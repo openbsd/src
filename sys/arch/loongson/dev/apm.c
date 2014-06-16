@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.19 2014/03/31 12:11:42 mpi Exp $	*/
+/*	$OpenBSD: apm.c,v 1.20 2014/06/16 20:32:29 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -50,6 +50,8 @@
 #include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/apmvar.h>
+
+#include <dev/pci/pcivar.h>	/* pci_dopm */
 
 #include <dev/wscons/wsdisplayvar.h>
 
@@ -132,6 +134,9 @@ apmmatch(struct device *parent, void *match, void *aux)
 void
 apmattach(struct device *parent, struct device *self, void *aux)
 {
+	/* Enable PCI Power Management. */
+	pci_dopm = 1;
+
 	printf("\n");
 }
 
