@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.128 2014/06/11 11:30:03 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.129 2014/06/16 19:47:21 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -174,8 +174,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 		if ((rt->rt_flags & RTF_HOST) == 0 && rt_mask(rt) &&
 		    satosin(rt_mask(rt))->sin_addr.s_addr != 0xffffffff)
 			rt->rt_flags |= RTF_CLONING;
-		if (rt->rt_flags & RTF_CLONING ||
-		    ((rt->rt_flags & RTF_LLINFO) && !la)) {
+		if (rt->rt_flags & RTF_CLONING) {
 			/*
 			 * Case 1: This route should come from a route to iface.
 			 */
@@ -190,8 +189,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 			 * from it do not need their expiration time set.
 			 */
 			rt->rt_expire = time_second;
-			if ((rt->rt_flags & RTF_CLONING) != 0)
-				break;
+			break;
 		}
 		/* Announce a new entry if requested. */
 		if (rt->rt_flags & RTF_ANNOUNCE)
