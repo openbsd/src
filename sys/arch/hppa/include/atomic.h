@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.6 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.7 2014/06/17 19:49:53 kettenis Exp $	*/
 
 /* Public Domain */
 
@@ -69,6 +69,25 @@ atomic_clearbits_long(volatile unsigned long *uip, unsigned long v)
 	ATOMIC_UNLOCK;
 	__asm volatile("mtctl	%0, %%cr15":: "r" (eiem));
 }
+
+/*
+ * Although the PA-RISC 2.0 architecture allows an implementation to
+ * be weakly ordered, all PA-RISC processers to date implement a
+ * strong memory ordering model.  So all we need is a compiler
+ * barrier.
+ */
+
+static inline void
+__insn_barrier(void)
+{
+	__asm volatile("" : : : "memory");
+}
+
+#define membar_enter()		__insn_barrier()
+#define membar_exit()		__insn_barrier()
+#define membar_producer()	__insn_barrier()
+#define membar_consumer()	__insn_barrier()
+#define membar_sync()		__insn_barrier()
 
 #endif /* defined(_KERNEL) */
 #endif /* _MACHINE_ATOMIC_H_ */
