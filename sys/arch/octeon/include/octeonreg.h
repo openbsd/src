@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonreg.h,v 1.3 2013/10/24 20:45:03 pirofti Exp $	*/
+/*	$OpenBSD: octeonreg.h,v 1.4 2014/06/17 01:33:04 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -163,5 +163,10 @@
 #define CIU_INT1_EN4_0          0x00000C90
 #define CIU_INT0_EN4_1          0x00000C88
 #define CIU_INT1_EN4_1          0x00000C98
+
+#define MIO_RST_BOOT		0x1180000001600ULL
+#define MIO_RST_BOOT_PNR_MUL_SHIFT	24
+#define MIO_RST_BOOT_PNR_MUL_MASK	0x3f
+#define OCTEON_IO_REF_CLOCK	50000000	/* 50MHz */
 
 #endif /* !_MACHINE_OCTEONREG_H_ */

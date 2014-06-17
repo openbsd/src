@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxuart.c,v 1.4 2013/06/05 02:45:03 jasper Exp $	*/
+/*	$OpenBSD: cn30xxuart.c,v 1.5 2014/06/17 01:33:04 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -32,6 +32,7 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
+#include <machine/octeonvar.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
@@ -111,7 +112,7 @@ cn30xxuart_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iobase = uba->uba_baseaddr;
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-	sc->sc_frequency = curcpu()->ci_hw.clock;
+	sc->sc_frequency = octeon_ioclock_speed();
 	sc->sc_uarttype = COM_UART_16550;
 
 	/* if it's in use as console, it's there. */

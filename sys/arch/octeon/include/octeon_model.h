@@ -1,4 +1,4 @@
-/*	$Id: octeon_model.h,v 1.1 2011/06/16 11:22:30 syuu Exp $	*/
+/*	$Id: octeon_model.h,v 1.2 2014/06/17 01:33:04 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -38,6 +38,7 @@
 #define OCTEON_MODEL_CN3005             0x000d0210
 #define OCTEON_MODEL_CN5010		0x000d0600
 #define OCTEON_MODEL_CN5010_PASS1_1	0x000d0601
+#define OCTEON_MODEL_CN61XX_PASS1_0	0x000d9300
 
 #define OCTEON_MODEL_MASK		0x00ffff10
 #define OCTEON_MODEL_REV_MASK		0x00ffff1f
@@ -50,6 +51,7 @@
 #define OCTEON_MODEL_FAMILY_CN31XX	0x000d0100
 #define OCTEON_MODEL_FAMILY_CN30XX	0x000d0200
 #define OCTEON_MODEL_FAMILY_CN50XX	0x000d0600
+#define OCTEON_MODEL_FAMILY_CN61XX	0x000d9300
 
 /*
  *  get chip id

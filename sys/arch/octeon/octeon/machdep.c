@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.48 2014/05/31 15:49:28 mpi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.49 2014/06/17 01:33:04 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -81,6 +81,7 @@
 #include <octeon/dev/iobusvar.h>
 #include <machine/octeonreg.h>
 #include <machine/octeonvar.h>
+#include <machine/octeon_model.h>
 
 /* The following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* Machine "architecture" */
@@ -564,6 +565,25 @@ octeon_cpuspeed(int *freq)
 	extern struct boot_info *octeon_boot_info;
 	*freq = octeon_boot_info->eclock / 1000000;
 	return (0);
+}
+
+int
+octeon_ioclock_speed(void)
+{
+	extern struct boot_info *octeon_boot_info;
+	int chipid;
+	u_int64_t mio_rst_boot;
+
+	chipid = octeon_get_chipid();
+	switch (octeon_model_family(chipid)) {
+	case OCTEON_MODEL_FAMILY_CN61XX:
+		mio_rst_boot = octeon_xkphys_read_8(MIO_RST_BOOT);
+		return OCTEON_IO_REF_CLOCK * ((mio_rst_boot >>
+		    MIO_RST_BOOT_PNR_MUL_SHIFT) & MIO_RST_BOOT_PNR_MUL_MASK);
+		break;
+	default:
+		return octeon_boot_info->eclock;
+	}
 }
 
 static u_int64_t
