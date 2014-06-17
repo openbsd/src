@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.68 2014/06/15 20:22:12 matthew Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.69 2014/06/17 03:49:03 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -155,6 +155,7 @@ int	systrace_policy(struct fsystrace *, struct systrace_policy *);
 int	systrace_preprepl(struct str_process *, struct systrace_replace *);
 int	systrace_replace(struct str_process *, size_t, register_t []);
 int	systrace_getcwd(struct fsystrace *, struct str_process *, int);
+int	systrace_restorecwd(struct fsystrace *, struct proc *);
 int	systrace_fname(struct str_process *, caddr_t, size_t);
 void	systrace_replacefree(struct str_process *);
 
@@ -260,7 +261,6 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 {
 	int ret = 0;
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
-	struct filedesc *fdp;
 	struct str_process *strp;
 	pid_t pid = 0;
 	int atfd = -1;
@@ -367,23 +367,7 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		ret = systrace_preprepl(strp, (struct systrace_replace *)data);
 		break;
 	case STRIOCRESCWD:
-		if (!fst->fd_pid) {
-			ret = EINVAL;
-			break;
-		}
-		fdp = p->p_fd;
-
-		/* Release cwd from other process */
-		if (fdp->fd_cdir)
-			vrele(fdp->fd_cdir);
-		if (fdp->fd_rdir)
-			vrele(fdp->fd_rdir);
-		/* This restores the cwd we had before */
-		fdp->fd_cdir = fst->fd_cdir;
-		fdp->fd_rdir = fst->fd_rdir;
-		/* Note that we are normal again */
-		fst->fd_pid = 0;
-		fst->fd_cdir = fst->fd_rdir = NULL;
+		ret = systrace_restorecwd(fst, p);
 		break;
 	case STRIOCGETCWD:
 		ret = systrace_getcwd(fst, strp, atfd);
@@ -1076,7 +1060,7 @@ int
 systrace_getcwd(struct fsystrace *fst, struct str_process *strp, int atfd)
 {
 	struct filedesc *myfdp, *fdp;
-	struct vnode *dvp;
+	struct vnode *dvp, *odvp;
 	int error;
 
 	DPRINTF(("%s: %d\n", __func__, strp->pid));
@@ -1101,21 +1085,59 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp, int atfd)
 			return (EINVAL);
 	}
 
-	/* Release any saved vnodes. */
-	if (fst->fd_cdir != NULL)
-		vrele(fst->fd_cdir);
-	if (fst->fd_rdir != NULL)
-		vrele(fst->fd_rdir);
-
-	/* Store our current values */
+	/* Is there a STRIOCGETCWD currently in effect? */
+	if (fst->fd_pid == 0) {
+		/* nope: just save the current values */
+		fst->fd_cdir = myfdp->fd_cdir;
+		fst->fd_rdir = myfdp->fd_rdir;
+	} else {
+		/* yep: carefully release the current values */
+		odvp = myfdp->fd_rdir;
+		myfdp->fd_rdir = fst->fd_rdir;
+		if (odvp != NULL)
+			vrele(odvp);
+		odvp = myfdp->fd_cdir;
+		myfdp->fd_cdir = fst->fd_cdir;
+		if (odvp != NULL)
+			vrele(odvp);
+	}
 	fst->fd_pid = strp->pid;
-	fst->fd_cdir = myfdp->fd_cdir;
-	fst->fd_rdir = myfdp->fd_rdir;
 
 	if ((myfdp->fd_cdir = dvp) != NULL)
 		vref(myfdp->fd_cdir);
 	if ((myfdp->fd_rdir = fdp->fd_rdir) != NULL)
 		vref(myfdp->fd_rdir);
+
+	return (0);
+}
+
+int
+systrace_restorecwd(struct fsystrace *fst, struct proc *p)
+{
+	struct filedesc *fdp;
+	struct vnode *rvp, *cvp;
+
+	if (!fst->fd_pid)
+		return (EINVAL);
+
+	fdp = p->p_fd;
+
+	/*
+	 * Restore original root and current directories and release the
+	 * ones from the other process.
+	 */
+	rvp = fdp->fd_rdir;
+	cvp = fdp->fd_cdir;
+	fdp->fd_rdir = fst->fd_rdir;
+	fdp->fd_cdir = fst->fd_cdir;
+	fst->fd_cdir = fst->fd_rdir = NULL;
+	if (rvp != NULL)
+		vrele(rvp);
+	if (cvp != NULL)
+		vrele(cvp);
+
+	/* Note that we are normal again */
+	fst->fd_pid = 0;
 
 	return (0);
 }
