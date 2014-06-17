@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.137 2013/11/23 17:24:29 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.138 2014/06/17 03:12:37 lteo Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -455,7 +455,7 @@ main(int argc, char *argv[])
 		if (readablen != allsockn) {
 			if (fdsrp)
 				free(fdsrp);
-			fdsrp = (fd_set *)calloc(allsockn, 1);
+			fdsrp = calloc(allsockn, 1);
 			if (fdsrp == NULL) {
 				syslog(LOG_ERR, "Out of memory.");
 				exit(1);
@@ -1085,7 +1085,7 @@ enter(struct servtab *cp)
 	struct servtab *sep;
 	sigset_t omask;
 
-	sep = (struct servtab *)malloc(sizeof (*sep));
+	sep = malloc(sizeof (*sep));
 	if (sep == NULL) {
 		syslog(LOG_ERR, "Out of memory.");
 		exit(1);
@@ -1180,13 +1180,11 @@ getconfigent(void)
 	char *arg, *cp, *hostdelim, *s;
 	int argc;
 
-	sep = (struct servtab *) malloc(sizeof(struct servtab));
+	sep = calloc(1, sizeof(struct servtab));
 	if (sep == NULL) {
-		syslog(LOG_ERR, "malloc: %m");
+		syslog(LOG_ERR, "calloc: %m");
 		exit(1);
 	}
-
-	memset(sep, 0, sizeof *sep);
 more:
 	freeconfig(sep);
 
@@ -1512,14 +1510,12 @@ dupconfig(struct servtab *sep)
 	struct servtab *newtab;
 	int argc;
 
-	newtab = (struct servtab *) malloc(sizeof(struct servtab));
+	newtab = calloc(1, sizeof(struct servtab));
 
 	if (newtab == NULL) {
-		syslog(LOG_ERR, "malloc: %m");
+		syslog(LOG_ERR, "calloc: %m");
 		exit(1);
 	}
-
-	memset(newtab, 0, sizeof(struct servtab));
 
 	newtab->se_service = sep->se_service ? newstr(sep->se_service) : NULL;
 	newtab->se_socktype = sep->se_socktype;
