@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.57 2014/03/24 01:00:58 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.58 2014/06/17 04:58:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -230,9 +230,9 @@ myx_sts_enter(struct myx_softc *sc)
 {
 	bus_dmamap_t		 map = sc->sc_sts_dma.mxm_map;
 
-        mtx_enter(&sc->sc_sts_mtx);
-        bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-            BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	mtx_enter(&sc->sc_sts_mtx);
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 }
 
 static inline void
@@ -240,9 +240,9 @@ myx_sts_leave(struct myx_softc *sc)
 {
 	bus_dmamap_t		 map = sc->sc_sts_dma.mxm_map;
 
-        bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-            BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-        mtx_leave(&sc->sc_sts_mtx);
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	mtx_leave(&sc->sc_sts_mtx);
 }
 
 struct cfdriver myx_cd = {
