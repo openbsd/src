@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.64 2014/04/22 15:52:05 naddy Exp $	*/
+/*	$OpenBSD: hme.c,v 1.65 2014/06/17 02:48:30 dlg Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -107,8 +107,7 @@ int		hme_rint(struct hme_softc *);
 int		hme_tint(struct hme_softc *);
 
 void
-hme_config(sc)
-	struct hme_softc *sc;
+hme_config(struct hme_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mii_data *mii = &sc->sc_mii;
@@ -305,8 +304,7 @@ fail:
 }
 
 void
-hme_unconfig(sc)
-	struct hme_softc *sc;
+hme_unconfig(struct hme_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i;
@@ -332,8 +330,7 @@ hme_unconfig(sc)
 }
 
 void
-hme_tick(arg)
-	void *arg;
+hme_tick(void *arg)
 {
 	struct hme_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -373,8 +370,7 @@ hme_tick(arg)
 }
 
 void
-hme_reset(sc)
-	struct hme_softc *sc;
+hme_reset(struct hme_softc *sc)
 {
 	int s;
 
@@ -445,8 +441,7 @@ hme_stop(struct hme_softc *sc, int softonly)
 }
 
 void
-hme_meminit(sc)
-	struct hme_softc *sc;
+hme_meminit(struct hme_softc *sc)
 {
 	bus_addr_t dma;
 	caddr_t p;
@@ -504,8 +499,7 @@ hme_meminit(sc)
  * and transmit/receive descriptor rings.
  */
 void
-hme_init(sc)
-	struct hme_softc *sc;
+hme_init(struct hme_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -659,8 +653,7 @@ hme_init(sc)
 }
 
 void
-hme_start(ifp)
-	struct ifnet *ifp;
+hme_start(struct ifnet *ifp)
 {
 	struct hme_softc *sc = (struct hme_softc *)ifp->if_softc;
 	struct hme_ring *hr = &sc->sc_rb;
@@ -771,8 +764,7 @@ hme_start(ifp)
  * Transmit interrupt.
  */
 int
-hme_tint(sc)
-	struct hme_softc *sc;
+hme_tint(struct hme_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	unsigned int ri, txflags;
@@ -828,8 +820,7 @@ hme_tint(sc)
  * Receive interrupt.
  */
 int
-hme_rint(sc)
-	struct hme_softc *sc;
+hme_rint(struct hme_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
@@ -889,9 +880,7 @@ hme_rint(sc)
 }
 
 int
-hme_eint(sc, status)
-	struct hme_softc *sc;
-	u_int status;
+hme_eint(struct hme_softc *sc, u_int status)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
@@ -924,8 +913,7 @@ hme_eint(sc, status)
 }
 
 int
-hme_intr(v)
-	void *v;
+hme_intr(void *v)
 {
 	struct hme_softc *sc = (struct hme_softc *)v;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -951,8 +939,7 @@ hme_intr(v)
 
 
 void
-hme_watchdog(ifp)
-	struct ifnet *ifp;
+hme_watchdog(struct ifnet *ifp)
 {
 	struct hme_softc *sc = ifp->if_softc;
 
@@ -966,8 +953,7 @@ hme_watchdog(ifp)
  * Initialize the MII Management Interface
  */
 void
-hme_mifinit(sc)
-	struct hme_softc *sc;
+hme_mifinit(struct hme_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
@@ -1002,9 +988,7 @@ hme_mifinit(sc)
  * MII interface
  */
 static int
-hme_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+hme_mii_readreg(struct device *self, int phy, int reg)
 {
 	struct hme_softc *sc = (struct hme_softc *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1060,9 +1044,7 @@ out:
 }
 
 static void
-hme_mii_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+hme_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct hme_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1115,8 +1097,7 @@ out:
 }
 
 static void
-hme_mii_statchg(dev)
-	struct device *dev;
+hme_mii_statchg(struct device *dev)
 {
 	struct hme_softc *sc = (void *)dev;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1143,8 +1124,7 @@ hme_mii_statchg(dev)
 }
 
 int
-hme_mediachange(ifp)
-	struct ifnet *ifp;
+hme_mediachange(struct ifnet *ifp)
 {
 	struct hme_softc *sc = ifp->if_softc;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1179,9 +1159,7 @@ hme_mediachange(ifp)
 }
 
 void
-hme_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+hme_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct hme_softc *sc = ifp->if_softc;
 
@@ -1197,10 +1175,7 @@ hme_mediastatus(ifp, ifmr)
  * Process an ioctl request.
  */
 int
-hme_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+hme_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct hme_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -1303,8 +1278,7 @@ hme_iff(struct hme_softc *sc)
 }
 
 void
-hme_fill_rx_ring(sc)
-	struct hme_softc *sc;
+hme_fill_rx_ring(struct hme_softc *sc)
 {
 	struct hme_sxd *sd;
 
@@ -1325,9 +1299,7 @@ hme_fill_rx_ring(sc)
 }
 
 int
-hme_newbuf(sc, d)
-	struct hme_softc *sc;
-	struct hme_sxd *d;
+hme_newbuf(struct hme_softc *sc, struct hme_sxd *d)
 {
 	struct mbuf *m;
 	bus_dmamap_t map;
