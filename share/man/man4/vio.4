@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vio.4,v 1.10 2014/05/09 14:44:56 sf Exp $
+.\"     $OpenBSD: vio.4,v 1.11 2014/06/17 19:46:13 sf Exp $
 .\"
 .\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 9 2014 $
+.Dd $Mdocdate: June 17 2014 $
 .Dt VIO 4
 .Os
 .Sh NAME
@@ -29,10 +29,15 @@ driver provides support for the
 .Xr virtio 4
 network interface provided by bhyve, KVM, QEMU, and VirtualBox.
 .Pp
-Setting flags to 0x02 disables the RingEventIndex feature.
+Setting the bit 0x2 in the flags disables the RingEventIndex feature.
 This can be tried as a workaround for possible bugs in host implementations or
 .Nm
 at the cost of slightly reduced performance.
+.Pp
+Setting the bit 0x100 in the flags forces the interface to be always in
+promiscous mode.
+This can be used as a workaround for a bug in QEMU before version 2.0 that
+prevents packets with a VLAN tag to be sent to the guest.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr virtio 4
@@ -54,8 +59,3 @@ It is based on the
 .Nm vioif
 driver by
 .An Minoura Makoto .
-.Sh BUGS
-Due to a qemu bug, VLANs don't work with qemu versions before 2.0 unless the
-interface is in promiscuous mode.
-.Nm
-should probably implement a workaround for this.

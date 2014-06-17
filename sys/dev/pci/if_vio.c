@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.15 2014/01/19 20:49:02 bluhm Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.16 2014/06/17 19:46:13 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -90,6 +90,13 @@
 #define VIRTIO_NET_F_CTRL_VLAN		(1<<19)
 #define VIRTIO_NET_F_CTRL_RX_EXTRA	(1<<20)
 #define VIRTIO_NET_F_GUEST_ANNOUNCE	(1<<21)
+
+/*
+ * Config(8) flags. The lowest byte is reserved for generic virtio stuff.
+ */
+
+/* Workaround for vlan related bug in qemu < version 2.0 */
+#define CONFFLAG_QEMU_VLAN_BUG		(1<<8)
 
 static const struct virtio_feature_name virtio_net_feature_names[] = {
 	{ VIRTIO_NET_F_CSUM,		"CSum" },
@@ -1394,6 +1401,9 @@ vio_iff(struct vio_softc *sc)
 		ifp->if_flags |= IFF_ALLMULTI | IFF_PROMISC;
 		return;
 	}
+
+	if (sc->sc_dev.dv_cfdata->cf_flags & CONFFLAG_QEMU_VLAN_BUG)
+		ifp->if_flags |= IFF_PROMISC;
 
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0 ||
 	    ac->ac_multicnt >= VIRTIO_NET_CTRL_MAC_MC_ENTRIES) {
