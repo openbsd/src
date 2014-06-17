@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.33 2014/06/13 18:58:58 deraadt Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.34 2014/06/17 00:37:07 matthew Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -48,12 +48,13 @@
 #define IVSZ	8
 #define BLOCKSZ	64
 #define RSBUFSZ	(16*BLOCKSZ)
-static int rs_initialized;
-static pid_t rs_stir_pid;
-static chacha_ctx *rs;		/* chacha context for random keystream */
+
+static struct {
+	size_t		rs_have;	/* valid bytes at end of rs_buf */
+	size_t		rs_count;	/* bytes till reseed */
+	chacha_ctx	rs_chacha;	/* chacha context for random keystream */
+} *rs;
 static u_char *rs_buf;		/* keystream blocks */
-static size_t rs_have;		/* valid bytes at end of rs_buf */
-static size_t rs_count;		/* bytes till reseed */
 
 static inline void _rs_rekey(u_char *dat, size_t datlen);
 
@@ -63,15 +64,23 @@ _rs_init(u_char *buf, size_t n)
 	if (n < KEYSZ + IVSZ)
 		return;
 
-	if (rs == NULL && (rs = mmap(NULL, sizeof(*rs), PROT_READ|PROT_WRITE,
-	    MAP_ANON, -1, 0)) == MAP_FAILED)
-		abort();
-	if (rs_buf == NULL && (rs_buf = mmap(NULL, RSBUFSZ, PROT_READ|PROT_WRITE,
-	    MAP_ANON, -1, 0)) == MAP_FAILED)
-		abort();
+	if (rs == NULL) {
+		if ((rs = mmap(NULL, sizeof(*rs), PROT_READ|PROT_WRITE,
+		    MAP_ANON, -1, 0)) == MAP_FAILED)
+			abort();
+		if (minherit(rs, sizeof(*rs), MAP_INHERIT_ZERO) == -1)
+			abort();
+	}
+	if (rs_buf == NULL) {
+		if ((rs_buf = mmap(NULL, RSBUFSZ, PROT_READ|PROT_WRITE,
+		    MAP_ANON, -1, 0)) == MAP_FAILED)
+			abort();
+		if (minherit(rs_buf, RSBUFSZ, MAP_INHERIT_ZERO) == -1)
+			abort();
+	}
 
-	chacha_keysetup(rs, buf, KEYSZ * 8, 0);
-	chacha_ivsetup(rs, buf + KEYSZ);
+	chacha_keysetup(&rs->rs_chacha, buf, KEYSZ * 8, 0);
+	chacha_ivsetup(&rs->rs_chacha, buf + KEYSZ);
 }
 
 static void
@@ -82,30 +91,28 @@ _rs_stir(void)
 	/* XXX */
 	(void) getentropy(rnd, sizeof rnd);
 
-	if (!rs_initialized) {
-		rs_initialized = 1;
+	if (!rs)
 		_rs_init(rnd, sizeof(rnd));
-	} else
+	else
 		_rs_rekey(rnd, sizeof(rnd));
 	explicit_bzero(rnd, sizeof(rnd));
 
 	/* invalidate rs_buf */
-	rs_have = 0;
+	rs->rs_have = 0;
 	memset(rs_buf, 0, RSBUFSZ);
 
-	rs_count = 1600000;
+	rs->rs_count = 1600000;
 }
 
 static inline void
 _rs_stir_if_needed(size_t len)
 {
-	pid_t pid = getpid();
-
-	if (rs_count <= len || !rs_initialized || rs_stir_pid != pid) {
-		rs_stir_pid = pid;
+	if (!rs || rs->rs_count <= len)
 		_rs_stir();
-	} else
-		rs_count -= len;
+	if (rs->rs_count <= len)
+		rs->rs_count = 0;
+	else
+		rs->rs_count -= len;
 }
 
 static inline void
@@ -115,7 +122,7 @@ _rs_rekey(u_char *dat, size_t datlen)
 	memset(rs_buf, 0,RSBUFSZ);
 #endif
 	/* fill rs_buf with the keystream */
-	chacha_encrypt_bytes(rs, rs_buf, rs_buf, RSBUFSZ);
+	chacha_encrypt_bytes(&rs->rs_chacha, rs_buf, rs_buf, RSBUFSZ);
 	/* mix in optional user provided data */
 	if (dat) {
 		size_t i, m;
@@ -127,7 +134,7 @@ _rs_rekey(u_char *dat, size_t datlen)
 	/* immediately reinit for backtracking resistance */
 	_rs_init(rs_buf, KEYSZ + IVSZ);
 	memset(rs_buf, 0, KEYSZ + IVSZ);
-	rs_have = RSBUFSZ - KEYSZ - IVSZ;
+	rs->rs_have = RSBUFSZ - KEYSZ - IVSZ;
 }
 
 static inline void
@@ -138,15 +145,15 @@ _rs_random_buf(void *_buf, size_t n)
 
 	_rs_stir_if_needed(n);
 	while (n > 0) {
-		if (rs_have > 0) {
-			m = MIN(n, rs_have);
-			memcpy(buf, rs_buf + RSBUFSZ - rs_have, m);
-			memset(rs_buf + RSBUFSZ - rs_have, 0, m);
+		if (rs->rs_have > 0) {
+			m = MIN(n, rs->rs_have);
+			memcpy(buf, rs_buf + RSBUFSZ - rs->rs_have, m);
+			memset(rs_buf + RSBUFSZ - rs->rs_have, 0, m);
 			buf += m;
 			n -= m;
-			rs_have -= m;
+			rs->rs_have -= m;
 		}
-		if (rs_have == 0)
+		if (rs->rs_have == 0)
 			_rs_rekey(NULL, 0);
 	}
 }
@@ -155,11 +162,11 @@ static inline void
 _rs_random_u32(u_int32_t *val)
 {
 	_rs_stir_if_needed(sizeof(*val));
-	if (rs_have < sizeof(*val))
+	if (rs->rs_have < sizeof(*val))
 		_rs_rekey(NULL, 0);
-	memcpy(val, rs_buf + RSBUFSZ - rs_have, sizeof(*val));
-	memset(rs_buf + RSBUFSZ - rs_have, 0, sizeof(*val));
-	rs_have -= sizeof(*val);
+	memcpy(val, rs_buf + RSBUFSZ - rs->rs_have, sizeof(*val));
+	memset(rs_buf + RSBUFSZ - rs->rs_have, 0, sizeof(*val));
+	rs->rs_have -= sizeof(*val);
 }
 
 u_int32_t
