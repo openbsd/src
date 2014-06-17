@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.12 2014/01/30 15:18:51 kettenis Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.13 2014/06/17 15:43:27 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -28,6 +28,7 @@
 #include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 
 #include <machine/intr.h>
 
@@ -69,6 +70,7 @@ mtx_enter(struct mutex *mtx)
 		if (mtx->mtx_wantipl != IPL_NONE)
 			s = splraise(mtx->mtx_wantipl);
 		if (try_lock(mtx)) {
+			membar_enter();
 			if (mtx->mtx_wantipl != IPL_NONE)
 				mtx->mtx_oldipl = s;
 			mtx->mtx_owner = curcpu();
@@ -90,6 +92,7 @@ mtx_enter_try(struct mutex *mtx)
  	if (mtx->mtx_wantipl != IPL_NONE)
 		s = splraise(mtx->mtx_wantipl);
 	if (try_lock(mtx)) {
+		membar_enter();
 		if (mtx->mtx_wantipl != IPL_NONE)
 			mtx->mtx_oldipl = s;
 		mtx->mtx_owner = curcpu();
@@ -116,6 +119,7 @@ mtx_leave(struct mutex *mtx)
 #endif
 	s = mtx->mtx_oldipl;
 	mtx->mtx_owner = NULL;
+	membar_exit();
 
 	mtx->mtx_lock[0] = 1;
 	mtx->mtx_lock[1] = 1;
