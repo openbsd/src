@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.154 2014/06/16 09:02:07 espie Exp $
+# $OpenBSD: Add.pm,v 1.155 2014/06/17 13:35:06 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -113,7 +113,7 @@ sub perform_extraction
 	$state->{partial} = $handle->{partial};
 	$state->{archive} = $handle->{location};
 	$state->{check_digest} = $handle->{plist}{check_digest};
-	my ($wanted, $tied) = {};
+	my ($wanted, $tied) = ({}, {});
 	$handle->{plist}->find_extractible($state, $wanted, $tied);
 	my $p = $state->progress->new_sizer($handle->{plist}, $state);
 	while (my $file = $state->{archive}->next) {
@@ -124,10 +124,11 @@ sub perform_extraction
 			$state->{archive}->skip;
 			$p->advance($e);
 			# skip to next;
+			next;
 		}
 		$e = $wanted->{$file->name};
 		if (!defined $e) {
-			$state->Fatal("archive member not found #1",
+			$state->fatal("archive member not found #1",
 			    $file->name);
 		}
 		delete $wanted->{$file->name};
@@ -404,8 +405,6 @@ use OpenBSD::Temp;
 sub find_extractible
 {
 	my ($self, $state, $wanted, $tied) = @_;
-	$wanted->{$self->name} = $self;
-	return;
 	if ($self->{tied} || $self->{link} || $self->{symlink}) {
 		$tied->{$self->name} = $self;
 	} else {
