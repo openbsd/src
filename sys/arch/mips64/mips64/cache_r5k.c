@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.c,v 1.13 2014/03/31 20:21:19 miod Exp $	*/
+/*	$OpenBSD: cache_r5k.c,v 1.14 2014/06/17 18:58:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -78,6 +78,9 @@
 #define	HitWBInvalidate_S	0x17
 #define	InvalidatePage_S	0x17	/* Only RM527[0-1] */
 
+#define	HitWriteback_D		0x19
+#define	HitWriteback_S		0x1b
+
 /*
  *  R5000 and RM52xx config register bits.
  */
@@ -145,6 +148,10 @@ static __inline__ void	mips5k_hitinv_primary(vaddr_t, vsize_t);
 static __inline__ void	mips5k_hitinv_secondary(vaddr_t, vsize_t);
 static __inline__ void	mips5k_hitwbinv_primary(vaddr_t, vsize_t);
 static __inline__ void	mips5k_hitwbinv_secondary(vaddr_t, vsize_t);
+static __inline__ void	mips5k_hitwb_primary(vaddr_t, vsize_t);
+#if 0
+static __inline__ void	mips5k_hitwb_secondary(vaddr_t, vsize_t);
+#endif
 
 void mips5k_l2_init(register_t);
 void mips7k_l2_init(register_t);
@@ -789,12 +796,9 @@ Mips5k_HitSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	va = _va & ~(R5K_LINE - 1);
 	sz = ((_va + _sz + R5K_LINE - 1) & ~(R5K_LINE - 1)) - va;
 
-#if 0
 	if (ci->ci_cacheconfiguration & CTYPE_HAS_IL2)
 		mips5k_hitwbinv_secondary(va, sz);
-	else
-#endif
-	     {
+	else {
 #ifdef CPU_R4600
 		/*
 		 * R4600 revision 2 needs to load from an uncached address
@@ -852,12 +856,9 @@ Mips5k_HitInvalidateDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	va = _va & ~(R5K_LINE - 1);
 	sz = ((_va + _sz + R5K_LINE - 1) & ~(R5K_LINE - 1)) - va;
 
-#if 0
 	if (ci->ci_cacheconfiguration & CTYPE_HAS_IL2)
 		mips5k_hitinv_secondary(va, sz);
-	else
-#endif
-	     {
+	else {
 #ifdef CPU_R4600
 		/*
 		 * R4600 revision 2 needs to load from an uncached address
@@ -873,6 +874,33 @@ Mips5k_HitInvalidateDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 
 	mips_sync();
 }
+
+static __inline__ void
+mips5k_hitwb_primary(vaddr_t va, vsize_t sz)
+{
+	vaddr_t eva;
+
+	eva = va + sz;
+	while (va != eva) {
+		cache(HitWriteback_D, 0, va);
+		va += R5K_LINE;
+	}
+}
+
+#if 0
+static __inline__ void
+mips5k_hitwb_secondary(vaddr_t va, vsize_t sz)
+{
+	vaddr_t eva;
+
+	eva = va + sz;
+	while (va != eva) {
+		cache(HitWriteback_S, 0, va);
+		cache(HitWriteback_D, 0, va);	/* orphans in L1 */
+		va += R5K_LINE;
+	}
+}
+#endif
 
 /*
  * Backend for bus_dmamap_sync(). Enforce coherency of the given range
@@ -942,8 +970,16 @@ Mips5k_IOSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz, int how)
 		}
 		break;
 
-	case CACHE_SYNC_X:
 	case CACHE_SYNC_W:
+#ifdef CPU_RM7000
+		if (ci->ci_cacheconfiguration & CTYPE_HAS_IL2)
+			mips5k_hitwbinv_secondary(va, sz);	/* XXX */
+		else
+#endif
+			mips5k_hitwb_primary(va, sz);
+		break;
+
+	case CACHE_SYNC_X:
 #ifdef CPU_RM7000
 		if (ci->ci_cacheconfiguration & CTYPE_HAS_IL2)
 			mips5k_hitwbinv_secondary(va, sz);
