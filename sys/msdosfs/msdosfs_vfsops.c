@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.65 2014/05/27 21:52:19 sf Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.66 2014/06/18 17:24:46 tobias Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -517,7 +517,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
 	 * Allocate memory for the bitmap of allocated clusters, and then
 	 * fill it in.
 	 */
-	bmapsiz = (pmp->pm_maxcluster + N_INUSEBITS - 1) / N_INUSEBITS;
+	bmapsiz = howmany(pmp->pm_maxcluster + 1, N_INUSEBITS);
 	if (bmapsiz == 0 || SIZE_MAX / bmapsiz < sizeof(*pmp->pm_inusemap)) {
 		/* detect multiplicative integer overflow */
 		error = EINVAL;

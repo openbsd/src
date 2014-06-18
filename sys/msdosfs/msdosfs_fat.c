@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.24 2013/06/11 16:42:16 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.25 2014/06/18 17:24:46 tobias Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -866,7 +866,7 @@ fillinusemap(struct msdosfsmount *pmp)
 	 * Mark all clusters in use, we mark the free ones in the fat scan
 	 * loop further down.
 	 */
-	for (cn = 0; cn < (pmp->pm_maxcluster + N_INUSEBITS) / N_INUSEBITS; cn++)
+	for (cn = 0; cn < howmany(pmp->pm_maxcluster + 1, N_INUSEBITS); cn++)
 		pmp->pm_inusemap[cn] = (u_int)-1;
 
 	/*
