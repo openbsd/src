@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.49 2014/06/15 15:29:25 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.50 2014/06/18 04:50:44 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -608,6 +608,10 @@ ssl3_digest_cached_records(SSL *s)
 	ssl3_free_digest_list(s);
 
 	s->s3->handshake_dgst = calloc(SSL_MAX_DIGEST, sizeof(EVP_MD_CTX *));
+	if (s->s3->handshake_dgst == NULL) {
+		SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
 	hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
 	if (hdatalen <= 0) {
 		SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS,
