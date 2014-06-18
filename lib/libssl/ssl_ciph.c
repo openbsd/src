@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.54 2014/06/18 04:47:32 miod Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.55 2014/06/18 04:48:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1909,16 +1909,16 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	}
 
-	if (buf == NULL) {
-		len = 128;
-		buf = malloc(len);
-		if (buf == NULL)
-			return("malloc Error");
-	} else if (len < 128)
-		return("Buffer too small");
-
-	l = snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac, exp_str);
-	if (l >= len || l == -1)
+	if (buf == NULL)
+		l = asprintf(&buf, format, cipher->name, ver, kx, au, enc,
+		    mac, exp_str);
+	else {
+		l = snprintf(buf, len, format, cipher->name, ver, kx, au, enc,
+		    mac, exp_str);
+		if (l >= len)
+			l = -1;
+	}
+	if (l == -1)
 		return("Buffer too small");
 	else
 		return (buf);
