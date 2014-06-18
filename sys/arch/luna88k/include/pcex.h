@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcex.h,v 1.1 2014/04/16 12:01:33 aoyama Exp $	*/
+/*	$OpenBSD: pcex.h,v 1.2 2014/06/18 12:26:11 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -20,7 +20,7 @@
 #define _MACHINE_PCEX_H_
 
 /*
- * PC-9801 extension board slot support for LUNA-88K{,2}
+ * PC-9801 extension board slot support for LUNA-88K2
  */
 
 /* The ioctl defines */
