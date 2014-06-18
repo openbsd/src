@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.41 2014/06/13 01:55:02 matthew Exp $
+#	$OpenBSD: Makefile,v 1.42 2014/06/18 08:24:00 matthew Exp $
 
-SUBDIR+= _setjmp alloca atexit basename cephes cxa-atexit db dirname env
+SUBDIR+= _setjmp alloca arc4random-fork
+SUBDIR+= atexit basename cephes cxa-atexit db dirname env
 SUBDIR+= explicit_bzero fmemopen fnmatch fpclassify getcap getopt_long glob
 SUBDIR+= hsearch longjmp locale malloc mkstemp modf netdb open_memstream
 SUBDIR+= orientation popen printf
