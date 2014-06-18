@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.54 2014/03/29 23:59:49 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.55 2014/06/18 20:03:55 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -350,8 +350,8 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	printf("cpu%d: L2 line size %d\n", cpuno, ci->ci_l2.linesize);
 	printf("cpu%d: cache configuration %x\n",
 	    cpuno, ci->ci_cacheconfiguration);
-	printf("cpu%d: virtual alias mask %p\n", cpuno, cache_valias_mask);
-	printf("cpu%d: config register %016x, status register %016x\n",
+	printf("cpu%d: virtual alias mask 0x%lx\n", cpuno, cache_valias_mask);
+	printf("cpu%d: config register %016lx, status register %016lx\n",
 	    cpuno, cp0_get_config(), getsr());
 #endif
 }
