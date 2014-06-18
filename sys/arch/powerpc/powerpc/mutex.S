@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.15 2014/01/22 11:01:15 kettenis Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.16 2014/06/18 18:42:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn
@@ -63,6 +63,7 @@ ENTRY(mtx_enter)
 .L_mutex_free:
 	stwcx.	%r4,%r5,%r3			# old owner was 0 cond store
 	bne-	.L_mutex_locked			# branch if reserve cancelled
+	isync					# memory barrier
 #ifdef DIAGNOSTIC
 	lwz	%r6,CI_MUTEX_LEVEL(%r4)
 	addi	%r6,%r6,1			# curpcu->ci_mutex_level++
@@ -119,6 +120,7 @@ ENTRY(mtx_enter_try)
 .L_mutex_try_free:
 	stwcx.	%r4,%r5,%r3			# old owner was 0 cond store
 	bne-	.L_mutex_try_locked		# branch if reserve cancelled
+	isync					# memory barrier
 #ifdef DIAGNOSTIC
 	lwz	%r6,CI_MUTEX_LEVEL(%r4)
 	addi	%r6,%r6,1			# curpcu->ci_mutex_level++
@@ -152,6 +154,7 @@ ENTRY(mtx_leave)
 	li	%r4,0
 	lwz	%r5,MTX_OLDCPL(%r3)
 	stw	%r4,MTX_OLDCPL(%r3)
+	sync					# memory barrier
 	stw	%r4,MTX_OWNER(%r3)
 	GET_CPUINFO(%r4)
 #ifdef DIAGNOSTIC
