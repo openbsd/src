@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.64 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.65 2014/06/18 04:51:31 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2960,8 +2960,10 @@ ssl3_send_newsession_ticket(SSL *s)
  		 */
 		if (!BUF_MEM_grow(s->init_buf,
 		    26 + EVP_MAX_IV_LENGTH + EVP_MAX_BLOCK_LENGTH +
-		    EVP_MAX_MD_SIZE + slen))
+		    EVP_MAX_MD_SIZE + slen)) {
+			free(senc);
 			return (-1);
+		}
 
 		p = (unsigned char *)s->init_buf->data;
 		/* do the header */
