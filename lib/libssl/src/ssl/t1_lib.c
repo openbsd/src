@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.46 2014/06/13 04:29:13 miod Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.47 2014/06/18 04:49:40 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1867,10 +1867,14 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 		unsigned char *nctick = (unsigned char *)etick;
 		int rv = tctx->tlsext_ticket_key_cb(s, nctick, nctick + 16,
 		    &ctx, &hctx, 0);
-		if (rv < 0)
+		if (rv < 0) {
+			EVP_CIPHER_CTX_cleanup(&ctx);
 			return -1;
-		if (rv == 0)
+		}
+		if (rv == 0) {
+			EVP_CIPHER_CTX_cleanup(&ctx);
 			return 2;
+		}
 		if (rv == 2)
 			renew_ticket = 1;
 	} else {
@@ -1895,8 +1899,10 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	HMAC_Update(&hctx, etick, eticklen);
 	HMAC_Final(&hctx, tick_hmac, NULL);
 	HMAC_CTX_cleanup(&hctx);
-	if (CRYPTO_memcmp(tick_hmac, etick + eticklen, mlen))
+	if (CRYPTO_memcmp(tick_hmac, etick + eticklen, mlen)) {
+		EVP_CIPHER_CTX_cleanup(&ctx);
 		return 2;
+	}
 	/* Attempt to decrypt session data */
 	/* Move p after IV to start of encrypted ticket, update length */
 	p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
