@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.h,v 1.8 2013/06/02 21:08:36 matthew Exp $ */
+/*	$OpenBSD: atexit.h,v 1.9 2014/06/18 19:01:10 kettenis Exp $ */
 
 /*
  * Copyright (c) 2002 Daniel Hartmeier
@@ -35,10 +35,7 @@ struct atexit {
 	int ind;			/* next index in this table */
 	int max;			/* max entries >= ATEXIT_SIZE */
 	struct atexit_fn {
-		union {
-			void (*std_func)(void);
-			void (*cxa_func)(void *);
-		} fn_ptr;
+		void (*fn_ptr)(void *);
 		void *fn_arg;		/* argument for CXA callback */
 		void *fn_dso;		/* shared module handle */
 	} fns[1];			/* the table itself */

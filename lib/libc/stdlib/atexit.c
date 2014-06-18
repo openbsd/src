@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.c,v 1.17 2013/12/28 18:38:42 kettenis Exp $ */
+/*	$OpenBSD: atexit.c,v 1.18 2014/06/18 19:01:10 kettenis Exp $ */
 /*
  * Copyright (c) 2002 Daniel Hartmeier
  * All rights reserved.
@@ -90,7 +90,7 @@ __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 		__atexit = p;
 	}
 	fnp = &p->fns[p->ind++];
-	fnp->fn_ptr.cxa_func = func;
+	fnp->fn_ptr = func;
 	fnp->fn_arg = arg;
 	fnp->fn_dso = dso;
 	if (mprotect(p, pgsize, PROT_READ))
@@ -118,7 +118,7 @@ __cxa_finalize(void *dso)
 
 	for (p = __atexit; p != NULL; p = p->next) {
 		for (n = p->ind; --n >= 0;) {
-			if (p->fns[n].fn_ptr.cxa_func == NULL)
+			if (p->fns[n].fn_ptr == NULL)
 				continue;	/* already called */
 			if (dso != NULL && dso != p->fns[n].fn_dso)
 				continue;	/* wrong DSO */
@@ -129,13 +129,10 @@ __cxa_finalize(void *dso)
 			 */
 			fn = p->fns[n];
 			if (mprotect(p, pgsize, PROT_READ | PROT_WRITE) == 0) {
-				p->fns[n].fn_ptr.cxa_func = NULL;
+				p->fns[n].fn_ptr = NULL;
 				mprotect(p, pgsize, PROT_READ);
 			}
-			if (fn.fn_dso != NULL)
-				(*fn.fn_ptr.cxa_func)(fn.fn_arg);
-			else
-				(*fn.fn_ptr.std_func)();
+			(*fn.fn_ptr)(fn.fn_arg);
 		}
 	}
 
@@ -185,7 +182,7 @@ __atexit_register_cleanup(void (*func)(void))
 		if (mprotect(p, pgsize, PROT_READ | PROT_WRITE))
 			goto unlock;
 	}
-	p->fns[0].fn_ptr.std_func = func;
+	p->fns[0].fn_ptr = (void (*)(void *))func;
 	p->fns[0].fn_arg = NULL;
 	p->fns[0].fn_dso = NULL;
 	mprotect(p, pgsize, PROT_READ);

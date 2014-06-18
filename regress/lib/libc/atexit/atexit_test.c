@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit_test.c,v 1.6 2007/09/03 14:42:44 millert Exp $ */
+/*	$OpenBSD: atexit_test.c,v 1.7 2014/06/18 19:01:10 kettenis Exp $ */
 
 /*
  * Copyright (c) 2002 Daniel Hartmeier
@@ -43,7 +43,7 @@
 void	handle_first(void);
 void	handle_middle(void);
 void	handle_last(void);
-void	handle_invalid(void);
+void	handle_invalid(void *);
 void	handle_cleanup(void);
 void	handle_signal(int);
 
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 	/* this is supposed to segfault */
 	if (!strcmp(argv[1], "-invalid-atexit")) {
 		signal(SIGSEGV, handle_signal);
-		__atexit->fns[0].fn_ptr.std_func = handle_invalid;
+		__atexit->fns[0].fn_ptr = handle_invalid;
 	} else if (!strcmp(argv[1], "-invalid-cleanup")) {
 		struct atexit *p = __atexit;
 
@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 			p = p->next;
 		if (p == NULL)
 			fprintf(stderr, "p == NULL, no page found\n");
-		p->fns[0].fn_ptr.std_func = handle_invalid;
+		p->fns[0].fn_ptr = handle_invalid;
 	}
 	__atexit_register_cleanup(handle_cleanup);
 	counter = 0;
@@ -121,7 +121,7 @@ handle_cleanup(void)
 }
 
 void
-handle_invalid(void)
+handle_invalid(void *arg)
 {
 	fprintf(stderr, "handle_invalid() THIS SHOULD HAVE SEGFAULTED INSTEAD!\n");
 }
