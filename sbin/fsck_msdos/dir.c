@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.22 2014/06/16 18:33:33 tobias Exp $	*/
+/*	$OpenBSD: dir.c,v 1.23 2014/06/18 17:29:07 tobias Exp $	*/
 /*	$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $	*/
 
 /*
@@ -374,7 +374,7 @@ checksize(struct bootblock *boot, struct fatEntry *fat, u_char *p,
 	/*
 	 * Check size on ordinary files
 	 */
-	int32_t physicalSize;
+	u_int32_t physicalSize;
 
 	if (dir->head == CLUST_FREE)
 		physicalSize = 0;
@@ -400,12 +400,16 @@ checksize(struct bootblock *boot, struct fatEntry *fat, u_char *p,
 		      fullpath(dir));
 		if (ask(1, "Drop superfluous clusters")) {
 			cl_t cl;
-			u_int32_t sz = 0;
+			u_int32_t len, sz;
 
-			for (cl = dir->head; (sz += boot->ClusterSize) < dir->size;)
+			len = sz = 0;
+			for (cl = dir->head; (sz += boot->ClusterSize) < dir->size;) {
 				cl = fat[cl].next;
+				len++;
+			}
 			clearchain(boot, fat, fat[cl].next);
 			fat[cl].next = CLUST_EOF;
+			fat[dir->head].length = len;
 			return (FSFATMOD);
 		} else
 			return (FSERROR);

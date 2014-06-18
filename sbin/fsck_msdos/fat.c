@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.c,v 1.23 2014/06/16 18:33:33 tobias Exp $	*/
+/*	$OpenBSD: fat.c,v 1.24 2014/06/18 17:29:07 tobias Exp $	*/
 /*	$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $	*/
 
 /*
@@ -302,11 +302,20 @@ clearchain(struct bootblock *boot, struct fatEntry *fat, cl_t head)
 int
 tryclear(struct bootblock *boot, struct fatEntry *fat, cl_t head, cl_t *trunc)
 {
+	u_int len;
+	cl_t p;
+
 	if (ask(0, "Clear chain starting at %u", head)) {
 		clearchain(boot, fat, head);
 		return FSFATMOD;
 	} else if (ask(0, "Truncate")) {
 		*trunc = CLUST_EOF;
+		len = 0;
+		for (p = head; p >= CLUST_FIRST && p < boot->NumClusters;
+		    p = fat[p].next) {
+			len++;
+		}
+		fat[head].length = len;
 		return FSFATMOD;
 	} else
 		return FSERROR;
