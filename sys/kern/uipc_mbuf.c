@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.185 2014/06/13 07:28:13 mpi Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.186 2014/06/18 11:09:58 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -451,7 +451,7 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 			return (NULL);
 		}
 		m = m0;
-	}			
+	}
 	m->m_ext.ext_buf = pool_get(&mclpools[pi],
 	    how == M_WAIT ? PR_WAITOK : PR_NOWAIT);
 	if (!m->m_ext.ext_buf) {
