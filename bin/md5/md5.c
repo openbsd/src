@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.75 2014/03/26 03:16:39 lteo Exp $	*/
+/*	$OpenBSD: md5.c,v 1.76 2014/06/19 15:30:49 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -493,6 +493,10 @@ digest_file(const char *file, struct hash_list *hl, int echo)
 		warn("%s: read error", file);
 		if (fp != stdin)
 			fclose(fp);
+		TAILQ_FOREACH(hf, hl, tailq) {
+			free(hf->ctx);
+			hf->ctx = NULL;
+		}
 		return(1);
 	}
 	if (fp != stdin)
