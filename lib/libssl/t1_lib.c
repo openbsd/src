@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.47 2014/06/18 04:49:40 miod Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.48 2014/06/19 21:29:51 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1879,7 +1879,7 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 			renew_ticket = 1;
 	} else {
 		/* Check key name matches */
-		if (CRYPTO_memcmp(etick, tctx->tlsext_tick_key_name, 16))
+		if (timingsafe_memcmp(etick, tctx->tlsext_tick_key_name, 16))
 			return 2;
 		HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
 		    tlsext_tick_md(), NULL);
@@ -1899,7 +1899,7 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	HMAC_Update(&hctx, etick, eticklen);
 	HMAC_Final(&hctx, tick_hmac, NULL);
 	HMAC_CTX_cleanup(&hctx);
-	if (CRYPTO_memcmp(tick_hmac, etick + eticklen, mlen)) {
+	if (timingsafe_memcmp(tick_hmac, etick + eticklen, mlen)) {
 		EVP_CIPHER_CTX_cleanup(&ctx);
 		return 2;
 	}

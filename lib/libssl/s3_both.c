@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.24 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: s3_both.c,v 1.25 2014/06/19 21:29:51 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -256,7 +256,7 @@ ssl3_get_finished(SSL *s, int a, int b)
 		goto f_err;
 	}
 
-	if (CRYPTO_memcmp(p, s->s3->tmp.peer_finish_md, i) != 0) {
+	if (timingsafe_memcmp(p, s->s3->tmp.peer_finish_md, i) != 0) {
 		al = SSL_AD_DECRYPT_ERROR;
 		SSLerr(SSL_F_SSL3_GET_FINISHED, SSL_R_DIGEST_CHECK_FAILED);
 		goto f_err;

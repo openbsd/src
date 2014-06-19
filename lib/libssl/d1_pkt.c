@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.29 2014/06/15 15:29:25 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.30 2014/06/19 21:29:51 tedu Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -414,7 +414,7 @@ dtls1_process_record(SSL *s)
 		}
 
 		i = s->method->ssl3_enc->mac(s, md, 0 /* not send */);
-		if (i < 0 || mac == NULL || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0)
+		if (i < 0 || mac == NULL || timingsafe_memcmp(md, mac, (size_t)mac_size) != 0)
 			enc_err = -1;
 		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + mac_size)
 			enc_err = -1;

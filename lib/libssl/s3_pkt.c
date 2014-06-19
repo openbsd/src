@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.47 2014/06/13 10:52:24 jsing Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.48 2014/06/19 21:29:51 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -447,7 +447,7 @@ again:
 
 		i = s->method->ssl3_enc->mac(s,md,0 /* not send */);
 		if (i < 0 || mac == NULL ||
-		    CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0)
+		    timingsafe_memcmp(md, mac, (size_t)mac_size) != 0)
 			enc_err = -1;
 		if (rr->length >
 		    SSL3_RT_MAX_COMPRESSED_LENGTH + extra + mac_size)

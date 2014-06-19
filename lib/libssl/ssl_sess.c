@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.32 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.33 2014/06/19 21:29:51 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -498,7 +498,7 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 	/* Now ret is non-NULL and we own one of its reference counts. */
 
 	if (ret->sid_ctx_length != s->sid_ctx_length
-	    || CRYPTO_memcmp(ret->sid_ctx, s->sid_ctx, ret->sid_ctx_length)) {
+	    || timingsafe_memcmp(ret->sid_ctx, s->sid_ctx, ret->sid_ctx_length)) {
 		/* We have the session requested by the client, but we don't
 		 * want to use it in this context. */
 		goto err; /* treat like cache miss */

@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_reneg.c,v 1.6 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: t1_reneg.c,v 1.7 2014/06/19 21:29:51 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -172,7 +172,7 @@ ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 		return 0;
 	}
 
-	if (CRYPTO_memcmp(d, s->s3->previous_client_finished,
+	if (timingsafe_memcmp(d, s->s3->previous_client_finished,
 	    s->s3->previous_client_finished_len)) {
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT,
 		    SSL_R_RENEGOTIATION_MISMATCH);
@@ -259,7 +259,7 @@ ssl_parse_serverhello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 		return 0;
 	}
 
-	if (CRYPTO_memcmp(d, s->s3->previous_client_finished,
+	if (timingsafe_memcmp(d, s->s3->previous_client_finished,
 	    s->s3->previous_client_finished_len)) {
 		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_RENEGOTIATE_EXT,
 		    SSL_R_RENEGOTIATION_MISMATCH);
@@ -268,7 +268,7 @@ ssl_parse_serverhello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 	}
 	d += s->s3->previous_client_finished_len;
 
-	if (CRYPTO_memcmp(d, s->s3->previous_server_finished,
+	if (timingsafe_memcmp(d, s->s3->previous_server_finished,
 	    s->s3->previous_server_finished_len)) {
 		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_RENEGOTIATE_EXT,
 		    SSL_R_RENEGOTIATION_MISMATCH);

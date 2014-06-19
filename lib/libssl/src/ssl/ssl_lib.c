@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.68 2014/06/17 01:41:01 tedu Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.69 2014/06/19 21:29:51 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1678,7 +1678,7 @@ ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
 		return (1);
 	if (a->session_id_length != b->session_id_length)
 		return (1);
-	if (CRYPTO_memcmp(a->session_id, b->session_id, a->session_id_length) != 0)
+	if (timingsafe_memcmp(a->session_id, b->session_id, a->session_id_length) != 0)
 		return (1);
 	return (0);
 }
