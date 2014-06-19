@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.6 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.7 2014/06/19 11:29:21 kettenis Exp $	*/
 
 /* Public Domain */
 
@@ -32,6 +32,22 @@ atomic_clearbits_int(volatile unsigned int *uip, unsigned int v)
 	    "	bne-	1b		\n"
 	    "	sync" : "=&r" (tmp) : "r" (v), "r" (uip) : "cc", "memory");
 }
+
+#define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
+
+#ifdef MULTIPROCESSOR
+#define membar_enter()		__membar("isync")
+#define membar_exit()		__membar("sync")
+#define membar_producer()	__membar("sync")
+#define membar_consumer()	__membar("isync")
+#define membar_sync()		__membar("sync")
+#else
+#define membar_enter()		__membar("")
+#define membar_exit()		__membar("")
+#define membar_producer()	__membar("")
+#define membar_consumer()	__membar("")
+#define membar_sync()		__membar("")
+#endif
 
 #endif /* defined(_KERNEL) */
 #endif /* _POWERPC_ATOMIC_H_ */
