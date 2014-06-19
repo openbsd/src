@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.108 2014/06/18 19:17:37 sthen Exp $ */
+/*	$Id: mandocdb.c,v 1.109 2014/06/19 00:44:59 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -425,10 +425,10 @@ mandocdb(int argc, char *argv[])
 	if (OP_UPDATE == op || OP_DELETE == op || OP_TEST == op) {
 
 		/*
-		 * All of these deal with a specific directory.
+		 * Most of these deal with a specific directory.
 		 * Jump into that directory first.
 		 */
-		if (0 == set_basedir(path_arg))
+		if (OP_TEST != op && 0 == set_basedir(path_arg))
 			goto out;
 
 		if (dbopen(1)) {
@@ -517,7 +517,6 @@ mandocdb(int argc, char *argv[])
 		}
 	}
 out:
-	set_basedir(NULL);
 	manpath_free(&dirs);
 	mchars_free(mc);
 	mparse_free(mp);
@@ -792,10 +791,10 @@ filescan(const char *file)
 		return;
 	}
 
-	if (strstr(buf, basedir) == buf && strcmp(basedir, "/") != 0)
-		start = buf + strlen(basedir) + 1;
-	else if (OP_TEST == op)
+	if (OP_TEST == op)
 		start = buf;
+	else if (strstr(buf, basedir) == buf)
+		start = buf + strlen(basedir);
 	else {
 		exitcode = (int)MANDOCLEVEL_BADARG;
 		say("", "%s: outside base directory", buf);
@@ -821,9 +820,9 @@ filescan(const char *file)
 			say(file, "Filename too long");
 			return;
 		}
-		start = strstr(buf, basedir) == buf && 
-		    strcmp(basedir, "/") != 0 ?
-		    buf + strlen(basedir) + 1 : buf;
+		start = buf;
+		if (OP_TEST != op && strstr(buf, basedir) == buf)
+			start += strlen(basedir);
 	}
 
 	mlink = mandoc_calloc(1, sizeof(struct mlink));
@@ -2366,6 +2365,7 @@ set_basedir(const char *targetdir)
 {
 	static char	 startdir[PATH_MAX];
 	static int	 fd;
+	char		*cp;
 
 	/*
 	 * Remember where we started by keeping a fd open to the origin
@@ -2376,8 +2376,7 @@ set_basedir(const char *targetdir)
 	if ('\0' == *startdir) {
 		if (NULL == getcwd(startdir, PATH_MAX)) {
 			exitcode = (int)MANDOCLEVEL_SYSERR;
-			if (NULL != targetdir)
-				say("", "&getcwd");
+			say("", "&getcwd");
 			return(0);
 		}
 		if (-1 == (fd = open(startdir, O_RDONLY, 0))) {
@@ -2385,8 +2384,6 @@ set_basedir(const char *targetdir)
 			say("", "&open %s", startdir);
 			return(0);
 		}
-		if (NULL == targetdir)
-			targetdir = startdir;
 	} else {
 		if (-1 == fd)
 			return(0);
@@ -2396,10 +2393,6 @@ set_basedir(const char *targetdir)
 			exitcode = (int)MANDOCLEVEL_SYSERR;
 			say("", "&chdir %s", startdir);
 			return(0);
-		}
-		if (NULL == targetdir) {
-			close(fd);
-			return(1);
 		}
 	}
 	if (NULL == realpath(targetdir, basedir)) {
@@ -2411,6 +2404,16 @@ set_basedir(const char *targetdir)
 		exitcode = (int)MANDOCLEVEL_BADARG;
 		say("", "&chdir");
 		return(0);
+	}
+	cp = strchr(basedir, '\0');
+	if ('/' != cp[-1]) {
+		if (cp - basedir >= PATH_MAX - 1) {
+			exitcode = (int)MANDOCLEVEL_SYSERR;
+			say("", "Filename too long");
+			return(0);
+		}
+		*cp++ = '/';
+		*cp = '\0';
 	}
 	return(1);
 }
