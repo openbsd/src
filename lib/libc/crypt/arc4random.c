@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.34 2014/06/17 00:37:07 matthew Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.35 2014/06/19 00:13:22 matthew Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -49,12 +49,17 @@
 #define BLOCKSZ	64
 #define RSBUFSZ	(16*BLOCKSZ)
 
+/* Marked MAP_INHERIT_ZERO, so zero'd out in fork children. */
 static struct {
 	size_t		rs_have;	/* valid bytes at end of rs_buf */
 	size_t		rs_count;	/* bytes till reseed */
-	chacha_ctx	rs_chacha;	/* chacha context for random keystream */
 } *rs;
-static u_char *rs_buf;		/* keystream blocks */
+
+/* Preserved in fork children. */
+static struct {
+	chacha_ctx	rs_chacha;	/* chacha context for random keystream */
+	u_char		rs_buf[RSBUFSZ];	/* keystream blocks */
+} *rsx;
 
 static inline void _rs_rekey(u_char *dat, size_t datlen);
 
@@ -66,21 +71,19 @@ _rs_init(u_char *buf, size_t n)
 
 	if (rs == NULL) {
 		if ((rs = mmap(NULL, sizeof(*rs), PROT_READ|PROT_WRITE,
-		    MAP_ANON, -1, 0)) == MAP_FAILED)
+		    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED)
 			abort();
 		if (minherit(rs, sizeof(*rs), MAP_INHERIT_ZERO) == -1)
 			abort();
 	}
-	if (rs_buf == NULL) {
-		if ((rs_buf = mmap(NULL, RSBUFSZ, PROT_READ|PROT_WRITE,
-		    MAP_ANON, -1, 0)) == MAP_FAILED)
-			abort();
-		if (minherit(rs_buf, RSBUFSZ, MAP_INHERIT_ZERO) == -1)
+	if (rsx == NULL) {
+		if ((rsx = mmap(NULL, sizeof(*rsx), PROT_READ|PROT_WRITE,
+		    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED)
 			abort();
 	}
 
-	chacha_keysetup(&rs->rs_chacha, buf, KEYSZ * 8, 0);
-	chacha_ivsetup(&rs->rs_chacha, buf + KEYSZ);
+	chacha_keysetup(&rsx->rs_chacha, buf, KEYSZ * 8, 0);
+	chacha_ivsetup(&rsx->rs_chacha, buf + KEYSZ);
 }
 
 static void
@@ -99,7 +102,7 @@ _rs_stir(void)
 
 	/* invalidate rs_buf */
 	rs->rs_have = 0;
-	memset(rs_buf, 0, RSBUFSZ);
+	memset(rsx->rs_buf, 0, sizeof(rsx->rs_buf));
 
 	rs->rs_count = 1600000;
 }
@@ -119,36 +122,40 @@ static inline void
 _rs_rekey(u_char *dat, size_t datlen)
 {
 #ifndef KEYSTREAM_ONLY
-	memset(rs_buf, 0,RSBUFSZ);
+	memset(rsx->rs_buf, 0, sizeof(rsx->rs_buf));
 #endif
 	/* fill rs_buf with the keystream */
-	chacha_encrypt_bytes(&rs->rs_chacha, rs_buf, rs_buf, RSBUFSZ);
+	chacha_encrypt_bytes(&rsx->rs_chacha, rsx->rs_buf,
+	    rsx->rs_buf, sizeof(rsx->rs_buf));
 	/* mix in optional user provided data */
 	if (dat) {
 		size_t i, m;
 
 		m = MIN(datlen, KEYSZ + IVSZ);
 		for (i = 0; i < m; i++)
-			rs_buf[i] ^= dat[i];
+			rsx->rs_buf[i] ^= dat[i];
 	}
 	/* immediately reinit for backtracking resistance */
-	_rs_init(rs_buf, KEYSZ + IVSZ);
-	memset(rs_buf, 0, KEYSZ + IVSZ);
-	rs->rs_have = RSBUFSZ - KEYSZ - IVSZ;
+	_rs_init(rsx->rs_buf, KEYSZ + IVSZ);
+	memset(rsx->rs_buf, 0, KEYSZ + IVSZ);
+	rs->rs_have = sizeof(rsx->rs_buf) - KEYSZ - IVSZ;
 }
 
 static inline void
 _rs_random_buf(void *_buf, size_t n)
 {
 	u_char *buf = (u_char *)_buf;
+	u_char *keystream;
 	size_t m;
 
 	_rs_stir_if_needed(n);
 	while (n > 0) {
 		if (rs->rs_have > 0) {
 			m = MIN(n, rs->rs_have);
-			memcpy(buf, rs_buf + RSBUFSZ - rs->rs_have, m);
-			memset(rs_buf + RSBUFSZ - rs->rs_have, 0, m);
+			keystream = rsx->rs_buf + sizeof(rsx->rs_buf)
+			    - rs->rs_have;
+			memcpy(buf, keystream, m);
+			memset(keystream, 0, m);
 			buf += m;
 			n -= m;
 			rs->rs_have -= m;
@@ -161,11 +168,13 @@ _rs_random_buf(void *_buf, size_t n)
 static inline void
 _rs_random_u32(u_int32_t *val)
 {
+	u_char *keystream;
 	_rs_stir_if_needed(sizeof(*val));
 	if (rs->rs_have < sizeof(*val))
 		_rs_rekey(NULL, 0);
-	memcpy(val, rs_buf + RSBUFSZ - rs->rs_have, sizeof(*val));
-	memset(rs_buf + RSBUFSZ - rs->rs_have, 0, sizeof(*val));
+	keystream = rsx->rs_buf + sizeof(rsx->rs_buf) - rs->rs_have;
+	memcpy(val, keystream, sizeof(*val));
+	memset(keystream, 0, sizeof(*val));
 	rs->rs_have -= sizeof(*val);
 }
 
