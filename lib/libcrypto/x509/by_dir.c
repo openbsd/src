@@ -1,4 +1,4 @@
-/* $OpenBSD: by_dir.c,v 1.26 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: by_dir.c,v 1.27 2014/06/19 21:23:48 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -241,16 +241,20 @@ add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 				}
 			}
 			ent = malloc(sizeof(BY_DIR_ENTRY));
-			if (!ent)
+			if (!ent) {
+				X509err(X509_F_ADD_CERT_DIR, ERR_R_MALLOC_FAILURE);
 				return 0;
+			}
 			ent->dir_type = type;
 			ent->hashes = sk_BY_DIR_HASH_new(by_dir_hash_cmp);
 			ent->dir = strdup(ss);
 			if (!ent->dir || !ent->hashes) {
+				X509err(X509_F_ADD_CERT_DIR, ERR_R_MALLOC_FAILURE);
 				by_dir_entry_free(ent);
 				return 0;
 			}
 			if (!sk_BY_DIR_ENTRY_push(ctx->dirs, ent)) {
+				X509err(X509_F_ADD_CERT_DIR, ERR_R_MALLOC_FAILURE);
 				by_dir_entry_free(ent);
 				return 0;
 			}
@@ -384,9 +388,16 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 			}
 			if (!hent) {
 				hent = malloc(sizeof(BY_DIR_HASH));
+				if (!hent) {
+					X509err(X509_F_GET_CERT_BY_SUBJECT, ERR_R_MALLOC_FAILURE);
+					CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+					ok = 0;
+					goto finish;
+				}
 				hent->hash = h;
 				hent->suffix = k;
 				if (!sk_BY_DIR_HASH_push(ent->hashes, hent)) {
+					X509err(X509_F_GET_CERT_BY_SUBJECT, ERR_R_MALLOC_FAILURE);
 					CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
 					free(hent);
 					ok = 0;
