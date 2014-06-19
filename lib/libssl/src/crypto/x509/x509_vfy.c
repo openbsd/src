@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.27 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.28 2014/06/19 21:24:35 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -313,7 +313,11 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 			ctx->current_cert = x;
 		} else {
 
-			sk_X509_push(ctx->chain, chain_ss);
+			if (!sk_X509_push(ctx->chain, chain_ss)) {
+				X509_free(chain_ss);
+				X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
+				return 0;
+			}
 			num++;
 			ctx->last_untrusted = num;
 			ctx->current_cert = chain_ss;
