@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.65 2014/06/20 17:23:09 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.66 2014/06/20 22:58:41 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -62,6 +62,8 @@ enum	mandocerr {
 
 	/* related to document structure */
 	MANDOCERR_SO, /* .so is fragile, better use ln(1) */
+	MANDOCERR_DOC_EMPTY, /* no document body */
+	MANDOCERR_SEC_BEFORE, /* content before the first section header */
 	MANDOCERR_NAMESECFIRST, /* NAME section must come first */
 	MANDOCERR_BADNAMESEC, /* bad NAME section contents */
 	MANDOCERR_SECOOO, /* sections out of conventional order */
@@ -161,7 +163,6 @@ enum	mandocerr {
 	MANDOCERR_SYNTCHILD, /* child violates parent syntax */
 	MANDOCERR_SYNTARGCOUNT, /* argument count wrong, violates syntax */
 	MANDOCERR_SOPATH, /* NOT IMPLEMENTED: .so with absolute path or ".." */
-	MANDOCERR_NODOCBODY, /* no document body */
 	MANDOCERR_NODOCPROLOG, /* no document prologue */
 	MANDOCERR_MEM, /* static buffer exhausted */
 

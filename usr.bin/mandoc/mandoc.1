@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.56 2013/07/13 19:27:46 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.57 2014/06/20 22:58:41 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2013 $
+.Dd $Mdocdate: June 20 2014 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -497,9 +497,7 @@ parser:
 .Sh DIAGNOSTICS
 Standard error messages reporting parsing errors are prefixed by
 .Pp
-.Sm off
-.D1 Ar file : line : column : \ level :
-.Sm on
+.D1 Nm Ns : Ar file : Ns Ar line : Ns Ar column : level :
 .Pp
 where the fields have the following meanings:
 .Bl -tag -width "column"
@@ -516,6 +514,12 @@ points to the first character of the word.
 .It Ar level
 The message level, printed in capital letters.
 .El
+.Pp
+The
+.Ar line
+and
+.Ar column
+fields are omitted when meaningless.
 .Pp
 Message levels have the following meanings:
 .Bl -tag -width "warning"
@@ -556,7 +560,7 @@ The
 utility may also print messages related to invalid command line arguments
 or operating system errors, for example when memory is exhausted or
 input files cannot be read.
-Such messages do not carry the prefix described above.
+Such messages may not carry the prefix described above.
 .Sh COMPATIBILITY
 This section summarises
 .Nm

@@ -1,0 +1,9 @@
+.Dd June 20, 2014
+.Dt DT-BEFSH 1
+.Os OpenBSD
+.Ox
+.Sh NAME
+.Nm Dt-befSh
+.Nd content before the first section header
+.Sh DESCRIPTION
+some text

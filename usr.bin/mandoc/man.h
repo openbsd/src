@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.43 2014/03/30 19:47:32 schwarze Exp $ */
+/*	$Id: man.h,v 1.44 2014/06/20 22:58:41 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -79,6 +79,7 @@ struct	man_meta {
 	char		*vol; /* `TH' volume */
 	char		*title; /* `TH' title (e.g., FOO) */
 	char		*source; /* `TH' source (e.g., GNU) */
+	int		 hasbody; /* document is not empty */
 };
 
 struct	man_node {
