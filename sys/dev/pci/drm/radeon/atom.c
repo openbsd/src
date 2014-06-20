@@ -1,4 +1,4 @@
-/*	$OpenBSD: atom.c,v 1.3 2014/02/09 11:03:31 jsg Exp $	*/
+/*	$OpenBSD: atom.c,v 1.4 2014/06/20 06:50:04 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  *
@@ -89,6 +89,10 @@ static void debug_print_spaces(int n)
 	while (n--)
 		printf("   ");
 }
+
+#ifdef DEBUG
+#undef DEBUG
+#endif
 
 #define DEBUG(...) do if (atom_debug) { printf(__FILE__ __VA_ARGS__); } while (0)
 #define SDEBUG(...) do if (atom_debug) { printf(__FILE__); debug_print_spaces(debug_depth); printf(__VA_ARGS__); } while (0)
