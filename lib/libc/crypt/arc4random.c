@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.35 2014/06/19 00:13:22 matthew Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.36 2014/06/20 00:02:12 matthew Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -24,6 +24,7 @@
 
 #include <fcntl.h>
 #include <limits.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -91,8 +92,8 @@ _rs_stir(void)
 {
 	u_char rnd[KEYSZ + IVSZ];
 
-	/* XXX */
-	(void) getentropy(rnd, sizeof rnd);
+	if (getentropy(rnd, sizeof rnd) == -1)
+		raise(SIGKILL);
 
 	if (!rs)
 		_rs_init(rnd, sizeof(rnd));
