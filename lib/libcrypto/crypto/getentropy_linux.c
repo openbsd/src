@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.1 2014/06/20 19:08:11 beck Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.2 2014/06/20 19:53:36 otto Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -61,8 +61,86 @@
 
 int	getentropy(void *buf, size_t len);
 
-extern int main(int, char *argv[]);
 static int gotdata(char *buf, size_t len);
+static int getentropy_urandom(void *buf, size_t len);
+static int getentropy_sysctl(void *buf, size_t len);
+static int getentropy_fallback(void *buf, size_t len);
+
+int
+getentropy(void *buf, size_t len)
+{
+	int ret = -1;
+
+	if (len > 256) {
+		errno = EIO;
+		return -1;
+	}
+
+	/*
+	 * Try to get entropy with /dev/urandom
+	 *
+	 * This can fail if the process is inside a chroot or if file
+	 * descriptors are exhausted.
+	 */
+	ret = getentropy_urandom(buf, len);
+	if (ret != -1)
+		return (ret);
+
+#ifdef RANDOM_UUID
+	/*
+	 * Try to use sysctl CTL_KERN, KERN_RANDOM, RANDOM_UUID.  sysctl is
+	 * a failsafe API, so it guarantees a result.  This should work
+	 * inside a chroot, or when file descriptors are exhuasted.
+	 *
+	 * However this can fail if the Linux kernel removes support for sysctl.
+	 * Starting in 2007, there have been efforts to deprecate the sysctl
+	 * API/ABI, and push callers towards use of the chroot-unavailable
+	 * fd-using /proc mechanism -- essentially the same problems as
+	 * /dev/urandom.
+	 *
+	 * Numerous setbacks have been encountered in their deprecation
+	 * schedule, so as of June 2014 the kernel ABI still exists. The
+	 * sysctl() stub in libc is missing on some systems.  There are
+	 * also reports that some kernels spew messages to the console.
+	 */
+	ret = getentropy_sysctl(buf, len);
+	if (ret != -1)
+		return (ret);
+#endif /* RANDOM_UUID */
+
+	/*
+	 * Entropy collection via /dev/urandom and sysctl have failed.
+	 *
+	 * No other API exists for collecting entropy.  See the large
+	 * comment block above.
+	 *
+	 * We have very few options:
+	 *     - Even syslog_r is unsafe to call at this low level, so
+	 *	 there is no way to alert the user or program.
+	 *     - Cannot call abort() because some systems have unsafe corefiles.
+	 *     - Could raise(SIGKILL) resulting in silent program termination.
+	 *     - Return EIO, to hint that arc4random's stir function
+	 *       should raise(SIGKILL)
+	 *     - Do the best under the circumstances....
+	 *
+	 * This code path exists to bring light to the issue that Linux
+	 * does not provide a failsafe API for entropy collection.
+	 *
+	 * We hope this demonstrates that Linux should either retain their
+	 * sysctl ABI, or consider providing a new failsafe API which
+	 * works in a chroot or when file descriptors are exhausted.
+	 */
+#undef FAIL_HARD_WHEN_LINUX_DEPRECATES_SYSCTL
+#ifdef FAIL_HARD_WHEN_LINUX_DEPRECATES_SYSCTL
+	raise(SIGKILL);
+#endif
+	ret = getentropy_fallback(buf, len);
+	if (ret != -1)
+		return (ret);
+
+	errno = EIO;
+	return (ret);
+}
 
 /*
  * XXX Should be replaced with a proper entropy measure.
@@ -360,80 +438,4 @@ getentropy_fallback(void *buf, size_t len)
 	}
 	errno = EIO;
 	return -1;
-}
-
-int
-getentropy(void *buf, size_t len)
-{
-	int ret = -1;
-
-	if (len > 256) {
-		errno = EIO;
-		return -1;
-	}
-
-	/*
-	 * Try to get entropy with /dev/urandom
-	 *
-	 * This can fail if the process is inside a chroot or if file
-	 * descriptors are exhausted.
-	 */
-	ret = getentropy_urandom(buf, len);
-	if (ret != -1)
-		return (ret);
-
-#ifdef RANDOM_UUID
-	/*
-	 * Try to use sysctl CTL_KERN, KERN_RANDOM, RANDOM_UUID.  sysctl is
-	 * a failsafe API, so it guarantees a result.  This should work
-	 * inside a chroot, or when file descriptors are exhuasted.
-	 *
-	 * However this can fail if the Linux kernel removes support for sysctl.
-	 * Starting in 2007, there have been efforts to deprecate the sysctl
-	 * API/ABI, and push callers towards use of the chroot-unavailable
-	 * fd-using /proc mechanism -- essentially the same problems as
-	 * /dev/urandom.
-	 *
-	 * Numerous setbacks have been encountered in their deprecation
-	 * schedule, so as of June 2014 the kernel ABI still exists. The
-	 * sysctl() stub in libc is missing on some systems.  There are
-	 * also reports that some kernels spew messages to the console.
-	 */
-	ret = getentropy_sysctl(buf, len);
-	if (ret != -1)
-		return (ret);
-#endif /* RANDOM_UUID */
-
-	/*
-	 * Entropy collection via /dev/urandom and sysctl have failed.
-	 *
-	 * No other API exists for collecting entropy.  See the large
-	 * comment block above.
-	 *
-	 * We have very few options:
-	 *     - Even syslog_r is unsafe to call at this low level, so
-	 *	 there is no way to alert the user or program.
-	 *     - Cannot call abort() because some systems have unsafe corefiles.
-	 *     - Could raise(SIGKILL) resulting in silent program termination.
-	 *     - Return EIO, to hint that arc4random's stir function
-	 *       should raise(SIGKILL)
-	 *     - Do the best under the circumstances....
-	 *
-	 * This code path exists to bring light to the issue that Linux
-	 * does not provide a failsafe API for entropy collection.
-	 *
-	 * We hope this demonstrates that Linux should either retain their
-	 * sysctl ABI, or consider providing a new failsafe API which
-	 * works in a chroot or when file descriptors are exhausted.
-	 */
-#undef FAIL_HARD_WHEN_LINUX_DEPRECATES_SYSCTL
-#ifdef FAIL_HARD_WHEN_LINUX_DEPRECATES_SYSCTL
-	raise(SIGKILL);
-#endif
-	ret = getentropy_fallback(buf, len);
-	if (ret != -1)
-		return (ret);
-
-	errno = EIO;
-	return (ret);
 }
