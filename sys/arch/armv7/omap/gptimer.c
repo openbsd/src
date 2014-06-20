@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.3 2014/05/08 21:17:01 miod Exp $ */
+/* $OpenBSD: gptimer.c,v 1.4 2014/06/20 14:08:11 rapha Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -233,7 +233,7 @@ gptimer_intr(void *frame)
 		stat_count.ec_count++;
 		statclock(frame);
 	}
-        if ((now - nexttickevent) < (now - nextstatevent))
+	if ((nexttickevent - now) < (nextstatevent - now))
                 nextevent = nexttickevent;
         else
                 nextevent = nextstatevent;
