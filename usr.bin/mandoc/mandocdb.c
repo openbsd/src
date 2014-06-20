@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.109 2014/06/19 00:44:59 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.110 2014/06/20 01:20:55 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -497,8 +497,6 @@ mandocdb(int argc, char *argv[])
 			if (0 == set_basedir(dirs.paths[j]))
 				goto out;
 			if (0 == treescan())
-				goto out;
-			if (0 == set_basedir(dirs.paths[j]))
 				goto out;
 			if (0 == dbopen(0))
 				goto out;
@@ -2364,39 +2362,56 @@ static int
 set_basedir(const char *targetdir)
 {
 	static char	 startdir[PATH_MAX];
-	static int	 fd;
+	static int	 getcwd_status;  /* 1 = ok, 2 = failure */
+	static int	 chdir_status;  /* 1 = changed directory */
 	char		*cp;
 
 	/*
-	 * Remember where we started by keeping a fd open to the origin
-	 * path component: throughout this utility, we chdir() a lot to
-	 * handle relative paths, and by doing this, we can return to
-	 * the starting point.
+	 * Remember the original working directory, if possible.
+	 * This will be needed if the second or a later directory
+	 * on the command line is given as a relative path.
+	 * Do not error out if the current directory is not
+	 * searchable: Maybe it won't be needed after all.
 	 */
-	if ('\0' == *startdir) {
-		if (NULL == getcwd(startdir, PATH_MAX)) {
+	if (0 == getcwd_status) {
+		if (NULL == getcwd(startdir, sizeof(startdir))) {
+			getcwd_status = 2;
+			(void)strlcpy(startdir, strerror(errno),
+			    sizeof(startdir));
+		} else
+			getcwd_status = 1;
+	}
+
+	/*
+	 * We are leaving the old base directory.
+	 * Do not use it any longer, not even for messages.
+	 */
+	*basedir = '\0';
+
+	/*
+	 * If and only if the directory was changed earlier and
+	 * the next directory to process is given as a relative path,
+	 * first go back, or bail out if that is impossible.
+	 */
+	if (chdir_status && '/' != *targetdir) {
+		if (2 == getcwd_status) {
 			exitcode = (int)MANDOCLEVEL_SYSERR;
-			say("", "&getcwd");
+			say("", "getcwd: %s", startdir);
 			return(0);
 		}
-		if (-1 == (fd = open(startdir, O_RDONLY, 0))) {
-			exitcode = (int)MANDOCLEVEL_SYSERR;
-			say("", "&open %s", startdir);
-			return(0);
-		}
-	} else {
-		if (-1 == fd)
-			return(0);
-		if (-1 == fchdir(fd)) {
-			close(fd);
-			basedir[0] = '\0';
+		if (-1 == chdir(startdir)) {
 			exitcode = (int)MANDOCLEVEL_SYSERR;
 			say("", "&chdir %s", startdir);
 			return(0);
 		}
 	}
+
+	/*
+	 * Always resolve basedir to the canonicalized absolute
+	 * pathname and append a trailing slash, such that
+	 * we can reliably check whether files are inside.
+	 */
 	if (NULL == realpath(targetdir, basedir)) {
-		basedir[0] = '\0';
 		exitcode = (int)MANDOCLEVEL_BADARG;
 		say("", "&%s: realpath", targetdir);
 		return(0);
@@ -2405,6 +2420,7 @@ set_basedir(const char *targetdir)
 		say("", "&chdir");
 		return(0);
 	}
+	chdir_status = 1;
 	cp = strchr(basedir, '\0');
 	if ('/' != cp[-1]) {
 		if (cp - basedir >= PATH_MAX - 1) {
@@ -2427,7 +2443,7 @@ say(const char *file, const char *format, ...)
 	if ('\0' != *basedir)
 		fprintf(stderr, "%s", basedir);
 	if ('\0' != *basedir && '\0' != *file)
-		fputs("//", stderr);
+		fputc('/', stderr);
 	if ('\0' != *file)
 		fprintf(stderr, "%s", file);
 
