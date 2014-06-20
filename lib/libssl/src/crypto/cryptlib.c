@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.26 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.27 2014/06/20 21:00:46 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -653,20 +653,12 @@ OPENSSL_cpuid_setup(void)
 	static int trigger = 0;
 	IA32CAP OPENSSL_ia32_cpuid(void);
 	IA32CAP vec;
-	char *env;
 
 	if (trigger)
 		return;
-
 	trigger = 1;
-	if ((env = getenv("OPENSSL_ia32cap"))) {
-		int off = (env[0] == '~') ? 1 : 0;
-		if (!sscanf(env+off, "%lli",(long long *)&vec))
-			vec = strtoul(env + off, NULL, 0);
-		if (off)
-			vec = OPENSSL_ia32_cpuid() & ~vec;
-	} else
-		vec = OPENSSL_ia32_cpuid();
+
+	vec = OPENSSL_ia32_cpuid();
 
 	/*
 	 * |(1<<10) sets a reserved bit to signal that variable
