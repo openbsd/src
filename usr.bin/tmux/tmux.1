@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.396 2014/05/27 12:49:36 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.397 2014/06/20 10:46:59 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 27 2014 $
+.Dd $Mdocdate: June 20 2014 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1148,6 +1148,12 @@ and
 .Fl E
 specify the starting and ending line numbers, zero is the first line of the
 visible pane and negative numbers are lines in the history.
+.Ql -
+to
+.Fl S
+is the start of the history and to
+.Fl E
+the end of the visible pane.
 The default is to capture only the visible contents of the pane.
 .It Xo
 .Ic choose-client
