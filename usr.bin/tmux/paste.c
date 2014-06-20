@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.20 2014/05/13 22:54:18 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.21 2014/06/20 11:00:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -69,7 +69,7 @@ paste_walk(struct paste_buffer *pb)
 	return (RB_NEXT(paste_time_tree, &paste_by_time, pb));
 }
 
-/* Get the most recent automatic buffer */
+/* Get the most recent automatic buffer. */
 struct paste_buffer *
 paste_get_top(void)
 {
@@ -81,7 +81,7 @@ paste_get_top(void)
 	return (pb);
 }
 
-/* Free the most recent buffer */
+/* Free the most recent buffer. */
 int
 paste_free_top(void)
 {
