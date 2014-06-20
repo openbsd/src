@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.3 2014/06/20 20:18:19 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.4 2014/06/20 20:27:22 beck Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -88,15 +88,16 @@ getentropy(void *buf, size_t len)
 
 #ifdef RANDOM_UUID
 	/*
-	 * Try to use sysctl CTL_KERN, KERN_RANDOM, RANDOM_UUID.  sysctl is
-	 * a failsafe API, so it guarantees a result.  This should work
-	 * inside a chroot, or when file descriptors are exhuasted.
+	 * Try to use sysctl CTL_KERN, KERN_RANDOM, RANDOM_UUID.
+	 * sysctl is a failsafe API, so it guarantees a result.  This
+	 * should work inside a chroot, or when file descriptors are
+	 * exhuasted.
 	 *
-	 * However this can fail if the Linux kernel removes support for sysctl.
-	 * Starting in 2007, there have been efforts to deprecate the sysctl
-	 * API/ABI, and push callers towards use of the chroot-unavailable
-	 * fd-using /proc mechanism -- essentially the same problems as
-	 * /dev/urandom.
+	 * However this can fail if the Linux kernel removes support
+	 * for sysctl.  Starting in 2007, there have been efforts to
+	 * deprecate the sysctl API/ABI, and push callers towards use
+	 * of the chroot-unavailable fd-using /proc mechanism --
+	 * essentially the same problems as /dev/urandom.
 	 *
 	 * Numerous setbacks have been encountered in their deprecation
 	 * schedule, so as of June 2014 the kernel ABI still exists. The
@@ -117,7 +118,8 @@ getentropy(void *buf, size_t len)
 	 * We have very few options:
 	 *     - Even syslog_r is unsafe to call at this low level, so
 	 *	 there is no way to alert the user or program.
-	 *     - Cannot call abort() because some systems have unsafe corefiles.
+	 *     - Cannot call abort() because some systems have unsafe
+	 *	 corefiles.
 	 *     - Could raise(SIGKILL) resulting in silent program termination.
 	 *     - Return EIO, to hint that arc4random's stir function
 	 *       should raise(SIGKILL)
@@ -292,35 +294,36 @@ getentropy_fallback(void *buf, size_t len)
 		SHA512_Init(&ctx);
 		for (repeat = 0; repeat < REPEAT; repeat++) {
 
-		HASHX((e = gettimeofday(&tv, NULL)) == -1, tv);
-		if (e != -1) {
-			counter += (int)tv.tv_sec;
-			counter += (int)tv.tv_usec;
-		}
+			HASHX((e = gettimeofday(&tv, NULL)) == -1, tv);
+			if (e != -1) {
+				counter += (int)tv.tv_sec;
+				counter += (int)tv.tv_usec;
+			}
 
-		for (ii = 0; ii < sizeof(cl)/sizeof(cl[0]); ii++)
-			HASHX(clock_gettime(cl[ii], &ts) == -1, ts);
+			for (ii = 0; ii < sizeof(cl)/sizeof(cl[0]); ii++)
+				HASHX(clock_gettime(cl[ii], &ts) == -1, ts);
 
-		HASHX((pid = getpid()) == -1, pid);
-		HASHX((pid = getsid(pid)) == -1, pid);
-		HASHX((pid = getppid()) == -1, pid);
-		HASHX((pid = getpgid(0)) == -1, pid);
-		HASHX((m = getpriority(0, 0)) == -1, m);
+			HASHX((pid = getpid()) == -1, pid);
+			HASHX((pid = getsid(pid)) == -1, pid);
+			HASHX((pid = getppid()) == -1, pid);
+			HASHX((pid = getpgid(0)) == -1, pid);
+			HASHX((m = getpriority(0, 0)) == -1, m);
 
-		ts.tv_sec = 0;
-		ts.tv_nsec = 1;
-		(void) nanosleep(&ts, NULL);
+			ts.tv_sec = 0;
+			ts.tv_nsec = 1;
+			(void) nanosleep(&ts, NULL);
 
-		HASHX(sigpending(&sigset) == -1, sigset);
-		HASHX(sigprocmask(SIG_BLOCK, NULL, &sigset) == -1, sigset);
+			HASHX(sigpending(&sigset) == -1, sigset);
+			HASHX(sigprocmask(SIG_BLOCK, NULL, &sigset) == -1,
+			    sigset);
 
-		HASHD(main);		/* an address in the main program */
-		HASHD(getentropy);		/* an address in this library */
-		HASHD(printf);		/* an address in libc */
-		p = (void *)&p;
-		HASHD(p);			/* an address on stack */
-		p = (void *)&errno;
-		HASHD(p);			/* the address of errno */
+			HASHD(main);	   /* an address in the main program */
+			HASHD(getentropy); /* man address in this library */
+			HASHD(printf);	   /* an address in libc */
+			p = (void *)&p;
+			HASHD(p); 	  /* an address on stack */
+			p = (void *)&errno;
+			HASHD(p); 	 /* the address of errno */
 
 		if (i == 0) {
 			struct sockaddr_storage ss;
@@ -337,13 +340,13 @@ getentropy_fallback(void *buf, size_t len)
 			struct mm {
 				size_t	npg;
 				void	*p;
-			} mm[] = {
-			    { 17, MAP_FAILED }, { 3, MAP_FAILED },
-			    { 11, MAP_FAILED }, { 2, MAP_FAILED },
-			    { 5, MAP_FAILED }, { 3, MAP_FAILED },
-			    { 7, MAP_FAILED }, { 1, MAP_FAILED },
-			    { 57, MAP_FAILED }, { 3, MAP_FAILED },
-			    { 131, MAP_FAILED }, { 1, MAP_FAILED },
+			} mm[] =	 {
+				{ 17, MAP_FAILED }, { 3, MAP_FAILED },
+				{ 11, MAP_FAILED }, { 2, MAP_FAILED },
+				{ 5, MAP_FAILED }, { 3, MAP_FAILED },
+				{ 7, MAP_FAILED }, { 1, MAP_FAILED },
+				{ 57, MAP_FAILED }, { 3, MAP_FAILED },
+				{ 131, MAP_FAILED }, { 1, MAP_FAILED },
 			};
 
 			for (m = 0; m < sizeof mm/sizeof(mm[0]); m++) {
@@ -355,20 +358,23 @@ getentropy_fallback(void *buf, size_t len)
 
 					/* Touch some memory... */
 					mp = mm[m].p;
-					mp[counter % (mm[m].npg * pgsiz - 1)] = 1;
-					counter += (int)((long)(mm[m].p) / pgsiz);
+					mp[counter % (mm[m].npg *
+					    pgsiz - 1)] = 1;
+					counter += (int)((long)(mm[m].p)
+					    / pgsiz);
 				}
 
 				/* Check counters and times... */
 				for (ii = 0; ii < sizeof(cl)/sizeof(cl[0]);
 				    ii++) {
-					HASHX((e = clock_gettime(cl[ii], &ts)) == -1,
-					    ts);
+					HASHX((e = clock_gettime(cl[ii],
+					    &ts)) == -1, ts);
 					if (e != -1)
 						counter += (int)ts.tv_nsec;
 				}
 
-				HASHX((e = getrusage(RUSAGE_SELF, &ru)) == -1, ru);
+				HASHX((e = getrusage(RUSAGE_SELF, &ru)) == -1,
+				    ru);
 				if (e != -1) {
 					counter += (int)ru.ru_utime.tv_sec;
 					counter += (int)ru.ru_utime.tv_usec;
@@ -391,9 +397,11 @@ getentropy_fallback(void *buf, size_t len)
 
 			HASHX((e = fstat(0, &st)) == -1, st);
 			if (e == -1) {
-				if (S_ISREG(st.st_mode) || S_ISFIFO(st.st_mode) ||
+				if (S_ISREG(st.st_mode) ||
+				    S_ISFIFO(st.st_mode) ||
 				    S_ISSOCK(st.st_mode)) {
-					HASHX(fstatvfs(0, &stvfs) == -1, stvfs);
+					HASHX(fstatvfs(0, &stvfs) == -1,
+					    stvfs);
 					HASHX(fstatfs(0, &stfs) == -1, stfs);
 					HASHX((off = lseek(0, (off_t)0,
 					    SEEK_CUR)) < 0, off);
