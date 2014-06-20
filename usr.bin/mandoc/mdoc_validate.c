@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.132 2014/04/23 21:06:33 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.133 2014/06/20 17:23:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -931,10 +931,10 @@ pre_dt(PRE_ARGS)
 {
 
 	if (NULL == mdoc->meta.date || mdoc->meta.os)
-		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOGOOO);
+		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOG_ORDER);
 
 	if (mdoc->meta.title)
-		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOGREP);
+		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOG_REP);
 
 	return(1);
 }
@@ -944,10 +944,10 @@ pre_os(PRE_ARGS)
 {
 
 	if (NULL == mdoc->meta.title || NULL == mdoc->meta.date)
-		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOGOOO);
+		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOG_ORDER);
 
 	if (mdoc->meta.os)
-		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOGREP);
+		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOG_REP);
 
 	return(1);
 }
@@ -957,10 +957,10 @@ pre_dd(PRE_ARGS)
 {
 
 	if (mdoc->meta.title || mdoc->meta.os)
-		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOGOOO);
+		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOG_ORDER);
 
 	if (mdoc->meta.date)
-		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOGREP);
+		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOG_REP);
 
 	return(1);
 }
@@ -2180,7 +2180,7 @@ post_dt(POST_ARGS)
 			 * FIXME: don't be lazy: have this make all
 			 * characters be uppercase and just warn once.
 			 */
-			mdoc_nmsg(mdoc, nn, MANDOCERR_UPPERCASE);
+			mdoc_nmsg(mdoc, nn, MANDOCERR_TITLE_CASE);
 			break;
 		}
 
@@ -2224,7 +2224,7 @@ post_dt(POST_ARGS)
 		mdoc->meta.vol = mandoc_strdup(cp);
 		mdoc->meta.msec = mandoc_strdup(nn->string);
 	} else {
-		mdoc_nmsg(mdoc, n, MANDOCERR_BADMSEC);
+		mdoc_nmsg(mdoc, n, MANDOCERR_MSEC_BAD);
 		mdoc->meta.vol = mandoc_strdup(nn->string);
 		mdoc->meta.msec = mandoc_strdup(nn->string);
 	}
@@ -2246,7 +2246,7 @@ post_dt(POST_ARGS)
 	} else {
 		cp = mdoc_a2arch(nn->string);
 		if (NULL == cp) {
-			mdoc_nmsg(mdoc, nn, MANDOCERR_BADVOLARCH);
+			mdoc_nmsg(mdoc, nn, MANDOCERR_ARCH_BAD);
 			free(mdoc->meta.vol);
 			mdoc->meta.vol = mandoc_strdup(nn->string);
 		} else

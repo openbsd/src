@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.64 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.65 2014/06/20 17:23:09 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,16 +49,16 @@ enum	mandocerr {
 	MANDOCERR_WARNING, /* ===== start of warnings ===== */
 
 	/* related to the prologue */
-	MANDOCERR_NOTITLE, /* no title in document */
-	MANDOCERR_UPPERCASE, /* document title should be all caps */
-	MANDOCERR_BADMSEC, /* unknown manual section */
-	MANDOCERR_BADVOLARCH, /* unknown manual volume or arch */
-	MANDOCERR_NODATE, /* date missing, using today's date */
-	MANDOCERR_BADDATE, /* cannot parse date, using it verbatim */
-	MANDOCERR_PROLOGOOO, /* prologue macros out of order */
-	MANDOCERR_PROLOGREP, /* duplicate prologue macro */
-	MANDOCERR_BADPROLOG, /* macro not allowed in prologue */
-	MANDOCERR_BADBODY, /* macro not allowed in body */
+	MANDOCERR_TH_MISSING, /* no TH macro in document */
+	MANDOCERR_TITLE_CASE, /* document title should be all caps */
+	MANDOCERR_MSEC_BAD, /* unknown manual section */
+	MANDOCERR_ARCH_BAD, /* unknown manual volume or arch */
+	MANDOCERR_DATE_MISSING, /* date missing, using today's date */
+	MANDOCERR_DATE_BAD, /* cannot parse date, using it verbatim */
+	MANDOCERR_PROLOG_ORDER, /* prologue macros out of order */
+	MANDOCERR_PROLOG_REP, /* duplicate prologue macro */
+	MANDOCERR_PROLOG_BAD, /* macro not allowed in prologue */
+	MANDOCERR_PROLOG_ONLY, /* macro not allowed in body */
 
 	/* related to document structure */
 	MANDOCERR_SO, /* .so is fragile, better use ln(1) */

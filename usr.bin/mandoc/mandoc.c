@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.48 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.49 2014/06/20 17:23:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -502,14 +502,14 @@ mandoc_normdate(struct mparse *parse, char *in, int ln, int pos)
 
 	if (NULL == in || '\0' == *in ||
 	    0 == strcmp(in, "$" "Mdocdate$")) {
-		mandoc_msg(MANDOCERR_NODATE, parse, ln, pos, NULL);
+		mandoc_msg(MANDOCERR_DATE_MISSING, parse, ln, pos, NULL);
 		time(&t);
 	}
 	else if (a2time(&t, "%Y-%m-%d", in))
 		t = 0;
 	else if (!a2time(&t, "$" "Mdocdate: %b %d %Y $", in) &&
 	    !a2time(&t, "%b %d, %Y", in)) {
-		mandoc_msg(MANDOCERR_BADDATE, parse, ln, pos, NULL);
+		mandoc_msg(MANDOCERR_DATE_BAD, parse, ln, pos, NULL);
 		t = 0;
 	}
 	out = t ? time2a(t) : NULL;
