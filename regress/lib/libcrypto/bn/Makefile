@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 2014/06/01 11:11:45 miod Exp $
+#	$OpenBSD: Makefile,v 1.3 2014/06/20 10:30:40 miod Exp $
 
-PROG=	bntest
-LDADD=	-lcrypto
-DPADD=	${LIBCRYPTO}
-WARNINGS=	Yes
-CFLAGS+=	-Werror
+SUBDIR= \
+	general
 
-.include <bsd.regress.mk>
+install:
+
+.include <bsd.subdir.mk>
