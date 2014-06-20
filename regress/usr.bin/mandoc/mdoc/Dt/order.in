@@ -1,0 +1,8 @@
+.Dd June 13, 2014
+.Os OpenBSD
+.Dt DT-ORDER 1
+.Sh NAME
+.Nm Dt-order
+.Nd prologue macros out of order
+.Sh DESCRIPTION
+some text

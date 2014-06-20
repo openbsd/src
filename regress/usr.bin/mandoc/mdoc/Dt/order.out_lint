@@ -1,0 +1,2 @@
+mandoc: order.in:2:2: WARNING: prologue macros out of order
+mandoc: order.in:3:2: WARNING: prologue macros out of order

@@ -1,0 +1,8 @@
+.Dd ""
+.Dt DT-NODATE 1
+.Os OpenBSD
+.Sh NAME
+.Nm Dt-nodate
+.Nd date missing
+.Sh DESCRIPTION
+some text

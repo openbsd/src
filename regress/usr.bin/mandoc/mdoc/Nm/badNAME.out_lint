@@ -1,0 +1,2 @@
+mandoc: badNAME.in:5:2: ERROR: manual name not yet set
+mandoc: badNAME.in:4:2: WARNING: bad NAME section contents

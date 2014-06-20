@@ -1,0 +1,9 @@
+.Dd June 18, 2014
+.Dt DT-LATEOS 1
+.Os OpenBSD
+.Sh NAME
+.Nm Dt-lateos
+.Nd operating system macro after the end of the prologue
+.Sh DESCRIPTION
+.Os OpenBSD
+some text

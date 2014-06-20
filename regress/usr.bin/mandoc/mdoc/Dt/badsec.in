@@ -1,0 +1,8 @@
+.Dd June 13, 2014
+.Dt DT-BADSEC foo
+.Os OpenBSD
+.Sh NAME
+.Nm Dt-badsec
+.Nd unknown manual section
+.Sh DESCRIPTION
+some text

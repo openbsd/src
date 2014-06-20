@@ -1,5 +1,5 @@
 .Dd July 6, 2012
-.Dt Dl-SPACING 1
+.Dt DL-SPACING 1
 .Os OpenBSD
 .Sh NAME
 .Nm Dl-spacing

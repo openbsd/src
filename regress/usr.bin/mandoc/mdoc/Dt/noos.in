@@ -1,0 +1,7 @@
+.Dd June 18, 2014
+.Dt DT-NOOS 1
+.Sh NAME
+.Nm Dt-noos
+.Nd operating system macro missing in prologue
+.Sh DESCRIPTION
+some text

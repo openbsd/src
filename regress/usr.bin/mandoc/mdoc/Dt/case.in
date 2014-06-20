@@ -1,0 +1,8 @@
+.Dd June 13, 2014
+.Dt Dt-case 1
+.Os OpenBSD
+.Sh NAME
+.Nm Dt-case
+.Nd document title is not all caps
+.Sh DESCRIPTION
+some text

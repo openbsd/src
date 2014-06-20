@@ -1,0 +1,9 @@
+.Dd June 13, 2014
+.Dt DT-DUPE 1
+.Os OpenBSD
+.Os OpenBSD
+.Sh NAME
+.Nm Dt-order
+.Nd duplicate prologue macro
+.Sh DESCRIPTION
+some text
