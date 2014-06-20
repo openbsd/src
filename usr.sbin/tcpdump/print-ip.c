@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.37 2014/01/11 04:35:52 lteo Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.38 2014/06/20 04:04:52 lteo Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -627,7 +627,6 @@ ip_print(register const u_char *bp, register u_int length)
 		(void)printf(" [ttl %d]", (int)ip->ip_ttl);
 
 	if (vflag) {
-		int sum;
 		char *sep = "";
 
 		printf(" (");
@@ -642,12 +641,12 @@ ip_print(register const u_char *bp, register u_int length)
 		(void)printf("%slen %u", sep, ntohs(ip->ip_len));
 		sep = ", ";
 		if ((u_char *)ip + hlen <= snapend) {
+			u_int16_t sum, ip_sum;
 			sum = in_cksum((const u_short *)ip, hlen, 0);
 			if (sum != 0) {
-				(void)printf("%sbad cksum %x!", sep,
-					     ntohs(ip->ip_sum));
-				if (vflag > 1)
-					(void)printf(" differs by %x", htons(sum));
+				ip_sum = EXTRACT_16BITS(&ip->ip_sum);
+				(void)printf("%sbad ip cksum %x! -> %x", sep, ip_sum,
+					     in_cksum_shouldbe(ip_sum, sum));
 				sep = ", ";
 			}
 		}

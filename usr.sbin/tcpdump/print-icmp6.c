@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.12 2014/01/11 04:41:08 lteo Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.13 2014/06/20 04:04:52 lteo Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -53,6 +53,7 @@
 
 #include "interface.h"
 #include "addrtoname.h"
+#include "extract.h"
 
 void icmp6_opt_print(const u_char *, int);
 void mld6_print(const u_char *);
@@ -485,12 +486,14 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 		break;
 	}
 	if (vflag) {
-		u_int16_t sum;
 		if (TTEST2(dp->icmp6_type, length)) {
+			u_int16_t sum, icmp6_sum;
 			sum = icmp6_cksum(ip, dp, length);
-			if (sum != 0)
-				printf(" [bad icmp6 cksum %x!]", sum);
-			else
+			if (sum != 0) {
+				icmp6_sum = EXTRACT_16BITS(&dp->icmp6_cksum);
+				printf(" [bad icmp6 cksum %x! -> %x]", icmp6_sum,
+				    in_cksum_shouldbe(icmp6_sum, sum));
+			} else
 				printf(" [icmp6 cksum ok]");
 		}
 	}

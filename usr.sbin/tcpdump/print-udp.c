@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.35 2014/01/26 18:03:27 naddy Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.36 2014/06/20 04:04:52 lteo Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -57,6 +57,7 @@
 
 #include "interface.h"
 #include "addrtoname.h"
+#include "extract.h"
 #include "appletalk.h"
 
 #include "nfsv2.h"
@@ -566,27 +567,29 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 #endif
 
 	if (ip->ip_v == 4 && vflag) {
-		int sum = up->uh_sum;
-		if (sum == 0) {
-			(void)printf(" [no cksum]");
+		u_int16_t sum, udp_sum = EXTRACT_16BITS(&up->uh_sum);
+		if (udp_sum == 0) {
+			(void)printf(" [no udp cksum]");
 		} else if (TTEST2(cp[0], length)) {
 			sum = udp_cksum(ip, up, length + sizeof(struct udphdr));
 			if (sum != 0)
-				(void)printf(" [bad udp cksum %x!]", sum);
+				(void)printf(" [bad udp cksum %x! -> %x]", udp_sum,
+				    in_cksum_shouldbe(udp_sum, sum));
 			else
 				(void)printf(" [udp sum ok]");
 		}
 	}
 #ifdef INET6
 	if (ip->ip_v == 6 && ip6->ip6_plen && vflag) {
-		int sum = up->uh_sum;
+		u_int16_t sum, udp_sum = EXTRACT_16BITS(&up->uh_sum);
 		/* for IPv6, UDP checksum is mandatory */
-		if (sum == 0) {
-			(void)printf(" [invalid cksum 0]");
+		if (udp_sum == 0) {
+			(void)printf(" [invalid udp cksum 0]");
 		} else if (TTEST2(cp[0], length)) {
 			sum = udp6_cksum(ip6, up, length + sizeof(struct udphdr));
 			if (sum != 0)
-				(void)printf(" [bad udp cksum %x!]", sum);
+				(void)printf(" [bad udp cksum %x! -> %x]", udp_sum,
+				    in_cksum_shouldbe(udp_sum, sum));
 			else
 				(void)printf(" [udp sum ok]");
 		}
