@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.60 2014/06/15 15:29:25 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.61 2014/06/21 14:06:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -248,10 +248,10 @@ tls1_PRF(long digest_mask, const void *seed1, int seed1_len, const void *seed2,
 	/* Count number of digests and partition sec evenly */
 	count = 0;
 	for (idx = 0; ssl_get_handshake_digest(idx, &m, &md); idx++) {
-		if ((m << TLS1_PRF_DGST_SHIFT)
-			& digest_mask) count++;
+		if ((m << TLS1_PRF_DGST_SHIFT) & digest_mask)
+			count++;
 	}
-	len = slen/count;
+	len = slen / count;
 	if (count == 1)
 		slen = 0;
 	S1 = sec;
@@ -262,7 +262,6 @@ tls1_PRF(long digest_mask, const void *seed1, int seed1_len, const void *seed2,
 				SSLerr(SSL_F_TLS1_PRF,
 				    SSL_R_UNSUPPORTED_DIGEST_TYPE);
 				goto err;
-
 			}
 			if (!tls1_P_hash(md , S1, len + (slen&1), seed1,
 			    seed1_len, seed2, seed2_len, seed3, seed3_len,
@@ -446,8 +445,7 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 			exp_label = TLS_MD_SERVER_WRITE_KEY_CONST;
 			exp_label_len = TLS_MD_SERVER_WRITE_KEY_CONST_SIZE;
 		}
-		if (!tls1_PRF(ssl_get_algorithm2(s),
-		    exp_label, exp_label_len,
+		if (!tls1_PRF(ssl_get_algorithm2(s), exp_label, exp_label_len,
 		    s->s3->client_random, SSL3_RANDOM_SIZE,
 		    s->s3->server_random, SSL3_RANDOM_SIZE,
 		    NULL, 0, NULL, 0, key, key_len, export_tmp1, export_tmp2,
@@ -990,7 +988,6 @@ tls1_enc(SSL *s, int send)
 			rec->length += i;
 		}
 
-
 		if (!send) {
 			if (l == 0 || l % bs != 0)
 				return 0;
@@ -1005,7 +1002,6 @@ tls1_enc(SSL *s, int send)
 			rec->input += EVP_GCM_TLS_EXPLICIT_IV_LEN;
 			rec->length -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
 		}
-
 
 		ret = 1;
 		if (EVP_MD_CTX_md(s->read_hash) != NULL)
@@ -1062,7 +1058,6 @@ tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
 	int err = 0;
 	const EVP_MD *md;
 
-
 	q = buf;
 
 	if (s->s3->handshake_buffer)
@@ -1072,7 +1067,7 @@ tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
 	EVP_MD_CTX_init(&ctx);
 
 	for (idx = 0; ssl_get_handshake_digest(idx, &mask, &md); idx++) {
-		if (mask & ssl_get_algorithm2(s)) {
+		if (ssl_get_algorithm2(s) & mask) {
 			int hashsize = EVP_MD_size(md);
 			EVP_MD_CTX *hdgst = s->s3->handshake_dgst[idx];
 			if (!hdgst || hashsize < 0 ||
@@ -1215,7 +1210,6 @@ tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 	size_t vallen, currentvalpos;
 	int rv;
 
-
 	buff = malloc(olen);
 	if (buff == NULL)
 		goto err2;
@@ -1276,7 +1270,8 @@ tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 
 	goto ret;
 err1:
-	SSLerr(SSL_F_TLS1_EXPORT_KEYING_MATERIAL, SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
+	SSLerr(SSL_F_TLS1_EXPORT_KEYING_MATERIAL,
+	    SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
 	rv = 0;
 	goto ret;
 err2:
@@ -1285,6 +1280,7 @@ err2:
 ret:
 	free(buff);
 	free(val);
+
 	return (rv);
 }
 
