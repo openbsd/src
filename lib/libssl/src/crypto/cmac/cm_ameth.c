@@ -1,4 +1,4 @@
-/* $OpenBSD: cm_ameth.c,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: cm_ameth.c,v 1.4 2014/06/21 12:07:02 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2010.
  */
@@ -62,19 +62,23 @@
  * key.
  */
 
-static int cmac_size(const EVP_PKEY *pkey)
-	{
+static int
+cmac_size(const EVP_PKEY *pkey)
+{
 	return EVP_MAX_BLOCK_LENGTH;
-	}
+}
 
-static void cmac_key_free(EVP_PKEY *pkey)
-	{
+static void
+cmac_key_free(EVP_PKEY *pkey)
+{
 	CMAC_CTX *cmctx = (CMAC_CTX *)pkey->pkey.ptr;
+
 	if (cmctx)
 		CMAC_CTX_free(cmctx);
-	}
+}
 
-const EVP_PKEY_ASN1_METHOD cmac_asn1_meth = {
+const EVP_PKEY_ASN1_METHOD
+cmac_asn1_meth = {
 	.pkey_id = EVP_PKEY_CMAC,
 	.pkey_base_id = EVP_PKEY_CMAC,
 
@@ -84,4 +88,3 @@ const EVP_PKEY_ASN1_METHOD cmac_asn1_meth = {
 	.pkey_size = cmac_size,
 	.pkey_free = cmac_key_free
 };
-
