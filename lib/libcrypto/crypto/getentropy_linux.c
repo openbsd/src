@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.4 2014/06/20 20:27:22 beck Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.5 2014/06/21 02:08:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -352,7 +352,7 @@ getentropy_fallback(void *buf, size_t len)
 			for (m = 0; m < sizeof mm/sizeof(mm[0]); m++) {
 				HASHX(mm[m].p = mmap(NULL, mm[m].npg * pgsiz,
 				    PROT_READ|PROT_WRITE,
-				    MAP_PRIVATE|MAP_ANON, -1, (off_t)0), p);
+				    MAP_PRIVATE|MAP_ANON, -1, (off_t)0), mm[m].p);
 				if (mm[m].p != MAP_FAILED) {
 					char *mp;
 
