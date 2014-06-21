@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.112 2014/04/13 23:14:15 tedu Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.113 2014/06/21 21:09:25 guenther Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -704,6 +704,7 @@ uvm_km_thread(void *arg)
 	vaddr_t pg[16];
 	int i;
 	int allocmore = 0;
+	int flags;
 	struct uvm_km_free_page *fp = NULL;
 
 	for (;;) {
@@ -720,17 +721,28 @@ uvm_km_thread(void *arg)
 		mtx_leave(&uvm_km_pages.mtx);
 
 		if (allocmore) {
+			/*
+			 * If there was nothing on the freelist, then we
+			 * must obtain at least one page to make progress.
+			 * So, only use UVM_KMF_TRYLOCK for the first page
+			 * if fp != NULL
+			 */
+			flags = UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+			    UVM_INH_NONE, UVM_ADV_RANDOM,
+			    fp != NULL ? UVM_KMF_TRYLOCK : 0);
 			bzero(pg, sizeof(pg));
 			for (i = 0; i < nitems(pg); i++) {
 				pg[i] = vm_map_min(kernel_map);
 				if (uvm_map(kernel_map, &pg[i], PAGE_SIZE,
-				    NULL, UVM_UNKNOWN_OFFSET, 0,
-				    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-				    UVM_INH_NONE, UVM_ADV_RANDOM,
-				    UVM_KMF_TRYLOCK)) != 0) {
+				    NULL, UVM_UNKNOWN_OFFSET, 0, flags) != 0) {
 					pg[i] = 0;
 					break;
 				}
+
+				/* made progress, so don't sleep for more */
+				flags = UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+				    UVM_INH_NONE, UVM_ADV_RANDOM,
+				    UVM_KMF_TRYLOCK);
 			}
 
 			mtx_enter(&uvm_km_pages.mtx);
