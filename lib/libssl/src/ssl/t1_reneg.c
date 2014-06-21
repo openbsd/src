@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_reneg.c,v 1.7 2014/06/19 21:29:51 tedu Exp $ */
+/* $OpenBSD: t1_reneg.c,v 1.8 2014/06/21 20:27:25 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -173,7 +173,7 @@ ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 	}
 
 	if (timingsafe_memcmp(d, s->s3->previous_client_finished,
-	    s->s3->previous_client_finished_len)) {
+	    s->s3->previous_client_finished_len) != 0) {
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT,
 		    SSL_R_RENEGOTIATION_MISMATCH);
 		*al = SSL_AD_HANDSHAKE_FAILURE;
@@ -260,7 +260,7 @@ ssl_parse_serverhello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 	}
 
 	if (timingsafe_memcmp(d, s->s3->previous_client_finished,
-	    s->s3->previous_client_finished_len)) {
+	    s->s3->previous_client_finished_len) != 0) {
 		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_RENEGOTIATE_EXT,
 		    SSL_R_RENEGOTIATION_MISMATCH);
 		*al = SSL_AD_HANDSHAKE_FAILURE;
