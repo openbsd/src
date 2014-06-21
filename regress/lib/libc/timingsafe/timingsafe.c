@@ -1,4 +1,4 @@
-/*	$OpenBSD: timingsafe.c,v 1.2 2014/06/13 02:12:17 matthew Exp $	*/
+/*	$OpenBSD: timingsafe.c,v 1.3 2014/06/21 22:57:15 tedu Exp $	*/
 /*
  * Copyright (c) 2014 Google Inc.
  *
@@ -32,13 +32,6 @@ check()
 {
 	int cmp = memcmp(bufone, buftwo, N);
 
-	/*
-	 * timingsafe_memcmp is specified to return -1, 0, or 1,
-	 * but memcmp only specifies <0, 0, or >0.
-	 */
-	if (cmp < 0) cmp = -1;
-	if (cmp > 0) cmp = 1;
-
 	/* Check for reflexivity. */
 	ASSERT_EQ(0, timingsafe_bcmp(bufone, bufone, N));
 	ASSERT_EQ(0, timingsafe_bcmp(buftwo, buftwo, N));
@@ -49,10 +42,10 @@ check()
 	ASSERT_EQ(cmp == 0, timingsafe_bcmp(bufone, buftwo, N) == 0);
 
 	/* Check that timingsafe_memcmp returns cmp... */
-	ASSERT_EQ(cmp, timingsafe_memcmp(bufone, buftwo, N));
+	ASSERT_EQ(cmp < 0, timingsafe_memcmp(bufone, buftwo, N) < 0);
 
 	/* ... or -cmp if the argument order is swapped. */
-	ASSERT_EQ(-cmp, timingsafe_memcmp(buftwo, bufone, N));
+	ASSERT_EQ(-cmp < 0, timingsafe_memcmp(buftwo, bufone, N) < 0);
 }
 
 int
