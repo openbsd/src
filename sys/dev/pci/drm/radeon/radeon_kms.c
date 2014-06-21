@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.27 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.28 2014/06/21 04:37:42 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1112,8 +1112,11 @@ int radeon_driver_open_kms(struct drm_device *dev, struct drm_file *file_priv)
 		radeon_vm_init(rdev, &fpriv->vm);
 
 		r = radeon_bo_reserve(rdev->ring_tmp_bo.bo, false);
-		if (r)
+		if (r) {
+			radeon_vm_fini(rdev, &fpriv->vm);
+			kfree(fpriv);
 			return r;
+		}
 
 		/* map the ib pool buffer read only into
 		 * virtual address space */
