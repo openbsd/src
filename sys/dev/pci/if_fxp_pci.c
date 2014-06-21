@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.60 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.61 2014/06/21 01:14:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -195,7 +195,6 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_INTEL_8255x:
 	case PCI_PRODUCT_INTEL_82559:
 	case PCI_PRODUCT_INTEL_82559ER:
-	{
 		chipname = "i82557";
 		if (sc->sc_revision >= FXP_REV_82558_A4)
 			chipname = "i82558";
@@ -207,8 +206,6 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 			chipname = "i82550";
 		if (sc->sc_revision >= FXP_REV_82551_E)
 			chipname = "i82551";
-		break;
-	}
 		break;
 	case PCI_PRODUCT_INTEL_82552:
 		chipname = "i82552";
