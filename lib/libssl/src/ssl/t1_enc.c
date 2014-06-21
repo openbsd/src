@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.61 2014/06/21 14:06:36 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.62 2014/06/21 14:45:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -775,23 +775,24 @@ tls1_enc(SSL *s, int send)
 	const EVP_CIPHER *enc;
 	EVP_CIPHER_CTX *ds;
 	SSL3_RECORD *rec;
+	unsigned char *seq;
 	unsigned long l;
 	int bs, i, j, k, pad = 0, ret, mac_size = 0;
 
 	if (send) {
 		aead = s->aead_write_ctx;
 		rec = &s->s3->wrec;
+		seq = s->s3->write_sequence;
 	} else {
 		aead = s->aead_read_ctx;
 		rec = &s->s3->rrec;
+		seq = s->s3->read_sequence;
 	}
 
 	if (aead) {
-		unsigned char ad[13], *seq, *in, *out, nonce[16];
+		unsigned char ad[13], *in, *out, nonce[16];
 		unsigned nonce_used;
 		ssize_t n;
-
-		seq = send ? s->s3->write_sequence : s->s3->read_sequence;
 
 		if (SSL_IS_DTLS(s)) {
 			unsigned char dtlsseq[9], *p = dtlsseq;
@@ -903,7 +904,6 @@ tls1_enc(SSL *s, int send)
 			OPENSSL_assert(n >= 0);
 		}
 		ds = s->enc_write_ctx;
-		rec = &(s->s3->wrec);
 		if (s->enc_write_ctx == NULL)
 			enc = NULL;
 		else {
@@ -930,7 +930,6 @@ tls1_enc(SSL *s, int send)
 			OPENSSL_assert(n >= 0);
 		}
 		ds = s->enc_read_ctx;
-		rec = &(s->s3->rrec);
 		if (s->enc_read_ctx == NULL)
 			enc = NULL;
 		else
@@ -946,9 +945,7 @@ tls1_enc(SSL *s, int send)
 		bs = EVP_CIPHER_block_size(ds->cipher);
 
 		if (EVP_CIPHER_flags(ds->cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
-			unsigned char buf[13], *seq;
-
-			seq = send ? s->s3->write_sequence : s->s3->read_sequence;
+			unsigned char buf[13];
 
 			if (SSL_IS_DTLS(s)) {
 				unsigned char dtlsseq[9], *p = dtlsseq;
