@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.5 2014/06/21 02:08:34 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.6 2014/06/21 21:44:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -49,15 +49,15 @@
 #define REPEAT 5
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
-#define HASHX(a, b) \
+#define HX(a, b) \
 	do { \
 		if ((a)) \
-			HASHD(errno); \
+			HD(errno); \
 		else \
-			HASHD(b); \
+			HD(b); \
 	} while (0)
 
-#define HASHD(xxx)	(SHA512_Update(&ctx, (char *)&(xxx), sizeof (xxx)))
+#define HD(xxx)	(SHA512_Update(&ctx, (char *)&(xxx), sizeof (xxx)))
 
 int	getentropy(void *buf, size_t len);
 
@@ -278,8 +278,8 @@ static int
 getentropy_fallback(void *buf, size_t len)
 {
 	uint8_t results[SHA512_DIGEST_LENGTH];
-	int save_errno = errno, e, m, pgsiz = getpagesize(), repeat;
-	static int counter;
+	int save_errno = errno, e, m, pgs = getpagesize(), repeat;
+	static int cnt;
 	struct timespec ts;
 	struct timeval tv;
 	struct rusage ru;
@@ -288,153 +288,159 @@ getentropy_fallback(void *buf, size_t len)
 	SHA512_CTX ctx;
 	pid_t pid;
 	size_t i, ii;
-	void *p;
+	char *p;
 
 	for (i = 0; i < len; ) {
 		SHA512_Init(&ctx);
 		for (repeat = 0; repeat < REPEAT; repeat++) {
 
-			HASHX((e = gettimeofday(&tv, NULL)) == -1, tv);
+			HX((e = gettimeofday(&tv, NULL)) == -1, tv);
 			if (e != -1) {
-				counter += (int)tv.tv_sec;
-				counter += (int)tv.tv_usec;
+				cnt += (int)tv.tv_sec;
+				cnt += (int)tv.tv_usec;
 			}
 
 			for (ii = 0; ii < sizeof(cl)/sizeof(cl[0]); ii++)
-				HASHX(clock_gettime(cl[ii], &ts) == -1, ts);
+				HX(clock_gettime(cl[ii], &ts) == -1, ts);
 
-			HASHX((pid = getpid()) == -1, pid);
-			HASHX((pid = getsid(pid)) == -1, pid);
-			HASHX((pid = getppid()) == -1, pid);
-			HASHX((pid = getpgid(0)) == -1, pid);
-			HASHX((m = getpriority(0, 0)) == -1, m);
+			HX((pid = getpid()) == -1, pid);
+			HX((pid = getsid(pid)) == -1, pid);
+			HX((pid = getppid()) == -1, pid);
+			HX((pid = getpgid(0)) == -1, pid);
+			HX((m = getpriority(0, 0)) == -1, m);
 
 			ts.tv_sec = 0;
 			ts.tv_nsec = 1;
 			(void) nanosleep(&ts, NULL);
 
-			HASHX(sigpending(&sigset) == -1, sigset);
-			HASHX(sigprocmask(SIG_BLOCK, NULL, &sigset) == -1,
+			HX(sigpending(&sigset) == -1, sigset);
+			HX(sigprocmask(SIG_BLOCK, NULL, &sigset) == -1,
 			    sigset);
 
-			HASHD(main);	   /* an address in the main program */
-			HASHD(getentropy); /* man address in this library */
-			HASHD(printf);	   /* an address in libc */
-			p = (void *)&p;
-			HASHD(p); 	  /* an address on stack */
-			p = (void *)&errno;
-			HASHD(p); 	 /* the address of errno */
+			HD(main);		/* an addr in program */
+			HD(getentropy);	/* an addr in this library */
+			HD(printf);		/* an addr in libc */
+			p = (char *)&p;
+			HD(p);		/* an addr on stack */
+			p = (char *)&errno;
+			HD(p);		/* the addr of errno */
 
-		if (i == 0) {
-			struct sockaddr_storage ss;
-			struct statvfs stvfs;
-			struct termios tios;
-			struct statfs stfs;
-			socklen_t ssl;
-			off_t off;
+			if (i == 0) {
+				struct sockaddr_storage ss;
+				struct statvfs stvfs;
+				struct termios tios;
+				struct statfs stfs;
+				socklen_t ssl;
+				off_t off;
+	
+				/*
+				 * Prime-sized mappings encourage fragmentation;
+				 * thus exposing some address entropy.
+				 */
+				struct mm {
+					size_t	npg;
+					void	*p;
+				} mm[] =	 {
+					{ 17, MAP_FAILED }, { 3, MAP_FAILED },
+					{ 11, MAP_FAILED }, { 2, MAP_FAILED },
+					{ 5, MAP_FAILED }, { 3, MAP_FAILED },
+					{ 7, MAP_FAILED }, { 1, MAP_FAILED },
+					{ 57, MAP_FAILED }, { 3, MAP_FAILED },
+					{ 131, MAP_FAILED }, { 1, MAP_FAILED },
+				};
+	
+				for (m = 0; m < sizeof mm/sizeof(mm[0]); m++) {
+					HX(mm[m].p = mmap(NULL,
+					    mm[m].npg * pgs,
+					    PROT_READ|PROT_WRITE,
+					    MAP_PRIVATE|MAP_ANON, -1,
+					    (off_t)0), mm[m].p);
+					if (mm[m].p != MAP_FAILED) {
+						size_t mo;
 
-			/*
-			 * Prime-sized mappings encourage fragmentation;
-			 * thus exposing some address entropy.
-			 */
-			struct mm {
-				size_t	npg;
-				void	*p;
-			} mm[] =	 {
-				{ 17, MAP_FAILED }, { 3, MAP_FAILED },
-				{ 11, MAP_FAILED }, { 2, MAP_FAILED },
-				{ 5, MAP_FAILED }, { 3, MAP_FAILED },
-				{ 7, MAP_FAILED }, { 1, MAP_FAILED },
-				{ 57, MAP_FAILED }, { 3, MAP_FAILED },
-				{ 131, MAP_FAILED }, { 1, MAP_FAILED },
-			};
-
-			for (m = 0; m < sizeof mm/sizeof(mm[0]); m++) {
-				HASHX(mm[m].p = mmap(NULL, mm[m].npg * pgsiz,
-				    PROT_READ|PROT_WRITE,
-				    MAP_PRIVATE|MAP_ANON, -1, (off_t)0), mm[m].p);
-				if (mm[m].p != MAP_FAILED) {
-					char *mp;
-
-					/* Touch some memory... */
-					mp = mm[m].p;
-					mp[counter % (mm[m].npg *
-					    pgsiz - 1)] = 1;
-					counter += (int)((long)(mm[m].p)
-					    / pgsiz);
+						/* Touch some memory... */
+						p = mm[m].p;
+						mo = cnt %
+						    (mm[m].npg * pgs - 1);
+						p[mo] = 1;
+						cnt += (int)((long)(mm[m].p)
+						    / pgs);
+					}
+	
+					/* Check cnts and times... */
+					for (ii = 0; ii < sizeof(cl)/sizeof(cl[0]);
+					    ii++) {
+						HX((e = clock_gettime(cl[ii],
+						    &ts)) == -1, ts);
+						if (e != -1)
+							cnt += (int)ts.tv_nsec;
+					}
+	
+					HX((e = getrusage(RUSAGE_SELF,
+					    &ru)) == -1, ru);
+					if (e != -1) {
+						cnt += (int)ru.ru_utime.tv_sec;
+						cnt += (int)ru.ru_utime.tv_usec;
+					}
 				}
-
-				/* Check counters and times... */
-				for (ii = 0; ii < sizeof(cl)/sizeof(cl[0]);
-				    ii++) {
-					HASHX((e = clock_gettime(cl[ii],
-					    &ts)) == -1, ts);
-					if (e != -1)
-						counter += (int)ts.tv_nsec;
+	
+				for (m = 0; m < sizeof mm/sizeof(mm[0]); m++) {
+					if (mm[m].p != MAP_FAILED)
+						munmap(mm[m].p, mm[m].npg * pgs);
+					mm[m].p = MAP_FAILED;
 				}
-
-				HASHX((e = getrusage(RUSAGE_SELF, &ru)) == -1,
-				    ru);
+	
+				HX(stat(".", &st) == -1, st);
+				HX(statvfs(".", &stvfs) == -1, stvfs);
+				HX(statfs(".", &stfs) == -1, stfs);
+	
+				HX(stat("/", &st) == -1, st);
+				HX(statvfs("/", &stvfs) == -1, stvfs);
+				HX(statfs("/", &stfs) == -1, stfs);
+	
+				HX((e = fstat(0, &st)) == -1, st);
+				if (e == -1) {
+					if (S_ISREG(st.st_mode) ||
+					    S_ISFIFO(st.st_mode) ||
+					    S_ISSOCK(st.st_mode)) {
+						HX(fstatvfs(0, &stvfs) == -1,
+						    stvfs);
+						HX(fstatfs(0, &stfs) == -1,
+						    stfs);
+						HX((off = lseek(0, (off_t)0,
+						    SEEK_CUR)) < 0, off);
+					}
+					if (S_ISCHR(st.st_mode)) {
+						HX(tcgetattr(0, &tios) == -1,
+						    tios);
+					} else if (S_ISSOCK(st.st_mode)) {
+						memset(&ss, 0, sizeof ss);
+						ssl = sizeof(ss);
+						HX(getpeername(0,
+						    (void *)&ss, &ssl) == -1,
+						    ss);
+					}
+				}
+	
+				HX((e = getrusage(RUSAGE_CHILDREN,
+				    &ru)) == -1, ru);
 				if (e != -1) {
-					counter += (int)ru.ru_utime.tv_sec;
-					counter += (int)ru.ru_utime.tv_usec;
+					cnt += (int)ru.ru_utime.tv_sec;
+					cnt += (int)ru.ru_utime.tv_usec;
 				}
+			} else {
+				/* Subsequent hashes absorb previous result */
+				HD(results);
 			}
-
-			for (m = 0; m < sizeof mm/sizeof(mm[0]); m++) {
-				if (mm[m].p != MAP_FAILED)
-					munmap(mm[m].p, mm[m].npg * pgsiz);
-				mm[m].p = MAP_FAILED;
-			}
-
-			HASHX(stat(".", &st) == -1, st);
-			HASHX(statvfs(".", &stvfs) == -1, stvfs);
-			HASHX(statfs(".", &stfs) == -1, stfs);
-
-			HASHX(stat("/", &st) == -1, st);
-			HASHX(statvfs("/", &stvfs) == -1, stvfs);
-			HASHX(statfs("/", &stfs) == -1, stfs);
-
-			HASHX((e = fstat(0, &st)) == -1, st);
-			if (e == -1) {
-				if (S_ISREG(st.st_mode) ||
-				    S_ISFIFO(st.st_mode) ||
-				    S_ISSOCK(st.st_mode)) {
-					HASHX(fstatvfs(0, &stvfs) == -1,
-					    stvfs);
-					HASHX(fstatfs(0, &stfs) == -1, stfs);
-					HASHX((off = lseek(0, (off_t)0,
-					    SEEK_CUR)) < 0, off);
-				}
-				if (S_ISCHR(st.st_mode)) {
-					HASHX(tcgetattr(0, &tios) == -1, tios);
-				} else if (S_ISSOCK(st.st_mode)) {
-					memset(&ss, 0, sizeof ss);
-					ssl = sizeof(ss);
-					HASHX(getpeername(0, (void *)&ss,
-					    &ssl) == -1, ss);
-				}
-			}
-
-			HASHX((e = getrusage(RUSAGE_CHILDREN, &ru)) == -1, ru);
+	
+			HX((e = gettimeofday(&tv, NULL)) == -1, tv);
 			if (e != -1) {
-				counter += (int)ru.ru_utime.tv_sec;
-				counter += (int)ru.ru_utime.tv_usec;
+				cnt += (int)tv.tv_sec;
+				cnt += (int)tv.tv_usec;
 			}
-		} else {
-			/* Subsequent hashes absorb previous result */
-			HASHD(results);
+	
+			HD(cnt);
 		}
-
-		HASHX((e = gettimeofday(&tv, NULL)) == -1, tv);
-		if (e != -1) {
-			counter += (int)tv.tv_sec;
-			counter += (int)tv.tv_usec;
-		}
-
-		HASHD(counter);
-
-		} /* repeat */
 		SHA512_Final(results, &ctx);
 		memcpy(buf + i, results, min(sizeof(results), len - i));
 		i += min(sizeof(results), len - i);
