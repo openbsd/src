@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.13 2014/02/10 01:59:48 jsg Exp $	*/
+/*	$OpenBSD: si.c,v 1.14 2014/06/21 04:47:58 jsg Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -208,10 +208,12 @@ static int si_mc_load_microcode(struct radeon_device *rdev)
 	const __be32 *fw_data;
 	u32 running, blackout = 0;
 	u32 *io_mc_regs;
-	int i, ucode_size, regs_size;
+	int i, regs_size, ucode_size;
 
 	if (!rdev->mc_fw)
 		return -EINVAL;
+
+	ucode_size = rdev->mc_fw_size / 4;
 
 	switch (rdev->family) {
 	case CHIP_TAHITI:
