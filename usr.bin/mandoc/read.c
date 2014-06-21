@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.28 2014/06/20 22:58:41 schwarze Exp $ */
+/*	$Id: read.c,v 1.29 2014/06/21 22:23:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -202,7 +202,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"static buffer exhausted",
 
 	/* system errors */
-	"cannot open file",
+	NULL,
 	"cannot stat file",
 	"cannot read file",
 };
