@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_ameth.c,v 1.5 2014/06/21 12:00:01 miod Exp $ */
+/* $OpenBSD: hm_ameth.c,v 1.6 2014/06/21 13:39:46 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -134,14 +134,13 @@ old_hmac_encode(const EVP_PKEY *pkey, unsigned char **pder)
 		if (inc)
 			*pder += os->length;
 	}
-			
+
 	return os->length;
 }
 
 #endif
 
-const EVP_PKEY_ASN1_METHOD
-hmac_asn1_meth = {
+const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
 	.pkey_id = EVP_PKEY_HMAC,
 	.pkey_base_id = EVP_PKEY_HMAC,
 

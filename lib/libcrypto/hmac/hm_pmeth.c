@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_pmeth.c,v 1.5 2014/06/21 12:00:01 miod Exp $ */
+/* $OpenBSD: hm_pmeth.c,v 1.6 2014/06/21 13:39:46 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -100,7 +100,7 @@ pkey_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 
 	if (!pkey_hmac_init(dst))
 		return 0;
-       	sctx = src->data;
+	sctx = src->data;
 	dctx = dst->data;
 	dctx->md = sctx->md;
 	HMAC_CTX_init(&dctx->ctx);
@@ -141,12 +141,12 @@ pkey_hmac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	if (!hkey)
 		return 0;
 	EVP_PKEY_assign(pkey, EVP_PKEY_HMAC, hkey);
-	
+
 	return 1;
 }
 
 static int
-int_update(EVP_MD_CTX *ctx,const void *data,size_t count)
+int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
 	HMAC_PKEY_CTX *hctx = ctx->pctx->data;
 
@@ -186,7 +186,7 @@ hmac_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 	return 1;
 }
 
-static int 
+static int
 pkey_hmac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
 	HMAC_PKEY_CTX *hctx = ctx->data;
@@ -240,8 +240,7 @@ pkey_hmac_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 	return -2;
 }
 
-const EVP_PKEY_METHOD
-hmac_pkey_meth = {
+const EVP_PKEY_METHOD hmac_pkey_meth = {
 	.pkey_id = EVP_PKEY_HMAC,
 
 	.init = pkey_hmac_init,
