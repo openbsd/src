@@ -268,6 +268,7 @@ sv_usage(void)
 #ifndef OPENSSL_NO_PSK
 	fprintf(stderr, " -psk arg      - PSK in hex (without 0x)\n");
 #endif
+	fprintf(stderr, " -dtls1        - use DTLSv1\n");
 	fprintf(stderr, " -ssl3         - use SSLv3\n");
 	fprintf(stderr, " -tls1         - use TLSv1\n");
 	fprintf(stderr, " -CApath arg   - PEM format directory of CA's\n");
@@ -387,7 +388,7 @@ main(int argc, char *argv[])
 	int badop = 0;
 	int bio_pair = 0;
 	int force = 0;
-	int tls1 = 0, ssl2 = 0, ssl3 = 0, ret = 1;
+	int tls1 = 0, ssl2 = 0, ssl3 = 0, dtls1 = 0, ret = 1;
 	int client_auth = 0;
 	int server_auth = 0, i;
 	struct app_verify_arg app_verify_arg =
@@ -488,13 +489,14 @@ main(int argc, char *argv[])
 #else
 			no_psk = 1;
 #endif
-		}
+		} else if (strcmp(*argv, "-dtls1") == 0)
+			dtls1 = 1;
 		else if (strcmp(*argv, "-ssl2") == 0)
 			ssl2 = 1;
-		else if (strcmp(*argv, "-tls1") == 0)
-			tls1 = 1;
 		else if (strcmp(*argv, "-ssl3") == 0)
 			ssl3 = 1;
+		else if (strcmp(*argv, "-tls1") == 0)
+			tls1 = 1;
 		else if (strncmp(*argv, "-num", 4) == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -595,11 +597,12 @@ bad:
 		goto end;
 	}
 
-	if (!ssl2 && !ssl3 && !tls1 && number > 1 && !reuse && !force) {
+	if (!dtls1 && !ssl2 && !ssl3 && !tls1 &&
+	    number > 1 && !reuse && !force) {
 		fprintf(stderr,
 		    "This case cannot work.  Use -f to perform "
 		    "the test anyway (and\n-d to see what happens), "
-		    "or add one of -ssl2, -ssl3, -tls1, -reuse\n"
+		    "or add one of -dtls1, -ssl2, -ssl3, -tls1, -reuse\n"
 		    "to avoid protocol mismatch.\n");
 		exit(1);
 	}
@@ -653,7 +656,9 @@ bad:
 	}
 #endif
 
-	if (tls1)
+	if (dtls1)
+		meth = DTLSv1_method();
+	else if (tls1)
 		meth = TLSv1_method();
 	else if (ssl3)
 		meth = SSLv3_method();

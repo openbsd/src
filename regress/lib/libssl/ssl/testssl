@@ -158,4 +158,32 @@ else
   $ssltest -bio_pair -tls1 -cipher SRP -srpuser test -srppass abc123
 fi
 
-exit 0
+#
+# DTLS
+#
+
+echo test dtlsv1
+$ssltest -dtls1 $extra || exit 1
+
+echo test dtlsv1 with server authentication
+$ssltest -dtls1 -server_auth $CA $extra || exit 1
+
+echo test dtlsv1 with client authentication
+$ssltest -dtls1 -client_auth $CA $extra || exit 1
+
+echo test dtlsv1 with both client and server authentication
+$ssltest -dtls1 -server_auth -client_auth $CA $extra || exit 1
+
+echo "Testing DTLS ciphersuites"
+for protocol in SSLv3; do
+  echo "Testing ciphersuites for $protocol"
+  for cipher in `openssl ciphers "RSA+$protocol" | tr ':' '\n' |
+    grep -v RC4`; do
+    echo "Testing $cipher"
+    $ssltest -cipher $cipher -dtls1
+    if [ $? -ne 0 ] ; then
+	  echo "Failed $cipher"
+	  exit 1
+    fi
+  done
+done
