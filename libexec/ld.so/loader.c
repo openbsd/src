@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.147 2014/02/16 01:16:38 martynas Exp $ */
+/*	$OpenBSD: loader.c,v 1.148 2014/06/21 08:00:23 otto Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -280,8 +280,10 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 			} *liblist;
 			int *randomlist;
 
-			liblist = _dl_malloc(libcount * sizeof(struct listent));
-			randomlist =  _dl_malloc(libcount * sizeof(int));
+			liblist = _dl_reallocarray(NULL, libcount,
+			    sizeof(struct listent));
+			randomlist =  _dl_reallocarray(NULL, libcount,
+			    sizeof(int));
 
 			if (liblist == NULL)
 				_dl_exit(5);
@@ -458,7 +460,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 			if (phdp->p_vaddr > maxva)
 				maxva = phdp->p_vaddr + phdp->p_memsz;
 
-			next_load = _dl_malloc(sizeof(struct load_list));
+			next_load = _dl_calloc(1, sizeof(struct load_list));
 			next_load->next = load_list;
 			load_list = next_load;
 			next_load->start = (char *)TRUNC_PG(phdp->p_vaddr) + exe_loff;
@@ -560,6 +562,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 			DL_DEB(("failed to mark DTDEBUG\n"));
 	}
 	if (map_link) {
+		/* XXX */
 		debug_map = (struct r_debug *)_dl_malloc(sizeof(*debug_map));
 		debug_map->r_version = 1;
 		debug_map->r_map = (struct link_map *)_dl_objects;

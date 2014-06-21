@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.44 2012/08/20 23:25:07 matthew Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.45 2014/06/21 08:00:23 otto Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -158,6 +158,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 			size = off + phdp->p_filesz;
 
 			if (size != 0) {
+				/* XXX */
 				ld = _dl_malloc(sizeof(struct load_list));
 				ld->start = NULL;
 				ld->size = size;
@@ -171,7 +172,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 			    ROUND_PG(size) == ROUND_PG(off + phdp->p_memsz))
 				break;
 			/* This phdr has a zfod section */
-			ld = _dl_malloc(sizeof(struct load_list));
+			ld = _dl_calloc(1, sizeof(struct load_list));
 			ld->start = NULL;
 			ld->size = ROUND_PG(off + phdp->p_memsz) -
 			    ROUND_PG(size);

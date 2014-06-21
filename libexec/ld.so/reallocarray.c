@@ -1,7 +1,6 @@
-/*	$OpenBSD: prebind_path.c,v 1.3 2014/06/21 08:00:23 otto Exp $	*/
-
+/*	$OpenBSD: reallocarray.c,v 1.1 2014/06/21 08:00:23 otto Exp $	*/
 /*
- * Copyright (c) 2013 Kurt Miller <kurt@intricatesoftware.com>
+ * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,29 +16,24 @@
  */
 
 #include <sys/types.h>
+#include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
-#include "util.h"
+#include <unistd.h>
+#include "archdep.h"
 
-void *                                                                         
-_dl_reallocarray(void *ptr, size_t cnt, size_t num)                            
-{                                                                              
-	return reallocarray(ptr, cnt, num);                                     
-} 
+/*
+ * This is sqrt(SIZE_MAX+1), as s1*s2 <= SIZE_MAX
+ * if both s1 < MUL_NO_OVERFLOW and s2 < MUL_NO_OVERFLOW
+ */
+#define MUL_NO_OVERFLOW	(1UL << (sizeof(size_t) * 4))
 
 void *
-_dl_malloc(size_t need)
+_dl_reallocarray(void *optr, size_t nmemb, size_t size)
 {
-	void *ret = malloc(need);
-	if (ret != NULL)
-		memset(ret, 0, need);
-	return (ret);
+	if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
+	    nmemb > 0 && SIZE_MAX / nmemb < size) {
+		_dl_wrstderr("reallocarray overflow\n");
+		_dl_exit(7);
+	}
+	return _dl_realloc(optr, size * nmemb);
 }
-
-void
-_dl_free(void *p)
-{
-	free(p);
-}
-
-#include "path.c"

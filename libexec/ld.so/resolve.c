@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.65 2013/11/27 21:25:25 deraadt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.66 2014/06/21 08:00:23 otto Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -245,7 +245,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	_dl_printf("objname [%s], dynp %p, objtype %x lbase %lx, obase %lx\n",
 	    objname, dynp, objtype, lbase, obase);
 #endif
-	object = _dl_malloc(sizeof(elf_object_t));
+	object = _dl_calloc(1, sizeof(elf_object_t));
 	object->prev = object->next = NULL;
 
 	object->load_dyn = dynp;
@@ -329,6 +329,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	object->phdrc = phdrc;
 	object->load_base = lbase;
 	object->obj_base = obase;
+	/* XXX */
 	object->load_name = _dl_strdup(objname);
 	object->load_object = _dl_loading_object;
 	if (object->load_object == object)

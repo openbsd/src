@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.2 2014/06/15 06:48:30 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.3 2014/06/21 08:00:23 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -887,7 +887,7 @@ _dl_malloc(size_t size)
 		malloc_recurse();
 		return NULL;
 	}
-	r = omalloc(size, 1 /* XXX */);
+	r = omalloc(size, 0);
 	malloc_active--;
 	return r;
 }
@@ -1020,3 +1020,49 @@ _dl_calloc(size_t nmemb, size_t size)
 	malloc_active--;
 	return r;
 }
+
+
+static void *
+orealloc(void *p, size_t newsz)
+{
+	struct region_info *r;
+	void *q;
+	size_t oldsz;
+
+	q = omalloc(newsz, 0);
+	if (p == NULL || q == NULL)
+		return q;
+	r = find(g_pool, p);
+	if (r == NULL)
+		wrterror("bogus pointer (double free?)");
+	REALSIZE(oldsz, r);	
+	if (oldsz > MALLOC_MAXCHUNK) {
+		if (oldsz < mopts.malloc_guard)
+			wrterror("guard size");
+		oldsz -= mopts.malloc_guard;
+	}
+	_dl_bcopy(p, q, oldsz < newsz ? oldsz : newsz);
+	_dl_free(p);
+	return q;
+}
+
+
+void *
+_dl_realloc(void *ptr, size_t size)
+{
+	void *r;
+  
+	malloc_func = "realloc():";  
+	if (g_pool == NULL) {
+		if (malloc_init() != 0)
+			return NULL;
+	}
+	if (malloc_active++) {
+		malloc_recurse();
+		return NULL;
+	}
+	r = orealloc(ptr, size);
+	malloc_active--;
+	return r;
+}
+

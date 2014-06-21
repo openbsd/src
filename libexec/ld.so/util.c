@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.31 2014/06/14 20:31:17 miod Exp $	*/
+/*	$OpenBSD: util.c,v 1.32 2014/06/21 08:00:23 otto Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -51,11 +51,12 @@ char *
 _dl_strdup(const char *orig)
 {
 	char *newstr;
-	int len;
+	size_t len;
 
 	len = _dl_strlen(orig)+1;
 	newstr = _dl_malloc(len);
-	_dl_strlcpy(newstr, orig, len);
+	if (newstr != NULL)
+		_dl_strlcpy(newstr, orig, len);
 	return (newstr);
 }
 

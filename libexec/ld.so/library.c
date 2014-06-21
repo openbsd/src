@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.67 2012/08/20 23:25:07 matthew Exp $ */
+/*	$OpenBSD: library.c,v 1.68 2014/06/21 08:00:22 otto Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -195,7 +195,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 				    TRUNC_PG(phdp->p_offset));
 			} else
 				res = NULL;	/* silence gcc */
-			next_load = _dl_malloc(sizeof(struct load_list));
+			next_load = _dl_calloc(1, sizeof(struct load_list));
 			next_load->next = load_list;
 			load_list = next_load;
 			next_load->start = start;
