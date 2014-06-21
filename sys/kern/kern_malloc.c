@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.107 2014/05/19 14:30:03 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.108 2014/06/21 19:24:57 daniel Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -79,10 +79,6 @@ static __inline__ long BUCKETINDX(size_t sz)
 
 static struct vm_map kmem_map_store;
 struct vm_map *kmem_map = NULL;
-
-#ifdef NKMEMCLUSTERS
-#error NKMEMCLUSTERS is obsolete; remove it from your kernel config file and use NKMEMPAGES instead or let the kernel auto-size
-#endif
 
 /*
  * Default number of pages in kmem_map.  We attempt to calculate this
