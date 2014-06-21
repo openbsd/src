@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.62 2014/06/21 14:45:22 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.63 2014/06/21 17:02:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -795,11 +795,8 @@ tls1_enc(SSL *s, int send)
 		ssize_t n;
 
 		if (SSL_IS_DTLS(s)) {
-			unsigned char dtlsseq[9], *p = dtlsseq;
-
-			s2n(send ? s->d1->w_epoch : s->d1->r_epoch, p);
-			memcpy(p, &seq[2], 6);
-			memcpy(ad, dtlsseq, 8);
+			dtls1_build_sequence_number(ad, seq,
+			    send ? s->d1->w_epoch : s->d1->r_epoch);
 		} else {
 			memcpy(ad, seq, SSL3_SEQUENCE_SIZE);
 			ssl3_record_sequence_increment(seq);
@@ -948,11 +945,8 @@ tls1_enc(SSL *s, int send)
 			unsigned char buf[13];
 
 			if (SSL_IS_DTLS(s)) {
-				unsigned char dtlsseq[9], *p = dtlsseq;
-
-				s2n(send ? s->d1->w_epoch : s->d1->r_epoch, p);
-				memcpy(p, &seq[2], 6);
-				memcpy(buf, dtlsseq, 8);
+				dtls1_build_sequence_number(buf, seq,
+				    send ? s->d1->w_epoch : s->d1->r_epoch);
 			} else {
 				memcpy(buf, seq, SSL3_SEQUENCE_SIZE);
 				ssl3_record_sequence_increment(seq);
@@ -1131,15 +1125,11 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 		mac_ctx = &hmac;
 	}
 
-	if (SSL_IS_DTLS(ssl)) {
-		unsigned char dtlsseq[8], *p = dtlsseq;
-
-		s2n(send ? ssl->d1->w_epoch : ssl->d1->r_epoch, p);
-		memcpy(p, &seq[2], 6);
-
-		memcpy(header, dtlsseq, 8);
-	} else
-		memcpy(header, seq, 8);
+	if (SSL_IS_DTLS(ssl))
+		dtls1_build_sequence_number(header, seq,
+		    send ? ssl->d1->w_epoch : ssl->d1->r_epoch);
+	else
+		memcpy(header, seq, SSL3_SEQUENCE_SIZE);
 
 	/* kludge: tls1_cbc_remove_padding passes padding length in rec->type */
 	orig_len = rec->length + md_size + ((unsigned int)rec->type >> 8);
