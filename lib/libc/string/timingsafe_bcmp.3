@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timingsafe_bcmp.3,v 1.1 2014/06/13 02:12:17 matthew Exp $
+.\"	$OpenBSD: timingsafe_bcmp.3,v 1.2 2014/06/21 20:22:15 tedu Exp $
 .\"
 .\" Copyright (c) 2014 Google Inc.
 .\"
@@ -13,7 +13,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: June 13 2014 $
+.Dd $Mdocdate: June 21 2014 $
 .Dt TIMINGSAFE_BCMP 3
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ may short-circuit after finding the first differing byte.
 .Sh RETURN VALUES
 The
 .Fn timingsafe_bcmp
-function returns 0 or 1 if the byte sequence pointed to by
+function returns 0 or not zero if the byte sequence pointed to by
 .Fa b1
 compares equal to or not equal to (respectively)
 the byte sequence pointed to by
@@ -58,17 +58,12 @@ the byte sequence pointed to by
 .Pp
 The
 .Fn timingsafe_memcmp
-function returns \-1, 0, or 1 if the byte sequence pointed to by
+function returns a negative value, 0, or positive value if the byte sequence
+pointed to by
 .Fa b1
 compares less than, equal to, or greater than (respectively)
 the byte sequence pointed to by
 .Fa b2 .
-.Pp
-Note that these return values are compatible with, but stricter than,
-the ones specified for
-.Xr bcmp 3
-and
-.Xr memcmp 3 .
 .Sh SEE ALSO
 .Xr bcmp 3 ,
 .Xr memcmp 3
