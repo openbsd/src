@@ -1,4 +1,4 @@
-/* $OpenBSD: cm_ameth.c,v 1.4 2014/06/21 12:07:02 miod Exp $ */
+/* $OpenBSD: cm_ameth.c,v 1.5 2014/06/21 13:42:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2010.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -77,8 +77,7 @@ cmac_key_free(EVP_PKEY *pkey)
 		CMAC_CTX_free(cmctx);
 }
 
-const EVP_PKEY_ASN1_METHOD
-cmac_asn1_meth = {
+const EVP_PKEY_ASN1_METHOD cmac_asn1_meth = {
 	.pkey_id = EVP_PKEY_CMAC,
 	.pkey_base_id = EVP_PKEY_CMAC,
 

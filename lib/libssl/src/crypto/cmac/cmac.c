@@ -1,4 +1,4 @@
-/* $OpenBSD: cmac.c,v 1.6 2014/06/21 12:07:02 miod Exp $ */
+/* $OpenBSD: cmac.c,v 1.7 2014/06/21 13:42:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -217,7 +217,7 @@ CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
 			return 1;
 		data += nleft;
 		/* Else not final block so encrypt it */
-		if (!EVP_Cipher(&ctx->cctx, ctx->tbl, ctx->last_block,bl))
+		if (!EVP_Cipher(&ctx->cctx, ctx->tbl, ctx->last_block, bl))
 			return 0;
 	}
 	/* Encrypt all but one of the complete blocks left */
@@ -257,7 +257,7 @@ CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
 			out[i] = ctx->last_block[i] ^ ctx->k2[i];
 	}
 	if (!EVP_Cipher(&ctx->cctx, out, out, bl)) {
-		OPENSSL_cleanse(out, bl);	
+		OPENSSL_cleanse(out, bl);
 		return 0;
 	}
 	return 1;
@@ -272,7 +272,7 @@ CMAC_resume(CMAC_CTX *ctx)
 	 * which is the last IV (or all zeroes if no last encrypted block).
 	 * The last block has not been modified since CMAC_final().
 	 * So reinitialising using the last decrypted block will allow
-	 * CMAC to continue after calling CMAC_Final(). 
+	 * CMAC to continue after calling CMAC_Final().
 	 */
 	return EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, ctx->tbl);
 }

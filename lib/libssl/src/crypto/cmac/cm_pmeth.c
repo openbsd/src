@@ -1,4 +1,4 @@
-/* $OpenBSD: cm_pmeth.c,v 1.5 2014/06/21 12:07:02 miod Exp $ */
+/* $OpenBSD: cm_pmeth.c,v 1.6 2014/06/21 13:42:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2010.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -100,12 +100,12 @@ pkey_cmac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 		return 0;
 	}
 	EVP_PKEY_assign(pkey, EVP_PKEY_CMAC, cmkey);
-	
+
 	return 1;
 }
 
 static int
-int_update(EVP_MD_CTX *ctx,const void *data,size_t count)
+int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
 	if (!CMAC_Update(ctx->pctx->data, data, count))
 		return 0;
@@ -193,8 +193,7 @@ pkey_cmac_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 	return -2;
 }
 
-const EVP_PKEY_METHOD
-cmac_pkey_meth = {
+const EVP_PKEY_METHOD cmac_pkey_meth = {
 	.pkey_id = EVP_PKEY_CMAC,
 	.flags = EVP_PKEY_FLAG_SIGCTX_CUSTOM,
 
