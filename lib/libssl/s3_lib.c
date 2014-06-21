@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.61 2014/06/13 13:28:53 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.62 2014/06/21 16:51:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -328,7 +328,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_SSLV3,
 		.algo_strength = SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 168,
+		.strength_bits = 112,
 		.alg_bits = 168,
 	},
 
@@ -377,7 +377,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_SSLV3,
 		.algo_strength = SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 168,
+		.strength_bits = 112,
 		.alg_bits = 168,
 	},
 
@@ -425,7 +425,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_SSLV3,
 		.algo_strength = SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 168,
+		.strength_bits = 112,
 		.alg_bits = 168,
 	},
 
@@ -474,7 +474,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_SSLV3,
 		.algo_strength = SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 168,
+		.strength_bits = 112,
 		.alg_bits = 168,
 	},
 
@@ -522,7 +522,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_SSLV3,
 		.algo_strength = SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 168,
+		.strength_bits = 112,
 		.alg_bits = 168,
 	},
 
@@ -602,7 +602,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_SSLV3,
 		.algo_strength = SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 168,
+		.strength_bits = 112,
 		.alg_bits = 168,
 	},
 
@@ -1293,7 +1293,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1,
 		.algo_strength = SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 168,
+		.strength_bits = 112,
 		.alg_bits = 168,
 	},
 
@@ -1592,7 +1592,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1,
 		.algo_strength = SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 168,
+		.strength_bits = 112,
 		.alg_bits = 168,
 	},
 
@@ -1672,7 +1672,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1,
 		.algo_strength = SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 168,
+		.strength_bits = 112,
 		.alg_bits = 168,
 	},
 
@@ -1752,7 +1752,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1,
 		.algo_strength = SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 168,
+		.strength_bits = 112,
 		.alg_bits = 168,
 	},
 
@@ -1832,7 +1832,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1,
 		.algo_strength = SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 168,
+		.strength_bits = 112,
 		.alg_bits = 168,
 	},
 
@@ -1912,7 +1912,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1,
 		.algo_strength = SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 168,
+		.strength_bits = 112,
 		.alg_bits = 168,
 	},
 
@@ -2224,8 +2224,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-
 
 #ifdef TEMP_GOST_TLS
 	/* Cipher FF00 */
