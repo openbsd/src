@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_ameth.c,v 1.4 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: hm_ameth.c,v 1.5 2014/06/21 12:00:01 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -68,35 +68,35 @@
  * key.
  */
 
-static int hmac_size(const EVP_PKEY *pkey)
-	{
+static int
+hmac_size(const EVP_PKEY *pkey)
+{
 	return EVP_MAX_MD_SIZE;
-	}
+}
 
-static void hmac_key_free(EVP_PKEY *pkey)
-	{
+static void
+hmac_key_free(EVP_PKEY *pkey)
+{
 	ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
-	if (os)
-		{
+
+	if (os) {
 		if (os->data)
 			OPENSSL_cleanse(os->data, os->length);
 		ASN1_OCTET_STRING_free(os);
-		}
 	}
+}
 
-
-static int hmac_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
-	{
-	switch (op)
-		{
-		case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
+static int
+hmac_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+{
+	switch (op) {
+	case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
 		*(int *)arg2 = NID_sha1;
 		return 1;
-
-		default:
+	default:
 		return -2;
-		}
 	}
+}
 
 #ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
 /* A bogus private key format for test purposes. This is simply the
@@ -104,42 +104,44 @@ static int hmac_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
  * genpkey utility can be used to "generate" HMAC keys.
  */
 
-static int old_hmac_decode(EVP_PKEY *pkey,
-					const unsigned char **pder, int derlen)
-	{
+static int
+old_hmac_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
+{
 	ASN1_OCTET_STRING *os;
+
 	os = ASN1_OCTET_STRING_new();
 	if (!os || !ASN1_OCTET_STRING_set(os, *pder, derlen))
 		return 0;
 	EVP_PKEY_assign(pkey, EVP_PKEY_HMAC, os);
 	return 1;
-	}
+}
 
-static int old_hmac_encode(const EVP_PKEY *pkey, unsigned char **pder)
-	{
+static int
+old_hmac_encode(const EVP_PKEY *pkey, unsigned char **pder)
+{
 	int inc;
 	ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
-	if (pder)
-		{
-		if (!*pder)
-			{
+
+	if (pder) {
+		if (!*pder) {
 			*pder = malloc(os->length);
 			inc = 0;
-			}
-		else inc = 1;
+		} else
+			inc = 1;
 
 		memcpy(*pder, os->data, os->length);
 
 		if (inc)
 			*pder += os->length;
-		}
+	}
 			
 	return os->length;
-	}
+}
 
 #endif
 
-const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
+const EVP_PKEY_ASN1_METHOD
+hmac_asn1_meth = {
 	.pkey_id = EVP_PKEY_HMAC,
 	.pkey_base_id = EVP_PKEY_HMAC,
 
@@ -154,5 +156,4 @@ const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
 	.old_priv_decode = old_hmac_decode,
 	.old_priv_encode = old_hmac_encode
 #endif
-	};
-
+};
