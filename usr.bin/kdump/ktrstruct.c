@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.3 2014/01/24 04:26:51 guenther Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.4 2014/06/22 23:50:45 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -61,10 +61,10 @@ ktrsockaddr(struct sockaddr *sa)
 {
 /*
  TODO: Support additional address families
-	#include <netnatm/natm.h>
-	struct sockaddr_natm	*natm;
-	#include <netsmb/netbios.h>
-	struct sockaddr_nb	*nb;
+	#include <netmpls/mpls.h>
+	struct sockaddr_mpls	*mpls;
+	#include <netbt/bluetooth.h>
+	struct sockaddr_bt	*bt;
 */
 	char addr[64];
 
@@ -155,7 +155,12 @@ print_timespec(const struct timespec *tsp, int relative)
 		printf("UTIME_NOW");
 	else if (tsp->tv_nsec == UTIME_OMIT)
 		printf("UTIME_OMIT");
-	else {
+	else if ((resolv == 0 || relative) && tsp->tv_sec < 0 &&
+	    tsp->tv_nsec > 0) {
+		/* negative relative times with non-zero nsecs require care */
+		printf("-%jd.%09ld", -(intmax_t)(tsp->tv_sec+1),
+		    1000000000 - tsp->tv_nsec);
+	} else {
 		print_time(tsp->tv_sec, relative);
 		if (tsp->tv_nsec != 0)
 			printf(".%09ld", tsp->tv_nsec);
@@ -210,9 +215,16 @@ ktrtimespec(const struct timespec *tsp, int relative)
 static void
 print_timeval(const struct timeval *tvp, int relative)
 {
-	print_time(tvp->tv_sec, relative);
-	if (tvp->tv_usec != 0)
-		printf(".%06ld", tvp->tv_usec);
+	if ((resolv == 0 || relative) && tvp->tv_sec < 0 &&
+	    tvp->tv_usec > 0) {
+		/* negative relative times with non-zero usecs require care */
+		printf("-%jd.%06ld", -(intmax_t)(tvp->tv_sec+1),
+		    1000000 - tvp->tv_usec);
+	} else {
+		print_time(tvp->tv_sec, relative);
+		if (tvp->tv_usec != 0)
+			printf(".%06ld", tvp->tv_usec);
+	}
 }
 
 static void
