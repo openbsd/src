@@ -1,4 +1,4 @@
-/*	$OpenBSD: biotest.c,v 1.1 2014/06/22 14:30:52 jsing Exp $	*/
+/*	$OpenBSD: biotest.c,v 1.2 2014/06/22 16:57:34 jsing Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -15,10 +15,41 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+
 #include <stdlib.h>
+#include <strings.h>
+
+#include <netinet/in.h>
 
 #include <openssl/bio.h>
 #include <openssl/err.h>
+
+struct bio_get_host_ip_test {
+	char *input;
+	u_int32_t ip;
+	int ret;
+};
+
+struct bio_get_host_ip_test bio_get_host_ip_tests[] = {
+	{"", 0, 0},
+	{".", 0, 0},
+	{"1", 0, 0},
+	{"1.2", 0, 0},
+	{"1.2.3", 0, 0},
+	{"1.2.3.", 0, 0},
+	{"1.2.3.4", 0x01020304, 1},
+	{"1.2.3.256", 0, 0},
+	{"1:2:3::4", 0, 0},
+	{"0.0.0.0", INADDR_ANY, 1},
+	{"127.0.0.1", INADDR_LOOPBACK, 1},
+	{"localhost", INADDR_LOOPBACK, 1},
+	{"255.255.255.255", INADDR_BROADCAST, 1},
+	{"0xff.0xff.0xff.0xff", 0, 0},
+};
+
+#define N_BIO_GET_IP_TESTS \
+    (sizeof(bio_get_host_ip_tests) / sizeof(*bio_get_host_ip_tests))
 
 struct bio_get_port_test {
 	char *input;
@@ -44,6 +75,38 @@ struct bio_get_port_test bio_get_port_tests[] = {
 
 #define N_BIO_GET_PORT_TESTS \
     (sizeof(bio_get_port_tests) / sizeof(*bio_get_port_tests))
+
+static int
+do_bio_get_host_ip_tests(void)
+{
+	struct bio_get_host_ip_test *bgit;
+	unsigned char ip[4];
+	int failed = 0;
+	size_t i;
+	int ret;
+
+	for (i = 0; i < N_BIO_GET_IP_TESTS; i++) {
+		bgit = &bio_get_host_ip_tests[i];
+		memset(ip, 0, sizeof(*ip));
+		
+		ret = BIO_get_host_ip(bgit->input, ip);
+		if (ret != bgit->ret) {
+			fprintf(stderr, "FAIL: test %zi (\"%s\") %s, want %s\n",
+			    i, bgit->input, ret ? "success" : "failure",
+			    bgit->ret ? "success" : "failure");
+			failed = 1;
+			continue;
+		}
+		if (ret && ntohl(*((u_int32_t *)ip)) != bgit->ip) {
+			fprintf(stderr, "FAIL: test %zi (\"%s\") returned ip "
+			    "%x != %x\n", i, bgit->input,
+			    ntohl(*((u_int32_t *)ip)), bgit->ip);
+			failed = 1;
+		}
+	}
+
+	return failed;
+}
 
 static int
 do_bio_get_port_tests(void)
@@ -79,5 +142,10 @@ do_bio_get_port_tests(void)
 int
 main(int argc, char **argv)
 {
-	return do_bio_get_port_tests();
+	int ret = 0;
+
+	ret |= do_bio_get_host_ip_tests();
+	ret |= do_bio_get_port_tests();
+
+	return (ret);
 }
