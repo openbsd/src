@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.12 2014/05/31 14:39:06 jsing Exp $
+#	$OpenBSD: Makefile,v 1.13 2014/06/22 14:28:07 jsing Exp $
 
 SUBDIR= \
+	aead \
 	aeswrap \
 	base64 \
 	bf \
