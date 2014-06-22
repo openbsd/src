@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.40 2014/06/22 15:38:28 jsing Exp $ */
+/* $OpenBSD: b_sock.c,v 1.41 2014/06/22 16:47:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,11 +86,6 @@ BIO_get_host_ip(const char *str, unsigned char *ip)
 		BIOerr(BIO_F_BIO_GET_HOST_IP, BIO_R_INVALID_IP_ADDRESS);
 		goto err;
 	}
-
-	/* At this point, we have something that is most probably correct
-	   in some way, so let's init the socket. */
-	if (BIO_sock_init() != 1)
-		return 0; /* don't generate another error code here */
 
 	/* If the string actually contained an IP address, we need not do
 	   anything more */
@@ -208,7 +203,6 @@ BIO_gethostbyname(const char *name)
 	return gethostbyname(name);
 }
 
-
 int
 BIO_sock_init(void)
 {
@@ -285,9 +279,6 @@ BIO_get_accept_socket(char *host, int bind_mode)
 	char *h, *p;
 	unsigned long l;
 	int err_num;
-
-	if (BIO_sock_init() != 1)
-		return (-1);
 
 	if ((str = BUF_strdup(host)) == NULL)
 		return (-1);
