@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.776 2014/04/20 00:08:26 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.777 2014/06/22 21:15:51 guenther Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -26,7 +26,7 @@ option		MTRR		# CPU memory range attributes control
 
 option		COMPAT_LINUX	# binary compatibility with Linux
 
-option		PROCFS		# /proc
+#option		PROCFS		# /proc, currently broken
 option		NTFS		# NTFS support
 option		HIBERNATE	# Hibernate support
 
