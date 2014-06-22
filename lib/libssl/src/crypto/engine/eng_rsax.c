@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_rsax.c,v 1.7 2014/06/22 12:05:09 jsing Exp $ */
+/* $OpenBSD: eng_rsax.c,v 1.8 2014/06/22 12:18:33 jsing Exp $ */
 /* Copyright (c) 2010-2010 Intel Corp.
  *   Author: Vinodh.Gopal@intel.com
  *           Jim Guilford
@@ -573,10 +573,10 @@ e_rsax_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
 		c = &local_c;
 		BN_with_flags(c, I, BN_FLG_CONSTTIME);
-		if (!BN_mod(r1, c,rsa->q, ctx))
+		if (!BN_mod(r1, c, rsa->q, ctx))
 			goto err;
 	} else {
-		if (!BN_mod(r1, I,rsa->q, ctx))
+		if (!BN_mod(r1, I, rsa->q, ctx))
 			goto err;
 	}
 
@@ -595,10 +595,10 @@ e_rsax_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
 		c = &local_c;
 		BN_with_flags(c, I, BN_FLG_CONSTTIME);
-		if (!BN_mod(r1, c,rsa->p, ctx))
+		if (!BN_mod(r1, c, rsa->p, ctx))
 			goto err;
 	} else {
-		if (!BN_mod(r1, I,rsa->p, ctx))
+		if (!BN_mod(r1, I, rsa->p, ctx))
 			goto err;
 	}
 
