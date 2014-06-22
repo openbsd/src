@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.38 2014/03/30 23:57:43 dlg Exp $
+.\"	$OpenBSD: man.7,v 1.39 2014/06/22 16:39:07 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 30 2014 $
+.Dd $Mdocdate: June 22 2014 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -873,10 +873,11 @@ Note that macros like
 .Sx \&BR
 open and close a font scope for each argument.
 .Sh COMPATIBILITY
-This section documents areas of questionable portability between
+This section mentions some areas of questionable portability between
 implementations of the
 .Nm
 language.
+More incompatibilities exist.
 .Pp
 .Bl -dash -compact
 .It
@@ -888,46 +889,11 @@ to close out a literal context opened with
 .Sx \&nf .
 This behaviour may not be portable.
 .It
-In quoted literals, GNU troff allowed pair-wise double-quotes to produce
-a standalone double-quote in formatted output.
-It is not known whether this behaviour is exhibited by other formatters.
-.It
 troff suppresses a newline before
 .Sq \(aq
 macro output; in mandoc, it is an alias for the standard
 .Sq \&.
 control character.
-.It
-The
-.Sq \eh
-.Pq horizontal position ,
-.Sq \ev
-.Pq vertical position ,
-.Sq \em
-.Pq text colour ,
-.Sq \eM
-.Pq text filling colour ,
-.Sq \ez
-.Pq zero-length character ,
-.Sq \ew
-.Pq string length ,
-.Sq \ek
-.Pq horizontal position marker ,
-.Sq \eo
-.Pq text overstrike ,
-and
-.Sq \es
-.Pq text size
-escape sequences are all discarded in mandoc.
-.It
-The
-.Sq \ef
-scaling unit is accepted by mandoc, but rendered as the default unit.
-.It
-The
-.Sx \&sp
-macro does not accept negative values in mandoc.
-In GNU troff, this would result in strange behaviour.
 .It
 In page header lines, GNU troff versions up to and including 1.21
 only print
@@ -944,8 +910,13 @@ is given, like in
 .El
 .Pp
 The
-.Sx OP
-macro is part of the extended
+.Sx EE ,
+.Sx EX ,
+.Sx OP ,
+.Sx UE ,
+and
+.Sx UR
+macros are part of the GNU extended
 .Nm
 macro set, and may not be portable to non-GNU troff implementations.
 .Sh SEE ALSO
