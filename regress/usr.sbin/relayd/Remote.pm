@@ -1,4 +1,4 @@
-#	$OpenBSD: Remote.pm,v 1.2 2013/01/04 14:01:49 bluhm Exp $
+#	$OpenBSD: Remote.pm,v 1.3 2014/06/22 14:18:01 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -48,7 +48,7 @@ sub new {
 	my %args = @_;
 	$args{logfile} ||= "remote.log";
 	$args{up} ||= "Started";
-	$args{down} ||= "parent terminating";
+	$args{down} ||= $args{dryrun} ? "no actions" : "parent terminating";
 	$args{func} = sub { Carp::confess "$class func may not be called" };
 	$args{remotessh}
 	    or croak "$class remote ssh host not given";
@@ -91,13 +91,13 @@ sub child {
 	my @sudo = $ENV{SUDO} ? "SUDO=$ENV{SUDO}" : ();
 	my @ktrace = $ENV{KTRACE} ? "KTRACE=$ENV{KTRACE}" : ();
 	my @relayd = $ENV{RELAYD} ? "RELAYD=$ENV{RELAYD}" : ();
-	my $dir = dirname($0);
-	$dir = getcwd() if ! $dir || $dir eq '.';
+	my $curdir = dirname($0) || ".";
+	$curdir = getcwd() if $curdir eq '.';
 	my @cmd = ('ssh', @opts, $self->{remotessh},
 	    @sudo, @ktrace, @relayd, 'perl',
-	    '-I', $dir, "$dir/".basename($0), $self->{forward},
+	    '-I', $curdir, "$curdir/".basename($0), $self->{forward},
 	    $self->{listenaddr}, $self->{connectaddr}, $self->{connectport},
-	    ($self->{testfile} ? "$dir/".basename($self->{testfile}) : ()));
+	    ($self->{testfile} ? "$curdir/".basename($self->{testfile}) : ()));
 	print STDERR "execute: @cmd\n";
 	exec @cmd;
 	die "Exec @cmd failed: $!";

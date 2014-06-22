@@ -12,7 +12,7 @@ our %args = (
 	protocol => [ "http",
 	    'return error',
 	    'label test_reject_label',
-	    'url filter file args-http-filter-url-file.in log',
+	    'url filter file "$curdir/args-http-filter-url-file.in" log',
 	    'no label',
 	],
 	loggrep => {

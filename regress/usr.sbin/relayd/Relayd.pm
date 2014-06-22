@@ -1,4 +1,4 @@
-#	$OpenBSD: Relayd.pm,v 1.9 2014/05/12 21:30:42 andre Exp $
+#	$OpenBSD: Relayd.pm,v 1.10 2014/06/22 14:18:01 bluhm Exp $
 
 # Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -55,6 +55,13 @@ sub new {
 	print $fh "table <table-$test> { $self->{connectaddr} }\n"
 	    if defined($self->{table});
 
+	# substitute variables in config file
+	my $curdir = dirname($0) || ".";
+	my $connectport = $self->{connectport};
+	my $connectaddr = $self->{connectaddr};
+	my $listenaddr = $self->{listenaddr};
+	my $listenport = $self->{listenport};
+
 	my @protocol = @{$self->{protocol}};
 	my $proto = shift @protocol;
 	$proto = defined($proto) ? "$proto " : "";
@@ -64,14 +71,14 @@ sub new {
 	    die ref($self), " invalid forward $self->{forward}"
 	    unless grep { /splice/ } @protocol;
 	print $fh "${proto}protocol proto-$test {";
+	# substitute variables in config file
+	foreach (@protocol) {
+		s/(\$[a-z]+)/$1/eeg;
+	}
 	print $fh  map { "\n\t$_" } @protocol;
 	print $fh  "\n}\n";
 
 	my @relay = @{$self->{relay}};
-	my $connectport = $self->{connectport};
-	my $connectaddr = $self->{connectaddr};
-	my $listenaddr = $self->{listenaddr};
-	my $listenport = $self->{listenport};
 	print $fh  "relay relay-$test {";
 	print $fh  "\n\tprotocol proto-$test"
 	    unless grep { /^protocol / } @relay;
@@ -81,11 +88,9 @@ sub new {
 	my $withssl = $self->{forwardssl} ? " with ssl" : "";
 	print $fh  "\n\tforward$withssl to $self->{connectaddr} ".
 	    "port $self->{connectport}" unless grep { /^forward / } @relay;
-	my @raux = @relay;
-	@relay = ();
-	foreach my $s (@raux) {
-		$s =~ s/(\$\w+)/$1/eeg;
-		push @relay, $s;
+	# substitute variables in config file
+	foreach (@relay) {
+		s/(\$[a-z]+)/$1/eeg;
 	}
 	print $fh  map { "\n\t$_" } @relay;
 	print $fh  "\n}\n";
@@ -97,7 +102,7 @@ sub up {
 	my $self = Proc::up(shift, @_);
 	my $timeout = shift || 10;
 	my $regex = $self->{dryrun} || "relay_launch: ";
-	my $lsock = $self->loggrep(qr/$regex/, $timeout)
+	$self->loggrep(qr/$regex/, $timeout)
 	    or croak ref($self), " no $regex in $self->{logfile} ".
 		"after $timeout seconds";
 	return $self;

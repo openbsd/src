@@ -5,7 +5,7 @@ our %args = (
     client => {
 	func => \&http_client,
 	len => 1,
-	loggrep => { "X-Server-Append: 127.0.0.1:.*" => 1 },
+	loggrep => { 'X-Server-Append: \d+\.\d+\.\d+\.\d+:\d+$' => 1 },
     },
     relayd => {
 	protocol => [ "http",
@@ -15,7 +15,7 @@ our %args = (
     },
     server => {
 	func => \&http_server,
-	loggrep => { "X-Client-Append: 127.0.0.1:.*" => 1 },
+	loggrep => { 'X-Client-Append: \d+\.\d+\.\d+\.\d+:\d+$' => 1 },
     },
 );
 

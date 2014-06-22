@@ -17,7 +17,7 @@ our %args = (
 	protocol => [ "http",
 	    'response header remove X-Header-Foo log',
 	],
-	loggrep => { qr/done, \[X-Header-Foo: foo\s*\]/ => 1 },
+	loggrep => { qr/ (?:done|last write \(done\)), \[X-Header-Foo: foo\s*\]/ => 1 },
     },
     server => {
 	func => \&http_server,

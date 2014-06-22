@@ -13,7 +13,7 @@ our %args = (
 	loggrep => { 
 		qr/relayd.conf\:.*action only supported for headers/ => 1
 	},
-	dryrun => "relayd.conf",
+	dryrun => "relayd.conf:4: action only supported for headers",
     },
     server => {
 	noserver => 1,

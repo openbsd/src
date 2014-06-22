@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2013/08/11 21:01:59 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2014/06/22 14:18:01 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -34,7 +34,7 @@ REMOTE_SSH ?=
 ARGS !=			cd ${.CURDIR} && ls args-*.pl
 TARGETS ?=		${ARGS}
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
-CLEANFILES +=		*.log *.pem relayd.conf ktrace.out stamp-*
+CLEANFILES +=		*.log *.pem *.crt *.key relayd.conf ktrace.out stamp-*
 
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
@@ -64,14 +64,27 @@ run-regress-$a: $a
 
 # create the certificates for SSL
 
-/etc/ssl/127.0.0.1.crt:
-	${SUDO} openssl req -batch -new -nodes -newkey rsa -keyout /etc/ssl/private/127.0.0.1.key -subj /CN=127.0.0.1/ -x509 -out $@
+.for ip in ${REMOTE_ADDR} 127.0.0.1
+${ip}.crt:
+	openssl req -batch -new -nodes -newkey rsa -keyout ${ip}.key -subj /CN=${ip}/ -x509 -out $@
+.if empty (REMOTE_SSH)
+	${SUDO} cp 127.0.0.1.crt /etc/ssl/
+	${SUDO} cp 127.0.0.1.key /etc/ssl/private/
+.else
+	scp ${REMOTE_ADDR}.crt root@${REMOTE_SSH}:/etc/ssl/
+	scp ${REMOTE_ADDR}.key root@${REMOTE_SSH}:/etc/ssl/private/
+.endif
+.endfor
 
 server-cert.pem:
 	openssl req -batch -new -nodes -newkey rsa -keyout server-key.pem -subj /CN=localhost/ -x509 -out $@
 
-${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: \
-    /etc/ssl/127.0.0.1.crt server-cert.pem
+${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: server-cert.pem
+.if empty (REMOTE_SSH)
+${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: 127.0.0.1.crt
+.else
+${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: ${REMOTE_ADDR}.crt
+.endif
 
 # make perl syntax check for all args files
 
