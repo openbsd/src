@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_int.h,v 1.5 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: eng_int.h,v 1.6 2014/06/22 12:16:28 jsing Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -57,7 +57,7 @@
  */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * ECDH support in OpenSSL originally developed by 
+ * ECDH support in OpenSSL originally developed by
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
@@ -98,10 +98,9 @@ extern "C" {
  * order. NB: both the "add" functions assume CRYPTO_LOCK_ENGINE to already be
  * held (in "write" mode). */
 typedef void (ENGINE_CLEANUP_CB)(void);
-typedef struct st_engine_cleanup_item
-	{
+typedef struct st_engine_cleanup_item {
 	ENGINE_CLEANUP_CB *cb;
-	} ENGINE_CLEANUP_ITEM;
+} ENGINE_CLEANUP_ITEM;
 DECLARE_STACK_OF(ENGINE_CLEANUP_ITEM)
 void engine_cleanup_add_first(ENGINE_CLEANUP_CB *cb);
 void engine_cleanup_add_last(ENGINE_CLEANUP_CB *cb);
@@ -118,17 +117,20 @@ DECLARE_STACK_OF(ENGINE)
  * as a (ENGINE_TABLE *) pointer value set initially to NULL. */
 typedef struct st_engine_table ENGINE_TABLE;
 int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
-		ENGINE *e, const int *nids, int num_nids, int setdefault);
+    ENGINE *e, const int *nids, int num_nids, int setdefault);
 void engine_table_unregister(ENGINE_TABLE **table, ENGINE *e);
 void engine_table_cleanup(ENGINE_TABLE **table);
 #ifndef ENGINE_TABLE_DEBUG
 ENGINE *engine_table_select(ENGINE_TABLE **table, int nid);
 #else
-ENGINE *engine_table_select_tmp(ENGINE_TABLE **table, int nid, const char *f, int l);
+ENGINE *engine_table_select_tmp(ENGINE_TABLE **table, int nid, const char *f,
+    int l);
 #define engine_table_select(t,n) engine_table_select_tmp(t,n,__FILE__,__LINE__)
 #endif
-typedef void (engine_table_doall_cb)(int nid, STACK_OF(ENGINE) *sk, ENGINE *def, void *arg);
-void engine_table_doall(ENGINE_TABLE *table, engine_table_doall_cb *cb, void *arg);
+typedef void (engine_table_doall_cb)(int nid, STACK_OF(ENGINE) *sk,
+    ENGINE *def, void *arg);
+void engine_table_doall(ENGINE_TABLE *table, engine_table_doall_cb *cb,
+    void *arg);
 
 /* Internal versions of API functions that have control over locking. These are
  * used between C files when functionality needs to be shared but the caller may
@@ -152,8 +154,7 @@ void engine_pkey_asn1_meths_free(ENGINE *e);
 
 /* This is a structure for storing implementations of various crypto
  * algorithms and functions. */
-struct engine_st
-	{
+struct engine_st {
 	const char *id;
 	const char *name;
 	const RSA_METHOD *rsa_meth;
@@ -197,7 +198,7 @@ struct engine_st
 	/* Used to maintain the linked-list of engines. */
 	struct engine_st *prev;
 	struct engine_st *next;
-	};
+};
 
 #ifdef  __cplusplus
 }
