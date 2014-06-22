@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_fat.c,v 1.11 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: eng_fat.c,v 1.12 2014/06/22 11:33:47 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -125,8 +125,8 @@ int_def_cb(const char *alg, int len, void *arg)
 	else if (!strncmp(alg, "DIGESTS", len))
 		*pflags |= ENGINE_METHOD_DIGESTS;
 	else if (!strncmp(alg, "PKEY", len))
-		*pflags |=
-		    ENGINE_METHOD_PKEY_METHS|ENGINE_METHOD_PKEY_ASN1_METHS;
+		*pflags |= ENGINE_METHOD_PKEY_METHS |
+		    ENGINE_METHOD_PKEY_ASN1_METHS;
 	else if (!strncmp(alg, "PKEY_CRYPTO", len))
 		*pflags |= ENGINE_METHOD_PKEY_METHS;
 	else if (!strncmp(alg, "PKEY_ASN1", len))

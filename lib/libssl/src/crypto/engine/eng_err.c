@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_err.c,v 1.8 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: eng_err.c,v 1.9 2014/06/22 11:33:47 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
  *
@@ -68,7 +68,7 @@
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_ENGINE,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_ENGINE,0,reason)
 
-static ERR_STRING_DATA ENGINE_str_functs[]= {
+static ERR_STRING_DATA ENGINE_str_functs[] = {
 	{ERR_FUNC(ENGINE_F_DYNAMIC_CTRL),	"DYNAMIC_CTRL"},
 	{ERR_FUNC(ENGINE_F_DYNAMIC_GET_DATA_CTX),	"DYNAMIC_GET_DATA_CTX"},
 	{ERR_FUNC(ENGINE_F_DYNAMIC_LOAD),	"DYNAMIC_LOAD"},
@@ -111,7 +111,7 @@ static ERR_STRING_DATA ENGINE_str_functs[]= {
 	{0, NULL}
 };
 
-static ERR_STRING_DATA ENGINE_str_reasons[]= {
+static ERR_STRING_DATA ENGINE_str_reasons[] = {
 	{ERR_REASON(ENGINE_R_ALREADY_LOADED)     , "already loaded"},
 	{ERR_REASON(ENGINE_R_ARGUMENT_IS_NOT_A_NUMBER), "argument is not a number"},
 	{ERR_REASON(ENGINE_R_CMD_NOT_EXECUTABLE) , "cmd not executable"},
