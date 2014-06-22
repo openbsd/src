@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strnid.c,v 1.14 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: a_strnid.c,v 1.15 2014/06/22 13:17:08 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -286,34 +286,3 @@ st_free(ASN1_STRING_TABLE *tbl)
 
 
 IMPLEMENT_STACK_OF(ASN1_STRING_TABLE)
-
-#ifdef STRING_TABLE_TEST
-
-main()
-{
-	ASN1_STRING_TABLE *tmp;
-	int i, last_nid = -1;
-
-	for (tmp = tbl_standard, i = 0;
-	    i < sizeof(tbl_standard) / sizeof(ASN1_STRING_TABLE); i++, tmp++) {
-		if (tmp->nid < last_nid) {
-			last_nid = 0;
-			break;
-		}
-		last_nid = tmp->nid;
-	}
-
-	if (last_nid != 0) {
-		printf("Table order OK\n");
-		exit(0);
-	}
-
-	for (tmp = tbl_standard, i = 0;
-	    i < sizeof(tbl_standard) / sizeof(ASN1_STRING_TABLE); i++, tmp++) {
-		printf("Index %d, NID %d, Name=%s\n", i, tmp->nid,
-		    OBJ_nid2ln(tmp->nid));
-	}
-
-}
-
-#endif
