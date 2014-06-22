@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.38 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: b_sock.c,v 1.39 2014/06/22 14:41:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -138,42 +138,56 @@ err:
 int
 BIO_get_port(const char *str, unsigned short *port_ptr)
 {
-	int i;
 	struct servent *s;
+	long port;
+	char *ep;
 
 	if (str == NULL) {
-		BIOerr(BIO_F_BIO_GET_PORT, BIO_R_NO_PORT_DEFINED);
+		BIOerr(BIO_F_BIO_GET_PORT, BIO_R_NO_PORT_SPECIFIED);
 		return (0);
 	}
-	i = atoi(str);
-	if (i != 0)
-		*port_ptr = (unsigned short)i;
-	else {
-		CRYPTO_w_lock(CRYPTO_LOCK_GETSERVBYNAME);
-		s = getservbyname(str, "tcp");
-		if (s != NULL)
-			*port_ptr = ntohs((unsigned short)s->s_port);
-		CRYPTO_w_unlock(CRYPTO_LOCK_GETSERVBYNAME);
-		if (s == NULL) {
-			if (strcmp(str, "http") == 0)
-				*port_ptr = 80;
-			else if (strcmp(str, "telnet") == 0)
-				*port_ptr = 23;
-			else if (strcmp(str, "socks") == 0)
-				*port_ptr = 1080;
-			else if (strcmp(str, "https") == 0)
-				*port_ptr = 443;
-			else if (strcmp(str, "ssl") == 0)
-				*port_ptr = 443;
-			else if (strcmp(str, "ftp") == 0)
-				*port_ptr = 21;
-			else if (strcmp(str, "gopher") == 0)
-				*port_ptr = 70;
-			else {
-				SYSerr(SYS_F_GETSERVBYNAME, errno);
-				ERR_asprintf_error_data("service='%s'", str);
-				return (0);
-			}
+
+	errno = 0;
+	port = strtol(str, &ep, 10);
+	if (str[0] != '\0' && *ep == '\0') {
+		if (errno == ERANGE && (port == LONG_MAX || port == LONG_MIN)) {
+			BIOerr(BIO_F_BIO_GET_PORT, BIO_R_INVALID_PORT_NUMBER);
+			return (0);
+		}
+		if (port < 0 || port > 65535) {
+			BIOerr(BIO_F_BIO_GET_PORT, BIO_R_INVALID_PORT_NUMBER);
+			return (0);
+		}
+
+		*port_ptr = (unsigned short)port;
+		return (1);
+	}
+	
+	CRYPTO_w_lock(CRYPTO_LOCK_GETSERVBYNAME);
+	s = getservbyname(str, "tcp");
+	if (s != NULL)
+		*port_ptr = ntohs((unsigned short)s->s_port);
+	CRYPTO_w_unlock(CRYPTO_LOCK_GETSERVBYNAME);
+
+	if (s == NULL) {
+		if (strcmp(str, "http") == 0)
+			*port_ptr = 80;
+		else if (strcmp(str, "telnet") == 0)
+			*port_ptr = 23;
+		else if (strcmp(str, "socks") == 0)
+			*port_ptr = 1080;
+		else if (strcmp(str, "https") == 0)
+			*port_ptr = 443;
+		else if (strcmp(str, "ssl") == 0)
+			*port_ptr = 443;
+		else if (strcmp(str, "ftp") == 0)
+			*port_ptr = 21;
+		else if (strcmp(str, "gopher") == 0)
+			*port_ptr = 70;
+		else {
+			SYSerr(SYS_F_GETSERVBYNAME, errno);
+			ERR_asprintf_error_data("service='%s'", str);
+			return (0);
 		}
 	}
 	return (1);

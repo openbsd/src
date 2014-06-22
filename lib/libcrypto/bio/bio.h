@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.23 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bio.h,v 1.24 2014/06/22 14:41:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -802,6 +802,7 @@ void ERR_load_BIO_strings(void);
 #define BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET		 107
 #define BIO_R_INVALID_ARGUMENT				 125
 #define BIO_R_INVALID_IP_ADDRESS			 108
+#define BIO_R_INVALID_PORT_NUMBER			 129
 #define BIO_R_IN_USE					 123
 #define BIO_R_KEEPALIVE					 109
 #define BIO_R_NBIO_CONNECT_ERROR			 110
