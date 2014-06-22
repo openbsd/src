@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.110 2014/03/30 23:57:43 dlg Exp $
+.\"	$OpenBSD: mdoc.7,v 1.111 2014/06/22 17:06:50 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 30 2014 $
+.Dd $Mdocdate: June 22 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -3154,8 +3154,9 @@ Manually switching the font using the
 .Ql \ef
 font escape sequences is never required.
 .Sh COMPATIBILITY
-This section documents compatibility between mandoc and other
-troff implementations, at this time limited to GNU troff
+This section provides an incomplete list of compatibility issues
+between mandoc and other troff implementations, at this time limited
+to GNU troff
 .Pq Qq groff .
 The term
 .Qq historic groff
@@ -3264,7 +3265,7 @@ certain list types.
 can only be called by other macros, but not at the beginning of a line.
 .It
 .Sx \&%C
-is not implemented.
+is not implemented (up to and including groff-1.22.2).
 .It
 Historic groff only allows up to eight or nine arguments per macro input
 line, depending on the exact situation.
@@ -3282,7 +3283,7 @@ in new groff and mandoc.
 .Sq \ef
 .Pq font face
 and
-.Sq \ef
+.Sq \eF
 .Pq font family face
 .Sx Text Decoration
 escapes behave irregularly when specified within line-macro scopes.
@@ -3304,36 +3305,6 @@ and
 .Fl offset Cm right .
 Groff does not implement centred and flush-right rendering either,
 but produces large indentations.
-.It
-The
-.Sq \eh
-.Pq horizontal position ,
-.Sq \ev
-.Pq vertical position ,
-.Sq \em
-.Pq text colour ,
-.Sq \eM
-.Pq text filling colour ,
-.Sq \ez
-.Pq zero-length character ,
-.Sq \ew
-.Pq string length ,
-.Sq \ek
-.Pq horizontal position marker ,
-.Sq \eo
-.Pq text overstrike ,
-and
-.Sq \es
-.Pq text size
-escape sequences are all discarded in mandoc.
-.It
-The
-.Sq \ef
-scaling unit is accepted by mandoc, but rendered as the default unit.
-.It
-In quoted literals, groff allows pairwise double-quotes to produce a
-standalone double-quote in formatted output.
-This is not supported by mandoc.
 .El
 .Sh SEE ALSO
 .Xr man 1 ,
