@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.7 2014/06/23 03:32:57 beck Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.8 2014/06/23 03:47:46 beck Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -44,6 +44,7 @@
 #include <openssl/sha.h>
 
 #include <linux/random.h>
+#include <linux/sysctl.h>
 #include <sys/vfs.h>
 
 #define REPEAT 5
@@ -64,7 +65,9 @@ int	getentropy(void *buf, size_t len);
 extern int main(int, char *argv[]);
 static int gotdata(char *buf, size_t len);
 static int getentropy_urandom(void *buf, size_t len);
+#ifdef CTL_MAXNAME
 static int getentropy_sysctl(void *buf, size_t len);
+#endif
 static int getentropy_fallback(void *buf, size_t len);
 
 int
@@ -87,7 +90,7 @@ getentropy(void *buf, size_t len)
 	if (ret != -1)
 		return (ret);
 
-#ifdef RANDOM_UUID
+#ifdef CTL_MAXNAME
 	/*
 	 * Try to use sysctl CTL_KERN, KERN_RANDOM, RANDOM_UUID.
 	 * sysctl is a failsafe API, so it guarantees a result.  This
@@ -108,7 +111,7 @@ getentropy(void *buf, size_t len)
 	ret = getentropy_sysctl(buf, len);
 	if (ret != -1)
 		return (ret);
-#endif /* RANDOM_UUID */
+#endif /* CTL_MAXNAME */
 
 	/*
 	 * Entropy collection via /dev/urandom and sysctl have failed.
@@ -218,11 +221,11 @@ nodevrandom:
 	return -1;
 }
 
-#ifdef RANDOM_UUID
+#ifdef CTL_MAXNAME
 static int
 getentropy_sysctl(void *buf, size_t len)
 {
-	static const int mib[] = { CTL_KERN, KERN_RANDOM, RANDOM_UUID };
+	static int mib[] = { CTL_KERN, KERN_RANDOM, RANDOM_UUID };
 	size_t i, chunk;
 	int save_errno = errno;
 
@@ -233,7 +236,7 @@ getentropy_sysctl(void *buf, size_t len)
 		struct __sysctl_args args = {
 			.name = mib,
 			.nlen = 3,
-			.oldval = &buf[i],
+			.oldval = buf + i,
 			.oldlenp = &chunk,
 		};
 		if (syscall(SYS__sysctl, &args) != 0)
@@ -248,7 +251,7 @@ sysctlfailed:
 	errno = EIO;
 	return -1;
 }
-#endif /* RANDOM_UUID */
+#endif /* CTL_MAXNAME */
 
 static int cl[] = {
 	CLOCK_REALTIME,
@@ -333,7 +336,7 @@ getentropy_fallback(void *buf, size_t len)
 				struct statfs stfs;
 				socklen_t ssl;
 				off_t off;
-	
+
 				/*
 				 * Prime-sized mappings encourage fragmentation;
 				 * thus exposing some address entropy.
@@ -349,7 +352,7 @@ getentropy_fallback(void *buf, size_t len)
 					{ 57, MAP_FAILED }, { 3, MAP_FAILED },
 					{ 131, MAP_FAILED }, { 1, MAP_FAILED },
 				};
-	
+
 				for (m = 0; m < sizeof mm/sizeof(mm[0]); m++) {
 					HX(mm[m].p = mmap(NULL,
 					    mm[m].npg * pgs,
@@ -367,7 +370,7 @@ getentropy_fallback(void *buf, size_t len)
 						cnt += (int)((long)(mm[m].p)
 						    / pgs);
 					}
-	
+
 					/* Check cnts and times... */
 					for (ii = 0; ii < sizeof(cl)/sizeof(cl[0]);
 					    ii++) {
@@ -376,7 +379,7 @@ getentropy_fallback(void *buf, size_t len)
 						if (e != -1)
 							cnt += (int)ts.tv_nsec;
 					}
-	
+
 					HX((e = getrusage(RUSAGE_SELF,
 					    &ru)) == -1, ru);
 					if (e != -1) {
@@ -384,21 +387,21 @@ getentropy_fallback(void *buf, size_t len)
 						cnt += (int)ru.ru_utime.tv_usec;
 					}
 				}
-	
+
 				for (m = 0; m < sizeof mm/sizeof(mm[0]); m++) {
 					if (mm[m].p != MAP_FAILED)
 						munmap(mm[m].p, mm[m].npg * pgs);
 					mm[m].p = MAP_FAILED;
 				}
-	
+
 				HX(stat(".", &st) == -1, st);
 				HX(statvfs(".", &stvfs) == -1, stvfs);
 				HX(statfs(".", &stfs) == -1, stfs);
-	
+
 				HX(stat("/", &st) == -1, st);
 				HX(statvfs("/", &stvfs) == -1, stvfs);
 				HX(statfs("/", &stfs) == -1, stfs);
-	
+
 				HX((e = fstat(0, &st)) == -1, st);
 				if (e == -1) {
 					if (S_ISREG(st.st_mode) ||
@@ -422,7 +425,7 @@ getentropy_fallback(void *buf, size_t len)
 						    ss);
 					}
 				}
-	
+
 				HX((e = getrusage(RUSAGE_CHILDREN,
 				    &ru)) == -1, ru);
 				if (e != -1) {
@@ -433,13 +436,13 @@ getentropy_fallback(void *buf, size_t len)
 				/* Subsequent hashes absorb previous result */
 				HD(results);
 			}
-	
+
 			HX((e = gettimeofday(&tv, NULL)) == -1, tv);
 			if (e != -1) {
 				cnt += (int)tv.tv_sec;
 				cnt += (int)tv.tv_usec;
 			}
-	
+
 			HD(cnt);
 		}
 		SHA512_Final(results, &ctx);
