@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.66 2014/06/18 17:24:46 tobias Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.67 2014/06/23 18:54:33 tobias Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -385,7 +385,8 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
 	if ((SecPerClust == 0) || (SecPerClust & (SecPerClust - 1)) ||
 	    (pmp->pm_BytesPerSec < DEV_BSIZE) ||
 	    (pmp->pm_BytesPerSec & (pmp->pm_BytesPerSec - 1)) ||
-	    (pmp->pm_HugeSectors == 0) || (pmp->pm_FATsecs == 0)) {
+	    (pmp->pm_HugeSectors == 0) || (pmp->pm_FATsecs == 0) ||
+	    (SecPerClust * pmp->pm_BlkPerSec > MAXBSIZE / DEV_BSIZE)) {
 		error = EINVAL;
 		goto error_exit;
 	}		
