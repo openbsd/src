@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.258 2014/05/21 02:14:07 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.259 2014/06/23 18:47:41 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -174,32 +174,27 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
     int access_size, int len, void *buffer)
 {
 	u_int8_t *pb;
+	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	struct acpi_mem_map mh;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
-	bus_addr_t ioaddr;
 	int reg, idx, ival, sval;
 
 	dnprintf(50, "gasio: %.2x 0x%.8llx %s\n",
 	    iospace, address, (iodir == ACPI_IOWRITE) ? "write" : "read");
 
+	KASSERT((len % access_size) == 0);
+
 	pb = (u_int8_t *)buffer;
 	switch (iospace) {
 	case GAS_SYSTEM_MEMORY:
-		/* copy to/from system memory */
-		acpi_map(address, len, &mh);
-		if (iodir == ACPI_IOREAD)
-			memcpy(buffer, mh.va, len);
-		else
-			memcpy(mh.va, buffer, len);
-		acpi_unmap(&mh);
-		break;
-
 	case GAS_SYSTEM_IOSPACE:
-		/* read/write from I/O registers */
-		ioaddr = address;
-		if (acpi_bus_space_map(sc->sc_iot, ioaddr, len, 0, &ioh) != 0) {
+		if (iospace == GAS_SYSTEM_MEMORY)
+			iot = sc->sc_memt;
+		else
+			iot = sc->sc_iot;
+
+		if (acpi_bus_space_map(iot, address, len, 0, &ioh) != 0) {
 			printf("%s: unable to map iospace\n", DEVNAME(sc));
 			return (-1);
 		}
@@ -207,20 +202,20 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 			if (iodir == ACPI_IOREAD) {
 				switch (access_size) {
 				case 1:
-					*(uint8_t *)(pb+reg) = bus_space_read_1(
-					    sc->sc_iot, ioh, reg);
+					*(uint8_t *)(pb + reg) = 
+					    bus_space_read_1(iot, ioh, reg);
 					dnprintf(80, "os_in8(%llx) = %x\n",
 					    reg+address, *(uint8_t *)(pb+reg));
 					break;
 				case 2:
-					*(uint16_t *)(pb+reg) = bus_space_read_2(
-					    sc->sc_iot, ioh, reg);
+					*(uint16_t *)(pb + reg) =
+					    bus_space_read_2(iot, ioh, reg);
 					dnprintf(80, "os_in16(%llx) = %x\n",
 					    reg+address, *(uint16_t *)(pb+reg));
 					break;
 				case 4:
-					*(uint32_t *)(pb+reg) = bus_space_read_4(
-					    sc->sc_iot, ioh, reg);
+					*(uint32_t *)(pb + reg) =
+					    bus_space_read_4(iot, ioh, reg);
 					break;
 				default:
 					printf("%s: rdio: invalid size %d\n",
@@ -230,20 +225,20 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 			} else {
 				switch (access_size) {
 				case 1:
-					bus_space_write_1(sc->sc_iot, ioh, reg,
-					    *(uint8_t *)(pb+reg));
+					bus_space_write_1(iot, ioh, reg,
+					    *(uint8_t *)(pb + reg));
 					dnprintf(80, "os_out8(%llx,%x)\n",
 					    reg+address, *(uint8_t *)(pb+reg));
 					break;
 				case 2:
-					bus_space_write_2(sc->sc_iot, ioh, reg,
-					    *(uint16_t *)(pb+reg));
+					bus_space_write_2(iot, ioh, reg,
+					    *(uint16_t *)(pb + reg));
 					dnprintf(80, "os_out16(%llx,%x)\n",
 					    reg+address, *(uint16_t *)(pb+reg));
 					break;
 				case 4:
-					bus_space_write_4(sc->sc_iot, ioh, reg,
-					    *(uint32_t *)(pb+reg));
+					bus_space_write_4(iot, ioh, reg,
+					    *(uint32_t *)(pb + reg));
 					break;
 				default:
 					printf("%s: wrio: invalid size %d\n",
@@ -260,7 +255,7 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 			if (cold)
 				delay(10000);
 		}
-		acpi_bus_space_unmap(sc->sc_iot, ioh, len, &ioaddr);
+		acpi_bus_space_unmap(iot, ioh, len, NULL);
 		break;
 
 	case GAS_PCI_CFG_SPACE:
