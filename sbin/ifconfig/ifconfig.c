@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.283 2014/05/12 08:47:37 beck Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.284 2014/06/23 18:44:43 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -411,7 +411,7 @@ const struct	cmd {
 	{ "flowdst",	NEXTARG,	0,		setpflow_receiver },
 	{ "-flowdst", 1,		0,		unsetpflow_receiver },
 	{ "pflowproto", NEXTARG,	0,		setpflowproto },
-	{ "-inet6",	IFXF_NOINET6,	0,		setifxflags } ,
+	{ "-inet6",	IFXF_NOINET6,	0,		setifxflags },
 	{ "keepalive",	NEXTARG2,	0,		NULL, setkeepalive },
 	{ "-keepalive",	1,		0,		unsetkeepalive },
 	{ "add",	NEXTARG,	0,		bridge_add },
@@ -1312,6 +1312,7 @@ setia6eui64(const char *cmd, int val)
 
 	if (afp->af_af != AF_INET6)
 		errx(1, "%s not allowed for the AF", cmd);
+	setifxflags("inet6", -IFXF_NOINET6);
 	in6 = (struct in6_addr *)&in6_addreq.ifra_addr.sin6_addr;
 	if (memcmp(&in6addr_any.s6_addr[8], &in6->s6_addr[8], 8) != 0)
 		errx(1, "interface index is already filled");
