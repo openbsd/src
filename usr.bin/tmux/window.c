@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.111 2014/06/05 22:14:29 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.112 2014/06/23 10:27:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1050,9 +1050,6 @@ void
 window_pane_key(struct window_pane *wp, struct session *sess, int key)
 {
 	struct window_pane	*wp2;
-
-	if (!window_pane_visible(wp))
-		return;
 
 	if (wp->mode != NULL) {
 		if (wp->mode->key != NULL)
