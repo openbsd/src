@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.20 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.21 2014/06/23 22:19:02 deraadt Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -541,9 +541,10 @@ CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data)
 char *
 CONF_get1_default_config_file(void)
 {
-	char *file;
+	char *file = NULL;
 
-	file = getenv("OPENSSL_CONF");
+	if (issetugid() == 0)
+		file = getenv("OPENSSL_CONF");
 	if (file)
 		return BUF_strdup(file);
 	if (asprintf(&file, "%s/openssl.cnf",

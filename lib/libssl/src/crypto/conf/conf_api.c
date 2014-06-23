@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_api.c,v 1.10 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: conf_api.c,v 1.11 2014/06/23 22:19:02 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,6 +66,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
 
@@ -142,7 +143,10 @@ _CONF_get_string(const CONF *conf, const char *section, const char *name)
 			if (v != NULL)
 				return (v->value);
 			if (strcmp(section, "ENV") == 0) {
-				p = getenv(name);
+				if (issetugid() == 0)
+					p = getenv(name);
+				else
+					p = NULL;
 				if (p != NULL)
 					return (p);
 			}
@@ -154,8 +158,11 @@ _CONF_get_string(const CONF *conf, const char *section, const char *name)
 			return (v->value);
 		else
 			return (NULL);
-	} else
+	} else {
+		if (issetugid())
+			return (NULL);
 		return (getenv(name));
+	}
 }
 
 #if 0 /* There's no way to provide error checking with this function, so

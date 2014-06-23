@@ -1,4 +1,4 @@
-/* $OpenBSD: by_dir.c,v 1.27 2014/06/19 21:23:48 tedu Exp $ */
+/* $OpenBSD: by_dir.c,v 1.28 2014/06/23 22:19:02 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -132,7 +132,8 @@ dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 	switch (cmd) {
 	case X509_L_ADD_DIR:
 		if (argl == X509_FILETYPE_DEFAULT) {
-			dir = (char *)getenv(X509_get_default_cert_dir_env());
+			if (issetugid() == 0)
+				dir = getenv(X509_get_default_cert_dir_env());
 			if (dir)
 				ret = add_cert_dir(ld, dir, X509_FILETYPE_PEM);
 			else
