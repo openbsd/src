@@ -160,7 +160,10 @@ get_decl_align_unit (tree decl)
   align = DECL_ALIGN (decl);
   align = LOCAL_ALIGNMENT (TREE_TYPE (decl), align);
   if (align > PREFERRED_STACK_BOUNDARY)
-    align = PREFERRED_STACK_BOUNDARY;
+    {
+      warning (0, "ignoring alignment for stack allocated %q+D", decl);
+      align = PREFERRED_STACK_BOUNDARY;
+    }
   if (cfun->stack_alignment_needed < align)
     cfun->stack_alignment_needed = align;
 
