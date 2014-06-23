@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.67 2013/11/21 17:32:13 mikeb Exp $	*/
+/*	$OpenBSD: if.c,v 1.68 2014/06/23 03:46:17 guenther Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ void
 intpr(int interval, int repeatcount)
 {
 	struct if_msghdr ifm;
-	int mib[6] = { CTL_NET, AF_ROUTE, 0, 0, NET_RT_IFLIST, 0 };
+	int mib[6] = { CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST, 0 };
 	char name[IFNAMSIZ + 1];	/* + 1 for the '*' */
 	char *buf, *next, *lim, *cp;
 	struct rt_msghdr *rtm;
@@ -552,7 +552,7 @@ static void
 fetchifs(void)
 {
 	struct if_msghdr ifm;
-	int mib[6] = { CTL_NET, AF_ROUTE, 0, 0, NET_RT_IFLIST, 0 };
+	int mib[6] = { CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST, 0 };
 	struct rt_msghdr *rtm;
 	struct if_data *ifd;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];

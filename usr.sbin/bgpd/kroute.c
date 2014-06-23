@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.197 2014/01/23 23:26:56 benno Exp $ */
+/*	$OpenBSD: kroute.c,v 1.198 2014/06/23 03:46:17 guenther Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -436,7 +436,7 @@ ktable_exists(u_int rtableid, u_int *rdomid)
 	int			 mib[6];
 
 	mib[0] = CTL_NET;
-	mib[1] = AF_ROUTE;
+	mib[1] = PF_ROUTE;
 	mib[2] = 0;
 	mib[3] = 0;
 	mib[4] = NET_RT_TABLE;
@@ -2782,7 +2782,7 @@ fetchtable(struct ktable *kt, u_int8_t fib_prio)
 	struct kroute6_node	*kr6 = NULL;
 
 	mib[0] = CTL_NET;
-	mib[1] = AF_ROUTE;
+	mib[1] = PF_ROUTE;
 	mib[2] = 0;
 	mib[3] = 0;
 	mib[4] = NET_RT_DUMP;
@@ -2948,7 +2948,7 @@ fetchifs(int ifindex)
 	struct sockaddr_dl	*sdl;
 
 	mib[0] = CTL_NET;
-	mib[1] = AF_ROUTE;
+	mib[1] = PF_ROUTE;
 	mib[2] = 0;
 	mib[3] = AF_INET;	/* AF does not matter but AF_INET is shorter */
 	mib[4] = NET_RT_IFLIST;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.69 2014/05/07 01:23:52 tedu Exp $	*/
+/*	$OpenBSD: mib.c,v 1.70 2014/06/23 03:46:17 guenther Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -1082,7 +1082,7 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	long long		 i;
 	size_t			 len;
 	int			 ifq;
-	int			 mib[] = { CTL_NET, AF_INET, IPPROTO_IP, 0, 0 };
+	int			 mib[] = { CTL_NET, PF_INET, IPPROTO_IP, 0, 0 };
 
 	/* Get and verify the current row index */
 	idx = o->bo_id[OIDIDX_ifEntry];
@@ -2461,7 +2461,7 @@ int
 mib_pfsyncstats(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	int			 i;
-	int			 mib[] = { CTL_NET, AF_INET, IPPROTO_PFSYNC,
+	int			 mib[] = { CTL_NET, PF_INET, IPPROTO_PFSYNC,
 				    PFSYNCCTL_STATS };
 	size_t			 len = sizeof(struct pfsyncstats);
 	struct pfsyncstats	 s;
@@ -2979,7 +2979,7 @@ static struct oid ip_mib[] = {
 int
 mib_ipforwarding(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_FORWARDING };
+	int	mib[] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_FORWARDING };
 	int	v;
 	size_t	len = sizeof(v);
 
@@ -2994,7 +2994,7 @@ mib_ipforwarding(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_ipdefaultttl(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_DEFTTL };
+	int	mib[] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	int	v;
 	size_t	len = sizeof(v);
 
@@ -3009,7 +3009,7 @@ mib_ipdefaultttl(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_getipstat(struct ipstat *ipstat)
 {
-	int	 mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	int	 mib[] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS };
 	size_t	 len = sizeof(*ipstat);
 
 	return (sysctl(mib, sizeofa(mib), ipstat, &len, NULL, 0));

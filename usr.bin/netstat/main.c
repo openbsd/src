@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.100 2014/02/13 20:51:21 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.101 2014/06/23 03:46:17 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -563,7 +563,7 @@ gettable(const char *s)
 		errx(1, "invalid table id: %s", errstr);
 
 	mib[0] = CTL_NET;
-	mib[1] = AF_ROUTE;
+	mib[1] = PF_ROUTE;
 	mib[2] = 0;
 	mib[3] = 0;
 	mib[4] = NET_RT_TABLE;

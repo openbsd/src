@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.132 2014/01/25 10:03:32 claudio Exp $	*/
+/*	$OpenBSD: inet.c,v 1.133 2014/06/23 03:46:17 guenther Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -254,7 +254,7 @@ void
 tcp_stats(char *name)
 {
 	struct tcpstat tcpstat;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_TCP, TCPCTL_STATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_STATS };
 	size_t len = sizeof(tcpstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -385,7 +385,7 @@ udp_stats(char *name)
 {
 	struct udpstat udpstat;
 	u_long delivered;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_UDP, UDPCTL_STATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS };
 	size_t len = sizeof(udpstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -431,7 +431,7 @@ void
 ip_stats(char *name)
 {
 	struct ipstat ipstat;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS };
 	size_t len = sizeof(ipstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -490,7 +490,7 @@ void
 div_stats(char *name)
 {
 	struct divstat divstat;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_DIVERT, DIVERTCTL_STATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_DIVERT, DIVERTCTL_STATS };
 	size_t len = sizeof(divstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -566,7 +566,7 @@ icmp_stats(char *name)
 {
 	struct icmpstat icmpstat;
 	int i, first;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_ICMP, ICMPCTL_STATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS };
 	size_t len = sizeof(icmpstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -627,7 +627,7 @@ void
 igmp_stats(char *name)
 {
 	struct igmpstat igmpstat;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_IGMP, IGMPCTL_STATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_IGMP, IGMPCTL_STATS };
 	size_t len = sizeof(igmpstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -663,7 +663,7 @@ void
 pim_stats(char *name)
 {
 	struct pimstat pimstat;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_PIM, PIMCTL_STATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_PIM, PIMCTL_STATS };
 	size_t len = sizeof(pimstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -857,7 +857,7 @@ void
 ah_stats(char *name)
 {
 	struct ahstat ahstat;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_AH, AHCTL_STATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_AH, AHCTL_STATS };
 	size_t len = sizeof(ahstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -903,7 +903,7 @@ void
 etherip_stats(char *name)
 {
 	struct etheripstat etheripstat;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_ETHERIP, ETHERIPCTL_STATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_ETHERIP, ETHERIPCTL_STATS };
 	size_t len = sizeof(etheripstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -936,7 +936,7 @@ void
 esp_stats(char *name)
 {
 	struct espstat espstat;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_ESP, ESPCTL_STATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_ESP, ESPCTL_STATS };
 	size_t len = sizeof(espstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -983,7 +983,7 @@ void
 ipip_stats(char *name)
 {
 	struct ipipstat ipipstat;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_IPIP, IPIPCTL_STATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_IPIP, IPIPCTL_STATS };
 	size_t len = sizeof(ipipstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -1017,7 +1017,7 @@ void
 carp_stats(char *name)
 {
 	struct carpstats carpstat;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_CARP, CARPCTL_STATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_CARP, CARPCTL_STATS };
 	size_t len = sizeof(carpstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -1059,7 +1059,7 @@ void
 pfsync_stats(char *name)
 {
 	struct pfsyncstats pfsyncstat;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_PFSYNC, PFSYNCCTL_STATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_PFSYNC, PFSYNCCTL_STATS };
 	size_t len = sizeof(pfsyncstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -1133,7 +1133,7 @@ void
 ipcomp_stats(char *name)
 {
 	struct ipcompstat ipcompstat;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_IPCOMP, IPCOMPCTL_STATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_IPCOMP, IPCOMPCTL_STATS };
 	size_t len = sizeof(ipcompstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),

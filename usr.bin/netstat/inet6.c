@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.44 2013/08/18 16:32:24 guenther Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.45 2014/06/23 03:46:17 guenther Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -337,7 +337,7 @@ ip6_stats(char *name)
 	int first, i;
 	struct protoent *ep;
 	const char *n;
-	int mib[] = { CTL_NET, AF_INET6, IPPROTO_IPV6, IPV6CTL_STATS };
+	int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_STATS };
 	size_t len = sizeof(ip6stat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -816,7 +816,7 @@ icmp6_stats(char *name)
 {
 	struct icmp6stat icmp6stat;
 	int i, first;
-	int mib[] = { CTL_NET, AF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_STATS };
+	int mib[] = { CTL_NET, PF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_STATS };
 	size_t len = sizeof(icmp6stat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -961,7 +961,7 @@ void
 pim6_stats(char *name)
 {
 	struct pim6stat pim6stat;
-	int mib[] = { CTL_NET, AF_INET6, IPPROTO_PIM, PIM6CTL_STATS };
+	int mib[] = { CTL_NET, PF_INET6, IPPROTO_PIM, PIM6CTL_STATS };
 	size_t len = sizeof(pim6stat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -993,7 +993,7 @@ rip6_stats(char *name)
 {
 	struct rip6stat rip6stat;
 	u_int64_t delivered;
-	int mib[] = { CTL_NET, AF_INET6, IPPROTO_RAW, RIPV6CTL_STATS };
+	int mib[] = { CTL_NET, PF_INET6, IPPROTO_RAW, RIPV6CTL_STATS };
 	size_t len = sizeof(rip6stat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -1033,7 +1033,7 @@ void
 div6_stats(char *name)
 {
 	struct div6stat div6stat;
-	int mib[] = { CTL_NET, AF_INET6, IPPROTO_DIVERT, DIVERT6CTL_STATS };
+	int mib[] = { CTL_NET, PF_INET6, IPPROTO_DIVERT, DIVERT6CTL_STATS };
 	size_t len = sizeof(div6stat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),

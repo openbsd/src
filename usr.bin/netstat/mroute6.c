@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.12 2013/11/21 17:32:13 mikeb Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.13 2014/06/23 03:46:17 guenther Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -98,7 +98,7 @@ mroute6pr(u_long mfcaddr, u_long mifaddr)
 	mifi_t maxmif = 0, mifi;
 	struct mf6c mfc;
 	u_int mrtproto;
-	int mib[] = { CTL_NET, AF_INET6, IPPROTO_IPV6, IPV6CTL_MRTPROTO };
+	int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_MRTPROTO };
 	size_t len = sizeof(int);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
@@ -212,8 +212,8 @@ mrt6_stats(void)
 {
 	struct mrt6stat mrt6stat;
 	u_int mrt6proto;
-	int mib[] = { CTL_NET, AF_INET6, IPPROTO_IPV6, IPV6CTL_MRTPROTO };
-	int mib2[] = { CTL_NET, AF_INET6, IPPROTO_IPV6, IPV6CTL_MRTSTATS };
+	int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_MRTPROTO };
+	int mib2[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_MRTSTATS };
 	size_t len = sizeof(int);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),

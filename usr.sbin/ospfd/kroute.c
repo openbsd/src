@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.93 2013/10/30 17:24:35 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.94 2014/06/23 03:46:17 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1237,7 +1237,7 @@ fetchtable(void)
 	int			 rv;
 
 	mib[0] = CTL_NET;
-	mib[1] = AF_ROUTE;
+	mib[1] = PF_ROUTE;
 	mib[2] = 0;
 	mib[3] = AF_INET;
 	mib[4] = NET_RT_DUMP;
@@ -1273,7 +1273,7 @@ fetchifs(u_short ifindex)
 	int			 rv;
 
 	mib[0] = CTL_NET;
-	mib[1] = AF_ROUTE;
+	mib[1] = PF_ROUTE;
 	mib[2] = 0;
 	mib[3] = AF_INET;
 	mib[4] = NET_RT_IFLIST;

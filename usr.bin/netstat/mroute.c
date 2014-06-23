@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.20 2013/04/18 15:44:01 deraadt Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.21 2014/06/23 03:46:17 guenther Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ mroutepr(u_long mfchashtbladdr, u_long mfchashaddr, u_long vifaddr)
 	struct vif viftable[MAXVIFS], *v;
 	struct mfc *mfcp, mfc;
 	vifi_t vifi;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_MRTPROTO };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_MRTPROTO };
 	size_t len = sizeof(int);
 	int i, banner_printed = 0, saved_nflag, numvifs = 0;
 	int nmfc;		/* No. of cache entries */
@@ -300,8 +300,8 @@ mrt_stats(void)
 {
 	u_int mrtproto;
 	struct mrtstat mrtstat;
-	int mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_MRTPROTO };
-	int mib2[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_MRTSTATS };
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_MRTPROTO };
+	int mib2[] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_MRTSTATS };
 	size_t len = sizeof(int);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
