@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.28 2014/06/24 15:05:49 schwarze Exp $
+# $OpenBSD: security,v 1.29 2014/06/24 16:18:30 schwarze Exp $
 #
 # Copyright (c) 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -50,6 +50,14 @@ sub nag ($$) {
 		$return_code = 1;
 	}
 	return $cond;
+}
+
+sub close_or_nag {
+	my ($fh, $cmd) = @_;
+	my $res = close $fh;
+	nag !$res, "$cmd: " .
+	    ($! ? "error closing pipe: $!" : "exit code " . ($? >> 8));
+	return $res;
 }
 
 sub check_access_file {
@@ -226,7 +234,7 @@ sub check_csh {
 		    "cannot spawn /bin/csh: $!"
 		    and next;
 		my @output = <$fh>;
-		close $fh;
+		close_or_nag $fh, "csh $filename" or next;
 		chomp @output;
 		check_root_path pop @output, $filename;
 	}
@@ -249,7 +257,7 @@ sub check_sh {
 		    "cannot spawn /bin/sh: $!"
 		    and next;
 		my @output = <$fh>;
-		close $fh;
+		close_or_nag $fh, "sh $filename" or next;
 		chomp @output;
 		check_root_path pop @output, $filename;
 
@@ -283,7 +291,7 @@ sub check_ksh {
 		    "cannot spawn /bin/ksh: $!"
 		    and next;
 		my @output = <$fh>;
-		close $fh;
+		close_or_nag $fh, "ksh $filename" or next;
 		chomp @output;
 		check_root_path pop @output, $filename;
 	}
@@ -521,7 +529,7 @@ sub find_special_files {
 		$skip{$path} = 1 if $path &&
 		    ($type =~ /^(?:a|nnp|proc)fs$/ || !/\(.*local.*\)/);
 	}
-	close $fh;
+	close_or_nag $fh, "mount" or return;
 
 	my $setuid_files = {};
 	my $device_files = {};
@@ -688,7 +696,7 @@ sub check_mtree {
 
 	if (open my $fh, '-|', qw(mtree -e -l -p / -f /etc/mtree/special)) {
 		nag 1, $_ for map { chomp; $_ } <$fh>;
-		close $fh;
+		close_or_nag $fh, "mtree special";
 	} else { nag 1, "cannot spawn mtree: $!"; }
 
 	while (my $filename = glob '/etc/mtree/*.secure') {
@@ -708,7 +716,7 @@ sub check_mtree {
 		    "cannot spawn mtree: $!"
 		    and next;
 		nag 1, $_ for map { chomp; $_ } <$fh>;
-		close $fh;
+		close_or_nag $fh, "mtree $filename";
 	}
 }
 
@@ -718,7 +726,7 @@ sub diff {
 	    and return;
 	local $/;
 	my $diff = <$fh>;
-	close $fh;
+	close_or_nag $fh, "diff";
 	return nag !!$diff, $diff;
 }
 
@@ -851,7 +859,7 @@ sub check_disklabels {
 	    "cannot spawn df: $!"
 	    and return;
 	my @disks = sort map m{^/dev/(\w*\d*)[a-p]}, <$fh>;
-	close $fh;
+	close_or_nag $fh, "df";
 
 	foreach my $disk (@disks) {
 		$check_title = "======\n$disk diffs (-OLD  +NEW)\n======";
