@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.54 2013/04/21 11:05:14 jsing Exp $	*/
+/*	$OpenBSD: mount.c,v 1.55 2014/06/24 02:32:43 daniel Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -84,7 +84,6 @@ static struct opt {
 	{ MNT_EXRDONLY,		1,	"exported read-only",	"" },
 	{ MNT_LOCAL,		0,	"local",		"" },
 	{ MNT_NOATIME,		0,	"noatime",		"noatime" },
-	{ MNT_NOATIME,		0,	"noaccesstime",		"" },
 	{ MNT_NODEV,		0,	"nodev",		"nodev" },
 	{ MNT_NOEXEC,		0,	"noexec",		"noexec" },
 	{ MNT_NOSUID,		0,	"nosuid",		"nosuid" },
