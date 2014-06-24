@@ -1,4 +1,4 @@
-/* $OpenBSD: chacha-merged.c,v 1.4 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: chacha-merged.c,v 1.5 2014/06/24 17:48:30 jsing Exp $ */
 /*
 chacha-merged.c version 20080118
 D. J. Bernstein
@@ -108,8 +108,10 @@ chacha_ivsetup(chacha_ctx *x, const u8 *iv, const u8 *counter)
 static inline void
 chacha_encrypt_bytes(chacha_ctx *x, const u8 *m, u8 *c, u32 bytes)
 {
-	u32 x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15;
-	u32 j0, j1, j2, j3, j4, j5, j6, j7, j8, j9, j10, j11, j12, j13, j14, j15;
+	u32 x0, x1, x2, x3, x4, x5, x6, x7;
+	u32 x8, x9, x10, x11, x12, x13, x14, x15;
+	u32 j0, j1, j2, j3, j4, j5, j6, j7;
+	u32 j8, j9, j10, j11, j12, j13, j14, j15;
 	u8 *ctarget = NULL;
 	u8 tmp[64];
 	u_int i;
@@ -136,8 +138,9 @@ chacha_encrypt_bytes(chacha_ctx *x, const u8 *m, u8 *c, u32 bytes)
 
 	for (;;) {
 		if (bytes < 64) {
-			for (i = 0;i < bytes;++i) tmp[i] = m[i];
-				m = tmp;
+			for (i = 0; i < bytes; ++i)
+				tmp[i] = m[i];
+			m = tmp;
 			ctarget = c;
 			c = tmp;
 		}
@@ -204,7 +207,10 @@ chacha_encrypt_bytes(chacha_ctx *x, const u8 *m, u8 *c, u32 bytes)
 		j12 = PLUSONE(j12);
 		if (!j12) {
 			j13 = PLUSONE(j13);
-			/* stopping at 2^70 bytes per nonce is user's responsibility */
+			/*
+			 * Stopping at 2^70 bytes per nonce is the user's
+			 * responsibility.
+			 */
 		}
 
 		U32TO8_LITTLE(c + 0, x0);
