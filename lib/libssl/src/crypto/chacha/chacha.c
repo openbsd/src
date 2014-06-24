@@ -1,4 +1,4 @@
-/* $OpenBSD: chacha.c,v 1.4 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: chacha.c,v 1.5 2014/06/24 18:12:09 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -22,6 +22,7 @@ void
 ChaCha_set_key(ChaCha_ctx *ctx, const unsigned char *key, uint32_t keybits)
 {
 	chacha_keysetup((chacha_ctx *)ctx, key, keybits);
+	ctx->unused = 0;
 }
 
 void
@@ -29,11 +30,25 @@ ChaCha_set_iv(ChaCha_ctx *ctx, const unsigned char *iv,
     const unsigned char *counter)
 {
 	chacha_ivsetup((chacha_ctx *)ctx, iv, counter);
+	ctx->unused = 0;
 }
 
 void
 ChaCha(ChaCha_ctx *ctx, unsigned char *out, const unsigned char *in, size_t len)
 {
+	unsigned char *k;
+	int i, l;
+
+	/* Consume remaining keystream, if any exists. */
+	if (ctx->unused > 0) {
+		k = ctx->ks + 64 - ctx->unused;
+		l = (len > ctx->unused) ? ctx->unused : len;
+		for (i = 0; i < l; i++)
+			*(out++) = *(in++) ^ *(k++);
+		ctx->unused -= l;
+		len -= l;
+	}
+
 	chacha_encrypt_bytes((chacha_ctx *)ctx, in, out, (uint32_t)len);
 }
 

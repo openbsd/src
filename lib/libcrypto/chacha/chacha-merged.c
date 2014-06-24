@@ -1,4 +1,4 @@
-/* $OpenBSD: chacha-merged.c,v 1.5 2014/06/24 17:48:30 jsing Exp $ */
+/* $OpenBSD: chacha-merged.c,v 1.6 2014/06/24 18:12:09 jsing Exp $ */
 /*
 chacha-merged.c version 20080118
 D. J. Bernstein
@@ -7,15 +7,17 @@ Public domain.
 
 #include <sys/types.h>
 
-struct chacha_ctx {
-	u_int input[16];
-};
-
 #define CHACHA_MINKEYLEN 	16
 #define CHACHA_NONCELEN		8
 #define CHACHA_CTRLEN		8
 #define CHACHA_STATELEN		(CHACHA_NONCELEN+CHACHA_CTRLEN)
 #define CHACHA_BLOCKLEN		64
+
+struct chacha_ctx {
+	u_int input[16];
+	u_int8_t ks[CHACHA_BLOCKLEN];
+	u_int8_t unused;
+};
 
 static inline void chacha_keysetup(struct chacha_ctx *x, const u_char *k,
     u_int kbits)
@@ -187,6 +189,25 @@ chacha_encrypt_bytes(chacha_ctx *x, const u8 *m, u8 *c, u32 bytes)
 		x14 = PLUS(x14, j14);
 		x15 = PLUS(x15, j15);
 
+		if (bytes < 64) {
+			U32TO8_LITTLE(x->ks + 0, x0);
+			U32TO8_LITTLE(x->ks + 4, x1);
+			U32TO8_LITTLE(x->ks + 8, x2);
+			U32TO8_LITTLE(x->ks + 12, x3);
+			U32TO8_LITTLE(x->ks + 16, x4);
+			U32TO8_LITTLE(x->ks + 20, x5);
+			U32TO8_LITTLE(x->ks + 24, x6);
+			U32TO8_LITTLE(x->ks + 28, x7);
+			U32TO8_LITTLE(x->ks + 32, x8);
+			U32TO8_LITTLE(x->ks + 36, x9);
+			U32TO8_LITTLE(x->ks + 40, x10);
+			U32TO8_LITTLE(x->ks + 44, x11);
+			U32TO8_LITTLE(x->ks + 48, x12);
+			U32TO8_LITTLE(x->ks + 52, x13);
+			U32TO8_LITTLE(x->ks + 56, x14);
+			U32TO8_LITTLE(x->ks + 60, x15);
+		}
+
 		x0 = XOR(x0, U8TO32_LITTLE(m + 0));
 		x1 = XOR(x1, U8TO32_LITTLE(m + 4));
 		x2 = XOR(x2, U8TO32_LITTLE(m + 8));
@@ -237,6 +258,7 @@ chacha_encrypt_bytes(chacha_ctx *x, const u8 *m, u8 *c, u32 bytes)
 			}
 			x->input[12] = j12;
 			x->input[13] = j13;
+			x->unused = 64 - bytes;
 			return;
 		}
 		bytes -= 64;

@@ -1,4 +1,4 @@
-/* $OpenBSD: chacha.h,v 1.4 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: chacha.h,v 1.5 2014/06/24 18:12:09 jsing Exp $ */
 /*
  * Copyright (c) Joel Sing <jsing@openbsd.org>
  *
@@ -32,6 +32,8 @@ extern "C" {
 
 typedef struct {
 	unsigned int input[16];
+	unsigned char ks[64];
+	unsigned char unused;
 } ChaCha_ctx;
 
 void ChaCha_set_key(ChaCha_ctx *ctx, const unsigned char *key,
