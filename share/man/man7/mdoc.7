@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.111 2014/06/22 17:06:50 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.112 2014/06/24 21:42:20 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 22 2014 $
+.Dd $Mdocdate: June 24 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -513,7 +513,6 @@ in the alphabetical
 .It Sx \&Cd Ta kernel configuration declaration (>0 arguments)
 .It Sx \&Ad Ta memory address (>0 arguments)
 .It Sx \&Ms Ta mathematical symbol (>0 arguments)
-.It Sx \&Tn Ta tradename (>0 arguments)
 .El
 .Ss Physical markup
 .Bl -column "Brq, Bro, Brc" description
@@ -541,7 +540,6 @@ in the alphabetical
 .It Sx \&Ex Fl std Ta standard command exit values: Op Ar utility ...
 .It Sx \&Rv Fl std Ta standard function return values: Op Ar function ...
 .It Sx \&St Ta reference to a standards document (one argument)
-.It Sx \&Ux Ta Ux
 .It Sx \&At Ta At
 .It Sx \&Bx Ta Bx
 .It Sx \&Bsx Ta Bsx
@@ -752,9 +750,8 @@ See also
 .Sx \&Dx ,
 .Sx \&Fx ,
 .Sx \&Nx ,
-.Sx \&Ox ,
 and
-.Sx \&Ux .
+.Sx \&Ox .
 .Ss \&Bc
 Close a
 .Sx \&Bo
@@ -1118,10 +1115,10 @@ See also
 .Sx \&Dx ,
 .Sx \&Fx ,
 .Sx \&Nx ,
-.Sx \&Ox ,
 and
-.Sx \&Ux .
+.Sx \&Ox .
 .Ss \&Bt
+Supported only for compatibility, do not use this in new manuals.
 Prints
 .Dq is currently in beta test.
 .Ss \&Bx
@@ -1141,9 +1138,8 @@ See also
 .Sx \&Dx ,
 .Sx \&Fx ,
 .Sx \&Nx ,
-.Sx \&Ox ,
 and
-.Sx \&Ux .
+.Sx \&Ox .
 .Ss \&Cd
 Kernel configuration declaration.
 This denotes strings accepted by
@@ -1456,9 +1452,8 @@ See also
 .Sx \&Bx ,
 .Sx \&Fx ,
 .Sx \&Nx ,
-.Sx \&Ox ,
 and
-.Sx \&Ux .
+.Sx \&Ox .
 .Ss \&Ec
 Close a scope started by
 .Sx \&Eo .
@@ -1507,7 +1502,7 @@ See also
 and
 .Sx \&Sy .
 .Ss \&En
-This macro is obsolete and not implemented in
+This macro is obsolete and ignored by
 .Xr mandoc 1 .
 .Ss \&Eo
 An arbitrary enclosure.
@@ -1534,7 +1529,8 @@ See also
 .Sx \&Dv
 for general constants.
 .Ss \&Es
-This macro is obsolete and not implemented.
+This macro is obsolete and ignored by
+.Xr mandoc 1 .
 .Ss \&Ev
 Environmental variables such as those specified in
 .Xr environ 7 .
@@ -1714,7 +1710,7 @@ See also
 and
 .Sx \&Ft .
 .Ss \&Fr
-This macro is obsolete and not implemented in
+This macro is obsolete and ignored by
 .Xr mandoc 1 .
 .Pp
 It was used to show function return values.
@@ -1759,9 +1755,8 @@ See also
 .Sx \&Bx ,
 .Sx \&Dx ,
 .Sx \&Nx ,
-.Sx \&Ox ,
 and
-.Sx \&Ux .
+.Sx \&Ox .
 .Ss \&Hf
 This macro is not implemented in
 .Xr mandoc 1 .
@@ -2079,9 +2074,8 @@ See also
 .Sx \&Bx ,
 .Sx \&Dx ,
 .Sx \&Fx ,
-.Sx \&Ox ,
 and
-.Sx \&Ux .
+.Sx \&Ox .
 .Ss \&Oc
 Close multi-line
 .Sx \&Oo
@@ -2135,7 +2129,7 @@ See also
 and
 .Sx \&Dt .
 .Ss \&Ot
-This macro is obsolete and not implemented in
+This macro is obsolete and ignored by
 .Xr mandoc 1 .
 .Pp
 Historical
@@ -2158,9 +2152,8 @@ See also
 .Sx \&Bx ,
 .Sx \&Dx ,
 .Sx \&Fx ,
-.Sx \&Nx ,
 and
-.Sx \&Ux .
+.Sx \&Nx .
 .Ss \&Pa
 An absolute or relative file system path, or a file or directory name.
 If an argument is not provided, the character
@@ -2648,36 +2641,19 @@ Table cell separator in
 lists; can only be used below
 .Sx \&It .
 .Ss \&Tn
-Format a tradename.
-.Pp
-Since this macro is often implemented to use a small caps font,
-it has historically been used for acronyms (like ASCII) as well.
-Such usage is not recommended because it would use the same macro
-sometimes for semantical annotation, sometimes for physical formatting.
-.Pp
-Examples:
-.Dl \&.Tn IBM
+Supported only for compatibility, do not use this in new manuals.
+Even though the macro name
+.Pq Dq tradename
+suggests a semantic function, historic usage is inconsistent, mostly
+using it as a presentation-level macro to request a small caps font.
 .Ss \&Ud
+Supported only for compatibility, do not use this in new manuals.
 Prints out
 .Dq currently under development.
 .Ss \&Ux
-Format the
-.Ux
-name.
-Accepts no argument.
-.Pp
-Examples:
-.Dl \&.Ux
-.Pp
-See also
-.Sx \&At ,
-.Sx \&Bsx ,
-.Sx \&Bx ,
-.Sx \&Dx ,
-.Sx \&Fx ,
-.Sx \&Nx ,
-and
-.Sx \&Ox .
+Supported only for compatibility, do not use this in new manuals.
+Prints out
+.Dq Ux .
 .Ss \&Va
 A variable name.
 .Pp
