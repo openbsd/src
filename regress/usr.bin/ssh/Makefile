@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.69 2014/04/30 05:32:00 djm Exp $
+#	$OpenBSD: Makefile,v 1.70 2014/06/24 01:14:17 djm Exp $
 
 REGRESS_FAIL_EARLY= yes
 REGRESS_TARGETS=	unit t1 t2 t3 t4 t5 t6 t7 t8 t9
@@ -86,7 +86,9 @@ SUDO_CLEAN+=	/var/run/testdata_${USER} /var/run/keycommand_${USER}
 TEST_ENV=      "MALLOC_OPTIONS=AFGJPRX"
 
 unit:
-	(set -e ; cd ${.CURDIR}/unittests ; make)
+	if test -z "${SKIP_UNIT}" ; then \
+		(set -e ; cd ${.CURDIR}/unittests ; make) \
+	fi
 
 t1:
 	ssh-keygen -if ${.CURDIR}/rsa_ssh2.prv | diff - ${.CURDIR}/rsa_openssh.prv

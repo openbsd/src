@@ -1,7 +1,15 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2014/04/30 05:32:00 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2014/06/24 01:14:18 djm Exp $
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
+
+REGRESS_FAIL_EARLY= yes
+
+# XXX detect from ssh binary? 
+OPENSSL?=	yes
+.if (${OPENSSL:L} == "yes")
+CFLAGS+=	-DWITH_OPENSSL -DWITH_SSH1
+.endif
 
 # enable warnings
 WARNINGS=Yes
@@ -55,5 +63,10 @@ LDADD+=-L${.CURDIR}/${SSHREL}/lib -lssh
 DPADD+=${.CURDIR}/${SSHREL}/lib/libssh.a
 .endif
 
+LDADD+= -lutil
+DPADD+= ${LIBUTIL}
+
+.if (${OPENSSL:L} == "yes")
 LDADD+= -lcrypto
 DPADD+= ${LIBCRYPTO}
+.endif
