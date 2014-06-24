@@ -222,40 +222,117 @@ struct chacha_tv chacha_test_vectors[] = {
 
 #define N_VECTORS (sizeof(chacha_test_vectors) / sizeof(*chacha_test_vectors))
 
+/* Single-shot ChaCha20 using CRYPTO_chacha_20 interface. */
+static void
+crypto_chacha_20_test(struct chacha_tv *tv, unsigned char *out,
+    unsigned char *in)
+{
+	CRYPTO_chacha_20(out, in, tv->len, tv->key, tv->iv, 0);
+}
+
+/* Single-shot ChaCha20 using the ChaCha interface. */
+static void
+chacha_ctx_full_test(struct chacha_tv *tv, unsigned char *out,
+    unsigned char *in)
+{
+	ChaCha_ctx ctx;
+
+	ChaCha_set_key(&ctx, tv->key, 256);
+	ChaCha_set_iv(&ctx, tv->iv, NULL);
+	ChaCha(&ctx, out, in, tv->len);
+}
+
+/* ChaCha20 with partial writes using the Chacha interface. */
+static void
+chacha_ctx_partial_test(struct chacha_tv *tv, unsigned char *out,
+    unsigned char *in)
+{
+	ChaCha_ctx ctx;
+	int len, size = 0;
+
+	ChaCha_set_key(&ctx, tv->key, 256);
+	ChaCha_set_iv(&ctx, tv->iv, NULL);
+	len = tv->len - 1;
+	while (len > 1) {
+		size = len / 2;
+		ChaCha(&ctx, out, in, size);
+		in += size;
+		out += size;
+		len -= size;
+	}
+	ChaCha(&ctx, out, in, len + 1);
+}
+
+/* ChaCha20 with single byte writes using the Chacha interface. */
+static void
+chacha_ctx_single_test(struct chacha_tv *tv, unsigned char *out,
+    unsigned char *in)
+{
+	ChaCha_ctx ctx;
+	size_t i;
+
+	ChaCha_set_key(&ctx, tv->key, 256);
+	ChaCha_set_iv(&ctx, tv->iv, NULL);
+	for (i = 0; i < tv->len; i++)
+		ChaCha(&ctx, out + i, in + i, 1);
+}
+
+struct chacha_test_function {
+	char *name;
+	void (*func)(struct chacha_tv *, unsigned char *, unsigned char *);
+};
+
+struct chacha_test_function chacha_test_functions[] = {
+	{"crypto_chacha_20_test", crypto_chacha_20_test},
+	{"chacha_ctx_full_test", chacha_ctx_full_test},
+	{"chacha_ctx_partial_test", chacha_ctx_partial_test},
+	{"chacha_ctx_single_test", chacha_ctx_single_test},
+};
+
+#define N_FUNCS (sizeof(chacha_test_functions) / sizeof(*chacha_test_functions))
+
 int
 main(int argc, char **argv)
 {
 	struct chacha_tv *tv;
 	unsigned char *in, *out;
-	size_t i, j;
+	size_t i, j, k;
+	int failed = 0;
 
 	for (i = 0; i < N_VECTORS; i++) {
 		tv = &chacha_test_vectors[i];
 
-		in = malloc(tv->len);
-		if (in == NULL)
-			errx(1, "malloc in");
-		out = malloc(tv->len);
-		if (out == NULL)
-			errx(1, "malloc out");
-		memset(in, 0, tv->len);
+		for (j = 0; j < N_FUNCS; j++) {
+			in = calloc(1, tv->len);
+			if (in == NULL)
+				errx(1, "calloc in");
+			out = calloc(1, tv->len);
+			if (out == NULL)
+				errx(1, "calloc out");
 
-		CRYPTO_chacha_20(out, in, tv->len, tv->key, tv->iv, 0);
+			chacha_test_functions[j].func(tv, out, in);
 
-		if (memcmp(out, tv->out, tv->len) != 0) {
-			printf("ChaCha %s failed!\n", tv->desc);
-			for (j = 0; j < tv->len; j++)
-				printf("%2.2x", out[j]);
-			printf("\n");
-			for (j = 0; j < tv->len; j++)
-				printf("%2.2x", tv->out[j]);
-			printf("\n");
-			return 1;
+			if (memcmp(out, tv->out, tv->len) != 0) {
+				printf("ChaCha %s failed for \"%s\"!\n",
+				    chacha_test_functions[j].name, tv->desc);
+
+				printf("Got:\t");
+				for (k = 0; k < tv->len; k++)
+					printf("%2.2x", out[k]);
+				printf("\n");
+
+				printf("Want:\t");
+				for (k = 0; k < tv->len; k++)
+					printf("%2.2x", tv->out[k]);
+				printf("\n");
+
+				failed = 1;
+			}
+
+			free(in);
+			free(out);
 		}
-
-		free(in);
-		free(out);
 	}
 
-	return 0;
+	return failed;
 }
