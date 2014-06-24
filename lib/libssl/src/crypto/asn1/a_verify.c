@@ -1,4 +1,4 @@
-/* $OpenBSD: a_verify.c,v 1.18 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: a_verify.c,v 1.19 2014/06/24 19:37:58 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,9 +62,7 @@
 #include "cryptlib.h"
 #include "asn1_locl.h"
 
-#ifndef NO_SYS_TYPES_H
-# include <sys/types.h>
-#endif
+#include <sys/types.h>
 
 #include <openssl/bn.h>
 #include <openssl/x509.h>
