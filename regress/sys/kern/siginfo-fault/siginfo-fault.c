@@ -1,4 +1,4 @@
-/*	$OpenBSD: siginfo-fault.c,v 1.1 2014/06/23 21:10:03 matthew Exp $	*/
+/*	$OpenBSD: siginfo-fault.c,v 1.2 2014/06/24 19:05:42 matthew Exp $	*/
 /*
  * Copyright (c) 2014 Google Inc.
  *
@@ -110,7 +110,7 @@ main()
 	CHECK_GE(fd, 0);
 	CHECK_EQ(0, unlink(filename));
 	CHECK_EQ(0, ftruncate(fd, 0));  /* just in case */
-	p = mmap(NULL, pagesize, PROT_READ|PROT_WRITE, MAP_FILE|MAP_SHARED, fd, 0);
+	p = mmap(NULL, pagesize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 	CHECK_NE(MAP_FAILED, p);
 	CHECK_EQ(0, close(fd));
 
