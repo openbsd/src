@@ -1,4 +1,4 @@
-/* $OpenBSD: a_set.c,v 1.13 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: a_set.c,v 1.14 2014/06/24 19:34:06 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -208,8 +208,6 @@ d2i_ASN1_SET(STACK_OF(OPENSSL_BLOCK) **a, const unsigned char **pp, long length,
 
 		if (M_ASN1_D2I_end_sequence())
 			break;
-		/* XXX: This was called with 4 arguments, incorrectly, it seems
-		if ((s = func(NULL, &c.p, c.slen, c.max - c.p)) == NULL) */
 		if ((s = d2i(NULL, &c.p, c.slen)) == NULL) {
 			ASN1err(ASN1_F_D2I_ASN1_SET,
 			    ASN1_R_ERROR_PARSING_SET_ELEMENT);
