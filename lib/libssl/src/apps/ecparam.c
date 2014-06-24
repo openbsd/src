@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.20 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: ecparam.c,v 1.21 2014/06/24 05:39:29 logan Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -544,8 +544,10 @@ bad:
 		if (eckey == NULL)
 			goto end;
 
-		if (EC_KEY_set_group(eckey, group) == 0)
+		if (EC_KEY_set_group(eckey, group) == 0) {
+			EC_KEY_free(eckey);
 			goto end;
+		}
 
 		if (!EC_KEY_generate_key(eckey)) {
 			EC_KEY_free(eckey);
