@@ -1,8 +1,8 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.27 2014/04/29 21:30:20 dcoppa Exp $
+# $OpenBSD: security,v 1.28 2014/06/24 15:05:49 schwarze Exp $
 #
-# Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
+# Copyright (c) 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -197,8 +197,9 @@ sub check_umask {
 # Instead, consider modifying the shells to warn about '.' in the PATH.
 sub check_root_path {
 	my ($path, $filename) = @_;
-	nag !($path =~ s/^PATH=[:\s]*//),
-	    "Failed to find PATH in $filename.";
+	nag !(defined $path && $path =~ s/^PATH=[:\s]*//),
+	    "Failed to find PATH in $filename."
+	    and return;
 	foreach my $dir (split /[:\s]+/, $path) {
 		nag $dir eq '.', "The root path includes ." and next;
 		next unless -d $dir;
@@ -227,7 +228,7 @@ sub check_csh {
 		my @output = <$fh>;
 		close $fh;
 		chomp @output;
-		check_root_path $output[-1], $filename;
+		check_root_path pop @output, $filename;
 	}
 	nag !$umaskset,
 	    "\nRoot csh startup files do not set the umask.";
@@ -250,9 +251,10 @@ sub check_sh {
 		my @output = <$fh>;
 		close $fh;
 		chomp @output;
-		check_root_path $output[-1], $filename;
+		check_root_path pop @output, $filename;
 
-		nag !($output[-2] =~ /^ENV=\s*(\S*)/),
+		my $env = pop @output;
+		nag !(defined $env && $env =~ /^ENV=\s*(\S*)/),
 		    "Failed to find ENV in $filename."
 		    and next;
 		push @env_path, $1 if $1 ne '';
@@ -283,7 +285,7 @@ sub check_ksh {
 		my @output = <$fh>;
 		close $fh;
 		chomp @output;
-		check_root_path $output[-1], $filename;
+		check_root_path pop @output, $filename;
 	}
 }
 
