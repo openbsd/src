@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.41 2014/06/22 16:47:08 jsing Exp $ */
+/* $OpenBSD: b_sock.c,v 1.42 2014/06/24 17:30:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,6 +60,7 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 
 #include <errno.h>
 #include <netdb.h>
@@ -509,21 +510,7 @@ end:
 int
 BIO_set_tcp_ndelay(int s, int on)
 {
-	int ret = 0;
-#if defined(TCP_NODELAY) && (defined(IPPROTO_TCP) || defined(SOL_TCP))
-	int opt;
-
-#ifdef SOL_TCP
-	opt = SOL_TCP;
-#else
-#ifdef IPPROTO_TCP
-	opt = IPPROTO_TCP;
-#endif
-#endif
-
-	ret = setsockopt(s, opt, TCP_NODELAY, (char *)&on, sizeof(on));
-#endif
-	return (ret == 0);
+	return (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on)) == 0);
 }
 
 int
