@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.49 2014/05/21 02:14:07 mlarkin Exp $ */
+/* $OpenBSD: acpiec.c,v 1.50 2014/06/25 07:46:14 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -273,9 +273,17 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	struct acpiec_softc	*sc = (struct acpiec_softc *)self;
 	struct acpi_attach_args *aa = aux;
 	struct aml_value res;
+	int64_t st;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
+
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &st))
+		st = STA_PRESENT | STA_ENABLED | STA_DEV_OK;
+	if ((st & STA_PRESENT) == 0) {
+		printf(": not present\n");
+		return;
+	}
 
 	if (acpiec_getcrs(sc, aa)) {
 		printf(": Failed to read resource settings\n");
