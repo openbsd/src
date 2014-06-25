@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.878 2014/05/20 11:03:13 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.879 2014/06/25 16:21:20 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3417,7 +3417,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 			    sk->port[pd->af == pd->naf ? pd->sidx : pd->didx],
 			    &sk->addr[pd->af == pd->naf ? pd->didx : pd->sidx],
 			    sk->port[pd->af == pd->naf ? pd->didx : pd->sidx],
-			    virtual_type, icmp_dir, pd->m);
+			    virtual_type, icmp_dir);
 		}
 	} else {
 		while ((ri = SLIST_FIRST(&rules))) {
@@ -3657,7 +3657,7 @@ csfailed:
 int
 pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
     struct pf_addr *daddr, u_int16_t dport, u_int16_t virtual_type,
-    int icmp_dir, struct mbuf *m)
+    int icmp_dir)
 {
 	/*
 	 * when called from bpf_mtap_pflog, there are extra constraints:

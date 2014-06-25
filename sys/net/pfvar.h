@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.399 2014/04/22 14:41:03 mpi Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.400 2014/06/25 16:21:20 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1840,7 +1840,7 @@ struct pf_state_key *pf_alloc_state_key(int);
 void	pf_pkt_addr_changed(struct mbuf *);
 int	pf_state_key_attach(struct pf_state_key *, struct pf_state *, int);
 int	pf_translate(struct pf_pdesc *, struct pf_addr *, u_int16_t,
-	    struct pf_addr *, u_int16_t, u_int16_t, int, struct mbuf *);
+	    struct pf_addr *, u_int16_t, u_int16_t, int);
 int	pf_translate_af(struct pf_pdesc *);
 void	pf_route(struct mbuf **, struct pf_rule *, int,
 	    struct ifnet *, struct pf_state *);
