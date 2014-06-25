@@ -1,5 +1,5 @@
-@0 match out on lo0 inet6 from <regress.1:2> to <regress.2:*> nat-to ::1
-  [ Skip steps: d=2 p=end da=4 sp=end dp=end ]
+@0 match out on lo0 inet from <regress.1:2> to <regress.2:*> nat-to 127.0.0.1
+  [ Skip steps: d=2 f=2 p=end da=4 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @1 match out on ! lo0 inet from ! <regress.1:2> to <regress.2:*> nat-to 127.0.0.1
