@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.9 2014/06/25 15:53:56 beck Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.10 2014/06/25 16:29:30 beck Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -45,6 +45,9 @@
 
 #include <linux/random.h>
 #include <linux/sysctl.h>
+#ifdef HAVE_GETAUXVAL
+#include <sys/auxv.h>
+#endif
 #include <sys/vfs.h>
 
 #define REPEAT 5
@@ -58,7 +61,8 @@
 			HD(b); \
 	} while (0)
 
-#define HD(xxx)	(SHA512_Update(&ctx, (char *)&(xxx), sizeof (xxx)))
+#define HR(x, l) (SHA512_Update(&ctx, (char *)(x), (l)))
+#define HD(x)	 (SHA512_Update(&ctx, (char *)&(x), sizeof (x)))
 
 int	getentropy(void *buf, size_t len);
 
@@ -446,6 +450,23 @@ getentropy_fallback(void *buf, size_t len)
 
 			HD(cnt);
 		}
+#ifdef AT_RANDOM
+		/* Not as random as you think but we take what we are given */
+		p = (char *) getauxval(AT_RANDOM);
+		if (p)
+			HR(p, 16);
+#endif
+#ifdef AT_SYSINFO_EHDR
+		p = (char *) getauxval(AT_SYSINFO_EHDR);
+		if (p)
+			HR(p, sizeof(p));
+#endif
+#ifdef AT_BASE
+		p = (char *) getauxval(AT_BASE);
+		if (p)
+			HR(p, sizeof(p));
+#endif
+
 		SHA512_Final(results, &ctx);
 		memcpy(buf + i, results, min(sizeof(results), len - i));
 		i += min(sizeof(results), len - i);
