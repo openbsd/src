@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.8 2014/06/23 03:47:46 beck Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.9 2014/06/25 15:53:56 beck Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -169,24 +169,25 @@ getentropy_urandom(void *buf, size_t len)
 {
 	struct stat st;
 	size_t i;
-	int fd, cnt;
+	int fd, cnt, flags;
 	int save_errno = errno;
 
 start:
+
+        flags = O_RDONLY;
+#ifdef O_NOFOLLOW
+        flags |= O_NOFOLLOW;
+#endif
 #ifdef O_CLOEXEC
-	fd = open("/dev/urandom", O_RDONLY|O_CLOEXEC, 0);
+        flags |= O_CLOEXEC;
+#endif
+	fd = open("/dev/urandom", flags, 0);
 	if (fd == -1) {
 		if (errno == EINTR)
 			goto start;
 		goto nodevrandom;
 	}
-#else
-	fd = open("/dev/urandom", O_RDONLY, 0);
-	if (fd == -1) {
-		if (errno == EINTR)
-			goto start;
-		goto nodevrandom;
-	}
+#ifndef O_CLOEXEC
 	fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
 #endif
 
