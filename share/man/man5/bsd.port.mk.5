@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.396 2014/03/18 22:36:31 miod Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.397 2014/06/25 09:43:36 zhuk Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 18 2014 $
+.Dd $Mdocdate: June 25 2014 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1019,8 +1019,7 @@ Each item has the form
 .Sq [pkgspec:]pkgpath[:target] .
 .Sq target
 defaults to
-.Sq install
-if it is not specified.
+.Sq install .
 The package installed must conform to the
 .Sq pkgspec ,
 which is by default obtained from the dependent
@@ -1631,7 +1630,7 @@ to link distribution files off
 .Ev CDROM_SITE
 instead of copying them.
 .It Ev FILESDIR
-Location of other files related to the current ports.
+Location of other files related to the current port.
 Default: files.
 .It Ev FLAVOR
 The port's current options.
@@ -1800,7 +1799,7 @@ Passed to gnu configure scripts.
 .It Ev LOCKDIR
 User settings.
 Defaults to
-.Pa ${WRKOBJDIR}/locks
+.Pa ${WRKOBJDIR}/locks .
 If set, points to a local directory common for all instances of
 concurrent ports builds.
 .It Ev LOCK_CMD
@@ -1811,7 +1810,7 @@ See also
 .It Ev LOCK_VERBOSE
 User settings.
 Defaults to
-.Sq \&No
+.Sq \&No .
 Set to
 .Sq Yes
 to show every acquire/release lock operation.
@@ -2090,7 +2089,7 @@ Revision number of
 Read-only.
 .It Ev PACKAGE_REPOSITORY
 User settings.
-Default location for built packages.
+Location for built packages.
 Defaults to
 .Pa ${PORTSDIR}/packages .
 See
@@ -2551,7 +2550,7 @@ and
 which default to
 .Sq test
 and
-.Sq check
+.Sq check ,
 respectively.
 .It Ev REORDER_DEPENDENCIES
 Points to a list of files that specify inter-dependencies for
@@ -2985,7 +2984,7 @@ Defaults to
 Note that WRKDIST may be a symbolic link, if set to ${WRKDIR}.
 .It Ev WRKSRC
 Subdirectory of ${WRKDIR} where the actual source is.
-Base for configuration (default: ${WRKDIST})
+Base for configuration (default: ${WRKDIST}).
 Note that WRKSRC may be a symbolic link, if set to ${WRKDIR}.
 .It Ev WRKINST
 Subdirectory of ${WRKDIR} where port normally installs (see
