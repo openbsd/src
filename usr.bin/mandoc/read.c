@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.29 2014/06/21 22:23:44 schwarze Exp $ */
+/*	$Id: read.c,v 1.30 2014/06/25 00:19:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -198,6 +198,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"child violates parent syntax",
 	"argument count wrong, violates syntax",
 	"NOT IMPLEMENTED: .so with absolute path or \"..\"",
+	".so request failed",
 	"no document prologue",
 	"static buffer exhausted",
 
@@ -498,8 +499,12 @@ rerun:
 			if (curp->secondary)
 				curp->secondary->sz -= pos + 1;
 			mparse_readfd(curp, -1, ln.buf + of);
-			if (MANDOCLEVEL_FATAL <= curp->file_status)
+			if (MANDOCLEVEL_FATAL <= curp->file_status) {
+				mandoc_vmsg(MANDOCERR_SO_FAIL,
+				    curp, curp->line, pos,
+				    ".so %s", ln.buf + of);
 				break;
+			}
 			pos = 0;
 			continue;
 		default:
