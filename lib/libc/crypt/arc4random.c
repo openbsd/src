@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.36 2014/06/20 00:02:12 matthew Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.37 2014/06/25 04:22:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -99,7 +99,7 @@ _rs_stir(void)
 		_rs_init(rnd, sizeof(rnd));
 	else
 		_rs_rekey(rnd, sizeof(rnd));
-	explicit_bzero(rnd, sizeof(rnd));
+	explicit_bzero(rnd, sizeof(rnd));	/* discard source seed */
 
 	/* invalidate rs_buf */
 	rs->rs_have = 0;
