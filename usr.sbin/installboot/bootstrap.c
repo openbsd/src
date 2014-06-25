@@ -1,3 +1,5 @@
+/*	$OpenBSD: bootstrap.c,v 1.5 2014/06/25 18:23:02 tobias Exp $	*/
+
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
  *

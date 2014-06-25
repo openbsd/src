@@ -1,4 +1,4 @@
-/*	$OpenBSD	*/
+/*	$OpenBSD: i386_installboot.h,v 1.2 2014/06/25 18:23:02 tobias Exp $	*/
 /*
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2010 Otto Moerbeek <otto@openbsd.org>
