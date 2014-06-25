@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.10 2014/06/25 16:29:30 beck Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.11 2014/06/25 16:31:03 beck Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -108,9 +108,10 @@ getentropy(void *buf, size_t len)
 	 * essentially the same problems as /dev/urandom.
 	 *
 	 * Numerous setbacks have been encountered in their deprecation
-	 * schedule, so as of June 2014 the kernel ABI still exists. The
-	 * sysctl() stub in libc is missing on some systems.  There are
-	 * also reports that some kernels spew messages to the console.
+	 * schedule, so as of June 2014 the kernel ABI still exists on
+	 * most Linux architectures. The sysctl() stub in libc is missing
+	 * on some systems.  There are also reports that some kernels
+	 * spew messages to the console.
 	 */
 	ret = getentropy_sysctl(buf, len);
 	if (ret != -1)
@@ -153,7 +154,7 @@ getentropy(void *buf, size_t len)
 }
 
 /*
- * XXX Should be replaced with a proper entropy measure.
+ * Basic sanity checking; wish we could do better.
  */
 static int
 gotdata(char *buf, size_t len)
