@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.12 2014/06/25 16:45:49 beck Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.13 2014/06/25 17:04:18 beck Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -465,7 +465,7 @@ getentropy_fallback(void *buf, size_t len)
 #ifdef AT_BASE
 		p = (char *) getauxval(AT_BASE);
 		if (p)
-			HR(p, sizeof(p));
+			HD(p, sizeof(p));
 #endif
 
 		SHA512_Final(results, &ctx);
