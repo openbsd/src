@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.633 2014/05/17 08:12:53 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.634 2014/06/25 15:11:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4297,7 +4297,7 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 	struct pf_opt_tbl *tbl = NULL;
 	struct node_host *h;
 	struct pf_rule_addr ra;
-	int	i = 0;
+	int af = 0, i = 0;
 
 	if (!rs || !rs->rdr || rs->rdr->host == NULL) {
 		rpool->addr.type = PF_ADDR_NONE;
@@ -4309,13 +4309,41 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 
 	/* count matching addresses */
 	for (h = rs->rdr->host; h != NULL; h = h->next) {
-		if (!r->af || !h->af || rs->af || h->af == r->af) {
+		if (h->af) {
+			/* check that af-to target address has correct af */
+			if (rs->af && rs->af != h->af) {
+				yyerror("af mismatch in %s spec",
+				    allow_if ? "routing" : "translation");
+				return (1);
+			}
+			/* skip if the rule af doesn't match redirect af */
+			if ((r->af && r->af != h->af) && /* exclude af-to */
+			    !(r->naf && h->af == r->naf))
+				continue;
+			/*
+			 * fail if the chosen af is not universal for the
+			 * whole supplied redirect address pool
+			 */
+			if (!r->af && af && af != h->af) {
+				yyerror("%s spec contains addresses with "
+				    "different address families",
+				    allow_if ? "routing" : "translation");
+				return (1);
+			}
+			if (!r->af)
+				af = h->af;
 			i++;
-			if (h->af && !r->af)
-				r->af = h->af;
-		} else if (r->naf && h->af == r->naf)
+		} else {
+			/*
+			 * we silently allow any not af-specific host specs,
+			 * e.g. (em0) and let the kernel deal with them
+			 */
 			i++;
+		}
 	}
+	/* set rule af to one chosen above */
+	if (!r->af && af)
+		r->af = af;
 
 	if (i == 0) {		/* no pool address */
 		yyerror("af mismatch in %s spec",
@@ -4697,6 +4725,7 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 			dsth->next = NULL;
 			dsth->tail = NULL;
 
+			bzero(&binat, sizeof(binat));
 			if ((binat.rdr =
 			    calloc(1, sizeof(*binat.rdr))) == NULL)
 				err(1, "expand_rule: calloc");
