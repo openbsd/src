@@ -1,7 +1,7 @@
-/*	$OpenBSD: check_script.c,v 1.15 2014/04/20 16:13:36 reyk Exp $	*/
+/*	$OpenBSD: check_script.c,v 1.16 2014/06/25 11:05:15 reyk Exp $	*/
 
 /*
- * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

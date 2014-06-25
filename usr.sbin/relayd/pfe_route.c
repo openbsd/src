@@ -1,7 +1,7 @@
-/*	$OpenBSD: pfe_route.c,v 1.5 2011/05/19 08:56:49 reyk Exp $	*/
+/*	$OpenBSD: pfe_route.c,v 1.6 2014/06/25 11:05:15 reyk Exp $	*/
 
 /*
- * Copyright (c) 2009 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2009 - 2011 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
