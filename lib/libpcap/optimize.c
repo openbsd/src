@@ -1,4 +1,4 @@
-/*	$OpenBSD: optimize.c,v 1.14 2014/03/16 08:33:05 deraadt Exp $	*/
+/*	$OpenBSD: optimize.c,v 1.15 2014/06/26 04:03:33 lteo Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -1810,23 +1810,23 @@ opt_init(root)
 	 */
 	unMarkAll();
 	n = count_blocks(root);
-	blocks = (struct block **)calloc(n, sizeof(*blocks));
+	blocks = reallocarray(NULL, n, sizeof(*blocks));
 	if (blocks == NULL)
 		bpf_error("malloc");
-	
+
 	unMarkAll();
 	n_blocks = 0;
 	number_blks_r(root);
 
 	n_edges = 2 * n_blocks;
-	edges = (struct edge **)calloc(n_edges, sizeof(*edges));
+	edges = reallocarray(NULL, n_edges, sizeof(*edges));
 	if (edges == NULL)
 		bpf_error("malloc");
 
 	/*
 	 * The number of levels is bounded by the number of nodes.
 	 */
-	levels = (struct block **)calloc(n_blocks, sizeof(*levels));
+	levels = reallocarray(NULL, n_blocks, sizeof(*levels));
 	if (levels == NULL)
 		bpf_error("malloc");
 
@@ -1901,8 +1901,8 @@ fail2:
 	 * we'll need.
 	 */
 	maxval = 3 * max_stmts;
-	vmap = (struct vmapinfo *)calloc(maxval, sizeof(*vmap));
-	vnode_base = (struct valnode *)calloc(maxval, sizeof(*vmap));
+	vmap = reallocarray(NULL, maxval, sizeof(*vmap));
+	vnode_base = reallocarray(NULL, maxval, sizeof(*vmap));
 	if (vmap == NULL || vnode_base == NULL)
 		bpf_error("malloc");
 }
