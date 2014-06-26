@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.43 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: mmap.2,v 1.44 2014/06/26 18:30:36 matthew Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mmap.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: June 26 2014 $
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -253,11 +253,26 @@ was specified and insufficient memory was available.
 .Xr msync 2 ,
 .Xr munmap 2 ,
 .Xr getpagesize 3
+.Sh STANDARDS
+The
+.Fn mmap
+function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn mmap
 system call first appeared in
 .Bx 4.1c .
+.Sh CAVEATS
+.St -p1003.1-2008
+specifies that references to pages beyond the end of a mapped object
+shall generate a
+.Dv SIGBUS
+signal; however,
+.Ox
+generates a
+.Dv SIGSEGV
+signal in this case instead.
 .Sh BUGS
 Due to a limitation of the current vm system (see
 .Xr uvm 9 ) ,
