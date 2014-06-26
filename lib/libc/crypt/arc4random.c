@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.37 2014/06/25 04:22:08 deraadt Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.38 2014/06/26 19:23:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -74,8 +74,10 @@ _rs_init(u_char *buf, size_t n)
 		if ((rs = mmap(NULL, sizeof(*rs), PROT_READ|PROT_WRITE,
 		    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED)
 			abort();
+#ifdef MAP_INHERIT_ZERO
 		if (minherit(rs, sizeof(*rs), MAP_INHERIT_ZERO) == -1)
 			abort();
+#endif
 	}
 	if (rsx == NULL) {
 		if ((rsx = mmap(NULL, sizeof(*rsx), PROT_READ|PROT_WRITE,
@@ -111,6 +113,16 @@ _rs_stir(void)
 static inline void
 _rs_stir_if_needed(size_t len)
 {
+#ifndef MAP_INHERIT_ZERO
+	static pid_t _rs_pid = 0;
+	pid_t pid = getpid();
+
+	/* If a system lacks MAP_INHERIT_ZERO, resort to getpid() */
+	if (_rs_pid == 0 || _rs_pid != pid) {
+		_rs_pid = pid;
+		rs->rs_count = 0;
+	}
+#endif
 	if (!rs || rs->rs_count <= len)
 		_rs_stir();
 	if (rs->rs_count <= len)
