@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.6 2014/06/15 11:18:39 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.7 2014/06/26 07:46:17 jasper Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -608,8 +608,8 @@ virtio_enqueue(struct virtqueue *vq, int slot, bus_dmamap_t dmamap, int write)
 	if (dmamap->dm_nsegs > vq->vq_maxnsegs) {
 #if VIRTIO_DEBUG
 		for (i = 0; i < dmamap->dm_nsegs; i++) {
-			printf(" %d (%d): %p %u \n", i, write,
-			    dmamap->dm_segs[i].ds_addr,
+			printf(" %d (%d): %p %lx \n", i, write,
+			    (void *)dmamap->dm_segs[i].ds_addr,
 			    dmamap->dm_segs[i].ds_len);
 		}
 #endif
