@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.13 2014/04/14 04:42:22 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.14 2014/06/26 04:25:38 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1363,7 +1363,7 @@ int
 ahci_port_portreset(struct ahci_port *ap, int pmp)
 {
 	u_int32_t			cmd, r;
-	int				rc, s;
+	int				rc, s, retries = 0;
 
 	s = splbio();
 	DPRINTF(AHCI_D_VERBOSE, "%s: port reset\n", PORTNAME(ap));
@@ -1376,6 +1376,7 @@ ahci_port_portreset(struct ahci_port *ap, int pmp)
 
 	/* Perform device detection */
 	ahci_pwrite(ap, AHCI_PREG_SCTL, 0);
+retry:
 	delay(10000);
 	r = AHCI_PREG_SCTL_IPM_DISABLED | AHCI_PREG_SCTL_DET_INIT;
 	if ((ap->ap_sc->sc_dev.dv_cfdata->cf_flags & 0x01) != 0) {
@@ -1411,6 +1412,10 @@ ahci_port_portreset(struct ahci_port *ap, int pmp)
 			/* even if the device doesn't wake up, check if there's
 			 * a port multiplier there
 			 */
+			if (retries == 0) {
+				retries = 1;
+				goto retry;
+			}
 			rc = EBUSY;
 		} else {
 			rc = 0;
