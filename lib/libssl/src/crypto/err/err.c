@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.33 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: err.c,v 1.34 2014/06/26 15:24:08 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -702,6 +702,7 @@ void
 ERR_put_error(int lib, int func, int reason, const char *file, int line)
 {
 	ERR_STATE *es;
+	int save_errno = errno;
 
 	es = ERR_get_state();
 
@@ -713,6 +714,7 @@ ERR_put_error(int lib, int func, int reason, const char *file, int line)
 	es->err_file[es->top] = file;
 	es->err_line[es->top] = line;
 	err_clear_data(es, es->top);
+	save_errno = errno;
 }
 
 void
