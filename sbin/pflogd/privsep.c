@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.18 2013/09/13 08:49:17 blambert Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.19 2014/06/26 17:56:09 tobias Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -193,21 +193,19 @@ move_log(const char *name)
 	for (;;) {
 		int fd;
 
-		len = snprintf(ren, sizeof(ren), "%s.bad.%08x",
-		    name, arc4random());
+		len = snprintf(ren, sizeof(ren), "%s.bad.XXXXXXXX", name);
 		if (len >= sizeof(ren)) {
 			logmsg(LOG_ERR, "[priv] new name too long");
 			return (1);
 		}
 
 		/* lock destination */
-		fd = open(ren, O_CREAT|O_EXCL, 0);
+		fd = mkstemp(ren);
 		if (fd >= 0) {
 			close(fd);
 			break;
 		}
-		/* if file exists, try another name */
-		if (errno != EEXIST && errno != EINTR) {
+		if (errno != EINTR) {
 			logmsg(LOG_ERR, "[priv] failed to create new name: %s",
 			    strerror(errno));
 			return (1);			
@@ -217,6 +215,7 @@ move_log(const char *name)
 	if (rename(name, ren)) {
 		logmsg(LOG_ERR, "[priv] failed to rename %s to %s: %s",
 		    name, ren, strerror(errno));
+		unlink(ren);
 		return (1);
 	}
 
