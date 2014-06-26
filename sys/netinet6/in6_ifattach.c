@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.70 2014/06/03 13:32:24 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.71 2014/06/26 13:08:25 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -648,6 +648,7 @@ in6_ifdetach(struct ifnet *ifp)
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		in6_purgeaddr(ifa);
+		dohooks(ifp->if_addrhooks, 0);
 	}
 
 	/*

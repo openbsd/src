@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.291 2014/06/23 18:51:15 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.292 2014/06/26 13:08:25 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2361,6 +2361,7 @@ ifnewlladdr(struct ifnet *ifp)
 		ifa = &in6ifa_ifpforlinklocal(ifp, 0)->ia_ifa;
 		if (ifa) {
 			in6_purgeaddr(ifa);
+			dohooks(ifp->if_addrhooks, 0);
 			in6_ifattach_linklocal(ifp, NULL);
 			if (in6if_do_dad(ifp)) {
 				ifa = &in6ifa_ifpforlinklocal(ifp, 0)->ia_ifa;

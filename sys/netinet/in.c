@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.98 2014/06/16 19:47:21 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.99 2014/06/26 13:08:25 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -1079,5 +1079,6 @@ in_ifdetach(struct ifnet *ifp)
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		in_purgeaddr(ifa);
+		dohooks(ifp->if_addrhooks, 0);
 	}
 }
