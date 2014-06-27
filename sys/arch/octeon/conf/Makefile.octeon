@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.16 2014/05/10 22:25:16 jasper Exp $
+#	$OpenBSD: Makefile.octeon,v 1.17 2014/06/27 17:28:10 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -150,8 +150,9 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.pl
 	rm -f db_structinfo.o
 
 locore.o: ${_machdir}/${_mach}/locore.S assym.h
-cache_octeon2.o context.o cp0access.o exception.o: assym.h
-fp.o lcore_access.o lcore_float.o tlbhandler.o lcore_ddb.o: assym.h
+context.o cp0access.o exception.o: assym.h
+lcore_access.o lcore_ddb.o lcore_float.o tlbhandler.o: assym.h
+mips64r2.o: assym.h
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
