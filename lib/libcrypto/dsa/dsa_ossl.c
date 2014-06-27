@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.17 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.18 2014/06/27 06:07:35 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,24 +97,28 @@ static DSA_METHOD openssl_dsa_meth = {
 
 #define DSA_MOD_EXP(err_instr,dsa,rr,a1,p1,a2,p2,m,ctx,in_mont) \
 	do { \
-	int _tmp_res53; \
-	if((dsa)->meth->dsa_mod_exp) \
-		_tmp_res53 = (dsa)->meth->dsa_mod_exp((dsa), (rr), (a1), (p1), \
-				(a2), (p2), (m), (ctx), (in_mont)); \
-	else \
-		_tmp_res53 = BN_mod_exp2_mont((rr), (a1), (p1), (a2), (p2), \
-				(m), (ctx), (in_mont)); \
-	if(!_tmp_res53) err_instr; \
+		int _tmp_res53; \
+		if((dsa)->meth->dsa_mod_exp) \
+			_tmp_res53 = (dsa)->meth->dsa_mod_exp((dsa), (rr), \
+			    (a1), (p1), (a2), (p2), (m), (ctx), (in_mont)); \
+		else \
+			_tmp_res53 = BN_mod_exp2_mont((rr), (a1), \
+			    (p1), (a2), (p2), (m), (ctx), (in_mont)); \
+		if(!_tmp_res53) \
+			err_instr; \
 	} while(0)
+
 #define DSA_BN_MOD_EXP(err_instr,dsa,r,a,p,m,ctx,m_ctx) \
 	do { \
-	int _tmp_res53; \
-	if((dsa)->meth->bn_mod_exp) \
-		_tmp_res53 = (dsa)->meth->bn_mod_exp((dsa), (r), (a), (p), \
-				(m), (ctx), (m_ctx)); \
-	else \
-		_tmp_res53 = BN_mod_exp_mont((r), (a), (p), (m), (ctx), (m_ctx)); \
-	if(!_tmp_res53) err_instr; \
+		int _tmp_res53; \
+		if((dsa)->meth->bn_mod_exp) \
+			_tmp_res53 = (dsa)->meth->bn_mod_exp((dsa), (r), \
+			    (a), (p), (m), (ctx), (m_ctx)); \
+		else \
+			_tmp_res53 = BN_mod_exp_mont((r), (a), (p), (m), \
+			    (ctx), (m_ctx)); \
+		if(!_tmp_res53) \
+			err_instr; \
 	} while(0)
 
 const DSA_METHOD *DSA_OpenSSL(void)

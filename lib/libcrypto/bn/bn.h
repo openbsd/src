@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.23 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bn.h,v 1.24 2014/06/27 06:07:35 deraadt Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -346,6 +346,7 @@ int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 		_tmp_bn->top = 0; \
 		_tmp_bn->neg = 0; \
 	} while(0)
+
 #ifdef OPENSSL_NO_DEPRECATED
 #define BN_zero(a)	BN_zero_ex(a)
 #else

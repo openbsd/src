@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.8 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: gcm128.c,v 1.9 2014/06/27 06:07:35 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -70,18 +70,18 @@
 #endif
 
 #define	PACK(s)		((size_t)(s)<<(sizeof(size_t)*8-16))
-#define REDUCE1BIT(V)	do { \
-	if (sizeof(size_t)==8) { \
-		u64 T = U64(0xe100000000000000) & (0-(V.lo&1)); \
-		V.lo  = (V.hi<<63)|(V.lo>>1); \
-		V.hi  = (V.hi>>1 )^T; \
-	} \
-	else { \
-		u32 T = 0xe1000000U & (0-(u32)(V.lo&1)); \
-		V.lo  = (V.hi<<63)|(V.lo>>1); \
-		V.hi  = (V.hi>>1 )^((u64)T<<32); \
-	} \
-} while(0)
+#define REDUCE1BIT(V)	\
+	do { \
+		if (sizeof(size_t)==8) { \
+			u64 T = U64(0xe100000000000000) & (0-(V.lo&1)); \
+			V.lo  = (V.hi<<63)|(V.lo>>1); \
+			V.hi  = (V.hi>>1 )^T; \
+		} else { \
+			u32 T = 0xe1000000U & (0-(u32)(V.lo&1)); \
+			V.lo  = (V.hi<<63)|(V.lo>>1); \
+			V.hi  = (V.hi>>1 )^((u64)T<<32); \
+		} \
+	} while(0)
 
 /*
  * Even though permitted values for TABLE_BITS are 8, 4 and 1, it should

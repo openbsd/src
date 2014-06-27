@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_ctx.c,v 1.9 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bn_ctx.c,v 1.10 2014/06/27 06:07:35 deraadt Exp $ */
 /* Written by Ulf Moeller for the OpenSSL project. */
 /* ====================================================================
  * Copyright (c) 1998-2004 The OpenSSL Project.  All rights reserved.
@@ -179,15 +179,19 @@ ctxdbg(BN_CTX *ctx)
 	}
 	fprintf(stderr, "\n");
 }
-#define CTXDBG_ENTRY(str, ctx)	do { \
-				ctxdbg_cur = (str); \
-				fprintf(stderr,"Starting %s\n", ctxdbg_cur); \
-				ctxdbg(ctx); \
-				} while(0)
-#define CTXDBG_EXIT(ctx)	do { \
-				fprintf(stderr,"Ending %s\n", ctxdbg_cur); \
-				ctxdbg(ctx); \
-				} while(0)
+#define CTXDBG_ENTRY(str, ctx) \
+	do { \
+		ctxdbg_cur = (str); \
+		fprintf(stderr, "Starting %s\n", ctxdbg_cur); \
+		ctxdbg(ctx); \
+	} while(0)
+
+#define CTXDBG_EXIT(ctx) \
+	do { \
+		fprintf(stderr, "Ending %s\n", ctxdbg_cur); \
+		ctxdbg(ctx); \
+	} while(0)
+
 #define CTXDBG_RET(ctx,ret)
 #else
 #define CTXDBG_ENTRY(str, ctx)
