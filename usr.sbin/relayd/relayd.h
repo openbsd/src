@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.180 2014/05/20 17:33:36 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.181 2014/06/27 07:49:08 andre Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1166,8 +1166,8 @@ int		 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 void		 socket_rlimit(int);
 char		*get_string(u_int8_t *, size_t);
 void		*get_data(u_int8_t *, size_t);
-int		 accept_reserve(int sockfd, struct sockaddr *addr,
-		    socklen_t *addrlen, int reserve, volatile int *);
+int		 accept_reserve(int, struct sockaddr *, socklen_t *, int,
+		     volatile int *);
 
 /* carp.c */
 int	 carp_demote_init(char *, int);

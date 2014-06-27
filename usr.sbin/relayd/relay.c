@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.170 2014/05/20 17:33:36 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.171 2014/06/27 07:49:08 andre Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -480,8 +480,8 @@ int
 relay_socket(struct sockaddr_storage *ss, in_port_t port,
     struct protocol *proto, int fd, int reuseport)
 {
-	int s = -1, val;
-	struct linger lng;
+	struct linger	lng;
+	int		s = -1, val;
 
 	if (relay_socket_af(ss, port) == -1)
 		goto bad;
@@ -919,9 +919,9 @@ relay_spliceadjust(struct ctl_relay_event *cre)
 void
 relay_error(struct bufferevent *bev, short error, void *arg)
 {
-	struct ctl_relay_event *cre = arg;
-	struct rsession *con = cre->con;
-	struct evbuffer *dst;
+	struct ctl_relay_event	*cre = arg;
+	struct rsession		*con = cre->con;
+	struct evbuffer		*dst;
 
 	if (error & EVBUFFER_TIMEOUT) {
 		if (cre->splicelen >= 0) {
@@ -990,14 +990,14 @@ relay_error(struct bufferevent *bev, short error, void *arg)
 void
 relay_accept(int fd, short event, void *arg)
 {
-	struct relay *rlay = arg;
-	struct protocol *proto = rlay->rl_proto;
-	struct rsession *con = NULL;
-	struct ctl_natlook *cnl = NULL;
-	socklen_t slen;
-	struct timeval tv;
-	struct sockaddr_storage ss;
-	int s = -1;
+	struct relay		*rlay = arg;
+	struct protocol		*proto = rlay->rl_proto;
+	struct rsession		*con = NULL;
+	struct ctl_natlook	*cnl = NULL;
+	socklen_t		 slen;
+	struct timeval		 tv;
+	struct sockaddr_storage	 ss;
+	int			 s = -1;
 
 	event_add(&rlay->rl_ev, NULL);
 	if ((event & EV_TIMEOUT))
@@ -2151,15 +2151,15 @@ relay_ssl_connected(struct ctl_relay_event *cre)
 void
 relay_ssl_readcb(int fd, short event, void *arg)
 {
-	char rbuf[IBUF_READ_SIZE];
-	struct bufferevent *bufev = arg;
-	struct ctl_relay_event *cre = bufev->cbarg;
-	struct rsession *con = cre->con;
-	struct relay *rlay = con->se_relay;
-	int ret = 0, ssl_err = 0;
-	short what = EVBUFFER_READ;
-	int howmuch = IBUF_READ_SIZE;
-	size_t len;
+	char			 rbuf[IBUF_READ_SIZE];
+	struct bufferevent	*bufev = arg;
+	struct ctl_relay_event	*cre = bufev->cbarg;
+	struct rsession		*con = cre->con;
+	struct relay		*rlay = con->se_relay;
+	int			 ret = 0, ssl_err = 0;
+	short			 what = EVBUFFER_READ;
+	int			 howmuch = IBUF_READ_SIZE;
+	size_t			 len;
 
 	if (event == EV_TIMEOUT) {
 		what |= EVBUFFER_TIMEOUT;
@@ -2226,12 +2226,12 @@ relay_ssl_readcb(int fd, short event, void *arg)
 void
 relay_ssl_writecb(int fd, short event, void *arg)
 {
-	struct bufferevent *bufev = arg;
-	struct ctl_relay_event *cre = bufev->cbarg;
-	struct rsession *con = cre->con;
-	struct relay *rlay = con->se_relay;
-	int ret = 0, ssl_err;
-	short what = EVBUFFER_WRITE;
+	struct bufferevent	*bufev = arg;
+	struct ctl_relay_event	*cre = bufev->cbarg;
+	struct rsession		*con = cre->con;
+	struct relay		*rlay = con->se_relay;
+	int			 ret = 0, ssl_err;
+	short			 what = EVBUFFER_WRITE;
 
 	if (event == EV_TIMEOUT) {
 		what |= EVBUFFER_TIMEOUT;
@@ -2321,8 +2321,8 @@ relay_bufferevent_add(struct event *ev, int timeout)
 int
 relay_bufferevent_printf(struct ctl_relay_event *cre, const char *fmt, ...)
 {
-	int ret;
-	va_list ap;
+	int	ret;
+	va_list	ap;
 
 	va_start(ap, fmt);
 	ret = evbuffer_add_vprintf(cre->output, fmt, ap);
@@ -2376,9 +2376,9 @@ relay_bufferevent_write(struct ctl_relay_event *cre, void *data, size_t size)
 int
 relay_cmp_af(struct sockaddr_storage *a, struct sockaddr_storage *b)
 {
-	int ret = -1;
-	struct sockaddr_in ia, ib;
-	struct sockaddr_in6 ia6, ib6;
+	int			ret = -1;
+	struct sockaddr_in	ia, ib;
+	struct sockaddr_in6	ia6, ib6;
 
 	switch (a->ss_family) {
 	case AF_INET:
