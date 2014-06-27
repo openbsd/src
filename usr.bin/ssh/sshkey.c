@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey.c,v 1.1 2014/06/24 01:16:58 djm Exp $ */
+/* $OpenBSD: sshkey.c,v 1.2 2014/06/27 18:50:39 markus Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Alexander von Gernler.  All rights reserved.
@@ -3775,9 +3775,6 @@ sshkey_parse_private_fileblob(struct sshbuf *buffer, const char *passphrase,
 	if (commentp != NULL)
 		*commentp = NULL;
 
-	if ((r = sshkey_parse_private_fileblob_type(buffer, KEY_UNSPEC,
-	    passphrase, keyp, commentp)) == 0)
-		return 0;
 #ifdef WITH_SSH1
 	/* it's a SSH v1 key if the public key part is readable */
 	if ((r = sshkey_parse_public_rsa1_fileblob(buffer, NULL, NULL)) == 0) {
@@ -3785,5 +3782,8 @@ sshkey_parse_private_fileblob(struct sshbuf *buffer, const char *passphrase,
 		    passphrase, keyp, commentp);
 	}
 #endif /* WITH_SSH1 */
+	if ((r = sshkey_parse_private_fileblob_type(buffer, KEY_UNSPEC,
+	    passphrase, keyp, commentp)) == 0)
+		return 0;
 	return r;
 }
