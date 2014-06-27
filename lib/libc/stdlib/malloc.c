@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.168 2014/06/27 17:37:42 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.169 2014/06/27 18:17:03 deraadt Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -211,7 +211,7 @@ static void malloc_exit(void);
 /* low bits of r->p determine size: 0 means >= page size and p->size holding
  *  real size, otherwise r->size is a shift count, or 1 for malloc(0)
  */
-#define REALSIZE(sz, r) 					\
+#define REALSIZE(sz, r)						\
 	(sz) = (uintptr_t)(r)->p & MALLOC_PAGEMASK,		\
 	(sz) = ((sz) == 0 ? (r)->size : ((sz) == 1 ? 0 : (1 << ((sz)-1))))
 
@@ -662,12 +662,12 @@ omalloc_grow(struct dir_info *d)
 	p = MMAP(newsize);
 	if (p == MAP_FAILED)
 		return 1;
-	
+
 	STATS_ADD(d->malloc_used, newsize);
 	memset(p, 0, newsize);
 	STATS_ZERO(d->inserts);
 	STATS_ZERO(d->insert_collisions);
-	for (i = 0; i < d->regions_total; i++) { 
+	for (i = 0; i < d->regions_total; i++) {
 		void *q = d->r[i].p;
 		if (q != NULL) {
 			size_t index = hash(q) & mask;
@@ -680,7 +680,7 @@ omalloc_grow(struct dir_info *d)
 		}
 	}
 	/* avoid pages containing meta info to end up in cache */
-	if (munmap(d->r, d->regions_total * sizeof(struct region_info))) 
+	if (munmap(d->r, d->regions_total * sizeof(struct region_info)))
 		wrterror("munmap", d->r);
 	else
 		STATS_SUB(d->malloc_used,
@@ -727,7 +727,7 @@ alloc_chunk_info(struct dir_info *d, int bits)
 }
 
 
-/* 
+/*
  * The hashtable uses the assumption that p is never NULL. This holds since
  * non-MAP_FIXED mappings with hint 0 start at BRKSIZ.
  */
@@ -816,7 +816,7 @@ delete(struct dir_info *d, struct region_info *ri)
 
 	}
 }
- 
+
 /*
  * Allocate a page of chunks
  */
@@ -933,7 +933,7 @@ malloc_bytes(struct dir_info *d, size_t size, void *f)
 			lp = &bp->bits[i / MALLOC_BITS];
 			if (!*lp) {
 				i += MALLOC_BITS;
-				i &= ~(MALLOC_BITS - 1); 
+				i &= ~(MALLOC_BITS - 1);
 				if (i >= bp->total)
 					i = 0;
 			} else
@@ -1111,7 +1111,7 @@ omalloc(size_t sz, int zero_fill, void *f)
  * print the error message once, to avoid making the problem
  * potentially worse.
  */
-static void  
+static void
 malloc_recurse(void)
 {
 	static int noprint;
@@ -1252,7 +1252,7 @@ free(void *ptr)
 		return;
 
 	_MALLOC_LOCK();
-	malloc_func = "free():";  
+	malloc_func = "free():";
 	if (g_pool == NULL) {
 		_MALLOC_UNLOCK();
 		wrterror("free() called before allocation", NULL);
@@ -1379,9 +1379,9 @@ realloc(void *ptr, size_t size)
 {
 	void *r;
 	int saved_errno = errno;
-  
+
 	_MALLOC_LOCK();
-	malloc_func = "realloc():";  
+	malloc_func = "realloc():";
 	if (g_pool == NULL) {
 		if (malloc_init() != 0)
 			return NULL;
@@ -1391,7 +1391,7 @@ realloc(void *ptr, size_t size)
 		return NULL;
 	}
 	r = orealloc(ptr, size, CALLER);
-  
+
 	malloc_active--;
 	_MALLOC_UNLOCK();
 	if (r == NULL && mopts.malloc_xmalloc) {
@@ -1417,7 +1417,7 @@ calloc(size_t nmemb, size_t size)
 	int saved_errno = errno;
 
 	_MALLOC_LOCK();
-	malloc_func = "calloc():";  
+	malloc_func = "calloc():";
 	if (g_pool == NULL) {
 		if (malloc_init() != 0)
 			return NULL;
@@ -1438,7 +1438,7 @@ calloc(size_t nmemb, size_t size)
 
 	size *= nmemb;
 	r = omalloc(size, 1, CALLER);
-  
+
 	malloc_active--;
 	_MALLOC_UNLOCK();
 	if (r == NULL && mopts.malloc_xmalloc) {
@@ -1678,7 +1678,7 @@ dump_chunk(int fd, struct chunk_info *p, void *f, int fromfreelist)
 		    p->size, p->free, p->total);
 		write(fd, buf, strlen(buf));
 		if (!fromfreelist) {
-			if (p->bits[0] & 1) 
+			if (p->bits[0] & 1)
 				putleakinfo(NULL, p->size, p->total - p->free);
 			else {
 				putleakinfo(f, p->size, 1);
@@ -1763,7 +1763,7 @@ malloc_dump1(int fd, struct dir_info *d)
 	    d->insert_collisions);
 	write(fd, buf, strlen(buf));
 	snprintf(buf, sizeof(buf), "Deletes %zu/%zu\n", d->deletes,
-	     d->delete_moves);
+	    d->delete_moves);
 	write(fd, buf, strlen(buf));
 	snprintf(buf, sizeof(buf), "Cheap reallocs %zu/%zu\n",
 	    d->cheap_reallocs, d->cheap_realloc_tries);
@@ -1784,12 +1784,12 @@ malloc_dump1(int fd, struct dir_info *d)
 			if (realsize > MALLOC_MAXCHUNK) {
 				putleakinfo(d->r[i].f, realsize, 1);
 				snprintf(buf, sizeof(buf),
-				    "pages %12p %12p %zu\n", d->r[i].p, 
+				    "pages %12p %12p %zu\n", d->r[i].p,
 				    d->r[i].f, realsize);
 				write(fd, buf, strlen(buf));
 			} else
 				dump_chunk(fd,
-				    (struct chunk_info *)d->r[i].size, 
+				    (struct chunk_info *)d->r[i].size,
 				    d->r[i].f, 0);
 		}
 	}
@@ -1814,7 +1814,7 @@ malloc_dump(int fd)
 		if (p == NULL)
 			continue;
 		r = find(g_pool, p);
-		if (r == NULL) 
+		if (r == NULL)
 			wrterror("bogus pointer in malloc_dump", p);
 		free_bytes(g_pool, r, p);
 		g_pool->delayed_chunks[i] = NULL;
