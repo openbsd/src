@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_div.c,v 1.19 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bn_div.c,v 1.20 2014/06/27 22:02:07 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -209,6 +209,7 @@ BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	wnum.top = div_n;
 	/* only needed when BN_ucmp messes up the values between top and max */
 	wnum.dmax  = snum->dmax - loop; /* so we don't step out of bounds */
+	wnum.flags = snum->flags | BN_FLG_STATIC_DATA;
 
 	/* Get the top 2 words of sdiv */
 	/* div_n=sdiv->top; */
