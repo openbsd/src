@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.46 2014/06/27 19:26:36 matthew Exp $
+.\"	$OpenBSD: mmap.2,v 1.47 2014/06/27 20:40:02 matthew Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -166,7 +166,9 @@ modifications made by others are not visible.
 this behaves just like
 .Dv MAP_PRIVATE ).
 .It Dv MAP_FILE
-Mapped from a regular file or character-special device memory.
+Mapped from a regular file, character special file, or block special file
+specified by file descriptor
+.Fa fd .
 (On
 .Ox
 and all systems conforming to
@@ -259,7 +261,7 @@ and
 specified a region that would extend beyond the end of the address space.
 .It Bq Er EINVAL
 .Fa fd
-did not reference a regular or character special file.
+did not specify a regular, character special, or block special file.
 .It Bq Er EINVAL
 The allocation
 .Fa len
