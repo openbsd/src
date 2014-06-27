@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.61 2013/12/23 23:32:40 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.62 2014/06/27 20:35:37 tobias Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -283,7 +283,7 @@ readline(char *buf, size_t n, int to)
 			continue;
 		case '\n':
 		case '\r':
-			p[1] = *p = '\0';
+			*p = '\0';
 			break;
 		case '\b':
 		case '\177':
