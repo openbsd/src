@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_mac.h,v 1.13 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: asn1_mac.h,v 1.14 2014/06/27 04:41:09 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -286,21 +286,6 @@ err:\
 		}\
 		c.slen-=(c.p-c.q); \
 		}
-
-/* New macros */
-#define M_ASN1_New_Malloc(ret,type) \
-	if ((ret = malloc(sizeof(type))) == NULL) \
-		{ c.line=__LINE__; goto err2; }
-
-#define M_ASN1_New(arg,func) \
-	if (((arg)=func()) == NULL) return(NULL)
-
-#define M_ASN1_New_Error(a) \
-/*	err:	ASN1_MAC_H_err((a),ERR_R_NESTED_ASN1_ERROR,c.line); \
-		return(NULL);*/ \
-	err2:	ASN1_MAC_H_err((a),ERR_R_MALLOC_FAILURE,c.line); \
-		return(NULL)
-
 
 /* BIG UGLY WARNING!  This is so damn ugly I wanna puke.  Unfortunately,
    some macros that use ASN1_const_CTX still insist on writing in the input
