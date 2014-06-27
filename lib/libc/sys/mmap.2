@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.44 2014/06/26 18:30:36 matthew Exp $
+.\"	$OpenBSD: mmap.2,v 1.45 2014/06/27 19:02:54 matthew Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mmap.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 26 2014 $
+.Dd $Mdocdate: June 27 2014 $
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -118,8 +118,17 @@ whether modifications made to the mapped copy of the page are private
 to the process or are to be shared with other references.
 Sharing, mapping type, and options are specified in the
 .Fa flags
-argument by OR'ing the following values:
-.Bl -tag -width MAP_FIXEDX
+argument by OR'ing the following values.
+Exactly one of the first two values must be specified:
+.Bl -tag -width MAP_PRIVATE -offset indent
+.It Dv MAP_PRIVATE
+Modifications are private.
+.It Dv MAP_SHARED
+Modifications are shared.
+.El
+.Pp
+Any combination of the following flags may additionally be used:
+.Bl -tag -width MAP_PRIVATE -offset indent
 .It Dv MAP_ANON
 Map anonymous memory not associated with any specific file.
 The file descriptor used for creating
@@ -150,10 +159,6 @@ handling may be necessary.
 Permit regions to be inherited across
 .Xr exec 3
 system calls.
-.It Dv MAP_PRIVATE
-Modifications are private.
-.It Dv MAP_SHARED
-Modifications are shared.
 .It Dv MAP_TRYFIXED
 Attempt to use the hint provided by
 .Fa addr .
@@ -220,6 +225,11 @@ was not open for writing.
 .Fa fd
 is not a valid open file descriptor.
 .It Bq Er EINVAL
+.Dv MAP_PRIVATE
+and
+.Dv MAP_SHARED
+were both specified.
+.It Bq Er EINVAL
 .Dv MAP_FIXED
 was specified and the
 .Fa addr
@@ -273,6 +283,27 @@ signal; however,
 generates a
 .Dv SIGSEGV
 signal in this case instead.
+.Pp
+Additionally,
+.St -p1003.1-2008
+specifies that
+.Fn mmap
+shall fail with
+.Er EINVAL
+if neither
+.Dv MAP_PRIVATE
+nor
+.Dv MAP_SHARED
+is specified by
+.Fa flags ;
+however, for compatibility with old programs,
+.Ox
+instead defaults to
+.Dv MAP_SHARED
+for mappings of character special files, and to
+.Dv MAP_PRIVATE
+for all other mappings.
+New programs should not rely on this behavior.
 .Sh BUGS
 Due to a limitation of the current vm system (see
 .Xr uvm 9 ) ,
