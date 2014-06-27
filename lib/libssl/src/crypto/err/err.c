@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.34 2014/06/26 15:24:08 deraadt Exp $ */
+/* $OpenBSD: err.c,v 1.35 2014/06/27 06:07:01 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,34 +127,34 @@ static void err_load_strings(int lib, ERR_STRING_DATA *str);
 static void ERR_STATE_free(ERR_STATE *s);
 #ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA ERR_str_libraries[] = {
-	{ERR_PACK(ERR_LIB_NONE,0,0)		, "unknown library"},
-	{ERR_PACK(ERR_LIB_SYS,0,0)		, "system library"},
-	{ERR_PACK(ERR_LIB_BN,0,0)		, "bignum routines"},
-	{ERR_PACK(ERR_LIB_RSA,0,0)		, "rsa routines"},
-	{ERR_PACK(ERR_LIB_DH,0,0)		, "Diffie-Hellman routines"},
-	{ERR_PACK(ERR_LIB_EVP,0,0)		, "digital envelope routines"},
-	{ERR_PACK(ERR_LIB_BUF,0,0)		, "memory buffer routines"},
-	{ERR_PACK(ERR_LIB_OBJ,0,0)		, "object identifier routines"},
-	{ERR_PACK(ERR_LIB_PEM,0,0)		, "PEM routines"},
-	{ERR_PACK(ERR_LIB_DSA,0,0)		, "dsa routines"},
-	{ERR_PACK(ERR_LIB_X509,0,0)		, "x509 certificate routines"},
-	{ERR_PACK(ERR_LIB_ASN1,0,0)		, "asn1 encoding routines"},
-	{ERR_PACK(ERR_LIB_CONF,0,0)		, "configuration file routines"},
-	{ERR_PACK(ERR_LIB_CRYPTO,0,0)		, "common libcrypto routines"},
-	{ERR_PACK(ERR_LIB_EC,0,0)		, "elliptic curve routines"},
-	{ERR_PACK(ERR_LIB_SSL,0,0)		, "SSL routines"},
-	{ERR_PACK(ERR_LIB_BIO,0,0)		, "BIO routines"},
-	{ERR_PACK(ERR_LIB_PKCS7,0,0)		, "PKCS7 routines"},
-	{ERR_PACK(ERR_LIB_X509V3,0,0)		, "X509 V3 routines"},
-	{ERR_PACK(ERR_LIB_PKCS12,0,0)		, "PKCS12 routines"},
-	{ERR_PACK(ERR_LIB_RAND,0,0)		, "random number generator"},
-	{ERR_PACK(ERR_LIB_DSO,0,0)		, "DSO support routines"},
-	{ERR_PACK(ERR_LIB_TS,0,0)		, "time stamp routines"},
-	{ERR_PACK(ERR_LIB_ENGINE,0,0)		, "engine routines"},
-	{ERR_PACK(ERR_LIB_OCSP,0,0)		, "OCSP routines"},
-	{ERR_PACK(ERR_LIB_FIPS,0,0)		, "FIPS routines"},
-	{ERR_PACK(ERR_LIB_CMS,0,0)		, "CMS routines"},
-	{ERR_PACK(ERR_LIB_HMAC,0,0)		, "HMAC routines"},
+	{ERR_PACK(ERR_LIB_NONE,0,0),		"unknown library"},
+	{ERR_PACK(ERR_LIB_SYS,0,0),		"system library"},
+	{ERR_PACK(ERR_LIB_BN,0,0),		"bignum routines"},
+	{ERR_PACK(ERR_LIB_RSA,0,0),		"rsa routines"},
+	{ERR_PACK(ERR_LIB_DH,0,0),		"Diffie-Hellman routines"},
+	{ERR_PACK(ERR_LIB_EVP,0,0),		"digital envelope routines"},
+	{ERR_PACK(ERR_LIB_BUF,0,0),		"memory buffer routines"},
+	{ERR_PACK(ERR_LIB_OBJ,0,0),		"object identifier routines"},
+	{ERR_PACK(ERR_LIB_PEM,0,0),		"PEM routines"},
+	{ERR_PACK(ERR_LIB_DSA,0,0),		"dsa routines"},
+	{ERR_PACK(ERR_LIB_X509,0,0),		"x509 certificate routines"},
+	{ERR_PACK(ERR_LIB_ASN1,0,0),		"asn1 encoding routines"},
+	{ERR_PACK(ERR_LIB_CONF,0,0),		"configuration file routines"},
+	{ERR_PACK(ERR_LIB_CRYPTO,0,0),		"common libcrypto routines"},
+	{ERR_PACK(ERR_LIB_EC,0,0),		"elliptic curve routines"},
+	{ERR_PACK(ERR_LIB_SSL,0,0),		"SSL routines"},
+	{ERR_PACK(ERR_LIB_BIO,0,0),		"BIO routines"},
+	{ERR_PACK(ERR_LIB_PKCS7,0,0),		"PKCS7 routines"},
+	{ERR_PACK(ERR_LIB_X509V3,0,0),		"X509 V3 routines"},
+	{ERR_PACK(ERR_LIB_PKCS12,0,0),		"PKCS12 routines"},
+	{ERR_PACK(ERR_LIB_RAND,0,0),		"random number generator"},
+	{ERR_PACK(ERR_LIB_DSO,0,0),		"DSO support routines"},
+	{ERR_PACK(ERR_LIB_TS,0,0),		"time stamp routines"},
+	{ERR_PACK(ERR_LIB_ENGINE,0,0),		"engine routines"},
+	{ERR_PACK(ERR_LIB_OCSP,0,0),		"OCSP routines"},
+	{ERR_PACK(ERR_LIB_FIPS,0,0),		"FIPS routines"},
+	{ERR_PACK(ERR_LIB_CMS,0,0),		"CMS routines"},
+	{ERR_PACK(ERR_LIB_HMAC,0,0),		"HMAC routines"},
 	{0, NULL},
 };
 
@@ -173,44 +173,44 @@ static ERR_STRING_DATA ERR_str_functs[] = {
 };
 
 static ERR_STRING_DATA ERR_str_reasons[] = {
-	{ERR_R_SYS_LIB				, "system lib"},
-	{ERR_R_BN_LIB				, "BN lib"},
-	{ERR_R_RSA_LIB				, "RSA lib"},
-	{ERR_R_DH_LIB				, "DH lib"},
-	{ERR_R_EVP_LIB				, "EVP lib"},
-	{ERR_R_BUF_LIB				, "BUF lib"},
-	{ERR_R_OBJ_LIB				, "OBJ lib"},
-	{ERR_R_PEM_LIB				, "PEM lib"},
-	{ERR_R_DSA_LIB				, "DSA lib"},
-	{ERR_R_X509_LIB				, "X509 lib"},
-	{ERR_R_ASN1_LIB				, "ASN1 lib"},
-	{ERR_R_CONF_LIB				, "CONF lib"},
-	{ERR_R_CRYPTO_LIB			, "CRYPTO lib"},
-	{ERR_R_EC_LIB				, "EC lib"},
-	{ERR_R_SSL_LIB				, "SSL lib"},
-	{ERR_R_BIO_LIB				, "BIO lib"},
-	{ERR_R_PKCS7_LIB			, "PKCS7 lib"},
-	{ERR_R_X509V3_LIB			, "X509V3 lib"},
-	{ERR_R_PKCS12_LIB			, "PKCS12 lib"},
-	{ERR_R_RAND_LIB				, "RAND lib"},
-	{ERR_R_DSO_LIB				, "DSO lib"},
-	{ERR_R_ENGINE_LIB			, "ENGINE lib"},
-	{ERR_R_OCSP_LIB				, "OCSP lib"},
-	{ERR_R_TS_LIB				, "TS lib"},
+	{ERR_R_SYS_LIB,				"system lib"},
+	{ERR_R_BN_LIB,				"BN lib"},
+	{ERR_R_RSA_LIB,				"RSA lib"},
+	{ERR_R_DH_LIB,				"DH lib"},
+	{ERR_R_EVP_LIB,				"EVP lib"},
+	{ERR_R_BUF_LIB,				"BUF lib"},
+	{ERR_R_OBJ_LIB,				"OBJ lib"},
+	{ERR_R_PEM_LIB,				"PEM lib"},
+	{ERR_R_DSA_LIB,				"DSA lib"},
+	{ERR_R_X509_LIB,			"X509 lib"},
+	{ERR_R_ASN1_LIB,			"ASN1 lib"},
+	{ERR_R_CONF_LIB,			"CONF lib"},
+	{ERR_R_CRYPTO_LIB,			"CRYPTO lib"},
+	{ERR_R_EC_LIB,				"EC lib"},
+	{ERR_R_SSL_LIB,				"SSL lib"},
+	{ERR_R_BIO_LIB,				"BIO lib"},
+	{ERR_R_PKCS7_LIB,			"PKCS7 lib"},
+	{ERR_R_X509V3_LIB,			"X509V3 lib"},
+	{ERR_R_PKCS12_LIB,			"PKCS12 lib"},
+	{ERR_R_RAND_LIB,			"RAND lib"},
+	{ERR_R_DSO_LIB,				"DSO lib"},
+	{ERR_R_ENGINE_LIB,			"ENGINE lib"},
+	{ERR_R_OCSP_LIB,			"OCSP lib"},
+	{ERR_R_TS_LIB,				"TS lib"},
 
-	{ERR_R_NESTED_ASN1_ERROR		, "nested asn1 error"},
-	{ERR_R_BAD_ASN1_OBJECT_HEADER		, "bad asn1 object header"},
-	{ERR_R_BAD_GET_ASN1_OBJECT_CALL		, "bad get asn1 object call"},
-	{ERR_R_EXPECTING_AN_ASN1_SEQUENCE	, "expecting an asn1 sequence"},
-	{ERR_R_ASN1_LENGTH_MISMATCH		, "asn1 length mismatch"},
-	{ERR_R_MISSING_ASN1_EOS			, "missing asn1 eos"},
+	{ERR_R_NESTED_ASN1_ERROR,		"nested asn1 error"},
+	{ERR_R_BAD_ASN1_OBJECT_HEADER,		"bad asn1 object header"},
+	{ERR_R_BAD_GET_ASN1_OBJECT_CALL,	"bad get asn1 object call"},
+	{ERR_R_EXPECTING_AN_ASN1_SEQUENCE,	"expecting an asn1 sequence"},
+	{ERR_R_ASN1_LENGTH_MISMATCH,		"asn1 length mismatch"},
+	{ERR_R_MISSING_ASN1_EOS,		"missing asn1 eos"},
 
-	{ERR_R_FATAL                            , "fatal"},
-	{ERR_R_MALLOC_FAILURE			, "malloc failure"},
-	{ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED	, "called a function you should not call"},
-	{ERR_R_PASSED_NULL_PARAMETER		, "passed a null parameter"},
-	{ERR_R_INTERNAL_ERROR			, "internal error"},
-	{ERR_R_DISABLED				, "called a function that was disabled at compile-time"},
+	{ERR_R_FATAL,				"fatal"},
+	{ERR_R_MALLOC_FAILURE,			"malloc failure"},
+	{ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,	"called a function you should not call"},
+	{ERR_R_PASSED_NULL_PARAMETER,		"passed a null parameter"},
+	{ERR_R_INTERNAL_ERROR,			"internal error"},
+	{ERR_R_DISABLED	,			"called a function that was disabled at compile-time"},
 
 	{0, NULL},
 };
@@ -615,22 +615,21 @@ build_SYS_str_reasons(void)
 
 #define err_clear_data(p,i) \
 	do { \
-	if (((p)->err_data[i] != NULL) && \
-		(p)->err_data_flags[i] & ERR_TXT_MALLOCED) \
-		{  \
-		free((p)->err_data[i]); \
-		(p)->err_data[i]=NULL; \
+		if (((p)->err_data[i] != NULL) && \
+		    (p)->err_data_flags[i] & ERR_TXT_MALLOCED) { \
+			free((p)->err_data[i]); \
+			(p)->err_data[i] = NULL; \
 		} \
-	(p)->err_data_flags[i]=0; \
+		(p)->err_data_flags[i] = 0; \
 	} while(0)
 
 #define err_clear(p,i) \
 	do { \
-	(p)->err_flags[i]=0; \
-	(p)->err_buffer[i]=0; \
-	err_clear_data(p,i); \
-	(p)->err_file[i]=NULL; \
-	(p)->err_line[i]= -1; \
+		(p)->err_flags[i] = 0; \
+		(p)->err_buffer[i] = 0; \
+		err_clear_data(p, i); \
+		(p)->err_file[i] = NULL; \
+		(p)->err_line[i] = -1; \
 	} while(0)
 
 static void
@@ -732,57 +731,66 @@ ERR_clear_error(void)
 }
 
 
-unsigned long ERR_get_error(void)
+unsigned long
+ERR_get_error(void)
 {
-	return (get_error_values(1, 0,NULL, NULL, NULL, NULL));
+	return (get_error_values(1, 0, NULL, NULL, NULL, NULL));
 }
 
-unsigned long ERR_get_error_line(const char **file, int *line)
+unsigned long
+ERR_get_error_line(const char **file, int *line)
 {
-	return (get_error_values(1, 0,file, line, NULL, NULL));
+	return (get_error_values(1, 0, file, line, NULL, NULL));
 }
 
-unsigned long ERR_get_error_line_data(const char **file, int *line,
+unsigned long
+ERR_get_error_line_data(const char **file, int *line,
     const char **data, int *flags)
 {
-	return (get_error_values(1, 0,file, line, data, flags));
+	return (get_error_values(1, 0, file, line, data, flags));
 }
 
 
-unsigned long ERR_peek_error(void)
+unsigned long
+ERR_peek_error(void)
 {
-	return (get_error_values(0, 0,NULL, NULL, NULL, NULL));
+	return (get_error_values(0, 0, NULL, NULL, NULL, NULL));
 }
 
-unsigned long ERR_peek_error_line(const char **file, int *line)
+unsigned long
+ERR_peek_error_line(const char **file, int *line)
 {
-	return (get_error_values(0, 0,file, line, NULL, NULL));
+	return (get_error_values(0, 0, file, line, NULL, NULL));
 }
 
-unsigned long ERR_peek_error_line_data(const char **file, int *line,
+unsigned long
+ERR_peek_error_line_data(const char **file, int *line,
     const char **data, int *flags)
 {
-	return (get_error_values(0, 0,file, line, data, flags));
+	return (get_error_values(0, 0, file, line, data, flags));
 }
 
-unsigned long ERR_peek_last_error(void)
+unsigned long
+ERR_peek_last_error(void)
 {
-	return (get_error_values(0, 1,NULL, NULL, NULL, NULL));
+	return (get_error_values(0, 1, NULL, NULL, NULL, NULL));
 }
 
-unsigned long ERR_peek_last_error_line(const char **file, int *line)
+unsigned long
+ERR_peek_last_error_line(const char **file, int *line)
 {
-	return (get_error_values(0, 1,file, line, NULL, NULL));
+	return (get_error_values(0, 1, file, line, NULL, NULL));
 }
 
-unsigned long ERR_peek_last_error_line_data(const char **file, int *line,
+unsigned long
+ERR_peek_last_error_line_data(const char **file, int *line,
     const char **data, int *flags)
 {
-	return (get_error_values(0, 1,file, line, data, flags));
+	return (get_error_values(0, 1, file, line, data, flags));
 }
 
-static unsigned
-long get_error_values(int inc, int top, const char **file, int *line,
+static unsigned long
+get_error_values(int inc, int top, const char **file, int *line,
     const char **data, int *flags)
 {
 	int i = 0;
