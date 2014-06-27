@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootarg.c,v 1.10 2003/08/11 06:23:07 deraadt Exp $	*/
+/*	$OpenBSD: bootarg.c,v 1.11 2014/06/27 16:05:20 tobias Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Michael Shalayeff
@@ -30,7 +30,7 @@
 #include <lib/libsa/stand.h>
 #include <stand/boot/bootarg.h>
 
-bootarg_t *bootarg_list;
+static bootarg_t *bootarg_list;
 
 void
 addbootarg(int t, size_t l, void *p)
@@ -53,18 +53,20 @@ makebootargs(caddr_t v, size_t *lenp)
 
 	/* get total size */
 	l = sizeof(*p);
-	for (p = bootarg_list; p != NULL; p = p->ba_next)
+	for (p = bootarg_list; p != NULL; p = p->ba_next) {
 		l += p->ba_size;
-	if (*lenp < l) {
+		if (*lenp < l) {
 #ifdef DEBUG
-		printf("makebootargs: too many args\n");
+			printf("makebootargs: too many args\n");
 #endif
-		l = *lenp;
+			l -= p->ba_size;
+			break;
+		}
 	}
 	*lenp = l;
 	/* copy them out */
 	for (p = bootarg_list, q = v;
-	     p != NULL && ((q + p->ba_size) - (u_char *)v) < l;
+	     p != NULL && ((q + p->ba_size) - (u_char *)v) <= l - sizeof(*p);
 	     q += p->ba_size, p = p->ba_next) {
 #ifdef DEBUG
 		printf("%d,%d ", p->ba_type, p->ba_size);
