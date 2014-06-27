@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.167 2014/06/02 08:49:38 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.168 2014/06/27 17:37:42 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -118,7 +118,7 @@ struct dir_info {
 					/* delayed free chunk slots */
 	void *delayed_chunks[MALLOC_DELAYED_CHUNK_MASK + 1];
 	size_t rbytesused;		/* random bytes used */
-	u_char rbytes[512];		/* random bytes */
+	u_char rbytes[32];		/* random bytes */
 	u_short chunk_start;
 #ifdef MALLOC_STATS
 	size_t inserts;
@@ -276,7 +276,8 @@ static void
 rbytes_init(struct dir_info *d)
 {
 	arc4random_buf(d->rbytes, sizeof(d->rbytes));
-	d->rbytesused = 0;
+	/* add 1 to account for using d->rbytes[0] */
+	d->rbytesused = 1 + d->rbytes[0] % (sizeof(d->rbytes) / 2);
 }
 
 static inline u_char
