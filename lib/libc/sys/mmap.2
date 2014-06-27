@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.45 2014/06/27 19:02:54 matthew Exp $
+.\"	$OpenBSD: mmap.2,v 1.46 2014/06/27 19:26:36 matthew Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -135,9 +135,6 @@ The file descriptor used for creating
 .Dv MAP_ANON
 must currently be \-1 indicating no name is associated with the
 region.
-.It Dv MAP_FILE
-Mapped from a regular file or character-special device memory.
-(This is the default mapping type, and need not be specified.)
 .It Dv MAP_FIXED
 Demand that the mapping is placed at
 .Fa addr ,
@@ -152,27 +149,48 @@ mappings)
 must be multiples of the page size.
 Existing mappings in the address range will be replaced.
 Use of this option is discouraged.
-.It Dv MAP_HASSEMAPHORE
-Notify the kernel that the region may contain semaphores and that special
-handling may be necessary.
-.It Dv MAP_INHERIT
-Permit regions to be inherited across
-.Xr exec 3
-system calls.
-.It Dv MAP_TRYFIXED
-Attempt to use the hint provided by
-.Fa addr .
-This is the default mapping type and need not be specified.
-Use of
-.Dv MAP_TRYFIXED
-is discouraged, as it is a non-portable extension.
+.El
+.Pp
+Finally, the following flags are also provided for
+source compatibility with code written for other operating systems,
+but are not recommended for use in new
+.Ox
+code:
+.Bl -tag -width MAP_PRIVATE -offset indent
 .It Dv MAP_COPY
 Modifications are private and, unlike
 .Dv MAP_PRIVATE ,
 modifications made by others are not visible.
-This option is deprecated, shouldn't be used and behaves just like
-.Dv MAP_PRIVATE
-in the current implementation.
+(On
+.Ox ,
+this behaves just like
+.Dv MAP_PRIVATE ).
+.It Dv MAP_FILE
+Mapped from a regular file or character-special device memory.
+(On
+.Ox
+and all systems conforming to
+.St -p1003.1-2008 ,
+this is the default mapping type, and need not be specified.)
+.It Dv MAP_HASSEMAPHORE
+Notify the kernel that the region may contain semaphores and that special
+handling may be necessary.
+(On
+.Ox ,
+this flag is ignored.)
+.It Dv MAP_INHERIT
+Permit regions to be inherited across
+.Xr exec 3
+system calls.
+(On
+.Ox ,
+this flag is ignored.)
+.It Dv MAP_TRYFIXED
+Attempt to use the hint provided by
+.Fa addr .
+(On
+.Ox ,
+this is the default behavior.)
 .El
 .Pp
 The
