@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.18 2013/12/21 07:32:35 guenther Exp $
+# $OpenBSD: mksubr,v 1.19 2014/06/27 20:50:43 matthew Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -241,7 +241,9 @@ cat <<_EOF_
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
+#define _KERNEL
 #include <sys/mman.h>
+#undef _KERNEL
 #include <sys/wait.h>
 #include <sys/proc.h>
 #define _KERNEL

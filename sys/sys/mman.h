@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.24 2014/06/13 01:48:52 matthew Exp $	*/
+/*	$OpenBSD: mman.h,v 1.25 2014/06/27 20:50:43 matthew Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -50,32 +50,49 @@
  */
 #define	MAP_SHARED	0x0001	/* share changes */
 #define	MAP_PRIVATE	0x0002	/* changes are private */
-#define	MAP_COPY	0x0004	/* "copy" region at mmap time */
 
 /*
  * Other flags
  */
-#define	MAP_FIXED	 0x0010	/* map addr must be exactly as requested */
-#define	MAP_RENAME	 0x0020	/* Sun: rename private pages to file */
-#define	MAP_NORESERVE	 0x0040	/* Sun: don't reserve needed swap area */
-#define	MAP_INHERIT	 0x0080	/* region is retained after exec */
-#define	MAP_NOEXTEND	 0x0100	/* for MAP_FILE, don't change file size */
-#define	MAP_HASSEMAPHORE 0x0200	/* region may contain semaphores */
-#define	MAP_TRYFIXED	 0x0400 /* attempt hint address, even within heap */
+#define	MAP_FIXED	0x0010	/* map addr must be exactly as requested */
+#define	__MAP_NOREPLACE	0x0800	/* fail if address not available */
+#define	MAP_ANON	0x1000	/* allocated from memory, swap space */
 
-#define	__MAP_NOREPLACE	 0x0800 /* fail if address not available */
+#define	MAP_FLAGMASK	0x1ff7
+
+#ifdef _KERNEL
+/*
+ * Backwards compat for OpenBSD 5.5.
+ * TODO: Remove after OpenBSD 5.7 release.
+ */
+#define	MAP_OLDCOPY		0x0004	/* alias for MAP_PRIVATE */
+#define	MAP_OLDRENAME		0x0020
+#define	MAP_OLDNORESERVE	0x0040
+#define	MAP_OLDINHERIT		0x0080
+#define	MAP_OLDNOEXTEND		0x0100
+#define	MAP_OLDHASSEMAPHORE	0x0200
+#define	MAP_OLDTRYFIXED		0x0400
+#endif
+
+#ifndef _KERNEL
+/*
+ * Legacy defines for userland source compatibility.
+ * Can be removed once no longer needed in base and ports.
+ */
+#define	MAP_COPY		MAP_PRIVATE	/* "copy" region at mmap time */
+#define	MAP_FILE		0	/* map from file (default) */
+#define	MAP_HASSEMAPHORE	0	/* region may contain semaphores */
+#define	MAP_INHERIT		0	/* region is retained after exec */
+#define	MAP_NOEXTEND		0	/* for MAP_FILE, don't change file size */
+#define	MAP_NORESERVE		0	/* Sun: don't reserve needed swap area */
+#define	MAP_RENAME		0	/* Sun: rename private pages to file */
+#define	MAP_TRYFIXED		0	/* attempt hint address, even within heap */
+#endif
 
 /*
  * Error return from mmap()
  */
 #define MAP_FAILED	((void *)-1)
-
-/*
- * Mapping type
- */
-#define	MAP_FILE	0x0000	/* map from file (default) */
-#define	MAP_ANON	0x1000	/* allocated from memory, swap space */
-#define	MAP_FLAGMASK	0x1ff7
 
 /*
  * POSIX memory advisory values.
