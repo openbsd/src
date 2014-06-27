@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.5 2014/01/18 20:43:20 dlg Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.6 2014/06/27 17:51:08 miod Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -117,8 +117,8 @@ int	wd33c93_go(struct wd33c93_softc *, struct wd33c93_acb *);
 int	wd33c93_dmaok(struct wd33c93_softc *, struct scsi_xfer *);
 int	wd33c93_wait(struct wd33c93_softc *, u_char, int , int);
 u_char	wd33c93_selectbus(struct wd33c93_softc *, struct wd33c93_acb *);
-int	wd33c93_xfout(struct wd33c93_softc *, int, void *);
-int	wd33c93_xfin(struct wd33c93_softc *, int, void *);
+ssize_t	wd33c93_xfout(struct wd33c93_softc *, ssize_t, void *);
+ssize_t	wd33c93_xfin(struct wd33c93_softc *, ssize_t, void *);
 int	wd33c93_poll(struct wd33c93_softc *, struct wd33c93_acb *);
 int	wd33c93_nextstate(struct wd33c93_softc *, struct wd33c93_acb *,
 	    u_char, u_char);
@@ -481,14 +481,15 @@ wd33c93_dma_setup(struct wd33c93_softc *sc, int datain)
 void
 wd33c93_dma_stop(struct wd33c93_softc *sc)
 {
-	size_t count;
+	ssize_t count;
 	int asr;
 
 	/* Wait until WD chip is idle */
 	do {
 		GET_SBIC_asr(sc, asr);	/* XXX */
 		if (asr & SBIC_ASR_DBR) {
-			printf("wd33c93_dma_stop: asr %02x canceled!\n", asr);
+			printf("%s: %s: asr %02x canceled!\n",
+			    sc->sc_dev.dv_xname, __func__, asr);
 			break;
 		}
 	} while (asr & (SBIC_ASR_BSY|SBIC_ASR_CIP));
@@ -506,9 +507,14 @@ wd33c93_dma_stop(struct wd33c93_softc *sc)
 		/* Work out how many bytes were actually transferred */
 		count = sc->sc_tcnt - count;
 
-		if (sc->sc_dleft < count)
-			printf("xfer too large: dleft=%zu resid=%zu\n",
+		if (sc->sc_dleft < count) {
+			if (sc->sc_nexus && sc->sc_nexus->xs)
+				sc_print_addr(sc->sc_nexus->xs->sc_link);
+			else
+				printf("%s: ", sc->sc_dev.dv_xname);
+			printf("xfer too large: dleft=%zd resid=%zd\n",
 			    sc->sc_dleft, count);
+		}
 
 		/* Fixup partial xfers */
 		sc->sc_daddr = (char *)sc->sc_daddr + count;
@@ -735,8 +741,10 @@ wd33c93_sched(struct wd33c93_softc *sc)
 		}
 		if (li->untagged == NULL && tag != 0) {
 			break;
-		} else
-			printf("%d:%d busy\n", sc_link->target, sc_link->lun);
+		} else {
+			sc_print_addr(sc_link);
+			printf(" busy\n");
+		}
 	}
 
 	if (acb == NULL) {
@@ -912,6 +920,7 @@ wd33c93_abort(struct wd33c93_softc *sc, struct wd33c93_acb *acb,
 			 * But we don't know what direction it needs to go
 			 */
 			GET_SBIC_data(sc, asr);
+			sc_print_addr(acb->xs->sc_link);
 			printf("abort %s: clearing data buffer 0x%02x\n",
 			       where, asr);
 			GET_SBIC_asr(sc, asr);
@@ -1052,8 +1061,9 @@ wd33c93_selectbus(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 	GET_SBIC_selid(sc, id);
 	if (id != target) {
 		/* Something went wrong - wrong target was select */
-		printf("wd33c93_selectbus: wrong target selected;"
-		    "  WANTED %d GOT %d", target, id);
+		sc_print_addr(sc_link);
+		printf("%s: wrong target selected; WANTED %d GOT %d",
+		    __func__, target, id);
 		return 0;      /* XXX: Need to call nexstate to handle? */
 	}
 
@@ -1146,8 +1156,8 @@ wd33c93_selectbus(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
  * to STATUS phase. This is really only a problem for immediate commands
  * since we don't allow disconnection for them (yet).
  */
-int
-wd33c93_xfout(struct wd33c93_softc *sc, int len, void *bp)
+ssize_t
+wd33c93_xfout(struct wd33c93_softc *sc, ssize_t len, void *bp)
 {
 	int wait = wd33c93_data_wait;
 	u_char asr, *buf = bp;
@@ -1199,14 +1209,14 @@ wd33c93_xfout(struct wd33c93_softc *sc, int len, void *bp)
  * Information Transfer *from* a Scsi Target
  * returns # bytes left to read
  */
-int
-wd33c93_xfin(struct wd33c93_softc *sc, int len, void *bp)
+ssize_t
+wd33c93_xfin(struct wd33c93_softc *sc, ssize_t len, void *bp)
 {
-	int     wait = wd33c93_data_wait;
-	u_char  *buf = bp;
-	u_char  asr;
+	int wait = wd33c93_data_wait;
+	u_char *buf = bp;
+	u_char asr;
 #ifdef SBICDEBUG
-	u_char  *obp = bp;
+	u_char *obp = bp;
 #endif
 	SET_SBIC_control(sc, SBIC_CTL_EDI | SBIC_CTL_IDI);
 	SBIC_TC_PUT (sc, (unsigned)len);
@@ -1303,8 +1313,8 @@ wd33c93_loop(struct wd33c93_softc *sc, u_char asr, u_char csr)
 			GET_SBIC_asr(sc, asr);
 
 			if (asr & SBIC_ASR_LCI)
-				printf("wd33c93_loop: LCI asr:%02x csr:%02x\n",
-				    asr, csr);
+				printf("%s: %s: LCI asr:%02x csr:%02x\n",
+				    sc->sc_dev.dv_xname, __func__, asr, csr);
 
 			if (asr & SBIC_ASR_INT)
 				GET_SBIC_csr(sc, csr);
@@ -1360,7 +1370,8 @@ wd33c93_go(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 	switch (i) {
 	case SBIC_STATE_DONE:
 		if (sc->sc_status == STATUS_UNKNOWN) {
-			printf("wd33c93_go: done & stat == UNKNOWN\n");
+			sc_print_addr(sc_link);
+			printf("%s: done & stat == UNKNOWN\n", __func__);
 			return 1;  /* Did we really finish that fast? */
 		}
 		break;
@@ -1412,9 +1423,11 @@ wd33c93_poll(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 	for (count = acb->timeout; count;) {
 		GET_SBIC_asr(sc, asr);
 		GET_SBIC_csr(sc, csr);
-		if (asr & SBIC_ASR_LCI)
-			printf("wd33c93_poll: LCI; asr:%02x csr:%02x\n",
-			    asr, csr);
+		if (asr & SBIC_ASR_LCI) {
+			sc_print_addr(xs->sc_link);
+			printf("%s: LCI; asr:%02x csr:%02x\n",
+			    __func__, asr, csr);
+		}
 		if (asr & SBIC_ASR_INT) {
 			/* inline wd33c93_intr(sc) */
 			s = splbio();
@@ -1517,9 +1530,9 @@ wd33c93_msgin_phase(struct wd33c93_softc *sc, int reselect)
 
 void wd33c93_msgin(struct wd33c93_softc *sc, u_char *msgaddr, int msglen)
 {
-	struct wd33c93_acb    *acb = sc->sc_nexus;
-	struct wd33c93_tinfo  *ti = &sc->sc_tinfo[sc->target];
-	struct wd33c93_linfo  *li;
+	struct wd33c93_acb *acb = sc->sc_nexus;
+	struct wd33c93_tinfo *ti = &sc->sc_tinfo[sc->target];
+	struct wd33c93_linfo *li;
 	u_char asr;
 
 	switch (sc->sc_state) {
@@ -1530,9 +1543,8 @@ void wd33c93_msgin(struct wd33c93_softc *sc, u_char *msgaddr, int msglen)
 				       "last msgout=%x\n", sc->sc_msgout));
 			switch (sc->sc_msgout) {
 			case SEND_TAG:
-				printf("%s: tagged queuing rejected: "
-				    "target %d\n",
-				    sc->sc_dev.dv_xname, sc->target);
+				sc_print_addr(acb->xs->sc_link);
+				printf("tagged queuing rejected\n");
 				ti->flags &= ~T_TAG;
 				li = TINFO_LUN(ti, sc->lun);
 				if (acb->tag_type &&
@@ -1546,8 +1558,8 @@ void wd33c93_msgin(struct wd33c93_softc *sc, u_char *msgaddr, int msglen)
 				break;
 
 			case SEND_SDTR:
-				printf("%s: sync transfer rejected: target %d\n",
-				    sc->sc_dev.dv_xname, sc->target);
+				sc_print_addr(acb->xs->sc_link);
+				printf("sync transfer rejected\n");
 
 				sc->sc_flags &= ~SBICF_SYNCNEGO;
 				ti->flags &= ~(T_NEGOTIATE | T_SYNCMODE);
@@ -1566,9 +1578,9 @@ void wd33c93_msgin(struct wd33c93_softc *sc, u_char *msgaddr, int msglen)
 		case MSG_HEAD_OF_Q_TAG:
 		case MSG_ORDERED_Q_TAG:
 		case MSG_SIMPLE_Q_TAG:
-			printf("-- Out of phase TAG;"
-			    "Nexus=%d:%d Tag=%02x/%02x\n",
-			    sc->target, sc->lun, msgaddr[0], msgaddr[1]);
+			sc_print_addr(acb->xs->sc_link);
+			printf("out of phase TAG; Tag=%02x/%02x\n",
+			    msgaddr[0], msgaddr[1]);
 			break;
 
 		case MSG_DISCONNECT:
@@ -1731,8 +1743,7 @@ void wd33c93_msgin(struct wd33c93_softc *sc, u_char *msgaddr, int msglen)
 			sc->sc_msgify = msgaddr[0];
 		} else {
 			printf("%s: reselect without IDENTIFY;"
-			    " MSG %x;"
-			    " sending DEVICE RESET\n",
+			    " MSG %x; sending DEVICE RESET\n",
 			    sc->sc_dev.dv_xname, msgaddr[0]);
 			goto reset;
 		}
@@ -1765,7 +1776,7 @@ wd33c93_sched_msgout(struct wd33c93_softc *sc, u_short msg)
 	WAIT_CIP(sc);
 	GET_SBIC_asr(sc, asr);
 	if (asr & SBIC_ASR_LCI) {
-		printf("MSGOUT Failed!\n");
+		printf("%s: MSGOUT Failed!\n", sc->sc_dev.dv_xname);
 	}
 	SET_SBIC_cmd(sc, SBIC_CMD_CLR_ACK);
 	WAIT_CIP(sc);
@@ -1812,18 +1823,22 @@ wd33c93_msgout(struct wd33c93_softc *sc)
 			}
 			break;
 		case SEND_IDENTIFY:
+#ifdef DIAGNOSTIC
 			if (sc->sc_state != SBIC_CONNECTED) {
 				printf("%s at line %d: no nexus\n",
 				    sc->sc_dev.dv_xname, __LINE__);
 			}
+#endif
 			sc->sc_omsg[0] =
 			    MSG_IDENTIFY(acb->xs->sc_link->lun, 0);
 			break;
 		case SEND_TAG:
+#ifdef DIAGNOSTIC
 			if (sc->sc_state != SBIC_CONNECTED) {
 				printf("%s at line %d: no nexus\n",
 				    sc->sc_dev.dv_xname, __LINE__);
 			}
+#endif
 			sc->sc_omsg[0] = acb->tag_type;
 			sc->sc_omsg[1] = acb->tag_id;
 			sc->sc_omsglen = 2;
@@ -1869,7 +1884,7 @@ wd33c93_msgout(struct wd33c93_softc *sc)
  *	SBIC_STATE_ERROR	== error
  */
 int
-wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb	*acb, u_char csr, u_char asr)
+wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb *acb, u_char csr, u_char asr)
 {
 	SBIC_DEBUG(PHASE, ("next[a=%02x,c=%02x]: ",asr,csr));
 
@@ -1924,7 +1939,9 @@ wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb	*acb, u_char csr,
 		 * Verify that we expected to transfer data...
 		 */
 		if (acb->dleft <= 0) {
-			printf("next: DATA phase with xfer count == %zd, asr:0x%02x csr:0x%02x\n",
+			sc_print_addr(acb->xs->sc_link);
+			printf("next: DATA phase with xfer count == %zd, "
+			    "asr:0x%02x csr:0x%02x\n",
 			    acb->dleft, asr, csr);
 			goto abort;
 		}
@@ -1935,7 +1952,7 @@ wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb	*acb, u_char csr,
 		if (acb->xs->flags & SCSI_POLL ||
 		    sc->sc_flags & SBICF_NODMA) {
 			/* Perfrom transfer using PIO */
-			int resid;
+			ssize_t resid;
 
 			SBIC_DEBUG(DMA, ("PIO xfer: %d(%p:%zx)\n", sc->target,
 				       sc->sc_daddr, sc->sc_dleft));
@@ -1995,7 +2012,8 @@ wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb	*acb, u_char csr,
 		 */
 		SET_SBIC_cmd(sc, SBIC_CMD_CLR_ACK);
 
-		printf("Acking unknown msgin CSR:%02x",csr);
+		sc_print_addr(acb->xs->sc_link);
+		printf("acking unknown msgin CSR:%02x\n", csr);
 		break;
 
 	case SBIC_CSR_XFERRED | MESG_OUT_PHASE:
@@ -2045,7 +2063,8 @@ wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb	*acb, u_char csr,
 		u_char  newtarget, newlun;
 
 		if (sc->sc_flags & SBICF_INDMA) {
-			printf("**** RESELECT WHILE DMA ACTIVE!!! ***\n");
+			printf("%s: **** RESELECT WHILE DMA ACTIVE!!! ***\n",
+			    sc->sc_dev.dv_xname);
 			wd33c93_dma_stop(sc);
 		}
 
@@ -2101,7 +2120,8 @@ wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb	*acb, u_char csr,
 					 * Whoops! Target didn't go to msg_in
 					 * phase!!
 					 */
-					printf("RSLT_NI - not MESG_IN_PHASE %x\n", csr);
+					printf("%s: RSLT_NI - not MESG_IN_PHASE %x\n",
+					    sc->sc_dev.dv_xname, csr);
 					newlun = 0; /* XXXSCW */
 				}
 			}
@@ -2121,7 +2141,8 @@ wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb	*acb, u_char csr,
 	default:
 	abort:
 		/* Something unexpected happend -- deal with it. */
-		printf("next: aborting asr 0x%02x csr 0x%02x\n", asr, csr);
+		printf("%s: next: aborting asr 0x%02x csr 0x%02x\n",
+		    sc->sc_dev.dv_xname, asr, csr);
 
 #ifdef DDB
 		Debugger();
@@ -2240,11 +2261,10 @@ wd33c93_timeout(void *arg)
 	GET_SBIC_asr(sc, asr);
 
 	sc_print_addr(sc_link);
-	printf("%s: timed out; asr=0x%02x [acb %p (flags 0x%x, dleft %zx)], "
-	    "<state %d, nexus %p, resid %lx, msg(q %x,o %x)>",
-	    sc->sc_dev.dv_xname, asr, acb, acb->flags, acb->dleft,
-	    sc->sc_state, sc->sc_nexus, (long)sc->sc_dleft,
-	    sc->sc_msgpriq, sc->sc_msgout);
+	printf("timed out; asr=0x%02x [acb %p (flags 0x%x, dleft %zd)], "
+	    "<state %d, nexus %p, resid %zd, msg(q %x,o %x)>",
+	    asr, acb, acb->flags, acb->dleft, sc->sc_state, sc->sc_nexus,
+	    sc->sc_dleft, sc->sc_msgpriq, sc->sc_msgout);
 
 	if (asr & SBIC_ASR_INT) {
 		/* We need to service a missed IRQ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.4 2013/05/18 23:13:07 miod Exp $	*/
+/*	$OpenBSD: wdsc.c,v 1.5 2014/06/27 17:51:08 miod Exp $	*/
 /*	$NetBSD: wdsc.c,v 1.32 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -78,7 +78,8 @@ struct cfdriver wdsc_cd = {
 	NULL, "wdsc", DV_DULL
 };
 
-int	wdsc_dmasetup(struct wd33c93_softc *, void ** ,size_t *, int, size_t *);
+int	wdsc_dmasetup(struct wd33c93_softc *, void **, ssize_t *, int,
+	    ssize_t *);
 int	wdsc_dmago(struct wd33c93_softc *);
 void	wdsc_dmastop(struct wd33c93_softc *);
 void	wdsc_reset(struct wd33c93_softc *);
@@ -185,18 +186,19 @@ wdsc_attach(struct device *parent, struct device *self, void *aux)
  * Requires splbio() interrupts to be disabled by the caller
  */
 int
-wdsc_dmasetup(struct wd33c93_softc *sc, void **addr, size_t *len, int datain,
-    size_t *dmasize)
+wdsc_dmasetup(struct wd33c93_softc *sc, void **addr, ssize_t *len, int datain,
+    ssize_t *dmasize)
 {
 	struct wdsc_softc *wsc = (struct wdsc_softc *)sc;
 	struct hpc_dma_softc *dsc = &wsc->sc_hpcdma;
-	int count, err;
+	ssize_t count;
+	int err;
 	void *vaddr;
 
 	KASSERT((wsc->sc_flags & WDSC_DMA_ACTIVE) == 0);
 
 	vaddr = *addr;
-	count = dsc->sc_dlen = *len;
+	dsc->sc_dlen = count = *len;
 	if (count) {
 		KASSERT((wsc->sc_flags & WDSC_DMA_MAPLOADED) == 0);
 

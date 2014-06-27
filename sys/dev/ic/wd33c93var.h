@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93var.h,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: wd33c93var.h,v 1.2 2014/06/27 17:51:08 miod Exp $	*/
 /*	$NetBSD: wd33c93var.h,v 1.10 2009/05/12 14:25:18 cegger Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ struct wd33c93_acb {
 	struct scsi_generic cmd;	/* SCSI command block */
 	char	*daddr;			/* kva for data */
 	int	clen;
-	size_t	dleft;			/* bytes remaining */
+	ssize_t	dleft;			/* bytes remaining */
 	u_char	tag_type;		/* TAG Type (0x20-0x22, 0=No Tags) */
 	u_char	tag_id;			/* TAG id number */
 };
@@ -133,7 +133,7 @@ struct wd33c93_softc {
 
 	/* Data about the current nexus (updated for every cmd switch) */
 	void *	sc_daddr;		/* Current data pointer */
-	size_t	sc_dleft;		/* Data left to transfer */
+	ssize_t	sc_dleft;		/* Data left to transfer */
 	ssize_t	sc_tcnt;		/* number of bytes transfered */
 
 	/* Lists of command blocks */
@@ -173,8 +173,8 @@ struct wd33c93_softc {
 	uint8_t	sc_syncperiods[7];	/* Sync transfer periods (4ns units) */
 	uint8_t	sc_fsyncperiods[3];	/* Sync transfer periods for Fast SCSI*/
 
-	int  (*sc_dmasetup)(struct wd33c93_softc *, void **, size_t *, int,
-		    size_t *);
+	int  (*sc_dmasetup)(struct wd33c93_softc *, void **, ssize_t *, int,
+		    ssize_t *);
 	int  (*sc_dmago)(struct wd33c93_softc *);
 	void (*sc_dmastop)(struct wd33c93_softc *);
 	void (*sc_reset)(struct wd33c93_softc *);
