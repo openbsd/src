@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cd.4,v 1.22 2014/06/28 06:18:26 matthew Exp $
+.\"	$OpenBSD: cd.4,v 1.23 2014/06/28 07:08:14 jmc Exp $
 .\"	$NetBSD: cd.4,v 1.3 1996/10/20 23:15:21 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -79,7 +79,7 @@ calls which apply to CD-ROM drives are defined in the header files
 and
 .In sys/disklabel.h .
 .Bl -tag -width Ds
-.It Dv DIOCGDINFO , Dv DIOCSDINFO Fa "struct disklabel *"
+.It Dv DIOCGDINFO , DIOCSDINFO Fa "struct disklabel *"
 Read or write the in-core copy of the disklabel for the drive.
 The disklabel is initialized with information read from the SCSI inquiry
 commands, and should be the same as the information printed at boot.
@@ -238,7 +238,7 @@ struct ioc_patch {
 	/* one for each channel */
 };
 .Ed
-.It Dv CDIOCGETVOL , Dv CDIOCSETVOL Fa "struct ioc_vol *"
+.It Dv CDIOCGETVOL , CDIOCSETVOL Fa "struct ioc_vol *"
 Get (set) information about the volume settings of the output channels.
 The argument structure is as follows:
 .Bd -literal -offset indent
@@ -254,17 +254,17 @@ Patch left source channel to the left output channel and the right
 source channel to the right output channel.
 .It Dv CDIOCSETMUTE
 Mute output without changing the volume settings.
-.It Dv CDIOCSETLEFT , Dv CDIOCSETRIGHT
+.It Dv CDIOCSETLEFT , CDIOCSETRIGHT
 Attach both output channels to the left (right) source channel.
-.It Dv CDIOCSETDEBUG , Dv CDIOCCLRDEBUG
+.It Dv CDIOCSETDEBUG , CDIOCCLRDEBUG
 Turn on (off) debugging for the appropriate device.
-.It Dv CDIOCPAUSE , Dv CDIOCRESUME
+.It Dv CDIOCPAUSE , CDIOCRESUME
 Pause (resume) audio play, without resetting the location of the read-head.
 .It Dv CDIOCRESET
 Reset the drive.
-.It Dv CDIOCSTART , Dv CDIOCSTOP
+.It Dv CDIOCSTART , CDIOCSTOP
 Tell the drive to spin-up (-down) the CD-ROM.
-.It Dv CDIOCALLOW , Dv CDIOCPREVENT
+.It Dv CDIOCALLOW , CDIOCPREVENT
 Tell the drive to allow (prevent) manual ejection of the CD-ROM disc.
 Not all drives support this feature.
 .It Dv CDIOCEJECT

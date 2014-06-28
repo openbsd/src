@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.64 2014/06/28 06:59:45 matthew Exp $
+.\"	$OpenBSD: audio.4,v 1.65 2014/06/28 07:08:14 jmc Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -469,9 +469,9 @@ interface described below.
 The
 .Va gain
 should be in the range
-.Bq Dv AUDIO_MIN_GAIN , Dv AUDIO_MAX_GAIN
+.Bq Dv AUDIO_MIN_GAIN , AUDIO_MAX_GAIN
 and the balance in the range
-.Bq Dv AUDIO_LEFT_BALANCE , Dv AUDIO_RIGHT_BALANCE
+.Bq Dv AUDIO_LEFT_BALANCE , AUDIO_RIGHT_BALANCE
 with the normal setting at
 .Dv AUDIO_MID_BALANCE .
 .Pp
