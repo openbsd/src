@@ -20,7 +20,7 @@ These functions used to allow for the state of the random number generator
 to be controlled by external sources.
 
 They are kept for ABI compatibility but are no longer functional, and
-should not used in new programs.
+should not be used in new programs.
 
 =head1 SEE ALSO
 
