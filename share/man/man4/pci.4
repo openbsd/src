@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.328 2014/03/16 08:28:55 deraadt Exp $
+.\"	$OpenBSD: pci.4,v 1.329 2014/06/28 06:23:01 matthew Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 16 2014 $
+.Dd $Mdocdate: June 28 2014 $
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -501,7 +501,7 @@ driver.
 They are defined in the header file
 .In sys/pciio.h .
 .Bl -tag -width 012345678901234
-.It PCIOCREAD
+.It PCIOCREAD Fa "struct pci_io *"
 This
 .Xr ioctl 2
 reads the
@@ -528,7 +528,7 @@ This value can be only 4.
 .It pi_data
 The data returned by the kernel.
 .El
-.It PCIOCWRITE
+.It PCIOCWRITE Fa "struct pci_io *"
 This
 .Xr ioctl 2
 allows users to write to the
@@ -543,7 +543,7 @@ The limitations on data width described for
 reading registers, above, also apply to writing
 .Tn PCI
 configuration registers.
-.It PCIOCGETROM
+.It PCIOCGETROM Fa "struct pci_rom *"
 This
 .Xr ioctl 2
 allows users to read the contents of the
