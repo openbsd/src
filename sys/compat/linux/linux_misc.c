@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.89 2014/03/30 21:54:49 guenther Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.90 2014/06/28 21:20:19 matthew Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -803,7 +803,7 @@ linux_to_bsd_mmap_args(cma, uap)
 	struct sys_mmap_args *cma;
 	const struct linux_sys_mmap2_args *uap;
 {
-	int flags = MAP_TRYFIXED, fl = SCARG(uap, flags);
+	int flags = 0, fl = SCARG(uap, flags);
 	
 	flags |= cvtto_bsd_mask(fl, LINUX_MAP_SHARED, MAP_SHARED);
 	flags |= cvtto_bsd_mask(fl, LINUX_MAP_PRIVATE, MAP_PRIVATE);
