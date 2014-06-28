@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srtp.c,v 1.5 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: d1_srtp.c,v 1.6 2014/06/28 18:05:27 logan Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -197,6 +197,7 @@ ssl_ctx_make_profiles(const char *profiles_string,
 			sk_SRTP_PROTECTION_PROFILE_push(profiles, p);
 		} else {
 			SSLerr(SSL_F_SSL_CTX_MAKE_PROFILES, SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE);
+			sk_SRTP_PROTECTION_PROFILE_free(profiles);
 			return 1;
 		}
 
@@ -344,6 +345,7 @@ ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len, int *al)
 	if (mki_len != len) {
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT, SSL_R_BAD_SRTP_MKI_VALUE);
 		*al = SSL_AD_DECODE_ERROR;
+		sk_SRTP_PROTECTION_PROFILE_free(clnt);
 		return 1;
 	}
 
