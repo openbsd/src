@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_att.c,v 1.8 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: x509_att.c,v 1.9 2014/06/28 18:25:24 logan Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -333,8 +333,11 @@ X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *data,
 	 * at least one value but some types use and zero length SET and
 	 * require this.
 	 */
-	if (attrtype == 0)
+	if (attrtype == 0) {
+		ASN1_STRING_free(stmp);
 		return 1;
+	}
+
 	if (!(ttmp = ASN1_TYPE_new()))
 		goto err;
 	if ((len == -1) && !(attrtype & MBSTRING_FLAG)) {
@@ -347,6 +350,7 @@ X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *data,
 	return 1;
 
 err:
+	ASN1_STRING_free(stmp);
 	X509err(X509_F_X509_ATTRIBUTE_SET1_DATA, ERR_R_MALLOC_FAILURE);
 	return 0;
 }
