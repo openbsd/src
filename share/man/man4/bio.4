@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bio.4,v 1.31 2014/06/28 06:34:22 matthew Exp $
+.\"	$OpenBSD: bio.4,v 1.32 2014/06/28 06:39:50 matthew Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
 .\" Copyright (c) 2006 Marco Peereboom
@@ -96,7 +96,7 @@ SCSI Enclosure Services
 The following ioctl calls apply to the
 .Nm
 device:
-.Bl -tag -width BIOCINSTALLBOOT
+.Bl -tag -width Ds
 .It Dv BIOCLOCATE Fa "struct bio_locate *"
 Locate a named device and give back a cookie to the application
 for subsequent ioctl calls.
@@ -136,7 +136,7 @@ The following ioctl calls apply to the
 device only when talking to a
 .Xr softraid 4
 device:
-.Bl -tag -width BIOCINSTALLBOOT
+.Bl -tag -width Ds
 .It Dv BIOCCREATERAID Fa "struct bioc_createraid *"
 Create a new volume or assemble an existing volume.
 The volume will be attached as a system disk, if this capability is supported
