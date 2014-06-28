@@ -1,4 +1,4 @@
-.\" $OpenBSD: video.4,v 1.10 2013/09/28 17:50:07 jmc Exp $
+.\" $OpenBSD: video.4,v 1.11 2014/06/28 06:27:31 matthew Exp $
 .\"
 .\" Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 28 2013 $
+.Dd $Mdocdate: June 28 2014 $
 .Dt VIDEO 4
 .Os
 .Sh NAME
@@ -23,9 +23,9 @@
 .Sh SYNOPSIS
 .Cd "video* at uvideo?"
 .Pp
-.Fd #include <sys/types.h>
-.Fd #include <sys/ioctl.h>
-.Fd #include <sys/videoio.h>
+.In sys/types.h
+.In sys/ioctl.h
+.In sys/videoio.h
 .Sh DESCRIPTION
 The
 .Nm
@@ -45,7 +45,7 @@ The following
 .Xr ioctl 2
 commands are supported:
 .Bl -tag -width Ds
-.It VIDIOC_QUERYCAP (struct v4l2_capability *)
+.It Dv VIDIOC_QUERYCAP Fa "struct v4l2_capability *"
 Query device capabilities.
 .Bd -literal
 struct v4l2_capability {
@@ -57,7 +57,7 @@ struct v4l2_capability {
 	u_int32_t	reserved[4];
 };
 .Ed
-.It VIDIOC_ENUM_FMT (struct v4l2_fmtdesc *)
+.It Dv VIDIOC_ENUM_FMT Fa "struct v4l2_fmtdesc *"
 Enumerate image formats.
 .Bd -literal
 struct v4l2_fmtdesc {
@@ -69,7 +69,7 @@ struct v4l2_fmtdesc {
 	u_int32_t		reserved[4];
 };
 .Ed
-.It VIDIOC_S_FMT (struct v4l2_format *)
+.It Dv VIDIOC_S_FMT Fa "struct v4l2_format *"
 Set the data format.
 .Bd -literal
 struct v4l2_format {
@@ -83,11 +83,12 @@ struct v4l2_format {
         } fmt;
 };
 .Ed
-.It VIDIOC_G_FMT (struct v4l2_format *)
+.It Dv VIDIOC_G_FMT Fa "struct v4l2_format *"
 Get the data format.
 .Pp
-Same structure as for VIDIOC_S_FMT.
-.It VIDIOC_ENUMINPUT (struct v4l2_input *)
+Same structure as for
+.Dv VIDIOC_S_FMT .
+.It Dv VIDIOC_ENUMINPUT Fa "struct v4l2_input *"
 Enumerate video inputs.
 .Bd -literal
 struct v4l2_input {
@@ -101,9 +102,9 @@ struct v4l2_input {
 	u_int32_t	reserved[32];
 };
 .Ed
-.It VIDIOC_S_INPUT (int *)
+.It Dv VIDIOC_S_INPUT Fa "int *"
 Select the current video input.
-.It VIDIOC_REQBUFS (struct v4l2_requestbuffers *)
+.It Dv VIDIOC_REQBUFS Fa "struct v4l2_requestbuffers *"
 Initiate memory mapping or user pointer I/O.
 .Bd -literal
 struct v4l2_requestbuffers {
@@ -113,7 +114,7 @@ struct v4l2_requestbuffers {
 	u_int32_t		reserved[2];
 };
 .Ed
-.It VIDIOC_QUERYBUF (struct v4l2_buffer *)
+.It Dv VIDIOC_QUERYBUF Fa "struct v4l2_buffer *"
 Query the status of a buffer.
 .Bd -literal
 struct v4l2_buffer {
@@ -135,23 +136,26 @@ struct v4l2_buffer {
 	u_int32_t		reserved;
 };
 .Ed
-.It VIDIOC_QBUF (struct v4l2_buffer *)
+.It Dv VIDIOC_QBUF Fa "struct v4l2_buffer *"
 Add a buffer to the queue.
 .Pp
-Same structure as for VIDIOC_QUERYBUF.
-.It VIDIOC_DQBUF (struct v4l2_buffer *)
+Same structure as for
+.Dv VIDIOC_QUERYBUF .
+.It Dv VIDIOC_DQBUF Fa "struct v4l2_buffer *"
 Remove a buffer from the queue.
 .Pp
-Same structure as for VIDIOC_QUERYBUF.
-.It VIDIOC_STREAMON (int *)
+Same structure as for
+.Dv VIDIOC_QUERYBUF .
+.It Dv VIDIOC_STREAMON Fa "int *"
 Start video stream.
-.It Dv VIDIOC_STREAMOFF (int *)
+.It Dv VIDIOC_STREAMOFF Fa "int *"
 Stop video stream.
-.It VIDIOC_TRY_FMT (struct v4l2_format *)
+.It Dv VIDIOC_TRY_FMT Fa "struct v4l2_format *"
 Try a data format.
 .Pp
-Same structure as for VIDIOC_S_FMT.
-.It VIDIOC_ENUM_FRAMEINTERVALS (struct v4l2_frmivalenum *)
+Same structure as for
+.Dv VIDIOC_S_FMT .
+.It Dv VIDIOC_ENUM_FRAMEINTERVALS Fa "struct v4l2_frmivalenum *"
 Enumerate frame intervals.
 .Bd -literal
 struct v4l2_frmivalemun {
@@ -173,7 +177,7 @@ struct v4l2_frmival_stepwise {
 	struct v4l2_fract step;
 };
 .Ed
-.It VIDIOC_S_PARM (struct v4l2_streamparm *)
+.It Dv VIDIOC_S_PARM Fa "struct v4l2_streamparm *"
 Set streaming parameters.
 .Bd -literal
 struct v4l2_streamparm {
@@ -203,11 +207,12 @@ struct v4l2_outputparm	{
 	u_int32_t	reserved[4];
 };
 .Ed
-.It VIDIOC_G_PARM (struct v4l2_streamparm *)
+.It Dv VIDIOC_G_PARM Fa "struct v4l2_streamparm *"
 Get the streaming parameters.
 .Pp
-Same structures as for VIDIOC_S_PARM.
-.It VIDIOC_QUERYCTRL (struct v4l2_queryctrl *)
+Same structures as for
+.Dv VIDIOC_S_PARM .
+.It Dv VIDIOC_QUERYCTRL Fa "struct v4l2_queryctrl *"
 Enumerate control items.
 .Bd -literal
 struct v4l2_queryctrl {
@@ -326,7 +331,9 @@ Read video data from the device via the
 .Xr read 2
 system call.
 The video stream will be started automatically with the first
-read, which means there is no need to issue a VIDIOC_STREAMON command.
+read, which means there is no need to issue a
+.Dv VIDIOC_STREAMON
+command.
 The read will always return a consistent video frame, if no error occurs.
 .It
 Process video data and start over again with step 2.
@@ -354,29 +361,42 @@ Open /dev/video* via the
 .Xr open 2
 system call.
 .It
-Request desired number of buffers via the VIDIOC_REQBUFS ioctl command.
+Request desired number of buffers via the
+.Dv VIDIOC_REQBUFS
+ioctl command.
 The maximum number of available buffers is normally limited by the hardware
 driver.
 .It
 Get the length and offset for the previously requested buffers via the
-VIDIOC_QUERYBUF ioctl command and map the buffers via the
+.Dv VIDIOC_QUERYBUF
+ioctl command and map the buffers via the
 .Xr mmap 2
 system call.
 .It
-Initially queue the buffers via the VIDIOC_QBUF ioctl command.
+Initially queue the buffers via the
+.Dv VIDIOC_QBUF
+ioctl command.
 .It
-Start the video stream via the VIDIOC_STREAMON ioctl command.
+Start the video stream via the
+.Dv VIDIOC_STREAMON
+ioctl command.
 .It
-Dequeue one buffer via the VIDIOC_DQBUF ioctl command.
+Dequeue one buffer via the
+.Dv VIDIOC_DQBUF
+ioctl command.
 If the queue is empty
 the ioctl will block until a buffer gets queued or an error occurs
 (e.g. a timeout).
 .It
-Requeue the buffer via the VIDIOC_QBUF ioctl command.
+Requeue the buffer via the
+.Dv VIDIOC_QBUF
+ioctl command.
 .It
 Process video data and start over again with step 6.
 .It
-When finished stop the video stream via the VIDIOC_STREAMOFF ioctl command.
+When finished stop the video stream via the
+.Dv VIDIOC_STREAMOFF
+ioctl command.
 .El
 .Pp
 The
@@ -385,7 +405,9 @@ and
 .Xr poll 2
 system calls are supported for this access type.
 They will signal when at least one frame is ready for dequeuing,
-allowing to call the VIDIOC_DQBUF ioctl command without blocking.
+allowing to call the
+.Dv VIDIOC_DQBUF
+ioctl command without blocking.
 .Sh FILES
 .Bl -tag -width /dev/video -compact
 .It Pa /dev/video
