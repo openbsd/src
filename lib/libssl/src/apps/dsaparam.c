@@ -1,4 +1,4 @@
-/* $OpenBSD: dsaparam.c,v 1.29 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: dsaparam.c,v 1.30 2014/06/28 04:39:41 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,6 +123,7 @@ dsaparam_main(int argc, char **argv)
 	char *engine = NULL;
 #endif
 #ifdef GENCB_TEST
+	const char *errstr = NULL;
 	int timebomb = 0;
 #endif
 
@@ -166,7 +167,9 @@ dsaparam_main(int argc, char **argv)
 		else if (strcmp(*argv, "-timebomb") == 0) {
 			if (--argc < 1)
 				goto bad;
-			timebomb = atoi(*(++argv));
+			timebomb = strtonum(*(++argv), 0, INT_MAX, &errstr);
+			if (errstr)
+				goto bad;
 		}
 #endif
 		else if (strcmp(*argv, "-text") == 0)

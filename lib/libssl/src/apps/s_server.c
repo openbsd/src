@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.53 2014/06/13 04:29:13 miod Exp $ */
+/* $OpenBSD: s_server.c,v 1.54 2014/06/28 04:39:41 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -154,6 +154,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -702,6 +703,7 @@ s_server_main(int argc, char *argv[])
 	X509 *s_cert = NULL, *s_dcert = NULL;
 	EVP_PKEY *s_key = NULL, *s_dkey = NULL;
 	int no_cache = 0;
+	const char *errstr = NULL;
 #ifndef OPENSSL_NO_TLSEXT
 	EVP_PKEY *s_key2 = NULL;
 	X509 *s_cert2 = NULL;
@@ -743,14 +745,18 @@ s_server_main(int argc, char *argv[])
 			s_server_verify = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
 			if (--argc < 1)
 				goto bad;
-			verify_depth = atoi(*(++argv));
+			verify_depth = strtonum(*(++argv), 0, INT_MAX, &errstr);
+			if (errstr)
+				goto bad;
 			BIO_printf(bio_err, "verify depth is %d\n", verify_depth);
 		} else if (strcmp(*argv, "-Verify") == 0) {
 			s_server_verify = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT |
 			    SSL_VERIFY_CLIENT_ONCE;
 			if (--argc < 1)
 				goto bad;
-			verify_depth = atoi(*(++argv));
+			verify_depth = strtonum(*(++argv), 0, INT_MAX, &errstr);
+			if (errstr)
+				goto bad;
 			BIO_printf(bio_err, "verify depth is %d, must return a certificate\n", verify_depth);
 		} else if (strcmp(*argv, "-context") == 0) {
 			if (--argc < 1)
@@ -856,7 +862,9 @@ s_server_main(int argc, char *argv[])
 			s_tlsextstatus = 1;
 			if (--argc < 1)
 				goto bad;
-			tlscstatp.timeout = atoi(*(++argv));
+			tlscstatp.timeout = strtonum(*(++argv), 0, INT_MAX, &errstr);
+			if (errstr)
+				goto bad;
 		} else if (!strcmp(*argv, "-status_url")) {
 			s_tlsextstatus = 1;
 			if (--argc < 1)
@@ -951,7 +959,9 @@ s_server_main(int argc, char *argv[])
 		else if (strcmp(*argv, "-mtu") == 0) {
 			if (--argc < 1)
 				goto bad;
-			socket_mtu = atol(*(++argv));
+			socket_mtu = strtonum(*(++argv), 0, LONG_MAX, &errstr);
+			if (errstr)
+				goto bad;
 		} else if (strcmp(*argv, "-chain") == 0)
 			cert_chain = 1;
 #endif
@@ -1005,8 +1015,8 @@ s_server_main(int argc, char *argv[])
 		} else if (strcmp(*argv, "-keymatexportlen") == 0) {
 			if (--argc < 1)
 				goto bad;
-			keymatexportlen = atoi(*(++argv));
-			if (keymatexportlen == 0)
+			keymatexportlen = strtonum(*(++argv), 1, INT_MAX, &errstr);
+			if (errstr)
 				goto bad;
 		} else {
 			BIO_printf(bio_err, "unknown option %s\n", *argv);
@@ -1018,7 +1028,11 @@ s_server_main(int argc, char *argv[])
 	}
 	if (badop) {
 bad:
-		sv_usage();
+		if (errstr)
+			BIO_printf(bio_err, "invalid argument %s: %s\n",
+			    *argv, errstr);
+		else
+			sv_usage();
 		goto end;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.31 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: s_time.c,v 1.32 2014/06/28 04:39:41 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,6 +67,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -181,6 +182,7 @@ static int
 parseArgs(int argc, char **argv)
 {
 	int badop = 0;
+	const char *errstr;
 
 	verify_depth = 0;
 	verify_error = X509_V_OK;
@@ -210,11 +212,14 @@ parseArgs(int argc, char **argv)
 		else if (strcmp(*argv, "-new") == 0)
 			perform = 1;
 		else if (strcmp(*argv, "-verify") == 0) {
+			const char *errstr;
 
 			tm_verify = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
 			if (--argc < 1)
 				goto bad;
-			verify_depth = atoi(*(++argv));
+			verify_depth = strtonum(*(++argv), 0, INT_MAX, &errstr);
+			if (errstr)
+				goto bad;
 			BIO_printf(bio_err, "verify depth is %d\n", verify_depth);
 
 		} else if (strcmp(*argv, "-cert") == 0) {
@@ -266,7 +271,9 @@ parseArgs(int argc, char **argv)
 
 			if (--argc < 1)
 				goto bad;
-			maxTime = atoi(*(++argv));
+			maxTime = strtonum(*(++argv), 0, INT_MAX, &errstr);
+			if (errstr)
+				goto bad;
 		} else {
 			BIO_printf(bio_err, "unknown option %s\n", *argv);
 			badop = 1;

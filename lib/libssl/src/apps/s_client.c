@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.61 2014/06/13 04:29:13 miod Exp $ */
+/* $OpenBSD: s_client.c,v 1.62 2014/06/28 04:39:41 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -147,6 +147,7 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -438,6 +439,7 @@ s_client_main(int argc, char **argv)
 	BIO *sbio;
 	int mbuf_len = 0;
 	struct timeval timeout, *timeoutp;
+	const char *errstr = NULL;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine_id = NULL;
 	char *ssl_client_engine_id = NULL;
@@ -503,7 +505,9 @@ s_client_main(int argc, char **argv)
 			verify = SSL_VERIFY_PEER;
 			if (--argc < 1)
 				goto bad;
-			verify_depth = atoi(*(++argv));
+			verify_depth = strtonum(*(++argv), 0, INT_MAX, &errstr);
+			if (errstr)
+				goto bad;			
 			BIO_printf(bio_err, "verify depth is %d\n", verify_depth);
 		} else if (strcmp(*argv, "-cert") == 0) {
 			if (--argc < 1)
@@ -592,7 +596,9 @@ s_client_main(int argc, char **argv)
 		else if (strcmp(*argv, "-mtu") == 0) {
 			if (--argc < 1)
 				goto bad;
-			socket_mtu = atol(*(++argv));
+			socket_mtu = strtonum(*(++argv), 0, LONG_MAX, &errstr);
+			if (errstr)
+				goto bad;
 		}
 #endif
 		else if (strcmp(*argv, "-bugs") == 0)
@@ -715,10 +721,12 @@ s_client_main(int argc, char **argv)
 				goto bad;
 			keymatexportlabel = *(++argv);
 		} else if (strcmp(*argv, "-keymatexportlen") == 0) {
+			const char *errstr;
+
 			if (--argc < 1)
 				goto bad;
-			keymatexportlen = atoi(*(++argv));
-			if (keymatexportlen == 0)
+			keymatexportlen = strtonum(*(++argv), 1, INT_MAX, &errstr);
+			if (errstr)
 				goto bad;
 		} else {
 			BIO_printf(bio_err, "unknown option %s\n", *argv);
@@ -730,7 +738,11 @@ s_client_main(int argc, char **argv)
 	}
 	if (badop) {
 bad:
-		sc_usage();
+		if (errstr)
+			BIO_printf(bio_err, "invalid argument %s: %s\n",
+			    *argv, errstr);
+		else
+			sc_usage();
 		goto end;
 	}
 

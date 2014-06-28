@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.26 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: ocsp.c,v 1.27 2014/06/28 04:39:41 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -59,6 +59,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <time.h>
 
@@ -144,6 +145,7 @@ ocsp_main(int argc, char **argv)
 	CA_DB *rdb = NULL;
 	int nmin = 0, ndays = -1;
 	const EVP_MD *cert_id_md = NULL;
+	const char *errstr = NULL;
 
 	if (!load_config(bio_err, NULL))
 		goto end;
@@ -164,11 +166,12 @@ ocsp_main(int argc, char **argv)
 		} else if (!strcmp(*args, "-timeout")) {
 			if (args[1]) {
 				args++;
-				req_timeout = atol(*args);
-				if (req_timeout < 0) {
+				req_timeout = strtonum(*args, 0,
+				    INT_MAX, &errstr);
+				if (errstr) {
 					BIO_printf(bio_err,
-					    "Illegal timeout value %s\n",
-					    *args);
+					    "Illegal timeout value %s: %s\n",
+					    *args, errstr);
 					badarg = 1;
 				}
 			} else
@@ -288,11 +291,11 @@ ocsp_main(int argc, char **argv)
 		} else if (!strcmp(*args, "-validity_period")) {
 			if (args[1]) {
 				args++;
-				nsec = atol(*args);
-				if (nsec < 0) {
+				nsec = strtonum(*args, 0, LONG_MAX, &errstr);
+				if (errstr) {
 					BIO_printf(bio_err,
-					    "Illegal validity period %s\n",
-					    *args);
+					    "Illegal validity period %s: %s\n",
+					    *args, errstr);
 					badarg = 1;
 				}
 			} else
@@ -300,11 +303,11 @@ ocsp_main(int argc, char **argv)
 		} else if (!strcmp(*args, "-status_age")) {
 			if (args[1]) {
 				args++;
-				maxage = atol(*args);
-				if (maxage < 0) {
+				maxage = strtonum(*args, 0, LONG_MAX, &errstr);
+				if (errstr) {
 					BIO_printf(bio_err,
-					    "Illegal validity age %s\n",
-					    *args);
+					    "Illegal validity age %s: %s\n",
+					    *args, errstr);
 					badarg = 1;
 				}
 			} else
@@ -385,11 +388,11 @@ ocsp_main(int argc, char **argv)
 		} else if (!strcmp(*args, "-nmin")) {
 			if (args[1]) {
 				args++;
-				nmin = atol(*args);
-				if (nmin < 0) {
+				nmin = strtonum(*args, 0, INT_MAX, &errstr);
+				if (errstr) {
 					BIO_printf(bio_err,
-					    "Illegal update period %s\n",
-					    *args);
+					    "Illegal update period %s: %s\n",
+					    *args, errstr);
 					badarg = 1;
 				}
 			}
@@ -400,11 +403,11 @@ ocsp_main(int argc, char **argv)
 		} else if (!strcmp(*args, "-nrequest")) {
 			if (args[1]) {
 				args++;
-				accept_count = atol(*args);
-				if (accept_count < 0) {
+				accept_count = strtonum(*args, 0, INT_MAX, &errstr);
+				if (errstr) {
 					BIO_printf(bio_err,
-					    "Illegal accept count %s\n",
-					    *args);
+					    "Illegal accept count %s: %s\n",
+					    *args, errstr);
 					badarg = 1;
 				}
 			} else
@@ -412,11 +415,11 @@ ocsp_main(int argc, char **argv)
 		} else if (!strcmp(*args, "-ndays")) {
 			if (args[1]) {
 				args++;
-				ndays = atol(*args);
-				if (ndays < 0) {
+				ndays = strtonum(*args, 0, INT_MAX, &errstr);
+				if (errstr) {
 					BIO_printf(bio_err,
-					    "Illegal update period %s\n",
-					    *args);
+					    "Illegal update period %s: %s\n",
+					    *args, errstr);
 					badarg = 1;
 				}
 			} else

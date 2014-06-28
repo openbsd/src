@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.45 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: x509.c,v 1.46 2014/06/28 04:39:41 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,6 +59,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 
 #include "apps.h"
@@ -208,6 +209,7 @@ x509_main(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
 #endif
+	const char *errstr = NULL;
 
 	reqfile = 0;
 
@@ -263,9 +265,9 @@ x509_main(int argc, char **argv)
 		} else if (strcmp(*argv, "-days") == 0) {
 			if (--argc < 1)
 				goto bad;
-			days = atoi(*(++argv));
-			if (days == 0) {
-				BIO_printf(bio_err, "bad number of days\n");
+			days = strtonum(*(++argv), 1, INT_MAX, &errstr);
+			if (errstr) {
+				BIO_printf(bio_err, "bad number of days: %s\n", errstr);
 				goto bad;
 			}
 		} else if (strcmp(*argv, "-passin") == 0) {
@@ -407,7 +409,11 @@ x509_main(int argc, char **argv)
 		else if (strcmp(*argv, "-checkend") == 0) {
 			if (--argc < 1)
 				goto bad;
-			checkoffset = atoi(*(++argv));
+			checkoffset = strtonum(*(++argv), 0, INT_MAX, &errstr);
+			if (errstr) {
+				BIO_printf(bio_err, "checkend unusable: %s\n", errstr);
+				goto bad;
+			}
 			checkend = 1;
 		} else if (strcmp(*argv, "-noout") == 0)
 			noout = ++num;

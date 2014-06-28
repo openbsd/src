@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.59 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: ca.c,v 1.60 2014/06/28 04:39:41 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,6 +63,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -296,6 +297,7 @@ ca_main(int argc, char **argv)
 	char *engine = NULL;
 #endif
 	char *tofree = NULL;
+	const char *errstr = NULL;
 	DB_ATTR db_attr;
 
 	conf = NULL;
@@ -340,7 +342,9 @@ ca_main(int argc, char **argv)
 		} else if (strcmp(*argv, "-days") == 0) {
 			if (--argc < 1)
 				goto bad;
-			days = atoi(*(++argv));
+			days = strtonum(*(++argv), 0, LONG_MAX, &errstr);
+			if (errstr)
+				goto bad;
 		} else if (strcmp(*argv, "-md") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -407,15 +411,21 @@ ca_main(int argc, char **argv)
 		else if (strcmp(*argv, "-crldays") == 0) {
 			if (--argc < 1)
 				goto bad;
-			crldays = atol(*(++argv));
+			crldays = strtonum(*(++argv), 0, LONG_MAX, &errstr);
+			if (errstr)
+				goto bad;
 		} else if (strcmp(*argv, "-crlhours") == 0) {
 			if (--argc < 1)
 				goto bad;
-			crlhours = atol(*(++argv));
+			crlhours = strtonum(*(++argv), 0, LONG_MAX, &errstr);
+			if (errstr)
+				goto bad;
 		} else if (strcmp(*argv, "-crlsec") == 0) {
 			if (--argc < 1)
 				goto bad;
-			crlsec = atol(*(++argv));
+			crlsec = strtonum(*(++argv), 0, LONG_MAX, &errstr);
+			if (errstr)
+				goto bad;
 		} else if (strcmp(*argv, "-infiles") == 0) {
 			argc--;
 			argv++;
@@ -484,7 +494,11 @@ ca_main(int argc, char **argv)
 #endif
 		else {
 bad:
-			BIO_printf(bio_err, "unknown option %s\n", *argv);
+			if (errstr)
+				BIO_printf(bio_err, "invalid argument %s: %s\n",
+				    *argv, errstr);
+			else
+				BIO_printf(bio_err, "unknown option %s\n", *argv);
 			badops = 1;
 			break;
 		}

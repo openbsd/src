@@ -1,4 +1,4 @@
-/* $OpenBSD: prime.c,v 1.10 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: prime.c,v 1.11 2014/06/28 04:39:41 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  *
@@ -49,6 +49,7 @@
  */
 
 #include <string.h>
+#include <limits.h>
 
 #include "apps.h"
 
@@ -65,6 +66,7 @@ prime_main(int argc, char **argv)
 	int bits = 0;
 	int safe = 0;
 	BIGNUM *bn = NULL;
+	const char *errstr = NULL;
 	BIO *bio_out;
 
 	--argc;
@@ -74,19 +76,23 @@ prime_main(int argc, char **argv)
 			hex = 1;
 		else if (!strcmp(*argv, "-generate"))
 			generate = 1;
-		else if (!strcmp(*argv, "-bits"))
+		else if (!strcmp(*argv, "-bits")) {
 			if (--argc < 1)
 				goto bad;
 			else
-				bits = atoi(*++argv);
-		else if (!strcmp(*argv, "-safe"))
+				bits = strtonum(*(++argv), 0, INT_MAX, &errstr);
+			if (errstr)
+				goto bad;
+		} else if (!strcmp(*argv, "-safe"))
 			safe = 1;
-		else if (!strcmp(*argv, "-checks"))
+		else if (!strcmp(*argv, "-checks")) {
 			if (--argc < 1)
 				goto bad;
 			else
-				checks = atoi(*++argv);
-		else {
+				checks = strtonum(*(++argv), 0, INT_MAX, &errstr);
+			if (errstr)
+				goto bad;
+		} else {
 			BIO_printf(bio_err, "Unknown option '%s'\n", *argv);
 			goto bad;
 		}
@@ -130,8 +136,12 @@ prime_main(int argc, char **argv)
 	return 0;
 
 bad:
-	BIO_printf(bio_err, "options are\n");
-	BIO_printf(bio_err, "%-14s hex\n", "-hex");
-	BIO_printf(bio_err, "%-14s number of checks\n", "-checks <n>");
+	if (errstr)
+		BIO_printf(bio_err, "invalid argument %s: %s\n", *argv, errstr);
+	else {
+		BIO_printf(bio_err, "options are\n");
+		BIO_printf(bio_err, "%-14s hex\n", "-hex");
+		BIO_printf(bio_err, "%-14s number of checks\n", "-checks <n>");
+	}
 	return 1;
 }

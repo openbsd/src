@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.43 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: req.c,v 1.44 2014/06/28 04:39:41 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,6 +64,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <time.h>
 
@@ -322,11 +323,16 @@ req_main(int argc, char **argv)
 		} else if (strcmp(*argv, "-multivalue-rdn") == 0)
 			multirdn = 1;
 		else if (strcmp(*argv, "-days") == 0) {
+			const char *errstr;
+
 			if (--argc < 1)
 				goto bad;
-			days = atoi(*(++argv));
-			if (days == 0)
+			days = strtonum(*(++argv), 1, INT_MAX, &errstr);
+			if (errstr) {
+				BIO_printf(bio_err, "bad -days %s, using 0: %s\n",
+				    *argv, errstr);
 				days = 30;
+			}
 		} else if (strcmp(*argv, "-set_serial") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -1383,13 +1389,18 @@ set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
 	long keylen = -1;
 	BIO *pbio = NULL;
 	const char *paramfile = NULL;
+	const char *errstr;
 
 	if (gstr == NULL) {
 		*pkey_type = EVP_PKEY_RSA;
 		keylen = *pkeylen;
 	} else if (gstr[0] >= '0' && gstr[0] <= '9') {
 		*pkey_type = EVP_PKEY_RSA;
-		keylen = atol(gstr);
+		keylen = strtonum(gstr, 0, LONG_MAX, &errstr);
+		if (errstr) {
+			BIO_printf(err, "bad algorithm %s: %s\n", gstr, errstr);
+			return NULL;
+		} 
 		*pkeylen = keylen;
 	} else if (!strncmp(gstr, "param:", 6))
 		paramfile = gstr + 6;
@@ -1422,7 +1433,12 @@ set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
 #endif
 		if (*pkey_type == EVP_PKEY_RSA) {
 			if (p) {
-				keylen = atol(p + 1);
+				keylen = strtonum(p + 1, 0, LONG_MAX, &errstr);
+				if (errstr) {
+					BIO_printf(err, "bad algorithm %s: %s\n",
+					    p + 1, errstr);
+					return NULL;					
+				}
 				*pkeylen = keylen;
 			} else
 				keylen = *pkeylen;

@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.59 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: apps.c,v 1.60 2014/06/28 04:39:41 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,6 +117,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
@@ -469,6 +470,7 @@ app_get_pass(BIO *err, char *arg, int keepbio)
 {
 	char *tmp, tpass[APP_PASS_LEN];
 	static BIO *pwdbio = NULL;
+	const char *errstr = NULL;
 	int i;
 
 	if (!strncmp(arg, "pass:", 5))
@@ -492,10 +494,15 @@ app_get_pass(BIO *err, char *arg, int keepbio)
 			}
 		} else if (!strncmp(arg, "fd:", 3)) {
 			BIO *btmp;
-			i = atoi(arg + 3);
-			if (i >= 0)
-				pwdbio = BIO_new_fd(i, BIO_NOCLOSE);
-			if ((i < 0) || !pwdbio) {
+			i = strtonum(arg + 3, 1, INT_MAX, &errstr);
+			if (errstr) {
+				BIO_printf(err,
+				    "Invalid file descriptor %s: %s\n",
+				    arg, errstr);
+				return NULL;
+			}
+			pwdbio = BIO_new_fd(i, BIO_NOCLOSE);
+			if (!pwdbio) {
 				BIO_printf(err,
 				    "Can't access file descriptor %s\n",
 				    arg + 3);
@@ -1969,6 +1976,7 @@ args_verify(char ***pargs, int *pargc, int *badarg, BIO *err,
 	char **oldargs = *pargs;
 	char *arg = **pargs, *argn = (*pargs)[1];
 	time_t at_time = 0;
+	const char *errstr = NULL;
 
 	if (!strcmp(arg, "-policy")) {
 		if (!argn)
@@ -2001,9 +2009,10 @@ args_verify(char ***pargs, int *pargc, int *badarg, BIO *err,
 		if (!argn)
 			*badarg = 1;
 		else {
-			depth = atoi(argn);
-			if (depth < 0) {
-				BIO_printf(err, "invalid depth\n");
+			depth = strtonum(argn, 1, INT_MAX, &errstr);
+			if (errstr) {
+				BIO_printf(err, "invalid depth %s: %s\n",
+				    argn, errstr);
 				*badarg = 1;
 			}
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1pars.c,v 1.24 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: asn1pars.c,v 1.25 2014/06/28 04:39:41 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 
 #include "apps.h"
@@ -93,6 +94,7 @@ asn1parse_main(int argc, char **argv)
 	int informat, indent = 0, noout = 0, dump = 0;
 	char *infile = NULL, *str = NULL, *prog, *oidfile = NULL, *derfile = NULL;
 	char *genstr = NULL, *genconf = NULL;
+	const char *errstr = NULL;
 	unsigned char *tmpbuf;
 	const unsigned char *ctmpbuf;
 	BUF_MEM *buf = NULL;
@@ -135,20 +137,22 @@ asn1parse_main(int argc, char **argv)
 		} else if (strcmp(*argv, "-offset") == 0) {
 			if (--argc < 1)
 				goto bad;
-			offset = atoi(*(++argv));
+			offset = strtonum(*(++argv), 0, INT_MAX, &errstr);
+			if (errstr)
+				goto bad;
 		} else if (strcmp(*argv, "-length") == 0) {
 			if (--argc < 1)
 				goto bad;
-			length = atoi(*(++argv));
-			if (length == 0)
+			length = strtonum(*(++argv), 1, UINT_MAX, &errstr);
+			if (errstr)
 				goto bad;
 		} else if (strcmp(*argv, "-dump") == 0) {
 			dump = -1;
 		} else if (strcmp(*argv, "-dlimit") == 0) {
 			if (--argc < 1)
 				goto bad;
-			dump = atoi(*(++argv));
-			if (dump <= 0)
+			dump = strtonum(*(++argv), 1, INT_MAX, &errstr);
+			if (errstr)
 				goto bad;
 		} else if (strcmp(*argv, "-strparse") == 0) {
 			if (--argc < 1)
@@ -269,11 +273,12 @@ bad:
 		for (i = 0; i < sk_OPENSSL_STRING_num(osk); i++) {
 			ASN1_TYPE *atmp;
 			int typ;
-			j = atoi(sk_OPENSSL_STRING_value(osk, i));
-			if (j == 0) {
+			j = strtonum(sk_OPENSSL_STRING_value(osk, i),
+			    1, INT_MAX, &errstr);
+			if (errstr) {
 				BIO_printf(bio_err,
-				    "'%s' is an invalid number\n",
-				    sk_OPENSSL_STRING_value(osk, i));
+				    "'%s' is an invalid number: %s\n",
+				    sk_OPENSSL_STRING_value(osk, i), errstr);
 				continue;
 			}
 			tmpbuf += j;
