@@ -527,6 +527,7 @@
 ./usr/include/dev/pci/drm/drm_pciids.h
 ./usr/include/dev/pci/drm/drm_sarea.h
 ./usr/include/dev/pci/drm/i915_drm.h
+./usr/include/dev/pci/drm/nouveau_drm.h
 ./usr/include/dev/pci/drm/radeon_drm.h
 ./usr/include/dev/pci/drm/refcount.h
 ./usr/include/dev/pci/eapreg.h

@@ -1095,6 +1095,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/drm/drm_pciids.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/drm/drm_sarea.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/drm/i915_drm.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/drm/nouveau_drm.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/drm/radeon_drm.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/drm/refcount.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/eapreg.ph
