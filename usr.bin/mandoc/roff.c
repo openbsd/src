@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.85 2014/06/29 22:12:54 schwarze Exp $ */
+/*	$Id: roff.c,v 1.86 2014/06/29 22:38:41 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -906,14 +906,14 @@ roff_ccond(struct roff *r, int ln, int ppos)
 static enum rofferr
 roff_block(ROFF_ARGS)
 {
-	int		sv;
-	size_t		sz;
-	char		*name;
+	char		*name, *cp;
+	size_t		 namesz;
 
-	name = NULL;
+	name = cp = *bufp + pos;
+	namesz = 0;
 
 	if (ROFF_ig != tok) {
-		if ('\0' == (*bufp)[pos]) {
+		if ('\0' == *cp) {
 			mandoc_msg(MANDOCERR_NOARGS, r->parse, ln, ppos, NULL);
 			return(ROFF_IGN);
 		}
@@ -925,18 +925,14 @@ roff_block(ROFF_ARGS)
 
 		if (ROFF_de1 == tok)
 			tok = ROFF_de;
-		if (ROFF_de == tok)
-			name = *bufp + pos;
-		else
+		else if (ROFF_de != tok)
 			mandoc_msg(MANDOCERR_REQUEST, r->parse, ln, ppos,
 			    roffs[tok].name);
 
-		while ((*bufp)[pos] && ! isspace((unsigned char)(*bufp)[pos]))
-			pos++;
-
-		while (isspace((unsigned char)(*bufp)[pos]))
-			(*bufp)[pos++] = '\0';
-	}
+		namesz = roff_getname(r, &cp, ln, ppos);
+		name[namesz] = '\0';
+	} else
+		name = NULL;
 
 	roffnode_push(r, tok, name, ln, ppos);
 
@@ -946,36 +942,20 @@ roff_block(ROFF_ARGS)
 	 * appended from roff_block_text() in multiline mode.
 	 */
 
-	if (ROFF_de == tok)
-		roff_setstr(r, name, "", 0);
+	if (namesz && ROFF_de == tok)
+		roff_setstrn(&r->strtab, name, namesz, "", 0, 0);
 
-	if ('\0' == (*bufp)[pos])
+	if ('\0' == *cp)
 		return(ROFF_IGN);
 
 	/* If present, process the custom end-of-line marker. */
 
-	sv = pos;
-	while ((*bufp)[pos] && ! isspace((unsigned char)(*bufp)[pos]))
-		pos++;
+	name = cp;
+	namesz = roff_getname(r, &cp, ln, ppos);
+	if (namesz)
+		r->last->end = mandoc_strndup(name, namesz);
 
-	/*
-	 * Note: groff does NOT like escape characters in the input.
-	 * Instead of detecting this, we're just going to let it fly and
-	 * to hell with it.
-	 */
-
-	assert(pos > sv);
-	sz = (size_t)(pos - sv);
-
-	if (1 == sz && '.' == (*bufp)[sv])
-		return(ROFF_IGN);
-
-	r->last->end = mandoc_malloc(sz + 1);
-
-	memcpy(r->last->end, *bufp + sv, sz);
-	r->last->end[(int)sz] = '\0';
-
-	if ((*bufp)[pos])
+	if ('\0' != *cp)
 		mandoc_msg(MANDOCERR_ARGSLOST, r->parse, ln, pos, NULL);
 
 	return(ROFF_IGN);
