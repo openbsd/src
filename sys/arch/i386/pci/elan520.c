@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520.c,v 1.18 2012/10/17 22:32:01 deraadt Exp $	*/
+/*	$OpenBSD: elan520.c,v 1.19 2014/06/29 01:01:20 deraadt Exp $	*/
 /*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
 
 /*-
@@ -46,6 +46,8 @@
 #include <sys/timetc.h>
 
 #include <machine/bus.h>
+
+#include <machine/cpufunc.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
