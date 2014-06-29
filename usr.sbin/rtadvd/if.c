@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.25 2013/03/21 04:43:15 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.26 2014/06/29 00:58:45 deraadt Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
+#include <sys/queue.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <net/if_types.h>

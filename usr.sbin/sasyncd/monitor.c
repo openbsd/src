@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.17 2012/09/12 07:45:19 haesbaert Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.18 2014/06/29 00:58:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -31,6 +31,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include <sys/queue.h>
 #include <sys/wait.h>
 #include <sys/un.h>
 #include <net/pfkeyv2.h>
