@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.h,v 1.12 2002/03/14 01:27:19 millert Exp $	*/
+/*	$OpenBSD: uvm_vnode.h,v 1.13 2014/06/29 22:56:31 deraadt Exp $	*/
 /*	$NetBSD: uvm_vnode.h,v 1.9 2000/03/26 20:54:48 kleink Exp $	*/
 
 /*
@@ -89,22 +89,5 @@ struct uvm_vnode {
  * touching the vnode [set WANTED and sleep to wait for it to clear]
  */
 #define UVM_VNODE_BLOCKED (UVM_VNODE_ALOCK|UVM_VNODE_DYING|UVM_VNODE_RELKILL)
-
-#ifdef _KERNEL
-
-/*
- * prototypes
- */
-
-#if 0
-/*
- * moved uvn_attach to uvm_extern.h because uvm_vnode.h is needed to
- * include sys/vnode.h, and files that include sys/vnode.h don't know
- * what a vm_prot_t is.
- */
-struct uvm_object  *uvn_attach(void *, vm_prot_t);
-#endif
-
-#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_VNODE_H_ */
