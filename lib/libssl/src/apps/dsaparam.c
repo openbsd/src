@@ -1,4 +1,4 @@
-/* $OpenBSD: dsaparam.c,v 1.30 2014/06/28 04:39:41 deraadt Exp $ */
+/* $OpenBSD: dsaparam.c,v 1.31 2014/06/29 18:26:26 logan Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -331,6 +331,7 @@ bad:
 				printf("\n\t");
 			printf("0x%02X, ", data[i]);
 		}
+		free(data);
 		printf("\n\t};\n\n");
 
 		printf("DSA *get_dsa%d()\n\t{\n", bits_p);
