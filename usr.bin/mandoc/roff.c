@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.84 2014/06/29 21:19:34 schwarze Exp $ */
+/*	$Id: roff.c,v 1.85 2014/06/29 22:12:54 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -183,7 +183,7 @@ static	int		 roff_evalstrcond(const char *, int *);
 static	void		 roff_free1(struct roff *);
 static	void		 roff_freereg(struct roffreg *);
 static	void		 roff_freestr(struct roffkv *);
-static	char		*roff_getname(struct roff *, char **, int, int);
+static	size_t		 roff_getname(struct roff *, char **, int, int);
 static	int		 roff_getnum(const char *, int *, int *);
 static	int		 roff_getop(const char *, int *, char *);
 static	int		 roff_getregn(const struct roff *,
@@ -1314,29 +1314,31 @@ out:
 static enum rofferr
 roff_ds(ROFF_ARGS)
 {
-	char		*name, *string;
+	char		*string;
+	const char	*name;
+	size_t		 namesz;
 
 	/*
-	 * A symbol is named by the first word following the macro
-	 * invocation up to a space.  Its value is anything after the
-	 * name's trailing whitespace and optional double-quote.  Thus,
-	 *
-	 *  [.ds foo "bar  "     ]
-	 *
-	 * will have `bar  "     ' as its value.
+	 * The first word is the name of the string.
+	 * If it is empty or terminated by an escape sequence,
+	 * abort the `ds' request without defining anything.
 	 */
 
-	string = *bufp + pos;
-	name = roff_getname(r, &string, ln, pos);
+	name = string = *bufp + pos;
 	if ('\0' == *name)
 		return(ROFF_IGN);
 
-	/* Read past initial double-quote. */
+	namesz = roff_getname(r, &string, ln, pos);
+	if ('\\' == name[namesz])
+		return(ROFF_IGN);
+
+	/* Read past the initial double-quote, if any. */
 	if ('"' == *string)
 		string++;
 
 	/* The rest is the value. */
-	roff_setstr(r, name, string, ROFF_as == tok);
+	roff_setstrn(&r->strtab, name, namesz, string, strlen(string),
+	    ROFF_as == tok);
 	return(ROFF_IGN);
 }
 
@@ -1650,13 +1652,19 @@ roff_freereg(struct roffreg *reg)
 static enum rofferr
 roff_nr(ROFF_ARGS)
 {
-	const char	*key;
-	char		*val;
+	char		*key, *val;
+	size_t		 keysz;
 	int		 iv;
 	char		 sign;
 
-	val = *bufp + pos;
-	key = roff_getname(r, &val, ln, pos);
+	key = val = *bufp + pos;
+	if ('\0' == *key)
+		return(ROFF_IGN);
+
+	keysz = roff_getname(r, &val, ln, pos);
+	if ('\\' == key[keysz])
+		return(ROFF_IGN);
+	key[keysz] = '\0';
 
 	sign = *val;
 	if ('+' == sign || '-' == sign)
@@ -1672,11 +1680,14 @@ static enum rofferr
 roff_rr(ROFF_ARGS)
 {
 	struct roffreg	*reg, **prev;
-	const char	*name;
-	char		*cp;
+	char		*name, *cp;
+	size_t		 namesz;
 
-	cp = *bufp + pos;
-	name = roff_getname(r, &cp, ln, pos);
+	name = cp = *bufp + pos;
+	if ('\0' == *name)
+		return(ROFF_IGN);
+	namesz = roff_getname(r, &cp, ln, pos);
+	name[namesz] = '\0';
 
 	prev = &r->regtab;
 	while (1) {
@@ -1698,12 +1709,15 @@ roff_rm(ROFF_ARGS)
 {
 	const char	 *name;
 	char		 *cp;
+	size_t		  namesz;
 
 	cp = *bufp + pos;
 	while ('\0' != *cp) {
-		name = roff_getname(r, &cp, ln, (int)(cp - *bufp));
-		if ('\0' != *name)
-			roff_setstr(r, name, NULL, 0);
+		name = cp;
+		namesz = roff_getname(r, &cp, ln, (int)(cp - *bufp));
+		roff_setstrn(&r->strtab, name, namesz, NULL, 0, 0);
+		if ('\\' == name[namesz])
+			break;
 	}
 	return(ROFF_IGN);
 }
@@ -2003,37 +2017,39 @@ roff_userdef(ROFF_ARGS)
 	   ROFF_REPARSE : ROFF_APPEND);
 }
 
-static char *
+static size_t
 roff_getname(struct roff *r, char **cpp, int ln, int pos)
 {
 	char	 *name, *cp;
+	size_t	  namesz;
 
 	name = *cpp;
 	if ('\0' == *name)
-		return(name);
+		return(0);
 
-	/* Read until end of name. */
-	for (cp = name; '\0' != *cp && ' ' != *cp; cp++) {
+	/* Read until end of name and terminate it with NUL. */
+	for (cp = name; 1; cp++) {
+		if ('\0' == *cp || ' ' == *cp) {
+			namesz = cp - name;
+			break;
+		}
 		if ('\\' != *cp)
 			continue;
 		cp++;
 		if ('\\' == *cp)
 			continue;
+		namesz = cp - name - 1;
 		mandoc_msg(MANDOCERR_NAMESC, r->parse, ln, pos, NULL);
-		*cp = '\0';
-		name = cp;
+		mandoc_escape((const char **)&cp, NULL, NULL);
+		break;
 	}
-
-	/* Nil-terminate name. */
-	if ('\0' != *cp)
-		*(cp++) = '\0';
 
 	/* Read past spaces. */
 	while (' ' == *cp)
 		cp++;
 
 	*cpp = cp;
-	return(name);
+	return(namesz);
 }
 
 /*

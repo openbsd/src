@@ -1,0 +1,15 @@
+.TH NR-ESCNAME 1 "June 29, 2014" OpenBSD
+.SH NAME
+nr-escname \- escape sequences in register names
+.SH DESCRIPTION
+.nr first 1
+.nr second 2
+.nr first\\second 3
+.nr first\esecond 4
+\n[first] \n[second] \n[first\\second]
+.PP
+.rr first\esecond
+\n[first] \n[second] \n[first\\second]
+.PP
+.rr first\\second
+\n[first] \n[second] \n[first\\second]

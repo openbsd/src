@@ -1,5 +1,5 @@
-# $OpenBSD: Makefile,v 1.5 2014/04/07 15:05:12 schwarze Exp $
+# $OpenBSD: Makefile,v 1.6 2014/06/29 22:12:54 schwarze Exp $
 
-REGRESS_TARGETS = argc eval int predef rr
+REGRESS_TARGETS = argc eval escname int predef rr
 
 .include <bsd.regress.mk>

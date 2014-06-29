@@ -1,0 +1,14 @@
+.Dd June 29, 2014
+.Dt DS-ESCNAME 1
+.Os OpenBSD
+.Sh NAME
+.Nm ds-escname
+.Nd escape sequences in string names
+.Sh DESCRIPTION
+.ds std\\esc stdval
+Now \e*[std\\esc] is
+.Sq \*[std\\esc] .
+.Pp
+.ds esc\eesc escval
+Now \e*[esc] is
+.Sq \*[esc] .

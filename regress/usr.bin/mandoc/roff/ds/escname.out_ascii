@@ -1,0 +1,11 @@
+DS-ESCNAME(1)              OpenBSD Reference Manual              DS-ESCNAME(1)
+
+NNAAMMEE
+     ddss--eessccnnaammee - escape sequences in string names
+
+DDEESSCCRRIIPPTTIIOONN
+     Now \*[std\esc] is `stdval'.
+
+     Now \*[esc] is `'.
+
+OpenBSD                          June 29, 2014                         OpenBSD
