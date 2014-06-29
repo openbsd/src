@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.86 2014/06/29 22:38:41 schwarze Exp $ */
+/*	$Id: roff.c,v 1.87 2014/06/29 23:23:16 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -196,7 +196,8 @@ static	enum rofferr	 roff_line_ignore(ROFF_ARGS);
 static	enum rofferr	 roff_nr(ROFF_ARGS);
 static	void		 roff_openeqn(struct roff *, const char *,
 				int, int, const char *);
-static	enum rofft	 roff_parse(struct roff *, const char *, int *);
+static	enum rofft	 roff_parse(struct roff *, char *, int *,
+				int, int);
 static	enum rofferr	 roff_parsetext(char **, size_t *, int, int *);
 static	enum rofferr	 roff_res(struct roff *,
 				char **, size_t *, int, int);
@@ -760,7 +761,7 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 	 * the compilers handle it.
 	 */
 
-	if (ROFF_MAX == (t = roff_parse(r, *bufp, &pos)))
+	if (ROFF_MAX == (t = roff_parse(r, *bufp, &pos, ln, ppos)))
 		return(ROFF_CONT);
 
 	assert(roffs[t].proc);
@@ -793,28 +794,26 @@ roff_endparse(struct roff *r)
  * form of ".foo xxx" in the usual way.
  */
 static enum rofft
-roff_parse(struct roff *r, const char *buf, int *pos)
+roff_parse(struct roff *r, char *buf, int *pos, int ln, int ppos)
 {
+	char		*cp;
 	const char	*mac;
 	size_t		 maclen;
 	enum rofft	 t;
 
-	if ('\0' == buf[*pos] || '"' == buf[*pos] ||
-	    '\t' == buf[*pos] || ' ' == buf[*pos])
+	cp = buf + *pos;
+
+	if ('\0' == *cp || '"' == *cp || '\t' == *cp || ' ' == *cp)
 		return(ROFF_MAX);
 
-	/* We stop the macro parse at an escape, tab, space, or nil. */
-
-	mac = buf + *pos;
-	maclen = strcspn(mac, " \\\t\0");
+	mac = cp;
+	maclen = roff_getname(r, &cp, ln, ppos);
 
 	t = (r->current_string = roff_getstrn(r, mac, maclen))
 	    ? ROFF_USERDEF : roffhash_find(mac, maclen);
 
-	*pos += (int)maclen;
-
-	while (buf[*pos] && ' ' == buf[*pos])
-		(*pos)++;
+	if (ROFF_MAX != t)
+		*pos = cp - buf;
 
 	return(t);
 }
@@ -992,7 +991,7 @@ roff_block_sub(ROFF_ARGS)
 				i++;
 
 			pos = i;
-			if (ROFF_MAX != roff_parse(r, *bufp, &pos))
+			if (ROFF_MAX != roff_parse(r, *bufp, &pos, ln, ppos))
 				return(ROFF_RERUN);
 			return(ROFF_IGN);
 		}
@@ -1003,7 +1002,7 @@ roff_block_sub(ROFF_ARGS)
 	 * pulling it out of the hashtable.
 	 */
 
-	t = roff_parse(r, *bufp, &pos);
+	t = roff_parse(r, *bufp, &pos, ln, ppos);
 
 	/*
 	 * Macros other than block-end are only significant
@@ -1038,7 +1037,7 @@ roff_cond_sub(ROFF_ARGS)
 
 	rr = r->last->rule;
 	roffnode_cleanscope(r);
-	t = roff_parse(r, *bufp, &pos);
+	t = roff_parse(r, *bufp, &pos, ln, ppos);
 
 	/*
 	 * Fully handle known macros when they are structurally

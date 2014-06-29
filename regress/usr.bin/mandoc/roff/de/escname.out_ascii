@@ -1,0 +1,23 @@
+DE-ESCNAME(1)              OpenBSD Reference Manual              DE-ESCNAME(1)
+
+NNAAMMEE
+     ddee--eessccnnaammee - escape sequences in macro names
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text
+
+     define second = val2
+
+     define first\second = val3
+
+     define first = val1
+
+     Values (first, second, first\second): val1 val2 val3
+
+     Remove all but second: val2
+
+     macro seperated from argument by an escape sequence: ``argument''
+
+     final text
+
+OpenBSD                          June 29, 2014                         OpenBSD

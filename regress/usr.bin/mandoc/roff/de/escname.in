@@ -1,0 +1,42 @@
+.Dd June 29, 2014
+.Dt DE-ESCNAME 1
+.Os OpenBSD
+.Sh NAME
+.Nm de-escname
+.Nd escape sequences in macro names
+.Sh DESCRIPTION
+initial text
+.Pp
+define second = val2
+.de second
+val2
+..
+.Pp
+define first\esecond = val3
+.de first\\second end3
+val3
+.end3
+.Pp
+define first = val1
+.de first\esecond
+val1
+..
+.Pp
+Values (first, second, first\esecond):
+.first
+.second
+.first\\second
+.Pp
+Remove all but second:
+.rm first\\second first\esecond second
+.first
+.second
+.first\\second
+.Pp
+macro seperated from argument by an escape sequence:
+.de witharg
+.Dq \\$1
+..
+.witharg\(enargument
+.Pp
+final text
