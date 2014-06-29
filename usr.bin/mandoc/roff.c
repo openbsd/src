@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.83 2014/06/25 00:19:17 schwarze Exp $ */
+/*	$Id: roff.c,v 1.84 2014/06/29 21:19:34 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -2064,7 +2064,8 @@ roff_setstrn(struct roffkv **r, const char *name, size_t namesz,
 	/* Search for an existing string with the same name. */
 	n = *r;
 
-	while (n && strcmp(name, n->key.p))
+	while (n && (namesz != n->key.sz ||
+			strncmp(n->key.p, name, namesz)))
 		n = n->next;
 
 	if (NULL == n) {
