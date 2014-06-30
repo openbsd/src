@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.85 2014/01/24 22:29:21 miod Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.86 2014/06/30 19:19:17 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
 #include <sys/sysctl.h>
 
 #include <ufs/ufs/dinode.h>
@@ -1178,6 +1179,7 @@ checksz(void)
 {
 	unsigned long long allocate, maxino, maxfsblock, ndir, bound;
 	int mib[2];
+	struct rlimit datasz;
 	size_t len;
 
 	mib[0] = CTL_HW;
@@ -1186,7 +1188,9 @@ checksz(void)
 	
 	if (sysctl(mib, 2, &bound, &len, NULL, 0) != 0)
 		err(1, "can't get physmem");
-	bound = MIN(MAXDSIZ, bound);
+	if (getrlimit(RLIMIT_DATA, &datasz) != 0)
+		err(1, "can't get rlimit");
+	bound = MIN(datasz.rlim_max, bound);
 
 	allocate = 0;
 	maxino = sblock.fs_ncg * (unsigned long long)sblock.fs_ipg;
@@ -1201,7 +1205,7 @@ checksz(void)
 
 	if (allocate > bound)
 		warnx("warning: fsck_ffs will need %lluMB; "
-		    "min(MAXDSIZ,physmem) is %lluMB",
+		    "min(ulimit -dH,physmem) is %lluMB",
 		    allocate / (1024ULL * 1024ULL),
 		    bound / (1024ULL * 1024ULL));
 }
