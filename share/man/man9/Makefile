@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.209 2014/04/19 11:38:13 henning Exp $
+#	$OpenBSD: Makefile,v 1.210 2014/06/30 21:48:09 matthew Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -386,11 +386,11 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_km_free.9 uvm.9 uvm_km_free_wakeup.9 uvm.9 uvm_pagealloc.9 \
 	uvm.9 uvm_pagerealloc.9 uvm.9 uvm_pagefree.9 uvm.9 uvm_pglistalloc.9 \
 	uvm.9 uvm_pglistfree.9 uvm.9 uvm_page_physload.9 \
-	uvm.9 uvm_pageout.9 uvm.9 uvm_scheduler.9 uvm.9 uvm_swapin.9 \
+	uvm.9 uvm_pageout.9 \
 	uvm.9 uao_create.9 uvm.9 uao_detach.9 uvm.9 uao_reference.9 \
 	uvm.9 uvm_chgkprot.9 uvm.9 uvm_kernacc.9 \
 	uvm.9 uvm_vslock.9 uvm.9 uvm_vsunlock.9 uvm.9 uvm_meter.9 \
-	uvm.9 uvm_sysctl.9 uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 \
+	uvm.9 uvm_sysctl.9 uvm.9 uvm_grow.9 \
 	uvm.9 uvm_coredump.9
 MLINKS+=vfs_busy.9 vfs_isbusy.9 vfs_busy.9 vfs_unbusy.9
 MLINKS+=vfs_cache.9 cache_enter.9 vfs_cache.9 cache_lookup.9 \

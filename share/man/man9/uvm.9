@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.54 2014/06/30 17:57:15 matthew Exp $
+.\"	$OpenBSD: uvm.9,v 1.55 2014/06/30 21:48:09 matthew Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -762,10 +762,6 @@ addresses of pages not already in use.
 .nr nS 1
 .Ft void
 .Fn uvm_pageout "void *arg"
-.Ft void
-.Fn uvm_scheduler "void"
-.Ft void
-.Fn uvm_swapin "struct proc *p"
 .nr nS 0
 .Pp
 The
@@ -774,18 +770,6 @@ function is the main loop for the page daemon.
 The
 .Fa arg
 argument is ignored.
-.Pp
-The
-.Fn uvm_scheduler
-function is the process zero main loop, which is to be called after the
-system has finished starting other processes.
-.Fn uvm_scheduler
-handles the swapping in of runnable, swapped out processes in priority
-order.
-.Pp
-The
-.Fn uvm_swapin
-function swaps in the named process.
 .Sh MISCELLANEOUS FUNCTIONS
 .nr nS 1
 .Ft struct uvm_object *
@@ -807,10 +791,6 @@ function swaps in the named process.
 .Fn uvm_meter
 .Ft int
 .Fn uvm_sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp " "size_t newlen" "struct proc *p"
-.Ft void
-.Fn uvm_fork "struct proc *p1" "struct proc *p2" "boolean_t shared" \
-             "void *stack" "size_t stacksize" "void (*func)(void *arg)" \
-             "void *arg"
 .Ft int
 .Fn uvm_grow "struct proc *p" "vaddr_t sp"
 .Ft int
@@ -1012,29 +992,6 @@ int kmapent;	/* number of kernel map entries */
 .Ed
 .Pp
 The
-.Fn uvm_fork
-function forks a virtual address space for process' (old)
-.Fa p1
-and (new)
-.Fa p2 .
-If the
-.Fa shared
-argument is non zero, p1 shares its address space with p2,
-otherwise a new address space is created.
-The
-.Fa stack ,
-.Fa stacksize ,
-.Fa func
-and
-.Fa arg
-arguments are passed to the machine-dependent
-.Fn cpu_fork
-function.
-The
-.Fn uvm_fork
-function currently has no return value, and thus cannot fail.
-.Pp
-The
 .Fn uvm_grow
 function increases the stack segment of process
 .Fa p
@@ -1107,7 +1064,3 @@ UVM to support System V shared memory and process swapping.
 handled the logistical issues involved with merging UVM into the
 .Ox
 source tree.
-.Sh BUGS
-The
-.Fn uvm_fork
-function should be able to fail in low memory conditions.
