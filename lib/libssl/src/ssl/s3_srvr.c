@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.66 2014/06/19 21:29:51 tedu Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.67 2014/06/30 14:13:27 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -214,7 +214,6 @@ ssl3_get_server_method(int ver)
 int
 ssl3_accept(SSL *s)
 {
-	BUF_MEM *buf;
 	unsigned long alg_k;
 	void (*cb)(const SSL *ssl, int type, int val) = NULL;
 	int ret = -1;
@@ -264,12 +263,14 @@ ssl3_accept(SSL *s)
 			s->type = SSL_ST_ACCEPT;
 
 			if (s->init_buf == NULL) {
+				BUF_MEM *buf;
 				if ((buf = BUF_MEM_new()) == NULL) {
 					ret = -1;
 					goto end;
 				}
 				if (!BUF_MEM_grow(buf,
 				    SSL3_RT_MAX_PLAIN_LENGTH)) {
+					BUF_MEM_free(buf);
 					ret = -1;
 					goto end;
 				}

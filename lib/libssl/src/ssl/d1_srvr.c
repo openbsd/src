@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.26 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.27 2014/06/30 14:13:27 tedu Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -176,7 +176,6 @@ dtls1_get_server_method(int ver)
 int
 dtls1_accept(SSL *s)
 {
-	BUF_MEM *buf;
 	void (*cb)(const SSL *ssl, int type, int val) = NULL;
 	unsigned long alg_k;
 	int ret = -1;
@@ -241,11 +240,13 @@ dtls1_accept(SSL *s)
 			s->type = SSL_ST_ACCEPT;
 
 			if (s->init_buf == NULL) {
+				BUF_MEM *buf;
 				if ((buf = BUF_MEM_new()) == NULL) {
 					ret = -1;
 					goto end;
 				}
 				if (!BUF_MEM_grow(buf, SSL3_RT_MAX_PLAIN_LENGTH)) {
+					BUF_MEM_free(buf);
 					ret = -1;
 					goto end;
 				}

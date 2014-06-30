@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.28 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.29 2014/06/30 14:13:27 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -174,7 +174,6 @@ ssl23_get_server_method(int ver)
 int
 ssl23_accept(SSL *s)
 {
-	BUF_MEM *buf;
 	void (*cb)(const SSL *ssl, int type, int val) = NULL;
 	int ret = -1;
 	int new_state, state;
@@ -208,11 +207,13 @@ ssl23_accept(SSL *s)
 			s->type = SSL_ST_ACCEPT;
 
 			if (s->init_buf == NULL) {
+				BUF_MEM *buf;
 				if ((buf = BUF_MEM_new()) == NULL) {
 					ret = -1;
 					goto end;
 				}
 				if (!BUF_MEM_grow(buf, SSL3_RT_MAX_PLAIN_LENGTH)) {
+					BUF_MEM_free(buf);
 					ret = -1;
 					goto end;
 				}
