@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.229 2014/04/30 10:04:33 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.230 2014/06/30 07:02:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1696,24 +1696,6 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 		/* detach from old interface */
 		if (sc->sc_carpdev != NULL)
 			carpdetach(sc);
-
-		/* join multicast groups */
-		if (sc->sc_naddrs < 0 &&
-		    (error = carp_join_multicast(sc)) != 0) {
-			if (ncif != NULL)
-				free(ncif, M_IFADDR);
-			return (error);
-		}
-
-#ifdef INET6
-		if (sc->sc_naddrs6 < 0 &&
-		    (error = carp_join_multicast6(sc)) != 0) {
-			if (ncif != NULL)
-				free(ncif, M_IFADDR);
-			carp_multicast_cleanup(sc);
-			return (error);
-		}
-#endif
 
 		/* attach carp interface to physical interface */
 		if (ncif != NULL)
