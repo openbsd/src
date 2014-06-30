@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.65 2012/07/11 10:37:38 sthen Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.66 2014/06/30 04:25:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -48,7 +48,6 @@
 
 #include "interface.h"
 #include "addrtoname.h"
-#include "machdep.h"
 #include "setsignal.h"
 #include "gmt2local.h"
 
@@ -224,8 +223,6 @@ main(int argc, char **argv)
 		error("Failed to setup privsep");
 
 	/* state: STATE_INIT */
-	if (abort_on_misalignment(ebuf, sizeof(ebuf)) < 0)
-		error("%s", ebuf);
 
 	opterr = 0;
 	while ((op = getopt(argc, argv,
