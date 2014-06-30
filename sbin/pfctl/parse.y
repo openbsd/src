@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.634 2014/06/25 15:11:20 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.635 2014/06/30 13:17:17 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2032,12 +2032,7 @@ filter_opt	: USER uids {
 				YYERROR;
 			}
 			if ($2 == 0) {
-				yyerror("no address family specified");
-				YYERROR;
-			}
-			if ($4->host->af && $4->host->af != $2) {
-				yyerror("af-to addresses must be in the "
-				    "target address family");
+				yyerror("no target address family specified");
 				YYERROR;
 			}
 			filter_opts.nat.af = $2;
@@ -3489,7 +3484,7 @@ redirspec	: host optweight		{
 redir_host_list	: host optweight optnl			{
 			if ($1->addr.type != PF_ADDR_ADDRMASK) {
 				free($1);
-				yyerror("only addresses can be listed for"
+				yyerror("only addresses can be listed for "
 				    "redirection pools ");
 				YYERROR;
 			}
@@ -4295,9 +4290,9 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
     struct redirspec *rs, u_int8_t allow_if)
 {
 	struct pf_opt_tbl *tbl = NULL;
-	struct node_host *h;
+	struct node_host *h, *hprev = NULL;
 	struct pf_rule_addr ra;
-	int af = 0, i = 0;
+	int af = 0, naddr = 0;
 
 	if (!rs || !rs->rdr || rs->rdr->host == NULL) {
 		rpool->addr.type = PF_ADDR_NONE;
@@ -4307,22 +4302,24 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 	if (r->rule_flag & PFRULE_AFTO)
 		r->naf = rs->af;
 
-	/* count matching addresses */
 	for (h = rs->rdr->host; h != NULL; h = h->next) {
-		if (h->af) {
-			/* check that af-to target address has correct af */
-			if (rs->af && rs->af != h->af) {
-				yyerror("af mismatch in %s spec",
-				    allow_if ? "routing" : "translation");
-				return (1);
-			}
+		/* set rule address family if redirect spec has one */
+		if (rs->af && !r->af && !af) {
+			/* swap address families for af-to */
+			if (r->naf == AF_INET6 && rs->af == AF_INET6)
+				af = AF_INET;
+			else if (r->naf == AF_INET && rs->af == AF_INET)
+				af = AF_INET6;
+			else
+				af = rs->af;
+		}
+		if (h->af && !r->naf) {	/* nat-to/rdr-to case */
 			/* skip if the rule af doesn't match redirect af */
-			if ((r->af && r->af != h->af) && /* exclude af-to */
-			    !(r->naf && h->af == r->naf))
+			if (r->af && r->af != h->af)
 				continue;
 			/*
-			 * fail if the chosen af is not universal for the
-			 * whole supplied redirect address pool
+			 * fail if the chosen af is not universal for
+			 * all addresses in the redirect address pool
 			 */
 			if (!r->af && af && af != h->af) {
 				yyerror("%s spec contains addresses with "
@@ -4330,53 +4327,49 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 				    allow_if ? "routing" : "translation");
 				return (1);
 			}
-			if (!r->af)
-				af = h->af;
-			i++;
-		} else {
+		} else if (h->af) {	/* af-to case */
 			/*
-			 * we silently allow any not af-specific host specs,
-			 * e.g. (em0) and let the kernel deal with them
+			 * fail if the redirect spec af is not universal
+			 * for all addresses in the redirect address pool
 			 */
-			i++;
+			if (rs->af && rs->af != h->af) {
+				yyerror("%s spec contains addresses that "
+				    "don't match target address family",
+				    allow_if ? "routing" : "translation");
+				return (1);
+			}
 		}
-	}
-	/* set rule af to one chosen above */
-	if (!r->af && af)
-		r->af = af;
+		/* else if (!h->af):
+		 * we silently allow any not af-specific host specs,
+		 * e.g. (em0) and let the kernel deal with them
+		 */
 
-	if (i == 0) {		/* no pool address */
-		yyerror("af mismatch in %s spec",
-		    allow_if ? "routing" : "translation");
-		return (1);
-	} else if (i == 1) {	/* only one address */
-		for (h = rs->rdr->host; h != NULL; h = h->next)
-			if (!h->af || !r->af || rs->af || r->af == h->af ||
-			    (r->naf && r->naf == h->af))
-				break;
-		rpool->addr = h->addr;
-		if (!allow_if && h->ifname) {
-			yyerror("@if not permitted for translation");
-			return (1);
-		}
-		if (h->ifname && strlcpy(rpool->ifname, h->ifname,
-		    sizeof(rpool->ifname)) >= sizeof(rpool->ifname))
-			errx(1, "collapse_redirspec: strlcpy");
+		/* if we haven't selected the rule af yet, now it's time */
+		if (!r->af && !af)
+			af = h->af;
 
-		return (0);
-	} else {		/* more than one address */
-		if (rs->pool_opts.type &&
-		    (rs->pool_opts.type != PF_POOL_ROUNDROBIN) &&
-		    (rs->pool_opts.type != PF_POOL_LEASTSTATES)) {
-			yyerror("only round-robin or "
-			    "least-states valid for multiple "
-			    "translation or routing addresses");
-			return (1);
-		}
-		for (h = rs->rdr->host; h != NULL; h = h->next) {
-			if (!rs->af && r->af != h->af)
-				continue;
-			if (h->addr.type != PF_ADDR_ADDRMASK &&
+		if (naddr == 0) {	/* the first host */
+			rpool->addr = h->addr;
+			if (!allow_if && h->ifname) {
+				yyerror("@if not permitted for translation");
+				return (1);
+			}
+			if (h->ifname && strlcpy(rpool->ifname, h->ifname,
+			    sizeof(rpool->ifname)) >= sizeof(rpool->ifname))
+				errx(1, "collapse_redirspec: strlcpy");
+			hprev = h; /* in case we need to conver to a table */
+		} else {		/* multiple hosts */
+			if (rs->pool_opts.type &&
+			    (rs->pool_opts.type != PF_POOL_ROUNDROBIN) &&
+			    (rs->pool_opts.type != PF_POOL_LEASTSTATES)) {
+				yyerror("only round-robin or "
+				    "least-states valid for multiple "
+				    "translation or routing addresses");
+				return (1);
+			}
+			if ((hprev && hprev->addr.type != PF_ADDR_ADDRMASK) &&
+			    (hprev && hprev->addr.type != PF_ADDR_NONE) &&
+			    h->addr.type != PF_ADDR_ADDRMASK &&
 			    h->addr.type != PF_ADDR_NONE) {
 				yyerror("multiple tables or dynamic interfaces "
 				    "not supported for translation or routing");
@@ -4386,6 +4379,20 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 				yyerror("@if not permitted for translation");
 				return (1);
 			}
+			if (hprev) {
+				/*
+				 * undo some damage and convert the single
+				 * host pool to the table
+				 */
+				memset(&ra, 0, sizeof(ra));
+				memset(rpool->ifname, 0, sizeof(rpool->ifname));
+				ra.addr = hprev->addr;
+				ra.weight = hprev->weight;
+				if (add_opt_table(pf, &tbl,
+				    hprev->af, &ra, hprev->ifname))
+					return (1);
+				hprev = NULL;
+			}
 			memset(&ra, 0, sizeof(ra));
 			ra.addr = h->addr;
 			ra.weight = h->weight;
@@ -4393,6 +4400,15 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 			    h->af, &ra, h->ifname))
 				return (1);
 		}
+		naddr++;
+	}
+	/* set rule af to the one chosen above */
+	if (!r->af && af)
+		r->af = af;
+	if (!naddr) {
+		yyerror("af mismatch in %s spec",
+		    allow_if ? "routing" : "translation");
+		return (1);
 	}
 	if (tbl) {
 		if ((pf->opts & PF_OPT_NOACTION) == 0 &&
