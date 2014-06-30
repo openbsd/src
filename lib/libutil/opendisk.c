@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendisk.c,v 1.6 2012/12/05 23:20:06 deraadt Exp $	*/
+/*	$OpenBSD: opendisk.c,v 1.7 2014/06/30 00:26:22 deraadt Exp $	*/
 /*	$NetBSD: opendisk.c,v 1.4 1997/09/30 17:13:50 phil Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 
 #include <errno.h>
 #include <fcntl.h>

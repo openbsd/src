@@ -1,4 +1,4 @@
-/*	$OpenBSD: pidfile.c,v 1.9 2013/10/01 16:47:42 millert Exp $	*/
+/*	$OpenBSD: pidfile.c,v 1.10 2014/06/30 00:26:22 deraadt Exp $	*/
 /*	$NetBSD: pidfile.c,v 1.4 2001/02/19 22:43:42 cgd Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <errno.h>
 #include <paths.h>
 #include <stdio.h>

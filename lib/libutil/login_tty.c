@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_tty.c,v 1.8 2009/08/01 17:11:21 millert Exp $	*/
+/*	$OpenBSD: login_tty.c,v 1.9 2014/06/30 00:26:22 deraadt Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 

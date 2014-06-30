@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrawpartition.c,v 1.7 2008/06/26 05:42:05 ray Exp $	*/
+/*	$OpenBSD: getrawpartition.c,v 1.8 2014/06/30 00:26:22 deraadt Exp $	*/
 /*	$NetBSD: getrawpartition.c,v 1.1 1996/05/16 07:03:33 thorpej Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/sysctl.h>
 
 #include "util.h"
