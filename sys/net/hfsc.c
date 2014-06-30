@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.9 2014/04/19 15:58:12 henning Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.10 2014/06/30 12:47:23 pelikan Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -164,13 +164,13 @@ hfsc_attach(struct ifnet *ifp)
 	if (ifp->if_snd.ifq_hfsc != NULL)
 		return (0);
 
-	hif = malloc(sizeof(struct hfsc_if), M_DEVBUF, M_WAITOK|M_ZERO);
+	hif = malloc(sizeof(struct hfsc_if), M_DEVBUF, M_WAITOK | M_ZERO);
 	hif->hif_eligible = hfsc_ellist_alloc();
-	hif->hif_ifq = &ifp->if_snd;
-	ifp->if_snd.ifq_hfsc = hif;
-
 	hif->hif_class_tbl = malloc(tblsize, M_DEVBUF, M_WAITOK | M_ZERO);
 	hif->hif_allocated = HFSC_DEFAULT_CLASSES;
+
+	hif->hif_ifq = &ifp->if_snd;
+	ifp->if_snd.ifq_hfsc = hif;
 
 	timeout_set(&hif->hif_defer, hfsc_deferred, ifp);
 	/* XXX HRTIMER don't schedule it yet, only when some packets wait. */
