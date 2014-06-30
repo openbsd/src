@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.7 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.8 2014/06/30 14:15:34 tedu Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -130,7 +130,6 @@ static int dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	{
 	DH *dh;
-	void *pval = NULL;
 	int ptype;
 	unsigned char *penc = NULL;
 	int penclen;
@@ -140,13 +139,17 @@ static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	dh=pkey->pkey.dh;
 
 	str = ASN1_STRING_new();
+	if (str == NULL) {
+		DHerr(DH_F_DH_PUB_ENCODE, ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
 	str->length = i2d_DHparams(dh, &str->data);
 	if (str->length <= 0)
 		{
 		DHerr(DH_F_DH_PUB_ENCODE, ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
-	pval = str;
 	ptype = V_ASN1_SEQUENCE;
 
 	pub_key = BN_to_ASN1_INTEGER(dh->pub_key, NULL);
@@ -164,13 +167,13 @@ static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 		}
 
 	if (X509_PUBKEY_set0_param(pk, OBJ_nid2obj(EVP_PKEY_DH),
-				ptype, pval, penc, penclen))
+				ptype, (void *)str, penc, penclen))
 		return 1;
 
 	err:
 	free(penc);
-	if (pval)
-		ASN1_STRING_free(pval);
+	if (str)
+		ASN1_STRING_free(str);
 
 	return 0;
 	}
