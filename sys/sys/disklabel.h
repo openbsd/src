@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.60 2014/05/05 13:32:15 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.61 2014/07/01 05:22:09 dlg Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -436,7 +436,6 @@ struct dos_mbr {
 
 #ifdef _KERNEL
 void	 diskerr(struct buf *, char *, char *, int, int, struct disklabel *);
-void	 disksort(struct buf *, struct buf *);
 u_int	 dkcksum(struct disklabel *);
 int	 initdisklabel(struct disklabel *);
 int	 checkdisklabel(void *, struct disklabel *, u_int64_t, u_int64_t);
