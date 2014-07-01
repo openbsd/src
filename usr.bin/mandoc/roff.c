@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.87 2014/06/29 23:23:16 schwarze Exp $ */
+/*	$Id: roff.c,v 1.88 2014/07/01 00:32:02 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -2014,10 +2014,12 @@ roff_getname(struct roff *r, char **cpp, int ln, int pos)
 		}
 		if ('\\' != *cp)
 			continue;
+		namesz = cp - name;
+		if ('{' == cp[1] || '}' == cp[1])
+			break;
 		cp++;
 		if ('\\' == *cp)
 			continue;
-		namesz = cp - name - 1;
 		mandoc_msg(MANDOCERR_NAMESC, r->parse, ln, pos, NULL);
 		mandoc_escape((const char **)&cp, NULL, NULL);
 		break;
