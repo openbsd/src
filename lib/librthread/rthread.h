@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.48 2013/11/29 16:27:40 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.49 2014/07/01 03:32:18 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -190,7 +190,8 @@ struct pthread {
 #define	THREAD_CANCEL_DEFERRED	0x010
 #define	THREAD_CANCEL_DELAY	0x020
 #define	THREAD_DYING		0x040
-#define	THREAD_ORIGINAL		0x080	/* first thread in process */
+#define	THREAD_ORIGINAL		0x080	/* original thread from fork */
+#define	THREAD_INITIAL_STACK	0x100	/* thread with stack from exec */
 
 #define	IS_CANCELED(thread) \
 	(((thread)->flags & (THREAD_CANCELED|THREAD_DYING)) == THREAD_CANCELED)
@@ -199,7 +200,6 @@ struct pthread {
 extern int _threads_ready;
 extern size_t _thread_pagesize;
 extern LIST_HEAD(listhead, pthread) _thread_list;
-extern struct pthread _initial_thread;
 extern struct _spinlock _thread_lock;
 extern struct pthread_attr _rthread_attr_default;
 

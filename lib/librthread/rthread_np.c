@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_np.c,v 1.11 2014/05/02 21:58:51 kurt Exp $	*/
+/*	$OpenBSD: rthread_np.c,v 1.12 2014/07/01 03:32:18 guenther Exp $	*/
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2005 Otto Moerbeek <otto@openbsd.org>
@@ -74,7 +74,7 @@ pthread_stackseg_np(pthread_t thread, stack_t *sinfo)
 			sinfo->ss_size -= thread->stack->guardsize;
 		sinfo->ss_flags = 0;
 		return (0);
-	} else if (thread == &_initial_thread) {
+	} else if (thread->flags & THREAD_INITIAL_STACK) {
 		static struct _ps_strings _ps;
 		static struct rlimit rl;
 		static int gotself;

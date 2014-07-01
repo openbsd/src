@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.77 2014/03/16 18:38:30 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.78 2014/07/01 03:32:18 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -58,8 +58,8 @@ struct _spinlock _thread_lock = _SPINLOCK_UNLOCKED;
 static struct pthread_queue _thread_gc_list
     = TAILQ_HEAD_INITIALIZER(_thread_gc_list);
 static struct _spinlock _thread_gc_lock = _SPINLOCK_UNLOCKED;
-struct pthread _initial_thread;
-struct thread_control_block _initial_thread_tcb;
+static struct pthread _initial_thread;
+static struct thread_control_block _initial_thread_tcb;
 
 struct pthread_attr _rthread_attr_default = {
 	.stack_addr			= NULL,
@@ -189,7 +189,7 @@ _rthread_init(void)
 	thread->tid = getthrid();
 	thread->donesem.lock = _SPINLOCK_UNLOCKED_ASSIGN;
 	thread->flags |= THREAD_CANCEL_ENABLE | THREAD_CANCEL_DEFERRED |
-	    THREAD_ORIGINAL;
+	    THREAD_ORIGINAL | THREAD_INITIAL_STACK;
 	thread->flags_lock = _SPINLOCK_UNLOCKED_ASSIGN;
 	strlcpy(thread->name, "Main process", sizeof(thread->name));
 	LIST_INSERT_HEAD(&_thread_list, thread, threads);
