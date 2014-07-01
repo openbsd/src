@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_fp.c,v 1.1 2014/06/09 16:26:32 miod Exp $	*/
+/*	$OpenBSD: m88100_fp.c,v 1.2 2014/07/01 20:26:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2014, Miodrag Vallat.
@@ -25,16 +25,21 @@
 
 #include <machine/fpu.h>
 #include <machine/frame.h>
+#include <machine/ieee.h>
 #include <machine/ieeefp.h>
 #include <machine/trap.h>
 #include <machine/m88100.h>
 
 #include <lib/libkern/softfloat.h>
+#include <lib/libkern/milieu.h>
+float32 normalizeRoundAndPackFloat32(int, int16, bits32);
+float64 normalizeRoundAndPackFloat64(flag, int16, bits64);
 
 #include <m88k/m88k/fpu.h>
 
 int	m88100_fpu_emulate(struct trapframe *);
 void	m88100_fpu_fetch(struct trapframe *, u_int, u_int, u_int, fparg *);
+void	m88100_fpu_checksig(struct trapframe *, int, int);
 
 /*
  * All 88100 precise floating-point exceptions are handled there.
@@ -47,13 +52,8 @@ void	m88100_fpu_fetch(struct trapframe *, u_int, u_int, u_int, fparg *);
 void
 m88100_fpu_precise_exception(struct trapframe *frame)
 {
-	struct proc *p = curproc;
 	int fault_type;
-	vaddr_t fault_addr;
-	union sigval sv;
 	int sig;
-
-	fault_addr = frame->tf_sxip & XIP_ADDR;
 
 	/* if FPECR_FUNIMP is set, all other bits are undefined, ignore them */
 	if (ISSET(frame->tf_fpecr, FPECR_FUNIMP))
@@ -76,36 +76,7 @@ m88100_fpu_precise_exception(struct trapframe *frame)
 	 */
 	__asm__ volatile ("fstcr %0, %%fcr62" :: "r"(frame->tf_fpsr));
 
-	if (sig != 0) {
-		if (sig == SIGILL) {
-			if (fault_type == SI_NOINFO)
-				fault_type = ILL_ILLOPC;
-		} else {
-			if (frame->tf_fpecr & FPECR_FIOV)
-				fault_type = FPE_FLTSUB;
-			else if (frame->tf_fpecr & FPECR_FROP)
-				fault_type = FPE_FLTINV;
-			else if (frame->tf_fpecr & FPECR_FDVZ)
-				fault_type = FPE_INTDIV;
-			else if (frame->tf_fpecr & FPECR_FUNF) {
-				if (frame->tf_fpsr & FPSR_EFUNF)
-					fault_type = FPE_FLTUND;
-				else if (frame->tf_fpsr & FPSR_EFINX)
-					fault_type = FPE_FLTRES;
-			} else if (frame->tf_fpecr & FPECR_FOVF) {
-				if (frame->tf_fpsr & FPSR_EFOVF)
-					fault_type = FPE_FLTOVF;
-				else if (frame->tf_fpsr & FPSR_EFINX)
-					fault_type = FPE_FLTRES;
-			} else if (frame->tf_fpecr & FPECR_FINX)
-				fault_type = FPE_FLTRES;
-		}
-
-		sv.sival_ptr = (void *)fault_addr;
-		KERNEL_LOCK();
-		trapsignal(p, sig, 0, fault_type, sv);
-		KERNEL_UNLOCK();
-	}
+	m88100_fpu_checksig(frame, sig, fault_type);
 }
 
 /*
@@ -342,4 +313,140 @@ do_int:
 	frame->tf_fpcr = old_fpcr;
 
 	return (rc);
+}
+
+/*
+ * All 88100 imprecise floating-point exceptions are handled there.
+ *
+ * We ignore the exception condition bits and simply round the intermediate
+ * result according to the current rounding mode, raising whichever exception
+ * conditions are necessary in the process.
+ */
+
+void
+m88100_fpu_imprecise_exception(struct trapframe *frame)
+{
+	flag sign;
+	int16 exp;
+	bits32 mant32;
+	bits64 mant64;
+	fparg res;
+	u_int fmt;
+
+	/* Reset the exception cause register */
+	__asm__ volatile ("fstcr %r0, %fcr0");
+
+	/*
+	 * Pick the inexact result, build a float32 or a float64 out of it, and
+	 * normalize it to the destination width.
+	 */
+
+	if (frame->tf_fpit & FPIT_DBL)
+		fmt = FTYPE_DBL;
+	else
+		fmt = FTYPE_SNG;
+
+	sign = (frame->tf_fprh & FPRH_SIGN) != 0;
+	exp = ((int32_t)frame->tf_fpit) >> 20; /* signed, unbiaised exponent */
+
+	if (fmt == FTYPE_SNG) {
+		exp += SNG_EXP_BIAS;
+		mant32 = (frame->tf_fprh & FPRH_MANTH_MASK);
+	       	mant32 <<= (SNG_FRACBITS - FPRH_MANTH_BITS + 1);
+		mant32 |= frame->tf_fprl >> (DBL_FRACBITS - SNG_FRACBITS);
+
+		/*
+		 * If the mantissa has been incremented, revert this; but
+		 * if doing so causes the mantissa hidden bit to clear,
+		 * the exponent needs to be decremented and the hidden bit
+		 * restored.
+		 */
+		if (frame->tf_fprh & FPRH_ADDONE) {
+			mant32--;
+			if ((mant32 & (1 << SNG_FRACBITS)) == 0) {
+				exp--;
+				mant32 |= 1 << SNG_FRACBITS;
+			}
+		}
+
+		/* normalizeRoundAndPackFloat32() requirement */
+		mant32 <<= (31 - SNG_FRACBITS - 1);
+		res.sng = normalizeRoundAndPackFloat32(sign, exp, mant32);
+	} else {
+		exp += DBL_EXP_BIAS;
+		mant64 = frame->tf_fprh & FPRH_MANTH_MASK;
+		mant64 <<= (DBL_FRACBITS - FPRH_MANTH_BITS + 1);
+		mant64 |= frame->tf_fprl;
+
+		/*
+		 * If the mantissa has been incremented, revert this; but
+		 * if doing so causes the mantissa hidden bit to clear,
+		 * the exponent needs to be decremented and the hidden bit
+		 * restored.
+		 */
+		if (frame->tf_fprh & FPRH_ADDONE) {
+			mant64--;
+			if ((mant64 & (1LL << DBL_FRACBITS)) == 0) {
+				exp--;
+				mant64 |= 1LL << DBL_FRACBITS;
+			}
+		}
+
+		/* normalizeRoundAndPackFloat64() requirement */
+		mant64 <<= (63 - DBL_FRACBITS - 1);
+		res.dbl = normalizeRoundAndPackFloat64(sign, exp, mant64);
+	}
+
+	fpu_store(frame, frame->tf_fpit & 0x1f, fmt, fmt, &res);
+
+	/*
+	 * Update the floating point status register regardless of
+	 * whether we'll deliver a signal or not.
+	 */
+	__asm__ volatile ("fstcr %0, %%fcr62" :: "r"(frame->tf_fpsr));
+
+	/* Check for a SIGFPE condition */
+	if (frame->tf_fpsr & frame->tf_fpcr)
+		m88100_fpu_checksig(frame, SIGFPE, 0 /* SI_NOINFO */);
+}
+
+/*
+ * Check if a signal needs to be delivered, and send it.
+ */
+void
+m88100_fpu_checksig(struct trapframe *frame, int sig, int fault_type)
+{
+	struct proc *p = curproc;
+	union sigval sv;
+
+	if (sig != 0) {
+		if (sig == SIGILL) {
+			if (fault_type == SI_NOINFO)
+				fault_type = ILL_ILLOPC;
+		} else {
+			if (frame->tf_fpecr & FPECR_FIOV)
+				fault_type = FPE_FLTSUB;
+			else if (frame->tf_fpecr & FPECR_FROP)
+				fault_type = FPE_FLTINV;
+			else if (frame->tf_fpecr & FPECR_FDVZ)
+				fault_type = FPE_INTDIV;
+			else if (frame->tf_fpecr & FPECR_FUNF) {
+				if (frame->tf_fpsr & FPSR_EFUNF)
+					fault_type = FPE_FLTUND;
+				else if (frame->tf_fpsr & FPSR_EFINX)
+					fault_type = FPE_FLTRES;
+			} else if (frame->tf_fpecr & FPECR_FOVF) {
+				if (frame->tf_fpsr & FPSR_EFOVF)
+					fault_type = FPE_FLTOVF;
+				else if (frame->tf_fpsr & FPSR_EFINX)
+					fault_type = FPE_FLTRES;
+			} else if (frame->tf_fpecr & FPECR_FINX)
+				fault_type = FPE_FLTRES;
+		}
+
+		sv.sival_ptr = (void *)(frame->tf_sxip & XIP_ADDR);
+		KERNEL_LOCK();
+		trapsignal(p, sig, 0, fault_type, sv);
+		KERNEL_UNLOCK();
+	}
 }

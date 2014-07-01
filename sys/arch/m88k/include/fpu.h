@@ -1,7 +1,7 @@
-/*	$OpenBSD: fpu.h,v 1.1 2007/12/08 18:39:50 miod Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.2 2014/07/01 20:26:09 miod Exp $	*/
 
 /*
- * Copyright (c) 2007, Miodrag Vallat.
+ * Copyright (c) 2007, 2014, Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -36,5 +36,14 @@
 #define	FPSR_EFUNF	0x04
 #define	FPSR_EFOVF	0x02
 #define	FPSR_EFINX	0x01
+
+/* FPIT bits */
+#define	FPIT_DBL	0x00000400
+
+/* FPRH bits and masks */
+#define	FPRH_SIGN	0x80000000
+#define	FPRH_ADDONE	0x02000000
+#define	FPRH_MANTH_MASK	0x001fffff
+#define	FPRH_MANTH_BITS	21
 
 #endif	/* _M88K_FPU_H_ */
