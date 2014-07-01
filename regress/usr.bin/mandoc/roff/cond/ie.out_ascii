@@ -10,7 +10,8 @@ DDEESSCCRRIIPPTTIIOONN
        Text following the true condition.
        Text following the false condition.
        Two-line else after false.
+       If .el\{ works, nothing follows here:
 
 
 
-OpenBSD                         April 25, 2010                           IE(1)
+OpenBSD                          July 1, 2014                            IE(1)
