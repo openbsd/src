@@ -1,4 +1,4 @@
-/*	$OpenBSD: softfloat.c,v 1.5 2012/12/05 23:20:22 deraadt Exp $	*/
+/*	$OpenBSD: softfloat.c,v 1.6 2014/07/01 20:21:17 miod Exp $	*/
 /*	$NetBSD: softfloat.c,v 1.1 2001/04/26 03:10:47 ross Exp $	*/
 
 /*
@@ -55,6 +55,9 @@ this code that are retained.
 
 #include "milieu.h"
 #include "softfloat.h"
+
+float32 normalizeRoundAndPackFloat32(flag, int16, bits32);
+float64 normalizeRoundAndPackFloat64(flag, int16, bits64);
 
 /*
  * Conversions between floats as stored in memory and floats as
@@ -416,7 +419,7 @@ Bit 31 of `zSig' must be zero, and `zExp' must be 1 less than the ``true''
 floating-point exponent.
 -------------------------------------------------------------------------------
 */
-static float32
+float32
  normalizeRoundAndPackFloat32( flag zSign, int16 zExp, bits32 zSig )
 {
     int8 shiftCount;
@@ -588,7 +591,7 @@ Bit 63 of `zSig' must be zero, and `zExp' must be 1 less than the ``true''
 floating-point exponent.
 -------------------------------------------------------------------------------
 */
-static float64
+float64
  normalizeRoundAndPackFloat64( flag zSign, int16 zExp, bits64 zSig )
 {
     int8 shiftCount;
