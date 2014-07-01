@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.212 2014/07/01 01:56:39 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.213 2014/07/01 02:11:46 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1284,7 +1284,9 @@ scsi_xs_exec(struct scsi_xfer *xs)
 #endif
 
 	/* The adapter's scsi_cmd() is responsible for calling scsi_done(). */
+	KERNEL_LOCK();
 	xs->sc_link->adapter->scsi_cmd(xs);
+	KERNEL_UNLOCK();
 }
 
 /*
