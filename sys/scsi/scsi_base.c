@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.211 2014/04/22 07:29:11 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.212 2014/07/01 01:56:39 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -85,6 +85,9 @@ void			scsi_xsh_ioh(void *, void *);
 
 int			scsi_link_open(struct scsi_link *);
 void			scsi_link_close(struct scsi_link *);
+
+void *			scsi_iopool_get(struct scsi_iopool *);
+void			scsi_iopool_put(struct scsi_iopool *, void *);
 
 /* ioh/xsh queue state */
 #define RUNQ_IDLE	0
@@ -233,6 +236,26 @@ scsi_iopool_init(struct scsi_iopool *iopl, void *iocookie,
 	TAILQ_INIT(&iopl->queue);
 	iopl->running = 0;
 	mtx_init(&iopl->mtx, IPL_BIO);
+}
+
+void *
+scsi_iopool_get(struct scsi_iopool *iopl)
+{
+	void *io;
+
+	KERNEL_LOCK();
+	io = iopl->io_get(iopl->iocookie);
+	KERNEL_UNLOCK();
+
+	return (io);
+}
+
+void
+scsi_iopool_put(struct scsi_iopool *iopl, void *io)
+{
+	KERNEL_LOCK();
+	iopl->io_put(iopl->iocookie, io);
+	KERNEL_UNLOCK();
 }
 
 void
@@ -385,13 +408,13 @@ scsi_iopool_run(struct scsi_iopool *iopl)
 		return;
 	do {
 		while (scsi_ioh_pending(iopl)) {
-			io = iopl->io_get(iopl->iocookie);
+			io = scsi_iopool_get(iopl);
 			if (io == NULL)
 				break;
 
 			ioh = scsi_ioh_deq(iopl);
 			if (ioh == NULL) {
-				iopl->io_put(iopl->iocookie, io);
+				scsi_iopool_put(iopl, io);
 				break;
 			}
 
@@ -437,7 +460,7 @@ scsi_io_get(struct scsi_iopool *iopl, int flags)
 	void *io;
 
 	/* try and sneak an io off the backend immediately */
-	io = iopl->io_get(iopl->iocookie);
+	io = scsi_iopool_get(iopl);
 	if (io != NULL)
 		return (io);
 	else if (ISSET(flags, SCSI_NOSLEEP))
@@ -460,7 +483,7 @@ scsi_io_get_done(void *cookie, void *io)
 void
 scsi_io_put(struct scsi_iopool *iopl, void *io)
 {
-	iopl->io_put(iopl->iocookie, io);
+	scsi_iopool_put(iopl, io);
 	scsi_iopool_run(iopl);
 }
 
@@ -617,7 +640,7 @@ scsi_xs_get(struct scsi_link *link, int flags)
 			return (NULL);
 
 		io = m.io;
-	} else if ((io = iopl->io_get(iopl->iocookie)) == NULL) {
+	} else if ((io = scsi_iopool_get(iopl)) == NULL) {
 		if (ISSET(flags, SCSI_NOSLEEP)) {
 			scsi_link_close(link);
 			return (NULL);
