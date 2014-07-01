@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.7 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.8 2014/07/01 21:26:27 miod Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1092,7 +1092,7 @@ i2d_ECPrivateKey(EC_KEY * a, unsigned char **out)
 			goto err;
 		}
 	}
-	if (!(a->enc_flag & EC_PKEY_NO_PUBKEY)) {
+	if (!(a->enc_flag & EC_PKEY_NO_PUBKEY) && a->pub_key != NULL) {
 		priv_key->publicKey = M_ASN1_BIT_STRING_new();
 		if (priv_key->publicKey == NULL) {
 			ECerr(EC_F_I2D_ECPRIVATEKEY,
