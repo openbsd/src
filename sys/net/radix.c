@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.40 2014/05/27 19:38:15 claudio Exp $	*/
+/*	$OpenBSD: radix.c,v 1.41 2014/07/01 09:58:40 mpi Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -982,16 +982,16 @@ rn_delete(void *v_arg, void *n_arg, struct radix_node_head *head,
 				return (0);
 	}
 
-	KASSERT((tt->rn_flags & RNF_ROOT) == 0);
-
 	/* save start of multi path chain for later use */
 	dupedkey_tt = tt;
 
 #ifndef SMALL_KERNEL
 	/* if we got a hint use the hint from now on */
-	if (rn) 
+	if (rn)
 		tt = rn;
 #endif
+
+	KASSERT((tt->rn_flags & RNF_ROOT) == 0);
 
 	/* remove possible radix_mask */
 	if (rn_del_radix_mask(tt))
