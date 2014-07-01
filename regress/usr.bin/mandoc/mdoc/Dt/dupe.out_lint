@@ -1,1 +1,1 @@
-mandoc: dupe.in:4:2: WARNING: macro not allowed in body: Os
+mandoc: dupe.in:3:2: WARNING: duplicate prologue macro: Dt

@@ -1,0 +1,5 @@
+.Dd July 1, 2014
+.Dt SH-FIRST 1
+.Os OpenBSD
+.Sh DESCRIPTION
+The first section is not a NAME section.

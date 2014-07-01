@@ -1,0 +1,3 @@
+mandoc: order.in:9:2: WARNING: sections out of conventional order: SYNOPSIS
+mandoc: order.in:10:2: WARNING: duplicate section title: SYNOPSIS
+mandoc: order.in:11:2: WARNING: unexpected section: ERRORS for 2, 3, 4, 9 only

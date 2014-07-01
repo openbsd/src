@@ -1,1 +1,1 @@
-mandoc: lateos.in:8:2: WARNING: macro not allowed in body: Os
+mandoc: lateos.in:8:2: WARNING: skipping prologue macro in body: Os

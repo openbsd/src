@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.134 2014/06/20 22:58:41 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.135 2014/07/01 22:36:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -931,10 +931,12 @@ pre_dt(PRE_ARGS)
 {
 
 	if (NULL == mdoc->meta.date || mdoc->meta.os)
-		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOG_ORDER);
+		mandoc_msg(MANDOCERR_PROLOG_ORDER, mdoc->parse,
+		    n->line, n->pos, "Dt");
 
 	if (mdoc->meta.title)
-		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOG_REP);
+		mandoc_msg(MANDOCERR_PROLOG_REP, mdoc->parse,
+		    n->line, n->pos, "Dt");
 
 	return(1);
 }
@@ -944,10 +946,12 @@ pre_os(PRE_ARGS)
 {
 
 	if (NULL == mdoc->meta.title || NULL == mdoc->meta.date)
-		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOG_ORDER);
+		mandoc_msg(MANDOCERR_PROLOG_ORDER, mdoc->parse,
+		    n->line, n->pos, "Os");
 
 	if (mdoc->meta.os)
-		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOG_REP);
+		mandoc_msg(MANDOCERR_PROLOG_REP, mdoc->parse,
+		    n->line, n->pos, "Os");
 
 	return(1);
 }
@@ -957,10 +961,12 @@ pre_dd(PRE_ARGS)
 {
 
 	if (mdoc->meta.title || mdoc->meta.os)
-		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOG_ORDER);
+		mandoc_msg(MANDOCERR_PROLOG_ORDER, mdoc->parse,
+		    n->line, n->pos, "Dd");
 
 	if (mdoc->meta.date)
-		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOG_REP);
+		mandoc_msg(MANDOCERR_PROLOG_REP, mdoc->parse,
+		    n->line, n->pos, "Dd");
 
 	return(1);
 }
@@ -1660,9 +1666,10 @@ post_root(POST_ARGS)
 
 	if (NULL == n->child)
 		mdoc_nmsg(mdoc, n, MANDOCERR_DOC_EMPTY);
-	else if (MDOC_BLOCK != n->child->type ||
-	    MDOC_Sh != n->child->tok)
-		mdoc_nmsg(mdoc, n->child, MANDOCERR_SEC_BEFORE);
+	else if (MDOC_Sh != n->child->tok)
+		mandoc_msg(MANDOCERR_SEC_BEFORE, mdoc->parse,
+		    n->child->line, n->child->pos,
+		    mdoc_macronames[n->child->tok]);
 
 	return(ret);
 }
@@ -1885,7 +1892,8 @@ post_sh_body(POST_ARGS)
 	 */
 
 	if (NULL == (n = mdoc->last->child)) {
-		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_BADNAMESEC);
+		mandoc_msg(MANDOCERR_NAMESEC_BAD, mdoc->parse,
+		    mdoc->last->line, mdoc->last->pos, "empty");
 		return(1);
 	}
 
@@ -1894,14 +1902,16 @@ post_sh_body(POST_ARGS)
 			continue;
 		if (MDOC_TEXT == n->type)
 			continue;
-		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_BADNAMESEC);
+		mandoc_msg(MANDOCERR_NAMESEC_BAD, mdoc->parse,
+		    n->line, n->pos, mdoc_macronames[n->tok]);
 	}
 
 	assert(n);
 	if (MDOC_BLOCK == n->type && MDOC_Nd == n->tok)
 		return(1);
 
-	mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_BADNAMESEC);
+	mandoc_msg(MANDOCERR_NAMESEC_BAD, mdoc->parse,
+	    n->line, n->pos, mdoc_macronames[n->tok]);
 	return(1);
 }
 
@@ -1909,6 +1919,7 @@ static int
 post_sh_head(POST_ARGS)
 {
 	struct mdoc_node *n;
+	const char	*goodsec;
 	char		*secname;
 	enum mdoc_sec	 sec;
 
@@ -1927,7 +1938,8 @@ post_sh_head(POST_ARGS)
 	/* The NAME should be first. */
 
 	if (SEC_NAME != sec && SEC_NONE == mdoc->lastnamed)
-		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_NAMESECFIRST);
+		mandoc_msg(MANDOCERR_NAMESEC_FIRST, mdoc->parse,
+		    mdoc->last->line, mdoc->last->pos, secname);
 
 	/* The SYNOPSIS gets special attention in other areas. */
 
@@ -1970,10 +1982,12 @@ post_sh_head(POST_ARGS)
 	 */
 
 	if (sec == mdoc->lastnamed)
-		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_SECREP);
+		mandoc_msg(MANDOCERR_SEC_REP, mdoc->parse,
+		    mdoc->last->line, mdoc->last->pos, secname);
 
 	if (sec < mdoc->lastnamed)
-		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_SECOOO);
+		mandoc_msg(MANDOCERR_SEC_ORDER, mdoc->parse,
+		    mdoc->last->line, mdoc->last->pos, secname);
 
 	/* Mark the last named section. */
 
@@ -1983,10 +1997,12 @@ post_sh_head(POST_ARGS)
 
 	assert(mdoc->meta.msec);
 
+	goodsec = NULL;
 	switch (sec) {
 	case SEC_ERRORS:
 		if (*mdoc->meta.msec == '4')
 			break;
+		goodsec = "2, 3, 4, 9";
 		/* FALLTHROUGH */
 	case SEC_RETURN_VALUES:
 		/* FALLTHROUGH */
@@ -1995,12 +2011,17 @@ post_sh_head(POST_ARGS)
 			break;
 		if (*mdoc->meta.msec == '3')
 			break;
+		if (NULL == goodsec)
+			goodsec = "2, 3, 9";
 		/* FALLTHROUGH */
 	case SEC_CONTEXT:
 		if (*mdoc->meta.msec == '9')
 			break;
-		mandoc_msg(MANDOCERR_SECMSEC, mdoc->parse,
-		    mdoc->last->line, mdoc->last->pos, secname);
+		if (NULL == goodsec)
+			goodsec = "9";
+		mandoc_vmsg(MANDOCERR_SEC_MSEC, mdoc->parse,
+		    mdoc->last->line, mdoc->last->pos,
+		    "%s for %s only", secname, goodsec);
 		break;
 	default:
 		break;
@@ -2165,18 +2186,16 @@ post_dt(POST_ARGS)
 
 	mdoc->meta.title = mdoc->meta.vol = mdoc->meta.arch = NULL;
 
-	/* First make all characters uppercase. */
+	/* First check that all characters are uppercase. */
 
 	if (NULL != (nn = n->child))
 		for (p = nn->string; *p; p++) {
 			if (toupper((unsigned char)*p) == *p)
 				continue;
-
-			/*
-			 * FIXME: don't be lazy: have this make all
-			 * characters be uppercase and just warn once.
-			 */
-			mdoc_nmsg(mdoc, nn, MANDOCERR_TITLE_CASE);
+			mandoc_msg(MANDOCERR_TITLE_CASE,
+			    mdoc->parse, nn->line,
+			    nn->pos + (p - nn->string),
+			    nn->string);
 			break;
 		}
 
@@ -2220,7 +2239,8 @@ post_dt(POST_ARGS)
 		mdoc->meta.vol = mandoc_strdup(cp);
 		mdoc->meta.msec = mandoc_strdup(nn->string);
 	} else {
-		mdoc_nmsg(mdoc, n, MANDOCERR_MSEC_BAD);
+		mandoc_msg(MANDOCERR_MSEC_BAD, mdoc->parse,
+		    nn->line, nn->pos, nn->string);
 		mdoc->meta.vol = mandoc_strdup(nn->string);
 		mdoc->meta.msec = mandoc_strdup(nn->string);
 	}
@@ -2242,7 +2262,8 @@ post_dt(POST_ARGS)
 	} else {
 		cp = mdoc_a2arch(nn->string);
 		if (NULL == cp) {
-			mdoc_nmsg(mdoc, nn, MANDOCERR_ARCH_BAD);
+			mandoc_msg(MANDOCERR_ARCH_BAD, mdoc->parse,
+			    nn->line, nn->pos, nn->string);
 			free(mdoc->meta.vol);
 			mdoc->meta.vol = mandoc_strdup(nn->string);
 		} else

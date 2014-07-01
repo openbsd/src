@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.65 2014/06/20 22:58:41 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.66 2014/07/01 22:36:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -410,7 +410,10 @@ post_TH(CHKARGS)
 			/* Only warn about this once... */
 			if (isalpha((unsigned char)*p) &&
 			    ! isupper((unsigned char)*p)) {
-				man_nmsg(man, n, MANDOCERR_TITLE_CASE);
+				mandoc_msg(MANDOCERR_TITLE_CASE,
+				    man->parse, n->line,
+				    n->pos + (p - n->string),
+				    n->string);
 				break;
 			}
 		}

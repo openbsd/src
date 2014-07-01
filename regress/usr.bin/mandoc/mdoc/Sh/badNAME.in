@@ -1,0 +1,8 @@
+.Dd July 1, 2014
+.Dt SH-BADNAME 1
+.Os OpenBSD
+.Sh NAME
+.Em bad NAME section
+.Nm Sh-badNAME
+.Sh DESCRIPTION
+The description appears before the name and is not marked up with Nd.

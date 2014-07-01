@@ -1,6 +1,6 @@
 .Dd June 13, 2014
 .Dt DT-DUPE 1
-.Os OpenBSD
+.Dt DT-DUPE 1
 .Os OpenBSD
 .Sh NAME
 .Nm Dt-order

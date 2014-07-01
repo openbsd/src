@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.105 2014/06/20 17:23:09 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.106 2014/07/01 22:36:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -31,7 +31,7 @@
 #include "libmdoc.h"
 #include "libmandoc.h"
 
-const	char *const __mdoc_macronames[MDOC_MAX] = {
+const	char *const __mdoc_macronames[MDOC_MAX + 1] = {
 	"Ap",		"Dd",		"Dt",		"Os",
 	"Sh",		"Ss",		"Pp",		"D1",
 	"Dl",		"Bd",		"Ed",		"Bl",
@@ -62,7 +62,7 @@ const	char *const __mdoc_macronames[MDOC_MAX] = {
 	"Lk",		"Mt",		"Brq",		"Bro",
 	"Brc",		"%C",		"Es",		"En",
 	"Dx",		"%Q",		"br",		"sp",
-	"%U",		"Ta",		"ll",
+	"%U",		"Ta",		"ll",		"text",
 	};
 
 const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {

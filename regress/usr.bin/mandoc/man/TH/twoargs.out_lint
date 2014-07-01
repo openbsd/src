@@ -1,2 +1,2 @@
 mandoc: twoargs.in:1:2: ERROR: argument count wrong: line arguments >= 2 (have 1)
-mandoc: twoargs.in:1:2: WARNING: date missing, using today's date
+mandoc: twoargs.in:1:2: WARNING: missing date, using today's date

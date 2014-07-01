@@ -1,2 +1,2 @@
-mandoc: noTH.in: WARNING: no TH macro in document
-mandoc: noTH.in: WARNING: date missing, using today's date
+mandoc: noTH.in: WARNING: missing .TH macro, using "unknown 1"
+mandoc: noTH.in: WARNING: missing date, using today's date

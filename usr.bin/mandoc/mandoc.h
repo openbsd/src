@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.68 2014/06/30 23:45:03 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.69 2014/07/01 22:36:35 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,26 +49,26 @@ enum	mandocerr {
 	MANDOCERR_WARNING, /* ===== start of warnings ===== */
 
 	/* related to the prologue */
-	MANDOCERR_TH_MISSING, /* no TH macro in document */
-	MANDOCERR_TITLE_CASE, /* document title should be all caps */
-	MANDOCERR_MSEC_BAD, /* unknown manual section */
-	MANDOCERR_ARCH_BAD, /* unknown manual volume or arch */
-	MANDOCERR_DATE_MISSING, /* date missing, using today's date */
-	MANDOCERR_DATE_BAD, /* cannot parse date, using it verbatim */
-	MANDOCERR_PROLOG_ORDER, /* prologue macros out of order */
-	MANDOCERR_PROLOG_REP, /* duplicate prologue macro */
-	MANDOCERR_PROLOG_BAD, /* macro not allowed in prologue: macro */
-	MANDOCERR_PROLOG_ONLY, /* macro not allowed in body: macro */
+	MANDOCERR_TH_MISSING, /* missing .TH macro, using "unknown 1" */
+	MANDOCERR_TITLE_CASE, /* lower case character in document title */
+	MANDOCERR_MSEC_BAD, /* unknown manual section: section */
+	MANDOCERR_ARCH_BAD, /* unknown manual volume or arch: volume */
+	MANDOCERR_DATE_MISSING, /* missing date, using today's date */
+	MANDOCERR_DATE_BAD, /* cannot parse date, using it verbatim: date */
+	MANDOCERR_PROLOG_ORDER, /* prologue macros out of order: macro */
+	MANDOCERR_PROLOG_REP, /* duplicate prologue macro: macro */
+	MANDOCERR_PROLOG_BAD, /* incomplete prologue, terminated by: macro */
+	MANDOCERR_PROLOG_ONLY, /* skipping prologue macro in body: macro */
 
 	/* related to document structure */
 	MANDOCERR_SO, /* .so is fragile, better use ln(1): .so path */
 	MANDOCERR_DOC_EMPTY, /* no document body */
-	MANDOCERR_SEC_BEFORE, /* content before the first section header */
-	MANDOCERR_NAMESECFIRST, /* NAME section must come first */
-	MANDOCERR_BADNAMESEC, /* bad NAME section contents */
-	MANDOCERR_SECOOO, /* sections out of conventional order */
-	MANDOCERR_SECREP, /* duplicate section name */
-	MANDOCERR_SECMSEC, /* section header suited to sections ... */
+	MANDOCERR_SEC_BEFORE, /* content before first section header: macro */
+	MANDOCERR_NAMESEC_FIRST, /* first section is not "NAME": title */
+	MANDOCERR_NAMESEC_BAD, /* bad NAME section contents: macro */
+	MANDOCERR_SEC_ORDER, /* sections out of conventional order: title */
+	MANDOCERR_SEC_REP, /* duplicate section title: title */
+	MANDOCERR_SEC_MSEC, /* unexpected section: title for ... only */
 
 	/* related to macros and nesting */
 	MANDOCERR_MACROOBS, /* skipping obsolete macro */
@@ -132,7 +132,7 @@ enum	mandocerr {
 	MANDOCERR_BADCHAR, /* skipping bad character */
 	MANDOCERR_NAMESC, /* escaped character not allowed in a name */
 	MANDOCERR_NONAME, /* manual name not yet set */
-	MANDOCERR_NOTEXT, /* skipping text before the first section header */
+	MANDOCERR_NOTEXT, /* skipping text before first section header */
 	MANDOCERR_MACRO, /* skipping unknown macro */
 	MANDOCERR_REQUEST, /* NOT IMPLEMENTED: skipping request */
 	MANDOCERR_ARGCOUNT, /* argument count wrong */

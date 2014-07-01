@@ -1,1 +1,1 @@
-mandoc: emptydate.in:1:20: WARNING: date missing, using today's date
+mandoc: emptydate.in:1:20: WARNING: missing date, using today's date

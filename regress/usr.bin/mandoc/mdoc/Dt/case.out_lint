@@ -1,1 +1,1 @@
-mandoc: case.in:2:5: WARNING: document title should be all caps
+mandoc: case.in:2:6: WARNING: lower case character in document title: Dt-case

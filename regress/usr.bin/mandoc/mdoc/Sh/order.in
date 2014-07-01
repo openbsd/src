@@ -1,0 +1,12 @@
+.Dd July 1, 2014
+.Dt SH-ORDER 1
+.Os OpenBSD
+.Sh NAME
+.Nm Sh-order
+.Nd sections out of conventional order
+.Sh DESCRIPTION
+some text
+.Sh SYNOPSIS
+.Sh SYNOPSIS
+.Sh ERRORS
+.Vt int errno

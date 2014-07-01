@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.31 2014/06/30 23:45:03 schwarze Exp $ */
+/*	$Id: read.c,v 1.32 2014/07/01 22:36:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -85,26 +85,26 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"generic warning",
 
 	/* related to the prologue */
-	"no TH macro in document",
-	"document title should be all caps",
+	"missing .TH macro, using \"unknown 1\"",
+	"lower case character in document title",
 	"unknown manual section",
 	"unknown manual volume or arch",
-	"date missing, using today's date",
+	"missing date, using today's date",
 	"cannot parse date, using it verbatim",
 	"prologue macros out of order",
 	"duplicate prologue macro",
-	"macro not allowed in prologue",
-	"macro not allowed in body",
+	"incomplete prologue, terminated by",
+	"skipping prologue macro in body",
 
 	/* related to document structure */
 	".so is fragile, better use ln(1)",
 	"no document body",
-	"content before the first section header",
-	"NAME section must come first",
+	"content before first section header",
+	"first section is not \"NAME\"",
 	"bad NAME section contents",
 	"sections out of conventional order",
-	"duplicate section name",
-	"section header suited to sections 2, 3, and 9 only",
+	"duplicate section title",
+	"unexpected section",
 
 	/* related to macros and nesting */
 	"skipping obsolete macro",
@@ -168,7 +168,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"skipping bad character",
 	"escaped character not allowed in a name",
 	"manual name not yet set",
-	"skipping text before the first section header",
+	"skipping text before first section header",
 	"skipping unknown macro",
 	"NOT IMPLEMENTED, please use groff: skipping request",
 	"argument count wrong",
