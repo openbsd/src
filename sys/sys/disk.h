@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.33 2011/12/28 16:02:45 jsing Exp $	*/
+/*	$OpenBSD: disk.h,v 1.34 2014/07/01 05:22:38 dlg Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -125,21 +125,6 @@ struct disk {
 /* Disk map flags. */
 #define	DM_OPENPART	0x1		/* Open raw partition. */
 #define	DM_OPENBLCK	0x2		/* Open block device. */
-
-#ifdef DISKSORT_STATS
-/*
- * Stats from disksort().
- */
-struct disksort_stats {
-	long	ds_newhead;		/* # new queue heads created */
-	long	ds_newtail;		/* # new queue tails created */
-	long	ds_midfirst;		/* # insertions into sort list */
-	long	ds_endfirst;		/* # insertions at end of sort list */
-	long	ds_newsecond;		/* # inversions (2nd lists) created */
-	long	ds_midsecond;		/* # insertions into 2nd list */
-	long	ds_endsecond;		/* # insertions at end of 2nd list */
-};
-#endif
 
 /*
  * disklist_head is defined here so that user-land has access to it.
