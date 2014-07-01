@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.106 2014/05/20 05:46:13 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.107 2014/07/01 09:52:27 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -303,14 +303,22 @@ sub find_every_library
 {
 }
 
+package OpenBSD::PackingElement::Meta;
+sub record_digest
+{
+	my ($self, $original, $entries, $new, $tail) = @_;
+	push(@$new, $self);
+}
+
 package OpenBSD::PackingElement::RcScript;
-sub archive
+sub set_destdir
 {
 	my ($self, $state) = @_;
 	if ($self->name =~ m/^\//) {
 		$state->{archive}->destdir($state->{base});
+	} else {
+		$self->SUPER::set_destdir($state);
 	}
-	$self->SUPER::archive($state);
 }
 
 package OpenBSD::PackingElement::SpecialFile;
@@ -322,6 +330,10 @@ sub archive
 sub pretend_to_archive
 {
 	&OpenBSD::PackingElement::FileBase::pretend_to_archive;
+}
+
+sub set_destdir
+{
 }
 
 sub may_add
@@ -387,13 +399,11 @@ package OpenBSD::PackingElement::Cwd;
 sub archive
 {
 	my ($self, $state) = @_;
-	$state->{archive}->destdir($state->{base}."/".$self->name);
 }
 
 sub pretend_to_archive
 {
 	my ($self, $state) = @_;
-	$state->{archive}->destdir($state->{base}."/".$self->name);
 	$self->comment_create_package;
 }
 
@@ -407,15 +417,28 @@ package OpenBSD::PackingElement::FileBase;
 
 sub record_digest
 {
-	my ($self, $list) = @_;
+	my ($self, $original, $entries, $new, $tail) = @_;
 	if (defined $self->{d}) {
-		push(@$list, $self->{d}->stringize);
+		my $k = $self->{d}->stringize;
+		push(@{$entries->{$k}}, $self);
+		push(@$original, $k);
+	} else {
+		push(@$tail, $self);
 	}
 }
+
+sub set_destdir
+{
+	my ($self, $state) = @_;
+
+	$state->{archive}->destdir($state->{base}."/".$self->cwd);
+}
+
 sub archive
 {
 	my ($self, $state) = @_;
 
+	$self->set_destdir($state);
 	my $o = $self->prepare_for_archival($state);
 
 	$o->write unless $state->{bad};
@@ -425,6 +448,7 @@ sub pretend_to_archive
 {
 	my ($self, $state) = @_;
 
+	$self->set_destdir($state);
 	$self->prepare_for_archival($state);
 	$self->comment_create_package;
 }
@@ -1224,7 +1248,7 @@ sub read_existing_plist
 
 sub create_package
 {
-	my ($self, $state, $plist, $wname) = @_;
+	my ($self, $state, $plist, $ordered, $wname) = @_;
 
 	$state->say("Creating gzip'd tar ball in '#1'", $wname)
 	    if $state->opt('v');
@@ -1242,7 +1266,11 @@ sub create_package
 	local $SIG{'TERM'} = $h;
 	$state->{archive} = $state->create_archive($wname, $plist->infodir);
 	$state->set_status("archiving");
-	$state->progress->visit_with_size($plist, 'create_package', $state);
+	my $p = $state->progress->new_sizer($plist, $state);
+	for my $e (@$ordered) {
+		$e->create_package($state);
+		$p->advance($e);
+	}
 	$state->end_status;
 	$state->{archive}->close;
 	if ($state->{bad}) {
@@ -1318,50 +1346,63 @@ sub save_history
 {
 	my ($self, $plist, $dir) = @_;
 
-	unless (-d $dir) {
-		require File::Path;
-
-		File::Path::make_path($dir);
-	}
-
-	my $name = $plist->fullpkgpath;
-	$name =~ s,/,.,g;
-	my $fname = "$dir/$name";
-
 	# grab the old stuff:
 	# - order
 	# - and presence
-	my @old;
 	my (%known, %found);
-	if (open(my $f, '<', $fname)) {
-		while (<$f>) {
-			chomp;
-			push(@old, $_);
-			$known{$_} = 1;
+	my $fname;
+	if (defined $dir) {
+		unless (-d $dir) {
+			require File::Path;
+
+			File::Path::make_path($dir);
 		}
-		close($f);
+
+		my $name = $plist->fullpkgpath;
+		$name =~ s,/,.,g;
+		my $fname = "$dir/$name";
+		my $n = 0;
+
+		if (open(my $f, '<', $fname)) {
+			while (<$f>) {
+				chomp;
+				$known{$_} //= $n++;
+			}
+			close($f);
+		}
 	}
 	my @new;
-	$plist->record_digest(\@new);
-	open(my $f, ">", "$fname.new") or return;
+	my $entries = {};
+	my $list = [];
+	my $tail = [];
+	$plist->record_digest(\@new, $entries, $list, $tail);
+
+	my $f;
+	if (defined $fname) {
+		open($f, ">", "$fname.new");
+	}
 	
 	# split list
 	# - first, unknown stuff
-	for my $i (@new) {
-		if ($known{$i}) {
-			$found{$i} = 1;
+	for my $h (@new) {
+		if ($known{$h} && $entries->{$h}[0]->{name} !~ /\.py$/) {
+			$found{$h} = $known{$h};
 		} else {
-			print $f "$i\n";
+			print $f "$h\n" if defined $f;
+			push(@$list, (shift @{$entries->{$h}}));
 		}
 	}
 	# - then known stuff, preserve the order
-	for my $i (@old) {
-		if ($found{$i}) {
-			print $f "$i\n";
-		}
+	for my $h (sort  {$found{$a} <=> $found{$b}} keys %found) {
+		print $f "$h\n" if defined $f;
+		push(@$list, @{$entries->{$h}});
 	}
-	close($f);
-	rename("$fname.new", $fname);
+	if (defined $f) {
+		close($f);
+		rename("$fname.new", $fname);
+	}
+	push(@$list, @$tail);
+	return $list;
 }
 
 sub parse_and_run
@@ -1406,6 +1447,7 @@ sub parse_and_run
 
 	$plist->discover_directories($state);
 	$self->tweak_libraries($state, $plist);
+	my $ordered;
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
 		$state->set_status("checking dependencies");
 		$self->check_dependencies($plist, $state);
@@ -1415,10 +1457,8 @@ sub parse_and_run
 		} else {
 			$plist = $self->make_plist_with_sum($state, $plist);
 		}
-		if ($state->defines('HISTORY_DIR')) {
-			$self->save_history($plist, 
-			    $state->defines('HISTORY_DIR'));
-		}
+		$ordered = $self->save_history($plist, 
+		    $state->defines('HISTORY_DIR'));
 		$self->show_bad_symlinks($state);
 		$state->end_status;
 	}
@@ -1469,7 +1509,7 @@ sub parse_and_run
 		    $plist->infodir);
 		$plist->pretend_to_archive($state);
 	} else {
-		$self->create_package($state, $plist, $wname);
+		$self->create_package($state, $plist, $ordered, $wname);
 	}
 	$self->finish_manpages($state, $plist);
 	}catch {
