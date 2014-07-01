@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.259 2014/06/23 18:47:41 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.260 2014/07/01 19:13:19 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -246,14 +246,6 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 					return (-1);
 				}
 			}
-
-			/* During autoconf some devices are still gathering
-			 * information.  Delay here to give them an opportunity
-			 * to finish.  During runtime we simply need to ignore
-			 * transient values.
-			 */
-			if (cold)
-				delay(10000);
 		}
 		acpi_bus_space_unmap(iot, ioh, len, NULL);
 		break;
