@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_sqlite.c,v 1.12 2014/06/10 16:43:46 gilles Exp $	*/
+/*	$OpenBSD: table_sqlite.c,v 1.13 2014/07/01 17:33:51 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -445,7 +445,7 @@ table_sqlite_lookup(int service, const char *key, char *dst, size_t sz)
 	case K_CREDENTIALS:
 		if (snprintf(dst, sz, "%s:%s",
 		    sqlite3_column_text(stmt, 0),
-		    sqlite3_column_text(stmt, 1)) > (ssize_t)sz) {
+		    sqlite3_column_text(stmt, 1)) >= (ssize_t)sz) {
 			log_warnx("warn: table-sqlite: result too large");
 			r = -1;
 		}
@@ -454,7 +454,7 @@ table_sqlite_lookup(int service, const char *key, char *dst, size_t sz)
 		if (snprintf(dst, sz, "%d:%d:%s",
 		    sqlite3_column_int(stmt, 0),
 		    sqlite3_column_int(stmt, 1),
-		    sqlite3_column_text(stmt, 2)) > (ssize_t)sz) {
+		    sqlite3_column_text(stmt, 2)) >= (ssize_t)sz) {
 			log_warnx("warn: table-sqlite: result too large");
 			r = -1;
 		}

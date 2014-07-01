@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_passwd.c,v 1.5 2013/11/18 11:47:16 eric Exp $	*/
+/*	$OpenBSD: table_passwd.c,v 1.6 2014/07/01 17:33:51 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -168,7 +168,7 @@ table_passwd_lookup(int service, const char *key, char *dst, size_t sz)
 	switch (service) {
 	case K_CREDENTIALS:
 		if (snprintf(dst, sz, "%s:%s",
-			pw.pw_name, pw.pw_passwd) > (ssize_t)sz) {
+			pw.pw_name, pw.pw_passwd) >= (ssize_t)sz) {
 			log_warnx("warn: table-passwd: result too large");
 			r = -1;
 		}
@@ -176,7 +176,7 @@ table_passwd_lookup(int service, const char *key, char *dst, size_t sz)
 	case K_USERINFO:
 		if (snprintf(dst, sz, "%d:%d:%s",
 			pw.pw_uid, pw.pw_gid, pw.pw_dir)
-		    > (ssize_t)sz) {
+		    >= (ssize_t)sz) {
 			log_warnx("warn: table-passwd: result too large");
 			r = -1;
 		}
