@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.24 2014/06/16 08:58:59 espie Exp $
+# $OpenBSD: Term.pm,v 1.25 2014/07/01 09:21:14 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -23,13 +23,6 @@ sub size_and
 	my ($self, $p, $method, @r) = @_;
 	$p->advance($self);
 	$self->$method(@r);
-}
-
-sub compute_size
-{
-	my ($self, $totsize) = @_;
-
-	$$totsize += $self->{size} if defined $self->{size};
 }
 
 sub compute_count
@@ -56,18 +49,9 @@ sub ntogo
 	return $state->ntogo_string($offset);
 }
 
-sub compute_size
-{
-	my $plist = shift;
-	my $totsize = 0;
-	$plist->compute_size(\$totsize);
-	$totsize = 1 if $totsize == 0;
-	return $totsize;
-}
-
 sub compute_count
 {
-	my $plist = shift;
+	my ($progres, $plist) = @_;
 	my $total = 0;
 	$plist->compute_count(\$total);
 	$total = 1 if $total == 0;
@@ -81,30 +65,15 @@ sub visit_with_size
 	$plist->size_and($p, $method, $state, @r);
 }
 
-sub new_sizer
+sub sizer_class
 {
-	my ($progress, $plist, $state) = @_;
-	$plist->{totsize} //= compute_size($plist);
-	my $p = bless {
-	    progress => $progress, 
-	    totsize => $plist->{totsize},
-	    donesize => 0,
-	    state => $state
-	    }, "_SizeCounter";
-	$progress->show(0, $p->{totsize});
-	if (defined $state->{archive}) {
-		$state->{archive}{callback} = sub {
-		    my $done = shift;
-		    $progress->show($p->{donesize} + $done, $p->{totsize});
-		};
-	}
-	return $p;
+	"ProgressSizer"
 }
 
 sub visit_with_count
 {
 	my ($progress, $plist, $method, @r) = @_;
-	$plist->{total} //= compute_count($plist);
+	$plist->{total} //= $progress->compute_count($plist);
 	my $count = 0;
 	$progress->show($count, $plist->{total});
 	$plist->count_and($progress, \$count, $plist->{total},
@@ -313,9 +282,21 @@ sub next
 	print "\r$self->{header}: $todo\n";
 }
 
-package _SizeCounter;
+package ProgressSizer;
+our @ISA = qw(PureSizer);
+
 sub new
 {
+	my ($class, $progress, $plist, $state) = @_;
+	my $p = $class->SUPER::new($progress, $plist, $state);
+	$progress->show(0, $p->{totsize});
+	if (defined $state->{archive}) {
+		$state->{archive}{callback} = sub {
+		    my $done = shift;
+		    $progress->show($p->{donesize} + $done, $p->{totsize});
+		};
+	}
+	return $p;
 }
 
 sub advance

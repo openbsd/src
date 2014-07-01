@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.41 2014/06/16 08:58:59 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.42 2014/07/01 09:21:14 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -18,10 +18,27 @@
 use strict;
 use warnings;
 
+package OpenBSD::PackingElement;
+sub compute_size
+{
+	my ($self, $totsize) = @_;
+
+	$$totsize += $self->{size} if defined $self->{size};
+}
+
 package OpenBSD::ProgressMeter;
 sub new
 {
 	bless {}, "OpenBSD::ProgressMeter::Stub";
+}
+
+sub compute_size
+{
+	my ($self, $plist) = @_;
+	my $totsize = 0;
+	$plist->compute_size(\$totsize);
+	$totsize = 1 if $totsize == 0;
+	return $totsize;
 }
 
 sub setup
@@ -49,11 +66,13 @@ sub errprint
 
 sub new_sizer
 {
-	return shift;
+	my ($progress, $plist, $state) = @_;
+	return $progress->sizer_class->new($progress, $plist, $state);
 }
 
-sub advance
+sub sizer_class
 {
+	"PureSizer"
 }
 
 sub for_list
@@ -100,6 +119,28 @@ sub visit_with_size
 sub visit_with_count
 {
 	&OpenBSD::ProgressMeter::Stub::visit_with_size;
+}
+
+package PureSizer;
+
+sub new
+{
+	my ($class, $progress, $plist, $state) = @_;
+	$plist->{totsize} //= $progress->compute_size($plist);
+	bless {
+	    progress => $progress, 
+	    totsize => $plist->{totsize},
+	    donesize => 0,
+	    state => $state
+	    }, $class;
+}
+
+sub advance
+{
+	my ($self, $e) = @_;
+	if (defined $e->{size}) {
+		$self->{donesize} += $e->{size};
+	}
 }
 
 1;
