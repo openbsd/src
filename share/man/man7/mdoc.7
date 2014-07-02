@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.112 2014/06/24 21:42:20 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.113 2014/07/02 03:47:07 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 24 2014 $
+.Dd $Mdocdate: July 2 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1502,8 +1502,14 @@ See also
 and
 .Sx \&Sy .
 .Ss \&En
-This macro is obsolete and ignored by
-.Xr mandoc 1 .
+This macro is obsolete.
+Use
+.Sx \&Eo
+or any of the other enclosure macros.
+.Pp
+It encloses its argument in the delimiters specified by the last
+.Sx \&Es
+macro.
 .Ss \&Eo
 An arbitrary enclosure.
 Its syntax is as follows:
@@ -1529,8 +1535,14 @@ See also
 .Sx \&Dv
 for general constants.
 .Ss \&Es
-This macro is obsolete and ignored by
-.Xr mandoc 1 .
+This macro is obsolete.
+Use
+.Sx \&Eo
+or any of the other enclosure macros.
+.Pp
+It takes two arguments, defining the delimiters to be used by subsequent
+.Sx \&En
+macros.
 .Ss \&Ev
 Environmental variables such as those specified in
 .Xr environ 7 .
@@ -1710,13 +1722,10 @@ See also
 and
 .Sx \&Ft .
 .Ss \&Fr
-This macro is obsolete and ignored by
-.Xr mandoc 1 .
+This macro is obsolete.
+No replacement markup is needed.
 .Pp
-It was used to show function return values.
-The syntax was:
-.Pp
-.Dl Pf . Sx \&Fr Ar value
+It was used to show numerical function return values in an italic font.
 .Ss \&Ft
 A function type.
 Its syntax is as follows:
@@ -2129,8 +2138,12 @@ See also
 and
 .Sx \&Dt .
 .Ss \&Ot
-This macro is obsolete and ignored by
-.Xr mandoc 1 .
+This macro is obsolete.
+Use
+.Sx \&Ft
+instead; with
+.Xr mandoc 1 ,
+both have the same effect.
 .Pp
 Historical
 .Nm
@@ -2905,6 +2918,7 @@ end of the line.
 .It Sx \&D1  Ta    \&No     Ta    \&Yes
 .It Sx \&Dl  Ta    \&No     Ta    Yes
 .It Sx \&Dq  Ta    Yes      Ta    Yes
+.It Sx \&En  Ta    Yes      Ta    Yes
 .It Sx \&Op  Ta    Yes      Ta    Yes
 .It Sx \&Pq  Ta    Yes      Ta    Yes
 .It Sx \&Ql  Ta    Yes      Ta    Yes
@@ -2982,16 +2996,15 @@ then the macro accepts an arbitrary number of arguments.
 .It Sx \&Dv  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Dx  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Em  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&En  Ta    \&No     Ta    \&No     Ta    0
 .It Sx \&Er  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Es  Ta    \&No     Ta    \&No     Ta    0
+.It Sx \&Es  Ta    Yes      Ta    Yes      Ta    2
 .It Sx \&Ev  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Ex  Ta    \&No     Ta    \&No     Ta    n
 .It Sx \&Fa  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Fd  Ta    \&No     Ta    \&No     Ta    >0
 .It Sx \&Fl  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Fn  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Fr  Ta    \&No     Ta    \&No     Ta    n
+.It Sx \&Fr  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Ft  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Fx  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Hf  Ta    \&No     Ta    \&No     Ta    n
@@ -3008,7 +3021,7 @@ then the macro accepts an arbitrary number of arguments.
 .It Sx \&Ns  Ta    Yes      Ta    Yes      Ta    0
 .It Sx \&Nx  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Os  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Ot  Ta    \&No     Ta    \&No     Ta    n
+.It Sx \&Ot  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Ox  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Pa  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Pf  Ta    Yes      Ta    Yes      Ta    1

@@ -1,0 +1,20 @@
+.Dd July 2, 2014
+.Dt EO-OBSOLETE 1
+.Os OpenBSD
+.Sh NAME
+.Nm Eo-obsolete
+.Nd obsolete enclosure macros
+.Sh DESCRIPTION
+.En no prior \&Es
+.Pp
+.Es << >> surplus
+initial text
+.En enclosed words with Fl flags
+middle text
+.En more enclosed words
+final text
+.Pp
+.Es
+initial text
+.En after empty \&Es
+final text

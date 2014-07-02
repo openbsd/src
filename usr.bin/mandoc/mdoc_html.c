@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.73 2014/04/23 16:07:06 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.74 2014/07/02 03:47:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -93,7 +93,6 @@ static	int		  mdoc_it_pre(MDOC_ARGS);
 static	int		  mdoc_lb_pre(MDOC_ARGS);
 static	int		  mdoc_li_pre(MDOC_ARGS);
 static	int		  mdoc_lk_pre(MDOC_ARGS);
-static	int		  mdoc_ll_pre(MDOC_ARGS);
 static	int		  mdoc_mt_pre(MDOC_ARGS);
 static	int		  mdoc_ms_pre(MDOC_ARGS);
 static	int		  mdoc_nd_pre(MDOC_ARGS);
@@ -107,6 +106,7 @@ static	int		  mdoc_quote_pre(MDOC_ARGS);
 static	int		  mdoc_rs_pre(MDOC_ARGS);
 static	int		  mdoc_rv_pre(MDOC_ARGS);
 static	int		  mdoc_sh_pre(MDOC_ARGS);
+static	int		  mdoc_skip_pre(MDOC_ARGS);
 static	int		  mdoc_sm_pre(MDOC_ARGS);
 static	int		  mdoc_sp_pre(MDOC_ARGS);
 static	int		  mdoc_ss_pre(MDOC_ARGS);
@@ -153,7 +153,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_nd_pre, NULL}, /* Nd */
 	{mdoc_nm_pre, NULL}, /* Nm */
 	{mdoc_quote_pre, mdoc_quote_post}, /* Op */
-	{NULL, NULL}, /* Ot */
+	{mdoc_ft_pre, NULL}, /* Ot */
 	{mdoc_pa_pre, NULL}, /* Pa */
 	{mdoc_rv_pre, NULL}, /* Rv */
 	{NULL, NULL}, /* St */
@@ -223,7 +223,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{NULL, NULL}, /* Ek */
 	{mdoc_bt_pre, NULL}, /* Bt */
 	{NULL, NULL}, /* Hf */
-	{NULL, NULL}, /* Fr */
+	{mdoc_em_pre, NULL}, /* Fr */
 	{mdoc_ud_pre, NULL}, /* Ud */
 	{mdoc_lb_pre, NULL}, /* Lb */
 	{mdoc_pp_pre, NULL}, /* Lp */
@@ -233,15 +233,15 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_quote_pre, mdoc_quote_post}, /* Bro */
 	{NULL, NULL}, /* Brc */
 	{mdoc__x_pre, mdoc__x_post}, /* %C */
-	{NULL, NULL}, /* Es */  /* TODO */
-	{NULL, NULL}, /* En */  /* TODO */
+	{mdoc_skip_pre, NULL}, /* Es */
+	{mdoc_quote_pre, mdoc_quote_post}, /* En */
 	{mdoc_xx_pre, NULL}, /* Dx */
 	{mdoc__x_pre, mdoc__x_post}, /* %Q */
 	{mdoc_sp_pre, NULL}, /* br */
 	{mdoc_sp_pre, NULL}, /* sp */
 	{mdoc__x_pre, mdoc__x_post}, /* %U */
 	{NULL, NULL}, /* Ta */
-	{mdoc_ll_pre, NULL}, /* ll */
+	{mdoc_skip_pre, NULL}, /* ll */
 };
 
 static	const char * const lists[LIST_MAX] = {
@@ -1541,7 +1541,7 @@ mdoc_sm_pre(MDOC_ARGS)
 }
 
 static int
-mdoc_ll_pre(MDOC_ARGS)
+mdoc_skip_pre(MDOC_ARGS)
 {
 
 	return(0);
@@ -2081,6 +2081,12 @@ mdoc_quote_pre(MDOC_ARGS)
 		PAIR_CLASS_INIT(&tag, "opt");
 		print_otag(h, TAG_SPAN, 1, &tag);
 		break;
+	case MDOC_En:
+		if (NULL == n->norm->Es ||
+		    NULL == n->norm->Es->child)
+			return(1);
+		print_text(h, n->norm->Es->child->string);
+		break;
 	case MDOC_Eo:
 		break;
 	case MDOC_Do:
@@ -2124,7 +2130,8 @@ mdoc_quote_post(MDOC_ARGS)
 	if (MDOC_BODY != n->type)
 		return;
 
-	h->flags |= HTML_NOSPACE;
+	if (MDOC_En != n->tok)
+		h->flags |= HTML_NOSPACE;
 
 	switch (n->tok) {
 	case MDOC_Ao:
@@ -2145,6 +2152,14 @@ mdoc_quote_post(MDOC_ARGS)
 		/* FALLTHROUGH */
 	case MDOC_Bq:
 		print_text(h, "\\(rB");
+		break;
+	case MDOC_En:
+		if (NULL != n->norm->Es &&
+		    NULL != n->norm->Es->child &&
+		    NULL != n->norm->Es->child->next) {
+			h->flags |= HTML_NOSPACE;
+			print_text(h, n->norm->Es->child->next->string);
+		}
 		break;
 	case MDOC_Eo:
 		break;

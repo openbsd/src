@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.88 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.89 2014/07/02 03:47:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -44,7 +44,6 @@ static	int		ctx_synopsis(MACRO_PROT_ARGS);
 static	int		in_line_eoln(MACRO_PROT_ARGS);
 static	int		in_line_argn(MACRO_PROT_ARGS);
 static	int		in_line(MACRO_PROT_ARGS);
-static	int		obsolete(MACRO_PROT_ARGS);
 static	int		phrase_ta(MACRO_PROT_ARGS);
 
 static	int		dword(struct mdoc *, int, int, const char *,
@@ -100,7 +99,7 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ blk_full, MDOC_JOIN }, /* Nd */
 	{ ctx_synopsis, MDOC_CALLABLE | MDOC_PARSED }, /* Nm */
 	{ blk_part_imp, MDOC_CALLABLE | MDOC_PARSED }, /* Op */
-	{ obsolete, 0 }, /* Ot */
+	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Ot */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Pa */
 	{ in_line_eoln, 0 }, /* Rv */
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* St */
@@ -187,7 +186,7 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ blk_exp_close, MDOC_EXPLICIT | MDOC_JOIN }, /* Ek */
 	{ in_line_eoln, 0 }, /* Bt */
 	{ in_line_eoln, 0 }, /* Hf */
-	{ obsolete, 0 }, /* Fr */
+	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Fr */
 	{ in_line_eoln, 0 }, /* Ud */
 	{ in_line, 0 }, /* Lb */
 	{ in_line_eoln, 0 }, /* Lp */
@@ -199,8 +198,8 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ blk_exp_close, MDOC_CALLABLE | MDOC_PARSED |
 			 MDOC_EXPLICIT | MDOC_JOIN }, /* Brc */
 	{ in_line_eoln, MDOC_JOIN }, /* %C */
-	{ obsolete, 0 }, /* Es */
-	{ obsolete, 0 }, /* En */
+	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* Es */
+	{ blk_part_imp, MDOC_CALLABLE | MDOC_PARSED | MDOC_JOIN }, /* En */
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* Dx */
 	{ in_line_eoln, MDOC_JOIN }, /* %Q */
 	{ in_line_eoln, 0 }, /* br */
@@ -1524,6 +1523,8 @@ in_line_argn(MACRO_PROT_ARGS)
 		break;
 	case MDOC_Bx:
 		/* FALLTHROUGH */
+	case MDOC_Es:
+		/* FALLTHROUGH */
 	case MDOC_Xr:
 		maxargs = 2;
 		break;
@@ -1709,14 +1710,6 @@ ctx_synopsis(MACRO_PROT_ARGS)
 		return(blk_full(mdoc, tok, line, ppos, pos, buf));
 	assert(MDOC_Vt == tok);
 	return(blk_part_imp(mdoc, tok, line, ppos, pos, buf));
-}
-
-static int
-obsolete(MACRO_PROT_ARGS)
-{
-
-	mdoc_pmsg(mdoc, line, ppos, MANDOCERR_MACROOBS);
-	return(1);
 }
 
 /*

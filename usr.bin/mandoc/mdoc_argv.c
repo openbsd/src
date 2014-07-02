@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.50 2014/04/23 21:06:33 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.51 2014/07/02 03:47:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -175,7 +175,7 @@ static	const struct mdocarg mdocargs[MDOC_MAX] = {
 	{ ARGSFL_NONE, NULL }, /* Nd */
 	{ ARGSFL_DELIM, NULL }, /* Nm */
 	{ ARGSFL_DELIM, NULL }, /* Op */
-	{ ARGSFL_NONE, NULL }, /* Ot */
+	{ ARGSFL_DELIM, NULL }, /* Ot */
 	{ ARGSFL_DELIM, NULL }, /* Pa */
 	{ ARGSFL_NONE, args_Ex }, /* Rv */
 	{ ARGSFL_DELIM, NULL }, /* St */
@@ -245,7 +245,7 @@ static	const struct mdocarg mdocargs[MDOC_MAX] = {
 	{ ARGSFL_NONE, NULL }, /* Ek */
 	{ ARGSFL_NONE, NULL }, /* Bt */
 	{ ARGSFL_NONE, NULL }, /* Hf */
-	{ ARGSFL_NONE, NULL }, /* Fr */
+	{ ARGSFL_DELIM, NULL }, /* Fr */
 	{ ARGSFL_NONE, NULL }, /* Ud */
 	{ ARGSFL_DELIM, NULL }, /* Lb */
 	{ ARGSFL_NONE, NULL }, /* Lp */
@@ -256,7 +256,7 @@ static	const struct mdocarg mdocargs[MDOC_MAX] = {
 	{ ARGSFL_DELIM, NULL }, /* Brc */
 	{ ARGSFL_NONE, NULL }, /* %C */
 	{ ARGSFL_NONE, NULL }, /* Es */
-	{ ARGSFL_NONE, NULL }, /* En */
+	{ ARGSFL_DELIM, NULL }, /* En */
 	{ ARGSFL_DELIM, NULL }, /* Dx */
 	{ ARGSFL_NONE, NULL }, /* %Q */
 	{ ARGSFL_NONE, NULL }, /* br */

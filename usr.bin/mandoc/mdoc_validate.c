@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.135 2014/07/01 22:36:35 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.136 2014/07/02 03:47:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -94,6 +94,8 @@ static	int	 post_bx(POST_ARGS);
 static	int	 post_defaults(POST_ARGS);
 static	int	 post_dd(POST_ARGS);
 static	int	 post_dt(POST_ARGS);
+static	int	 post_en(POST_ARGS);
+static	int	 post_es(POST_ARGS);
 static	int	 post_eoln(POST_ARGS);
 static	int	 post_hyph(POST_ARGS);
 static	int	 post_ignpar(POST_ARGS);
@@ -121,6 +123,7 @@ static	int	 pre_display(PRE_ARGS);
 static	int	 pre_dt(PRE_ARGS);
 static	int	 pre_it(PRE_ARGS);
 static	int	 pre_literal(PRE_ARGS);
+static	int	 pre_obsolete(PRE_ARGS);
 static	int	 pre_os(PRE_ARGS);
 static	int	 pre_par(PRE_ARGS);
 static	int	 pre_sh(PRE_ARGS);
@@ -141,6 +144,8 @@ static	v_post	 posts_d1[] = { bwarn_ge1, post_hyph, NULL };
 static	v_post	 posts_dd[] = { post_dd, post_prol, NULL };
 static	v_post	 posts_dl[] = { post_literal, bwarn_ge1, NULL };
 static	v_post	 posts_dt[] = { post_dt, post_prol, NULL };
+static	v_post	 posts_en[] = { post_en, NULL };
+static	v_post	 posts_es[] = { post_es, NULL };
 static	v_post	 posts_fo[] = { hwarn_eq1, bwarn_ge1, NULL };
 static	v_post	 posts_hyph[] = { post_hyph, NULL };
 static	v_post	 posts_hyphtext[] = { ewarn_ge1, post_hyph, NULL };
@@ -169,6 +174,7 @@ static	v_pre	 pres_dl[] = { pre_literal, pre_display, NULL };
 static	v_pre	 pres_dd[] = { pre_dd, NULL };
 static	v_pre	 pres_dt[] = { pre_dt, NULL };
 static	v_pre	 pres_it[] = { pre_it, pre_par, NULL };
+static	v_pre	 pres_obsolete[] = { pre_obsolete, NULL };
 static	v_pre	 pres_os[] = { pre_os, NULL };
 static	v_pre	 pres_pp[] = { pre_par, NULL };
 static	v_pre	 pres_sh[] = { pre_sh, NULL };
@@ -210,7 +216,7 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_nd },			/* Nd */
 	{ NULL, posts_nm },			/* Nm */
 	{ NULL, NULL },				/* Op */
-	{ NULL, NULL },				/* Ot */
+	{ pres_obsolete, NULL },		/* Ot */
 	{ NULL, posts_defaults },		/* Pa */
 	{ pres_std, posts_std },		/* Rv */
 	{ NULL, posts_st },			/* St */
@@ -280,7 +286,7 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Ek */
 	{ NULL, posts_eoln },			/* Bt */
 	{ NULL, NULL },				/* Hf */
-	{ NULL, NULL },				/* Fr */
+	{ pres_obsolete, NULL },		/* Fr */
 	{ NULL, posts_eoln },			/* Ud */
 	{ NULL, posts_lb },			/* Lb */
 	{ pres_pp, posts_pp },			/* Lp */
@@ -290,8 +296,8 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Bro */
 	{ NULL, NULL },				/* Brc */
 	{ NULL, posts_text },			/* %C */
-	{ NULL, NULL },				/* Es */
-	{ NULL, NULL },				/* En */
+	{ pres_obsolete, posts_es },		/* Es */
+	{ pres_obsolete, posts_en },		/* En */
 	{ NULL, NULL },				/* Dx */
 	{ NULL, posts_text },			/* %Q */
 	{ NULL, posts_pp },			/* br */
@@ -927,6 +933,16 @@ pre_std(PRE_ARGS)
 }
 
 static int
+pre_obsolete(PRE_ARGS)
+{
+
+	if (MDOC_ELEM == n->type || MDOC_BLOCK == n->type)
+		mandoc_msg(MANDOCERR_MACRO_OBS, mdoc->parse,
+		    n->line, n->pos, mdoc_macronames[n->tok]);
+	return(1);
+}
+
+static int
 pre_dt(PRE_ARGS)
 {
 
@@ -1222,6 +1238,23 @@ post_an(POST_ARGS)
 	} else if (np->child)
 		check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_EQ, 0);
 
+	return(1);
+}
+
+static int
+post_en(POST_ARGS)
+{
+
+	if (MDOC_BLOCK == mdoc->last->type)
+		mdoc->last->norm->Es = mdoc->last_es;
+	return(1);
+}
+
+static int
+post_es(POST_ARGS)
+{
+
+	mdoc->last_es = mdoc->last;
 	return(1);
 }
 

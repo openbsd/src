@@ -1,0 +1,11 @@
+FO-OBSOLETE(1)             OpenBSD Reference Manual             FO-OBSOLETE(1)
+
+NNAAMMEE
+     FFoo--oobbssoolleettee - obsolete function macros
+
+DDEESSCCRRIIPPTTIIOONN
+     old function type _f_o_r_t_r_a_n
+
+     function return value _v_a_l_u_e
+
+OpenBSD                          July 2, 2014                          OpenBSD

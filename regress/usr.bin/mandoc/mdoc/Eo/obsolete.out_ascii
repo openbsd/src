@@ -1,0 +1,14 @@
+EO-OBSOLETE(1)             OpenBSD Reference Manual             EO-OBSOLETE(1)
+
+NNAAMMEE
+     EEoo--oobbssoolleettee - obsolete enclosure macros
+
+DDEESSCCRRIIPPTTIIOONN
+     no prior Es
+
+     surplus initial text <<enclosed words with --ffllaaggss>> middle text <<more
+     enclosed words>> final text
+
+     initial text after empty Es final text
+
+OpenBSD                          July 2, 2014                          OpenBSD
