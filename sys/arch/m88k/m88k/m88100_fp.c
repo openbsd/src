@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_fp.c,v 1.2 2014/07/01 20:26:09 miod Exp $	*/
+/*	$OpenBSD: m88100_fp.c,v 1.3 2014/07/02 20:28:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2014, Miodrag Vallat.
@@ -80,6 +80,24 @@ m88100_fpu_precise_exception(struct trapframe *frame)
 }
 
 /*
+ * Convert a single floating-point argument with its exponent sign-extended
+ * to 11 bits in an fphs/fpls pair to a correct 32-bit single precision
+ * number.
+ */
+static inline uint32_t
+m88100_fpu_parse_single(uint32_t hs, uint32_t ls)
+{
+	uint32_t result;
+
+	result = hs << (DBL_EXPBITS - SNG_EXPBITS);
+	result &= ~(1U << 31);		/* clear carry into sign bit */
+	result |= ls >> (DBL_FRACBITS - SNG_FRACBITS);
+	result |= hs & (1U << 31);	/* sign bit */
+
+	return result;
+}
+
+/*
  * Load a floating-point argument into a fparg union, then convert it to
  * the required format if it is of larger precision.
  *
@@ -105,7 +123,9 @@ m88100_fpu_fetch(struct trapframe *frame, u_int operandno, u_int orig_width,
 		}
 		break;
 	case FTYPE_SNG:
-		tmp = operandno == 1 ? frame->tf_fphs1 : frame->tf_fphs2;
+		tmp = operandno == 1 ?
+		    m88100_fpu_parse_single(frame->tf_fphs1, frame->tf_fpls1) :
+		    m88100_fpu_parse_single(frame->tf_fphs2, frame->tf_fpls2);
 		switch (width) {
 		case FTYPE_SNG:
 			dest->sng = tmp;
