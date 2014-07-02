@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.879 2014/06/25 16:21:20 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.880 2014/07/02 13:04:50 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -584,8 +584,8 @@ pf_remove_src_node(struct pf_src_node *sn)
 
 	if (sn->rule.ptr != NULL) {
 		sn->rule.ptr->src_nodes--;
-		if (sn->rule.ptr->states_cur <= 0 &&
-		    sn->rule.ptr->src_nodes <= 0)
+		if (sn->rule.ptr->states_cur == 0 &&
+		    sn->rule.ptr->src_nodes == 0)
 			pf_rm_rule(NULL, sn->rule.ptr);
 		RB_REMOVE(pf_src_tree, &tree_src_tracking, sn);
 		pf_status.scounters[SCNT_SRC_NODE_REMOVALS]++;
@@ -1307,16 +1307,16 @@ pf_free_state(struct pf_state *cur)
 		return;
 #endif
 	KASSERT(cur->timeout == PFTM_UNLINKED);
-	if (--cur->rule.ptr->states_cur <= 0 &&
-	    cur->rule.ptr->src_nodes <= 0)
+	if (--cur->rule.ptr->states_cur == 0 &&
+	    cur->rule.ptr->src_nodes == 0)
 		pf_rm_rule(NULL, cur->rule.ptr);
 	if (cur->anchor.ptr != NULL)
-		if (--cur->anchor.ptr->states_cur <= 0)
+		if (--cur->anchor.ptr->states_cur == 0)
 			pf_rm_rule(NULL, cur->anchor.ptr);
 	while ((ri = SLIST_FIRST(&cur->match_rules))) {
 		SLIST_REMOVE_HEAD(&cur->match_rules, entry);
-		if (--ri->r->states_cur <= 0 &&
-		    ri->r->src_nodes <= 0)
+		if (--ri->r->states_cur == 0 &&
+		    ri->r->src_nodes == 0)
 			pf_rm_rule(NULL, ri->r);
 		pool_put(&pf_rule_item_pl, ri);
 	}
