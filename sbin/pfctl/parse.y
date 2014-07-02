@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.635 2014/06/30 13:17:17 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.636 2014/07/02 13:03:41 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4306,9 +4306,9 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 		/* set rule address family if redirect spec has one */
 		if (rs->af && !r->af && !af) {
 			/* swap address families for af-to */
-			if (r->naf == AF_INET6 && rs->af == AF_INET6)
+			if (r->naf == AF_INET6)
 				af = AF_INET;
-			else if (r->naf == AF_INET && rs->af == AF_INET)
+			else if (r->naf == AF_INET)
 				af = AF_INET6;
 			else
 				af = rs->af;
