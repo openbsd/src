@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.131 2014/07/02 05:49:59 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.132 2014/07/02 05:52:45 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -66,6 +66,7 @@ SIMPLEQ_HEAD(,pool) pool_head = SIMPLEQ_HEAD_INITIALIZER(pool_head);
  * wraps, we're screwed, but we shouldn't create so many pools anyway.
  */
 unsigned int pool_serial;
+unsigned int pool_count;
 
 /* Lock the previous variables making up the global pool state */
 struct rwlock pool_lock = RWLOCK_INITIALIZER("pools");
@@ -409,6 +410,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	if (pool_serial == 0)
 		panic("pool_init: too much uptime");
 
+	pool_count++;
 	SIMPLEQ_INSERT_HEAD(&pool_head, pp, pr_poollist);
 	rw_exit_write(&pool_lock);
 }
@@ -452,6 +454,7 @@ removed:
 	if (pp->pr_nout != 0)
 		panic("pool_destroy: pool busy: still out: %u", pp->pr_nout);
 #endif
+	pool_count--;
 	rw_exit_write(&pool_lock);
 
 	/* Remove all pages */
