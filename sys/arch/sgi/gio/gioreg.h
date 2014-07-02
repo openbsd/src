@@ -1,4 +1,4 @@
-/*	$OpenBSD: gioreg.h,v 1.3 2012/05/10 21:30:39 miod Exp $	*/
+/*	$OpenBSD: gioreg.h,v 1.4 2014/07/02 17:44:35 miod Exp $	*/
 /*	$NetBSD: gioreg.h,v 1.4 2006/08/31 00:01:10 rumble Exp $	*/
 
 /*
@@ -71,3 +71,5 @@
 #define	GIO_ADDR_EXP0			0x1f400000	/* 2MB */
 #define	GIO_ADDR_EXP1			0x1f600000	/* 4MB */
 #define	GIO_ADDR_END			0x1fa00000
+
+#define	IS_GIO_ADDRESS(pa)	((pa) >= GIO_ADDR_GFX && (pa) < GIO_ADDR_END)

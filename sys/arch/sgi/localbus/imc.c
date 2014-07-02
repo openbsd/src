@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.16 2014/05/19 21:18:42 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.17 2014/07/02 17:44:35 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -61,8 +61,10 @@
 #include <sgi/sgi/ip22.h>
 #include <sgi/localbus/imcreg.h>
 #include <sgi/localbus/imcvar.h>
+#include <sgi/localbus/intreg.h>
 
 #include <sgi/hpc/hpcreg.h>
+#include <sgi/gio/gioreg.h>
 #include <sgi/gio/giovar.h>
 
 #include "eisa.h"
@@ -716,10 +718,13 @@ uint32_t
 imc_bus_error(uint32_t hwpend, struct trap_frame *tf)
 {
 	uint32_t cpustat, giostat;
-	int quiet = 0;
+	paddr_t cpuaddr, gioaddr;
+	int cpuquiet = 0, gioquiet = 0;
 
 	cpustat = imc_read(IMC_CPU_ERRSTAT);
+	cpuaddr = imc_read(IMC_CPU_ERRADDR);
 	giostat = imc_read(IMC_GIO_ERRSTAT);
+	gioaddr = imc_read(IMC_GIO_ERRADDR);
 
 	switch (sys_config.system_type) {
 	case SGI_IP28:
@@ -728,34 +733,41 @@ imc_bus_error(uint32_t hwpend, struct trap_frame *tf)
 		 * non-existing memory when in the kernel. We do not
 		 * want to flood the console about those.
 		 */
-		if ((cpustat & IMC_CPU_ERRSTAT_ADDR) &&
-		    IS_XKPHYS((vaddr_t)tf->pc))
-			quiet = 1;
-		/* This happens. No idea why. */
-		if (cpustat == 0 && giostat == 0)
-			quiet = 1;
+		if (cpustat & IMC_CPU_ERRSTAT_ADDR) {
+			if (IS_XKPHYS((vaddr_t)tf->pc))
+				cpuquiet = 1;
+		}
+		if (giostat != 0) {
+			/*
+			 * Ignore speculative writes to interrupt controller
+			 * registers.
+			 */
+			if ((giostat & IMC_ECC_ERRSTAT_FUW) &&
+			    (gioaddr & ~0x3f) == INT2_IP22)
+				gioquiet = 1;
+			/* XXX is it wise to hide these? */
+			if ((giostat & IMC_GIO_ERRSTAT_TMO) &&
+			    !IS_GIO_ADDRESS(gioaddr))
+				gioquiet = 1;
+		}
 		break;
 	}
 
-	if (quiet == 0) {
-		printf("bus error:");
-		if (cpustat != 0) {
-			vaddr_t pc = tf->pc;
-			uint32_t insn = 0xffffffff;
+	if (cpustat != 0 && cpuquiet == 0) {
+		vaddr_t pc = tf->pc;
+		uint32_t insn = 0xffffffff;
 
-			if (tf->pc < 0)
-				guarded_read_4(pc, &insn);
-			else
-				copyin((void *)pc, &insn, sizeof insn);
+		if (tf->pc < 0)
+			guarded_read_4(pc, &insn);
+		else
+			copyin((void *)pc, &insn, sizeof insn);
 
-			printf(" cpu_stat %08x addr %08x pc %p insn %08x",
-			    cpustat, imc_read(IMC_CPU_ERRADDR), (void *)pc,
-			    insn);
-		}
-		if (giostat != 0)
-			printf(" gio_stat %08x addr %08x",
-			    giostat, imc_read(IMC_GIO_ERRADDR));
-		printf("\n");
+		printf("bus error: cpu_stat %08x addr %08lx pc %p insn %08x\n",
+		    cpustat, cpuaddr, (void *)pc, insn);
+	}
+	if (giostat != 0 && gioquiet == 0) {
+		printf("bus error: gio_stat %08x addr %08lx\n",
+		    giostat, gioaddr);
 	}
 
 	if (cpustat != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imcreg.h,v 1.4 2014/03/27 21:24:22 miod Exp $	*/
+/*	$OpenBSD: imcreg.h,v 1.5 2014/07/02 17:44:35 miod Exp $	*/
 /*	$NetBSD: imcreg.h,v 1.4 2005/12/11 12:18:52 christos Exp $	*/
 
 /*
@@ -142,7 +142,18 @@
 
 #define IMC_GIO_ERRADDR		0xf4	/* GIO error address */
 #define IMC_GIO_ERRSTAT		0xfc	/* GIO error status */
-
+#define	IMC_GIO_ERRSTAT_RD	0x00000100	/* read parity error */
+#define	IMC_GIO_ERRSTAT_WR	0x00000200	/* write parity error */
+#define	IMC_GIO_ERRSTAT_TMO	0x00000400	/* bus timeout */
+#define	IMC_GIO_ERRSTAT_PROM	0x00000800	/* PROM write while disabled */
+#define	IMC_GIO_ERRSTAT_ADDR	0x00001000	/* parity error during */
+						/* address cycle */
+#define	IMC_GIO_ERRSTAT_BC	0x00002000	/* parity error during */
+						/* byte count cycle */
+#define	IMC_GIO_ERRSTAT_PIO_RD	0x00004000	/* data parity error during */
+						/* PIO read */
+#define	IMC_GIO_ERRSTAT_PIO_WR	0x00008000	/* data parity error during */
+						/* PIO write */
 /* {CPU,GIO}_ERRSTAT bits in ECC mode */
 #define	IMC_ECC_ERRSTAT_FUW	0x00000001	/* fast mode uncached write */
 #define	IMC_ECC_ERRSTAT_MULTI	0x00000002	/* multi bit error */
