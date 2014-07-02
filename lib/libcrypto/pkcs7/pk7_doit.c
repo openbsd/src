@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.23 2014/06/29 17:05:36 jsing Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.24 2014/07/02 16:33:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -754,7 +754,7 @@ PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 	case NID_pkcs7_signed:
 		si_sk = p7->d.sign->signer_info;
 		os = PKCS7_get_octet_string(p7->d.sign->contents);
-		if (os == NULL) {
+		if (!PKCS7_is_detached(p7) && os == NULL) {
 			PKCS7err(PKCS7_F_PKCS7_DATAFINAL, PKCS7_R_DECODE_ERROR);
 			goto err;
 		}
