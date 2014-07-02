@@ -1,0 +1,12 @@
+.Dd January 19, 2011
+.Dt EM-NOARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm Em-noarg
+.Nd emphasis macro without arguments
+.Sh DESCRIPTION
+with argument
+.Em arg
+no argument
+.Em
+end of test document

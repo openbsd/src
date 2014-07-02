@@ -1,0 +1,12 @@
+.Dd July 2, 2014
+.Dt CM-NOARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm Cm-noarg
+.Nd command modifier macro without arguments
+.Sh DESCRIPTION
+end of line:
+.Nm mt Fl f Ar device Cm
+.Pp
+middle of line:
+.Nm ps Fl x Cm Fl o Cm command

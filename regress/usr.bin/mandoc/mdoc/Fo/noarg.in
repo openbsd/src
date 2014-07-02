@@ -8,9 +8,20 @@
 with arguments:
 .Ft int
 .Fn abs "int i"
+.Ft long
+.Fo labs
+.Fa "long i"
+.Fc
 void function arguments:
 .Ft int
 .Fn rand
+.Ft long
+.Fo random
+.Fc
+.Ft u_int32_t
+.Fo arc4random
+.Fa
+.Fc
 no name arguments:
 .Ft int
 .Fn
@@ -20,6 +31,13 @@ no type arguments:
 no type and void function arguments:
 .Ft
 .Fn rand
+.Ft
+.Fo random
+.Fc
+.Ft
+.Fo arc4random
+.Fa
+.Fc
 no arguments at all:
 .Ft
 .Fn

@@ -1,0 +1,11 @@
+CM-NOARG(1)                OpenBSD Reference Manual                CM-NOARG(1)
+
+NNAAMMEE
+     CCmm--nnooaarrgg - command modifier macro without arguments
+
+DDEESSCCRRIIPPTTIIOONN
+     end of line: mmtt --ff _d_e_v_i_c_e
+
+     middle of line: ppss --xx --oo ccoommmmaanndd
+
+OpenBSD                          July 2, 2014                          OpenBSD

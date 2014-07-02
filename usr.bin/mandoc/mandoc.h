@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.73 2014/07/02 13:10:15 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.74 2014/07/02 20:18:42 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -84,7 +84,7 @@ enum	mandocerr {
 	MANDOCERR_LINESCOPE, /* line scope broken: macro breaks macro */
 
 	/* related to missing macro arguments */
-	MANDOCERR_MACROEMPTY, /* skipping empty macro */
+	MANDOCERR_MACRO_EMPTY, /* skipping empty macro: macro */
 	MANDOCERR_ARGCWARN, /* argument count wrong */
 	MANDOCERR_DISPTYPE, /* missing display type */
 	MANDOCERR_LISTFIRST, /* list type must come first */

@@ -1,0 +1,2 @@
+mandoc: noarg.in:9:23: WARNING: skipping empty macro: Cm
+mandoc: noarg.in:12:13: WARNING: skipping empty macro: Cm

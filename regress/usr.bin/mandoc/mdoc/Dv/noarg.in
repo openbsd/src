@@ -1,0 +1,12 @@
+.Dd July 2, 2014
+.Dt DV-NOARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm Dv-noarg
+.Nd defined variable macro without an argument
+.Sh DESCRIPTION
+with variable:
+.Dv NULL
+no variable:
+.Dv
+end of test document

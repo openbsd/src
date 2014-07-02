@@ -1,0 +1,9 @@
+EM-NOARG(1)                OpenBSD Reference Manual                EM-NOARG(1)
+
+NNAAMMEE
+     EEmm--nnooaarrgg - emphasis macro without arguments
+
+DDEESSCCRRIIPPTTIIOONN
+     with argument _a_r_g no argument end of test document
+
+OpenBSD                        January 19, 2011                        OpenBSD

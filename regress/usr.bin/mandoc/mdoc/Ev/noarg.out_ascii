@@ -1,0 +1,9 @@
+EV-NOARG(1)                OpenBSD Reference Manual                EV-NOARG(1)
+
+NNAAMMEE
+     EEvv--nnooaarrgg - environment variable macro without an argument
+
+DDEESSCCRRIIPPTTIIOONN
+     with variable: HOME no variable: end of test document
+
+OpenBSD                          July 2, 2014                          OpenBSD

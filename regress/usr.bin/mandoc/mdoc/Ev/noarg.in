@@ -1,0 +1,12 @@
+.Dd July 2, 2014
+.Dt EV-NOARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm Ev-noarg
+.Nd environment variable macro without an argument
+.Sh DESCRIPTION
+with variable:
+.Ev HOME
+no variable:
+.Ev
+end of test document

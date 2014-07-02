@@ -1,0 +1,9 @@
+VA-NOARG(1)                OpenBSD Reference Manual                VA-NOARG(1)
+
+NNAAMMEE
+     VVaa--nnooaarrgg - variable name macro without arguments
+
+DDEESSCCRRIIPPTTIIOONN
+     with arguments _i_n_t _e_r_r_n_o no arguments end of test document
+
+OpenBSD                        January 20, 2011                        OpenBSD

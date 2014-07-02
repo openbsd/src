@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.91 2014/07/02 11:42:56 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.92 2014/07/02 20:18:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -915,8 +915,9 @@ in_line(MACRO_PROT_ARGS)
 					return(0);
 			} else if ( ! nc && 0 == cnt) {
 				mdoc_argv_free(arg);
-				mdoc_pmsg(mdoc, line, ppos,
-				    MANDOCERR_MACROEMPTY);
+				mandoc_msg(MANDOCERR_MACRO_EMPTY,
+				    mdoc->parse, line, ppos,
+				    mdoc_macronames[tok]);
 			}
 
 			if ( ! mdoc_macro(mdoc, ntok, line, la, pos, buf))
@@ -1001,7 +1002,8 @@ in_line(MACRO_PROT_ARGS)
 			return(0);
 	} else if ( ! nc && 0 == cnt) {
 		mdoc_argv_free(arg);
-		mdoc_pmsg(mdoc, line, ppos, MANDOCERR_MACROEMPTY);
+		mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
+		    line, ppos, mdoc_macronames[tok]);
 	}
 
 	if ( ! nl)

@@ -1,0 +1,13 @@
+.Dd January 20, 2011
+.Dt VA-NOARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm Va-noarg
+.Nd variable name macro without arguments
+.Sh DESCRIPTION
+with arguments
+.Vt int
+.Va errno
+no arguments
+.Va
+end of test document
