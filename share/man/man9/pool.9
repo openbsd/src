@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.45 2013/07/17 20:21:54 schwarze Exp $
+.\"	$OpenBSD: pool.9,v 1.46 2014/07/02 00:39:43 dlg Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: July 2 2014 $
 .Dt POOL 9
 .Os
 .Sh NAME
@@ -320,6 +320,26 @@ Alternatively, the
 .Dv PR_DEBUGCHK
 flag can be passed to enable pool internal consistency checks before and
 after each allocation and free.
+
+.Sh CONTEXT
+.Fn pool_init ,
+.Fn pool_destroy ,
+.Fn pool_prime ,
+.Fn pool_setipl ,
+.Fn pool_sethiwat ,
+.Fn pool_setlowat ,
+and
+.Fn pool_sethardlimit
+can be called during autoconf or from process context.
+.Pp
+.Fn pool_get
+and
+.Fn pool_put
+can be called during autoconf or from process context.
+If the pool has been initialised with an interrupt safe pool allocator
+they can also be called from interrupt context at or below the
+interrupt level specified by a call to
+.Fn pool_setipl .
 .Sh CODE REFERENCES
 The pool manager is implemented in the file
 .Pa sys/kern/subr_pool.c .
