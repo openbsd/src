@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.47 2014/07/02 00:40:30 dlg Exp $
+.\"	$OpenBSD: pool.9,v 1.48 2014/07/02 00:49:50 dlg Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -217,11 +217,6 @@ The handle identifying the pool resource instance.
 The number of items to add to the pool.
 .El
 .Pp
-This function may return
-.Dv ENOMEM
-in case the requested number of items could not be allocated.
-Otherwise,
-the return value is 0.
 .Ss SETTING POOL RESOURCE WATERMARKS
 A pool will attempt to increase its resource usage to keep up with the demand
 for its items.
@@ -339,6 +334,28 @@ If the pool has been initialised with an interrupt safe pool allocator
 they can also be called from interrupt context at or below the
 interrupt level specified by a call to
 .Fn pool_setipl .
+.Sh RETURN VALUES
+.Fn pool_get
+will return a pointer to an item allocated from the pool.
+If
+.Dv PR_NOWAIT
+or
+.Dv PR_LIMITFAIL
+was passed as flags to the pool it may return
+.Dv NULL
+if there are no resources available or if the pool hard limit has been reached
+respectively.
+.Pp
+.Fn pool_prime
+will return
+.Dv ENOMEM
+if the requested number of items could not be allocated.
+Otherwise, the return value is 0.
+.Pp
+.Fn pool_sethardlimit 
+will return
+.Dv EINVAL if the current size of the pool exceeds the requested hard limit.
+Otherwise, the return value is 0.
 .Sh CODE REFERENCES
 The pool manager is implemented in the file
 .Pa sys/kern/subr_pool.c .
