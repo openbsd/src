@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.48 2014/07/02 00:49:50 dlg Exp $
+.\"	$OpenBSD: pool.9,v 1.49 2014/07/02 05:48:38 jmc Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -216,7 +216,6 @@ The handle identifying the pool resource instance.
 .It Fa nitems
 The number of items to add to the pool.
 .El
-.Pp
 .Ss SETTING POOL RESOURCE WATERMARKS
 A pool will attempt to increase its resource usage to keep up with the demand
 for its items.
@@ -341,9 +340,9 @@ If
 .Dv PR_NOWAIT
 or
 .Dv PR_LIMITFAIL
-was passed as flags to the pool it may return
+were passed as flags to the pool it may return
 .Dv NULL
-if there are no resources available or if the pool hard limit has been reached
+if there are no resources available or if the pool hard limit has been reached,
 respectively.
 .Pp
 .Fn pool_prime
@@ -352,9 +351,10 @@ will return
 if the requested number of items could not be allocated.
 Otherwise, the return value is 0.
 .Pp
-.Fn pool_sethardlimit 
+.Fn pool_sethardlimit
 will return
-.Dv EINVAL if the current size of the pool exceeds the requested hard limit.
+.Dv EINVAL
+if the current size of the pool exceeds the requested hard limit.
 Otherwise, the return value is 0.
 .Sh CODE REFERENCES
 The pool manager is implemented in the file
