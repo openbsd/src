@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.99 2014/07/01 20:26:09 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.100 2014/07/02 18:37:34 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -543,6 +543,7 @@ user_fault:
 			}
 
 			/* restore original instruction and clear breakpoint */
+			KERNEL_LOCK();
 			if (p->p_md.md_bp0va == pc) {
 				ss_put_value(p, pc, p->p_md.md_bp0save);
 				p->p_md.md_bp0va = 0;
@@ -551,6 +552,7 @@ user_fault:
 				ss_put_value(p, pc, p->p_md.md_bp1save);
 				p->p_md.md_bp1va = 0;
 			}
+			KERNEL_UNLOCK();
 
 			frame->tf_sxip = pc | NIP_V;
 			sig = SIGTRAP;
@@ -1073,6 +1075,7 @@ m88110_user_fault:
 			}
 
 			/* restore original instruction and clear breakpoint */
+			KERNEL_LOCK();
 			if (p->p_md.md_bp0va == pc) {
 				ss_put_value(p, pc, p->p_md.md_bp0save);
 				p->p_md.md_bp0va = 0;
@@ -1081,6 +1084,7 @@ m88110_user_fault:
 				ss_put_value(p, pc, p->p_md.md_bp1save);
 				p->p_md.md_bp1va = 0;
 			}
+			KERNEL_UNLOCK();
 
 			sig = SIGTRAP;
 			fault_type = TRAP_BRKPT;
