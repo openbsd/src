@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.400 2014/06/25 16:21:20 mikeb Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.401 2014/07/02 13:02:08 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1934,9 +1934,9 @@ extern struct pf_pool_limit	pf_pool_limits[PF_LIMIT_MAX];
 
 #endif /* _KERNEL */
 
-extern struct pf_anchor_global  pf_anchors;
-extern struct pf_anchor        pf_main_anchor;
-#define pf_main_ruleset	pf_main_anchor.ruleset
+extern struct pf_anchor_global	pf_anchors;
+extern struct pf_anchor		pf_main_anchor;
+#define pf_main_ruleset		pf_main_anchor.ruleset
 
 /* these ruleset functions can be linked into userland programs (pfctl) */
 void			 pf_init_ruleset(struct pf_ruleset *);
