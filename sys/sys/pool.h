@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.44 2013/11/05 03:28:44 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.45 2014/07/02 00:12:34 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -43,6 +43,30 @@
 #define KERN_POOL_NPOOLS	1
 #define KERN_POOL_NAME		2
 #define KERN_POOL_POOL		3
+
+struct kinfo_pool {
+	unsigned int	pr_size;	/* size of a pool item */
+	unsigned int	pr_pgsize;	/* size of a "page" */
+	unsigned int	pr_itemsperpage; /* number of items per "page" */
+	unsigned int	pr_minpages;	/* same in page units */
+	unsigned int	pr_maxpages;	/* maximum # of idle pages to keep */
+	unsigned int	pr_hardlimit;	/* hard limit to number of allocated
+					   items */
+
+	unsigned int	pr_npages;	/* # of pages allocated */
+	unsigned int	pr_nout;	/* # items currently allocated */
+	unsigned int	pr_nitems;	/* # items in the pool */
+
+	unsigned long	pr_nget;	/* # of successful requests */
+	unsigned long	pr_nput;	/* # of releases */
+	unsigned long	pr_nfail;	/* # of unsuccessful requests */
+	unsigned long	pr_npagealloc;	/* # of pages allocated */
+	unsigned long	pr_npagefree;	/* # of pages released */
+	unsigned int	pr_hiwat;	/* max # of pages in pool */
+	unsigned long	pr_nidle;	/* # of idle pages */
+};
+
+#if defined(_KERNEL) || defined(_LIBKVM)
 
 #include <sys/queue.h>
 #include <sys/time.h>
@@ -131,7 +155,10 @@ struct pool {
 	const struct kmem_pa_mode *pr_crange;
 };
 
+#endif /* _KERNEL || _LIBKVM */
+
 #ifdef _KERNEL
+
 extern struct pool_allocator pool_allocator_nointr;
 
 /* these functions are not locked */

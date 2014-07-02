@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.31 2010/07/08 08:47:07 lum Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.32 2014/07/02 00:12:34 dlg Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 typedef int bool;
 
 struct	mbstat mbstat;
-struct pool mbpool, mclpools[MCLPOOLS];
+struct kinfo_pool mbpool, mclpools[MCLPOOLS];
 int	mclp;
 char	*mclnames[] = {
 	"mcl2k", "mcl4k", "mcl8k", "mcl9k", "mcl12k", "mcl16k", "mcl64k"
@@ -82,7 +82,7 @@ mbpr(void)
 	unsigned long totmem, totused, totmbufs;
 	int totpct;
 	int i, mib[4], npools;
-	struct pool pool;
+	struct kinfo_pool pool;
 	struct mbtypes *mp;
 	size_t size;
 	int page_size = getpagesize();
@@ -122,7 +122,7 @@ mbpr(void)
 		mib[1] = KERN_POOL;
 		mib[2] = KERN_POOL_POOL;
 		mib[3] = i;
-		size = sizeof(struct pool);
+		size = sizeof(pool);
 		if (sysctl(mib, 4, &pool, &size, NULL, 0) < 0) {
 			if (errno == ENOENT)
 				continue;
@@ -140,11 +140,11 @@ mbpr(void)
 		}
 
 		if (!strncmp(name, "mbpl", strlen("mbpl")))
-			bcopy(&pool, &mbpool, sizeof(struct pool));
+			bcopy(&pool, &mbpool, sizeof(pool));
 		else if (mclp < sizeof(mclpools) / sizeof(mclpools[0]) &&
 		    !strncmp(name, *mclnamep, strlen(*mclnamep))) {
 			bcopy(&pool, &mclpools[mclp++],
-			    sizeof(struct pool));
+			    sizeof(pool));
 			mclnamep++;
 		}
 	}

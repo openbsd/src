@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.128 2014/05/19 14:30:03 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.129 2014/07/02 00:12:34 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1422,7 +1422,8 @@ pool_walk(struct pool *pp, int full,
 int
 sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 {
-	struct pool *pp, *foundpool = NULL;
+	struct kinfo_pool pi;
+	struct pool *pp;
 	size_t buflen = where != NULL ? *sizep : 0;
 	int npools = 0, s;
 	unsigned int lookfor;
@@ -1440,7 +1441,7 @@ sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 		lookfor = name[1];
 		break;
 	case KERN_POOL_POOL:
-		if (namelen != 2 || buflen != sizeof(struct pool))
+		if (namelen != 2 || buflen != sizeof(pi))
 			return (EINVAL);
 		lookfor = name[1];
 		break;
@@ -1452,28 +1453,42 @@ sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 
 	SIMPLEQ_FOREACH(pp, &pool_head, pr_poollist) {
 		npools++;
-		if (lookfor == pp->pr_serial) {
-			foundpool = pp;
+		if (lookfor == pp->pr_serial)
 			break;
-		}
 	}
 
 	splx(s);
 
-	if (*name != KERN_POOL_NPOOLS && foundpool == NULL)
+	if (*name != KERN_POOL_NPOOLS && pp == NULL)
 		return (ENOENT);
 
 	switch (*name) {
 	case KERN_POOL_NPOOLS:
 		return copyout(&npools, where, buflen);
 	case KERN_POOL_NAME:
-		len = strlen(foundpool->pr_wchan) + 1;
+		len = strlen(pp->pr_wchan) + 1;
 		if (*sizep < len)
 			return (ENOMEM);
 		*sizep = len;
-		return copyout(foundpool->pr_wchan, where, len);
+		return copyout(pp->pr_wchan, where, len);
 	case KERN_POOL_POOL:
-		return copyout(foundpool, where, buflen);
+		memset(&pi, 0, sizeof(pi));
+		pi.pr_size = pp->pr_size;
+		pi.pr_pgsize = pp->pr_alloc->pa_pagesz;
+		pi.pr_itemsperpage = pp->pr_itemsperpage;
+		pi.pr_minpages = pp->pr_minpages;
+		pi.pr_maxpages = pp->pr_maxpages;
+		pi.pr_hardlimit = pp->pr_hardlimit;
+		pi.pr_nout = pp->pr_nout;
+		pi.pr_nitems = pp->pr_nitems;
+		pi.pr_nget = pp->pr_nget;
+		pi.pr_nput = pp->pr_nput;
+		pi.pr_nfail = pp->pr_nfail;
+		pi.pr_npagealloc = pp->pr_npagealloc;
+		pi.pr_npagefree = pp->pr_npagefree;
+		pi.pr_hiwat = pp->pr_hiwat;
+		pi.pr_nidle = pp->pr_nidle;
+		return copyout(&pi, where, buflen);
 	}
 	/* NOTREACHED */
 	return (0); /* XXX - Stupid gcc */

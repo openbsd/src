@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.33 2014/06/13 07:31:18 mpi Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.34 2014/07/02 00:12:34 dlg Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -40,7 +40,7 @@ struct mclpool_info {
 
 int mclpool_count = 0;
 int mbpool_index = -1;
-struct pool mbpool;
+struct kinfo_pool mbpool;
 u_int mcllivelocks, mcllivelocks_cur, mcllivelocks_diff;
 
 /* interfaces */
@@ -106,7 +106,7 @@ initmembufs(void)
 {
 	field_view *v;
 	int i, mib[4], npools;
-	struct pool pool;
+	struct kinfo_pool pool;
 	char pname[32];
 	size_t size;
 
@@ -147,7 +147,7 @@ initmembufs(void)
 		}
 
 		mib[2] = KERN_POOL_POOL;
-		size = sizeof(struct pool);
+		size = sizeof(pool);
 
 		if (sysctl(mib, 4, &pool, &size, NULL, 0) < 0) {
 			err(1, "sysctl(KERN_POOL_POOL, %d)", i);
@@ -187,7 +187,7 @@ select_mb(void)
 int
 read_mb(void)
 {
-	struct pool pool;
+	struct kinfo_pool pool;
 	struct ifaddrs *ifap, *ifa;
 	struct if_info *ifi;
 	int mib[4];
@@ -259,7 +259,7 @@ read_mb(void)
 	mib[1] = KERN_POOL;
 	mib[2] = KERN_POOL_POOL;
 	mib[3] = mbpool_index;
-	size = sizeof(struct pool);
+	size = sizeof(mbpool);
 
 	if (sysctl(mib, 4, &mbpool, &size, NULL, 0) < 0) {
 		error("sysctl(KERN_POOL_POOL, %d)", mib[3]);
@@ -270,7 +270,7 @@ read_mb(void)
 		struct mclpool *mp = &interfaces[0].data.ifi_mclpool[i];
 
 		mib[3] = mclpools[i].pool_offset;
-		size = sizeof(struct pool);
+		size = sizeof(pool);
 
 		if (sysctl(mib, 4, &pool, &size, NULL, 0) < 0) {
 			error("sysctl(KERN_POOL_POOL, %d)", mib[3]);

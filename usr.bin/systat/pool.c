@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.6 2011/03/02 06:48:17 jasper Exp $	*/
+/*	$OpenBSD: pool.c,v 1.7 2014/07/02 00:12:34 dlg Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -39,7 +39,7 @@ int sort_npage_callback(const void *s1, const void *s2);
 
 struct pool_info {
 	char name[32];
-	struct pool pool;
+	struct kinfo_pool pool;
 };
 
 
@@ -232,7 +232,7 @@ read_pool(void)
 		mib[1] = KERN_POOL;
 		mib[2] = KERN_POOL_POOL;
 		mib[3] = i + 1;
-		size = sizeof(struct pool);
+		size = sizeof(pools[i].pool);
 		if (sysctl(mib, 4, &pools[i].pool, &size, NULL, 0) < 0) {
 			memset(&pools[i], 0, sizeof(pools[i]));
 			num_disp--;
