@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.4 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: imxenet.c,v 1.5 2014/07/02 17:01:07 brad Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -477,10 +477,6 @@ imxenet_init(struct imxenet_softc *sc)
 	/* clear outstanding interrupts */
 	HWRITE4(sc, ENET_EIR, 0xffffffff);
 
-	/* set address filter */
-	HWRITE4(sc, ENET_GAUR, 0);
-	HWRITE4(sc, ENET_GALR, 0);
-
 	/* set max receive buffer size, 3-0 bits always zero for alignment */
 	HWRITE4(sc, ENET_MRBR, ENET_MAX_PKT_SIZE);
 
@@ -534,6 +530,9 @@ imxenet_init(struct imxenet_softc *sc)
 	/* rx descriptors are ready */
 	HWRITE4(sc, ENET_RDAR, ENET_RDAR_RDAR);
 
+	/* program promiscuous mode and multicast filters */
+	imxenet_iff(sc);
+
 	/* Indicate we are up and running. */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -556,7 +555,37 @@ imxenet_stop(struct imxenet_softc *sc)
 void
 imxenet_iff(struct imxenet_softc *sc)
 {
-	// Set interface features
+	struct arpcom *ac = &sc->sc_ac;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint64_t ghash = 0, ihash = 0;
+	uint32_t h;
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	if (ifp->if_flags & IFF_PROMISC) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		ihash = 0xffffffffffffffffLLU;
+	} else if (ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		ghash = 0xffffffffffffffffLLU;
+	} else {
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+			ghash |= 1LLU << (((uint8_t *)&h)[3] >> 2);
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
+	}
+
+	HWRITE4(sc, ENET_GAUR, (uint32_t)(ghash >> 32));
+	HWRITE4(sc, ENET_GALR, (uint32_t)ghash);
+
+	HWRITE4(sc, ENET_IAUR, (uint32_t)(ihash >> 32));
+	HWRITE4(sc, ENET_IALR, (uint32_t)ihash);
 }
 
 int
