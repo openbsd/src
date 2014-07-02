@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.130 2014/07/02 05:42:40 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.131 2014/07/02 05:49:59 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1484,6 +1484,8 @@ sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 		break;
 	case KERN_POOL_POOL:
 		memset(&pi, 0, sizeof(pi));
+
+		mtx_enter(&pp->pr_mtx);
 		pi.pr_size = pp->pr_size;
 		pi.pr_pgsize = pp->pr_alloc->pa_pagesz;
 		pi.pr_itemsperpage = pp->pr_itemsperpage;
@@ -1499,6 +1501,8 @@ sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 		pi.pr_npagefree = pp->pr_npagefree;
 		pi.pr_hiwat = pp->pr_hiwat;
 		pi.pr_nidle = pp->pr_nidle;
+		mtx_leave(&pp->pr_mtx);
+
 		rv = copyout(&pi, where, buflen);
 		break;
 	}
