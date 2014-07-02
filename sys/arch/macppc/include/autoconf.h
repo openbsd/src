@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.10 2014/07/02 15:11:39 tobiasu Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.11 2014/07/02 15:34:43 tobiasu Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -34,38 +34,9 @@
 
 #include <machine/bus.h>
 
-struct confargs;
-
-typedef int (*intr_handler_t)(void *);
-
-typedef struct bushook {
-	struct	device *bh_dv;
-	int	bh_type;
-	void	(*bh_intr_establish)(struct confargs *, intr_handler_t, void *);
-	void	(*bh_intr_disestablish)(struct confargs *);
-	int	(*bh_matchname)(struct confargs *, char *);
-} bushook_t;
-
-#define	BUS_MAIN	1		/* mainbus */
-#define	BUS_ISABR	2		/* ISA Bridge Bus */
-#define	BUS_PCIBR	3		/* PCI bridge */
-#define	BUS_VMEBR	4		/* VME bridge */
-
-#define	BUS_INTR_ESTABLISH(ca, handler, val)				\
-	    (*(ca)->ca_bus->bh_intr_establish)((ca), (handler), (val))
-#define	BUS_INTR_DISESTABLISH(ca)					\
-	    (*(ca)->ca_bus->bh_intr_establish)(ca)
-#define	BUS_CVTADDR(ca)							\
-	    (*(ca)->ca_bus->bh_cvtaddr)(ca)
-#define	BUS_MATCHNAME(ca, name)						\
-	    (*(ca)->ca_bus->bh_matchname)((ca), (name))
-
 struct confargs {
-	char	*ca_name;		/* Device name. */
-	bushook_t *ca_bus;		/* bus device resides on. */
-	/* macobio hooks ?? */
+	char	*ca_name;
 	bus_space_tag_t ca_iot;
-	bus_space_tag_t ca_memt; /* XXX */
 	bus_dma_tag_t ca_dmat;
 	u_int32_t ca_node;
 	int ca_nreg;

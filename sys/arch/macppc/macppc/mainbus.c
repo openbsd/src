@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.21 2009/04/19 17:53:39 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.22 2014/07/02 15:34:43 tobiasu Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,15 +31,9 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/reboot.h>
 
 #include <machine/autoconf.h>
 #include <dev/ofw/openfirm.h>
-
-struct mainbus_softc {
-	struct	device sc_dv;
-	struct	bushook sc_bus;
-};
 
 /* Definition of the mainbus driver. */
 static int	mbmatch(struct device *, void *, void *);
@@ -47,7 +41,7 @@ static void	mbattach(struct device *, struct device *, void *);
 static int	mbprint(void *, const char *);
 
 struct cfattach mainbus_ca = {
-	sizeof(struct mainbus_softc), mbmatch, mbattach
+	sizeof(struct device), mbmatch, mbattach
 };
 struct cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL
@@ -57,11 +51,6 @@ struct cfdriver mainbus_cd = {
 extern char *hw_prod, *hw_ver, *hw_vendor;
 
 #define HH_REG_CONF 	0x90
-
-void	mb_intr_establish(struct confargs *, int (*)(void *), void *);
-void	mb_intr_disestablish(struct confargs *);
-caddr_t	mb_cvtaddr(struct confargs *);
-int	mb_matchname(struct confargs *, char *);
 
 /*ARGSUSED*/
 static int
@@ -77,7 +66,6 @@ mbmatch(struct device *parent, void *cfdata, void *aux)
 static void
 mbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
 	char name[64], *t = NULL;
 	int reg[4], cpucnt;
@@ -112,12 +100,6 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": model %s\n", hw_prod);
 
-	sc->sc_bus.bh_dv = (struct device *)sc;
-	sc->sc_bus.bh_type = BUS_MAIN;
-	sc->sc_bus.bh_intr_establish = mb_intr_establish;
-	sc->sc_bus.bh_intr_disestablish = mb_intr_disestablish;
-	sc->sc_bus.bh_matchname = mb_matchname;
-
 	/*
 	 * Try to find and attach all of the CPUs in the machine.
 	 */
@@ -132,7 +114,6 @@ mbattach(struct device *parent, struct device *self, void *aux)
 			len = OF_getprop(node, "reg", &cpunum, sizeof cpunum);
 			if (len == 4 && cpucnt == cpunum) {
 				nca.ca_name = "cpu";
-				nca.ca_bus = &sc->sc_bus;
 				nca.ca_reg = reg;
 				reg[0] = cpucnt;
 				config_found(self, &nca, mbprint);
@@ -143,7 +124,6 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	}
 	if (cpucnt == 0) {
 		nca.ca_name = "cpu";
-		nca.ca_bus = &sc->sc_bus;
 		nca.ca_reg = reg;
 		reg[0] = 0;
 		ncpusfound++;
@@ -167,7 +147,6 @@ mbattach(struct device *parent, struct device *self, void *aux)
 			}
 			if (twoway) {
 				nca.ca_name = "cpu";
-				nca.ca_bus = &sc->sc_bus;
 				nca.ca_reg = reg;
 				reg[0] = 1;
 				ncpusfound++;
@@ -189,31 +168,26 @@ mbattach(struct device *parent, struct device *self, void *aux)
 		if (strcmp(name, "memory") == 0) {
 			nca.ca_name = "mem";
 			nca.ca_node = node;
-			nca.ca_bus = &sc->sc_bus;
 			config_found(self, &nca, mbprint);
 		}
 		if (strcmp(name, "memory-controller") == 0) {
 			nca.ca_name = "memc";
 			nca.ca_node = node;
-			nca.ca_bus = &sc->sc_bus;
 			config_found(self, &nca, mbprint);
 		}
 		if (strcmp(name, "pci") == 0) {
 			nca.ca_name = "mpcpcibr";
 			nca.ca_node = node;
-			nca.ca_bus = &sc->sc_bus;
 			config_found(self, &nca, mbprint);
 		}
 		if (strcmp(name, "ht") == 0) {
 			nca.ca_name = "ht";
 			nca.ca_node = node;
-			nca.ca_bus = &sc->sc_bus;
 			config_found(self, &nca, mbprint);
 		}
 		if (strcmp(name, "smu") == 0) {
 			nca.ca_name = "smu";
 			nca.ca_node = node;
-			nca.ca_bus = &sc->sc_bus;
 			config_found(self, &nca, mbprint);
 		}
 	}
@@ -227,28 +201,4 @@ mbprint(void *aux, const char *pnp)
 		printf("%s at %s", ca->ca_name, pnp);
 
 	return (UNCONF);
-}
-
-void
-mb_intr_establish(struct confargs *ca, int (*handler)(void *), void *val)
-{
-	panic("can never mb_intr_establish");
-}
-
-void
-mb_intr_disestablish(struct confargs *ca)
-{
-	panic("can never mb_intr_disestablish");
-}
-
-caddr_t
-mb_cvtaddr(struct confargs *ca)
-{
-	return (NULL);
-}
-
-int
-mb_matchname(struct confargs *ca, char *name)
-{
-	return (strcmp(name, ca->ca_name) == 0);
 }
