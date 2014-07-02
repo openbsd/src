@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.129 2014/07/02 00:12:34 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.130 2014/07/02 05:42:40 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -40,6 +40,7 @@
 #include <sys/pool.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
+#include <sys/rwlock.h>
 
 #include <uvm/uvm_extern.h>
 #include <dev/rndvar.h>
@@ -59,6 +60,15 @@
 
 /* List of all pools */
 SIMPLEQ_HEAD(,pool) pool_head = SIMPLEQ_HEAD_INITIALIZER(pool_head);
+
+/*
+ * Every pool gets a unique serial number assigned to it. If this counter
+ * wraps, we're screwed, but we shouldn't create so many pools anyway.
+ */
+unsigned int pool_serial;
+
+/* Lock the previous variables making up the global pool state */
+struct rwlock pool_lock = RWLOCK_INITIALIZER("pools");
 
 /* Private pool for page header structures */
 struct pool phpool;
@@ -91,12 +101,6 @@ int	pool_debug = 0;
 
 #define	POOL_NEEDS_CATCHUP(pp)						\
 	((pp)->pr_nitems < (pp)->pr_minitems)
-
-/*
- * Every pool gets a unique serial number assigned to it. If this counter
- * wraps, we're screwed, but we shouldn't create so many pools anyway.
- */
-unsigned int pool_serial;
 
 int	 pool_catchup(struct pool *);
 void	 pool_prime_page(struct pool *, caddr_t, struct pool_item_header *);
@@ -247,11 +251,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	int off, slack;
 #ifdef DIAGNOSTIC
 	struct pool *iter;
-
-	SIMPLEQ_FOREACH(iter, &pool_head, pr_poollist) {
-		if (iter == pp)
-			panic("init pool already on list");
-	}
 #endif
 
 #ifdef MALLOC_DEBUG
@@ -339,10 +338,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_hardlimit_ratecap.tv_usec = 0;
 	pp->pr_hardlimit_warning_last.tv_sec = 0;
 	pp->pr_hardlimit_warning_last.tv_usec = 0;
-	pp->pr_serial = ++pool_serial;
-	if (pool_serial == 0)
-		panic("pool_init: too much uptime");
-
 	/*
 	 * Decide whether to put the page header off page to avoid
 	 * wasting too large a part of the page. Off-page page headers
@@ -392,17 +387,30 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_ipl = -1;
 	mtx_init(&pp->pr_mtx, IPL_NONE);
 
+	/* pglistalloc/constraint parameters */
+	pp->pr_crange = &kp_dirty;
+
 	if (phpool.pr_size == 0) {
 		pool_init(&phpool, sizeof(struct pool_item_header), 0, 0,
 		    0, "phpool", NULL);
 		pool_setipl(&phpool, IPL_HIGH);
 	}
 
-	/* pglistalloc/constraint parameters */
-	pp->pr_crange = &kp_dirty;
-
 	/* Insert this into the list of all pools. */
+	rw_enter_write(&pool_lock);
+#ifdef DIAGNOSTIC
+	SIMPLEQ_FOREACH(iter, &pool_head, pr_poollist) {
+		if (iter == pp)
+			panic("init pool already on list");
+	}
+#endif
+
+	pp->pr_serial = ++pool_serial;
+	if (pool_serial == 0)
+		panic("pool_init: too much uptime");
+
 	SIMPLEQ_INSERT_HEAD(&pool_head, pp, pr_poollist);
+	rw_exit_write(&pool_lock);
 }
 
 void
@@ -421,6 +429,7 @@ pool_destroy(struct pool *pp)
 	struct pool_item_header *ph;
 	struct pool *prev, *iter;
 
+	rw_enter_write(&pool_lock);
 	/* Remove from global pool list */
 	if (pp == SIMPLEQ_FIRST(&pool_head))
 		SIMPLEQ_REMOVE_HEAD(&pool_head, pr_poollist);
@@ -443,6 +452,7 @@ removed:
 	if (pp->pr_nout != 0)
 		panic("pool_destroy: pool busy: still out: %u", pp->pr_nout);
 #endif
+	rw_exit_write(&pool_lock);
 
 	/* Remove all pages */
 	while ((ph = LIST_FIRST(&pp->pr_emptypages)) != NULL)
@@ -1112,12 +1122,11 @@ void
 pool_reclaim_all(void)
 {
 	struct pool	*pp;
-	int		s;
 
-	s = splhigh();
+	rw_enter_read(&pool_lock);
 	SIMPLEQ_FOREACH(pp, &pool_head, pr_poollist)
 		pool_reclaim(pp);
-	splx(s);
+	rw_exit_read(&pool_lock);
 }
 
 #ifdef DDB
@@ -1425,9 +1434,10 @@ sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 	struct kinfo_pool pi;
 	struct pool *pp;
 	size_t buflen = where != NULL ? *sizep : 0;
-	int npools = 0, s;
+	int npools = 0;
 	unsigned int lookfor;
 	size_t len;
+	int rv = ENOENT;
 
 	switch (*name) {
 	case KERN_POOL_NPOOLS:
@@ -1449,28 +1459,29 @@ sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 		return (EINVAL);
 	}
 
-	s = splvm();
-
+	rw_enter_read(&pool_lock);
 	SIMPLEQ_FOREACH(pp, &pool_head, pr_poollist) {
 		npools++;
 		if (lookfor == pp->pr_serial)
 			break;
 	}
 
-	splx(s);
-
 	if (*name != KERN_POOL_NPOOLS && pp == NULL)
-		return (ENOENT);
+		goto done;
 
 	switch (*name) {
 	case KERN_POOL_NPOOLS:
-		return copyout(&npools, where, buflen);
+		rv = copyout(&npools, where, buflen);
+		break;
 	case KERN_POOL_NAME:
 		len = strlen(pp->pr_wchan) + 1;
-		if (*sizep < len)
-			return (ENOMEM);
+		if (*sizep < len) {
+			rv = ENOMEM;
+			goto done;
+		}
 		*sizep = len;
-		return copyout(pp->pr_wchan, where, len);
+		rv = copyout(pp->pr_wchan, where, len);
+		break;
 	case KERN_POOL_POOL:
 		memset(&pi, 0, sizeof(pi));
 		pi.pr_size = pp->pr_size;
@@ -1488,10 +1499,13 @@ sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 		pi.pr_npagefree = pp->pr_npagefree;
 		pi.pr_hiwat = pp->pr_hiwat;
 		pi.pr_nidle = pp->pr_nidle;
-		return copyout(&pi, where, buflen);
+		rv = copyout(&pi, where, buflen);
+		break;
 	}
-	/* NOTREACHED */
-	return (0); /* XXX - Stupid gcc */
+
+done:
+	rw_exit_read(&pool_lock);
+	return (rv);
 }
 
 /*
