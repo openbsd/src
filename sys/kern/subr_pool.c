@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.132 2014/07/02 05:52:45 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.133 2014/07/02 06:01:25 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1432,59 +1432,42 @@ pool_walk(struct pool *pp, int full,
  * kern.pool.name.<pool#> - the name for pool#.
  */
 int
-sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
+sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 {
 	struct kinfo_pool pi;
 	struct pool *pp;
-	size_t buflen = where != NULL ? *sizep : 0;
-	int npools = 0;
-	unsigned int lookfor;
-	size_t len;
 	int rv = ENOENT;
 
-	switch (*name) {
+	switch (name[0]) {
 	case KERN_POOL_NPOOLS:
-		if (namelen != 1 || buflen != sizeof(int))
-			return (EINVAL);
-		lookfor = 0;
-		break;
+		if (namelen != 1)
+			return (ENOTDIR);
+		return (sysctl_rdint(oldp, oldlenp, NULL, pool_count));
+
 	case KERN_POOL_NAME:
-		if (namelen != 2 || buflen < 1)
-			return (EINVAL);
-		lookfor = name[1];
-		break;
 	case KERN_POOL_POOL:
-		if (namelen != 2 || buflen != sizeof(pi))
-			return (EINVAL);
-		lookfor = name[1];
 		break;
+
 	default:
 		return (EINVAL);
 	}
 
+	if (namelen != 2)
+		return (ENOTDIR);
+
 	rw_enter_read(&pool_lock);
 	SIMPLEQ_FOREACH(pp, &pool_head, pr_poollist) {
-		npools++;
-		if (lookfor == pp->pr_serial)
+		if (name[1] == pp->pr_serial)
 			break;
 	}
-
-	if (*name != KERN_POOL_NPOOLS && pp == NULL)
+	if (pp == NULL)
 		goto done;
 
-	switch (*name) {
-	case KERN_POOL_NPOOLS:
-		rv = copyout(&npools, where, buflen);
-		break;
+	switch (name[0]) {
 	case KERN_POOL_NAME:
-		len = strlen(pp->pr_wchan) + 1;
-		if (*sizep < len) {
-			rv = ENOMEM;
-			goto done;
-		}
-		*sizep = len;
-		rv = copyout(pp->pr_wchan, where, len);
+		rv = sysctl_rdstring(oldp, oldlenp, NULL, pp->pr_wchan);
 		break;
+
 	case KERN_POOL_POOL:
 		memset(&pi, 0, sizeof(pi));
 
@@ -1506,12 +1489,13 @@ sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 		pi.pr_nidle = pp->pr_nidle;
 		mtx_leave(&pp->pr_mtx);
 
-		rv = copyout(&pi, where, buflen);
+		rv = sysctl_rdstruct(oldp, oldlenp, NULL, &pi, sizeof(pi));
 		break;
 	}
 
 done:
 	rw_exit_read(&pool_lock);
+
 	return (rv);
 }
 
