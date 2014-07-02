@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.163 2014/01/24 10:25:56 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.164 2014/07/02 09:59:43 dlg Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/workq.h>
-#include <uvm/uvm_extern.h>
 
 #include <sys/socket.h>
 #include <sys/socketvar.h>
