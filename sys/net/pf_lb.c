@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.30 2013/10/30 11:21:26 mikeb Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.31 2014/07/02 13:06:00 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -805,85 +805,86 @@ pf_get_transaddr_af(struct pf_rule *r, struct pf_pdesc *pd,
 #endif /* INET6 */
 
 int
-pf_postprocess_addr(struct pf_state *cur) {
-	struct pf_rule *nr;
+pf_postprocess_addr(struct pf_state *cur)
+{
+	struct pf_rule		*nr;
+	struct pf_state_key	*sks;
+	struct pf_pool		 rpool;
+	struct pf_addr		 lookup_addr;
+	int			 slbcount;
 
 	nr = cur->natrule.ptr;
 
+	if (nr == NULL)
+		return (0);
+
 	/* decrease counter */
-	if (nr != NULL) {
-		int			 slbcount;
-		struct pf_pool		 rpool;
-		struct pf_addr		 lookup_addr;
-		struct pf_state_key	*sks;
 
-		sks = cur ? cur->key[PF_SK_STACK] : NULL;
+	sks = cur ? cur->key[PF_SK_STACK] : NULL;
 
-		/* check for outgoing or ingoing balancing */
-		if (nr->rt == PF_ROUTETO)
-			lookup_addr = cur->rt_addr;
-		else if (sks != NULL)
-			lookup_addr = sks->addr[1];
-		else {
+	/* check for outgoing or ingoing balancing */
+	if (nr->rt == PF_ROUTETO)
+		lookup_addr = cur->rt_addr;
+	else if (sks != NULL)
+		lookup_addr = sks->addr[1];
+	else {
+		if (pf_status.debug >= LOG_DEBUG) {
+			log(LOG_DEBUG, "pf: pf_unlink_state: "
+			    "unable to optain address");
+		}
+		return (1);
+	}
+
+	/* check for appropriate pool */
+	if (nr->rdr.addr.type != PF_ADDR_NONE)
+		rpool = nr->rdr;
+	else if (nr->nat.addr.type != PF_ADDR_NONE)
+		rpool = nr->nat;
+	else if (nr->route.addr.type != PF_ADDR_NONE)
+		rpool = nr->route;
+
+	if (((rpool.opts & PF_POOL_TYPEMASK) != PF_POOL_LEASTSTATES))
+		return (0);
+
+	if (rpool.addr.type == PF_ADDR_TABLE) {
+		if ((slbcount = pfr_states_decrease(
+		    rpool.addr.p.tbl,
+		    &lookup_addr, sks->af)) == -1) {
 			if (pf_status.debug >= LOG_DEBUG) {
 				log(LOG_DEBUG, "pf: pf_unlink_state: "
-				    "unable to optain address");
+				    "selected address ");
+				pf_print_host(&lookup_addr,
+				    sks->port[0], sks->af);
+				addlog(". Failed to "
+				    "decrease count!\n");
 			}
 			return (1);
 		}
-
-		/* check for appropriate pool */
-		if (nr->rdr.addr.type != PF_ADDR_NONE)
-			rpool = nr->rdr;
-		else if (nr->nat.addr.type != PF_ADDR_NONE)
-			rpool = nr->nat;
-		else if (nr->route.addr.type != PF_ADDR_NONE)
-			rpool = nr->route;
-
-		if (((rpool.opts & PF_POOL_TYPEMASK) != PF_POOL_LEASTSTATES))
-			return (0);
-
-		if (rpool.addr.type == PF_ADDR_TABLE) {
-			if ((slbcount = pfr_states_decrease(
-			    rpool.addr.p.tbl,
-			    &lookup_addr, sks->af)) == -1) {
-				if (pf_status.debug >= LOG_DEBUG) {
-					log(LOG_DEBUG, "pf: pf_unlink_state: "
-					    "selected address ");
-					pf_print_host(&lookup_addr,
-					    sks->port[0], sks->af);
-					addlog(". Failed to "
-					    "decrease count!\n");
-				}
-				return (1);
+	} else if (rpool.addr.type == PF_ADDR_DYNIFTL) {
+		if ((slbcount = pfr_states_decrease(
+		    rpool.addr.p.dyn->pfid_kt,
+		    &lookup_addr, sks->af)) == -1) {
+			if (pf_status.debug >= LOG_DEBUG) {
+				log(LOG_DEBUG,
+				    "pf: pf_unlink_state: "
+				    "selected address ");
+				pf_print_host(&lookup_addr,
+				    sks->port[0], sks->af);
+				addlog(". Failed to "
+				    "decrease count!\n");
 			}
-		} else if (rpool.addr.type == PF_ADDR_DYNIFTL) {
-			if ((slbcount = pfr_states_decrease(
-			    rpool.addr.p.dyn->pfid_kt,
-			    &lookup_addr, sks->af)) == -1) {
-				if (pf_status.debug >= LOG_DEBUG) {
-					log(LOG_DEBUG,
-					    "pf: pf_unlink_state: "
-					    "selected address ");
-					pf_print_host(&lookup_addr,
-					    sks->port[0], sks->af);
-					addlog(". Failed to "
-					    "decrease count!\n");
-				}
-				return (1);
-			}
-		}
-		if (slbcount > -1) {
-			if (pf_status.debug >= LOG_NOTICE) {
-				log(LOG_NOTICE,
-				    "pf: pf_unlink_state: selected address ");
-				pf_print_host(&lookup_addr, sks->port[0],
-				    sks->af);
-				addlog(" decreased state count to %u\n",
-				    slbcount);
-			}
+			return (1);
 		}
 	}
-
+	if (slbcount > -1) {
+		if (pf_status.debug >= LOG_NOTICE) {
+			log(LOG_NOTICE,
+			    "pf: pf_unlink_state: selected address ");
+			pf_print_host(&lookup_addr, sks->port[0],
+			    sks->af);
+			addlog(" decreased state count to %u\n",
+			    slbcount);
+		}
+	}
 	return (0);
 }
