@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.46 2014/07/02 00:15:27 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.47 2014/07/02 00:23:36 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -69,7 +69,6 @@ struct kinfo_pool {
 #if defined(_KERNEL) || defined(_LIBKVM)
 
 #include <sys/queue.h>
-#include <sys/time.h>
 #include <sys/tree.h>
 #include <sys/mutex.h>
 
