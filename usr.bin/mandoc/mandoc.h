@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.71 2014/07/02 05:51:49 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.72 2014/07/02 11:42:56 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -74,12 +74,13 @@ enum	mandocerr {
 	MANDOCERR_MACRO_OBS, /* obsolete macro: macro */
 	MANDOCERR_PAR_SKIP, /* skipping paragraph macro: macro ... */
 	MANDOCERR_PAR_MOVE, /* moving paragraph macro out of list: macro */
-	MANDOCERR_IGNNS, /* skipping no-space macro */
-	MANDOCERR_SCOPENEST, /* blocks badly nested */
+	MANDOCERR_NS_SKIP, /* skipping no-space macro */
+	MANDOCERR_BLOCK_NEST, /* blocks badly nested: macro ... */
 	MANDOCERR_CHILD, /* child violates parent syntax */
-	MANDOCERR_NESTEDDISP, /* nested displays are not portable */
-	MANDOCERR_SCOPEREP, /* already in literal mode */
-	MANDOCERR_LINESCOPE, /* line scope broken */
+	MANDOCERR_BD_NEST, /* nested displays are not portable: macro ... */
+	MANDOCERR_FI_SKIP, /* fill mode already enabled, skipping .fi */
+	MANDOCERR_NF_SKIP, /* fill mode already disabled, skipping .nf */
+	MANDOCERR_LINESCOPE, /* line scope broken: macro breaks macro */
 
 	/* related to missing macro arguments */
 	MANDOCERR_MACROEMPTY, /* skipping empty macro */
@@ -88,7 +89,6 @@ enum	mandocerr {
 	MANDOCERR_LISTFIRST, /* list type must come first */
 	MANDOCERR_NOWIDTHARG, /* tag lists require a width argument */
 	MANDOCERR_FONTTYPE, /* missing font type */
-	MANDOCERR_WNOSCOPE, /* skipping end of block that is not open */
 
 	/* related to bad macro arguments */
 	MANDOCERR_IGNARGV, /* skipping argument */

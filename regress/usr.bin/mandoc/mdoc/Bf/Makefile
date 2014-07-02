@@ -1,6 +1,7 @@
-# $OpenBSD: Makefile,v 1.2 2012/11/16 17:16:29 schwarze Exp $
+# $OpenBSD: Makefile,v 1.3 2014/07/02 11:42:56 schwarze Exp $
 
 REGRESS_TARGETS = nest break broken
+LINT_TARGETS	= break broken
 
 # groff-1.20.1 defect:
 #  - If a font block breaks another block,

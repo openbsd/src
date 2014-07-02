@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.90 2014/07/02 08:21:12 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.91 2014/07/02 11:42:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -524,7 +524,7 @@ make_pending(struct mdoc_node *broken, enum mdoct tok,
 			taker->pending = broken->pending;
 		}
 		broken->pending = breaker;
-		mandoc_vmsg(MANDOCERR_SCOPENEST, mdoc->parse, line, ppos,
+		mandoc_vmsg(MANDOCERR_BLOCK_NEST, mdoc->parse, line, ppos,
 		    "%s breaks %s", mdoc_macronames[tok],
 		    mdoc_macronames[broken->tok]);
 		return(1);
@@ -1350,18 +1350,9 @@ blk_part_imp(MACRO_PROT_ARGS)
 			return(1);
 		}
 	}
+	assert(n == body);
 
-	/*
-	 * If we can't rewind to our body, then our scope has already
-	 * been closed by another macro (like `Oc' closing `Op').  This
-	 * is ugly behaviour nodding its head to OpenBSD's overwhelming
-	 * crufty use of `Op' breakage.
-	 */
-	if (n != body)
-		mandoc_vmsg(MANDOCERR_SCOPENEST, mdoc->parse, line,
-		    ppos, "%s broken", mdoc_macronames[tok]);
-
-	if (n && ! rew_sub(MDOC_BODY, mdoc, tok, line, ppos))
+	if ( ! rew_sub(MDOC_BODY, mdoc, tok, line, ppos))
 		return(0);
 
 	/* Standard appending of delimiters. */
@@ -1371,7 +1362,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 
 	/* Rewind scope, if applicable. */
 
-	if (n && ! rew_sub(MDOC_BLOCK, mdoc, tok, line, ppos))
+	if ( ! rew_sub(MDOC_BLOCK, mdoc, tok, line, ppos))
 		return(0);
 
 	/* Move trailing .Ns out of scope. */

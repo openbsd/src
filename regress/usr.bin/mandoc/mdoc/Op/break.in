@@ -1,0 +1,29 @@
+.Dd July 2, 2014
+.Dt OP-BREAK 1
+.Os OpenBSD
+.Sh NAME
+.Nm Op-break
+.Nd partial explicit block broken by partial implicit block
+.Sh DESCRIPTION
+before both
+.Op inside first Do inside both
+inside second
+.Dc
+after both
+.Pp
+0
+.Op 1 Op 12 Do 123
+3
+.Dc
+0
+.\" The following does not work yet:
+.ig
+.Pp
+0
+.Op 1 Op 12 Do 123 Do 1234
+34
+.Dc
+4
+.Dc
+0
+..

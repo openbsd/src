@@ -1,0 +1,17 @@
+.TH NF-DUPE 1 "July 2, 2014" OpenBSD
+.SH NAME
+nf-dupe \- duplicate filling macros
+.SH DESCRIPTION
+regular
+text
+.fi
+still
+regular
+text
+.nf
+literal
+text
+.nf
+still
+literal
+text

@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.33 2014/07/02 03:47:07 schwarze Exp $ */
+/*	$Id: read.c,v 1.34 2014/07/02 11:42:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -114,7 +114,8 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"blocks badly nested",
 	"child violates parent syntax",
 	"nested displays are not portable",
-	"already in literal mode",
+	"fill mode already enabled, skipping .fi",
+	"fill mode already disabled, skipping .nf",
 	"line scope broken",
 
 	/* related to missing macro arguments */
@@ -124,7 +125,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"list type must come first",
 	"tag lists require a width argument",
 	"missing font type",
-	"skipping end of block that is not open",
 
 	/* related to bad macro arguments */
 	"skipping argument",

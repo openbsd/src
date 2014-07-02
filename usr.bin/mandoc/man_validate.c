@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.67 2014/07/02 05:51:49 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.68 2014/07/02 11:42:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -475,7 +475,7 @@ post_nf(CHKARGS)
 {
 
 	if (MAN_LITERAL & man->flags)
-		man_nmsg(man, n, MANDOCERR_SCOPEREP);
+		man_nmsg(man, n, MANDOCERR_NF_SKIP);
 
 	man->flags |= MAN_LITERAL;
 	return(1);
@@ -486,7 +486,7 @@ post_fi(CHKARGS)
 {
 
 	if ( ! (MAN_LITERAL & man->flags))
-		man_nmsg(man, n, MANDOCERR_WNOSCOPE);
+		man_nmsg(man, n, MANDOCERR_FI_SKIP);
 
 	man->flags &= ~MAN_LITERAL;
 	return(1);

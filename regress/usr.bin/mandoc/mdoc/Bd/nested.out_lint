@@ -1,0 +1,2 @@
+mandoc: nested.in:13:2: WARNING: nested displays are not portable: Bd in Bd
+mandoc: nested.in:24:2: WARNING: nested displays are not portable: Bd in Bd

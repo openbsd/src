@@ -1,0 +1,2 @@
+mandoc: dupe.in:7:2: WARNING: fill mode already enabled, skipping .fi
+mandoc: dupe.in:14:2: WARNING: fill mode already disabled, skipping .nf

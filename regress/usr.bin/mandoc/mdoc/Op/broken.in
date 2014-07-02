@@ -1,0 +1,24 @@
+.Dd July 2, 2014
+.Dt OP-BROKEN 1
+.Os OpenBSD
+.Sh NAME
+.Nm Op-broken
+.Nd partial implicit block broken by partial explicit block
+.Sh DESCRIPTION
+before both
+.Do inside first
+.Op inside both Dc inside second
+after both
+.Pp
+0
+.Do 1
+.Op 12 Op 123 Dc 23
+0
+.\" The following does not work yet, see mdoc_macro.c rev. 1.47.
+.ig
+.Pp
+0
+.Do 1 Do 12
+.Op 123 Op 1234 Dc 134 Dc 34
+0
+..

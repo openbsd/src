@@ -27,6 +27,7 @@ at which point will this text wrap to the next line?
 normal paragraph:
 This is a rather long text because we want to test the text width;
 at which point will this text wrap to the next line?
+.B
 .PP
 .TP 16n
 .TP 16n
