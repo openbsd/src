@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sd.4,v 1.19 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: sd.4,v 1.20 2014/07/02 22:35:42 matthew Exp $
 .\"	$NetBSD: sd.4,v 1.3 1996/10/20 23:15:23 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: July 2 2014 $
 .Dt SD 4
 .Os
 .Sh NAME
@@ -137,14 +137,14 @@ calls apply to
 .Tn SCSI
 disks as well as to other disks.
 They are defined in the header file
-.In sys/disklabel.h .
-.Bl -tag -width DIOCSDINFO
+.In sys/dkio.h .
+.Bl -tag -width Ds
 .\".It Dv DIOCSBAD
 .\"Usually used to set up a bad-block mapping system on the disk.
 .\".Tn SCSI
 .\"drive incorporate their own bad-block mapping so this command is not
 .\"implemented.
-.It Dv DIOCGDINFO
+.It Dv DIOCGDINFO Fa "struct disklabel *"
 Read, from the kernel, the in-core copy of the disklabel for the
 drive.
 This may be a fictitious disklabel if the drive has never
@@ -152,24 +152,24 @@ been initialized, in which case it will contain information read
 from the
 .Tn SCSI
 inquiry commands.
-.It Dv DIOCSDINFO
+.It Dv DIOCSDINFO Fa "struct disklabel *"
 Give the driver a new disklabel to use.
 The driver
 .Em will not
 write the new
 disklabel to the disk.
-.It Dv DIOCWDINFO
+.It Dv DIOCWDINFO Fa "struct disklabel *"
 Give the driver a new disklabel to use.
 The driver
 .Em will
 write the new disklabel to the disk.
-.It Dv DIOCLOCK
+.It Dv DIOCLOCK Fa "int *"
 Lock the media cartridge into the device, or unlock a cartridge previously
 locked.
 Used to prevent user and software eject while the media is in use.
 .It Dv DIOCEJECT
 Eject the media cartridge from a removable device.
-.It Dv DIOCINQ
+.It Dv DIOCINQ Fa "struct dk_inquiry *"
 Read the devices product information.
 .El
 .Pp
