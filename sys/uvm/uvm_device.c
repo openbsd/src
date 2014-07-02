@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.45 2014/04/13 23:14:15 tedu Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.46 2014/07/02 06:09:49 matthew Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -97,9 +97,8 @@ struct uvm_pagerops uvm_deviceops = {
  * The last two arguments (off and size) are only used for access checking.
  */
 struct uvm_object *
-udv_attach(void *arg, vm_prot_t accessprot, voff_t off, vsize_t size)
+udv_attach(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
 {
-	dev_t device = *((dev_t *)arg);
 	struct uvm_device *udv, *lcv;
 	paddr_t (*mapfn)(dev_t, off_t, int);
 #if NDRM > 0
@@ -118,7 +117,7 @@ udv_attach(void *arg, vm_prot_t accessprot, voff_t off, vsize_t size)
 		return(NULL);
 
 #if NDRM > 0
-	obj = udv_attach_drm(arg, accessprot, off, size);
+	obj = udv_attach_drm(device, accessprot, off, size);
 	if (obj)
 		return(obj);
 #endif

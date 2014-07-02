@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.95 2014/06/27 20:50:43 matthew Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.96 2014/07/02 06:09:49 matthew Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -949,7 +949,7 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	} else {
 		vp = (struct vnode *) handle;	/* get vnode */
 		if (vp->v_type != VCHR) {
-			uobj = uvn_attach((void *) vp, (flags & MAP_SHARED) ?
+			uobj = uvn_attach(vp, (flags & MAP_SHARED) ?
 			   maxprot : (maxprot & ~VM_PROT_WRITE));
 
 #ifndef UBC
@@ -987,7 +987,7 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 			vref(vp);
 #endif
 		} else {
-			uobj = udv_attach((void *) &vp->v_rdev,
+			uobj = udv_attach(vp->v_rdev,
 			    (flags & MAP_SHARED) ? maxprot :
 			    (maxprot & ~VM_PROT_WRITE), foff, size);
 			/*
@@ -997,7 +997,7 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 			 */
 			if (uobj == NULL && (prot & PROT_EXEC) == 0) {
 				maxprot &= ~VM_PROT_EXECUTE;
-				uobj = udv_attach((void *) &vp->v_rdev,
+				uobj = udv_attach(vp->v_rdev,
 				    (flags & MAP_SHARED) ? maxprot :
 				    (maxprot & ~VM_PROT_WRITE), foff, size);
 			}

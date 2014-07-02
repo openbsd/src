@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.82 2014/05/08 20:08:50 kettenis Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.83 2014/07/02 06:09:49 matthew Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -139,9 +139,8 @@ uvn_init(void)
  *    pointers are equiv.
  */
 struct uvm_object *
-uvn_attach(void *arg, vm_prot_t accessprot)
+uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 {
-	struct vnode *vp = arg;
 	struct uvm_vnode *uvn = &vp->v_uvm;
 	struct vattr vattr;
 	int oldflags, result;

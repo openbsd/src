@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.127 2014/04/07 06:43:11 jsg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.128 2014/07/02 06:09:49 matthew Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -1691,9 +1691,8 @@ out_free_list:
 }
 
 struct uvm_object *
-udv_attach_drm(void *arg, vm_prot_t accessprot, voff_t off, vsize_t size)
+udv_attach_drm(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
 {
-	dev_t device = *((dev_t *)arg);
 	struct drm_device *dev = drm_get_device_from_kdev(device);
 	struct drm_local_map *map;
 	struct drm_gem_object *obj;
