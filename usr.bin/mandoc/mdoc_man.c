@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.63 2014/07/02 03:47:07 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.64 2014/07/02 19:54:39 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1561,11 +1561,16 @@ static int
 pre_sm(DECL_ARGS)
 {
 
-	assert(n->child && MDOC_TEXT == n->child->type);
-	if (0 == strcmp("on", n->child->string))
-		outflags |= MMAN_Sm | MMAN_spc;
+	if (NULL == n->child)
+		outflags ^= MMAN_Sm;
+	else if (0 == strcmp("on", n->child->string))
+		outflags |= MMAN_Sm;
 	else
 		outflags &= ~MMAN_Sm;
+
+	if (MMAN_Sm & outflags)
+		outflags |= MMAN_spc;
+
 	return(0);
 }
 

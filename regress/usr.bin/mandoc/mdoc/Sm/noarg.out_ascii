@@ -1,0 +1,11 @@
+SM-NOARG(1)                OpenBSD Reference Manual                SM-NOARG(1)
+
+NNAAMMEE
+     SSmm--nnooaarrgg - spacing macro without arguments
+
+DDEESSCCRRIIPPTTIIOONN
+     --ff _o_n --ff_o_f_f --ff _t_o_g_g_l_e (now on) --ff _o_n --ff_t_o_g_g_l_e(nowoff)
+
+     --ff _o_n on a new line
+
+OpenBSD                          July 2, 2014                          OpenBSD

@@ -1,0 +1,20 @@
+.Dd July 2, 2014
+.Dt SM-NOARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm Sm-noarg
+.Nd spacing macro without arguments
+.Sh DESCRIPTION
+.Fl f Ar on
+.Sm off
+.Fl f Ar off
+.Sm
+.Fl f Ar toggle Pq now on
+.Sm on
+.Fl f Ar on
+.Sm
+.Fl f Ar toggle Pq now off
+.Pp
+.Sm on
+.Fl f Ar on
+on a new line

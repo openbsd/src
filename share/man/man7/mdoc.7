@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.113 2014/07/02 03:47:07 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.114 2014/07/02 19:54:39 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -468,7 +468,7 @@ in the alphabetical
 .It Sx \&Pf Ta prefix, no following horizontal space (one argument)
 .It Sx \&Ns Ta roman font, no preceding horizontal space (no arguments)
 .It Sx \&Ap Ta apostrophe without surrounding whitespace (no arguments)
-.It Sx \&Sm Ta switch horizontal spacing mode: Cm on | off
+.It Sx \&Sm Ta switch horizontal spacing mode: Op Cm on | off
 .It Sx \&Bk , \&Ek Ta keep block: Fl words
 .It Sx \&br Ta force output line break in text mode (no arguments)
 .It Sx \&sp Ta force vertical space: Op Ar height
@@ -2340,7 +2340,7 @@ and
 Switches the spacing mode for output generated from macros.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Sm Cm on | off
+.D1 Pf \. Sx \&Sm Op Cm on | off
 .Pp
 By default, spacing is
 .Cm on .
@@ -2349,6 +2349,11 @@ When switched
 no white space is inserted between macro arguments and between the
 output generated from adjacent macros, but text lines
 still get normal spacing between words and sentences.
+.Pp
+When called without an argument, the
+.Sx \&Sm
+macro toggles the spacing mode.
+Using this is not recommended because it makes the code harder to read.
 .Ss \&So
 Multi-line version of
 .Sx \&Sq .
@@ -3027,7 +3032,7 @@ then the macro accepts an arbitrary number of arguments.
 .It Sx \&Pf  Ta    Yes      Ta    Yes      Ta    1
 .It Sx \&Pp  Ta    \&No     Ta    \&No     Ta    0
 .It Sx \&Rv  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Sm  Ta    \&No     Ta    \&No     Ta    1
+.It Sx \&Sm  Ta    \&No     Ta    \&No     Ta    <2
 .It Sx \&St  Ta    \&No     Ta    Yes      Ta    1
 .It Sx \&Sx  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Sy  Ta    Yes      Ta    Yes      Ta    >0

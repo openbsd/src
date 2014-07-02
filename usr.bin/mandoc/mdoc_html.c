@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.74 2014/07/02 03:47:07 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.75 2014/07/02 19:54:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1520,22 +1520,15 @@ static int
 mdoc_sm_pre(MDOC_ARGS)
 {
 
-	assert(n->child && MDOC_TEXT == n->child->type);
-	if (0 == strcmp("on", n->child->string)) {
-		/*
-		 * FIXME: no p->col to check.  Thus, if we have
-		 *  .Bd -literal
-		 *  .Sm off
-		 *  1 2
-		 *  .Sm on
-		 *  3
-		 *  .Ed
-		 * the "3" is preceded by a space.
-		 */
-		h->flags &= ~HTML_NOSPACE;
+	if (NULL == n->child)
+		h->flags ^= HTML_NONOSPACE;
+	else if (0 == strcmp("on", n->child->string))
 		h->flags &= ~HTML_NONOSPACE;
-	} else
+	else
 		h->flags |= HTML_NONOSPACE;
+
+	if ( ! (HTML_NONOSPACE & h->flags))
+		h->flags &= ~HTML_NOSPACE;
 
 	return(0);
 }

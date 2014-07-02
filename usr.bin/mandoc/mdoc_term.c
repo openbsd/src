@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.170 2014/07/02 03:47:07 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.171 2014/07/02 19:54:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -2052,13 +2052,15 @@ static int
 termp_sm_pre(DECL_ARGS)
 {
 
-	assert(n->child && MDOC_TEXT == n->child->type);
-	if (0 == strcmp("on", n->child->string)) {
-		if (p->col)
-			p->flags &= ~TERMP_NOSPACE;
+	if (NULL == n->child)
+		p->flags ^= TERMP_NONOSPACE;
+	else if (0 == strcmp("on", n->child->string))
 		p->flags &= ~TERMP_NONOSPACE;
-	} else
+	else
 		p->flags |= TERMP_NONOSPACE;
+
+	if (p->col && ! (TERMP_NONOSPACE & p->flags))
+		p->flags &= ~TERMP_NOSPACE;
 
 	return(0);
 }
