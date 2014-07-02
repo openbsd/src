@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.136 2014/07/02 03:47:07 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.137 2014/07/02 05:51:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1381,12 +1381,17 @@ post_bl_block(POST_ARGS)
 				continue;
 			}
 			if (NULL == ni->next) {
-				mdoc_nmsg(mdoc, nc, MANDOCERR_MOVEPAR);
+				mandoc_msg(MANDOCERR_PAR_MOVE,
+				    mdoc->parse, nc->line, nc->pos,
+				    mdoc_macronames[nc->tok]);
 				if ( ! mdoc_node_relink(mdoc, nc))
 					return(0);
 			} else if (0 == n->norm->Bl.comp &&
 			    LIST_column != n->norm->Bl.type) {
-				mdoc_nmsg(mdoc, nc, MANDOCERR_IGNPAR);
+				mandoc_vmsg(MANDOCERR_PAR_SKIP,
+				    mdoc->parse, nc->line, nc->pos,
+				    "%s before It",
+				    mdoc_macronames[nc->tok]);
 				mdoc_node_delete(mdoc, nc);
 			} else
 				break;
@@ -2074,13 +2079,19 @@ post_ignpar(POST_ARGS)
 
 	if (NULL != (np = mdoc->last->child))
 		if (MDOC_Pp == np->tok || MDOC_Lp == np->tok) {
-			mdoc_nmsg(mdoc, np, MANDOCERR_IGNPAR);
+			mandoc_vmsg(MANDOCERR_PAR_SKIP,
+			    mdoc->parse, np->line, np->pos,
+			    "%s after %s", mdoc_macronames[np->tok],
+			    mdoc_macronames[mdoc->last->tok]);
 			mdoc_node_delete(mdoc, np);
 		}
 
 	if (NULL != (np = mdoc->last->last))
 		if (MDOC_Pp == np->tok || MDOC_Lp == np->tok) {
-			mdoc_nmsg(mdoc, np, MANDOCERR_IGNPAR);
+			mandoc_vmsg(MANDOCERR_PAR_SKIP, mdoc->parse,
+			    np->line, np->pos, "%s at the end of %s",
+			    mdoc_macronames[np->tok],
+			    mdoc_macronames[mdoc->last->tok]);
 			mdoc_node_delete(mdoc, np);
 		}
 
@@ -2112,7 +2123,10 @@ pre_par(PRE_ARGS)
 	if (MDOC_It == n->tok && n->parent->norm->Bl.comp)
 		return(1);
 
-	mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_IGNPAR);
+	mandoc_vmsg(MANDOCERR_PAR_SKIP, mdoc->parse,
+	    mdoc->last->line, mdoc->last->pos,
+	    "%s before %s", mdoc_macronames[mdoc->last->tok],
+	    mdoc_macronames[n->tok]);
 	mdoc_node_delete(mdoc, mdoc->last);
 	return(1);
 }
@@ -2120,25 +2134,27 @@ pre_par(PRE_ARGS)
 static int
 post_par(POST_ARGS)
 {
+	struct mdoc_node *np;
 
 	if (MDOC_ELEM != mdoc->last->type &&
 	    MDOC_BLOCK != mdoc->last->type)
 		return(1);
 
-	if (NULL == mdoc->last->prev) {
-		if (MDOC_Sh != mdoc->last->parent->tok &&
-		    MDOC_Ss != mdoc->last->parent->tok)
+	if (NULL == (np = mdoc->last->prev)) {
+		np = mdoc->last->parent;
+		if (MDOC_Sh != np->tok && MDOC_Ss != np->tok)
 			return(1);
 	} else {
-		if (MDOC_Pp != mdoc->last->prev->tok &&
-		    MDOC_Lp != mdoc->last->prev->tok &&
+		if (MDOC_Pp != np->tok && MDOC_Lp != np->tok &&
 		    (MDOC_br != mdoc->last->tok ||
-		     (MDOC_sp != mdoc->last->prev->tok &&
-		      MDOC_br != mdoc->last->prev->tok)))
+		     (MDOC_sp != np->tok && MDOC_br != np->tok)))
 			return(1);
 	}
 
-	mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_IGNPAR);
+	mandoc_vmsg(MANDOCERR_PAR_SKIP, mdoc->parse,
+	    mdoc->last->line, mdoc->last->pos,
+	    "%s after %s", mdoc_macronames[mdoc->last->tok],
+	    mdoc_macronames[np->tok]);
 	mdoc_node_delete(mdoc, mdoc->last);
 	return(1);
 }

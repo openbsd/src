@@ -79,4 +79,12 @@ El sp 2v
 Sh sp 2v:
 .Sh CUSTOM
 .sp 2v
+Pp Sh Pp:
+.Pp
+.Sh CUSTOM TWO
+.Pp
+Ss Pp:
+.Ss Subsection
+.Pp
 End.
+.Pp

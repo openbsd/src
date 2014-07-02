@@ -1,0 +1,7 @@
+mandoc: list.in:19:2: WARNING: skipping paragraph macro: Pp before It
+mandoc: list.in:22:2: WARNING: moving paragraph macro out of list: Pp
+mandoc: list.in:34:2: WARNING: moving paragraph macro out of list: Pp
+mandoc: list.in:34:2: WARNING: skipping paragraph macro: Pp before Pp
+mandoc: list.in:51:2: WARNING: moving paragraph macro out of list: Pp
+mandoc: list.in:63:2: WARNING: moving paragraph macro out of list: Pp
+mandoc: list.in:63:2: WARNING: skipping paragraph macro: Pp before Pp

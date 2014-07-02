@@ -1,0 +1,4 @@
+mandoc: line.in:5:2: WARNING: skipping paragraph macro: sp after SH
+mandoc: line.in:25:2: WARNING: skipping paragraph macro: PP empty
+mandoc: line.in:81:2: WARNING: skipping paragraph macro: sp after SH
+mandoc: line.in:84:2: WARNING: skipping paragraph macro: sp after SS

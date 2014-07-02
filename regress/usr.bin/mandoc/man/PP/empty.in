@@ -1,4 +1,4 @@
-.TH PP-EMPTY 1 "24 May 2010" OpenBSD
+.TH PP-EMPTY 1 "May 24, 2010" OpenBSD
 .SH NAME
 PP-empty \- handling of empty paragraphs
 .SH DESCRIPTION
