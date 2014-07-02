@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mprotect.2,v 1.18 2014/07/02 19:08:40 matthew Exp $
+.\"	$OpenBSD: mprotect.2,v 1.19 2014/07/02 22:22:35 matthew Exp $
 .\"	$NetBSD: mprotect.2,v 1.6 1995/10/12 15:41:08 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 .Nm mprotect
 .Nd control the protection of pages
 .Sh SYNOPSIS
-.Fd #include <sys/mman.h>
+.In sys/mman.h
 .Ft int
 .Fn mprotect "void *addr" "size_t len" "int prot"
 .Sh DESCRIPTION
@@ -83,11 +83,7 @@ However, if
 .Dv PROT_WRITE
 was not specified then the page will not be writable.
 .Sh RETURN VALUES
-Upon successful completion,
-a value of 0 is returned.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 .Fn mprotect
 will fail if:

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.49 2014/07/02 19:08:40 matthew Exp $
+.\"	$OpenBSD: mmap.2,v 1.50 2014/07/02 22:22:35 matthew Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -37,13 +37,12 @@
 .Nm mmap
 .Nd map files or devices into memory
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/mman.h>
+.In sys/mman.h
 .Ft void *
 .Fn mmap "void *addr" "size_t len" "int prot" "int flags" "int fd" "off_t offset"
 .Sh DESCRIPTION
 The
-.Nm mmap
+.Fn mmap
 function causes the contents of
 .Fa fd ,
 starting at
@@ -77,7 +76,7 @@ The
 .Fa len
 argument describes the minimum amount of bytes the mapping will span.
 Since
-.Nm
+.Fn mmap
 maps pages into memory,
 .Fa len
 may be rounded up to hit a page boundary.
@@ -203,24 +202,20 @@ function does not unmap pages; see
 .Xr munmap 2
 for further information.
 .Sh RETURN VALUES
-Upon successful completion,
-.Nm mmap
-returns a pointer to the mapped region.
-Otherwise, a value of
+The
+.Fn mmap
+function returns a pointer to the mapped region if successful;
+otherwise the value
 .Dv MAP_FAILED
-is returned and
+is returned and the global variable
 .Va errno
 is set to indicate the error.
-The symbol
-.Dv MAP_FAILED
-is defined in the header
-.In sys/mman.h .
 A successful return from
-.Nm
+.Fn mmap
 will never return the value
 .Dv MAP_FAILED .
 .Sh ERRORS
-.Nm
+.Fn mmap
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EACCES

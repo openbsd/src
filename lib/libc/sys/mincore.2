@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mincore.2,v 1.10 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: mincore.2,v 1.11 2014/07/02 22:22:35 matthew Exp $
 .\"	$NetBSD: mincore.2,v 1.7 1995/10/12 15:41:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,15 +30,14 @@
 .\"
 .\"	@(#)mincore.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 2 2014 $
 .Dt MINCORE 2
 .Os
 .Sh NAME
 .Nm mincore
 .Nd determine residency of memory pages
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/mman.h>
+.In sys/mman.h
 .Ft int
 .Fn mincore "void *addr" "size_t len" "char *vec"
 .Sh DESCRIPTION
@@ -52,11 +51,7 @@ in the character array
 .Fa vec ,
 with a value of 1 meaning that the page is in-core.
 .Sh RETURN VALUES
-Upon successful completion,
-a value of 0 is returned.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh SEE ALSO
 .Xr madvise 2 ,
 .Xr minherit 2 ,

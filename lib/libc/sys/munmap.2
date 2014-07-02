@@ -1,4 +1,4 @@
-.\"	$OpenBSD: munmap.2,v 1.15 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: munmap.2,v 1.16 2014/07/02 22:22:35 matthew Exp $
 .\"	$NetBSD: munmap.2,v 1.5 1995/02/27 12:35:03 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,15 +30,14 @@
 .\"
 .\"	@(#)munmap.2	8.2 (Berkeley) 4/15/94
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: July 2 2014 $
 .Dt MUNMAP 2
 .Os
 .Sh NAME
 .Nm munmap
 .Nd remove a mapping
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/mman.h>
+.In sys/mman.h
 .Ft int
 .Fn munmap "void *addr" "size_t len"
 .Sh DESCRIPTION
@@ -49,12 +48,7 @@ deletes the mappings for the specified address range,
 and causes further references to addresses within the range
 to generate invalid memory references.
 .Sh RETURN VALUES
-Upon successful completion,
-.Nm munmap
-returns zero.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 .Fn munmap
 will fail if:

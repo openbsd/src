@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mquery.2,v 1.10 2013/04/08 19:35:00 guenther Exp $
+.\"	$OpenBSD: mquery.2,v 1.11 2014/07/02 22:22:35 matthew Exp $
 .\"
 .\" Copyright (c) 2003 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,24 +23,23 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 8 2013 $
+.Dd $Mdocdate: July 2 2014 $
 .Dt MQUERY 2
 .Os
 .Sh NAME
 .Nm mquery
 .Nd provide mapping hints to applications
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/mman.h>
+.In sys/mman.h
 .Ft void *
 .Fn mquery "void *addr" "size_t len" "int prot" "int flags" "int fd" "off_t offset"
 .Sh DESCRIPTION
 The
-.Nm mquery
+.Fn mquery
 system call checks the existing memory mappings of a process and returns
 hints to the caller about where to put a memory mapping.
 This hint can be later used when performing memory mappings with the
-.Fn mmap
+.Xr mmap 2
 system call with
 .Dv MAP_FIXED
 in the flags.
@@ -58,7 +57,7 @@ and
 .Fa off
 arguments specify the file that will be mapped and the offset in it,
 this is the same as the corresponding arguments to
-.Fn mmap .
+.Xr mmap 2 .
 .Pp
 The behavior of the function depends on the
 .Fa flags

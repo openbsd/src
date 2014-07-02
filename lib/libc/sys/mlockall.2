@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mlockall.2,v 1.7 2013/03/30 09:00:06 jmc Exp $
+.\"	$OpenBSD: mlockall.2,v 1.8 2014/07/02 22:22:35 matthew Exp $
 .\"	$NetBSD: mlockall.2,v 1.6 2000/06/26 17:00:02 kleink Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 30 2013 $
+.Dd $Mdocdate: July 2 2014 $
 .Dt MLOCKALL 2
 .Os
 .Sh NAME
@@ -37,20 +37,20 @@
 .Nm munlockall
 .Nd lock (unlock) the address space of a process
 .Sh SYNOPSIS
-.Fd #include <sys/mman.h>
+.In sys/mman.h
 .Ft int
 .Fn mlockall "int flags"
 .Ft int
 .Fn munlockall "void"
 .Sh DESCRIPTION
 The
-.Nm mlockall
+.Fn mlockall
 system call locks into memory the physical pages associated with the
 address space of a process until the address space is unlocked, the
 process exits, or execs another program image.
 .Pp
 The following flags affect the behavior of
-.Nm mlockall :
+.Fn mlockall :
 .Bl -tag -width MCL_CURRENT
 .It Dv MCL_CURRENT
 Lock all pages currently mapped into the process's address space.
@@ -70,19 +70,13 @@ limit and the per-process
 resource limit.
 .Pp
 The
-.Nm munlockall
+.Fn munlockall
 call unlocks any locked memory regions in the process address space.
 Any regions mapped after an
-.Nm munlockall
+.Fn munlockall
 call will not be locked.
 .Sh RETURN VALUES
-A return value of 0 indicates that the call
-succeeded and all pages in the range have either been locked or unlocked.
-A return value of -1 indicates an error occurred and the locked
-status of all pages in the range remains unchanged.
-In this case, the global location
-.Va errno
-is set to indicate the error.
+.Rv -std mlockall munlockall
 .Sh ERRORS
 .Fn mlockall
 will fail if:
