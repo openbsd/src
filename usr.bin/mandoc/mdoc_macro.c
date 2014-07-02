@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.89 2014/07/02 03:47:07 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.90 2014/07/02 08:21:12 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -1569,7 +1569,7 @@ in_line_argn(MACRO_PROT_ARGS)
 				return(0);
 			continue;
 		} else if (0 == j)
-		       if ( ! mdoc_elem_alloc(mdoc, line, la, tok, arg))
+		       if ( ! mdoc_elem_alloc(mdoc, line, ppos, tok, arg))
 			       return(0);
 
 		if (j == maxargs && ! flushed) {
@@ -1605,7 +1605,7 @@ in_line_argn(MACRO_PROT_ARGS)
 		j++;
 	}
 
-	if (0 == j && ! mdoc_elem_alloc(mdoc, line, la, tok, arg))
+	if (0 == j && ! mdoc_elem_alloc(mdoc, line, ppos, tok, arg))
 	       return(0);
 
 	/* Close out in a consistent state. */
