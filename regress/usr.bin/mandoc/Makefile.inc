@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.11 2014/06/20 18:27:51 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.12 2014/07/02 06:35:26 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -40,7 +40,7 @@ _LINTDIFFS += ${t}.diff_lint
 # --- convenience targets ---
 
 # Note that bsd.regress.mk automatically adds REGRESS_TARGETS to all.
-all: clean ${LINT_TARGETS}
+all: clean
 
 ascii: ascii-clean ${_ASCIIDIFFS}
 
