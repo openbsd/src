@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.45 2014/07/02 00:12:34 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.46 2014/07/02 00:15:27 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -83,7 +83,7 @@ struct pool_allocator {
 	int pa_pageshift;
 };
 
-LIST_HEAD(pool_pagelist,pool_item_header);
+LIST_HEAD(pool_pagelist, pool_item_header);
 
 struct pool {
 	struct mutex	pr_mtx;
@@ -95,7 +95,8 @@ struct pool {
 			pr_fullpages;	/* Full pages */
 	struct pool_pagelist
 			pr_partpages;	/* Partially-allocated pages */
-	struct pool_item_header	*pr_curpage;
+	struct pool_item_header	*
+			pr_curpage;
 	unsigned int	pr_size;	/* Size of item */
 	unsigned int	pr_align;	/* Requested alignment, must be 2^n */
 	unsigned int	pr_itemoffset;	/* Align this offset in item */
@@ -110,8 +111,9 @@ struct pool {
 	unsigned int	pr_hardlimit;	/* hard limit to number of allocated
 					   items */
 	unsigned int	pr_serial;	/* unique serial number of the pool */
-	struct pool_allocator *pr_alloc;/* backend allocator */
-	const char	*pr_wchan;	/* tsleep(9) identifier */
+	struct pool_allocator *
+			pr_alloc;	/* backend allocator */
+	const char *	pr_wchan;	/* tsleep(9) identifier */
 	unsigned int	pr_flags;	/* r/w flags */
 	unsigned int	pr_roflags;	/* r/o flags */
 #define PR_WAITOK	0x0001 /* M_WAITOK */
@@ -124,9 +126,10 @@ struct pool {
 #define PR_DEBUG	0x0800
 #define PR_DEBUGCHK	0x1000
 
-	int			pr_ipl;
+	int		pr_ipl;
 
-	RB_HEAD(phtree, pool_item_header) pr_phtree;
+	RB_HEAD(phtree, pool_item_header)
+			pr_phtree;
 
 	int		pr_maxcolor;	/* Cache colouring */
 	int		pr_curcolor;
@@ -152,7 +155,8 @@ struct pool {
 	unsigned long	pr_nidle;	/* # of idle pages */
 
 	/* Physical memory configuration. */
-	const struct kmem_pa_mode *pr_crange;
+	const struct kmem_pa_mode *
+			pr_crange;
 };
 
 #endif /* _KERNEL || _LIBKVM */
@@ -191,9 +195,9 @@ void		pool_walk(struct pool *, int, int (*)(const char *, ...),
 #endif
 
 /* the allocator for dma-able memory is a thin layer on top of pool  */
-void			 dma_alloc_init(void);
-void			*dma_alloc(size_t size, int flags);
-void			 dma_free(void *m, size_t size);
+void		 dma_alloc_init(void);
+void		*dma_alloc(size_t size, int flags);
+void		 dma_free(void *m, size_t size);
 #endif /* _KERNEL */
 
 #endif /* _SYS_POOL_H_ */
