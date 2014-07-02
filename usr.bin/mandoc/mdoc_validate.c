@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.138 2014/07/02 11:42:56 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.139 2014/07/02 13:10:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1113,7 +1113,8 @@ post_vt(POST_ARGS)
 
 	for (n = mdoc->last->child; n; n = n->next)
 		if (MDOC_TEXT != n->type)
-			mdoc_nmsg(mdoc, n, MANDOCERR_CHILD);
+			mandoc_msg(MANDOCERR_VT_CHILD, mdoc->parse,
+			    n->line, n->pos, mdoc_macronames[n->tok]);
 
 	return(1);
 }
@@ -1609,7 +1610,9 @@ post_bl(POST_ARGS)
 			continue;
 		}
 
-		mdoc_nmsg(mdoc, nchild, MANDOCERR_CHILD);
+		mandoc_msg(MANDOCERR_BL_MOVE, mdoc->parse,
+		    nchild->line, nchild->pos,
+		    mdoc_macronames[nchild->tok]);
 
 		/*
 		 * Move the node out of the Bl block.
@@ -1778,7 +1781,8 @@ post_rs(POST_ARGS)
 		}
 
 		next = nn->next;
-		mdoc_nmsg(mdoc, nn, MANDOCERR_CHILD);
+		mandoc_msg(MANDOCERR_RS_SKIP, mdoc->parse,
+		    nn->line, nn->pos, mdoc_macronames[nn->tok]);
 		mdoc_node_delete(mdoc, nn);
 	}
 

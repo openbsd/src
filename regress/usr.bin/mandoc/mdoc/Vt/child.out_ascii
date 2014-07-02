@@ -1,0 +1,12 @@
+VT-CHILD(1)                OpenBSD Reference Manual                VT-CHILD(1)
+
+NNAAMMEE
+     VVtt--cchhiilldd - the variable type macro does not want children
+
+SSYYNNOOPPSSIISS
+     _e_x_t_e_r_n iinntt errno
+
+DDEESSCCRRIIPPTTIIOONN
+     various types, for example _u_n_s_i_g_n_e_d iinntt, _l_o_n_g int and _f_l_o_a_t, _d_o_u_b_l_e
+
+OpenBSD                          July 2, 2014                          OpenBSD

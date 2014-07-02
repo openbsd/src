@@ -1,0 +1,5 @@
+mandoc: noIt.in:9:1: WARNING: moving content out of list: text
+mandoc: noIt.in:10:2: WARNING: moving content out of list: Em
+mandoc: noIt.in:15:1: WARNING: moving content out of list: text
+mandoc: noIt.in:16:2: WARNING: moving content out of list: Em
+mandoc: noIt.in:21:1: WARNING: moving content out of list: text

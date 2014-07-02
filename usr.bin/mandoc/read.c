@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.34 2014/07/02 11:42:56 schwarze Exp $ */
+/*	$Id: read.c,v 1.35 2014/07/02 13:10:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -112,8 +112,9 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"moving paragraph macro out of list",
 	"skipping no-space macro",
 	"blocks badly nested",
-	"child violates parent syntax",
 	"nested displays are not portable",
+	"moving content out of list",
+	".Vt block has child macro",
 	"fill mode already enabled, skipping .fi",
 	"fill mode already disabled, skipping .nf",
 	"line scope broken",
@@ -172,6 +173,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"skipping unknown macro",
 	"NOT IMPLEMENTED, please use groff: skipping request",
 	"argument count wrong",
+	"skipping invalid content in .Rs block",
 	"skipping column outside column list",
 	"skipping end of block that is not open",
 	"missing end of block",

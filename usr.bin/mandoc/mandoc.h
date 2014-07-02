@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.72 2014/07/02 11:42:56 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.73 2014/07/02 13:10:15 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -76,8 +76,9 @@ enum	mandocerr {
 	MANDOCERR_PAR_MOVE, /* moving paragraph macro out of list: macro */
 	MANDOCERR_NS_SKIP, /* skipping no-space macro */
 	MANDOCERR_BLOCK_NEST, /* blocks badly nested: macro ... */
-	MANDOCERR_CHILD, /* child violates parent syntax */
 	MANDOCERR_BD_NEST, /* nested displays are not portable: macro ... */
+	MANDOCERR_BL_MOVE, /* moving content out of list: macro */
+	MANDOCERR_VT_CHILD, /* .Vt block has child macro: macro */
 	MANDOCERR_FI_SKIP, /* fill mode already enabled, skipping .fi */
 	MANDOCERR_NF_SKIP, /* fill mode already disabled, skipping .nf */
 	MANDOCERR_LINESCOPE, /* line scope broken: macro breaks macro */
@@ -136,6 +137,7 @@ enum	mandocerr {
 	MANDOCERR_MACRO, /* skipping unknown macro */
 	MANDOCERR_REQUEST, /* NOT IMPLEMENTED: skipping request */
 	MANDOCERR_ARGCOUNT, /* argument count wrong */
+	MANDOCERR_RS_SKIP, /* skipping invalid content in .Rs block: macro */
 	MANDOCERR_STRAYTA, /* skipping column outside column list */
 	MANDOCERR_NOSCOPE, /* skipping end of block that is not open */
 	MANDOCERR_SCOPEBROKEN, /* missing end of block */

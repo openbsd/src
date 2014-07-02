@@ -1,0 +1,15 @@
+.Dd July 2, 2014
+.Dt VT-CHILD 1
+.Os OpenBSD
+.Sh NAME
+.Nm Vt-child
+.Nd the variable type macro does not want children
+.Sh SYNOPSIS
+.Vt extern Sy int Li errno
+.Sh DESCRIPTION
+various types, for example
+.Vt unsigned Sy int ,
+.Vt long Li int
+and
+.Vt float ,
+.Vt double
