@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.129 2014/07/02 00:12:34 dlg Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.130 2014/07/02 07:16:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -1055,6 +1055,7 @@ dopool_kvm(void)
 		pi.pr_size = pp->pr_size;
 		pi.pr_pgsize = palloc.pa_pagesz;
 		pi.pr_itemsperpage = pp->pr_itemsperpage;
+		pi.pr_npages = pp->pr_npages;
 		pi.pr_minpages = pp->pr_minpages;
 		pi.pr_maxpages = pp->pr_maxpages;
 		pi.pr_hardlimit = pp->pr_hardlimit;
