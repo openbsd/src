@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.48 2014/06/27 22:51:20 jmc Exp $
+.\"	$OpenBSD: mmap.2,v 1.49 2014/07/02 19:08:40 matthew Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mmap.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 27 2014 $
+.Dd $Mdocdate: July 2 2014 $
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -98,17 +98,19 @@ to the page offset in
 .Pp
 The protections (region accessibility) are specified in the
 .Fa prot
-argument by OR'ing the following values:
+argument.
+It should either be
+.Dv PROT_NONE
+.Pq no permissions
+or the bitwise OR of one or more of the following values:
 .Pp
-.Bl -tag -width "PROT_WRITE  " -offset indent -compact
+.Bl -tag -width "PROT_WRITEXX" -offset indent -compact
 .It Dv PROT_EXEC
 Pages may be executed.
 .It Dv PROT_READ
 Pages may be read.
 .It Dv PROT_WRITE
 Pages may be written.
-.It Dv PROT_NONE
-No permissions.
 .El
 .Pp
 The

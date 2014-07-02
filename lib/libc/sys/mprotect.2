@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mprotect.2,v 1.17 2014/02/13 07:30:39 guenther Exp $
+.\"	$OpenBSD: mprotect.2,v 1.18 2014/07/02 19:08:40 matthew Exp $
 .\"	$NetBSD: mprotect.2,v 1.6 1995/10/12 15:41:08 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mprotect.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: February 13 2014 $
+.Dd $Mdocdate: July 2 2014 $
 .Dt MPROTECT 2
 .Os
 .Sh NAME
@@ -62,6 +62,7 @@ The protections (region accessibility) are specified in the
 argument.
 It should either be
 .Dv PROT_NONE
+.Pq no permissions
 or the bitwise OR of one or more of the following values:
 .Pp
 .Bl -tag -width "PROT_WRITEXX" -offset indent -compact
