@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.64 2014/05/08 20:08:50 kettenis Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.65 2014/07/03 11:38:46 kettenis Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1207,9 +1207,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 			/* I/O done.  check for errors. */
 			if (rv != VM_PAGER_OK) {
-				if (ptmp->pg_flags & PG_WANTED)
-					wakeup(ptmp);
-
 				/*
 				 * remove the swap slot from the aobj
 				 * and mark the aobj as having no real slot.
@@ -1220,6 +1217,8 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 							SWSLOT_BAD);
 				uvm_swap_markbad(swslot, 1);
 
+				if (ptmp->pg_flags & PG_WANTED)
+					wakeup(ptmp);
 				atomic_clearbits_int(&ptmp->pg_flags,
 				    PG_WANTED|PG_BUSY);
 				UVM_PAGE_OWN(ptmp, NULL);

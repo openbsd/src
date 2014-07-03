@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.73 2014/05/08 20:08:50 kettenis Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.74 2014/07/03 11:38:46 kettenis Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1144,20 +1144,18 @@ Case2:
 
 		/* didn't get the lock?   release the page and retry. */
 		if (locked == FALSE) {
-			if (uobjpage->pg_flags & PG_WANTED)
-				/* still holding object lock */
-				wakeup(uobjpage);
-
 			uvm_lock_pageq();
 			/* make sure it is in queues */
 			uvm_pageactivate(uobjpage);
-
 			uvm_unlock_pageq();
+
+			if (uobjpage->pg_flags & PG_WANTED)
+				/* still holding object lock */
+				wakeup(uobjpage);
 			atomic_clearbits_int(&uobjpage->pg_flags,
 			    PG_BUSY|PG_WANTED);
 			UVM_PAGE_OWN(uobjpage, NULL);
 			goto ReFault;
-
 		}
 
 		/*
@@ -1293,12 +1291,12 @@ Case2:
 		if (anon == NULL || pg == NULL) {
 			/* arg!  must unbusy our page and fail or sleep. */
 			if (uobjpage != PGO_DONTCARE) {
-				if (uobjpage->pg_flags & PG_WANTED)
-					wakeup(uobjpage);
-
 				uvm_lock_pageq();
 				uvm_pageactivate(uobjpage);
 				uvm_unlock_pageq();
+
+				if (uobjpage->pg_flags & PG_WANTED)
+					wakeup(uobjpage);
 				atomic_clearbits_int(&uobjpage->pg_flags,
 				    PG_BUSY|PG_WANTED);
 				UVM_PAGE_OWN(uobjpage, NULL);
