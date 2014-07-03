@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_att.c,v 1.9 2014/06/28 18:25:24 logan Exp $ */
+/* $OpenBSD: x509_att.c,v 1.10 2014/07/03 21:21:11 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -304,7 +304,7 @@ int
 X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *data,
     int len)
 {
-	ASN1_TYPE *ttmp;
+	ASN1_TYPE *ttmp = NULL;
 	ASN1_STRING *stmp = NULL;
 	int atype = 0;
 
@@ -350,6 +350,7 @@ X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *data,
 	return 1;
 
 err:
+	ASN1_TYPE_free(ttmp);
 	ASN1_STRING_free(stmp);
 	X509err(X509_F_X509_ATTRIBUTE_SET1_DATA, ERR_R_MALLOC_FAILURE);
 	return 0;
