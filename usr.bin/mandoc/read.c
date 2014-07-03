@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.36 2014/07/03 21:23:08 schwarze Exp $ */
+/*	$Id: read.c,v 1.37 2014/07/03 23:23:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -127,6 +127,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"missing display type",
 	"list type must come first",
 	"tag lists require a width argument",
+	"missing head in list item",
 	"missing font type",
 
 	/* related to bad macro arguments */
@@ -181,7 +182,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"missing end of block",
 	"scope open on exit",
 	"uname(3) system call failed",
-	"macro requires line argument(s)",
 	"macro requires body argument(s)",
 	"macro requires argument(s)",
 	"request requires a numeric argument",

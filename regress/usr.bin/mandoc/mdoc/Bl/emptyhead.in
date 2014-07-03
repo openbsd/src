@@ -1,0 +1,43 @@
+.Dd July 3, 2014
+.Dt BL-EMPTYHEAD 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bl-emptyhead
+.Nd lists with empty item heads
+.Sh DESCRIPTION
+hang list:
+.Bl -hang -width 6n
+.It tag
+text
+.It
+no tag before this text
+.It tag
+text
+.El
+ohang list:
+.Bl -ohang
+.It tag
+text
+.It
+no tag before this text
+.It tag
+text
+.El
+inset list:
+.Bl -inset
+.It tag
+text
+.It
+no tag before this text
+.It tag
+text
+.El
+diag list:
+.Bl -diag
+.It tag
+text
+.It
+no tag before this text
+.It tag
+text
+.El

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.141 2014/07/02 20:18:42 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.142 2014/07/03 23:23:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1266,27 +1266,24 @@ post_it(POST_ARGS)
 {
 	int		  i, cols;
 	enum mdoc_list	  lt;
-	struct mdoc_node *n, *c;
+	struct mdoc_node *nbl, *nit, *nch;
 	enum mandocerr	  er;
 
-	if (MDOC_BLOCK != mdoc->last->type)
+	nit = mdoc->last;
+	if (MDOC_BLOCK != nit->type)
 		return(1);
 
-	n = mdoc->last->parent->parent;
-	lt = n->norm->Bl.type;
+	nbl = nit->parent->parent;
+	lt = nbl->norm->Bl.type;
 
 	if (LIST__NONE == lt) {
-		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_LISTTYPE);
+		mdoc_nmsg(mdoc, nit, MANDOCERR_LISTTYPE);
 		return(1);
 	}
 
 	switch (lt) {
 	case LIST_tag:
-		if (mdoc->last->head->child)
-			break;
-		/* FIXME: give this a dummy value. */
-		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_NOARGS);
-		break;
+		/* FALLTHROUGH */
 	case LIST_hang:
 		/* FALLTHROUGH */
 	case LIST_ohang:
@@ -1294,8 +1291,10 @@ post_it(POST_ARGS)
 	case LIST_inset:
 		/* FALLTHROUGH */
 	case LIST_diag:
-		if (NULL == mdoc->last->head->child)
-			mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_NOARGS);
+		if (NULL == nit->head->child)
+			mandoc_msg(MANDOCERR_IT_NOHEAD,
+			    mdoc->parse, nit->line, nit->pos,
+			    mdoc_argnames[nbl->args->argv[0].arg]);
 		break;
 	case LIST_bullet:
 		/* FALLTHROUGH */
@@ -1304,23 +1303,23 @@ post_it(POST_ARGS)
 	case LIST_enum:
 		/* FALLTHROUGH */
 	case LIST_hyphen:
-		if (NULL == mdoc->last->body->child)
-			mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_NOBODY);
+		if (NULL == nit->body->child)
+			mdoc_nmsg(mdoc, nit, MANDOCERR_NOBODY);
 		/* FALLTHROUGH */
 	case LIST_item:
-		if (mdoc->last->head->child)
-			mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_ARGSLOST);
+		if (NULL != nit->head->child)
+			mdoc_nmsg(mdoc, nit, MANDOCERR_ARGSLOST);
 		break;
 	case LIST_column:
-		cols = (int)n->norm->Bl.ncols;
+		cols = (int)nbl->norm->Bl.ncols;
 
-		assert(NULL == mdoc->last->head->child);
+		assert(NULL == nit->head->child);
 
-		if (NULL == mdoc->last->body->child)
-			mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_NOBODY);
+		if (NULL == nit->body->child)
+			mdoc_nmsg(mdoc, nit, MANDOCERR_NOBODY);
 
-		for (i = 0, c = mdoc->last->child; c; c = c->next)
-			if (MDOC_BODY == c->type)
+		for (i = 0, nch = nit->child; nch; nch = nch->next)
+			if (MDOC_BODY == nch->type)
 				i++;
 
 		if (i < cols)
@@ -1330,8 +1329,7 @@ post_it(POST_ARGS)
 		else
 			er = MANDOCERR_SYNTARGCOUNT;
 
-		mandoc_vmsg(er, mdoc->parse,
-		    mdoc->last->line, mdoc->last->pos,
+		mandoc_vmsg(er, mdoc->parse, nit->line, nit->pos,
 		    "columns == %d (have %d)", cols, i);
 		return(MANDOCERR_ARGCOUNT == er);
 	default:

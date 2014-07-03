@@ -1,0 +1,17 @@
+.Dd July 3, 2014
+.Dt BL-EMPTYTAG 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bl-emptytag
+.Nd tag lists with empty item heads
+.Sh DESCRIPTION
+initial text
+.Bl -tag -width 6n
+.It tag
+text
+.It
+no tag before this text
+.It tag
+text
+.El
+final text

@@ -1,0 +1,4 @@
+mandoc: emptyhead.in:12:2: WARNING: missing head in list item: hang
+mandoc: emptyhead.in:21:2: WARNING: missing head in list item: ohang
+mandoc: emptyhead.in:30:2: WARNING: missing head in list item: inset
+mandoc: emptyhead.in:39:2: WARNING: missing head in list item: diag

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.171 2014/07/02 19:54:39 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.172 2014/07/03 23:23:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -743,7 +743,7 @@ termp_it_pre(DECL_ARGS)
 			term_word(p, "\\ \\ ");
 		break;
 	case LIST_inset:
-		if (MDOC_BODY == n->type)
+		if (MDOC_BODY == n->type && n->parent->head->nchild)
 			term_word(p, "\\ ");
 		break;
 	default:

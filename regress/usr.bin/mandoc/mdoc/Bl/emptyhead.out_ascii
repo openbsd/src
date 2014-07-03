@@ -1,0 +1,38 @@
+BL-EMPTYHEAD(1)            OpenBSD Reference Manual            BL-EMPTYHEAD(1)
+
+NNAAMMEE
+     BBll--eemmppttyyhheeaadd - lists with empty item heads
+
+DDEESSCCRRIIPPTTIIOONN
+     hang list:
+
+     tag     text
+
+             no tag before this text
+
+     tag     text
+     ohang list:
+
+     tag
+     text
+
+     no tag before this text
+
+     tag
+     text
+     inset list:
+
+     tag text
+
+     no tag before this text
+
+     tag text
+     diag list:
+
+     ttaagg  text
+
+       no tag before this text
+
+     ttaagg  text
+
+OpenBSD                          July 3, 2014                          OpenBSD
