@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.271 2014/03/03 22:22:30 djm Exp $ */
+/* $OpenBSD: session.c,v 1.272 2014/07/03 03:34:09 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -45,6 +45,7 @@
 #include <fcntl.h>
 #include <grp.h>
 #include <login_cap.h>
+#include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
@@ -2260,7 +2261,7 @@ session_setup_x11fwd(Session *s)
 {
 	struct stat st;
 	char display[512], auth_display[512];
-	char hostname[MAXHOSTNAMELEN];
+	char hostname[NI_MAXHOST];
 	u_int i;
 
 	if (no_x11_forwarding_flag) {
