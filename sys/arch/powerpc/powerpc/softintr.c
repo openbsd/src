@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.4 2011/08/29 20:21:44 drahn Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.5 2014/07/03 07:02:10 matthieu Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm_extern.h>
 
