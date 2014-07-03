@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.354 2014/04/22 11:54:46 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.355 2014/07/03 13:26:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -4022,9 +4022,20 @@ doit:
 	 * the fragment pointers. Stop when we run out
 	 * of fragments or hit the end of the mbuf chain.
 	 */
-	if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_head,
-	    BUS_DMA_NOWAIT))
+	switch (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_head,
+	    BUS_DMA_NOWAIT)) {
+	case 0:
+		break;
+	case EFBIG:
+		if (m_defrag(m_head, M_DONTWAIT) == 0 &&
+		    bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_head,
+		     BUS_DMA_NOWAIT) == 0)
+			break;
+
+		/* FALLTHROUGH */
+	default:
 		return (ENOBUFS);
+	}
 
 	/* Check if we have enough free send BDs. */
 	if (sc->bge_txcnt + dmamap->dm_nsegs >= BGE_TX_RING_CNT)
