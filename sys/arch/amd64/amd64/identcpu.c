@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.52 2013/11/19 04:12:17 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.53 2014/07/03 21:15:28 matthew Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -92,13 +92,14 @@ const struct {
 	{ CPUID_TM,	"TM" },
 	{ CPUID_PBE,	"PBE" }
 }, cpu_ecpuid_features[] = {
-	{ CPUID_MPC,	"MPC" },
-	{ CPUID_NXE,	"NXE" },
-	{ CPUID_MMXX,	"MMXX" },
-	{ CPUID_FFXSR,	"FFXSR" },
-	{ CPUID_LONG,	"LONG" },
-	{ CPUID_3DNOW2,	"3DNOW2" },
-	{ CPUID_3DNOW,	"3DNOW" }
+	{ CPUID_MPC,		"MPC" },
+	{ CPUID_NXE,		"NXE" },
+	{ CPUID_MMXX,		"MMXX" },
+	{ CPUID_FFXSR,		"FFXSR" },
+	{ CPUID_PAGE1GB,	"PAGE1GB" },
+	{ CPUID_LONG,		"LONG" },
+	{ CPUID_3DNOW2,		"3DNOW2" },
+	{ CPUID_3DNOW,		"3DNOW" }
 }, cpu_cpuid_ecxfeatures[] = {
 	{ CPUIDECX_SSE3,	"SSE3" },
 	{ CPUIDECX_PCLMUL,	"PCLMUL" },

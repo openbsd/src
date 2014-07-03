@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.46 2013/08/24 04:26:16 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.47 2014/07/03 21:15:28 matthew Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -206,6 +206,7 @@
 #define	CPUID_NXE	0x00100000	/* No-Execute Extension */
 #define	CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
 #define	CPUID_FFXSR	0x02000000	/* fast FP/MMX save/restore */
+#define	CPUID_PAGE1GB	0x04000000	/* 1-GByte pages */
 #define	CPUID_LONG	0x20000000	/* long mode */
 #define	CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
 #define	CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */

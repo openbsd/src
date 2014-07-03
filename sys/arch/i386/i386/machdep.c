@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.539 2014/06/15 11:43:24 sf Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.540 2014/07/03 21:15:28 matthew Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -997,13 +997,14 @@ const struct cpu_cpuid_feature i386_cpuid_features[] = {
 };
 
 const struct cpu_cpuid_feature i386_ecpuid_features[] = {
-	{ CPUID_MPC,	"MPC" },
-	{ CPUID_NXE,	"NXE" },
-	{ CPUID_MMXX,	"MMXX" },
-	{ CPUID_FFXSR,	"FFXSR" },
-	{ CPUID_LONG,	"LONG" },
-	{ CPUID_3DNOW2,	"3DNOW2" },
-	{ CPUID_3DNOW,	"3DNOW" }
+	{ CPUID_MPC,		"MPC" },
+	{ CPUID_NXE,		"NXE" },
+	{ CPUID_MMXX,		"MMXX" },
+	{ CPUID_FFXSR,		"FFXSR" },
+	{ CPUID_PAGE1GB,	"PAGE1GB" },
+	{ CPUID_LONG,		"LONG" },
+	{ CPUID_3DNOW2,		"3DNOW2" },
+	{ CPUID_3DNOW,		"3DNOW" }
 };
 
 const struct cpu_cpuid_feature i386_cpuid_ecxfeatures[] = {
