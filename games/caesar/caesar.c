@@ -1,4 +1,4 @@
-/*	$OpenBSD: caesar.c,v 1.15 2010/02/22 18:57:42 otto Exp $	*/
+/*	$OpenBSD: caesar.c,v 1.16 2014/07/03 20:30:17 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,8 +61,8 @@ double stdf[26] = {
 	2.62, 0.81, 1.88, 0.23,  2.07, 0.06
 };
 
-void printit(int);
-void usage(void);
+__dead void printit(int);
+__dead void usage(void);
 
 
 int
