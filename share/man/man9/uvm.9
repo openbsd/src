@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.57 2014/07/02 23:46:52 matthew Exp $
+.\"	$OpenBSD: uvm.9,v 1.58 2014/07/03 06:55:59 matthew Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: July 2 2014 $
+.Dd $Mdocdate: July 3 2014 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -652,7 +652,10 @@ function allocates a page of memory at virtual address
 in either the object
 .Fa uobj
 or the anonymous memory
-.Fa anon .
+.Fa anon ,
+or returns
+.Dv NULL
+if no pages are free.
 Only one of
 .Fa anon
 and
@@ -687,10 +690,7 @@ function reallocates page
 to a new object
 .Fa newobj ,
 at a new offset
-.Fa newoff ,
-and returns
-.Dv NULL
-when no page can be found.
+.Fa newoff .
 .Pp
 The
 .Fn uvm_pagefree
