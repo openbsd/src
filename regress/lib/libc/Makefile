@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.42 2014/06/18 08:24:00 matthew Exp $
+#	$OpenBSD: Makefile,v 1.43 2014/07/03 21:12:24 miod Exp $
 
 SUBDIR+= _setjmp alloca arc4random-fork
 SUBDIR+= atexit basename cephes cxa-atexit db dirname env
@@ -9,7 +9,7 @@ SUBDIR+= regex setjmp setjmp-signal sigreturn sigsetjmp sprintf
 SUBDIR+= stdio_threading stpncpy strerror strtod strtol strtonum
 SUBDIR+= telldir time timingsafe vis
 
-.if defined(REGRESS_FULL)
+.if defined(REGRESS_FULL) || make(clean) || make(cleandir) || make(obj)
 SUBDIR+= getaddrinfo
 SUBDIR+= setjmp-fpu
 .endif

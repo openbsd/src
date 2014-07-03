@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.6 2014/05/24 13:32:46 jsing Exp $
+#	$OpenBSD: Makefile,v 1.7 2014/07/03 21:12:24 miod Exp $
 
 SUBDIR += mtree
 SUBDIR += openssl
 SUBDIR += relayd
 
-.if defined(REGRESS_FULL)
+.if defined(REGRESS_FULL) || make(clean) || make(cleandir) || make(obj)
 SUBDIR += pkg_add
 .endif
 

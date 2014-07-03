@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.9 2013/08/01 21:26:30 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.10 2014/07/03 21:12:24 miod Exp $
 
 SUBDIR+= cmac
 SUBDIR+= gmac
 SUBDIR+= hmac
 SUBDIR+= key_wrap
 
-.if defined(REGRESS_FULL)
+.if defined(REGRESS_FULL) || make(clean) || make(cleandir) || make(obj)
 SUBDIR+= enc
 SUBDIR+= aesctr
 SUBDIR+= aesxts

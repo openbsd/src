@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.44 2013/08/01 21:26:30 kettenis Exp $
+# $OpenBSD: Makefile,v 1.45 2014/07/03 21:12:24 miod Exp $
 
 # disabled because it requires a buggy behavior that uthread had:
 #	dup2_race
@@ -23,7 +23,7 @@ SUBDIR+= barrier blocked_shutdown \
 	 siginterrupt signal signals signodefer sigsuspend sigwait sleep \
 	 socket spinlock stack stdarg stdio switch system
 
-.if defined(REGRESS_FULL)
+.if defined(REGRESS_FULL) || make(clean) || make(cleandir) || make(obj)
 SUBDIR+= malloc_duel setsockopt
 .endif
 
