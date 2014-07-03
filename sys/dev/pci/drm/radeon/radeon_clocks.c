@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_clocks.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_clocks.c,v 1.2 2014/07/03 18:58:21 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -31,6 +31,10 @@
 #include "radeon_reg.h"
 #include "radeon.h"
 #include "atom.h"
+
+#if defined(__macppc__) || defined(__sparc64__)
+#include <dev/ofw/openfirm.h>
+#endif
 
 uint32_t	 radeon_legacy_get_engine_clock(struct radeon_device *);
 uint32_t	 radeon_legacy_get_memory_clock(struct radeon_device *);
@@ -95,6 +99,8 @@ uint32_t radeon_legacy_get_memory_clock(struct radeon_device *rdev)
 
 	return mclk;
 }
+
+#ifdef __linux__
 
 #ifdef CONFIG_OF
 /*
@@ -176,6 +182,84 @@ static bool radeon_read_clocks_OF(struct drm_device *dev)
 	return false;
 }
 #endif /* CONFIG_OF */
+
+#else
+
+#if defined(__macppc__) || defined(__sparc64__)
+/*
+ * Read XTAL (ref clock), SCLK and MCLK from Open Firmware device
+ * tree. Hopefully, ATI OF driver is kind enough to fill these
+ */
+static bool radeon_read_clocks_OF(struct drm_device *dev)
+{
+	struct radeon_device *rdev = dev->dev_private;
+	int node = PCITAG_NODE(rdev->pa_tag);
+	uint32_t val;
+	struct radeon_pll *p1pll = &rdev->clock.p1pll;
+	struct radeon_pll *p2pll = &rdev->clock.p2pll;
+	struct radeon_pll *spll = &rdev->clock.spll;
+	struct radeon_pll *mpll = &rdev->clock.mpll;
+
+	if (OF_getprop(node, "ATY,RefCLK", &val, sizeof(val)) != sizeof(val) || !val)
+		return false;
+	p1pll->reference_freq = p2pll->reference_freq = (val) / 10;
+	p1pll->reference_div = RREG32_PLL(RADEON_PPLL_REF_DIV) & 0x3ff;
+	if (p1pll->reference_div < 2)
+		p1pll->reference_div = 12;
+	p2pll->reference_div = p1pll->reference_div;
+
+	/* These aren't in the device-tree */
+	if (rdev->family >= CHIP_R420) {
+		p1pll->pll_in_min = 100;
+		p1pll->pll_in_max = 1350;
+		p1pll->pll_out_min = 20000;
+		p1pll->pll_out_max = 50000;
+		p2pll->pll_in_min = 100;
+		p2pll->pll_in_max = 1350;
+		p2pll->pll_out_min = 20000;
+		p2pll->pll_out_max = 50000;
+	} else {
+		p1pll->pll_in_min = 40;
+		p1pll->pll_in_max = 500;
+		p1pll->pll_out_min = 12500;
+		p1pll->pll_out_max = 35000;
+		p2pll->pll_in_min = 40;
+		p2pll->pll_in_max = 500;
+		p2pll->pll_out_min = 12500;
+		p2pll->pll_out_max = 35000;
+	}
+	/* not sure what the max should be in all cases */
+	rdev->clock.max_pixel_clock = 35000;
+
+	spll->reference_freq = mpll->reference_freq = p1pll->reference_freq;
+	spll->reference_div = mpll->reference_div =
+		RREG32_PLL(RADEON_M_SPLL_REF_FB_DIV) &
+			    RADEON_M_SPLL_REF_DIV_MASK;
+
+	if (OF_getprop(node, "ATY,SCLK", &val, sizeof(val)) == sizeof(val) && val)
+		rdev->clock.default_sclk = (val) / 10;
+	else
+		rdev->clock.default_sclk =
+			radeon_legacy_get_engine_clock(rdev);
+
+	if (OF_getprop(node, "ATY,MCLK", &val, sizeof(val)) == sizeof(val) && val)
+		rdev->clock.default_mclk = (val) / 10;
+	else
+		rdev->clock.default_mclk =
+			radeon_legacy_get_memory_clock(rdev);
+
+	DRM_INFO("Using device-tree clock info\n");
+
+	return true;
+}
+#else
+static bool radeon_read_clocks_OF(struct drm_device *dev)
+{
+	return false;
+}
+#endif /* CONFIG_OF */
+
+#endif
 
 void radeon_get_clock_info(struct drm_device *dev)
 {
