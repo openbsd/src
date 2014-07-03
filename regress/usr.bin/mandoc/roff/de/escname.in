@@ -39,4 +39,5 @@ macro seperated from argument by an escape sequence:
 ..
 .witharg\(enargument
 .Pp
+.de\e
 final text
