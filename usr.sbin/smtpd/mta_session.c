@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.66 2014/05/20 18:47:01 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.67 2014/07/04 13:25:00 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -219,6 +219,9 @@ mta_session(struct mta_relay *relay, struct mta_route *route)
 		default:
 			s->flags |= MTA_FORCE_PLAIN;
 	}
+
+	if (relay->flags & RELAY_BACKUP)
+		s->flags &= ~MTA_FORCE_PLAIN;
 
 	log_debug("debug: mta: %p: spawned for relay %s", s,
 	    mta_relay_to_text(relay));
