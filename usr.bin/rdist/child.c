@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.16 2011/04/18 12:29:59 krw Exp $	*/
+/*	$OpenBSD: child.c,v 1.17 2014/07/04 21:50:13 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -363,7 +363,6 @@ waitup(void)
 	CHILD *pc;
 	fd_set *rchildfdsp = NULL;
 	int rchildfdsn = 0;
-	size_t bytes;
 
 	debugmsg(DM_CALL, "waitup() start\n");
 
@@ -374,16 +373,15 @@ waitup(void)
 		return;
 
 	/*
-	 * Settup which children we want to select() on.
+	 * Set up which children we want to select() on.
 	 */
 	for (pc = childlist; pc; pc = pc->c_next)
 		if (pc->c_readfd > rchildfdsn)
 			rchildfdsn = pc->c_readfd;
-	bytes = howmany(rchildfdsn+1, NFDBITS) * sizeof(fd_mask);
-	if ((rchildfdsp = (fd_set *)malloc(bytes)) == NULL)
+	rchildfdsp = calloc(howmany(rchildfdsn+1, NFDBITS), sizeof(fd_mask));
+	if (rchildfdsp == NULL)
 		return;
 
-	memset(rchildfdsp, 0, bytes);
 	for (pc = childlist; pc; pc = pc->c_next)
 		if (pc->c_readfd > 0) {
 			debugmsg(DM_MISC, "waitup() select on %d (%s)\n",
