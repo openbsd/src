@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf6.c,v 1.5 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-ospf6.c,v 1.6 2014/07/04 08:42:38 bluhm Exp $	*/
 
 
 /*
@@ -631,7 +631,6 @@ ospf6_print(register const u_char *bp, register u_int length)
 	}
 	dataend = bp + length;
 
-	/* Print the routerid if it is not the same as the source */
 	TCHECK(op->ospf6_routerid);
 	printf(" rtrid %s", ipaddr_string(&op->ospf6_routerid));
 

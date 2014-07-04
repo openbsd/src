@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf.c,v 1.16 2011/03/22 17:31:18 claudio Exp $	*/
+/*	$OpenBSD: print-ospf.c,v 1.17 2014/07/04 08:42:38 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -535,10 +535,8 @@ ospf_print(register const u_char *bp, register u_int length,
 		printf(" %d:", length);
 	dataend = bp + length;
 
-	/* Print the routerid if it is not the same as the source */
 	TCHECK(op->ospf_routerid);
-	if (ip->ip_src.s_addr != op->ospf_routerid.s_addr)
-		printf(" rtrid %s", ipaddr_string(&op->ospf_routerid));
+	printf(" rtrid %s", ipaddr_string(&op->ospf_routerid));
 
 	TCHECK(op->ospf_areaid);
 	if (op->ospf_areaid.s_addr != 0)
