@@ -1,0 +1,13 @@
+.Dd July 4, 2014
+.Dt BD-NOTYPE 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bd-notype
+.Nd no type specified for a display
+.Sh DESCRIPTION
+initial text
+.Bd -offset 0n
+displayed
+text
+.Ed
+final text

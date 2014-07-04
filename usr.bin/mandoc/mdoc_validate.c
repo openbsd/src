@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.142 2014/07/03 23:23:45 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.143 2014/07/04 01:50:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -723,15 +723,16 @@ pre_bl(PRE_ARGS)
 			if (n->norm->Bl.width ||
 			    n->norm->Bl.offs ||
 			    n->norm->Bl.comp)
-				mdoc_nmsg(mdoc, n, MANDOCERR_LISTFIRST);
-
+				mandoc_msg(MANDOCERR_BL_LATETYPE,
+				    mdoc->parse, n->line, n->pos,
+				    mdoc_argnames[n->args->argv[0].arg]);
 		continue;
 	}
 
 	/* Allow lists to default to LIST_item. */
 
 	if (LIST__NONE == n->norm->Bl.type) {
-		mdoc_nmsg(mdoc, n, MANDOCERR_LISTTYPE);
+		mdoc_nmsg(mdoc, n, MANDOCERR_BL_NOTYPE);
 		n->norm->Bl.type = LIST_item;
 	}
 
@@ -745,7 +746,7 @@ pre_bl(PRE_ARGS)
 	switch (n->norm->Bl.type) {
 	case LIST_tag:
 		if (NULL == n->norm->Bl.width)
-			mdoc_nmsg(mdoc, n, MANDOCERR_NOWIDTHARG);
+			mdoc_nmsg(mdoc, n, MANDOCERR_BL_WIDTH);
 		break;
 	case LIST_column:
 		/* FALLTHROUGH */
@@ -865,7 +866,7 @@ pre_bd(PRE_ARGS)
 	}
 
 	if (DISP__NONE == n->norm->Bd.type) {
-		mdoc_nmsg(mdoc, n, MANDOCERR_DISPTYPE);
+		mdoc_nmsg(mdoc, n, MANDOCERR_BD_NOTYPE);
 		n->norm->Bd.type = DISP_ragged;
 	}
 
@@ -930,7 +931,8 @@ pre_std(PRE_ARGS)
 		if (MDOC_Std == n->args->argv[0].arg)
 			return(1);
 
-	mdoc_nmsg(mdoc, n, MANDOCERR_NOARGV);
+	mandoc_msg(MANDOCERR_ARG_STD, mdoc->parse,
+	    n->line, n->pos, mdoc_macronames[n->tok]);
 	return(1);
 }
 
@@ -1276,11 +1278,6 @@ post_it(POST_ARGS)
 	nbl = nit->parent->parent;
 	lt = nbl->norm->Bl.type;
 
-	if (LIST__NONE == lt) {
-		mdoc_nmsg(mdoc, nit, MANDOCERR_LISTTYPE);
-		return(1);
-	}
-
 	switch (lt) {
 	case LIST_tag:
 		/* FALLTHROUGH */
@@ -1304,7 +1301,9 @@ post_it(POST_ARGS)
 		/* FALLTHROUGH */
 	case LIST_hyphen:
 		if (NULL == nit->body->child)
-			mdoc_nmsg(mdoc, nit, MANDOCERR_NOBODY);
+			mandoc_msg(MANDOCERR_IT_NOBODY,
+			    mdoc->parse, nit->line, nit->pos,
+			    mdoc_argnames[nbl->args->argv[0].arg]);
 		/* FALLTHROUGH */
 	case LIST_item:
 		if (NULL != nit->head->child)
@@ -1314,9 +1313,6 @@ post_it(POST_ARGS)
 		cols = (int)nbl->norm->Bl.ncols;
 
 		assert(NULL == nit->head->child);
-
-		if (NULL == nit->body->child)
-			mdoc_nmsg(mdoc, nit, MANDOCERR_NOBODY);
 
 		for (i = 0, nch = nit->child; nch; nch = nch->next)
 			if (MDOC_BODY == nch->type)
@@ -1333,7 +1329,7 @@ post_it(POST_ARGS)
 		    "columns == %d (have %d)", cols, i);
 		return(MANDOCERR_ARGCOUNT == er);
 	default:
-		break;
+		abort();
 	}
 
 	return(1);

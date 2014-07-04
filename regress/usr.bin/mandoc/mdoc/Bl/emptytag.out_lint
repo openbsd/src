@@ -1,1 +1,1 @@
-mandoc: emptytag.in:12:2: WARNING: missing head in list item: tag
+mandoc: emptytag.in:12:2: WARNING: empty head in list item: tag

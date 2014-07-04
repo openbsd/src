@@ -1,0 +1,36 @@
+BL-EMPTYITEM(1)            OpenBSD Reference Manual            BL-EMPTYITEM(1)
+
+NNAAMMEE
+     BBll--eemmppttyyiitteemm - lists with fixed heads and empty items
+
+DDEESSCCRRIIPPTTIIOONN
+     bullet list:
+
+     oo   one
+
+     oo
+
+     oo   three
+     dash list:
+
+     --   one
+
+     --
+
+     --   three
+     enum list:
+
+     1.   one
+
+     2.
+
+     3.   three
+     hyphen list:
+
+     --   one
+
+     --
+
+     --   three
+
+OpenBSD                          July 3, 2014                          OpenBSD

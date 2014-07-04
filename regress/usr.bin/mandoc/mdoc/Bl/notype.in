@@ -1,0 +1,18 @@
+.Dd July 4, 2014
+.Dt BL-NOTYPE 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bl-notype
+.Nd lists with late or missing types
+.Sh DESCRIPTION
+initial text
+.Bl -offset indent -bullet
+.It
+Some text.
+.El
+middle text
+.Bl -offset indent
+.It
+Some text.
+.El
+final text

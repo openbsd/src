@@ -1,0 +1,39 @@
+.Dd July 3, 2014
+.Dt BL-EMPTYITEM 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bl-emptyitem
+.Nd lists with fixed heads and empty items
+.Sh DESCRIPTION
+bullet list:
+.Bl -bullet
+.It
+one
+.It
+.It
+three
+.El
+dash list:
+.Bl -dash
+.It
+one
+.It
+.It
+three
+.El
+enum list:
+.Bl -enum
+.It
+one
+.It
+.It
+three
+.El
+hyphen list:
+.Bl -hyphen
+.It
+one
+.It
+.It
+three
+.El

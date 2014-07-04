@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.76 2014/07/03 23:23:45 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.77 2014/07/04 01:50:03 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -88,11 +88,13 @@ enum	mandocerr {
 	MANDOCERR_COND_EMPTY, /* conditional request controls empty scope */
 	MANDOCERR_MACRO_EMPTY, /* skipping empty macro: macro */
 	MANDOCERR_ARGCWARN, /* argument count wrong */
-	MANDOCERR_DISPTYPE, /* missing display type */
-	MANDOCERR_LISTFIRST, /* list type must come first */
-	MANDOCERR_NOWIDTHARG, /* tag lists require a width argument */
-	MANDOCERR_IT_NOHEAD, /* missing head in list item: type */
+	MANDOCERR_BD_NOTYPE, /* missing display type, using -ragged */
+	MANDOCERR_BL_LATETYPE, /* list type is not the first argument: arg */
+	MANDOCERR_BL_WIDTH, /* missing -width in -tag list, using 8n */
+	MANDOCERR_IT_NOHEAD, /* empty head in list item: type */
+	MANDOCERR_IT_NOBODY, /* empty list item: type */
 	MANDOCERR_FONTTYPE, /* missing font type */
+	MANDOCERR_ARG_STD, /* missing -std argument, adding it: macro */
 
 	/* related to bad macro arguments */
 	MANDOCERR_IGNARGV, /* skipping argument */
@@ -146,11 +148,8 @@ enum	mandocerr {
 	MANDOCERR_SCOPEBROKEN, /* missing end of block */
 	MANDOCERR_SCOPEEXIT, /* scope open on exit */
 	MANDOCERR_UNAME, /* uname(3) system call failed */
-	/* FIXME: merge following with MANDOCERR_ARGCOUNT */
-	MANDOCERR_NOBODY, /* macro requires body argument(s) */
-	MANDOCERR_NOARGV, /* macro requires argument(s) */
 	MANDOCERR_NUMERIC, /* request requires a numeric argument */
-	MANDOCERR_LISTTYPE, /* missing list type */
+	MANDOCERR_BL_NOTYPE, /* missing list type, using -item */
 	MANDOCERR_ARGSLOST, /* line argument(s) will be lost */
 
 	MANDOCERR_FATAL, /* ===== start of fatal errors ===== */

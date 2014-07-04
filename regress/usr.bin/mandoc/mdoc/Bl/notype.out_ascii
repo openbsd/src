@@ -1,0 +1,15 @@
+BL-NOTYPE(1)               OpenBSD Reference Manual               BL-NOTYPE(1)
+
+NNAAMMEE
+     BBll--nnoottyyppee - lists with late or missing types
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text
+
+           oo   Some text.
+     middle text
+
+           Some text.
+     final text
+
+OpenBSD                          July 4, 2014                          OpenBSD
