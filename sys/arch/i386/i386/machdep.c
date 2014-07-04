@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.540 2014/07/03 21:15:28 matthew Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.541 2014/07/04 09:48:38 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3061,24 +3061,6 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_self = &cpu_info_primary;
 	cpu_info_primary.ci_curpcb = &proc0.p_addr->u_pcb;
 
-	/*
-	 * Initialize the I/O port and I/O mem extent maps.
-	 * Note: we don't have to check the return value since
-	 * creation of a fixed extent map will never fail (since
-	 * descriptor storage has already been allocated).
-	 *
-	 * N.B. The iomem extent manages _all_ physical addresses
-	 * on the machine.  When the amount of RAM is found, the two
-	 * extents of RAM are allocated from the map (0 -> ISA hole
-	 * and end of ISA hole -> end of RAM).
-	 */
-	ioport_ex = extent_create("ioport", 0x0, 0xffff, M_DEVBUF,
-	    (caddr_t)ioport_ex_storage, sizeof(ioport_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
-	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
-	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
-
 	/* make bootstrap gdt gates and memory segments */
 	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GICODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
@@ -3127,6 +3109,24 @@ init386(paddr_t first_avail)
 	lgdt(&region);
 	setregion(&region, idt, sizeof(idt_region) - 1);
 	lidt(&region);
+
+	/*
+	 * Initialize the I/O port and I/O mem extent maps.
+	 * Note: we don't have to check the return value since
+	 * creation of a fixed extent map will never fail (since
+	 * descriptor storage has already been allocated).
+	 *
+	 * N.B. The iomem extent manages _all_ physical addresses
+	 * on the machine.  When the amount of RAM is found, the two
+	 * extents of RAM are allocated from the map (0 -> ISA hole
+	 * and end of ISA hole -> end of RAM).
+	 */
+	ioport_ex = extent_create("ioport", 0x0, 0xffff, M_DEVBUF,
+	    (caddr_t)ioport_ex_storage, sizeof(ioport_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
+	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
 
 #if NISA > 0
 	isa_defaultirq();
