@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.22 2014/05/25 20:28:28 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.23 2014/07/04 05:58:31 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,13 +134,13 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 		}
 		if (process.ps_pgrp == NULL)
 			continue;
+		if (process.ps_flags & PS_EMBRYO)
+			continue;
 		if (KREAD(kd, (u_long)process.ps_mainproc, &proc)) {
 			_kvm_err(kd, kd->program, "can't read proc at %lx",
 			    (u_long)process.ps_mainproc);
 			return (-1);
 		}
-		if (proc.p_stat == SIDL)
-			continue;
 		process_pid = proc.p_pid;
 		if (KREAD(kd, (u_long)process.ps_ucred, &ucred)) {
 			_kvm_err(kd, kd->program, "can't read ucred at %lx",
@@ -275,7 +275,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 
 		vmp = NULL;
 
-		if (proc.p_stat != SIDL && !P_ZOMBIE(&proc) &&
+		if ((process.ps_flags & PS_ZOMBIE) == 0 &&
 		    !KREAD(kd, (u_long)process.ps_vmspace, &vm))
 			vmp = &vm;
 
@@ -306,7 +306,13 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 		}
 
 		/* update %cpu for all threads */
-		if (!dothreads) {
+		if (dothreads) {
+			kp.p_pctcpu = proc.p_pctcpu;
+			kp.p_stat   = proc.p_stat;
+		} else {
+			kp.p_pctcpu = 0;
+			kp.p_stat = (process.ps_flags & PS_ZOMBIE) ? SDEAD :
+			    SIDL;
 			for (p = TAILQ_FIRST(&process.ps_threads); p != NULL; 
 			    p = TAILQ_NEXT(&proc, p_thr_link)) {
 				if (KREAD(kd, (u_long)p, &proc)) {
@@ -315,11 +321,24 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 					    (u_long)p);
 					return (-1);
 				}
-				if (p == process.ps_mainproc)
-					continue;
 				kp.p_pctcpu += proc.p_pctcpu;
+				/*
+				 * find best state:
+				 * ONPROC > RUN > STOP > SLEEP > ...
+				 */
+				if (proc.p_stat == SONPROC ||
+				    kp.p_stat == SONPROC)
+					kp.p_stat = SONPROC;
+				else if (proc.p_stat == SRUN ||
+				    kp.p_stat == SRUN)
+					kp.p_stat = SRUN;
+				else if (proc.p_stat == SSTOP ||
+				    kp.p_stat == SSTOP)
+					kp.p_stat = SSTOP;
+				else if (proc.p_stat == SSLEEP)
+					kp.p_stat = SSLEEP;
 			}
-		}
+                }
 
 		memcpy(bp, &kp, esize);
 		bp += esize;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.34 2014/05/15 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.35 2014/07/04 05:58:31 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -493,7 +493,6 @@ setrunnable(struct proc *p)
 	case 0:
 	case SRUN:
 	case SONPROC:
-	case SZOMB:
 	case SDEAD:
 	case SIDL:
 	default:

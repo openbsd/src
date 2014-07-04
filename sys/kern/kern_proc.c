@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.58 2014/05/15 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.59 2014/07/04 05:58:30 guenther Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -348,7 +348,7 @@ fixjobc(struct process *pr, struct pgrp *pgrp, int entering)
 	LIST_FOREACH(pr, &pr->ps_children, ps_sibling)
 		if ((hispgrp = pr->ps_pgrp) != pgrp &&
 		    hispgrp->pg_session == mysession &&
-		    P_ZOMBIE(pr->ps_mainproc) == 0) {
+		    (pr->ps_flags & PS_ZOMBIE) == 0) {
 			if (entering)
 				hispgrp->pg_jobc++;
 			else if (--hispgrp->pg_jobc == 0)

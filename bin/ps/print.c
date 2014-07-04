@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.56 2013/11/11 23:07:15 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.57 2014/07/04 05:58:31 guenther Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -238,7 +238,7 @@ state(const struct kinfo_proc *kp, VARENT *ve)
 		state = *cp = 'R';
 		break;
 
-	case SZOMB:
+	case SDEAD:
 		*cp = 'Z';
 		break;
 
@@ -255,7 +255,7 @@ state(const struct kinfo_proc *kp, VARENT *ve)
 		*cp++ = 'X';
 	if (flag & P_SYSTRACE)
 		*cp++ = 'x';
-	if (flag & P_WEXIT && kp->p_stat != SZOMB)
+	if ((kp->p_psflags & (PS_EXITING | PS_ZOMBIE)) == PS_EXITING)
 		*cp++ = 'E';
 	if (kp->p_psflags & PS_ISPWAIT)
 		*cp++ = 'V';
@@ -489,7 +489,7 @@ cputime(const struct kinfo_proc *kp, VARENT *ve)
 	char obuff[128];
 
 	v = ve->var;
-	if (kp->p_stat == SZOMB || !kp->p_uvalid) {
+	if (kp->p_stat == SDEAD || !kp->p_uvalid) {
 		secs = 0;
 		psecs = 0;
 	} else {

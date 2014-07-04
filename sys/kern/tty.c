@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.108 2014/06/06 22:44:18 matthew Exp $	*/
+/*	$OpenBSD: tty.c,v 1.109 2014/07/04 05:58:31 guenther Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2183,7 +2183,7 @@ ttyinfo(struct tty *tp)
 				goto update_pickpr;
 
 			/* if p has less cpu or is zombie, then it's worse */
-			if (pctcpu2 < pctcpu || P_ZOMBIE(pr->ps_mainproc))
+			if (pctcpu2 < pctcpu || (pr->ps_flags & PS_ZOMBIE))
 				continue;
 update_pickpr:
 			pickpr = pr;
@@ -2193,8 +2193,7 @@ update_pickpr:
 
 		/* Calculate percentage cpu, resident set size. */
 		calc_pctcpu = (pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
-		rss = (!P_ZOMBIE(pickpr->ps_mainproc) &&
-		    pickpr->ps_mainproc->p_stat != SIDL) ? 0 :
+		rss = (pickpr->ps_flags & (PS_EMBRYO | PS_ZOMBIE)) ? 0 :
 		    vm_resident_count(pickpr->ps_vmspace);
 
 		calctsru(&pickpr->ps_tu, &utime, &stime, NULL);

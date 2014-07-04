@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.186 2014/05/15 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.187 2014/07/04 05:58:30 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -245,12 +245,14 @@ struct process {
 #define	PS_NOZOMBIE	0x00004000	/* No signal or zombie at exit. */
 #define	PS_STOPPED	0x00008000	/* Just stopped, need sig to parent. */
 #define	PS_SYSTEM	0x00010000	/* No sigs, stats or swapping. */
+#define	PS_EMBRYO	0x00020000	/* New process, not yet fledged */
+#define	PS_ZOMBIE	0x00040000	/* Dead and ready to be waited for */
 
 #define	PS_BITS \
     ("\20\01CONTROLT\02EXEC\03INEXEC\04EXITING\05SUGID" \
      "\06SUGIDEXEC\07PPWAIT\010ISPWAIT\011PROFIL\012TRACED" \
      "\013WAITED\014COREDUMP\015SINGLEEXIT\016SINGLEUNWIND" \
-     "\017NOZOMBIE\020STOPPED\021SYSTEM")
+     "\017NOZOMBIE\020STOPPED\021SYSTEM\022EMBRYO\023ZOMBIE")
 
 
 struct proc {
@@ -343,15 +345,15 @@ struct proc {
 };
 
 /* Status values. */
-#define	SIDL	1		/* Process being created by fork. */
+#define	SIDL	1		/* Thread being created by fork. */
 #define	SRUN	2		/* Currently runnable. */
 #define	SSLEEP	3		/* Sleeping on an address. */
-#define	SSTOP	4		/* Process debugging or suspension. */
-#define	SZOMB	5		/* Awaiting collection by parent. */
-#define SDEAD	6		/* Process is almost a zombie. */
-#define	SONPROC	7		/* Process is currently on a CPU. */
+#define	SSTOP	4		/* Debugging or suspension. */
+#define	SZOMB	5		/* unused */
+#define	SDEAD	6		/* Thread is almost gone */
+#define	SONPROC	7		/* Thread is currently on a CPU. */
 
-#define P_ZOMBIE(p)	((p)->p_stat == SZOMB || (p)->p_stat == SDEAD)
+#define	P_ZOMBIE(p)	((p)->p_stat == SDEAD)
 
 /*
  * These flags are per-thread and kept in p_flag

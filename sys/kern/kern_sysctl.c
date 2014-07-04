@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.252 2014/06/14 22:00:28 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.253 2014/07/04 05:58:31 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -123,8 +123,8 @@ int sysctl_emul(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_cptime2(int *, u_int, void *, size_t *, void *, size_t);
 
 void fill_file(struct kinfo_file *, struct file *, struct filedesc *,
-    int, struct vnode *, struct proc *, struct proc *, int);
-void fill_kproc(struct proc *, struct kinfo_proc *, int, int);
+    int, struct vnode *, struct process *, struct proc *, int);
+void fill_kproc(struct process *, struct kinfo_proc *, struct proc *, int);
 
 int (*cpu_cpuspeed)(int *);
 void (*cpu_setperf)(int);
@@ -997,7 +997,7 @@ sysctl_rdstruct(void *oldp, size_t *oldlenp, void *newp, const void *sp,
 #ifndef SMALL_KERNEL
 void
 fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
-	  int fd, struct vnode *vp, struct proc *pp, struct proc *p,
+	  int fd, struct vnode *vp, struct process *pr, struct proc *p,
 	  int show_pointers)
 {
 	struct vattr va;
@@ -1168,12 +1168,13 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 	}
 
 	/* per-process information for KERN_FILE_BY[PU]ID */
-	if (pp != NULL) {
-		kf->p_pid = pp->p_p->ps_pid;
-		kf->p_uid = pp->p_ucred->cr_uid;
-		kf->p_gid = pp->p_ucred->cr_gid;
-		kf->p_tid = pp->p_pid + THREAD_PID_OFFSET;
-		strlcpy(kf->p_comm, pp->p_comm, sizeof(kf->p_comm));
+	if (pr != NULL) {
+		kf->p_pid = pr->ps_pid;
+		kf->p_uid = pr->ps_ucred->cr_uid;
+		kf->p_gid = pr->ps_ucred->cr_gid;
+		kf->p_tid = -1;
+		strlcpy(kf->p_comm, pr->ps_mainproc->p_comm,
+		    sizeof(kf->p_comm));
 	}
 	if (fdp != NULL)
 		kf->fd_ofileflags = fdp->fd_ofileflags[fd];
@@ -1189,7 +1190,6 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 	struct kinfo_file *kf;
 	struct filedesc *fdp;
 	struct file *fp;
-	struct proc *pp;
 	struct process *pr;
 	size_t buflen, elem_size, elem_count, outsize;
 	char *dp = where;
@@ -1216,9 +1216,9 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 
 	kf = malloc(sizeof(*kf), M_TEMP, M_WAITOK);
 
-#define FILLIT(fp, fdp, i, vp, pp) do {				\
+#define FILLIT(fp, fdp, i, vp, pr) do {				\
 	if (buflen >= elem_size && elem_count > 0) {		\
-		fill_file(kf, fp, fdp, i, vp, pp, p, show_pointers);	\
+		fill_file(kf, fp, fdp, i, vp, pr, p, show_pointers);	\
 		error = copyout(kf, dp, outsize);		\
 		if (error)					\
 			break;					\
@@ -1253,9 +1253,7 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 			 * skip system, exiting, embryonic and undead
 			 * processes
 			 */
-			pp = pr->ps_mainproc;
-			if ((pr->ps_flags & (PS_SYSTEM | PS_EXITING))
-			    || pp->p_stat == SIDL || pp->p_stat == SZOMB)
+			if (pr->ps_flags & (PS_SYSTEM | PS_EMBRYO | PS_EXITING))
 				continue;
 			if (arg > 0 && pr->ps_pid != (pid_t)arg) {
 				/* not the pid we are looking for */
@@ -1263,31 +1261,29 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 			}
 			fdp = pr->ps_fd;
 			if (pr->ps_textvp)
-				FILLIT(NULL, NULL, KERN_FILE_TEXT, pr->ps_textvp, pp);
+				FILLIT(NULL, NULL, KERN_FILE_TEXT, pr->ps_textvp, pr);
 			if (fdp->fd_cdir)
-				FILLIT(NULL, NULL, KERN_FILE_CDIR, fdp->fd_cdir, pp);
+				FILLIT(NULL, NULL, KERN_FILE_CDIR, fdp->fd_cdir, pr);
 			if (fdp->fd_rdir)
-				FILLIT(NULL, NULL, KERN_FILE_RDIR, fdp->fd_rdir, pp);
+				FILLIT(NULL, NULL, KERN_FILE_RDIR, fdp->fd_rdir, pr);
 			if (pr->ps_tracevp)
-				FILLIT(NULL, NULL, KERN_FILE_TRACE, pr->ps_tracevp, pp);
+				FILLIT(NULL, NULL, KERN_FILE_TRACE, pr->ps_tracevp, pr);
 			for (i = 0; i < fdp->fd_nfiles; i++) {
 				if ((fp = fdp->fd_ofiles[i]) == NULL)
 					continue;
 				if (!FILE_IS_USABLE(fp))
 					continue;
-				FILLIT(fp, fdp, i, NULL, pp);
+				FILLIT(fp, fdp, i, NULL, pr);
 			}
 		}
 		break;
 	case KERN_FILE_BYUID:
 		LIST_FOREACH(pr, &allprocess, ps_list) {
-			pp = pr->ps_mainproc;
 			/*
 			 * skip system, exiting, embryonic and undead
 			 * processes
 			 */
-			if ((pr->ps_flags & (PS_SYSTEM | PS_EXITING))
-			    || pp->p_stat == SIDL || pp->p_stat == SZOMB)
+			if (pr->ps_flags & (PS_SYSTEM | PS_EMBRYO | PS_EXITING))
 				continue;
 			if (arg >= 0 && pr->ps_ucred->cr_uid != (uid_t)arg) {
 				/* not the uid we are looking for */
@@ -1295,17 +1291,17 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 			}
 			fdp = pr->ps_fd;
 			if (fdp->fd_cdir)
-				FILLIT(NULL, NULL, KERN_FILE_CDIR, fdp->fd_cdir, pp);
+				FILLIT(NULL, NULL, KERN_FILE_CDIR, fdp->fd_cdir, pr);
 			if (fdp->fd_rdir)
-				FILLIT(NULL, NULL, KERN_FILE_RDIR, fdp->fd_rdir, pp);
+				FILLIT(NULL, NULL, KERN_FILE_RDIR, fdp->fd_rdir, pr);
 			if (pr->ps_tracevp)
-				FILLIT(NULL, NULL, KERN_FILE_TRACE, pr->ps_tracevp, pp);
+				FILLIT(NULL, NULL, KERN_FILE_TRACE, pr->ps_tracevp, pr);
 			for (i = 0; i < fdp->fd_nfiles; i++) {
 				if ((fp = fdp->fd_ofiles[i]) == NULL)
 					continue;
 				if (!FILE_IS_USABLE(fp))
 					continue;
-				FILLIT(fp, fdp, i, NULL, pp);
+				FILLIT(fp, fdp, i, NULL, pr);
 			}
 		}
 		break;
@@ -1335,7 +1331,7 @@ int
 sysctl_doproc(int *name, u_int namelen, char *where, size_t *sizep)
 {
 	struct kinfo_proc *kproc = NULL;
-	struct proc *p, *pp;
+	struct proc *p;
 	struct process *pr;
 	char *dp;
 	int arg, buflen, doingzomb, elem_size, elem_count;
@@ -1371,12 +1367,10 @@ again:
 		if (pr->ps_pgrp == NULL)
 			continue;
 
-		p = pr->ps_mainproc;
-
 		/*
 		 * Skip embryonic processes.
 		 */
-		if (p->p_stat == SIDL)
+		if (pr->ps_flags & PS_EMBRYO)
 			continue;
 
 		/*
@@ -1434,16 +1428,7 @@ again:
 		}
 
 		if (buflen >= elem_size && elem_count > 0) {
-			fill_kproc(p, kproc, 0, show_pointers);
-			/* Update %cpu for all threads */
-			if (!dothreads) {
-				TAILQ_FOREACH(pp, &pr->ps_threads,
-				    p_thr_link) {
-					if (pp == p)
-						continue;
-					kproc->p_pctcpu += pp->p_pctcpu;
-				}
-			}
+			fill_kproc(pr, kproc, NULL, show_pointers);
 			error = copyout(kproc, dp, elem_size);
 			if (error)
 				goto err;
@@ -1459,7 +1444,7 @@ again:
 
 		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
 			if (buflen >= elem_size && elem_count > 0) {
-				fill_kproc(p, kproc, 1, show_pointers);
+				fill_kproc(pr, kproc, p, show_pointers);
 				error = copyout(kproc, dp, elem_size);
 				if (error)
 					goto err;
@@ -1495,13 +1480,17 @@ err:
  * Fill in a kproc structure for the specified process.
  */
 void
-fill_kproc(struct proc *p, struct kinfo_proc *ki, int isthread,
+fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
     int show_pointers)
 {
-	struct process *pr = p->p_p;
 	struct session *s = pr->ps_session;
 	struct tty *tp;
 	struct timespec ut, st;
+	int isthread;
+
+	isthread = p != NULL;
+	if (!isthread)
+		p = pr->ps_mainproc;		/* XXX */
 
 	FILL_KPROC(ki, strlcpy, p, pr, pr->ps_ucred, pr->ps_pgrp,
 	    p, pr, s, pr->ps_vmspace, pr->ps_limit, pr->ps_sigacts, isthread,
@@ -1525,20 +1514,40 @@ fill_kproc(struct proc *p, struct kinfo_proc *ki, int isthread,
 	}
 
 	/* fixups that can only be done in the kernel */
-	if (!P_ZOMBIE(p)) {
-		if (p->p_stat != SIDL)
+	if ((pr->ps_flags & PS_ZOMBIE) == 0) {
+		if ((pr->ps_flags & PS_EMBRYO) == 0)
 			ki->p_vm_rssize = vm_resident_count(pr->ps_vmspace);
-
-		calctsru(&p->p_tu, &ut, &st, NULL);
+		calctsru(isthread ? &p->p_tu : &pr->ps_tu, &ut, &st, NULL);
 		ki->p_uutime_sec = ut.tv_sec;
 		ki->p_uutime_usec = ut.tv_nsec/1000;
 		ki->p_ustime_sec = st.tv_sec;
 		ki->p_ustime_usec = st.tv_nsec/1000;
 
 #ifdef MULTIPROCESSOR
-		if (p->p_cpu != NULL)
+		if (isthread && p->p_cpu != NULL)
 			ki->p_cpuid = CPU_INFO_UNIT(p->p_cpu);
 #endif
+	}
+
+	/* get %cpu and schedule state: just one thread or sum of all? */
+	if (isthread) {
+		ki->p_pctcpu = p->p_pctcpu;
+		ki->p_stat   = p->p_stat;
+	} else {
+		ki->p_pctcpu = 0;
+		ki->p_stat = (pr->ps_flags & PS_ZOMBIE) ? SDEAD : SIDL;
+		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
+			ki->p_pctcpu += p->p_pctcpu;
+			/* find best state: ONPROC > RUN > STOP > SLEEP > .. */
+			if (p->p_stat == SONPROC || ki->p_stat == SONPROC)
+				ki->p_stat = SONPROC;
+			else if (p->p_stat == SRUN || ki->p_stat == SRUN)
+				ki->p_stat = SRUN;
+			else if (p->p_stat == SSTOP || ki->p_stat == SSTOP)
+				ki->p_stat = SSTOP;
+			else if (p->p_stat == SSLEEP)
+				ki->p_stat = SSLEEP;
+		}
 	}
 }
 

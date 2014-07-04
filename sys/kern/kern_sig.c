@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.167 2014/06/21 20:58:30 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.168 2014/07/04 05:58:30 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1058,7 +1058,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		/* FALLTHROUGH */
 	default:
 		/*
-		 * SRUN, SIDL, SZOMB do nothing with the signal,
+		 * SRUN, SIDL, SDEAD do nothing with the signal,
 		 * other than kicking ourselves if we are running.
 		 * It will either never be noticed, or noticed very soon.
 		 */
@@ -1963,7 +1963,6 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 				pr->ps_singlecount++;
 			}
 			break;
-		case SZOMB:
 		case SDEAD:
 			break;
 		case SONPROC:

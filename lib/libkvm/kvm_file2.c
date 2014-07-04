@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.35 2014/03/30 21:54:49 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.36 2014/07/04 05:58:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -121,7 +121,7 @@ static struct kinfo_file *kvm_deadfile_byfile(kvm_t *, int, int,
 static struct kinfo_file *kvm_deadfile_byid(kvm_t *, int, int,
     size_t, int *);
 static int fill_file(kvm_t *, struct kinfo_file *, struct file *, u_long,
-    struct vnode *, struct proc *, int, pid_t);
+    struct vnode *, struct process *, int, pid_t);
 static int filestat(kvm_t *, struct kinfo_file *, struct vnode *);
 
 LIST_HEAD(processlist, process);
@@ -315,6 +315,10 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			goto cleanup;
 		}
 
+		/* skip system, exiting, embryonic and undead processes */
+		if (process.ps_flags & (PS_SYSTEM | PS_EMBRYO | PS_EXITING))
+			continue;
+
 		if (process.ps_mainproc == NULL)
 			continue;
 		if (KREAD(kd, (u_long)process.ps_mainproc, &proc)) {
@@ -322,11 +326,6 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			    (u_long)process.ps_mainproc);
 			goto cleanup;
 		}
-
-		/* skip system, exiting, embryonic and undead processes */
-		if (proc.p_flag & P_SYSTEM || process.ps_flags & PS_EXITING ||
-		    proc.p_stat == SIDL || proc.p_stat == SZOMB)
-			continue;
 
 		if (op == KERN_FILE_BYPID && arg > 0 &&
 		    proc.p_pid != (pid_t)arg) {
@@ -344,17 +343,17 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		process.ps_ucred = &ucred;
 
 		if (op == KERN_FILE_BYUID && arg >= 0 &&
-		    proc.p_ucred->cr_uid != (uid_t)arg) {
+		    process.ps_ucred->cr_uid != (uid_t)arg) {
 			/* not the uid we are looking for */
 			continue;
 		}
 
-		if (KREAD(kd, (u_long)proc.p_fd, &filed0)) {
+		if (KREAD(kd, (u_long)process.ps_fd, &filed0)) {
 			_kvm_err(kd, kd->program, "can't read filedesc at %lx",
-			    (u_long)proc.p_fd);
+			    (u_long)process.ps_fd);
 			goto cleanup;
 		}
-		if ((char *)proc.p_fd + offsetof(struct filedesc0, fd_dfiles)
+		if ((char *)process.ps_fd + offsetof(struct filedesc0,fd_dfiles)
 		    == (char *)filed.fd_ofiles) {
 			filed.fd_ofiles = filed0.fd_dfiles;
 			filed.fd_ofileflags = filed0.fd_dfileflags;
@@ -377,13 +376,13 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			filed.fd_ofileflags = filebuf +
 			    (filed.fd_nfiles * sizeof(struct file *));
 		}
-		proc.p_fd = &filed;
+		process.ps_fd = &filed;
 
 		if (process.ps_textvp) {
 			if (buflen < esize)
 				goto done;
 			if (fill_file(kd, &kf, NULL, 0, process.ps_textvp,
-			    &proc, KERN_FILE_TEXT, proc.p_pid) == -1)
+			    &process, KERN_FILE_TEXT, proc.p_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
@@ -393,8 +392,8 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		if (filed.fd_cdir) {
 			if (buflen < esize)
 				goto done;
-			if (fill_file(kd, &kf, NULL, 0, filed.fd_cdir, &proc,
-			    KERN_FILE_CDIR, proc.p_pid) == -1)
+			if (fill_file(kd, &kf, NULL, 0, filed.fd_cdir,
+			    &process, KERN_FILE_CDIR, proc.p_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
@@ -404,8 +403,8 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		if (filed.fd_rdir) {
 			if (buflen < esize)
 				goto done;
-			if (fill_file(kd, &kf, NULL, 0, filed.fd_rdir, &proc,
-			    KERN_FILE_RDIR, proc.p_pid) == -1)
+			if (fill_file(kd, &kf, NULL, 0, filed.fd_rdir,
+			    &process, KERN_FILE_RDIR, proc.p_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
@@ -416,7 +415,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			if (buflen < esize)
 				goto done;
 			if (fill_file(kd, &kf, NULL, 0, process.ps_tracevp,
-			    &proc, KERN_FILE_TRACE, proc.p_pid) == -1)
+			    &process, KERN_FILE_TRACE, proc.p_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
@@ -429,7 +428,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		    filed.fd_freefile > filed.fd_lastfile + 1) {
 			_kvm_err(kd, kd->program,
 			    "filedesc corrupted at %lx for pid %d",
-			    (u_long)proc.p_fd, proc.p_pid);
+			    (u_long)process.ps_fd, proc.p_pid);
 			goto cleanup;
 		}
 
@@ -443,7 +442,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 				goto cleanup;
 			}
 			if (fill_file(kd, &kf, &file, (u_long)fp, NULL,
-			    &proc, i, proc.p_pid) == -1)
+			    &process, i, proc.p_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
@@ -461,8 +460,8 @@ cleanup:
 }
 
 static int
-fill_file(kvm_t *kd, struct kinfo_file *kf, struct file *fp, u_long fpaddr, struct vnode *vp,
-    struct proc *p, int fd, pid_t pid)
+fill_file(kvm_t *kd, struct kinfo_file *kf, struct file *fp, u_long fpaddr,
+    struct vnode *vp, struct process *pr, int fd, pid_t pid)
 {
 	struct ucred f_cred;
 
@@ -683,14 +682,15 @@ fill_file(kvm_t *kd, struct kinfo_file *kf, struct file *fp, u_long fpaddr, stru
 	}
 
 	/* per-process information for KERN_FILE_BY[PU]ID */
-	if (p != NULL) {
+	if (pr != NULL) {
 		kf->p_pid = pid;
-		kf->p_uid = p->p_ucred->cr_uid;
-		kf->p_gid = p->p_ucred->cr_gid;
-		kf->p_tid = p->p_pid + THREAD_PID_OFFSET;
-		strlcpy(kf->p_comm, p->p_comm, sizeof(kf->p_comm));
-		if (p->p_fd != NULL)
-			kf->fd_ofileflags = p->p_fd->fd_ofileflags[fd];
+		kf->p_uid = pr->ps_ucred->cr_uid;
+		kf->p_gid = pr->ps_ucred->cr_gid;
+		kf->p_tid = -1;
+		strlcpy(kf->p_comm, pr->ps_mainproc->p_comm,
+		    sizeof(kf->p_comm));
+		if (pr->ps_fd != NULL)
+			kf->fd_ofileflags = pr->ps_fd->fd_ofileflags[fd];
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.143 2014/06/11 20:39:18 matthew Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.144 2014/07/04 05:58:30 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -460,7 +460,7 @@ reaper(void)
 
 			if ((pr->ps_flags & PS_NOZOMBIE) == 0) {
 				/* Process is now a true zombie. */
-				p->p_stat = SZOMB;
+				atomic_setbits_int(&pr->ps_flags, PS_ZOMBIE);
 				prsignal(pr->ps_pptr, SIGCHLD);
 
 				/* Wake up the parent so it can get exit status. */
@@ -528,7 +528,7 @@ loop:
 			continue;
 
 		nfound++;
-		if (p->p_stat == SZOMB) {
+		if (pr->ps_flags & PS_ZOMBIE) {
 			retval[0] = p->p_pid;
 
 			if (statusp != NULL)

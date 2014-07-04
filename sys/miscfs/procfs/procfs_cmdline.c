@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_cmdline.c,v 1.10 2012/03/10 05:54:28 guenther Exp $	*/
+/*	$OpenBSD: procfs_cmdline.c,v 1.11 2014/07/04 05:58:31 guenther Exp $	*/
 /*	$NetBSD: procfs_cmdline.c,v 1.3 1999/03/13 22:26:48 thorpej Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 int
 procfs_docmdline(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct uio *uio)
 {
+	struct process *pr = p->p_p;
 	struct ps_strings pss;
 	int count, error, i;
 	size_t len, xlen, upper_bound;
@@ -78,7 +79,7 @@ procfs_docmdline(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct 
 	 * System processes also don't have a user stack.  This is what
 	 * ps(1) would display.
 	 */
-	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0) {
+	if (pr->ps_flags & (PS_ZOMBIE | PS_SYSTEM)) {
                 len = snprintf(arg, PAGE_SIZE, "(%s)", p->p_comm);
                 if (uio->uio_offset >= (off_t)len)
                         error = 0;
@@ -99,11 +100,11 @@ procfs_docmdline(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct 
 	 * Lock the process down in memory.
 	 */
 	/* XXXCDC: how should locking work here? */
-	if ((p->p_p->ps_flags & PS_EXITING) || (p->p_vmspace->vm_refcnt < 1)) {
+	if ((pr->ps_flags & PS_EXITING) || (pr->ps_vmspace->vm_refcnt < 1)) {
 		free(arg, M_TEMP);
 		return (EFAULT);
 	}
-	vm = p->p_vmspace;
+	vm = pr->ps_vmspace;
 	vm->vm_refcnt++;	/* XXX */
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.70 2014/06/23 03:46:17 guenther Exp $	*/
+/*	$OpenBSD: mib.c,v 1.71 2014/07/04 05:58:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -843,7 +843,6 @@ mib_hrswrun(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 			/* notRunnable(3) */
 			ber = ber_add_integer(ber, 3);
 			break;
-		case SZOMB:
 		case SDEAD:
 		default:
 			/* invalid(4) */

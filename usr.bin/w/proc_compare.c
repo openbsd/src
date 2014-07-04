@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc_compare.c,v 1.13 2012/12/18 21:28:45 millert Exp $	*/
+/*	$OpenBSD: proc_compare.c,v 1.14 2014/07/04 05:58:31 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -88,7 +88,7 @@ proc_compare(const struct kinfo_proc *p1, const struct kinfo_proc *p2)
 	/*
 	 * weed out zombies
 	 */
-	switch (TESTAB(p1->p_stat == SZOMB, p2->p_stat == SZOMB)) {
+	switch (TESTAB(p1->p_stat == SDEAD, p2->p_stat == SDEAD)) {
 	case ONLYA:
 		return (1);
 	case ONLYB:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.145 2014/05/15 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.146 2014/07/04 05:58:30 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -513,7 +513,6 @@ do {									\
 		(kp)->p_iticks = (pr)->ps_tu.tu_iticks;			\
 	}								\
 	(kp)->p_cpticks = (p)->p_cpticks;				\
-	(kp)->p_pctcpu = (p)->p_pctcpu;					\
 									\
 	if (show_addresses)						\
 		(kp)->p_tracep = PTRTOINT64((pr)->ps_tracevp);		\
@@ -542,7 +541,7 @@ do {									\
 	if ((sess)->s_leader == (praddr))				\
 		(kp)->p_eflag |= EPROC_SLEADER;				\
 									\
-	if ((p)->p_stat != SIDL && !P_ZOMBIE(p)) {			\
+	if (((pr)->ps_flags & (PS_EMBRYO | PS_ZOMBIE)) == 0) {		\
 		if ((vm) != NULL) {					\
 			(kp)->p_vm_rssize = (vm)->vm_rssize;		\
 			(kp)->p_vm_tsize = (vm)->vm_tsize;		\
@@ -566,7 +565,7 @@ do {									\
 		(kp)->p_rlim_rss_cur =					\
 		    (lim)->pl_rlimit[RLIMIT_RSS].rlim_cur;		\
 									\
-	if (!P_ZOMBIE(p)) {						\
+	if (((pr)->ps_flags & PS_ZOMBIE) == 0) {			\
 		struct timeval tv;					\
 									\
 		(kp)->p_uvalid = 1;					\

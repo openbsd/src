@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.167 2014/05/15 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.168 2014/07/04 05:58:30 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -189,9 +189,8 @@ process_new(struct proc *p, struct process *parent, int flags)
 	timeout_set(&pr->ps_realit_to, realitexpire, pr);
 
 	pr->ps_flags = parent->ps_flags & (PS_SUGID | PS_SUGIDEXEC);
-	if (parent->ps_session->s_ttyvp != NULL &&
-	    parent->ps_flags & PS_CONTROLT)
-		atomic_setbits_int(&pr->ps_flags, PS_CONTROLT);
+	if (parent->ps_session->s_ttyvp != NULL)
+		pr->ps_flags |= parent->ps_flags & PS_CONTROLT;
 
 	p->p_p = pr;
 
@@ -214,12 +213,18 @@ process_new(struct proc *p, struct process *parent, int flags)
 
 	if (parent->ps_flags & PS_PROFIL)
 		startprofclock(pr);
-	if ((flags & FORK_PTRACE) && (parent->ps_flags & PS_TRACED))
-		atomic_setbits_int(&pr->ps_flags, PS_TRACED);
+	if (flags & FORK_PTRACE)
+		pr->ps_flags |= parent->ps_flags & PS_TRACED;
 	if (flags & FORK_NOZOMBIE)
-		atomic_setbits_int(&pr->ps_flags, PS_NOZOMBIE);
+		pr->ps_flags |= PS_NOZOMBIE;
 	if (flags & FORK_SYSTEM)
-		atomic_setbits_int(&pr->ps_flags, PS_SYSTEM);
+		pr->ps_flags |= PS_SYSTEM;
+
+	/*
+	 * Mark as embryo to protect against others.
+	 * Done with atomic_* to force visibility of all of the above flags
+	 */
+	atomic_setbits_int(&pr->ps_flags, PS_EMBRYO);
 
 	/* it's sufficiently inited to be globally visible */
 	LIST_INSERT_HEAD(&allprocess, pr, ps_list);
@@ -463,11 +468,12 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 	}
 
 	/*
-	 * For new processes, set accounting bits
+	 * For new processes, set accounting bits and mark as complete.
 	 */
 	if ((flags & FORK_THREAD) == 0) {
 		getnanotime(&pr->ps_start);
 		pr->ps_acflag = AFORK;
+		atomic_clearbits_int(&pr->ps_flags, PS_EMBRYO);
 	}
 
 	/*

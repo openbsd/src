@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.49 2013/11/01 15:57:56 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.50 2014/07/04 05:58:31 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@
  * most other applications are interested only in open/close/read/nlist).
  */
 
+#define __need_process
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
@@ -344,16 +345,22 @@ static int
 proc_verify(kvm_t *kd, const struct kinfo_proc *p)
 {
 	struct proc kernproc;
+	struct process kernprocess;
+
+	if (p->p_psflags & (PS_EMBRYO | PS_ZOMBIE))
+		return (0);
 
 	/*
 	 * Just read in the whole proc.  It's not that big relative
 	 * to the cost of the read system call.
 	 */
-	if (kvm_read(kd, (u_long)p->p_paddr, &kernproc, sizeof(kernproc)) !=
-	    sizeof(kernproc))
+	if (KREAD(kd, (u_long)p->p_paddr, &kernproc))
 		return (0);
-	return (p->p_pid == kernproc.p_pid &&
-	    (kernproc.p_stat != SZOMB || p->p_stat == SZOMB));
+	if (p->p_pid != kernproc.p_pid)
+		return (0);
+	if (KREAD(kd, (u_long)kernproc.p_p, &kernprocess))
+		return (0);
+	return ((kernprocess.ps_flags & (PS_EMBRYO | PS_ZOMBIE)) == 0);
 }
 
 static char **
@@ -381,7 +388,7 @@ kvm_doargv(kvm_t *kd, const struct kinfo_proc *p, int nchr,
 	/*
 	 * Pointers are stored at the top of the user stack.
 	 */
-	if (p->p_stat == SZOMB ||
+	if (p->p_psflags & (PS_EMBRYO | PS_ZOMBIE) ||
 	    kvm_ureadm(kd, p, (u_long)ps, (char *)&arginfo,
 	    sizeof(arginfo)) != sizeof(arginfo))
 		return (0);
