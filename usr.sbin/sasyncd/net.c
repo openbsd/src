@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.20 2013/03/11 17:40:11 deraadt Exp $	*/
+/*	$OpenBSD: net.c,v 1.21 2014/07/04 22:32:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -302,13 +302,12 @@ net_enqueue(struct syncpeer *p, struct msg *m)
 	if (p->socket < 0)
 		return;
 
-	qm = (struct qmsg *)malloc(sizeof *qm);
+	qm = calloc(1, sizeof *qm);
 	if (!qm) {
-		log_err("net_enqueue: malloc()");
+		log_err("net_enqueue: calloc()");
 		return;
 	}
 
-	memset(qm, 0, sizeof *qm);
 	qm->msg = m;
 	m->refcnt++;
 
