@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.11 2013/04/30 12:30:40 florian Exp $	*/
+/*	$OpenBSD: timer.c,v 1.12 2014/07/04 22:39:31 guenther Exp $	*/
 /*	$KAME: timer.c,v 1.7 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
@@ -48,10 +48,8 @@ rtadvd_add_timer(void (*timeout)(void *),
 {
 	struct rtadvd_timer *newtimer;
 
-	if ((newtimer = malloc(sizeof(*newtimer))) == NULL)
-		fatal("malloc");
-
-	memset(newtimer, 0, sizeof(*newtimer));
+	if ((newtimer = calloc(1, sizeof(*newtimer))) == NULL)
+		fatal("calloc");
 
 	if (timeout == NULL)
 		fatalx("timeout function unspecified");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.41 2014/06/29 00:58:45 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.42 2014/07/04 22:39:31 guenther Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -241,9 +241,8 @@ getconfig(intface)
 			continue;
 
 		/* allocate memory to store prefix information */
-		if ((pfx = malloc(sizeof(struct prefix))) == NULL)
-			fatal("malloc");
-		memset(pfx, 0, sizeof(*pfx));
+		if ((pfx = calloc(1, sizeof(*pfx))) == NULL)
+			fatal("calloc");
 
 		/* link into chain */
 		TAILQ_INSERT_TAIL(&tmp->prefixes, pfx, entry);
@@ -569,9 +568,8 @@ get_prefix(struct rainfo *rai)
 		}
 
 		/* allocate memory to store prefix info. */
-		if ((pp = malloc(sizeof(*pp))) == NULL)
-			fatal("malloc");
-		memset(pp, 0, sizeof(*pp));
+		if ((pp = calloc(1, sizeof(*pp))) == NULL)
+			fatal("calloc");
 
 		/* set prefix, sweep bits outside of prefixlen */
 		pp->prefixlen = plen;
@@ -635,11 +633,10 @@ add_prefix(struct rainfo *rai, struct in6_prefixreq *ipr)
 	struct prefix *prefix;
 	u_char ntopbuf[INET6_ADDRSTRLEN];
 
-	if ((prefix = malloc(sizeof(*prefix))) == NULL) {
-		log_warn("malloc");
+	if ((prefix = calloc(1, sizeof(*prefix))) == NULL) {
+		log_warn("calloc");
 		return;		/* XXX: error or exit? */
 	}
-	memset(prefix, 0, sizeof(*prefix));
 	prefix->prefix = ipr->ipr_prefix.sin6_addr;
 	prefix->prefixlen = ipr->ipr_plen;
 	prefix->validlifetime = ipr->ipr_vltime;
