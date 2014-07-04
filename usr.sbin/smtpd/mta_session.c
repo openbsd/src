@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.67 2014/07/04 13:25:00 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.68 2014/07/04 15:24:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -144,7 +144,6 @@ static void mta_send(struct mta_session *, char *, ...);
 static ssize_t mta_queue_data(struct mta_session *);
 static void mta_response(struct mta_session *, char *);
 static const char * mta_strstate(int);
-static int mta_check_loop(FILE *);
 static void mta_start_tls(struct mta_session *);
 static int mta_verify_certificate(struct mta_session *);
 static struct mta_session *mta_tree_pop(struct tree *, uint64_t);
@@ -286,16 +285,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		if (s->datafp == NULL)
 			fatal("mta: fdopen");
 
-		if (mta_check_loop(s->datafp)) {
-			log_debug("debug: mta: loop detected");
-			fclose(s->datafp);
-			s->datafp = NULL;
-			mta_flush_task(s, IMSG_MTA_DELIVERY_LOOP,
-			    "Loop detected", 0, 0);
-			mta_enter_state(s, MTA_READY);
-		} else {
-			mta_enter_state(s, MTA_MAIL);
-		}
+		mta_enter_state(s, MTA_MAIL);
 		io_reload(&s->io);
 		return;
 
@@ -1488,48 +1478,6 @@ mta_error(struct mta_session *s, const char *fmt, ...)
 		mta_flush_task(s, IMSG_MTA_DELIVERY_TEMPFAIL, error, 0, 0);
 
 	free(error);
-}
-
-static int
-mta_check_loop(FILE *fp)
-{
-	char	*buf, *lbuf;
-	size_t	 len;
-	uint32_t rcvcount = 0;
-	int	 ret = 0;
-
-	lbuf = NULL;
-	while ((buf = fgetln(fp, &len))) {
-		if (buf[len - 1] == '\n')
-			buf[len - 1] = '\0';
-		else {
-			/* EOF without EOL, copy and add the NUL */
-			lbuf = xmalloc(len + 1, "mta_check_loop");
-			memcpy(lbuf, buf, len);
-			lbuf[len] = '\0';
-			buf = lbuf;
-		}
-
-		if (strchr(buf, ':') == NULL && !isspace((unsigned char)*buf))
-			break;
-
-		if (strncasecmp("Received: ", buf, 10) == 0) {
-			rcvcount++;
-			if (rcvcount == MAX_HOPS_COUNT) {
-				ret = 1;
-				break;
-			}
-		}
-		if (lbuf) {
-			free(lbuf);
-			lbuf  = NULL;
-		}
-	}
-	if (lbuf)
-		free(lbuf);
-
-	fseek(fp, SEEK_SET, 0);
-	return ret;
 }
 
 static void

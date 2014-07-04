@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.211 2014/05/17 20:07:54 chl Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.212 2014/07/04 15:24:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -85,8 +85,9 @@ enum message_flags {
 	MF_QUEUE_ENVELOPE_FAIL	= 0x0001,
 	MF_ERROR_SIZE		= 0x1000,
 	MF_ERROR_IO		= 0x2000,
-	MF_ERROR_MFA		= 0x4000,
+	MF_ERROR_LOOP		= 0x4000,
 };
+#define MF_ERROR	(MF_ERROR_SIZE | MF_ERROR_IO | MF_ERROR_LOOP)
 
 enum smtp_command {
 	CMD_HELO = 0,
@@ -140,9 +141,10 @@ struct smtp_session {
 	size_t			 rcptfail;
 	TAILQ_HEAD(, smtp_rcpt)	 rcpts;
 
-
 	size_t			 datalen;
 	FILE			*ofile;
+	int			 hdrdone;
+	int			 rcvcount;
 
 	struct event		 pause;
 };
@@ -1542,8 +1544,22 @@ smtp_message_write(struct smtp_session *s, const char *line)
 	log_trace(TRACE_SMTP, "<<< [MSG] %s", line);
 
 	/* Don't waste resources on message if it's going to bin anyway. */
-	if (s->msgflags & (MF_ERROR_IO | MF_ERROR_SIZE | MF_ERROR_MFA))
+	if (s->msgflags & MF_ERROR)
 		return;
+
+	if (*line == '\0')
+		s->hdrdone = 1;
+
+	/* check for loops */
+	if (!s->hdrdone) {
+		if (strncasecmp("Received: ", line, 10) == 0)
+			s->rcvcount++;
+		if (s->rcvcount == MAX_HOPS_COUNT) {
+			s->msgflags |= MF_ERROR_LOOP;
+			log_warn("warn: loop detected");
+			return;
+		}
+	}
 
 	len = strlen(line) + 1;
 
@@ -1572,7 +1588,7 @@ smtp_message_end(struct smtp_session *s)
 	fclose(s->ofile);
 	s->ofile = NULL;
 
-	if (s->msgflags & (MF_ERROR_SIZE | MF_ERROR_MFA | MF_ERROR_IO)) {
+	if (s->msgflags & MF_ERROR) {
 		m_create(p_queue, IMSG_SMTP_MESSAGE_ROLLBACK, 0, 0, -1);
 		m_add_msgid(p_queue, evpid_to_msgid(s->evp.id));
 		m_close(p_queue);
@@ -1580,6 +1596,10 @@ smtp_message_end(struct smtp_session *s)
 			smtp_reply(s, "554 %s %s: Transaction failed, message too big",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_MESSAGE_TOO_BIG_FOR_SYSTEM),
 			    esc_description(ESC_MESSAGE_TOO_BIG_FOR_SYSTEM));
+		else if (s->msgflags & MF_ERROR_LOOP)
+			smtp_reply(s, "500 %s %s: Loop detected",
+			    esc_code(ESC_STATUS_PERMFAIL, ESC_ROUTING_LOOP_DETECTED),
+			    esc_description(ESC_ROUTING_LOOP_DETECTED));
 		else
 			smtp_reply(s, "%d Message rejected", s->msgcode);
 		smtp_message_reset(s, 0);
@@ -1609,6 +1629,8 @@ smtp_message_reset(struct smtp_session *s, int prepare)
 	s->destcount = 0;
 	s->rcptcount = 0;
 	s->datalen = 0;
+	s->rcvcount = 0;
+	s->hdrdone = 0;
 
 	if (prepare) {
 		s->evp.ss = s->ss;
