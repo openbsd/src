@@ -1,0 +1,11 @@
+.TH PP-ARG 1 "July 4, 2014" OpenBSD
+.SH NAME
+PP-arg \- paragraphs macros with arguments
+.SH DESCRIPTION
+PP with argument:
+.PP arg
+LP with arguments:
+.LP arg1 arg2
+P with argument:
+.P arg
+final text

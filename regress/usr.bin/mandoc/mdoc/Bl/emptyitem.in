@@ -7,7 +7,7 @@
 .Sh DESCRIPTION
 bullet list:
 .Bl -bullet
-.It
+.It head argument
 one
 .It
 .It
@@ -17,7 +17,7 @@ dash list:
 .Bl -dash
 .It
 one
-.It
+.It head argument
 .It
 three
 .El
@@ -26,12 +26,12 @@ enum list:
 .It
 one
 .It
-.It
+.It head argument
 three
 .El
 hyphen list:
 .Bl -hyphen
-.It
+.It head argument
 one
 .It
 .It

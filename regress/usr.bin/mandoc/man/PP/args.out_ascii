@@ -1,0 +1,19 @@
+PP-ARG(1)                  OpenBSD Reference Manual                  PP-ARG(1)
+
+
+
+NNAAMMEE
+       PP-arg - paragraphs macros with arguments
+
+DDEESSCCRRIIPPTTIIOONN
+       PP with argument:
+
+       LP with arguments:
+
+       P with argument:
+
+       final text
+
+
+
+OpenBSD                          July 4, 2014                        PP-ARG(1)

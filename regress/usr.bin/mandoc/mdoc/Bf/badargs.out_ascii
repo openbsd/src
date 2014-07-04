@@ -1,0 +1,10 @@
+BF-BADARGS(1)              OpenBSD Reference Manual              BF-BADARGS(1)
+
+NNAAMMEE
+     BBff--bbaaddaarrggss - font blocks with bad arguments
+
+DDEESSCCRRIIPPTTIIOONN
+     normal text _e_m_p_h_a_s_i_s no argument _b_a_c_k _t_o _e_m_p_h_a_s_i_s bad argument _b_a_c_k _t_o
+     _e_m_p_h_a_s_i_s back to normal
+
+OpenBSD                          July 4, 2014                          OpenBSD

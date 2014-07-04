@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.143 2014/07/04 01:50:03 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.144 2014/07/04 16:11:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -80,7 +80,6 @@ static	int	 ewarn_le1(POST_ARGS);
 static	int	 hwarn_eq0(POST_ARGS);
 static	int	 hwarn_eq1(POST_ARGS);
 static	int	 hwarn_ge1(POST_ARGS);
-static	int	 hwarn_le1(POST_ARGS);
 
 static	int	 post_an(POST_ARGS);
 static	int	 post_at(POST_ARGS);
@@ -133,7 +132,7 @@ static	int	 pre_std(PRE_ARGS);
 static	v_post	 posts_an[] = { post_an, NULL };
 static	v_post	 posts_at[] = { post_at, post_defaults, NULL };
 static	v_post	 posts_bd[] = { post_literal, hwarn_eq0, bwarn_ge1, NULL };
-static	v_post	 posts_bf[] = { hwarn_le1, post_bf, NULL };
+static	v_post	 posts_bf[] = { post_bf, NULL };
 static	v_post	 posts_bk[] = { hwarn_eq0, bwarn_ge1, NULL };
 static	v_post	 posts_bl[] = { bwarn_ge1, post_bl, NULL };
 static	v_post	 posts_bx[] = { post_bx, NULL };
@@ -509,12 +508,6 @@ static int
 hwarn_ge1(POST_ARGS)
 {
 	return(check_count(mdoc, MDOC_HEAD, CHECK_WARN, CHECK_GT, 0));
-}
-
-static int
-hwarn_le1(POST_ARGS)
-{
-	return(check_count(mdoc, MDOC_HEAD, CHECK_WARN, CHECK_LT, 2));
 }
 
 static void
@@ -994,7 +987,7 @@ pre_dd(PRE_ARGS)
 static int
 post_bf(POST_ARGS)
 {
-	struct mdoc_node *np;
+	struct mdoc_node *np, *nch;
 	enum mdocargt	  arg;
 
 	/*
@@ -1021,18 +1014,19 @@ post_bf(POST_ARGS)
 	assert(MDOC_BLOCK == np->parent->type);
 	assert(MDOC_Bf == np->parent->tok);
 
-	/*
-	 * Cannot have both argument and parameter.
-	 * If neither is specified, let it through with a warning.
-	 */
+	/* Check the number of arguments. */
 
-	if (np->parent->args && np->child) {
-		mdoc_nmsg(mdoc, np, MANDOCERR_SYNTARGVCOUNT);
-		return(0);
-	} else if (NULL == np->parent->args && NULL == np->child) {
-		mdoc_nmsg(mdoc, np, MANDOCERR_FONTTYPE);
-		return(1);
+	nch = np->child;
+	if (NULL == np->parent->args) {
+		if (NULL == nch) {
+			mdoc_nmsg(mdoc, np, MANDOCERR_BF_NOFONT);
+			return(1);
+		}
+		nch = nch->next;
 	}
+	if (NULL != nch)
+		mandoc_vmsg(MANDOCERR_ARG_EXCESS, mdoc->parse,
+		    nch->line, nch->pos, "Bf ... %s", nch->string);
 
 	/* Extract argument into data. */
 
@@ -1058,7 +1052,9 @@ post_bf(POST_ARGS)
 	else if (0 == strcmp(np->child->string, "Sy"))
 		np->norm->Bf.font = FONT_Sy;
 	else
-		mdoc_nmsg(mdoc, np, MANDOCERR_FONTTYPE);
+		mandoc_vmsg(MANDOCERR_BF_BADFONT, mdoc->parse,
+		    np->child->line, np->child->pos,
+		    "Bf %s", np->child->string);
 
 	return(1);
 }
@@ -1091,9 +1087,14 @@ post_lb(POST_ARGS)
 static int
 post_eoln(POST_ARGS)
 {
+	const struct mdoc_node *n;
 
-	if (mdoc->last->child)
-		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_ARGSLOST);
+	n = mdoc->last;
+	if (n->child)
+		mandoc_vmsg(MANDOCERR_ARG_SKIP,
+		    mdoc->parse, n->line, n->pos,
+		    "%s %s", mdoc_macronames[n->tok],
+		    n->child->string);
 	return(1);
 }
 
@@ -1307,7 +1308,9 @@ post_it(POST_ARGS)
 		/* FALLTHROUGH */
 	case LIST_item:
 		if (NULL != nit->head->child)
-			mdoc_nmsg(mdoc, nit, MANDOCERR_ARGSLOST);
+			mandoc_vmsg(MANDOCERR_ARG_SKIP,
+			    mdoc->parse, nit->line, nit->pos,
+			    "It %s", nit->head->child->string);
 		break;
 	case LIST_column:
 		cols = (int)nbl->norm->Bl.ncols;

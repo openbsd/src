@@ -9,7 +9,7 @@ initial text
 .Bl -offset indent -bullet
 .It
 Some text.
-.El
+.El tail argument
 middle text
 .Bl -offset indent
 .It

@@ -9,5 +9,5 @@ initial text
 .Bd -offset 0n
 displayed
 text
-.Ed
+.Ed some arguments
 final text

@@ -1,0 +1,5 @@
+mandoc: multiargs.in:13:15: ERROR: skipping excess arguments: Bf ... Em
+mandoc: multiargs.in:17:15: ERROR: skipping excess arguments: Bf ... badarg
+mandoc: multiargs.in:21:8: ERROR: skipping excess arguments: Bf ... -emphasis
+mandoc: multiargs.in:25:8: ERROR: skipping excess arguments: Bf ... Em
+mandoc: multiargs.in:29:8: ERROR: skipping excess arguments: Bf ... badarg

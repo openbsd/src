@@ -1,4 +1,4 @@
-/*	$Id: eqn.c,v 1.9 2014/04/23 21:06:33 schwarze Exp $ */
+/*	$Id: eqn.c,v 1.10 2014/07/04 16:11:41 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -296,7 +296,8 @@ eqn_read(struct eqn_node **epp, int ln,
 			p++;
 		if ('\0' == *p)
 			return(er);
-		mandoc_msg(MANDOCERR_ARGSLOST, ep->parse, ln, pos, NULL);
+		mandoc_vmsg(MANDOCERR_ARG_SKIP, ep->parse,
+		    ln, pos, "EN %s", p);
 		return(er);
 	}
 

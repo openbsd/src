@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.92 2014/07/02 20:18:42 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.93 2014/07/04 16:11:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -765,11 +765,12 @@ blk_exp_close(MACRO_PROT_ARGS)
 			later = n;
 	}
 
-	if ( ! (MDOC_CALLABLE & mdoc_macros[tok].flags)) {
-		/* FIXME: do this in validate */
-		if (buf[*pos])
-			mdoc_pmsg(mdoc, line, ppos, MANDOCERR_ARGSLOST);
-
+	if ( ! (MDOC_PARSED & mdoc_macros[tok].flags)) {
+		if ('\0' != buf[*pos])
+			mandoc_vmsg(MANDOCERR_ARG_SKIP,
+			    mdoc->parse, line, ppos,
+			    "%s %s", mdoc_macronames[tok],
+			    buf + *pos);
 		if ( ! rew_sub(MDOC_BODY, mdoc, tok, line, ppos))
 			return(0);
 		return(rew_sub(MDOC_BLOCK, mdoc, tok, line, ppos));

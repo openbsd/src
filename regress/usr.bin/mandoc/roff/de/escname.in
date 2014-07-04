@@ -34,9 +34,9 @@ Remove all but second:
 .first\\second
 .Pp
 macro seperated from argument by an escape sequence:
-.de witharg
+.de witharg end4 excess arguments
 .Dq \\$1
-..
+.end4 tail argument
 .witharg\(enargument
 .Pp
 .de\e

@@ -21,7 +21,7 @@
 .Ar x x x x x x
 .Bk -lines
 .Op o Ar a
-.Ek
+.Ek tail argument
 .Pp
 .Nm
 .Ar x x x x x x x x

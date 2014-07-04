@@ -1,0 +1,20 @@
+.Dd July 4, 2014
+.Dt BF-BADARGS 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bf-badargs
+.Nd font blocks with bad arguments
+.Sh DESCRIPTION
+normal text
+.Bf -emphasis
+emphasis
+.Bf
+no argument
+.Ef
+back to emphasis
+.Bf badarg
+bad argument
+.Ef tail argument
+back to emphasis
+.Ef
+back to normal

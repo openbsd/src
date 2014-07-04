@@ -1,0 +1,3 @@
+mandoc: args.in:6:2: ERROR: skipping all arguments: PP arg
+mandoc: args.in:8:2: ERROR: skipping all arguments: LP arg1 ...
+mandoc: args.in:10:2: ERROR: skipping all arguments: P arg

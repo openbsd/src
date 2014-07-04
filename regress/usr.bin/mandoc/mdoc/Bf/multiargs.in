@@ -1,0 +1,32 @@
+.Dd July 4, 2014
+.Dt BF-MULTIARGS 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bf-multiargs
+.Nd font blocks with multiple arguments
+.Sh DESCRIPTION
+normal text
+.Bf -symbolic -emphasis
+symbolic emphasis
+.Ef
+back to normal
+.Bf -symbolic Em
+symbolic Em
+.Ef
+back to normal
+.Bf -symbolic badarg
+symbolic badarg
+.Ef
+back to normal
+.Bf Sy -emphasis
+Sy -emphasis
+.Ef
+back to normal
+.Bf Sy Em
+Sy Em
+.Ef
+back to normal
+.Bf Sy badarg
+Sy Em
+.Ef
+back to normal

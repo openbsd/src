@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.77 2014/07/04 01:50:03 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.78 2014/07/04 16:11:41 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -93,7 +93,8 @@ enum	mandocerr {
 	MANDOCERR_BL_WIDTH, /* missing -width in -tag list, using 8n */
 	MANDOCERR_IT_NOHEAD, /* empty head in list item: type */
 	MANDOCERR_IT_NOBODY, /* empty list item: type */
-	MANDOCERR_FONTTYPE, /* missing font type */
+	MANDOCERR_BF_NOFONT, /* missing font type, using \fR */
+	MANDOCERR_BF_BADFONT, /* unknown font type, using \fR: Bf font */
 	MANDOCERR_ARG_STD, /* missing -std argument, adding it: macro */
 
 	/* related to bad macro arguments */
@@ -150,7 +151,8 @@ enum	mandocerr {
 	MANDOCERR_UNAME, /* uname(3) system call failed */
 	MANDOCERR_NUMERIC, /* request requires a numeric argument */
 	MANDOCERR_BL_NOTYPE, /* missing list type, using -item */
-	MANDOCERR_ARGSLOST, /* line argument(s) will be lost */
+	MANDOCERR_ARG_SKIP, /* skipping all arguments: macro args */
+	MANDOCERR_ARG_EXCESS, /* skipping excess arguments: macro ... args */
 
 	MANDOCERR_FATAL, /* ===== start of fatal errors ===== */
 
@@ -158,7 +160,6 @@ enum	mandocerr {
 	MANDOCERR_NOTMANUAL, /* not a manual */
 	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
 	MANDOCERR_BADDISP, /* NOT IMPLEMENTED: .Bd -file */
-	MANDOCERR_SYNTARGVCOUNT, /* argument count wrong, violates syntax */
 	MANDOCERR_SYNTCHILD, /* child violates parent syntax */
 	MANDOCERR_SYNTARGCOUNT, /* argument count wrong, violates syntax */
 	MANDOCERR_SO_PATH, /* NOT IMPLEMENTED: .so with absolute path or ".." */
