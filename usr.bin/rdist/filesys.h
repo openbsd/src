@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.h,v 1.2 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: filesys.h,v 1.3 2014/07/05 07:58:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -88,31 +88,6 @@
 #undef bcopy
 #undef bzero
 #endif	/* NCR */
-
-/*
- * Stat Filesystem
- */
-#if 	defined(STATFS_TYPE)
-#  if defined(ultrix)
-	typedef struct fs_data		statfs_t;
-#	define f_bavail			fd_req.bfreen
-#	define f_bsize			fd_req.bsize
-#	define f_ffree			fd_req.gfree
-#  elif defined(_AIX) || STATFS_TYPE == STATFS_SYSV
-#	include <sys/statfs.h>
-	typedef struct statfs		statfs_t;
-#	define f_bavail			f_bfree
-#  elif defined(SVR4)
-#	include <sys/statvfs.h>
-	typedef struct statvfs		statfs_t;
-#	define statfs(mp,sb)		statvfs(mp,sb)
-#  elif STATFS_TYPE == STATFS_44BSD || STATFS_TYPE == STATFS_OSF1
-	typedef struct statfs		statfs_t;
-#  else
-#	include <sys/vfs.h>
-	typedef struct statfs 		statfs_t;
-#  endif
-#endif	/* STATFS_TYPE */
 
 /*
  * Mount Entry definetions

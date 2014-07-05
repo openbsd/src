@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.c,v 1.13 2014/07/05 06:33:54 guenther Exp $	*/
+/*	$OpenBSD: filesys.c,v 1.14 2014/07/05 07:58:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -404,9 +404,9 @@ is_symlinked(char *path, struct stat *statbuf, int *isvalid)
 int
 getfilesysinfo(char *file, int64_t *freespace, int64_t *freefiles)
 {
-#if	defined(STATFS_TYPE)
-	static statfs_t statfsbuf;
+	struct statfs statfsbuf;
 	char *mntpt;
+	int64_t val;
 	int t, r;
 
 	/*
@@ -418,19 +418,7 @@ getfilesysinfo(char *file, int64_t *freespace, int64_t *freefiles)
 		return(-1);
 	}
 
-	/*
-	 * Stat the filesystem (system specific)
-	 */
-#if	STATFS_TYPE == STATFS_SYSV
-	r = statfs(mntpt, &statfsbuf, sizeof(statfs_t), 0);
-#endif
-#if	STATFS_TYPE == STATFS_BSD || STATFS_TYPE == STATFS_44BSD
 	r = statfs(mntpt, &statfsbuf);
-#endif
-#if	STATFS_TYPE == STATFS_OSF1
-	r = statfs(mntpt, &statfsbuf, sizeof(statfs_t));
-#endif
-
 	if (r < 0) {
 		error("%s: Cannot statfs filesystem: %s.", mntpt, SYSERR);
 		return(-1);
@@ -440,26 +428,15 @@ getfilesysinfo(char *file, int64_t *freespace, int64_t *freefiles)
 	 * If values are < 0, then assume the value is unsupported
 	 * or unavailable for that filesystem type.
 	 */
+	val = -1;
 	if (statfsbuf.f_bavail >= 0)
-		*freespace = (statfsbuf.f_bavail * (statfsbuf.f_bsize / 512))
-			      / 2;
+		val = (statfsbuf.f_bavail * (statfsbuf.f_bsize / 512)) / 2;
+	*freespace = val;
 
-	/*
-	 * BROKEN_STATFS means that statfs() does not set fields
-	 * to < 0 if the field is unsupported for the filesystem type.
-	 */
-#if	defined(BROKEN_STATFS)
-	if (statfsbuf.f_favail > 0)
-#else
+	val = -1;
 	if (statfsbuf.f_favail >= 0)
-#endif 	/* BROKEN_STATFS */
-		*freefiles = statfsbuf.f_favail;
-
-#else	/* !STATFS_TYPE */
-
-    	*freespace = *freefiles = -1;
-
-#endif	/* STATFS_TYPE */
+		val = statfsbuf.f_favail;
+	*freefiles = val;
 
 	return(0);
 }

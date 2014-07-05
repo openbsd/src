@@ -29,7 +29,7 @@
  */
 
 /*
- * $OpenBSD: os-openbsd.h,v 1.20 2014/07/05 07:25:27 guenther Exp $
+ * $OpenBSD: os-openbsd.h,v 1.21 2014/07/05 07:58:41 guenther Exp $
  */
 
 /*
@@ -54,11 +54,6 @@
  * Determine what routines we have to get filesystem info.
  */
 #define FSI_TYPE	FSI_GETFSSTAT
-
-/*
- * Select the type of statfs() system call (if any).
- */
-#define STATFS_TYPE	STATFS_44BSD
 
 /*
  * Use f_fstypename in struct statfs.
