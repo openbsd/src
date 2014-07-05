@@ -1,0 +1,17 @@
+.Dd July 4, 2014
+.Dt BD-BADARGS 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bd-badargs
+.Nd display block with bad arguments
+.Sh DESCRIPTION
+trailing -offset:
+.Bd -ragged -offset
+is
+ignored
+.Ed tail argument
+double -compact and -offset
+.Bd -ragged -compact -offset 42n -compact -offset 6n
+last
+wins
+.Ed

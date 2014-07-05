@@ -1,0 +1,13 @@
+BD-BADARGS(1)              OpenBSD Reference Manual              BD-BADARGS(1)
+
+NNAAMMEE
+     BBdd--bbaaddaarrggss - display block with bad arguments
+
+DDEESSCCRRIIPPTTIIOONN
+     trailing -offset:
+
+     is ignored
+     double -compact and -offset
+           last wins
+
+OpenBSD                          July 4, 2014                          OpenBSD

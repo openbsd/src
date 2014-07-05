@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.39 2014/07/04 16:11:41 schwarze Exp $ */
+/*	$Id: read.c,v 1.40 2014/07/05 01:11:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -123,6 +123,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"skipping empty request",
 	"conditional request controls empty scope",
 	"skipping empty macro",
+	"empty argument, using 0n",
 	"argument count wrong",
 	"missing display type, using -ragged",
 	"list type is not the first argument",

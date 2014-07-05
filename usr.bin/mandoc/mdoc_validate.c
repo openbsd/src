@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.144 2014/07/04 16:11:41 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.145 2014/07/05 01:11:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -590,10 +590,10 @@ pre_display(PRE_ARGS)
 static int
 pre_bl(PRE_ARGS)
 {
-	int		  i, comp, dup;
-	const char	 *offs, *width;
-	enum mdoc_list	  lt;
 	struct mdoc_node *np;
+	struct mdoc_argv *argv;
+	int		  i;
+	enum mdoc_list	  lt;
 
 	if (MDOC_BLOCK != n->type) {
 		if (ENDBODY_NOT != n->end) {
@@ -615,10 +615,9 @@ pre_bl(PRE_ARGS)
 	 */
 
 	for (i = 0; n->args && i < (int)n->args->argc; i++) {
+		argv = n->args->argv + i;
 		lt = LIST__NONE;
-		dup = comp = 0;
-		width = offs = NULL;
-		switch (n->args->argv[i].arg) {
+		switch (argv->arg) {
 		/* Set list types. */
 		case MDOC_Bullet:
 			lt = LIST_bullet;
@@ -655,42 +654,44 @@ pre_bl(PRE_ARGS)
 			break;
 		/* Set list arguments. */
 		case MDOC_Compact:
-			dup = n->norm->Bl.comp;
-			comp = 1;
+			if (n->norm->Bl.comp)
+				mandoc_msg(MANDOCERR_ARG_REP,
+				    mdoc->parse, argv->line,
+				    argv->pos, "Bl -compact");
+			n->norm->Bl.comp = 1;
 			break;
 		case MDOC_Width:
-			/* NB: this can be empty! */
-			if (n->args->argv[i].sz) {
-				width = n->args->argv[i].value[0];
-				dup = (NULL != n->norm->Bl.width);
+			if (0 == argv->sz) {
+				mandoc_msg(MANDOCERR_ARG_EMPTY,
+				    mdoc->parse, argv->line,
+				    argv->pos, "Bl -width");
+				n->norm->Bl.width = "0n";
 				break;
 			}
-			mdoc_nmsg(mdoc, n, MANDOCERR_IGNARGV);
+			if (NULL != n->norm->Bl.width)
+				mandoc_vmsg(MANDOCERR_ARG_REP,
+				    mdoc->parse, argv->line,
+				    argv->pos, "Bl -width %s",
+				    argv->value[0]);
+			n->norm->Bl.width = argv->value[0];
 			break;
 		case MDOC_Offset:
-			/* NB: this can be empty! */
-			if (n->args->argv[i].sz) {
-				offs = n->args->argv[i].value[0];
-				dup = (NULL != n->norm->Bl.offs);
+			if (0 == argv->sz) {
+				mandoc_msg(MANDOCERR_ARG_EMPTY,
+				    mdoc->parse, argv->line,
+				    argv->pos, "Bl -offset");
 				break;
 			}
-			mdoc_nmsg(mdoc, n, MANDOCERR_IGNARGV);
+			if (NULL != n->norm->Bl.offs)
+				mandoc_vmsg(MANDOCERR_ARG_REP,
+				    mdoc->parse, argv->line,
+				    argv->pos, "Bl -offset %s",
+				    argv->value[0]);
+			n->norm->Bl.offs = argv->value[0];
 			break;
 		default:
 			continue;
 		}
-
-		/* Check: duplicate auxiliary arguments. */
-
-		if (dup)
-			mdoc_nmsg(mdoc, n, MANDOCERR_ARGVREP);
-
-		if (comp && ! dup)
-			n->norm->Bl.comp = comp;
-		if (offs && ! dup)
-			n->norm->Bl.offs = offs;
-		if (width && ! dup)
-			n->norm->Bl.width = width;
 
 		/* Check: multiple list types. */
 
@@ -775,10 +776,10 @@ pre_bl(PRE_ARGS)
 static int
 pre_bd(PRE_ARGS)
 {
-	int		  i, dup, comp;
-	enum mdoc_disp	  dt;
-	const char	 *offs;
 	struct mdoc_node *np;
+	struct mdoc_argv *argv;
+	int		  i;
+	enum mdoc_disp	  dt;
 
 	if (MDOC_BLOCK != n->type) {
 		if (ENDBODY_NOT != n->end) {
@@ -794,11 +795,10 @@ pre_bd(PRE_ARGS)
 	}
 
 	for (i = 0; n->args && i < (int)n->args->argc; i++) {
+		argv = n->args->argv + i;
 		dt = DISP__NONE;
-		dup = comp = 0;
-		offs = NULL;
 
-		switch (n->args->argv[i].arg) {
+		switch (argv->arg) {
 		case MDOC_Centred:
 			dt = DISP_centred;
 			break;
@@ -818,34 +818,30 @@ pre_bd(PRE_ARGS)
 			mdoc_nmsg(mdoc, n, MANDOCERR_BADDISP);
 			return(0);
 		case MDOC_Offset:
-			/* NB: this can be empty! */
-			if (n->args->argv[i].sz) {
-				offs = n->args->argv[i].value[0];
-				dup = (NULL != n->norm->Bd.offs);
+			if (0 == argv->sz) {
+				mandoc_msg(MANDOCERR_ARG_EMPTY,
+				    mdoc->parse, argv->line,
+				    argv->pos, "Bd -offset");
 				break;
 			}
-			mdoc_nmsg(mdoc, n, MANDOCERR_IGNARGV);
+			if (NULL != n->norm->Bd.offs)
+				mandoc_vmsg(MANDOCERR_ARG_REP,
+				    mdoc->parse, argv->line,
+				    argv->pos, "Bd -offset %s",
+				    argv->value[0]);
+			n->norm->Bd.offs = argv->value[0];
 			break;
 		case MDOC_Compact:
-			comp = 1;
-			dup = n->norm->Bd.comp;
+			if (n->norm->Bd.comp)
+				mandoc_msg(MANDOCERR_ARG_REP,
+				    mdoc->parse, argv->line,
+				    argv->pos, "Bd -compact");
+			n->norm->Bd.comp = 1;
 			break;
 		default:
 			abort();
 			/* NOTREACHED */
 		}
-
-		/* Check whether we have duplicates. */
-
-		if (dup)
-			mdoc_nmsg(mdoc, n, MANDOCERR_ARGVREP);
-
-		/* Make our auxiliary assignments. */
-
-		if (offs && ! dup)
-			n->norm->Bd.offs = offs;
-		if (comp && ! dup)
-			n->norm->Bd.comp = comp;
 
 		/* Check whether a type has already been assigned. */
 

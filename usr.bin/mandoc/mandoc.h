@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.78 2014/07/04 16:11:41 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.79 2014/07/05 01:11:33 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -87,6 +87,7 @@ enum	mandocerr {
 	MANDOCERR_REQ_EMPTY, /* skipping empty request: request */
 	MANDOCERR_COND_EMPTY, /* conditional request controls empty scope */
 	MANDOCERR_MACRO_EMPTY, /* skipping empty macro: macro */
+	MANDOCERR_ARG_EMPTY, /* empty argument, using 0n: macro arg */
 	MANDOCERR_ARGCWARN, /* argument count wrong */
 	MANDOCERR_BD_NOTYPE, /* missing display type, using -ragged */
 	MANDOCERR_BL_LATETYPE, /* list type is not the first argument: arg */
@@ -99,7 +100,7 @@ enum	mandocerr {
 
 	/* related to bad macro arguments */
 	MANDOCERR_IGNARGV, /* skipping argument */
-	MANDOCERR_ARGVREP, /* duplicate argument */
+	MANDOCERR_ARG_REP, /* duplicate argument: macro arg */
 	MANDOCERR_DISPREP, /* duplicate display type */
 	MANDOCERR_LISTREP, /* duplicate list type */
 	MANDOCERR_BADATT, /* unknown AT&T UNIX version */

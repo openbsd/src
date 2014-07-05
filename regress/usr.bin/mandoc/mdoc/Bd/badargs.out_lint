@@ -1,0 +1,4 @@
+mandoc: badargs.in:9:20: WARNING: skipping empty argument: Bd -offset
+mandoc: badargs.in:12:2: ERROR: skipping all arguments: Ed tail argument
+mandoc: badargs.in:14:43: WARNING: duplicate argument: Bd -compact
+mandoc: badargs.in:14:51: WARNING: duplicate argument: Bd -offset 6n

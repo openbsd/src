@@ -1,0 +1,26 @@
+BL-BADARGS(1)              OpenBSD Reference Manual              BL-BADARGS(1)
+
+NNAAMMEE
+     BBll--bbaaddaarrggss - list with bad arguments
+
+DDEESSCCRRIIPPTTIIOONN
+     trailing -offset:
+
+     oo   is ignored
+     trailing -width:
+
+     oo bullet
+
+     -- dash
+
+     -- hyphen
+
+     hang item
+
+     tag
+       Here we need a very long line.  It must be sufficiently long such that
+       it wraps the line.
+     double arguments:
+       last    wins
+
+OpenBSD                          July 4, 2014                          OpenBSD
