@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.122 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.123 2014/07/05 09:20:54 guenther Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -76,6 +76,7 @@ void		aborthttp(int);
 void		abortfile(int);
 char		hextochar(const char *);
 char		*urldecode(const char *);
+char		*recode_credentials(const char *_userinfo);
 int		ftp_printf(FILE *, SSL *, const char *, ...) __attribute__((format(printf, 3, 4)));
 char		*ftp_readline(FILE *, SSL *, size_t *);
 size_t		ftp_read(FILE *, SSL *, char *, size_t);
@@ -96,8 +97,6 @@ SSL_CTX		*ssl_get_ssl_ctx(void);
 #define	FILE_URL	"file:"		/* file URL prefix */
 #define FTP_PROXY	"ftp_proxy"	/* env var with ftp proxy location */
 #define HTTP_PROXY	"http_proxy"	/* env var with http proxy location */
-
-#define COOKIE_MAX_LEN	42
 
 #define EMPTYSTRING(x)	((x) == NULL || (*(x) == '\0'))
 
@@ -393,7 +392,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	struct addrinfo hints, *res0, *res, *ares = NULL;
 	const char * volatile savefile;
 	char * volatile proxyurl = NULL;
-	char *cookie = NULL;
+	char *credentials = NULL;
 	volatile int s = -1, out;
 	volatile sig_t oldintr, oldinti;
 	FILE *fin = NULL;
@@ -402,9 +401,9 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	ssize_t len, wlen;
 #ifndef SMALL
 	char *sslpath = NULL, *sslhost = NULL;
-	char *locbase, *full_host = NULL, *auth = NULL;
+	char *locbase, *full_host = NULL;
 	const char *scheme;
-	int ishttpsurl = 0;
+	int ishttpurl = 0, ishttpsurl = 0;
 	SSL_CTX *ssl_ctx = NULL;
 #endif /* !SMALL */
 	SSL *ssl = NULL;
@@ -420,6 +419,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	if (strncasecmp(newline, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
 		host = newline + sizeof(HTTP_URL) - 1;
 #ifndef SMALL
+		ishttpurl = 1;
 		scheme = HTTP_URL;
 #endif /* !SMALL */
 	} else if (strncasecmp(newline, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
@@ -472,17 +472,10 @@ noslash:
 	 * contain the path. Basic auth from RFC 2617, valid
 	 * characters for path are in RFC 3986 section 3.3.
 	 */
-	if (proxyenv == NULL &&
-	    (!strcmp(scheme, HTTP_URL) || !strcmp(scheme, HTTPS_URL))) {
+	if (proxyenv == NULL && (ishttpurl || ishttpsurl)) {
 		if ((p = strchr(host, '@')) != NULL) {
-			size_t authlen = (strlen(host) + 5) * 4 / 3;
-			*p = 0;	/* Kill @ */
-			if ((auth = malloc(authlen)) == NULL)
-				err(1, "Can't allocate memory for "
-				    "authorization");
-			if (b64_ntop(host, strlen(host),
-			    auth, authlen) == -1)
-				errx(1, "error in base64 encoding");
+			*p = '\0';
+			credentials = recode_credentials(host);
 			host = p + 1;
 		}
 	}
@@ -544,17 +537,13 @@ noslash:
 		path = strchr(host, '@');	/* look for credentials in proxy */
 		if (!EMPTYSTRING(path)) {
 			*path = '\0';
-			cookie = strchr(host, ':');
-			if (EMPTYSTRING(cookie)) {
+			if (strchr(host, ':') == NULL) {
 				warnx("Malformed proxy URL: %s", proxyenv);
 				goto cleanup_url_get;
 			}
-			cookie  = malloc(COOKIE_MAX_LEN);
-			if (cookie == NULL)
-				errx(1, "out of memory");
-			if (b64_ntop(host, strlen(host), cookie, COOKIE_MAX_LEN) == -1)
-				errx(1, "error in base64 encoding");
+			credentials = recode_credentials(host);
 			*path = '@'; /* restore @ in proxyurl */
+
 			/*
 			 * This removes the password from proxyurl,
 			 * filling with stars
@@ -565,6 +554,7 @@ noslash:
 
 			host = path + 1;
 		}
+
 		path = newline;
 	}
 
@@ -697,7 +687,7 @@ noslash:
 	if (debug)
 		fprintf(ttyout, "host %s, port %s, path %s, "
 		    "save as %s, auth %s.\n",
-		    host, portnum, path, savefile, auth);
+		    host, portnum, path, savefile, credentials);
 #endif /* !SMALL */
 
 	memset(&hints, 0, sizeof(hints));
@@ -793,7 +783,7 @@ again:
 
 #ifndef SMALL
 		if (proxyenv && sslhost)
-			proxy_connect(s, sslhost, cookie);
+			proxy_connect(s, sslhost, credentials);
 #endif /* !SMALL */
 		break;
 	}
@@ -890,10 +880,11 @@ again:
 		 * Host: directive must use the destination host address for
 		 * the original URI (path).  We do not attach it at this moment.
 		 */
-		if (cookie)
+		if (credentials)
 			ftp_printf(fin, ssl, "GET %s HTTP/1.0\r\n"
 			    "Proxy-Authorization: Basic %s%s\r\n%s\r\n\r\n",
-			    epath, cookie, buf ? buf : "", HTTP_USER_AGENT);
+			    epath, credentials, buf ? buf : "",
+			    HTTP_USER_AGENT);
 		else
 			ftp_printf(fin, ssl, "GET %s HTTP/1.0\r\n%s%s\r\n\r\n",
 			    epath, buf ? buf : "", HTTP_USER_AGENT);
@@ -908,14 +899,14 @@ again:
 			else
 				restart_point = 0;
 		}
-		if (auth) {
+		if (credentials) {
 			ftp_printf(fin, ssl,
 			    "GET /%s %s\r\nAuthorization: Basic %s\r\nHost: ",
 			    epath, restart_point ?
 			    "HTTP/1.1\r\nConnection: close" : "HTTP/1.0",
-			    auth);
-			free(auth);
-			auth = NULL;
+			    credentials);
+			free(credentials);
+			credentials = NULL;
 		} else
 #endif	/* SMALL */
 			ftp_printf(fin, ssl, "GET /%s %s\r\nHost: ", epath,
@@ -1231,7 +1222,7 @@ cleanup_url_get:
 		SSL_free(ssl);
 	}
 	free(full_host);
-	free(auth);
+	free(credentials);
 #endif /* !SMALL */
 	if (fin != NULL)
 		fclose(fin);
@@ -1240,7 +1231,7 @@ cleanup_url_get:
 	free(buf);
 	free(proxyurl);
 	free(newline);
-	free(cookie);
+	free(credentials);
 	return (rval);
 }
 
@@ -1316,9 +1307,13 @@ auto_fetch(int argc, char *argv[], char *outfile)
 	/*
 	 * Loop through as long as there's files to fetch.
 	 */
+	username = pass = NULL;
 	for (rval = 0; (rval == 0) && (argpos < argc); free(url), argpos++) {
 		if (strchr(argv[argpos], ':') == NULL)
 			break;
+
+		free(username);
+		free(pass);
 		host = dir = file = portnum = username = pass = NULL;
 
 		/*
@@ -1375,6 +1370,7 @@ auto_fetch(int argc, char *argv[], char *outfile)
 				if (strchr(pass, '@') != NULL ||
 				    (passagain != NULL && passagain < dir)) {
 					warnx(at_encoding_warning);
+					username = pass = NULL;
 					goto bad_ftp_url;
 				}
 
@@ -1382,6 +1378,7 @@ auto_fetch(int argc, char *argv[], char *outfile)
 bad_ftp_url:
 					warnx("Invalid URL: %s", argv[argpos]);
 					rval = argpos + 1;
+					username = pass = NULL;
 					continue;
 				}
 				username = urldecode(username);
@@ -1616,6 +1613,26 @@ urldecode(const char *str)
 	*ret = '\0';
 
 	return ret-reallen;
+}
+
+char *
+recode_credentials(const char *userinfo)
+{
+	char *ui, *creds;
+	size_t ulen, credsize;
+
+	/* url-decode the user and pass */
+	ui = urldecode(userinfo);
+
+	ulen = strlen(ui);
+	credsize = (ulen + 2) / 3 * 4 + 1;
+	creds = malloc(credsize);
+	if (creds == NULL)
+		errx(1, "out of memory");
+	if (b64_ntop(ui, ulen, creds, credsize) == -1)
+		errx(1, "error in base64 encoding");
+	free(ui);
+	return (creds);
 }
 
 char
