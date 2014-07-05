@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.2 2010/01/02 12:16:35 kettenis Exp $ */
+/*	$OpenBSD: archdep.h,v 1.3 2014/07/05 12:22:41 miod Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -40,12 +40,6 @@
 #include <machine/reloc.h>
 #include "syscall.h"
 #include "util.h"
-
-/* HACK */
-#define DT_PROCNUM 0
-#ifndef DT_BIND_NOW
-#define DT_BIND_NOW 0
-#endif
 
 #define  RTLD_NO_WXORX
 
