@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2013/07/05 21:29:51 miod Exp $
+#	$OpenBSD: Makefile,v 1.18 2014/07/05 05:31:35 guenther Exp $
 
 
 PROG=	rdist
@@ -9,7 +9,5 @@ CLEANFILES+=gram.c y.tab.h
 WARNINGS=yes
 
 .include <bsd.prog.mk>
-
-CFLAGS+=-DEXE_TYPE=EXE_ELF
 
 .depend: gram.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isexec.c,v 1.8 2009/10/27 23:59:42 deraadt Exp $	*/
+/*	$OpenBSD: isexec.c,v 1.9 2014/07/05 05:31:35 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,209 +31,15 @@
 
 #include "defs.h"
 
-static int _isexec(int);
-
-#if	EXE_TYPE == EXE_AOUT
-/*
- * BSD style A.OUT
- */
-#include <a.out.h>
-
-static int
-_isexec(int fd)
-{
-	struct exec ehdr;
-
-	if ((read(fd, &ehdr, sizeof(ehdr)) == sizeof(ehdr)) && 
-	    !N_BADMAG(ehdr))
-		return(TRUE);
-	else
-		return(FALSE);
-}
-#endif /* EXE_AOUT */
-
-
-#if	EXE_TYPE == EXE_ELF_AND_COFF || EXE_TYPE == EXE_ELF
-/*
- * Elf
- */
 #include <elf_abi.h>
-#define ISELF(h)	(h.e_type == ET_EXEC)
-#endif	/* EXE_ELF_AND_COFF || EXE_ELF */
-
-#if 	EXE_TYPE == EXE_ELF_AND_COFF || EXE_TYPE == EXE_COFF
 
 /*
- * COFF
- */
-#if defined(FILEHDR_H)
-#include FILEHDR_H
-#endif	/* FILEHDR_H */
-
-#if !defined(ISCOFF)
-
-/*
- * Stupid AIX
- */
-#if defined(U802WRMAGIC) && defined(U802ROMAGIC) && defined(U802TOCMAGIC)
-#define ISCOFF(x) (((x)==U802WRMAGIC) || ((x)==U802TOCMAGIC) || \
-		   ((x)==U802TOCMAGIC))
-#endif	/* U802... */
-/*
- * Stupid Umax4.3
- */
-#if 	defined(NS32GMAGIC) || defined(NS32SMAGIC)
-#define ISCOFF(x) (((x)==NS32GMAGIC) || ((x)==NS32SMAGIC))
-#endif 	/* NS32 ... */
-
-#endif	/* ISCOFF */
-
-#endif /* EXE_TYPE == EXE_ELF_AND_COFF || EXE_TYPE == EXE_COFF */
-
-#if	EXE_TYPE == EXE_ELF_AND_COFF
-/*
- * ELF and COFF
- */
-typedef union {
-    struct filehdr 	coffhdr;
-    Elf32_Ehdr 		elfhdr;
-} hdr_t;
-#endif	/* EXE_TYPE == EXE_ELF_AND_COFF */
-
-#if	EXE_TYPE == EXE_ELF
-/*
- * Elf
- */
-typedef Elf32_Ehdr 	hdr_t;
-#endif	/* EXE_TYPE == EXE_ELF */
-
-#if	EXE_TYPE == EXE_COFF
-/*
- * COFF
- */
-
-#if	defined(FILEHDR_H)
-#include FILEHDR_H
-#endif	/* FILEHDR_H */
-
-typedef struct filehdr 	hdr_t;
-#endif	/* EXE_TYPE == EXE_COFF */
-
-#if	EXE_TYPE == EXE_ELF_AND_COFF || EXE_TYPE == EXE_ELF || EXE_TYPE == EXE_COFF
-/*
- * System V style COFF and System V R4 style ELF
- */
-static int
-_isexec(int fd)
-{
-	hdr_t hdr;
-
-	if (read(fd, &hdr, sizeof(hdr)) == sizeof(hdr)) {
-#if EXE_TYPE == EXE_ELF_AND_COFF
-	    if (ISELF(hdr.elfhdr) || ISCOFF(hdr.coffhdr.f_magic))
-		return(TRUE);
-#endif
-#if EXE_TYPE == EXE_ELF
-	    if (ISELF(hdr))
-		return(TRUE);
-#endif
-#if EXE_TYPE == EXE_COFF
-	    if (ISCOFF(hdr.f_magic))
-		return(TRUE);
-#endif
-	}
-
-	return(FALSE);
-}
-#endif /* EXE_ELF_AND_COFF */
-
-
-#if	EXE_TYPE == EXE_MACHO
-/*
- * Mach-O format
- */
-
-#if	defined(NEXTSTEP) && NEXTSTEP >= 3
-#	include <mach-o/loader.h>
-#else
-#	include <sys/loader.h>
-#endif	/* NEXTSTEP */
-
-#ifndef MH_CIGAM
-#define MH_CIGAM  	0xcefaedfe
-#endif
-#ifndef FAT_MAGIC
-#define FAT_MAGIC 	0xcafebabe
-#endif
-#ifndef FAT_CIGAM
-#define FAT_CIGAM 	0xbebafeca
-#endif
-
-static int
-_isexec(int fd)
-{
-	struct mach_header ehdr;
-
-	if ((read(fd, &ehdr, sizeof(ehdr)) == sizeof(ehdr)) && 
-	    (ehdr.magic == MH_MAGIC || ehdr.magic == MH_CIGAM ||
-	     ehdr.magic == FAT_MAGIC || ehdr.magic == FAT_CIGAM))
-		return(TRUE);
-	else
-		return(FALSE);
-}
-#endif /* EXE_COFF */
-
-
-#if	EXE_TYPE == EXE_HPEXEC
-/*
- * HP 9000 executable format
- */
-
-#ifdef hp9000s300
-
-#include <a.out.h>
-#define header exec
-#define ISEXEC(a) ((a.file_type)==EXEC_MAGIC || (a.file_type)==SHARE_MAGIC || \
-		   (a.file_type)==DEMAND_MAGIC)
-
-#else	/* ! hp9000s300 */
-
-#define ISEXEC(a) ((a)==EXEC_MAGIC || (a)==SHARE_MAGIC || (a)==DEMAND_MAGIC)
-#include <filehdr.h>
-
-#endif	/* hp9000s300 */
-
-static int
-_isexec(int fd)
-{
-	struct header ehdr;
-
-	if ((read(fd, &ehdr, sizeof(ehdr)) == sizeof(ehdr)) &&
-	    ISEXEC(ehdr.a_magic))
-		return(TRUE);
-	else
-		return(FALSE);
-}
-#endif	/* EXE_HPEXEC */
-
-
-#if	!defined(EXE_TYPE)
-/*
- * Fake _isexec() call for unknown executable formats.
- */
-static int
-_isexec(int fd)
-{
-	return(FALSE);
-}
-#endif	/* !defined(EXE_TYPE) */
-
-/*
- * Determine whether 'file' is an executable or not.
+ * Determine whether 'file' is a binary executable or not.
  */
 int
 isexec(char *file, struct stat *statp)
 {
+	Elf32_Ehdr hdr;
 	int fd, r;
 
 	/*
@@ -245,9 +51,10 @@ isexec(char *file, struct stat *statp)
 
 	if ((fd = open(file, O_RDONLY, 0)) < 0)
 		return(FALSE);
-	r = _isexec(fd);
-	(void) close(fd);
 
-	return(r);
+	r = read(fd, &hdr, sizeof(hdr)) == sizeof(hdr) &&
+	    IS_ELF(hdr) && hdr.e_type == ET_EXEC;
+	close(fd);
+
+	return (r);
 }
-

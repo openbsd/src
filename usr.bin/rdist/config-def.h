@@ -1,4 +1,4 @@
-/*	$OpenBSD: config-def.h,v 1.6 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: config-def.h,v 1.7 2014/07/05 05:31:35 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -67,16 +67,6 @@
  */
 #define NBIO_FCNTL		1
 #define NBIO_IOCTL		2
-
-/*
- * Types of executable formats
- */
-#define EXE_AOUT		1
-#define EXE_COFF		2
-#define EXE_MACHO		3
-#define EXE_HPEXEC		4
-#define EXE_ELF			5
-#define EXE_ELF_AND_COFF	6
 
 /*
  * Types of set filetime functions

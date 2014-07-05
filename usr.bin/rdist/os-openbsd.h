@@ -29,7 +29,7 @@
  */
 
 /*
- * $OpenBSD: os-openbsd.h,v 1.13 2003/06/03 02:56:14 millert Exp $
+ * $OpenBSD: os-openbsd.h,v 1.14 2014/07/05 05:31:35 guenther Exp $
  */
 
 /*
@@ -74,13 +74,6 @@
  * Type of argument passed to wait() (above).
  */
 #define WAIT_ARG_TYPE	int
-
-/*
- * Select the type of executable file format.
- */
-#ifndef EXE_TYPE
-#define EXE_TYPE	EXE_AOUT
-#endif
 
 /*
  * Select the type of statfs() system call (if any).
