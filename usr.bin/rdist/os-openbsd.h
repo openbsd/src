@@ -29,7 +29,7 @@
  */
 
 /*
- * $OpenBSD: os-openbsd.h,v 1.15 2014/07/05 06:18:58 guenther Exp $
+ * $OpenBSD: os-openbsd.h,v 1.16 2014/07/05 06:35:03 guenther Exp $
  */
 
 /*
@@ -59,16 +59,6 @@
  * Determine what routines we have to get filesystem info.
  */
 #define FSI_TYPE	FSI_GETFSSTAT
-
-/*
- * Type of wait() function to use.
- */
-#define WAIT_TYPE	WAIT_WAIT3
-
-/*
- * Type of argument passed to wait() (above).
- */
-#define WAIT_ARG_TYPE	int
 
 /*
  * Select the type of statfs() system call (if any).
@@ -113,7 +103,6 @@ typedef void POINTER;
 #define HAVE_LCHOWN			/* Have lchown() */
 #define HAVE_FCHMOD			/* Have fchmod() */
 #define HAVE_FTRUNCATE			/* Have ftruncate() */
-#define HAVE_SELECT			/* Have select() */
 #define HAVE_SAVED_IDS			/* Have POSIX style saved [ug]id's */
 #define HAVE_VIS			/* Have vis() */
 #define HAVE_VSNPRINTF			/* Have vsnprintf() */

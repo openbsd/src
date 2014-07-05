@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.20 2014/07/05 06:18:58 guenther Exp $	*/
+/*	$OpenBSD: child.c,v 1.21 2014/07/05 06:35:03 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -36,10 +36,8 @@
  */
 
 #include <sys/types.h>
-#include <sys/wait.h>
-#if	defined(NEED_SYS_SELECT_H)
 #include <sys/select.h>
-#endif	/* NEED_SYS_SELECT_H */
+#include <sys/wait.h>
 
 typedef enum _PROCSTATE {
     PSrunning,
@@ -225,26 +223,16 @@ readchild(CHILD *child)
 static pid_t
 waitproc(int *statval, int block)
 {
-	WAIT_ARG_TYPE status;
+	int status;
 	pid_t pid;
 	int exitval;
 
 	debugmsg(DM_CALL, "waitproc() %s, active children = %d...\n", 
 		 (block) ? "blocking" : "nonblocking", activechildren);
 
-#if	WAIT_TYPE == WAIT_WAITPID
 	pid = waitpid(-1, &status, (block) ? 0 : WNOHANG);
-#else
-#if	WAIT_TYPE == WAIT_WAIT3
-	pid = wait3(&status, (block) ? 0 : WNOHANG, NULL);
-#endif	/* WAIT_WAIT3 */
-#endif	/* WAIT_WAITPID */
 
-#if	defined(WEXITSTATUS)
 	exitval = WEXITSTATUS(status);
-#else
-	exitval = status.w_retcode;
-#endif	/* defined(WEXITSTATUS) */
 
 	if (pid > 0 && exitval != 0) {
 		nerrs++;
@@ -345,20 +333,13 @@ childscan(void)
 }
 
 /*
-#if	defined HAVE_SELECT
  *
  * Wait for children to send output for us to read.
  *
-#else	!HAVE_SELECT
- *
- * Wait up for children to exit.
- *
-#endif
  */
 void
 waitup(void)
 {
-#if	defined(HAVE_SELECT)
 	int count;
 	CHILD *pc;
 	fd_set *rchildfdsp = NULL;
@@ -447,17 +428,6 @@ waitup(void)
 	}
 	free(rchildfdsp);
 
-#else	/* !defined(HAVE_SELECT) */
-
-	/*
-	 * The non-select() version of waitproc()
-	 */
-	debugmsg(DM_CALL, "waitup() start\n");
-
-	if (waitproc(NULL, TRUE) > 0)
-		--activechildren;
-
-#endif	/* defined(HAVE_SELECT) */
 	debugmsg(DM_CALL, "waitup() end\n");
 }
 

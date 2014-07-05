@@ -1,4 +1,4 @@
-/*	$OpenBSD: config-def.h,v 1.8 2014/07/05 06:18:58 guenther Exp $	*/
+/*	$OpenBSD: config-def.h,v 1.9 2014/07/05 06:35:03 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -41,12 +41,6 @@
 /*
  * Configuration definetions
  */
-
-/*
- * Types of wait() functions
- */
-#define WAIT_WAIT3		1
-#define WAIT_WAITPID		2
 
 /*
  * Types of directory routines
