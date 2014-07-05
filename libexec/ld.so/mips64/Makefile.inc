@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2004/08/11 17:11:45 pefo Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2014/07/05 17:05:08 miod Exp $
 
 # CFLAGS += -fpic -msoft-float
-# ADDR=-Tdata 8000
-# ELF_LDFLAGS+=${ADDR}
+LIBCSRCDIR=${.CURDIR}/../../lib/libc
+CPPFLAGS += -I${LIBCSRCDIR}/arch/mips64

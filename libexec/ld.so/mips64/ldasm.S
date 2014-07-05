@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.9 2014/01/18 09:08:42 kettenis Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.10 2014/07/05 17:05:08 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -28,6 +28,7 @@
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
+#include <SYS.h>
 
 /* Stack at this stage is:
  * struct stack {
@@ -74,16 +75,6 @@ LEAF(_dl_start, FRAMESZ)		/* Not really LEAF, but we simplify */
 	move	ra, zero		# Mark last stack frame.
 	j	t9			# Go execute the 'real' program.
 END(_dl_start)
-
-LEAF(_dl__syscall, 0)
-	li	v0, SYS___syscall	# Indirect syscall.
-	syscall
-	bne	a3, zero, 1f
-	j	ra
-1:
-	li	v0, -1
-	j	ra
-END(_dl__syscall)
 
 FRAMESZ= MKFSIZ(4,16)
 GPOFF= FRAMESZ-2*REGSZ
@@ -135,3 +126,59 @@ _dl_bind_start:
 	move	t9, v0
 	jr	t9
 	.end	_dl_bind_start
+
+#define	DL_SYSCALL(n)		DL_SYSCALL2(n,n)
+#define	DL_SYSCALL_NOERR(n)	DL_SYSCALL2_NOERR(n,n)
+#define	DL_SYSCALL2(n,c)						\
+NLEAF(_dl_##n,0)							\
+	__DO_SYSCALL(c);						\
+	bnez	a3, _dl_cerror;						\
+	j	ra;							\
+END(_dl_##n)
+#define	DL_SYSCALL2_NOERR(n,c)						\
+NLEAF(_dl_##n,0)							\
+	__DO_SYSCALL(c);						\
+	j	ra;							\
+END(_dl_##n)
+
+_dl_cerror:
+	subu	v0, zero, v0
+	j	ra
+
+NLEAF(_dl_sigprocmask,0)
+	/* _dl_sigprocmask does not support NULL as the new mask */
+#if 0
+	bnez	a1, 1f
+	li	a0, 1	/* SIG_BLOCK */
+	b	2f
+1:
+#endif
+	lw	a1, 0(a1)
+2:
+	__DO_SYSCALL(sigprocmask)
+	bnez	a3, _dl_cerror
+	beqz	a2, 1f
+	sw	v0, 0(a2)
+1:
+	li	v0, 0
+	j	ra
+END(_dl_sigprocmask)
+
+DL_SYSCALL(close)
+DL_SYSCALL_NOERR(exit)
+DL_SYSCALL(fcntl)
+DL_SYSCALL(fstat)
+DL_SYSCALL2(getcwd,__getcwd)
+DL_SYSCALL(getdents)
+DL_SYSCALL(gettimeofday)
+DL_SYSCALL_NOERR(issetugid)
+DL_SYSCALL(lstat)
+DL_SYSCALL(mprotect)
+DL_SYSCALL(munmap)
+DL_SYSCALL(open)
+DL_SYSCALL(read)
+DL_SYSCALL(readlink)
+DL_SYSCALL2(_syscall,__syscall)
+DL_SYSCALL2(sysctl,__sysctl)
+DL_SYSCALL(utrace)
+DL_SYSCALL(write)
