@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.16 2013/12/23 22:03:52 kettenis Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.17 2014/07/05 17:06:18 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -161,3 +161,63 @@ ENTRY(_dl_bind_start)
 
 	addi	1,1,64
 	bctr
+
+#define	DL_SYSCALL(n)		DL_SYSCALL2(n,n)
+#define	DL_SYSCALL_NOERR(n)	DL_SYSCALL2_NOERR(n,n)
+#define	DL_SYSCALL2(n,c)						\
+ENTRY(_dl_##n)								\
+	li	0, SYS_##c;						\
+	sc;								\
+	cmpwi	0, 0;							\
+	beqlr+;								\
+	b	_dl_cerror
+#define	DL_SYSCALL2_NOERR(n,c)						\
+ENTRY(_dl_##n)								\
+	li	0, SYS_##c;						\
+	sc;								\
+	blr
+
+_dl_cerror:
+	neg	3, 3
+	blr
+
+ENTRY(_dl_sigprocmask)
+	/* _dl_sigprocmask does not support NULL as the new mask */
+#if 0
+	cmpwi	4, 0
+	bne+	1f
+	li	3, 1		/* SIG_BLOCK */
+	b	2f
+1:
+#endif
+	lwz	4, 0(4)
+2:
+	li	0, SYS_sigprocmask
+	sc
+	cmpwi	0, 0
+	bne-	_dl_cerror
+	cmpwi	5, 0
+	beq-	1f
+	stw	3, 0(5)
+1:
+	li	3, 0
+	blr
+
+DL_SYSCALL(close)
+DL_SYSCALL_NOERR(exit)
+DL_SYSCALL(fcntl)
+DL_SYSCALL(fstat)
+DL_SYSCALL2(getcwd,__getcwd)
+DL_SYSCALL(getdents)
+DL_SYSCALL(gettimeofday)
+DL_SYSCALL_NOERR(issetugid)
+DL_SYSCALL(lstat)
+DL_SYSCALL(mprotect)
+DL_SYSCALL(munmap)
+DL_SYSCALL(open)
+DL_SYSCALL(read)
+DL_SYSCALL(readlink)
+DL_SYSCALL2(_syscall,__syscall)
+DL_SYSCALL2(sysctl,__sysctl)
+DL_SYSCALL(utrace)
+DL_SYSCALL(write)

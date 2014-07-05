@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.51 2013/06/13 04:13:47 brad Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.52 2014/07/05 17:06:18 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -687,15 +687,3 @@ _dl_syncicache(char *from, size_t len)
 		off += CACHELINESIZE;
 	}
 }
-__asm__(".section\t\".text\"\n\t"
-	".align 2\n\t"
-	".globl _dl__syscall\n\t"
-	".type _dl__syscall,@function\n"
-	"_dl__syscall:\n\t"
-	"li 0, " XSTRINGIFY(SYS___syscall) "\n\t"
-	"sc\n\t"
-	"cmpwi	0, 0\n\t"
-	"beq	1f\n\t"
-	"li	3, -1\n\t"
-	"1:\n\t"
-	"blr");
