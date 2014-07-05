@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.sh,v 1.11 2004/02/01 13:13:37 miod Exp $
+#	$OpenBSD: genassym.sh,v 1.12 2014/07/05 07:18:33 jsg Exp $
 #	$NetBSD: genassym.sh,v 1.9 1998/04/25 19:48:27 matthias Exp $
 
 #
@@ -13,11 +13,6 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#	This product includes software developed by Matthias Pfaller.
-# 4. The name of the author may not be used to endorse or promote products
-#    derived from this software without specific prior written permission
 #
 # THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 # IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
