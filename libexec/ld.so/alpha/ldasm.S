@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.23 2013/12/23 21:18:57 kettenis Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.24 2014/07/05 17:03:19 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -199,135 +199,72 @@ END(_dl_bind_start)
  * further register saving.
  */
 
-LEAF_NOPROFILE(_dl_exit, 1)
-	ldiq	v0, SYS_exit
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_exit)
+#define	DL_SYSCALL(n)			DL_SYSCALL2(n,n)
+#define	DL_SYSCALL_NOERR(n)		DL_SYSCALL2_NOERR(n,n)
+#define	DL_SYSCALL2(n,c)						\
+LEAF_NOPROFILE(_dl_##n, irrelevant);					\
+	CALLSYS_NOERROR(c);						\
+	beq	a3, 1f;							\
+	jmp	zero, _dl_cerror;					\
+1:									\
+	RET;								\
+END(_dl_##n)
+#define	DL_SYSCALL2_NOERR(n,c)						\
+LEAF_NOPROFILE(_dl_##n, irrelevant);					\
+	CALLSYS_NOERROR(c);						\
+	RET;								\
+END(_dl_##n)
 
-LEAF_NOPROFILE(_dl_open, 2)
-	ldiq	v0, SYS_open
-	call_pal PAL_OSF1_callsys
-	beq	a3, _dl_open_no_error
-	subq	zero, v0, v0
-_dl_open_no_error:
+_dl_cerror:
+	subq	zero, v0, v0	/* return -errno */
 	RET
-END(_dl_open)
 
-LEAF_NOPROFILE(_dl_close, 1)
-	ldiq	v0, SYS_close
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_close)
-
-LEAF_NOPROFILE(_dl_write, 3)
-	ldiq	v0, SYS_write
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_write)
-
-LEAF_NOPROFILE(_dl_read, 3)
-	ldiq	v0, SYS_read
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_read)
-
+/* _dl_mmap() is special, as it needs to insert the syscall padding argument */
 LEAF_NOPROFILE(_dl_mmap, 6)
 	lda	sp, -8(sp)
 	stq	a5, 0(sp)
-	ldiq	v0, SYS_mmap
-	call_pal PAL_OSF1_callsys
+	CALLSYS_NOERROR(mmap)
 	lda	sp, 8(sp)
+	beq	a3, 1f
+	jmp	zero, _dl_cerror
+1:
 	RET
 END(_dl_mmap)
 
-LEAF_NOPROFILE(_dl_munmap, 2)
-	ldiq	v0, SYS_munmap
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_munmap)
-
-LEAF_NOPROFILE(_dl_mprotect, 3)
-	ldiq	v0, SYS_mprotect
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_mprotect)
-
-LEAF_NOPROFILE(_dl_issetugid, 0)
-	ldiq	v0, SYS_issetugid
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_issetugid)
-
-LEAF_NOPROFILE(_dl__syscall, 3)
-	ldiq	v0, SYS___syscall
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl__syscall)
-
-LEAF_NOPROFILE(_dl_fstat, 2)
-	ldiq	v0, SYS_fstat
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_fstat)
-
-LEAF_NOPROFILE(_dl_fcntl, 3)
-	ldiq	v0, SYS_fcntl
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_fcntl)
-
-LEAF_NOPROFILE(_dl_getdents, 3)
-	ldiq	v0, SYS_getdents
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_getdents)
-
-/* _dl_sigprocmask does not support NULL new mask */
 LEAF_NOPROFILE(_dl_sigprocmask, 4)
+	/* _dl_sigprocmask does not support NULL new mask */
 	mov	a2, a5
-	ldl	a1, 0(a1)		/* load the set from *set */
-	ldiq	v0, SYS_sigprocmask
-	call_pal PAL_OSF1_callsys
-	/* What about syscalls failing? */
+#if 0
+	cmoveq	a1, 1, a0	/* if set is NULL, set how to SIG_BLOCK */
+	beq	a1, 1f
+#endif
+	ldl	a1, 0(a1)	/* load the set from *set */
+1:
+	CALLSYS_NOERROR(sigprocmask)
+	beq	a3, 1f
+	jmp	zero, _dl_cerror
 	beq	a5, 1f
 	stl	v0, 0(a5)
-1:	mov	zero, v0
+1:
+	mov	zero, v0
 	RET
 END(_dl_sigprocmask)
 
-LEAF_NOPROFILE(_dl_sysctl, 4)
-	ldiq	v0, SYS___sysctl
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_sysctl)
-
-LEAF_NOPROFILE(_dl_gettimeofday, 2)
-	ldiq	v0, SYS_gettimeofday
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_gettimeofday)
-
-LEAF_NOPROFILE(_dl_readlink, 3)
-	ldiq	v0, SYS_readlink
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_readlink)
-
-LEAF_NOPROFILE(_dl_lstat, 2)
-	ldiq	v0, SYS_lstat
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_lstat)
-
-LEAF_NOPROFILE(_dl_getcwd, 2)
-	ldiq	v0, SYS___getcwd
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_getcwd)
-
-LEAF_NOPROFILE(_dl_utrace, 2)
-	ldiq	v0, SYS_utrace
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_utrace)
+DL_SYSCALL(close)
+DL_SYSCALL_NOERR(exit)
+DL_SYSCALL(fcntl)
+DL_SYSCALL(fstat)
+DL_SYSCALL2(getcwd,__getcwd)
+DL_SYSCALL(getdents)
+DL_SYSCALL(gettimeofday)
+DL_SYSCALL_NOERR(issetugid)
+DL_SYSCALL(lstat)
+DL_SYSCALL(mprotect)
+DL_SYSCALL(munmap)
+DL_SYSCALL(open)
+DL_SYSCALL(read)
+DL_SYSCALL(readlink)
+DL_SYSCALL2(_syscall,__syscall)
+DL_SYSCALL2(sysctl,__sysctl)
+DL_SYSCALL(utrace)
+DL_SYSCALL(write)
