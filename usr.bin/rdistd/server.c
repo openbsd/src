@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.27 2014/07/05 06:40:54 guenther Exp $	*/
+/*	$OpenBSD: server.c,v 1.28 2014/07/05 06:45:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -28,6 +28,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <dirent.h>
+
 #include "defs.h"
 
 /*
@@ -297,7 +300,7 @@ static int
 removefile(struct stat *statb, int silent)
 {
 	DIR *d;
-	static DIRENTRY *dp;
+	static struct dirent *dp;
 	char *cp;
 	struct stat stb;
 	char *optarget;
@@ -407,7 +410,7 @@ static void
 doclean(char *cp)
 {
 	DIR *d;
-	DIRENTRY *dp;
+	struct dirent *dp;
 	struct stat stb;
 	char *optarget, *ep;
 	int len;

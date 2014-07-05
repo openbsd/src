@@ -1,4 +1,4 @@
-/*	$OpenBSD: config-def.h,v 1.9 2014/07/05 06:35:03 guenther Exp $	*/
+/*	$OpenBSD: config-def.h,v 1.10 2014/07/05 06:45:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -41,12 +41,6 @@
 /*
  * Configuration definetions
  */
-
-/*
- * Types of directory routines
- */
-#define DIR_DIRECT		1
-#define DIR_DIRENT		2
 
 /*
  * Types of filesystem info routines

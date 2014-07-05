@@ -29,7 +29,7 @@
  */
 
 /*
- * $OpenBSD: os-openbsd.h,v 1.16 2014/07/05 06:35:03 guenther Exp $
+ * $OpenBSD: os-openbsd.h,v 1.17 2014/07/05 06:45:00 guenther Exp $
  */
 
 /*
@@ -49,11 +49,6 @@
  * OpenBSD has setproctitle() in libc so we don't want to use rdist's.
  */
 #define HAVE_SETPROCTITLE
-
-/*
- * Define the type of directory routines your system has.
- */
-#define DIR_TYPE	DIR_DIRENT
 
 /*
  * Determine what routines we have to get filesystem info.

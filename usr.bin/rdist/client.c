@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.27 2014/07/05 05:05:51 guenther Exp $	*/
+/*	$OpenBSD: client.c,v 1.28 2014/07/05 06:45:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -28,6 +28,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <dirent.h>
 
 #include "defs.h"
 #include "y.tab.h"
@@ -577,7 +579,7 @@ static int
 senddir(char *rname, opt_t opts, struct stat *stb, char *user,
 	char *group, int destdir)
 {
-	DIRENTRY *dp;
+	struct dirent *dp;
 	DIR *d;
 	char *optarget, *cp;
 	int len;

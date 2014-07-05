@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.27 2014/07/05 06:18:58 guenther Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.28 2014/07/05 06:45:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -29,15 +29,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/socket.h>
+#include <dirent.h>
+#include <netdb.h>
+
 #include "defs.h"
 #include "y.tab.h"
 
 /*
  * Functions for rdist that do command (cmd) related activities.
  */
-
-#include <sys/socket.h>
-#include <netdb.h>
 
 struct subcmd	       *subcmds;		/* list of sub-commands for 
 						   current cmd */
@@ -636,7 +637,7 @@ static void
 rcmptime(struct stat *st, struct subcmd *sbcmds, char **env)
 {
 	DIR *d;
-	DIRENTRY *dp;
+	struct dirent *dp;
 	char *cp;
 	char *optarget;
 	int len;

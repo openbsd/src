@@ -1,4 +1,4 @@
-/*	$OpenBSD: config-data.h,v 1.8 2014/07/05 06:18:58 guenther Exp $	*/
+/*	$OpenBSD: config-data.h,v 1.9 2014/07/05 06:45:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -48,21 +48,6 @@
  */
 #define PIPE_READ		0
 #define PIPE_WRITE		1
-
-/*
- * Directory information
- */
-#if	DIR_TYPE == DIR_DIRECT
-#include 	<sys/dir.h>
-typedef 	struct direct		DIRENTRY;
-#define 	D_NAMLEN(p)		((p)->d_namlen)
-#endif	/* DIR_DIRECT */
-
-#if	DIR_TYPE == DIR_DIRENT
-#include 	<dirent.h>
-typedef 	struct dirent		DIRENTRY;
-#define 	D_NAMLEN(p)		(strlen((p)->d_name))
-#endif	/* DIR_DIRENT */
 
 /*
  * Set default write(2) return and amount types.
