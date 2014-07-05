@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.c,v 1.14 2014/07/05 07:58:41 guenther Exp $	*/
+/*	$OpenBSD: filesys.c,v 1.15 2014/07/05 10:21:24 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -28,6 +28,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/param.h>
+#include <sys/mount.h>
 
 #include "defs.h"
 
@@ -207,16 +210,14 @@ wakeup(int dummy)
 struct mntinfo *
 makemntinfo(struct mntinfo *mi)
 {
-	FILE *mfp;
 	static struct mntinfo *mntinfo;
 	struct mntinfo *newmi, *m;
 	struct stat mntstat;
 	mntent_t *mnt;
 	int timeo = 310;
 
-	if (!(mfp = setmountent(MOUNTED_FILE, "r"))) {
-		message(MT_NERROR, "%s: setmntent failed: %s", 
-			MOUNTED_FILE, SYSERR);
+	if (setmountent()) {
+		message(MT_NERROR, "setmntent failed: %s", SYSERR);
 		return(NULL);
 	}
 
@@ -228,7 +229,7 @@ makemntinfo(struct mntinfo *mi)
 	}
 
 	mntinfo = mi;
-	while ((mnt = getmountent(mfp)) != NULL) {
+	while ((mnt = getmountent()) != NULL) {
 		debugmsg(DM_MISC, "mountent = '%s' (%s)", 
 			 mnt->me_path, mnt->me_type);
 
@@ -268,8 +269,8 @@ makemntinfo(struct mntinfo *mi)
 			mntinfo = newmi;
 	}
 
-	(void) alarm(0);
-	(void) endmountent(mfp);
+	alarm(0);
+	endmountent();
 
 	return(mntinfo);
 }

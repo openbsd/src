@@ -29,7 +29,7 @@
  */
 
 /*
- * $OpenBSD: os-openbsd.h,v 1.21 2014/07/05 07:58:41 guenther Exp $
+ * $OpenBSD: os-openbsd.h,v 1.22 2014/07/05 10:21:24 guenther Exp $
  */
 
 /*
@@ -49,11 +49,6 @@
  * OpenBSD has setproctitle() in libc so we don't want to use rdist's.
  */
 #define HAVE_SETPROCTITLE
-
-/*
- * Determine what routines we have to get filesystem info.
- */
-#define FSI_TYPE	FSI_GETFSSTAT
 
 /*
  * Use f_fstypename in struct statfs.
