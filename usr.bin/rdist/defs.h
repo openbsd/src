@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.21 2014/07/05 06:18:58 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.22 2014/07/05 06:55:29 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -302,7 +302,7 @@ extern int		rem_r;		/* Remote file descriptor, reading */
 extern int 		rem_w;		/* Remote file descriptor, writing */
 extern int 		rtimeout;	/* Response time out in seconds */
 extern int		setjmp_ok;	/* setjmp/longjmp flag */
-extern UID_T 		userid;		/* User ID of rdist user */
+extern uid_t 		userid;		/* User ID of rdist user */
 extern jmp_buf 		finish_jmpbuf;	/* Setjmp buffer for finish() */
 extern struct group    *gr;	/* pointer to static area used by getgrent */
 extern struct linkbuf  *ihead;	/* list of files with more than one link */
@@ -342,8 +342,8 @@ void sighandler(int);
 int sendcmd(char, const char *, ...) __attribute__((__format__ (printf, 2, 3)));
 int remline(u_char *, int, int);
 ssize_t readrem(char *, ssize_t);
-char *getusername(UID_T, char *, opt_t);
-char *getgroupname(GID_T, char *, opt_t);
+char *getusername(uid_t, char *, opt_t);
+char *getgroupname(gid_t, char *, opt_t);
 int response(void);
 char *exptilde(char *, char *, size_t);
 int becomeuser(void);

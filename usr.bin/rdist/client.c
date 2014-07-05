@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.28 2014/07/05 06:45:00 guenther Exp $	*/
+/*	$OpenBSD: client.c,v 1.29 2014/07/05 06:55:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -976,7 +976,7 @@ update(char *rname, opt_t opts, struct stat *statp)
 			while (*owner && !isdigit((unsigned char)*owner) &&
 			    (*owner != '-'))
 				++owner;
-			if (owner && (UID_T) atoi(owner) != statp->st_uid) {
+			if (owner && (uid_t)atoi(owner) != statp->st_uid) {
 				debugmsg(DM_MISC, 
 					 "owner does not match (%d != %s).\n",
 					 statp->st_uid, owner);
@@ -1002,7 +1002,7 @@ update(char *rname, opt_t opts, struct stat *statp)
 			while (*group && !isdigit((unsigned char) *group) &&
 			    (*group != '-'))
 				++group;
-			if (group && (UID_T) atoi(group) != statp->st_gid) {
+			if (group && (gid_t)atoi(group) != statp->st_gid) {
 				debugmsg(DM_MISC,
 					 "group does not match (%d != %s).\n",
 					 statp->st_gid, group);

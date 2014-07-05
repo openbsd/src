@@ -29,7 +29,7 @@
  */
 
 /*
- * $OpenBSD: os-openbsd.h,v 1.17 2014/07/05 06:45:00 guenther Exp $
+ * $OpenBSD: os-openbsd.h,v 1.18 2014/07/05 06:55:29 guenther Exp $
  */
 
 /*
@@ -64,22 +64,6 @@
  * Use f_fstypename in struct statfs.
  */
 #define HAVE_FSTYPENAME	1
-
-/*
- * UID argument type for chown()
- */
-typedef uid_t CHOWN_UID_T;
-
-/*
- * GID argument type for chown()
- */
-typedef gid_t CHOWN_GID_T;
-
-/*
- * Our types, usually these are uid_t and gid_t.
- */
-typedef uid_t UID_T;	/* Must be signed */
-typedef gid_t GID_T;	/* Must be signed */
 
 /*
  * Generic pointer, used by memcpy, malloc, etc.  Usually char or void.

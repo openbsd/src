@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.28 2014/07/05 06:18:58 guenther Exp $	*/
+/*	$OpenBSD: common.c,v 1.29 2014/07/05 06:55:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -45,8 +45,8 @@
  * Variables common to both client and server
  */
 char			host[MAXHOSTNAMELEN];	/* Name of this host */
-UID_T			userid = (UID_T)-1;	/* User's UID */
-GID_T			groupid = (GID_T)-1;	/* User's GID */
+uid_t			userid = (uid_t)-1;	/* User's UID */
+gid_t			groupid = (gid_t)-1;	/* User's GID */
 char		       *homedir = NULL;		/* User's $HOME */
 char		       *locuser = NULL;		/* Local User's name */
 int			isserver = FALSE;	/* We're the server */
@@ -430,10 +430,10 @@ readrem(char *p, ssize_t space)
  * Get the user name for the uid.
  */
 char *
-getusername(UID_T uid, char *file, opt_t opts)
+getusername(uid_t uid, char *file, opt_t opts)
 {
 	static char buf[100];
-	static UID_T lastuid = (UID_T)-1;
+	static uid_t lastuid = (uid_t)-1;
 	struct passwd *pwd = NULL;
 
 	/*
@@ -472,10 +472,10 @@ getusername(UID_T uid, char *file, opt_t opts)
  * Get the group name for the gid.
  */
 char *
-getgroupname(GID_T gid, char *file, opt_t opts)
+getgroupname(gid_t gid, char *file, opt_t opts)
 {
 	static char buf[100];
-	static GID_T lastgid = (GID_T)-1;
+	static gid_t lastgid = (gid_t)-1;
 	struct group *grp = NULL;
 
 	/*
