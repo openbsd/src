@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.30 2014/07/05 07:22:18 guenther Exp $	*/
+/*	$OpenBSD: server.c,v 1.31 2014/07/05 07:39:18 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -287,12 +287,8 @@ removefile(struct stat *statb, int silent)
 	case S_IFLNK:
 	case S_IFCHR:
 	case S_IFBLK:
-#ifdef S_IFSOCK
 	case S_IFSOCK:
-#endif
-#ifdef S_IFIFO
 	case S_IFIFO:
-#endif
 		if (unlink(target) < 0) {
 			if (errno == ETXTBSY) {
 				if (!silent)
@@ -623,16 +619,6 @@ query(char *xname)
 	case S_IFLNK:
 	case S_IFDIR:
 	case S_IFREG:
-#ifdef notyet
-	case S_IFCHR:
-	case S_IFBLK:
-#ifdef S_IFSOCK
-	case S_IFSOCK:
-#endif
-#ifdef S_IFIFO
-	case S_IFIFO:
-#endif
-#endif
 		(void) sendcmd(QC_YES, "%lld %lld %o %s %s",
 			       (long long) stb.st_size,
 			       (long long) stb.st_mtime,
