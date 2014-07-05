@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.23 2013/08/13 05:52:18 guenther Exp $ */
+/*	$OpenBSD: syscall.h,v 1.24 2014/07/05 21:54:51 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -39,6 +39,7 @@
     ((long) __res < 0 && (long) __res >= -_dl_MAX_ERRNO)
 
 int	_dl_close(int);
+__dead
 int	_dl_exit(int);
 int	_dl_issetugid(void);
 void *	_dl_mmap(void *, size_t, int, int, int, off_t);

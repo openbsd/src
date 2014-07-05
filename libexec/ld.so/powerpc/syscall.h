@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.31 2014/07/05 20:41:25 miod Exp $ */
+/*	$OpenBSD: syscall.h,v 1.32 2014/07/05 21:54:51 miod Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -41,6 +41,7 @@
     ((long)__res < 0 && (long)__res >= -_dl_MAX_ERRNO)
 
 int	_dl_close(int);
+__dead
 void	_dl_exit(int);
 int	_dl_fcntl(int, int, int);
 int	_dl_fstat(int, struct stat *);
