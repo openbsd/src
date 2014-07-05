@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.18 2014/07/05 05:05:51 guenther Exp $	*/
+/*	$OpenBSD: child.c,v 1.19 2014/07/05 05:08:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -378,9 +378,7 @@ waitup(void)
 	for (pc = childlist; pc; pc = pc->c_next)
 		if (pc->c_readfd > rchildfdsn)
 			rchildfdsn = pc->c_readfd;
-	rchildfdsp = calloc(howmany(rchildfdsn+1, NFDBITS), sizeof(fd_mask));
-	if (rchildfdsp == NULL)
-		return;
+	rchildfdsp = xcalloc(howmany(rchildfdsn+1, NFDBITS), sizeof(fd_mask));
 
 	for (pc = childlist; pc; pc = pc->c_next)
 		if (pc->c_readfd > 0) {
