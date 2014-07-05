@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.30 2014/07/05 17:06:18 miod Exp $ */
+/*	$OpenBSD: syscall.h,v 1.31 2014/07/05 20:41:25 miod Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -34,8 +34,6 @@
 #include <sys/signal.h>
 #include <sys/time.h>
 
-static off_t	_dl_lseek(int, off_t, int);
-
 #ifndef _dl_MAX_ERRNO
 #define _dl_MAX_ERRNO 512L
 #endif
@@ -51,6 +49,7 @@ ssize_t	_dl_getdents(int, char *, size_t);
 int	_dl_gettimeofday(struct timeval *, struct timezone *);
 int	_dl_issetugid(void);
 int	_dl_lstat(const char *, struct stat *);
+void *	_dl_mmap(void *, size_t, int, int, int, off_t);
 int	_dl_mprotect(const void *, size_t, int);
 int	_dl_munmap(const void *, size_t);
 int	_dl_open(const char *, int);
@@ -66,13 +65,6 @@ static inline off_t
 _dl_lseek(int fildes, off_t offset, int whence)
 {
 	return _dl__syscall((quad_t)SYS_lseek, fildes, 0, offset, whence);
-}
-
-static inline void *
-_dl_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
-{
-	return((void *)_dl__syscall((quad_t)SYS_mmap, addr, len, prot,
-	    flags, fd, 0, offset));
 }
 
 #endif /*__DL_SYSCALL_H__*/
