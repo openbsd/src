@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.12 2014/07/05 01:11:33 schwarze Exp $
+# $OpenBSD: Makefile,v 1.13 2014/07/05 12:33:54 schwarze Exp $
 
 REGRESS_TARGETS	 = blank nested spacing
-REGRESS_TARGETS	+= notype badargs empty offset-empty
+REGRESS_TARGETS	+= badargs empty offset-empty
 REGRESS_TARGETS	+= break broken
 
-LINT_TARGETS	 = nested notype badargs break broken
+LINT_TARGETS	 = nested badargs break broken
 
 # groff defect:
 # - a display breaking another block continues indefinitely

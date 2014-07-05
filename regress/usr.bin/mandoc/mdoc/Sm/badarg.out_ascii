@@ -1,0 +1,9 @@
+SM-BADARG(1)               OpenBSD Reference Manual               SM-BADARG(1)
+
+NNAAMMEE
+     SSmm--bbaaddaarrgg - spacing macro with invalid arguments
+
+DDEESSCCRRIIPPTTIIOONN
+     --ff _o_n --ff_o_f_f bad --ff _b_a_d (on) bad--ff_b_a_d(off)
+
+OpenBSD                          July 3, 2014                          OpenBSD

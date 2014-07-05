@@ -1,4 +1,4 @@
-.Dd July 4, 2014
+.Dd July 5, 2014
 .Dt BL-BADARGS 1
 .Os OpenBSD
 .Sh NAME
@@ -36,6 +36,15 @@ item
 .It tag
 Here we need a very long line.
 It must be sufficiently long such that it wraps the line.
+.El
+double type:
+.Bl -bullet -compact -enum
+.It
+bullet enum
+.El
+.Bl -enum -compact -bullet
+.It
+enum bullet
 .El
 double arguments:
 .Bl -tag -compact -offset 20n -width 20n -compact -offset 2n -width 6n

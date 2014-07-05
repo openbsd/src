@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.69 2014/07/04 16:11:41 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.70 2014/07/05 12:33:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -299,8 +299,8 @@ post_ft(CHKARGS)
 	}
 
 	if (0 == ok) {
-		mandoc_vmsg(MANDOCERR_BADFONT, man->parse, n->line,
-		    n->pos, "%s", cp);
+		mandoc_vmsg(MANDOCERR_FT_BAD, man->parse,
+		    n->line, n->pos, "ft %s", cp);
 		*cp = '\0';
 	}
 

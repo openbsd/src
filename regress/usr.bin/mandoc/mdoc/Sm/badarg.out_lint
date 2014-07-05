@@ -1,0 +1,2 @@
+mandoc: badarg.in:11:5: WARNING: invalid Boolean argument: Sm bad
+mandoc: badarg.in:13:5: WARNING: invalid Boolean argument: Sm bad

@@ -7,7 +7,14 @@ DDEESSCCRRIIPPTTIIOONN
      trailing -offset:
 
      is ignored
-     double -compact and -offset
+     double -compact and -offset:
            last wins
+     no type:
 
-OpenBSD                          July 4, 2014                          OpenBSD
+     displayed text
+     double type:
+     ragged unfilled
+     unfilled
+     ragged
+
+OpenBSD                          July 5, 2014                          OpenBSD

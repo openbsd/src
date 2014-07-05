@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.145 2014/07/05 01:11:33 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.146 2014/07/05 12:33:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -692,35 +692,32 @@ pre_bl(PRE_ARGS)
 		default:
 			continue;
 		}
+		if (LIST__NONE == lt)
+			continue;
 
 		/* Check: multiple list types. */
 
-		if (LIST__NONE != lt && n->norm->Bl.type != LIST__NONE)
-			mdoc_nmsg(mdoc, n, MANDOCERR_LISTREP);
-
-		/* Assign list type. */
-
-		if (LIST__NONE != lt && n->norm->Bl.type == LIST__NONE) {
-			n->norm->Bl.type = lt;
-			/* Set column information, too. */
-			if (LIST_column == lt) {
-				n->norm->Bl.ncols =
-				    n->args->argv[i].sz;
-				n->norm->Bl.cols = (void *)
-				    n->args->argv[i].value;
-			}
+		if (LIST__NONE != n->norm->Bl.type) {
+			mandoc_msg(MANDOCERR_BL_REP,
+			    mdoc->parse, n->line, n->pos,
+			    mdoc_argnames[argv->arg]);
+			continue;
 		}
 
 		/* The list type should come first. */
 
-		if (n->norm->Bl.type == LIST__NONE)
-			if (n->norm->Bl.width ||
-			    n->norm->Bl.offs ||
-			    n->norm->Bl.comp)
-				mandoc_msg(MANDOCERR_BL_LATETYPE,
-				    mdoc->parse, n->line, n->pos,
-				    mdoc_argnames[n->args->argv[0].arg]);
-		continue;
+		if (n->norm->Bl.width ||
+		    n->norm->Bl.offs ||
+		    n->norm->Bl.comp)
+			mandoc_msg(MANDOCERR_BL_LATETYPE,
+			    mdoc->parse, n->line, n->pos,
+			    mdoc_argnames[n->args->argv[0].arg]);
+
+		n->norm->Bl.type = lt;
+		if (LIST_column == lt) {
+			n->norm->Bl.ncols = argv->sz;
+			n->norm->Bl.cols = (void *)argv->value;
+		}
 	}
 
 	/* Allow lists to default to LIST_item. */
@@ -740,7 +737,7 @@ pre_bl(PRE_ARGS)
 	switch (n->norm->Bl.type) {
 	case LIST_tag:
 		if (NULL == n->norm->Bl.width)
-			mdoc_nmsg(mdoc, n, MANDOCERR_BL_WIDTH);
+			mdoc_nmsg(mdoc, n, MANDOCERR_BL_NOWIDTH);
 		break;
 	case LIST_column:
 		/* FALLTHROUGH */
@@ -842,16 +839,15 @@ pre_bd(PRE_ARGS)
 			abort();
 			/* NOTREACHED */
 		}
+		if (DISP__NONE == dt)
+			continue;
 
-		/* Check whether a type has already been assigned. */
-
-		if (DISP__NONE != dt && n->norm->Bd.type != DISP__NONE)
-			mdoc_nmsg(mdoc, n, MANDOCERR_DISPREP);
-
-		/* Make our type assignment. */
-
-		if (DISP__NONE != dt && n->norm->Bd.type == DISP__NONE)
+		if (DISP__NONE == n->norm->Bd.type)
 			n->norm->Bd.type = dt;
+		else
+			mandoc_msg(MANDOCERR_BD_REP,
+			    mdoc->parse, n->line, n->pos,
+			    mdoc_argnames[argv->arg]);
 	}
 
 	if (DISP__NONE == n->norm->Bd.type) {
@@ -1218,7 +1214,8 @@ post_at(POST_ARGS)
 
 	assert(MDOC_TEXT == n->type);
 	if (NULL == (std_att = mdoc_a2att(n->string))) {
-		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_BADATT);
+		mandoc_msg(MANDOCERR_AT_BAD, mdoc->parse,
+		    n->line, n->pos, n->string);
 		mandoc_asprintf(&att, "AT&T UNIX %s", n->string);
 	} else
 		att = mandoc_strdup(std_att);
@@ -1421,10 +1418,8 @@ post_bl_block_width(POST_ARGS)
 		width = 6;
 	else if (MDOC_MAX == (tok = mdoc_hash_find(n->norm->Bl.width)))
 		return(1);
-	else if (0 == (width = macro2len(tok)))  {
-		mdoc_nmsg(mdoc, n, MANDOCERR_BADWIDTH);
-		return(1);
-	}
+	else
+		width = macro2len(tok);
 
 	/* The value already exists: free and reallocate it. */
 
@@ -1655,30 +1650,37 @@ post_bl(POST_ARGS)
 static int
 ebool(struct mdoc *mdoc)
 {
+	struct mdoc_node	*nch;
+	enum mdoct		 tok;
 
-	if (NULL == mdoc->last->child) {
-		if (MDOC_Sm == mdoc->last->tok)
+	tok = mdoc->last->tok;
+	nch = mdoc->last->child;
+
+	if (NULL == nch) {
+		if (MDOC_Sm == tok)
 			mdoc->flags ^= MDOC_SMOFF;
 		return(1);
 	}
 
 	check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_LT, 2);
 
-	assert(MDOC_TEXT == mdoc->last->child->type);
+	assert(MDOC_TEXT == nch->type);
 
-	if (0 == strcmp(mdoc->last->child->string, "on")) {
-		if (MDOC_Sm == mdoc->last->tok)
+	if (0 == strcmp(nch->string, "on")) {
+		if (MDOC_Sm == tok)
 			mdoc->flags &= ~MDOC_SMOFF;
 		return(1);
 	}
-	if (0 == strcmp(mdoc->last->child->string, "off")) {
-		if (MDOC_Sm == mdoc->last->tok)
+	if (0 == strcmp(nch->string, "off")) {
+		if (MDOC_Sm == tok)
 			mdoc->flags |= MDOC_SMOFF;
 		return(1);
 	}
 
-	mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_BADBOOL);
-	return(1);
+	mandoc_vmsg(MANDOCERR_SM_BAD,
+	    mdoc->parse, nch->line, nch->pos,
+	    "%s %s", mdoc_macronames[tok], nch->string);
+	return(mdoc_node_relink(mdoc, nch));
 }
 
 static int
@@ -1714,25 +1716,28 @@ post_root(POST_ARGS)
 static int
 post_st(POST_ARGS)
 {
-	struct mdoc_node	 *ch;
+	struct mdoc_node	 *n, *nch;
 	const char		 *p;
 
-	if (NULL == (ch = mdoc->last->child)) {
+	n = mdoc->last;
+	nch = n->child;
+
+	if (NULL == nch) {
 		mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
-		    mdoc->last->line, mdoc->last->pos,
-		    mdoc_macronames[mdoc->last->tok]);
-		mdoc_node_delete(mdoc, mdoc->last);
+		    n->line, n->pos, mdoc_macronames[n->tok]);
+		mdoc_node_delete(mdoc, n);
 		return(1);
 	}
 
-	assert(MDOC_TEXT == ch->type);
+	assert(MDOC_TEXT == nch->type);
 
-	if (NULL == (p = mdoc_a2st(ch->string))) {
-		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_BADSTANDARD);
-		mdoc_node_delete(mdoc, mdoc->last);
+	if (NULL == (p = mdoc_a2st(nch->string))) {
+		mandoc_msg(MANDOCERR_ST_BAD, mdoc->parse,
+		    nch->line, nch->pos, nch->string);
+		mdoc_node_delete(mdoc, n);
 	} else {
-		free(ch->string);
-		ch->string = mandoc_strdup(p);
+		free(nch->string);
+		nch->string = mandoc_strdup(p);
 	}
 
 	return(1);

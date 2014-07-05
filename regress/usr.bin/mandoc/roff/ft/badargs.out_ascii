@@ -1,0 +1,13 @@
+FT-BADARGS(1)              OpenBSD Reference Manual              FT-BADARGS(1)
+
+
+
+NNAAMMEE
+       ft-badargs - font request with bad arguments
+
+DDEESSCCRRIIPPTTIIOONN
+       default font bboolldd ssttiillll bboolldd _i_t_a_l_i_c bbaacckk ttoo bboolldd _b_a_c_k _t_o _i_t_a_l_i_c
+
+
+
+OpenBSD                          July 5, 2014                    FT-BADARGS(1)

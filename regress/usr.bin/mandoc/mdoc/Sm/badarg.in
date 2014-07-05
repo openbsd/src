@@ -1,0 +1,14 @@
+.Dd July 3, 2014
+.Dt SM-BADARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm Sm-badarg
+.Nd spacing macro with invalid arguments
+.Sh DESCRIPTION
+.Fl f Ar on
+.Sm off
+.Fl f Ar off
+.Sm bad
+.Fl f Ar bad Pq on
+.Sm bad
+.Fl f Ar bad Pq off

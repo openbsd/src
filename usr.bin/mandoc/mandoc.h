@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.79 2014/07/05 01:11:33 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.80 2014/07/05 12:33:54 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -91,23 +91,21 @@ enum	mandocerr {
 	MANDOCERR_ARGCWARN, /* argument count wrong */
 	MANDOCERR_BD_NOTYPE, /* missing display type, using -ragged */
 	MANDOCERR_BL_LATETYPE, /* list type is not the first argument: arg */
-	MANDOCERR_BL_WIDTH, /* missing -width in -tag list, using 8n */
+	MANDOCERR_BL_NOWIDTH, /* missing -width in -tag list, using 8n */
 	MANDOCERR_IT_NOHEAD, /* empty head in list item: type */
 	MANDOCERR_IT_NOBODY, /* empty list item: type */
 	MANDOCERR_BF_NOFONT, /* missing font type, using \fR */
-	MANDOCERR_BF_BADFONT, /* unknown font type, using \fR: Bf font */
+	MANDOCERR_BF_BADFONT, /* unknown font type, using \fR: macro font */
 	MANDOCERR_ARG_STD, /* missing -std argument, adding it: macro */
 
 	/* related to bad macro arguments */
 	MANDOCERR_IGNARGV, /* skipping argument */
 	MANDOCERR_ARG_REP, /* duplicate argument: macro arg */
-	MANDOCERR_DISPREP, /* duplicate display type */
-	MANDOCERR_LISTREP, /* duplicate list type */
-	MANDOCERR_BADATT, /* unknown AT&T UNIX version */
-	MANDOCERR_BADBOOL, /* bad Boolean value */
-	MANDOCERR_BADFONT, /* unknown font */
-	MANDOCERR_BADSTANDARD, /* unknown standard specifier */
-	MANDOCERR_BADWIDTH, /* bad width argument */
+	MANDOCERR_BD_REP, /* skipping duplicate display type: type */
+	MANDOCERR_BL_REP, /* skipping duplicate list type: type */
+	MANDOCERR_AT_BAD, /* unknown AT&T UNIX version: version */
+	MANDOCERR_SM_BAD, /* invalid Boolean argument: macro arg */
+	MANDOCERR_FT_BAD, /* unknown font, skipping request: request font */
 
 	/* related to plain text */
 	MANDOCERR_NOBLANKLN, /* blank line in non-literal context */
@@ -145,6 +143,7 @@ enum	mandocerr {
 	MANDOCERR_REQUEST, /* NOT IMPLEMENTED: skipping request */
 	MANDOCERR_ARGCOUNT, /* argument count wrong */
 	MANDOCERR_RS_SKIP, /* skipping invalid content in .Rs block: macro */
+	MANDOCERR_ST_BAD, /* unknown standard specifier: standard */
 	MANDOCERR_STRAYTA, /* skipping column outside column list */
 	MANDOCERR_NOSCOPE, /* skipping end of block that is not open */
 	MANDOCERR_SCOPEBROKEN, /* missing end of block */

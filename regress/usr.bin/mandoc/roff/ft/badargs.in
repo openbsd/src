@@ -1,0 +1,15 @@
+.TH "FT-BADARGS" 1 "July 5, 2014" OpenBSD
+.SH NAME
+ft-badargs \(en font request with bad arguments
+.SH DESCRIPTION
+default font
+.ft B
+bold
+.ft foo
+still bold
+.ft I
+italic
+.ft P
+back to bold
+.ft
+back to italic

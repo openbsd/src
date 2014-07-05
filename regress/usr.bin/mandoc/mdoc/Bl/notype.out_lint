@@ -1,4 +1,3 @@
 mandoc: notype.in:9:2: WARNING: list type is not the first argument: offset
 mandoc: notype.in:12:2: ERROR: skipping all arguments: El tail argument
-mandoc: notype.in:14:2: WARNING: list type is not the first argument: offset
 mandoc: notype.in:14:2: ERROR: missing list type, using -item

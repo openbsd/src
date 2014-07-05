@@ -20,7 +20,10 @@ DDEESSCCRRIIPPTTIIOONN
      tag
        Here we need a very long line.  It must be sufficiently long such that
        it wraps the line.
+     double type:
+     oo   bullet enum
+     1.   enum bullet
      double arguments:
        last    wins
 
-OpenBSD                          July 4, 2014                          OpenBSD
+OpenBSD                          July 5, 2014                          OpenBSD
