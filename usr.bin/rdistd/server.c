@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.25 2013/10/27 18:31:24 guenther Exp $	*/
+/*	$OpenBSD: server.c,v 1.26 2014/07/05 06:39:13 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -345,9 +345,8 @@ removefile(struct stat *statb, int silent)
 	optarget = ptarget;
 	len = ptarget - target;
 	while ((dp = readdir(d)) != NULL) {
-		if ((D_NAMLEN(dp) == 1 && dp->d_name[0] == '.') ||
-		    (D_NAMLEN(dp) == 2 && dp->d_name[0] == '.' &&
-		     dp->d_name[1] == '.'))
+		if (dp->d_name[0] == '.' && (dp->d_name[1] == '\0' ||
+		    dp->d_name[1] == '.' && dp->d_name[2] == '\0'))
 			continue;
 
 		if (len + 1 + (int)strlen(dp->d_name) >= MAXPATHLEN - 1) {
