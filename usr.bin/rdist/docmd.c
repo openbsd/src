@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.26 2014/07/05 05:05:51 guenther Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.27 2014/07/05 06:18:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -983,7 +983,7 @@ docmds(struct namelist *hostlist, int argc, char **argv)
 	(void) signal(SIGTERM, sighandler);
 
 	if (!nflag)
-		mysetlinebuf(stdout);	/* Make output (mostly) clean */
+		setvbuf(stdout, NULL, _IOLBF, 0);
 
 #if	defined(USE_STATDB)
 	if (!nflag && (dostatdb || juststatdb)) {

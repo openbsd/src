@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.19 2014/07/05 05:08:57 guenther Exp $	*/
+/*	$OpenBSD: child.c,v 1.20 2014/07/05 06:18:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -462,6 +462,21 @@ waitup(void)
 }
 
 /*
+ * Enable non-blocking I/O mode.
+ */
+static int
+setnonblocking(int fd)
+{
+	int	mode;
+
+	if ((mode = fcntl(fd, F_GETFL)) < 0)
+		return (-1);
+	if (mode & O_NONBLOCK)
+		return (0);
+	return (fcntl(fd, F_SETFL, mode | O_NONBLOCK));
+}
+
+/*
  * Spawn (create) a new child process for "cmd".
  */
 int
@@ -510,7 +525,7 @@ spawn(struct cmd *cmd, struct cmd *cmdlist)
 		(void) close(fildes[PIPE_WRITE]);
 
 		/* Set non-blocking I/O */
-		if (setnonblocking(newchild.c_readfd, TRUE) < 0) {
+		if (setnonblocking(newchild.c_readfd) < 0) {
 			error("Set nonblocking I/O failed: %s", SYSERR);
 			return(-1);
 		}
@@ -548,40 +563,3 @@ spawn(struct cmd *cmd, struct cmd *cmdlist)
 		return(0);
 	}
 }
-
-
-/*
- * Enable or disable non-blocking I/O mode.
- *
- * Code is from INN by Rich Salz.
- */
-#if	NBIO_TYPE == NBIO_IOCTL
-#include <sys/ioctl.h>
-
-int
-setnonblocking(int fd, int flag)
-{
-	int state;
-
-	state = flag ? 1 : 0;
-	return(ioctl(fd, FIONBIO, (char *)&state));
-}
-
-#endif	/* NBIO_IOCTL */
-
-
-#if	NBIO_TYPE == NBIO_FCNTL
-int
-setnonblocking(int fd, int flag)
-{
-	int	mode;
-
-	if ((mode = fcntl(fd, F_GETFL, 0)) < 0)
-		return(-1);
-	if (flag)
-		mode |= FNDELAY;
-	else
-		mode &= ~FNDELAY;
-	return(fcntl(fd, F_SETFL, mode));
-}
-#endif	/* NBIO_FCNTL */

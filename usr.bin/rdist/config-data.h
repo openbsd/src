@@ -1,4 +1,4 @@
-/*	$OpenBSD: config-data.h,v 1.7 2011/04/10 15:47:28 krw Exp $	*/
+/*	$OpenBSD: config-data.h,v 1.8 2014/07/05 06:18:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -63,20 +63,6 @@ typedef 	struct direct		DIRENTRY;
 typedef 	struct dirent		DIRENTRY;
 #define 	D_NAMLEN(p)		(strlen((p)->d_name))
 #endif	/* DIR_DIRENT */
-
-/*
- * Set a default buffering type.
- */
-#if	!defined(SETBUF_TYPE)
-#define 	SETBUF_TYPE		SETBUF_SETLINEBUF
-#endif	/* SETBUF_TYPE */
-
-/*
- * Set a default get socket pair type.
- */
-#if	!defined(SOCKPAIR_TYPE)
-#define 	SOCKPAIR_TYPE		SOCKPAIR_SOCKETPAIR
-#endif	/* SOCKPAIR_TYPE */
 
 /*
  * Set default write(2) return and amount types.

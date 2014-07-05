@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.20 2014/07/05 05:05:51 guenther Exp $	*/
+/*	$OpenBSD: message.c,v 1.21 2014/07/05 06:18:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -552,33 +552,8 @@ _message(int flags, char *msgbuf)
 							      mbuf);
 }
 
-#if	defined(ARG_TYPE) && ARG_TYPE == ARG_VARARGS
 /*
- * Varargs front-end to _message()
- */
-void
-message(va_alist)
-	va_dcl
-{
-	static char buf[MSGBUFSIZ];
-	va_list args;
-	char *fmt;
-	int lvl;
-
-	va_start(args);
-	lvl = (int) va_arg(args, int);
-	fmt = (char *) va_arg(args, char *);
-	va_end(args);
-
-	(void) vsnprintf(buf, sizeof(buf), fmt, args);
-
-	_message(lvl, buf);
-}
-#endif	/* ARG_VARARGS */
-
-#if	defined(ARG_TYPE) && ARG_TYPE == ARG_STDARG
-/*
- * Stdarg front-end to _message()
+ * Front-end to _message()
  */
 void
 message(int lvl, const char *fmt, ...)
@@ -592,7 +567,6 @@ message(int lvl, const char *fmt, ...)
 
 	_message(lvl, buf);
 }
-#endif	/* ARG_STDARG */
 
 /*
  * Display a debugging message
@@ -604,33 +578,8 @@ _debugmsg(int lvl, char *buf)
 		_message(MT_DEBUG, buf);
 }
 
-#if	defined(ARG_TYPE) && ARG_TYPE == ARG_VARARGS
 /*
- * Varargs front-end to _debugmsg()
- */
-void
-debugmsg(va_alist)
-	va_dcl
-{
-	static char buf[MSGBUFSIZ];
-	va_list args;
-	char *fmt;
-	int lvl;
-
-	va_start(args);
-	lvl = (int) va_arg(args, int);
-	fmt = (char *) va_arg(args, char *);
-	va_end(args);
-
-	(void) vsnprintf(buf, sizeof(buf), fmt, args);
-
-	_debugmsg(lvl, buf);
-}
-#endif	/* ARG_VARARGS */
-
-#if	defined(ARG_TYPE) && ARG_TYPE == ARG_STDARG
-/*
- * Stdarg front-end to _debugmsg()
+ * Front-end to _debugmsg()
  */
 void
 debugmsg(int lvl, const char *fmt, ...)
@@ -644,7 +593,6 @@ debugmsg(int lvl, const char *fmt, ...)
 
 	_debugmsg(lvl, buf);
 }
-#endif	/* ARG_STDARG */
 
 /*
  * Print an error message
@@ -669,32 +617,8 @@ _error(const char *msg)
 	_message(MT_NERROR, (buf[0]) ? buf : NULL);
 }
 
-#if	defined(ARG_TYPE) && ARG_TYPE == ARG_VARARGS
 /*
- * Varargs frontend to _error()
- */
-void
-error(va_alist)
-	va_dcl
-{
-	static char buf[MSGBUFSIZ];
-	va_list args;
-	char *fmt;
-
-	buf[0] = CNULL;
-	va_start(args);
-	fmt = (char *) va_arg(args, char *);
-	if (fmt)
-		(void) vsnprintf(buf, sizeof(buf), fmt, args);
-	va_end(args);
-
-	_error((buf[0]) ? buf : NULL);
-}
-#endif	/* ARG_VARARGS */
-
-#if	defined(ARG_TYPE) && ARG_TYPE == ARG_STDARG
-/*
- * Stdarg frontend to _error()
+ * Frontend to _error()
  */
 void
 error(const char *fmt, ...)
@@ -710,7 +634,6 @@ error(const char *fmt, ...)
 
 	_error((buf[0]) ? buf : NULL);
 }
-#endif	/* ARG_STDARG */
 
 /*
  * Display a fatal message
@@ -732,30 +655,8 @@ _fatalerr(const char *msg)
 	exit(nerrs);
 }
 
-#if	defined(ARG_TYPE) && ARG_TYPE == ARG_VARARGS
 /*
- * Varargs front-end to _fatalerr()
- */
-void
-fatalerr(va_alist)
-	va_dcl
-{
-	static char buf[MSGBUFSIZ];
-	va_list args;
-	char *fmt;
-
-	va_start(args);
-	fmt = (char *) va_arg(args, char *);
-	(void) vsnprintf(buf, sizeof(buf), fmt, args);
-	va_end(args);
-
-	_fatalerr(buf);
-}
-#endif	/* ARG_VARARGS */
-
-#if	defined(ARG_TYPE) && ARG_TYPE == ARG_STDARG
-/*
- * Stdarg front-end to _fatalerr()
+ * Front-end to _fatalerr()
  */
 void
 fatalerr(const char *fmt, ...)
@@ -769,7 +670,6 @@ fatalerr(const char *fmt, ...)
 
 	_fatalerr(buf);
 }
-#endif	/* ARG_STDARG */
 
 /*
  * Get the name of the file used for notify.

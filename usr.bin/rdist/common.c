@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.27 2014/07/05 05:05:51 guenther Exp $	*/
+/*	$OpenBSD: common.c,v 1.28 2014/07/05 06:18:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -275,14 +275,10 @@ sendcmdmsg(int cmd, char *msg, size_t msgsize)
 /*
  * Send a command message to the remote host.
  * Called as sendcmd(char cmdchar, char *fmt, arg1, arg2, ...)
- * The fmt and arg? arguments are optional.
- */
-#if	defined(ARG_TYPE) && ARG_TYPE == ARG_STDARG
-/*
- * Stdarg frontend to sendcmdmsg()
+ * The fmt may be NULL, in which case there are no args.
  */
 int
-sendcmd(char cmd, char *fmt, ...)
+sendcmd(char cmd, const char *fmt, ...)
 {
 	static char buf[BUFSIZ];
 	va_list args;
@@ -297,35 +293,6 @@ sendcmd(char cmd, char *fmt, ...)
 
 	return(sendcmdmsg(cmd, buf, sizeof(buf)));
 }
-#endif	/* ARG_TYPE == ARG_STDARG */
-
-#if	defined(ARG_TYPE) && ARG_TYPE == ARG_VARARGS
-/*
- * Varargs frontend to sendcmdmsg()
- */
-int
-sendcmd(va_alist)
-	va_dcl
-{
-	static char buf[BUFSIZ];
-	va_list args;
-	char cmd;
-	char *fmt;
-
-	va_start(args);
-	/* XXX The "int" is necessary as a workaround for broken varargs */
-	cmd = (char) va_arg(args, int);
-	fmt = va_arg(args, char *);
-	if (fmt)
-		(void) vsnprintf(buf + (cmd != C_NONE),
-				 sizeof(buf) - (cmd != C_NONE), fmt, args);
-	else
-		buf[1] = CNULL;
-	va_end(args);
-
-	return(sendcmdmsg(cmd, buf, sizeof(buf)));
-}
-#endif	/* ARG_TYPE == ARG_VARARGS */
 
 /*
  * Internal variables and routines for reading lines from the remote.
@@ -918,21 +885,4 @@ searchpath(char *path)
 			*space = ' ';		/* Put back what we zapped */
 	}
 	return (file);
-}
-
-/*
- * Set line buffering.
- */
-int
-mysetlinebuf(FILE *fp)
-{
-#if	SETBUF_TYPE == SETBUF_SETLINEBUF
-	return(setlinebuf(fp));
-#endif	/* SETBUF_SETLINEBUF */
-#if	SETBUF_TYPE == SETBUF_SETVBUF
-	return(setvbuf(stdout, NULL, _IOLBF, BUFSIZ));
-#endif	/* SETBUF_SETVBUF */
-#if	!defined(SETBUF_TYPE)
-	No SETBUF_TYPE is defined!
-#endif	/* SETBUF_TYPE */
 }

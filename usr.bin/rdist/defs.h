@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.20 2014/07/05 05:05:51 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.21 2014/07/05 06:18:58 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -36,32 +36,28 @@
  * @(#)defs.h      5.2 (Berkeley) 3/20/86
  */
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <pwd.h>
-#include <grp.h>
-#include <regex.h>
-#include <syslog.h>
-#include <setjmp.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <ctype.h>
+#include <errno.h>
+#include <grp.h>
+#include <pwd.h>
+#include <regex.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
 
 #ifndef __GNUC__
 # ifndef __attribute__
 #  define __attribute__(a)
-# endif
-#endif
-
-#ifndef __STDC__
-# ifndef const
-#  define const
 # endif
 #endif
 
@@ -73,7 +69,6 @@
 #include "types.h"
 #include "filesys.h"
 
-#include <signal.h>
 
 /*
  * This belongs in os-svr4.h but many SVR4 OS's
@@ -94,15 +89,6 @@
 #if	defined(NEED_LIMITS_H)
 #include <limits.h>
 #endif	/* NEED_LIMITS_H */
-
-#if defined(ARG_TYPE)
-#if	ARG_TYPE == ARG_STDARG
-#include <stdarg.h>
-#endif
-#if	ARG_TYPE == ARG_VARARGS
-#include <varargs.h>
-#endif
-#endif	/* ARG_TYPE */
 
 	/* boolean truth */
 #ifndef TRUE
@@ -146,19 +132,6 @@
 #define IS_OFF(b,f)	!(IS_ON(b,f))
 #define FLAG_ON(b,f)	b |= f
 #define FLAG_OFF(b,f)	b &= ~(f)
-
-/*
- * POSIX systems should already have S_* defined.
- */
-#ifndef S_ISDIR
-#define S_ISDIR(m) 	(((m) & S_IFMT) == S_IFDIR)
-#endif
-#ifndef S_ISREG
-#define S_ISREG(m) 	(((m) & S_IFMT) == S_IFREG)
-#endif
-#ifndef S_ISLNK
-#define S_ISLNK(m) 	(((m) & S_IFMT) == S_IFLNK)
-#endif
 
 #define ALLOC(x) 	(struct x *) xmalloc(sizeof(struct x))
 #define A(s)		((s) ? s : "<null>")
@@ -209,8 +182,8 @@
 #define C_CMDSPECIAL	's'		/* Execute cmd special command */
 #define C_CHMOG		'M'		/* Chown,Chgrp,Chmod a file */
 
-#define	ack() 		(void) sendcmd(C_ACK, (char *)NULL)
-#define	err() 		(void) sendcmd(C_ERRMSG, (char *)NULL)
+#define	ack() 		(void) sendcmd(C_ACK, NULL)
+#define	err() 		(void) sendcmd(C_ERRMSG, NULL)
 
 /*
  * Session startup commands.
@@ -349,8 +322,6 @@ extern int 		juststatdb;
 /* child.c */
 void waitup(void);
 int spawn(struct cmd *, struct cmd *);
-int setnonblocking(int, int);
-int setnonblocking(int, int);
 
 /* client.c */
 char *remfilename(char *, char *, char *, char *, int);
@@ -368,7 +339,7 @@ void finish(void);
 void lostconn(void);
 void coredump(void);
 void sighandler(int);
-int sendcmd(char, char *, ...) __attribute__((__format__ (printf, 2, 3)));
+int sendcmd(char, const char *, ...) __attribute__((__format__ (printf, 2, 3)));
 int remline(u_char *, int, int);
 ssize_t readrem(char *, ssize_t);
 char *getusername(UID_T, char *, opt_t);
@@ -386,7 +357,6 @@ void *xcalloc(size_t, size_t);
 char *xstrdup(const char *);
 char *xbasename(char *);
 char *searchpath(char *);
-int mysetlinebuf(FILE *);
 
 /* distopt.c */
 DISTOPTINFO *getdistopt(char *, int *);

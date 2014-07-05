@@ -1,4 +1,4 @@
-/*	$OpenBSD: config-def.h,v 1.7 2014/07/05 05:31:35 guenther Exp $	*/
+/*	$OpenBSD: config-def.h,v 1.8 2014/07/05 06:18:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -63,12 +63,6 @@
 #define FSI_GETMNTENT		4
 
 /*
- * Types of non-blocking I/O.
- */
-#define NBIO_FCNTL		1
-#define NBIO_IOCTL		2
-
-/*
  * Types of set filetime functions
  */
 #define SETFTIME_UTIMES		1		/* Have utimes() */
@@ -80,23 +74,5 @@
 #define STATFS_BSD		1
 #define STATFS_SYSV		2
 #define STATFS_OSF1		3
-
-/*
- * Arg types
- */
-#define ARG_VARARGS		1
-#define ARG_STDARG		2
-
-/*
- * Set buffering types
- */
-#define SETBUF_SETLINEBUF	1
-#define SETBUF_SETVBUF		2
-
-/*
- * Socket Pair types
- */
-#define SOCKPAIR_SOCKETPAIR	1
-#define SOCKPAIR_SPIPE		2
 
 #endif	/* __configdef_h__ */

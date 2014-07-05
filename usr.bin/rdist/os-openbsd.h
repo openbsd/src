@@ -29,7 +29,7 @@
  */
 
 /*
- * $OpenBSD: os-openbsd.h,v 1.14 2014/07/05 05:31:35 guenther Exp $
+ * $OpenBSD: os-openbsd.h,v 1.15 2014/07/05 06:18:58 guenther Exp $
  */
 
 /*
@@ -61,11 +61,6 @@
 #define FSI_TYPE	FSI_GETFSSTAT
 
 /*
- * Type of non-blocking I/O.
- */
-#define NBIO_TYPE	NBIO_FCNTL
-
-/*
  * Type of wait() function to use.
  */
 #define WAIT_TYPE	WAIT_WAIT3
@@ -84,11 +79,6 @@
  * Use f_fstypename in struct statfs.
  */
 #define HAVE_FSTYPENAME	1
-
-/*
- * Type of arg functions we have.
- */
-#define ARG_TYPE	ARG_STDARG
 
 /*
  * UID argument type for chown()
@@ -115,11 +105,6 @@ typedef void POINTER;
  * Type of set file time function available
  */
 #define SETFTIME_TYPE	SETFTIME_UTIMES
-
-/*
- * Type of set line buffering function available
- */
-#define SETBUF_TYPE	SETBUF_SETLINEBUF
 
 /*
  * Things we have
