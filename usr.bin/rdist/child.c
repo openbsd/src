@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.22 2014/07/05 07:25:27 guenther Exp $	*/
+/*	$OpenBSD: child.c,v 1.23 2014/07/05 07:57:43 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -461,15 +461,6 @@ spawn(struct cmd *cmd, struct cmd *cmdlist)
 		 * Parent
 		 */
 		static CHILD newchild;
-
-#if	defined(FORK_MISSES)
-		/*
-		 * XXX Some OS's have a bug where fork does not
-		 * always return properly to the parent
-		 * when a number of forks are done very quicky.
-		 */
-		sleep(2);
-#endif	/* FORK_MISSES */
 
 		/* Receive notification when the child exits */
 		(void) signal(SIGCHLD, reap);
