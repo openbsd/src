@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.12 2013/12/25 15:01:39 miod Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.13 2014/07/05 16:59:36 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -145,6 +145,5 @@ _dl_sigprocmask:
 	mov	pc, lr
 
 .L_cerr:
-	mov	r0, #0
-	sub	r0, r0, #1
+	rsb	r0, r0, #0		/* r0 = -errno */
 	mov	pc, lr
