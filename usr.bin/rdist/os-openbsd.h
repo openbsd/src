@@ -29,7 +29,7 @@
  */
 
 /*
- * $OpenBSD: os-openbsd.h,v 1.18 2014/07/05 06:55:29 guenther Exp $
+ * $OpenBSD: os-openbsd.h,v 1.19 2014/07/05 07:22:18 guenther Exp $
  */
 
 /*
@@ -66,11 +66,6 @@
 #define HAVE_FSTYPENAME	1
 
 /*
- * Generic pointer, used by memcpy, malloc, etc.  Usually char or void.
- */
-typedef void POINTER;
-
-/*
  * Type of set file time function available
  */
 #define SETFTIME_TYPE	SETFTIME_UTIMES
@@ -78,13 +73,7 @@ typedef void POINTER;
 /*
  * Things we have
  */
-#define HAVE_FCHOWN			/* Have fchown() */
-#define HAVE_LCHOWN			/* Have lchown() */
-#define HAVE_FCHMOD			/* Have fchmod() */
-#define HAVE_FTRUNCATE			/* Have ftruncate() */
-#define HAVE_SAVED_IDS			/* Have POSIX style saved [ug]id's */
 #define HAVE_VIS			/* Have vis() */
-#define HAVE_VSNPRINTF			/* Have vsnprintf() */
 #define POSIX_SIGNALS			/* Have POSIX signals */
 #define HAVE_PATHS_H			/* Have <paths.h> */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.29 2014/07/05 06:53:36 guenther Exp $	*/
+/*	$OpenBSD: server.c,v 1.30 2014/07/05 07:22:18 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -104,22 +104,12 @@ setownership(char *file, int fd, uid_t uid, gid_t gid, int link)
 	if (getuid() != 0) 
 		uid = -1;
 
-	/*
-	 * If we are dealing with a symlink, only try to change it if
-	 * we have lchown, if we don't leave it alone.
-	 */
-#if	defined(HAVE_LCHOWN)
 	if (link)
 		status = lchown(file, uid, gid);
-#else
-	if (link)
-		return 0;
-#endif
 
-#if	defined(HAVE_FCHOWN)
 	if (fd != -1 && !link)
 		status = fchown(fd, uid, gid);
-#endif
+
 	if (status < 0 && !link)
 		status = chown(file, uid, gid);
 
@@ -147,22 +137,11 @@ setfilemode(char *file, int fd, int mode, int link)
 	if (mode == -1)
 		return(0);
 
-	/*
-	 * If we are dealing with a symlink, only try to change it if
-	 * we have lchown, if we don't leave it alone.
-	 */
-#if	defined(HAVE_LCHMOD)
 	if (link)
-		status = lchmod(file, mode);
-#else
-	if (link)
-		return 0;
-#endif
+		status = fchmodat(AT_FDCWD, file, mode, AT_SYMLINK_NOFOLLOW);
 
-#if	defined(HAVE_FCHMOD)
 	if (fd != -1 && !link)
 		status = fchmod(fd, mode);
-#endif
 
 	if (status < 0 && !link)
 		status = chmod(file, mode);

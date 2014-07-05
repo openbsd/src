@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.28 2014/07/05 06:45:00 guenther Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.29 2014/07/05 07:22:18 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -257,9 +257,6 @@ static int
 remotecmd(char *rhost, char *luser, char *ruser, char *cmd)
 {
 	int desc;
-#if	defined(DIRECT_RCMD)
-	static int port = -1;
-#endif	/* DIRECT_RCMD */
 
 	debugmsg(DM_MISC, "local user = %s remote user = %s\n", luser, ruser);
 	debugmsg(DM_MISC, "Remote command = '%s'\n", cmd);
@@ -269,30 +266,12 @@ remotecmd(char *rhost, char *luser, char *ruser, char *cmd)
 	(void) signal(SIGALRM, sighandler);
 	(void) alarm(RTIMEOUT);
 
-#if	defined(DIRECT_RCMD)
-	(void) signal(SIGPIPE, sighandler);
-
-	if (port < 0) {
-		struct servent *sp;
-		
-		if ((sp = getservbyname("shell", "tcp")) == NULL)
-				fatalerr("shell/tcp: unknown service");
-		port = sp->s_port;
-	}
-
-	if (becomeroot() != 0)
-		exit(1);
-	desc = rcmd(&rhost, port, luser, ruser, cmd, 0);
-	if (becomeuser() != 0)
-		exit(1);
-#else	/* !DIRECT_RCMD */
 	debugmsg(DM_MISC, "Remote shell command = '%s'\n",
 	    path_remsh ? path_remsh : "default");
 	(void) signal(SIGPIPE, SIG_IGN);
 	desc = rcmdsh(&rhost, -1, luser, ruser, cmd, path_remsh);
 	if (desc > 0)
 		(void) signal(SIGPIPE, sighandler);
-#endif	/* DIRECT_RCMD */
 
 	(void) alarm(0);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.22 2014/07/05 05:05:51 guenther Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.23 2014/07/05 07:22:18 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -128,17 +128,12 @@ main(int argc, char **argv, char **envp)
 		exit(1);
 	}
 
-#if	defined(DIRECT_RCMD)
-	if (becomeuser() != 0)
-		exit(1);
-#else	/* !DIRECT_RCMD */
 	/*
 	 * Perform check to make sure we are not incorrectly installed
 	 * setuid to root or anybody else.
 	 */
 	if (getuid() != geteuid())
 		fatalerr("This version of rdist should not be installed setuid.");
-#endif	/* DIRECT_RCMD */
 
 	while ((c = getopt(argc, argv, optchars)) != -1)
 		switch (c) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.29 2014/07/05 06:55:29 guenther Exp $	*/
+/*	$OpenBSD: common.c,v 1.30 2014/07/05 07:22:18 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -616,52 +616,7 @@ notilde:
 	return(pw_dir);
 }
 
-#if	defined(DIRECT_RCMD)
-/*
- * Set our effective user id to the user running us.
- * This should be the uid we do most of our work as.
- */
-int
-becomeuser(void)
-{
-	int r = 0;
 
-#if	defined(HAVE_SAVED_IDS)
-	r = seteuid(userid);
-#else
-	r = setreuid(0, userid);
-#endif	/* HAVE_SAVED_IDS */
-
-	if (r < 0)
-		error("becomeuser %u failed: %s (ruid = %u euid = %u)",
-		      userid, SYSERR, getuid(), geteuid());
-
-	return(r);
-}
-#endif	/* DIRECT_RCMD */
-
-#if	defined(DIRECT_RCMD)
-/*
- * Set our effective user id to "root" (uid = 0)
- */
-int
-becomeroot(void)
-{
-	int r = 0;
-
-#if	defined(HAVE_SAVED_IDS)
-	r = seteuid(0);
-#else
-	r = setreuid(userid, 0);
-#endif	/* HAVE_SAVED_IDS */
-
-	if (r < 0)
-		error("becomeroot failed: %s (ruid = %u euid = %u)",
-		      SYSERR, getuid(), geteuid());
-
-	return(r);
-}
-#endif	/* DIRECT_RCMD */
 
 /*
  * Set access and modify times of a given file
