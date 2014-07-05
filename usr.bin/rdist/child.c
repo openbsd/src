@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.21 2014/07/05 06:35:03 guenther Exp $	*/
+/*	$OpenBSD: child.c,v 1.22 2014/07/05 07:25:27 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -96,28 +96,18 @@ removechild(CHILD *child)
 		/*
 		 * Remove the child
 		 */
-#if	defined(POSIX_SIGNALS)
-		sigset_t set;
+		sigset_t set, oset;
 
 		sigemptyset(&set);
 		sigaddset(&set, SIGCHLD);
-		sigprocmask(SIG_BLOCK, &set, NULL);
-#else	/* !POSIX_SIGNALS */
-		int oldmask;
-
-		oldmask = sigblock(sigmask(SIGCHLD));
-#endif	/* POSIX_SIGNALS */
+		sigprocmask(SIG_BLOCK, &set, &oset);
 
 		if (prevpc != NULL)
 			prevpc->c_next = pc->c_next;
 		else
 			childlist = pc->c_next;
 
-#if	defined(POSIX_SIGNALS)
-		sigprocmask(SIG_UNBLOCK, &set, NULL);
-#else
-		sigsetmask(oldmask);
-#endif	/* POSIX_SIGNALS */
+		sigprocmask(SIG_SETMASK, &oset, NULL);
 
 		(void) free(child->c_name);
 		--activechildren;

@@ -29,7 +29,7 @@
  */
 
 /*
- * $OpenBSD: os-openbsd.h,v 1.19 2014/07/05 07:22:18 guenther Exp $
+ * $OpenBSD: os-openbsd.h,v 1.20 2014/07/05 07:25:27 guenther Exp $
  */
 
 /*
@@ -74,7 +74,6 @@
  * Things we have
  */
 #define HAVE_VIS			/* Have vis() */
-#define POSIX_SIGNALS			/* Have POSIX signals */
 #define HAVE_PATHS_H			/* Have <paths.h> */
 
 /*
