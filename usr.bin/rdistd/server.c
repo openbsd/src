@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.28 2014/07/05 06:45:00 guenther Exp $	*/
+/*	$OpenBSD: server.c,v 1.29 2014/07/05 06:53:36 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -49,7 +49,7 @@ static int64_t min_freefiles = 0; /* Minimium free # files on a filesystem */
 int	oumask;			/* Old umask */
 
 static int cattarget(char *);
-static int setownership(char *, int, UID_T, GID_T, int);
+static int setownership(char *, int, uid_t, gid_t, int);
 static int setfilemode(char *, int, int, int);
 static int fchog(int, char *, char *, char *, int);
 static int removefile(struct stat *, int);
@@ -94,7 +94,7 @@ cattarget(char *string)
  * Set uid and gid ownership of a file.
  */
 static int
-setownership(char *file, int fd, UID_T uid, GID_T gid, int link)
+setownership(char *file, int fd, uid_t uid, gid_t gid, int link)
 {
 	int status = -1;
 
@@ -110,8 +110,7 @@ setownership(char *file, int fd, UID_T uid, GID_T gid, int link)
 	 */
 #if	defined(HAVE_LCHOWN)
 	if (link)
-		status = lchown(file, (CHOWN_UID_T) uid, 
-				(CHOWN_GID_T) gid);
+		status = lchown(file, uid, gid);
 #else
 	if (link)
 		return 0;
@@ -119,15 +118,13 @@ setownership(char *file, int fd, UID_T uid, GID_T gid, int link)
 
 #if	defined(HAVE_FCHOWN)
 	if (fd != -1 && !link)
-		status = fchown(fd, (CHOWN_UID_T) uid, 
-				(CHOWN_GID_T) gid);
+		status = fchown(fd, uid, gid);
 #endif
 	if (status < 0 && !link)
-		status = chown(file, (CHOWN_UID_T) uid, 
-			       (CHOWN_GID_T) gid);
+		status = chown(file, uid, gid);
 
 	if (status < 0) {
-		if (uid == (UID_T) -1)
+		if (uid == (uid_t)-1)
 			message(MT_NOTICE, "%s: chgrp %d failed: %s",
 				target, gid, SYSERR);
 		else
@@ -187,14 +184,14 @@ fchog(int fd, char *file, char *owner, char *group, int mode)
 	extern char *locuser;
 	int i;
 	struct stat st;
-	UID_T uid;
-	GID_T gid;
-	GID_T primegid = (GID_T)-2;
+	uid_t uid;
+	gid_t gid;
+	gid_t primegid = (gid_t)-2;
 
 	uid = userid;
 	if (userid == 0) {	/* running as root; take anything */
 		if (*owner == ':') {
-			uid = (UID_T) atoi(owner + 1);
+			uid = (uid_t) atoi(owner + 1);
 		} else if (pw == NULL || strcmp(owner, pw->pw_name) != 0) {
 			if ((pw = getpwnam(owner)) == NULL) {
 				if (mode != -1 && IS_ON(mode, S_ISUID)) {
@@ -214,7 +211,7 @@ fchog(int fd, char *file, char *owner, char *group, int mode)
 			primegid = pw->pw_gid;
 		}
 		if (*group == ':') {
-			gid = (GID_T) atoi(group + 1);
+			gid = (gid_t)atoi(group + 1);
 			goto ok;
 		}
 	} else {	/* not root, setuid only if user==owner */
@@ -232,7 +229,7 @@ fchog(int fd, char *file, char *owner, char *group, int mode)
 			primegid = lupw->pw_gid;
 	}
 
-	gid = (GID_T) -1;
+	gid = (gid_t)-1;
 	if (gr == NULL || strcmp(group, gr->gr_name) != 0) {
 		if ((*group == ':' && 
 		     (getgrgid(gid = atoi(group + 1)) == NULL))
@@ -262,7 +259,7 @@ fchog(int fd, char *file, char *owner, char *group, int mode)
 				target, locuser, group);
 			mode &= ~S_ISGID;
 		}
-		gid = (GID_T) -1;
+		gid = (gid_t)-1;
 	}
 ok:
 	if (stat(file, &st) == -1) {
@@ -349,7 +346,7 @@ removefile(struct stat *statb, int silent)
 	len = ptarget - target;
 	while ((dp = readdir(d)) != NULL) {
 		if (dp->d_name[0] == '.' && (dp->d_name[1] == '\0' ||
-		    dp->d_name[1] == '.' && dp->d_name[2] == '\0'))
+		    (dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
 			continue;
 
 		if (len + 1 + (int)strlen(dp->d_name) >= MAXPATHLEN - 1) {
@@ -432,7 +429,7 @@ doclean(char *cp)
 	len = ptarget - target;
 	while ((dp = readdir(d)) != NULL) {
 		if (dp->d_name[0] == '.' && (dp->d_name[1] == '\0' ||
-		    dp->d_name[1] == '.' && dp->d_name[2] == '\0'))
+		    (dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
 			continue;
 
 		if (len + 1 + (int)strlen(dp->d_name) >= MAXPATHLEN - 1) {
