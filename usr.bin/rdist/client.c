@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.26 2013/08/18 16:32:24 guenther Exp $	*/
+/*	$OpenBSD: client.c,v 1.27 2014/07/05 05:05:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -204,7 +204,7 @@ addcmdspecialfile(char *starget, char *rname, int destdir)
 	}
 
 	if (isokay) {
-		new = (struct namelist *) xmalloc(sizeof(struct namelist));
+		new = xmalloc(sizeof *new);
 		new->n_name = xstrdup(rfile);
 		new->n_regex = NULL;
 		new->n_next = updfilelist;
@@ -323,7 +323,7 @@ linkinfo(struct stat *statp)
 			return(lp);
 		}
 
-	lp = (struct linkbuf *) xmalloc(sizeof(*lp));
+	lp = xmalloc(sizeof(*lp));
 	lp->nextp = ihead;
 	ihead = lp;
 	lp->inum = statp->st_ino;

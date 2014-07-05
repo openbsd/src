@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.17 2014/07/04 21:50:13 guenther Exp $	*/
+/*	$OpenBSD: child.c,v 1.18 2014/07/05 05:05:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -138,7 +138,7 @@ copychild(CHILD *child)
 {
 	CHILD *newc;
 
-	newc = (CHILD *) xmalloc(sizeof(CHILD));
+	newc = xmalloc(sizeof *newc);
 
 	newc->c_name = xstrdup(child->c_name);
 	newc->c_readfd = child->c_readfd;

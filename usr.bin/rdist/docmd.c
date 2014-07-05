@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.25 2012/11/12 01:14:41 guenther Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.26 2014/07/05 05:05:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -724,7 +724,7 @@ cmptime(char *name, struct subcmd *sbcmds, char **env)
 			message(MT_CHANGE, "special \"%s\"", buf);
 			if (*env) {
 				size_t len = strlen(*env) + strlen(name) + 2;
-				*env = (char *) xrealloc(*env, len);
+				*env = xrealloc(*env, len);
 				(void) strlcat(*env, name, len);
 				(void) strlcat(*env, ":", len);
 			}
@@ -767,7 +767,7 @@ dodcolon(struct cmd *cmd, char **filev)
 	env = NULL;
 	for (sc = sbcmds; sc != NULL; sc = sc->sc_next) {
 		if (sc->sc_type == CMDSPECIAL) {
-			env = (char *) xmalloc(sizeof(E_FILES) + 3);
+			env = xmalloc(sizeof(E_FILES) + 3);
 			(void) snprintf(env, sizeof(E_FILES) + 3,
 					"%s='", E_FILES);
 			break;
@@ -843,8 +843,7 @@ except(char *file)
 
 				/* allocate and compile n_regex as needed */
 				if (nl->n_regex == NULL) {
-					nl->n_regex = (regex_t *)
-					    xmalloc(sizeof(regex_t));
+					nl->n_regex = xmalloc(sizeof(regex_t));
 					ecode = regcomp(nl->n_regex, nl->n_name,
 							REG_NOSUB);
 				}

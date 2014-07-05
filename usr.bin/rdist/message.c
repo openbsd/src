@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.19 2013/12/21 06:29:17 guenther Exp $	*/
+/*	$OpenBSD: message.c,v 1.20 2014/07/05 05:05:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -448,7 +448,7 @@ msgsendnotify(MSGFACILITY *msgfac, int mtype, int flags, char *msgbuf)
 		if ((cp = getenv("TMPDIR")) == NULL || *cp == '\0')
 			cp = _PATH_TMP;
 		len = strlen(cp) + 1 + sizeof(_RDIST_TMP);
-		tempfile = (char *) xmalloc(len);
+		tempfile = xmalloc(len);
 		(void) snprintf(tempfile, len, "%s/%s", cp, _RDIST_TMP);
 
 		msgfac->mf_filename = tempfile;

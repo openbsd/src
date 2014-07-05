@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.19 2013/12/21 06:29:17 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.20 2014/07/05 05:05:51 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -380,9 +380,9 @@ int becomeroot(void);
 int setfiletime(char *, time_t, time_t);
 char *getversion(void);
 void runcommand(char *);
-char *xmalloc(size_t);
-char *xrealloc(char *, size_t);
-char *xcalloc(size_t, size_t);
+void *xmalloc(size_t);
+void *xrealloc(void *, size_t);
+void *xcalloc(size_t, size_t);
 char *xstrdup(const char *);
 char *xbasename(char *);
 char *searchpath(char *);

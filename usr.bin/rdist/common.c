@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.26 2011/04/24 02:23:57 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.27 2014/07/05 05:05:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -831,44 +831,44 @@ runcommand(char *cmd)
 /*
  * Malloc with error checking
  */
-char *
+void *
 xmalloc(size_t amt)
 {
-	char *ptr;
+	void *ptr;
 
-	if ((ptr = (char *)malloc(amt)) == NULL)
+	if ((ptr = malloc(amt)) == NULL)
 		fatalerr("Cannot malloc %zu bytes of memory.", amt);
 
-	return(ptr);
+	return (ptr);
 }
 
 /*
  * realloc with error checking
  */
-char *
-xrealloc(char *baseptr, size_t amt)
+void *
+xrealloc(void *baseptr, size_t amt)
 {
-	char *new;
+	void *new;
 
-	if ((new = (char *)realloc(baseptr, amt)) == NULL)
+	if ((new = realloc(baseptr, amt)) == NULL)
 		fatalerr("Cannot realloc %zu bytes of memory.", amt);
 
-	return(new);
+	return (new);
 }
 
 /*
  * calloc with error checking
  */
-char *
+void *
 xcalloc(size_t num, size_t esize)
 {
-	char *ptr;
+	void *ptr;
 
-	if ((ptr = (char *)calloc(num, esize)) == NULL)
+	if ((ptr = calloc(num, esize)) == NULL)
 		fatalerr("Cannot calloc %zu * %zu = %zu bytes of memory.",
 		      num, esize, num * esize);
 
-	return(ptr);
+	return (ptr);
 }
 
 /*
@@ -878,12 +878,9 @@ char *
 xstrdup(const char *str)
 {
 	size_t len = strlen(str) + 1;
-	char *nstr = (char *) malloc(len);
+	char *nstr = xmalloc(len);
 
-	if (nstr == NULL)
-		fatalerr("Cannot malloc %zu bytes of memory.", len);
-
-	return(memcpy(nstr, str, len));
+	return (memcpy(nstr, str, len));
 }
 
 /*

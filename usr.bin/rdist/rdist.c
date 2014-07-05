@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.21 2011/04/21 02:44:15 krw Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.22 2014/07/05 05:05:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -66,7 +66,7 @@ addhostlist(char *name, struct namelist **hostlist)
 	if (!name || !hostlist)
 		return;
 
-	new = (struct namelist *) xmalloc(sizeof(struct namelist));
+	new = xmalloc(sizeof *new);
 	new->n_name = xstrdup(name);
 	new->n_regex = NULL;
 	new->n_next = NULL;
