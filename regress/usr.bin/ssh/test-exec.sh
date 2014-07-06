@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.47 2013/11/09 05:41:34 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.48 2014/07/06 07:42:03 djm Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -154,13 +154,20 @@ export SSH SSHD SSHAGENT SSHADD SSHKEYGEN SSHKEYSCAN SFTP SFTPSERVER SCP
 # helper
 cleanup ()
 {
+	if [ "x$SSH_PID" != "x" ]; then
+		if [ $SSH_PID -lt 2 ]; then
+			echo bad pid for ssh: $SSH_PID
+		else
+			kill $SSH_PID
+		fi
+	fi
 	if [ -f $PIDFILE ]; then
 		pid=`$SUDO cat $PIDFILE`
 		if [ "X$pid" = "X" ]; then
 			echo no sshd running
 		else
 			if [ $pid -lt 2 ]; then
-				echo bad pid for ssh: $pid
+				echo bad pid for sshd: $pid
 			else
 				$SUDO kill $pid
 				trace "wait for sshd to exit"
