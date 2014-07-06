@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_bios.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
+/*	$OpenBSD: radeon_bios.c,v 1.3 2014/07/06 08:19:33 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -240,6 +240,20 @@ static bool radeon_atrm_get_bios(struct radeon_device *rdev)
 		if (!ACPI_FAILURE(status)) {
 			found = true;
 			break;
+		}
+	}
+
+	if (!found) {
+		while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_OTHER << 8, pdev)) != NULL) {
+			dhandle = ACPI_HANDLE(&pdev->dev);
+			if (!dhandle)
+				continue;
+
+			status = acpi_get_handle(dhandle, "ATRM", &atrm_handle);
+			if (!ACPI_FAILURE(status)) {
+				found = true;
+				break;
+			}
 		}
 	}
 
