@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.19 2014/07/06 17:33:10 otto Exp $	*/
+/*	$OpenBSD: dir.c,v 1.20 2014/07/06 18:26:58 otto Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,11 +67,14 @@ _dl_opendir(const char *name)
 		return (NULL);
 	}
 	if (_dl_fcntl(fd, F_SETFD, FD_CLOEXEC) < 0 ||
-	    (dirp = _dl_calloc(1, sizeof(*dirp))) == NULL) {
+	    (dirp = _dl_malloc(sizeof(*dirp))) == NULL) {
 		_dl_close(fd);
 		return (NULL);
 	}
 
+	dirp->dd_fd = fd;
+	dirp->dd_loc = 0;
+	dirp->dd_size = 0;
 	dirp->dd_len = _dl_round_page(sb.st_blksize);
 	dirp->dd_buf = _dl_malloc(dirp->dd_len);
 	if (dirp->dd_buf == NULL) {
@@ -79,8 +82,6 @@ _dl_opendir(const char *name)
 		_dl_close (fd);
 		return (NULL);
 	}
-	dirp->dd_loc = 0;
-	dirp->dd_fd = fd;
 
 	return (dirp);
 }
