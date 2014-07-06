@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.148 2014/06/21 08:00:23 otto Exp $ */
+/*	$OpenBSD: loader.c,v 1.149 2014/07/06 19:15:16 otto Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -285,7 +285,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 			randomlist =  _dl_reallocarray(NULL, libcount,
 			    sizeof(int));
 
-			if (liblist == NULL)
+			if (liblist == NULL || randomlist == NULL)
 				_dl_exit(5);
 
 			for (dynp = dynobj->load_dyn, loop = 0; dynp->d_tag;
