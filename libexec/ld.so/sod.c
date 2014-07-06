@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.28 2014/06/21 08:00:23 otto Exp $	*/
+/*	$OpenBSD: sod.c,v 1.29 2014/07/06 17:33:10 otto Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -94,7 +94,7 @@ _dl_build_sod(const char *name, struct sod *sodp)
 	major = minor = -1;
 
 	/* loop through name - parse skipping name */
-	for (tuplet = 0; (tok = strsep(&cp, ".")) != NULL; tuplet++) {
+	for (tuplet = 0; (tok = _dl_strsep(&cp, ".")) != NULL; tuplet++) {
 		switch (tuplet) {
 		case 0:
 			/* empty tok, we already skipped to "\.so.*" */

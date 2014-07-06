@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.39 2013/12/03 01:47:05 deraadt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.40 2014/07/06 17:33:10 otto Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -34,7 +34,6 @@
 #include <sys/queue.h>
 #include <limits.h>
 #include <dirent.h>
-#include <string.h>
 
 #include "archdep.h"
 #include "resolve.h"

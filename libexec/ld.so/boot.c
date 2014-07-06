@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.1 2014/02/16 01:16:38 martynas Exp $ */
+/*	$OpenBSD: boot.c,v 1.2 2014/07/06 17:33:10 otto Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -40,7 +40,6 @@
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <nlist.h>
-#include <string.h>
 #include <link.h>
 #include <dlfcn.h>
 

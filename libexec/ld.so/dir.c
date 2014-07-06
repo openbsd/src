@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.18 2014/06/21 08:00:22 otto Exp $	*/
+/*	$OpenBSD: dir.c,v 1.19 2014/07/06 17:33:10 otto Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,6 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "syscall.h"

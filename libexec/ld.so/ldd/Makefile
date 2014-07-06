@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2013/07/05 21:29:51 miod Exp $
+#	$OpenBSD: Makefile,v 1.6 2014/07/06 17:33:10 otto Exp $
 
 MAN=	ldd.1
 
@@ -6,7 +6,7 @@ MAN=	ldd.1
 
 PROG=	ldd
 SRCS=	ldd.c
-#CFLAGS+=-Werror
+CFLAGS+=-Wall
 
 BINDIR=	/usr/bin
 
