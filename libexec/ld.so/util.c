@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.33 2014/07/06 07:28:36 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.34 2014/07/06 07:39:07 otto Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -28,8 +28,6 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/sysctl.h>
-#include <string.h>
 #include "archdep.h"
 
 /*
