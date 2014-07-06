@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.17 2013/09/29 21:30:50 jmc Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.18 2014/07/06 12:13:18 miod Exp $	*/
 /*	$NetBSD: installboot.c,v 1.8 2001/02/19 22:48:59 cgd Exp $ */
 
 /*-
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -144,6 +145,8 @@ main(int argc, char *argv[])
 	}
 
 	close(devfd);
+
+	return 0;
 }
 
 static void
@@ -211,9 +214,7 @@ static void
 sr_installboot(int devfd)
 {
 	struct bioc_installboot bb;
-	struct stat sb;
-	int fd, i, rv;
-	u_char *p;
+	int rv;
 
 	/*
 	 * Install boot loader into softraid boot loader storage area.
@@ -237,9 +238,6 @@ static void
 sr_install_bootblk(int devfd, int vol, int disk)
 {
 	struct bioc_disk bd;
-	struct disklabel dl;
-	struct partition *pp;
-	uint32_t poffset;
 	char *realdev;
 	char part;
 	int diskfd;
