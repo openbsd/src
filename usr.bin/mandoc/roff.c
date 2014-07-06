@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.90 2014/07/04 16:11:41 schwarze Exp $ */
+/*	$Id: roff.c,v 1.91 2014/07/06 18:46:51 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -496,7 +496,7 @@ roff_res(struct roff *r, char **bufp, size_t *szp, int ln, int pos)
 	size_t		 naml;	/* actual length of the escape name */
 	int		 expand_count;	/* to avoid infinite loops */
 	int		 npos;	/* position in numeric expression */
-	int		 irc;	/* return code from roff_evalnum() */
+	int		 arg_complete; /* argument not interrupted by eol */
 	char		 term;	/* character terminating the escape */
 
 	expand_count = 0;
@@ -581,10 +581,12 @@ roff_res(struct roff *r, char **bufp, size_t *szp, int ln, int pos)
 
 		/* Advance to the end of the name. */
 
+		arg_complete = 1;
 		for (naml = 0; 0 == maxl || naml < maxl; naml++, cp++) {
 			if ('\0' == *cp) {
 				mandoc_msg(MANDOCERR_BADESCAPE, r->parse,
 				    ln, (int)(stesc - *bufp), NULL);
+				arg_complete = 0;
 				break;
 			}
 			if (0 == maxl && *cp == term) {
@@ -600,20 +602,25 @@ roff_res(struct roff *r, char **bufp, size_t *szp, int ln, int pos)
 
 		switch (stesc[1]) {
 		case '*':
-			res = roff_getstrn(r, stnam, naml);
+			if (arg_complete)
+				res = roff_getstrn(r, stnam, naml);
 			break;
 		case 'B':
 			npos = 0;
-			irc = roff_evalnum(stnam, &npos, NULL, 0);
-			ubuf[0] = irc && stnam + npos + 1 == cp
-			    ? '1' : '0';
+			ubuf[0] = arg_complete &&
+			    roff_evalnum(stnam, &npos, NULL, 0) &&
+			    stnam + npos + 1 == cp ? '1' : '0';
 			ubuf[1] = '\0';
 			break;
 		case 'n':
-			(void)snprintf(ubuf, sizeof(ubuf), "%d",
-			    roff_getregn(r, stnam, naml));
+			if (arg_complete)
+				(void)snprintf(ubuf, sizeof(ubuf), "%d",
+				    roff_getregn(r, stnam, naml));
+			else
+				ubuf[0] = '\0';
 			break;
 		case 'w':
+			/* use even incomplete args */
 			(void)snprintf(ubuf, sizeof(ubuf), "%d",
 			    24 * (int)naml);
 			break;
