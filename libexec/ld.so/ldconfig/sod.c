@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.3 2013/12/03 01:47:06 deraadt Exp $	*/
+/*	$OpenBSD: sod.c,v 1.4 2014/07/06 11:52:02 miod Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -204,6 +204,9 @@ _dl_findhint(char *name, int major, int minor, char *preferred_path)
 
 	/* if it failed to map, return failure */
 	if (!(HINTS_VALID))
+		return NULL;
+
+	if (hheader->hh_nbucket == 0)
 		return NULL;
 
 	bp = hbuckets + (_dl_hinthash(name, major, minor) % hheader->hh_nbucket);
