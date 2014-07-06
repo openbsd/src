@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.27 2014/05/18 20:16:29 mlarkin Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.28 2014/07/06 21:36:55 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -54,7 +54,7 @@ struct cfdriver acpimadt_cd = {
 };
 
 int acpimadt_validate(struct acpi_madt *);
-void acpimadt_cfg_intr(int, u_int32_t *);
+int acpimadt_cfg_intr(int, u_int32_t *);
 int acpimadt_print(void *, const char *);
 
 int
@@ -150,7 +150,7 @@ acpimadt_validate(struct acpi_madt *madt)
 struct mp_bus acpimadt_busses[256];
 struct mp_bus acpimadt_isa_bus;
 
-void
+int
 acpimadt_cfg_intr(int flags, u_int32_t *redir)
 {
 	int mpspo = (flags >> MPS_INTPO_SHIFT) & MPS_INTPO_MASK;
@@ -166,7 +166,7 @@ acpimadt_cfg_intr(int flags, u_int32_t *redir)
 		*redir |= IOAPIC_REDLO_ACTLO;
 		break;
 	default:
-		panic("unknown MPS interrupt polarity %d", mpspo);
+		return (0);
 	}
 
 	*redir |= (IOAPIC_REDLO_DEL_LOPRI << IOAPIC_REDLO_DEL_SHIFT);
@@ -180,8 +180,10 @@ acpimadt_cfg_intr(int flags, u_int32_t *redir)
 		*redir &= ~IOAPIC_REDLO_LEVEL;
 		break;
 	default:
-		panic("unknown MPS interrupt trigger %d", mpstrig);
+		return (0);
 	}
+
+	return (1);
 }
 
 static u_int8_t lapic_map[256];
@@ -325,7 +327,12 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			map->bus_pin = entry->madt_override.source;
 			map->flags = entry->madt_override.flags;
 
-			acpimadt_cfg_intr(entry->madt_override.flags, &map->redir);
+			if (!acpimadt_cfg_intr(entry->madt_override.flags, &map->redir)) {
+				printf("%s: bogus override for pin %d\n",
+				    self->dv_xname, pin);
+				free(map, M_DEVBUF);
+				break;
+			}
 
 			map->ioapic_ih = APIC_INT_VIA_APIC |
 			    ((apic->sc_apicid << APIC_INT_APIC_SHIFT) |
@@ -351,7 +358,13 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			map->ioapic_pin = pin;
 			map->flags = entry->madt_lapic_nmi.flags;
 
-			acpimadt_cfg_intr(entry->madt_lapic_nmi.flags, &map->redir);
+			if (!acpimadt_cfg_intr(entry->madt_lapic_nmi.flags, &map->redir)) {
+				printf("%s: bogus nmi for apid %d\n",
+				    self->dv_xname, map->cpu_id);
+				mp_nintrs--;
+				break;
+			}
+
 			map->redir &= ~IOAPIC_REDLO_DEL_MASK;
 			map->redir |= (IOAPIC_REDLO_DEL_NMI << IOAPIC_REDLO_DEL_SHIFT);
 			break;
