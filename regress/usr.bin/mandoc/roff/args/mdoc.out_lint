@@ -1,0 +1,12 @@
+mandoc: mdoc.in:37:13: WARNING: whitespace at end of input line
+mandoc: mdoc.in:41:14: WARNING: whitespace at end of input line
+mandoc: mdoc.in:45:15: WARNING: whitespace at end of input line
+mandoc: mdoc.in:85:25: WARNING: whitespace at end of input line
+mandoc: mdoc.in:89:26: WARNING: whitespace at end of input line
+mandoc: mdoc.in:93:27: WARNING: whitespace at end of input line
+mandoc: mdoc.in:101:9: WARNING: unterminated quoted argument
+mandoc: mdoc.in:102:13: WARNING: unterminated quoted argument
+mandoc: mdoc.in:106:10: WARNING: unterminated quoted argument
+mandoc: mdoc.in:107:14: WARNING: unterminated quoted argument
+mandoc: mdoc.in:111:11: WARNING: unterminated quoted argument
+mandoc: mdoc.in:112:15: WARNING: unterminated quoted argument

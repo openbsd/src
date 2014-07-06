@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.107 2014/07/02 03:47:07 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.108 2014/07/06 19:08:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -793,10 +793,12 @@ mdoc_ptext(struct mdoc *mdoc, int line, char *buf, int offs)
 	*end = '\0';
 
 	if (ws)
-		mdoc_pmsg(mdoc, line, (int)(ws-buf), MANDOCERR_EOLNSPACE);
+		mandoc_msg(MANDOCERR_SPACE_EOL, mdoc->parse,
+		    line, (int)(ws-buf), NULL);
 
 	if ('\0' == buf[offs] && ! (MDOC_LITERAL & mdoc->flags)) {
-		mdoc_pmsg(mdoc, line, (int)(c-buf), MANDOCERR_NOBLANKLN);
+		mandoc_msg(MANDOCERR_FI_BLANK, mdoc->parse,
+		    line, (int)(c - buf), NULL);
 
 		/*
 		 * Insert a `sp' in the case of a blank line.  Technically,
@@ -846,7 +848,8 @@ mdoc_pmacro(struct mdoc *mdoc, int ln, char *buf, int offs)
 	/* Empty post-control lines are ignored. */
 
 	if ('"' == buf[offs]) {
-		mdoc_pmsg(mdoc, ln, offs, MANDOCERR_BADCOMMENT);
+		mandoc_msg(MANDOCERR_COMMENT_BAD, mdoc->parse,
+		    ln, offs, NULL);
 		return(1);
 	} else if ('\0' == buf[offs])
 		return(1);
@@ -889,7 +892,8 @@ mdoc_pmacro(struct mdoc *mdoc, int ln, char *buf, int offs)
 	 */
 
 	if ('\0' == buf[offs] && ' ' == buf[offs - 1])
-		mdoc_pmsg(mdoc, ln, offs - 1, MANDOCERR_EOLNSPACE);
+		mandoc_msg(MANDOCERR_SPACE_EOL, mdoc->parse,
+		    ln, offs - 1, NULL);
 
 	/*
 	 * If an initial macro or a list invocation, divert directly

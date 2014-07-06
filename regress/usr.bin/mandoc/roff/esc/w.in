@@ -12,3 +12,5 @@ character: \w'n'
 blank: \w' '
 .br
 text: \w'text'
+.br
+unterminated: \w'foo

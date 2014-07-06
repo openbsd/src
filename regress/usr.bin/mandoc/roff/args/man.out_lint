@@ -1,0 +1,8 @@
+mandoc: man.in:34:13: WARNING: whitespace at end of input line
+mandoc: man.in:38:14: WARNING: whitespace at end of input line
+mandoc: man.in:42:15: WARNING: whitespace at end of input line
+mandoc: man.in:82:25: WARNING: whitespace at end of input line
+mandoc: man.in:86:26: WARNING: whitespace at end of input line
+mandoc: man.in:90:27: WARNING: whitespace at end of input line
+mandoc: man.in:98:5: WARNING: unterminated quoted argument
+mandoc: man.in:99:9: WARNING: unterminated quoted argument

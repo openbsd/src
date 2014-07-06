@@ -1,0 +1,17 @@
+mandoc: name.in:10:5: ERROR: escaped character not allowed in a name
+mandoc: name.in:12:5: ERROR: escaped character not allowed in a name
+mandoc: name.in:15:29: WARNING: invalid escape sequence: \*[norm
+mandoc: name.in:15:29: WARNING: undefined string, using "": norm
+mandoc: name.in:15:28: WARNING: whitespace at end of input line
+mandoc: name.in:17:7: WARNING: undefined string, using "": quot
+mandoc: name.in:17:6: WARNING: whitespace at end of input line
+mandoc: name.in:25:6: WARNING: undefined string, using "": bse
+mandoc: name.in:25:5: WARNING: whitespace at end of input line
+mandoc: name.in:27:5: WARNING: undefined string, using "": bs
+mandoc: name.in:27:4: WARNING: whitespace at end of input line
+mandoc: name.in:31:7: WARNING: undefined string, using "": bl e
+mandoc: name.in:31:6: WARNING: whitespace at end of input line
+mandoc: name.in:33:6: WARNING: undefined string, using "": ble
+mandoc: name.in:33:5: WARNING: whitespace at end of input line
+mandoc: name.in:35:5: WARNING: undefined string, using "": bl
+mandoc: name.in:35:4: WARNING: whitespace at end of input line

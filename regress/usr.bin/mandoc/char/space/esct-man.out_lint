@@ -1,0 +1,6 @@
+mandoc: esct-man.in:7:7: WARNING: tab in filled text
+mandoc: esct-man.in:11:7: WARNING: tab in filled text
+mandoc: esct-man.in:11:8: WARNING: tab in filled text
+mandoc: esct-man.in:27:11: WARNING: tab in filled text
+mandoc: esct-man.in:29:11: WARNING: tab in filled text
+mandoc: esct-man.in:34:10: WARNING: tab in filled text

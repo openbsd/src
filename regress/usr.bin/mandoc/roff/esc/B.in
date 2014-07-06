@@ -1,4 +1,4 @@
-.Dd April 8, 2014
+.Dd July 6, 2014
 .Dt ESC-B 1
 .Os OpenBSD
 .Sh NAME
@@ -32,3 +32,5 @@ parentheses containing number: \B'(42)'
 complex expression: \B'3+(3*(5==5*2)*4)+(3*5)/2'
 .br
 other delimiter: \Bx1+1x
+.br
+no closing delimiter: \B'1+1

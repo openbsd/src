@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.80 2014/07/05 12:33:54 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.81 2014/07/06 19:08:56 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -98,8 +98,9 @@ enum	mandocerr {
 	MANDOCERR_BF_BADFONT, /* unknown font type, using \fR: macro font */
 	MANDOCERR_ARG_STD, /* missing -std argument, adding it: macro */
 
-	/* related to bad macro arguments */
+	/* related to bad arguments */
 	MANDOCERR_IGNARGV, /* skipping argument */
+	MANDOCERR_ARG_QUOTE, /* unterminated quoted argument */
 	MANDOCERR_ARG_REP, /* duplicate argument: macro arg */
 	MANDOCERR_BD_REP, /* skipping duplicate display type: type */
 	MANDOCERR_BL_REP, /* skipping duplicate list type: type */
@@ -108,12 +109,12 @@ enum	mandocerr {
 	MANDOCERR_FT_BAD, /* unknown font, skipping request: request font */
 
 	/* related to plain text */
-	MANDOCERR_NOBLANKLN, /* blank line in non-literal context */
-	MANDOCERR_BADTAB, /* tab in non-literal context */
-	MANDOCERR_EOLNSPACE, /* end of line whitespace */
-	MANDOCERR_BADCOMMENT, /* bad comment style */
-	MANDOCERR_BADESCAPE, /* bad escape sequence */
-	MANDOCERR_BADQUOTE, /* unterminated quoted string */
+	MANDOCERR_FI_BLANK, /* blank line in fill mode, using .sp */
+	MANDOCERR_FI_TAB, /* tab in filled text */
+	MANDOCERR_SPACE_EOL, /* whitespace at end of input line */
+	MANDOCERR_COMMENT_BAD, /* bad comment style */
+	MANDOCERR_ESC_BAD, /* invalid escape sequence: esc */
+	MANDOCERR_STR_UNDEF, /* undefined string, using "": name */
 
 	MANDOCERR_ERROR, /* ===== start of errors ===== */
 

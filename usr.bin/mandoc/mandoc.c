@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.51 2014/07/06 18:36:49 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.52 2014/07/06 19:08:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -425,7 +425,7 @@ mandoc_getarg(struct mparse *parse, char **cpp, int ln, int *pos)
 
 	/* Quoted argument without a closing quote. */
 	if (1 == quoted)
-		mandoc_msg(MANDOCERR_BADQUOTE, parse, ln, *pos, NULL);
+		mandoc_msg(MANDOCERR_ARG_QUOTE, parse, ln, *pos, NULL);
 
 	/* NUL-terminate this argument and move to the next one. */
 	if (pairs)
@@ -439,7 +439,7 @@ mandoc_getarg(struct mparse *parse, char **cpp, int ln, int *pos)
 	*cpp = cp;
 
 	if ('\0' == *cp && (white || ' ' == cp[-1]))
-		mandoc_msg(MANDOCERR_EOLNSPACE, parse, ln, *pos, NULL);
+		mandoc_msg(MANDOCERR_SPACE_EOL, parse, ln, *pos, NULL);
 
 	return(start);
 }

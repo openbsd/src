@@ -14,3 +14,5 @@ escape at the end: >\h'0+\w'\&''<
 escape at the beginning: >\h'\w'\&'+0'<
 .br
 escape in the middle: >\h'0+\w'\&'+0'<
+.br
+invalid delimiter: >\h-<

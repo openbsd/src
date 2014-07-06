@@ -12,6 +12,8 @@
 .ds bl\ e value of bl\e e
 norm: \*[norm]
 .br
+norm without closing brace: \*[norm
+.br
 quot: \*[quot]
 .br
 "quot": \*["quot"]

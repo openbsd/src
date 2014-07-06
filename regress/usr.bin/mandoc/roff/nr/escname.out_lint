@@ -1,0 +1,4 @@
+mandoc: escname.in:8:5: ERROR: escaped character not allowed in a name
+mandoc: escname.in:11:5: ERROR: escaped character not allowed in a name
+mandoc: escname.in:17:13: WARNING: invalid escape sequence: \n[second
+mandoc: escname.in:17:12: WARNING: whitespace at end of input line

@@ -13,3 +13,5 @@ nr-escname \- escape sequences in register names
 .PP
 .rr first\\second
 \n[first] \n[second] \n[first\\second]
+.PP
+incomplete: \n[second

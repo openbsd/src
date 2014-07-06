@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.80 2014/05/07 14:11:24 schwarze Exp $ */
+/*	$Id: man.c,v 1.81 2014/07/06 19:08:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -443,7 +443,8 @@ man_ptext(struct man *man, int line, char *buf, int offs)
 
 	if (' ' == buf[i - 1] || '\t' == buf[i - 1]) {
 		if (i > 1 && '\\' != buf[i - 2])
-			man_pmsg(man, line, i - 1, MANDOCERR_EOLNSPACE);
+			mandoc_msg(MANDOCERR_SPACE_EOL, man->parse,
+			    line, i - 1, NULL);
 
 		for (--i; i && ' ' == buf[i]; i--)
 			/* Spin back to non-space. */ ;
@@ -479,7 +480,8 @@ man_pmacro(struct man *man, int ln, char *buf, int offs)
 	struct man_node	*n;
 
 	if ('"' == buf[offs]) {
-		man_pmsg(man, ln, offs, MANDOCERR_BADCOMMENT);
+		mandoc_msg(MANDOCERR_COMMENT_BAD, man->parse,
+		    ln, offs, NULL);
 		return(1);
 	} else if ('\0' == buf[offs])
 		return(1);
@@ -517,7 +519,8 @@ man_pmacro(struct man *man, int ln, char *buf, int offs)
 	 */
 
 	if ('\0' == buf[offs] && ' ' == buf[offs - 1])
-		man_pmsg(man, ln, offs - 1, MANDOCERR_EOLNSPACE);
+		mandoc_msg(MANDOCERR_SPACE_EOL, man->parse,
+		    ln, offs - 1, NULL);
 
 	/*
 	 * Remove prior ELINE macro, as it's being clobbered by a new

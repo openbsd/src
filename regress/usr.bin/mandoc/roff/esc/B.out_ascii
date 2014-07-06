@@ -18,5 +18,6 @@ DDEESSCCRRIIPPTTIIOONN
      parentheses containing number: 1
      complex expression: 1
      other delimiter: 1
+     no closing delimiter: 0
 
-OpenBSD                          April 8, 2014                         OpenBSD
+OpenBSD                          July 6, 2014                          OpenBSD
