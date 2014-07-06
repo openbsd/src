@@ -6381,7 +6381,6 @@
 ./usr/share/man/man9/uvm_coredump.9
 ./usr/share/man/man9/uvm_deallocate.9
 ./usr/share/man/man9/uvm_fault.9
-./usr/share/man/man9/uvm_fork.9
 ./usr/share/man/man9/uvm_grow.9
 ./usr/share/man/man9/uvm_init.9
 ./usr/share/man/man9/uvm_init_limits.9
@@ -6409,10 +6408,8 @@
 ./usr/share/man/man9/uvm_pagerealloc.9
 ./usr/share/man/man9/uvm_pglistalloc.9
 ./usr/share/man/man9/uvm_pglistfree.9
-./usr/share/man/man9/uvm_scheduler.9
 ./usr/share/man/man9/uvm_setpagesize.9
 ./usr/share/man/man9/uvm_swap_init.9
-./usr/share/man/man9/uvm_swapin.9
 ./usr/share/man/man9/uvm_sysctl.9
 ./usr/share/man/man9/uvm_vnp_setsize.9
 ./usr/share/man/man9/uvm_vnp_sync.9
