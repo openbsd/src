@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.12 2013/12/23 13:57:44 kettenis Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.13 2014/07/06 07:28:36 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -271,6 +271,12 @@ ENTRY(_dl_utrace,0)
 	bv	r0(rp)
 	nop
 EXIT(_dl_utrace)
+
+ENTRY(_dl_getentropy,0)
+	SYSCALL(getentropy)
+	bv	r0(rp)
+	nop
+EXIT(_dl_getentropy)
 
 ENTRY(_dl_sigprocmask,0)
 	stw	arg2, HPPA_FRAME_ARG(2)(sp)

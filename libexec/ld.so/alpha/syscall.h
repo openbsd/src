@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.24 2014/07/05 21:54:51 miod Exp $ */
+/*	$OpenBSD: syscall.h,v 1.25 2014/07/06 07:28:36 otto Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -41,6 +41,7 @@
 int	_dl_close(int);
 __dead
 int	_dl_exit(int);
+int	_dl_getentropy(char *, size_t);
 int	_dl_issetugid(void);
 void *	_dl_mmap(void *, size_t, int, int, int, off_t);
 int	_dl_mprotect(const void *, size_t, int);

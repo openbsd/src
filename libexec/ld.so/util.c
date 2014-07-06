@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.32 2014/06/21 08:00:23 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.33 2014/07/06 07:28:36 otto Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -63,7 +63,6 @@ _dl_strdup(const char *orig)
 void
 _dl_randombuf(void *buf, size_t buflen)
 {
-	const int mib[2] = { CTL_KERN, KERN_ARND };
 	size_t chunk;
 
 	while (buflen != 0) {
@@ -71,7 +70,8 @@ _dl_randombuf(void *buf, size_t buflen)
 			chunk = 256;
 		else
 			chunk = buflen;
-		_dl_sysctl(mib, 2, buf, &chunk, NULL, 0);
+		if (_dl_getentropy(buf, chunk) != 0)
+			_dl_exit(8);
 		buflen -= chunk;
 		buf += chunk;
 	}

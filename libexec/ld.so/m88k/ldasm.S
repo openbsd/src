@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.9 2014/07/05 16:59:36 miod Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.10 2014/07/06 07:28:36 otto Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -207,6 +207,9 @@ DL_SYSCALL(lstat)
 	jmp	%r1
 
 DL_SYSCALL(utrace)
+	jmp	%r1
+
+DL_SYSCALL(getentropy)
 	jmp	%r1
 
 DL_SYSCALL2(getcwd,__getcwd)

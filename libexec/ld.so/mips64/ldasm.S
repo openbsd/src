@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.10 2014/07/05 17:05:08 miod Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.11 2014/07/06 07:28:36 otto Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -170,6 +170,7 @@ DL_SYSCALL(fcntl)
 DL_SYSCALL(fstat)
 DL_SYSCALL2(getcwd,__getcwd)
 DL_SYSCALL(getdents)
+DL_SYSCALL(getentropy)
 DL_SYSCALL(gettimeofday)
 DL_SYSCALL_NOERR(issetugid)
 DL_SYSCALL(lstat)

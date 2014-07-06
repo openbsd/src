@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.14 2014/07/05 21:54:51 miod Exp $ */
+/*	$OpenBSD: syscall.h,v 1.15 2014/07/06 07:28:36 otto Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -45,6 +45,7 @@ int	_dl_fcntl(int, int, ...);
 int	_dl_fstat(int, struct stat *);
 int	_dl_getcwd(char *, size_t);
 ssize_t	_dl_getdents(int, char *, size_t);
+int	_dl_getentropy(char *, size_t);
 int	_dl_gettimeofday(struct timeval *, struct timezone *);
 int	_dl_issetugid(void);
 int	_dl_lstat(const char *, struct stat *);
