@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.50 2014/04/11 02:58:08 jsg Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.51 2014/07/07 09:11:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -93,9 +93,8 @@ static inline void profile_leave(void)
 
 	clock_gettime(CLOCK_MONOTONIC, &t1);
 	timespecsub(&t1, &profile.t0, &dt);
-	log_debug("profile-queue: %s %lld.%06ld", profile.name,
-	    (long long)dt.tv_sec * 1000000 + dt.tv_nsec / 1000000,
-	    dt.tv_nsec % 1000000);
+	log_debug("profile-queue: %s %lld.%09ld", profile.name,
+	    (long long)dt.tv_sec, dt.tv_nsec);
 }
 #else
 #define profile_enter(x)	do {} while (0)

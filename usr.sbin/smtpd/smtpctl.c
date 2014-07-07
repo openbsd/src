@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.121 2014/05/23 13:28:32 espie Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.122 2014/07/07 09:11:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -500,7 +500,7 @@ do_profile(int argc, struct parameter *argv)
 
 	v = str_to_profile(argv[0].u.u_str);
 
-	srv_send(IMSG_CTL_PROFILE, &v, sizeof(v));
+	srv_send(IMSG_CTL_PROFILE_ENABLE, &v, sizeof(v));
 	return srv_check_result(1);
 }
 

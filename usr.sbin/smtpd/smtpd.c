@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.226 2014/05/01 15:50:20 reyk Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.227 2014/07/07 09:11:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1181,13 +1181,13 @@ imsg_dispatch(struct mproc *p, struct imsg *imsg)
 		clock_gettime(CLOCK_MONOTONIC, &t1);
 		timespecsub(&t1, &t0, &dt);
 
-		log_debug("profile-imsg: %s %s %s %d %lld.%06ld",
+		log_debug("profile-imsg: %s %s %s %d %lld.%09ld",
 		    proc_name(smtpd_process),
 		    proc_name(p->proc),
 		    imsg_to_str(msg),
 		    (int)imsg->hdr.len,
-		    (long long)dt.tv_sec * 1000000 + dt.tv_nsec / 1000000,
-		    dt.tv_nsec % 1000000);
+		    (long long)dt.tv_sec,
+		    dt.tv_nsec);
 
 		if (profiling & PROFILE_TOSTAT) {
 			char	key[STAT_KEY_SIZE];
