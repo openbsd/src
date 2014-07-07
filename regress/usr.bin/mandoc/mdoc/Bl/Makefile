@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.22 2014/07/05 01:11:33 schwarze Exp $
+# $OpenBSD: Makefile,v 1.23 2014/07/07 21:35:42 schwarze Exp $
 
 REGRESS_TARGETS  = item inset diag ohang bullet dash enum hang tag
 REGRESS_TARGETS += column extend nested
@@ -9,7 +9,7 @@ REGRESS_TARGETS += bareTa unclosed break broken
 
 LINT_TARGETS	 = notype badargs
 LINT_TARGETS	+= noIt emptyhead emptytag emptyitem
-LINT_TARGETS	+= break broken
+LINT_TARGETS	+= bareTa break broken
 
 # groff-1.22.2 defects:
 # - lists with missing or late type ruin indentation

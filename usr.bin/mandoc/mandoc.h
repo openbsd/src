@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.84 2014/07/07 16:12:06 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.85 2014/07/07 21:35:42 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -75,13 +75,13 @@ enum	mandocerr {
 	MANDOCERR_PAR_SKIP, /* skipping paragraph macro: macro ... */
 	MANDOCERR_PAR_MOVE, /* moving paragraph macro out of list: macro */
 	MANDOCERR_NS_SKIP, /* skipping no-space macro */
-	MANDOCERR_BLOCK_NEST, /* blocks badly nested: macro ... */
+	MANDOCERR_BLK_NEST, /* blocks badly nested: macro ... */
 	MANDOCERR_BD_NEST, /* nested displays are not portable: macro ... */
 	MANDOCERR_BL_MOVE, /* moving content out of list: macro */
 	MANDOCERR_VT_CHILD, /* .Vt block has child macro: macro */
 	MANDOCERR_FI_SKIP, /* fill mode already enabled, skipping .fi */
 	MANDOCERR_NF_SKIP, /* fill mode already disabled, skipping .nf */
-	MANDOCERR_LINESCOPE, /* line scope broken: macro breaks macro */
+	MANDOCERR_BLK_LINE, /* line scope broken: macro breaks macro */
 
 	/* related to missing arguments */
 	MANDOCERR_REQ_EMPTY, /* skipping empty request: request */
@@ -136,17 +136,20 @@ enum	mandocerr {
 	MANDOCERR_TBLBLOCK, /* data block still open */
 	MANDOCERR_TBLEXTRADAT, /* ignoring extra data cells */
 
+	/* related to document structure and macros */
 	MANDOCERR_ROFFLOOP, /* input stack limit exceeded, infinite loop? */
 	MANDOCERR_BADCHAR, /* skipping bad character */
+	MANDOCERR_MACRO, /* skipping unknown macro */
+	MANDOCERR_TA_STRAY, /* skipping column outside column list */
+	MANDOCERR_BLK_NOTOPEN, /* skipping end of block that is not open */
+	MANDOCERR_BLK_BROKEN, /* inserting missing end of block: macro ... */
+	MANDOCERR_BLK_NOEND, /* appending missing end of block: macro */
+
+	/* related to request and macro arguments */
 	MANDOCERR_NAMESC, /* escaped character not allowed in a name */
 	MANDOCERR_NONAME, /* manual name not yet set */
-	MANDOCERR_MACRO, /* skipping unknown macro */
 	MANDOCERR_ARGCOUNT, /* argument count wrong */
 	MANDOCERR_ST_BAD, /* unknown standard specifier: standard */
-	MANDOCERR_STRAYTA, /* skipping column outside column list */
-	MANDOCERR_NOSCOPE, /* skipping end of block that is not open */
-	MANDOCERR_SCOPEBROKEN, /* missing end of block */
-	MANDOCERR_SCOPEEXIT, /* scope open on exit */
 	MANDOCERR_UNAME, /* uname(3) system call failed */
 	MANDOCERR_NUMERIC, /* request requires a numeric argument */
 	MANDOCERR_BL_NOTYPE, /* missing list type, using -item */

@@ -12,6 +12,8 @@ DDEESSCCRRIIPPTTIIOONN
 
        closing after plain text
 
+       still open at the end of the file
+
 
 
 OpenBSD                           2013-06-27                     COND-CLOSE(1)

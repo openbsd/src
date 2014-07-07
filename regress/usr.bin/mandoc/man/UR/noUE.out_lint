@@ -1,0 +1,2 @@
+mandoc: noUE.in:6:2: ERROR: skipping end of block that is not open: UE
+mandoc: noUE.in:9:2: ERROR: appending missing end of block: UR

@@ -20,4 +20,8 @@ with two arguments
 ignored text
 .end2
 .br
-final text
+Here is a stray .. block ending,
+..
+and then an .ig staying open until the end of the file:
+.ig
+ignored text

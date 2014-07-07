@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.46 2014/07/07 19:17:39 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.47 2014/07/07 21:35:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -106,7 +106,7 @@ man_unscope(struct man *man, const struct man_node *to)
 		    MAN_BLOCK == n->type &&
 		    0 == (MAN_VALID & n->flags) &&
 		    MAN_EXPLICIT & man_macros[n->tok].flags)
-			mandoc_msg(MANDOCERR_SCOPEEXIT,
+			mandoc_msg(MANDOCERR_BLK_NOEND,
 			    man->parse, n->line, n->pos,
 			    man_macronames[n->tok]);
 		/*
@@ -266,7 +266,8 @@ blk_close(MACRO_PROT_ARGS)
 			break;
 
 	if (NULL == nn) {
-		man_pmsg(man, line, ppos, MANDOCERR_NOSCOPE);
+		mandoc_msg(MANDOCERR_BLK_NOTOPEN, man->parse,
+		    line, ppos, man_macronames[tok]);
 		if ( ! rew_scope(MAN_BLOCK, man, MAN_PP))
 			return(0);
 	} else

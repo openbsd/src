@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.93 2014/07/04 16:11:41 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.94 2014/07/07 21:35:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -230,7 +230,8 @@ mdoc_macroend(struct mdoc *mdoc)
 	for ( ; n; n = n->parent)
 		if (MDOC_BLOCK == n->type &&
 		    MDOC_EXPLICIT & mdoc_macros[n->tok].flags)
-			mdoc_nmsg(mdoc, n, MANDOCERR_SCOPEEXIT);
+			mandoc_msg(MANDOCERR_BLK_NOEND, mdoc->parse,
+			    n->line, n->pos, mdoc_macronames[n->tok]);
 
 	/* Rewind to the first. */
 
@@ -524,7 +525,7 @@ make_pending(struct mdoc_node *broken, enum mdoct tok,
 			taker->pending = broken->pending;
 		}
 		broken->pending = breaker;
-		mandoc_vmsg(MANDOCERR_BLOCK_NEST, mdoc->parse, line, ppos,
+		mandoc_vmsg(MANDOCERR_BLK_NEST, mdoc->parse, line, ppos,
 		    "%s breaks %s", mdoc_macronames[tok],
 		    mdoc_macronames[broken->tok]);
 		return(1);
@@ -554,7 +555,7 @@ rew_sub(enum mdoc_type t, struct mdoc *mdoc,
 			     ! (MDOC_EXPLICIT & mdoc_macros[tok].flags));
 			break;
 		case REWIND_FORCE:
-			mandoc_vmsg(MANDOCERR_SCOPEBROKEN, mdoc->parse,
+			mandoc_vmsg(MANDOCERR_BLK_BROKEN, mdoc->parse,
 			    line, ppos, "%s breaks %s",
 			    mdoc_macronames[tok],
 			    mdoc_macronames[n->tok]);
@@ -570,7 +571,9 @@ rew_sub(enum mdoc_type t, struct mdoc *mdoc,
 				return(1);
 			/* FALLTHROUGH */
 		case REWIND_ERROR:
-			mdoc_pmsg(mdoc, line, ppos, MANDOCERR_NOSCOPE);
+			mandoc_msg(MANDOCERR_BLK_NOTOPEN,
+			    mdoc->parse, line, ppos,
+			    mdoc_macronames[tok]);
 			return(1);
 		}
 		break;
@@ -1759,7 +1762,8 @@ phrase_ta(MACRO_PROT_ARGS)
 	while (NULL != n && MDOC_Bl != n->tok)
 		n = n->parent;
 	if (NULL == n || LIST_column != n->norm->Bl.type) {
-		mdoc_pmsg(mdoc, line, ppos, MANDOCERR_STRAYTA);
+		mandoc_msg(MANDOCERR_TA_STRAY, mdoc->parse,
+		    line, ppos, NULL);
 		return(1);
 	}
 

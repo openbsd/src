@@ -3,7 +3,7 @@ SPACE-LEADING-MAN(1)       OpenBSD Reference Manual       SPACE-LEADING-MAN(1)
 
 
 NNAAMMEE
-       pace-leading-man - leading spaces on text lines in man documents
+       space-leading-man - leading spaces on text lines in man documents
 
 DDEESSCCRRIIPPTTIIOONN
        normal line of text second normal line

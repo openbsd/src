@@ -1,0 +1,10 @@
+.Dd July 7, 2014
+.Dt BD-UNCLOSED 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bd-unclosed
+.Nd display still open at the end of the file
+.Sh DESCRIPTION
+before display
+.Bd -ragged -offset indent
+inside display

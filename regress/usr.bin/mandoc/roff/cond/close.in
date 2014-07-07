@@ -10,3 +10,6 @@ closing after an ignored macro
 .PP
 .if t \{text \}
 closing after plain text
+.PP
+.if n \{
+still open at the end of the file

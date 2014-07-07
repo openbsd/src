@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.82 2014/07/07 19:17:39 schwarze Exp $ */
+/*	$Id: man.c,v 1.83 2014/07/07 21:35:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -538,7 +538,7 @@ man_pmacro(struct man *man, int ln, char *buf, int offs)
 		if (MAN_NSCOPED & man_macros[n->tok].flags)
 			n = n->parent;
 
-		mandoc_vmsg(MANDOCERR_LINESCOPE, man->parse, n->line,
+		mandoc_vmsg(MANDOCERR_BLK_LINE, man->parse, n->line,
 		    n->pos, "%s breaks %s", man_macronames[tok],
 		    man_macronames[n->tok]);
 
@@ -569,7 +569,7 @@ man_pmacro(struct man *man, int ln, char *buf, int offs)
 		assert(MAN_BLOCK == n->type);
 		assert(MAN_SCOPED & man_macros[n->tok].flags);
 
-		mandoc_vmsg(MANDOCERR_LINESCOPE, man->parse, n->line,
+		mandoc_vmsg(MANDOCERR_BLK_LINE, man->parse, n->line,
 		    n->pos, "%s breaks %s", man_macronames[tok],
 		    man_macronames[n->tok]);
 

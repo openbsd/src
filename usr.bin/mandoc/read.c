@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.45 2014/07/07 16:12:06 schwarze Exp $ */
+/*	$Id: read.c,v 1.46 2014/07/07 21:35:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -172,17 +172,20 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"data block still open",
 	"ignoring extra data cells",
 
+	/* related to document structure and macros */
 	"input stack limit exceeded, infinite loop?",
 	"skipping bad character",
-	"escaped character not allowed in a name",
-	"manual name not yet set",
 	"skipping unknown macro",
-	"argument count wrong",
-	"unknown standard specifier",
 	"skipping column outside column list",
 	"skipping end of block that is not open",
-	"missing end of block",
-	"scope open on exit",
+	"inserting missing end of block",
+	"appending missing end of block",
+
+	/* related to request and macro arguments */
+	"escaped character not allowed in a name",
+	"manual name not yet set",
+	"argument count wrong",
+	"unknown standard specifier",
 	"uname(3) system call failed",
 	"request requires a numeric argument",
 	"missing list type, using -item",
