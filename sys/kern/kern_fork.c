@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.168 2014/07/04 05:58:30 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.169 2014/07/07 05:31:42 matthew Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -253,7 +253,9 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 
 	/* sanity check some flag combinations */
 	if (flags & FORK_THREAD) {
-		if ((flags & FORK_SIGHAND) == 0 || (flags & FORK_SYSTEM) != 0)
+		if ((flags & FORK_SHAREFILES) == 0 ||
+		    (flags & FORK_SIGHAND) == 0 ||
+		    (flags & FORK_SYSTEM) != 0)
 			return (EINVAL);
 	}
 	if (flags & FORK_SIGHAND && (flags & FORK_SHAREVM) == 0)
