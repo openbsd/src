@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.40 2014/07/07 16:43:55 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.41 2014/07/07 19:10:25 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -328,7 +328,9 @@ sub skip
 sub set_callback
 {
 	my ($self, $code) = @_;
-	$self->{_archive}->set_callback($code);
+	if (defined $self->{_archive}) {
+		$self->{_archive}->set_callback($code);
+	}
 }
 
 package OpenBSD::PackageLocation::Installed;
