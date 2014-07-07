@@ -1,4 +1,4 @@
-#	$OpenBSD: multiplex.sh,v 1.22 2014/07/06 07:42:03 djm Exp $
+#	$OpenBSD: multiplex.sh,v 1.23 2014/07/07 08:15:26 djm Exp $
 #	Placed in the Public Domain.
 
 CTL=$OBJ/ctl-sock
@@ -39,8 +39,6 @@ EOF
 if [ $? -ne 0 ]; then
 	fail "environment not found"
 fi
-
-fatal ok
 
 verbose "test $tid: transfer"
 rm -f ${COPY}
