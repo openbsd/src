@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.63 2014/05/30 15:04:54 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.64 2014/07/07 16:45:52 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -73,6 +73,9 @@ sub framework
 		    $state->defines('tally')) {
 			$state->vstat->tally;
 		}
+		$state->say("Extracted #1 from #2", 
+		    $state->{stats}{donesize},
+		    $state->{stats}{totsize});
 		# show any error, and show why we died...
 		rethrow $dielater;
 	};
