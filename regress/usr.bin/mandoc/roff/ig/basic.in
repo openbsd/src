@@ -1,0 +1,23 @@
+.Dd July 7, 2014
+.Dt IG-BASIC 1
+.Os OpenBSD
+.Sh NAME
+.Nm ig-basic
+.Nd ignored blocks
+.Sh DESCRIPTION
+no arguments
+.ig
+ignored text
+..
+.br
+with end marker
+.ig end1
+ignored text
+.end1
+.br
+with two arguments
+.ig end2 excess
+ignored text
+.end2
+.br
+final text

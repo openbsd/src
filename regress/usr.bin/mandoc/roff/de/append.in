@@ -1,0 +1,25 @@
+.Dd July 7, 2014
+.Dt DE-APPEND 1
+.Os OpenBSD
+.Sh NAME
+.Nm de-append
+.Nd append to macro definitions
+.Sh DESCRIPTION
+de:
+.de mym
+.Ox
+..
+.mym
+am:
+.am mym
+.Nx
+..
+.mym
+ami:
+.ds myim mym
+.ds myie mye
+.ami myim myie
+.Fx
+.mye
+.mym
+end

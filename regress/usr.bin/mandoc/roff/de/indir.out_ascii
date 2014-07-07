@@ -1,0 +1,12 @@
+DE-INDIR(1)                OpenBSD Reference Manual                DE-INDIR(1)
+
+NNAAMMEE
+     ddee--iinnddiirr - indirect macro definitions
+
+DDEESSCCRRIIPPTTIIOONN
+     full dei: text1
+     dei with undefined second argument: text2
+     dei with undefined first argument: text3
+     dei without arguments: text4
+
+OpenBSD                          July 7, 2014                          OpenBSD

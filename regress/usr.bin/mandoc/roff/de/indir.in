@@ -1,0 +1,30 @@
+.Dd July 7, 2014
+.Dt DE-INDIR 1
+.Os OpenBSD
+.Sh NAME
+.Nm de-indir
+.Nd indirect macro definitions
+.Sh DESCRIPTION
+full dei:
+.ds myim mym
+.ds myie mye
+.dei myim myie
+text1
+.mye
+.mym
+.br
+dei with undefined second argument:
+.rm myie mym
+.dei myim myie
+text2
+..
+.mym
+.br
+dei with undefined first argument:
+.rm myim mym
+.dei myim
+text3
+.br
+dei without arguments:
+.dei
+text4

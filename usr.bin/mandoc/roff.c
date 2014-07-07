@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.92 2014/07/06 19:08:56 schwarze Exp $ */
+/*	$Id: roff.c,v 1.93 2014/07/07 11:34:41 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -843,10 +843,9 @@ roff_cblock(ROFF_ARGS)
 
 	switch (r->last->tok) {
 	case ROFF_am:
+		/* ROFF_am1 is remapped to ROFF_am in roff_block(). */
 		/* FALLTHROUGH */
 	case ROFF_ami:
-		/* FALLTHROUGH */
-	case ROFF_am1:
 		/* FALLTHROUGH */
 	case ROFF_de:
 		/* ROFF_de1 is remapped to ROFF_de in roff_block(). */
@@ -915,34 +914,47 @@ roff_ccond(struct roff *r, int ln, int ppos)
 static enum rofferr
 roff_block(ROFF_ARGS)
 {
-	char		*name, *cp;
+	const char	*name;
+	char		*iname, *cp;
 	size_t		 namesz;
 
-	name = cp = *bufp + pos;
-	namesz = 0;
+	/* Ignore groff compatibility mode for now. */
 
-	if (ROFF_ig != tok) {
-		if ('\0' == *cp) {
-			mandoc_msg(MANDOCERR_REQ_EMPTY, r->parse,
-			    ln, ppos, roffs[tok].name);
-			return(ROFF_IGN);
-		}
+	if (ROFF_de1 == tok)
+		tok = ROFF_de;
+	else if (ROFF_am1 == tok)
+		tok = ROFF_am;
 
-		/*
-		 * Re-write `de1', since we don't really care about
-		 * groff's strange compatibility mode, into `de'.
-		 */
+	/* Parse the macro name argument. */
 
-		if (ROFF_de1 == tok)
-			tok = ROFF_de;
-		else if (ROFF_de != tok)
-			mandoc_msg(MANDOCERR_REQUEST, r->parse, ln, ppos,
-			    roffs[tok].name);
-
+	cp = *bufp + pos;
+	if (ROFF_ig == tok) {
+		iname = NULL;
+		namesz = 0;
+	} else {
+		iname = cp;
 		namesz = roff_getname(r, &cp, ln, ppos);
-		name[namesz] = '\0';
+		iname[namesz] = '\0';
+	}
+
+	/* Resolve the macro name argument if it is indirect. */
+
+	if (namesz && (ROFF_dei == tok || ROFF_ami == tok)) {
+		if (NULL == (name = roff_getstrn(r, iname, namesz))) {
+			mandoc_vmsg(MANDOCERR_STR_UNDEF,
+			    r->parse, ln, (int)(iname - *bufp),
+			    "%.*s", (int)namesz, iname);
+			namesz = 0;
+		} else
+			namesz = strlen(name);
 	} else
-		name = NULL;
+		name = iname;
+
+	if (0 == namesz && ROFF_ig != tok) {
+		mandoc_msg(MANDOCERR_REQ_EMPTY, r->parse,
+		    ln, ppos, roffs[tok].name);
+		return(ROFF_IGN);
+	}
 
 	roffnode_push(r, tok, name, ln, ppos);
 
@@ -952,16 +964,30 @@ roff_block(ROFF_ARGS)
 	 * appended from roff_block_text() in multiline mode.
 	 */
 
-	if (namesz && ROFF_de == tok)
+	if (ROFF_de == tok || ROFF_dei == tok)
 		roff_setstrn(&r->strtab, name, namesz, "", 0, 0);
 
 	if ('\0' == *cp)
 		return(ROFF_IGN);
 
-	/* If present, process the custom end-of-line marker. */
+	/* Get the custom end marker. */
 
-	name = cp;
+	iname = cp;
 	namesz = roff_getname(r, &cp, ln, ppos);
+
+	/* Resolve the end marker if it is indirect. */
+
+	if (namesz && (ROFF_dei == tok || ROFF_ami == tok)) {
+		if (NULL == (name = roff_getstrn(r, iname, namesz))) {
+			mandoc_vmsg(MANDOCERR_STR_UNDEF,
+			    r->parse, ln, (int)(iname - *bufp),
+			    "%.*s", (int)namesz, iname);
+			namesz = 0;
+		} else
+			namesz = strlen(name);
+	} else
+		name = iname;
+
 	if (namesz)
 		r->last->end = mandoc_strndup(name, namesz);
 
@@ -1016,12 +1042,8 @@ roff_block_sub(ROFF_ARGS)
 
 	t = roff_parse(r, *bufp, &pos, ln, ppos);
 
-	/*
-	 * Macros other than block-end are only significant
-	 * in `de' blocks; elsewhere, simply throw them away.
-	 */
 	if (ROFF_cblock != t) {
-		if (ROFF_de == tok)
+		if (ROFF_ig != tok)
 			roff_setstr(r, r->last->name, *bufp + ppos, 2);
 		return(ROFF_IGN);
 	}
@@ -1034,7 +1056,7 @@ static enum rofferr
 roff_block_text(ROFF_ARGS)
 {
 
-	if (ROFF_de == tok)
+	if (ROFF_ig != tok)
 		roff_setstr(r, r->last->name, *bufp + pos, 2);
 
 	return(ROFF_IGN);

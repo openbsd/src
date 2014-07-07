@@ -1,0 +1,4 @@
+mandoc: indir.in:18:11: WARNING: undefined string, using "": myie
+mandoc: indir.in:25:6: WARNING: undefined string, using "": myim
+mandoc: indir.in:25:1: WARNING: skipping empty request: dei
+mandoc: indir.in:29:1: WARNING: skipping empty request: dei
