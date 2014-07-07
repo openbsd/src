@@ -1,7 +1,11 @@
-.Dd June 20, 2014
+.Dd July 7, 2014
 .Dt SH-BEFORE 1
 .Os OpenBSD
+Can
+.Xr mandoc 1
+on
 .Ox
+handle this?
 .Sh NAME
 .Nm Sh-before
 .Nd content before the first section header

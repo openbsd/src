@@ -1,1 +1,1 @@
-mandoc: before.in:4:2: WARNING: content before first section header: Ox
+mandoc: before.in:4:1: WARNING: content before first section header: text

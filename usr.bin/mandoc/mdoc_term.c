@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.172 2014/07/03 23:23:45 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.173 2014/07/07 15:03:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -271,8 +271,11 @@ terminal_mdoc(void *arg, const struct mdoc *mdoc)
 
 	term_begin(p, print_mdoc_head, print_mdoc_foot, meta);
 
-	if (n->child)
+	if (n->child) {
+		if (MDOC_Sh != n->child->tok)
+			term_vspace(p);
 		print_mdoc_nodelist(p, NULL, meta, n->child);
+	}
 
 	term_end(p);
 }

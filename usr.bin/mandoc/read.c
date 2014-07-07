@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.43 2014/07/07 11:34:41 schwarze Exp $ */
+/*	$Id: read.c,v 1.44 2014/07/07 15:03:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -175,7 +175,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"skipping bad character",
 	"escaped character not allowed in a name",
 	"manual name not yet set",
-	"skipping text before first section header",
 	"skipping unknown macro",
 	"argument count wrong",
 	"skipping invalid content in .Rs block",

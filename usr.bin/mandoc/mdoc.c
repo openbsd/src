@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.108 2014/07/06 19:08:56 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.109 2014/07/07 15:03:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -223,13 +223,6 @@ mdoc_addeqn(struct mdoc *mdoc, const struct eqn *ep)
 
 	assert( ! (MDOC_HALT & mdoc->flags));
 
-	/* No text before an initial macro. */
-
-	if (SEC_NONE == mdoc->lastnamed) {
-		mdoc_pmsg(mdoc, ep->ln, ep->pos, MANDOCERR_NOTEXT);
-		return(1);
-	}
-
 	n = node_alloc(mdoc, ep->ln, ep->pos, MDOC_MAX, MDOC_EQN);
 	n->eqn = ep;
 
@@ -246,13 +239,6 @@ mdoc_addspan(struct mdoc *mdoc, const struct tbl_span *sp)
 	struct mdoc_node *n;
 
 	assert( ! (MDOC_HALT & mdoc->flags));
-
-	/* No text before an initial macro. */
-
-	if (SEC_NONE == mdoc->lastnamed) {
-		mdoc_pmsg(mdoc, sp->line, 0, MANDOCERR_NOTEXT);
-		return(1);
-	}
 
 	n = node_alloc(mdoc, sp->line, 0, MDOC_MAX, MDOC_TBL);
 	n->span = sp;
@@ -717,13 +703,6 @@ mdoc_ptext(struct mdoc *mdoc, int line, char *buf, int offs)
 {
 	char		 *c, *ws, *end;
 	struct mdoc_node *n;
-
-	/* No text before an initial macro. */
-
-	if (SEC_NONE == mdoc->lastnamed) {
-		mdoc_pmsg(mdoc, line, offs, MANDOCERR_NOTEXT);
-		return(1);
-	}
 
 	assert(mdoc->last);
 	n = mdoc->last;

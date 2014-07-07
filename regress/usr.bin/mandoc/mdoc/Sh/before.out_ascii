@@ -1,0 +1,11 @@
+SH-BEFORE(1)               OpenBSD Reference Manual               SH-BEFORE(1)
+
+Can mandoc(1) on OpenBSD handle this?
+
+NNAAMMEE
+     SShh--bbeeffoorree - content before the first section header
+
+DDEESSCCRRIIPPTTIIOONN
+     some text
+
+OpenBSD                          July 7, 2014                          OpenBSD
