@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.25 2014/07/01 09:21:14 espie Exp $
+# $OpenBSD: Term.pm,v 1.26 2014/07/07 16:43:55 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -291,10 +291,11 @@ sub new
 	my $p = $class->SUPER::new($progress, $plist, $state);
 	$progress->show(0, $p->{totsize});
 	if (defined $state->{archive}) {
-		$state->{archive}{callback} = sub {
-		    my $done = shift;
-		    $progress->show($p->{donesize} + $done, $p->{totsize});
-		};
+		$state->{archive}->set_callback(
+		    sub {
+			my $done = shift;
+			$progress->show($p->{donesize} + $done, $p->{totsize});
+		});
 	}
 	return $p;
 }

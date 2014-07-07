@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.78 2014/04/21 11:42:31 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.79 2014/07/07 16:43:55 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -75,6 +75,12 @@ sub set_description
 {
 	my ($self, $d) = @_;
 	$self->{description} = $d;
+}
+
+sub set_callback
+{
+	my ($self, $code) = @_;
+	$self->{callback} = $code;
 }
 
 sub fatal
