@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.42 2014/07/01 09:21:14 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.43 2014/07/07 16:45:03 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -141,6 +141,13 @@ sub advance
 	if (defined $e->{size}) {
 		$self->{donesize} += $e->{size};
 	}
+}
+
+sub saved
+{
+	my $self = shift;
+	$self->{state}{stats}{totsize} += $self->{totsize};
+	$self->{state}{stats}{donesize} += $self->{donesize};
 }
 
 1;

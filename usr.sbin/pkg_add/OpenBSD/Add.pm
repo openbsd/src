@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.157 2014/07/01 09:22:40 espie Exp $
+# $OpenBSD: Add.pm,v 1.158 2014/07/07 16:45:03 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -128,7 +128,7 @@ sub perform_extraction
 			if (keys %$tied > 0) {
 				$handle->{location}{early_close} = 1;
 			}
-			return;
+			last;
 		}
 		my $e = $tied->{$file->name};
 		if (defined $e) {
@@ -153,6 +153,7 @@ sub perform_extraction
 	if (keys %$wanted > 0) {
 		$state->fatal("Truncated archive");
 	}
+	$p->saved;
 }
 
 my $user_tagged = {};
