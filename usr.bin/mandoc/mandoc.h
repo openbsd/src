@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.83 2014/07/07 15:03:24 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.84 2014/07/07 16:12:06 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -105,6 +105,7 @@ enum	mandocerr {
 	MANDOCERR_BD_REP, /* skipping duplicate display type: type */
 	MANDOCERR_BL_REP, /* skipping duplicate list type: type */
 	MANDOCERR_AT_BAD, /* unknown AT&T UNIX version: version */
+	MANDOCERR_RS_BAD, /* invalid content in Rs block: macro */
 	MANDOCERR_SM_BAD, /* invalid Boolean argument: macro arg */
 	MANDOCERR_FT_BAD, /* unknown font, skipping request: request font */
 
@@ -141,7 +142,6 @@ enum	mandocerr {
 	MANDOCERR_NONAME, /* manual name not yet set */
 	MANDOCERR_MACRO, /* skipping unknown macro */
 	MANDOCERR_ARGCOUNT, /* argument count wrong */
-	MANDOCERR_RS_SKIP, /* skipping invalid content in .Rs block: macro */
 	MANDOCERR_ST_BAD, /* unknown standard specifier: standard */
 	MANDOCERR_STRAYTA, /* skipping column outside column list */
 	MANDOCERR_NOSCOPE, /* skipping end of block that is not open */

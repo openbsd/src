@@ -1,0 +1,6 @@
+mandoc: allch.in:14:1: WARNING: invalid content in Rs block: text
+mandoc: allch.in:19:2: WARNING: invalid content in Rs block: Em
+mandoc: allch.in:20:1: WARNING: invalid content in Rs block: text
+mandoc: allch.in:35:1: WARNING: invalid content in Rs block: text
+mandoc: allch.in:36:2: WARNING: invalid content in Rs block: Em
+mandoc: allch.in:41:1: WARNING: invalid content in Rs block: text

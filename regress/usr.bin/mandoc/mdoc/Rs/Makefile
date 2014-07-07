@@ -1,5 +1,6 @@
-# $OpenBSD: Makefile,v 1.5 2012/07/11 23:45:26 schwarze Exp $
+# $OpenBSD: Makefile,v 1.6 2014/07/07 16:12:06 schwarze Exp $
 
-REGRESS_TARGETS=allch break three_authors
+REGRESS_TARGETS	= allch break three_authors
+LINT_TARGETS	= allch
 
 .include <bsd.regress.mk>

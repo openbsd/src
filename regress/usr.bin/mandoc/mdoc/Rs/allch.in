@@ -1,4 +1,4 @@
-.Dd July 25, 2013
+.Dd July 7, 2014
 .Dt RS-ALLCH 1
 .Os OpenBSD
 .Sh NAME
@@ -11,11 +11,14 @@ reference on the same line:
 .%T title of article
 .%B book title
 .%I issuer name
+some
 .%J journal name
 .%R report name
 .%N number of journal
 .%V volume number
-.%U uniform resource locator
+.Em bogus
+text
+.%U "uniform resource locator"
 .%P page number
 .%Q institutional author
 .%C city name
@@ -29,11 +32,14 @@ reference after a blank line:
 .%T title of article
 .%B book title
 .%I issuer name
+some
+.Em bogus
 .%J journal name
 .%R report name
 .%N number of journal
 .%V volume number
-.%U uniform resource locator
+text
+.%U "uniform resource locator"
 .%P page number
 .%Q institutional author
 .%C city name

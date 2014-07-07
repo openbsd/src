@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.147 2014/07/06 19:08:56 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.148 2014/07/07 16:12:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1764,42 +1764,9 @@ post_rs(POST_ARGS)
 	}
 
 	/*
-	 * Make sure only certain types of nodes are allowed within the
-	 * the `Rs' body.  Delete offending nodes and raise a warning.
-	 * Do this before re-ordering for the sake of clarity.
-	 */
-
-	next = NULL;
-	for (nn = mdoc->last->child; nn; nn = next) {
-		for (i = 0; i < RSORD_MAX; i++)
-			if (nn->tok == rsord[i])
-				break;
-
-		if (i < RSORD_MAX) {
-			if (MDOC__J == rsord[i] || MDOC__B == rsord[i])
-				mdoc->last->norm->Rs.quote_T++;
-			next = nn->next;
-			continue;
-		}
-
-		next = nn->next;
-		mandoc_msg(MANDOCERR_RS_SKIP, mdoc->parse,
-		    nn->line, nn->pos, mdoc_macronames[nn->tok]);
-		mdoc_node_delete(mdoc, nn);
-	}
-
-	/*
-	 * Nothing to sort if only invalid nodes were found
-	 * inside the `Rs' body.
-	 */
-
-	if (NULL == mdoc->last->child)
-		return(1);
-
-	/*
 	 * The full `Rs' block needs special handling to order the
 	 * sub-elements according to `rsord'.  Pick through each element
-	 * and correctly order it.  This is a insertion sort.
+	 * and correctly order it.  This is an insertion sort.
 	 */
 
 	next = NULL;
@@ -1808,6 +1775,14 @@ post_rs(POST_ARGS)
 		for (i = 0; i < RSORD_MAX; i++)
 			if (rsord[i] == nn->tok)
 				break;
+
+		if (i == RSORD_MAX) {
+			mandoc_msg(MANDOCERR_RS_BAD,
+			    mdoc->parse, nn->line, nn->pos,
+			    mdoc_macronames[nn->tok]);
+			i = -1;
+		} else if (MDOC__J == nn->tok || MDOC__B == nn->tok)
+			mdoc->last->norm->Rs.quote_T++;
 
 		/*
 		 * Remove `nn' from the chain.  This somewhat
@@ -1834,6 +1809,8 @@ post_rs(POST_ARGS)
 			for (j = 0; j < RSORD_MAX; j++)
 				if (rsord[j] == prev->tok)
 					break;
+			if (j == RSORD_MAX)
+				j = -1;
 
 			if (j <= i)
 				break;
