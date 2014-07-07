@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh2.c,v 1.3 2009/07/12 18:04:03 jsg Exp $ */
+/* $OpenBSD: ssh2.c,v 1.4 2014/07/07 17:02:22 bluhm Exp $ */
 /*
  * ssh2.c
  *
@@ -87,9 +87,9 @@ _keyfromstr(char *str, int len)
 static int
 _read_int(struct iovec *iov, int *ival)
 {
-	iov->iov_len -= 4;
-	if (iov->iov_len < 0)
+	if (iov->iov_len < 4)
 		return (-1);
+	iov->iov_len -= 4;
 	*ival = GET_32BIT((u_char *)iov->iov_base);
 	iov->iov_base = (u_char*)iov->iov_base + 4;
 
@@ -102,9 +102,9 @@ _read_opaque(struct iovec *iov, u_char **buf, int *len)
 	if (_read_int(iov, len) < 0 || *len < 0)
 		return (-1);
 
-	iov->iov_len -= *len;
-	if (iov->iov_len < 0)
+	if (iov->iov_len < (size_t)*len)
 		return (-1);
+	iov->iov_len -= *len;
 
 	*buf = iov->iov_base;
 	iov->iov_base = (u_char*)iov->iov_base + *len;
