@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.280 2014/06/11 04:28:43 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.281 2014/07/07 23:12:00 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1133,10 +1133,21 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	map = tx_buffer->map;
 
 	error = bus_dmamap_load_mbuf(sc->txtag, map, m_head, BUS_DMA_NOWAIT);
-	if (error != 0) {
+	switch (error) {
+	case 0:
+		break;
+	case EFBIG:
+		if ((error = m_defrag(m_head, M_DONTWAIT)) == 0 &&
+		    (error = bus_dmamap_load_mbuf(sc->txtag, map, m_head,
+		     BUS_DMA_NOWAIT)) == 0)
+			break;
+
+		/* FALLTHROUGH */
+	default:
 		sc->no_tx_dma_setup++;
 		goto loaderr;
 	}
+
 	EM_KASSERT(map->dm_nsegs!= 0, ("em_encap: empty packet"));
 
 	if (map->dm_nsegs > sc->num_tx_desc_avail - 2)
