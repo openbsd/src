@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.135 2014/06/13 00:02:37 tobiasu Exp $	*/
+/*	$OpenBSD: trap.c,v 1.136 2014/07/07 19:01:26 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -835,45 +835,48 @@ syscall(struct trapframe *frame)
 		callp += code;
 
 	if ((argsize = callp->sy_argsize)) {
+		register_t *s, *e, t;
 		int i;
 
-		for (i = 0, argsize -= argoff * 4;
-		    argsize > 0; i++, argsize -= 4) {
+		argsize -= argoff * 4;
+		if (argsize > 0) {
+			i = argsize / 4;
 			if ((error = copyin((void *)(frame->tf_sp +
-			    HPPA_FRAME_ARG(i + 4)), args + i + argoff, 4)))
+			    HPPA_FRAME_ARG(4 + i - 1)), args + argoff,
+			    argsize)))
 				goto bad;
+			/* reverse the args[] entries */
+			s = args + argoff;
+			e = s + i - 1;
+			while (s < e) {
+				t = *s;
+				*s = *e;
+				*e = t;
+				s++, e--;
+			}
 		}
 
 		/*
-		 * coming from syscall() or __syscall we must be
-		 * having one of those w/ a 64 bit arguments,
-		 * which needs a word swap due to the order
-		 * of the arguments on the stack.
-		 * this assumes that none of 'em are called
-		 * by their normal syscall number, maybe a regress
-		 * test should be used, to watch the behaviour.
+		 * System calls with 64-bit arguments need a word swap
+		 * due to the order of the arguments on the stack.
 		 */
-		if (argoff < 4) {
-			int t;
+		i = 0;
+		switch (code) {
+		case SYS_lseek:		retq = 0;
+		case SYS_truncate:
+		case SYS_ftruncate:	i = 2;	break;
+		case SYS_preadv:
+		case SYS_pwritev:
+		case SYS_pread:
+		case SYS_pwrite:	i = 4;	break;
+		case SYS_mquery:
+		case SYS_mmap:		i = 6;	break;
+		}
 
-			i = 0;
-			switch (code) {
-			case SYS_lseek:		retq = 0;
-			case SYS_truncate:
-			case SYS_ftruncate:	i = 2;	break;
-			case SYS_preadv:
-			case SYS_pwritev:
-			case SYS_pread:
-			case SYS_pwrite:	i = 4;	break;
-			case SYS_mquery:
-			case SYS_mmap:		i = 6;	break;
-			}
-
-			if (i) {
-				t = args[i];
-				args[i] = args[i + 1];
-				args[i + 1] = t;
-			}
+		if (i) {
+			t = args[i];
+			args[i] = args[i + 1];
+			args[i + 1] = t;
 		}
 	}
 
