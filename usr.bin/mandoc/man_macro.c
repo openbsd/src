@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.45 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.46 2014/07/07 19:17:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -93,57 +93,33 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 const	struct man_macro * const man_macros = __man_macros;
 
 
-/*
- * Warn when "n" is an explicit non-roff macro.
- */
-static void
-rew_warn(struct man *man, struct man_node *n, enum mandocerr er)
-{
-
-	if (er == MANDOCERR_MAX || MAN_BLOCK != n->type)
-		return;
-	if (MAN_VALID & n->flags)
-		return;
-	if ( ! (MAN_EXPLICIT & man_macros[n->tok].flags))
-		return;
-
-	assert(er < MANDOCERR_FATAL);
-	man_nmsg(man, n, er);
-}
-
-/*
- * Rewind scope.  If a code "er" != MANDOCERR_MAX has been provided, it
- * will be used if an explicit block scope is being closed out.
- */
 int
-man_unscope(struct man *man, const struct man_node *to,
-		enum mandocerr er)
+man_unscope(struct man *man, const struct man_node *to)
 {
 	struct man_node	*n;
 
-	assert(to);
-
 	man->next = MAN_NEXT_SIBLING;
-
-	while (man->last != to) {
+	to = to->parent;
+	n = man->last;
+	while (n != to) {
+		if (NULL == to &&
+		    MAN_BLOCK == n->type &&
+		    0 == (MAN_VALID & n->flags) &&
+		    MAN_EXPLICIT & man_macros[n->tok].flags)
+			mandoc_msg(MANDOCERR_SCOPEEXIT,
+			    man->parse, n->line, n->pos,
+			    man_macronames[n->tok]);
 		/*
-		 * Save the parent here, because we may delete the
-		 * man->last node in the post-validation phase and reset
-		 * it to man->last->parent, causing a step in the closing
-		 * out to be lost.
+		 * We might delete the man->last node
+		 * in the post-validation phase.
+		 * Save a pointer to the parent such that
+		 * we know where to continue the iteration.
 		 */
-		n = man->last->parent;
-		rew_warn(man, man->last, er);
+		man->last = n;
+		n = n->parent;
 		if ( ! man_valid_post(man))
 			return(0);
-		man->last = n;
-		assert(man->last);
 	}
-
-	rew_warn(man, man->last, er);
-	if ( ! man_valid_post(man))
-		return(0);
-
 	return(1);
 }
 
@@ -260,7 +236,7 @@ rew_scope(enum man_type type, struct man *man, enum mant tok)
 	 */
 	assert(n);
 
-	return(man_unscope(man, n, MANDOCERR_MAX));
+	return(man_unscope(man, n));
 }
 
 
@@ -294,7 +270,7 @@ blk_close(MACRO_PROT_ARGS)
 		if ( ! rew_scope(MAN_BLOCK, man, MAN_PP))
 			return(0);
 	} else
-		man_unscope(man, nn, MANDOCERR_MAX);
+		man_unscope(man, nn);
 
 	return(1);
 }
@@ -331,7 +307,7 @@ blk_exp(MACRO_PROT_ARGS)
 		if (n->tok != tok)
 			continue;
 		assert(MAN_HEAD == n->type);
-		man_unscope(man, n, MANDOCERR_MAX);
+		man_unscope(man, n);
 		break;
 	}
 
@@ -478,7 +454,7 @@ int
 man_macroend(struct man *man)
 {
 
-	return(man_unscope(man, man->first, MANDOCERR_SCOPEEXIT));
+	return(man_unscope(man, man->first));
 }
 
 static int

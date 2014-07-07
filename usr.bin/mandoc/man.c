@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.81 2014/07/06 19:08:56 schwarze Exp $ */
+/*	$Id: man.c,v 1.82 2014/07/07 19:17:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -388,7 +388,7 @@ man_descope(struct man *man, int line, int offs)
 
 	if (MAN_ELINE & man->flags) {
 		man->flags &= ~MAN_ELINE;
-		if ( ! man_unscope(man, man->last->parent, MANDOCERR_MAX))
+		if ( ! man_unscope(man, man->last->parent))
 			return(0);
 	}
 
@@ -396,7 +396,7 @@ man_descope(struct man *man, int line, int offs)
 		return(1);
 	man->flags &= ~MAN_BLINE;
 
-	if ( ! man_unscope(man, man->last->parent, MANDOCERR_MAX))
+	if ( ! man_unscope(man, man->last->parent))
 		return(0);
 	return(man_body_alloc(man, line, offs, man->last->tok));
 }
@@ -635,7 +635,7 @@ man_pmacro(struct man *man, int ln, char *buf, int offs)
 	assert(MAN_BLINE & man->flags);
 	man->flags &= ~MAN_BLINE;
 
-	if ( ! man_unscope(man, man->last->parent, MANDOCERR_MAX))
+	if ( ! man_unscope(man, man->last->parent))
 		return(0);
 	return(man_body_alloc(man, ln, ppos, man->last->tok));
 
