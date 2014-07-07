@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.141 2014/07/06 20:55:58 kettenis Exp $
+;	$OpenBSD: syscalls.master,v 1.142 2014/07/07 19:59:00 matthew Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -80,8 +80,8 @@
 			    int flags, void *data); }
 22	STD		{ int sys_unmount(const char *path, int flags); }
 23	STD		{ int sys_setuid(uid_t uid); }
-24	STD		{ uid_t sys_getuid(void); }
-25	STD		{ uid_t sys_geteuid(void); }
+24	STD NOLOCK	{ uid_t sys_getuid(void); }
+25	STD NOLOCK	{ uid_t sys_geteuid(void); }
 #ifdef PTRACE
 26	STD		{ int sys_ptrace(int req, pid_t pid, caddr_t addr, \
 			    int data); }
@@ -112,7 +112,7 @@
 41	STD		{ int sys_dup(int fd); }
 42	STD		{ int sys_fstatat(int fd, const char *path, \
 			    struct stat *buf, int flag); }
-43	STD		{ gid_t sys_getegid(void); }
+43	STD NOLOCK	{ gid_t sys_getegid(void); }
 44	STD		{ int sys_profil(caddr_t samples, size_t size, \
 			    u_long offset, u_int scale); }
 #ifdef KTRACE
@@ -124,7 +124,7 @@
 46	STD		{ int sys_sigaction(int signum, \
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa); }
-47	STD		{ gid_t sys_getgid(void); }
+47	STD NOLOCK	{ gid_t sys_getgid(void); }
 48	STD		{ int sys_sigprocmask(int how, sigset_t mask); }
 49	STD		{ int sys_getlogin(char *namebuf, u_int namelen); }
 50	STD		{ int sys_setlogin(const char *namebuf); }
@@ -181,7 +181,7 @@
 			    const struct timeval *tptr); }
 78	STD		{ int sys_mincore(void *addr, size_t len, \
 			    char *vec); }
-79	STD		{ int sys_getgroups(int gidsetsize, \
+79	STD NOLOCK	{ int sys_getgroups(int gidsetsize, \
 			    gid_t *gidset); }
 80	STD		{ int sys_setgroups(int gidsetsize, \
 			    const gid_t *gidset); }
@@ -476,11 +476,11 @@
 278	UNIMPL		sys_extattr_set_fd
 279	UNIMPL		sys_extattr_get_fd
 280	UNIMPL		sys_extattr_delete_fd
-281	STD		{ int sys_getresuid(uid_t *ruid, uid_t *euid, \
+281	STD NOLOCK	{ int sys_getresuid(uid_t *ruid, uid_t *euid, \
 			    uid_t *suid); }
 282	STD		{ int sys_setresuid(uid_t ruid, uid_t euid, \
 			    uid_t suid); }
-283	STD		{ int sys_getresgid(gid_t *rgid, gid_t *egid, \
+283	STD NOLOCK	{ int sys_getresgid(gid_t *rgid, gid_t *egid, \
 			    gid_t *sgid); }
 284	STD		{ int sys_setresgid(gid_t rgid, gid_t egid, \
 			    gid_t sgid); }
