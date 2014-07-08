@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.16 2014/07/08 09:24:27 beck Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.17 2014/07/08 09:30:33 beck Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -298,7 +298,7 @@ getentropy_fallback(void *buf, size_t len)
 	SHA512_CTX ctx;
 	static pid_t lastpid;
 	pid_t pid;
-	size_t i, j, ii;
+	size_t i, ii;
 	char *p;
 
 	pid = getpid();
@@ -311,12 +311,13 @@ getentropy_fallback(void *buf, size_t len)
 		repeat = REPEAT;
 	}
 	for (i = 0; i < len; ) {
+		int j;
 		SHA512_Init(&ctx);
 		for (j = 0; j < repeat; j++) {
 			HX((e = gettimeofday(&tv, NULL)) == -1, tv);
 			if (e != -1) {
 				cnt += (int)tv.tv_sec;
-				cnt += (int)tv.tv_usec;
+			nt += (int)tv.tv_usec;
 			}
 
 			for (ii = 0; ii < sizeof(cl)/sizeof(cl[0]); ii++)
