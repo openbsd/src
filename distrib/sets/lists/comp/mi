@@ -6064,6 +6064,12 @@
 ./usr/share/man/man9/ieee80211_setmode.9
 ./usr/share/man/man9/ieee80211_watchdog.9
 ./usr/share/man/man9/ieee80211_wep_crypt.9
+./usr/share/man/man9/if_rxr_get.9
+./usr/share/man/man9/if_rxr_info_ioctl.9
+./usr/share/man/man9/if_rxr_init.9
+./usr/share/man/man9/if_rxr_inuse.9
+./usr/share/man/man9/if_rxr_ioctl.9
+./usr/share/man/man9/if_rxr_put.9
 ./usr/share/man/man9/iic.9
 ./usr/share/man/man9/iic_acquire_bus.9
 ./usr/share/man/man9/iic_exec.9
