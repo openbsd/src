@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.44 2014/07/08 09:06:49 jsing Exp $ */
+/* $OpenBSD: b_sock.c,v 1.45 2014/07/08 09:46:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,7 +115,8 @@ err:
 int
 BIO_get_port(const char *str, unsigned short *port_ptr)
 {
-	struct servent *s;
+	struct servent_data sd;
+	struct servent se;
 	long port;
 	char *ep;
 
@@ -135,38 +136,37 @@ BIO_get_port(const char *str, unsigned short *port_ptr)
 			BIOerr(BIO_F_BIO_GET_PORT, BIO_R_INVALID_PORT_NUMBER);
 			return (0);
 		}
-
-		*port_ptr = (unsigned short)port;
-		return (1);
+		goto done;
 	}
-	
-	CRYPTO_w_lock(CRYPTO_LOCK_GETSERVBYNAME);
-	s = getservbyname(str, "tcp");
-	if (s != NULL)
-		*port_ptr = ntohs((unsigned short)s->s_port);
-	CRYPTO_w_unlock(CRYPTO_LOCK_GETSERVBYNAME);
 
-	if (s == NULL) {
-		if (strcmp(str, "http") == 0)
-			*port_ptr = 80;
-		else if (strcmp(str, "telnet") == 0)
-			*port_ptr = 23;
-		else if (strcmp(str, "socks") == 0)
-			*port_ptr = 1080;
-		else if (strcmp(str, "https") == 0)
-			*port_ptr = 443;
-		else if (strcmp(str, "ssl") == 0)
-			*port_ptr = 443;
-		else if (strcmp(str, "ftp") == 0)
-			*port_ptr = 21;
-		else if (strcmp(str, "gopher") == 0)
-			*port_ptr = 70;
-		else {
-			SYSerr(SYS_F_GETSERVBYNAME, errno);
-			ERR_asprintf_error_data("service='%s'", str);
-			return (0);
-		}
+	memset(&sd, 0, sizeof(sd));
+	if (getservbyname_r(str, "tcp", &se, &sd) == 0) {
+		port = ntohs((unsigned short)se.s_port);
+		goto done;
 	}
+
+	if (strcmp(str, "http") == 0)
+		port = 80;
+	else if (strcmp(str, "telnet") == 0)
+		port = 23;
+	else if (strcmp(str, "socks") == 0)
+		port = 1080;
+	else if (strcmp(str, "https") == 0)
+		port = 443;
+	else if (strcmp(str, "ssl") == 0)
+		port = 443;
+	else if (strcmp(str, "ftp") == 0)
+		port = 21;
+	else if (strcmp(str, "gopher") == 0)
+		port = 70;
+	else {
+		SYSerr(SYS_F_GETSERVBYNAME, errno);
+		ERR_asprintf_error_data("service='%s'", str);
+		return (0);
+	}
+
+done:
+	*port_ptr = (unsigned short)port;
 	return (1);
 }
 
