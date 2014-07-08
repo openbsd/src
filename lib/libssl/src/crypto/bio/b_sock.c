@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.47 2014/07/08 11:05:41 jsing Exp $ */
+/* $OpenBSD: b_sock.c,v 1.48 2014/07/08 11:08:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -310,7 +310,6 @@ again:
 		goto err;
 	}
 
-#ifdef SO_REUSEADDR
 	if (bind_mode == BIO_BIND_REUSEADDR) {
 		int i = 1;
 
@@ -318,9 +317,7 @@ again:
 		    sizeof(i));
 		bind_mode = BIO_BIND_NORMAL;
 	}
-#endif
 	if (bind(s, &server.sa, addrlen) == -1) {
-#ifdef SO_REUSEADDR
 		err_num = errno;
 		if ((bind_mode == BIO_BIND_REUSEADDR_IF_UNUSED) &&
 		    (err_num == EADDRINUSE)) {
@@ -350,7 +347,6 @@ again:
 			}
 			/* else error */
 		}
-#endif
 		SYSerr(SYS_F_BIND, err_num);
 		ERR_asprintf_error_data("port='%s'", host);
 		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET,
