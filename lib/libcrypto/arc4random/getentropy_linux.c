@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.17 2014/07/08 09:30:33 beck Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.18 2014/07/08 09:38:55 beck Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -317,7 +317,7 @@ getentropy_fallback(void *buf, size_t len)
 			HX((e = gettimeofday(&tv, NULL)) == -1, tv);
 			if (e != -1) {
 				cnt += (int)tv.tv_sec;
-			nt += (int)tv.tv_usec;
+				cnt += (int)tv.tv_usec;
 			}
 
 			for (ii = 0; ii < sizeof(cl)/sizeof(cl[0]); ii++)
