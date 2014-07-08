@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.68 2014/07/08 11:38:48 deraadt Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.69 2014/07/08 13:10:52 deraadt Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -72,8 +72,8 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/buf.h>
