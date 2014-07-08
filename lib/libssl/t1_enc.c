@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.63 2014/06/21 17:02:25 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.64 2014/07/08 16:05:52 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -250,6 +250,11 @@ tls1_PRF(long digest_mask, const void *seed1, int seed1_len, const void *seed2,
 	for (idx = 0; ssl_get_handshake_digest(idx, &m, &md); idx++) {
 		if ((m << TLS1_PRF_DGST_SHIFT) & digest_mask)
 			count++;
+	}
+	if (count == 0) {
+		SSLerr(SSL_F_TLS1_PRF,
+		    SSL_R_SSL_HANDSHAKE_FAILURE);
+		goto err;
 	}
 	len = slen / count;
 	if (count == 1)
