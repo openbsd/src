@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.88 2014/06/14 18:01:41 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.89 2014/07/08 21:35:39 tedu Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@
 #define _POSIX2_C_DEV				(-1) /* need C99 utility */
 #define _POSIX2_CHAR_TERM			1
 #define _POSIX2_FORT_DEV			(-1) /* need fort77 utility */
-#define _POSIX2_FORT_RUN			200112L
+#define _POSIX2_FORT_RUN			(-1) /* need asa utility */
 #define _POSIX2_LOCALEDEF			(-1)
 #define _POSIX2_PBS				(-1)
 #define _POSIX2_PBS_ACCOUNTING			(-1)
