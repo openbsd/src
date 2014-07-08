@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmprobe.c,v 1.17 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: apmprobe.c,v 1.18 2014/07/08 13:31:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Michael Shalayeff
@@ -54,14 +54,10 @@
 #include "libsa.h"
 #include <stand/boot/bootarg.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <dev/isa/isareg.h>
 
 #include <machine/apmvar.h>
 #include <machine/biosvar.h>
-
-#define vm_page_size 4096
 
 #include "debug.h"
 
@@ -192,6 +188,9 @@ apmprobe(void)
 		addbootarg(BOOTARG_APMINFO, sizeof(ai), &ai);
 	}
 }
+
+#define round_page(x)   (((x) + PAGE_MASK) & ~PAGE_MASK)
+#define trunc_page(x)   ((x) & ~PAGE_MASK)
 
 void
 apmfixmem(void)
