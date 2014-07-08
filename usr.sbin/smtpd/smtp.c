@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.138 2014/07/08 07:59:31 sobrado Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.139 2014/07/08 14:38:17 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -55,9 +55,6 @@ static size_t	sessions;
 void
 smtp_imsg(struct mproc *p, struct imsg *imsg)
 {
-	struct msg	 m;
-	int		 v;
-
 	if (p->proc == PROC_LKA) {
 		switch (imsg->hdr.type) {
 		case IMSG_SMTP_DNS_PTR:
@@ -85,32 +82,6 @@ smtp_imsg(struct mproc *p, struct imsg *imsg)
 			m_compose(p, IMSG_QUEUE_SMTP_SESSION, 0, 0,
 			    smtp_enqueue(NULL), imsg->data,
 			    imsg->hdr.len - sizeof imsg->hdr);
-			return;
-		}
-	}
-
-	if (p->proc == PROC_PARENT) {
-		switch (imsg->hdr.type) {
-
-		case IMSG_CONF_START:
-			return;
-
-		case IMSG_CONF_END:
-			smtp_setup_events();
-			return;
-
-		case IMSG_CTL_VERBOSE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			log_verbose(v);
-			return;
-
-		case IMSG_CTL_PROFILE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			profiling = v;
 			return;
 		}
 	}
