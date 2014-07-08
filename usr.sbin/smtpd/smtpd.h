@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.464 2014/07/08 20:14:46 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.465 2014/07/08 21:58:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -37,6 +37,7 @@
 #define	DEFAULT_MAX_BODY_SIZE	(35*1024*1024)
 #define MAX_TAG_SIZE		 32
 #define	MAX_FILTER_NAME		 32
+#define	MAX_FILTER_ARGS		 255
 
 #define	EXPAND_BUFFER		 1024
 
@@ -629,12 +630,13 @@ struct deliver {
 };
 
 #define MAX_FILTER_PER_CHAIN	16
-struct filter {
-	int			chain;
-	int			done;
-	char			name[MAX_FILTER_NAME];
-	char			path[SMTPD_MAXPATHLEN];
-	char			filters[MAX_FILTER_NAME][MAX_FILTER_PER_CHAIN];
+struct filter_conf {
+	int		 chain;
+	int		 done;
+	int		 argc;
+	char		*name;
+	char		*argv[MAX_FILTER_ARGS + 1];
+	char		*path;
 };
 
 struct mta_host {
