@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.141 2014/04/24 14:55:39 tedu Exp $
+#	$OpenBSD: Makefile,v 1.142 2014/07/08 21:30:50 tedu Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR= apply arch asa at aucat audioctl awk banner \
+SUBDIR= apply arch at aucat audioctl awk banner \
 	basename bc bgplg \
 	biff cal calendar cap_mkdb cdio chpass cmp col colrm \
 	column comm compress cpp crontab csplit ctags cu cut \
