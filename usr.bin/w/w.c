@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.55 2014/07/04 05:58:31 guenther Exp $	*/
+/*	$OpenBSD: w.c,v 1.56 2014/07/08 23:24:28 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -44,7 +44,6 @@
 #include <sys/socket.h>
 #include <sys/tty.h>
 
-#include <machine/cpu.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
