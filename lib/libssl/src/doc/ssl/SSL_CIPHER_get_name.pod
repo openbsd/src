@@ -28,11 +28,11 @@ SSL_CIPHER_get_version() returns the protocol version for B<cipher>, currently
 "SSLv2", "SSLv3", or "TLSv1". If B<cipher> is NULL, "(NONE)" is returned.
 
 SSL_CIPHER_description() returns a textual description of the cipher used
-into the buffer B<buf> of length B<len> provided. B<len> must be at least
-128 bytes, otherwise a pointer to the string "Buffer too small" is
-returned. If B<buf> is NULL, a buffer of 128 bytes is allocated using
-OPENSSL_malloc(). If the allocation fails, a pointer to the string
-"OPENSSL_malloc Error" is returned.
+into the buffer B<buf> of length B<len> provided.
+If B<buf> is NULL, a buffer is allocated using asprintf(); that
+buffer should be freed up using the B<free> function.
+If B<len> is too small, or if B<buf> is NULL and the allocation fails, a
+pointer to the string "Buffer too small" is returned.
 
 =head1 NOTES
 
