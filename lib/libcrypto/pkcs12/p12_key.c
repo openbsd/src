@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_key.c,v 1.15 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: p12_key.c,v 1.16 2014/07/08 09:24:53 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -74,35 +74,37 @@ void h__dump (unsigned char *p, int len);
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
-int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
-	     int saltlen, int id, int iter, int n, unsigned char *out,
-	     const EVP_MD *md_type)
+int
+PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
+    int saltlen, int id, int iter, int n, unsigned char *out,
+    const EVP_MD *md_type)
 {
 	int ret;
 	unsigned char *unipass;
 	int uniplen;
 
-	if(!pass) {
+	if (!pass) {
 		unipass = NULL;
 		uniplen = 0;
 	} else if (!OPENSSL_asc2uni(pass, passlen, &unipass, &uniplen)) {
-		PKCS12err(PKCS12_F_PKCS12_KEY_GEN_ASC,ERR_R_MALLOC_FAILURE);
+		PKCS12err(PKCS12_F_PKCS12_KEY_GEN_ASC, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	ret = PKCS12_key_gen_uni(unipass, uniplen, salt, saltlen,
-						 id, iter, n, out, md_type);
+	    id, iter, n, out, md_type);
 	if (ret <= 0)
-	    return 0;
-	if(unipass) {
+		return 0;
+	if (unipass) {
 		OPENSSL_cleanse(unipass, uniplen);	/* Clear password from memory */
 		free(unipass);
 	}
 	return ret;
 }
 
-int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
-	     int saltlen, int id, int iter, int n, unsigned char *out,
-	     const EVP_MD *md_type)
+int
+PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
+    int saltlen, int id, int iter, int n, unsigned char *out,
+    const EVP_MD *md_type)
 {
 	unsigned char *B, *D, *I, *p, *Ai;
 	int Slen, Plen, Ilen, Ijlen;
@@ -117,7 +119,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 
 #if 0
 	if (!pass) {
-		PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UNI,ERR_R_PASSED_NULL_PARAMETER);
+		PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UNI, ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 #endif
@@ -131,37 +133,42 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 	fprintf(stderr, "Salt (length %d):\n", saltlen);
 	h__dump(salt, saltlen);
 #endif
-	v = EVP_MD_block_size (md_type);
-	u = EVP_MD_size (md_type);
+	v = EVP_MD_block_size(md_type);
+	u = EVP_MD_size(md_type);
 	if (u < 0)
-	    return 0;
-	D = malloc (v);
-	Ai = malloc (u);
-	B = malloc (v + 1);
-	Slen = v * ((saltlen+v-1)/v);
-	if(passlen) Plen = v * ((passlen+v-1)/v);
-	else Plen = 0;
+		return 0;
+	D = malloc(v);
+	Ai = malloc(u);
+	B = malloc(v + 1);
+	Slen = v * ((saltlen + v - 1) / v);
+	if (passlen)
+		Plen = v * ((passlen + v - 1)/v);
+	else
+		Plen = 0;
 	Ilen = Slen + Plen;
-	I = malloc (Ilen);
+	I = malloc(Ilen);
 	Ij = BN_new();
 	Bpl1 = BN_new();
 	if (!D || !Ai || !B || !I || !Ij || !Bpl1)
 		goto err;
-	for (i = 0; i < v; i++) D[i] = id;
+	for (i = 0; i < v; i++)
+		D[i] = id;
 	p = I;
-	for (i = 0; i < Slen; i++) *p++ = salt[i % saltlen];
-	for (i = 0; i < Plen; i++) *p++ = pass[i % passlen];
+	for (i = 0; i < Slen; i++)
+		*p++ = salt[i % saltlen];
+	for (i = 0; i < Plen; i++)
+		*p++ = pass[i % passlen];
 	for (;;) {
-		if (!EVP_DigestInit_ex(&ctx, md_type, NULL)
-			|| !EVP_DigestUpdate(&ctx, D, v)
-			|| !EVP_DigestUpdate(&ctx, I, Ilen)
-			|| !EVP_DigestFinal_ex(&ctx, Ai, NULL))
+		if (!EVP_DigestInit_ex(&ctx, md_type, NULL) ||
+		    !EVP_DigestUpdate(&ctx, D, v) ||
+		    !EVP_DigestUpdate(&ctx, I, Ilen) ||
+		    !EVP_DigestFinal_ex(&ctx, Ai, NULL))
 			goto err;
 		for (j = 1; j < iter; j++) {
-			if (!EVP_DigestInit_ex(&ctx, md_type, NULL)
-				|| !EVP_DigestUpdate(&ctx, Ai, u)
-				|| !EVP_DigestFinal_ex(&ctx, Ai, NULL))
-			goto err;
+			if (!EVP_DigestInit_ex(&ctx, md_type, NULL) ||
+			    !EVP_DigestUpdate(&ctx, Ai, u) ||
+			    !EVP_DigestFinal_ex(&ctx, Ai, NULL))
+				goto err;
 		}
 		memcpy (out, Ai, min (n, u));
 		if (u >= n) {
@@ -174,13 +181,14 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 		}
 		n -= u;
 		out += u;
-		for (j = 0; j < v; j++) B[j] = Ai[j % u];
+		for (j = 0; j < v; j++)
+			B[j] = Ai[j % u];
 		/* Work out B + 1 first then can use B as tmp space */
 		if (!BN_bin2bn (B, v, Bpl1))
 			goto err;
 		if (!BN_add_word (Bpl1, 1))
 			goto err;
-		for (j = 0; j < Ilen ; j+=v) {
+		for (j = 0; j < Ilen; j += v) {
 			if (!BN_bin2bn(I + j, v, Ij))
 				goto err;
 			if (!BN_add(Ij, Ij, Bpl1))
@@ -194,7 +202,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 					goto err;
 				memcpy (I + j, B + 1, v);
 #ifndef PKCS12_BROKEN_KEYGEN
-			/* If less than v bytes pad with zeroes */
+				/* If less than v bytes pad with zeroes */
 			} else if (Ijlen < v) {
 				memset(I + j, 0, v - Ijlen);
 				if (!BN_bn2bin(Ij, I + j + v - Ijlen))
@@ -206,7 +214,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 	}
 
 err:
-	PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UNI,ERR_R_MALLOC_FAILURE);
+	PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UNI, ERR_R_MALLOC_FAILURE);
 
 end:
 	free (Ai);
@@ -221,7 +229,8 @@ end:
 #ifdef DEBUG_KEYGEN
 void h__dump (unsigned char *p, int len)
 {
-	for (; len --; p++) fprintf(stderr, "%02X", *p);
-	fprintf(stderr, "\n");	
+	for (; len --; p++)
+		fprintf(stderr, "%02X", *p);
+	fprintf(stderr, "\n");
 }
 #endif
