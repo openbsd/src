@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.229 2014/07/08 20:14:46 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.230 2014/07/08 21:25:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -521,7 +521,7 @@ main(int argc, char *argv[])
 			    !strcmp(optarg, "filter") ||
 			    !strcmp(optarg, "filters"))
 				verbose |= TRACE_FILTERS;
-			else if (!strcmp(optarg, "filters") ||
+			else if (!strcmp(optarg, "mta") ||
 			    !strcmp(optarg, "transfer"))
 				verbose |= TRACE_MTA;
 			else if (!strcmp(optarg, "bounce") ||
