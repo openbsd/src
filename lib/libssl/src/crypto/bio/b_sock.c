@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.46 2014/07/08 10:12:48 jsing Exp $ */
+/* $OpenBSD: b_sock.c,v 1.47 2014/07/08 11:05:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -247,7 +247,6 @@ BIO_get_accept_socket(char *host, int bind_mode)
 	else
 		p = h, h = NULL;
 
-#ifdef EAI_FAMILY
 	do {
 		struct addrinfo *res, hint;
 
@@ -280,7 +279,6 @@ BIO_get_accept_socket(char *host, int bind_mode)
 		freeaddrinfo(res);
 		goto again;
 	} while (0);
-#endif
 
 	if (!BIO_get_port(p, &port))
 		goto err;
@@ -407,7 +405,6 @@ BIO_accept(int sock, char **addr)
 	if (addr == NULL)
 		goto end;
 
-#ifdef EAI_FAMILY
 	do {
 		char   h[NI_MAXHOST], s[NI_MAXSERV];
 		size_t nl;
@@ -441,7 +438,6 @@ BIO_accept(int sock, char **addr)
 		snprintf(*addr, nl, "%s:%s", h, s);
 		goto end;
 	} while (0);
-#endif
 	if (sa.from.sa.sa_family != AF_INET)
 		goto end;
 	l = ntohl(sa.from.sa_in.sin_addr.s_addr);
