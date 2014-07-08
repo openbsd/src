@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.26 2012/04/04 11:50:01 jasper Exp $
+#	$OpenBSD: airport,v 1.27 2014/07/08 11:46:14 kettenis Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1105,6 +1105,7 @@ MSO:Missoula County, Montana, USA
 MSP:Minneapolis-St. Paul International, Minnesota, USA
 MSQ:Minsk, Belarus
 MSS:Massena, NY, USA
+MST:Maastricht Aachen, Maastricht, Netherlands
 MSU:Maseru, Lesotho
 MSY:Moisant International, New Orleans, Louisiana, USA
 MTH:Marathon, FL, USA
