@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.11 2014/05/26 08:33:48 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.12 2014/07/08 04:02:14 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -449,6 +449,17 @@ void	ifa_add(struct ifnet *, struct ifaddr *);
 void	ifa_del(struct ifnet *, struct ifaddr *);
 void	ifa_update_broadaddr(struct ifnet *, struct ifaddr *,
 	    struct sockaddr *);
+
+void	if_rxr_init(struct if_rxring *, u_int, u_int);
+u_int	if_rxr_get(struct if_rxring *, u_int);
+
+#define if_rxr_put(_r, _c)	do { (_r)->rxr_alive -= (_c); } while (0)
+#define if_rxr_inuse(_r)	((_r)->rxr_alive)
+
+int	if_rxr_info_ioctl(struct if_rxrinfo *, u_int, struct if_rxring_info *);
+int	if_rxr_ioctl(struct if_rxrinfo *, const char *, u_int,
+	    struct if_rxring *);
+
 #endif /* _KERNEL */
 
 #endif /* _NET_IF_VAR_H_ */

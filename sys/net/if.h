@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.154 2014/06/13 07:28:12 mpi Exp $	*/
+/*	$OpenBSD: if.h,v 1.155 2014/07/08 04:02:14 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -77,6 +77,26 @@ struct mclpool {
 	u_short mcl_hwm;
 	u_short mcl_cwm;
 	u_short mcl_lwm;
+};
+
+struct if_rxring {
+	int     rxr_adjusted;
+	u_int	rxr_alive;
+	u_int	rxr_cwm;
+	u_int	rxr_lwm;
+	u_int	rxr_hwm;
+};
+
+struct if_rxring_info {
+	char	ifr_name[16];		/* name of the ring */
+	u_int	ifr_size;		/* size of the packets on the ring */
+	struct if_rxring ifr_info;
+};
+
+/* Structure used in SIOCGIFRXR request. */
+struct if_rxrinfo {
+	u_int	ifri_total;
+	struct if_rxring_info *ifri_entries;
 };
 
 /*

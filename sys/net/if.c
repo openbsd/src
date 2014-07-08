@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.292 2014/06/26 13:08:25 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.293 2014/07/08 04:02:14 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -177,6 +177,8 @@ LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
 
 struct pool ifaddr_item_pl;
+
+int	net_livelocked(void);
 
 /*
  * Network interface utility routines.
@@ -2378,4 +2380,103 @@ ifnewlladdr(struct ifnet *ifp)
 		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
 	}
 	splx(s);
+}
+
+int
+net_livelocked()
+{
+	extern int ticks;
+	extern int m_clticks;
+
+	return (ticks - m_clticks > 1);
+}
+
+void
+if_rxr_init(struct if_rxring *rxr, u_int lwm, u_int hwm)
+{
+	extern int ticks;
+
+	memset(rxr, 0, sizeof(*rxr));
+
+	rxr->rxr_adjusted = ticks;
+	rxr->rxr_cwm = rxr->rxr_lwm = lwm;
+	rxr->rxr_hwm = hwm;
+}
+
+static inline void
+if_rxr_adjust_cwm(struct if_rxring *rxr)
+{
+	extern int ticks;
+
+	if (net_livelocked()) {
+		if (rxr->rxr_cwm > rxr->rxr_lwm)
+			rxr->rxr_cwm--;
+		else
+			return;
+	} else if (rxr->rxr_alive > 4)
+		return;
+	else if (rxr->rxr_cwm < rxr->rxr_hwm)
+		rxr->rxr_cwm++;
+
+	rxr->rxr_adjusted = ticks;
+}
+
+u_int
+if_rxr_get(struct if_rxring *rxr, u_int max)
+{
+	extern int ticks;
+	u_int diff;
+
+	if (ticks - rxr->rxr_adjusted >= 1) {
+		/* we're free to try for an adjustment */
+		if_rxr_adjust_cwm(rxr);
+	}
+
+	if (rxr->rxr_alive >= rxr->rxr_cwm)
+		return (0);
+
+	diff = min(rxr->rxr_cwm - rxr->rxr_alive, max);
+	rxr->rxr_alive += diff;
+
+	return (diff);
+}
+
+int
+if_rxr_info_ioctl(struct if_rxrinfo *uifri, u_int t, struct if_rxring_info *e)
+{
+	struct if_rxrinfo kifri;
+	int error;
+	u_int n;
+
+	error = copyin(uifri, &kifri, sizeof(kifri));
+	if (error)
+		return (error);
+
+	n = min(t, kifri.ifri_total);
+	kifri.ifri_total = t;
+
+	if (n > 0) {
+		error = copyout(e, kifri.ifri_entries, sizeof(*e) * n);
+		if (error)
+			return (error);
+	}
+
+	return (copyout(&kifri, uifri, sizeof(kifri)));
+}
+
+int
+if_rxr_ioctl(struct if_rxrinfo *ifri, const char *name, u_int size,
+    struct if_rxring *rxr)
+{
+	struct if_rxring_info ifr;
+
+	memset(&ifr, 0, sizeof(ifr));
+
+	if (name != NULL)
+		strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+
+	ifr.ifr_size = size;
+	ifr.ifr_info = *rxr;
+
+	return (if_rxr_info_ioctl(ifri, 1, &ifr));
 }
