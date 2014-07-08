@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.53 2014/03/28 17:57:11 mpi Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.54 2014/07/08 14:22:43 deraadt Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -135,14 +135,13 @@ do {									\
  * uvm_map internal functions.
  * Used by uvm_map address selectors.
  */
-
-struct vm_map_entry	*uvm_map_entrybyaddr(struct uvm_map_addr*, vaddr_t);
-int			 uvm_map_isavail(struct vm_map*,
-			    struct uvm_addr_state*,
-			    struct vm_map_entry**, struct vm_map_entry**,
+struct vm_map_entry	*uvm_map_entrybyaddr(struct uvm_map_addr *, vaddr_t);
+int			 uvm_map_isavail(struct vm_map *,
+			    struct uvm_addr_state *,
+			    struct vm_map_entry **, struct vm_map_entry**,
 			    vaddr_t, vsize_t);
-struct uvm_addr_state	*uvm_map_uaddr(struct vm_map*, vaddr_t);
-struct uvm_addr_state	*uvm_map_uaddr_e(struct vm_map*, struct vm_map_entry*);
+struct uvm_addr_state	*uvm_map_uaddr(struct vm_map *, vaddr_t);
+struct uvm_addr_state	*uvm_map_uaddr_e(struct vm_map *, struct vm_map_entry *);
 
 #define VMMAP_FREE_START(_entry)	((_entry)->end + (_entry)->guard)
 #define VMMAP_FREE_END(_entry)		((_entry)->end + (_entry)->guard + \
