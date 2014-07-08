@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.17 2014/07/08 05:35:19 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.18 2014/07/08 08:54:00 stsp Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -279,8 +279,6 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, NTXDESC);
 	IFQ_SET_READY(&ifp->if_snd);
-
-	m_clsetwms(ifp, JUMBO_LEN, 2, NRXDESC - 1);
 
 	ifmedia_init(&sc->sc_media, IFM_IMASK, vmxnet3_media_change,
 	    vmxnet3_media_status);

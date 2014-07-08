@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1728 2014/05/20 15:02:24 mpi Exp $
+$OpenBSD: pcidevs,v 1.1729 2014/07/08 08:54:00 stsp Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1840,6 +1840,7 @@ product ATHEROS AR5211_DEFAULT	0x1112	AR5211
 product ATHEROS AR5212_FPGA	0xf013	AR5212
 product ATHEROS AR5211_FPGA11B	0xf11b	AR5211Ref
 product ATHEROS AR5211_LEGACY	0xff12	AR5211Ref
+product ATHEROS AR9281_2	0xff1c	AR9281
 
 /* Atmel products */
 product ATMEL AT76C506		0x0506	AT76C506
