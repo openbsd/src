@@ -13,7 +13,7 @@ character arrays structure
 
  void	BUF_MEM_free(BUF_MEM *a);
 
- int	BUF_MEM_grow(BUF_MEM *str, int len);
+ int	BUF_MEM_grow(BUF_MEM *str, size_t len);
 
  char *	BUF_strdup(const char *str);
 
@@ -26,9 +26,9 @@ The library uses the BUF_MEM structure defined in buffer.h:
 
  typedef struct buf_mem_st
  {
-        int length;     /* current number of bytes */
+        size_t length;     /* current number of bytes */
         char *data;
-        int max;        /* size of buffer */
+        size_t max;        /* size of buffer */
  } BUF_MEM;
 
 B<length> is the current size of the buffer in bytes, B<max> is the amount of
