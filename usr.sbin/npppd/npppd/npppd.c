@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.35 2014/03/22 04:30:31 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.36 2014/07/08 18:49:27 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.35 2014/03/22 04:30:31 yasuoka Exp $
+ * $Id: npppd.c,v 1.36 2014/07/08 18:49:27 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/types.h>
@@ -1746,8 +1746,10 @@ npppd_set_radish(npppd *_this, void *radish_head)
 	slist_fini(&rtlist0);
 	slist_fini(&rtlist1);
 
-	if (_this->rd != NULL)
+	if (_this->rd != NULL) {
 		npppd_rd_walktree_delete(_this->rd);
+		_this->rd = NULL;
+	}
 	if (radish_head == NULL)
 		npppd_get_all_users(_this, &delppp);
 
