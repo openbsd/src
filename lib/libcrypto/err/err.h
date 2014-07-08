@@ -1,4 +1,4 @@
-/* $OpenBSD: err.h,v 1.18 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: err.h,v 1.19 2014/07/08 11:11:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -232,10 +232,8 @@ typedef struct err_state_st {
 #define HMACerr(f,r) ERR_PUT_error(ERR_LIB_HMAC,(f),(r),__FILE__,__LINE__)
 #define JPAKEerr(f,r) ERR_PUT_error(ERR_LIB_JPAKE,(f),(r),__FILE__,__LINE__)
 
-/* Borland C seems too stupid to be able to shift and do longs in
- * the pre-processor :-( */
-#define ERR_PACK(l,f,r)		(((((unsigned long)l)&0xffL)*0x1000000)| \
-				((((unsigned long)f)&0xfffL)*0x1000)| \
+#define ERR_PACK(l,f,r)		(((((unsigned long)l)&0xffL)<<24L)| \
+				((((unsigned long)f)&0xfffL)<<12L)| \
 				((((unsigned long)r)&0xfffL)))
 #define ERR_GET_LIB(l)		(int)((((unsigned long)l)>>24L)&0xffL)
 #define ERR_GET_FUNC(l)		(int)((((unsigned long)l)>>12L)&0xfffL)
