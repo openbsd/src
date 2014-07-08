@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.h,v 1.8 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: user.h,v 1.9 2014/07/08 23:31:22 deraadt Exp $	*/
 /*	$NetBSD: user.h,v 1.10 1996/04/09 20:55:49 cgd Exp $	*/
 
 /*
@@ -33,18 +33,8 @@
  */
 
 #include <machine/pcb.h>
-#ifndef _KERNEL
-/* stuff that *used* to be included by user.h, or is now needed */
-#include <errno.h>
-#include <sys/time.h>
 #include <sys/resource.h>
-#include <sys/ucred.h>
-#include <sys/uio.h>
-#endif
 #include <sys/resourcevar.h>
-#include <uvm/uvm_extern.h>		/* XXX */
-#include <sys/sysctl.h>
-
 
 /*
  * Per process structure containing data that isn't needed in core

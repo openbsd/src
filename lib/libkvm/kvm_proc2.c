@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.23 2014/07/04 05:58:31 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.24 2014/07/08 23:31:22 deraadt Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,12 +71,14 @@
 
 #define __need_process
 #include <sys/param.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/stat.h>
+#include <sys/ucred.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
+#include <sys/resource.h>
+#include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <stddef.h>
 #include <stdlib.h>

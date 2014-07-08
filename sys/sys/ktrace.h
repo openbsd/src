@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.19 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.20 2014/07/08 23:31:22 deraadt Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -31,6 +31,8 @@
  *
  *	@(#)ktrace.h	8.1 (Berkeley) 6/2/93
  */
+
+#include <sys/uio.h>
 
 /*
  * operations to ktrace system call  (KTROP(op))
