@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.45 2014/07/08 09:46:44 jsing Exp $ */
+/* $OpenBSD: b_sock.c,v 1.46 2014/07/08 10:12:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -95,7 +95,8 @@ BIO_get_host_ip(const char *str, unsigned char *ip)
 
 	/* cast to short because of win16 winsock definition */
 	if ((short)he->h_addrtype != AF_INET) {
-		BIOerr(BIO_F_BIO_GET_HOST_IP, BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
+		BIOerr(BIO_F_BIO_GET_HOST_IP,
+		    BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
 		goto err;
 	}
 	for (i = 0; i < 4; i++)
@@ -240,8 +241,9 @@ BIO_get_accept_socket(char *host, int bind_mode)
 			break;
 		}
 	}
+	/* points at last ':', '::port' is special [see below] */
 	if (p)
-		*p++='\0';	/* points at last ':', '::port' is special [see below] */
+		*p++ = '\0';
 	else
 		p = h, h = NULL;
 
@@ -249,10 +251,12 @@ BIO_get_accept_socket(char *host, int bind_mode)
 	do {
 		struct addrinfo *res, hint;
 
-		/* '::port' enforces IPv6 wildcard listener. Some OSes,
+		/*
+		 * '::port' enforces IPv6 wildcard listener. Some OSes,
 		 * e.g. Solaris, default to IPv6 without any hint. Also
 		 * note that commonly IPv6 wildchard socket can service
-		 * IPv4 connections just as well...  */
+		 * IPv4 connections just as well...
+		 */
 		memset(&hint, 0, sizeof(hint));
 		hint.ai_flags = AI_PASSIVE;
 		if (h) {
@@ -303,7 +307,8 @@ again:
 	if (s == -1) {
 		SYSerr(SYS_F_SOCKET, errno);
 		ERR_asprintf_error_data("port='%s'", host);
-		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET, BIO_R_UNABLE_TO_CREATE_SOCKET);
+		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET,
+		    BIO_R_UNABLE_TO_CREATE_SOCKET);
 		goto err;
 	}
 
@@ -311,7 +316,8 @@ again:
 	if (bind_mode == BIO_BIND_REUSEADDR) {
 		int i = 1;
 
-		ret = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&i, sizeof(i));
+		ret = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&i,
+		    sizeof(i));
 		bind_mode = BIO_BIND_NORMAL;
 	}
 #endif
@@ -323,10 +329,12 @@ again:
 			client = server;
 			if (h == NULL || strcmp(h, "*") == 0) {
 				if (client.sa.sa_family == AF_INET6) {
-					memset(&client.sa_in6.sin6_addr, 0, sizeof(client.sa_in6.sin6_addr));
+					memset(&client.sa_in6.sin6_addr, 0,
+					    sizeof(client.sa_in6.sin6_addr));
 					client.sa_in6.sin6_addr.s6_addr[15] = 1;
 				} else if (client.sa.sa_family == AF_INET) {
-					client.sa_in.sin_addr.s_addr = htonl(0x7F000001);
+					client.sa_in.sin_addr.s_addr =
+					    htonl(0x7F000001);
 				} else
 					goto err;
 			}
@@ -347,13 +355,15 @@ again:
 #endif
 		SYSerr(SYS_F_BIND, err_num);
 		ERR_asprintf_error_data("port='%s'", host);
-		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET, BIO_R_UNABLE_TO_BIND_SOCKET);
+		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET,
+		    BIO_R_UNABLE_TO_BIND_SOCKET);
 		goto err;
 	}
 	if (listen(s, SOMAXCONN) == -1) {
 		SYSerr(SYS_F_BIND, errno);
 		ERR_asprintf_error_data("port='%s'", host);
-		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET, BIO_R_UNABLE_TO_LISTEN_SOCKET);
+		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET,
+		    BIO_R_UNABLE_TO_LISTEN_SOCKET);
 		goto err;
 	}
 	ret = 1;
