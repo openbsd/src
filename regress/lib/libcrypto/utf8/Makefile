@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.3 2014/06/01 11:11:46 miod Exp $
+#	$OpenBSD: Makefile,v 1.4 2014/07/08 15:53:53 jsing Exp $
 
 PROG=	utf8test
 CPPFLAGS+=-I${.CURDIR}/../../../../lib/libssl/src/crypto/asn1
 LDADD=	-lcrypto
 DPADD=	${LIBCRYPTO}
 WARNINGS=Yes
-CFLAGS+=	-Werror
+CFLAGS+=	-DLIBRESSL_INTERNAL -Werror
 
 .include <bsd.regress.mk>

@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.1 2014/07/02 16:29:36 jsing Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/07/08 15:53:53 jsing Exp $
 
 PROG=	pkcs7test
 LDADD=	-lcrypto
 DPADD=	${LIBCRYPTO}
 WARNINGS=	Yes
-CFLAGS+=	-Werror
+CFLAGS+=	-DLIBRESSL_INTERNAL -Werror
 
 .include <bsd.regress.mk>
