@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.281 2014/07/07 23:12:00 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.282 2014/07/08 00:11:50 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2849,9 +2849,6 @@ em_rxeof(struct em_softc *sc)
 	u_int8_t	    status;
 
 	ifp = &sc->interface_data.ac_if;
-
-	if (!ISSET(ifp->if_flags, IFF_RUNNING))
-		return;
 
 	i = sc->next_rx_desc_to_check;
 
