@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.h,v 1.27 2009/07/22 21:05:37 oga Exp $	*/
+/*	$OpenBSD: uvm_pager.h,v 1.28 2014/07/08 13:15:07 deraadt Exp $	*/
 /*	$NetBSD: uvm_pager.h,v 1.20 2000/11/27 08:40:05 chs Exp $	*/
 
 /*
@@ -74,13 +74,7 @@
 #ifndef _UVM_UVM_PAGER_H_
 #define _UVM_UVM_PAGER_H_
 
-/*
- * uvm_pager.h
- */
-
-/*
- * pager ops
- */
+#ifdef _KERNEL
 
 struct uvm_pagerops {
 						/* init pager */
@@ -127,8 +121,6 @@ struct uvm_pagerops {
 
 /* page we are not interested in getting */
 #define PGO_DONTCARE ((struct vm_page *) -1L)	/* [get only] */
-
-#ifdef _KERNEL
 
 /*
  * prototypes
