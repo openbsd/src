@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.53 2014/05/20 01:25:24 guenther Exp $ */
+/*	$OpenBSD: procmap.c,v 1.54 2014/07/08 10:15:16 deraadt Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -866,9 +866,6 @@ findname(kvm_t *kd, struct kbit *vmspace,
 	    (D(vmspace, vmspace)->vm_maxsaddr + (size_t)maxssiz) >=
 	    (caddr_t)vme->end) {
 		name = "  [ stack ]";
-	} else if (D(vmspace, vmspace)->vm_daddr <= (caddr_t)vme->start &&
-	    D(vmspace, vmspace)->vm_daddr + BRKSIZ >= (caddr_t)vme->end) {
-		name = "  [ heap ]";
 	} else if (UVM_ET_ISHOLE(vme))
 		name = "  [ hole ]";
 	else
