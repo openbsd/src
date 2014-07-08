@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.106 2014/04/30 09:17:29 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.107 2014/07/08 07:59:31 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -239,7 +239,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 
 			/* start queueing delivery headers */
 			if (e->sender[0])
-				/* XXX: remove exising Return-Path, if any */
+				/* XXX: remove existing Return-Path, if any */
 				n = iobuf_fqueue(&s->iobuf,
 				    "Return-Path: %s\nDelivered-To: %s\n",
 				    e->sender, e->rcpt ? e->rcpt : e->dest);

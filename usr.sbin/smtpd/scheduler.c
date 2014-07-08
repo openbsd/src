@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.45 2014/05/20 18:47:01 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.46 2014/07/08 07:59:31 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -530,7 +530,7 @@ scheduler_timeout(int fd, short event, void *p)
 	left &= batch.mask;
 	left &= ~batch.type;
 
-	/* We can still schedule something immediatly. */
+	/* We can still schedule something immediately. */
 	if (left)
 		goto again;
 

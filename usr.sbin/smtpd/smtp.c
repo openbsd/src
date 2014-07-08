@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.137 2014/04/29 19:13:13 reyk Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.138 2014/07/08 07:59:31 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -359,7 +359,7 @@ smtp_collect(void)
 
 	if (env->sc_flags & SMTPD_SMTP_DISABLED) {
 		log_warnx("warn: smtp: "
-		    "fd exaustion over, re-enabling incoming connections");
+		    "fd exhaustion over, re-enabling incoming connections");
 		env->sc_flags &= ~SMTPD_SMTP_DISABLED;
 		smtp_resume();
 	}

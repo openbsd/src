@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.38 2014/04/19 13:51:24 gilles Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.39 2014/07/08 07:59:31 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -288,7 +288,7 @@ scheduler_ram_update(struct scheduler_info *si)
 
 	/*
 	 * If the envelope was removed while inflight,  schedule it for
-	 * removal immediatly.
+	 * removal immediately.
 	 */
 	if (evp->flags & RQ_ENVELOPE_REMOVED) {
 		TAILQ_INSERT_TAIL(&ramqueue.q_removed, evp, entry);
@@ -409,7 +409,7 @@ scheduler_ram_release(int type, uint64_t holdq, int n)
 		evp->holdq = 0;
 
 		/* When released, all envelopes are put in the pending queue
-		 * and will be rescheduled immediatly.  As an optimization,
+		 * and will be rescheduled immediately.  As an optimization,
 		 * we could just schedule them directly.
 		 */
 		evp->state = RQ_EVPSTATE_PENDING;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.119 2014/06/07 07:53:32 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.120 2014/07/08 07:59:31 sobrado Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 7 2014 $
+.Dd $Mdocdate: July 8 2014 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -893,7 +893,7 @@ the first line is used as the server name.
 Otherwise, the server name is derived from the local hostname returned by
 .Xr gethostname 3 ,
 either directly if it is a fully qualified domain name,
-or by retreiving the associated canonical name through
+or by retrieving the associated canonical name through
 .Xr getaddrinfo 3 .
 .It Pa /var/spool/smtpd/
 Spool directories for mail during processing.

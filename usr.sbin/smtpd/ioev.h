@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.h,v 1.3 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: ioev.h,v 1.4 2014/07/08 07:59:31 sobrado Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -19,7 +19,7 @@
 
 enum {
 	IO_CONNECTED = 0, 	/* connection successful	*/
-	IO_TLSREADY,		/* TLS started succesfully	*/
+	IO_TLSREADY,		/* TLS started successfully	*/
 	IO_TLSVERIFIED,		/* XXX - needs more work	*/
 	IO_DATAIN,		/* new data in input buffer	*/
 	IO_LOWAT,		/* output queue running low	*/
@@ -48,7 +48,7 @@ struct io {
 	int		 state;
 	struct event	 ev;
 	void		*ssl;
-	const char	*error; /* only valid immediatly on callback */
+	const char	*error; /* only valid immediately on callback */
 };
 
 void io_set_blocking(int, int);
