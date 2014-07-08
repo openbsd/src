@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.41 2014/07/07 19:10:25 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.42 2014/07/08 07:59:05 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -84,6 +84,7 @@ sub _opened
 	my $archive = OpenBSD::Ustar->new($fh, $self->{repository}{state});
 	$archive->set_description($self->{repository}->url($self->{name}));
 	$self->{_archive} = $archive;
+	$self->_set_callback;
 
 	if (defined $self->{_current_name}) {
 		while (my $e = $self->{_archive}->next) {
@@ -94,6 +95,14 @@ sub _opened
 		}
 	}
 	return $self;
+}
+
+sub _set_callback
+{
+	my $self = shift;
+	if (defined $self->{_archive}) {
+		$self->{_archive}->set_callback($self->{callback});
+	}
 }
 
 sub store_end_of_stream
@@ -328,9 +337,8 @@ sub skip
 sub set_callback
 {
 	my ($self, $code) = @_;
-	if (defined $self->{_archive}) {
-		$self->{_archive}->set_callback($code);
-	}
+	$self->{callback} = $code;
+	$self->_set_callback;
 }
 
 package OpenBSD::PackageLocation::Installed;
