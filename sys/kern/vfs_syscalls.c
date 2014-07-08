@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.206 2014/05/25 18:46:44 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.207 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/namei.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
+#include <sys/sysctl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
@@ -56,9 +57,6 @@
 #include <sys/ktrace.h>
 
 #include <sys/syscallargs.h>
-
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 extern int suid_clear;
 int	usermount = 0;		/* sysctl: by default, users may not mount */

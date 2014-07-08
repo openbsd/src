@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.84 2014/03/19 10:09:19 mpi Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.85 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -50,8 +50,6 @@
 #include <machine/endian.h>
 #include <machine/bus.h>
 #include <machine/intr.h>	/* splnet */
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

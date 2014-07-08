@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.150 2014/01/18 07:10:26 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.151 2014/07/08 17:19:26 deraadt Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -62,8 +62,6 @@
 #include <sys/queue.h>
 #include <sys/specdev.h>
 #include <sys/unistd.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <miscfs/fifofs/fifo.h>
 

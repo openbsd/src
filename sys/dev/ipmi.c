@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.70 2014/05/04 18:18:36 sf Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.71 2014/07/08 17:19:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -45,8 +45,6 @@
 #include <dev/isa/isavar.h>
 
 #include <dev/ipmivar.h>
-
-#include <uvm/uvm_extern.h>
 
 struct ipmi_sensor {
 	u_int8_t	*i_sdr;

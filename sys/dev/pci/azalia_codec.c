@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.160 2014/05/25 16:00:53 ratchov Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.161 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <uvm/uvm_param.h>
 #include <dev/pci/azalia.h>
 
 #define XNAME(co)	(((struct device *)co->az)->dv_xname)

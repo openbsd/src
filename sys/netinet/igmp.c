@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.40 2014/05/12 09:15:00 mpi Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.41 2014/07/08 17:19:26 deraadt Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -77,6 +77,7 @@
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
+#include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
 #include <sys/proc.h>

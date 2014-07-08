@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_mem.c,v 1.2 2013/06/03 10:37:02 espie Exp $	*/
+/*	$OpenBSD: tmpfs_mem.c,v 1.3 2014/07/08 17:19:26 deraadt Exp $	*/
 /*	$NetBSD: tmpfs_mem.c,v 1.4 2011/05/24 01:09:47 rmind Exp $	*/
 
 /*
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.4 2011/05/24 01:09:47 rmind Exp $");
 #include <sys/namei.h>
 #include <sys/pool.h>
 #include <sys/vnode.h>
+#include <sys/sysctl.h>
 #include <sys/malloc.h>
 
 #include <tmpfs/tmpfs.h>

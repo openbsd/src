@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2.c,v 1.9 2013/11/18 20:21:51 deraadt Exp $	*/
+/*	$OpenBSD: tcic2.c,v 1.10 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: tcic2.c,v 1.3 2000/01/13 09:38:17 joda Exp $	*/
 
 #undef	TCICDEBUG
@@ -40,8 +40,6 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/kthread.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.26 2014/03/31 12:11:42 mpi Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.27 2014/07/08 17:19:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -24,6 +24,8 @@
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/sysctl.h>
+#include <sys/mutex.h>
+#include <sys/lock.h>
 #include <sys/reboot.h>
 
 #include <arm/xscale/pxa2x0reg.h>

@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.130 2014/07/02 07:16:29 dlg Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.131 2014/07/08 17:19:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -58,9 +58,6 @@
 #include <paths.h>
 #include <limits.h>
 #include "dkstats.h"
-
-#include <uvm/uvm_object.h>
-#include <uvm/uvm_extern.h>
 
 struct nlist namelist[] = {
 #define X_UVMEXP	0		/* sysctl */

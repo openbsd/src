@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.54 2014/07/08 14:22:43 deraadt Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.55 2014/07/08 17:19:26 deraadt Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -45,10 +45,11 @@
 #include <uvm/uvm_glue.h>
 #include <uvm/uvm_km.h>
 #include <uvm/uvm_swap.h>
-#include <uvm/uvm_pmemrange.h>
 #ifdef UVM_SWAP_ENCRYPT
 #include <uvm/uvm_swap_encrypt.h>
 #endif
+
+#include <uvm/uvm_pmemrange.h>
 
 /*
  * uvm structure (vm global state: collected in one structure for ease

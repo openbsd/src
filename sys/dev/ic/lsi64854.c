@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsi64854.c,v 1.9 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: lsi64854.c,v 1.10 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: lsi64854.c,v 1.18 2001/06/04 20:56:51 mrg Exp $ */
 
 /*-
@@ -36,8 +36,6 @@
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>

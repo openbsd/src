@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_cmdline.c,v 1.11 2014/07/04 05:58:31 guenther Exp $	*/
+/*	$OpenBSD: procfs_cmdline.c,v 1.12 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: procfs_cmdline.c,v 1.3 1999/03/13 22:26:48 thorpej Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <sys/exec.h>
 #include <sys/malloc.h>
 #include <miscfs/procfs/procfs.h>
-#include <uvm/uvm_extern.h>
 
 /*
  * code for returning process's command line arguments

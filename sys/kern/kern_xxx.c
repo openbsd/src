@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.24 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.25 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

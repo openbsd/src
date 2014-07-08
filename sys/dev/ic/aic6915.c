@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.11 2013/11/26 09:50:32 mpi Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.12 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -48,8 +48,6 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

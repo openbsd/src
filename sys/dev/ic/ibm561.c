@@ -1,5 +1,5 @@
 /* $NetBSD: ibm561.c,v 1.1 2001/12/12 07:46:48 elric Exp $ */
-/* $OpenBSD: ibm561.c,v 1.6 2010/11/11 17:47:00 miod Exp $ */
+/* $OpenBSD: ibm561.c,v 1.7 2014/07/08 17:19:25 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/ic/ibm561reg.h>

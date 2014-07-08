@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.25 2013/03/28 16:55:25 deraadt Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.26 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -45,7 +45,6 @@
 #ifdef GPROF
 #include <sys/malloc.h>
 #include <sys/gmon.h>
-#include <uvm/uvm_extern.h>
 
 /*
  * Flag to prevent CPUs from executing the mcount() monitor function

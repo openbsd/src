@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.123 2014/01/24 06:21:59 dlg Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.124 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -64,7 +64,6 @@
 #include <sys/proc.h>
 #include <sys/disk.h>
 #include <sys/pool.h>
-#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

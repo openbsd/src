@@ -1,4 +1,4 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.35 2013/03/04 00:41:54 dlg Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.36 2014/07/08 17:19:25 deraadt Exp $ */
 /*
  * OpenBSD Specific definitions for the QLogic ISP Host Adapter
  */
@@ -49,8 +49,6 @@
 
 #include <scsi/scsi_message.h>
 #include <scsi/scsi_debug.h>
-
-#include <uvm/uvm_extern.h>
 
 /*
  * Efficiency- get rid of SBus code && tests unless we need them.

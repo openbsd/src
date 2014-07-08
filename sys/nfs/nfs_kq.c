@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.18 2014/06/15 11:43:24 sf Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.19 2014/07/08 17:19:26 deraadt Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -42,8 +42,6 @@
 #include <sys/kthread.h>
 #include <sys/rwlock.h>
 #include <sys/queue.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>

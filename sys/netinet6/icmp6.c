@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.144 2014/05/07 08:09:33 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.145 2014/07/08 17:19:26 deraadt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -68,6 +68,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/sysctl.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -2809,9 +2810,6 @@ icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 		    r->rtt_tableid);
 	}
 }
-
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 int *icmpv6ctl_vars[ICMPV6CTL_MAXID] = ICMPV6CTL_VARS;
 

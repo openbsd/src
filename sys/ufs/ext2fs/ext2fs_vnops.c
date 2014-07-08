@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.65 2014/05/27 14:31:24 krw Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.66 2014/07/08 17:19:26 deraadt Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -56,8 +56,6 @@
 #include <sys/pool.h>
 #include <sys/signalvar.h>
 #include <sys/specdev.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <miscfs/fifofs/fifo.h>
 

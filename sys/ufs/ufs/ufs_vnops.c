@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.113 2014/03/19 04:17:33 guenther Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.114 2014/07/08 17:19:26 deraadt Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -56,8 +56,6 @@
 #include <sys/event.h>
 #include <sys/poll.h>
 #include <sys/specdev.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <miscfs/fifofs/fifo.h>
 

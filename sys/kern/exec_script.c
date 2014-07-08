@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.28 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.29 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <sys/filedesc.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
-#include <uvm/uvm_extern.h>
 
 #include <sys/exec_script.h>
 

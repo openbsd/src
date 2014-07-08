@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.109 2014/06/15 20:39:22 matthew Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.110 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -60,8 +60,6 @@
 #include <sys/event.h>
 #include <sys/pool.h>
 #include <sys/ktrace.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/pipe.h>
 

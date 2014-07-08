@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.20 2013/10/09 18:22:06 miod Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.21 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -43,8 +43,6 @@
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

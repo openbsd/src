@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.44 2014/05/21 18:53:05 krw Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.45 2014/07/08 17:19:24 deraadt Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
 #include <sys/time.h>
 #include <sys/lock.h>
 #include <sys/ucred.h>
-#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>

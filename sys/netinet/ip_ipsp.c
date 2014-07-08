@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.194 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.195 2014/07/08 17:19:26 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -41,11 +41,11 @@
 #include "pfsync.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/sysctl.h>
 #include <sys/timeout.h>
 
 #include <net/if.h>

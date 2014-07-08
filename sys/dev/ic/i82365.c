@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.30 2013/11/18 20:21:51 deraadt Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.31 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -38,8 +38,6 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/kthread.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

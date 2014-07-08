@@ -30,8 +30,6 @@
 #include <sys/device.h>
 #include <sys/rwlock.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/agpvar.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.54 2014/07/08 10:15:16 deraadt Exp $ */
+/*	$OpenBSD: procmap.c,v 1.55 2014/07/08 17:19:26 deraadt Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -39,6 +39,9 @@
 #include <sys/mount.h>
 #include <sys/uio.h>
 #include <sys/sysctl.h>
+
+/* XXX until uvm gets cleaned up */
+typedef int boolean_t;
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>

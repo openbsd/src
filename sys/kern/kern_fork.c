@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.169 2014/07/07 05:31:42 matthew Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.170 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/acct.h>
 #include <sys/ktrace.h>
 #include <sys/sched.h>
+#include <sys/sysctl.h>
 #include <dev/rndvar.h>
 #include <sys/pool.h>
 #include <sys/mman.h>

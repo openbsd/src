@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.42 2013/11/26 20:33:12 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.43 2014/07/08 17:19:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -33,7 +33,7 @@
 #include <sys/evcount.h>
 #include <sys/malloc.h>
 
-#include <uvm/uvm_extern.h>	/* for uvmexp */
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/frame.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vesafb.c,v 1.7 2009/11/11 00:01:34 fgsch Exp $	*/
+/*	$OpenBSD: vesafb.c,v 1.8 2014/07/08 17:19:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -74,8 +74,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-
-#include <uvm/uvm_extern.h>
 
 
 void vesafb_set_mode(struct vga_pci_softc *, int);

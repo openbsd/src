@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.144 2014/07/04 05:58:30 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.145 2014/07/08 17:19:25 deraadt Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/kernel.h>
+#include <sys/sysctl.h>
 #include <sys/buf.h>
 #include <sys/wait.h>
 #include <sys/file.h>
@@ -69,9 +70,6 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-
-#include <uvm/uvm_extern.h>
 
 /*
  * exit --
