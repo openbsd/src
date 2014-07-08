@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.54 2014/07/08 21:31:54 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.55 2014/07/08 21:50:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -395,7 +395,6 @@
 #define SSL_LOW			0x00000020L
 #define SSL_MEDIUM		0x00000040L
 #define SSL_HIGH		0x00000080L
-#define SSL_FIPS		0x00000100L
 
 /* we have used 000001ff - 23 bits left to go */
 

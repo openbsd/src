@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.55 2014/06/18 04:48:37 miod Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.56 2014/07/08 21:50:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -556,13 +556,6 @@ static const SSL_CIPHER cipher_aliases[] = {
 	{
 		.name = SSL_TXT_HIGH,
 		.algo_strength = SSL_HIGH,
-	},
-
-	/* FIPS 140-2 approved ciphersuite */
-	{
-		.name = SSL_TXT_FIPS,
-		.algorithm_enc = ~SSL_eNULL,
-		.algo_strength = SSL_FIPS,
 	},
 };
 
