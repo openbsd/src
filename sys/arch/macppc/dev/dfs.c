@@ -1,4 +1,4 @@
-/*	$OpenBSD: dfs.c,v 1.2 2013/10/31 08:26:12 mpi Exp $	*/
+/*	$OpenBSD: dfs.c,v 1.3 2014/07/08 13:06:58 deraadt Exp $	*/
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 

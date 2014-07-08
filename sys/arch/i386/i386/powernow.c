@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow.c,v 1.4 2010/04/20 22:05:41 tedu Exp $	*/
+/*	$OpenBSD: powernow.c,v 1.5 2014/07/08 13:06:58 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Ted Unangst
  * All rights reserved.
@@ -22,6 +22,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 
