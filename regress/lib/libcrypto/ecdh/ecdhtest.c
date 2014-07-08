@@ -358,7 +358,7 @@ static int ecdh_kat(BIO *out, const char *cname, int nid,
 	Ztmplen = (EC_GROUP_get_degree(EC_KEY_get0_group(key1)) + 7)/8;
 	if (Ztmplen != Zlen)
 		goto err;
-	Ztmp = OPENSSL_malloc(Ztmplen);
+	Ztmp = malloc(Ztmplen);
 	if (!ECDH_compute_key(Ztmp, Ztmplen,
 				EC_KEY_get0_public_key(key2), key1, 0))
 		goto err;
@@ -376,8 +376,7 @@ static int ecdh_kat(BIO *out, const char *cname, int nid,
 		EC_KEY_free(key1);
 	if (key2)
 		EC_KEY_free(key2);
-	if (Ztmp)
-		OPENSSL_free(Ztmp);
+	free(Ztmp);
 	if (rv)
 		BIO_puts(out, " ok\n");
 	else
