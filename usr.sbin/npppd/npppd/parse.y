@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2014/05/07 08:07:53 yasuoka Exp $ */
+/*	$OpenBSD: parse.y,v 1.12 2014/07/08 19:00:12 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -679,9 +679,7 @@ authopt	: USERNAME_SUFFIX STRING {
 				YYERROR;
 			}
 			curr_radconf = &curr_authconf->data.radius.auth;
-		} '{' optnl radopt_l '}' {
-			curr_radconf = NULL;
-		}
+		} '{' optnl radopt_l '}'
 		| ACCOUNTING_SERVER {
 			if (curr_authconf->auth_type != NPPPD_AUTH_TYPE_RADIUS){
 				yyerror("`accounting-server' can not be used "
@@ -689,10 +687,7 @@ authopt	: USERNAME_SUFFIX STRING {
 				YYERROR;
 			}
 			curr_radconf = &curr_authconf->data.radius.acct;
-			TAILQ_INIT(&curr_radconf->servers);
-		} '{' optnl radopt_l '}' {
-			curr_radconf = NULL;
-		}
+		} '{' optnl radopt_l '}'
 		;
 
 optport		: /* empty */                 { $$ = 0; }
@@ -1423,10 +1418,6 @@ npppd_conf_fini(struct npppd_conf *xconf)
 
 	TAILQ_FOREACH_SAFE(tunn, &xconf->tunnconfs, entry, tunn0) {
 		tunnconf_fini(tunn);
-	}
-	if (curr_radconf != NULL) {
-		radconf_fini(curr_radconf);
-		curr_radconf = NULL;
 	}
 	TAILQ_FOREACH_SAFE(auth, &xconf->authconfs, entry, auth0) {
 		authconf_fini(auth);
