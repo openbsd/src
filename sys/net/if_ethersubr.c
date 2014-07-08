@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.172 2014/04/22 12:07:20 henning Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.173 2014/07/08 07:10:12 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -487,8 +487,6 @@ ether_input(struct ifnet *ifp0, struct ether_header *eh, struct mbuf *m)
 #if NPPPOE > 0
 	struct ether_header *eh_tmp;
 #endif
-
-	m_cluncount(m, 1);
 
 	/* mark incoming routing table */
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;

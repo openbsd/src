@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.176 2014/04/22 14:41:03 mpi Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.177 2014/07/08 07:10:12 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -432,11 +432,6 @@ struct  mbuf *m_getptr(struct mbuf *, int, int *);
 int	m_leadingspace(struct mbuf *);
 int	m_trailingspace(struct mbuf *);
 struct mbuf *m_clget(struct mbuf *, int, struct ifnet *, u_int);
-void	m_clsetwms(struct ifnet *, u_int, u_int, u_int);
-int	m_cldrop(struct ifnet *, int);
-void	m_clcount(struct ifnet *, int);
-void	m_cluncount(struct mbuf *, int);
-void	m_clinitifp(struct ifnet *);
 void	m_adj(struct mbuf *, int);
 int	m_copyback(struct mbuf *, int, int, const void *, int);
 void	m_freem(struct mbuf *);

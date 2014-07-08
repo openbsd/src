@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.293 2014/07/08 04:02:14 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.294 2014/07/08 07:10:12 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -178,6 +178,8 @@ int if_cloners_count;
 
 struct pool ifaddr_item_pl;
 
+struct timeout net_tick_to;
+void	net_tick(void *);
 int	net_livelocked(void);
 
 /*
@@ -195,8 +197,10 @@ ifinit()
 	    "ifaddritem", NULL);
 
 	timeout_set(&if_slowtim, if_slowtimo, &if_slowtim);
+	timeout_set(&net_tick_to, net_tick, &net_tick_to);
 
 	if_slowtimo(&if_slowtim);
+	net_tick(&net_tick_to);
 }
 
 static unsigned int if_index = 0;
@@ -428,8 +432,6 @@ if_attach(struct ifnet *ifp)
 #ifdef INET6
 	ifp->if_xflags |= IFXF_NOINET6;
 #endif
-
-	m_clinitifp(ifp);
 
 	if_attachsetup(ifp);
 }
@@ -1150,8 +1152,6 @@ if_up(struct ifnet *ifp)
 #ifndef SMALL_KERNEL
 	rt_if_track(ifp);
 #endif
-
-	m_clinitifp(ifp);
 }
 
 /*
@@ -2382,13 +2382,28 @@ ifnewlladdr(struct ifnet *ifp)
 	splx(s);
 }
 
+int net_ticks;
+u_int net_livelocks;
+
+void
+net_tick(void *null)
+{
+	extern int ticks;
+
+	if (ticks - net_ticks > 1)
+		net_livelocks++;
+
+	net_ticks = ticks;
+
+	timeout_add(&net_tick_to, 1);
+}
+
 int
 net_livelocked()
 {
 	extern int ticks;
-	extern int m_clticks;
 
-	return (ticks - m_clticks > 1);
+	return (ticks - net_ticks > 1);
 }
 
 void

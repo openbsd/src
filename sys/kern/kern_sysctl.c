@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.253 2014/07/04 05:58:31 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.254 2014/07/08 07:10:12 dlg Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -110,7 +110,7 @@ extern int nselcoll, fscale;
 extern struct disklist_head disklist;
 extern fixpt_t ccpu;
 extern  long numvnodes;
-extern u_int mcllivelocks;
+extern u_int net_livelocks;
 
 extern void nmbclust_update(void);
 
@@ -591,7 +591,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			dev = NODEV;
 		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
 	case KERN_NETLIVELOCKS:
-		return (sysctl_rdint(oldp, oldlenp, newp, mcllivelocks));
+		return (sysctl_rdint(oldp, oldlenp, newp, net_livelocks));
 	case KERN_POOL_DEBUG: {
 		int old_pool_debug = pool_debug;
 

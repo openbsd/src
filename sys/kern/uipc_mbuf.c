@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.187 2014/07/08 05:35:19 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.188 2014/07/08 07:10:12 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -118,10 +118,6 @@ int max_linkhdr;		/* largest link-level header */
 int max_protohdr;		/* largest protocol header */
 int max_hdr;			/* largest link+protocol header */
 
-struct timeout m_cltick_tmo;
-int	m_clticks;
-void	m_cltick(void *);
-
 void	m_extfree(struct mbuf *);
 struct mbuf *m_copym0(struct mbuf *, int, int, int, int);
 void	nmbclust_update(void);
@@ -162,9 +158,6 @@ mbinit(void)
 	}
 
 	nmbclust_update();
-
-	timeout_set(&m_cltick_tmo, m_cltick, NULL);
-	m_cltick(NULL);
 }
 
 void
@@ -298,134 +291,6 @@ m_clpool(u_int pktlen)
 	return (-1);
 }
 
-u_int mcllivelocks;
-
-void
-m_clinitifp(struct ifnet *ifp)
-{
-	struct mclpool *mclp = ifp->if_data.ifi_mclpool;
-	int i;
-
-	/* Initialize high water marks for use of cluster pools */
-	for (i = 0; i < MCLPOOLS; i++) {
-		mclp = &ifp->if_data.ifi_mclpool[i];
-
-		if (mclp->mcl_lwm == 0)
-			mclp->mcl_lwm = 2;
-		if (mclp->mcl_hwm == 0)
-			mclp->mcl_hwm = 32768;
-
-		mclp->mcl_cwm = MAX(4, mclp->mcl_lwm);
-		mclp->mcl_livelocks = mcllivelocks;
-	}
-}
-
-void
-m_clsetwms(struct ifnet *ifp, u_int pktlen, u_int lwm, u_int hwm)
-{
-	int pi;
-
-	pi = m_clpool(pktlen);
-	if (pi == -1)
-		return;
-
-	ifp->if_data.ifi_mclpool[pi].mcl_lwm = lwm;
-	ifp->if_data.ifi_mclpool[pi].mcl_hwm = hwm;
-}
-
-/*
- * Record when the last timeout has been run.  If the delta is
- * too high, m_cldrop() will notice and decrease the interface
- * high water marks.
- */
-void
-m_cltick(void *arg)
-{
-	extern int ticks;
-
-	if (ticks - m_clticks > 1)
-		mcllivelocks++;
-
-	m_clticks = ticks;
-	timeout_add(&m_cltick_tmo, 1);
-}
-
-int m_livelock;
-
-int
-m_cldrop(struct ifnet *ifp, int pi)
-{
-	static int liveticks;
-	struct mclpool *mclp;
-	extern int ticks;
-	u_int diff, adj;
-
-	if (ticks - m_clticks > 1) {
-		/*
-		 * Timeout did not run, so we are in some kind of livelock.
-		 *
-		 * Increase the livelock counter to tell the interfaces to
-		 * decrease their cluster allocation high water marks.
-		 */
-		m_livelock = 1;
-		m_clticks = liveticks = ticks;
-	} else if (m_livelock && (ticks - liveticks) > 4)
-		m_livelock = 0;	/* Let the high water marks grow again */
-
-	mclp = &ifp->if_data.ifi_mclpool[pi];
-
-	/*
-	 * If at least a livelock happened since the last time a cluster
-	 * was requested, decrease its pool allocation high water mark to
-	 * prevent it from growth for the very near future.
-	 *
-	 * The decrease is proportional to the number of livelocks since
-	 * the last request for a given pool.
-	 */
-	adj = mcllivelocks - mclp->mcl_livelocks;
-	if (adj != 0) {
-		diff = max((mclp->mcl_cwm / 8) * adj, 2);
-		mclp->mcl_cwm = max(mclp->mcl_lwm, mclp->mcl_cwm - diff);
-	}
-	mclp->mcl_livelocks = mcllivelocks;
-
-	if (m_livelock == 0 && ISSET(ifp->if_flags, IFF_RUNNING) &&
-	    mclp->mcl_alive <= 4 && mclp->mcl_cwm < mclp->mcl_hwm &&
-	    mclp->mcl_grown - ticks < 0) {
-		/* About to run out, so increase the current watermark */
-		mclp->mcl_cwm++;
-		mclp->mcl_grown = ticks;
-	} else if (mclp->mcl_alive >= mclp->mcl_cwm)
-		return (1);		/* No more packets given */
-
-	return (0);
-}
-
-void
-m_clcount(struct ifnet *ifp, int pi)
-{
-	ifp->if_data.ifi_mclpool[pi].mcl_alive++;
-}
-
-void
-m_cluncount(struct mbuf *m, int all)
-{
-	struct mbuf_ext *me;
-	struct ifnet *ifp;
-
-	do {
-		me = &m->m_ext;
-		if (((m->m_flags & (M_EXT|M_CLUSTER)) != (M_EXT|M_CLUSTER)) ||
-		    (me->ext_ifidx == 0))
-			continue;
-
-		ifp = if_get(me->ext_ifidx);
-		if (ifp != NULL)
-			ifp->if_data.ifi_mclpool[me->ext_backend].mcl_alive--;
-		me->ext_ifidx = 0;
-	} while (all && (m = m->m_next));
-}
-
 struct mbuf *
 m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 {
@@ -440,12 +305,6 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 #endif
 
 	s = splnet();
-
-	if (ifp != NULL && m_cldrop(ifp, pi)) {
-		splx(s);
-		return (NULL);
-	}
-
 	if (m == NULL) {
 		MGETHDR(m0, M_DONTWAIT, MT_DATA);
 		if (m0 == NULL) {
@@ -462,8 +321,6 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 		splx(s);
 		return (NULL);
 	}
-	if (ifp != NULL)
-		m_clcount(ifp, pi);
 	splx(s);
 
 	m->m_data = m->m_ext.ext_buf;
@@ -472,10 +329,7 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 	m->m_ext.ext_free = NULL;
 	m->m_ext.ext_arg = NULL;
 	m->m_ext.ext_backend = pi;
-	if (ifp != NULL)
-		m->m_ext.ext_ifidx = ifp->if_index;
-	else
-		m->m_ext.ext_ifidx = 0;
+	m->m_ext.ext_ifidx = 0;
 	MCLINITREFERENCE(m);
 	return (m);
 }
@@ -524,7 +378,6 @@ m_extfree(struct mbuf *m)
 		m->m_ext.ext_prevref->m_ext.ext_nextref =
 		    m->m_ext.ext_nextref;
 	} else if (m->m_flags & M_CLUSTER) {
-		m_cluncount(m, 0);
 		pool_put(&mclpools[m->m_ext.ext_backend],
 		    m->m_ext.ext_buf);
 	} else if (m->m_ext.ext_free)
