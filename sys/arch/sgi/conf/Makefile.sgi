@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.64 2014/06/27 17:28:10 miod Exp $
+#	$OpenBSD: Makefile.sgi,v 1.65 2014/07/08 16:01:33 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -150,7 +150,7 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.pl
 	rm -f db_structinfo.o
 
 locore.o: ${_machdir}/${_mach}/locore.S assym.h
-context.o cp0access.o exception.o exception_tfp: assym.h
+context.o cp0access.o exception.o exception_tfp.o: assym.h
 lcore_access.o lcore_ddb.o lcore_float.o tlb_tfp.o tlbhandler.o: assym.h
 cache_tfp_subr.o ip30_nmi.o: assym.h
 
