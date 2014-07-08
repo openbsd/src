@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.64 2014/07/08 21:50:40 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.65 2014/07/08 22:09:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -204,7 +204,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 
 	/* Cipher 03 */
 	{
-		.valid = 1,
+		.valid = 0,	/* Weakened 40-bit export cipher. */
 		.name = SSL3_TXT_RSA_RC4_40_MD5,
 		.id = SSL3_CK_RSA_RC4_40_MD5,
 		.algorithm_mkey = SSL_kRSA,
@@ -252,7 +252,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 
 	/* Cipher 06 */
 	{
-		.valid = 1,
+		.valid = 0,	/* Weakened 40-bit export cipher. */
 		.name = SSL3_TXT_RSA_RC2_40_MD5,
 		.id = SSL3_CK_RSA_RC2_40_MD5,
 		.algorithm_mkey = SSL_kRSA,
@@ -286,7 +286,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 
 	/* Cipher 08 */
 	{
-		.valid = 1,
+		.valid = 0,	/* Weakened 40-bit export cipher. */
 		.name = SSL3_TXT_RSA_DES_40_CBC_SHA,
 		.id = SSL3_CK_RSA_DES_40_CBC_SHA,
 		.algorithm_mkey = SSL_kRSA,
@@ -335,7 +335,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 	/* The DH ciphers */
 	/* Cipher 0B */
 	{
-		.valid = 0,
+		.valid = 0,	/* Weakened 40-bit export cipher. */
 		.name = SSL3_TXT_DH_DSS_DES_40_CBC_SHA,
 		.id = SSL3_CK_DH_DSS_DES_40_CBC_SHA,
 		.algorithm_mkey = SSL_kDHd,
@@ -432,7 +432,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 	/* The Ephemeral DH ciphers */
 	/* Cipher 11 */
 	{
-		.valid = 1,
+		.valid = 0,	/* Weakened 40-bit export cipher. */
 		.name = SSL3_TXT_EDH_DSS_DES_40_CBC_SHA,
 		.id = SSL3_CK_EDH_DSS_DES_40_CBC_SHA,
 		.algorithm_mkey = SSL_kEDH,
@@ -480,7 +480,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 
 	/* Cipher 14 */
 	{
-		.valid = 1,
+		.valid = 0,	/* Weakened 40-bit export cipher. */
 		.name = SSL3_TXT_EDH_RSA_DES_40_CBC_SHA,
 		.id = SSL3_CK_EDH_RSA_DES_40_CBC_SHA,
 		.algorithm_mkey = SSL_kEDH,
@@ -528,7 +528,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 
 	/* Cipher 17 */
 	{
-		.valid = 1,
+		.valid = 0,	/* Weakened 40-bit export cipher. */
 		.name = SSL3_TXT_ADH_RC4_40_MD5,
 		.id = SSL3_CK_ADH_RC4_40_MD5,
 		.algorithm_mkey = SSL_kEDH,
@@ -560,7 +560,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 
 	/* Cipher 19 */
 	{
-		.valid = 1,
+		.valid = 0,	/* Weakened 40-bit export cipher. */
 		.name = SSL3_TXT_ADH_DES_40_CBC_SHA,
 		.id = SSL3_CK_ADH_DES_40_CBC_SHA,
 		.algorithm_mkey = SSL_kEDH,
