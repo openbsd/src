@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shm_open.3,v 1.3 2013/08/14 06:32:27 jmc Exp $
+.\"	$OpenBSD: shm_open.3,v 1.4 2014/07/08 00:40:56 matthew Exp $
 .\"
 .\" Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: July 8 2014 $
 .Dt SHM_OPEN 3
 .Os
 .Sh NAME
@@ -85,5 +85,13 @@ This implementation deviates from the standard by permitting less sharing.
 .Pp
 .Fn shm_mkstemp
 is an extension.
+.Sh HISTORY
+The
+.Fn shm_open ,
+.Fn shm_unlink ,
+and
+.Fn shm_mkstemp
+functions have been available since
+.Ox 5.4 .
 .Sh AUTHORS
 .An Ted Unangst Aq Mt tedu@openbsd.org .
