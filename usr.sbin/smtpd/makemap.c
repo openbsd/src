@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.48 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.49 2014/07/08 13:49:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -78,6 +78,12 @@ void
 purge_config(uint8_t what)
 {
 	memset(env, 0, sizeof(struct smtpd));
+}
+
+int
+fork_proc_backend(const char *backend, const char *conf, const char *procname)
+{
+	return (-1);
 }
 
 int

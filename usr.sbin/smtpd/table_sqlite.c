@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_sqlite.c,v 1.13 2014/07/01 17:33:51 matthieu Exp $	*/
+/*	$OpenBSD: table_sqlite.c,v 1.14 2014/07/08 13:49:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -45,9 +45,9 @@ enum {
 };
 
 static int table_sqlite_update(void);
-static int table_sqlite_lookup(int, const char *, char *, size_t);
-static int table_sqlite_check(int, const char *);
-static int table_sqlite_fetch(int, char *, size_t);
+static int table_sqlite_lookup(int, struct dict *, const char *, char *, size_t);
+static int table_sqlite_check(int, struct dict *, const char *);
+static int table_sqlite_fetch(int, struct dict *, char *, size_t);
 
 static sqlite3_stmt *table_sqlite_query(const char *, int);
 
@@ -133,7 +133,7 @@ table_sqlite_prepare_stmt(sqlite3 *_db, const char *query, int ncols)
 		goto end;
 	}
 	if (sqlite3_column_count(stmt) != ncols) {
-		log_warnx("warn: table-sqlite: columns: invalid resultset");
+		log_warnx("warn: table-sqlite: columns: invalid columns count for query: %s", query);
 		goto end;
 	}
 
@@ -371,7 +371,7 @@ table_sqlite_query(const char *key, int service)
 }
 
 static int
-table_sqlite_check(int service, const char *key)
+table_sqlite_check(int service, struct dict *params, const char *key)
 {
 	sqlite3_stmt	*stmt;
 	int		 r;
@@ -393,7 +393,7 @@ table_sqlite_check(int service, const char *key)
 }
 
 static int
-table_sqlite_lookup(int service, const char *key, char *dst, size_t sz)
+table_sqlite_lookup(int service, struct dict *params, const char *key, char *dst, size_t sz)
 {
 	sqlite3_stmt	*stmt;
 	const char	*value;
@@ -435,7 +435,6 @@ table_sqlite_lookup(int service, const char *key, char *dst, size_t sz)
 			}
 			s = sqlite3_step(stmt);
 		} while (s == SQLITE_ROW);
-
 		if (s !=  SQLITE_ROW && s != SQLITE_DONE) {
 			log_warnx("warn: table-sqlite: sqlite3_step: %s",
 			    sqlite3_errmsg(db));
@@ -479,7 +478,7 @@ table_sqlite_lookup(int service, const char *key, char *dst, size_t sz)
 }
 
 static int
-table_sqlite_fetch(int service, char *dst, size_t sz)
+table_sqlite_fetch(int service, struct dict *params, char *dst, size_t sz)
 {
 	const char	*k;
 	int		 s;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.9 2014/04/29 19:13:13 reyk Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.10 2014/07/08 13:49:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -43,7 +43,7 @@ static void mproc_dispatch(int, short, void *);
 static ssize_t msgbuf_write2(struct msgbuf *);
 
 int
-mproc_fork(struct mproc *p, const char *path, const char *arg)
+mproc_fork(struct mproc *p, const char *path, char *argv[])
 {
 	int sp[2];
 
@@ -62,8 +62,8 @@ mproc_fork(struct mproc *p, const char *path, const char *arg)
 		if (closefrom(STDERR_FILENO + 1) < 0)
 			exit(1);
 
-		execl(path, arg, NULL);
-		err(1, "execl");
+		execv(path, argv);
+		err(1, "execv: %s", path);
 	}
 
 	/* parent process */
@@ -72,7 +72,7 @@ mproc_fork(struct mproc *p, const char *path, const char *arg)
 	return (0);
 
 err:
-	log_warn("warn: Failed to start process %s, instance of %s", arg, path);
+	log_warn("warn: Failed to start process %s, instance of %s", argv[0], path);
 	close(sp[0]);
 	close(sp[1]);
 	return (-1);
@@ -446,7 +446,7 @@ m_error(const char *error)
 	    proc_name(smtpd_process),
 	    imsg_to_str(current->hdr.type),
 	    error);
-	fatalx(buf);
+	fatalx("%s", buf);
 }
 
 void
@@ -618,6 +618,25 @@ m_add_envelope(struct mproc *m, const struct envelope *evp)
 #endif
 
 void
+m_add_params(struct mproc *m, struct dict *d)
+{
+	const char *key;
+	char *value;
+	void *iter;
+
+	if (d == NULL) {
+		m_add_size(m, 0);
+		return;
+	}
+	m_add_size(m, dict_count(d));
+	iter = NULL;
+	while (dict_iter(d, &iter, &key, (void **)&value)) {
+		m_add_string(m, key);
+		m_add_string(m, value);
+	}
+}
+
+void
 m_get_int(struct msg *m, int *i)
 {
 	m_get_typed(m, M_INT, i, sizeof(*i));
@@ -719,3 +738,33 @@ m_get_envelope(struct msg *m, struct envelope *evp)
 #endif
 }
 #endif
+
+void
+m_get_params(struct msg *m, struct dict *d)
+{
+	size_t	c;
+	const char *key;
+	const char *value;
+	char *tmp;
+
+	dict_init(d);
+
+	m_get_size(m, &c);
+
+	for (; c; c--) {
+		m_get_string(m, &key);
+		m_get_string(m, &value);
+		if ((tmp = strdup(value)) == NULL)
+			fatal("m_get_params");
+		dict_set(d, key, tmp);
+	}
+}
+
+void
+m_clear_params(struct dict *d)
+{
+	char *value;
+
+	while (dict_poproot(d, (void **)&value))
+		free(value);
+}

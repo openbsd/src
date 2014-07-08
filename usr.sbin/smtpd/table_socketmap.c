@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_socketmap.c,v 1.3 2014/04/19 14:21:26 gilles Exp $	*/
+/*	$OpenBSD: table_socketmap.c,v 1.4 2014/07/08 13:49:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -34,9 +34,9 @@
 #include "log.h"
 
 static int table_socketmap_update(void);
-static int table_socketmap_lookup(int, const char *, char *, size_t);
-static int table_socketmap_check(int, const char *);
-static int table_socketmap_fetch(int, char *, size_t);
+static int table_socketmap_lookup(int, struct dict *, const char *, char *, size_t);
+static int table_socketmap_check(int, struct dict *, const char *);
+static int table_socketmap_fetch(int, struct dict *, char *, size_t);
 
 static int table_socketmap_connect(const char *);
 
@@ -212,13 +212,13 @@ table_socketmap_update(void)
 }
 
 static int
-table_socketmap_check(int service, const char *key)
+table_socketmap_check(int service, struct dict *params, const char *key)
 {
 	return (-1);
 }
 
 static int
-table_socketmap_lookup(int service, const char *key, char *dst, size_t sz)
+table_socketmap_lookup(int service, struct dict *params, const char *key, char *dst, size_t sz)
 {
 	int			r;
 	enum socketmap_reply	rep;
@@ -255,7 +255,7 @@ table_socketmap_lookup(int service, const char *key, char *dst, size_t sz)
 }
 
 static int
-table_socketmap_fetch(int service, char *key, size_t sz)
+table_socketmap_fetch(int service, struct dict *params, char *key, size_t sz)
 {
 	return (-1);
 }

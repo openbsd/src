@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.227 2014/07/07 09:11:24 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.228 2014/07/08 13:49:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -763,6 +763,61 @@ post_fork(int proc)
 	if (proc == PROC_CA) {
 		load_pki_keys();
 	}
+}
+
+int
+fork_proc_backend(const char *key, const char *conf, const char *procname)
+{
+	pid_t		pid;
+	int		sp[2];
+	char		path[SMTPD_MAXPATHLEN];
+	char		name[SMTPD_MAXPATHLEN];
+	char		*arg;
+
+	if (strlcpy(name, conf, sizeof(name)) >= sizeof(name)) {
+		log_warnx("warn: %s-proc: conf too long", key);
+		return (0);
+	}
+
+	arg = strchr(name, ':');
+	if (arg)
+		*arg++ = '\0';
+
+	if (snprintf(path, sizeof(path), PATH_LIBEXEC "/%s-%s", key, name) >=
+	    (ssize_t)sizeof(path)) {
+		log_warn("warn: %s-proc: exec path too long", key);
+		return (-1);
+	}
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) == -1) {
+		log_warn("warn: %s-proc: socketpair", key);
+		return (-1);
+	}
+
+	if ((pid = fork()) == -1) {
+		log_warn("warn: %s-proc: fork", key);
+		close(sp[0]);
+		close(sp[1]);
+		return (-1);
+	}
+
+	if (pid == 0) {
+		/* child process */
+		dup2(sp[0], STDIN_FILENO);
+		if (closefrom(STDERR_FILENO + 1) < 0)
+			exit(1);
+
+		if (procname == NULL)
+			procname = name;
+
+		execl(path, procname, arg, NULL);
+		err(1, "execl: %s", path);
+	}
+
+	/* parent process */
+	close(sp[0]);
+
+	return (sp[1]);
 }
 
 struct child *

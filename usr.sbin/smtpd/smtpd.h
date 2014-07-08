@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.461 2014/05/04 16:38:19 reyk Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.462 2014/07/08 13:49:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -55,8 +55,7 @@
 #define PATH_PURGE		"/purge"
 #define PATH_TEMPORARY		"/temporary"
 
-#define	PATH_FILTERS		"/usr/libexec/smtpd"
-#define	PATH_TABLES		"/usr/libexec/smtpd"
+#define	PATH_LIBEXEC		"/usr/libexec/smtpd"
 
 
 /*
@@ -332,8 +331,8 @@ struct table_backend {
 	void   *(*open)(struct table *);
 	int	(*update)(struct table *);
 	void	(*close)(void *);
-	int	(*lookup)(void *, const char *, enum table_service, union lookup *);
-	int	(*fetch)(void *, enum table_service, union lookup *);
+	int	(*lookup)(void *, struct dict *, const char *, enum table_service, union lookup *);
+	int	(*fetch)(void *, struct dict *, enum table_service, union lookup *);
 };
 
 
@@ -1200,7 +1199,7 @@ void mfa_build_fd_chain(uint64_t, int);
 
 
 /* mproc.c */
-int mproc_fork(struct mproc *, const char*, const char *);
+int mproc_fork(struct mproc *, const char*, char **);
 void mproc_init(struct mproc *, int);
 void mproc_clear(struct mproc *);
 void mproc_enable(struct mproc *);
@@ -1224,6 +1223,7 @@ void m_add_id(struct mproc *, uint64_t);
 void m_add_sockaddr(struct mproc *, const struct sockaddr *);
 void m_add_mailaddr(struct mproc *, const struct mailaddr *);
 void m_add_envelope(struct mproc *, const struct envelope *);
+void m_add_params(struct mproc *, struct dict *);
 void m_close(struct mproc *);
 void m_flush(struct mproc *);
 
@@ -1242,6 +1242,8 @@ void m_get_id(struct msg *, uint64_t *);
 void m_get_sockaddr(struct msg *, struct sockaddr *);
 void m_get_mailaddr(struct msg *, struct mailaddr *);
 void m_get_envelope(struct msg *, struct envelope *);
+void m_get_params(struct msg *, struct dict *);
+void m_clear_params(struct dict *);
 
 
 /* mta.c */
@@ -1331,6 +1333,7 @@ const char *proc_name(enum smtp_proc_type);
 const char *proc_title(enum smtp_proc_type);
 const char *imsg_to_str(int);
 void log_imsg(int, int, struct imsg *);
+int fork_proc_backend(const char *, const char *, const char *);
 
 
 /* ssl_smtpd.c */
@@ -1360,19 +1363,17 @@ void	table_close(struct table *);
 int	table_check_use(struct table *, uint32_t, uint32_t);
 int	table_check_type(struct table *, uint32_t);
 int	table_check_service(struct table *, uint32_t);
-int	table_lookup(struct table *, const char *, enum table_service,
+int	table_lookup(struct table *, struct dict *, const char *, enum table_service,
     union lookup *);
-int	table_fetch(struct table *, enum table_service, union lookup *);
+int	table_fetch(struct table *, struct dict *, enum table_service, union lookup *);
 void table_destroy(struct table *);
 void table_add(struct table *, const char *, const char *);
-void table_delete(struct table *, const char *);
 int table_domain_match(const char *, const char *);
 int table_netaddr_match(const char *, const char *);
 int table_mailaddr_match(const char *, const char *);
 void	table_open_all(void);
 void	table_dump_all(void);
 void	table_close_all(void);
-const void	*table_get(struct table *, const char *);
 int table_parse_lookup(enum table_service, const char *, const char *,
     union lookup *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_proc.c,v 1.2 2014/02/04 13:55:34 eric Exp $	*/
+/*	$OpenBSD: table_proc.c,v 1.3 2014/07/08 13:49:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -119,41 +119,17 @@ table_proc_end(void)
 static void *
 table_proc_open(struct table *table)
 {
-	int			 sp[2];
 	struct table_proc_priv	*priv;
-	char			*environ_new[2];
 	struct table_open_params op;
+	int			 fd;
 
-	errno = 0;
-
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) < 0) {
-		log_warn("warn: table-proc: socketpair");
-		return (NULL);
-	}
 	priv = xcalloc(1, sizeof(*priv), "table_proc_open");
 
-	if ((priv->pid = fork()) == -1) {
-		log_warn("warn: table-proc: fork");
-		goto err;
-	}
+	fd = fork_proc_backend("table", table->t_config, table->t_name);
+	if (fd == -1)
+		fatalx("table-proc: exiting");
 
-	if (priv->pid == 0) {
-		/* child process */
-		dup2(sp[0], STDIN_FILENO);
-		if (closefrom(STDERR_FILENO + 1) < 0)
-			exit(1);
-
-		environ_new[0] = "PATH=" _PATH_DEFPATH;
-		environ_new[1] = (char *)NULL;
-		environ = environ_new;
-		execle("/bin/sh", "/bin/sh", "-c", table->t_config, (char *)NULL,
-		    environ_new);
-		fatal("execl");
-	}
-
-	/* parent process */
-	close(sp[0]);
-	imsg_init(&priv->ibuf, sp[1]);
+	imsg_init(&priv->ibuf, fd);
 
 	memset(&op, 0, sizeof op);
 	op.version = PROC_TABLE_API_VERSION;
@@ -164,11 +140,6 @@ table_proc_open(struct table *table)
 	table_proc_end();
 
 	return (priv);
-err:
-	free(priv);
-	close(sp[0]);
-	close(sp[1]);
-	return (NULL);
 }
 
 static int
@@ -196,7 +167,36 @@ table_proc_close(void *arg)
 }
 
 static int
-table_proc_lookup(void *arg, const char *k, enum table_service s,
+imsg_add_params(struct ibuf *buf, struct dict *params)
+{
+	size_t count;
+	const char *key;
+	char *value;
+	void *iter;
+
+	count = 0;
+	if (params)
+		count = dict_count(params);
+
+	if (imsg_add(buf, &count, sizeof(count)) == -1)
+		return (-1);
+
+	if (count == 0)
+		return (0);
+
+	iter = NULL;
+	while (dict_iter(params, &iter, &key, (void **)&value)) {
+		if (imsg_add(buf, key, strlen(key) + 1) == -1)
+			return (-1);
+		if (imsg_add(buf, value, strlen(value) + 1) == -1)
+			return (-1);
+	}
+
+	return (0);
+}
+
+static int
+table_proc_lookup(void *arg, struct dict *params, const char *k, enum table_service s,
     union lookup *lk)
 {
 	struct table_proc_priv	*priv = arg;
@@ -210,6 +210,8 @@ table_proc_lookup(void *arg, const char *k, enum table_service s,
 	if (buf == NULL)
 		return (-1);
 	if (imsg_add(buf, &s, sizeof(s)) == -1)
+		return (-1);
+	if (imsg_add_params(buf, params) == -1)
 		return (-1);
 	if (imsg_add(buf, k, strlen(k) + 1) == -1)
 		return (-1);
@@ -237,7 +239,7 @@ table_proc_lookup(void *arg, const char *k, enum table_service s,
 }
 
 static int
-table_proc_fetch(void *arg, enum table_service s, union lookup *lk)
+table_proc_fetch(void *arg, struct dict *params, enum table_service s, union lookup *lk)
 {
 	struct table_proc_priv	*priv = arg;
 	struct ibuf		*buf;
@@ -247,6 +249,8 @@ table_proc_fetch(void *arg, enum table_service s, union lookup *lk)
 	if (buf == NULL)
 		return (-1);
 	if (imsg_add(buf, &s, sizeof(s)) == -1)
+		return (-1);
+	if (imsg_add_params(buf, params) == -1)
 		return (-1);
 	imsg_close(&priv->ibuf, buf);
 

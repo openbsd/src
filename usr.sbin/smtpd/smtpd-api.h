@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.16 2014/02/04 15:44:06 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.17 2014/07/08 13:49:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -378,9 +378,9 @@ int scheduler_api_dispatch(void);
 
 /* table */
 void table_api_on_update(int(*)(void));
-void table_api_on_check(int(*)(int, const char *));
-void table_api_on_lookup(int(*)(int, const char *, char *, size_t));
-void table_api_on_fetch(int(*)(int, char *, size_t));
+void table_api_on_check(int(*)(int, struct dict *, const char *));
+void table_api_on_lookup(int(*)(int, struct dict *, const char *, char *, size_t));
+void table_api_on_fetch(int(*)(int, struct dict *, char *, size_t));
 int table_api_dispatch(void);
 const char *table_api_get_name(void);
 

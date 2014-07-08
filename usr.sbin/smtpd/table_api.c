@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_api.c,v 1.4 2014/02/04 13:55:34 eric Exp $	*/
+/*	$OpenBSD: table_api.c,v 1.5 2014/07/08 13:49:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -34,9 +34,9 @@
 #include "log.h"
 
 static int (*handler_update)(void);
-static int (*handler_check)(int, const char *);
-static int (*handler_lookup)(int, const char *, char *, size_t);
-static int (*handler_fetch)(int, char *, size_t);
+static int (*handler_check)(int, struct dict *, const char *);
+static int (*handler_lookup)(int, struct dict *, const char *, char *, size_t);
+static int (*handler_fetch)(int, struct dict *, char *, size_t);
 
 static int		 quit;
 static struct imsgbuf	 ibuf;
@@ -101,10 +101,40 @@ table_msg_close(void)
 	buf = NULL;
 }
 
+static int
+table_read_params(struct dict *params)
+{
+	size_t	count;
+	char	*key;
+	char	*value;
+
+	dict_init(params);
+
+	table_msg_get(&count, sizeof(count));
+
+	for (;count; count--) {
+		key = rdata;
+		table_msg_get(NULL, strlen(key) + 1);
+		value = rdata;
+		table_msg_get(NULL, strlen(value) + 1);
+		dict_set(params, key, value);
+	}
+
+	return (0);
+}
+
+static void
+table_clear_params(struct dict *params)
+{
+	while (dict_poproot(params, NULL))
+		;
+}
+
 static void
 table_msg_dispatch(void)
 {
 	struct table_open_params op;
+	struct dict	 params;
 	char		 res[4096];
 	int		 type, r;
 
@@ -142,6 +172,7 @@ table_msg_dispatch(void)
 
 	case PROC_TABLE_CHECK:
 		table_msg_get(&type, sizeof(type));
+		table_read_params(&params);
 		if (rlen == 0) {
 			log_warnx("warn: table-api: no key");
 			fatalx("table-api: exiting");
@@ -152,9 +183,10 @@ table_msg_dispatch(void)
 		}
 
 		if (handler_check)
-			r = handler_check(type, rdata);
+			r = handler_check(type, &params, rdata);
 		else
 			r = -1;
+		table_clear_params(&params);
 		table_msg_get(NULL, rlen);
 		table_msg_end();
 
@@ -164,7 +196,7 @@ table_msg_dispatch(void)
 
 	case PROC_TABLE_LOOKUP:
 		table_msg_get(&type, sizeof(type));
-
+		table_read_params(&params);
 		if (rlen == 0) {
 			log_warnx("warn: table-api: no key");
 			fatalx("table-api: exiting");
@@ -175,10 +207,10 @@ table_msg_dispatch(void)
 		}
 
 		if (handler_lookup)
-			r = handler_lookup(type, rdata, res, sizeof(res));
+			r = handler_lookup(type, &params, rdata, res, sizeof(res));
 		else
 			r = -1;
-
+		table_clear_params(&params);
 		table_msg_get(NULL, rlen);
 		table_msg_end();
 
@@ -191,12 +223,13 @@ table_msg_dispatch(void)
 
 	case PROC_TABLE_FETCH:
 		table_msg_get(&type, sizeof(type));
-		table_msg_end();
-
+		table_read_params(&params);
 		if (handler_fetch)
-			r = handler_fetch(type, res, sizeof(res));
+			r = handler_fetch(type, &params, res, sizeof(res));
 		else
 			r = -1;
+		table_clear_params(&params);
+		table_msg_end();
 
 		table_msg_add(&r, sizeof(r));
 		if (r == 1)
@@ -217,19 +250,19 @@ table_api_on_update(int(*cb)(void))
 }
 
 void
-table_api_on_check(int(*cb)(int, const char *))
+table_api_on_check(int(*cb)(int, struct dict *, const char *))
 {
 	handler_check = cb;
 }
 
 void
-table_api_on_lookup(int(*cb)(int, const char *, char *, size_t))
+table_api_on_lookup(int(*cb)(int, struct dict  *, const char *, char *, size_t))
 {
 	handler_lookup = cb;
 }
 
 void
-table_api_on_fetch(int(*cb)(int, char *, size_t))
+table_api_on_fetch(int(*cb)(int, struct dict *, char *, size_t))
 {
 	handler_fetch = cb;
 }

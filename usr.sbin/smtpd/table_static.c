@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.8 2013/11/28 10:43:37 eric Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.9 2014/07/08 13:49:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -41,9 +41,9 @@
 static int table_static_config(struct table *);
 static int table_static_update(struct table *);
 static void *table_static_open(struct table *);
-static int table_static_lookup(void *, const char *, enum table_service,
+static int table_static_lookup(void *, struct dict *, const char *, enum table_service,
     union lookup *);
-static int table_static_fetch(void *, enum table_service, union lookup *);
+static int table_static_fetch(void *, struct dict *, enum table_service, union lookup *);
 static void  table_static_close(void *);
 static int table_static_parse(struct table *, const char *, enum table_type);
 
@@ -189,7 +189,7 @@ table_static_close(void *hdl)
 }
 
 static int
-table_static_lookup(void *hdl, const char *key, enum table_service service,
+table_static_lookup(void *hdl, struct dict *params, const char *key, enum table_service service,
     union lookup *lk)
 {
 	struct table   *m  = hdl;
@@ -235,7 +235,7 @@ table_static_lookup(void *hdl, const char *key, enum table_service service,
 }
 
 static int
-table_static_fetch(void *hdl, enum table_service service, union lookup *lk)
+table_static_fetch(void *hdl, struct dict *params, enum table_service service, union lookup *lk)
 {
 	struct table   *t = hdl;
 	const char     *k;

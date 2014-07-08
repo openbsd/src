@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.170 2014/05/22 20:31:03 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.171 2014/07/08 13:49:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -339,7 +339,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 				m_add_int(p, LKA_TEMPFAIL);
 			}
 			else {
-				ret = table_fetch(table, K_SOURCE, &lk);
+				ret = table_fetch(table, NULL, K_SOURCE, &lk);
 				if (ret == -1)
 					m_add_int(p, LKA_TEMPFAIL);
 				else if (ret == 0)
@@ -531,7 +531,7 @@ lka_authenticate(const char *tablename, const char *user, const char *password)
 		return (LKA_TEMPFAIL);
 	}
 
-	switch (table_lookup(table, user, K_CREDENTIALS, &lk)) {
+	switch (table_lookup(table, NULL, user, K_CREDENTIALS, &lk)) {
 	case -1:
 		log_warnx("warn: user credentials lookup fail for %s:%s",
 		    tablename, user);
@@ -561,7 +561,7 @@ lka_credentials(const char *tablename, const char *label, char *dst, size_t sz)
 
 	dst[0] = '\0';
 
-	switch(table_lookup(table, label, K_CREDENTIALS, &lk)) {
+	switch(table_lookup(table, NULL, label, K_CREDENTIALS, &lk)) {
 	case -1:
 		log_warnx("warn: credentials lookup fail for %s:%s",
 		    tablename, label);
@@ -602,7 +602,7 @@ lka_userinfo(const char *tablename, const char *username, struct userinfo *res)
 		return (LKA_TEMPFAIL);
 	}
 
-	switch (table_lookup(table, username, K_USERINFO, &lk)) {
+	switch (table_lookup(table, NULL, username, K_USERINFO, &lk)) {
 	case -1:
 		log_warnx("warn: failure during userinfo lookup %s:%s",
 		    tablename, username);
@@ -632,7 +632,7 @@ lka_addrname(const char *tablename, const struct sockaddr *sa,
 		return (LKA_TEMPFAIL);
 	}
 
-	switch (table_lookup(table, source, K_ADDRNAME, &lk)) {
+	switch (table_lookup(table, NULL, source, K_ADDRNAME, &lk)) {
 	case -1:
 		log_warnx("warn: failure during helo lookup %s:%s",
 		    tablename, source);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_ldap.c,v 1.10 2014/06/10 16:43:46 gilles Exp $	*/
+/*	$OpenBSD: table_ldap.c,v 1.11 2014/07/08 13:49:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -59,9 +59,9 @@ struct query {
 };
 
 static int table_ldap_update(void);
-static int table_ldap_check(int, const char *);
-static int table_ldap_lookup(int, const char *, char *, size_t);
-static int table_ldap_fetch(int, char *, size_t);
+static int table_ldap_check(int, struct dict *, const char *);
+static int table_ldap_lookup(int, struct dict *, const char *, char *, size_t);
+static int table_ldap_fetch(int, struct dict *, char *, size_t);
 
 static int ldap_config(void);
 static int ldap_open(void);
@@ -135,7 +135,7 @@ table_ldap_update(void)
 }
 
 static int
-table_ldap_check(int service, const char *key)
+table_ldap_check(int service, struct dict *params, const char *key)
 {
 	switch(service) {
 	case K_ALIAS:
@@ -149,7 +149,7 @@ table_ldap_check(int service, const char *key)
 }
 
 static int
-table_ldap_lookup(int service, const char *key, char *dst, size_t sz)
+table_ldap_lookup(int service, struct dict *params, const char *key, char *dst, size_t sz)
 {
 	switch(service) {
 	case K_ALIAS:
@@ -163,7 +163,7 @@ table_ldap_lookup(int service, const char *key, char *dst, size_t sz)
 }
 
 static int
-table_ldap_fetch(int service, char *dst, size_t sz)
+table_ldap_fetch(int service, struct dict *params, char *dst, size_t sz)
 {
 	return (-1);
 }
