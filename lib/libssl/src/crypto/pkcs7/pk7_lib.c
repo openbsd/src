@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_lib.c,v 1.11 2014/06/29 17:05:36 jsing Exp $ */
+/* $OpenBSD: pk7_lib.c,v 1.12 2014/07/08 09:08:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -184,37 +184,38 @@ PKCS7_set_type(PKCS7 *p7, int type)
 		break;
 	case NID_pkcs7_signedAndEnveloped:
 		p7->type = obj;
-		if ((p7->d.signed_and_enveloped = PKCS7_SIGN_ENVELOPE_new())
-			== NULL) goto err;
+		if ((p7->d.signed_and_enveloped =
+		    PKCS7_SIGN_ENVELOPE_new()) == NULL)
+			goto err;
 		ASN1_INTEGER_set(p7->d.signed_and_enveloped->version, 1);
 		if (!ASN1_INTEGER_set(p7->d.signed_and_enveloped->version, 1))
 			goto err;
-		p7->d.signed_and_enveloped->enc_data->content_type
-		= OBJ_nid2obj(NID_pkcs7_data);
+		p7->d.signed_and_enveloped->enc_data->content_type =
+		    OBJ_nid2obj(NID_pkcs7_data);
 		break;
 	case NID_pkcs7_enveloped:
 		p7->type = obj;
-		if ((p7->d.enveloped = PKCS7_ENVELOPE_new())
-			== NULL) goto err;
+		if ((p7->d.enveloped = PKCS7_ENVELOPE_new()) == NULL)
+			goto err;
 		if (!ASN1_INTEGER_set(p7->d.enveloped->version, 0))
 			goto err;
-		p7->d.enveloped->enc_data->content_type
-		= OBJ_nid2obj(NID_pkcs7_data);
+		p7->d.enveloped->enc_data->content_type =
+		    OBJ_nid2obj(NID_pkcs7_data);
 		break;
 	case NID_pkcs7_encrypted:
 		p7->type = obj;
-		if ((p7->d.encrypted = PKCS7_ENCRYPT_new())
-			== NULL) goto err;
+		if ((p7->d.encrypted = PKCS7_ENCRYPT_new()) == NULL)
+			goto err;
 		if (!ASN1_INTEGER_set(p7->d.encrypted->version, 0))
 			goto err;
-		p7->d.encrypted->enc_data->content_type
-		= OBJ_nid2obj(NID_pkcs7_data);
+		p7->d.encrypted->enc_data->content_type =
+		    OBJ_nid2obj(NID_pkcs7_data);
 		break;
 
 	case NID_pkcs7_digest:
 		p7->type = obj;
-		if ((p7->d.digest = PKCS7_DIGEST_new())
-			== NULL) goto err;
+		if ((p7->d.digest = PKCS7_DIGEST_new()) == NULL)
+			goto err;
 		if (!ASN1_INTEGER_set(p7->d.digest->version, 0))
 			goto err;
 		break;
@@ -454,7 +455,8 @@ PKCS7_set_digest(PKCS7 *p7, const EVP_MD *md)
 	return 1;
 }
 
-STACK_OF(PKCS7_SIGNER_INFO) *PKCS7_get_signer_info(PKCS7 *p7)
+STACK_OF(PKCS7_SIGNER_INFO) *
+PKCS7_get_signer_info(PKCS7 *p7)
 {
 	if (PKCS7_type_is_signed(p7)) {
 		return (p7->d.sign->signer_info);
