@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.43 2014/06/24 17:42:54 jsing Exp $ */
+/* $OpenBSD: b_sock.c,v 1.44 2014/07/08 09:06:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -173,20 +173,13 @@ BIO_get_port(const char *str, unsigned short *port_ptr)
 int
 BIO_sock_error(int sock)
 {
-	int j, i;
-	int size;
+	socklen_t len;
+	int err;
 
-	size = sizeof(int);
-	/* Note: under Windows the third parameter is of type (char *)
-	 * whereas under other systems it is (void *) if you don't have
-	 * a cast it will choke the compiler: if you do have a cast then
-	 * you can either go for (char *) or (void *).
-	 */
-	i = getsockopt(sock, SOL_SOCKET, SO_ERROR, (void *)&j, (void *)&size);
-	if (i < 0)
+	len = sizeof(err);
+	if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &err, &len) != 0)
 		return (1);
-	else
-		return (j);
+	return (err);
 }
 
 struct hostent *
@@ -209,14 +202,12 @@ BIO_sock_cleanup(void)
 int
 BIO_socket_ioctl(int fd, long type, void *arg)
 {
-	int i;
+	int ret;
 
-#  define ARG arg
-
-	i = ioctl(fd, type, ARG);
-	if (i < 0)
+	ret = ioctl(fd, type, arg);
+	if (ret < 0)
 		SYSerr(SYS_F_IOCTLSOCKET, errno);
-	return (i);
+	return (ret);
 }
 
 int
@@ -471,11 +462,5 @@ BIO_set_tcp_ndelay(int s, int on)
 int
 BIO_socket_nbio(int s, int mode)
 {
-	int ret = -1;
-	int l;
-
-	l = mode;
-	ret = BIO_socket_ioctl(s, FIONBIO, &l);
-
-	return (ret == 0);
+	return (BIO_socket_ioctl(s, FIONBIO, &mode) == 0);
 }
