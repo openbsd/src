@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.96 2014/07/02 06:09:49 matthew Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.97 2014/07/08 11:38:48 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -952,7 +952,6 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 			uobj = uvn_attach(vp, (flags & MAP_SHARED) ?
 			   maxprot : (maxprot & ~VM_PROT_WRITE));
 
-#ifndef UBC
 			/*
 			 * XXXCDC: hack from old code
 			 * don't allow vnodes which have been mapped
@@ -982,10 +981,6 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 					uvm_vnp_uncache(vp);
 				}
 			}
-#else
-			/* XXX for now, attach doesn't gain a ref */
-			vref(vp);
-#endif
 		} else {
 			uobj = udv_attach(vp->v_rdev,
 			    (flags & MAP_SHARED) ? maxprot :

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.67 2014/04/13 23:14:15 tedu Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.68 2014/07/08 11:38:48 deraadt Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -688,16 +688,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			}
 			continue;
 		}
-
-#ifdef UBC
-		if (result == VM_PAGER_ERROR &&
-		    curproc == uvm.pagedaemon_proc) {
-			uvm_lock_pageq();
-			nextpg = TAILQ_NEXT(p, pageq);
-			uvm_pageactivate(p);
-			continue;
-		}
-#endif
 
 		/* clean up "p" if we have one */
 		if (p) {

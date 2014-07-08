@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_param.h,v 1.15 2010/07/22 17:31:39 thib Exp $	*/
+/*	$OpenBSD: uvm_param.h,v 1.16 2014/07/08 11:38:48 deraadt Exp $	*/
 /*	$NetBSD: uvm_param.h,v 1.5 2001/03/09 01:02:12 chs Exp $	*/
 
 /* 
@@ -152,10 +152,6 @@ struct _ps_strings {
 #define	trunc_page(x)	((x) & ~PAGE_MASK)
 
 extern psize_t		mem_size;	/* size of physical memory (bytes) */
-#ifdef UBC
-extern int		ubc_nwins;	/* number of UBC mapping windows */
-extern int		ubc_winsize;	/* size of a UBC mapping window */
-#endif
 
 #else
 /* out-of-kernel versions of round_page and trunc_page */
