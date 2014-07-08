@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.41 2014/06/24 19:31:50 miod Exp $
+# $OpenBSD: Makefile,v 1.42 2014/07/08 16:07:37 miod Exp $
 
 LIB=	crypto
 
@@ -99,7 +99,7 @@ SRCS+= conf_mall.c conf_sap.c
 SRCS+= cbc_cksm.c cbc_enc.c cfb64enc.c cfb_enc.c 
 SRCS+= ecb3_enc.c ecb_enc.c  enc_read.c enc_writ.c
 SRCS+= fcrypt.c ofb64enc.c ofb_enc.c  pcbc_enc.c
-SRCS+= qud_cksm.c rand_key.c rpc_enc.c  set_key.c xcbc_enc.c
+SRCS+= qud_cksm.c rand_key.c set_key.c xcbc_enc.c
 SRCS+= str2key.c  cfb64ede.c ofb64ede.c ede_cbcm_enc.c
 
 # dh/
