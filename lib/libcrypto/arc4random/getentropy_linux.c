@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.14 2014/06/26 13:48:11 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.15 2014/07/08 08:33:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -288,7 +288,7 @@ static int
 getentropy_fallback(void *buf, size_t len)
 {
 	uint8_t results[SHA512_DIGEST_LENGTH];
-	int save_errno = errno, e, m, pgs = getpagesize(), repeat;
+	int save_errno = errno, e, m, pgs = getpagesize(), repeat = 0;
 	static int cnt;
 	struct timespec ts;
 	struct timeval tv;
@@ -296,13 +296,20 @@ getentropy_fallback(void *buf, size_t len)
 	sigset_t sigset;
 	struct stat st;
 	SHA512_CTX ctx;
+	static pid_t lastpid;
 	pid_t pid;
 	size_t i, ii;
 	char *p;
 
+	pid = getpid();
+	if (lastpid == getpid())
+		repeat = REPEAT - 1;
+	else
+		lastpid = pid;
+
 	for (i = 0; i < len; ) {
 		SHA512_Init(&ctx);
-		for (repeat = 0; repeat < REPEAT; repeat++) {
+		for (; repeat < REPEAT; repeat++) {
 
 			HX((e = gettimeofday(&tv, NULL)) == -1, tv);
 			if (e != -1) {
