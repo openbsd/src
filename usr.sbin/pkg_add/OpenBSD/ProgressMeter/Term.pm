@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.27 2014/07/08 07:59:05 espie Exp $
+# $OpenBSD: Term.pm,v 1.28 2014/07/08 17:02:56 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -306,15 +306,6 @@ sub advance
 	if (defined $e->{size}) {
 		$self->{donesize} += $e->{size};
 		$self->{progress}->show($self->{donesize}, $self->{totsize});
-	}
-}
-
-sub saved
-{
-	my $self = shift;
-	$self->SUPER::saved;
-	if (defined $self->{state}{archive}) {
-		$self->{state}{archive}->set_callback;
 	}
 }
 
