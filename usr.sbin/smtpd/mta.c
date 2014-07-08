@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.188 2014/07/08 07:59:31 sobrado Exp $	*/
+/*	$OpenBSD: mta.c,v 1.189 2014/07/08 13:02:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1076,6 +1076,7 @@ mta_connect(struct mta_connector *c)
 	if (c->flags & CONNECTOR_WAIT) {
 		log_debug("debug: mta: cancelling connector timeout");
 		runq_cancel(runq_connector, NULL, c);
+		c->flags &= ~CONNECTOR_WAIT;
 	}
 
 	/* No job. */
