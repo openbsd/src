@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.24 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: conf_def.c,v 1.25 2014/07/08 16:36:45 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -368,14 +368,13 @@ again:
 			}
 			if (psection == NULL)
 				psection = section;
-			v->name = malloc(strlen(pname) + 1);
+			v->name = strdup(pname);
 			v->value = NULL;
 			if (v->name == NULL) {
 				CONFerr(CONF_F_DEF_LOAD_BIO,
 				    ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
-			strlcpy(v->name, pname, strlen(pname) + 1);
 			if (!str_copy(conf, psection, &(v->value), start))
 				goto err;
 
