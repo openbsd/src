@@ -2267,6 +2267,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/uvm/uvm_swap.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/uvm/uvm_swap_encrypt.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/uvm/uvm_vnode.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/uvm/uvmexp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/wchar.ph

@@ -1524,6 +1524,7 @@
 ./usr/include/uvm/uvm_swap.h
 ./usr/include/uvm/uvm_swap_encrypt.h
 ./usr/include/uvm/uvm_vnode.h
+./usr/include/uvm/uvmexp.h
 ./usr/include/varargs.h
 ./usr/include/vis.h
 ./usr/include/wchar.h
