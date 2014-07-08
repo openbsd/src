@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fs.c,v 1.5 2014/04/19 13:48:57 gilles Exp $	*/
+/*	$OpenBSD: queue_fs.c,v 1.6 2014/07/08 15:45:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -166,6 +166,9 @@ queue_fs_message_commit(uint32_t msgid, const char *path)
 		return 0;
 	}
 
+	/* best effort */
+	sync();
+
 	return 1;
 }
 
@@ -263,7 +266,7 @@ queue_fs_envelope_create(uint32_t msgid, const char *buf, size_t len,
 			fsqueue_envelope_incoming_path(*evpid, path,
 			    sizeof(path));
 
-		r = fsqueue_envelope_dump(path, buf, len, 0, 1);
+		r = fsqueue_envelope_dump(path, buf, len, 0, 0);
 		if (r >= 0)
 			goto done;
 	}
@@ -615,7 +618,7 @@ fsqueue_qwalk(void *hdl, uint64_t *evpid)
 }
 
 static int
-queue_fs_init(struct passwd *pw, int server)
+queue_fs_init(struct passwd *pw, int server, const char *conf)
 {
 	unsigned int	 n;
 	char		*paths[] = { PATH_QUEUE, PATH_CORRUPT, PATH_INCOMING };

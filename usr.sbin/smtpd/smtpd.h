@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.462 2014/07/08 13:49:09 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.463 2014/07/08 15:45:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -832,7 +832,7 @@ struct mta_task {
 struct passwd;
 
 struct queue_backend {
-	int	(*init)(struct passwd *, int);
+	int	(*init)(struct passwd *, int, const char *);
 };
 
 struct compress_backend {
@@ -1280,6 +1280,7 @@ void queue_flow_control(void);
 uint32_t queue_generate_msgid(void);
 uint64_t queue_generate_evpid(uint32_t);
 int queue_init(const char *, int);
+int queue_close(void);
 int queue_message_create(uint32_t *);
 int queue_message_delete(uint32_t);
 int queue_message_commit(uint32_t);

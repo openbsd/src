@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.18 2014/07/08 14:24:16 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.19 2014/07/08 15:45:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -108,6 +108,7 @@ enum {
 	PROC_QUEUE_OK,
 	PROC_QUEUE_FAIL,
 	PROC_QUEUE_INIT,
+	PROC_QUEUE_CLOSE,
 	PROC_QUEUE_MESSAGE_CREATE,
 	PROC_QUEUE_MESSAGE_DELETE,
 	PROC_QUEUE_MESSAGE_COMMIT,
@@ -362,6 +363,7 @@ void filter_api_on_dataline(void(*)(uint64_t, const char *));
 void filter_api_on_eom(int(*)(uint64_t, size_t));
 
 /* queue */
+void queue_api_on_close(int(*)(void));
 void queue_api_on_message_create(int(*)(uint32_t *));
 void queue_api_on_message_commit(int(*)(uint32_t, const char*));
 void queue_api_on_message_delete(int(*)(uint32_t));
@@ -372,6 +374,9 @@ void queue_api_on_envelope_delete(int(*)(uint64_t));
 void queue_api_on_envelope_update(int(*)(uint64_t, const char *, size_t));
 void queue_api_on_envelope_load(int(*)(uint64_t, char *, size_t));
 void queue_api_on_envelope_walk(int(*)(uint64_t *, char *, size_t));
+void queue_api_no_chroot(void);
+void queue_api_set_chroot(const char *);
+void queue_api_set_user(const char *);
 int queue_api_dispatch(void);
 
 /* scheduler */

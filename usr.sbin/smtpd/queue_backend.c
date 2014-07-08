@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.51 2014/07/07 09:11:24 eric Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.52 2014/07/08 15:45:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -57,6 +57,7 @@ static struct tree		evpcache_tree;
 static struct evplst		evpcache_list;
 static struct queue_backend	*backend;
 
+static int (*handler_close)(void);
 static int (*handler_message_create)(uint32_t *);
 static int (*handler_message_commit)(uint32_t, const char*);
 static int (*handler_message_delete)(uint32_t);
@@ -122,17 +123,12 @@ queue_init(const char *name, int server)
 
 	if (!strcmp(name, "fs"))
 		backend = &queue_backend_fs;
-	if (!strcmp(name, "null"))
+	else if (!strcmp(name, "null"))
 		backend = &queue_backend_null;
-	if (!strcmp(name, "proc"))
-		backend = &queue_backend_proc;
-	if (!strcmp(name, "ram"))
+	else if (!strcmp(name, "ram"))
 		backend = &queue_backend_ram;
-
-	if (backend == NULL) {
-		log_warn("could not find queue backend \"%s\"", name);
-		return (0);
-	}
+	else
+		backend = &queue_backend_proc;
 
 	if (server) {
 		if (ckdir(PATH_SPOOL, 0711, 0, 0, 1) == 0)
@@ -148,11 +144,20 @@ queue_init(const char *name, int server)
 			errx(1, "error in purge directory setup");
 	}
 
-	r = backend->init(pwq, server);
+	r = backend->init(pwq, server, name);
 
 	log_trace(TRACE_QUEUE, "queue-backend: queue_init(%d) -> %d", server, r);
 
 	return (r);
+}
+
+int
+queue_close(void)
+{
+	if (handler_close)
+		return (handler_close());
+
+	return (1);
 }
 
 int
@@ -634,9 +639,9 @@ queue_envelope_walk(struct envelope *ep)
 		}
 		log_debug("debug: invalid envelope %016" PRIx64 ": %s",
 		    ep->id, e);
+		(void)queue_message_corrupt(evpid_to_msgid(evpid));
 	}
 
-	(void)queue_message_corrupt(evpid_to_msgid(evpid));
 	return (0);
 }
 
@@ -687,6 +692,12 @@ envelope_validate(struct envelope *ep)
 		return "invalid error line";
 
 	return NULL;
+}
+
+void
+queue_api_on_close(int(*cb)(void))
+{
+	handler_close = cb;
 }
 
 void

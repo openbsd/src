@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_null.c,v 1.4 2013/07/19 20:37:07 eric Exp $	*/
+/*	$OpenBSD: queue_null.c,v 1.5 2014/07/08 15:45:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -104,7 +104,7 @@ queue_null_envelope_walk(uint64_t *evpid, char *buf, size_t len)
 }
 
 static int
-queue_null_init(struct passwd *pw, int server)
+queue_null_init(struct passwd *pw, int server, const char *conf)
 {
 	queue_api_on_message_create(queue_null_message_create);
 	queue_api_on_message_commit(queue_null_message_commit);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_proc.c,v 1.2 2013/10/27 18:21:07 eric Exp $	*/
+/*	$OpenBSD: queue_proc.c,v 1.3 2014/07/08 15:45:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -24,8 +24,6 @@
 #include <sys/stat.h>
 
 #include <ctype.h>
-#include <err.h>
-#include <errno.h>
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
@@ -41,13 +39,10 @@
 #include "smtpd.h"
 #include "log.h"
 
-static pid_t		 pid;
 static struct imsgbuf	 ibuf;
 static struct imsg	 imsg;
 static size_t		 rlen;
 static char		*rdata;
-
-static const char *execpath = "/usr/libexec/smtpd/backend-queue";
 
 static void
 queue_proc_call(void)
@@ -115,6 +110,20 @@ queue_proc_end(void)
 /*
  * API
  */
+
+static int
+queue_proc_close(void)
+{
+	int	r;
+
+	imsg_compose(&ibuf, PROC_QUEUE_MESSAGE_CORRUPT, 0, 0, -1, NULL, 0);
+
+	queue_proc_call();
+	queue_proc_read(&r, sizeof(r));
+	queue_proc_end();
+
+	return (r);
+}
 
 static int
 queue_proc_message_create(uint32_t *msgid)
@@ -270,7 +279,7 @@ queue_proc_envelope_load(uint64_t evpid, char *buf, size_t len)
 	}
 
 	r = rlen;
-	queue_proc_read(&buf, rlen);
+	queue_proc_read(buf, rlen);
 	queue_proc_end();
 
 	return (r);
@@ -296,7 +305,7 @@ queue_proc_envelope_walk(uint64_t *evpid, char *buf, size_t len)
 			log_warnx("warn: queue-proc: len mismatch");
 			fatalx("queue-proc: exiting");
 		}
-		queue_proc_read(&buf, rlen);
+		queue_proc_read(buf, rlen);
 	}
 	queue_proc_end();
 
@@ -304,41 +313,22 @@ queue_proc_envelope_walk(uint64_t *evpid, char *buf, size_t len)
 }
 
 static int
-queue_proc_init(struct passwd *pw, int server)
+queue_proc_init(struct passwd *pw, int server, const char *conf)
 {
-	int		sp[2];
 	uint32_t	version;
+	int		fd;
 
-	errno = 0;
+	fd = fork_proc_backend("queue", conf, "queue-proc");
+	if (fd == -1)
+		fatalx("queue-proc: exiting");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) < 0) {
-		log_warn("warn: queue-proc: socketpair");
-		return (0);
-	}
-
-	if ((pid = fork()) == -1) {
-		log_warn("warn: queue-proc: fork");
-		goto err;
-	}
-
-	if (pid == 0) {
-		/* child process */
-		dup2(sp[0], STDIN_FILENO);
-		if (closefrom(STDERR_FILENO + 1) < 0)
-			exit(1);
-
-		execl(execpath, "queue_ramproc", NULL);
-		err(1, "execl");
-	}
-
-	/* parent process */
-	close(sp[0]);
-	imsg_init(&ibuf, sp[1]);
+	imsg_init(&ibuf, fd);
 
 	version = PROC_QUEUE_API_VERSION;
 	imsg_compose(&ibuf, PROC_QUEUE_INIT, 0, 0, -1,
 	    &version, sizeof(version));
 
+	queue_api_on_close(queue_proc_close);
 	queue_api_on_message_create(queue_proc_message_create);
 	queue_api_on_message_commit(queue_proc_message_commit);
 	queue_api_on_message_delete(queue_proc_message_delete);
@@ -354,11 +344,6 @@ queue_proc_init(struct passwd *pw, int server)
 	queue_proc_end();
 
 	return (1);
-
-err:
-	close(sp[0]);
-	close(sp[1]);
-	return (0);
 }
 
 struct queue_backend	queue_backend_proc = {
