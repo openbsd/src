@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_variables.c,v 1.13 2011/04/05 19:54:35 jasper Exp $	*/
+/*	$OpenBSD: db_variables.c,v 1.14 2014/07/08 13:02:57 deraadt Exp $	*/
 /*	$NetBSD: db_variables.c,v 1.8 1996/02/05 01:57:19 christos Exp $	*/
 
 /* 
@@ -28,9 +28,8 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 

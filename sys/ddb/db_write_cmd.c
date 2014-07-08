@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_write_cmd.c,v 1.11 2009/05/30 20:58:49 miod Exp $	*/
+/*	$OpenBSD: db_write_cmd.c,v 1.12 2014/07/08 13:02:57 deraadt Exp $	*/
 /*	$NetBSD: db_write_cmd.c,v 1.6 1996/02/05 01:57:25 christos Exp $	*/
 
 /* 
@@ -31,9 +31,8 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 

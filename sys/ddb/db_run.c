@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.22 2010/11/27 19:59:11 miod Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.23 2014/07/08 13:02:57 deraadt Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -34,9 +34,8 @@
  * Commands to run process.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 

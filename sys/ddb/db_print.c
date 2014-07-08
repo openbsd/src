@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_print.c,v 1.12 2007/11/05 19:23:24 miod Exp $	*/
+/*	$OpenBSD: db_print.c,v 1.13 2014/07/08 13:02:57 deraadt Exp $	*/
 /*	$NetBSD: db_print.c,v 1.5 1996/02/05 01:57:11 christos Exp $	*/
 
 /* 
@@ -34,9 +34,8 @@
  * Miscellaneous printing.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 

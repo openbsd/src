@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_expr.c,v 1.9 2011/05/22 19:21:55 ariane Exp $	*/
+/*	$OpenBSD: db_expr.c,v 1.10 2014/07/08 13:02:57 deraadt Exp $	*/
 /*	$NetBSD: db_expr.c,v 1.5 1996/02/05 01:56:58 christos Exp $	*/
 
 /* 
@@ -32,8 +32,6 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 

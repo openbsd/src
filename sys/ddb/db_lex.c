@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_lex.c,v 1.9 2006/03/13 06:23:20 jsg Exp $	*/
+/*	$OpenBSD: db_lex.c,v 1.10 2014/07/08 13:02:57 deraadt Exp $	*/
 /*	$NetBSD: db_lex.c,v 1.8 1996/02/05 01:57:05 christos Exp $	*/
 
 /* 
@@ -34,9 +34,8 @@
  * Lexical analyzer.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 

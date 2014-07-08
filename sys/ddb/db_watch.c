@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_watch.c,v 1.10 2010/11/27 19:59:11 miod Exp $ */
+/*	$OpenBSD: db_watch.c,v 1.11 2014/07/08 13:02:57 deraadt Exp $ */
 /*	$NetBSD: db_watch.c,v 1.9 1996/03/30 22:30:12 christos Exp $	*/
 
 /* 
@@ -31,6 +31,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 
 #include <machine/db_machdep.h>
