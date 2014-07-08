@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_poison.c,v 1.8 2014/07/08 17:19:25 deraadt Exp $ */
+/*	$OpenBSD: subr_poison.c,v 1.9 2014/07/08 17:42:50 miod Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -18,6 +18,8 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 /*
  * The POISON is used as known text to copy into free objects so
