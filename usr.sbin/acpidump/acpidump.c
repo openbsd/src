@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.9 2013/12/03 01:47:06 deraadt Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.10 2014/07/08 10:28:02 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -30,8 +30,6 @@
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <assert.h>
 #include <err.h>
@@ -211,6 +209,7 @@ struct acpi_user_mapping *
 acpi_user_find_mapping(vm_offset_t pa, size_t size)
 {
 	struct acpi_user_mapping	*map;
+	int	page_mask = getpagesize() - 1;
 
 	/* First search for an existing mapping */
 	for (map = LIST_FIRST(&maplist); map; map = LIST_NEXT(map, link)) {
@@ -219,8 +218,14 @@ acpi_user_find_mapping(vm_offset_t pa, size_t size)
 	}
 
 	/* Then create a new one */
+#undef round_page
+#undef trunc_page
+#define	round_page(x)	(((x) + page_mask) & ~page_mask)
+#define	trunc_page(x)	((x) & ~page_mask)
 	size = round_page(pa + size) - trunc_page(pa);
 	pa = trunc_page(pa);
+#undef round_page
+#undef trunc_page
 	map = malloc(sizeof(struct acpi_user_mapping));
 	if (!map)
 		errx(1, "out of memory");
