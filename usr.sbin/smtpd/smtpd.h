@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.463 2014/07/08 15:45:32 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.464 2014/07/08 20:14:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -591,7 +591,7 @@ struct smtpd {
 #define	TRACE_IMSG	0x0002
 #define	TRACE_IO	0x0004
 #define	TRACE_SMTP	0x0008
-#define	TRACE_MFA	0x0010
+#define	TRACE_FILTERS	0x0010
 #define	TRACE_MTA	0x0020
 #define	TRACE_BOUNCE	0x0040
 #define	TRACE_SCHEDULER	0x0080
@@ -1002,12 +1002,6 @@ struct bounce_req_msg {
 	struct delivery_bounce	bounce;
 };
 
-enum mfa_resp_status {
-	MFA_OK,
-	MFA_FAIL,
-	MFA_CLOSE,
-};
-
 enum dns_error {
 	DNS_OK = 0,
 	DNS_RETRY,
@@ -1178,24 +1172,6 @@ void vlog(int, const char *, va_list);
 void mda_postfork(void);
 void mda_postprivdrop(void);
 void mda_imsg(struct mproc *, struct imsg *);
-
-
-/* mfa.c */
-pid_t mfa(void);
-void mfa_ready(void);
-
-
-/* mfa_session.c */
-void mfa_filter_prepare(void);
-void mfa_filter_init(void);
-void mfa_filter_connect(uint64_t, const struct sockaddr *,
-    const struct sockaddr *, const char *);
-void mfa_filter_mailaddr(uint64_t, int, const struct mailaddr *);
-void mfa_filter_line(uint64_t, int, const char *);
-void mfa_filter_eom(uint64_t, int, size_t);
-void mfa_filter(uint64_t, int);
-void mfa_filter_event(uint64_t, int);
-void mfa_build_fd_chain(uint64_t, int);
 
 
 /* mproc.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.228 2014/07/08 13:49:09 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.229 2014/07/08 20:14:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -520,8 +520,8 @@ main(int argc, char *argv[])
 			else if (!strcmp(optarg, "mfa") ||
 			    !strcmp(optarg, "filter") ||
 			    !strcmp(optarg, "filters"))
-				verbose |= TRACE_MFA;
-			else if (!strcmp(optarg, "mta") ||
+				verbose |= TRACE_FILTERS;
+			else if (!strcmp(optarg, "filters") ||
 			    !strcmp(optarg, "transfer"))
 				verbose |= TRACE_MTA;
 			else if (!strcmp(optarg, "bounce") ||
@@ -1419,8 +1419,6 @@ imsg_to_str(int type)
 	CASE(IMSG_MDA_LOOKUP_USERINFO);
 	CASE(IMSG_MDA_KILL);
 	CASE(IMSG_MDA_OPEN_MESSAGE);
-
-	CASE(IMSG_MFA_SMTP_RESPONSE);
 
 	CASE(IMSG_MTA_DELIVERY_OK);
 	CASE(IMSG_MTA_DELIVERY_TEMPFAIL);

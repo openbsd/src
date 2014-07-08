@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.213 2014/07/08 07:59:31 sobrado Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.214 2014/07/08 20:14:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -631,7 +631,7 @@ smtp_mfa_response(struct smtp_session *s, int msg, int status, uint32_t code,
 {
 	struct ca_cert_req_msg		 req_ca_cert;
 
-	if (status == MFA_CLOSE) {
+	if (status == FILTER_CLOSE) {
 		code = code ? code : 421;
 		line = line ? line : "Temporary failure";
 		smtp_reply(s, "%d %s", code, line);
@@ -643,7 +643,7 @@ smtp_mfa_response(struct smtp_session *s, int msg, int status, uint32_t code,
 	switch (msg) {
 
 	case IMSG_SMTP_REQ_CONNECT:
-		if (status != MFA_OK) {
+		if (status != FILTER_OK) {
 			log_info("smtp-in: Disconnecting session %016" PRIx64
 			    ": rejected by filter", s->id);
 			smtp_free(s, "rejected by filter");
@@ -667,7 +667,7 @@ smtp_mfa_response(struct smtp_session *s, int msg, int status, uint32_t code,
 		return;
 
 	case IMSG_SMTP_REQ_HELO:
-		if (status != MFA_OK) {
+		if (status != FILTER_OK) {
 			code = code ? code : 530;
 			line = line ? line : "Hello rejected";
 			smtp_reply(s, "%d %s", code, line);
@@ -699,7 +699,7 @@ smtp_mfa_response(struct smtp_session *s, int msg, int status, uint32_t code,
 		return;
 
 	case IMSG_SMTP_REQ_MAIL:
-		if (status != MFA_OK) {
+		if (status != FILTER_OK) {
 			code = code ? code : 530;
 			line = line ? line : "Sender rejected";
 			smtp_reply(s, "%d %s", code, line);
@@ -714,7 +714,7 @@ smtp_mfa_response(struct smtp_session *s, int msg, int status, uint32_t code,
 		return;
 
 	case IMSG_SMTP_REQ_RCPT:
-		if (status != MFA_OK) {
+		if (status != FILTER_OK) {
 			code = code ? code : 530;
 			line = line ? line : "Recipient rejected";
 			smtp_reply(s, "%d %s", code, line);
@@ -737,7 +737,7 @@ smtp_mfa_response(struct smtp_session *s, int msg, int status, uint32_t code,
 		return;
 
 	case IMSG_SMTP_REQ_DATA:
-		if (status != MFA_OK) {
+		if (status != FILTER_OK) {
 			code = code ? code : 530;
 			line = line ? line : "Message rejected";
 			smtp_reply(s, "%d %s", code, line);
@@ -752,7 +752,7 @@ smtp_mfa_response(struct smtp_session *s, int msg, int status, uint32_t code,
 		return;
 
 	case IMSG_SMTP_REQ_EOM:
-		if (status != MFA_OK) {
+		if (status != FILTER_OK) {
 			code = code ? code : 530;
 			line = line ? line : "Message rejected";
 			smtp_reply(s, "%d %s", code, line);
@@ -1920,37 +1920,37 @@ smtp_filter_disconnect(struct smtp_session *s)
 static void
 smtp_filter_connect(struct smtp_session *s, struct sockaddr *sa)
 {
-	smtp_mfa_response(s, IMSG_SMTP_REQ_CONNECT, MFA_OK, 0, NULL);
+	smtp_mfa_response(s, IMSG_SMTP_REQ_CONNECT, FILTER_OK, 0, NULL);
 }
 
 static void
 smtp_filter_eom(struct smtp_session *s)
 {
-	smtp_mfa_response(s, IMSG_SMTP_REQ_EOM, MFA_OK, 0, NULL);
+	smtp_mfa_response(s, IMSG_SMTP_REQ_EOM, FILTER_OK, 0, NULL);
 }
 
 static void
 smtp_filter_helo(struct smtp_session *s)
 {
-	smtp_mfa_response(s, IMSG_SMTP_REQ_HELO, MFA_OK, 0, NULL);
+	smtp_mfa_response(s, IMSG_SMTP_REQ_HELO, FILTER_OK, 0, NULL);
 }
 
 static void
 smtp_filter_mail(struct smtp_session *s)
 {
-	smtp_mfa_response(s, IMSG_SMTP_REQ_MAIL, MFA_OK, 0, NULL);
+	smtp_mfa_response(s, IMSG_SMTP_REQ_MAIL, FILTER_OK, 0, NULL);
 }
 
 static void
 smtp_filter_rcpt(struct smtp_session *s)
 {
-	smtp_mfa_response(s, IMSG_SMTP_REQ_RCPT, MFA_OK, 0, NULL);
+	smtp_mfa_response(s, IMSG_SMTP_REQ_RCPT, FILTER_OK, 0, NULL);
 }
 
 static void
 smtp_filter_data(struct smtp_session *s)
 {
-	smtp_mfa_response(s, IMSG_SMTP_REQ_DATA, MFA_OK, 0, NULL);
+	smtp_mfa_response(s, IMSG_SMTP_REQ_DATA, FILTER_OK, 0, NULL);
 }
 
 #define CASE(x) case x : return #x

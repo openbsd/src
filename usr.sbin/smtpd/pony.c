@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.5 2014/05/01 15:50:20 reyk Exp $	*/
+/*	$OpenBSD: pony.c,v 1.6 2014/07/08 20:14:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -78,7 +78,6 @@ pony_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_SMTP_AUTHENTICATE:
 	case IMSG_SMTP_SSL_INIT:
 	case IMSG_SMTP_SSL_VERIFY:
-	case IMSG_MFA_SMTP_RESPONSE:
 	case IMSG_SMTP_MESSAGE_COMMIT:
 	case IMSG_SMTP_MESSAGE_CREATE:
 	case IMSG_SMTP_MESSAGE_OPEN:

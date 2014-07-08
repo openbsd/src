@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.122 2014/07/07 09:11:24 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.123 2014/07/08 20:14:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -1134,8 +1134,8 @@ str_to_trace(const char *str)
 		return TRACE_IO;
 	if (!strcmp(str, "smtp"))
 		return TRACE_SMTP;
-	if (!strcmp(str, "mfa"))
-		return TRACE_MFA;
+	if (!strcmp(str, "filters"))
+		return TRACE_FILTERS;
 	if (!strcmp(str, "mta"))
 		return TRACE_MTA;
 	if (!strcmp(str, "bounce"))
