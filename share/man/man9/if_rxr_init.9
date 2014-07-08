@@ -1,4 +1,4 @@
-.\"	$OpenBSD: if_rxr_init.9,v 1.1 2014/07/08 04:02:14 dlg Exp $
+.\"	$OpenBSD: if_rxr_init.9,v 1.2 2014/07/08 05:52:17 jmc Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\"
@@ -21,7 +21,9 @@
 .Nm if_rxr_init ,
 .Nm if_rxr_get ,
 .Nm if_rxr_put ,
-.Nm if_ixr_inuse
+.Nm if_ixr_inuse ,
+.Nm if_rxr_ioctl ,
+.Nm if_rxr_info_ioctl
 .Nd Interface Receive Ring accounting
 .Sh SYNOPSIS
 .In net/if.h
@@ -39,7 +41,7 @@
 .Fn "if_rxr_info_ioctl" "struct if_rxrinfo *ifri" "unsigned int n" "struct if_rxring_info *rings"
 .Sh DESCRIPTION
 The Interface Receive Ring accounting API provides a mechanism to
-manage the number of available descriptors on a network cards receive
+manage the number of available descriptors on a network card's receive
 ring.
 The API restricts the allocation of receive descriptors using a
 heuristic that monitors the use of the ring.
@@ -78,7 +80,7 @@ The
 .Fn if_rxr_ioctl
 and
 .Fn if_rxr_info_ioctl
-functions are provided to assist drivers in reporting their rings
+functions are provided to assist drivers in reporting their rings'
 state to userland via a
 .Dv SIOCGIFRXR
 ioctl request.
