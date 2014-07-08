@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_poison.c,v 1.9 2014/07/08 17:42:50 miod Exp $ */
+/*	$OpenBSD: subr_poison.c,v 1.10 2014/07/08 22:30:26 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -44,7 +44,17 @@ poison_value(void *v)
 
 	l = l >> PAGE_SHIFT;
 
-	return (l & 1) ? POISON0 : POISON1;
+	switch (l & 3) {
+	case 0:
+		return POISON0;
+	case 1:
+		return POISON1;
+	case 2:
+		return ~POISON0;
+	case 3:
+		return ~POISON1;
+	}
+	return 0;
 }
 
 void
