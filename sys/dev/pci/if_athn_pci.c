@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_pci.c,v 1.15 2014/07/08 08:54:00 stsp Exp $	*/
+/*	$OpenBSD: if_athn_pci.c,v 1.16 2014/07/08 08:55:33 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -94,7 +94,6 @@ static const struct pci_matchid athn_pci_devices[] = {
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9160 },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9280 },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9281 },
-	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9281_2 },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9285 },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR2427 },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9227 },
