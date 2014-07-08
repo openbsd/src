@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.53 2014/06/21 17:02:25 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.54 2014/07/08 21:31:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -385,7 +385,6 @@
 #define SSL_EXP_MASK		0x00000003L
 #define SSL_STRONG_MASK		0x000001fcL
 
-#define SSL_NOT_EXP		0x00000001L
 #define SSL_EXPORT		0x00000002L
 
 #define SSL_STRONG_NONE		0x00000004L
