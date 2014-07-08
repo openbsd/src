@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mskvar.h,v 1.10 2013/02/01 06:51:32 brad Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.11 2014/07/08 05:35:18 dlg Exp $	*/
 /*	$NetBSD: if_skvar.h,v 1.6 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
@@ -26,7 +26,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*	$OpenBSD: if_mskvar.h,v 1.10 2013/02/01 06:51:32 brad Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.11 2014/07/08 05:35:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -96,12 +96,15 @@ struct sk_chain {
  */
 #define SK_NTXSEG      30
 
+#define SK_NRXSEG      4
+
 struct sk_txmap_entry {
 	bus_dmamap_t			dmamap;
 	SIMPLEQ_ENTRY(sk_txmap_entry)	link;
 };
 
 struct msk_chain_data {
+	struct if_rxring	sk_rx_ring;
 	struct sk_chain		sk_tx_chain[MSK_TX_RING_CNT];
 	struct sk_chain		sk_rx_chain[MSK_RX_RING_CNT];
 	struct sk_txmap_entry	*sk_tx_map[MSK_TX_RING_CNT];
@@ -111,7 +114,6 @@ struct msk_chain_data {
 	int			sk_tx_cnt;
 	int			sk_rx_prod;
 	int			sk_rx_cons;
-	int			sk_rx_cnt;
 };
 
 struct msk_ring_data {

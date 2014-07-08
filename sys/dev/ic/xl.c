@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.113 2014/05/30 19:51:22 chl Exp $	*/
+/*	$OpenBSD: xl.c,v 1.114 2014/07/08 05:35:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1093,7 +1093,7 @@ xl_list_rx_init(struct xl_softc *sc)
 	}
 
 	cd->xl_rx_prod = cd->xl_rx_cons = &cd->xl_rx_chain[0];
-	cd->xl_rx_cnt = 0;
+	if_rxr_init(&cd->xl_rx_ring, 2, XL_RX_LIST_CNT - 1);
 	xl_fill_rx_ring(sc);
 	return (0);
 }
@@ -1102,15 +1102,17 @@ void
 xl_fill_rx_ring(struct xl_softc *sc)
 {  
 	struct xl_chain_data    *cd;
+	u_int			slots;
 
 	cd = &sc->xl_cdata;
 
-	while (cd->xl_rx_cnt < XL_RX_LIST_CNT) {
+	for (slots = if_rxr_get(&cd->xl_rx_ring, XL_RX_LIST_CNT);
+	     slots > 0; slots--) {
 		if (xl_newbuf(sc, cd->xl_rx_prod) == ENOBUFS)
 			break;
 		cd->xl_rx_prod = cd->xl_rx_prod->xl_next;
-		cd->xl_rx_cnt++;
 	}
+	if_rxr_put(&cd->xl_rx_ring, slots);
 }
 
 /*
@@ -1122,7 +1124,7 @@ xl_newbuf(struct xl_softc *sc, struct xl_chain_onefrag *c)
 	struct mbuf	*m_new = NULL;
 	bus_dmamap_t	map;
 
-	m_new = MCLGETI(NULL, M_DONTWAIT, &sc->sc_arpcom.ac_if, MCLBYTES);
+	m_new = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
 	if (!m_new)
 		return (ENOBUFS);
 
@@ -1182,7 +1184,7 @@ xl_rxeof(struct xl_softc *sc)
 
 again:
 
-	while (sc->xl_cdata.xl_rx_cnt > 0) {
+	while (if_rxr_inuse(&sc->xl_cdata.xl_rx_ring) > 0) {
 		cur_rx = sc->xl_cdata.xl_rx_cons;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,                    
 		    ((caddr_t)cur_rx->xl_ptr - sc->sc_listkva),
@@ -1193,7 +1195,7 @@ again:
 		m = cur_rx->xl_mbuf;  
 		cur_rx->xl_mbuf = NULL;
 		sc->xl_cdata.xl_rx_cons = cur_rx->xl_next;
-		sc->xl_cdata.xl_rx_cnt--;
+		if_rxr_put(&sc->xl_cdata.xl_rx_ring, 1);
 		total_len = rxstat & XL_RXSTAT_LENMASK;
 
 		/*
@@ -2510,8 +2512,6 @@ xl_attach(struct xl_softc *sc)
 	IFQ_SET_MAXLEN(&ifp->if_snd, XL_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
-
-	m_clsetwms(ifp, MCLBYTES, 2, XL_RX_LIST_CNT - 1);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.355 2014/07/03 13:26:05 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.356 2014/07/08 05:35:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -151,6 +151,7 @@ int bge_compact_dma_runt(struct mbuf *);
 int bge_intr(void *);
 void bge_start(struct ifnet *);
 int bge_ioctl(struct ifnet *, u_long, caddr_t);
+int bge_rxrinfo(struct bge_softc *, struct if_rxrinfo *);
 void bge_init(void *);
 void bge_stop_block(struct bge_softc *, bus_size_t, u_int32_t);
 void bge_stop(struct bge_softc *);
@@ -1118,7 +1119,7 @@ bge_newbuf(struct bge_softc *sc, int i)
 	struct mbuf		*m;
 	int			error;
 
-	m = MCLGETI(NULL, M_DONTWAIT, &sc->arpcom.ac_if, MCLBYTES);
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
 	if (!m)
 		return (ENOBUFS);
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
@@ -1153,8 +1154,6 @@ bge_newbuf(struct bge_softc *sc, int i)
 	    sizeof (struct bge_rx_bd),
 	    BUS_DMASYNC_PREWRITE);
 
-	sc->bge_std_cnt++;
-
 	return (0);
 }
 
@@ -1169,7 +1168,7 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i)
 	struct mbuf		*m;
 	int			error;
 
-	m = MCLGETI(NULL, M_DONTWAIT, &sc->arpcom.ac_if, BGE_JLEN);
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, BGE_JLEN);
 	if (!m)
 		return (ENOBUFS);
 	m->m_len = m->m_pkthdr.len = BGE_JUMBO_FRAMELEN;
@@ -1226,8 +1225,6 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i)
 	    sizeof (struct bge_ext_rx_bd),
 	    BUS_DMASYNC_PREWRITE);
 
-	sc->bge_jumbo_cnt++;
-
 	return (0);
 }
 
@@ -1258,7 +1255,9 @@ bge_init_rx_ring_std(struct bge_softc *sc)
 	}
 
 	sc->bge_std = BGE_STD_RX_RING_CNT - 1;
-	sc->bge_std_cnt = 0;
+
+	/* lwm must be greater than the replenish threshold */
+	if_rxr_init(&sc->bge_std_ring, 17, BGE_JUMBO_RX_RING_CNT);
 	bge_fill_rx_ring_std(sc);
 
 	SET(sc->bge_flags, BGE_RXRING_VALID);
@@ -1281,10 +1280,10 @@ bge_rxtick(void *arg)
 
 	s = splnet();
 	if (ISSET(sc->bge_flags, BGE_RXRING_VALID) &&
-	    sc->bge_std_cnt <= 8)
+	    if_rxr_inuse(&sc->bge_std_ring) <= 8)
 		bge_fill_rx_ring_std(sc);
 	if (ISSET(sc->bge_flags, BGE_JUMBO_RXRING_VALID) &&
-	    sc->bge_jumbo_cnt <= 8)
+	    if_rxr_inuse(&sc->bge_jumbo_ring) <= 8)
 		bge_fill_rx_ring_jumbo(sc);
 	splx(s);
 }
@@ -1294,17 +1293,21 @@ bge_fill_rx_ring_std(struct bge_softc *sc)
 {
 	int i;
 	int post = 0;
+	u_int slots;
 
 	i = sc->bge_std;
-	while (sc->bge_std_cnt < BGE_STD_RX_RING_CNT) {
+	for (slots = if_rxr_get(&sc->bge_std_ring, BGE_STD_RX_RING_CNT);
+	    slots > 0; slots--) {
 		BGE_INC(i, BGE_STD_RX_RING_CNT);
 
 		if (bge_newbuf(sc, i) != 0)
 			break;
 
-		sc->bge_std = i;
 		post = 1;
 	}
+	if_rxr_put(&sc->bge_std_ring, slots);
+
+	sc->bge_std = i;
 
 	if (post)
 		bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, sc->bge_std);
@@ -1313,7 +1316,7 @@ bge_fill_rx_ring_std(struct bge_softc *sc)
 	 * bge always needs more than 8 packets on the ring. if we cant do
 	 * that now, then try again later.
 	 */
-	if (sc->bge_std_cnt <= 8)
+	if (if_rxr_inuse(&sc->bge_std_ring) <= 8)
 		timeout_add(&sc->bge_rxtimeout, 1);
 }
 
@@ -1368,7 +1371,9 @@ bge_init_rx_ring_jumbo(struct bge_softc *sc)
 	}
 
 	sc->bge_jumbo = BGE_JUMBO_RX_RING_CNT - 1;
-	sc->bge_jumbo_cnt = 0;
+
+	/* lwm must be greater than the replenish threshold */
+	if_rxr_init(&sc->bge_jumbo_ring, 17, BGE_JUMBO_RX_RING_CNT);
 	bge_fill_rx_ring_jumbo(sc);
 
 	SET(sc->bge_flags, BGE_JUMBO_RXRING_VALID);
@@ -1393,17 +1398,21 @@ bge_fill_rx_ring_jumbo(struct bge_softc *sc)
 {
 	int i;
 	int post = 0;
+	u_int slots;
 
 	i = sc->bge_jumbo;
-	while (sc->bge_jumbo_cnt < BGE_JUMBO_RX_RING_CNT) {
+	for (slots = if_rxr_get(&sc->bge_jumbo_ring, BGE_JUMBO_RX_RING_CNT);
+	    slots > 0; slots--) {
 		BGE_INC(i, BGE_JUMBO_RX_RING_CNT);
 
 		if (bge_newbuf_jumbo(sc, i) != 0)
 			break;
 
-		sc->bge_jumbo = i;
 		post = 1;
 	}
+	if_rxr_put(&sc->bge_jumbo_ring, slots);
+
+	sc->bge_jumbo = i;
 
 	if (post)
 		bge_writembx(sc, BGE_MBX_RX_JUMBO_PROD_LO, sc->bge_jumbo);
@@ -1412,7 +1421,7 @@ bge_fill_rx_ring_jumbo(struct bge_softc *sc)
 	 * bge always needs more than 8 packets on the ring. if we cant do
 	 * that now, then try again later.
 	 */
-	if (sc->bge_jumbo_cnt <= 8)
+	if (if_rxr_inuse(&sc->bge_jumbo_ring) <= 8)
 		timeout_add(&sc->bge_rxtimeout, 1);
 }
 
@@ -2995,10 +3004,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, BGE_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	/* lwm must be greater than the replenish threshold */
-	m_clsetwms(ifp, MCLBYTES, 17, BGE_STD_RX_RING_CNT);
-	m_clsetwms(ifp, BGE_JLEN, 17, BGE_JUMBO_RX_RING_CNT);
-
 	DPRINTFN(5, ("bcopy\n"));
 	bcopy(sc->bge_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
@@ -3455,7 +3460,6 @@ bge_rxeof(struct bge_softc *sc)
 			sc->bge_cdata.bge_rx_jumbo_chain[rxidx] = NULL;
 
 			jumbocnt++;
-			sc->bge_jumbo_cnt--;
 
 			dmamap = sc->bge_cdata.bge_rx_jumbo_map[rxidx];
 			bus_dmamap_sync(sc->bge_dmatag, dmamap, 0,
@@ -3471,7 +3475,6 @@ bge_rxeof(struct bge_softc *sc)
 			sc->bge_cdata.bge_rx_std_chain[rxidx] = NULL;
 
 			stdcnt++;
-			sc->bge_std_cnt--;
 
 			dmamap = sc->bge_cdata.bge_rx_std_map[rxidx];
 			bus_dmamap_sync(sc->bge_dmatag, dmamap, 0,
@@ -3522,10 +3525,14 @@ bge_rxeof(struct bge_softc *sc)
 
 	sc->bge_rx_saved_considx = rx_cons;
 	bge_writembx(sc, BGE_MBX_RX_CONS0_LO, sc->bge_rx_saved_considx);
-	if (stdcnt)
+	if (stdcnt) {
+		if_rxr_put(&sc->bge_std_ring, stdcnt);
 		bge_fill_rx_ring_std(sc);
-	if (jumbocnt)
+	}
+	if (jumbocnt) {
+		if_rxr_put(&sc->bge_jumbo_ring, jumbocnt);
 		bge_fill_rx_ring_jumbo(sc);
+	}
 }
 
 void
@@ -4478,6 +4485,10 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 
+	case SIOCGIFRXR:
+		error = bge_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
+		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->arpcom, command, data);
 	}
@@ -4490,6 +4501,33 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	splx(s);
 	return (error);
+}
+
+int
+bge_rxrinfo(struct bge_softc *sc, struct if_rxrinfo *ifri)
+{
+	struct if_rxring_info ifr[2];
+	u_int n = 0;
+
+	memset(ifr, 0, sizeof(ifr));
+
+	if (ISSET(sc->bge_flags, BGE_RXRING_VALID)) {
+		ifr[n].ifr_size = MCLBYTES;
+		strlcpy(ifr[n].ifr_name, "std", sizeof(ifr[n].ifr_name));
+		ifr[n].ifr_info = sc->bge_std_ring;
+
+		n++;
+	}
+
+	if (ISSET(sc->bge_flags, BGE_JUMBO_RXRING_VALID)) {
+		ifr[n].ifr_size = BGE_JLEN;
+		strlcpy(ifr[n].ifr_name, "jumbo", sizeof(ifr[n].ifr_name));
+		ifr[n].ifr_info = sc->bge_jumbo_ring;
+
+		n++;
+	}
+
+	return (if_rxr_info_ioctl(ifri, n, ifr));
 }
 
 void

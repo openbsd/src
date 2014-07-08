@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.28 2014/03/14 11:04:24 dlg Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.29 2014/07/08 05:35:18 dlg Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -176,7 +176,8 @@ struct gem_softc {
 	u_int32_t sc_tx_cnt, sc_tx_prod, sc_tx_cons;
 
 	struct gem_rxsoft sc_rxsoft[GEM_NRXDESC];
-	u_int32_t sc_rx_cnt, sc_rx_prod, sc_rx_cons;
+	struct if_rxring sc_rx_ring;
+	u_int32_t sc_rx_prod, sc_rx_cons;
 
 	/*
 	 * Control data structures.

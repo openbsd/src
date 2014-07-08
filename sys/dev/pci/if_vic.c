@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.77 2011/11/29 11:53:25 jsing Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.78 2014/07/08 05:35:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -290,10 +290,10 @@ struct vic_softc {
 	struct vic_data		*sc_data;
 
 	struct {
+		struct if_rxring	ring;
 		struct vic_rxbuf	*bufs;
 		struct vic_rxdesc	*slots;
 		int			end;
-		int			len;
 		u_int			pktlen;
 	}			sc_rxq[VIC_NRXRINGS];
 
@@ -486,9 +486,6 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->sc_ntxbuf - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	m_clsetwms(ifp, MCLBYTES, 2, sc->sc_nrxbuf - 1);
-	m_clsetwms(ifp, 4096, 2, sc->sc_nrxbuf - 1);
-
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 #if 0
@@ -608,7 +605,6 @@ vic_alloc_data(struct vic_softc *sc)
 	for (q = 0; q < VIC_NRXRINGS; q++) {
 		sc->sc_rxq[q].slots = (struct vic_rxdesc *)&kva[offset];
 		sc->sc_data->vd_rx_offset[q] = offset;
-		sc->sc_data->vd_rx[q].length = sc->sc_nrxbuf;
 
 		for (i = 0; i < sc->sc_nrxbuf; i++) {
 			rxd = &sc->sc_rxq[q].slots[i];
@@ -644,8 +640,10 @@ vic_rx_fill(struct vic_softc *sc, int q)
 {
 	struct vic_rxbuf		*rxb;
 	struct vic_rxdesc		*rxd;
+	u_int				slots;
 
-	while (sc->sc_rxq[q].len < sc->sc_data->vd_rx[q].length) {
+	for (slots = if_rxr_get(&sc->sc_rxq[q].ring, sc->sc_nrxbuf);
+	    slots > 0; slots--) {
 		rxb = &sc->sc_rxq[q].bufs[sc->sc_rxq[q].end];
 		rxd = &sc->sc_rxq[q].slots[sc->sc_rxq[q].end];
 
@@ -663,8 +661,8 @@ vic_rx_fill(struct vic_softc *sc, int q)
 		rxd->rx_owner = VIC_OWNER_NIC;
 
 		VIC_INC(sc->sc_rxq[q].end, sc->sc_data->vd_rx[q].length);
-		sc->sc_rxq[q].len++;
 	}
+	if_rxr_put(&sc->sc_rxq[q].ring, slots);
 }
 
 int
@@ -695,9 +693,9 @@ vic_init_data(struct vic_softc *sc)
 			rxd->rx_length = 0;
 			rxd->rx_owner = VIC_OWNER_DRIVER;
 		}
-
-		sc->sc_rxq[q].len = 0;
 		sc->sc_rxq[q].end = 0;
+
+		if_rxr_init(&sc->sc_rxq[q].ring, 2, sc->sc_nrxbuf - 1);
 		vic_rx_fill(sc, q);
 	}
 
@@ -825,7 +823,7 @@ vic_rx_proc(struct vic_softc *sc, int q)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	while (sc->sc_rxq[q].len > 0) {
+	while (if_rxr_inuse(&sc->sc_rxq[q].ring) > 0) {
 		idx = sc->sc_data->vd_rx[q].nextidx;
 		if (idx >= sc->sc_data->vd_rx[q].length) {
 			ifp->if_ierrors++;
@@ -875,9 +873,8 @@ vic_rx_proc(struct vic_softc *sc, int q)
 		ether_input_mbuf(ifp, m);
 
 nextp:
-		sc->sc_rxq[q].len--;
-		VIC_INC(sc->sc_data->vd_rx[q].nextidx,
-		    sc->sc_data->vd_rx[q].length);
+		if_rxr_put(&sc->sc_rxq[q].ring, 1);
+		VIC_INC(sc->sc_data->vd_rx[q].nextidx, sc->sc_nrxbuf);
 	}
 
 	vic_rx_fill(sc, q);
@@ -1330,7 +1327,7 @@ vic_alloc_mbuf(struct vic_softc *sc, bus_dmamap_t map, u_int pktlen)
 {
 	struct mbuf *m = NULL;
 
-	m = MCLGETI(NULL, M_DONTWAIT, &sc->sc_ac.ac_if, pktlen);
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, pktlen);
 	if (!m)
 		return (NULL);
 	m->m_data += ETHER_ALIGN;

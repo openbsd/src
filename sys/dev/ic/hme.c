@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.65 2014/06/17 02:48:30 dlg Exp $	*/
+/*	$OpenBSD: hme.c,v 1.66 2014/07/08 05:35:18 dlg Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -227,8 +227,6 @@ hme_config(struct hme_softc *sc)
 	IFQ_SET_READY(&ifp->if_snd);
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
-	m_clsetwms(ifp, MCLBYTES, 0, HME_RX_RING_SIZE);
-
 	/* Initialize ifmedia structures and MII info */
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = hme_mii_readreg; 
@@ -360,7 +358,7 @@ hme_tick(void *arg)
 	 * If buffer allocation fails, the receive ring may become
 	 * empty. There is no receive interrupt to recover from that.
 	 */
-	if (sc->sc_rx_cnt == 0)
+	if (if_rxr_inuse(&sc->sc_rx_ring) == 0)
 		hme_fill_rx_ring(sc);
 
 	mii_tick(&sc->sc_mii);
@@ -437,7 +435,7 @@ hme_stop(struct hme_softc *sc, int softonly)
 			sc->sc_rxd[n].sd_mbuf = NULL;
 		}
 	}
-	sc->sc_rx_prod = sc->sc_rx_cons = sc->sc_rx_cnt = 0;
+	sc->sc_rx_prod = sc->sc_rx_cons = 0;
 }
 
 void
@@ -491,6 +489,7 @@ hme_meminit(struct hme_softc *sc)
 		sc->sc_rxd[i].sd_mbuf = NULL;
 	}
 
+	if_rxr_init(&sc->sc_rx_ring, 2, HME_RX_RING_SIZE);
 	hme_fill_rx_ring(sc);
 }
 
@@ -834,7 +833,7 @@ hme_rint(struct hme_softc *sc)
 	/*
 	 * Process all buffers with valid data.
 	 */
-	while (sc->sc_rx_cnt > 0) {
+	while (if_rxr_inuse(&sc->sc_rx_ring) > 0) {
 		flags = HME_XD_GETFLAGS(sc->sc_pci, sc->sc_rb.rb_rxd, ri);
 		if (flags & HME_XD_OWN)
 			break;
@@ -851,7 +850,8 @@ hme_rint(struct hme_softc *sc)
 			sd = sc->sc_rxd;
 		} else
 			sd++;
-		sc->sc_rx_cnt--;
+
+		if_rxr_put(&sc->sc_rx_ring, 1);
 
 		if (flags & HME_XD_OFL) {
 			ifp->if_ierrors++;
@@ -1281,8 +1281,10 @@ void
 hme_fill_rx_ring(struct hme_softc *sc)
 {
 	struct hme_sxd *sd;
+	u_int slots;
 
-	while (sc->sc_rx_cnt < HME_RX_RING_SIZE) {
+	for (slots = if_rxr_get(&sc->sc_rx_ring, HME_RX_RING_SIZE);
+	    slots > 0; slots--) {
 		if (hme_newbuf(sc, &sc->sc_rxd[sc->sc_rx_prod]))
 			break;
 
@@ -1294,8 +1296,8 @@ hme_fill_rx_ring(struct hme_softc *sc)
 
 		if (++sc->sc_rx_prod == HME_RX_RING_SIZE)
 			sc->sc_rx_prod = 0;
-		sc->sc_rx_cnt++;
         }
+	if_rxr_put(&sc->sc_rx_ring, slots);
 }
 
 int
@@ -1309,7 +1311,7 @@ hme_newbuf(struct hme_softc *sc, struct hme_sxd *d)
 	 * until we're sure everything is a success.
 	 */
 
-	m = MCLGETI(NULL, M_DONTWAIT, &sc->sc_arpcom.ac_if, MCLBYTES);
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
 	if (!m)
 		return (ENOBUFS);
 	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.24 2013/08/05 19:58:05 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.25 2014/07/08 05:35:18 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -204,7 +204,7 @@ struct rx_ring {
 	uint			next_to_refresh;
 	uint			next_to_check;
 	uint			last_desc_filled;
-	int			rx_ndescs;
+	struct if_rxring	rx_ring;
 	struct ixgbe_rx_buf	*rx_buffers;
 
 	uint32_t		bytes; /* Used for AIM calc */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.84 2014/04/23 03:37:29 jsg Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.85 2014/07/08 05:35:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -806,7 +806,7 @@ struct rl_list_data {
 	struct rl_desc		*rl_rx_list;
 	int			rl_rx_considx;
 	int			rl_rx_prodidx;
-	int			rl_rx_cnt;
+	struct if_rxring	rl_rx_ring;
 	bus_dma_segment_t	rl_rx_listseg;
 	int			rl_rx_listnseg;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.29 2012/11/29 21:10:31 brad Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.30 2014/07/08 05:35:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -267,7 +267,7 @@ struct tsec_softc {
 	struct tsec_buf		*sc_rxbuf;
 	struct tsec_desc	*sc_rxdesc;
 	int			sc_rx_prod;
-	int			sc_rx_cnt;
+	struct if_rxring	sc_rx_ring;
 	int			sc_rx_cons;
 
 	struct timeout		sc_tick;
@@ -416,8 +416,6 @@ tsec_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, TSEC_NTXDESC - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
-
-	m_clsetwms(ifp, MCLBYTES, 0, TSEC_NRXDESC);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
@@ -849,7 +847,7 @@ tsec_rx_proc(struct tsec_softc *sc)
 	    TSEC_DMA_LEN(sc->sc_rxring),
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	while (sc->sc_rx_cnt > 0) {
+	while (if_rxr_inuse(&sc->sc_rx_ring) > 0) {
 		idx = sc->sc_rx_cons;
 		KASSERT(idx < TSEC_NRXDESC);
 
@@ -883,7 +881,7 @@ tsec_rx_proc(struct tsec_softc *sc)
 
 		ether_input_mbuf(ifp, m);
 
-		sc->sc_rx_cnt--;
+		if_rxr_put(&sc->sc_rx_ring, 1);
 		if (rxd->td_status & TSEC_RX_W)
 			sc->sc_rx_cons = 0;
 		else
@@ -954,8 +952,8 @@ tsec_up(struct tsec_softc *sc)
 	    0, TSEC_DMA_LEN(sc->sc_rxring), BUS_DMASYNC_PREWRITE);
 
 	sc->sc_rx_prod = sc->sc_rx_cons = 0;
-	sc->sc_rx_cnt = 0;
 
+	if_rxr_init(&sc->sc_rx_ring, 2, TSEC_NRXDESC);
 	tsec_fill_rx_ring(sc);
 
 	tsec_write(sc, TSEC_MRBLR, MCLBYTES);
@@ -1279,7 +1277,7 @@ tsec_alloc_mbuf(struct tsec_softc *sc, bus_dmamap_t map)
 {
 	struct mbuf *m = NULL;
 
-	m = MCLGETI(NULL, M_DONTWAIT, &sc->sc_ac.ac_if, MCLBYTES);
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
 	if (!m)
 		return (NULL);
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
@@ -1301,8 +1299,10 @@ tsec_fill_rx_ring(struct tsec_softc *sc)
 {
 	struct tsec_desc *rxd;
 	struct tsec_buf *rxb;
+	u_int slots;
 
-	while (sc->sc_rx_cnt < TSEC_NRXDESC) {
+	for (slots = if_rxr_get(&sc->sc_rx_ring, TSEC_NRXDESC);
+	    slots > 0; slots--) {
 		rxb = &sc->sc_rxbuf[sc->sc_rx_prod];
 		rxb->tb_m = tsec_alloc_mbuf(sc, rxb->tb_map);
 		if (rxb->tb_m == NULL)
@@ -1314,10 +1314,10 @@ tsec_fill_rx_ring(struct tsec_softc *sc)
 		__asm volatile("eieio" ::: "memory");
 		rxd->td_status |= TSEC_RX_E | TSEC_RX_I;
 
-		sc->sc_rx_cnt++;
 		if (rxd->td_status & TSEC_RX_W)
 			sc->sc_rx_prod = 0;
 		else
 			sc->sc_rx_prod++;
 	}
+	if_rxr_put(&sc->sc_rx_ring, slots);
 }

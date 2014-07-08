@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.35 2013/02/09 19:17:52 sthen Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.36 2014/07/08 05:35:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -468,7 +468,6 @@ struct vr_chain_data {
 
 	struct vr_chain_onefrag	*vr_rx_cons;
 	struct vr_chain_onefrag	*vr_rx_prod;
-	int			 vr_rx_cnt;
 
 	struct vr_chain		*vr_tx_cons;
 	struct vr_chain		*vr_tx_prod;
@@ -524,6 +523,7 @@ struct vr_softc {
 	struct timeout		sc_rxto;
 	struct vr_dmamem	sc_listmap;	/* descriptor list map */
 	struct vr_dmamem	sc_zeromap;	/* zero pad map */
+	struct if_rxring	sc_rxring;
 	int			sc_rxbufs;
 	int			vr_link;
 	int			vr_quirks;

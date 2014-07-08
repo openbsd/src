@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.115 2013/12/28 03:34:54 deraadt Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.116 2014/07/08 05:35:18 dlg Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1174,8 +1174,6 @@ sis_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
-	m_clsetwms(ifp, MCLBYTES, 2, SIS_RX_LIST_CNT - 1);
-
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = sis_miibus_readreg;
 	sc->sc_mii.mii_writereg = sis_miibus_writereg;
@@ -1270,7 +1268,8 @@ sis_ring_init(struct sis_softc *sc)
 		ld->sis_rx_list[i].sis_ctl = 0;
 	}
 
-	cd->sis_rx_prod = cd->sis_rx_cons = cd->sis_rx_cnt = 0;
+	cd->sis_rx_prod = cd->sis_rx_cons;
+	if_rxr_init(&cd->sis_rx_ring, 2, SIS_RX_LIST_CNT - 1);
 	sis_fill_rx_ring(sc);
 
 	return (0);
@@ -1281,16 +1280,19 @@ sis_fill_rx_ring(struct sis_softc *sc)
 {
 	struct sis_list_data    *ld;
 	struct sis_ring_data    *cd;
+	u_int			slots;
 
 	cd = &sc->sis_cdata;
 	ld = sc->sis_ldata;
 
-	while (cd->sis_rx_cnt < SIS_RX_LIST_CNT) {
+	for (slots = if_rxr_get(&cd->sis_rx_ring, SIS_RX_LIST_CNT);
+	    slots > 0; slots--) {
 		if (sis_newbuf(sc, &ld->sis_rx_list[cd->sis_rx_prod]))
 			break;
+
 		SIS_INC(cd->sis_rx_prod, SIS_RX_LIST_CNT);
-		cd->sis_rx_cnt++;
 	}
+	if_rxr_put(&cd->sis_rx_ring, slots);
 }
 
 /*
@@ -1304,7 +1306,7 @@ sis_newbuf(struct sis_softc *sc, struct sis_desc *c)
 	if (c == NULL)
 		return (EINVAL);
 
-	m_new = MCLGETI(NULL, M_DONTWAIT, &sc->arpcom.ac_if, MCLBYTES);
+	m_new = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
 	if (!m_new)
 		return (ENOBUFS);
 
@@ -1350,7 +1352,7 @@ sis_rxeof(struct sis_softc *sc)
 
 	ifp = &sc->arpcom.ac_if;
 
-	while(sc->sis_cdata.sis_rx_cnt > 0) {
+	while (if_rxr_inuse(&sc->sis_cdata.sis_rx_ring) > 0) {
 		cur_rx = &sc->sis_ldata->sis_rx_list[sc->sis_cdata.sis_rx_cons];
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 		    ((caddr_t)cur_rx - sc->sc_listkva),
@@ -1365,7 +1367,7 @@ sis_rxeof(struct sis_softc *sc)
 		total_len = SIS_RXBYTES(cur_rx);
 		/* from here on the buffer is consumed */
 		SIS_INC(sc->sis_cdata.sis_rx_cons, SIS_RX_LIST_CNT);
-		sc->sis_cdata.sis_rx_cnt--;
+		if_rxr_put(&sc->sis_cdata.sis_rx_ring, 1);
 
 		/*
 		 * If an error occurs, update stats, clear the

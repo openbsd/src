@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.102 2013/12/28 03:35:42 deraadt Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.103 2014/07/08 05:35:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -433,7 +433,8 @@ msk_init_rx_ring(struct sk_if_softc *sc_if)
 
 	sc_if->sk_cdata.sk_rx_prod = 0;
 	sc_if->sk_cdata.sk_rx_cons = 0;
-	sc_if->sk_cdata.sk_rx_cnt = 0;
+
+	if_rxr_init(&sc_if->sk_cdata.sk_rx_ring, 2, MSK_RX_RING_CNT);
 
 	msk_fill_rx_ring(sc_if);
 	return (0);
@@ -494,9 +495,9 @@ msk_newbuf(struct sk_if_softc *sc_if)
 	int			error;
 	int			i, head;
 
-	m = MCLGETI(NULL, M_DONTWAIT, &sc_if->arpcom.ac_if, sc_if->sk_pktlen);
-	if (!m)
-		return (ENOBUFS);
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, sc_if->sk_pktlen);
+	if (m == NULL)
+		return (0);
 	m->m_len = m->m_pkthdr.len = sc_if->sk_pktlen;
 	m_adj(m, ETHER_ALIGN);
 
@@ -506,13 +507,7 @@ msk_newbuf(struct sk_if_softc *sc_if)
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		m_freem(m);
-		return (ENOBUFS);
-	}
-
-	if (dmamap->dm_nsegs > (MSK_RX_RING_CNT - sc_if->sk_cdata.sk_rx_cnt)) {
-		bus_dmamap_unload(sc_if->sk_softc->sc_dmatag, dmamap);
-		m_freem(m);
-		return (ENOBUFS);
+		return (0);
 	}
 
 	bus_dmamap_sync(sc_if->sk_softc->sc_dmatag, dmamap, 0,
@@ -530,7 +525,6 @@ msk_newbuf(struct sk_if_softc *sc_if)
 	MSK_CDRXSYNC(sc_if, head, BUS_DMASYNC_PREWRITE);
 
 	SK_INC(sc_if->sk_cdata.sk_rx_prod, MSK_RX_RING_CNT);
-	sc_if->sk_cdata.sk_rx_cnt++;
 
 	for (i = 1; i < dmamap->dm_nsegs; i++) {
 		c = &sc_if->sk_cdata.sk_rx_chain[sc_if->sk_cdata.sk_rx_prod];
@@ -550,7 +544,6 @@ msk_newbuf(struct sk_if_softc *sc_if)
 		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 		SK_INC(sc_if->sk_cdata.sk_rx_prod, MSK_RX_RING_CNT);
-		sc_if->sk_cdata.sk_rx_cnt++;
 	}
 
 	c = &sc_if->sk_cdata.sk_rx_chain[head];
@@ -559,7 +552,7 @@ msk_newbuf(struct sk_if_softc *sc_if)
 
 	MSK_CDRXSYNC(sc_if, head, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
-	return (0);
+	return (dmamap->dm_nsegs);
 }
 
 /*
@@ -952,7 +945,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; i < MSK_RX_RING_CNT; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmatag,
-		    sc_if->sk_pktlen, 4, sc_if->sk_pktlen,
+		    sc_if->sk_pktlen, SK_NRXSEG, sc_if->sk_pktlen,
 		    0, 0, &sc_if->sk_cdata.sk_rx_map[i])) != 0) {
 			printf("\n%s: unable to create rx DMA map %d, "
 			    "error = %d\n", sc->sk_dev.dv_xname, i, error);
@@ -1011,7 +1004,6 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-	m_clsetwms(ifp, sc_if->sk_pktlen, 2, MSK_RX_RING_CNT);
 
 	DPRINTFN(2, ("msk_attach: end\n"));
 	return;
@@ -1620,8 +1612,8 @@ msk_rxeof(struct sk_if_softc *sc_if, u_int16_t len, u_int32_t rxstat)
 	dmamap = sc_if->sk_cdata.sk_rx_map[cur];
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
 	  	SK_INC(sc_if->sk_cdata.sk_rx_cons, MSK_RX_RING_CNT);
-		sc_if->sk_cdata.sk_rx_cnt--;
 	}
+	if_rxr_put(&sc_if->sk_cdata.sk_rx_ring, dmamap->dm_nsegs);
 
 	bus_dmamap_sync(sc_if->sk_softc->sc_dmatag, dmamap, 0,
 	    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
@@ -1713,10 +1705,17 @@ msk_txeof(struct sk_if_softc *sc_if)
 void
 msk_fill_rx_ring(struct sk_if_softc *sc_if)
 {
-	while (sc_if->sk_cdata.sk_rx_cnt < MSK_RX_RING_CNT) {
-		if (msk_newbuf(sc_if) == ENOBUFS)
+	u_int slots, used;
+
+	slots = if_rxr_get(&sc_if->sk_cdata.sk_rx_ring, MSK_RX_RING_CNT);
+	while (slots > SK_NRXSEG) {
+		used = msk_newbuf(sc_if);
+		if (used == 0)
 			break;
+
+		slots -= used;
 	}
+	if_rxr_put(&sc_if->sk_cdata.sk_rx_ring, slots);
 }
 
 void
@@ -2127,7 +2126,6 @@ msk_stop(struct sk_if_softc *sc_if, int softonly)
 
 	sc_if->sk_cdata.sk_rx_prod = 0;
 	sc_if->sk_cdata.sk_rx_cons = 0;
-	sc_if->sk_cdata.sk_rx_cnt = 0;
 
 	for (i = 0; i < MSK_TX_RING_CNT; i++) {
 		if (sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf != NULL) {

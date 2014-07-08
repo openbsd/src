@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.153 2014/04/23 03:37:29 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.154 2014/07/08 05:35:18 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -964,8 +964,6 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	IFQ_SET_MAXLEN(&ifp->if_snd, RL_TX_QLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	m_clsetwms(ifp, MCLBYTES, 2, RL_RX_DESC_CNT);
-
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_TCPv4 |
 	    IFCAP_CSUM_UDPv4;
 
@@ -1083,7 +1081,7 @@ re_newbuf(struct rl_softc *sc)
 	u_int32_t	cmdstat;
 	int		error, idx;
 
-	m = MCLGETI(NULL, M_DONTWAIT, &sc->sc_arpcom.ac_if, MCLBYTES);
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
 	if (!m)
 		return (ENOBUFS);
 
@@ -1133,7 +1131,6 @@ re_newbuf(struct rl_softc *sc)
 	RL_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	sc->rl_ldata.rl_rx_prodidx = RL_NEXT_RX_DESC(sc, idx);
-	sc->rl_ldata.rl_rx_cnt++;
 
 	return (0);
 }
@@ -1168,9 +1165,9 @@ re_rx_list_init(struct rl_softc *sc)
 
 	sc->rl_ldata.rl_rx_prodidx = 0;
 	sc->rl_ldata.rl_rx_considx = 0;
-	sc->rl_ldata.rl_rx_cnt = 0;
 	sc->rl_head = sc->rl_tail = NULL;
 
+	if_rxr_init(&sc->rl_ldata.rl_rx_ring, 2, RL_RX_DESC_CNT);
 	re_rx_list_fill(sc);
 
 	return (0);
@@ -1179,10 +1176,14 @@ re_rx_list_init(struct rl_softc *sc)
 void
 re_rx_list_fill(struct rl_softc *sc)
 {
-	while (sc->rl_ldata.rl_rx_cnt < RL_RX_DESC_CNT) {
+	u_int slots;
+
+	for (slots = if_rxr_get(&sc->rl_ldata.rl_rx_ring, RL_RX_DESC_CNT);
+	    slots > 0; slots--) {
 		if (re_newbuf(sc) == ENOBUFS)
 			break;
 	}
+	if_rxr_put(&sc->rl_ldata.rl_rx_ring, slots);
 }
 
 /*
@@ -1202,7 +1203,8 @@ re_rxeof(struct rl_softc *sc)
 
 	ifp = &sc->sc_arpcom.ac_if;
 
-	for (i = sc->rl_ldata.rl_rx_considx; sc->rl_ldata.rl_rx_cnt > 0;
+	for (i = sc->rl_ldata.rl_rx_considx;
+	    if_rxr_inuse(&sc->rl_ldata.rl_rx_ring) > 0;
 	     i = RL_NEXT_RX_DESC(sc, i)) {
 		cur_rx = &sc->rl_ldata.rl_rx_list[i];
 		RL_RXDESCSYNC(sc, i,
@@ -1216,7 +1218,7 @@ re_rxeof(struct rl_softc *sc)
 		rxs = &sc->rl_ldata.rl_rxsoft[i];
 		m = rxs->rxs_mbuf;
 		rxs->rxs_mbuf = NULL;
-		sc->rl_ldata.rl_rx_cnt--;
+		if_rxr_put(&sc->rl_ldata.rl_rx_ring, 1);
 		rx = 1;
 
 		/* Invalidate the RX mbuf and unload its map */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.123 2014/02/05 05:59:42 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.124 2014/07/08 05:35:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2898,10 +2898,10 @@ struct bge_softc {
 	u_int16_t		bge_ev_saved_considx;
 	u_int16_t		bge_return_ring_cnt;
 	u_int32_t		bge_tx_prodidx;
+	struct if_rxring	bge_std_ring;
 	u_int16_t		bge_std;	/* current std ring head */
-	int			bge_std_cnt;
+	struct if_rxring	bge_jumbo_ring;
 	u_int16_t		bge_jumbo;	/* current jumo ring head */
-	int			bge_jumbo_cnt;
 	u_int32_t		bge_stat_ticks;
 	u_int32_t		bge_rx_coal_ticks;
 	u_int32_t		bge_tx_coal_ticks;

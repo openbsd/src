@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.15 2009/10/15 17:54:54 deraadt Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.16 2014/07/08 05:35:18 dlg Exp $	*/
 /*	$NetBSD: hmevar.h,v 1.6 2000/09/28 10:56:57 tsutsui Exp $	*/
 
 /*-
@@ -87,7 +87,8 @@ struct hme_softc {
 	struct hme_sxd sc_txd[HME_TX_RING_MAX], sc_rxd[HME_RX_RING_MAX];
 	bus_dmamap_t	sc_rxmap_spare;
 	int	sc_tx_cnt, sc_tx_prod, sc_tx_cons;
-	int	sc_rx_cnt, sc_rx_prod, sc_rx_cons;
+	struct if_rxring sc_rx_ring;
+	int	sc_rx_prod, sc_rx_cons;
 	u_int32_t sc_tcvr;
 };
 

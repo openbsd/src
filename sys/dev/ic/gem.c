@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.103 2014/04/22 15:52:05 naddy Exp $	*/
+/*	$OpenBSD: gem.c,v 1.104 2014/07/08 05:35:18 dlg Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -230,9 +230,6 @@ gem_config(struct gem_softc *sc)
 	ifp->if_watchdog = gem_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, GEM_NTXDESC - 1);
 	IFQ_SET_READY(&ifp->if_snd);
-
-	/* Hardware reads RX descriptors in multiples of four. */
-	m_clsetwms(ifp, MCLBYTES, 4, GEM_NRXDESC - 4);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
@@ -520,7 +517,7 @@ gem_rxdrain(struct gem_softc *sc)
 			rxs->rxs_mbuf = NULL;
 		}
 	}
-	sc->sc_rx_prod = sc->sc_rx_cons = sc->sc_rx_cnt = 0;
+	sc->sc_rx_prod = sc->sc_rx_cons = 0;
 }
 
 /*
@@ -697,6 +694,8 @@ gem_meminit(struct gem_softc *sc)
 		sc->sc_rxdescs[i].gd_flags = 0;
 		sc->sc_rxdescs[i].gd_addr = 0;
 	}
+	/* Hardware reads RX descriptors in multiples of four. */
+	if_rxr_init(&sc->sc_rx_ring, 4, GEM_NRXDESC - 4);
 	gem_fill_rx_ring(sc);
 
 	return (0);
@@ -957,7 +956,8 @@ gem_rint(struct gem_softc *sc)
 	u_int64_t rxstat;
 	int i, len;
 
-	for (i = sc->sc_rx_cons; sc->sc_rx_cnt > 0; i = GEM_NEXTRX(i)) {
+	for (i = sc->sc_rx_cons; if_rxr_inuse(&sc->sc_rx_ring) > 0;
+	    i = GEM_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
 
 		GEM_CDRXSYNC(sc, i,
@@ -977,7 +977,7 @@ gem_rint(struct gem_softc *sc)
 		m = rxs->rxs_mbuf;
 		rxs->rxs_mbuf = NULL;
 
-		sc->sc_rx_cnt--;
+		if_rxr_put(&sc->sc_rx_ring, 1);
 
 		if (rxstat & GEM_RD_BAD_CRC) {
 			ifp->if_ierrors++;
@@ -1031,10 +1031,14 @@ gem_rint(struct gem_softc *sc)
 void
 gem_fill_rx_ring(struct gem_softc *sc)
 {
-	while (sc->sc_rx_cnt < (GEM_NRXDESC - 4)) {
+	u_int slots;
+
+	for (slots = if_rxr_get(&sc->sc_rx_ring, GEM_NRXDESC - 4);
+	    slots > 0; slots--) {
 		if (gem_add_rxbuf(sc, sc->sc_rx_prod))
 			break;
 	}
+	if_rxr_put(&sc->sc_rx_ring, slots);
 }
 
 /*
@@ -1047,7 +1051,7 @@ gem_add_rxbuf(struct gem_softc *sc, int idx)
 	struct mbuf *m;
 	int error;
 
-	m = MCLGETI(NULL, M_DONTWAIT, &sc->sc_arpcom.ac_if, MCLBYTES);
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
 	if (!m)
 		return (ENOBUFS);
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
@@ -1073,7 +1077,6 @@ gem_add_rxbuf(struct gem_softc *sc, int idx)
 	GEM_INIT_RXDESC(sc, idx);
 
 	sc->sc_rx_prod = GEM_NEXTRX(sc->sc_rx_prod);
-	sc->sc_rx_cnt++;
 
 	return (0);
 }

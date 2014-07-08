@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.186 2014/06/18 11:09:58 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.187 2014/07/08 05:35:19 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -343,6 +343,9 @@ m_cltick(void *arg)
 {
 	extern int ticks;
 
+	if (ticks - m_clticks > 1)
+		mcllivelocks++;
+
 	m_clticks = ticks;
 	timeout_add(&m_cltick_tmo, 1);
 }
@@ -365,7 +368,6 @@ m_cldrop(struct ifnet *ifp, int pi)
 		 * decrease their cluster allocation high water marks.
 		 */
 		m_livelock = 1;
-		mcllivelocks++;
 		m_clticks = liveticks = ticks;
 	} else if (m_livelock && (ticks - liveticks) > 4)
 		m_livelock = 0;	/* Let the high water marks grow again */
