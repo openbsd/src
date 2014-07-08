@@ -1,4 +1,4 @@
-/*	$OpenBSD: biotest.c,v 1.2 2014/06/22 16:57:34 jsing Exp $	*/
+/*	$OpenBSD: biotest.c,v 1.3 2014/07/08 14:17:38 bcook Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -18,7 +18,7 @@
 #include <sys/types.h>
 
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 
 #include <netinet/in.h>
 
