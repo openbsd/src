@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat_backend.c,v 1.8 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: stat_backend.c,v 1.9 2014/07/08 10:22:15 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -49,6 +49,9 @@ stat_increment(const char *key, size_t count)
 {
 	struct stat_value	*value;
 
+	if (count == 0)
+		return;
+
 	value = stat_counter(count);
 
 	m_create(p_control, IMSG_STAT_INCREMENT, 0, 0, -1);
@@ -61,6 +64,9 @@ void
 stat_decrement(const char *key, size_t count)
 {
 	struct stat_value	*value;
+
+	if (count == 0)
+		return;
 
 	value = stat_counter(count);
 
