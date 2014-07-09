@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.62 2014/07/09 20:37:20 tedu Exp $ */
+/* $OpenBSD: apps.c,v 1.63 2014/07/09 21:02:35 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -137,9 +137,7 @@
 #include <openssl/engine.h>
 #endif
 
-#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
-#endif
 
 typedef struct {
 	const char *name;
@@ -797,7 +795,6 @@ load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 	if (format == FORMAT_ASN1) {
 		pkey = d2i_PUBKEY_bio(key, NULL);
 	}
-#ifndef OPENSSL_NO_RSA
 	else if (format == FORMAT_ASN1RSA) {
 		RSA *rsa;
 		rsa = d2i_RSAPublicKey_bio(key, NULL);
@@ -819,7 +816,6 @@ load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 		} else
 			pkey = NULL;
 	}
-#endif
 	else if (format == FORMAT_PEM) {
 		pkey = PEM_read_bio_PUBKEY(key, NULL, password_callback, &cb_data);
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.44 2014/06/28 04:39:41 deraadt Exp $ */
+/* $OpenBSD: req.c,v 1.45 2014/07/09 21:02:35 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,13 +81,9 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
-#endif
 
-#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
-#endif
 
 #define SECTION		"req"
 
@@ -383,9 +379,7 @@ bad:
 		BIO_printf(bio_err, " -keyout arg    file to send the key to\n");
 		BIO_printf(bio_err, " -newkey rsa:bits generate a new RSA key of 'bits' in size\n");
 		BIO_printf(bio_err, " -newkey dsa:file generate a new DSA key, parameters taken from CA in 'file'\n");
-#ifndef OPENSSL_NO_ECDSA
 		BIO_printf(bio_err, " -newkey ec:file generate a new EC key, parameters taken from CA in 'file'\n");
-#endif
 		BIO_printf(bio_err, " -[digest]      Digest to sign with (md5, sha1, md2, mdc2, md4)\n");
 		BIO_printf(bio_err, " -config file   request template file.\n");
 		BIO_printf(bio_err, " -subj arg      set or modify request subject\n");
@@ -848,11 +842,9 @@ loop:
 			goto end;
 		}
 		fprintf(stdout, "Modulus=");
-#ifndef OPENSSL_NO_RSA
 		if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA)
 			BN_print(out, tpubkey->pkey.rsa->n);
 		else
-#endif
 			fprintf(stdout, "Wrong Algorithm type");
 		EVP_PKEY_free(tpubkey);
 		fprintf(stdout, "\n");
@@ -1512,7 +1504,6 @@ set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
 		ERR_print_errors(err);
 		return NULL;
 	}
-#ifndef OPENSSL_NO_RSA
 	if ((*pkey_type == EVP_PKEY_RSA) && (keylen != -1)) {
 		if (EVP_PKEY_CTX_set_rsa_keygen_bits(gctx, keylen) <= 0) {
 			BIO_puts(err, "Error setting RSA keysize\n");
@@ -1521,7 +1512,6 @@ set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
 			return NULL;
 		}
 	}
-#endif
 
 	return gctx;
 }

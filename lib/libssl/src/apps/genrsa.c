@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.34 2014/07/09 09:06:58 bcook Exp $ */
+/* $OpenBSD: genrsa.c,v 1.35 2014/07/09 21:02:35 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,7 +64,6 @@
 #undef OPENSSL_NO_DEPRECATED
 #endif
 
-#ifndef OPENSSL_NO_RSA
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -288,4 +287,3 @@ genrsa_cb(int p, int n, BN_GENCB * cb)
 	(void) BIO_flush(cb->arg);
 	return 1;
 }
-#endif

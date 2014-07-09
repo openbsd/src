@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.21 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: rsautl.c,v 1.22 2014/07/09 21:02:35 tedu Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -58,7 +58,6 @@
 
 #include <openssl/opensslconf.h>
 
-#ifndef OPENSSL_NO_RSA
 
 #include <string.h>
 
@@ -343,4 +342,3 @@ usage()
 
 }
 
-#endif

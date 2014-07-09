@@ -1,4 +1,4 @@
-/* $OpenBSD: dhparam.c,v 1.30 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: dhparam.c,v 1.31 2014/07/09 21:02:35 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,9 +127,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
-#endif
 
 #define DEFBITS	512
 
@@ -153,9 +151,7 @@ dhparam_main(int argc, char **argv)
 {
 	DH *dh = NULL;
 	int i, badops = 0, text = 0;
-#ifndef OPENSSL_NO_DSA
 	int dsaparam = 0;
-#endif
 	BIO *in = NULL, *out = NULL;
 	int informat, outformat, check = 0, noout = 0, C = 0, ret = 1;
 	char *infile, *outfile, *prog;
@@ -204,10 +200,8 @@ dhparam_main(int argc, char **argv)
 			check = 1;
 		else if (strcmp(*argv, "-text") == 0)
 			text = 1;
-#ifndef OPENSSL_NO_DSA
 		else if (strcmp(*argv, "-dsaparam") == 0)
 			dsaparam = 1;
-#endif
 		else if (strcmp(*argv, "-C") == 0)
 			C = 1;
 		else if (strcmp(*argv, "-noout") == 0)
@@ -230,9 +224,7 @@ bad:
 		BIO_printf(bio_err, " -outform arg  output format - one of DER PEM\n");
 		BIO_printf(bio_err, " -in arg       input file\n");
 		BIO_printf(bio_err, " -out arg      output file\n");
-#ifndef OPENSSL_NO_DSA
 		BIO_printf(bio_err, " -dsaparam     read or generate DSA parameters, convert to DH\n");
-#endif
 		BIO_printf(bio_err, " -check        check the DH parameters\n");
 		BIO_printf(bio_err, " -text         print a text form of the DH parameters\n");
 		BIO_printf(bio_err, " -C            Output C code\n");
@@ -254,14 +246,12 @@ bad:
 	if (g && !num)
 		num = DEFBITS;
 
-#ifndef OPENSSL_NO_DSA
 	if (dsaparam) {
 		if (g) {
 			BIO_printf(bio_err, "generator may not be chosen for DSA parameters\n");
 			goto end;
 		}
 	} else
-#endif
 	{
 		/* DH parameters */
 		if (num && !g)
@@ -272,7 +262,6 @@ bad:
 
 		BN_GENCB cb;
 		BN_GENCB_set(&cb, dh_cb, bio_err);
-#ifndef OPENSSL_NO_DSA
 		if (dsaparam) {
 			DSA *dsa = DSA_new();
 
@@ -291,7 +280,6 @@ bad:
 				goto end;
 			}
 		} else
-#endif
 		{
 			dh = DH_new();
 			BIO_printf(bio_err, "Generating DH parameters, %d bit long safe prime, generator %d\n", num, g);
@@ -321,7 +309,6 @@ bad:
 			BIO_printf(bio_err, "bad input format specified\n");
 			goto end;
 		}
-#ifndef OPENSSL_NO_DSA
 		if (dsaparam) {
 			DSA *dsa;
 
@@ -342,7 +329,6 @@ bad:
 				goto end;
 			}
 		} else
-#endif
 		{
 			if (informat == FORMAT_ASN1)
 				dh = d2i_DHparams_bio(in, NULL);

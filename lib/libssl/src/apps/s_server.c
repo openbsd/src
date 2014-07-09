@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.55 2014/07/09 20:59:41 tedu Exp $ */
+/* $OpenBSD: s_server.c,v 1.56 2014/07/09 21:02:35 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -173,16 +173,12 @@
 #include <openssl/dh.h>
 #endif
 
-#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
-#endif
 
 #include "s_apps.h"
 #include "timeouts.h"
 
-#ifndef OPENSSL_NO_RSA
 static RSA *tmp_rsa_cb(SSL * s, int is_export, int keylength);
-#endif
 static int sv_body(char *hostname, int s, unsigned char *context);
 static int www_body(char *hostname, int s, unsigned char *context);
 static void close_accept_socket(void);
@@ -406,11 +402,9 @@ sv_usage(void)
 	BIO_printf(bio_err, " -dpass arg    - second private key file pass phrase source\n");
 	BIO_printf(bio_err, " -dhparam arg  - DH parameter file to use, in cert file if not specified\n");
 	BIO_printf(bio_err, "                 or a default set of parameters is used\n");
-#ifndef OPENSSL_NO_ECDH
 	BIO_printf(bio_err, " -named_curve arg  - Elliptic curve name to use for ephemeral ECDH keys.\n" \
 	    "                 Use \"openssl ecparam -list_curves\" for all names\n" \
 	    "                 (default is nistp256).\n");
-#endif
 	BIO_printf(bio_err, " -nbio         - Run with non-blocking IO\n");
 	BIO_printf(bio_err, " -nbio_test    - test with the non-blocking test bio\n");
 	BIO_printf(bio_err, " -crlf         - convert LF from terminal into CRLF\n");
@@ -444,9 +438,7 @@ sv_usage(void)
 #ifndef OPENSSL_NO_DH
 	BIO_printf(bio_err, " -no_dhe       - Disable ephemeral DH\n");
 #endif
-#ifndef OPENSSL_NO_ECDH
 	BIO_printf(bio_err, " -no_ecdhe     - Disable ephemeral ECDH\n");
-#endif
 	BIO_printf(bio_err, " -bugs         - Turn on SSL bug compatibility\n");
 	BIO_printf(bio_err, " -www          - Respond to a 'GET /' with a status page\n");
 	BIO_printf(bio_err, " -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
@@ -681,9 +673,7 @@ s_server_main(int argc, char *argv[])
 	char *CApath = NULL, *CAfile = NULL;
 	unsigned char *context = NULL;
 	char *dhfile = NULL;
-#ifndef OPENSSL_NO_ECDH
 	char *named_curve = NULL;
-#endif
 	int badop = 0, bugs = 0;
 	int ret = 1;
 	int off = 0;
@@ -783,13 +773,11 @@ s_server_main(int argc, char *argv[])
 				goto bad;
 			dhfile = *(++argv);
 		}
-#ifndef OPENSSL_NO_ECDH
 		else if (strcmp(*argv, "-named_curve") == 0) {
 			if (--argc < 1)
 				goto bad;
 			named_curve = *(++argv);
 		}
-#endif
 		else if (strcmp(*argv, "-dcertform") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -1123,9 +1111,7 @@ bad:
 				bio_s_out = BIO_new_fp(stdout, BIO_NOCLOSE);
 		}
 	}
-#if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECDSA)
 	if (nocert)
-#endif
 	{
 		s_cert_file = NULL;
 		s_key_file = NULL;
@@ -1286,7 +1272,6 @@ bad:
 	}
 #endif
 
-#ifndef OPENSSL_NO_ECDH
 	if (!no_ecdhe) {
 		EC_KEY *ecdh = NULL;
 
@@ -1324,7 +1309,6 @@ bad:
 #endif
 		EC_KEY_free(ecdh);
 	}
-#endif
 
 	if (!set_cert_key_stuff(ctx, s_cert, s_key))
 		goto end;
@@ -1336,7 +1320,6 @@ bad:
 		if (!set_cert_key_stuff(ctx, s_dcert, s_dkey))
 			goto end;
 	}
-#ifndef OPENSSL_NO_RSA
 	if (!no_tmp_rsa) {
 		SSL_CTX_set_tmp_rsa_callback(ctx, tmp_rsa_cb);
 #ifndef OPENSSL_NO_TLSEXT
@@ -1344,7 +1327,6 @@ bad:
 			SSL_CTX_set_tmp_rsa_callback(ctx2, tmp_rsa_cb);
 #endif
 	}
-#endif
 
 #ifndef OPENSSL_NO_PSK
 	if (psk_key != NULL) {
@@ -2213,7 +2195,6 @@ err:
 	return (ret);
 }
 
-#ifndef OPENSSL_NO_RSA
 static RSA *
 tmp_rsa_cb(SSL * s, int is_export, int keylength)
 {
@@ -2241,7 +2222,6 @@ tmp_rsa_cb(SSL * s, int is_export, int keylength)
 	}
 	return (rsa_tmp);
 }
-#endif
 
 #define MAX_SESSION_ID_ATTEMPTS 10
 static int 

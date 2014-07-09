@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.49 2014/06/28 04:39:41 deraadt Exp $ */
+/* $OpenBSD: speed.c,v 1.50 2014/07/09 21:02:35 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,15 +116,9 @@
 #ifndef OPENSSL_NO_DES
 #include <openssl/des.h>
 #endif
-#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
-#endif
-#ifndef OPENSSL_NO_ECDH
 #include <openssl/ecdh.h>
-#endif
-#ifndef OPENSSL_NO_ECDSA
 #include <openssl/ecdsa.h>
-#endif
 #ifndef OPENSSL_NO_HMAC
 #include <openssl/hmac.h>
 #endif
@@ -149,9 +143,7 @@
 #ifndef OPENSSL_NO_RC5
 #include <openssl/rc5.h>
 #endif
-#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
-#endif
 #ifndef OPENSSL_NO_RIPEMD
 #include <openssl/ripemd.h>
 #endif
@@ -162,12 +154,8 @@
 #include <openssl/whrlpool.h>
 #endif
 
-#ifndef OPENSSL_NO_DSA
 #include "./testdsa.h"
-#endif
-#ifndef OPENSSL_NO_RSA
 #include "./testrsa.h"
-#endif
 
 #define BUFSIZE	((long)1024*8+1)
 int run = 0;
@@ -201,18 +189,10 @@ static const char *names[ALGOR_NUM] = {
 "aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash"};
 static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM] = {16, 64, 256, 1024, 8 * 1024};
-#ifndef OPENSSL_NO_RSA
 static double rsa_results[RSA_NUM][2];
-#endif
-#ifndef OPENSSL_NO_DSA
 static double dsa_results[DSA_NUM][2];
-#endif
-#ifndef OPENSSL_NO_ECDSA
 static double ecdsa_results[EC_NUM][2];
-#endif
-#ifndef OPENSSL_NO_ECDH
 static double ecdh_results[EC_NUM][1];
-#endif
 
 static void sig_done(int sig);
 
@@ -234,7 +214,6 @@ Time_F(int s)
 }
 
 
-#ifndef OPENSSL_NO_ECDH
 static const int KDF1_SHA1_len = 20;
 static void *
 KDF1_SHA1(const void *in, size_t inlen, void *out, size_t * outlen)
@@ -249,7 +228,6 @@ KDF1_SHA1(const void *in, size_t inlen, void *out, size_t * outlen)
 	return NULL;
 #endif				/* OPENSSL_NO_SHA */
 }
-#endif				/* OPENSSL_NO_ECDH */
 
 
 int speed_main(int, char **);
@@ -261,12 +239,8 @@ speed_main(int argc, char **argv)
 	int mret = 1;
 	long count = 0, save_count = 0;
 	int i, j, k;
-#if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA)
 	long rsa_count;
-#endif
-#ifndef OPENSSL_NO_RSA
 	unsigned rsa_num;
-#endif
 	unsigned char md[EVP_MAX_MD_SIZE];
 #ifndef OPENSSL_NO_MDC2
 	unsigned char mdc2[MDC2_DIGEST_LENGTH];
@@ -414,7 +388,6 @@ speed_main(int argc, char **argv)
 #define R_EC_B409    14
 #define R_EC_B571    15
 
-#ifndef OPENSSL_NO_RSA
 	RSA *rsa_key[RSA_NUM];
 	long rsa_c[RSA_NUM][2];
 	static unsigned int rsa_bits[RSA_NUM] = {512, 1024, 2048, 4096};
@@ -423,12 +396,9 @@ speed_main(int argc, char **argv)
 	static int rsa_data_length[RSA_NUM] = {
 		sizeof(test512), sizeof(test1024),
 	sizeof(test2048), sizeof(test4096)};
-#endif
-#ifndef OPENSSL_NO_DSA
 	DSA *dsa_key[DSA_NUM];
 	long dsa_c[DSA_NUM][2];
 	static unsigned int dsa_bits[DSA_NUM] = {512, 1024, 2048};
-#endif
 #ifndef OPENSSL_NO_EC
 	/*
 	 * We only test over the following curves as they are representative,
@@ -487,30 +457,22 @@ speed_main(int argc, char **argv)
 
 #endif
 
-#ifndef OPENSSL_NO_ECDSA
 	unsigned char ecdsasig[256];
 	unsigned int ecdsasiglen;
 	EC_KEY *ecdsa[EC_NUM];
 	long ecdsa_c[EC_NUM][2];
-#endif
 
-#ifndef OPENSSL_NO_ECDH
 	EC_KEY *ecdh_a[EC_NUM], *ecdh_b[EC_NUM];
 	unsigned char secret_a[MAX_ECDH_SIZE], secret_b[MAX_ECDH_SIZE];
 	int secret_size_a, secret_size_b;
 	int ecdh_checks = 0;
 	int secret_idx = 0;
 	long ecdh_c[EC_NUM][2];
-#endif
 
 	int rsa_doit[RSA_NUM];
 	int dsa_doit[DSA_NUM];
-#ifndef OPENSSL_NO_ECDSA
 	int ecdsa_doit[EC_NUM];
-#endif
-#ifndef OPENSSL_NO_ECDH
 	int ecdh_doit[EC_NUM];
-#endif
 	int doit[ALGOR_NUM];
 	int pr_header = 0;
 	const EVP_CIPHER *evp_cipher = NULL;
@@ -524,28 +486,20 @@ speed_main(int argc, char **argv)
 #endif
 
 	memset(results, 0, sizeof(results));
-#ifndef OPENSSL_NO_DSA
 	memset(dsa_key, 0, sizeof(dsa_key));
-#endif
-#ifndef OPENSSL_NO_ECDSA
 	for (i = 0; i < EC_NUM; i++)
 		ecdsa[i] = NULL;
-#endif
-#ifndef OPENSSL_NO_ECDH
 	for (i = 0; i < EC_NUM; i++) {
 		ecdh_a[i] = NULL;
 		ecdh_b[i] = NULL;
 	}
-#endif
 
 	if (!load_config(bio_err, NULL))
 		goto end;
 
-#ifndef OPENSSL_NO_RSA
 	memset(rsa_key, 0, sizeof(rsa_key));
 	for (i = 0; i < RSA_NUM; i++)
 		rsa_key[i] = NULL;
-#endif
 
 	if ((buf = malloc((int) BUFSIZE)) == NULL) {
 		BIO_printf(bio_err, "out of memory\n");
@@ -565,14 +519,10 @@ speed_main(int argc, char **argv)
 		rsa_doit[i] = 0;
 	for (i = 0; i < DSA_NUM; i++)
 		dsa_doit[i] = 0;
-#ifndef OPENSSL_NO_ECDSA
 	for (i = 0; i < EC_NUM; i++)
 		ecdsa_doit[i] = 0;
-#endif
-#ifndef OPENSSL_NO_ECDH
 	for (i = 0; i < EC_NUM; i++)
 		ecdh_doit[i] = 0;
-#endif
 
 
 	j = 0;
@@ -731,7 +681,6 @@ speed_main(int argc, char **argv)
 			doit[D_CBC_256_CML] = 1;
 		else
 #endif
-#ifndef OPENSSL_NO_RSA
 #if 0				/* was: #ifdef RSAref */
 		if (strcmp(*argv, "rsaref") == 0) {
 			RSA_set_default_openssl_method(RSA_PKCS1_RSAref());
@@ -744,7 +693,6 @@ speed_main(int argc, char **argv)
 			j--;
 		} else
 #endif
-#endif				/* !OPENSSL_NO_RSA */
 		if (strcmp(*argv, "dsa512") == 0)
 			dsa_doit[R_DSA_512] = 2;
 		else if (strcmp(*argv, "dsa1024") == 0)
@@ -821,22 +769,17 @@ speed_main(int argc, char **argv)
 			doit[D_CBC_256_CML] = 1;
 		} else
 #endif
-#ifndef OPENSSL_NO_RSA
 		if (strcmp(*argv, "rsa") == 0) {
 			rsa_doit[R_RSA_512] = 1;
 			rsa_doit[R_RSA_1024] = 1;
 			rsa_doit[R_RSA_2048] = 1;
 			rsa_doit[R_RSA_4096] = 1;
 		} else
-#endif
-#ifndef OPENSSL_NO_DSA
 		if (strcmp(*argv, "dsa") == 0) {
 			dsa_doit[R_DSA_512] = 1;
 			dsa_doit[R_DSA_1024] = 1;
 			dsa_doit[R_DSA_2048] = 1;
 		} else
-#endif
-#ifndef OPENSSL_NO_ECDSA
 		if (strcmp(*argv, "ecdsap160") == 0)
 			ecdsa_doit[R_EC_P160] = 2;
 		else if (strcmp(*argv, "ecdsap192") == 0)
@@ -873,8 +816,6 @@ speed_main(int argc, char **argv)
 			for (i = 0; i < EC_NUM; i++)
 				ecdsa_doit[i] = 1;
 		} else
-#endif
-#ifndef OPENSSL_NO_ECDH
 		if (strcmp(*argv, "ecdhp160") == 0)
 			ecdh_doit[R_EC_P160] = 2;
 		else if (strcmp(*argv, "ecdhp192") == 0)
@@ -911,7 +852,6 @@ speed_main(int argc, char **argv)
 			for (i = 0; i < EC_NUM; i++)
 				ecdh_doit[i] = 1;
 		} else
-#endif
 		{
 			BIO_printf(bio_err, "Error: bad option or value\n");
 			BIO_printf(bio_err, "\n");
@@ -982,25 +922,17 @@ speed_main(int argc, char **argv)
 #endif
 			BIO_printf(bio_err, "\n");
 
-#ifndef OPENSSL_NO_RSA
 			BIO_printf(bio_err, "rsa512   rsa1024  rsa2048  rsa4096\n");
-#endif
 
-#ifndef OPENSSL_NO_DSA
 			BIO_printf(bio_err, "dsa512   dsa1024  dsa2048\n");
-#endif
-#ifndef OPENSSL_NO_ECDSA
 			BIO_printf(bio_err, "ecdsap160 ecdsap192 ecdsap224 ecdsap256 ecdsap384 ecdsap521\n");
 			BIO_printf(bio_err, "ecdsak163 ecdsak233 ecdsak283 ecdsak409 ecdsak571\n");
 			BIO_printf(bio_err, "ecdsab163 ecdsab233 ecdsab283 ecdsab409 ecdsab571\n");
 			BIO_printf(bio_err, "ecdsa\n");
-#endif
-#ifndef OPENSSL_NO_ECDH
 			BIO_printf(bio_err, "ecdhp160  ecdhp192  ecdhp224  ecdhp256  ecdhp384  ecdhp521\n");
 			BIO_printf(bio_err, "ecdhk163  ecdhk233  ecdhk283  ecdhk409  ecdhk571\n");
 			BIO_printf(bio_err, "ecdhb163  ecdhb233  ecdhb283  ecdhb409  ecdhb571\n");
 			BIO_printf(bio_err, "ecdh\n");
-#endif
 
 #ifndef OPENSSL_NO_IDEA
 			BIO_printf(bio_err, "idea     ");
@@ -1017,9 +949,7 @@ speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_CAMELLIA
 			BIO_printf(bio_err, "camellia ");
 #endif
-#ifndef OPENSSL_NO_RSA
 			BIO_printf(bio_err, "rsa      ");
-#endif
 #ifndef OPENSSL_NO_BF
 			BIO_printf(bio_err, "blowfish");
 #endif
@@ -1061,14 +991,10 @@ speed_main(int argc, char **argv)
 			rsa_doit[i] = 1;
 		for (i = 0; i < DSA_NUM; i++)
 			dsa_doit[i] = 1;
-#ifndef OPENSSL_NO_ECDSA
 		for (i = 0; i < EC_NUM; i++)
 			ecdsa_doit[i] = 1;
-#endif
-#ifndef OPENSSL_NO_ECDH
 		for (i = 0; i < EC_NUM; i++)
 			ecdh_doit[i] = 1;
-#endif
 	}
 	for (i = 0; i < ALGOR_NUM; i++)
 		if (doit[i])
@@ -1077,7 +1003,6 @@ speed_main(int argc, char **argv)
 	if (usertime == 0 && !mr)
 		BIO_printf(bio_err, "You have chosen to measure elapsed time instead of user CPU time.\n");
 
-#ifndef OPENSSL_NO_RSA
 	for (i = 0; i < RSA_NUM; i++) {
 		const unsigned char *p;
 
@@ -1097,13 +1022,10 @@ speed_main(int argc, char **argv)
 		}
 #endif
 	}
-#endif
 
-#ifndef OPENSSL_NO_DSA
 	dsa_key[0] = get_dsa512();
 	dsa_key[1] = get_dsa1024();
 	dsa_key[2] = get_dsa2048();
-#endif
 
 #ifndef OPENSSL_NO_DES
 	DES_set_key_unchecked(&key, &sch);
@@ -1138,9 +1060,7 @@ speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_CAST
 	CAST_set_key(&cast_ks, 16, key16);
 #endif
-#ifndef OPENSSL_NO_RSA
 	memset(rsa_c, 0, sizeof(rsa_c));
-#endif
 #define COND(c)	(run && count<0x7fffffff)
 #define COUNT(d) (count)
 	signal(SIGALRM, sig_done);
@@ -1555,7 +1475,6 @@ speed_main(int argc, char **argv)
 		}
 	}
 	RAND_pseudo_bytes(buf, 36);
-#ifndef OPENSSL_NO_RSA
 	for (j = 0; j < RSA_NUM; j++) {
 		int ret;
 		if (!rsa_doit[j])
@@ -1626,10 +1545,8 @@ speed_main(int argc, char **argv)
 				rsa_doit[j] = 0;
 		}
 	}
-#endif
 
 	RAND_pseudo_bytes(buf, 20);
-#ifndef OPENSSL_NO_DSA
 	for (j = 0; j < DSA_NUM; j++) {
 		unsigned int kk;
 		int ret;
@@ -1703,9 +1620,7 @@ speed_main(int argc, char **argv)
 				dsa_doit[j] = 0;
 		}
 	}
-#endif
 
-#ifndef OPENSSL_NO_ECDSA
 	for (j = 0; j < EC_NUM; j++) {
 		int ret;
 
@@ -1792,9 +1707,7 @@ speed_main(int argc, char **argv)
 			}
 		}
 	}
-#endif
 
-#ifndef OPENSSL_NO_ECDH
 	for (j = 0; j < EC_NUM; j++) {
 		if (!ecdh_doit[j])
 			continue;
@@ -1877,7 +1790,6 @@ speed_main(int argc, char **argv)
 				ecdh_doit[j] = 0;
 		}
 	}
-#endif
 show_res:
 	if (!mr) {
 		fprintf(stdout, "%s\n", SSLeay_version(SSLEAY_VERSION));
@@ -1927,7 +1839,6 @@ show_res:
 		}
 		fprintf(stdout, "\n");
 	}
-#ifndef OPENSSL_NO_RSA
 	j = 1;
 	for (k = 0; k < RSA_NUM; k++) {
 		if (!rsa_doit[k])
@@ -1945,8 +1856,6 @@ show_res:
 			    rsa_bits[k], rsa_results[k][0], rsa_results[k][1],
 			    1.0 / rsa_results[k][0], 1.0 / rsa_results[k][1]);
 	}
-#endif
-#ifndef OPENSSL_NO_DSA
 	j = 1;
 	for (k = 0; k < DSA_NUM; k++) {
 		if (!dsa_doit[k])
@@ -1963,8 +1872,6 @@ show_res:
 			    dsa_bits[k], dsa_results[k][0], dsa_results[k][1],
 			    1.0 / dsa_results[k][0], 1.0 / dsa_results[k][1]);
 	}
-#endif
-#ifndef OPENSSL_NO_ECDSA
 	j = 1;
 	for (k = 0; k < EC_NUM; k++) {
 		if (!ecdsa_doit[k])
@@ -1985,10 +1892,8 @@ show_res:
 			    ecdsa_results[k][0], ecdsa_results[k][1],
 			    1.0 / ecdsa_results[k][0], 1.0 / ecdsa_results[k][1]);
 	}
-#endif
 
 
-#ifndef OPENSSL_NO_ECDH
 	j = 1;
 	for (k = 0; k < EC_NUM; k++) {
 		if (!ecdh_doit[k])
@@ -2008,7 +1913,6 @@ show_res:
 			    test_curves_names[k],
 			    ecdh_results[k][0], 1.0 / ecdh_results[k][0]);
 	}
-#endif
 
 	mret = 0;
 
@@ -2016,30 +1920,22 @@ end:
 	ERR_print_errors(bio_err);
 	free(buf);
 	free(buf2);
-#ifndef OPENSSL_NO_RSA
 	for (i = 0; i < RSA_NUM; i++)
 		if (rsa_key[i] != NULL)
 			RSA_free(rsa_key[i]);
-#endif
-#ifndef OPENSSL_NO_DSA
 	for (i = 0; i < DSA_NUM; i++)
 		if (dsa_key[i] != NULL)
 			DSA_free(dsa_key[i]);
-#endif
 
-#ifndef OPENSSL_NO_ECDSA
 	for (i = 0; i < EC_NUM; i++)
 		if (ecdsa[i] != NULL)
 			EC_KEY_free(ecdsa[i]);
-#endif
-#ifndef OPENSSL_NO_ECDH
 	for (i = 0; i < EC_NUM; i++) {
 		if (ecdh_a[i] != NULL)
 			EC_KEY_free(ecdh_a[i]);
 		if (ecdh_b[i] != NULL)
 			EC_KEY_free(ecdh_b[i]);
 	}
-#endif
 
 	
 	return (mret);
@@ -2204,7 +2100,6 @@ do_multi(int multi)
 				else
 					rsa_results[k][1] = d;
 			}
-#ifndef OPENSSL_NO_DSA
 			else if (!strncmp(buf, "+F3:", 4)) {
 				int k;
 				double d;
@@ -2226,8 +2121,6 @@ do_multi(int multi)
 				else
 					dsa_results[k][1] = d;
 			}
-#endif
-#ifndef OPENSSL_NO_ECDSA
 			else if (!strncmp(buf, "+F4:", 4)) {
 				int k;
 				double d;
@@ -2249,9 +2142,7 @@ do_multi(int multi)
 				else
 					ecdsa_results[k][1] = d;
 			}
-#endif
 
-#ifndef OPENSSL_NO_ECDH
 			else if (!strncmp(buf, "+F5:", 4)) {
 				int k;
 				double d;
@@ -2268,7 +2159,6 @@ do_multi(int multi)
 					ecdh_results[k][0] = d;
 
 			}
-#endif
 
 			else if (!strncmp(buf, "+H:", 3)) {
 			} else

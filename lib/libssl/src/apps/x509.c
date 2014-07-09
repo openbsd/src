@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.46 2014/06/28 04:39:41 deraadt Exp $ */
+/* $OpenBSD: x509.c,v 1.47 2014/07/09 21:02:35 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,13 +74,9 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
-#endif
 
-#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
-#endif
 
 #define	POSTFIX	".srl"
 #define DEF_DAYS	30
@@ -713,16 +709,12 @@ bad:
 					goto end;
 				}
 				BIO_printf(STDout, "Modulus=");
-#ifndef OPENSSL_NO_RSA
 				if (pkey->type == EVP_PKEY_RSA)
 					BN_print(STDout, pkey->pkey.rsa->n);
 				else
-#endif
-#ifndef OPENSSL_NO_DSA
 						if (pkey->type == EVP_PKEY_DSA)
 							BN_print(STDout, pkey->pkey.dsa->pub_key);
 				else
-#endif
 						BIO_printf(STDout, "Wrong Algorithm type");
 				BIO_printf(STDout, "\n");
 				EVP_PKEY_free(pkey);
