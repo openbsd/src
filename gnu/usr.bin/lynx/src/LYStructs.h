@@ -1,5 +1,5 @@
 /*
- * $LynxId: LYStructs.h,v 1.29 2009/02/02 19:56:38 tom Exp $
+ * $LynxId: LYStructs.h,v 1.31 2013/10/03 08:56:47 tom Exp $
  */
 #ifndef LYSTRUCTS_H
 #define LYSTRUCTS_H
@@ -26,8 +26,6 @@ extern "C" {
 	char *lname;
 	char *target;
 	char *l_hightext;
-	char *l_hightext2;
-	int l_hightext2_offset;
 	BOOL inUnderline;	/* TRUE when this link is in underlined context. */
 	int lx;
 	int ly;
@@ -95,20 +93,21 @@ extern "C" {
     typedef struct _lynx_list_item_type {
 	struct _lynx_list_item_type *next;	/* the next item in the linked list */
 	char *name;		/* a description of the item */
+	char *menu_name;	/* menu-name for EXTERNAL / EXTERNAL_MENU */
 	char *command;		/* the command to execute */
-	int always_enabled;	/* a constant to tell whether or
+	BOOL always_enabled;	/* a constant to tell whether or
 				 * not to disable the printer
 				 * when the no_print option is on
 				 */
 	/* HTML lists: */
-	BOOL override_primary_action;	/* whether primary action will be
-					 * overridden by this - e.g. this
-					 * allows invoking user's MUA when
-					 * mailto:  link is activated using
-					 * normal "activate" command.  This
-					 * field is only examined by code that
-					 * handles EXTERNAL command.
-					 */
+	BOOL override_action;	/* whether primary action will be
+				 * overridden by this - e.g. this
+				 * allows invoking user's MUA when
+				 * mailto:  link is activated using
+				 * normal "activate" command.  This
+				 * field is only examined by code that
+				 * handles EXTERNAL command.
+				 */
 	/* PRINTER lists: */
 	int pagelen;		/* an integer to store the printer's
 				 * page length

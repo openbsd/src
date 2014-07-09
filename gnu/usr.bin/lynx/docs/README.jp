@@ -47,10 +47,6 @@ configure オプション
         前章 (3) の処理を有効にします。
         このマクロは userdefs.h において標準で定義されています。
 
-  ・CONV_JISX0201KANA_JISX0208KANA
-        いわゆる半角カナを全角に変換して表示します。
-        このマクロは userdefs.h において標準で定義されています。
-
   ・KANJI_CODE_OVERRIDE
         文書の文字コードをユーザが指定できるようにする処理を有効に
         します。この指定は、META 要素、HTTP の応答、ASSUME_CHARSET 
@@ -131,3 +127,4 @@ KANJI_CODE_OVERRIDE を定義してコンパイルした Lynx をお使いください。
 後者の場合は残念ですがあきらめてください。
 ----
 2000/3/28 Takeshi Hataguchi <patakuti@t3.rim.or.jp>
+---- $LynxId: README.jp,v 1.2 2011/06/06 00:35:13 tom Exp $

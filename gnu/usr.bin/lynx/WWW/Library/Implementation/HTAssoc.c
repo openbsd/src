@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTAssoc.c,v 1.9 2009/01/03 01:59:16 tom Exp $
+ * $LynxId: HTAssoc.c,v 1.10 2010/04/29 09:34:03 tom Exp $
  *
  * MODULE							HTAssoc.c
  *	    ASSOCIATION LIST FOR STORING NAME-VALUE PAIRS.
@@ -54,6 +54,8 @@ void HTAssocList_add(HTAssocList *alist,
     if (alist) {
 	if (!(assoc = (HTAssoc *) malloc(sizeof(HTAssoc))))
 	      outofmem(__FILE__, "HTAssoc_add");
+
+	assert(assoc != NULL);
 
 	assoc->name = NULL;
 	assoc->value = NULL;

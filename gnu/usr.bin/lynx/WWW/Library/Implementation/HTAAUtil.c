@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTAAUtil.c,v 1.27 2008/12/31 22:04:39 tom Exp $
+ * $LynxId: HTAAUtil.c,v 1.35 2013/05/03 20:32:37 tom Exp $
  *
  * MODULE							HTAAUtil.c
  *		COMMON PARTS OF ACCESS AUTHORIZATION MODULE
@@ -77,19 +77,19 @@ HTAAScheme HTAAScheme_enum(const char *name)
     StrAllocCopy(upcased, name);
     LYUpperCase(upcased);
 
-    if (!strncmp(upcased, "NONE", 4)) {
+    if (!StrNCmp(upcased, "NONE", 4)) {
 	FREE(upcased);
 	return HTAA_NONE;
-    } else if (!strncmp(upcased, "BASIC", 5)) {
+    } else if (!StrNCmp(upcased, "BASIC", 5)) {
 	FREE(upcased);
 	return HTAA_BASIC;
-    } else if (!strncmp(upcased, "PUBKEY", 6)) {
+    } else if (!StrNCmp(upcased, "PUBKEY", 6)) {
 	FREE(upcased);
 	return HTAA_PUBKEY;
-    } else if (!strncmp(upcased, "KERBEROSV4", 10)) {
+    } else if (!StrNCmp(upcased, "KERBEROSV4", 10)) {
 	FREE(upcased);
 	return HTAA_KERBEROS_V4;
-    } else if (!strncmp(upcased, "KERBEROSV5", 10)) {
+    } else if (!StrNCmp(upcased, "KERBEROSV5", 10)) {
 	FREE(upcased);
 	return HTAA_KERBEROS_V5;
     } else {
@@ -234,7 +234,7 @@ BOOL HTAA_templateMatch(const char *ctemplate,
 	return YES;		/* Equally long equal strings */
     else if ('*' == *p) {	/* Wildcard */
 	p++;			/* Skip wildcard character */
-	m = strlen(q) - strlen(p);	/* Amount to match to wildcard */
+	m = (int) (strlen(q) - strlen(p));	/* Amount to match to wildcard */
 	if (m < 0)
 	    return NO;		/* No match, filename too short */
 	else {			/* Skip the matched characters and compare */
@@ -284,7 +284,7 @@ BOOL HTAA_templateCaseMatch(const char *ctemplate,
 	return YES;		/* Equally long equal strings */
     else if ('*' == *p) {	/* Wildcard */
 	p++;			/* Skip wildcard character */
-	m = strlen(q) - strlen(p);	/* Amount to match to wildcard */
+	m = (int) (strlen(q) - strlen(p));	/* Amount to match to wildcard */
 	if (m < 0)
 	    return NO;		/* No match, filename too short */
 	else {			/* Skip the matched characters and compare */
@@ -470,7 +470,7 @@ static void FreeHTAAUtil(void)
  *			proceed to read from socket.
  */
 void HTAA_setupReader(char *start_of_headers,
-		      int length,
+		      size_t length,
 		      int soc)
 {
     if (!start_of_headers)
@@ -480,20 +480,22 @@ void HTAA_setupReader(char *start_of_headers,
 	if (buffer_length < BUFFER_SIZE)	/* would fall below BUFFER_SIZE? */
 	    buffer_length = BUFFER_SIZE;
 	buffer = (char *) malloc((size_t) (sizeof(char) * (buffer_length + 1)));
-    } else if (length > (int) buffer_length) {	/* need more space? */
+    } else if (length > buffer_length) {	/* need more space? */
 	buffer_length = length;
 	buffer = (char *) realloc((char *) buffer,
 				  (size_t) (sizeof(char) * (buffer_length + 1)));
     }
     if (buffer == NULL)
 	outofmem(__FILE__, "HTAA_setupReader");
+
+    assert(buffer != NULL);
+
 #ifdef LY_FIND_LEAKS
     atexit(FreeHTAAUtil);
 #endif
     start_pointer = buffer;
     if (start_of_headers) {
-	strncpy(buffer, start_of_headers, length);
-	buffer[length] = '\0';
+	LYStrNCpy(buffer, start_of_headers, length);
 	end_pointer = buffer + length;
     } else {
 	*start_pointer = '\0';
@@ -554,6 +556,8 @@ char *HTAA_getUnfoldedLine(void)
 		in_soc = -1;
 		return line;
 	    }
+	    if (count > (int) buffer_length)
+		count = (int) buffer_length;
 	    start_pointer = buffer;
 	    end_pointer = buffer + count;
 	    *end_pointer = '\0';

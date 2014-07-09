@@ -1,4 +1,4 @@
-/* $LynxId: LYShowInfo.c,v 1.69 2009/01/19 23:42:23 tom Exp $ */
+/* $LynxId: LYShowInfo.c,v 1.76 2013/10/03 01:01:34 tom Exp $ */
 #include <HTUtils.h>
 #include <HTFile.h>
 #include <HTParse.h>
@@ -29,7 +29,7 @@
 #define END_DL()       fprintf(fp0, "\n</dl>\n")
 
 #define ADD_SS(label,value)       dt_String(fp0, label, value)
-#define ADD_NN(label,value,units) dt_Number(fp0, label, value, units)
+#define ADD_NN(label,value,units) dt_Number(fp0, label, (long) value, units)
 
 static int label_columns;
 
@@ -61,7 +61,7 @@ const char *LYVersionDate(void)
 {
     static char temp[LYNX_DATE_LEN + 1];
 
-    LYstrncpy(temp, &LYNX_DATE[LYNX_DATE_OFF], LYNX_DATE_LEN);
+    LYStrNCpy(temp, &LYNX_DATE[LYNX_DATE_OFF], LYNX_DATE_LEN);
     return temp;
 }
 
@@ -104,6 +104,25 @@ static void dt_Number(FILE *fp0,
     ADD_SS(label, value);
     FREE(value);
     FREE(buffer);
+}
+
+static void dt_URL(FILE *fp0, const char *address)
+{
+    ADD_SS(gettext("URL:"), address);
+
+    /*
+     * If the display handles UTF-8, and if the address uses %xy formatted
+     * characters, show the decoded URL on the next line.
+     */
+    if (LYCharSet_UC[current_char_set].enc == UCT_ENC_UTF8) {
+	char *working = 0;
+
+	StrAllocCopy(working, address);
+	if (strcmp(HTUnEscape(working), address)) {
+	    fprintf(fp0, "\n<br>%s\n", working);
+	}
+	free(working);
+    }
 }
 
 /*
@@ -180,7 +199,7 @@ int LYShowInfo(DocInfo *doc,
 	ADD_SS(gettext("Name:"), temp);
 	FREE(temp);
 
-	ADD_SS(gettext("URL:"), doc->address);
+	dt_URL(fp0, doc->address);
 
 	END_DL();
 
@@ -209,11 +228,14 @@ int LYShowInfo(DocInfo *doc,
 	    if (S_ISLNK(dir_info.st_mode)) {
 		char buf[MAX_LINE];
 		int buf_size;
+		size_t limit = sizeof(buf) - 1;
 
-		if ((buf_size = readlink(temp, buf, sizeof(buf) - 1)) != -1) {
+		if ((buf_size = (int) readlink(temp, buf, limit)) != -1) {
+		    if (buf_size > (int) limit)
+			buf_size = (int) limit;
 		    buf[buf_size] = '\0';
 		} else {
-		    sprintf(buf, "%.*s", (int) sizeof(buf) - 1,
+		    sprintf(buf, "%.*s", (int) limit,
 			    gettext("Unable to follow link"));
 		}
 		ADD_SS(gettext("Points to file:"), buf);
@@ -318,7 +340,7 @@ int LYShowInfo(DocInfo *doc,
 	ADD_SS(gettext("Linkname:"), temp);
 	FREE(temp);
 
-	ADD_SS("URL:", doc->address);
+	dt_URL(fp0, doc->address);
 
 	if (HTLoadedDocumentCharset()) {
 	    ADD_SS(gettext("Charset:"),
@@ -446,8 +468,7 @@ int LYShowInfo(DocInfo *doc,
 			    LYEntifyTitle(&buffer, gettext("(Form field)")));
 		}
 	    } else {
-		ADD_SS("URL:",
-		       NonNull(links[doc->link].lname));
+		dt_URL(fp0, NonNull(links[doc->link].lname));
 	    }
 	    END_DL();
 

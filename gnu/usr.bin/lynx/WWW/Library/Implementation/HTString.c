@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTString.c,v 1.57 2009/03/17 22:27:59 tom Exp $
+ * $LynxId: HTString.c,v 1.72 2013/11/28 11:14:49 tom Exp $
  *
  *	Case-independent string comparison		HTString.c
  *
@@ -16,6 +16,10 @@
 #include <LYLeaks.h>
 #include <LYUtils.h>
 #include <LYStrings.h>
+
+#ifdef USE_IGNORE_RC
+int ignore_unused;
+#endif
 
 #ifndef NO_LYNX_TRACE
 BOOLEAN WWW_TraceFlag = 0;	/* Global trace flag for ALL W3 code */
@@ -180,7 +184,6 @@ int strcasecomp_asterisk(const char *a, const char *b)
 		    break;
 		} else if (strcasecomp_asterisk(a + 1, p)) {
 		    ++p;
-		    result = 1;	/* could not match */
 		} else {
 		    b = p - 1;
 		    result = 0;	/* found a match starting at 'p' */
@@ -303,7 +306,8 @@ char *HTSACopy(char **dest,
 	    *dest = (char *) malloc(size);
 	    if (*dest == NULL)
 		outofmem(__FILE__, "HTSACopy");
-	    memcpy(*dest, src, size);
+	    assert(*dest != NULL);
+	    MemCpy(*dest, src, size);
 	}
     } else {
 	FREE(*dest);
@@ -323,11 +327,13 @@ char *HTSACat(char **dest,
 	    *dest = (char *) realloc(*dest, length + strlen(src) + 1);
 	    if (*dest == NULL)
 		outofmem(__FILE__, "HTSACat");
+	    assert(*dest != NULL);
 	    strcpy(*dest + length, src);
 	} else {
 	    *dest = (char *) malloc(strlen(src) + 1);
 	    if (*dest == NULL)
 		outofmem(__FILE__, "HTSACat");
+	    assert(*dest != NULL);
 	    strcpy(*dest, src);
 	}
     }
@@ -353,18 +359,19 @@ char *HTSACopy_extra(char **dest,
 	EXTRA_TYPE size = 0;
 
 	if (*dest != 0) {
-	    size = *(EXTRA_TYPE *) ((*dest) - EXTRA_SIZE);
+	    size = *(EXTRA_TYPE *) (void *) ((*dest) - EXTRA_SIZE);
 	}
-	if (size < srcsize) {
+	if ((*dest == 0) || (size < srcsize)) {
 	    FREE_extra(*dest);
 	    size = srcsize * 2;	/* x2 step */
 	    *dest = (char *) malloc(size + EXTRA_SIZE);
 	    if (*dest == NULL)
 		outofmem(__FILE__, "HTSACopy_extra");
-	    *(EXTRA_TYPE *) (*dest) = size;
+	    assert(*dest != NULL);
+	    *(EXTRA_TYPE *) (void *) (*dest) = size;
 	    *dest += EXTRA_SIZE;
 	}
-	memcpy(*dest, src, srcsize);
+	MemCpy(*dest, src, srcsize);
     } else {
 	Clear_extra(*dest);
     }
@@ -388,29 +395,31 @@ char *HTSACopy_extra(char **dest,
 char *HTNextField(char **pstr)
 {
     char *p = *pstr;
-    char *start;		/* start of field */
+    char *start = NULL;		/* start of field */
 
-    while (*p && WHITE(*p))
-	p++;			/* Strip white space */
-    if (!*p) {
-	*pstr = p;
-	return NULL;		/* No first field */
-    }
-    if (*p == '"') {		/* quoted field */
-	p++;
-	start = p;
-	for (; *p && *p != '"'; p++) {
-	    if (*p == '\\' && p[1])
-		p++;		/* Skip escaped chars */
+    if (p != NULL) {
+	while (*p && WHITE(*p))
+	    p++;		/* Strip white space */
+	if (!*p) {
+	    *pstr = p;
+	} else {
+	    if (*p == '"') {	/* quoted field */
+		p++;
+		start = p;
+		for (; *p && *p != '"'; p++) {
+		    if (*p == '\\' && p[1])
+			p++;	/* Skip escaped chars */
+		}
+	    } else {
+		start = p;
+		while (*p && !WHITE(*p))
+		    p++;	/* Skip first field */
+	    }
+	    if (*p)
+		*p++ = '\0';
+	    *pstr = p;
 	}
-    } else {
-	start = p;
-	while (*p && !WHITE(*p))
-	    p++;		/* Skip first field */
     }
-    if (*p)
-	*p++ = '\0';
-    *pstr = p;
     return start;
 }
 
@@ -458,9 +467,9 @@ char *HTNextTok(char **pstr,
     if (!bracks)
 	bracks = "<\"";
 
-    get_blanks = (BOOL) (!strchr(delims, ' ') && !strchr(bracks, ' '));
-    get_comments = (BOOL) (strchr(bracks, '(') != NULL);
-    skip_comments = (BOOL) (!get_comments && !strchr(delims, '(') && !get_blanks);
+    get_blanks = (BOOL) (!StrChr(delims, ' ') && !StrChr(bracks, ' '));
+    get_comments = (BOOL) (StrChr(bracks, '(') != NULL);
+    skip_comments = (BOOL) (!get_comments && !StrChr(delims, '(') && !get_blanks);
 #define skipWHITE(c) (!get_blanks && WHITE(c))
 
     while (*p && skipWHITE(*p))
@@ -473,7 +482,7 @@ char *HTNextTok(char **pstr,
     }
     while (1) {
 	/* Strip white space and other delimiters */
-	while (*p && (skipWHITE(*p) || strchr(delims, *p)))
+	while (*p && (skipWHITE(*p) || StrChr(delims, *p)))
 	    p++;
 	if (!*p) {
 	    *pstr = p;
@@ -505,12 +514,12 @@ char *HTNextTok(char **pstr,
 	    if (*p)
 		p++;
 	    if (get_closing_char_too) {
-		if (!*p || (!strchr(bracks, *p) && strchr(delims, *p))) {
+		if (!*p || (!StrChr(bracks, *p) && StrChr(delims, *p))) {
 		    break;
 		} else
-		    get_closing_char_too = (BOOL) (strchr(bracks, *p) != NULL);
+		    get_closing_char_too = (BOOL) (StrChr(bracks, *p) != NULL);
 	    }
-	} else if (strchr(bracks, *p)) {	/* quoted or bracketed field */
+	} else if (StrChr(bracks, *p)) {	/* quoted or bracketed field */
 	    switch (*p) {
 	    case '<':
 		closer = '>';
@@ -534,19 +543,19 @@ char *HTNextTok(char **pstr,
 		    p++;	/* Skip escaped chars */
 	    if (get_closing_char_too) {
 		p++;
-		if (!*p || (!strchr(bracks, *p) && strchr(delims, *p))) {
+		if (!*p || (!StrChr(bracks, *p) && StrChr(delims, *p))) {
 		    break;
 		} else
-		    get_closing_char_too = (BOOL) (strchr(bracks, *p) != NULL);
+		    get_closing_char_too = (BOOL) (StrChr(bracks, *p) != NULL);
 	    } else
 		break;		/* kr95-10-9: needs to stop here */
 	} else {		/* Spool field */
 	    if (!start)
 		start = p;
-	    while (*p && !skipWHITE(*p) && !strchr(bracks, *p) &&
-		   !strchr(delims, *p))
+	    while (*p && !skipWHITE(*p) && !StrChr(bracks, *p) &&
+		   !StrChr(delims, *p))
 		p++;
-	    if (*p && strchr(bracks, *p)) {
+	    if (*p && StrChr(bracks, *p)) {
 		get_closing_char_too = TRUE;
 	    } else {
 		if (*p == '(' && skip_comments) {
@@ -578,6 +587,7 @@ static char *HTAlloc(char *ptr, size_t length)
 	ptr = (char *) malloc(length);
     if (ptr == 0)
 	outofmem(__FILE__, "HTAlloc");
+    assert(ptr != NULL);
     return ptr;
 }
 
@@ -635,15 +645,14 @@ PUBLIC_IF_FIND_LEAKS char *StrAllocVsprintf(char **pstr,
 
     if (vasprintf(&temp, fmt, *ap) >= 0) {
 	if (dst_len != 0) {
-	    int src_len = strlen(temp);
-	    int new_len = dst_len + src_len + 1;
+	    size_t src_len = strlen(temp);
+	    size_t new_len = dst_len + src_len + 1;
 
 	    result = HTAlloc(pstr ? *pstr : 0, new_len);
 	    if (result != 0) {
 		strcpy(result + dst_len, temp);
-		mark_malloced(temp, new_len);
 	    }
-	    free(temp);
+	    (free) (temp);
 	} else {
 	    result = temp;
 	    mark_malloced(temp, strlen(temp));
@@ -690,6 +699,8 @@ PUBLIC_IF_FIND_LEAKS char *StrAllocVsprintf(char **pstr,
     if ((fmt_ptr = malloc(need * NUM_WIDTH)) == 0
 	|| (tmp_ptr = malloc(tmp_len)) == 0) {
 	outofmem(__FILE__, "StrAllocVsprintf");
+	assert(fmt_ptr != NULL);
+	assert(tmp_ptr != NULL);
     }
 #endif /* SAVE_TIME_NOT_SPACE */
 
@@ -767,6 +778,7 @@ PUBLIC_IF_FIND_LEAKS char *StrAllocVsprintf(char **pstr,
 
 			else if (type == 'Z')
 			    VA_INTGR(size_t);
+
 			else
 			    VA_INTGR(int);
 
@@ -926,7 +938,7 @@ char *HTSprintf0(char **pstr, const char *fmt,...)
 
     LYva_start(ap, fmt);
     {
-	result = StrAllocVsprintf(pstr, 0, fmt, &ap);
+	result = StrAllocVsprintf(pstr, (size_t) 0, fmt, &ap);
     }
     va_end(ap);
 
@@ -953,13 +965,15 @@ char *HTQuoteParameter(const char *parameter)
 
     last = strlen(parameter);
     for (i = 0; i < last; ++i)
-	if (strchr("\\&#$^*?(){}<>\"';`|", parameter[i]) != 0
+	if (StrChr("\\&#$^*?(){}<>\"';`|", parameter[i]) != 0
 	    || isspace(UCH(parameter[i])))
 	    ++quoted;
 
     result = (char *) malloc(last + 5 * quoted + 3);
     if (result == NULL)
 	outofmem(__FILE__, "HTQuoteParameter");
+
+    assert(result != NULL);
 
     n = 0;
 #if (USE_QUOTED_PARAMETER == 1)
@@ -1066,8 +1080,10 @@ void HTAddXpand(char **result,
 	while (next[0] != 0) {
 	    if (HTIsParam(next)) {
 		if (next != last) {
-		    size_t len = (next - last)
-		    + ((*result != 0) ? strlen(*result) : 0);
+		    size_t len = ((size_t) (next - last)
+				  + ((*result != 0)
+				     ? strlen(*result)
+				     : 0));
 
 		    HTSACat(result, last);
 		    (*result)[len] = 0;
@@ -1109,8 +1125,10 @@ void HTAddToCmd(char **result,
 	while (next[0] != 0) {
 	    if (HTIsParam(next)) {
 		if (next != last) {
-		    size_t len = (next - last)
-		    + ((*result != 0) ? strlen(*result) : 0);
+		    size_t len = ((size_t) (next - last)
+				  + ((*result != 0)
+				     ? strlen(*result)
+				     : 0));
 
 		    HTSACat(result, last);
 		    (*result)[len] = 0;
@@ -1171,13 +1189,35 @@ void HTEndParam(char **result,
  * there is a null on the end, anyway.
  */
 
+/* (Re)allocate a bstring, e.g., to increase its buffer size for ad hoc
+ * operations.
+ */
+void HTSABAlloc(bstring **dest, int len)
+{
+    if (*dest == 0) {
+	*dest = typecalloc(bstring);
+
+	if (*dest == 0)
+	    outofmem(__FILE__, "HTSABAlloc");
+    }
+
+    if ((*dest)->len != len) {
+	(*dest)->str = typeRealloc(char, (*dest)->str, len);
+
+	if ((*dest)->str == 0)
+	    outofmem(__FILE__, "HTSABAlloc");
+
+	(*dest)->len = len;
+    }
+}
+
 /* Allocate a new bstring, and return it.
 */
 void HTSABCopy(bstring **dest, const char *src,
 	       int len)
 {
     bstring *t;
-    unsigned need = len + 1;
+    unsigned need = (unsigned) (len + 1);
 
     CTRACE2(TRACE_BSTRING,
 	    (tfp, "HTSABCopy(%p, %p, %d)\n",
@@ -1192,9 +1232,14 @@ void HTSABCopy(bstring **dest, const char *src,
 	if ((t = (bstring *) malloc(sizeof(bstring))) == NULL)
 	      outofmem(__FILE__, "HTSABCopy");
 
-	if ((t->str = (char *) malloc(need)) == NULL)
-	    outofmem(__FILE__, "HTSABCopy");
-	memcpy(t->str, src, len);
+	assert(t != NULL);
+
+	if ((t->str = typeMallocn(char, need)) == NULL)
+	      outofmem(__FILE__, "HTSABCopy");
+
+	assert(t->str != NULL);
+
+	MemCpy(t->str, src, len);
 	t->len = len;
 	t->str[t->len] = '\0';
 	*dest = t;
@@ -1211,7 +1256,7 @@ void HTSABCopy(bstring **dest, const char *src,
  */
 void HTSABCopy0(bstring **dest, const char *src)
 {
-    HTSABCopy(dest, src, strlen(src));
+    HTSABCopy(dest, src, (int) strlen(src));
 }
 
 /*
@@ -1226,7 +1271,7 @@ void HTSABCat(bstring **dest, const char *src,
 	    (tfp, "HTSABCat(%p, %p, %d)\n",
 	     (void *) dest, (const void *) src, len));
     if (src) {
-	unsigned need = len + 1;
+	unsigned need = (unsigned) (len + 1);
 
 	if (TRACE_BSTRING) {
 	    CTRACE((tfp, "===    %4d:", len));
@@ -1234,19 +1279,23 @@ void HTSABCat(bstring **dest, const char *src,
 	    CTRACE((tfp, "\n"));
 	}
 	if (t) {
-	    unsigned length = t->len + need;
+	    unsigned length = (unsigned) t->len + need;
 
-	    if ((t->str = (char *) realloc(t->str, length)) == NULL)
-		outofmem(__FILE__, "HTSACat");
+	    t->str = typeRealloc(char, t->str, length);
 	} else {
 	    if ((t = typecalloc(bstring)) == NULL)
 		  outofmem(__FILE__, "HTSACat");
 
-	    t->str = (char *) malloc(need);
+	    assert(t != NULL);
+
+	    t->str = typeMallocn(char, need);
 	}
 	if (t->str == NULL)
 	    outofmem(__FILE__, "HTSACat");
-	memcpy(t->str + t->len, src, len);
+
+	assert(t->str != NULL);
+
+	MemCpy(t->str + t->len, src, len);
 	t->len += len;
 	t->str[t->len] = '\0';
 	*dest = t;
@@ -1263,7 +1312,7 @@ void HTSABCat(bstring **dest, const char *src,
  */
 void HTSABCat0(bstring **dest, const char *src)
 {
-    HTSABCat(dest, src, strlen(src));
+    HTSABCat(dest, src, (int) strlen(src));
 }
 
 /*
@@ -1271,12 +1320,12 @@ void HTSABCat0(bstring **dest, const char *src)
  */
 BOOL HTSABEql(bstring *a, bstring *b)
 {
-    unsigned len_a = (a != 0) ? a->len : 0;
-    unsigned len_b = (b != 0) ? b->len : 0;
+    unsigned len_a = (unsigned) ((a != 0) ? a->len : 0);
+    unsigned len_b = (unsigned) ((b != 0) ? b->len : 0);
 
     if (len_a == len_b) {
 	if (len_a == 0
-	    || memcmp(a->str, b->str, a->len) == 0)
+	    || MemCmp(a->str, b->str, a->len) == 0)
 	    return TRUE;
     }
     return FALSE;
@@ -1306,9 +1355,9 @@ bstring *HTBprintf(bstring **pstr, const char *fmt,...)
 
     LYva_start(ap, fmt);
     {
-	temp = StrAllocVsprintf(&temp, 0, fmt, &ap);
-	if (!isEmpty(temp)) {
-	    HTSABCat(pstr, temp, strlen(temp));
+	temp = StrAllocVsprintf(&temp, (size_t) 0, fmt, &ap);
+	if (non_empty(temp)) {
+	    HTSABCat(pstr, temp, (int) strlen(temp));
 	}
 	FREE(temp);
 	result = *pstr;

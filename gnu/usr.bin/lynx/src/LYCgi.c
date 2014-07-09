@@ -1,5 +1,5 @@
 /*
- * $LynxId: LYCgi.c,v 1.56 2009/04/12 17:14:41 tom Exp $
+ * $LynxId: LYCgi.c,v 1.67 2013/11/28 11:35:56 tom Exp $
  *                   Lynx CGI support                              LYCgi.c
  *                   ================
  *
@@ -48,10 +48,6 @@
 
 #include <LYLeaks.h>
 #include <www_wait.h>
-
-struct _HTStream {
-    HTStreamClass *isa;
-};
 
 static char **env = NULL;	/* Environment variables */
 static unsigned envc_size = 0;	/* Slots in environment array */
@@ -118,9 +114,10 @@ static void add_environment_value(const char *env_value)
 	if (env == NULL) {
 	    outofmem(__FILE__, "LYCgi");
 	}
+	assert(env != NULL);
     }
 
-    env[envc++] = (char *) env_value;
+    env[envc++] = DeConst(env_value);
     env[envc] = NULL;		/* Make sure it is always properly terminated */
 }
 
@@ -211,19 +208,19 @@ static int LYLoadCGI(const char *arg,
 	return (status);
 
     } else {
-	if (strncmp(arg, "lynxcgi://localhost", 19) == 0) {
+	if (StrNCmp(arg, "lynxcgi://localhost", 19) == 0) {
 	    StrAllocCopy(pgm, arg + 19);
 	} else {
 	    StrAllocCopy(pgm, arg + 8);
 	}
-	if ((cp = strchr(pgm, '?')) != NULL) {	/* Need to terminate executable */
+	if ((cp = StrChr(pgm, '?')) != NULL) {	/* Need to terminate executable */
 	    *cp++ = '\0';
 	    pgm_args = cp;
 	}
     }
 
     StrAllocCopy(orig_pgm, pgm);
-    if ((cp = trimPoundSelector(pgm)) != NULL) {
+    if (trimPoundSelector(pgm) != NULL) {
 	/*
 	 * Strip a #fragment from path.  In this case any pgm_args found above
 	 * will also be bogus, since the '?' came after the '#' and is part of
@@ -370,6 +367,11 @@ static int LYLoadCGI(const char *arg,
 	int wstatus;
 #endif
 
+	fd1[0] = -1;
+	fd1[1] = -1;
+	fd2[0] = -1;
+	fd2[1] = -1;
+
 	if (anAnchor->isHEAD || keep_mime_headers) {
 
 	    /* Show output as plain text */
@@ -428,12 +430,14 @@ static int LYLoadCGI(const char *arg,
 	    CTRACE_FLUSH(tfp);
 
 	    if ((pid = fork()) > 0) {	/* The good, */
-		int chars, total_chars;
+		ssize_t chars;
+		off_t total_chars;
 
 		close(fd2[1]);
 
 		if (anAnchor->post_data) {
-		    int written, remaining, total_written = 0;
+		    ssize_t written;
+		    int remaining, total_written = 0;
 
 		    close(fd1[0]);
 
@@ -449,7 +453,7 @@ static int LYLoadCGI(const char *arg,
 		    remaining = BStrLen(anAnchor->post_data);
 		    while ((written = write(fd1[1],
 					    BStrData(anAnchor->post_data) + total_written,
-					    (unsigned) remaining)) != 0) {
+					    (size_t) remaining)) != 0) {
 			if (written < 0) {
 #ifdef EINTR
 			    if (errno == EINTR)
@@ -463,9 +467,9 @@ static int LYLoadCGI(const char *arg,
 			    break;
 			}
 			CTRACE((tfp, "LYNXCGI: Wrote %d bytes of POST data.\n",
-				written));
-			total_written += written;
-			remaining -= written;
+				(int) written));
+			total_written += (int) written;
+			remaining -= (int) written;
 			if (remaining == 0)
 			    break;
 		    }
@@ -476,7 +480,7 @@ static int LYLoadCGI(const char *arg,
 		    close(fd1[1]);
 		}
 
-		HTReadProgress(total_chars = 0, 0);
+		HTReadProgress(total_chars = 0, (off_t) 0);
 		while ((chars = read(fd2[0], buf, sizeof(buf))) != 0) {
 		    if (chars < 0) {
 #ifdef EINTR
@@ -490,9 +494,10 @@ static int LYLoadCGI(const char *arg,
 			PERROR("read() of CGI output failed");
 			break;
 		    }
-		    HTReadProgress(total_chars += chars, 0);
-		    CTRACE((tfp, "LYNXCGI: Rx: %.*s\n", chars, buf));
-		    (*target->isa->put_block) (target, buf, chars);
+		    total_chars += (int) chars;
+		    HTReadProgress(total_chars, (off_t) 0);
+		    CTRACE((tfp, "LYNXCGI: Rx: %.*s\n", (int) chars, buf));
+		    (*target->isa->put_block) (target, buf, (int) chars);
 		}
 
 		if (chars < 0 && total_chars == 0) {
@@ -590,6 +595,8 @@ static int LYLoadCGI(const char *arg,
 		if (argv == NULL) {
 		    outofmem(__FILE__, "LYCgi");
 		}
+		assert(argv != NULL);
+
 		cur_argv = argv + 1;	/* For argv[0] */
 		if (pgm_args != NULL) {
 		    char *cr;
@@ -673,7 +680,6 @@ static int LYLoadCGI(const char *arg,
 	    } else {		/* and the Ugly */
 		HTAlert(CONNECT_FAILED);
 		PERROR("fork() failed");
-		status = HT_NO_DATA;
 		close(fd1[0]);
 		close(fd1[1]);
 		close(fd2[0]);

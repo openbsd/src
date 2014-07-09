@@ -3,13 +3,13 @@
 # Volodymyr M. Lisivka <lvm@mystery.lviv.net>, 2003
 # Dmytro O. Redchuk <dor@kiev-online.net>, 2001-2002
 # Olexander Kunytsa <kunia@snark.ukma.kiev.ua>, 2000-2001
-# $Id: uk.po,v 1.3 2011/07/22 14:10:38 avsm Exp $
+# $LynxId: uk.po,v 1.33 2008/12/15 00:21:55 tom Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: lynx 2.8.5pre9\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-31 18:50-0400\n"
+"POT-Creation-Date: 2008-12-07 20:02-0500\n"
 "PO-Revision-Date: 2003-01-22 18:21EEST\n"
 "Last-Translator: Volodymyr M. Lisivka <lvm@mystery.lviv.net>\n"
 "Language-Team: Ukrainian <translation-team-uk@lists.sourceforge.net>\n"

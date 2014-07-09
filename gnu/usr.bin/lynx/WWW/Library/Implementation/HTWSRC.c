@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTWSRC.c,v 1.24 2009/01/03 02:01:01 tom Exp $
+ * $LynxId: HTWSRC.c,v 1.29 2013/05/01 22:32:59 tom Exp $
  *
  *			Parse WAIS Source file			HTWSRC.c
  *			======================
@@ -10,6 +10,8 @@
  *
  *	3 June 93	Bug fix: Won't crash if no description
  */
+
+#define HTSTREAM_INTERNAL 1
 
 #include <HTUtils.h>
 
@@ -133,7 +135,7 @@ char from_hex(char c)
 /*		Treat One Character
  *		-------------------
  */
-static void WSRCParser_put_character(HTStream *me, char c)
+static void WSRCParser_put_character(HTStream *me, int c)
 {
     switch (me->state) {
     case beginning:
@@ -171,7 +173,7 @@ static void WSRCParser_put_character(HTStream *me, char c)
 	    me->state = before_value;
 	} else {
 	    if (me->param_count < PARAM_MAX)
-		me->param[me->param_count++] = c;
+		me->param[me->param_count++] = (char) c;
 	}
 	break;
 
@@ -185,11 +187,12 @@ static void WSRCParser_put_character(HTStream *me, char c)
 	me->param_count = 0;
 	if (c == '"') {
 	    me->state = quoted_value;
-	    break;
+	} else {
+	    me->state = ((c == '(')
+			 ? bracketed_value
+			 : value);
+	    me->param[me->param_count++] = (char) c;	/* Don't miss first character */
 	}
-	me->state = (c == '"') ? quoted_value :
-	    (c == '(') ? bracketed_value : value;
-	me->param[me->param_count++] = c;	/* Don't miss first character */
 	break;
 
     case value:
@@ -199,7 +202,7 @@ static void WSRCParser_put_character(HTStream *me, char c)
 	    me->state = before_tag;
 	} else {
 	    if (me->param_count < PARAM_MAX)
-		me->param[me->param_count++] = c;
+		me->param[me->param_count++] = (char) c;
 	}
 	break;
 
@@ -211,7 +214,7 @@ static void WSRCParser_put_character(HTStream *me, char c)
 	    break;
 	}
 	if (me->param_count < PARAM_MAX)
-	    me->param[me->param_count++] = c;
+	    me->param[me->param_count++] = (char) c;
 	break;
 
     case quoted_value:
@@ -230,7 +233,7 @@ static void WSRCParser_put_character(HTStream *me, char c)
 
     case escape_in_quoted:
 	if (me->param_count < PARAM_MAX)
-	    me->param[me->param_count++] = c;
+	    me->param[me->param_count++] = (char) c;
 	me->state = quoted_value;
 	break;
 
@@ -303,7 +306,7 @@ static void give_parameter(HTStream *me, int p)
 /*			Generate Outout
  *			===============
  */
-static void WSRC_gen_html(HTStream *me, BOOL source_file)
+static void WSRC_gen_html(HTStream *me, int source_file)
 {
     if (me->par_value[PAR_DATABASE_NAME]) {
 	char *shortname = 0;
@@ -466,6 +469,8 @@ HTStream *HTWSRCConvert(HTPresentation *pres, HTParentAnchor *anchor,
 
     if (!me)
 	outofmem(__FILE__, "HTWSRCConvert");
+
+    assert(me != NULL);
 
     me->isa = &WSRCParserClass;
     me->target = HTML_new(anchor, pres->rep_out, sink);

@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTTelnet.c,v 1.38 2007/07/01 23:13:22 Daniel.Dickman Exp $
+ * $LynxId: HTTelnet.c,v 1.41 2013/11/28 11:15:19 tom Exp $
  *
  *		Telnet Access, Rlogin, etc			HTTelnet.c
  *		==========================
@@ -44,11 +44,11 @@ static void do_system(char *) GCC_UNUSED;
 
 static void do_system(char *command)
 {
-    if (!isEmpty(command)) {
+    if (non_empty(command)) {
 	CTRACE((tfp, "HTTelnet: Command is: %s\n\n", command));
 	LYSystem(command);
-	FREE(command);
     }
+    FREE(command);
 }
 
 /*	Telnet or "rlogin" access
@@ -79,7 +79,7 @@ static int remote_session(char *acc_method, char *host)
      *  *cp=0;        // terminate at any ;,<,>,`,|,",' or space or return
      * or tab to prevent security hole
      */
-    for (cp = (strchr(host, '@') ? strchr(host, '@') : host); *cp != '\0';
+    for (cp = (StrChr(host, '@') ? StrChr(host, '@') : host); *cp != '\0';
 	 cp++) {
 	if (!isalnum(UCH(*cp)) && *cp != '_' && *cp != '-' &&
 	    *cp != ':' && *cp != '.' && *cp != '@') {
@@ -88,7 +88,7 @@ static int remote_session(char *acc_method, char *host)
 	}
     }
 
-    hostname = strchr(host, '@');
+    hostname = StrChr(host, '@');
 
     if (hostname) {
 	*hostname++ = '\0';	/* Split */
@@ -97,11 +97,11 @@ static int remote_session(char *acc_method, char *host)
 	user = NULL;		/* No user specified */
     }
 
-    port = strchr(hostname, ':');
+    port = StrChr(hostname, ':');
     if (port)
 	*port++ = '\0';		/* Split */
 
-    if (!hostname || *hostname == '\0') {
+    if (*hostname == '\0') {
 	CTRACE((tfp, "HTTelnet: No host specified!\n"));
 	return HT_NO_DATA;
     } else if (!valid_hostname(hostname)) {
@@ -120,7 +120,7 @@ static int remote_session(char *acc_method, char *host)
     }
 
     if (user) {
-	password = strchr(user, ':');
+	password = StrChr(user, ':');
 	if (password) {
 	    *password++ = '\0';
 	}

@@ -1,12 +1,13 @@
 /*
- * $LynxId: tidy_tls.c,v 1.3 2008/12/14 18:25:25 tom Exp $
- * Copyright 2008, Thomas E. Dickey
+ * $LynxId: tidy_tls.c,v 1.22 2014/01/11 17:34:51 tom Exp $
+ * Copyright 2008-2013,2014 Thomas E. Dickey
  * with fix Copyright 2008 by Thomas Viehmann
  *
  * Required libraries:
  *	libgnutls
  *	libcrypt
  */
+#include <HTUtils.h>
 #include <tidy_tls.h>
 
 #include <gnutls/x509.h>
@@ -14,20 +15,26 @@
 #include <libtasn1.h>		/* ASN1_SUCCESS,etc */
 #include <string.h>
 
+#ifdef HAVE_GNUTLS_PRIORITY_SET_DIRECT
+#define USE_SET_DIRECT 1
+#else
+#define USE_SET_DIRECT 0
+#endif
+
 #define typeCalloc(type) (type *) calloc(1, sizeof(type))
 
 static int last_error = 0;
 
 /* ugly, but hey, we could just use a more sane api, too */
 #define GetDnByOID(target, oid, thewhat) \
-		len = sizeof(target); \
-                if (! thewhat) \
-		  gnutls_x509_crt_get_dn_by_oid(xcert, oid, 0, 0, target, &len); \
-                else \
-                  gnutls_x509_crt_get_issuer_dn_by_oid(xcert, oid, 0, 0, target, &len)
+	len = sizeof(target); \
+	if (! thewhat) \
+	    gnutls_x509_crt_get_dn_by_oid(xcert, oid, 0, 0, target, &len); \
+	else \
+	    gnutls_x509_crt_get_issuer_dn_by_oid(xcert, oid, 0, 0, target, &len)
 
 /* thewhat: which DN to get 0 = subject, 1 = issuer */
-static int ExtractCertificate(const gnutls_datum_t * cert, X509_NAME * result, int thewhat)
+static int ExtractCertificate(const gnutls_datum_t *cert, X509_NAME * result, int thewhat)
 {
     gnutls_x509_crt_t xcert;
     int rc;
@@ -212,8 +219,9 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD * method)
 {
     SSL_CTX *ctx;
 
-    ctx = typeCalloc(SSL_CTX);
-    ctx->method = method;
+    if ((ctx = typeCalloc(SSL_CTX)) != 0) {
+	ctx->method = method;
+    }
 
     return ctx;
 }
@@ -249,6 +257,116 @@ void SSL_CTX_set_verify(SSL_CTX * ctx, int verify_mode,
     ctx->verify_callback = verify_callback;
 }
 
+#if USE_SET_DIRECT
+/*
+ * Functions such as this are normally part of an API; lack of planning makes
+ * these necessary in application code.
+ */
+#define IdsToString(type, func, ids) \
+	char *result = 0; \
+	size_t need = 8 + strlen(type); \
+	const char *name; \
+	int pass; \
+	int n; \
+	for (pass = 0; pass < 2; ++pass) { \
+	    for (n = 0; n < GNUTLS_MAX_ALGORITHM_NUM; ++n) { \
+		name = 0; \
+		if (ids[n] == 0) \
+		    break; \
+		if ((name = func(ids[n])) != 0) { \
+		    if (pass) { \
+			sprintf(result + strlen(result), ":+%s%s", type, name); \
+		    } else { \
+			need += 4 + strlen(type) + strlen(name); \
+		    } \
+		} \
+	    } \
+	    if (!pass) { \
+		result = malloc(need); \
+		if (!result) \
+		    break; \
+		result[0] = '\0'; \
+	    } \
+	} \
+	CTRACE((tfp, "->%s\n", result)); \
+	return result
+
+/*
+ * Given an array of compression id's, convert to string for GNUTLS.
+ */
+static char *StringOfCIPHER(int *id_ptr)
+{
+    IdsToString("", gnutls_cipher_get_name, id_ptr);
+}
+
+/*
+ * Given an array of compression id's, convert to string for GNUTLS.
+ */
+static char *StringOfCOMP(int *id_ptr)
+{
+    IdsToString("COMP-", gnutls_compression_get_name, id_ptr);
+}
+
+/*
+ * Given an array of key-exchange id's, convert to string for GNUTLS.
+ */
+static char *StringOfKX(int *id_ptr)
+{
+    IdsToString("", gnutls_kx_get_name, id_ptr);
+}
+
+/*
+ * Given an array of MAC algorithm id's, convert to string for GNUTLS.
+ */
+static char *StringOfMAC(int *id_ptr)
+{
+    IdsToString("", gnutls_mac_get_name, id_ptr);
+}
+
+/*
+ * Given an array of protocol id's, convert to string for GNUTLS.
+ */
+static char *StringOfVERS(int *vers_ptr)
+{
+    IdsToString("VERS-", gnutls_protocol_get_name, vers_ptr);
+}
+
+static void UpdatePriority(SSL * ssl)
+{
+    SSL_METHOD *method = ssl->ctx->method;
+    char *complete = 0;
+    char *pnames;
+    const char *err_pos = 0;
+    int code;
+
+    StrAllocCopy(complete, "NONE");
+    if ((pnames = StringOfVERS(method->priority.protocol)) != 0) {
+	StrAllocCat(complete, pnames);
+	free(pnames);
+    }
+    if ((pnames = StringOfCIPHER(method->priority.encrypts)) != 0) {
+	StrAllocCat(complete, pnames);
+	free(pnames);
+    }
+    if ((pnames = StringOfCOMP(method->priority.compress)) != 0) {
+	StrAllocCat(complete, pnames);
+	free(pnames);
+    }
+    if ((pnames = StringOfKX(method->priority.key_xchg)) != 0) {
+	StrAllocCat(complete, pnames);
+	free(pnames);
+    }
+    if ((pnames = StringOfMAC(method->priority.msg_code)) != 0) {
+	StrAllocCat(complete, pnames);
+	free(pnames);
+    }
+    CTRACE((tfp, "set priorities %s\n", complete));
+    code = gnutls_priority_set_direct(ssl->gnutls_state, complete, &err_pos);
+    CTRACE((tfp, "CHECK %d:%s\n", code, NonNull(err_pos)));
+    FREE(complete);
+}
+#endif /* USE_SET_DIRECT */
+
 static void RemoveProtocol(SSL * ssl, int protocol)
 {
     int j, k;
@@ -266,7 +384,12 @@ static void RemoveProtocol(SSL * ssl, int protocol)
     }
 
     if (changed) {
+#if USE_SET_DIRECT
+	CTRACE((tfp, "RemoveProtocol\n"));
+	UpdatePriority(ssl);
+#else
 	gnutls_protocol_set_priority(ssl->gnutls_state, protocols);
+#endif
     }
 }
 
@@ -277,13 +400,29 @@ int SSL_connect(SSL * ssl)
 {
     X509_STORE_CTX *store;
     int rc;
+    gnutls_alert_description_t alert;
+    const char *aname;
 
     if (ssl->options & SSL_OP_NO_TLSv1)
 	RemoveProtocol(ssl, GNUTLS_TLS1);
     if (ssl->options & SSL_OP_NO_SSLv3)
 	RemoveProtocol(ssl, GNUTLS_SSL3);
 
-    rc = gnutls_handshake(ssl->gnutls_state);
+    while ((rc = gnutls_handshake(ssl->gnutls_state)) < 0 &&
+	   !gnutls_error_is_fatal(rc)) {
+	if (rc == GNUTLS_E_WARNING_ALERT_RECEIVED) {
+	    alert = gnutls_alert_get(ssl->gnutls_state);
+	    aname = gnutls_alert_get_name(alert);
+	    CTRACE((tfp, "SSL Alert: %s\n", NonNull(aname)));
+	    switch (gnutls_alert_get(ssl->gnutls_state)) {
+	    case GNUTLS_A_UNRECOGNIZED_NAME:
+		continue;	/* ignore */
+	    default:
+		break;
+	    }
+	    break;		/* treat all other alerts as fatal */
+	}
+    }
     ssl->last_error = rc;
 
     if (rc < 0) {
@@ -292,6 +431,9 @@ int SSL_connect(SSL * ssl)
     }
 
     store = typeCalloc(X509_STORE_CTX);
+    if (store == 0)
+	outofmem(__FILE__, "SSL_connect");
+
     store->ssl = ssl;
     store->cert_list = SSL_get_peer_certificate(ssl);
 
@@ -300,7 +442,6 @@ int SSL_connect(SSL * ssl)
     }
     ssl->state = SSL_ST_OK;
 
-    rc = store->error;
     free(store);
 
     /* FIXME: deal with error from callback */
@@ -342,14 +483,16 @@ SSL_CIPHER *SSL_get_current_cipher(SSL * ssl)
 /*
  * Get the X509 certificate of the peer.
  */
-X509 *SSL_get_peer_certificate(SSL * ssl)
+const X509 *SSL_get_peer_certificate(SSL * ssl)
 {
-    gnutls_datum_t *result;
+    const gnutls_datum_t *result;
     unsigned list_size = 0;
 
-    result = gnutls_certificate_get_peers(ssl->gnutls_state, &list_size);
+    result =
+	(const gnutls_datum_t *) gnutls_certificate_get_peers(ssl->gnutls_state,
+							      &list_size);
 
-    return (X509 *) result;
+    return (const X509 *) result;
 }
 
 /*
@@ -385,9 +528,13 @@ SSL *SSL_new(SSL_CTX * ctx)
 	    free(ssl);
 	    ssl = 0;
 	} else {
+	    ssl->ctx = ctx;
 
 	    gnutls_init(&ssl->gnutls_state, ctx->method->connend);
 
+#if USE_SET_DIRECT
+	    UpdatePriority(ssl);
+#else
 	    gnutls_protocol_set_priority(ssl->gnutls_state,
 					 ctx->method->priority.protocol);
 	    gnutls_cipher_set_priority(ssl->gnutls_state,
@@ -398,6 +545,7 @@ SSL *SSL_new(SSL_CTX * ctx)
 				   ctx->method->priority.key_xchg);
 	    gnutls_mac_set_priority(ssl->gnutls_state,
 				    ctx->method->priority.msg_code);
+#endif
 
 	    gnutls_credentials_set(ssl->gnutls_state, GNUTLS_CRD_CERTIFICATE,
 				   ssl->gnutls_cred);
@@ -410,7 +558,6 @@ SSL *SSL_new(SSL_CTX * ctx)
 						     ctx->certfile,
 						     ctx->keyfile,
 						     ctx->keyfile_type);
-	    ssl->ctx = ctx;
 	    ssl->verify_mode = ctx->verify_mode;
 	    ssl->verify_callback = ctx->verify_callback;
 
@@ -449,7 +596,7 @@ int SSL_read(SSL * ssl, void *buffer, int length)
 int SSL_set_fd(SSL * ssl, int fd)
 {
     gnutls_transport_set_ptr(ssl->gnutls_state,
-			     (gnutls_transport_ptr_t) (fd));
+			     (gnutls_transport_ptr_t) (intptr_t) (fd));
     return 1;
 }
 
@@ -480,45 +627,59 @@ SSL_METHOD *SSLv23_client_method(void)
     SSL_METHOD *m;
 
     if ((m = typeCalloc(SSL_METHOD)) != 0) {
+	int n;
 
 	/*
 	 * List the protocols in decreasing order of priority.
 	 */
-	m->priority.protocol[0] = GNUTLS_TLS1;
-	m->priority.protocol[1] = GNUTLS_SSL3;
-	m->priority.protocol[2] = 0;
+	n = 0;
+#if GNUTLS_VERSION_NUMBER >= 0x030000
+	m->priority.protocol[n++] = GNUTLS_SSL3;
+	m->priority.protocol[n++] = GNUTLS_TLS1_2;
+#endif
+	m->priority.protocol[n++] = GNUTLS_TLS1_1;
+	m->priority.protocol[n++] = GNUTLS_TLS1_0;
+	m->priority.protocol[n] = 0;
 
 	/*
 	 * List the cipher algorithms in decreasing order of priority.
 	 */
-	m->priority.encrypts[0] = GNUTLS_CIPHER_AES_128_CBC;
-	m->priority.encrypts[1] = GNUTLS_CIPHER_3DES_CBC;
-	m->priority.encrypts[2] = GNUTLS_CIPHER_AES_256_CBC;
-	m->priority.encrypts[3] = GNUTLS_CIPHER_ARCFOUR_128;
-	m->priority.encrypts[4] = 0;
+	n = 0;
+#if GNUTLS_VERSION_NUMBER >= 0x030000
+	m->priority.encrypts[n++] = GNUTLS_CIPHER_AES_256_GCM;
+	m->priority.encrypts[n++] = GNUTLS_CIPHER_AES_128_GCM;
+#endif
+	m->priority.encrypts[n++] = GNUTLS_CIPHER_AES_256_CBC;
+	m->priority.encrypts[n++] = GNUTLS_CIPHER_AES_128_CBC;
+	m->priority.encrypts[n++] = GNUTLS_CIPHER_CAMELLIA_256_CBC;
+	m->priority.encrypts[n++] = GNUTLS_CIPHER_CAMELLIA_128_CBC;
+	m->priority.encrypts[n++] = GNUTLS_CIPHER_3DES_CBC;
+	m->priority.encrypts[n] = 0;
 
 	/*
 	 * List the compression algorithms in decreasing order of priority.
 	 */
-	m->priority.compress[0] = GNUTLS_COMP_ZLIB;
-	m->priority.compress[1] = GNUTLS_COMP_NULL;
-	m->priority.compress[2] = 0;
+	n = 0;
+	m->priority.compress[n++] = GNUTLS_COMP_NULL;
+	m->priority.compress[n] = 0;
 
 	/*
 	 * List the key exchange algorithms in decreasing order of priority.
 	 */
-	m->priority.key_xchg[0] = GNUTLS_KX_DHE_RSA;
-	m->priority.key_xchg[1] = GNUTLS_KX_RSA;
-	m->priority.key_xchg[2] = GNUTLS_KX_DHE_DSS;
-	m->priority.key_xchg[3] = 0;
+	n = 0;
+	m->priority.key_xchg[n++] = GNUTLS_KX_DHE_RSA;
+	m->priority.key_xchg[n++] = GNUTLS_KX_RSA;
+	m->priority.key_xchg[n++] = GNUTLS_KX_DHE_DSS;
+	m->priority.key_xchg[n] = 0;
 
 	/*
 	 * List message authentication code (MAC) algorithms in decreasing
 	 * order of priority to specify via gnutls_mac_set_priority().
 	 */
-	m->priority.msg_code[0] = GNUTLS_MAC_SHA1;
-	m->priority.msg_code[1] = GNUTLS_MAC_MD5;
-	m->priority.msg_code[2] = 0;
+	n = 0;
+	m->priority.msg_code[n++] = GNUTLS_MAC_SHA1;
+	m->priority.msg_code[n++] = GNUTLS_MAC_MD5;
+	m->priority.msg_code[n] = 0;
 
 	/*
 	 * For gnutls_init, says we're a client.
@@ -531,18 +692,22 @@ SSL_METHOD *SSLv23_client_method(void)
 
 static int add_name(char *target, int len, const char *tag, const char *data)
 {
-    int need = strlen(tag);
+    if (*data != '\0') {
+	int need = strlen(tag) + 2;
 
-    target += strlen(target);
-    if (need < len) {
-	strcat(target, tag);
-	len -= need;
-	target += need;
+	target += strlen(target);
+	if (need < len) {
+	    strcat(target, "/");
+	    strcat(target, tag);
+	    strcat(target, "=");
+	    len -= need;
+	    target += need;
+	}
+	need = strlen(data);
+	if (need >= len - 1)
+	    need = len - 1;
+	strncat(target, data, need)[need] = '\0';
     }
-    need = strlen(data);
-    if (need >= len - 1)
-	need = len - 1;
-    strncat(target, data, need)[need] = '\0';
     return len;
 }
 #define ADD_NAME(tag, data) len = add_name(target, len, tag, data);
@@ -556,13 +721,13 @@ char *X509_NAME_oneline(X509_NAME * source, char *target, int len)
     if (target && (len > 0)) {
 	*target = '\0';
 	if (source) {
-	    ADD_NAME("C=", source->country);
-	    ADD_NAME(", ST=", source->state_or_province_name);
-	    ADD_NAME(", L=", source->locality_name);
-	    ADD_NAME(", O=", source->organization);
-	    ADD_NAME(", OU=", source->organizational_unit_name);
-	    ADD_NAME(", CN=", source->common_name);
-	    ADD_NAME("/Email=", source->email);
+	    ADD_NAME("C", source->country);
+	    ADD_NAME("ST", source->state_or_province_name);
+	    ADD_NAME("L", source->locality_name);
+	    ADD_NAME("O", source->organization);
+	    ADD_NAME("OU", source->organizational_unit_name);
+	    ADD_NAME("CN", source->common_name);
+	    ADD_NAME("Email", source->email);
 	}
     }
     return target;

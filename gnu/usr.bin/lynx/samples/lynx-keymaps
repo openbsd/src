@@ -1,3 +1,5 @@
+# $LynxId: lynx-keymaps,v 1.7 2013/10/13 20:40:00 tom Exp $
+#
 # This is a sample key sequence definition file.  It is used by Lynx when
 # built with ncurses or slang, to augment the definitions from your terminal's
 # termcap or terminfo description.
@@ -34,6 +36,17 @@
 #       HOME
 #       END
 #       F1
+#       F2
+#       F3
+#       F4
+#       F5
+#       F6
+#       F7
+#       F8
+#       F9
+#       F10
+#       F11
+#       F12
 #       DO_KEY
 #       FIND_KEY
 #       SELECT_KEY

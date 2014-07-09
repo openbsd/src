@@ -36,7 +36,6 @@ static time_t mkgmtime(register struct tm *t)
 	year -= 1;
 	month += 12;
     }
-    result = (year - 1970) * 365 + (year - 1969) / 4 + m_to_d[month];
     result = (year - 1970) * 365 + m_to_d[month];
     if (month <= 1)
 	year -= 1;
@@ -59,8 +58,7 @@ static time_t mkgmtime(register struct tm *t)
  *		if tm_isdst >= 0 use it, else compute it
  */
 
-time_t
-mktime(struct tm * t)
+time_t mktime(struct tm * t)
 {
     time_t result;
 

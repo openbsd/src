@@ -1,4 +1,7 @@
-/*                          BROWSER SIDE ACCESS AUTHORIZATION MODULE
+/*
+ * $LynxId: HTAABrow.h,v 1.16 2010/10/27 00:13:53 tom Exp $
+ *
+ *                          BROWSER SIDE ACCESS AUTHORIZATION MODULE
 
    This module is the browser side interface to Access Authorization (AA) package.  It
    contains code only for browser.
@@ -37,8 +40,7 @@
 extern "C" {
 #endif
 /*
-
-Routines for Browser Side Recording of AA Info
+   Routines for Browser Side Recording of AA Info
 
    Most of the browser-side AA is done by the following two functions (which are called
    from file HTTP.c so the browsers using libwww only need to be linked with the new
@@ -52,27 +54,29 @@ Routines for Browser Side Recording of AA Info
       HTAA_shouldRetryWithAuth() determines whether to retry the request with AA or with a
       new AA (in case username or password was misspelled).
 
- *//* PUBLIC                                               HTAA_composeAuth()
-   *
-   *      COMPOSE THE ENTIRE AUTHORIZATION HEADER LINE IF WE
-   *      ALREADY KNOW, THAT THE HOST MIGHT REQUIRE AUTHORIZATION
-   *
-   * ON ENTRY:
-   *      hostname        is the hostname of the server.
-   *      portnumber      is the portnumber in which the server runs.
-   *      docname         is the pathname of the document (as in URL)
-   *
-   * ON EXIT:
-   *      returns NULL, if no authorization seems to be needed, or
-   *              if it is the entire Authorization: line, e.g.
-   *
-   *                 "Authorization: basic username:password"
-   *
-   *              As usual, this string is automatically freed.
- */ extern char *HTAA_composeAuth(const char *hostname,
+ */
+/* PUBLIC                                               HTAA_composeAuth()
+ *
+ *      COMPOSE THE ENTIRE AUTHORIZATION HEADER LINE IF WE
+ *      ALREADY KNOW, THAT THE HOST MIGHT REQUIRE AUTHORIZATION
+ *
+ * ON ENTRY:
+ *      hostname        is the hostname of the server.
+ *      portnumber      is the portnumber in which the server runs.
+ *      docname         is the pathname of the document (as in URL)
+ *
+ * ON EXIT:
+ *      returns NULL, if no authorization seems to be needed, or
+ *              if it is the entire Authorization: line, e.g.
+ *
+ *                 "Authorization: basic username:password"
+ *
+ *              As usual, this string is automatically freed.
+ */
+    extern char *HTAA_composeAuth(const char *hostname,
 				  const int portnumber,
 				  const char *docname,
-				  BOOL IsProxy);
+				  int IsProxy);
 
 /* BROWSER PUBLIC                               HTAA_shouldRetryWithAuth()
  *
@@ -102,9 +106,9 @@ Routines for Browser Side Recording of AA Info
  *                      NO, otherwise.
  */
     extern BOOL HTAA_shouldRetryWithAuth(char *start_of_headers,
-					 int length,
+					 size_t length,
 					 int soc,
-					 BOOL IsProxy);
+					 int IsProxy);
 
 /*
  *  Function to allow clearing of all Authorization info

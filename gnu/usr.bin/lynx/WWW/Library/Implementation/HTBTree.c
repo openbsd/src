@@ -24,6 +24,8 @@ HTBTree *HTBTree_new(HTComparer comp)
     if (tree == NULL)
 	outofmem(__FILE__, "HTBTree_new");
 
+    assert(tree != NULL);
+
     tree->compare = comp;
     tree->top = NULL;
 
@@ -143,6 +145,9 @@ void HTBTree_add(HTBTree *tree,
 
 	if (tree->top == NULL)
 	    outofmem(__FILE__, "HTBTree_add");
+
+	assert(tree->top != NULL);
+
 	tree->top->up = NULL;
 	tree->top->object = object;
 	tree->top->left = NULL;
@@ -167,6 +172,9 @@ void HTBTree_add(HTBTree *tree,
 
 		    if (father_of_element->left == NULL)
 			outofmem(__FILE__, "HTBTree_add");
+
+		    assert(father_of_element->left != NULL);
+
 		    added_element = father_of_element->left;
 		    added_element->up = father_of_element;
 		    added_element->object = object;
@@ -176,14 +184,16 @@ void HTBTree_add(HTBTree *tree,
 		    added_element->right_depth = 0;
 		}
 	    } else {		/* res >= 0 */
-		if (father_of_element->right != NULL)
+		if (father_of_element->right != NULL) {
 		    father_of_element = father_of_element->right;
-		else {
+		} else {
 		    father_found = NO;
 		    father_of_element->right = typeMalloc(HTBTElement);
 
 		    if (father_of_element->right == NULL)
 			outofmem(__FILE__, "HTBTree_add");
+		    assert(father_of_element->right != NULL);
+
 		    added_element = father_of_element->right;
 		    added_element->up = father_of_element;
 		    added_element->object = object;
@@ -246,19 +256,26 @@ void HTBTree_add(HTBTree *tree,
 		 * with the two following conditions (4 March 94 - AS)
 		 */
 
-		if ((father_of_element->left == NULL)
-		    && (father_of_element->right->right == NULL)
-		    && (father_of_element->right->left->left == NULL)
-		    && (father_of_element->right->left->right == NULL))
-		    corrections = 7;
+		if (father_of_element->left == NULL) {
+		    if ((father_of_element->right != NULL)
+			&& (father_of_element->right->right == NULL)
+			&& (father_of_element->right->left != NULL)
+			&& (father_of_element->right->left->left == NULL)
+			&& (father_of_element->right->left->right == NULL)) {
+			corrections = 7;
+		    }
+		} else {
+		    if ((father_of_element->right == NULL)
+			&& (father_of_element->left->left == NULL)
+			&& (father_of_element->left->right != NULL)
+			&& (father_of_element->left->right->right == NULL)
+			&& (father_of_element->left->right->left == NULL)) {
+			corrections = 7;
+		    }
+		}
 
-		if ((father_of_element->right == NULL)
-		    && (father_of_element->left->left == NULL)
-		    && (father_of_element->left->right->right == NULL)
-		    && (father_of_element->left->right->left == NULL))
-		    corrections = 7;
-
-		if (father_of_element->left_depth > father_of_element->right_depth) {
+		if ((father_of_element->left != NULL)
+		    && (father_of_element->left_depth > father_of_element->right_depth)) {
 		    added_element = father_of_element->left;
 		    father_of_element->left_depth = added_element->right_depth;
 		    added_element->right_depth = 1
@@ -349,7 +366,7 @@ void HTBTree_add(HTBTree *tree,
 		    father_of_element->up = added_element;
 		    if (father_of_element->left != NULL)
 			father_of_element->left->up = father_of_element;
-		} else {
+		} else if (father_of_element->right != NULL) {
 		    added_element = father_of_element->right;
 		    father_of_element->right_depth = added_element->left_depth;
 		    added_element->left_depth = 1 +

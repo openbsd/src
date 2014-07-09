@@ -1,5 +1,5 @@
 /*
- * $LynxId: LYexit.c,v 1.35 2009/03/10 00:12:52 tom Exp $
+ * $LynxId: LYexit.c,v 1.36 2013/10/24 09:16:37 tom Exp $
  *
  *	Copyright (c) 1994, University of Kansas, All Rights Reserved
  *	(most of this file was rewritten in 1996 and 2004).
@@ -28,31 +28,30 @@ static void (*callstack[ATEXITSIZE]) (void);
 static int topOfStack = 0;
 
 /*
- * Purpose:		Registers termination function.
- * Arguments:		function	The function to register.
- * Return Value:	int	0	registered
- *				!0	no more space to register
- * Remarks/Portability/Dependencies/Restrictions:
- * Revision History:
- *	06-15-94	created Lynx 2-3-1 Garrett Arch Blythe
+ * Capture "atexit()" calls for our own accounting.
  */
-
 int LYatexit(void (*function) (void))
 {
-    /*
-     * Check for available space.
-     */
-    if (topOfStack == ATEXITSIZE) {
-	CTRACE((tfp, "(LY)atexit: Too many functions, ignoring one!\n"));
-	return (-1);
-    }
+    int result = 0;
 
-    /*
-     * Register the function.
-     */
-    callstack[topOfStack] = function;
-    topOfStack++;
-    return (0);
+    if (topOfStack >= ATEXITSIZE) {
+	CTRACE((tfp, "(LY)atexit: Too many functions, ignoring one!\n"));
+	result = -1;
+    } else {
+	int n;
+	BOOLEAN found = FALSE;
+
+	for (n = 0; n < topOfStack; ++n) {
+	    if (callstack[n] == function) {
+		found = TRUE;
+		break;
+	    }
+	}
+	if (!found) {
+	    callstack[topOfStack++] = function;
+	}
+    }
+    return result;
 }
 
 /*

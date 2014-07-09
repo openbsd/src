@@ -1,3 +1,4 @@
+/* $LynxId: LYMap.h,v 1.12 2010/09/25 11:35:42 tom Exp $ */
 #ifndef LYMAP_H
 #define LYMAP_H
 
@@ -19,7 +20,7 @@ extern "C" {
 			      HTParentAnchor *node_anchor);
     extern BOOL LYAddMapElement(char *map, char *address, char *title,
 				HTParentAnchor *node_anchor,
-				BOOL intern_flag);
+				int intern_flag);
     extern BOOL LYHaveImageMap(char *address);
 
 #ifdef __cplusplus

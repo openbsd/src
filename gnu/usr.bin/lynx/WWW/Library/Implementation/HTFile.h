@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTFile.h,v 1.31 2008/12/07 18:49:53 tom Exp $
+ * $LynxId: HTFile.h,v 1.33 2012/02/10 00:59:15 tom Exp $
  *							File access in libwww
  *				FILE ACCESS
  *
@@ -49,8 +49,8 @@ extern "C" {
 /*
  *  Convert filenames between local and WWW formats
  */
-    extern char *HTURLPath_toFile(const char *name, BOOL expand_all, BOOL is_remote);
-    extern char *HTnameOfFile_WWW(const char *name, BOOL WWW_prefix, BOOL expand_all);
+    extern char *HTURLPath_toFile(const char *name, int expand_all, int is_remote);
+    extern char *HTnameOfFile_WWW(const char *name, int WWW_prefix, int expand_all);
 
 #define HTLocalName(name)      HTnameOfFile_WWW(name,TRUE,TRUE)
 #define HTfullURL_toFile(name) HTnameOfFile_WWW(name,FALSE,TRUE)
@@ -83,7 +83,7 @@ extern "C" {
  */
     extern BOOL HTDirTitles(HTStructured * target, HTParentAnchor *anchor,
 			    HTFormat format_out,
-			    BOOL tildeIsTop);
+			    int tildeIsTop);
 
 /*
  *	Check existence.
@@ -347,7 +347,7 @@ extern "C" {
 /*
  * Reset the list of known program paths to the ones that are compiled-in
  */
-    extern void HTInitProgramPaths(void);
+    extern void HTInitProgramPaths(BOOL init);
 
 /*
  *  The Protocols

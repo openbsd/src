@@ -1,4 +1,8 @@
-/*             DOS specific routines            */
+/*
+ * $LynxId: HTDOS.h,v 1.14 2009/09/09 00:16:06 tom Exp $
+ *
+ * DOS specific routines
+ */
 
 #ifndef HTDOS_H
 #define HTDOS_H
@@ -33,10 +37,10 @@ char *HTDOS_slashes(char *path);
  *
  * Bug:	Returns pointer to static -- non-reentrant
  */
-char *HTDOS_name(char *wwwname);
+char *HTDOS_name(const char *wwwname);
 
 #ifdef WIN_EX
-char *HTDOS_short_name(char *fn);
+char *HTDOS_short_name(const char *fn);
 
 #else
 #define HTDOS_short_name(fn)  fn

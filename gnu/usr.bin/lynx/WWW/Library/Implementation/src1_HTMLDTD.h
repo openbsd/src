@@ -1,4 +1,4 @@
-/* $LynxId: src1_HTMLDTD.h,v 1.42 2009/04/16 22:55:54 tom Exp $ */
+/* $LynxId: src1_HTMLDTD.h,v 1.45 2011/10/07 00:54:36 Kihara.Hideto Exp $ */
 #ifndef src_HTMLDTD_H1
 #define src_HTMLDTD_H1 1
 
@@ -394,6 +394,7 @@ static const attr BUTTON_attr_list[] = {
 	{ "NAME"          T(N) },
 	{ "ONBLUR"        T(N) },
 	{ "ONFOCUS"       T(N) },
+	{ "READONLY"      T(N) },
 	{ "TABINDEX"      T(N) },
 	{ "TYPE"          T(N) },
 	{ "VALUE"         T(N) },
@@ -846,6 +847,7 @@ static const AttrType MATH_attr_type[] = {
 };
 
 static const attr META_attr_list[] = {
+	{ "CHARSET"       T(N) },
 	{ "CONTENT"       T(N) },
 	{ "HTTP-EQUIV"    T(N) },
 	{ "NAME"          T(N) },
@@ -1383,6 +1385,7 @@ static const attr BUTTON_attr[] = {     /* BUTTON attributes */
 	{ "NAME"          T(N) },
 	{ "ONBLUR"        T(N) },
 	{ "ONFOCUS"       T(N) },
+	{ "READONLY"      T(N) },
 	{ "STYLE"         T(N) },
 	{ "TABINDEX"      T(N) },
 	{ "TITLE"         T(N) },
@@ -1792,6 +1795,7 @@ static const attr MATH_attr[] = {       /* MATH attributes */
 };
 
 static const attr META_attr[] = {       /* META attributes */
+	{ "CHARSET"       T(N) },
 	{ "CONTENT"       T(N) },
 	{ "HTTP-EQUIV"    T(N) },
 	{ "NAME"          T(N) },
@@ -2275,7 +2279,7 @@ static const attr UL_attr[] = {         /* DIR attributes */
 #define NULL_HTTag_ NULL
 #endif
 
-#ifdef EXP_JUSTIFY_ELTS
+#ifdef USE_JUSTIFY_ELTS
 #define P(x) P_(x), 1
 #define P0(x) P_(x), 0
 #define NULL_HTTag NULL_HTTag_,0

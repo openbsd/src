@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTString.h,v 1.31 2009/03/17 22:25:50 tom Exp $
+ * $LynxId: HTString.h,v 1.38 2013/11/28 11:09:55 tom Exp $
  *						String handling for libwww
  *                                         STRINGS
  *                                            
@@ -28,10 +28,22 @@ extern "C" {
 
 #else
 #define AS_casecomp( a, b ) ( strcasecomp( ( a ), ( b ) ) )
-#define AS_ncmp( a, b, c )  ( strncmp( ( a ), ( b ), ( c ) ) )
+#define AS_ncmp( a, b, c )  ( StrNCmp( ( a ), ( b ), ( c ) ) )
 #define AS_cmp strcmp
 
 #endif				/* NOT_ASCII */
+
+#define StrNCat(a,b,c) strncat((a),(b),(size_t)(c))
+#define StrNCpy(a,b,c) strncpy((a),(b),(size_t)(c))
+#define StrNCmp(a,b,c) strncmp((a),(b),(size_t)(c))
+
+#define MemCpy(a,b,c)  memcpy((a),(b),(size_t)(c))
+#define MemCmp(a,b,c)  memcmp((a),(b),(size_t)(c))
+
+    /*
+     * Workaround for glibc header defect combined with -Wlogical-op warnings
+     */
+#define StrChr (strchr)
 
     /*
      * Case-insensitive string comparison
@@ -121,6 +133,7 @@ extern "C" {
 	int len;
     } bstring;
 
+    extern void HTSABAlloc(bstring **dest, int len);
     extern void HTSABCopy(bstring **dest, const char *src, int len);
     extern void HTSABCopy0(bstring **dest, const char *src);
     extern void HTSABCat(bstring **dest, const char *src, int len);
@@ -135,11 +148,13 @@ extern "C" {
 
 #define isBEmpty(p)   ((p) == 0 || BStrLen(p) == 0)
 
-#define BStrCopy(d,s)  HTSABCopy(  &(d), BStrData(s), BStrLen(s))
-#define BStrCopy0(d,s) HTSABCopy0( &(d), s)
-#define BStrCat(d,s)   HTSABCat(   &(d), BStrData(s), BStrLen(s))
-#define BStrCat0(d,s)  HTSABCat0(  &(d), s)
-#define BStrFree(d)    HTSABFree(  &(d))
+#define BStrAlloc(d,n)   HTSABAlloc( &(d), n)
+#define BStrCopy(d,s)    HTSABCopy( &(d), BStrData(s), BStrLen(s))
+#define BStrCopy0(d,s)   HTSABCopy0( &(d), s)
+#define BStrCopy1(d,s,n) HTSABCopy(  &(d), s, n)
+#define BStrCat(d,s)     HTSABCat( &(d), BStrData(s), BStrLen(s))
+#define BStrCat0(d,s)    HTSABCat0( &(d), s)
+#define BStrFree(d)      HTSABFree( &(d))
 
     extern bstring *HTBprintf(bstring **pstr, const char *fmt,...) GCC_PRINTFLIKE(2,3);
 

@@ -1,5 +1,5 @@
 /*
- * $LynxId: LYCharUtils.h,v 1.24 2009/01/19 23:53:27 tom Exp $
+ * $LynxId: LYCharUtils.h,v 1.28 2012/02/10 18:36:39 tom Exp $
  */
 #ifndef LYCHARUTILS_H
 #define LYCHARUTILS_H
@@ -7,6 +7,10 @@
 #ifndef HTUTILS_H
 #include <HTUtils.h>
 #endif /* HTUTILS_H */
+
+#ifndef HTSTREAM_H
+#include <HTStream.h>
+#endif /* HTSTREAM_H */
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,25 +25,25 @@ extern "C" {
     extern char **LYUCFullyTranslateString(char **str,
 					   int cs_from,
 					   int cs_to,
-					   BOOLEAN do_ent,
-					   BOOL use_lynx_specials,
-					   BOOLEAN plain_space,
-					   BOOLEAN hidden,
-					   BOOL Back,
+					   int do_ent,
+					   int use_lynx_specials,
+					   int plain_space,
+					   int hidden,
+					   int Back,
 					   CharUtil_st stype);
     extern BOOL LYUCTranslateHTMLString(char **str,
 					int cs_from,
 					int cs_to,
-					BOOL use_lynx_specials,
-					BOOLEAN plain_space,
-					BOOLEAN hidden,
+					int use_lynx_specials,
+					int plain_space,
+					int hidden,
 					CharUtil_st stype);
     extern BOOL LYUCTranslateBackFormData(char **str,
 					  int cs_from,
 					  int cs_to,
-					  BOOLEAN plain_space);
+					  int plain_space);
     extern void LYEntify(char **str,
-			 BOOLEAN isTITLE);
+			 int isTITLE);
     extern const char *LYEntifyTitle(char **target, const char *source);
     extern const char *LYEntifyValue(char **target, const char *source);
     extern void LYTrimHead(char *str);
@@ -49,6 +53,8 @@ extern "C" {
 				   const char *base);
     extern void LYAddMETAcharsetToFD(FILE *fd,
 				     int disp_chndl);
+    extern void LYAddMETAcharsetToStream(HTStream *target,
+					 int disp_chndl);
     extern void LYformTitle(char **dst,
 			    const char *src);
     extern char *LYParseTagParam(char *from,
@@ -67,23 +73,23 @@ extern "C" {
     extern char *LYLowercaseI_OL_String(int seqnum);
     extern void LYGetChartransInfo(HTStructured * me);
     extern void LYHandleMETA(HTStructured * me, const BOOL *present,
-			     const char **value,
+			     STRING2PTR value,
 			     char **include);
     extern void LYHandlePlike(HTStructured * me, const BOOL *present,
-			      const char **value,
+			      STRING2PTR value,
 			      char **include,
 			      int align_idx,
-			      BOOL start);
+			      int start);
     extern void LYHandleSELECT(HTStructured * me, const BOOL *present,
-			       const char **value,
+			       STRING2PTR value,
 			       char **include,
-			       BOOL start);
+			       int start);
     extern int LYLegitimizeHREF(HTStructured * me, char **href,
-				BOOL force_slash,
-				BOOL strip_dots);
+				int force_slash,
+				int strip_dots);
     extern void LYCheckForContentBase(HTStructured * me);
     extern void LYCheckForID(HTStructured * me, const BOOL *present,
-			     const char **value,
+			     STRING2PTR value,
 			     int attribute);
     extern void LYHandleID(HTStructured * me, const char *id);
     extern BOOLEAN LYoverride_default_alignment(HTStructured * me);

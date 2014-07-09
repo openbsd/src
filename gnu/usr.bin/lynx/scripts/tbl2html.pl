@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# $LynxId: tbl2html.pl,v 1.5 2011/05/21 15:18:16 tom Exp $
 #
 # Translate one or more ".tbl" files into ".html" files which can be used to
 # test the charset support in lynx.  Each of the ".html" files will use the
@@ -41,13 +42,13 @@ sub make_header($$$) {
 	printf FP "<HTML>\n";
 	printf FP "<HEAD>\n";
 	printf FP "<!-- $source -->\n";
-	printf FP "<TITLE>%s table</TITLE>\n", escaped($official);
-	printf FP "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=%s\">\n", escaped($charset);
+	printf FP "<TITLE>%s table</TITLE>\n", &escaped($official);
+	printf FP "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=%s\">\n", &escaped($charset);
 	printf FP "</HEAD>\n";
 	printf FP "\n";
 	printf FP "<BODY> \n";
 	printf FP "\n";
-	printf FP "<H1 ALIGN=center>%s table</H1> \n", escaped($charset);
+	printf FP "<H1 ALIGN=center>%s table</H1> \n", &escaped($charset);
 	printf FP "\n";
 	printf FP "<PRE>\n";
 	printf FP "Code  Char  Entity   Render          Description\n";
@@ -76,12 +77,12 @@ sub make_row($$$) {
 		printf FP "%4x    %c   %.13s  &#%d;             %s\n",
 			$old_code, $old_code,
 			$visible, $new_code,
-			escaped($comments);
+			&escaped($comments);
 	} else {
 		printf FP "%4x    .   %.13s  &#%d;             %s\n",
 			$old_code,
 			$visible, $new_code,
-			escaped($comments);
+			&escaped($comments);
 	}
 }
 
@@ -92,11 +93,11 @@ sub null_row($$) {
 	if ($old_code < 256) {
 		printf FP "%4x    %c                     %s\n",
 			$old_code, $old_code,
-			escaped($comments);
+			&escaped($comments);
 	} else {
 		printf FP "%4x    .                     %s\n",
 			$old_code,
-			escaped($comments);
+			&escaped($comments);
 	}
 }
 
@@ -128,34 +129,34 @@ sub value_of($) {
 
 # return the first number in a range
 sub first_of($) {
-	my $range = zeroxes($_[0]);
+	my $range = &zeroxes($_[0]);
 	$range =~ s/-.*//;
-	return value_of($range);
+	return &value_of($range);
 }
 
 # return the last number in a range
 sub last_of($) {
-	my $range = zeroxes($_[0]);
+	my $range = &zeroxes($_[0]);
 	$range =~ s/^.*-//;
-	return value_of($range);
+	return &value_of($range);
 }
 
 sub one_many($$$) {
 	my $oldcode = $_[0];
-	my $newcode = zeroxes($_[1]);
+	my $newcode = &zeroxes($_[1]);
 	my $comment = $_[2];
 
-	my $old_code = value_of($oldcode);
+	my $old_code = &value_of($oldcode);
 	if ( $old_code lt 0 ) {
 		printf "? Problem with number \"%s\"\n", $oldcode;
 	} else {
-		make_mark if (( $old_code % 8 ) == 0 );
+		&make_mark if (( $old_code % 8 ) == 0 );
 
 		if ( $newcode =~ /^#.*/ ) {
-			null_row($old_code, $comment);
-		} elsif ( is_range($newcode) ) {
-			my $first_item = first_of($newcode);
-			my $last_item  = last_of($newcode);
+			&null_row($old_code, $comment);
+		} elsif ( &is_range($newcode) ) {
+			my $first_item = &first_of($newcode);
+			my $last_item  = &last_of($newcode);
 			my $item;
 
 			if ( $first_item lt 0 or $last_item lt 0 ) {
@@ -167,18 +168,18 @@ sub one_many($$$) {
 					$comment = $comment . " (range)";
 				}
 				for $item ( $first_item..$last_item) {
-					make_row($old_code, $item, $comment);
+					&make_row($old_code, $item, $comment);
 				}
 			}
 		} else {
-			my $new_code = value_of($newcode);
+			my $new_code = &value_of($newcode);
 			if ( $new_code lt 0 ) {
 				printf "? Problem with number \"%s\"\n", $newcode;
 			} else {
 				if ( $comment =~ /^$/ ) {
 					$comment = sprintf("mapped: %#x to %#x", $old_code, $new_code);
 				}
-				make_row($old_code, $new_code, $comment);
+				&make_row($old_code, $new_code, $comment);
 			}
 		}
 	}
@@ -189,20 +190,20 @@ sub many_many($$$) {
 	my $newcode = $_[1];
 	my $comment = $_[2];
 
-	my $first_old = first_of($oldcode);
-	my $last_old  = last_of($oldcode);
+	my $first_old = &first_of($oldcode);
+	my $last_old  = &last_of($oldcode);
 	my $item;
 
-	if (is_range($newcode)) {
-		my $first_new = first_of($newcode);
-		my $last_new  = last_of($newcode);
+	if (&is_range($newcode)) {
+		my $first_new = &first_of($newcode);
+		my $last_new  = &last_of($newcode);
 		for $item ( $first_old..$last_old) {
-			one_many($item, $first_new, $comment);
+			&one_many($item, $first_new, $comment);
 			$first_new += 1;
 		}
 	} else {
 		for $item ( $first_old..$last_old) {
-			one_many($item, $newcode, $comment);
+			&one_many($item, $newcode, $comment);
 		}
 	}
 }
@@ -211,6 +212,22 @@ sub approximate($$$) {
 	my $values = $_[0];
 	my $expect = sprintf("%-8s", $_[1]);
 	my $comment = $_[2];
+	my $escaped = &escaped($expect);
+	my $left;
+	my $this;
+	my $next;
+
+	$escaped =~ s/\\134/\\/g;
+	$escaped =~ s/\\015/\&#13\;/g;
+	$escaped =~ s/\\012/\&#10\;/g;
+
+	while ( $escaped =~ /^.*\\[0-7]{3}.*$/ ) {
+		$left = $escaped;
+		$left =~ s/\\[0-7]{3}.*//;
+		$this = substr $escaped,length($left)+1,3;
+		$next = substr $escaped,length($left)+4;
+		$escaped = sprintf("%s&#%d;%s", $left, oct $this, $next);
+	}
 
 	my $visible = sprintf("&amp;#%d;      ", $values);
 	if ($values < 256) {
@@ -218,13 +235,13 @@ sub approximate($$$) {
 			$values, $values,
 			$visible,
 			$values,
-			escaped($expect);
+			$escaped;
 	} else {
 		printf FP "%4x    .   %.13s  &#%d;             approx: %s\n",
 			$values,
 			$visible,
 			$values,
-			escaped($expect);
+			$escaped;
 	}
 }
 
@@ -253,8 +270,23 @@ sub doit($) {
 		$input[$n] =~ s/\s*$//; # trim trailing blanks
 		$input[$n] =~ s/^\s*//; # trim leading blanks
 		$input[$n] =~ s/^#0x/0x/; # uncomment redundant stuff
+
 		next if $input[$n] =~ /^$/;
 		next if $input[$n] =~ /^#.*$/;
+
+		if ( $empty 
+		  and ( $input[$n] =~ /^\d/
+		     or $input[$n] =~ /^U\+/ ) ) {
+			$target = $charset . ".html";
+			printf "=> %s\n", $target;
+			open(FP,">$target") || do {
+				print STDERR "Can't open output $target: $!\n";
+				return;
+			};
+			&make_header($source, $charset, $official);
+			$empty = 0;
+		}
+
 		if ( $input[$n] =~ /^M.*/ ) {
 			$charset = $input[$n];
 			$charset =~ s/^.//;
@@ -262,28 +294,17 @@ sub doit($) {
 			$official = $input[$n];
 			$official =~ s/^.//;
 		} elsif ( $input[$n] =~ /^\d/ ) {
-			if ( $empty ) {
-				$target = $charset . ".html";
-				printf "=> %s\n", $target;
-				open(FP,">$target") || do {
-					print STDERR "Can't open output $target: $!\n";
-					return;
-				};
 
-				make_header($source, $charset, $official);
-				$empty = 0;
-			}
-
-			my $newcode = field($input[$n], 1);
+			my $newcode = &field($input[$n], 1);
 
 			next if ( $newcode eq "idem" );
 			next if ( $newcode eq "" );
 
-			my $oldcode = field($input[$n], 0);
-			if ( is_range($oldcode) ) {
-				many_many($oldcode, $newcode, notes($input[$n]));
+			my $oldcode = &field($input[$n], 0);
+			if ( &is_range($oldcode) ) {
+				&many_many($oldcode, $newcode, &notes($input[$n]));
 			} else {
-				one_many($oldcode, $newcode, notes($input[$n]));
+				&one_many($oldcode, $newcode, &notes($input[$n]));
 			}
 		} elsif ( $input[$n] =~ /^U\+/ ) {
 			if ( $input[$n] =~ /^U\+\w+:/ ) {
@@ -291,29 +312,26 @@ sub doit($) {
 				my $expect = $input[$n];
 
 				$values =~ s/:.*//;
-				$values = zeroxes($values);
+				$values = &zeroxes($values);
 				$expect =~ s/^[^:]+://;
 
-				if ( is_range($values) ) {
-					# printf "fixme:%s(%s)(%s)\n", $input[$n], $values, $expect;
+				if ( &is_range($values) ) {
+					printf "fixme:%s(%s)(%s)\n", $input[$n], $values, $expect;
 				} else {
-					approximate(value_of($values), $expect, notes($input[$n]));
+					&approximate(&value_of($values), $expect, &notes($input[$n]));
 				}
 			} else {
 				my $value = $input[$n];
 				$value =~ s/\s*".*//;
-				$value = value_of(zeroxes($value));
+				$value = &value_of(&zeroxes($value));
 				if ($value gt 0) {
 					my $quote = $input[$n];
-					my $comment = notes($input[$n]);
+					my $comment = &notes($input[$n]);
 					$quote =~ s/^[^"]*"//;
 					$quote =~ s/".*//;
-					$quote =~ s/\\134/\\/g;
-					$quote =~ s/\\015/\&#13\;/g;
-					$quote =~ s/\\012/\&#10\;/g;
-					approximate($value, $quote, $comment);
+					&approximate($value, $quote, $comment);
 				} else {
-					printf "fixme:%s(%s)\n", $input[$n];
+					printf "fixme:%d(%s)\n", $n, $input[$n];
 				}
 			}
 		} else {
@@ -321,7 +339,7 @@ sub doit($) {
 		}
 	}
 	if ( ! $empty ) {
-		make_footer();
+		&make_footer();
 	}
 	close FP;
 }

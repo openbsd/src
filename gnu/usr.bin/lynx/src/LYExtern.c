@@ -1,5 +1,5 @@
 /*
- * $LynxId: LYExtern.c,v 1.42 2009/01/01 22:07:00 tom Exp $
+ * $LynxId: LYExtern.c,v 1.54 2013/11/29 00:21:20 tom Exp $
  *
  External application support.
  This feature allows lynx to pass a given URL to an external program.
@@ -31,8 +31,8 @@
 
 #ifdef WIN_EX
 /* ASCII char -> HEX digit */
-#define ASC2HEXD(x) (((x) >= '0' && (x) <= '9') ?               \
-		     ((x) - '0') : (toupper(x) - 'A' + 10))
+#define ASC2HEXD(x) ((UCH(x) >= '0' && UCH(x) <= '9') ?               \
+		     (UCH(x) - '0') : (toupper(UCH(x)) - 'A' + 10))
 
 /* Decodes the forms %xy in a URL to the character the hexadecimal
    code of which is xy. xy are hexadecimal digits from
@@ -52,7 +52,7 @@ static char *decode_string(char *s)
 	    /* Do nothing if at the end of the string. Or if the chars
 	       are not hex-digits. */
 	    if (!*(s + 1) || !*(s + 2)
-		|| !(isxdigit(*(s + 1)) && isxdigit(*(s + 2)))) {
+		|| !(isxdigit(UCH(*(s + 1))) && isxdigit(UCH(*(s + 2))))) {
 		*p = *s;
 		continue;
 	    }
@@ -78,7 +78,7 @@ static void delete_danger_characters(char *src)
     char *dst;
 
     for (dst = src; *src != '\0'; src++) {
-	if (strchr("<>|%\"", *src) == NULL) {
+	if (StrChr("<>|%\"", *src) == NULL) {
 	    *dst = *src;
 	    dst++;
 	}
@@ -99,14 +99,14 @@ static char *escapeParameter(CONST char *parameter)
     char *needs_escaped_NT = "%&^";
 
     for (i = 0; i < last; ++i) {
-	if (strchr(needs_encoded, parameter[i]) != NULL) {
+	if (StrChr(needs_encoded, parameter[i]) != NULL) {
 	    ++encoded;
 	}
 	if (system_is_NT) {
-	    if (strchr(needs_escaped_NT, parameter[i]) != NULL) {
+	    if (StrChr(needs_escaped_NT, parameter[i]) != NULL) {
 		++escaped;
 	    }
-	} else if (strchr(needs_escaped, parameter[i]) != NULL) {
+	} else if (StrChr(needs_escaped, parameter[i]) != NULL) {
 	    ++escaped;
 	}
     }
@@ -117,18 +117,18 @@ static char *escapeParameter(CONST char *parameter)
 
     n = 0;
     for (i = 0; i < last; i++) {
-	if (strchr(needs_encoded, parameter[i]) != NULL) {
+	if (StrChr(needs_encoded, parameter[i]) != NULL) {
 	    sprintf(result + n, "%%%02X", (unsigned char) parameter[i]);
 	    n += 3;
 	    continue;
 	}
 	if (system_is_NT) {
-	    if (strchr(needs_escaped_NT, parameter[i]) != NULL) {
+	    if (StrChr(needs_escaped_NT, parameter[i]) != NULL) {
 		result[n++] = '^';
 		result[n++] = parameter[i];
 		continue;
 	    }
-	} else if (strchr(needs_escaped, parameter[i]) != NULL) {
+	} else if (StrChr(needs_escaped, parameter[i]) != NULL) {
 	    result[n++] = '%';	/* parameter[i] is '%' */
 	    result[n++] = parameter[i];
 	    continue;
@@ -167,10 +167,10 @@ static char *format_command(char *command,
     char pram_string[LY_MAXPATH];
     char *escaped = NULL;
 
-    if (strnicmp("file://localhost/", param, 17) == 0) {
+    if (strncasecomp("file://localhost/", param, 17) == 0) {
 	/* decode local path parameter for programs to be
 	   able to interpret - TH */
-	LYstrncpy(pram_string, param, sizeof(pram_string) - 1);
+	LYStrNCpy(pram_string, param, sizeof(pram_string) - 1);
 	decode_string(pram_string);
 	param = pram_string;
     } else {
@@ -181,23 +181,23 @@ static char *format_command(char *command,
 
     if (isMAILTO_URL(param)) {
 	format(&cmdbuf, command, param + 7);
-    } else if (strnicmp("telnet://", param, 9) == 0) {
+    } else if (strncasecomp("telnet://", param, 9) == 0) {
 	char host[sizeof(pram_string)];
 	int last_pos;
 
-	LYstrncpy(host, param + 9, sizeof(host));
+	LYStrNCpy(host, param + 9, sizeof(host));
 	last_pos = strlen(host) - 1;
 	if (last_pos > 1 && host[last_pos] == '/')
 	    host[last_pos] = '\0';
 
 	format(&cmdbuf, command, host);
-    } else if (strnicmp("file://localhost/", param, 17) == 0) {
+    } else if (strncasecomp("file://localhost/", param, 17) == 0) {
 	char e_buff[LY_MAXPATH], *p;
 
 	p = param + 17;
 	delete_danger_characters(p);
 	*e_buff = 0;
-	if (strchr(p, ':') == NULL) {
+	if (StrChr(p, ':') == NULL) {
 	    sprintf(e_buff, "%.3s/", windows_drive);
 	}
 	strncat(e_buff, p, sizeof(e_buff) - strlen(e_buff) - 1);
@@ -236,11 +236,12 @@ static char *format_command(char *command,
  * allow the user to select one.  Return the selected command.
  */
 static char *lookup_external(char *param,
-			     BOOL only_overriders)
+			     int only_overriders)
 {
     int pass, num_disabled, num_matched, num_choices, cur_choice;
-    int length = 0;
+    size_t length = 0;
     char *cmdbuf = NULL;
+    char **actions = 0;
     char **choices = 0;
     lynx_list_item_type *ptr = 0;
 
@@ -260,8 +261,11 @@ static char *lookup_external(char *param,
 			length++;
 		    } else if (pass != 0) {
 			cmdbuf = format_command(ptr->command, param);
-			if (length > 1)
-			    choices[num_choices] = cmdbuf;
+			if (length > 1) {
+			    actions[num_choices] = cmdbuf;
+			    choices[num_choices] =
+				format_command(ptr->menu_name, param);
+			}
 		    }
 		    num_choices++;
 		}
@@ -269,8 +273,13 @@ static char *lookup_external(char *param,
 	}
 	if (length > 1) {
 	    if (pass == 0) {
-		choices = typecallocn(char *, (unsigned) length + 1);
+		actions = typecallocn(char *, length + 1);
+		choices = typecallocn(char *, length + 1);
+
+		if (actions == 0 || choices == 0)
+		    outofmem(__FILE__, "lookup_external");
 	    } else {
+		actions[num_choices] = 0;
 		choices[num_choices] = 0;
 	    }
 	}
@@ -286,7 +295,7 @@ static char *lookup_external(char *param,
 	cur_choice = LYhandlePopupList(-1,
 				       0,
 				       old_x,
-				       (const char **) choices,
+				       (STRING2PTR) choices,
 				       -1,
 				       -1,
 				       FALSE,
@@ -299,18 +308,34 @@ static char *lookup_external(char *param,
 	}
 	for (pass = 0; choices[pass] != 0; pass++) {
 	    if (pass == cur_choice) {
-		cmdbuf = choices[pass];
+		cmdbuf = actions[pass];
 	    } else {
-		FREE(choices[pass]);
+		FREE(actions[pass]);
 	    }
+	    FREE(choices[pass]);
+	}
+    }
+
+    if (actions) {
+	for (pass = 0; actions[pass] != 0; ++pass) {
+	    if (actions[pass] != cmdbuf)
+		FREE(actions[pass]);
+	}
+	FREE(actions);
+    }
+
+    if (choices) {
+	for (pass = 0; choices[pass] != 0; ++pass) {
+	    FREE(choices[pass]);
 	}
 	FREE(choices);
     }
+
     return cmdbuf;
 }
 
 BOOL run_external(char *param,
-		  BOOL only_overriders)
+		  int only_overriders)
 {
 #ifdef WIN_EX
     int status;
@@ -363,7 +388,7 @@ BOOL run_external(char *param,
 	    }
 	}
 
-	if (strnicmp(cmdbuf, "start ", 6) == 0)
+	if (strncasecomp(cmdbuf, "start ", 6) == 0)
 	    redraw_flag = FALSE;
 	else
 	    redraw_flag = TRUE;

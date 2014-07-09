@@ -1,4 +1,4 @@
-# $LynxId: makefile.in,v 1.25 2009/04/15 23:24:33 tom Exp $
+# $LynxId: makefile.in,v 1.31 2012/08/12 23:55:17 tom Exp $
 # Make WWW under unix for a.n.other unix system (bsd)
 # Use this as a template
 
@@ -11,6 +11,7 @@ LFLAGS =
 
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
+datarootdir	= @datarootdir@
 top_srcdir	= @top_srcdir@
 srcdir		= @srcdir@
 VPATH		= $(srcdir)
@@ -42,7 +43,11 @@ CPPOPTS		= $(DEFS) $(LYFLAGS) \
 
 LY_CFLAGS	= @CFLAGS@
 CFLAGS		= $(CPPOPTS) $(LY_CFLAGS)
+
 LINT		= @LINT@
+LINTOPTS	=
+
+CTAGS		= @CTAGS@
 
 # Directory for installed binary:
 BINDIR		= @bindir@
@@ -86,11 +91,11 @@ LOB = .
 # Only needed if HTWAIS.c is to be compiled. Put into your Makefile.include
 #  uncomment these and fill in WAISINC for adding direct wais access
 #  to Lynx.
-#HTWAIS_c = $(CMN)/HTWAIS.c
-#HTWAIS_o = $(LOB)/HTWAIS$o
-#WAIS = YES
+@MAKE_WAIS@HTWAIS_c = $(CMN)/HTWAIS.c
+@MAKE_WAIS@HTWAIS_o = $(LOB)/HTWAIS$o
+@MAKE_WAIS@WAIS = YES
 #WAISINC = -I../../../../freeWAIS-0.202/ir
-#WAISCFLAGS = -DDIRECT_WAIS
+@MAKE_WAIS@WAISCFLAGS = -DDIRECT_WAIS
 #
 
 # add -DNEW_GATEWAY here for the new gateway config stuff
@@ -150,19 +155,21 @@ HFILES = $(CMN)HTParse.h $(CMN)HTAccess.h $(CMN)HTTP.h $(CMN)HTFile.h \
 	$(CMN)HTAAProt.h \
 	$(CMN)HTAssoc.h  $(CMN)HTLex.h    $(CMN)HTUU.h
 
+C_SRC		= $(COMMON:$o=.c)
+
 all : $(LOB)/libwww.a
 
 lint:
-	$(LINT) $(LINTOPTS) $(CPPOPTS) $(srcdir)/../Implementation/*.c  > ../../../lint.libwww
+	$(LINT) $(LINTOPTS) $(CPPOPTS) $(C_SRC) 2>&1 |tee ../../../lint.libwww
 
 .SUFFIXES: $o .i .h .html
 
 .c$o:
-@RULE_CC@
+	@RULE_CC@
 	@ECHO_CC@$(CC) $(CPPOPTS) $(CFLAGS) -c $(srcdir)/$*.c
 
 .c.i:
-@RULE_CC@
+	@RULE_CC@
 	@ECHO_CC@$(CPP) -C $(CPPOPTS) $(srcdir)/$*.c >$@
 
 depend :
@@ -186,7 +193,7 @@ distclean : clean
 	@echo made $@
 
 tags:
-	ctags *.[ch]
+	$(CTAGS) *.[ch]
 
 #			Common code
 #			-----------

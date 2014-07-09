@@ -419,7 +419,7 @@ msgstr "  矢印キー: [↑][↓]で移動 [→]でリンクを辿る [←]で一つ戻る  \n"
 #. #define NOVICE_LINE_TWO
 #: LYMessages.c:168
 msgid " H)elp O)ptions P)rint G)o M)ain screen Q)uit /=search [delete]=history list \n"
-msgstr " [H]ヘルプ[o]設定[p]印刷[g]移動[m]メイン画面[q]終了 /=検索 [Delete]=履歴 \n"
+msgstr " [H]ヘルプ[o]設定[p]印刷[g]移動[m]メイン画面[q]終了 /=検索 [BackSpace]=履歴 \n"
 
 #. #define NOVICE_LINE_TWO_A
 #: LYMessages.c:170
@@ -3550,7 +3550,7 @@ msgstr " (%s 秒停止中)"
 #: src/HTAlert.c:346
 #, c-format
 msgid ", ETA %s"
-msgstr "、 ETA %s 秒"
+msgstr "、 ETA %s"
 
 #: src/HTAlert.c:368
 msgid " (Press 'z' to abort)"

@@ -1,4 +1,4 @@
-/* $LynxId: LYStyle.h,v 1.16 2009/01/01 23:06:08 tom Exp $ */
+/* $LynxId: LYStyle.h,v 1.19 2013/10/22 00:42:18 tom Exp $ */
 #ifndef LYSTYLE_H
 #define LYSTYLE_H
 
@@ -12,12 +12,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* list of elements */ extern const SGML_dtd HTML_dtd;
 
-/* array of currently set styles */
+    typedef struct {
+	char *given;
+	char *actual;
+    } LSS_NAMES;
+
+    /* list of elements */ extern const SGML_dtd HTML_dtd;
+
+    /* array of currently set styles */
     extern HTCharStyle displayStyles[DSTYLE_ELEMENTS];
 
-/* Set all the buckets in the hash table to be empty */
+    /* Set all the buckets in the hash table to be empty */
     extern void parse_userstyles(void);
 
     extern void style_defaultStyleSheet(void);
@@ -28,45 +34,45 @@ extern "C" {
 			       char *styleclassname,
 			       int *phcode);
 
-/* this is an array of styles for tags that don't specify 'class' - the values
- * from that array will be suggested by SGML.c by setting the following
- * variable.  Value of -1 means that style value should be calculated honestly. 
- * -HV
- */
+    /* This is an array of styles for tags that don't specify 'class' - the
+     * values from that array will be suggested by SGML.c by setting the
+     * following variable.  A value of -1 means that the style value should be
+     * calculated honestly -HV
+     */
     extern int cached_tag_styles[HTML_ELEMENTS];
 
-/* the style for current tag is suggested in current_tag_style.  If
- * force_current_tag_style =TRUE, then no attempts to calculate the color style
- * for current tag should be made - the value of 'current_tag_style' must be
- * used.
- */
+    /* The style for current tag is suggested in current_tag_style.  If
+     * force_current_tag_style =TRUE, then no attempts to calculate the color
+     * style for current tag should be made - the value of 'current_tag_style'
+     * must be used.
+     */
     extern int current_tag_style;
     extern BOOL force_current_tag_style;
 
     extern BOOL force_classname;
 
-/* if force_current_tag_style =TRUE, then here will be the classname (this is
- * done to avoid copying the class name to the buffer class_name.
- */
+    /* If force_current_tag_style =TRUE, then here will be the classname (this
+     * is done to avoid copying the class name to the buffer class_name.
+     */
     extern char *forced_classname;
 
-/* This is called each time lss styles are read.  It will fill each elt of
- * 'cached_tag_styles' -HV
- */
+    /* This is called each time lss styles are read.  It will fill each element
+     * of 'cached_tag_styles' -HV
+     */
     extern void cache_tag_styles(void);
 
-/* this is global var - it can be used for reading the end of string found
- * during last invokation of TrimColorClass.
- */
+    /* use this for reading the end of string found during last invokation of
+     * TrimColorClass.
+     */
     extern void FastTrimColorClass(const char *tag_name,
 				   unsigned name_len,
 				   char *stylename,
 				   char **pstylename_end,
 				   int *hcode);
 
-/*
- * Functions for cached-styles
- */
+    /*
+     * Functions for cached-styles
+     */
     extern BOOL ValidCachedStyle(int y, int x);
     extern unsigned GetCachedStyle(int y, int x);
     extern void FreeCachedStyles(void);

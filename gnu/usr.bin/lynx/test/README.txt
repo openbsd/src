@@ -1,4 +1,4 @@
-ISO_LATIN1_test.html and iso8859-1.html are for testing the translation of
+ISO_LATIN1_test.html and iso-8859-1.html are for testing the translation of
 HTML entities with the character sets that are selectable via the 'o'ptions
 menu.
 

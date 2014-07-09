@@ -1,5 +1,5 @@
 /*
- * $LynxId: LYJustify.h,v 1.7 2009/04/07 00:24:15 tom Exp $
+ * $LynxId: LYJustify.h,v 1.8 2009/11/21 15:24:48 tom Exp $
  *
  * Justification for lynx - implemented by Vlad Harchev <hvv@hippo.ru>
  * 11 July 1999
@@ -13,7 +13,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifdef EXP_JUSTIFY_ELTS
+#ifdef USE_JUSTIFY_ELTS
     extern BOOL can_justify_here;
     extern BOOL can_justify_here_saved;
 
@@ -58,24 +58,24 @@ extern "C" {
  */
 #define CAN_JUSTIFY_START  mark_justify_start_position(me->text);
 #define CANT_JUSTIFY_THIS_LINE can_justify_this_line = FALSE
-#define EMIT_IFDEF_EXP_JUSTIFY_ELTS(x) x
+#define EMIT_IFDEF_USE_JUSTIFY_ELTS(x) x
     /*defined in order not to wrap single line of code  into #ifdef/#endif */
 
     extern void ht_justify_cleanup(void);
     extern void mark_justify_start_position(void *text);
 
-#else				/* ! EXP_JUSTIFY_ELTS */
+#else				/* ! USE_JUSTIFY_ELTS */
 /*
  * define empty macros so that they can be used without wrapping them in
- * #ifdef EXP_JUSTIFY_ELTS/#endif
+ * #ifdef USE_JUSTIFY_ELTS/#endif
  */
 #define CAN_JUSTIFY_PUSH(x)
 #define CAN_JUSTIFY_POP
 #define CAN_JUSTIFY_SET(x)
 #define CAN_JUSTIFY_START
 #define CANT_JUSTIFY_THIS_LINE
-#define EMIT_IFDEF_EXP_JUSTIFY_ELTS(x)
-#endif				/* EXP_JUSTIFY_ELTS */
+#define EMIT_IFDEF_USE_JUSTIFY_ELTS(x)
+#endif				/* USE_JUSTIFY_ELTS */
 #define CAN_JUSTIFY_PUSH_F CAN_JUSTIFY_PUSH(FALSE)
 #ifdef __cplusplus
 }

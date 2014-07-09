@@ -1,5 +1,5 @@
 /*
- * $LynxId: AttrList.h,v 1.16 2009/04/16 23:42:58 tom Exp $
+ * $LynxId: AttrList.h,v 1.17 2013/05/03 20:54:09 tom Exp $
  */
 #if !defined(__ATTRLIST_H)
 #define __ATTRLIST_H
@@ -47,7 +47,7 @@ extern "C" {
     extern void _internal_HTC(HText *text, int style, int dir);
 
 #define TEMPSTRINGSIZE 256
-    extern char class_string[TEMPSTRINGSIZE];
+    extern char class_string[TEMPSTRINGSIZE + 1];
 
 /* stack of attributes during page rendering */
 #define MAX_LAST_STYLES 128

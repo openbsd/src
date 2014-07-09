@@ -1,5 +1,5 @@
 /*
- * $LynxId: LYPrettySrc.h,v 1.10 2009/03/11 00:40:00 tom Exp $
+ * $LynxId: LYPrettySrc.h,v 1.12 2010/09/24 09:42:58 tom Exp $
  */
 #ifndef LYPrettySrc_H
 #define LYPrettySrc_H
@@ -72,13 +72,13 @@ extern "C" {
     extern HT_tagspec *lexeme_end[HTL_num_lexemes];
 
     extern int html_src_parse_tagspec(char *ts, HTlexeme lexeme,
-				      BOOL checkonly, BOOL isstart);
-    extern void HTMLSRC_init_caches(BOOL dont_exit);
+				      int checkonly, int isstart);
+    extern void HTMLSRC_init_caches(int dont_exit);
     extern void html_src_clean_item(HTlexeme l);
     extern void html_src_clean_data(void);
     extern void html_src_on_lynxcfg_reload(void);
 
-/* these 2 vars tell what kind of transform should be appiled to tag names
+/* these 2 vars tell what kind of transform should be applied to tag names
   and attribute names. 0 - lowercase, 1 - as is, 2 uppercase. */
     extern int tagname_transform;
     extern int attrname_transform;

@@ -1,5 +1,5 @@
 /*                System dependencies in the W3 library
- * $LynxId: www_tcp.h,v 1.39 2009/03/09 22:43:29 Doug.Kaufman Exp $
+ * $LynxId: www_tcp.h,v 1.54 2013/07/20 14:08:29 tom Exp $
  *
                                    SYSTEM DEPENDENCIES
 
@@ -40,11 +40,15 @@ Default values
 
  */
 /* Default values of those: */
-#define NETCLOSE close		/* Routine to close a TCP-IP socket         */
-#define NETREAD  HTDoRead	/* Routine to read from a TCP-IP socket     */
-#define NETWRITE write		/* Routine to write to a TCP-IP socket      */
-#define SOCKET_READ read	/* normal socket read routine */
-#define IOCTL ioctl		/* normal ioctl routine for sockets */
+	/* Routine to close a TCP-IP socket         */
+#define NETCLOSE close
+	/* Routine to read from a TCP-IP socket     */
+#define NETREAD(s,p,n) \
+	HTDoRead(s, p, (unsigned)(n))
+	/* Routine to write to a TCP-IP socket      */
+#define NETWRITE(s,p,n)		write(s, p, (size_t)(n))
+#define SOCKET_READ(s,b,l)	read(s,b,(size_t)(l))
+#define IOCTL(s,cmd,arg)	ioctl(s,(long)(cmd),arg)
 #define SOCKET_ERRNO errno	/* normal socket errno */
 
 /* Unless stated otherwise, */
@@ -155,7 +159,8 @@ extern const unsigned char IBM1047[];
 /* For debugging
 #include <assert.h>
 #define   TOASCII(c) (assert((c)>=0 && (c)<256), un_IBM1047[c])
-*//* for production */
+*/
+/* for production */
 #define   TOASCII(c) (un_IBM1047[c])
 
 #define FROMASCII(c) (IBM1047[c])
@@ -211,7 +216,7 @@ extern int ws_netread(int fd, char *buf, int len);
 #define NETREAD(s,b,l)  ws_netread((s),(b),(l))		/* 1997/11/06 (Thu) */
 #define NETWRITE(s,b,l) send((s),(b),(l),0)
 #define NETCLOSE(s)     closesocket(s)
-#define IOCTL				ioctlsocket
+#define IOCTL(s,cmd,arg)	ioctlsocket(s,cmd,arg)
 #include <io.h>
 #include <string.h>
 #include <process.h>
@@ -277,13 +282,28 @@ extern int ws_netread(int fd, char *buf, int len);
 #undef EAGAIN
 #endif /* _MSC_VER */
 
+#undef EINPROGRESS
 #define EINPROGRESS          (WSABASEERR+36)
+
+#undef EALREADY
 #define EALREADY             (WSABASEERR+37)
+
+#undef EISCONN
 #define EISCONN              (WSABASEERR+56)
+
+#undef EINTR
 #define EINTR                (WSABASEERR+4)
+
+#undef EAGAIN
 #define EAGAIN               (WSABASEERR+1002)
+
+#undef ENOTCONN
 #define ENOTCONN             (WSABASEERR+57)
+
+#undef ECONNRESET
 #define ECONNRESET           (WSABASEERR+54)
+
+#undef ETIMEDOUT
 #define ETIMEDOUT             WSAETIMEDOUT
 
 #endif /* USE_WINSOCK2_H */
@@ -322,7 +342,7 @@ VAX/VMS
 
 #ifdef UCX
 #undef IOCTL
-#define IOCTL HTioctl
+#define IOCTL(s,cmd,arg)	HTioctl(s,cmd,arg)
 #endif /* UCX */
 
 #ifdef WIN_TCP
@@ -330,8 +350,8 @@ VAX/VMS
 #undef NETWRITE
 #undef NETCLOSE
 #define SOCKET_READ(s,b,l)  ((s)>10 ? netread((s),(b),(l)) : read((s),(b),(l)))
-#define NETWRITE(s,b,l) ((s)>10 ? netwrite((s),(b),(l)) : write((s),(b),(l)))
-#define NETCLOSE(s)     ((s)>10 ? netclose(s) : close(s))
+#define NETWRITE(s,b,l)     ((s)>10 ? netwrite((s),(b),(l)) : write((s),(b),(l)))
+#define NETCLOSE(s)         ((s)>10 ? netclose(s) : close(s))
 #undef IOCTL
 #define IOCTL(a,b,c) -1		/* disables ioctl function            */
 #define NO_IOCTL		/* flag to check if ioctl is disabled */
@@ -343,9 +363,9 @@ VAX/VMS
 #undef NETWRITE
 #undef NETCLOSE
 #define SOCKET_READ(s,b,l) (cmu_get_sdc((s)) != 0 ? cmu_read((s),(b),(l)) : read((s),(b),(l)))
-#define NETREAD(s,b,l) (cmu_get_sdc((s)) != 0 ? HTDoRead((s),(b),(l)) : read((s),(b),(l)))
-#define NETWRITE(s,b,l) (cmu_get_sdc((s)) != 0 ? cmu_write((s),(b),(l)) : write((s),(b),(l)))
-#define NETCLOSE(s) (cmu_get_sdc((s)) != 0 ? cmu_close((s)) : close((s)))
+#define NETREAD(s,b,l)     (cmu_get_sdc((s)) != 0 ? HTDoRead((s),(b),(l)) : read((s),(b),(l)))
+#define NETWRITE(s,b,l)    (cmu_get_sdc((s)) != 0 ? cmu_write((s),(b),(l)) : write((s),(b),(l)))
+#define NETCLOSE(s)        (cmu_get_sdc((s)) != 0 ? cmu_close((s)) : close((s)))
 #endif /* CMU_TCP */
 
 #ifdef MULTINET
@@ -367,10 +387,10 @@ extern int socket_ioctl();
 
 #define SOCKET_READ(s,b,l)  ((s)>10 ? socket_read((s),(b),(l)) : \
 				read((s),(b),(l)))
-#define NETWRITE(s,b,l) ((s)>10 ? socket_write((s),(b),(l)) : \
+#define NETWRITE(s,b,l)     ((s)>10 ? socket_write((s),(b),(l)) : \
                                 write((s),(b),(l)))
-#define NETCLOSE(s)     ((s)>10 ? socket_close(s) : close(s))
-#define IOCTL socket_ioctl
+#define NETCLOSE(s)         ((s)>10 ? socket_close(s) : close(s))
+#define IOCTL(s,cmd,arg)	socket_ioctl(s,cmd,arg)
 #define SOCKET_ERRNO socket_errno
 #endif /* MULTINET */
 
@@ -380,14 +400,14 @@ extern int socket_ioctl();
 #undef NETWRITE
 #undef NETCLOSE
 #undef IOCTL
-#define SOCKET_READ(s,b,l) (si_get_sdc((s)) != 0 ? si_read((s),(b),(l)) : \
+#define SOCKET_READ(s,b,l)  (si_get_sdc((s)) != 0 ? si_read((s),(b),(l)) : \
                                 read((s),(b),(l)))
-#define NETREAD(s,b,l) (si_get_sdc((s)) != 0 ? HTDoRead((s),(b),(l)) : \
+#define NETREAD(s,b,l)      (si_get_sdc((s)) != 0 ? HTDoRead((s),(b),(l)) : \
                                 read((s),(b),(l)))
-#define NETWRITE(s,b,l) (si_get_sdc((s)) != 0 ? si_write((s),(b),(l)) : \
+#define NETWRITE(s,b,l)     (si_get_sdc((s)) != 0 ? si_write((s),(b),(l)) : \
                                 write((s),(b),(l)))
-#define NETCLOSE(s) (si_get_sdc((s)) != 0 ? si_close((s)) : close((s)))
-#define IOCTL si_ioctl
+#define NETCLOSE(s)         (si_get_sdc((s)) != 0 ? si_close((s)) : close((s)))
+#define IOCTL(s,cmd,arg)	si_ioctl(s,cmd,arg)
 #endif /* SOCKETSHR_TCP */
 
 #ifdef TCPIP_SERVICES
@@ -395,10 +415,13 @@ extern int socket_ioctl();
  * TCPIP Services has all of the entrypoints including ioctl().
  */
 #undef NETWRITE
-#define NETWRITE(s,b,l) send((s),(char *)(b),(l))
+#define NETWRITE(s,b,l) send((s),(char *)(b),(l),0)
 
 #define TYPE_FD_SET int
+
+#if 0				/* this should be declared via time.h */
 typedef TYPE_FD_SET fd_set;
+#endif
 
 #endif /* TCPIP_SERVICES */
 
@@ -435,30 +458,49 @@ extern char *vms_errno_string();
 #ifndef __SOCKET_TYPEDEFS
 #define __SOCKET_TYPEDEFS 1
 #endif /* !__SOCKET_TYPEDEFS */
+
 #include <time.h>
 #include <types.h>
+/*
+ * DEC C before version 5.2 added some typedefs to <types.h> which happen
+ * to be suppressed if the version-4 compatibility define is set.  In
+ * particular, lynx uses "off_t".  VAX-C used "unsigned", DEC-C uses "int".
+ */
+#if defined(_DECC_V4_SOURCE) && !defined(____OFF_T)
+#undef off_t
+#define off_t int
+#endif
+
 #ifdef __TIME_T
 #undef  __TYPES
 #define __TYPES 1
 #define __TYPES_LOADED 1
 #endif /* __TIME_T */
+
 #ifdef __SOCKET_TYPEDEFS
 #undef __SOCKET_TYPEDEFS
 #endif /* __SOCKET_TYPEDEFS */
+
 #include "multinet_root:[multinet.include.sys]types.h"
+
 #ifndef __SOCKET_TYPEDEFS
 #define __SOCKET_TYPEDEFS 1
 #endif /* !__SOCKET_TYPEDEFS */
+
 #include "multinet_root:[multinet.include]errno.h"
+
 #ifdef __TYPES
 #undef  __TIME_T
 #define __TIME_T 1
 #endif /* __TYPE */
+
 #ifdef __TIME_LOADED
 #undef  __TIME
 #define __TIME 1		/* to avoid double definitions in in.h */
 #endif /* __TIME_LOADED */
+
 #include "multinet_root:[multinet.include.sys]time.h"
+
 #define MULTINET_NO_PROTOTYPES	/* DECC is compatible-but-different */
 #include "multinet_root:[multinet.include.sys]socket.h"
 #undef MULTINET_NO_PROTOTYPES
@@ -504,7 +546,11 @@ struct timeval {
 #include "tcpware_include:ucx$inetdef.h"
 #else
 #include <netdb.h>
+#ifdef MUCX
+#include <multinet_root:[multinet.include.vms]ucx$inetdef.h>
+#else
 #include <ucx$inetdef.h>
+#endif /* MUCX */
 #endif /* TCPWARE */
 #define TCP_INCLUDES_DONE
 #endif /* UCX */
@@ -620,7 +666,7 @@ extern int errno;
 #undef SELECT
 #define TCP_INCLUDES_DONE
 #undef  IOCTL
-#define IOCTL(s,cmd,arg) ioctlsocket(s,cmd,(char*)(arg))
+#define IOCTL(s,cmd,arg)	ioctlsocket(s,cmd,(char*)(arg))
 #define DECL_ERRNO
 #include <errno.h>
 #include <sys/types.h>
@@ -738,10 +784,10 @@ typedef unsigned short mode_t;
 
 # ifdef HAVE_LIMITS_H
 #  include <limits.h>
-# endif				/* HAVE_LIMITS_H */
+# endif	/* HAVE_LIMITS_H */
 # if !defined(MAXINT) && defined(INT_MAX)
 #  define MAXINT INT_MAX
-# endif				/* !MAXINT && INT_MAX */
+# endif	/* !MAXINT && INT_MAX */
 
 #else
 
@@ -749,7 +795,7 @@ typedef unsigned short mode_t;
 #define DECL_SYS_ERRLIST 1
 #endif
 
-#if defined(VMS) && !defined(TCPIP_SERVICES)
+#if defined(VMS)
 #define socklen_t unsigned
 #else
 #define socklen_t int		/* used for default LY_SOCKLEN definition */
@@ -769,6 +815,10 @@ typedef unsigned short mode_t;
 
 #ifndef HAVE_GETTEXT
 #define gettext(s) s
+#endif
+
+#ifndef NLS_TEXTDOMAIN
+#define NLS_TEXTDOMAIN "lynx"
 #endif
 
 /*
@@ -924,7 +974,7 @@ typedef TYPE_FD_SET fd_set;
 typedef struct sockaddr_storage SockA;
 
 #ifdef SIN6_LEN
-#define SOCKADDR_LEN(soc_address) ((struct sockaddr *)&soc_address)->sa_len
+#define SOCKADDR_LEN(soc_address) (((struct sockaddr *)&soc_address)->sa_len)
 #else
 #ifndef SA_LEN
 #define SA_LEN(x) (((x)->sa_family == AF_INET6) \
@@ -933,7 +983,7 @@ typedef struct sockaddr_storage SockA;
 		      ? sizeof(struct sockaddr_in) \
 		      : sizeof(struct sockaddr)))	/* AF_UNSPEC? */
 #endif
-#define SOCKADDR_LEN(soc_address) SA_LEN((struct sockaddr *)&soc_address)
+#define SOCKADDR_LEN(soc_address) (socklen_t) (SA_LEN((struct sockaddr *)&soc_address))
 #endif /* SIN6_LEN */
 #else
 typedef struct sockaddr_in SockA;

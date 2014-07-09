@@ -1,5 +1,5 @@
 /*
- * $LynxId: LYrcFile.h,v 1.33 2009/06/07 16:56:00 tom Exp $
+ * $LynxId: LYrcFile.h,v 1.45 2014/02/12 23:42:24 tom Exp $
  */
 #ifndef LYRCFILE_H
 #define LYRCFILE_H
@@ -11,6 +11,7 @@
 /* configuration-variable names to share with LYReadCFG.c and LYOptions.c */
 #define RC_ACCEPT_ALL_COOKIES           "accept_all_cookies"
 #define RC_ALERTSECS                    "alertsecs"
+#define RC_ALT_BLAT_MAIL                "alt_blat_mail"
 #define RC_ALWAYS_RESUBMIT_POSTS        "always_resubmit_posts"
 #define RC_ALWAYS_TRUSTED_EXEC          "always_trusted_exec"
 #define RC_ANONFTP_PASSWORD             "anonftp_password"
@@ -24,6 +25,7 @@
 #define RC_BAD_HTML                     "bad_html"
 #define RC_BIBP_BIBHOST                 "bibp_bibhost"
 #define RC_BIBP_GLOBALSERVER            "bibp_globalserver"
+#define RC_BLAT_MAIL                    "blat_mail"
 #define RC_BLOCK_MULTI_BOOKMARKS        "block_multi_bookmarks"
 #define RC_BOLD_H1                      "bold_h1"
 #define RC_BOLD_HEADERS                 "bold_headers"
@@ -44,6 +46,7 @@
 #define RC_COLOR_STYLE                  "color_style"
 #define RC_COMPRESS_PATH                "compress_path"
 #define RC_CONNECT_TIMEOUT              "connect_timeout"
+#define RC_CONV_JISX0201KANA            "conv_jisx0201kana"
 #define RC_COOKIE_ACCEPT_DOMAINS        "cookie_accept_domains"
 #define RC_COOKIE_FILE                  "cookie_file"
 #define RC_COOKIE_LOOSE_INVALID_DOMAINS "cookie_loose_invalid_domains"
@@ -69,12 +72,14 @@
 #define RC_DIR_LIST_STYLE               "dir_list_style"
 #define RC_DISPLAY                      "display"
 #define RC_DISPLAY_CHARSET_CHOICE       "display_charset_choice"
+#define RC_DONT_WRAP_PRE                "dont_wrap_pre"
 #define RC_DOWNLOADER                   "downloader"
 #define RC_EMACS_KEYS                   "emacs_keys"
 #define RC_EMACS_KEYS_ALWAYS_ON         "emacs_keys_always_on"
 #define RC_ENABLE_LYNXRC                "enable_lynxrc"
 #define RC_ENABLE_SCROLLBACK            "enable_scrollback"
 #define RC_EXTERNAL                     "external"
+#define RC_EXTERNAL_MENU                "external_menu"
 #define RC_FILE_EDITOR                  "file_editor"
 #define RC_FILE_SORTING_METHOD          "file_sorting_method"
 #define RC_FINGER_PROXY                 "finger_proxy"
@@ -82,6 +87,7 @@
 #define RC_FORCE_8BIT_TOUPPER           "force_8bit_toupper"
 #define RC_FORCE_COOKIE_PROMPT          "force_cookie_prompt"
 #define RC_FORCE_EMPTY_HREFLESS_A       "force_empty_hrefless_a"
+#define RC_FORCE_HTML                   "force_html"
 #define RC_FORCE_SSL_COOKIES_SECURE     "force_ssl_cookies_secure"
 #define RC_FORCE_SSL_PROMPT             "force_ssl_prompt"
 #define RC_FORMS_OPTIONS                "forms_options"
@@ -94,8 +100,10 @@
 #define RC_GOTOBUFFER                   "gotobuffer"
 #define RC_GZIP_PATH                    "gzip_path"
 #define RC_HELPFILE                     "helpfile"
+#define RC_HIDDENLINKS                  "hiddenlinks"
 #define RC_HIDDEN_LINK_MARKER           "hidden_link_marker"
 #define RC_HISTORICAL_COMMENTS          "historical_comments"
+#define RC_HTML5_CHARSETS               "html5_charsets"
 #define RC_HTMLSRC_ATTRNAME_XFORM       "htmlsrc_attrname_xform"
 #define RC_HTMLSRC_TAGNAME_XFORM        "htmlsrc_tagname_xform"
 #define RC_HTTPS_PROXY                  "https_proxy"
@@ -115,10 +123,13 @@
 #define RC_KEYPAD_MODE                  "keypad_mode"
 #define RC_LEFTARROW_IN_TEXTFLD_PROMPT  "leftarrow_in_textfield_prompt"
 #define RC_LINEEDIT_MODE                "lineedit_mode"
+#define RC_LISTONLY                     "listonly"
 #define RC_LIST_FORMAT                  "list_format"
+#define RC_LIST_INLINE                  "list_inline"
 #define RC_LIST_NEWS_DATES              "list_news_dates"
 #define RC_LIST_NEWS_NUMBERS            "list_news_numbers"
 #define RC_LOCALE_CHARSET               "locale_charset"
+#define RC_LOCALHOST                    "localhost"
 #define RC_LOCALHOST_ALIAS              "localhost_alias"
 #define RC_LOCAL_DOMAIN                 "local_domain"
 #define RC_LOCAL_EXECUTION_LINKS_ALWAYS "local_execution_links_always_on"
@@ -134,7 +145,9 @@
 #define RC_MAX_COOKIES_BUFFER           "max_cookies_buffer"
 #define RC_MAX_COOKIES_DOMAIN           "max_cookies_domain"
 #define RC_MAX_COOKIES_GLOBAL           "max_cookies_global"
+#define RC_MAX_URI_SIZE                 "max_uri_size"
 #define RC_MESSAGESECS                  "messagesecs"
+#define RC_MESSAGE_LANGUAGE             "message_language"
 #define RC_MINIMAL_COMMENTS             "minimal_comments"
 #define RC_MKDIR_PATH                   "mkdir_path"
 #define RC_MULTI_BOOKMARK               "multi_bookmark"
@@ -171,7 +184,8 @@
 #define RC_PERSONAL_EXTENSION_MAP       "personal_extension_map"
 #define RC_PERSONAL_MAILCAP             "personal_mailcap"
 #define RC_PERSONAL_MAIL_ADDRESS        "personal_mail_address"
-#define RC_POSITIONABLE_EDITOR		"positionable_editor"
+#define RC_PERSONAL_MAIL_NAME           "personal_mail_name"
+#define RC_POSITIONABLE_EDITOR          "positionable_editor"
 #define RC_PREFERRED_CHARSET            "preferred_charset"
 #define RC_PREFERRED_ENCODING           "preferred_encoding"
 #define RC_PREFERRED_LANGUAGE           "preferred_language"
@@ -189,6 +203,7 @@
 #define RC_REPLAYSECS                   "replaysecs"
 #define RC_REUSE_TEMPFILES              "reuse_tempfiles"
 #define RC_RLOGIN_PATH                  "rlogin_path"
+#define RC_RMDIR_PATH                   "rmdir_path"
 #define RC_RM_PATH                      "rm_path"
 #define RC_RULE                         "rule"
 #define RC_RULESFILE                    "rulesfile"
@@ -206,6 +221,7 @@
 #define RC_SESSION_FILE                 "session_file"
 #define RC_SESSION_LIMIT                "session_limit"
 #define RC_SET_COOKIES                  "set_cookies"
+#define RC_SHORT_URL                    "short_url"
 #define RC_SHOW_COLOR                   "show_color"
 #define RC_SHOW_CURSOR                  "show_cursor"
 #define RC_SHOW_DOTFILES                "show_dotfiles"
@@ -237,11 +253,13 @@
 #define RC_TIMEOUT                      "timeout"
 #define RC_TN3270_PATH                  "tn3270_path"
 #define RC_TOUCH_PATH                   "touch_path"
+#define RC_TRACK_INTERNAL_LINKS         "track_internal_links"
 #define RC_TRIM_INPUT_FIELDS            "trim_input_fields"
 #define RC_TRUSTED_EXEC                 "trusted_exec"
 #define RC_TRUSTED_LYNXCGI              "trusted_lynxcgi"
 #define RC_UNCOMPRESS_PATH              "uncompress_path"
 #define RC_UNDERLINE_LINKS              "underline_links"
+#define RC_UNIQUE_URLS                  "unique_urls"
 #define RC_UNZIP_PATH                   "unzip_path"
 #define RC_UPLOADER                     "uploader"
 #define RC_URL_DOMAIN_PREFIXES          "url_domain_prefixes"
@@ -258,6 +276,8 @@
 #define RC_VI_KEYS                      "vi_keys"
 #define RC_VI_KEYS_ALWAYS_ON            "vi_keys_always_on"
 #define RC_WAIS_PROXY                   "wais_proxy"
+#define RC_WAIT_VIEWER_TERMINATION      "wait_viewer_termination"
+#define RC_WITH_BACKSPACES              "with_backspaces"
 #define RC_XHTML_PARSING                "xhtml_parsing"
 #define RC_XLOADIMAGE_COMMAND           "xloadimage_command"
 #define RC_ZCAT_PATH                    "zcat_path"
@@ -271,7 +291,8 @@ extern Config_Enum tbl_preferred_media[];
 extern Config_Enum tbl_transfer_rate[];
 extern Config_Enum tbl_user_mode[];
 
-extern BOOL LYgetEnum(Config_Enum * table, char *name, int *result);
+extern BOOL LYgetEnum(Config_Enum * table, const char *name, int *result);
+extern BOOL LYsetRcValue(const char *name, const char *param);
 extern BOOL will_save_rc(const char *name);
 extern const char *LYputEnum(Config_Enum * table, int value);
 extern int enable_lynxrc(char *value);

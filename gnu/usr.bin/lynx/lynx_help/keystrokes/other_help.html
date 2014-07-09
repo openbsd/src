@@ -1,15 +1,25 @@
-<!DOCTYPE html PUBLIC "-//IETF//DTD HTML 3.0//EN">
-<HTML>
-<HEAD>
-<TITLE>Help on Misc. Lynx Commands</TITLE>
-<LINK rev="made" href="mailto:lynx-dev@nongnu.org">
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-</HEAD>
-<BODY>
-<h1>+++ Other Commands +++</h1>
-<PRE>
+<!-- $LynxId: other_help.html,v 1.15 2014/01/10 20:51:10 tom Exp $ -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+
+<html>
+<head>
+  <meta name="generator" content=
+  "HTML Tidy for Linux (vers 25 March 2009), see www.w3.org">
+
+  <title>Help on Miscellaneous Lynx Commands</title>
+  <link rev="made" href="mailto:lynx-dev@nongnu.org">
+  <meta http-equiv="Content-Type" content=
+  "text/html; charset=us-ascii">
+  <meta name="description" content=
+  "This is a table listing with brief descriptions miscellaneous Lynx commands, along with links to related topics">
+  </head>
+
+<body>
+  <h2>Summary of Commands</h2>
+  <pre>
        a      - Places the link that you are currently positioned
-                on into a personal <A HREF="bookmark_help.html">bookmark file</A>.
+                on into a personal <a href=
+"bookmark_help.html">bookmark file</a>.
 
        c      - Allows you to send a mail message to the owner
                 or maintainer of the data that you are currently
@@ -28,14 +38,15 @@
        E      - Allows you to edit the current link's URL (or ACTION) and
                 use that as a <em>goto</em> URL.
 
-       g      - Allows you to enter any <a href="http://archive.ncsa.uiuc.edu/demoweb/url-primer.html">URL</a> or filename that
+       g      - Allows you to enter any <a href=
+"http://www.ietf.org/rfc/rfc1738.txt">URL</a> or filename that
                 you wish to view, and then <em>goto</em> it.
 
        G      - Allows you to edit the current document's URL and use that
                 as a <em>goto</em> URL.
 
      ? or H   - Hypertext help to explain how to navigate in
-                Lynx and use its features.
+                <strong>Lynx</strong> and use its features.
 
        i      - Shows an index of files or subjects,
                 which may be changed in <em>lynx.cfg</em>.
@@ -54,31 +65,37 @@
        m      - Returns to the first screen and empties the
                 history stack.
 
-       p      - Brings up a list of <A HREF="print_help.html">print commands</A>.
+       p      - Brings up a list of <a href=
+"print_help.html">print commands</a>.
 
-       o      - Brings up a list of settable <A HREF="option_help.html">options</A>.
+       o      - Brings up a list of settable <a href=
+"option_help.html">options</a>.
 
-       q      - Quits Lynx. ('Q' quits without asking)
+       q      - Quits <strong>Lynx</strong>. ('Q' quits without asking)
 
        /      - Search for a string of characters in the current document
                 (case insensitive or case sensitive
-                depending on the <A HREF="option_help.html">options</A> set).
+                depending on the <a href=
+"option_help.html">options</a> set).
 
        s      - Search through an external searchable indexed document.
 
        n      - Move to the next instance of a search string if you
                 have searched previously.
 
-       v      - View a <A HREF="bookmark_help.html">Bookmark file</A>.
+       v      - View a <a href=
+"bookmark_help.html">Bookmark file</a>.
 
-       V      - Go to the <A HREF="visited_help.html">Visited Links Page</A>
+       V      - Go to the <a href=
+"visited_help.html">Visited Links Page</a>
 
        x      - Force submission of form or link with no-cache.
 
        z      - Abort a network transfer in progress.  If any partial
                 data has been transferred it will be displayed.
 
-  &lt;backspace&gt; - displays the <a href="history_help.html">History Page</A>.
+  &lt;backspace&gt; - displays the <a href=
+"history_help.html">History Page</a>.
 
        =      - Show information about the file and link that you
                 are currently viewing.
@@ -96,7 +113,7 @@
                 comments within the angle-brackets.
 
        _      - Clears all authorization info for the current session.  Can
-                be used when leaving one's terminal without ending the Lynx
+                be used when leaving one's terminal without ending the <strong>Lynx</strong>
                 session, to guard against someone else retrieving protected
                 documents with previously entered username/password info.
                 Note that any protected documents that are still in cache
@@ -115,13 +132,13 @@
                 for documents which does not specify character set explicitly.
                 Should be on when the document's charset matches the
                 display character set, and otherwise off so that 8-bit
-                characters will be translated by Lynx with respect to the
+                characters will be translated by <strong>Lynx</strong> with respect to the
                 Assumed document charset, using approximations if necessary
-                (see <A HREF="option_help.html">options</A>).
+                (see <a href="option_help.html">options</a>).
 
        [      - Toggles pseudo_inlines mode on and off.  When on, inline
                 images which have no ALT string specified will have an
-                "[INLINE]" pseudo-ALT string inserted in the Lynx display.
+                "[INLINE]" pseudo-ALT string inserted in the <strong>Lynx</strong> display.
                 When off, they will be treated as having ALT="" (i.e.,
                 they'll be ignored).  If image_links mode is toggled on,
                 the pseudo-ALT strings will be restored, to serve as links
@@ -131,7 +148,7 @@
                 applies only to documents or links (or form submit buttons)
                 of http servers.  A statusline message will notify you if
                 the context for this command was inappropriate.  The HEAD
-                requests always are sent to the http server, i.e., Lynx
+                requests always are sent to the http server, i.e., <strong>Lynx</strong>
                 does not retrieve any previous server replies from its
                 cache.  Note that for form submissions, http servers vary
                 in whether they'll treat HEAD requests as valid and return
@@ -147,8 +164,8 @@
 
      CTRL-V   - Switches to an alternative way of parsing HTML documents.
                 This may help to get a more readable rendering of some
-                documents with invalidly placed HTML tags, <A
-                HREF="option_help.html#tagsoup">more details</A>.
+                documents with invalidly placed HTML tags, <a href=
+"option_help.html#tagsoup">more details</a>.
 
      CTRL-W   - Resets or cleans up the display.
 
@@ -158,17 +175,17 @@
 
      CTRL-T   - Toggles trace mode on and off.
 
-       ;      - Views the Lynx Trace Log for the current session.
+       ;      - Views the <em>Lynx Trace Log</em> for the current session.
 
      CTRL-K   - Invokes the Cookie Jar Page.
 
-     numbers  - Lynx offers other, advanced navigation features when
+     numbers  - <strong>Lynx</strong> offers other, advanced navigation features when
                 numbers are used to invoke the
-                  <a href="follow_help.html"
-                  >Follow link (or goto link or page) number:</a> or
-                  <a href="follow_help.html#select-option"
-                  >Select option (or page) number:</a>
+                  <a href=
+"follow_help.html">Follow link (or goto link or page) number:</a> or
+                  <a href=
+"follow_help.html#select-option">Select option (or page) number:</a>
                 prompts.
-</PRE>
-</BODY>
-</HTML>
+</pre>
+</body>
+</html>

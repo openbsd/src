@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTForms.h,v 1.27 2009/05/28 22:49:51 tom Exp $
+ * $LynxId: HTForms.h,v 1.33 2012/02/12 22:30:53 tom Exp $
  */
 #ifndef HTFORMS_H
 #define HTFORMS_H
@@ -16,15 +16,15 @@ extern "C" {
  */ extern int change_form_link(int cur,
 				DocInfo *newdoc,
 				BOOLEAN *refresh_screen,
-				BOOLEAN use_last_tfpos,
-				BOOLEAN immediate_submit);
+				int use_last_tfpos,
+				int immediate_submit);
 
     extern int change_form_link_ex(int cur,
 				   DocInfo *newdoc,
 				   BOOLEAN *refresh_screen,
-				   BOOLEAN use_last_tfpos,
-				   BOOLEAN immediate_submit,
-				   BOOLEAN draw_only);
+				   int use_last_tfpos,
+				   int immediate_submit,
+				   int draw_only);
 
 /* InputFieldData is used to pass the info between HTML.c and Gridtext.c in
  * HText_beginInput()
@@ -35,6 +35,7 @@ extern "C" {
 	int checked;
 	const char *iclass;
 	int disabled;
+	int readonly;
 	const char *error;
 	const char *height;
 	const char *id;
@@ -74,7 +75,7 @@ extern "C" {
 	char *value;		/* user entered string data */
 	char *orig_value;	/* the original value */
 	int size;		/* width on the screen */
-	unsigned maxlength;	/* max width of data */
+	size_t maxlength;	/* max width of data */
 	int group;		/* a group associated with the link
 				 *  this is used for select's
 				 */
@@ -91,10 +92,13 @@ extern "C" {
 	char *orig_submit_value;	/* original submit value */
 	int size_l;		/* The length of the option list */
 	int disabled;		/* If YES, can't change values */
+	int readonly;		/* If YES, can't change values */
 	int name_cs;
 	int value_cs;
 	char *accept_cs;
     } FormInfo;
+
+#define FormIsReadonly(form) ((form) && ((form)->disabled || (form)->readonly))
 
 /*
  * As structure for info associated with a form.  There is some redundancy
@@ -104,8 +108,8 @@ extern "C" {
  */
     typedef struct _PerFormInfo {
 	int number;		/* form number, see GridText.c */
-	/* except for the last two, the following fields aren't actually used.. */
 	int disabled;		/* If YES, can't change values */
+	FormInfo data;
 	struct _PerFormInfo *next;	/* pointer to next form in doc */
 	int nfields;		/* number of fields */
 	FormInfo *first_field;
@@ -136,6 +140,10 @@ extern "C" {
 	F_KEYGEN_TYPE,
 	F_BUTTON_TYPE
     } FieldTypes;
+
+#define F_SUBMITLIKE(type) ((type) == F_SUBMIT_TYPE || \
+			    (type) == F_IMAGE_SUBMIT_TYPE || \
+			    (type) == F_TEXT_SUBMIT_TYPE)
 
 #define F_TEXTLIKE(type) ((type) == F_TEXT_TYPE || \
 			  (type) == F_TEXT_SUBMIT_TYPE || \

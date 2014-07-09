@@ -1,4 +1,4 @@
-/* $LynxId: LYKeymap.c,v 1.68 2009/01/25 18:34:57 tom Exp $ */
+/* $LynxId: LYKeymap.c,v 1.110 2013/12/17 00:27:55 tom Exp $ */
 #include <HTUtils.h>
 #include <LYUtils.h>
 #include <LYGlobalDefs.h>
@@ -38,10 +38,6 @@ const char *LYKbLayoutNames[] =
 };
 #endif /* EXP_KEYBOARD_LAYOUT */
 
-struct _HTStream {
-    HTStreamClass *isa;
-};
-
 /* * * Tables mapping LynxKeyCodes to LynxActionCodes  * * */
 
 /*
@@ -52,312 +48,173 @@ struct _HTStream {
  * lynx.cfg.
  *
  * Lynxactioncodes (confusingly, constants are named LYK_foo and typed as
- * LYKeymapCode) specify key `functions', see LYKeymap.h.
+ * specify key `functions', see LYKeymap.h.
  */
 
 /* the character gets 1 added to it before lookup,
  * so that EOF maps to 0
  */
-/* *INDENT-OFF* */
-LYKeymap_t keymap[KEYMAP_SIZE] = {
+LYKeymap_t keymap[KEYMAP_SIZE];
 
-0,
-/* EOF */
-
-LYK_DO_NOTHING,     LYK_HOME,       LYK_PREV_PAGE,     0,
-/* nul */           /* ^A */        /* ^B */       /* ^C */
-
-LYK_ABORT,          LYK_END,        LYK_NEXT_PAGE,     0,
-/* ^D */            /* ^E */        /* ^F */       /* ^G */
-
-LYK_HISTORY,    LYK_FASTFORW_LINK,  LYK_ACTIVATE,  LYK_COOKIE_JAR,
-/* bs */            /* ht */        /* nl */       /* ^K */
-
-LYK_REFRESH,      LYK_ACTIVATE,     LYK_DOWN_TWO,      0,
-/* ^L */            /* cr */        /* ^N */       /* ^O */
-
-LYK_UP_TWO,       LYK_CHG_CENTER,   LYK_RELOAD,    LYK_TO_CLIPBOARD,
-/* ^P */            /* XON */       /* ^R */       /* ^S */
-
-LYK_TRACE_TOGGLE,  LYK_NEXT_DOC,  LYK_SWITCH_DTD,  LYK_REFRESH,
-/* ^T */            /* ^U */        /* ^V */       /* ^W */
-
-#ifdef USE_CACHEJAR
-LYK_CACHE_JAR,          0,              0,             0,
-/* ^X */            /* ^Y */        /* ^Z */       /* ESC */
+static const LYEditInit initKeymapData[] =
+{
+    {1, LYK_DO_NOTHING},	/* nul */
+    {2, LYK_HOME},		/* ^B */
+    {3, LYK_PREV_PAGE},		/* ^C */
+    {5, LYK_ABORT},		/* ^E */
+    {6, LYK_END},		/* ^F */
+    {7, LYK_NEXT_PAGE},		/* ^G */
+    {9, LYK_HISTORY},		/* ^I */
+    {10, LYK_FASTFORW_LINK},	/* ^J */
+    {11, LYK_ACTIVATE},		/* ^K */
+    {12, LYK_COOKIE_JAR},	/* ^L */
+    {13, LYK_REFRESH},		/* ^M */
+    {14, LYK_ACTIVATE},		/* ^N */
+    {15, LYK_DOWN_TWO},		/* ^O */
+    {17, LYK_UP_TWO},		/* ^Q */
+    {18, LYK_CHANGE_CENTER},	/* XON */
+    {19, LYK_RELOAD},		/* ^S */
+    {20, LYK_TO_CLIPBOARD},	/* XOFF */
+    {21, LYK_TRACE_TOGGLE},	/* ^U */
+    {22, LYK_NEXT_DOC},		/* ^V */
+    {23, LYK_SWITCH_DTD},	/* ^W */
+    {24, LYK_REFRESH},		/* ^X */
+    {25, LYK_CACHE_JAR},	/* ^Y */
+    {27, LYK_MAXSCREEN_TOGGLE},	/* ^Z */
+    {33, LYK_NEXT_PAGE},	/*   */
+    {34, LYK_SHELL},		/* ! */
+    {35, LYK_SOFT_DQUOTES},	/* " */
+    {36, LYK_TOOLBAR},		/* # */
+    {37, LYK_LAST_LINK},	/* $ */
+    {40, LYK_HISTORICAL},	/* ' */
+    {41, LYK_UP_HALF},		/* ( */
+    {42, LYK_DOWN_HALF},	/* ) */
+    {43, LYK_IMAGE_TOGGLE},	/* * */
+    {44, LYK_NEXT_PAGE},	/* + */
+    {45, LYK_EXTERN_PAGE},	/* , */
+    {46, LYK_PREV_PAGE},	/* - */
+    {47, LYK_EXTERN_LINK},	/* . */
+    {48, LYK_WHEREIS},		/* / */
+    {49, LYK_F_LINK_NUM},	/* 0 */
+    {50, LYK_1},		/* 1 */
+    {51, LYK_2},		/* 2 */
+    {52, LYK_3},		/* 3 */
+    {53, LYK_4},		/* 4 */
+    {54, LYK_5},		/* 5 */
+    {55, LYK_6},		/* 6 */
+    {56, LYK_7},		/* 7 */
+    {57, LYK_8},		/* 8 */
+    {58, LYK_9},		/* 9 */
+    {59, LYK_COMMAND},		/* : */
+    {60, LYK_TRACE_LOG},	/* ; */
+    {61, LYK_UP_LINK},		/* < */
+    {62, LYK_INFO},		/* = */
+    {63, LYK_DOWN_LINK},	/* > */
+    {64, LYK_HELP},		/* ? */
+    {65, LYK_RAW_TOGGLE},	/* @ */
+    {66, LYK_ADDRLIST},		/* A */
+    {67, LYK_PREV_PAGE},	/* B */
+#ifdef SUPPORT_CHDIR
+    {68, LYK_CHDIR},		/* C */
 #else
-0,                      0,              0,             0,
-/* ^X */            /* ^Y */        /* ^Z */       /* ESC */
+    {68, LYK_COMMENT},		/* C */
 #endif
-
-0,                      0,              0,             0,
-/* ^\ */            /* ^] */        /* ^^ */       /* ^_ */
-
-LYK_NEXT_PAGE,       LYK_SHELL,  LYK_SOFT_DQUOTES,  LYK_TOOLBAR,
-/* sp */             /* ! */         /* " */        /* # */
-
-LYK_LAST_LINK,          0,              0,          LYK_HISTORICAL,
-/* $ */              /* % */         /* & */        /* ' */
-
-LYK_UP_HALF,      LYK_DOWN_HALF, LYK_IMAGE_TOGGLE,  LYK_NEXT_PAGE,
-/* ( */              /* ) */         /* * */        /* + */
-
-LYK_EXTERN_PAGE,  LYK_PREV_PAGE, LYK_EXTERN_LINK,   LYK_WHEREIS,
-/* , */              /* - */         /* . */        /* / */
-
-LYK_F_LINK_NUM,      LYK_1,          LYK_2,         LYK_3,
-/* 0 */              /* 1 */         /* 2 */        /* 3 */
-
-LYK_4,               LYK_5,          LYK_6,         LYK_7,
-/* 4 */              /* 5 */         /* 6 */        /* 7 */
-
-LYK_8,               LYK_9,         LYK_COMMAND,    LYK_TRACE_LOG,
-/* 8 */              /* 9 */         /* : */        /* ; */
-
-LYK_UP_LINK,         LYK_INFO,     LYK_DOWN_LINK,   LYK_HELP,
-/* < */              /* = */         /* > */        /* ? */
-
-#ifndef SUPPORT_CHDIR
-LYK_RAW_TOGGLE,      LYK_ADDRLIST, LYK_PREV_PAGE,   LYK_COMMENT,
-/* @ */              /* A */         /* B */        /* C */
-#else
-LYK_RAW_TOGGLE,      LYK_ADDRLIST, LYK_PREV_PAGE,   LYK_CHDIR,
-/* @ */              /* A */         /* B */        /* C */
-#endif
-
-LYK_DOWNLOAD,        LYK_ELGOTO,  LYK_DIRED_MENU,   LYK_ECGOTO,
-/* D */              /* E */         /* F */        /* G */
-
+    {69, LYK_DOWNLOAD},		/* D */
+    {70, LYK_ELGOTO},		/* E */
+    {71, LYK_DIRED_MENU},	/* F */
+    {72, LYK_ECGOTO},		/* G */
+    {73, LYK_HELP},		/* H */
+    {74, LYK_INDEX},		/* I */
 #ifdef KANJI_CODE_OVERRIDE
-LYK_HELP,            LYK_INDEX,      LYK_CHG_KCODE, LYK_KEYMAP,
-/* H */              /* I */         /* J */        /* K */
-
+    {75, LYK_CHANGE_KCODE},	/* J */
 #else
-LYK_HELP,            LYK_INDEX,      LYK_JUMP,      LYK_KEYMAP,
-/* H */              /* I */         /* J */        /* K */
+    {75, LYK_JUMP},		/* J */
 #endif
-
-LYK_LIST,          LYK_MAIN_MENU,    LYK_PREV,      LYK_OPTIONS,
-/* L */              /* M */         /* N */        /* O */
-
-LYK_PRINT,          LYK_ABORT,    LYK_DEL_BOOKMARK, LYK_INDEX_SEARCH,
-/* P */              /* Q */         /* R */        /* S */
-
-LYK_TAG_LINK,      LYK_PREV_DOC,    LYK_VLINKS,         0,
-/* T */              /* U */         /* V */        /* W */
-
-LYK_NOCACHE,            0,        LYK_INTERRUPT,    LYK_INLINE_TOGGLE,
-/* X */              /* Y */         /* Z */        /* [ */
-
-LYK_SOURCE,          LYK_HEAD,    LYK_FIRST_LINK,   LYK_CLEAR_AUTH,
-/* \ */              /* ] */         /* ^ */        /* _ */
-
-LYK_MINIMAL,   LYK_ADD_BOOKMARK,  LYK_PREV_PAGE,    LYK_COMMENT,
-/* ` */              /* a */         /* b */        /* c */
-
-LYK_DOWNLOAD,        LYK_EDIT,    LYK_DIRED_MENU,   LYK_GOTO,
-/* d */              /* e */         /* f */        /* g */
-
-LYK_HELP,            LYK_INDEX,      LYK_JUMP,      LYK_KEYMAP,
-/* h */              /* i */         /* j */        /* k */
-
-LYK_LIST,         LYK_MAIN_MENU,     LYK_NEXT,      LYK_OPTIONS,
-/* l */              /* m */         /* n */        /* o */
-
-LYK_PRINT,           LYK_QUIT,    LYK_DEL_BOOKMARK, LYK_INDEX_SEARCH,
-/* p */              /* q */         /* r */        /* s */
-
-LYK_TAG_LINK,     LYK_PREV_DOC,   LYK_VIEW_BOOKMARK,   0,
-/* t */              /* u */         /* v */        /* w */
-
-LYK_NOCACHE,            0,          LYK_INTERRUPT, LYK_SHIFT_LEFT,
-/* x */              /* y */          /* z */       /* { */
-
-LYK_LINEWRAP_TOGGLE, LYK_SHIFT_RIGHT, LYK_NESTED_TABLES, LYK_HISTORY,
-/* | */               /* } */         /* ~ */       /* del */
-
-
-/* 80..9F (illegal ISO-8859-1) 8-bit characters. */
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-
-/* A0..FF (permissible ISO-8859-1) 8-bit characters. */
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-
-/* 100..10F function key definitions in LYStrings.h */
-LYK_PREV_LINK,    LYK_NEXT_LINK,    LYK_ACTIVATE,   LYK_PREV_DOC,
-/* UPARROW */     /* DNARROW */     /* RTARROW */   /* LTARROW */
-
-LYK_NEXT_PAGE,    LYK_PREV_PAGE,    LYK_HOME,       LYK_END,
-/* PGDOWN */      /* PGUP */        /* HOME */      /* END */
-
-#if (defined(_WINDOWS) || defined(__DJGPP__))
-
-LYK_DWIMHELP,          0,              0,             0,
-/* F1*/
-#else
-
-LYK_DWIMHELP,     LYK_ACTIVATE,     LYK_HOME,       LYK_END,
-/* F1*/ 	  /* Do key */      /* Find key */  /* Select key */
-
-#endif /* _WINDOWS || __DJGPP__ */
-
-LYK_UP_TWO,       LYK_DOWN_TWO,     LYK_DO_NOTHING, LYK_FASTBACKW_LINK,
-/* Insert key */  /* Remove key */  /* DO_NOTHING*/ /* Back tab */
-
-/* 110..18F */
-
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,             LYK_DO_NOTHING,      0,             0,
-               /* 0x11d: MOUSE_KEY */
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
+    {76, LYK_KEYMAP},		/* K */
+    {77, LYK_LIST},		/* L */
+    {78, LYK_MAIN_MENU},	/* M */
+    {79, LYK_PREV},		/* N */
+    {80, LYK_OPTIONS},		/* O */
+    {81, LYK_PRINT},		/* P */
+    {82, LYK_ABORT},		/* Q */
+    {83, LYK_DEL_BOOKMARK},	/* R */
+    {84, LYK_INDEX_SEARCH},	/* S */
+    {85, LYK_TAG_LINK},		/* T */
+    {86, LYK_PREV_DOC},		/* U */
+    {87, LYK_VLINKS},		/* V */
+    {89, LYK_NOCACHE},		/* X */
+    {91, LYK_INTERRUPT},	/* Z */
+    {92, LYK_INLINE_TOGGLE},	/* [ */
+    {93, LYK_SOURCE},		/* \ */
+    {94, LYK_HEAD},		/* ] */
+    {95, LYK_FIRST_LINK},	/* ^ */
+    {96, LYK_CLEAR_AUTH},	/* _ */
+    {97, LYK_MINIMAL},		/* ` */
+    {98, LYK_ADD_BOOKMARK},	/* a */
+    {99, LYK_PREV_PAGE},	/* b */
+    {100, LYK_COMMENT},		/* c */
+    {101, LYK_DOWNLOAD},	/* d */
+    {102, LYK_EDIT},		/* e */
+    {103, LYK_DIRED_MENU},	/* f */
+    {104, LYK_GOTO},		/* g */
+    {105, LYK_HELP},		/* h */
+    {106, LYK_INDEX},		/* i */
+    {107, LYK_JUMP},		/* j */
+    {108, LYK_KEYMAP},		/* k */
+    {109, LYK_LIST},		/* l */
+    {110, LYK_MAIN_MENU},	/* m */
+    {111, LYK_NEXT},		/* n */
+    {112, LYK_OPTIONS},		/* o */
+    {113, LYK_PRINT},		/* p */
+    {114, LYK_QUIT},		/* q */
+    {115, LYK_DEL_BOOKMARK},	/* r */
+    {116, LYK_INDEX_SEARCH},	/* s */
+    {117, LYK_TAG_LINK},	/* t */
+    {118, LYK_PREV_DOC},	/* u */
+    {119, LYK_VIEW_BOOKMARK},	/* v */
+    {121, LYK_NOCACHE},		/* x */
+    {123, LYK_INTERRUPT},	/* z */
+    {124, LYK_SHIFT_LEFT},	/* { */
+    {125, LYK_LINEWRAP_TOGGLE},	/* | */
+    {126, LYK_SHIFT_RIGHT},	/* } */
+    {127, LYK_NESTED_TABLES},	/* ~ */
+    {128, LYK_HISTORY},		/* DEL */
+    {257, LYK_PREV_LINK},	/* UPARROW_KEY */
+    {258, LYK_NEXT_LINK},	/* DNARROW_KEY */
+    {259, LYK_ACTIVATE},	/* RTARROW_KEY */
+    {260, LYK_PREV_DOC},	/* LTARROW_KEY */
+    {261, LYK_NEXT_PAGE},	/* PGDOWN_KEY */
+    {262, LYK_PREV_PAGE},	/* PGUP_KEY */
+    {263, LYK_HOME},		/* HOME_KEY */
+    {264, LYK_END},		/* END_KEY */
+    {265, LYK_DWIMHELP},	/* F1_KEY */
+#if !(defined(_WINDOWS) || defined(__DJGPP__))
+    {266, LYK_ACTIVATE},	/* DO_KEY */
+    {267, LYK_HOME},		/* FIND_KEY */
+    {268, LYK_END},		/* SELECT_KEY */
+#endif
+    {269, LYK_UP_TWO},		/* INSERT_KEY */
+    {270, LYK_DOWN_TWO},	/* REMOVE_KEY */
+    {271, LYK_DO_NOTHING},	/* DO_NOTHING */
+    {272, LYK_FASTBACKW_LINK},	/* BACKTAB_KEY */
+    {282, LYK_DO_NOTHING},	/* F11_KEY */
 #ifdef DJGPP_KEYHANDLER
-   0,                  LYK_ABORT,      0,             0,
-                       /* ALT_X */
-#else
-   0,                  0,              0,             0,
-#endif /* DJGPP_KEYHANDLER */
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-/* 190..20F */
+    {302, LYK_ABORT},
+#endif				/* DJGPP_KEYHANDLER */
+#if (defined(_WINDOWS) || defined(__DJGPP__) || defined(__CYGWIN__)) && !defined(USE_SLANG)	/* PDCurses */
+    {441, LYK_ABORT},		/* ALT_X */
+    {459, LYK_WHEREIS},		/* KP_SLASH */
+    {464, LYK_IMAGE_TOGGLE},	/* KP_* */
+    {465, LYK_PREV_PAGE},	/* KP_- */
+    {466, LYK_NEXT_PAGE},	/* KP_+ */
+#endif
+    {657, LYK_CHANGE_LINK},
+    {-1, LYE_UNKNOWN}
+};
 
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-#if (defined(_WINDOWS) || defined(__DJGPP__) || defined(__CYGWIN__)) && !defined(USE_SLANG) /* PDCurses */
-   LYK_ABORT,          0,              0,             0,
-   /* ALT_X */
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              LYK_WHEREIS,   0,
-                                       /* KP_SLASH */
-   0,                  0,              0,           LYK_IMAGE_TOGGLE,
-                                                    /* KP_* */
-   LYK_PREV_PAGE,      LYK_NEXT_PAGE,  0,             0,
-   /* KP_- */          /* KP_+ */
-#else
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-#endif /* (_WINDOWS || __DJGPP__ || __CYGWIN__) && !USE_SLANG */
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-/* 210..28F */
-
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   /* 290...293 */
-   LYK_CHANGE_LINK,    0,              0,             0,
+static LYEditConfig myKeymapData =
+{
+    "Key Map", initKeymapData, keymap
 };
 
 #if defined(DIRED_SUPPORT) && defined(OK_OVERRIDE)
@@ -367,627 +224,417 @@ LYK_UP_TWO,       LYK_DOWN_TWO,     LYK_DO_NOTHING, LYK_FASTBACKW_LINK,
  * allowed at compile time.
  */
 
-LYKeymap_t key_override[KEYMAP_SIZE] = {
+LYKeymap_t key_override[KEYMAP_SIZE];
 
-    0,
-/* EOF */
-
-    0,                  0,              0,            0,
-/* nul */           /* ^A */        /* ^B */      /* ^C */
-
-    0,                  0,              0,            0,
-/* ^D */            /* ^E */        /* ^F */      /* ^G */
-
-    0,                  0,              0,            0,
-/* bs */            /* ht */        /* nl */      /* ^K */
-
-    0,                  0,              0,            0,
-/* ^L */            /* cr */        /* ^N */      /* ^O */
-
-    0,                  0,              0,            0,
-/* ^P */            /* XON */       /* ^R */      /* XOFF */
-
-    0,            LYK_NEXT_DOC,         0,            0,
-/* ^T */            /* ^U */        /* ^V */      /* ^W */
-
-    0,                  0,              0,            0,
-/* ^X */            /* ^Y */        /* ^Z */      /* ESC */
-
-    0,                  0,              0,            0,
-/* ^\ */            /* ^] */        /* ^^ */      /* ^_ */
-
-    0,                 0,              0,            0,
-/* sp */            /* ! */         /* " */       /* # */
-
-   0,                  0,              0,            0,
-/* $ */             /* % */         /* & */       /* ' */
-
-    0,                 0,              0,            0,
-/* ( */             /* ) */         /* * */       /* + */
-
-    0,                 0,         LYK_TAG_LINK,      0,
-/* , */             /* - */         /* . */       /* / */
-
-   0,                  0,              0,            0,
-/* 0 */             /* 1 */         /* 2 */       /* 3 */
-
-   0,                  0,              0,            0,
-/* 4 */             /* 5 */         /* 6 */       /* 7 */
-
-   0,                  0,              0,             0,
-/* 8 */             /* 9 */         /* : */        /* ; */
-
-   0,                  0,              0,             0,
-/* < */             /* = */         /* > */        /* ? */
+static const LYEditInit initOverrideData[] =
+{
+    {22, LYK_NEXT_DOC},		/* ^V */
+    {47, LYK_TAG_LINK},		/* . */
 #ifndef SUPPORT_CHDIR
-   0,                  0,              0,         LYK_CREATE,
-/* @ */             /* A */         /* B */        /* C */
+    {68, LYK_CREATE},		/* C */
 #else
-   0,                  0,              0,         LYK_CHDIR,
-/* @ */             /* A */         /* B */        /* C */
+    {68, LYK_CHDIR},		/* C */
 #endif
+    {71, LYK_DIRED_MENU},	/* F */
+    {78, LYK_MODIFY},		/* M */
+    {83, LYK_REMOVE},		/* R */
+    {85, LYK_TAG_LINK},		/* T */
+    {86, LYK_UPLOAD},		/* U */
+    {100, LYK_CREATE},		/* c */
+    {103, LYK_DIRED_MENU},	/* f */
+    {110, LYK_MODIFY},		/* m */
+    {115, LYK_REMOVE},		/* r */
+    {117, LYK_TAG_LINK},	/* t */
+    {118, LYK_UPLOAD},		/* u */
+    {271, LYK_DO_NOTHING},	/* DO_NOTHING */
+    {-1, LYE_UNKNOWN}
+};
 
-   0,                  0,        LYK_DIRED_MENU,       0,
-/* D */             /* E */         /* F */        /* G */
-
-   0,                  0,              0,             0,
-/* H */             /* I */         /* J */        /* K */
-
-   0,             LYK_MODIFY,          0,             0,
-/* L */             /* M */         /* N */        /* O */
-
-   0,                  0,         LYK_REMOVE,         0,
-/* P */             /* Q */         /* R */        /* S */
-
-LYK_TAG_LINK,     LYK_UPLOAD,          0,             0,
-/* T */             /* U */         /* V */        /* W */
-
-   0,                  0,              0,             0,
-/* X */             /* Y */         /* Z */        /* [ */
-
-   0,                  0,              0,             0,
-/* \ */             /* ] */         /* ^ */        /* _ */
-
-0,                     0,              0,         LYK_CREATE,
-/* ` */             /* a */         /* b */        /* c */
-
-   0,                  0,       LYK_DIRED_MENU,       0,
-/* d */             /* e */         /* f */        /* g */
-
-   0,                  0,              0,             0,
-/* h */             /* i */         /* j */        /* k */
-
-0,                LYK_MODIFY,          0,             0,
-/* l */             /* m */         /* n */        /* o */
-
-   0,                  0,          LYK_REMOVE,        0,
-/* p */             /* q */         /* r */        /* s */
-
-LYK_TAG_LINK,      LYK_UPLOAD,         0,             0,
-/* t */             /* u */         /* v */         /* w */
-
-   0,                  0,               0,            0,
-/* x */             /* y */          /* z */       /* { */
-
-   0,                   0,             0,              0,
-/* | */              /* } */         /* ~ */       /* del */
-
-/* 80..9F (illegal ISO-8859-1) 8-bit characters. */
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-
-/* A0..FF (permissible ISO-8859-1) 8-bit characters. */
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-
-/* 100..10F function key definitions in LYStrings.h */
-   0,                   0,             0,              0,
-/* UPARROW */     /* DNARROW */     /* RTARROW */   /* LTARROW */
-
-   0,                  0,              0,              0,
-/* PGDOWN */      /* PGUP */        /* HOME */      /* END */
-
-   0,                  0,              0,              0,
-/* F1*/ 	  /* Do key */      /* Find key */  /* Select key */
-
-   0,                  0,           LYK_DO_NOTHING,    0,
-/* Insert key */  /* Remove key */  /* DO_NOTHING */ /* Back tab */
-
-/* 110..18F */
-
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-/* 190..20F */
-
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-/* 210..28F */
-
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   0,                  0,              0,             0,
-   /* 290...293 */
-   0,                  0,              0,             0,
+static LYEditConfig myOverrideData =
+{
+    "Key Override", initOverrideData, key_override
 };
 #endif /* DIRED_SUPPORT && OK_OVERRIDE */
 
 #define DATA(code, name, doc) { code, name, doc }
 /* The order of this array must match the LYKeymapCode enum in LYKeymap.h */
-static Kcmd revmap[] = {
+static Kcmd revmap[] =
+{
     DATA(
-	LYK_UNKNOWN, "UNMAPPED",
-	NULL ),
+	    LYK_UNKNOWN, "UNMAPPED",
+	    NULL),
     DATA(
-	LYK_COMMAND, "COMMAND",
-	"prompt for, execute a command" ),
+	    LYK_COMMAND, "COMMAND",
+	    "prompt for, execute a command"),
     DATA(
-	LYK_1, "1",
-	NULL ),
+	    LYK_1, "1",
+	    NULL),
     DATA(
-	LYK_2, "2",
-	NULL ),
+	    LYK_2, "2",
+	    NULL),
     DATA(
-	LYK_3, "3",
-	NULL ),
+	    LYK_3, "3",
+	    NULL),
     DATA(
-	LYK_4, "4",
-	NULL ),
+	    LYK_4, "4",
+	    NULL),
     DATA(
-	LYK_5, "5",
-	NULL ),
+	    LYK_5, "5",
+	    NULL),
     DATA(
-	LYK_6, "6",
-	NULL ),
+	    LYK_6, "6",
+	    NULL),
     DATA(
-	LYK_7, "7",
-	NULL ),
+	    LYK_7, "7",
+	    NULL),
     DATA(
-	LYK_8, "8",
-	NULL ),
+	    LYK_8, "8",
+	    NULL),
     DATA(
-	LYK_9, "9",
-	NULL ),
+	    LYK_9, "9",
+	    NULL),
     DATA(
-	LYK_SOURCE, "SOURCE",
-	"toggle source/presentation for current document" ),
+	    LYK_SOURCE, "SOURCE",
+	    "toggle source/presentation for current document"),
     DATA(
-	LYK_RELOAD, "RELOAD",
-	"reload the current document" ),
+	    LYK_RELOAD, "RELOAD",
+	    "reload the current document"),
     DATA(
-	LYK_QUIT, "QUIT",
-	"quit the browser" ),
+	    LYK_QUIT, "QUIT",
+	    "quit the browser"),
     DATA(
-	LYK_ABORT, "ABORT",
-	"quit the browser unconditionally" ),
+	    LYK_ABORT, "ABORT",
+	    "quit the browser unconditionally"),
     DATA(
-	LYK_NEXT_PAGE, "NEXT_PAGE",
-	"view the next page of the document" ),
+	    LYK_NEXT_PAGE, "NEXT_PAGE",
+	    "view the next page of the document"),
     DATA(
-	LYK_PREV_PAGE, "PREV_PAGE",
-	"view the previous page of the document" ),
+	    LYK_PREV_PAGE, "PREV_PAGE",
+	    "view the previous page of the document"),
     DATA(
-	LYK_UP_TWO, "UP_TWO",
-	"go back two lines in the document" ),
+	    LYK_UP_TWO, "UP_TWO",
+	    "go back two lines in the document"),
     DATA(
-	LYK_DOWN_TWO, "DOWN_TWO",
-	"go forward two lines in the document" ),
+	    LYK_DOWN_TWO, "DOWN_TWO",
+	    "go forward two lines in the document"),
     DATA(
-	LYK_UP_HALF, "UP_HALF",
-	"go back half a page in the document" ),
+	    LYK_UP_HALF, "UP_HALF",
+	    "go back half a page in the document"),
     DATA(
-	LYK_DOWN_HALF, "DOWN_HALF",
-	"go forward half a page in the document" ),
+	    LYK_DOWN_HALF, "DOWN_HALF",
+	    "go forward half a page in the document"),
     DATA(
-	LYK_REFRESH, "REFRESH",
-	"refresh the screen to clear garbled text" ),
+	    LYK_REFRESH, "REFRESH",
+	    "refresh the screen to clear garbled text"),
     DATA(
-	LYK_HOME, "HOME",
-	"go to the beginning of the current document" ),
+	    LYK_HOME, "HOME",
+	    "go to the beginning of the current document"),
     DATA(
-	LYK_END, "END",
-	"go to the end of the current document" ),
+	    LYK_END, "END",
+	    "go to the end of the current document"),
     DATA(
-	LYK_FIRST_LINK, "FIRST_LINK",
-	"make the first link on the line current" ),
+	    LYK_FIRST_LINK, "FIRST_LINK",
+	    "make the first link on the line current"),
     DATA(
-	LYK_LAST_LINK, "LAST_LINK",
-	"make the last link on the line current" ),
+	    LYK_LAST_LINK, "LAST_LINK",
+	    "make the last link on the line current"),
     DATA(
-	LYK_PREV_LINK, "PREV_LINK",
-	"make the previous link current" ),
+	    LYK_PREV_LINK, "PREV_LINK",
+	    "make the previous link current"),
     DATA(
-	LYK_NEXT_LINK, "NEXT_LINK",
-	"make the next link current" ),
+	    LYK_NEXT_LINK, "NEXT_LINK",
+	    "make the next link current"),
     DATA(
-	LYK_LPOS_PREV_LINK, "LPOS_PREV_LINK",
-	"make previous link current, same column for input" ),
+	    LYK_LPOS_PREV_LINK, "LPOS_PREV_LINK",
+	    "make previous link current, same column for input"),
     DATA(
-	LYK_LPOS_NEXT_LINK, "LPOS_NEXT_LINK",
-	"make next link current, same column for input" ),
+	    LYK_LPOS_NEXT_LINK, "LPOS_NEXT_LINK",
+	    "make next link current, same column for input"),
     DATA(
-	LYK_FASTBACKW_LINK, "FASTBACKW_LINK",
-	"previous link or text area, only stops on links" ),
+	    LYK_FASTBACKW_LINK, "FASTBACKW_LINK",
+	    "previous link or text area, only stops on links"),
     DATA(
-	LYK_FASTFORW_LINK, "FASTFORW_LINK",
-	"next link or text area, only stops on links" ),
+	    LYK_FASTFORW_LINK, "FASTFORW_LINK",
+	    "next link or text area, only stops on links"),
     DATA(
-	LYK_UP_LINK, "UP_LINK",
-	"move up the page to a previous link" ),
+	    LYK_UP_LINK, "UP_LINK",
+	    "move up the page to a previous link"),
     DATA(
-	LYK_DOWN_LINK, "DOWN_LINK",
-	"move down the page to another link" ),
+	    LYK_DOWN_LINK, "DOWN_LINK",
+	    "move down the page to another link"),
     DATA(
-	LYK_RIGHT_LINK, "RIGHT_LINK",
-	"move right to another link" ),
+	    LYK_RIGHT_LINK, "RIGHT_LINK",
+	    "move right to another link"),
     DATA(
-	LYK_LEFT_LINK, "LEFT_LINK",
-	"move left to a previous link" ),
+	    LYK_LEFT_LINK, "LEFT_LINK",
+	    "move left to a previous link"),
     DATA(
-	LYK_HISTORY, "HISTORY",
-	"display stack of currently-suspended documents" ),
+	    LYK_HISTORY, "HISTORY",
+	    "display stack of currently-suspended documents"),
     DATA(
-	LYK_PREV_DOC, "PREV_DOC",
-	"go back to the previous document" ),
+	    LYK_PREV_DOC, "PREV_DOC",
+	    "go back to the previous document"),
     DATA(
-	LYK_NEXT_DOC, "NEXT_DOC",
-	"undo going back to the previous document" ),
+	    LYK_NEXT_DOC, "NEXT_DOC",
+	    "undo going back to the previous document"),
     DATA(
-	LYK_ACTIVATE, "ACTIVATE",
-	"go to the document given by the current link" ),
+	    LYK_ACTIVATE, "ACTIVATE",
+	    "go to the document given by the current link"),
     DATA(
-	LYK_SUBMIT, "MOUSE_SUBMIT",
-	"DO NOT MAP:  follow current link, submit" ),
+	    LYK_MOUSE_SUBMIT, "MOUSE_SUBMIT",
+	    "DO NOT MAP:  follow current link, submit"),
     DATA(
-	LYK_GOTO, "GOTO",
-	"go to a document given as a URL" ),
+	    LYK_SUBMIT, "SUBMIT",
+	    "prompt and submit form"),
     DATA(
-	LYK_ECGOTO, "ECGOTO",
-	"edit the current document's URL and go to it" ),
+	    LYK_RESET, "RESET",
+	    "reset fields on current form"),
     DATA(
-	LYK_HELP, "HELP",
-	"display help on using the browser" ),
+	    LYK_GOTO, "GOTO",
+	    "go to a document given as a URL"),
     DATA(
-	LYK_DWIMHELP, "DWIMHELP",
-	"display help page that may depend on context" ),
+	    LYK_ECGOTO, "ECGOTO",
+	    "edit the current document's URL and go to it"),
     DATA(
-	LYK_INDEX, "INDEX",
-	"display an index of potentially useful documents" ),
+	    LYK_HELP, "HELP",
+	    "display help on using the browser"),
     DATA(
-	LYK_NOCACHE, "NOCACHE",
-	"force submission of form or link with no-cache" ),
+	    LYK_DWIMHELP, "DWIMHELP",
+	    "display help page that may depend on context"),
     DATA(
-	LYK_INTERRUPT, "INTERRUPT",
-	"interrupt network connection or transmission" ),
+	    LYK_INDEX, "INDEX",
+	    "display an index of potentially useful documents"),
     DATA(
-	LYK_MAIN_MENU, "MAIN_MENU",
-	"return to the first screen (home page)" ),
+	    LYK_NOCACHE, "NOCACHE",
+	    "force submission of form or link with no-cache"),
     DATA(
-	LYK_OPTIONS, "OPTIONS",
-	"display and change option settings" ),
+	    LYK_INTERRUPT, "INTERRUPT",
+	    "interrupt network connection or transmission"),
     DATA(
-	LYK_INDEX_SEARCH, "INDEX_SEARCH",
-	"allow searching of an index" ),
+	    LYK_MAIN_MENU, "MAIN_MENU",
+	    "return to the first screen (home page)"),
     DATA(
-	LYK_WHEREIS, "WHEREIS",
-	"search within the current document" ),
+	    LYK_OPTIONS, "OPTIONS",
+	    "display and change option settings"),
     DATA(
-	LYK_PREV, "PREV",
-	"search for the previous occurence" ),
+	    LYK_INDEX_SEARCH, "INDEX_SEARCH",
+	    "allow searching of an index"),
     DATA(
-	LYK_NEXT, "NEXT",
-	"search for the next occurence" ),
+	    LYK_WHEREIS, "WHEREIS",
+	    "search within the current document"),
     DATA(
-	LYK_COMMENT, "COMMENT",
-	"send a comment to the author of the current document" ),
+	    LYK_PREV, "PREV",
+	    "search for the previous occurence"),
     DATA(
-	LYK_EDIT, "EDIT",
-	"edit the current document or a form's textarea" ),
+	    LYK_NEXT, "NEXT",
+	    "search for the next occurence"),
     DATA(
-	LYK_INFO, "INFO",
-	"display information on the current document and link" ),
+	    LYK_COMMENT, "COMMENT",
+	    "send a comment to the author of the current document"),
     DATA(
-	LYK_PRINT, "PRINT",
-	"display choices for printing the current document" ),
+	    LYK_EDIT, "EDIT",
+	    "edit the current document or a form's textarea"),
     DATA(
-	LYK_ADD_BOOKMARK, "ADD_BOOKMARK",
-	"add to your personal bookmark list" ),
+	    LYK_INFO, "INFO",
+	    "display information on the current document and link"),
     DATA(
-	LYK_DEL_BOOKMARK, "DEL_BOOKMARK",
-	"delete from your personal bookmark list" ),
+	    LYK_PRINT, "PRINT",
+	    "display choices for printing the current document"),
     DATA(
-	LYK_VIEW_BOOKMARK, "VIEW_BOOKMARK",
-	"view your personal bookmark list" ),
+	    LYK_ADD_BOOKMARK, "ADD_BOOKMARK",
+	    "add to your personal bookmark list"),
     DATA(
-	LYK_VLINKS, "VLINKS",
-	"list links visited during the current Lynx session" ),
+	    LYK_DEL_BOOKMARK, "DEL_BOOKMARK",
+	    "delete from your personal bookmark list"),
     DATA(
-	LYK_SHELL, "SHELL",
-	"escape from the browser to the system" ),
+	    LYK_VIEW_BOOKMARK, "VIEW_BOOKMARK",
+	    "view your personal bookmark list"),
     DATA(
-	LYK_DOWNLOAD, "DOWNLOAD",
-	"download the current link to your computer" ),
+	    LYK_VLINKS, "VLINKS",
+	    "list links visited during the current Lynx session"),
     DATA(
-	LYK_TRACE_TOGGLE, "TRACE_TOGGLE",
-	"toggle tracing of browser operations" ),
+	    LYK_SHELL, "SHELL",
+	    "escape from the browser to the system"),
     DATA(
-	LYK_TRACE_LOG, "TRACE_LOG",
-	"view trace log if started in the current session" ),
+	    LYK_DOWNLOAD, "DOWNLOAD",
+	    "download the current link to your computer"),
     DATA(
-	LYK_IMAGE_TOGGLE, "IMAGE_TOGGLE",
-	"toggle handling of all images as links" ),
+	    LYK_TRACE_TOGGLE, "TRACE_TOGGLE",
+	    "toggle tracing of browser operations"),
     DATA(
-	LYK_INLINE_TOGGLE, "INLINE_TOGGLE",
-	"toggle pseudo-ALTs for inlines with no ALT string" ),
+	    LYK_TRACE_LOG, "TRACE_LOG",
+	    "view trace log if started in the current session"),
     DATA(
-	LYK_HEAD, "HEAD",
-	"send a HEAD request for the current document or link" ),
+	    LYK_IMAGE_TOGGLE, "IMAGE_TOGGLE",
+	    "toggle handling of all images as links"),
     DATA(
-	LYK_DO_NOTHING, "DO_NOTHING",
-	NULL ),
+	    LYK_INLINE_TOGGLE, "INLINE_TOGGLE",
+	    "toggle pseudo-ALTs for inlines with no ALT string"),
     DATA(
-	LYK_TOGGLE_HELP, "TOGGLE_HELP",
-	"show other commands in the novice help menu" ),
+	    LYK_HEAD, "HEAD",
+	    "send a HEAD request for the current document or link"),
     DATA(
-	LYK_JUMP, "JUMP",
-	"go directly to a target document or action" ),
+	    LYK_DO_NOTHING, "DO_NOTHING",
+	    NULL),
     DATA(
-	LYK_KEYMAP, "KEYMAP",
-	"display the current key map" ),
+	    LYK_TOGGLE_HELP, "TOGGLE_HELP",
+	    "show other commands in the novice help menu"),
     DATA(
-	LYK_LIST, "LIST",
-	"list the references (links) in the current document" ),
+	    LYK_JUMP, "JUMP",
+	    "go directly to a target document or action"),
     DATA(
-	LYK_TOOLBAR, "TOOLBAR",
-	"go to Toolbar or Banner in the current document" ),
+	    LYK_EDITMAP, "EDITMAP",
+	    "display the current edit-key map"),
     DATA(
-	LYK_HISTORICAL, "HISTORICAL",
-	"toggle historical vs.  valid/minimal comment parsing" ),
+	    LYK_KEYMAP, "KEYMAP",
+	    "display the current key map"),
     DATA(
-	LYK_MINIMAL, "MINIMAL",
-	"toggle minimal vs.  valid comment parsing" ),
+	    LYK_LIST, "LIST",
+	    "list the references (links) in the current document"),
     DATA(
-	LYK_SOFT_DQUOTES, "SOFT_DQUOTES",
-	"toggle valid vs.  soft double-quote parsing" ),
+	    LYK_TOOLBAR, "TOOLBAR",
+	    "go to Toolbar or Banner in the current document"),
     DATA(
-	LYK_RAW_TOGGLE, "RAW_TOGGLE",
-	"toggle raw 8-bit translations or CJK mode ON or OFF" ),
+	    LYK_HISTORICAL, "HISTORICAL",
+	    "toggle historical vs.  valid/minimal comment parsing"),
     DATA(
-	LYK_COOKIE_JAR, "COOKIE_JAR",
-	"examine the Cookie Jar" ),
+	    LYK_MINIMAL, "MINIMAL",
+	    "toggle minimal vs.  valid comment parsing"),
     DATA(
-	LYK_F_LINK_NUM, "F_LINK_NUM",
-	"invoke the 'Follow link (or page) number:' prompt" ),
+	    LYK_SOFT_DQUOTES, "SOFT_DQUOTES",
+	    "toggle valid vs.  soft double-quote parsing"),
     DATA(
-	LYK_CLEAR_AUTH, "CLEAR_AUTH",
-	"clear all authorization info for this session" ),
+	    LYK_RAW_TOGGLE, "RAW_TOGGLE",
+	    "toggle raw 8-bit translations or CJK mode ON or OFF"),
     DATA(
-	LYK_SWITCH_DTD, "SWITCH_DTD",
-	"switch between two ways of parsing HTML" ),
+	    LYK_COOKIE_JAR, "COOKIE_JAR",
+	    "examine the Cookie Jar"),
     DATA(
-	LYK_ELGOTO, "ELGOTO",
-	"edit the current link's URL or ACTION and go to it" ),
+	    LYK_F_LINK_NUM, "F_LINK_NUM",
+	    "invoke the 'Follow link (or page) number:' prompt"),
     DATA(
-	LYK_CHANGE_LINK, "CHANGE_LINK",
-	"force reset of the current link on the page" ),
+	    LYK_CLEAR_AUTH, "CLEAR_AUTH",
+	    "clear all authorization info for this session"),
     DATA(
-	LYK_DWIMEDIT, "DWIMEDIT",
-	"use external editor for context-dependent purpose" ),
+	    LYK_SWITCH_DTD, "SWITCH_DTD",
+	    "switch between two ways of parsing HTML"),
     DATA(
-	LYK_EDIT_TEXTAREA, "EDITTEXTAREA",
-	"use an external editor to edit a form's textarea" ),
+	    LYK_ELGOTO, "ELGOTO",
+	    "edit the current link's URL or ACTION and go to it"),
     DATA(
-	LYK_GROW_TEXTAREA, "GROWTEXTAREA",
-	"add 5 new blank lines to the bottom of a textarea" ),
+	    LYK_CHANGE_LINK, "CHANGE_LINK",
+	    "force reset of the current link on the page"),
     DATA(
-	LYK_INSERT_FILE, "INSERTFILE",
-	"insert file into a textarea (just above cursorline)" ),
-#ifdef EXP_ADDRLIST_PAGE
+	    LYK_DWIMEDIT, "DWIMEDIT",
+	    "use external editor for context-dependent purpose"),
     DATA(
-	LYK_ADDRLIST, "ADDRLIST",
-	"like LIST command, but always shows the links' URLs" ),
+	    LYK_EDITTEXTAREA, "EDITTEXTAREA",
+	    "use an external editor to edit a form's textarea"),
+    DATA(
+	    LYK_GROWTEXTAREA, "GROWTEXTAREA",
+	    "add 5 new blank lines to the bottom of a textarea"),
+    DATA(
+	    LYK_INSERTFILE, "INSERTFILE",
+	    "insert file into a textarea (just above cursorline)"),
+#ifdef USE_ADDRLIST_PAGE
+    DATA(
+	    LYK_ADDRLIST, "ADDRLIST",
+	    "like LIST command, but always shows the links' URLs"),
 #endif
 #ifdef USE_EXTERNALS
     DATA(
-	LYK_EXTERN_LINK, "EXTERN_LINK",
-	"run external program with current link" ),
+	    LYK_EXTERN_LINK, "EXTERN_LINK",
+	    "run external program with current link"),
     DATA(
-	LYK_EXTERN_PAGE, "EXTERN_PAGE",
-	"run external program with current page" ),
+	    LYK_EXTERN_PAGE, "EXTERN_PAGE",
+	    "run external program with current page"),
 #endif
 #ifdef VMS
     DATA(
-	LYK_DIRED_MENU, "DIRED_MENU",
-	"invoke File/Directory Manager, if available" ),
+	    LYK_DIRED_MENU, "DIRED_MENU",
+	    "invoke File/Directory Manager, if available"),
 #else
 #ifdef DIRED_SUPPORT
     DATA(
-	LYK_DIRED_MENU, "DIRED_MENU",
-	"display a full menu of file operations" ),
+	    LYK_DIRED_MENU, "DIRED_MENU",
+	    "display a full menu of file operations"),
     DATA(
-	LYK_CREATE, "CREATE",
-	"create a new file or directory" ),
+	    LYK_CREATE, "CREATE",
+	    "create a new file or directory"),
     DATA(
-	LYK_REMOVE, "REMOVE",
-	"remove a file or directory" ),
+	    LYK_REMOVE, "REMOVE",
+	    "remove a file or directory"),
     DATA(
-	LYK_MODIFY, "MODIFY",
-	"modify the name or location of a file or directory" ),
+	    LYK_MODIFY, "MODIFY",
+	    "modify the name or location of a file or directory"),
     DATA(
-	LYK_TAG_LINK, "TAG_LINK",
-	"tag a file or directory for later action" ),
+	    LYK_TAG_LINK, "TAG_LINK",
+	    "tag a file or directory for later action"),
     DATA(
-	LYK_UPLOAD, "UPLOAD",
-	"upload from your computer to the current directory" ),
+	    LYK_UPLOAD, "UPLOAD",
+	    "upload from your computer to the current directory"),
     DATA(
-	LYK_INSTALL, "INSTALL",
-	"install file or tagged files into a system area" ),
-#endif /* DIRED_SUPPORT */
+	    LYK_INSTALL, "INSTALL",
+	    "install file or tagged files into a system area"),
+#endif				/* DIRED_SUPPORT */
     DATA(
-	LYK_CHG_CENTER, "CHANGE_CENTER",
-	"toggle center alignment in HTML TABLE" ),
+	    LYK_CHANGE_CENTER, "CHANGE_CENTER",
+	    "toggle center alignment in HTML TABLE"),
 #ifdef KANJI_CODE_OVERRIDE
     DATA(
-	LYK_CHG_KCODE, "CHANGE_KCODE",
-	"Change Kanji code" ),
+	    LYK_CHANGE_KCODE, "CHANGE_KCODE",
+	    "Change Kanji code"),
 #endif
-#endif /* VMS */
+#endif				/* VMS */
 #ifdef SUPPORT_CHDIR
     DATA(
-	LYK_CHDIR, "CHDIR",
-	"change current directory" ),
+	    LYK_CHDIR, "CHDIR",
+	    "change current directory"),
+    DATA(
+	    LYK_PWD, "PWD",
+	    "print current directory"),
 #endif
 #ifdef USE_CURSES_PADS
     DATA(
-	LYK_SHIFT_LEFT, "SHIFT_LEFT",
-	"shift the screen left" ),
+	    LYK_SHIFT_LEFT, "SHIFT_LEFT",
+	    "shift the screen left"),
     DATA(
-	LYK_SHIFT_RIGHT, "SHIFT_RIGHT",
-	"shift the screen right" ),
+	    LYK_SHIFT_RIGHT, "SHIFT_RIGHT",
+	    "shift the screen right"),
     DATA(
-	LYK_LINEWRAP_TOGGLE, "LINEWRAP_TOGGLE",
-	"toggle linewrap on/off" ),
+	    LYK_LINEWRAP_TOGGLE, "LINEWRAP_TOGGLE",
+	    "toggle linewrap on/off"),
 #endif
 #ifdef CAN_CUT_AND_PASTE
     DATA(
-	LYK_PASTE_URL, "PASTE_URL",
-	"Goto the URL in the clipboard" ),
+	    LYK_PASTE_URL, "PASTE_URL",
+	    "Goto the URL in the clipboard"),
     DATA(
-	LYK_TO_CLIPBOARD, "TO_CLIPBOARD",
-	"link's URL to Clip Board" ),
+	    LYK_TO_CLIPBOARD, "TO_CLIPBOARD",
+	    "link's URL to Clip Board"),
 #endif
 #ifdef EXP_NESTED_TABLES
     DATA(
-	LYK_NESTED_TABLES, "NESTED_TABLES",
-	"toggle nested-table parsing on/off" ),
+	    LYK_NESTED_TABLES, "NESTED_TABLES",
+	    "toggle nested-table parsing on/off"),
 #endif
 #ifdef USE_CACHEJAR
     DATA(
-	LYK_CACHE_JAR, "CACHE_JAR",
-	"examine list of cached documents" ),
+	    LYK_CACHE_JAR, "CACHE_JAR",
+	    "examine list of cached documents"),
+#endif
+#ifdef USE_MAXSCREEN_TOGGLE
+    DATA(
+	    LYK_MAXSCREEN_TOGGLE, "MAXSCREEN_TOGGLE",
+	    "toggle max screen and normal"),
 #endif
     DATA(
-	LYK_UNKNOWN, NULL,
-	"" )
+	    LYK_UNKNOWN, NULL,
+	    "")
 };
-#undef DATA
 
+#undef DATA
+/* *INDENT-OFF* */
 static const struct {
     int key;
     const char *name;
@@ -998,16 +645,28 @@ static const struct {
     { ' ',		"<space>" },
     { '<',		"<" },
     { '>',		">" },
+    /* LYExtraKeys */
     { CH_DEL,		"<delete>" },
-    { UPARROW,		"Up Arrow" },
-    { DNARROW,		"Down Arrow" },
-    { RTARROW,		"Right Arrow" },
-    { LTARROW,		"Left Arrow" },
-    { PGDOWN,		"Page Down" },
-    { PGUP,		"Page Up" },
-    { HOME,		"Home" },
+    { UPARROW_KEY,	"Up Arrow" },
+    { DNARROW_KEY,	"Down Arrow" },
+    { RTARROW_KEY,	"Right Arrow" },
+    { LTARROW_KEY,	"Left Arrow" },
+    { PGDOWN_KEY,	"Page Down" },
+    { PGUP_KEY,		"Page Up" },
+    { HOME_KEY,		"Home" },
     { END_KEY,		"End" },
-    { F1,		"F1" },
+    { F1_KEY,		"F1" },
+    { F2_KEY,		"F2" },
+    { F3_KEY,		"F3" },
+    { F4_KEY,		"F4" },
+    { F5_KEY,		"F5" },
+    { F6_KEY,		"F6" },
+    { F7_KEY,		"F7" },
+    { F8_KEY,		"F8" },
+    { F9_KEY,		"F9" },
+    { F10_KEY,		"F10" },
+    { F11_KEY,		"F11" },
+    { F12_KEY,		"F12" },
     { DO_KEY,		"Do key" },
     { FIND_KEY,		"Find key" },
     { SELECT_KEY,	"Select key" },
@@ -1016,67 +675,6 @@ static const struct {
     { DO_NOTHING,	"(DO_NOTHING)" },
     { BACKTAB_KEY,	"Back Tab" },
     { MOUSE_KEY,	"mouse pseudo key" },
-};
-
-struct emap {
-    const char *name;
-    const int   code;
-    const char *descr;
-};
-
-static struct emap ekmap[] = {
-  {"NOP",	LYE_NOP,	"Do Nothing"},
-  {"CHAR",	LYE_CHAR,	"Insert printable char"},
-  {"ENTER",	LYE_ENTER,	"Input complete, return char/lynxkeycode"},
-  {"TAB",	LYE_TAB,	"Input complete, return TAB"},
-  {"STOP",	LYE_STOP,	"Input deactivated"},
-  {"ABORT",	LYE_ABORT,	"Input cancelled"},
-
-  {"PASS",	LYE_FORM_PASS,  "In fields: input complete, or Do Nothing"},
-
-  {"DELN",	LYE_DELN,	"Delete next/curr char"},
-  {"DELP",	LYE_DELP,	"Delete prev      char"},
-  {"DELNW",	LYE_DELNW,	"Delete next word"},
-  {"DELPW",	LYE_DELPW,	"Delete prev word"},
-
-  {"ERASE",	LYE_ERASE,	"Erase the line"},
-
-  {"BOL",	LYE_BOL,	"Go to begin of line"},
-  {"EOL",	LYE_EOL,	"Go to end   of line"},
-  {"FORW",	LYE_FORW,	"Cursor forwards"},
-  {"FORW_RL",	LYE_FORW_RL,	"Cursor forwards or right link"},
-  {"BACK",	LYE_BACK,	"Cursor backwards"},
-  {"BACK_LL",	LYE_BACK_LL,	"Cursor backwards or left link"},
-  {"FORWW",	LYE_FORWW,	"Word forward"},
-  {"BACKW",	LYE_BACKW,	"Word back"},
-
-  {"LOWER",	LYE_LOWER,	"Lower case the line"},
-  {"UPPER",	LYE_UPPER,	"Upper case the line"},
-
-  {"LKCMD",	LYE_LKCMD,	"Invoke command prompt"},
-
-  {"AIX",	LYE_AIX,	"Hex 97"},
-
-  {"DELBL",	LYE_DELBL,	"Delete back to BOL"},
-  {"DELEL",	LYE_DELEL,	"Delete thru EOL"},
-
-  {"SWMAP",	LYE_SWMAP,	"Switch input keymap"},
-
-  {"TPOS",	LYE_TPOS,	"Transpose characters"},
-
-  {"SETM1",	LYE_SETM1,	"Set modifier 1 flag"},
-  {"SETM2",	LYE_SETM2,	"Set modifier 2 flag"},
-  {"UNMOD",	LYE_UNMOD,	"Fall back to no-modifier command"},
-
-  {"C1CHAR",	LYE_C1CHAR,	"Insert C1 char if printable"},
-
-  {"SETMARK",	LYE_SETMARK,	"emacs-like set-mark-command"},
-  {"XPMARK",	LYE_XPMARK,	"emacs-like exchange-point-and-mark"},
-  {"KILLREG",	LYE_KILLREG,	"emacs-like kill-region"},
-  {"YANK",	LYE_YANK,	"emacs-like yank"},
-#ifdef CAN_CUT_AND_PASTE
-  {"PASTE",	LYE_PASTE,	"ClipBoard to Lynx"},
-#endif
 };
 /* *INDENT-ON* */
 
@@ -1127,8 +725,8 @@ Kcmd *LYKeycodeToKcmd(LYKeymapCode code)
  */
 Kcmd *LYStringToKcmd(const char *name)
 {
-    unsigned need = strlen(name);
-    unsigned j;
+    size_t need = strlen(name);
+    size_t j;
     BOOL exact = FALSE;
     Kcmd *result = 0;
     Kcmd *maybe = 0;
@@ -1156,7 +754,7 @@ Kcmd *LYStringToKcmd(const char *name)
 }
 
 char *LYKeycodeToString(int c,
-			BOOLEAN upper8)
+			int upper8)
 {
     static char buf[30];
     unsigned n;
@@ -1165,7 +763,7 @@ char *LYKeycodeToString(int c,
     for (n = 0; n < TABLESIZE(named_keys); n++) {
 	if (named_keys[n].key == c) {
 	    named = TRUE;
-	    strcpy(buf, named_keys[n].name);
+	    LYStrNCpy(buf, named_keys[n].name, sizeof(buf) - 1);
 	    break;
 	}
     }
@@ -1203,13 +801,13 @@ int LYStringToKeycode(char *src)
     } else if (len > 2 && !strncasecomp(src, "0x", 2)) {
 	char *dst = 0;
 
-	key = strtol(src, &dst, 0);
-	if (!isEmpty(dst))
+	key = (int) strtol(src, &dst, 0);
+	if (non_empty(dst))
 	    key = -1;
     } else if (len > 6 && !strncasecomp(src, "key-", 4)) {
 	char *dst = 0;
 
-	key = strtol(src + 4, &dst, 0);
+	key = (int) strtol(src + 4, &dst, 0);
 	if (isEmpty(dst))
 	    key = -1;
     }
@@ -1254,7 +852,7 @@ static char *pretty_html(int c)
 	    for (n = 0; n < TABLESIZE(table); n++) {
 		if (c == table[n].code) {
 		    found = TRUE;
-		    strcpy(dst, table[n].name);
+		    LYStrNCpy(dst, table[n].name, sizeof(dst) - 1);
 		    adj += (int) strlen(dst) - 1;
 		    dst += (int) strlen(dst);
 		    break;
@@ -1264,7 +862,7 @@ static char *pretty_html(int c)
 		*dst++ = (char) c;
 	    }
 	}
-	adj -= (dst - buf) - PRETTY_LEN;
+	adj -= (int) (dst - buf) - PRETTY_LEN;
 	while (adj-- > 0)
 	    *dst++ = ' ';
 	*dst = 0;
@@ -1274,12 +872,12 @@ static char *pretty_html(int c)
     return 0;
 }
 
-static char *format_binding(LYKeymap_t * table, int i)
+static char *format_binding(LYKeymap_t *table, int i)
 {
-    LYKeymapCode the_key = (LYKeymapCode) table[i];
+    LYKeymap_t the_key = table[i];
     char *buf = 0;
     char *formatted;
-    Kcmd *rmap = LYKeycodeToKcmd(the_key);
+    Kcmd *rmap = LYKeycodeToKcmd((LYKeymapCode) the_key);
 
     if (rmap != 0
 	&& rmap->name != 0
@@ -1296,15 +894,14 @@ static char *format_binding(LYKeymap_t * table, int i)
 
 /* if both is true, produce an additional line for the corresponding
    uppercase key if its binding is different. - kw */
-static void print_binding(HTStream *target, int i,
-			  BOOLEAN both)
+static void print_binding(HTStream *target, int i, int both)
 {
     char *buf;
-    LYKeymapCode lac1 = LYK_UNKNOWN;	/* 0 */
+    LYKeymap_t lac1 = LYK_UNKNOWN;	/* 0 */
 
 #if defined(DIRED_SUPPORT) && defined(OK_OVERRIDE)
     if (prev_lynx_edit_mode && !no_dired_support &&
-	(lac1 = (LYKeymapCode) key_override[i]) != LYK_UNKNOWN) {
+	(lac1 = key_override[i]) != LYK_UNKNOWN) {
 	if ((buf = format_binding(key_override, i)) != 0) {
 	    PUTS(buf);
 	    FREE(buf);
@@ -1312,7 +909,7 @@ static void print_binding(HTStream *target, int i,
     } else
 #endif /* DIRED_SUPPORT && OK_OVERRIDE */
     if ((buf = format_binding(keymap, i)) != 0) {
-	lac1 = (LYKeymapCode) keymap[i];
+	lac1 = keymap[i];
 	PUTS(buf);
 	FREE(buf);
     }
@@ -1348,25 +945,6 @@ int lacname_to_lac(const char *func)
 }
 
 /*
- * Return editactioncode whose name is the string func.  func must be present
- * in the ekmap table.  returns -1 if not found.  - kw
- */
-int lecname_to_lec(const char *func)
-{
-    int i;
-    struct emap *mp;
-
-    if (non_empty(func)) {
-	for (i = 0, mp = ekmap; (*mp).name != NULL; mp++, i++) {
-	    if (strcmp((*mp).name, func) == 0) {
-		return (*mp).code;
-	    }
-	}
-    }
-    return (-1);
-}
-
-/*
  * Return lynxkeycode represented by string src.  returns -1 if not valid.
  *
  * This is simpler than what map_string_to_keysym() does for USE_KEYMAP, but
@@ -1377,32 +955,36 @@ int lkcstring_to_lkc(const char *src)
 {
     int c = -1;
 
-    if (strlen(src) == 1)
+    if (strlen(src) == 1) {
 	c = *src;
-    else if (strlen(src) == 2 && *src == '^')
+    } else if (strlen(src) == 2 && *src == '^') {
 	c = src[1] & 037;
-    else if (strlen(src) >= 2 && isdigit(UCH(*src))) {
-	if (sscanf(src, "%d", &c) != 1)
-	    return (-1);
+    } else if (strlen(src) >= 2 && isdigit(UCH(*src))) {
+	char *next = 0;
+
+	c = (int) strtol(src, &next, 0);
+	if (next != 0 && *next != '\0')
+	    c = (-1);
 #ifdef USE_KEYMAPS
     } else {
 	map_string_to_keysym(src, &c);
 #ifndef USE_SLANG
 	if (c >= 0) {
-	    if ((c & LKC_MASK) > 255 && !(c & LKC_ISLKC))
-		return (-1);	/* Don't accept untranslated curses KEY_* */
-	    else
+	    /* make curses-keys mapped from Keysym_Strings[] available here */
+	    if ((c & LKC_MASK) > 255)
 		c &= ~LKC_ISLKC;
 	}
 #endif
 #endif
     }
-    if (c == CH_ESC)
+
+    if (c == CH_ESC) {
 	escape_bound = 1;
-    if (c < -1)
-	return (-1);
-    else
-	return c;
+    } else if (c < -1) {
+	c = (-1);
+    }
+
+    return c;
 }
 
 static int LYLoadKeymap(const char *arg GCC_UNUSED,
@@ -1473,7 +1055,7 @@ GLOBALDEF HTProtocol LYLynxKeymap =
  */
 int remap(char *key,
 	  const char *func,
-	  BOOLEAN for_dired)
+	  int for_dired)
 {
     Kcmd *mp;
     int c;
@@ -1521,12 +1103,12 @@ typedef struct {
 /*
  * Save the given keys in the table, setting them to the map'd value.
  */
-static void set_any_keys(ANY_KEYS * table, int size)
+static void set_any_keys(ANY_KEYS * table, size_t size)
 {
-    int j, k;
+    size_t j, k;
 
     for (j = 0; j < size; ++j) {
-	k = table[j].code + 1;
+	k = (size_t) (table[j].code + 1);
 	table[j].save = keymap[k];
 	keymap[k] = table[j].map;
     }
@@ -1535,12 +1117,12 @@ static void set_any_keys(ANY_KEYS * table, int size)
 /*
  * Restore the given keys from the table.
  */
-static void reset_any_keys(ANY_KEYS * table, int size)
+static void reset_any_keys(ANY_KEYS * table, size_t size)
 {
-    int j, k;
+    size_t j, k;
 
     for (j = 0; j < size; ++j) {
-	k = table[j].code + 1;
+	k = (size_t) (table[j].code + 1);
 	keymap[k] = table[j].save;
     }
 }
@@ -1715,7 +1297,7 @@ static int best_reverse_keymap(int lac)
 {
     int i, c;
 
-    for (i = FIRST_I; i >= 0; i = NEXT_I(i, KEYMAP_SIZE - 2)) {
+    for (i = FIRST_I; i >= 0; i = NEXT_I(i, KEYMAP_SIZE - 1)) {
 #ifdef NOT_ASCII
 	if (i < 256) {
 	    c = FROMASCII(i);
@@ -1776,15 +1358,18 @@ char *key_for_func_ext(int lac,
 BOOLEAN LYisNonAlnumKeyname(int ch,
 			    int KeyName)
 {
-    if (ch < 0 || ch >= KEYMAP_SIZE)
-	return (FALSE);
-    if (ch > 0
-	&& strchr("0123456789\
-ABCDEFGHIJKLMNOPQRSTUVWXYZ\
-abcdefghijklmnopqrstuvwxyz", ch) != NULL)
-	return (FALSE);
+    BOOLEAN result = FALSE;
 
-    return (BOOL) (keymap[ch + 1] == KeyName);
+    if (ch >= 0 && (ch + 1) < KEYMAP_SIZE) {
+	if ((ch <= 0
+	     || StrChr("0123456789"
+		       "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		       "abcdefghijklmnopqrstuvwxyz", ch) == NULL)
+	    && (keymap[ch + 1] == KeyName)) {
+	    result = TRUE;
+	}
+    }
+    return result;
 }
 
 /*
@@ -1794,28 +1379,158 @@ abcdefghijklmnopqrstuvwxyz", ch) != NULL)
 int LYReverseKeymap(int KeyName)
 {
     int i;
+    int result = -1;
 
     for (i = 1; i < KEYMAP_SIZE; i++) {
 	if (keymap[i] == KeyName) {
-	    return (i - 1);
+	    result = (i - 1);
+	    break;
 	}
     }
 
-    return (-1);
+    return result;
 }
 
 #ifdef EXP_KEYBOARD_LAYOUT
-int LYSetKbLayout(char *layout_id)
+BOOLEAN LYSetKbLayout(char *layout_id)
 {
     int i;
+    BOOLEAN result = FALSE;
 
     for (i = 0; i < (int) TABLESIZE(LYKbLayoutNames) - 1; i++) {
-	if (!strcmp(LYKbLayoutNames[i], layout_id)) {
+	if (!strcasecomp(LYKbLayoutNames[i], layout_id)) {
 	    current_layout = i;
-	    return (-1);
+	    result = TRUE;
+	    break;
 	}
     }
 
-    return 0;
+    return result;
 }
 #endif
+
+#if 0
+/*
+ * This function was useful in converting the hand-crafted key-bindings to
+ * their reusable form in 2.8.8 -TD
+ */
+static void checkKeyMap(LYEditConfig * table)
+{
+    unsigned j, k;
+    char comment[80];
+    int first = TRUE;
+
+    for (j = 0; table->init[j].code >= 0; ++j) {
+	int code = table->init[j].code;
+
+	if (table->init[j].edit != table->used[code]) {
+	    if (first) {
+		printf("TABLE %s\n", table->name);
+		first = FALSE;
+	    }
+	    printf("%u: init %d vs used %d\n",
+		   j,
+		   table->init[j].edit,
+		   table->used[code]);
+	}
+    }
+    for (j = 0; j < KEYMAP_SIZE; ++j) {
+	int code = (int) j;
+	BOOL found = FALSE;
+
+	for (k = 0; table->init[k].code >= 0; ++k) {
+	    if (code == table->init[k].code) {
+		found = TRUE;
+		break;
+	    }
+	}
+	if (!found) {
+	    if (table->used[j] != 0) {
+		unsigned used = (j - 1);
+		int edit = table->used[j];
+		const char *prefix = "LYK_";
+		const char *name = 0;
+		Kcmd *cmd = LYKeycodeToKcmd(edit + 0);
+
+		if (cmd != 0) {
+		    name = cmd->name;
+		}
+
+		if (used < 32) {
+		    char temp[80];
+		    const char *what = 0;
+
+		    switch (used) {
+		    case 0:
+			what = "nul";
+			break;
+		    case 17:
+			what = "XON";
+			break;
+		    case 19:
+			what = "XOFF";
+			break;
+		    default:
+			sprintf(temp, "^%c", used + 'A');
+			what = temp;
+			break;
+		    }
+		    sprintf(comment, "\t/* %s */", what);
+		} else if (used < 127) {
+		    sprintf(comment, "\t/* %c */", used);
+		} else if (used == 127) {
+		    strcpy(comment, "\t/* DEL */");
+		} else {
+		    const char *what = LYextraKeysToName(used);
+
+		    if (non_empty(what)) {
+			sprintf(comment, "\t/* %s%s */", what,
+				((StrChr(what, '_') != 0)
+				 ? ""
+				 : "_KEY"));
+		    } else {
+			strcpy(comment, "");
+		    }
+		}
+		if (name == 0) {
+		    name = "XXX";
+		}
+		if (first) {
+		    printf("TABLE %s\n", table->name);
+		    first = FALSE;
+		}
+		printf("\t{ %d, %s%s },%s\n", code, prefix, name, comment);
+	    }
+	}
+    }
+}
+
+#else
+#define checkKeyMap(table)	/* nothing */
+#endif
+
+static void initKeyMap(LYEditConfig * table)
+{
+    unsigned k;
+    LYEditCode *used = table->used;
+    const LYEditInit *init = table->init;
+
+    memset(used, 0, sizeof(LYEditCode) * KEYMAP_SIZE);
+    for (k = 0; init[k].code >= 0; ++k) {
+	int code = init[k].code;
+
+	used[code] = init[k].edit;
+    }
+    checkKeyMap(table);
+}
+
+/*
+ * Reset the key bindings to their default values.
+ */
+void LYinitKeymap(void)
+{
+    initKeyMap(&myKeymapData);
+#if defined(DIRED_SUPPORT) && defined(OK_OVERRIDE)
+    initKeyMap(&myOverrideData);
+#endif
+}

@@ -1,5 +1,5 @@
 /*
- * $LynxId: LYCharUtils.c,v 1.102 2009/06/23 19:44:06 tom Exp $
+ * $LynxId: LYCharUtils.c,v 1.127 2013/11/28 11:17:59 tom Exp $
  *
  *  Functions associated with LYCharSets.c and the Lynx version of HTML.c - FM
  *  ==========================================================================
@@ -46,17 +46,31 @@
 int OL_CONTINUE = -29999;	/* flag for whether CONTINUE is set */
 int OL_VOID = -29998;		/* flag for whether a count is set */
 
-/*
- *  This function converts any ampersands in allocated
- *  strings to "&amp;".  If isTITLE is TRUE, it also
- *  converts any angle-brackets to "&lt;" or "&gt;". - FM
- */
-void LYEntify(char **str,
-	      BOOLEAN isTITLE)
+static size_t count_char(const char *value, int ch)
 {
-    char *p = *str;
-    char *q = NULL, *cp = NULL;
-    int amps = 0, lts = 0, gts = 0;
+    const char *found;
+    size_t result = 0;
+
+    while ((*value != '\0') && (found = StrChr(value, ch)) != NULL) {
+	++result;
+	value = (found + 1);
+    }
+    return result;
+}
+
+/*
+ * This function converts any ampersands in a pre-allocated string to "&amp;". 
+ * If brackets is TRUE, it also converts any angle-brackets to "&lt;" or "&gt;".
+ */
+void LYEntify(char **in_out,
+	      int brackets)
+{
+    char *source = *in_out;
+    char *target;
+    char *result = NULL;
+    size_t count_AMPs = 0;
+    size_t count_LTs = 0;
+    size_t count_GTs = 0;
 
 #ifdef CJK_EX
     enum _state {
@@ -70,162 +84,133 @@ void LYEntify(char **str,
     int in_sjis = 0;
 #endif
 
-    if (isEmpty(p))
-	return;
-
-    /*
-     * Count the ampersands.  - FM
-     */
-    while ((*p != '\0') && (q = strchr(p, '&')) != NULL) {
-	amps++;
-	p = (q + 1);
-    }
-
-    /*
-     * Count the left-angle-brackets, if needed.  - FM
-     */
-    if (isTITLE == TRUE) {
-	p = *str;
-	while ((*p != '\0') && (q = strchr(p, '<')) != NULL) {
-	    lts++;
-	    p = (q + 1);
+    if (non_empty(source)) {
+	count_AMPs = count_char(*in_out, '&');
+	if (brackets) {
+	    count_LTs = count_char(*in_out, '<');
+	    count_GTs = count_char(*in_out, '>');
 	}
-    }
 
-    /*
-     * Count the right-angle-brackets, if needed.  - FM
-     */
-    if (isTITLE == TRUE) {
-	p = *str;
-	while ((*p != '\0') && (q = strchr(p, '>')) != NULL) {
-	    gts++;
-	    p = (q + 1);
-	}
-    }
+	if (count_AMPs != 0 || count_LTs != 0 || count_GTs != 0) {
 
-    /*
-     * Check whether we need to convert anything.  - FM
-     */
-    if (amps == 0 && lts == 0 && gts == 0)
-	return;
+	    target = typecallocn(char,
+				   (strlen(*in_out)
+				    + (4 * count_AMPs)
+				    + (3 * count_LTs)
+				    + (3 * count_GTs) + 1));
 
-    /*
-     * Allocate space and convert.  - FM
-     */
-    q = typecallocn(char,
-		    (strlen(*str)
-		     + (unsigned)(4 * amps)
-		     + (unsigned)(3 * lts)
-		     + (unsigned)(3 * gts) + 1));
-    if ((cp = q) == NULL)
-	outofmem(__FILE__, "LYEntify");
-    for (p = *str; *p; p++) {
+	    if ((result = target) == NULL)
+		outofmem(__FILE__, "LYEntify");
+
+	    for (source = *in_out; *source; source++) {
 #ifdef CJK_EX
-	if (IS_CJK_TTY) {
-	    switch (state) {
-	    case S_text:
-		if (*p == '\033') {
-		    state = S_esc;
-		    *q++ = *p;
-		    continue;
+		if (IS_CJK_TTY) {
+		    switch (state) {
+		    case S_text:
+			if (*source == '\033') {
+			    state = S_esc;
+			    *target++ = *source;
+			    continue;
+			}
+			break;
+
+		    case S_esc:
+			if (*source == '$') {
+			    state = S_dollar;
+			} else if (*source == '(') {
+			    state = S_paren;
+			} else {
+			    state = S_text;
+			}
+			*target++ = *source;
+			continue;
+
+		    case S_dollar:
+			if (*source == '@' || *source == 'B' || *source == 'A') {
+			    state = S_nonascii_text;
+			} else if (*source == '(') {
+			    state = S_dollar_paren;
+			} else {
+			    state = S_text;
+			}
+			*target++ = *source;
+			continue;
+
+		    case S_dollar_paren:
+			if (*source == 'C') {
+			    state = S_nonascii_text;
+			} else {
+			    state = S_text;
+			}
+			*target++ = *source;
+			continue;
+
+		    case S_paren:
+			if (*source == 'B' || *source == 'J' || *source == 'T') {
+			    state = S_text;
+			} else if (*source == 'I') {
+			    state = S_nonascii_text;
+			} else if (*source == '\033') {
+			    state = S_esc;
+			}
+			*target++ = *source;
+			continue;
+
+		    case S_nonascii_text:
+			if (*source == '\033')
+			    state = S_esc;
+			*target++ = *source;
+			continue;
+
+		    default:
+			break;
+		    }
+		    if (*(source + 1) != '\0' &&
+			(IS_EUC(UCH(*source), UCH(*(source + 1))) ||
+			 IS_SJIS(UCH(*source), UCH(*(source + 1)), in_sjis) ||
+			 IS_BIG5(UCH(*source), UCH(*(source + 1))))) {
+			*target++ = *source++;
+			*target++ = *source;
+			continue;
+		    }
 		}
-		break;
-
-	    case S_esc:
-		if (*p == '$') {
-		    state = S_dollar;
-		    *q++ = *p;
-		    continue;
-		} else if (*p == '(') {
-		    state = S_paren;
-		    *q++ = *p;
-		    continue;
-		} else {
-		    state = S_text;
-		    *q++ = *p;
-		    continue;
-		}
-
-	    case S_dollar:
-		if (*p == '@' || *p == 'B' || *p == 'A') {
-		    state = S_nonascii_text;
-		    *q++ = *p;
-		    continue;
-		} else if (*p == '(') {
-		    state = S_dollar_paren;
-		    *q++ = *p;
-		    continue;
-		} else {
-		    state = S_text;
-		    *q++ = *p;
-		    continue;
-		}
-
-	    case S_dollar_paren:
-		if (*p == 'C') {
-		    state = S_nonascii_text;
-		    *q++ = *p;
-		    continue;
-		} else {
-		    state = S_text;
-		    *q++ = *p;
-		    continue;
-		}
-
-	    case S_paren:
-		if (*p == 'B' || *p == 'J' || *p == 'T') {
-		    state = S_text;
-		    *q++ = *p;
-		    continue;
-		} else if (*p == 'I') {
-		    state = S_nonascii_text;
-		    *q++ = *p;
-		    continue;
-		}
-		/* FALLTHRU */
-
-	    case S_nonascii_text:
-		if (*p == '\033')
-		    state = S_esc;
-		*q++ = *p;
-		continue;
-
-	    default:
-		break;
-	    }
-	    if (*(p + 1) != '\0' &&
-		(IS_EUC(UCH(*p), UCH(*(p + 1))) ||
-		 IS_SJIS(UCH(*p), UCH(*(p + 1)), in_sjis) ||
-		 IS_BIG5(UCH(*p), UCH(*(p + 1))))) {
-		*q++ = *p++;
-		*q++ = *p;
-		continue;
-	    }
-	}
 #endif
-	if (*p == '&') {
-	    *q++ = '&';
-	    *q++ = 'a';
-	    *q++ = 'm';
-	    *q++ = 'p';
-	    *q++ = ';';
-	} else if (isTITLE && *p == '<') {
-	    *q++ = '&';
-	    *q++ = 'l';
-	    *q++ = 't';
-	    *q++ = ';';
-	} else if (isTITLE && *p == '>') {
-	    *q++ = '&';
-	    *q++ = 'g';
-	    *q++ = 't';
-	    *q++ = ';';
-	} else {
-	    *q++ = *p;
+		switch (*source) {
+		case '&':
+		    *target++ = '&';
+		    *target++ = 'a';
+		    *target++ = 'm';
+		    *target++ = 'p';
+		    *target++ = ';';
+		    break;
+		case '<':
+		    if (brackets) {
+			*target++ = '&';
+			*target++ = 'l';
+			*target++ = 't';
+			*target++ = ';';
+			break;
+		    }
+		    /* FALLTHRU */
+		case '>':
+		    if (brackets) {
+			*target++ = '&';
+			*target++ = 'g';
+			*target++ = 't';
+			*target++ = ';';
+			break;
+		    }
+		    /* FALLTHRU */
+		default:
+		    *target++ = *source;
+		    break;
+		}
+	    }
+	    *target = '\0';
+	    FREE(*in_out);
+	    *in_out = result;
 	}
     }
-    *q = '\0';
-    FREE(*str);
-    *str = cp;
 }
 
 /*
@@ -238,7 +223,7 @@ static BOOL MustEntify(const char *source)
     BOOL result;
 
 #ifdef CJK_EX
-    if (IS_CJK_TTY && strchr(source, '\033') != 0) {
+    if (IS_CJK_TTY && StrChr(source, '\033') != 0) {
 	result = TRUE;
     } else
 #endif
@@ -352,7 +337,7 @@ char *LYFindEndOfComment(char *str)
 	 */
 	return NULL;
 
-    if (strncmp(str, "<!--", 4))
+    if (StrNCmp(str, "<!--", 4))
 	/*
 	 * We don't have the start of a comment, so return the beginning of the
 	 * string.  - FM
@@ -367,7 +352,7 @@ char *LYFindEndOfComment(char *str)
 	 */
 	return cp;
 
-    if ((cp1 = strchr(cp, '>')) == NULL)
+    if ((cp1 = StrChr(cp, '>')) == NULL)
 	/*
 	 * We don't have an end character, so return the beginning of the
 	 * string.  - FM
@@ -461,7 +446,7 @@ void LYFillLocalFileURL(char **href,
     if (isEmpty(*href))
 	return;
 
-    if (!strcmp(*href, "//") || !strncmp(*href, "///", 3)) {
+    if (!strcmp(*href, "//") || !StrNCmp(*href, "///", 3)) {
 	if (base != NULL && isFILE_URL(base)) {
 	    StrAllocCopy(temp, STR_FILE_URL);
 	    StrAllocCat(temp, *href);
@@ -473,10 +458,10 @@ void LYFillLocalFileURL(char **href,
 	    StrAllocCat(*href, "//localhost");
 	} else if (!strcmp(*href, "file://")) {
 	    StrAllocCat(*href, "localhost");
-	} else if (!strncmp(*href, "file:///", 8)) {
+	} else if (!StrNCmp(*href, "file:///", 8)) {
 	    StrAllocCopy(temp, (*href + 7));
 	    LYLocalFileToURL(href, temp);
-	} else if (!strncmp(*href, "file:/", 6) && !LYIsHtmlSep(*(*href + 6))) {
+	} else if (!StrNCmp(*href, "file:/", 6) && !LYIsHtmlSep(*(*href + 6))) {
 	    StrAllocCopy(temp, (*href + 5));
 	    LYLocalFileToURL(href, temp);
 	}
@@ -492,7 +477,7 @@ void LYFillLocalFileURL(char **href,
     }
 
     /* use below: strlen("file://localhost/") = 17 */
-    if (!strncmp(*href, "file://localhost/", 17)
+    if (!StrNCmp(*href, "file://localhost/", 17)
 	&& (strlen(*href) == 19)
 	&& LYIsDosDrive(*href + 17)) {
 	/*
@@ -523,7 +508,7 @@ void LYFillLocalFileURL(char **href,
 	 * Check for pathological cases - current dir has chars which MUST BE
 	 * URL-escaped - kw
 	 */
-	if (strchr(temp2, '%') != NULL || strchr(temp2, '#') != NULL) {
+	if (StrChr(temp2, '%') != NULL || StrChr(temp2, '#') != NULL) {
 	    FREE(temp);
 	    temp = HTEscape(temp2, URL_PATH);
 	    StrAllocCat(*href, temp);
@@ -542,6 +527,25 @@ void LYFillLocalFileURL(char **href,
 
     FREE(temp);
     return;
+}
+
+void LYAddMETAcharsetToStream(HTStream *target, int disp_chndl)
+{
+    char *buf = 0;
+
+    if (disp_chndl == -1)
+	/*
+	 * -1 means use current_char_set.
+	 */
+	disp_chndl = current_char_set;
+
+    if (target != 0 && disp_chndl >= 0) {
+	HTSprintf0(&buf, "<META %s content=\"text/html;charset=%s\">\n",
+		   "http-equiv=\"content-type\"",
+		   LYCharSet_UC[disp_chndl].MIMEname);
+	(*target->isa->put_string) (target, buf);
+	FREE(buf);
+    }
 }
 
 /*
@@ -723,10 +727,6 @@ char *LYUppercaseI_OL_String(int seqnum)
     if (Arabic >= 500) {
 	strcat(OLstring, "D");
 	Arabic -= 500;
-	while (Arabic >= 500) {
-	    strcat(OLstring, "C");
-	    Arabic -= 10;
-	}
     }
 
     if (Arabic >= 400) {
@@ -747,10 +747,6 @@ char *LYUppercaseI_OL_String(int seqnum)
     if (Arabic >= 50) {
 	strcat(OLstring, "L");
 	Arabic -= 50;
-	while (Arabic >= 50) {
-	    strcat(OLstring, "X");
-	    Arabic -= 10;
-	}
     }
 
     if (Arabic >= 40) {
@@ -857,10 +853,6 @@ char *LYLowercaseI_OL_String(int seqnum)
     if (Arabic >= 500) {
 	strcat(OLstring, "d");
 	Arabic -= 500;
-	while (Arabic >= 500) {
-	    strcat(OLstring, "c");
-	    Arabic -= 10;
-	}
     }
 
     if (Arabic >= 400) {
@@ -881,10 +873,6 @@ char *LYLowercaseI_OL_String(int seqnum)
     if (Arabic >= 50) {
 	strcat(OLstring, "l");
 	Arabic -= 50;
-	while (Arabic >= 50) {
-	    strcat(OLstring, "x");
-	    Arabic -= 10;
-	}
     }
 
     if (Arabic >= 40) {
@@ -983,59 +971,6 @@ void LYGetChartransInfo(HTStructured * me)
 				      UCT_STAGE_STRUCTURED);
 }
 
-/*
- * Given an UCS character code, will fill buffer passed in as q with the code's
- * UTF-8 encoding.
- * If terminate = YES, terminates string on success and returns pointer
- *		       to beginning.
- * If terminate = NO,	does not terminate string, and returns pointer
- *		       next char after the UTF-8 put into buffer.
- * On failure, including invalid code or 7-bit code, returns NULL.
- */
-static char *UCPutUtf8ToBuffer(char *q, UCode_t code, BOOL terminate)
-{
-    char *q_in = q;
-
-    if (!q)
-	return NULL;
-    if (code > 127 && code < 0x7fffffffL) {
-	if (code < 0x800L) {
-	    *q++ = (char) (0xc0 | (code >> 6));
-	    *q++ = (char) (0x80 | (0x3f & (code)));
-	} else if (code < 0x10000L) {
-	    *q++ = (char) (0xe0 | (code >> 12));
-	    *q++ = (char) (0x80 | (0x3f & (code >> 6)));
-	    *q++ = (char) (0x80 | (0x3f & (code)));
-	} else if (code < 0x200000L) {
-	    *q++ = (char) (0xf0 | (code >> 18));
-	    *q++ = (char) (0x80 | (0x3f & (code >> 12)));
-	    *q++ = (char) (0x80 | (0x3f & (code >> 6)));
-	    *q++ = (char) (0x80 | (0x3f & (code)));
-	} else if (code < 0x4000000L) {
-	    *q++ = (char) (0xf8 | (code >> 24));
-	    *q++ = (char) (0x80 | (0x3f & (code >> 18)));
-	    *q++ = (char) (0x80 | (0x3f & (code >> 12)));
-	    *q++ = (char) (0x80 | (0x3f & (code >> 6)));
-	    *q++ = (char) (0x80 | (0x3f & (code)));
-	} else {
-	    *q++ = (char) (0xfc | (code >> 30));
-	    *q++ = (char) (0x80 | (0x3f & (code >> 24)));
-	    *q++ = (char) (0x80 | (0x3f & (code >> 18)));
-	    *q++ = (char) (0x80 | (0x3f & (code >> 12)));
-	    *q++ = (char) (0x80 | (0x3f & (code >> 6)));
-	    *q++ = (char) (0x80 | (0x3f & (code)));
-	}
-    } else {
-	return NULL;
-    }
-    if (terminate) {
-	*q = '\0';
-	return q_in;
-    } else {
-	return q;
-    }
-}
-
 	/* as in HTParse.c, saves some calls - kw */
 static const char *hex = "0123456789ABCDEF";
 
@@ -1123,11 +1058,11 @@ static const char *hex = "0123456789ABCDEF";
 char **LYUCFullyTranslateString(char **str,
 				int cs_from,
 				int cs_to,
-				BOOLEAN do_ent,
-				BOOL use_lynx_specials,
-				BOOLEAN plain_space,
-				BOOLEAN hidden,
-				BOOL Back,
+				int do_ent,
+				int use_lynx_specials,
+				int plain_space,
+				int hidden,
+				int Back,
 				CharUtil_st stype)
 {
     char *p;
@@ -1140,7 +1075,6 @@ char **LYUCFullyTranslateString(char **str,
     int uck;
     int lowest_8;
     UCode_t code = 0;
-    unsigned long lcode;
     BOOL output_utf8 = 0, repl_translated_C0 = 0;
     size_t len;
     const char *name = NULL;
@@ -1181,15 +1115,13 @@ char **LYUCFullyTranslateString(char **str,
 #ifdef KANJI_CODE_OVERRIDE
     static unsigned char sjis_1st = '\0';
 
-#ifdef CONV_JISX0201KANA_JISX0208KANA
     unsigned char sjis_str[3];
-#endif
 #endif
 
     /*
      * Make sure we have a non-empty string.  - FM
      */
-    if (!str || isEmpty(*str))
+    if (isEmpty(*str))
 	return str;
 
     /*
@@ -1220,7 +1152,7 @@ char **LYUCFullyTranslateString(char **str,
     /*
      * Save malloc/calloc overhead in simple case - kw
      */
-    if (do_ent && hidden && (stype != st_URL) && (strchr(*str, '&') == NULL))
+    if (do_ent && hidden && (stype != st_URL) && (StrChr(*str, '&') == NULL))
 	do_ent = FALSE;
 
     /* Can't do, caller should figure out what to do... */
@@ -1267,12 +1199,12 @@ char **LYUCFullyTranslateString(char **str,
 #define CHUNK (chunk ? chunk : (chunk = HTChunkCreate2(128, len+1)))
 
 #define REPLACE_STRING(s) \
-		if (q != qs) HTChunkPutb(CHUNK, qs, q-qs); \
+		if (q != qs) HTChunkPutb(CHUNK, qs, (int) (q - qs)); \
 		HTChunkPuts(CHUNK, s); \
 		qs = q = *str
 
 #define REPLACE_CHAR(c) if (q > p) { \
-		HTChunkPutb(CHUNK, qs, q-qs); \
+		HTChunkPutb(CHUNK, qs, (int) (q - qs)); \
 		qs = q = *str; \
 		*q++ = c; \
 	    } else \
@@ -1296,8 +1228,7 @@ char **LYUCFullyTranslateString(char **str,
 		} else if (sjis_1st && IS_SJIS_LO(code)) {
 		    sjis_1st = '\0';
 		} else {
-#ifdef CONV_JISX0201KANA_JISX0208KANA
-		    if (0xA1 <= code && code <= 0xDF) {
+		    if (conv_jisx0201kana && 0xA1 <= code && code <= 0xDF) {
 			sjis_str[2] = '\0';
 			JISx0201TO0208_SJIS(UCH(code),
 					    sjis_str, sjis_str + 1);
@@ -1305,7 +1236,6 @@ char **LYUCFullyTranslateString(char **str,
 			p++;
 			continue;
 		    }
-#endif
 		}
 	    }
 #endif
@@ -1584,15 +1514,12 @@ char **LYUCFullyTranslateString(char **str,
 	     * (3) Is 127 and we don't have HTPassHighCtrlRaw or HTCJK set.
 	     * (4) Is 128 - 159 and we don't have HTPassHighCtrlNum set.
 	     */
-	    if ((((what == P_hex)
-		  ? sscanf(cp, "%lx", &lcode)
-		  : sscanf(cp, "%lu", &lcode)) != 1) ||
-		lcode > 0x7fffffffL) {
+	    if (UCScanCode(&code, cp, (BOOL) (what == P_hex))) {
+		code = LYcp1252ToUnicode(code);
+		state = S_check_uni;
+	    } else {
 		state = S_recover;
 		break;
-	    } else {
-		code = LYcp1252ToUnicode(lcode);
-		state = S_check_uni;
 	    }
 	    break;
 
@@ -1692,10 +1619,10 @@ char **LYUCFullyTranslateString(char **str,
 		/*
 		 * Not found; look for replacement string.
 		 */
-		       (uck = UCTransUniCharStr(replace_buf,
-						60, code,
-						cs_to,
-						0) >= 0)) {
+		       UCTransUniCharStr(replace_buf,
+					 60, code,
+					 cs_to,
+					 0) >= 0) {
 		state = S_got_outstring;
 		break;
 	    }
@@ -1728,7 +1655,8 @@ char **LYUCFullyTranslateString(char **str,
 		 */
 	    } else if (code == 8204 || code == 8205 ||
 		       code == 8206 || code == 8207) {
-		CTRACE((tfp, "LYUCFullyTranslateString: Ignoring '%ld'.\n", code));
+		CTRACE((tfp, "LYUCFullyTranslateString: Ignoring '%"
+			PRI_UCode_t "'.\n", code));
 		replace_buf[0] = '\0';
 		state = S_got_outstring;
 		break;
@@ -1801,7 +1729,8 @@ char **LYUCFullyTranslateString(char **str,
 	    } else if (!T.output_utf8 && stype == st_HTML && !hidden &&
 		       !(HTPassEightBitRaw &&
 			 UCH(*p) >= lowest_8)) {
-		sprintf(replace_buf, "U%.2lX", code);
+		sprintf(replace_buf, "U%.2" PRI_UCode_t "", code);
+
 		state = S_got_outstring;
 	    } else {
 		puni = p;
@@ -1847,7 +1776,7 @@ char **LYUCFullyTranslateString(char **str,
 	case S_got_oututf8:
 	    if (code > 255 ||
 		(code >= 128 && LYCharSet_UC[cs_to].enc == UCT_ENC_UTF8)) {
-		UCPutUtf8ToBuffer(replace_buf, code, YES);
+		UCConvertUniToUtf8(code, replace_buf);
 		state = S_got_outstring;
 	    } else {
 		state = S_got_outchar;
@@ -1931,7 +1860,7 @@ char **LYUCFullyTranslateString(char **str,
 
     *q = '\0';
     if (chunk) {
-	HTChunkPutb(CHUNK, qs, q - qs + 1);	/* also terminates */
+	HTChunkPutb(CHUNK, qs, (int) (q - qs + 1));	/* also terminates */
 	if (stype == st_URL || stype == st_other) {
 	    LYTrimHead(chunk->data);
 	    LYTrimTail(chunk->data);
@@ -1953,9 +1882,9 @@ char **LYUCFullyTranslateString(char **str,
 BOOL LYUCTranslateHTMLString(char **str,
 			     int cs_from,
 			     int cs_to,
-			     BOOL use_lynx_specials,
-			     BOOLEAN plain_space,
-			     BOOLEAN hidden,
+			     int use_lynx_specials,
+			     int plain_space,
+			     int hidden,
 			     CharUtil_st stype)
 {
     BOOL ret = YES;
@@ -1972,7 +1901,7 @@ BOOL LYUCTranslateHTMLString(char **str,
 BOOL LYUCTranslateBackFormData(char **str,
 			       int cs_from,
 			       int cs_to,
-			       BOOLEAN plain_space)
+			       int plain_space)
 {
     char **ret;
 
@@ -1994,7 +1923,7 @@ char *LYParseTagParam(char *from,
     char *string = from;
 
     do {
-	if ((string = strchr(string, ';')) == NULL)
+	if ((string = StrChr(string, ';')) == NULL)
 	    return NULL;
 	while (*string != '\0' && (*string == ';' || isspace(UCH(*string)))) {
 	    string++;
@@ -2044,7 +1973,7 @@ void LYParseRefreshURL(char *content,
 	cp1 = cp;
 	while (*cp1 && isdigit(UCH(*cp1)))
 	    cp1++;
-	StrnAllocCopy(Seconds, cp, cp1 - cp);
+	StrnAllocCopy(Seconds, cp, (size_t) (cp1 - cp));
     }
     *p_seconds = Seconds;
     *p_address = LYParseTagParam(content, "URL");
@@ -2058,10 +1987,10 @@ void LYParseRefreshURL(char *content,
  *  This function processes META tags in HTML streams. - FM
  */
 void LYHandleMETA(HTStructured * me, const BOOL *present,
-		  const char **value,
+		  STRING2PTR value,
 		  char **include GCC_UNUSED)
 {
-    char *http_equiv = NULL, *name = NULL, *content = NULL;
+    char *http_equiv = NULL, *name = NULL, *content = NULL, *charset = NULL;
     char *href = NULL, *id_string = NULL, *temp = NULL;
     char *cp, *cp0, *cp1 = NULL;
     int url_type = 0;
@@ -2111,141 +2040,49 @@ void LYHandleMETA(HTStructured * me, const BOOL *present,
 	    FREE(content);
 	}
     }
+    if (present[HTML_META_CHARSET] &&
+	non_empty(value[HTML_META_CHARSET])) {
+	StrAllocCopy(charset, value[HTML_META_CHARSET]);
+	convert_to_spaces(charset, TRUE);
+	LYUCTranslateHTMLString(&charset, me->tag_charset, me->tag_charset,
+				NO, NO, YES, st_other);
+	if (*charset == '\0') {
+	    FREE(charset);
+	}
+    }
     CTRACE((tfp,
-	    "LYHandleMETA: HTTP-EQUIV=\"%s\" NAME=\"%s\" CONTENT=\"%s\"\n",
+	    "LYHandleMETA: HTTP-EQUIV=\"%s\" NAME=\"%s\" CONTENT=\"%s\" CHARSET=\"%s\"\n",
 	    NONNULL(http_equiv),
 	    NONNULL(name),
-	    NONNULL(content)));
+	    NONNULL(content),
+	    NONNULL(charset)));
 
     /*
-     * Make sure we have META name/value pairs to handle.  - FM
+     * Check for a text/html Content-Type with a charset directive, if we
+     * didn't already set the charset via a server's header.  - AAC & FM
      */
-    if (!(http_equiv || name) || !content)
-	goto free_META_copies;
-
-    /*
-     * Check for a no-cache Pragma
-     * or Cache-Control directive. - FM
-     */
-    if (!strcasecomp(NonNull(http_equiv), "Pragma") ||
-	!strcasecomp(NonNull(http_equiv), "Cache-Control")) {
-	LYUCTranslateHTMLString(&content, me->tag_charset, me->tag_charset,
-				NO, NO, YES, st_other);
-	if (!strcasecomp(content, "no-cache")) {
-	    me->node_anchor->no_cache = TRUE;
-	    HText_setNoCache(me->text);
-	}
-
-	/*
-	 * If we didn't get a Cache-Control MIME header, and the META has one,
-	 * convert to lowercase, store it in the anchor element, and if we
-	 * haven't yet set no_cache, check whether we should.  - FM
-	 */
-	if ((!me->node_anchor->cache_control) &&
-	    !strcasecomp(NonNull(http_equiv), "Cache-Control")) {
-	    LYLowerCase(content);
-	    StrAllocCopy(me->node_anchor->cache_control, content);
-	    if (me->node_anchor->no_cache == FALSE) {
-		cp0 = content;
-		while ((cp = strstr(cp0, "no-cache")) != NULL) {
-		    cp += 8;
-		    while (*cp != '\0' && WHITE(*cp))
-			cp++;
-		    if (*cp == '\0' || *cp == ';') {
-			me->node_anchor->no_cache = TRUE;
-			HText_setNoCache(me->text);
-			break;
-		    }
-		    cp0 = cp;
-		}
-		if (me->node_anchor->no_cache == TRUE)
-		    goto free_META_copies;
-		cp0 = content;
-		while ((cp = strstr(cp0, "max-age")) != NULL) {
-		    cp += 7;
-		    while (*cp != '\0' && WHITE(*cp))
-			cp++;
-		    if (*cp == '=') {
-			cp++;
-			while (*cp != '\0' && WHITE(*cp))
-			    cp++;
-			if (isdigit(UCH(*cp))) {
-			    cp0 = cp;
-			    while (isdigit(UCH(*cp)))
-				cp++;
-			    if (*cp0 == '0' && cp == (cp0 + 1)) {
-				me->node_anchor->no_cache = TRUE;
-				HText_setNoCache(me->text);
-				break;
-			    }
-			}
-		    }
-		    cp0 = cp;
-		}
-	    }
-	}
-
-	/*
-	 * Check for an Expires directive. - FM
-	 */
-    } else if (!strcasecomp(NonNull(http_equiv), "Expires")) {
-	/*
-	 * If we didn't get an Expires MIME header, store it in the anchor
-	 * element, and if we haven't yet set no_cache, check whether we
-	 * should.  Note that we don't accept a Date header via META tags,
-	 * because it's likely to be untrustworthy, but do check for a Date
-	 * header from a server when making the comparison.  - FM
-	 */
-	LYUCTranslateHTMLString(&content, me->tag_charset, me->tag_charset,
-				NO, NO, YES, st_other);
-	StrAllocCopy(me->node_anchor->expires, content);
-	if (me->node_anchor->no_cache == FALSE) {
-	    if (!strcmp(content, "0")) {
-		/*
-		 * The value is zero, which we treat as an absolute no-cache
-		 * directive.  - FM
-		 */
-		me->node_anchor->no_cache = TRUE;
-		HText_setNoCache(me->text);
-	    } else if (me->node_anchor->date != NULL) {
-		/*
-		 * We have a Date header, so check if the value is less than or
-		 * equal to that.  - FM
-		 */
-		if (LYmktime(content, TRUE) <=
-		    LYmktime(me->node_anchor->date, TRUE)) {
-		    me->node_anchor->no_cache = TRUE;
-		    HText_setNoCache(me->text);
-		}
-	    } else if (LYmktime(content, FALSE) == 0) {
-		/*
-		 * We don't have a Date header, and the value is in past for
-		 * us.  - FM
-		 */
-		me->node_anchor->no_cache = TRUE;
-		HText_setNoCache(me->text);
-	    }
-	}
-
-	/*
-	 * Check for a text/html Content-Type with a charset directive, if we
-	 * didn't already set the charset via a server's header.  - AAC & FM
-	 */
-    } else if (isEmpty(me->node_anchor->charset) &&
-	       !strcasecomp(NonNull(http_equiv), "Content-Type")) {
+    if (isEmpty(me->node_anchor->charset) &&
+	(charset ||
+	 (!strcasecomp(NonNull(http_equiv), "Content-Type") && content))) {
 	LYUCcharset *p_in = NULL;
 	LYUCcharset *p_out = NULL;
 
-	LYUCTranslateHTMLString(&content, me->tag_charset, me->tag_charset,
-				NO, NO, YES, st_other);
-	LYLowerCase(content);
+	if (charset) {
+	    LYLowerCase(charset);
+	} else {
+	    LYUCTranslateHTMLString(&content, me->tag_charset, me->tag_charset,
+				    NO, NO, YES, st_other);
+	    LYLowerCase(content);
+	}
 
-	if ((cp1 = strstr(content, "charset")) != NULL) {
+	if ((cp1 = charset) != NULL ||
+	    (cp1 = strstr(content, "charset")) != NULL) {
 	    BOOL chartrans_ok = NO;
 	    char *cp3 = NULL, *cp4;
 	    int chndl;
 
-	    cp1 += 7;
+	    if (!charset)
+		cp1 += 7;
 	    while (*cp1 == ' ' || *cp1 == '=' || *cp1 == '"')
 		cp1++;
 
@@ -2372,12 +2209,12 @@ void LYHandleMETA(HTStructured * me, const BOOL *present,
 		 * be like ISO-8859 in structure, pretend we have some kind of
 		 * match.
 		 */
-		BOOL given_is_8859 = (BOOL) (!strncmp(cp4, "iso-8859-", 9) &&
+		BOOL given_is_8859 = (BOOL) (!StrNCmp(cp4, "iso-8859-", 9) &&
 					     isdigit(UCH(cp4[9])));
 		BOOL given_is_8859like = (BOOL) (given_is_8859
-						 || !strncmp(cp4, "windows-", 8)
-						 || !strncmp(cp4, "cp12", 4)
-						 || !strncmp(cp4, "cp-12", 5));
+						 || !StrNCmp(cp4, "windows-", 8)
+						 || !StrNCmp(cp4, "cp12", 4)
+						 || !StrNCmp(cp4, "cp-12", 5));
 		BOOL given_and_display_8859like = (BOOL) (given_is_8859like &&
 							  (strstr(LYchar_set_names[current_char_set],
 								  "ISO-8859") ||
@@ -2410,6 +2247,117 @@ void LYHandleMETA(HTStructured * me, const BOOL *present,
 	 * Set the kcode element based on the charset.  - FM
 	 */
 	HText_setKcode(me->text, me->node_anchor->charset, p_in);
+    }
+
+    /*
+     * Make sure we have META name/value pairs to handle.  - FM
+     */
+    if (!(http_equiv || name) || !content)
+	goto free_META_copies;
+
+    /*
+     * Check for a no-cache Pragma
+     * or Cache-Control directive. - FM
+     */
+    if (!strcasecomp(NonNull(http_equiv), "Pragma") ||
+	!strcasecomp(NonNull(http_equiv), "Cache-Control")) {
+	LYUCTranslateHTMLString(&content, me->tag_charset, me->tag_charset,
+				NO, NO, YES, st_other);
+	if (!strcasecomp(content, "no-cache")) {
+	    me->node_anchor->no_cache = TRUE;
+	    HText_setNoCache(me->text);
+	}
+
+	/*
+	 * If we didn't get a Cache-Control MIME header, and the META has one,
+	 * convert to lowercase, store it in the anchor element, and if we
+	 * haven't yet set no_cache, check whether we should.  - FM
+	 */
+	if ((!me->node_anchor->cache_control) &&
+	    !strcasecomp(NonNull(http_equiv), "Cache-Control")) {
+	    LYLowerCase(content);
+	    StrAllocCopy(me->node_anchor->cache_control, content);
+	    if (me->node_anchor->no_cache == FALSE) {
+		cp0 = content;
+		while ((cp = strstr(cp0, "no-cache")) != NULL) {
+		    cp += 8;
+		    while (*cp != '\0' && WHITE(*cp))
+			cp++;
+		    if (*cp == '\0' || *cp == ';') {
+			me->node_anchor->no_cache = TRUE;
+			HText_setNoCache(me->text);
+			break;
+		    }
+		    cp0 = cp;
+		}
+		if (me->node_anchor->no_cache == TRUE)
+		    goto free_META_copies;
+		cp0 = content;
+		while ((cp = strstr(cp0, "max-age")) != NULL) {
+		    cp += 7;
+		    while (*cp != '\0' && WHITE(*cp))
+			cp++;
+		    if (*cp == '=') {
+			cp++;
+			while (*cp != '\0' && WHITE(*cp))
+			    cp++;
+			if (isdigit(UCH(*cp))) {
+			    cp0 = cp;
+			    while (isdigit(UCH(*cp)))
+				cp++;
+			    if (*cp0 == '0' && cp == (cp0 + 1)) {
+				me->node_anchor->no_cache = TRUE;
+				HText_setNoCache(me->text);
+				break;
+			    }
+			}
+		    }
+		    cp0 = cp;
+		}
+	    }
+	}
+
+	/*
+	 * Check for an Expires directive. - FM
+	 */
+    } else if (!strcasecomp(NonNull(http_equiv), "Expires")) {
+	/*
+	 * If we didn't get an Expires MIME header, store it in the anchor
+	 * element, and if we haven't yet set no_cache, check whether we
+	 * should.  Note that we don't accept a Date header via META tags,
+	 * because it's likely to be untrustworthy, but do check for a Date
+	 * header from a server when making the comparison.  - FM
+	 */
+	LYUCTranslateHTMLString(&content, me->tag_charset, me->tag_charset,
+				NO, NO, YES, st_other);
+	StrAllocCopy(me->node_anchor->expires, content);
+	if (me->node_anchor->no_cache == FALSE) {
+	    if (!strcmp(content, "0")) {
+		/*
+		 * The value is zero, which we treat as an absolute no-cache
+		 * directive.  - FM
+		 */
+		me->node_anchor->no_cache = TRUE;
+		HText_setNoCache(me->text);
+	    } else if (me->node_anchor->date != NULL) {
+		/*
+		 * We have a Date header, so check if the value is less than or
+		 * equal to that.  - FM
+		 */
+		if (LYmktime(content, TRUE) <=
+		    LYmktime(me->node_anchor->date, TRUE)) {
+		    me->node_anchor->no_cache = TRUE;
+		    HText_setNoCache(me->text);
+		}
+	    } else if (LYmktime(content, FALSE) == 0) {
+		/*
+		 * We don't have a Date header, and the value is in past for
+		 * us.  - FM
+		 */
+		me->node_anchor->no_cache = TRUE;
+		HText_setNoCache(me->text);
+	    }
+	}
 
 	/*
 	 * Check for a Refresh directive.  - FM
@@ -2426,7 +2374,7 @@ void LYHandleMETA(HTStructured * me, const BOOL *present,
 		/*
 		 * We found a URL field, so check it out.  - FM
 		 */
-		if (!(url_type = LYLegitimizeHREF(me, &href, TRUE, FALSE))) {
+		if (!LYLegitimizeHREF(me, &href, TRUE, FALSE)) {
 		    /*
 		     * The specs require a complete URL, but this is a
 		     * Netscapism, so don't expect the author to know that.  -
@@ -2474,15 +2422,14 @@ void LYHandleMETA(HTStructured * me, const BOOL *present,
 	     * Check for an anchor in http or https URLs.  - FM
 	     */
 	    cp = NULL;
-#ifndef DONT_TRACK_INTERNAL_LINKS
 	    /* id_string seems to be used wrong below if given.
 	       not that it matters much.  avoid setting it here. - kw */
-	    if ((strncmp(href, "http", 4) == 0) &&
-		(cp = strchr(href, '#')) != NULL) {
+	    if (track_internal_links &&
+		(StrNCmp(href, "http", 4) == 0) &&
+		(cp = StrChr(href, '#')) != NULL) {
 		StrAllocCopy(id_string, cp);
 		*cp = '\0';
 	    }
-#endif
 	    if (me->inA) {
 		/*
 		 * Ugh!  The META tag, which is a HEAD element, is in an
@@ -2546,7 +2493,7 @@ void LYHandleMETA(HTStructured * me, const BOOL *present,
 	    if (*cp != '\0') {
 		StrAllocCopy(me->node_anchor->SugFname, cp);
 		if (*me->node_anchor->SugFname == '"') {
-		    if ((cp = strchr((me->node_anchor->SugFname + 1),
+		    if ((cp = StrChr((me->node_anchor->SugFname + 1),
 				     '"')) != NULL) {
 			*(cp + 1) = '\0';
 			HTMIME_TrimDoubleQuotes(me->node_anchor->SugFname);
@@ -2598,6 +2545,7 @@ void LYHandleMETA(HTStructured * me, const BOOL *present,
     FREE(http_equiv);
     FREE(name);
     FREE(content);
+    FREE(charset);
 }
 
 /*
@@ -2610,103 +2558,99 @@ void LYHandleMETA(HTStructured * me, const BOOL *present,
  *  end tag is present or not in the markup. - FM
  */
 void LYHandlePlike(HTStructured * me, const BOOL *present,
-		   const char **value,
+		   STRING2PTR value,
 		   char **include GCC_UNUSED,
 		   int align_idx,
-		   BOOL start)
+		   int start)
 {
-    if (TRUE) {
+    /*
+     * FIG content should be a true block, which like P inherits the current
+     * style.  APPLET is like character elements or an ALT attribute, unless
+     * its content contains a block element.  If we encounter a P in either's
+     * content, we set flags to treat the content as a block - FM
+     */
+    if (start) {
+	if (me->inFIG)
+	    me->inFIGwithP = TRUE;
+
+	if (me->inAPPLET)
+	    me->inAPPLETwithP = TRUE;
+    }
+
+    UPDATE_STYLE;
+    if (me->List_Nesting_Level >= 0) {
 	/*
-	 * FIG content should be a true block, which like P inherits the
-	 * current style.  APPLET is like character elements or an ALT
-	 * attribute, unless it content contains a block element.  If we
-	 * encounter a P in either's content, we set flags to treat the content
-	 * as a block.  - FM
+	 * We're in a list.  Treat P as an instruction to create one blank
+	 * line, if not already present, then fall through to handle
+	 * attributes, with the "second line" margins - FM
 	 */
-	if (start) {
-	    if (me->inFIG)
-		me->inFIGwithP = TRUE;
-
-	    if (me->inAPPLET)
-		me->inAPPLETwithP = TRUE;
-	}
-
-	UPDATE_STYLE;
-	if (me->List_Nesting_Level >= 0) {
-	    /*
-	     * We're in a list.  Treat P as an instruction to create one blank
-	     * line, if not already present, then fall through to handle
-	     * attributes, with the "second line" margins.  - FM
-	     */
-	    if (me->inP) {
-		if (me->inFIG || me->inAPPLET ||
-		    me->inCAPTION || me->inCREDIT ||
-		    me->sp->style->spaceAfter > 0 ||
-		    (start && me->sp->style->spaceBefore > 0)) {
-		    LYEnsureDoubleSpace(me);
-		} else {
-		    LYEnsureSingleSpace(me);
-		}
-	    }
-	} else if (me->sp[0].tag_number == HTML_ADDRESS) {
-	    /*
-	     * We're in an ADDRESS.  Treat P as an instruction to start a
-	     * newline, if needed, then fall through to handle attributes.  -
-	     * FM
-	     */
-	    if (!HText_LastLineEmpty(me->text, FALSE)) {
-		HText_setLastChar(me->text, ' ');	/* absorb white space */
-		HText_appendCharacter(me->text, '\r');
-	    }
-	} else {
-	    if (start) {
-		if (!(me->inLABEL && !me->inP)) {
-		    HText_appendParagraph(me->text);
-		}
-	    } else if (me->sp->style->spaceAfter > 0) {
+	if (me->inP) {
+	    if (me->inFIG || me->inAPPLET ||
+		me->inCAPTION || me->inCREDIT ||
+		me->sp->style->spaceAfter > 0 ||
+		(start && me->sp->style->spaceBefore > 0)) {
 		LYEnsureDoubleSpace(me);
 	    } else {
 		LYEnsureSingleSpace(me);
 	    }
-	    me->inLABEL = FALSE;
 	}
-	me->in_word = NO;
-
-	if (LYoverride_default_alignment(me)) {
-	    me->sp->style->alignment = LYstyles(me->sp[0].tag_number)->alignment;
-	} else if ((me->List_Nesting_Level >= 0 &&
-		    (me->sp->style->id == ST_DivCenter ||
-		     me->sp->style->id == ST_DivLeft ||
-		     me->sp->style->id == ST_DivRight)) ||
-		   ((me->Division_Level < 0) &&
-		    (me->sp->style->id == ST_Normal ||
-		     me->sp->style->id == ST_Preformatted))) {
-	    me->sp->style->alignment = HT_LEFT;
-	} else {
-	    me->sp->style->alignment = (short) me->current_default_alignment;
-	}
-
-	if (start) {
-	    if (present && present[align_idx] && value[align_idx]) {
-		if (!strcasecomp(value[align_idx], "center") &&
-		    !(me->List_Nesting_Level >= 0 && !me->inP))
-		    me->sp->style->alignment = HT_CENTER;
-		else if (!strcasecomp(value[align_idx], "right") &&
-			 !(me->List_Nesting_Level >= 0 && !me->inP))
-		    me->sp->style->alignment = HT_RIGHT;
-		else if (!strcasecomp(value[align_idx], "left") ||
-			 !strcasecomp(value[align_idx], "justify"))
-		    me->sp->style->alignment = HT_LEFT;
-	    }
-
-	}
-
+    } else if (me->sp[0].tag_number == HTML_ADDRESS) {
 	/*
-	 * Mark that we are starting a new paragraph and don't have any of it's
-	 * text yet.  - FM
+	 * We're in an ADDRESS.  Treat P as an instruction to start a newline,
+	 * if needed, then fall through to handle attributes - FM
 	 */
-	me->inP = FALSE;
+	if (!HText_LastLineEmpty(me->text, FALSE)) {
+	    HText_setLastChar(me->text, ' ');	/* absorb white space */
+	    HText_appendCharacter(me->text, '\r');
+	}
+    } else {
+	if (start) {
+	    if (!(me->inLABEL && !me->inP)) {
+		HText_appendParagraph(me->text);
+	    }
+	} else if (me->sp->style->spaceAfter > 0) {
+	    LYEnsureDoubleSpace(me);
+	} else {
+	    LYEnsureSingleSpace(me);
+	}
+	me->inLABEL = FALSE;
     }
+    me->in_word = NO;
+
+    if (LYoverride_default_alignment(me)) {
+	me->sp->style->alignment = LYstyles(me->sp[0].tag_number)->alignment;
+    } else if ((me->List_Nesting_Level >= 0 &&
+		(me->sp->style->id == ST_DivCenter ||
+		 me->sp->style->id == ST_DivLeft ||
+		 me->sp->style->id == ST_DivRight)) ||
+	       ((me->Division_Level < 0) &&
+		(me->sp->style->id == ST_Normal ||
+		 me->sp->style->id == ST_Preformatted))) {
+	me->sp->style->alignment = HT_LEFT;
+    } else {
+	me->sp->style->alignment = (short) me->current_default_alignment;
+    }
+
+    if (start && align_idx >= 0) {
+	if (present && present[align_idx] && value[align_idx]) {
+	    if (!strcasecomp(value[align_idx], "center") &&
+		!(me->List_Nesting_Level >= 0 && !me->inP))
+		me->sp->style->alignment = HT_CENTER;
+	    else if (!strcasecomp(value[align_idx], "right") &&
+		     !(me->List_Nesting_Level >= 0 && !me->inP))
+		me->sp->style->alignment = HT_RIGHT;
+	    else if (!strcasecomp(value[align_idx], "left") ||
+		     !strcasecomp(value[align_idx], "justify"))
+		me->sp->style->alignment = HT_LEFT;
+	}
+
+    }
+
+    /*
+     * Mark that we are starting a new paragraph and don't have any of its
+     * text yet - FM
+     */
+    me->inP = FALSE;
 
     return;
 }
@@ -2717,9 +2661,9 @@ void LYHandlePlike(HTStructured * me, const BOOL *present,
  *  an end tag. - FM
  */
 void LYHandleSELECT(HTStructured * me, const BOOL *present,
-		    const char **value,
+		    STRING2PTR value,
 		    char **include GCC_UNUSED,
-		    BOOL start)
+		    int start)
 {
     int i;
 
@@ -2750,7 +2694,7 @@ void LYHandleSELECT(HTStructured * me, const BOOL *present,
 	if (!(present && present[HTML_SELECT_NAME] &&
 	      non_empty(value[HTML_SELECT_NAME]))) {
 	    StrAllocCopy(name, "");
-	} else if (strchr(value[HTML_SELECT_NAME], '&') == NULL) {
+	} else if (StrChr(value[HTML_SELECT_NAME], '&') == NULL) {
 	    StrAllocCopy(name, value[HTML_SELECT_NAME]);
 	} else {
 	    StrAllocCopy(name, value[HTML_SELECT_NAME]);
@@ -2910,8 +2854,8 @@ void LYHandleSELECT(HTStructured * me, const BOOL *present,
  *  URLs. - FM
  */
 int LYLegitimizeHREF(HTStructured * me, char **href,
-		     BOOL force_slash,
-		     BOOL strip_dots)
+		     int force_slash,
+		     int strip_dots)
 {
     int url_type = 0;
     char *p = NULL;
@@ -2950,12 +2894,12 @@ int LYLegitimizeHREF(HTStructured * me, char **href,
 		 * it may actually have blanks in the name.
 		 * Try to accommodate. See also HTParse().
 		 */
-		if (LYRemoveNewlines(p) || strchr(p, '\t') != 0) {
+		if (LYRemoveNewlines(p) || StrChr(p, '\t') != 0) {
 		    LYRemoveBlanks(p);	/* a compromise... */
 		}
 
 		if (pound != NULL) {
-		    p = strchr(p, '\0');
+		    p = StrChr(p, '\0');
 		    *pound = '#';	/* restore */
 		    convert_to_spaces(pound, FALSE);
 		    if (p < pound)
@@ -3005,7 +2949,7 @@ int LYLegitimizeHREF(HTStructured * me, char **href,
 
 	temp = HTParse(*href, Base, PARSE_ALL);
 	path = HTParse(temp, "", PARSE_PATH + PARSE_PUNCTUATION);
-	if (!strncmp(path, "/..", 3)) {
+	if (!StrNCmp(path, "/..", 3)) {
 	    cp = (path + 3);
 	    if (LYIsHtmlSep(*cp) || *cp == '\0') {
 		if (Base[4] == 's') {
@@ -3023,7 +2967,7 @@ int LYLegitimizeHREF(HTStructured * me, char **href,
 	    if (*cp == '\0') {
 		StrAllocCopy(*href, "/");
 	    } else if (LYIsHtmlSep(*cp)) {
-		while (!strncmp(cp, "/..", 3)) {
+		while (!StrNCmp(cp, "/..", 3)) {
 		    if (*(cp + 3) == '/') {
 			cp += 3;
 			continue;
@@ -3112,7 +3056,7 @@ void LYCheckForContentBase(HTStructured * me)
  *  or ID attribute was present in the tag. - FM
  */
 void LYCheckForID(HTStructured * me, const BOOL *present,
-		  const char **value,
+		  STRING2PTR value,
 		  int attribute)
 {
     HTChildAnchor *ID_A = NULL;
@@ -3321,7 +3265,7 @@ BOOLEAN LYCheckForCSI(HTParentAnchor *anchor,
 BOOLEAN LYCommentHacks(HTParentAnchor *anchor,
 		       const char *comment)
 {
-    const char *cp = comment;
+    const char *cp;
     size_t len;
 
     if (comment == NULL)
@@ -3330,7 +3274,7 @@ BOOLEAN LYCommentHacks(HTParentAnchor *anchor,
     if (!(anchor && anchor->address))
 	return FALSE;
 
-    if (strncmp(comment, "!--X-Message-Id: ", 17) == 0) {
+    if (StrNCmp(comment, "!--X-Message-Id: ", 17) == 0) {
 	char *messageid = NULL;
 	char *p;
 
@@ -3356,7 +3300,7 @@ BOOLEAN LYCommentHacks(HTParentAnchor *anchor,
 	    FREE(messageid);
 	    return FALSE;
 	}
-	if ((p = strchr(messageid, '@')) == NULL || p[1] == '\0') {
+	if ((p = StrChr(messageid, '@')) == NULL || p[1] == '\0') {
 	    FREE(messageid);
 	    return FALSE;
 	}
@@ -3375,7 +3319,7 @@ BOOLEAN LYCommentHacks(HTParentAnchor *anchor,
 	    return FALSE;
 	}
     }
-    if (strncmp(comment, "!--X-Subject: ", 14) == 0) {
+    if (StrNCmp(comment, "!--X-Subject: ", 14) == 0) {
 	char *subject = NULL;
 	char *p;
 
@@ -3441,6 +3385,9 @@ void LYformTitle(char **dst,
 
 	if ((tmp_buffer = (char *) malloc(strlen(src) + 1)) == 0)
 	    outofmem(__FILE__, "LYformTitle");
+
+	assert(tmp_buffer != NULL);
+
 	switch (kanji_code) {	/* 1997/11/22 (Sat) 09:28:00 */
 	case EUC:
 	    TO_EUC((const unsigned char *) src, (unsigned char *) tmp_buffer);

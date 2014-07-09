@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTAAProt.c,v 1.31 2009/03/10 00:27:20 tom Exp $
+ * $LynxId: HTAAProt.c,v 1.33 2013/11/28 11:11:05 tom Exp $
  *
  * MODULE							HTAAProt.c
  *		PROTECTION FILE PARSING MODULE
@@ -169,7 +169,7 @@ static void HTAA_setIds(HTAAProt *prot, const char *ids)
 	char *point;
 
 	StrAllocCopy(local_copy, ids);
-	point = strchr(local_copy, '.');
+	point = StrChr(local_copy, '.');
 	if (point) {
 	    *(point++) = (char) 0;
 	    StrAllocCopy(prot->gid_name, point);
@@ -346,6 +346,8 @@ static HTAAProt *HTAAProt_new(const char *cur_docname,
 	if ((prot = typecalloc(HTAAProt)) == 0)
 	      outofmem(__FILE__, "HTAAProt_new");
 
+	assert(prot != NULL);
+
 	prot->ctemplate = NULL;
 	prot->filename = NULL;
 	prot->uid_name = NULL;
@@ -359,6 +361,9 @@ static HTAAProt *HTAAProt_new(const char *cur_docname,
 	    fclose(fp);
 	    if ((cache_item = typecalloc(HTAAProtCache)) == 0)
 		outofmem(__FILE__, "HTAAProt_new");
+
+	    assert(cache_item != NULL);
+
 	    cache_item->prot = prot;
 	    cache_item->prot_filename = NULL;
 	    StrAllocCopy(cache_item->prot_filename, prot_filename);

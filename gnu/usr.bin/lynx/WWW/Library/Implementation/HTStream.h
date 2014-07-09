@@ -1,4 +1,7 @@
-/*                                                      The Stream class definition -- libwww
+/*
+ * $LynxId: HTStream.h,v 1.16 2011/06/11 12:08:40 tom Exp $
+ *
+ *                                                      The Stream class definition -- libwww
                                  STREAM OBJECT DEFINITION
 
    A Stream object is something which accepts a stream of text.
@@ -36,7 +39,7 @@ extern "C" {
 
 	void (*_abort) (HTStream *me, HTError e);
 
-	void (*put_character) (HTStream *me, char ch);
+	void (*put_character) (HTStream *me, int ch);
 
 	void (*put_string) (HTStream *me, const char *str);
 
@@ -44,6 +47,11 @@ extern "C" {
 
     } HTStreamClass;
 
+#ifndef HTSTREAM_INTERNAL
+    struct _HTStream {
+	HTStreamClass *isa;
+    };
+#endif
 /*
 
   Generic Error Stream

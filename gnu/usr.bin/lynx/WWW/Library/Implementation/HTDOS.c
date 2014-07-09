@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTDOS.c,v 1.36 2009/01/03 01:58:39 tom Exp $
+ * $LynxId: HTDOS.c,v 1.40 2013/11/28 11:11:05 tom Exp $
  *							DOS specific routines
  */
 
@@ -12,6 +12,7 @@
 
 #ifdef _WINDOWS
 #include <LYGlobalDefs.h>
+#include <HTAlert.h>
 #endif
 
 /*
@@ -103,12 +104,21 @@ char *HTDOS_slashes(char *path)
  * ON EXIT:
  *	returns		DOS file specification
  */
-char *HTDOS_name(char *wwwname)
+char *HTDOS_name(const char *wwwname)
 {
     static char *result = NULL;
     int joe;
 
+#if defined(SH_EX)		/* 2000/03/07 (Tue) 18:32:42 */
+    if (unsafe_filename(wwwname)) {
+	HTUserMsg2("unsafe filename : %s", wwwname);
+	copy_plus(&result, "BAD_LOCAL_FILE_NAME");
+    } else {
+	copy_plus(&result, wwwname);
+    }
+#else
     copy_plus(&result, wwwname);
+#endif
 #ifdef __DJGPP__
     if (result[0] == '/'
 	&& result[1] == 'd'
@@ -126,6 +136,10 @@ char *HTDOS_name(char *wwwname)
     /* the rest of path may be with or without drive letter  */
     if ((result[1] != '\\') && (result[0] == '\\')) {
 	for (joe = 0; (result[joe] = result[joe + 1]) != 0; joe++) ;
+    }
+    /* convert '|' after the drive letter to ':' */
+    if (isalpha(UCH(result[0])) && result[1] == '|') {
+	result[1] = ':';
     }
 #ifdef _WINDOWS			/* 1998/04/02 (Thu) 08:59:48 */
     if (LYLastPathSep(result) != NULL
@@ -150,17 +164,17 @@ char *HTDOS_name(char *wwwname)
 }
 
 #ifdef WIN_EX
-char *HTDOS_short_name(char *path)
+char *HTDOS_short_name(const char *path)
 {
     static char sbuf[LY_MAXPATH];
     char *ret;
     DWORD r;
 
-    if (strchr(path, '/'))
+    if (StrChr(path, '/'))
 	path = HTDOS_name(path);
     r = GetShortPathName(path, sbuf, sizeof sbuf);
     if (r >= sizeof(sbuf) || r == 0) {
-	ret = LYstrncpy(sbuf, path, sizeof(sbuf));
+	ret = LYStrNCpy(sbuf, path, sizeof(sbuf));
     } else {
 	ret = sbuf;
     }

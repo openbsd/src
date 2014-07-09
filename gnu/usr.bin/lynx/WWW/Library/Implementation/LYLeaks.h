@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYLeaks.h,v 1.14 2012/02/10 00:15:56 tom Exp $
+ */
 #ifndef __LYLEAKS_H
 /*
  *	Avoid include redundancy
@@ -44,6 +47,9 @@
  *	1999-10-17	modified to handle HTSprintf0 and HTSprintf(),
  *			and to provide mark_malloced, if
  *			LY_FIND_LEAKS_EXTENDED is defined. - kw
+ *	2003-01-22	add sequence-id for counting mallocs/frees -TD
+ *	2004-04-27	ANSIfy'd -TD
+ *	2012-02-09	add bstring interfaces -TD
  */
 
 /* Undefine this to get no improved HTSprintf0/HTSprintf tracking: */
@@ -161,6 +167,31 @@ extern "C" {
 #endif				/* StrAllocCat */
 #define StrAllocCat(dest, src)  LYLeakSACat(&(dest), src, __FILE__, __LINE__)
 
+#ifdef BStrAlloc
+#undef BStrAlloc
+#endif
+#define BStrAlloc(d,n)   LYLeakSABAlloc( &(d), n, __FILE__, __LINE__)
+
+#ifdef BStrCopy
+#undef BStrCopy
+#endif
+#define BStrCopy(d,s)  LYLeakSABCopy( &(d), BStrData(s), BStrLen(s), __FILE__, __LINE__)
+
+#ifdef BStrCopy0
+#undef BStrCopy0
+#endif
+#define BStrCopy0(d,s)  LYLeakSABCopy0( &(d), s, __FILE__, __LINE__)
+
+#ifdef BStrCat
+#undef BStrCat
+#endif
+#define BStrCat(d,s)  LYLeakSABCat( &(d), BStrData(s), BStrLen(s), __FILE__, __LINE__)
+
+#ifdef BStrCat0
+#undef BStrCat0
+#endif
+#define BStrCat0(d,s)  LYLeakSABCat0( &(d), s, __FILE__, __LINE__)
+
 #define mark_malloced(a,size) LYLeak_mark_malloced(a,size, __FILE__, __LINE__)
 
 #if defined(LY_FIND_LEAKS_EXTENDED) && !defined(NO_EXTENDED_MEMORY_TRACKING)
@@ -224,6 +255,31 @@ extern "C" {
 			     const char *src,
 			     const char *cp_File,
 			     const short ssi_Line);
+    extern void LYLeakSABAlloc(bstring **dest,
+			       int len,
+			       const char *cp_File,
+			       const short ssi_Line);
+    extern void LYLeakSABCopy(bstring **dest,
+			      const char *src,
+			      int len,
+			      const char *cp_File,
+			      const short ssi_Line);
+    extern void LYLeakSABCopy0(bstring **dest,
+			       const char *src,
+			       const char *cp_File,
+			       const short ssi_Line);
+    extern void LYLeakSABCat(bstring **dest,
+			     const char *src,
+			     int len,
+			     const char *cp_File,
+			     const short ssi_Line);
+    extern void LYLeakSABCat0(bstring **dest,
+			      const char *src,
+			      const char *cp_File,
+			      const short ssi_Line);
+    extern void LYLeakSABFree(bstring **ptr,
+			      const char *cp_File,
+			      const short ssi_Line);
 
 #ifdef LY_FIND_LEAKS_EXTENDED
 /*

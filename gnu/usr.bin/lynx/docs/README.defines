@@ -107,7 +107,6 @@ Both:
 
 Other general
 -------------
-# -DEXP_ASCII_CTYPES use POSIX locale for toupper/tolower/isupper
 # -DIGNORE_CTRL_C  Define if Control-C shouldn't exit lynx.
 # -DINACTIVE_INPUT_STYLE_VH  Different style for showing inactive text fields
 # -DMISC_EXP       Enable some truly experimental stuff

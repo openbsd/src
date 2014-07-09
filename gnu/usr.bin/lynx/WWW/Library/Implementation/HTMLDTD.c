@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTMLDTD.c,v 1.56 2008/09/18 22:29:24 tom Exp $
+ * $LynxId: HTMLDTD.c,v 1.57 2010/09/25 00:30:56 tom Exp $
  *
  *		Our Static DTD for HTML
  *		-----------------------
@@ -236,9 +236,9 @@ void HTSwitchDTD(int new_flag)
 		HTML_ALL_ELEMENTS,
 		(int) sizeof(HTTag)));
     if (new_flag)
-	memcpy(tags, tags_table1, HTML_ALL_ELEMENTS * sizeof(HTTag));
+	MemCpy(tags, tags_table1, HTML_ALL_ELEMENTS * sizeof(HTTag));
     else
-	memcpy(tags, tags_table0, HTML_ALL_ELEMENTS * sizeof(HTTag));
+	MemCpy(tags, tags_table0, HTML_ALL_ELEMENTS * sizeof(HTTag));
 }
 
 HTTag HTTag_unrecognized =

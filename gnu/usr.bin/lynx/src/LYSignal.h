@@ -16,10 +16,10 @@ extern "C" {
 #endif				/* VMS */
 
 #ifdef HAVE_SIGACTION
-    typedef void LYSigHandlerFunc_t(int);
+    typedef void LYSigHandlerFunc_t (int);
 
 /* implementation in LYUtils.c */
-    extern void LYExtSignal(int sig, LYSigHandlerFunc_t * handler);
+    extern void LYExtSignal(int sig, LYSigHandlerFunc_t *handler);
 
 #else
 #define LYExtSignal(sig,h) signal(sig, h)

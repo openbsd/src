@@ -1,5 +1,5 @@
 /*
- * $LynxId: UCAux.c,v 1.40 2009/03/10 21:13:12 tom Exp $
+ * $LynxId: UCAux.c,v 1.44 2010/11/07 21:21:09 tom Exp $
  */
 #include <HTUtils.h>
 
@@ -212,9 +212,7 @@ void UCSetTransParams(UCTransParams * pT, int cs_in,
 	     * Set up the structure for a CJK input with
 	     * a CJK output (IS_CJK_TTY).  - FM
 	     */
-	    intm_ucs = FALSE;
 	    pT->trans_to_uni = FALSE;
-	    use_ucs = FALSE;
 	    pT->do_8bitraw = FALSE;
 	    pT->pass_160_173_raw = TRUE;
 	    pT->use_raw_char_in = FALSE;	/* Not used for CJK. - KW */
@@ -368,7 +366,7 @@ void UCSetBoxChars(int cset,
 	    /* *INDENT-OFF* */
 	    static struct {
 		int mapping;
-		int internal;
+		UCode_t internal;
 		int external;
 	    } table[] = {
 		{ 'j', 0x2518, 0 }, /* BOX DRAWINGS LIGHT UP AND LEFT */
@@ -388,7 +386,8 @@ void UCSetBoxChars(int cset,
 	    unsigned n;
 
 	    if (first) {
-		char *map = tigetstr("acsc");
+		static char acsc_name[] = "acsc";
+		char *map = tigetstr(acsc_name);
 
 		if (map != 0) {
 		    CTRACE((tfp, "build terminal line-drawing map\n"));
@@ -396,7 +395,8 @@ void UCSetBoxChars(int cset,
 			for (n = 0; n < TABLESIZE(table); ++n) {
 			    if (table[n].mapping == map[0]) {
 				table[n].external = UCH(map[1]);
-				CTRACE((tfp, "  map[%c] %#x -> %#x\n",
+				CTRACE((tfp,
+					"  map[%c] %#" PRI_UCode_t " -> %#x\n",
 					table[n].mapping,
 					table[n].internal,
 					table[n].external));
@@ -464,7 +464,7 @@ void UCSetBoxChars(int cset,
 #define PUTC(ch) ((*myPutc)(target, (char)(ch)))
 #define PUTC2(ch) ((*myPutc)(target,(char)(0x80|(0x3f &(ch)))))
 
-BOOL UCPutUtf8_charstring(HTStream *target, putc_func_t * myPutc, long code)
+BOOL UCPutUtf8_charstring(HTStream *target, putc_func_t *myPutc, UCode_t code)
 {
     if (code < 128)
 	return NO;		/* indicate to caller we didn't handle it */

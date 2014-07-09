@@ -1,5 +1,5 @@
 /*
- * $LynxId: LYCharSets.c,v 1.63 2009/05/25 17:57:41 tom Exp $
+ * $LynxId: LYCharSets.c,v 1.68 2013/01/04 21:47:16 tom Exp $
  */
 #include <HTUtils.h>
 #include <HTCJK.h>
@@ -24,11 +24,11 @@ int forced_UCLYhdnl;
 int LYNumCharsets = 0;		/* Will be initialized later by UC_Register. */
 int current_char_set = -1;	/* will be intitialized later in LYMain.c */
 int linedrawing_char_set = -1;
-const char **p_entity_values = NULL;	/* Pointer, for HTML_put_entity() */
+STRING2PTR p_entity_values = NULL;	/* Pointer, for HTML_put_entity() */
 
 			      /* obsolete and probably not used(???)        */
 			      /* will be initialized in HTMLUseCharacterSet */
-#ifdef EXP_CHARSET_CHOICE
+#ifdef USE_CHARSET_CHOICE
 charset_subset_t charset_subsets[MAXCHARSETS];
 BOOL custom_display_charset = FALSE;
 BOOL custom_assumed_doc_charset = FALSE;
@@ -41,7 +41,7 @@ const char *display_charset_choices[MAXCHARSETS + 1];
 const char *assumed_charset_choices[MAXCHARSETS + 1];
 int displayed_display_charset_idx;
 #endif
-#endif /* EXP_CHARSET_CHOICE */
+#endif /* USE_CHARSET_CHOICE */
 
 /*
  * New character sets now declared with UCInit() in UCdomap.c
@@ -342,7 +342,7 @@ const char *SevenBitApproximations[] =
 /*
  * Add the array name to LYCharSets
  */
-const char **LYCharSets[MAXCHARSETS] =
+STRING2PTR LYCharSets[MAXCHARSETS] =
 {
     ISO_Latin1,			/* ISO Latin 1          */
     SevenBitApproximations,	/* 7 Bit Approximations */
@@ -494,7 +494,7 @@ void HTMLSetCharacterHandling(int i)
     }
 #endif /* USE_SLANG */
 
-    ena_csi((BOOLEAN) (LYlowest_eightbit[current_char_set] > 155));
+    ena_csi(LYlowest_eightbit[current_char_set] > 155);
 
     /* some diagnostics */
     if (TRACE) {
@@ -565,18 +565,18 @@ static void HTMLSetRawModeDefault(int i)
  * character set and the current LYRawMode value.  - FM
  */
 void HTMLSetUseDefaultRawMode(int i,
-			      BOOLEAN modeflag)
+			      int modeflag)
 {
     if (LYCharSet_UC[i].enc != UCT_ENC_CJK) {
 
 	int chndl = safeUCGetLYhndl_byMIME(UCAssume_MIMEcharset);
 
 	if (i == chndl)
-	    LYUseDefaultRawMode = modeflag;
+	    LYUseDefaultRawMode = (BOOLEAN) modeflag;
 	else
 	    LYUseDefaultRawMode = (BOOL) (!modeflag);
     } else			/* CJK encoding: */
-	LYUseDefaultRawMode = modeflag;
+	LYUseDefaultRawMode = (BOOLEAN) modeflag;
 
     return;
 }
@@ -712,10 +712,10 @@ int UCGetLYhndl_byAnyName(char *value)
 {
     int i;
 
-    LYTrimTrailing(value);
     if (value == NULL)
 	return -1;
 
+    LYTrimTrailing(value);
     CTRACE((tfp, "UCGetLYhndl_byAnyName(%s)\n", value));
 
     /* search by name */
@@ -1122,7 +1122,7 @@ int LYCharSetsDeclared(void)
     return UCInitialized;
 }
 
-#ifdef EXP_CHARSET_CHOICE
+#ifdef USE_CHARSET_CHOICE
 void init_charset_subsets(void)
 {
     int i, n;
@@ -1154,4 +1154,4 @@ void init_charset_subsets(void)
     }
 #endif
 }
-#endif /* EXP_CHARSET_CHOICE */
+#endif /* USE_CHARSET_CHOICE */

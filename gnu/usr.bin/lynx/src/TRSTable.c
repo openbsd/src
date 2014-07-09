@@ -1,5 +1,5 @@
 /*
- * $LynxId: TRSTable.c,v 1.24 2009/01/01 22:15:35 tom Exp $
+ * $LynxId: TRSTable.c,v 1.31 2013/05/01 01:00:38 tom Exp $
  *		Simple table object
  *		===================
  * Authors
@@ -230,14 +230,14 @@ static const char *cellstate_s(cellstate_t state)
     return result;
 }
 
-struct _STable_info *Stbl_startTABLE(short alignment)
+struct _STable_info *Stbl_startTABLE(int alignment)
 {
     STable_info *me = typecalloc(STable_info);
 
     CTRACE2(TRACE_TRST,
 	    (tfp, "TRST:Stbl_startTABLE(align=%d)\n", (int) alignment));
     if (me) {
-	me->alignment = alignment;
+	me->alignment = (short) alignment;
 	me->rowgroup_align = HT_ALIGN_NONE;
 	me->pending_colgroup_align = HT_ALIGN_NONE;
 	me->s.x_td = -1;
@@ -646,6 +646,7 @@ static int Stbl_finishCellInRow(STable_rowinfo *me, STable_states *s, int end_td
 			if (me->Line != lastcell->cLine)
 			    goto trace_and_return;
 		    }
+		    newstate = CS__cb;
 		} else {
 		    if (!me->fixed_line) {
 			me->fixed_line = YES;	/* type=b def of fixed_line ii */
@@ -654,7 +655,6 @@ static int Stbl_finishCellInRow(STable_rowinfo *me, STable_states *s, int end_td
 		    s->state = CS__cbc;
 		    goto trace_and_return;
 		}
-		newstate = empty ? CS__cb : CS__cbc;
 		break;
 	    case CS__ef:
 		ret = 0;
@@ -776,10 +776,10 @@ static int Stbl_finishCellInRow(STable_rowinfo *me, STable_states *s, int end_td
 			if (me->Line != lastcell->cLine)
 			    goto trace_and_return;
 		    }
+		    newstate = CS__cf;
 		} else {
 		    goto trace_and_return;
 		}
-		newstate = empty ? CS__cf : CS__cbc;
 		break;
 	    case CS__ef:	/* ignored error */
 	    case CS__cf:	/* ignored error */
@@ -1028,10 +1028,10 @@ static int Stbl_reserveCellsInTable(STable_info *me, int icell,
 	 i < (rowspan == 0 ? me->allocated_rows : me->nrows + rowspan - 1);
 	 i++) {
 	if (!me->rows[i].allocated) {
-	    me->rows[i].cells = typecallocn(STable_cellinfo, (unsigned)
-									      HTMAX(1,
-									      icell
-									      + colspan));
+	    me->rows[i].cells = typecallocn(STable_cellinfo,
+					      (unsigned) HTMAX(1,
+							       icell
+							       + colspan));
 
 	    if (!me->rows[i].cells)
 		return 0;	/* fail silently */
@@ -1159,13 +1159,11 @@ static int Stbl_finishRowInTable(STable_info *me)
 {
     STable_rowinfo *lastrow;
     STable_states *s = &me->s;
-    int ncells;
 
     CTRACE2(TRACE_TRST, (tfp, "TRST:Stbl_finishRowInTable()\n"));
     if (!me->rows || !me->nrows)
 	return -1;		/* no row started! */
     lastrow = me->rows + (me->nrows - 1);
-    ncells = lastrow->ncells;
     lastrow->ended = ROW_ended_by_endtr;
     if (lastrow->ncells > 0) {
 	if (s->pending_len > 0)
@@ -1304,7 +1302,7 @@ static int Stbl_fakeFinishCellInTable(STable_info *me,
 	int need_reserved = 0;
 	int prev_reserved_last = -1;
 	STable_rowinfo *prev_row;
-	int prev_row_n2 = lastrow - me->rows;
+	int prev_row_n2 = (int) (lastrow - me->rows);
 
 	CTRACE2(TRACE_TRST,
 		(tfp,
@@ -1324,7 +1322,8 @@ static int Stbl_fakeFinishCellInTable(STable_info *me,
 	}
 
 	/* Fake </TR> at BOL */
-/* Stbl_finishCellInTable(lineno, 0, 0); *//* Needed? */
+	/* Stbl_finishCellInTable(lineno, 0, 0); */
+	/* Needed? */
 
 	/* Fake <TR> at BOL */
 	if (Stbl_addRowToTable(me, al, lineno) < 0) {
@@ -1352,7 +1351,7 @@ static int Stbl_fakeFinishCellInTable(STable_info *me,
 	       Remember that STable_rowinfo is about logical (TR)
 	       table lines, not displayed lines.  We need to duplicate
 	       the reservation structure when we fake new logical lines.  */
-	    int prev_row_n = prev_row - me->rows;
+	    int prev_row_n = (int) (prev_row - me->rows);
 	    STable_rowinfo *rows = typeRealloc(STable_rowinfo, me->rows,
 					       (unsigned) (me->allocated_rows
 							   + 1));
@@ -1657,9 +1656,10 @@ int Stbl_finishCellInTable(STable_info *me, int end_td,
 /*
  * Returns -1 on error, otherwise 0.
  */
-int Stbl_addColInfo(STable_info *me, int colspan,
-		    short alignment,
-		    BOOL isgroup)
+int Stbl_addColInfo(STable_info *me,
+		    int colspan,
+		    int alignment,
+		    int isgroup)
 {
     STable_cellinfo *sumcols, *sumcol;
     int i, icolinfo;
@@ -1673,7 +1673,7 @@ int Stbl_addColInfo(STable_info *me, int colspan,
 	me->pending_colgroup_next = me->ncolinfo + colspan;
 	if (me->ncolinfo > 0)
 	    me->sumcols[me->ncolinfo - 1].cLine = EOCOLG;
-	me->pending_colgroup_align = alignment;
+	me->pending_colgroup_align = (short) alignment;
     } else {
 	for (i = me->pending_colgroup_next - 1;
 	     i >= me->ncolinfo + colspan; i--)
@@ -1737,11 +1737,11 @@ int Stbl_finishColGroup(STable_info *me)
     return 0;
 }
 
-int Stbl_addRowGroup(STable_info *me, short alignment)
+int Stbl_addRowGroup(STable_info *me, int alignment)
 {
     CTRACE2(TRACE_TRST, (tfp, "TRST:Stbl_addRowGroup()\n"));
     Stbl_cancelRowSpans(me);
-    me->rowgroup_align = alignment;
+    me->rowgroup_align = (short) alignment;
     return 0;			/* that's all! */
 }
 

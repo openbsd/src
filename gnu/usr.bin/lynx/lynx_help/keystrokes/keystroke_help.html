@@ -1,22 +1,33 @@
-<!DOCTYPE html PUBLIC "-//IETF//DTD HTML 3.0//EN">
-<HTML>
-<HEAD>
-<TITLE>Help on Lynx Keystroke Commands</TITLE>
-<LINK rev="made" href="mailto:lynx-dev@nongnu.org">
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-</HEAD>
-<BODY>
-<h1>+++ Keystroke Commands +++</h1>
-<PRE>
-  <A HREF="movement_help.html"
-  >MOVEMENT</A>:    Down arrow     - Highlight next topic
+<!-- $LynxId: keystroke_help.html,v 1.19 2014/01/07 01:45:02 tom Exp $ -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+
+<html>
+<head>
+  <meta name="generator" content=
+  "HTML Tidy for Linux (vers 25 March 2009), see www.w3.org">
+
+  <title>Help on Lynx Keystroke Commands</title>
+  <link rev="made" href="mailto:lynx-dev@nongnu.org">
+  <meta http-equiv="Content-Type" content=
+  "text/html; charset=us-ascii">
+  <meta name="description" content=
+  "Lynx recognizes many single-character commands. This is an overview to their default bindings, with links to more detailed documentation.">
+  </head>
+
+<body>
+  <p><strong>Lynx</strong> recognizes many single-character
+  commands. This is an overview to their default bindings, with
+  links to more detailed documentation.</p>
+  <pre>
+  <a name="movement" href="movement_help.html" id=
+"movement">MOVEMENT</a>:    Down arrow     - Highlight next topic
                Up arrow       - Highlight previous topic
                Right arrow,   - Jump to highlighted topic
                Return, Enter  - Follow selected link
                Left arrow     - Return to previous topic
 
-  <A HREF="scrolling_help.html"
-  >SCROLLING</A>:   +              - Scroll down to next page (Page-Down)
+  <a name="scrolling" href="scrolling_help.html" id=
+"scrolling">SCROLLING</a>:   +              - Scroll down to next page (Page-Down)
                -              - Scroll up to previous page (Page-Up)
                SPACE          - Scroll down to next page (Page-Down)
                b              - Scroll up to previous page (Page-Up)
@@ -34,7 +45,8 @@
                &gt;              - Go to the next link in the current column
                #              - Go to Toolbar or Banner in the current document
 
-  <A HREF="dired_help.html">DIRED</A>:       c              - Create a new file
+  <a name="dired" href="dired_help.html" id=
+"dired">DIRED</a>:       c              - Create a new file
                d              - Download selected file
                e              - Edit selected file
                f              - Show a full menu of options for current file
@@ -43,15 +55,16 @@
                t              - Tag highlighted file
                u              - Upload a file into the current directory
 
-  <A HREF="other_help.html">OTHER</A>:       ? (or h)       - Help (this screen)
+  <a name="other" href="other_help.html" id=
+"other">OTHER</a>:       ? (or h)       - Help (this screen)
                a              - Add the current link to a bookmark file
                c              - Send a comment to the document owner
                d              - Download the current link
                e              - Edit the current file
                E              - Edit the current link's URL (or ACTION) and
                                 use that as a goto URL.
-               g              - Goto a user specified <a
-                                href="../lynx_url_support.html">URL</a> or file
+               g              - Goto a user specified <a href=
+"../lynx_url_support.html">URL</a> or file
                G              - Edit the current document's URL and use that
                                 as a goto URL.
                i              - Show an index of documents
@@ -59,22 +72,23 @@
                k              - Show list of actual key mappings
                l              - List references (links) in current document
                m              - Return to main screen
-               o              - Set your <A HREF="option_help.html">options</A>
-               p              - <a href="print_help.html"
-                                >Print</a> to a file, mail, printers, or other
+               o              - Set your <a href=
+"option_help.html">options</a>
+               p              - <a href=
+"print_help.html">Print</a> to a file, mail, printers, or other
                q              - Quit (Capital 'Q' for quick quit)
                /              - Search for a string within the current document
                s              - Enter a search string for an external search
                n              - Go to the next search string
                N              - Go to the previous search string
-               v              - View a <A HREF="bookmark_help.html"
-                                >bookmark file</A>
-               V              - Go to the <A HREF="visited_help.html"
-                                >Visited Links Page</A>
+               v              - View a <a href=
+"bookmark_help.html">bookmark file</a>
+               V              - Go to the <a href=
+"visited_help.html">Visited Links Page</a>
                x              - Force submission of form or link with no-cache
                z              - Cancel transfer in progress
-               [backspace]    - Go to the <A HREF="history_help.html"
-                                >History Page</A>
+               [backspace]    - Go to the <a href=
+"history_help.html">History Page</a>
                =              - Show info about current document, URL and link
                \              - Toggle document source/rendered view
                !              - Spawn your default shell
@@ -100,12 +114,12 @@
                CTRL-L         - Refresh the screen
 
                CTRL-V         - Outside of a text input line or field,
-                                switch to <A HREF="option_help.html#tagsoup"
-                                         >alternative parsing</A> of HTML.
+                                switch to <a href=
+"option_help.html#tagsoup">alternative parsing</a> of HTML.
                               - In a form text input field,
                                 CTRL-V prompts for a key command (allows
-                                <A HREF="../Lynx_users_guide.html#CtrlVNote"
-                                >escaping</A> from the field).
+                                <a href=
+"../Lynx_users_guide.html#CtrlVNote">escaping</a> from the field).
 
                                 Note that on most UNIX hosts, CTRL-V is bound
                                 via stty to the lnext (literal-next) code but
@@ -115,8 +129,8 @@
                                 keystroke.
 
                CTRL-U         - Inside text input line or field,
-                                erase input line (<a href="edit_help.html"
-                                >more input line commands</a>)
+                                erase input line (<a href=
+"edit_help.html">more input line commands</a>)
                               - Outside of text input or field,
                                 undo returning to previous topic.
 
@@ -124,17 +138,17 @@
 
                CTRL-T         - Toggle trace mode on and off
                ;              - View the Lynx Trace Log for the current session
-               CTRL-K         - Invoke the <A HREF="cookie_help.html"
-                                >Cookie Jar Page</A>
-               CTRL-X	      - Invoke the <A HREF="../Lynx_users_guide.html#Cache"
-                                >Cache Jar Page</A>
+               CTRL-K         - Invoke the <a href=
+"cookie_help.html">Cookie Jar Page</a>
+               CTRL-X         - Invoke the <a href=
+"../Lynx_users_guide.html#Cache">Cache Jar Page</a>
                numbers        - Invoke the prompt
-                                <a href="follow_help.html"
-                                  >Follow link (or goto link or page) number:</a>
+                                <a href=
+"follow_help.html">Follow link (or goto link or page) number:</a>
                                   or the
-                                  <a href="follow_help.html#select-option"
-                                  >Select option (or page) number:</a>
+                                  <a href=
+"follow_help.html#select-option">Select option (or page) number:</a>
                                 prompt
-</PRE>
-</BODY>
-</HTML>
+</pre>
+</body>
+</html>

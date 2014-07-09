@@ -1,4 +1,4 @@
-# $LynxId: makefile.in,v 1.33 2007/05/23 00:57:49 tom Exp $
+# $LynxId: makefile.in,v 1.39 2014/01/19 14:42:43 tom Exp $
 #
 # Makefile for the makeuctb and unicode tables.
 #
@@ -9,6 +9,7 @@ SHELL		= @CONFIG_SHELL@
 
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
+datarootdir	= @datarootdir@
 top_srcdir	= @top_srcdir@
 srcdir		= @srcdir@
 VPATH		= $(srcdir)
@@ -51,6 +52,11 @@ CPP_OPTS	= \
 		-I$(top_srcdir)/ \
 		$(INTLDIR_CPPFLAGS) $(SITE_DEFS) $(BUILD_CPPFLAGS)
 CC_OPTS		= $(CPP_OPTS) $(BUILD_CFLAGS)
+
+LINT		= @LINT@
+LINTOPTS	=
+
+CTAGS		= @CTAGS@
 
 #
 # This file contains the font map for the default (hardware) font
@@ -111,21 +117,24 @@ TABLES= \
 
 default: $(FONTMAP_INC)
 
-tables: $(TABLES)
+all tables: $(TABLES)
 
-$(MAKEUCTB) : makeuctb$o
-	$(BUILD_CC) $(CC_OPTS) $(BUILD_LDFLAGS) -o $@ makeuctb$o $(INTLLIB) $(BUILD_LIBS)
+OBJS		= makeuctb$o
+C_SRC		= $(OBJS:$o=.c)
+
+$(MAKEUCTB) : $(OBJS)
+	$(BUILD_CC) $(CC_OPTS) $(BUILD_LDFLAGS) -o $@ $(OBJS) $(INTLLIB) $(BUILD_LIBS)
 
 makeuctb$o : $(srcdir)/UCkd.h $(srcdir)/makeuctb.c
 
 .SUFFIXES : $o .tbl .i .h
 
 .c$o:
-@RULE_CC@
+	@RULE_CC@
 	@ECHO_CC@$(BUILD_CC) $(CC_OPTS) -c $(srcdir)/$*.c
 
 .c.i:
-@RULE_CC@
+	@RULE_CC@
 	@ECHO_CC@$(BUILD_CPP) -C $(CPP_OPTS) $(srcdir)/$*.c >$@
 
 .tbl.h:
@@ -177,6 +186,12 @@ pt154_uni.h:		$(srcdir)/pt154_uni.tbl 	$(MAKEUCTB)
 rfc_suni.h:		$(srcdir)/rfc_suni.tbl		$(MAKEUCTB)
 utf8_uni.h:		$(srcdir)/utf8_uni.tbl		$(MAKEUCTB)
 viscii_uni.h:		$(srcdir)/viscii_uni.tbl	$(MAKEUCTB)
+
+lint:
+	$(LINT) $(LINTOPTS) $(CPP_OPTS) $(C_SRC) 2>&1 |tee $(top_builddir)/lint.chrtrans
+
+tags:
+	$(CTAGS) *.[ch]
 
 clean:
 	rm -f $(MAKEUCTB) *$o *uni.h *uni2.h *.i

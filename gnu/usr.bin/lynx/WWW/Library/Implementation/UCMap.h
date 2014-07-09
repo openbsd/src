@@ -1,5 +1,5 @@
 /*
- * $LynxId: UCMap.h,v 1.23 2009/01/01 02:03:25 tom Exp $
+ * $LynxId: UCMap.h,v 1.27 2011/12/01 02:00:57 tom Exp $
  */
 #ifndef UCMAP_H
 #define UCMAP_H
@@ -25,6 +25,8 @@ extern "C" {
 
     typedef long UCode_t;
 
+    extern BOOL UCScanCode(UCode_t *, const char *, BOOL);
+
     extern int UCTransUniChar(UCode_t unicode,
 			      int charset_out);
     extern int UCTransUniCharStr(char *outbuf,
@@ -32,15 +34,15 @@ extern "C" {
 				 UCode_t unicode,
 				 int charset_out,
 				 int chk_single_flag);
-    extern int UCTransChar(char ch_in,
+    extern int UCTransChar(int ch_in,
 			   int charset_in,
 			   int charset_out);
-    extern int UCReverseTransChar(char ch_out,
+    extern int UCReverseTransChar(int ch_out,
 				  int charset_in,
 				  int charset_out);
     extern int UCTransCharStr(char *outbuf,
 			      int buflen,
-			      char ch_in,
+			      int ch_in,
 			      int charset_in,
 			      int charset_out,
 			      int chk_single_flag);
@@ -49,7 +51,7 @@ extern "C" {
 				  int buflen,
 				  int charset_in);
 #endif
-    extern UCode_t UCTransToUni(char ch_in,
+    extern UCode_t UCTransToUni(int ch_in,
 				int charset_in);
     extern int UCGetRawUniMode_byLYhndl(int i);
     extern int UCGetLYhndl_byMIME(const char *p);	/* returns -1 if name not recognized */

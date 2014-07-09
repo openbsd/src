@@ -1,5 +1,5 @@
 /*
- * $LynxId: UCAuto.c,v 1.39 2009/01/01 22:07:18 tom Exp $
+ * $LynxId: UCAuto.c,v 1.53 2013/11/29 00:22:00 tom Exp $
  *
  *  This file contains code for changing the Linux console mode.
  *  Currently some names for font files are hardwired in here.
@@ -75,7 +75,6 @@ typedef enum {
  */
 typedef enum {
     GN_Blat1,			/* Latin-1 */
-    GN_0decgraf,		/* VT100 graphics */
     GN_Ucp437,			/* PC -> PC */
     GN_Kuser,			/* user-defined */
     GN_dunno,
@@ -198,7 +197,7 @@ static void write_esc(const char *p)
     int fd = open("/dev/tty", O_WRONLY);
 
     if (fd >= 0) {
-	write(fd, p, strlen(p));
+	IGNORE_RC(write(fd, p, strlen(p)));
 	close(fd);
     }
 }
@@ -290,11 +289,11 @@ void UCChangeTerminalCodepage(int newcs,
 	}
 	if (newcs < 0 && p == 0) {
 	    if (old_font) {
-		LYRemoveTemp(old_font);
+		(void) LYRemoveTemp(old_font);
 		FREE(old_font);
 	    }
 	    if (old_umap) {
-		LYRemoveTemp(old_umap);
+		(void) LYRemoveTemp(old_umap);
 		FREE(old_umap);
 	    }
 	    if (status == 0) {
@@ -309,6 +308,11 @@ void UCChangeTerminalCodepage(int newcs,
 
 	if ((old_font = typecallocn(char, LY_MAXPATH)) != 0)
 	      old_umap = typecallocn(char, LY_MAXPATH);
+
+	if (old_font == NULL)
+	    outofmem(__FILE__, "UCChangeTerminalCodepage");
+
+	assert(old_font != NULL);
 
 	if ((fp1 = LYOpenTemp(old_font, ".fnt", BIN_W)) != 0)
 	    fp2 = LYOpenTemp(old_umap, ".uni", BIN_W);
@@ -340,9 +344,7 @@ void UCChangeTerminalCodepage(int newcs,
 		old_umap = typeRealloc(char, old_umap, nlen);
 	} else {
 	    if (fp1)
-		LYRemoveTemp(old_font);
-	    if (fp2)
-		LYRemoveTemp(old_umap);
+		(void) LYRemoveTemp(old_font);
 	    FREE(old_font);
 	    FREE(old_umap);
 	}
@@ -366,7 +368,7 @@ void UCChangeTerminalCodepage(int newcs,
      * Also some cpNNN fonts used below are not in the kbd-data.  - kw
      */
 
-    if (!strncmp(name, "iso-8859-1", 10) &&
+    if (!StrNCmp(name, "iso-8859-1", 10) &&
 	(!name[10] || !isdigit(UCH(name[10])))) {
 	if ((lastHasUmap == Is_Set) && !strcmp(lastname, "cp850")) {
 	    /*
@@ -402,7 +404,7 @@ void UCChangeTerminalCodepage(int newcs,
 	TransT = GN_Blat1;	/* bogus! */
 	HasUmap = Dunno;	/* distributed lat0 files have bogus map data! */
 	Utf = Is_Unset;
-    } else if (!strncmp(name, "iso-8859-", 9)) {
+    } else if (!StrNCmp(name, "iso-8859-", 9)) {
 	if (strlen(name) <= 10 || !isdigit(UCH(name[10])))
 	    HTSprintf0(&tmpbuf1, "iso0%s", &name[9]);
 	else
@@ -490,7 +492,7 @@ void UCChangeTerminalCodepage(int newcs,
 	Utf = Dont_Care;
     } else if (!strcmp(name, "us-ascii")) {
 	Utf = Dont_Care;
-    } else if (!strncmp(name, "mnem", 4)) {
+    } else if (!StrNCmp(name, "mnem", 4)) {
 	Utf = Dont_Care;
     }
 
@@ -508,8 +510,6 @@ void UCChangeTerminalCodepage(int newcs,
 	     * Switch Linux console to lat1 table.
 	     */
 	    write_esc("\033(B");
-	} else if (TransT == GN_0decgraf) {
-	    write_esc("\033(0");
 	} else if (TransT == GN_Ucp437) {
 	    /*
 	     * Switch Linux console to 437 table?
@@ -523,8 +523,6 @@ void UCChangeTerminalCodepage(int newcs,
 	}
 	if (TransT != GN_dunno && TransT != GN_dontCare) {
 	    lastTransT = TransT;
-	} else {
-	    TransT = lastTransT;
 	}
     }
 
@@ -602,35 +600,36 @@ int Find_Best_Display_Charset(int ord)
     if (!lowercase++)
 	LYLowerCase(charset_switch_rules);
     while (1) {
-	while (*s && strchr(" \t,", *s))
+	while (*s && StrChr(" \t,", *s))
 	    s++;		/* Go to start of a name or ':' */
 	if (!*s && source)
 	    return ord;		/* OK to find nothing */
 	if (!*s) {
-	    sprintf(buf, "No destination for '%.80s' in CHARSET_SWITCH_RULES",
+	    sprintf(buf,
+		    gettext("No destination for '%.80s' in CHARSET_SWITCH_RULES"),
 		    name);
 	    HTInfoMsg(buf);
 	    return ord;
 	}
 	if (*s == ':') {
 	    /* Before the replacement name */
-	    while (*s && strchr(" \t:", *s))
+	    while (*s && StrChr(" \t:", *s))
 		s++;		/* Go to the replacement */
 	    /* At start of the replacement name */
 	    r = s;
-	    while (*s && !strchr(" \t,:", *s))
+	    while (*s && !StrChr(" \t,:", *s))
 		s++;		/* Skip the replacement */
 	    if (source)
 		continue;
 	    break;
 	}
 	/* At start of the source name */
-	if (source && !strnicmp(name, s, n) && strchr(" \t,", s[n])) {	/* Found! */
+	if (source && !strncasecomp(name, s, n) && StrChr(" \t,", s[n])) {	/* Found! */
 	    source = 0;
 	    s += n;
 	    continue;		/* Look for the replacement */
 	}
-	while (*s && !strchr(" \t,:", *s))
+	while (*s && !StrChr(" \t,:", *s))
 	    s++;		/* Skip the other source names */
     }
     /* Here r point to the replacement, s to the end of the replacement. */
@@ -638,11 +637,11 @@ int Find_Best_Display_Charset(int ord)
 	HTInfoMsg(gettext("Charset name in CHARSET_SWITCH_RULES too long"));
 	return ord;
     }
-    strncpy(buf, r, s - r);
-    buf[s - r] = '\0';
+    LYStrNCpy(buf, r, s - r);
     n = UCGetLYhndl_byMIME(buf);
     if (n < 0) {
-	sprintf(buf, "Unknown charset name '%.*s' in CHARSET_SWITCH_RULES",
+	sprintf(buf,
+		gettext("Unknown charset name '%.*s' in CHARSET_SWITCH_RULES"),
 		s - r, r);
 	HTInfoMsg(buf);
 	return ord;
@@ -696,7 +695,7 @@ static int _Switch_Display_Charset(int ord, enum switch_display_charset_t really
 	if (rc == 0)
 	    goto report;
       err:
-	sprintf(msgbuf, "Can't change to '%s': err=%#x=%d", name, rc, rc);
+	sprintf(msgbuf, gettext("Can't change to '%s': err=%#x=%d"), name, rc, rc);
 	HTInfoMsg(msgbuf);
 	return -1;
     }
@@ -733,7 +732,8 @@ static int _Switch_Display_Charset(int ord, enum switch_display_charset_t really
 
 	rc = VioGetFont(font, 0);	/* Retrieve data for current font */
 	if (rc) {
-	    sprintf(msgbuf, "Can't fetch current font info: err=%#x=%d", rc, rc);
+	    sprintf(msgbuf,
+		    gettext("Can't fetch current font info: err=%#x=%d"), rc, rc);
 	    HTInfoMsg(msgbuf);
 	    ord = ord1 = auto_display_charset;
 	    goto retry;
@@ -749,7 +749,7 @@ static int _Switch_Display_Charset(int ord, enum switch_display_charset_t really
 		charsets_directory, font->cyCell, font->cxCell, name);
 	file = fopen(fnamebuf, BIN_R);
 	if (!file) {
-	    sprintf(msgbuf, "Can't open font file '%s'", fnamebuf);
+	    sprintf(msgbuf, gettext("Can't open font file '%s'"), fnamebuf);
 	    HTInfoMsg(msgbuf);
 	    ord = ord1 = auto_display_charset;
 	    goto retry;
@@ -758,7 +758,7 @@ static int _Switch_Display_Charset(int ord, enum switch_display_charset_t really
 	fseek(file, 0, SEEK_END);
 	if (ftell(file) - i != font->cbData) {
 	    fclose(file);
-	    sprintf(msgbuf, "Mismatch of size of font file '%s'", fnamebuf);
+	    sprintf(msgbuf, gettext("Mismatch of size of font file '%s'"), fnamebuf);
 	    HTAlert(msgbuf);
 	    ord = ord1 = auto_display_charset;
 	    goto retry;
@@ -768,7 +768,7 @@ static int _Switch_Display_Charset(int ord, enum switch_display_charset_t really
 	fclose(file);
 	rc = VioSetFont(font, 0);	/* Put it all back.. */
 	if (rc) {
-	    sprintf(msgbuf, "Can't set font: err=%#x=%d", rc, rc);
+	    sprintf(msgbuf, gettext("Can't set font: err=%#x=%d"), rc, rc);
 	    HTInfoMsg(msgbuf);
 	    ord = ord1 = auto_display_charset;
 	    font_loaded_for = -1;
@@ -785,7 +785,7 @@ static int _Switch_Display_Charset(int ord, enum switch_display_charset_t really
     CTRACE((tfp, "Display font set to '%s'.\n", name));
     return ord;
 }
-#  endif			/* __EMX__ */
+#  endif /* __EMX__ */
 
 int Switch_Display_Charset(const int ord, const enum switch_display_charset_t really)
 {

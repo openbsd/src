@@ -1,4 +1,4 @@
-/* $LynxId: LYmktime.c,v 1.9 2008/12/27 00:46:30 tom Exp $ */
+/* $LynxId: LYmktime.c,v 1.14 2013/05/03 20:14:06 tom Exp $ */
 
 #include <LYStrings.h>
 #include <LYUtils.h>
@@ -20,7 +20,7 @@ char *LYstrncpy(char *dst,
     if (n < 0)
 	n = 0;
 
-    val = strncpy(dst, src, n);
+    val = StrNCpy(dst, src, n);
     if (len < n)
 	*(dst + len) = '\0';
     else
@@ -54,7 +54,7 @@ FILE *TraceFP(void)
  * - FM
  */
 time_t LYmktime(char *string,
-		BOOL absolute)
+		int absolute)
 {
 #if USE_PARSDATE
     time_t result = 0;
@@ -64,12 +64,12 @@ time_t LYmktime(char *string,
 	result = parsedate(string, 0);
 
 	if (!absolute) {
-	    if ((time((time_t *) 0) - result) >= 0)
+	    if ((long) (time((time_t *) 0) - result) >= 0)
 		result = 0;
 	}
 	if (result != 0) {
 	    CTRACE((tfp, "LYmktime: clock=%" PRI_time_t ", ctime=%s",
-		    CAST_time_t(result),
+		    CAST_time_t (result),
 		    ctime(&result)));
 	}
     }
@@ -106,7 +106,7 @@ time_t LYmktime(char *string,
 	s++;
     if (*s == '\0' || (s - start) > 2)
 	return (0);
-    LYstrncpy(temp, start, (int) (s - start));
+    LYStrNCpy(temp, start, (s - start));
     day = atoi(temp);
     if (day < 1 || day > 31)
 	return (0);
@@ -125,7 +125,7 @@ time_t LYmktime(char *string,
 	(s - start) < (isdigit(UCH(*(s - 1))) ? 2 : 3) ||
 	(s - start) > (isdigit(UCH(*(s - 1))) ? 2 : 9))
 	return (0);
-    LYstrncpy(temp, start, (isdigit(UCH(*(s - 1))) ? 2 : 3));
+    LYStrNCpy(temp, start, (isdigit(UCH(*(s - 1))) ? 2 : 3));
     switch (TOUPPER(temp[0])) {
     case '0':
     case '1':
@@ -213,7 +213,7 @@ time_t LYmktime(char *string,
     while (*s != '\0' && isdigit(UCH(*s)))
 	s++;
     if ((s - start) == 4) {
-	LYstrncpy(temp, start, 4);
+	LYStrNCpy(temp, start, 4);
     } else if ((s - start) == 2) {
 	now = time(NULL);
 	/*
@@ -226,9 +226,9 @@ time_t LYmktime(char *string,
 	 * in 2100 -- setting up the next crisis...) - BL
 	 */
 	if (atoi(start) >= 70)
-	    LYstrncpy(temp, "19", 2);
+	    LYStrNCpy(temp, "19", 2);
 	else
-	    LYstrncpy(temp, "20", 2);
+	    LYStrNCpy(temp, "20", 2);
 	strncat(temp, start, 2);
 	temp[4] = '\0';
     } else {
@@ -251,7 +251,7 @@ time_t LYmktime(char *string,
 	    s++;
 	if (*s != ':' || (s - start) > 2)
 	    return (0);
-	LYstrncpy(temp, start, (int) (s - start));
+	LYStrNCpy(temp, start, (s - start));
 	hour = atoi(temp);
 
 	/*
@@ -266,7 +266,7 @@ time_t LYmktime(char *string,
 	    s++;
 	if (*s != ':' || (s - start) > 2)
 	    return (0);
-	LYstrncpy(temp, start, (int) (s - start));
+	LYStrNCpy(temp, start, (s - start));
 	minutes = atoi(temp);
 
 	/*
@@ -281,7 +281,7 @@ time_t LYmktime(char *string,
 	    s++;
 	if (*s == '\0' || (s - start) > 2)
 	    return (0);
-	LYstrncpy(temp, start, (int) (s - start));
+	LYStrNCpy(temp, start, (s - start));
 	seconds = atoi(temp);
     }
 
@@ -304,7 +304,7 @@ time_t LYmktime(char *string,
 	clock2 = (time_t) 0;
     if (clock2 > 0)
 	CTRACE((tfp, "LYmktime: clock=%" PRI_time_t ", ctime=%s",
-		CAST_time_t(clock2),
+		CAST_time_t (clock2),
 		ctime(&clock2)));
 
     return (clock2);
@@ -318,8 +318,9 @@ static void test_mktime(char *source)
     time_t after = parsedate(source, 0);
 
     printf("TEST %s\n", source);
-    printf("\t%" PRI_time_t "  %s", CAST_time_t(before), ctime(&before));
-    printf("\t%" PRI_time_t "  %s", CAST_time_t(after), ctime(&after));
+    printf("\t%" PRI_time_t "  %s", CAST_time_t (before), ctime(&before));
+    printf("\t%" PRI_time_t "  %s", CAST_time_t (after), ctime(&after));
+
     if (before != after)
 	printf("\t****\n");
 }

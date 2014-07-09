@@ -1,4 +1,4 @@
-/* $LynxId: hdr_HTMLDTD.h,v 1.20 2009/04/12 01:15:23 tom Exp $ */
+/* $LynxId: hdr_HTMLDTD.h,v 1.22 2011/10/07 00:54:36 Kihara.Hideto Exp $ */
 #ifndef hdr_HTMLDTD_H
 #define hdr_HTMLDTD_H 1
 
@@ -310,12 +310,13 @@ extern "C" {
 #define HTML_BUTTON_NAME          7
 #define HTML_BUTTON_ONBLUR        8
 #define HTML_BUTTON_ONFOCUS       9
-#define HTML_BUTTON_STYLE        10
-#define HTML_BUTTON_TABINDEX     11
-#define HTML_BUTTON_TITLE        12
-#define HTML_BUTTON_TYPE         13
-#define HTML_BUTTON_VALUE        14
-#define HTML_BUTTON_ATTRIBUTES   15
+#define HTML_BUTTON_READONLY     10
+#define HTML_BUTTON_STYLE        11
+#define HTML_BUTTON_TABINDEX     12
+#define HTML_BUTTON_TITLE        13
+#define HTML_BUTTON_TYPE         14
+#define HTML_BUTTON_VALUE        15
+#define HTML_BUTTON_ATTRIBUTES   16
 
 #define HTML_CAPTION_ACCESSKEY    0
 #define HTML_CAPTION_ALIGN        1
@@ -669,11 +670,12 @@ extern "C" {
 #define HTML_MATH_TITLE           7
 #define HTML_MATH_ATTRIBUTES      8
 
-#define HTML_META_CONTENT         0
-#define HTML_META_HTTP_EQUIV      1
-#define HTML_META_NAME            2
-#define HTML_META_SCHEME          3
-#define HTML_META_ATTRIBUTES      4
+#define HTML_META_CHARSET         0
+#define HTML_META_CONTENT         1
+#define HTML_META_HTTP_EQUIV      2
+#define HTML_META_NAME            3
+#define HTML_META_SCHEME          4
+#define HTML_META_ATTRIBUTES      5
 
 #define HTML_NEXTID_N             0
 #define HTML_NEXTID_ATTRIBUTES    1

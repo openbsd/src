@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTAnchor.h,v 1.33 2009/01/01 16:47:33 tom Exp $
+ * $LynxId: HTAnchor.h,v 1.37 2013/10/02 23:21:55 tom Exp $
  *
  *	Hypertext "Anchor" Object				     HTAnchor.h
  *	==========================
@@ -35,6 +35,8 @@ extern "C" {
 	HTParentAnchor0 *parent;	/* Parent of this anchor (self for adults) */
     };
 
+#define HASH_TYPE unsigned short
+
     struct _HTParentAnchor0 {	/* One for adult_table,
 				 * generally not used outside HTAnchor.c */
 	/* Common part from the generic anchor structure */
@@ -48,7 +50,7 @@ extern "C" {
 	HTList sources;		/* List of anchors pointing to this, if any */
 
 	HTList _add_adult;	/* - just a memory for list entry:) */
-	short adult_hash;	/* adult list number */
+	HASH_TYPE adult_hash;	/* adult list number */
 	BOOL underway;		/* Document about to be attached to it */
     };
 
@@ -112,7 +114,8 @@ extern "C" {
 	char *content_md5;	/* Content-MD5 */
 	char *message_id;	/* Message-ID */
 	char *subject;		/* Subject */
-	long content_length;	/* Content-Length */
+	off_t content_length;	/* Content-Length */
+	off_t actual_length;	/* actual length may differ */
 	char *date;		/* Date */
 	char *expires;		/* Expires */
 	char *last_modified;	/* Last-Modified */
@@ -220,6 +223,8 @@ extern "C" {
      * as a malloc'd string to be freed by the caller.
      */
     extern char *HTAnchor_address(HTAnchor * me);
+
+    extern char *HTAnchor_short_address(HTAnchor * me);
 
     extern void HTAnchor_setFormat(HTParentAnchor *me,
 				   HTFormat form);

@@ -1,4 +1,4 @@
-# $LynxId: makefile.dos,v 1.32 2008/06/30 23:53:42 tom Exp $
+# $LynxId: makefile.dos,v 1.33 2011/05/28 13:07:55 tom Exp $
 
 OBJS= UCdomap.o UCAux.o UCAuto.o \
 LYClean.o LYShowInfo.o LYEdit.o LYStrings.o \
@@ -34,8 +34,8 @@ MCFLAGS = \
  -DCOLOR_CURSES \
  -DDISP_PARTIAL \
  -DDOSPATH \
- -DEXP_ADDRLIST_PAGE \
- -DEXP_ALT_BINDINGS \
+ -DUSE_ADDRLIST_PAGE \
+ -DUSE_ALT_BINDINGS \
  -DEXP_NESTED_TABLES \
  -DUSE_PERSISTENT_COOKIES \
  -DFANCY_CURSES \

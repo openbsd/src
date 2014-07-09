@@ -1,3 +1,4 @@
+/* $LynxId: TRSTable.h,v 1.16 2010/09/25 11:40:05 tom Exp $ */
 #ifndef TRSTABLE_H
 #define TRSTABLE_H
 
@@ -7,16 +8,16 @@
 extern "C" {
 #endif
 /* TRST_MAXCOLSPAN and TRST_MAXCOLSPAN are defined in userdefs.h */ typedef struct _STable_info STable_info;
-    extern STable_info *Stbl_startTABLE(short);
+    extern STable_info *Stbl_startTABLE(int);
     extern int Stbl_finishTABLE(STable_info *);
     extern void Stbl_free(STable_info *);
     extern int Stbl_addRowToTable(STable_info *, int, int);
     extern int Stbl_addCellToTable(STable_info *, int, int, int, int, int,
 				   int, int);
     extern int Stbl_finishCellInTable(STable_info *, int, int, int, int);
-    extern int Stbl_addColInfo(STable_info *, int, short, BOOL);
+    extern int Stbl_addColInfo(STable_info *, int, int, int);
     extern int Stbl_finishColGroup(STable_info *);
-    extern int Stbl_addRowGroup(STable_info *, short);
+    extern int Stbl_addRowGroup(STable_info *, int);
 
 #define TRST_ENDCELL_ENDTD	1
 #define TRST_ENDCELL_LINEBREAK	0

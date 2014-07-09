@@ -1,4 +1,7 @@
-/*	Style Implementation for Hypertext			HTStyle.c
+/*
+ * $LynxId: HTStyle.c,v 1.16 2009/11/27 13:01:48 tom Exp $
+ *
+ *	Style Implementation for Hypertext			HTStyle.c
  *	==================================
  *
  *	Styles allow the translation between a logical property
@@ -31,7 +34,7 @@ HTStyle *HTStyleNewNamed(const char *name)
 {
     HTStyle *self = HTStyleNew();
 
-    StrAllocCopy(self->name, name);
+    StrAllocCopy(self->w_name, name);
     self->id = -1;		/* <0 */
     return self;
 }
@@ -40,8 +43,8 @@ HTStyle *HTStyleNewNamed(const char *name)
 */
 HTStyle *HTStyleFree(HTStyle *self)
 {
-    FREE(self->name);
-    FREE(self->SGMLTag);
+    FREE(self->w_name);
+    FREE(self->w_SGMLTag);
     FREE(self);
     return NULL;
 }
@@ -185,7 +188,7 @@ HTStyle *HTStyleNamed(HTStyleSheet *self, const char *name)
     HTStyle *scan;
 
     for (scan = self->styles; scan; scan = scan->next)
-	if (0 == strcmp(scan->name, name))
+	if (0 == strcmp(GetHTStyleName(scan), name))
 	    return scan;
     CTRACE((tfp, "StyleSheet: No style named `%s'\n", name));
     return NULL;

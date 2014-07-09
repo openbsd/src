@@ -109,6 +109,7 @@ CTRACE((tfp, "\n" \
             "orig_submit_value=|%s|\n"   \
             "           size_l=%d\n"     \
             "         disabled=%d\n"     \
+            "         readonly=%d\n"     \
             "          name_cs=%d\n"     \
             "         value_cs=%d\n"     \
             "        accept_cs=|%s|\n"   \
@@ -120,7 +121,7 @@ CTRACE((tfp, "\n" \
             (F)->hrange, (F)->lrange, (F)->select_list, (F)->submit_action, \
             (F)->submit_method, (F)->submit_enctype, (F)->submit_title, \
             (F)->no_cache, (F)->cp_submit_value, (F)->orig_submit_value, \
-            (F)->size_l, (F)->disabled, (F)->name_cs, (F)->value_cs, \
+            (F)->size_l, (F)->disabled, (F)->readonly, (F)->name_cs, (F)->value_cs, \
             (F)->accept_cs)); \
 } else { \
 CTRACE((tfp, "\n" \

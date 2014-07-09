@@ -1,4 +1,4 @@
-# $LynxId: makefile.inn,v 1.16 2008/07/19 11:07:29 tom Exp $
+# $LynxId: makefile.inn,v 1.19 2010/09/19 18:34:55 tom Exp $
 #
 # Makefile for program source directory in GNU NLS utilities package.
 # Copyright (C) 1995, 1996, 1997 by Ulrich Drepper <drepper@gnu.ai.mit.edu>
@@ -13,6 +13,7 @@ SHELL = /bin/sh
 
 PACKAGE		= @PACKAGE@
 VERSION		= @VERSION@
+NLS_TEXTDOMAIN	= @NLS_TEXTDOMAIN@
 
 srcdir		= @srcdir@
 top_srcdir	= @top_srcdir@
@@ -37,7 +38,6 @@ GETTEXTSRCDIR	= $(DESTDIR)$(gettextsrcdir)
 
 INSTALL		= @INSTALL@
 INSTALL_DATA	= @INSTALL_DATA@
-MKINSTALLDIRS	= @MKINSTALLDIRS@
 
 CC		= @CC@
 GENCAT		= @GENCAT@
@@ -65,6 +65,8 @@ POTFILES = \
 CATALOGS	= @CATALOGS@
 CATOBJEXT	= @CATOBJEXT@
 INSTOBJEXT	= @INSTOBJEXT@
+
+INSTOBJ		= $(NLS_TEXTDOMAIN)$(INSTOBJEXT)
 
 .SUFFIXES:
 .SUFFIXES: .c .o .po .pox .gmo .mo .msg .cat
@@ -97,7 +99,7 @@ en.po :
 	msginit --no-translator -l en -i $(PACKAGE).pot
 
 $(srcdir)/$(PACKAGE).pot: $(POTFILES)
-	$(XGETTEXT) --default-domain=$(PACKAGE) --directory=$(top_srcdir) \
+	$(XGETTEXT) --default-domain=$(NLS_TEXTDOMAIN) --directory=$(top_srcdir) \
 	  --add-comments --keyword=_ --keyword=N_ \
 	  --files-from=$(srcdir)/POTFILES.in \
 	&& test ! -f $(PACKAGE).po \
@@ -124,11 +126,7 @@ install-exec:
 install-data: install-data-@USE_NLS@
 install-data-no: all
 install-data-yes: all
-	if test -r "$(MKINSTALLDIRS)"; then \
-	  $(MKINSTALLDIRS) $(DATADIR); \
-	else \
-	  $(SHELL) $(top_srcdir)/mkdirs.sh $(DATADIR); \
-	fi
+	mkdir -p $(DATADIR)
 	@catalogs='$(CATALOGS)'; \
 	for cat in $$catalogs; do \
 	  cat=`basename $$cat`; \
@@ -138,39 +136,31 @@ install-data-yes: all
 	  esac; \
 	  lang=`echo $$cat | sed 's/\$(CATOBJEXT)$$//'`; \
 	  dir=$$destdir/$$lang/LC_MESSAGES; \
-	  if test -r "$(MKINSTALLDIRS)"; then \
-	    $(MKINSTALLDIRS) $$dir; \
-	  else \
-	    $(SHELL) $(top_srcdir)/mkdirs.sh $$dir; \
-	  fi; \
+	  mkdir -p $$dir; \
 	  if test -r $$cat; then \
-	    $(INSTALL_DATA) $$cat $$dir/$(PACKAGE)$(INSTOBJEXT); \
-	    echo "installing $$cat as $$dir/$(PACKAGE)$(INSTOBJEXT)"; \
+	    $(INSTALL_DATA) $$cat $$dir/$(INSTOBJ); \
+	    echo "installing $$cat as $$dir/$(INSTOBJ)"; \
 	  else \
-	    $(INSTALL_DATA) $(srcdir)/$$cat $$dir/$(PACKAGE)$(INSTOBJEXT); \
+	    $(INSTALL_DATA) $(srcdir)/$$cat $$dir/$(INSTOBJ); \
 	    echo "installing $(srcdir)/$$cat as" \
-		 "$$dir/$(PACKAGE)$(INSTOBJEXT)"; \
+		 "$$dir/$(INSTOBJ)"; \
 	  fi; \
 	  if test -r $$cat.m; then \
-	    $(INSTALL_DATA) $$cat.m $$dir/$(PACKAGE)$(INSTOBJEXT).m; \
-	    echo "installing $$cat.m as $$dir/$(PACKAGE)$(INSTOBJEXT).m"; \
+	    $(INSTALL_DATA) $$cat.m $$dir/$(INSTOBJ).m; \
+	    echo "installing $$cat.m as $$dir/$(INSTOBJ).m"; \
 	  else \
 	    if test -r $(srcdir)/$$cat.m ; then \
 	      $(INSTALL_DATA) $(srcdir)/$$cat.m \
-		$$dir/$(PACKAGE)$(INSTOBJEXT).m; \
+		$$dir/$(INSTOBJ).m; \
 	      echo "installing $(srcdir)/$$cat as" \
-		   "$$dir/$(PACKAGE)$(INSTOBJEXT).m"; \
+		   "$$dir/$(INSTOBJ).m"; \
 	    else \
 	      true; \
 	    fi; \
 	  fi; \
 	done
 	if test "$(PACKAGE)" = "gettext"; then \
-	  if test -r "$(MKINSTALLDIRS)"; then \
-	    $(MKINSTALLDIRS) $(GETTEXTSRCDIR); \
-	  else \
-	    $(SHELL) $(top_srcdir)/mkdirs.sh $(GETTEXTSRCDIR); \
-	  fi; \
+	  mkdir -p $(GETTEXTSRCDIR); \
 	  $(INSTALL_DATA) $(srcdir)/makefile.inn \
 			  $(GETTEXTSRCDIR)/makefile.inn; \
 	else \
@@ -185,10 +175,10 @@ uninstall:
 	for cat in $$catalogs; do \
 	  cat=`basename $$cat`; \
 	  lang=`echo $$cat | sed 's/\$(CATOBJEXT)$$//'`; \
-	  rm -f $(LOCALEDIR)/$$lang/LC_MESSAGES/$(PACKAGE)$(INSTOBJEXT); \
-	  rm -f $(LOCALEDIR)/$$lang/LC_MESSAGES/$(PACKAGE)$(INSTOBJEXT).m; \
-	  rm -f $(GNULOCALEDIR)/$$lang/LC_MESSAGES/$(PACKAGE)$(INSTOBJEXT); \
-	  rm -f $(GNULOCALEDIR)/$$lang/LC_MESSAGES/$(PACKAGE)$(INSTOBJEXT).m; \
+	  rm -f $(LOCALEDIR)/$$lang/LC_MESSAGES/$(INSTOBJ); \
+	  rm -f $(LOCALEDIR)/$$lang/LC_MESSAGES/$(INSTOBJ).m; \
+	  rm -f $(GNULOCALEDIR)/$$lang/LC_MESSAGES/$(INSTOBJ); \
+	  rm -f $(GNULOCALEDIR)/$$lang/LC_MESSAGES/$(INSTOBJ).m; \
 	done
 	rm -f $(GETTEXTSRCDIR)/po-makefile.inn
 

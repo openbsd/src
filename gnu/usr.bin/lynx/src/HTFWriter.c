@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTFWriter.c,v 1.91 2009/01/01 22:58:59 tom Exp $
+ * $LynxId: HTFWriter.c,v 1.106 2013/11/28 11:17:04 tom Exp $
  *
  *		FILE WRITER				HTFWrite.h
  *		===========
@@ -10,6 +10,8 @@
  *	Bugs:
  *		strings written must be less than buffer size.
  */
+
+#define HTSTREAM_INTERNAL 1
 
 #include <HTUtils.h>
 #include <LYCurses.h>
@@ -91,7 +93,7 @@ struct _HTStream {
 /*	Error handling
  *	------------------
  */
-static void HTFWriter_error(HTStream *me, char *id)
+static void HTFWriter_error(HTStream *me, const char *id)
 {
     char buf[200];
 
@@ -109,7 +111,7 @@ static void HTFWriter_error(HTStream *me, char *id)
 /*	Character handling
  *	------------------
  */
-static void HTFWriter_put_character(HTStream *me, char c)
+static void HTFWriter_put_character(HTStream *me, int c)
 {
     if (me->fp) {
 	putc(c, me->fp);
@@ -134,7 +136,7 @@ static void HTFWriter_write(HTStream *me, const char *s, int l)
     size_t result;
 
     if (me->fp) {
-	result = fwrite(s, 1, (unsigned) l, me->fp);
+	result = fwrite(s, (size_t) 1, (size_t) l, me->fp);
 	if (result != (size_t) l) {
 	    HTFWriter_error(me, "HTFWriter_write");
 	}
@@ -153,7 +155,6 @@ static void HTFWriter_free(HTStream *me)
     int len;
     char *path = NULL;
     char *addr = NULL;
-    int status;
     BOOL use_zread = NO;
     BOOLEAN found = FALSE;
 
@@ -209,7 +210,7 @@ static void HTFWriter_free(HTStream *me)
 #endif /* USE_ZLIB */
 		    {
 			path[len - 3] = '\0';
-			remove(path);
+			(void) remove(path);
 		    }
 		} else if (len > 4 && !strcasecomp(&path[len - 3], "bz2")) {
 #ifdef USE_BZLIB
@@ -219,11 +220,11 @@ static void HTFWriter_free(HTStream *me)
 #endif /* USE_BZLIB */
 		    {
 			path[len - 4] = '\0';
-			remove(path);
+			(void) remove(path);
 		    }
 		} else if (len > 2 && !strcasecomp(&path[len - 1], "Z")) {
 		    path[len - 2] = '\0';
-		    remove(path);
+		    (void) remove(path);
 		}
 		if (!use_zread) {
 		    if (!dump_output_immediately) {
@@ -249,7 +250,7 @@ static void HTFWriter_free(HTStream *me)
 			LYrefresh();
 		    }
 		    HTAlert(ERROR_UNCOMPRESSING_TEMP);
-		    LYRemoveTemp(me->anchor->FileCache);
+		    (void) LYRemoveTemp(me->anchor->FileCache);
 		    FREE(me->anchor->FileCache);
 		} else {
 		    /*
@@ -363,22 +364,22 @@ static void HTFWriter_free(HTStream *me)
 #ifdef WIN_EX
 			    if (focus_window) {
 				HTInfoMsg(gettext("Set focus1"));
-				status = SetForegroundWindow(cur_handle);
+				(void) SetForegroundWindow(cur_handle);
 			    }
 #else
 			    start_curses();
 #endif
 			}
 		    } else {
-			status = HTLoadFile(addr,
-					    me->anchor,
-					    me->output_format,
-					    me->sink);
+			(void) HTLoadFile(addr,
+					  me->anchor,
+					  me->output_format,
+					  me->sink);
 		    }
 		    if (dump_output_immediately &&
 			me->output_format == HTAtom_for("www/present")) {
 			FREE(addr);
-			remove(me->anchor->FileCache);
+			(void) remove(me->anchor->FileCache);
 			FREE(me->anchor->FileCache);
 			FREE(me->remove_command);
 			FREE(me->end_command);
@@ -408,7 +409,7 @@ static void HTFWriter_free(HTStream *me)
 #endif
 	    }
 #ifdef _WIN_CC
-	    exec_command(me->end_command, FALSE);
+	    exec_command(me->end_command, wait_viewer_termination);
 #else
 	    LYSystem(me->end_command);
 #endif
@@ -421,7 +422,7 @@ static void HTFWriter_free(HTStream *me)
 #ifdef WIN_EX
 		if (focus_window) {
 		    HTInfoMsg(gettext("Set focus2"));
-		    status = SetForegroundWindow(cur_handle);
+		    (void) SetForegroundWindow(cur_handle);
 		}
 #else
 		start_curses();
@@ -439,7 +440,7 @@ static void HTFWriter_free(HTStream *me)
 #ifdef WIN_EX
 		if (focus_window) {
 		    HTInfoMsg(gettext("Set focus3"));
-		    status = SetForegroundWindow(cur_handle);
+		    (void) SetForegroundWindow(cur_handle);
 		}
 #else
 		start_curses();
@@ -452,7 +453,7 @@ static void HTFWriter_free(HTStream *me)
 
     if (dump_output_immediately) {
 	if (me->anchor->FileCache)
-	    remove(me->anchor->FileCache);
+	    (void) remove(me->anchor->FileCache);
 	FREE(me);
 #ifdef USE_PERSISTENT_COOKIES
 	/*
@@ -489,7 +490,7 @@ static void HTFWriter_abort(HTStream *me, HTError e GCC_UNUSED)
 #ifdef VMS
 	    LYSystem(me->remove_command);
 #else
-	    chmod(me->remove_command, 0600);	/* Ignore errors */
+	    (void) chmod(me->remove_command, 0600);	/* Ignore errors */
 	    if (0 != unlink(me->remove_command)) {
 		char buf[560];
 
@@ -534,6 +535,9 @@ HTStream *HTFWriter_new(FILE *fp)
     me = typecalloc(HTStream);
     if (me == NULL)
 	outofmem(__FILE__, "HTFWriter_new");
+
+    assert(me != NULL);
+
     me->isa = &HTFWriter;
 
     me->fp = fp;
@@ -607,7 +611,7 @@ HTStream *HTSaveAndExecute(HTPresentation *pres,
 	if (!local_exec) {
 	    if (local_exec_on_local_files &&
 		(LYJumpFileURL ||
-		 !strncmp(anchor->address, "file://localhost", 16))) {
+		 !StrNCmp(anchor->address, "file://localhost", 16))) {
 		/* allow it to continue */
 		;
 	    } else {
@@ -630,6 +634,9 @@ HTStream *HTSaveAndExecute(HTPresentation *pres,
     me = typecalloc(HTStream);
     if (me == NULL)
 	outofmem(__FILE__, "HTSaveAndExecute");
+
+    assert(me != NULL);
+
     me->isa = &HTFWriter;
     me->input_format = pres->rep;
     me->output_format = pres->rep_out;
@@ -647,21 +654,18 @@ HTStream *HTSaveAndExecute(HTPresentation *pres,
 	me->fp = LYOpenTempRewrite(fnam, BIN_SUFFIX, BIN_W);
     } else {
 #if defined(WIN_EX) && !defined(__CYGWIN__)	/* 1998/01/04 (Sun) */
-	if (!strncmp(anchor->address, "file://localhost", 16)) {
+	if (!StrNCmp(anchor->address, "file://localhost", 16)) {
 
 	    /* 1998/01/23 (Fri) 17:38:26 */
-	    unsigned char *cp, *view_fname;
-
-#define IS_SJIS_HI1(hi) ((0x81<=hi)&&(hi<=0x9F))	/* 1st lev. */
-#define IS_SJIS_HI2(hi) ((0xE0<=hi)&&(hi<=0xEF))	/* 2nd lev. */
+	    char *cp, *view_fname;
 
 	    me->fp = NULL;
 
 	    view_fname = fnam + 3;
-	    LYstrncpy(view_fname, anchor->address + 17, sizeof(fnam) - 5);
+	    LYStrNCpy(view_fname, anchor->address + 17, sizeof(fnam) - 5);
 	    HTUnEscape(view_fname);
 
-	    if (strchr(view_fname, ':') == NULL) {
+	    if (StrChr(view_fname, ':') == NULL) {
 		fnam[0] = windows_drive[0];
 		fnam[1] = windows_drive[1];
 		fnam[2] = '/';
@@ -671,7 +675,7 @@ HTStream *HTSaveAndExecute(HTPresentation *pres,
 	    /* 1998/04/21 (Tue) 11:04:16 */
 	    cp = view_fname;
 	    while (*cp) {
-		if (IS_SJIS_HI1(*cp) || IS_SJIS_HI2(*cp)) {
+		if (IS_SJIS_HI1(UCH(*cp)) || IS_SJIS_HI2(UCH(*cp))) {
 		    cp += 2;
 		    continue;
 		} else if (*cp == '/') {
@@ -679,8 +683,8 @@ HTStream *HTSaveAndExecute(HTPresentation *pres,
 		}
 		cp++;
 	    }
-	    if (strchr(view_fname, ' '))
-		view_fname = (unsigned char *) quote_pathname(view_fname);
+	    if (StrChr(view_fname, ' '))
+		view_fname = quote_pathname(view_fname);
 
 	    StrAllocCopy(me->viewer_command, pres->command);
 
@@ -758,12 +762,18 @@ HTStream *HTSaveToFile(HTPresentation *pres,
     const char *suffix;
     char *cp;
     int c = 0;
+
+#ifdef VMS
     BOOL IsBinary = TRUE;
+#endif
 
     ret_obj = typecalloc(HTStream);
 
     if (ret_obj == NULL)
 	outofmem(__FILE__, "HTSaveToFile");
+
+    assert(ret_obj != NULL);
+
     ret_obj->isa = &HTFWriter;
     ret_obj->remove_command = NULL;
     ret_obj->end_command = NULL;
@@ -793,7 +803,7 @@ HTStream *HTSaveToFile(HTPresentation *pres,
 	    return (NULL);
 	}
 
-	if (((cp = strchr(pres->rep->name, ';')) != NULL) &&
+	if (((cp = StrChr(pres->rep->name, ';')) != NULL) &&
 	    strstr((cp + 1), "charset") != NULL) {
 	    _user_message(MSG_DOWNLOAD_OR_CANCEL, pres->rep->name);
 	} else if (*(pres->rep->name) != '\0') {
@@ -871,7 +881,9 @@ HTStream *HTSaveToFile(HTPresentation *pres,
 	 * It's a text file requested via 'd'ownload.  Keep adding others to
 	 * the above list, 'til we add a configurable procedure.  - FM
 	 */
+#ifdef VMS
 	IsBinary = FALSE;
+#endif
 
     /*
      * Any "application/foo" or other non-"text/foo" types that are actually
@@ -1002,7 +1014,7 @@ HTStream *HTCompressed(HTPresentation *pres,
      * Deal with any inappropriate invocations of this function, or a download
      * request, in which case we won't bother to uncompress the file.  - FM
      */
-    if (!(anchor && anchor->content_encoding && anchor->content_type)) {
+    if (!(anchor->content_encoding && anchor->content_type)) {
 	/*
 	 * We have no idea what we're dealing with, so treat it as a binary
 	 * stream.  - FM
@@ -1078,7 +1090,7 @@ HTStream *HTCompressed(HTPresentation *pres,
     }
     if (can_present == FALSE ||	/* no presentation mapping */
 	uncompress_mask == NULL ||	/* not gzip or compress */
-	strchr(anchor->content_type, ';') ||	/* wrong charset */
+	StrChr(anchor->content_type, ';') ||	/* wrong charset */
 	HTOutputFormat == HTAtom_for("www/download") ||		/* download */
 	!strcasecomp(pres->rep_out->name, "www/download") ||	/* download */
 	(traversal &&		/* only handle html or plain text for traversals */
@@ -1088,7 +1100,7 @@ HTStream *HTCompressed(HTPresentation *pres,
 	 * Cast the Content-Encoding to a Content-Type and pass it back to be
 	 * handled as that type.  - FM
 	 */
-	if (strchr(anchor->content_encoding, '/') == NULL) {
+	if (StrChr(anchor->content_encoding, '/') == NULL) {
 	    /*
 	     * Use "x-" prefix, none of the types we are likely to construct
 	     * here are official.  That is we generate "application/x-gzip" and
@@ -1116,6 +1128,9 @@ HTStream *HTCompressed(HTPresentation *pres,
     me = typecalloc(HTStream);
     if (me == NULL)
 	outofmem(__FILE__, "HTCompressed");
+
+    assert(me != NULL);
+
     me->isa = &HTFWriter;
     me->input_format = pres->rep;
     me->output_format = pres->rep_out;
@@ -1129,7 +1144,7 @@ HTStream *HTCompressed(HTPresentation *pres,
      * Remove any old versions of the file.  - FM
      */
     if (anchor->FileCache) {
-	LYRemoveTemp(anchor->FileCache);
+	(void) LYRemoveTemp(anchor->FileCache);
 	FREE(anchor->FileCache);
     }
 
@@ -1149,7 +1164,7 @@ HTStream *HTCompressed(HTPresentation *pres,
 		HTFileSuffix(HTAtom_for(anchor->content_type), NULL)) &&
 	       *suffix == '.') {
 #if defined(VMS) || defined(FNAMES_8_3)
-	if (strchr(suffix + 1, '.') == NULL)
+	if (StrChr(suffix + 1, '.') == NULL)
 #endif
 	    middle = suffix + 1;
     }
@@ -1195,7 +1210,7 @@ HTStream *HTCompressed(HTPresentation *pres,
 	     (local_exec ||
 	      (local_exec_on_local_files &&
 	       (LYJumpFileURL ||
-		!strncmp(anchor->address, "file://localhost", 16))))))
+		!StrNCmp(anchor->address, "file://localhost", 16))))))
 #endif /* EXEC_LINKS || EXEC_SCRIPTS */
 	) {
 	StrAllocCopy(me->viewer_command, Pres->command);
@@ -1260,6 +1275,9 @@ HTStream *HTDumpToStdout(HTPresentation *pres GCC_UNUSED,
 
     if (ret_obj == NULL)
 	outofmem(__FILE__, "HTDumpToStdout");
+
+    assert(ret_obj != NULL);
+
     ret_obj->isa = &HTFWriter;
     ret_obj->remove_command = NULL;
     ret_obj->end_command = NULL;

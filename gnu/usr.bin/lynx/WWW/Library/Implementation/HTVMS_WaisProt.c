@@ -1,4 +1,7 @@
-/*							HTVMS_WAISProt.c
+/*
+ * $LynxId: HTVMS_WaisProt.c,v 1.9 2010/09/24 23:51:22 tom Exp $
+ *
+ *							  HTVMS_WAISProt.c
  *
  *	Adaptation for Lynx by F.Macrides (macrides@sci.wfeb.edu)
  *
@@ -479,7 +482,6 @@ static char *readDocObj(DocObj **doc,
 	    buf = readNum(&((*doc)->ChunkEnd.Pos), buf);
 	    break;
 	case CT_paragraph:
-	    readParagraphs = true;
 	    buf = readAny(&((*doc)->ChunkStart.ID), buf);
 	    buf = readAny(&((*doc)->ChunkEnd.ID), buf);
 	    break;
@@ -2112,8 +2114,8 @@ static query_term **makeWAISQueryTerms(DocObj **docs)
 		    char start[20], end[20];
 
 		    (doc->ChunkCode == CT_byte) ?
-			strncpy(chunk_att, BYTE, ATTRIBUTE_SIZE) :
-			strncpy(chunk_att, LINE, ATTRIBUTE_SIZE);
+			StrNCpy(chunk_att, BYTE, ATTRIBUTE_SIZE) :
+			StrNCpy(chunk_att, LINE, ATTRIBUTE_SIZE);
 		    sprintf(start, "%ld", doc->ChunkStart.Pos);
 		    startChunk = stringToAny(start);
 		    sprintf(end, "%ld", doc->ChunkEnd.Pos);
@@ -2121,7 +2123,7 @@ static query_term **makeWAISQueryTerms(DocObj **docs)
 		}
 		break;
 	    case CT_paragraph:
-		strncpy(chunk_att, PARAGRAPH, ATTRIBUTE_SIZE);
+		StrNCpy(chunk_att, PARAGRAPH, ATTRIBUTE_SIZE);
 		startChunk = doc->ChunkStart.ID;
 		endChunk = doc->ChunkEnd.ID;
 		break;
@@ -2451,13 +2453,13 @@ void writeWAISPacketHeader(char *header,
 	serverLen = 10;
 
     sprintf(lengthBuf, "%010ld", dataLen);
-    strncpy(header, lengthBuf, 10);
+    StrNCpy(header, lengthBuf, 10);
 
     header[10] = type & 0xFF;
     header[11] = version & 0xFF;
 
-    strncpy(serverBuf, server, serverLen);
-    strncpy((char *) (header + 12), serverBuf, serverLen);
+    StrNCpy(serverBuf, server, serverLen);
+    StrNCpy((char *) (header + 12), serverBuf, serverLen);
 
     header[22] = compression & 0xFF;
     header[23] = encoding & 0xFF;

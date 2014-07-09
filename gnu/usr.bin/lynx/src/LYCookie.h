@@ -1,3 +1,4 @@
+/* $LynxId: LYCookie.h,v 1.20 2011/06/07 08:29:39 tom Exp $ */
 #ifndef LYCOOKIES_H
 #define LYCOOKIES_H
 
@@ -34,6 +35,7 @@ extern "C" {
 
     struct _domain_entry {
 	char *domain;		/* Domain for which these cookies are valid */
+	char *ddomain;		/* Domain without leading "." */
 	behaviour_t bv;
 	invcheck_behaviour_t invcheck_bv;
 	HTList *cookie_list;
@@ -46,7 +48,7 @@ extern "C" {
     extern char *LYAddCookieHeader(char *hostname,
 				   char *partialpath,
 				   int port,
-				   BOOL secure);
+				   int secure);
     extern void LYStoreCookies(char *cookie_file);
     extern void LYLoadCookies(char *cookie_file);
     extern void LYConfigCookies(void);

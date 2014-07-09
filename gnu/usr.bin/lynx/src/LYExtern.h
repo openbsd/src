@@ -1,4 +1,4 @@
-/* $LynxId: LYExtern.h,v 1.13 2008/12/29 18:59:39 tom Exp $ */
+/* $LynxId: LYExtern.h,v 1.14 2010/09/24 09:39:20 tom Exp $ */
 #ifndef EXTERNALS_H
 #define EXTERNALS_H
 
@@ -9,7 +9,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    extern BOOL run_external(char *c, BOOL only_overriders);
+    extern BOOL run_external(char *c, int only_overriders);
 #ifdef __cplusplus
 }
 #endif

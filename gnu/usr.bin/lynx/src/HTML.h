@@ -1,4 +1,7 @@
-/*					HTML to rich text converter for libwww
+/*
+ * $LynxId: HTML.h,v 1.33 2011/05/19 09:57:53 tom Exp $
+ *
+ *					HTML to rich text converter for libwww
  *
  *			THE HTML TO RTF OBJECT CONVERTER
  *
@@ -101,6 +104,7 @@ extern "C" {
 	int textarea_cols;
 	int textarea_rows;
 	int textarea_disabled;
+	int textarea_readonly;
 	char *textarea_id;
 	HTChunk math;		/* Grow by 128 */
 	HTChunk style_block;	/* Grow by 128 */
@@ -124,8 +128,8 @@ extern "C" {
 	BOOL HiddenValue;
 	int lastraw;
 
-	char *comment_start;	/* for literate programming */
-	char *comment_end;
+	const char *comment_start;	/* for literate programming */
+	const char *comment_end;
 
 	HTTag *current_tag;
 	BOOL style_change;
@@ -213,7 +217,7 @@ extern "C" {
 /*
  *	Semi-Private functions. - FM
  */
-    extern void HTML_put_character(HTStructured * me, char c);
+    extern void HTML_put_character(HTStructured * me, int c);
     extern void HTML_put_string(HTStructured * me, const char *s);
     extern void HTML_write(HTStructured * me, const char *s, int l);
     extern int HTML_put_entity(HTStructured * me, int entity_number);

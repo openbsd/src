@@ -107,6 +107,9 @@ static AddressDefList *parse_address_part(FILE *fp)
 
 	if (ref == NULL)
 	    outofmem(__FILE__, "parse_address_part");
+
+	assert(ref != NULL);
+
 	ref->name = NULL;
 	ref->translation = NULL;
 	StrAllocCopy(ref->name, HTlex_buffer);
@@ -163,6 +166,9 @@ static UserDefList *parse_user_part(FILE *fp)
 
 	if (ref == NULL)
 	    outofmem(__FILE__, "parse_user_part");
+
+	assert(ref != NULL);
+
 	ref->name = NULL;
 	ref->translation = NULL;
 	StrAllocCopy(ref->name, HTlex_buffer);
@@ -236,6 +242,9 @@ static Item *parse_item(FILE *fp)
     item = typecalloc(Item);
     if (item == NULL)
 	outofmem(__FILE__, "parse_item");
+
+    assert(item != NULL);
+
     item->user_def_list = user_def_list;
     item->address_def_list = address_def_list;
     return item;
@@ -283,6 +292,9 @@ GroupDef *HTAA_parseGroupDef(FILE *fp)
     group_def = typecalloc(GroupDef);
     if (group_def == NULL)
 	outofmem(__FILE__, "HTAA_parseGroupDef");
+
+    assert(group_def != NULL);
+
     group_def->group_name = NULL;
     group_def->item_list = item_list;
 
@@ -519,9 +531,9 @@ static BOOL ip_number_match(const char *ctemplate,
     for (cnt = 0; cnt < 4; cnt++) {
 	if (!tcur || !icur || !part_match(tcur, icur))
 	    return NO;
-	if (NULL != (tcur = strchr(tcur, '.')))
+	if (NULL != (tcur = StrChr(tcur, '.')))
 	    tcur++;
-	if (NULL != (icur = strchr(icur, '.')))
+	if (NULL != (icur = StrChr(icur, '.')))
 	    icur++;
     }
     return YES;

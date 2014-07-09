@@ -1,4 +1,4 @@
-# $LynxId: def7_uni.tbl,v 1.28 2008/04/15 19:38:41 Tim.Larson Exp $
+# $LynxId: def7_uni.tbl,v 1.30 2012/08/13 09:49:49 Ralph.Babel Exp $
 # Default 7bit replacements.
 #
 # This table is very important and should not be excluded from the distribution
@@ -152,10 +152,10 @@ U+0152:OE
 U+0153:oe
 0x52	U+0154	U+0156	U+0158			# R
 0x72	U+0155	U+0157	U+0159			# r
-0x53	U+015a	U+015c	U+015e	U+0160		# S
-0x73	U+015b	U+015d	U+015f	U+0161		# s
-0x54	U+0162	U+0164				# T
-0x74	U+0163	U+0165				# t
+0x53	U+015a	U+015c	U+015e	U+0160	U+0218	# S
+0x73	U+015b	U+015d	U+015f	U+0161	U+0219	# s
+0x54	U+0162	U+0164	U+021a			# T
+0x74	U+0163	U+0165	U+021b			# t
 U+0166:T/
 U+0167:t/
 0x55	U+0168	U+016a	U+016c	U+016e	U+0172	# U
@@ -336,7 +336,8 @@ U+02b1:<?>
 U+02b3:<r>
 U+02b7:<w>
 U+02bb:;S
-0x60	U+02bc
+0x27	U+02bc
+0x27	U+02bd
 U+02c6:^
 U+02c7:'<
 U+02c8:|

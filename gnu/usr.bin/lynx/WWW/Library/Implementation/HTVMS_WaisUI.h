@@ -439,12 +439,12 @@ extern "C" {
 	/* type */
 	long TermType;
 	/* for term */
-	char Use[ATTRIBUTE_SIZE];
-	char Relation[ATTRIBUTE_SIZE];
-	char Position[ATTRIBUTE_SIZE];
-	char Structure[ATTRIBUTE_SIZE];
-	char Truncation[ATTRIBUTE_SIZE];
-	char Completeness[ATTRIBUTE_SIZE];
+	char Use[ATTRIBUTE_SIZE + 1];
+	char Relation[ATTRIBUTE_SIZE + 1];
+	char Position[ATTRIBUTE_SIZE + 1];
+	char Structure[ATTRIBUTE_SIZE + 1];
+	char Truncation[ATTRIBUTE_SIZE + 1];
+	char Completeness[ATTRIBUTE_SIZE + 1];
 	any *Term;
 	/* for result set */
 	any *ResultSetID;

@@ -1,5 +1,5 @@
 /*
- * $LynxId: LYBookmark.c,v 1.62 2009/01/02 00:01:00 tom Exp $
+ * $LynxId: LYBookmark.c,v 1.76 2013/11/28 11:17:59 tom Exp $
  */
 #include <HTUtils.h>
 #include <HTAlert.h>
@@ -40,11 +40,11 @@ int LYMBM2index(int ch)
 {
     if ((ch = TOUPPER(ch)) > 0) {
 	const char *letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	const char *result = strchr(letters, ch);
+	const char *result = StrChr(letters, ch);
 
 	if (result != 0
 	    && (result - letters) <= MBM_V_MAXFILES)
-	    return (result - letters);
+	    return (int) (result - letters);
     }
     return -1;
 }
@@ -120,7 +120,7 @@ const char *get_bookmark_filename(char **URL)
 	 */
 	if (LYSafeGets(&string_buffer, fp) != 0
 	    && *LYTrimNewline(string_buffer) != '\0'
-	    && !strncmp(string_buffer, "ncsa-xmosaic-hotlist-format-1", 29)) {
+	    && !StrNCmp(string_buffer, "ncsa-xmosaic-hotlist-format-1", 29)) {
 	    const char *newname;
 
 	    /*
@@ -153,7 +153,7 @@ static const char *convert_mosaic_bookmark_file(const char *filename_buffer)
     char *buf = NULL;
     int line = -2;
 
-    LYRemoveTemp(newfile);
+    (void) LYRemoveTemp(newfile);
     if ((nfp = LYOpenTemp(newfile, HTML_SUFFIX, "w")) == NULL) {
 	LYMBM_statusline(NO_TEMP_FOR_HOTLIST);
 	LYSleepAlert();
@@ -207,11 +207,11 @@ void save_bookmark_link(const char *address,
     const char *filename;
     char *bookmark_URL = NULL;
     char filename_buffer[LY_MAXPATH];
-    char string_buffer[BUFSIZ];
-    char tmp_buffer[BUFSIZ];
     char *Address = NULL;
     char *Title = NULL;
     int i, c;
+    bstring *string_data = NULL;
+    bstring *tmp_data = NULL;
     DocAddress WWWDoc;
     HTParentAnchor *tmpanchor;
     HText *text;
@@ -243,7 +243,7 @@ void save_bookmark_link(const char *address,
 	    FREE(bookmark_URL);
 	    return;
 	}
-	LYstrncpy(filename_buffer, filename, sizeof(filename_buffer) - 1);
+	LYStrNCpy(filename_buffer, filename, sizeof(filename_buffer) - 1);
     }
 
     /*
@@ -282,28 +282,30 @@ void save_bookmark_link(const char *address,
 	if (HTCJK == JAPANESE) {
 	    switch (kanji_code) {
 	    case EUC:
-		TO_EUC((const unsigned char *) title, (unsigned char *) tmp_buffer);
+		BStrAlloc(tmp_data, MAX_LINE + 2 * (int) strlen(title));
+		TO_EUC((const unsigned char *) title, (unsigned char *) tmp_data->str);
 		break;
 	    case SJIS:
-		TO_SJIS((const unsigned char *) title, (unsigned char *) tmp_buffer);
+		BStrAlloc(tmp_data, MAX_LINE + (int) strlen(title));
+		TO_SJIS((const unsigned char *) title, (unsigned char *) tmp_data->str);
 		break;
 	    default:
 		break;
 	    }
-	    LYstrncpy(string_buffer, tmp_buffer, sizeof(string_buffer) - 1);
+	    BStrCopy0(string_data, tmp_data ? tmp_data->str : title);
 	} else {
-	    LYstrncpy(string_buffer, title, sizeof(string_buffer) - 1);
+	    BStrCopy0(string_data, title);
 	}
-	LYReduceBlanks(string_buffer);
+	LYReduceBlanks(string_data->str);
 	LYMBM_statusline(TITLE_PROMPT);
-	LYgetstr(string_buffer, VISIBLE, sizeof(string_buffer), NORECALL);
-	if (*string_buffer == '\0') {
+	LYgetBString(&string_data, FALSE, 0, NORECALL);
+	if (isBEmpty(string_data)) {
 	    LYMBM_statusline(CANCELLED);
 	    LYSleepMsg();
 	    FREE(bookmark_URL);
 	    return;
 	}
-    } while (!havevisible(string_buffer));
+    } while (!havevisible(string_data->str));
 
     /*
      * Create the Title with any left-angle-brackets converted to &lt; entities
@@ -313,14 +315,16 @@ void save_bookmark_link(const char *address,
      * character set which may need changing.  Do NOT convert any 8-bit chars
      * if we have CJK display.  - LP
      */
-    LYformTitle(&Title, string_buffer);
+    LYformTitle(&Title, string_data->str);
     LYEntify(&Title, TRUE);
     if (UCSaveBookmarksInUnicode &&
 	have8bit(Title) && (!LYHaveCJKCharacterSet)) {
 	char *p = title_convert8bit(Title);
 
-	FREE(Title);
-	Title = p;
+	if (p != 0) {
+	    FREE(Title);
+	    Title = p;
+	}
     }
 
     /*
@@ -432,6 +436,8 @@ Note: if you edit this file manually\n\
     /*
      * Clean up and report success.
      */
+    BStrFree(string_data);
+    BStrFree(tmp_data);
     FREE(Title);
     FREE(Address);
     FREE(bookmark_URL);
@@ -464,7 +470,6 @@ void remove_bookmark_link(int cur,
 
 #ifdef UNIX
     struct stat stat_buf;
-    mode_t mode;
     BOOLEAN regular = FALSE;
 #endif /* UNIX */
 #endif /* VMS */
@@ -496,8 +501,7 @@ void remove_bookmark_link(int cur,
      */
     if (stat(filename_buffer, &stat_buf) == 0) {
 	regular = (BOOLEAN) (S_ISREG(stat_buf.st_mode) && stat_buf.st_nlink == 1);
-	mode = ((stat_buf.st_mode & 0777) | 0600);	/* make it writable */
-	(void) chmod(newfile, mode);
+	(void) chmod(newfile, HIDE_CHMOD);
 	if ((nfp = LYReopenTemp(newfile)) == NULL) {
 	    (void) LYCloseInput(fp);
 	    HTAlert(BOOKTEMP_REOPEN_FAIL_FOR_DEL);
@@ -519,7 +523,7 @@ void remove_bookmark_link(int cur,
 	}
 
     } else {
-	char *cp, *cp2;
+	char *cp;
 	BOOLEAN retain;
 	int seen;
 
@@ -530,7 +534,7 @@ void remove_bookmark_link(int cur,
 	    retain = TRUE;
 	    seen = 0;
 	    cp = buf;
-	    if ((cur == 0) && (cp2 = LYstrstr(cp, "<ol><LI>")))
+	    if ((cur == 0) && LYstrstr(cp, "<ol><LI>"))
 		keep_ol = TRUE;	/* Do not erase, this corrects a bug in an
 				   older version */
 	    while (n < cur && (cp = LYstrstr(cp, "<a href="))) {
@@ -598,7 +602,7 @@ void remove_bookmark_link(int cur,
      */
     if (!regular) {
 	if (LYCopyFile(newfile, filename_buffer) == 0) {
-	    LYRemoveTemp(newfile);
+	    (void) LYRemoveTemp(newfile);
 	    return;
 	}
 	LYSleepAlert();		/* give a chance to see error from cp - kw */
@@ -680,7 +684,7 @@ void remove_bookmark_link(int cur,
 	HTUserMsg2(gettext("File may be recoverable from %s during this session"),
 		   newfile);
     } else {
-	LYRemoveTemp(newfile);
+	(void) LYRemoveTemp(newfile);
     }
 }
 
@@ -1057,15 +1061,15 @@ static char *title_convert8bit(const char *Title)
     for (; *p; p++) {
 	char temp[2];
 
-	LYstrncpy(temp, p, sizeof(temp) - 1);
+	LYStrNCpy(temp, p, sizeof(temp) - 1);
 	if (UCH(*temp) <= 127) {
 	    StrAllocCat(comment, temp);
 	    StrAllocCat(ncr, temp);
-	} else {
+	} else if (charset_out >= 0) {
 	    long unicode;
 	    char replace_buf[32];
 
-	    if (UCTransCharStr(replace_buf, sizeof(replace_buf), *temp,
+	    if (UCTransCharStr(replace_buf, (int) sizeof(replace_buf), *temp,
 			       charset_in, charset_out, YES) > 0)
 		StrAllocCat(comment, replace_buf);
 
@@ -1078,27 +1082,29 @@ static char *title_convert8bit(const char *Title)
 	}
     }
 
-    /*
-     * Cleanup comment, collapse multiple dashes into one dash, skip '>'.
-     */
-    for (q = p0 = comment; *p0; p0++) {
-	if (UCH(TOASCII(*p0)) >= 32 &&
-	    *p0 != '>' &&
-	    (q == comment || *p0 != '-' || *(q - 1) != '-')) {
-	    *q++ = *p0;
+    if (comment != NULL) {
+	/*
+	 * Cleanup comment, collapse multiple dashes into one dash, skip '>'.
+	 */
+	for (q = p0 = comment; *p0; p0++) {
+	    if (UCH(TOASCII(*p0)) >= 32 &&
+		*p0 != '>' &&
+		(q == comment || *p0 != '-' || *(q - 1) != '-')) {
+		*q++ = *p0;
+	    }
 	}
+	*q = '\0';
+
+	/*
+	 * valid bookmark should be a single line (no linebreaks!).
+	 */
+	StrAllocCat(buf, "<!-- ");
+	StrAllocCat(buf, comment);
+	StrAllocCat(buf, " -->");
+	StrAllocCat(buf, ncr);
+
+	FREE(comment);
     }
-    *q = '\0';
-
-    /*
-     * valid bookmark should be a single line (no linebreaks!).
-     */
-    StrAllocCat(buf, "<!-- ");
-    StrAllocCat(buf, comment);
-    StrAllocCat(buf, " -->");
-    StrAllocCat(buf, ncr);
-
-    FREE(comment);
     FREE(ncr);
     return (buf);
 }

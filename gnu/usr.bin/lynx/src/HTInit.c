@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTInit.c,v 1.70 2009/01/01 22:58:06 tom Exp $
+ * $LynxId: HTInit.c,v 1.88 2014/02/13 21:39:04 tom Exp $
  *
  *		Configuration-specific Initialization		HTInit.c
  *		----------------------------------------
@@ -43,13 +43,13 @@ static int HTLoadExtensionsConfigFile(char *fn);
        HTSetSuffix5(suffix, mimetype, type, description, 1.0)
 
 #define SET_PRESENT(mimetype, command, quality, delay) \
-  HTSetPresentation(mimetype, command, 0, quality, delay, 0.0, 0, media)
+  HTSetPresentation(mimetype, command, 0, quality, delay, 0.0, 0L, media)
 
 #define SET_EXTERNL(rep_in, rep_out, command, quality) \
-    HTSetConversion(rep_in, rep_out, command, quality, 3.0, 0.0, 0, mediaEXT)
+    HTSetConversion(rep_in, rep_out, command, quality, 3.0, 0.0, 0L, mediaEXT)
 
 #define SET_INTERNL(rep_in, rep_out, command, quality) \
-    HTSetConversion(rep_in, rep_out, command, quality, 0.0, 0.0, 0, mediaINT)
+    HTSetConversion(rep_in, rep_out, command, quality, 0.0, 0.0, 0L, mediaINT)
 
 void HTFormatInit(void)
 {
@@ -98,7 +98,6 @@ void HTFormatInit(void)
     /*
      * Add our header handlers.
      */
-    media = mediaINT;
     SET_INTERNL("message/x-http-redirection", "*", HTMIMERedirect, 2.0);
     SET_INTERNL("message/x-http-redirection", "www/present", HTMIMERedirect, 2.0);
     SET_INTERNL("message/x-http-redirection", "www/debug", HTMIMERedirect, 1.0);
@@ -116,15 +115,13 @@ void HTFormatInit(void)
     SET_INTERNL("www/compressed", "www/dump", HTCompressed, 1.0);
 
     /*
-     * Added the following to support some content types beginning to surface.
+     * The following support some content types seen here/there:
      */
     SET_INTERNL("application/html", "text/x-c", HTMLToC, 0.5);
     SET_INTERNL("application/html", "text/plain", HTMLToPlain, 0.5);
-    SET_INTERNL("text/css", "text/plain", HTMLToPlain, 0.5);
     SET_INTERNL("application/html", "www/present", HTMLPresent, 2.0);
-    SET_INTERNL("application/xhtml+xml", "www/present", HTMLPresent, 2.0);
-    SET_INTERNL("application/xml", "www/present", HTMLPresent, 2.0);
     SET_INTERNL("application/html", "www/source", HTPlainPresent, 1.0);
+    SET_INTERNL("application/xml", "www/present", HTMLPresent, 2.0);
     SET_INTERNL("application/x-wais-source", "www/source", HTPlainPresent, 1.0);
     SET_INTERNL("application/x-wais-source", "www/present", HTWSRCConvert, 2.0);
     SET_INTERNL("application/x-wais-source", "www/download", HTWSRCConvert, 1.0);
@@ -144,19 +141,49 @@ void HTFormatInit(void)
     SET_EXTERNL("www/source", "www/dump", HTDumpToStdout, 1.0);
 
     /*
-     * Now add our basic conversions.
+     * Other internal types, which must precede the "www/present" entries
+     * below (otherwise, they will be filtered out in HTFilterPresentations()).
      */
-    SET_INTERNL("text/x-sgml", "www/source", HTPlainPresent, 1.0);
-    SET_INTERNL("text/x-sgml", "www/present", HTMLPresent, 2.0);
-    SET_INTERNL("text/sgml", "www/source", HTPlainPresent, 1.0);
-    SET_INTERNL("text/sgml", "www/present", HTMLPresent, 1.0);
-    SET_INTERNL("text/css", "www/present", HTPlainPresent, 1.0);
-    SET_INTERNL("text/plain", "www/present", HTPlainPresent, 1.0);
-    SET_INTERNL("text/plain", "www/source", HTPlainPresent, 1.0);
-    SET_INTERNL("text/html", "www/source", HTPlainPresent, 1.0);
-    SET_INTERNL("text/html", "text/x-c", HTMLToC, 0.5);
+    SET_INTERNL("text/css", "text/plain", HTMLToPlain, 0.5);
     SET_INTERNL("text/html", "text/plain", HTMLToPlain, 0.5);
+    SET_INTERNL("text/html", "text/x-c", HTMLToC, 0.5);
+    SET_INTERNL("text/html", "www/source", HTPlainPresent, 1.0);
+    SET_INTERNL("text/plain", "www/source", HTPlainPresent, 1.0);
+    SET_INTERNL("text/sgml", "www/source", HTPlainPresent, 1.0);
+    SET_INTERNL("text/x-sgml", "www/source", HTPlainPresent, 1.0);
+
+    /*
+     * Now add our basic conversions.  These include the types which will
+     * be listed in a "Accept:" line sent to a server.  These criteria are
+     * used in HTFilterPresentations() to select acceptable types:
+     *
+     * a) input is not "www/mime" or "www/compressed"
+     * b) output is "www/present"
+     * c) quality is in the range 0.0 to 1.0, i.e., excludes the 2.0's.
+     *
+     * For reference:
+     * RFC 1874 - text/sgml
+     * RFC 2046 - text/plain
+     * RFC 2318 - text/css
+     * RFC 3023 - text/xml
+     * obsolete - text/x-sgml
+     *
+     * as well as
+     * http://www.iana.org/assignments/media-types/media-types.xhtml
+     *
+     * and
+     * http://www.w3.org/TR/xhtml-media-types/
+     *
+     * which describes
+     * application/xhtml+xml
+     * text/html
+     */
+    SET_INTERNL("application/xhtml+xml", "www/present", HTMLPresent, 1.0);
+    SET_INTERNL("text/css", "www/present", HTPlainPresent, 1.0);
     SET_INTERNL("text/html", "www/present", HTMLPresent, 1.0);
+    SET_INTERNL("text/plain", "www/present", HTPlainPresent, 1.0);
+    SET_INTERNL("text/sgml", "www/present", HTMLPresent, 1.0);
+    SET_INTERNL("text/x-sgml", "www/present", HTMLPresent, 2.0);
     SET_INTERNL("text/xml", "www/present", HTMLPresent, 2.0);
 
     if (LYisAbsPath(global_type_map)) {
@@ -248,6 +275,8 @@ static char *GetCommand(char *s, char **t)
     if (!s2)
 	ExitWithError(MEMORY_EXHAUSTED_ABORT);
 
+    assert(s2 != NULL);
+
     *t = s2;
     while (non_empty(s)) {
 	if (quoted) {
@@ -261,7 +290,7 @@ static char *GetCommand(char *s, char **t)
 		*s2 = '\0';
 		return (++s);
 	    }
-	    if (*s == '\\') {
+	    if (*s == ESCAPE) {
 		quoted = 1;
 		++s;
 	    } else {
@@ -300,22 +329,24 @@ static void TrimCommand(char *command)
 	    if (escape) {
 		escape = FALSE;
 	    } else if (squote) {
-		if (ch == '\'')
+		if (ch == SQUOTE)
 		    squote = FALSE;
 	    } else if (dquote) {
-		if (ch == '"')
+		switch (ch) {
+		case DQUOTE:
 		    dquote = FALSE;
+		    break;
+		case ESCAPE:
+		    escape = TRUE;
+		    break;
+		}
 	    } else {
 		switch (ch) {
-		case '"':
+		case DQUOTE:
 		    dquote = TRUE;
 		    break;
-		case '\'':
+		case SQUOTE:
 		    squote = TRUE;
-		    break;
-		case '\\':
-		    if (dquote)
-			escape = TRUE;
 		    break;
 		}
 	    }
@@ -344,6 +375,9 @@ static int ProcessMailcapEntry(FILE *fp, struct MailcapEntry *mc, AcceptMedia me
     rawentry = (char *) malloc(rawentryalloc);
     if (!rawentry)
 	ExitWithError(MEMORY_EXHAUSTED_ABORT);
+
+    assert(rawentry != NULL);
+
     *rawentry = '\0';
     while (LYSafeGets(&LineBuf, fp) != 0) {
 	LYTrimNewline(LineBuf);
@@ -357,8 +391,10 @@ static int ProcessMailcapEntry(FILE *fp, struct MailcapEntry *mc, AcceptMedia me
 
 	    if (!rawentry)
 		ExitWithError(MEMORY_EXHAUSTED_ABORT);
+
+	    assert(rawentry != NULL);
 	}
-	if (len > 0 && LineBuf[len - 1] == '\\') {
+	if (len > 0 && LineBuf[len - 1] == ESCAPE) {
 	    LineBuf[len - 1] = '\0';
 	    strcat(rawentry, LineBuf);
 	} else {
@@ -374,7 +410,7 @@ static int ProcessMailcapEntry(FILE *fp, struct MailcapEntry *mc, AcceptMedia me
 	FREE(rawentry);
 	return (0);
     }
-    s = strchr(rawentry, ';');
+    s = StrChr(rawentry, ';');
     if (s == NULL) {
 	CTrace((tfp,
 		"ProcessMailcapEntry: Ignoring invalid mailcap entry: %s\n",
@@ -415,7 +451,7 @@ static int ProcessMailcapEntry(FILE *fp, struct MailcapEntry *mc, AcceptMedia me
 
 	t = GetCommand(s, &mallocd_string);
 	arg = mallocd_string;
-	eq = strchr(arg, '=');
+	eq = StrChr(arg, '=');
 	if (eq) {
 	    *eq++ = '\0';
 	    eq = LYSkipBlanks(eq);
@@ -491,9 +527,9 @@ static const char *LYSkipQuoted(const char *s)
     while (*s != 0) {
 	if (escaped) {
 	    escaped = 0;
-	} else if (*s == '\\') {
+	} else if (*s == ESCAPE) {
 	    escaped = 1;
-	} else if (*s == '"') {
+	} else if (*s == DQUOTE) {
 	    ++s;
 	    break;
 	}
@@ -510,7 +546,7 @@ static const char *LYSkipToken(const char *s)
 {
     static const char tspecials[] = "\"()<>@,;:\\/[]?.=";
 
-    while (*s != '\0' && !WHITE(*s) && strchr(tspecials, *s) == 0) {
+    while (*s != '\0' && !WHITE(*s) && StrChr(tspecials, *s) == 0) {
 	++s;
     }
     return s;
@@ -518,7 +554,7 @@ static const char *LYSkipToken(const char *s)
 
 static const char *LYSkipValue(const char *s)
 {
-    if (*s == '"')
+    if (*s == DQUOTE)
 	s = LYSkipQuoted(s);
     else
 	s = LYSkipToken(s);
@@ -534,12 +570,12 @@ static char *LYCopyValue(const char *s)
     char *result = 0;
     int j, k;
 
-    if (*s == '"') {
+    if (*s == DQUOTE) {
 	t = LYSkipQuoted(s);
 	StrAllocCopy(result, s + 1);
 	result[t - s - 2] = '\0';
 	for (j = k = 0;; ++j, ++k) {
-	    if (result[j] == '\\') {
+	    if (result[j] == ESCAPE) {
 		++j;
 	    }
 	    if ((result[k] = result[j]) == '\0')
@@ -565,7 +601,7 @@ static char *LYGetContentType(const char *name,
     if (params != 0) {
 	if (name != 0) {
 	    size_t length = strlen(name);
-	    const char *test = strchr(params, ';');	/* skip type/subtype */
+	    const char *test = StrChr(params, ';');	/* skip type/subtype */
 	    const char *next;
 
 	    while (test != 0) {
@@ -575,7 +611,7 @@ static char *LYGetContentType(const char *name,
 		test = LYSkipCBlanks(test);
 		next = LYSkipToken(test);
 		if ((next - test) == (int) length
-		    && !strncmp(test, name, length)) {
+		    && !StrNCmp(test, name, length)) {
 		    found = TRUE;
 		}
 		test = LYSkipCBlanks(next);
@@ -617,7 +653,7 @@ BOOL LYMailcapUsesPctS(const char *controlstring)
     for (from = controlstring; *from != '\0'; from++) {
 	if (escaped) {
 	    escaped = 0;
-	} else if (*from == '\\') {
+	} else if (*from == ESCAPE) {
 	    escaped = 1;
 	} else if (prefixed) {
 	    prefixed = 0;
@@ -631,7 +667,7 @@ BOOL LYMailcapUsesPctS(const char *controlstring)
 		result = TRUE;
 		break;
 	    case L_CURL:
-		next = strchr(from, R_CURL);
+		next = StrChr(from, R_CURL);
 		if (next != 0) {
 		    from = next;
 		    break;
@@ -670,14 +706,14 @@ static int BuildCommand(HTChunk *cmd,
     for (from = controlstring; *from != '\0'; from++) {
 	if (escaped) {
 	    escaped = 0;
-	    HTChunkPutc(cmd, *from);
-	} else if (*from == '\\') {
+	    HTChunkPutc(cmd, UCH(*from));
+	} else if (*from == ESCAPE) {
 	    escaped = 1;
 	} else if (prefixed) {
 	    prefixed = 0;
 	    switch (*from) {
 	    case '%':		/* not defined */
-		HTChunkPutc(cmd, *from);
+		HTChunkPutc(cmd, UCH(*from));
 		break;
 	    case 'n':
 		/* FALLTHRU */
@@ -692,12 +728,12 @@ static int BuildCommand(HTChunk *cmd,
 		}
 		break;
 	    case 's':
-		if (TmpFileLen && TmpFileName) {
+		if (TmpFileLen) {
 		    HTChunkPuts(cmd, TmpFileName);
 		}
 		break;
 	    case L_CURL:
-		next = strchr(from, R_CURL);
+		next = StrChr(from, R_CURL);
 		if (next != 0) {
 		    if (params != 0) {
 			++from;
@@ -706,7 +742,7 @@ static int BuildCommand(HTChunk *cmd,
 			if ((value = LYGetContentType(name, params)) != 0) {
 			    HTChunkPuts(cmd, value);
 			    FREE(value);
-			} else {
+			} else if (name) {
 			    if (!strcmp(name, "charset")) {
 				HTChunkPuts(cmd, "ISO-8859-1");
 			    } else {
@@ -730,7 +766,7 @@ static int BuildCommand(HTChunk *cmd,
 	} else if (*from == '%') {
 	    prefixed = 1;
 	} else {
-	    HTChunkPutc(cmd, *from);
+	    HTChunkPutc(cmd, UCH(*from));
 	}
     }
     HTChunkTerminate(cmd);
@@ -759,7 +795,7 @@ int LYTestMailcapCommand(const char *testcommand,
 	TmpFileName[0] = '\0';
     }
     expanded = HTChunkCreate(1024);
-    if ((result = BuildCommand(expanded, testcommand, TmpFileName, params)) != 0) {
+    if (BuildCommand(expanded, testcommand, TmpFileName, params) != 0) {
 	result = 1;
 	CTrace((tfp, "PassesTest: Deferring test command: %s\n", expanded->data));
     } else {
@@ -773,7 +809,7 @@ int LYTestMailcapCommand(const char *testcommand,
     }
 
     HTChunkFree(expanded);
-    LYRemoveTemp(TmpFileName);
+    (void) LYRemoveTemp(TmpFileName);
 
     return result;
 }
@@ -825,6 +861,9 @@ static int RememberTestResult(int mode, char *cmd, int result)
 
 	if (cur == NULL)
 	    outofmem(__FILE__, "RememberTestResult");
+
+	assert(cur != NULL);
+
 	cur->next = cmdlist;
 	StrAllocCopy(cur->cmd, cmd);
 	cur->result = result;
@@ -1388,11 +1427,13 @@ static int HTGetLine(char *s, int n, FILE *f)
     }
 }
 
-static void HTGetWord(char *word, char *line, char stop, char stop2)
+static void HTGetWord(char *word, char *line, int stop, int stop2)
 {
     int x = 0, y;
 
-    for (x = 0; line[x] && line[x] != stop && line[x] != stop2; x++) {
+    for (x = 0; (line[x]
+		 && UCH(line[x]) != UCH(stop)
+		 && UCH(line[x]) != UCH(stop2)); x++) {
 	word[x] = line[x];
     }
 
@@ -1401,7 +1442,9 @@ static void HTGetWord(char *word, char *line, char stop, char stop2)
 	++x;
     y = 0;
 
-    while ((line[y++] = line[x++])) ;
+    while ((line[y++] = line[x++])) {
+	;
+    }
 
     return;
 }
@@ -1421,7 +1464,7 @@ static int HTLoadExtensionsConfigFile(char *fn)
 	return count;
     }
 
-    while (!(HTGetLine(line, sizeof(line), f))) {
+    while (!(HTGetLine(line, (int) sizeof(line), f))) {
 	HTGetWord(word, line, ' ', '\t');
 	if (line[0] == '\0' || word[0] == '#')
 	    continue;

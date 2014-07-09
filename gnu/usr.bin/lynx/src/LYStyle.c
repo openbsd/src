@@ -1,6 +1,8 @@
-/* character level styles for Lynx
+/*
+ * $LynxId: LYStyle.c,v 1.96 2014/01/09 21:01:22 tom Exp $
+ *
+ * character level styles for Lynx
  * (c) 1996 Rob Partington -- donated to the Lyncei (if they want it :-)
- * $Id: LYStyle.c,v 1.6 2011/07/22 14:10:39 avsm Exp $
  */
 #include <HTUtils.h>
 #include <HTML.h>
@@ -19,6 +21,9 @@
 #include <LYHash.h>
 #include <LYStyle.h>
 
+#include <LYOptions.h>
+#include <LYPrettySrc.h>
+
 #include <LYexit.h>
 #include <LYLeaks.h>
 #include <LYStrings.h>
@@ -28,7 +33,7 @@
 
 #ifdef USE_COLOR_STYLE
 
-static void style_initialiseHashTable(void);
+static HTList *list_of_lss_files;
 
 /* because curses isn't started when we parse the config file, we
  * need to remember the STYLE: lines we encounter and parse them
@@ -49,16 +54,6 @@ int last_styles[MAX_LAST_STYLES + 1] =
 int last_colorattr_ptr = 0;
 
 bucket hashStyles[CSHASHSIZE];
-bucket special_bucket =
-{
-    "<special>",		/* in order something to be in trace. */
-    0, 0, 0, 0, NULL
-};
-bucket nostyle_bucket =
-{
-    "<NOSTYLE>",		/* in order something to be in trace. */
-    0, 0, 0, 0, NULL
-};
 
 int cached_tag_styles[HTML_ELEMENTS];
 int current_tag_style;
@@ -117,6 +112,30 @@ static unsigned char our_pairs[2]
 [MAX_COLOR + 1]
 [MAX_COLOR + 1];
 
+static void style_initialiseHashTable(void);
+
+static bucket *new_bucket(const char *name)
+{
+    bucket *result = typecalloc(bucket);
+
+    if (!result)
+	outofmem(__FILE__, "new_bucket");
+    StrAllocCopy(result->name, name);
+    return result;
+}
+
+#if OMIT_SCN_KEEPING
+bucket *special_bucket(void)
+{
+    return new_bucket("<special>");
+}
+#endif
+
+bucket *nostyle_bucket(void)
+{
+    return new_bucket("<NOSTYLE>");
+}
+
 static char *TrimLowercase(char *buffer)
 {
     LYRemoveBlanks(buffer);
@@ -127,46 +146,53 @@ static char *TrimLowercase(char *buffer)
 /*
  * Parse a string containing a combination of video attributes and color.
  */
-static void parse_either(char *attrs,
+static void parse_either(const char *attrs,
 			 int dft_color,
 			 int *monop,
 			 int *colorp)
 {
     int value;
+    char *temp_attrs = NULL;
 
-    while (*attrs != '\0') {
-	char *next = strchr(attrs, '+');
-	char save = (char) ((next != NULL) ? *next : '\0');
+    if (StrAllocCopy(temp_attrs, attrs) != NULL) {
+	char *to_free = temp_attrs;
 
-	if (next == NULL)
-	    next = attrs + strlen(attrs);
+	while (*temp_attrs != '\0') {
+	    char *next = StrChr(temp_attrs, '+');
+	    char save = (char) ((next != NULL) ? *next : '\0');
 
-	if (save != 0)		/* attrs might be a constant string */
-	    *next = '\0';
-	if ((value = string_to_attr(attrs)) != 0)
-	    *monop |= value;
-	else if (colorp != 0
-		 && (value = check_color(attrs, dft_color)) != ERR_COLOR)
-	    *colorp = value;
+	    if (next == NULL)
+		next = temp_attrs + strlen(temp_attrs);
 
-	attrs = next;
-	if (save != '\0')
-	    *attrs++ = save;
+	    if (save != 0)
+		*next = '\0';
+	    if ((value = string_to_attr(temp_attrs)) != 0)
+		*monop |= value;
+	    else if (colorp != 0
+		     && (value = check_color(temp_attrs, dft_color)) != ERR_COLOR)
+		*colorp = value;
+
+	    temp_attrs = next;
+	    if (save != '\0')
+		*temp_attrs++ = save;
+	}
+	FREE(to_free);
     }
 }
 
 /* icky parsing of the style options */
-static void parse_attributes(char *mono,
-			     char *fg,
-			     char *bg,
+static void parse_attributes(const char *mono,
+			     const char *fg,
+			     const char *bg,
 			     int style,
-			     char *element)
+			     const char *element)
 {
     int mA = A_NORMAL;
     int fA = default_fg;
     int bA = default_bg;
     int cA = A_NORMAL;
     int newstyle = hash_code(element);
+    int colored_attr;
 
     CTRACE2(TRACE_STYLE, (tfp, "CSS(PA):style d=%d / h=%d, e=%s\n",
 			  style, newstyle, element));
@@ -214,8 +240,8 @@ static void parse_attributes(char *mono,
 	int curPair = 0;
 	int iFg = (1 + (fA >= 0 ? fA : 0));
 	int iBg = (1 + (bA >= 0 ? bA : 0));
-	int iBold = !!(cA & A_BOLD);
-	int iBlink = !!(cA & M_BLINK);
+	int iBold = !!((unsigned) cA & A_BOLD);
+	int iBlink = !!((unsigned) cA & M_BLINK);
 
 	CTRACE2(TRACE_STYLE, (tfp, "parse_attributes %d/%d %d/%d %#x\n",
 			      fA, default_fg, bA, default_bg, cA));
@@ -234,9 +260,10 @@ static void parse_attributes(char *mono,
 	    }
 	}
 	CTRACE2(TRACE_STYLE, (tfp, "CSS(CURPAIR):%d\n", curPair));
+	colored_attr = ((int) COLOR_PAIR(curPair)) | ((int) cA);
 	if (style < DSTYLE_ELEMENTS)
-	    setStyle(style, COLOR_PAIR(curPair) | cA, cA, mA);
-	setHashStyle(newstyle, COLOR_PAIR(curPair) | cA, cA, mA, element);
+	    setStyle(style, colored_attr, cA, mA);
+	setHashStyle(newstyle, colored_attr, cA, mA, element);
     } else {
 	if (lynx_has_color && fA != NO_COLOR) {
 	    CTRACE2(TRACE_STYLE,
@@ -257,7 +284,7 @@ static void parse_style(char *param)
 {
     /* *INDENT-OFF* */
     static struct {
-	char *name;
+	const char *name;
 	int style;
 	int *set_hash;
     } table[] = {
@@ -296,7 +323,8 @@ static void parse_style(char *param)
 
     char *buffer = 0;
     char *tmp = 0;
-    char *element, *mono, *fg, *bg;
+    char *element, *mono;
+    const char *fg, *bg;
 
     if (param == 0)
 	return;
@@ -306,7 +334,7 @@ static void parse_style(char *param)
 	return;
 
     TrimLowercase(buffer);
-    if ((tmp = strchr(buffer, ':')) == 0) {
+    if ((tmp = StrChr(buffer, ':')) == 0) {
 	fprintf(stderr, gettext("\
 Syntax Error parsing style in lss file:\n\
 [%s]\n\
@@ -319,7 +347,7 @@ where OBJECT is one of EM,STRONG,B,I,U,BLINK etc.\n\n"), buffer);
     element = buffer;
 
     mono = tmp + 1;
-    tmp = strchr(mono, ':');
+    tmp = StrChr(mono, ':');
 
     if (!tmp) {
 	fg = "nocolor";
@@ -327,7 +355,7 @@ where OBJECT is one of EM,STRONG,B,I,U,BLINK etc.\n\n"), buffer);
     } else {
 	*tmp = '\0';
 	fg = tmp + 1;
-	tmp = strchr(fg, ':');
+	tmp = StrChr(fg, ':');
 	if (!tmp)
 	    bg = "default";
 	else {
@@ -367,7 +395,7 @@ where OBJECT is one of EM,STRONG,B,I,U,BLINK etc.\n\n"), buffer);
 	HTTag *t = SGMLFindTag(&HTML_dtd, element);
 
 	if (t && t->name) {
-	    element_number = t - HTML_dtd.tags;
+	    element_number = (int) (t - HTML_dtd.tags);
 	}
 	if (element_number >= HTML_A &&
 	    element_number < HTML_ELEMENTS) {
@@ -385,12 +413,65 @@ static void style_deleteStyleList(void)
     lss_styles = NULL;
 }
 
+#ifdef LY_FIND_LEAKS
+static void free_colorstyle_leaks(void)
+{
+    LSS_NAMES *obj;
+
+    while ((obj = HTList_objectAt(list_of_lss_files, 0)) != 0) {
+	if (HTList_unlinkObject(list_of_lss_files, obj)) {
+	    FREE(obj->given);
+	    FREE(obj->actual);
+	    FREE(obj);
+	} else {
+	    break;
+	}
+    }
+    HTList_delete(list_of_lss_files);
+}
+#endif
+
 static void free_colorstylestuff(void)
 {
     style_initialiseHashTable();
     style_deleteStyleList();
     memset(our_pairs, 0, sizeof(our_pairs));
     FreeCachedStyles();
+}
+
+/* Set all the buckets in the hash table to be empty */
+static void style_initialiseHashTable(void)
+{
+    int i;
+    static int firsttime = 1;
+
+    for (i = 0; i < CSHASHSIZE; i++) {
+	if (firsttime)
+	    hashStyles[i].name = NULL;
+	else
+	    FREE(hashStyles[i].name);
+	hashStyles[i].color = 0;
+	hashStyles[i].cattr = 0;
+	hashStyles[i].mono = 0;
+    }
+    if (firsttime) {
+	firsttime = 0;
+#ifdef LY_FIND_LEAKS
+	atexit(free_colorstylestuff);
+	atexit(free_colorstyle_leaks);
+#endif
+    }
+    s_alink = hash_code("alink");
+    s_a = hash_code("a");
+    s_status = hash_code("status");
+    s_alert = hash_code("alert");
+    s_title = hash_code("title");
+#ifdef USE_SCROLLBAR
+    s_sb_bar = hash_code("scroll.bar");
+    s_sb_bg = hash_code("scroll.back");
+    s_sb_aa = hash_code("scroll.arrow");
+    s_sb_naa = hash_code("scroll.noarrow");
+#endif
 }
 
 /*
@@ -429,17 +510,9 @@ static void initialise_default_stylesheet(void)
 	{ 4,	"strike" },
 	{ 4,	"strong" },
 	{ 4,	"u" },
-#if 0
-	{ 5,	"a.b" },
-	{ 5,	"b.a" },
-	{ 5,	"var.a" },
-#endif
+	{ 5,	"input" },
 	{ 6,	"alink" },
 	{ 7,	"whereis" },
-#if 0
-	{ 0,	"h2.link" },
-	{ 0,	"link.h2" },
-#endif
 #ifdef USE_PRETTYSRC
 	/* FIXME: HTL_tagspecs_defaults[] has similar info */
 	{ 4,	"span.htmlsrc_comment" },
@@ -503,44 +576,10 @@ static void initialise_default_stylesheet(void)
     FREE(strong);
 }
 
-/* Set all the buckets in the hash table to be empty */
-static void style_initialiseHashTable(void)
-{
-    int i;
-    static int firsttime = 1;
-
-    for (i = 0; i < CSHASHSIZE; i++) {
-	if (firsttime)
-	    hashStyles[i].name = NULL;
-	else
-	    FREE(hashStyles[i].name);
-	hashStyles[i].color = 0;
-	hashStyles[i].cattr = 0;
-	hashStyles[i].mono = 0;
-    }
-    if (firsttime) {
-	firsttime = 0;
-#ifdef LY_FIND_LEAKS
-	atexit(free_colorstylestuff);
-#endif
-    }
-    s_alink = hash_code("alink");
-    s_a = hash_code("a");
-    s_status = hash_code("status");
-    s_alert = hash_code("alert");
-    s_title = hash_code("title");
-#ifdef USE_SCROLLBAR
-    s_sb_bar = hash_code("scroll.bar");
-    s_sb_bg = hash_code("scroll.back");
-    s_sb_aa = hash_code("scroll.arrow");
-    s_sb_naa = hash_code("scroll.noarrow");
-#endif
-}
-
 void parse_userstyles(void)
 {
     char *name;
-    HTList *cur = lss_styles;
+    HTList *cur = LYuse_color_style ? lss_styles : 0;
 
     colorPairs = 0;
     style_initialiseHashTable();
@@ -601,6 +640,7 @@ static void HStyle_addStyle(char *buffer)
 			      name ? name : "!?! empty !?!"));
 	if (!default_color_reset)
 	    parse_style(name);
+	FREE(name);
 	return;			/* do not need to process it again */
     }
     CTRACE2(TRACE_STYLE, (tfp, "READCSS:%s\n", name ? name : "!?! empty !?!"));
@@ -612,7 +652,6 @@ static int style_readFromFileREC(char *lss_filename,
 {
     FILE *fh;
     char *buffer = NULL;
-    int len;
 
     CTRACE2(TRACE_STYLE, (tfp, "CSS:Reading styles from file: %s\n",
 			  lss_filename ? lss_filename : "?!? empty ?!?"));
@@ -635,7 +674,7 @@ static int style_readFromFileREC(char *lss_filename,
 	LYTrimHead(buffer);
 	if (!strncasecomp(buffer, "include:", 8))
 	    style_readFromFileREC(LYSkipBlanks(buffer + 8), lss_filename);
-	else if (buffer[0] != '#' && (len = (int) strlen(buffer)) > 0)
+	else if (buffer[0] != '#' && strlen(buffer) != 0)
 	    HStyle_addStyle(buffer);
     }
 
@@ -719,7 +758,7 @@ void cache_tag_styles(void)
     int i;
 
     for (i = 0; i < HTML_ELEMENTS; ++i) {
-	LYstrncpy(buf, HTML_dtd.tags[i].name, sizeof(buf) - 1);
+	LYStrNCpy(buf, HTML_dtd.tags[i].name, sizeof(buf) - 1);
 	LYLowerCase(buf);
 	cached_tag_styles[i] = hash_code(buf);
     }
@@ -784,6 +823,153 @@ void FreeCachedStyles(void)
 	cached_styles_rows = 0;
 	cached_styles_cols = 0;
     }
+}
+
+/*
+ * Recompute the pairs associated with the color style.
+ */
+void update_color_style(void)
+{
+    CTRACE((tfp, "update_color_style %p\n", (void *) lss_styles));
+    memset(our_pairs, 0, sizeof(our_pairs));
+    parse_userstyles();
+}
+
+static char *find_lss_file(const char *nominal)
+{
+    return LYFindConfigFile(nominal, LYNX_LSS_FILE);
+}
+
+/*
+ * Add an entry to the lss-list, and cache the resolved filename if known.
+ */
+void add_to_lss_list(const char *source, const char *resolved)
+{
+    LSS_NAMES *obj;
+    LSS_NAMES *chk;
+    BOOLEAN found = FALSE;
+    int position = 0;
+
+#ifdef LY_FIND_LEAKS
+    atexit(free_colorstyle_leaks);
+#endif
+
+    CTRACE((tfp, "add_to_lss_list(\"%s\", \"%s\")\n",
+	    NonNull(source),
+	    NonNull(resolved)));
+
+    if (list_of_lss_files == 0) {
+	list_of_lss_files = HTList_new();
+    }
+
+    while ((chk = HTList_objectAt(list_of_lss_files, position++)) != 0) {
+	if (!strcmp(source, chk->given)) {
+	    found = TRUE;
+	    if (resolved && !chk->actual) {
+		StrAllocCopy(chk->actual, resolved);
+	    }
+	    break;
+	}
+    }
+
+    if (!found) {
+	obj = typecalloc(LSS_NAMES);
+	if (obj == NULL)
+	    outofmem(__FILE__, "add_to_lss_list");
+
+	StrAllocCopy(obj->given, source);
+	StrAllocCopy(obj->actual, resolved);
+	HTList_appendObject(list_of_lss_files, obj);
+    }
+}
+
+/*
+ * This is called after reading lynx.cfg, to set the initial value for the
+ * lss-file, and read its data.
+ */
+void init_color_styles(char **from_cmdline, const char *default_styles)
+{
+    char *cp;
+
+    /*
+     * If we read no COLOR_STYLE data from lynx.cfg, build a default list now.
+     */
+    if (list_of_lss_files == 0) {
+	char *source = 0;
+	char *config;
+
+	StrAllocCopy(source, default_styles);
+	config = source;
+	while ((cp = LYstrsep(&config, ";")) != 0) {
+	    char *target;
+
+	    target = find_lss_file(LYPathLeaf(cp));
+	    if (target != 0)
+		add_to_lss_list(cp, target);
+	}
+	FREE(source);
+    }
+
+    /*
+     * A command-line "-lss" always overrides the config-file, even if it is
+     * an empty string such as -lss="".
+     */
+    if (*from_cmdline != 0) {
+	FREE(lynx_lss_file);
+	lynx_lss_file = find_lss_file(cp = *from_cmdline);
+	*from_cmdline = 0;
+    } else if (((cp = LYGetEnv("LYNX_LSS")) != NULL) ||
+	       (cp = LYGetEnv("lynx_lss")) != NULL) {
+	lynx_lss_file = find_lss_file(cp);
+    } else {
+	lynx_lss_file = find_lss_file(cp = DeConst(LYNX_LSS_FILE));
+    }
+    CTRACE1((tfp, "init_color_styles(%s)\n", NonNull(lynx_lss_file)));
+
+    /*
+     * If the lynx-style file is not available, inform the user and exit.
+     */
+    if (isEmpty(lynx_lss_file) || !LYCanReadFile(lynx_lss_file)) {
+	fprintf(stderr, gettext("\nLynx file \"%s\" is not available.\n\n"),
+		NonNull(cp));
+	exit_immediately(EXIT_FAILURE);
+    }
+
+    /*
+     * Otherwise, load the initial lss-file and add it to the list for the
+     * options menu.
+     */
+    style_readFromFile(lynx_lss_file);
+    add_to_lss_list(LYPathLeaf(lynx_lss_file), lynx_lss_file);
+#ifndef NO_OPTION_FORMS
+    build_lss_enum(list_of_lss_files);
+#endif
+}
+
+void reinit_color_styles(void)
+{
+    int cs;
+
+    for (cs = 0; cs < CSHASHSIZE; ++cs) {
+	bucket *style = &hashStyles[cs];
+
+	while (style != 0) {
+	    bucket *next = style->next;
+
+	    if (next != 0) {
+		hashStyles[cs] = *next;
+		free(next);
+	    }
+	    style = hashStyles[cs].next;
+	}
+    }
+#ifdef USE_PRETTYSRC
+    for (cs = 0; cs < HTL_num_lexemes; ++cs) {
+	html_src_clean_item((HTlexeme) cs);
+    }
+#endif
+    free_colorstylestuff();
+    style_readFromFile(lynx_lss_file);
 }
 
 #endif /* USE_COLOR_STYLE */

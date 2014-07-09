@@ -1,4 +1,7 @@
-/*			CJK character converter		HTCJK.h
+/*
+ * $LynxId: HTCJK.h,v 1.19 2012/08/15 23:11:03 tom Exp $
+ *
+ *			CJK character converter		HTCJK.h
  *			=======================
  *
  *	Added 11-Jun-96 by FM, based on jiscode.h for
@@ -30,8 +33,8 @@ extern "C" {
 #define TO_HANGUL	"\033$(C"
 #define TO_ASCII	"\033(B"
 #define IS_SJIS_LO(lo)	((0x40<=lo)&&(lo!=0x7F)&&(lo<=0xFC))
-#define IS_SJIS_HI1(hi) ((0x81<=hi)&&(hi<=0x9F))	/* 1st lev. */
-#define IS_SJIS_HI2(hi) ((0xE0<=hi)&&(hi<=0xEF))	/* 2nd lev. */
+#define IS_SJIS_HI1(hi) ((0x81 <= (hi)) && ((hi) <= 0x9F))	/* 1st lev. */
+#define IS_SJIS_HI2(hi) ((0xE0 <= (hi)) && ((hi) <= 0xEF))	/* 2nd lev. */
 #define IS_SJIS(hi,lo,in_sjis) (!IS_SJIS_LO(lo)?0:IS_SJIS_HI1(hi)?(in_sjis=1):in_sjis&&IS_SJIS_HI2(hi))
 #define IS_SJIS_2BYTE(hi,lo) (IS_SJIS_LO(lo)&&(IS_SJIS_HI1(hi)||IS_SJIS_HI2(hi)))
 #define IS_SJIS_X0201KANA(lo) ((0xA1<=lo)&&(lo<=0xDF))
@@ -56,29 +59,29 @@ extern "C" {
 /*
  *  Function prototypes.
  */
-    extern void JISx0201TO0208_EUC(register unsigned char IHI,
-				   register unsigned char ILO,
-				   register unsigned char *OHI,
-				   register unsigned char *OLO);
+    extern void JISx0201TO0208_EUC(unsigned IHI,
+				   unsigned ILO,
+				   unsigned char *OHI,
+				   unsigned char *OLO);
 
-    extern unsigned char *SJIS_TO_JIS1(register unsigned char HI,
-				       register unsigned char LO,
-				       register unsigned char *JCODE);
+    extern unsigned char *SJIS_TO_JIS1(unsigned HI,
+				       unsigned LO,
+				       unsigned char *JCODE);
 
-    extern unsigned char *JIS_TO_SJIS1(register unsigned char HI,
-				       register unsigned char LO,
+    extern unsigned char *JIS_TO_SJIS1(unsigned HI,
+				       unsigned LO,
+				       unsigned char *SJCODE);
+
+    extern unsigned char *EUC_TO_SJIS1(unsigned HI,
+				       unsigned LO,
 				       register unsigned char *SJCODE);
 
-    extern unsigned char *EUC_TO_SJIS1(unsigned char HI,
-				       unsigned char LO,
-				       register unsigned char *SJCODE);
+    extern void JISx0201TO0208_SJIS(unsigned I,
+				    unsigned char *OHI,
+				    unsigned char *OLO);
 
-    extern void JISx0201TO0208_SJIS(register unsigned char I,
-				    register unsigned char *OHI,
-				    register unsigned char *OLO);
-
-    extern unsigned char *SJIS_TO_EUC1(unsigned char HI,
-				       unsigned char LO,
+    extern unsigned char *SJIS_TO_EUC1(unsigned HI,
+				       unsigned LO,
 				       unsigned char *EUCp);
 
     extern unsigned char *SJIS_TO_EUC(unsigned char *src,

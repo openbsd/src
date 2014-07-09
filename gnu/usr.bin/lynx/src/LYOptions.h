@@ -1,3 +1,4 @@
+/* $LynxId: LYOptions.h,v 1.31 2013/10/22 00:37:32 tom Exp $ */
 #ifndef LYOPTIONS_H
 #define LYOPTIONS_H
 
@@ -14,13 +15,13 @@ extern "C" {
     extern int popup_choice(int cur_choice,
 			    int line,
 			    int column,
-			    const char **choices,
+			    STRING2PTR choices,
 			    int length,
 			    int disabled,
-			    BOOLEAN mouse);
+			    int mouse);
 
 #define LYChoosePopup(cur, line, column, choices, length, disabled, mouse) \
-	popup_choice(cur, line, column, (const char **)choices, length, disabled, mouse)
+	popup_choice(cur, line, column, (STRING2PTR) choices, length, disabled, mouse)
 
 #ifndef NO_OPTION_FORMS
     extern void LYMenuVisitedLinks(FILE *fp0, int disable_all);
@@ -30,6 +31,10 @@ extern "C" {
 #ifndef NO_OPTION_MENU
     extern void LYoptions(void);
 #endif				/* !NO_OPTION_MENU */
+
+#ifdef USE_COLOR_STYLE
+    extern void build_lss_enum(HTList *);
+#endif
 
 #ifdef __cplusplus
 }

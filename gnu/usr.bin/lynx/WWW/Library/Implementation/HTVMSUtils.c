@@ -1,5 +1,7 @@
-
-/* MODULE							HTVMSUtil.c
+/*
+ * $LynxId: HTVMSUtils.c,v 1.39 2013/11/28 11:15:31 tom Exp $
+ *
+ * MODULE							HTVMSUtil.c
  *		VMS Utility Routines
  *
  * AUTHORS:
@@ -166,7 +168,7 @@ BOOL HTVMS_checkAccess(const char *FileName,
 	return (NO);
 
     /* check Filename and convert */
-    colon = strchr(FileName, ':');
+    colon = StrChr(FileName, ':');
     if (colon)
 	VmsName = HTVMS_name("", colon + 1);
     else
@@ -243,7 +245,7 @@ const char *HTVMS_wwwName(const char *vmsname)
     dst = wwwname;
     src = vmsname;
     dir = 0;
-    if (strchr(src, ':'))
+    if (StrChr(src, ':'))
 	*(dst++) = '/';
     for (; *src != '\0'; src++) {
 	switch (*src) {
@@ -340,17 +342,17 @@ int HTStat(const char *filename,
 	Name[Len - 1] = '\0';
 
     /* fail in case of device */
-    Ptr = strchr(Name + 1, '/');
+    Ptr = StrChr(Name + 1, '/');
     if ((Ptr == NULL) && (Name[0] == '/')) {	/* device only... */
 	StrAllocCat(Name, "/000000/000000");
     }
 
     if (Ptr != NULL) {		/* correct filename in case of toplevel dir */
-	Ptr2 = strchr(Ptr + 1, '/');
+	Ptr2 = StrChr(Ptr + 1, '/');
 	if ((Ptr2 == NULL) && (Name[0] == '/')) {
 	    char End[256];
 
-	    LYstrncpy(End, Ptr, sizeof(End) - 1);
+	    LYStrNCpy(End, Ptr, sizeof(End) - 1);
 	    *(Ptr + 1) = '\0';
 	    StrAllocCat(Name, "000000");
 	    StrAllocCat(Name, End);
@@ -465,7 +467,7 @@ static DIR *HTVMSopendir(char *dirname)
 	StrAllocCat(DirEntry, ".dir");
     }
     /* lib$find_file needs a fixed-size buffer */
-    LYstrncpy(Actual, DirEntry, sizeof(Actual) - 1);
+    LYStrNCpy(Actual, DirEntry, sizeof(Actual) - 1);
 
     dir.context = 0;
     dirname_desc.dsc$w_length = strlen(Actual);
@@ -525,9 +527,9 @@ static struct dirent *HTVMSreaddir(DIR *dirp)
 	if (!(status & 0x01))
 	    return (0);
 	if (HTVMSFileVersions)
-	    space = strchr(VMSentry, ' ');
+	    space = StrChr(VMSentry, ' ');
 	else
-	    space = strchr(VMSentry, ';');
+	    space = StrChr(VMSentry, ';');
 	if (space)
 	    *space = '\0';
 
@@ -643,8 +645,7 @@ int compare_VMSEntryInfo_structs(VMSEntryInfo * entry1, VMSEntryInfo * entry2)
 		strcpy(date1, (char *) &entry1->date[8]);
 		strcpy(time1, "00:00");
 	    }
-	    strncpy(month, entry1->date, 3);
-	    month[3] = '\0';
+	    LYStrNCpy(month, entry1->date, 3);
 	    for (i = 0; i < 12; i++) {
 		if (!strcasecomp(month, months[i])) {
 		    break;
@@ -653,7 +654,7 @@ int compare_VMSEntryInfo_structs(VMSEntryInfo * entry1, VMSEntryInfo * entry2)
 	    i++;
 	    sprintf(month, "%02d", i);
 	    strcat(date1, month);
-	    strncat(date1, (char *) &entry1->date[4], 2);
+	    StrNCat(date1, (char *) &entry1->date[4], 2);
 	    date1[8] = '\0';
 	    if (date1[6] == ' ') {
 		date1[6] = '0';
@@ -666,8 +667,7 @@ int compare_VMSEntryInfo_structs(VMSEntryInfo * entry1, VMSEntryInfo * entry2)
 		strcpy(date2, (char *) &entry2->date[8]);
 		strcpy(time2, "00:00");
 	    }
-	    strncpy(month, entry2->date, 3);
-	    month[3] = '\0';
+	    LYStrNCpy(month, entry2->date, 3);
 	    for (i = 0; i < 12; i++) {
 		if (!strcasecomp(month, months[i])) {
 		    break;
@@ -676,7 +676,7 @@ int compare_VMSEntryInfo_structs(VMSEntryInfo * entry1, VMSEntryInfo * entry2)
 	    i++;
 	    sprintf(month, "%02d", i);
 	    strcat(date2, month);
-	    strncat(date2, (char *) &entry2->date[4], 2);
+	    StrNCat(date2, (char *) &entry2->date[4], 2);
 	    date2[8] = '\0';
 	    if (date2[6] == ' ') {
 		date2[6] = '0';
@@ -747,9 +747,9 @@ int HTVMSBrowseDir(const char *address,
      * /sys$sysroot/syshlp) before calling this routine.
      */
     if (((*pathname != '/') ||
-	 (cp = strchr(pathname + 1, '/')) == NULL ||
+	 (cp = StrChr(pathname + 1, '/')) == NULL ||
 	 *(cp + 1) == '\0' ||
-	 0 == strncmp((cp + 1), "000000", 6)) ||
+	 0 == StrNCmp((cp + 1), "000000", 6)) ||
 	(dp = HTVMSopendir(pathname)) == NULL) {
 	FREE(pathname);
 	return HTLoadError(sink, 403, COULD_NOT_ACCESS_DIR);
@@ -779,7 +779,7 @@ int HTVMSBrowseDir(const char *address,
 	*cp = '\0';
 	if ((cp1 = strrchr(pathname, '/')) != NULL &&
 	    cp1 != pathname &&
-	    strncmp((cp1 + 1), "000000", 6))
+	    StrNCmp((cp1 + 1), "000000", 6))
 	    StrAllocCopy(parent, (cp1 + 1));
 	*cp = '/';
     } else {
@@ -938,9 +938,9 @@ int HTVMSBrowseDir(const char *address,
 	    format = HTFileFormat(dirbuf->d_name, &encoding,
 				  (const char **) &cp);
 	    if (!cp) {
-		if (!strncmp(HTAtom_name(format), "application", 11)) {
+		if (!StrNCmp(HTAtom_name(format), "application", 11)) {
 		    cp = HTAtom_name(format) + 12;
-		    if (!strncmp(cp, "x-", 2))
+		    if (!StrNCmp(cp, "x-", 2))
 			cp += 2;
 		} else
 		    cp = HTAtom_name(format);
@@ -962,12 +962,12 @@ int HTVMSBrowseDir(const char *address,
 		    cp = entry_info->filename;
 		} else {
 		    cp += 4;
-		    if (!strncmp(cp, "ME", 2)) {
+		    if (!StrNCmp(cp, "ME", 2)) {
 			cp += 2;
 			while (cp && *cp && *cp != '.') {
 			    cp++;
 			}
-		    } else if (!strncmp(cp, ".ME", 3)) {
+		    } else if (!StrNCmp(cp, ".ME", 3)) {
 			cp = (entry_info->filename +
 			      strlen(entry_info->filename));
 		    } else {

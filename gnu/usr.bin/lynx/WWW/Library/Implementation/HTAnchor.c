@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTAnchor.c,v 1.63 2009/04/08 19:55:12 tom Exp $
+ * $LynxId: HTAnchor.c,v 1.76 2013/11/28 11:34:24 tom Exp $
  *
  *	Hypertext "Anchor" Object				HTAnchor.c
  *	==========================
@@ -53,7 +53,7 @@ static HASH_TYPE HASH_FUNCTION(const char *cp_address)
     const unsigned char *p;
 
     for (p = (const unsigned char *) cp_address, hash = 0; *p; p++)
-	hash = (int) (hash * 3 + (*(const unsigned char *) p)) % HASH_SIZE;
+	hash = (HASH_TYPE) (hash * 3 + (*(const unsigned char *) p)) % HASH_SIZE;
 
     return (hash);
 }
@@ -79,16 +79,18 @@ static HTList adult_table[HASH_SIZE] =
  *	anchor you are creating : use newWithParent or newWithAddress.
  */
 static HTParentAnchor0 *HTParentAnchor0_new(const char *address,
-					    HASH_TYPE hash)
+					    unsigned hash)
 {
     HTParentAnchor0 *newAnchor = typecalloc(HTParentAnchor0);
 
     if (newAnchor == NULL)
 	outofmem(__FILE__, "HTParentAnchor0_new");
 
+    assert(newAnchor != NULL);
+
     newAnchor->parent = newAnchor;	/* self */
     StrAllocCopy(newAnchor->address, address);
-    newAnchor->adult_hash = hash;
+    newAnchor->adult_hash = (HASH_TYPE) hash;
 
     return (newAnchor);
 }
@@ -99,6 +101,8 @@ static HTParentAnchor *HTParentAnchor_new(HTParentAnchor0 *parent)
 
     if (newAnchor == NULL)
 	outofmem(__FILE__, "HTParentAnchor_new");
+
+    assert(newAnchor != NULL);
 
     newAnchor->parent = parent;	/* cross reference */
     parent->info = newAnchor;	/* cross reference */
@@ -120,6 +124,8 @@ static HTChildAnchor *HTChildAnchor_new(HTParentAnchor0 *parent)
     if (p == NULL)
 	outofmem(__FILE__, "HTChildAnchor_new");
 
+    assert(p != NULL);
+
     p->parent = parent;		/* parent reference */
     return p;
 }
@@ -127,10 +133,12 @@ static HTChildAnchor *HTChildAnchor_new(HTParentAnchor0 *parent)
 static HTChildAnchor *HText_pool_ChildAnchor_new(HTParentAnchor *parent)
 {
     HTChildAnchor *p = (HTChildAnchor *) HText_pool_calloc((HText *) (parent->document),
-							   sizeof(HTChildAnchor));
+							   (unsigned) sizeof(HTChildAnchor));
 
     if (p == NULL)
 	outofmem(__FILE__, "HText_pool_ChildAnchor_new");
+
+    assert(p != NULL);
 
     p->parent = parent->parent;	/* parent reference */
     return p;
@@ -162,7 +170,7 @@ static BOOL HTSEquivalent(const char *s,
 		return (NO);
 	    }
 	}
-	return (HT_EQUIV(*s, *t));
+	return (BOOL) (HT_EQUIV(*s, *t));
     } else {
 	return (BOOL) (s == t);	/* Two NULLs are equivalent, aren't they ? */
     }
@@ -231,7 +239,7 @@ static HTChildAnchor *HTAnchor_findNamedChild(HTParentAnchor0 *parent,
 	     */
 	    HTChildAnchor sample;
 
-	    sample.tag = (char *) tag;	/* for compare_anchors() only */
+	    sample.tag = DeConst(tag);	/* for compare_anchors() only */
 
 	    child = (HTChildAnchor *) HTBTree_search(parent->children, &sample);
 	    if (child != NULL) {
@@ -311,68 +319,72 @@ HTChildAnchor *HTAnchor_findChildAndLink(HTParentAnchor *parent,	/* May not be 0
 	    (ltype == HTInternalLink) ? " (internal link)" : "",
 	    NonNull(href)));
 
-    if (tag && *tag) {
-	child = HTAnchor_findNamedChild(parent->parent, tag);
+    if (parent == 0) {
+	child = 0;
     } else {
-	child = HTAnchor_addChild(parent);
-    }
-
-    if (href && *href) {
-	const char *fragment = NULL;
-	HTParentAnchor0 *dest;
-
-	if (ltype == HTInternalLink && *href == '#') {
-	    dest = parent->parent;
+	if (non_empty(tag)) {
+	    child = HTAnchor_findNamedChild(parent->parent, tag);
 	} else {
-	    const char *relative_to = ((parent->inBASE && *href != '#')
-				       ? parent->content_base
-				       : parent->address);
-	    DocAddress parsed_doc;
-
-	    parsed_doc.address = HTParse(href, relative_to,
-					 PARSE_ALL_WITHOUT_ANCHOR);
-
-	    parsed_doc.post_data = NULL;
-	    parsed_doc.post_content_type = NULL;
-	    if (ltype && parent->post_data && ltype == HTInternalLink) {
-		/* for internal links, find a destination with the same
-		   post data if the source of the link has post data. - kw
-		   Example: LYNXIMGMAP: */
-		parsed_doc.post_data = parent->post_data;
-		parsed_doc.post_content_type = parent->post_content_type;
-	    }
-	    parsed_doc.bookmark = NULL;
-	    parsed_doc.isHEAD = FALSE;
-	    parsed_doc.safe = FALSE;
-
-	    dest = HTAnchor_findAddress_in_adult_table(&parsed_doc);
-	    FREE(parsed_doc.address);
+	    child = HTAnchor_addChild(parent);
 	}
 
-	/*
-	 * [from HTAnchor_findAddress()]
-	 * If the address represents a sub-anchor, we load its parent (above),
-	 * then we create a named child anchor within that parent.
-	 */
-	fragment = (*href == '#') ? href + 1 : HTParseAnchor(href);
+	if (non_empty(href)) {
+	    const char *fragment = NULL;
+	    HTParentAnchor0 *dest;
 
-	if (*fragment)
-	    dest = (HTParentAnchor0 *) HTAnchor_findNamedChild(dest, fragment);
+	    if (ltype == HTInternalLink && *href == '#') {
+		dest = parent->parent;
+	    } else {
+		const char *relative_to = ((parent->inBASE && *href != '#')
+					   ? parent->content_base
+					   : parent->address);
+		DocAddress parsed_doc;
 
-	if (tag && *tag) {
-	    if (child->dest) {	/* DUPLICATE_ANCHOR_NAME_WORKAROUND  - kw */
-		CTRACE((tfp,
-			"*** Duplicate ChildAnchor %p named `%s'",
-			(void *) child, tag));
-		if ((HTAnchor *) dest != child->dest || ltype != child->type) {
+		parsed_doc.address = HTParse(href, relative_to,
+					     PARSE_ALL_WITHOUT_ANCHOR);
+
+		parsed_doc.post_data = NULL;
+		parsed_doc.post_content_type = NULL;
+		if (ltype && parent->post_data && ltype == HTInternalLink) {
+		    /* for internal links, find a destination with the same
+		       post data if the source of the link has post data. - kw
+		       Example: LYNXIMGMAP: */
+		    parsed_doc.post_data = parent->post_data;
+		    parsed_doc.post_content_type = parent->post_content_type;
+		}
+		parsed_doc.bookmark = NULL;
+		parsed_doc.isHEAD = FALSE;
+		parsed_doc.safe = FALSE;
+
+		dest = HTAnchor_findAddress_in_adult_table(&parsed_doc);
+		FREE(parsed_doc.address);
+	    }
+
+	    /*
+	     * [from HTAnchor_findAddress()]
+	     * If the address represents a sub-anchor, we load its parent (above),
+	     * then we create a named child anchor within that parent.
+	     */
+	    fragment = (*href == '#') ? href + 1 : HTParseAnchor(href);
+
+	    if (*fragment)
+		dest = (HTParentAnchor0 *) HTAnchor_findNamedChild(dest, fragment);
+
+	    if (tag && *tag) {
+		if (child->dest) {	/* DUPLICATE_ANCHOR_NAME_WORKAROUND  - kw */
 		    CTRACE((tfp,
-			    ", different dest %p or type, creating unnamed child\n",
-			    (void *) child->dest));
-		    child = HTAnchor_addChild(parent);
+			    "*** Duplicate ChildAnchor %p named `%s'",
+			    (void *) child, tag));
+		    if ((HTAnchor *) dest != child->dest || ltype != child->type) {
+			CTRACE((tfp,
+				", different dest %p or type, creating unnamed child\n",
+				(void *) child->dest));
+			child = HTAnchor_addChild(parent);
+		    }
 		}
 	    }
+	    HTAnchor_link(child, (HTAnchor *) dest, ltype);
 	}
-	HTAnchor_link(child, (HTAnchor *) dest, ltype);
     }
     return child;
 }
@@ -399,7 +411,6 @@ HTParentAnchor *HTAnchor_findAddress(const DocAddress *newdoc)
     if (*tag) {
 	DocAddress parsed_doc;
 	HTParentAnchor0 *foundParent;
-	HTChildAnchor *foundAnchor;
 
 	parsed_doc.address = HTParse(newdoc->address, "",
 				     PARSE_ALL_WITHOUT_ANCHOR);
@@ -410,7 +421,7 @@ HTParentAnchor *HTAnchor_findAddress(const DocAddress *newdoc)
 	parsed_doc.safe = newdoc->safe;
 
 	foundParent = HTAnchor_findAddress_in_adult_table(&parsed_doc);
-	foundAnchor = HTAnchor_findNamedChild(foundParent, tag);
+	(void) HTAnchor_findNamedChild(foundParent, tag);
 	FREE(parsed_doc.address);
 	return HTAnchor_parent((HTAnchor *) foundParent);
     }
@@ -500,7 +511,7 @@ HTParentAnchor *HTAnchor_findSimpleAddress(const char *url)
 {
     DocAddress urldoc;
 
-    urldoc.address = (char *) url;	/* ignore warning, it IS treated like const - kw */
+    urldoc.address = DeConst(url);	/* ignore warning, it IS treated like const - kw */
     urldoc.post_data = NULL;
     urldoc.post_content_type = NULL;
     urldoc.bookmark = NULL;
@@ -578,7 +589,9 @@ static void deleteLinks(HTChildAnchor *me)
 	 * Recursive call.  Test here to avoid calling overhead.  Don't delete
 	 * if document is loaded or being loaded.
 	 */
-	if ((me->parent != parent) && !parent->underway &&
+	if ((me->parent != parent) &&
+	    parent != NULL &&
+	    !parent->underway &&
 	    (!parent->info || !parent->info->document)) {
 	    HTAnchor_delete(parent);
 	}
@@ -765,7 +778,7 @@ static void HTParentAnchor_free(HTParentAnchor *me)
 
 	if ((fd = fopen(me->FileCache, "r")) != NULL) {
 	    fclose(fd);
-	    remove(me->FileCache);
+	    (void) remove(me->FileCache);
 	}
 	FREE(me->FileCache);
     }
@@ -814,7 +827,7 @@ void HTAnchor_clearSourceCache(HTParentAnchor *me)
     if (me->source_cache_file) {
 	CTRACE((tfp, "SourceCache: Removing file %s\n",
 		me->source_cache_file));
-	LYRemoveTemp(me->source_cache_file);
+	(void) LYRemoveTemp(me->source_cache_file);
 	FREE(me->source_cache_file);
     }
     if (me->source_cache_chunk) {
@@ -870,6 +883,22 @@ char *HTAnchor_address(HTAnchor * me)
     return (addr);
 }
 
+char *HTAnchor_short_address(HTAnchor * me)
+{
+    const char chop[] = "file://localhost/";
+    char *addr = HTAnchor_address(me);
+
+    if (!strncmp(addr, chop, sizeof(chop) - 1)) {
+	char *a = addr + 7;
+	char *b = addr + sizeof(chop) - 2;
+
+	while ((*a++ = *b++) != '\0') {
+	    ;
+	}
+    }
+    return addr;
+}
+
 void HTAnchor_setFormat(HTParentAnchor *me,
 			HTFormat form)
 {
@@ -901,9 +930,9 @@ void HTAnchor_setPrompt(HTParentAnchor *me,
 
 BOOL HTAnchor_isIndex(HTParentAnchor *me)
 {
-    return (me
-	    ? (BOOL) me->isIndex
-	    : NO);
+    return (BOOL) (me
+		   ? me->isIndex
+		   : NO);
 }
 
 /*	Whether Anchor has been designated as an ISMAP link
@@ -911,9 +940,9 @@ BOOL HTAnchor_isIndex(HTParentAnchor *me)
  */
 BOOL HTAnchor_isISMAPScript(HTAnchor * me)
 {
-    return ((me && me->parent->info)
-	    ? (BOOL) me->parent->info->isISMAPScript
-	    : NO);
+    return (BOOL) ((me && me->parent->info)
+		   ? me->parent->info->isISMAPScript
+		   : NO);
 }
 
 #if defined(USE_COLOR_STYLE)
@@ -1225,6 +1254,29 @@ void HTAnchor_setPhysical(HTParentAnchor *me,
     }
 }
 
+#ifdef DEBUG
+static void show_stages(HTParentAnchor *me, const char *tag, int which_stage)
+{
+    int j;
+
+    CTRACE((tfp, "Stages %s*%s", NonNull(me->charset), tag));
+    for (j = 0; j < UCT_STAGEMAX; j++) {
+	CTRACE((tfp, " "));
+	if (j == which_stage)
+	    CTRACE((tfp, "("));
+	CTRACE((tfp, "%d:%d:%s",
+		j,
+		me->UCStages->s[j].LYhndl,
+		NonNull(me->UCStages->s[j].C.MIMEname)));
+	if (j == which_stage)
+	    CTRACE((tfp, ")"));
+    }
+    CTRACE((tfp, "\n"));
+}
+#else
+#define show_stages(me,tag,which_stage)		/* nothing */
+#endif
+
 /*
  *  We store charset info in the HTParentAnchor object, for several
  *  "stages".  (See UCDefs.h)
@@ -1252,39 +1304,45 @@ void HTAnchor_setPhysical(HTParentAnchor *me,
 LYUCcharset *HTAnchor_getUCInfoStage(HTParentAnchor *me,
 				     int which_stage)
 {
-    if (me && !me->UCStages) {
-	int i;
-	int chndl = UCLYhndl_for_unspec;	/* always >= 0 */
-	UCAnchorInfo *stages = typecalloc(UCAnchorInfo);
+    LYUCcharset *result = NULL;
 
-	if (stages == NULL)
-	    outofmem(__FILE__, "HTAnchor_getUCInfoStage");
-	for (i = 0; i < UCT_STAGEMAX; i++) {
-	    stages->s[i].C.MIMEname = "";
-	    stages->s[i].LYhndl = -1;
-	}
-	if (me->charset) {
-	    chndl = UCGetLYhndl_byMIME(me->charset);
-	    if (chndl < 0)
-		chndl = UCLYhndl_for_unrec;
-	    if (chndl < 0)
-		/*
-		 * UCLYhndl_for_unrec not defined :-(
-		 * fallback to UCLYhndl_for_unspec which always valid.
-		 */
-		chndl = UCLYhndl_for_unspec;	/* always >= 0 */
-	}
-	memcpy(&stages->s[UCT_STAGE_MIME].C, &LYCharSet_UC[chndl],
-	       sizeof(LYUCcharset));
-
-	stages->s[UCT_STAGE_MIME].lock = UCT_SETBY_DEFAULT;
-	stages->s[UCT_STAGE_MIME].LYhndl = chndl;
-	me->UCStages = stages;
-    }
     if (me) {
-	return (&me->UCStages->s[which_stage].C);
+	if (!me->UCStages) {
+	    int i;
+	    int chndl = UCLYhndl_for_unspec;	/* always >= 0 */
+	    UCAnchorInfo *stages = typecalloc(UCAnchorInfo);
+
+	    if (stages == NULL)
+		outofmem(__FILE__, "HTAnchor_getUCInfoStage");
+
+	    assert(stages != NULL);
+
+	    for (i = 0; i < UCT_STAGEMAX; i++) {
+		stages->s[i].C.MIMEname = "";
+		stages->s[i].LYhndl = -1;
+	    }
+	    if (me->charset) {
+		chndl = UCGetLYhndl_byMIME(me->charset);
+		if (chndl < 0)
+		    chndl = UCLYhndl_for_unrec;
+		if (chndl < 0)
+		    /*
+		     * UCLYhndl_for_unrec not defined :-(
+		     * fallback to UCLYhndl_for_unspec which always valid.
+		     */
+		    chndl = UCLYhndl_for_unspec;	/* always >= 0 */
+	    }
+	    MemCpy(&stages->s[UCT_STAGE_MIME].C, &LYCharSet_UC[chndl],
+		   sizeof(LYUCcharset));
+
+	    stages->s[UCT_STAGE_MIME].lock = UCT_SETBY_DEFAULT;
+	    stages->s[UCT_STAGE_MIME].LYhndl = chndl;
+	    me->UCStages = stages;
+	}
+	result = (&me->UCStages->s[which_stage].C);
+	show_stages(me, "_getUCInfoStage", which_stage);
     }
-    return (NULL);
+    return (result);
 }
 
 int HTAnchor_getUCLYhndl(HTParentAnchor *me,
@@ -1340,7 +1398,7 @@ LYUCcharset *HTAnchor_setUCInfoStage(HTParentAnchor *me,
 	    me->UCStages->s[which_stage].lock = set_by;
 	    me->UCStages->s[which_stage].LYhndl = LYhndl;
 	    if (LYhndl >= 0) {
-		memcpy(p, &LYCharSet_UC[LYhndl], sizeof(LYUCcharset));
+		MemCpy(p, &LYCharSet_UC[LYhndl], sizeof(LYUCcharset));
 
 #ifdef CAN_SWITCH_DISPLAY_CHARSET
 		/* Allow a switch to a more suitable display charset */
@@ -1350,6 +1408,7 @@ LYUCcharset *HTAnchor_setUCInfoStage(HTParentAnchor *me,
 	    } else {
 		p->UChndl = -1;
 	    }
+	    show_stages(me, "_setUCInfoStage", which_stage);
 	    return (p);
 	}
     }
@@ -1361,21 +1420,25 @@ LYUCcharset *HTAnchor_resetUCInfoStage(HTParentAnchor *me,
 				       int which_stage,
 				       int set_by)
 {
+    LYUCcharset *result = NULL;
     int ohandle;
 
-    if (!me || !me->UCStages)
-	return (NULL);
-    me->UCStages->s[which_stage].lock = set_by;
-    ohandle = me->UCStages->s[which_stage].LYhndl;
-    me->UCStages->s[which_stage].LYhndl = LYhndl;
+    if (me && me->UCStages) {
+	me->UCStages->s[which_stage].lock = set_by;
+	ohandle = me->UCStages->s[which_stage].LYhndl;
+	me->UCStages->s[which_stage].LYhndl = LYhndl;
 #ifdef CAN_SWITCH_DISPLAY_CHARSET
-    /* Allow a switch to a more suitable display charset */
-    if (LYhndl >= 0 && LYhndl != ohandle && which_stage == UCT_STAGE_PARSER)
-	setup_switch_display_charset(me, LYhndl);
+	/* Allow a switch to a more suitable display charset */
+	if (LYhndl >= 0 && LYhndl != ohandle
+	    && which_stage == UCT_STAGE_PARSER)
+	    setup_switch_display_charset(me, LYhndl);
 #else
-    (void) ohandle;
+	(void) ohandle;
 #endif
-    return (&me->UCStages->s[which_stage].C);
+	show_stages(me, "_resetUCInfoStage", which_stage);
+	result = (&me->UCStages->s[which_stage].C);
+    }
+    return result;
 }
 
 /*
@@ -1416,7 +1479,7 @@ LYUCcharset *HTAnchor_copyUCInfoStage(HTParentAnchor *me,
 					     me->UCStages->s[to_stage].LYhndl);
 #endif
 	    if (p_to != p_from)
-		memcpy(p_to, p_from, sizeof(LYUCcharset));
+		MemCpy(p_to, p_from, sizeof(LYUCcharset));
 
 	    return (p_to);
 	}

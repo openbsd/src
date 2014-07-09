@@ -1,6 +1,6 @@
 /*
- * $LynxId: tidy_tls.h,v 1.1 2008/04/27 22:50:39 tom Exp $
- * Copyright 2008, Thomas E. Dickey
+ * $LynxId: tidy_tls.h,v 1.4 2014/01/11 17:09:33 tom Exp $
+ * Copyright 2008-2011,2014 Thomas E. Dickey
  */
 #ifndef TIDY_TLS_H
 #define TIDY_TLS_H
@@ -41,7 +41,7 @@ typedef struct _SSL SSL;
 typedef gnutls_datum_t X509;
 
 typedef struct {
-    gnutls_connection_end_t connend;
+    unsigned connend;
     struct {
 	int protocol[GNUTLS_MAX_ALGORITHM_NUM];
 	int encrypts[GNUTLS_MAX_ALGORITHM_NUM];
@@ -103,12 +103,12 @@ struct _SSL {
 /* use either SSL_VERIFY_NONE or SSL_VERIFY_PEER, the last 2 options
  * are 'ored' with SSL_VERIFY_PEER if they are desired */
 #define SSL_VERIFY_PEER			0x01
-
+/* *INDENT-OFF* */
 extern SSL *SSL_new(SSL_CTX * ctx);
 extern SSL_CIPHER *SSL_get_current_cipher(SSL * ssl);
 extern SSL_CTX *SSL_CTX_new(SSL_METHOD * method);
 extern SSL_METHOD *SSLv23_client_method(void);
-extern X509 *SSL_get_peer_certificate(SSL * ssl);
+extern const X509 *SSL_get_peer_certificate(SSL * ssl);
 extern X509_NAME *X509_get_issuer_name(const X509 * cert);
 extern X509_NAME *X509_get_subject_name(const X509 * cert);
 extern char *X509_NAME_oneline(X509_NAME * name, char *buf, int len);
@@ -134,5 +134,6 @@ extern void SSL_CTX_free(SSL_CTX * ctx);
 extern void SSL_CTX_set_verify(SSL_CTX * ctx, int verify_mode, int (*verify_callback) (int, X509_STORE_CTX *));
 extern void SSL_free(SSL * ssl);
 extern void SSL_load_error_strings(void);
+/* *INDENT-ON* */
 
 #endif /* TIDY_TLS_H */

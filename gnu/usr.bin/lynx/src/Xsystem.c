@@ -1,27 +1,9 @@
-/* $Id: Xsystem.c,v 1.5 2011/07/22 14:10:39 avsm Exp $
+/* $LynxId: Xsystem.c,v 1.28 2013/11/29 00:22:00 tom Exp $
  *	like system("cmd") but return with exit code of "cmd"
  *	for Turbo-C/MS-C/LSI-C
  *  This code is in the public domain.
  *
- * $Log: Xsystem.c,v $
- * Revision 1.5  2011/07/22 14:10:39  avsm
- * update to lynx2.8.7rel.2, with local patches:
- * - restore local lynx.cfg settings [avsm]
- * - fix makefile races [espie]
- * - read/write result checking fixes to avoid unsigned comparisons vs -1 [krw]
- * - initialize all the InputFieldData members correctly [fgsch]
- * - fix socklen_t test to include <sys/types.h> [miod]
- * - fgets(3) returns NULL on error, not 0. No functional change [cloder]
- *
- * ok krw@, tests by Simon Kuhnle and Martin Pieuchot
- *
- * Revision 1.4  2009/05/31 09:16:52  avsm
- * Update to lynx-2.8.6.rel5, with our local patches maintained where relevant.
- * tests from miod@ sthen@ jmc@ jsing@
- * two additional fixes from miod:
- * - fix uninitialized stack variable use, leading to occasional crash.
- * - modify the socklen_t test to include <sys/types.h>, fixes gcc2 build failures
- *
+ * @Log: xsystem.c,v @
  *
  * Revision 1.14  1997/10/17 (Fri) 16:28:24  senshu
  * *** for Win32 version ***
@@ -141,7 +123,7 @@ static int NEAR is_builtin_command(char *s)
 	if (strcasecomp(s, cmdtab[i]) == 0)
 	    return 1;
 	lc = strlen(cmdtab[i]);
-	if (lc < l && strnicmp(s, cmdtab[i], lc) == 0 && issep2(s[lc]))
+	if (lc < l && strncasecomp(s, cmdtab[i], lc) == 0 && issep2(s[lc]))
 	    return 1;
     }
     return 0;
@@ -312,17 +294,17 @@ static int NEAR try3(char *cnm, PRO * p, int flag)
     char cmdb[STR_MAX];
     int rc;
 
-    sprintf(cmdb, "%.*s.com", sizeof(cmdb) - 5, cnm);
+    sprintf(cmdb, "%.*s.com", (int) sizeof(cmdb) - 5, cnm);
     if ((rc = open(cmdb, O_RDONLY)) >= 0) {
 	close(rc);
 	return spawnl(flag, cmdb, cmdb, p->arg, (char *) 0);
     }
-    sprintf(cmdb, "%.*s.exe", sizeof(cmdb) - 5, cnm);
+    sprintf(cmdb, "%.*s.exe", (int) sizeof(cmdb) - 5, cnm);
     if ((rc = open(cmdb, O_RDONLY)) >= 0) {
 	close(rc);
 	return spawnl(flag, cmdb, cmdb, p->arg, (char *) 0);
     }
-    sprintf(cmdb, "%.*s.bat", sizeof(cmdb) - 5, cnm);
+    sprintf(cmdb, "%.*s.bat", (int) sizeof(cmdb) - 5, cnm);
     if ((rc = open(cmdb, O_RDONLY)) >= 0) {
 	close(rc);
 	return csystem(p, flag);
@@ -353,7 +335,7 @@ static int NEAR prog_go(PRO * p, int flag)
 
     if (s < p->cmd) {		/* cmd has no PATH nor Drive */
 	ep = LYGetEnv("PATH");
-	LYstrncpy(cmdb, p->cmd, sizeof(cmdb) - 1);
+	LYStrNCpy(cmdb, p->cmd, sizeof(cmdb) - 1);
 	for (;;) {
 	    if (extp) {		/* has extension */
 		if ((rc = open(cmdb, O_RDONLY)) >= 0) {
@@ -376,7 +358,7 @@ static int NEAR prog_go(PRO * p, int flag)
 		if (i > 0 && lc != ':' && lc != '\\' && lc != '/')
 		    cmdb[i++] = '\\';
 		cmdb[i] = 0;
-		LYstrncpy(cmdb + i, p->cmd, sizeof(cmdb) - 1 - i);
+		LYStrNCpy(cmdb + i, p->cmd, sizeof(cmdb) - 1 - i);
 	    } else {
 		if (rc == -2)
 		    return rc;
@@ -403,7 +385,7 @@ static char *NEAR tmpf(char *tp)
     int i;
 
     if ((ev = LYGetEnv("TMP")) != 0) {
-	LYstrncpy(tplate, ev, sizeof(tplate) - 2 - strlen(tp));
+	LYStrNCpy(tplate, ev, sizeof(tplate) - 2 - strlen(tp));
 	i = strlen(ev);
 	if (i && ev[i - 1] != '\\' && ev[i - 1] != '/')
 	    strcat(tplate, "\\");
@@ -546,13 +528,10 @@ int xsystem(char *cmd)
     return rc < 0 ? 0xFF00 : rc;
 }
 
-int exec_command(char *cmd, int wait_flag GCC_UNUSED)
+int exec_command(char *cmd, int wait_flag)
 {
     int rc;
 
-#if defined(__MINGW32__)
-    rc = system(cmd);
-#else
     PRO *p;
     char *pif;
     int cmd_str;
@@ -586,7 +565,6 @@ int exec_command(char *cmd, int wait_flag GCC_UNUSED)
     else
 	rc = prog_go(p, P_NOWAIT);
 
-#endif
     return rc;
 }
 

@@ -1,4 +1,4 @@
-/* $LynxId: parsdate.h,v 1.1 2008/06/29 23:23:45 tom Exp $ */
+/* $LynxId: parsdate.h,v 1.2 2010/10/31 17:56:22 tom Exp $ */
 #ifndef PARSDATE_H
 #define PARSDATE_H
 
@@ -7,7 +7,7 @@ extern "C" {
 #endif
 #include <LYUtils.h>
 #define ARRAY_SIZE(array)       ((int) (sizeof(array) / sizeof(array[0])))
-     typedef struct _TIMEINFO {
+    typedef struct _TIMEINFO {
 	time_t time;
 	long usec;
 	long tzone;

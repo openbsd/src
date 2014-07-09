@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTList.c,v 1.17 2008/09/18 21:36:59 tom Exp $
+ * $LynxId: HTList.c,v 1.19 2013/01/04 00:31:27 tom Exp $
  *
  *	A small List class					      HTList.c
  *	==================
@@ -22,6 +22,8 @@ HTList *HTList_new(void)
 
     if ((newList = typeMalloc(HTList)) == NULL)
 	  outofmem(__FILE__, "HTList_new");
+
+    assert(newList != NULL);
 
     newList->object = NULL;
     newList->next = NULL;
@@ -132,6 +134,8 @@ void HTList_addObject(HTList *me, void *newObject)
 	if ((newNode = typeMalloc(HTList)) == NULL)
 	      outofmem(__FILE__, "HTList_addObject");
 
+	assert(newNode != NULL);
+
 	newNode->object = newObject;
 	newNode->next = me->next;
 	me->next = newNode;
@@ -187,6 +191,8 @@ void HTList_insertObjectAt(HTList *me, void *newObject,
 	if (Pos == 0) {
 	    if ((newNode = typeMalloc(HTList)) == NULL)
 		  outofmem(__FILE__, "HTList_addObjectAt");
+
+	    assert(newNode != NULL);
 
 	    newNode->object = newObject;
 	    newNode->next = temp;
@@ -257,23 +263,23 @@ void *HTList_removeObjectAt(HTList *me, int position)
     HTList *temp = me;
     HTList *prevNode;
     int pos = position;
+    void *result = NULL;
 
-    if (!temp || pos < 0)
-	return NULL;
-
-    prevNode = temp;
-    while ((temp = temp->next)) {
-	if (pos == 0) {
-	    prevNode->next = temp->next;
-	    prevNode = temp;
-	    FREE(temp);
-	    return prevNode->object;
-	}
+    if (temp != NULL && pos >= 0) {
 	prevNode = temp;
-	pos--;
+	while ((temp = temp->next) != NULL) {
+	    if (pos == 0) {
+		prevNode->next = temp->next;
+		result = temp->object;
+		FREE(temp);
+		break;
+	    }
+	    prevNode = temp;
+	    pos--;
+	}
     }
 
-    return NULL;		/* Reached the end of the list */
+    return result;
 }
 
 /*	Unlink object from START of list (the Last one inserted

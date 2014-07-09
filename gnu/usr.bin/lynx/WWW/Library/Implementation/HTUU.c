@@ -1,5 +1,7 @@
-
-/* MODULE							HTUU.c
+/*
+ * $LynxId: HTUU.c,v 1.11 2010/09/21 23:55:12 tom Exp $
+ *
+ * MODULE							HTUU.c
  *			UUENCODE AND UUDECODE
  *
  * ACKNOWLEDGEMENT:
@@ -28,10 +30,6 @@
  *  Mark Riordan   12 August 1990 and 17 Feb 1991.
  *  This code is hereby placed in the public domain.
  * -------------------------------------------------------------
- *
- * BUGS:
- *
- *
  */
 
 #include <HTUtils.h>
@@ -71,14 +69,14 @@ static unsigned char pr2six[256];
  *             Returns the number of ASCII characters in "bufcoded".
  */
 int HTUU_encode(unsigned char *bufin,
-		unsigned int nbytes,
+		size_t nbytes,
 		char *bufcoded)
 {
 /* ENC is the basic 1 character encoding function to make a char printing */
 #define ENC(c) six2pr[c]
 
     register char *outptr = bufcoded;
-    unsigned int i;
+    size_t i;
 
     /* This doesn't seem to be needed (AL):   register unsigned char *inptr  = bufin; */
 
@@ -103,7 +101,7 @@ int HTUU_encode(unsigned char *bufin,
 	outptr[-2] = '=';
     }
     *outptr = '\0';
-    return (outptr - bufcoded);
+    return (int) (outptr - bufcoded);
 }
 
 /*--- function HTUU_decode ------------------------------------------------
@@ -136,7 +134,7 @@ int HTUU_decode(char *bufcoded,
     static int first = 1;
 
     int nbytesdecoded, j;
-    register char *bufin = bufcoded;
+    register char *bufin;
     register unsigned char *bufout = bufplain;
     register int nprbytes;
 
@@ -184,7 +182,7 @@ int HTUU_decode(char *bufcoded,
      */
     bufin = bufcoded;
     while (pr2six[UCH(*(bufin++))] <= MAXVAL) ;
-    nprbytes = bufin - bufcoded - 1;
+    nprbytes = (int) (bufin - bufcoded - 1);
     nbytesdecoded = ((nprbytes + 3) / 4) * 3;
     if (nbytesdecoded > outbufsize) {
 	nprbytes = (outbufsize * 4) / 3;

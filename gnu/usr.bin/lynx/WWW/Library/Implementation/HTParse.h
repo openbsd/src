@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTParse.h,v 1.19 2008/12/14 15:31:47 tom Exp $
+ * $LynxId: HTParse.h,v 1.21 2010/09/24 22:45:23 tom Exp $
  *				HTParse:  URL parsing in the WWW Library
  *				HTPARSE
  *
@@ -139,7 +139,7 @@ extern "C" {
  *	Unlike HTUnEscape(), this routine returns a malloc'd string.
  */
     extern char *HTEscape(const char *str,
-			  unsigned char mask);
+			  unsigned mask);
 
 /*		Escape unsafe characters using %		HTEscapeUnsafe()
  *		--------------------------------
@@ -165,7 +165,7 @@ extern "C" {
  *	Unlike HTUnEscape(), this routine returns a malloc'd string.
  */
     extern char *HTEscapeSP(const char *str,
-			    unsigned char mask);
+			    unsigned mask);
 
 /*	Decode %xx escaped characters.				HTUnEscape()
  *	------------------------------

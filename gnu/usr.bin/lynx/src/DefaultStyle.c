@@ -1,4 +1,7 @@
-/*	A real style sheet for the Character Grid browser
+/*
+ * $LynxId: DefaultStyle.c,v 1.20 2009/11/27 13:04:27 tom Exp $
+ *
+ *	A real style sheet for the Character Grid browser
  *
  *	The dimensions are all in characters!
  */
@@ -47,377 +50,385 @@ static const HTTabStop tabs_8[] =
  */
 
 static HTStyle HTStyleNormal =
-{
-    0, "Normal", ST_Normal, "P",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    3, 3, 6, HT_LEFT, 1, 0, tabs_8,
-    YES, YES, 1, 0, 0};
+HTStyleInit(
+	       0, Normal, "P",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       3, 3, 6, HT_LEFT, 1, 0, tabs_8,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleDivCenter =
-{
-    &HTStyleNormal, "DivCenter", ST_DivCenter, "DCENTER",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    3, 3, 6, HT_CENTER, 1, 0, tabs_8,
-    YES, YES, 1, 0, 0};
+HTStyleInit(
+	       &HTStyleNormal, DivCenter, "DCENTER",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       3, 3, 6, HT_CENTER, 1, 0, tabs_8,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleDivLeft =
-{
-    &HTStyleDivCenter, "DivLeft", ST_DivLeft, "DLEFT",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    3, 3, 6, HT_LEFT, 1, 0, tabs_8,
-    YES, YES, 1, 0, 0};
+HTStyleInit(
+	       &HTStyleDivCenter, DivLeft, "DLEFT",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       3, 3, 6, HT_LEFT, 1, 0, tabs_8,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleDivRight =
-{
-    &HTStyleDivLeft, "DivRight", ST_DivRight, "DRIGHT",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    3, 3, 6, HT_RIGHT, 1, 0, tabs_8,
-    YES, YES, 1, 0, 0};
+HTStyleInit(
+	       &HTStyleDivLeft, DivRight, "DRIGHT",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       3, 3, 6, HT_RIGHT, 1, 0, tabs_8,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleBanner =
-{
-    &HTStyleDivRight, "Banner", ST_Banner, "BANNER",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    3, 3, 6, HT_LEFT, 1, 0, tabs_8,
-    YES, YES, 1, 0, 0};
+HTStyleInit(
+	       &HTStyleDivRight, Banner, "BANNER",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       3, 3, 6, HT_LEFT, 1, 0, tabs_8,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleBlockquote =
-{
-    &HTStyleBanner, "Blockquote", ST_Blockquote, "BLOCKQUOTE",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    5, 5, 7, HT_LEFT, 1, 0, tabs_8,
-    YES, YES, 1, 0, 0};
+HTStyleInit(
+	       &HTStyleBanner, Blockquote, "BLOCKQUOTE",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       5, 5, 7, HT_LEFT, 1, 0, tabs_8,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleBq =
-{				/* HTML 3.0 BLOCKQUOTE - FM */
-    &HTStyleBlockquote, "Bq", ST_Bq, "BQ",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    5, 5, 7, HT_LEFT, 1, 0, tabs_8,
-    YES, YES, 1, 0, 0};
+HTStyleInit(			/* HTML 3.0 BLOCKQUOTE - FM */
+	       &HTStyleBlockquote, Bq, "BQ",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       5, 5, 7, HT_LEFT, 1, 0, tabs_8,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleFootnote =
-{				/* HTML 3.0 FN - FM */
-    &HTStyleBq, "Footnote", ST_Footnote, "FN",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    5, 5, 7, HT_LEFT, 1, 0, tabs_8,
-    YES, YES, 1, 0, 0};
+HTStyleInit(			/* HTML 3.0 FN - FM */
+	       &HTStyleBq, Footnote, "FN",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       5, 5, 7, HT_LEFT, 1, 0, tabs_8,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleList =
-{
-    &HTStyleFootnote, "List", ST_List, "UL",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    3, 7, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0};
+HTStyleInit(
+	       &HTStyleFootnote, List, "UL",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       3, 7, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0);
 
 static HTStyle HTStyleList1 =
-{
-    &HTStyleList, "List1", ST_List1, "UL",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    8, 12, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0};
+HTStyleInit(
+	       &HTStyleList, List1, "UL",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       8, 12, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0);
 
 static HTStyle HTStyleList2 =
-{
-    &HTStyleList1, "List2", ST_List2, "UL",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    13, 17, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0};
+HTStyleInit(
+	       &HTStyleList1, List2, "UL",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       13, 17, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0);
 
 static HTStyle HTStyleList3 =
-{
-    &HTStyleList2, "List3", ST_List3, "UL",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    18, 22, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0};
+HTStyleInit(
+	       &HTStyleList2, List3, "UL",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       18, 22, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0);
 
 static HTStyle HTStyleList4 =
-{
-    &HTStyleList3, "List4", ST_List4, "UL",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    23, 27, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0};
+HTStyleInit(
+	       &HTStyleList3, List4, "UL",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       23, 27, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0);
 
 static HTStyle HTStyleList5 =
-{
-    &HTStyleList4, "List5", ST_List5, "UL",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    28, 32, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0};
+HTStyleInit(
+	       &HTStyleList4, List5, "UL",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       28, 32, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0);
 
 static HTStyle HTStyleList6 =
-{
-    &HTStyleList5, "List6", ST_List6, "UL",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    33, 37, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0};
+HTStyleInit(
+	       &HTStyleList5, List6, "UL",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       33, 37, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0);
 
 static HTStyle HTStyleMenu =
-{
-    &HTStyleList6, "Menu", ST_Menu, "MENU",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    3, 7, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleList6, Menu, "MENU",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       3, 7, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0
+);
 
 static HTStyle HTStyleMenu1 =
-{
-    &HTStyleMenu, "Menu1", ST_Menu1, "MENU",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    8, 12, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleMenu, Menu1, "MENU",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       8, 12, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0
+);
 
 static HTStyle HTStyleMenu2 =
-{
-    &HTStyleMenu1, "Menu2", ST_Menu2, "MENU",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    13, 17, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleMenu1, Menu2, "MENU",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       13, 17, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0
+);
 
 static HTStyle HTStyleMenu3 =
-{
-    &HTStyleMenu2, "Menu3", ST_Menu3, "MENU",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    18, 22, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleMenu2, Menu3, "MENU",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       18, 22, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0
+);
 
 static HTStyle HTStyleMenu4 =
-{
-    &HTStyleMenu3, "Menu4", ST_Menu4, "MENU",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    23, 27, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleMenu3, Menu4, "MENU",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       23, 27, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0
+);
 
 static HTStyle HTStyleMenu5 =
-{
-    &HTStyleMenu4, "Menu5", ST_Menu5, "MENU",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    28, 33, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleMenu4, Menu5, "MENU",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       28, 33, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0
+);
 
 static HTStyle HTStyleMenu6 =
-{
-    &HTStyleMenu5, "Menu6", ST_Menu6, "MENU",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    33, 38, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleMenu5, Menu6, "MENU",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       33, 38, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0
+);
 
 static HTStyle HTStyleGlossary =
-{
-    &HTStyleMenu6, "Glossary", ST_Glossary, "DL",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    3, 10, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 1, 1, 0
-};
+HTStyleInit(
+	       &HTStyleMenu6, Glossary, "DL",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       3, 10, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 1, 1, 0
+);
 
 static HTStyle HTStyleGlossary1 =
-{
-    &HTStyleGlossary, "Glossary1", ST_Glossary1, "DL",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    8, 16, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 1, 1, 0
-};
+HTStyleInit(
+	       &HTStyleGlossary, Glossary1, "DL",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       8, 16, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 1, 1, 0
+);
 
 static HTStyle HTStyleGlossary2 =
-{
-    &HTStyleGlossary1, "Glossary2", ST_Glossary2, "DL",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    14, 22, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 1, 1, 0
-};
+HTStyleInit(
+	       &HTStyleGlossary1, Glossary2, "DL",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       14, 22, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 1, 1, 0
+);
 
 static HTStyle HTStyleGlossary3 =
-{
-    &HTStyleGlossary2, "Glossary3", ST_Glossary3, "DL",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    20, 28, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 1, 1, 0
-};
+HTStyleInit(
+	       &HTStyleGlossary2, Glossary3, "DL",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       20, 28, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 1, 1, 0
+);
 
 static HTStyle HTStyleGlossary4 =
-{
-    &HTStyleGlossary3, "Glossary4", ST_Glossary4, "DL",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    26, 34, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 1, 1, 0
-};
+HTStyleInit(
+	       &HTStyleGlossary3, Glossary4, "DL",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       26, 34, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 1, 1, 0
+);
 
 static HTStyle HTStyleGlossary5 =
-{
-    &HTStyleGlossary4, "Glossary5", ST_Glossary5, "DL",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    32, 40, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 1, 1, 0
-};
+HTStyleInit(
+	       &HTStyleGlossary4, Glossary5, "DL",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       32, 40, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 1, 1, 0
+);
 
 static HTStyle HTStyleGlossary6 =
-{
-    &HTStyleGlossary5, "Glossary6", ST_Glossary6, "DL",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    38, 46, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 1, 1, 0
-};
+HTStyleInit(
+	       &HTStyleGlossary5, Glossary6, "DL",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       38, 46, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 1, 1, 0
+);
 
 static HTStyle HTStyleGlossaryCompact =
-{
-    &HTStyleGlossary6, "GlossaryCompact", ST_GlossaryCompact, "DLC",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    3, 10, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleGlossary6, GlossaryCompact, "DLC",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       3, 10, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0
+);
 
 static HTStyle HTStyleGlossaryCompact1 =
-{
-    &HTStyleGlossaryCompact, "GlossaryCompact1", ST_GlossaryCompact1, "DLC",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    8, 15, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleGlossaryCompact,
+	       GlossaryCompact1, "DLC",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       8, 15, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0
+);
 
 static HTStyle HTStyleGlossaryCompact2 =
-{
-    &HTStyleGlossaryCompact1, "GlossaryCompact2", ST_GlossaryCompact2, "DLC",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    13, 20, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleGlossaryCompact1,
+	       GlossaryCompact2, "DLC",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       13, 20, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0
+);
 
 static HTStyle HTStyleGlossaryCompact3 =
-{
-    &HTStyleGlossaryCompact2, "GlossaryCompact3", ST_GlossaryCompact3, "DLC",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    18, 25, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleGlossaryCompact2,
+	       GlossaryCompact3, "DLC",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       18, 25, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0
+);
 
 static HTStyle HTStyleGlossaryCompact4 =
-{
-    &HTStyleGlossaryCompact3, "GlossaryCompact4", ST_GlossaryCompact4, "DLC",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    23, 30, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleGlossaryCompact3,
+	       GlossaryCompact4, "DLC",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       23, 30, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0
+);
 
 static HTStyle HTStyleGlossaryCompact5 =
-{
-    &HTStyleGlossaryCompact4, "GlossaryCompact5", ST_GlossaryCompact5, "DLC",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    28, 35, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleGlossaryCompact4,
+	       GlossaryCompact5, "DLC",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       28, 35, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0
+);
 
 static HTStyle HTStyleGlossaryCompact6 =
-{
-    &HTStyleGlossaryCompact5, "GlossaryCompact6", ST_GlossaryCompact6, "DLC",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    33, 40, 6, HT_LEFT, 1, 0, 0,
-    YES, YES, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleGlossaryCompact5,
+	       GlossaryCompact6, "DLC",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       33, 40, 6, HT_LEFT, 1, 0, 0,
+	       YES, YES, 0, 0, 0
+);
 
 static HTStyle HTStyleExample =
-{
-    &HTStyleGlossaryCompact6, "Example", ST_Example, "XMP",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    0, 0, 0, HT_LEFT, 1, 0, tabs_8,
-    NO, NO, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleGlossaryCompact6,
+	       Example, "XMP",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       0, 0, 0, HT_LEFT, 1, 0, tabs_8,
+	       NO, NO, 0, 0, 0
+);
 
 static HTStyle HTStylePreformatted =
-{
-    &HTStyleExample, "Preformatted", ST_Preformatted, "PRE",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    0, 0, 0, HT_LEFT, 1, 0, tabs_8,
-    NO, NO, 0, 0, 0
-};
+HTStyleInit(
+	       &HTStyleExample,
+	       Preformatted, "PRE",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       0, 0, 0, HT_LEFT, 1, 0, tabs_8,
+	       NO, NO, 0, 0, 0
+);
 
 static HTStyle HTStyleListing =
-{
-    &HTStylePreformatted, "Listing", ST_Listing, "LISTING",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    0, 0, 0, HT_LEFT, 1, 0, tabs_8,
-    NO, NO, 0, 0, 0};
+HTStyleInit(
+	       &HTStylePreformatted, Listing, "LISTING",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       0, 0, 0, HT_LEFT, 1, 0, tabs_8,
+	       NO, NO, 0, 0, 0);
 
 static HTStyle HTStyleAddress =
-{
-    &HTStyleListing, "Address", ST_Address, "ADDRESS",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    4, 4, 7, HT_LEFT, 1, 0, tabs_8,
-    YES, YES, 2, 0, 0};
+HTStyleInit(
+	       &HTStyleListing, Address, "ADDRESS",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       4, 4, 7, HT_LEFT, 1, 0, tabs_8,
+	       YES, YES, 2, 0, 0);
 
 static HTStyle HTStyleNote =
-{				/* HTML 3.0 NOTE - FM */
-    &HTStyleAddress, "Note", ST_Note, "NOTE",
-    HT_FONT, 1, HT_BLACK, 0, 0,
-    5, 5, 7, HT_LEFT, 1, 0, tabs_8,
-    YES, YES, 1, 0, 0};
+HTStyleInit(			/* HTML 3.0 NOTE - FM */
+	       &HTStyleAddress, Note, "NOTE",
+	       HT_FONT, 1, HT_BLACK, 0, 0,
+	       5, 5, 7, HT_LEFT, 1, 0, tabs_8,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleHeading1 =
-{
-    &HTStyleNote, "Heading1", ST_Heading1, "H1",
-    HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
-    0, 0, 0, HT_CENTER, 1, 0, 0,
-    YES, YES, 1, 1, 0};
+HTStyleInit(
+	       &HTStyleNote, Heading1, "H1",
+	       HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
+	       0, 0, 0, HT_CENTER, 1, 0, 0,
+	       YES, YES, 1, 1, 0);
 
 static HTStyle HTStyleHeading2 =
-{
-    &HTStyleHeading1, "Heading2", ST_Heading2, "H2",
-    HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
-    0, 0, 0, HT_LEFT, 1, 0, 0,
-    YES, YES, 1, 1, 0};
+HTStyleInit(
+	       &HTStyleHeading1, Heading2, "H2",
+	       HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
+	       0, 0, 0, HT_LEFT, 1, 0, 0,
+	       YES, YES, 1, 1, 0);
 
 static HTStyle HTStyleHeading3 =
-{
-    &HTStyleHeading2, "Heading3", ST_Heading3, "H3",
-    HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
-    2, 2, 0, HT_LEFT, 1, 0, 0,
-    YES, YES, 1, 0, 0};
+HTStyleInit(
+	       &HTStyleHeading2, Heading3, "H3",
+	       HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
+	       2, 2, 0, HT_LEFT, 1, 0, 0,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleHeading4 =
-{
-    &HTStyleHeading3, "Heading4", ST_Heading4, "H4",
-    HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
-    4, 4, 0, HT_LEFT, 1, 0, 0,
-    YES, YES, 1, 0, 0};
+HTStyleInit(
+	       &HTStyleHeading3, Heading4, "H4",
+	       HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
+	       4, 4, 0, HT_LEFT, 1, 0, 0,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleHeading5 =
-{
-    &HTStyleHeading4, "Heading5", ST_Heading5, "H5",
-    HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
-    6, 6, 0, HT_LEFT, 1, 0, 0,
-    YES, YES, 1, 0, 0};
+HTStyleInit(
+	       &HTStyleHeading4, Heading5, "H5",
+	       HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
+	       6, 6, 0, HT_LEFT, 1, 0, 0,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleHeading6 =
-{
-    &HTStyleHeading5, "Heading6", ST_Heading6, "H6",
-    HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
-    8, 8, 0, HT_LEFT, 1, 0, 0,
-    YES, YES, 1, 0, 0};
+HTStyleInit(
+	       &HTStyleHeading5, Heading6, "H6",
+	       HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
+	       8, 8, 0, HT_LEFT, 1, 0, 0,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleHeadingCenter =
-{
-    &HTStyleHeading6, "HeadingCenter", ST_HeadingCenter, "HCENTER",
-    HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
-    0, 0, 3, HT_CENTER, 1, 0, tabs_8,
-    YES, YES, 1, 0, 0};
+HTStyleInit(
+	       &HTStyleHeading6, HeadingCenter, "HCENTER",
+	       HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
+	       0, 0, 3, HT_CENTER, 1, 0, tabs_8,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleHeadingLeft =
-{
-    &HTStyleHeadingCenter, "HeadingLeft", ST_HeadingLeft, "HLEFT",
-    HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
-    0, 0, 3, HT_LEFT, 1, 0, tabs_8,
-    YES, YES, 1, 0, 0};
+HTStyleInit(
+	       &HTStyleHeadingCenter, HeadingLeft, "HLEFT",
+	       HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
+	       0, 0, 3, HT_LEFT, 1, 0, tabs_8,
+	       YES, YES, 1, 0, 0);
 
 static HTStyle HTStyleHeadingRight =
-{
-    &HTStyleHeadingLeft, "HeadingRight", ST_HeadingRight, "HRIGHT",
-    HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
-    0, 0, 3, HT_RIGHT, 1, 0, tabs_8,
-    YES, YES, 1, 0, 0};
+HTStyleInit(
+	       &HTStyleHeadingLeft, HeadingRight, "HRIGHT",
+	       HT_FONT + HT_BOLD, 1, HT_BLACK, 0, 0,
+	       0, 0, 3, HT_RIGHT, 1, 0, tabs_8,
+	       YES, YES, 1, 0, 0);
 
 /* Style sheet points to the last in the list:
 */

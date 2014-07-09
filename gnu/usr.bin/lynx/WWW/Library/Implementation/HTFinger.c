@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTFinger.c,v 1.25 2009/01/03 02:02:18 tom Exp $
+ * $LynxId: HTFinger.c,v 1.31 2013/11/28 11:27:50 tom Exp $
  *
  *			FINGER ACCESS				HTFinger.c
  *			=============
@@ -128,7 +128,7 @@ static int response(char *command,
     /* Send the command.
      */
     CTRACE((tfp, "HTFinger command to be sent: %s", command));
-    status = NETWRITE(finger_fd, (char *) command, (unsigned) length);
+    status = (int) NETWRITE(finger_fd, (char *) command, (unsigned) length);
     if (status < 0) {
 	CTRACE((tfp, "HTFinger: Unable to send command. Disconnecting.\n"));
 	NETCLOSE(finger_fd);
@@ -163,11 +163,7 @@ static int response(char *command,
     PUTS(sitename);
     END(HTML_EM);
     PUTS(": ");
-    if (command) {
-	StrAllocCopy(cmd, command);
-    } else {
-	StrAllocCopy(cmd, "");
-    }
+    StrAllocCopy(cmd, command);
     for (i = ((int) strlen(cmd) - 1); i >= 0; i--) {
 	if (cmd[i] == LF || cmd[i] == CR) {
 	    cmd[i] = '\0';
@@ -203,27 +199,27 @@ static int response(char *command,
 	     */
 	    p = l = line;
 	    while (*l) {
-		if (strncmp(l, STR_NEWS_URL, LEN_NEWS_URL) &&
-		    strncmp(l, "snews://", 8) &&
-		    strncmp(l, "nntp://", 7) &&
-		    strncmp(l, "snewspost:", 10) &&
-		    strncmp(l, "snewsreply:", 11) &&
-		    strncmp(l, "newspost:", 9) &&
-		    strncmp(l, "newsreply:", 10) &&
-		    strncmp(l, "ftp://", 6) &&
-		    strncmp(l, "file:/", 6) &&
-		    strncmp(l, "finger://", 9) &&
-		    strncmp(l, "http://", 7) &&
-		    strncmp(l, "https://", 8) &&
-		    strncmp(l, "wais://", 7) &&
-		    strncmp(l, STR_MAILTO_URL, LEN_MAILTO_URL) &&
-		    strncmp(l, "cso://", 6) &&
-		    strncmp(l, "gopher://", 9))
+		if (StrNCmp(l, STR_NEWS_URL, LEN_NEWS_URL) &&
+		    StrNCmp(l, "snews://", 8) &&
+		    StrNCmp(l, "nntp://", 7) &&
+		    StrNCmp(l, "snewspost:", 10) &&
+		    StrNCmp(l, "snewsreply:", 11) &&
+		    StrNCmp(l, "newspost:", 9) &&
+		    StrNCmp(l, "newsreply:", 10) &&
+		    StrNCmp(l, "ftp://", 6) &&
+		    StrNCmp(l, "file:/", 6) &&
+		    StrNCmp(l, "finger://", 9) &&
+		    StrNCmp(l, "http://", 7) &&
+		    StrNCmp(l, "https://", 8) &&
+		    StrNCmp(l, "wais://", 7) &&
+		    StrNCmp(l, STR_MAILTO_URL, LEN_MAILTO_URL) &&
+		    StrNCmp(l, "cso://", 6) &&
+		    StrNCmp(l, "gopher://", 9))
 		    PUTC(*l++);
 		else {
 		    StrAllocCopy(href, l);
 		    start_anchor(strtok(href, " \r\n\t,>)\""));
-		    while (*l && !strchr(" \r\n\t,>)\"", *l))
+		    while (*l && !StrChr(" \r\n\t,>)\"", *l))
 			PUTC(*l++);
 		    END(HTML_A);
 		    FREE(href);
@@ -254,7 +250,9 @@ int HTLoadFinger(const char *arg,
 		 HTFormat format_out,
 		 HTStream *stream)
 {
-    char *username, *sitename, *colon;	/* Fields extracted from URL */
+    static char empty[1];
+
+    char *username, *sitename;	/* Fields extracted from URL */
     char *slash, *at_sign;	/* Fields extracted from URL */
     char *command, *str, *param;	/* Buffers */
     int port;			/* Port number from URL */
@@ -291,7 +289,7 @@ int HTLoadFinger(const char *arg,
     if (param == 0) {
 	HTAlert(COULD_NOT_LOAD_DATA);
 	return HT_NOT_LOADED;
-    } else if ((slash = strchr(sitename, '/')) != NULL) {
+    } else if ((slash = StrChr(sitename, '/')) != NULL) {
 	*slash++ = '\0';
 	HTUnEscape(slash);
 	if (IsGopherURL) {
@@ -303,7 +301,7 @@ int HTLoadFinger(const char *arg,
 	}
     }
 
-    if ((at_sign = strchr(sitename, '@')) != NULL) {
+    if ((at_sign = StrChr(sitename, '@')) != NULL) {
 	if (IsGopherURL) {
 	    HTAlert(COULD_NOT_LOAD_DATA);
 	    return HT_NOT_LOADED;	/* FAIL */
@@ -316,15 +314,13 @@ int HTLoadFinger(const char *arg,
     } else if (slash) {
 	username = slash;
     } else {
-	username = "";
+	username = empty;
     }
 
     if (*sitename == '\0') {
 	HTAlert(gettext("Could not load data (no sitename in finger URL)"));
 	result = HT_NOT_LOADED;	/* Ignore if no name */
-    } else if ((colon = strchr(sitename, ':')) != NULL) {
-	*colon++ = '\0';
-	port = atoi(colon);
+    } else if (HTParsePort(sitename, &port) != NULL) {
 	if (port != 79) {
 	    HTAlert(gettext("Invalid port number - will only use port 79!"));
 	    result = HT_NOT_LOADED;	/* Ignore if wrong port */
@@ -349,7 +345,7 @@ int HTLoadFinger(const char *arg,
 	} else if (at_sign) {
 	    HTSprintf0(&command, "%s%c%c", username, CR, LF);
 	} else if (*username == '/') {
-	    if ((slash = strchr((username + 1), '/')) != NULL) {
+	    if ((slash = StrChr((username + 1), '/')) != NULL) {
 		*slash = ' ';
 	    }
 	    HTSprintf0(&command, "%s%c%c", username, CR, LF);
@@ -364,7 +360,7 @@ int HTLoadFinger(const char *arg,
 	} else if ((*username == 'w' || *username == 'W') &&
 		   *(username + 1) == '\0') {
 	    HTSprintf0(&command, "/%s%c%c", username, CR, LF);
-	} else if ((slash = strchr(username, '/')) != NULL) {
+	} else if ((slash = StrChr(username, '/')) != NULL) {
 	    *slash++ = '\0';
 	    if (*slash == 'w' || *slash == 'W') {
 		HTSprintf0(&command, "/w %s%c%c", username, CR, LF);

@@ -1,28 +1,43 @@
-<!DOCTYPE html PUBLIC "-//IETF//DTD HTML 3.0//EN">
+<!-- $LynxId: alt_edit_help.html,v 1.11 2014/01/08 00:56:30 tom Exp $ -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+
 <html>
 <head>
-<title>Lynx Line Editor Alternative Key Binding</title>
-<link rev="made" href="mailto:lynx-dev@nongnu.org">
-<link rel="Sibling" title="Default Binding" href="edit_help.html">
-<link rel="Sibling" title="Bash-Like Binding" href="bashlike_edit_help.html">
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-</head>
+  <meta name="generator" content=
+  "HTML Tidy for Linux (vers 25 March 2009), see www.w3.org">
+
+  <title>Lynx Line Editor Alternative Key Binding</title>
+  <link rev="made" href="mailto:lynx-dev@nongnu.org">
+  <link rel="Sibling" title="Default Binding" href=
+  "edit_help.html">
+  <link rel="Sibling" title="Bash-Like Binding" href=
+  "bashlike_edit_help.html">
+  <meta http-equiv="Content-Type" content=
+  "text/html; charset=us-ascii">
+  <meta name="description" content=
+  "Describes an alternative set of line editor bindings for Lynx. This is one of the alternate bindings normally compiled-in">
+  </head>
+
 <body>
-<h1>+++ALTERNATIVE BINDING+++</h1>
+  <h2>Overview</h2>
 
-Lynx invokes a built-in <em>Line Editor</em> for entering strings in
-response to prompts, in forms, and for email messages if an external editor
-has not been defined.  Additional alternative key-bindings can be offered
-by configuring with --enable-alt-bindings or by adding them in
-LYEditmap.c before compiling Lynx.  If available,
-they may be selected via the 'o'ptions menu, or by editing lineedit_mode in
-the '.lynxrc' file.
+  <p><strong>Lynx</strong> invokes a built-in <a href=
+  "edit_help.html">Line Editor</a> for entering strings in response
+  to prompts, in forms, and for email messages if an external
+  editor has not been defined. Additional alternative key-bindings
+  can be offered by configuring with
+  <code>--enable-alt-bindings</code> or by adding them in
+  LYEditmap.c before compiling <strong>Lynx</strong>. If available,
+  they may be selected via the 'o'ptions menu, or by editing
+  lineedit_mode in the '.lynxrc' file.</p>
 
-<p>Note: setting emacs/vi keys ON has no direct effect on line-editor bindings.
+  <p>Note: setting emacs/vi keys ON has no direct effect on
+  line-editor bindings.</p>
 
-<p>This is the <em>Alternative Binding</em> keymap:
+  <p>This is the <em>Alternative Binding</em> keymap.</p>
 
-<pre>
+  <h2>Table of key-bindings</h2>
+  <pre>
      ENTER  Input complete        -  RETURN
      TAB    Input complete        -  TAB, Do
      ABORT  Input cancelled       -  Ctrl-G, Ctrl-O, (Ctrl-C on some systems)
@@ -36,7 +51,7 @@ the '.lynxrc' file.
      EOL    Go to end   of  line  -  Ctrl-E, End,  Select
 
      DELP   Delete prev     char  -  Ctrl-H, DELETE, Remove
-     DELN   Delete next [1] char  -  Ctrl-D
+     DELN   Delete next     char  -  Ctrl-D (<em>see note 1</em>)
      DELPW  Delete prev     word  -  Ctrl-R
      DELNW  Delete next     word  -  Ctrl-T
      DELEL  Delete to end of line -  Ctrl-K
@@ -44,25 +59,30 @@ the '.lynxrc' file.
      UPPER  Upper case the line   -  Ctrl-^
      LOWER  Lower case the line   -  Ctrl-_
 
-     LKCMD  Invoke cmd prompt     -  Ctrl-V (in form text fields, only) [2]
+     LKCMD  Invoke cmd prompt     -  Ctrl-V (in form text fields, only) (<em>see note 2</em>)
 
-<A NAME="TASpecial">Special commands for use only in textarea fields</A>[3]:
+<a name="TASpecial" id=
+"TASpecial">Special commands for use only in textarea fields</a>(<em>see note 3</em>):
 
           Textarea external edit  - Ctrl-X e
           Insert file in textarea - Ctrl-X i
           Grow textarea           - Ctrl-X g
-
-[1] "next" means the character "under" a box or underline style cursor; it
-     means "to the immediate right of" an I-beam (between characters) type
-     cursor.
-
-[2]  Follow Ctrl-V with any recognized key command, to "escape" from a text
-     input field.
-
-[3]  For other key combinations using Ctrl-X as a prefix key, see the
-     Help page for the <a rel="Sibling" title="Bash-Like Binding"
-                        href="bashlike_edit_help.html"
-                      >Bash-Like</a> Binding.
 </pre>
+
+  <h2>Notes</h2>
+
+  <ol>
+    <li>"next" means the character "under" a box or underline style
+    cursor; it means "to the immediate right of" an I-beam (between
+    characters) type cursor.</li>
+
+    <li>Follow Ctrl-V with any recognized key command, to "escape"
+    from a text input field.</li>
+
+    <li>For other key combinations using Ctrl-X as a prefix key,
+    see the Help page for the <a rel="Sibling" title=
+    "Bash-Like Binding" href=
+    "bashlike_edit_help.html">Bash-Like</a> Binding.</li>
+  </ol>
 </body>
 </html>

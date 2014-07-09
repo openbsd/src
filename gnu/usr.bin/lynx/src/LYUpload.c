@@ -1,4 +1,6 @@
 /*
+ * $LynxId: LYUpload.c,v 1.40 2013/11/28 11:22:34 tom Exp $
+ *
  *  Routines to upload files to the local filesystem.
  *  Created by: Rick Mallett, Carleton University
  *  Report problems to rmallett@ccs.carleton.ca
@@ -86,7 +88,7 @@ int LYUpload(char *line)
 	_statusline(FILENAME_PROMPT);
       retry:
 	*tmpbuf = '\0';
-	if (LYgetstr(tmpbuf, VISIBLE, sizeof(tmpbuf), NORECALL) < 0)
+	if (LYGetStr(tmpbuf, FALSE, sizeof(tmpbuf), NORECALL) < 0)
 	    goto cancelled;
 
 	if (*tmpbuf == '\0')
@@ -95,7 +97,7 @@ int LYUpload(char *line)
 	if (strstr(tmpbuf, "../") != NULL) {
 	    HTAlert(gettext("Illegal redirection \"../\" found! Request ignored."));
 	    goto cancelled;
-	} else if (strchr(tmpbuf, '/') != NULL) {
+	} else if (StrChr(tmpbuf, '/') != NULL) {
 	    HTAlert(gettext("Illegal character \"/\" found! Request ignored."));
 	    goto cancelled;
 	} else if (tmpbuf[0] == '~') {
@@ -124,10 +126,6 @@ int LYUpload(char *line)
 	 * See if we can write to it.
 	 */
 	CTRACE((tfp, "LYUpload: filename is %s", filename));
-
-	if (!LYCanWriteFile(filename)) {
-	    goto retry;
-	}
 
 	HTAddParam(&the_upload, upload_command->command, 1, filename);
 	HTEndParam(&the_upload, upload_command->command, 1);
@@ -177,19 +175,16 @@ int LYUpload_options(char **newfile,
     FILE *fp0;
     lynx_list_item_type *cur_upload;
     int count;
-    static char curloc[LY_MAXPATH];
-    char *cp;
+    char *curloc = NULL;
 
     if ((fp0 = InternalPageFP(tempfile, TRUE)) == 0)
 	return (-1);
 
 #ifdef VMS
-    strcpy(curloc, "/sys$login");
+    StrAllocCopy(curloc, "/sys$login");
 #else
-    cp = HTfullURL_toFile(directory);
-    strcpy(curloc, cp);
+    StrAllocCopy(curloc, HTfullURL_toFile(directory));
     LYTrimPathSep(curloc);
-    FREE(cp);
 #endif /* VMS */
 
     LYLocalFileToURL(newfile, tempfile);
@@ -220,6 +215,7 @@ int LYUpload_options(char **newfile,
     LYCloseTempFP(fp0);
 
     LYforce_no_cache = TRUE;
+    FREE(curloc);
 
     return (0);
 }

@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTParse.c,v 1.51 2009/01/03 01:11:14 tom Exp $
+ * $LynxId: HTParse.c,v 1.75 2014/02/12 23:15:42 tom Exp $
  *
  *		Parse HyperText Document Address		HTParse.c
  *		================================
@@ -12,6 +12,7 @@
 #include <LYLeaks.h>
 #include <LYStrings.h>
 #include <LYCharUtils.h>
+#include <LYGlobalDefs.h>
 
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
@@ -21,7 +22,10 @@
 #endif /* __MINGW32__ */
 #endif
 
-#define MAX_URI_SIZE 8192
+#ifdef USE_IDNA
+#include <idna.h>
+#include <idn-free.h>
+#endif
 
 #define HEX_ESCAPE '%'
 
@@ -62,9 +66,11 @@ static void show_parts(const char *name, struct struct_parts *parts, int line)
 char *HTStrip(char *s)
 {
 #define SPACE(c) ((c == ' ') || (c == '\t') || (c == '\n'))
-    char *p = s;
+    char *p;
 
-    for (p = s; *p; p++) ;	/* Find end of string */
+    for (p = s; *p; p++) {	/* Find end of string */
+	;
+    }
     for (p--; p >= s; p--) {
 	if (SPACE(*p))
 	    *p = '\0';		/* Zap trailing blanks */
@@ -133,12 +139,12 @@ static void scan(char *name,
 	if (p[1] == '/') {
 	    parts->host = (p + 2);	/* host has been specified    */
 	    *p = '\0';		/* Terminate access           */
-	    p = strchr(parts->host, '/');	/* look for end of host name if any */
+	    p = StrChr(parts->host, '/');	/* look for end of host name if any */
 	    if (p != NULL) {
 		*p = '\0';	/* Terminate host */
 		parts->absolute = (p + 1);	/* Root has been found */
 	    } else {
-		p = strchr(parts->host, '?');
+		p = StrChr(parts->host, '?');
 		if (p != NULL) {
 		    *p = '\0';	/* Terminate host */
 		    parts->search = (p + 1);
@@ -156,7 +162,7 @@ static void scan(char *name,
      * Check schemes that commonly have unescaped hashes.
      */
     if (parts->access && parts->anchor &&
-    /* optimize */ strchr("lnsdLNSD", *parts->access) != NULL) {
+    /* optimize */ StrChr("lnsdLNSD", *parts->access) != NULL) {
 	if ((!parts->host && strcasecomp(parts->access, "lynxcgi")) ||
 	    !strcasecomp(parts->access, "nntp") ||
 	    !strcasecomp(parts->access, "snews") ||
@@ -188,7 +194,7 @@ static void scan(char *name,
 
 static char *strchr_or_end(char *string, int ch)
 {
-    char *result = strchr(string, ch);
+    char *result = StrChr(string, ch);
 
     if (result == 0) {
 	result = string + strlen(string);
@@ -217,7 +223,7 @@ char *HTParsePort(char *host, int *portp)
 		if (brackets == 0 && isdigit(UCH(*host))) {
 		    char *next = NULL;
 
-		    *portp = strtol(host, &next, 10);
+		    *portp = (int) strtol(host, &next, 10);
 		    if (next != 0 && next != host && *next == '\0') {
 			result = (host - 1);
 			CTRACE((tfp, "HTParsePort %d\n", *portp));
@@ -235,6 +241,76 @@ char *HTParsePort(char *host, int *portp)
     }
     return result;
 }
+
+#ifdef USE_IDNA
+static int hex_decode(int ch)
+{
+    int result = -1;
+
+    if (ch >= '0' && ch <= '9')
+	result = (ch - '0');
+    else if (ch >= 'a' && ch <= 'f')
+	result = (ch - 'a') + 10;
+    else if (ch >= 'A' && ch <= 'F')
+	result = (ch - 'A') + 10;
+    return result;
+}
+
+/*
+ * Convert in-place the given hostname to IDNA form.  That requires up to 64
+ * characters, and we've allowed for that, with MIN_PARSE.
+ */
+static void convert_to_idna(char *host)
+{
+    size_t length = strlen(host);
+    char *endhost = host + length;
+    char *buffer = malloc(length + 1);
+    char *output = NULL;
+    char *src, *dst;
+    int code;
+    int hi, lo;
+
+    if (buffer != 0) {
+	code = TRUE;
+	for (dst = buffer, src = host; src < endhost; ++dst) {
+	    int ch = *src++;
+
+	    if (ch == HEX_ESCAPE) {
+		if ((src + 1) < endhost
+		    && (hi = hex_decode(src[0])) >= 0
+		    && (lo = hex_decode(src[1])) >= 0) {
+
+		    *dst = (char) ((hi << 4) | lo);
+		    src += 2;
+		} else {
+		    CTRACE((tfp, "convert_to_idna: `%s' is malformed\n", host));
+		    code = FALSE;
+		    break;
+		}
+	    } else {
+		*dst = (char) ch;
+	    }
+	}
+	if (code) {
+	    *dst = '\0';
+	    code = idna_to_ascii_8z(buffer, &output, IDNA_USE_STD3_ASCII_RULES);
+	    if (code == IDNA_SUCCESS) {
+		strcpy(host, output);
+	    } else {
+		CTRACE((tfp, "convert_to_idna: `%s': %s\n",
+			buffer,
+			idna_strerror((Idna_rc) code)));
+	    }
+	    if (output)
+		idn_free (output);
+	}
+	free(buffer);
+    }
+}
+#define MIN_PARSE 80
+#else
+#define MIN_PARSE 8
+#endif
 
 /*	Parse a Name relative to another name.			HTParse()
  *	--------------------------------------
@@ -291,17 +367,19 @@ char *HTParse(const char *aName,
      */
     len1 = strlen(aName) + 1;
     len2 = strlen(relatedName) + 1;
-    len = len1 + len2 + 8;	/* Lots of space: more than enough */
+    len = len1 + len2 + MIN_PARSE;	/* Lots of space: more than enough */
 
     need = (len * 2 + len1 + len2);
-    if (need > MAX_URI_SIZE ||
-	len1 > MAX_URI_SIZE ||
-	len2 > MAX_URI_SIZE)
+    if (need > (size_t) max_uri_size ||
+	(int) need < (int) len1 ||
+	(int) need < (int) len2)
 	return StrAllocCopy(return_value, "");
 
     result = tail = (char *) LYalloca(need);
     if (result == NULL) {
 	outofmem(__FILE__, "HTParse");
+
+	assert(result != NULL);
     }
     *result = '\0';
     name = result + len;
@@ -310,7 +388,7 @@ char *HTParse(const char *aName,
     /*
      * Make working copy of the input string to cut up.
      */
-    memcpy(name, aName, len1);
+    MemCpy(name, aName, len1);
 
     /*
      * Cut up the string into URL fields.
@@ -332,7 +410,7 @@ char *HTParse(const char *aName,
 	related.search = NULL;
 	related.anchor = NULL;
     } else {
-	memcpy(rel, relatedName, len2);
+	MemCpy(rel, relatedName, len2);
 	scan(rel, &related);
     }
     SHOW_PARTS(related);
@@ -344,7 +422,6 @@ char *HTParse(const char *aName,
 	if (!strcmp(given.access, "http") ||
 	    !strcmp(given.access, "https") ||
 	    !strcmp(given.access, "ftp")) {
-	    static char empty_string[] = "";
 
 	    /*
 	     * Assume root.
@@ -407,7 +484,7 @@ char *HTParse(const char *aName,
 		char *p2, *h;
 		int portnumber;
 
-		if ((p2 = strchr(result, '@')) != NULL)
+		if ((p2 = StrChr(result, '@')) != NULL)
 		    tail = (p2 + 1);
 		p2 = HTParsePort(result, &portnumber);
 		if (p2 != NULL && acc_method != NULL) {
@@ -455,6 +532,13 @@ char *HTParse(const char *aName,
 		    }
 		}
 	    }
+#ifdef USE_IDNA
+	    /*
+	     * Depending on locale-support, we could have a literal UTF-8
+	     * string as a host name, or a URL-encoded form of that.
+	     */
+	    convert_to_idna(tail);
+#endif
 #endif /* CLEAN_URLS */
 	}
     }
@@ -544,7 +628,7 @@ char *HTParse(const char *aName,
 		}
 		/* otherwise fall through to RFC 1808 part 4 step 6 */
 		else {
-		    p = strchr(tail, '?');	/* Search part? */
+		    p = StrChr(tail, '?');	/* Search part? */
 		    if (p == NULL)
 			p = (tail + strlen(tail) - 1);
 		    for (; *p != '/'; p--) ;	/* last / */
@@ -574,7 +658,7 @@ char *HTParse(const char *aName,
 	    CTRACE((tfp, "HTParse: (No inheritance)\n"));
 	}
 	if (want_detail) {
-	    p = strchr(tail, '?');	/* Search part? */
+	    p = StrChr(tail, '?');	/* Search part? */
 	    if (p) {
 		if (PARSE_STRICTPATH) {
 		    *p = '\0';
@@ -608,7 +692,7 @@ char *HTParse(const char *aName,
      * If there are any blanks remaining in the string, escape them as needed.
      * See the discussion in LYLegitimizeHREF() for example.
      */
-    if ((p = strchr(result, ' ')) != 0) {
+    if ((p = StrChr(result, ' ')) != 0) {
 	switch (is_url(result)) {
 	case UNKNOWN_URL_TYPE:
 	    CTRACE((tfp, "HTParse:      ignore:`%s'\n", result));
@@ -640,10 +724,10 @@ char *HTParse(const char *aName,
 		    q[0] = q[-2];
 		    --q;
 		}
-		p[0] = '%';
+		p[0] = HEX_ESCAPE;
 		p[1] = '2';
 		p[2] = '0';
-	    } while ((p = strchr(result, ' ')) != 0);
+	    } while ((p = StrChr(result, ' ')) != 0);
 	    break;
 	}
     }
@@ -686,13 +770,15 @@ const char *HTParseAnchor(const char *aName)
 	size_t need = ((unsigned) ((p - aName) + (int) strlen(p) + 1));
 	char *name;
 
-	if (strlen(aName) > MAX_URI_SIZE) {
+	if (need > (size_t) max_uri_size) {
 	    p += strlen(p);
 	} else {
 	    name = (char *) LYalloca(need);
 
 	    if (name == NULL) {
 		outofmem(__FILE__, "HTParseAnchor");
+
+		assert(name != NULL);
 	    }
 	    strcpy(name, aName);
 	    scan(name, &given);
@@ -735,7 +821,7 @@ void HTSimplify(char *filename)
 	filename[0] == '?' || filename[1] == '?' || filename[2] == '?')
 	return;
 
-    if (strchr(filename, '/') != NULL) {
+    if (StrChr(filename, '/') != NULL) {
 	for (p = (filename + 2); *p; p++) {
 	    if (*p == '?') {
 		/*
@@ -765,8 +851,8 @@ void HTSimplify(char *filename)
 			 */
 			;
 		    if ((q[0] == '/') &&
-			(strncmp(q, "/../", 4) &&
-			 strncmp(q, "/..?", 4)) &&
+			(StrNCmp(q, "/../", 4) &&
+			 StrNCmp(q, "/..?", 4)) &&
 			!((q - 1) > filename && q[-1] == '/')) {
 			/*
 			 * Not at beginning of string or in a host field, so
@@ -838,7 +924,7 @@ void HTSimplify(char *filename)
 			return;
 		    q++;
 		}
-		if (strncmp(q, "../", 3) && strncmp(q, "./", 2)) {
+		if (StrNCmp(q, "../", 3) && StrNCmp(q, "./", 2)) {
 		    /*
 		     * Not after "//" at beginning of string or after "://",
 		     * and xxx is not ".." or ".", so remove the "xxx/..".
@@ -913,6 +999,9 @@ char *HTRelative(const char *aName,
 
 	if (result == NULL)
 	    outofmem(__FILE__, "HTRelative");
+
+	assert(result != NULL);
+
 	result[0] = '\0';
 	for (; levels; levels--)
 	    strcat(result, "../");
@@ -925,7 +1014,7 @@ char *HTRelative(const char *aName,
 }
 
 #define AlloCopy(next,base,extra) \
-	typecallocn(char, (unsigned) ((next - base) + ((int) extra)))
+	typecallocn(char, ((next - base) + ((int) extra)))
 
 /*	Escape undesirable characters using %			HTEscape()
  *	-------------------------------------
@@ -958,12 +1047,12 @@ static const char *hex = "0123456789ABCDEF";
 #define ACCEPTABLE(a)	( a>=32 && a<128 && ((isAcceptable[a-32]) & mask))
 
 char *HTEscape(const char *str,
-	       unsigned char mask)
+	       unsigned mask)
 {
     const char *p;
     char *q;
     char *result;
-    unsigned unacceptable = 0;
+    size_t unacceptable = 0;
 
     for (p = str; *p; p++)
 	if (!ACCEPTABLE(UCH(TOASCII(*p))))
@@ -972,6 +1061,9 @@ char *HTEscape(const char *str,
 
     if (result == NULL)
 	outofmem(__FILE__, "HTEscape");
+
+    assert(result != NULL);
+
     for (q = result, p = str; *p; p++) {
 	unsigned char a = UCH(TOASCII(*p));
 
@@ -982,7 +1074,7 @@ char *HTEscape(const char *str,
 	} else
 	    *q++ = *p;
     }
-    *q++ = '\0';		/* Terminate */
+    *q = '\0';			/* Terminate */
     return result;
 }
 
@@ -1003,7 +1095,7 @@ char *HTEscapeUnsafe(const char *str)
     const char *p;
     char *q;
     char *result;
-    unsigned unacceptable = 0;
+    size_t unacceptable = 0;
 
     for (p = str; *p; p++)
 	if (UNSAFE(UCH(TOASCII(*p))))
@@ -1012,6 +1104,9 @@ char *HTEscapeUnsafe(const char *str)
 
     if (result == NULL)
 	outofmem(__FILE__, "HTEscapeUnsafe");
+
+    assert(result != NULL);
+
     for (q = result, p = str; *p; p++) {
 	unsigned char a = UCH(TOASCII(*p));
 
@@ -1022,7 +1117,7 @@ char *HTEscapeUnsafe(const char *str)
 	} else
 	    *q++ = *p;
     }
-    *q++ = '\0';		/* Terminate */
+    *q = '\0';			/* Terminate */
     return result;
 }
 
@@ -1038,12 +1133,12 @@ char *HTEscapeUnsafe(const char *str)
  *	Unlike HTUnEscape(), this routine returns a calloced string.
  */
 char *HTEscapeSP(const char *str,
-		 unsigned char mask)
+		 unsigned mask)
 {
     const char *p;
     char *q;
     char *result;
-    unsigned unacceptable = 0;
+    size_t unacceptable = 0;
 
     for (p = str; *p; p++)
 	if (!(*p == ' ' || ACCEPTABLE(UCH(TOASCII(*p)))))
@@ -1052,6 +1147,9 @@ char *HTEscapeSP(const char *str,
 
     if (result == NULL)
 	outofmem(__FILE__, "HTEscape");
+
+    assert(result != NULL);
+
     for (q = result, p = str; *p; p++) {
 	unsigned char a = UCH(TOASCII(*p));
 
@@ -1065,7 +1163,7 @@ char *HTEscapeSP(const char *str,
 	    *q++ = *p;
 	}
     }
-    *q++ = '\0';		/* Terminate */
+    *q = '\0';			/* Terminate */
     return result;
 }
 
@@ -1077,7 +1175,7 @@ char *HTEscapeSP(const char *str,
  *	the ASCII hex code for character 16x+y.
  *	The string is converted in place, as it will never grow.
  */
-static char from_hex(char c)
+static char from_hex(int c)
 {
     return (char) (c >= '0' && c <= '9' ? c - '0'
 		   : c >= 'A' && c <= 'F' ? c - 'A' + 10
@@ -1117,7 +1215,7 @@ char *HTUnEscape(char *str)
 	}
     }
 
-    *q++ = '\0';
+    *q = '\0';
     return str;
 
 }				/* HTUnEscape */
@@ -1149,7 +1247,7 @@ char *HTUnEscapeSome(char *str,
 	    isxdigit(UCH(p[2])) &&
 	    (testcode = (char) FROMASCII(from_hex(p[1]) * 16 +
 					 from_hex(p[2]))) &&	/* %00 no good */
-	    strchr(do_trans, testcode)) {	/* it's one of the ones we want */
+	    StrChr(do_trans, testcode)) {	/* it's one of the ones we want */
 	    *q++ = testcode;
 	    p += 3;
 	} else {
@@ -1157,7 +1255,7 @@ char *HTUnEscapeSome(char *str,
 	}
     }
 
-    *q++ = '\0';
+    *q = '\0';
     return str;
 
 }				/* HTUnEscapeSome */
@@ -1220,6 +1318,8 @@ void HTMake822Word(char **str,
     if (result == NULL)
 	outofmem(__FILE__, "HTMake822Word");
 
+    assert(result != NULL);
+
     q = result;
     if (quoted)
 	*q++ = '"';
@@ -1243,7 +1343,7 @@ void HTMake822Word(char **str,
     }
     if (quoted)
 	*q++ = '"';
-    *q++ = '\0';		/* Terminate */
+    *q = '\0';			/* Terminate */
     FREE(*str);
     *str = result;
 }

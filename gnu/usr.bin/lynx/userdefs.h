@@ -1,12 +1,12 @@
 /*
- * $LynxId: userdefs.h,v 1.246 2009/05/28 21:37:22 tom Exp $
+ * $LynxId: userdefs.h,v 1.293 2014/02/21 01:18:50 tom Exp $
  *
  * Lynx - Hypertext navigation system
  *
  *   (c) Copyright 1992, 1993, 1994 University of Kansas
  *	 1995, 1996: GNU General Public License
  *
- *   Copyrights 1996-2007 Lynx Developers Group
+ *   Copyright 1996-2013,2014 Thomas E. Dickey and Lynx Developers Group
  *   Note: GNU General Public License is not a copyright.
  */
 
@@ -107,6 +107,10 @@
 #ifndef LYNX_CFG_FILE
 #define LYNX_CFG_FILE "Lynx_Dir:lynx.cfg"
 #endif /* LYNX_CFG_FILE */
+
+#ifndef LYNX_CFG_PATH
+#define LYNX_CFG_PATH "Lynx_Dir"
+#endif /* LYNX_CFG_PATH */
 
 /**************************
  * The EXTENSION_MAP file allows you to map file suffixes to
@@ -243,6 +247,12 @@
 #define LYNX_LSS_FILE "Lynx_Dir:lynx.lss"
 #endif /* LYNX_LSS_FILE */
 
+/*
+ * FTP_FORMAT uses the same codes as LIST_FORMAT, but applies to files shown
+ * in an ftp listing.
+ */
+#define FTP_FORMAT "%d  %-16.16t %a  %K"
+
 /*******************************************************************
  * Things you must change  -  non-VMS specific
  *  Section 1b).
@@ -287,8 +297,10 @@
 #ifndef HAVE_CONFIG_H
 #ifndef LYNX_CFG_FILE
 #ifdef DOSPATH
+#define LYNX_CFG_PATH "."
 #define LYNX_CFG_FILE "./lynx.cfg"
 #else
+#define LYNX_CFG_PATH "/usr/local/lib"
 #define LYNX_CFG_FILE "/usr/local/lib/lynx.cfg"
 #endif /* DOSPATH */
 #endif /* LYNX_CFG_FILE */
@@ -360,13 +372,13 @@
  * Comment this line out to disable code that implements command logging
  * and scripting.
  */
-#define EXP_CMD_LOGGING 1
+#define USE_CMD_LOGGING 1
 
 /********************************
  * Comment this line out to disable code that randomizes the names given to
  * temporary files.
  */
-#define EXP_RAND_TEMPNAME 1
+#define USE_RAND_TEMPNAME 1
 
 /********************************
  * Comment this line out to let the user enter his/her email address
@@ -445,7 +457,11 @@
  * -lss command line switch will override these definitions.
  */
 #ifndef LYNX_LSS_FILE
+#ifdef DOSPATH
+#define LYNX_LSS_FILE "lynx.lss"
+#else
 #define LYNX_LSS_FILE "/usr/local/lib/lynx.lss"
+#endif
 #endif /* LYNX_LSS_FILE */
 
 #endif /* VMS OR UNIX */
@@ -486,12 +502,12 @@
  *   for this distribution (use SHELL syntax including the device
  *   on VMS systems).
  * The default HELPFILE is:
- * http://lynx.isc.org/release/lynx2-8-7/lynx_help/lynx_help_main.html
+ * http://lynx.isc.org/release/breakout/lynx_help/lynx_help_main.html
  *   This should be changed here or in lynx.cfg to the local path.
  * The definition here can be overridden at run time by defining a
  * "LYNX_HELPFILE" environment variable.
  */
-#define HELPFILE "http://lynx.isc.org/release/lynx2-8-7/lynx_help/lynx_help_main.html"
+#define HELPFILE "http://lynx.isc.org/release/breakout/lynx_help/lynx_help_main.html"
 /* #define HELPFILE "file://localhost/PATH_TO/lynx_help/lynx_help_main.html" */
 
 /*****************************
@@ -500,7 +516,7 @@
  * An index to your CWIS can be placed here or a document containing
  * pointers to lots of interesting places on the web.
  */
-#define DEFAULT_INDEX_FILE "http://www.ncsa.uiuc.edu/SDG/Software/Mosaic/MetaIndex.html"
+#define DEFAULT_INDEX_FILE "http://scout.wisc.edu/"
 
 /*****************************
  * If USE_TRACE_LOG is set FALSE, then when TRACE mode is invoked the
@@ -1178,7 +1194,7 @@
  *
  *  NOTE: This can generate A REAL LOT of mail, be warned!!!
  */
-/* #define ALERTMAIL "webmaster@localhost" *//*error recipient if no owner */
+/* #define ALERTMAIL "webmaster@localhost" */ /*error recipient if no owner */
 
 /*********************************
  * If CHECKMAIL is set to TRUE, the user will be informed (via a status line
@@ -1426,11 +1442,11 @@
  * the version definition with the Project Version on checkout.  Just
  * ignore it. - kw */
 /* $Format: "#define LYNX_VERSION \"$ProjectVersion$\""$ */
-#define LYNX_VERSION "2.8.7rel.2"
+#define LYNX_VERSION "2.8.8rel.2"
 #define LYNX_WWW_HOME "http://lynx.isc.org/"
 #define LYNX_WWW_DIST "http://lynx.isc.org/current/"
 /* $Format: "#define LYNX_DATE \"$ProjectDate$\""$ */
-#define LYNX_DATE "Mon, 21 Jun 2010 02:27:35 -0700"
+#define LYNX_DATE "Sun, 09 Mar 2014 14:43:10 -0700"
 #define LYNX_DATE_OFF 5		/* truncate the automatically-generated date */
 #define LYNX_DATE_LEN 11	/* truncate the automatically-generated date */
 
@@ -1491,6 +1507,14 @@
 #endif /* FNAMES_8_3 */
 #endif
 
+#ifndef BLAT_MAIL
+#define BLAT_MAIL "blat"
+#endif
+
+#ifndef ALTBLAT_MAIL
+#define ALTBLAT_MAIL "blatj"
+#endif
+
 #define BIN_SUFFIX  ".bin"
 #define TEXT_SUFFIX ".txt"
 
@@ -1510,28 +1534,24 @@
 
 #ifdef DOSPATH
 
+/*
+ * Define this to setup feature that uses directory of lynx.exe to locate
+ * associated configuration files.
+#define USE_PROGRAM_DIR 1
+ */
+
 #ifdef _WINDOWS
-#ifdef SYSTEM_MAIL
-#undef SYSTEM_MAIL
+
+#ifndef USE_BLAT_MAILER
+#define USE_BLAT_MAILER 1
 #endif
-#ifdef SYSTEM_MAIL_FLAGS
-#undef SYSTEM_MAIL_FLAGS
-#endif
-#ifdef USE_ALT_BLAT_MAILER
-#define SYSTEM_MAIL		"BLAT"
-#define SYSTEM_MAIL_FLAGS	""
-#else
-#define SYSTEM_MAIL		"BLATJ"
-#define SYSTEM_MAIL_FLAGS	""
-#endif
+
 #else
 /* have to define something... */
-#ifdef SYSTEM_MAIL
 #undef SYSTEM_MAIL
-#endif /* SYSTEM_MAIL */
-#define SYSTEM_MAIL "sendmail"
-#define SYSTEM_MAIL_FLAGS "-t -oi"
-#endif
+#define SYSTEM_MAIL             "sendmail"
+#define SYSTEM_MAIL_FLAGS       "-t -oi"
+#endif /* _WINDOWS */
 
 /*
 **  The following executables may be used at run time.  Unless you change
@@ -1622,8 +1642,8 @@
 #define MARK_HIDDEN_LINKS
 
 /*****************************
- * USE_TH_JP_AUTO_DETECT, CONV_JISX0201KANA_JISX0208KANA,
- * and KANJI_CODE_OVERRIDE are the macros for Japanese. - TH
+ * USE_TH_JP_AUTO_DETECT and KANJI_CODE_OVERRIDE are the macros
+ * for Japanese. - TH
  */
 /*****************************
  * USE_TH_JP_AUTO_DETECT enables a new Japanese charset detection routine.
@@ -1635,13 +1655,6 @@
  * Lynx falls back to the old assumption of the three kanji codes mixed.
  */
 #define USE_TH_JP_AUTO_DETECT
-
-/*****************************
- * If CONV_JISX0201KANA_JISX0208KANA is set, Lynx will convert
- * JIS X0201 Kana to JIS X0208 Kana, i.e., convert half-width kana
- * to full-width.
- */
-#define CONV_JISX0201KANA_JISX0208KANA
 
 /*****************************
  * Uncomment the following line to enable the kanji code override routine.
@@ -1823,5 +1836,26 @@
  *
  * This ends the section specific to anonymous accounts.
  */
+
+/*****************************
+ * These can be uncommmented to get more detail when debugging changes to
+ * the color-style and layout logic.
+ */
+/*#define DEBUG_APPCH 1*/
+/*#define DEBUG_STYLE 1*/
+
+#ifdef DEBUG_STYLE
+#define CTRACE_STYLE(p) CTRACE2(TRACE_STYLE, p)
+#else
+#define CTRACE_STYLE(p)		/* nothing */
+#endif
+
+/* #define DEBUG_SPLITLINE */
+
+#ifdef DEBUG_SPLITLINE
+#define CTRACE_SPLITLINE(p)	CTRACE(p)
+#else
+#define CTRACE_SPLITLINE(p)	/*nothing */
+#endif
 
 #endif /* USERDEFS_H */

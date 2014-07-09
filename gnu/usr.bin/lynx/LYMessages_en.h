@@ -1,10 +1,11 @@
 /*
- * $LynxId: LYMessages_en.h,v 1.70 2009/05/28 23:11:50 tom Exp $
+ * $LynxId: LYMessages_en.h,v 1.74 2013/10/19 13:02:24 tom Exp $
  *
  * Lynx - Hypertext navigation system
  *
- *   (c) Copyright 1992, 1993, 1994 University of Kansas
- *	 1995-1999: GNU General Public License
+ *   Copyright 1997-2013 Thomas E. Dickey
+ *   Copyright 1992, 1993, 1994 University of Kansas
+ *   Released 1995 using GNU General Public License
  */
 
 #ifndef LYMESSAGES_EN_H
@@ -19,11 +20,6 @@
  * Lynx source, covering all but those messages which (a) are used for
  * debugging (CTRACE) or (b) are constants used in interaction with
  * other programs.
- *
- * Links to collections of alternate definitions, developed by the Lynx
- * User Community, are maintained in Lynx links:
- *
- *    http://www.subir.com/lynx.html
  *
  * See ABOUT-NLS and po/readme for details and location of contributed
  * translations.  When no translation is available, the English default is
@@ -146,6 +142,8 @@
 #define RESETTING_FORM gettext("Resetting form...")
 #define RELOADING_FORM \
  gettext("Reloading document.  Any form entries will be lost!")
+#define LINK_NOT_IN_FORM \
+ gettext("The current link is not in a FORM")
 #define CANNOT_TRANSCODE_FORM gettext("Warning: Cannot transcode form data to charset %s!")
 
 #define NORMAL_LINK_MESSAGE \
@@ -369,6 +367,7 @@
 #define CURRENT_DOC_HAS_POST_DATA gettext("Current document has POST data.")
 #define EDIT_CURDOC_URL gettext("Edit this document's URL: ")
 #define EDIT_CURLINK_URL gettext("Edit the current link's URL: ")
+#define EDIT_SUBMIT_URL gettext("Edit the form's submit-URL: ")
 #define EDIT_FM_MENU_URLS_DISALLOWED gettext("You cannot edit File Management URLs")
 #define ENTER_DATABASE_QUERY gettext("Enter a database query: ")
 #define ENTER_WHEREIS_QUERY gettext("Enter a whereis query: ")
@@ -820,6 +819,7 @@
 #define BOOKMARK_TITLE		gettext("Bookmark file")
 #define CONFIG_DEF_TITLE	gettext("Configuration Definitions")
 #define COOKIE_JAR_TITLE	gettext("Cookie Jar")
+#define CURRENT_EDITMAP_TITLE	gettext("Current Edit-Key Map")
 #define CURRENT_KEYMAP_TITLE	gettext("Current Key Map")
 #define DIRED_MENU_TITLE	gettext("File Management Options")
 #define DOWNLOAD_OPTIONS_TITLE	gettext("Download Options")

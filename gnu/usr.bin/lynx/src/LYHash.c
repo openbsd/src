@@ -1,5 +1,5 @@
 /*
- * $LynxId: LYHash.c,v 1.16 2008/12/31 22:10:38 tom Exp $
+ * $LynxId: LYHash.c,v 1.19 2013/06/12 09:21:21 tom Exp $
  *
  * A hash table for the (fake) CSS support in Lynx-rp
  * (c) 1996 Rob Partington
@@ -26,6 +26,7 @@ int hash_code(const char *string)
     for (p = string, hash = 0; *p; p++)
 	hash = HASH_OF(hash, *p);
 
+    CTRACE_STYLE((tfp, "hash_code(%s) = %d\n", string, hash));
     return hash;
 }
 
@@ -37,10 +38,11 @@ int hash_code_lowercase_on_fly(const char *string)
     for (p = string, hash = 0; *p; p++)
 	hash = HASH_OF(hash, TOLOWER(*p));
 
+    CTRACE_STYLE((tfp, "hash_code_lc(%s) = %d\n", string, hash));
     return hash;
 }
 
-int hash_code_aggregate_char(char c, int hash)
+int hash_code_aggregate_char(int c, int hash)
 {
     return HASH_OF(hash, c);
 }
@@ -53,6 +55,7 @@ int hash_code_aggregate_lower_str(const char *string, int hash_was)
     for (p = string, hash = hash_was; *p; p++)
 	hash = HASH_OF(hash, TOLOWER(*p));
 
+    CTRACE_STYLE((tfp, "hash_code_lc2(%s) = %d\n", string, hash));
     return hash;
 }
 

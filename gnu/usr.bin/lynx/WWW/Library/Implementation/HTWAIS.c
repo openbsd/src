@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTWAIS.c,v 1.31 2008/09/06 15:47:08 tom Exp $
+ * $LynxId: HTWAIS.c,v 1.38 2013/11/28 11:16:03 tom Exp $
  *
  *	WorldWideWeb - Wide Area Informaion Server Access	HTWAIS.c
  *	==================================================
@@ -59,6 +59,10 @@
 #include <HTTCP.h>
 #include <HTCJK.h>
 #include <HTAlert.h>
+#include <LYStrings.h>
+
+#undef lines			/* term.h conflict with wais.h */
+#undef alloca			/* alloca.h conflict with wais.h */
 
 /*			From WAIS
  *			---------
@@ -66,6 +70,8 @@
 #ifdef VMS
 #include <HTVMS_WaisUI.h>
 #include <HTVMS_WaisProt.h>
+#elif defined(HAVE_WAIS_H)
+#include <wais.h>
 #else
 #include <ui.h>
 #endif /* VMS */
@@ -109,11 +115,6 @@ struct _HTStructured {
     /* ... */
 };
 
-struct _HTStream {
-    const HTStreamClass *isa;
-    /* ... */
-};
-
 /* ------------------------------------------------------------------------ */
 /* ---------------- Local copy of connect_to_server calls ----------------- */
 /* ------------------------------------------------------------------------ */
@@ -126,7 +127,7 @@ static int fd_mosaic_connect_to_server(char *host_name,
     int status;
     int result;
 
-    HTSprintf0(&dummy, "%s//%s:%d/", STR_WAIS_URL, host_name, port);
+    HTSprintf0(&dummy, "%s//%s:%ld/", STR_WAIS_URL, host_name, port);
 
     status = HTDoConnect(dummy, "WAIS", 210, (int *) fd);
     if (status == HT_INTERRUPTED) {
@@ -237,8 +238,8 @@ static char *WWW_from_archie(char *file)
     if (!result)
 	return result;		/* Malloc error */
     strcpy(result, "file://");
-    strncat(result, file, end - file);
-    colon = strchr(result + 7, ':');	/* Expect colon after host */
+    StrNCat(result, file, end - file);
+    colon = StrChr(result + 7, ':');	/* Expect colon after host */
     if (colon) {
 	for (; colon[0]; colon[0] = colon[1], colon++) ;	/* move down */
     }
@@ -266,14 +267,14 @@ static char *WWW_from_WAIS(any *docid)
     int i, l;
 
     if (TRACE) {
-	char *p;
+	char *p2;
 
 	fprintf(tfp, "WAIS id (%d bytes) is ", (int) docid->size);
-	for (p = docid->bytes; p < docid->bytes + docid->size; p++) {
-	    if ((*p >= ' ') && (*p <= '~'))	/* Assume ASCII! */
-		fprintf(tfp, "%c", *p);
+	for (p2 = docid->bytes; p2 < docid->bytes + docid->size; p2++) {
+	    if ((*p2 >= ' ') && (*p2 <= '~'))	/* Assume ASCII! */
+		fprintf(tfp, "%c", *p2);
 	    else
-		fprintf(tfp, "<%x>", (unsigned) *p);
+		fprintf(tfp, "<%x>", (unsigned) *p2);
 	}
 	fprintf(tfp, "\n");
     }
@@ -284,22 +285,22 @@ static char *WWW_from_WAIS(any *docid)
 	    CTRACE((tfp, "Eh?  DOCID record type of %d!\n", *p));
 	    return 0;
 	} {			/* Bug fix -- allow any byte value 15 Apr 93 */
-	    unsigned int i = (unsigned) *p++;
+	    unsigned int i2 = (unsigned) *p++;
 
-	    if (i > 99) {
-		*q++ = (i / 100) + '0';
-		i = i % 100;
+	    if (i2 > 99) {
+		*q++ = (i2 / 100) + '0';
+		i2 = i2 % 100;
 	    }
-	    if (i > 9) {
-		*q++ = (i / 10) + '0';
-		i = i % 10;
+	    if (i2 > 9) {
+		*q++ = (i2 / 10) + '0';
+		i2 = i2 % 10;
 	    }
-	    *q++ = i + '0';	/* Record type */
+	    *q++ = i2 + '0';	/* Record type */
 	}
 	*q++ = '=';		/* Separate */
 	l = *p++;		/* Length */
 	for (i = 0; i < l; i++, p++) {
-	    if (!acceptable[*p]) {
+	    if (!acceptable[UCH(*p)]) {
 		*q++ = HEX_ESCAPE;	/* Means hex coming */
 		*q++ = hex[(*p) >> 4];
 		*q++ = hex[(*p) & 15];
@@ -359,11 +360,7 @@ static any *WAIS_from_WWW(any *docid, char *docname)
 	    return 0;
 	q = p;
 
-/*	  *z++ = *p++ - '0';
-	q = strchr(p , '=');
-	if (!q) return 0;
-*/
-	s = strchr(q, ';');	/* (Check only) */
+	s = StrChr(q, ';');	/* (Check only) */
 	if (!s)
 	    return 0;		/* Bad! No ';'; */
 	sor = z;		/* Remember where the size field was */
@@ -389,14 +386,14 @@ static any *WAIS_from_WWW(any *docid, char *docname)
     }
 
     if (TRACE) {
-	char *p;
+	char *p2;
 
 	fprintf(tfp, "WAIS id (%d bytes) is ", (int) docid->size);
-	for (p = docid->bytes; p < docid->bytes + docid->size; p++) {
-	    if ((*p >= ' ') && (*p <= '~'))	/* Assume ASCII! */
-		fprintf(tfp, "%c", *p);
+	for (p2 = docid->bytes; p2 < docid->bytes + docid->size; p2++) {
+	    if ((*p2 >= ' ') && (*p2 <= '~'))	/* Assume ASCII! */
+		fprintf(tfp, "%c", *p2);
 	    else
-		fprintf(tfp, "<%x>", (unsigned) *p);
+		fprintf(tfp, "<%x>", (unsigned) *p2);
 	}
 	fprintf(tfp, "\n");
     }
@@ -409,10 +406,9 @@ static any *WAIS_from_WWW(any *docid, char *docname)
  */
 static void output_text_record(HTStream *target,
 			       WAISDocumentText *record,
-			       boolean quote_string_quotes,
 			       boolean binary)
 {
-    long count;
+    unsigned long count;
 
     /* printf(" Text\n");
        print_any("     DocumentID:  ", record->DocumentID);
@@ -452,18 +448,18 @@ static void output_text_record(HTStream *target,
  * displays either a text record or a set of headlines.
  */
 static void display_search_response(HTStructured * target, SearchResponseAPDU *response,
-				    char *database,
+				    char *the_database,
 				    char *keywords)
 {
     WAISSearchResponse *info;
     long i, k;
 
-    BOOL archie = strstr(database, "archie") != 0;	/* Special handling */
+    BOOL archie = strstr(the_database, "archie") != 0;	/* Special handling */
 
     CTRACE((tfp, "HTWAIS: Displaying search response\n"));
     PUTS(gettext("Index "));
     START(HTML_EM);
-    PUTS(database);
+    PUTS(the_database);
     END(HTML_EM);
     sprintf(line, gettext(" contains the following %d item%s relevant to \""),
 	    (int) (response->NumberOfRecordsReturned),
@@ -525,7 +521,7 @@ static void display_search_response(HTStructured * target, SearchResponseAPDU *r
 			    (!strcmp(head->Types[0], "URL"))) {
 			    HTStartAnchor(target, NULL, headline);
 			} else {
-			    char *dbname = HTEscape(database, URL_XPALPHAS);
+			    char *dbname = HTEscape(the_database, URL_XPALPHAS);
 			    char *w3_address = NULL;
 
 			    HTSprintf0(&w3_address,
@@ -574,7 +570,7 @@ static void display_search_response(HTStructured * target, SearchResponseAPDU *r
 		i++;
 		PUTS(gettext("\nText record\n"));
 		output_text_record((HTStream *) target,
-				   info->Text[k++], false, false);
+				   info->Text[k++], false);
 	    }
 	}
 	if (info->Headlines != 0) {
@@ -620,14 +616,14 @@ int HTLoadWAIS(const char *arg,
     long request_buffer_length;	/* how of the request is left */
     SearchResponseAPDU *retrieval_response = 0;
     char keywords[MAX_KEYWORDS_LENGTH + 1];
-    char *server_name;
+    char *the_server_name;
     char *wais_database = NULL;	/* name of current database */
     char *www_database;		/* Same name escaped */
     char *service;
     char *doctype;
     char *doclength;
-    long document_length;
-    char *docname;
+    long document_length = 0;
+    char *docname = 0;
 
 #ifdef VMS
     long connection = 0;
@@ -649,7 +645,7 @@ int HTLoadWAIS(const char *arg,
      * First we remove the "wais:" if it was specified.  920110
      */
     names = HTParse(arg, "", PARSE_HOST | PARSE_PATH | PARSE_PUNCTUATION);
-    key = strchr(names, '?');
+    key = StrChr(names, '?');
 
     if (key) {
 	char *p;
@@ -661,23 +657,23 @@ int HTLoadWAIS(const char *arg,
 	HTUnEscape(key);
     }
     if (names[0] == '/') {
-	server_name = names + 1;
-	if ((as_gate = (*server_name == '/')) != 0)
-	    server_name++;	/* Accept one or two */
-	www_database = strchr(server_name, '/');
+	the_server_name = names + 1;
+	if ((as_gate = (*the_server_name == '/')) != 0)
+	    the_server_name++;	/* Accept one or two */
+	www_database = StrChr(the_server_name, '/');
 	if (www_database) {
 	    *www_database++ = 0;	/* Separate database name */
-	    doctype = strchr(www_database, '/');
+	    doctype = StrChr(www_database, '/');
 	    if (key)
 		ok = YES;	/* Don't need doc details */
 	    else if (doctype) {	/* If not search parse doc details */
 		*doctype++ = 0;	/* Separate rest of doc address */
-		doclength = strchr(doctype, '/');
+		doclength = StrChr(doctype, '/');
 		if (doclength) {
 		    *doclength++ = 0;
 		    document_length = atol(doclength);
 		    if (document_length) {
-			docname = strchr(doclength, '/');
+			docname = StrChr(doclength, '/');
 			if (docname) {
 			    *docname++ = 0;
 			    ok = YES;	/* To avoid a goto! */
@@ -697,13 +693,13 @@ int HTLoadWAIS(const char *arg,
 
     CTRACE((tfp, "HTWAIS: Parsed OK\n"));
 
-    service = strchr(names, ':');
+    service = StrChr(names, ':');
     if (service)
 	*service++ = 0;
     else
 	service = "210";
 
-    if (server_name[0] == 0) {
+    if (the_server_name[0] == 0) {
 #ifdef VMS
 	connection = 0;
 #else
@@ -714,7 +710,7 @@ int HTLoadWAIS(const char *arg,
 	int status;
 
 	CTRACE((tfp, "===WAIS=== calling mosaic_connect_to_server\n"));
-	status = mosaic_connect_to_server(server_name,
+	status = mosaic_connect_to_server(the_server_name,
 					  atoi(service),
 					  &connection);
 	if (status == 0) {
@@ -791,7 +787,7 @@ int HTLoadWAIS(const char *arg,
 #ifdef CACHE_FILE_PREFIX
 	HTSprintf0(&filename, "%sWSRC-%s:%s:%.100s.txt",
 		   CACHE_FILE_PREFIX,
-		   server_name, service, www_database);
+		   the_server_name, service, www_database);
 
 	fp = fopen(filename, "r");	/* Have we found this already? */
 	CTRACE((tfp, "HTWAIS: Description of server %s %s.\n",
@@ -818,8 +814,8 @@ int HTLoadWAIS(const char *arg,
 	char *p;
 	HTStructured *target;
 
-	strncpy(keywords, key, MAX_KEYWORDS_LENGTH);
-	while ((p = strchr(keywords, '+')) != 0)
+	LYStrNCpy(keywords, key, MAX_KEYWORDS_LENGTH);
+	while ((p = StrChr(keywords, '+')) != 0)
 	    *p = ' ';
 
 	/*
@@ -915,7 +911,7 @@ int HTLoadWAIS(const char *arg,
 
 	CTRACE((tfp,
 		"HTWAIS: Retrieve document id `%s' type `%s' length %ld\n",
-		docname, doctype, document_length));
+		NonNull(docname), doctype, document_length));
 
 	format_in =
 	    !strcmp(doctype, "WSRC") ? HTAtom_for("application/x-wais-source") :
@@ -1034,7 +1030,7 @@ int HTLoadWAIS(const char *arg,
 		output_text_record(target,
 				   ((WAISSearchResponse *)
 				    retrieval_response->DatabaseDiagnosticRecords)->Text[0],
-				   false, binary);
+				   binary);
 	    }			/* If text existed */
 
 #ifdef VMS

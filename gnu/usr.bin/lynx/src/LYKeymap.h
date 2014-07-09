@@ -1,3 +1,4 @@
+/* $LynxId: LYKeymap.h,v 1.53 2013/10/20 22:11:03 tom Exp $ */
 #ifndef LYKEYMAP_H
 #define LYKEYMAP_H
 
@@ -10,7 +11,8 @@ extern "C" {
 #endif
     extern BOOLEAN LYisNonAlnumKeyname(int ch, int KeyName);
     extern HTList *LYcommandList(void);
-    extern char *LYKeycodeToString(int c, BOOLEAN upper8);
+    extern const char *lec_to_lecname(int code);
+    extern char *LYKeycodeToString(int c, int upper8);
     extern char *fmt_keys(int lkc_first, int lkc_second);
     extern char *key_for_func(int func);
     extern char *key_for_func_ext(int lac, int context_code);
@@ -19,7 +21,7 @@ extern "C" {
     extern int lacname_to_lac(const char *func);
     extern int lecname_to_lec(const char *func);
     extern int lkcstring_to_lkc(const char *src);
-    extern int remap(char *key, const char *func, BOOLEAN for_dired);
+    extern int remap(char *key, const char *func, int for_dired);
     extern void print_keymap(char **newfile);
     extern void reset_emacs_keys(void);
     extern void reset_numbers_as_arrows(void);
@@ -33,7 +35,7 @@ extern "C" {
  * (which is supposed to be 'int'), that would be okay, but not as clean
  * for type-checking.
  */
-    typedef unsigned short LYKeymap_t;
+    typedef short LYKeymap_t;
 
 #define KEYMAP_SIZE 661
     extern LYKeymap_t keymap[KEYMAP_SIZE];	/* main keymap matrix */
@@ -43,7 +45,7 @@ extern "C" {
     extern int current_layout;
     extern LYKbLayout_t *LYKbLayouts[];
     extern const char *LYKbLayoutNames[];
-    extern int LYSetKbLayout(char *layout_id);
+    extern BOOLEAN LYSetKbLayout(char *layout_id);
 #endif
 
 #if defined(DIRED_SUPPORT) && defined(OK_OVERRIDE)
@@ -149,7 +151,9 @@ extern "C" {
 	,LYK_PREV_DOC
 	,LYK_NEXT_DOC
 	,LYK_ACTIVATE
-	,LYK_SUBMIT		/* mostly like LYK_ACTIVATE, for mouse use, don't map */
+	,LYK_MOUSE_SUBMIT	/* mostly like LYK_ACTIVATE, for mouse use, don't map */
+	,LYK_SUBMIT
+	,LYK_RESET
 	,LYK_GOTO
 	,LYK_ECGOTO
 	,LYK_HELP
@@ -181,6 +185,7 @@ extern "C" {
 	,LYK_DO_NOTHING
 	,LYK_TOGGLE_HELP
 	,LYK_JUMP
+	,LYK_EDITMAP
 	,LYK_KEYMAP
 	,LYK_LIST
 	,LYK_TOOLBAR
@@ -195,11 +200,11 @@ extern "C" {
 	,LYK_ELGOTO
 	,LYK_CHANGE_LINK
 	,LYK_DWIMEDIT
-	,LYK_EDIT_TEXTAREA
-	,LYK_GROW_TEXTAREA
-	,LYK_INSERT_FILE
+	,LYK_EDITTEXTAREA
+	,LYK_GROWTEXTAREA
+	,LYK_INSERTFILE
 
-#ifdef EXP_ADDRLIST_PAGE
+#ifdef USE_ADDRLIST_PAGE
 	,LYK_ADDRLIST
 #else
 #define LYK_ADDRLIST      LYK_ADD_BOOKMARK
@@ -230,14 +235,15 @@ extern "C" {
 #define LYK_TAG_LINK      LYK_UNKNOWN
 #endif				/* DIRED_SUPPORT */
 
-	,LYK_CHG_CENTER
+	,LYK_CHANGE_CENTER
 
 #ifdef KANJI_CODE_OVERRIDE
-	,LYK_CHG_KCODE
+	,LYK_CHANGE_KCODE
 #endif
 
 #ifdef SUPPORT_CHDIR
 	,LYK_CHDIR
+	,LYK_PWD
 #endif
 
 #ifdef USE_CURSES_PADS
@@ -268,6 +274,12 @@ extern "C" {
 	,LYK_CACHE_JAR
 #else
 #define LYK_CACHE_JAR LYK_UNKNOWN
+#endif
+
+#ifdef USE_MAXSCREEN_TOGGLE
+	,LYK_MAXSCREEN_TOGGLE
+#else
+#define LYK_MAXSCREEN_TOGGLE  LYK_UNKNOWN
 #endif
 
     } LYKeymapCode;

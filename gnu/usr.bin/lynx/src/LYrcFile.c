@@ -1,4 +1,4 @@
-/* $LynxId: LYrcFile.c,v 1.81 2009/06/07 17:11:00 tom Exp $ */
+/* $LynxId: LYrcFile.c,v 1.92 2013/11/28 11:22:53 tom Exp $ */
 #include <HTUtils.h>
 #include <HTFTP.h>
 #include <LYUtils.h>
@@ -130,6 +130,8 @@ Config_Enum tbl_transfer_rate[] = {
 #ifdef USE_READPROGRESS
     { "KB,ETA",		rateEtaKB },
     { "BYTES,ETA",	rateEtaBYTES },
+    { "KB2,ETA",	rateEtaKB2 },
+    { "BYTES2,ETA",	rateEtaBYTES2 },
 #endif
 #ifdef USE_PROGRESSBAR
     { "METER",		rateBAR },
@@ -178,11 +180,11 @@ const char *LYputEnum(Config_Enum * table, int value)
     return "?";
 }
 
-BOOL LYgetEnum(Config_Enum * table, char *name,
+BOOL LYgetEnum(Config_Enum * table, const char *name,
 	       int *result)
 {
     Config_Enum *found = 0;
-    unsigned len = strlen(name);
+    unsigned len = (unsigned) strlen(name);
     int match = 0;
 
     if (len != 0) {
@@ -344,7 +346,7 @@ bookmark_file specifies the name and location of the default bookmark\n\
 file into which the user can paste links for easy access at a later\n\
 date.\n\
 ")),
-    PARSE_SET(RC_CASE_SENSITIVE_SEARCHING, case_sensitive, N_("\
+    PARSE_SET(RC_CASE_SENSITIVE_SEARCHING, LYcase_sensitive, N_("\
 If case_sensitive_searching is \"on\" then when the user invokes a search\n\
 using the 's' or '/' keys, the search performed will be case sensitive\n\
 instead of case INsensitive.  The default is usually \"off\".\n\
@@ -427,11 +429,12 @@ file lists such as FTP directories.  The options are:\n\
 #ifndef DISABLE_FTP
     MAYBE_SET(RC_FTP_PASSIVE,           ftp_passive,        MSG_ENABLE_LYNXRC),
 #endif
+    MAYBE_SET(RC_HTML5_CHARSETS,        html5_charsets,     MSG_ENABLE_LYNXRC),
 #ifdef EXP_KEYBOARD_LAYOUT
     PARSE_ARY(RC_KBLAYOUT,              current_layout,     LYKbLayoutNames, NULL),
 #endif
     PARSE_ENU(RC_KEYPAD_MODE,           keypad_mode,        tbl_keypad_mode, NULL),
-    PARSE_ARY(RC_LINEEDIT_MODE,         current_lineedit,   LYLineeditNames, N_("\
+    PARSE_ARY(RC_LINEEDIT_MODE,         current_lineedit,   LYEditorNames, N_("\
 lineedit_mode specifies the key binding used for inputting strings in\n\
 prompts and forms.  If lineedit_mode is set to \"Default Binding\" then\n\
 the following control characters are used for moving and deleting:\n\
@@ -463,6 +466,16 @@ If you do not want this information given out, set the NO_FROM_HEADER\n\
 to TRUE in lynx.cfg, or use the -nofrom command line switch.  You also\n\
 could leave this field blank, but then you won't have it included in\n\
 your mailed comments.\n\
+")),
+    PARSE_STR(RC_PERSONAL_MAIL_NAME,    personal_mail_name, N_("\
+personal_mail_name specifies your personal name, for mail.  The\n\
+name is sent for mailed comments.  Lynx will prompt for this,\n\
+showing the configured value as a default when sending mail.\n\
+This is not necessarily the same as a name provided as part of the\n\
+personal_mail_address.\n\
+Lynx does not save your changes to that default value as a side-effect\n\
+of sending email.  To update the default value, you must use the options\n\
+menu, or modify this file directly.\n\
 ")),
     PARSE_STR(RC_PREFERRED_CHARSET,     pref_charset, N_("\
 preferred_charset specifies the character set in MIME notation (e.g.,\n\
@@ -639,6 +652,113 @@ static Config_Type *lookup_config(const char *name)
     return tbl;
 }
 
+BOOL LYsetRcValue(const char *name, const char *param)
+{
+    char MBM_line[256];
+    char *notes;
+    int n;
+    Config_Type *tbl;
+    ParseUnionPtr q;
+    BOOL changed = TRUE;
+    char *value = NULL;
+
+    StrAllocCopy(value, param);
+    value = LYSkipBlanks(value);
+    CTRACE2(TRACE_CFG, (tfp, "LYrcFile %s:%s\n", name, value));
+
+    tbl = lookup_config(name);
+    if (tbl->name == 0) {
+	const char *special = RC_MULTI_BOOKMARK;
+
+	if (!strncasecomp(name, special, (int) strlen(special))) {
+	    tbl = lookup_config(special);
+	}
+	/*
+	 * lynx ignores unknown keywords.
+	 * This includes known keywords where there is no ENABLE_LYNXRC.
+	 */
+	if (tbl->name == 0) {
+	    CTRACE((tfp, "LYrcFile: ignored %s=%s\n", name, value));
+	    return FALSE;
+	}
+    }
+
+    q = ParseUnionOf(tbl);
+    switch (tbl->type) {
+    case CONF_BOOL:
+	if (q->set_value != 0)
+	    *(q->set_value) = getBool(value);
+	break;
+
+    case CONF_FUN:
+	if (q->fun_value != 0)
+	    (*(q->fun_value)) (value);
+	break;
+
+    case CONF_ARRAY:
+	for (n = 0; tbl->strings[n] != 0; ++n) {
+	    if (!strcasecomp(value, tbl->strings[n])) {
+		*(q->int_value) = n;
+		break;
+	    }
+	}
+	break;
+
+    case CONF_ENUM:
+	if (tbl->table != 0)
+	    LYgetEnum(tbl->table, value, q->int_value);
+	break;
+
+    case CONF_INT:
+	if (q->int_value != 0) {
+	    int ival;
+
+	    if (1 == sscanf(value, "%d", &ival))
+		*(q->int_value) = ival;
+	}
+	break;
+
+    case CONF_LIS:
+	if (q->str_value != 0) {
+	    if (*(q->str_value) != NULL)
+		StrAllocCat(*(q->str_value), ",");
+	    StrAllocCat(*(q->str_value), value);
+	}
+	break;
+
+    case CONF_MBM:
+	for (n = 1; n <= MBM_V_MAXFILES; n++) {
+	    sprintf(MBM_line, "multi_bookmark%c", LYindex2MBM(n));
+
+	    if (!strcasecomp(name, MBM_line)) {
+		if ((notes = StrChr(value, ',')) != 0) {
+		    *notes++ = '\0';
+		    LYTrimTrailing(value);
+		    notes = LYSkipBlanks(notes);
+		} else {
+		    notes = value + strlen(value);
+		}
+		StrAllocCopy(MBM_A_subbookmark[n], value);
+		StrAllocCopy(MBM_A_subdescript[n], notes);
+		break;
+	    }
+	}
+	break;
+
+    case CONF_STR:
+	if (q->str_value != 0)
+	    StrAllocCopy(*(q->str_value), value);
+	break;
+
+    default:
+	changed = FALSE;
+	break;
+    }
+    FREE(value);
+
+    return changed;
+}
+
 /* Read and process user options.  If the passed-in fp is NULL, open the
  * regular user defaults file for reading, otherwise use fp which has to be a
  * file open for reading.  - kw
@@ -647,8 +767,6 @@ void read_rc(FILE *fp)
 {
     char *buffer = NULL;
     char rcfile[LY_MAXPATH];
-    char MBM_line[256];
-    int n;
 
     if (!fp) {
 	/*
@@ -667,9 +785,7 @@ void read_rc(FILE *fp)
      * Process the entries.
      */
     while (LYSafeGets(&buffer, fp) != NULL) {
-	char *name, *value, *notes;
-	Config_Type *tbl;
-	ParseUnionPtr q;
+	char *name, *value;
 
 	/* Most lines in the config file are comment lines.  Weed them out
 	 * now.  Also, leading whitespace is ok, so trim it.
@@ -682,99 +798,13 @@ void read_rc(FILE *fp)
 	/*
 	 * Parse the "name=value" strings.
 	 */
-	if ((value = strchr(name, '=')) == 0) {
+	if ((value = StrChr(name, '=')) == 0) {
 	    CTRACE((tfp, "LYrcFile: missing '=' %s\n", name));
 	    continue;
 	}
 	*value++ = '\0';
 	LYTrimTrailing(name);
-	value = LYSkipBlanks(value);
-	CTRACE2(TRACE_CFG, (tfp, "LYrcFile %s:%s\n", name, value));
-
-	tbl = lookup_config(name);
-	if (tbl->name == 0) {
-	    const char *special = RC_MULTI_BOOKMARK;
-
-	    if (!strncasecomp(name, special, (int) strlen(special))) {
-		tbl = lookup_config(special);
-	    }
-	    /* lynx ignores unknown keywords */
-	    if (tbl->name == 0) {
-		CTRACE((tfp, "LYrcFile: ignored %s=%s\n", name, value));
-		continue;
-	    }
-	}
-
-	q = ParseUnionOf(tbl);
-	switch (tbl->type) {
-	case CONF_BOOL:
-	    if (q->set_value != 0)
-		*(q->set_value) = getBool(value);
-	    break;
-
-	case CONF_FUN:
-	    if (q->fun_value != 0)
-		(*(q->fun_value)) (value);
-	    break;
-
-	case CONF_ARRAY:
-	    for (n = 0; tbl->strings[n] != 0; ++n) {
-		if (!strcasecomp(value, tbl->strings[n])) {
-		    *(q->int_value) = n;
-		    break;
-		}
-	    }
-	    break;
-
-	case CONF_ENUM:
-	    if (tbl->table != 0)
-		LYgetEnum(tbl->table, value, q->int_value);
-	    break;
-
-	case CONF_INT:
-	    if (q->int_value != 0) {
-		int ival;
-
-		if (1 == sscanf(value, "%d", &ival))
-		    *(q->int_value) = ival;
-	    }
-	    break;
-
-	case CONF_LIS:
-	    if (q->str_value != 0) {
-		if (*(q->str_value) != NULL)
-		    StrAllocCat(*(q->str_value), ",");
-		StrAllocCat(*(q->str_value), value);
-	    }
-	    break;
-
-	case CONF_MBM:
-	    for (n = 1; n <= MBM_V_MAXFILES; n++) {
-		sprintf(MBM_line, "multi_bookmark%c", LYindex2MBM(n));
-
-		if (!strcasecomp(name, MBM_line)) {
-		    if ((notes = strchr(value, ',')) != 0) {
-			*notes++ = '\0';
-			LYTrimTrailing(value);
-			notes = LYSkipBlanks(notes);
-		    } else {
-			notes = value + strlen(value);
-		    }
-		    StrAllocCopy(MBM_A_subbookmark[n], value);
-		    StrAllocCopy(MBM_A_subdescript[n], notes);
-		    break;
-		}
-	    }
-	    break;
-
-	case CONF_STR:
-	    if (q->str_value != 0)
-		StrAllocCopy(*(q->str_value), value);
-	    break;
-
-	case CONF_NIL:
-	    break;
-	}
+	LYsetRcValue(name, value);
     }
 
     LYCloseInput(fp);
@@ -1024,7 +1054,7 @@ BOOL will_save_rc(const char *name)
 int enable_lynxrc(char *value)
 {
     Config_Type *tbl;
-    char *colon = strchr(value, ':');
+    char *colon = StrChr(value, ':');
 
     if (colon != 0) {
 	*colon++ = 0;

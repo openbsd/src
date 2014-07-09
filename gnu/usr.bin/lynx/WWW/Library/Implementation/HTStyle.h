@@ -1,4 +1,6 @@
-/*                                                       HTStyle: Style management for libwww
+/*
+ * $LynxId: HTStyle.h,v 1.17 2011/06/06 09:12:01 tom Exp $
+					    HTStyle: Style management for libwww
                               STYLE DEFINITION FOR HYPERTEXT
 
    Styles allow the translation between a logical property of a piece of text
@@ -80,9 +82,11 @@ extern "C" {
 /*      Style management information
 */
 	struct _HTStyle *next;	/* Link for putting into stylesheet */
-	char *name;		/* Style name */
+	char *w_name;		/* Style name */
+	const char *c_name;	/* Style name */
 	int id;			/* equivalent of name, for speed */
-	char *SGMLTag;		/* Tag name to start */
+	char *w_SGMLTag;	/* Tag name to start */
+	const char *c_SGMLTag;	/* Tag name to start */
 
 /*      Character attributes    (a la NXRun)
 */
@@ -120,6 +124,22 @@ extern "C" {
 
     } HTStyle;
 
+#define GetHTStyleName(p) ((p)->w_name    ? (p)->w_name    : (p)->c_name)
+#define GetHTStyleSGML(p) ((p)->w_SGMLTag ? (p)->w_SGMLTag : (p)->c_SGMLTag)
+
+#define HTStyleInit( \
+	next, name, SGML_tag, \
+	font, fontsize, color, superscript, \
+	anchor, indent1st, leftIndent, rightIndent, \
+	alignment, lineHt, descentLine, \
+	tabs, wordWrap, freeFormat, spaceBefore, spaceAfter, paraFlags) \
+    { \
+	next, NULL, #name, ST_##name, NULL, SGML_tag, \
+	font, fontsize, color, superscript, \
+	anchor, indent1st, leftIndent, rightIndent, \
+	alignment, lineHt, descentLine, \
+	tabs, wordWrap, freeFormat, spaceBefore, spaceAfter, paraFlags }
+
 #define HT_ALIGN_NONE (-1)
 
 /*      Style functions:
@@ -136,7 +156,7 @@ extern "C" {
  *              -----------
  */
     typedef struct _HTStyleSheet {
-	char *name;
+	const char *name;
 	HTStyle *styles;
     } HTStyleSheet;
 

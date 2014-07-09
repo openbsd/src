@@ -1,4 +1,4 @@
-/* $LynxId: LYGetFile.c,v 1.79 2009/04/12 17:24:06 tom Exp $ */
+/* $LynxId: LYGetFile.c,v 1.92 2013/11/28 11:18:56 tom Exp $ */
 #include <HTUtils.h>
 #include <HTTP.h>
 #include <HTAnchor.h>		/* Anchor class */
@@ -144,7 +144,7 @@ int getfile(DocInfo *doc, int *target)
 	strlen(temp) > 3) {
 	char *cp1;
 
-	if ((cp1 = strchr(temp, '@')) == NULL)
+	if ((cp1 = StrChr(temp, '@')) == NULL)
 	    cp1 = temp;
 	if ((cp = strrchr(cp1, ':')) != NULL) {
 	    long int value;
@@ -189,6 +189,7 @@ int getfile(DocInfo *doc, int *target)
 	    if (!(url_type == HTTP_URL_TYPE ||
 		  url_type == HTTPS_URL_TYPE ||
 		  url_type == LYNXHIST_URL_TYPE ||
+		  url_type == LYNXEDITMAP_URL_TYPE ||
 		  url_type == LYNXKEYMAP_URL_TYPE ||
 		  url_type == LYNXIMGMAP_URL_TYPE ||
 		  url_type == LYNXCOOKIE_URL_TYPE ||
@@ -222,9 +223,10 @@ int getfile(DocInfo *doc, int *target)
 		return (NULLFILE);
 	    }
 	} else if (check_realm && !LYPermitURL && !LYJumpFileURL) {
-	    if (!(0 == strncmp(startrealm, WWWDoc.address,
+	    if (!(0 == StrNCmp(startrealm, WWWDoc.address,
 			       strlen(startrealm)) ||
 		  url_type == LYNXHIST_URL_TYPE ||
+		  url_type == LYNXEDITMAP_URL_TYPE ||
 		  url_type == LYNXKEYMAP_URL_TYPE ||
 		  url_type == LYNXIMGMAP_URL_TYPE ||
 		  url_type == LYNXCOOKIE_URL_TYPE ||
@@ -380,8 +382,8 @@ int getfile(DocInfo *doc, int *target)
 		LYNoRefererForThis = TRUE;
 	    }
 	    if (LYNoRefererForThis == FALSE &&
-		(cp = strchr(ref_url, '?')) != NULL &&
-		strchr(cp, '=') != NULL) {
+		(cp = StrChr(ref_url, '?')) != NULL &&
+		StrChr(cp, '=') != NULL) {
 		/*
 		 * Don't send a Referer header if the URL is the reply from a
 		 * form with method GET, in case the content has personal data
@@ -430,12 +432,9 @@ int getfile(DocInfo *doc, int *target)
 	    WWWDoc.bookmark = doc->bookmark;
 	    WWWDoc.isHEAD = doc->isHEAD;
 	    WWWDoc.safe = doc->safe;
-#ifndef DONT_TRACK_INTERNAL_LINKS
-	    if (doc->internal_link && !reloading) {
+	    if (track_internal_links && doc->internal_link && !reloading) {
 		LYinternal_flag = TRUE;
 	    }
-#endif
-
 #ifdef DIRED_SUPPORT
 	    lynx_edit_mode = FALSE;
 #endif /* DIRED_SUPPORT */
@@ -525,7 +524,7 @@ int getfile(DocInfo *doc, int *target)
 	} else if (url_type == MAILTO_URL_TYPE) {
 	    if (no_mail) {
 		HTUserMsg(MAIL_DISABLED);
-	    } else {
+	    } else if (!dump_output_immediately) {
 		HTParentAnchor *tmpanchor = HTAnchor_findAddress(&WWWDoc);
 		const char *title;
 		char *tmptitle = NULL;
@@ -545,14 +544,15 @@ int getfile(DocInfo *doc, int *target)
 			title = "";
 		    }
 		}
-		cp = strchr(doc->address, ':') + 1;
+		cp = StrChr(doc->address, ':') + 1;
 		reply_by_mail(cp,
-			      ((HTMainAnchor && !LYUserSpecifiedURL) ?
-			       (char *) HTMainAnchor->address :
-			       (char *) doc->address),
+			      ((HTMainAnchor && !LYUserSpecifiedURL)
+			       ? (char *) HTMainAnchor->address
+			       : (char *) doc->address),
 			      title,
-			      (HTMainAnchor && !LYUserSpecifiedURL) ?
-			      HTMainAnchor->message_id : NULL);
+			      (HTMainAnchor && !LYUserSpecifiedURL)
+			      ? HTMainAnchor->message_id
+			      : NULL);
 		FREE(tmptitle);
 	    }
 	    return (NULLFILE);
@@ -562,6 +562,7 @@ int getfile(DocInfo *doc, int *target)
 	     * allowed.
 	     */
 	} else if (local_host_only &&
+		   url_type != LYNXEDITMAP_URL_TYPE &&
 		   url_type != LYNXKEYMAP_URL_TYPE &&
 		   url_type != LYNXIMGMAP_URL_TYPE &&
 		   url_type != LYNXCOOKIE_URL_TYPE &&
@@ -571,7 +572,7 @@ int getfile(DocInfo *doc, int *target)
 #endif
 		   url_type != LYNXCGI_URL_TYPE &&
 		   !(url_type == NEWS_URL_TYPE &&
-		     strncmp(doc->address, "news://", 7)) &&
+		     StrNCmp(doc->address, "news://", 7)) &&
 		   !(LYisLocalHost(doc->address) ||
 		     LYisLocalAlias(doc->address))) {
 	    HTUserMsg(ACCESS_ONLY_LOCALHOST);
@@ -588,7 +589,7 @@ int getfile(DocInfo *doc, int *target)
 	    if (!telnet_ok) {
 		HTUserMsg(TELNET_DISABLED);
 		return (NULLFILE);
-	    } else if (no_telnet_port && strchr(doc->address + 7, ':')) {
+	    } else if (no_telnet_port && StrChr(doc->address + 7, ':')) {
 		HTUserMsg(TELNET_PORT_SPECS_DISABLED);
 		return (NULLFILE);
 		/*
@@ -659,7 +660,7 @@ int getfile(DocInfo *doc, int *target)
 	     * already attached then do this.  Otherwise just load it!
 	     */
 	} else if (url_type == INDEX_GOPHER_URL_TYPE &&
-		   strchr(doc->address, '?') == NULL) {
+		   StrChr(doc->address, '?') == NULL) {
 	    int status;
 
 	    /*
@@ -670,7 +671,7 @@ int getfile(DocInfo *doc, int *target)
 		*cp = '\0';
 		StrAllocCopy(temp, doc->address);
 		cp += 3;
-		if (*cp && strncmp(cp, "%09", 3)) {
+		if (*cp && StrNCmp(cp, "%09", 3)) {
 		    StrAllocCat(temp, "?");
 		    StrAllocCat(temp, cp);
 		    if ((cp = strstr(temp, "%09")) != NULL) {
@@ -717,8 +718,8 @@ int getfile(DocInfo *doc, int *target)
 	    /*
 	     * If tuple's Path=GET%20/...  convert to an http URL.
 	     */
-	    if ((cp = strchr(doc->address + 9, '/')) != NULL &&
-		0 == strncmp(++cp, "hGET%20/", 8)) {
+	    if ((cp = StrChr(doc->address + 9, '/')) != NULL &&
+		0 == StrNCmp(++cp, "hGET%20/", 8)) {
 		StrAllocCopy(tmp, "http://");
 		CTRACE((tfp, "getfile: URL '%s'\n",
 			doc->address));
@@ -727,7 +728,7 @@ int getfile(DocInfo *doc, int *target)
 		/*
 		 * If the port is defaulted, it should stay 70.
 		 */
-		if (strchr(tmp + 6, ':') == NULL) {
+		if (StrChr(tmp + 6, ':') == NULL) {
 		    StrAllocCat(tmp, "70/");
 		    tmp[strlen(tmp) - 4] = ':';
 		}
@@ -1123,25 +1124,30 @@ int follow_link_number(int c,
 		       DocInfo *doc,
 		       int *num)
 {
-    char temp[120];
-    char *p = temp;
+    bstring *temp = NULL;
+    char *p;
     int rel = 0;
     int new_top, new_link;
     BOOL want_go;
     int curline = *num;		/* passed in from mainloop() */
+    int code;
 
     CTRACE((tfp, "follow_link_number(%d,%d,...)\n", c, cur));
-    temp[0] = (char) c;
-    temp[1] = '\0';
+    BStrCopy0(temp, "?");
+    temp->str[0] = (char) c;
     *num = -1;
     _statusline(FOLLOW_LINK_NUMBER);
+
     /*
      * Get the number, possibly with a letter suffix, from the user.
      */
-    if (LYgetstr(temp, VISIBLE, sizeof(temp), NORECALL) < 0 || *temp == 0) {
+    if (LYgetBString(&temp, FALSE, sizeof(temp), NORECALL) < 0 ||
+	isBEmpty(temp)) {
 	HTInfoMsg(CANCELLED);
 	return (DO_NOTHING);
     }
+
+    p = temp->str;
     *num = atoi(p);
     while (isdigit(UCH(*p)))
 	++p;
@@ -1161,7 +1167,7 @@ int follow_link_number(int c,
     }
     /* don't currently check for errors typing suffix */
 
-    CTRACE((tfp, "  temp=%s, *num=%d, rel='%c'\n", temp, *num, rel));
+    CTRACE((tfp, "  temp=%s, *num=%d, rel='%c'\n", temp->str, *num, rel));
     /*
      * Check if we had a 'p' or 'P' following the number as a flag for
      * displaying the page with that number.  - FM
@@ -1169,15 +1175,15 @@ int follow_link_number(int c,
     if ((c == 'p' || c == 'P') && display_lines == 0) {
 	CTRACE((tfp, " curline=%d, LYlines=%d, display too small!\n",
 		curline, LYlines));
-	return (PRINT_ERROR);
+	code = PRINT_ERROR;
     } else if (c == 'p' || c == 'P') {
 	int nlines = HText_getNumOfLines();
-	int npages = ((nlines + 1) > display_lines) ?
-	(((nlines + 1) + (display_lines - 1)) / (display_lines))
-	: 1;
-	int curpage = ((curline + 1) > display_lines) ?
-	(((curline + 1) + (display_lines - 1)) / (display_lines))
-	: 1;
+	int npages = (((nlines + 1) > display_lines)
+		      ? (((nlines + 1) + (display_lines - 1)) / (display_lines))
+		      : 1);
+	int curpage = (((curline + 1) > display_lines)
+		       ? (((curline + 1) + (display_lines - 1)) / (display_lines))
+		       : 1);
 
 	CTRACE((tfp, " nlines=%d, npages=%d, curline=%d, curpage=%d\n",
 		nlines, npages, curline, curpage));
@@ -1187,63 +1193,68 @@ int follow_link_number(int c,
 	    *num = curpage + *num;
 	else if (rel == '-')
 	    *num = curpage - *num;
-	doc->line = (npages <= 1) ?
-	    1 :
-	    ((*num <= npages) ? (((*num - 1) * display_lines) + 1)
-	     : (((npages - 1) * display_lines) + 1));
-	return (DO_GOTOPAGE_STUFF);
-    }
-
-    /*
-     * Check if we want to make the link corresponding to the number the
-     * current link, rather than ACTIVATE-ing it.
-     */
-    want_go = (BOOL) (c == 'g' || c == 'G');
-
-    /* If rel, add or subtract num from current link, or
-     * nearest previous/subsequent link if current link is not on screen.
-     */
-    if (rel)
-	*num = HTGetRelLinkNum(*num, rel, cur);
-    /*
-     * If we have a valid number, act on it.
-     */
-    if (*num > 0) {
-	int info;
-	char *text = NULL;
+	doc->line = ((npages <= 1)
+		     ? 1
+		     : ((*num <= npages)
+			? (((*num - 1) * display_lines) + 1)
+			: (((npages - 1) * display_lines) + 1)));
+	code = DO_GOTOPAGE_STUFF;
+    } else {
 
 	/*
-	 * Get the lname, and hightext, directly from www structures and add it
-	 * to the cur link so that we can pass it transparently on to
-	 * getfile(), and load new_top and new_link if we instead want to make
-	 * the link number current.  These things are done so that a link can
-	 * be selected anywhere in the current document, whether it is
-	 * displayed on the screen or not!
+	 * Check if we want to make the link corresponding to the number the
+	 * current link, rather than ACTIVATE-ing it.
 	 */
-	info = HTGetLinkInfo(*num,
-			     want_go,
-			     &new_top,
-			     &new_link,
-			     &text,
-			     &links[cur].lname);
-	if (text != NULL)
-	    LYSetHilite(cur, text);
-	if (info == WWW_INTERN_LINK_TYPE) {
-	    links[cur].type = WWW_INTERN_LINK_TYPE;
-	    return (DO_LINK_STUFF);
-	} else if (info == LINK_LINE_FOUND) {
-	    doc->line = new_top + 1;
-	    doc->link = new_link;
-	    return (DO_GOTOLINK_STUFF);
-	} else if (info) {
-	    links[cur].type = WWW_LINK_TYPE;
-	    return (DO_LINK_STUFF);
+	want_go = (BOOL) (c == 'g' || c == 'G');
+
+	/* If rel, add or subtract num from current link, or
+	 * nearest previous/subsequent link if current link is not on screen.
+	 */
+	if (rel)
+	    *num = HTGetRelLinkNum(*num, rel, cur);
+	/*
+	 * If we have a valid number, act on it.
+	 */
+	if (*num > 0) {
+	    int info;
+	    char *text = NULL;
+
+	    /*
+	     * Get the lname, and hightext, directly from www structures and
+	     * add it to the cur link so that we can pass it transparently on
+	     * to getfile(), and load new_top and new_link if we instead want
+	     * to make the link number current.  These things are done so that
+	     * a link can be selected anywhere in the current document, whether
+	     * it is displayed on the screen or not!
+	     */
+	    info = HTGetLinkInfo(*num,
+				 want_go,
+				 &new_top,
+				 &new_link,
+				 &text,
+				 &links[cur].lname);
+	    if (text != NULL)
+		LYSetHilite(cur, text);
+
+	    if (info == WWW_INTERN_LINK_TYPE) {
+		links[cur].type = WWW_INTERN_LINK_TYPE;
+		code = DO_LINK_STUFF;
+	    } else if (info == LINK_LINE_FOUND) {
+		doc->line = new_top + 1;
+		doc->link = new_link;
+		code = DO_GOTOLINK_STUFF;
+	    } else if (info) {
+		links[cur].type = WWW_LINK_TYPE;
+		code = DO_LINK_STUFF;
+	    } else {
+		code = PRINT_ERROR;
+	    }
 	} else {
-	    return (PRINT_ERROR);
+	    code = PRINT_ERROR;
 	}
-    } else {
-	return (PRINT_ERROR);
     }
+    BStrFree(temp);
+    return code;
 }
 
 #if defined(EXEC_LINKS) || defined(LYNXCGI_LINKS)
@@ -1255,61 +1266,56 @@ struct trust {
     struct trust *next;
 };
 
-static struct trust trusted_exec_default =
-{
-    "file://localhost/", "", EXEC_PATH, NULL
-};
-static struct trust always_trusted_exec_default =
-{
-    "none", "", ALWAYS_EXEC_PATH, NULL
-};
-static struct trust trusted_cgi_default =
-{
-    "none", "", CGI_PATH, NULL
-};
+static struct trust *trusted_exec = 0;
+static struct trust *always_trusted_exec;
+static struct trust *trusted_cgi = 0;
 
-static struct trust *trusted_exec = &trusted_exec_default;
-static struct trust *always_trusted_exec = &always_trusted_exec_default;
-static struct trust *trusted_cgi = &trusted_cgi_default;
+static struct trust *new_trust(const char *src, const char *path, int type)
+{
+    struct trust *tp;
+
+    tp = typecalloc(struct trust);
+
+    if (tp == NULL)
+	outofmem(__FILE__, "new_trust");
+
+    assert(tp != NULL);
+
+    tp->type = type;
+    StrAllocCopy(tp->src, src);
+    StrAllocCopy(tp->path, path);
+
+    return tp;
+}
+
+static struct trust *get_trust(struct trust **table, const char *src, int type)
+{
+    if (*table == 0) {
+	*table = new_trust(src, "", type);
+    }
+    return *table;
+}
 
 #ifdef LY_FIND_LEAKS
-static void LYTrusted_free(void)
+static void free_data(struct trust *cur)
 {
-    struct trust *cur;
     struct trust *next;
 
-    if (trusted_exec != &trusted_exec_default) {
-	cur = trusted_exec;
-	while (cur) {
-	    FREE(cur->src);
-	    FREE(cur->path);
-	    next = cur->next;
-	    FREE(cur);
-	    cur = next;
-	}
+    cur = trusted_exec;
+    while (cur) {
+	FREE(cur->src);
+	FREE(cur->path);
+	next = cur->next;
+	FREE(cur);
+	cur = next;
     }
+}
 
-    if (always_trusted_exec != &always_trusted_exec_default) {
-	cur = always_trusted_exec;
-	while (cur) {
-	    FREE(cur->src);
-	    FREE(cur->path);
-	    next = cur->next;
-	    FREE(cur);
-	    cur = next;
-	}
-    }
-
-    if (trusted_cgi != &trusted_cgi_default) {
-	cur = trusted_cgi;
-	while (cur) {
-	    FREE(cur->src);
-	    FREE(cur->path);
-	    next = cur->next;
-	    FREE(cur);
-	    cur = next;
-	}
-    }
+static void LYTrusted_free(void)
+{
+    free_data(trusted_exec);
+    free_data(always_trusted_exec);
+    free_data(trusted_cgi);
 
     return;
 }
@@ -1321,6 +1327,7 @@ void add_trusted(char *str,
     struct trust *tp;
     char *path;
     char *src = str;
+    const char *after_tab;
     int Type = type;
     static BOOLEAN first = TRUE;
 
@@ -1333,37 +1340,24 @@ void add_trusted(char *str,
 	first = FALSE;
     }
 
-    path = strchr(src, '\t');
-    if (path)
+    path = StrChr(src, '\t');
+    if (path) {
 	*path++ = '\0';
-    else
-	path = "";
+	after_tab = path;
+    } else {
+	after_tab = "";
+    }
 
-    tp = (struct trust *) malloc(sizeof(*tp));
-    if (tp == NULL)
-	outofmem(__FILE__, "add_trusted");
-    tp->src = NULL;
-    tp->path = NULL;
-    tp->type = Type;
-    StrAllocCopy(tp->src, src);
-    StrAllocCopy(tp->path, path);
+    tp = new_trust(src, after_tab, Type);
+
     if (Type == EXEC_PATH) {
-	if (trusted_exec == &trusted_exec_default)
-	    tp->next = NULL;
-	else
-	    tp->next = trusted_exec;
+	tp->next = trusted_exec;
 	trusted_exec = tp;
     } else if (Type == ALWAYS_EXEC_PATH) {
-	if (always_trusted_exec == &always_trusted_exec_default)
-	    tp->next = NULL;
-	else
-	    tp->next = always_trusted_exec;
+	tp->next = always_trusted_exec;
 	always_trusted_exec = tp;
     } else if (Type == CGI_PATH) {
-	if (trusted_cgi == &trusted_cgi_default)
-	    tp->next = NULL;
-	else
-	    tp->next = trusted_cgi;
+	tp->next = trusted_cgi;
 	trusted_cgi = tp;
     }
 }
@@ -1390,11 +1384,11 @@ BOOLEAN exec_ok(const char *source,
      * Choose the trust structure based on the type.
      */
     if (Type == EXEC_PATH) {
-	tp = trusted_exec;
+	tp = get_trust(&trusted_exec, "file://localhost/", EXEC_PATH);
     } else if (Type == ALWAYS_EXEC_PATH) {
-	tp = always_trusted_exec;
+	tp = get_trust(&always_trusted_exec, "none", ALWAYS_EXEC_PATH);
     } else if (Type == CGI_PATH) {
-	tp = trusted_cgi;
+	tp = get_trust(&trusted_cgi, "none", CGI_PATH);
     } else {
 	HTAlert(MALFORMED_EXEC_REQUEST);
 	return FALSE;
@@ -1404,11 +1398,11 @@ BOOLEAN exec_ok(const char *source,
     /*
      * Security:  reject on relative path.
      */
-    if ((cp = strchr(linktext, '[')) != NULL) {
+    if ((cp = StrChr(linktext, '[')) != NULL) {
 	char *cp1;
 
-	if (((cp1 = strchr(cp, '-')) != NULL) &&
-	    strchr(cp1, ']') != NULL) {
+	if (((cp1 = StrChr(cp, '-')) != NULL) &&
+	    StrChr(cp1, ']') != NULL) {
 	    while (cp1[1] == '-')
 		cp1++;
 	    if (cp1[1] == ']' ||
@@ -1435,7 +1429,7 @@ BOOLEAN exec_ok(const char *source,
     else
 	allowed_extra_chars = " _-:./@~$+=\t";
     for (cp = linktext; *cp != '\0'; cp++) {
-	if (!isalnum(UCH(*cp)) && !strchr(allowed_extra_chars, *cp)) {
+	if (!isalnum(UCH(*cp)) && !StrChr(allowed_extra_chars, *cp)) {
 	    char *buf = 0;
 
 	    HTSprintf0(&buf,
@@ -1465,7 +1459,7 @@ BOOLEAN exec_ok(const char *source,
 	tp = tp->next;
     }
     if (Type == EXEC_PATH &&
-	always_trusted_exec != &always_trusted_exec_default) {
+	always_trusted_exec->next != 0) {
 	Type = ALWAYS_EXEC_PATH;
 	tp = always_trusted_exec;
 	goto check_tp_for_entry;
@@ -1492,7 +1486,6 @@ static int fix_httplike_urls(DocInfo *doc, UrlTypes type)
      */
     if (type == FTP_URL_TYPE &&
 	LYIsHtmlSep(doc->address[strlen(doc->address) - 1])) {
-	char *proxy;
 	char *path = HTParse(doc->address, "", PARSE_PATH | PARSE_PUNCTUATION);
 
 	/*
@@ -1509,7 +1502,7 @@ static int fix_httplike_urls(DocInfo *doc, UrlTypes type)
 	/*
 	 * If we're proxying ftp, don't trim anything.  - KW
 	 */
-	if (((proxy = LYGetEnv("ftp_proxy")) != NULL) &&
+	if ((LYGetEnv("ftp_proxy") != NULL) &&
 	    !override_proxy(doc->address))
 	    return 0;
 
@@ -1523,11 +1516,13 @@ static int fix_httplike_urls(DocInfo *doc, UrlTypes type)
     } else if (type == NCFTP_URL_TYPE) {
 	char *path = NULL;
 	char *first = doc->address;
-	char *second = strchr(first, ':');
+	char *second = StrChr(first, ':');
 
 	CTRACE((tfp, "fix_httplike_urls: URL '%s'\n", doc->address));
-
-	*second++ = '\0';
+	if (second == 0)
+	    second = first + strlen(first);
+	else
+	    *second++ = '\0';
 	HTSprintf0(&path, "%s//%s%s", STR_FTP_URL, first, second);
 	FREE(doc->address);
 	doc->address = path;
@@ -1546,7 +1541,7 @@ static int fix_httplike_urls(DocInfo *doc, UrlTypes type)
 	}
 	if (type == HTTP_URL_TYPE ||
 	    type == HTTPS_URL_TYPE) {
-	    if ((slash - 2) != strchr(doc->address, ':')) {
+	    if ((slash - 2) != StrChr(doc->address, ':')) {
 		/*
 		 * Turns out we were not looking at the right slash after all,
 		 * there must have been more than one "://" which is valid at
@@ -1555,7 +1550,7 @@ static int fix_httplike_urls(DocInfo *doc, UrlTypes type)
 		 */
 		return (0);
 	    }
-	    if (strchr(doc->address, '?')) {
+	    if (StrChr(doc->address, '?')) {
 		/*
 		 * If there is a question mark that appears to be part of the
 		 * hostname, don't append anything either.  Leave it to HTParse

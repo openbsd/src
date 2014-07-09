@@ -9,6 +9,7 @@
 extern "C" {
 #endif
 #ifdef VMS
+    extern BOOLEAN DidCleanup;
     extern BOOLEAN HadVMSInterrupt;
 #endif
 

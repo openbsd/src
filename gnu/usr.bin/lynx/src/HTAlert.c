@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTAlert.c,v 1.85 2009/04/07 00:09:34 tom Exp $
+ * $LynxId: HTAlert.c,v 1.101 2013/11/28 11:17:04 tom Exp $
  *
  *	Displaying messages and getting input for Lynx Browser
  *	==========================================================
@@ -40,7 +40,7 @@
 #ifdef HAVE_NAPMS
 #define LYSleep(n) napms(n)
 #else
-#define LYSleep(n) sleep(n)
+#define LYSleep(n) sleep((unsigned)n)
 #endif
 
 /*	Issue a message about a problem.		HTAlert()
@@ -152,7 +152,7 @@ void HTProgress(const char *Msg)
     statusline(Msg);
     LYstore_message(Msg);
     CTRACE((tfp, "%s\n", Msg));
-    LYSleepDebug();
+    LYSleepDelay();
 }
 
 const char *HTProgressUnits(int rate)
@@ -167,6 +167,7 @@ const char *HTProgressUnits(int rate)
     return ((rate == rateKB)
 #ifdef USE_READPROGRESS
 	    || (rate == rateEtaKB)
+	    || (rate == rateEtaKB2)
 #endif
 	)? kbunits : bunits;
 }
@@ -176,17 +177,18 @@ static const char *sprint_bytes(char *s, off_t n, const char *was_units)
     static off_t kb_units = 1024;
     const char *u = HTProgressUnits(LYTransferRate);
 
-    if (LYTransferRate == rateKB || LYTransferRate == rateEtaKB_maybe) {
+    if (isRateInKB(LYTransferRate)) {
 	if (n >= 10 * kb_units) {
-	    sprintf(s, "%" PRI_off_t, CAST_off_t(n / kb_units));
+	    sprintf(s, "%" PRI_off_t, CAST_off_t (n / kb_units));
 	} else if (n > 999) {	/* Avoid switching between 1016b/s and 1K/s */
-	    sprintf(s, "%.2g", ((double) n) / kb_units);
+	    sprintf(s, "%.2g", ((double) n) / (double) kb_units);
 	} else {
-	    sprintf(s, "%" PRI_off_t, CAST_off_t(n));
+	    sprintf(s, "%" PRI_off_t, CAST_off_t (n));
+
 	    u = HTProgressUnits(rateBYTES);
 	}
     } else {
-	sprintf(s, "%" PRI_off_t, CAST_off_t(n));
+	sprintf(s, "%" PRI_off_t, CAST_off_t (n));
     }
 
     if (!was_units || was_units != u)
@@ -195,16 +197,40 @@ static const char *sprint_bytes(char *s, off_t n, const char *was_units)
 }
 
 #ifdef USE_READPROGRESS
-#define TIME_HMS_LENGTH (16)
+#define TIME_HMS_LENGTH (36)
 static char *sprint_tbuf(char *s, long t)
 {
-    if (t > 3600)
-	sprintf(s, "%ldh%ldm%lds", t / 3600, (t / 60) % 60, t % 60);
-    else if (t > 60)
-	sprintf(s, "%ldm%lds", t / 60, t % 60);
-    else
-	sprintf(s, "%ld sec", t);
-    return s;
+    const char *format = ((LYTransferRate == rateEtaBYTES2 ||
+			   LYTransferRate == rateEtaKB2)
+			  ? "% 2ld%c"
+			  : "%ld%c");
+    char *base = s;
+
+    if (t < 0) {
+	strcpy(s, "forever");
+    } else {
+	if (t > (3600 * 24)) {
+	    sprintf(s, format, t / (3600 * 24), 'd');
+	    s += strlen(s);
+	    t %= (3600 * 24);
+	}
+	if (t > 3600) {
+	    sprintf(s, format, t / 3600, 'h');
+	    s += strlen(s);
+	    t %= 3600;
+	}
+	if (t > 60) {
+	    sprintf(s, format, t / 60, 'm');
+	    s += strlen(s);
+	    t %= 60;
+	}
+	if (s == base) {
+	    sprintf(s, "% 2ld sec", t);
+	} else if (t != 0) {
+	    sprintf(s, format, t, 's');
+	}
+    }
+    return base;
 }
 #endif /* USE_READPROGRESS */
 
@@ -226,7 +252,7 @@ void HTReadProgress(off_t bytes, off_t total)
     static double first, last, last_active;
 
     gettimeofday(&tv, (struct timezone *) 0);
-    now = tv.tv_sec + tv.tv_usec / 1000000.;
+    now = (double) tv.tv_sec + (double) tv.tv_usec / 1000000.;
 #else
 #if defined(HAVE_FTIME) && defined(HAVE_SYS_TIMEB_H)
     static double now, first, last, last_active;
@@ -254,8 +280,10 @@ void HTReadProgress(off_t bytes, off_t total)
     /* 1 sec delay for transfer_rate calculation without g-t-o-d */
     if ((bytes > 0) &&
 	(now > first)) {
-	if (transfer_rate <= 0)	/* the very first time */
-	    transfer_rate = (off_t) ((bytes) / (now - first));	/* bytes/sec */
+	if (transfer_rate <= 0) {	/* the very first time */
+	    transfer_rate = (off_t) ((double) (bytes) / (now - first));
+	    /* bytes/sec */
+	}
 	total_last = total;
 
 	/*
@@ -281,7 +309,7 @@ void HTReadProgress(off_t bytes, off_t total)
 		if (bytes_last != bytes)
 		    last_active = now;
 		bytes_last = bytes;
-		transfer_rate = (off_t) (bytes / (now - first));	/* more accurate value */
+		transfer_rate = (off_t) ((double) bytes / (now - first));	/* more accurate value */
 	    }
 
 	    if (total > 0)
@@ -300,11 +328,13 @@ void HTReadProgress(off_t bytes, off_t total)
 		HTSprintf0(&line, gettext("Read %s of data"), bytesp);
 
 		if (total > 0) {
-		    float percent = bytes / (float) total;
-		    int meter = (LYcolLimit * percent) - 5;
+		    float percent = (float) bytes / (float) total;
+		    int meter = (int) (((float) LYcolLimit * percent) - 5);
 
 		    CTRACE((tfp, "rateBAR: bytes: %" PRI_off_t ", total: "
-			    "%" PRI_off_t "\n", bytes, total));
+			    "%" PRI_off_t "\n",
+			    CAST_off_t (bytes),
+			    CAST_off_t (total)));
 		    CTRACE((tfp, "meter = %d\n", meter));
 
 		    HTSprintf0(&line, "%d%% ", (int) (percent * 100));
@@ -334,7 +364,9 @@ void HTReadProgress(off_t bytes, off_t total)
 
 #ifdef USE_READPROGRESS
 	    if (LYTransferRate == rateEtaBYTES
-		|| LYTransferRate == rateEtaKB) {
+		|| LYTransferRate == rateEtaKB
+		|| LYTransferRate == rateEtaBYTES2
+		|| LYTransferRate == rateEtaKB2) {
 		char tbuf[TIME_HMS_LENGTH];
 
 		if (now - last_active >= 5)
@@ -618,20 +650,17 @@ BOOL confirm_post_resub(const char *address,
 char *HTPrompt(const char *Msg, const char *deflt)
 {
     char *rep = NULL;
-    char Tmp[200];
-
-    Tmp[0] = '\0';
-    Tmp[sizeof(Tmp) - 1] = '\0';
+    bstring *data = NULL;
 
     _statusline(Msg);
-    if (deflt)
-	strncpy(Tmp, deflt, sizeof(Tmp) - 1);
+    BStrCopy0(data, deflt ? deflt : "");
 
     if (!dump_output_immediately)
-	LYgetstr(Tmp, VISIBLE, sizeof(Tmp), NORECALL);
+	(void) LYgetBString(&data, FALSE, 0, NORECALL);
 
-    StrAllocCopy(rep, Tmp);
+    StrAllocCopy(rep, data->str);
 
+    BStrFree(data);
     return rep;
 }
 
@@ -642,14 +671,14 @@ char *HTPrompt(const char *Msg, const char *deflt)
 char *HTPromptPassword(const char *Msg)
 {
     char *result = NULL;
-    char pw[120];
-
-    pw[0] = '\0';
+    bstring *data = NULL;
 
     if (!dump_output_immediately) {
 	_statusline(Msg ? Msg : PASSWORD_PROMPT);
-	LYgetstr(pw, HIDDEN, sizeof(pw), NORECALL);	/* hidden */
-	StrAllocCopy(result, pw);
+	BStrCopy0(data, "");
+	(void) LYgetBString(&data, TRUE, 0, NORECALL);
+	StrAllocCopy(result, data->str);
+	BStrFree(data);
     } else {
 	printf("\n%s\n", PASSWORD_REQUIRED);
 	StrAllocCopy(result, "");
@@ -683,7 +712,7 @@ char *HTPromptPassword(const char *Msg)
 void HTPromptUsernameAndPassword(const char *Msg,
 				 char **username,
 				 char **password,
-				 BOOL IsProxy)
+				 int IsProxy)
 {
     if ((IsProxy == FALSE &&
 	 authentication_info[0] && authentication_info[1]) ||
@@ -909,9 +938,9 @@ BOOL HTConfirmCookie(domain_entry * de, const char *server,
 		 * (O/N/Toujours/Jamais)           - French
 		 */
 		char *p = gettext("Y/N/A/V");	/* placeholder for comment */
-		char *s = "YNAV\007\003";	/* see ADVANCED_COOKIE_CONFIRMATION */
+		const char *s = "YNAV\007\003";		/* see ADVANCED_COOKIE_CONFIRMATION */
 
-		if (strchr(s, ch) == 0
+		if (StrChr(s, ch) == 0
 		    && isalpha(ch)
 		    && (p = strrchr(prompt, L_PAREN)) != 0) {
 
@@ -1134,10 +1163,10 @@ void LYSleepAlert(void)
 	LYSleep(AlertSecs);
 }
 
-void LYSleepDebug(void)
+void LYSleepDelay(void)
 {
     if (okToSleep())
-	LYSleep(DebugSecs);
+	LYSleep(DelaySecs);
 }
 
 void LYSleepInfo(void)
@@ -1152,13 +1181,13 @@ void LYSleepMsg(void)
 	LYSleep(MessageSecs);
 }
 
-#ifdef EXP_CMD_LOGGING
+#ifdef USE_CMD_LOGGING
 void LYSleepReplay(void)
 {
     if (okToSleep())
 	LYSleep(ReplaySecs);
 }
-#endif /* EXP_CMD_LOGGING */
+#endif /* USE_CMD_LOGGING */
 
 /*
  * LYstrerror emulates the ANSI strerror() function.

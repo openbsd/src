@@ -1,4 +1,7 @@
-/*			Lynx Document Reference List Support	      LYList.c
+/*
+ * $LynxId: LYList.c,v 1.53 2013/10/03 07:46:14 tom Exp $
+ *
+ *			Lynx Document Reference List Support	      LYList.c
  *			====================================
  *
  *	Author: FM	Foteos Macrides (macrides@sci.wfbr.edu)
@@ -9,6 +12,7 @@
 #include <HTAlert.h>
 #include <LYUtils.h>
 #include <GridText.h>
+#include <HTParse.h>
 #include <LYList.h>
 #include <LYMap.h>
 #include <LYClean.h>
@@ -36,10 +40,11 @@
  *			Clear:	we only get addresses.
  */
 
-int showlist(DocInfo *newdoc, BOOLEAN titles)
+int showlist(DocInfo *newdoc, int titles)
 {
     int cnt;
     int refs, hidden_links;
+    int result;
     static char tempfile[LY_MAXPATH];
     static BOOLEAN last_titles = TRUE;
     FILE *fp0;
@@ -68,11 +73,11 @@ int showlist(DocInfo *newdoc, BOOLEAN titles)
 
     LYRegisterUIPage(newdoc->address,
 		     titles ? UIP_LIST_PAGE : UIP_ADDRLIST_PAGE);
-    last_titles = titles;
+    last_titles = (BOOLEAN) titles;
     LYforce_HTML_mode = TRUE;	/* force this file to be HTML */
     LYforce_no_cache = TRUE;	/* force this file to be new */
 
-#ifdef EXP_ADDRLIST_PAGE
+#ifdef USE_ADDRLIST_PAGE
     if (titles != TRUE)
 	BeginInternalPage(fp0, ADDRLIST_PAGE_TITLE, LIST_PAGE_HELP);
     else
@@ -97,8 +102,10 @@ int showlist(DocInfo *newdoc, BOOLEAN titles)
 	    hidden_links = 0;
     }
     helper = NULL;		/* init */
+    result = 1;
     for (cnt = 1; cnt <= refs; cnt++) {
 	HTChildAnchor *child = HText_childNextNumber(cnt, &helper);
+	int value = HText_findAnchorNumber(helper);
 	HTAnchor *dest_intl = NULL;
 	HTAnchor *dest;
 	HTParentAnchor *parent;
@@ -124,63 +131,64 @@ int showlist(DocInfo *newdoc, BOOLEAN titles)
 			"<li><a id=%d href=\"#%d\">form field</a> = <em>%s</em>\n",
 			cnt, cnt, desc);
 	    }
-	    continue;
-	}
-#ifndef DONT_TRACK_INTERNAL_LINKS
-	dest_intl = HTAnchor_followTypedLink(child, HTInternalLink);
-#endif
-	dest = dest_intl ?
-	    dest_intl : HTAnchor_followLink(child);
-	parent = HTAnchor_parent(dest);
-	if (!intern_w_post && dest_intl &&
-	    HTMainAnchor &&
-	    HTMainAnchor->post_data &&
-	    parent->post_data &&
-	    BINEQ(HTMainAnchor->post_data, parent->post_data)) {
-	    /*
-	     * Set flag to note that we had at least one internal link, if the
-	     * document from which we are generating the list has associated
-	     * POST data; after an extra check that the link destination really
-	     * has the same POST data so that we can believe it is an internal
-	     * link.
-	     */
-	    intern_w_post = TRUE;
-	}
-	address = HTAnchor_address(dest);
-	title = titles ? HTAnchor_title(parent) : NULL;
-	if (dest_intl) {
-	    HTSprintf0(&LinkTitle, "(internal)");
-	} else if (titles && child->type &&
-		   dest == child->dest &&
-		   !strncmp(HTAtom_name(child->type),
-			    "RelTitle: ", 10)) {
-	    HTSprintf0(&LinkTitle, "(%s)", HTAtom_name(child->type) + 10);
-	} else {
-	    FREE(LinkTitle);
-	}
-	StrAllocCopy(Address, address);
-	FREE(address);
-	LYEntify(&Address, TRUE);
-	if (non_empty(title)) {
-	    LYformTitle(&Title, title);
-	    LYEntify(&Title, TRUE);
-	    if (*Title) {
-		cp = findPoundSelector(Address);
-	    } else {
-		FREE(Title);
+	} else if (value >= result) {
+	    if (track_internal_links)
+		dest_intl = HTAnchor_followTypedLink(child, HTInternalLink);
+	    dest = (dest_intl
+		    ? dest_intl
+		    : HTAnchor_followLink(child));
+	    parent = HTAnchor_parent(dest);
+	    if (!intern_w_post && dest_intl &&
+		HTMainAnchor &&
+		HTMainAnchor->post_data &&
+		parent->post_data &&
+		BINEQ(HTMainAnchor->post_data, parent->post_data)) {
+		/*
+		 * Set flag to note that we had at least one internal link, if
+		 * the document from which we are generating the list has
+		 * associated POST data; after an extra check that the link
+		 * destination really has the same POST data so that we can
+		 * believe it is an internal link.
+		 */
+		intern_w_post = TRUE;
 	    }
+	    address = HTAnchor_address(dest);
+	    title = titles ? HTAnchor_title(parent) : NULL;
+	    if (dest_intl) {
+		HTSprintf0(&LinkTitle, "(internal)");
+	    } else if (titles && child->type &&
+		       dest == child->dest &&
+		       !StrNCmp(HTAtom_name(child->type),
+				"RelTitle: ", 10)) {
+		HTSprintf0(&LinkTitle, "(%s)", HTAtom_name(child->type) + 10);
+	    } else {
+		FREE(LinkTitle);
+	    }
+	    StrAllocCopy(Address, address);
+	    FREE(address);
+	    LYEntify(&Address, TRUE);
+	    if (non_empty(title)) {
+		LYformTitle(&Title, title);
+		LYEntify(&Title, TRUE);
+		if (*Title) {
+		    cp = findPoundSelector(Address);
+		} else {
+		    FREE(Title);
+		}
+	    }
+
+	    fprintf(fp0, "<li><a href=\"%s\"%s>%s%s%s%s%s</a>\n", Address,
+		    dest_intl ? " TYPE=\"internal link\"" : "",
+		    NonNull(LinkTitle),
+		    ((HTAnchor *) parent != dest) && Title ? "in " : "",
+		    (char *) (Title ? Title : Address),
+		    (Title && cp) ? " - " : "",
+		    (Title && cp) ? (cp + 1) : "");
+
+	    FREE(Address);
+	    FREE(Title);
 	}
-
-	fprintf(fp0, "<li><a href=\"%s\"%s>%s%s%s%s%s</a>\n", Address,
-		dest_intl ? " TYPE=\"internal link\"" : "",
-		NonNull(LinkTitle),
-		((HTAnchor *) parent != dest) && Title ? "in " : "",
-		(char *) (Title ? Title : Address),
-		(Title && cp) ? " - " : "",
-		(Title && cp) ? (cp + 1) : "");
-
-	FREE(Address);
-	FREE(Title);
+	result = value + 1;
     }
     FREE(LinkTitle);
 
@@ -232,9 +240,11 @@ int showlist(DocInfo *newdoc, BOOLEAN titles)
     return (0);
 }
 
-static void print_refs(FILE *fp, BOOLEAN titles, int refs)
+static int print_refs(FILE *fp, int titles, int refs)
 {
+    int result = 0;
     int cnt;
+    int value;
     char *address = NULL;
     const char *desc = gettext("unknown field or link");
     void *helper = NULL;	/* init */
@@ -244,6 +254,7 @@ static void print_refs(FILE *fp, BOOLEAN titles, int refs)
 	HTAnchor *dest;
 	HTParentAnchor *parent;
 	const char *title;
+	int counter = result + 1;
 
 	if (child == 0) {
 	    /*
@@ -257,33 +268,48 @@ static void print_refs(FILE *fp, BOOLEAN titles, int refs)
 	     */
 	    if (fields_are_numbered()) {
 		HText_FormDescNumber(cnt, &desc);
-		fprintf(fp, "%4d. form field = %s\n", cnt, desc);
+		fprintf(fp, "%4d. form field = %s\n", counter, desc);
 	    }
-	    continue;
+	} else {
+	    dest = HTAnchor_followLink(child);
+	    /*
+	     * Ignore if child anchor points to itself, i.e., we had something
+	     * like <A NAME=xyz HREF="#xyz"> and it is not treated as a hidden
+	     * link.  Useful if someone 'P'rints the List Page (which isn't a
+	     * very useful action to do, but anyway...) - kw
+	     */
+	    if (dest != (HTAnchor *) child) {
+		parent = HTAnchor_parent(dest);
+		title = titles ? HTAnchor_title(parent) : NULL;
+		if (links_are_numbered()) {
+		    value = HText_findAnchorNumber(helper);
+		    if (value <= result)
+			continue;
+		    fprintf(fp, "%4d. ", value);
+		}
+		if (((HTAnchor *) parent != dest) && title) {
+		    fprintf(fp, "in ");
+		}
+		if (title) {
+		    fprintf(fp, "%s\n", title);
+		} else {
+		    address = HTAnchor_short_address(dest);
+		    if (LYCharSet_UC[current_char_set].enc == UCT_ENC_UTF8) {
+			(void) HTUnEscape(address);
+		    }
+		    fprintf(fp, "%s\n", address);
+		    FREE(address);
+		}
+	    }
 	}
-	dest = HTAnchor_followLink(child);
-	/*
-	 * Ignore if child anchor points to itself, i.e., we had something
-	 * like <A NAME=xyz HREF="#xyz"> and it is not treated as a hidden
-	 * link.  Useful if someone 'P'rints the List Page (which isn't a
-	 * very useful action to do, but anyway...) - kw
-	 */
-	if (dest == (HTAnchor *) child)
-	    continue;
-	parent = HTAnchor_parent(dest);
-	title = titles ? HTAnchor_title(parent) : NULL;
-	address = HTAnchor_address(dest);
-	if (links_are_numbered())
-	    fprintf(fp, "%4d. ", cnt);
-	fprintf(fp, "%s%s\n",
-		((HTAnchor *) parent != dest) && title ? "in " : "",
-		(title ? title : address));
-	FREE(address);
+	if (counter > result)
+	    result = counter;
 #ifdef VMS
 	if (HadVMSInterrupt)
 	    break;
 #endif /* VMS */
     }
+    return result;
 }
 
 static void print_hidden_refs(FILE *fp, int refs, int hidden_links)
@@ -320,7 +346,7 @@ static void print_hidden_refs(FILE *fp, int refs, int hidden_links)
  *	titles		Set:	if we want titles where available
  *			Clear:	we only get addresses.
  */
-void printlist(FILE *fp, BOOLEAN titles)
+void printlist(FILE *fp, int titles)
 {
     int refs, hidden_links;
 
@@ -335,7 +361,7 @@ void printlist(FILE *fp, BOOLEAN titles)
 	    if (hidden_links > 0) {
 		fprintf(fp, "   %s\n", gettext("Visible links"));
 	    }
-	    print_refs(fp, titles, refs);
+	    refs = print_refs(fp, titles, refs) + 1;
 
 	    if (hidden_links > 0) {
 		print_hidden_refs(fp, refs, hidden_links);

@@ -1,5 +1,5 @@
 /*
- * $LynxId: HTVMS_WaisUI.c,v 1.15 2008/12/14 18:06:19 tom Exp $
+ * $LynxId: HTVMS_WaisUI.c,v 1.19 2013/05/03 20:51:49 tom Exp $
  *								HTVMS_WAISUI.c
  *
  *	Adaptation for Lynx by F.Macrides (macrides@sci.wfeb.edu)
@@ -243,8 +243,7 @@ static long transport_message(long connection,
     {
 	char length_array[11];
 
-	strncpy(length_array, header.msg_len, 10);
-	length_array[10] = '\0';
+	LYStrNCpy(length_array, header.msg_len, 10);
 	response_length = atol(length_array);
 	/*
 	   if(verbose){
@@ -695,7 +694,7 @@ SearchAPDU *makeSearchAPDU(long small,
 		query->DatabaseNames = (char **) s_realloc((char *) query->DatabaseNames,
 							   (size_t) (sizeof(char
 									    *) *
-								       (i + 2)));
+								     (i + 2)));
 
 	    query->DatabaseNames[i] = s_strdup(ptr);
 	    query->DatabaseNames[i + 1] = NULL;
@@ -713,7 +712,7 @@ SearchAPDU *makeSearchAPDU(long small,
 		query->ElementSetNames = (char **) s_realloc((char *) query->ElementSetNames,
 							     (size_t) (sizeof(char
 									      *) *
-								         (i + 2)));
+								       (i + 2)));
 
 	    query->ElementSetNames[i] = s_strdup(ptr);
 	    query->ElementSetNames[i + 1] = NULL;
@@ -787,7 +786,7 @@ char *writeSearchAPDU(SearchAPDU *query, char *buffer, long *len)
 		if (query->ElementSetNames[i + 1] == NULL)	/* there is a single element set name */
 		{
 		    scratch = (char *) s_malloc((size_t) strlen(ptr) + 2);
-		    strncpy(scratch, ES_DELIMITER_1, 2);
+		    StrNCpy(scratch, ES_DELIMITER_1, 2);
 		    s_strncat(scratch, ptr, strlen(ptr) + 1, strlen(ptr) + 2);
 		} else {	/* this is the first of a series of element set names */
 		    size_t newScratchSize = (size_t) (strlen(ptr) +
@@ -1023,7 +1022,7 @@ diagnosticRecord *makeDiag(boolean surrogate, char *code, char *addInfo)
     (diagnosticRecord *) s_malloc((size_t) sizeof(diagnosticRecord));
 
     diag->SURROGATE = surrogate;
-    memcpy(diag->DIAG, code, DIAGNOSTIC_CODE_SIZE);
+    MemCpy(diag->DIAG, code, DIAGNOSTIC_CODE_SIZE);
     diag->ADDINFO = s_strdup(addInfo);
 
     return (diag);
@@ -1080,7 +1079,7 @@ char *writeDiag(diagnosticRecord * diag, char *buffer, long *len)
 
     if (length > 3) {
 	CHECK_FOR_SPACE_LEFT(3, len);
-	memcpy(buf, diag->ADDINFO, (size_t) length - 3);
+	MemCpy(buf, diag->ADDINFO, length - 3);
 	buf += length - 3;
     }
 
@@ -1114,7 +1113,7 @@ char *readDiag(diagnosticRecord ** diag, char *buffer)
 
     if (len > 3) {
 	d->ADDINFO = (char *) s_malloc((size_t) (len - 3 + 1));
-	memcpy(d->ADDINFO, (char *) (buf + 2), (size_t) (len - 3));
+	MemCpy(d->ADDINFO, (char *) (buf + 2), len - 3);
 	d->ADDINFO[len - 3] = '\0';
     } else
 	d->ADDINFO = NULL;
@@ -1301,7 +1300,7 @@ any *duplicateAny(any *a)
 	copy->bytes = NULL;
     else {
 	copy->bytes = (char *) s_malloc((size_t) copy->size);
-	memcpy(copy->bytes, a->bytes, (size_t) copy->size);
+	MemCpy(copy->bytes, a->bytes, copy->size);
     }
     return (copy);
 }
@@ -1322,7 +1321,7 @@ char *writeAny(any *a, data_tag tag, char *buffer, long *len)
 
     /* write the bytes */
     CHECK_FOR_SPACE_LEFT(a->size, len);
-    memcpy(buf, a->bytes, (size_t) a->size);
+    MemCpy(buf, a->bytes, a->size);
 
     return (buf + a->size);
 }
@@ -1346,7 +1345,7 @@ char *readAny(any **anAny, char *buffer)
 
     /* now simply copy the bytes */
     a->bytes = (char *) s_malloc((size_t) a->size);
-    memcpy(a->bytes, buf, (size_t) a->size);
+    MemCpy(a->bytes, buf, a->size);
     *anAny = a;
 
     return (buf + a->size);
@@ -1380,7 +1379,7 @@ any *stringToAny(char *s)
 
     a->size = strlen(s);
     a->bytes = (char *) s_malloc((size_t) a->size);
-    memcpy(a->bytes, s, (size_t) a->size);
+    MemCpy(a->bytes, s, a->size);
     return (a);
 }
 
@@ -1394,7 +1393,7 @@ char *anyToString(any *a)
 	return (NULL);
 
     s = s_malloc((size_t) (a->size + 1));
-    memcpy(s, a->bytes, (size_t) a->size);
+    MemCpy(s, a->bytes, a->size);
     s[a->size] = '\0';
     return (s);
 }
@@ -1833,12 +1832,12 @@ query_term *makeAttributeTerm(char *use,
     qt->TermType = TT_Attribute;
 
     /* copy in the attributes */
-    strncpy(qt->Use, use, ATTRIBUTE_SIZE);
-    strncpy(qt->Relation, relation, ATTRIBUTE_SIZE);
-    strncpy(qt->Position, position, ATTRIBUTE_SIZE);
-    strncpy(qt->Structure, structure, ATTRIBUTE_SIZE);
-    strncpy(qt->Truncation, truncation, ATTRIBUTE_SIZE);
-    strncpy(qt->Completeness, completeness, ATTRIBUTE_SIZE);
+    LYStrNCpy(qt->Use, use, ATTRIBUTE_SIZE);
+    LYStrNCpy(qt->Relation, relation, ATTRIBUTE_SIZE);
+    LYStrNCpy(qt->Position, position, ATTRIBUTE_SIZE);
+    LYStrNCpy(qt->Structure, structure, ATTRIBUTE_SIZE);
+    LYStrNCpy(qt->Truncation, truncation, ATTRIBUTE_SIZE);
+    LYStrNCpy(qt->Completeness, completeness, ATTRIBUTE_SIZE);
 
     qt->Term = duplicateAny(term);
 
@@ -1870,7 +1869,7 @@ query_term *makeOperatorTerm(char *operatorCode)
 
     qt->TermType = TT_Operator;
 
-    strncpy(qt->Operator, operatorCode, OPERATOR_SIZE);
+    LYStrNCpy(qt->Operator, operatorCode, OPERATOR_SIZE);
 
     qt->Term = NULL;
     qt->ResultSetID = NULL;
@@ -1914,7 +1913,7 @@ char *writeQueryTerm(query_term *qt, char *buffer, long *len)
 
     switch (qt->TermType) {
     case TT_Attribute:
-	strncpy(attributes, qt->Use, ATTRIBUTE_LIST_SIZE);
+	LYStrNCpy(attributes, qt->Use, ATTRIBUTE_LIST_SIZE);
 	s_strncat(attributes, AT_DELIMITER, sizeof(AT_DELIMITER) + 1, ATTRIBUTE_LIST_SIZE);
 	s_strncat(attributes, qt->Relation, ATTRIBUTE_SIZE, ATTRIBUTE_LIST_SIZE);
 	s_strncat(attributes, AT_DELIMITER, sizeof(AT_DELIMITER) + 1, ATTRIBUTE_LIST_SIZE);
@@ -2226,7 +2225,7 @@ char *s_strdup(char *s)
     len = strlen(s);		/* length of string - terminator */
     copy = (char *) s_malloc((size_t) (sizeof(char) * (len + 1)));
 
-    strncpy(copy, s, len + 1);
+    StrNCpy(copy, s, len + 1);
     return (copy);
 }
 
@@ -2242,14 +2241,14 @@ char *fs_strncat(char *dst, char *src, size_t maxToAdd, size_t maxTotal)
     size_t srcSize = strlen(src);
 
     if (dstSize + srcSize < maxTotal)	/* use regular old strncat */
-	return (strncat(dst, src, maxToAdd));
+	return (StrNCat(dst, src, maxToAdd));
     else {
 	size_t truncateTo = maxTotal - dstSize - 1;
 	char saveChar = src[truncateTo];
 	char *result = NULL;
 
 	src[truncateTo] = '\0';
-	result = strncat(dst, src, maxToAdd);
+	result = StrNCat(dst, src, maxToAdd);
 	src[truncateTo] = saveChar;
 	return (result);
     }
