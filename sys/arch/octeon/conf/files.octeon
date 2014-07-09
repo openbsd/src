@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.17 2014/01/15 10:36:10 pirofti Exp $
+#	$OpenBSD: files.octeon,v 1.18 2014/07/09 23:03:22 pirofti Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -99,3 +99,8 @@ file	arch/octeon/dev/octeon_pcibus.c			pcibus
 file	arch/octeon/dev/octeon_bus_space.c
 
 file	arch/octeon/octeon/pciide_machdep.c		pciide
+
+# On-board USB
+device	octhci: usbus
+attach	octhci at iobus
+file	arch/octeon/dev/octhci.c			octhci
