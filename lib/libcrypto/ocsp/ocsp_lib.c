@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_lib.c,v 1.10 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: ocsp_lib.c,v 1.11 2014/07/09 20:34:29 tedu Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -265,6 +265,9 @@ err:
 	free(*ppath);
 	free(*pport);
 	free(*phost);
+	*phost = NULL;
+	*pport = NULL;
+	*ppath = NULL;
 	return 0;
 }
 
