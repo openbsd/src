@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.h,v 1.13 2013/10/29 19:05:45 deraadt Exp $	*/
+/*	$OpenBSD: ip6_mroute.h,v 1.14 2014/07/09 15:35:53 mpi Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -180,7 +180,6 @@ struct mif6 {
 	u_int64_t	m6_pkt_out;	/* # pkts out on interface           */
 	u_int64_t	m6_bytes_in;	/* # bytes in on interface	     */
 	u_int64_t	m6_bytes_out;	/* # bytes out on interface	     */
-	struct route_in6 m6_route;/* cached route if this is a tunnel */
 };
 
 /*
