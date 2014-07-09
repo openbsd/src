@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.223 2014/04/19 14:39:26 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.224 2014/07/09 09:30:49 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1330,7 +1330,7 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 #if NBPFILTER > 0
 	if (sc->sc_if.if_bpf)
 		bpf_mtap_hdr(sc->sc_if.if_bpf, (caddr_t)eh,
-		    ETHER_HDR_LEN, m, BPF_DIRECTION_IN);
+		    ETHER_HDR_LEN, m, BPF_DIRECTION_IN, NULL);
 #endif
 
 	bridge_span(sc, eh, m);
@@ -1441,10 +1441,8 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 			 * is aware */
 #if NBPFILTER > 0
 			if (ifl->ifp->if_bpf)
-				bpf_mtap_hdr(ifl->ifp->if_bpf,
-				    (caddr_t)eh,
-				    ETHER_HDR_LEN, m,
-				    BPF_DIRECTION_IN);
+				bpf_mtap_hdr(ifl->ifp->if_bpf, (caddr_t)eh,
+				    ETHER_HDR_LEN, m, BPF_DIRECTION_IN, NULL);
 #endif
 			/* Count for the interface we are going to */
 			ifl->ifp->if_ipackets++;

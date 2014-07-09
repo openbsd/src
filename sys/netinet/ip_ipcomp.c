@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.33 2014/01/09 06:29:06 tedu Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.34 2014/07/09 09:30:49 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -402,7 +402,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 			hdr.spi = tdb->tdb_spi;
 
 			bpf_mtap_hdr(encif->if_bpf, (char *)&hdr,
-			    ENC_HDRLEN, m, BPF_DIRECTION_OUT);
+			    ENC_HDRLEN, m, BPF_DIRECTION_OUT, NULL);
 		}
 	}
 #endif

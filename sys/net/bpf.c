@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.93 2014/04/23 10:50:18 jca Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.94 2014/07/09 09:30:49 henning Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -92,6 +92,8 @@ LIST_HEAD(, bpf_d) bpf_d_list;
 void	bpf_allocbufs(struct bpf_d *);
 void	bpf_freed(struct bpf_d *);
 void	bpf_ifname(struct ifnet *, struct ifreq *);
+void	_bpf_mtap(caddr_t, struct mbuf *, u_int,
+	    void (*)(const void *, void *, size_t));
 void	bpf_mcopy(const void *, void *, size_t);
 int	bpf_movein(struct uio *, u_int, struct mbuf **,
 	    struct sockaddr *, struct bpf_insn *);
@@ -1159,10 +1161,11 @@ bpf_mcopy(const void *src_arg, void *dst_arg, size_t len)
 }
 
 /*
- * Incoming linkage from device drivers, when packet is in an mbuf chain.
+ * like bpf_mtap, but copy fn can be given. used by various bpf_mtap*
  */
 void
-bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction)
+_bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction,
+    void (*cpfn)(const void *, void *, size_t))
 {
 	struct bpf_if *bp = (struct bpf_if *)arg;
 	struct bpf_d *d;
@@ -1173,6 +1176,9 @@ bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction)
 
 	if (m == NULL)
 		return;
+
+	if (cpfn == NULL)
+		cpfn = bpf_mcopy;
 
 	pktlen = 0;
 	for (m0 = m; m0 != 0; m0 = m0->m_next)
@@ -1191,10 +1197,19 @@ bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction)
 
 		if (!gottime++)
 			microtime(&tv);
-		bpf_catchpacket(d, (u_char *)m, pktlen, slen, bpf_mcopy, &tv);
+		bpf_catchpacket(d, (u_char *)m, pktlen, slen, cpfn, &tv);
 		if (d->bd_fildrop)
 			m->m_flags |= M_FILDROP;
 	}
+}
+
+/*
+ * Incoming linkage from device drivers, when packet is in an mbuf chain.
+ */
+void
+bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction)
+{
+	_bpf_mtap(arg, m, direction, NULL);
 }
 
 /*
@@ -1208,17 +1223,23 @@ bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction)
  */
 void
 bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, struct mbuf *m,
-    u_int direction)
+    u_int direction, void (*cpfn)(const void *, void *, size_t))
 {
-	struct m_hdr mh;
+	struct m_hdr	 mh;
+	struct mbuf	*m0;
 
-	mh.mh_flags = 0;
-	mh.mh_next = m;
-	mh.mh_len = dlen;
-	mh.mh_data = data;
+	if (dlen > 0) {
+		mh.mh_flags = 0;
+		mh.mh_next = m;
+		mh.mh_len = dlen;
+		mh.mh_data = data;
+		m0 = (struct mbuf *)&mh;
+	} else 
+		m0 = m;
 
-	bpf_mtap(arg, (struct mbuf *) &mh, direction);
-	m->m_flags |= mh.mh_flags & M_FILDROP;
+	_bpf_mtap(arg, m0, direction, cpfn);
+	if (m0 != m)
+		m->m_flags |= m0->m_flags & M_FILDROP;
 }
 
 /*
@@ -1233,17 +1254,10 @@ bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, struct mbuf *m,
 void
 bpf_mtap_af(caddr_t arg, u_int32_t af, struct mbuf *m, u_int direction)
 {
-	struct m_hdr mh;
 	u_int32_t    afh;
 
-	mh.mh_flags = 0;
-	mh.mh_next = m;
-	mh.mh_len = 4;
 	afh = htonl(af);
-	mh.mh_data = (caddr_t)&afh;
-
-	bpf_mtap(arg, (struct mbuf *) &mh, direction);
-	m->m_flags |= mh.mh_flags & M_FILDROP;
+	bpf_mtap_hdr(arg, (caddr_t)&afh, 4, m, direction, NULL);
 }
 
 /*
@@ -1259,7 +1273,6 @@ void
 bpf_mtap_ether(caddr_t arg, struct mbuf *m, u_int direction)
 {
 #if NVLAN > 0
-	struct m_hdr mh;
 	struct ether_vlan_header evh;
 
 	if ((m->m_flags & M_VLANTAG) == 0)
@@ -1277,13 +1290,7 @@ bpf_mtap_ether(caddr_t arg, struct mbuf *m, u_int direction)
 	m->m_len -= ETHER_HDR_LEN;
 	m->m_data += ETHER_HDR_LEN;
 
-	mh.mh_flags = 0;
-	mh.mh_next = m;
-	mh.mh_len = sizeof(evh);
-	mh.mh_data = (caddr_t)&evh;
-
-	bpf_mtap(arg, (struct mbuf *) &mh, direction);
-	m->m_flags |= mh.mh_flags & M_FILDROP;
+	bpf_mtap_hdr(arg, (caddr_t)&evh, sizeof(evh), m, direction, NULL);
 
 	m->m_len += ETHER_HDR_LEN;
 	m->m_data -= ETHER_HDR_LEN;
@@ -1294,42 +1301,11 @@ void
 bpf_mtap_pflog(caddr_t arg, caddr_t data, struct mbuf *m)
 {
 #if NPFLOG > 0
-	struct m_hdr mh;
-	struct bpf_if *bp = (struct bpf_if *)arg;
-	struct bpf_d *d;
-	size_t pktlen, slen;
-	struct mbuf *m0;
-	struct timeval tv;
-	int gottime = 0;
-
 	if (m == NULL)
 		return;
 
-	mh.mh_flags = 0;
-	mh.mh_next = m;
-	mh.mh_len = PFLOG_HDRLEN;
-	mh.mh_data = data;
-
-	pktlen = mh.mh_len;
-	for (m0 = m; m0 != 0; m0 = m0->m_next)
-		pktlen += m0->m_len;
-
-	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
-		++d->bd_rcount;
-		if ((BPF_DIRECTION_OUT & d->bd_dirfilt) != 0)
-			slen = 0;
-		else
-			slen = bpf_filter(d->bd_rfilter, (u_char *)&mh,
-			    pktlen, 0);
-
-		if (slen == 0)
-			continue;
-
-		if (!gottime++)
-			microtime(&tv);
-		bpf_catchpacket(d, (u_char *)&mh, pktlen, slen, pflog_bpfcopy,
-		    &tv);
-	}
+	bpf_mtap_hdr(arg, data, PFLOG_HDRLEN, m, BPF_DIRECTION_OUT,
+	    pflog_bpfcopy);
 #endif
 }
 

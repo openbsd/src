@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.230 2014/06/30 07:02:22 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.231 2014/07/09 09:30:49 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1454,7 +1454,7 @@ carp_input(struct ifnet *ifp0, struct ether_header *eh0, struct mbuf *m)
 #if NBPFILTER > 0
 			if (vh->sc_if.if_bpf)
 				bpf_mtap_hdr(vh->sc_if.if_bpf, (char *)&eh,
-				    ETHER_HDR_LEN, m0, BPF_DIRECTION_IN);
+				    ETHER_HDR_LEN, m0, BPF_DIRECTION_IN, NULL);
 #endif
 			vh->sc_if.if_ipackets++;
 			ether_input(&vh->sc_if, &eh, m0);
@@ -1470,7 +1470,7 @@ carp_input(struct ifnet *ifp0, struct ether_header *eh0, struct mbuf *m)
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
 		bpf_mtap_hdr(ifp->if_bpf, (char *)&eh, ETHER_HDR_LEN, m,
-		    BPF_DIRECTION_IN);
+		    BPF_DIRECTION_IN, NULL);
 #endif
 	ifp->if_ipackets++;
 	ether_input(ifp, &eh, m);

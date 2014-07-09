@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.105 2014/05/14 21:48:50 henning Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.106 2014/07/09 09:30:49 henning Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -299,7 +299,7 @@ vlan_input(struct ether_header *eh, struct mbuf *m)
 #if NBPFILTER > 0
 	if (ifv->ifv_if.if_bpf)
 		bpf_mtap_hdr(ifv->ifv_if.if_bpf, (char *)eh, ETHER_HDR_LEN, m,
-		    BPF_DIRECTION_IN);
+		    BPF_DIRECTION_IN, NULL);
 #endif
 
 	/*

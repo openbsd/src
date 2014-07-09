@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.87 2014/03/10 12:21:35 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.88 2014/07/09 09:30:49 henning Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1102,7 +1102,7 @@ trunk_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 #if NBPFILTER > 0
 	if (trifp->if_bpf && tr->tr_proto != TRUNK_PROTO_FAILOVER)
 		bpf_mtap_hdr(trifp->if_bpf, (char *)eh, ETHER_HDR_LEN, m,
-		    BPF_DIRECTION_IN);
+		    BPF_DIRECTION_IN, NULL);
 #endif
 
 	error = (*tr->tr_input)(tr, tp, eh, m);
@@ -1372,7 +1372,7 @@ trunk_fail_input(struct trunk_softc *tr, struct trunk_port *tp,
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
 		bpf_mtap_hdr(ifp->if_bpf, (char *)eh, ETHER_HDR_LEN, m,
-		    BPF_DIRECTION_IN);
+		    BPF_DIRECTION_IN, NULL);
 #endif
 
 	m->m_pkthdr.rcvif = ifp;
