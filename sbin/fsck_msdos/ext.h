@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext.h,v 1.11 2014/06/16 18:33:33 tobias Exp $	*/
+/*	$OpenBSD: ext.h,v 1.12 2014/07/09 18:32:34 tobias Exp $	*/
 /*	$NetBSD: ext.h,v 1.5 1997/10/17 11:19:48 ws Exp $	*/
 
 /*
@@ -45,8 +45,6 @@ extern int preen;	/* we are preening */
 extern int rdonly;	/* device is opened read only (supersedes above) */
 
 extern struct disklabel lab;
-
-extern struct dosDirEntry *rootDir;
 
 /*
  * function declarations

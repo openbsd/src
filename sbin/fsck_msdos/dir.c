@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.23 2014/06/18 17:29:07 tobias Exp $	*/
+/*	$OpenBSD: dir.c,v 1.24 2014/07/09 18:32:34 tobias Exp $	*/
 /*	$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ freeDirTodo(struct dirTodoNode *dt)
 /*
  * The stack of unread directories
  */
-struct dirTodoNode *pendingDirectories = NULL;
+static struct dirTodoNode *pendingDirectories = NULL;
 
 /*
  * Return the full pathname for a directory entry.
@@ -203,7 +203,7 @@ static char longName[DOSLONGNAMELEN] = "";
 static u_char *buffer = NULL;
 static u_char *delbuf = NULL;
 
-struct dosDirEntry *rootDir;
+static struct dosDirEntry *rootDir;
 static struct dosDirEntry *lostDir;
 
 /*
@@ -223,14 +223,14 @@ resetDosDirSection(struct bootblock *boot, struct fatEntry *fat)
 	    || !(delbuf = malloc(b2))
 	    || !(rootDir = newDosDirEntry())) {
 		xperror("No space for directory");
-		return (FSFATAL);
+		goto fail;
 	}
 	(void)memset(rootDir, 0, sizeof *rootDir);
 	if (boot->flags & FAT32) {
 		if (boot->RootCl < CLUST_FIRST || boot->RootCl >= boot->NumClusters) {
 			pfatal("Root directory starts with cluster out of range(%u)\n",
 			       boot->RootCl);
-			return (FSFATAL);
+			goto fail;
 		}
 		cl = fat[boot->RootCl].next;
 		if (cl < CLUST_FIRST
@@ -243,7 +243,7 @@ resetDosDirSection(struct bootblock *boot, struct fatEntry *fat)
 				      rsrvdcltype(cl));
 			else {
 				pfatal("Root directory doesn't start a cluster chain\n");
-				return (FSFATAL);
+				goto fail;
 			}
 			if (ask(1, "Fix")) {
 				fat[boot->RootCl].next = CLUST_FREE;
@@ -257,6 +257,9 @@ resetDosDirSection(struct bootblock *boot, struct fatEntry *fat)
 	}
 
 	return (ret);
+fail:
+	finishDosDirSection();
+	return (FSFATAL);
 }
 
 /*
