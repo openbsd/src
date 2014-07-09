@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.62 2014/07/09 11:37:16 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.63 2014/07/09 16:18:03 mlarkin Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -710,11 +710,6 @@ cpu_hatch(void *v)
 		while ((ci->ci_flags & CPUF_IDENTIFY) == 0)
 			delay(10);
 
-#ifdef HIBERNATE
-		if ((ci->ci_flags & CPUF_PARK) != 0)
-			hibernate_drop_to_real_mode();
-#endif /* HIBERNATE */
-
 		identifycpu(ci);
 
 		/* Signal we're done */
@@ -725,6 +720,11 @@ cpu_hatch(void *v)
 
 	while ((ci->ci_flags & CPUF_GO) == 0)
 		delay(10);
+#ifdef HIBERNATE
+	if ((ci->ci_flags & CPUF_PARK) != 0)
+		hibernate_drop_to_real_mode();
+#endif /* HIBERNATE */
+
 #ifdef DEBUG
 	if (ci->ci_flags & CPUF_RUNNING)
 		panic("%s: already running!?", ci->ci_dev->dv_xname);
