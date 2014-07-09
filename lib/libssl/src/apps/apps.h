@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.33 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: apps.h,v 1.34 2014/07/09 09:06:58 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -144,7 +144,7 @@ typedef struct pw_cb_data {
 	const char *prompt_info;
 } PW_CB_DATA;
 
-int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_data);
+int password_callback(char *buf, int bufsiz, int verify, void *cb_data);
 
 int setup_ui_method(void);
 void destroy_ui_method(void);

@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.60 2014/06/28 04:39:41 deraadt Exp $ */
+/* $OpenBSD: apps.c,v 1.61 2014/07/09 09:06:58 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -369,8 +369,9 @@ destroy_ui_method(void)
 }
 
 int
-password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
+password_callback(char *buf, int bufsiz, int verify, void *arg)
 {
+	PW_CB_DATA *cb_tmp = arg;
 	UI *ui = NULL;
 	int res = 0;
 	const char *prompt_info = NULL;
@@ -587,7 +588,7 @@ load_pkcs12(BIO *err, BIO *in, const char *desc, pem_password_cb *pem_cb,
 		pass = "";
 	else {
 		if (!pem_cb)
-			pem_cb = (pem_password_cb *) password_callback;
+			pem_cb = password_callback;
 		len = pem_cb(tpass, PEM_BUFSIZE, 0, cb_data);
 		if (len < 0) {
 			BIO_printf(err, "Passpharse callback error for %s\n",
@@ -654,8 +655,7 @@ load_cert(BIO *err, const char *file, int format, const char *pass, ENGINE *e,
 		nx->cert = NULL;
 		NETSCAPE_X509_free(nx);
 	} else if (format == FORMAT_PEM)
-		x = PEM_read_bio_X509_AUX(cert, NULL,
-		    (pem_password_cb *) password_callback, NULL);
+		x = PEM_read_bio_X509_AUX(cert, NULL, password_callback, NULL);
 	else if (format == FORMAT_PKCS12) {
 		if (!load_pkcs12(err, cert, cert_descrip, NULL, NULL,
 		    NULL, &x, NULL))
@@ -724,16 +724,14 @@ load_key(BIO *err, const char *file, int format, int maybe_stdin,
 	if (format == FORMAT_ASN1) {
 		pkey = d2i_PrivateKey_bio(key, NULL);
 	} else if (format == FORMAT_PEM) {
-		pkey = PEM_read_bio_PrivateKey(key, NULL,
-		    (pem_password_cb *) password_callback, &cb_data);
+		pkey = PEM_read_bio_PrivateKey(key, NULL, password_callback, &cb_data);
 	}
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
 	else if (format == FORMAT_NETSCAPE || format == FORMAT_IISSGC)
 		pkey = load_netscape_key(err, key, file, key_descrip, format);
 #endif
 	else if (format == FORMAT_PKCS12) {
-		if (!load_pkcs12(err, key, key_descrip,
-		    (pem_password_cb *) password_callback, &cb_data,
+		if (!load_pkcs12(err, key, key_descrip, password_callback, &cb_data,
 		    &pkey, NULL, NULL))
 			goto end;
 	}
@@ -741,7 +739,7 @@ load_key(BIO *err, const char *file, int format, int maybe_stdin,
 	else if (format == FORMAT_MSBLOB)
 		pkey = b2i_PrivateKey_bio(key);
 	else if (format == FORMAT_PVK)
-		pkey = b2i_PVK_bio(key, (pem_password_cb *) password_callback,
+		pkey = b2i_PVK_bio(key, password_callback,
 		    &cb_data);
 #endif
 	else {
@@ -812,8 +810,7 @@ load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 			pkey = NULL;
 	} else if (format == FORMAT_PEMRSA) {
 		RSA *rsa;
-		rsa = PEM_read_bio_RSAPublicKey(key, NULL,
-		    (pem_password_cb *) password_callback, &cb_data);
+		rsa = PEM_read_bio_RSAPublicKey(key, NULL, password_callback, &cb_data);
 		if (rsa) {
 			pkey = EVP_PKEY_new();
 			if (pkey)
@@ -824,8 +821,7 @@ load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 	}
 #endif
 	else if (format == FORMAT_PEM) {
-		pkey = PEM_read_bio_PUBKEY(key, NULL,
-		    (pem_password_cb *) password_callback, &cb_data);
+		pkey = PEM_read_bio_PUBKEY(key, NULL, password_callback, &cb_data);
 	}
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
 	else if (format == FORMAT_NETSCAPE || format == FORMAT_IISSGC)
@@ -923,8 +919,7 @@ load_certs_crls(BIO *err, const char *file, int format, const char *pass,
 		ERR_print_errors(err);
 		return 0;
 	}
-	xis = PEM_X509_INFO_read_bio(bio, NULL,
-	    (pem_password_cb *) password_callback, &cb_data);
+	xis = PEM_X509_INFO_read_bio(bio, NULL, password_callback, &cb_data);
 
 	BIO_free(bio);
 
