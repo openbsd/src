@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkcs7test.c,v 1.1 2014/07/02 16:29:36 jsing Exp $	*/
+/*	$OpenBSD: pkcs7test.c,v 1.2 2014/07/09 06:42:01 bcook Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -102,7 +102,7 @@ x509_store_callback(int ok, X509_STORE_CTX *ctx)
 static void
 fatal(const char *msg)
 {
-	warnx(msg);
+	warnx("%s", msg);
 	ERR_print_errors(BIO_new_fd(STDERR_FILENO, 0));
 	exit(1);
 }
