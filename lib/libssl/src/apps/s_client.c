@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.62 2014/06/28 04:39:41 deraadt Exp $ */
+/* $OpenBSD: s_client.c,v 1.63 2014/07/09 20:59:41 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -865,10 +865,6 @@ bad:
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-#if 0
-		else
-			SSL_CTX_set_cipher_list(ctx, getenv("SSL_CIPHER"));
-#endif
 
 	SSL_CTX_set_verify(ctx, verify, verify_callback);
 	if (!set_cert_key_stuff(ctx, cert, key))
@@ -998,17 +994,6 @@ re_start:
 		SSL_set_tlsext_status_type(con, TLSEXT_STATUSTYPE_ocsp);
 		SSL_CTX_set_tlsext_status_cb(ctx, ocsp_resp_cb);
 		SSL_CTX_set_tlsext_status_arg(ctx, bio_c_out);
-#if 0
-		{
-			STACK_OF(OCSP_RESPID) * ids = sk_OCSP_RESPID_new_null();
-			OCSP_RESPID *id = OCSP_RESPID_new();
-			id->value.byKey = ASN1_OCTET_STRING_new();
-			id->type = V_OCSP_RESPID_KEY;
-			ASN1_STRING_set(id->value.byKey, "Hello World", -1);
-			sk_OCSP_RESPID_push(ids, id);
-			SSL_set_tlsext_status_ids(con, ids);
-		}
-#endif
 	}
 #endif
 
@@ -1149,15 +1134,6 @@ re_start:
 			tty_on = 1;
 			if (in_init) {
 				in_init = 0;
-#if 0
-				/* This test doesn't really work as intended
-				 * (needs to be fixed) */
-#ifndef OPENSSL_NO_TLSEXT
-				if (servername != NULL && !SSL_session_reused(con)) {
-					BIO_printf(bio_c_out, "Server did %sacknowledge servername extension.\n", tlsextcbp.ack ? "" : "not ");
-				}
-#endif
-#endif
 				if (sess_out) {
 					BIO *stmp = BIO_new_file(sess_out, "w");
 					if (stmp) {
@@ -1299,16 +1275,7 @@ re_start:
 				}
 			}
 #endif
-#if 1
 			k = SSL_read(con, sbuf, 1024 /* BUFSIZZ */ );
-#else
-/* Demo for pending and peek :-) */
-			k = SSL_read(con, sbuf, 16);
-			{
-				char zbuf[10240];
-				printf("read=%d pending=%d peek=%d\n", k, SSL_pending(con), SSL_peek(con, zbuf, 10240));
-			}
-#endif
 
 			switch (SSL_get_error(con, k)) {
 			case SSL_ERROR_NONE:
