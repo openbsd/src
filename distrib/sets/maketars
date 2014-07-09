@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: maketars,v 1.21 2014/07/09 16:01:17 espie Exp $
+#	$OpenBSD: maketars,v 1.22 2014/07/09 17:30:09 espie Exp $
 #
 # Copyright (c) 2001 Theo de Raadt
 # All rights reserved.
@@ -65,7 +65,7 @@ rm -f $TMP $TMP2
 
 for i in base comp etc game man; do
 	cat ${lists}/$i/mi ${lists}/$i/md.${arch} | \
-	    sed -e "s,^\./,$i${RELEASE}:,"
+	    sed -e "s,^\.,$i${RELEASE}:,"
 done | sort | /usr/libexec/locate.mklocatedb > $tardir/src${RELEASE}.db
 
 exit 0
