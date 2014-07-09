@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.103 2014/07/08 05:35:18 dlg Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.104 2014/07/09 00:15:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1708,7 +1708,7 @@ msk_fill_rx_ring(struct sk_if_softc *sc_if)
 	u_int slots, used;
 
 	slots = if_rxr_get(&sc_if->sk_cdata.sk_rx_ring, MSK_RX_RING_CNT);
-	while (slots > SK_NRXSEG) {
+	while (slots > 0) {
 		used = msk_newbuf(sc_if);
 		if (used == 0)
 			break;
