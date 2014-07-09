@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.65 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.66 2014/07/09 15:46:22 tedu Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -503,7 +503,7 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 	}
 	ttwakeupwr(tp);
 	if (bufcc)
-		bzero(buf, bufcc);
+		explicit_bzero(buf, bufcc);
 	return (error);
 }
 
@@ -604,7 +604,7 @@ block:
 	uio->uio_resid += cc;
 done:
 	if (bufcc)
-		bzero(buf, bufcc);
+		explicit_bzero(buf, bufcc);
 	return (error);
 }
 
