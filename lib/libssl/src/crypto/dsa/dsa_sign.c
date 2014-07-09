@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_sign.c,v 1.15 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: dsa_sign.c,v 1.16 2014/07/09 10:16:24 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,36 +63,39 @@
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 
-DSA_SIG * DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
-	{
+DSA_SIG *
+DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
+{
 	return dsa->meth->dsa_do_sign(dgst, dlen, dsa);
-	}
+}
 
-int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
-	{
+int
+DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
+{
 	return dsa->meth->dsa_sign_setup(dsa, ctx_in, kinvp, rp);
-	}
+}
 
-DSA_SIG *DSA_SIG_new(void)
-	{
+DSA_SIG *
+DSA_SIG_new(void)
+{
 	DSA_SIG *sig;
+
 	sig = malloc(sizeof(DSA_SIG));
 	if (!sig)
 		return NULL;
 	sig->r = NULL;
 	sig->s = NULL;
 	return sig;
-	}
+}
 
-void DSA_SIG_free(DSA_SIG *sig)
-	{
-	if (sig)
-		{
+void
+DSA_SIG_free(DSA_SIG *sig)
+{
+	if (sig) {
 		if (sig->r)
 			BN_free(sig->r);
 		if (sig->s)
 			BN_free(sig->s);
 		free(sig);
-		}
 	}
-
+}

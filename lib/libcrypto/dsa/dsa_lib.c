@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.16 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.17 2014/07/09 10:16:24 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,198 +70,212 @@
 #include <openssl/dh.h>
 #endif
 
-const char DSA_version[]="DSA" OPENSSL_VERSION_PTEXT;
+const char DSA_version[] = "DSA" OPENSSL_VERSION_PTEXT;
 
 static const DSA_METHOD *default_DSA_method = NULL;
 
-void DSA_set_default_method(const DSA_METHOD *meth)
-	{
+void
+DSA_set_default_method(const DSA_METHOD *meth)
+{
 	default_DSA_method = meth;
-	}
+}
 
-const DSA_METHOD *DSA_get_default_method(void)
-	{
-	if(!default_DSA_method)
-		{
+const DSA_METHOD *
+DSA_get_default_method(void)
+{
+	if (!default_DSA_method)
 		default_DSA_method = DSA_OpenSSL();
-		}
 	return default_DSA_method;
-	}
+}
 
-DSA *DSA_new(void)
-	{
+DSA *
+DSA_new(void)
+{
 	return DSA_new_method(NULL);
-	}
+}
 
-int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
-	{
-	/* NB: The caller is specifically setting a method, so it's not up to us
-	 * to deal with which ENGINE it comes from. */
+int
+DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
+{
+	/*
+	 * NB: The caller is specifically setting a method, so it's not up to us
+	 * to deal with which ENGINE it comes from.
+	 */
         const DSA_METHOD *mtmp;
         mtmp = dsa->meth;
-        if (mtmp->finish) mtmp->finish(dsa);
+        if (mtmp->finish)
+		mtmp->finish(dsa);
 #ifndef OPENSSL_NO_ENGINE
-	if (dsa->engine)
-		{
+	if (dsa->engine) {
 		ENGINE_finish(dsa->engine);
 		dsa->engine = NULL;
-		}
+	}
 #endif
         dsa->meth = meth;
-        if (meth->init) meth->init(dsa);
+        if (meth->init)
+		meth->init(dsa);
         return 1;
-	}
+}
 
-DSA *DSA_new_method(ENGINE *engine)
-	{
+DSA *
+DSA_new_method(ENGINE *engine)
+{
 	DSA *ret;
 
 	ret = malloc(sizeof(DSA));
-	if (ret == NULL)
-		{
-		DSAerr(DSA_F_DSA_NEW_METHOD,ERR_R_MALLOC_FAILURE);
-		return(NULL);
-		}
+	if (ret == NULL) {
+		DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
 	ret->meth = DSA_get_default_method();
 #ifndef OPENSSL_NO_ENGINE
-	if (engine)
-		{
-		if (!ENGINE_init(engine))
-			{
+	if (engine) {
+		if (!ENGINE_init(engine)) {
 			DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_ENGINE_LIB);
 			free(ret);
 			return NULL;
-			}
-		ret->engine = engine;
 		}
-	else
+		ret->engine = engine;
+	} else
 		ret->engine = ENGINE_get_default_DSA();
-	if(ret->engine)
-		{
+	if (ret->engine) {
 		ret->meth = ENGINE_get_DSA(ret->engine);
-		if(!ret->meth)
-			{
-			DSAerr(DSA_F_DSA_NEW_METHOD,
-				ERR_R_ENGINE_LIB);
+		if (!ret->meth) {
+			DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
 			free(ret);
 			return NULL;
-			}
 		}
+	}
 #endif
 
-	ret->pad=0;
-	ret->version=0;
-	ret->write_params=1;
-	ret->p=NULL;
-	ret->q=NULL;
-	ret->g=NULL;
+	ret->pad = 0;
+	ret->version = 0;
+	ret->write_params = 1;
+	ret->p = NULL;
+	ret->q = NULL;
+	ret->g = NULL;
 
-	ret->pub_key=NULL;
-	ret->priv_key=NULL;
+	ret->pub_key = NULL;
+	ret->priv_key = NULL;
 
-	ret->kinv=NULL;
-	ret->r=NULL;
-	ret->method_mont_p=NULL;
+	ret->kinv = NULL;
+	ret->r = NULL;
+	ret->method_mont_p = NULL;
 
-	ret->references=1;
-	ret->flags=ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
+	ret->references = 1;
+	ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
-	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
-		{
+	if (ret->meth->init != NULL && !ret->meth->init(ret)) {
 #ifndef OPENSSL_NO_ENGINE
 		if (ret->engine)
 			ENGINE_finish(ret->engine);
 #endif
 		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
 		free(ret);
-		ret=NULL;
-		}
-	
-	return(ret);
+		ret = NULL;
 	}
+	
+	return ret;
+}
 
-void DSA_free(DSA *r)
-	{
+void
+DSA_free(DSA *r)
+{
 	int i;
 
-	if (r == NULL) return;
+	if (r == NULL)
+		return;
 
-	i=CRYPTO_add(&r->references,-1,CRYPTO_LOCK_DSA);
-	if (i > 0) return;
+	i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_DSA);
+	if (i > 0)
+		return;
 
-	if(r->meth->finish)
+	if (r->meth->finish)
 		r->meth->finish(r);
 #ifndef OPENSSL_NO_ENGINE
-	if(r->engine)
+	if (r->engine)
 		ENGINE_finish(r->engine);
 #endif
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);
 
-	if (r->p != NULL) BN_clear_free(r->p);
-	if (r->q != NULL) BN_clear_free(r->q);
-	if (r->g != NULL) BN_clear_free(r->g);
-	if (r->pub_key != NULL) BN_clear_free(r->pub_key);
-	if (r->priv_key != NULL) BN_clear_free(r->priv_key);
-	if (r->kinv != NULL) BN_clear_free(r->kinv);
-	if (r->r != NULL) BN_clear_free(r->r);
+	if (r->p != NULL)
+		BN_clear_free(r->p);
+	if (r->q != NULL)
+		BN_clear_free(r->q);
+	if (r->g != NULL)
+		BN_clear_free(r->g);
+	if (r->pub_key != NULL)
+		BN_clear_free(r->pub_key);
+	if (r->priv_key != NULL)
+		BN_clear_free(r->priv_key);
+	if (r->kinv != NULL)
+		BN_clear_free(r->kinv);
+	if (r->r != NULL)
+		BN_clear_free(r->r);
 	free(r);
-	}
+}
 
-int DSA_up_ref(DSA *r)
-	{
+int
+DSA_up_ref(DSA *r)
+{
 	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DSA);
-	return ((i > 1) ? 1 : 0);
-	}
+	return i > 1 ? 1 : 0;
+}
 
-int DSA_size(const DSA *r)
-	{
-	int ret,i;
+int
+DSA_size(const DSA *r)
+{
+	int ret, i;
 	ASN1_INTEGER bs;
 	unsigned char buf[4];	/* 4 bytes looks really small.
 				   However, i2d_ASN1_INTEGER() will not look
 				   beyond the first byte, as long as the second
 				   parameter is NULL. */
 
-	i=BN_num_bits(r->q);
-	bs.length=(i+7)/8;
-	bs.data=buf;
-	bs.type=V_ASN1_INTEGER;
+	i = BN_num_bits(r->q);
+	bs.length = (i + 7) / 8;
+	bs.data = buf;
+	bs.type = V_ASN1_INTEGER;
 	/* If the top bit is set the asn1 encoding is 1 larger. */
-	buf[0]=0xff;	
+	buf[0] = 0xff;
 
-	i=i2d_ASN1_INTEGER(&bs,NULL);
-	i+=i; /* r and s */
-	ret=ASN1_object_size(1,i,V_ASN1_SEQUENCE);
-	return(ret);
-	}
+	i = i2d_ASN1_INTEGER(&bs, NULL);
+	i += i; /* r and s */
+	ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
+	return ret;
+}
 
-int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
-        {
+int
+DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+    CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
+{
 	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DSA, argl, argp,
-				new_func, dup_func, free_func);
-        }
+	    new_func, dup_func, free_func);
+}
 
-int DSA_set_ex_data(DSA *d, int idx, void *arg)
-	{
-	return(CRYPTO_set_ex_data(&d->ex_data,idx,arg));
-	}
+int
+DSA_set_ex_data(DSA *d, int idx, void *arg)
+{
+	return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
+}
 
-void *DSA_get_ex_data(DSA *d, int idx)
-	{
-	return(CRYPTO_get_ex_data(&d->ex_data,idx));
-	}
+void *
+DSA_get_ex_data(DSA *d, int idx)
+{
+	return CRYPTO_get_ex_data(&d->ex_data, idx);
+}
 
 #ifndef OPENSSL_NO_DH
-DH *DSA_dup_DH(const DSA *r)
-	{
-	/* DSA has p, q, g, optional pub_key, optional priv_key.
+DH *
+DSA_dup_DH(const DSA *r)
+{
+	/*
+	 * DSA has p, q, g, optional pub_key, optional priv_key.
 	 * DH has p, optional length, g, optional pub_key, optional priv_key,
 	 * optional q.
 	 */ 
-
 	DH *ret = NULL;
 
 	if (r == NULL)
@@ -272,12 +286,11 @@ DH *DSA_dup_DH(const DSA *r)
 	if (r->p != NULL) 
 		if ((ret->p = BN_dup(r->p)) == NULL)
 			goto err;
-	if (r->q != NULL)
-		{
+	if (r->q != NULL) {
 		ret->length = BN_num_bits(r->q);
 		if ((ret->q = BN_dup(r->q)) == NULL)
 			goto err;
-		}
+	}
 	if (r->g != NULL)
 		if ((ret->g = BN_dup(r->g)) == NULL)
 			goto err;
@@ -290,9 +303,9 @@ DH *DSA_dup_DH(const DSA *r)
 
 	return ret;
 
- err:
+err:
 	if (ret != NULL)
 		DH_free(ret);
 	return NULL;
-	}
+}
 #endif

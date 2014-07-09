@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_vrf.c,v 1.14 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: dsa_vrf.c,v 1.15 2014/07/09 10:16:24 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,8 +61,8 @@
 #include "cryptlib.h"
 #include <openssl/dsa.h>
 
-int DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
-		  DSA *dsa)
-	{
+int
+DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
+{
 	return dsa->meth->dsa_do_verify(dgst, dgst_len, sig, dsa);
-	}
+}

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.10 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.11 2014/07/09 10:16:24 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -64,17 +64,17 @@
 #include <openssl/rand.h>
 
 /* Override the default new methods */
-static int sig_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-								void *exarg)
+static int
+sig_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 {
-	if(operation == ASN1_OP_NEW_PRE) {
+	if (operation == ASN1_OP_NEW_PRE) {
 		DSA_SIG *sig;
+
 		sig = malloc(sizeof(DSA_SIG));
-		if (!sig)
-			{
+		if (!sig) {
 			DSAerr(DSA_F_SIG_CB, ERR_R_MALLOC_FAILURE);
 			return 0;
-			}
+		}
 		sig->r = NULL;
 		sig->s = NULL;
 		*pval = (ASN1_VALUE *)sig;
@@ -91,14 +91,15 @@ ASN1_SEQUENCE_cb(DSA_SIG, sig_cb) = {
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA_SIG, DSA_SIG, DSA_SIG)
 
 /* Override the default free and new methods */
-static int dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-							void *exarg)
+static int
+dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 {
-	if(operation == ASN1_OP_NEW_PRE) {
+	if (operation == ASN1_OP_NEW_PRE) {
 		*pval = (ASN1_VALUE *)DSA_new();
-		if(*pval) return 2;
+		if (*pval)
+			return 2;
 		return 0;
-	} else if(operation == ASN1_OP_FREE_PRE) {
+	} else if (operation == ASN1_OP_FREE_PRE) {
 		DSA_free((DSA *)*pval);
 		*pval = NULL;
 		return 2;
@@ -125,7 +126,8 @@ ASN1_SEQUENCE_cb(DSAparams, dsa_cb) = {
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAparams, DSAparams)
 
-/* DSA public key is a bit trickier... its effectively a CHOICE type
+/*
+ * DSA public key is a bit trickier... its effectively a CHOICE type
  * decided by a field called write_params which can either write out
  * just the public key as an INTEGER or the parameters and public key
  * in a SEQUENCE
@@ -145,43 +147,49 @@ ASN1_CHOICE_cb(DSAPublicKey, dsa_cb) = {
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPublicKey, DSAPublicKey)
 
-DSA *DSAparams_dup(DSA *dsa)
-	{
+DSA *
+DSAparams_dup(DSA *dsa)
+{
 	return ASN1_item_dup(ASN1_ITEM_rptr(DSAparams), dsa);
-	}
+}
 
-int DSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
-	     unsigned int *siglen, DSA *dsa)
-	{
+int
+DSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
+    unsigned int *siglen, DSA *dsa)
+{
 	DSA_SIG *s;
-	s=DSA_do_sign(dgst,dlen,dsa);
-	if (s == NULL)
-		{
-		*siglen=0;
-		return(0);
-		}
-	*siglen=i2d_DSA_SIG(s,&sig);
-	DSA_SIG_free(s);
-	return(1);
-	}
 
-/* data has already been hashed (probably with SHA or SHA-1). */
-/* returns
+	s = DSA_do_sign(dgst, dlen, dsa);
+	if (s == NULL) {
+		*siglen = 0;
+		return 0;
+	}
+	*siglen = i2d_DSA_SIG(s,&sig);
+	DSA_SIG_free(s);
+	return 1;
+}
+
+/*
+ * data has already been hashed (probably with SHA or SHA-1).
+ * returns
  *      1: correct signature
  *      0: incorrect signature
  *     -1: error
  */
-int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
-	     const unsigned char *sigbuf, int siglen, DSA *dsa)
-	{
+int
+DSA_verify(int type, const unsigned char *dgst, int dgst_len,
+    const unsigned char *sigbuf, int siglen, DSA *dsa)
+{
 	DSA_SIG *s;
-	int ret=-1;
+	int ret = -1;
 
 	s = DSA_SIG_new();
-	if (s == NULL) return(ret);
-	if (d2i_DSA_SIG(&s,&sigbuf,siglen) == NULL) goto err;
-	ret=DSA_do_verify(dgst,dgst_len,s,dsa);
+	if (s == NULL)
+		return ret;
+	if (d2i_DSA_SIG(&s, &sigbuf, siglen) == NULL)
+		goto err;
+	ret = DSA_do_verify(dgst, dgst_len, s, dsa);
 err:
 	DSA_SIG_free(s);
-	return(ret);
-	}
+	return ret;
+}

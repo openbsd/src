@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_pmeth.c,v 1.6 2014/06/12 20:40:57 deraadt Exp $ */
+/* $OpenBSD: dsa_pmeth.c,v 1.7 2014/07/09 10:16:24 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -68,8 +68,7 @@
 
 /* DSA pkey context structure */
 
-typedef struct
-	{
+typedef struct {
 	/* Parameter gen parameters */
 	int nbits;		/* size of p in bits (default: 1024) */
 	int qbits;		/* size of q in bits (default: 160)  */
@@ -78,11 +77,13 @@ typedef struct
 	int gentmp[2];
 	/* message digest */
 	const EVP_MD *md;	/* MD for the signature */
-	} DSA_PKEY_CTX;
+} DSA_PKEY_CTX;
 
-static int pkey_dsa_init(EVP_PKEY_CTX *ctx)
-	{
+static int
+pkey_dsa_init(EVP_PKEY_CTX *ctx)
+{
 	DSA_PKEY_CTX *dctx;
+
 	dctx = malloc(sizeof(DSA_PKEY_CTX));
 	if (!dctx)
 		return 0;
@@ -96,11 +97,13 @@ static int pkey_dsa_init(EVP_PKEY_CTX *ctx)
 	ctx->keygen_info_count = 2;
 	
 	return 1;
-	}
+}
 
-static int pkey_dsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
-	{
+static int
+pkey_dsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+{
 	DSA_PKEY_CTX *dctx, *sctx;
+
 	if (!pkey_dsa_init(dst))
 		return 0;
        	sctx = src->data;
@@ -110,17 +113,20 @@ static int pkey_dsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 	dctx->pmd = sctx->pmd;
 	dctx->md  = sctx->md;
 	return 1;
-	}
+}
 
-static void pkey_dsa_cleanup(EVP_PKEY_CTX *ctx)
-	{
+static void
+pkey_dsa_cleanup(EVP_PKEY_CTX *ctx)
+{
 	DSA_PKEY_CTX *dctx = ctx->data;
-	free(dctx);
-	}
 
-static int pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
-					const unsigned char *tbs, size_t tbslen)
-	{
+	free(dctx);
+}
+
+static int
+pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
+    const unsigned char *tbs, size_t tbslen)
+{
 	int ret, type;
 	unsigned int sltmp;
 	DSA_PKEY_CTX *dctx = ctx->data;
@@ -137,12 +143,12 @@ static int pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 		return ret;
 	*siglen = sltmp;
 	return 1;
-	}
+}
 
-static int pkey_dsa_verify(EVP_PKEY_CTX *ctx,
-					const unsigned char *sig, size_t siglen,
-					const unsigned char *tbs, size_t tbslen)
-	{
+static int
+pkey_dsa_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig, size_t siglen,
+    const unsigned char *tbs, size_t tbslen)
+{
 	int ret, type;
 	DSA_PKEY_CTX *dctx = ctx->data;
 	DSA *dsa = ctx->pkey->pkey.dsa;
@@ -155,69 +161,67 @@ static int pkey_dsa_verify(EVP_PKEY_CTX *ctx,
 	ret = DSA_verify(type, tbs, tbslen, sig, siglen, dsa);
 
 	return ret;
-	}
+}
 
-static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
-	{
+static int
+pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
+{
 	DSA_PKEY_CTX *dctx = ctx->data;
-	switch (type)
-		{
-		case EVP_PKEY_CTRL_DSA_PARAMGEN_BITS:
+
+	switch (type) {
+	case EVP_PKEY_CTRL_DSA_PARAMGEN_BITS:
 		if (p1 < 256)
 			return -2;
 		dctx->nbits = p1;
 		return 1;
 
-		case EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS:
+	case EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS:
 		if (p1 != 160 && p1 != 224 && p1 && p1 != 256)
 			return -2;
 		dctx->qbits = p1;
 		return 1;
 
-		case EVP_PKEY_CTRL_DSA_PARAMGEN_MD:
-		if (EVP_MD_type((const EVP_MD *)p2) != NID_sha1   &&
+	case EVP_PKEY_CTRL_DSA_PARAMGEN_MD:
+		if (EVP_MD_type((const EVP_MD *)p2) != NID_sha1 &&
 		    EVP_MD_type((const EVP_MD *)p2) != NID_sha224 &&
-		    EVP_MD_type((const EVP_MD *)p2) != NID_sha256)
-			{
+		    EVP_MD_type((const EVP_MD *)p2) != NID_sha256) {
 			DSAerr(DSA_F_PKEY_DSA_CTRL, DSA_R_INVALID_DIGEST_TYPE);
 			return 0;
-			}
+		}
 		dctx->md = p2;
 		return 1;
 
-		case EVP_PKEY_CTRL_MD:
-		if (EVP_MD_type((const EVP_MD *)p2) != NID_sha1   &&
-		    EVP_MD_type((const EVP_MD *)p2) != NID_dsa    &&
-		    EVP_MD_type((const EVP_MD *)p2) != NID_dsaWithSHA    &&
+	case EVP_PKEY_CTRL_MD:
+		if (EVP_MD_type((const EVP_MD *)p2) != NID_sha1 &&
+		    EVP_MD_type((const EVP_MD *)p2) != NID_dsa &&
+		    EVP_MD_type((const EVP_MD *)p2) != NID_dsaWithSHA &&
 		    EVP_MD_type((const EVP_MD *)p2) != NID_sha224 &&
 		    EVP_MD_type((const EVP_MD *)p2) != NID_sha256 &&
 		    EVP_MD_type((const EVP_MD *)p2) != NID_sha384 &&
-		    EVP_MD_type((const EVP_MD *)p2) != NID_sha512)
-			{
+		    EVP_MD_type((const EVP_MD *)p2) != NID_sha512) {
 			DSAerr(DSA_F_PKEY_DSA_CTRL, DSA_R_INVALID_DIGEST_TYPE);
 			return 0;
-			}
+		}
 		dctx->md = p2;
 		return 1;
 
-		case EVP_PKEY_CTRL_DIGESTINIT:
-		case EVP_PKEY_CTRL_PKCS7_SIGN:
-		case EVP_PKEY_CTRL_CMS_SIGN:
+	case EVP_PKEY_CTRL_DIGESTINIT:
+	case EVP_PKEY_CTRL_PKCS7_SIGN:
+	case EVP_PKEY_CTRL_CMS_SIGN:
 		return 1;
 		
-		case EVP_PKEY_CTRL_PEER_KEY:
-			DSAerr(DSA_F_PKEY_DSA_CTRL,
-			EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-			return -2;	
-		default:
+	case EVP_PKEY_CTRL_PEER_KEY:
+		DSAerr(DSA_F_PKEY_DSA_CTRL,
+		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		return -2;	
+	default:
 		return -2;
-
-		}
 	}
+}
 			
-static int pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx,
-			const char *type, const char *value)
-	{
+static int
+pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
+{
  	long lval;
 	char *ep;
 
@@ -228,69 +232,71 @@ static int pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx,
 		lval = strtol(value, &ep, 10);
 		if (value[0] == '\0' || *ep != '\0')
 			goto not_a_number;
-		if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
+		if ((errno == ERANGE &&
+		    (lval == LONG_MAX || lval == LONG_MIN)) ||
 		    (lval > INT_MAX || lval < INT_MIN))
 			goto out_of_range;
 		nbits = lval;
 		return EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, nbits);
-	}
-	if (!strcmp(type, "dsa_paramgen_q_bits")) {
+	} else if (!strcmp(type, "dsa_paramgen_q_bits")) {
 		int qbits;
 
 		errno = 0;
 		lval = strtol(value, &ep, 10);
 		if (value[0] == '\0' || *ep != '\0')
 			goto not_a_number;
-		if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
+		if ((errno == ERANGE &&
+		    (lval == LONG_MAX || lval == LONG_MIN)) ||
 		    (lval > INT_MAX || lval < INT_MIN))
 			goto out_of_range;
 		qbits = lval;
-		return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
-		    EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits, NULL);
-	}
-	if (!strcmp(type, "dsa_paramgen_md")){
-		return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
-		    EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, 
+		return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA,
+		    EVP_PKEY_OP_PARAMGEN, EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS,
+		    qbits, NULL);
+	} else if (!strcmp(type, "dsa_paramgen_md")) {
+		return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA,
+		    EVP_PKEY_OP_PARAMGEN, EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, 
 		    (void *)EVP_get_digestbyname(value));
 	}
 not_a_number:
 out_of_range:
 	return -2;
-	}
+}
 
-static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
-	{
+static int
+pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+{
 	DSA *dsa = NULL;
 	DSA_PKEY_CTX *dctx = ctx->data;
 	BN_GENCB *pcb, cb;
 	int ret;
-	if (ctx->pkey_gencb)
-		{
+
+	if (ctx->pkey_gencb) {
 		pcb = &cb;
 		evp_pkey_set_cb_translate(pcb, ctx);
-		}
-	else
+	} else
 		pcb = NULL;
 	dsa = DSA_new();
 	if (!dsa)
 		return 0;
 	ret = dsa_builtin_paramgen(dsa, dctx->nbits, dctx->qbits, dctx->pmd,
-	                           NULL, 0, NULL, NULL, NULL, pcb);
+	    NULL, 0, NULL, NULL, NULL, pcb);
 	if (ret)
 		EVP_PKEY_assign_DSA(pkey, dsa);
 	else
 		DSA_free(dsa);
 	return ret;
-	}
+}
 
-static int pkey_dsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
-	{
+static int
+pkey_dsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+{
 	DSA *dsa = NULL;
-	if (ctx->pkey == NULL)
-		{
+
+	if (ctx->pkey == NULL) {
 		DSAerr(DSA_F_PKEY_DSA_KEYGEN, DSA_R_NO_PARAMETERS_SET);
 		return 0;
-		}
+	}
 	dsa = DSA_new();
 	if (!dsa)
 		return 0;
@@ -299,7 +305,7 @@ static int pkey_dsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	if (!EVP_PKEY_copy_parameters(pkey, ctx->pkey))
 		return 0;
 	return DSA_generate_key(pkey->pkey.dsa);
-	}
+}
 
 const EVP_PKEY_METHOD dsa_pkey_meth = {
 	.pkey_id = EVP_PKEY_DSA,
