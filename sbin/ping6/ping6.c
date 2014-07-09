@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.93 2014/07/09 09:35:51 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.94 2014/07/09 09:37:30 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -310,14 +310,8 @@ main(int argc, char *argv[])
 					naflags |= NI_NODEADDR_FLAG_GLOBAL;
 					break;
 				case 'A': /* experimental. not in the spec */
-#ifdef NI_NODEADDR_FLAG_ANYCAST
 					naflags |= NI_NODEADDR_FLAG_ANYCAST;
 					break;
-#else
-					errx(1,
-"-a A is not supported on the platform");
-					/*NOTREACHED*/
-#endif
 				default:
 					usage();
 					/*NOTREACHED*/
