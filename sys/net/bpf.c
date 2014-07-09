@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.96 2014/07/09 11:39:07 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.97 2014/07/09 13:52:35 yasuoka Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -161,6 +161,11 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 		hlen = 0;
 		break;
 
+	case DLT_LOOP:
+		sockp->sa_family = AF_UNSPEC;
+		hlen = sizeof(u_int32_t);
+		break;
+
 	default:
 		return (EIO);
 	}
@@ -201,7 +206,15 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 	 * Make room for link header, and copy it to sockaddr
 	 */
 	if (hlen != 0) {
-		bcopy(m->m_data, sockp->sa_data, hlen);
+		if (linktype == DLT_LOOP) {
+			u_int32_t af;
+
+			/* the link header indicates the address family */
+			KASSERT(hlen == sizeof(u_int32_t));
+			memcpy(&af, m->m_data, hlen);
+			sockp->sa_family = ntohl(af);
+		} else
+			memcpy(sockp->sa_data, m->m_data, hlen);
 		m->m_len -= hlen;
 		m->m_data += hlen; /* XXX */
 	}
@@ -526,7 +539,7 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
-	if (d->bd_hdrcmplt)
+	if (d->bd_hdrcmplt && dst.ss_family == AF_UNSPEC)
 		dst.ss_family = pseudo_AF_HDRCMPLT;
 
 	s = splsoftnet();
