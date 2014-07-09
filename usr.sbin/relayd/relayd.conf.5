@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.144 2014/07/09 16:42:05 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.145 2014/07/09 17:01:30 reyk Exp $
 .\"
 .\" Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -517,7 +517,7 @@ It will ensure that multiple connections from the same source are
 mapped to the same redirection address.
 .It Xo
 .Op Ic match
-.Ic tag Ar name
+.Ic pftag Ar name
 .Xc
 Automatically tag packets passing through the
 .Xr pf 4
@@ -1373,7 +1373,7 @@ redirect "www" {
 	listen on www.example.com port 8080 interface trunk0
 	listen on www6.example.com port 80 interface trunk0
 
-	tag REDIRECTED
+	pftag REDIRECTED
 
 	forward to \*(Ltphphosts\*(Gt port 8080 timeout 300 \e
 		check http "/" digest "630aa3c2f..."
