@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.29 2014/07/09 08:20:08 miod Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.30 2014/07/09 08:44:53 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,8 +114,6 @@
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
-
-#ifndef RSA_NULL
 
 static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
@@ -906,5 +904,3 @@ RSA_eay_finish(RSA *rsa)
 		BN_MONT_CTX_free(rsa->_method_mod_q);
 	return 1;
 }
-
-#endif

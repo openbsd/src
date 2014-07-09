@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.21 2014/07/09 08:20:08 miod Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.22 2014/07/09 08:44:53 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,13 +88,8 @@ RSA_set_default_method(const RSA_METHOD *meth)
 const RSA_METHOD *
 RSA_get_default_method(void)
 {
-	if (default_RSA_meth == NULL) {
-#ifdef RSA_NULL
-		default_RSA_meth = RSA_null_method();
-#else
+	if (default_RSA_meth == NULL)
 		default_RSA_meth = RSA_PKCS1_SSLeay();
-#endif
-	}
 
 	return default_RSA_meth;
 }
