@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.92 2014/05/31 04:36:59 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.93 2014/07/09 12:43:51 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -76,6 +76,10 @@ int	hib_debug = 99;
 #define DPRINTF(x...)
 #define DNPRINTF(n,x...)
 #endif
+
+#ifndef NO_PROPOLICE
+extern long __guard_local;
+#endif /* ! NO_PROPOLICE */
 
 void hibernate_copy_chunk_to_piglet(paddr_t, vaddr_t, size_t);
 
@@ -643,6 +647,11 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 	struct disklabel dl;
 	char err_string[128], *dl_ret;
 
+#ifndef NO_PROPOLICE
+	/* Save propolice guard */
+	hib->guard = __guard_local;
+#endif /* ! NO_PROPOLICE */
+
 	/* Determine I/O function to use */
 	hib->io_func = get_hibernate_io_function();
 	if (hib->io_func == NULL)
@@ -1174,6 +1183,11 @@ hibernate_resume(void)
 
 	/* Switch stacks */
 	hibernate_switch_stack_machdep();
+
+#ifndef NO_PROPOLICE
+	/* Start using suspended kernel's propolice guard */
+	__guard_local = disk_hib.guard;
+#endif /* ! NO_PROPOLICE */
 
 	/* Unpack and resume */
 	hibernate_unpack_image(&disk_hib);

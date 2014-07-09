@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.30 2013/11/09 06:54:00 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.31 2014/07/09 12:43:51 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -95,6 +95,9 @@ union hibernate_info {
 		char				kernel_version[128];
 		hibio_fn			io_func;
 		void				*io_page;
+#ifndef NO_PROPOLICE
+		long				guard;
+#endif /* ! NO_PROPOLICE */
 	};
 
 	/* XXX - remove restriction to have this union fit in a single block */
