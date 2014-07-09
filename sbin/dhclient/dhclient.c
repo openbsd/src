@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.311 2014/05/23 17:36:59 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.312 2014/07/09 15:16:38 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2350,7 +2350,7 @@ priv_write_file(struct imsg_write_file *imsg)
 		note("Couldn't write contents to '%s': %s", imsg->path,
 		    strerror(errno));
 	else if (n < imsg->len)
-		note("Short contents write to '%s' (%zd vs %zd)", imsg->path,
+		note("Short contents write to '%s' (%zd vs %zu)", imsg->path,
 		    n, imsg->len);
 
 	if (fchmod(fd, imsg->mode) == -1)
