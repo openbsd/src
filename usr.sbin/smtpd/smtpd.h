@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.465 2014/07/08 21:58:33 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.466 2014/07/09 09:53:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -520,6 +520,7 @@ struct listener {
 	struct event		 ev;
 	char			 pki_name[SMTPD_MAXPATHLEN];
 	char			 tag[MAX_TAG_SIZE];
+	char			 filter[SMTPD_MAXPATHLEN];
 	char			 authtable[SMTPD_MAXLINESIZE];
 	char			 hostname[SMTPD_MAXHOSTNAMELEN];
 	char			 hostnametable[SMTPD_MAXPATHLEN];

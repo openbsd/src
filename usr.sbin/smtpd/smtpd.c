@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.231 2014/07/08 21:55:53 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.232 2014/07/09 09:53:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -612,6 +612,44 @@ main(int argc, char *argv[])
 	env->sc_stat = stat_backend_lookup(backend_stat);
 	if (env->sc_stat == NULL)
 		errx(1, "could not find stat backend \"%s\"", backend_stat);
+
+	if (env->sc_queue_flags & QUEUE_ENCRYPTION) {
+		if (env->sc_queue_key == NULL) {
+			char	*password;
+
+			password = getpass("queue key: ");
+			if (password == NULL)
+				err(1, "getpass");
+
+			env->sc_queue_key = strdup(password);
+			memset(password, 0, strlen(password));
+			if (env->sc_queue_key == NULL)
+				err(1, "strdup");
+		}
+		else {
+			char   *buf;
+			char   *lbuf;
+			size_t	len;
+
+			if (strcasecmp(env->sc_queue_key, "stdin") == 0) {
+				lbuf = NULL;
+				buf = fgetln(stdin, &len);
+				if (buf[len - 1] == '\n') {
+					lbuf = calloc(len, 1);
+					if (lbuf == NULL)
+						err(1, "calloc");
+					memcpy(lbuf, buf, len-1);
+				}
+				else {
+					lbuf = calloc(len+1, 1);
+					if (lbuf == NULL)
+						err(1, "calloc");
+					memcpy(lbuf, buf, len);
+				}
+				env->sc_queue_key = lbuf;
+			}
+		}
+	}
 
 	if (env->sc_queue_flags & QUEUE_COMPRESSION)
 		env->sc_comp = compress_backend_lookup("gzip");
