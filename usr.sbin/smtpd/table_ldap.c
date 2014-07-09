@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_ldap.c,v 1.11 2014/07/08 13:49:09 eric Exp $	*/
+/*	$OpenBSD: table_ldap.c,v 1.12 2014/07/09 08:38:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -66,7 +66,7 @@ static int table_ldap_fetch(int, struct dict *, char *, size_t);
 static int ldap_config(void);
 static int ldap_open(void);
 static int ldap_query(const char *, char **, char ***, size_t);
-static int ldap_parse_attributes(char **, const char *, const char *, size_t);
+static int ldap_parse_attributes(struct query *, const char *, const char *, size_t);
 static int ldap_run_query(int type, const char *, char *, size_t);
 
 static char *config;
@@ -142,6 +142,7 @@ table_ldap_check(int service, struct dict *params, const char *key)
 	case K_DOMAIN:
 	case K_CREDENTIALS:
 	case K_USERINFO:
+	case K_MAILADDR:
 		return ldap_run_query(service, key, NULL, 0);
 	default:
 		return (-1);
@@ -156,6 +157,7 @@ table_ldap_lookup(int service, struct dict *params, const char *key, char *dst, 
 	case K_DOMAIN:
 	case K_CREDENTIALS:
 	case K_USERINFO:
+	case K_MAILADDR:
 		return ldap_run_query(service, key, dst, sz);
 	default:
 		return (-1);
@@ -246,7 +248,7 @@ read_value(char **store, const char *key, const char *value)
 }
 
 static int
-ldap_parse_attributes(char **attributes, const char *key, const char *line,
+ldap_parse_attributes(struct query *query, const char *key, const char *line,
     size_t expect)
 {
 	char	buffer[1024];
@@ -271,14 +273,15 @@ ldap_parse_attributes(char **attributes, const char *key, const char *line,
 
 	p = buffer;
 	for (n = 0; n < expect; ++n)
-		attributes[n] = NULL;
+		query->attrs[n] = NULL;
 	for (n = 0; n < m; ++n) {
-		attributes[n] = strdup(p);
-		if (attributes[n] == NULL) {
+		query->attrs[n] = strdup(p);
+		if (query->attrs[n] == NULL) {
 			log_warnx("warn: table-ldap: strdup");
 			return (0); /* XXX cleanup */
 		}
 		p += strlen(p) + 1;
+		query->attrn++;
 	}
 	return (1);
 }
@@ -343,27 +346,38 @@ ldap_config(void)
 
 		else if (!strcmp(key, "alias_filter"))
 			read_value(&queries[LDAP_ALIAS].filter, key, value);
-		else if (!strcmp(key, "alias_attributes"))
-			ldap_parse_attributes(queries[LDAP_ALIAS].attrs,
+		else if (!strcmp(key, "alias_attributes")) {
+			ldap_parse_attributes(&queries[LDAP_ALIAS],
 			    key, value, 1);
+		}
 
 		else if (!strcmp(key, "credentials_filter"))
 			read_value(&queries[LDAP_CREDENTIALS].filter, key, value);
-		else if (!strcmp(key, "credentials_attributes"))
-			ldap_parse_attributes(queries[LDAP_CREDENTIALS].attrs,
+		else if (!strcmp(key, "credentials_attributes")) {
+			ldap_parse_attributes(&queries[LDAP_CREDENTIALS],
 			    key, value, 2);
+		}
 
 		else if (!strcmp(key, "domain_filter"))
 			read_value(&queries[LDAP_DOMAIN].filter, key, value);
-		else if (!strcmp(key, "domain_attributes"))
-			ldap_parse_attributes(queries[LDAP_DOMAIN].attrs,
+		else if (!strcmp(key, "domain_attributes")) {
+			ldap_parse_attributes(&queries[LDAP_DOMAIN],
 			    key, value, 1);
+		}
 
 		else if (!strcmp(key, "userinfo_filter"))
 			read_value(&queries[LDAP_USERINFO].filter, key, value);
-		else if (!strcmp(key, "userinfo_attributes"))
-			ldap_parse_attributes(queries[LDAP_USERINFO].attrs,
-			    key, value, 4);
+		else if (!strcmp(key, "userinfo_attributes")) {
+			ldap_parse_attributes(&queries[LDAP_USERINFO],
+			    key, value, 3);
+		}
+
+		else if (!strcmp(key, "mailaddr_filter"))
+			read_value(&queries[LDAP_MAILADDR].filter, key, value);
+		else if (!strcmp(key, "mailaddr_attributes")) {
+			ldap_parse_attributes(&queries[LDAP_MAILADDR],
+			    key, value, 1);
+		}
 		else
 			log_warnx("warn: table-ldap: bogus entry \"%s\"", key);
 	}
@@ -437,9 +451,9 @@ ldap_query(const char *filter, char **attributes, char ***outp, size_t n)
 	do {
 		if ((ret = aldap_search(aldap, basedn__, LDAP_SCOPE_SUBTREE,
 			    filter__, NULL, 0, 0, 0, pg)) == -1) {
+			log_debug("ret=%d", ret);
 			return -1;
 		}
-
 		if (pg != NULL) {
 			aldap_freepage(pg);
 			pg = NULL;
@@ -476,7 +490,7 @@ error:
 end:
 	if (m)
 		aldap_freemsg(m);
-	log_debug("debug: table_ldap_internal_query: filter=%s, ret=%d", filter, ret);
+	log_debug("debug: table_ldap: ldap_query: filter=%s, ret=%d", filter, ret);
 	return ret;
 }
 
@@ -527,11 +541,12 @@ ldap_run_query(int type, const char *key, char *dst, size_t sz)
 		}
 		break;
 	case K_DOMAIN:
+	case K_MAILADDR:
 		if (strlcpy(dst, res[0][0], sz) >= sz)
 			ret = -1;
 		break;
 	case K_CREDENTIALS:
-		if (snprintf(dst, sz, "%s:%s", res[0][0], res[0][1]) >= (int)sz)
+		if (snprintf(dst, sz, "%s:%s", res[0][0], res[1][0]) >= (int)sz)
 			ret = -1;
 		break;
 	case K_USERINFO:
@@ -539,6 +554,9 @@ ldap_run_query(int type, const char *key, char *dst, size_t sz)
 		    res[2][0]) >= (int)sz)
 			ret = -1;
 		break;
+	default:
+		log_warnx("warn: table-ldap: unsupported lookup kind");
+		ret = -1;
 	}
 
 	if (ret == -1)
