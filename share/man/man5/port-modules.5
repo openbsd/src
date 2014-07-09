@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.172 2014/04/02 15:00:27 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.173 2014/07/09 13:38:11 bcallah Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 2 2014 $
+.Dd $Mdocdate: July 9 2014 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -1184,6 +1184,7 @@ is appended to
 .Ev MODGNOME_RUN_DEPENDS
 and a link to /usr/bin/true is created under
 .Pa ${WRKDIR}/bin/desktop-file-validate .
+If
 .Ev MODGNOME_TOOLS
 is set to docbook,
 .Pa textproc/docbook-xsl
