@@ -9,19 +9,21 @@ our %args = (
 	func => \&http_client,
 	lengths => \@lengths,
 	ssl => 1,
+	mreqs => 1
     },
     relayd => {
 	protocol => [ "http",
-	    "request header log foo",
-	    "response header log Content-Length",
+	    "match request header log foo",
+	    "match response header log Content-Length",
 	],
-	loggrep => [ map { "log 'Content-Length: $_'" } @lengths ],
+	loggrep => [ map { "Content-Length: $_" } @lengths ],
 	forwardssl => 1,
 	listenssl => 1,
     },
     server => {
 	func => \&http_server,
 	ssl => 1,
+	mreqs => scalar(@lengths),
     },
     lengths => \@lengths,
 );

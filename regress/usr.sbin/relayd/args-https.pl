@@ -10,8 +10,8 @@ our %args = (
     },
     relayd => {
 	protocol => [ "http",
-	    "request header log foo",
-	    "response header log bar",
+	    "match request header log foo",
+	    "match response header log bar",
 	],
 	forwardssl => 1,
 	listenssl => 1,

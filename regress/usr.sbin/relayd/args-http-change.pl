@@ -13,8 +13,8 @@ our %args = (
     },
     relayd => {
 	protocol => [ "http",
-	    'request header change "Host" to "foobar.changed"',
-	    'response header change "X-Test-Header" to "XChangedValue"',
+	    'match request header set "Host" value "foobar.changed"',
+	    'match response header set "X-Test-Header" value "XChangedValue"',
 	],
     },
     server => {

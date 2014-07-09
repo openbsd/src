@@ -8,14 +8,14 @@ our %args = (
     },
     relayd => {
 	protocol => [ "http",
-	    'request path mark "*" from "/foobar" with 55',
-	    'request header append "bar" to "foo" marked 55',
+	    'match request path "/foobar" value "*" tag RING0',
+	    'block request',
+	    'pass request quick tagged RING0',
 	],
-	loggrep => { ", 55,.*done" => 1 },
+	loggrep => { ", RING0,.*done" => 1 },
     },
     server => {
 	func => \&http_server,
-	loggrep => { "foo: bar" => 1 },
     },
 );
 

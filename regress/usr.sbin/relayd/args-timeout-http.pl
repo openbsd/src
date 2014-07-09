@@ -16,8 +16,8 @@ our %args = (
 	func => sub {
 	    errignore();
 	    http_server(@_);
-	    sleep 4;
-	    write_char(@_, 4);
+	    sleep 5;
+	    write_char(@_, 5);
 	},
 	sleep => 1,
 	down => "Broken pipe",

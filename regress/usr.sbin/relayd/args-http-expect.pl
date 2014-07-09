@@ -6,12 +6,18 @@ our %args = (
     client => {
 	func => \&http_client,
 	lengths => \@lengths,
-	path => "query?foo=bar&ok=yes"
+	path => "query?foo=bar&ok=yes",
     },
     relayd => {
 	protocol => [ "http",
-	    'request query expect "bar" from "foo" log',
+	    'block request',
+	    'block request query log "ok"',
+	    'pass query log "foo" value "bar"',
 	],
+	loggrep => {
+		qr/\[foo: bar\]/ => 1,
+		qr/\[ok: yes\]/ => 0,
+	},
     },
     server => {
 	func => \&http_server,

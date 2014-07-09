@@ -3,21 +3,23 @@ use warnings;
 
 our %args = (
     client => {
-	noclient => 1,
-	nocheck => 1,
+	func => \&http_client,
+	loggrep => {
+		qr/GET \/251 HTTP\/1\.0/ => 1,
+	},
     },
     relayd => {
 	protocol => [ "http",
-	    'request path change "path" to "foobarchangedpath" marked 55',
+	    'match request path set "*" value "/foopath" \
+		url log "*"',
 	],
-	loggrep => { 
-		qr/relayd.conf\:.*action only supported for headers/ => 1
-	},
-	dryrun => "relayd.conf:4: action only supported for headers",
+	loggrep => { qr/\, done\, \[foo.bar\/foopath\]/ => 1 },
     },
     server => {
-	noserver => 1,
-	nocheck => 1,
+	func => \&http_server,
+	loggrep => {
+		qr/GET \/foopath HTTP\/1\.0/ => 1,
+	},
     },
 );
 

@@ -10,7 +10,7 @@ our %args = (
     },
     relayd => {
 	protocol => [ "http",
-	    'request path filter "/2"',
+	    'match request path "/2"',
 	],
 	loggrep => qr/done/,
     },

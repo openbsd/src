@@ -1,4 +1,4 @@
-# test http connection with request block filter, tests lateconnect
+# test http block
 
 use strict;
 use warnings;
@@ -8,17 +8,19 @@ our %args = (
     client => {
 	func => sub { eval { http_client(@_) }; warn $@ },
 	loggrep => qr/Client missing http 3 response/,
-	lengths => \@lengths,
+        lengths => \@lengths,
+	mreqs => 1,
     },
     relayd => {
 	protocol => [ "http",
-	    'request path filter "/3"',
+	    'block request path "/3"',
 	],
-	loggrep => qr/rejecting request/,
+	loggrep => qr/Forbidden/,
     },
     server => {
 	func => \&http_server,
 	lengths => (1, 2, 0),
+	mreqs => 3,
     },
 );
 

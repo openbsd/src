@@ -1,24 +1,33 @@
-# test http block
+# test http block cookies
 
 use strict;
 use warnings;
 
+my @lengths = (1, 2, 3, 4);
+my @cookies = ("med=thx; domain=.foo.bar; path=/; expires=Mon, 27-Oct-2014 04:11:56 GMT;", "", "", "");
 our %args = (
     client => {
-	func => sub { eval { http_client(@_) }; warn $@ },
-	loggrep => qr/Client missing http 251 response/,
-	cookie => "med=thx; domain=.foo.bar; path=/; expires=Mon, 27-Oct-2014 04:11:56 GMT;",
-	path => "anypath",
-	nocheck => 1,
+	func => \&http_client,
+	loggrep => {
+	    qr/Client missing http 1 response/ => 1,
+	    qr/Set-Cookie: a\=b\;/ => 3,
+	},
+	cookies => \@cookies,
+	lengths => \@lengths,
+	httpnok => 1,
+	mreqs => 1,
     },
     relayd => {
 	protocol => [ "http",
-	    'request cookie filter "thx" from "med" log',
+	    'block request cookie log "med" value "thx"',
+	    'match response cookie append "a" value "b" tag "cookie"',
+	    'pass tagged "cookie"',
 	],
-	loggrep => qr/rejecting request, \[med: thx\]/,
+	loggrep => qr/Forbidden, \[Cookie: med=thx.*/,
     },
     server => {
-	noserver => 1,
+	func => \&http_server,
+	mreqs => 3,
 	nocheck => 1,
     },
 );

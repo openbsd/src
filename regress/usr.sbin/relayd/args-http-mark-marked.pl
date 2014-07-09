@@ -3,19 +3,18 @@ use warnings;
 
 our %args = (
     client => {
-	noclient => 1,
-	nocheck => 1,
+	func => \&http_client,
+	len => 33,
     },
     relayd => {
 	protocol => [ "http",
-	    'request path mark "*" with 99 marked 55',
+	    'match request path "/3*" value "*" tag RING0',
+	    'match request tagged RING0 tag RINGX',
 	],
-	loggrep => { "either mark or marked" => 1 },
-	dryrun => "relayd.conf:4: either mark or marked",
+	loggrep => { ", RINGX,.*done" => 1 },
     },
     server => {
-	noserver => 1,
-	nocheck => 1,
+	func => \&http_server,
     },
 );
 
