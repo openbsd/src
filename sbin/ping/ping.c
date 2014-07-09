@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.106 2014/07/09 15:22:36 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.107 2014/07/09 15:23:29 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -1184,17 +1184,13 @@ pr_icmph(struct icmp *icp)
 		(void)printf("Information Reply\n");
 		/* XXX ID + Seq */
 		break;
-#ifdef ICMP_MASKREQ
 	case ICMP_MASKREQ:
 		(void)printf("Address Mask Request\n");
 		break;
-#endif
-#ifdef ICMP_MASKREPLY
 	case ICMP_MASKREPLY:
 		(void)printf("Address Mask Reply (Mask 0x%08x)\n",
 		    ntohl(icp->icmp_mask));
 		break;
-#endif
 	default:
 		(void)printf("Unknown ICMP type: %d\n", icp->icmp_type);
 	}
