@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.174 2014/07/09 14:02:35 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.175 2014/07/09 17:53:11 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -1148,11 +1148,15 @@ will default to .tar.xz if unset.
 Unless
 .Li NO_BUILD=Yes ,
 .Pa textproc/intltool
-will also be appended to
-.Ev MODULES .
+is also appended to
+.Ev MODULES
+and 
+.Ev USE_GMAKE
+is set to "Yes".
 .Pp
-Unless
-.Li NO_BUILD=Yes ,
+If
+.Ev CONFIGURE_STYLE
+is set to "gnu" or "simple",
 .Ev CONFIGURE_SHARED
 is appended to
 .Ev CONFIGURE_ARGS ,
@@ -1168,9 +1172,6 @@ nor
 .Ev AUTOMAKE_VERSION
 are defined, then "--disable-maintainer-mode" is appended to
 .Ev CONFIGURE_ARGS .
-.Pp
-.Ev USE_GMAKE
-is unconditionally set.
 .Pp
 Certain build/run dependencies and configure arguments and environment
 can be set by appending desktop-file-utils, docbook, gobject-introspection,
