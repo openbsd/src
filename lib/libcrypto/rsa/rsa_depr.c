@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_depr.c,v 1.4 2014/07/09 08:20:08 miod Exp $ */
+/* $OpenBSD: rsa_depr.c,v 1.5 2014/07/09 19:51:38 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in

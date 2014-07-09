@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pss.c,v 1.6 2014/07/09 08:20:08 miod Exp $ */
+/* $OpenBSD: rsa_pss.c,v 1.7 2014/07/09 19:51:38 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -121,7 +121,8 @@ RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 		EM++;
 		emLen--;
 	}
-	if (emLen < (hLen + sLen + 2)) { /* sLen can be small negative */
+	if (emLen < (hLen + sLen + 2)) {
+		/* sLen can be small negative */
 		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_DATA_TOO_LARGE);
 		goto err;
 	}
@@ -143,7 +144,7 @@ RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 		DB[i] ^= EM[i];
 	if (MSBits)
 		DB[0] &= 0xFF >> (8 - MSBits);
-	for (i = 0; DB[i] == 0 && i < (maskedDBLen-1); i++)
+	for (i = 0; DB[i] == 0 && i < (maskedDBLen - 1); i++)
 		;
 	if (DB[i++] != 0x1) {
 		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1,
@@ -168,7 +169,7 @@ RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 	if (memcmp(H_, H, hLen)) {
 		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_BAD_SIGNATURE);
 		ret = 0;
-	} else 
+	} else
 		ret = 1;
 
 err:

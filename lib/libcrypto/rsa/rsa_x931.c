@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_x931.c,v 1.4 2014/07/09 09:07:00 miod Exp $ */
+/* $OpenBSD: rsa_x931.c,v 1.5 2014/07/09 19:51:38 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -81,7 +81,7 @@ RSA_padding_add_X931(unsigned char *to, int tlen, const unsigned char *from,
 		    RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
 		return -1;
 	}
-	
+
 	p = (unsigned char *)to;
 
 	/* If no padding start and end nibbles are in one byte */
@@ -103,7 +103,7 @@ RSA_padding_add_X931(unsigned char *to, int tlen, const unsigned char *from,
 
 int
 RSA_padding_check_X931(unsigned char *to, int tlen, const unsigned char *from,
-   int flen, int num)
+    int flen, int num)
 {
 	int i = 0, j;
 	const unsigned char *p = from;
@@ -121,13 +121,14 @@ RSA_padding_check_X931(unsigned char *to, int tlen, const unsigned char *from,
 				break;
 			if (c != 0xBB) {
 				RSAerr(RSA_F_RSA_PADDING_CHECK_X931,
-					RSA_R_INVALID_PADDING);
+				    RSA_R_INVALID_PADDING);
 				return -1;
 			}
 		}
 
 		if (i == 0) {
-			RSAerr(RSA_F_RSA_PADDING_CHECK_X931, RSA_R_INVALID_PADDING);
+			RSAerr(RSA_F_RSA_PADDING_CHECK_X931,
+			    RSA_R_INVALID_PADDING);
 			return -1;
 		}
 

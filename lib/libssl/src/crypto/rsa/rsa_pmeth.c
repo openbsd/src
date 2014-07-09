@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.9 2014/07/09 08:20:08 miod Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.10 2014/07/09 19:51:38 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -110,7 +110,7 @@ pkey_rsa_init(EVP_PKEY_CTX *ctx)
 	ctx->data = rctx;
 	ctx->keygen_info = rctx->gentmp;
 	ctx->keygen_info_count = 2;
-	
+
 	return 1;
 }
 
@@ -121,7 +121,7 @@ pkey_rsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 
 	if (!pkey_rsa_init(dst))
 		return 0;
-       	sctx = src->data;
+	sctx = src->data;
 	dctx = dst->data;
 	dctx->nbits = sctx->nbits;
 	if (sctx->pub_exp) {
@@ -236,7 +236,7 @@ pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx, unsigned char *rout, size_t *routlen,
 				return 0;
 			ret--;
 			if (rctx->tbuf[ret] !=
-			    RSA_X931_hash_id(EVP_MD_type(rctx->md))) {
+				RSA_X931_hash_id(EVP_MD_type(rctx->md))) {
 				RSAerr(RSA_F_PKEY_RSA_VERIFYRECOVER,
 				    RSA_R_ALGORITHM_MISMATCH);
 				return 0;
@@ -371,6 +371,7 @@ static int
 pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
 	RSA_PKEY_CTX *rctx = ctx->data;
+
 	switch (type) {
 	case EVP_PKEY_CTRL_RSA_PADDING:
 		if (p1 >= RSA_PKCS1_PADDING && p1 <= RSA_PKCS1_PSS_PADDING) {
@@ -458,17 +459,18 @@ bad_pad:
 		return 1;
 #ifndef OPENSSL_NO_CMS
 	case EVP_PKEY_CTRL_CMS_DECRYPT:
-	    {
-		X509_ALGOR *alg = NULL;
-		ASN1_OBJECT *encalg = NULL;
+		{
+			X509_ALGOR *alg = NULL;
+			ASN1_OBJECT *encalg = NULL;
 
-		if (p2)
-			CMS_RecipientInfo_ktri_get0_algs(p2, NULL, NULL, &alg);
-		if (alg)
-			X509_ALGOR_get0(&encalg, NULL, NULL, alg);
-		if (encalg && OBJ_obj2nid(encalg) == NID_rsaesOaep)
-			rctx->pad_mode = RSA_PKCS1_OAEP_PADDING;
-	    }
+			if (p2)
+				CMS_RecipientInfo_ktri_get0_algs(p2, NULL,
+				    NULL, &alg);
+			if (alg)
+				X509_ALGOR_get0(&encalg, NULL, NULL, alg);
+			if (encalg && OBJ_obj2nid(encalg) == NID_rsaesOaep)
+				rctx->pad_mode = RSA_PKCS1_OAEP_PADDING;
+		}
 		/* FALLTHROUGH */
 
 	case EVP_PKEY_CTRL_CMS_ENCRYPT:
@@ -477,18 +479,18 @@ bad_pad:
 #endif
 	case EVP_PKEY_CTRL_PEER_KEY:
 		RSAerr(RSA_F_PKEY_RSA_CTRL,
-		RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-		return -2;	
+		    RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		return -2;
 
 	default:
 		return -2;
 	}
 }
-			
+
 static int
 pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 {
- 	long lval;
+	long lval;
 	char *ep;
 
 	if (!value) {

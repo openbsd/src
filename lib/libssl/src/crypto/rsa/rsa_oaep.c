@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_oaep.c,v 1.18 2014/07/09 17:08:40 miod Exp $ */
+/* $OpenBSD: rsa_oaep.c,v 1.19 2014/07/09 19:51:38 jsing Exp $ */
 /* Written by Ulf Moeller. This software is distributed on an "AS IS"
    basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. */
 
@@ -8,7 +8,7 @@
  * <URL: http://www.shoup.net/papers/oaep.ps.Z>
  * for problems with the security proof for the
  * original OAEP scheme, which EME-OAEP is based on.
- * 
+ *
  * A new proof can be found in E. Fujisaki, T. Okamoto,
  * D. Pointcheval, J. Stern, "RSA-OEAP is Still Alive!",
  * Dec. 2000, <URL: http://eprint.iacr.org/2000/061/>.
@@ -29,7 +29,7 @@
 #include <openssl/sha.h>
 
 static int MGF1(unsigned char *mask, long len, const unsigned char *seed,
-	    long seedlen);
+    long seedlen);
 
 int
 RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
@@ -142,7 +142,7 @@ RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 		return -1;
 	for (i = 0; i < SHA_DIGEST_LENGTH; i++)
 		seed[i] ^= padded_from[i];
-  
+
 	if (MGF1(db, dblen, seed, SHA_DIGEST_LENGTH))
 		return -1;
 	for (i = 0; i < dblen; i++)
@@ -204,7 +204,7 @@ PKCS1_MGF1(unsigned char *mask, long len, const unsigned char *seed,
 		cnt[1] = (unsigned char)((i >> 16) & 255);
 		cnt[2] = (unsigned char)((i >> 8)) & 255;
 		cnt[3] = (unsigned char)(i & 255);
-		if (!EVP_DigestInit_ex(&c,dgst, NULL) ||
+		if (!EVP_DigestInit_ex(&c, dgst, NULL) ||
 		    !EVP_DigestUpdate(&c, seed, seedlen) ||
 		    !EVP_DigestUpdate(&c, cnt, 4))
 			goto err;

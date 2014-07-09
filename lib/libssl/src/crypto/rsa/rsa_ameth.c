@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.7 2014/07/09 08:20:08 miod Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.8 2014/07/09 19:51:38 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -104,8 +104,8 @@ rsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 static int
 rsa_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
-	if (BN_cmp(b->pkey.rsa->n,a->pkey.rsa->n) != 0 ||
-	    BN_cmp(b->pkey.rsa->e,a->pkey.rsa->e) != 0)
+	if (BN_cmp(b->pkey.rsa->n, a->pkey.rsa->n) != 0 ||
+	    BN_cmp(b->pkey.rsa->e, a->pkey.rsa->e) != 0)
 		return 0;
 	return 1;
 }
@@ -256,7 +256,7 @@ do_rsa_print(BIO *bp, const RSA *x, int off, int priv)
 	ret = 1;
 err:
 	free(m);
-	return(ret);
+	return (ret);
 }
 
 static int
@@ -282,13 +282,14 @@ rsa_pss_decode(const X509_ALGOR *alg, X509_ALGOR **pmaskHash)
 
 	if (!alg->parameter || alg->parameter->type != V_ASN1_SEQUENCE)
 		return NULL;
+
 	p = alg->parameter->value.sequence->data;
 	plen = alg->parameter->value.sequence->length;
 	pss = d2i_RSA_PSS_PARAMS(NULL, &p, plen);
 
 	if (!pss)
 		return NULL;
-	
+
 	if (pss->maskGenAlgorithm) {
 		ASN1_TYPE *param = pss->maskGenAlgorithm->parameter;
 		if (OBJ_obj2nid(pss->maskGenAlgorithm->algorithm) == NID_mgf1 &&
@@ -351,7 +352,7 @@ rsa_pss_param_print(BIO *bp, RSA_PSS_PARAMS *pss, X509_ALGOR *maskHash,
 	if (!BIO_indent(bp, indent, 128))
 		goto err;
 	if (BIO_puts(bp, "Salt Length: 0x") <= 0)
-			goto err;
+		goto err;
 	if (pss->saltLength) {
 		if (i2a_ASN1_INTEGER(bp, pss->saltLength) <= 0)
 			goto err;
@@ -369,7 +370,7 @@ rsa_pss_param_print(BIO *bp, RSA_PSS_PARAMS *pss, X509_ALGOR *maskHash,
 	} else if (BIO_puts(bp, "BC (default)") <= 0)
 		goto err;
 	BIO_puts(bp, "\n");
-	
+
 	rv = 1;
 
 err:
@@ -403,6 +404,7 @@ static int
 rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
 	X509_ALGOR *alg = NULL;
+
 	switch (op) {
 	case ASN1_PKEY_CTRL_PKCS7_SIGN:
 		if (arg1 == 0)
@@ -422,7 +424,7 @@ rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 	case ASN1_PKEY_CTRL_CMS_ENVELOPE:
 		if (arg1 == 0)
 			CMS_RecipientInfo_ktri_get0_algs(arg2, NULL, NULL, &alg);
-	break;
+		break;
 #endif
 
 	case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
@@ -440,8 +442,8 @@ rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 	return 1;
 }
 
-/* Customised RSA item verification routine. This is called 
- * when a signature is encountered requiring special handling. We 
+/* Customised RSA item verification routine. This is called
+ * when a signature is encountered requiring special handling. We
  * currently only handle PSS.
  */
 static int
@@ -460,6 +462,7 @@ rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 		RSAerr(RSA_F_RSA_ITEM_VERIFY, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
 		return -1;
 	}
+
 	/* Decode PSS parameters */
 	pss = rsa_pss_decode(sigalg, &maskHash);
 
@@ -544,7 +547,7 @@ err:
 
 static int
 rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
-   X509_ALGOR *alg1, X509_ALGOR *alg2, ASN1_BIT_STRING *sig)
+    X509_ALGOR *alg1, X509_ALGOR *alg2, ASN1_BIT_STRING *sig)
 {
 	int pad_mode;
 	EVP_PKEY_CTX *pkctx = ctx->pctx;

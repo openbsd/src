@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_asn1.c,v 1.7 2014/07/09 08:20:08 miod Exp $ */
+/* $OpenBSD: rsa_asn1.c,v 1.8 2014/07/09 19:51:38 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -99,10 +99,10 @@ ASN1_SEQUENCE_cb(RSAPublicKey, rsa_cb) = {
 } ASN1_SEQUENCE_END_cb(RSA, RSAPublicKey)
 
 ASN1_SEQUENCE(RSA_PSS_PARAMS) = {
-	ASN1_EXP_OPT(RSA_PSS_PARAMS, hashAlgorithm, X509_ALGOR,0),
-	ASN1_EXP_OPT(RSA_PSS_PARAMS, maskGenAlgorithm, X509_ALGOR,1),
-	ASN1_EXP_OPT(RSA_PSS_PARAMS, saltLength, ASN1_INTEGER,2),
-	ASN1_EXP_OPT(RSA_PSS_PARAMS, trailerField, ASN1_INTEGER,3)
+	ASN1_EXP_OPT(RSA_PSS_PARAMS, hashAlgorithm, X509_ALGOR, 0),
+	ASN1_EXP_OPT(RSA_PSS_PARAMS, maskGenAlgorithm, X509_ALGOR, 1),
+	ASN1_EXP_OPT(RSA_PSS_PARAMS, saltLength, ASN1_INTEGER, 2),
+	ASN1_EXP_OPT(RSA_PSS_PARAMS, trailerField, ASN1_INTEGER, 3)
 } ASN1_SEQUENCE_END(RSA_PSS_PARAMS)
 
 IMPLEMENT_ASN1_FUNCTIONS(RSA_PSS_PARAMS)
