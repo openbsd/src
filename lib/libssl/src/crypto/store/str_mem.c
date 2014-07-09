@@ -1,4 +1,4 @@
-/* $OpenBSD: str_mem.c,v 1.8 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: str_mem.c,v 1.9 2014/07/09 16:59:33 miod Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2003.
  */
@@ -224,15 +224,15 @@ static void *
 mem_list_start(STORE *s, STORE_OBJECT_TYPES type, OPENSSL_ITEM attributes[],
     OPENSSL_ITEM parameters[])
 {
-	struct mem_ctx_st *context = malloc(sizeof(struct mem_ctx_st));
+	struct mem_ctx_st *context;
 	void *attribute_context = NULL;
 	STORE_ATTR_INFO *attrs = NULL;
 
+	context = calloc(1, sizeof(struct mem_ctx_st));
 	if (!context) {
 		STOREerr(STORE_F_MEM_LIST_START, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	memset(context, 0, sizeof(struct mem_ctx_st));
 
 	attribute_context = STORE_parse_attrs_start(attributes);
 	if (!attribute_context) {

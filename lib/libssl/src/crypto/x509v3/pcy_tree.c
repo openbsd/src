@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_tree.c,v 1.10 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: pcy_tree.c,v 1.11 2014/07/09 16:59:33 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -220,7 +220,7 @@ tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs, unsigned int flags)
 		return 0;
 
 	tree->flags = 0;
-	tree->levels = reallocarray(NULL, n, sizeof(X509_POLICY_LEVEL));
+	tree->levels = calloc(n, sizeof(X509_POLICY_LEVEL));
 	tree->nlevel = 0;
 	tree->extra_data = NULL;
 	tree->auth_policies = NULL;
@@ -230,8 +230,6 @@ tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs, unsigned int flags)
 		free(tree);
 		return 0;
 	}
-
-	memset(tree->levels, 0, n * sizeof(X509_POLICY_LEVEL));
 
 	tree->nlevel = n;
 
