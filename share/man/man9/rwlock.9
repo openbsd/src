@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.16 2014/07/09 13:43:25 guenther Exp $
+.\" $OpenBSD: rwlock.9,v 1.17 2014/07/09 18:00:09 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -31,7 +31,11 @@
 .Nm rw_assert_rdlock ,
 .Nm rw_assert_unlocked ,
 .Nm rw_status ,
-.Nm RWLOCK_INITIALIZER
+.Nm RWLOCK_INITIALIZER ,
+.Nm rrw_init ,
+.Nm rrw_enter ,
+.Nm rrw_exit ,
+.Nm rrw_status
 .Nd interface to read/write locks
 .Sh SYNOPSIS
 .In sys/rwlock.h
@@ -50,8 +54,6 @@
 .Ft void
 .Fn rw_exit_write "struct rwlock *rwl"
 .Ft int
-.Fn rw_status "struct rwlock *rwl"
-.Ft void
 .Fn rw_assert_wrlock "struct rwlock *rwl"
 .Ft void
 .Fn rw_assert_rdlock "struct rwlock *rwl"
@@ -172,7 +174,7 @@ if the thread needs to sleep.
 The
 .Nm rrwlock
 functions support recursive write locking by the same process.
-They otherwise behavior equivalently to their rwlock counterparts.
+They otherwise behave the same as their rwlock counterparts.
 .Sh CONTEXT
 .Fn rw_init
 and
