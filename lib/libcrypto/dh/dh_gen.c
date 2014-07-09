@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_gen.c,v 1.11 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: dh_gen.c,v 1.12 2014/07/09 13:26:47 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,16 +66,19 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
-static int dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB *cb);
+static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
+	    BN_GENCB *cb);
 
-int DH_generate_parameters_ex(DH *ret, int prime_len, int generator, BN_GENCB *cb)
-	{
-	if(ret->meth->generate_params)
+int
+DH_generate_parameters_ex(DH *ret, int prime_len, int generator, BN_GENCB *cb)
+{
+	if (ret->meth->generate_params)
 		return ret->meth->generate_params(ret, prime_len, generator, cb);
 	return dh_builtin_genparams(ret, prime_len, generator, cb);
-	}
+}
 
-/* We generate DH parameters as follows
+/*
+ * We generate DH parameters as follows:
  * find a prime q which is prime_len/2 bits long.
  * p=(2*q)+1 or (p-1)/2 = q
  * For this case, g is a generator if
@@ -100,76 +103,84 @@ int DH_generate_parameters_ex(DH *ret, int prime_len, int generator, BN_GENCB *c
  * It's just as OK (and in some sense better) to use a generator of the
  * order-q subgroup.
  */
-static int dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB *cb)
-	{
-	BIGNUM *t1,*t2;
-	int g,ok= -1;
-	BN_CTX *ctx=NULL;
+static int
+dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB *cb)
+{
+	BIGNUM *t1, *t2;
+	int g, ok = -1;
+	BN_CTX *ctx = NULL;
 
-	ctx=BN_CTX_new();
-	if (ctx == NULL) goto err;
+	ctx = BN_CTX_new();
+	if (ctx == NULL)
+		goto err;
 	BN_CTX_start(ctx);
 	t1 = BN_CTX_get(ctx);
 	t2 = BN_CTX_get(ctx);
-	if (t1 == NULL || t2 == NULL) goto err;
+	if (t1 == NULL || t2 == NULL)
+		goto err;
 
 	/* Make sure 'ret' has the necessary elements */
-	if(!ret->p && ((ret->p = BN_new()) == NULL)) goto err;
-	if(!ret->g && ((ret->g = BN_new()) == NULL)) goto err;
+	if (!ret->p && ((ret->p = BN_new()) == NULL))
+		goto err;
+	if (!ret->g && ((ret->g = BN_new()) == NULL))
+		goto err;
 	
-	if (generator <= 1)
-		{
+	if (generator <= 1) {
 		DHerr(DH_F_DH_BUILTIN_GENPARAMS, DH_R_BAD_GENERATOR);
 		goto err;
-		}
-	if (generator == DH_GENERATOR_2)
-		{
-		if (!BN_set_word(t1,24)) goto err;
-		if (!BN_set_word(t2,11)) goto err;
-		g=2;
-		}
+	}
+	if (generator == DH_GENERATOR_2) {
+		if (!BN_set_word(t1, 24))
+			goto err;
+		if (!BN_set_word(t2, 11))
+			goto err;
+		g = 2;
 #if 0 /* does not work for safe primes */
-	else if (generator == DH_GENERATOR_3)
-		{
-		if (!BN_set_word(t1,12)) goto err;
-		if (!BN_set_word(t2,5)) goto err;
-		g=3;
-		}
+	} else if (generator == DH_GENERATOR_3) {
+		if (!BN_set_word(t1, 12))
+			goto err;
+		if (!BN_set_word(t2, 5))
+			goto err;
+		g = 3;
 #endif
-	else if (generator == DH_GENERATOR_5)
-		{
-		if (!BN_set_word(t1,10)) goto err;
-		if (!BN_set_word(t2,3)) goto err;
+	} else if (generator == DH_GENERATOR_5) {
+		if (!BN_set_word(t1, 10))
+			goto err;
+		if (!BN_set_word(t2, 3))
+			goto err;
 		/* BN_set_word(t3,7); just have to miss
 		 * out on these ones :-( */
-		g=5;
-		}
-	else
-		{
-		/* in the general case, don't worry if 'generator' is a
+		g = 5;
+	} else {
+		/*
+		 * in the general case, don't worry if 'generator' is a
 		 * generator or not: since we are using safe primes,
 		 * it will generate either an order-q or an order-2q group,
-		 * which both is OK */
-		if (!BN_set_word(t1,2)) goto err;
-		if (!BN_set_word(t2,1)) goto err;
-		g=generator;
-		}
+		 * which both is OK
+		 */
+		if (!BN_set_word(t1, 2))
+			goto err;
+		if (!BN_set_word(t2, 1))
+			goto err;
+		g = generator;
+	}
 	
-	if(!BN_generate_prime_ex(ret->p,prime_len,1,t1,t2,cb)) goto err;
-	if(!BN_GENCB_call(cb, 3, 0)) goto err;
-	if (!BN_set_word(ret->g,g)) goto err;
-	ok=1;
+	if (!BN_generate_prime_ex(ret->p, prime_len, 1, t1, t2, cb))
+		goto err;
+	if (!BN_GENCB_call(cb, 3, 0))
+		goto err;
+	if (!BN_set_word(ret->g, g))
+		goto err;
+	ok = 1;
 err:
-	if (ok == -1)
-		{
-		DHerr(DH_F_DH_BUILTIN_GENPARAMS,ERR_R_BN_LIB);
-		ok=0;
-		}
+	if (ok == -1) {
+		DHerr(DH_F_DH_BUILTIN_GENPARAMS, ERR_R_BN_LIB);
+		ok = 0;
+	}
 
-	if (ctx != NULL)
-		{
+	if (ctx != NULL) {
 		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
-		}
-	return ok;
 	}
+	return ok;
+}

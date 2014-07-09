@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_asn1.c,v 1.4 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: dh_asn1.c,v 1.5 2014/07/09 13:26:47 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -64,14 +64,15 @@
 #include <openssl/asn1t.h>
 
 /* Override the default free and new methods */
-static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-						void *exarg)
+static int
+dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 {
-	if(operation == ASN1_OP_NEW_PRE) {
+	if (operation == ASN1_OP_NEW_PRE) {
 		*pval = (ASN1_VALUE *)DH_new();
-		if(*pval) return 2;
+		if (*pval)
+			return 2;
 		return 0;
-	} else if(operation == ASN1_OP_FREE_PRE) {
+	} else if (operation == ASN1_OP_FREE_PRE) {
 		DH_free((DH *)*pval);
 		*pval = NULL;
 		return 2;
@@ -87,7 +88,8 @@ ASN1_SEQUENCE_cb(DHparams, dh_cb) = {
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DH, DHparams, DHparams)
 
-DH *DHparams_dup(DH *dh)
-	{
+DH *
+DHparams_dup(DH *dh)
+{
 	return ASN1_item_dup(ASN1_ITEM_rptr(DHparams), dh);
-	}
+}

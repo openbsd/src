@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_prn.c,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: dh_prn.c,v 1.4 2014/07/09 13:26:47 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,18 +61,18 @@
 #include <openssl/evp.h>
 #include <openssl/dh.h>
 
-int DHparams_print_fp(FILE *fp, const DH *x)
-	{
+int
+DHparams_print_fp(FILE *fp, const DH *x)
+{
 	BIO *b;
 	int ret;
 
-	if ((b=BIO_new(BIO_s_file())) == NULL)
-		{
-		DHerr(DH_F_DHPARAMS_PRINT_FP,ERR_R_BUF_LIB);
-		return(0);
-		}
-	BIO_set_fp(b,fp,BIO_NOCLOSE);
-	ret=DHparams_print(b, x);
-	BIO_free(b);
-	return(ret);
+	if ((b = BIO_new(BIO_s_file())) == NULL) {
+		DHerr(DH_F_DHPARAMS_PRINT_FP, ERR_R_BUF_LIB);
+		return 0;
 	}
+	BIO_set_fp(b,fp,BIO_NOCLOSE);
+	ret = DHparams_print(b, x);
+	BIO_free(b);
+	return ret;
+}
