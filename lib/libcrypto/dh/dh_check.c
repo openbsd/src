@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.11 2014/07/09 13:26:47 miod Exp $ */
+/* $OpenBSD: dh_check.c,v 1.12 2014/07/09 13:30:00 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -124,13 +124,12 @@ err:
 int
 DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
 {
-	int ok = 0;
 	BIGNUM *q = NULL;
 
 	*ret = 0;
 	q = BN_new();
 	if (q == NULL)
-		goto err;
+		return 0;
 	BN_set_word(q, 1);
 	if (BN_cmp(pub_key, q) <= 0)
 		*ret |= DH_CHECK_PUBKEY_TOO_SMALL;
@@ -139,9 +138,6 @@ DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
 	if (BN_cmp(pub_key, q) >= 0)
 		*ret |= DH_CHECK_PUBKEY_TOO_LARGE;
 
-	ok = 1;
-err:
-	if (q != NULL)
-		BN_free(q);
-	return ok;
+	BN_free(q);
+	return 1;
 }
