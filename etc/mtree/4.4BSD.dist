@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.247 2014/04/22 10:24:29 reyk Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.248 2014/07/09 19:23:28 espie Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -351,6 +351,11 @@ lib
 # ./usr/lib/debug
 debug		gname=bin uname=root mode=0755
 # ./usr/lib/debug
+..
+
+# ./usr/lib/locate
+locate	gname=bin uname=root mode=0755
+# ./usr/lib/locate
 ..
 
 # ./usr/lib/pkgconfig
