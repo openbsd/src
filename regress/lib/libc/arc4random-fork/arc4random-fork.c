@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -73,13 +74,13 @@ usage()
 }
 
 static pid_t
-_waitpid(pid_t pid, int *stat_loc, int options)
+safewaitpid(pid_t pid, int *status, int options)
 {
 	pid_t ret;
 	do {
-		ret = waitpid(pid, stat_loc, options);
+		ret = waitpid(pid, status, options);
 	} while (ret == -1 && errno == EINTR);
-	return ret;
+	return (ret);
 }
 
 int
@@ -89,6 +90,12 @@ main(int argc, char *argv[])
 	Buf *bufparent, *bufchildone, *bufchildtwo;
 	pid_t pidone, pidtwo;
 	size_t i, countone = 0, counttwo = 0, countkids = 0;
+
+	/* Ensure SIGCHLD isn't set to SIG_IGN. */
+	const struct sigaction sa = {
+		.sa_handler = SIG_DFL,
+	};
+	CHECK_EQ(0, sigaction(SIGCHLD, &sa, NULL));
 
 	while ((opt = getopt(argc, argv, "bp")) != -1) {
 		switch (opt) {
@@ -134,11 +141,11 @@ main(int argc, char *argv[])
 
 	fillbuf(bufparent);
 
-	CHECK_EQ(pidone, _waitpid(pidone, &status, 0));
+	CHECK_EQ(pidone, safewaitpid(pidone, &status, 0));
 	CHECK(WIFEXITED(status));
 	CHECK_EQ(0, WEXITSTATUS(status));
 
-	CHECK_EQ(pidtwo, _waitpid(pidtwo, &status, 0));
+	CHECK_EQ(pidtwo, safewaitpid(pidtwo, &status, 0));
 	CHECK(WIFEXITED(status));
 	CHECK_EQ(0, WEXITSTATUS(status));
 
