@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.47 2014/07/07 21:35:42 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.48 2014/07/09 11:27:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -45,8 +45,6 @@ static	enum rew	 rew_dohalt(enum mant, enum man_type,
 				const struct man_node *);
 static	enum rew	 rew_block(enum mant, enum man_type,
 				const struct man_node *);
-static	void		 rew_warn(struct man *,
-				struct man_node *, enum mandocerr);
 
 const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, MAN_NSCOPED }, /* br */
