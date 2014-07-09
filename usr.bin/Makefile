@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.142 2014/07/08 21:30:50 tedu Exp $
+#	$OpenBSD: Makefile,v 1.143 2014/07/09 18:59:10 tedu Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ SUBDIR= apply arch at aucat audioctl awk banner \
 	libtool lndir \
 	locale locate lock logger login logname look lorder \
 	m4 mail make man mandoc mesg mg \
-	midiplay mixerctl mkdep mklocale mkstr mktemp modstat nc netstat \
+	midiplay mixerctl mkdep mklocale mktemp modstat nc netstat \
 	newsyslog \
 	nfsstat nice nm nl nohup oldrdist pagesize passwd paste patch pctr \
 	pkg-config pkill \
@@ -28,7 +28,7 @@ SUBDIR= apply arch at aucat audioctl awk banner \
 	ul uname unexpand unifdef uniq units \
 	unvis users uudecode uuencode vacation vi vis vmstat w wall wc \
 	what which who whois write x99token xargs xinstall \
-	xstr yacc yes
+	yacc yes
 
 .if (${YP:L} == "yes")
 SUBDIR+=ypcat ypmatch ypwhich
