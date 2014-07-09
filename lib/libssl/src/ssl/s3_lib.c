@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.65 2014/07/08 22:09:01 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.66 2014/07/09 11:10:51 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -154,8 +154,6 @@
 #include "../crypto/ec/ec_lcl.h"
 #include <openssl/md5.h>
 #include <openssl/dh.h>
-
-const char ssl3_version_str[]="SSLv3" OPENSSL_VERSION_PTEXT;
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers) / sizeof(SSL_CIPHER))
 

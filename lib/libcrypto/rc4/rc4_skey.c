@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4_skey.c,v 1.10 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: rc4_skey.c,v 1.11 2014/07/09 11:10:51 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,8 +59,6 @@
 #include <openssl/rc4.h>
 #include "rc4_locl.h"
 #include <openssl/opensslv.h>
-
-const char RC4_version[]="RC4" OPENSSL_VERSION_PTEXT;
 
 const char *RC4_options(void)
 	{

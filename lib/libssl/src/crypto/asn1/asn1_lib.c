@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.27 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.28 2014/07/09 11:10:50 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,7 +64,6 @@
 
 static int asn1_get_length(const unsigned char **pp, int *inf, long *rl, int max);
 static void asn1_put_length(unsigned char **pp, int length);
-const char ASN1_version[]="ASN.1" OPENSSL_VERSION_PTEXT;
 
 static int
 _asn1_check_infinite_end(const unsigned char **p, long len)

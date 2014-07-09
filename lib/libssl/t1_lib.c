@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.48 2014/06/19 21:29:51 tedu Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.49 2014/07/09 11:10:51 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,8 +116,6 @@
 #include <openssl/ocsp.h>
 #include <openssl/rand.h>
 #include "ssl_locl.h"
-
-const char tls1_version_str[] = "TLSv1" OPENSSL_VERSION_PTEXT;
 
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
     const unsigned char *sess_id, int sesslen,

@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.5 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.6 2014/07/09 11:10:50 bcook Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -73,8 +73,6 @@
 #include <openssl/engine.h>
 #endif
 #include <openssl/err.h>
-
-const char ECDH_version[]="ECDH" OPENSSL_VERSION_PTEXT;
 
 static const ECDH_METHOD *default_ECDH_method = NULL;
 

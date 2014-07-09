@@ -1,4 +1,4 @@
-/* $OpenBSD: md5_dgst.c,v 1.12 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: md5_dgst.c,v 1.13 2014/07/09 11:10:51 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,8 +60,6 @@
 #include "md5_locl.h"
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
-
-const char MD5_version[]="MD5" OPENSSL_VERSION_PTEXT;
 
 /* Implemented from RFC1321 The MD5 Message-Digest Algorithm
  */

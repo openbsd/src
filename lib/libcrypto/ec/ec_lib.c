@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.12 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.13 2014/07/09 11:10:50 bcook Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -67,9 +67,6 @@
 #include <openssl/opensslv.h>
 
 #include "ec_lcl.h"
-
-static const char EC_version[] = "EC" OPENSSL_VERSION_PTEXT;
-
 
 /* functions for EC_GROUP objects */
 

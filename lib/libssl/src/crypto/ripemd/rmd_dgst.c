@@ -1,4 +1,4 @@
-/* $OpenBSD: rmd_dgst.c,v 1.14 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: rmd_dgst.c,v 1.15 2014/07/09 11:10:51 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,8 +60,6 @@
 #include "rmd_locl.h"
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
-
-const char RMD160_version[]="RIPE-MD160" OPENSSL_VERSION_PTEXT;
 
 #  ifdef RMD160_ASM
      void ripemd160_block_x86(RIPEMD160_CTX *c, unsigned long *p,size_t num);

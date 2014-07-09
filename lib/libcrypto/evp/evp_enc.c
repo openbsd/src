@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.20 2014/06/15 15:44:39 jsing Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.21 2014/07/09 11:10:50 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,8 +67,6 @@
 #include "evp_locl.h"
 
 #define M_do_cipher(ctx, out, in, inl) ctx->cipher->do_cipher(ctx, out, in, inl)
-
-const char EVP_version[] = "EVP" OPENSSL_VERSION_PTEXT;
 
 void
 EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)

@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.25 2014/07/08 16:36:45 bcook Exp $ */
+/* $OpenBSD: conf_def.c,v 1.26 2014/07/09 11:10:50 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -87,8 +87,6 @@ static int def_load_bio(CONF *conf, BIO *bp, long *eline);
 static int def_dump(const CONF *conf, BIO *bp);
 static int def_is_number(const CONF *conf, char c);
 static int def_to_int(const CONF *conf, char c);
-
-const char CONF_def_version[]="CONF_def" OPENSSL_VERSION_PTEXT;
 
 static CONF_METHOD default_method = {
 	.name = "OpenSSL default",

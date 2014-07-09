@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.9 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: sha512.c,v 1.10 2014/07/09 11:10:51 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].
@@ -50,8 +50,6 @@
 #include <openssl/opensslv.h>
 
 #include "cryptlib.h"
-
-const char SHA512_version[]="SHA-512" OPENSSL_VERSION_PTEXT;
 
 #if !defined(__STRICT_ALIGNMENT) || defined(SHA512_ASM)
 #define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA

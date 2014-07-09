@@ -1,4 +1,4 @@
-/* $OpenBSD: c_ecb.c,v 1.6 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: c_ecb.c,v 1.7 2014/07/09 11:10:50 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,8 +59,6 @@
 #include <openssl/cast.h>
 #include "cast_lcl.h"
 #include <openssl/opensslv.h>
-
-const char CAST_version[]="CAST" OPENSSL_VERSION_PTEXT;
 
 void CAST_ecb_encrypt(const unsigned char *in, unsigned char *out,
 		      const CAST_KEY *ks, int enc)

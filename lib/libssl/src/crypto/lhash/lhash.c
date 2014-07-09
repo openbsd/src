@@ -1,4 +1,4 @@
-/* $OpenBSD: lhash.c,v 1.15 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: lhash.c,v 1.16 2014/07/09 11:10:51 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -99,8 +99,6 @@
 #include <stdlib.h>
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
-
-const char lh_version[] = "lhash" OPENSSL_VERSION_PTEXT;
 
 #undef MIN_NODES
 #define MIN_NODES	16

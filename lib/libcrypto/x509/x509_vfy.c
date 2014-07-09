@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.29 2014/06/20 20:59:49 deraadt Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.30 2014/07/09 11:10:51 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -133,8 +133,6 @@ static int check_crl_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *cert_path,
     STACK_OF(X509) *crl_path);
 
 static int internal_verify(X509_STORE_CTX *ctx);
-const char X509_version[]="X.509" OPENSSL_VERSION_PTEXT;
-
 
 static int
 null_callback(int ok, X509_STORE_CTX *e)

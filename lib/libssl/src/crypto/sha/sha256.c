@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.4 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: sha256.c,v 1.5 2014/07/09 11:10:51 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].
@@ -14,8 +14,6 @@
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
-
-const char SHA256_version[]="SHA-256" OPENSSL_VERSION_PTEXT;
 
 int SHA224_Init(SHA256_CTX *c)
 	{

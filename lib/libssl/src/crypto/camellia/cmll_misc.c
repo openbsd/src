@@ -1,4 +1,4 @@
-/* $OpenBSD: cmll_misc.c,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: cmll_misc.c,v 1.4 2014/07/09 11:10:50 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -53,8 +53,6 @@
 #include <openssl/crypto.h>
 #include <openssl/camellia.h>
 #include "cmll_locl.h"
-
-const char CAMELLIA_version[]="CAMELLIA" OPENSSL_VERSION_PTEXT;
 
 int private_Camellia_set_key(const unsigned char *userKey, const int bits,
 	CAMELLIA_KEY *key)

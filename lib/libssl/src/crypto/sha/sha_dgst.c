@@ -1,4 +1,4 @@
-/* $OpenBSD: sha_dgst.c,v 1.10 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: sha_dgst.c,v 1.11 2014/07/09 11:10:51 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,8 +64,6 @@
 #define SHA_0
 
 #include <openssl/opensslv.h>
-
-const char SHA_version[]="SHA" OPENSSL_VERSION_PTEXT;
 
 /* The implementation is in ../md32_common.h */
 
