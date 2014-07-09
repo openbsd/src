@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_verify.c,v 1.9 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: ts_rsp_verify.c,v 1.10 2014/07/09 11:12:13 bcook Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -564,7 +564,7 @@ TS_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
 		ASN1_UTF8STRING *current = sk_ASN1_UTF8STRING_value(text, i);
 		if (i > 0)
 			strlcat(result, "/", length);
-		strlcat(result, ASN1_STRING_data(current), length);
+		strlcat(result, (const char *)ASN1_STRING_data(current), length);
 	}
 	return result;
 }
