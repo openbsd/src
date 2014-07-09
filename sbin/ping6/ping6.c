@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.94 2014/07/09 09:37:30 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.95 2014/07/09 09:38:35 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -252,10 +252,8 @@ main(int argc, char *argv[])
 	const char *errstr;
 	int ip6optlen = 0;
 	struct cmsghdr *scmsgp = NULL;
-#if defined(SO_SNDBUF) && defined(SO_RCVBUF)
 	u_long lsockbufsize;
 	int sockbufsize = 0;
-#endif
 	int usepktinfo = 0;
 	struct in6_pktinfo *pktinfo = NULL;
 	struct ip6_rthdr *rthdr = NULL;
@@ -320,7 +318,6 @@ main(int argc, char *argv[])
 			break;
 		}
 		case 'b':
-#if defined(SO_SNDBUF) && defined(SO_RCVBUF)
 			errno = 0;
 			e = NULL;
 			lsockbufsize = strtoul(optarg, &e, 10);
@@ -328,10 +325,6 @@ main(int argc, char *argv[])
 			if (errno || !*optarg || *e ||
 			    sockbufsize != lsockbufsize)
 				errx(1, "invalid socket buffer size");
-#else
-			errx(1,
-"-b option ignored: SO_SNDBUF/SO_RCVBUF socket options not supported");
-#endif
 			break;
 		case 'c':
 			npackets = (unsigned long)strtonum(optarg, 0,
@@ -784,7 +777,6 @@ main(int argc, char *argv[])
 		close(dummy);
 	}
 
-#if defined(SO_SNDBUF) && defined(SO_RCVBUF)
 	if (sockbufsize) {
 		if (datalen > sockbufsize)
 			warnx("you need -b to increase socket buffer size");
@@ -807,7 +799,6 @@ main(int argc, char *argv[])
 		setsockopt(s, SOL_SOCKET, SO_RCVBUF, &hold,
 		    (socklen_t)sizeof(hold));
 	}
-#endif
 
 	optval = 1;
 	if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO, &optval,
