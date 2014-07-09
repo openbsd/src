@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.45 2014/05/27 12:35:40 krw Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.46 2014/07/09 11:21:48 krw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -73,6 +73,7 @@
 #include <fstab.h>
 #include <errno.h>
 #include <err.h>
+#include <util.h>
 
 #define DIP(dp, field) \
     ((sblock->fs_magic == FS_UFS1_MAGIC) ? \
@@ -505,7 +506,7 @@ main(int argc, char *argv[])
 	struct fstab *fsp;
 	unsigned long long ullval;
 	ssize_t n;
-	char *ep, *odisk;
+	char *ep;
 	int c, i;
 
 	while ((c = getopt(argc, argv, "af:i:ms")) != -1)
@@ -556,9 +557,17 @@ main(int argc, char *argv[])
 	if (optind != argc - 1 || (mflag && format))
 		usage();
 
-	odisk = argv[optind];
-	if (realpath(odisk, rdisk) == NULL)
-		err(1, "cannot find real path for %s", odisk);
+	disk = argv[optind];
+	if ((diskfd = opendev(disk, O_RDONLY, 0, NULL)) >= 0) {
+		if (fstat(diskfd, &stblock))
+			err(1, "cannot stat %s", disk);
+		if (S_ISCHR(stblock.st_mode))
+			goto gotdev;
+		close(diskfd);
+	}
+
+	if (realpath(disk, rdisk) == NULL)
+		err(1, "cannot find real path for %s", disk);
 	disk = rdisk;
 
 	if (stat(disk, &stblock) < 0)
@@ -572,8 +581,12 @@ main(int argc, char *argv[])
                 disk = rawname(fsp->fs_spec);
         }
 
-	if ((diskfd = open(disk, O_RDONLY)) < 0)
+	if ((diskfd = opendev(disk, O_RDONLY, 0, NULL)) < 0)
 		err(1, "cannot open %s", disk);
+
+gotdev:
+	if (ioctl(diskfd, DIOCGDINFO, (char *)&lab) < 0)
+		err(1, "ioctl (DIOCGDINFO)");
 	if (ioctl(diskfd, DIOCGPDINFO, (char *)&lab) < 0)
 		err(1, "ioctl (DIOCGPDINFO)");
 	sblock = (struct fs *)sblock_buf;
