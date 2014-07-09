@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.68 2014/05/05 18:02:49 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.69 2014/07/09 12:55:31 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -246,6 +246,50 @@ done:
 }
 
 /*
+ * Must special case *_CLASSLESS_* route options due to the variable size
+ * of the CIDR element in its CIA format.
+ */
+int
+pretty_print_classless_routes(unsigned char *dst, size_t dstlen,
+    unsigned char *src, size_t srclen)
+{
+	struct in_addr mask, gateway;
+	int opcount = 0, total = 0, bits, bytes;
+	char ntoabuf[INET_ADDRSTRLEN];
+	
+	while (srclen && dstlen) {
+		bits = *src;
+		src++;
+		srclen--;
+		bytes = (bits + 7) / 8;
+		if (srclen < bytes || bytes > sizeof(mask.s_addr))
+			break;
+		memset(&mask, 0, sizeof(mask));
+		memcpy(&mask.s_addr, src, bytes);
+		src += bytes;
+		srclen -= bytes;
+		strlcpy(ntoabuf, inet_ntoa(mask), sizeof(ntoabuf));
+		if (srclen < sizeof(gateway.s_addr))
+			break;
+		memcpy(&gateway.s_addr, src, sizeof(gateway.s_addr));
+		src += sizeof(gateway.s_addr);
+		srclen -= sizeof(gateway.s_addr);
+		opcount = snprintf(dst, dstlen, "%s%s/%u %s",
+		    total ? ", " : "", ntoabuf, bits,
+		    inet_ntoa(gateway));
+		if (opcount == -1)
+			return (-1);
+		total += opcount;
+		if (opcount >= dstlen)
+			break;
+		dst += opcount;
+		dstlen -= opcount;
+	}
+
+	return (total);
+}
+
+/*
  * Format the specified option so that a human can easily read it.
  */
 char *
@@ -275,6 +319,18 @@ pretty_print_option(unsigned int code, struct option_data *option,
 		comma = ',';
 	else
 		comma = ' ';
+
+	/* Handle the princess class options with weirdo formats. */
+	switch (code) {
+	case DHO_CLASSLESS_STATIC_ROUTES:
+	case DHO_CLASSLESS_MS_STATIC_ROUTES:
+		opcount = pretty_print_classless_routes(op, opleft, dp, len);
+		if (opcount >= opleft || opcount == -1)
+			goto toobig;
+		goto done;
+	default:
+		break;
+	}
 
 	/* Figure out the size of the data. */
 	for (i = 0; dhcp_options[code].format[i]; i++) {
@@ -331,9 +387,6 @@ pretty_print_option(unsigned int code, struct option_data *option,
 			hunksize++;
 			break;
 		case 'e':
-			break;
-		case 'C':
-			hunksize += 5;
 			break;
 		default:
 			warning("%s: garbage in format string: %s",
@@ -412,14 +465,6 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				    *dp ? "true" : "false");
 				dp++;
 				break;
-			case 'C':
-				memset(&foo, 0, sizeof(foo));
-				memcpy(&foo.s_addr, dp+1, (*dp + 7) / 8);
-				opcount = snprintf(op, opleft, "%s/%u",
-				    inet_ntoa(foo), *dp);
-				if (opcount >= opleft || opcount == -1)
-					goto toobig;
-				dp += 1 + (*dp + 7) / 8;
  				break;
 			default:
 				warning("Unexpected format code %c", fmtbuf[j]);
