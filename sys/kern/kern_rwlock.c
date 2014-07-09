@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.21 2014/01/21 01:48:44 tedu Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.22 2014/07/09 13:32:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -256,8 +256,12 @@ rw_exit(struct rwlock *rwl)
 int
 rw_status(struct rwlock *rwl)
 {
-	if (rwl->rwl_owner & RWLOCK_WRLOCK)
-		return RW_WRITE;
+	if (rwl->rwl_owner & RWLOCK_WRLOCK) {
+		if (RW_PROC(curproc) == RW_PROC(rwl->rwl_owner))
+			return RW_WRITE;
+		else
+			return RW_WRITE_OTHER;
+	}
 	if (rwl->rwl_owner)
 		return RW_READ;
 	return (0);

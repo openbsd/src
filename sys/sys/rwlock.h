@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.15 2014/03/29 18:09:31 guenther Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.16 2014/07/09 13:32:00 guenther Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  *
@@ -108,6 +108,12 @@ int rw_status(struct rwlock *);
 #define RW_SLEEPFAIL	0x0020UL	/* fail if we slept for the lock */
 #define RW_NOSLEEP	0x0040UL	/* don't wait for the lock */
 #define RW_RECURSEFAIL	0x0080UL	/* Fail on recursion for RRW locks. */
+
+/*
+ * for rw_status() and rrw_status() only: exclusive lock held by
+ * some other thread
+ */
+#define RW_WRITE_OTHER	0x0100UL
 
 #ifndef rw_cas
 int rw_cas(volatile unsigned long *, unsigned long, unsigned long);

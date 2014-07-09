@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.22 2013/05/01 17:13:05 tedu Exp $	*/
+/*	$OpenBSD: lock.h,v 1.23 2014/07/09 13:32:00 guenther Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -71,6 +71,9 @@ struct lock {
 #define LK_CANRECURSE	0x20	/* allow recursive exclusive lock */
 #define LK_RECURSEFAIL	0x40	/* fail if recursive exclusive lock */
 #define LK_RETRY	0x80	/* vn_lock: retry until locked */
+
+/* for lockstatus() only */
+#define LK_EXCLOTHER	0x100	/* exclusive lock held by some other thread */
 
 void	lockinit(struct lock *, int, char *, int, int);
 int	lockmgr(struct lock *, u_int flags, void *);
