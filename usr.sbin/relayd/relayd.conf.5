@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.145 2014/07/09 17:01:30 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.146 2014/07/09 19:17:08 jmc Exp $
 .\"
 .\" Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -799,7 +799,7 @@ The available configuration directives are described below:
 .Pq Ic block Ns | Ns Ic pass Ns | Ns Ic match
 .Op Ar rule
 .Xc
-Specify one ore more rules to filter connections based on their
+Specify one or more rules to filter connections based on their
 network or application layer headers;
 see the
 .Sx FILTER RULES
@@ -955,7 +955,7 @@ This option is enabled by default.
 .El
 .El
 .Sh FILTER RULES
-Relays have the ability have the ability to filter connections based
+Relays have the ability to filter connections based
 on their network or application layer headers.
 Filter rules apply options to connections based on the specified
 filter parameters.
@@ -987,7 +987,7 @@ application layer parameters;
 any connection of the relay session will be instantly dropped.
 .It Ic match
 The connection is matched.
-This action does not alter the connection state, but allows to apply
+This action does not alter the connection state, but allows
 additional parameters to the connection.
 .It Ic pass
 The connection is passed;
@@ -1010,7 +1010,7 @@ an established session can be purely request/response-based (like
 HTTP), exchange data in a bidirectional way (like arbitrary TCP
 sessions), or just contain a single datagram and an optional response
 (like UDP-based protocols).
-But the client always 
+But the client always
 .Ar requests
 to communicate with a remote peer; the server.
 .It Ic quick
@@ -1103,7 +1103,7 @@ or
 .Ic url .
 .Pp
 Instead of a single
-.Ar key,
+.Ar key ,
 multiple keys can be loaded from a
 .Ic file
 specified by
@@ -1121,7 +1121,7 @@ The algorithm used is determined by the string length of the
 .Ar key
 argument, either SHA1 (40 characters) or MD5 (32 characters).
 To compute the digest,
-for example for an
+for example for a
 .Ic url ,
 use this simple command:
 .Bd -literal -offset indent
@@ -1245,7 +1245,7 @@ keyword in the
 section above.
 .It Ic log
 Log the
-.Ar key 
+.Ar key
 name and the
 .Ar value
 of the entity.
