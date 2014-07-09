@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.49 2014/07/09 15:19:52 bcook Exp $ */
+/* $OpenBSD: b_sock.c,v 1.50 2014/07/09 23:46:14 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,7 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-#include <sys/filio.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
@@ -65,6 +64,7 @@
 #include <netinet/tcp.h>
 
 #include <errno.h>
+#include <limits.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
