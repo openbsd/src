@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.90 2014/04/28 15:25:34 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.91 2014/07/09 09:33:12 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -682,14 +682,6 @@ main(int argc, char *argv[])
 		    sizeof(opton)))
 			err(1, "setsockopt(IPV6_RECVRTHDR)");
 	}
-
-/*
-	optval = 1;
-	if (IN6_IS_ADDR_MULTICAST(&dst.sin6_addr))
-		if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
-		    &optval, sizeof(optval)) == -1)
-			err(1, "IPV6_MULTICAST_LOOP");
-*/
 
 	/* Specify the outgoing interface and/or the source address */
 	if (usepktinfo)
