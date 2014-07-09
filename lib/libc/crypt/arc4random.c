@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.39 2014/06/27 21:31:12 deraadt Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.40 2014/07/09 16:52:09 bcook Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -25,13 +25,13 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/sysctl.h>
 #include <sys/mman.h>
 
 #include "thread_private.h"
@@ -39,6 +39,7 @@
 #define KEYSTREAM_ONLY
 #include "chacha_private.h"
 
+#define min(a, b) ((a) < (b) ? (a) : (b))
 #ifdef __GNUC__
 #define inline __inline
 #else				/* !__GNUC__ */
@@ -145,7 +146,7 @@ _rs_rekey(u_char *dat, size_t datlen)
 	if (dat) {
 		size_t i, m;
 
-		m = MIN(datlen, KEYSZ + IVSZ);
+		m = min(datlen, KEYSZ + IVSZ);
 		for (i = 0; i < m; i++)
 			rsx->rs_buf[i] ^= dat[i];
 	}
@@ -165,7 +166,7 @@ _rs_random_buf(void *_buf, size_t n)
 	_rs_stir_if_needed(n);
 	while (n > 0) {
 		if (rs->rs_have > 0) {
-			m = MIN(n, rs->rs_have);
+			m = min(n, rs->rs_have);
 			keystream = rsx->rs_buf + sizeof(rsx->rs_buf)
 			    - rs->rs_have;
 			memcpy(buf, keystream, m);
@@ -180,7 +181,7 @@ _rs_random_buf(void *_buf, size_t n)
 }
 
 static inline void
-_rs_random_u32(u_int32_t *val)
+_rs_random_u32(uint32_t *val)
 {
 	u_char *keystream;
 	_rs_stir_if_needed(sizeof(*val));
@@ -192,10 +193,10 @@ _rs_random_u32(u_int32_t *val)
 	rs->rs_have -= sizeof(*val);
 }
 
-u_int32_t
+uint32_t
 arc4random(void)
 {
-	u_int32_t val;
+	uint32_t val;
 
 	_ARC4_LOCK();
 	_rs_random_u32(&val);
@@ -221,10 +222,10 @@ arc4random_buf(void *buf, size_t n)
  * [2**32 % upper_bound, 2**32) which maps back to [0, upper_bound)
  * after reduction modulo upper_bound.
  */
-u_int32_t
-arc4random_uniform(u_int32_t upper_bound)
+uint32_t
+arc4random_uniform(uint32_t upper_bound)
 {
-	u_int32_t r, min;
+	uint32_t r, min;
 
 	if (upper_bound < 2)
 		return 0;
