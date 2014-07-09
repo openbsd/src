@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.58 2014/04/22 14:26:26 tedu Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.59 2014/07/09 16:57:49 beck Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -305,8 +305,8 @@ qdiv_t	 qdiv(quad_t, quad_t);
 quad_t	 strtoq(const char *, char **, int);
 u_quad_t strtouq(const char *, char **, int);
 
-u_int32_t arc4random(void);
-u_int32_t arc4random_uniform(u_int32_t);
+uint32_t arc4random(void);
+uint32_t arc4random_uniform(uint32_t);
 void arc4random_buf(void *, size_t)
 	__attribute__((__bounded__ (__string__,1,2)));
 

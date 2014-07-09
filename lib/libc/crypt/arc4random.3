@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.32 2013/10/22 06:51:41 jmc Exp $
+.\" $OpenBSD: arc4random.3,v 1.33 2014/07/09 16:57:49 beck Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: October 22 2013 $
+.Dd $Mdocdate: July 9 2014 $
 .Dt ARC4RANDOM 3
 .Os
 .Sh NAME
@@ -40,12 +40,12 @@
 .Nd random number generator
 .Sh SYNOPSIS
 .In stdlib.h
-.Ft u_int32_t
+.Ft uint32_t
 .Fn arc4random "void"
 .Ft void
 .Fn arc4random_buf "void *buf" "size_t nbytes"
-.Ft u_int32_t
-.Fn arc4random_uniform "u_int32_t upper_bound"
+.Ft uint32_t
+.Fn arc4random_uniform "uint32_t upper_bound"
 .Sh DESCRIPTION
 This family of functions provides higher quality data than those
 described in
