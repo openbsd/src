@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.103 2014/04/28 15:25:34 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.104 2014/07/09 15:20:51 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -182,9 +182,7 @@ main(int argc, char *argv[])
 	int ch, hold = 1, i, packlen, preload, maxsize, df = 0, tos = 0;
 	u_char *datap, *packet, ttl = MAXTTL, loop = 1;
 	char *target, hnamebuf[MAXHOSTNAMELEN];
-#ifdef IP_OPTIONS
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
-#endif
 	socklen_t maxsizelen;
 	const char *errstr;
 	uid_t uid;
@@ -432,7 +430,6 @@ main(int argc, char *argv[])
 	if (options & F_RROUTE) {
 		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
 			errx(1, "record route not valid to multicast destinations");
-#ifdef IP_OPTIONS
 		memset(rspace, 0, sizeof(rspace));
 		rspace[IPOPT_OPTVAL] = IPOPT_RR;
 		rspace[IPOPT_OLEN] = sizeof(rspace)-1;
@@ -442,9 +439,6 @@ main(int argc, char *argv[])
 			perror("ping: record route");
 			exit(1);
 		}
-#else
-		errx(1, "record route not available in this implementation");
-#endif /* IP_OPTIONS */
 	}
 
 	if ((moptions & MULTICAST_NOLOOP) &&
