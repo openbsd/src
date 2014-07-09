@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.21 2014/06/11 00:30:25 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.22 2014/07/09 11:37:16 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -32,6 +32,7 @@
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pmemrange.h>
 
+#include <machine/cpu.h>
 #include <machine/hibernate.h>
 #include <machine/hibernate_var.h>
 #include <machine/kcore.h>
@@ -359,16 +360,25 @@ hibernate_disable_intr_machdep(void)
 void
 hibernate_quiesce_cpus(void)
 {
+	struct cpu_info *ci;
+	u_long i;
+
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
 
-	/* Start the hatched (but idling) APs */
-	cpu_boot_secondary_processors();
-
-	/* Demote the APs to real mode */
-        x86_broadcast_ipi(X86_IPI_HALT_REALMODE);
+	for (i = 0; i < MAXCPUS; i++) {
+		ci = cpu_info[i];
+		if (ci == NULL)
+			continue;
+		if (ci->ci_idle_pcb == NULL)
+			continue;
+		if ((ci->ci_flags & CPUF_PRESENT) == 0)
+			continue;
+		if (ci->ci_flags & (CPUF_BSP | CPUF_SP | CPUF_PRIMARY))
+			continue;
+		atomic_setbits_int(&ci->ci_flags, CPUF_GO | CPUF_PARK);
+	}
 
 	/* Wait a bit for the APs to park themselves */
-	delay(1000000);
-
+	delay(500000);
 }
 #endif /* MULTIPROCESSOR */

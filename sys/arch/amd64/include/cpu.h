@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.83 2014/02/13 23:11:06 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.84 2014/07/09 11:37:16 mlarkin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -163,6 +163,7 @@ struct cpu_info {
 #define CPUF_RUNNING	0x2000		/* CPU is running */
 #define CPUF_PAUSE	0x4000		/* CPU is paused in DDB */
 #define CPUF_GO		0x8000		/* CPU should start running */
+#define CPUF_PARK	0x10000		/* CPU should self-park in real mode */
 
 #define PROC_PC(p)	((p)->p_md.md_regs->tf_rip)
 #define PROC_STACK(p)	((p)->p_md.md_regs->tf_rsp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.61 2014/04/30 06:24:23 sf Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.62 2014/07/09 11:37:16 mlarkin Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -102,6 +102,11 @@
 #include <dev/ic/mc146818reg.h>
 #include <amd64/isa/nvram.h>
 #include <dev/isa/isareg.h>
+
+#ifdef HIBERNATE
+#include <sys/hibernate.h>
+#include <machine/hibernate.h>
+#endif /* HIBERNATE */
 
 int     cpu_match(struct device *, void *, void *);
 void    cpu_attach(struct device *, struct device *, void *);
@@ -589,7 +594,7 @@ cpu_boot_secondary_processors(void)
 			continue;
 		if ((ci->ci_flags & CPUF_PRESENT) == 0)
 			continue;
-		if (ci->ci_flags & (CPUF_BSP|CPUF_SP|CPUF_PRIMARY))
+		if (ci->ci_flags & (CPUF_BSP | CPUF_SP | CPUF_PRIMARY))
 			continue;
 		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 		cpu_boot_secondary(ci);
@@ -704,6 +709,11 @@ cpu_hatch(void *v)
 		 */
 		while ((ci->ci_flags & CPUF_IDENTIFY) == 0)
 			delay(10);
+
+#ifdef HIBERNATE
+		if ((ci->ci_flags & CPUF_PARK) != 0)
+			hibernate_drop_to_real_mode();
+#endif /* HIBERNATE */
 
 		identifycpu(ci);
 

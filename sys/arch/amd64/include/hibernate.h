@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.5 2014/05/31 06:30:16 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.6 2014/07/09 11:37:16 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -32,4 +32,5 @@ void	hibernate_enable_intr_machdep(void);
 void	hibernate_disable_intr_machdep(void);
 #ifdef MULTIPROCESSOR
 void	hibernate_quiesce_cpus(void);
+void	hibernate_drop_to_real_mode(void);
 #endif /* MULTIPROCESSOR */

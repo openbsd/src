@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.31 2014/06/11 00:30:25 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.32 2014/07/09 11:37:16 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -297,20 +297,13 @@ hibernate_disable_intr_machdep(void)
 
 #ifdef MULTIPROCESSOR
 /*
- * Quiesce CPUs in a multiprocessor machine before resuming. We need to do
- * this since the APs will be hatched (but waiting for CPUF_GO), and we don't
- * want the APs to be executing code and causing side effects during the
- * unpack operation.
+ * On i386, the APs have not been hatched at the time hibernate resume is
+ * called, so there is no need to quiesce them. We do want to make sure
+ * however that we are on the BSP.
  */
 void
 hibernate_quiesce_cpus(void)
 {
-        KASSERT(CPU_IS_PRIMARY(curcpu()));
-
-	/* Start the hatched (but idling) APs */
-	cpu_boot_secondary_processors();
-
-	/* Now shut them down */
-	acpi_sleep_mp();
+	KASSERT(CPU_IS_PRIMARY(curcpu()));
 }
 #endif /* MULTIPROCESSOR */

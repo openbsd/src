@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.23 2014/03/29 18:09:28 guenther Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.24 2014/07/09 11:37:16 mlarkin Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -85,11 +85,6 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 #else
 	NULL,
 #endif
-#ifdef HIBERNATE
-	x86_64_ipi_halt_realmode,
-#else
-	NULL,
-#endif /* HIBERNATE */
 };
 
 void
@@ -135,19 +130,3 @@ x86_64_ipi_reload_mtrr(struct cpu_info *ci)
 		mem_range_softc.mr_op->reload(&mem_range_softc);
 }
 #endif
-
-#ifdef HIBERNATE
-void
-x86_64_ipi_halt_realmode(struct cpu_info *ci)
-{
-	/* Halt CPUs and park in real mode */
-
-	fpusave_cpu(ci, 1);
-	disable_intr();
-	wbinvd();
-	ci->ci_flags &= ~CPUF_RUNNING;
-	wbinvd();
-
-	hibernate_drop_to_real_mode();
-}
-#endif /* HIBERNATE */
