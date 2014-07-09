@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_asn1.c,v 1.6 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: rsa_asn1.c,v 1.7 2014/07/09 08:20:08 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -64,14 +64,15 @@
 #include <openssl/asn1t.h>
 
 /* Override the default free and new methods */
-static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-								void *exarg)
+static int
+rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 {
-	if(operation == ASN1_OP_NEW_PRE) {
+	if (operation == ASN1_OP_NEW_PRE) {
 		*pval = (ASN1_VALUE *)RSA_new();
-		if(*pval) return 2;
+		if (*pval)
+			return 2;
 		return 0;
-	} else if(operation == ASN1_OP_FREE_PRE) {
+	} else if (operation == ASN1_OP_FREE_PRE) {
 		RSA_free((RSA *)*pval);
 		*pval = NULL;
 		return 2;
@@ -110,12 +111,14 @@ IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(RSA, RSAPrivateKey, RSAPrivateKey)
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(RSA, RSAPublicKey, RSAPublicKey)
 
-RSA *RSAPublicKey_dup(RSA *rsa)
-	{
+RSA *
+RSAPublicKey_dup(RSA *rsa)
+{
 	return ASN1_item_dup(ASN1_ITEM_rptr(RSAPublicKey), rsa);
-	}
+}
 
-RSA *RSAPrivateKey_dup(RSA *rsa)
-	{
+RSA *
+RSAPrivateKey_dup(RSA *rsa)
+{
 	return ASN1_item_dup(ASN1_ITEM_rptr(RSAPrivateKey), rsa);
-	}
+}

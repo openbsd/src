@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_null.c,v 1.6 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: rsa_null.c,v 1.7 2014/07/09 08:20:08 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -62,7 +62,8 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 
-/* This is a dummy RSA implementation that just returns errors when called.
+/*
+ * This is a dummy RSA implementation that just returns errors when called.
  * It is designed to allow some RSA functions to work while stopping those
  * covered by the RSA patent. That is RSA, encryption, decryption, signing
  * and verify is not allowed but RSA key generation, key checking and other
@@ -92,53 +93,65 @@ static RSA_METHOD rsa_null_meth = {
 	.finish = RSA_null_finish,
 };
 
-const RSA_METHOD *RSA_null_method(void)
-	{
-	return(&rsa_null_meth);
-	}
+const RSA_METHOD *
+RSA_null_method(void)
+{
+	return &rsa_null_meth;
+}
 
-static int RSA_null_public_encrypt(int flen, const unsigned char *from,
-	     unsigned char *to, RSA *rsa, int padding)
-	{
-	RSAerr(RSA_F_RSA_NULL_PUBLIC_ENCRYPT, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
+static int
+RSA_null_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int padding)
+{
+	RSAerr(RSA_F_RSA_NULL_PUBLIC_ENCRYPT,
+	    RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
 	return -1;
-	}
+}
 
-static int RSA_null_private_encrypt(int flen, const unsigned char *from,
-	     unsigned char *to, RSA *rsa, int padding)
-	{
-	RSAerr(RSA_F_RSA_NULL_PRIVATE_ENCRYPT, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
+static int
+RSA_null_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int padding)
+{
+	RSAerr(RSA_F_RSA_NULL_PRIVATE_ENCRYPT,
+	    RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
 	return -1;
-	}
+}
 
-static int RSA_null_private_decrypt(int flen, const unsigned char *from,
-	     unsigned char *to, RSA *rsa, int padding)
-	{
-	RSAerr(RSA_F_RSA_NULL_PRIVATE_DECRYPT, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
+static int
+RSA_null_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int padding)
+{
+	RSAerr(RSA_F_RSA_NULL_PRIVATE_DECRYPT,
+	    RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
 	return -1;
-	}
+}
 
-static int RSA_null_public_decrypt(int flen, const unsigned char *from,
-	     unsigned char *to, RSA *rsa, int padding)
-	{
-	RSAerr(RSA_F_RSA_NULL_PUBLIC_DECRYPT, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
+static int
+RSA_null_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int padding)
+{
+	RSAerr(RSA_F_RSA_NULL_PUBLIC_DECRYPT,
+	    RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
 	return -1;
-	}
+}
 
 #if 0 /* not currently used */
-static int RSA_null_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
-	{
+static int
+RSA_null_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
+{
 	...err(RSA_F_RSA_NULL_MOD_EXP, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
 	return -1;
-	}
+}
 #endif
 
-static int RSA_null_init(RSA *rsa)
-	{
-	return(1);
-	}
+static int
+RSA_null_init(RSA *rsa)
+{
+	return 1;
+}
 
-static int RSA_null_finish(RSA *rsa)
-	{
-	return(1);
-	}
+static int
+RSA_null_finish(RSA *rsa)
+{
+	return 1;
+}
