@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.100 2014/03/08 11:42:56 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.101 2014/07/09 15:47:54 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -816,12 +816,34 @@ usbd_setup_pipe(struct usbd_device *dev, struct usbd_interface *iface,
 }
 
 int
+usbd_set_address(struct usbd_device *dev, int addr)
+{
+	usb_device_request_t req;
+
+	req.bmRequestType = UT_WRITE_DEVICE;
+	req.bRequest = UR_SET_ADDRESS;
+	USETW(req.wValue, addr);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 0);
+	if (usbd_do_request(dev, &req, 0))
+		return (1);
+
+	dev->address = addr;
+	dev->bus->devices[addr] = dev;
+
+	/* Allow device time to set new address */
+	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
+
+	return (0);
+}
+
+int
 usbd_getnewaddr(struct usbd_bus *bus)
 {
 	int addr;
 
 	for (addr = 1; addr < USB_MAX_DEVICES; addr++)
-		if (bus->devices[addr] == 0)
+		if (bus->devices[addr] == NULL)
 			return (addr);
 	return (-1);
 }
@@ -1167,26 +1189,16 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 
 	err = usbd_reload_device_desc(dev);
 	if (err) {
-		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
-		    "failed\n", addr));
 		usb_free_device(dev, up);
 		return (err);
 	}
 
-	/* Set the address. */
-	DPRINTFN(5,("usbd_new_device: setting device address=%d\n", addr));
-	err = usbd_set_address(dev, addr);
-	if (err) {
-		DPRINTFN(-1,("usbd_new_device: set address %d failed\n", addr));
-		err = USBD_SET_ADDR_FAILED;
-		usb_free_device(dev, up);
-		return (err);
-	}
-
-	/* Allow device time to set new address */
-	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
-	dev->address = addr;	/* New device address now */
-	bus->devices[addr] = dev;
+	/* Set the address if the HC didn't do it already. */
+	if (bus->methods->dev_setaddr != NULL &&
+	    bus->methods->dev_setaddr(dev, addr)) {
+ 		usb_free_device(dev, up);
+		return (USBD_SET_ADDR_FAILED);
+ 	}
 
 	/* Re-establish the default pipe with the new address. */
 	usbd_close_pipe(dev->default_pipe);

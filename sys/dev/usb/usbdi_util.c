@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.36 2014/04/24 09:40:28 mpi Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.37 2014/07/09 15:47:54 mpi Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -111,19 +111,6 @@ usbd_get_hub_descriptor(struct usbd_device *dev, usb_hub_descriptor_t *hd,
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, len);
 	return (usbd_do_request(dev, &req, hd));
-}
-
-usbd_status
-usbd_set_address(struct usbd_device *dev, int addr)
-{
-	usb_device_request_t req;
-
-	req.bmRequestType = UT_WRITE_DEVICE;
-	req.bRequest = UR_SET_ADDRESS;
-	USETW(req.wValue, addr);
-	USETW(req.wIndex, 0);
-	USETW(req.wLength, 0);
-	return usbd_do_request(dev, &req, 0);
 }
 
 usbd_status

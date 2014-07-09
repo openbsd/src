@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.133 2014/06/04 13:52:30 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.134 2014/07/09 15:47:54 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -232,6 +232,7 @@ struct ohci_pipe {
 
 struct usbd_bus_methods ohci_bus_methods = {
 	.open_pipe = ohci_open,
+	.dev_setaddr = usbd_set_address,
 	.soft_intr = ohci_softintr,
 	.do_poll = ohci_poll,
 	.allocx = ohci_allocx,

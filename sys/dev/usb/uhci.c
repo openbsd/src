@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.124 2014/06/04 13:52:30 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.125 2014/07/09 15:47:54 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -250,6 +250,7 @@ UREAD4(struct uhci_softc *sc, bus_size_t r)
 
 struct usbd_bus_methods uhci_bus_methods = {
 	.open_pipe = uhci_open,
+	.dev_setaddr = usbd_set_address,
 	.soft_intr = uhci_softintr,
 	.do_poll = uhci_poll,
 	.allocx = uhci_allocx,
