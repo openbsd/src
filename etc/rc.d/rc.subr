@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.70 2013/07/11 09:34:33 otto Exp $
+#	$OpenBSD: rc.subr,v 1.71 2014/07/09 10:59:35 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -208,11 +208,11 @@ getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
 	daemon_class=${_name}
 
 [ -z "${daemon_class}" ] && daemon_class=daemon
-[ -z "${daemon_user}"  ] && daemon_user=root
+[ -z "${daemon_user}" ] && daemon_user=root
 
 [ -n "${_RC_FORCE}" ] && [ X"${_rcflags}" = X"NO" ] && unset _rcflags
 [ -n "${_rcflags}" ] && daemon_flags=${_rcflags}
-[ -n "${_rcuser}"  ] && daemon_user=${_rcuser}
+[ -n "${_rcuser}" ] && daemon_user=${_rcuser}
 
 # sanitize
 daemon_flags=$(printf ' %s' ${daemon_flags})
