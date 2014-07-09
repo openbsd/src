@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.69 2014/06/19 21:29:51 tedu Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.70 2014/07/09 11:25:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1956,9 +1956,7 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 {
 	CERT_PKEY	*cpk;
 	int		 rsa_enc, rsa_tmp, rsa_sign, dh_tmp, dh_rsa, dh_dsa, dsa_sign;
-	int		 rsa_enc_export, dh_rsa_export, dh_dsa_export;
-	int		 rsa_tmp_export, dh_tmp_export, kl;
-	unsigned long	 mask_k, mask_a, emask_k, emask_a;
+	unsigned long	 mask_k, mask_a;
 	int		 have_ecc_cert, ecdh_ok, ecdsa_ok, ecc_pkey_size;
 	int		 have_ecdh_tmp;
 	X509		*x = NULL;
@@ -1968,39 +1966,25 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	if (c == NULL)
 		return;
 
-	kl = SSL_C_EXPORT_PKEYLENGTH(cipher);
-
 	rsa_tmp = (c->rsa_tmp != NULL || c->rsa_tmp_cb != NULL);
-	rsa_tmp_export = (c->rsa_tmp_cb != NULL ||
-	(rsa_tmp && RSA_size(c->rsa_tmp)*8 <= kl));
 	dh_tmp = (c->dh_tmp != NULL || c->dh_tmp_cb != NULL);
-	dh_tmp_export = (c->dh_tmp_cb != NULL ||
-	(dh_tmp && DH_size(c->dh_tmp)*8 <= kl));
 
 	have_ecdh_tmp = (c->ecdh_tmp != NULL || c->ecdh_tmp_cb != NULL);
 	cpk = &(c->pkeys[SSL_PKEY_RSA_ENC]);
 	rsa_enc = (cpk->x509 != NULL && cpk->privatekey != NULL);
-	rsa_enc_export = (rsa_enc && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
 	cpk = &(c->pkeys[SSL_PKEY_RSA_SIGN]);
 	rsa_sign = (cpk->x509 != NULL && cpk->privatekey != NULL);
 	cpk = &(c->pkeys[SSL_PKEY_DSA_SIGN]);
 	dsa_sign = (cpk->x509 != NULL && cpk->privatekey != NULL);
 	cpk = &(c->pkeys[SSL_PKEY_DH_RSA]);
 	dh_rsa = (cpk->x509 != NULL && cpk->privatekey != NULL);
-	dh_rsa_export = (dh_rsa && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
 	cpk = &(c->pkeys[SSL_PKEY_DH_DSA]);
 /* FIX THIS EAY EAY EAY */
 	dh_dsa = (cpk->x509 != NULL && cpk->privatekey != NULL);
-	dh_dsa_export = (dh_dsa && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
 	cpk = &(c->pkeys[SSL_PKEY_ECC]);
 	have_ecc_cert = (cpk->x509 != NULL && cpk->privatekey != NULL);
 	mask_k = 0;
 	mask_a = 0;
-	emask_k = 0;
-	emask_a = 0;
-
-
-
 
 	cpk = &(c->pkeys[SSL_PKEY_GOST01]);
 	if (cpk->x509 != NULL && cpk->privatekey !=NULL) {
@@ -2015,38 +1999,23 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 
 	if (rsa_enc || (rsa_tmp && rsa_sign))
 		mask_k|=SSL_kRSA;
-	if (rsa_enc_export || (rsa_tmp_export && (rsa_sign || rsa_enc)))
-		emask_k|=SSL_kRSA;
-
-	if (dh_tmp_export)
-		emask_k|=SSL_kEDH;
 
 	if (dh_tmp)
 		mask_k|=SSL_kEDH;
 
 	if (dh_rsa)
 		mask_k|=SSL_kDHr;
-	if (dh_rsa_export)
-		emask_k|=SSL_kDHr;
 
 	if (dh_dsa)
 		mask_k|=SSL_kDHd;
-	if (dh_dsa_export)
-		emask_k|=SSL_kDHd;
 
-	if (rsa_enc || rsa_sign) {
+	if (rsa_enc || rsa_sign)
 		mask_a|=SSL_aRSA;
-		emask_a|=SSL_aRSA;
-	}
 
-	if (dsa_sign) {
+	if (dsa_sign)
 		mask_a|=SSL_aDSS;
-		emask_a|=SSL_aDSS;
-	}
 
 	mask_a|=SSL_aNULL;
-	emask_a|=SSL_aNULL;
-
 
 	/*
 	 * An ECC certificate may be usable for ECDH and/or
@@ -2069,47 +2038,30 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 			OBJ_find_sigid_algs(signature_nid, &md_nid, &pk_nid);
 		}
 		if (ecdh_ok) {
-
 			if (pk_nid == NID_rsaEncryption || pk_nid == NID_rsa) {
 				mask_k|=SSL_kECDHr;
 				mask_a|=SSL_aECDH;
-				if (ecc_pkey_size <= 163) {
-					emask_k|=SSL_kECDHr;
-					emask_a|=SSL_aECDH;
-				}
 			}
-
 			if (pk_nid == NID_X9_62_id_ecPublicKey) {
 				mask_k|=SSL_kECDHe;
 				mask_a|=SSL_aECDH;
-				if (ecc_pkey_size <= 163) {
-					emask_k|=SSL_kECDHe;
-					emask_a|=SSL_aECDH;
-				}
 			}
 		}
-		if (ecdsa_ok) {
+		if (ecdsa_ok)
 			mask_a|=SSL_aECDSA;
-			emask_a|=SSL_aECDSA;
-		}
 	}
 
 	if (have_ecdh_tmp) {
 		mask_k|=SSL_kEECDH;
-		emask_k|=SSL_kEECDH;
 	}
 
 #ifndef OPENSSL_NO_PSK
 	mask_k |= SSL_kPSK;
 	mask_a |= SSL_aPSK;
-	emask_k |= SSL_kPSK;
-	emask_a |= SSL_aPSK;
 #endif
 
 	c->mask_k = mask_k;
 	c->mask_a = mask_a;
-	c->export_mask_k = emask_k;
-	c->export_mask_a = emask_a;
 	c->valid = 1;
 }
 
@@ -2122,24 +2074,11 @@ int
 ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 {
 	unsigned long		 alg_k, alg_a;
-	EVP_PKEY		*pkey = NULL;
-	int			 keysize = 0;
 	int			 signature_nid = 0, md_nid = 0, pk_nid = 0;
 	const SSL_CIPHER	*cs = s->s3->tmp.new_cipher;
 
 	alg_k = cs->algorithm_mkey;
 	alg_a = cs->algorithm_auth;
-
-	if (SSL_C_IS_EXPORT(cs)) {
-		/* ECDH key length in export ciphers must be <= 163 bits */
-		pkey = X509_get_pubkey(x);
-		if (pkey == NULL)
-			return (0);
-		keysize = EVP_PKEY_bits(pkey);
-		EVP_PKEY_free(pkey);
-		if (keysize > 163)
-			return (0);
-	}
 
 	/* This call populates the ex_flags field correctly */
 	X509_check_purpose(x, -1, 0);

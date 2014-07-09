@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.50 2014/06/18 04:50:44 miod Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.51 2014/07/09 11:25:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -218,21 +218,17 @@ ssl3_change_cipher_state(SSL *s, int which)
 	const unsigned char *client_write_key, *server_write_key;
 	const unsigned char *client_write_iv, *server_write_iv;
 	const unsigned char *mac_secret, *key, *iv;
-	unsigned char *key_block, *er1, *er2;
-	unsigned char export_key[EVP_MAX_KEY_LENGTH];
-	unsigned char export_iv[EVP_MAX_IV_LENGTH];
-	int is_export, mac_len, key_len, iv_len;
+	unsigned char *key_block;
+	int mac_len, key_len, iv_len;
 	char is_read, use_client_keys;
 	EVP_CIPHER_CTX *cipher_ctx;
 	const EVP_CIPHER *cipher;
-	EVP_MD_CTX mac_ctx;
 	const EVP_MD *mac;
 
 #ifndef OPENSSL_NO_COMP
 	const SSL_COMP *comp;
 #endif
 
-	is_export = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	cipher = s->s3->tmp.new_sym_enc;
 	mac = s->s3->tmp.new_hash;
 
@@ -320,10 +316,6 @@ ssl3_change_cipher_state(SSL *s, int which)
 	if (mac_len < 0)
 		goto err2;
 
-	if (is_export &&
-	    key_len > SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher))
-		key_len = SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher);
-
 	key_block = s->s3->tmp.key_block;
 	client_write_mac_secret = key_block;
 	key_block += mac_len;
@@ -342,14 +334,10 @@ ssl3_change_cipher_state(SSL *s, int which)
 		mac_secret = client_write_mac_secret;
 		key = client_write_key;
 		iv = client_write_iv;
-		er1 = s->s3->client_random;
-		er2 = s->s3->server_random;
 	} else {
 		mac_secret = server_write_mac_secret;
 		key = server_write_key;
 		iv = server_write_iv;
-		er1 = s->s3->server_random;
-		er2 = s->s3->client_random;
 	}
 
 	if (key_block - s->s3->tmp.key_block != s->s3->tmp.key_block_length) {
@@ -359,36 +347,9 @@ ssl3_change_cipher_state(SSL *s, int which)
 
 	memcpy(is_read ? s->s3->read_mac_secret : s->s3->write_mac_secret,
 	    mac_secret, mac_len);
-		
-	EVP_MD_CTX_init(&mac_ctx);
-	if (is_export) {
-		/* In here I set both the read and write key/iv to the
-		 * same value since only the correct one will be used :-).
-		 */
-		EVP_DigestInit_ex(&mac_ctx, EVP_md5(), NULL);
-		EVP_DigestUpdate(&mac_ctx, key, key_len);
-		EVP_DigestUpdate(&mac_ctx, er1, SSL3_RANDOM_SIZE);
-		EVP_DigestUpdate(&mac_ctx, er2, SSL3_RANDOM_SIZE);
-		EVP_DigestFinal_ex(&mac_ctx, export_key, NULL);
-		key = export_key;
-
-		if (iv_len > 0) {
-			EVP_DigestInit_ex(&mac_ctx, EVP_md5(), NULL);
-			EVP_DigestUpdate(&mac_ctx, er1, SSL3_RANDOM_SIZE);
-			EVP_DigestUpdate(&mac_ctx, er2, SSL3_RANDOM_SIZE);
-			EVP_DigestFinal_ex(&mac_ctx, export_iv, NULL);
-			iv = export_iv;
-		}
-	}
 
 	EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, iv, !is_read);
 
-	if (is_export) {
-		OPENSSL_cleanse(export_key, sizeof(export_key));
-		OPENSSL_cleanse(export_iv, sizeof(export_iv));
-	}
-
-	EVP_MD_CTX_cleanup(&mac_ctx);
 	return (1);
 err:
 	SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
@@ -431,10 +392,6 @@ ssl3_setup_key_block(SSL *s)
 
 	if (mac_len < 0)
 		return 0;
-
-	if (SSL_C_IS_EXPORT(s->session->cipher) &&
-	    key_len > SSL_C_EXPORT_KEYLENGTH(s->session->cipher))
-		key_len = SSL_C_EXPORT_KEYLENGTH(s->session->cipher);
 
 	key_block_len = (mac_len + key_len + iv_len) * 2;
 

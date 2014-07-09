@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.67 2014/06/30 14:13:27 tedu Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.68 2014/07/09 11:25:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -435,11 +435,7 @@ ssl3_accept(SSL *s)
 			    || ((alg_k & SSL_kRSA)
 			    && (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey ==
 			    NULL
-			    || (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)
-			    && EVP_PKEY_size(
-			    s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey) * 8
-			    > SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher
-			    ))))) {
+			    ))) {
 				ret = ssl3_send_server_key_exchange(s);
 				if (ret <= 0)
 					goto end;
@@ -1296,8 +1292,6 @@ ssl3_get_client_hello(SSL *s)
 				c = sk_SSL_CIPHER_value(sk, i);
 				if (c->algorithm_enc & SSL_eNULL)
 					nc = c;
-				if (SSL_C_IS_EXPORT(c))
-					ec = c;
 			}
 			if (nc != NULL)
 				s->s3->tmp.new_cipher = nc;
@@ -1508,9 +1502,7 @@ ssl3_send_server_key_exchange(SSL *s)
 		if (type & SSL_kRSA) {
 			rsa = cert->rsa_tmp;
 			if ((rsa == NULL) && (s->cert->rsa_tmp_cb != NULL)) {
-				rsa = s->cert->rsa_tmp_cb(s,
-				SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
-				SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher));
+				rsa = s->cert->rsa_tmp_cb(s, 0, 0);
 				if (rsa == NULL) {
 					al = SSL_AD_HANDSHAKE_FAILURE;
 					SSLerr(
@@ -1534,9 +1526,7 @@ ssl3_send_server_key_exchange(SSL *s)
 		if (type & SSL_kEDH) {
 			dhp = cert->dh_tmp;
 			if ((dhp == NULL) && (s->cert->dh_tmp_cb != NULL))
-				dhp = s->cert->dh_tmp_cb(s,
-			SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
-			SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher));
+				dhp = s->cert->dh_tmp_cb(s, 0, 0);
 			if (dhp == NULL) {
 				al = SSL_AD_HANDSHAKE_FAILURE;
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
@@ -1584,12 +1574,8 @@ ssl3_send_server_key_exchange(SSL *s)
 			const EC_GROUP *group;
 
 			ecdhp = cert->ecdh_tmp;
-			if ((ecdhp == NULL) && (s->cert->ecdh_tmp_cb != NULL)) {
-				ecdhp = s->cert->ecdh_tmp_cb(
-				    s, SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
-				    SSL_C_EXPORT_PKEYLENGTH(
-				    s->s3->tmp.new_cipher));
-			}
+			if (ecdhp == NULL && s->cert->ecdh_tmp_cb != NULL)
+				ecdhp = s->cert->ecdh_tmp_cb(s, 0, 0);
 			if (ecdhp == NULL) {
 				al = SSL_AD_HANDSHAKE_FAILURE;
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
@@ -1631,13 +1617,6 @@ ssl3_send_server_key_exchange(SSL *s)
 			    (EC_KEY_get0_public_key(ecdh)  == NULL) ||
 			    (EC_KEY_get0_private_key(ecdh) == NULL)) {
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,					    ERR_R_ECDH_LIB);
-				goto err;
-			}
-
-			if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) &&
-			    (EC_GROUP_get_degree(group) > 163)) {
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-				    SSL_R_ECGROUP_TOO_LARGE_FOR_CIPHER);
 				goto err;
 			}
 

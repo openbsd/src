@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.55 2014/07/08 21:50:40 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.56 2014/07/09 11:25:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -368,62 +368,13 @@
 	(((ssl_cipher->algorithm2 >> 24) & 0xf) * 2)
 
 /*
- * Export and cipher strength information. For each cipher we have to decide
- * whether it is exportable or not. This information is likely to change
- * over time, since the export control rules are no static technical issue.
- *
- * Independent of the export flag the cipher strength is sorted into classes.
- * SSL_EXP40 was denoting the 40bit US export limit of past times, which now
- * is at 56bit (SSL_EXP56). If the exportable cipher class is going to change
- * again (eg. to 64bit) the use of "SSL_EXP*" becomes blurred even more,
- * since SSL_EXP64 could be similar to SSL_LOW.
- * For this reason SSL_MICRO and SSL_MINI macros are included to widen the
- * namespace of SSL_LOW-SSL_HIGH to lower values. As development of speed
- * and ciphers goes, another extension to SSL_SUPER and/or SSL_ULTRA would
- * be possible.
+ * Cipher strength information.
  */
-#define SSL_EXP_MASK		0x00000003L
 #define SSL_STRONG_MASK		0x000001fcL
-
-#define SSL_EXPORT		0x00000002L
-
 #define SSL_STRONG_NONE		0x00000004L
-#define SSL_EXP40		0x00000008L
-#define SSL_MICRO		(SSL_EXP40)
-#define SSL_EXP56		0x00000010L
-#define SSL_MINI		(SSL_EXP56)
 #define SSL_LOW			0x00000020L
 #define SSL_MEDIUM		0x00000040L
 #define SSL_HIGH		0x00000080L
-
-/* we have used 000001ff - 23 bits left to go */
-
-/*
- * Macros to check the export status and cipher strength for export ciphers.
- * Even though the macros for EXPORT and EXPORT40/56 have similar names,
- * their meaning is different:
- * *_EXPORT macros check the 'exportable' status.
- * *_EXPORT40/56 macros are used to check whether a certain cipher strength
- *          is given.
- * Since the SSL_IS_EXPORT* and SSL_EXPORT* macros depend on the correct
- * algorithm structure element to be passed (algorithms, algo_strength) and no
- * typechecking can be done as they are all of type unsigned long, their
- * direct usage is discouraged.
- * Use the SSL_C_* macros instead.
- */
-#define SSL_IS_EXPORT(a)	((a)&SSL_EXPORT)
-#define SSL_IS_EXPORT56(a)	((a)&SSL_EXP56)
-#define SSL_IS_EXPORT40(a)	((a)&SSL_EXP40)
-#define SSL_C_IS_EXPORT(c)	SSL_IS_EXPORT((c)->algo_strength)
-#define SSL_C_IS_EXPORT56(c)	SSL_IS_EXPORT56((c)->algo_strength)
-#define SSL_C_IS_EXPORT40(c)	SSL_IS_EXPORT40((c)->algo_strength)
-
-#define SSL_EXPORT_KEYLENGTH(a,s)	(SSL_IS_EXPORT40(s) ? 5 : \
-				 (a) == SSL_DES ? 8 : 7)
-#define SSL_EXPORT_PKEYLENGTH(a) (SSL_IS_EXPORT40(a) ? 512 : 1024)
-#define SSL_C_EXPORT_KEYLENGTH(c)	SSL_EXPORT_KEYLENGTH((c)->algorithm_enc, \
-				(c)->algo_strength)
-#define SSL_C_EXPORT_PKEYLENGTH(c)	SSL_EXPORT_PKEYLENGTH((c)->algo_strength)
 
 /* Check if an SSL structure is using DTLS. */
 #define SSL_IS_DTLS(s) (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
@@ -490,8 +441,6 @@ typedef struct cert_st {
 	int valid;
 	unsigned long mask_k;
 	unsigned long mask_a;
-	unsigned long export_mask_k;
-	unsigned long export_mask_a;
 	RSA *rsa_tmp;
 	RSA *(*rsa_tmp_cb)(SSL *ssl, int is_export, int keysize);
 	DH *dh_tmp;

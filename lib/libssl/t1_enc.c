@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.64 2014/07/08 16:05:52 beck Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.65 2014/07/09 11:25:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -375,21 +375,12 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
     const unsigned char *key, unsigned int key_len, const unsigned char *iv,
     unsigned int iv_len)
 {
-	static const unsigned char empty[] = "";
-	unsigned char export_tmp1[EVP_MAX_KEY_LENGTH];
-	unsigned char export_tmp2[EVP_MAX_KEY_LENGTH];
-	unsigned char export_iv1[EVP_MAX_IV_LENGTH * 2];
-	unsigned char export_iv2[EVP_MAX_IV_LENGTH * 2];
-	unsigned char *exp_label;
-	int exp_label_len;
 	EVP_CIPHER_CTX *cipher_ctx;
 	const EVP_CIPHER *cipher;
 	EVP_MD_CTX *mac_ctx;
 	const EVP_MD *mac;
 	int mac_type;
-	int is_export;
 
-	is_export = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	cipher = s->s3->tmp.new_sym_enc;
 	mac = s->s3->tmp.new_hash;
 	mac_type = s->s3->tmp.new_mac_pkey_type;
@@ -438,41 +429,6 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 		s->write_hash = mac_ctx;
 	}
 
-	if (is_export) {
-		/*
-		 * Both the read and write key/iv are set to the same value
-		 * since only the correct one will be used :-).
-		 */
-		if (use_client_keys) {
-			exp_label = TLS_MD_CLIENT_WRITE_KEY_CONST;
-			exp_label_len = TLS_MD_CLIENT_WRITE_KEY_CONST_SIZE;
-		} else {
-			exp_label = TLS_MD_SERVER_WRITE_KEY_CONST;
-			exp_label_len = TLS_MD_SERVER_WRITE_KEY_CONST_SIZE;
-		}
-		if (!tls1_PRF(ssl_get_algorithm2(s), exp_label, exp_label_len,
-		    s->s3->client_random, SSL3_RANDOM_SIZE,
-		    s->s3->server_random, SSL3_RANDOM_SIZE,
-		    NULL, 0, NULL, 0, key, key_len, export_tmp1, export_tmp2,
-		    EVP_CIPHER_key_length(cipher)))
-			goto err2;
-		key = export_tmp1;
-
-		if (iv_len > 0) {
-			if (!tls1_PRF(ssl_get_algorithm2(s),
-			    TLS_MD_IV_BLOCK_CONST, TLS_MD_IV_BLOCK_CONST_SIZE,
-			    s->s3->client_random, SSL3_RANDOM_SIZE,
-			    s->s3->server_random, SSL3_RANDOM_SIZE,
-			    NULL, 0, NULL, 0, empty, 0,
-			    export_iv1, export_iv2, iv_len * 2))
-				goto err2;
-			if (use_client_keys)
-				iv = export_iv1;
-			else
-				iv = &(export_iv1[iv_len]);
-		}
-	}
-
 	if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE) {
 		EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, NULL,
 		    !is_read);
@@ -494,18 +450,10 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 		    mac_secret_size, (unsigned char *)mac_secret);
 	}
 
-	if (is_export) {
-		OPENSSL_cleanse(export_tmp1, sizeof(export_tmp1));
-		OPENSSL_cleanse(export_tmp2, sizeof(export_tmp2));
-		OPENSSL_cleanse(export_iv1, sizeof(export_iv1));
-		OPENSSL_cleanse(export_iv2, sizeof(export_iv2));
-	}
-
 	return (1);
 
 err:
 	SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE_CIPHER, ERR_R_MALLOC_FAILURE);
-err2:
 	return (0);
 }
 
@@ -521,13 +469,11 @@ tls1_change_cipher_state(SSL *s, int which)
 	const EVP_CIPHER *cipher;
 	const EVP_AEAD *aead;
 	char is_read, use_client_keys;
-	int is_export;
 
 #ifndef OPENSSL_NO_COMP
 	const SSL_COMP *comp;
 #endif
 
-	is_export = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	cipher = s->s3->tmp.new_sym_enc;
 	aead = s->s3->tmp.new_aead;
 
@@ -597,10 +543,6 @@ tls1_change_cipher_state(SSL *s, int which)
 	} else {
 		key_len = EVP_CIPHER_key_length(cipher);
 		iv_len = EVP_CIPHER_iv_length(cipher);
-
-		if (is_export &&
-		    key_len > SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher))
-			key_len = SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher);
 
 		/* If GCM mode only part of IV comes from PRF. */
 		if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE)
@@ -699,10 +641,6 @@ tls1_setup_key_block(SSL *s)
 		}
 		key_len = EVP_CIPHER_key_length(cipher);
 		iv_len = EVP_CIPHER_iv_length(cipher);
-
-		if (SSL_C_IS_EXPORT(s->session->cipher) &&
-                    key_len > SSL_C_EXPORT_KEYLENGTH(s->session->cipher))
-                        key_len = SSL_C_EXPORT_KEYLENGTH(s->session->cipher);
 
 		/* If GCM mode only part of IV comes from PRF. */ 
 		if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE)

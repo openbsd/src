@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.56 2014/06/13 13:28:53 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.57 2014/07/09 11:25:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -222,12 +222,9 @@ extern "C" {
 
 /* These are used to specify which ciphers to use and not to use */
 
-#define SSL_TXT_EXP40		"EXPORT40"
-#define SSL_TXT_EXP56		"EXPORT56"
 #define SSL_TXT_LOW		"LOW"
 #define SSL_TXT_MEDIUM		"MEDIUM"
 #define SSL_TXT_HIGH		"HIGH"
-#define SSL_TXT_FIPS		"FIPS"
 
 #define SSL_TXT_kFZA		"kFZA" /* unused! */
 #define	SSL_TXT_aFZA		"aFZA" /* unused! */

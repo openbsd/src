@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.39 2014/06/21 09:10:30 logan Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.40 2014/07/09 11:25:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -202,8 +202,6 @@ ssl_cert_dup(CERT *cert)
 	ret->valid = cert->valid;
 	ret->mask_k = cert->mask_k;
 	ret->mask_a = cert->mask_a;
-	ret->export_mask_k = cert->export_mask_k;
-	ret->export_mask_a = cert->export_mask_a;
 
 	if (cert->rsa_tmp != NULL) {
 		RSA_up_ref(cert->rsa_tmp);

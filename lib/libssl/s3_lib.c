@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.66 2014/07/09 11:10:51 bcook Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.67 2014/07/09 11:25:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -210,7 +210,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_enc = SSL_RC4,
 		.algorithm_mac = SSL_MD5,
 		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_EXPORT|SSL_EXP40,
+		.algo_strength = 0,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
 		.strength_bits = 40,
 		.alg_bits = 128,
@@ -258,7 +258,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_enc = SSL_RC2,
 		.algorithm_mac = SSL_MD5,
 		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_EXPORT|SSL_EXP40,
+		.algo_strength = 0,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
 		.strength_bits = 40,
 		.alg_bits = 128,
@@ -292,7 +292,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_enc = SSL_DES,
 		.algorithm_mac = SSL_SHA1,
 		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_EXPORT|SSL_EXP40,
+		.algo_strength = 0,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
 		.strength_bits = 40,
 		.alg_bits = 56,
@@ -341,7 +341,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_enc = SSL_DES,
 		.algorithm_mac = SSL_SHA1,
 		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_EXPORT|SSL_EXP40,
+		.algo_strength = 0,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
 		.strength_bits = 40,
 		.alg_bits = 56,
@@ -389,7 +389,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_enc = SSL_DES,
 		.algorithm_mac = SSL_SHA1,
 		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_EXPORT|SSL_EXP40,
+		.algo_strength = 0,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
 		.strength_bits = 40,
 		.alg_bits = 56,
@@ -438,7 +438,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_enc = SSL_DES,
 		.algorithm_mac = SSL_SHA1,
 		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_EXPORT|SSL_EXP40,
+		.algo_strength = 0,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
 		.strength_bits = 40,
 		.alg_bits = 56,
@@ -486,7 +486,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_enc = SSL_DES,
 		.algorithm_mac = SSL_SHA1,
 		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_EXPORT|SSL_EXP40,
+		.algo_strength = 0,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
 		.strength_bits = 40,
 		.alg_bits = 56,
@@ -534,7 +534,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_enc = SSL_RC4,
 		.algorithm_mac = SSL_MD5,
 		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_EXPORT|SSL_EXP40,
+		.algo_strength = 0,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
 		.strength_bits = 40,
 		.alg_bits = 128,
@@ -566,7 +566,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_enc = SSL_DES,
 		.algorithm_mac = SSL_SHA1,
 		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_EXPORT|SSL_EXP40,
+		.algo_strength = 0,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
 		.strength_bits = 40,
 		.alg_bits = 128,
@@ -2999,7 +2999,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	int ec_ok, ec_nid;
 	unsigned char ec_search1 = 0, ec_search2 = 0;
 	CERT *cert;
-	unsigned long alg_k, alg_a, mask_k, mask_a, emask_k, emask_a;
+	unsigned long alg_k, alg_a, mask_k, mask_a;
 
 	/* Let's see which ciphers we can support */
 	cert = s->cert;
@@ -3030,8 +3030,6 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 		ssl_set_cert_masks(cert, c);
 		mask_k = cert->mask_k;
 		mask_a = cert->mask_a;
-		emask_k = cert->export_mask_k;
-		emask_a = cert->export_mask_a;
 
 		alg_k = c->algorithm_mkey;
 		alg_a = c->algorithm_auth;
@@ -3042,11 +3040,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 			continue;
 #endif /* OPENSSL_NO_PSK */
 
-		if (SSL_C_IS_EXPORT(c)) {
-			ok = (alg_k & emask_k) && (alg_a & emask_a);
-		} else {
-			ok = (alg_k & mask_k) && (alg_a & mask_a);
-		}
+		ok = (alg_k & mask_k) && (alg_a & mask_a);
 
 		if (
 		/*

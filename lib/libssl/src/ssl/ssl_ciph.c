@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.56 2014/07/08 21:50:40 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.57 2014/07/09 11:25:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -526,25 +526,7 @@ static const SSL_CIPHER cipher_aliases[] = {
 		.algorithm_ssl = SSL_TLSV1_2,
 	},
 	
-	/* export flag */
-	{
-		.name = SSL_TXT_EXP,
-		.algo_strength = SSL_EXPORT,
-	},
-	{
-		.name = SSL_TXT_EXPORT,
-		.algo_strength = SSL_EXPORT,
-	},
-	
 	/* strength classes */
-	{
-		.name = SSL_TXT_EXP40,
-		.algo_strength = SSL_EXP40,
-	},
-	{
-		.name = SSL_TXT_EXP56,
-		.algo_strength = SSL_EXP56,
-	},
 	{
 		.name = SSL_TXT_LOW,
 		.algo_strength = SSL_LOW,
@@ -1214,8 +1196,6 @@ ssl_cipher_apply_rule(unsigned long cipher_id, unsigned long alg_mkey,
 				continue;
 			if (alg_ssl && !(alg_ssl & cp->algorithm_ssl))
 				continue;
-			if ((algo_strength & SSL_EXP_MASK) && !(algo_strength & SSL_EXP_MASK & cp->algo_strength))
-				continue;
 			if ((algo_strength & SSL_STRONG_MASK) && !(algo_strength & SSL_STRONG_MASK & cp->algo_strength))
 				continue;
 		}
@@ -1467,21 +1447,6 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 					}
 				} else
 					alg_mac = ca_list[j]->algorithm_mac;
-			}
-
-			if (ca_list[j]->algo_strength & SSL_EXP_MASK) {
-				if (algo_strength & SSL_EXP_MASK) {
-					algo_strength &=
-					    (ca_list[j]->algo_strength &
-					    SSL_EXP_MASK) | ~SSL_EXP_MASK;
-					if (!(algo_strength & SSL_EXP_MASK)) {
-						found = 0;
-						break;
-					}
-				} else
-					algo_strength |=
-					    ca_list[j]->algo_strength &
-					    SSL_EXP_MASK;
 			}
 
 			if (ca_list[j]->algo_strength & SSL_STRONG_MASK) {
@@ -1739,11 +1704,11 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 char *
 SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 {
-	int is_export, pkl, kl, l;
-	const char *ver, *exp_str;
+	int l;
+	const char *ver;
 	const char *kx, *au, *enc, *mac;
 	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, alg2;
-	static const char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s\n";
+	static const char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s\n";
 
 	alg_mkey = cipher->algorithm_mkey;
 	alg_auth = cipher->algorithm_auth;
@@ -1752,11 +1717,6 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	alg_ssl = cipher->algorithm_ssl;
 
 	alg2 = cipher->algorithm2;
-
-	is_export = SSL_C_IS_EXPORT(cipher);
-	pkl = SSL_C_EXPORT_PKEYLENGTH(cipher);
-	kl = SSL_C_EXPORT_KEYLENGTH(cipher);
-	exp_str = is_export?" export":"";
 
 	if (alg_ssl & SSL_SSLV2)
 		ver="SSLv2";
@@ -1769,7 +1729,7 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 
 	switch (alg_mkey) {
 	case SSL_kRSA:
-		kx = is_export?(pkl == 512 ? "RSA(512)" : "RSA(1024)"):"RSA";
+		kx = "RSA";
 		break;
 	case SSL_kDHr:
 		kx="DH/RSA";
@@ -1781,7 +1741,7 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		kx="KRB5";
 		break;
 	case SSL_kEDH:
-		kx = is_export?(pkl == 512 ? "DH(512)" : "DH(1024)"):"DH";
+		kx = "DH";
 		break;
 	case SSL_kECDHr:
 		kx="ECDH/RSA";
@@ -1834,17 +1794,16 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 
 	switch (alg_enc) {
 	case SSL_DES:
-		enc = (is_export && kl == 5)?"DES(40)":"DES(56)";
+		enc = "DES(56)";
 		break;
 	case SSL_3DES:
 		enc="3DES(168)";
 		break;
 	case SSL_RC4:
-		enc = is_export?(kl == 5 ? "RC4(40)" : "RC4(56)")
-		:((alg2&SSL2_CF_8_BYTE_ENC)?"RC4(64)":"RC4(128)");
+		enc = alg2 & SSL2_CF_8_BYTE_ENC ? "RC4(64)" : "RC4(128)";
 		break;
 	case SSL_RC2:
-		enc = is_export?(kl == 5 ? "RC2(40)" : "RC2(56)"):"RC2(128)";
+		enc = "RC2(128)";
 		break;
 	case SSL_IDEA:
 		enc="IDEA(128)";
@@ -1903,11 +1862,10 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	}
 
 	if (buf == NULL)
-		l = asprintf(&buf, format, cipher->name, ver, kx, au, enc,
-		    mac, exp_str);
+		l = asprintf(&buf, format, cipher->name, ver, kx, au, enc, mac);
 	else {
 		l = snprintf(buf, len, format, cipher->name, ver, kx, au, enc,
-		    mac, exp_str);
+		    mac);
 		if (l >= len)
 			l = -1;
 	}
