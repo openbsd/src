@@ -1,4 +1,4 @@
-/*	$OpenBSD: explicit_bzero.c,v 1.2 2014/07/09 14:26:59 bcook Exp $	*/
+/*	$OpenBSD: explicit_bzero.c,v 1.3 2014/07/09 18:02:24 matthew Exp $	*/
 /*
  * Copyright (c) 2014 Google Inc.
  *
@@ -25,8 +25,21 @@
 #define ASSERT_NE(a, b) assert((a) != (b))
 #define ASSERT_GE(a, b) assert((a) >= (b))
 
+static char altstack[SIGSTKSZ];
+
 static void
-call_on_stack(void (*fn)(int), void *stack, size_t stacklen)
+setup_stack(void)
+{
+	const stack_t sigstk = {
+		.ss_sp = altstack,
+		.ss_size = sizeof(altstack),
+	};
+
+	ASSERT_EQ(0, sigaltstack(&sigstk, NULL));
+}
+
+static void
+call_on_stack(void (*fn)(int))
 {
 	/*
 	 * This is a bit more complicated than strictly necessary, but
@@ -42,12 +55,7 @@ call_on_stack(void (*fn)(int), void *stack, size_t stacklen)
 		.sa_handler = fn,
 		.sa_flags = SA_ONSTACK,
 	};
-	const stack_t sigstk = {
-		.ss_sp = stack,
-		.ss_size = stacklen,
-	};
 	struct sigaction oldsigact;
-	stack_t oldsigstk;
 	sigset_t sigset, oldsigset;
 
 	/* First, block all signals. */
@@ -55,8 +63,7 @@ call_on_stack(void (*fn)(int), void *stack, size_t stacklen)
 	ASSERT_EQ(0, sigfillset(&sigset));
 	ASSERT_EQ(0, sigprocmask(SIG_BLOCK, &sigset, &oldsigset));
 
-	/* Next setup the signal stack and handler for SIGUSR1. */
-	ASSERT_EQ(0, sigaltstack(&sigstk, &oldsigstk));
+	/* Next setup the signal handler for SIGUSR1. */
 	ASSERT_EQ(0, sigaction(SIGUSR1, &sigact, &oldsigact));
 
 	/* Raise SIGUSR1 and momentarily unblock it to run the handler. */
@@ -67,8 +74,6 @@ call_on_stack(void (*fn)(int), void *stack, size_t stacklen)
 
 	/* Restore the original signal action, stack, and mask. */
 	ASSERT_EQ(0, sigaction(SIGUSR1, &oldsigact, NULL));
-	if (oldsigstk.ss_flags & SA_ONSTACK)
-		ASSERT_EQ(0, sigaltstack(&oldsigstk, NULL));
 	ASSERT_EQ(0, sigprocmask(SIG_SETMASK, &oldsigset, NULL));
 }
 
@@ -112,11 +117,11 @@ test_with_bzero(int signo)
 	explicit_bzero(buf, sizeof(buf));
 }
 
-static char altstack[SIGSTKSZ];
-
 int
 main()
 {
+	setup_stack();
+
 	/*
 	 * First, test that if we *don't* call explicit_bzero, that we
 	 * *are* able to find the secret data on the stack.  This
@@ -124,7 +129,7 @@ main()
 	 * work as intended.
 	 */
 	memset(altstack, 0, sizeof(altstack));
-	call_on_stack(test_without_bzero, altstack, sizeof(altstack));
+	call_on_stack(test_without_bzero);
 	ASSERT_NE(NULL, memmem(altstack, sizeof(altstack), secret, sizeof(secret)));
 
 	/*
@@ -132,7 +137,7 @@ main()
 	 * *don't* find the secret data.
 	 */
 	memset(altstack, 0, sizeof(altstack));
-	call_on_stack(test_with_bzero, altstack, sizeof(altstack));
+	call_on_stack(test_with_bzero);
 	ASSERT_EQ(NULL, memmem(altstack, sizeof(altstack), secret, sizeof(secret)));
 
 	return (0);
