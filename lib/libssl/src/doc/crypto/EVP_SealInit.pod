@@ -55,9 +55,6 @@ failure.
 
 =head1 NOTES
 
-Because a random secret key is generated the random number generator
-must be seeded before calling EVP_SealInit().
-
 The public key must be RSA because it is the only OpenSSL public key
 algorithm that supports key transport.
 

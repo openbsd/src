@@ -56,9 +56,6 @@ and public key algorithms. This meant that "clone" digests such as EVP_dss1()
 needed to be used to sign using SHA1 and DSA. This is no longer necessary and
 the use of clone digest is now discouraged.
 
-For some key types and parameters the random number generator must be seeded
-or the operation will fail.
-
 The call to EVP_DigestSignFinal() internally finalizes a copy of the digest
 context. This means that calls to EVP_DigestSignUpdate() and
 EVP_DigestSignFinal() can be called later to digest and sign additional data.

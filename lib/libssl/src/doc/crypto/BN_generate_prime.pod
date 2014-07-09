@@ -55,7 +55,6 @@ generator.
 If B<safe> is true, it will be a safe prime (i.e. a prime p so
 that (p-1)/2 is also prime).
 
-The PRNG must be seeded prior to calling BN_generate_prime().
 The prime number generation has a negligible error probability.
 
 BN_is_prime() and BN_is_prime_fasttest() test if the number B<a> is

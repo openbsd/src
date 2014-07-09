@@ -60,10 +60,6 @@ digest algorithm must be used with the correct public key type. A list of
 algorithms and associated public key algorithms appears in
 L<EVP_DigestInit(3)|EVP_DigestInit(3)>.
 
-When signing with DSA private keys the random number generator must be seeded
-or the operation will fail. The random number generator does not need to be
-seeded for RSA signatures.
-
 The call to EVP_SignFinal() internally finalizes a copy of the digest context.
 This means that calls to EVP_SignUpdate() and EVP_SignFinal() can be called
 later to digest and sign additional data.

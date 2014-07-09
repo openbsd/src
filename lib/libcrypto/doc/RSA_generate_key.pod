@@ -14,8 +14,7 @@ RSA_generate_key - generate RSA key pair
 =head1 DESCRIPTION
 
 RSA_generate_key() generates a key pair and returns it in a newly
-allocated B<RSA> structure. The pseudo-random number generator must
-be seeded prior to calling RSA_generate_key().
+allocated B<RSA> structure.
 
 The modulus size will be B<num> bits, and the public exponent will be
 B<e>. Key sizes with B<num> E<lt> 1024 should be considered insecure.

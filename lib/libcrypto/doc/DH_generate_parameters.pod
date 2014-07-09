@@ -17,8 +17,7 @@ DH_generate_parameters, DH_check - generate and check Diffie-Hellman parameters
 
 DH_generate_parameters() generates Diffie-Hellman parameters that can
 be shared among a group of users, and returns them in a newly
-allocated B<DH> structure. The pseudo-random number generator must be
-seeded prior to calling DH_generate_parameters().
+allocated B<DH> structure.
 
 B<prime_len> is the length in bits of the safe prime to be generated.
 B<generator> is a small number E<gt> 1, typically 2 or 5.
