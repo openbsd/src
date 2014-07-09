@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.214 2014/07/08 20:14:46 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.215 2014/07/09 12:44:54 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -155,6 +155,9 @@ struct smtp_session {
 #define ADVERTISE_AUTH(s) \
 	((s)->listener->flags & F_AUTH && (s)->flags & SF_SECURE && \
 	 !((s)->flags & SF_AUTHENTICATED))
+
+#define ADVERTISE_EXT_DSN(s) \
+	((s)->listener->flags & F_EXT_DSN)
 
 static int smtp_mailaddr(struct mailaddr *, char *, int, char **, const char *);
 static void smtp_session_init(void);
@@ -686,7 +689,8 @@ smtp_mfa_response(struct smtp_session *s, int msg, int status, uint32_t code,
 			smtp_reply(s, "250-8BITMIME");
 			smtp_reply(s, "250-ENHANCEDSTATUSCODES");
 			smtp_reply(s, "250-SIZE %zu", env->sc_maxsize);
-			smtp_reply(s, "250-DSN");
+			if (ADVERTISE_EXT_DSN(s))
+				smtp_reply(s, "250-DSN");
 			if (ADVERTISE_TLS(s))
 				smtp_reply(s, "250-STARTTLS");
 			if (ADVERTISE_AUTH(s))
@@ -1394,7 +1398,7 @@ smtp_parse_rcpt_args(struct smtp_session *s, char *args)
 		if (*b == '\0')
 			continue;
 		
-		if (strncasecmp(b, "NOTIFY=", 7) == 0) {
+		if (ADVERTISE_EXT_DSN(s) && strncasecmp(b, "NOTIFY=", 7) == 0) {
 			b += 7;
 			while ((p = strsep(&b, ","))) {
 				if (*p == '\0')
@@ -1413,7 +1417,7 @@ smtp_parse_rcpt_args(struct smtp_session *s, char *args)
 				    combined with other options");
 				return (-1);
 			}
-		} else if (strncasecmp(b, "ORCPT=", 6) == 0) {
+		} else if (ADVERTISE_EXT_DSN(s) && strncasecmp(b, "ORCPT=", 6) == 0) {
 			b += 6;
 			if (!text_to_mailaddr(&s->evp.dsn_orcpt, b)) {
 				smtp_reply(s, "553 ORCPT address syntax error");
@@ -1446,13 +1450,13 @@ smtp_parse_mail_args(struct smtp_session *s, char *args)
 			s->flags &= ~SF_8BITMIME;
 		else if (strcasecmp(b, "BODY=8BITMIME") == 0)
 			;
-		else if (strncasecmp(b, "RET=", 4) == 0) {
+		else if (ADVERTISE_EXT_DSN(s) && strncasecmp(b, "RET=", 4) == 0) {
 			b += 4;
 			if (strcasecmp(b, "HDRS") == 0)
 				s->evp.dsn_ret = DSN_RETHDRS;
 			else if (strcasecmp(b, "FULL") == 0)
 				s->evp.dsn_ret = DSN_RETFULL;
-		} else if (strncasecmp(b, "ENVID=", 6) == 0) {
+		} else if (ADVERTISE_EXT_DSN(s) && strncasecmp(b, "ENVID=", 6) == 0) {
 			b += 6;
 			if (strlcpy(s->evp.dsn_envid, b, sizeof(s->evp.dsn_envid))
 			    >= sizeof(s->evp.dsn_envid)) {

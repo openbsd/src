@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.145 2014/07/09 09:53:37 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.146 2014/07/09 12:44:54 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -109,6 +109,7 @@ enum listen_options {
 	LO_HOSTNAME   	= 0x80,
 	LO_HOSTNAMES   	= 0x100,
 	LO_MASKSOURCE  	= 0x200,
+	LO_NODSN	= 0x400,
 };
 
 static struct listen_opts {
@@ -159,7 +160,7 @@ typedef struct {
 %}
 
 %token	AS QUEUE COMPRESSION ENCRYPTION MAXMESSAGESIZE MAXMTADEFERRED LISTEN ON ANY PORT EXPIRE
-%token	TABLE SECURE SMTPS CERTIFICATE DOMAIN BOUNCEWARN LIMIT INET4 INET6
+%token	TABLE SECURE SMTPS CERTIFICATE DOMAIN BOUNCEWARN LIMIT INET4 INET6 NODSN
 %token  RELAY BACKUP VIA DELIVER TO LMTP MAILDIR MBOX HOSTNAME HOSTNAMES
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR SOURCE MTA PKI SCHEDULER
 %token	ARROW AUTH TLS LOCAL VIRTUAL TAG TAGGED ALIAS FILTER KEY CA DHPARAMS
@@ -558,6 +559,14 @@ opt_listen     	: INET4			{
 			listen_opts.options |= LO_MASKSOURCE;
 			listen_opts.flags |= F_MASK_SOURCE;
 		}
+		| NODSN	{
+			if (listen_opts.options & LO_NODSN) {
+				yyerror("no-dsn already specified");
+				YYERROR;	
+			}
+			listen_opts.options |= LO_NODSN;
+			listen_opts.flags &= ~F_EXT_DSN;
+		}
 		;
 
 listen		: opt_listen listen
@@ -740,6 +749,7 @@ main		: BOUNCEWARN {
 			memset(&l, 0, sizeof l);
 			memset(&listen_opts, 0, sizeof listen_opts);
 			listen_opts.family = AF_UNSPEC;
+			listen_opts.flags |= F_EXT_DSN;
 		} ON STRING listen {
 			listen_opts.ifx = $4;
 			create_listener(conf->sc_listeners, &listen_opts);
@@ -1289,6 +1299,7 @@ lookup(char *s)
 		{ "mbox",		MBOX },
 		{ "mda",		MDA },
 		{ "mta",		MTA },
+		{ "no-dsn",		NODSN },
 		{ "on",			ON },
 		{ "pki",		PKI },
 		{ "port",		PORT },
