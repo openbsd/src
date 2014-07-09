@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.59 2014/06/25 16:21:20 mikeb Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.60 2014/07/09 11:03:04 henning Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -85,6 +85,7 @@ int	pflogioctl(struct ifnet *, u_long, caddr_t);
 void	pflogstart(struct ifnet *);
 int	pflog_clone_create(struct if_clone *, int);
 int	pflog_clone_destroy(struct ifnet *);
+void	pflog_bpfcopy(const void *, void *, size_t);
 
 LIST_HEAD(, pflog_softc)	pflogif_list;
 struct if_clone	pflog_cloner =
@@ -298,7 +299,8 @@ pflog_packet(struct pf_pdesc *pd, u_int8_t reason, struct pf_rule *rm,
 	ifn->if_opackets++;
 	ifn->if_obytes += pd->m->m_pkthdr.len;
 
-	bpf_mtap_pflog(ifn->if_bpf, (caddr_t)&hdr, pd->m);
+	bpf_mtap_hdr(ifn->if_bpf, (caddr_t)&hdr, PFLOG_HDRLEN, pd->m,
+	    BPF_DIRECTION_OUT, pflog_bpfcopy);
 #endif
 
 	return (0);

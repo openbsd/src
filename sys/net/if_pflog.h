@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pflog.h,v 1.24 2013/06/25 09:16:34 mpi Exp $ */
+/* $OpenBSD: if_pflog.h,v 1.25 2014/07/09 11:03:04 henning Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -66,8 +66,6 @@ struct pflog_softc {
 	int			sc_unit;
 	LIST_ENTRY(pflog_softc)	sc_list;
 };
-
-void	pflog_bpfcopy(const void *, void *, size_t);
 
 #if NPFLOG > 0
 #define	PFLOG_PACKET(a,b,c,d,e) pflog_packet(a,b,c,d,e)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.94 2014/07/09 09:30:49 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.95 2014/07/09 11:03:04 henning Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1296,19 +1296,6 @@ bpf_mtap_ether(caddr_t arg, struct mbuf *m, u_int direction)
 	m->m_data -= ETHER_HDR_LEN;
 #endif
 }
-
-void
-bpf_mtap_pflog(caddr_t arg, caddr_t data, struct mbuf *m)
-{
-#if NPFLOG > 0
-	if (m == NULL)
-		return;
-
-	bpf_mtap_hdr(arg, data, PFLOG_HDRLEN, m, BPF_DIRECTION_OUT,
-	    pflog_bpfcopy);
-#endif
-}
-
 
 /*
  * Move the packet data from interface memory (pkt) into the
