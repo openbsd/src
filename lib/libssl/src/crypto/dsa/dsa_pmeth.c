@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_pmeth.c,v 1.7 2014/07/09 10:16:24 miod Exp $ */
+/* $OpenBSD: dsa_pmeth.c,v 1.8 2014/07/09 11:08:31 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -182,9 +182,12 @@ pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		return 1;
 
 	case EVP_PKEY_CTRL_DSA_PARAMGEN_MD:
-		if (EVP_MD_type((const EVP_MD *)p2) != NID_sha1 &&
-		    EVP_MD_type((const EVP_MD *)p2) != NID_sha224 &&
-		    EVP_MD_type((const EVP_MD *)p2) != NID_sha256) {
+		switch (EVP_MD_type((const EVP_MD *)p2)) {
+		case NID_sha1:
+		case NID_sha224:
+		case NID_sha256:
+			break;
+		default:
 			DSAerr(DSA_F_PKEY_DSA_CTRL, DSA_R_INVALID_DIGEST_TYPE);
 			return 0;
 		}
@@ -192,13 +195,16 @@ pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		return 1;
 
 	case EVP_PKEY_CTRL_MD:
-		if (EVP_MD_type((const EVP_MD *)p2) != NID_sha1 &&
-		    EVP_MD_type((const EVP_MD *)p2) != NID_dsa &&
-		    EVP_MD_type((const EVP_MD *)p2) != NID_dsaWithSHA &&
-		    EVP_MD_type((const EVP_MD *)p2) != NID_sha224 &&
-		    EVP_MD_type((const EVP_MD *)p2) != NID_sha256 &&
-		    EVP_MD_type((const EVP_MD *)p2) != NID_sha384 &&
-		    EVP_MD_type((const EVP_MD *)p2) != NID_sha512) {
+		switch (EVP_MD_type((const EVP_MD *)p2)) {
+		case NID_sha1:
+		case NID_dsa:
+		case NID_dsaWithSHA:
+		case NID_sha224:
+		case NID_sha256:
+		case NID_sha384:
+		case NID_sha512:
+			break;
+		default:
 			DSAerr(DSA_F_PKEY_DSA_CTRL, DSA_R_INVALID_DIGEST_TYPE);
 			return 0;
 		}
