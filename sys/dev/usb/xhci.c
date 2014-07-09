@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.13 2014/05/21 12:31:53 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.14 2014/07/09 15:54:39 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -81,6 +81,7 @@ void	xhci_event_xfer(struct xhci_softc *, uint64_t, uint32_t, uint32_t);
 void	xhci_event_command(struct xhci_softc *, uint64_t);
 void	xhci_event_port_change(struct xhci_softc *, uint64_t, uint32_t);
 int	xhci_pipe_init(struct xhci_softc *, struct usbd_pipe *, uint32_t);
+int	xhci_device_setup(struct xhci_softc *, struct usbd_device *, uint8_t);
 int	xhci_scratchpad_alloc(struct xhci_softc *, int);
 void	xhci_scratchpad_free(struct xhci_softc *);
 int	xhci_softdev_alloc(struct xhci_softc *, uint8_t);
@@ -103,7 +104,7 @@ void	xhci_cmd_set_tr_deq_async(struct xhci_softc *, uint8_t, uint8_t, uint64_t);
 int	xhci_cmd_configure_ep(struct xhci_softc *, uint8_t, uint64_t);
 int	xhci_cmd_stop_ep(struct xhci_softc *, uint8_t, uint8_t);
 int	xhci_cmd_slot_control(struct xhci_softc *, uint8_t *, int);
-int	xhci_cmd_address_device(struct xhci_softc *,uint8_t,  uint64_t, int);
+int	xhci_cmd_address_device(struct xhci_softc *,uint8_t,  uint64_t);
 int	xhci_cmd_evaluate_ctx(struct xhci_softc *, uint8_t, uint64_t);
 #ifdef XHCI_DEBUG
 int	xhci_cmd_noop(struct xhci_softc *);
@@ -935,6 +936,41 @@ xhci_endpoint_txinfo(struct xhci_softc *sc, usb_endpoint_descriptor_t *ed)
 }
 
 int
+xhci_device_setup(struct xhci_softc *sc, struct usbd_device *dev, uint8_t slot)
+{
+	struct xhci_soft_dev *sdev = &sc->sc_sdevs[slot];
+	struct xhci_sctx *sctx;
+	uint8_t addr;
+	int error;
+
+	/*
+	 * Issue only one Set address to set up the slot context and
+	 * assign an address.
+	 */
+	error = xhci_cmd_address_device(sc, slot, DMAADDR(&sdev->ictx_dma, 0));
+	if (error)
+		return (error);
+
+	usb_syncmem(&sdev->octx_dma, 0, sc->sc_pagesize,
+	    BUS_DMASYNC_POSTREAD);
+
+	/* Get output slot context. */
+	sctx = KERNADDR(&sdev->octx_dma, 0);
+	addr = XHCI_SCTX_DEV_ADDR(letoh32(sctx->state));
+	if (addr == 0)
+		return (EINVAL);
+
+	DPRINTF(("%s: dev %d new addr %d\n", DEVNAME(sc), slot, addr));
+
+	dev->address = addr;
+	dev->bus->devices[addr] = dev;
+
+	return (0);
+}
+
+
+
+int
 xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
 {
 	struct xhci_pipe *xp = (struct xhci_pipe *)pipe;
@@ -1027,45 +1063,15 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
 
 	usb_syncmem(&sdev->ictx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
 
-	if (xp->dci == 1) {
-		error = xhci_cmd_address_device(sc, xp->slot,
-		    DMAADDR(&sdev->ictx_dma, 0), 1 /* XXX see below */);
-		if (error)
-			return (error);
-		/*
-		 * XXX Set the address.  This is ugly and is not
-		 * adapted to our stack.  But the whole idea of
-		 * reopening the default pipes should be revisited
-		 * anyway...
-		 */
-#if 1
-		struct usbd_device *dev = pipe->device;
-		struct xhci_sctx *slot;
-		uint8_t addr;
-
-		usb_syncmem(&sdev->octx_dma, 0, sc->sc_pagesize,
-		    BUS_DMASYNC_POSTREAD);
-
-		/* Get output slot context. */
-		slot = KERNADDR(&sdev->octx_dma, 0);
-		addr = XHCI_SCTX_DEV_ADDR(letoh32(slot->state));
-		if (addr == 0)
-			return (EINVAL);
-
-		DPRINTF(("%s: dev %d new addr %d (old %d)\n", DEVNAME(sc),
-		    xp->slot, addr, dev->address));
-
-		dev->bus->devices[dev->address] = 0;
-		dev->bus->devices[addr] = dev;
-		dev->address = addr;
-#endif
-	} else {
+	if (xp->dci == 1)
+		error = xhci_device_setup(sc, pipe->device, xp->slot);
+	else
 		error = xhci_cmd_configure_ep(sc, xp->slot,
 		    DMAADDR(&sdev->ictx_dma, 0));
-		if (error) {
-			xhci_ring_free(sc, &xp->ring);
-			return (EIO);
-		}
+
+	if (error) {
+		xhci_ring_free(sc, &xp->ring);
+		return (EIO);
 	}
 
 	usb_syncmem(&sdev->octx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_POSTREAD);
@@ -1476,8 +1482,7 @@ xhci_cmd_slot_control(struct xhci_softc *sc, uint8_t *slotp, int enable)
 }
 
 int
-xhci_cmd_address_device(struct xhci_softc *sc, uint8_t slot, uint64_t addr,
-    int set_address)
+xhci_cmd_address_device(struct xhci_softc *sc, uint8_t slot, uint64_t addr)
 {
 	struct xhci_trb trb;
 
@@ -1486,8 +1491,7 @@ xhci_cmd_address_device(struct xhci_softc *sc, uint8_t slot, uint64_t addr,
 	trb.trb_paddr = htole64(addr);
 	trb.trb_status = 0;
 	trb.trb_flags = htole32(
-	    XHCI_TRB_SET_SLOT(slot) | (set_address ? 0 : XHCI_TRB_BSR) |
-	    XHCI_CMD_ADDRESS_DEVICE
+	    XHCI_TRB_SET_SLOT(slot) | XHCI_CMD_ADDRESS_DEVICE
 	);
 
 	return (xhci_command_submit(sc, &trb, XHCI_COMMAND_TIMEOUT));
