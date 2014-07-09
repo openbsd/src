@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpustate.h,v 1.9 2012/09/29 19:02:25 miod Exp $ */
+/*	$OpenBSD: cpustate.h,v 1.10 2014/07/09 12:58:08 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -54,18 +54,18 @@
 	SAVE_REG(a2, A2, frame, bo)		;\
 	SAVE_REG(a3, A3, frame, bo)		;\
 	MFC0	a0, COP_0_CAUSE_REG		;\
-	SAVE_REG($8, T0, frame, bo)		;\
-	SAVE_REG($9, T1, frame, bo)		;\
+	SAVE_REG(a4, A4, frame, bo)		;\
+	SAVE_REG(a5, A5, frame, bo)		;\
 	MFC0	a1, COP_0_STATUS_REG		;\
-	SAVE_REG($10, T2, frame, bo)		;\
-	SAVE_REG($11, T3, frame, bo)		;\
+	SAVE_REG(a6, A6, frame, bo)		;\
+	SAVE_REG(a7, A7, frame, bo)		;\
 	PRE_MFC0_ADDR_HAZARD			;\
 	DMFC0	a2, COP_0_BAD_VADDR		;\
-	SAVE_REG($12, T4, frame, bo)		;\
-	SAVE_REG($13, T5, frame, bo)		;\
+	SAVE_REG(t0, T0, frame, bo)		;\
+	SAVE_REG(t1, T1, frame, bo)		;\
 	DMFC0	a3, COP_0_EXC_PC		;\
-	SAVE_REG($14, T6, frame, bo)		;\
-	SAVE_REG($15, T7, frame, bo)		;\
+	SAVE_REG(t2, T2, frame, bo)		;\
+	SAVE_REG(t3, T3, frame, bo)		;\
 	SAVE_REG(t8, T8, frame, bo)		;\
 	SAVE_REG(t9, T9, frame, bo)		;\
 	SAVE_REG(gp, GP, frame, bo)		;\
@@ -118,14 +118,14 @@
 	RESTORE_REG(a1, A1, frame, bo)		;\
 	RESTORE_REG(a2, A2, frame, bo)		;\
 	RESTORE_REG(a3, A3, frame, bo)		;\
-	RESTORE_REG($8, T0, frame, bo)		;\
-	RESTORE_REG($9, T1, frame, bo)		;\
-	RESTORE_REG($10, T2, frame, bo)		;\
-	RESTORE_REG($11, T3, frame, bo)		;\
-	RESTORE_REG($12, T4, frame, bo)		;\
-	RESTORE_REG($13, T5, frame, bo)		;\
-	RESTORE_REG($14, T6, frame, bo)		;\
-	RESTORE_REG($15, T7, frame, bo)		;\
+	RESTORE_REG(a4, A4, frame, bo)		;\
+	RESTORE_REG(a5, A5, frame, bo)		;\
+	RESTORE_REG(a6, A6, frame, bo)		;\
+	RESTORE_REG(a7, A7, frame, bo)		;\
+	RESTORE_REG(t0, T0, frame, bo)		;\
+	RESTORE_REG(t1, T1, frame, bo)		;\
+	RESTORE_REG(t2, T2, frame, bo)		;\
+	RESTORE_REG(t3, T3, frame, bo)		;\
 	RESTORE_REG(t8, T8, frame, bo)		;\
 	RESTORE_REG(t9, T9, frame, bo)		;\
 	RESTORE_REG(gp, GP, frame, bo)		;\

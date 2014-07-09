@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.5 2009/10/22 22:08:52 miod Exp $ */
+/*	$OpenBSD: frame.h,v 1.6 2014/07/09 12:58:08 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -41,18 +41,14 @@ struct trap_frame {
 	register_t	a1;
 	register_t	a2;
 	register_t	a3;
+	register_t	a4; /* ta0 */
+	register_t	a5; /* ta1 */
+	register_t	a6; /* ta2 */
+	register_t	a7; /* ta3 */
 	register_t	t0;
 	register_t	t1;
 	register_t	t2;
 	register_t	t3;
-#define	a4 t0
-#define a5 t1
-#define a6 t2
-#define a7 t3
-	register_t	t4;
-	register_t	t5;
-	register_t	t6;
-	register_t	t7;
 	register_t	s0;
 	register_t	s1;
 	register_t	s2;

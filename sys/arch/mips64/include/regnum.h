@@ -1,4 +1,4 @@
-/*	$OpenBSD: regnum.h,v 1.3 2004/08/10 20:28:13 deraadt Exp $ */
+/*	$OpenBSD: regnum.h,v 1.4 2014/07/09 12:58:08 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -41,14 +41,14 @@
 #define A1	5
 #define A2	6
 #define A3	7
-#define T0	8
-#define T1	9
-#define T2	10
-#define T3	11
-#define T4	12
-#define T5	13
-#define T6	14
-#define T7	15
+#define A4	8
+#define A5	9
+#define A6	10
+#define A7	11
+#define T0	12
+#define T1	13
+#define T2	14
+#define T3	15
 #define S0	16
 #define S1	17
 #define S2	18

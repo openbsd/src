@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.40 2014/05/19 21:18:42 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.41 2014/07/09 12:58:08 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -94,14 +94,14 @@ struct db_variable db_regs[] = {
     { "a1",  (long *)&ddb_regs.a1,      FCN_NULL },
     { "a2",  (long *)&ddb_regs.a2,      FCN_NULL },
     { "a3",  (long *)&ddb_regs.a3,      FCN_NULL },
-    { "a4",  (long *)&ddb_regs.t0,      FCN_NULL },
-    { "a5",  (long *)&ddb_regs.t1,      FCN_NULL },
-    { "a6",  (long *)&ddb_regs.t2,      FCN_NULL },
-    { "a7",  (long *)&ddb_regs.t3,      FCN_NULL },
-    { "t0",  (long *)&ddb_regs.t4,      FCN_NULL },
-    { "t1",  (long *)&ddb_regs.t5,      FCN_NULL },
-    { "t2",  (long *)&ddb_regs.t6,      FCN_NULL },
-    { "t3",  (long *)&ddb_regs.t7,      FCN_NULL },
+    { "a4",  (long *)&ddb_regs.a4,      FCN_NULL },
+    { "a5",  (long *)&ddb_regs.a5,      FCN_NULL },
+    { "a6",  (long *)&ddb_regs.a6,      FCN_NULL },
+    { "a7",  (long *)&ddb_regs.a7,      FCN_NULL },
+    { "t0",  (long *)&ddb_regs.t0,      FCN_NULL },
+    { "t1",  (long *)&ddb_regs.t1,      FCN_NULL },
+    { "t2",  (long *)&ddb_regs.t2,      FCN_NULL },
+    { "t3",  (long *)&ddb_regs.t3,      FCN_NULL },
     { "s0",  (long *)&ddb_regs.s0,      FCN_NULL },
     { "s1",  (long *)&ddb_regs.s1,      FCN_NULL },
     { "s2",  (long *)&ddb_regs.s2,      FCN_NULL },
