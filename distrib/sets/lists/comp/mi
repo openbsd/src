@@ -1,14 +1,12 @@
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
-./usr/bin/asa
 ./usr/bin/c++
 ./usr/bin/c++filt
 ./usr/bin/cc
 ./usr/bin/cpp
 ./usr/bin/flex
 ./usr/bin/flex++
-./usr/bin/fpr
 ./usr/bin/g++
 ./usr/bin/gcc
 ./usr/bin/gcov
@@ -1636,12 +1634,10 @@
 ./usr/share/man/man1/addr2line.1
 ./usr/share/man/man1/ar.1
 ./usr/share/man/man1/as.1
-./usr/share/man/man1/asa.1
 ./usr/share/man/man1/c++.1
 ./usr/share/man/man1/c++filt.1
 ./usr/share/man/man1/cc.1
 ./usr/share/man/man1/flex.1
-./usr/share/man/man1/fpr.1
 ./usr/share/man/man1/g++.1
 ./usr/share/man/man1/gcc-local.1
 ./usr/share/man/man1/gcc.1
