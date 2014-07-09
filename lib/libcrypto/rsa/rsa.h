@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.21 2014/07/09 19:51:31 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.22 2014/07/09 20:05:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -165,47 +165,53 @@ struct rsa_st {
 #define RSA_3	0x3L
 #define RSA_F4	0x10001L
 
-#define RSA_METHOD_FLAG_NO_CHECK	0x0001 /* don't check pub/private match */
+/* Don't check pub/private match. */
+#define RSA_METHOD_FLAG_NO_CHECK	0x0001
 
 #define RSA_FLAG_CACHE_PUBLIC		0x0002
 #define RSA_FLAG_CACHE_PRIVATE		0x0004
 #define RSA_FLAG_BLINDING		0x0008
 #define RSA_FLAG_THREAD_SAFE		0x0010
-/* This flag means the private key operations will be handled by rsa_mod_exp
+
+/*
+ * This flag means the private key operations will be handled by rsa_mod_exp
  * and that they do not depend on the private key components being present:
  * for example a key stored in external hardware. Without this flag bn_mod_exp
  * gets called when private key components are absent.
  */
 #define RSA_FLAG_EXT_PKEY		0x0020
 
-/* This flag in the RSA_METHOD enables the new rsa_sign, rsa_verify functions.
+/*
+ * This flag in the RSA_METHOD enables the new rsa_sign, rsa_verify functions.
  */
 #define RSA_FLAG_SIGN_VER		0x0040
 
-#define RSA_FLAG_NO_BLINDING		0x0080 /* new with 0.9.6j and 0.9.7b; the built-in
-                                                * RSA implementation now uses blinding by
-                                                * default (ignoring RSA_FLAG_BLINDING),
-                                                * but other engines might not need it
-                                                */
-#define RSA_FLAG_NO_CONSTTIME		0x0100 /* new with 0.9.8f; the built-in RSA
-						* implementation now uses constant time
-						* operations by default in private key operations,
-						* e.g., constant time modular exponentiation,
-                                                * modular inverse without leaking branches,
-                                                * division without leaking branches. This
-                                                * flag disables these constant time
-                                                * operations and results in faster RSA
-                                                * private key operations.
-                                                */
+/*
+ * New with 0.9.6j and 0.9.7b; the built-in RSA implementation now uses
+ * blinding by default (ignoring RSA_FLAG_BLINDING), but other engines might
+ * not need it.
+ */
+#define RSA_FLAG_NO_BLINDING		0x0080
+
+/*
+ * New with 0.9.8f; the built-in RSA implementation now uses constant time
+ * operations by default in private key operations, e.g., constant time modular
+ * exponentiation, modular inverse without leaking branches, division without
+ * leaking branches. This flag disables these constant time operations and
+ * results in faster RSA private key operations.
+ */
+#define RSA_FLAG_NO_CONSTTIME		0x0100
+
 #ifndef OPENSSL_NO_DEPRECATED
-#define RSA_FLAG_NO_EXP_CONSTTIME RSA_FLAG_NO_CONSTTIME /* deprecated name for the flag*/
-                                                /* new with 0.9.7h; the built-in RSA
-                                                * implementation now uses constant time
-                                                * modular exponentiation for secret exponents
-                                                * by default. This flag causes the
-                                                * faster variable sliding window method to
-                                                * be used for all exponents.
-                                                */
+
+/* Deprecated name for the flag. */
+/*
+ * New with 0.9.7h; the built-in RSA implementation now uses constant time
+ * modular exponentiation for secret exponents by default. This flag causes
+ * the faster variable sliding window method to be used for all exponents.
+ */
+#define RSA_FLAG_NO_EXP_CONSTTIME RSA_FLAG_NO_CONSTTIME
+
 #endif
 
 
