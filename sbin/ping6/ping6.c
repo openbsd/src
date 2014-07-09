@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.92 2014/07/09 09:34:47 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.93 2014/07/09 09:35:51 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -208,9 +208,7 @@ char *scmsg = 0;
 
 volatile sig_atomic_t seenalrm;
 volatile sig_atomic_t seenint;
-#ifdef SIGINFO
 volatile sig_atomic_t seeninfo;
-#endif
 
 int	 main(int, char *[]);
 void	 fill(char *, char *);
@@ -834,9 +832,7 @@ main(int argc, char *argv[])
 		(void)pinger();
 
 	(void)signal(SIGINT, onsignal);
-#ifdef SIGINFO
 	(void)signal(SIGINFO, onsignal);
-#endif
 
 	if ((options & F_FLOOD) == 0) {
 		(void)signal(SIGALRM, onsignal);
@@ -848,9 +844,7 @@ main(int argc, char *argv[])
 	}
 
 	seenalrm = seenint = 0;
-#ifdef SIGINFO
 	seeninfo = 0;
-#endif
 
 	for (;;) {
 		struct msghdr	m;
@@ -874,13 +868,11 @@ main(int argc, char *argv[])
 			seenint = 0;
 			continue;
 		}
-#ifdef SIGINFO
 		if (seeninfo) {
 			summary(0);
 			seeninfo = 0;
 			continue;
 		}
-#endif
 
 		if (options & F_FLOOD) {
 			(void)pinger();
@@ -956,11 +948,9 @@ onsignal(int sig)
 	case SIGINT:
 		seenint++;
 		break;
-#ifdef SIGINFO
 	case SIGINFO:
 		seeninfo++;
 		break;
-#endif
 	}
 }
 
