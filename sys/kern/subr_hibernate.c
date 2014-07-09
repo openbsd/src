@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.93 2014/07/09 12:43:51 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.94 2014/07/09 14:10:25 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -98,6 +98,32 @@ struct hiballoc_entry {
 	size_t			hibe_space;
 	RB_ENTRY(hiballoc_entry) hibe_entry;
 };
+
+/*
+ * Sort hibernate memory ranges by ascending PA
+ */
+void
+hibernate_sort_ranges(union hibernate_info *hib_info)
+{
+	int i, j;
+	struct hibernate_memory_range *ranges;
+	paddr_t base, end;
+
+	ranges = hib_info->ranges;
+
+	for (i = 1; i < hib_info->nranges; i++) {
+		j = i;
+		while (j > 0 && ranges[j - 1].base > ranges[j].base) {
+			base = ranges[j].base;
+			end = ranges[j].end;
+			ranges[j].base = ranges[j - 1].base;
+			ranges[j].end = ranges[j - 1].end;
+			ranges[j - 1].base = base;
+			ranges[j - 1].end = end;
+			j--;
+		}
+	}
+}
 
 /*
  * Compare hiballoc entries based on the address they manage.
@@ -1663,17 +1689,17 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
     paddr_t pig_end, size_t image_compr_size,
     struct hibernate_disk_chunk *chunks)
 {
-	paddr_t img_index, img_cur, r1s, r1e, r2s, r2e;
-	paddr_t copy_start, copy_end;
-	paddr_t piglet_base = hib->piglet_pa;
-	paddr_t piglet_end = piglet_base + HIBERNATE_CHUNK_SIZE;
+	paddr_t img_cur, piglet_base;
 	daddr_t blkctr;
 	size_t processed, compressed_size, read_size;
-	int overlap, found, nchunks, nochunks = 0, nfchunks = 0, npchunks = 0;
-	int num_io_pages;
-	short *ochunks, *pchunks, *fchunks, i, j;
-	vaddr_t tempva = (vaddr_t)NULL, hibernate_fchunk_area = (vaddr_t)NULL;
+	int nchunks, nfchunks, num_io_pages;
+	vaddr_t tempva, hibernate_fchunk_area;
+	short *fchunks, i, j;
 
+	tempva = (vaddr_t)NULL;
+	hibernate_fchunk_area = (vaddr_t)NULL;
+	nfchunks = 0;
+	piglet_base = hib->piglet_pa;
 	global_pig_start = pig_start;
 
 	pmap_activate(curproc);
@@ -1687,7 +1713,7 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 		&kd_nowait);
 	if (!tempva)
 		return (1);
-	hibernate_fchunk_area = (vaddr_t)km_alloc(24*PAGE_SIZE, &kv_any,
+	hibernate_fchunk_area = (vaddr_t)km_alloc(24 * PAGE_SIZE, &kv_any,
 	    &kp_none, &kd_nowait);
 	if (!hibernate_fchunk_area)
 		return (1);
@@ -1695,16 +1721,10 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 	/* Final output chunk ordering VA */
 	fchunks = (short *)hibernate_fchunk_area;
 
-	/* Piglet chunk ordering VA */
-	pchunks = (short *)(hibernate_fchunk_area + (8*PAGE_SIZE));
-
-	/* Final chunk ordering VA */
-	ochunks = (short *)(hibernate_fchunk_area + (16*PAGE_SIZE));
-
 	/* Map the chunk ordering region */
-	for(i=0; i<24 ; i++)
-		pmap_kenter_pa(hibernate_fchunk_area + (i*PAGE_SIZE),
-			piglet_base + ((4+i)*PAGE_SIZE), VM_PROT_ALL);
+	for(i = 0; i < 24 ; i++)
+		pmap_kenter_pa(hibernate_fchunk_area + (i * PAGE_SIZE),
+			piglet_base + ((4 + i) * PAGE_SIZE), VM_PROT_ALL);
 	pmap_update(pmap_kernel());
 
 	nchunks = hib->chunk_ctr;
@@ -1719,97 +1739,20 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 	 */
 	for (i = 0; i < nchunks; i++) {
 		if (chunks[i].end <= pig_start || chunks[i].base >= pig_end) {
-			ochunks[nochunks] = i;
 			fchunks[nfchunks] = i;
-			nochunks++;
 			nfchunks++;
-			chunks[i].flags |= HIBERNATE_CHUNK_USED;
+			chunks[i].flags |= HIBERNATE_CHUNK_PLACED;
 		}
 	}
 
 	/*
 	 * Walk the ordering, place the chunks in ascending memory order.
-	 * Conflicts might arise, these are handled next.
 	 */
-	do {
-		img_index = -1;
-		found = 0;
-		j = -1;
-		for (i = 0; i < nchunks; i++)
-			if (chunks[i].base < img_index &&
-			    chunks[i].flags == 0 ) {
-				j = i;
-				img_index = chunks[i].base;
-			}
-
-		if (j != -1) {
-			found = 1;
-			ochunks[nochunks] = j;
-			nochunks++;
-			chunks[j].flags |= HIBERNATE_CHUNK_PLACED;
-		}
-	} while (found);
-
-	img_index = pig_start;
-
-	/*
-	 * Identify chunk output conflicts (chunks whose pig load area
-	 * corresponds to their original memory placement location)
-	 */
-	for (i = 0; i < nochunks ; i++) {
-		overlap = 0;
-		r1s = img_index;
-		r1e = img_index + chunks[ochunks[i]].compressed_size;
-		r2s = chunks[ochunks[i]].base;
-		r2e = chunks[ochunks[i]].end;
-
-		overlap = hibernate_check_overlap(r1s, r1e, r2s, r2e);
-		if (overlap)
-			chunks[ochunks[i]].flags |= HIBERNATE_CHUNK_CONFLICT;
-		img_index += chunks[ochunks[i]].compressed_size;
-	}
-
-	/*
-	 * Prepare the final output chunk list. Calculate an output
-	 * inflate strategy for overlapping chunks if needed.
-	 */
-	for (i = 0; i < nochunks ; i++) {
-		/*
-		 * If a conflict is detected, consume enough compressed
-		 * output chunks to fill the piglet
-		 */
-		if (chunks[ochunks[i]].flags & HIBERNATE_CHUNK_CONFLICT) {
-			copy_start = piglet_base;
-			copy_end = piglet_end;
-			npchunks = 0;
-			j = i;
-
-			while (copy_start < copy_end && j < nochunks) {
-				pchunks[npchunks] = ochunks[j];
-				npchunks++;
-				copy_start +=
-				    chunks[ochunks[j]].compressed_size;
-				i++;
-				j++;
-			}
-
-			for (j = 0; j < npchunks; j++) {
-				fchunks[nfchunks] = pchunks[j];
-				chunks[pchunks[j]].flags |=
-				    HIBERNATE_CHUNK_USED;
-				nfchunks++;
-			}
-		} else {
-			/*
-			 * No conflict, chunk can be added without copying
-			 */
-			if ((chunks[ochunks[i]].flags &
-			    HIBERNATE_CHUNK_USED) == 0) {
-				fchunks[nfchunks] = ochunks[i];
-				chunks[ochunks[i]].flags |=
-				    HIBERNATE_CHUNK_USED;
-				nfchunks++;
-			}
+	for (i = 0; i < nchunks; i++) {
+		if (chunks[i].flags != HIBERNATE_CHUNK_PLACED) {
+			fchunks[nfchunks] = i;
+			nfchunks++;
+			chunks[i].flags = HIBERNATE_CHUNK_PLACED;
 		}
 	}
 
@@ -1858,9 +1801,7 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 		}
 	}
 
-	pmap_kremove(hibernate_fchunk_area, PAGE_SIZE);
-	pmap_kremove((vaddr_t)pchunks, PAGE_SIZE);
-	pmap_kremove((vaddr_t)fchunks, PAGE_SIZE);
+	pmap_kremove(hibernate_fchunk_area, 24 * PAGE_SIZE);
 	pmap_update(pmap_kernel());	
 
 	return (0);

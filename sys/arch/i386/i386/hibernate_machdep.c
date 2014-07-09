@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.32 2014/07/09 11:37:16 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.33 2014/07/09 14:10:25 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -109,7 +109,7 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 	hiber_info->nranges = ndumpmem;
 	hiber_info->image_size = 0;
 
-	for(i = 0; i < ndumpmem; i++) {
+	for (i = 0; i < ndumpmem; i++) {
 		hiber_info->ranges[i].base = dumpmem[i].start * PAGE_SIZE;
 		hiber_info->ranges[i].end = dumpmem[i].end * PAGE_SIZE;
 		hiber_info->image_size += hiber_info->ranges[i].end -
@@ -130,6 +130,8 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 	hiber_info->image_size += PAGE_SIZE;
 	hiber_info->nranges++;
 #endif
+
+	hibernate_sort_ranges(hiber_info);
 
 	return (0);
 }
