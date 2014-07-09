@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.178 2014/07/09 11:22:52 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.179 2014/07/09 13:05:45 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -128,7 +128,6 @@ struct mbuf_ext {
 	void	(*ext_free)(caddr_t, u_int, void *);
 	void	*ext_arg;
 	u_int	ext_size;		/* size of buffer, for ext_free */
-	int	ext_type;
 	struct mbuf *ext_nextref;
 	struct mbuf *ext_prevref;
 #ifdef DEBUG
@@ -300,7 +299,6 @@ struct mbuf {
 	(m)->m_ext.ext_size = (size);					\
 	(m)->m_ext.ext_free = (free);					\
 	(m)->m_ext.ext_arg = (arg);					\
-	(m)->m_ext.ext_type = (type);					\
 	MCLINITREFERENCE(m);						\
 } while (/* CONSTCOND */ 0)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.189 2014/07/09 11:22:53 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.190 2014/07/09 13:05:45 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1235,7 +1235,6 @@ m_print(void *v,
 	if (m->m_flags & M_EXT) {
 		(*pr)("m_ext.ext_buf: %p\tm_ext.ext_size: %u\n",
 		    m->m_ext.ext_buf, m->m_ext.ext_size);
-		(*pr)("m_ext.ext_type: %x\n", m->m_ext.ext_type);
 		(*pr)("m_ext.ext_free: %p\tm_ext.ext_arg: %p\n",
 		    m->m_ext.ext_free, m->m_ext.ext_arg);
 		(*pr)("m_ext.ext_nextref: %p\tm_ext.ext_prevref: %p\n",
