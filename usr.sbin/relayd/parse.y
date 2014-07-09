@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.183 2014/06/25 11:05:15 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.184 2014/07/09 16:42:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -56,6 +56,7 @@
 #include <openssl/ssl.h>
 
 #include "relayd.h"
+#include "http.h"
 #include "snmp.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
@@ -107,12 +108,16 @@ static struct relay	*rlay = NULL;
 static struct host	*hst = NULL;
 struct relaylist	 relays;
 static struct protocol	*proto = NULL;
-static struct protonode	 node;
+static struct relay_rule *rule = NULL;
 static struct router	*router = NULL;
-static u_int16_t	 label = 0;
+static int		 label = 0;
+static int		 tagged = 0;
+static int		 tag = 0;
 static in_port_t	 tableport = 0;
-static int		 nodedirection;
 static int		 dstmode;
+static enum key_type	 keytype = KEY_TYPE_NONE;
+static enum direction	 dir = RELAY_DIR_ANY;
+static char		*rulefile = NULL;
 
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
@@ -138,6 +143,7 @@ typedef struct {
 		struct timeval		 tv;
 		struct table		*table;
 		struct portrange	 port;
+		enum direction		 dir;
 		struct {
 			struct sockaddr_storage	 ss;
 			char			 name[MAXHOSTNAMELEN];
@@ -152,30 +158,32 @@ typedef struct {
 
 %}
 
-%token	ALL APPEND BACKLOG BACKUP BUFFER CA CACHE CHANGE CHECK
-%token	CIPHERS CODE COOKIE DEMOTE DIGEST DISABLE ERROR EXPECT
-%token	EXTERNAL FILENAME FILTER FORWARD FROM HASH HEADER HOST ICMP
-%token	INCLUDE INET INET6 INTERFACE INTERVAL IP LABEL LISTEN
-%token	LOADBALANCE LOG LOOKUP MARK MARKED MODE NAT NO DESTINATION
-%token	NODELAY NOTHING ON PARENT PATH PORT PREFORK PRIORITY PROTO
-%token	QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST RESPONSE RETRY
+%token	ALL APPEND BACKLOG BACKUP BUFFER CA CACHE SET CHECK
+%token	CIPHERS CODE COOKIE DEMOTE DIGEST DISABLE ERROR EXPECT PASS BLOCK
+%token	EXTERNAL FILENAME FORWARD FROM HASH HEADER HOST ICMP
+%token	INCLUDE INET INET6 INTERFACE INTERVAL IP LABEL LISTEN VALUE
+%token	LOADBALANCE LOG LOOKUP METHOD MODE NAT NO DESTINATION
+%token	NODELAY NOTHING ON PARENT PATH PFTAG PORT PREFORK PRIORITY PROTO
+%token	QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST RESPONSE RETRY QUICK
 %token	RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SNMP SOCKET SPLICE
-%token	SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO ROUTER RTLABEL
+%token	SSL STICKYADDR STYLE TABLE TAG TAGGED TCP TIMEOUT TO ROUTER RTLABEL
 %token	TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE MATCH
 %token	RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDH CURVE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
-%type	<v.string>	hostname interface table optstring
-%type	<v.number>	http_type loglevel mark trap
-%type	<v.number>	direction dstmode flag forwardmode retry
+%type	<v.string>	hostname interface table value optstring
+%type	<v.number>	http_type loglevel quick trap
+%type	<v.number>	dstmode flag forwardmode retry
 %type	<v.number>	optssl optsslclient sslcache
 %type	<v.number>	redirect_proto relay_proto match
+%type	<v.number>	action ruleaf key_option
 %type	<v.port>	port
 %type	<v.host>	host
 %type	<v.addr>	address
 %type	<v.tv>		timeout
-%type	<v.digest>	digest
+%type	<v.digest>	digest optdigest
 %type	<v.table>	tablespec
+%type	<v.dir>		dir
 
 %%
 
@@ -541,7 +549,7 @@ rdroptsl	: forwardmode TO tablespec interface	{
 		}
 		| DISABLE		{ rdr->conf.flags |= F_DISABLE; }
 		| STICKYADDR		{ rdr->conf.flags |= F_STICKY; }
-		| match TAG STRING {
+		| match PFTAG STRING {
 			conf->sc_flags |= F_NEEDPF;
 			if (strlcpy(rdr->conf.tag, $3,
 			    sizeof(rdr->conf.tag)) >=
@@ -663,6 +671,7 @@ tablespec	: table			{
 			}
 			free($1);
 			table = tb;
+			dstmode = RELAY_DSTMODE_DEFAULT;
 		} tableopts_l		{
 			struct table	*tb;
 			if (table->conf.port == 0)
@@ -845,6 +854,16 @@ digest		: DIGEST STRING
 		}
 		;
 
+optdigest	: digest			{
+			$$.digest = $1.digest;
+			$$.type = $1.type;
+		}
+		| STRING			{
+			$$.digest = $1;
+			$$.type = DIGEST_NONE;
+		}
+		;
+
 proto		: relay_proto PROTO STRING	{
 			struct protocol *p;
 
@@ -882,6 +901,7 @@ proto		: relay_proto PROTO STRING	{
 			p->tcpflags = TCPFLAG_DEFAULT;
 			p->sslflags = SSLFLAG_DEFAULT;
 			p->tcpbacklog = RELAY_BACKLOG;
+			TAILQ_INIT(&p->rules);
 			(void)strlcpy(p->sslciphers, SSLCIPHERS_DEFAULT,
 			    sizeof(p->sslciphers));
 			p->sslecdhcurve = SSLECDHCURVE_DEFAULT;
@@ -890,8 +910,6 @@ proto		: relay_proto PROTO STRING	{
 				free(p);
 				YYERROR;
 			}
-			RB_INIT(&p->request_tree);
-			RB_INIT(&p->response_tree);
 			proto = p;
 		} protopts_n			{
 			conf->sc_protocount++;
@@ -920,35 +938,8 @@ protoptsl	: SSL sslflags
 		| TCP '{' tcpflags_l '}'
 		| RETURN ERROR opteflags	{ proto->flags |= F_RETURN; }
 		| RETURN ERROR '{' eflags_l '}'	{ proto->flags |= F_RETURN; }
-		| LABEL STRING			{
-			label = pn_name2id($2);
-			free($2);
-			if (label == 0) {
-				yyerror("invalid protocol action label");
-				YYERROR;
-			}
-		}
-		| NO LABEL			{
-			label = 0;
-		}
-		| direction			{
-			node.label = label;
-			node.labelname = NULL;
-			nodedirection = $1;
-		} protonode {
-			if (nodedirection != -1 &&
-			    protonode_add(nodedirection, proto, &node) == -1) {
-				yyerror("failed to add protocol node");
-				YYERROR;
-			}
-			bzero(&node, sizeof(node));
-		}
+		| filterrule
 		| include
-		;
-
-direction	: /* empty */		{ $$ = RELAY_DIR_REQUEST; }
-		| REQUEST		{ $$ = RELAY_DIR_REQUEST; }
-		| RESPONSE		{ $$ = RELAY_DIR_RESPONSE; }
 		;
 
 tcpflags_l	: tcpflags comma tcpflags_l
@@ -1079,238 +1070,6 @@ flag		: STRING			{
 		}
 		;
 
-protonode	: nodetype APPEND STRING TO STRING nodeopts		{
-			if (node.type != NODE_TYPE_HEADER) {
-				yyerror("action only supported for headers");
-				free($5);
-				free($3);
-				YYERROR;
-			}
-			node.action = NODE_ACTION_APPEND;
-			node.key = strdup($5);
-			node.value = strdup($3);
-			if (node.key == NULL || node.value == NULL)
-				fatal("out of memory");
-			if (strchr(node.value, '$') != NULL)
-				node.flags |= PNFLAG_MACRO;
-			free($5);
-			free($3);
-		}
-		| nodetype CHANGE STRING TO STRING nodeopts		{
-			if (node.type != NODE_TYPE_HEADER) {
-				yyerror("action only supported for headers");
-				free($5);
-				free($3);
-				YYERROR;
-			}
-			node.action = NODE_ACTION_CHANGE;
-			node.key = strdup($3);
-			node.value = strdup($5);
-			if (node.key == NULL || node.value == NULL)
-				fatal("out of memory");
-			if (strchr(node.value, '$') != NULL)
-				node.flags |= PNFLAG_MACRO;
-			free($5);
-			free($3);
-		}
-		| nodetype REMOVE STRING nodeopts			{
-			if (node.type != NODE_TYPE_HEADER) {
-				yyerror("action only supported for headers");
-				free($3);
-				YYERROR;
-			}
-			node.action = NODE_ACTION_REMOVE;
-			node.key = strdup($3);
-			node.value = NULL;
-			if (node.key == NULL)
-				fatal("out of memory");
-			free($3);
-		}
-		| nodetype REMOVE					{
-			if (node.type != NODE_TYPE_HEADER) {
-				yyerror("action only supported for headers");
-				YYERROR;
-			}
-			node.action = NODE_ACTION_REMOVE;
-			node.key = NULL;
-			node.value = NULL;
-		} nodefile
-		| nodetype EXPECT STRING FROM STRING nodeopts		{
-			node.action = NODE_ACTION_EXPECT;
-			node.key = strdup($5);
-			node.value = strdup($3);
-			if (node.key == NULL || node.value == NULL)
-				fatal("out of memory");
-			free($5);
-			free($3);
-			proto->lateconnect++;
-		}
-		| nodetype EXPECT STRING nodeopts			{
-			node.action = NODE_ACTION_EXPECT;
-			node.key = strdup($3);
-			node.value = strdup("*");
-			if (node.key == NULL || node.value == NULL)
-				fatal("out of memory");
-			free($3);
-			proto->lateconnect++;
-		}
-		| nodetype EXPECT					{
-			node.action = NODE_ACTION_EXPECT;
-			node.key = NULL;
-			node.value = "*";
-			proto->lateconnect++;
-		} nodefile
-		| nodetype EXPECT digest nodeopts			{
-			if (node.type != NODE_TYPE_URL) {
-				yyerror("digest not supported for this type");
-				free($3.digest);
-				YYERROR;
-			}
-			node.action = NODE_ACTION_EXPECT;
-			node.key = strdup($3.digest);
-			node.flags |= PNFLAG_LOOKUP_DIGEST($3.type);
-			node.value = strdup("*");
-			if (node.key == NULL || node.value == NULL)
-				fatal("out of memory");
-			free($3.digest);
-			proto->lateconnect++;
-		}
-		| nodetype FILTER STRING FROM STRING nodeopts		{
-			node.action = NODE_ACTION_FILTER;
-			node.key = strdup($5);
-			node.value = strdup($3);
-			if (node.key == NULL || node.value == NULL)
-				fatal("out of memory");
-			free($5);
-			free($3);
-			proto->lateconnect++;
-		}
-		| nodetype FILTER STRING nodeopts			{
-			node.action = NODE_ACTION_FILTER;
-			node.key = strdup($3);
-			node.value = strdup("*");
-			if (node.key == NULL || node.value == NULL)
-				fatal("out of memory");
-			free($3);
-			proto->lateconnect++;
-		}
-		| nodetype FILTER					{
-			node.action = NODE_ACTION_FILTER;
-			node.key = NULL;
-			node.value = "*";
-			proto->lateconnect++;
-		} nodefile
-		| nodetype FILTER digest nodeopts			{
-			if (node.type != NODE_TYPE_URL) {
-				yyerror("digest not supported for this type");
-				free($3.digest);
-				YYERROR;
-			}
-			node.action = NODE_ACTION_FILTER;
-			node.key = strdup($3.digest);
-			node.flags |= PNFLAG_LOOKUP_DIGEST($3.type);
-			node.value = strdup("*");
-			if (node.key == NULL || node.value == NULL)
-				fatal("out of memory");
-			free($3.digest);
-			proto->lateconnect++;
-		}
-		| nodetype HASH STRING nodeopts				{
-			node.action = NODE_ACTION_HASH;
-			node.key = strdup($3);
-			node.value = NULL;
-			if (node.key == NULL)
-				fatal("out of memory");
-			free($3);
-			proto->lateconnect++;
-		}
-		| nodetype LOG STRING nodeopts				{
-			node.action = NODE_ACTION_LOG;
-			node.key = strdup($3);
-			node.value = NULL;
-			node.flags |= PNFLAG_LOG;
-			if (node.key == NULL)
-				fatal("out of memory");
-			free($3);
-		}
-		| nodetype LOG						{
-			node.action = NODE_ACTION_LOG;
-			node.key = NULL;
-			node.value = NULL;
-			node.flags |= PNFLAG_LOG;
-		} nodefile
-		| nodetype MARK STRING FROM STRING WITH mark log	{
-			node.action = NODE_ACTION_MARK;
-			node.key = strdup($5);
-			node.value = strdup($3);
-			node.mark = $7;
-			if (node.key == NULL || node.value == NULL)
-				fatal("out of memory");
-			free($3);
-			free($5);
-		}
-		| nodetype MARK STRING WITH mark nodeopts		{
-			if (node.mark) {
-				yyerror("either mark or marked");
-				free($3);
-				YYERROR;
-			}
-			node.action = NODE_ACTION_MARK;
-			node.key = strdup($3);
-			node.value = strdup("*");
-			node.mark = $5;	/* overwrite */
-			if (node.key == NULL || node.value == NULL)
-				fatal("out of memory");
-			free($3);
-		}
-		;
-
-nodefile	: FILENAME STRING nodeopts			{
-			if (protonode_load(nodedirection,
-			    proto, &node, $2) == -1) {
-				yyerror("failed to load from file: %s", $2);
-				free($2);
-				YYERROR;
-			}
-			free($2);
-			nodedirection = -1;	/* don't add template node */
-		}
-		;
-
-nodeopts	: marked log
-		;
-
-marked		: /* empty */
-		| MARKED mark			{ node.mark = $2; }
-		;
-
-log		: /* empty */
-		| LOG				{ node.flags |= PNFLAG_LOG; }
-		;
-
-mark		: NUMBER					{
-			if ($1 <= 0 || $1 >= (int)USHRT_MAX) {
-				yyerror("invalid mark: %d", $1);
-				YYERROR;
-			}
-			$$ = $1;
-		}
-		;
-
-nodetype	: HEADER			{
-			node.type = NODE_TYPE_HEADER;
-		}
-		| QUERYSTR			{ node.type = NODE_TYPE_QUERY; }
-		| COOKIE			{
-			node.type = NODE_TYPE_COOKIE;
-		}
-		| PATH				{
-			proto->flags |= F_LOOKUP_PATH;
-			node.type = NODE_TYPE_PATH;
-		}
-		| URL				{ node.type = NODE_TYPE_URL; }
-		;
-
 sslcache	: NUMBER			{
 			if ($1 < 0) {
 				yyerror("invalid sslcache value: %d", $1);
@@ -1319,6 +1078,379 @@ sslcache	: NUMBER			{
 			$$ = $1;
 		}
 		| DISABLE			{ $$ = -2; }
+		;
+
+filterrule	: action dir quick ruleaf rulesrc ruledst {
+			if ((rule = calloc(1, sizeof(*rule))) == NULL)
+				fatal("out of memory");
+
+			rule->rule_action = $1;
+			rule->rule_proto = proto->type;
+			rule->rule_dir = $2;
+			rule->rule_flags |= $3;
+			rule->rule_af = $4;
+
+			rulefile = NULL;
+		} ruleopts_l {
+			if (rule_add(proto, rule, rulefile) == -1) {
+				if (rulefile == NULL) {
+					yyerror("failed to load rule");
+				} else {
+					yyerror("failed to load rules from %s",
+					    rulefile);
+					free(rulefile);
+				}
+				rule_free(rule);
+				free(rule);
+				YYERROR;
+			}
+			if (rulefile)
+				free(rulefile);
+			rulefile = NULL;
+			rule = NULL;
+			keytype = KEY_TYPE_NONE;
+		}
+		;
+
+action		: PASS				{ $$ = RULE_ACTION_PASS; }
+		| BLOCK				{ $$ = RULE_ACTION_BLOCK; }
+		| MATCH				{ $$ = RULE_ACTION_MATCH; }
+		;
+
+dir		: /* empty */			{
+			$$ = dir = RELAY_DIR_REQUEST;
+		}
+		| REQUEST			{
+			$$ = dir = RELAY_DIR_REQUEST;
+		}
+		| RESPONSE			{
+			$$ = dir = RELAY_DIR_RESPONSE;
+		}
+		;
+
+quick		: /* empty */			{ $$ = 0; }
+		| QUICK				{ $$ = RULE_FLAG_QUICK; }
+		;
+
+ruleaf		: /* empty */			{ $$ = AF_UNSPEC; }
+		| INET6				{ $$ = AF_INET6; }
+		| INET				{ $$ = AF_INET; }
+		;
+
+rulesrc		: /* XXX */
+		;
+
+ruledst		: /* XXX */
+		;
+
+ruleopts_l	: /* empty */
+		| ruleopts_t
+		;
+
+ruleopts_t	: ruleopts ruleopts_t
+		| ruleopts
+		;
+
+ruleopts	: METHOD STRING					{
+			u_int	id;
+			if ((id = relay_httpmethod_byname($2)) ==
+			    HTTP_HEADER_NONE) {
+				yyerror("unknown HTTP method currently not "
+				    "supported");
+				free($2);
+				YYERROR;
+			}
+			rule->rule_method = id;
+			free($2);
+		}
+		| COOKIE key_option STRING value		{
+			keytype = KEY_TYPE_COOKIE;
+			rule->rule_kv[keytype].kv_key = strdup($3);
+			rule->rule_kv[keytype].kv_option = $2;
+			rule->rule_kv[keytype].kv_value = (($4 != NULL) ?
+			    strdup($4) : strdup("*"));
+			if (rule->rule_kv[keytype].kv_key == NULL ||
+			    rule->rule_kv[keytype].kv_value == NULL)
+				fatal("out of memory");
+			free($3);
+			if ($4)
+				free($4);
+			rule->rule_kv[keytype].kv_type = keytype;
+		}
+		| COOKIE key_option				{
+			keytype = KEY_TYPE_COOKIE;
+			rule->rule_kv[keytype].kv_option = $2;
+			rule->rule_kv[keytype].kv_type = keytype;
+		}
+		| HEADER key_option STRING value		{
+			keytype = KEY_TYPE_HEADER;
+			memset(&rule->rule_kv[keytype], 0,
+			    sizeof(rule->rule_kv[keytype]));
+			rule->rule_kv[keytype].kv_header_id =
+			    relay_httpheader_byname($3);
+			rule->rule_kv[keytype].kv_option = $2;
+			rule->rule_kv[keytype].kv_key = strdup($3);
+			rule->rule_kv[keytype].kv_value = (($4 != NULL) ?
+			    strdup($4) : strdup("*"));
+			if (rule->rule_kv[keytype].kv_key == NULL ||
+			    rule->rule_kv[keytype].kv_value == NULL)
+				fatal("out of memory");
+			free($3);
+			if ($4)
+				free($4);
+			rule->rule_kv[keytype].kv_type = keytype;
+		}
+		| HEADER key_option				{
+			keytype = KEY_TYPE_HEADER;
+			rule->rule_kv[keytype].kv_option = $2;
+			rule->rule_kv[keytype].kv_type = keytype;
+		}
+		| PATH key_option STRING value			{
+			keytype = KEY_TYPE_PATH;
+			rule->rule_kv[keytype].kv_option = $2;
+			rule->rule_kv[keytype].kv_key = strdup($3);
+			rule->rule_kv[keytype].kv_value = (($4 != NULL) ?
+			    strdup($4) : strdup("*"));
+			if (rule->rule_kv[keytype].kv_key == NULL ||
+			    rule->rule_kv[keytype].kv_value == NULL)
+				fatal("out of memory");
+			free($3);
+			if ($4)
+				free($4);
+			rule->rule_kv[keytype].kv_type = keytype;
+		}
+		| PATH key_option				{
+			keytype = KEY_TYPE_PATH;
+			rule->rule_kv[keytype].kv_option = $2;
+			rule->rule_kv[keytype].kv_type = keytype;
+		}
+		| QUERYSTR key_option STRING value		{
+			switch ($2) {
+			case KEY_OPTION_APPEND:
+			case KEY_OPTION_SET:
+			case KEY_OPTION_REMOVE:
+				yyerror("combining query type and the given "
+				    "option is not supported");
+				free($3);
+				if ($4)
+					free($4);
+				YYERROR;
+				break;
+			}
+			keytype = KEY_TYPE_QUERY;
+			rule->rule_kv[keytype].kv_option = $2;
+			rule->rule_kv[keytype].kv_key = strdup($3);
+			rule->rule_kv[keytype].kv_value = (($4 != NULL) ?
+			    strdup($4) : strdup("*"));
+			if (rule->rule_kv[keytype].kv_key == NULL ||
+			    rule->rule_kv[keytype].kv_value == NULL)
+				fatal("out of memory");
+			free($3);
+			if ($4)
+				free($4);
+			rule->rule_kv[keytype].kv_type = keytype;
+		}
+		| QUERYSTR key_option				{
+			switch ($2) {
+			case KEY_OPTION_APPEND:
+			case KEY_OPTION_SET:
+			case KEY_OPTION_REMOVE:
+				yyerror("combining query type and the given "
+				    "option is not supported");
+				YYERROR;
+				break;
+			}
+			keytype = KEY_TYPE_QUERY;
+			rule->rule_kv[keytype].kv_option = $2;
+			rule->rule_kv[keytype].kv_type = keytype;
+		}
+		| URL key_option optdigest value			{
+			switch ($2) {
+			case KEY_OPTION_APPEND:
+			case KEY_OPTION_SET:
+			case KEY_OPTION_REMOVE:
+				yyerror("combining url type and the given "
+				"option is not supported");
+				free($3.digest);
+				free($4);
+				YYERROR;
+				break;
+			}
+			keytype = KEY_TYPE_URL;
+			rule->rule_kv[keytype].kv_option = $2;
+			rule->rule_kv[keytype].kv_key = strdup($3.digest);
+			rule->rule_kv[keytype].kv_digest = $3.type;
+			rule->rule_kv[keytype].kv_value = (($4 != NULL) ?
+			    strdup($4) : strdup("*"));
+			if (rule->rule_kv[keytype].kv_key == NULL ||
+			    rule->rule_kv[keytype].kv_value == NULL)
+				fatal("out of memory");
+			free($3.digest);
+			if ($4)
+				free($4);
+			rule->rule_kv[keytype].kv_type = keytype;
+		}
+		| URL key_option					{
+			switch ($2) {
+			case KEY_OPTION_APPEND:
+			case KEY_OPTION_SET:
+			case KEY_OPTION_REMOVE:
+				yyerror("combining url type and the given "
+				    "option is not supported");
+				YYERROR;
+				break;
+			}
+			keytype = KEY_TYPE_URL;
+			rule->rule_kv[keytype].kv_option = $2;
+			rule->rule_kv[keytype].kv_type = keytype;
+		}
+		| FORWARD TO table				{
+			if (table_findbyname(conf, $3) == NULL) {
+				yyerror("undefined forward table");
+				free($3);
+				YYERROR;
+			}
+			if (strlcpy(rule->rule_tablename, $3,
+			    sizeof(rule->rule_tablename)) >=
+			    sizeof(rule->rule_tablename)) {
+				yyerror("invalid forward table name");
+				free($3);
+				YYERROR;
+			}
+			free($3);
+		}
+		| TAG STRING					{
+			tag = tag_name2id($2);
+			if (rule->rule_tag) {
+				yyerror("tag already defined");
+				free($2);
+				rule_free(rule);
+				free(rule);
+				YYERROR;
+			}
+			if (tag == 0) {
+				yyerror("invalid tag");
+				free($2);
+				rule_free(rule);
+				free(rule);
+				YYERROR;
+			}
+			rule->rule_tag = tag;
+			if (strlcpy(rule->rule_tagname, $2,
+			    sizeof(rule->rule_tagname)) >=
+			    sizeof(rule->rule_tagname)) {
+				yyerror("tag truncated");
+				free($2);
+				rule_free(rule);
+				free(rule);
+				YYERROR;
+			}
+			free($2);
+		}
+		| NO TAG					{
+			if (tag == 0) {
+				yyerror("no tag defined");
+				YYERROR;
+			}
+			rule->rule_tag = -1;
+			memset(rule->rule_tagname, 0,
+			    sizeof(rule->rule_tagname));
+		}
+		| TAGGED STRING					{
+			tagged = tag_name2id($2);
+			if (rule->rule_tagged) {
+				yyerror("tagged already defined");
+				free($2);
+				rule_free(rule);
+				free(rule);
+				YYERROR;
+			}
+			if (tagged == 0) {
+				yyerror("invalid tag");
+				free($2);
+				rule_free(rule);
+				free(rule);
+				YYERROR;
+			}
+			rule->rule_tagged = tagged;
+			if (strlcpy(rule->rule_taggedname, $2,
+			    sizeof(rule->rule_taggedname)) >=
+			    sizeof(rule->rule_taggedname)) {
+				yyerror("tagged truncated");
+				free($2);
+				rule_free(rule);
+				free(rule);
+				YYERROR;
+			}
+			free($2);
+		}
+		| LABEL STRING					{
+			label = label_name2id($2);
+			if (rule->rule_label) {
+				yyerror("label already defined");
+				free($2);
+				rule_free(rule);
+				free(rule);
+				YYERROR;
+			}
+			if (label == 0) {
+				yyerror("invalid label");
+				free($2);
+				rule_free(rule);
+				free(rule);
+				YYERROR;
+			}
+			rule->rule_label = label;
+			if (strlcpy(rule->rule_labelname, $2,
+			    sizeof(rule->rule_labelname)) >=
+			    sizeof(rule->rule_labelname)) {
+				yyerror("label truncated");
+				free($2);
+				rule_free(rule);
+				free(rule);
+				YYERROR;
+			}
+			free($2);
+		}
+		| NO LABEL					{
+			if (label == 0) {
+				yyerror("no label defined");
+				YYERROR;
+			}
+			rule->rule_label = -1;
+			memset(rule->rule_labelname, 0,
+			    sizeof(rule->rule_labelname));
+		}
+		| FILENAME STRING value				{
+			if (rulefile != NULL) {
+				yyerror("only one file per rule supported");
+				free($2);
+				free($3);
+				rule_free(rule);
+				free(rule);
+				YYERROR;
+			}
+			if ($3) {
+				if ((rule->rule_kv[keytype].kv_value =
+				    strdup($3)) == NULL)
+					fatal("out of memory");
+				free($3);
+			} else
+				rule->rule_kv[keytype].kv_value = NULL;
+			rulefile = $2;
+		}
+		;
+
+value		: /* empty */		{ $$ = NULL; }
+		| VALUE STRING		{ $$ = $2; }
+		;
+
+key_option	: /* empty */		{ $$ = KEY_OPTION_NONE; }
+		| APPEND		{ $$ = KEY_OPTION_APPEND; }
+		| SET			{ $$ = KEY_OPTION_SET; }
+		| REMOVE		{ $$ = KEY_OPTION_REMOVE; }
+		| HASH			{ $$ = KEY_OPTION_HASH; }
+		| LOG			{ $$ = KEY_OPTION_LOG; }
 		;
 
 relay		: RELAY STRING	{
@@ -1740,7 +1872,7 @@ dstaf		: /* empty */		{
 		}
 		;
 
-interface	: /*empty*/		{ $$ = NULL; }
+interface	: /* empty */		{ $$ = NULL; }
 		| INTERFACE STRING	{ $$ = $2; }
 		;
 
@@ -1914,11 +2046,11 @@ lookup(char *s)
 		{ "append",		APPEND },
 		{ "backlog",		BACKLOG },
 		{ "backup",		BACKUP },
+		{ "block",		BLOCK },
 		{ "buffer",		BUFFER },
 		{ "ca",			CA },
 		{ "cache",		CACHE },
 		{ "cert",		CERTIFICATE },
-		{ "change",		CHANGE },
 		{ "check",		CHECK },
 		{ "ciphers",		CIPHERS },
 		{ "code",		CODE },
@@ -1933,7 +2065,6 @@ lookup(char *s)
 		{ "expect",		EXPECT },
 		{ "external",		EXTERNAL },
 		{ "file",		FILENAME },
-		{ "filter",		FILTER },
 		{ "forward",		FORWARD },
 		{ "from",		FROM },
 		{ "hash",		HASH },
@@ -1953,9 +2084,8 @@ lookup(char *s)
 		{ "loadbalance",	LOADBALANCE },
 		{ "log",		LOG },
 		{ "lookup",		LOOKUP },
-		{ "mark",		MARK },
-		{ "marked",		MARKED },
 		{ "match",		MATCH },
+		{ "method",		METHOD },
 		{ "mode",		MODE },
 		{ "nat",		NAT },
 		{ "no",			NO },
@@ -1963,13 +2093,16 @@ lookup(char *s)
 		{ "nothing",		NOTHING },
 		{ "on",			ON },
 		{ "parent",		PARENT },
+		{ "pass",		PASS },
 		{ "password",		PASSWORD },
 		{ "path",		PATH },
+		{ "pftag",		PFTAG },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
 		{ "priority",		PRIORITY },
 		{ "protocol",		PROTO },
 		{ "query",		QUERYSTR },
+		{ "quick",		QUICK },
 		{ "random",		RANDOM },
 		{ "real",		REAL },
 		{ "redirect",		REDIRECT },
@@ -1988,6 +2121,7 @@ lookup(char *s)
 		{ "script",		SCRIPT },
 		{ "send",		SEND },
 		{ "session",		SESSION },
+		{ "set",		SET },
 		{ "snmp",		SNMP },
 		{ "socket",		SOCKET },
 		{ "source-hash",	SRCHASH },
@@ -1997,6 +2131,7 @@ lookup(char *s)
 		{ "style",		STYLE },
 		{ "table",		TABLE },
 		{ "tag",		TAG },
+		{ "tagged",		TAGGED },
 		{ "tcp",		TCP },
 		{ "timeout",		TIMEOUT },
 		{ "to",			TO },
@@ -2005,6 +2140,7 @@ lookup(char *s)
 		{ "ttl",		TTL },
 		{ "updates",		UPDATES },
 		{ "url",		URL },
+		{ "value",		VALUE },
 		{ "virtual",		VIRTUAL },
 		{ "with",		WITH }
 	};

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.143 2014/06/25 11:05:15 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.144 2014/07/09 16:42:05 reyk Exp $
 .\"
 .\" Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 25 2014 $
+.Dd $Mdocdate: July 9 2014 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@ health-checked table on layer 3.
 Relays allow application layer load balancing, SSL acceleration, and
 general purpose TCP proxying on layer 7.
 .It Sy Protocols
-Protocols are predefined protocol handlers and settings for relays.
+Protocols are predefined settings and filter rules for relays.
 .It Sy Routers
 Routers are used to insert routes with health-checked gateways for
 (WAN) link balancing.
@@ -765,9 +765,9 @@ Now it finally accepts the SSL connection from the diverted client
 using the updated certificate and continues to handle the connection
 and to connect to the remote server.
 .Sh PROTOCOLS
-Protocols are templates defining actions and settings for relays.
-They allow setting generic TCP options, SSL settings, and actions
-specific to the selected application layer protocol.
+Protocols are templates defining settings and rules for relays.
+They allow setting generic TCP options, SSL settings, and rules
+for the selected application layer protocol.
 .Pp
 The protocol directive is available for a number of different
 application layer protocols.
@@ -796,282 +796,14 @@ This is the default.
 The available configuration directives are described below:
 .Bl -tag -width Ds
 .It Xo
-.Op Ar direction
-.Op Ar type
-.Ar action
-.Op Ic marked Ar id
-.Op Ic log
+.Pq Ic block Ns | Ns Ic pass Ns | Ns Ic match
+.Op Ar rule
 .Xc
-Define an action for the selected entity.
-The optional
-.Ic log
-keyword will log the entity name and the value and
-the optional
-.Ic marked
-keyword requires that the session has been marked with a given
-identifier in order to execute the action.
-The actions are dependent on the underlying application
-.Ic protocol .
-.El
-.Pp
-.Bq Ar direction
-may be one of:
-.Bl -tag -width Ds
-.It Ic request
-Handle the data stream from the client to the relay, like HTTP
-requests.
-This is the default if the
-.Ar direction
-directive is omitted.
-.It Ic response
-Handle the data stream from the target host to the relay, like
-HTTP server replies.
-.El
-.Pp
-.Bq Ar type
-may be one of:
-.Bl -tag -width Ds
-.It Ic cookie
-Look up the entity as a value in the Cookie header when using the
-.Ic http
-protocol.
-This type is only available with the direction
-.Ic request .
-.It Ic header
-Look up the entity in the application protocol headers, like HTTP
-headers in
-.Ic http
-mode.
-.It Ic path
-Look up the entity as a value in the URL path when using the
-.Ic http
-protocol.
-This type is only available with the direction
-.Ic request .
-The
-.Ar key
-will match the path of the requested URL without the hostname
-and query and the value will match the complete query,
-for example:
-.Bd -literal -offset indent
-request path filter "/index.html"
-request path filter "foo=bar*" from "/cgi-bin/t.cgi"
-.Ed
-.It Ic query
-Look up the entity as a query variable in the URL when using the
-.Ic http
-protocol.
-This type is only available with the direction
-.Ic request ,
-for example:
-.Bd -literal -offset indent
-# Will match /cgi-bin/example.pl?foo=bar&ok=yes
-request query expect "bar" from "foo"
-.Ed
-.It Ic url
-Look up the entity as a URL suffix/prefix expression consisting of a
-canonicalized hostname without port or suffix and a path name or
-prefix when using the
-.Ic http
-protocol.
-This type is only available with the direction
-.Ic request ,
-for example:
-.Bd -literal -offset indent
-request url filter "example.com/index.html"
-request url filter "example.com/test.cgi?val=1"
-.Ed
-.Pp
-.Xr relayd 8
-will match the full URL and different possible suffix/prefix
-combinations by stripping subdomains and path components (up to 5
-levels), and the query string.
-For example, the following
-lookups will be done for
-.Ar http://www.example.com:81/1/2/3/4/5.html?query=yes :
-.Bd -literal -offset indent
-www.example.com/1/2/3/4/5.html?query=yes
-www.example.com/1/2/3/4/5.html
-www.example.com/
-www.example.com/1/
-www.example.com/1/2/
-www.example.com/1/2/3/
-example.com/1/2/3/4/5.html?query=yes
-example.com/1/2/3/4/5.html
-example.com/
-example.com/1/
-example.com/1/2/
-example.com/1/2/3/
-.Ed
-.El
-.Pp
-.Bq Ar action
-may be one of:
-.Bl -tag -width Ds
-.It Ic append Ar value Ic to Ar key
-Append the specified value to a protocol entity with the selected name.
-When using the
-.Ic http
-protocol,
-.Ic key
-will indicate a specified HTTP header.
-If
-.Ar key
-does not exist in the request, it will be created with the value
-set to
-.Ar value .
-.Pp
-The
-.Ar value
-string
-may contain predefined macros that will be expanded at runtime:
-.Pp
-.Bl -tag -width $SERVER_ADDR -offset indent -compact
-.It Ic $REMOTE_ADDR
-The IP address of the connected client.
-.It Ic $REMOTE_PORT
-The TCP source port of the connected client.
-.It Ic $SERVER_ADDR
-The configured IP address of the relay.
-.It Ic $SERVER_PORT
-The configured TCP server port of the relay.
-.It Ic $SERVER_NAME
-The server software name of
-.Xr relayd 8 .
-.It Ic $TIMEOUT
-The configured session timeout of the relay.
-.El
-.It Ic change Ar key Ic to Ar value
-Like the
-.Ic append
-directive above, but change the contents of the specified entity.
-If
-.Ar key
-does not exist in the request, it will be created with the value
-set to
-.Ar value .
-.Pp
-The
-.Ar value
-string
-may contain predefined macros that will be expanded at runtime,
-as detailed for the
-.Ic append
-directive above.
-.It Ic expect Ar value Ic from Ar key
-Expect an entity
-.Ar key
-and match against
-.Ar value
-using shell globbing rules.
-If the entity is not present or the value doesn't match, the connection
-will be dropped.
-.It Xo
-.Ic expect
-.Op Ic digest
-.Ar key
-.Xc
-Expect an entity
-.Ar key
-with any possible value.
-This is the short form of
-.Ic expect Ar * Ic from Ar key .
-.Pp
-If the
-.Ic digest
-keyword is specified,
-compare the message digest of the entity against the defined string.
-The algorithm used is determined by the string length of the
-.Ar key
-argument, either SHA1 (40 characters) or MD5 (32 characters).
-To compute the digest, use this simple command:
-.Bd -literal -offset indent
-$ echo -n "example.com/path/?args" | sha1
-.Ed
-.It Ic expect file Ar path
-Like the directive above, but load the non-digest keys from an
-external file with the specified
-.Ar path
-containing one key per line.
-Lines will be stripped at the first whitespace or newline character.
-Any empty lines or lines beginning with a hash mark
-.Pq Sq #
-will be ignored.
-.It Ic filter Ar value Ic from Ar key
-Like the
-.Ic expect Ar .. Ic from
-directive above, but drop any connections with the specified entity
-.Ar key
-and a matching
-.Ar value .
-.It Xo
-.Ic filter
-.Op Ic digest
-.Ar key
-.Xc
-Like the
-.Ic expect
-directive above, but drop any connections with the specified entity
-.Ar key
-and any possible value.
-This is the short form of
-.Ic filter Ar * Ic from Ar key .
-.It Ic filter file Ar path
-Like the directive above, but load the non-digest keys from
-.Ar path .
-See
-.Ic expect file Ar path
-for more information.
-.It Ic hash Ar key
-Feed the value of the selected entity into the load balancing hash to
-select the target host.
-See the
-.Ic table
-keyword in the
-.Sx RELAYS
-section above.
-.It Ic log Ar key
-Log the name and the value of the entity.
-.It Ic log file Ar path
-Like the directive above, but load the keys from
-.Ar path .
-See
-.Ic expect file Ar path
-for more information.
-.It Xo
-.Ic mark
-.Op Ar value Ic from
-.Ar key Ic with Ar id
-.Xc
-Mark the session with the specified identifier (a positive number
-between 1 and 65535) if the specified condition matches.
-Note that the
-.Ic mark
-action does not accept the
-.Ic marked
-option (see above).
-.It Ic label Ar string
-Add a label to subsequently added actions.
-The label will be printed as part of the error message if the
-.Ic return error
-option is set and may contain HTML tags, for example:
-.Bd -literal -offset indent
-label "\*(Lta href='http://example.com/advisory.pl?id=7359'\*(Gt\e
-	Advisory provided by example.com\*(Lt/a\*(Gt"
-url filter digest 5c1e03f58f8ce0b457474ffb371fd1ef
-url filter digest 80c1a7b8337462093ef8359c57b4d56a
-no label
-.Ed
-.It Ic no label
-Do not set a label for subsequently added actions; this is the default.
-.It Ic remove Ar key
-Remove the entity with the selected name.
-.It Ic remove file Ar path
-Like the directive above, but load the keys from
-.Ar path .
-See
-.Ic expect file Ar path
-for more information.
+Specify one ore more rules to filter connections based on their
+network or application layer headers;
+see the
+.Sx FILTER RULES
+section for more details.
 .It Ic return error Op Ar option
 Return an error response to the client if an internal operation or the
 forward connection to the client failed.
@@ -1222,6 +954,322 @@ Use socket splicing for zero-copy data transfer.
 This option is enabled by default.
 .El
 .El
+.Sh FILTER RULES
+Relays have the ability have the ability to filter connections based
+on their network or application layer headers.
+Filter rules apply options to connections based on the specified
+filter parameters.
+.Pp
+For each connection that is processed by a relay, the filter rules are
+evaluated in sequential order, from first to last.
+For
+.Ar block
+and
+.Ar pass ,
+the last matching rule decides what action is taken;
+if no rule matches the connection, the default action is to establish
+the connection without any additional action.
+For
+.Ar match ,
+rules are evaluated every time they match;
+the pass/block state of a connection remains unchanged.
+.Pp
+The filter action may be one of the following:
+.Bl -tag -width Ds
+.It Ic block
+The connection is blocked.
+If a
+.Ic block
+rule matches a new connection attempt, it will not be established.
+.Ic block
+rules can also trigger for existing connections after evaluating
+application layer parameters;
+any connection of the relay session will be instantly dropped.
+.It Ic match
+The connection is matched.
+This action does not alter the connection state, but allows to apply
+additional parameters to the connection.
+.It Ic pass
+The connection is passed;
+.Xr relayd 8
+will continue to process the relay session normally.
+.El
+.Pp
+These filter parameters can be used in the rules:
+.Bl -tag -width Ds
+.It Ic request No or Ic response
+A relay session always consists of two connections:
+the
+.Ic request ,
+a client initiating a new connection to a server via the relay,
+and the
+.Ic response ,
+the server accepting the connection.
+Depending on the protocol,
+an established session can be purely request/response-based (like
+HTTP), exchange data in a bidirectional way (like arbitrary TCP
+sessions), or just contain a single datagram and an optional response
+(like UDP-based protocols).
+But the client always 
+.Ar requests
+to communicate with a remote peer; the server.
+.It Ic quick
+If a connection is matched by a rule with the
+.Ic quick
+option set,
+the rule is considered to be the last matching rule and any further
+evaluation is skipped.
+.It Ic inet No or Ic inet6
+Only match connections with the specified address family,
+either of type IPv4 or IPv6.
+.\" XXX .It Ic from
+.\" XXX .It Ic to
+.It Ic label Ar string
+The label will be printed as part of the error message if the
+.Ic return error
+option is set and may contain HTML tags, for example:
+.Bd -literal -offset indent
+block request url digest 5c1e03f58f8ce0b457474ffb371fd1ef \e
+	label "\*(Lta href='http://example.com/adv.pl?id=7359'\*(Gt\e
+	Advisory provided by example.com\*(Lt/a\*(Gt"
+.Ed
+.It Ic no Ar parameter
+Reset a sticky parameter that was previously set by a matching rule.
+The
+.Ar parameter
+is a keyword that can be either
+.Ic label
+or
+.Ic tag .
+.It Ic tag Ar string
+Add a "sticky" tag to connections matching this filter rule.
+Tags can be used to filter the connection by further rules using the
+.Ic tagged
+option.
+Only one tag is assigned per connection;
+the tag will be replaced if the connection is already tagged.
+.It Ic tagged Ar string
+Match the connection if it is already tagged with a given tag by a
+previous rule.
+.El
+.Pp
+The following parameters are available when using the
+.Ic http
+protocol:
+.Bl -tag -width Ds
+.It Ic method Ar NAME
+Match the HTTP request method.
+The method is specified by
+.Ar name
+and can be either
+.Ic CONNECT ,
+.Ic COPY ,
+.Ic DELETE ,
+.Ic GET ,
+.Ic HEAD ,
+.Ic LOCK ,
+.Ic MKCOL ,
+.Ic MOVE ,
+.Ic OPTIONS ,
+.Ic PATCH ,
+.Ic POST ,
+.Ic PROPFIND ,
+.Ic PROPPATCH ,
+.Ic PUT ,
+.Ic TRACE ,
+or
+.Ic UNLOCK .
+.It Xo
+.Ar type Ar option
+.Oo Oo Ic digest Oc
+.Pq Ar key Ns | Ns Ic file Ar path
+.Oo Ic value Ar value Oc Oc
+.Xc
+Match a specified HTTP header entity and an optional
+.Ic key
+and
+.Ic value .
+An
+.Ic option
+can be specified to modify the matched entity or to trigger an event.
+The entity is extracted from the HTTP request or response header and
+can be either of
+.Ar type
+.Ic cookie ,
+.Ic header ,
+.Ic path ,
+.Ic query ,
+or
+.Ic url .
+.Pp
+Instead of a single
+.Ar key,
+multiple keys can be loaded from a
+.Ic file
+specified by
+.Ar path
+that contains one key per line.
+Lines will be stripped at the first whitespace or newline character
+and any empty lines or lines beginning with a hash mark (`#') will be
+ignored.
+.Pp
+If the
+.Ic digest
+keyword is specified,
+compare the message digest of the key against the defined string.
+The algorithm used is determined by the string length of the
+.Ar key
+argument, either SHA1 (40 characters) or MD5 (32 characters).
+To compute the digest,
+for example for an
+.Ic url ,
+use this simple command:
+.Bd -literal -offset indent
+$ echo -n "example.com/path/?args" | sha1
+.Ed
+.El
+.Pp
+.Bq Ar type
+may be one of:
+.Bl -tag -width Ds
+.It Ic cookie Ar option Oo Ar key Oo Ic value Ar value Oc Oc
+Look up the entity as a value in the Cookie header.
+This type is only available with the direction
+.Ic request .
+.It Ic header Ar option Oo Ar key Oo Ic value Ar value Oc Oc
+Look up the entity in the application protocol headers, like HTTP
+headers in
+.Ic http
+mode.
+.It Ic path Ar option Oo Ar key Oo Ic value Ar value Oc Oc
+Look up the entity as a value in the URL path when using the
+.Ic http
+protocol.
+This type is only available with the direction
+.Ic request .
+The
+.Ar key
+will match the path of the requested URL without the hostname
+and query and the value will match the complete query,
+for example:
+.Bd -literal -offset indent
+block path "/index.html"
+block path "/cgi-bin/t.cgi" value "foo=bar*"
+.Ed
+.It Ic query Ar option Oo Ar key Oo Ic value Ar value Oc Oc
+Look up the entity as a query variable in the URL when using the
+.Ic http
+protocol.
+This type is only available with the direction
+.Ic request ,
+for example:
+.Bd -literal -offset indent
+# Will match /cgi-bin/example.pl?foo=bar&ok=yes
+request query expect "bar" from "foo"
+.Ed
+.It Ic url Ar option Oo Oo Ic digest Oc Ar key Oo Ic value Ar value Oc Oc
+Look up the entity as a URL suffix/prefix expression consisting of a
+canonicalized hostname without port or suffix and a path name or
+prefix when using the
+.Ic http
+protocol.
+This type is only available with the direction
+.Ic request ,
+for example:
+.Bd -literal -offset indent
+block url "example.com/index.html"
+block url "example.com/test.cgi?val=1"
+.Ed
+.Pp
+.Xr relayd 8
+will match the full URL and different possible suffix/prefix
+combinations by stripping subdomains and path components (up to 5
+levels), and the query string.
+For example, the following
+lookups will be done for
+.Ar http://www.example.com:81/1/2/3/4/5.html?query=yes :
+.Bd -literal -offset indent
+www.example.com/1/2/3/4/5.html?query=yes
+www.example.com/1/2/3/4/5.html
+www.example.com/
+www.example.com/1/
+www.example.com/1/2/
+www.example.com/1/2/3/
+example.com/1/2/3/4/5.html?query=yes
+example.com/1/2/3/4/5.html
+example.com/
+example.com/1/
+example.com/1/2/
+example.com/1/2/3/
+.Ed
+.El
+.Pp
+.Bq Ar option
+may be one of:
+.Bl -tag -width Ds
+.It Ic append
+Append the specified
+.Ar value
+to a protocol entity with the selected
+.Ar key
+name.
+If it does not exist, it will be created with the new value.
+.Pp
+The value string may contain predefined macros that will be expanded
+at runtime:
+.Pp
+.Bl -tag -width $SERVER_ADDR -offset indent -compact
+.It Ic $REMOTE_ADDR
+The IP address of the connected client.
+.It Ic $REMOTE_PORT
+The TCP source port of the connected client.
+.It Ic $SERVER_ADDR
+The configured IP address of the relay.
+.It Ic $SERVER_PORT
+The configured TCP server port of the relay.
+.It Ic $SERVER_NAME
+The server software name of
+.Xr relayd 8 .
+.It Ic $TIMEOUT
+The configured session timeout of the relay.
+.El
+.It Ic hash
+Feed the
+.Ar value
+of the selected entity into the load balancing hash to select the
+target host.
+See the
+.Ic table
+keyword in the
+.Sx RELAYS
+section above.
+.It Ic log
+Log the
+.Ar key 
+name and the
+.Ar value
+of the entity.
+.It Ic remove
+Remove the entity with the selected
+.Ar key
+name.
+.It Ic set
+Like the
+.Ic append
+directive above, but change the contents of the specified entity.
+If
+.Ar key
+does not exist in the request, it will be created with the new
+.Ar value .
+.Pp
+The
+.Ar value
+string
+may contain predefined macros that will be expanded at runtime,
+as detailed for the
+.Ic append
+directive above.
+.El
 .Sh ROUTERS
 Routers represent routing table entries in the kernel forwarding
 database, see
@@ -1358,12 +1406,17 @@ and include the
 variable in the hash to calculate the target host:
 .Bd -literal -offset indent
 http protocol "http_ssl" {
-	header append "$REMOTE_ADDR" to "X-Forwarded-For"
-	header append "$SERVER_ADDR:$SERVER_PORT" to "X-Forwarded-By"
-	header change "Keep-Alive" to "$TIMEOUT"
-	query hash "sessid"
-	cookie hash "sessid"
-	path filter "*command=*" from "/cgi-bin/index.cgi"
+	match header append "X-Forwarded-For" \e
+		value "$REMOTE_ADDR"
+	match header append "X-Forwarded-By" \e
+		value "$REMOTE_ADDR:$SERVER_PORT"
+	match header set "Keep-Alive" value "$TIMEOUT"
+
+	match query hash "sessid"
+	match hash "sessid"
+
+	pass
+	block path "/cgi-bin/index.cgi" value "*command=*"
 
 	ssl { sslv2, ciphers "MEDIUM:HIGH" }
 }
@@ -1426,8 +1479,9 @@ And finally configure the SSL inspection in
 http protocol httpfilter {
 	return error
 
-	label "Prohibited!"
-	request url filter "social.network.example.com/"
+	pass
+	match label "Prohibited!"
+	block url "social.network.example.com/"
 
 	# New configuration directives for SSL Interception
 	ssl ca key "/etc/ssl/private/ca.key" password "password123"

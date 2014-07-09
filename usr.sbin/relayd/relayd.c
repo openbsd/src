@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.125 2014/06/27 07:49:08 andre Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.126 2014/07/09 16:42:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -296,6 +296,8 @@ parent_configure(struct relayd *env)
 		config_setrt(env, rt);
 	TAILQ_FOREACH(proto, env->sc_protos, entry)
 		config_setproto(env, proto);
+	TAILQ_FOREACH(proto, env->sc_protos, entry)
+		config_setrule(env, proto);
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 		/* Check for SSL Inspection */
 		if ((rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)) ==
@@ -537,33 +539,6 @@ parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 }
 
 void
-purge_tree(struct proto_tree *tree)
-{
-	struct protonode	*proot, *pn;
-
-	while ((proot = RB_ROOT(tree)) != NULL) {
-		RB_REMOVE(proto_tree, tree, proot);
-		if (proot->key != NULL)
-			free(proot->key);
-		if (proot->value != NULL)
-			free(proot->value);
-		while ((pn = SIMPLEQ_FIRST(&proot->head)) != NULL) {
-			SIMPLEQ_REMOVE_HEAD(&proot->head, entry);
-			if (pn->key != NULL)
-				free(pn->key);
-			if (pn->value != NULL)
-				free(pn->value);
-			if (pn->labelname != NULL)
-				free(pn->labelname);
-			if (pn->label != 0)
-				pn_unref(pn->label);
-			free(pn);
-		}
-		free(proot);
-	}
-}
-
-void
 purge_table(struct tablelist *head, struct table *table)
 {
 	struct host		*host;
@@ -658,6 +633,335 @@ purge_relay(struct relayd *env, struct relay *rlay)
 	}
 
 	free(rlay);
+}
+
+
+struct kv *
+kv_add(struct kvlist *keys, char *key, char *value)
+{
+	struct kv	*kv;
+
+	if (key == NULL)
+		return (NULL);
+	if ((kv = calloc(1, sizeof(*kv))) == NULL)
+		return (NULL);
+	if ((kv->kv_key = strdup(key)) == NULL) {
+		free(kv);
+		return (NULL);
+	}
+	if (value != NULL &&
+	    (kv->kv_value = strdup(value)) == NULL) {
+		free(kv->kv_key);
+		free(kv);
+		return (NULL);
+	}
+
+	TAILQ_INSERT_TAIL(keys, kv, kv_entry);
+
+	return (kv);
+}
+
+int
+kv_set(struct kv *kv, char *fmt, ...)
+{
+	va_list  ap;
+	char	*value = NULL;
+
+	va_start(ap, fmt);
+	if (vasprintf(&value, fmt, ap) == -1)
+		return (-1);
+	va_end(ap);
+
+	if (kv->kv_value != NULL)
+		free(kv->kv_value);
+	kv->kv_value = value;
+
+	return (0);
+}
+
+int
+kv_setkey(struct kv *kv, char *fmt, ...)
+{
+	va_list  ap;
+	char	*key = NULL;
+
+	va_start(ap, fmt);
+	if (vasprintf(&key, fmt, ap) == -1)
+		return (-1);
+	va_end(ap);
+
+	if (kv->kv_key != NULL)
+		free(kv->kv_key);
+	kv->kv_key = key;
+
+	return (0);
+}
+
+void
+kv_delete(struct kvlist *keys, struct kv *kv)
+{
+	TAILQ_REMOVE(keys, kv, kv_entry);
+	kv_free(kv);
+	free(kv);
+}
+
+struct kv *
+kv_extend(struct kvlist *keys, char *value)
+{
+	struct kv	*kv;
+	char		*newvalue;
+
+	if ((kv = TAILQ_LAST(keys, kvlist)) == NULL)
+		return (NULL);
+
+	if (kv->kv_value == NULL) {
+		if ((kv->kv_value = strdup(value)) == NULL)
+			return (NULL);
+	} else if (asprintf(&newvalue, "%s%s", kv->kv_value, value) == -1)
+		return (NULL);
+
+	free(kv->kv_value);
+	kv->kv_value = newvalue;
+
+	return (kv);
+}
+
+void
+kv_purge(struct kvlist *keys)
+{
+	struct kv	*kv;
+
+	while ((kv = TAILQ_FIRST(keys)))
+		kv_delete(keys, kv);
+}
+
+void
+kv_free(struct kv *kv)
+{
+	if (kv->kv_key != NULL) {
+		free(kv->kv_key);
+	}
+	kv->kv_key = NULL;
+	if (kv->kv_value != NULL) {
+		free(kv->kv_value);
+	}
+	kv->kv_value = NULL;
+	kv->kv_matchlist = NULL;
+	kv->kv_matchptr = NULL;
+	kv->kv_match = NULL;
+	memset(kv, 0, sizeof(*kv));
+}
+
+struct kv *
+kv_inherit(struct kv *dst, struct kv *src)
+{
+	memset(dst, 0, sizeof(*dst));
+	memcpy(dst, src, sizeof(*dst));
+
+	if (src->kv_key != NULL) {
+		if ((dst->kv_key = strdup(src->kv_key)) == NULL) {
+			kv_free(dst);
+			return (NULL);
+		}
+	}
+	if (src->kv_value != NULL) {
+		if ((dst->kv_value = strdup(src->kv_value)) == NULL) {
+			kv_free(dst);
+			return (NULL);
+		}
+	}
+
+	if (src->kv_match != NULL)
+		dst->kv_match = src->kv_match;
+	if (src->kv_matchptr != NULL)
+		dst->kv_matchptr = src->kv_matchptr;
+	if (src->kv_matchlist != NULL)
+		dst->kv_matchlist = src->kv_matchlist;
+
+	return (dst);
+}
+
+int
+kv_log(struct evbuffer *log, struct kv *kv, u_int16_t labelid)
+{
+	char	*msg;
+
+	if (log == NULL)
+		return (0);
+	if (asprintf(&msg, " [%s%s%s%s%s]",
+	    labelid == 0 ? "" : label_id2name(labelid),
+	    labelid == 0 ? "" : ", ",
+	    kv->kv_key == NULL ? "(unknown)" : kv->kv_key,
+	    kv->kv_value == NULL ? "" : ": ",
+	    kv->kv_value == NULL ? "" : kv->kv_value) == -1)
+		return (-1);
+	if (evbuffer_add(log, msg, strlen(msg)) == -1) {
+		free(msg);
+		return (-1);
+	}
+	free(msg);
+
+	return (0);
+}
+
+int
+rule_add(struct protocol *proto, struct relay_rule *rule, const char *rulefile)
+{
+	struct relay_rule	*r = NULL;
+	struct kv		*kv = NULL;
+	FILE			*fp = NULL;
+	char			 buf[BUFSIZ];
+	int			 ret = -1;
+	u_int			 i;
+
+	for (i = 0; i < KEY_TYPE_MAX; i++) {
+		kv = &rule->rule_kv[i];
+		if (kv->kv_type != i)
+			continue;
+
+		if (kv->kv_value != NULL && strchr(kv->kv_value, '$') != NULL)
+			kv->kv_flags |= KV_FLAG_MACRO;
+
+		switch (kv->kv_option) {
+		case KEY_OPTION_LOG:
+			/* log action needs a key or a file to be specified */
+			if (kv->kv_key == NULL && rulefile == NULL &&
+			    (kv->kv_key = strdup("*")) == NULL)
+				goto fail;
+			break;
+		default:
+			break;
+		}
+
+		switch (kv->kv_type) {
+		case KEY_TYPE_QUERY:
+		case KEY_TYPE_PATH:
+		case KEY_TYPE_URL:
+			if (rule->rule_dir != RELAY_DIR_REQUEST)
+				goto fail;
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (rulefile == NULL) {
+		TAILQ_INSERT_TAIL(&proto->rules, rule, rule_entry);
+		return (0);
+	}
+
+	if ((fp = fopen(rulefile, "r")) == NULL)
+		goto fail;
+
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		/* strip whitespace and newline characters */
+		buf[strcspn(buf, "\r\n\t ")] = '\0';
+		if (!strlen(buf) || buf[0] == '#')
+			continue;
+
+		if ((r = rule_inherit(rule)) == NULL)
+			goto fail;
+
+		for (i = 0; i < KEY_TYPE_MAX; i++) {
+			kv = &r->rule_kv[i];
+			if (kv->kv_type != i)
+				continue;
+			if (kv->kv_key != NULL)
+				free(kv->kv_key);
+			if ((kv->kv_key = strdup(buf)) == NULL) {
+				rule_free(r);
+				free(r);
+				goto fail;
+			}
+		}
+
+		TAILQ_INSERT_TAIL(&proto->rules, r, rule_entry);
+	}
+
+	ret = 0;
+	rule_free(rule);
+	free(rule);
+
+ fail:
+	if (fp != NULL)
+		fclose(fp);
+	return (ret);
+}
+
+struct relay_rule *
+rule_inherit(struct relay_rule *rule)
+{
+	struct relay_rule	*r;
+	u_int			 i;
+	struct kv		*kv;
+
+	if ((r = calloc(1, sizeof(*r))) == NULL)
+		return (NULL);
+	memcpy(r, rule, sizeof(*r));
+
+	for (i = 0; i < KEY_TYPE_MAX; i++) {
+		kv = &rule->rule_kv[i];
+		if (kv->kv_type != i)
+			continue;
+		if (kv_inherit(&r->rule_kv[i], kv) == NULL) {
+			free(r);
+			return(NULL);
+		}
+	}
+
+	if (r->rule_label > 0)
+		label_ref(r->rule_label);
+	if (r->rule_tag > 0)
+		tag_ref(r->rule_tag);
+	if (r->rule_tagged > 0)
+		tag_ref(r->rule_tagged);
+
+	return (r);
+}
+
+void
+rule_free(struct relay_rule *rule)
+{
+	u_int	i;
+
+	for (i = 0; i < KEY_TYPE_MAX; i++)
+		kv_free(&rule->rule_kv[i]);
+	if (rule->rule_label > 0)
+		label_unref(rule->rule_label);
+	if (rule->rule_tag > 0)
+		tag_unref(rule->rule_tag);
+	if (rule->rule_tagged > 0)
+		tag_unref(rule->rule_tagged);
+}
+
+void
+rule_delete(struct relay_rules *rules, struct relay_rule *rule)
+{
+	TAILQ_REMOVE(rules, rule, rule_entry);
+	rule_free(rule);
+	free(rule);
+}
+
+void
+rule_settable(struct relay_rules *rules, struct relay_table *rlt)
+{
+	struct relay_rule	*r;
+	char		 	 pname[TABLE_NAME_SIZE];
+
+	if (rlt->rlt_table == NULL || strlcpy(pname, rlt->rlt_table->conf.name,
+	    sizeof(pname)) >= sizeof(pname))
+		return;
+
+	pname[strcspn(pname, ":")] = '\0';
+
+	TAILQ_FOREACH(r, rules, rule_entry) {
+		if (r->rule_tablename[0] &&
+		    strcmp(pname, r->rule_tablename) == 0) {
+			r->rule_table = rlt;
+		} else {
+			r->rule_table = NULL;
+		}
+	}
 }
 
 /*
@@ -857,7 +1161,7 @@ struct ca_pkey *
 pkey_add(struct relayd *env, EVP_PKEY *pkey, objid_t id)
 {
 	struct ca_pkey	*ca_pkey;
-	
+
 	if (env->sc_pkeys == NULL)
 		fatalx("pkeys");
 
@@ -1023,168 +1327,6 @@ canonicalize_host(const char *host, char *name, size_t len)
 	return (NULL);
 }
 
-struct protonode *
-protonode_header(enum direction dir, struct protocol *proto,
-    struct protonode *pk)
-{
-	struct protonode	*pn;
-	struct proto_tree	*tree;
-
-	if (dir == RELAY_DIR_RESPONSE)
-		tree = &proto->response_tree;
-	else
-		tree = &proto->request_tree;
-
-	pn = RB_FIND(proto_tree, tree, pk);
-	if (pn != NULL)
-		return (pn);
-	if ((pn = calloc(1, sizeof(*pn))) == NULL) {
-		log_warn("%s: calloc", __func__);
-		return (NULL);
-	}
-	pn->key = strdup(pk->key);
-	if (pn->key == NULL) {
-		free(pn);
-		log_warn("%s: strdup", __func__);
-		return (NULL);
-	}
-	pn->value = NULL;
-	pn->action = NODE_ACTION_NONE;
-	pn->type = pk->type;
-	SIMPLEQ_INIT(&pn->head);
-	if (dir == RELAY_DIR_RESPONSE)
-		pn->id =
-		    proto->response_nodes++;
-	else
-		pn->id = proto->request_nodes++;
-	if (pn->id == INT_MAX) {
-		log_warnx("%s: too many protocol "
-		    "nodes defined", __func__);
-		return (NULL);
-	}
-	RB_INSERT(proto_tree, tree, pn);
-	return (pn);
-}
-
-int
-protonode_add(enum direction dir, struct protocol *proto,
-    struct protonode *node)
-{
-	struct protonode	*pn, *proot, pk;
-	struct proto_tree	*tree;
-
-	if (dir == RELAY_DIR_RESPONSE)
-		tree = &proto->response_tree;
-	else
-		tree = &proto->request_tree;
-
-	if ((pn = calloc(1, sizeof (*pn))) == NULL) {
-		log_warn("%s: calloc", __func__);
-		return (-1);
-	}
-	bcopy(node, pn, sizeof(*pn));
-	pn->key = node->key;
-	pn->value = node->value;
-	pn->labelname = NULL;
-	if (node->labelname != NULL)
-		pn->label = pn_name2id(node->labelname);
-	SIMPLEQ_INIT(&pn->head);
-	if (dir == RELAY_DIR_RESPONSE)
-		pn->id = proto->response_nodes++;
-	else
-		pn->id = proto->request_nodes++;
-	if (pn->id == INT_MAX) {
-		log_warnx("%s: too many protocol nodes defined", __func__);
-		free(pn);
-		return (-1);
-	}
-	if ((proot =
-	    RB_INSERT(proto_tree, tree, pn)) != NULL) {
-		/*
-		 * A protocol node with the same key already
-		 * exists, append it to a queue behind the
-		 * existing node->
-		 */
-		if (SIMPLEQ_EMPTY(&proot->head))
-			SIMPLEQ_NEXT(proot, entry) = pn;
-		SIMPLEQ_INSERT_TAIL(&proot->head, pn, entry);
-	}
-	if (node->type == NODE_TYPE_COOKIE)
-		pk.key = "Cookie";
-	else if (node->type == NODE_TYPE_URL)
-		pk.key = "Host";
-	else
-		pk.key = "GET";
-	if (node->type != NODE_TYPE_HEADER) {
-		pk.type = NODE_TYPE_HEADER;
-		pn = protonode_header(dir, proto, &pk);
-		if (pn == NULL)
-			return (-1);
-		switch (node->type) {
-		case NODE_TYPE_QUERY:
-			pn->flags |= PNFLAG_LOOKUP_QUERY;
-			break;
-		case NODE_TYPE_COOKIE:
-			pn->flags |= PNFLAG_LOOKUP_COOKIE;
-			break;
-		case NODE_TYPE_URL:
-			if (node->flags &
-			    PNFLAG_LOOKUP_URL_DIGEST)
-				pn->flags |= node->flags &
-				    PNFLAG_LOOKUP_URL_DIGEST;
-			else
-				pn->flags |=
-				    PNFLAG_LOOKUP_DIGEST(0);
-			break;
-		default:
-			break;
-		}
-	}
-
-	return (0);
-}
-
-int
-protonode_load(enum direction dir, struct protocol *proto,
-    struct protonode *node, const char *name)
-{
-	FILE			*fp;
-	char			 buf[BUFSIZ];
-	int			 ret = -1;
-	struct protonode	 pn;
-
-	bcopy(node, &pn, sizeof(pn));
-	pn.key = pn.value = NULL;
-
-	if ((fp = fopen(name, "r")) == NULL)
-		return (-1);
-
-	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		/* strip whitespace and newline characters */
-		buf[strcspn(buf, "\r\n\t ")] = '\0';
-		if (!strlen(buf) || buf[0] == '#')
-			continue;
-		pn.key = strdup(buf);
-		if (node->value != NULL)
-			pn.value = strdup(node->value);
-		if (pn.key == NULL ||
-		    (node->value != NULL && pn.value == NULL))
-			goto fail;
-		if (protonode_add(dir, proto, &pn) == -1)
-			goto fail;
-		pn.key = pn.value = NULL;
-	}
-
-	ret = 0;
- fail:
-	if (pn.key != NULL)
-		free(pn.key);
-	if (pn.value != NULL)
-		free(pn.value);
-	fclose(fp);
-	return (ret);
-}
-
 int
 bindany(struct ctl_bindany *bnd)
 {
@@ -1313,6 +1455,102 @@ get_data(u_int8_t *ptr, size_t len)
 	memcpy(data, ptr, len);
 
 	return (data);
+}
+
+int
+sockaddr_cmp(struct sockaddr *a, struct sockaddr *b, int prefixlen)
+{
+	struct sockaddr_in	*a4, *b4;
+	struct sockaddr_in6	*a6, *b6;
+	u_int32_t		 av[4], bv[4], mv[4];
+
+	if (a->sa_family == AF_UNSPEC || b->sa_family == AF_UNSPEC)
+		return (0);
+	else if (a->sa_family > b->sa_family)
+		return (1);
+	else if (a->sa_family < b->sa_family)
+		return (-1);
+
+	if (prefixlen == -1)
+		memset(&mv, 0xff, sizeof(mv));
+
+	switch (a->sa_family) {
+	case AF_INET:
+		a4 = (struct sockaddr_in *)a;
+		b4 = (struct sockaddr_in *)b;
+
+		av[0] = a4->sin_addr.s_addr;
+		bv[0] = b4->sin_addr.s_addr;
+		if (prefixlen != -1)
+			mv[0] = prefixlen2mask(prefixlen);
+
+		if ((av[0] & mv[0]) > (bv[0] & mv[0]))
+			return (1);
+		if ((av[0] & mv[0]) < (bv[0] & mv[0]))
+			return (-1);
+		break;
+	case AF_INET6:
+		a6 = (struct sockaddr_in6 *)a;
+		b6 = (struct sockaddr_in6 *)b;
+
+		memcpy(&av, &a6->sin6_addr.s6_addr, 16);
+		memcpy(&bv, &b6->sin6_addr.s6_addr, 16);
+		if (prefixlen != -1)
+			prefixlen2mask6(prefixlen, mv);
+
+		if ((av[3] & mv[3]) > (bv[3] & mv[3]))
+			return (1);
+		if ((av[3] & mv[3]) < (bv[3] & mv[3]))
+			return (-1);
+		if ((av[2] & mv[2]) > (bv[2] & mv[2]))
+			return (1);
+		if ((av[2] & mv[2]) < (bv[2] & mv[2]))
+			return (-1);
+		if ((av[1] & mv[1]) > (bv[1] & mv[1]))
+			return (1);
+		if ((av[1] & mv[1]) < (bv[1] & mv[1]))
+			return (-1);
+		if ((av[0] & mv[0]) > (bv[0] & mv[0]))
+			return (1);
+		if ((av[0] & mv[0]) < (bv[0] & mv[0]))
+			return (-1);
+		break;
+	}
+
+	return (0);
+}
+
+u_int32_t
+prefixlen2mask(u_int8_t prefixlen)
+{
+	if (prefixlen == 0)
+		return (0);
+
+	if (prefixlen > 32)
+		prefixlen = 32;
+
+	return (htonl(0xffffffff << (32 - prefixlen)));
+}
+
+struct in6_addr *
+prefixlen2mask6(u_int8_t prefixlen, u_int32_t *mask)
+{
+	static struct in6_addr  s6;
+	int			i;
+
+	if (prefixlen > 128)
+		prefixlen = 128;
+
+	bzero(&s6, sizeof(s6));
+	for (i = 0; i < prefixlen / 8; i++)
+		s6.s6_addr[i] = 0xff;
+	i = prefixlen % 8;
+	if (i)
+		s6.s6_addr[prefixlen / 8] = 0xff00 >> i;
+
+	memcpy(mask, &s6, sizeof(s6));
+
+	return (&s6);
 }
 
 int

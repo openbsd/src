@@ -1,4 +1,4 @@
-/*	$OpenBSD: name2id.c,v 1.2 2007/12/07 17:17:00 reyk Exp $	*/
+/*	$OpenBSD: name2id.c,v 1.3 2014/07/09 16:42:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -16,16 +16,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
 
 #include <net/if.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 #include <event.h>
 
 #include <openssl/ssl.h>
@@ -48,31 +47,55 @@ const char	*_id2name(struct n2id_labels *, u_int16_t);
 void		 _unref(struct n2id_labels *, u_int16_t);
 void		 _ref(struct n2id_labels *, u_int16_t);
 
-/* for protocolnode labels */
-struct n2id_labels	pn_labels = TAILQ_HEAD_INITIALIZER(pn_labels);
+struct n2id_labels	relay_labels = TAILQ_HEAD_INITIALIZER(relay_labels);
+struct n2id_labels	relay_tags = TAILQ_HEAD_INITIALIZER(relay_tags);
 
 u_int16_t
-pn_name2id(const char *name)
+tag_name2id(const char *name)
 {
-	return (_name2id(&pn_labels, name));
+	return (_name2id(&relay_tags, name));
 }
 
 const char *
-pn_id2name(u_int16_t id)
+tag_id2name(u_int16_t id)
 {
-	return (_id2name(&pn_labels, id));
+	return (_id2name(&relay_tags, id));
 }
 
 void
-pn_unref(u_int16_t id)
+tag_unref(u_int16_t id)
 {
-	_unref(&pn_labels, id);
+	_unref(&relay_tags, id);
 }
 
 void
-pn_ref(u_int16_t id)
+tag_ref(u_int16_t id)
 {
-	_ref(&pn_labels, id);
+	_ref(&relay_tags, id);
+}
+
+u_int16_t
+label_name2id(const char *name)
+{
+	return (_name2id(&relay_labels, name));
+}
+
+const char *
+label_id2name(u_int16_t id)
+{
+	return (_id2name(&relay_labels, id));
+}
+
+void
+label_unref(u_int16_t id)
+{
+	_unref(&relay_labels, id);
+}
+
+void
+label_ref(u_int16_t id)
+{
+	_ref(&relay_labels, id);
 }
 
 u_int16_t

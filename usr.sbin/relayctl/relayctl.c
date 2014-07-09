@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.50 2014/06/25 11:12:45 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.51 2014/07/09 16:42:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -116,7 +116,7 @@ main(int argc, char *argv[])
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, RELAYD_SOCKET, sizeof(sun.sun_path));
+	(void)strlcpy(sun.sun_path, RELAYD_SOCKET, sizeof(sun.sun_path));
  reconnect:
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
 		/* Keep retrying if running in monitor mode */
@@ -449,8 +449,9 @@ show_session_msg(struct imsg *imsg)
 		print_time(&tv_now, &con->se_tv_last, b, sizeof(b));
 		printf("\tage %s, idle %s, relay %u, pid %u",
 		    a, b, con->se_relayid, con->se_pid);
-		if (con->se_mark)
-			printf(", mark %u", con->se_mark);
+		/* XXX grab tagname instead of tag id */
+		if (con->se_tag)
+			printf(", tag (id) %u", con->se_tag);
 		printf("\n");
 		break;
 	case IMSG_CTL_END:
