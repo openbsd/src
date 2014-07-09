@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.57 2014/07/09 11:25:42 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.58 2014/07/09 14:20:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1704,11 +1704,11 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 char *
 SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 {
-	int l;
-	const char *ver;
-	const char *kx, *au, *enc, *mac;
+	static const char *fmt="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s\n";
 	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, alg2;
-	static const char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s\n";
+	const char *ver, *kx, *au, *enc, *mac;
+	char *ret;
+	int l;
 
 	alg_mkey = cipher->algorithm_mkey;
 	alg_auth = cipher->algorithm_auth;
@@ -1719,76 +1719,76 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	alg2 = cipher->algorithm2;
 
 	if (alg_ssl & SSL_SSLV2)
-		ver="SSLv2";
+		ver = "SSLv2";
 	else if (alg_ssl & SSL_SSLV3)
-		ver="SSLv3";
+		ver = "SSLv3";
 	else if (alg_ssl & SSL_TLSV1_2)
-		ver="TLSv1.2";
+		ver = "TLSv1.2";
 	else
-		ver="unknown";
+		ver = "unknown";
 
 	switch (alg_mkey) {
 	case SSL_kRSA:
 		kx = "RSA";
 		break;
 	case SSL_kDHr:
-		kx="DH/RSA";
+		kx = "DH/RSA";
 		break;
 	case SSL_kDHd:
-		kx="DH/DSS";
+		kx = "DH/DSS";
 		break;
 	case SSL_kKRB5:
-		kx="KRB5";
+		kx = "KRB5";
 		break;
 	case SSL_kEDH:
 		kx = "DH";
 		break;
 	case SSL_kECDHr:
-		kx="ECDH/RSA";
+		kx = "ECDH/RSA";
 		break;
 	case SSL_kECDHe:
-		kx="ECDH/ECDSA";
+		kx = "ECDH/ECDSA";
 		break;
 	case SSL_kEECDH:
-		kx="ECDH";
+		kx = "ECDH";
 		break;
 	case SSL_kPSK:
-		kx="PSK";
+		kx = "PSK";
 		break;
 	case SSL_kSRP:
-		kx="SRP";
+		kx = "SRP";
 		break;
 	default:
-		kx="unknown";
+		kx = "unknown";
 	}
 
 	switch (alg_auth) {
 	case SSL_aRSA:
-		au="RSA";
+		au = "RSA";
 		break;
 	case SSL_aDSS:
-		au="DSS";
+		au = "DSS";
 		break;
 	case SSL_aDH:
-		au="DH";
+		au = "DH";
 		break;
 	case SSL_aKRB5:
-		au="KRB5";
+		au = "KRB5";
 		break;
 	case SSL_aECDH:
-		au="ECDH";
+		au = "ECDH";
 		break;
 	case SSL_aNULL:
-		au="None";
+		au = "None";
 		break;
 	case SSL_aECDSA:
-		au="ECDSA";
+		au = "ECDSA";
 		break;
 	case SSL_aPSK:
-		au="PSK";
+		au = "PSK";
 		break;
 	default:
-		au="unknown";
+		au = "unknown";
 		break;
 	}
 
@@ -1797,7 +1797,7 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		enc = "DES(56)";
 		break;
 	case SSL_3DES:
-		enc="3DES(168)";
+		enc = "3DES(168)";
 		break;
 	case SSL_RC4:
 		enc = alg2 & SSL2_CF_8_BYTE_ENC ? "RC4(64)" : "RC4(128)";
@@ -1806,73 +1806,73 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		enc = "RC2(128)";
 		break;
 	case SSL_IDEA:
-		enc="IDEA(128)";
+		enc = "IDEA(128)";
 		break;
 	case SSL_eNULL:
-		enc="None";
+		enc = "None";
 		break;
 	case SSL_AES128:
-		enc="AES(128)";
+		enc = "AES(128)";
 		break;
 	case SSL_AES256:
-		enc="AES(256)";
+		enc = "AES(256)";
 		break;
 	case SSL_AES128GCM:
-		enc="AESGCM(128)";
+		enc = "AESGCM(128)";
 		break;
 	case SSL_AES256GCM:
-		enc="AESGCM(256)";
+		enc = "AESGCM(256)";
 		break;
 	case SSL_CAMELLIA128:
-		enc="Camellia(128)";
+		enc = "Camellia(128)";
 		break;
 	case SSL_CAMELLIA256:
-		enc="Camellia(256)";
+		enc = "Camellia(256)";
 		break;
 	case SSL_SEED:
-		enc="SEED(128)";
+		enc = "SEED(128)";
 		break;
 	case SSL_CHACHA20POLY1305:
 		enc = "ChaCha20-Poly1305";
 		break;
 	default:
-		enc="unknown";
+		enc = "unknown";
 		break;
 	}
 
 	switch (alg_mac) {
 	case SSL_MD5:
-		mac="MD5";
+		mac = "MD5";
 		break;
 	case SSL_SHA1:
-		mac="SHA1";
+		mac = "SHA1";
 		break;
 	case SSL_SHA256:
-		mac="SHA256";
+		mac = "SHA256";
 		break;
 	case SSL_SHA384:
-		mac="SHA384";
+		mac = "SHA384";
 		break;
 	case SSL_AEAD:
-		mac="AEAD";
+		mac = "AEAD";
 		break;
 	default:
-		mac="unknown";
+		mac = "unknown";
 		break;
 	}
 
-	if (buf == NULL)
-		l = asprintf(&buf, format, cipher->name, ver, kx, au, enc, mac);
-	else {
-		l = snprintf(buf, len, format, cipher->name, ver, kx, au, enc,
-		    mac);
+	if (asprintf(&ret, fmt, cipher->name, ver, kx, au, enc, mac) == -1)
+		return "OPENSSL_malloc Error";
+
+	if (buf != NULL) {
+		l = strlcpy(buf, ret, len);
+		free(ret);
+		ret = buf;
 		if (l >= len)
-			l = -1;
+			ret = "Buffer too small";
 	}
-	if (l == -1)
-		return("Buffer too small");
-	else
-		return (buf);
+
+	return (ret);
 }
 
 char *
