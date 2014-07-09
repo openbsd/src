@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.128 2014/06/08 14:17:52 miod Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.129 2014/07/09 15:43:33 tedu Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1013,7 +1013,7 @@ sorflush(struct socket *so)
 	sbunlock(sb);
 	asb = *sb;
 	bzero(sb, sizeof (*sb));
-	/* XXX - the bzero stumps all over so_rcv */
+	/* XXX - the bzero stomps all over so_rcv */
 	if (asb.sb_flags & SB_KNOTE) {
 		sb->sb_sel.si_note = asb.sb_sel.si_note;
 		sb->sb_flags = SB_KNOTE;
