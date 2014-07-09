@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.95 2014/07/09 15:03:12 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.96 2014/07/09 15:12:34 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -662,7 +662,7 @@ uvm_page_rle(paddr_t addr)
 }
 
 /*
- * Fills out the hibernate_info union pointed to by hiber_info
+ * Fills out the hibernate_info union pointed to by hib
  * with information about this machine (swap signature block
  * offsets, number of memory ranges, kernel in use, etc)
  */
@@ -1181,6 +1181,8 @@ hibernate_resume(void)
 	}
 
 #ifdef MULTIPROCESSOR
+	/* XXX - if we fail later, we may need to rehatch APs on some archs */
+	DPRINTF("hibernate: quiescing APs\n");
 	hibernate_quiesce_cpus();
 #endif /* MULTIPROCESSOR */
 
@@ -1188,6 +1190,7 @@ hibernate_resume(void)
 	if (hibernate_read_image(&disk_hib))
 		goto fail;
 
+	DPRINTF("hibernate: quiescing devices\n");
 	if (config_suspend(device_mainbus(), DVACT_QUIESCE) != 0)
 		goto fail;
 
@@ -1195,6 +1198,7 @@ hibernate_resume(void)
 	hibernate_disable_intr_machdep();
 	cold = 1;
 
+	DPRINTF("hibernate: suspending devices\n");
 	if (config_suspend(device_mainbus(), DVACT_SUSPEND) != 0) {
 		cold = 0;
 		hibernate_enable_intr_machdep();
@@ -1208,6 +1212,7 @@ hibernate_resume(void)
 	printf("Unpacking image...\n");
 
 	/* Switch stacks */
+	DPRINTF("hibernate: switching stacks\n");
 	hibernate_switch_stack_machdep();
 
 #ifndef NO_PROPOLICE
@@ -1267,6 +1272,7 @@ hibernate_unpack_image(union hibernate_info *hib)
 	 * same between the hibernated and resuming kernel, and we are running
 	 * on our own stack, so the overwrite is ok.
 	 */
+	DPRINTF("hibernate: activating alt. pagetable and starting unpack\n");
 	hibernate_activate_resume_pt_machdep();
 
 	for (i = 0; i < local_hib.chunk_ctr; i++) {
@@ -1335,7 +1341,6 @@ hibernate_process_chunk(union hibernate_info *hib,
 
 	hibernate_copy_chunk_to_piglet(img_cur,
 	 (vaddr_t)(pva + (HIBERNATE_CHUNK_SIZE * 2)), chunk->compressed_size);
-
 	hibernate_inflate_region(hib, chunk->base,
 	    (vaddr_t)(pva + (HIBERNATE_CHUNK_SIZE * 2)),
 	    chunk->compressed_size);
@@ -1841,19 +1846,19 @@ hibernate_suspend(void)
 
 	/* Find a page-addressed region in swap [start,end] */
 	if (uvm_hibswap(hib.dev, &start, &end)) {
-		printf("cannot find any swap\n");
+		printf("hibernate: cannot find any swap\n");
 		return (1);
 	}
 
 	if (end - start < 1000) {
-		printf("%lu\n is too small", end - start);
+		printf("hibernate: insufficient swap (%lu is too small)\n",
+			end - start);
 		return (1);
 	}
 
 	/* Calculate block offsets in swap */
 	hib.image_offset = ctod(start);
 
-	/* XXX side effect */
 	DPRINTF("hibernate @ block %lld max-length %lu blocks\n",
 	    hib.image_offset, ctod(end) - ctod(start));
 
