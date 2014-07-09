@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.24 2014/03/26 00:15:47 schwarze Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.25 2014/07/09 14:19:22 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 26 2014 $
+.Dd $Mdocdate: July 9 2014 $
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -214,7 +214,7 @@ i.e. that it will reload its configuration.
 .Sh ENVIRONMENT
 .Ic rc_cmd
 uses the following shell variables to control its behaviour.
-.Bl -tag -width "daemon_flags"
+.Bl -tag -width "daemon_timeout"
 .It Va daemon
 The path to the daemon, optionally followed by one or more
 whitespace separated arguments.
@@ -232,6 +232,13 @@ Arguments to call the daemon with.
 .It Va daemon_user
 User to run the daemon as, using
 .Xr su 1 .
+.It Ar daemon Ns _timeout
+Maximum time in seconds to wait for the
+.Cm start ,
+.Cm stop
+and
+.Cm reload
+actions to return.
 .It Va daemon_class
 Login class to run the daemon with, using
 .Xr su 1 .

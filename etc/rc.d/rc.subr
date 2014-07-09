@@ -1,6 +1,6 @@
-#	$OpenBSD: rc.subr,v 1.71 2014/07/09 10:59:35 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.72 2014/07/09 14:19:22 ajacoutot Exp $
 #
-# Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
+# Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2010, 2011 Robert Nagy <robert@openbsd.org>
 #
@@ -85,8 +85,8 @@ rc_exit() {
 }
 
 rc_wait() {
-	local _i=0 _w=${2:-30}
-	while [ $_i -lt $_w ]; do
+	local _i=0
+	while [ $_i -lt ${daemon_timeout} ]; do
 		case "$1" in
 			reload|start)
 				rc_do rc_check && return 0
@@ -203,16 +203,19 @@ _RC_RUNFILE=${_RC_RUNDIR}/${_name}
 
 eval _rcflags=\${${_name}_flags}
 eval _rcuser=\${${_name}_user}
+eval _rctimeout=\${${_name}_timeout}
 
 getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
 	daemon_class=${_name}
 
 [ -z "${daemon_class}" ] && daemon_class=daemon
 [ -z "${daemon_user}" ] && daemon_user=root
+[ -z "${daemon_timeout}" ] && daemon_timeout=30
 
 [ -n "${_RC_FORCE}" ] && [ X"${_rcflags}" = X"NO" ] && unset _rcflags
 [ -n "${_rcflags}" ] && daemon_flags=${_rcflags}
 [ -n "${_rcuser}" ] && daemon_user=${_rcuser}
+[ -n "${_rctimeout}" ] && daemon_timeout=${_rctimeout}
 
 # sanitize
 daemon_flags=$(printf ' %s' ${daemon_flags})
