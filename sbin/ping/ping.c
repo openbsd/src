@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.107 2014/07/09 15:23:29 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.108 2014/07/09 15:24:19 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -699,11 +699,7 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 		if (timing) {
 			struct tv32 tv32;
 
-#ifndef icmp_data
-			pkttime = (char *)&icp->icmp_ip;
-#else
 			pkttime = (char *)icp->icmp_data;
-#endif
 			memcpy(&tv32, pkttime, sizeof tv32);
 			tp.tv_sec = ntohl(tv32.tv32_sec);
 			tp.tv_usec = ntohl(tv32.tv32_usec);
@@ -1077,19 +1073,11 @@ pr_icmph(struct icmp *icp)
 			break;
 		}
 		/* Print returned IP header information */
-#ifndef icmp_data
-		pr_retip(&icp->icmp_ip);
-#else
 		pr_retip((struct ip *)icp->icmp_data);
-#endif
 		break;
 	case ICMP_SOURCEQUENCH:
 		(void)printf("Source Quench\n");
-#ifndef icmp_data
-		pr_retip(&icp->icmp_ip);
-#else
 		pr_retip((struct ip *)icp->icmp_data);
-#endif
 		break;
 	case ICMP_REDIRECT:
 		switch(icp->icmp_code) {
@@ -1111,11 +1099,7 @@ pr_icmph(struct icmp *icp)
 		}
 		(void)printf("(New addr: %s)\n",
 		    inet_ntoa(icp->icmp_gwaddr));
-#ifndef icmp_data
-		pr_retip(&icp->icmp_ip);
-#else
 		pr_retip((struct ip *)icp->icmp_data);
-#endif
 		break;
 	case ICMP_ECHO:
 		(void)printf("Echo Request\n");
@@ -1144,11 +1128,7 @@ pr_icmph(struct icmp *icp)
 			    icp->icmp_code);
 			break;
 		}
-#ifndef icmp_data
-		pr_retip(&icp->icmp_ip);
-#else
 		pr_retip((struct ip *)icp->icmp_data);
-#endif
 		break;
 	case ICMP_PARAMPROB:
 		switch(icp->icmp_code) {
@@ -1162,11 +1142,7 @@ pr_icmph(struct icmp *icp)
 			    ntohs(icp->icmp_hun.ih_pptr));
 			break;
 		}
-#ifndef icmp_data
-		pr_retip(&icp->icmp_ip);
-#else
 		pr_retip((struct ip *)icp->icmp_data);
-#endif
 		break;
 	case ICMP_TSTAMP:
 		(void)printf("Timestamp\n");
