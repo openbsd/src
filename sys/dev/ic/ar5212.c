@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.53 2013/04/13 08:57:10 stsp Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.54 2014/07/09 16:36:13 stsp Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -238,6 +238,7 @@ ar5k_ar5212_attach(u_int16_t device, void *sc, bus_space_tag_t st,
 	} else if (srev == AR5K_SREV_VER_AR2425) {
 		hal->ah_radio = AR5K_AR2425;
 		hal->ah_phy_spending = AR5K_AR5212_PHY_SPENDING_AR5112;
+		hal->ah_radio_5ghz_revision = AR5K_SREV_RAD_SC2;
 	} else if (hal->ah_radio_5ghz_revision < AR5K_SREV_RAD_5112) {
 		hal->ah_radio = AR5K_AR5111;
 		hal->ah_phy_spending = AR5K_AR5212_PHY_SPENDING_AR5111;
