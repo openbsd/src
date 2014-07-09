@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1731 2014/07/09 21:51:25 sasano Exp 
+ *	OpenBSD: pcidevs,v 1.1732 2014/07/09 23:30:38 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5847,8 +5847,8 @@
 #define	PCI_PRODUCT_RDC_R6025_HB	0x6025		/* R6025 Host */
 #define	PCI_PRODUCT_RDC_R6031_ISA	0x6031		/* R6031 ISA */
 #define	PCI_PRODUCT_RDC_R6040_ETHER	0x6040		/* R6040 Ethernet */
-#define	PCI_PRODUCT_RDC_R6060_OHCI	0x6060		/* R6060 USB OHCI */
-#define	PCI_PRODUCT_RDC_R6061_EHCI	0x6061		/* R6061 USB EHCI */
+#define	PCI_PRODUCT_RDC_R6060_OHCI	0x6060		/* R6060 USB */
+#define	PCI_PRODUCT_RDC_R6061_EHCI	0x6061		/* R6061 USB2 */
 
 /* Realtek products */
 #define	PCI_PRODUCT_REALTEK_RTS5209	0x5209		/* RTS5209 Card Reader */

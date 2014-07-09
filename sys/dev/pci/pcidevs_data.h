@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1731 2014/07/09 21:51:25 sasano Exp 
+ *	OpenBSD: pcidevs,v 1.1732 2014/07/09 23:30:38 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -20165,11 +20165,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6060_OHCI,
-	    "R6060 USB OHCI",
+	    "R6060 USB",
 	},
 	{
 	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6061_EHCI,
-	    "R6061 USB EHCI",
+	    "R6061 USB2",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTS5209,
