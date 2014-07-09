@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.10 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: aes_core.c,v 1.11 2014/07/09 09:10:07 miod Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -626,8 +626,7 @@ static const u32 rcon[] = {
  * Expand the cipher key into the encryption key schedule.
  */
 int
-private_AES_set_encrypt_key(const unsigned char *userKey, const int bits,
-    AES_KEY *key)
+AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 {
 	u32 *rk;
 	int i = 0;
@@ -728,15 +727,14 @@ private_AES_set_encrypt_key(const unsigned char *userKey, const int bits,
  * Expand the cipher key into the decryption key schedule.
  */
 int
-private_AES_set_decrypt_key(const unsigned char *userKey, const int bits,
-    AES_KEY *key)
+AES_set_decrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 {
 	u32 *rk;
 	int i, j, status;
 	u32 temp;
 
 	/* first, start with an encryption schedule */
-	status = private_AES_set_encrypt_key(userKey, bits, key);
+	status = AES_set_encrypt_key(userKey, bits, key);
 	if (status < 0)
 		return status;
 
@@ -1213,8 +1211,7 @@ static const u32 rcon[] = {
  * Expand the cipher key into the encryption key schedule.
  */
 int
-private_AES_set_encrypt_key(const unsigned char *userKey, const int bits,
-    AES_KEY *key)
+AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 {
 	u32 *rk;
 	int i = 0;
@@ -1315,7 +1312,7 @@ private_AES_set_encrypt_key(const unsigned char *userKey, const int bits,
  * Expand the cipher key into the decryption key schedule.
  */
 int
-private_AES_set_decrypt_key(const unsigned char *userKey, const int bits,
+AES_set_decrypt_key(const unsigned char *userKey, const int bits,
     AES_KEY *key)
 {
 	u32 *rk;
@@ -1323,7 +1320,7 @@ private_AES_set_decrypt_key(const unsigned char *userKey, const int bits,
 	u32 temp;
 
 	/* first, start with an encryption schedule */
-	status = private_AES_set_encrypt_key(userKey, bits, key);
+	status = AES_set_encrypt_key(userKey, bits, key);
 	if (status < 0)
 		return status;
 

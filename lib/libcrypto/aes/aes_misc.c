@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_misc.c,v 1.8 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: aes_misc.c,v 1.9 2014/07/09 09:10:07 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -64,20 +64,4 @@ AES_options(void)
 #else   
 	return "aes(partial)";
 #endif
-}
-
-/* FIPS wrapper functions to block low level AES calls in FIPS mode */
-
-int
-AES_set_encrypt_key(const unsigned char *userKey, const int bits,
-    AES_KEY *key)
-{
-	return private_AES_set_encrypt_key(userKey, bits, key);
-}
-
-int
-AES_set_decrypt_key(const unsigned char *userKey, const int bits,
-    AES_KEY *key)
-{
-	return private_AES_set_decrypt_key(userKey, bits, key);
 }
