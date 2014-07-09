@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.104 2014/07/08 05:35:18 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.105 2014/07/09 00:13:05 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4015,7 +4015,7 @@ bnx_fill_rx_chain(struct bnx_softc *sc)
 
 	/* Keep filling the RX chain until it's full. */
 	slots = if_rxr_get(&sc->rx_ring, sc->max_rx_bd);
-	while (slots > BNX_MAX_SEGMENTS) {
+	while (slots > 0) {
 		chain_prod = RX_CHAIN_IDX(prod);
 		
 		used = bnx_get_buf(sc, &prod, &chain_prod, &prod_bseq);
@@ -5121,6 +5121,11 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		    sc->bnx_phy_flags);
 
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
+		break;
+
+	case SIOCGIFRXR:
+		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
+		    NULL, MCLBYTES, &sc->rx_ring);
 		break;
 
 	default:
