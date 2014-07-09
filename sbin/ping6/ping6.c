@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.91 2014/07/09 09:33:12 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.92 2014/07/09 09:34:47 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -144,9 +144,6 @@ struct tv32 {
 #define F_FQDN		0x1000
 #define F_INTERFACE	0x2000
 #define F_SRCADDR	0x4000
-#ifdef IPV6_REACHCONF
-#define F_REACHCONF	0x8000
-#endif
 #define F_HOSTNAME	0x10000
 #define F_FQDNOLD	0x20000
 #define F_NIGROUP	0x40000
@@ -285,7 +282,7 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
 	while ((ch = getopt(argc, argv,
-	    "a:b:c:dEefHg:h:I:i:l:mnNp:qRS:s:tvV:wW")) != -1) {
+	    "a:b:c:dEefHg:h:I:i:l:mnNp:qS:s:tvV:wW")) != -1) {
 		switch (ch) {
 		case 'a':
 		{
@@ -433,13 +430,6 @@ main(int argc, char *argv[])
 		case 'q':
 			options |= F_QUIET;
 			break;
-		case 'R':
-#ifdef IPV6_REACHCONF
-			options |= F_REACHCONF;
-			break;
-#else
-			errx(1, "-R is not supported in this configuration");
-#endif
 		case 'S':
 			memset(&hints, 0, sizeof(struct addrinfo));
 			hints.ai_flags = AI_NUMERICHOST; /* allow hostname? */
@@ -690,10 +680,6 @@ main(int argc, char *argv[])
 	if (hoplimit != -1)
 		ip6optlen += CMSG_SPACE(sizeof(int));
 
-#ifdef IPV6_REACHCONF
-	if (options & F_REACHCONF)
-		ip6optlen += CMSG_SPACE(0);
-#endif
 
 	/* set IP6 packet options */
 	if (ip6optlen) {
@@ -726,15 +712,6 @@ main(int argc, char *argv[])
 
 		scmsgp = CMSG_NXTHDR(&smsghdr, scmsgp);
 	}
-#ifdef IPV6_REACHCONF
-	if (options & F_REACHCONF) {
-		scmsgp->cmsg_len = CMSG_LEN(0);
-		scmsgp->cmsg_level = IPPROTO_IPV6;
-		scmsgp->cmsg_type = IPV6_REACHCONF;
-
-		scmsgp = CMSG_NXTHDR(&smsghdr, scmsgp);
-	}
-#endif
 
 	if (argc > 1) {	/* some intermediate addrs are specified */
 		int hops, error;
@@ -2455,9 +2432,6 @@ usage(void)
 	    "usage: ping6 [-dEefH"
 	    "m"
 	    "NnqtvWw"
-#ifdef IPV6_REACHCONF
-	    "R"
-#endif
 	    "] [-a addrtype] [-b bufsiz] [-c count] [-g gateway]\n\t"
 	    "[-h hoplimit] [-I interface] [-i wait] [-l preload] [-p pattern]"
 	    "\n\t[-S sourceaddr] [-s packetsize] [-V rtable] [hops ...]"
