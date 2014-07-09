@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.37 2014/05/09 06:37:24 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.38 2014/07/09 12:05:01 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -510,14 +510,18 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 		sa_ltime_hard.sadb_lifetime_bytes = lt->lt_bytes;
 		sa_ltime_hard.sadb_lifetime_addtime = lt->lt_seconds;
 
+		/* double the lifetime for IP compression */
+		if (satype == SADB_X_SATYPE_IPCOMP)
+			sa_ltime_hard.sadb_lifetime_addtime *= 2;
+
 		sa_ltime_soft.sadb_lifetime_exttype = SADB_EXT_LIFETIME_SOFT;
 		sa_ltime_soft.sadb_lifetime_len = sizeof(sa_ltime_soft) / 8;
 		/* set randomly to 85-95% */
 		jitter = 850 + arc4random_uniform(100);
 		sa_ltime_soft.sadb_lifetime_bytes =
-		    (lt->lt_bytes * jitter) / 1000;
+		    (sa_ltime_hard.sadb_lifetime_bytes * jitter) / 1000;
 		sa_ltime_soft.sadb_lifetime_addtime =
-		    (lt->lt_seconds * jitter) / 1000;
+		    (sa_ltime_hard.sadb_lifetime_addtime * jitter) / 1000;
 	}
 
 	/* XXX handle NULL encryption or NULL auth or combined encr/auth */
@@ -1793,6 +1797,10 @@ out:
 			break;
 		case SADB_SATYPE_ESP:
 			spi.spi_protoid = IKEV2_SAPROTO_ESP;
+			break;
+		case SADB_X_SATYPE_IPCOMP:
+			spi.spi_size = 2;
+			spi.spi_protoid = IKEV2_SAPROTO_IPCOMP;
 			break;
 		default:
 			log_warnx("%s: unsupported SA type %d spi %s",

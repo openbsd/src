@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.113 2014/05/13 14:24:35 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.114 2014/07/09 12:05:01 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -4480,7 +4480,6 @@ ikev2_ipcomp_enable(struct iked *env, struct iked_sa *sa)
 	csa->csa_dir = IPSP_DIRECTION_OUT;
 	csa->csa_local = &sa->sa_local;
 	csa->csa_peer = &sa->sa_peer;
-	csa->csa_persistent = 1;
 
 	memcpy(csb, csa, sizeof(*csb));
 	csb->csa_spi.spi = csa->csa_peerspi;
@@ -4804,6 +4803,8 @@ ikev2_rekey_sa(struct iked *env, struct iked_spi *rekey)
 
 	if (csa->csa_rekey)	/* See if it's already taken care of */
 		return (0);
+	if (csa->csa_saproto == IKEV2_SAPROTO_IPCOMP)	/* no rekey */
+		return (0);
 	if ((sa = csa->csa_ikesa) == NULL) {
 		log_warnx("%s: SA %s doesn't have a parent SA", __func__,
 		    print_spi(rekey->spi, rekey->spi_size));
@@ -4848,6 +4849,12 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 	csa->csa_rekey = 1;	/* prevent re-loading */
 	if (sa == NULL) {
 		log_debug("%s: failed to find a parent SA", __func__);
+		return (0);
+	}
+	if (csa->csa_saproto == IKEV2_SAPROTO_IPCOMP) {
+		/* matching Child SAs (e.g. ESP) should have expired by now */
+		if (csa->csa_children == 0)
+			ikev2_ipcomp_csa_free(env, csa);
 		return (0);
 	}
 
