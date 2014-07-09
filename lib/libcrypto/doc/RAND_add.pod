@@ -24,7 +24,7 @@ should not be used in new programs.
 
 =head1 SEE ALSO
 
-L<rand(3)|rand(3)>, L<RAND_egd(3)|RAND_egd(3)>,
+L<rand(3)|rand(3)>,
 L<RAND_load_file(3)|RAND_load_file(3)>, L<RAND_cleanup(3)|RAND_cleanup(3)>
 
 =cut

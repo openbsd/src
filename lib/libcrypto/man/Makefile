@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2014/04/19 11:15:37 deraadt Exp $
+# $OpenBSD: Makefile,v 1.5 2014/07/09 17:56:43 miod Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -660,8 +660,6 @@ MLINKS+=\
 	PEM_read_bio_PrivateKey.3 PEM_write_bio_X509_CRL.3 \
 	PEM_read_bio_PrivateKey.3 PEM_write_bio_X509_REQ.3 \
 	PEM_read_bio_PrivateKey.3 PEM_write_bio_X509_REQ_NEW.3 \
-	RAND_add.3 RAND_event.3 \
-	RAND_add.3 RAND_screen.3 \
 	RAND_add.3 RAND_seed.3 \
 	RAND_add.3 RAND_status.3 \
 	RAND_bytes.3 RAND_pseudo_bytes.3 \
