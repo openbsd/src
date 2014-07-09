@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.19 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: rsa.h,v 1.20 2014/07/09 08:55:32 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -155,7 +155,6 @@ struct rsa_st
 
 	/* all BIGNUM values are actually in the following data, if it is not
 	 * NULL */
-	char *bignum_data;
 	BN_BLINDING *blinding;
 	BN_BLINDING *mt_blinding;
 	};
@@ -311,9 +310,6 @@ void RSA_set_default_method(const RSA_METHOD *meth);
 const RSA_METHOD *RSA_get_default_method(void);
 const RSA_METHOD *RSA_get_method(const RSA *rsa);
 int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
-
-/* This function needs the memory locking malloc callbacks to be installed */
-int RSA_memory_lock(RSA *r);
 
 /* these are the actual SSLeay RSA functions */
 const RSA_METHOD *RSA_PKCS1_SSLeay(void);

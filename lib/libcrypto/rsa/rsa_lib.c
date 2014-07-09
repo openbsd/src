@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.22 2014/07/09 08:44:53 miod Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.23 2014/07/09 08:55:32 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -265,48 +265,3 @@ RSA_get_ex_data(const RSA *r, int idx)
 {
 	return CRYPTO_get_ex_data(&r->ex_data, idx);
 }
-
-int RSA_memory_lock(RSA *r)
-	{
-	int i,j,k,off;
-	char *p;
-	BIGNUM *bn,**t[6],*b;
-	BN_ULONG *ul;
-
-	if (r->d == NULL) return(1);
-	t[0]= &r->d;
-	t[1]= &r->p;
-	t[2]= &r->q;
-	t[3]= &r->dmp1;
-	t[4]= &r->dmq1;
-	t[5]= &r->iqmp;
-	k=sizeof(BIGNUM)*6;
-	off=k/sizeof(BN_ULONG)+1;
-	j=1;
-	for (i=0; i<6; i++)
-		j+= (*t[i])->top;
-	if ((p=reallocarray(NULL, (off+j), sizeof(BN_ULONG))) == NULL)
-		{
-		RSAerr(RSA_F_RSA_MEMORY_LOCK,ERR_R_MALLOC_FAILURE);
-		return(0);
-		}
-	bn=(BIGNUM *)p;
-	ul=(BN_ULONG *)&(p[off]);
-	for (i=0; i<6; i++)
-		{
-		b= *(t[i]);
-		*(t[i])= &(bn[i]);
-		memcpy((char *)&(bn[i]),(char *)b,sizeof(BIGNUM));
-		bn[i].flags=BN_FLG_STATIC_DATA;
-		bn[i].d=ul;
-		memcpy((char *)ul,b->d,sizeof(BN_ULONG)*b->top);
-		ul+=b->top;
-		BN_clear_free(b);
-		}
-	
-	/* I should fix this so it can still be done */
-	r->flags&= ~(RSA_FLAG_CACHE_PRIVATE|RSA_FLAG_CACHE_PUBLIC);
-
-	r->bignum_data=p;
-	return(1);
-	}
