@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.96 2014/07/09 09:39:54 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.97 2014/07/09 09:41:09 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1084,11 +1084,6 @@ pinger(void)
 		}
 		cc = ICMP6ECHOLEN + datalen;
 	}
-
-#ifdef DIAGNOSTIC
-	if (pingerlen() != cc)
-		errx(1, "internal error; length mismatch");
-#endif
 
 	smsghdr.msg_name = &dst;
 	smsghdr.msg_namelen = sizeof(dst);
