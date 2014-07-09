@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.23 2014/07/09 14:10:25 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.24 2014/07/09 14:35:24 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -168,8 +168,8 @@ hibernate_enter_resume_2m_pde(vaddr_t va, paddr_t pa)
 			/* First 512GB and 1GB are already mapped */
 			pde = (pt_entry_t *)(HIBERNATE_PD_LOW +
 				(pl2_pi(va) * sizeof(pt_entry_t)));
-			npde = (pa & L2_MASK) | 
-				PG_RW | PG_V | PG_M | PG_PS;
+			npde = (pa & PG_LGFRAME) | 
+				PG_RW | PG_V | PG_M | PG_PS | PG_U;
 			*pde = npde;
 		} else {
 			/* Map the 1GB containing region */
@@ -178,11 +178,11 @@ hibernate_enter_resume_2m_pde(vaddr_t va, paddr_t pa)
 			npde = (HIBERNATE_PD_LOW2) | PG_RW | PG_V;
 			*pde = npde;
 
-			/* Map 2MB region */
+			/* Map 2MB page */
 			pde = (pt_entry_t *)(HIBERNATE_PD_LOW2 +
 				(pl2_pi(va) * sizeof(pt_entry_t)));
-			npde = (pa & L2_MASK) |
-				PG_RW | PG_V | PG_M | PG_PS;
+			npde = (pa & PG_LGFRAME) |
+				PG_RW | PG_V | PG_M | PG_PS | PG_U;
 			*pde = npde; 
 		}
 	} else {
@@ -198,10 +198,10 @@ hibernate_enter_resume_2m_pde(vaddr_t va, paddr_t pa)
 		npde = (HIBERNATE_PD_HI) | PG_RW | PG_V;
 		*pde = npde;
 
-		/* Map the requested 2MB region */
+		/* Map the 2MB page */
 		pde = (pt_entry_t *)(HIBERNATE_PD_HI +
 			(pl2_pi(va) * sizeof(pt_entry_t)));
-		npde = (pa & L2_MASK) | PG_RW | PG_V | PG_PS;
+		npde = (pa & PG_LGFRAME) | PG_RW | PG_V | PG_PS;
 		*pde = npde;
 	}
 }
@@ -214,10 +214,13 @@ hibernate_enter_resume_4k_pte(vaddr_t va, paddr_t pa)
 {
 	pt_entry_t *pde, npde;
 
+	/* Mappings entered here must be in the first 2MB VA */
+	KASSERT(va < NBPD_L2);
+
 	/* Map the page */
 	pde = (pt_entry_t *)(HIBERNATE_PT_LOW +
 		(pl1_pi(va) * sizeof(pt_entry_t)));
-	npde = (pa & PMAP_PA_MASK) | PG_RW | PG_V;
+	npde = (pa & PMAP_PA_MASK) | PG_RW | PG_V | PG_M | PG_U;
 	*pde = npde;
 }
 
@@ -285,12 +288,11 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	*pde = npde;
 
 	/*
-	 * Identity map 64KB-640KB physical for tramps and special utility
-	 * pages using 4KB mappings
+	 * Identity map low physical pages.
+	 * See arch/amd64/include/hibernate_var.h for page ranges used here.
 	 */
-	for (i = 16; i < 160; i ++) {
-		hibernate_enter_resume_mapping(i*PAGE_SIZE, i*PAGE_SIZE, 0);
-	}
+	for (i = ACPI_TRAMPOLINE; i <= HIBERNATE_HIBALLOC_PAGE; i += PAGE_SIZE)
+		hibernate_enter_resume_mapping(i, i, 0);
 
 	/*
 	 * Map current kernel VA range using 2MB pages

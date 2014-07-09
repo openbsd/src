@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.33 2014/07/09 14:10:25 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.34 2014/07/09 14:35:24 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -219,12 +219,11 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	hibernate_enter_resume_4k_pde(0);
 
 	/*
-	 * Identity map 64KB-640KB physical for tramps and special utility
-	 * pages using 4KB mappings
+	 * Identity map low physical pages.
+	 * See arch/i386/include/hibernate_var.h for page ranges used here.
 	 */
-	for (i = 16; i < 160; i ++) {
-		hibernate_enter_resume_mapping(i*PAGE_SIZE, i*PAGE_SIZE, 0);
-	}
+	for (i = ACPI_TRAMPOLINE; i <= HIBERNATE_HIBALLOC_PAGE; i += PAGE_SIZE)
+		hibernate_enter_resume_mapping(i, i, 0);
 
 	/*
 	 * Map current kernel VA range using 4M pages
