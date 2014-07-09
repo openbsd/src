@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.33 2014/07/06 07:28:36 otto Exp $ */
+/*	$OpenBSD: syscall.h,v 1.34 2014/07/09 12:51:21 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -43,7 +43,6 @@
 int	_dl_close(int);
 __dead
 void	_dl_exit(int);
-int	_dl_fcntl(int, int, int);
 int	_dl_fstat(int, struct stat *);
 int	_dl_getcwd(char *, size_t);
 ssize_t	_dl_getdents(int, char *, size_t);

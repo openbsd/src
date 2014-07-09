@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.19 2014/07/06 07:28:36 otto Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.20 2014/07/09 12:51:21 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -205,7 +205,6 @@ ENTRY(_dl_sigprocmask)
 
 DL_SYSCALL(close)
 DL_SYSCALL_NOERR(exit)
-DL_SYSCALL(fcntl)
 DL_SYSCALL(fstat)
 DL_SYSCALL2(getcwd,__getcwd)
 DL_SYSCALL(getdents)
