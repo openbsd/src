@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1727 2014/05/18 10:49:28 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.1731 2014/07/09 21:51:25 sasano Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -20116,8 +20116,44 @@ static const struct pci_known_product pci_known_products[] = {
 	    "R1011 IDE",
 	},
 	{
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R1012_IDE,
+	    "R1012 IDE",
+	},
+	{
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R1031_PCIE,
+	    "R1031 PCIe",
+	},
+	{
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R1060_USBD,
+	    "R1060 USB Device",
+	},
+	{
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R1070_CAN,
+	    "R1070 CAN",
+	},
+	{
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R1331_MC,
+	    "R1331 MC",
+	},
+	{
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R1710_SPI,
+	    "R1710 SPI",
+	},
+	{
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R3010_HDA,
+	    "R3010 HDA",
+	},
+	{
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6011_SB,
+	    "R6011 SB",
+	},
+	{
 	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6021_HB,
 	    "R6021 Host",
+	},
+	{
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6025_HB,
+	    "R6025 Host",
 	},
 	{
 	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6031_ISA,
@@ -20129,11 +20165,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6060_OHCI,
-	    "R6060 USB",
+	    "R6060 USB OHCI",
 	},
 	{
 	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6061_EHCI,
-	    "R6061 USB",
+	    "R6061 USB EHCI",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTS5209,
