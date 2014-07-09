@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.95 2014/07/09 11:03:04 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.96 2014/07/09 11:39:07 henning Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -62,11 +62,6 @@
 #include "vlan.h"
 #if NVLAN > 0
 #include <net/if_vlan_var.h>
-#endif
-
-#include "pflog.h"
-#if NPFLOG > 0
-#include <net/if_pflog.h>
 #endif
 
 #define BPF_BUFSIZE 32768
