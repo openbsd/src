@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.8 2014/07/09 19:51:38 jsing Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.9 2014/07/09 22:55:17 tedu Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -625,8 +625,7 @@ err:
 			X509_ALGOR_free(mgf1alg);
 		if (pss)
 			RSA_PSS_PARAMS_free(pss);
-		if (os1)
-			ASN1_STRING_free(os1);
+		ASN1_STRING_free(os1);
 		return rv;
 	}
 	return 2;

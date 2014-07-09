@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.9 2014/07/09 13:26:47 miod Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.10 2014/07/09 22:55:17 tedu Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -167,8 +167,7 @@ dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 
 err:
 	free(penc);
-	if (str)
-		ASN1_STRING_free(str);
+	ASN1_STRING_free(str);
 
 	return 0;
 }
@@ -271,10 +270,8 @@ dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
 err:
 	free(dp);
-	if (params != NULL)
-		ASN1_STRING_free(params);
-	if (prkey != NULL)
-		ASN1_INTEGER_free(prkey);
+	ASN1_STRING_free(params);
+	ASN1_INTEGER_free(prkey);
 	return 0;
 }
 
