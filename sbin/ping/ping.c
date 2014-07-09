@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.104 2014/07/09 15:20:51 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.105 2014/07/09 15:21:41 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -489,9 +489,7 @@ main(int argc, char *argv[])
 
 	(void)signal(SIGINT, finish);
 	(void)signal(SIGALRM, catcher);
-#ifdef SIGINFO
 	(void)signal(SIGINFO, prtsig);
-#endif
 
 	while (preload--)		/* fire off them quickies */
 		pinger();
