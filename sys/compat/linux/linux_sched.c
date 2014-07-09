@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sched.c,v 1.17 2014/03/30 21:54:49 guenther Exp $	*/
+/*	$OpenBSD: linux_sched.c,v 1.18 2014/07/09 14:42:53 guenther Exp $	*/
 /*	$NetBSD: linux_sched.c,v 1.6 2000/05/28 05:49:05 thorpej Exp $	*/
 
 /*-
@@ -169,12 +169,6 @@ linux_sys_clone(struct proc *p, void *v, register_t *retval)
 	else
 		emul->set_tls_base = 0;
 
-	/*
-	 * Note that Linux does not provide a portable way of specifying
-	 * the stack area; the caller must know if the stack grows up
-	 * or down.  So, we pass a stack size of 0, so that the code
-	 * that makes this adjustment is a noop.
-	 */
 	error = fork1(p, flags, SCARG(uap, stack), 0, linux_child_return,
 	    NULL, retval, NULL);
 	if (error)
