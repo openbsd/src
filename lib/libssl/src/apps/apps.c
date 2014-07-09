@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.63 2014/07/09 21:02:35 tedu Exp $ */
+/* $OpenBSD: apps.c,v 1.64 2014/07/09 21:13:34 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1451,9 +1451,6 @@ save_serial(char *serialfile, char *suffix, BIGNUM *serial,
 		BIO_printf(bio_err, "serial too long\n");
 		goto err;
 	}
-#ifdef RL_DEBUG
-	BIO_printf(bio_err, "DEBUG: writing \"%s\"\n", buf[0]);
-#endif
 	out = BIO_new(BIO_s_file());
 	if (out == NULL) {
 		ERR_print_errors(bio_err);
@@ -1501,10 +1498,6 @@ rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 	snprintf(buf[0], sizeof buf[0], "%s.%s", serialfile, new_suffix);
 	snprintf(buf[1], sizeof buf[1], "%s.%s", serialfile, old_suffix);
 
-#ifdef RL_DEBUG
-	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
-	    serialfile, buf[1]);
-#endif
 
 	if (rename(serialfile, buf[1]) < 0 &&
 	    errno != ENOENT && errno != ENOTDIR) {
@@ -1514,10 +1507,6 @@ rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 		goto err;
 	}
 
-#ifdef RL_DEBUG
-	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
-	    buf[0], serialfile);
-#endif
 
 	if (rename(buf[0], serialfile) < 0) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
@@ -1610,10 +1599,6 @@ load_index(char *dbfile, DB_ATTR *db_attr)
 	if (dbattr_conf) {
 		char *p = NCONF_get_string(dbattr_conf, NULL, "unique_subject");
 		if (p) {
-#ifdef RL_DEBUG
-			BIO_printf(bio_err,
-			    "DEBUG[load_index]: unique_subject = \"%s\"\n", p);
-#endif
 			retdb->attributes.unique_subject = parse_yesno(p, 1);
 		}
 	}
@@ -1668,9 +1653,6 @@ save_index(const char *dbfile, const char *suffix, CA_DB *db)
 	snprintf(buf[1], sizeof buf[1], "%s.attr.%s", dbfile, suffix);
 	snprintf(buf[0], sizeof buf[0], "%s.%s", dbfile, suffix);
 
-#ifdef RL_DEBUG
-	BIO_printf(bio_err, "DEBUG: writing \"%s\"\n", buf[0]);
-#endif
 
 	if (BIO_write_filename(out, buf[0]) <= 0) {
 		perror(dbfile);
@@ -1685,9 +1667,6 @@ save_index(const char *dbfile, const char *suffix, CA_DB *db)
 
 	out = BIO_new(BIO_s_file());
 
-#ifdef RL_DEBUG
-	BIO_printf(bio_err, "DEBUG: writing \"%s\"\n", buf[1]);
-#endif
 
 	if (BIO_write_filename(out, buf[1]) <= 0) {
 		perror(buf[2]);
@@ -1724,10 +1703,6 @@ rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 	snprintf(buf[1], sizeof buf[1], "%s.%s", dbfile, old_suffix);
 	snprintf(buf[3], sizeof buf[3], "%s.attr.%s", dbfile, old_suffix);
 
-#ifdef RL_DEBUG
-	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
-	    dbfile, buf[1]);
-#endif
 
 	if (rename(dbfile, buf[1]) < 0 && errno != ENOENT && errno != ENOTDIR) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
@@ -1736,10 +1711,6 @@ rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 		goto err;
 	}
 
-#ifdef RL_DEBUG
-	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
-	    buf[0], dbfile);
-#endif
 
 	if (rename(buf[0], dbfile) < 0) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
@@ -1749,10 +1720,6 @@ rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 		goto err;
 	}
 
-#ifdef RL_DEBUG
-	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
-	    buf[4], buf[3]);
-#endif
 
 	if (rename(buf[4], buf[3]) < 0 && errno != ENOENT && errno != ENOTDIR) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
@@ -1763,10 +1730,6 @@ rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 		goto err;
 	}
 
-#ifdef RL_DEBUG
-	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
-	    buf[2], buf[4]);
-#endif
 
 	if (rename(buf[2], buf[4]) < 0) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",

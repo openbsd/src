@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.60 2014/06/28 04:39:41 deraadt Exp $ */
+/* $OpenBSD: ca.c,v 1.61 2014/07/09 21:13:34 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -603,20 +603,9 @@ bad:
 	db_attr.unique_subject = 1;
 	p = NCONF_get_string(conf, section, ENV_UNIQUE_SUBJECT);
 	if (p) {
-#ifdef RL_DEBUG
-		BIO_printf(bio_err, "DEBUG: unique_subject = \"%s\"\n", p);
-#endif
 		db_attr.unique_subject = parse_yesno(p, 1);
 	} else
 		ERR_clear_error();
-#ifdef RL_DEBUG
-	if (!p)
-		BIO_printf(bio_err, "DEBUG: unique_subject undefined\n", p);
-#endif
-#ifdef RL_DEBUG
-	BIO_printf(bio_err, "DEBUG: configured unique_subject is %d\n",
-	    db_attr.unique_subject);
-#endif
 
 	in = BIO_new(BIO_s_file());
 	out = BIO_new(BIO_s_file());
