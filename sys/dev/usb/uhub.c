@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.67 2014/05/28 11:20:55 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.68 2014/07/09 18:15:04 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -77,23 +77,17 @@ void uhub_intr(struct usbd_xfer *, void *, usbd_status);
 int uhub_match(struct device *, void *, void *); 
 void uhub_attach(struct device *, struct device *, void *); 
 int uhub_detach(struct device *, int); 
-int uhub_activate(struct device *, int); 
 
 struct cfdriver uhub_cd = { 
 	NULL, "uhub", DV_DULL 
 }; 
 
-const struct cfattach uhub_ca = { 
-	sizeof(struct uhub_softc), 
-	uhub_match, 
-	uhub_attach, 
-	uhub_detach, 
-	uhub_activate, 
+const struct cfattach uhub_ca = {
+	sizeof(struct uhub_softc), uhub_match, uhub_attach,  uhub_detach
 };
 
-struct cfattach uhub_uhub_ca = {
-	sizeof(struct uhub_softc), uhub_match, uhub_attach,
-	uhub_detach, uhub_activate
+const struct cfattach uhub_uhub_ca = {
+	sizeof(struct uhub_softc), uhub_match, uhub_attach,  uhub_detach
 };
 
 int
@@ -395,7 +389,8 @@ uhub_explore(struct usbd_device *dev)
 	disco:
 		if (up->device != NULL) {
 			/* Disconnected */
-			usb_disconnect_port(up, &sc->sc_dev);
+			usbd_detach(up->device, &sc->sc_dev);
+			up->device = NULL;
 			usbd_clear_port_feature(dev, port,
 						UHF_C_PORT_CONNECTION);
 		}
@@ -473,31 +468,6 @@ uhub_explore(struct usbd_device *dev)
 	return (0);
 }
 
-int
-uhub_activate(struct device *self, int act)
-{
-	struct uhub_softc *sc = (struct uhub_softc *)self;
-	struct usbd_hub *hub = sc->sc_hub->hub;
-	struct usbd_device *dev;
-	int nports, port, i;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		if (hub == NULL) /* malfunctioning hub */
-			break;
-		nports = hub->hubdesc.bNbrPorts;
-		for(port = 0; port < nports; port++) {
-			dev = hub->ports[port].device;
-			if (dev != NULL && dev->subdevs != NULL) {
-				for (i = 0; dev->subdevs[i] != NULL; i++)
-					config_deactivate(dev->subdevs[i]);
-			}
-		}
-		break;
-	}
-	return (0);
-}
-
 /*
  * Called from process context when the hub is gone.
  * Detach all devices on active ports.
@@ -519,8 +489,10 @@ uhub_detach(struct device *self, int flags)
 	nports = hub->hubdesc.bNbrPorts;
 	for(port = 0; port < nports; port++) {
 		rup = &hub->ports[port];
-		if (rup->device)
-			usb_disconnect_port(rup, self);
+		if (rup->device != NULL) {
+			usbd_detach(rup->device, self);
+			rup->device = NULL;
+		}
 	}
 
 	if (hub->ports[0].tt)

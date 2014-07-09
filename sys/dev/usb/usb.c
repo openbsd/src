@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.97 2014/05/28 11:20:55 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.98 2014/07/09 18:15:04 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -849,8 +849,10 @@ usb_explore(void *v)
 		sc->sc_bus->dying = 1;
 
 		/* Make all devices disconnect. */
-		if (sc->sc_port.device != NULL)
-			usb_disconnect_port(&sc->sc_port, (struct device *)sc);
+		if (sc->sc_port.device != NULL) {
+			usbd_detach(sc->sc_port.device, (struct device *)sc);
+			sc->sc_port.device = NULL;
+		}
 
 		sc->sc_bus->flags &= ~USB_BUS_DISCONNECTING;
 	} else {

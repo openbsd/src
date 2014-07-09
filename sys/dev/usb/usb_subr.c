@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.101 2014/07/09 15:47:54 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.102 2014/07/09 18:15:04 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -72,7 +72,7 @@ usbd_status	usbd_probe_and_attach(struct device *,
 		    struct usbd_device *, int, int);
 
 int		usbd_printBCD(char *cp, size_t len, int bcd);
-void		usb_free_device(struct usbd_device *, struct usbd_port *);
+void		usb_free_device(struct usbd_device *);
 
 #ifdef USBVERBOSE
 #include <dev/usb/usbdevs_data.h>
@@ -1092,7 +1092,8 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
 	    &dev->default_pipe);
 	if (err) {
-		usb_free_device(dev, up);
+		usb_free_device(dev);
+		up->device = NULL;
 		return (err);
 	}
 
@@ -1137,11 +1138,9 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 			USB_MAX_IPACKET, dd);
 	}
 
-	/* fail to get device descriptor, give up */
 	if (err) {
-		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting first desc "
-		    "failed\n", addr));
-		usb_free_device(dev, up);
+		usb_free_device(dev);
+		up->device = NULL;
 		return (err);
 	}
 
@@ -1163,16 +1162,14 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 		 dev->speed));
 
 	if (dd->bDescriptorType != UDESC_DEVICE) {
-		/* Illegal device descriptor */
-		DPRINTFN(-1,("usbd_new_device: illegal descriptor %d\n",
-		    dd->bDescriptorType));
-		usb_free_device(dev, up);
+		usb_free_device(dev);
+		up->device = NULL;
 		return (USBD_INVAL);
 	}
 
 	if (dd->bLength < USB_DEVICE_DESCRIPTOR_SIZE) {
-		DPRINTFN(-1,("usbd_new_device: bad length %d\n", dd->bLength));
-		usb_free_device(dev, up);
+		usb_free_device(dev);
+		up->device = NULL;
 		return (USBD_INVAL);
 	}
 
@@ -1183,20 +1180,23 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
 	    &dev->default_pipe);
 	if (err) {
-		usb_free_device(dev, up);
+		usb_free_device(dev);
+		up->device = NULL;
 		return (err);
 	}
 
 	err = usbd_reload_device_desc(dev);
 	if (err) {
-		usb_free_device(dev, up);
+		usb_free_device(dev);
+		up->device = NULL;
 		return (err);
 	}
 
 	/* Set the address if the HC didn't do it already. */
 	if (bus->methods->dev_setaddr != NULL &&
 	    bus->methods->dev_setaddr(dev, addr)) {
- 		usb_free_device(dev, up);
+		usb_free_device(dev);
+		up->device = NULL;
 		return (USBD_SET_ADDR_FAILED);
  	}
 
@@ -1205,7 +1205,8 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
 	    &dev->default_pipe);
 	if (err) {
-		usb_free_device(dev, up);
+		usb_free_device(dev);
+		up->device = NULL;
 		return (err);
 	}
 
@@ -1231,7 +1232,8 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 
 	err = usbd_probe_and_attach(parent, dev, port, addr);
 	if (err) {
-		usb_free_device(dev, up);
+		usb_free_device(dev);
+		up->device = NULL;
 		return (err);
   	}
 
@@ -1424,7 +1426,7 @@ usbd_get_cdesc(struct usbd_device *dev, int index, int *lenp)
 }
 
 void
-usb_free_device(struct usbd_device *dev, struct usbd_port *up)
+usb_free_device(struct usbd_device *dev)
 {
 	int ifcidx, nifc;
 
@@ -1444,7 +1446,6 @@ usb_free_device(struct usbd_device *dev, struct usbd_port *up)
 		free(dev->cdesc, M_USB);
 	if (dev->subdevs != NULL)
 		free(dev->subdevs, M_USB);
-	up->device = NULL;
 	dev->bus->devices[dev->address] = NULL;
 
 	free(dev, M_USB);
@@ -1467,38 +1468,14 @@ usb_free_device(struct usbd_device *dev, struct usbd_port *up)
  * Called from process context when we discover that a port has
  * been disconnected.
  */
-void
-usb_disconnect_port(struct usbd_port *up, struct device *parent)
+int
+usbd_detach(struct usbd_device *dev, struct device *parent)
 {
-	struct usbd_device *dev = up->device;
-	int i;
+	int rv;
 
-	DPRINTFN(3,("uhub_disconnect: up=%p dev=%p port=%d\n",
-		    up, dev, up->portno));
+	rv = config_detach_children(parent, DETACH_FORCE);
+	if (rv == 0)
+		usb_free_device(dev);
 
-#ifdef DIAGNOSTIC
-	if (dev == NULL) {
-		printf("usb_disconnect_port: no device\n");
-		return;
-	}
-#endif
-
-	if (dev->subdevs != NULL) {
-		DPRINTFN(3,("usb_disconnect_port: disconnect subdevs\n"));
-		for (i = 0; dev->subdevs[i]; i++) {
-			DPRINTF(("%s: at %s", dev->subdevs[i]->dv_xname,
-			    parent->dv_xname));
-			if (up->portno != 0)
-				DPRINTF((" port %d", up->portno));
-			DPRINTF((" (addr %d) deactivated\n", dev->address));
-			config_deactivate(dev->subdevs[i]);
-		}
-		for (i = 0; dev->subdevs[i]; i++) {
-			DPRINTF((" (addr %d) disconnected\n", dev->address));
-			config_detach(dev->subdevs[i], DETACH_FORCE);
-			dev->subdevs[i] = 0;
-		}
-	}
-
-	usb_free_device(dev, up);
+	return (rv);
 }
