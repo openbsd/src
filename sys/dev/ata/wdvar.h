@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.20 2013/06/11 16:42:14 deraadt Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.21 2014/07/09 12:56:28 mpi Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -87,7 +87,6 @@ struct wd_softc {
 	int sectors;
 	int retries; /* number of xfer retry */
 	struct timeout sc_restart_timeout;
-	void *sc_sdhook;
 };
 
 /* drive states stored in ata_drive_datas */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmacvar.h,v 1.3 2013/09/16 20:52:14 jmatthew Exp $	*/
+/*	$OpenBSD: if_cnmacvar.h,v 1.4 2014/07/09 12:56:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -71,8 +71,6 @@ struct octeon_eth_softc {
 
 	struct arpcom		sc_arpcom;
 	struct mii_data		sc_mii;
-
-	void			*sc_sdhook;
 
 	struct timeout		sc_tick_misc_ch;
 	struct timeout		sc_tick_free_ch;
