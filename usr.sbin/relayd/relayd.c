@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.126 2014/07/09 16:42:05 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.127 2014/07/09 22:10:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -714,14 +714,14 @@ kv_extend(struct kvlist *keys, char *value)
 	if ((kv = TAILQ_LAST(keys, kvlist)) == NULL)
 		return (NULL);
 
-	if (kv->kv_value == NULL) {
-		if ((kv->kv_value = strdup(value)) == NULL)
+	if (kv->kv_value != NULL) {
+		if (asprintf(&newvalue, "%s%s", kv->kv_value, value) == -1)
 			return (NULL);
-	} else if (asprintf(&newvalue, "%s%s", kv->kv_value, value) == -1)
-		return (NULL);
 
-	free(kv->kv_value);
-	kv->kv_value = newvalue;
+		free(kv->kv_value);
+		kv->kv_value = newvalue;
+	} else if ((kv->kv_value = strdup(value)) == NULL)
+		return (NULL);
 
 	return (kv);
 }
