@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.94 2014/07/09 14:10:25 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.95 2014/07/09 15:03:12 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -39,7 +39,7 @@
  * Its phys and virt addrs are recorded in the signature block. The piglet is
  * used to guarantee an unused area of memory that can be used by the resuming
  * kernel for various things. The piglet is excluded during unpack operations.
- * The piglet size is presently 3*HIBERNATE_CHUNK_SIZE (typically 3*4MB).
+ * The piglet size is presently 4*HIBERNATE_CHUNK_SIZE (typically 4*4MB).
  *
  * Offset from piglet_base	Purpose
  * ----------------------------------------------------------------------------
@@ -55,7 +55,7 @@
  * ...				unused
  * HIBERNATE_CHUNK_SIZE		start of hibernate chunk table
  * 2*HIBERNATE_CHUNK_SIZE	bounce area for chunks being unpacked
- * 3*HIBERNATE_CHUNK_SIZE	end of piglet
+ * 4*HIBERNATE_CHUNK_SIZE	end of piglet
  */
 
 /* Temporary vaddr ranges used during hibernate */
@@ -720,7 +720,7 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 	if (suspend) {
 		/* Allocate piglet region */
 		if (uvm_pmr_alloc_piglet(&hib->piglet_va,
-		    &hib->piglet_pa, HIBERNATE_CHUNK_SIZE*3,
+		    &hib->piglet_pa, HIBERNATE_CHUNK_SIZE * 4,
 		    HIBERNATE_CHUNK_SIZE)) {
 			printf("Hibernate failed to allocate the piglet\n");
 			return (1);
@@ -761,7 +761,7 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 fail:
 	if (suspend)
 		uvm_pmr_free_piglet(hib->piglet_va,
-		    HIBERNATE_CHUNK_SIZE * 3);
+		    HIBERNATE_CHUNK_SIZE * 4);
 
 	return (1);
 }
@@ -1237,20 +1237,24 @@ hibernate_unpack_image(union hibernate_info *hib)
 	union hibernate_info local_hib;
 	paddr_t image_cur = global_pig_start;
 	short i, *fchunks;
-	char *pva = (char *)hib->piglet_va;
+	char *pva;
 	struct hibernate_zlib_state *hibernate_state;
 
 	hibernate_state =
 	    (struct hibernate_zlib_state *)HIBERNATE_HIBALLOC_PAGE;
 
-	/* Mask off based on arch-specific piglet page size */
-	pva = (char *)((paddr_t)pva & (PIGLET_PAGE_MASK));
+	/* Piglet will be identity mapped (VA == PA) */
+	pva = (char *)hib->piglet_pa;
+
 	fchunks = (short *)(pva + (4 * PAGE_SIZE));
 
-	chunks = (struct hibernate_disk_chunk *)(pva +  HIBERNATE_CHUNK_SIZE);
+	chunks = (struct hibernate_disk_chunk *)(pva + HIBERNATE_CHUNK_SIZE);
 
 	/* Can't use hiber_info that's passed in after this point */
 	bcopy(hib, &local_hib, sizeof(union hibernate_info));
+
+	/* VA == PA */
+	local_hib.piglet_va = local_hib.piglet_pa;
 
 	/*
 	 * Point of no return. Once we pass this point, only kernel code can
@@ -1898,7 +1902,7 @@ hibernate_free(void)
 {
 	if (global_piglet_va)
 		uvm_pmr_free_piglet(global_piglet_va,
-		    3*HIBERNATE_CHUNK_SIZE);
+		    4 * HIBERNATE_CHUNK_SIZE);
 
 	if (hibernate_copy_page)
 		pmap_kremove(hibernate_copy_page, PAGE_SIZE);

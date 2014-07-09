@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.24 2014/07/09 14:35:24 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.25 2014/07/09 15:03:12 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -235,8 +235,9 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
     paddr_t image_start, paddr_t image_end)
 {
 	int phys_page_number, i;
-	paddr_t pa, piglet_start, piglet_end;
+	paddr_t pa;
 	vaddr_t kern_start_2m_va, kern_end_2m_va, page;
+	vaddr_t piglet_start_va, piglet_end_va;
 	pt_entry_t *pde, npde;
 
 	/* Identity map MMU pages */
@@ -310,15 +311,15 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	}
 
 	/*
-	 * Map the piglet
+	 * Identity map the piglet using 2MB pages.
 	 */
 	phys_page_number = hib_info->piglet_pa / NBPD_L2;
-	piglet_start = hib_info->piglet_va;
-	piglet_end = piglet_start + HIBERNATE_CHUNK_SIZE * 3;
-	piglet_start &= ~(PAGE_MASK_2M);
-	piglet_end &= ~(PAGE_MASK_2M);
 
-	for (page = piglet_start; page <= piglet_end ;
+	/* VA == PA */
+	piglet_start_va = hib_info->piglet_pa;
+	piglet_end_va = piglet_start_va + HIBERNATE_CHUNK_SIZE * 4;
+
+	for (page = piglet_start_va; page <= piglet_end_va;
 	    page += NBPD_L2, phys_page_number++) {
 		pa = (paddr_t)(phys_page_number * NBPD_L2);
 		hibernate_enter_resume_mapping(page, pa, 1);
@@ -336,7 +337,7 @@ int
 hibernate_inflate_skip(union hibernate_info *hib_info, paddr_t dest)
 {
 	if (dest >= hib_info->piglet_pa &&
-	    dest <= (hib_info->piglet_pa + 3 * HIBERNATE_CHUNK_SIZE))
+	    dest <= (hib_info->piglet_pa + 4 * HIBERNATE_CHUNK_SIZE))
 		return (1);
 
 	return (0);
