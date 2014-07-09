@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lock.9,v 1.21 2014/04/03 03:57:42 tedu Exp $
+.\"     $OpenBSD: lock.9,v 1.22 2014/07/09 14:16:10 guenther Exp $
 .\"     $NetBSD: lock.9,v 1.12 2001/11/01 01:13:43 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 3 2014 $
+.Dd $Mdocdate: July 9 2014 $
 .Dt LOCK 9
 .Os
 .Sh NAME
@@ -131,10 +131,20 @@ Attempt at recursive lock fails.
 This argument exists for legacy reasons, it is now ignored.
 .El
 .It Fn lockstatus "lock"
-Determine the status of lock
+Returns the current state of lock
 .Fa lock .
-Returns LK_EXCLUSIVE or LK_SHARED for exclusive-access and
-shared-access locks respectively.
+.Pp
+.Bl -tag -width "LK_EXCLUSIVE" -offset indent -compact
+.It Dv LK_EXCLUSIVE
+Lock is locked for exclusive-access by the calling thread.
+.It Dv LK_EXCLOTHER
+Lock is locked for exclusive-access by a different thread.
+.It Dv LK_SHARED
+Lock is locked for shared-access.
+The current thread may be one of the threads that has it locked.
+.It 0
+Lock is not locked.
+.El
 .El
 .Sh RETURN VALUES
 Successfully acquired locks return 0.
