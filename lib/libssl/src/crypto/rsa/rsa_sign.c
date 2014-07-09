@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_sign.c,v 1.18 2014/07/09 08:20:08 miod Exp $ */
+/* $OpenBSD: rsa_sign.c,v 1.19 2014/07/09 09:04:14 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -223,19 +223,8 @@ int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
 		sigtype = OBJ_obj2nid(sig->algor->algorithm);
 
 		if (sigtype != dtype) {
-			if ((dtype == NID_md5 &&
-			     sigtype == NID_md5WithRSAEncryption) ||
-			    (dtype == NID_md2 &&
-			     sigtype == NID_md2WithRSAEncryption)) {
-				/* ok, we will let it through */
-				fprintf(stderr,
-				    "signature has problems, "
-				    "re-make with post SSLeay045\n");
-			} else {
-				RSAerr(RSA_F_INT_RSA_VERIFY,
-				    RSA_R_ALGORITHM_MISMATCH);
-				goto err;
-			}
+			RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_ALGORITHM_MISMATCH);
+			goto err;
 		}
 		if (rm) {
 			const EVP_MD *md;
