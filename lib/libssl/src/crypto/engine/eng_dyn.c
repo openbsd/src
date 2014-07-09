@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_dyn.c,v 1.9 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: eng_dyn.c,v 1.10 2014/07/09 08:52:00 bcook Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2001.
  */
@@ -120,9 +120,6 @@ static const ENGINE_CMD_DEFN dynamic_cmd_defns[] = {
 		"Load up the ENGINE specified by other settings",
 		ENGINE_CMD_FLAG_NO_INPUT},
 
-	{0, NULL, NULL, 0}
-};
-static const ENGINE_CMD_DEFN dynamic_cmd_defns_empty[] = {
 	{0, NULL, NULL, 0}
 };
 
