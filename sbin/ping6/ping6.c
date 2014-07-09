@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.95 2014/07/09 09:38:35 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.96 2014/07/09 09:39:54 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -630,7 +630,6 @@ main(int argc, char *argv[])
 	}
 
 
-#ifdef ICMP6_FILTER
     {
 	struct icmp6_filter filt;
 	if (!(options & F_VERBOSE)) {
@@ -647,7 +646,6 @@ main(int argc, char *argv[])
 	    (socklen_t)sizeof(filt)) < 0)
 		err(1, "setsockopt(ICMP6_FILTER)");
     }
-#endif /*ICMP6_FILTER*/
 
 	/* let the kernel pass extension headers of incoming packets */
 	if ((options & F_VERBOSE) != 0) {
