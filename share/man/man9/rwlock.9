@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.15 2014/07/09 13:12:52 tedu Exp $
+.\" $OpenBSD: rwlock.9,v 1.16 2014/07/09 13:43:25 guenther Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -27,6 +27,10 @@
 .Nm rw_enter_write ,
 .Nm rw_exit_read ,
 .Nm rw_exit_write ,
+.Nm rw_assert_wrlock ,
+.Nm rw_assert_rdlock ,
+.Nm rw_assert_unlocked ,
+.Nm rw_status ,
 .Nm RWLOCK_INITIALIZER
 .Nd interface to read/write locks
 .Sh SYNOPSIS
@@ -53,6 +57,8 @@
 .Fn rw_assert_rdlock "struct rwlock *rwl"
 .Ft void
 .Fn rw_assert_unlocked "struct rwlock *rwl"
+.Ft int
+.Fn rw_status "struct rwlock *rwl"
 .Fn RWLOCK_INITIALIZER "const char *name"
 .Ft void
 .Fn rrw_init "struct rrwlock *rrwl" "const char *name"
@@ -66,7 +72,12 @@
 The
 .Nm
 set of functions provides a multiple-reader, single-writer locking mechanism to
-ensure mutual exclusion between different processes.
+ensure mutual exclusion between different threads.
+.Pp
+Read locks can be acquired while the write lock is not held, and may coexist in
+distinct threads at any time.
+A write lock, however, can only be acquired when there are no read locks held,
+granting exclusive access to a single thread.
 .Pp
 The
 .Fn rw_init
@@ -75,7 +86,7 @@ function is used to initiate the lock pointed to by
 The
 .Fa name
 argument specifies the name of the lock, which is used as the wait message
-if the process needs to sleep.
+if the thread needs to sleep.
 .Pp
 The
 .Fn rw_enter
@@ -127,24 +138,6 @@ The
 function releases a write lock.
 .Pp
 The
-.Fn rw_status
-function returns the current status of the lock:
-.Pp
-.Bl -tag -offset indent -width RW_DOWNGRADEXXX -compact
-.It Dv 0
-Not locked.
-.It Dv RW_READ
-Read locked.
-.It Dv RW_WRITE
-Write locked.
-.El
-.Pp
-Read locks can be acquired while the write lock is not held, and may coexist in
-distinct processes at any time.
-A write lock, however, can only be acquired when there are no read locks held,
-granting exclusive access to a single process.
-.Pp
-The
 .Fn rw_assert_wrlock ,
 .Fn rw_assert_rdlock ,
 and
@@ -153,13 +146,28 @@ functions check the status
 .Fa rwl ,
 panicking if it is not write-, read-, or unlocked, respectively.
 .Pp
+.Nm rw_status
+returns the current state of the lock:
+.Pp
+.Bl -tag -width "RW_WRITE_OTHER" -offset indent -compact
+.It Dv RW_WRITE
+Lock is write locked by the calling thread.
+.It Dv RW_WRITE_OTHER
+Lock is write locked by a different thread.
+.It Dv RW_READ
+Lock is read locked.
+The current thread may be one of the threads that has it locked.
+.It 0
+Lock is not locked.
+.El
+.Pp
 A lock declaration may be initialised with the
 .Fn RWLOCK_INITIALIZER
 macro.
 The
 .Fa name
 argument specifies the name of the lock, which is used as the wait message
-if the process needs to sleep.
+if the thread needs to sleep.
 .Pp
 The
 .Nm rrwlock
@@ -174,8 +182,7 @@ can be called during autoconf, from process context, or from interrupt context.
 All other functions can be called during autoconf or from process context.
 .Sh SEE ALSO
 .Xr lockmgr 9 ,
-.Xr mutex 9 ,
-.Xr spl 9
+.Xr mutex 9
 .Sh HISTORY
 The
 .Nm
