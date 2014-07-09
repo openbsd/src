@@ -1,4 +1,4 @@
-/* $OpenBSD: xts128.c,v 1.4 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: xts128.c,v 1.5 2014/07/09 16:06:13 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -99,7 +99,7 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 
 		if (len==0)	return 0;
 
-		if (_BYTE_ORDER == _LITTLE_ENDIAN) {
+		if (BYTE_ORDER == LITTLE_ENDIAN) {
 			unsigned int carry,res;
 			
 			res = 0x87&(((int)tweak.d[3])>>31);
@@ -135,7 +135,7 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 	else {
 		union { u64 u[2]; u8 c[16]; } tweak1;
 
-		if (_BYTE_ORDER == _LITTLE_ENDIAN) {
+		if (BYTE_ORDER == LITTLE_ENDIAN) {
 			unsigned int carry,res;
 
 			res = 0x87&(((int)tweak.d[3])>>31);

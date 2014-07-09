@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.5 2014/07/09 11:10:51 bcook Exp $ */
+/* $OpenBSD: sha256.c,v 1.6 2014/07/09 16:06:13 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].
@@ -211,7 +211,7 @@ static void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num
 	a = ctx->h[0];	b = ctx->h[1];	c = ctx->h[2];	d = ctx->h[3];
 	e = ctx->h[4];	f = ctx->h[5];	g = ctx->h[6];	h = ctx->h[7];
 
-	if (_BYTE_ORDER != _LITTLE_ENDIAN &&
+	if (BYTE_ORDER != LITTLE_ENDIAN &&
 	    sizeof(SHA_LONG)==4 && ((size_t)in%4)==0)
 		{
 		const SHA_LONG *W=(const SHA_LONG *)data;

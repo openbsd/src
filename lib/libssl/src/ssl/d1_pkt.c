@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.30 2014/06/19 21:29:51 tedu Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.31 2014/07/09 16:06:14 miod Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -133,7 +133,7 @@ satsub64be(const unsigned char *v1, const unsigned char *v2)
 		do {
 			long l;
 
-			if (_BYTE_ORDER == _LITTLE_ENDIAN)
+			if (BYTE_ORDER == LITTLE_ENDIAN)
 				break;
 			/* not reached on little-endians */
 			/* following test is redundant, because input is

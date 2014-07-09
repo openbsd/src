@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4_enc.c,v 1.11 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: rc4_enc.c,v 1.12 2014/07/09 16:06:13 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,7 +150,7 @@ void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 		 *
 		 *			<appro@fy.chalmers.se>
 		 */
-		if (_BYTE_ORDER != _LITTLE_ENDIAN)
+		if (BYTE_ORDER != LITTLE_ENDIAN)
 			{	/* BIG-ENDIAN CASE */
 # define BESHFT(c)	(((sizeof(RC4_CHUNK)-(c)-1)*8)&(sizeof(RC4_CHUNK)*8-1))
 			for (;len&(0-sizeof(RC4_CHUNK));len-=sizeof(RC4_CHUNK))

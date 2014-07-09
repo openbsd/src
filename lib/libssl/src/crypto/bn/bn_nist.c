@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_nist.c,v 1.11 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bn_nist.c,v 1.12 2014/07/09 16:06:13 miod Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -387,7 +387,7 @@ static void nist_cp_bn(BN_ULONG *dst, const BN_ULONG *src, int top)
 						:(to[(n)/2] =((m)&1)?(from[(m)/2]>>32):(from[(m)/2]&BN_MASK2l)))
 #define bn_32_set_0(to, n)		(((n)&1)?(to[(n)/2]&=BN_MASK2l):(to[(n)/2]=0));
 #define bn_cp_32(to,n,from,m)		((m)>=0)?bn_cp_32_naked(to,n,from,m):bn_32_set_0(to,n)
-# if _BYTE_ORDER == _LITTLE_ENDIAN
+# if BYTE_ORDER == LITTLE_ENDIAN
 #  if defined(_LP64)
 #   define NIST_INT64 long
 #  else

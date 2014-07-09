@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.10 2014/07/09 11:10:51 bcook Exp $ */
+/* $OpenBSD: sha512.c,v 1.11 2014/07/09 16:06:13 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].
@@ -104,7 +104,7 @@ int SHA512_Final (unsigned char *md, SHA512_CTX *c)
 		sha512_block_data_order (c,p,1);
 
 	memset (p+n,0,sizeof(c->u)-16-n);
-#if _BYTE_ORDER == _BIG_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 	c->u.d[SHA_LBLOCK-2] = c->Nh;
 	c->u.d[SHA_LBLOCK-1] = c->Nl;
 #else
@@ -431,7 +431,7 @@ static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num
 
 	for (i=0;i<16;i++)
 		{
-#if _BYTE_ORDER == _BIG_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 		T1 = X[i] = W[i];
 #else
 		T1 = X[i] = PULL64(W[i]);
@@ -486,7 +486,7 @@ static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num
 	a = ctx->h[0];	b = ctx->h[1];	c = ctx->h[2];	d = ctx->h[3];
 	e = ctx->h[4];	f = ctx->h[5];	g = ctx->h[6];	h = ctx->h[7];
 
-#if _BYTE_ORDER == _BIG_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 	T1 = X[0] = W[0];	ROUND_00_15(0,a,b,c,d,e,f,g,h);
 	T1 = X[1] = W[1];	ROUND_00_15(1,h,a,b,c,d,e,f,g);
 	T1 = X[2] = W[2];	ROUND_00_15(2,g,h,a,b,c,d,e,f);

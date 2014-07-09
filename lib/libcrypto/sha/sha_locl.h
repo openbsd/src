@@ -1,4 +1,4 @@
-/* $OpenBSD: sha_locl.h,v 1.16 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: sha_locl.h,v 1.17 2014/07/09 16:06:13 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -223,7 +223,7 @@ static void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
 	for (;;)
 			{
 
-	if (_BYTE_ORDER != _LITTLE_ENDIAN &&
+	if (BYTE_ORDER != LITTLE_ENDIAN &&
 	    sizeof(SHA_LONG)==4 && ((size_t)p%4)==0)
 		{
 		const SHA_LONG *W=(const SHA_LONG *)data;
