@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.100 2014/05/11 00:12:44 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.101 2014/07/09 08:32:57 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -43,16 +43,15 @@
 
 #include <dev/cons.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/cpu.h>
 #include <machine/fpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
-#include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/db_machdep.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <ddb/db_extern.h>
 #include <ddb/db_sym.h>
