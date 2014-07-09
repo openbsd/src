@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.105 2014/07/09 15:21:41 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.106 2014/07/09 15:22:36 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -1004,22 +1004,6 @@ finish(int signo)
 	else
 		exit(nreceived ? 0 : 1);
 }
-
-#ifdef notdef
-static char *ttab[] = {
-	"Echo Reply",		/* ip + seq + udata */
-	"Dest Unreachable",	/* net, host, proto, port, frag, sr + IP */
-	"Source Quench",	/* IP */
-	"Redirect",		/* redirect type, gateway, + IP  */
-	"Echo",
-	"Time Exceeded",	/* transit, frag reassem + IP */
-	"Parameter Problem",	/* pointer + IP */
-	"Timestamp",		/* id + seq + three timestamps */
-	"Timestamp Reply",	/* " */
-	"Info Request",		/* id + sq */
-	"Info Reply"		/* " */
-};
-#endif
 
 /*
  * pr_icmph --
