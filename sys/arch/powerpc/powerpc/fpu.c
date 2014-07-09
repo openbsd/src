@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.13 2014/05/09 18:16:15 miod Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.14 2014/07/09 08:34:49 deraadt Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 1996/09/30 16:34:44 ws Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 
