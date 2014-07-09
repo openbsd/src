@@ -1,4 +1,4 @@
-/*	$OpenBSD: explicit_bzero.c,v 1.3 2014/07/09 18:02:24 matthew Exp $	*/
+/*	$OpenBSD: explicit_bzero.c,v 1.4 2014/07/09 23:54:00 matthew Exp $	*/
 /*
  * Copyright (c) 2014 Google Inc.
  *
@@ -36,6 +36,14 @@ setup_stack(void)
 	};
 
 	ASSERT_EQ(0, sigaltstack(&sigstk, NULL));
+}
+
+static void
+assert_on_stack(void)
+{
+	stack_t cursigstk;
+	ASSERT_EQ(0, sigaltstack(NULL, &cursigstk));
+	ASSERT_EQ(SS_ONSTACK, cursigstk.ss_flags & (SS_DISABLE|SS_ONSTACK));
 }
 
 static void
@@ -106,14 +114,18 @@ static void
 test_without_bzero(int signo)
 {
 	char buf[SECRETBYTES];
+	assert_on_stack();
 	populate_secret(buf, sizeof(buf));
+	ASSERT_NE(NULL, memmem(altstack, sizeof(altstack), buf, sizeof(buf)));
 }
 
 static void
 test_with_bzero(int signo)
 {
 	char buf[SECRETBYTES];
+	assert_on_stack();
 	populate_secret(buf, sizeof(buf));
+	ASSERT_NE(NULL, memmem(altstack, sizeof(altstack), buf, sizeof(buf)));
 	explicit_bzero(buf, sizeof(buf));
 }
 
