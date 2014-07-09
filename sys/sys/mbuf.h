@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.177 2014/07/08 07:10:12 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.178 2014/07/09 11:22:52 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -126,11 +126,9 @@ struct mbuf_ext {
 	caddr_t	ext_buf;		/* start of buffer */
 					/* free routine if not the usual */
 	void	(*ext_free)(caddr_t, u_int, void *);
-	void	*ext_arg;		/* argument for ext_free */
+	void	*ext_arg;
 	u_int	ext_size;		/* size of buffer, for ext_free */
 	int	ext_type;
-	u_short	ext_ifidx;		/* index of the interface */
-	int	ext_backend;		/* backend pool the storage came from */
 	struct mbuf *ext_nextref;
 	struct mbuf *ext_prevref;
 #ifdef DEBUG
