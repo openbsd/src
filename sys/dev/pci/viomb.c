@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.8 2014/03/28 17:57:11 mpi Exp $	 */
+/* $OpenBSD: viomb.c,v 1.9 2014/07/09 22:45:26 jasper Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 
 /*
@@ -48,7 +48,7 @@
 
 #define	DEVNAME(sc)	sc->sc_dev.dv_xname
 #if VIRTIO_DEBUG
-#define VIOMBDEBUG(sc, format, args...)	\
+#define VIOMBDEBUG(sc, format, args...)					  \
 		do { printf("%s: " format, sc->sc_dev.dv_xname, ##args);} \
 		while (0)
 #else
@@ -93,8 +93,8 @@ struct viomb_softc {
 	struct device		sc_dev;
 	struct virtio_softc	*sc_virtio;
 	struct virtqueue	sc_vq[2];
-	u_int32_t		sc_npages;
-	u_int32_t		sc_actual;
+	u_int32_t		sc_npages; /* desired pages */
+	u_int32_t		sc_actual; /* current pages */
 	struct balloon_req	sc_req;
 	struct taskq		*sc_taskq;
 	struct task		sc_task;
@@ -245,9 +245,9 @@ viomb_worker(void *arg1, void *arg2)
 		viomb_inflate(sc);
 		}
 	else if (sc->sc_npages < sc->sc_actual){
-		viomb_deflate(sc);
 		VIOMBDEBUG(sc, "deflating balloon from %u to %u.\n",
 			   sc->sc_actual, sc->sc_npages);
+		viomb_deflate(sc);
 	}
 	splx(s);
 }
@@ -383,8 +383,7 @@ viomb_vq_dequeue(struct virtqueue *vq)
 
 	r = virtio_dequeue(vsc, vq, &slot, NULL);
 	if (r != 0) {
-		printf("%s: dequeue failed, errno %d\n",
-		       DEVNAME(sc), r);
+		printf("%s: dequeue failed, errno %d\n", DEVNAME(sc), r);
 		return(r);
 	}
 	virtio_dequeue_commit(vq, slot);
