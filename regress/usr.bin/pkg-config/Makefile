@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.45 2014/04/14 13:20:46 jasper Exp $
+#	$OpenBSD: Makefile,v 1.46 2014/07/09 22:50:12 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -26,6 +26,10 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers5-7 \
 		cmp-vers6-1 \
 		cmp-vers6-2 \
+		cmp-vers7-1 \
+		cmp-vers7-2 \
+		cmp-vers7-3 \
+		cmp-vers7-4 \
 		corrupt1 \
 		corrupt2 \
 		corrupt3 \
@@ -201,7 +205,6 @@ cmp-vers4-9:
 	@${VPCONFIG} "alpha = 0.1.0alpha2"
 	@diff -u ${WANT} ${GOT}
 
-
 cmp-vers5-1:
 	# Test suffixed versions (beta > alpha)
 	@touch ${WANT}
@@ -274,6 +277,30 @@ cmp-vers6-2:
 	# Test suffixed versions in Requires.private
 	@echo "Requested 'alpha >= 0.1.0alpha3' but version of alpha suffix test is 0.1.0alpha2" > ${WANT}
 	@if ${VPCONFIG} --libs --static requires-test2; then false; fi
+	@diff -u ${WANT} ${GOT}
+
+cmp-vers7-1:
+	# Test suffixed version (vers3 > 1.0.1g)
+	@touch ${WANT}
+	@${VPCONFIG} "vers3 > 1.0.1g"
+	@diff -u ${WANT} ${GOT}
+
+cmp-vers7-2:
+	# Test suffixed version (vers3 < 1.0.1i)
+	@touch ${WANT}
+	@${VPCONFIG} "vers3 < 1.0.1i"
+	@diff -u ${WANT} ${GOT}
+
+cmp-vers7-3:
+	# Test suffixed version (vers3 < 1.0.1i)
+	@touch ${WANT}
+	@${VPCONFIG} "vers3 < 1.0.1i"
+	@diff -u ${WANT} ${GOT}
+
+cmp-vers7-4:
+	# Test suffixed version (vers3 > 1.0.1)
+	@touch ${WANT}
+	@${VPCONFIG} "vers3 > 1.0.1"
 	@diff -u ${WANT} ${GOT}
 
 # Tests for various environment variables
