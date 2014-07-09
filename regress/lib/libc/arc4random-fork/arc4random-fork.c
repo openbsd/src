@@ -18,6 +18,7 @@
 #include <sys/wait.h>
 #include <assert.h>
 #include <err.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -69,6 +70,16 @@ usage()
 {
 	extern const char *__progname;
 	errx(1, "usage: %s [-bp]", __progname);
+}
+
+static pid_t
+_waitpid(pid_t pid, int *stat_loc, int options)
+{
+	pid_t ret;
+	do {
+		ret = waitpid(pid, stat_loc, options);
+	} while (ret == -1 && errno == EINTR);
+	return ret;
 }
 
 int
@@ -123,11 +134,11 @@ main(int argc, char *argv[])
 
 	fillbuf(bufparent);
 
-	CHECK_EQ(pidone, waitpid(pidone, &status, 0));
+	CHECK_EQ(pidone, _waitpid(pidone, &status, 0));
 	CHECK(WIFEXITED(status));
 	CHECK_EQ(0, WEXITSTATUS(status));
 
-	CHECK_EQ(pidtwo, waitpid(pidtwo, &status, 0));
+	CHECK_EQ(pidtwo, _waitpid(pidtwo, &status, 0));
 	CHECK(WIFEXITED(status));
 	CHECK_EQ(0, WEXITSTATUS(status));
 
