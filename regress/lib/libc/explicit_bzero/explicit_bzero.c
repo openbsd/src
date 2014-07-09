@@ -1,4 +1,4 @@
-/*	$OpenBSD: explicit_bzero.c,v 1.1 2014/06/12 22:01:55 matthew Exp $	*/
+/*	$OpenBSD: explicit_bzero.c,v 1.2 2014/07/09 14:26:59 bcook Exp $	*/
 /*
  * Copyright (c) 2014 Google Inc.
  *
@@ -67,7 +67,8 @@ call_on_stack(void (*fn)(int), void *stack, size_t stacklen)
 
 	/* Restore the original signal action, stack, and mask. */
 	ASSERT_EQ(0, sigaction(SIGUSR1, &oldsigact, NULL));
-	ASSERT_EQ(0, sigaltstack(&oldsigstk, NULL));
+	if (oldsigstk.ss_flags & SA_ONSTACK)
+		ASSERT_EQ(0, sigaltstack(&oldsigstk, NULL));
 	ASSERT_EQ(0, sigprocmask(SIG_SETMASK, &oldsigset, NULL));
 }
 
