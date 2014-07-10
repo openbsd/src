@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.180 2014/06/15 11:43:24 sf Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.181 2014/07/10 12:13:48 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -742,7 +742,7 @@ cpu_unidle(struct cpu_info *ci)
 int	waittime = -1;
 struct pcb dumppcb;
 
-void
+__dead void
 boot(int howto)
 {
 	struct device *mainbus;

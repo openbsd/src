@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_machdep.c,v 1.25 2014/05/31 15:49:28 mpi Exp $ */
+/*	$OpenBSD: armish_machdep.c,v 1.26 2014/07/10 12:13:48 uebayasi Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -246,7 +246,7 @@ int comcnmode = CONMODE;
  */
 void	board_reset(void);
 void	board_powerdown(void);
-void
+__dead void
 boot(int howto)
 {
 	struct device *mainbus;

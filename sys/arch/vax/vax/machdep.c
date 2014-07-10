@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.136 2014/05/31 15:49:28 mpi Exp $ */
+/* $OpenBSD: machdep.c,v 1.137 2014/07/10 12:13:49 uebayasi Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -508,9 +508,8 @@ sendsig(catcher, sig, mask, code, type, val)
 int	waittime = -1;
 static	volatile int showto; /* Must be volatile to survive MM on -> MM off */
 
-void
-boot(howto)
-	register int howto;
+__dead void
+boot(int howto)
 {
 	struct device *mainbus;
 

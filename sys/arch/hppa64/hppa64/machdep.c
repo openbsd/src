@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 2014/05/31 15:49:28 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.61 2014/07/10 12:13:49 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -532,7 +532,7 @@ ptlball(void)
 
 int waittime = -1;
 
-void
+__dead void
 boot(int howto)
 {
 	struct device *mainbus;

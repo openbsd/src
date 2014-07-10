@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.222 2014/05/31 15:49:28 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.223 2014/07/10 12:13:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -886,7 +886,7 @@ btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *lenp, u_int prot)
 
 int waittime = -1;
 
-void
+__dead void
 boot(int howto)
 {
 	struct device *mainbus;

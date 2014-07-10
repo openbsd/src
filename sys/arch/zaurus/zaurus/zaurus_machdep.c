@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.44 2014/05/31 15:49:28 mpi Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.45 2014/07/10 12:13:49 uebayasi Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -286,7 +286,7 @@ int comcnmode = CONMODE;
  * Deal with any syncing, unmounting, dumping and shutdown hooks,
  * then reset the CPU.
  */
-void
+__dead void
 boot(int howto)
 {
 	struct device *mainbus;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.157 2014/05/31 15:49:28 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.158 2014/07/10 12:13:49 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -604,9 +604,8 @@ signotify(struct proc *p)
 int	waittime = -1;
 struct pcb dumppcb;
 
-void
-boot(howto)
-	int howto;
+__dead void
+boot(int howto)
 {
 	int i;
 	static char str[128];
