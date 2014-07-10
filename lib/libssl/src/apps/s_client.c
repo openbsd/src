@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.64 2014/07/10 09:15:51 tedu Exp $ */
+/* $OpenBSD: s_client.c,v 1.65 2014/07/10 09:30:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1508,6 +1508,10 @@ print_stuff(BIO * bio, SSL * s, int full)
 	}
 	BIO_printf(bio, "Secure Renegotiation IS%s supported\n",
 	    SSL_get_secure_renegotiation_support(s) ? "" : " NOT");
+
+	/* Compression is not supported and will always be none. */
+	BIO_printf(bio, "Compression: NONE\n");
+	BIO_printf(bio, "Expansion: NONE\n");
 
 #ifdef SSL_DEBUG
 	{
