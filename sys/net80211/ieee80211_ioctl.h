@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.18 2011/03/04 23:48:15 fgsch Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.19 2014/07/10 14:32:28 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -230,6 +230,7 @@ struct ieee80211_wpapsk {
 #define IEEE80211_WPA_CIPHER_TKIP	0x04
 #define IEEE80211_WPA_CIPHER_CCMP	0x08
 #define IEEE80211_WPA_CIPHER_WEP104	0x10
+#define IEEE80211_WPA_CIPHER_BIP	0x20
 
 #define IEEE80211_WPA_AKM_PSK		0x01
 #define IEEE80211_WPA_AKM_8021X		0x02
@@ -311,7 +312,9 @@ struct ieee80211_nodereq {
 	u_int8_t	nr_txrate;	/* index to nr_rates[] */
 	u_int16_t	nr_state;	/* node state in the cache */
 
-	/* XXX RSN */
+	/* RSN */
+	u_int		nr_rsnciphers;
+	u_int		nr_rsnakms;
 
 	/* Node flags */
 	u_int8_t	nr_flags;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.123 2013/06/11 18:15:53 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.124 2014/07/10 14:32:28 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1579,11 +1579,11 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 			ieee80211_parse_wmm_params(ic, wmmie);
 	}
 
-	if (ic->ic_state == IEEE80211_S_SCAN &&
+	if (ic->ic_state == IEEE80211_S_SCAN
 #ifndef IEEE80211_STA_ONLY
-	    ic->ic_opmode != IEEE80211_M_HOSTAP &&
+	    && ic->ic_opmode != IEEE80211_M_HOSTAP
 #endif
-	    (ic->ic_flags & IEEE80211_F_RSNON)) {
+	   ) {
 		struct ieee80211_rsnparams rsn;
 		const u_int8_t *saveie = NULL;
 		/*
@@ -1613,8 +1613,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 			ni->ni_rsncaps = rsn.rsn_caps;
 		} else
 			ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
-	} else if (ic->ic_state == IEEE80211_S_SCAN)
-		ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
+	}
 
 	if (ssid[1] != 0 && ni->ni_esslen == 0) {
 		ni->ni_esslen = ssid[1];

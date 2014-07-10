@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.284 2014/06/23 18:44:43 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.285 2014/07/10 14:32:28 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2281,6 +2281,18 @@ ieee80211_printnode(struct ieee80211_nodereq *nr)
 	nr->nr_capinfo &= ~IEEE80211_CAPINFO_ESS;
 	if (nr->nr_capinfo) {
 		printb_status(nr->nr_capinfo, IEEE80211_CAPINFO_BITS);
+		if (nr->nr_capinfo & IEEE80211_CAPINFO_PRIVACY) {
+			if (nr->nr_rsnciphers & IEEE80211_WPA_CIPHER_CCMP)
+				fputs(",wpa2", stdout);
+			else if (nr->nr_rsnciphers & IEEE80211_WPA_CIPHER_TKIP)
+				fputs(",wpa1", stdout);
+			else
+				fputs(",wep", stdout);
+
+			if (nr->nr_rsnakms & IEEE80211_WPA_AKM_8021X ||
+			    nr->nr_rsnakms & IEEE80211_WPA_AKM_SHA256_8021X)
+				fputs(",802.1x", stdout);
+		}
 		putchar(' ');
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.34 2010/09/29 20:00:51 kettenis Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.35 2014/07/10 14:32:28 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -91,7 +91,18 @@ ieee80211_node2req(struct ieee80211com *ic, const struct ieee80211_node *ni,
 	nr->nr_inact = ni->ni_inact;
 	nr->nr_txrate = ni->ni_txrate;
 	nr->nr_state = ni->ni_state;
-	/* XXX RSN */
+
+	/* RSN */
+	nr->nr_rsnciphers = ni->ni_rsnciphers;
+	nr->nr_rsnakms = 0;
+	if (ni->ni_rsnakms & IEEE80211_AKM_8021X)
+		nr->nr_rsnakms |= IEEE80211_WPA_AKM_8021X;
+	if (ni->ni_rsnakms & IEEE80211_AKM_PSK)
+		nr->nr_rsnakms |= IEEE80211_WPA_AKM_PSK;
+	if (ni->ni_rsnakms & IEEE80211_AKM_SHA256_8021X)
+		nr->nr_rsnakms |= IEEE80211_WPA_AKM_SHA256_8021X;
+	if (ni->ni_rsnakms & IEEE80211_AKM_SHA256_PSK)
+		nr->nr_rsnakms |= IEEE80211_WPA_AKM_SHA256_PSK;
 
 	/* Node flags */
 	nr->nr_flags = 0;
