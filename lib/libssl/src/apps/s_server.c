@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.56 2014/07/09 21:02:35 tedu Exp $ */
+/* $OpenBSD: s_server.c,v 1.57 2014/07/10 08:59:15 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1709,9 +1709,20 @@ sv_body(char *hostname, int s, unsigned char *context)
 		again:
 				i = SSL_read(con, (char *) buf, bufsize);
 				switch (SSL_get_error(con, i)) {
-				case SSL_ERROR_NONE:
-					write(fileno(stdout), buf,
-					    (unsigned int) i);
+				case SSL_ERROR_NONE: {
+						int len, n;
+						for (len = 0; len < i;) {
+							do {
+								n = write(fileno(stdout), buf + len, i - len);
+							} while (n == -1 && errno == EINTR);
+
+							if (n < 0) {
+								BIO_printf(bio_s_out, "ERROR\n");
+								goto err;
+							}
+							len += n;
+						}
+					}
 					if (SSL_pending(con))
 						goto again;
 					break;
