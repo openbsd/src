@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.260 2014/07/01 19:13:19 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.261 2014/07/10 13:52:15 blambert Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -27,7 +27,6 @@
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#include <sys/workq.h>
 #include <sys/sched.h>
 #include <sys/reboot.h>
 
