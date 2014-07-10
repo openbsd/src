@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.25 2014/06/27 20:50:43 matthew Exp $	*/
+/*	$OpenBSD: mman.h,v 1.26 2014/07/10 19:00:23 matthew Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -57,6 +57,7 @@
 #define	MAP_FIXED	0x0010	/* map addr must be exactly as requested */
 #define	__MAP_NOREPLACE	0x0800	/* fail if address not available */
 #define	MAP_ANON	0x1000	/* allocated from memory, swap space */
+#define	MAP_ANONYMOUS	MAP_ANON	/* alternate POSIX spelling */
 
 #define	MAP_FLAGMASK	0x1ff7
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.50 2014/07/02 22:22:35 matthew Exp $
+.\"	$OpenBSD: mmap.2,v 1.51 2014/07/10 19:00:23 matthew Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mmap.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 2 2014 $
+.Dd $Mdocdate: July 10 2014 $
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -121,7 +121,7 @@ Sharing, mapping type, and options are specified in the
 .Fa flags
 argument by OR'ing the following values.
 Exactly one of the first two values must be specified:
-.Bl -tag -width MAP_PRIVATE -offset indent
+.Bl -tag -width MAP_ANONYMOUS -offset indent
 .It Dv MAP_PRIVATE
 Modifications are private.
 .It Dv MAP_SHARED
@@ -129,13 +129,16 @@ Modifications are shared.
 .El
 .Pp
 Any combination of the following flags may additionally be used:
-.Bl -tag -width MAP_PRIVATE -offset indent
+.Bl -tag -width MAP_ANONYMOUS -offset indent
 .It Dv MAP_ANON
 Map anonymous memory not associated with any specific file.
 The file descriptor used for creating
 .Dv MAP_ANON
 must currently be \-1 indicating no name is associated with the
 region.
+.It Dv MAP_ANONYMOUS
+Synonym for
+.Dv MAP_ANON .
 .It Dv MAP_FIXED
 Demand that the mapping is placed at
 .Fa addr ,
@@ -157,7 +160,7 @@ source compatibility with code written for other operating systems,
 but are not recommended for use in new
 .Ox
 code:
-.Bl -tag -width MAP_PRIVATE -offset indent
+.Bl -tag -width MAP_ANONYMOUS -offset indent
 .It Dv MAP_COPY
 Modifications are private and, unlike
 .Dv MAP_PRIVATE ,
