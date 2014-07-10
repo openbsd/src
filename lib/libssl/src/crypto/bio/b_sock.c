@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.52 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: b_sock.c,v 1.53 2014/07/10 21:57:40 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -417,26 +417,17 @@ BIO_accept(int sock, char **addr)
 			break;
 		nl = strlen(h) + strlen(s) + 2;
 		p = *addr;
-		if (p) {
+		if (p)
 			*p = '\0';
-			if (!(tmp = realloc(p, nl))) {
-				close(ret);
-				ret = -1;
-				free(p);
-				*addr = NULL;
-				BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
-				goto end;
-			}
-			p = tmp;
-		} else {
-			p = malloc(nl);
-		}
-		if (p == NULL) {
+		if (!(tmp = realloc(p, nl))) {
 			close(ret);
 			ret = -1;
+			free(p);
+			*addr = NULL;
 			BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
 			goto end;
 		}
+		p = tmp;
 		*addr = p;
 		snprintf(*addr, nl, "%s:%s", h, s);
 		goto end;
