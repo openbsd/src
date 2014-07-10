@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.158 2014/07/07 16:45:03 espie Exp $
+# $OpenBSD: Add.pm,v 1.159 2014/07/10 10:32:01 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -277,6 +277,9 @@ sub set_modes
 			$state->system(OpenBSD::Paths->chmod, 
 			    $self->{mode}, $name);
 		}
+	}
+	if (defined $self->{ts}) {
+		utime $self->{ts}, $self->{ts}, $name;
 	}
 }
 

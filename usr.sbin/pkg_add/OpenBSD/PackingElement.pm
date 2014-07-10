@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.234 2014/03/18 18:53:29 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.235 2014/07/10 10:32:01 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -366,6 +366,9 @@ sub write
 	if (defined $self->{size}) {
 		print $fh "\@size ", $self->{size}, "\n";
 	}
+	if (defined $self->{ts}) {
+		print $fh "\@ts ", $self->{ts}, "\n";
+	}
 	if (defined $self->{symlink}) {
 		print $fh "\@symlink ", $self->{symlink}, "\n";
 	}
@@ -399,6 +402,12 @@ sub add_size
 {
 	my ($self, $sz) = @_;
 	$self->{size} = $sz;
+}
+
+sub add_timestamp
+{
+	my ($self, $ts) = @_;
+	$self->{ts} = $ts;
 }
 
 # XXX symlink/hardlinks are properties of File,
@@ -829,6 +838,19 @@ sub add
 	my ($class, $plist, $args) = @_;
 
 	$plist->{state}->{lastfile}->add_size($args);
+	return;
+}
+
+package OpenBSD::PackingElement::ts;
+our @ISA=qw(OpenBSD::PackingElement::Annotation);
+
+__PACKAGE__->register_with_factory('ts');
+
+sub add
+{
+	my ($class, $plist, $args) = @_;
+
+	$plist->{state}->{lastfile}->add_timestamp($args);
 	return;
 }
 
@@ -1532,6 +1554,11 @@ sub add_size
 	&OpenBSD::PackingElement::FileBase::add_size;
 }
 
+sub add_timestamp
+{
+	# just don't
+}
+
 sub compute_digest
 {
 	&OpenBSD::PackingElement::FileObject::compute_digest;
@@ -1746,6 +1773,12 @@ sub time_to_iso8601
 	my ($sec, $min, $hour, $day, $month, $year, @rest) = gmtime($time);
 	return sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
 	    $year+1900, $month+1, $day, $hour, $min, $sec);
+}
+
+sub iso8601
+{
+	my $self = shift;
+	return time_to_iso8601($self->{timestamp});
 }
 
 sub iso8601_to_time
