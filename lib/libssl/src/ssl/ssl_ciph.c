@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.59 2014/07/10 08:51:15 tedu Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.60 2014/07/10 09:26:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1846,4 +1846,22 @@ unsigned long
 SSL_CIPHER_get_id(const SSL_CIPHER *c)
 {
 	return c->id;
+}
+
+void *
+SSL_COMP_get_compression_methods(void)
+{
+	return NULL;
+}
+
+int
+SSL_COMP_add_compression_method(int id, void *cm)
+{
+	return 1;
+}
+
+const char *
+SSL_COMP_get_name(const void *comp)
+{
+	return NULL;
 }

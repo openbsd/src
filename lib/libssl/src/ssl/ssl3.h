@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.24 2014/07/10 08:51:15 tedu Exp $ */
+/* $OpenBSD: ssl3.h,v 1.25 2014/07/10 09:26:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -281,7 +281,6 @@ extern "C" {
 			(SSL_RT_MAX_CIPHER_BLOCK_SIZE + SSL3_RT_MAX_MD_SIZE)
 
 /* If compression isn't used don't include the compression overhead */
-
 #define SSL3_RT_MAX_COMPRESSED_LENGTH		SSL3_RT_MAX_PLAIN_LENGTH
 #define SSL3_RT_MAX_ENCRYPTED_LENGTH	\
 		(SSL3_RT_MAX_ENCRYPTED_OVERHEAD+SSL3_RT_MAX_COMPRESSED_LENGTH)

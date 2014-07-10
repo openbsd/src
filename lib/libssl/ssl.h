@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.58 2014/07/10 08:51:15 tedu Exp $ */
+/* $OpenBSD: ssl.h,v 1.59 2014/07/10 09:26:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1814,6 +1814,13 @@ void SSL_CTX_set_tmp_ecdh_callback(SSL_CTX *ctx,
     EC_KEY *(*ecdh)(SSL *ssl, int is_export, int keylength));
 void SSL_set_tmp_ecdh_callback(SSL *ssl,
     EC_KEY *(*ecdh)(SSL *ssl, int is_export, int keylength));
+
+const void *SSL_get_current_compression(SSL *s);
+const void *SSL_get_current_expansion(SSL *s);
+
+const char *SSL_COMP_get_name(const void *comp);
+void *SSL_COMP_get_compression_methods(void);
+int SSL_COMP_add_compression_method(int id, void *cm);
 
 /* TLS extensions functions */
 int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len);
