@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.68 2014/07/09 11:25:42 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.69 2014/07/10 08:25:00 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -312,8 +312,10 @@ ssl3_accept(SSL *s)
 				ret = -1;
 				goto end;
 			} else {
-				/* s->state == SSL_ST_RENEGOTIATE,
-				 * we will just send a HelloRequest */
+				/*
+				 * s->state == SSL_ST_RENEGOTIATE,
+				 * we will just send a HelloRequest
+				 */
 				s->ctx->stats.sess_accept_renegotiate++;
 				s->state = SSL3_ST_SW_HELLO_REQ_A;
 			}
@@ -404,19 +406,21 @@ ssl3_accept(SSL *s)
 			    )
 				/*
 				 * option SSL_OP_EPHEMERAL_RSA sends temporary
-				 * RSA key even when forbidden by protocol specs
-				 * (handshake may fail as clients are not
-				 * required to be able to handle this)
+				 * RSA key even when forbidden by protocol
+				 * specs (handshake may fail as clients are
+				 * not required to be able to handle this)
 				 */
 				s->s3->tmp.use_rsa_tmp = 1;
 			else
 				s->s3->tmp.use_rsa_tmp = 0;
 
 
-			/* only send if a DH key exchange, fortezza or
+			/*
+			 * Only send if a DH key exchange, fortezza or
 			 * RSA but we have a sign only certificate
 			 *
-			 * PSK: may send PSK identity hints
+			 * PSK: send ServerKeyExchange if PSK identity
+			 * hint is provided
 			 *
 			 * For ECC ciphersuites, we send a serverKeyExchange
 			 * message only if the cipher suite is either
@@ -425,8 +429,6 @@ ssl3_accept(SSL *s)
 			 * public key for key exchange.
 			 */
 			if (s->s3->tmp.use_rsa_tmp
-			/* PSK: send ServerKeyExchange if PSK identity
-			 * hint if provided */
 #ifndef OPENSSL_NO_PSK
 			    || ((alg_k & SSL_kPSK) && s->ctx->psk_identity_hint)
 #endif
@@ -1070,8 +1072,10 @@ ssl3_get_client_hello(SSL *s)
 			}
 		}
 		if (j == 0) {
-			/* we need to have the cipher in the cipher
-			 * list if we are asked to reuse it */
+			/*
+			 * We need to have the cipher in the cipher
+			 * list if we are asked to reuse it
+			 */
 			al = SSL_AD_ILLEGAL_PARAMETER;
 			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
 			    SSL_R_REQUIRED_CIPHER_MISSING);
@@ -1841,8 +1845,7 @@ ssl3_send_server_key_exchange(SSL *s)
 		*(d++) = SSL3_MT_SERVER_KEY_EXCHANGE;
 		l2n3(n, d);
 
-		/* we should now have things packed up, so lets send
-		 * it off */
+		/* we should now have things packed up, so lets send it off */
 		s->init_num = n + 4;
 		s->init_off = 0;
 	}
@@ -1928,9 +1931,7 @@ ssl3_send_certificate_request(SSL *s)
 		*(d++) = SSL3_MT_CERTIFICATE_REQUEST;
 		l2n3(n, d);
 
-		/* we should now have things packed up, so lets send
-		 * it off */
-
+		/* we should now have things packed up, so lets send it off */
 		s->init_num = n + 4;
 		s->init_off = 0;
 #ifdef NETSCAPE_HANG_BUG
@@ -1975,10 +1976,9 @@ ssl3_get_client_key_exchange(SSL *s)
 	EC_POINT *clnt_ecpoint = NULL;
 	BN_CTX *bn_ctx = NULL;
 
-
+	/* 2048 maxlen is a guess.  How long a key does that permit? */
 	n = s->method->ssl_get_message(s, SSL3_ST_SR_KEY_EXCH_A,
-	    SSL3_ST_SR_KEY_EXCH_B, SSL3_MT_CLIENT_KEY_EXCHANGE,
-	    2048, /* ??? */ &ok);
+	    SSL3_ST_SR_KEY_EXCH_B, SSL3_MT_CLIENT_KEY_EXCHANGE, 2048, &ok);
 	if (!ok)
 		return ((int)n);
 	p = (unsigned char *)s->init_msg;
@@ -1990,8 +1990,10 @@ ssl3_get_client_key_exchange(SSL *s)
 		if (s->s3->tmp.use_rsa_tmp) {
 			if ((s->cert != NULL) && (s->cert->rsa_tmp != NULL))
 				rsa = s->cert->rsa_tmp;
-			/* Don't do a callback because rsa_tmp should
-			 * be sent already */
+			/*
+			 * Don't do a callback because rsa_tmp should
+			 * be sent already
+			 */
 			if (rsa == NULL) {
 				al = SSL_AD_HANDSHAKE_FAILURE;
 				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
@@ -2054,7 +2056,8 @@ ssl3_get_client_key_exchange(SSL *s)
 				al = SSL_AD_DECODE_ERROR;
 				/* SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_BAD_PROTOCOL_VERSION_NUMBER); */
 
-				/* The Klima-Pokorny-Rosa extension of
+				/*
+				 * The Klima-Pokorny-Rosa extension of
 				 * Bleichenbacher's attack
 				 * (http://eprint.iacr.org/2003/052/) exploits
 				 * the version number check as a "bad version
@@ -2227,7 +2230,8 @@ ssl3_get_client_key_exchange(SSL *s)
 			}
 			ret = 2; /* Skip certificate verify processing */
 		} else {
-			/* Get client's public key from encoded point
+			/*
+			 * Get client's public key from encoded point
 			 * in the ClientKeyExchange message.
 			 */
 			if ((bn_ctx = BN_CTX_new()) == NULL) {
@@ -2474,9 +2478,9 @@ ssl3_get_cert_verify(SSL *s)
 	EVP_MD_CTX mctx;
 	EVP_MD_CTX_init(&mctx);
 
+	/* 516 maxlen is enough for 4096 bit RSA key with TLS v1.2 */
 	n = s->method->ssl_get_message(s, SSL3_ST_SR_CERT_VRFY_A,
-	    SSL3_ST_SR_CERT_VRFY_B, -1,
-	    516, /* Enough for 4096 bit RSA key with TLS v1.2 */ &ok);
+	    SSL3_ST_SR_CERT_VRFY_B, -1, 516, &ok);
 	if (!ok)
 		return ((int)n);
 
@@ -2815,8 +2819,10 @@ ssl3_get_client_certificate(SSL *s)
 	s->session->peer = sk_X509_shift(sk);
 	s->session->verify_result = s->verify_result;
 
-	/* With the current implementation, sess_cert will always be NULL
-	 * when we arrive here. */
+	/*
+	 * With the current implementation, sess_cert will always be NULL
+	 * when we arrive here
+	 */
 	if (s->session->sess_cert == NULL) {
 		s->session->sess_cert = ssl_sess_cert_new();
 		if (s->session->sess_cert == NULL) {
@@ -2828,8 +2834,11 @@ ssl3_get_client_certificate(SSL *s)
 	if (s->session->sess_cert->cert_chain != NULL)
 		sk_X509_pop_free(s->session->sess_cert->cert_chain, X509_free);
 	s->session->sess_cert->cert_chain = sk;
-	/* Inconsistency alert: cert_chain does *not* include the
-	 * peer's own certificate, while we do include it in s3_clnt.c */
+
+	/*
+	 * Inconsistency alert: cert_chain does *not* include the
+	 * peer's own certificate, while we do include it in s3_clnt.c
+	 */
 
 	sk = NULL;
 
@@ -3080,9 +3089,9 @@ ssl3_get_next_proto(SSL *s)
 		return (-1);
 	}
 
+	/* 514 maxlen is enough for the payload format below */
 	n = s->method->ssl_get_message(s, SSL3_ST_SR_NEXT_PROTO_A,
-	    SSL3_ST_SR_NEXT_PROTO_B, SSL3_MT_NEXT_PROTO,
-	    514,  /* See the payload format below */ &ok);
+	    SSL3_ST_SR_NEXT_PROTO_B, SSL3_MT_NEXT_PROTO, 514, &ok);
 	if (!ok)
 		return ((int)n);
 

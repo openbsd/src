@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.40 2014/07/09 11:25:42 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.41 2014/07/10 08:25:00 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -195,9 +195,11 @@ ssl_cert_dup(CERT *cert)
 		return (NULL);
 	}
 
+	/*
+	 * same as ret->key = ret->pkeys + (cert->key - cert->pkeys),
+	 * if you find that more readable
+	 */
 	ret->key = &ret->pkeys[cert->key - &cert->pkeys[0]];
-	/* or ret->key = ret->pkeys + (cert->key - cert->pkeys),
-	 * if you find that more readable */
 
 	ret->valid = cert->valid;
 	ret->mask_k = cert->mask_k;
@@ -256,9 +258,11 @@ ssl_cert_dup(CERT *cert)
 			CRYPTO_LOCK_EVP_PKEY);
 
 			switch (i) {
-				/* If there was anything special to do for
+				/*
+				 * If there was anything special to do for
 				 * certain types of keys, we'd do it here.
-				 * (Nothing at the moment, I think.) */
+				 * (Nothing at the moment, I think.)
+				 */
 
 			case SSL_PKEY_RSA_ENC:
 			case SSL_PKEY_RSA_SIGN:
@@ -285,12 +289,15 @@ ssl_cert_dup(CERT *cert)
 		}
 	}
 
-	/* ret->extra_certs *should* exist, but currently the own certificate
-	 * chain is held inside SSL_CTX */
+	/*
+	 * ret->extra_certs *should* exist, but currently the own certificate
+	 * chain is held inside SSL_CTX
+	 */
 
 	ret->references = 1;
-	/* Set digests to defaults. NB: we don't copy existing values as they
-	 * will be set during handshake.
+	/*
+	 * Set digests to defaults. NB: we don't copy existing values
+	 * as they will be set during handshake.
 	 */
 	ssl_cert_set_default_md(ret);
 
@@ -339,7 +346,8 @@ ssl_cert_free(CERT *c)
 int
 ssl_cert_inst(CERT **o)
 {
-	/* Create a CERT if there isn't already one
+	/*
+	 * Create a CERT if there isn't already one
 	 * (which cannot really happen, as it is initially created in
 	 * SSL_CTX_new; but the earlier code usually allows for that one
 	 * being non-existant, so we follow that behaviour, as it might
@@ -431,16 +439,17 @@ ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 	X509_STORE_CTX_set_ex_data(&ctx,
 	    SSL_get_ex_data_X509_STORE_CTX_idx(), s);
 
-	/* We need to inherit the verify parameters. These can be determined by
-	 * the context: if its a server it will verify SSL client certificates
-	 * or vice versa.
+	/*
+	 * We need to inherit the verify parameters. These can be
+	 * determined by the context: if its a server it will verify
+	 * SSL client certificates or vice versa.
 	 */
-
 	X509_STORE_CTX_set_default(&ctx,
 	    s->server ? "ssl_client" : "ssl_server");
 
-	/* Anything non-default in "param" should overwrite anything in the
-	 * ctx.
+	/*
+	 * Anything non-default in "param" should overwrite anything
+	 * in the ctx.
 	 */
 	X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(&ctx), s->param);
 
