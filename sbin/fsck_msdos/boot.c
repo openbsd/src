@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.20 2014/06/16 18:33:33 tobias Exp $	*/
+/*	$OpenBSD: boot.c,v 1.21 2014/07/10 17:08:33 tobias Exp $	*/
 /*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
 
 /*
@@ -94,6 +94,10 @@ readboot(int dosfs, struct bootblock *boot)
 	}
 	boot->ResSectors = block[14] + (block[15] << 8);
 	boot->FATs = block[16];
+	if (boot->FATs == 0) {
+		pfatal("Invalid number of FATs: %u\n", boot->FATs);
+		goto fail;
+	}
 	boot->RootDirEnts = block[17] + (block[18] << 8);
 	boot->Sectors = block[19] + (block[20] << 8);
 	boot->Media = block[21];
