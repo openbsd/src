@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.134 2014/07/09 15:47:54 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.135 2014/07/10 20:57:40 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -352,10 +352,6 @@ ohci_activate(struct device *self, int act)
 		sc->sc_control = sc->sc_intre = sc->sc_ival = 0;
 		sc->sc_bus.use_polling--;
 		rv = config_activate_children(self, act);
-		break;
-	case DVACT_DEACTIVATE:
-		rv = config_activate_children(self, act);
-		sc->sc_bus.dying = 1;
 		break;
 	case DVACT_POWERDOWN:
 		rv = config_activate_children(self, act);
