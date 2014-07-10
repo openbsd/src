@@ -1,4 +1,4 @@
-/* $OpenBSD: sha.h,v 1.15 2014/06/14 10:28:31 avsm Exp $ */
+/* $OpenBSD: sha.h,v 1.16 2014/07/10 09:01:04 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,14 +78,7 @@ extern "C" {
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
-#if defined(__LP32__)
-#define SHA_LONG unsigned long
-#elif defined(__ILP64__)
-#define SHA_LONG unsigned long
-#define SHA_LONG_LOG2 3
-#else
 #define SHA_LONG unsigned int
-#endif
 
 #define SHA_LBLOCK	16
 #define SHA_CBLOCK	(SHA_LBLOCK*4)	/* SHA treats input data as a

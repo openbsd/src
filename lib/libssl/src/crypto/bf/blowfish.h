@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.h,v 1.13 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: blowfish.h,v 1.14 2014/07/10 09:01:04 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,14 +79,7 @@ extern "C" {
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
-#if defined(__LP32__)
-#define BF_LONG unsigned long
-#elif defined(__ILP64__)
-#define BF_LONG unsigned long
-#define BF_LONG_LOG2 3
-#else
 #define BF_LONG unsigned int
-#endif
 
 #define BF_ROUNDS	16
 #define BF_BLOCK	8

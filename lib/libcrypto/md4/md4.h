@@ -1,4 +1,4 @@
-/* $OpenBSD: md4.h,v 1.11 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: md4.h,v 1.12 2014/07/10 09:01:04 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,14 +78,7 @@ extern "C" {
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
-#if defined(__LP32__)
-#define MD4_LONG unsigned long
-#elif defined(__ILP64__)
-#define MD4_LONG unsigned long
-#define MD4_LONG_LOG2 3
-#else
 #define MD4_LONG unsigned int
-#endif
 
 #define MD4_CBLOCK	64
 #define MD4_LBLOCK	(MD4_CBLOCK/4)
