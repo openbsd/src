@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.53 2014/07/10 19:33:16 matthew Exp $
+.\"	$OpenBSD: malloc.9,v 1.54 2014/07/10 19:35:38 matthew Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 .Ft void *
 .Fn malloc "size_t size" "int type" "int flags"
 .Ft void *
-.Fn malloc "size_t nmemb" "size_t size" "int type" "int flags"
+.Fn mallocarray "size_t nmemb" "size_t size" "int type" "int flags"
 .Ft void
 .Fn free "void *addr" "int type"
 .Sh DESCRIPTION
