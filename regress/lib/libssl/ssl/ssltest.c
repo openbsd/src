@@ -190,11 +190,6 @@
 #  define TEST_SERVER_CERT "../apps/server.pem"
 #  define TEST_CLIENT_CERT "../apps/client.pem"
 
-/* There is really no standard for this, so let's assign some tentative
-   numbers.  In any case, these numbers are only for this test */
-#define COMP_RLE	255
-#define COMP_ZLIB	1
-
 static int verify_callback(int ok, X509_STORE_CTX *ctx);
 static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength);
 static void free_tmp_rsa(void);
@@ -281,8 +276,6 @@ sv_usage(void)
 	fprintf(stderr, " -bio_pair     - Use BIO pairs\n");
 	fprintf(stderr, " -f            - Test even cases that can't work\n");
 	fprintf(stderr, " -time         - measure processor time used by client and server\n");
-	fprintf(stderr, " -zlib         - use zlib compression\n");
-	fprintf(stderr, " -rle          - use rle compression\n");
 #ifndef OPENSSL_NO_ECDH
 	fprintf(stderr, " -named_curve arg  - Elliptic curve name to use for ephemeral ECDH keys.\n" \
 	               "                 Use \"openssl ecparam -list_curves\" for all names\n"  \
@@ -418,11 +411,6 @@ main(int argc, char *argv[])
 	int no_psk = 0;
 	int print_time = 0;
 	clock_t s_time = 0, c_time = 0;
-	int comp = 0;
-#ifndef OPENSSL_NO_COMP
-	COMP_METHOD *cm = NULL;
-	STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
-#endif
 	int test_cipherlist = 0;
 
 	verbose = 0;
@@ -556,10 +544,6 @@ main(int argc, char *argv[])
 			force = 1;
 		} else if (strcmp(*argv, "-time") == 0) {
 			print_time = 1;
-		} else if (strcmp(*argv, "-zlib") == 0) {
-			comp = COMP_ZLIB;
-		} else if (strcmp(*argv, "-rle") == 0) {
-			comp = COMP_RLE;
 		} else if (strcmp(*argv, "-named_curve") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -621,40 +605,6 @@ bad:
 	SSL_library_init();
 	SSL_load_error_strings();
 
-#ifndef OPENSSL_NO_COMP
-	if (comp == COMP_ZLIB)
-		cm = COMP_zlib();
-	if (comp == COMP_RLE)
-		cm = COMP_rle();
-	if (cm != NULL) {
-		if (cm->type != NID_undef) {
-			if (SSL_COMP_add_compression_method(comp, cm) != 0) {
-				fprintf(stderr,
-				"Failed to add compression method\n");
-				ERR_print_errors_fp(stderr);
-			}
-		} else {
-			fprintf(stderr,
-			    "Warning: %s compression not supported\n",
-			    (comp == COMP_RLE ? "rle" :
-			    (comp == COMP_ZLIB ? "zlib" :
-			    "unknown")));
-			ERR_print_errors_fp(stderr);
-		}
-	}
-	ssl_comp_methods = SSL_COMP_get_compression_methods();
-	fprintf(stderr, "Available compression methods:\n");
-	{
-		int j, n = sk_SSL_COMP_num(ssl_comp_methods);
-		if (n == 0)
-			fprintf(stderr, "  NONE\n");
-		else
-			for (j = 0; j < n; j++) {
-				SSL_COMP *c = sk_SSL_COMP_value(ssl_comp_methods, j);
-				fprintf(stderr, "  %d: %s\n", c->id, c->name);
-			}
-	}
-#endif
 
 	if (dtls1)
 		meth = DTLSv1_method();
