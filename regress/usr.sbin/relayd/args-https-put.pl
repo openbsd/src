@@ -10,7 +10,6 @@ our %args = (
 	lengths => \@lengths,
 	method => "PUT",
 	ssl => 1,
-	mreqs => 1,
     },
     relayd => {
 	protocol => [ "http",
@@ -24,7 +23,6 @@ our %args = (
     server => {
 	func => \&http_server,
 	ssl => 1,
-	mreqs => scalar(@lengths),
     },
     lengths => \@lengths,
     md5 => "bc3a3f39af35fe5b1687903da2b00c7f",

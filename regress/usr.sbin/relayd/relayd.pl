@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: relayd.pl,v 1.10 2014/05/12 21:30:42 andre Exp $
+#	$OpenBSD: relayd.pl,v 1.11 2014/07/10 10:19:06 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -38,12 +38,15 @@ if (@ARGV and -f $ARGV[-1]) {
 }
 @ARGV == 1 or usage();
 
+my $redo = $args{lengths} && @{$args{lengths}};
+$redo = 0 if $args{client}{http_vers};  # run only one persistent connection
 my($sport, $rport) = find_ports(num => 2);
 my $s = Server->new(
     func                => \&read_char,
     listendomain        => AF_INET,
     listenaddr          => "127.0.0.1",
     listenport          => $sport,
+    redo                => $redo,
     %{$args{server}},
 ) unless $args{server}{noserver};
 my $r = Relayd->new(

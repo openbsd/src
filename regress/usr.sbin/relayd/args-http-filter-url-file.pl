@@ -7,14 +7,8 @@ our %args = (
 	func => \&http_client,
 	lengths => \@lengths,
 	loggrep => {
-		qr/403 Forbidden/ => 2,
-		qr/Server: OpenBSD relayd/ => 2,
-		qr/Connection: close/ => 2,
-		qr/Content-Length\: 3/ => 0,
-		qr/Content-Length\: 4/ => 1,
+		qr/403 Forbidden/ => 4,
 	},
-	mreqs => 1,
-	httpnok => 1,
     },
     relayd => {
 	protocol => [ "http",
@@ -23,17 +17,15 @@ our %args = (
 	    'block request url log file "$curdir/args-http-filter-url-file.in" value "*" label "test_reject_label"',
 	],
 	loggrep => {
-		qr/Forbidden/ => 2,
-		qr/\[test_reject_label\, foo\.bar\/0\]/ => 1,
-		qr/\[test_reject_label\, foo\.bar\/3\]/ => 1,
+		qr/Forbidden/ => 4,
+		qr/\[test_reject_label\, foo\.bar\/0\]/ => 2,
+		qr/\[test_reject_label\, foo\.bar\/3\]/ => 2,
 	},
     },
     server => {
 	func => \&http_server,
-	lengths => (1, 2, 4),
-	mreqs => 4,
-	nocheck => 1,
     },
+    lengths => [1, 2, 4, 5],
 );
 
 1;

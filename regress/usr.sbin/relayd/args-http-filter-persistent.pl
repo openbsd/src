@@ -6,12 +6,9 @@ use warnings;
 my @lengths = (251, 16384, 0, 1, 2, 3, 4, 5);
 our %args = (
     client => {
-	# relayd closes the connection on the first blocked request
-	func => sub { eval { http_client(@_) }; warn $@ },
+	func => \&http_client,
 	lengths => \@lengths,
 	loggrep => qr/Client missing http 2 response/,
-	mreqs => 1,
-	httpnok => 1,
     },
     relayd => {
 	protocol => [ "http",
@@ -21,10 +18,8 @@ our %args = (
     },
     server => {
 	func => \&http_server,
-	mreqs => 7,
-	nocheck => 1,
     },
-    lengths => [251, 16384, 0, 1],
+    lengths => [251, 16384, 0, 1, 3, 4, 5],
     md5 => "bc3a3f39af35fe5b1687903da2b00c7f",
 );
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Server.pm,v 1.5 2014/07/09 16:48:55 reyk Exp $
+#	$OpenBSD: Server.pm,v 1.6 2014/07/10 10:19:06 bluhm Exp $
 
 # Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -58,16 +58,15 @@ sub new {
 sub child {
 	my $self = shift;
 
-	if ($self->{mreqs}) {
-		print STDERR "connection per request\n";
-		return;
-	}
+	# in case we redo the accept, shutdown the old one
+	shutdown(\*STDOUT, SHUT_WR);
+	delete $self->{as};
+
 	my $iosocket = $self->{ssl} ? "IO::Socket::SSL" : "IO::Socket::INET6";
 	my $as = $self->{ls}->accept()
 	    or die ref($self), " $iosocket socket accept failed: $!";
 	print STDERR "accept sock: ",$as->sockhost()," ",$as->sockport(),"\n";
 	print STDERR "accept peer: ",$as->peerhost()," ",$as->peerport(),"\n";
-	print STDERR "single connection\n";
 
 	*STDIN = *STDOUT = $self->{as} = $as;
 }

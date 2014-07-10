@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.12 2014/07/09 16:48:55 reyk Exp $
+#	$OpenBSD: funcs.pl,v 1.13 2014/07/10 10:19:06 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -24,7 +24,6 @@ use Socket;
 use Socket6;
 use IO::Socket;
 use IO::Socket::INET6;
-use IO::Socket::SSL;
 
 sub find_ports {
 	my %args = @_;
@@ -43,41 +42,6 @@ sub find_ports {
 	my @ports = map { $_->sockport() } @sockets;
 
 	return @ports;
-}
-
-sub client_connect {
-	my $self = shift;
-
-	$SSL_ERROR = "";
-	my $iosocket = $self->{ssl} ? "IO::Socket::SSL" : "IO::Socket::INET6";
-	my $cs = $iosocket->new(
-	    Proto		=> "tcp",
-	    Domain		=> $self->{connectdomain},
-	    PeerAddr		=> $self->{connectaddr},
-	    PeerPort		=> $self->{connectport},
-	    SSL_verify_mode	=> SSL_VERIFY_NONE,
-	) or die ref($self), " $iosocket socket connect failed: $!,$SSL_ERROR";
-	print STDERR "connect sock: ",$cs->sockhost()," ",$cs->sockport(),"\n";
-	print STDERR "connect peer: ",$cs->peerhost()," ",$cs->peerport(),"\n";
-
-	$self->{stdout} = *STDOUT;
-	$self->{stdin} = *STDIN;
-	*STDIN = *STDOUT = $self->{cs} = $cs;
-}
-
-sub client_disconnect {
-	my $self = shift;
-	my $cs = $self->{cs};
-
-	*STDOUT = $self->{stdout};
-	*STDIN = $self->{stdin};
-
-	print STDERR "shutdown sock: ",$cs->sockhost()," ",$cs->sockport(),"\n";
-	print STDERR "shutdown peer: ",$cs->peerhost()," ",$cs->peerport(),"\n";
-
-	IO::Handle::flush(\*STDOUT);
-	IO::Handle::flush($cs);
-	$cs->shutdown(SHUT_RDWR);
 }
 
 ########################################################################
@@ -122,75 +86,100 @@ sub write_char {
 
 sub http_client {
 	my $self = shift;
-	my @lengths = @{$self->{lengths} || [ shift // $self->{len} // 251 ]};
-	my $vers = $self->{lengths} ? "1.1" : "1.0";
+
+	unless ($self->{lengths}) {
+		# only a single http request
+		my $len = shift // $self->{len} // 251;
+		my $cookie = $self->{cookie};
+		http_request($self, $len, "1.0", $cookie);
+		return;
+	}
+
+	$self->{http_vers} ||= ["1.1", "1.0"];
+	my $vers = $self->{http_vers}[0];
+	my @lengths = @{$self->{redo}{lengths} || $self->{lengths}};
+	my @cookies = @{$self->{redo}{cookies} || $self->{cookies} || []};
+	while (defined (my $len = shift @lengths)) {
+		my $cookie = shift @cookies || $self->{cookie};
+		eval { http_request($self, $len, $vers, $cookie) };
+		warn $@ if $@;
+		if (@lengths && ($@ || $vers eq "1.0")) {
+			# reconnect and redo the outstanding requests
+			$self->{redo} = {
+			    lengths => \@lengths,
+			    cookies => \@cookies,
+			};
+			return;
+		}
+	}
+	delete $self->{redo};
+	shift @{$self->{http_vers}};
+	if (@{$self->{http_vers}}) {
+		# run the tests again with other persistence
+		$self->{redo} = {
+		    lengths => [@{$self->{lengths}}],
+		    cookies => [@{$self->{cookies} || []}],
+		};
+	}
+}
+
+sub http_request {
+	my ($self, $len, $vers, $cookie) = @_;
 	my $method = $self->{method} || "GET";
 	my %header = %{$self->{header} || {}};
-	my @cookies = $self->{cookies} ? @{$self->{cookies}} :
-		($self->{cookie} ? @{$self->{cookie}} : ());
-	my $c = 0;
 
-	foreach my $len (@lengths) {
-		my $cookie = ($c < scalar(@cookies) && length($cookies[$c])) ?
-			$cookies[$c] : "";
-		++$c;
-		$self->{mreqs} && client_connect($self);
-		# encode the requested length or chunks into the url
-		my $path = ref($len) eq 'ARRAY' ? join("/", @$len) : $len;
-		# overwrite path with custom path
-		if (defined($self->{path})) {
-			$path = $self->{path};
-		}
-		my @request = ("$method /$path HTTP/$vers");
-		push @request, "Host: foo.bar" unless defined $header{Host};
-		push @request, "Content-Length: $len"
-		    if $vers eq "1.1" && $method eq "PUT" &&
-		    !defined $header{'Content-Length'};
-		push @request, "$_: $header{$_}" foreach sort keys %header;
-		push @request, "Cookie: $cookie" if $cookie ne "";
-		push @request, "";
-		print STDERR map { ">>> $_\n" } @request;
-		print map { "$_\r\n" } @request;
-		write_char($self, $len) if $method eq "PUT";
-		IO::Handle::flush(\*STDOUT);
-		# XXX client shutdown seems to be broken in relayd
-		#shutdown(\*STDOUT, SHUT_WR)
-		#    or die ref($self), " shutdown write failed: $!"
-		#    if $vers ne "1.1";
+	# encode the requested length or chunks into the url
+	my $path = ref($len) eq 'ARRAY' ? join("/", @$len) : $len;
+	# overwrite path with custom path
+	if (defined($self->{path})) {
+		$path = $self->{path};
+	}
+	my @request = ("$method /$path HTTP/$vers");
+	push @request, "Host: foo.bar" unless defined $header{Host};
+	push @request, "Content-Length: $len"
+	    if $vers eq "1.1" && $method eq "PUT" &&
+	    !defined $header{'Content-Length'};
+	push @request, "$_: $header{$_}" foreach sort keys %header;
+	push @request, "Cookie: $cookie" if $cookie;
+	push @request, "";
+	print STDERR map { ">>> $_\n" } @request;
+	print map { "$_\r\n" } @request;
+	write_char($self, $len) if $method eq "PUT";
+	IO::Handle::flush(\*STDOUT);
+	# XXX client shutdown seems to be broken in relayd
+	#shutdown(\*STDOUT, SHUT_WR)
+	#    or die ref($self), " shutdown write failed: $!"
+	#    if $vers ne "1.1";
 
-		my $chunked = 0;
-		{
-			local $/ = "\r\n";
-			local $_ = <STDIN>;
-			defined
-			    or print STDERR ref($self),
-				" missing http $len response\n";
-			chomp if defined;
-			print STDERR "<<< $_\n" if defined;
-			die ref($self), " http response not ok"
-				if (!defined or !m{^HTTP/$vers 200 OK$}) &&
-				    !$self->{httpnok};
-			while (<STDIN>) {
-				chomp;
-				print STDERR "<<< $_\n";
-				last if /^$/;
-				last if /^X-Chunk-Trailer:.*/;
-				if (/^Content-Length: (.*)/) {
-					$1 == $len or die ref($self),
-					    " bad content length $1";
-				}
-				if (/^Transfer-Encoding: chunked$/) {
-					$chunked = 1;
-				}
+	my $chunked = 0;
+	{
+		local $/ = "\r\n";
+		local $_ = <STDIN>;
+		defined
+		    or die ref($self), " missing http $len response";
+		chomp;
+		print STDERR "<<< $_\n";
+		m{^HTTP/$vers 200 OK$}
+		    or die ref($self), " http response not ok"
+		    unless $self->{httpnok};
+		while (<STDIN>) {
+			chomp;
+			print STDERR "<<< $_\n";
+			last if /^$/;
+			if (/^Content-Length: (.*)/) {
+				$1 == $len or die ref($self),
+				    " bad content length $1";
+			}
+			if (/^Transfer-Encoding: chunked$/) {
+				$chunked = 1;
 			}
 		}
-		if ($chunked) {
-			read_chunked($self);
-		} else {
-			read_char($self, $vers eq "1.1" ? $len : undef)
-			    if $method eq "GET";
-		}
-		$self->{mreqs} && client_disconnect($self);
+	}
+	if ($chunked) {
+		read_chunked($self);
+	} else {
+		read_char($self, $vers eq "1.1" ? $len : undef)
+		    if $method eq "GET";
 	}
 }
 
@@ -271,43 +260,13 @@ sub read_char {
 	print STDERR "MD5: ", $ctx->hexdigest, "\n";
 }
 
-sub server_accept {
-	my $self = shift;
-	my $iosocket = $self->{ssl} ? "IO::Socket::SSL" : "IO::Socket::INET6";
-	my $as = $self->{ls}->accept()
-	    or die ref($self), " $iosocket socket accept failed: $!";
-	print STDERR "accept sock: ",$as->sockhost()," ",$as->sockport(),"\n";
-	print STDERR "accept peer: ",$as->peerhost()," ",$as->peerport(),"\n";
-
-	$self->{stdout} = *STDOUT;
-	$self->{stdin} = *STDIN;
-	*STDIN = *STDOUT = $self->{as} = $as;
-}
-
-sub server_disconnect {
-	my $self = shift;
-	my $as = $self->{as};
-	*STDOUT = $self->{stdout};
-	*STDIN = $self->{stdin};
-
-	print STDERR "shutdown sock: ",$as->sockhost()," ",$as->sockport(),"\n";
-	print STDERR "shutdown peer: ",$as->peerhost()," ",$as->peerport(),"\n";
-
-	IO::Handle::flush(\*STDOUT);
-	IO::Handle::flush($as);
-#	$as->shutdown(SHUT_RDWR);
-	IO::Handle::close($as);
-}
-
 sub http_server {
 	my $self = shift;
 	my %header = %{$self->{header} || { Server => "Perl/".$^V }};
 	my $cookie = $self->{cookie} || "";
-	my $reqsc = $self->{mreqs} || 0;
 
 	my($method, $url, $vers);
 	do {
-		$self->{mreqs} && server_accept($self);
 		my $len;
 		{
 			local $/ = "\r\n";
@@ -330,10 +289,7 @@ sub http_server {
 					$1 == $len or die ref($self),
 					    " bad content length $1";
 				}
-				if ($cookie eq "" &&
-				    /^Cookie: (.*)/) {
-				    $cookie = $1;
-				}
+				$cookie ||= $1 if /^Cookie: (.*)/;
 			}
 		}
 		# XXX reading to EOF does not work with relayd
@@ -351,24 +307,24 @@ sub http_server {
 			    if $vers eq "1.1" && $method eq "GET";
 		}
 		push @response, "$_: $header{$_} " foreach sort keys %header;
-		push @response, "Set-Cookie: $cookie"
-		    if $cookie ne "";
+		push @response, "Set-Cookie: $cookie" if $cookie;
 		push @response, "";
 
 		print STDERR map { ">>> $_\n" } @response;
 		print map { "$_\r\n" } @response;
 
 		if (ref($len) eq 'ARRAY') {
-			write_chunked($self, @$len);
+			if ($vers eq "1.1") {
+				write_chunked($self, @$len);
+			} else {
+				write_char($self, $_) foreach (@$len);
+			}
 		} else {
 			write_char($self, $len) if $method eq "GET";
 		}
 		IO::Handle::flush(\*STDOUT);
-		if ($self->{mreqs}) {
-			server_disconnect($self);
-			--$reqsc > 0 or return;
-		}
 	} while ($vers eq "1.1");
+	$self->{redo}-- if $self->{redo};
 }
 
 sub write_chunked {

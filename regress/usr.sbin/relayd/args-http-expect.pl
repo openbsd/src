@@ -15,7 +15,7 @@ our %args = (
 	    'pass query log "foo" value "bar"',
 	],
 	loggrep => {
-		qr/\[foo: bar\]/ => 1,
+		qr/\[foo: bar\]/ => 2,
 		qr/\[ok: yes\]/ => 0,
 	},
     },

@@ -5,8 +5,9 @@ our %args = (
     client => {
 	func => \&http_client,
 	len => 1,
-	loggrep => { 'X-Server-Append: \d+\.\d+\.\d+\.\d+:\d+$' => 1,
-		'Set-Cookie: a=b\;' => 1,
+	loggrep => {
+	    'X-Server-Append: \d+\.\d+\.\d+\.\d+:\d+$' => 1,
+	    'Set-Cookie: a=b\;' => 1,
 	},
     },
     relayd => {

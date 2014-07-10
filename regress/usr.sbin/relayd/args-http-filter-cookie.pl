@@ -9,13 +9,11 @@ our %args = (
     client => {
 	func => \&http_client,
 	loggrep => {
-	    qr/Client missing http 1 response/ => 1,
-	    qr/Set-Cookie: a\=b\;/ => 3,
+	    qr/Client missing http 1 response/ => 2,
+	    qr/Set-Cookie: a\=b\;/ => 6,
 	},
 	cookies => \@cookies,
 	lengths => \@lengths,
-	httpnok => 1,
-	mreqs => 1,
     },
     relayd => {
 	protocol => [ "http",
@@ -27,9 +25,8 @@ our %args = (
     },
     server => {
 	func => \&http_server,
-	mreqs => 3,
-	nocheck => 1,
     },
+    lengths => [2, 3, 4],
 );
 
 1;

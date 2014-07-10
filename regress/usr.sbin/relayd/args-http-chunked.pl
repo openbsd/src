@@ -8,7 +8,7 @@ our %args = (
     client => {
 	func => \&http_client,
 	lengths => \@lengths,
-	mreqs => 1,
+	http_vers => ["1.1"],
     },
     relayd => {
 	protocol => [ "http",
@@ -16,13 +16,12 @@ our %args = (
 	    "match response header log Transfer-Encoding",
 	],
 	loggrep => {
-		"Transfer-Encoding: chunked" => 2,
+		"Transfer-Encoding: chunked" => 1,
 		qr/\[\(null\)\]/ => 0,
 	},
     },
     server => {
 	func => \&http_server,
-	mreqs => scalar(@lengths),
     },
     lengths => \@lengths,
     md5 => "bc3a3f39af35fe5b1687903da2b00c7f",

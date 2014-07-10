@@ -6,10 +6,9 @@ use warnings;
 my @lengths = (1, 2, 0, 3);
 our %args = (
     client => {
-	func => sub { eval { http_client(@_) }; warn $@ },
+	func => \&http_client,
 	loggrep => qr/Client missing http 3 response/,
-        lengths => \@lengths,
-	mreqs => 1,
+	lengths => \@lengths,
     },
     relayd => {
 	protocol => [ "http",
@@ -19,9 +18,8 @@ our %args = (
     },
     server => {
 	func => \&http_server,
-	lengths => (1, 2, 0),
-	mreqs => 3,
     },
+    lengths => [1, 2, 0],
 );
 
 1;

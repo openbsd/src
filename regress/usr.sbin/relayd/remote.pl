@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.4 2014/06/22 14:18:01 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.5 2014/07/10 10:19:06 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -96,12 +96,15 @@ if ($mode eq "relay") {
 	exit;
 }
 
+my $redo = $args{lengths} && @{$args{lengths}};
+$redo = 0 if $args{client}{http_vers};  # run only one persistent connection
 my $s = Server->new(
     func                => \&read_char,
     %{$args{server}},
     listendomain        => AF_INET,
     listenaddr          => ($mode eq "auto" ? $ARGV[1] : undef),
     listenport          => ($mode eq "manual" ? $ARGV[0] : undef),
+    redo                => $redo,
 ) unless $args{server}{noserver};
 if ($mode eq "auto") {
 	$r = Remote->new(
