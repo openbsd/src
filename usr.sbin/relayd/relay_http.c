@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.21 2014/07/10 00:05:59 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.22 2014/07/10 20:02:32 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1563,7 +1563,7 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions)
 			if (kv_inherit(mp, match) == NULL)
 				goto fail;
 			if (mp->kv_flags & KV_FLAG_INVALID) {
-				if (kv_set(mp, "%s*removed*",
+				if (kv_set(mp, "%s (removed)",
 				   mp->kv_value) == -1)
 					goto fail;
 			}
