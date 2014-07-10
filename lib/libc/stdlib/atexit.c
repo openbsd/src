@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.c,v 1.18 2014/06/18 19:01:10 kettenis Exp $ */
+/*	$OpenBSD: atexit.c,v 1.19 2014/07/10 21:14:22 tedu Exp $ */
 /*
  * Copyright (c) 2002 Daniel Hartmeier
  * All rights reserved.
@@ -38,6 +38,7 @@
 #include "thread_private.h"
 
 struct atexit *__atexit;
+static int restartloop;
 
 /*
  * Function pointers are stored in a linked list of pages. The list
@@ -95,6 +96,7 @@ __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 	fnp->fn_dso = dso;
 	if (mprotect(p, pgsize, PROT_READ))
 		goto unlock;
+	restartloop = 1;
 	ret = 0;
 unlock:
 	_ATEXIT_UNLOCK();
@@ -116,6 +118,8 @@ __cxa_finalize(void *dso)
 
 	call_depth++;
 
+restart:
+	restartloop = 0;
 	for (p = __atexit; p != NULL; p = p->next) {
 		for (n = p->ind; --n >= 0;) {
 			if (p->fns[n].fn_ptr == NULL)
@@ -133,6 +137,8 @@ __cxa_finalize(void *dso)
 				mprotect(p, pgsize, PROT_READ);
 			}
 			(*fn.fn_ptr)(fn.fn_arg);
+			if (restartloop)
+				goto restart;
 		}
 	}
 
@@ -186,6 +192,7 @@ __atexit_register_cleanup(void (*func)(void))
 	p->fns[0].fn_arg = NULL;
 	p->fns[0].fn_dso = NULL;
 	mprotect(p, pgsize, PROT_READ);
+	restartloop = 1;
 unlock:
 	_ATEXIT_UNLOCK();
 }
