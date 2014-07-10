@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.127 2014/07/09 22:10:15 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.128 2014/07/10 00:05:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -738,6 +738,8 @@ kv_purge(struct kvlist *keys)
 void
 kv_free(struct kv *kv)
 {
+	if (kv->kv_type == KEY_TYPE_NONE)
+		return;
 	if (kv->kv_key != NULL) {
 		free(kv->kv_key);
 	}

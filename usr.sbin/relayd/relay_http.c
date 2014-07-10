@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.20 2014/07/09 16:42:05 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.21 2014/07/10 00:05:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1411,6 +1411,9 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions)
 	char			 buf[IBUF_READ_SIZE], *ptr;
 	enum httpheader		 hdrid;
 
+	memset(&kvcopy, 0, sizeof(kvcopy));
+	memset(&matchcopy, 0, sizeof(matchcopy));
+
 	ret = -1;
 	kp = mp = NULL;
 	TAILQ_FOREACH(kv, actions, kv_entry) {
@@ -1600,10 +1603,7 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions)
 		TAILQ_REMOVE(actions, kv, kv_match_entry);
 
 		kv_free(&kvcopy);
-		if (mp != NULL) {
-			kv_free(mp);
-			mp = NULL;
-		}
+		kv_free(&matchcopy);
 	}
 
 	ret = 0;
