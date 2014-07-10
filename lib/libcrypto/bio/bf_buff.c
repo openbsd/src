@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_buff.c,v 1.18 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bf_buff.c,v 1.19 2014/07/10 11:25:13 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -345,7 +345,7 @@ buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
 		}
 		ctx->ibuf_off = 0;
 		ctx->ibuf_len = (int)num;
-		memcpy(ctx->ibuf, ptr, (int)num);
+		memcpy(ctx->ibuf, ptr, num);
 		ret = 1;
 		break;
 	case BIO_C_SET_BUFF_SIZE:

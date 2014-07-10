@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_lib.c,v 1.29 2014/07/09 11:10:51 bcook Exp $ */
+/* $OpenBSD: pem_lib.c,v 1.30 2014/07/10 11:25:13 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,7 +102,7 @@ PEM_def_callback(char *buf, int num, int w, void *key)
 		if (i != 0) {
 			PEMerr(PEM_F_PEM_DEF_CALLBACK,
 			    PEM_R_PROBLEMS_GETTING_PASSWORD);
-			memset(buf, 0, (unsigned int)num);
+			memset(buf, 0, num);
 			return (-1);
 		}
 		j = strlen(buf);

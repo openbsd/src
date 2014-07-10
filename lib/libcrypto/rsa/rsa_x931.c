@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_x931.c,v 1.5 2014/07/09 19:51:38 jsing Exp $ */
+/* $OpenBSD: rsa_x931.c,v 1.6 2014/07/10 11:25:13 tedu Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -95,7 +95,7 @@ RSA_padding_add_X931(unsigned char *to, int tlen, const unsigned char *from,
 		}
 		*p++ = 0xBA;
 	}
-	memcpy(p, from, (unsigned int)flen);
+	memcpy(p, from, flen);
 	p += flen;
 	*p = 0xCC;
 	return 1;
@@ -141,7 +141,7 @@ RSA_padding_check_X931(unsigned char *to, int tlen, const unsigned char *from,
 		return -1;
 	}
 
-	memcpy(to, p, (unsigned int)j);
+	memcpy(to, p, j);
 
 	return j;
 }

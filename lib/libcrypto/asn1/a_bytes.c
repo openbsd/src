@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bytes.c,v 1.15 2014/07/09 22:55:17 tedu Exp $ */
+/* $OpenBSD: a_bytes.c,v 1.16 2014/07/10 11:25:13 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -99,12 +99,12 @@ d2i_ASN1_type_bytes(ASN1_STRING **a, const unsigned char **pp,
 		ret = (*a);
 
 	if (len != 0) {
-		s = malloc((int)len + 1);
+		s = malloc(len + 1);
 		if (s == NULL) {
 			i = ERR_R_MALLOC_FAILURE;
 			goto err;
 		}
-		memcpy(s, p, (int)len);
+		memcpy(s, p, len);
 		s[len]='\0';
 		p += len;
 	} else
@@ -211,7 +211,7 @@ d2i_ASN1_bytes(ASN1_STRING **a, const unsigned char **pp,
 				}
 			} else
 				s = ret->data;
-			memcpy(s, p, (int)len);
+			memcpy(s, p, len);
 			s[len] = '\0';
 			p += len;
 		} else {

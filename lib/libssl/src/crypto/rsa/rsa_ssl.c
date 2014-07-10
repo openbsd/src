@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ssl.c,v 1.10 2014/07/10 07:41:54 jsing Exp $ */
+/* $OpenBSD: rsa_ssl.c,v 1.11 2014/07/10 11:25:13 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,7 +97,7 @@ RSA_padding_add_SSLv23(unsigned char *to, int tlen, const unsigned char *from,
 	p += 8;
 	*(p++) = '\0';
 
-	memcpy(p, from, (unsigned int)flen);
+	memcpy(p, from, flen);
 	return 1;
 }
 
@@ -146,7 +146,7 @@ RSA_padding_check_SSLv23(unsigned char *to, int tlen, const unsigned char *from,
 		RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, RSA_R_DATA_TOO_LARGE);
 		return -1;
 	}
-	memcpy(to, p, (unsigned int)j);
+	memcpy(to, p, j);
 
 	return j;
 }

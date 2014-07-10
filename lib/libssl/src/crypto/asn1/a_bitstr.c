@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.17 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.18 2014/07/10 11:25:13 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -158,7 +158,7 @@ c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **pp, long len)
 			i = ERR_R_MALLOC_FAILURE;
 			goto err;
 		}
-		memcpy(s, p, (int)len);
+		memcpy(s, p, len);
 		s[len - 1] &= (0xff << i);
 		p += len;
 	} else

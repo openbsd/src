@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.18 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: a_object.c,v 1.19 2014/07/10 11:25:13 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -311,14 +311,14 @@ c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp, long len)
 	if ((data == NULL) || (ret->length < len)) {
 		ret->length = 0;
 		free(data);
-		data = malloc(len ? (int)len : 1);
+		data = malloc(len ? len : 1);
 		if (data == NULL) {
 			i = ERR_R_MALLOC_FAILURE;
 			goto err;
 		}
 		ret->flags |= ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 	}
-	memcpy(data, p, (int)len);
+	memcpy(data, p, len);
 	/* reattach data to object, after which it remains const */
 	ret->data = data;
 	ret->length = (int)len;

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pk1.c,v 1.10 2014/07/10 07:41:54 jsing Exp $ */
+/* $OpenBSD: rsa_pk1.c,v 1.11 2014/07/10 11:25:13 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,7 +85,7 @@ RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
 	memset(p, 0xff, j);
 	p += j;
 	*(p++) = '\0';
-	memcpy(p, from, (unsigned int)flen);
+	memcpy(p, from, flen);
 
 	return 1;
 }
@@ -139,7 +139,7 @@ RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
 		    RSA_R_DATA_TOO_LARGE);
 		return -1;
 	}
-	memcpy(to, p, (unsigned int)j);
+	memcpy(to, p, j);
 
 	return j;
 }
@@ -177,7 +177,7 @@ RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
 
 	*(p++) = '\0';
 
-	memcpy(p, from, (unsigned int)flen);
+	memcpy(p, from, flen);
 	return 1;
 }
 
@@ -219,7 +219,7 @@ RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
 		    RSA_R_DATA_TOO_LARGE);
 		return -1;
 	}
-	memcpy(to, p, (unsigned int)j);
+	memcpy(to, p, j);
 
 	return j;
 }
