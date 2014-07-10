@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.13 2014/02/17 11:00:14 reyk Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.14 2014/07/10 12:50:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -34,6 +34,7 @@
 #include <openssl/sha.h>
 #include <openssl/md5.h>
 #include <openssl/x509.h>
+#include <openssl/rsa.h>
 
 #include "iked.h"
 #include "ikev2.h"

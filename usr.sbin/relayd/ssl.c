@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.24 2014/05/20 17:33:36 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.25 2014/07/10 12:50:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -35,6 +35,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/engine.h>
+#include <openssl/rsa.h>
 
 #include "relayd.h"
 
