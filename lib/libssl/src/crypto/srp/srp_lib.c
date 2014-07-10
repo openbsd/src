@@ -1,4 +1,4 @@
-/* $OpenBSD: srp_lib.c,v 1.6 2014/07/10 20:18:51 miod Exp $ */
+/* $OpenBSD: srp_lib.c,v 1.7 2014/07/10 20:22:00 miod Exp $ */
 /* Written by Christophe Renou (christophe.renou@edelweb.fr) with 
  * the precious help of Peter Sylvester (peter.sylvester@edelweb.fr) 
  * for the EdelKey project and contributed to the OpenSSL project 2004.
@@ -84,7 +84,8 @@ static BIGNUM *srp_Calc_k(BIGNUM *N, BIGNUM *g)
 	unsigned char digest[SHA_DIGEST_LENGTH];
 	unsigned char *tmp;
 	EVP_MD_CTX ctxt;
-	int longg ;
+	BIGNUM *ret = NULL;
+	int longg;
 	int longN = BN_num_bytes(N);
 
 	if ((tmp = malloc(longN)) == NULL)
@@ -92,19 +93,26 @@ static BIGNUM *srp_Calc_k(BIGNUM *N, BIGNUM *g)
 	BN_bn2bin(N,tmp);
 
 	EVP_MD_CTX_init(&ctxt);
-	EVP_DigestInit_ex(&ctxt, EVP_sha1(), NULL);
-	EVP_DigestUpdate(&ctxt, tmp, longN);
+	if (!EVP_DigestInit_ex(&ctxt, EVP_sha1(), NULL))
+		goto err;
+	if (!EVP_DigestUpdate(&ctxt, tmp, longN))
+		goto err;
 
 	memset(tmp, 0, longN);
 	longg = BN_bn2bin(g,tmp);
         /* use the zeros behind to pad on left */
-	EVP_DigestUpdate(&ctxt, tmp + longg, longN-longg);
-	EVP_DigestUpdate(&ctxt, tmp, longg);
-	free(tmp);
+	if (!EVP_DigestUpdate(&ctxt, tmp + longg, longN-longg))
+		goto err;
+	if (!EVP_DigestUpdate(&ctxt, tmp, longg))
+		goto err;
 
-	EVP_DigestFinal_ex(&ctxt, digest, NULL);
+	if (!EVP_DigestFinal_ex(&ctxt, digest, NULL))
+		goto err;
+	ret = BN_bin2bn(digest, sizeof(digest), NULL);	
+err:
 	EVP_MD_CTX_cleanup(&ctxt);
-	return BN_bin2bn(digest, sizeof(digest), NULL);	
+	free(tmp);
+	return ret;
 	}
 
 BIGNUM *SRP_Calc_u(BIGNUM *A, BIGNUM *B, BIGNUM *N)
