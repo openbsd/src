@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.22 2014/07/09 20:05:54 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.23 2014/07/10 11:04:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -201,18 +201,6 @@ struct rsa_st {
  * results in faster RSA private key operations.
  */
 #define RSA_FLAG_NO_CONSTTIME		0x0100
-
-#ifndef OPENSSL_NO_DEPRECATED
-
-/* Deprecated name for the flag. */
-/*
- * New with 0.9.7h; the built-in RSA implementation now uses constant time
- * modular exponentiation for secret exponents by default. This flag causes
- * the faster variable sliding window method to be used for all exponents.
- */
-#define RSA_FLAG_NO_EXP_CONSTTIME RSA_FLAG_NO_CONSTTIME
-
-#endif
 
 
 #define EVP_PKEY_CTX_set_rsa_padding(ctx, pad) \
