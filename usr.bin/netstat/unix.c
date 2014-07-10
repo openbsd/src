@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.22 2013/11/09 20:04:13 guenther Exp $	*/
+/*	$OpenBSD: unix.c,v 1.23 2014/07/10 14:08:13 deraadt Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -42,6 +42,7 @@
 #include <sys/un.h>
 #include <sys/unpcb.h>
 #define _KERNEL
+#include <sys/ucred.h>
 #include <sys/file.h>
 #undef _KERNEL
 
