@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_api.c,v 1.5 2014/02/04 14:56:03 eric Exp $	*/
+/*	$OpenBSD: scheduler_api.c,v 1.6 2014/07/10 14:45:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -37,7 +37,7 @@ static int (*handler_update)(struct scheduler_info *);
 static int (*handler_delete)(uint64_t);
 static int (*handler_hold)(uint64_t, uint64_t);
 static int (*handler_release)(int, uint64_t, int);
-static int (*handler_batch)(int, struct scheduler_batch *);
+static int (*handler_batch)(int, int *, size_t *, uint64_t *, int *);
 static size_t (*handler_messages)(uint32_t, uint32_t *, size_t);
 static size_t (*handler_envelopes)(uint64_t, struct evpstate *, size_t);
 static int (*handler_schedule)(uint64_t);
@@ -52,8 +52,8 @@ static struct imsg	 imsg;
 static size_t		 rlen;
 static char		*rdata;
 static struct ibuf	*buf;
-static char		*rootpath = PATH_CHROOT;
-static char		*user = SMTPD_USER;
+static const char	*rootpath = PATH_CHROOT;
+static const char	*user = SMTPD_USER;
 
 static void
 scheduler_msg_get(void *dst, size_t len)
@@ -108,13 +108,13 @@ scheduler_msg_close(void)
 static void
 scheduler_msg_dispatch(void)
 {
-	size_t			 n, sz;
+	size_t			 n, sz, count;
 	struct evpstate		 evpstates[MAX_BATCH_SIZE];
 	uint64_t		 evpid, evpids[MAX_BATCH_SIZE], u64;
 	uint32_t		 msgids[MAX_BATCH_SIZE], version, msgid;
 	struct scheduler_info	 info;
-	struct scheduler_batch	 batch;
-	int			 typemask, r, type;
+	int			 typemask, r, type, types[MAX_BATCH_SIZE];
+	int			 delay;
 
 	switch (imsg.hdr.type) {
 	case PROC_SCHEDULER_INIT:
@@ -211,17 +211,20 @@ scheduler_msg_dispatch(void)
 	case PROC_SCHEDULER_BATCH:
 		log_debug("scheduler-api:  PROC_SCHEDULER_BATCH");
 		scheduler_msg_get(&typemask, sizeof(typemask));
-		scheduler_msg_get(&batch.evpcount, sizeof(batch.evpcount));
+		scheduler_msg_get(&count, sizeof(count));
 		scheduler_msg_end();
 
-		if (batch.evpcount > MAX_BATCH_SIZE)
-			batch.evpcount = MAX_BATCH_SIZE;
-		batch.evpids = evpids;
+		if (count > MAX_BATCH_SIZE)
+			count = MAX_BATCH_SIZE;
 
-		handler_batch(typemask, &batch);
-
-		scheduler_msg_add(&batch, sizeof(batch));
-		scheduler_msg_add(evpids, sizeof(*evpids) * batch.evpcount);
+		r = handler_batch(typemask, &delay, &count, evpids, types);
+		scheduler_msg_add(&r, sizeof(r));
+		scheduler_msg_add(&delay, sizeof(delay));
+		scheduler_msg_add(&count, sizeof(count));
+		if (r > 0) {
+			scheduler_msg_add(evpids, sizeof(*evpids) * count);
+			scheduler_msg_add(types, sizeof(*types) * count);
+		}
 		scheduler_msg_close();
 		break;
 
@@ -338,7 +341,7 @@ scheduler_api_on_delete(int(*cb)(uint64_t))
 }
 
 void
-scheduler_api_on_batch(int(*cb)(int, struct scheduler_batch *))
+scheduler_api_on_batch(int(*cb)(int, int *, size_t *, uint64_t *, int *))
 {
 	handler_batch = cb;
 }
@@ -391,34 +394,55 @@ scheduler_api_on_release(int(*cb)(int, uint64_t, int))
 	handler_release = cb;
 }
 
+void
+scheduler_api_no_chroot(void)
+{
+	rootpath = NULL;
+}
+
+void
+scheduler_api_set_chroot(const char *path)
+{
+	rootpath = path;
+}
+
+void
+scheduler_api_set_user(const char *username)
+{
+	user = username;
+}
+
 int
 scheduler_api_dispatch(void)
 {
-	struct passwd	*pw;
+	struct passwd	*pw = NULL;
 	ssize_t		 n;
 
-	pw = getpwnam(user);
-	if (pw == NULL) {
-		log_warn("scheduler-api: getpwnam");
-		fatalx("scheduler-api: exiting");
+	if (user) {
+		pw = getpwnam(user);
+		if (pw == NULL) {
+			log_warn("queue-api: getpwnam");
+			fatalx("queue-api: exiting");
+		}
 	}
 
 	if (rootpath) {
 		if (chroot(rootpath) == -1) {
-			log_warn("scheduler-api: chroot");
-			fatalx("scheduler-api: exiting");
+			log_warn("queue-api: chroot");
+			fatalx("queue-api: exiting");
 		}
 		if (chdir("/") == -1) {
-			log_warn("scheduler-api: chdir");
-			fatalx("scheduler-api: exiting");
+			log_warn("queue-api: chdir");
+			fatalx("queue-api: exiting");
 		}
 	}
 
-	if (setgroups(1, &pw->pw_gid) ||
+	if (pw &&
+	   (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid)) {
-		log_warn("scheduler-api: cannot drop privileges");
-		fatalx("scheduler-api: exiting");
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))) {
+		log_warn("queue-api: cannot drop privileges");
+		fatalx("queue-api: exiting");
 	}
 
 	imsg_init(&ibuf, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.467 2014/07/09 12:44:54 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.468 2014/07/10 14:45:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -150,7 +150,7 @@ union lookup {
  * Bump IMSG_VERSION whenever a change is made to enum imsg_type.
  * This will ensure that we can never use a wrong version of smtpctl with smtpd.
  */
-#define	IMSG_VERSION		10
+#define	IMSG_VERSION		11
 
 enum imsg_type {
 	IMSG_NONE,
@@ -209,6 +209,7 @@ enum imsg_type {
 	IMSG_QUEUE_DELIVERY_TEMPFAIL,
 	IMSG_QUEUE_DELIVERY_PERMFAIL,
 	IMSG_QUEUE_DELIVERY_LOOP,
+	IMSG_QUEUE_ENVELOPE_ACK,
 	IMSG_QUEUE_ENVELOPE_COMMIT,
 	IMSG_QUEUE_ENVELOPE_REMOVE,
 	IMSG_QUEUE_ENVELOPE_SCHEDULE,
@@ -864,7 +865,7 @@ struct delivery_backend {
 };
 
 struct scheduler_backend {
-	int	(*init)(void);
+	int	(*init)(const char *);
 
 	int	(*insert)(struct scheduler_info *);
 	size_t	(*commit)(uint32_t);
@@ -875,7 +876,7 @@ struct scheduler_backend {
 	int	(*hold)(uint64_t, uint64_t);
 	int	(*release)(int, uint64_t, int);
 
-	int	(*batch)(int, struct scheduler_batch *);
+	int	(*batch)(int, int*, size_t*, uint64_t*, int*);
 
 	size_t	(*messages)(uint32_t, uint32_t *, size_t);
 	size_t	(*envelopes)(uint64_t, struct evpstate *, size_t);
@@ -1285,7 +1286,6 @@ pid_t scheduler(void);
 /* scheduler_bakend.c */
 struct scheduler_backend *scheduler_backend_lookup(const char *);
 void scheduler_info(struct scheduler_info *, struct envelope *);
-time_t scheduler_compute_schedule(struct scheduler_info *);
 
 
 /* pony.c */

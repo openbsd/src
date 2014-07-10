@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.163 2014/07/08 15:45:32 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.164 2014/07/10 14:45:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -197,9 +197,14 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 			m_get_evpid(&m, &evpid);
 			m_end(&m);
 
+			m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_ACK, 0, 0, -1);
+			m_add_evpid(p_scheduler, evpid);
+			m_close(p_scheduler);
+
 			/* already removed by scheduler */
 			if (queue_envelope_load(evpid, &evp) == 0)
 				return;
+
 			queue_log(&evp, "Remove", "Removed by administrator");
 			queue_envelope_delete(evpid);
 			return;
@@ -208,6 +213,10 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 			m_msg(&m, imsg);
 			m_get_evpid(&m, &evpid);
 			m_end(&m);
+
+			m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_ACK, 0, 0, -1);
+			m_add_evpid(p_scheduler, evpid);
+			m_close(p_scheduler);
 
 			/* already removed by scheduler*/
 			if (queue_envelope_load(evpid, &evp) == 0)

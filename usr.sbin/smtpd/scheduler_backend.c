@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_backend.c,v 1.13 2014/02/04 14:56:03 eric Exp $	*/
+/*	$OpenBSD: scheduler_backend.c,v 1.14 2014/07/10 14:45:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -42,12 +42,10 @@ scheduler_backend_lookup(const char *name)
 {
 	if (!strcmp(name, "null"))
 		return &scheduler_backend_null;
-	if (!strcmp(name, "proc"))
-		return &scheduler_backend_proc;
 	if (!strcmp(name, "ramqueue"))
 		return &scheduler_backend_ramqueue;
 
-	return NULL;
+	return &scheduler_backend_proc;
 }
 
 void
@@ -61,21 +59,4 @@ scheduler_info(struct scheduler_info *sched, struct envelope *evp)
 	sched->lasttry = evp->lasttry;
 	sched->lastbounce = evp->lastbounce;
 	sched->nexttry	= 0;
-}
-
-time_t
-scheduler_compute_schedule(struct scheduler_info *sched)
-{
-	time_t		delay;
-	uint32_t	retry;
-
-	if (sched->type == D_MTA)
-		delay = 800;
-	else
-		delay = 10;
-
-	retry = sched->retry;
-	delay = ((delay * retry) * retry) / 2;
-
-	return (sched->creation + delay);
 }

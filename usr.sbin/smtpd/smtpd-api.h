@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.19 2014/07/08 15:45:32 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.20 2014/07/10 14:45:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -124,7 +124,6 @@ enum {
 #define PROC_SCHEDULER_API_VERSION	1
 
 struct scheduler_info;
-struct scheduler_batch;
 
 enum {
 	PROC_SCHEDULER_OK,
@@ -183,22 +182,12 @@ struct scheduler_info {
 	time_t			nexttry;
 };
 
-#define SCHED_NONE		0x00
-#define SCHED_DELAY		0x01
-#define SCHED_REMOVE		0x02
-#define SCHED_EXPIRE		0x04
-#define SCHED_UPDATE		0x08
-#define SCHED_BOUNCE		0x10
-#define SCHED_MDA		0x20
-#define SCHED_MTA		0x40
-
-struct scheduler_batch {
-	int		 mask;
-	int		 type;
-	time_t		 delay;
-	size_t		 evpcount;
-	uint64_t	*evpids;
-};
+#define SCHED_REMOVE		0x01
+#define SCHED_EXPIRE		0x02
+#define SCHED_UPDATE		0x04
+#define SCHED_BOUNCE		0x08
+#define SCHED_MDA		0x10
+#define SCHED_MTA		0x20
 
 #define PROC_TABLE_API_VERSION	1
 
@@ -388,13 +377,16 @@ void scheduler_api_on_update(int(*)(struct scheduler_info *));
 void scheduler_api_on_delete(int(*)(uint64_t));
 void scheduler_api_on_hold(int(*)(uint64_t, uint64_t));
 void scheduler_api_on_release(int(*)(int, uint64_t, int));
-void scheduler_api_on_batch(int(*)(int, struct scheduler_batch *));
+void scheduler_api_on_batch(int(*)(int, int *, size_t *, uint64_t *, int *));
 void scheduler_api_on_messages(size_t(*)(uint32_t, uint32_t *, size_t));
 void scheduler_api_on_envelopes(size_t(*)(uint64_t, struct evpstate *, size_t));
 void scheduler_api_on_schedule(int(*)(uint64_t));
 void scheduler_api_on_remove(int(*)(uint64_t));
 void scheduler_api_on_suspend(int(*)(uint64_t));
 void scheduler_api_on_resume(int(*)(uint64_t));
+void scheduler_api_no_chroot(void);
+void scheduler_api_set_chroot(const char *);
+void scheduler_api_set_user(const char *);
 int scheduler_api_dispatch(void);
 
 /* table */
