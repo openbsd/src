@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.43 2014/07/08 17:02:56 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.44 2014/07/10 21:12:33 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -56,6 +56,9 @@ OpenBSD::Auto::cache(pkgname,
 OpenBSD::Auto::cache(update_info,
     sub {
 	my $self = shift;
+	if ($self->name =~ /^quirks\-/) {
+		return $self->plist;
+	}
 	return $self->plist(\&OpenBSD::PackingList::UpdateInfoOnly,
 	    sub {
 		return 0 if $_[0] =~ m/^\@option\s+always-update\b/m;

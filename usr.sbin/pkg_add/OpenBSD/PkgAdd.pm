@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.67 2014/06/16 08:56:48 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.68 2014/07/10 21:12:33 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -277,6 +277,23 @@ sub setup_header
 	}
 }
 
+sub display_timestamp
+{
+	my ($pkgname, $plist, $state) = @_;
+
+	return unless $plist->is_signed;
+	if ($state->defines('nosig')) {
+		$state->errsay("NOT CHECKING DIGITAL SIGNATURE FOR #1",
+		    $pkgname);
+		return;
+	}
+	if (!$plist->check_signature($state)) {
+		$state->fatal("#1 is corrupted", $pkgname);
+	}
+	$state->say("#1 signed on #2", $pkgname, 
+	    $plist->get('digital-signature')->iso8601);
+}
+
 sub find_kept_handle
 {
 	my ($set, $n,  $state) = @_;
@@ -286,6 +303,9 @@ sub find_kept_handle
 	my $plist = $n->dependency_info;
 	return if !defined $plist;
 	my $pkgname = $plist->pkgname;
+	if ($set->{quirks}) {
+		display_timestamp($pkgname, $plist, $state);
+	}
 	# condition for no update
 	unless (is_installed($pkgname) &&
 	    (!$state->{allow_replacing} ||
