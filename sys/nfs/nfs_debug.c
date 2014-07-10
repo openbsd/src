@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_debug.c,v 1.4 2013/05/31 14:00:08 guenther Exp $ */
+/*	$OpenBSD: nfs_debug.c,v 1.5 2014/07/10 13:36:38 tedu Exp $ */
 /*
  * Copyright (c) 2009 Thordur I. Bjornsson. <thib@openbsd.org>
  *
@@ -36,10 +36,10 @@
 void
 db_show_all_nfsreqs(db_expr_t expr, int haddr, db_expr_t count, char *modif)
 {
-	boolean_t full = FALSE;
+	int full = 0;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = 1;
 
 	pool_walk(&nfsreqpl, full, db_printf, nfs_request_print);
 }
@@ -64,10 +64,10 @@ nfs_request_print(void *v, int full, int (*pr)(const char *, ...))
 void
 db_show_all_nfsnodes(db_expr_t expr, int haddr, db_expr_t count, char *modif)
 {
-	boolean_t full = FALSE;
+	int full = 0;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = 1;
 
 	pool_walk(&nfs_node_pool, full, db_printf, nfs_node_print);
 }
