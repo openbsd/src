@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_info.c,v 1.15 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: pem_info.c,v 1.16 2014/07/10 11:20:49 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -106,7 +106,7 @@ PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,
 		if ((ret = sk_X509_INFO_new_null()) == NULL) {
 			PEMerr(PEM_F_PEM_X509_INFO_READ_BIO,
 			    ERR_R_MALLOC_FAILURE);
-			goto err;
+			return 0;
 		}
 	} else
 		ret = sk;
@@ -173,9 +173,11 @@ start:
 			xi->enc_len = 0;
 
 			xi->x_pkey = X509_PKEY_new();
+			if (xi->x_pkey == NULL)
+				goto err;
 			ptype = EVP_PKEY_RSA;
 			pp = &xi->x_pkey->dec_pkey;
-			if ((int)strlen(header) > 10) /* assume encrypted */
+			if (strlen(header) > 10) /* assume encrypted */
 				raw = 1;
 		} else
 #endif
@@ -194,9 +196,11 @@ start:
 			xi->enc_len = 0;
 
 			xi->x_pkey = X509_PKEY_new();
+			if (xi->x_pkey == NULL)
+				goto err;
 			ptype = EVP_PKEY_DSA;
 			pp = &xi->x_pkey->dec_pkey;
-			if ((int)strlen(header) > 10) /* assume encrypted */
+			if (strlen(header) > 10) /* assume encrypted */
 				raw = 1;
 		} else
 #endif
@@ -215,9 +219,11 @@ start:
 			xi->enc_len = 0;
 
 			xi->x_pkey = X509_PKEY_new();
+			if (xi->x_pkey == NULL)
+				goto err;
 			ptype = EVP_PKEY_EC;
 			pp = &xi->x_pkey->dec_pkey;
-			if ((int)strlen(header) > 10) /* assume encrypted */
+			if (strlen(header) > 10) /* assume encrypted */
 				raw = 1;
 		} else
 #endif
@@ -238,11 +244,13 @@ start:
 				if (ptype) {
 					if (!d2i_PrivateKey(ptype, pp, &p,
 					    len)) {
-						PEMerr(PEM_F_PEM_X509_INFO_READ_BIO, ERR_R_ASN1_LIB);
+						PEMerr(PEM_F_PEM_X509_INFO_READ_BIO,
+						    ERR_R_ASN1_LIB);
 						goto err;
 					}
 				} else if (d2i(pp, &p, len) == NULL) {
-					PEMerr(PEM_F_PEM_X509_INFO_READ_BIO, ERR_R_ASN1_LIB);
+					PEMerr(PEM_F_PEM_X509_INFO_READ_BIO,
+					    ERR_R_ASN1_LIB);
 					goto err;
 				}
 			} else { /* encrypted RSA data */
