@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs_msdos.8,v 1.24 2013/07/16 09:45:28 schwarze Exp $
+.\"	$OpenBSD: newfs_msdos.8,v 1.25 2014/07/10 19:31:07 tobias Exp $
 .\"
 .\" Copyright (c) 1998 Robert Nordier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/sbin/newfs_msdos/newfs_msdos.8,v 1.6 1999/08/28 00:13:52 peter Exp $
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: July 10 2014 $
 .Dt NEWFS_MSDOS 8
 .Os
 .Sh NAME
@@ -134,7 +134,7 @@ Number of hidden sectors.
 Number of reserved sectors.
 .It Fl S Ar sector-size
 Number of bytes per sector.
-Acceptable values are powers of 2 in the range 128 through 32768.
+Acceptable values are powers of 2 in the range 512 through 32768.
 .It Fl s Ar total
 File system size.
 .It Fl u Ar track-size
