@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.59 2014/07/10 09:26:08 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.60 2014/07/10 11:58:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -772,8 +772,6 @@ struct ssl_ctx_st {
 	const EVP_MD *sha1;	/* For SSLv3/TLSv1 'ssl3-sha1' */
 
 	STACK_OF(X509) *extra_certs;
-	STACK_OF(SSL_COMP) *comp_methods; /* stack of SSL_COMP, SSLv3/TLSv1 */
-
 
 	/* Default values used when no per-SSL value is defined follow */
 

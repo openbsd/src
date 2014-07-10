@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.61 2014/07/10 10:09:54 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.62 2014/07/10 11:58:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -167,10 +167,6 @@
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
-
-#define SSL_COMP_NULL_IDX	0
-#define SSL_COMP_ZLIB_IDX	1
-#define SSL_COMP_NUM_IDX	2
 
 #define SSL_MD_MD5_IDX	0
 #define SSL_MD_SHA1_IDX	1

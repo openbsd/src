@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.72 2014/07/10 08:51:15 tedu Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.73 2014/07/10 11:58:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1896,8 +1896,6 @@ SSL_CTX_free(SSL_CTX *a)
 		sk_X509_NAME_pop_free(a->client_CA, X509_NAME_free);
 	if (a->extra_certs != NULL)
 		sk_X509_pop_free(a->extra_certs, X509_free);
-	/* Don't free, since it removes a global database */
-	a->comp_methods = NULL;
 
 #ifndef OPENSSL_NO_SRTP
 	if (a->srtp_profiles)
@@ -3060,6 +3058,4 @@ SSL_cache_hit(SSL *s)
 }
 
 IMPLEMENT_STACK_OF(SSL_CIPHER)
-IMPLEMENT_STACK_OF(SSL_COMP)
-IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER,
-    ssl_cipher_id);
+IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
