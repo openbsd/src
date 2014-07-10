@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.63 2014/07/09 20:59:41 tedu Exp $ */
+/* $OpenBSD: s_client.c,v 1.64 2014/07/10 09:15:51 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1414,9 +1414,6 @@ print_stuff(BIO * bio, SSL * s, int full)
 	const SSL_CIPHER *c;
 	X509_NAME *xn;
 	int j, i;
-#ifndef OPENSSL_NO_COMP
-	const COMP_METHOD *comp, *expansion;
-#endif
 	unsigned char *exportedkeymat;
 
 	if (full) {
@@ -1511,14 +1508,6 @@ print_stuff(BIO * bio, SSL * s, int full)
 	}
 	BIO_printf(bio, "Secure Renegotiation IS%s supported\n",
 	    SSL_get_secure_renegotiation_support(s) ? "" : " NOT");
-#ifndef OPENSSL_NO_COMP
-	comp = SSL_get_current_compression(s);
-	expansion = SSL_get_current_expansion(s);
-	BIO_printf(bio, "Compression: %s\n",
-	    comp ? SSL_COMP_get_name(comp) : "NONE");
-	BIO_printf(bio, "Expansion: %s\n",
-	    expansion ? SSL_COMP_get_name(expansion) : "NONE");
-#endif
 
 #ifdef SSL_DEBUG
 	{

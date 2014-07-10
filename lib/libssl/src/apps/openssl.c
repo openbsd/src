@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.38 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: openssl.c,v 1.39 2014/07/10 09:15:51 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -234,10 +234,6 @@ openssl_shutdown(void)
 	ERR_remove_thread_state(NULL);
 	RAND_cleanup();
 	ERR_free_strings();
-
-#ifndef OPENSSL_NO_COMP
-	COMP_zlib_cleanup();
-#endif
 }
 
 int
