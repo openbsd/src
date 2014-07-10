@@ -10,6 +10,7 @@ our %args = (
 	    qr/Server: OpenBSD relayd/,
 	    qr/Connection: close/,
 	],
+	nocheck => 1,
 	httpnok => 1,
     },
     relayd => {

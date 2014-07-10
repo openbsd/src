@@ -5,7 +5,6 @@ my %header = ("X-Test-Header" => "XOriginalValue");
 our %args = (
     client => {
 	func => \&http_client,
-	nocheck => 1,
 	loggrep => {
 		qr/X-Test-Header: XChangedValue/ => 1,
 		qr/Host: foo.bar/ => 1,

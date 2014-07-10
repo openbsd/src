@@ -8,7 +8,6 @@ my %header = (
 our %args = (
     client => {
 	func => \&http_client,
-	nocheck => 1,
 	loggrep => {
 	    "X-Header-Foo: foo" => 0,
 	    "X-Header-Bar: bar" => 1,

@@ -16,6 +16,7 @@ our %args = (
     server => {
 	func => \&http_server,
     },
+    len => 33,
 );
 
 1;

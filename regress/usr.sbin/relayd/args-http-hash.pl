@@ -5,8 +5,6 @@ our %args = (
     client => {
 	func => \&http_client,
 	path => "query?foobar",
-	len => 21,
-	nocheck => 1,
     },
     relayd => {
 	table => 1,
@@ -22,8 +20,8 @@ our %args = (
     },
     server => {
 	func => \&http_server,
-	nocheck => 1,
     },
+    len => 13,
 );
 
 1;

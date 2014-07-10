@@ -10,6 +10,7 @@ our %args = (
 	},
 	path => "query?foo=bar&ok=yes",
 	httpnok => 1,
+	nocheck => 1,
     },
     relayd => {
 	protocol => [ "http",

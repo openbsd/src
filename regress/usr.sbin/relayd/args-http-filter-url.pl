@@ -11,6 +11,7 @@ our %args = (
 	    qr/Connection: close/,
 	],
 	httpnok => 1,
+	nocheck => 1,
     },
     relayd => {
 	protocol => [ "http",

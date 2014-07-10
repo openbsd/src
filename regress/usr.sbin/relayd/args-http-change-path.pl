@@ -21,6 +21,7 @@ our %args = (
 		qr/GET \/foopath HTTP\/1\.0/ => 1,
 	},
     },
+    len => 8,
 );
 
 1;
