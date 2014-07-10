@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.46 2014/07/10 20:15:27 uebayasi Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.47 2014/07/10 21:46:03 mpi Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -311,8 +311,9 @@ boot(int howto)
 	if (!(howto & RB_NOSYNC))
 		bootsync(howto);
 
-	/* Say NO to interrupts */
-	splhigh();
+	uvm_shutdown();
+	splhigh();		/* Disable interrupts. */
+	cold = 1;
 
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)

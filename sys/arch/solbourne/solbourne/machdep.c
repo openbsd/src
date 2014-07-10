@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.36 2014/07/10 20:15:27 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.37 2014/07/10 21:46:03 mpi Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -546,7 +546,8 @@ boot(int howto)
 	if_downall();
 
 	uvm_shutdown();
-	(void) splhigh();		/* ??? */
+	splhigh();		/* Disable interrupts. */
+	cold = 1;
 
 	if (howto & RB_DUMP)
 		dumpsys();

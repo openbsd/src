@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.67 2014/07/10 20:15:26 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.68 2014/07/10 21:46:02 mpi Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -318,6 +318,7 @@ boot(int howto)
 
 	uvm_shutdown();
 	splhigh();		/* Disable interrupts. */
+	cold = 1;
 
 	/* If rebooting and a dump is requested, do it. */
 	if (howto & RB_DUMP)

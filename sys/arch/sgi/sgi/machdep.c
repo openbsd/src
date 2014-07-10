@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.143 2014/07/10 20:15:27 uebayasi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.144 2014/07/10 21:46:03 mpi Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -858,7 +858,8 @@ boot(int howto)
 	if_downall();
 
 	uvm_shutdown();
-	(void) splhigh();		/* Extreme priority. */
+	splhigh();		/* Disable interrupts. */
+	cold = 1;
 
 	if (howto & RB_DUMP)
 		dumpsys();

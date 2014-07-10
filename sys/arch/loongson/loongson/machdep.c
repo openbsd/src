@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 2014/07/10 20:15:27 uebayasi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.53 2014/07/10 21:46:03 mpi Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -931,7 +931,8 @@ boot(int howto)
 	if_downall();
 
 	uvm_shutdown();
-	(void) splhigh();		/* Extreme priority. */
+	splhigh();		/* Disable interrupts. */
+	cold = 1;
 
 	if (howto & RB_DUMP)
 		dumpsys();
