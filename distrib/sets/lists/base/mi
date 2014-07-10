@@ -341,7 +341,6 @@
 ./usr/bin/nm
 ./usr/bin/nohup
 ./usr/bin/od
-./usr/bin/oldrdist
 ./usr/bin/otp-md5
 ./usr/bin/otp-rmd160
 ./usr/bin/otp-sha1

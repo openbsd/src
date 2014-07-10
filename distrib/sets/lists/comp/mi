@@ -6134,6 +6134,7 @@
 ./usr/share/man/man9/m_tag_next.9
 ./usr/share/man/man9/m_tag_prepend.9
 ./usr/share/man/man9/malloc.9
+./usr/share/man/man9/mallocarray.9
 ./usr/share/man/man9/max.9
 ./usr/share/man/man9/mbuf.9
 ./usr/share/man/man9/mbuf_tags.9
