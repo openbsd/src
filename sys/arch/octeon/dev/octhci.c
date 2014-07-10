@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.1 2014/07/09 23:03:22 pirofti Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.2 2014/07/10 08:45:18 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -40,9 +40,7 @@
 #endif
 
 struct octhci_softc {
-	struct device sc_dev;
 	struct usbd_bus sc_bus;		/* base device */
-	struct device *sc_child;	/* /dev/usb# device */
 
 	void *sc_ih;			/* interrupt handler */
 
@@ -86,35 +84,6 @@ struct octhci_soft_td {
 	int islot;
 };
 
-struct octhci_pipe {
-	struct usbd_pipe pipe;
-
-	struct octhci_soft_qh *sqh;
-	union {
-		struct octhci_soft_td *td;
-	} tail;
-	union {
-		/* Control pipe */
-		struct {
-			struct usb_dma reqdma;
-			u_int length;
-		} ctl;
-		/* Interrupt pipe */
-		struct {
-			u_int length;
-		} intr;
-		/* Bulk pipe */
-		struct {
-			u_int length;
-		} bulk;
-		/* Iso pipe */
-		struct {
-			u_int next_frame;
-			u_int cur_xfers;
-		} isoc;
-	} u;
-};
-
 usbd_status octhci_open(struct usbd_pipe *pipe);
 void octhci_softintr(void *);
 void octhci_poll(struct usbd_bus *);
@@ -122,11 +91,11 @@ struct usbd_xfer * octhci_allocx(struct usbd_bus *);
 void octhci_freex(struct usbd_bus *, struct usbd_xfer *);
 
 struct usbd_bus_methods octhci_bus_methods = {
-	octhci_open,
-	octhci_softintr,
-	octhci_poll,
-	octhci_allocx,
-	octhci_freex,
+	.open_pipe = octhci_open,
+	.soft_intr = octhci_softintr,
+	.do_poll = octhci_poll,
+	.allocx = octhci_allocx,
+	.freex = octhci_freex,
 };
 
 #define OCTHCI_INTR_ENDPT 1
@@ -134,16 +103,14 @@ usbd_status octhci_root_ctrl_transfer(struct usbd_xfer *xfer);
 usbd_status octhci_root_ctrl_start(struct usbd_xfer *xfer);
 void octhci_root_ctrl_abort(struct usbd_xfer *xfer);
 void octhci_root_ctrl_close(struct usbd_pipe *pipe);
-void octhci_root_ctrl_cleartoggle(struct usbd_pipe *pipe);
 void octhci_root_ctrl_done(struct usbd_xfer *xfer);
 
 struct usbd_pipe_methods octhci_root_ctrl_methods = {
-	octhci_root_ctrl_transfer,
-	octhci_root_ctrl_start,
-	octhci_root_ctrl_abort,
-	octhci_root_ctrl_close,
-	octhci_root_ctrl_cleartoggle,
-	octhci_root_ctrl_done,
+	.transfer = octhci_root_ctrl_transfer,
+	.start = octhci_root_ctrl_start,
+	.abort = octhci_root_ctrl_abort,
+	.close = octhci_root_ctrl_close,
+	.done = octhci_root_ctrl_done,
 };
 
 
@@ -151,16 +118,14 @@ usbd_status octhci_root_intr_transfer(struct usbd_xfer *xfer);
 usbd_status octhci_root_intr_start(struct usbd_xfer *xfer);
 void octhci_root_intr_abort(struct usbd_xfer *xfer);
 void octhci_root_intr_close(struct usbd_pipe *pipe);
-void octhci_root_intr_cleartoggle(struct usbd_pipe *pipe);
 void octhci_root_intr_done(struct usbd_xfer *xfer);
 
 struct usbd_pipe_methods octhci_root_intr_methods = {
-	octhci_root_intr_transfer,
-	octhci_root_intr_start,
-	octhci_root_intr_abort,
-	octhci_root_intr_close,
-	octhci_root_intr_cleartoggle,
-	octhci_root_intr_done,
+	.transfer = octhci_root_intr_transfer,
+	.start = octhci_root_intr_start,
+	.abort = octhci_root_intr_abort,
+	.close = octhci_root_intr_close,
+	.done = octhci_root_intr_done,
 };
 
 
@@ -227,9 +192,10 @@ octhci_attach(struct device *parent, struct device *self, void *aux)
 	 * sc->sc_bus.usbrev = USBREV_2_0;
 	 */
 	sc->sc_bus.methods = &octhci_bus_methods;
-	sc->sc_bus.pipe_size = sizeof(struct octhci_pipe);
+	sc->sc_bus.pipe_size = sizeof(struct usbd_pipe);
 	sc->sc_bus.dmatag = aa->aa_dmat;
-	sc->sc_child = config_found((void *)sc, &sc->sc_bus, usbctlprint);
+
+	config_found((void *)sc, &sc->sc_bus, usbctlprint);
 }
 
 void
@@ -544,11 +510,6 @@ octhci_root_ctrl_close(struct usbd_pipe *pipe)
 }
 
 void
-octhci_root_ctrl_cleartoggle(struct usbd_pipe *pipe)
-{
-}
-
-void
 octhci_root_ctrl_done(struct usbd_xfer *xfer)
 {
 }
@@ -576,11 +537,6 @@ octhci_root_intr_abort(struct usbd_xfer *xfer)
 
 void
 octhci_root_intr_close(struct usbd_pipe *pipe)
-{
-}
-
-void
-octhci_root_intr_cleartoggle(struct usbd_pipe *pipe)
 {
 }
 
