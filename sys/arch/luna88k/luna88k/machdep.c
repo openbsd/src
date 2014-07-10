@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.103 2014/07/10 20:15:27 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.104 2014/07/10 20:37:42 uebayasi Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -470,7 +470,6 @@ boot(int howto)
 {
 	struct device *mainbus;
 
-	/* take a snapshot before clobbering any registers */
 	if (curproc && curproc->p_addr)
 		savectx(curpcb);
 

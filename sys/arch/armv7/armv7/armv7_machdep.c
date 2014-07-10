@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.9 2014/07/10 12:13:48 uebayasi Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.10 2014/07/10 20:37:41 uebayasi Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -253,10 +253,6 @@ boot(int howto)
 
 	mainbus = device_mainbus();
 
-	/*
-	 * If we are still cold then hit the air brakes
-	 * and crash to earth fast
-	 */
 	if (cold) {
 		doshutdownhooks();
 		if (mainbus != NULL)
