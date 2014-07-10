@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_smime.c,v 1.16 2014/07/10 21:40:59 miod Exp $ */
+/* $OpenBSD: pk7_smime.c,v 1.17 2014/07/10 21:42:43 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -199,7 +199,7 @@ PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert, EVP_PKEY *pkey,
 			    !add_cipher_smcap(smcap, NID_rc2_cbc, 64) ||
 			    !add_cipher_smcap(smcap, NID_des_cbc, -1) ||
 			    !add_cipher_smcap(smcap, NID_rc2_cbc, 40) ||
-			    !PKCS7_add_attrib_smimecap (si, smcap))
+			    !PKCS7_add_attrib_smimecap(si, smcap))
 				goto err;
 			sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
 			smcap = NULL;
@@ -314,15 +314,18 @@ PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata,
 	if (!(flags & PKCS7_NOVERIFY))
 		for (k = 0; k < sk_X509_num(signers); k++) {
 			signer = sk_X509_value (signers, k);
-			if (!(flags & PKCS7_NOCHAIN)) {
-				if (!X509_STORE_CTX_init(&cert_ctx, store, signer,
-				    p7->d.sign->cert)) {
-					PKCS7err(PKCS7_F_PKCS7_VERIFY, ERR_R_X509_LIB);
+			if  (!(flags & PKCS7_NOCHAIN)) {
+				if (!X509_STORE_CTX_init(&cert_ctx, store,
+				    signer, p7->d.sign->cert)) {
+					PKCS7err(PKCS7_F_PKCS7_VERIFY,
+					    ERR_R_X509_LIB);
 					sk_X509_free(signers);
 					return 0;
 				}
-				X509_STORE_CTX_set_default(&cert_ctx, "smime_sign");
-			} else if (!X509_STORE_CTX_init (&cert_ctx, store, signer, NULL)) {
+				X509_STORE_CTX_set_default(&cert_ctx,
+				    "smime_sign");
+			} else if (!X509_STORE_CTX_init(&cert_ctx, store,
+			    signer, NULL)) {
 				PKCS7err(PKCS7_F_PKCS7_VERIFY, ERR_R_X509_LIB);
 				sk_X509_free(signers);
 				return 0;
@@ -334,7 +337,8 @@ PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata,
 				j = X509_STORE_CTX_get_error(&cert_ctx);
 			X509_STORE_CTX_cleanup(&cert_ctx);
 			if (i <= 0) {
-				PKCS7err(PKCS7_F_PKCS7_VERIFY, PKCS7_R_CERTIFICATE_VERIFY_ERROR);
+				PKCS7err(PKCS7_F_PKCS7_VERIFY,
+				    PKCS7_R_CERTIFICATE_VERIFY_ERROR);
 				ERR_asprintf_error_data("Verify error:%s",
 				    X509_verify_cert_error_string(j));
 				sk_X509_free(signers);
@@ -343,7 +347,8 @@ PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata,
 			/* Check for revocation status here */
 		}
 
-	/* Performance optimization: if the content is a memory BIO then
+	/*
+	 * Performance optimization: if the content is a memory BIO then
 	 * store its contents in a temporary read only memory BIO. This
 	 * avoids potentially large numbers of slow copies of data which will
 	 * occur when reading from a read write memory BIO when signatures
@@ -352,6 +357,7 @@ PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata,
 	if (indata && (BIO_method_type(indata) == BIO_TYPE_MEM)) {
 		char *ptr;
 		long len;
+
 		len = BIO_get_mem_data(indata, &ptr);
 		tmpin = BIO_new_mem_buf(ptr, len);
 		if (tmpin == NULL) {
@@ -371,7 +377,8 @@ PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata,
 			goto err;
 		}
 		BIO_set_mem_eof_return(tmpout, 0);
-	} else tmpout = out;
+	} else
+		tmpout = out;
 
 	/* We now have to 'read' from p7bio to calculate digests etc. */
 	for (;;) {
@@ -395,15 +402,15 @@ PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata,
 	/* Now Verify All Signatures */
 	if (!(flags & PKCS7_NOSIGS))
 		for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++) {
-		si = sk_PKCS7_SIGNER_INFO_value(sinfos, i);
-		signer = sk_X509_value (signers, i);
-		j = PKCS7_signatureVerify(p7bio, p7, si, signer);
-		if (j <= 0) {
-			PKCS7err(PKCS7_F_PKCS7_VERIFY,
-			    PKCS7_R_SIGNATURE_FAILURE);
-			goto err;
+			si = sk_PKCS7_SIGNER_INFO_value(sinfos, i);
+			signer = sk_X509_value (signers, i);
+			j = PKCS7_signatureVerify(p7bio, p7, si, signer);
+			if (j <= 0) {
+				PKCS7err(PKCS7_F_PKCS7_VERIFY,
+				    PKCS7_R_SIGNATURE_FAILURE);
+				goto err;
+			}
 		}
-	}
 
 	ret = 1;
 
@@ -413,13 +420,13 @@ err:
 			BIO_pop(p7bio);
 	}
 	BIO_free_all(p7bio);
-
 	sk_X509_free(signers);
 
 	return ret;
 }
 
-STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
+STACK_OF(X509) *
+PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
 {
 	STACK_OF(X509) *signers;
 	STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
@@ -457,12 +464,13 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
 		ias = si->issuer_and_serial;
 		signer = NULL;
 		/* If any certificates passed they take priority */
-		if (certs) signer = X509_find_by_issuer_and_serial (certs,
-		    ias->issuer, ias->serial);
-		if (!signer && !(flags & PKCS7_NOINTERN) &&
-		    p7->d.sign->cert) signer =
-			    X509_find_by_issuer_and_serial (p7->d.sign->cert,
+		if (certs)
+			signer = X509_find_by_issuer_and_serial (certs,
 			    ias->issuer, ias->serial);
+		if (!signer && !(flags & PKCS7_NOINTERN) && p7->d.sign->cert)
+			signer =
+			    X509_find_by_issuer_and_serial(p7->d.sign->cert,
+			      ias->issuer, ias->serial);
 		if (!signer) {
 			PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,
 			    PKCS7_R_SIGNER_CERTIFICATE_NOT_FOUND);
