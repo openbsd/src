@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.171 2014/07/08 13:49:09 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.172 2014/07/10 15:54:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -388,6 +388,20 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			mproc_enable(p_pony);
 			return;
 
+		case IMSG_LKA_OPEN_FORWARD:
+			lka_session_forward_reply(imsg->data, imsg->fd);
+			return;
+
+		case IMSG_LKA_AUTHENTICATE:
+			imsg->hdr.type = IMSG_SMTP_AUTHENTICATE;
+			m_forward(p_pony, imsg);
+			return;
+		}
+	}
+
+	if (p->proc == PROC_CONTROL) {
+		switch (imsg->hdr.type) {
+
 		case IMSG_CTL_VERBOSE:
 			m_msg(&m, imsg);
 			m_get_int(&m, &v);
@@ -402,19 +416,6 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			profiling = v;
 			return;
 
-		case IMSG_LKA_OPEN_FORWARD:
-			lka_session_forward_reply(imsg->data, imsg->fd);
-			return;
-
-		case IMSG_LKA_AUTHENTICATE:
-			imsg->hdr.type = IMSG_SMTP_AUTHENTICATE;
-			m_forward(p_pony, imsg);
-			return;
-		}
-	}
-
-	if (p->proc == PROC_CONTROL) {
-		switch (imsg->hdr.type) {
 		case IMSG_CTL_UPDATE_TABLE:
 			table = table_find(imsg->data, NULL);
 			if (table == NULL) {

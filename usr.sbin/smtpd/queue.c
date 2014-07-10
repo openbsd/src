@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.164 2014/07/10 14:45:02 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.165 2014/07/10 15:54:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -485,17 +485,12 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 		case IMSG_CTL_RESUME_MTA:
 			m_forward(p_scheduler, imsg);
 			return;
-		}
-	}
 
-	if (p->proc == PROC_PARENT) {
-		switch (imsg->hdr.type) {
 		case IMSG_CTL_VERBOSE:
 			m_msg(&m, imsg);
 			m_get_int(&m, &v);
 			m_end(&m);
 			log_verbose(v);
-			m_forward(p_scheduler, imsg);
 			return;
 
 		case IMSG_CTL_PROFILE:

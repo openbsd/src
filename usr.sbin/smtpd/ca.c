@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.8 2014/07/08 11:03:51 eric Exp $	*/
+/*	$OpenBSD: ca.c,v 1.9 2014/07/10 15:54:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -124,6 +124,7 @@ ca(void)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
+	config_peer(PROC_CONTROL);
 	config_peer(PROC_PARENT);
 	config_peer(PROC_PONY);
 	config_done();
@@ -262,6 +263,11 @@ ca_imsg(struct mproc *p, struct imsg *imsg)
 			/* Start fulfilling requests */
 			mproc_enable(p_pony);
 			return;
+		}
+	}
+
+	if (p->proc == PROC_CONTROL) {
+		switch (imsg->hdr.type) {
 		case IMSG_CTL_VERBOSE:
 			m_msg(&m, imsg);
 			m_get_int(&m, &v);

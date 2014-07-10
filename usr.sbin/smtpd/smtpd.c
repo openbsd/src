@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.233 2014/07/10 14:45:02 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.234 2014/07/10 15:54:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -63,8 +63,6 @@ static void parent_send_config_ca(void);
 static void parent_sig_handler(int, short, void *);
 static void forkmda(struct mproc *, uint64_t, struct deliver *);
 static int parent_forward_open(char *, char *, uid_t, gid_t);
-static void parent_broadcast_verbose(uint32_t);
-static void parent_broadcast_profile(uint32_t);
 static void fork_peers(void);
 static struct child *child_add(pid_t, int, const char *);
 
@@ -235,44 +233,13 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 			m_get_int(&m, &v);
 			m_end(&m);
 			log_verbose(v);
-			m_forward(p_lka, imsg);
-			m_forward(p_queue, imsg);
-			m_forward(p_pony, imsg);
-			m_forward(p_ca, imsg);
 			return;
 
-		case IMSG_CTL_TRACE_ENABLE:
+		case IMSG_CTL_PROFILE:
 			m_msg(&m, imsg);
 			m_get_int(&m, &v);
 			m_end(&m);
-			verbose |= v;
-			log_verbose(verbose);
-			parent_broadcast_verbose(verbose);
-			return;
-
-		case IMSG_CTL_TRACE_DISABLE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			verbose &= ~v;
-			log_verbose(verbose);
-			parent_broadcast_verbose(verbose);
-			return;
-
-		case IMSG_CTL_PROFILE_ENABLE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			profiling |= v;
-			parent_broadcast_profile(profiling);
-			return;
-
-		case IMSG_CTL_PROFILE_DISABLE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			profiling &= ~v;
-			parent_broadcast_profile(profiling);
+			profiling = v;
 			return;
 
 		case IMSG_CTL_SHUTDOWN:
@@ -1534,44 +1501,4 @@ parent_auth_user(const char *username, const char *password)
 	if (ret)
 		return LKA_OK;
 	return LKA_PERMFAIL;
-}
-
-static void
-parent_broadcast_verbose(uint32_t v)
-{
-	m_create(p_lka, IMSG_CTL_VERBOSE, 0, 0, -1);
-	m_add_int(p_lka, v);
-	m_close(p_lka);
-	
-	m_create(p_pony, IMSG_CTL_VERBOSE, 0, 0, -1);
-	m_add_int(p_pony, v);
-	m_close(p_pony);
-	
-	m_create(p_queue, IMSG_CTL_VERBOSE, 0, 0, -1);
-	m_add_int(p_queue, v);
-	m_close(p_queue);
-
-	m_create(p_ca, IMSG_CTL_VERBOSE, 0, 0, -1);
-	m_add_int(p_ca, v);
-	m_close(p_ca);
-}
-
-static void
-parent_broadcast_profile(uint32_t v)
-{
-	m_create(p_lka, IMSG_CTL_PROFILE, 0, 0, -1);
-	m_add_int(p_lka, v);
-	m_close(p_lka);
-	
-	m_create(p_pony, IMSG_CTL_PROFILE, 0, 0, -1);
-	m_add_int(p_pony, v);
-	m_close(p_pony);
-	
-	m_create(p_queue, IMSG_CTL_PROFILE, 0, 0, -1);
-	m_add_int(p_queue, v);
-	m_close(p_queue);
-
-	m_create(p_ca, IMSG_CTL_PROFILE, 0, 0, -1);
-	m_add_int(p_ca, v);
-	m_close(p_ca);
 }
