@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.63 2014/07/09 16:18:03 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.64 2014/07/10 11:56:56 mlarkin Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -721,8 +721,10 @@ cpu_hatch(void *v)
 	while ((ci->ci_flags & CPUF_GO) == 0)
 		delay(10);
 #ifdef HIBERNATE
-	if ((ci->ci_flags & CPUF_PARK) != 0)
+	if ((ci->ci_flags & CPUF_PARK) != 0) {
+		atomic_clearbits_int(&ci->ci_flags, CPUF_PARK);
 		hibernate_drop_to_real_mode();
+	}
 #endif /* HIBERNATE */
 
 #ifdef DEBUG
