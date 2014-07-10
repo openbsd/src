@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.99 2014/03/19 10:09:19 mpi Exp $  */
+/*      $OpenBSD: ath.c,v 1.100 2014/07/10 11:34:48 stsp Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -264,6 +264,11 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 			    ah->ah_radio_2ghz_revision & 0xf);
 		}
 	}
+	if (ah->ah_ee_version == AR5K_EEPROM_VERSION_4_7)
+		printf(" eeprom 4.7");
+	else
+		printf(" eeprom %1x.%1x", ah->ah_ee_version >> 12,
+		    ah->ah_ee_version & 0xff);
 
 #if 0
 	if (ah->ah_radio_5ghz_revision >= AR5K_SREV_RAD_UNSUPP ||
