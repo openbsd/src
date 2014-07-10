@@ -1,4 +1,4 @@
-/* $OpenBSD: srp_lib.c,v 1.5 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: srp_lib.c,v 1.6 2014/07/10 20:18:51 miod Exp $ */
 /* Written by Christophe Renou (christophe.renou@edelweb.fr) with 
  * the precious help of Peter Sylvester (peter.sylvester@edelweb.fr) 
  * for the EdelKey project and contributed to the OpenSSL project 2004.
@@ -89,14 +89,14 @@ static BIGNUM *srp_Calc_k(BIGNUM *N, BIGNUM *g)
 
 	if ((tmp = malloc(longN)) == NULL)
 		return NULL;
-	BN_bn2bin(N,tmp) ;
+	BN_bn2bin(N,tmp);
 
 	EVP_MD_CTX_init(&ctxt);
 	EVP_DigestInit_ex(&ctxt, EVP_sha1(), NULL);
 	EVP_DigestUpdate(&ctxt, tmp, longN);
 
 	memset(tmp, 0, longN);
-	longg = BN_bn2bin(g,tmp) ;
+	longg = BN_bn2bin(g,tmp);
         /* use the zeros behind to pad on left */
 	EVP_DigestUpdate(&ctxt, tmp + longg, longN-longg);
 	EVP_DigestUpdate(&ctxt, tmp, longg);
@@ -257,6 +257,7 @@ BIGNUM *SRP_Calc_A(BIGNUM *a, BIGNUM *N, BIGNUM *g)
 BIGNUM *SRP_Calc_client_key(BIGNUM *N, BIGNUM *B, BIGNUM *g, BIGNUM *x, BIGNUM *a, BIGNUM *u)
 	{
 	BIGNUM *tmp = NULL, *tmp2 = NULL, *tmp3 = NULL , *k = NULL, *K = NULL;
+	BIGNUM *ret = NULL;
 	BN_CTX *bn_ctx;
 
 	if (u == NULL || B == NULL || N == NULL || g == NULL || x == NULL || a == NULL ||
@@ -285,13 +286,17 @@ BIGNUM *SRP_Calc_client_key(BIGNUM *N, BIGNUM *B, BIGNUM *g, BIGNUM *x, BIGNUM *
 	if (!BN_mod_exp(K,tmp,tmp2,N,bn_ctx))
 		goto err;
 
+	ret = K;
+	K = NULL;
+
 err :
 	BN_CTX_free(bn_ctx);
 	BN_clear_free(tmp);
 	BN_clear_free(tmp2);
 	BN_clear_free(tmp3);
 	BN_free(k);
-	return K;	
+	BN_clear_free(K);
+	return ret;	
 	}
 
 int SRP_Verify_B_mod_N(BIGNUM *B, BIGNUM *N)
