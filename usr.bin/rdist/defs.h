@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.22 2014/07/05 06:55:29 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.23 2014/07/10 20:35:35 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -333,7 +333,7 @@ void cleanup(int);
 int install(char *, char *, int, int , opt_t);
 
 /* common.c */
-WRITE_RETURN_T xwrite(int, void *, WRITE_AMT_T);
+ssize_t xwrite(int, void *, size_t);
 int init(int, char **, char **);
 void finish(void);
 void lostconn(void);
