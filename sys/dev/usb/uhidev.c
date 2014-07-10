@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.60 2014/04/29 12:47:33 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.61 2014/07/10 08:56:40 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 
 		hid = usbd_get_hid_descriptor(sc->sc_udev, id);
 		if (hid == NULL) {
-			printf("%s: no report descriptor\n", DEVNAME(sc));
+			printf("%s: no HID descriptor\n", DEVNAME(sc));
 			return;
 		}
 		size = UGETW(hid->descrs[0].wDescriptorLength);
@@ -197,7 +197,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		}
 		if (usbd_get_report_descriptor(sc->sc_udev, sc->sc_ifaceno,
 		    desc, size)) {
-			printf("%s: XXX\n", DEVNAME(sc));
+			printf("%s: no report descriptor\n", DEVNAME(sc));
 			free(desc, M_USBDEV);
 			return;
 		}
