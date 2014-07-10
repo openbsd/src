@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.68 2014/07/08 14:22:38 eric Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.69 2014/07/10 20:16:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -38,6 +38,9 @@
 #include <openssl/ssl.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
+#include <openssl/rsa.h>
+#include <openssl/dh.h>
+#include <openssl/bn.h>
 
 #include "log.h"
 #include "ssl.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.9 2014/07/10 15:54:55 eric Exp $	*/
+/*	$OpenBSD: ca.c,v 1.10 2014/07/10 20:16:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -33,6 +33,7 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/engine.h>
+#include <openssl/err.h>
 
 #include "smtpd.h"
 #include "log.h"
