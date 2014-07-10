@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.149 2014/07/06 19:15:16 otto Exp $ */
+/*	$OpenBSD: loader.c,v 1.150 2014/07/10 09:03:01 otto Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -461,6 +461,8 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 				maxva = phdp->p_vaddr + phdp->p_memsz;
 
 			next_load = _dl_calloc(1, sizeof(struct load_list));
+			if (next_load == NULL)
+				_dl_exit(5);
 			next_load->next = load_list;
 			load_list = next_load;
 			next_load->start = (char *)TRUNC_PG(phdp->p_vaddr) + exe_loff;
@@ -562,8 +564,9 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 			DL_DEB(("failed to mark DTDEBUG\n"));
 	}
 	if (map_link) {
-		/* XXX */
 		debug_map = (struct r_debug *)_dl_malloc(sizeof(*debug_map));
+		if (debug_map == NULL)
+			_dl_exit(5);
 		debug_map->r_version = 1;
 		debug_map->r_map = (struct link_map *)_dl_objects;
 		debug_map->r_brk = (Elf_Addr)_dl_debug_state;

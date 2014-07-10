@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.21 2014/07/09 11:19:42 guenther Exp $	*/
+/*	$OpenBSD: dir.c,v 1.22 2014/07/10 09:03:01 otto Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -88,16 +88,12 @@ _dl_opendir(const char *name)
 int
 _dl_closedir(_dl_DIR *dirp)
 {
-	int fd;
 	int ret;
 
-	fd = dirp->dd_fd;
-	dirp->dd_fd = -1;
-	dirp->dd_loc = 0;
-	_dl_free((void *)dirp->dd_buf);
-	_dl_free((void *)dirp);
-	ret = _dl_close(fd);
-	return (ret);
+	ret = _dl_close(dirp->dd_fd);
+	_dl_free(dirp->dd_buf);
+	_dl_free(dirp);
+	return ret;
 }
 
 

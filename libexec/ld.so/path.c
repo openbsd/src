@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.2 2014/06/21 08:00:23 otto Exp $	*/
+/*	$OpenBSD: path.c,v 1.3 2014/07/10 09:03:01 otto Exp $	*/
 
 /*
  * Copyright (c) 2013 Kurt Miller <kurt@intricatesoftware.com>
@@ -44,7 +44,6 @@ _dl_split_path(const char *searchpath)
 	count++;
 
 	retval = _dl_reallocarray(NULL, count, sizeof(retval));
-
 	if (retval == NULL)
 		return (NULL);
 

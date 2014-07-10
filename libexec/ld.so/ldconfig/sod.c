@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.4 2014/07/06 11:52:02 miod Exp $	*/
+/*	$OpenBSD: sod.c,v 1.5 2014/07/10 09:03:02 otto Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -68,6 +68,8 @@ _dl_build_sod(const char *name, struct sod *sodp)
 
 	/* default is an absolute or relative path */
 	sodp->sod_name = (long)strdup(name);    /* strtok is destructive */
+	if (sodp->sod_name == 0)
+		exit(7);
 	sodp->sod_library = 0;
 	sodp->sod_major = sodp->sod_minor = 0;
 
@@ -125,6 +127,8 @@ _dl_build_sod(const char *name, struct sod *sodp)
 		goto backout;
 	cp = (char *)sodp->sod_name;
 	sodp->sod_name = (long)strdup(realname);
+	if (sodp->sod_name == 0)
+		exit(7);
 	free(cp);
 	sodp->sod_library = 1;
 	sodp->sod_major = major;
@@ -134,6 +138,8 @@ _dl_build_sod(const char *name, struct sod *sodp)
 backout:
 	free((char *)sodp->sod_name);
 	sodp->sod_name = (long)strdup(name);
+	if (sodp->sod_name == 0)
+		exit(7);
 }
 
 static struct hints_header	*hheader = NULL;

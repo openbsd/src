@@ -1,4 +1,4 @@
-/* $OpenBSD: dl_prebind.c,v 1.15 2014/07/06 17:33:10 otto Exp $ */
+/* $OpenBSD: dl_prebind.c,v 1.16 2014/07/10 09:03:01 otto Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -201,6 +201,8 @@ prebind_symcache(elf_object_t *object, int plt)
 		} else {
 			objarray = _dl_reallocarray(NULL, i,
 			    sizeof(elf_object_t *));
+			if (objarray == NULL)
+				_dl_exit(20);
 		}
 
 		obj = _dl_objects;
