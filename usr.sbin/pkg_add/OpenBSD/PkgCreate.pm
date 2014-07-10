@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.107 2014/07/01 09:52:27 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.108 2014/07/10 10:33:10 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -210,7 +210,7 @@ sub compute_checksum
 	if (defined $base) {
 		$fname = $base.$fname;
 	}
-	for my $field (qw(symlink link size)) {  # md5
+	for my $field (qw(symlink link size ts)) {  # md5
 		if (defined $result->{$field}) {
 			$state->error("User tried to define @#1 for #2",
 			    $field, $fname);
