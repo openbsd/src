@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.97 2014/07/09 13:52:35 yasuoka Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.98 2014/07/10 09:46:29 henning Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -90,6 +90,7 @@ void	bpf_ifname(struct ifnet *, struct ifreq *);
 void	_bpf_mtap(caddr_t, struct mbuf *, u_int,
 	    void (*)(const void *, void *, size_t));
 void	bpf_mcopy(const void *, void *, size_t);
+void	bpf_mcopy_stripvlan(const void *, void *, size_t);
 int	bpf_movein(struct uio *, u_int, struct mbuf **,
 	    struct sockaddr *, struct bpf_insn *);
 void	bpf_attachd(struct bpf_d *, struct bpf_if *);
@@ -1169,6 +1170,46 @@ bpf_mcopy(const void *src_arg, void *dst_arg, size_t len)
 }
 
 /*
+ * Copy an ethernet frame from an mbuf chain into a buffer, strip the
+ * vlan header bits
+ */
+void
+bpf_mcopy_stripvlan(const void *src_arg, void *dst_arg, size_t len)
+{
+#if NVLAN > 0
+	const struct mbuf		*m;
+	u_int				 count, copied = 0, hdrdone = 0;
+	u_char				*dst;
+	struct ether_vlan_header	*evh;
+
+	m = src_arg;
+	dst = dst_arg;
+	evh = dst_arg;
+	while (len > 0) {
+		if (m == 0)
+			panic("bpf_mcopy_stripvlan");
+		count = min(m->m_len, len);
+		bcopy(mtod(m, caddr_t), (caddr_t)dst, count);
+		m = m->m_next;
+		dst += count;
+		len -= count;
+		copied += count;
+		if (!hdrdone && copied >= sizeof(struct ether_vlan_header) &&
+		    (ntohs(evh->evl_encap_proto) == ETHERTYPE_VLAN ||
+		    ntohs(evh->evl_encap_proto) == ETHERTYPE_QINQ)) {
+			/* move up by 4 bytes, overwrite encap_proto + tag */
+			memmove(&evh->evl_encap_proto, &evh->evl_proto, copied -
+			    offsetof(struct ether_vlan_header, evl_proto));
+			dst -= (offsetof(struct ether_vlan_header, evl_proto) -
+			    offsetof(struct ether_vlan_header,
+			    evl_encap_proto)); /* long expression for "4" */
+			hdrdone = 1;
+		}
+	}
+#endif
+}
+
+/*
  * like bpf_mtap, but copy fn can be given. used by various bpf_mtap*
  */
 void
@@ -1218,6 +1259,13 @@ void
 bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction)
 {
 	_bpf_mtap(arg, m, direction, NULL);
+}
+
+/* like bpf_mtap, but strip the vlan header, leave regular ethernet hdr */
+void
+bpf_mtap_stripvlan(caddr_t arg, struct mbuf *m, u_int direction)
+{
+	_bpf_mtap(arg, m, direction, bpf_mcopy_stripvlan);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.45 2014/07/09 11:03:04 henning Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.46 2014/07/10 09:46:29 henning Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -272,6 +272,7 @@ struct bpf_dltlist {
 int	 bpf_validate(struct bpf_insn *, int);
 int	 bpf_tap(caddr_t, u_char *, u_int, u_int);
 void	 bpf_mtap(caddr_t, struct mbuf *, u_int);
+void	 bpf_mtap_stripvlan(caddr_t, struct mbuf *, u_int);
 void	 bpf_mtap_hdr(caddr_t, caddr_t, u_int, struct mbuf *, u_int,
 	    void (*)(const void *, void *, size_t));
 void	 bpf_mtap_af(caddr_t, u_int32_t, struct mbuf *, u_int);
