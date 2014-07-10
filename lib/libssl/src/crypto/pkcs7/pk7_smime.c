@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_smime.c,v 1.15 2014/06/29 17:05:36 jsing Exp $ */
+/* $OpenBSD: pk7_smime.c,v 1.16 2014/07/10 21:40:59 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -551,25 +551,21 @@ PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
 	}
 
 	if (flags & PKCS7_TEXT) {
-		BIO *tmpbuf, *bread;
+		BIO *tmpbuf;
+
 		/* Encrypt BIOs can't do BIO_gets() so add a buffer BIO */
 		if (!(tmpbuf = BIO_new(BIO_f_buffer()))) {
 			PKCS7err(PKCS7_F_PKCS7_DECRYPT, ERR_R_MALLOC_FAILURE);
 			BIO_free_all(tmpmem);
 			return 0;
 		}
-		if (!(bread = BIO_push(tmpbuf, tmpmem))) {
-			PKCS7err(PKCS7_F_PKCS7_DECRYPT, ERR_R_MALLOC_FAILURE);
-			BIO_free_all(tmpbuf);
-			BIO_free_all(tmpmem);
-			return 0;
-		}
-		ret = SMIME_text(bread, data);
+		BIO_push(tmpbuf, tmpmem);
+		ret = SMIME_text(tmpbuf, data);
 		if (ret > 0 && BIO_method_type(tmpmem) == BIO_TYPE_CIPHER) {
 			if (!BIO_get_cipher_status(tmpmem))
 				ret = 0;
 		}
-		BIO_free_all(bread);
+		BIO_free_all(tmpbuf);
 		return ret;
 	} else {
 		for (;;) {
