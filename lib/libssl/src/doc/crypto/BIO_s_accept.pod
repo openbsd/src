@@ -151,14 +151,14 @@ down each and finally closes both down.
  abio = BIO_new_accept("4444");
 
  /* First call to BIO_accept() sets up accept BIO */
- if(BIO_do_accept(abio) <= 0) {
+ if (BIO_do_accept(abio) <= 0) {
 	fprintf(stderr, "Error setting up accept\n");
 	ERR_print_errors_fp(stderr);
 	exit(0);
  }
 
  /* Wait for incoming connection */
- if(BIO_do_accept(abio) <= 0) {
+ if (BIO_do_accept(abio) <= 0) {
 	fprintf(stderr, "Error accepting connection\n");
 	ERR_print_errors_fp(stderr);
 	exit(0);
@@ -169,7 +169,7 @@ down each and finally closes both down.
  BIO_puts(cbio, "Connection 1: Sending out Data on initial connection\n");
  fprintf(stderr, "Sent out data on connection 1\n");
  /* Wait for another connection */
- if(BIO_do_accept(abio) <= 0) {
+ if (BIO_do_accept(abio) <= 0) {
 	fprintf(stderr, "Error accepting connection\n");
 	ERR_print_errors_fp(stderr);
 	exit(0);

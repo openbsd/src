@@ -129,39 +129,37 @@ named curve secp192k1.
 First step: create a EC_KEY object (note: this part is B<not> ECDSA
 specific)
 
- int        ret;
+ int ret;
  ECDSA_SIG *sig;
- EC_KEY    *eckey;
+ EC_KEY *eckey;
+
  eckey = EC_KEY_new_by_curve_name(NID_secp192k1);
- if (eckey == NULL)
-	{
+ if (eckey == NULL) {
 	/* error */
-	}
- if (!EC_KEY_generate_key(eckey))
-	{
+ }
+ if (!EC_KEY_generate_key(eckey)) {
 	/* error */
-	}
+ }
 
 Second step: compute the ECDSA signature of a SHA-1 hash value
 using B<ECDSA_do_sign>
 
  sig = ECDSA_do_sign(digest, 20, eckey);
- if (sig == NULL)
-	{
+ if (sig == NULL) {
 	/* error */
-	}
+ }
 
 or using B<ECDSA_sign>
 
  unsigned char *buffer, *pp;
- int            buf_len;
+ int buf_len;
+
  buf_len = ECDSA_size(eckey);
  buffer  = OPENSSL_malloc(buf_len);
  pp = buffer;
- if (!ECDSA_sign(0, dgst, dgstlen, pp, &buf_len, eckey);
-	{
+ if (!ECDSA_sign(0, dgst, dgstlen, pp, &buf_len, eckey) {
 	/* error */
-	}
+ }
 
 Third step: verify the created ECDSA signature using B<ECDSA_do_verify>
 
@@ -173,18 +171,14 @@ or using B<ECDSA_verify>
 
 and finally evaluate the return value:
 
- if (ret == -1)
-	{
+ if (ret == -1) {
 	/* error */
-	}
- else if (ret == 0)
-	{
+ } else if (ret == 0) {
 	/* incorrect signature */
-	}
- else	/* ret == 1 */
-	{
+ } else	{
+	/* ret == 1 */
 	/* signature ok */
-	}
+ }
 
 =head1 CONFORMING TO
 

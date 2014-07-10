@@ -169,18 +169,20 @@ to retrieve a page and copy the result to standard output.
  BIO *cbio, *out;
  int len;
  char tmpbuf[1024];
+
  ERR_load_crypto_strings();
  cbio = BIO_new_connect("localhost:http");
  out = BIO_new_fp(stdout, BIO_NOCLOSE);
- if(BIO_do_connect(cbio) <= 0) {
+ if (BIO_do_connect(cbio) <= 0) {
 	fprintf(stderr, "Error connecting to server\n");
 	ERR_print_errors_fp(stderr);
 	/* whatever ... */
-	}
+ }
  BIO_puts(cbio, "GET / HTTP/1.0\n\n");
  for(;;) {
 	len = BIO_read(cbio, tmpbuf, 1024);
-	if(len <= 0) break;
+	if (len <= 0)
+		break;
 	BIO_write(out, tmpbuf, len);
  }
  BIO_free(cbio);
