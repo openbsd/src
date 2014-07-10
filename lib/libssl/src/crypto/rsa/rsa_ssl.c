@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ssl.c,v 1.9 2014/07/09 19:51:38 jsing Exp $ */
+/* $OpenBSD: rsa_ssl.c,v 1.10 2014/07/10 07:41:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,11 +86,10 @@ RSA_padding_add_SSLv23(unsigned char *to, int tlen, const unsigned char *from,
 	if (RAND_bytes(p, j) <= 0)
 		return 0;
 	for (i = 0; i < j; i++) {
-		if (*p == '\0')
-			do {
-				if (RAND_bytes(p, 1) <= 0)
-					return 0;
-			} while (*p == '\0');
+		while (*p == '\0') {
+			if (RAND_bytes(p, 1) <= 0)
+				return 0;
+		}
 		p++;
 	}
 
