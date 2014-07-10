@@ -64,6 +64,4 @@ BIO_push() returns the end of the chain, B<b>.
 BIO_pop() returns the next BIO in the chain, or NULL if there is no next
 BIO.
 
-=head1 SEE ALSO
-
-TBA
+=cut

@@ -60,8 +60,4 @@ avoided if possible.
 
 L<d2i_X509(3)|d2i_X509(3)>
 
-=head1 HISTORY
-
-TBA
-
 =cut

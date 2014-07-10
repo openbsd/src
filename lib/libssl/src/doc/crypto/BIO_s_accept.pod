@@ -141,10 +141,6 @@ BIO_set_accept_port(), BIO_get_accept_port(), BIO_set_nbio_accept(),
 BIO_set_accept_bios(), BIO_set_bind_mode(), BIO_get_bind_mode() and
 BIO_do_accept() are macros.
 
-=head1 RETURN VALUES
-
-TBA
-
 =head1 EXAMPLE
 
 This example accepts two connections on port 4444, sends messages
@@ -190,6 +186,4 @@ down each and finally closes both down.
  BIO_free(cbio);
  BIO_free(cbio2);
 
-=head1 SEE ALSO
-
-TBA
+=cut

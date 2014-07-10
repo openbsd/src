@@ -100,8 +100,4 @@ calls X509_NAME_print() internally.
 
 L<ASN1_STRING_print_ex(3)|ASN1_STRING_print_ex(3)>
 
-=head1 HISTORY
-
-TBA
-
 =cut

@@ -102,4 +102,5 @@ in the inner loop of the Miller-Rabin test whenever it reached the
 squaring step (the parameters to B<callback> did not reveal how many
 witnesses had been tested); since OpenSSL 0.9.5, B<callback(1, ...)>
 is called as in BN_is_prime(3), i.e. once for each witness.
+
 =cut

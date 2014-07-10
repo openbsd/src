@@ -40,8 +40,4 @@ EVP_PKEY_free() does not return a value.
 
 L<EVP_PKEY_set1_RSA(3)|EVP_PKEY_set1_RSA(3)>
 
-=head1 HISTORY
-
-TBA
-
 =cut

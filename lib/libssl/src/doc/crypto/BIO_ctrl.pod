@@ -125,6 +125,4 @@ particular a return value of 0 can be returned if an operation is not
 supported, if an error occurred, if EOF has not been reached and in
 the case of BIO_seek() on a file BIO for a successful operation.
 
-=head1 SEE ALSO
-
-TBA
+=cut

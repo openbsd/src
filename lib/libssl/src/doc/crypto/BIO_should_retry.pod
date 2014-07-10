@@ -109,6 +109,4 @@ that is they cannot retry after a partial read or write. This is usually
 worked around by only passing the relevant data to ASN1 functions when
 the entire structure can be read or written.
 
-=head1 SEE ALSO
-
-TBA
+=cut

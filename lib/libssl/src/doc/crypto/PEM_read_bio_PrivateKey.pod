@@ -496,3 +496,5 @@ The read routines return either a pointer to the structure read or NULL
 if an error occurred.
 
 The write routines return 1 for success or 0 for failure.
+
+=cut

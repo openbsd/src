@@ -68,10 +68,4 @@ for failure.
 
 BIO_get_cipher_ctx() currently always returns 1.
 
-=head1 EXAMPLES
-
-TBA
-
-=head1 SEE ALSO
-
-TBA
+=cut

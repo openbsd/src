@@ -73,8 +73,4 @@ and EVP_PKEY_assign_EC_KEY() return 1 for success and 0 for failure.
 
 L<EVP_PKEY_new(3)|EVP_PKEY_new(3)>
 
-=head1 HISTORY
-
-TBA
-
 =cut

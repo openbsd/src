@@ -93,7 +93,4 @@ Traverse a chain looking for digest BIOs:
 	btmp = BIO_next(btmp);
  } while(btmp);
 
-
-=head1 SEE ALSO
-
-TBA
+=cut

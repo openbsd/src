@@ -186,7 +186,4 @@ to retrieve a page and copy the result to standard output.
  BIO_free(cbio);
  BIO_free(out);
 
-
-=head1 SEE ALSO
-
-TBA
+=cut

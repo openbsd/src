@@ -58,6 +58,4 @@ initialized.
 BIO_new_socket() returns the newly allocated BIO or NULL is an error
 occurred.
 
-=head1 SEE ALSO
-
-TBA
+=cut

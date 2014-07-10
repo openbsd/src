@@ -139,6 +139,4 @@ and BIO_puts() should be passed to the next BIO in the chain and digest
 the data passed through and that digests should be retrieved using a
 separate BIO_ctrl() call.
 
-=head1 SEE ALSO
-
-TBA
+=cut
