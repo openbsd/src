@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.19 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.20 2014/07/10 08:55:35 deraadt Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -47,6 +47,17 @@
 #include <sys/syslog.h>
 #include <sys/conf.h>
 #include <sys/poll.h>
+#include <sys/malloc.h>
+#include <sys/filedesc.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
+
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 
 #define LOG_RDPRI	(PZERO + 1)
 
@@ -65,6 +76,7 @@ int	log_open;			/* also used in log() */
 int	msgbufmapped;			/* is the message buffer mapped */
 int	msgbufenabled;			/* is logging to the buffer enabled */
 struct	msgbuf *msgbufp;		/* the mapped buffer, itself. */
+struct file *syslogf;
 
 void filt_logrdetach(struct knote *kn);
 int filt_logread(struct knote *kn, long hint);
@@ -142,6 +154,9 @@ int
 logclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 
+	if (syslogf)
+		FRELE(syslogf, p);
+	syslogf = NULL;
 	log_open = 0;
 	logsoftc.sc_state = 0;
 	return (0);
@@ -269,8 +284,9 @@ logwakeup(void)
 int
 logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct proc *p)
 {
+	struct file *fp;
 	long l;
-	int s;
+	int error, s;
 
 	switch (com) {
 
@@ -304,8 +320,69 @@ logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct proc *p)
 		*(int *)data = logsoftc.sc_pgid;
 		break;
 
+	case LIOCSFD:
+		if ((error = suser(p, 0)) != 0)
+			return (error);
+		if ((error = getsock(p->p_fd, *(int *)data, &fp)) != 0)
+			return (error);
+		if (syslogf)
+			FRELE(syslogf, p);
+		syslogf = fp;
+		break;
+
 	default:
 		return (ENOTTY);
 	}
 	return (0);
+}
+
+int
+sys_sendsyslog(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_sendsyslog_args /* {
+		syscallarg(const void *) buf;
+		syscallarg(size_t) nbyte;
+	} */ *uap = v;
+#ifdef KTRACE
+	struct iovec *ktriov = NULL;
+#endif
+	struct iovec aiov;
+	struct uio auio;
+	struct file *f;
+	int error;
+
+	if (syslogf == NULL)
+		return (ENOTCONN);
+	f = syslogf;
+	FREF(f);
+
+	aiov.iov_base = (char *)SCARG(uap, buf);
+	aiov.iov_len = SCARG(uap, nbyte);
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_segflg = UIO_USERSPACE;
+	auio.uio_rw = UIO_WRITE;
+	auio.uio_procp = p;
+	auio.uio_offset = 0;
+	auio.uio_resid = aiov.iov_len;
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_GENIO)) {
+		int iovlen = auio.uio_iovcnt * sizeof (struct iovec);
+
+		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
+		bcopy(auio.uio_iov, ktriov, iovlen);
+	}
+#endif
+
+	error = sosend(f->f_data, NULL, &auio, NULL, NULL, 0);
+
+#ifdef KTRACE
+	if (ktriov != NULL) {
+		if (error == 0)
+			ktrgenio(p, 0, UIO_WRITE, ktriov, aiov.iov_len);
+		free(ktriov, M_TEMP);
+	}
+#endif
+	FRELE(f, p);
+	return error;
 }

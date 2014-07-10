@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.h,v 1.13 2010/10/19 19:01:05 deraadt Exp $	*/
+/*	$OpenBSD: syslog.h,v 1.14 2014/07/10 08:55:35 deraadt Exp $	*/
 /*	$NetBSD: syslog.h,v 1.14 1996/04/03 20:46:44 christos Exp $	*/
 
 /*
@@ -36,6 +36,8 @@
 #define _SYS_SYSLOG_H_
 
 #define	_PATH_LOG	"/dev/log"
+
+#define	LIOCSFD		_IOW('l', 127, int)	/* set sendsyslog() fd */
 
 /*
  * priorities/facilities are encoded into a single 32-bit quantity, where the
