@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.78 2014/07/08 05:35:19 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.79 2014/07/10 11:15:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -605,6 +605,7 @@ vic_alloc_data(struct vic_softc *sc)
 	for (q = 0; q < VIC_NRXRINGS; q++) {
 		sc->sc_rxq[q].slots = (struct vic_rxdesc *)&kva[offset];
 		sc->sc_data->vd_rx_offset[q] = offset;
+		sc->sc_data->vd_rx[q].length = sc->sc_nrxbuf;
 
 		for (i = 0; i < sc->sc_nrxbuf; i++) {
 			rxd = &sc->sc_rxq[q].slots[i];
