@@ -13,7 +13,7 @@ BIO_push, BIO_pop - add and remove BIOs from a chain.
 
 =head1 DESCRIPTION
 
-The BIO_push() function appends the BIO B<append> to B<b>, it returns
+The BIO_push() function appends the BIO B<append> to B<b>, and returns
 B<b>.
 
 BIO_pop() removes the BIO B<b> from a chain and returns the next BIO
@@ -40,7 +40,7 @@ If the call:
 
  BIO_push(b64, f);
 
-is made then the new chain will be B<b64-chain>. After making the calls
+is made then the new chain will be B<b64-f>. After making the calls
 
  BIO_push(md2, b64);
  BIO_push(md1, md2);
@@ -54,12 +54,12 @@ by B<md1> and B<md2>. If the call:
 
  BIO_pop(md2);
 
-The call will return B<b64> and the new chain will be B<md1-b64-f> data can
+The call will return B<b64> and the new chain will be B<md1-b64-f>; data can
 be written to B<md1> as before.
 
 =head1 RETURN VALUES
 
-BIO_push() returns the end of the chain, B<b>.
+BIO_push() returns the beginning of the chain, B<b>.
 
 BIO_pop() returns the next BIO in the chain, or NULL if there is no next
 BIO.
