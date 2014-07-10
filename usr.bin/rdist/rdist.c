@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.23 2014/07/05 07:22:18 guenther Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.24 2014/07/10 14:29:27 tedu Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -114,17 +114,7 @@ main(int argc, char **argv, char **envp)
 	for (x = 1; x <= argc && argv[x]; x++) {
 		if (strcmp(argv[x], "-Server") != 0)
 			continue;
-#if	defined(_PATH_OLDRDIST)
-		message(MT_SYSLOG, 
-			"Old rdist (-Server) requested; running %s", 
-			_PATH_OLDRDIST);
-		(void) execl(_PATH_OLDRDIST, xbasename(_PATH_OLDRDIST), 
-			     "-Server", (char *)NULL);
-		fatalerr("Exec old rdist failed: %s: %s.", 
-			 _PATH_OLDRDIST, SYSERR);
-#else	/* !_PATH_OLDRDIST */
 		fatalerr("Old rdist not available.");
-#endif	/* _PATH_OLDRDIST */
 		exit(1);
 	}
 

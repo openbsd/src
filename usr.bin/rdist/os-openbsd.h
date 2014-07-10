@@ -29,7 +29,7 @@
  */
 
 /*
- * $OpenBSD: os-openbsd.h,v 1.22 2014/07/05 10:21:24 guenther Exp $
+ * $OpenBSD: os-openbsd.h,v 1.23 2014/07/10 14:29:27 tedu Exp $
  */
 
 /*
@@ -65,11 +65,6 @@
  */
 #define HAVE_VIS			/* Have vis() */
 #define HAVE_PATHS_H			/* Have <paths.h> */
-
-/*
- * Path to old-style rdist command
- */
-#define _PATH_OLDRDIST	"/usr/bin/oldrdist"
 
 /*
  * Path to remote shell command
