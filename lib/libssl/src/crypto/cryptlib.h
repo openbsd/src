@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.h,v 1.22 2014/07/10 20:42:45 jsing Exp $ */
+/* $OpenBSD: cryptlib.h,v 1.23 2014/07/10 22:13:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,8 +78,6 @@ extern "C" {
 
 void OPENSSL_cpuid_setup(void);
 extern unsigned int OPENSSL_ia32cap_P[];
-void OPENSSL_showfatal(const char *fmta,...);
-void *OPENSSL_stderr(void);
 
 #ifdef  __cplusplus
 }

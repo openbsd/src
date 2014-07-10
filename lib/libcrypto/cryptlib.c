@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.29 2014/07/10 20:02:58 jsing Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.30 2014/07/10 22:13:39 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -688,8 +688,7 @@ OPENSSL_cpuid_setup(void)
 }
 #endif
 
-
-void
+static void
 OPENSSL_showfatal(const char *fmta, ...)
 {
 	va_list ap;
@@ -706,12 +705,6 @@ OpenSSLDie(const char *file, int line, const char *assertion)
 	    "%s(%d): OpenSSL internal error, assertion failed: %s\n",
 	    file, line, assertion);
 	abort();
-}
-
-void *
-OPENSSL_stderr(void)
-{
-	return stderr;
 }
 
 int
