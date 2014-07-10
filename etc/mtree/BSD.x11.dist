@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.32 2014/01/12 15:07:47 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.33 2014/07/10 07:12:28 espie Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -123,6 +123,8 @@
                         ..
                     ..
                 ..
+		locate
+		..
                 modules
                     dri
                     ..
