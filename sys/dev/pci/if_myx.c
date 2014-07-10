@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.59 2014/07/08 05:35:18 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.60 2014/07/10 07:02:50 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1852,6 +1852,9 @@ myx_rxeof(struct myx_softc *sc)
 	    sc->sc_intrq_dma.mxm_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	for (ring = MYX_RXSMALL; ring <= MYX_RXBIG; ring++) {
+		if (rxfree[ring] == 0)
+			continue;
+
 		mtx_enter(&sc->sc_rx_ring_lock[ring].mrl_mtx);
 		if_rxr_put(&sc->sc_rx_ring[ring], rxfree[ring]);
 		mtx_leave(&sc->sc_rx_ring_lock[ring].mrl_mtx);
