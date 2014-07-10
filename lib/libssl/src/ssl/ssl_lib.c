@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.70 2014/07/09 11:25:42 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.71 2014/07/10 08:18:55 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1957,7 +1957,7 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	CERT_PKEY	*cpk;
 	int		 rsa_enc, rsa_tmp, rsa_sign, dh_tmp, dh_rsa, dh_dsa, dsa_sign;
 	unsigned long	 mask_k, mask_a;
-	int		 have_ecc_cert, ecdh_ok, ecdsa_ok, ecc_pkey_size;
+	int		 have_ecc_cert, ecdh_ok, ecdsa_ok;
 	int		 have_ecdh_tmp;
 	X509		*x = NULL;
 	EVP_PKEY	*ecc_pkey = NULL;
@@ -2030,8 +2030,6 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 		ecdsa_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
 		(x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE) : 1;
 		ecc_pkey = X509_get_pubkey(x);
-		ecc_pkey_size = (ecc_pkey != NULL) ?
-		EVP_PKEY_bits(ecc_pkey) : 0;
 		EVP_PKEY_free(ecc_pkey);
 		if ((x->sig_alg) && (x->sig_alg->algorithm)) {
 			signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
