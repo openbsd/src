@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.29 2014/06/30 14:13:27 tedu Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.30 2014/07/10 08:51:14 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -487,7 +487,7 @@ ssl23_get_client_hello(SSL *s)
 		}
 		s2n(j, dd);
 
-		/* COMPRESSION */
+		/* add in (no) COMPRESSION */
 		*(d++) = 1;
 		*(d++) = 0;
 

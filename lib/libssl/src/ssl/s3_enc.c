@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.51 2014/07/09 11:25:42 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.52 2014/07/10 08:51:14 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -225,9 +225,6 @@ ssl3_change_cipher_state(SSL *s, int which)
 	const EVP_CIPHER *cipher;
 	const EVP_MD *mac;
 
-#ifndef OPENSSL_NO_COMP
-	const SSL_COMP *comp;
-#endif
 
 	cipher = s->s3->tmp.new_sym_enc;
 	mac = s->s3->tmp.new_hash;
@@ -250,41 +247,6 @@ ssl3_change_cipher_state(SSL *s, int which)
 	use_client_keys = ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
 	    (which == SSL3_CHANGE_CIPHER_SERVER_READ));
 
-#ifndef OPENSSL_NO_COMP
-	comp = s->s3->tmp.new_compression;
-	if (is_read) {
-		if (s->expand != NULL) {
-			COMP_CTX_free(s->expand);
-			s->expand = NULL;
-		}
-		if (comp != NULL) {
-			s->expand = COMP_CTX_new(comp->method);
-			if (s->expand == NULL) {
-				SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE,
-				    SSL_R_COMPRESSION_LIBRARY_ERROR);
-				goto err2;
-			}
-			if (s->s3->rrec.comp == NULL)
-				s->s3->rrec.comp =
-				    malloc(SSL3_RT_MAX_PLAIN_LENGTH);
-			if (s->s3->rrec.comp == NULL)
-				goto err;
-		}
-	} else {
-		if (s->compress != NULL) {
-			COMP_CTX_free(s->compress);
-			s->compress = NULL;
-		}
-		if (comp != NULL) {
-			s->compress = COMP_CTX_new(comp->method);
-			if (s->compress == NULL) {
-				SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE,
-				    SSL_R_COMPRESSION_LIBRARY_ERROR);
-				goto err2;
-			}
-		}
-	}
-#endif
 
 	if (is_read) {
 		EVP_CIPHER_CTX_free(s->enc_read_ctx);
@@ -365,16 +327,9 @@ ssl3_setup_key_block(SSL *s)
 	const EVP_CIPHER *cipher;
 	const EVP_MD *mac;
 	int ret = 0;
-	SSL_COMP *comp;
 
 	if (s->s3->tmp.key_block_length != 0)
 		return (1);
-
-	if (!ssl_cipher_get_comp(s->session, &comp)) {
-		SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK,
-		    SSL_R_CIPHER_COMPRESSION_UNAVAILABLE);
-		return (0);
-	}
 
 	if (!ssl_cipher_get_evp(s->session, &cipher, &mac, NULL, NULL)) {
 		SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK,
@@ -384,7 +339,6 @@ ssl3_setup_key_block(SSL *s)
 
 	s->s3->tmp.new_sym_enc = cipher;
 	s->s3->tmp.new_hash = mac;
-	s->s3->tmp.new_compression = comp;
 
 	mac_len = EVP_MD_size(mac);
 	key_len = EVP_CIPHER_key_length(cipher);

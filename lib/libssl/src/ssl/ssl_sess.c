@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.34 2014/06/21 20:27:25 tedu Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.35 2014/07/10 08:51:15 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -207,7 +207,6 @@ SSL_SESSION_new(void)
 	ss->time = time(NULL);
 	ss->prev = NULL;
 	ss->next = NULL;
-	ss->compress_meth = 0;
 	ss->tlsext_hostname = NULL;
 
 	ss->tlsext_ecpointformatlist_length = 0;
@@ -233,7 +232,7 @@ SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len)
 unsigned int
 SSL_SESSION_get_compress_id(const SSL_SESSION *s)
 {
-	return s->compress_meth;
+	return 0;
 }
 
 /* Even with SSLv2, we have 16 bytes (128 bits) of session ID space. SSLv3/TLSv1

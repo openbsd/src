@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_txt.c,v 1.21 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: ssl_txt.c,v 1.22 2014/07/10 08:51:15 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -182,22 +182,6 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 			goto err;
 	}
 
-#ifndef OPENSSL_NO_COMP
-	if (x->compress_meth != 0) {
-		SSL_COMP *comp = NULL;
-
-		if (!ssl_cipher_get_comp(x, &comp))
-			goto err;
-
-		if (comp == NULL) {
-			if (BIO_printf(bp, "\n    Compression: %d", x->compress_meth) <= 0)
-				goto err;
-		} else {
-			if (BIO_printf(bp, "\n    Compression: %d (%s)", comp->id, comp->method->name) <= 0)
-				goto err;
-		}
-	}
-#endif
 	if (x->time != 0) {
 		if (BIO_printf(bp, "\n    Start Time: %lld", (long long)x->time) <= 0)
 			goto err;

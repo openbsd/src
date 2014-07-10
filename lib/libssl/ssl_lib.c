@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.71 2014/07/10 08:18:55 bcook Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.72 2014/07/10 08:51:15 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1793,9 +1793,6 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->ex_data);
 
 	ret->extra_certs = NULL;
-	/* No compression for DTLS */
-	if (meth->version != DTLS1_VERSION)
-		ret->comp_methods = SSL_COMP_get_compression_methods();
 
 	ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
@@ -2610,12 +2607,6 @@ ssl_clear_cipher_ctx(SSL *s)
 		s->aead_write_ctx = NULL;
 	}
 
-#ifndef OPENSSL_NO_COMP
-	COMP_CTX_free(s->expand);
-	s->expand = NULL;
-	COMP_CTX_free(s->compress);
-	s->compress = NULL;
-#endif
 }
 
 /* Fix this function so that it takes an optional type parameter */
@@ -2645,7 +2636,6 @@ SSL_get_current_cipher(const SSL *s)
 		return (s->session->cipher);
 	return (NULL);
 }
-#ifdef OPENSSL_NO_COMP
 const void *
 SSL_get_current_compression(SSL *s)
 {
@@ -2657,24 +2647,6 @@ SSL_get_current_expansion(SSL *s)
 {
 	return (NULL);
 }
-#else
-
-const COMP_METHOD *
-SSL_get_current_compression(SSL *s)
-{
-	if (s->compress != NULL)
-		return (s->compress->meth);
-	return (NULL);
-}
-
-const COMP_METHOD *
-SSL_get_current_expansion(SSL *s)
-{
-	if (s->expand != NULL)
-		return (s->expand->meth);
-	return (NULL);
-}
-#endif
 
 int
 ssl_init_wbio_buffer(SSL *s, int push)

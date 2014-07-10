@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.29 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.30 2014/07/10 08:51:14 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -293,10 +293,6 @@ ssl23_client_hello(SSL *s)
 	int i;
 	unsigned long l;
 	int version = 0, version_major, version_minor;
-#ifndef OPENSSL_NO_COMP
-	int j;
-	SSL_COMP *comp;
-#endif
 	int ret;
 	unsigned long mask, options = s->options;
 
@@ -384,21 +380,8 @@ ssl23_client_hello(SSL *s)
 		s2n(i, p);
 		p += i;
 
-		/* COMPRESSION */
-#ifdef OPENSSL_NO_COMP
+		/* add in (no) COMPRESSION */
 		*(p++) = 1;
-#else
-		if ((s->options & SSL_OP_NO_COMPRESSION) ||
-		    !s->ctx->comp_methods)
-			j = 0;
-		else
-			j = sk_SSL_COMP_num(s->ctx->comp_methods);
-		*(p++) = 1 + j;
-		for (i = 0; i < j; i++) {
-			comp = sk_SSL_COMP_value(s->ctx->comp_methods, i);
-			*(p++) = comp->id;
-		}
-#endif
 		/* Add the NULL method */
 		*(p++) = 0;
 

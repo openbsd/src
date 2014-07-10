@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.23 2014/06/13 11:52:03 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.24 2014/07/10 08:51:15 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,9 +117,6 @@
 #ifndef HEADER_SSL3_H 
 #define HEADER_SSL3_H 
 
-#ifndef OPENSSL_NO_COMP
-#include <openssl/comp.h>
-#endif
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
@@ -285,12 +282,7 @@ extern "C" {
 
 /* If compression isn't used don't include the compression overhead */
 
-#ifdef OPENSSL_NO_COMP
 #define SSL3_RT_MAX_COMPRESSED_LENGTH		SSL3_RT_MAX_PLAIN_LENGTH
-#else
-#define SSL3_RT_MAX_COMPRESSED_LENGTH	\
-		(SSL3_RT_MAX_PLAIN_LENGTH+SSL3_RT_MAX_COMPRESSED_OVERHEAD)
-#endif
 #define SSL3_RT_MAX_ENCRYPTED_LENGTH	\
 		(SSL3_RT_MAX_ENCRYPTED_OVERHEAD+SSL3_RT_MAX_COMPRESSED_LENGTH)
 #define SSL3_RT_MAX_PACKET_SIZE		\
@@ -336,7 +328,6 @@ typedef struct ssl3_record_st {
 /*r */	unsigned int off;       /* read/write offset into 'buf' */
 /*rw*/	unsigned char *data;    /* pointer to the record data */
 /*rw*/	unsigned char *input;   /* where the decode bytes are */
-/*r */	unsigned char *comp;    /* only used with decompression - malloc()ed */
 /*r */  unsigned long epoch;    /* epoch number, needed by DTLS1 */
 /*r */  unsigned char seq_num[8]; /* sequence number, needed by DTLS1 */
 } SSL3_RECORD;
@@ -492,11 +483,6 @@ typedef struct ssl3_state_st {
 		const EVP_MD *new_hash;
 		int new_mac_pkey_type;
 		int new_mac_secret_size;
-#ifndef OPENSSL_NO_COMP
-		const SSL_COMP *new_compression;
-#else
-		char *new_compression;
-#endif
 		int cert_request;
 	} tmp;
 

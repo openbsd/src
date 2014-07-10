@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.69 2014/07/10 08:25:00 guenther Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.70 2014/07/10 08:51:14 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -884,9 +884,6 @@ ssl3_get_client_hello(SSL *s)
 	unsigned long id;
 	unsigned char *p, *d, *q;
 	SSL_CIPHER *c;
-#ifndef OPENSSL_NO_COMP
-	SSL_COMP *comp = NULL;
-#endif
 	STACK_OF(SSL_CIPHER) *ciphers = NULL;
 
 	/*
@@ -1173,96 +1170,11 @@ ssl3_get_client_hello(SSL *s)
 	}
 
 	/*
-	 * Worst case, we will use the NULL compression, but if we have other
-	 * options, we will now look for them.  We have i-1 compression
-	 * algorithms from the client, starting at q.
-	 */
-	s->s3->tmp.new_compression = NULL;
-#ifndef OPENSSL_NO_COMP
-	/* This only happens if we have a cache hit */
-	if (s->session->compress_meth != 0) {
-		int m, comp_id = s->session->compress_meth;
-		/* Perform sanity checks on resumed compression algorithm */
-		/* Can't disable compression */
-		if (s->options & SSL_OP_NO_COMPRESSION) {
-			al = SSL_AD_INTERNAL_ERROR;
-			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
-			    SSL_R_INCONSISTENT_COMPRESSION);
-			goto f_err;
-		}
-		/* Look for resumed compression method */
-		for (m = 0; m < sk_SSL_COMP_num(s->ctx->comp_methods); m++) {
-			comp = sk_SSL_COMP_value(s->ctx->comp_methods, m);
-			if (comp_id == comp->id) {
-				s->s3->tmp.new_compression = comp;
-				break;
-			}
-		}
-		if (s->s3->tmp.new_compression == NULL) {
-			al = SSL_AD_INTERNAL_ERROR;
-			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
-			    SSL_R_INVALID_COMPRESSION_ALGORITHM);
-			goto f_err;
-		}
-		/* Look for resumed method in compression list */
-		for (m = 0; m < i; m++) {
-			if (q[m] == comp_id)
-				break;
-		}
-		if (m >= i) {
-			al = SSL_AD_ILLEGAL_PARAMETER;
-			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
-			    SSL_R_REQUIRED_COMPRESSSION_ALGORITHM_MISSING);
-			goto f_err;
-		}
-	} else if (s->hit)
-		comp = NULL;
-	else if (!(s->options & SSL_OP_NO_COMPRESSION) && s->ctx->comp_methods)
-	{ /* See if we have a match */
-		int m, nn, o, v, done = 0;
-
-		nn = sk_SSL_COMP_num(s->ctx->comp_methods);
-		for (m = 0; m < nn; m++) {
-			comp = sk_SSL_COMP_value(s->ctx->comp_methods, m);
-			v = comp->id;
-			for (o = 0; o < i; o++) {
-				if (v == q[o]) {
-					done = 1;
-					break;
-				}
-			}
-			if (done)
-				break;
-		}
-		if (done)
-			s->s3->tmp.new_compression = comp;
-		else
-			comp = NULL;
-	}
-#else
-	/*
-	 * If compression is disabled we'd better not try to resume a session
-	 * using compression.
-	 */
-	if (s->session->compress_meth != 0) {
-		al = SSL_AD_INTERNAL_ERROR;
-		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
-		    SSL_R_INCONSISTENT_COMPRESSION);
-		goto f_err;
-	}
-#endif
-
-	/*
 	 * Given s->session->ciphers and SSL_get_ciphers, we must
 	 * pick a cipher
 	 */
 
 	if (!s->hit) {
-#ifdef OPENSSL_NO_COMP
-		s->session->compress_meth = 0;
-#else
-		s->session->compress_meth = (comp == NULL) ? 0 : comp->id;
-#endif
 		if (s->session->ciphers != NULL)
 			sk_SSL_CIPHER_free(s->session->ciphers);
 		s->session->ciphers = ciphers;
@@ -1405,14 +1317,7 @@ ssl3_send_server_hello(SSL *s)
 		p += i;
 
 		/* put the compression method */
-#ifdef OPENSSL_NO_COMP
 		*(p++) = 0;
-#else
-		if (s->s3->tmp.new_compression == NULL)
-			*(p++) = 0;
-		else
-			*(p++) = s->s3->tmp.new_compression->id;
-#endif
 		if (ssl_prepare_serverhello_tlsext(s) <= 0) {
 			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,
 			    SSL_R_SERVERHELLO_TLSEXT);

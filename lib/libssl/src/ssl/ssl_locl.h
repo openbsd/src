@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.56 2014/07/09 11:25:42 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.57 2014/07/10 08:51:15 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -153,9 +153,6 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/buffer.h>
-#ifndef OPENSSL_NO_COMP
-#include <openssl/comp.h>
-#endif
 #include <openssl/bio.h>
 #include <openssl/stack.h>
 #include <openssl/rsa.h>
@@ -547,15 +544,6 @@ struct ssl_aead_ctx_st {
 	char variable_nonce_in_record;
 };
 
-#ifndef OPENSSL_NO_COMP
-/* Used for holding the relevant compression methods loaded into SSL_CTX */
-typedef struct ssl3_comp_st {
-	int comp_id;	/* The identifier byte for this compression type */
-	char *name;	/* Text name used for the compression type */
-	COMP_METHOD *method; /* The method :-) */
-} SSL3_COMP;
-#endif
-
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 extern SSL_CIPHER ssl3_ciphers[];
 
@@ -685,8 +673,6 @@ long tls1_default_timeout(void);
 int dtls1_do_write(SSL *s, int type);
 int ssl3_read_n(SSL *s, int n, int max, int extend);
 int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
-int ssl3_do_compress(SSL *ssl);
-int ssl3_do_uncompress(SSL *ssl);
 int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
     unsigned int len);
 unsigned char *dtls1_set_message_header(SSL *s, unsigned char *p,

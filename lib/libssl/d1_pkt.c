@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.31 2014/07/09 16:06:14 miod Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.32 2014/07/10 08:51:14 tedu Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -425,20 +425,6 @@ dtls1_process_record(SSL *s)
 		rr->length = 0;
 		s->packet_length = 0;
 		goto err;
-	}
-
-	/* r->length is now just compressed */
-	if (s->expand != NULL) {
-		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH) {
-			al = SSL_AD_RECORD_OVERFLOW;
-			SSLerr(SSL_F_DTLS1_PROCESS_RECORD, SSL_R_COMPRESSED_LENGTH_TOO_LONG);
-			goto f_err;
-		}
-		if (!ssl3_do_uncompress(s)) {
-			al = SSL_AD_DECOMPRESSION_FAILURE;
-			SSLerr(SSL_F_DTLS1_PROCESS_RECORD, SSL_R_BAD_DECOMPRESSION);
-			goto f_err;
-		}
 	}
 
 	if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH) {
@@ -1373,16 +1359,8 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	/* we now 'read' from wr->input, wr->length bytes into
 	 * wr->data */
 
-	/* first we compress */
-	if (s->compress != NULL) {
-		if (!ssl3_do_compress(s)) {
-			SSLerr(SSL_F_DO_DTLS1_WRITE, SSL_R_COMPRESSION_FAILURE);
-			goto err;
-		}
-	} else {
-		memcpy(wr->data, wr->input, wr->length);
-		wr->input = wr->data;
-	}
+	memcpy(wr->data, wr->input, wr->length);
+	wr->input = wr->data;
 
 	/* we should still have the output to wr->data and the input
 	 * from wr->input.  Length should be wr->length.

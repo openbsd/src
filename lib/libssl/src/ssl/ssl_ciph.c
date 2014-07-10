@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.58 2014/07/09 14:20:55 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.59 2014/07/10 08:51:15 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -142,9 +142,6 @@
 
 #include <stdio.h>
 #include <openssl/objects.h>
-#ifndef OPENSSL_NO_COMP
-#include <openssl/comp.h>
-#endif
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
@@ -174,8 +171,6 @@ static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX] = {
 #define SSL_COMP_NULL_IDX	0
 #define SSL_COMP_ZLIB_IDX	1
 #define SSL_COMP_NUM_IDX	2
-
-static STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
 
 #define SSL_MD_MD5_IDX	0
 #define SSL_MD_SHA1_IDX	1
@@ -645,81 +640,14 @@ ssl_load_ciphers(void)
 	ssl_mac_secret_size[SSL_MD_SHA384_IDX]=
 	EVP_MD_size(ssl_digest_methods[SSL_MD_SHA384_IDX]);
 }
-#ifndef OPENSSL_NO_COMP
-
-static int
-sk_comp_cmp(const SSL_COMP * const *a,
-    const SSL_COMP * const *b)
-{
-	return ((*a)->id - (*b)->id);
-}
-
-static void
-load_builtin_compressions(void)
-{
-	int got_write_lock = 0;
-
-	CRYPTO_r_lock(CRYPTO_LOCK_SSL);
-	if (ssl_comp_methods == NULL) {
-		CRYPTO_r_unlock(CRYPTO_LOCK_SSL);
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL);
-		got_write_lock = 1;
-
-		if (ssl_comp_methods == NULL) {
-			SSL_COMP *comp = NULL;
-
-			ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
-			if (ssl_comp_methods != NULL) {
-				comp = malloc(sizeof(SSL_COMP));
-				if (comp != NULL) {
-					comp->method = COMP_zlib();
-					if (comp->method &&
-					    comp->method->type == NID_undef)
-						free(comp);
-					else {
-						comp->id = SSL_COMP_ZLIB_IDX;
-						comp->name = comp->method->name;
-						sk_SSL_COMP_push(ssl_comp_methods, comp);
-					}
-				}
-				sk_SSL_COMP_sort(ssl_comp_methods);
-			}
-		}
-	}
-
-	if (got_write_lock)
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
-	else
-		CRYPTO_r_unlock(CRYPTO_LOCK_SSL);
-}
-#endif
 
 /* ssl_cipher_get_comp sets comp to the correct SSL_COMP for the given
  * session and returns 1. On error it returns 0. */
 int
 ssl_cipher_get_comp(const SSL_SESSION *s, SSL_COMP **comp)
 {
-	SSL_COMP ctmp;
-	int i;
-
-#ifndef OPENSSL_NO_COMP
-	load_builtin_compressions();
-#endif
-
 	*comp = NULL;
-	if (s->compress_meth == 0)
-		return 1;
-	if (ssl_comp_methods == NULL)
-		return 0;
-
-	ctmp.id = s->compress_meth;
-	i = sk_SSL_COMP_find(ssl_comp_methods, &ctmp);
-	if (i >= 0) {
-		*comp = sk_SSL_COMP_value(ssl_comp_methods, i);
-		return 1;
-	}
-
-	return 0;
+	return 1;
 }
 
 int
@@ -1919,102 +1847,3 @@ SSL_CIPHER_get_id(const SSL_CIPHER *c)
 {
 	return c->id;
 }
-
-SSL_COMP *
-ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
-{
-	SSL_COMP *ctmp;
-	int i, nn;
-
-	if ((n == 0) || (sk == NULL))
-		return (NULL);
-	nn = sk_SSL_COMP_num(sk);
-	for (i = 0; i < nn; i++) {
-		ctmp = sk_SSL_COMP_value(sk, i);
-		if (ctmp->id == n)
-			return (ctmp);
-	}
-	return (NULL);
-}
-
-#ifdef OPENSSL_NO_COMP
-void *
-SSL_COMP_get_compression_methods(void)
-{
-	return NULL;
-}
-
-int
-SSL_COMP_add_compression_method(int id, void *cm)
-{
-	return 1;
-}
-
-const char *
-SSL_COMP_get_name(const void *comp)
-{
-	return NULL;
-}
-#else
-STACK_OF(SSL_COMP) *
-SSL_COMP_get_compression_methods(void)
-{
-	load_builtin_compressions();
-	return (ssl_comp_methods);
-}
-
-int
-SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
-{
-	SSL_COMP *comp;
-
-	if (cm == NULL || cm->type == NID_undef)
-		return 1;
-
-	/* According to draft-ietf-tls-compression-04.txt, the
-	   compression number ranges should be the following:
-
-	   0 to 63:    methods defined by the IETF
-	   64 to 192:  external party methods assigned by IANA
-	   193 to 255: reserved for private use */
-	if (id < 193 || id > 255) {
-		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
-		    SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE);
-		return 1;
-	}
-
-	comp = malloc(sizeof(SSL_COMP));
-	if (comp == NULL) {
-		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
-		    ERR_R_MALLOC_FAILURE);
-		return (1);
-	}
-	comp->id = id;
-	comp->method = cm;
-	load_builtin_compressions();
-	if (ssl_comp_methods &&
-	    sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
-		free(comp);
-		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
-		    SSL_R_DUPLICATE_COMPRESSION_ID);
-		return (1);
-	} else if ((ssl_comp_methods == NULL) ||
-	    !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
-		free(comp);
-		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
-		    ERR_R_MALLOC_FAILURE);
-		return (1);
-	} else {
-		return (0);
-	}
-}
-
-const char *
-SSL_COMP_get_name(const COMP_METHOD *comp)
-{
-	if (comp)
-		return comp->name;
-	return NULL;
-}
-
-#endif

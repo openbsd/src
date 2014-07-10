@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.65 2014/07/09 11:25:42 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.66 2014/07/10 08:51:15 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -137,9 +137,6 @@
 
 #include <stdio.h>
 #include "ssl_locl.h"
-#ifndef OPENSSL_NO_COMP
-#include <openssl/comp.h>
-#endif
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
@@ -470,9 +467,6 @@ tls1_change_cipher_state(SSL *s, int which)
 	const EVP_AEAD *aead;
 	char is_read, use_client_keys;
 
-#ifndef OPENSSL_NO_COMP
-	const SSL_COMP *comp;
-#endif
 
 	cipher = s->s3->tmp.new_sym_enc;
 	aead = s->s3->tmp.new_aead;
@@ -492,41 +486,6 @@ tls1_change_cipher_state(SSL *s, int which)
 	use_client_keys = ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
 	    (which == SSL3_CHANGE_CIPHER_SERVER_READ));
 
-#ifndef OPENSSL_NO_COMP
-	comp = s->s3->tmp.new_compression;
-	if (is_read) {
-		if (s->expand != NULL) {
-			COMP_CTX_free(s->expand);
-			s->expand = NULL;
-		}
-		if (comp != NULL) {
-			s->expand = COMP_CTX_new(comp->method);
-			if (s->expand == NULL) {
-				SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,
-				    SSL_R_COMPRESSION_LIBRARY_ERROR);
-				goto err2;
-			}
-			if (s->s3->rrec.comp == NULL)
-				s->s3->rrec.comp =
-				    malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
-			if (s->s3->rrec.comp == NULL)
-				goto err;
-		}
-	} else {
-		if (s->compress != NULL) {
-			COMP_CTX_free(s->compress);
-			s->compress = NULL;
-		}
-		if (comp != NULL) {
-			s->compress = COMP_CTX_new(comp->method);
-			if (s->compress == NULL) {
-				SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,
-				    SSL_R_COMPRESSION_LIBRARY_ERROR);
-				goto err2;
-			}
-		}
-	}
-#endif
 
 	/*
 	 * Reset sequence number to zero - for DTLS this is handled in
@@ -596,8 +555,6 @@ tls1_change_cipher_state(SSL *s, int which)
 	return tls1_change_cipher_state_cipher(s, is_read, use_client_keys,
 	    mac_secret, mac_secret_size, key, key_len, iv, iv_len);
 
-err:
-	SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
 err2:
 	return (0);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.28 2014/07/09 11:25:42 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.29 2014/07/10 08:51:14 tedu Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -946,14 +946,7 @@ dtls1_send_server_hello(SSL *s)
 		p += i;
 
 		/* put the compression method */
-#ifdef OPENSSL_NO_COMP
 		*(p++) = 0;
-#else
-		if (s->s3->tmp.new_compression == NULL)
-			*(p++) = 0;
-		else
-			*(p++) = s->s3->tmp.new_compression->id;
-#endif
 
 		if ((p = ssl_add_serverhello_tlsext(s, p, buf + SSL3_RT_MAX_PLAIN_LENGTH)) == NULL) {
 			SSLerr(SSL_F_DTLS1_SEND_SERVER_HELLO, ERR_R_INTERNAL_ERROR);

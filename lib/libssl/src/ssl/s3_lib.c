@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.67 2014/07/09 11:25:42 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.68 2014/07/10 08:51:14 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2420,7 +2420,6 @@ ssl3_free(SSL *s)
 	ssl3_release_read_buffer(s);
 	ssl3_release_write_buffer(s);
 
-	free(s->s3->rrec.comp);
 	DH_free(s->s3->tmp.dh);
 	EC_KEY_free(s->s3->tmp.ecdh);
 
@@ -2443,9 +2442,6 @@ ssl3_clear(SSL *s)
 	ssl3_cleanup_key_block(s);
 	if (s->s3->tmp.ca_names != NULL)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
-
-	free(s->s3->rrec.comp);
-	s->s3->rrec.comp = NULL;
 
 	DH_free(s->s3->tmp.dh);
 	s->s3->tmp.dh = NULL;

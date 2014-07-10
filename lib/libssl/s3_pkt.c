@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.48 2014/06/19 21:29:51 tedu Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.49 2014/07/10 08:51:14 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -469,21 +469,6 @@ again:
 		goto f_err;
 	}
 
-	/* r->length is now just compressed */
-	if (s->expand != NULL) {
-		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + extra) {
-			al = SSL_AD_RECORD_OVERFLOW;
-			SSLerr(SSL_F_SSL3_GET_RECORD,
-			    SSL_R_COMPRESSED_LENGTH_TOO_LONG);
-			goto f_err;
-		}
-		if (!ssl3_do_uncompress(s)) {
-			al = SSL_AD_DECOMPRESSION_FAILURE;
-			SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_DECOMPRESSION);
-			goto f_err;
-		}
-	}
-
 	if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH + extra) {
 		al = SSL_AD_RECORD_OVERFLOW;
 		SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_DATA_LENGTH_TOO_LONG);
@@ -514,46 +499,6 @@ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 err:
 	return (ret);
-}
-
-int
-ssl3_do_uncompress(SSL *ssl)
-{
-#ifndef OPENSSL_NO_COMP
-	int i;
-	SSL3_RECORD *rr;
-
-	rr = &(ssl->s3->rrec);
-	i = COMP_expand_block(ssl->expand, rr->comp,
-	SSL3_RT_MAX_PLAIN_LENGTH, rr->data, (int)rr->length);
-	if (i < 0)
-		return (0);
-	else
-		rr->length = i;
-	rr->data = rr->comp;
-#endif
-	return (1);
-}
-
-int
-ssl3_do_compress(SSL *ssl)
-{
-#ifndef OPENSSL_NO_COMP
-	int i;
-	SSL3_RECORD *wr;
-
-	wr = &(ssl->s3->wrec);
-	i = COMP_compress_block(ssl->compress, wr->data,
-	    SSL3_RT_MAX_COMPRESSED_LENGTH,
-	    wr->input, (int)wr->length);
-	if (i < 0)
-		return (0);
-	else
-		wr->length = i;
-
-	wr->input = wr->data;
-#endif
-	return (1);
 }
 
 /* Call this to write data in records of type 'type'
@@ -766,16 +711,8 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
 	/* we now 'read' from wr->input, wr->length bytes into wr->data */
 
-	/* first we compress */
-	if (s->compress != NULL) {
-		if (!ssl3_do_compress(s)) {
-			SSLerr(SSL_F_DO_SSL3_WRITE, SSL_R_COMPRESSION_FAILURE);
-			goto err;
-		}
-	} else {
-		memcpy(wr->data, wr->input, wr->length);
-		wr->input = wr->data;
-	}
+	memcpy(wr->data, wr->input, wr->length);
+	wr->input = wr->data;
 
 	/* we should still have the output to wr->data and the input
 	 * from wr->input.  Length should be wr->length.

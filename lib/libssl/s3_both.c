@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.25 2014/06/19 21:29:51 tedu Exp $ */
+/* $OpenBSD: s3_both.c,v 1.26 2014/07/10 08:51:14 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -287,7 +287,6 @@ f_err:
  * ssl->s3->read_sequence		zero
  * ssl->s3->read_mac_secret		re-init
  * ssl->session->read_sym_enc		assign
- * ssl->session->read_compression	assign
  * ssl->session->read_hash		assign
  */
 int
@@ -640,10 +639,6 @@ ssl3_setup_read_buffer(SSL *s)
 			s->s3->init_extra = 1;
 			len += SSL3_RT_MAX_EXTRA;
 		}
-#ifndef OPENSSL_NO_COMP
-		if (!(s->options & SSL_OP_NO_COMPRESSION))
-			len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
-#endif
 		if ((p = malloc(len)) == NULL)
 			goto err;
 		s->s3->rbuf.buf = p;
@@ -676,10 +671,6 @@ ssl3_setup_write_buffer(SSL *s)
 	if (s->s3->wbuf.buf == NULL) {
 		len = s->max_send_fragment +
 		    SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
-#ifndef OPENSSL_NO_COMP
-		if (!(s->options & SSL_OP_NO_COMPRESSION))
-			len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
-#endif
 		if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
 			len += headerlen + align +
 			    SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;

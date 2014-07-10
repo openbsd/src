@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.23 2014/07/10 08:25:00 guenther Exp $ */
+/* $OpenBSD: d1_both.c,v 1.24 2014/07/10 08:51:14 tedu Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -944,7 +944,6 @@ dtls1_send_finished(SSL *s, int a, int b, const char *sender, int slen)
  * ssl->s3->read_sequence		zero
  * ssl->s3->read_mac_secret		re-init
  * ssl->session->read_sym_enc		assign
- * ssl->session->read_compression	assign
  * ssl->session->read_hash		assign
  */
 int
@@ -1160,7 +1159,6 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 	/* save current state*/
 	frag->msg_header.saved_retransmit_state.enc_write_ctx = s->enc_write_ctx;
 	frag->msg_header.saved_retransmit_state.write_hash = s->write_hash;
-	frag->msg_header.saved_retransmit_state.compress = s->compress;
 	frag->msg_header.saved_retransmit_state.session = s->session;
 	frag->msg_header.saved_retransmit_state.epoch = s->d1->w_epoch;
 
@@ -1229,7 +1227,6 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 	/* save current state */
 	saved_state.enc_write_ctx = s->enc_write_ctx;
 	saved_state.write_hash = s->write_hash;
-	saved_state.compress = s->compress;
 	saved_state.session = s->session;
 	saved_state.epoch = s->d1->w_epoch;
 
@@ -1238,7 +1235,6 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 	/* restore state in which the message was originally sent */
 	s->enc_write_ctx = frag->msg_header.saved_retransmit_state.enc_write_ctx;
 	s->write_hash = frag->msg_header.saved_retransmit_state.write_hash;
-	s->compress = frag->msg_header.saved_retransmit_state.compress;
 	s->session = frag->msg_header.saved_retransmit_state.session;
 	s->d1->w_epoch = frag->msg_header.saved_retransmit_state.epoch;
 
@@ -1256,7 +1252,6 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 	/* restore current state */
 	s->enc_write_ctx = saved_state.enc_write_ctx;
 	s->write_hash = saved_state.write_hash;
-	s->compress = saved_state.compress;
 	s->session = saved_state.session;
 	s->d1->w_epoch = saved_state.epoch;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.57 2014/07/09 11:25:42 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.58 2014/07/10 08:51:15 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -145,9 +145,6 @@
 
 #include <openssl/opensslconf.h>
 
-#ifndef OPENSSL_NO_COMP
-#include <openssl/comp.h>
-#endif
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
@@ -488,8 +485,6 @@ struct ssl_session_st {
 	time_t time;
 	int references;
 
-	unsigned int compress_meth;	/* Need to lookup the method */
-
 	const SSL_CIPHER *cipher;
 	unsigned long cipher_id;	/* when ASN.1 loaded, this
 					 * needs to be used to load
@@ -682,11 +677,6 @@ typedef struct ssl_comp_st SSL_COMP;
 struct ssl_comp_st {
 	int id;
 	const char *name;
-#ifndef OPENSSL_NO_COMP
-	COMP_METHOD *method;
-#else
-	char *method;
-#endif
 };
 
 DECLARE_STACK_OF(SSL_COMP)
@@ -1099,11 +1089,6 @@ struct ssl_st {
 
 	EVP_CIPHER_CTX *enc_read_ctx;		/* cryptographic state */
 	EVP_MD_CTX *read_hash;			/* used for mac generation */
-#ifndef OPENSSL_NO_COMP
-	COMP_CTX *expand;			/* uncompress */
-#else
-	char *expand;
-#endif
 
 	SSL_AEAD_CTX *aead_write_ctx;	/* AEAD context. If non-NULL, then
 					   enc_write_ctx and write_hash are
@@ -1111,12 +1096,6 @@ struct ssl_st {
 
 	EVP_CIPHER_CTX *enc_write_ctx;		/* cryptographic state */
 	EVP_MD_CTX *write_hash;			/* used for mac generation */
-#ifndef OPENSSL_NO_COMP
-	COMP_CTX *compress;			/* compression */
-#else
-	char *compress;
-
-#endif
 
 	/* session info */
 
@@ -1835,20 +1814,6 @@ void SSL_CTX_set_tmp_ecdh_callback(SSL_CTX *ctx,
     EC_KEY *(*ecdh)(SSL *ssl, int is_export, int keylength));
 void SSL_set_tmp_ecdh_callback(SSL *ssl,
     EC_KEY *(*ecdh)(SSL *ssl, int is_export, int keylength));
-
-#ifndef OPENSSL_NO_COMP
-const COMP_METHOD *SSL_get_current_compression(SSL *s);
-const COMP_METHOD *SSL_get_current_expansion(SSL *s);
-const char *SSL_COMP_get_name(const COMP_METHOD *comp);
-STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
-int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
-#else
-const void *SSL_get_current_compression(SSL *s);
-const void *SSL_get_current_expansion(SSL *s);
-const char *SSL_COMP_get_name(const void *comp);
-void *SSL_COMP_get_compression_methods(void);
-int SSL_COMP_add_compression_method(int id, void *cm);
-#endif
 
 /* TLS extensions functions */
 int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len);

@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.26 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.27 2014/07/10 08:51:14 tedu Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -544,15 +544,6 @@ dtls1_connect(SSL *s)
 			s->init_num = 0;
 
 			s->session->cipher = s->s3->tmp.new_cipher;
-#ifdef OPENSSL_NO_COMP
-			s->session->compress_meth = 0;
-#else
-			if (s->s3->tmp.new_compression == NULL)
-				s->session->compress_meth = 0;
-			else
-				s->session->compress_meth =
-				    s->s3->tmp.new_compression->id;
-#endif
 			if (!s->method->ssl3_enc->setup_key_block(s)) {
 				ret = -1;
 				goto end;
@@ -768,9 +759,8 @@ dtls1_client_hello(SSL *s)
 {
 	unsigned char *buf;
 	unsigned char *p, *d;
-	unsigned int i, j;
+	unsigned int i;
 	unsigned long l;
-	SSL_COMP *comp;
 
 	buf = (unsigned char *)s->init_buf->data;
 	if (s->state == SSL3_ST_CW_CLNT_HELLO_A) {
@@ -839,16 +829,8 @@ dtls1_client_hello(SSL *s)
 		s2n(i, p);
 		p += i;
 
-		/* COMPRESSION */
-		if (s->ctx->comp_methods == NULL)
-			j = 0;
-		else
-			j = sk_SSL_COMP_num(s->ctx->comp_methods);
-		*(p++) = 1 + j;
-		for (i = 0; i < j; i++) {
-			comp = sk_SSL_COMP_value(s->ctx->comp_methods, i);
-			*(p++) = comp->id;
-		}
+		/* add in (no) COMPRESSION */
+		*(p++) = 1;
 		*(p++) = 0; /* Add the NULL method */
 
 		if ((p = ssl_add_clienthello_tlsext(s, p,
