@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.50 2014/07/09 23:46:14 bcook Exp $ */
+/* $OpenBSD: b_sock.c,v 1.51 2014/07/10 09:33:45 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,8 +117,12 @@ err:
 int
 BIO_get_port(const char *str, unsigned short *port_ptr)
 {
-	struct servent_data sd;
-	struct servent se;
+	struct addrinfo *res = NULL;
+	struct addrinfo hints = {
+		.ai_family = AF_UNSPEC,
+		.ai_socktype = SOCK_STREAM,
+		.ai_flags = AI_PASSIVE,
+	};
 	long port;
 	char *ep;
 
@@ -141,9 +145,8 @@ BIO_get_port(const char *str, unsigned short *port_ptr)
 		goto done;
 	}
 
-	memset(&sd, 0, sizeof(sd));
-	if (getservbyname_r(str, "tcp", &se, &sd) == 0) {
-		port = ntohs((unsigned short)se.s_port);
+	if (getaddrinfo(NULL, str, &hints, &res) == 0) {
+		port = ntohs(((struct sockaddr_in *)(res->ai_addr))->sin_port);
 		goto done;
 	}
 
@@ -168,6 +171,8 @@ BIO_get_port(const char *str, unsigned short *port_ptr)
 	}
 
 done:
+	if (res)
+		freeaddrinfo(res);
 	*port_ptr = (unsigned short)port;
 	return (1);
 }
