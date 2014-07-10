@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_depr.c,v 1.5 2014/07/09 19:51:38 jsing Exp $ */
+/* $OpenBSD: rsa_depr.c,v 1.6 2014/07/10 07:43:11 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -91,10 +91,9 @@ RSA_generate_key(int bits, unsigned long e_value,
 		return rsa;
 	}
 err:
-	if (e)
-		BN_free(e);
-	if (rsa)
-		RSA_free(rsa);
+	BN_free(e);
+	RSA_free(rsa);
+
 	return 0;
 }
 #endif

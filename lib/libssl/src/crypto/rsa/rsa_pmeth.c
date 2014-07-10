@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.10 2014/07/09 19:51:38 jsing Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.11 2014/07/10 07:43:11 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -151,8 +151,7 @@ pkey_rsa_cleanup(EVP_PKEY_CTX *ctx)
 	RSA_PKEY_CTX *rctx = ctx->data;
 
 	if (rctx) {
-		if (rctx->pub_exp)
-			BN_free(rctx->pub_exp);
+		BN_free(rctx->pub_exp);
 		free(rctx->tbuf);
 		free(rctx);
 	}

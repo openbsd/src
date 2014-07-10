@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_chk.c,v 1.8 2014/07/09 19:51:38 jsing Exp $ */
+/* $OpenBSD: rsa_chk.c,v 1.9 2014/07/10 07:43:11 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -51,7 +51,6 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/rsa.h>
-
 
 int
 RSA_check_key(const RSA *key)
@@ -203,17 +202,12 @@ RSA_check_key(const RSA *key)
 	}
 
 err:
-	if (i != NULL)
-		BN_free(i);
-	if (j != NULL)
-		BN_free(j);
-	if (k != NULL)
-		BN_free(k);
-	if (l != NULL)
-		BN_free(l);
-	if (m != NULL)
-		BN_free(m);
-	if (ctx != NULL)
-		BN_CTX_free(ctx);
+	BN_free(i);
+	BN_free(j);
+	BN_free(k);
+	BN_free(l);
+	BN_free(m);
+	BN_CTX_free(ctx);
+
 	return (ret);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.31 2014/07/09 19:51:38 jsing Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.32 2014/07/10 07:43:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -898,12 +898,9 @@ RSA_eay_init(RSA *rsa)
 static int
 RSA_eay_finish(RSA *rsa)
 {
-	if (rsa->_method_mod_n != NULL)
-		BN_MONT_CTX_free(rsa->_method_mod_n);
-	if (rsa->_method_mod_p != NULL)
-		BN_MONT_CTX_free(rsa->_method_mod_p);
-	if (rsa->_method_mod_q != NULL)
-		BN_MONT_CTX_free(rsa->_method_mod_q);
+	BN_MONT_CTX_free(rsa->_method_mod_n);
+	BN_MONT_CTX_free(rsa->_method_mod_p);
+	BN_MONT_CTX_free(rsa->_method_mod_q);
 
 	return 1;
 }

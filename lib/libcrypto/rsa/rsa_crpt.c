@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_crpt.c,v 1.6 2014/07/09 19:51:38 jsing Exp $ */
+/* $OpenBSD: rsa_crpt.c,v 1.7 2014/07/10 07:43:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,10 +110,8 @@ RSA_flags(const RSA *r)
 void
 RSA_blinding_off(RSA *rsa)
 {
-	if (rsa->blinding != NULL) {
-		BN_BLINDING_free(rsa->blinding);
-		rsa->blinding = NULL;
-	}
+	BN_BLINDING_free(rsa->blinding);
+	rsa->blinding = NULL;
 	rsa->flags &= ~RSA_FLAG_BLINDING;
 	rsa->flags |= RSA_FLAG_NO_BLINDING;
 }
