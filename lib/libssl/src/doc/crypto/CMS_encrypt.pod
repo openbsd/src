@@ -22,9 +22,6 @@ Only certificates carrying RSA keys are supported so the recipient certificates
 supplied to this function must all contain RSA public keys, though they do not
 have to be signed using the RSA algorithm.
 
-EVP_des_ede3_cbc() (triple DES) is the algorithm of choice for S/MIME use
-because most clients will support it.
-
 The algorithm passed in the B<cipher> parameter must support ASN1 encoding of
 its parameters.
 

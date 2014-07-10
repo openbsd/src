@@ -101,7 +101,7 @@ EVP_CIPHER_CTX_init() initializes cipher contex B<ctx>.
 EVP_EncryptInit_ex() sets up cipher context B<ctx> for encryption
 with cipher B<type> from ENGINE B<impl>. B<ctx> must be initialized
 before calling this function. B<type> is normally supplied
-by a function such as EVP_des_cbc(). If B<impl> is NULL then the
+by a function such as EVP_aes_256_cbc(). If B<impl> is NULL then the
 default implementation is used. B<key> is the symmetric key to use
 and B<iv> is the IV to use (if necessary), the actual number of bytes
 used for the key and IV depends on the cipher. It is possible to set
@@ -279,9 +279,21 @@ All algorithms have a fixed key length unless otherwise stated.
 
 =over 4
 
-=item EVP_enc_null()
+=item EVP_enc_null(void)
 
 Null cipher: does nothing.
+
+=item EVP_aes_128_cbc(void), EVP_aes_128_ecb(void), EVP_aes_128_cfb(void), EVP_aes_128_ofb(void)
+
+128-bit AES in CBC, ECB, CFB and OFB modes respectively.
+
+=item EVP_aes_192_cbc(void), EVP_aes_192_ecb(void), EVP_aes_192_cfb(void), EVP_aes_192_ofb(void)
+
+192-bit AES in CBC, ECB, CFB and OFB modes respectively.
+
+=item EVP_aes_256_cbc(void), EVP_aes_256_ecb(void), EVP_aes_256_cfb(void), EVP_aes_256_ofb(void)
+
+256-bit AES in CBC, ECB, CFB and OFB modes respectively.
 
 =item EVP_des_cbc(void), EVP_des_ecb(void), EVP_des_cfb(void), EVP_des_ofb(void)
 
