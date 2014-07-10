@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.331 2014/01/22 23:32:42 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.332 2014/07/10 12:21:09 mpi Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -125,8 +125,7 @@ void			sr_set_chunk_state(struct sr_discipline *, int, int);
 void			sr_set_vol_state(struct sr_discipline *);
 
 /* utility functions */
-void			sr_shutdown(struct sr_softc *);
-void			sr_shutdownhook(void *);
+void			sr_shutdown(void);
 void			sr_uuid_generate(struct sr_uuid *);
 char			*sr_uuid_format(struct sr_uuid *);
 void			sr_uuid_print(struct sr_uuid *, int);
@@ -1827,8 +1826,6 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 
 	softraid_disk_attach = sr_disk_attach;
 
-	sc->sc_shutdownhook = shutdownhook_establish(sr_shutdownhook, sc);
-
 	sr_boot_assembly(sc);
 
 	explicit_bzero(sr_bootkey, sizeof(sr_bootkey));
@@ -1842,12 +1839,9 @@ sr_detach(struct device *self, int flags)
 
 	DNPRINTF(SR_D_MISC, "%s: sr_detach\n", DEVNAME(sc));
 
-	if (sc->sc_shutdownhook)
-		shutdownhook_disestablish(sc->sc_shutdownhook);
-
 	softraid_disk_attach = NULL;
 
-	sr_shutdown(sc);
+	sr_shutdown();
 
 #ifndef SMALL_KERNEL
 	if (sc->sc_sensor_task != NULL)
@@ -4503,17 +4497,19 @@ sr_validate_stripsize(u_int32_t b)
 }
 
 void
-sr_shutdownhook(void *arg)
+sr_shutdown(void)
 {
-	sr_shutdown((struct sr_softc *)arg);
-}
-
-void
-sr_shutdown(struct sr_softc *sc)
-{
+	struct sr_softc		*sc = softraid0;
 	struct sr_discipline	*sd;
 
 	DNPRINTF(SR_D_MISC, "%s: sr_shutdown\n", DEVNAME(sc));
+
+	/*
+	 * Since softraid is not under mainbus, we have to explicitly
+	 * notify its children that the power is going down, so they
+	 * can execute their shutdown hooks.
+	 */
+	config_suspend((struct device *)sc, DVACT_POWERDOWN);
 
 	/* Shutdown disciplines in reverse attach order. */
 	while ((sd = TAILQ_LAST(&sc->sc_dis_list, sr_discipline_list)) != NULL)

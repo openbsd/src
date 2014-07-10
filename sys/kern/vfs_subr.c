@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.215 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.216 2014/07/10 12:21:08 mpi Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -64,6 +64,10 @@
 #include <sys/specdev.h>
 
 #include <netinet/in.h>
+
+#include "softraid.h"
+
+void sr_shutdown(void);
 
 enum vtype iftovt_tab[16] = {
 	VNON, VFIFO, VCHR, VNON, VDIR, VNON, VBLK, VNON,
@@ -1645,6 +1649,10 @@ vfs_shutdown(void)
 		printf("giving up\n");
 	else
 		printf("done\n");
+
+#if NSOFTRAID > 0
+	sr_shutdown();
+#endif
 }
 
 /*
