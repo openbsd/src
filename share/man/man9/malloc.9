@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.52 2014/04/03 04:10:34 lteo Exp $
+.\"	$OpenBSD: malloc.9,v 1.53 2014/07/10 19:33:16 matthew Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,18 +28,21 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 3 2014 $
+.Dd $Mdocdate: July 10 2014 $
 .Dt MALLOC 9
 .Os
 .Sh NAME
 .Nm malloc ,
+.Nm mallocarray ,
 .Nm free
 .Nd kernel memory allocator
 .Sh SYNOPSIS
 .In sys/types.h
 .In sys/malloc.h
 .Ft void *
-.Fn malloc "unsigned long size" "int type" "int flags"
+.Fn malloc "size_t size" "int type" "int flags"
+.Ft void *
+.Fn malloc "size_t nmemb" "size_t size" "int type" "int flags"
 .Ft void
 .Fn free "void *addr" "int type"
 .Sh DESCRIPTION
@@ -48,8 +51,17 @@ The
 function allocates uninitialized memory in kernel address space for an
 object whose size is specified by
 .Fa size .
+The
+.Fn mallocarray
+function is the same as
+.Fn malloc ,
+except it allocates space for an array of
+.Fa nmemb
+objects and checks for arithmetic overflow.
+.Pp
+The
 .Fn free
-releases memory at address
+function releases memory at address
 .Fa addr
 that was previously allocated by
 .Fn malloc
@@ -60,7 +72,8 @@ is a null pointer, no action occurs.
 .Pp
 The
 .Fa flags
-argument further qualifies malloc's
+argument further qualifies
+.Fn malloc Ns 's
 operational characteristics as follows:
 .Bl -tag -width xxx -offset indent
 .It Dv M_WAITOK

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.110 2014/07/10 10:53:45 deraadt Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.111 2014/07/10 19:33:16 matthew Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ struct timeval malloc_lasterr;
  * Allocate a block of memory
  */
 void *
-malloc(unsigned long size, int type, int flags)
+malloc(size_t size, int type, int flags)
 {
 	struct kmembuckets *kbp;
 	struct kmemusage *kup;
@@ -697,3 +697,37 @@ malloc_printit(
 #endif
 }
 #endif /* DDB */
+
+/*
+ * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * This is sqrt(SIZE_MAX+1), as s1*s2 <= SIZE_MAX
+ * if both s1 < MUL_NO_OVERFLOW and s2 < MUL_NO_OVERFLOW
+ */
+#define MUL_NO_OVERFLOW	(1UL << (sizeof(size_t) * 4))
+
+void *
+mallocarray(size_t nmemb, size_t size, int type, int flags)
+{
+	if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
+	    nmemb > 0 && SIZE_MAX / nmemb < size) {
+		if (flags & M_CANFAIL)
+			return (NULL);
+		panic("mallocarray overflow: %zu * %zu", nmemb, size);
+	}
+	return (malloc(size * nmemb, type, flags));
+}
