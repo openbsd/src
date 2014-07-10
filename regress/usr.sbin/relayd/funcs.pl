@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.13 2014/07/10 10:19:06 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.14 2014/07/10 11:56:11 reyk Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -139,7 +139,15 @@ sub http_request {
 	push @request, "Content-Length: $len"
 	    if $vers eq "1.1" && $method eq "PUT" &&
 	    !defined $header{'Content-Length'};
-	push @request, "$_: $header{$_}" foreach sort keys %header;
+	foreach my $key (sort keys %header) {
+		my $val = $header{$key};
+		if (ref($val) eq 'ARRAY') {
+			push @request, "$key: $_"
+			    foreach @{$val};
+		} else {
+			push @request, "$key: $val";
+		}
+	}
 	push @request, "Cookie: $cookie" if $cookie;
 	push @request, "";
 	print STDERR map { ">>> $_\n" } @request;
@@ -306,7 +314,15 @@ sub http_server {
 			push @response, "Content-Length: $len"
 			    if $vers eq "1.1" && $method eq "GET";
 		}
-		push @response, "$_: $header{$_} " foreach sort keys %header;
+		foreach my $key (sort keys %header) {
+			my $val = $header{$key};
+			if (ref($val) eq 'ARRAY') {
+				push @response, "$key: $_"
+				    foreach @{$val};
+			} else {
+				push @response, "$key: $val";
+			}
+		}
 		push @response, "Set-Cookie: $cookie" if $cookie;
 		push @response, "";
 
