@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.64 2014/04/22 10:08:54 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.65 2014/07/10 13:46:31 guenther Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -32,12 +32,12 @@ SRCS+=	_sys_errlist.c _sys_nerr.c _sys_siglist.c
 
 # machine-dependent gen sources
 # m-d Makefile.inc must include sources for:
-#	_setjmp() fabs() frexp() infinity ldexp() modf() nan
-#	setjmp() sigsetjmp()
+#	_setjmp() fabs() frexp() infinity ldexp() modf() __nan
+#	setjmp() sigsetjmp() __tfork_thread()
 
 .include "${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen/Makefile.inc"
 
-MAN+=	alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 \
+MAN+=	__tfork_thread.3 alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 \
 	clock_getcpuclockid.3 confstr.3 \
 	ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 err.3 \
 	exec.3 fabs.3 fnmatch.3 fpclassify.3 fpgetmask.3 frexp.3 ftok.3 fts.3 \
@@ -59,6 +59,7 @@ MAN+=	alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 \
 	syslog.3 time.3 times.3 timezone.3 toascii.3 tolower.3 toupper.3 \
 	ttyname.3 ualarm.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
 
+MLINKS+=__tfork_thread.3 __tfork.2
 MLINKS+=auth_subr.3 auth_open.3 auth_subr.3 auth_call.3 auth_subr.3 \
 	auth_challenge.3 auth_subr.3 auth_check_change.3 auth_subr.3 \
 	auth_check_expire.3 auth_subr.3 auth_clean.3 auth_subr.3 auth_close.3 \
