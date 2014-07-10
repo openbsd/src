@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.70 2014/07/10 08:51:14 tedu Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.71 2014/07/10 21:36:49 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -882,7 +882,7 @@ ssl3_get_client_hello(SSL *s)
 	unsigned int cookie_len;
 	long n;
 	unsigned long id;
-	unsigned char *p, *d, *q;
+	unsigned char *p, *d;
 	SSL_CIPHER *c;
 	STACK_OF(SSL_CIPHER) *ciphers = NULL;
 
@@ -1089,7 +1089,6 @@ ssl3_get_client_hello(SSL *s)
 		    SSL_R_LENGTH_MISMATCH);
 		goto f_err;
 	}
-	q = p;
 	for (j = 0; j < i; j++) {
 		if (p[j] == 0)
 			break;
