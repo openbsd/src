@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.21 2011/01/03 23:08:07 guenther Exp $	*/
+/*	$OpenBSD: sem.h,v 1.22 2014/07/10 14:16:49 deraadt Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -175,6 +175,15 @@ extern struct seminfo	seminfo;
 
 extern struct	semid_ds **sema;	/* semaphore id list */
 
+struct proc;
+
+void	seminit(void);
+void	semexit(struct process *);
+int	sysctl_sysvsem(int *, u_int, void *, size_t *, void *, size_t);
+int	semctl1(struct proc *, int, int, int, union semun *, register_t *,
+	    int (*)(const void *, void *, size_t),
+	    int (*)(const void *, void *, size_t));
+
 #endif /* _KERNEL */
 
 #ifndef _KERNEL
@@ -184,13 +193,6 @@ int	__semctl(int, int, int, union semun *);
 int	semget(key_t, int, int);
 int	semop(int, struct sembuf *, size_t);
 __END_DECLS
-#else
-void	seminit(void);
-void	semexit(struct process *);
-int	sysctl_sysvsem(int *, u_int, void *, size_t *, void *, size_t);
-int	semctl1(struct proc *, int, int, int, union semun *, register_t *,
-	    int (*)(const void *, void *, size_t),
-	    int (*)(const void *, void *, size_t));
 #endif /* !_KERNEL */
 
 #endif /* !_SEM_H_ */
