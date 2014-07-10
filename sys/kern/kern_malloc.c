@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.111 2014/07/10 19:33:16 matthew Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.112 2014/07/10 22:16:48 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -45,18 +45,12 @@
 
 #include <uvm/uvm_extern.h>
 
-static __inline__ long BUCKETINDX(size_t sz)
+static
+#ifndef SMALL_KERNEL
+__inline__
+#endif
+long BUCKETINDX(size_t sz)
 {
-#ifdef SMALL_KERNEL
-	long b;
-
-	if (sz-- == 0)
-		return MINBUCKET;
-
-	for (b = MINBUCKET; b < MINBUCKET + 15; b++)
-		if ((sz >> b) == 0)
-			break;
-#else
 	long b, d;
 
 	/* note that this relies upon MINALLOCSIZE being 1 << MINBUCKET */
@@ -72,8 +66,6 @@ static __inline__ long BUCKETINDX(size_t sz)
 		b += 0;
 	else
 		b += 1;
-#endif
-
 	return b;
 }
 
