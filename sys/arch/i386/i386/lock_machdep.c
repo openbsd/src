@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.14 2014/03/14 03:01:38 dlg Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.15 2014/07/10 12:14:48 mlarkin Exp $	*/
 /* $NetBSD: lock_machdep.c,v 1.1.2.3 2000/05/03 14:40:30 sommerfeld Exp $ */
 
 /*-
@@ -97,7 +97,7 @@ __mp_lock_spin(struct __mp_lock *mpl, u_int me)
 		SPINLOCK_SPIN_HOOK;
 
 	if (ticks == 0) {
-		db_printf("__mp_lock(0x%x): lock spun out", mpl);
+		db_printf("__mp_lock(%p): lock spun out", mpl);
 		Debugger();
 	}
 #endif
@@ -124,7 +124,7 @@ __mp_unlock(struct __mp_lock *mpl)
 	int ef = read_eflags();
 
 #ifdef MP_LOCKDEBUG
-	if (mpl->mpl_cpu != curcpu()) {
+	if (!__mp_lock_held(mpl)) {
 		db_printf("__mp_unlock(%p): not held lock\n", mpl);
 		Debugger();
 	}
