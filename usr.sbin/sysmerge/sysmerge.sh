@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.133 2014/03/27 07:27:04 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.134 2014/07/10 11:00:03 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -218,7 +218,6 @@ sm_populate() {
 		      /etc/myname
 		      /var/db/locate.database
 		      /var/db/sysmerge/{etc,xetc}sum
-		      /var/games/tetris.scores
 		      /var/mail/root"
 	CF_FILES="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
 	for cf in ${CF_FILES}; do
