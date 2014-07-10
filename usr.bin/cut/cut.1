@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cut.1,v 1.22 2014/02/02 14:16:22 jmc Exp $
+.\"	$OpenBSD: cut.1,v 1.23 2014/07/10 11:18:32 tedu Exp $
 .\"	$NetBSD: cut.1,v 1.6 1995/10/02 20:19:26 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)cut.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 2 2014 $
+.Dd $Mdocdate: July 10 2014 $
 .Dt CUT 1
 .Os
 .Sh NAME
@@ -88,6 +88,8 @@ Numbers and number ranges may be repeated, overlapping, and in any order.
 It is not an error to select fields or columns not present in the
 input line.
 .Pp
+Fields are output in the same order as input, not in the order selected.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl b Ar list
@@ -135,6 +137,7 @@ Show the names and login times of logged in users:
 .Pp
 .Dl "$ who | cut -c 1-8,18-30"
 .Sh SEE ALSO
+.Xr awk 1 ,
 .Xr paste 1
 .Sh STANDARDS
 The
