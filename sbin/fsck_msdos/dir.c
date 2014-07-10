@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.24 2014/07/09 18:32:34 tobias Exp $	*/
+/*	$OpenBSD: dir.c,v 1.25 2014/07/10 18:59:49 tobias Exp $	*/
 /*	$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $	*/
 
 /*
@@ -537,6 +537,14 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 					vallfn = NULL;
 				}
 				lidx = *p & LRNOMASK;
+				if (lidx == 0) {
+					if (!invlfn) {
+						invlfn = vallfn;
+						invcl = valcl;
+					}
+					vallfn = NULL;
+					continue;
+				}
 				t = longName + --lidx * 13;
 				for (k = 1; k < 11 && t < longName + sizeof(longName); k += 2) {
 					if (!p[k] && !p[k + 1])
