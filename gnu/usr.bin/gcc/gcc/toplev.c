@@ -4190,7 +4190,8 @@ decode_W_option (arg)
 
       warn_larger_than = larger_than_size != -1;
     }
-  else if ((option_value = skip_leading_substring (arg, "stack-larger-than-")))
+  else if ((option_value = skip_leading_substring (arg, "stack-larger-than-"))
+	   || (option_value = skip_leading_substring (arg, "frame-larger-than=")))
     {
       stack_larger_than_size = read_integral_parameter (option_value, arg - 2, -1);
 

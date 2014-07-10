@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.42 2014/03/23 17:29:06 pascal Exp $
+.\" $OpenBSD: gcc-local.1,v 1.43 2014/07/10 19:14:40 matthew Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2014 $
+.Dd $Mdocdate: July 10 2014 $
 .Dt GCC-LOCAL 1
 .Os
 .Sh NAME
@@ -244,7 +244,11 @@ is enabled by default.
 supports two extra warning options:
 .Bl -item
 .It
+.Fl Wframe-larger-than= Ns Va N
+.Po
+and its non-portable alias
 .Fl Wstack-larger-than- Ns Va N
+.Pc
 will report functions using more than
 .Va N
 bytes of stack space for their local variables.

@@ -728,6 +728,7 @@ common_handle_option (size_t scode, const char *arg, int value,
       warn_larger_than = value != -1;
       break;
 
+    case OPT_Wframe_larger_than_:
     case OPT_Wstack_larger_than_:
       stack_larger_than_size = value;
       warn_stack_larger_than = stack_larger_than_size != -1;
