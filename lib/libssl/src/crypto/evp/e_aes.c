@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.22 2014/06/15 22:53:21 tedu Exp $ */
+/* $OpenBSD: e_aes.c,v 1.23 2014/07/10 22:45:57 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -49,16 +49,19 @@
  *
  */
 
-#include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_AES
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <string.h>
 #include <assert.h>
+#include <string.h>
+
+#include <openssl/opensslconf.h>
+
+#ifndef OPENSSL_NO_AES
 #include <openssl/aes.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+
 #include "evp_locl.h"
 #include "modes_lcl.h"
-#include <openssl/rand.h>
 
 typedef struct {
 	AES_KEY ks;

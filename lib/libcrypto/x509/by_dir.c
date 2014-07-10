@@ -1,4 +1,4 @@
-/* $OpenBSD: by_dir.c,v 1.30 2014/07/10 13:58:23 jsing Exp $ */
+/* $OpenBSD: by_dir.c,v 1.31 2014/07/10 22:45:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,22 +56,24 @@
  * [including the GNU Public Licence.]
  */
 
+#include <sys/types.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 
+#include <openssl/opensslconf.h>
+
 #include "cryptlib.h"
 
-#include <sys/types.h>
 #ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
 #endif
 
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
-
 
 typedef struct lookup_dir_hashes_st {
 	unsigned long hash;

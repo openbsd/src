@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_openssl.c,v 1.7 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: eng_openssl.c,v 1.8 2014/07/10 22:45:57 jsing Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -63,6 +63,8 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include <openssl/opensslconf.h>
 
 #include <openssl/crypto.h>
 #include "cryptlib.h"

@@ -1,4 +1,4 @@
-/* $OpenBSD: rc2.h,v 1.10 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: rc2.h,v 1.11 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,6 +60,7 @@
 #define HEADER_RC2_H
 
 #include <openssl/opensslconf.h> /* OPENSSL_NO_RC2, RC2_INT */
+
 #ifdef OPENSSL_NO_RC2
 #error RC2 is disabled.
 #endif

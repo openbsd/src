@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_err.c,v 1.13 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: dsa_err.c,v 1.14 2014/07/10 22:45:56 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -59,6 +59,9 @@
  */
 
 #include <stdio.h>
+
+#include <openssl/opensslconf.h>
+
 #include <openssl/err.h>
 #include <openssl/dsa.h>
 

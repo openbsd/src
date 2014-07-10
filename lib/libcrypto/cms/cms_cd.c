@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_cd.c,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: cms_cd.c,v 1.4 2014/07/10 22:45:56 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -50,6 +50,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  */
+
+#include <openssl/opensslconf.h>
 
 #include "cryptlib.h"
 #include <openssl/asn1t.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.31 2014/06/24 19:33:10 miod Exp $ */
+/* $OpenBSD: crypto.h,v 1.32 2014/07/10 22:45:56 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -114,14 +114,13 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #ifndef HEADER_CRYPTO_H
 #define HEADER_CRYPTO_H
 
-#include <stdlib.h>
-
 #include <openssl/opensslconf.h>
-
-#include <stdio.h>
 
 #include <openssl/stack.h>
 #include <openssl/safestack.h>

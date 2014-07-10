@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.h,v 1.16 2014/07/10 09:01:04 miod Exp $ */
+/* $OpenBSD: md5.h,v 1.17 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,10 +56,10 @@
  * [including the GNU Public Licence.]
  */
 
+#include <stddef.h>
+
 #ifndef HEADER_MD5_H
 #define HEADER_MD5_H
-
-#include <stddef.h>
 
 #include <openssl/opensslconf.h>
 

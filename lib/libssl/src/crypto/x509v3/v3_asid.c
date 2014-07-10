@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_asid.c,v 1.8 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: v3_asid.c,v 1.9 2014/07/10 22:45:58 jsing Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -62,6 +62,9 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include <openssl/opensslconf.h>
+
 #include "cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/asn1.h>

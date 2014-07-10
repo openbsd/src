@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp224.c,v 1.13 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: ecp_nistp224.c,v 1.14 2014/07/10 22:45:57 jsing Exp $ */
 /*
  * Written by Emilia Kasper (Google) for the OpenSSL project.
  */
@@ -25,12 +25,13 @@
  * and Adam Langley's public domain 64-bit C implementation of curve25519
  */
 
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/opensslconf.h>
+
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 
-#include <stdint.h>
-
-#include <string.h>
 #include <openssl/err.h>
 #include "ec_lcl.h"
 

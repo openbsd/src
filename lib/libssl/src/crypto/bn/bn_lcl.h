@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lcl.h,v 1.19 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bn_lcl.h,v 1.20 2014/07/10 22:45:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -111,6 +111,8 @@
 
 #ifndef HEADER_BN_LCL_H
 #define HEADER_BN_LCL_H
+
+#include <openssl/opensslconf.h>
 
 #include <openssl/bn.h>
 

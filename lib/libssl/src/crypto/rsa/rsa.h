@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.24 2014/07/10 12:08:22 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.25 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,6 +58,8 @@
 
 #ifndef HEADER_RSA_H
 #define HEADER_RSA_H
+
+#include <openssl/opensslconf.h>
 
 #include <openssl/asn1.h>
 

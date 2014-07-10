@@ -1,4 +1,4 @@
-/* $OpenBSD: rand.h,v 1.20 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: rand.h,v 1.21 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,10 +56,10 @@
  * [including the GNU Public Licence.]
  */
 
+#include <stdlib.h>
+
 #ifndef HEADER_RAND_H
 #define HEADER_RAND_H
-
-#include <stdlib.h>
 
 #include <openssl/opensslconf.h>
 

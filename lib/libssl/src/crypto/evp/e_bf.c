@@ -1,4 +1,4 @@
-/* $OpenBSD: e_bf.c,v 1.6 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: e_bf.c,v 1.7 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,9 @@
  */
 
 #include <stdio.h>
+
+#include <openssl/opensslconf.h>
+
 #include "cryptlib.h"
 #ifndef OPENSSL_NO_BF
 #include <openssl/evp.h>

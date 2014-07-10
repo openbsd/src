@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_list.c,v 1.13 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: eng_list.c,v 1.14 2014/07/10 22:45:57 jsing Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -63,6 +63,8 @@
 
 #include <string.h>
 #include <unistd.h>
+
+#include <openssl/opensslconf.h>
 
 #include "eng_int.h"
 

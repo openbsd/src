@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistputil.c,v 1.5 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: ecp_nistputil.c,v 1.6 2014/07/10 22:45:57 jsing Exp $ */
 /*
  * Written by Bodo Moeller for the OpenSSL project.
  */
@@ -18,14 +18,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stddef.h>
+
 #include <openssl/opensslconf.h>
+
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 
 /*
  * Common utility functions for ecp_nistp224.c, ecp_nistp256.c, ecp_nistp521.c.
  */
 
-#include <stddef.h>
 #include "ec_lcl.h"
 
 /* Convert an array of points into affine coordinates.

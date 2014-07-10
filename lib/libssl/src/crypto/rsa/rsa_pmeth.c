@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.12 2014/07/10 13:58:23 jsing Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.13 2014/07/10 22:45:57 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -59,6 +59,8 @@
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <openssl/opensslconf.h>
 
 #include "cryptlib.h"
 #include <openssl/asn1t.h>

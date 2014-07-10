@@ -1,4 +1,4 @@
-/* $OpenBSD: srp_lib.c,v 1.7 2014/07/10 20:22:00 miod Exp $ */
+/* $OpenBSD: srp_lib.c,v 1.8 2014/07/10 22:45:58 jsing Exp $ */
 /* Written by Christophe Renou (christophe.renou@edelweb.fr) with 
  * the precious help of Peter Sylvester (peter.sylvester@edelweb.fr) 
  * for the EdelKey project and contributed to the OpenSSL project 2004.
@@ -56,6 +56,9 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
+#include <openssl/opensslconf.h>
+
 #ifndef OPENSSL_NO_SRP
 #include "cryptlib.h"
 #include "srp_lcl.h"

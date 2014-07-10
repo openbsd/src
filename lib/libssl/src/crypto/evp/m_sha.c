@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sha.c,v 1.13 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: m_sha.c,v 1.14 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,9 @@
  */
 
 #include <stdio.h>
+
+#include <openssl/opensslconf.h>
+
 #include "cryptlib.h"
 
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA0)

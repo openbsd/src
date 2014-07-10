@@ -1,4 +1,4 @@
-/* $OpenBSD: pk12err.c,v 1.9 2014/07/08 09:24:53 jsing Exp $ */
+/* $OpenBSD: pk12err.c,v 1.10 2014/07/10 22:45:57 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -59,6 +59,9 @@
  */
 
 #include <stdio.h>
+
+#include <openssl/opensslconf.h>
+
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
 

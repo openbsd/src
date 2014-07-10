@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_asn1.c,v 1.4 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: ts_asn1.c,v 1.5 2014/07/10 22:45:58 jsing Exp $ */
 /* Written by Nils Larsch for the OpenSSL project 2004.
  */
 /* ====================================================================
@@ -54,6 +54,8 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
+#include <openssl/opensslconf.h>
 
 #include <openssl/ts.h>
 #include <openssl/err.h>

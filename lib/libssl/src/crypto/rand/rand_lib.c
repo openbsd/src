@@ -1,4 +1,4 @@
-/* $OpenBSD: rand_lib.c,v 1.17 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: rand_lib.c,v 1.18 2014/07/10 22:45:57 jsing Exp $ */
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
  *
@@ -14,6 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <openssl/opensslconf.h>
+
 #include "cryptlib.h"
 #include <openssl/rand.h>
 

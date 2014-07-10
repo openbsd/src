@@ -1,4 +1,4 @@
-/* $OpenBSD: modes_lcl.h,v 1.7 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: modes_lcl.h,v 1.8 2014/07/10 22:45:57 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -6,9 +6,11 @@
  * ====================================================================
  */
 
-#include <openssl/modes.h>
 #include <machine/endian.h>
 
+#include <openssl/opensslconf.h>
+
+#include <openssl/modes.h>
 
 #if defined(_LP64)
 typedef long i64;

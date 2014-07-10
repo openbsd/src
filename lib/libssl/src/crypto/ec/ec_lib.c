@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.13 2014/07/09 11:10:50 bcook Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.14 2014/07/10 22:45:57 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -62,6 +62,8 @@
  */
 
 #include <string.h>
+
+#include <openssl/opensslconf.h>
 
 #include <openssl/err.h>
 #include <openssl/opensslv.h>

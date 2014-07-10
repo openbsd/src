@@ -1,4 +1,4 @@
-/* $OpenBSD: err_all.c,v 1.15 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: err_all.c,v 1.16 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,9 @@
  */
 
 #include <stdio.h>
+
+#include <openssl/opensslconf.h>
+
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #ifndef OPENSSL_NO_EC

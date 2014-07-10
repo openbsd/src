@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.31 2014/07/10 13:58:23 jsing Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.32 2014/07/10 22:45:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,6 +61,8 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+#include <openssl/opensslconf.h>
 
 #include "cryptlib.h"
 #include <openssl/crypto.h>

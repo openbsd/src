@@ -1,15 +1,18 @@
-/* $OpenBSD: sha256.c,v 1.6 2014/07/09 16:06:13 miod Exp $ */
+/* $OpenBSD: sha256.c,v 1.7 2014/07/10 22:45:58 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].
  * ====================================================================
  */
+
 #include <openssl/opensslconf.h>
+
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA256)
+
+#include <machine/endian.h>
 
 #include <stdlib.h>
 #include <string.h>
-#include <machine/endian.h>
 
 #include <openssl/crypto.h>
 #include <openssl/sha.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_depr.c,v 1.6 2014/07/10 07:43:11 jsing Exp $ */
+/* $OpenBSD: rsa_depr.c,v 1.7 2014/07/10 22:45:57 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -58,6 +58,9 @@
 
 #include <stdio.h>
 #include <time.h>
+
+#include <openssl/opensslconf.h>
+
 #include "cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/rsa.h>

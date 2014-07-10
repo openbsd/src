@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.30 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.31 2014/07/10 22:45:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,6 +65,8 @@
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <openssl/opensslconf.h>
 
 #include "cryptlib.h"
 #include "bn_lcl.h"

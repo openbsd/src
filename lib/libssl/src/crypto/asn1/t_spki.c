@@ -1,4 +1,4 @@
-/* $OpenBSD: t_spki.c,v 1.9 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: t_spki.c,v 1.10 2014/07/10 22:45:56 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -57,6 +57,9 @@
  */
 
 #include <stdio.h>
+
+#include <openssl/opensslconf.h>
+
 #include "cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/asn1.h>

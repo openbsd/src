@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_rsax.c,v 1.8 2014/06/22 12:18:33 jsing Exp $ */
+/* $OpenBSD: eng_rsax.c,v 1.9 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (c) 2010-2010 Intel Corp.
  *   Author: Vinodh.Gopal@intel.com
  *           Jim Guilford
@@ -66,6 +66,9 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include <openssl/opensslconf.h>
+
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/engine.h>

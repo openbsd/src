@@ -1,4 +1,4 @@
-/* $OpenBSD: md32_common.h,v 1.15 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: md32_common.h,v 1.16 2014/07/10 22:45:56 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -108,6 +108,8 @@
  *
  *					<appro@fy.chalmers.se>
  */
+
+#include <openssl/opensslconf.h>
 
 #if !defined(DATA_ORDER_IS_BIG_ENDIAN) && !defined(DATA_ORDER_IS_LITTLE_ENDIAN)
 #error "DATA_ORDER must be defined!"

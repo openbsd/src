@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cmp.c,v 1.20 2014/07/10 13:58:23 jsing Exp $ */
+/* $OpenBSD: x509_cmp.c,v 1.21 2014/07/10 22:45:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,6 +59,8 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <openssl/opensslconf.h>
 
 #include "cryptlib.h"
 #include <openssl/asn1.h>

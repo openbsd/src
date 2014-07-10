@@ -1,4 +1,4 @@
-/* $OpenBSD: md4.h,v 1.12 2014/07/10 09:01:04 miod Exp $ */
+/* $OpenBSD: md4.h,v 1.13 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,10 +56,10 @@
  * [including the GNU Public Licence.]
  */
 
+#include <stddef.h>
+
 #ifndef HEADER_MD4_H
 #define HEADER_MD4_H
-
-#include <stddef.h>
 
 #include <openssl/opensslconf.h>
 

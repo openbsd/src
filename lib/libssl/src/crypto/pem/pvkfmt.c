@@ -1,4 +1,4 @@
-/* $OpenBSD: pvkfmt.c,v 1.7 2014/07/10 13:58:23 jsing Exp $ */
+/* $OpenBSD: pvkfmt.c,v 1.8 2014/07/10 22:45:57 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -61,6 +61,8 @@
  */
 
 #include <string.h>
+
+#include <openssl/opensslconf.h>
 
 #include "cryptlib.h"
 #include <openssl/pem.h>

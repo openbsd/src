@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_err.c,v 1.17 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: asn1_err.c,v 1.18 2014/07/10 22:45:56 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -59,6 +59,9 @@
  */
 
 #include <stdio.h>
+
+#include <openssl/opensslconf.h>
+
 #include <openssl/err.h>
 #include <openssl/asn1.h>
 

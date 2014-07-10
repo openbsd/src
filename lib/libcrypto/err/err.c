@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.36 2014/06/27 07:01:21 deraadt Exp $ */
+/* $OpenBSD: err.c,v 1.37 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,9 +109,12 @@
  *
  */
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
+
+#include <openssl/opensslconf.h>
+
 #include "cryptlib.h"
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>

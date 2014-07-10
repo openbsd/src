@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.6 2014/07/09 11:10:50 bcook Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.7 2014/07/10 22:45:57 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -54,6 +54,9 @@
  */
 
 #include <string.h>
+
+#include <openssl/opensslconf.h>
+
 #include "ecs_locl.h"
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>

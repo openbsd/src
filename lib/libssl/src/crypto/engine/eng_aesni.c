@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_aesni.c,v 1.5 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: eng_aesni.c,v 1.6 2014/07/10 22:45:57 jsing Exp $ */
 /*
  * Support for Intel AES-NI intruction set
  *   Author: Huang Ying <ying.huang@intel.com>
@@ -73,13 +73,13 @@
  *
  */
 
+#include <assert.h>
+#include <stdio.h>
 
 #include <openssl/opensslconf.h>
 
 #if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_AES_NI) && !defined(OPENSSL_NO_AES)
 
-#include <stdio.h>
-#include <assert.h>
 #include "cryptlib.h"
 #include <openssl/dso.h>
 #include <openssl/engine.h>

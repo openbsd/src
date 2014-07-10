@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_asm.c,v 1.11 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bn_asm.c,v 1.12 2014/07/10 22:45:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,8 +61,11 @@
 # define NDEBUG
 #endif
 
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
+
+#include <openssl/opensslconf.h>
+
 #include "cryptlib.h"
 #include "bn_lcl.h"
 

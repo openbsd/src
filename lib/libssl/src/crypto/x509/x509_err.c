@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_err.c,v 1.11 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: x509_err.c,v 1.12 2014/07/10 22:45:58 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -59,6 +59,9 @@
  */
 
 #include <stdio.h>
+
+#include <openssl/opensslconf.h>
+
 #include <openssl/err.h>
 #include <openssl/x509.h>
 

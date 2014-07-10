@@ -1,4 +1,4 @@
-/* $OpenBSD: lh_stats.c,v 1.10 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: lh_stats.c,v 1.11 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,6 +59,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include <openssl/opensslconf.h>
+
 /* If you wish to build this outside of SSLeay, remove the following lines
  * and things should work as expected */
 #include "cryptlib.h"

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.26 2014/07/10 07:43:11 jsing Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.27 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,9 @@
  */
 
 #include <stdio.h>
+
+#include <openssl/opensslconf.h>
+
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/lhash.h>

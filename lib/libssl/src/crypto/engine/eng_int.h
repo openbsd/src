@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_int.h,v 1.6 2014/06/22 12:16:28 jsing Exp $ */
+/* $OpenBSD: eng_int.h,v 1.7 2014/07/10 22:45:57 jsing Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -65,6 +65,7 @@
 #define HEADER_ENGINE_INT_H
 
 #include "cryptlib.h"
+
 /* Take public definitions from engine.h */
 #include <openssl/engine.h>
 

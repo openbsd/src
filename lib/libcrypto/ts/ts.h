@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.h,v 1.6 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: ts.h,v 1.7 2014/07/10 22:45:58 jsing Exp $ */
 /* Written by Zoltan Glozik (zglozik@opentsa.org) for the OpenSSL
  * project 2002, 2003, 2004.
  */
@@ -60,6 +60,7 @@
 #define HEADER_TS_H
 
 #include <openssl/opensslconf.h>
+
 #ifndef OPENSSL_NO_BUFFER
 #include <openssl/buffer.h>
 #endif

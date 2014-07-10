@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_all.c,v 1.25 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: eng_all.c,v 1.26 2014/07/10 22:45:57 jsing Exp $ */
 /* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
  * project 2000.
  */
@@ -55,6 +55,8 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
+#include <openssl/opensslconf.h>
 
 #include "cryptlib.h"
 #include "eng_int.h"

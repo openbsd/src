@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.7 2014/06/21 15:30:36 jsing Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.8 2014/07/10 22:45:57 jsing Exp $ */
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -17,14 +17,16 @@
 
 #include <stdint.h>
 #include <string.h>
+
 #include <openssl/opensslconf.h>
 
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 
+#include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/chacha.h>
 #include <openssl/poly1305.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
+
 #include "evp_locl.h"
 
 #define POLY1305_TAG_LEN 16

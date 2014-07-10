@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_err.c,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: cms_err.c,v 1.4 2014/07/10 22:45:56 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2009 The OpenSSL Project.  All rights reserved.
  *
@@ -59,8 +59,11 @@
  */
 
 #include <stdio.h>
-#include <openssl/err.h>
+
+#include <openssl/opensslconf.h>
+
 #include <openssl/cms.h>
+#include <openssl/err.h>
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR

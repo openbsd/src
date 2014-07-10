@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.8 2014/07/01 21:26:27 miod Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.9 2014/07/10 22:45:57 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -57,11 +57,13 @@
  */
 
 #include <string.h>
+
+#include <openssl/opensslconf.h>
+
 #include "ec_lcl.h"
 #include <openssl/err.h>
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
-
 
 int 
 EC_GROUP_get_basis_type(const EC_GROUP * group)

@@ -1,4 +1,4 @@
-/* $OpenBSD: mdc2.h,v 1.12 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: mdc2.h,v 1.13 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,6 +58,8 @@
 
 #ifndef HEADER_MDC2_H
 #define HEADER_MDC2_H
+
+#include <openssl/opensslconf.h>
 
 #include <openssl/des.h>
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.h,v 1.4 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: cms.h,v 1.5 2014/07/10 22:45:56 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -51,9 +51,10 @@
  * ====================================================================
  */
 
-
 #ifndef HEADER_CMS_H
 #define HEADER_CMS_H
+
+#include <openssl/opensslconf.h>
 
 #include <openssl/x509.h>
 
@@ -64,7 +65,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 typedef struct CMS_ContentInfo_st CMS_ContentInfo;
 typedef struct CMS_SignerInfo_st CMS_SignerInfo;
