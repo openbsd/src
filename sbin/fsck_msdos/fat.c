@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.c,v 1.24 2014/06/18 17:29:07 tobias Exp $	*/
+/*	$OpenBSD: fat.c,v 1.25 2014/07/10 20:11:12 tobias Exp $	*/
 /*	$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $	*/
 
 /*
@@ -539,15 +539,17 @@ checklost(int dosfs, struct bootblock *boot, struct fatEntry *fat)
 
 	if (boot->FSInfo) {
 		ret = 0;
-		if (boot->FSFree != boot->NumFree) {
-			pwarn("Free space in FSInfo block (%d) not correct (%d)\n",
+		if (boot->FSFree != 0xffffffff &&
+		    boot->FSFree != boot->NumFree) {
+			pwarn("Free space in FSInfo block (%u) not correct (%u)\n",
 			      boot->FSFree, boot->NumFree);
 			if (ask(1, "fix")) {
 				boot->FSFree = boot->NumFree;
 				ret = 1;
 			}
 		}
-		if (boot->NumFree && (boot->FSNext >= boot->NumClusters ||
+		if (boot->FSNext != 0xffffffff &&
+		    boot->NumFree && (boot->FSNext >= boot->NumClusters ||
 		    fat[boot->FSNext].next != CLUST_FREE)) {
 			pwarn("Next free cluster in FSInfo block (%u) not free\n",
 			      boot->FSNext);
