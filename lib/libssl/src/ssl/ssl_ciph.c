@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.60 2014/07/10 09:26:08 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.61 2014/07/10 10:09:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -639,15 +639,6 @@ ssl_load_ciphers(void)
 	EVP_get_digestbyname(SN_sha384);
 	ssl_mac_secret_size[SSL_MD_SHA384_IDX]=
 	EVP_MD_size(ssl_digest_methods[SSL_MD_SHA384_IDX]);
-}
-
-/* ssl_cipher_get_comp sets comp to the correct SSL_COMP for the given
- * session and returns 1. On error it returns 0. */
-int
-ssl_cipher_get_comp(const SSL_SESSION *s, SSL_COMP **comp)
-{
-	*comp = NULL;
-	return 1;
 }
 
 int

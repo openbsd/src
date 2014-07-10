@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.57 2014/07/10 08:51:15 tedu Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.58 2014/07/10 10:09:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -579,7 +579,6 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *meth,
     STACK_OF(SSL_CIPHER) **pref, STACK_OF(SSL_CIPHER) **sorted,
     const char *rule_str);
 void ssl_update_cache(SSL *s, int mode);
-int ssl_cipher_get_comp(const SSL_SESSION *s, SSL_COMP **comp);
 int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
     const EVP_MD **md, int *mac_pkey_type, int *mac_secret_size);
 int ssl_cipher_get_evp_aead(const SSL_SESSION *s, const EVP_AEAD **aead);

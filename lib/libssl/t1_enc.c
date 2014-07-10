@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.66 2014/07/10 08:51:15 tedu Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.67 2014/07/10 10:09:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -568,17 +568,10 @@ tls1_setup_key_block(SSL *s)
 	const EVP_CIPHER *cipher = NULL;
 	const EVP_AEAD *aead = NULL;
 	const EVP_MD *mac = NULL;
-	SSL_COMP *comp;
 	int ret = 0;
 
 	if (s->s3->tmp.key_block_length != 0)
 		return (1);
-
-	if (!ssl_cipher_get_comp(s->session, &comp)) {
-		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,
-		    SSL_R_CIPHER_COMPRESSION_UNAVAILABLE);
-		return (0);
-	}
 
 	if (s->session->cipher &&
 	    (s->session->cipher->algorithm2 & SSL_CIPHER_ALGORITHM2_AEAD)) {
