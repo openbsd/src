@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.11 2014/07/09 12:51:20 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.12 2014/07/10 07:41:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -237,7 +237,7 @@ END(_dl_sigprocmask)
 
 _dl_cerror:
 	jmp.n	%r1
-	 subu	%r2, %r0, r2
+	 subu	%r2, %r0, %r2
 
 ENTRY(_dl_cacheflush)
 	tb0	0, %r0, 451
