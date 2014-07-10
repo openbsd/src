@@ -6271,6 +6271,7 @@
 ./usr/share/man/man9/rw_exit_read.9
 ./usr/share/man/man9/rw_exit_write.9
 ./usr/share/man/man9/rw_init.9
+./usr/share/man/man9/rw_status.9
 ./usr/share/man/man9/rwlock.9
 ./usr/share/man/man9/scanc.9
 ./usr/share/man/man9/sensor_attach.9
