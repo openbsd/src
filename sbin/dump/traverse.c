@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.35 2014/06/13 20:43:06 naddy Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.36 2014/07/10 09:33:43 krw Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -804,15 +804,48 @@ int	breaderrors = 0;
 void
 bread(daddr_t blkno, char *buf, int size)
 {
+	static char *mybuf = NULL;
+	char *mybufp, *bufp, *np;
+	static size_t mybufsz = 0;
 	off_t offset;
 	int cnt, i;
-	u_int32_t secsize = lab.d_secsize;
+	u_int64_t secno, seccount;
+	u_int32_t secoff, secsize = lab.d_secsize;
 
-	offset = blkno * DEV_BSIZE;
+	/*
+	 * We must read an integral number of sectors large enough to contain
+	 * all the requested data. The read must begin at a sector.
+	 */
+	if (DL_BLKOFFSET(&lab, blkno) == 0 && size % secsize == 0) {
+		secno = DL_BLKTOSEC(&lab, blkno);
+		secoff = 0;
+		seccount = size / secsize;
+		bufp = buf;
+	} else {
+		secno = DL_BLKTOSEC(&lab, blkno);
+		secoff = DL_BLKOFFSET(&lab, blkno);
+		seccount = DL_BLKTOSEC(&lab, (size + secoff) / DEV_BSIZE);
+		if (seccount * secsize < (size + secoff))
+			seccount++;
+		if (mybufsz < seccount * secsize) {
+			np = reallocarray(mybuf, seccount, secsize);
+			if (np == NULL) {
+				msg("No memory to read %llu %u-byte sectors",
+				    seccount, secsize);
+				dumpabort(0);
+			}
+			mybufsz = seccount * secsize;
+			mybuf = np;
+		}
+		bufp = mybuf;
+	}
+
+	offset = secno * secsize;
 
 loop:
-	if ((cnt = pread(diskfd, buf, size, offset)) == size)
-		return;
+	if ((cnt = pread(diskfd, bufp, seccount * secsize, offset)) ==
+	    seccount * secsize)
+		goto done;
 	if (blkno + (size / DEV_BSIZE) >
 	    fsbtodb(sblock, sblock->fs_ffs1_size)) {
 		/*
@@ -826,6 +859,7 @@ loop:
 		 * us into trouble. (mkm 9/25/83)
 		 */
 		size -= secsize;
+		seccount--;
 		goto loop;
 	}
 	if (cnt == -1)
@@ -848,9 +882,12 @@ loop:
 	/*
 	 * Zero buffer, then try to read each sector of buffer separately.
 	 */
-	memset(buf, 0, size);
-	for (i = 0; i < size; i += secsize, buf += secsize) {
-		if ((cnt = pread(diskfd, buf, secsize, offset + i)) ==
+	if (bufp == mybuf)
+		memset(bufp, 0, mybufsz);
+	else
+		memset(bufp, 0, size);
+	for (i = 0, mybufp = bufp; i < size; i += secsize, mybufp += secsize) {
+		if ((cnt = pread(diskfd, mybufp, secsize, offset + i)) ==
 		    secsize)
 			continue;
 		if (cnt == -1) {
@@ -863,4 +900,9 @@ loop:
 		    "got=%d\n", disk, (long long)(offset + i) / DEV_BSIZE,
 		    secsize, cnt);
 	}
+
+done:
+	/* If necessary, copy out data that was read. */
+	if (bufp == mybuf)
+		memcpy(buf, bufp + secoff, size);
 }
