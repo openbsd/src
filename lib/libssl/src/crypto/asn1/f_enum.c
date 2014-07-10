@@ -1,4 +1,4 @@
-/* $OpenBSD: f_enum.c,v 1.12 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: f_enum.c,v 1.13 2014/07/10 21:58:08 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -104,7 +104,8 @@ a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
 	int i, j,k, m,n, again, bufsize;
 	unsigned char *s = NULL, *sp;
 	unsigned char *bufp;
-	int num = 0, slen = 0, first = 1;
+	int first = 1;
+	size_t num = 0, slen = 0;
 
 	bs->type = V_ASN1_ENUMERATED;
 
@@ -154,7 +155,7 @@ a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
 		}
 		i /= 2;
 		if (num + i > slen) {
-			sp = realloc(s, (unsigned int)num + i);
+			sp = realloc(s, num + i);
 			if (sp == NULL) {
 				ASN1err(ASN1_F_A2I_ASN1_ENUMERATED,
 				    ERR_R_MALLOC_FAILURE);
