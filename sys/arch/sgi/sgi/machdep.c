@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.142 2014/07/10 13:34:32 uebayasi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.143 2014/07/10 20:15:27 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -831,15 +831,10 @@ boot(int howto)
 {
 	struct device *mainbus;
 
-	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
 		savectx(curproc->p_addr, 0);
 
 	if (cold) {
-		/*
-		 * If the system is cold, just halt, unless the user
-		 * explicitly asked for reboot.
-		 */
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
 		goto haltsys;

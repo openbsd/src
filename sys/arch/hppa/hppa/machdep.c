@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.224 2014/07/10 13:34:32 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.225 2014/07/10 20:15:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -900,9 +900,7 @@ boot(int howto)
 	if (cold_hook == NULL)
 		howto &= ~RB_POWERDOWN;
 
-	/* If system is cold, just halt. */
 	if (cold) {
-		/* (Unless the user explicitly asked for reboot.) */
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
 		goto haltsys;

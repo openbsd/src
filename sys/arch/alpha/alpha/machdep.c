@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.158 2014/07/10 13:34:32 uebayasi Exp $ */
+/* $OpenBSD: machdep.c,v 1.159 2014/07/10 20:15:26 uebayasi Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -983,15 +983,12 @@ boot(int howto)
 	int i;
 #endif
 
-	/* If system is cold, just halt. */
 	if (cold) {
-		/* (Unless the user explicitly asked for reboot.) */
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
 		goto haltsys;
 	}
 
-	/* If "always halt" was specified as a boot flag, obey. */
 	if ((boothowto & RB_HALT) != 0)
 		howto |= RB_HALT;
 

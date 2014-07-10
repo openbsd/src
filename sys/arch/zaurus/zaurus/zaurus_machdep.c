@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.45 2014/07/10 12:13:49 uebayasi Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.46 2014/07/10 20:15:27 uebayasi Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -296,10 +296,6 @@ boot(int howto)
 		lid_suspend = 0;
 
 	if (cold) {
-		/*
-		 * If the system is cold, just halt, unless the user
-		 * explicitely asked for reboot.
-		 */
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
 		goto haltsys;
