@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.65 2014/07/10 12:13:48 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.66 2014/07/10 13:34:32 uebayasi Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -311,11 +311,7 @@ boot(int howto)
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0) {
 		vfs_shutdown();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now unless
-		 * the system was sitting in ddb.
-		 */
+
 		if ((howto & RB_TIMEBAD) == 0)
 			resettodr();
 		else

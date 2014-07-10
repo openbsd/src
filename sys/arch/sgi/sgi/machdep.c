@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.141 2014/07/10 12:13:49 uebayasi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.142 2014/07/10 13:34:32 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -851,16 +851,9 @@ boot(int howto)
 		/* fill curproc with live object */
 		if (curproc == NULL)
 			curproc = &proc0;
-		/*
-		 * Synchronize the disks...
-		 */
 		waittime = 0;
 		vfs_shutdown();
 
-		/*
-		 * If we've been adjusting the clock, the todr will be out of
-		 * sync; adjust it now.
-		 */
 		if ((howto & RB_TIMEBAD) == 0) {
 			resettodr();
 		} else {

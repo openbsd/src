@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.158 2014/07/10 12:13:49 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.159 2014/07/10 13:34:32 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -632,8 +632,7 @@ boot(int howto)
 		vfs_shutdown();
 
 		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
+		 * XXX
 		 * Do this only if the TOD clock has already been read out
 		 * successfully by inittodr() or set by an explicit call
 		 * to resettodr() (e.g. from settimeofday()).

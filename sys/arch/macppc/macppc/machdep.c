@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.154 2014/07/10 12:13:49 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.155 2014/07/10 13:34:32 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -821,11 +821,6 @@ boot(int howto)
 		syncing = 1;
 		vfs_shutdown();		/* sync */
 
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now unless
-		 * the system was sitting in ddb.
-		 */
 		if ((howto & RB_TIMEBAD) == 0) {
 			resettodr();
 		} else {

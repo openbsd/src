@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.181 2014/07/10 12:13:48 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.182 2014/07/10 13:34:32 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -765,12 +765,9 @@ boot(int howto)
 		waittime = 0;
 
 		if (curproc == NULL)
-			curproc = &proc0;	/* XXX */
+			curproc = &proc0;
 		vfs_shutdown();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
+
 		if ((howto & RB_TIMEBAD) == 0) {
 			resettodr();
 		} else {
