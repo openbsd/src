@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.2 2014/07/10 08:45:18 mpi Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.3 2014/07/10 12:05:36 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -19,6 +19,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/pool.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -34,10 +36,15 @@
 #include <octeon/dev/octhcireg.h>
 
 #ifdef OCTHCI_DEBUG
-#define DPRINTF(x) printf x
+#define DPRINTF(x)	do { if (octhcidebug) printf x; } while(0)
+#define DPRINTFN(n,x)	do { if (octhcidebug>(n)) printf x; } while (0)
+int octhcidebug = 3;
 #else
 #define DPRINTF(x)
+#define DPRINTFN(n,x)
 #endif
+
+#define DEVNAME(sc)		((sc)->sc_bus.bdev.dv_xname)
 
 struct octhci_softc {
 	struct usbd_bus sc_bus;		/* base device */
@@ -48,12 +55,26 @@ struct octhci_softc {
 	bus_space_handle_t sc_regn;	/* usbn register space */
 	bus_space_handle_t sc_regc;	/* usbc register space */
         bus_space_handle_t sc_dma_reg;	/* dma register space */
+
+	int sc_noport;			/* Maximum number of ports */
+
+	u_int8_t sc_conf;		/* Device configuration */
+
+	char sc_vendor[16];		/* Vendor string for root hub */
+	int sc_id_vendor;		/* Vendor ID for root hub */
 };
+
+struct pool *octhcixfer;
+
+struct octhci_xfer {
+	struct usbd_xfer	 xfer;
+};
+
 
 int octhci_match(struct device *, void *, void *);
 void octhci_attach(struct device *, struct device *, void *);
 
-void octhci_init(struct octhci_softc *);
+int octhci_init(struct octhci_softc *);
 void octhci_init_core(struct octhci_softc *);
 void octhci_init_host(struct octhci_softc *);
 int octhci_intr(void *);
@@ -174,10 +195,13 @@ octhci_attach(struct device *parent, struct device *self, void *aux)
 	 * Should write a get_nports routine to get the actual number based
 	 * on the model.
 	 */
+	sc->sc_noport = 1;
 
 	sc->sc_bus.usbrev = USBREV_2_0;
 
-	octhci_init(sc);
+	if (octhci_init(sc))
+		return;
+
 	octhci_init_core(sc);
 	octhci_init_host(sc);
 #if 0
@@ -198,10 +222,21 @@ octhci_attach(struct device *parent, struct device *self, void *aux)
 	config_found((void *)sc, &sc->sc_bus, usbctlprint);
 }
 
-void
+int
 octhci_init(struct octhci_softc *sc)
 {
 	uint64_t clk;
+
+	if (octhcixfer == NULL) {
+		octhcixfer = malloc(sizeof(struct pool), M_DEVBUF, M_NOWAIT);
+		if (octhcixfer == NULL) {
+			printf("%s: unable to allocate pool descriptor\n",
+			    DEVNAME(sc));
+			return (ENOMEM);
+		}
+		pool_init(octhcixfer, sizeof(struct octhci_xfer), 0, 0, 0,
+		    "octhcixfer", NULL);
+	}
 
 	/*
 	 * Clock setup.
@@ -251,6 +286,8 @@ octhci_init(struct octhci_softc *sc)
 	 */
 	octhci_regn_set(sc, USBN_CLK_CTL_OFFSET, USBN_CLK_CTL_ENABLE);
 	delay(1);
+
+	return 0;
 }
 
 void
@@ -444,11 +481,11 @@ octhci_open(struct usbd_pipe *pipe)
 	if (pipe->device->depth == 0) {
 		switch (ed->bEndpointAddress) {
 		case USB_CONTROL_ENDPOINT:
-			printf("Root Hub Control\n");
+			DPRINTF(("Root Hub Control\n"));
 			pipe->methods = &octhci_root_ctrl_methods;
 			break;
 		case UE_DIR_IN | OCTHCI_INTR_ENDPT:
-			printf("Root Hub Interrupt\n");
+			DPRINTF(("Root Hub Interrupt\n"));
 			pipe->methods = &octhci_root_intr_methods;
 			break;
 		default:
@@ -475,13 +512,97 @@ octhci_poll(struct usbd_bus *bus)
 struct usbd_xfer *
 octhci_allocx(struct usbd_bus *bus)
 {
-	return NULL;
+	struct octhci_xfer *xx;
+
+	xx = pool_get(octhcixfer, PR_NOWAIT | PR_ZERO);
+#ifdef DIAGNOSTIC
+	if (xx != NULL)
+		xx->xfer.busy_free = XFER_BUSY;
+#endif
+	return ((struct usbd_xfer *)xx);
 }
 
 void
 octhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
+	struct octhci_xfer *xx = (struct octhci_xfer*)xfer;
+
+#ifdef DIAGNOSTIC
+	if (xfer->busy_free != XFER_BUSY) {
+		printf("%s: xfer=%p not busy, 0x%08x\n", __func__, xfer,
+		    xfer->busy_free);
+		return;
+	}
+#endif
+	pool_put(octhcixfer, xx);
 }
+
+
+/* Root hub descriptors. */
+usb_device_descriptor_t octhci_devd = {
+	USB_DEVICE_DESCRIPTOR_SIZE,
+	UDESC_DEVICE,		/* type */
+	{0x00, 0x02},		/* USB version */
+	UDCLASS_HUB,		/* class */
+	UDSUBCLASS_HUB,		/* subclass */
+	UDPROTO_HSHUBSTT,	/* protocol */
+	64,			/* max packet */
+	{0},{0},{0x00,0x01},	/* device id */
+	1,2,0,			/* string indexes */
+	1			/* # of configurations */
+};
+
+const usb_config_descriptor_t octhci_confd = {
+	USB_CONFIG_DESCRIPTOR_SIZE,
+	UDESC_CONFIG,
+	{USB_CONFIG_DESCRIPTOR_SIZE +
+	 USB_INTERFACE_DESCRIPTOR_SIZE +
+	 USB_ENDPOINT_DESCRIPTOR_SIZE},
+	1,
+	1,
+	0,
+	UC_SELF_POWERED,
+	0                      /* max power */
+};
+
+const usb_interface_descriptor_t octhci_ifcd = {
+	USB_INTERFACE_DESCRIPTOR_SIZE,
+	UDESC_INTERFACE,
+	0,
+	0,
+	1,
+	UICLASS_HUB,
+	UISUBCLASS_HUB,
+	UIPROTO_HSHUBSTT,	/* XXX */
+	0
+};
+
+const usb_endpoint_descriptor_t octhci_endpd = {
+	USB_ENDPOINT_DESCRIPTOR_SIZE,
+	UDESC_ENDPOINT,
+	UE_DIR_IN,
+	UE_INTERRUPT,
+	{2, 0},                 /* max 15 ports */
+	255
+};
+
+const usb_endpoint_ss_comp_descriptor_t octhci_endpcd = {
+	USB_ENDPOINT_SS_COMP_DESCRIPTOR_SIZE,
+	UDESC_ENDPOINT_SS_COMP,
+	0,
+	0,
+	{0, 0}			/* XXX */
+};
+
+const usb_hub_descriptor_t octhci_hubd = {
+	USB_HUB_DESCRIPTOR_SIZE,
+	UDESC_SS_HUB,
+	0,
+	{0,0},
+	0,
+	0,
+	{0},
+};
 
 /*
  * USBD Root Control Pipe Methods.
@@ -490,13 +611,342 @@ octhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 usbd_status
 octhci_root_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	return USBD_NORMAL_COMPLETION;
+	usbd_status err;
+
+	err = usb_insert_transfer(xfer);
+	if (err)
+		return (err);
+
+	return (octhci_root_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
 }
 
 usbd_status
 octhci_root_ctrl_start(struct usbd_xfer *xfer)
 {
-	return USBD_NORMAL_COMPLETION;
+	struct octhci_softc *sc = (struct octhci_softc *)xfer->device->bus;
+	usb_port_status_t ps;
+	usb_device_request_t *req;
+	void *buf = NULL;
+	usb_hub_descriptor_t hubd;
+	usbd_status err;
+	int s, len, value, index;
+	int l, totlen = 0;
+	int i;
+	/* int port; */
+	/* uint32_t v; */
+
+	KASSERT(xfer->rqflags & URQ_REQUEST);
+
+	if (sc->sc_bus.dying)
+		return (USBD_IOERROR);
+
+	req = &xfer->request;
+
+	DPRINTFN(4,("%s: type=0x%02x request=%02x\n", __func__,
+	    req->bmRequestType, req->bRequest));
+
+	len = UGETW(req->wLength);
+	value = UGETW(req->wValue);
+	index = UGETW(req->wIndex);
+
+	if (len != 0)
+		buf = KERNADDR(&xfer->dmabuf, 0);
+
+#define C(x,y) ((x) | ((y) << 8))
+	switch(C(req->bRequest, req->bmRequestType)) {
+	case C(UR_CLEAR_FEATURE, UT_WRITE_DEVICE):
+	case C(UR_CLEAR_FEATURE, UT_WRITE_INTERFACE):
+	case C(UR_CLEAR_FEATURE, UT_WRITE_ENDPOINT):
+		/*
+		 * DEVICE_REMOTE_WAKEUP and ENDPOINT_HALT are no-ops
+		 * for the integrated root hub.
+		 */
+		break;
+	case C(UR_GET_CONFIG, UT_READ_DEVICE):
+		if (len > 0) {
+			*(uint8_t *)buf = sc->sc_conf;
+			totlen = 1;
+		}
+		break;
+	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
+		DPRINTFN(8,("octhci_root_ctrl_start: wValue=0x%04x\n", value));
+		switch(value >> 8) {
+		case UDESC_DEVICE:
+			if ((value & 0xff) != 0) {
+				err = USBD_IOERROR;
+				goto ret;
+			}
+			totlen = l = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
+			USETW(octhci_devd.idVendor, sc->sc_id_vendor);
+			memcpy(buf, &octhci_devd, l);
+			break;
+		/*
+		 * We can't really operate at another speed, but the spec says
+		 * we need this descriptor.
+		 */
+		case UDESC_OTHER_SPEED_CONFIGURATION:
+		case UDESC_CONFIG:
+			if ((value & 0xff) != 0) {
+				err = USBD_IOERROR;
+				goto ret;
+			}
+			totlen = l = min(len, USB_CONFIG_DESCRIPTOR_SIZE);
+			memcpy(buf, &octhci_confd, l);
+			((usb_config_descriptor_t *)buf)->bDescriptorType =
+			    value >> 8;
+			buf = (char *)buf + l;
+			len -= l;
+			l = min(len, USB_INTERFACE_DESCRIPTOR_SIZE);
+			totlen += l;
+			memcpy(buf, &octhci_ifcd, l);
+			buf = (char *)buf + l;
+			len -= l;
+			l = min(len, USB_ENDPOINT_DESCRIPTOR_SIZE);
+			totlen += l;
+			memcpy(buf, &octhci_endpd, l);
+			break;
+		case UDESC_STRING:
+			if (len == 0)
+				break;
+			*(u_int8_t *)buf = 0;
+			totlen = 1;
+			switch (value & 0xff) {
+			case 0: /* Language table */
+				totlen = usbd_str(buf, len, "\001");
+				break;
+			case 1: /* Vendor */
+				totlen = usbd_str(buf, len, sc->sc_vendor);
+				break;
+			case 2: /* Product */
+				totlen = usbd_str(buf, len, "octHCI root hub");
+				break;
+			}
+			break;
+		default:
+			err = USBD_IOERROR;
+			goto ret;
+		}
+		break;
+	case C(UR_GET_INTERFACE, UT_READ_INTERFACE):
+		if (len > 0) {
+			*(uint8_t *)buf = 0;
+			totlen = 1;
+		}
+		break;
+	case C(UR_GET_STATUS, UT_READ_DEVICE):
+		if (len > 1) {
+			USETW(((usb_status_t *)buf)->wStatus,UDS_SELF_POWERED);
+			totlen = 2;
+		}
+		break;
+	case C(UR_GET_STATUS, UT_READ_INTERFACE):
+	case C(UR_GET_STATUS, UT_READ_ENDPOINT):
+		if (len > 1) {
+			USETW(((usb_status_t *)buf)->wStatus, 0);
+			totlen = 2;
+		}
+		break;
+	case C(UR_SET_ADDRESS, UT_WRITE_DEVICE):
+		if (value >= USB_MAX_DEVICES) {
+			err = USBD_IOERROR;
+			goto ret;
+		}
+		break;
+	case C(UR_SET_CONFIG, UT_WRITE_DEVICE):
+		if (value != 0 && value != 1) {
+			err = USBD_IOERROR;
+			goto ret;
+		}
+		sc->sc_conf = value;
+		break;
+	case C(UR_SET_DESCRIPTOR, UT_WRITE_DEVICE):
+		break;
+	case C(UR_SET_FEATURE, UT_WRITE_DEVICE):
+	case C(UR_SET_FEATURE, UT_WRITE_INTERFACE):
+	case C(UR_SET_FEATURE, UT_WRITE_ENDPOINT):
+		err = USBD_IOERROR;
+		goto ret;
+	case C(UR_SET_INTERFACE, UT_WRITE_INTERFACE):
+		break;
+	case C(UR_SYNCH_FRAME, UT_WRITE_ENDPOINT):
+		break;
+	/* Hub requests */
+	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_DEVICE):
+		break;
+	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
+		DPRINTFN(8, ("octhci_root_ctrl_start: UR_CLEAR_PORT_FEATURE "
+		    "port=%d feature=%d\n", index, value));
+		if (index < 1 || index > sc->sc_noport) {
+			err = USBD_IOERROR;
+			goto ret;
+		}
+		switch (value) {
+		case UHF_PORT_ENABLE:
+			break;
+		case UHF_PORT_SUSPEND:
+			/* TODO */
+			break;
+		case UHF_PORT_POWER:
+			break;
+		case UHF_PORT_INDICATOR:
+			break;
+		case UHF_C_PORT_CONNECTION:
+			break;
+		case UHF_C_PORT_ENABLE:
+			break;
+		case UHF_C_PORT_SUSPEND:
+			break;
+		case UHF_C_PORT_OVER_CURRENT:
+			break;
+		case UHF_C_PORT_RESET:
+			break;
+		default:
+			err = USBD_IOERROR;
+			goto ret;
+		}
+		break;
+
+	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
+		if (len == 0)
+			break;
+		if ((value & 0xff) != 0) {
+			err = USBD_IOERROR;
+			goto ret;
+		}
+		/* v = XREAD4(sc, XHCI_HCCPARAMS); */
+		hubd = octhci_hubd;
+		hubd.bNbrPorts = sc->sc_noport;
+#if 0
+		USETW(hubd.wHubCharacteristics,
+		    (XHCI_HCC_PPC(v) ? UHD_PWR_INDIVIDUAL : UHD_PWR_GANGED) |
+		    (XHCI_HCC_PIND(v) ? UHD_PORT_IND : 0));
+		hubd.bPwrOn2PwrGood = 10; /* xHCI section 5.4.9 */
+		for (i = 1; i <= sc->sc_noport; i++) {
+			v = XOREAD4(sc, XHCI_PORTSC(i));
+			if (v & XHCI_PS_DR)
+				hubd.DeviceRemovable[i / 8] |= 1U << (i % 8);
+		}
+#endif
+		hubd.bDescLength = USB_HUB_DESCRIPTOR_SIZE + i;
+		l = min(len, hubd.bDescLength);
+		totlen = l;
+		memcpy(buf, &hubd, l);
+		break;
+	case C(UR_GET_STATUS, UT_READ_CLASS_DEVICE):
+		if (len != 16) {
+			err = USBD_IOERROR;
+			goto ret;
+		}
+		memset(buf, 0, len);
+		totlen = len;
+		break;
+	case C(UR_GET_STATUS, UT_READ_CLASS_OTHER):
+		DPRINTFN(8,("octhci_root_ctrl_start: get port status i=%d\n",
+		    index));
+		if (index < 1 || index > sc->sc_noport) {
+			err = USBD_IOERROR;
+			goto ret;
+		}
+		if (len != 4) {
+			err = USBD_IOERROR;
+			goto ret;
+		}
+#if 0
+		v = XOREAD4(sc, XHCI_PORTSC(index));
+		DPRINTFN(8,("xhci_root_ctrl_start: port status=0x%04x\n", v));
+		switch (XHCI_PS_SPEED(v)) {
+		case XHCI_SPEED_FULL:
+			i = UPS_FULL_SPEED;
+			break;
+		case XHCI_SPEED_LOW:
+			i = UPS_LOW_SPEED;
+			break;
+		case XHCI_SPEED_HIGH:
+			i = UPS_HIGH_SPEED;
+			break;
+		case XHCI_SPEED_SUPER:
+		default:
+			i = UPS_SUPER_SPEED;
+			break;
+		}
+		if (v & XHCI_PS_CCS)	i |= UPS_CURRENT_CONNECT_STATUS;
+		if (v & XHCI_PS_PED)	i |= UPS_PORT_ENABLED;
+		if (v & XHCI_PS_OCA)	i |= UPS_OVERCURRENT_INDICATOR;
+		if (v & XHCI_PS_PR)	i |= UPS_RESET;
+		if (v & XHCI_PS_PP)	i |= UPS_PORT_POWER;
+		USETW(ps.wPortStatus, i);
+		i = 0;
+		if (v & XHCI_PS_CSC)    i |= UPS_C_CONNECT_STATUS;
+		if (v & XHCI_PS_PEC)    i |= UPS_C_PORT_ENABLED;
+		if (v & XHCI_PS_OCC)    i |= UPS_C_OVERCURRENT_INDICATOR;
+		if (v & XHCI_PS_PRC)	i |= UPS_C_PORT_RESET;
+#endif
+		i = UPS_HIGH_SPEED;
+		USETW(ps.wPortStatus, i);
+
+		i = 0;
+		i |= UPS_C_PORT_ENABLED;
+		USETW(ps.wPortChange, i);
+
+		l = min(len, sizeof ps);
+		memcpy(buf, &ps, l);
+		totlen = l;
+		break;
+	case C(UR_SET_DESCRIPTOR, UT_WRITE_CLASS_DEVICE):
+		err = USBD_IOERROR;
+		goto ret;
+	case C(UR_SET_FEATURE, UT_WRITE_CLASS_DEVICE):
+		break;
+	case C(UR_SET_FEATURE, UT_WRITE_CLASS_OTHER):
+
+		i = index >> 8;
+		index &= 0x00ff;
+
+		if (index < 1 || index > sc->sc_noport) {
+			err = USBD_IOERROR;
+			goto ret;
+		}
+
+		switch (value) {
+		case UHF_PORT_ENABLE:
+			break;
+		case UHF_PORT_SUSPEND:
+			DPRINTFN(6, ("suspend port %u (LPM=%u)\n", index, i));
+			break;
+		case UHF_PORT_RESET:
+			DPRINTFN(6, ("reset port %d\n", index));
+			break;
+		case UHF_PORT_POWER:
+			DPRINTFN(3, ("set port power %d\n", index));
+			break;
+		case UHF_PORT_INDICATOR:
+			DPRINTFN(3, ("set port indicator %d\n", index));
+
+			break;
+		case UHF_C_PORT_RESET:
+			break;
+		default:
+			err = USBD_IOERROR;
+			goto ret;
+		}
+		break;
+	case C(UR_CLEAR_TT_BUFFER, UT_WRITE_CLASS_OTHER):
+	case C(UR_RESET_TT, UT_WRITE_CLASS_OTHER):
+	case C(UR_GET_TT_STATE, UT_READ_CLASS_OTHER):
+	case C(UR_STOP_TT, UT_WRITE_CLASS_OTHER):
+		break;
+	default:
+		err = USBD_IOERROR;
+		goto ret;
+	}
+	xfer->actlen = totlen;
+	err = USBD_NORMAL_COMPLETION;
+ret:
+	xfer->status = err;
+	s = splusb();
+	usb_transfer_complete(xfer);
+	splx(s);
+	return (USBD_IN_PROGRESS);
 }
 
 void
