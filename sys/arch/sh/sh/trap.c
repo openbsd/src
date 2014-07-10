@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.29 2014/05/11 00:12:44 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.30 2014/07/10 14:21:20 deraadt Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -156,7 +156,7 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 {
 	int expevt = tf->tf_expevt;
 	int tra;
-	boolean_t usermode = !KERNELMODE(tf->tf_ssr);
+	int usermode = !KERNELMODE(tf->tf_ssr);
 	union sigval sv;
 
 	uvmexp.traps++;
@@ -315,7 +315,7 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 	struct vm_map *map;
 	pmap_t pmap;
 	union sigval sv;
-	boolean_t usermode;
+	int usermode;
 	int err, track, ftype;
 	const char *panic_msg;
 
@@ -422,7 +422,7 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 
 	/* Page in. load PTE to TLB. */
 	if (err == 0) {
-		boolean_t loaded = __pmap_pte_load(pmap, va, track);
+		int loaded = __pmap_pte_load(pmap, va, track);
 		TLB_ASSERT(loaded, "page table entry not found");
 		if (usermode)
 			userret(p);

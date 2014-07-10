@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci_pci.c,v 1.5 2014/04/14 04:42:22 dlg Exp $ */
+/*	$OpenBSD: ahci_pci.c,v 1.6 2014/07/10 14:21:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -161,7 +161,6 @@ int			ahci_pci_detach(struct device *, int);
 int			ahci_pci_activate(struct device *, int);
 
 #ifdef HIBERNATE
-#include <uvm/uvm_extern.h>
 #include <sys/hibernate.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>

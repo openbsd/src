@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.29 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.30 2014/07/10 14:21:20 deraadt Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -45,8 +45,6 @@
 #include <sys/disk.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>

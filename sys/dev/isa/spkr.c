@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.14 2012/11/10 23:36:52 jsg Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.15 2014/07/10 14:21:20 deraadt Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -115,10 +115,6 @@ rest(ticks)
  * except possibly at physical block boundaries.
  */
 
-typedef int	boolean_t;
-#define TRUE	1
-#define FALSE	0
-
 #define toupper(c)	((c) - ' ' * (((c) >= 'a') && ((c) <= 'z')))
 #define isdigit(c)	(((c) >= '0') && ((c) <= '9'))
 #define dtoi(c)		((c) - '0')
@@ -127,8 +123,8 @@ static int octave;	/* currently selected octave */
 static int whole;	/* whole-note time at current tempo, in ticks */
 static int value;	/* whole divisor for note time, quarter note = 1 */
 static int fill;	/* controls spacing of notes */
-static boolean_t octtrack;	/* octave-tracking on? */
-static boolean_t octprefix;	/* override current octave-tracking state? */
+static int octtrack;	/* octave-tracking on? */
+static int octprefix;	/* override current octave-tracking state? */
 
 /*
  * Magic number avoidance...
@@ -177,8 +173,8 @@ playinit(void)
 	whole = (hz * SECS_PER_MIN * WHOLE_NOTE) / DFLT_TEMPO;
 	fill = NORMAL;
 	value = DFLT_VALUE;
-	octtrack = FALSE;
-	octprefix = TRUE;	/* act as though there was an initial O(n) */
+	octtrack = 0;
+	octprefix = 1;	/* act as though there was an initial O(n) */
 }
 
 /* play tone of proper duration for current rhythm signature */
@@ -276,7 +272,7 @@ do { \
 					pitch -= OCTAVE_NOTES;
 				}
 			}
-			octprefix = FALSE;
+			octprefix = 0;
 			lastpitch = pitch;
 
 			/*
@@ -299,31 +295,31 @@ do { \
 
 		case 'O':
 			if (slen > 0 && (cp[1] == 'N' || cp[1] == 'n')) {
-				octprefix = octtrack = FALSE;
+				octprefix = octtrack = 0;
 				++cp;
 				slen--;
 			} else if (slen > 0 && (cp[1] == 'L' || cp[1] == 'l')) {
-				octtrack = TRUE;
+				octtrack = 1;
 				++cp;
 				slen--;
 			} else {
 				GETNUM(cp, octave);
 				if (octave >= NOCTAVES)
 					octave = DFLT_OCTAVE;
-				octprefix = TRUE;
+				octprefix = 1;
 			}
 			break;
 
 		case '>':
 			if (octave < NOCTAVES - 1)
 				octave++;
-			octprefix = TRUE;
+			octprefix = 1;
 			break;
 
 		case '<':
 			if (octave > 0)
 				octave--;
-			octprefix = TRUE;
+			octprefix = 1;
 			break;
 
 		case 'N':

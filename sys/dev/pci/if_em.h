@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.51 2014/07/08 05:35:18 dlg Exp $ */
+/* $OpenBSD: if_em.h,v 1.52 2014/07/10 14:21:20 deraadt Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -72,7 +72,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <net/bpf.h>
 #endif
 
-#include <uvm/uvm_extern.h>
+typedef int	boolean_t;
+#define TRUE	1
+#define FALSE	0
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

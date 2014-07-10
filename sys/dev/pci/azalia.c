@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.212 2014/05/17 12:45:53 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.213 2014/07/10 14:21:20 deraadt Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -46,7 +46,6 @@
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/timeout.h>
-#include <uvm/uvm_param.h>
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
 #include <dev/pci/pcidevs.h>
@@ -175,10 +174,10 @@ typedef struct azalia_t {
 	rirb_entry_t *unsolq;
 	int unsolq_wp;
 	int unsolq_rp;
-	boolean_t unsolq_kick;
+	int unsolq_kick;
 	struct timeout unsol_to;
 
-	boolean_t ok64;
+	int ok64;
 	int nistreams, nostreams, nbstreams;
 	stream_t pstream;
 	stream_t rstream;
@@ -1153,7 +1152,7 @@ azalia_init_rirb(azalia_t *az, int resuming)
 
 	az->unsolq_rp = 0;
 	az->unsolq_wp = 0;
-	az->unsolq_kick = FALSE;
+	az->unsolq_kick = 0;
 
 	AZ_WRITE_2(az, RINTCNT, 1);
 
@@ -1271,7 +1270,7 @@ azalia_rirb_kick_unsol_events(void *v)
 
 	if (az->unsolq_kick)
 		return;
-	az->unsolq_kick = TRUE;
+	az->unsolq_kick = 1;
 	while (az->unsolq_rp != az->unsolq_wp) {
 		addr = RIRB_RESP_CODEC(az->unsolq[az->unsolq_rp].resp_ex);
 		tag = RIRB_UNSOL_TAG(az->unsolq[az->unsolq_rp].resp);
@@ -1284,7 +1283,7 @@ azalia_rirb_kick_unsol_events(void *v)
 		if (az->codecs[az->codecno].address == addr)
 			azalia_unsol_event(&az->codecs[az->codecno], tag);
 	}
-	az->unsolq_kick = FALSE;
+	az->unsolq_kick = 0;
 }
 
 void

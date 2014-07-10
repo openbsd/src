@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.14 2013/10/30 03:59:26 dlg Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.15 2014/07/10 14:21:20 deraadt Exp $	*/
 
 /******************************************************************************
 
@@ -76,7 +76,9 @@
 #include <net/if_vlan_var.h>
 #endif
 
-#include <uvm/uvm_extern.h>
+typedef int	boolean_t;
+#define TRUE	1
+#define FALSE	0
 
 #include <dev/rndvar.h>
 
