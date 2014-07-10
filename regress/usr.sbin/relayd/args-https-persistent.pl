@@ -15,7 +15,9 @@ our %args = (
 	    "match request header log foo",
 	    "match response header log bar",
 	],
-	loggrep => qr/\, done/,
+	loggrep => {
+	    qr/, (?:done|last write \(done\))/ => (1 + @lengths),
+	},
 	forwardssl => 1,
 	listenssl => 1,
     },
