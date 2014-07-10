@@ -1,4 +1,4 @@
-#	$OpenBSD: Relayd.pm,v 1.10 2014/06/22 14:18:01 bluhm Exp $
+#	$OpenBSD: Relayd.pm,v 1.11 2014/07/10 22:33:44 bluhm Exp $
 
 # Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -27,7 +27,7 @@ sub new {
 	my %args = @_;
 	$args{logfile} ||= "relayd.log";
 	$args{up} ||= "Started";
-	$args{down} ||= $args{dryrun} ? "no actions" : "parent terminating";
+	$args{down} ||= $args{dryrun} ? "relayd.conf:" : "parent terminating";
 	$args{func} = sub { Carp::confess "$class func may not be called" };
 	$args{conffile} ||= "relayd.conf";
 	$args{forward}
