@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.23 2014/07/10 19:31:07 tobias Exp $	*/
+/*	$OpenBSD: newfs_msdos.c,v 1.24 2014/07/10 20:09:53 tobias Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -626,7 +626,7 @@ main(int argc, char *argv[])
 		mk4(img, 0x41615252);
 		mk4(img + MINBPS - 28, 0x61417272);
 		mk4(img + MINBPS - 24, 0xffffffff);
-		mk4(img + MINBPS - 20, bpb.rdcl);
+		mk4(img + MINBPS - 20, 0xffffffff);
 		mk2(img + MINBPS - 2, DOSMAGIC);
 	    } else if (lsn >= bpb.res && lsn < dir &&
 		       !((lsn - bpb.res) %
