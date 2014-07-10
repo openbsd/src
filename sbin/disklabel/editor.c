@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.286 2014/05/02 23:17:29 chl Exp $	*/
+/*	$OpenBSD: editor.c,v 1.287 2014/07/10 13:31:23 florian Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -137,8 +137,6 @@ void	find_bounds(struct disklabel *);
 void	set_bounds(struct disklabel *);
 void	set_duid(struct disklabel *);
 struct diskchunk *free_chunks(struct disklabel *);
-void	mpcopy(char **, char **);
-void	mpfree(char **);
 int	micmp(const void *, const void *);
 int	mpequal(char **, char **);
 int	get_bsize(struct disklabel *, int);
