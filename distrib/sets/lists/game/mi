@@ -43,6 +43,7 @@
 ./usr/games/worm
 ./usr/games/worms
 ./usr/games/wump
+./usr/share/games/atc
 ./usr/share/games/atc/Atlantis
 ./usr/share/games/atc/Game_List
 ./usr/share/games/atc/Killer
@@ -59,12 +60,14 @@
 ./usr/share/games/atc/game_4
 ./usr/share/games/atc/novice
 ./usr/share/games/atc/two-corners
+./usr/share/games/boggle
 ./usr/share/games/boggle/dictindex
 ./usr/share/games/boggle/dictionary
 ./usr/share/games/boggle/helpfile
 ./usr/share/games/cards.pck
 ./usr/share/games/cribbage.instr
 ./usr/share/games/fish.instr
+./usr/share/games/fortune
 ./usr/share/games/fortune/fortunes
 ./usr/share/games/fortune/fortunes-o
 ./usr/share/games/fortune/fortunes-o.dat
@@ -81,6 +84,7 @@
 ./usr/share/games/fortune/startrek.dat
 ./usr/share/games/fortune/zippy
 ./usr/share/games/fortune/zippy.dat
+./usr/share/games/quiz.db
 ./usr/share/games/quiz.db/africa
 ./usr/share/games/quiz.db/america
 ./usr/share/games/quiz.db/areas
@@ -163,11 +167,14 @@
 ./var/games/atc_score
 ./var/games/battlestar.log
 ./var/games/cfscores
+./var/games/hackdir
 ./var/games/hackdir/data
 ./var/games/hackdir/help
 ./var/games/hackdir/hh
 ./var/games/hackdir/perm
 ./var/games/hackdir/record
+./var/games/hackdir/save
+./var/games/phantasia
 ./var/games/phantasia/characs
 ./var/games/phantasia/gold
 ./var/games/phantasia/lastdead
@@ -177,4 +184,6 @@
 ./var/games/phantasia/scoreboard
 ./var/games/phantasia/void
 ./var/games/robots_roll
+./var/games/save
 ./var/games/snakerawscores
+./var/games/tetris.scores

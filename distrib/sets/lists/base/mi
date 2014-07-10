@@ -2795,10 +2795,6 @@
 ./usr/share/dict/words
 ./usr/share/doc
 ./usr/share/games
-./usr/share/games/atc
-./usr/share/games/boggle
-./usr/share/games/fortune
-./usr/share/games/quiz.db
 ./usr/share/info
 ./usr/share/lkm
 ./usr/share/lkm/misc
@@ -5012,10 +5008,6 @@
 ./var/empty
 ./var/empty/dev
 ./var/games
-./var/games/hackdir
-./var/games/hackdir/save
-./var/games/phantasia
-./var/games/save
 ./var/log
 ./var/log/rdist
 ./var/mail
