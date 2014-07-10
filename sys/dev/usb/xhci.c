@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.14 2014/07/09 15:54:39 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.15 2014/07/10 11:47:14 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -960,10 +960,7 @@ xhci_device_setup(struct xhci_softc *sc, struct usbd_device *dev, uint8_t slot)
 	if (addr == 0)
 		return (EINVAL);
 
-	DPRINTF(("%s: dev %d new addr %d\n", DEVNAME(sc), slot, addr));
-
-	dev->address = addr;
-	dev->bus->devices[addr] = dev;
+	DPRINTF(("%s: dev %d internal addr %d\n", DEVNAME(sc), slot, addr));
 
 	return (0);
 }
