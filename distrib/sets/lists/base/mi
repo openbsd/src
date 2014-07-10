@@ -500,6 +500,8 @@
 ./usr/include
 ./usr/lib
 ./usr/lib/gcc-lib
+./usr/lib/locate
+./usr/lib/locate/src.db
 ./usr/lib/pkgconfig
 ./usr/lib/pkgconfig/expat.pc
 ./usr/lib/pkgconfig/fuse.pc

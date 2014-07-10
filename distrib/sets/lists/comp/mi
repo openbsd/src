@@ -15,12 +15,10 @@
 ./usr/bin/ld
 ./usr/bin/lex
 ./usr/bin/lorder
-./usr/bin/mkstr
 ./usr/bin/objdump
 ./usr/bin/ranlib
 ./usr/bin/rpcgen
 ./usr/bin/strip
-./usr/bin/xstr
 ./usr/bin/yacc
 ./usr/include/a.out.h
 ./usr/include/ar.h
@@ -1647,7 +1645,6 @@
 ./usr/share/man/man1/ld.1
 ./usr/share/man/man1/lex.1
 ./usr/share/man/man1/lorder.1
-./usr/share/man/man1/mkstr.1
 ./usr/share/man/man1/objcopy.1
 ./usr/share/man/man1/objdump.1
 ./usr/share/man/man1/protoize.1
@@ -1656,7 +1653,6 @@
 ./usr/share/man/man1/rpcgen.1
 ./usr/share/man/man1/strip.1
 ./usr/share/man/man1/unprotoize.1
-./usr/share/man/man1/xstr.1
 ./usr/share/man/man1/yacc.1
 ./usr/share/man/man2/EV_SET.2
 ./usr/share/man/man2/S_ISBLK.2
@@ -2592,12 +2588,10 @@
 ./usr/share/man/man3/RAND_add.3
 ./usr/share/man/man3/RAND_bytes.3
 ./usr/share/man/man3/RAND_cleanup.3
-./usr/share/man/man3/RAND_event.3
 ./usr/share/man/man3/RAND_file_name.3
 ./usr/share/man/man3/RAND_get_rand_method.3
 ./usr/share/man/man3/RAND_load_file.3
 ./usr/share/man/man3/RAND_pseudo_bytes.3
-./usr/share/man/man3/RAND_screen.3
 ./usr/share/man/man3/RAND_seed.3
 ./usr/share/man/man3/RAND_set_rand_method.3
 ./usr/share/man/man3/RAND_status.3
@@ -6231,6 +6225,10 @@
 ./usr/share/man/man9/readdisklabel.9
 ./usr/share/man/man9/resettodr.9
 ./usr/share/man/man9/route.9
+./usr/share/man/man9/rrw_enter.9
+./usr/share/man/man9/rrw_exit.9
+./usr/share/man/man9/rrw_init.9
+./usr/share/man/man9/rrw_status.9
 ./usr/share/man/man9/rssadapt.9
 ./usr/share/man/man9/rt_ifa_add.9
 ./usr/share/man/man9/rt_ifa_addloop.9
