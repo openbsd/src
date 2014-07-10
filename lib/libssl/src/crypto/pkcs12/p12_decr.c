@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_decr.c,v 1.11 2014/07/08 09:24:53 jsing Exp $ */
+/* $OpenBSD: p12_decr.c,v 1.12 2014/07/10 10:01:23 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -59,9 +59,6 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/pkcs12.h>
-
-/* Define this to dump decrypted output to files called DERnnn */
-/*#define DEBUG_DECRYPT*/
 
 
 /* Encrypt/Decrypt a buffer based on password and algor, result in a
@@ -137,18 +134,6 @@ PKCS12_item_decrypt_d2i(X509_ALGOR *algor, const ASN1_ITEM *it,
 		return NULL;
 	}
 	p = out;
-#ifdef DEBUG_DECRYPT
-	{
-		FILE *op;
-
-		char fname[30];
-		static int fnm = 1;
-		sprintf(fname, "DER%d", fnm++);
-		op = fopen(fname, "wb");
-		fwrite (p, 1, outlen, op);
-		fclose(op);
-	}
-#endif
 	ret = ASN1_item_d2i(NULL, &p, outlen, it);
 	if (zbuf)
 		OPENSSL_cleanse(out, outlen);

@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_key.c,v 1.16 2014/07/08 09:24:53 jsing Exp $ */
+/* $OpenBSD: p12_key.c,v 1.17 2014/07/10 10:01:23 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -61,14 +61,6 @@
 #include <openssl/pkcs12.h>
 #include <openssl/bn.h>
 
-/* Uncomment out this line to get debugging info about key generation */
-/*#define DEBUG_KEYGEN*/
-#ifdef DEBUG_KEYGEN
-#include <openssl/bio.h>
-extern BIO *bio_err;
-void h__dump (unsigned char *p, int len);
-#endif
-
 /* PKCS12 compatible key/IV generation */
 #ifndef min
 #define min(a,b) ((a) < (b) ? (a) : (b))
@@ -112,10 +104,6 @@ PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 	int ret = 0;
 	BIGNUM *Ij, *Bpl1;	/* These hold Ij and B + 1 */
 	EVP_MD_CTX ctx;
-#ifdef  DEBUG_KEYGEN
-	unsigned char *tmpout = out;
-	int tmpn = n;
-#endif
 
 #if 0
 	if (!pass) {
@@ -125,14 +113,6 @@ PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 #endif
 
 	EVP_MD_CTX_init(&ctx);
-#ifdef  DEBUG_KEYGEN
-	fprintf(stderr, "KEYGEN DEBUG\n");
-	fprintf(stderr, "ID %d, ITER %d\n", id, iter);
-	fprintf(stderr, "Password (length %d):\n", passlen);
-	h__dump(pass, passlen);
-	fprintf(stderr, "Salt (length %d):\n", saltlen);
-	h__dump(salt, saltlen);
-#endif
 	v = EVP_MD_block_size(md_type);
 	u = EVP_MD_size(md_type);
 	if (u < 0)
@@ -172,10 +152,6 @@ PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 		}
 		memcpy (out, Ai, min (n, u));
 		if (u >= n) {
-#ifdef DEBUG_KEYGEN
-			fprintf(stderr, "Output KEY (length %d)\n", tmpn);
-			h__dump(tmpout, tmpn);
-#endif
 			ret = 1;
 			goto end;
 		}
@@ -226,11 +202,3 @@ end:
 	EVP_MD_CTX_cleanup(&ctx);
 	return ret;
 }
-#ifdef DEBUG_KEYGEN
-void h__dump (unsigned char *p, int len)
-{
-	for (; len --; p++)
-		fprintf(stderr, "%02X", *p);
-	fprintf(stderr, "\n");
-}
-#endif
