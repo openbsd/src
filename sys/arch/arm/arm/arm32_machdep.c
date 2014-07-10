@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.44 2014/07/10 13:34:32 uebayasi Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.45 2014/07/10 19:44:35 uebayasi Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -198,7 +198,8 @@ bootsync(int howto)
 {
 	static int bootsyncdone = 0;
 
-	if (bootsyncdone) return;
+	if (bootsyncdone)
+		return;
 
 	bootsyncdone = 1;
 
