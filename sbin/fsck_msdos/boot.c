@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.21 2014/07/10 17:08:33 tobias Exp $	*/
+/*	$OpenBSD: boot.c,v 1.22 2014/07/10 17:12:05 tobias Exp $	*/
 /*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ readboot(int dosfs, struct bootblock *boot)
 		goto fail;
 	}
 	boot->SecPerClust = block[13];
-	if (boot->SecPerClust == 0) {
+	if (boot->SecPerClust == 0 || !powerof2(boot->SecPerClust)) {
 		pfatal("Invalid cluster size: %u\n", boot->SecPerClust);
 		goto fail;
 	}
@@ -231,6 +231,11 @@ readboot(int dosfs, struct bootblock *boot)
 		/* Check backup FSInfo?					XXX */
 	}
 
+	if (boot->FATsecs == 0) {
+		pfatal("Invalid number of FAT sectors: %u\n", boot->FATsecs);
+		goto fail;
+	}
+
 	boot->ClusterOffset = (boot->RootDirEnts * 32 + secsize - 1)
 	    / secsize
 	    + boot->ResSectors
@@ -242,6 +247,12 @@ readboot(int dosfs, struct bootblock *boot)
 		boot->NumSectors = boot->Sectors;
 	} else
 		boot->NumSectors = boot->HugeSectors;
+
+	if (boot->ClusterOffset > boot->NumSectors) {
+		pfatal("Cluster offset too large (%u clusters)\n",
+		    boot->ClusterOffset);
+		goto fail;
+	}
 	boot->NumClusters = (boot->NumSectors - boot->ClusterOffset) / boot->SecPerClust;
 
 	if (boot->flags&FAT32)
