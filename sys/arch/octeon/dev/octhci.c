@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.4 2014/07/10 12:20:19 pirofti Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.5 2014/07/10 21:50:42 jasper Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -208,7 +208,7 @@ octhci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_USB, octhci_intr,
 	    (void *)sc, sc->sc_bus.bdev.dv_xname);
 	if (sc->sc_ih == NULL)
-		panic(": can't interrupt establish failed\n");
+		panic(": can't interrupt establish failed");
 #endif
 
 	/*
@@ -362,10 +362,10 @@ octhci_intr(void *arg)
 
 	if (intsts & USBC_GINTSTS_RXFLVL)
 		/* Failed assumption: no DMA */
-		panic("octhci_intr: Packets pending to be read from RxFIFO\n");
+		panic("octhci_intr: Packets pending to be read from RxFIFO");
 	if ((intsts & USBC_GINTSTS_PTXFEMP) || (intsts & USBC_GINTSTS_NPTXFEMP))
 		/* Failed assumption: no DMA */
-		panic("octhci_intr: Packets pending to be written on TxFIFO\n");
+		panic("octhci_intr: Packets pending to be written on TxFIFO");
 	if ((intsts & USBC_GINTSTS_DISCONNINT) ||
 	    (intsts & USBC_GINTSTS_PRTINT)) {
 		/* Device disconnected */
