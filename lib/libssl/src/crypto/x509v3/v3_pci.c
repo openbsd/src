@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pci.c,v 1.6 2014/07/10 13:58:23 jsing Exp $ */
+/* $OpenBSD: v3_pci.c,v 1.7 2014/07/10 21:57:20 miod Exp $ */
 /* Contributed to the OpenSSL Project 2004
  * by Richard Levitte (richard@levitte.org)
  */
@@ -141,7 +141,7 @@ process_pci_value(CONF_VALUE *val, ASN1_OBJECT **language,
 				(*policy)->data[(*policy)->length] = '\0';
 			} else {
 				free(tmp_data2);
-				/* realloc failure implies the original data space is b0rked too! */
+				free((*policy)->data);
 				(*policy)->data = NULL;
 				(*policy)->length = 0;
 				X509V3err(X509V3_F_PROCESS_PCI_VALUE,
@@ -198,7 +198,7 @@ process_pci_value(CONF_VALUE *val, ASN1_OBJECT **language,
 				(*policy)->length += val_len;
 				(*policy)->data[(*policy)->length] = '\0';
 			} else {
-				/* realloc failure implies the original data space is b0rked too! */
+				free((*policy)->data);
 				(*policy)->data = NULL;
 				(*policy)->length = 0;
 				X509V3err(X509V3_F_PROCESS_PCI_VALUE,
