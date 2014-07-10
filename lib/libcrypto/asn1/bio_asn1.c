@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_asn1.c,v 1.9 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: bio_asn1.c,v 1.10 2014/07/10 13:58:22 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -61,7 +61,9 @@
  * can be provided to add prefix and suffix data.
  */
 
+#include <stdlib.h>
 #include <string.h>
+
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
 

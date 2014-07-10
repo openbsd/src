@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_lib.c,v 1.30 2014/07/10 11:25:13 tedu Exp $ */
+/* $OpenBSD: pem_lib.c,v 1.31 2014/07/10 13:58:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,8 +56,10 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>

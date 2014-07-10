@@ -1,4 +1,4 @@
-/* $OpenBSD: buffer.c,v 1.19 2014/07/09 16:51:09 miod Exp $ */
+/* $OpenBSD: buffer.c,v 1.20 2014/07/10 13:58:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/buffer.h>
 

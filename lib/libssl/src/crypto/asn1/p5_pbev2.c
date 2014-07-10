@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbev2.c,v 1.15 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: p5_pbev2.c,v 1.16 2014/07/10 13:58:22 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -57,6 +57,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>

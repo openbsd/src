@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.27 2014/06/20 21:00:46 deraadt Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.28 2014/07/10 13:58:21 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -113,6 +113,9 @@
  * ECDH support in OpenSSL originally developed by
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
+
+#include <string.h>
+#include <unistd.h>
 
 #include "cryptlib.h"
 #include <openssl/safestack.h>

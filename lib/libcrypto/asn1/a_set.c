@@ -1,4 +1,4 @@
-/* $OpenBSD: a_set.c,v 1.14 2014/06/24 19:34:06 miod Exp $ */
+/* $OpenBSD: a_set.c,v 1.15 2014/07/10 13:58:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/asn1_mac.h>
 

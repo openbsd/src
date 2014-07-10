@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.6 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.7 2014/07/10 13:58:22 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -62,6 +62,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/ec.h>

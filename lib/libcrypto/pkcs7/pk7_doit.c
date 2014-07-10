@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.25 2014/07/10 12:08:50 miod Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.26 2014/07/10 13:58:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/objects.h>

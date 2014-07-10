@@ -1,4 +1,4 @@
-/* $OpenBSD: a_mbstr.c,v 1.17 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: a_mbstr.c,v 1.18 2014/07/10 13:58:22 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -56,8 +56,10 @@
  *
  */
 
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 #include "asn1_locl.h"

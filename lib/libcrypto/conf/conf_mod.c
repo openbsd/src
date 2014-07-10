@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.21 2014/06/23 22:19:02 deraadt Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.22 2014/07/10 13:58:22 jsing Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -56,8 +56,11 @@
  *
  */
 
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/conf.h>

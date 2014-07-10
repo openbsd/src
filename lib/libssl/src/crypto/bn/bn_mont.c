@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.21 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.22 2014/07/10 13:58:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,6 +117,8 @@
  */
 
 #include <stdio.h>
+#include <stdint.h>
+
 #include "cryptlib.h"
 #include "bn_lcl.h"
 

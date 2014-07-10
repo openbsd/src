@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_sign.c,v 1.15 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: ts_rsp_sign.c,v 1.16 2014/07/10 13:58:23 jsing Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -56,9 +56,11 @@
  *
  */
 
-#include "cryptlib.h"
-
 #include <sys/time.h>
+
+#include <string.h>
+
+#include "cryptlib.h"
 
 #include <openssl/objects.h>
 #include <openssl/ts.h>

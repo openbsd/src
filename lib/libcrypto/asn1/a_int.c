@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.22 2014/07/10 11:25:13 tedu Exp $ */
+/* $OpenBSD: a_int.c,v 1.23 2014/07/10 13:58:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
@@ -200,7 +202,7 @@ c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp, long len)
 	} else
 		ret = (*a);
 
-	p= *pp;
+	p = *pp;
 	pend = p + len;
 
 	/* We must malloc stuff, even for 0 bytes otherwise it

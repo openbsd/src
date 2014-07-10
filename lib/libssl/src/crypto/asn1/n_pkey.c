@@ -1,4 +1,4 @@
-/* $OpenBSD: n_pkey.c,v 1.18 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: n_pkey.c,v 1.19 2014/07/10 13:58:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>

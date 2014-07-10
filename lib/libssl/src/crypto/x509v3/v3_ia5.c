@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_ia5.c,v 1.11 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: v3_ia5.c,v 1.12 2014/07/10 13:58:23 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -56,8 +56,9 @@
  *
  */
 
-
 #include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/conf.h>

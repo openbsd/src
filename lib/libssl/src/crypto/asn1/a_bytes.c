@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bytes.c,v 1.16 2014/07/10 11:25:13 tedu Exp $ */
+/* $OpenBSD: a_bytes.c,v 1.17 2014/07/10 13:58:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 

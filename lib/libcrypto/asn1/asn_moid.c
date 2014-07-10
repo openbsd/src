@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_moid.c,v 1.10 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: asn_moid.c,v 1.11 2014/07/10 13:58:22 jsing Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -56,8 +56,10 @@
  *
  */
 
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
+
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/conf.h>

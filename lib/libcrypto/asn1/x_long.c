@@ -1,4 +1,4 @@
-/* $OpenBSD: x_long.c,v 1.7 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: x_long.c,v 1.8 2014/07/10 13:58:22 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -57,6 +57,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>

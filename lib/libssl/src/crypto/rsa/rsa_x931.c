@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_x931.c,v 1.6 2014/07/10 11:25:13 tedu Exp $ */
+/* $OpenBSD: rsa_x931.c,v 1.7 2014/07/10 13:58:23 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -57,6 +57,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/rsa.h>

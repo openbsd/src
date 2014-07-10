@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.h,v 1.19 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: cryptlib.h,v 1.20 2014/07/10 13:58:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,11 +58,6 @@
 
 #ifndef HEADER_CRYPTLIB_H
 #define HEADER_CRYPTLIB_H
-
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>

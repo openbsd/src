@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_purp.c,v 1.18 2014/06/28 18:14:57 logan Exp $ */
+/* $OpenBSD: v3_purp.c,v 1.19 2014/07/10 13:58:23 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -57,6 +57,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>

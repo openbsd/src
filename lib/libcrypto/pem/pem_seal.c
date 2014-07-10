@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_seal.c,v 1.17 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: pem_seal.c,v 1.18 2014/07/10 13:58:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,9 +56,11 @@
  * [including the GNU Public Licence.]
  */
 
+#include <stdio.h>
+#include <string.h>
+
 #include <openssl/opensslconf.h>	/* for OPENSSL_NO_RSA */
 #ifndef OPENSSL_NO_RSA
-#include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/rand.h>

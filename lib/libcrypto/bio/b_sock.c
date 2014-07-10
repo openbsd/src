@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.51 2014/07/10 09:33:45 bcook Exp $ */
+/* $OpenBSD: b_sock.c,v 1.52 2014/07/10 13:58:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,6 +58,7 @@
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <string.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_utl.c,v 1.10 2014/07/08 09:24:53 jsing Exp $ */
+/* $OpenBSD: p12_utl.c,v 1.11 2014/07/10 13:58:23 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -57,6 +57,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/pkcs12.h>
 

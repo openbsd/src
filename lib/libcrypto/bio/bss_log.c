@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_log.c,v 1.19 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bss_log.c,v 1.20 2014/07/10 13:58:22 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -62,19 +62,17 @@
 
 */
 
-
-#include <stdio.h>
 #include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <syslog.h>
 
 #include "cryptlib.h"
-
-#include <syslog.h>
 
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 
 #ifndef NO_SYSLOG
-
 
 static int slg_write(BIO *h, const char *buf, int num);
 static int slg_puts(BIO *h, const char *str);
@@ -213,6 +211,5 @@ xcloselog(BIO* bp)
 {
 	closelog();
 }
-
 
 #endif /* NO_SYSLOG */

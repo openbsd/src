@@ -1,4 +1,4 @@
-/* $OpenBSD: a_gentm.c,v 1.20 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: a_gentm.c,v 1.21 2014/07/10 13:58:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,7 +59,9 @@
 /* GENERALIZEDTIME implementation, written by Steve Henson. Based on UTCTIME */
 
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
+
 #include "cryptlib.h"
 #include "o_time.h"
 #include <openssl/asn1.h>

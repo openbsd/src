@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_gen.c,v 1.13 2014/07/09 10:16:24 miod Exp $ */
+/* $OpenBSD: dsa_gen.c,v 1.14 2014/07/10 13:58:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,6 +61,8 @@
 #ifndef OPENSSL_NO_SHA
 
 #include <stdio.h>
+#include <string.h>
+
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/bn.h>
