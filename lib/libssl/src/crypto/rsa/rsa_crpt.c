@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_crpt.c,v 1.8 2014/07/10 11:35:31 jsing Exp $ */
+/* $OpenBSD: rsa_crpt.c,v 1.9 2014/07/10 12:36:58 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -177,11 +177,6 @@ RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 		ctx = in_ctx;
 
 	BN_CTX_start(ctx);
-	e = BN_CTX_get(ctx);
-	if (e == NULL) {
-		RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
 
 	if (rsa->e == NULL) {
 		e = rsa_get_public_exp(rsa->d, rsa->p, rsa->q, ctx);
