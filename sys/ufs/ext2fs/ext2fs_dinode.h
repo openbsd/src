@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_dinode.h,v 1.13 2013/05/30 19:19:09 guenther Exp $	*/
+/*	$OpenBSD: ext2fs_dinode.h,v 1.14 2014/07/10 09:24:18 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_dinode.h,v 1.6 2000/01/26 16:21:33 bouyer Exp $	*/
 
 /*
@@ -81,10 +81,9 @@ struct ext2fs_dinode {
 	u_int32_t	e2di_gen;	/* 100: generation number */
 	u_int32_t	e2di_facl;	/* 104: file ACL (not implemented) */
 	u_int32_t	e2di_dacl;	/* 108: dir ACL (not implemented) */
-	u_int32_t	e2di_faddr;	/* 112: fragment address */
-	u_int8_t	e2di_nfrag;	/* 116: fragment number */
-	u_int8_t	e2di_fsize;	/* 117: fragment size */
-	u_int16_t	e2di_linux_reserved2; /* 118 */
+	u_int32_t	e2di_faddr;	/* 112: fragment address (obsolete) */
+	u_int16_t	e2di_nblock_hi;	/* 116: Blocks count bits 47:32 */
+	u_int16_t	e2di_facl_hi;	/* 118: file ACL bits 47:32 */
 	u_int16_t	e2di_uid_high;	/* 120: 16 highest bits of uid */
 	u_int16_t	e2di_gid_high;	/* 122: 16 highest bits of gid */
 	u_int32_t	e2di_linux_reserved3; /* 124 */
@@ -115,9 +114,17 @@ struct ext2fs_dinode {
 #define EXT2_UNRM		0x00000002	/* Undelete */
 #define EXT2_COMPR		0x00000004	/* Compress file */
 #define EXT2_SYNC		0x00000008	/* Synchronous updates */
-#define EXT2_IMMUTABLE	0x00000010	/* Immutable file */
+#define EXT2_IMMUTABLE		0x00000010	/* Immutable file */
 #define EXT2_APPEND		0x00000020	/* writes to file may only append */
 #define EXT2_NODUMP		0x00000040	/* do not dump file */
+#define EXT2_NOATIME		0x00000080	/* do not update access time */
+#define EXT4_INDEX		0x00001000	/* hash-indexed directory */
+#define EXT4_JOURNAL_DATA	0x00004000	/* file data should be journaled */
+#define EXT4_DIRSYNC		0x00010000	/* all dirent updates done synchronously */
+#define EXT4_TOPDIR		0x00020000	/* top of directory hierarchies */
+#define EXT4_HUGE_FILE		0x00040000	/* nblocks unit is fsb, not db */
+#define EXT4_EXTENTS		0x00080000	/* inode uses extents */
+#define EXT4_EOFBLOCKS		0x00400000	/* blocks allocated beyond EOF */
 
 /* Size of on-disk inode. */
 #define EXT2_REV0_DINODE_SIZE	sizeof(struct ext2fs_dinode)

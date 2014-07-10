@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.45 2014/05/07 02:57:41 guenther Exp $	*/
+/*	$OpenBSD: inode.h,v 1.46 2014/07/10 09:24:18 pelikan Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -235,8 +235,8 @@ struct inode_vtbl {
 #define i_e2fs_facl		i_e2din->e2di_facl
 #define i_e2fs_dacl		i_e2din->e2di_dacl
 #define i_e2fs_faddr		i_e2din->e2di_faddr
-#define i_e2fs_nfrag		i_e2din->e2di_nfrag
-#define i_e2fs_fsize		i_e2din->e2di_fsize
+#define i_e2fs_nblock_hi	i_e2din->e2di_nblock_hi
+#define i_e2fs_faddr_hi		i_e2din->e2di_faddr_hi
 #define i_e2fs_uid_low		i_e2din->e2di_uid_low
 #define i_e2fs_gid_low		i_e2din->e2di_gid_low
 #define i_e2fs_uid_high		i_e2din->e2di_uid_high

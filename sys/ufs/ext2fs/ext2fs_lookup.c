@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.31 2014/05/27 14:31:24 krw Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.32 2014/07/10 09:24:18 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /*
@@ -164,8 +164,8 @@ ext2fs_readdir(void *v)
 	error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
 	if (error == 0) {
 		readcnt = e2fs_count - auio.uio_resid;
-		for (dp = (struct ext2fs_direct *)dirbuf;
-			(char *)dp < (char *)dirbuf + readcnt; ) {
+		dp = (struct ext2fs_direct *) dirbuf;
+		while ((char *) dp < (char *) dirbuf + readcnt) {
 			e2d_reclen = fs2h16(dp->e2d_reclen);
 			if (e2d_reclen == 0) {
 				error = EIO;
@@ -263,6 +263,7 @@ ext2fs_lookup(void *v)
 	dp = VTOI(vdp);
 	lockparent = flags & LOCKPARENT;
 	wantparent = flags & (LOCKPARENT|WANTPARENT);
+
 	/*
 	 * Check accessiblity of directory.
 	 */
@@ -334,6 +335,7 @@ searchloop:
 		if ((dp->i_offset & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
+
 			error = ext2fs_bufatoff(dp, (off_t)dp->i_offset,
 			    NULL, &bp);
 			if (error != 0)
