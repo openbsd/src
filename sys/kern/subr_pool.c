@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.136 2014/07/03 07:47:56 guenther Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.137 2014/07/10 07:50:27 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -485,7 +485,7 @@ pool_get(struct pool *pp, int flags)
 		if (pool_debug == 2)
 			yield();
 #endif
-		if (!cold) {
+		if (!cold && pool_debug) {
 			KERNEL_UNLOCK();
 			KERNEL_LOCK();
 		}
