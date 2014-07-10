@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.32 2013/08/13 09:52:53 mpi Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.33 2014/07/10 03:48:25 lteo Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: August 13 2013 $
+.Dd $Mdocdate: July 10 2014 $
 .Dt MBUF_TAGS 9
 .Os
 .Sh NAME
@@ -162,8 +162,7 @@ identifying the data link layer type.
 .It PACKET_TAG_PF_DIVERT
 Indicates that the packet was diverted by
 .Xr pf 4
-by using
-.Em divert-packet ,
+using the
 .Em divert-to
 or
 .Em divert-reply
