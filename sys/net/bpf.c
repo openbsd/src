@@ -1,9 +1,10 @@
-/*	$OpenBSD: bpf.c,v 1.100 2014/07/10 11:44:56 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.101 2014/07/10 11:48:14 henning Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2010, 2014 Henning Brauer <henning@openbsd.org>
  *
  * This code is derived from the Stanford/CMU enet packet filter,
  * (net/enet.c) distributed as part of 4.3BSD, and code contributed
