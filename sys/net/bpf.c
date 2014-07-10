@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.99 2014/07/10 11:03:24 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.100 2014/07/10 11:44:56 henning Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -912,8 +912,7 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp, int wf)
 			d->bd_rfilter = NULL;
 		bpf_reset_d(d);
 		splx(s);
-		if (old != NULL)
-			free(old, M_DEVBUF);
+		free(old, M_DEVBUF);
 		return (0);
 	}
 	flen = fp->bf_len;
@@ -931,8 +930,7 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp, int wf)
 			d->bd_rfilter = fcode;
 		bpf_reset_d(d);
 		splx(s);
-		if (old != NULL)
-			free(old, M_DEVBUF);
+		free(old, M_DEVBUF);
 
 		return (0);
 	}
@@ -1456,17 +1454,11 @@ bpf_freed(struct bpf_d *d)
 	if (--d->bd_ref > 0)
 		return;
 
-	if (d->bd_sbuf != NULL) {
-		free(d->bd_sbuf, M_DEVBUF);
-		if (d->bd_hbuf != NULL)
-			free(d->bd_hbuf, M_DEVBUF);
-		if (d->bd_fbuf != NULL)
-			free(d->bd_fbuf, M_DEVBUF);
-	}
-	if (d->bd_rfilter)
-		free(d->bd_rfilter, M_DEVBUF);
-	if (d->bd_wfilter)
-		free(d->bd_wfilter, M_DEVBUF);
+	free(d->bd_sbuf, M_DEVBUF);
+	free(d->bd_hbuf, M_DEVBUF);
+	free(d->bd_fbuf, M_DEVBUF);
+	free(d->bd_rfilter, M_DEVBUF);
+	free(d->bd_wfilter, M_DEVBUF);
 
 	bpfilter_destroy(d);
 }
