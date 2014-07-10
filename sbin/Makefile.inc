@@ -1,4 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.4 1997/09/21 11:36:00 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2014/07/10 13:31:57 florian Exp $
 
 BINDIR?=	/sbin
 LDSTATIC=	${STATIC}
+CFLAGS+=	-Werror-implicit-function-declaration
