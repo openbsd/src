@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.30 2014/07/05 07:22:18 guenther Exp $	*/
+/*	$OpenBSD: common.c,v 1.31 2014/07/10 14:29:03 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -75,11 +75,11 @@ static int remmore(void);
 /* 
  * Front end to write() that handles partial write() requests.
  */
-WRITE_RETURN_T
-xwrite(int fd, void *buf, WRITE_AMT_T len)
+ssize_t
+xwrite(int fd, void *buf, size_t len)
 {
-    	WRITE_AMT_T nleft = len;
-	WRITE_RETURN_T nwritten;
+    	size_t nleft = len;
+	ssize_t nwritten;
 	char *ptr = buf;
          
 	while (nleft > 0) {

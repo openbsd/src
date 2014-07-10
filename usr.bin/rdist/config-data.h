@@ -1,4 +1,4 @@
-/*	$OpenBSD: config-data.h,v 1.9 2014/07/05 06:45:00 guenther Exp $	*/
+/*	$OpenBSD: config-data.h,v 1.10 2014/07/10 14:29:03 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -48,15 +48,5 @@
  */
 #define PIPE_READ		0
 #define PIPE_WRITE		1
-
-/*
- * Set default write(2) return and amount types.
- */
-#if	!defined(WRITE_RETURN_T)
-#define		WRITE_RETURN_T		ssize_t	/* What write() returns */
-#endif	/* WRITE_RETURN_T */
-#if	!defined(WRITE_AMT_T)
-#define		WRITE_AMT_T		size_t	/* Amount to write */
-#endif	/* WRITE_AMT_T */
 
 #endif	/* __configdata_h__ */
