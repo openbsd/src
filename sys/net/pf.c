@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.880 2014/07/02 13:04:50 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.881 2014/07/10 03:17:59 lteo Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6617,14 +6617,8 @@ done:
 		}
 	}
 
-	if (action == PF_PASS && r->divert_packet.port) {
-		struct pf_divert *divert;
-
-		if ((divert = pf_get_divert(pd.m)))
-			divert->port = r->divert_packet.port;
-
+	if (action == PF_PASS && r->divert_packet.port)
 		action = PF_DIVERT;
-	}
 
 	if (pd.pflog) {
 		struct pf_rule_item	*ri;
@@ -6651,12 +6645,13 @@ done:
 	case PF_DIVERT:
 		switch (pd.af) {
 		case AF_INET:
-			if (divert_packet(pd.m, pd.dir) == 0)
+			if (!divert_packet(pd.m, pd.dir, r->divert_packet.port))
 				*m0 = NULL;
 			break;
 #ifdef INET6
 		case AF_INET6:
-			if (divert6_packet(pd.m, pd.dir) == 0)
+			if (!divert6_packet(pd.m, pd.dir,
+			    r->divert_packet.port))
 				*m0 = NULL;
 			break;
 #endif /* INET6 */
