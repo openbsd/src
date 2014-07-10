@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.h,v 1.21 2014/07/10 20:02:58 jsing Exp $ */
+/* $OpenBSD: cryptlib.h,v 1.22 2014/07/10 20:42:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,10 +75,6 @@ extern "C" {
 #define X509_PRIVATE_DIR	OPENSSLDIR "/private"
 #define X509_CERT_DIR_EVP        "SSL_CERT_DIR"
 #define X509_CERT_FILE_EVP       "SSL_CERT_FILE"
-
-/* size of string representations */
-#define DECIMAL_SIZE(type)	((sizeof(type)*8+2)/3+1)
-#define HEX_SIZE(type)		(sizeof(type)*2)
 
 void OPENSSL_cpuid_setup(void);
 extern unsigned int OPENSSL_ia32cap_P[];
