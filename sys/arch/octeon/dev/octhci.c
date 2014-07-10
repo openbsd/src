@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.3 2014/07/10 12:05:36 pirofti Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.4 2014/07/10 12:20:19 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -301,7 +301,7 @@ octhci_init_core(struct octhci_softc *sc)
 	minor = (value >> 4) & 0xf;
 	major = ((value >> 8) & 0xf) / 2;
 	version = (value >> 12) & 0xf;
-	printf(" core version %d pass %d.%d\n", version, major, minor);
+	printf(": core version %d pass %d.%d\n", version, major, minor);
 
 	value = 0;
 	value |= (USBC_GAHBCFG_DMAEN | USBC_GAHBCFG_NPTXFEMPLVL |
