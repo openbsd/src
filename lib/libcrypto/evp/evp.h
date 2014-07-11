@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.38 2014/06/24 19:31:50 miod Exp $ */
+/* $OpenBSD: evp.h,v 1.39 2014/07/11 15:28:27 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,13 +59,7 @@
 #ifndef HEADER_ENVELOPE_H
 #define HEADER_ENVELOPE_H
 
-#ifdef OPENSSL_ALGORITHM_DEFINES
-# include <openssl/opensslconf.h>
-#else
-# define OPENSSL_ALGORITHM_DEFINES
-# include <openssl/opensslconf.h>
-# undef OPENSSL_ALGORITHM_DEFINES
-#endif
+#include <openssl/opensslconf.h>
 
 #include <openssl/ossl_typ.h>
 
