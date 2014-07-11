@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.251 2014/07/11 13:51:05 schwarze Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.252 2014/07/11 16:44:17 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -17,6 +17,8 @@ amd
 authpf		uname=root mode=0755
 ..
 disklabels
+..
+examples
 ..
 firmware
 ..
