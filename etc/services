@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.83 2014/03/14 17:56:36 sthen Exp $
+#	$OpenBSD: services,v 1.84 2014/07/11 16:54:29 ajacoutot Exp $
 #
 # Network services, Internet style
 #
@@ -276,27 +276,37 @@ afs3-rmtsys		7009/udp	# AFS remote cache manager service
 #
 # Unofficial services
 #
+tacacs		49/tcp	tacas+		# Login Host Protocol (TACACS)
+tacacs		49/udp	tacas+		# Login Host Protocol (TACACS)
 pop3pw		106/tcp	poppassd	# Eudora compatible PW changer
 smtps		465/tcp			# SSL-wrapped SMTP
 conserver	782/tcp			# console server
 supfilesrv	871/tcp			# SUP server
+swat		901/tcp			# Samba Web Administration Tool
 supfiledbg	1127/tcp		# SUP debugging
+support		1529/tcp		# GNATS, cygnus bug tracker
 datametrics	1645/udp
 ekshell2	2106/tcp		# Encrypted kshell - UColorado, Boulder
 cvspserver	2401/tcp		# cvs pserver
 webster		2627/tcp		# Network dictionary
 webster		2627/udp
 canna		5680/tcp		# Kana->Kanji server
+sane-port	6566/tcp		# SANE Control Port
+sane-port	6566/udp		# SANE Control Port
 icb		7326/tcp		# Internet Citizen's Band
 spamd		8025/tcp		# spamd(8)
 spamd-sync	8025/udp		# spamd(8) synchronisation
 spamd-cfg	8026/tcp		# spamd(8) configuration
 dhcpd-sync	8067/udp		# dhcpd(8) synchronisation
 ub-dns-control	8953/tcp		# unbound dns nameserver control
+git		9418/tcp		# git pack transfer service
+git		9418/udp		# git pack transfer service
 amt-soap-http	16992/tcp		# Intel AMT SOAP/HTTP
 amt-soap-https	16993/tcp		# Intel AMT SOAP/HTTPS
 amt-redir-tcp	16994/tcp		# Intel AMT Redirection/TCP
 amt-redir-tls	16995/tcp		# Intel AMT Redirection/TLS
+openwebnet	20005/tcp	xcept	# OpenWebNet protocol for electric network
+openwebnet	20005/udp	xcept	# OpenWebNet protocol for electric network
 hunt		26740/udp		# hunt(6)
 #
 # Appletalk
