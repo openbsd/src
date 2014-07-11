@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.159 2014/07/10 10:32:01 espie Exp $
+# $OpenBSD: Add.pm,v 1.160 2014/07/11 12:49:20 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -505,8 +505,8 @@ sub tie
 		$d = dirname($d);
 	}
 	if ($state->{not}) {
-		$state->say("extracting tempfile under #1", $d)
-		    if $state->verbose >= 3;
+		$state->say("link #1 -> #2", 
+		    $self->name, $d) if $state->verbose >= 3;
 	} else {
 		if (!-e _) {
 			File::Path::mkpath($d);
@@ -516,7 +516,7 @@ sub tie
 
 		my $src = $self->{tieto}->realname($state);
 		unlink($tempname);
-		$state->say("linking #1 to #2", $src, $tempname)
+		$state->say("link #1 -> #2", $src, $tempname)
 		    if $state->verbose >= 3;
 		link($src, $tempname) || $state->copy_file($src, $tempname);
 	}
@@ -536,8 +536,8 @@ sub extract
 		$d = dirname($d);
 	}
 	if ($state->{not}) {
-		$state->say("extracting tempfile under #1", $d)
-		    if $state->verbose >= 3;
+		$state->say("extract #1 -> #2", 
+		    $self->name, $d) if $state->verbose >= 3;
 		$state->{archive}->skip;
 	} else {
 		if (!-e _) {
@@ -550,7 +550,8 @@ sub extract
 		$file->{destdir} = '';
 		$file->set_name($tempname);
 
-		$state->say("extracting #1", $tempname) if $state->verbose >= 3;
+		$state->say("extract #1 -> #2", $self->name, $tempname) 
+		    if $state->verbose >= 3;
 
 
 		if (!$file->isFile) {
