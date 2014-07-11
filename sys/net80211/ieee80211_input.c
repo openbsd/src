@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.124 2014/07/10 14:32:28 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.125 2014/07/11 08:19:40 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -42,7 +42,7 @@
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -136,6 +136,11 @@ void	ieee80211_input_print(struct ieee80211com *,  struct ifnet *,
 	    struct ieee80211_frame *, struct ieee80211_rxinfo *);
 void	ieee80211_input_print_task(void *, void *);
 
+struct ieee80211printmsg {
+	struct task	task;
+	char		text[512];
+};
+
 /*
  * Retrieve the length in bytes of an 802.11 header.
  */
@@ -164,19 +169,18 @@ ieee80211_get_hdrlen(const struct ieee80211_frame *wh)
 void
 ieee80211_input_print_task(void *arg1, void *arg2)
 {
-	char *msg = arg1;
+	struct ieee80211printmsg *msg = arg1;
 
-	printf("%s", msg);
+	printf("%s", msg->text);
 	free(msg, M_DEVBUF);
-
 }
 
 void
 ieee80211_input_print(struct ieee80211com *ic,  struct ifnet *ifp,
     struct ieee80211_frame *wh, struct ieee80211_rxinfo *rxi)
 {
-	int doprint, error;
-	char *msg;
+	int doprint;
+	struct ieee80211printmsg *msg;
 	u_int8_t subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 
 	/* avoid printing too many frames */
@@ -202,20 +206,19 @@ ieee80211_input_print(struct ieee80211com *ic,  struct ifnet *ifp,
 	if (!doprint)
 		return;
 
-	msg = malloc(1024, M_DEVBUF, M_NOWAIT);
+	msg = malloc(sizeof(*msg), M_DEVBUF, M_NOWAIT);
 	if (msg == NULL)
 		return;
 
-	snprintf(msg, 1024, "%s: received %s from %s rssi %d mode %s\n",
-	    ifp->if_xname,
+	snprintf(msg->text, sizeof(msg->text),
+	    "%s: received %s from %s rssi %d mode %s\n", ifp->if_xname,
 	    ieee80211_mgt_subtype_name[subtype >> IEEE80211_FC0_SUBTYPE_SHIFT],
 	    ether_sprintf(wh->i_addr2), rxi->rxi_rssi,
 	    ieee80211_phymode_name[ieee80211_chan2mode(
 	        ic, ic->ic_bss->ni_chan)]);
 
-	error = workq_add_task(NULL, 0, ieee80211_input_print_task, msg, NULL);
-	if (error)
-		free(msg, M_DEVBUF);
+	task_set(&msg->task, ieee80211_input_print_task, msg, NULL);
+	task_add(systq, &msg->task);
 }
 
 /*
