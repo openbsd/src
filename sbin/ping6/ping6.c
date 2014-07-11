@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.98 2014/07/11 15:25:48 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.99 2014/07/11 15:28:27 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1739,18 +1739,16 @@ pr_nodeaddr(struct icmp6_nodeinfo *ni, int nilen)
 	 */
 	if (nilen % (sizeof(u_int32_t) + sizeof(struct in6_addr)) == 0)
 		withttl = 1;
-	while (nilen > 0) {
-		u_int32_t ttl;
+	while (nilen >= sizeof(struct in6_addr)) {
+		u_int32_t ttl = (u_int32_t)ntohl(*(u_int32_t *)cp);
 
 		if (withttl) {
-			/* XXX: alignment? */
-			ttl = (u_int32_t)ntohl(*(u_int32_t *)cp);
 			cp += sizeof(u_int32_t);
 			nilen -= sizeof(u_int32_t);
 		}
 
-		if (inet_ntop(AF_INET6, cp, ntop_buf, sizeof(ntop_buf)) ==
-		    NULL)
+		if (nilen < sizeof(struct in6_addr) || inet_ntop(AF_INET6,
+		    cp, ntop_buf, sizeof(ntop_buf)) == NULL)
 			strncpy(ntop_buf, "?", sizeof(ntop_buf));
 		printf("  %s", ntop_buf);
 		if (withttl) {
