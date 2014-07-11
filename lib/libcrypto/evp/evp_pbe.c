@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.20 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.21 2014/07/11 14:16:10 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -226,7 +226,7 @@ EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
 	int cipher_nid, md_nid;
 
 	if (cipher)
-		cipher_nid = EVP_CIPHER_type(cipher);
+		cipher_nid = EVP_CIPHER_nid(cipher);
 	else
 		cipher_nid = -1;
 	if (md)
