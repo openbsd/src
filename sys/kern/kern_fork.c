@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.170 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.171 2014/07/11 08:20:42 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include <sys/pool.h>
 #include <sys/mman.h>
 #include <sys/ptrace.h>
+#include <sys/atomic.h>
 
 #include <sys/syscallargs.h>
 
@@ -221,11 +222,11 @@ process_new(struct proc *p, struct process *parent, int flags)
 	if (flags & FORK_SYSTEM)
 		pr->ps_flags |= PS_SYSTEM;
 
-	/*
-	 * Mark as embryo to protect against others.
-	 * Done with atomic_* to force visibility of all of the above flags
-	 */
-	atomic_setbits_int(&pr->ps_flags, PS_EMBRYO);
+	/* mark as embryo to protect against others */
+	pr->ps_flags |= PS_EMBRYO;
+
+	/* Force visibility of all of the above changes */
+	membar_producer();
 
 	/* it's sufficiently inited to be globally visible */
 	LIST_INSERT_HEAD(&allprocess, pr, ps_list);
