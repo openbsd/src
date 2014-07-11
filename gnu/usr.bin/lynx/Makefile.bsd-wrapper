@@ -1,11 +1,13 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.24 2014/04/15 20:55:42 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.25 2014/07/11 19:35:54 daniel Exp $
 
 MAN=	lynx.1
 CLEANFILES+= lynx.1
 DPADD=	${LIBSSL} ${LIBCRYPTO}
 
 GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS} ${OPT}" LDFLAGS="${LDFLAGS}"
-CONFIGURE_ARGS= --with-ssl=/usr --enable-widec --enable-ipv6 --enable-debug
+CONFIGURE_ARGS= --with-ssl=/usr --enable-widec --enable-ipv6 --enable-debug \
+		--disable-bibp-urls --disable-finger
+
 HTMLDIR=	/usr/share/doc/html
 HELPFILES=	keystrokes/alt_edit_help.html keystrokes/bookmark_help.html \
 		keystrokes/cookie_help.html keystrokes/dired_help.html \
@@ -39,12 +41,18 @@ config: .FORCE
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	${GNUCFLAGS} \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	TELNET=/usr/bin/false \
+	RLOGIN=/usr/bin/false \
+	TN3270=/usr/bin/false \
 	sh ${.CURDIR}/configure --prefix=/usr --sysconfdir=/etc --disable-color-style ${CONFIGURE_ARGS}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	${GNUCFLAGS} \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	TELNET=/usr/bin/false \
+	RLOGIN=/usr/bin/false \
+	TN3270=/usr/bin/false \
 	sh ${.CURDIR}/configure --prefix=/usr --sysconfdir=/etc --disable-color-style ${CONFIGURE_ARGS} ${CF}
 
 lynx.1:	${.CURDIR}/lynx.man
