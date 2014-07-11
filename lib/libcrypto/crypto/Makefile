@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.43 2014/07/09 08:44:53 miod Exp $
+# $OpenBSD: Makefile,v 1.44 2014/07/11 14:01:38 tedu Exp $
 
 LIB=	crypto
 
@@ -362,6 +362,7 @@ HDRS=\
 	crypto/modes/modes.h \
 	crypto/objects/objects.h \
 	crypto/ocsp/ocsp.h \
+	crypto/opensslfeatures.h \
 	crypto/opensslv.h \
 	crypto/ossl_typ.h \
 	crypto/pem/pem.h \
