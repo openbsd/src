@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.357 2014/04/29 21:30:20 dcoppa Exp $
+#	$OpenBSD: Makefile,v 1.358 2014/07/11 16:59:03 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -38,7 +38,10 @@ BIN1=	changelist csh.cshrc csh.login csh.logout daily dhcpd.conf \
 	remote rpc services shells syslog.conf weekly \
 	etc.${MACHINE}/login.conf \
 	etc.${MACHINE}/disktab dhclient.conf mailer.conf ntpd.conf \
-	moduli pf.os sensorsd.conf ifstated.conf mixerctl.conf
+	moduli pf.os sensorsd.conf mixerctl.conf
+
+EXAMPLES=chio.conf dvmrpd.conf hostapd.conf ifstated.conf ldpd.conf \
+	ospf6d.conf ospfd.conf
 
 .if ${MACHINE} != "aviion" 
 BIN1+=	wsconsctl.conf
@@ -109,14 +112,8 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
 	${INSTALL} -c -o root -g wheel -m 600 bgpd.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 600 ospfd.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 600 ospf6d.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 ripd.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 600 dvmrpd.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 600 ldpd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 pf.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g operator -m 644 chio.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 600 hostapd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 relayd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 iked.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 ipsec.conf ${DESTDIR}/etc
@@ -173,6 +170,9 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/ppp; \
 		${INSTALL} -c -o root -g wheel -m 600 pap-secrets \
 		    ${DESTDIR}/etc/ppp
+	cd examples; \
+		${INSTALL} -c -o root -g wheel -m 644 ${EXAMPLES} \
+		    ${DESTDIR}/etc/examples
 	cd signify; \
 		${INSTALL} -c -o root -g wheel -m 644 *.pub \
 		    ${DESTDIR}/etc/signify

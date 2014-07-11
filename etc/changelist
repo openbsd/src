@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.87 2014/04/29 21:30:20 dcoppa Exp $
+#	$OpenBSD: changelist,v 1.88 2014/07/11 16:59:03 deraadt Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -14,7 +14,7 @@
 /etc/boot.conf
 /etc/bootparams
 /etc/changelist
-/etc/chio.conf
++/etc/chio.conf
 /etc/crontab
 /etc/csh.cshrc
 /etc/csh.login
@@ -26,7 +26,7 @@
 /etc/dhcpd.conf
 /etc/disktab
 /etc/distfile
-/etc/dvmrpd.conf
++/etc/dvmrpd.conf
 /etc/ethers
 /etc/exports
 /etc/fbtab
@@ -40,7 +40,7 @@
 +/etc/hostname.*
 /etc/hosts
 /etc/hosts.lpd
-/etc/ifstated.conf
++/etc/ifstated.conf
 +/etc/iked.conf
 /etc/inetd.conf
 +/etc/ipsec.conf
@@ -50,7 +50,7 @@
 +/etc/isakmpd/private/local.key
 /etc/ksh.kshrc
 /etc/ldapd.conf
-/etc/ldpd.conf
++/etc/ldpd.conf
 /etc/locate.rc
 /etc/login.conf
 /etc/lynx.cfg
@@ -95,8 +95,8 @@
 /etc/npppd/npppd.conf
 +/etc/npppd/npppd-users
 /etc/ntpd.conf
-/etc/ospf6d.conf
-/etc/ospfd.conf
++/etc/ospf6d.conf
++/etc/ospfd.conf
 /etc/passwd
 /etc/pf.conf
 /etc/pf.os
