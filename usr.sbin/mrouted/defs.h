@@ -209,6 +209,7 @@ extern void		accept_leave_message(u_int32_t src, u_int32_t dst,
 			    u_int32_t group);
 extern void		accept_membership_query(u_int32_t src, u_int32_t dst,
 			    u_int32_t group, int tmo);
+extern void		init_installvifs(void);
 
 /* config.c */
 extern void		config_vifs_from_kernel(void);
@@ -223,6 +224,8 @@ extern char *		inet_fmt(u_int32_t addr, char *s);
 extern char *		inet_fmts(u_int32_t addr, u_int32_t mask, char *s);
 extern u_int32_t	inet_parse(char *s);
 extern int		inet_cksum(u_int16_t *addr, u_int len);
+extern int		inet_valid_host(u_int32_t naddr);
+extern int		inet_valid_mask(u_int32_t mask);
 
 /* prune.c */
 extern unsigned		kroutes;
