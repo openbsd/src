@@ -14,6 +14,8 @@ from scapy.all import *
 pid=os.getpid()
 payload=100 * "ABCDEFGHIJKLMNOP"
 packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/ICMPv6EchoRequest(id=pid, data=payload)
+request_cksum=ICMPv6Unknown(str(packet.payload)).cksum
+print "request cksum=%#x" % (request_cksum)
 frag=[]
 frag.append(IPv6ExtHdrFragment(nh=58, id=pid, m=1)/str(packet)[40:56])
 offset=2
@@ -47,6 +49,13 @@ for a in ans:
 		if id != pid:
 			print "WRONG ECHO REPLY ID"
 			exit(2)
+		reply_cksum=a.payload.payload.payload.cksum
+		print "reply cksum=%#x" % (reply_cksum)
+		# change request checksum incrementaly and check with reply
+		diff_cksum=~(~reply_cksum+~(~request_cksum+~0x8000+0x8100))
+		if  diff_cksum != -1:
+			print "CHECKSUM ERROR diff cksum=%#x" % (diff_cksum)
+			exit(1)
 		exit(0)
 print "NO ECHO REPLY"
 exit(2)
