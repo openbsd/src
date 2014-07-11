@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.58 2014/07/10 10:09:54 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.59 2014/07/11 08:17:36 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -659,13 +659,10 @@ void ssl3_record_sequence_increment(unsigned char *seq);
 int ssl3_do_change_cipher_spec(SSL *ssl);
 long ssl3_default_timeout(void);
 
-int ssl23_num_ciphers(void);
-const SSL_CIPHER *ssl23_get_cipher(unsigned int u);
 int ssl23_read(SSL *s, void *buf, int len);
 int ssl23_peek(SSL *s, void *buf, int len);
 int ssl23_write(SSL *s, const void *buf, int len);
 int ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
-const SSL_CIPHER *ssl23_get_cipher_by_char(const unsigned char *p);
 long ssl23_default_timeout(void);
 
 long tls1_default_timeout(void);

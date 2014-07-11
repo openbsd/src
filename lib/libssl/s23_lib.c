@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_lib.c,v 1.15 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: s23_lib.c,v 1.16 2014/07/11 08:17:36 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,34 +64,6 @@ long
 ssl23_default_timeout(void)
 {
 	return (300);
-}
-
-int
-ssl23_num_ciphers(void)
-{
-	return (ssl3_num_ciphers());
-}
-
-const SSL_CIPHER *
-ssl23_get_cipher(unsigned int u)
-{
-	unsigned int uu = ssl3_num_ciphers();
-
-	if (u < uu)
-		return (ssl3_get_cipher(u));
-	else
-		return (NULL);
-}
-
-/* This function needs to check if the ciphers required are actually
- * available */
-const SSL_CIPHER *
-ssl23_get_cipher_by_char(const unsigned char *p)
-{
-	const SSL_CIPHER *cp;
-
-	cp = ssl3_get_cipher_by_char(p);
-	return (cp);
 }
 
 int

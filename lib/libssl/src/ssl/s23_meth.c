@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_meth.c,v 1.13 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: s23_meth.c,v 1.14 2014/07/11 08:17:36 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,11 +81,11 @@ const SSL_METHOD SSLv23_method_data = {
 	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.ssl_ctrl = ssl3_ctrl,
 	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
-	.get_cipher_by_char = ssl23_get_cipher_by_char,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
 	.put_cipher_by_char = ssl23_put_cipher_by_char,
 	.ssl_pending = ssl_undefined_const_function,
-	.num_ciphers = ssl23_num_ciphers,
-	.get_cipher = ssl23_get_cipher,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = ssl3_get_cipher,
 	.get_ssl_method = ssl23_get_method,
 	.get_timeout = ssl23_default_timeout,
 	.ssl3_enc = &ssl3_undef_enc_method,
