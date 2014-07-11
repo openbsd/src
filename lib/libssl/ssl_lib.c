@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.73 2014/07/10 11:58:08 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.74 2014/07/11 09:24:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -349,10 +349,6 @@ SSL_new(SSL_CTX *ctx)
 
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
 
-#ifndef OPENSSL_NO_PSK
-	s->psk_client_callback = ctx->psk_client_callback;
-	s->psk_server_callback = ctx->psk_server_callback;
-#endif
 
 	return (s);
 err:
@@ -1391,13 +1387,6 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p,
 		if ((c->algorithm_ssl & SSL_TLSV1_2) &&
 		    (TLS1_get_client_version(s) < TLS1_2_VERSION))
 			continue;
-#ifndef OPENSSL_NO_PSK
-		/* with PSK there must be client callback set */
-		if (((c->algorithm_mkey & SSL_kPSK) ||
-		    (c->algorithm_auth & SSL_aPSK)) &&
-		    s->psk_client_callback == NULL)
-			continue;
-#endif /* OPENSSL_NO_PSK */
 		j = put_cb ? put_cb(c, p) : ssl_put_cipher_by_char(s, c, p);
 		p += j;
 	}
@@ -1811,11 +1800,6 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->next_protos_advertised_cb = 0;
 	ret->next_proto_select_cb = 0;
 # endif
-#ifndef OPENSSL_NO_PSK
-	ret->psk_identity_hint = NULL;
-	ret->psk_client_callback = NULL;
-	ret->psk_server_callback = NULL;
-#endif
 #ifndef OPENSSL_NO_ENGINE
 	ret->client_cert_engine = NULL;
 #ifdef OPENSSL_SSL_CLIENT_ENGINE_AUTO
@@ -1902,9 +1886,6 @@ SSL_CTX_free(SSL_CTX *a)
 		sk_SRTP_PROTECTION_PROFILE_free(a->srtp_profiles);
 #endif
 
-#ifndef OPENSSL_NO_PSK
-	free(a->psk_identity_hint);
-#endif
 #ifndef OPENSSL_NO_ENGINE
 	if (a->client_cert_engine)
 		ENGINE_finish(a->client_cert_engine);
@@ -2048,10 +2029,6 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 		mask_k|=SSL_kEECDH;
 	}
 
-#ifndef OPENSSL_NO_PSK
-	mask_k |= SSL_kPSK;
-	mask_a |= SSL_aPSK;
-#endif
 
 	c->mask_k = mask_k;
 	c->mask_a = mask_a;
@@ -2914,97 +2891,6 @@ SSL_set_tmp_ecdh_callback(SSL *ssl, EC_KEY *(*ecdh)(SSL *ssl, int is_export,
 	SSL_callback_ctrl(ssl, SSL_CTRL_SET_TMP_ECDH_CB,(void (*)(void))ecdh);
 }
 
-#ifndef OPENSSL_NO_PSK
-int
-SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint)
-{
-	if (identity_hint != NULL && strlen(identity_hint) >
-	    PSK_MAX_IDENTITY_LEN) {
-		SSLerr(SSL_F_SSL_CTX_USE_PSK_IDENTITY_HINT,
-		    SSL_R_DATA_LENGTH_TOO_LONG);
-		return (0);
-	}
-	free(ctx->psk_identity_hint);
-	if (identity_hint != NULL) {
-		ctx->psk_identity_hint = BUF_strdup(identity_hint);
-		if (ctx->psk_identity_hint == NULL)
-			return (0);
-	} else
-		ctx->psk_identity_hint = NULL;
-	return (1);
-}
-
-int
-SSL_use_psk_identity_hint(SSL *s, const char *identity_hint)
-{
-	if (s == NULL)
-		return (0);
-
-	if (s->session == NULL)
-		return (1); /* session not created yet, ignored */
-
-	if (identity_hint != NULL &&
-	    strlen(identity_hint) > PSK_MAX_IDENTITY_LEN) {
-		SSLerr(SSL_F_SSL_USE_PSK_IDENTITY_HINT,
-		    SSL_R_DATA_LENGTH_TOO_LONG);
-		return (0);
-	}
-	free(s->session->psk_identity_hint);
-	if (identity_hint != NULL) {
-		s->session->psk_identity_hint = BUF_strdup(identity_hint);
-		if (s->session->psk_identity_hint == NULL)
-			return (0);
-	} else
-		s->session->psk_identity_hint = NULL;
-	return (1);
-}
-
-const char *
-SSL_get_psk_identity_hint(const SSL *s)
-{
-	if (s == NULL || s->session == NULL)
-		return (NULL);
-	return (s->session->psk_identity_hint);
-}
-
-const char *
-SSL_get_psk_identity(const SSL *s)
-{
-	if (s == NULL || s->session == NULL)
-		return (NULL);
-	return (s->session->psk_identity);
-}
-
-void
-SSL_set_psk_client_callback(SSL *s, unsigned int (*cb)(SSL *ssl,
-    const char *hint, char *identity, unsigned int max_identity_len,
-    unsigned char *psk, unsigned int max_psk_len))
-{
-	s->psk_client_callback = cb;
-}
-
-void
-SSL_CTX_set_psk_client_callback(SSL_CTX *ctx, unsigned int (*cb)(SSL *ssl,
-    const char *hint, char *identity, unsigned int max_identity_len,
-    unsigned char *psk, unsigned int max_psk_len))
-{
-	ctx->psk_client_callback = cb;
-}
-
-void
-SSL_set_psk_server_callback(SSL *s, unsigned int (*cb)(SSL *ssl,
-    const char *identity, unsigned char *psk, unsigned int max_psk_len))
-{
-	s->psk_server_callback = cb;
-}
-
-void
-SSL_CTX_set_psk_server_callback(SSL_CTX *ctx, unsigned int (*cb)(SSL *ssl,
-    const char *identity, unsigned char *psk, unsigned int max_psk_len))
-{
-	ctx->psk_server_callback = cb;
-}
-#endif
 
 void
 SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version,

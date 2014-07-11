@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.27 2014/07/10 08:51:14 tedu Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.28 2014/07/11 09:24:44 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1196,83 +1196,6 @@ dtls1_send_client_key_exchange(SSL *s)
 			EVP_PKEY_free(srvr_pub_pkey);
 		}
 
-#ifndef OPENSSL_NO_PSK
-		else if (alg_k & SSL_kPSK) {
-			char identity[PSK_MAX_IDENTITY_LEN];
-			unsigned char *t = NULL;
-			unsigned char psk_or_pre_ms[PSK_MAX_PSK_LEN*2 + 4];
-			unsigned int pre_ms_len = 0, psk_len = 0;
-			int psk_err = 1;
-
-			n = 0;
-			if (s->psk_client_callback == NULL) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    SSL_R_PSK_NO_CLIENT_CB);
-				goto err;
-			}
-
-			psk_len = s->psk_client_callback(s,
-			    s->ctx->psk_identity_hint, identity,
-			    PSK_MAX_IDENTITY_LEN, psk_or_pre_ms,
-			    sizeof(psk_or_pre_ms));
-			if (psk_len > PSK_MAX_PSK_LEN) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
-				goto psk_err;
-			} else if (psk_len == 0) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    SSL_R_PSK_IDENTITY_NOT_FOUND);
-				goto psk_err;
-			}
-
-			/* create PSK pre_master_secret */
-			pre_ms_len = 2 + psk_len + 2 + psk_len;
-			t = psk_or_pre_ms;
-			memmove(psk_or_pre_ms + psk_len + 4,
-			    psk_or_pre_ms, psk_len);
-			s2n(psk_len, t);
-			memset(t, 0, psk_len);
-			t += psk_len;
-			s2n(psk_len, t);
-
-			free(s->session->psk_identity_hint);
-			s->session->psk_identity_hint =
-			    BUF_strdup(s->ctx->psk_identity_hint);
-			if (s->ctx->psk_identity_hint != NULL &&
-			    s->session->psk_identity_hint == NULL) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_MALLOC_FAILURE);
-				goto psk_err;
-			}
-
-			free(s->session->psk_identity);
-			s->session->psk_identity = BUF_strdup(identity);
-			if (s->session->psk_identity == NULL) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_MALLOC_FAILURE);
-				goto psk_err;
-			}
-
-			s->session->master_key_length =
-			    s->method->ssl3_enc->generate_master_secret(s,
-			    s->session->master_key,
-			    psk_or_pre_ms, pre_ms_len);
-
-			n = strlen(identity);
-			s2n(n, p);
-			memcpy(p, identity, n);
-			n += 2;
-			psk_err = 0;
-psk_err:
-			OPENSSL_cleanse(identity, PSK_MAX_IDENTITY_LEN);
-			OPENSSL_cleanse(psk_or_pre_ms, sizeof(psk_or_pre_ms));
-			if (psk_err != 0) {
-				ssl3_send_alert(s, SSL3_AL_FATAL,
-				    SSL_AD_HANDSHAKE_FAILURE);
-				goto err;
-			}
-		}
-#endif
 		else {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
 			    SSL_AD_HANDSHAKE_FAILURE);

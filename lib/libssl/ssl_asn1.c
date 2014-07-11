@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.27 2014/07/10 08:51:15 tedu Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.28 2014/07/11 09:24:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -103,17 +103,13 @@ typedef struct ssl_session_asn1_st {
 	ASN1_OCTET_STRING tlsext_hostname;
 	ASN1_INTEGER tlsext_tick_lifetime;
 	ASN1_OCTET_STRING tlsext_tick;
-#ifndef OPENSSL_NO_PSK
-	ASN1_OCTET_STRING psk_identity_hint;
-	ASN1_OCTET_STRING psk_identity;
-#endif /* OPENSSL_NO_PSK */
 } SSL_SESSION_ASN1;
 
 int
 i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 {
 #define LSIZE2 (sizeof(long)*2)
-	int v1 = 0, v2 = 0, v3 = 0, v4 = 0, v5 = 0, v7 = 0, v8 = 0;
+	int v1 = 0, v2 = 0, v3 = 0, v4 = 0, v5 = 0;
 	unsigned char buf[4], ibuf1[LSIZE2], ibuf2[LSIZE2];
 	unsigned char ibuf3[LSIZE2], ibuf4[LSIZE2], ibuf5[LSIZE2];
 	int v6 = 0, v9 = 0, v10 = 0;
@@ -202,18 +198,6 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		a.tlsext_tick_lifetime.data = ibuf6;
 		ASN1_INTEGER_set(&a.tlsext_tick_lifetime, in->tlsext_tick_lifetime_hint);
 	}
-#ifndef OPENSSL_NO_PSK
-	if (in->psk_identity_hint) {
-		a.psk_identity_hint.length = strlen(in->psk_identity_hint);
-		a.psk_identity_hint.type = V_ASN1_OCTET_STRING;
-		a.psk_identity_hint.data = (unsigned char *)(in->psk_identity_hint);
-	}
-	if (in->psk_identity) {
-		a.psk_identity.length = strlen(in->psk_identity);
-		a.psk_identity.type = V_ASN1_OCTET_STRING;
-		a.psk_identity.data = (unsigned char *)(in->psk_identity);
-	}
-#endif /* OPENSSL_NO_PSK */
 
 	M_ASN1_I2D_len(&(a.version),		i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(&(a.ssl_version),	i2d_ASN1_INTEGER);
@@ -236,12 +220,6 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		M_ASN1_I2D_len_EXP_opt(&(a.tlsext_tick), i2d_ASN1_OCTET_STRING, 10, v10);
 	if (in->tlsext_hostname)
 		M_ASN1_I2D_len_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING, 6, v6);
-#ifndef OPENSSL_NO_PSK
-	if (in->psk_identity_hint)
-		M_ASN1_I2D_len_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING, 7, v7);
-	if (in->psk_identity)
-		M_ASN1_I2D_len_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING, 8, v8);
-#endif /* OPENSSL_NO_PSK */
 
 	M_ASN1_I2D_seq_total();
 
@@ -262,12 +240,6 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		M_ASN1_I2D_put_EXP_opt(&a.verify_result, i2d_ASN1_INTEGER, 5, v5);
 	if (in->tlsext_hostname)
 		M_ASN1_I2D_put_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING, 6, v6);
-#ifndef OPENSSL_NO_PSK
-	if (in->psk_identity_hint)
-		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING, 7, v7);
-	if (in->psk_identity)
-		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING, 8, v8);
-#endif /* OPENSSL_NO_PSK */
 	if (in->tlsext_tick_lifetime_hint > 0)
 		M_ASN1_I2D_put_EXP_opt(&a.tlsext_tick_lifetime, i2d_ASN1_INTEGER, 9, v9);
 	if (in->tlsext_tick)
@@ -415,29 +387,6 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	} else
 		ret->tlsext_hostname = NULL;
 
-#ifndef OPENSSL_NO_PSK
-	os.length = 0;
-	os.data = NULL;
-	M_ASN1_D2I_get_EXP_opt(osp, d2i_ASN1_OCTET_STRING, 7);
-	if (os.data) {
-		ret->psk_identity_hint = BUF_strndup((char *)os.data, os.length);
-		free(os.data);
-		os.data = NULL;
-		os.length = 0;
-	} else
-		ret->psk_identity_hint = NULL;
-
-	os.length = 0;
-	os.data = NULL;
-	M_ASN1_D2I_get_EXP_opt(osp, d2i_ASN1_OCTET_STRING, 8);
-	if (os.data) {
-		ret->psk_identity = BUF_strndup((char *)os.data, os.length);
-		free(os.data);
-		os.data = NULL;
-		os.length = 0;
-	} else
-		ret->psk_identity = NULL;
-#endif /* OPENSSL_NO_PSK */
 
 	ai.length = 0;
 	M_ASN1_D2I_get_EXP_opt(aip, d2i_ASN1_INTEGER, 9);

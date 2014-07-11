@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.57 2014/07/10 08:59:15 bcook Exp $ */
+/* $OpenBSD: s_server.c,v 1.58 2014/07/11 09:24:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -280,68 +280,6 @@ static int cert_chain = 0;
 #endif
 
 
-#ifndef OPENSSL_NO_PSK
-static char *psk_identity = "Client_identity";
-char *psk_key = NULL;		/* by default PSK is not used */
-
-static unsigned int 
-psk_server_cb(SSL * ssl, const char *identity,
-    unsigned char *psk, unsigned int max_psk_len)
-{
-	unsigned int psk_len = 0;
-	int ret;
-	BIGNUM *bn = NULL;
-
-	if (s_debug)
-		BIO_printf(bio_s_out, "psk_server_cb\n");
-	if (!identity) {
-		BIO_printf(bio_err, "Error: client did not send PSK identity\n");
-		goto out_err;
-	}
-	if (s_debug)
-		BIO_printf(bio_s_out, "identity_len=%d identity=%s\n",
-		    identity ? (int) strlen(identity) : 0, identity);
-
-	/* here we could lookup the given identity e.g. from a database */
-	if (strcmp(identity, psk_identity) != 0) {
-		BIO_printf(bio_s_out, "PSK error: client identity not found"
-		    " (got '%s' expected '%s')\n", identity,
-		    psk_identity);
-		goto out_err;
-	}
-	if (s_debug)
-		BIO_printf(bio_s_out, "PSK client identity found\n");
-
-	/* convert the PSK key to binary */
-	ret = BN_hex2bn(&bn, psk_key);
-	if (!ret) {
-		BIO_printf(bio_err, "Could not convert PSK key '%s' to BIGNUM\n", psk_key);
-		if (bn)
-			BN_free(bn);
-		return 0;
-	}
-	if (BN_num_bytes(bn) > (int) max_psk_len) {
-		BIO_printf(bio_err, "psk buffer of callback is too small (%d) for key (%d)\n",
-		    max_psk_len, BN_num_bytes(bn));
-		BN_free(bn);
-		return 0;
-	}
-	ret = BN_bn2bin(bn, psk);
-	BN_free(bn);
-
-	if (ret < 0)
-		goto out_err;
-	psk_len = (unsigned int) ret;
-
-	if (s_debug)
-		BIO_printf(bio_s_out, "fetched PSK len=%d\n", psk_len);
-	return psk_len;
-out_err:
-	if (s_debug)
-		BIO_printf(bio_err, "Error in PSK server callback\n");
-	return 0;
-}
-#endif
 
 
 static void 
@@ -418,10 +356,6 @@ sv_usage(void)
 	BIO_printf(bio_err, " -serverpref   - Use server's cipher preferences\n");
 	BIO_printf(bio_err, " -quiet        - Inhibit printing of session and certificate information\n");
 	BIO_printf(bio_err, " -no_tmp_rsa   - Do not generate a tmp RSA key\n");
-#ifndef OPENSSL_NO_PSK
-	BIO_printf(bio_err, " -psk_hint arg - PSK identity hint to use\n");
-	BIO_printf(bio_err, " -psk arg      - PSK in hex (without 0x)\n");
-#endif
 	BIO_printf(bio_err, " -ssl3         - Just talk SSLv3\n");
 	BIO_printf(bio_err, " -tls1_2       - Just talk TLSv1.2\n");
 	BIO_printf(bio_err, " -tls1_1       - Just talk TLSv1.1\n");
@@ -699,10 +633,6 @@ s_server_main(int argc, char *argv[])
 	tlsextnextprotoctx next_proto;
 #endif
 #endif
-#ifndef OPENSSL_NO_PSK
-	/* by default do not send a PSK identity hint */
-	static char *psk_identity_hint = NULL;
-#endif
 	meth = SSLv23_server_method();
 
 	local_argc = argc;
@@ -882,25 +812,6 @@ s_server_main(int argc, char *argv[])
 		} else if (strcmp(*argv, "-no_ecdhe") == 0) {
 			no_ecdhe = 1;
 		}
-#ifndef OPENSSL_NO_PSK
-		else if (strcmp(*argv, "-psk_hint") == 0) {
-			if (--argc < 1)
-				goto bad;
-			psk_identity_hint = *(++argv);
-		} else if (strcmp(*argv, "-psk") == 0) {
-			size_t i;
-
-			if (--argc < 1)
-				goto bad;
-			psk_key = *(++argv);
-			for (i = 0; i < strlen(psk_key); i++) {
-				if (isxdigit((unsigned char) psk_key[i]))
-					continue;
-				BIO_printf(bio_err, "Not a hex number '%s'\n", *argv);
-				goto bad;
-			}
-		}
-#endif
 		else if (strcmp(*argv, "-www") == 0) {
 			www = 1;
 		} else if (strcmp(*argv, "-WWW") == 0) {
@@ -1328,18 +1239,6 @@ bad:
 #endif
 	}
 
-#ifndef OPENSSL_NO_PSK
-	if (psk_key != NULL) {
-		if (s_debug)
-			BIO_printf(bio_s_out, "PSK key given, setting server callback\n");
-		SSL_CTX_set_psk_server_callback(ctx, psk_server_cb);
-	}
-	if (!SSL_CTX_use_psk_identity_hint(ctx, psk_identity_hint)) {
-		BIO_printf(bio_err, "error setting PSK identity hint to context\n");
-		ERR_print_errors(bio_err);
-		goto end;
-	}
-#endif
 
 	if (cipher != NULL) {
 		if (!SSL_CTX_set_cipher_list(ctx, cipher)) {

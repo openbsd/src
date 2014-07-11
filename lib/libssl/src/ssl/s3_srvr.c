@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.71 2014/07/10 21:36:49 bcook Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.72 2014/07/11 09:24:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -429,9 +429,6 @@ ssl3_accept(SSL *s)
 			 * public key for key exchange.
 			 */
 			if (s->s3->tmp.use_rsa_tmp
-#ifndef OPENSSL_NO_PSK
-			    || ((alg_k & SSL_kPSK) && s->ctx->psk_identity_hint)
-#endif
 			    || (alg_k & (SSL_kDHr|SSL_kDHd|SSL_kEDH))
 			    || (alg_k & SSL_kEECDH)
 			    || ((alg_k & SSL_kRSA)
@@ -1383,9 +1380,6 @@ ssl3_send_server_key_exchange(SSL *s)
 	int curve_id = 0;
 	BN_CTX *bn_ctx = NULL;
 
-#ifndef OPENSSL_NO_PSK
-	size_t pskhintlen = 0;
-#endif
 	EVP_PKEY *pkey;
 	const EVP_MD *md = NULL;
 	unsigned char *p, *d;
@@ -1592,13 +1586,6 @@ ssl3_send_server_key_exchange(SSL *s)
 			r[2] = NULL;
 			r[3] = NULL;
 		} else
-#ifndef OPENSSL_NO_PSK
-		if (type & SSL_kPSK) {
-			pskhintlen = strlen(s->ctx->psk_identity_hint);
-			/* reserve size for record length and PSK identity hint*/
-			n += 2 + pskhintlen;
-		} else
-#endif /* !OPENSSL_NO_PSK */
 		{
 			al = SSL_AD_HANDSHAKE_FAILURE;
 			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
@@ -1661,15 +1648,6 @@ ssl3_send_server_key_exchange(SSL *s)
 			p += encodedlen;
 		}
 
-#ifndef OPENSSL_NO_PSK
-		if (type & SSL_kPSK) {
-			/* copy PSK identity hint */
-			s2n(pskhintlen, p);
-
-			memcpy(p, s->ctx->psk_identity_hint, pskhintlen);
-			p += pskhintlen;
-		}
-#endif
 
 		/* not anonymous */
 		if (pkey != NULL) {
@@ -2196,91 +2174,6 @@ ssl3_get_client_key_exchange(SSL *s)
 		OPENSSL_cleanse(p, i);
 		return (ret);
 	} else
-#ifndef OPENSSL_NO_PSK
-	if (alg_k & SSL_kPSK) {
-		unsigned char *t = NULL;
-		unsigned char psk_or_pre_ms[PSK_MAX_PSK_LEN*2 + 4];
-		unsigned int pre_ms_len = 0, psk_len = 0;
-		int psk_err = 1;
-		char tmp_id[PSK_MAX_IDENTITY_LEN + 1];
-
-		al = SSL_AD_HANDSHAKE_FAILURE;
-
-		n2s(p, i);
-		if (n != i + 2) {
-			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-			    SSL_R_LENGTH_MISMATCH);
-			goto psk_err;
-		}
-		if (i > PSK_MAX_IDENTITY_LEN) {
-			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-			    SSL_R_DATA_LENGTH_TOO_LONG);
-			goto psk_err;
-		}
-		if (s->psk_server_callback == NULL) {
-			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-			    SSL_R_PSK_NO_SERVER_CB);
-			goto psk_err;
-		}
-
-		/*
-		 * Create guaranteed NULL-terminated identity
-		 * string for the callback
-		 */
-		memcpy(tmp_id, p, i);
-		memset(tmp_id + i, 0, PSK_MAX_IDENTITY_LEN + 1 - i);
-		psk_len = s->psk_server_callback(s, tmp_id,
-		    psk_or_pre_ms, sizeof(psk_or_pre_ms));
-		OPENSSL_cleanse(tmp_id, PSK_MAX_IDENTITY_LEN + 1);
-
-		if (psk_len > PSK_MAX_PSK_LEN) {
-			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-			    ERR_R_INTERNAL_ERROR);
-			goto psk_err;
-		} else if (psk_len == 0) {
-			/* PSK related to the given identity not found */
-			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-			    SSL_R_PSK_IDENTITY_NOT_FOUND);
-			al = SSL_AD_UNKNOWN_PSK_IDENTITY;
-			goto psk_err;
-		}
-
-		/* create PSK pre_master_secret */
-		pre_ms_len = 2 + psk_len + 2 + psk_len;
-		t = psk_or_pre_ms;
-		memmove(psk_or_pre_ms + psk_len + 4, psk_or_pre_ms, psk_len);
-		s2n(psk_len, t);
-		memset(t, 0, psk_len);
-		t += psk_len;
-		s2n(psk_len, t);
-
-		free(s->session->psk_identity);
-		s->session->psk_identity = BUF_strdup((char *)p);
-		if (s->session->psk_identity == NULL) {
-			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-			    ERR_R_MALLOC_FAILURE);
-			goto psk_err;
-		}
-
-		free(s->session->psk_identity_hint);
-		s->session->psk_identity_hint = BUF_strdup(s->ctx->psk_identity_hint);
-		if (s->ctx->psk_identity_hint != NULL &&
-			s->session->psk_identity_hint == NULL) {
-			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-			    ERR_R_MALLOC_FAILURE);
-			goto psk_err;
-		}
-
-		s->session->master_key_length =
-		    s->method->ssl3_enc->generate_master_secret(
-		        s, s->session->master_key, psk_or_pre_ms, pre_ms_len);
-		psk_err = 0;
-		psk_err:
-		OPENSSL_cleanse(psk_or_pre_ms, sizeof(psk_or_pre_ms));
-		if (psk_err != 0)
-			goto f_err;
-	} else
-#endif
 	if (alg_k & SSL_kGOST) {
 		int ret = 0;
 		EVP_PKEY_CTX *pkey_ctx;

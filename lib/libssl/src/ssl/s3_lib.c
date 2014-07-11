@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.68 2014/07/10 08:51:14 tedu Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.69 2014/07/11 09:24:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1262,71 +1262,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 	},
 #endif /* OPENSSL_NO_CAMELLIA */
 
-#ifndef OPENSSL_NO_PSK
-	/* Cipher 8A */
-	{
-		.valid = 1,
-		.name = TLS1_TXT_PSK_WITH_RC4_128_SHA,
-		.id = TLS1_CK_PSK_WITH_RC4_128_SHA,
-		.algorithm_mkey = SSL_kPSK,
-		.algorithm_auth = SSL_aPSK,
-		.algorithm_enc = SSL_RC4,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_MEDIUM,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 128,
-		.alg_bits = 128,
-	},
-
-	/* Cipher 8B */
-	{
-		.valid = 1,
-		.name = TLS1_TXT_PSK_WITH_3DES_EDE_CBC_SHA,
-		.id = TLS1_CK_PSK_WITH_3DES_EDE_CBC_SHA,
-		.algorithm_mkey = SSL_kPSK,
-		.algorithm_auth = SSL_aPSK,
-		.algorithm_enc = SSL_3DES,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 112,
-		.alg_bits = 168,
-	},
-
-	/* Cipher 8C */
-	{
-		.valid = 1,
-		.name = TLS1_TXT_PSK_WITH_AES_128_CBC_SHA,
-		.id = TLS1_CK_PSK_WITH_AES_128_CBC_SHA,
-		.algorithm_mkey = SSL_kPSK,
-		.algorithm_auth = SSL_aPSK,
-		.algorithm_enc = SSL_AES128,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 128,
-		.alg_bits = 128,
-	},
-
-	/* Cipher 8D */
-	{
-		.valid = 1,
-		.name = TLS1_TXT_PSK_WITH_AES_256_CBC_SHA,
-		.id = TLS1_CK_PSK_WITH_AES_256_CBC_SHA,
-		.algorithm_mkey = SSL_kPSK,
-		.algorithm_auth = SSL_aPSK,
-		.algorithm_enc = SSL_AES256,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 256,
-		.alg_bits = 256,
-	},
-#endif  /* OPENSSL_NO_PSK */
 
 	/* GCM ciphersuites from RFC5288 */
 
@@ -3030,11 +2965,6 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 		alg_k = c->algorithm_mkey;
 		alg_a = c->algorithm_auth;
 
-#ifndef OPENSSL_NO_PSK
-		/* with PSK there must be server callback set */
-		if ((alg_k & SSL_kPSK) && s->psk_server_callback == NULL)
-			continue;
-#endif /* OPENSSL_NO_PSK */
 
 		ok = (alg_k & mask_k) && (alg_a & mask_a);
 

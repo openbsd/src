@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.74 2014/07/10 08:51:14 tedu Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.75 2014/07/11 09:24:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1173,20 +1173,6 @@ ssl3_get_key_exchange(SSL *s)
 		return ((int)n);
 
 	if (s->s3->tmp.message_type != SSL3_MT_SERVER_KEY_EXCHANGE) {
-#ifndef OPENSSL_NO_PSK
-		/*
-		 * In plain PSK ciphersuite, ServerKeyExchange can be
-		 * omitted if no identity hint is sent. Set session->sess_cert
-		 * anyway to avoid problems later.
-		 */
-		if (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK) {
-			s->session->sess_cert = ssl_sess_cert_new();
-			if (s->session->sess_cert == NULL)
-				goto err; 
-			free(s->ctx->psk_identity_hint);
-			s->ctx->psk_identity_hint = NULL;
-		}
-#endif
 		s->s3->tmp.reuse_message = 1;
 		return (1);
 	}
@@ -1212,50 +1198,6 @@ ssl3_get_key_exchange(SSL *s)
 	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 	EVP_MD_CTX_init(&md_ctx);
 
-#ifndef OPENSSL_NO_PSK
-	if (alg_k & SSL_kPSK) {
-		char tmp_id_hint[PSK_MAX_IDENTITY_LEN + 1];
-
-		al = SSL_AD_HANDSHAKE_FAILURE;
-		n2s(p, i);
-		param_len = i + 2;
-		/*
-		 * Store PSK identity hint for later use, hint is used
-		 * in ssl3_send_client_key_exchange.  Assume that the
-		 * maximum length of a PSK identity hint can be as
-		 * long as the maximum length of a PSK identity.
-		 */
-		if (i > PSK_MAX_IDENTITY_LEN) {
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    SSL_R_DATA_LENGTH_TOO_LONG);
-			goto f_err;
-		}
-		if (param_len > n) {
-			al = SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    SSL_R_BAD_PSK_IDENTITY_HINT_LENGTH);
-			goto f_err;
-		}
-		/*
-		 * If received PSK identity hint contains NULL
-		 * characters, the hint is truncated from the first
-		 * NULL. p may not be ending with NULL, so create a
-		 * NULL-terminated string.
-		 */
-		memcpy(tmp_id_hint, p, i);
-		memset(tmp_id_hint + i, 0, PSK_MAX_IDENTITY_LEN + 1 - i);
-		free(s->ctx->psk_identity_hint);
-		s->ctx->psk_identity_hint = BUF_strdup(tmp_id_hint);
-		if (s->ctx->psk_identity_hint == NULL) {
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    ERR_R_MALLOC_FAILURE);
-			goto f_err;
-		}
-
-		p += i;
-		n -= param_len;
-	} else
-#endif /* !OPENSSL_NO_PSK */
 	if (alg_k & SSL_kRSA) {
 		if ((rsa = RSA_new()) == NULL) {
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
@@ -2363,83 +2305,6 @@ ssl3_send_client_key_exchange(SSL *s)
 			EVP_PKEY_free(pub_key);
 
 		}
-#ifndef OPENSSL_NO_PSK
-		else if (alg_k & SSL_kPSK) {
-			char identity[PSK_MAX_IDENTITY_LEN];
-			unsigned char *t = NULL;
-			unsigned char psk_or_pre_ms[PSK_MAX_PSK_LEN*2 + 4];
-			unsigned int pre_ms_len = 0, psk_len = 0;
-			int psk_err = 1;
-
-			n = 0;
-			if (s->psk_client_callback == NULL) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    SSL_R_PSK_NO_CLIENT_CB);
-				goto err;
-			}
-
-			psk_len = s->psk_client_callback(s,
-			    s->ctx->psk_identity_hint, identity,
-			    PSK_MAX_IDENTITY_LEN, psk_or_pre_ms,
-			    sizeof(psk_or_pre_ms));
-			if (psk_len > PSK_MAX_PSK_LEN) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
-				goto psk_err;
-			} else if (psk_len == 0) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    SSL_R_PSK_IDENTITY_NOT_FOUND);
-				goto psk_err;
-			}
-
-			/* create PSK pre_master_secret */
-			pre_ms_len = 2 + psk_len + 2 + psk_len;
-			t = psk_or_pre_ms;
-			memmove(psk_or_pre_ms + psk_len + 4,
-			    psk_or_pre_ms, psk_len);
-			s2n(psk_len, t);
-			memset(t, 0, psk_len);
-			t += psk_len;
-			s2n(psk_len, t);
-
-			free(s->session->psk_identity_hint);
-			s->session->psk_identity_hint =
-			    BUF_strdup(s->ctx->psk_identity_hint);
-			if (s->ctx->psk_identity_hint != NULL &&
-			    s->session->psk_identity_hint == NULL) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_MALLOC_FAILURE);
-				goto psk_err;
-			}
-
-			free(s->session->psk_identity);
-			s->session->psk_identity = BUF_strdup(identity);
-			if (s->session->psk_identity == NULL) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_MALLOC_FAILURE);
-				goto psk_err;
-			}
-
-			s->session->master_key_length =
-			    s->method->ssl3_enc->generate_master_secret(
-			    s, s->session->master_key, psk_or_pre_ms,
-			    pre_ms_len);
-
-			n = strlen(identity);
-			s2n(n, p);
-			memcpy(p, identity, n);
-			n += 2;
-			psk_err = 0;
-psk_err:
-			OPENSSL_cleanse(identity, PSK_MAX_IDENTITY_LEN);
-			OPENSSL_cleanse(psk_or_pre_ms, sizeof(psk_or_pre_ms));
-			if (psk_err != 0) {
-				ssl3_send_alert(s, SSL3_AL_FATAL,
-				    SSL_AD_HANDSHAKE_FAILURE);
-				goto err;
-			}
-		}
-#endif
 		else {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
 			SSL_AD_HANDSHAKE_FAILURE);

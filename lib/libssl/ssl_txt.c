@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_txt.c,v 1.22 2014/07/10 08:51:15 tedu Exp $ */
+/* $OpenBSD: ssl_txt.c,v 1.23 2014/07/11 09:24:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,16 +159,6 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 		if (BIO_printf(bp, "%02X", x->master_key[i]) <= 0)
 			goto err;
 	}
-#ifndef OPENSSL_NO_PSK
-	if (BIO_puts(bp, "\n    PSK identity: ") <= 0)
-		goto err;
-	if (BIO_printf(bp, "%s", x->psk_identity ? x->psk_identity : "None") <= 0)
-		goto err;
-	if (BIO_puts(bp, "\n    PSK identity hint: ") <= 0)
-		goto err;
-	if (BIO_printf(bp, "%s", x->psk_identity_hint ? x->psk_identity_hint : "None") <= 0)
-		goto err;
-#endif
 	if (x->tlsext_tick_lifetime_hint) {
 		if (BIO_printf(bp,
 		    "\n    TLS session ticket lifetime hint: %ld (seconds)",

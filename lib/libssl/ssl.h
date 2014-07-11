@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.60 2014/07/10 11:58:08 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.61 2014/07/11 09:24:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -460,10 +460,6 @@ struct ssl_session_st {
 	unsigned int sid_ctx_length;
 	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 
-#ifndef OPENSSL_NO_PSK
-	char *psk_identity_hint;
-	char *psk_identity;
-#endif
 	/* Used to indicate that session resumption is not allowed.
 	 * Applications can also set this bit for a new session via
 	 * not_resumable_session_cb to disable session caching and tickets. */
@@ -835,14 +831,6 @@ struct ssl_ctx_st {
 	int (*tlsext_status_cb)(SSL *ssl, void *arg);
 	void *tlsext_status_arg;
 
-#ifndef OPENSSL_NO_PSK
-	char *psk_identity_hint;
-	unsigned int (*psk_client_callback)(SSL *ssl, const char *hint,
-	    char *identity, unsigned int max_identity_len, unsigned char *psk,
-	    unsigned int max_psk_len);
-	unsigned int (*psk_server_callback)(SSL *ssl, const char *identity,
-	    unsigned char *psk, unsigned int max_psk_len);
-#endif
 
 
 
@@ -955,30 +943,6 @@ void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
 #define OPENSSL_NPN_NO_OVERLAP	2
 #endif
 
-#ifndef OPENSSL_NO_PSK
-/* the maximum length of the buffer given to callbacks containing the
- * resulting identity/psk */
-#define PSK_MAX_IDENTITY_LEN 128
-#define PSK_MAX_PSK_LEN 256
-void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx,
-    unsigned int (*psk_client_callback)(SSL *ssl, const char *hint,
-    char *identity, unsigned int max_identity_len, unsigned char *psk,
-    unsigned int max_psk_len));
-void SSL_set_psk_client_callback(SSL *ssl,
-    unsigned int (*psk_client_callback)(SSL *ssl, const char *hint,
-    char *identity, unsigned int max_identity_len, unsigned char *psk,
-    unsigned int max_psk_len));
-void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx,
-    unsigned int (*psk_server_callback)(SSL *ssl, const char *identity,
-    unsigned char *psk, unsigned int max_psk_len));
-void SSL_set_psk_server_callback(SSL *ssl,
-    unsigned int (*psk_server_callback)(SSL *ssl, const char *identity,
-    unsigned char *psk, unsigned int max_psk_len));
-int SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint);
-int SSL_use_psk_identity_hint(SSL *s, const char *identity_hint);
-const char *SSL_get_psk_identity_hint(const SSL *s);
-const char *SSL_get_psk_identity(const SSL *s);
-#endif
 
 #define SSL_NOTHING	1
 #define SSL_WRITING	2
@@ -1123,13 +1087,6 @@ struct ssl_st {
 	int error_code;		/* actual code */
 
 
-#ifndef OPENSSL_NO_PSK
-	unsigned int (*psk_client_callback)(SSL *ssl, const char *hint,
-	    char *identity, unsigned int max_identity_len, unsigned char *psk,
-	    unsigned int max_psk_len);
-	unsigned int (*psk_server_callback)(SSL *ssl, const char *identity,
-	    unsigned char *psk, unsigned int max_psk_len);
-#endif
 
 	SSL_CTX *ctx;
 	/* set this flag to 1 and a sleep(1) is put into all SSL_read()

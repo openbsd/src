@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.29 2014/07/10 08:51:14 tedu Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.30 2014/07/11 09:24:44 beck Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -464,11 +464,6 @@ dtls1_accept(SSL *s)
 			/* only send if a DH key exchange or
 			 * RSA but we have a sign only certificate */
 			if (s->s3->tmp.use_rsa_tmp
-			/* PSK: send ServerKeyExchange if PSK identity
-			 * hint if provided */
-#ifndef OPENSSL_NO_PSK
-			|| ((alg_k & SSL_kPSK) && s->ctx->psk_identity_hint)
-#endif
 			|| (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
 			|| (alg_k & SSL_kEECDH)
 			|| ((alg_k & SSL_kRSA)
@@ -1011,9 +1006,6 @@ dtls1_send_server_key_exchange(SSL *s)
 	int curve_id = 0;
 	BN_CTX *bn_ctx = NULL;
 
-#ifndef OPENSSL_NO_PSK
-	size_t pskhintlen = 0;
-#endif
 	EVP_PKEY *pkey;
 	unsigned char *p, *d;
 	int al, i;
@@ -1200,13 +1192,6 @@ dtls1_send_server_key_exchange(SSL *s)
 			r[2] = NULL;
 			r[3] = NULL;
 		} else
-#ifndef OPENSSL_NO_PSK
-		if (type & SSL_kPSK) {
-			pskhintlen = strlen(s->ctx->psk_identity_hint);
-			/* reserve size for record length and PSK identity hint*/
-			n += 2 + pskhintlen;
-		} else
-#endif /* !OPENSSL_NO_PSK */
 		{
 			al = SSL_AD_HANDSHAKE_FAILURE;
 			SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE, SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE);
@@ -1265,15 +1250,6 @@ dtls1_send_server_key_exchange(SSL *s)
 			p += encodedlen;
 		}
 
-#ifndef OPENSSL_NO_PSK
-		if (type & SSL_kPSK) {
-			/* copy PSK identity hint */
-			s2n(pskhintlen, p);
-
-			memcpy(p, s->ctx->psk_identity_hint, pskhintlen);
-			p += pskhintlen;
-		}
-#endif
 
 		/* not anonymous */
 		if (pkey != NULL) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.62 2014/07/10 11:58:08 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.63 2014/07/11 09:24:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -883,10 +883,8 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, unsigned long 
 	*auth |= SSL_aDH;
 	*mkey |= SSL_kKRB5;
 	*auth |= SSL_aKRB5;
-#ifdef OPENSSL_NO_PSK
 	*mkey |= SSL_kPSK;
 	*auth |= SSL_aPSK;
-#endif
 	*mkey |= SSL_kSRP;
 	/* Check for presence of GOST 34.10 algorithms, and if they
 	 * do not present, disable  appropriate auth and key exchange */

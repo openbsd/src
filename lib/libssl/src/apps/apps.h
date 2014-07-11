@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.34 2014/07/09 09:06:58 bcook Exp $ */
+/* $OpenBSD: apps.h,v 1.35 2014/07/11 09:24:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -244,9 +244,6 @@ int do_X509_REQ_sign(BIO *err, X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
     STACK_OF(OPENSSL_STRING) *sigopts);
 int do_X509_CRL_sign(BIO *err, X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
     STACK_OF(OPENSSL_STRING) *sigopts);
-#ifndef OPENSSL_NO_PSK
-extern char *psk_key;
-#endif
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 unsigned char *next_protos_parse(unsigned short *outlen, const char *in);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.35 2014/07/10 08:51:15 tedu Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.36 2014/07/11 09:24:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -214,10 +214,6 @@ SSL_SESSION_new(void)
 	ss->tlsext_ellipticcurvelist_length = 0;
 	ss->tlsext_ellipticcurvelist = NULL;
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
-#ifndef OPENSSL_NO_PSK
-	ss->psk_identity_hint = NULL;
-	ss->psk_identity = NULL;
-#endif
 	return (ss);
 }
 
@@ -690,10 +686,6 @@ SSL_SESSION_free(SSL_SESSION *ss)
 	free(ss->tlsext_ecpointformatlist);
 	ss->tlsext_ellipticcurvelist_length = 0;
 	free(ss->tlsext_ellipticcurvelist);
-#ifndef OPENSSL_NO_PSK
-	free(ss->psk_identity_hint);
-	free(ss->psk_identity);
-#endif
 	OPENSSL_cleanse(ss, sizeof(*ss));
 	free(ss);
 }
