@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.184 2014/07/10 21:46:02 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.185 2014/07/11 22:28:05 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -157,6 +157,7 @@ char machine[] = MACHINE;
 void (*cpu_idle_leave_fcn)(void) = NULL;
 void (*cpu_idle_cycle_fcn)(void) = NULL;
 void (*cpu_idle_enter_fcn)(void) = NULL;
+void (*cpu_busy_cycle_fcn)(void) = NULL;
 
 /* the following is used externally for concurrent handlers */
 int setperf_prio = 0;
@@ -759,9 +760,6 @@ boot(int howto)
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
-
-		if (curproc == NULL)
-			curproc = &proc0;
 		vfs_shutdown();
 
 		if ((howto & RB_TIMEBAD) == 0) {

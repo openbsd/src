@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.545 2014/07/10 21:46:03 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.546 2014/07/11 22:28:05 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2570,11 +2570,6 @@ boot(int howto)
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		extern struct proc proc0;
-
-		if (curproc == NULL)
-			curproc = &proc0;
-
 		waittime = 0;
 		vfs_shutdown();
 
