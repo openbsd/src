@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.24 2014/07/09 11:37:16 mlarkin Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.25 2014/07/11 10:56:52 mlarkin Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -50,6 +50,7 @@
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #include <machine/fpu.h>
+#include <machine/mplock.h>
 
 #include <ddb/db_output.h>
 #include <machine/db_machdep.h>
@@ -96,6 +97,8 @@ void
 x86_64_ipi_halt(struct cpu_info *ci)
 {
 	SCHED_ASSERT_UNLOCKED();
+	KASSERT(!__mp_lock_held(&kernel_lock));
+	
 	fpusave_cpu(ci, 1);
 	disable_intr();
 	lapic_disable();
