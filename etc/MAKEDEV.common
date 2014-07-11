@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.73 2013/11/21 11:04:44 kettenis Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.74 2014/07/11 21:58:32 tedu Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -204,8 +204,6 @@ __devtitle(dis, Disks)dnl
 __devitem(sd, {-sd*-}, {-SCSI disks{-,-} including flopticals-})dnl
 __devitem(cd, {-cd*-}, ATAPI and SCSI CD-ROM drives)dnl
 _mkdev(cd, cd*, {-dodisk2 cd $U major_cd_b major_cd_c $U 0{--}ifstep(cd)-})dnl
-__devitem(bthub, {-bthub*-}, Bluetooth Hubs,nothing)dnl
-_mcdev(bthub, bthub*, bthub, {-major_bthub_c-})dnl
 __devitem(fuse, fuse, Userland Filesystem, fuse 4)dnl
 _mcdev(fuse, fuse, fuse, {-major_fuse_c-}, 600)dnl
 __devitem(ch, {-ch*-}, SCSI media changers)dnl
