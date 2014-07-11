@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 2014/07/11 22:28:51 bluhm Exp $
+
 # The following ports must be installed for the regression tests:
 # p5-AnyEvent		provide framework for multiple event loops
 # p5-Hash-Merge		merge associative arrays

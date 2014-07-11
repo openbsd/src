@@ -1,3 +1,5 @@
+/*	$OpenBSD: opentun.c,v 1.2 2014/07/11 22:28:51 bluhm Exp $ */
+
 /*
  * Copyright (c) 2014 Alexander Bluhm <bluhm@openbsd.org>
  *
