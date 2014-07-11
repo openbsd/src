@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_b64.c,v 1.18 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: bio_b64.c,v 1.19 2014/07/11 12:04:46 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -224,7 +224,8 @@ b64_read(BIO *b, char *out, int outl)
 			/* ctx->start=1; */
 			ctx->tmp_len = 0;
 		} else if (ctx->start) {
-			q = p=(unsigned char *)ctx->tmp;
+			q = p =(unsigned char *)ctx->tmp;
+			num = 0;
 			for (j = 0; j < i; j++) {
 				if (*(q++) != '\n')
 					continue;
