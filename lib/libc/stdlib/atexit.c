@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.c,v 1.19 2014/07/10 21:14:22 tedu Exp $ */
+/*	$OpenBSD: atexit.c,v 1.20 2014/07/11 09:51:37 kettenis Exp $ */
 /*
  * Copyright (c) 2002 Daniel Hartmeier
  * All rights reserved.
@@ -116,6 +116,7 @@ __cxa_finalize(void *dso)
 	int n, pgsize = getpagesize();
 	static int call_depth;
 
+	_ATEXIT_LOCK();
 	call_depth++;
 
 restart:
@@ -136,7 +137,9 @@ restart:
 				p->fns[n].fn_ptr = NULL;
 				mprotect(p, pgsize, PROT_READ);
 			}
+			_ATEXIT_UNLOCK();
 			(*fn.fn_ptr)(fn.fn_arg);
+			_ATEXIT_LOCK();
 			if (restartloop)
 				goto restart;
 		}
@@ -157,6 +160,7 @@ restart:
 		}
 		__atexit = NULL;
 	}
+	_ATEXIT_UNLOCK();
 }
 
 /*
