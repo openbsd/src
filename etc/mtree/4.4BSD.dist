@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.250 2014/07/11 13:21:08 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.251 2014/07/11 13:51:05 schwarze Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -414,56 +414,6 @@ perl5
 site_perl
 ..
 ..
-..
-
-# ./usr/local/libexec
-libexec
-..
-
-# ./usr/local/man
-man
-cat1
-..
-cat2
-..
-cat3
-..
-cat4
-..
-cat5
-..
-cat6
-..
-cat7
-..
-cat8
-..
-cat9
-..
-man1
-..
-man2
-..
-man3
-..
-man4
-..
-man5
-..
-man6
-..
-man7
-..
-man8
-..
-man9
-..
-..
-
-# ./usr/local/sbin
-sbin
-..
-info
 ..
 ..
 
