@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.18 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.19 2014/07/11 15:01:49 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -670,7 +670,7 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 	/* Dedicated window==4 case improves 512-bit RSA sign by ~15%, but as
 	 * 512-bit RSA is hardly relevant, we omit it to spare size... */
-	if (window == 5) {
+	if (window == 5 && top > 1) {
 		void bn_mul_mont_gather5(BN_ULONG *rp, const BN_ULONG *ap,
 		    const void *table, const BN_ULONG *np,
 		    const BN_ULONG *n0, int num, int power);
