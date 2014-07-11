@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.776 2014/06/16 19:31:41 rpe Exp $
+#	$OpenBSD: install.sub,v 1.777 2014/07/11 13:21:08 deraadt Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1954,11 +1954,6 @@ finish_up() {
 	# We may run some programs in chroot, and some of them might be
 	# dynamic.  That is highly discouraged, but let us play it safe.
 	rm -f /mnt/var/run/ld.so.hints
-
-	if [ -f /mnt/etc/mtree/BSD.local.dist ]; then
-		/mnt/usr/sbin/chroot /mnt /usr/sbin/mtree -Uedqn -p /usr/local \
-			-f /etc/mtree/BSD.local.dist >/dev/null
-	fi
 
 	[ -x /mnt/$MODE.site ] && /mnt/usr/sbin/chroot /mnt /$MODE.site
 
