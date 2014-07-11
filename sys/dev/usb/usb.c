@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.98 2014/07/09 18:15:04 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.99 2014/07/11 08:43:38 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -121,24 +121,21 @@ void		 usb_fill_di_task(void *);
 void		 usb_fill_udc_task(void *);
 void		 usb_fill_udf_task(void *);
 
-int		 usb_match(struct device *, void *, void *); 
-void		 usb_attach(struct device *, struct device *, void *); 
-int		 usb_detach(struct device *, int); 
-int		 usb_activate(struct device *, int); 
+int		 usb_match(struct device *, void *, void *);
+void		 usb_attach(struct device *, struct device *, void *);
+int		 usb_detach(struct device *, int);
+int		 usb_activate(struct device *, int);
 
 int		 usb_attach_roothub(struct usb_softc *);
 void		 usb_detach_roothub(struct usb_softc *);
 
-struct cfdriver usb_cd = { 
-	NULL, "usb", DV_DULL 
-}; 
+struct cfdriver usb_cd = {
+	NULL, "usb", DV_DULL
+};
 
-const struct cfattach usb_ca = { 
-	sizeof(struct usb_softc), 
-	usb_match, 
-	usb_attach, 
-	usb_detach, 
-	usb_activate, 
+const struct cfattach usb_ca = {
+	sizeof(struct usb_softc), usb_match, usb_attach, usb_detach,
+	usb_activate,
 };
 
 int
@@ -295,12 +292,12 @@ usb_add_task(struct usbd_device *dev, struct usb_task *task)
 {
 	int s;
 
-	DPRINTFN(2,("%s: task=%p state=%d type=%d\n", __func__, task,
-	    task->state, task->type));
-
 	/* Don't add task if the device's root hub is dying. */
 	if (usbd_is_dying(dev))
 		return;
+
+	DPRINTFN(2,("%s: task=%p state=%d type=%d\n", __func__, task,
+	    task->state, task->type));
 
 	s = splusb();
 	if (!(task->state & USB_TASK_STATE_ONQ)) {
@@ -330,11 +327,11 @@ usb_rem_task(struct usbd_device *dev, struct usb_task *task)
 {
 	int s;
 
-	DPRINTFN(2,("%s: task=%p state=%d type=%d\n", __func__, task,
-	    task->state, task->type));
-
 	if (!(task->state & USB_TASK_STATE_ONQ))
 		return;
+
+	DPRINTFN(2,("%s: task=%p state=%d type=%d\n", __func__, task,
+	    task->state, task->type));
 
 	s = splusb();
 
