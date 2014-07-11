@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.28 2014/07/11 09:24:44 beck Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.29 2014/07/11 22:57:25 miod Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -879,6 +879,8 @@ dtls1_get_hello_verify(SSL *s)
 		return (1);
 	}
 
+	if (2 > n)
+		goto truncated;
 	data = (unsigned char *)s->init_msg;
 
 	if ((data[0] != (s->version >> 8)) || (data[1] != (s->version&0xff))) {
@@ -889,7 +891,11 @@ dtls1_get_hello_verify(SSL *s)
 	}
 	data += 2;
 
+	if (2 + 1 > n)
+		goto truncated;
 	cookie_len = *(data++);
+	if (2 + 1 + cookie_len > n)
+		goto truncated;
 	if (cookie_len > sizeof(s->d1->cookie)) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		goto f_err;
@@ -901,6 +907,8 @@ dtls1_get_hello_verify(SSL *s)
 	s->d1->send_cookie = 1;
 	return 1;
 
+truncated:
+	al = SSL_AD_DECODE_ERROR;
 f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	return -1;

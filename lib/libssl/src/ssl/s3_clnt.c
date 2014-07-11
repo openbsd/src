@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.77 2014/07/11 15:44:53 miod Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.78 2014/07/11 22:57:25 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -814,6 +814,8 @@ ssl3_get_server_hello(SSL *s)
 
 	d = p = (unsigned char *)s->init_msg;
 
+	if (2 > n)
+		goto truncated;
 	if ((p[0] != (s->version >> 8)) || (p[1] != (s->version & 0xff))) {
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_WRONG_SSL_VERSION);
 		s->version = (s->version&0xff00) | p[1];
@@ -823,6 +825,10 @@ ssl3_get_server_hello(SSL *s)
 	p += 2;
 
 	/* load the server hello data */
+
+	if (p + SSL3_RANDOM_SIZE + 1 - d > n)
+		goto truncated;
+
 	/* load the server random */
 	memcpy(s->s3->server_random, p, SSL3_RANDOM_SIZE);
 	p += SSL3_RANDOM_SIZE;
@@ -837,6 +843,9 @@ ssl3_get_server_hello(SSL *s)
 		    SSL_R_SSL3_SESSION_ID_TOO_LONG);
 		goto f_err;
 	}
+
+	if (p + j + 2 - d > n)
+		goto truncated;
 
 	/*
 	 * Check if we want to resume the session based on external
@@ -935,6 +944,8 @@ ssl3_get_server_hello(SSL *s)
 	}
 	/* lets get the compression algorithm */
 	/* COMPRESSION */
+	if (p + 1 - d > n)
+		goto truncated;
 	if (*(p++) != 0) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
@@ -958,15 +969,15 @@ ssl3_get_server_hello(SSL *s)
 		}
 	}
 
-	if (p != (d + n)) {
-		/* wrong packet length */
-		al = SSL_AD_DECODE_ERROR;
-		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
-		    SSL_R_BAD_PACKET_LENGTH);
-		goto f_err;
-	}
+	if (p != d + n)
+		goto truncated;
 
 	return (1);
+
+truncated:
+	/* wrong packet length */
+	al = SSL_AD_DECODE_ERROR;
+	SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_BAD_PACKET_LENGTH);
 f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 err:
@@ -1015,6 +1026,8 @@ ssl3_get_server_certificate(SSL *s)
 		goto err;
 	}
 
+	if (p + 3 - d > n)
+		goto truncated;
 	n2l3(p, llen);
 	if (llen + 3 != n) {
 		al = SSL_AD_DECODE_ERROR;
@@ -1023,6 +1036,8 @@ ssl3_get_server_certificate(SSL *s)
 		goto f_err;
 	}
 	for (nc = 0; nc < llen; ) {
+		if (p + 3 - d > n)
+			goto truncated;
 		n2l3(p, l);
 		if ((l + nc + 3) > llen) {
 			al = SSL_AD_DECODE_ERROR;
@@ -1094,7 +1109,7 @@ ssl3_get_server_certificate(SSL *s)
 		x = NULL;
 		al = SSL3_AL_FATAL;
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
-		SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS);
+		    SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS);
 		goto f_err;
 	}
 
@@ -1103,7 +1118,7 @@ ssl3_get_server_certificate(SSL *s)
 		x = NULL;
 		al = SSL3_AL_FATAL;
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
-		SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+		    SSL_R_UNKNOWN_CERTIFICATE_TYPE);
 		goto f_err;
 	}
 
@@ -1137,6 +1152,11 @@ ssl3_get_server_certificate(SSL *s)
 	ret = 1;
 
 	if (0) {
+truncated:
+		/* wrong packet length */
+		al = SSL_AD_DECODE_ERROR;
+		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
+		    SSL_R_BAD_PACKET_LENGTH);
 f_err:
 		ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	}
@@ -1206,6 +1226,8 @@ ssl3_get_key_exchange(SSL *s)
 			    ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
+		if (2 > n)
+			goto truncated;
 		n2s(p, i);
 		param_len = i + 2;
 		if (param_len > n) {
@@ -1221,6 +1243,8 @@ ssl3_get_key_exchange(SSL *s)
 		}
 		p += i;
 
+		if (param_len + 2 > n)
+			goto truncated;
 		n2s(p, i);
 		param_len += i + 2;
 		if (param_len > n) {
@@ -1258,6 +1282,8 @@ ssl3_get_key_exchange(SSL *s)
 			    ERR_R_DH_LIB);
 			goto err;
 		}
+		if (2 > n)
+			goto truncated;
 		n2s(p, i);
 		param_len = i + 2;
 		if (param_len > n) {
@@ -1273,6 +1299,8 @@ ssl3_get_key_exchange(SSL *s)
 		}
 		p += i;
 
+		if (param_len + 2 > n)
+			goto truncated;
 		n2s(p, i);
 		param_len += i + 2;
 		if (param_len > n) {
@@ -1288,6 +1316,8 @@ ssl3_get_key_exchange(SSL *s)
 		}
 		p += i;
 
+		if (param_len + 2 > n)
+			goto truncated;
 		n2s(p, i);
 		param_len += i + 2;
 		if (param_len > n) {
@@ -1376,6 +1406,8 @@ ssl3_get_key_exchange(SSL *s)
 			goto err;
 		}
 
+		if (param_len + 1 > n)
+			goto truncated;
 		encoded_pt_len = *p;
 		/* length of encoded point */
 		p += 1;
@@ -1435,6 +1467,8 @@ ssl3_get_key_exchange(SSL *s)
 			 * Check key type is consistent
 			 * with signature
 			 */
+			if (2 > n)
+				goto truncated;
 			if (sigalg != (int)p[1]) {
 				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
 				    SSL_R_WRONG_SIGNATURE_TYPE);
@@ -1453,11 +1487,13 @@ ssl3_get_key_exchange(SSL *s)
 		} else
 			md = EVP_sha1();
 
+		if (2 > n)
+			goto truncated;
 		n2s(p, i);
 		n -= 2;
 		j = EVP_PKEY_size(pkey);
 
-		if ((i != n) || (n > j) || (n <= 0)) {
+		if (i != n || n > j) {
 			/* wrong packet length */
 			al = SSL_AD_DECODE_ERROR;
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
@@ -1534,6 +1570,10 @@ ssl3_get_key_exchange(SSL *s)
 	EVP_PKEY_free(pkey);
 	EVP_MD_CTX_cleanup(&md_ctx);
 	return (1);
+truncated:
+	/* wrong packet length */
+	al = SSL_AD_DECODE_ERROR;
+	SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_PACKET_LENGTH);
 f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 err:
@@ -1606,13 +1646,26 @@ ssl3_get_certificate_request(SSL *s)
 	}
 
 	/* get the certificate types */
+	if (1 > n)
+		goto truncated;
 	ctype_num= *(p++);
 	if (ctype_num > SSL3_CT_NUMBER)
 		ctype_num = SSL3_CT_NUMBER;
+	if (p + ctype_num - d > n) {
+		SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
+		    SSL_R_DATA_LENGTH_TOO_LONG);
+		goto err;
+	}
+
 	for (i = 0; i < ctype_num; i++)
 		s->s3->tmp.ctype[i] = p[i];
 	p += ctype_num;
 	if (SSL_USE_SIGALGS(s)) {
+		if (p + 2 - d > n) {
+			SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
+			    SSL_R_DATA_LENGTH_TOO_LONG);
+			goto err;
+		}
 		n2s(p, llen);
 		/* Check we have enough room for signature algorithms and
 		 * following length value.
@@ -1633,6 +1686,11 @@ ssl3_get_certificate_request(SSL *s)
 	}
 
 	/* get the CA RDNs */
+	if (p + 2 - d > n) {
+		SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
+		    SSL_R_DATA_LENGTH_TOO_LONG);
+		goto err;
+	}
 	n2s(p, llen);
 
 	if ((unsigned long)(p - d + llen) != n) {
@@ -1698,6 +1756,11 @@ cont:
 	ca_sk = NULL;
 
 	ret = 1;
+	if (0) {
+truncated:
+		SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
+		    SSL_R_BAD_PACKET_LENGTH);
+	}
 err:
 	if (ca_sk != NULL)
 		sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
