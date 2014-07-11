@@ -1,4 +1,4 @@
-Camellia assebler implementation.
+Camellia assembler implementation.
 
 Copyright (c) 2008 Andy Polyakov <appro@openssl.org>
 
