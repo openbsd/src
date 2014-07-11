@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_dir.h,v 1.10 2014/05/27 14:31:24 krw Exp $	*/
+/*	$OpenBSD: ext2fs_dir.h,v 1.11 2014/07/11 07:59:04 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_dir.h,v 1.4 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -85,6 +85,20 @@ struct	ext2fs_direct {
 	u_int8_t e2d_namlen;		/* length of string in d_name */
 	u_int8_t e2d_type;		/* file type */
 	char	  e2d_name[EXT2FS_MAXNAMLEN];/* name with length <= EXT2FS_MAXNAMLEN */
+};
+
+enum slotstatus {
+	NONE,
+	COMPACT,
+	FOUND
+};
+
+struct ext2fs_searchslot {
+	enum slotstatus	slotstatus;
+	doff_t		slotoffset;	/* offset of area with free space */
+	int		slotsize;	/* size of area at slotoffset */
+	int		slotfreespace;	/* amount of space free in slot */
+	int		slotneeded;	/* sizeof the entry we are seeking */
 };
 
 /* Ext2 directory file types (not the same as FFS. Sigh. */

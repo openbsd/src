@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.32 2014/07/10 09:24:18 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.33 2014/07/11 07:59:04 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /*
@@ -233,11 +233,7 @@ ext2fs_lookup(void *v)
 	struct buf *bp;			/* a buffer of directory entries */
 	struct ext2fs_direct *ep; /* the current directory entry */
 	int entryoffsetinblock;		/* offset of ep in bp's buffer */
-	enum {NONE, COMPACT, FOUND} slotstatus;
-	doff_t slotoffset;		/* offset of area with free space */
-	int slotsize;			/* size of area at slotoffset */
-	int slotfreespace;		/* amount of space free in slot */
-	int slotneeded;			/* size of the entry we're seeking */
+	struct ext2fs_searchslot ss;
 	int numdirpasses;		/* strategy for directory search */
 	doff_t endsearch;		/* offset to end directory search */
 	doff_t prevoff;			/* prev entry dp->i_offset */
@@ -256,8 +252,11 @@ ext2fs_lookup(void *v)
 	struct proc *p = cnp->cn_proc;
 	int	dirblksize = VTOI(ap->a_dvp)->i_e2fs->e2fs_bsize;
 
+	ss.slotstatus = FOUND;
+	ss.slotoffset = -1;
+	ss.slotfreespace = ss.slotsize = ss.slotneeded = 0;
+
 	bp = NULL;
-	slotoffset = -1;
 	*vpp = NULL;
 	vdp = ap->a_dvp;
 	dp = VTOI(vdp);
@@ -290,12 +289,9 @@ ext2fs_lookup(void *v)
 	 * we watch for a place to put the new file in
 	 * case it doesn't already exist.
 	 */
-	slotstatus = FOUND;
-	slotfreespace = slotsize = slotneeded = 0;
-	if ((nameiop == CREATE || nameiop == RENAME) &&
-		(flags & ISLASTCN)) {
-		slotstatus = NONE;
-		slotneeded = EXT2FS_DIRSIZ(cnp->cn_namelen);
+	if ((nameiop == CREATE || nameiop == RENAME) && (flags & ISLASTCN)) {
+		ss.slotstatus = NONE;
+		ss.slotneeded = EXT2FS_DIRSIZ(cnp->cn_namelen);
 	}
 
 	/*
@@ -311,15 +307,15 @@ ext2fs_lookup(void *v)
 	 */
 	bmask = VFSTOUFS(vdp->v_mount)->um_mountp->mnt_stat.f_iosize - 1;
 	if (nameiop != LOOKUP || dp->i_diroff == 0 ||
-		dp->i_diroff >ext2fs_size(dp)) {
+	    dp->i_diroff > ext2fs_size(dp)) {
 		entryoffsetinblock = 0;
 		dp->i_offset = 0;
 		numdirpasses = 1;
 	} else {
 		dp->i_offset = dp->i_diroff;
 		if ((entryoffsetinblock = dp->i_offset & bmask) &&
-			(error = ext2fs_bufatoff(dp, (off_t)dp->i_offset,
-			    NULL, &bp)))
+		    (error = ext2fs_bufatoff(dp, (off_t)dp->i_offset,
+		    NULL, &bp)))
 			return (error);
 		numdirpasses = 2;
 	}
@@ -346,10 +342,10 @@ searchloop:
 		 * If still looking for a slot, and at a dirblksize
 		 * boundary, have to start looking for free space again.
 		 */
-		if (slotstatus == NONE &&
-			(entryoffsetinblock & (dirblksize - 1)) == 0) {
-			slotoffset = -1;
-			slotfreespace = 0;
+		if (ss.slotstatus == NONE &&
+		    (entryoffsetinblock & (dirblksize - 1)) == 0) {
+			ss.slotoffset = -1;
+			ss.slotfreespace = 0;
 		}
 		/*
 		 * Get pointer to next entry.
@@ -359,7 +355,7 @@ searchloop:
 		 * "dirchk" to be true.
 		 */
 		ep = (struct ext2fs_direct *)
-			((char *)bp->b_data + entryoffsetinblock);
+		    ((char *)bp->b_data + entryoffsetinblock);
 		if (ep->e2d_reclen == 0 ||
 		    (dirchk &&
 		    ext2fs_dirbadentry(vdp, ep, entryoffsetinblock))) {
@@ -378,24 +374,24 @@ searchloop:
 		 * in the current block so that we can determine if
 		 * compaction is viable.
 		 */
-		if (slotstatus != FOUND) {
+		if (ss.slotstatus != FOUND) {
 			int size = fs2h16(ep->e2d_reclen);
 
 			if (ep->e2d_ino != 0)
 				size -= EXT2FS_DIRSIZ(ep->e2d_namlen);
 			if (size > 0) {
-				if (size >= slotneeded) {
-					slotstatus = FOUND;
-					slotoffset = dp->i_offset;
-					slotsize = fs2h16(ep->e2d_reclen);
-				} else if (slotstatus == NONE) {
-					slotfreespace += size;
-					if (slotoffset == -1)
-						slotoffset = dp->i_offset;
-					if (slotfreespace >= slotneeded) {
-						slotstatus = COMPACT;
-						slotsize = dp->i_offset +
-							  fs2h16(ep->e2d_reclen) - slotoffset;
+				if (size >= ss.slotneeded) {
+					ss.slotstatus = FOUND;
+					ss.slotoffset = dp->i_offset;
+					ss.slotsize = fs2h16(ep->e2d_reclen);
+				} else if (ss.slotstatus == NONE) {
+					ss.slotfreespace += size;
+					if (ss.slotoffset == -1)
+						ss.slotoffset = dp->i_offset;
+					if (ss.slotfreespace >= ss.slotneeded) {
+						ss.slotstatus = COMPACT;
+						ss.slotsize = dp->i_offset +
+							  fs2h16(ep->e2d_reclen) - ss.slotoffset;
 					}
 				}
 			}
@@ -451,7 +447,7 @@ searchloop:
 		 * is pointless, so don't proceed any further.
 		 */
 		if (vdp->v_mount->mnt_flag & MNT_RDONLY)
-					return (EROFS);
+			return (EROFS);
 		/*
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.
@@ -467,15 +463,15 @@ searchloop:
 		 * can be put in the range from dp->i_offset to
 		 * dp->i_offset + dp->i_count.
 		 */
-		if (slotstatus == NONE) {
+		if (ss.slotstatus == NONE) {
 			dp->i_offset = roundup(ext2fs_size(dp), dirblksize);
 			dp->i_count = 0;
 			enduseful = dp->i_offset;
 		} else {
-			dp->i_offset = slotoffset;
-			dp->i_count = slotsize;
-			if (enduseful < slotoffset + slotsize)
-				enduseful = slotoffset + slotsize;
+			dp->i_offset = ss.slotoffset;
+			dp->i_count = ss.slotsize;
+			if (enduseful < ss.slotoffset + ss.slotsize)
+				enduseful = ss.slotoffset + ss.slotsize;
 		}
 		dp->i_endoff = roundup(enduseful, dirblksize);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -588,8 +584,7 @@ found:
 	 * Must get inode of directory entry to verify it's a
 	 * regular file, or empty directory.
 	 */
-	if (nameiop == RENAME && wantparent &&
-		(flags & ISLASTCN)) {
+	if (nameiop == RENAME && wantparent && (flags & ISLASTCN)) {
 		if ((error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc)) != 0)
 			return (error);
 		/*
