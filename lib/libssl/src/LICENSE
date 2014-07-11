@@ -1,4 +1,11 @@
 
+  LibReSSL files are retained under the copyright of the authors. New
+  additions are ISC licensed as per OpenBSD's normal licensing policy,
+  or are placed in the public domain. 
+
+  The OpenSSL code is distributed under the terms of the original OpenSSL
+  license which follows:
+
   LICENSE ISSUES
   ==============
 
