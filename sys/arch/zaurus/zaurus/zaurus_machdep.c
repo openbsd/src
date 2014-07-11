@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.47 2014/07/10 21:46:03 mpi Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.48 2014/07/11 10:10:44 uebayasi Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -130,6 +130,7 @@
 #include <sys/device.h>
 #include <dev/cons.h>
 #include <dev/ic/smc91cxxreg.h>
+#include <sys/socket.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -137,6 +138,8 @@
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
+
+#include <net/if.h>
 
 #include <machine/bootconfig.h>
 #include <machine/bus.h>
@@ -310,6 +313,8 @@ boot(int howto)
 	 */
 	if (!(howto & RB_NOSYNC))
 		bootsync(howto);
+
+	if_downall();
 
 	uvm_shutdown();
 	splhigh();		/* Disable interrupts. */
