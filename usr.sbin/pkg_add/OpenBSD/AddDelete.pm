@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.65 2014/07/07 16:55:16 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.66 2014/07/11 12:50:15 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -75,7 +75,8 @@ sub framework
 		}
 		$state->say("Extracted #1 from #2", 
 		    $state->{stats}{donesize},
-		    $state->{stats}{totsize}) if defined $state->{stats};
+		    $state->{stats}{totsize}) 
+			if defined $state->{stats} and $state->verbose;
 		# show any error, and show why we died...
 		rethrow $dielater;
 	};
