@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.360 2014/07/11 21:20:10 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.361 2014/07/11 21:30:21 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -42,7 +42,7 @@ BIN1=	changelist csh.cshrc csh.login csh.logout daily \
 
 EXAMPLES=bgpd.conf chio.conf dhcpd.conf dvmrpd.conf hostapd.conf \
 	ifstated.conf iked.conf inetd.conf ipsec.conf ldapd.conf ldpd.conf \
-	mrouted.conf nsd.conf ospf6d.conf ospfd.conf rbootd.conf \
+	mrouted.conf ospf6d.conf ospfd.conf rbootd.conf \
 	relayd.conf ripd.conf sasyncd.conf sensorsd.conf snmpd.conf \
 	ypldap.conf
 
@@ -115,6 +115,7 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
 	${INSTALL} -c -o root -g wheel -m 600 pf.conf ${DESTDIR}/etc
+	${INSTALL} -c -o root -g _nsd -m 640 nsd.conf ${DESTDIR}/var/nsd/etc
 	${INSTALL} -c -o root -g wheel -m 644 unbound.conf ${DESTDIR}/var/unbound/etc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
