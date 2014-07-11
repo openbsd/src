@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.286 2014/04/20 00:08:26 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.287 2014/07/11 21:58:09 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -251,17 +251,6 @@ onewire* at uow?
 # USB Video
 uvideo* at uhub?
 video*  at uvideo?
-
-# Bluetooth controllers
-#ubt*	at uhub? disable	# USB Bluetooth
-#bthub*	at ubt?
-#bthidev* at bthub?		# Bluetooth HID support
-#btkbd*	at bthidev?
-#btms*	at bthidev?
-#wskbd*	at btkbd? mux 1
-#wsmouse* at btms? mux 0
-#btsco*	at bthub?		# Bluetooth audio support
-#audio*	at btsco?
 
 # CardBus bus support
 cardbus* at cardslot?

@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.52 2014/04/07 22:20:43 andre Exp $ 
+# $OpenBSD: GENERIC,v 1.53 2014/07/11 21:58:09 tedu Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -162,17 +162,6 @@ ugold*	at uhidev?		# gold TEMPer sensor
 utwitch* at uhidev?		# YUREX BBU sensor
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
-
-# Bluetooth controllers
-#ubt*	at uhub? disable	# USB Bluetooth
-#bthub*	at ubt?
-#bthidev* at bthub?		# Bluetooth HID support
-#btkbd*	at bthidev?
-#btms*	at bthidev?
-#wskbd*	at btkbd? mux 1
-#wsmouse* at btms? mux 0
-#btsco*	at bthub?		# Bluetooth audio support
-#audio*	at btsco?
 
 amphy*		at mii?		# AMD 79C873 PHYs
 dcphy*		at mii?		# Digital Clone PHYs
