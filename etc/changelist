@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.88 2014/07/11 16:59:03 deraadt Exp $
+#	$OpenBSD: changelist,v 1.89 2014/07/11 17:10:30 henning Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -10,7 +10,7 @@
 /etc/Distfile
 /etc/adduser.conf
 /etc/adduser.message
-/etc/bgpd.conf
++/etc/bgpd.conf
 /etc/boot.conf
 /etc/bootparams
 /etc/changelist

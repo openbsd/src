@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.358 2014/07/11 16:59:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.359 2014/07/11 17:10:30 henning Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -40,7 +40,7 @@ BIN1=	changelist csh.cshrc csh.login csh.logout daily dhcpd.conf \
 	etc.${MACHINE}/disktab dhclient.conf mailer.conf ntpd.conf \
 	moduli pf.os sensorsd.conf mixerctl.conf
 
-EXAMPLES=chio.conf dvmrpd.conf hostapd.conf ifstated.conf ldpd.conf \
+EXAMPLES=bgpd.conf chio.conf dvmrpd.conf hostapd.conf ifstated.conf ldpd.conf \
 	ospf6d.conf ospfd.conf
 
 .if ${MACHINE} != "aviion" 
@@ -111,7 +111,6 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o root -g crontab -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
-	${INSTALL} -c -o root -g wheel -m 600 bgpd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 ripd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 pf.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 relayd.conf ${DESTDIR}/etc
