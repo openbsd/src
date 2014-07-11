@@ -250,7 +250,6 @@
 ./usr/bin/fmt
 ./usr/bin/fold
 ./usr/bin/from
-./usr/bin/fsplit
 ./usr/bin/fstat
 ./usr/bin/ftp
 ./usr/bin/fuser

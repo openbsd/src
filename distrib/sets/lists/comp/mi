@@ -10,6 +10,7 @@
 ./usr/bin/g++
 ./usr/bin/gcc
 ./usr/bin/gcov
+./usr/include/ddb/db_dwarf.h
 ./usr/bin/gdb
 ./usr/bin/gprof
 ./usr/bin/ld
