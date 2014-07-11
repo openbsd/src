@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.49 2014/07/08 17:19:26 deraadt Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.50 2014/07/11 12:08:21 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -62,40 +62,37 @@ static int ext2fs_indirtrunc(struct inode *, int32_t, int32_t,
 u_int64_t
 ext2fs_size(struct inode *ip)
 {
-        u_int64_t size = ip->i_e2fs_size;
+	u_int64_t size = ip->i_e2fs_size;
 
-        if ((ip->i_e2fs_mode & IFMT) == IFREG)
-                size |= (u_int64_t)ip->i_e2fs_dacl << 32;
+	if ((ip->i_e2fs_mode & IFMT) == IFREG)
+		size |= (u_int64_t)ip->i_e2fs_size_hi << 32;
 
-        return (size);
+	return (size);
 }
 
 int
 ext2fs_setsize(struct inode *ip, u_int64_t size)
 {
-        if ((ip->i_e2fs_mode & IFMT) == IFREG ||
-            ip->i_e2fs_mode == 0) {
-                ip->i_e2fs_dacl = size >> 32;
-                if (size >= 0x80000000U) {
-                        struct m_ext2fs *fs = ip->i_e2fs;
+	struct m_ext2fs *fs = ip->i_e2fs;
 
-                        if (fs->e2fs.e2fs_rev <= E2FS_REV0) {
-                                /* Linux automagically upgrades to REV1 here! */
-                                return (EFBIG);
-                        }
-                        if (!(fs->e2fs.e2fs_features_rocompat
-                            & EXT2F_ROCOMPAT_LARGEFILE)) {
-                                fs->e2fs.e2fs_features_rocompat |=
-                                    EXT2F_ROCOMPAT_LARGEFILE;
-                                fs->e2fs_fmod = 1;
-                        }
-                }
-        } else if (size >= 0x80000000U)
-                return (EFBIG);
+	if (size < /* XXX MAXFILESIZE */ INT_MAX) {
+		/* If HUGE_FILEs are off, e2fs_maxfilesize will protect us. */
+		if ((ip->i_e2fs_mode & IFMT) == IFREG || ip->i_e2fs_mode == 0)
+			ip->i_e2fs_size_hi = size >> 32;
 
-        ip->i_e2fs_size = size;
+		ip->i_e2fs_size = size;
+		return (0);
+	}
 
-        return (0);
+	/* Linux automagically upgrades to REV1 here! */
+	if (fs->e2fs.e2fs_rev <= E2FS_REV0)
+		return (EFBIG);
+
+	if ((fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGEFILE) == 0) {
+		fs->e2fs.e2fs_features_rocompat |= EXT2F_ROCOMPAT_LARGEFILE;
+		fs->e2fs_fmod = 1;
+	}
+	return (EFBIG);
 }
 
 
