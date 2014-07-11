@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.7 2014/04/22 00:22:41 guenther Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.8 2014/07/11 15:16:22 pelikan Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -1115,9 +1115,9 @@ init_resizeino(const struct timeval *tv)
 		    "required to enable resize feature for this filesystem\n",
 		    __func__);
 	}
-	/* upper 32bit is stored into e2di_dacl on REV1 feature */
+	/* upper 32bit is stored into e2di_size_hi on REV1 feature */
 	node.e2di_size = isize & UINT32_MAX;
-	node.e2di_dacl = isize >> 32;
+	node.e2di_size_hi = isize >> 32;
 
 #define SINGLE	0	/* index of single indirect block */
 #define DOUBLE	1	/* index of double indirect block */
