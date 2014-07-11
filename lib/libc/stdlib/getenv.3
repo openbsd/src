@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getenv.3,v 1.20 2014/04/21 08:46:59 guenther Exp $
+.\"	$OpenBSD: getenv.3,v 1.21 2014/07/11 09:24:03 tedu Exp $
 .\"
-.Dd $Mdocdate: April 21 2014 $
+.Dd $Mdocdate: July 11 2014 $
 .Dt GETENV 3
 .Os
 .Sh NAME
@@ -145,6 +145,7 @@ function failed because it was unable to allocate memory for the environment.
 .Xr csh 1 ,
 .Xr sh 1 ,
 .Xr execve 2 ,
+.Xr issetugid 2 ,
 .Xr environ 7
 .Sh STANDARDS
 The
@@ -175,3 +176,10 @@ The
 .Fn putenv
 function appeared in
 .Bx 4.3 Reno .
+.Sh CAVEATS
+Library code must be careful about using
+.Fn getenv
+to read untrusted environment variables in setuid programs.
+The
+.Fn issetugid
+function is provided for this purpose.
