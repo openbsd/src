@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.24 2014/07/11 09:44:42 yasuoka Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.25 2014/07/11 13:53:47 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -46,12 +46,12 @@
 .Nm dhcpd
 .Bk -words
 .Op Fl dfn
-.Op Fl u Ns Op Ar bind_address
 .Op Fl A Ar abandoned_ip_table
 .Op Fl C Ar changed_ip_table
 .Op Fl c Ar config-file
 .Op Fl L Ar leased_ip_table
 .Op Fl l Ar lease-file
+.Op Fl u Ns Op Ar bind_address
 .Op Fl Y Ar synctarget
 .Op Fl y Ar synclisten
 .Op Ar if0 Op Ar ... ifN
@@ -150,9 +150,10 @@ This should be done on systems where
 .Nm
 is unable to identify non-broadcast interfaces,
 but should not be required on other systems.
-If any interface name and
+If no interface names are specified on the command line,
+and the
 .Fl u
-is not specified on the command line,
+option is not given,
 .Nm
 will identify all network interfaces which are up, eliminating non-broadcast
 interfaces if possible, and listen for DHCP broadcasts on each interface.
@@ -243,23 +244,26 @@ for testing lease files in a non-production environment.
 Only test configuration, do not run
 .Nm .
 .It Fl u Ns Op Ar bind_address
-Use an UDP socket instead of BPF for receiving and sending packets.
-Only DHCPINFORM messages can be handled on this socket, other messages are
-discarded.
+Use a UDP socket instead of BPF for receiving and sending packets.
+Only
+.Dv DHCPINFORM
+messages can be handled on this socket;
+other messages are discarded.
 With this option,
 .Nm
-can answer DHCPINFORM from the clients on non ethernet interfaces
-(eg.
+can answer
+.Dv DHCPINFORM
+from clients on non Ethernet interfaces
+such as
 .Xr tun 4
 or
-.Xr pppx 4
-.Ns ) .
+.Xr pppx 4 .
 If
 .Ar bind_address
 is specified,
 .Nm
-will bind that address, otherwise
-the limited broadcast address (255.255.255.255) is used as default.
+will bind to that address; otherwise
+the limited broadcast address (255.255.255.255) is used as the default.
 .It Fl Y Ar synctarget
 Add target
 .Ar synctarget
