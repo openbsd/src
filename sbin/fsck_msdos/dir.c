@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.25 2014/07/10 18:59:49 tobias Exp $	*/
+/*	$OpenBSD: dir.c,v 1.26 2014/07/11 14:35:19 tobias Exp $	*/
 /*	$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $	*/
 
 /*
@@ -213,7 +213,6 @@ int
 resetDosDirSection(struct bootblock *boot, struct fatEntry *fat)
 {
 	int b1, b2;
-	cl_t cl;
 	int ret = FSOK;
 
 	b1 = boot->RootDirEnts * 32;
@@ -232,24 +231,9 @@ resetDosDirSection(struct bootblock *boot, struct fatEntry *fat)
 			       boot->RootCl);
 			goto fail;
 		}
-		cl = fat[boot->RootCl].next;
-		if (cl < CLUST_FIRST
-		    || (cl >= CLUST_RSRVD && cl< CLUST_EOFS)
-		    || fat[boot->RootCl].head != boot->RootCl) {
-			if (cl == CLUST_FREE)
-				pwarn("Root directory starts with free cluster\n");
-			else if (cl >= CLUST_RSRVD)
-				pwarn("Root directory starts with cluster marked %s\n",
-				      rsrvdcltype(cl));
-			else {
-				pfatal("Root directory doesn't start a cluster chain\n");
-				goto fail;
-			}
-			if (ask(1, "Fix")) {
-				fat[boot->RootCl].next = CLUST_FREE;
-				ret = FSFATMOD;
-			} else
-				 ret = FSFATAL;
+		if (fat[boot->RootCl].head != boot->RootCl) {
+			pfatal("Root directory doesn't start a cluster chain\n");
+			goto fail;
 		}
 
 		fat[boot->RootCl].flags |= FAT_USED;
