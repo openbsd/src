@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.25 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.26 2014/07/11 14:36:44 uebayasi Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -59,8 +59,18 @@ sys_reboot(struct proc *p, void *v, register_t *retval)
 	sched_stop_secondary_cpus();
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
 #endif
-	boot(SCARG(uap, opt));
+	reboot(SCARG(uap, opt));
+	/* NOTREACHED */
 	return (0);
+}
+
+__dead void
+reboot(int howto)
+{
+	KASSERT((howto & RB_NOSYNC) || curproc != NULL);
+
+	boot(howto);
+	/* NOTREACHED */
 }
 
 #if !defined(NO_PROPOLICE)
