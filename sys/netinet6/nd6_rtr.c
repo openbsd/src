@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.80 2014/03/27 10:39:23 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.81 2014/07/11 15:03:17 blambert Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -942,6 +942,8 @@ nd6_prelist_add(struct nd_prefix *pr, struct nd_defrouter *dr,
 		new->ndpr_prefix.sin6_addr.s6_addr32[i] &=
 		    new->ndpr_mask.s6_addr32[i];
 
+	task_set(&new->ndpr_task, nd6_addr_add, new, NULL);
+
 	s = splsoftnet();
 	/* link ndpr_entry to nd_prefix list */
 	LIST_INSERT_HEAD(&nd_prefix, new, ndpr_entry);
@@ -1277,9 +1279,11 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 		 * 4941 temporary address. And the valid prefix lifetime is
 		 * non-zero. And there is no static address in the same prefix.
 		 * Create new addresses in process context.
+		 * Increment prefix refcount to ensure the prefix is not
+		 * removed before the task is done.
 		 */
 		pr->ndpr_refcnt++;
-		if (workq_add_task(NULL, 0, nd6_addr_add, pr, NULL))
+		if (task_add(systq, &pr->ndpr_task) == 0)
 			pr->ndpr_refcnt--;
 	}
 
@@ -1293,51 +1297,12 @@ nd6_addr_add(void *prptr, void *arg2)
 {
 	struct nd_prefix *pr = (struct nd_prefix *)prptr;
 	struct in6_ifaddr *ia6 = NULL;
-	struct ifaddr *ifa;
-	int ifa_plen, autoconf, privacy, s;
+	int autoconf, privacy, s;
 
 	s = splsoftnet();
 
 	autoconf = 1;
 	privacy = (pr->ndpr_ifp->if_xflags & IFXF_INET6_NOPRIVACY) == 0;
-
-	/* Because prelist_update() runs in interrupt context it may run
-	 * again before this work queue task is run, causing multiple work
-	 * queue tasks to be scheduled all of which add addresses for the
-	 * same prefix. So check again if a non-deprecated address has already
-	 * been autoconfigured for this prefix. */
-	TAILQ_FOREACH(ifa, &pr->ndpr_ifp->if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-
-		ia6 = ifatoia6(ifa);
-
-		/*
-		 * Spec is not clear here, but I believe we should concentrate
-		 * on unicast (i.e. not anycast) addresses.
-		 * XXX: other ia6_flags? detached or duplicated?
-		 */
-		if ((ia6->ia6_flags & IN6_IFF_ANYCAST) != 0)
-			continue;
-
-		if ((ia6->ia6_flags & IN6_IFF_AUTOCONF) == 0)
-			continue;
-
-		if ((ia6->ia6_flags & IN6_IFF_DEPRECATED) != 0)
-			continue;
-
-		ifa_plen = in6_mask2len(&ia6->ia_prefixmask.sin6_addr, NULL);
-		if (ifa_plen == pr->ndpr_plen &&
-		    in6_are_prefix_equal(&ia6->ia_addr.sin6_addr,
-		    &pr->ndpr_prefix.sin6_addr, ifa_plen)) {
-			if ((ia6->ia6_flags & IN6_IFF_PRIVACY) == 0)
-				autoconf = 0;
-			else
-				privacy = 0;
-			if (!autoconf && !privacy)
-				break;
-		}
-	}
 
 	if (autoconf && (ia6 = in6_ifadd(pr, 0)) != NULL) {
 		ia6->ia6_ndpr = pr;
@@ -1359,6 +1324,7 @@ nd6_addr_add(void *prptr, void *arg2)
 	if (autoconf || privacy)
 		pfxlist_onlink_check();
 
+	/* Decrement prefix refcount now that the task is done. */
 	pr->ndpr_refcnt--;
 
 	splx(s);
