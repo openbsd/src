@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.17 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: x_crl.c,v 1.18 2014/07/11 13:54:41 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -238,8 +238,8 @@ crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 			crl->flags |= EXFLAG_INVALID;
 
 		/* See if we have any unhandled critical CRL extensions and
-		 * indicate this in a flag. We only currently handle IDP so
-		 * anything else critical sets the flag.
+		 * indicate this in a flag. We only currently handle IDP,
+		 * AKID and deltas, so anything else critical sets the flag.
 		 *
 		 * This code accesses the X509_CRL structure directly:
 		 * applications shouldn't do this.
@@ -254,10 +254,11 @@ crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 			if (nid == NID_freshest_crl)
 				crl->flags |= EXFLAG_FRESHEST;
 			if (ext->critical > 0) {
-				/* We handle IDP and deltas */
-				if ((nid == NID_issuing_distribution_point) ||
-				    (nid == NID_delta_crl))
-					break;;
+				/* We handle IDP, AKID and deltas */
+				if (nid == NID_issuing_distribution_point ||
+				    nid == NID_authority_key_identifier ||
+				    nid == NID_delta_crl)
+					break;
 				crl->flags |= EXFLAG_CRITICAL;
 				break;
 			}
