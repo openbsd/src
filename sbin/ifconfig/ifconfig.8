@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.243 2014/07/02 05:54:32 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.244 2014/07/11 16:41:51 henning Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: July 2 2014 $
+.Dd $Mdocdate: July 11 2014 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -151,6 +151,13 @@ This is currently implemented for mapping between
 DARPA Internet addresses and Ethernet addresses.
 .It Fl arp
 Disable the use of ARP.
+.It Cm autoconf
+Enable autoconfiguration.
+Valid for
+.Xr inet6
+only, controls wether router advertisements will be accepted on this interface.
+.It Fl autoconf
+Disable autoconfiguration.
 .It Cm broadcast Ar addr
 (inet only)
 Specify the address to use to represent broadcasts to the

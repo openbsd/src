@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.285 2014/07/10 14:32:28 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.286 2014/07/11 16:41:51 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -148,6 +148,7 @@ void	setiflladdr(const char *, int);
 void	setifdstaddr(const char *, int);
 void	setifflags(const char *, int);
 void	setifxflags(const char *, int);
+void	removeaf(const char *, int);
 void	setifbroadaddr(const char *, int);
 void	setifmtu(const char *, int);
 void	setifnwid(const char *, int);
@@ -203,6 +204,7 @@ void	setifgroup(const char *, int);
 void	unsetifgroup(const char *, int);
 void	setgroupattribs(char *, int, char *[]);
 int	printgroup(char *, int);
+void	setautoconf(const char *, int);
 
 #ifndef SMALL
 void	carp_status(void);
@@ -333,6 +335,8 @@ const struct	cmd {
 	{ "-vlandev",	1,		0,		unsetvlandev },
 	{ "group",	NEXTARG,	0,		setifgroup },
 	{ "-group",	NEXTARG,	0,		unsetifgroup },
+	{ "autoconf",	1,		0,		setautoconf },
+	{ "-autoconf",	-1,		0,		setautoconf },
 #ifdef INET6
 	{ "anycast",	IN6_IFF_ANYCAST,	0,	setia6flags },
 	{ "-anycast",	-IN6_IFF_ANYCAST,	0,	setia6flags },
@@ -411,7 +415,7 @@ const struct	cmd {
 	{ "flowdst",	NEXTARG,	0,		setpflow_receiver },
 	{ "-flowdst", 1,		0,		unsetpflow_receiver },
 	{ "pflowproto", NEXTARG,	0,		setpflowproto },
-	{ "-inet6",	IFXF_NOINET6,	0,		setifxflags },
+	{ "-inet6",	AF_INET6,	0,		removeaf },
 	{ "keepalive",	NEXTARG2,	0,		NULL, setkeepalive },
 	{ "-keepalive",	1,		0,		unsetkeepalive },
 	{ "add",	NEXTARG,	0,		bridge_add },
@@ -1253,6 +1257,21 @@ setifxflags(const char *vname, int value)
 		warn("SIOCSIFXFLAGS");
 }
 
+void
+removeaf(const char *vname, int value)
+{
+	switch (value) {
+#ifdef INET6
+	case AF_INET6:
+		setifxflags(vname, IFXF_NOINET6);
+		setifxflags(vname, -IFXF_AUTOCONF6);
+		break;
+#endif
+	default:
+		errx(1, "removeaf not implemented for this AF");
+	}
+}
+
 #ifdef INET6
 void
 setia6flags(const char *vname, int value)
@@ -1336,6 +1355,20 @@ setia6eui64(const char *cmd, int val)
 	freeifaddrs(ifap);
 }
 #endif /* INET6 */
+
+void
+setautoconf(const char *cmd, int val)
+{
+	switch (afp->af_af) {
+#ifdef INET6
+	case AF_INET6:
+		setifxflags("inet6", val * IFXF_AUTOCONF6);
+		break;
+#endif
+	default:
+		errx(1, "autoconf not allowed for this AF");
+	}
+}
 
 #ifndef SMALL
 /* ARGSUSED */
