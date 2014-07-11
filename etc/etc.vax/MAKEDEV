@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.51 2014/01/05 01:16:52 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.73 2013/11/21 11:04:44 kettenis Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.52 2014/03/19 15:28:16 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.74 2014/07/11 21:58:32 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #

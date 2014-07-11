@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.socppc/MAKEDEV.md,v 1.22 2014/01/05 01:16:52 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.73 2013/11/21 11:04:44 kettenis Exp 
+#	OpenBSD: etc.socppc/MAKEDEV.md,v 1.23 2014/07/11 22:04:09 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.74 2014/07/11 21:58:32 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -61,7 +61,6 @@
 #	usb*	Bus control devices used by usbd for attach/detach
 # Special purpose devices:
 #	bpf*	Berkeley Packet Filter
-#	bthub*	Bluetooth Hubs
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
@@ -276,10 +275,6 @@ diskmap)
 	M diskmap c 82 0 640 operator
 	;;
 
-bthub*)
-	M bthub$U c 81 $U
-	;;
-
 bpf*)
 	M bpf$U c 22 $U 600
 	;;
@@ -429,13 +424,13 @@ ramdisk)
 	;;
 
 all)
-	R bthub0 bthub1 bthub2 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
-	R sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
-	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap
-	R vscsi0 ch0 fuse pppx hotplug ptm local wscons pci0 pci1 pci2
-	R pci3 uall video0 video1 random lkm tty00 tty01 tty02 tty03
-	R tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b pf systrace
-	R wd0 wd1 wd2 wd3 std st0 st1 fd
+	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
+	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 fuse pppx
+	R hotplug ptm local wscons pci0 pci1 pci2 pci3 uall video0
+	R video1 random lkm tty00 tty01 tty02 tty03 tty04 tty05 tty06
+	R tty07 tty08 tty09 tty0a tty0b pf systrace wd0 wd1 wd2 wd3
+	R std st0 st1 fd
 	;;
 
 wd*|sd*)

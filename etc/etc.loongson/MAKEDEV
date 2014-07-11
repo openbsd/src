@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.loongson/MAKEDEV.md,v 1.17 2014/04/03 20:32:26 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.73 2013/11/21 11:04:44 kettenis Exp 
+#	OpenBSD: etc.loongson/MAKEDEV.md,v 1.18 2014/07/11 22:04:09 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.74 2014/07/11 21:58:32 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -64,7 +64,6 @@
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
-#	bthub*	Bluetooth Hubs
 #	crypto	Hardware crypto access driver
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
@@ -283,10 +282,6 @@ crypto)
 	M crypto c 47 0
 	;;
 
-bthub*)
-	M bthub$U c 68 $U
-	;;
-
 bpf*)
 	M bpf$U c 12 $U 600
 	;;
@@ -456,14 +451,13 @@ ramdisk)
 	;;
 
 all)
-	R bthub0 bthub1 bthub2 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
-	R sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio
-	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1
-	R pty2 diskmap vscsi0 audio0 audio1 audio2 fuse pppx hotplug
-	R ptm local wscons pci0 pci1 pci2 pci3 uall video0 video1 uk0
-	R random tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08
-	R tty09 tty0a tty0b apm crypto pf systrace wd0 wd1 wd2 wd3 std
-	R st0 st1 fd
+	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
+	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 diskmap vscsi0
+	R audio0 audio1 audio2 fuse pppx hotplug ptm local wscons pci0
+	R pci1 pci2 pci3 uall video0 video1 uk0 random tty00 tty01
+	R tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b
+	R apm crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)
