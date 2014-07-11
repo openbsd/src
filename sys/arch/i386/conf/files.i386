@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.216 2013/12/19 21:30:02 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.217 2014/07/11 21:54:37 tedu Exp $
 #
 # new style config file for i386 architecture
 #
@@ -388,11 +388,6 @@ include "dev/onewire/files.onewire"
 # Machine-independent SD/MMC drivers
 #
 include "dev/sdmmc/files.sdmmc"
-
-#
-# Machine-independent Bluetooth drivers
-#
-include "dev/bluetooth/files.bluetooth"
 
 include "dev/acpi/files.acpi"
 file	arch/i386/i386/acpi_machdep.c		acpi

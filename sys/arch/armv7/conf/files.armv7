@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.9 2013/11/06 19:03:07 syl Exp $
+#	$OpenBSD: files.armv7,v 1.10 2014/07/11 21:54:37 tedu Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -48,9 +48,6 @@ include "dev/wsfont/files.wsfont"
 
 # Include USB stuff
 include "dev/usb/files.usb"
-
-# Bluetooth
-include "dev/bluetooth/files.bluetooth"
 
 # Machine-independent GPIO drivers
 include "dev/gpio/files.gpio"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.294 2014/07/08 07:10:12 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.295 2014/07/11 21:54:38 tedu Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -61,7 +61,6 @@
  *	@(#)if.c	8.3 (Berkeley) 1/4/94
  */
 
-#include "bluetooth.h"
 #include "bpfilter.h"
 #include "bridge.h"
 #include "carp.h"

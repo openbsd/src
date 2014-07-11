@@ -1,4 +1,4 @@
-#	$OpenBSD: files.landisk,v 1.9 2013/11/04 14:07:16 deraadt Exp $
+#	$OpenBSD: files.landisk,v 1.10 2014/07/11 21:54:37 tedu Exp $
 #	$NetBSD: files.landisk,v 1.2 2006/09/07 01:55:02 uwe Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
@@ -64,11 +64,6 @@ include "dev/rasops/files.rasops"
 # USB drivers
 #
 include "dev/usb/files.usb"
-
-#
-# Bluetooth
-#
-include "dev/bluetooth/files.bluetooth"
 
 #
 # SH bus

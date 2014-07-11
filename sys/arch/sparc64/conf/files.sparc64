@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.144 2013/11/04 14:07:16 deraadt Exp $
+#	$OpenBSD: files.sparc64,v 1.145 2014/07/11 21:54:38 tedu Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -368,11 +368,6 @@ include "dev/sdmmc/files.sdmmc"
 # Machine-independent USB drivers
 #
 include	"dev/usb/files.usb"
-
-#
-# Bluetooth
-#
-include "dev/bluetooth/files.bluetooth"
 
 #
 # Cardbus

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.91 2013/11/04 14:07:16 deraadt Exp $
+#	$OpenBSD: files.hppa,v 1.92 2014/07/11 21:54:37 tedu Exp $
 #
 # hppa-specific configuration info
 
@@ -71,11 +71,6 @@ include	"dev/pcmcia/files.pcmcia"
 # Machine-independent USB drivers
 #
 include "dev/usb/files.usb"
-
-#
-# Bluetooth
-#
-include "dev/bluetooth/files.bluetooth"
 
 #
 # HIL Human Interface Loop devices

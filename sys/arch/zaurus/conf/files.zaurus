@@ -1,4 +1,4 @@
-#	$OpenBSD: files.zaurus,v 1.28 2013/11/04 14:07:16 deraadt Exp $
+#	$OpenBSD: files.zaurus,v 1.29 2014/07/11 21:54:38 tedu Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -100,8 +100,6 @@ include "dev/usb/files.usb"
 
 attach pxaudc at pxaip with pxaudc_zaurus
 file arch/zaurus/dev/zaurus_udc.c		pxaudc_zaurus
-# Bluetooth
-include "dev/bluetooth/files.bluetooth"
 
 # Media Independent Interface (mii)
 include "dev/mii/files.mii"

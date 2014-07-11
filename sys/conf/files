@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.572 2014/04/19 12:27:06 henning Exp $
+#	$OpenBSD: files,v 1.573 2014/07/11 21:54:38 tedu Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -67,7 +67,6 @@ define	systrace
 define	ether
 define	sppp
 define	wlan
-define	bluetooth
 
 # "Chipset" attributes.  These are the machine-independent portions
 # of device drivers.
@@ -884,25 +883,6 @@ file crypto/hmac.c			wlan | (softraid & crypto)
 file crypto/gmac.c			(inet & ipsec) | crypto
 file crypto/key_wrap.c			wlan
 file crypto/idgen.c			inet6 | nfsclient | nfsserver
-file netbt/bt_input.c			bluetooth		needs-flag
-file netbt/bt_proto.c			bluetooth
-file netbt/hci_event.c			bluetooth
-file netbt/hci_ioctl.c			bluetooth
-file netbt/hci_link.c			bluetooth
-file netbt/hci_misc.c			bluetooth
-file netbt/hci_socket.c			bluetooth
-file netbt/hci_unit.c			bluetooth
-file netbt/l2cap_lower.c		bluetooth
-file netbt/l2cap_misc.c			bluetooth
-file netbt/l2cap_signal.c		bluetooth
-file netbt/l2cap_socket.c		bluetooth
-file netbt/l2cap_upper.c		bluetooth
-file netbt/rfcomm_dlc.c			bluetooth
-file netbt/rfcomm_session.c		bluetooth
-file netbt/rfcomm_socket.c		bluetooth
-file netbt/rfcomm_upper.c		bluetooth
-file netbt/sco_socket.c			bluetooth
-file netbt/sco_upper.c			bluetooth
 file netmpls/mpls_input.c		mpls
 file netmpls/mpls_output.c		mpls
 file netmpls/mpls_proto.c		mpls

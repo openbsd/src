@@ -20,7 +20,6 @@
 
 #include <machine/intr.h>
 
-#include "bluetooth.h"
 #include "ether.h"
 #include "ppp.h"
 #include "bridge.h"
@@ -68,11 +67,6 @@ netintr(void *unused) /* ARGSUSED */
 		if (n & (1 << NETISR_PPPOE))
 			pppoeintr();
 #endif
-#if NBLUETOOTH > 0
-		if (n & (1 << NETISR_BT))
-			btintr();
-#endif
-
 		t |= n;
 	}
 
