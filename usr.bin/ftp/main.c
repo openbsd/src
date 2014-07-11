@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.87 2014/01/23 00:39:15 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.88 2014/07/11 03:31:52 lteo Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -198,9 +198,10 @@ main(volatile int argc, char *argv[])
 #ifndef SMALL
 	cookiefile = getenv("http_cookies");
 #endif /* !SMALL */
+	httpuseragent = NULL;
 
 	while ((ch = getopt(argc, argv,
-		    "46AaCc:dD:Eegik:mno:pP:r:S:s:tvV")) != -1) {
+		    "46AaCc:dD:Eegik:mno:pP:r:S:s:tU:vV")) != -1) {
 		switch (ch) {
 		case '4':
 			family = PF_INET;
@@ -359,6 +360,20 @@ main(volatile int argc, char *argv[])
 
 		case 't':
 			trace = 1;
+			break;
+
+		case 'U':
+#ifndef SMALL
+			if (httpuseragent)
+				errx(1, "User-Agent was already defined");
+			/* Ensure that User-Agent value is in a single line. */
+			if (strcspn(optarg, "\r\n") != strlen(optarg))
+				errx(1, "Invalid User-Agent: %s.", optarg);
+			if (asprintf(&httpuseragent, "User-Agent: %s",
+			    optarg) == -1)
+				errx(1, "Can't allocate memory for HTTP(S) "
+				    "User-Agent");
+#endif /* !SMALL */
 			break;
 
 		case 'v':
@@ -852,7 +867,7 @@ usage(void)
 #ifndef SMALL
 	    "[-S ssl_options] "
 	    "[-s srcaddr]\n"
-	    "           "
+	    "           [-U useragent] "
 #endif /* !SMALL */
 	    "http"
 #ifndef SMALL
