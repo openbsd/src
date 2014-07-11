@@ -1,6 +1,7 @@
 # define OPENSSL_NO_CAMELLIA
 # define OPENSSL_NO_EC_NISTP_64_GCC_128
 # define OPENSSL_NO_CMS
+# define OPENSSL_NO_COMP
 # define OPENSSL_NO_GMP
 # define OPENSSL_NO_GOST
 # define OPENSSL_NO_JPAKE
@@ -31,6 +32,9 @@
 # endif
 # if defined(OPENSSL_NO_CMS) && !defined(NO_CMS)
 #  define NO_CMS
+# endif
+# if defined(OPENSSL_NO_COMP) && !defined(NO_COMP)
+#  define NO_COMP
 # endif
 # if defined(OPENSSL_NO_GMP) && !defined(NO_GMP)
 #  define NO_GMP
