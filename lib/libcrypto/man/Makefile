@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2014/07/11 16:18:13 miod Exp $
+# $OpenBSD: Makefile,v 1.10 2014/07/11 16:34:06 beck Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -217,6 +217,8 @@ MAN=	\
 #	SMIME_write_CMS.3 \
 #	i2d_CMS_bio_stream.3 \
 
+# XXX PLEASE LEAVE THESE AS TWO PER LINE. DO NOT WRAP.
+# XXX SCRIPTS IN PORTABLE DEPEND ON THIS.
 MLINKS+=\
 	ASN1_OBJECT_new.3 ASN1_OBJECT_free.3 \
 	ASN1_STRING_length.3 ASN1_STRING_cmp.3 \
