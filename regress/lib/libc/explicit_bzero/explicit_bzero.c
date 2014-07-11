@@ -1,4 +1,4 @@
-/*	$OpenBSD: explicit_bzero.c,v 1.4 2014/07/09 23:54:00 matthew Exp $	*/
+/*	$OpenBSD: explicit_bzero.c,v 1.5 2014/07/11 00:38:17 matthew Exp $	*/
 /*
  * Copyright (c) 2014 Google Inc.
  *
@@ -25,7 +25,18 @@
 #define ASSERT_NE(a, b) assert((a) != (b))
 #define ASSERT_GE(a, b) assert((a) >= (b))
 
-static char altstack[SIGSTKSZ];
+/* 128 bits of random data. */
+static const char secret[16] = {
+	0xa0, 0x6c, 0x0c, 0x81, 0xba, 0xd8, 0x5b, 0x0c,
+	0xb0, 0xd6, 0xd4, 0xe3, 0xeb, 0x52, 0x5f, 0x96,
+};
+
+enum {
+	SECRETCOUNT = 64,
+	SECRETBYTES = SECRETCOUNT * sizeof(secret)
+};
+
+static char altstack[SIGSTKSZ + SECRETBYTES];
 
 static void
 setup_stack(void)
@@ -85,17 +96,6 @@ call_on_stack(void (*fn)(int))
 	ASSERT_EQ(0, sigprocmask(SIG_SETMASK, &oldsigset, NULL));
 }
 
-/* 128 bits of random data. */
-static const char secret[16] = {
-	0xa0, 0x6c, 0x0c, 0x81, 0xba, 0xd8, 0x5b, 0x0c,
-	0xb0, 0xd6, 0xd4, 0xe3, 0xeb, 0x52, 0x5f, 0x96,
-};
-
-enum {
-	SECRETCOUNT = 16,
-	SECRETBYTES = SECRETCOUNT * sizeof(secret)
-};
-
 static void
 populate_secret(char *buf, size_t len)
 {
@@ -110,23 +110,54 @@ populate_secret(char *buf, size_t len)
 	ASSERT_EQ(0, close(fds[0]));
 }
 
-static void
-test_without_bzero(int signo)
+static int
+count_secrets(const char *buf)
 {
-	char buf[SECRETBYTES];
-	assert_on_stack();
-	populate_secret(buf, sizeof(buf));
-	ASSERT_NE(NULL, memmem(altstack, sizeof(altstack), buf, sizeof(buf)));
+	int res = 0;
+	size_t i;
+	for (i = 0; i < SECRETCOUNT; i++) {
+		if (memcmp(buf + i * sizeof(secret), secret,
+		    sizeof(secret)) == 0)
+			res += 1;
+	}
+	return (res);
 }
 
-static void
-test_with_bzero(int signo)
+static char *
+test_without_bzero()
 {
 	char buf[SECRETBYTES];
 	assert_on_stack();
 	populate_secret(buf, sizeof(buf));
-	ASSERT_NE(NULL, memmem(altstack, sizeof(altstack), buf, sizeof(buf)));
+	char *res = memmem(altstack, sizeof(altstack), buf, sizeof(buf));
+	ASSERT_NE(NULL, res);
+	return (res);
+}
+
+static char *
+test_with_bzero()
+{
+	char buf[SECRETBYTES];
+	assert_on_stack();
+	populate_secret(buf, sizeof(buf));
+	char *res = memmem(altstack, sizeof(altstack), buf, sizeof(buf));
+	ASSERT_NE(NULL, res);
 	explicit_bzero(buf, sizeof(buf));
+	return (res);
+}
+
+static void 
+do_test_without_bzero(int signo)
+{
+	char *buf = test_without_bzero();
+	ASSERT_GE(count_secrets(buf), 1);
+}
+
+static void 
+do_test_with_bzero(int signo)
+{
+	char *buf = test_without_bzero();
+	ASSERT_GE(count_secrets(buf), 0);
 }
 
 int
@@ -135,22 +166,32 @@ main()
 	setup_stack();
 
 	/*
+	 * Solaris and OS X clobber the signal stack after returning to the
+	 * normal stack, so we need to inspect altstack while we're still
+	 * running on it.  Unfortunately, this means we risk clobbering the
+	 * buffer ourselves.
+	 *
+	 * To minimize this risk, test_with{,out}_bzero() are responsible for
+	 * locating the offset of their buf variable within altstack, and
+	 * and returning that address.  Then we can simply memcmp() repeatedly
+	 * to count how many instances of secret we found.
+	 */
+
+	/*
 	 * First, test that if we *don't* call explicit_bzero, that we
-	 * *are* able to find the secret data on the stack.  This
-	 * sanity checks that call_on_stack() and populare_secret()
-	 * work as intended.
+	 * *are* able to find at least one instance of the secret data still
+	 * on the stack.  This sanity checks that call_on_stack() and
+	 * populate_secret() work as intended.
 	 */
 	memset(altstack, 0, sizeof(altstack));
-	call_on_stack(test_without_bzero);
-	ASSERT_NE(NULL, memmem(altstack, sizeof(altstack), secret, sizeof(secret)));
+	call_on_stack(do_test_without_bzero);
 
 	/*
 	 * Now test with a call to explicit_bzero() and check that we
-	 * *don't* find the secret data.
+	 * *don't* find any instances of the secret data.
 	 */
 	memset(altstack, 0, sizeof(altstack));
-	call_on_stack(test_with_bzero);
-	ASSERT_EQ(NULL, memmem(altstack, sizeof(altstack), secret, sizeof(secret)));
+	call_on_stack(do_test_with_bzero);
 
 	return (0);
 }
