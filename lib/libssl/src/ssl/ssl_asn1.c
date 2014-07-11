@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.28 2014/07/11 09:24:44 beck Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.29 2014/07/11 12:07:30 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -287,6 +287,7 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	if ((ssl_version >> 8) >= SSL3_VERSION_MAJOR) {
 		if (os.length != 2) {
 			c.error = SSL_R_CIPHER_CODE_WRONG_LENGTH;
+			c.line = __LINE__;
 			goto err;
 		}
 		id = 0x03000000L|
@@ -294,6 +295,7 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		(unsigned long)os.data[1];
 	} else {
 		c.error = SSL_R_UNKNOWN_SSL_VERSION;
+		c.line = __LINE__;
 		goto err;
 	}
 
@@ -355,6 +357,7 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	if (os.data != NULL) {
 		if (os.length > SSL_MAX_SID_CTX_LENGTH) {
 			c.error = SSL_R_BAD_LENGTH;
+			c.line = __LINE__;
 			goto err;
 		} else {
 			ret->sid_ctx_length = os.length;
