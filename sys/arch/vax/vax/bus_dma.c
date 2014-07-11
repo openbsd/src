@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.27 2011/06/23 20:44:39 ariane Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.28 2014/07/11 09:36:26 mpi Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.5 1999/11/13 00:32:20 thorpej Exp $	*/
 
 /*-
@@ -427,6 +427,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	size_t ssize;
 	bus_addr_t addr;
 	int curseg, error;
+	const struct kmem_dyn_mode *kd;
 
 	/*
 	 * Special case (but common):
@@ -448,8 +449,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		return 0;
 	}
 	size = round_page(size);
-	va = uvm_km_valloc(kernel_map, size);
-
+	kd = flags & BUS_DMA_NOWAIT ? &kd_trylock : &kd_waitok;
+	va = (vaddr_t)km_alloc(size, &kv_any, &kp_none, kd);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -470,7 +471,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			    VM_PROT_WRITE | PMAP_WIRED | PMAP_CANFAIL);
 			if (error) {
 				pmap_update(pmap_kernel());
-				uvm_km_free(kernel_map, sva, ssize);
+				km_free((void *)sva, ssize, &kv_any, &kp_none);
 				return (error);
 			}
 		}
@@ -500,7 +501,7 @@ _bus_dmamem_unmap(t, kva, size)
 
 	/* Avoid free'ing if not mapped */
 	if (kva >= (caddr_t)virtual_avail)
-		uvm_km_free(kernel_map, (vaddr_t)kva, round_page(size));
+		km_free(kva, round_page(size), &kv_any, &kp_none);
 }
 
 /*

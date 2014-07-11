@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.26 2014/04/08 13:23:51 mpi Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.27 2014/07/11 09:36:26 mpi Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -691,6 +691,7 @@ iommu_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	int cbit;
 	u_long align;
 	int pagesz = PAGE_SIZE;
+	const struct kmem_dyn_mode *kd;
 
 	if (nsegs != 1)
 		panic("iommu_dmamem_map: nsegs = %d", nsegs);
@@ -709,7 +710,8 @@ iommu_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	va = _bus_dma_valloc_skewed(size, 0, align,
 				    segs[0].ds_addr & (align - 1));
 #else
-	va = uvm_km_valloc(kernel_map, size);
+	kd = flags & BUS_DMA_NOWAIT ? &kd_trylock : &kd_waitok;
+	va = (vaddr_t)km_alloc(size, &kv_any, &kp_none, kd);
 #endif
 	if (va == 0)
 		return (ENOMEM);
@@ -750,10 +752,7 @@ iommu_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 		panic("iommu_dmamem_unmap");
 #endif
 
-	size = round_page(size);
-	pmap_kremove((vaddr_t)kva, size);
-	pmap_update(pmap_kernel());
-	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
+	km_free(kva, round_page(size), &kv_any, &kp_none);
 }
 
 

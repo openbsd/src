@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.34 2014/05/19 21:18:42 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.35 2014/07/11 09:36:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -443,6 +443,7 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 	paddr_t pa;
 	bus_addr_t addr;
 	int curseg, error, pmap_flags;
+	const struct kmem_dyn_mode *kd;
 
 #if defined(TGT_INDIGO2)
 	/*
@@ -471,7 +472,8 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 	}
 
 	size = round_page(size);
-	va = uvm_km_valloc(kernel_map, size);
+	kd = flags & BUS_DMA_NOWAIT ? &kd_trylock : &kd_waitok;
+	va = (vaddr_t)km_alloc(size, &kv_any, &kp_none, kd);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -496,7 +498,7 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 			    VM_PROT_WRITE | pmap_flags);
 			if (error) {
 				pmap_update(pmap_kernel());
-				uvm_km_free(kernel_map, sva, ssize);
+				km_free((void *)sva, ssize, &kv_any, &kp_none);
 				return (error);
 			}
 
@@ -528,8 +530,7 @@ _dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 	if (IS_XKPHYS((vaddr_t)kva))
 		return;
 
-	size = round_page(size);
-	uvm_km_free(kernel_map, (vaddr_t)kva, size);
+	km_free(kva, round_page(size), &kv_any, &kp_none);
 }
 
 /*

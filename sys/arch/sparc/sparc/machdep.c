@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.158 2014/07/10 21:46:03 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.159 2014/07/11 09:36:26 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -1104,8 +1104,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 		panic("_bus_dmamem_unmap");
 #endif
 
-	size = round_page(size);
-	uvm_km_free(kernel_map, (vaddr_t)kva, (vaddr_t)size + size);
+	km_free(kva, round_page(size), &kv_any, &kp_none);
 }
 
 /*
