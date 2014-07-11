@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.312 2014/07/09 15:16:38 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.313 2014/07/11 20:19:30 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -304,6 +304,8 @@ routehandler(void)
 			memset(&b, 0, sizeof(b));
 			add_address(ifi->name, 0, b, b);
 			quit = INTERNALSIG;
+			/* No need to write out our resolv.conf. */
+			client->flags &= ~IS_RESPONSIBLE;
 			break;
 		}
 		if (deleting.s_addr != INADDR_ANY) {
@@ -368,7 +370,8 @@ routehandler(void)
 	}
 
 	/* Something has happened. Try to write out the resolv.conf. */
-	if (client->active && client->active->resolv_conf)
+	if (client->active && client->active->resolv_conf &&
+	    client->flags & IS_RESPONSIBLE)
 		write_file("/etc/resolv.conf",
 		    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
 		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0,
@@ -891,11 +894,6 @@ bind_lease(void)
 
 	client->new->resolv_conf = resolv_conf_contents(
 	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS]);
-	if (client->new->resolv_conf)
-		write_file("/etc/resolv.conf",
-		    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
-		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0,
-		    client->new->resolv_conf, strlen(client->new->resolv_conf));
 
 newlease:
 	/* Replace the old active lease with the new one. */
