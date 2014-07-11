@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.5 2014/07/10 21:50:42 jasper Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.6 2014/07/11 17:01:48 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -59,6 +59,7 @@ struct octhci_softc {
 	int sc_noport;			/* Maximum number of ports */
 
 	u_int8_t sc_conf;		/* Device configuration */
+	struct usbd_xfer *sc_intrxfer;	/* Root HUB interrupt xfer */
 
 	char sc_vendor[16];		/* Vendor string for root hub */
 	int sc_id_vendor;		/* Vendor ID for root hub */
@@ -78,6 +79,8 @@ int octhci_init(struct octhci_softc *);
 void octhci_init_core(struct octhci_softc *);
 void octhci_init_host(struct octhci_softc *);
 int octhci_intr(void *);
+
+int	octhci_intr1(struct octhci_softc *);
 
 const struct cfattach octhci_ca = {
 	sizeof(struct octhci_softc), octhci_match, octhci_attach,
@@ -204,17 +207,12 @@ octhci_attach(struct device *parent, struct device *self, void *aux)
 
 	octhci_init_core(sc);
 	octhci_init_host(sc);
-#if 0
+
 	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_USB, octhci_intr,
 	    (void *)sc, sc->sc_bus.bdev.dv_xname);
 	if (sc->sc_ih == NULL)
-		panic(": can't interrupt establish failed");
-#endif
+		panic(": interrupt establish failed");
 
-	/*
-	 * No usb methods yet.
-	 * sc->sc_bus.usbrev = USBREV_2_0;
-	 */
 	sc->sc_bus.methods = &octhci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct usbd_pipe);
 	sc->sc_bus.dmatag = aa->aa_dmat;
@@ -287,7 +285,7 @@ octhci_init(struct octhci_softc *sc)
 	octhci_regn_set(sc, USBN_CLK_CTL_OFFSET, USBN_CLK_CTL_ENABLE);
 	delay(1);
 
-	return 0;
+	return (0);
 }
 
 void
@@ -346,36 +344,66 @@ octhci_init_host(struct octhci_softc *sc)
 }
 
 int
-octhci_intr(void *arg)
+octhci_intr(void *v)
 {
-	struct octhci_softc *sc = (struct octhci_softc *)arg;
-	uint32_t intsts;
+	struct octhci_softc *sc = v;
+
+	if (sc == NULL || sc->sc_bus.dying) {
+		DPRINTFN(16, ("octhci_intr: dying\n"));
+		return (0);
+	}
+
+	/* If we get an interrupt while polling, then just ignore it. */
+	if (sc->sc_bus.use_polling) {
+		DPRINTFN(16, ("octhci_intr: ignore interrupt while polling\n"));
+		return (0);
+	}
+
+	return (octhci_intr1(sc));
+}
+
+int
+octhci_intr1(struct octhci_softc *sc)
+{
+	uint32_t intsts, intmsk;
+
+	intsts = octhci_regc_read(sc, USBC_GINTSTS_OFFSET);
+	intmsk = octhci_regc_read(sc, USBC_GINTMSK_OFFSET);
+
+	if ((intsts & intmsk) == 0)
+		return (0);
 
 	sc->sc_bus.intr_context++;
 	sc->sc_bus.no_intrs++;
 
-	intsts = octhci_regc_read(sc, USBC_GINTSTS_OFFSET);
-	intsts &= octhci_regc_read(sc, USBC_GINTMSK_OFFSET) |
-	    USBC_GINTSTS_CURMOD;
-	intsts |= octhci_regc_read(sc, USBC_GINTSTS_OFFSET);
-	octhci_regc_write(sc, USBC_GINTSTS_OFFSET, intsts);
+	if (intsts & USBC_GINTSTS_RXFLVL) {
+		/* Failed assumption: no DMA */
+		printf("%s: Packets pending to be read from RxFIFO\n",
+		    DEVNAME(sc));
+		sc->sc_bus.dying = 1;
+		sc->sc_bus.intr_context--;
+		return (1);
+	}
+	if ((intsts & USBC_GINTSTS_PTXFEMP) ||
+	    (intsts & USBC_GINTSTS_NPTXFEMP)) {
+		/* Failed assumption: no DMA */
+		printf("%s: Packets pending to be written on TxFIFO\n",
+		    DEVNAME(sc));
+		sc->sc_bus.dying = 1;
+		sc->sc_bus.intr_context--;
+		return (1);
+	}
 
-	if (intsts & USBC_GINTSTS_RXFLVL)
-		/* Failed assumption: no DMA */
-		panic("octhci_intr: Packets pending to be read from RxFIFO");
-	if ((intsts & USBC_GINTSTS_PTXFEMP) || (intsts & USBC_GINTSTS_NPTXFEMP))
-		/* Failed assumption: no DMA */
-		panic("octhci_intr: Packets pending to be written on TxFIFO");
+	octhci_regc_write(sc, USBC_GINTSTS_OFFSET, intsts); /* Acknowledge */
+	usb_schedsoftintr(&sc->sc_bus);
+#if 0
 	if ((intsts & USBC_GINTSTS_DISCONNINT) ||
 	    (intsts & USBC_GINTSTS_PRTINT)) {
 		/* Device disconnected */
-		uint32_t hprt;
 
-		/* XXX: callback */
+		/* XXX: user callback */
 
-		hprt = octhci_regc_read(sc, USBC_HPRT_OFFSET);
-		hprt &= ~(USBC_HPRT_PRTENA);
-		octhci_regc_write(sc, USBC_HPRT_OFFSET, hprt);
+		octhci_regc_clear(sc, USBC_HPRT_OFFSET, USBC_HPRT_PRTENA);
 	}
 	if (intsts & USBC_GINTSTS_HCHINT) {
 		/* Host Channel Interrupt */
@@ -389,9 +417,10 @@ octhci_intr(void *arg)
 			/* XXX: implement octhci_poll_chan(sc, chan); */
 		}
 	}
+#endif
 
 	sc->sc_bus.intr_context--;
-	return 1;
+	return (1);
 }
 
 inline void
@@ -475,7 +504,7 @@ octhci_open(struct usbd_pipe *pipe)
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
 
 	if (sc->sc_bus.dying)
-		return USBD_IOERROR;
+		return (USBD_IOERROR);
 
 	/* Root Hub */
 	if (pipe->device->depth == 0) {
@@ -489,14 +518,16 @@ octhci_open(struct usbd_pipe *pipe)
 			pipe->methods = &octhci_root_intr_methods;
 			break;
 		default:
+			DPRINTF(("%s: bad bEndpointAddress 0x%02x\n", __func__,
+			    ed->bEndpointAddress));
 			pipe->methods = NULL;
-			return USBD_INVAL;
+			return (USBD_INVAL);
 		}
-		return USBD_NORMAL_COMPLETION;
+		return (USBD_NORMAL_COMPLETION);
 	}
 
 	/* XXX: not supported yet */
-	return USBD_INVAL;
+	return (USBD_INVAL);
 }
 
 void
@@ -507,6 +538,10 @@ octhci_softintr(void *aux)
 void
 octhci_poll(struct usbd_bus *bus)
 {
+	struct octhci_softc *sc = (struct octhci_softc *)bus;
+
+	if (octhci_regc_read(sc, USBC_GINTSTS_OFFSET))
+		octhci_intr1(sc);
 }
 
 struct usbd_xfer *
@@ -580,7 +615,7 @@ const usb_interface_descriptor_t octhci_ifcd = {
 const usb_endpoint_descriptor_t octhci_endpd = {
 	USB_ENDPOINT_DESCRIPTOR_SIZE,
 	UDESC_ENDPOINT,
-	UE_DIR_IN,
+	UE_DIR_IN | OCTHCI_INTR_ENDPT,
 	UE_INTERRUPT,
 	{2, 0},                 /* max 15 ports */
 	255
@@ -971,18 +1006,41 @@ octhci_root_ctrl_done(struct usbd_xfer *xfer)
 usbd_status
 octhci_root_intr_transfer(struct usbd_xfer *xfer)
 {
-	return USBD_NORMAL_COMPLETION;
+	usbd_status err;
+
+	err = usb_insert_transfer(xfer);
+	if (err)
+		return (err);
+
+	return (octhci_root_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
 }
+
 
 usbd_status
 octhci_root_intr_start(struct usbd_xfer *xfer)
 {
-	return USBD_NORMAL_COMPLETION;
+	struct octhci_softc *sc = (struct octhci_softc *)xfer->device->bus;
+
+	if (sc->sc_bus.dying)
+		return (USBD_IOERROR);
+
+	sc->sc_intrxfer = xfer;
+
+	return (USBD_IN_PROGRESS);
 }
 
 void
 octhci_root_intr_abort(struct usbd_xfer *xfer)
 {
+	struct octhci_softc *sc = (struct octhci_softc *)xfer->device->bus;
+	int s;
+
+	sc->sc_intrxfer = NULL;
+
+	xfer->status = USBD_CANCELLED;
+	s = splusb();
+	usb_transfer_complete(xfer);
+	splx(s);
 }
 
 void
