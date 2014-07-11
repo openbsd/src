@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.128 2014/07/10 00:05:59 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.129 2014/07/11 11:48:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <fnmatch.h>
 #include <err.h>
 #include <errno.h>
 #include <event.h>
@@ -637,9 +638,9 @@ purge_relay(struct relayd *env, struct relay *rlay)
 
 
 struct kv *
-kv_add(struct kvlist *keys, char *key, char *value)
+kv_add(struct kvtree *keys, char *key, char *value)
 {
-	struct kv	*kv;
+	struct kv	*kv, *oldkv;
 
 	if (key == NULL)
 		return (NULL);
@@ -655,8 +656,12 @@ kv_add(struct kvlist *keys, char *key, char *value)
 		free(kv);
 		return (NULL);
 	}
+	TAILQ_INIT(&kv->kv_children);
 
-	TAILQ_INSERT_TAIL(keys, kv, kv_entry);
+	if ((oldkv = RB_INSERT(kvtree, keys, kv)) != NULL) {
+		TAILQ_INSERT_TAIL(&oldkv->kv_children, kv, kv_entry);
+		kv->kv_parent = oldkv;
+	}
 
 	return (kv);
 }
@@ -664,14 +669,23 @@ kv_add(struct kvlist *keys, char *key, char *value)
 int
 kv_set(struct kv *kv, char *fmt, ...)
 {
-	va_list  ap;
-	char	*value = NULL;
+	va_list		  ap;
+	char		*value = NULL;
+	struct kv	*ckv;
 
 	va_start(ap, fmt);
 	if (vasprintf(&value, fmt, ap) == -1)
 		return (-1);
 	va_end(ap);
 
+	/* Remove all children */
+	while ((ckv = TAILQ_FIRST(&kv->kv_children)) != NULL) {
+		TAILQ_REMOVE(&kv->kv_children, ckv, kv_entry);
+		kv_free(ckv);
+		free(ckv);
+	}
+
+	/* Set the new value */
 	if (kv->kv_value != NULL)
 		free(kv->kv_value);
 	kv->kv_value = value;
@@ -698,23 +712,31 @@ kv_setkey(struct kv *kv, char *fmt, ...)
 }
 
 void
-kv_delete(struct kvlist *keys, struct kv *kv)
+kv_delete(struct kvtree *keys, struct kv *kv)
 {
-	TAILQ_REMOVE(keys, kv, kv_entry);
+	struct kv	*ckv;
+
+	RB_REMOVE(kvtree, keys, kv);
+
+	/* Remove all children */
+	while ((ckv = TAILQ_FIRST(&kv->kv_children)) != NULL) {
+		TAILQ_REMOVE(&kv->kv_children, ckv, kv_entry);
+		kv_free(ckv);
+		free(ckv);
+	}
+
 	kv_free(kv);
 	free(kv);
 }
 
 struct kv *
-kv_extend(struct kvlist *keys, char *value)
+kv_extend(struct kvtree *keys, struct kv *kv, char *value)
 {
-	struct kv	*kv;
 	char		*newvalue;
 
-	if ((kv = TAILQ_LAST(keys, kvlist)) == NULL)
+	if (kv == NULL) {
 		return (NULL);
-
-	if (kv->kv_value != NULL) {
+	} else if (kv->kv_value != NULL) {
 		if (asprintf(&newvalue, "%s%s", kv->kv_value, value) == -1)
 			return (NULL);
 
@@ -727,11 +749,11 @@ kv_extend(struct kvlist *keys, char *value)
 }
 
 void
-kv_purge(struct kvlist *keys)
+kv_purge(struct kvtree *keys)
 {
 	struct kv	*kv;
 
-	while ((kv = TAILQ_FIRST(keys)))
+	while ((kv = RB_MIN(kvtree, keys)) != NULL)
 		kv_delete(keys, kv);
 }
 
@@ -748,8 +770,7 @@ kv_free(struct kv *kv)
 		free(kv->kv_value);
 	}
 	kv->kv_value = NULL;
-	kv->kv_matchlist = NULL;
-	kv->kv_matchptr = NULL;
+	kv->kv_matchtree = NULL;
 	kv->kv_match = NULL;
 	memset(kv, 0, sizeof(*kv));
 }
@@ -759,6 +780,7 @@ kv_inherit(struct kv *dst, struct kv *src)
 {
 	memset(dst, 0, sizeof(*dst));
 	memcpy(dst, src, sizeof(*dst));
+	TAILQ_INIT(&dst->kv_children);
 
 	if (src->kv_key != NULL) {
 		if ((dst->kv_key = strdup(src->kv_key)) == NULL) {
@@ -775,10 +797,8 @@ kv_inherit(struct kv *dst, struct kv *src)
 
 	if (src->kv_match != NULL)
 		dst->kv_match = src->kv_match;
-	if (src->kv_matchptr != NULL)
-		dst->kv_matchptr = src->kv_matchptr;
-	if (src->kv_matchlist != NULL)
-		dst->kv_matchlist = src->kv_matchlist;
+	if (src->kv_matchtree != NULL)
+		dst->kv_matchtree = src->kv_matchtree;
 
 	return (dst);
 }
@@ -806,6 +826,35 @@ kv_log(struct evbuffer *log, struct kv *kv, u_int16_t labelid)
 	return (0);
 }
 
+struct kv *
+kv_find(struct kvtree *keys, struct kv *kv)
+{
+	struct kv	*match;
+	const char	*key;
+
+	if (kv->kv_flags & KV_FLAG_GLOBBING) {
+		/* Test header key using shell globbing rules */
+		key = kv->kv_key == NULL ? "" : kv->kv_key;
+		RB_FOREACH(match, kvtree, keys) {
+			if (fnmatch(key, match->kv_key, FNM_CASEFOLD) == 0)
+				break;
+		}
+	} else {
+		/* Fast tree-based lookup only works without globbing */
+		match = RB_FIND(kvtree, keys, kv);
+	}
+
+	return (match);
+}
+
+int
+kv_cmp(struct kv *a, struct kv *b)
+{
+	return (strcasecmp(a->kv_key, b->kv_key));
+}
+
+RB_GENERATE(kvtree, kv, kv_node, kv_cmp);
+
 int
 rule_add(struct protocol *proto, struct relay_rule *rule, const char *rulefile)
 {
@@ -820,9 +869,6 @@ rule_add(struct protocol *proto, struct relay_rule *rule, const char *rulefile)
 		kv = &rule->rule_kv[i];
 		if (kv->kv_type != i)
 			continue;
-
-		if (kv->kv_value != NULL && strchr(kv->kv_value, '$') != NULL)
-			kv->kv_flags |= KV_FLAG_MACRO;
 
 		switch (kv->kv_option) {
 		case KEY_OPTION_LOG:
@@ -845,6 +891,11 @@ rule_add(struct protocol *proto, struct relay_rule *rule, const char *rulefile)
 		default:
 			break;
 		}
+
+		if (kv->kv_value != NULL && strchr(kv->kv_value, '$') != NULL)
+			kv->kv_flags |= KV_FLAG_MACRO;
+		if (kv->kv_key != NULL && strpbrk(kv->kv_key, "*?[") != NULL)
+			kv->kv_flags |= KV_FLAG_GLOBBING;
 	}
 
 	if (rulefile == NULL) {

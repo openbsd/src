@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.182 2014/07/09 16:42:05 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.183 2014/07/11 11:48:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -272,6 +272,9 @@ enum digest_type {
 	DIGEST_MD5		= 2
 };
 
+TAILQ_HEAD(kvlist, kv);
+RB_HEAD(kvtree, kv);
+
 struct kv {
 	char			*kv_key;
 	char			*kv_value;
@@ -279,22 +282,26 @@ struct kv {
 	enum key_type		 kv_type;
 	enum key_option		 kv_option;
 	enum digest_type	 kv_digest;
-	u_int			 kv_header_id;
 
 #define KV_FLAG_MACRO		 0x01
 #define KV_FLAG_INVALID		 0x02
+#define KV_FLAG_GLOBBING	 0x04
 	u_int8_t		 kv_flags;
+
+	struct kvlist		 kv_children;
+	struct kv		*kv_parent;
+	TAILQ_ENTRY(kv)		 kv_entry;
+
+	RB_ENTRY(kv)		 kv_node;
 
 	/* A few pointers used by the rule actions */
 	struct kv		*kv_match;
-	struct kvlist		*kv_matchlist;
-	struct kv		**kv_matchptr;
+	struct kvtree		*kv_matchtree;
 
 	TAILQ_ENTRY(kv)		 kv_match_entry;
 	TAILQ_ENTRY(kv)		 kv_rule_entry;
-	TAILQ_ENTRY(kv)		 kv_entry;
+	TAILQ_ENTRY(kv)		 kv_action_entry;
 };
-TAILQ_HEAD(kvlist, kv);
 
 struct portrange {
 	in_port_t		 val[2];
@@ -1121,7 +1128,7 @@ int	 relay_bufferevent_write(struct ctl_relay_event *,
 int	 relay_test(struct protocol *, struct ctl_relay_event *);
 void	 relay_calc_skip_steps(struct relay_rules *);
 void	 relay_match(struct kvlist *, struct kv *, struct kv *,
-	    struct kvlist *);
+	    struct kvtree *);
 
 SPLAY_PROTOTYPE(session_tree, rsession, se_nodes, relay_session_cmp);
 
@@ -1135,9 +1142,6 @@ void	 relay_close_http(struct rsession *);
 u_int	 relay_httpmethod_byname(const char *);
 const char
 	*relay_httpmethod_byid(u_int);
-u_int	 relay_httpheader_byname(const char *);
-const char
-	*relay_httpheader_byid(u_int id);
 int	 relay_httpdesc_init(struct ctl_relay_event *);
 
 /* relay_udp.c */
@@ -1220,15 +1224,17 @@ struct in6_addr *prefixlen2mask6(u_int8_t, u_int32_t *);
 u_int32_t	 prefixlen2mask(u_int8_t);
 int		 accept_reserve(int, struct sockaddr *, socklen_t *, int,
 		     volatile int *);
-struct kv	*kv_add(struct kvlist *, char *, char *);
+struct kv	*kv_add(struct kvtree *, char *, char *);
 int		 kv_set(struct kv *, char *, ...);
 int		 kv_setkey(struct kv *, char *, ...);
-void		 kv_delete(struct kvlist *, struct kv *);
-struct kv	*kv_extend(struct kvlist *, char *);
-void		 kv_purge(struct kvlist *);
+void		 kv_delete(struct kvtree *, struct kv *);
+struct kv	*kv_extend(struct kvtree *, struct kv *, char *);
+void		 kv_purge(struct kvtree *);
 void		 kv_free(struct kv *);
 struct kv	*kv_inherit(struct kv *, struct kv *);
 int		 kv_log(struct evbuffer *, struct kv *, u_int16_t);
+struct kv	*kv_find(struct kvtree *, struct kv *);
+int		 kv_cmp(struct kv *, struct kv *);
 int		 rule_add(struct protocol *, struct relay_rule *, const char
 		     *);
 void		 rule_delete(struct relay_rules *, struct relay_rule *);
@@ -1236,6 +1242,7 @@ void		 rule_free(struct relay_rule *);
 struct relay_rule
 		*rule_inherit(struct relay_rule *);
 void		 rule_settable(struct relay_rules *, struct relay_table *);
+RB_PROTOTYPE(kvtree, kv, kv_node, kv_cmp);
 
 /* carp.c */
 int	 carp_demote_init(char *, int);

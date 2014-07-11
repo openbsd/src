@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.184 2014/07/09 16:42:05 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.185 2014/07/11 11:48:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1154,7 +1154,7 @@ ruleopts_t	: ruleopts ruleopts_t
 ruleopts	: METHOD STRING					{
 			u_int	id;
 			if ((id = relay_httpmethod_byname($2)) ==
-			    HTTP_HEADER_NONE) {
+			    HTTP_METHOD_NONE) {
 				yyerror("unknown HTTP method currently not "
 				    "supported");
 				free($2);
@@ -1186,8 +1186,6 @@ ruleopts	: METHOD STRING					{
 			keytype = KEY_TYPE_HEADER;
 			memset(&rule->rule_kv[keytype], 0,
 			    sizeof(rule->rule_kv[keytype]));
-			rule->rule_kv[keytype].kv_header_id =
-			    relay_httpheader_byname($3);
 			rule->rule_kv[keytype].kv_option = $2;
 			rule->rule_kv[keytype].kv_key = strdup($3);
 			rule->rule_kv[keytype].kv_value = (($4 != NULL) ?

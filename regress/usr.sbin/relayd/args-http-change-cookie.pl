@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-my $name = "X-Set-Cookie";
+my $name = "Set-Cookie";
 my %header = ("$name" => [ "test=a;", "test=b;" ]);
 our %args = (
     client => {

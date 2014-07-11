@@ -16,7 +16,7 @@ our %args = (
     relayd => {
 	protocol => [ "http",
 	    'match response header remove X-Header-Foo',
-	    'match response header log "*"',
+	    'match response header log "*Foo"',
 	],
 	loggrep => { qr/ (?:done|last write \(done\)), \[X-Header-Foo: foo \(removed\)\s*\]/ => 1 },
     },
