@@ -1,4 +1,4 @@
-/* $OpenBSD: libcrypto.h,v 1.17 2005/04/05 20:46:20 cloder Exp $	 */
+/* $OpenBSD: libcrypto.h,v 1.18 2014/07/11 10:01:00 jsg Exp $	 */
 /* $EOM: libcrypto.h,v 1.16 2000/09/28 12:53:27 niklas Exp $	 */
 
 /*
@@ -40,6 +40,7 @@
 #include <openssl/bio.h>
 #include <openssl/md5.h>
 #include <openssl/pem.h>
+#include <openssl/rsa.h>
 #include <openssl/x509_vfy.h>
 #include <openssl/x509.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.15 2012/06/04 09:14:29 mikeb Exp $	*/
+/*	$OpenBSD: dh.c,v 1.16 2014/07/11 10:01:00 jsg Exp $	*/
 /*	$vantronix: dh.c,v 1.13 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include <openssl/obj_mac.h>
+#include <openssl/bn.h>
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include <openssl/ecdh.h>
