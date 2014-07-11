@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_mutl.c,v 1.16 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: p12_mutl.c,v 1.17 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -62,10 +62,11 @@
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_HMAC
-#include "cryptlib.h"
+
+#include <openssl/err.h>
 #include <openssl/hmac.h>
-#include <openssl/rand.h>
 #include <openssl/pkcs12.h>
+#include <openssl/rand.h>
 
 /* Generate a MAC */
 int

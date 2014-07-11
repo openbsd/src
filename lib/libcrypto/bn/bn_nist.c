@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_nist.c,v 1.13 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: bn_nist.c,v 1.14 2014/07/11 08:44:48 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -56,12 +56,11 @@
  *
  */
 
+#include <machine/endian.h>
+
 #include <stdint.h>
 
 #include "bn_lcl.h"
-#include "cryptlib.h"
-
-#include <machine/endian.h>
 
 #define BN_NIST_192_TOP	(192+BN_BITS2-1)/BN_BITS2
 #define BN_NIST_224_TOP	(224+BN_BITS2-1)/BN_BITS2

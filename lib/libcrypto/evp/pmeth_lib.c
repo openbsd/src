@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.7 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.8 2014/07/11 08:44:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -62,12 +62,13 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
-#include <openssl/objects.h>
 #include <openssl/evp.h>
+#include <openssl/objects.h>
+
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+
 #include "asn1_locl.h"
 #include "evp_locl.h"
 

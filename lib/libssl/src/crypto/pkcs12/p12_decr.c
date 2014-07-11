@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_decr.c,v 1.12 2014/07/10 10:01:23 miod Exp $ */
+/* $OpenBSD: p12_decr.c,v 1.13 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -57,9 +57,9 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/pkcs12.h>
 
+#include <openssl/err.h>
+#include <openssl/pkcs12.h>
 
 /* Encrypt/Decrypt a buffer based on password and algor, result in a
  * malloc'ed buffer

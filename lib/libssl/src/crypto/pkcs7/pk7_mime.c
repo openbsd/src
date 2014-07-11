@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_mime.c,v 1.10 2014/06/29 17:05:36 jsing Exp $ */
+/* $OpenBSD: pk7_mime.c,v 1.11 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -52,12 +52,12 @@
  *
  */
 
-#include <stdio.h>
 #include <ctype.h>
-#include "cryptlib.h"
+#include <stdio.h>
+
+#include <openssl/asn1.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>
-#include <openssl/asn1.h>
 
 /* PKCS#7 wrappers round generalised stream and MIME routines */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_d2.c,v 1.8 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: x509_d2.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,8 +57,9 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/x509.h>
 
 int

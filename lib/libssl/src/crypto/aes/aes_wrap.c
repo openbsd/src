@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_wrap.c,v 1.8 2014/07/10 13:58:21 jsing Exp $ */
+/* $OpenBSD: aes_wrap.c,v 1.9 2014/07/11 08:44:47 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -53,7 +53,6 @@
 
 #include <string.h>
 
-#include "cryptlib.h"
 #include <openssl/aes.h>
 #include <openssl/bio.h>
 

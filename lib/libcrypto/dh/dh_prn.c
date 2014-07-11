@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_prn.c,v 1.4 2014/07/09 13:26:47 miod Exp $ */
+/* $OpenBSD: dh_prn.c,v 1.5 2014/07/11 08:44:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,9 +57,10 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/evp.h>
+
 #include <openssl/dh.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
 
 int
 DHparams_print_fp(FILE *fp, const DH *x)

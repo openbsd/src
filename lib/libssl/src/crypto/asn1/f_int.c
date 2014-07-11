@@ -1,4 +1,4 @@
-/* $OpenBSD: f_int.c,v 1.16 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: f_int.c,v 1.17 2014/07/11 08:44:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,9 +57,10 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/buffer.h>
+
 #include <openssl/asn1.h>
+#include <openssl/buffer.h>
+#include <openssl/err.h>
 
 int
 i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a)

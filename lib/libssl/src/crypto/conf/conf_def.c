@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.26 2014/07/09 11:10:50 bcook Exp $ */
+/* $OpenBSD: conf_def.c,v 1.27 2014/07/11 08:44:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,14 +60,15 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "cryptlib.h"
-#include <openssl/stack.h>
-#include <openssl/lhash.h>
+
+#include <openssl/buffer.h>
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
-#include "conf_def.h"
-#include <openssl/buffer.h>
 #include <openssl/err.h>
+#include <openssl/lhash.h>
+#include <openssl/stack.h>
+
+#include "conf_def.h"
 
 static char *eat_ws(CONF *conf, char *p);
 static char *eat_alpha_numeric(CONF *conf, char *p);

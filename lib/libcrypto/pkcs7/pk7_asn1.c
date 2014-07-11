@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_asn1.c,v 1.6 2014/06/29 17:05:36 jsing Exp $ */
+/* $OpenBSD: pk7_asn1.c,v 1.7 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
 #include <openssl/asn1t.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>

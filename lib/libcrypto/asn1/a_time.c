@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time.c,v 1.20 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: a_time.c,v 1.21 2014/07/11 08:44:47 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -53,7 +53,6 @@
  *
  */
 
-
 /* This is an implementation of the ASN1 Time structure which is:
  *    Time ::= CHOICE {
  *      utcTime        UTCTime,
@@ -65,9 +64,10 @@
 #include <string.h>
 #include <time.h>
 
-#include "cryptlib.h"
-#include "o_time.h"
 #include <openssl/asn1t.h>
+#include <openssl/err.h>
+
+#include "o_time.h"
 
 IMPLEMENT_ASN1_MSTRING(ASN1_TIME, B_ASN1_TIME)
 

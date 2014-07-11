@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.8 2014/07/10 13:58:23 jsing Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -59,10 +59,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cryptlib.h"
+#include <openssl/buffer.h>
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
-#include <openssl/buffer.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 

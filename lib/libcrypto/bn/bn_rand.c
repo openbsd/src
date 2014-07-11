@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_rand.c,v 1.14 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bn_rand.c,v 1.15 2014/07/11 08:44:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -111,9 +111,11 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "cryptlib.h"
-#include "bn_lcl.h"
+
+#include <openssl/err.h>
 #include <openssl/rand.h>
+
+#include "bn_lcl.h"
 
 static int
 bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)

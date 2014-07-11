@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_list.c,v 1.14 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: eng_list.c,v 1.15 2014/07/11 08:44:48 jsing Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -66,6 +66,7 @@
 
 #include <openssl/opensslconf.h>
 
+#include "cryptlib.h"
 #include "eng_int.h"
 
 /* The linked-list of pointers to engine types. engine_list_head

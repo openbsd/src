@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sha.c,v 1.14 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: m_sha.c,v 1.15 2014/07/11 08:44:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,16 +60,16 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
-
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA0)
 
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
+
 #include "evp_locl.h"
 
 static int

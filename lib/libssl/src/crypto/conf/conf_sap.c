@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_sap.c,v 1.9 2014/07/10 22:45:56 jsing Exp $ */
+/* $OpenBSD: conf_sap.c,v 1.10 2014/07/11 08:44:48 jsing Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -60,11 +60,11 @@
 
 #include <openssl/opensslconf.h>
 
-#include <openssl/crypto.h>
-#include "cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/x509.h>
 #include <openssl/asn1.h>
+#include <openssl/conf.h>
+#include <openssl/crypto.h>
+#include <openssl/x509.h>
+
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif

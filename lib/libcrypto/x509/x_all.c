@@ -1,4 +1,4 @@
-/* $OpenBSD: x_all.c,v 1.17 2014/07/10 22:45:58 jsing Exp $ */
+/* $OpenBSD: x_all.c,v 1.18 2014/07/11 08:44:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,17 +60,17 @@
 
 #include <openssl/opensslconf.h>
 
-#include <openssl/stack.h>
-#include "cryptlib.h"
-#include <openssl/buffer.h>
 #include <openssl/asn1.h>
+#include <openssl/buffer.h>
 #include <openssl/evp.h>
+#include <openssl/stack.h>
 #include <openssl/x509.h>
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
-#endif
+
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
+#endif
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
 #endif
 
 int

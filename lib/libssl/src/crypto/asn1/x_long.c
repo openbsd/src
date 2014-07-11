@@ -1,4 +1,4 @@
-/* $OpenBSD: x_long.c,v 1.8 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: x_long.c,v 1.9 2014/07/11 08:44:47 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -59,9 +59,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
+#include <openssl/err.h>
 
 /* Custom primitive type for long handling. This converts between an ASN1_INTEGER
  * and a long directly.

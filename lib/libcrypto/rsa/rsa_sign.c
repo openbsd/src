@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_sign.c,v 1.21 2014/07/10 13:58:23 jsing Exp $ */
+/* $OpenBSD: rsa_sign.c,v 1.22 2014/07/11 08:44:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,11 +59,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
+#include <openssl/err.h>
 #include <openssl/objects.h>
+#include <openssl/rsa.h>
 #include <openssl/x509.h>
+
 #include "rsa_locl.h"
 
 /* Size of an SSL signature: MD5+SHA1 */

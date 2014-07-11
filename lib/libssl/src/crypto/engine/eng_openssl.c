@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_openssl.c,v 1.8 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: eng_openssl.c,v 1.9 2014/07/11 08:44:48 jsing Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -67,20 +67,20 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/crypto.h>
-#include "cryptlib.h"
-#include <openssl/engine.h>
 #include <openssl/dso.h>
-#include <openssl/pem.h>
+#include <openssl/engine.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/rand.h>
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
+
+#ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
 #endif
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
-#ifndef OPENSSL_NO_DH
-#include <openssl/dh.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
 #endif
 
 /* This testing gunk is implemented (and explained) lower down. It also assumes

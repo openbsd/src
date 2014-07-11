@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pku.c,v 1.8 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: v3_pku.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>

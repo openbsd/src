@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_acpt.c,v 1.22 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: bss_acpt.c,v 1.23 2014/07/11 08:44:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,8 +63,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "cryptlib.h"
 #include <openssl/bio.h>
+#include <openssl/buffer.h>
+#include <openssl/err.h>
 
 #define SOCKET_PROTOCOL IPPROTO_TCP
 

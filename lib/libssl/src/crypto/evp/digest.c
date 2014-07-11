@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.20 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: digest.c,v 1.21 2014/07/11 08:44:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,9 +114,9 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
-#include <openssl/objects.h>
 #include <openssl/evp.h>
+#include <openssl/objects.h>
+
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: x_bignum.c,v 1.5 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: x_bignum.c,v 1.6 2014/07/11 08:44:47 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
 

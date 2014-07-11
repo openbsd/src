@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pkey.c,v 1.13 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: x_pkey.c,v 1.14 2014/07/11 08:44:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,10 +59,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cryptlib.h"
+#include <openssl/asn1_mac.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <openssl/asn1_mac.h>
 #include <openssl/x509.h>
 
 /* need to implement */

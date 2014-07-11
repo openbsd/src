@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_init.c,v 1.8 2014/07/08 09:24:53 jsing Exp $ */
+/* $OpenBSD: p12_init.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -57,7 +57,8 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
+#include <openssl/err.h>
 #include <openssl/pkcs12.h>
 
 /* Initialise a PKCS12 structure to take data */

@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_crt.c,v 1.14 2014/07/08 09:24:53 jsing Exp $ */
+/* $OpenBSD: p12_crt.c,v 1.15 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -57,9 +57,9 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/pkcs12.h>
 
+#include <openssl/err.h>
+#include <openssl/pkcs12.h>
 
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
     PKCS12_SAFEBAG *bag);

@@ -1,4 +1,4 @@
-/* $OpenBSD: pvkfmt.c,v 1.8 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: pvkfmt.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -64,10 +64,11 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
+#include <openssl/bn.h>
+#include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
-#include <openssl/bn.h>
+
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>

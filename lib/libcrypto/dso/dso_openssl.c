@@ -1,4 +1,4 @@
-/* $OpenBSD: dso_openssl.c,v 1.5 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: dso_openssl.c,v 1.6 2014/07/11 08:44:48 jsing Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
 #include <openssl/dso.h>
 
 /* We just pinch the method from an appropriate "default" method. */

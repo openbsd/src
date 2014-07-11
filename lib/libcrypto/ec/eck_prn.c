@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.8 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.9 2014/07/11 08:44:48 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -66,10 +66,10 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
-#include <openssl/evp.h>
-#include <openssl/ec.h>
 #include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
 
 int 
 ECPKParameters_print_fp(FILE * fp, const EC_GROUP * x, int off)

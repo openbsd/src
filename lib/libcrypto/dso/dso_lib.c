@@ -1,4 +1,4 @@
-/* $OpenBSD: dso_lib.c,v 1.17 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: dso_lib.c,v 1.18 2014/07/11 08:44:48 jsing Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -60,8 +60,8 @@
 #include <string.h>
 
 #include <openssl/crypto.h>
-#include "cryptlib.h"
 #include <openssl/dso.h>
+#include <openssl/err.h>
 
 static DSO_METHOD *default_DSO_meth = NULL;
 

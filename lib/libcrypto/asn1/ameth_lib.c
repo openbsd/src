@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.11 2014/07/10 22:45:56 jsing Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.12 2014/07/11 08:44:47 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -61,12 +61,13 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
+
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+
 #include "asn1_locl.h"
 
 extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[];

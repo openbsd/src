@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ext.c,v 1.10 2014/07/10 13:58:23 jsing Exp $ */
+/* $OpenBSD: ocsp_ext.c,v 1.11 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -61,14 +61,13 @@
  *
  */
 
-#include <cryptlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <openssl/objects.h>
-#include <openssl/x509.h>
 #include <openssl/ocsp.h>
 #include <openssl/rand.h>
+#include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 /* Standard wrapper functions for extensions */

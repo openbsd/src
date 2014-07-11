@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_smime.c,v 1.10 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: cms_smime.c,v 1.11 2014/07/11 08:44:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -51,12 +51,12 @@
  * ====================================================================
  */
 
-#include "cryptlib.h"
 #include <openssl/asn1t.h>
+#include <openssl/cms.h>
+#include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/err.h>
-#include <openssl/cms.h>
+
 #include "cms_lcl.h"
 
 static int

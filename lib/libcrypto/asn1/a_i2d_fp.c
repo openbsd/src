@@ -1,4 +1,4 @@
-/* $OpenBSD: a_i2d_fp.c,v 1.13 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: a_i2d_fp.c,v 1.14 2014/07/11 08:44:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,9 +57,10 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/buffer.h>
+
 #include <openssl/asn1.h>
+#include <openssl/buffer.h>
+#include <openssl/err.h>
 
 #ifndef NO_OLD_ASN1
 

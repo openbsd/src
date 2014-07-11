@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509a.c,v 1.9 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: x_x509a.c,v 1.10 2014/07/11 08:44:47 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -57,9 +57,9 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/evp.h>
+
 #include <openssl/asn1t.h>
+#include <openssl/evp.h>
 #include <openssl/x509.h>
 
 /* X509_CERT_AUX routines. These are used to encode additional

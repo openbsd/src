@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.10 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.11 2014/07/11 08:44:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +57,9 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
+#include <openssl/err.h>
+
 #include "bn_lcl.h"
 
 void

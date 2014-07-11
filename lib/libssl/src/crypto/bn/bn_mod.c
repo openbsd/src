@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mod.c,v 1.7 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bn_mod.c,v 1.8 2014/07/11 08:44:48 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================
@@ -111,7 +111,8 @@
  * [including the GNU Public Licence.]
  */
 
-#include "cryptlib.h"
+#include <openssl/err.h>
+
 #include "bn_lcl.h"
 
 int

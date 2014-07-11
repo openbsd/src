@@ -1,4 +1,4 @@
-/* $OpenBSD: buffer.c,v 1.20 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: buffer.c,v 1.21 2014/07/11 08:44:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,10 +57,11 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "cryptlib.h"
 #include <openssl/buffer.h>
+#include <openssl/err.h>
 
 /* LIMIT_BEFORE_EXPANSION is the maximum n such that (n+3)/3*4 < 2**31. That
  * function is applied in several functions in this file and this limit ensures

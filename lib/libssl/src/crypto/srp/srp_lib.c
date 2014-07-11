@@ -1,4 +1,4 @@
-/* $OpenBSD: srp_lib.c,v 1.8 2014/07/10 22:45:58 jsing Exp $ */
+/* $OpenBSD: srp_lib.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Christophe Renou (christophe.renou@edelweb.fr) with 
  * the precious help of Peter Sylvester (peter.sylvester@edelweb.fr) 
  * for the EdelKey project and contributed to the OpenSSL project 2004.
@@ -60,10 +60,11 @@
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_SRP
-#include "cryptlib.h"
-#include "srp_lcl.h"
-#include <openssl/srp.h>
+
 #include <openssl/evp.h>
+#include <openssl/srp.h>
+
+#include "srp_lcl.h"
 
 #if (BN_BYTES == 8)
 # if defined(_LP64)

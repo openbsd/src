@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqrt.c,v 1.4 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bn_sqrt.c,v 1.5 2014/07/11 08:44:48 jsing Exp $ */
 /* Written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * and Bodo Moeller for the OpenSSL project. */
 /* ====================================================================
@@ -55,9 +55,9 @@
  *
  */
 
-#include "cryptlib.h"
-#include "bn_lcl.h"
+#include <openssl/err.h>
 
+#include "bn_lcl.h"
 
 BIGNUM *
 BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)

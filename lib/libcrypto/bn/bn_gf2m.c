@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gf2m.c,v 1.14 2014/07/10 22:45:56 jsing Exp $ */
+/* $OpenBSD: bn_gf2m.c,v 1.15 2014/07/11 08:44:47 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -94,7 +94,8 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
+#include <openssl/err.h>
+
 #include "bn_lcl.h"
 
 #ifndef OPENSSL_NO_EC2M

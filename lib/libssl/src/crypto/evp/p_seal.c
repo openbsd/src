@@ -1,4 +1,4 @@
-/* $OpenBSD: p_seal.c,v 1.12 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: p_seal.c,v 1.13 2014/07/11 08:44:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,14 +60,14 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 #include <openssl/rand.h>
+#include <openssl/x509.h>
+
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/x509.h>
 
 int
 EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek,

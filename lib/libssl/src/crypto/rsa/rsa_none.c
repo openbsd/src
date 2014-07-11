@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_none.c,v 1.8 2014/07/10 13:58:23 jsing Exp $ */
+/* $OpenBSD: rsa_none.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,10 +59,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
+#include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/rsa.h>
 
 int
 RSA_padding_add_none(unsigned char *to, int tlen, const unsigned char *from,

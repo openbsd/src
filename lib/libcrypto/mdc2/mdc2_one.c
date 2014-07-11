@@ -1,4 +1,4 @@
-/* $OpenBSD: mdc2_one.c,v 1.3 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: mdc2_one.c,v 1.4 2014/07/11 08:44:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +57,8 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
+#include <openssl/crypto.h>
 #include <openssl/mdc2.h>
 
 unsigned char *MDC2(const unsigned char *d, size_t n, unsigned char *md)

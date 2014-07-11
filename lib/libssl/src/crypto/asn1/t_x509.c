@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.23 2014/07/10 22:45:56 jsing Exp $ */
+/* $OpenBSD: t_x509.c,v 1.24 2014/07/11 08:44:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,21 +60,23 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
-#include <openssl/buffer.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
-#endif
+#include <openssl/buffer.h>
+#include <openssl/err.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
 #ifndef OPENSSL_NO_EC
 #include <openssl/ec.h>
 #endif
-#include <openssl/objects.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
+
 #include "asn1_locl.h"
 
 int

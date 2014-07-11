@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.12 2014/07/10 22:45:58 jsing Exp $ */
+/* $OpenBSD: sha512.c,v 1.13 2014/07/11 08:44:49 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].
@@ -50,10 +50,8 @@
  */
 
 #include <openssl/crypto.h>
-#include <openssl/sha.h>
 #include <openssl/opensslv.h>
-
-#include "cryptlib.h"
+#include <openssl/sha.h>
 
 #if !defined(__STRICT_ALIGNMENT) || defined(SHA512_ASM)
 #define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA

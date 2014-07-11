@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_par.c,v 1.18 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: asn1_par.c,v 1.19 2014/07/11 08:44:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,10 +57,10 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
+#include <openssl/asn1.h>
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
-#include <openssl/asn1.h>
 
 static int asn1_print_info(BIO *bp, int tag, int xclass, int constructed,
     int indent);

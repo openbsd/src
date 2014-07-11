@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.31 2014/07/10 22:45:56 jsing Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.32 2014/07/11 08:44:47 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -114,12 +114,15 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
+#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
+#include <openssl/crypto.h>
+#include <openssl/buffer.h>
+#include <openssl/err.h>
 #include <openssl/safestack.h>
 
 DECLARE_STACK_OF(CRYPTO_dynlock)

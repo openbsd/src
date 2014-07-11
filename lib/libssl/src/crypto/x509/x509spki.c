@@ -1,4 +1,4 @@
-/* $OpenBSD: x509spki.c,v 1.11 2014/07/10 13:58:23 jsing Exp $ */
+/* $OpenBSD: x509spki.c,v 1.12 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cryptlib.h"
+#include <openssl/err.h>
 #include <openssl/x509.h>
 
 int

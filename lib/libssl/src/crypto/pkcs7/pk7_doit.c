@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.26 2014/07/10 13:58:23 jsing Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.27 2014/07/11 08:44:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,12 +59,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cryptlib.h"
-#include <openssl/rand.h>
+#include <openssl/err.h>
 #include <openssl/objects.h>
+#include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/err.h>
 
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
     void *value);

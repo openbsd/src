@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.29 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.30 2014/07/11 08:44:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,11 +63,11 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
-#include <openssl/lhash.h>
 #include <openssl/asn1.h>
-#include <openssl/objects.h>
 #include <openssl/bn.h>
+#include <openssl/err.h>
+#include <openssl/lhash.h>
+#include <openssl/objects.h>
 
 /* obj_dat.h is generated from objects.h by obj_dat.pl */
 #ifndef OPENSSL_NO_OBJECT

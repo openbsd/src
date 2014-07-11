@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.11 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.12 2014/07/11 08:44:47 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -58,8 +58,8 @@
 
 #include <string.h>
 
-#include "cryptlib.h"
 #include <openssl/asn1.h>
+#include <openssl/err.h>
 #include <openssl/x509v3.h>
 
 #define ASN1_GEN_FLAG		0x10000

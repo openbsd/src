@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_aesni.c,v 1.6 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: eng_aesni.c,v 1.7 2014/07/11 08:44:48 jsing Exp $ */
 /*
  * Support for Intel AES-NI intruction set
  *   Author: Huang Ying <ying.huang@intel.com>
@@ -80,12 +80,11 @@
 
 #if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_AES_NI) && !defined(OPENSSL_NO_AES)
 
-#include "cryptlib.h"
+#include <openssl/aes.h>
 #include <openssl/dso.h>
 #include <openssl/engine.h>
-#include <openssl/evp.h>
-#include <openssl/aes.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 
 /* AES-NI is available *ONLY* on some x86 CPUs.  Not only that it
    doesn't exist elsewhere, but it even can't be compiled on other

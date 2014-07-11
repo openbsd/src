@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pmaps.c,v 1.3 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: v3_pmaps.c,v 1.4 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -58,9 +58,10 @@
 
 
 #include <stdio.h>
-#include "cryptlib.h"
+
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
+#include <openssl/err.h>
 #include <openssl/x509v3.h>
 
 static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,

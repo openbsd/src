@@ -1,4 +1,4 @@
-/* $OpenBSD: cversion.c,v 1.13 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: cversion.c,v 1.14 2014/07/11 08:44:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,7 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
-#include "cryptlib.h"
+#include <openssl/crypto.h>
+#include <openssl/opensslv.h>
 
 const char *
 SSLeay_version(int t)

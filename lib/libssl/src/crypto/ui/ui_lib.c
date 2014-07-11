@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.24 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.25 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -60,11 +60,10 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
-
 #include <openssl/buffer.h>
-#include <openssl/ui.h>
 #include <openssl/err.h>
+#include <openssl/ui.h>
+
 #include "ui_locl.h"
 
 IMPLEMENT_STACK_OF(UI_STRING_ST) static const UI_METHOD *default_UI_meth = NULL;

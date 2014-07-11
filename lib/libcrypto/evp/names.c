@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.11 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: names.c,v 1.12 2014/07/11 08:44:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.14 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: p_lib.c,v 1.15 2014/07/11 08:44:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,21 +60,21 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
+#include <openssl/asn1_mac.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
-#include <openssl/objects.h>
 #include <openssl/evp.h>
-#include <openssl/asn1_mac.h>
+#include <openssl/objects.h>
 #include <openssl/x509.h>
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
+
+#ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
 #endif
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
-#ifndef OPENSSL_NO_DH
-#include <openssl/dh.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
 #endif
 
 #ifndef OPENSSL_NO_ENGINE

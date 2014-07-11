@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_lib.c,v 1.13 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: ocsp_lib.c,v 1.14 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -61,19 +61,19 @@
  *
  */
 
-#include <cryptlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
 
+#include <openssl/asn1t.h>
+#include <openssl/err.h>
 #include <openssl/objects.h>
+#include <openssl/ocsp.h>
+#include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>
-#include <openssl/pem.h>
 #include <openssl/x509v3.h>
-#include <openssl/ocsp.h>
-#include <openssl/asn1t.h>
 
 /* Convert a certificate and its issuer to an OCSP_CERTID */
 

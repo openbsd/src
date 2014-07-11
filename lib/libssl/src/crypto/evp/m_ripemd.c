@@ -1,4 +1,4 @@
-/* $OpenBSD: m_ripemd.c,v 1.10 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: m_ripemd.c,v 1.11 2014/07/11 08:44:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,17 +60,17 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
-
 #ifndef OPENSSL_NO_RIPEMD
 
-#include <openssl/ripemd.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/ripemd.h>
 #include <openssl/x509.h>
+
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
+
 #include "evp_locl.h"
 
 static int

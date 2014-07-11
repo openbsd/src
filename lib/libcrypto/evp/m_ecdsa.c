@@ -1,4 +1,4 @@
-/* $OpenBSD: m_ecdsa.c,v 1.7 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: m_ecdsa.c,v 1.8 2014/07/11 08:44:48 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -113,7 +113,6 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: a_d2i_fp.c,v 1.9 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: a_d2i_fp.c,v 1.10 2014/07/11 08:44:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,11 +56,12 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
 #include <limits.h>
-#include "cryptlib.h"
-#include <openssl/buffer.h>
+#include <stdio.h>
+
 #include <openssl/asn1_mac.h>
+#include <openssl/buffer.h>
+#include <openssl/err.h>
 
 static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb);
 

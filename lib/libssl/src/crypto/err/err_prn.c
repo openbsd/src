@@ -1,4 +1,4 @@
-/* $OpenBSD: err_prn.c,v 1.15 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: err_prn.c,v 1.16 2014/07/11 08:44:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,11 +59,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cryptlib.h"
-#include <openssl/lhash.h>
-#include <openssl/crypto.h>
 #include <openssl/buffer.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/lhash.h>
 
 void
 ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u), void *u)

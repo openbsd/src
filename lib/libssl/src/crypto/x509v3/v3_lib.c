@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_lib.c,v 1.12 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: v3_lib.c,v 1.13 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -58,8 +58,9 @@
 /* X509 v3 extension utilities */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
 #include <openssl/conf.h>
+#include <openssl/err.h>
 #include <openssl/x509v3.h>
 
 #include "ext_dat.h"

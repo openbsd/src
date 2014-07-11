@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_lib.c,v 1.12 2014/07/08 09:08:27 jsing Exp $ */
+/* $OpenBSD: pk7_lib.c,v 1.13 2014/07/11 08:44:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,9 +57,11 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
+#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+
 #include "asn1_locl.h"
 
 long

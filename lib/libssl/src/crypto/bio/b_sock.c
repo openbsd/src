@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.53 2014/07/10 21:57:40 miod Exp $ */
+/* $OpenBSD: b_sock.c,v 1.54 2014/07/11 08:44:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,8 +72,8 @@
 #include <unistd.h>
 
 #include <openssl/bio.h>
-
-#include "cryptlib.h"
+#include <openssl/buffer.h>
+#include <openssl/err.h>
 
 int
 BIO_get_host_ip(const char *str, unsigned char *ip)

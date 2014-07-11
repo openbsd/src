@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_asid.c,v 1.9 2014/07/10 22:45:58 jsing Exp $ */
+/* $OpenBSD: v3_asid.c,v 1.10 2014/07/11 08:44:49 jsing Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -65,13 +65,12 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
-#include <openssl/conf.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#include <openssl/bn.h>
+#include <openssl/conf.h>
 #include <openssl/x509v3.h>
 #include <openssl/x509.h>
-#include <openssl/bn.h>
 
 #ifndef OPENSSL_NO_RFC3779
 

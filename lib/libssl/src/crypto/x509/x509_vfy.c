@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.32 2014/07/10 22:45:58 jsing Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.33 2014/07/11 08:44:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,15 +64,15 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
-#include <openssl/crypto.h>
-#include <openssl/lhash.h>
-#include <openssl/buffer.h>
-#include <openssl/evp.h>
 #include <openssl/asn1.h>
+#include <openssl/buffer.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/lhash.h>
+#include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/objects.h>
 
 /* CRL score values */
 

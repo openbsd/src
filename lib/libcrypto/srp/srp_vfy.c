@@ -1,4 +1,4 @@
-/* $OpenBSD: srp_vfy.c,v 1.6 2014/07/10 22:45:58 jsing Exp $ */
+/* $OpenBSD: srp_vfy.c,v 1.7 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Christophe Renou (christophe.renou@edelweb.fr) with 
  * the precious help of Peter Sylvester (peter.sylvester@edelweb.fr) 
  * for the EdelKey project and contributed to the OpenSSL project 2004.
@@ -60,13 +60,14 @@
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_SRP
-#include "cryptlib.h"
-#include "srp_lcl.h"
-#include <openssl/srp.h>
-#include <openssl/evp.h>
+
 #include <openssl/buffer.h>
+#include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <openssl/srp.h>
 #include <openssl/txt_db.h>
+
+#include "srp_lcl.h"
 
 #define SRP_RANDOM_SALT_LEN 20
 #define MAX_LEN 2500

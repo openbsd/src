@@ -1,4 +1,4 @@
-/* $OpenBSD: buf_str.c,v 1.8 2014/04/26 13:07:16 jsing Exp $ */
+/* $OpenBSD: buf_str.c,v 1.9 2014/07/11 08:44:48 jsing Exp $ */
 /*
  * Copyright (c) 2014 Bob Beck
  *
@@ -18,8 +18,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "cryptlib.h"
+
 #include <openssl/buffer.h>
+#include <openssl/err.h>
 
 /*
  * XXX these functions accept a NULL arg and return NULL

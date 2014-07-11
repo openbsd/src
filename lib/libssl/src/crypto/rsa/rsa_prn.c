@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_prn.c,v 1.5 2014/07/09 19:51:38 jsing Exp $ */
+/* $OpenBSD: rsa_prn.c,v 1.6 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -57,9 +57,10 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/rsa.h>
+
+#include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/rsa.h>
 
 int
 RSA_print_fp(FILE *fp, const RSA *x, int off)

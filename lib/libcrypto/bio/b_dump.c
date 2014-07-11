@@ -1,4 +1,4 @@
-/* $OpenBSD: b_dump.c,v 1.18 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: b_dump.c,v 1.19 2014/07/11 08:44:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,8 +64,6 @@
 #include <string.h>
 
 #include <openssl/bio.h>
-
-#include "cryptlib.h"
 
 #define TRUNCATE
 #define DUMP_WIDTH	16

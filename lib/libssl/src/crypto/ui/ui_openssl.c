@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_openssl.c,v 1.21 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: ui_openssl.c,v 1.22 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) and others
  * for the OpenSSL project 2001.
  */
@@ -114,25 +114,22 @@
  * [including the GNU Public Licence.]
  */
 
+#include <sys/ioctl.h>
+
 #include <openssl/opensslconf.h>
 
+#include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
-
-#include <unistd.h>
 #include <termios.h>
+#include <unistd.h>
 
 #include "ui_locl.h"
-#include "cryptlib.h"
-
-#include <sys/ioctl.h>
 
 #ifndef NX509_SIG
 #define NX509_SIG 32
 #endif
-
 
 /* Define globals.  They are protected by a lock */
 static struct sigaction savsig[NX509_SIG];

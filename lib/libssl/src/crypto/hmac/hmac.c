@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.c,v 1.20 2014/06/21 13:39:46 jsing Exp $ */
+/* $OpenBSD: hmac.c,v 1.21 2014/07/11 08:44:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -55,10 +55,11 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "cryptlib.h"
+
 #include <openssl/hmac.h>
 
 int

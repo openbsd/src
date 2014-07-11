@@ -1,4 +1,4 @@
-/* $OpenBSD: t_bitst.c,v 1.6 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: t_bitst.c,v 1.7 2014/07/11 08:44:47 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -59,7 +59,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: a_gentm.c,v 1.21 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: a_gentm.c,v 1.22 2014/07/11 08:44:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,9 +62,10 @@
 #include <string.h>
 #include <time.h>
 
-#include "cryptlib.h"
-#include "o_time.h"
 #include <openssl/asn1.h>
+#include <openssl/err.h>
+
+#include "o_time.h"
 
 #if 0
 

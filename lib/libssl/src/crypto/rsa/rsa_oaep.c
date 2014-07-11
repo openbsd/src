@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_oaep.c,v 1.22 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: rsa_oaep.c,v 1.23 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Ulf Moeller. This software is distributed on an "AS IS"
    basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. */
 
@@ -24,11 +24,12 @@
 #include <openssl/opensslconf.h>
 
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
-#include "cryptlib.h"
+
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <openssl/rsa.h>
 #include <openssl/sha.h>
 
 static int MGF1(unsigned char *mask, long len, const unsigned char *seed,

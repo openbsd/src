@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_ossl.c,v 1.6 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: ech_ossl.c,v 1.7 2014/07/11 08:44:48 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -72,13 +72,12 @@
 
 #include <openssl/opensslconf.h>
 
-#include "cryptlib.h"
+#include <openssl/bn.h>
+#include <openssl/err.h>
+#include <openssl/obj_mac.h>
+#include <openssl/sha.h>
 
 #include "ech_locl.h"
-#include <openssl/err.h>
-#include <openssl/sha.h>
-#include <openssl/obj_mac.h>
-#include <openssl/bn.h>
 
 static int ecdh_compute_key(void *out, size_t len, const EC_POINT *pub_key,
 	EC_KEY *ecdh, 

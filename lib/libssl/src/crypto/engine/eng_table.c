@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_table.c,v 1.6 2014/06/22 12:05:09 jsing Exp $ */
+/* $OpenBSD: eng_table.c,v 1.7 2014/07/11 08:44:48 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
  *
@@ -53,9 +53,9 @@
  *
  */
 
-#include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/lhash.h>
+
 #include "eng_int.h"
 
 /* The type of the items in the table */

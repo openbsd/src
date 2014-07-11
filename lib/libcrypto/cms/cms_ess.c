@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_ess.c,v 1.5 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: cms_ess.c,v 1.6 2014/07/11 08:44:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -51,13 +51,13 @@
  * ====================================================================
  */
 
-#include "cryptlib.h"
 #include <openssl/asn1t.h>
+#include <openssl/cms.h>
+#include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/x509v3.h>
-#include <openssl/err.h>
-#include <openssl/cms.h>
+
 #include "cms_lcl.h"
 
 DECLARE_ASN1_ITEM(CMS_ReceiptRequest)

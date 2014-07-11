@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_tree.c,v 1.11 2014/07/09 16:59:33 miod Exp $ */
+/* $OpenBSD: pcy_tree.c,v 1.12 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -56,7 +56,6 @@
  *
  */
 
-#include "cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 

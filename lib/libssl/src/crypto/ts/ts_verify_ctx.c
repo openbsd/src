@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_verify_ctx.c,v 1.6 2014/07/10 13:58:23 jsing Exp $ */
+/* $OpenBSD: ts_verify_ctx.c,v 1.7 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2003.
  */
@@ -58,7 +58,7 @@
 
 #include <string.h>
 
-#include "cryptlib.h"
+#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 

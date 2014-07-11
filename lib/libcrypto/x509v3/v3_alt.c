@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_alt.c,v 1.20 2014/07/10 13:58:23 jsing Exp $ */
+/* $OpenBSD: v3_alt.c,v 1.21 2014/07/11 08:44:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -59,8 +59,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cryptlib.h"
 #include <openssl/conf.h>
+#include <openssl/err.h>
 #include <openssl/x509v3.h>
 
 static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,

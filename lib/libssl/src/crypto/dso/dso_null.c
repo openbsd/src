@@ -1,4 +1,4 @@
-/* $OpenBSD: dso_null.c,v 1.6 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: dso_null.c,v 1.7 2014/07/11 08:44:48 jsing Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -60,7 +60,7 @@
  * no appropriate support for "shared-libraries". */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
 #include <openssl/dso.h>
 
 static DSO_METHOD dso_meth_null = {
