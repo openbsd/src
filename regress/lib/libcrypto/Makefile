@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2014/07/02 16:29:36 jsing Exp $
+#	$OpenBSD: Makefile,v 1.16 2014/07/11 20:37:59 miod Exp $
 
 SUBDIR= \
 	aead \
@@ -26,6 +26,7 @@ SUBDIR= \
 	md4 \
 	md5 \
 	mdc2 \
+	pbkdf2 \
 	pkcs7 \
 	poly1305 \
 	pqueue \
