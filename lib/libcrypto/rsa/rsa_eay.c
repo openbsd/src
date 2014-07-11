@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.34 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.35 2014/07/11 15:21:51 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -452,7 +452,7 @@ RSA_eay_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
 
 	if (padding == RSA_X931_PADDING) {
 		BN_sub(f, rsa->n, ret);
-		if (BN_cmp(ret, f))
+		if (BN_cmp(ret, f) > 0)
 			res = f;
 		else
 			res = ret;
