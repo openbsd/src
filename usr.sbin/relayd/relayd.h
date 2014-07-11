@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.183 2014/07/11 11:48:50 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.184 2014/07/11 16:59:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -161,6 +161,13 @@ enum direction {
 	RELAY_DIR_RESPONSE	=  2
 };
 
+enum sslreneg_state {
+	SSLRENEG_INIT		= 0,	/* first/next negotiation is allowed */
+	SSLRENEG_ALLOW		= 1,	/* all (re-)negotiations are allowed */
+	SSLRENEG_DENY		= 2,	/* next renegotiation must be denied */
+	SSLRENEG_ABORT		= 3	/* the connection should be aborted */
+};
+
 struct ctl_relay_event {
 	int			 s;
 	in_port_t		 port;
@@ -169,8 +176,10 @@ struct ctl_relay_event {
 	struct evbuffer		*output;
 	struct ctl_relay_event	*dst;
 	struct rsession		*con;
+
 	SSL			*ssl;
 	X509			*sslcert;
+	enum sslreneg_state	 sslreneg_state;
 
 	off_t			 splicelen;
 	int			 line;
@@ -622,17 +631,25 @@ TAILQ_HEAD(relay_rules, relay_rule);
 	"\10\01NODELAY\02NO_NODELAY\03SACK\04NO_SACK"		\
 	"\05SOCKET_BUFFER_SIZE\06IP_TTL\07IP_MINTTL\10NO_SPLICE"
 
-#define SSLFLAG_SSLV2		0x01
-#define SSLFLAG_SSLV3		0x02
-#define SSLFLAG_TLSV1		0x04
-#define SSLFLAG_VERSION		0x07
-#define SSLFLAG_DEFAULT		(SSLFLAG_SSLV3|SSLFLAG_TLSV1)
+#define SSLFLAG_SSLV2				0x01
+#define SSLFLAG_SSLV3				0x02
+#define SSLFLAG_TLSV1				0x04
+#define SSLFLAG_VERSION				0x07
+#define SSLFLAG_CIPHER_SERVER_PREF		0x08
+#define SSLFLAG_CLIENT_RENEG			0x10
+#define SSLFLAG_DEFAULT				\
+	(SSLFLAG_SSLV3|SSLFLAG_TLSV1|SSLFLAG_CLIENT_RENEG)
 
 #define SSLFLAG_BITS						\
-	"\10\01sslv2\02sslv3\03tlsv1\04version"
+	"\10\01sslv2\02sslv3\03tlsv1"				\
+	"\04cipher-server-preference\05client-renegotiation"
 
 #define SSLCIPHERS_DEFAULT	"HIGH:!aNULL"
 #define SSLECDHCURVE_DEFAULT	NID_X9_62_prime256v1
+
+#define SSLDHPARAMS_NONE	0
+#define SSLDHPARAMS_DEFAULT	0
+#define SSLDHPARAMS_MIN		1024
 
 struct protocol {
 	objid_t			 id;
@@ -642,8 +659,9 @@ struct protocol {
 	int			 tcpbacklog;
 	u_int8_t		 tcpipttl;
 	u_int8_t		 tcpipminttl;
-	u_int8_t		 sslflags;
+	u_int16_t		 sslflags;
 	char			 sslciphers[768];
+	int			 ssldhparams;
 	int			 sslecdhcurve;
 	char			 sslca[MAXPATHLEN];
 	char			 sslcacert[MAXPATHLEN];

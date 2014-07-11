@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.146 2014/07/09 19:17:08 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.147 2014/07/11 16:59:38 reyk Exp $
 .\"
 .\" Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 9 2014 $
+.Dd $Mdocdate: July 11 2014 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -873,14 +873,45 @@ will be used (strong crypto cipher suites without anonymous DH).
 See the CIPHERS section of
 .Xr openssl 1
 for information about SSL cipher suites and preference lists.
-.It Ic ecdh curve Ar name
+.It Oo Ic no Oc Ic cipher-server-preference
+Prefer the server's cipher list over the client's preferences when
+choosing a cipher for the connection;
+disabled by default.
+.It Oo Ic no Oc Ic client-renegotiation
+Allow client-initiated renegotiation;
+enabled by default.
+Disable to mitigate a potential DoS risk.
+.It Ic ecdh Op Ic curve Ar name
 Set a named curve to use when generating EC keys for ECDHE-based
-cipher suites with Perfect Forward Security (PFS), or
-.Ar none
-to disable ECDHE support.
-If not specified, the default curve
+cipher suites with Perfect Forward Security (PFS).
+If the curve
+.Ar name
+is not specified, the default curve
 .Ar prime256v1
 will be used.
+ECDHE is enabled by default.
+.It Ic no ecdh
+Disable ECDHE support.
+.It Ic edh Op Ic params Ar maximum
+Enable EDH-based cipher suites with Perfect Forward Security (PFS) for
+older clients that do not support ECDHE.
+If the
+.Ar maximum
+length of the DH params for EDH is not specified, the default value of
+.Ar 1024
+bits will be used.
+Other possible values are numbers between 1024 and 8192, including
+.Ar 1024 ,
+.Ar 1536 ,
+.Ar 2048 ,
+.Ar 4096 ,
+or
+.Ar 8192 .
+Values higher than 1024 bits can cause incompatibilities with older
+SSL clients.
+.It Ic no edh
+Disable EDH support.
+This is the default.
 .It Ic session cache Ar value
 Set the maximum size of the SSL session cache.
 If the

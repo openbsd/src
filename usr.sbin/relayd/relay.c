@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.172 2014/07/09 16:42:05 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.173 2014/07/11 16:59:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -43,6 +43,7 @@
 #include <event.h>
 #include <fnmatch.h>
 
+#include <openssl/dh.h>
 #include <openssl/ssl.h>
 
 #include "relayd.h"
@@ -72,6 +73,9 @@ void		 relay_input(struct rsession *);
 
 u_int32_t	 relay_hash_addr(struct sockaddr_storage *, u_int32_t);
 
+DH *		 relay_ssl_get_dhparams(int);
+void		 relay_ssl_callback_info(const SSL *, int, int);
+DH		*relay_ssl_callback_dh(SSL *, int, int);
 SSL_CTX		*relay_ssl_ctx_create(struct relay *);
 void		 relay_ssl_transaction(struct rsession *,
 		    struct ctl_relay_event *);
@@ -1847,6 +1851,103 @@ relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	return (0);
 }
 
+void
+relay_ssl_callback_info(const SSL *ssl, int where, int rc)
+{
+	struct ctl_relay_event *cre;
+	int ssl_state;
+
+	cre = (struct ctl_relay_event *)SSL_get_app_data(ssl);
+
+	if (cre == NULL || cre->sslreneg_state == SSLRENEG_ALLOW)
+		return;
+
+	ssl_state = SSL_get_state(ssl);
+
+	/* Check renegotiations */
+	if ((where & SSL_CB_ACCEPT_LOOP) &&
+	    (cre->sslreneg_state == SSLRENEG_DENY)) {
+		if ((ssl_state == SSL3_ST_SR_CLNT_HELLO_A) ||
+		    (ssl_state == SSL23_ST_SR_CLNT_HELLO_A)) {
+			/*
+			 * This is a client initiated renegotiation
+			 * that we do not allow
+			 */
+			cre->sslreneg_state = SSLRENEG_ABORT;
+		}
+	} else if ((where & SSL_CB_HANDSHAKE_DONE) &&
+	    (cre->sslreneg_state == SSLRENEG_INIT)) {
+		/*
+		 * This is right after the first handshake,
+		 * disallow any further negotiations.
+		 */
+		cre->sslreneg_state = SSLRENEG_DENY;
+	}
+}
+
+DH *
+relay_ssl_get_dhparams(int keylen)
+{
+	DH		*dh;
+	BIGNUM		*(*prime)(BIGNUM *);
+	const char	*gen;
+
+	gen = "2";
+	if (keylen >= 8192)
+		prime = get_rfc3526_prime_8192;
+	else if (keylen >= 4096)
+		prime = get_rfc3526_prime_4096;
+	else if (keylen >= 3072)
+		prime = get_rfc3526_prime_3072;
+	else if (keylen >= 2048)
+		prime = get_rfc3526_prime_2048;
+	else if (keylen >= 1536)
+		prime = get_rfc3526_prime_1536;
+	else
+		prime = get_rfc2409_prime_1024;
+
+	if ((dh = DH_new()) == NULL)
+		return (NULL);
+
+	dh->p = (*prime)(NULL);
+	BN_dec2bn(&dh->g, gen);
+
+	if (dh->p == NULL || dh->g == NULL) {
+		DH_free(dh);
+		return (NULL);
+	}
+
+	return (dh);
+}
+
+DH *
+relay_ssl_callback_dh(SSL *ssl, int export, int keylen)
+{
+	struct ctl_relay_event	*cre;
+	EVP_PKEY		*pkey;
+	int			 keytype, maxlen;
+	DH			*dh = NULL;
+
+	/* Get maximum key length from config */
+	if ((cre = (struct ctl_relay_event *)SSL_get_app_data(ssl)) == NULL)
+		return (NULL);
+	maxlen = cre->con->se_relay->rl_proto->ssldhparams;
+
+	/* Get the private key length from the cert */
+	if ((pkey = SSL_get_privatekey(ssl))) {
+		keytype = EVP_PKEY_type(pkey->type);
+		if (keytype == EVP_PKEY_RSA || keytype == EVP_PKEY_DSA)
+			keylen = EVP_PKEY_bits(pkey);
+		else
+			return (NULL);
+	}
+
+	/* get built-in params based on the shorter key length */
+	dh = relay_ssl_get_dhparams(MIN(keylen, maxlen));
+
+	return (dh);
+}
+
 SSL_CTX *
 relay_ssl_ctx_create(struct relay *rlay)
 {
@@ -1873,6 +1974,8 @@ relay_ssl_ctx_create(struct relay *rlay)
 	SSL_CTX_set_options(ctx, SSL_OP_ALL);
 	SSL_CTX_set_options(ctx,
 	    SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
+	if (proto->sslflags & SSLFLAG_CIPHER_SERVER_PREF)
+		SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
 
 	/* Set the allowed SSL protocols */
 	if ((proto->sslflags & SSLFLAG_SSLV2) == 0)
@@ -1882,6 +1985,9 @@ relay_ssl_ctx_create(struct relay *rlay)
 	if ((proto->sslflags & SSLFLAG_TLSV1) == 0)
 		SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
 
+	/* add the SSL info callback */
+	SSL_CTX_set_info_callback(ctx, relay_ssl_callback_info);
+
 	if (proto->sslecdhcurve > 0) {
 		/* Enable ECDHE support for TLS perfect forward secrecy */
 		if ((ecdhkey =
@@ -1890,6 +1996,11 @@ relay_ssl_ctx_create(struct relay *rlay)
 		SSL_CTX_set_tmp_ecdh(ctx, ecdhkey);
 		SSL_CTX_set_options(ctx, SSL_OP_SINGLE_ECDH_USE);
 		EC_KEY_free(ecdhkey);
+	}
+
+	if (proto->ssldhparams > 0) {
+		/* Enable EDH params (forward secrecy for older clients) */
+		SSL_CTX_set_tmp_dh_callback(ctx, relay_ssl_callback_dh);
 	}
 
 	if (!SSL_CTX_set_cipher_list(ctx, proto->sslciphers))
@@ -1953,6 +2064,7 @@ void
 relay_ssl_transaction(struct rsession *con, struct ctl_relay_event *cre)
 {
 	struct relay		*rlay = con->se_relay;
+	struct protocol	*proto = rlay->rl_proto;
 	SSL			*ssl;
 	const SSL_METHOD	*method;
 	void			(*cb)(int, short, void *);
@@ -1981,11 +2093,21 @@ relay_ssl_transaction(struct rsession *con, struct ctl_relay_event *cre)
 	if (!SSL_set_fd(ssl, cre->s))
 		goto err;
 
-	if (cre->dir == RELAY_DIR_REQUEST)
+	if (cre->dir == RELAY_DIR_REQUEST) {
+		if ((proto->sslflags & SSLFLAG_CLIENT_RENEG) == 0)
+			/* Only allow negotiation during the first handshake */
+			cre->sslreneg_state = SSLRENEG_INIT;
+		else
+			/* Allow client initiated renegotiations */
+			cre->sslreneg_state = SSLRENEG_ALLOW;
 		SSL_set_accept_state(ssl);
-	else
+	} else {
+		/* Always allow renegotiations if we're the client */
+		cre->sslreneg_state = SSLRENEG_ALLOW;
 		SSL_set_connect_state(ssl);
+	}
 
+	SSL_set_app_data(ssl, cre);
 	cre->ssl = ssl;
 
 	DPRINTF("%s: session %d: scheduling on %s", __func__, con->se_id,
@@ -2166,6 +2288,11 @@ relay_ssl_readcb(int fd, short event, void *arg)
 		goto err;
 	}
 
+	if (cre->sslreneg_state == SSLRENEG_ABORT) {
+		what |= EVBUFFER_ERROR;
+		goto err;
+	}
+
 	if (bufev->wm_read.high != 0)
 		howmuch = MIN(sizeof(rbuf), bufev->wm_read.high);
 
@@ -2235,6 +2362,11 @@ relay_ssl_writecb(int fd, short event, void *arg)
 
 	if (event == EV_TIMEOUT) {
 		what |= EVBUFFER_TIMEOUT;
+		goto err;
+	}
+
+        if (cre->sslreneg_state == SSLRENEG_ABORT) {
+		what |= EVBUFFER_ERROR;
 		goto err;
 	}
 

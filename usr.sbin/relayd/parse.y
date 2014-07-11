@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.185 2014/07/11 11:48:50 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.186 2014/07/11 16:59:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -167,8 +167,8 @@ typedef struct {
 %token	QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST RESPONSE RETRY QUICK
 %token	RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SNMP SOCKET SPLICE
 %token	SSL STICKYADDR STYLE TABLE TAG TAGGED TCP TIMEOUT TO ROUTER RTLABEL
-%token	TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE MATCH
-%token	RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDH CURVE
+%token	TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE MATCH PARAMS
+%token	RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDH EDH CURVE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table value optstring
@@ -177,6 +177,7 @@ typedef struct {
 %type	<v.number>	optssl optsslclient sslcache
 %type	<v.number>	redirect_proto relay_proto match
 %type	<v.number>	action ruleaf key_option
+%type	<v.number>	ssldhparams sslecdhcurve
 %type	<v.port>	port
 %type	<v.host>	host
 %type	<v.addr>	address
@@ -904,6 +905,7 @@ proto		: relay_proto PROTO STRING	{
 			TAILQ_INIT(&p->rules);
 			(void)strlcpy(p->sslciphers, SSLCIPHERS_DEFAULT,
 			    sizeof(p->sslciphers));
+			p->ssldhparams = SSLDHPARAMS_DEFAULT;
 			p->sslecdhcurve = SSLECDHCURVE_DEFAULT;
 			if (last_proto_id == INT_MAX) {
 				yyerror("too many protocols defined");
@@ -1002,15 +1004,17 @@ sslflags	: SESSION CACHE sslcache	{ proto->cache = $3; }
 			}
 			free($2);
 		}
-		| ECDH CURVE STRING		{
-			if (strcmp("none", $3) == 0)
-				proto->sslecdhcurve = 0;
-			else if ((proto->sslecdhcurve = OBJ_sn2nid($3)) == 0) {
-				yyerror("ECDH curve not supported");
-				free($3);
-				YYERROR;
-			}
-			free($3);
+		| NO EDH			{
+			proto->ssldhparams = SSLDHPARAMS_NONE;
+		}
+		| EDH ssldhparams		{
+			proto->ssldhparams = $2;
+		}
+		| NO ECDH			{
+			proto->sslecdhcurve = 0;
+		}
+		| ECDH sslecdhcurve		{
+			proto->sslecdhcurve = $2;
 		}
 		| CA FILENAME STRING		{
 			if (strlcpy(proto->sslca, $3,
@@ -1061,6 +1065,10 @@ flag		: STRING			{
 				$$ = SSLFLAG_SSLV3;
 			else if (strcmp("tlsv1", $1) == 0)
 				$$ = SSLFLAG_TLSV1;
+			else if (strcmp("cipher-server-preference", $1) == 0)
+				$$ = SSLFLAG_CIPHER_SERVER_PREF;
+			else if (strcmp("client-renegotiation", $1) == 0)
+				$$ = SSLFLAG_CLIENT_RENEG;
 			else {
 				yyerror("invalid SSL flag: %s", $1);
 				free($1);
@@ -1449,6 +1457,29 @@ key_option	: /* empty */		{ $$ = KEY_OPTION_NONE; }
 		| REMOVE		{ $$ = KEY_OPTION_REMOVE; }
 		| HASH			{ $$ = KEY_OPTION_HASH; }
 		| LOG			{ $$ = KEY_OPTION_LOG; }
+		;
+
+ssldhparams	: /* empty */		{ $$ = SSLDHPARAMS_MIN; }
+		| PARAMS NUMBER		{
+			if ($2 < SSLDHPARAMS_MIN) {
+				yyerror("EDH params not supported: %d", $2);
+				YYERROR;
+			}
+			$$ = $2;
+		}
+		;
+
+sslecdhcurve	: /* empty */		{ $$ = SSLECDHCURVE_DEFAULT; }
+		| CURVE STRING		{
+			if (strcmp("none", $2) == 0)
+				$$ = 0;
+			else if ((proto->sslecdhcurve = OBJ_sn2nid($2)) == 0) {
+				yyerror("ECDH curve not supported");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
 		;
 
 relay		: RELAY STRING	{
@@ -2059,6 +2090,7 @@ lookup(char *s)
 		{ "digest",		DIGEST },
 		{ "disable",		DISABLE },
 		{ "ecdh",		ECDH },
+		{ "edh",		EDH },
 		{ "error",		ERROR },
 		{ "expect",		EXPECT },
 		{ "external",		EXTERNAL },
@@ -2090,6 +2122,7 @@ lookup(char *s)
 		{ "nodelay",		NODELAY },
 		{ "nothing",		NOTHING },
 		{ "on",			ON },
+		{ "params",		PARAMS },
 		{ "parent",		PARENT },
 		{ "pass",		PASS },
 		{ "password",		PASSWORD },
