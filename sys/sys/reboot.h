@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.h,v 1.15 2014/07/10 12:13:48 uebayasi Exp $	*/
+/*	$OpenBSD: reboot.h,v 1.16 2014/07/11 07:57:58 deraadt Exp $	*/
 /*	$NetBSD: reboot.h,v 1.9 1996/04/22 01:23:25 christos Exp $	*/
 
 /*
@@ -34,8 +34,6 @@
 
 #ifndef _SYS_REBOOT_H_
 #define	_SYS_REBOOT_H_
-
-#include <sys/cdefs.h>
 
 /*
  * Arguments to reboot system call.  These are passed to the boot program,
