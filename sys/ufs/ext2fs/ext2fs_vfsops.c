@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.72 2014/07/11 14:30:52 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.73 2014/07/11 15:54:52 tobias Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -1079,6 +1079,12 @@ ext2fs_checksb(struct ext2fs *fs, int ronly)
 		    fs2h32(fs->e2fs_log_bsize));
 #endif
 		return (EIO);	   /* XXX needs translation */
+	}
+	if (fs->e2fs_bpg == 0) {
+#ifdef DIAGNOSTIC
+		printf("Ext2 fs: bad blocks per group: 0\n");
+#endif
+		return (EIO);
 	}
 	if (fs2h32(fs->e2fs_rev) > E2FS_REV0) {
 		if (fs2h32(fs->e2fs_first_ino) != EXT2_FIRSTINO) {
