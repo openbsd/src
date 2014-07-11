@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2013/01/06 21:59:28 martynas Exp $
+#	$OpenBSD: Makefile,v 1.12 2014/07/11 16:01:41 halex Exp $
 
 #	dump.h			header file
 #	itime.c			reads /etc/dumpdates
@@ -14,6 +14,8 @@
 PROG=	dump
 LINKS=	${BINDIR}/dump ${BINDIR}/rdump
 CFLAGS+=-DRDUMP
+DPADD+=	${LIBUTIL}
+LDADD+=	-lutil
 SRCS=	itime.c main.c optr.c dumprmt.c tape.c traverse.c
 MAN=	dump.8
 MLINKS+=dump.8 rdump.8

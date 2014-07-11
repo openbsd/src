@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprestore.h,v 1.9 2009/12/15 13:11:42 halex Exp $	*/
+/*	$OpenBSD: dumprestore.h,v 1.10 2014/07/11 16:01:40 halex Exp $	*/
 /*	$NetBSD: dumprestore.h,v 1.14 2005/12/26 19:01:47 perry Exp $	*/
 
 /*
@@ -152,8 +152,8 @@ union u_spcl {
 #define DR_NEWHEADER	0x0001	/* new format tape header */
 #define DR_NEWINODEFMT	0x0002	/* new format inodes on tape */
 
-#define	DUMPOUTFMT	"%-16s %c %s"		/* for printf */
+#define	DUMPOUTFMT	"%-18s %c %s"		/* for printf */
 						/* name, level, ctime(date) */
-#define	DUMPINFMT	"%16s %c %[^\n]\n"	/* inverse for scanf */
+#define	DUMPINFMT	"%18s %c %[^\n]\n"	/* inverse for scanf */
 
 #endif /* !_PROTOCOLS_DUMPRESTORE_H_ */

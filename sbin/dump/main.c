@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.51 2014/06/13 20:43:06 naddy Exp $	*/
+/*	$OpenBSD: main.c,v 1.52 2014/07/11 16:01:41 halex Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "dump.h"
 #include "pathnames.h"
@@ -94,8 +95,9 @@ main(int argc, char *argv[])
 	ino_t maxino;
 	time_t t;
 	int dirlist;
-	char *toplevel, *str, *mount_point = NULL;
+	char *toplevel, *str, *mount_point = NULL, *realpath;
 	int just_estimate = 0;
+	u_int64_t zero_uid = 0;
 
 	spcl.c_date = (int64_t)time(NULL);
 
@@ -112,7 +114,7 @@ main(int argc, char *argv[])
 		usage();
 
 	obsolete(&argc, &argv);
-	while ((ch = getopt(argc, argv, "0123456789aB:b:cd:f:h:ns:ST:uWw")) != -1)
+	while ((ch = getopt(argc, argv, "0123456789aB:b:cd:f:h:ns:ST:UuWw")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
@@ -180,6 +182,10 @@ main(int argc, char *argv[])
 			lastlevel = '?';
 			break;
 
+		case 'U':
+			Uflag = 1;	/* use duids */
+			break;
+
 		case 'u':		/* update /etc/dumpdates */
 			uflag = 1;
 			break;
@@ -213,6 +219,16 @@ main(int argc, char *argv[])
 	for (i = 0; i < argc; i++) {
 		struct stat sb;
 
+		/* Convert potential duid into a device name */
+		if ((diskfd = opendev(argv[i], O_RDONLY | O_NOFOLLOW, 0,
+		    &realpath)) >= 0) {
+			argv[i] = strdup(realpath);
+			if (argv[i] == NULL) {
+				msg("Cannot malloc realpath\n");
+				exit(X_STARTUP);
+			}
+			(void)close(diskfd);
+		}
 		if (lstat(argv[i], &sb) == -1) {
 			msg("Cannot lstat %s: %s\n", argv[i], strerror(errno));
 			exit(X_STARTUP);
@@ -370,6 +386,26 @@ main(int argc, char *argv[])
 	(void)gethostname(spcl.c_host, sizeof(spcl.c_host));
 	spcl.c_level = level - '0';
 	spcl.c_type = TS_TAPE;
+
+	if ((diskfd = open(disk, O_RDONLY)) < 0) {
+		msg("Cannot open %s\n", disk);
+		exit(X_STARTUP);
+	}
+	if (ioctl(diskfd, DIOCGDINFO, (char *)&lab) < 0)
+		err(1, "ioctl (DIOCGDINFO)");
+	if (!Uflag)
+		;
+	else if (memcmp(lab.d_uid, &zero_uid, sizeof(lab.d_uid)) == 0) {
+		msg("Cannot find DUID of disk %s\n", disk);
+		exit(X_STARTUP);
+	} else if (asprintf(&duid,
+	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.%c",
+	    lab.d_uid[0], lab.d_uid[1], lab.d_uid[2], lab.d_uid[3],
+	    lab.d_uid[4], lab.d_uid[5], lab.d_uid[6], lab.d_uid[7],
+	    disk[strlen(disk)-1]) == -1) {
+		msg("Cannot malloc duid\n");
+		exit(X_STARTUP);
+	}
 	if (!Tflag)
 	        getdumptime();		/* /etc/dumpdates snarfed */
 
@@ -387,10 +423,6 @@ main(int argc, char *argv[])
 	else
 		msgtail("to %s\n", tape);
 
-	if ((diskfd = open(disk, O_RDONLY)) < 0) {
-		msg("Cannot open %s\n", disk);
-		exit(X_STARTUP);
-	}
 	if (ioctl(diskfd, DIOCGPDINFO, (char *)&lab) < 0)
 		err(1, "ioctl (DIOCGPDINFO)");
 	sync();
@@ -561,7 +593,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	(void)fprintf(stderr, "usage: %s [-0123456789acnSuWw] [-B records] "
+	(void)fprintf(stderr, "usage: %s [-0123456789acnSUuWw] [-B records] "
 		      "[-b blocksize] [-d density]\n"
 		      "\t[-f file] [-h level] [-s feet] "
 		      "[-T date] files-to-dump\n",

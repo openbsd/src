@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.20 2014/06/13 20:43:06 naddy Exp $	*/
+/*	$OpenBSD: dump.h,v 1.21 2014/07/11 16:01:41 halex Exp $	*/
 /*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
@@ -56,9 +56,11 @@ char	*disk;		/* name of the disk file */
 char	*tape;		/* name of the tape file */
 char	*dumpdates;	/* name of the file containing dump date information*/
 char	*temp;		/* name of the file for doing rewrite of dumpdates */
+char	*duid;		/* duid of the disk being dumped */
 char	lastlevel;	/* dump level of previous dump */
 char	level;		/* dump level of this dump */
 int	uflag;		/* update flag */
+int	Uflag;		/* use duids in dumpdates flag */
 int	diskfd;		/* disk file descriptor */
 int	tapefd;		/* tape file descriptor */
 int	pipeout;	/* true => output to standard output */
