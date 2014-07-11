@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.17 2014/07/09 15:41:16 halex Exp $
+#	$OpenBSD: ksh.kshrc,v 1.18 2014/07/11 16:41:16 halex Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -98,15 +98,15 @@ case "$-" in
 		alias stripe='label "$USER@$HOST ($tty) - $PWD"'
 		alias istripe='ilabel "$USER@$HOST ($tty)"'
 
-		function wftp { ilabel "ftp $*"; "ftp" "$@"; istripe; }
-		function wcd { \cd "$@" && stripe; }
+		function wftp { ilabel "ftp $*"; "ftp" "$@"; eval istripe; }
+		function wcd { \cd "$@" && eval stripe; }
 		function wssh
 		{
 			local rc
 			"ssh" "$@"
 			rc=$?
-			istripe
-			stripe
+			eval istripe
+			eval stripe
 			return $rc
 		}
 		function wtelnet
@@ -114,8 +114,8 @@ case "$-" in
 			local rc
 			"telnet" "$@"
 			rc=$?
-			istripe
-			stripe
+			eval istripe
+			eval stripe
 			return $rc
 		}
 		function wrlogin
@@ -123,8 +123,8 @@ case "$-" in
 			local rc
 			"rlogin" "$@"
 			rc=$?
-			istripe
-			stripe
+			eval istripe
+			eval stripe
 			return $rc
 		}
 		function wsu
@@ -132,8 +132,8 @@ case "$-" in
 			local rc
 			"su" "$@"
 			rc=$?
-			istripe
-			stripe
+			eval istripe
+			eval stripe
 			return $rc
 		}
 		alias su=wsu
@@ -142,8 +142,8 @@ case "$-" in
 		alias ssh=wssh
 		alias telnet=wtelnet
 		alias rlogin=wrlogin
-		stripe
-		istripe
+		eval stripe
+		eval istripe
 		PS1=$PROMPT
 	fi
 	alias quit=exit
