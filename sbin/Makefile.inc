@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2014/07/10 13:31:57 florian Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2014/07/11 13:13:04 deraadt Exp $
 
 BINDIR?=	/sbin
 LDSTATIC=	${STATIC}
-CFLAGS+=	-Werror-implicit-function-declaration
+COPTS+=		-Werror-implicit-function-declaration

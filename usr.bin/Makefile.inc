@@ -1,3 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1996/06/26 05:31:08 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2014/07/11 13:13:04 deraadt Exp $
 
 BINDIR?=	/usr/bin
+COPTS+=-Werror-implicit-function-declaration
