@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.263 2014/04/21 12:22:26 henning Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.264 2014/07/11 15:25:44 henning Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -2075,18 +2075,23 @@ void
 in_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 {
 	/* some hw and in_delayed_cksum need the pseudo header cksum */
-	if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) {
+	if (m->m_pkthdr.csum_flags &
+	    (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT|M_ICMP_CSUM_OUT)) {
 		struct ip *ip;
-		u_int16_t csum, offset;
+		u_int16_t csum = 0, offset;
 
 		ip  = mtod(m, struct ip *);
 		offset = ip->ip_hl << 2;
-		csum = in_cksum_phdr(ip->ip_src.s_addr, ip->ip_dst.s_addr,
-		    htonl(ntohs(ip->ip_len) - offset + ip->ip_p));
+		if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT))
+			csum = in_cksum_phdr(ip->ip_src.s_addr,
+			    ip->ip_dst.s_addr, htonl(ntohs(ip->ip_len) -
+			    offset + ip->ip_p));
 		if (ip->ip_p == IPPROTO_TCP)
 			offset += offsetof(struct tcphdr, th_sum);
 		else if (ip->ip_p == IPPROTO_UDP)
 			offset += offsetof(struct udphdr, uh_sum);
+		else if (ip->ip_p == IPPROTO_ICMP)
+			offset += offsetof(struct icmp, icmp_cksum);
 		if ((offset + sizeof(u_int16_t)) > m->m_len)
 			m_copyback(m, offset, sizeof(csum), &csum, M_NOWAIT);
 		else
