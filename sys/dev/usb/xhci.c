@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.15 2014/07/10 11:47:14 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.16 2014/07/11 16:38:58 pirofti Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -552,8 +552,7 @@ xhci_intr1(struct xhci_softc *sc)
 	}
 
 	XOWRITE4(sc, XHCI_USBSTS, intrs); /* Acknowledge */
-	if (intrs & XHCI_STS_EINT)
-		usb_schedsoftintr(&sc->sc_bus);
+	usb_schedsoftintr(&sc->sc_bus);
 
 	/* Acknowledge PCI interrupt */
 	intrs = XRREAD4(sc, XHCI_IMAN(0));
