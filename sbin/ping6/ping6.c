@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.97 2014/07/09 09:41:09 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.98 2014/07/11 15:25:48 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -246,7 +246,7 @@ main(int argc, char *argv[])
 	struct itimerval itimer;
 	struct sockaddr_in6 from;
 	struct addrinfo hints;
-	int ch, hold, i, packlen, preload, optval, ret_ga;
+	int ch, i, packlen, preload, optval, ret_ga;
 	u_char *datap, *packet;
 	char *e, *target, *ifname = NULL, *gateway = NULL;
 	const char *errstr;
@@ -606,11 +606,11 @@ main(int argc, char *argv[])
 	for (i = 0; i < sizeof(nonce); i += sizeof(u_int32_t))
 		*((u_int32_t *)&nonce[i]) = arc4random();
 
-	hold = 1;
+	optval = 1;
 
 	if (options & F_SO_DEBUG)
-		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, &hold,
-		    (socklen_t)sizeof(hold));
+		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, &optval,
+		    (socklen_t)sizeof(optval));
 	optval = IPV6_DEFHLIM;
 	if (IN6_IS_ADDR_MULTICAST(&dst.sin6_addr))
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
@@ -793,9 +793,9 @@ main(int argc, char *argv[])
 		 * to stress the ethernet, or just want to fill the arp cache
 		 * to get some stuff for /etc/ethers.
 		 */
-		hold = 48 * 1024;
-		setsockopt(s, SOL_SOCKET, SO_RCVBUF, &hold,
-		    (socklen_t)sizeof(hold));
+		optval = 48 * 1024;
+		setsockopt(s, SOL_SOCKET, SO_RCVBUF, &optval,
+		    (socklen_t)sizeof(optval));
 	}
 
 	optval = 1;
