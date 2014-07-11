@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2014/07/11 13:21:05 beck Exp $
+# $OpenBSD: Makefile,v 1.8 2014/07/11 13:35:57 beck Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -811,17 +811,10 @@ MLINKS+=\
 	d2i_X509_REQ.3 i2d_X509_REQ.3 \
 	d2i_X509_REQ.3 i2d_X509_REQ_bio.3 \
 	d2i_X509_REQ.3 i2d_X509_REQ_fp.3 \
-	dsa.3 DSA_OpenSSL.3 \
 	dsa.3 DSA_SIG_free.3 \
 	dsa.3 DSA_do_verify.3 \
-	dsa.3 DSA_free.3 \
-	dsa.3 DSA_get_default_method.3 \
 	dsa.3 DSA_get_ex_data.3 \
-	dsa.3 DSA_new_method.3 \
-	dsa.3 DSA_set_default_method.3 \
 	dsa.3 DSA_set_ex_data.3 \
-	dsa.3 DSA_sign_setup.3 \
-	dsa.3 DSA_verify.3 \
 	ecdsa.3 ECDSA_OpenSSL.3 \
 	ecdsa.3 ECDSA_SIG_free.3 \
 	ecdsa.3 ECDSA_SIG_new.3 \
