@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.184 2014/07/11 16:59:38 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.185 2014/07/11 21:09:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -659,7 +659,7 @@ struct protocol {
 	int			 tcpbacklog;
 	u_int8_t		 tcpipttl;
 	u_int8_t		 tcpipminttl;
-	u_int16_t		 sslflags;
+	u_int8_t		 sslflags;
 	char			 sslciphers[768];
 	int			 ssldhparams;
 	int			 sslecdhcurve;
