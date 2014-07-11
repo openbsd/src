@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.76 2014/07/11 13:21:15 miod Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.77 2014/07/11 15:44:53 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -849,7 +849,8 @@ ssl3_get_server_hello(SSL *s)
 		    &s->session->master_key_length, NULL, &pref_cipher,
 		    s->tls_session_secret_cb_arg)) {
 			s->session->cipher = pref_cipher ?
-			pref_cipher : ssl_get_cipher_by_char(s, p + j);
+			    pref_cipher : ssl_get_cipher_by_char(s, p + j);
+			s->s3->flags |= SSL3_FLAGS_CCS_OK;
 		}
 	}
 
