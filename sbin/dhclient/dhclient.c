@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.314 2014/07/11 20:41:41 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.315 2014/07/11 21:08:20 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -304,8 +304,6 @@ routehandler(void)
 			memset(&b, 0, sizeof(b));
 			add_address(ifi->name, 0, b, b);
 			quit = INTERNALSIG;
-			/* No need to write out our resolv.conf. */
-			client->flags &= ~IS_RESPONSIBLE;
 			break;
 		}
 		if (deleting.s_addr != INADDR_ANY) {
@@ -370,8 +368,7 @@ routehandler(void)
 	}
 
 	/* Something has happened. Try to write out the resolv.conf. */
-	if (client->active && client->active->resolv_conf &&
-	    client->flags & IS_RESPONSIBLE)
+	if (client->active && client->active->resolv_conf)
 		write_file("/etc/resolv.conf",
 		    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
 		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0,
@@ -843,13 +840,6 @@ bind_lease(void)
 		goto newlease;
 	}
 
-	client->new->resolv_conf = resolv_conf_contents(
-	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS]);
-
-	/* Replace the old active lease with the new one. */
-	client->active = client->new;
-	client->new = NULL;
-
 	/* Deleting the addresses also clears out arp entries. */
 	delete_addresses(ifi->name, ifi->rdomain);
 	flush_routes(ifi->name, ifi->rdomain);
@@ -899,7 +889,18 @@ bind_lease(void)
 			    &options[DHO_STATIC_ROUTES]);
 	}
 
+	client->new->resolv_conf = resolv_conf_contents(
+	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS]);
+	if (client->new->resolv_conf)
+		write_file("/etc/resolv.conf",
+		    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
+		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0,
+		    client->new->resolv_conf, strlen(client->new->resolv_conf));
+
 newlease:
+	/* Replace the old active lease with the new one. */
+	client->active = client->new;
+	client->new = NULL;
 	rewrite_option_db(client->active, lease);
 	free_client_lease(lease);
 
