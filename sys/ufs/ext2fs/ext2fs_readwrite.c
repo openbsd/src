@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.30 2014/07/11 14:30:52 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.31 2014/07/11 15:11:00 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -54,6 +54,8 @@
 #include <ufs/ext2fs/ext2fs_extern.h>
 
 
+static int	ext2_ind_read(struct vnode *, struct inode *, struct m_ext2fs *, struct uio *);
+
 #define doclusterread 0 /* XXX underway */
 #define doclusterwrite 0
 
@@ -69,15 +71,24 @@ ext2fs_read(void *v)
 	struct inode *ip;
 	struct uio *uio;
 	struct m_ext2fs *fs;
+
+	vp = ap->a_vp;
+	ip = VTOI(vp);
+	uio = ap->a_uio;
+	fs = ip->i_e2fs;
+
+	return ext2_ind_read(vp, ip, fs, uio);
+}
+
+static int
+ext2_ind_read(struct vnode *vp, struct inode *ip, struct m_ext2fs *fs,
+    struct uio *uio)
+{
 	struct buf *bp;
 	daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error;
-
-	vp = ap->a_vp;
-	ip = VTOI(vp);
-	uio = ap->a_uio;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
@@ -85,13 +96,12 @@ ext2fs_read(void *v)
 
 	if (vp->v_type == VLNK) {
 		if ((int)ext2fs_size(ip) < vp->v_mount->mnt_maxsymlinklen ||
-			(vp->v_mount->mnt_maxsymlinklen == 0 &&
-			 ip->i_e2fs_nblock == 0))
+		    (vp->v_mount->mnt_maxsymlinklen == 0 &&
+		    ip->i_e2fs_nblock == 0))
 			panic("%s: short symlink", "ext2fs_read");
 	} else if (vp->v_type != VREG && vp->v_type != VDIR)
 		panic("%s: type %d", "ext2fs_read", vp->v_type);
 #endif
-	fs = ip->i_e2fs;
 	if (e2fs_overflow(fs, 0, uio->uio_offset))
 		return (EFBIG);
 	if (uio->uio_resid == 0)
