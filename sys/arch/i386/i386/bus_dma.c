@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.30 2014/07/11 09:36:26 mpi Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.31 2014/07/11 14:41:00 mpi Exp $	*/
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -430,7 +430,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	size_t ssize;
 	bus_addr_t addr;
 	int curseg, pmapflags = 0, ret;
-	struct kmem_pa_mode *kd;
+	const struct kmem_dyn_mode *kd;
 
 	if (flags & BUS_DMA_NOCACHE)
 		pmapflags |= PMAP_NOCACHE;
