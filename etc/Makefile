@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.359 2014/07/11 17:10:30 henning Exp $
+#	$OpenBSD: Makefile,v 1.360 2014/07/11 21:20:10 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -30,18 +30,21 @@ kernels: bootblocks ${ALL_KERNELS}
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-BIN1=	changelist csh.cshrc csh.login csh.logout daily dhcpd.conf \
-	exports ftpusers ftpchroot gettytab group hosts hosts.lpd inetd.conf \
-	ksh.kshrc locate.rc man.conf monthly motd mrouted.conf myname \
+BIN1=	changelist csh.cshrc csh.login csh.logout daily \
+	exports ftpusers ftpchroot gettytab group hosts hosts.lpd \
+	ksh.kshrc locate.rc man.conf monthly motd myname \
 	netstart networks newsyslog.conf printcap protocols \
-	rbootd.conf rc rc.conf rc.local rc.securelevel rc.shutdown \
+	rc rc.conf rc.local rc.securelevel rc.shutdown \
 	remote rpc services shells syslog.conf weekly \
 	etc.${MACHINE}/login.conf \
 	etc.${MACHINE}/disktab dhclient.conf mailer.conf ntpd.conf \
-	moduli pf.os sensorsd.conf mixerctl.conf
+	moduli pf.os mixerctl.conf
 
-EXAMPLES=bgpd.conf chio.conf dvmrpd.conf hostapd.conf ifstated.conf ldpd.conf \
-	ospf6d.conf ospfd.conf
+EXAMPLES=bgpd.conf chio.conf dhcpd.conf dvmrpd.conf hostapd.conf \
+	ifstated.conf iked.conf inetd.conf ipsec.conf ldapd.conf ldpd.conf \
+	mrouted.conf nsd.conf ospf6d.conf ospfd.conf rbootd.conf \
+	relayd.conf ripd.conf sasyncd.conf sensorsd.conf snmpd.conf \
+	ypldap.conf
 
 .if ${MACHINE} != "aviion" 
 BIN1+=	wsconsctl.conf
@@ -111,16 +114,7 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o root -g crontab -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
-	${INSTALL} -c -o root -g wheel -m 600 ripd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 pf.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 600 relayd.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 600 iked.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 600 ipsec.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 600 sasyncd.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 600 snmpd.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 600 ldapd.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 600 ypldap.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g _nsd -m 640 nsd.conf ${DESTDIR}/var/nsd/etc
 	${INSTALL} -c -o root -g wheel -m 644 unbound.conf ${DESTDIR}/var/unbound/etc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev

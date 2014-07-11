@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.89 2014/07/11 17:10:30 henning Exp $
+#	$OpenBSD: changelist,v 1.90 2014/07/11 21:20:10 deraadt Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -23,7 +23,7 @@
 /etc/daily.local
 /etc/defaultdomain
 /etc/dhclient.conf
-/etc/dhcpd.conf
++/etc/dhcpd.conf
 /etc/disktab
 /etc/distfile
 +/etc/dvmrpd.conf
@@ -36,20 +36,20 @@
 /etc/ftpwelcome
 /etc/gettytab
 /etc/group
-/etc/hostapd.conf
++/etc/hostapd.conf
 +/etc/hostname.*
 /etc/hosts
 /etc/hosts.lpd
 +/etc/ifstated.conf
 +/etc/iked.conf
-/etc/inetd.conf
++/etc/inetd.conf
 +/etc/ipsec.conf
 +/etc/isakmpd/isakmpd.conf
 +/etc/isakmpd/isakmpd.policy
 /etc/isakmpd/local.pub
 +/etc/isakmpd/private/local.key
 /etc/ksh.kshrc
-/etc/ldapd.conf
++/etc/ldapd.conf
 +/etc/ldpd.conf
 /etc/locate.rc
 /etc/login.conf
@@ -79,7 +79,7 @@
 /etc/monthly
 /etc/monthly.local
 /etc/motd
-/etc/mrouted.conf
++/etc/mrouted.conf
 /etc/mtree/4.4BSD.dist
 /etc/mtree/BSD.local.dist
 /etc/mtree/BSD.x11.dist
@@ -105,7 +105,7 @@
 /etc/profile
 /etc/protocols
 +/etc/pwd.db
-/etc/rbootd.conf
++/etc/rbootd.conf
 /etc/rc
 /etc/rc.conf
 /etc/rc.conf.local
@@ -113,21 +113,21 @@
 /etc/rc.local
 /etc/rc.securelevel
 /etc/rc.shutdown
-/etc/relayd.conf
++/etc/relayd.conf
 /etc/remote
 /etc/resolv.conf
 /etc/resolv.conf.tail
-/etc/ripd.conf
++/etc/ripd.conf
 +/etc/rndc.key
 /etc/rpc
-/etc/rtadvd.conf
-/etc/sasyncd.conf
-/etc/sensorsd.conf
++/etc/rtadvd.conf
++/etc/sasyncd.conf
++/etc/sensorsd.conf
 /etc/services
 /etc/shells
 /etc/slip.hosts
 /etc/slip.login
-/etc/snmpd.conf
++/etc/snmpd.conf
 +/etc/spwd.db
 /etc/ssh/ssh_config
 +/etc/ssh/ssh_host_dsa_key
@@ -150,7 +150,7 @@
 /etc/weekly
 /etc/weekly.local
 /etc/wsconsctl.conf
-/etc/ypldap.conf
++/etc/ypldap.conf
 /root/.Xdefaults
 /root/.cshrc
 /root/.login
