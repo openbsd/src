@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.75 2014/07/11 09:24:44 beck Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.76 2014/07/11 13:21:15 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -497,12 +497,13 @@ ssl3_connect(SSL *s)
 
 		case SSL3_ST_CW_FINISHED_A:
 		case SSL3_ST_CW_FINISHED_B:
-			ret = ssl3_send_finished(s,
-			SSL3_ST_CW_FINISHED_A, SSL3_ST_CW_FINISHED_B,
-			s->method->ssl3_enc->client_finished_label,
-			s->method->ssl3_enc->client_finished_label_len);
+			ret = ssl3_send_finished(s, SSL3_ST_CW_FINISHED_A,
+			    SSL3_ST_CW_FINISHED_B,
+			    s->method->ssl3_enc->client_finished_label,
+			    s->method->ssl3_enc->client_finished_label_len);
 			if (ret <= 0)
 				goto end;
+			s->s3->flags |= SSL3_FLAGS_CCS_OK;
 			s->state = SSL3_ST_CW_FLUSH;
 
 			/* clear flags */
