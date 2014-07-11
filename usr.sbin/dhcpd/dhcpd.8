@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.22 2014/01/03 16:21:58 jmc Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.23 2014/07/11 09:42:27 yasuoka Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: January 3 2014 $
+.Dd $Mdocdate: July 11 2014 $
 .Dt DHCPD 8
 .Os
 .Sh NAME
@@ -46,6 +46,7 @@
 .Nm dhcpd
 .Bk -words
 .Op Fl dfn
+.Op Fl u Ns Op Ar bind_address
 .Op Fl A Ar abandoned_ip_table
 .Op Fl C Ar changed_ip_table
 .Op Fl c Ar config-file
@@ -149,7 +150,9 @@ This should be done on systems where
 .Nm
 is unable to identify non-broadcast interfaces,
 but should not be required on other systems.
-If no interface names are specified on the command line,
+If any interface name and
+.Fl u
+is not specified on the command line,
 .Nm
 will identify all network interfaces which are up, eliminating non-broadcast
 interfaces if possible, and listen for DHCP broadcasts on each interface.
@@ -239,6 +242,24 @@ for testing lease files in a non-production environment.
 .It Fl n
 Only test configuration, do not run
 .Nm .
+.It Fl u Ns Op Ar bind_address
+Use an UDP socket instead of BPF for receiving and sending packets.
+Only DHCPINFORM messages can be handled on this socket, other messages are
+discarded.
+With this option,
+.Nm
+can answer DHCPINFORM from the clients on on non ethernet interfaces
+(eg.
+.Xr tun 4
+or
+.Xr pppx 4
+.Ns ) .
+If
+.Ar bind_address
+is specified,
+.Nm
+will bind that address, otherwise
+the limited broadcast address (255.255.255.255) is used as default.
 .It Fl Y Ar synctarget
 Add target
 .Ar synctarget

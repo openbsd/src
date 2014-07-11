@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.50 2014/05/07 13:20:47 pelikan Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.51 2014/07/11 09:42:27 yasuoka Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -424,6 +424,9 @@ struct interface_info {
 	int errors;
 	int dead;
 	u_int16_t	index;
+	int is_udpsock;
+	ssize_t (*send_packet)(struct interface_info *, struct dhcp_packet *,
+	    size_t, struct in_addr, struct sockaddr_in *, struct hardware *);
 };
 
 struct hardware_link {
@@ -616,8 +619,6 @@ char *print_hw_addr(int, int, unsigned char *);
 /* bpf.c */
 int if_register_bpf(struct interface_info *);
 void if_register_send(struct interface_info *);
-ssize_t send_packet(struct interface_info *, struct dhcp_packet *, size_t,
-    struct in_addr, struct sockaddr_in *, struct hardware *);
 void if_register_receive(struct interface_info *);
 ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
     struct sockaddr_in *, struct hardware *);
@@ -697,3 +698,6 @@ size_t atomicio(ssize_t (*)(int, void *, size_t), int, void *, size_t);
 #define vwrite (ssize_t (*)(int, void *, size_t))write
 void pfmsg(char, struct lease *);
 extern struct syslog_data sdata;
+
+/* udpsock.c */
+void udpsock_startup(struct in_addr);

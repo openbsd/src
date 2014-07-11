@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.26 2010/01/02 04:21:16 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.27 2014/07/11 09:42:27 yasuoka Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -509,6 +509,14 @@ do_packet(struct interface_info *interface, struct dhcp_packet *packet,
 	if (tp.options_valid &&
 	    tp.options[DHO_DHCP_MESSAGE_TYPE].data)
 		tp.packet_type = tp.options[DHO_DHCP_MESSAGE_TYPE].data[0];
+
+	if (interface->is_udpsock) {
+		if (tp.packet_type != DHCPINFORM) {
+			note("Unable to handle a DHCP message type=%d on UDP "
+			    "socket", tp.packet_type);
+			return;
+		}
+	}
 	if (tp.packet_type)
 		dhcp(&tp);
 	else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.44 2014/05/07 13:20:47 pelikan Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.45 2014/07/11 09:42:27 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -71,18 +71,19 @@ struct syslog_data sdata = SYSLOG_DATA_INIT;
 int
 main(int argc, char *argv[])
 {
-	int ch, cftest = 0, daemonize = 1, rdomain = -1;
+	int ch, cftest = 0, daemonize = 1, rdomain = -1, udpsockmode = 0;
 	extern char *__progname;
 	char *sync_iface = NULL;
 	char *sync_baddr = NULL;
 	u_short sync_port = 0;
 	struct servent *ent;
+	struct in_addr udpaddr;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog_r(__progname, LOG_PID | LOG_NDELAY, DHCPD_LOG_FACILITY, &sdata);
 
 	opterr = 0;
-	while ((ch = getopt(argc, argv, "A:C:L:c:dfl:nY:y:")) != -1)
+	while ((ch = getopt(argc, argv, "A:C:L:c:dfl:nu::Y:y:")) != -1)
 		switch (ch) {
 		case 'Y':
 			syncsend = 1;
@@ -98,8 +99,10 @@ main(int argc, char *argv[])
 		sync_port = ntohs(ent->s_port);
 	}
 
+	udpaddr.s_addr = htonl(INADDR_BROADCAST);
+
 	optreset = optind = opterr = 1;
-	while ((ch = getopt(argc, argv, "A:C:L:c:dfl:nY:y:")) != -1)
+	while ((ch = getopt(argc, argv, "A:C:L:c:dfl:nu::Y:y:")) != -1)
 		switch (ch) {
 		case 'A':
 			abandoned_tab = optarg;
@@ -127,6 +130,14 @@ main(int argc, char *argv[])
 			daemonize = 0;
 			cftest = 1;
 			log_perror = 1;
+			break;
+		case 'u':
+			udpsockmode = 1;
+			if (optarg != NULL) {
+				if (inet_aton(optarg, &udpaddr) != 1)
+					errx(1, "Cannot parse binding IP "
+					    "address: %s", optarg);
+			}
 			break;
 		case 'Y':
 			if (sync_addhost(optarg, sync_port) != 0)
@@ -169,12 +180,15 @@ main(int argc, char *argv[])
 		exit(0);
 
 	db_startup();
-	discover_interfaces(&rdomain);
+	if (!udpsockmode || argc > 0)
+		discover_interfaces(&rdomain);
 
 	if (rdomain != -1)
 		if (setrtable(rdomain) == -1)
 			error("setrtable (%m)");
 
+	if (udpsockmode)
+		udpsock_startup(udpaddr);
 	icmp_startup(1, lease_pinged);
 
 	if (syncsend || syncrecv) {
@@ -235,8 +249,8 @@ usage(void)
 	fprintf(stderr, "usage: %s [-dfn] [-A abandoned_ip_table]", __progname);
 	fprintf(stderr, " [-C changed_ip_table]\n");
 	fprintf(stderr, "\t[-c config-file] [-L leased_ip_table]");
-	fprintf(stderr, " [-l lease-file] [-Y synctarget] [-y synclisten]\n");
-	fprintf(stderr, "\t[if0 [... ifN]]\n");
+	fprintf(stderr, " [-l lease-file] [-u[bind_address]]\n");
+	fprintf(stderr, "\t[-Y synctarget] [-y synclisten] [if0 [... ifN]]\n");
 	exit(1);
 }
 

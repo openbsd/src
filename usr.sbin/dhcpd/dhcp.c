@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.36 2013/04/05 19:31:36 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.37 2014/07/11 09:42:27 yasuoka Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -652,7 +652,7 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 		to.sin_addr = raw.giaddr;
 		to.sin_port = server_port;
 
-		result = send_packet(packet->interface, &raw,
+		result = packet->interface->send_packet(packet->interface, &raw,
 		    outgoing.packet_length, from, &to, packet->haddr);
 		if (result == -1)
 			warning("send_fallback: %m");
@@ -663,7 +663,7 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 	}
 
 	errno = 0;
-	result = send_packet(packet->interface, &raw,
+	result = packet->interface->send_packet(packet->interface, &raw,
 	    outgoing.packet_length, from, &to, NULL);
 }
 
@@ -1327,7 +1327,7 @@ dhcp_reply(struct lease *lease)
 
 		memcpy(&from, state->from.iabuf, sizeof from);
 
-		(void) send_packet(state->ip, &raw,
+		(void) state->ip->send_packet(state->ip, &raw,
 		    packet_length, from, &to, &state->haddr);
 
 		free_lease_state(state, "dhcp_reply gateway");
@@ -1371,7 +1371,7 @@ dhcp_reply(struct lease *lease)
 
 	memcpy(&from, state->from.iabuf, sizeof from);
 
-	(void) send_packet(state->ip, &raw, packet_length,
+	(void) state->ip->send_packet(state->ip, &raw, packet_length,
 	    from, &to, &state->haddr);
 
 	free_lease_state(state, "dhcp_reply");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.10 2013/04/05 19:31:36 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.11 2014/07/11 09:42:27 yasuoka Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -52,6 +52,9 @@
 
 #define BPF_FORMAT "/dev/bpf%d"
 
+ssize_t send_packet	 (struct interface_info *, struct dhcp_packet *,
+    size_t, struct in_addr, struct sockaddr_in *, struct hardware *);
+
 /*
  * Called by get_interface_list for each interface that's discovered.
  * Opens a packet filter for each interface and adds it to the select
@@ -81,6 +84,7 @@ if_register_bpf(struct interface_info *info)
 		error("Can't attach interface %s to bpf device %s: %m",
 		    info->name, filename);
 
+	info->send_packet = send_packet;
 	return (sock);
 }
 
