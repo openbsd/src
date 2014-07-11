@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.76 2013/11/19 14:04:07 pirofti Exp $ */
+/*	$OpenBSD: ugen.c,v 1.77 2014/07/11 08:45:29 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -118,21 +118,18 @@ int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
 #define UGENENDPOINT(n) (minor(n) & 0xf)
 #define UGENDEV(u, e) (makedev(0, ((u) << 4) | (e)))
 
-int ugen_match(struct device *, void *, void *); 
-void ugen_attach(struct device *, struct device *, void *); 
-int ugen_detach(struct device *, int); 
-int ugen_activate(struct device *, int); 
+int ugen_match(struct device *, void *, void *);
+void ugen_attach(struct device *, struct device *, void *);
+int ugen_detach(struct device *, int);
+int ugen_activate(struct device *, int);
 
-struct cfdriver ugen_cd = { 
-	NULL, "ugen", DV_DULL 
-}; 
+struct cfdriver ugen_cd = {
+	NULL, "ugen", DV_DULL
+};
 
-const struct cfattach ugen_ca = { 
-	sizeof(struct ugen_softc), 
-	ugen_match, 
-	ugen_attach, 
-	ugen_detach, 
-	ugen_activate, 
+const struct cfattach ugen_ca = {
+	sizeof(struct ugen_softc), ugen_match, ugen_attach, ugen_detach,
+	ugen_activate,
 };
 
 int
@@ -844,16 +841,15 @@ ugen_isoc_rintr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 		return;
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
-	DPRINTFN(5,("ugen_isoc_rintr: xfer %d, count=%d\n", req - sce->isoreqs,
-		    count));
+	DPRINTFN(5,("%s: xfer %ld, count=%d\n", __func__, req - sce->isoreqs,
+	    count));
 
 	/* throw away oldest input if the buffer is full */
 	if(sce->fill < sce->cur && sce->cur <= sce->fill + count) {
 		sce->cur += count;
 		if(sce->cur >= sce->limit)
 			sce->cur = sce->ibuf + (sce->limit - sce->cur);
-		DPRINTFN(5, ("ugen_isoc_rintr: throwing away %d bytes\n",
-			     count));
+		DPRINTFN(5, ("%s: throwing away %d bytes\n", __func__, count));
 	}
 
 	isize = UGETW(sce->edesc->wMaxPacketSize);
