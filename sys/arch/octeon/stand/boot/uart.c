@@ -1,4 +1,4 @@
-/*	$OpenBSD: uart.c,v 1.4 2013/06/13 20:01:01 jasper Exp $	*/
+/*	$OpenBSD: uart.c,v 1.5 2014/07/11 15:38:20 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -41,8 +41,13 @@
 #define  OCTEON_MIO_UART0               0x8001180000000800ull
 #define  OCTEON_MIO_UART0_LSR           0x8001180000000828ull
 #define  OCTEON_MIO_UART0_RBR           0x8001180000000800ull
+#define  OCTEON_MIO_UART0_IER           0x8001180000000808ull
+#define  OCTEON_MIO_UART0_IIR           0x8001180000000810ull
+#define  OCTEON_MIO_UART0_MSR           0x8001180000000830ull
 #define  OCTEON_MIO_UART0_USR           0x8001180000000938ull
 #define  OCTEON_MIO_UART0_LCR           0x8001180000000818ull
+#define  OCTEON_MIO_UART0_MCR           0x8001180000000820ull
+#define  OCTEON_MIO_UART0_FCR           0x8001180000000850ull
 #define  OCTEON_MIO_UART0_DLL           0x8001180000000880ull
 #define  OCTEON_MIO_UART0_DLH           0x8001180000000888ull
 #define  USR_TXFIFO_NOTFULL		2
