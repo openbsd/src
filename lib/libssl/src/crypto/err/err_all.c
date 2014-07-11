@@ -1,4 +1,4 @@
-/* $OpenBSD: err_all.c,v 1.16 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: err_all.c,v 1.17 2014/07/11 08:00:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -104,9 +104,6 @@
 #ifndef OPENSSL_NO_CMS
 #include <openssl/cms.h>
 #endif
-#ifndef OPENSSL_NO_JPAKE
-#include <openssl/jpake.h>
-#endif
 
 void
 ERR_load_crypto_strings(void)
@@ -158,9 +155,6 @@ ERR_load_crypto_strings(void)
 	ERR_load_UI_strings();
 #ifndef OPENSSL_NO_CMS
 	ERR_load_CMS_strings();
-#endif
-#ifndef OPENSSL_NO_JPAKE
-	ERR_load_JPAKE_strings();
 #endif
 #endif
 }
