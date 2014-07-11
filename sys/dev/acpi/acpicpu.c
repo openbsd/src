@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.58 2014/05/21 02:14:07 mlarkin Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.59 2014/07/11 14:33:45 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -195,46 +195,82 @@ acpicpu_set_pdc(struct acpicpu_softc *sc)
 {
 	struct aml_value cmd, osc_cmd[4];
 	struct aml_value res;
+	uint32_t cap;
 	uint32_t buf[3];
 
 	/* 4077A616-290C-47BE-9EBD-D87058713953 */
 	static uint8_t cpu_oscuuid[16] = { 0x16, 0xA6, 0x77, 0x40, 0x0C, 0x29,
 					   0xBE, 0x47, 0x9E, 0xBD, 0xD8, 0x70,
 					   0x58, 0x71, 0x39, 0x53 };
-	/* Evaluate _PDC */
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.type = AML_OBJTYPE_BUFFER;
-	cmd.v_buffer = (uint8_t *)&buf;
-	cmd.length = sizeof(buf);
-
-	buf[0] = ACPI_PDC_REVID;
-	buf[1] = 1;
-	buf[2] = ACPI_PDC_C_C1_HALT | ACPI_PDC_P_FFH | ACPI_PDC_C_C1_FFH
+	cap = ACPI_PDC_C_C1_HALT | ACPI_PDC_P_FFH | ACPI_PDC_C_C1_FFH
 	    | ACPI_PDC_C_C2C3_FFH | ACPI_PDC_SMP_P_SWCOORD | ACPI_PDC_SMP_C2C3
 	    | ACPI_PDC_SMP_C1PT;
 
-	aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PDC", 1, &cmd, &res);
+	if (aml_searchname(sc->sc_devnode, "_OSC")) {
+		/* Query _OSC */
+		memset(&osc_cmd, 0, sizeof(cmd) * 4);
+		osc_cmd[0].type = AML_OBJTYPE_BUFFER;
+		osc_cmd[0].v_buffer = (uint8_t *)&cpu_oscuuid;
+		osc_cmd[0].length = sizeof(cpu_oscuuid);
 
-	/* Evaluate _OSC */
-	memset(&osc_cmd, 0, sizeof(cmd) * 4);
-	osc_cmd[0].type = AML_OBJTYPE_BUFFER;
-	osc_cmd[0].v_buffer = (uint8_t *)&cpu_oscuuid;
-	osc_cmd[0].length = sizeof(cpu_oscuuid);
+		osc_cmd[1].type = AML_OBJTYPE_INTEGER;
+		osc_cmd[1].v_integer = 1;
+		osc_cmd[1].length = 1;
 
-	osc_cmd[1].type = AML_OBJTYPE_INTEGER;
-	osc_cmd[1].v_integer = 1;
-	osc_cmd[1].length = 1;
+		osc_cmd[2].type = AML_OBJTYPE_INTEGER;
+		osc_cmd[2].v_integer = 2;
+		osc_cmd[2].length = 1;
 
-	osc_cmd[2].type = AML_OBJTYPE_INTEGER;
-	osc_cmd[2].v_integer = 1;
-	osc_cmd[2].length = 1;
+		buf[0] = 1;
+		buf[1] = cap;
+		osc_cmd[3].type = AML_OBJTYPE_BUFFER;
+		osc_cmd[3].v_buffer = (int8_t *)&buf;
+		osc_cmd[3].length = sizeof(buf);
 
-	buf[0] = 0;
-	osc_cmd[3].type = AML_OBJTYPE_BUFFER;
-	osc_cmd[3].v_buffer = (int8_t *)&buf;
-	osc_cmd[3].length = sizeof(buf);
+		aml_evalname(sc->sc_acpi, sc->sc_devnode, "_OSC",
+		    4, osc_cmd, &res);
 
-	aml_evalname(sc->sc_acpi, sc->sc_devnode, "_OSC", 4, osc_cmd, &res);
+		if (res.type != AML_OBJTYPE_BUFFER || res.length < 8) {
+			printf(": unable to query capabilities\n");
+			return;
+		}
+
+		/* Evaluate _OSC */
+		memset(&osc_cmd, 0, sizeof(cmd) * 4);
+		osc_cmd[0].type = AML_OBJTYPE_BUFFER;
+		osc_cmd[0].v_buffer = (uint8_t *)&cpu_oscuuid;
+		osc_cmd[0].length = sizeof(cpu_oscuuid);
+
+		osc_cmd[1].type = AML_OBJTYPE_INTEGER;
+		osc_cmd[1].v_integer = 1;
+		osc_cmd[1].length = 1;
+
+		osc_cmd[2].type = AML_OBJTYPE_INTEGER;
+		osc_cmd[2].v_integer = 2;
+		osc_cmd[2].length = 1;
+
+		buf[0] = 0;
+		buf[1] = (*(uint32_t *)&res.v_buffer[4]) & cap;
+		osc_cmd[3].type = AML_OBJTYPE_BUFFER;
+		osc_cmd[3].v_buffer = (int8_t *)&buf;
+		osc_cmd[3].length = sizeof(buf);
+
+		aml_evalname(sc->sc_acpi, sc->sc_devnode, "_OSC",
+		    4, osc_cmd, &res);
+	} else {
+		/* Evaluate _PDC */
+		memset(&cmd, 0, sizeof(cmd));
+		cmd.type = AML_OBJTYPE_BUFFER;
+		cmd.v_buffer = (uint8_t *)&buf;
+		cmd.length = sizeof(buf);
+
+		buf[0] = ACPI_PDC_REVID;
+		buf[1] = 1;
+		buf[2] = cap;
+
+		aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PDC",
+		    1, &cmd, &res);
+	}
 }
 
 
