@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.186 2014/06/23 22:48:33 deraadt Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.187 2014/07/11 13:15:34 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -557,8 +557,11 @@ udp_input(struct mbuf *m, ...)
 	 * Locate pcb for datagram.
 	 */
 #if 0
-	if (m->m_pkthdr.pf.statekey)
+	if (m->m_pkthdr.pf.statekey) {
 		inp = m->m_pkthdr.pf.statekey->inp;
+		if (inp && inp->inp_pf_sk)
+			KASSERT(m->m_pkthdr.pf.statekey == inp->inp_pf_sk);
+	}
 #endif
 	if (inp == NULL) {
 #ifdef INET6
