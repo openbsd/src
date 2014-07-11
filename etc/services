@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.84 2014/07/11 16:54:29 ajacoutot Exp $
+#	$OpenBSD: services,v 1.85 2014/07/11 19:55:46 giovanni Exp $
 #
 # Network services, Internet style
 #
@@ -279,6 +279,8 @@ afs3-rmtsys		7009/udp	# AFS remote cache manager service
 tacacs		49/tcp	tacas+		# Login Host Protocol (TACACS)
 tacacs		49/udp	tacas+		# Login Host Protocol (TACACS)
 pop3pw		106/tcp	poppassd	# Eudora compatible PW changer
+snpp		444/tcp			# Simple Network Paging Protocol
+snpp		444/udp			# Simple Network Paging Protocol
 smtps		465/tcp			# SSL-wrapped SMTP
 conserver	782/tcp			# console server
 supfilesrv	871/tcp			# SUP server
@@ -290,6 +292,8 @@ ekshell2	2106/tcp		# Encrypted kshell - UColorado, Boulder
 cvspserver	2401/tcp		# cvs pserver
 webster		2627/tcp		# Network dictionary
 webster		2627/udp
+hylafax		4559/tcp		# HylaFAX client-server protocol
+hylafax		4559/udp		# HylaFAX client-server protocol
 canna		5680/tcp		# Kana->Kanji server
 sane-port	6566/tcp		# SANE Control Port
 sane-port	6566/udp		# SANE Control Port
