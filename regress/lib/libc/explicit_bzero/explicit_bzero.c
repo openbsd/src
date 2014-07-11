@@ -1,4 +1,4 @@
-/*	$OpenBSD: explicit_bzero.c,v 1.5 2014/07/11 00:38:17 matthew Exp $	*/
+/*	$OpenBSD: explicit_bzero.c,v 1.6 2014/07/11 01:10:35 matthew Exp $	*/
 /*
  * Copyright (c) 2014 Google Inc.
  *
@@ -156,8 +156,8 @@ do_test_without_bzero(int signo)
 static void 
 do_test_with_bzero(int signo)
 {
-	char *buf = test_without_bzero();
-	ASSERT_GE(count_secrets(buf), 0);
+	char *buf = test_with_bzero();
+	ASSERT_EQ(count_secrets(buf), 0);
 }
 
 int
