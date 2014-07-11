@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_pack.c,v 1.13 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: asn_pack.c,v 1.14 2014/07/11 13:41:59 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -155,8 +155,11 @@ ASN1_pack_string(void *obj, i2d_of_void *i2d, ASN1_STRING **oct)
 		*oct = octmp;
 	return octmp;
 err:
-	if (!oct || octmp != *oct)
+	if (!oct || octmp != *oct) {
 		ASN1_STRING_free(octmp);
+		if (oct)
+			*oct = NULL;
+	}
 	return NULL;
 }
 

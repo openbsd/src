@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.12 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.13 2014/07/11 13:41:59 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -242,11 +242,16 @@ int
 EVP_PKEY_asn1_add_alias(int to, int from)
 {
 	EVP_PKEY_ASN1_METHOD *ameth;
+
 	ameth = EVP_PKEY_asn1_new(from, ASN1_PKEY_ALIAS, NULL, NULL);
 	if (!ameth)
 		return 0;
 	ameth->pkey_base_id = to;
-	return EVP_PKEY_asn1_add0(ameth);
+	if (!EVP_PKEY_asn1_add0(ameth)) {
+		EVP_PKEY_asn1_free(ameth);
+		return 0;
+	}
+	return 1;
 }
 
 int
