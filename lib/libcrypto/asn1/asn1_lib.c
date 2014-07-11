@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.30 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.31 2014/07/11 14:22:55 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -174,15 +174,18 @@ asn1_get_length(const unsigned char **pp, int *inf, long *rl, int max)
 		*inf = 0;
 		i= *p & 0x7f;
 		if (*(p++) & 0x80) {
+			if (max < (int)i)
+				return (0);
+			/* skip leading zeroes */
+			while (i && *p == 0) {
+				p++;
+				i--;
+			}
 			if (i > sizeof(long))
 				return 0;
-			if (max-- == 0)
-				return (0);
 			while (i-- > 0) {
 				ret <<= 8L;
 				ret |= *(p++);
-				if (max-- == 0)
-					return (0);
 			}
 		} else
 			ret = i;
