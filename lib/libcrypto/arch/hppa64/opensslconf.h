@@ -1,4 +1,4 @@
-#include <opensslfeatures.h>
+#include <openssl/opensslfeatures.h>
 /* crypto/opensslconf.h.in */
 
 /* Generate 80386 code? */
