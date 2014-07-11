@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_smime.c,v 1.11 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: cms_smime.c,v 1.12 2014/07/11 12:12:39 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -586,7 +586,7 @@ CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert)
 	STACK_OF(CMS_RecipientInfo) *ris;
 	CMS_RecipientInfo *ri;
 	int i, r;
-	int debug = 0;
+	int debug = 0, match_ri = 0;
 
 	ris = CMS_get0_RecipientInfos(cms);
 	if (ris)
@@ -595,6 +595,7 @@ CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert)
 		ri = sk_CMS_RecipientInfo_value(ris, i);
 		if (CMS_RecipientInfo_type(ri) != CMS_RECIPINFO_TRANS)
 			continue;
+		match_ri = 1;
 		/* If we have a cert try matching RecipientInfo
 		 * otherwise try them all.
 		 */
@@ -627,7 +628,7 @@ CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert)
 		}
 	}
 	/* If no cert and not debugging always return success */
-	if (!cert && !debug) {
+	if (match_ri && !cert && !debug) {
 		ERR_clear_error();
 		return 1;
 	}
