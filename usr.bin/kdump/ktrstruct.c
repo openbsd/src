@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.4 2014/06/22 23:50:45 guenther Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.5 2014/07/11 21:49:13 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -63,8 +63,6 @@ ktrsockaddr(struct sockaddr *sa)
  TODO: Support additional address families
 	#include <netmpls/mpls.h>
 	struct sockaddr_mpls	*mpls;
-	#include <netbt/bluetooth.h>
-	struct sockaddr_bt	*bt;
 */
 	char addr[64];
 
