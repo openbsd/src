@@ -117,6 +117,7 @@ int test_gf2m_mod_sqrt(BIO *bp,BN_CTX *ctx);
 int test_gf2m_mod_solve_quad(BIO *bp,BN_CTX *ctx);
 int test_kron(BIO *bp,BN_CTX *ctx);
 int test_sqrt(BIO *bp,BN_CTX *ctx);
+int test_mod_exp_sizes(BIO *bp, BN_CTX *ctx);
 int rand_neg(void);
 static int results=0;
 
@@ -256,6 +257,12 @@ int main(int argc, char *argv[])
 	message(out,"BN_mod_sqrt");
 	if (!test_sqrt(out,ctx)) goto err;
 	(void)BIO_flush(out);
+
+	message(out, "Modexp with different sizes");
+	if (!test_mod_exp_sizes(out, ctx))
+		goto err;
+	(void)BIO_flush(out);
+
 #ifndef OPENSSL_NO_EC2M
 	message(out,"BN_GF2m_add");
 	if (!test_gf2m_add(out)) goto err;
@@ -1998,3 +2005,53 @@ int rand_neg(void)
 
 	return(sign[(neg++)%8]);
 	}
+
+int
+test_mod_exp_sizes(BIO *bp, BN_CTX *ctx)
+{
+	BN_MONT_CTX *mont_ctx;
+	BIGNUM *p, *x, *y, *r, *r2;
+	int size;
+	int ok = 0;
+
+	BN_CTX_start(ctx);
+	p = BN_CTX_get(ctx);
+	x = BN_CTX_get(ctx);
+	y = BN_CTX_get(ctx);
+	r = BN_CTX_get(ctx);
+	r2 = BN_CTX_get(ctx);
+	mont_ctx = BN_MONT_CTX_new();
+
+	if (r2 == NULL || mont_ctx == NULL)
+		goto err;
+
+	if (!BN_generate_prime_ex(p, 32, 0, NULL, NULL, NULL) ||
+	    !BN_MONT_CTX_set(mont_ctx, p, ctx))
+		goto err;
+
+	for (size = 32; size < 1024; size += 8) {
+		if (!BN_rand(x, size, -1, 0) ||
+		    !BN_rand(y, size, -1, 0) ||
+		    !BN_mod_exp_mont_consttime(r, x, y, p, ctx, mont_ctx) ||
+		    !BN_mod_exp(r2, x, y, p, ctx))
+			goto err;
+
+		if (BN_cmp(r, r2) != 0) {
+			char *r_str = BN_bn2hex(r);
+			char *r2_str = BN_bn2hex(r2);
+
+			printf("Incorrect answer at size %d: %s vs %s\n",
+			    size, r_str, r2_str);
+			free(r_str);
+			free(r2_str);
+			goto err;
+		}
+	}
+
+	ok = 1;
+
+err:
+	BN_MONT_CTX_free(mont_ctx);
+	BN_CTX_end(ctx);
+	return ok;
+}
