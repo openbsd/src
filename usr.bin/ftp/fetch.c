@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.124 2014/07/11 03:31:52 lteo Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.125 2014/07/11 18:19:45 halex Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1284,9 +1284,6 @@ auto_fetch(int argc, char *argv[], char *outfile)
 	char *cp, *url, *host, *dir, *file, *portnum;
 	char *username, *pass, *pathstart;
 	char *ftpproxy, *httpproxy;
-#ifndef SMALL
-	char *uagent = NULL;
-#endif /* !SMALL */
 	int rval, xargc;
 	volatile int argpos;
 	int dirhasglob, filehasglob, oautologin;
@@ -1306,13 +1303,6 @@ auto_fetch(int argc, char *argv[], char *outfile)
 		ftpproxy = NULL;
 	if ((httpproxy = getenv(HTTP_PROXY)) != NULL && *httpproxy == '\0')
 		httpproxy = NULL;
-
-	if (httpuseragent == NULL)
-		httpuseragent = HTTP_USER_AGENT;
-#ifndef SMALL
-	else
-		uagent = httpuseragent;
-#endif /* !SMALL */
 
 	/*
 	 * Loop through as long as there's files to fetch.
@@ -1590,9 +1580,6 @@ bad_ftp_url:
 	}
 	if (connected && rval != -1)
 		disconnect(0, NULL);
-#ifndef SMALL
-	free(uagent);
-#endif /* !SMALL */
 	return (rval);
 }
 

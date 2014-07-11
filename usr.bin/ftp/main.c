@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.88 2014/07/11 03:31:52 lteo Exp $	*/
+/*	$OpenBSD: main.c,v 1.89 2014/07/11 18:19:45 halex Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -362,19 +362,17 @@ main(volatile int argc, char *argv[])
 			trace = 1;
 			break;
 
-		case 'U':
 #ifndef SMALL
-			if (httpuseragent)
-				errx(1, "User-Agent was already defined");
-			/* Ensure that User-Agent value is in a single line. */
+		case 'U':
+			free (httpuseragent);
 			if (strcspn(optarg, "\r\n") != strlen(optarg))
 				errx(1, "Invalid User-Agent: %s.", optarg);
 			if (asprintf(&httpuseragent, "User-Agent: %s",
 			    optarg) == -1)
 				errx(1, "Can't allocate memory for HTTP(S) "
 				    "User-Agent");
-#endif /* !SMALL */
 			break;
+#endif /* !SMALL */
 
 		case 'v':
 			verbose = 1;
@@ -394,6 +392,8 @@ main(volatile int argc, char *argv[])
 #ifndef SMALL
 	cookie_load();
 #endif /* !SMALL */
+	if (httpuseragent == NULL)
+		httpuseragent = HTTP_USER_AGENT;
 
 	cpend = 0;	/* no pending replies */
 	proxy = 0;	/* proxy not active */
