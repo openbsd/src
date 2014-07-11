@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.6 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.7 2014/07/11 15:42:34 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -96,7 +96,7 @@ CMS_add0_recipient_password(CMS_ContentInfo *cms, int iter, int wrap_nid,
 
 	env = cms_get0_enveloped(cms);
 	if (!env)
-		goto err;
+		return NULL;
 
 	if (wrap_nid <= 0)
 		wrap_nid = NID_id_alg_PWRI_KEK;
