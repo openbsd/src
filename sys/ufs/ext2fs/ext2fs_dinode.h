@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_dinode.h,v 1.15 2014/07/11 12:08:21 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_dinode.h,v 1.16 2014/07/11 12:53:19 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_dinode.h,v 1.6 2000/01/26 16:21:33 bouyer Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ struct ext2fs_dinode {
 #define EXT4_EOFBLOCKS		0x00400000	/* blocks allocated beyond EOF */
 
 /* Size of on-disk inode. */
-#define EXT2_REV0_DINODE_SIZE	sizeof(struct ext2fs_dinode)
+#define EXT2_REV0_DINODE_SIZE	128
 #define EXT2_DINODE_SIZE(fs)	((fs)->e2fs.e2fs_rev > E2FS_REV0 ?  \
 				    (fs)->e2fs.e2fs_inode_size : \
 				    EXT2_REV0_DINODE_SIZE)
