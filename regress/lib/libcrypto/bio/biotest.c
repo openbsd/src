@@ -1,4 +1,4 @@
-/*	$OpenBSD: biotest.c,v 1.3 2014/07/08 14:17:38 bcook Exp $	*/
+/*	$OpenBSD: biotest.c,v 1.4 2014/07/11 08:48:52 bcook Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include <sys/types.h>
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -27,7 +28,7 @@
 
 struct bio_get_host_ip_test {
 	char *input;
-	u_int32_t ip;
+	uint32_t ip;
 	int ret;
 };
 
@@ -97,10 +98,10 @@ do_bio_get_host_ip_tests(void)
 			failed = 1;
 			continue;
 		}
-		if (ret && ntohl(*((u_int32_t *)ip)) != bgit->ip) {
+		if (ret && ntohl(*((uint32_t *)ip)) != bgit->ip) {
 			fprintf(stderr, "FAIL: test %zi (\"%s\") returned ip "
 			    "%x != %x\n", i, bgit->input,
-			    ntohl(*((u_int32_t *)ip)), bgit->ip);
+			    ntohl(*((uint32_t *)ip)), bgit->ip);
 			failed = 1;
 		}
 	}
