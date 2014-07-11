@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.110 2014/07/11 15:29:46 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.111 2014/07/11 15:30:47 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ int bufspace = IP_MAXPACKET;
 void fill(char *, char *);
 void catcher(int signo);
 void prtsig(int signo);
-void finish(int signo);
+__dead void finish(int signo);
 void summary(int, int);
 int in_cksum(u_short *, int);
 void pinger(void);
@@ -535,7 +535,6 @@ main(int argc, char *argv[])
 	}
 	finish(0);
 	/* NOTREACHED */
-	exit(0);	/* Make the compiler happy */
 }
 
 /*
@@ -989,7 +988,7 @@ qsqrt(quad_t qdev)
  * finish --
  *	Print out statistics, and give up.
  */
-void
+__dead void
 finish(int signo)
 {
 	(void)signal(SIGINT, SIG_IGN);
