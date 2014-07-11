@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.49 2014/04/15 11:02:38 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.50 2014/07/11 13:37:02 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -816,9 +816,14 @@ sub fill_localbase
 	$state->{known}{$base."/lib/X11"}{'app-defaults'} = 1;
 	$state->{known}{$base."/libdata"} = {};
 	$state->{known}{$base."/libdata/perl5"} = {};
-	# XXX
-	OpenBSD::Mtree::parse($state->{known}, $base,
-	    "/etc/mtree/BSD.local.dist", 1);
+	my $l = "/etc/mtree/BSD.local.dist";
+	if (-f $l) {
+		# XXX
+		OpenBSD::Mtree::parse($state->{known}, $base, $l, 1);
+	} else {
+		OpenBSD::Mtree::parse($state->{known}, $state->destdir('/'),
+		    "/etc/mtree/4.4BSD.dist", 1);
+	}
 }
 
 sub fill_root
