@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.313 2014/07/11 20:19:30 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.314 2014/07/11 20:41:41 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -843,6 +843,13 @@ bind_lease(void)
 		goto newlease;
 	}
 
+	client->new->resolv_conf = resolv_conf_contents(
+	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS]);
+
+	/* Replace the old active lease with the new one. */
+	client->active = client->new;
+	client->new = NULL;
+
 	/* Deleting the addresses also clears out arp entries. */
 	delete_addresses(ifi->name, ifi->rdomain);
 	flush_routes(ifi->name, ifi->rdomain);
@@ -892,13 +899,7 @@ bind_lease(void)
 			    &options[DHO_STATIC_ROUTES]);
 	}
 
-	client->new->resolv_conf = resolv_conf_contents(
-	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS]);
-
 newlease:
-	/* Replace the old active lease with the new one. */
-	client->active = client->new;
-	client->new = NULL;
 	rewrite_option_db(client->active, lease);
 	free_client_lease(lease);
 
