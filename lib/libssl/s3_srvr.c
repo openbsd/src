@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.73 2014/07/11 12:24:51 miod Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.74 2014/07/11 15:18:52 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2270,9 +2270,8 @@ ssl3_get_cert_verify(SSL *s)
 	EVP_MD_CTX mctx;
 	EVP_MD_CTX_init(&mctx);
 
-	/* 516 maxlen is enough for 4096 bit RSA key with TLS v1.2 */
 	n = s->method->ssl_get_message(s, SSL3_ST_SR_CERT_VRFY_A,
-	    SSL3_ST_SR_CERT_VRFY_B, -1, 516, &ok);
+	    SSL3_ST_SR_CERT_VRFY_B, -1, SSL3_RT_MAX_PLAIN_LENGTH, &ok);
 	if (!ok)
 		return ((int)n);
 
