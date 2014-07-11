@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.26 2013/10/21 08:46:07 phessler Exp $	*/
+/*	$OpenBSD: if.c,v 1.27 2014/07/11 16:44:13 henning Exp $	*/
 /*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -105,6 +105,7 @@ interface_up(char *name)
 	if (ioctl(ifsock, SIOCGIFXFLAGS, (caddr_t)&ifr) < 0)
 		warn("SIOCGIFXFLAGS");
 	ifr.ifr_flags &= ~IFXF_NOINET6;
+	ifr.ifr_flags |= IFXF_AUTOCONF6;
 	if (ioctl(ifsock, SIOCSIFXFLAGS, (caddr_t)&ifr) < 0)
 		warn("SIOCSIFXFLAGS");
 

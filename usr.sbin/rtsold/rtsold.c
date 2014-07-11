@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.51 2014/07/04 22:33:43 guenther Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.52 2014/07/11 16:44:13 henning Exp $	*/
 /*	$KAME: rtsold.c,v 1.75 2004/01/03 00:00:07 itojun Exp $	*/
 
 /*
@@ -185,13 +185,9 @@ main(int argc, char *argv[])
 #endif
 
 	if (Fflag) {
-		setinet6sysctl(IPPROTO_IPV6, IPV6CTL_ACCEPT_RTADV, 1);
 		setinet6sysctl(IPPROTO_ICMPV6, ICMPV6CTL_REDIRACCEPT, 1);
 		setinet6sysctl(IPPROTO_IPV6, IPV6CTL_FORWARDING, 0);
 	} else {
-		/* warn if accept_rtadv is down */
-		if (!getinet6sysctl(IPPROTO_IPV6, IPV6CTL_ACCEPT_RTADV))
-			warnx("kernel is configured not to accept RAs");
 		/* warn if accepting redirects is off */
 		if (!getinet6sysctl(IPPROTO_ICMPV6, ICMPV6CTL_REDIRACCEPT))
 			warnx("kernel is configured not to accept redirects");
