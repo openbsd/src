@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bswap.c,v 1.4 2007/06/17 20:15:25 jasper Exp $	*/
+/*	$OpenBSD: ext2fs_bswap.c,v 1.5 2014/07/11 16:04:25 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_bswap.c,v 1.6 2000/07/24 00:23:10 mycroft Exp $	*/
 
 /*
@@ -117,8 +117,10 @@ e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new)
 	new->e2di_flags		=	swap32(old->e2di_flags);
 	new->e2di_gen		=	swap32(old->e2di_gen);
 	new->e2di_facl		=	swap32(old->e2di_facl);
-	new->e2di_dacl		=	swap32(old->e2di_dacl);
+	new->e2di_size_hi	=	swap32(old->e2di_size_hi);
 	new->e2di_faddr		=	swap32(old->e2di_faddr);
+	new->e2di_nblock_hi	=	swap16(old->e2di_nblock_hi);
+	new->e2di_facl_hi	=	swap16(old->e2di_facl_hi);
 	memcpy(&new->e2di_blocks[0], &old->e2di_blocks[0],
 		(NDADDR+NIADDR) * sizeof(int));
 }
