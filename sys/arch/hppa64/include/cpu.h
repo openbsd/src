@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.33 2013/05/31 17:00:58 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.34 2014/07/11 10:53:07 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -119,6 +119,8 @@ struct cpu_info *curcpu(void);
 #define	CPU_INFO_UNIT(ci)	((ci)->ci_number)
 #define MAXCPUS	1
 #define cpu_unidle(ci)
+
+#define CPU_BUSY_CYCLE()	do {} while (0)
 
 /* types */
 enum hppa_cpu_type {

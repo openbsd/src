@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.19 2010/09/28 20:27:55 miod Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.20 2014/07/11 10:53:07 uebayasi Exp $	*/
 /*	$NetBSD: cpuvar.h,v 1.4 1997/07/06 21:14:25 pk Exp $ */
 
 /*
@@ -95,6 +95,8 @@ struct cpu_info {
 #define CPU_INFO_UNIT(ci) ((ci)->ci_softc ? (ci)->ci_softc->dv.dv_unit : 0)
 #define MAXCPUS	1
 #define cpu_unidle(ci)
+
+#define CPU_BUSY_CYCLE()	do {} while (0)
 
 /*
  * The cpu_softc structure. This structure maintains information about one

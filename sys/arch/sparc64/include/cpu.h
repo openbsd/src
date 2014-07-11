@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.84 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.85 2014/07/11 10:53:07 uebayasi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -205,6 +205,8 @@ void	cpu_unidle(struct cpu_info *);
 #define MAXCPUS 1
 
 #define cpu_unidle(ci)
+
+#define CPU_BUSY_CYCLE()	do {} while (0)
 
 #endif
 

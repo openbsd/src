@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.26 2013/06/11 16:42:10 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.27 2014/07/11 10:53:07 uebayasi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -80,6 +80,8 @@ extern struct cpu_info cpu_info_store;
 #define CPU_INFO_UNIT(ci)	0
 #define MAXCPUS	1
 #define cpu_unidle(ci)
+
+#define CPU_BUSY_CYCLE()	do {} while (0)
 
 
 /*

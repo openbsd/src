@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.38 2013/09/12 11:43:51 patrick Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.39 2014/07/11 10:53:07 uebayasi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -233,6 +233,8 @@ extern struct cpu_info *cpu_info[MAXCPUS];
 
 void cpu_boot_secondary_processors(void);
 #endif /* !MULTIPROCESSOR */
+
+#define CPU_BUSY_CYCLE()	do {} while (0)
 
 #define curpcb		curcpu()->ci_curpcb
 
