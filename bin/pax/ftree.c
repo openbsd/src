@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.31 2014/05/24 18:51:00 guenther Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.32 2014/07/11 07:51:48 tedu Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -477,7 +477,7 @@ next_file(ARCHD *arcn)
 			}
 			/*
 			 * set link name length, watch out readlink does not
-			 * always NUL terminate the link path
+			 * NUL terminate the link path
 			 */
 			arcn->ln_name[cnt] = '\0';
 			arcn->ln_nlen = cnt;
