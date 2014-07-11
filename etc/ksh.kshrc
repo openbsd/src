@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.18 2014/07/11 16:41:16 halex Exp $
+#	$OpenBSD: ksh.kshrc,v 1.19 2014/07/11 21:12:39 halex Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -98,44 +98,18 @@ case "$-" in
 		alias stripe='label "$USER@$HOST ($tty) - $PWD"'
 		alias istripe='ilabel "$USER@$HOST ($tty)"'
 
-		function wftp { ilabel "ftp $*"; "ftp" "$@"; eval istripe; }
-		function wcd { \cd "$@" && eval stripe; }
-		function wssh
-		{
-			local rc
-			"ssh" "$@"
-			rc=$?
-			eval istripe
-			eval stripe
-			return $rc
-		}
-		function wtelnet
-		{
-			local rc
-			"telnet" "$@"
-			rc=$?
-			eval istripe
-			eval stripe
-			return $rc
-		}
-		function wrlogin
-		{
-			local rc
-			"rlogin" "$@"
-			rc=$?
-			eval istripe
-			eval stripe
-			return $rc
-		}
-		function wsu
-		{
-			local rc
-			"su" "$@"
-			rc=$?
-			eval istripe
-			eval stripe
-			return $rc
-		}
+		# Run stuff through this to preserve the exit code
+		function _ignore { local rc=$?; "$@"; return $rc; }
+
+		function wftp { ilabel "ftp $*"; "ftp" "$@"; _ignore eval istripe; }
+
+		function wcd     { \cd "$@";     _ignore eval stripe; }
+
+		function wssh    { \ssh "$@";    _ignore eval 'istripe; stripe'; }
+		function wtelnet { \telnet "$@"; _ignore eval 'istripe; stripe'; }
+		function wrlogin { \rlogin "$@"; _ignore eval 'istripe; stripe'; }
+		function wsu     { \su "$@";     _ignore eval 'istripe; stripe'; }
+
 		alias su=wsu
 		alias cd=wcd
 		alias ftp=wftp
