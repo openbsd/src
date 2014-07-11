@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.24 2014/07/10 14:29:27 tedu Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.25 2014/07/11 13:00:06 tedu Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -107,16 +107,6 @@ main(int argc, char **argv, char **envp)
 
 	if (init(argc, argv, envp) < 0)
 		exit(1);
-
-	/*
-	 * Be backwards compatible.
-	 */
-	for (x = 1; x <= argc && argv[x]; x++) {
-		if (strcmp(argv[x], "-Server") != 0)
-			continue;
-		fatalerr("Old rdist not available.");
-		exit(1);
-	}
 
 	/*
 	 * Perform check to make sure we are not incorrectly installed
@@ -342,7 +332,7 @@ usage(void)
 	extern char *__progname;
 
 	(void) fprintf(stderr,
-		"usage: %s [-DFnV] [-Server] [-A num] [-a num] "
+		"usage: %s [-DFnV] [-A num] [-a num] "
 		"[-c mini_distfile]\n"
 		"\t[-d var=value] [-f distfile] [-L remote_logopts] "
 		"[-l local_logopts]\n"
