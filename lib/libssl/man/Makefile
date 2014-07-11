@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.25 2014/04/16 09:50:10 mpi Exp $
+# $OpenBSD: Makefile,v 1.26 2014/07/11 16:18:13 miod Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -122,6 +122,18 @@ MLINKS+=\
 	SSL_CTX_get_verify_mode.3 SSL_get_verify_callback.3 \
 	SSL_CTX_get_verify_mode.3 SSL_get_verify_depth.3 \
 	SSL_CTX_get_verify_mode.3 SSL_get_verify_mode.3 \
+	SSL_CTX_new.3 SSLv23_client_method.3 \
+	SSL_CTX_new.3 SSLv23_method.3 \
+	SSL_CTX_new.3 SSLv23_server_method.3 \
+	SSL_CTX_new.3 SSLv3_client_method.3 \
+	SSL_CTX_new.3 SSLv3_method.3 \
+	SSL_CTX_new.3 SSLv3_server_method.3 \
+	SSL_CTX_new.3 TLSv1_1_client_method.3 \
+	SSL_CTX_new.3 TLSv1_1_method.3 \
+	SSL_CTX_new.3 TLSv1_1_server_method.3 \
+	SSL_CTX_new.3 TLSv1_client_method.3 \
+	SSL_CTX_new.3 TLSv1_method.3 \
+	SSL_CTX_new.3 TLSv1_server_method.3 \
 	SSL_CTX_sess_number.3 SSL_CTX_sess_accept.3 \
 	SSL_CTX_sess_number.3 SSL_CTX_sess_accept_good.3 \
 	SSL_CTX_sess_number.3 SSL_CTX_sess_accept_renegotiate.3 \
