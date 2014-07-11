@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.31 2014/07/11 14:22:55 miod Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.32 2014/07/11 14:49:12 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -135,6 +135,9 @@ ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 	*ptag = tag;
 	*pclass = xclass;
 	if (!asn1_get_length(&p, &inf, plength, (int)max))
+		goto err;
+
+	if (inf && !(ret & V_ASN1_CONSTRUCTED))
 		goto err;
 
 #if 0
