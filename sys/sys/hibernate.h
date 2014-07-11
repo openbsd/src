@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.32 2014/07/09 14:10:25 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.33 2014/07/11 03:06:08 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -145,5 +145,7 @@ void	hibernate_free(void);
 
 int	hibernate_check_overlap(paddr_t, paddr_t, paddr_t, paddr_t);
 void	hibernate_sort_ranges(union hibernate_info *);
+void	hibernate_suspend_bufcache(void);
+void	hibernate_resume_bufcache(void);
 
 #endif /* _SYS_HIBERNATE_H_ */

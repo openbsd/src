@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.261 2014/07/10 13:52:15 blambert Exp $ */
+/* $OpenBSD: acpi.c,v 1.262 2014/07/11 03:06:08 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2116,6 +2116,11 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	if (config_suspend(mainbus, DVACT_QUIESCE))
 		goto fail_quiesce;
 
+#ifdef HIBERNATE
+	if (state == ACPI_STATE_S4)
+		hibernate_suspend_bufcache();
+#endif /* HIBERNATE */
+
 	bufq_quiesce();
 
 #ifdef MULTIPROCESSOR
@@ -2193,6 +2198,7 @@ fail_quiesce:
 	if (state == ACPI_STATE_S4) {
 		hibernate_free();
 		uvm_pmr_dirty_everything();
+		hibernate_resume_bufcache();
 	}
 #endif /* HIBERNATE */
 

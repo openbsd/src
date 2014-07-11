@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.156 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.157 2014/07/11 03:06:08 mlarkin Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -57,6 +57,10 @@
 #include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/specdev.h>
+
+#ifdef HIBERNATE
+#include <sys/hibernate.h>
+#endif /* HIBERNATE */
 
 int nobuffers;
 int needbuffer;
@@ -1228,3 +1232,31 @@ bufcache_release(struct buf *bp)
 	}
 	TAILQ_INSERT_TAIL(queue, bp, b_freelist);
 }
+
+#ifdef HIBERNATE
+/*
+ * Flush buffercache to lowest value on hibernate suspend
+ */
+void
+hibernate_suspend_bufcache(void)
+{
+	long save_buflowpages = buflowpages;
+
+	/* Shrink buffercache to 16MB (4096 pages) */
+	buflowpages = 4096;
+	bufadjust(buflowpages);
+	buflowpages = save_buflowpages;
+	bufhighpages = bufpages;
+}
+
+void
+hibernate_resume_bufcache(void)
+{
+	uint64_t dmapages, pgs;
+
+	dmapages = uvm_pagecount(&dma_constraint);
+	pgs = bufcachepercent * dmapages / 100;
+	bufadjust(pgs);
+	bufhighpages = bufpages;
+}
+#endif /* HIBERNATE */
