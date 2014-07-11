@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.2 2014/07/11 22:14:39 tedu Exp $ */
+/*	$Id: cgi.c,v 1.3 2014/07/11 22:16:11 tedu Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -161,7 +161,7 @@ html_printquery(const struct req *req)
 	}
 	if (NULL != req->q.expr) {
 		printf("&amp;expr=");
-		html_print(req->q.expr ? req->q.expr : "");
+		html_print(req->q.expr);
 	}
 }
 
@@ -280,11 +280,13 @@ static int
 http_decode(char *p)
 {
 	char             hex[3];
+	char		*q;
 	int              c;
 
 	hex[2] = '\0';
 
-	for ( ; '\0' != *p; p++) {
+	q = p;
+	for ( ; '\0' != *p; p++, q++) {
 		if ('%' == *p) {
 			if ('\0' == (hex[0] = *(p + 1)))
 				return(0);
@@ -295,13 +297,13 @@ http_decode(char *p)
 			if ('\0' == c)
 				return(0);
 
-			*p = (char)c;
-			memmove(p + 1, p + 3, strlen(p + 3) + 1);
+			*q = (char)c;
+			p += 2;
 		} else
-			*p = '+' == *p ? ' ' : *p;
+			*q = '+' == *p ? ' ' : *p;
 	}
 
-	*p = '\0';
+	*q = '\0';
 	return(1);
 }
 
