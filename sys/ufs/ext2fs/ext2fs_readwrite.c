@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.29 2014/05/09 03:48:58 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.30 2014/07/11 14:30:52 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -92,8 +92,7 @@ ext2fs_read(void *v)
 		panic("%s: type %d", "ext2fs_read", vp->v_type);
 #endif
 	fs = ip->i_e2fs;
-	if ((u_int64_t)uio->uio_offset >
-		((u_int64_t)0x80000000 * fs->e2fs_bsize - 1))
+	if (e2fs_overflow(fs, 0, uio->uio_offset))
 		return (EFBIG);
 	if (uio->uio_resid == 0)
 		return (0);
@@ -203,9 +202,7 @@ ext2fs_write(void *v)
 	}
 
 	fs = ip->i_e2fs;
-	if (uio->uio_offset < 0 ||
-		(u_int64_t)uio->uio_offset + uio->uio_resid >
-		((u_int64_t)0x80000000 * fs->e2fs_bsize - 1))
+	if (e2fs_overflow(fs, uio->uio_resid, uio->uio_offset + uio->uio_resid))
 		return (EFBIG);
 
 	/* do the filesize rlimit check */

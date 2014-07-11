@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.71 2014/05/27 14:31:24 krw Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.72 2014/07/11 14:30:52 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -371,6 +371,19 @@ ext2fs_reload_vnode(struct vnode *vp, void *args)
 	return (0);
 }
 
+static off_t
+ext2fs_maxfilesize(struct m_ext2fs *fs)
+{
+	bool huge = fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_HUGE_FILE;
+	off_t b = fs->e2fs_bsize / 4;
+	off_t physically, logically;
+
+	physically = dbtob(huge ? ((1ULL << 48) - 1) : UINT_MAX);
+	logically = (12ULL + b + b*b + b*b*b) * fs->e2fs_bsize;
+
+	return MIN(logically, physically);
+}
+
 /*
  * Reload all incore data for a filesystem (used after running fsck on
  * the root filesystem and finding things to fix). The filesystem must
@@ -436,6 +449,15 @@ ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	    fs->e2fs_bsize / sizeof(struct ext2_gd));
 	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE(fs);
 	fs->e2fs_itpg = fs->e2fs.e2fs_ipg/fs->e2fs_ipb;
+
+	if ((fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGEFILE) == 0 ||
+	    (fs->e2fs.e2fs_rev == E2FS_REV0))
+		fs->e2fs_maxfilesize = INT_MAX;
+	else
+		fs->e2fs_maxfilesize = ext2fs_maxfilesize(fs);
+
+	if (fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_EXTENTS)
+		fs->e2fs_maxfilesize *= 4;
 
 	/*
 	 * Step 3: re-read summary information from disk.
