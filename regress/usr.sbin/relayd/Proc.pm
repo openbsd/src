@@ -1,4 +1,4 @@
-#	$OpenBSD: Proc.pm,v 1.8 2014/07/10 10:19:06 bluhm Exp $
+#	$OpenBSD: Proc.pm,v 1.9 2014/07/11 15:38:44 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -20,6 +20,7 @@ use warnings;
 package Proc;
 use Carp;
 use Errno;
+use File::Basename;
 use IO::File;
 use POSIX;
 use Time::HiRes qw(time alarm sleep);
@@ -104,12 +105,22 @@ sub run {
 	do {
 		$self->child();
 		print STDERR $self->{up}, "\n";
+		$self->{begin} = time();
 		$self->{func}->($self);
 	} while ($self->{redo});
+	$self->{end} = time();
 	print STDERR "Shutdown", "\n";
+	if ($self->{timefile}) {
+		open(my $fh, '>>', $self->{timefile})
+		    or die ref($self), " open $self->{timefile} failed: $!";
+		printf $fh "time='%s' duration='%.10g' ".
+		    "forward='%s' test='%s'\n",
+		    scalar(localtime(time())), $self->{end} - $self->{begin},
+		    $self->{forward}, basename($self->{testfile});
+	}
+
 	IO::Handle::flush(\*STDOUT);
 	IO::Handle::flush(\*STDERR);
-
 	POSIX::_exit(0);
 }
 

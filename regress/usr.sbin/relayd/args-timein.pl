@@ -12,6 +12,7 @@ our %args = (
 	    write_char(@_, 4);
 	},
 	sleep => 1,
+	timefile => "",
 	nocheck => 1,
     },
     relayd => {

@@ -13,6 +13,7 @@ our %args = (
 	},
 	sleep => 1,
 	down => "Broken pipe",
+	timefile => "",
 	nocheck => 1,
     },
     relayd => {
