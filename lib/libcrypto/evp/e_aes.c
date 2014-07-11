@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.23 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.24 2014/07/11 14:38:51 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -785,6 +785,27 @@ aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 		/* Extra padding: tag appended to record */
 		return EVP_GCM_TLS_TAG_LEN;
 
+	case EVP_CTRL_COPY:
+	    {
+		EVP_CIPHER_CTX *out = ptr;
+		EVP_AES_GCM_CTX *gctx_out = out->cipher_data;
+
+		if (gctx->gcm.key) {
+			if (gctx->gcm.key != &gctx->ks)
+				return 0;
+			gctx_out->gcm.key = &gctx_out->ks;
+		}
+		if (gctx->iv == c->iv)
+			gctx_out->iv = out->iv;
+		else {
+			gctx_out->iv = malloc(gctx->ivlen);
+			if (!gctx_out->iv)
+				return 0;
+			memcpy(gctx_out->iv, gctx->iv, gctx->ivlen);
+		}
+		return 1;
+	    }
+
 	default:
 		return -1;
 
@@ -992,9 +1013,10 @@ aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 }
 
-#define CUSTOM_FLAGS	(EVP_CIPH_FLAG_DEFAULT_ASN1 \
-		| EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER \
-		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT)
+#define CUSTOM_FLAGS \
+    ( EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CUSTOM_IV | \
+      EVP_CIPH_FLAG_CUSTOM_CIPHER | EVP_CIPH_ALWAYS_CALL_INIT | \
+      EVP_CIPH_CTRL_INIT | EVP_CIPH_CUSTOM_COPY )
 
 BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, gcm, GCM,
     EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
@@ -1008,13 +1030,35 @@ aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
 	EVP_AES_XTS_CTX *xctx = c->cipher_data;
 
-	if (type != EVP_CTRL_INIT)
-		return -1;
+	switch (type) {
+	case EVP_CTRL_INIT:
+		/*
+		 * key1 and key2 are used as an indicator both key and IV
+		 * are set
+		 */
+		xctx->xts.key1 = NULL;
+		xctx->xts.key2 = NULL;
+		return 1;
 
-	/* key1 and key2 are used as an indicator both key and IV are set */
-	xctx->xts.key1 = NULL;
-	xctx->xts.key2 = NULL;
-	return 1;
+	case EVP_CTRL_COPY:
+	    {
+		EVP_CIPHER_CTX *out = ptr;
+		EVP_AES_XTS_CTX *xctx_out = out->cipher_data;
+
+		if (xctx->xts.key1) {
+			if (xctx->xts.key1 != &xctx->ks1)
+				return 0;
+			xctx_out->xts.key1 = &xctx_out->ks1;
+		}
+		if (xctx->xts.key2) {
+			if (xctx->xts.key2 != &xctx->ks2)
+				return 0;
+			xctx_out->xts.key2 = &xctx_out->ks2;
+		}
+		return 1;
+	    }
+	}
+	return -1;
 }
 
 static int
@@ -1106,8 +1150,9 @@ aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 #define aes_xts_cleanup NULL
 
-#define XTS_FLAGS	(EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CUSTOM_IV \
-			 | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT)
+#define XTS_FLAGS \
+    ( EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CUSTOM_IV | \
+      EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT | EVP_CIPH_CUSTOM_COPY )
 
 BLOCK_CIPHER_custom(NID_aes, 128, 1, 16, xts, XTS, EVP_CIPH_FLAG_FIPS|XTS_FLAGS)
 BLOCK_CIPHER_custom(NID_aes, 256, 1, 16, xts, XTS, EVP_CIPH_FLAG_FIPS|XTS_FLAGS)
@@ -1157,6 +1202,19 @@ aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 		cctx->iv_set = 0;
 		cctx->len_set = 0;
 		return 1;
+
+	case EVP_CTRL_COPY:
+	    {
+		EVP_CIPHER_CTX *out = ptr;
+		EVP_AES_CCM_CTX *cctx_out = out->cipher_data;
+
+		if (cctx->ccm.key) {
+			if (cctx->ccm.key != &cctx->ks)
+				return 0;
+			cctx_out->ccm.key = &cctx_out->ks;
+		}
+		return 1;
+	    }
 
 	default:
 		return -1;
