@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.28 2014/07/11 17:18:11 beck Exp $
+# $OpenBSD: Makefile,v 1.29 2014/07/11 17:43:41 deraadt Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -162,7 +162,7 @@ MLINKS+=\
 	SSL_CTX_set_max_cert_list.3 SSL_CTX_get_max_cert_list.3 \
 	SSL_CTX_set_max_cert_list.3 SSL_get_max_cert_list.3 \
 	SSL_CTX_set_max_cert_list.3 SSL_set_max_cert_list.3 \
-	SSL_CTX_set_mode.3 SSL_CTX_get_mode.3 
+	SSL_CTX_set_mode.3 SSL_CTX_get_mode.3 \
 	SSL_CTX_set_mode.3 SSL_get_mode.3 \
 	SSL_CTX_set_mode.3 SSL_set_mode.3 \
 	SSL_CTX_set_msg_callback.3 SSL_CTX_set_msg_callback_arg.3 \
