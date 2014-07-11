@@ -1,4 +1,4 @@
-/*	$OpenBSD: panel.c,v 1.2 2013/11/04 11:57:26 mpi Exp $	*/
+/*	$OpenBSD: panel.c,v 1.3 2014/07/11 08:18:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -150,7 +150,7 @@ panel_intr(void *v)
 	    (reg & IOC_PANEL_POWER_IRQ) == 0) {
 		if (allowpowerdown == 1) {
 			allowpowerdown = 0;
-			psignal(initproc, SIGUSR2);
+			prsignal(initprocess, SIGUSR2);
 		}
 	}
 

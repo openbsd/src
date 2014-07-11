@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.187 2014/07/04 05:58:30 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.188 2014/07/11 08:18:31 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -451,8 +451,8 @@ extern struct processlist allprocess;	/* List of all processes. */
 extern struct processlist zombprocess;	/* List of zombie processes. */
 extern struct proclist allproc;		/* List of all threads. */
 
-extern struct proc *initproc;		/* Process slot for init. */
-extern struct proc *reaperproc;		/* Process slot for reaper. */
+extern struct process *initprocess;	/* Process slot for init. */
+extern struct proc *reaperproc;		/* Thread slot for reaper. */
 extern struct proc *syncerproc;		/* filesystem syncer daemon */
 
 extern struct pool process_pool;	/* memory pool for processes */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.145 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.146 2014/07/11 08:18:31 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -286,10 +286,10 @@ exit1(struct proc *p, int rv, int flags)
 		 */
 		qr = LIST_FIRST(&pr->ps_children);
 		if (qr)		/* only need this if any child is S_ZOMB */
-			wakeup(initproc->p_p);
+			wakeup(initprocess);
 		for (; qr != 0; qr = nqr) {
 			nqr = LIST_NEXT(qr, ps_sibling);
-			proc_reparent(qr, initproc->p_p);
+			proc_reparent(qr, initprocess);
 			/*
 			 * Traced processes are killed since their
 			 * existence means someone is screwing up.
@@ -339,7 +339,7 @@ exit1(struct proc *p, int rv, int flags)
 		 */
 		if (pr->ps_flags & PS_NOZOMBIE) {
 			struct process *ppr = pr->ps_pptr;
-			proc_reparent(pr, initproc->p_p);
+			proc_reparent(pr, initprocess);
 			wakeup(ppr);
 		}
 

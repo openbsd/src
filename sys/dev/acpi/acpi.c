@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.262 2014/07/11 03:06:08 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.263 2014/07/11 08:18:31 guenther Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1628,7 +1628,7 @@ acpi_powerdown_task(void *arg0, int dummy)
 
 	if (allowpowerdown == 1) {
 		allowpowerdown = 0;
-		psignal(initproc, SIGUSR2);
+		prsignal(initprocess, SIGUSR2);
 	}
 }
 

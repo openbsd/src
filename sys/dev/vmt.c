@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.17 2014/03/29 18:09:30 guenther Exp $ */
+/*	$OpenBSD: vmt.c,v 1.18 2014/07/11 08:18:31 guenther Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -427,7 +427,7 @@ vmt_do_shutdown(struct vmt_softc *sc)
 	vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK);
 
 	log(LOG_KERN | LOG_NOTICE, "Shutting down in response to request from VMware host\n");
-	psignal(initproc, SIGUSR2);
+	prsignal(initprocess, SIGUSR2);
 }
 
 void
@@ -437,7 +437,7 @@ vmt_do_reboot(struct vmt_softc *sc)
 	vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK);
 
 	log(LOG_KERN | LOG_NOTICE, "Rebooting in response to request from VMware host\n");
-	psignal(initproc, SIGINT);
+	prsignal(initprocess, SIGINT);
 }
 
 void

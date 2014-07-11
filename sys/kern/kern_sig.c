@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.169 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.170 2014/07/11 08:18:31 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ setsigvec(struct proc *p, int signum, struct sigaction *sa)
 		 * for PID 1.
 		 * XXX exit1 rework means this is unnecessary?
 		 */
-		if (initproc->p_p->ps_sigacts != ps &&
+		if (initprocess->ps_sigacts != ps &&
 		    ((sa->sa_flags & SA_NOCLDWAIT) ||
 		    sa->sa_handler == SIG_IGN))
 			atomic_setbits_int(&ps->ps_flags, SAS_NOCLDWAIT);

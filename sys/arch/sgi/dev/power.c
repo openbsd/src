@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.14 2011/06/24 19:47:49 naddy Exp $	*/
+/*	$OpenBSD: power.c,v 1.15 2014/07/11 08:18:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -142,7 +142,7 @@ power_intr(void *unused)
 
 	if (allowpowerdown == 1) {
 		allowpowerdown = 0;
-		psignal(initproc, SIGUSR2);
+		prsignal(initprocess, SIGUSR2);
 	}
 
 	return 1;

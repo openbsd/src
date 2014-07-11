@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtc.c,v 1.9 2011/06/24 19:47:49 naddy Exp $	*/
+/*	$OpenBSD: rtc.c,v 1.10 2014/07/11 08:18:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -212,7 +212,7 @@ rtc_intr(void *arg)
 
 	if (allowpowerdown == 1) {
 		allowpowerdown = 0;
-		psignal(initproc, SIGUSR2);
+		prsignal(initprocess, SIGUSR2);
 	}
 	return (1);
 }
