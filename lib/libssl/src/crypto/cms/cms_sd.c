@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.6 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.7 2014/07/11 13:02:10 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -150,8 +150,8 @@ cms_sd_set_version(CMS_SignedData *sd)
 				si->version = 3;
 			if (sd->version < 3)
 				sd->version = 3;
-		} else
-			sd->version = 1;
+		} else if (si->version < 1)
+			si->version = 1;
 	}
 
 	if (sd->version < 1)
