@@ -1,4 +1,4 @@
-#	$OpenBSD: Remote.pm,v 1.3 2014/06/22 14:18:01 bluhm Exp $
+#	$OpenBSD: Remote.pm,v 1.4 2014/07/11 16:13:11 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -48,7 +48,7 @@ sub new {
 	my %args = @_;
 	$args{logfile} ||= "remote.log";
 	$args{up} ||= "Started";
-	$args{down} ||= $args{dryrun} ? "no actions" : "parent terminating";
+	$args{down} ||= $args{dryrun} ? "relayd.conf" : "parent terminating";
 	$args{func} = sub { Carp::confess "$class func may not be called" };
 	$args{remotessh}
 	    or croak "$class remote ssh host not given";
