@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.51 2014/07/11 09:42:27 yasuoka Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.52 2014/07/11 16:48:29 yasuoka Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -180,6 +180,7 @@ struct lease {
 #define EPHEMERAL_FLAGS		(BOOTP_LEASE)
 #define MS_NULL_TERMINATION	8
 #define ABANDONED_LEASE		16
+#define INFORM_NOLEASE		32
 
 	struct lease_state *state;
 	u_int8_t releasing;

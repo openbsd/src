@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.37 2014/07/11 09:42:27 yasuoka Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.38 2014/07/11 16:48:29 yasuoka Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -500,7 +500,7 @@ dhcpdecline(struct packet *packet)
 void
 dhcpinform(struct packet *packet)
 {
-	struct lease *lease;
+	struct lease lease;
 	struct iaddr cip;
 	struct subnet *subnet;
 
@@ -509,9 +509,17 @@ dhcpinform(struct packet *packet)
 	 * not all clients are standards compliant.
 	 */
 	cip.len = 4;
-	if (packet->raw->ciaddr.s_addr)
+	if (packet->raw->ciaddr.s_addr) {
+		if (memcmp(&packet->raw->ciaddr.s_addr,
+		    packet->client_addr.iabuf, 4) != 0) {
+			note("DHCPINFORM from %s but ciaddr %s is not "
+			    "consitent with actual address",
+			    piaddr(packet->client_addr),
+			    inet_ntoa(packet->raw->ciaddr));
+			return;
+		}
 		memcpy(cip.iabuf, &packet->raw->ciaddr.s_addr, 4);
-	else
+	} else
 		memcpy(cip.iabuf, &packet->client_addr.iabuf, 4);
 
 	note("DHCPINFORM from %s", piaddr(cip));
@@ -528,28 +536,21 @@ dhcpinform(struct packet *packet)
 		return;
 	}
 
-	lease = find_lease(packet, subnet->shared_network, 0);
-	if (!lease) {
-		note("DHCPINFORM packet from %s but no lease present",
-		    print_hw_addr(packet->raw->htype, packet->raw->hlen,
-		    packet->raw->chaddr));
-		return;
-	}
+	/* Use a fake lease entry */
+	memset(&lease, 0, sizeof(lease));
+	lease.subnet = subnet;
+	lease.shared_network = subnet->shared_network;
 
-	/* If this subnet won't boot unknown clients, ignore the
-	   request. */
-	if (!lease->host &&
-	    !lease->subnet->group->boot_unknown_clients) {
-		note("Ignoring unknown client %s",
-		    print_hw_addr(packet->raw->htype, packet->raw->hlen,
-		    packet->raw->chaddr));
-	} else if (lease->host && !lease->host->group->allow_booting) {
-		note("Declining to boot client %s",
-		    lease->host->name ? lease->host->name :
-		    print_hw_addr(packet->raw->htype, packet->raw->hlen,
-		    packet->raw->chaddr));
-	} else
-		ack_lease(packet, lease, DHCPACK, 0);
+	if (packet->options[DHO_DHCP_CLIENT_IDENTIFIER].len)
+		lease.host = find_hosts_by_uid(
+		    packet->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
+		    packet->options[DHO_DHCP_CLIENT_IDENTIFIER].len);
+
+	lease.starts = lease.timestamp = lease.ends = MIN_TIME;
+	lease.flags = INFORM_NOLEASE;
+	ack_lease(packet, &lease, DHCPACK, 0);
+	if (lease.state != NULL)
+		free_lease_state(lease.state, "ack_lease");
 }
 
 void
@@ -881,7 +882,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 	lt.shared_network = lease->shared_network;
 
 	/* Don't call supersede_lease on a mocked-up lease. */
-	if (lease->flags & STATIC_LEASE) {
+	if (lease->flags & (STATIC_LEASE | INFORM_NOLEASE)) {
 		/* Copy the hardware address into the static lease
 		   structure. */
 		lease->hardware_addr.hlen = packet->raw->hlen;
@@ -1043,6 +1044,42 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 			memcpy(state->from.iabuf, state->options[i]->value,
 			    state->from.len);
 		}
+		/* If we used the vendor class the client specified, we
+		   have to return it. */
+		if (vendor_class) {
+			i = DHO_DHCP_CLASS_IDENTIFIER;
+			state->options[i] =
+				new_tree_cache("class-identifier");
+			state->options[i]->flags = TC_TEMPORARY;
+			state->options[i]->value =
+				(unsigned char *)vendor_class->name;
+			state->options[i]->len =
+				strlen(vendor_class->name);
+			state->options[i]->buf_size =
+				state->options[i]->len;
+			state->options[i]->timeout = -1;
+			state->options[i]->tree = NULL;
+		}
+
+		/* If we used the user class the client specified, we
+		   have to return it. */
+		if (user_class) {
+			i = DHO_DHCP_USER_CLASS_ID;
+			state->options[i] = new_tree_cache("user-class");
+			state->options[i]->flags = TC_TEMPORARY;
+			state->options[i]->value =
+				(unsigned char *)user_class->name;
+			state->options[i]->len =
+				strlen(user_class->name);
+			state->options[i]->buf_size =
+				state->options[i]->len;
+			state->options[i]->timeout = -1;
+			state->options[i]->tree = NULL;
+		}
+	}
+
+	/* for DHCPINFORM, don't include lease time parameters */
+	if (state->offer && (lease->flags & INFORM_NOLEASE) == 0) {
 
 		/* Sanity check the lease time. */
 		if ((state->offered_expiry - cur_time) < 15)
@@ -1093,39 +1130,6 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		state->options[i]->buf_size = sizeof state->rebind;
 		state->options[i]->timeout = -1;
 		state->options[i]->tree = NULL;
-
-		/* If we used the vendor class the client specified, we
-		   have to return it. */
-		if (vendor_class) {
-			i = DHO_DHCP_CLASS_IDENTIFIER;
-			state->options[i] =
-				new_tree_cache("class-identifier");
-			state->options[i]->flags = TC_TEMPORARY;
-			state->options[i]->value =
-				(unsigned char *)vendor_class->name;
-			state->options[i]->len =
-				strlen(vendor_class->name);
-			state->options[i]->buf_size =
-				state->options[i]->len;
-			state->options[i]->timeout = -1;
-			state->options[i]->tree = NULL;
-		}
-
-		/* If we used the user class the client specified, we
-		   have to return it. */
-		if (user_class) {
-			i = DHO_DHCP_USER_CLASS_ID;
-			state->options[i] = new_tree_cache("user-class");
-			state->options[i]->flags = TC_TEMPORARY;
-			state->options[i]->value =
-				(unsigned char *)user_class->name;
-			state->options[i]->len =
-				strlen(user_class->name);
-			state->options[i]->buf_size =
-				state->options[i]->len;
-			state->options[i]->timeout = -1;
-			state->options[i]->tree = NULL;
-		}
 	}
 
 	/* Use the subnet mask from the subnet declaration if no other
@@ -1280,7 +1284,8 @@ dhcp_reply(struct lease *lease)
 	}
 
 	memcpy(&raw.ciaddr, &state->ciaddr, sizeof raw.ciaddr);
-	memcpy(&raw.yiaddr, lease->ip_addr.iabuf, 4);
+	if ((lease->flags & INFORM_NOLEASE) == 0)
+		memcpy(&raw.yiaddr, lease->ip_addr.iabuf, 4);
 
 	/* Figure out the address of the next server. */
 	if (lease->host && lease->host->group->next_server.len)
