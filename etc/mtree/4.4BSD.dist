@@ -1,707 +1,344 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.248 2014/07/09 19:23:28 espie Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.249 2014/07/11 10:52:30 schwarze Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
 . nochange
-
-# ./altroot
 altroot
-# ./altroot
 ..
-
-# ./bin
 bin
-# ./bin
 ..
-
-# ./dev
 dev
-
-# ./dev
 ..
 
 # ./etc
 etc
-
-# ./etc/amd
 amd
-# ./etc/amd
 ..
-
-# ./etc/authpf
 authpf		uname=root mode=0755
-# ./etc/authpf
 ..
-
-# ./etc/disklabels
 disklabels
-# ./etc/disklabels
 ..
-
-# ./etc/firmware
 firmware
-# ./etc/firmware
 ..
-
-# ./etc/hotplug
 hotplug
-# ./etc/hotplug
 ..
 
 # ./etc/iked
 iked
-
-# ./etc/iked/ca
 ca
-# ./etc/iked/ca
 ..
-
-# ./etc/iked/certs
 certs
-# ./etc/iked/certs
 ..
-
-# ./etc/iked/crls
 crls
-# ./etc/iked/crls
 ..
-
-# ./etc/iked/private
 private		uname=root mode=0700
-# ./etc/iked/private
 ..
 
 # ./etc/iked/pubkeys
 pubkeys		uname=root mode=0755
-
-# ./etc/iked/pubkeys/fqdn
 fqdn		uname=root mode=0755
-# ./etc/iked/pubkeys/fqdn
 ..
-
-# ./etc/iked/pubkeys/ipv4
 ipv4		uname=root mode=0755
-# ./etc/iked/pubkeys/ipv4
 ..
-
-# ./etc/iked/pubkeys/ipv6
 ipv6		uname=root mode=0755
-# ./etc/iked/pubkeys/ipv6
 ..
-
-# ./etc/iked/pubkeys/ufqdn
 ufqdn		uname=root mode=0755
-# ./etc/iked/pubkeys/ufqdn
 ..
-
-# ./etc/iked/pubkeys
 ..
-
-# ./etc/iked
 ..
 
 # ./etc/isakmpd
 isakmpd
-
-# ./etc/isakmpd/ca
 ca
-# ./etc/isakmpd/ca
 ..
-
-# ./etc/isakmpd/certs
 certs
-# ./etc/isakmpd/certs
 ..
-
-# ./etc/isakmpd/crls
 crls
-# ./etc/isakmpd/crls
 ..
-
-# ./etc/isakmpd/keynote
 keynote
-# ./etc/isakmpd/keynote
 ..
-
-# ./etc/isakmpd/private
 private		uname=root mode=0700
-# ./etc/isakmpd/private
 ..
 
 # ./etc/isakmpd/pubkeys
 pubkeys		uname=root mode=0755
-
-# ./etc/isakmpd/pubkeys/fqdn
 fqdn		uname=root mode=0755
-# ./etc/isakmpd/pubkeys/fqdn
 ..
-
-# ./etc/isakmpd/pubkeys/ipv4
 ipv4		uname=root mode=0755
-# ./etc/isakmpd/pubkeys/ipv4
 ..
-
-# ./etc/isakmpd/pubkeys/ipv6
 ipv6		uname=root mode=0755
-# ./etc/isakmpd/pubkeys/ipv6
 ..
-
-# ./etc/isakmpd/pubkeys/ufqdn
 ufqdn		uname=root mode=0755
-# ./etc/isakmpd/pubkeys/ufqdn
 ..
-
-# ./etc/isakmpd/pubkeys
 ..
-
-# ./etc/isakmpd
 ..
 
 # ./etc/ldap
 ldap
-
-# ./etc/ldap/certs
 certs		mode=0700
-# ./etc/ldap/certs
 ..
-
-# ./etc/ldap
 ..
 
 # ./etc/mail
 mail
-# ./etc/mail
 ..
-
-# ./etc/mtree
 mtree
-# ./etc/mtree
 ..
-
-# ./etc/nginx
 nginx
-# ./etc/nginx
 ..
-
-# ./etc/npppd
 npppd
-# ./etc/npppd
 ..
-
-# ./etc/ppp
 ppp
-# ./etc/ppp
 ..
-
-# ./etc/rc.d
 rc.d
-# ./etc/rc.d
 ..
 
 # ./etc/skel
 skel
-
-# ./etc/skel/.ssh
 .ssh		uname=root mode=0700
-# ./etc/skel/.ssh
 ..
-
-# ./etc/skel
 ..
 
 # ./etc/sliphome
 sliphome
-# ./etc/sliphome
 ..
-
-# ./etc/signify
 signify
-# ./etc/signify
 ..
-
-# ./etc/ssh
 ssh
-# ./etc/ssh
 ..
-
 
 # ./etc/ssl
 ssl
-
-# ./etc/ssl/private
 private		uname=root mode=0700
-# ./etc/ssl/private
 ..
-
-# ./etc/ssl/lib
 lib
-# ./etc/ssl/lib
 ..
-
-# ./etc/ssl
 ..
 
 # ./etc/systrace
 systrace
-# ./etc/systrace
 ..
-
-# ./etc
 ..
 
 # ./home
 home
-# ./home
 ..
-
-# ./mnt
 mnt
-# ./mnt
 ..
-
-# ./root
 root		mode=0700
-# ./root
 ..
-
-# ./sbin
 sbin
-# ./sbin
 ..
-
-# ./tmp
 tmp             mode=01777
-# ./tmp
 ..
 
 # ./usr
 usr
-
-# ./usr/bin
 bin
-# ./usr/bin
 ..
-
-# ./usr/games
 games
-
-# ./usr/games
 ..
 
 # ./usr/include
 include		gname=bin uname=root mode=0755
-
-# ./usr/include/arpa
 arpa		gname=bin uname=root mode=0755
-# ./usr/include/arpa
 ..
 
 # ./usr/include/g++
 g++		gname=bin uname=root mode=0755
-
-# ./usr/include/g++/std
 std             gname=bin uname=root mode=0755
-# ./usr/include/g++/std
 ..
-
-# ./usr/include/g++
 ..
 
 # ./usr/include/libmilter
 libmilter		gname=bin uname=root mode=0755
-# ./usr/include/libmilter
 ..
-
-# ./usr/include/objc
 objc		gname=bin uname=root mode=0755
-# ./usr/include/objc
 ..
-
-# ./usr/include/openssl
 openssl		gname=bin uname=root mode=0755
-# ./usr/include/openssl
 ..
-
-# ./usr/include/protocols
 protocols		gname=bin uname=root mode=0755
-# ./usr/include/protocols
 ..
-
-# ./usr/include/readline
 readline	gname=bin uname=root mode=0755
-# ./usr/include/readline
 ..
-
-# ./usr/include/rpc
 rpc		gname=bin uname=root mode=0755
-# ./usr/include/rpc
 ..
-
-# ./usr/include/rpcsvc
 rpcsvc		gname=bin uname=root mode=0755
-# ./usr/include/rpcsvc
 ..
-
-# ./usr/include
 ..
 
 # ./usr/lib
 lib
-
-# ./usr/lib/debug
 debug		gname=bin uname=root mode=0755
-# ./usr/lib/debug
 ..
-
-# ./usr/lib/locate
 locate	gname=bin uname=root mode=0755
-# ./usr/lib/locate
 ..
-
-# ./usr/lib/pkgconfig
 pkgconfig	gname=bin uname=root mode=0755
-# ./usr/lib/pkgconfig
 ..
-
-# ./usr/lib
 ..
 
 # ./usr/libdata
 libdata
-
-# ./usr/libdata/perl5
 perl5
-
-# ./usr/libdata/perl5/site_perl
 site_perl
-# ./usr/libdata/perl5/site_perl
 ..
-
-# ./usr/libdata/perl5
 ..
-
-# ./usr/libdata
 ..
 
 # ./usr/libexec
 libexec
-
-# ./usr/libexec/auth
 auth		type=dir uname=root gname=auth mode=0750
-# ./usr/libexec/auth
 ..
-
-# ./usr/libexec/sm.bin
 sm.bin
-# ./usr/libexec/sm.bin
 ..
-
-# ./usr/libexec/lpr
 lpr
-# ./usr/libexec/lpr
 ..
-
-# ./libexec/sendmail
 sendmail	type=dir uname=root gname=wheel mode=0755
-# ./libexec/sendmail
 ..
-
-# ./libexec/smtpd
 smtpd		type=dir uname=root gname=wheel mode=0755
-# ./libexec/smtpd
 ..
-
-# ./usr/libexec
 ..
 
 # ./usr/lkm
 lkm
-# ./usr/lkm
 ..
 
 # ./usr/local
 local
-
-# ./usr/local/bin
 bin
-# ./usr/local/bin
 ..
-
-# ./usr/local/lib
 lib
-# ./usr/local/lib
 ..
 
 # ./usr/local/libdata
 libdata
-
-# ./usr/local/libdata/perl5
 perl5
-
-# ./usr/local/libdata/perl5/site_perl
 site_perl
-# ./usr/local/libdata/perl5/site_perl
 ..
-
-# ./usr/local/libdata/perl5
 ..
-
-# ./usr/local/libdata
 ..
 
 # ./usr/local/libexec
 libexec
-# ./usr/local/libexec
 ..
 
 # ./usr/local/man
 man
-
-# ./usr/local/man/cat1
 cat1
-# ./usr/local/man/cat1
 ..
-
-# ./usr/local/man/cat2
 cat2
-# ./usr/local/man/cat2
 ..
-
-# ./usr/local/man/cat3
 cat3
-# ./usr/local/man/cat3
 ..
-
-# ./usr/local/man/cat4
 cat4
-
-# ./usr/local/man/cat4
 ..
-
-# ./usr/local/man/cat5
 cat5
-# ./usr/local/man/cat5
 ..
-
-# ./usr/local/man/cat6
 cat6
-# ./usr/local/man/cat6
 ..
-
-# ./usr/local/man/cat7
 cat7
-# ./usr/local/man/cat7
 ..
-
-# ./usr/local/man/cat8
 cat8
-# ./usr/local/man/cat8
 ..
-
-# ./usr/local/man/cat9
 cat9
-# ./usr/local/man/cat9
 ..
-
-# ./usr/local/man/man1
 man1
-# ./usr/local/man/man1
 ..
-
-# ./usr/local/man/man2
 man2
-# ./usr/local/man/man2
 ..
-
-# ./usr/local/man/man3
 man3
-# ./usr/local/man/man3
 ..
-
-# ./usr/local/man/man4
 man4
-# ./usr/local/man/man4
 ..
-
-# ./usr/local/man/man5
 man5
-# ./usr/local/man/man5
 ..
-
-# ./usr/local/man/man6
 man6
-# ./usr/local/man/man6
 ..
-
-# ./usr/local/man/man7
 man7
-# ./usr/local/man/man7
 ..
-
-# ./usr/local/man/man8
 man8
-# ./usr/local/man/man8
 ..
-
-# ./usr/local/man/man9
 man9
-# ./usr/local/man/man9
 ..
-
-# ./usr/local/man
 ..
 
 # ./usr/local/sbin
 sbin
-# ./usr/local/sbin
 ..
-
-# ./usr/local/info
 info
-# ./usr/local/info
 ..
-
-# ./usr/local
 ..
 
 # ./usr/mdec
 mdec
-# ./usr/mdec
 ..
-
-# ./usr/obj		XXX
 obj		gname=wsrc mode=0775
-# ./usr/obj		XXX
 ..
-
-# ./usr/sbin
 sbin
-# ./usr/sbin
 ..
 
 # ./usr/share
 share
-
-# ./usr/share/calendar
 calendar
-# ./usr/share/calendar
 ..
 
 # ./usr/share/dict
 dict
-
-# ./usr/share/dict/papers
 papers
-# ./usr/share/dict/papers
 ..
-
-# ./usr/share/dict/special
 special
-# ./usr/share/dict/special
 ..
-
-# ./usr/share/dict
 ..
 
 # ./usr/share/doc
 doc
-
-# ./usr/share/doc/html
 html
-
-# ./usr/share/doc/html/lynx_help
 lynx_help
-
-# ./usr/share/doc/html/lynx_help/keystrokes
 keystrokes
-# ./usr/share/doc/html/lynx_help/keystrokes
 ..
-
-# ./usr/share/doc/html/lynx_help
 ..
 
 # ./usr/share/doc/html/bind
 bind
-
-# ./usr/share/doc/html/bind
 ..
-
-# ./usr/share/doc/html/curses
 curses
-
-# ./usr/share/doc/html/curses
 ..
-
-# ./usr/share/doc/html/milter
 milter
-
-# ./usr/share/doc/html/milter
 ..
-
-# ./usr/share/doc/html
 ..
-
-# ./usr/share/doc
 ..
 
 # ./usr/share/games
 games
-
-# ./usr/share/games/atc
 atc
-# ./usr/share/games/atc
 ..
-
-# ./usr/share/games/boggle
 boggle
-# ./usr/share/games/boggle
 ..
-
-# ./usr/share/games/fortune
 fortune
-# ./usr/share/games/fortune
 ..
-
-# ./usr/share/games/quiz.db
 quiz.db
-# ./usr/share/games/quiz.db
 ..
-
-# ./usr/share/games
 ..
 
 # ./usr/share/info
 info
-# ./usr/share/info
 ..
 
 # ./usr/share/lkm
 lkm		gname=bin uname=root
-
-# ./usr/share/lkm/misc
 misc		gname=bin uname=root
-# ./usr/share/lkm/misc
 ..
-
-# ./usr/share/lkm/syscall
 syscall		gname=bin uname=root
-# ./usr/share/lkm/syscall
 ..
-
-# ./usr/share/lkm
 ..
 
 # ./usr/share/locale
 locale
-# ./usr/share/locale
 ..
 
 # ./usr/share/man
 man
-
-# ./usr/share/man/man1
 man1
-
 amd64
 ..
 i386
@@ -710,13 +347,10 @@ sparc
 ..
 sparc64
 ..
-
-# ./usr/share/man/man1
 ..
 
 # ./usr/share/man/man2
 man2
-
 alpha
 ..
 amd64
@@ -727,31 +361,24 @@ i386
 ..
 zaurus
 ..
-
-# ./usr/share/man/man2
 ..
 
 # ./usr/share/man/man3
 man3
-
 loongson
 ..
 sgi
 ..
 vax
 ..
-
-# ./usr/share/man/man3
 ..
 
 # ./usr/share/man/man3p
 man3p
-# ./usr/share/man/man3p
 ..
 
 # ./usr/share/man/man4
 man4
-
 alpha
 ..
 amd64
@@ -788,13 +415,10 @@ vax
 ..
 zaurus
 ..
-
-# ./usr/share/man/man4
 ..
 
 # ./usr/share/man/man5
 man5
-
 amd64
 ..
 armish
@@ -813,23 +437,16 @@ socppc
 ..
 zaurus
 ..
-
-# ./usr/share/man/man5
 ..
 
 # ./usr/share/man/man6
 man6
-# ./usr/share/man/man6
 ..
-
-# ./usr/share/man/man7
 man7
-# ./usr/share/man/man7
 ..
 
 # ./usr/share/man/man8
 man8
-
 alpha
 ..
 amd64
@@ -868,541 +485,267 @@ vax
 ..
 zaurus
 ..
-
-# ./usr/share/man/man8
 ..
 
 # ./usr/share/man/man9
 man9
-# ./usr/share/man/man9
 ..
-
-# ./usr/share/man
 ..
 
 # ./usr/share/misc
 misc
-# ./usr/share/misc
 ..
-
-# ./usr/share/mk
 mk
-# ./usr/share/mk
 ..
-
-# ./usr/share/nls
 nls
-# ./usr/share/nls
 ..
 
 # ./usr/share/sendmail
 sendmail
-
-# ./usr/share/sendmail/cf
 cf
-# ./usr/share/sendmail/cf
 ..
-
-# ./usr/share/sendmail/domain
 domain
-# ./usr/share/sendmail/domain
 ..
-
-# ./usr/share/sendmail/feature
 feature
-# ./usr/share/sendmail/feature
 ..
-
-# ./usr/share/sendmail/hack
 hack
-# ./usr/share/sendmail/hack
 ..
-
-# ./usr/share/sendmail/m4
 m4
-# ./usr/share/sendmail/m4
 ..
-
-# ./usr/share/sendmail/mailer
 mailer
-# ./usr/share/sendmail/mailer
 ..
-
-# ./usr/share/sendmail/ostype
 ostype
-# ./usr/share/sendmail/ostype
 ..
-
-# ./usr/share/sendmail/sh
 sh
-# ./usr/share/sendmail/sh
 ..
-
-# ./usr/share/sendmail/siteconfig
 siteconfig
-# ./usr/share/sendmail/siteconfig
 ..
-
-# ./usr/share/sendmail
 ..
 
 # ./usr/share/snmp
 snmp
-
-# ./usr/share/snmp/mibs
 mibs
-# ./usr/share/snmp/mibs
 ..
-
-# ./usr/share/snmp
 ..
 
 # ./usr/share/tabset
 tabset
-# ./usr/share/tabset
 ..
 
 # ./usr/share/vi
 vi
-
-# ./usr/share/vi/catalog
 catalog
-# ./usr/share/vi/catalog
 ..
-
-# ./usr/share/vi
 ..
 
 # ./usr/share/zoneinfo
 zoneinfo         gname=bin uname=root mode=0555
-
-# ./usr/share/zoneinfo/Australia
 Australia        gname=bin uname=root mode=0555
-# ./usr/share/zoneinfo/Australia
 ..
-
-# ./usr/share/zoneinfo/Brazil
 Brazil           gname=bin uname=root mode=0555
-# ./usr/share/zoneinfo/Brazil
 ..
-
-# ./usr/share/zoneinfo/Canada
 Canada           gname=bin uname=root mode=0555
-# ./usr/share/zoneinfo/Canada
 ..
-
-# ./usr/share/zoneinfo/Chile
 Chile            gname=bin uname=root mode=0555
-# ./usr/share/zoneinfo/Chile
 ..
-
-# ./usr/share/zoneinfo/Mexico
 Mexico           gname=bin uname=root mode=0555
-# ./usr/share/zoneinfo/Mexico
 ..
-
-# ./usr/share/zoneinfo/US
 US               gname=bin uname=root mode=0555
-# ./usr/share/zoneinfo/US
 ..
-
-# ./usr/share/zoneinfo
 ..
-
-# ./usr/share
 ..
 
 # ./usr/src
 #src		gname=wsrc mode=0775
-# ./usr/src
 #..
 
 # ./usr/xobj
 xobj		gname=wsrc mode=0775
-# ./usr/xobj
 ..
-
-# ./usr
 ..
 
 # ./var
 var
-
-# ./var/account
 account
-# ./var/account
 ..
-
-# ./var/authpf
 authpf		uname=root gname=authpf mode=0770
-# ./var/authpf
 ..
 
 # ./var/empty
 empty		mode=0755
-
-# ./var/empty/dev
 dev		mode=0555
-# ./var/empty/dev
 ..
-
-# ./var/empty
 ..
 
 # ./var/backups
 backups		mode=0700
-# ./var/backups
 ..
-
-# ./var/yp
 yp		mode=755
-# ./var/yp
 ..
-
-# ./var/crash
 crash		mode=770
-# ./var/crash
 ..
 
 # ./var/cron
 cron		mode=0555
-
-# ./var/cron/atjobs
 atjobs		gname=crontab mode=01770
-
-# ./var/cron/tabs
 ..
-
-# ./var/cron/tabs
 tabs		gname=crontab mode=01730
-
-# ./var/cron/tabs
 ..
-
-# ./var/cron
 ..
 
 # ./var/db
 db
-
-# ./var/db/ldap
 ldap		mode=0700
-# ./var/db/ldap
 ..
-
-# ./var/db/ns
 ns
-# ./var/db/ns
 ..
-
-# ./var/db/pkg
 pkg
-# ./var/db/pkg
 ..
-
-# ./var/db/sysmerge
 sysmerge
-# ./var/db/sysmerge
 ..
-
-# ./var/db/yubikey
 yubikey          uname=root gname=auth mode=0770
-# ./var/db/yubikey
 ..
-
-# ./var/db
 ..
 
 # ./var/games
 games            uname=root gname=games mode=0775
-
-# ./var/games/hackdir
 hackdir          uname=root gname=games mode=0775
-
-# ./var/games/hackdir/save
 save		 uname=root gname=games mode=0770
-# ./var/games/hackdir/save
+..
 ..
 
-# ./var/games/hackdir
-..
-
-# ./var/games/hackdir/save		XXX
+# ./var/games/save
 save		uname=root gname=games mode=0775
-# ./var/games/hackdir/save		XXX
 ..
-
-# ./var/games/phantasia
 phantasia        uname=root gname=games mode=0775
-# ./var/games/phantasia
 ..
-
-# ./var/games
 ..
 
 # ./var/log
 log
-
-# ./var/log/rdist
 rdist
-# ./var/log/rdist
 ..
-
-# ./var/log
 ..
 
 # ./var/mail
 mail
-# ./var/mail
 ..
 
 # ./var/named
 named
-
-# ./var/named/dev
 dev
-# ./var/named/dev
 ..
-
-# ./var/named/etc
 etc		uname=root gname=named mode=0750
-# ./var/named/etc
 ..
-
-# ./var/named/master
 master
-# ./var/named/master
 ..
-
-# ./var/named/slave
 slave		uname=root gname=named mode=0775
-# ./var/named/slave
 ..
-
-# ./var/named/standard
 standard
-# ./var/named/standard
 ..
-
-# ./var/named/tmp
 tmp		uname=root gname=named mode=0775
-# ./var/named/tmp
 ..
-
-# ./var/named
 ..
 
 # ./var/nsd
 nsd
-
-# ./var/nsd/db
 db		uname=root gname=_nsd mode=0775
-# ./var/nsd/db
 ..
-
-# ./var/nsd/dev
 dev
-# ./var/nsd/dev
 ..
-
-# ./var/nsd/etc
 etc		uname=root gname=_nsd mode=0750
-# ./var/nsd/etc
 ..
 
 # ./var/nsd/run
 run		uname=root gname=_nsd mode=0775
-
-# ./var/nsd/run/xfr
 xfr		uname=root gname=_nsd mode=0770
-# ./var/nsd/run/xfr
 ..
-
-# ./var/nsd/run
 ..
 
 # ./var/nsd/zones
 zones		uname=root gname=wheel mode=0755
-# ./var/nsd/zones
 ..
-
-# ./var/nsd
 ..
 
 # ./var/quotas
 quotas            gname=operator mode=0750
-# ./var/quotas
 ..
-
-# ./var/run
 run
-# ./var/run
 ..
-
-# ./var/rwho
 rwho
-# ./var/rwho
 ..
 
 # ./var/spool
 spool
-
-# ./var/spool/clientmqueue
 clientmqueue	mode=0770 uname=smmsp gname=smmsp
-# ./var/spool/clientmqueue
 ..
 
 # ./var/spool/ftp
 ftp		mode=0555
-
-# ./var/spool/ftp/bin
 bin		mode=0511
-# ./var/spool/ftp/bin
 ..
-
-# ./var/spool/ftp/etc
 etc		mode=0511
-# ./var/spool/ftp/etc
 ..
-
-# ./var/spool/ftp/hidden
 hidden           mode=0111
-# ./var/spool/ftp/hidden
 ..
-
-# ./var/spool/ftp/pub			XXX
 #pub		mode=0555
-# ./var/spool/ftp/pub			XXX
 #..
-
-# ./var/spool/ftp
 ..
 
 # ./var/spool/lock
 lock		uname=uucp gname=dialer mode=1775
-# ./var/spool/lock
 ..
-
-# ./var/spool/mqueue
 mqueue		mode=0700
-# ./var/spool/mqueue
 ..
-
-# ./var/spool/output
 output		gname=daemon mode=0775
-# ./var/spool/output
 ..
-
-# ./var/spool/smtpd
 smtpd		type=dir uname=root gname=wheel mode=0711
-# ./var/spool/smtpd
 ..
-
-# ./var/spool/sockets
 #sockets	mode=777
-# ./var/spool/sockets
 #..
-
-# ./var/spool/uucp
 uucp		uname=uucp gname=daemon
-# ./var/spool/uucp
 ..
-
-# ./var/spool/uucppublic
 uucppublic	uname=uucp gname=daemon mode=0755
-# ./var/spool/uucppublic
 ..
-
-/set uname=root gname=wheel
-# ./var/spool
 ..
 
 # ./var/tmp
 tmp        mode=01777
-
-# ./var/tmp/vi.recover
 vi.recover	 mode=01777
-# ./var/tmp/vi.recover
 ..
-
-# ./var/tmp
 ..
 
 # ./var/unbound
 unbound
-
-# ./var/unbound/dev
 dev		uname=root gname=wheel mode=0755
-# ./var/unbound/dev
 ..
-
-# ./var/unbound/etc
 etc		uname=root gname=wheel mode=0755
-# ./var/unbound/etc
 ..
-
-# ./var/unbound/db
 db		uname=root gname=_unbound mode=0775
-# ./var/unbound/db
+..
 ..
 
-# ./var/unbound
-..
-
-# ./www
+# ./var/www
 www type=dir uname=root gname=daemon mode=755
-
-# ./www/cache
 cache type=dir uname=www gname=daemon mode=1700
-
-# ./www
 ..
-
-# ./www/dev
 dev type=dir uname=root gname=daemon mode=755
-
-# ./www
 ..
-
-#./www/cgi-bin
 cgi-bin  type=dir uname=root gname=daemon mode=755
-#./www/cgi-bin
 ..
-
-#./www/htdocs
 htdocs  type=dir uname=root gname=daemon mode=755
-
-#./www/htdocs
 ..
-
-#./www/logs
 logs  type=dir uname=root gname=daemon mode=755
-#./www/logs
 ..
-
-#./www/conf
 conf  type=dir uname=root gname=daemon mode=755
-
-#./www/conf
 ..
-
-#./www/bin
 bin  type=dir uname=root gname=daemon mode=755
-#./www/bin
 ..
-
-#./www/run
 run  type=dir uname=root gname=daemon mode=755
-#./www/run
+..
 ..
 
-#./www
-..
-
-#./var/audit
+# ./var/audit
 audit type=dir uname=root gname=wheel mode=2770
-#./var/audit
 ..
-
-# ./var
 ..
