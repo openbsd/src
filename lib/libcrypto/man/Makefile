@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2014/07/09 17:56:43 miod Exp $
+# $OpenBSD: Makefile,v 1.6 2014/07/11 13:06:26 beck Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -308,9 +308,7 @@ MLINKS+=\
 	BIO_s_mem.3 BIO_new_mem_buf.3 \
 	BIO_s_mem.3 BIO_set_mem_buf.3 \
 	BIO_s_mem.3 BIO_set_mem_eof_return.3 \
-	BIO_s_socket.3 BIO_get_fd.3 \
 	BIO_s_socket.3 BIO_new_socket.3 \
-	BIO_s_socket.3 BIO_set_fd.3 \
 	BIO_set_callback.3 BIO_debug_callback.3 \
 	BIO_set_callback.3 BIO_get_callback.3 \
 	BIO_set_callback.3 BIO_get_callback_arg.3 \
