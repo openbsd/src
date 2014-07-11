@@ -1,3 +1,10 @@
+./etc/examples/ldpd.conf
+./etc/examples/dvmrpd.conf
+./etc/examples/hostapd.conf
+./etc/examples/ifstated.conf
+./etc/examples/chio.conf
+./etc/examples/ospf6d.conf
+./etc/examples/ospfd.conf
 ./altroot
 ./bin
 ./bin/[
