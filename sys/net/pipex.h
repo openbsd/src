@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.17 2013/06/08 14:24:38 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.18 2014/07/11 16:24:00 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -89,7 +89,7 @@ struct pipex_session_req {
 	int8_t		pr_ccp_id;		/* CCP current packet id */
 	int		pr_ppp_id;		/* PPP Id. */
 	uint16_t	pr_peer_mru; 		/* Peer's MRU */
-	uint16_t	pr_timeout_sec; 	/* Idle Timer */
+	uint32_t	pr_timeout_sec; 	/* Idle Timer */
 
 	struct in_addr	pr_ip_srcaddr;		/* local framed IP-Address */
 	struct in_addr	pr_ip_address;		/* framed IP-Address */
