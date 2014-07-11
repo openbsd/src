@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.23 2014/07/11 11:48:50 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.24 2014/07/11 22:28:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -164,7 +164,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	char			*line = NULL, *key, *value;
 	int			 action;
 	const char		*errstr;
-	size_t			 size;
+	size_t			 size, linelen;
 	struct kv		*hdr = NULL;
 
 	getmonotime(&con->se_tv_last);
@@ -180,16 +180,26 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	}
 
 	while (!cre->done && (line = evbuffer_readline(src)) != NULL) {
+		linelen = strlen(line);
+
 		/*
 		 * An empty line indicates the end of the request.
 		 * libevent already stripped the \r\n for us.
 		 */
-		if (!strlen(line)) {
+		if (!linelen) {
 			cre->done = 1;
 			free(line);
 			break;
 		}
 		key = line;
+
+		/* Limit the total header length minus \r\n */
+		cre->headerlen += linelen;
+		if (cre->headerlen > RELAY_MAXHEADERLENGTH) {
+			free(line);
+			relay_abort_http(con, 413, "request too large", 0);
+			return;
+		}
 
 		/*
 		 * The first line is the GET/POST/PUT/... request,
@@ -614,6 +624,7 @@ relay_reset_http(struct ctl_relay_event *cre)
 	}
 	desc->http_method = 0;
 	desc->http_chunked = 0;
+	cre->headerlen = 0;
 	cre->line = 0;
 	cre->done = 0;
 }

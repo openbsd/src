@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.185 2014/07/11 21:09:28 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.186 2014/07/11 22:28:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -59,6 +59,7 @@
 #define RELAY_NUMPROC		3
 #define RELAY_MAXPROC		32
 #define RELAY_MAXHOSTS		32
+#define RELAY_MAXHEADERLENGTH	8192
 #define RELAY_STATINTERVAL	60
 #define RELAY_BACKLOG		10
 #define RELAY_MAXLOOKUPLEVELS	5
@@ -183,6 +184,7 @@ struct ctl_relay_event {
 
 	off_t			 splicelen;
 	int			 line;
+	size_t			 headerlen;
 	off_t			 toread;
 	int			 done;
 	enum direction		 dir;
