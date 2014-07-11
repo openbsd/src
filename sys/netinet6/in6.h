@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.72 2014/06/13 15:41:06 chrisz Exp $	*/
+/*	$OpenBSD: in6.h,v 1.73 2014/07/11 16:39:06 henning Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -623,7 +623,7 @@ ifatoia6(struct ifaddr *ifa)
 	{ "maxfragpackets", CTLTYPE_INT }, \
 	{ "sourcecheck", CTLTYPE_INT }, \
 	{ "sourcecheck_logint", CTLTYPE_INT }, \
-	{ "accept_rtadv", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "log_interval", CTLTYPE_INT }, \
 	{ "hdrnestlimit", CTLTYPE_INT }, \
@@ -677,7 +677,7 @@ ifatoia6(struct ifaddr *ifa)
 	&ip6_maxfragpackets, \
 	NULL, \
 	NULL, \
-	&ip6_accept_rtadv, \
+	NULL, \
 	NULL, \
 	&ip6_log_interval, \
 	&ip6_hdrnestlimit, \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.118 2014/06/07 11:04:14 henning Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.119 2014/07/11 16:39:06 henning Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -152,11 +152,7 @@ nd6_ifattach(struct ifnet *ifp)
 	nd->basereachable = REACHABLE_TIME;
 	nd->reachable = ND_COMPUTE_RTIME(nd->basereachable);
 	nd->retrans = RETRANS_TIMER;
-	/*
-	 * Note that the default value of ip6_accept_rtadv is 0, which means
-	 * we won't accept RAs by default even if we set ND6_IFF_ACCEPT_RTADV
-	 * here.
-	 */
+	/* per-interface IFXF_AUTOCONF6 needs to be set too to accept RAs */
 	nd->flags = (ND6_IFF_PERFORMNUD | ND6_IFF_ACCEPT_RTADV);
 
 	/* XXX: we cannot call nd6_setmtu since ifp is not fully initialized */
@@ -611,7 +607,8 @@ nd6_purge(struct ifnet *ifp)
 		}
 	}
 
-	if (!ip6_forwarding && ip6_accept_rtadv) { /* XXX: too restrictive? */
+	/* XXX: too restrictive? */
+	if (!ip6_forwarding && (ifp->if_xflags & IFXF_AUTOCONF6)) {
 		/* refresh default router list */
 		defrouter_select();
 	}
@@ -1577,7 +1574,8 @@ fail:
 	 * for those are not autoconfigured hosts, we explicitly avoid such
 	 * cases for safety.
 	 */
-	if (do_update && ln->ln_router && !ip6_forwarding && ip6_accept_rtadv)
+	if (do_update && ln->ln_router && !ip6_forwarding &&
+	    (ifp->if_xflags & IFXF_AUTOCONF6))
 		defrouter_select();
 
 	return rt;

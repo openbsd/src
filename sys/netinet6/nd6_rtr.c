@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.81 2014/07/11 15:03:17 blambert Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.82 2014/07/11 16:39:06 henning Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -108,8 +108,8 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 	union nd_opts ndopts;
 	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
-	/* If I'm not a router, ignore it. */
-	if (ip6_accept_rtadv != 0 || !ip6_forwarding)
+	/* If I'm not a router, ignore it. XXX - too restrictive? */
+	if (!ip6_forwarding || (ifp->if_xflags & IFXF_AUTOCONF6))
 		goto freeit;
 
 	/* Sanity checks */
@@ -195,12 +195,8 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	struct nd_defrouter *dr;
 	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
-	/*
-	 * We only accept RAs only when
-	 * the system-wide variable allows the acceptance, and
-	 * per-interface variable allows RAs on the receiving interface.
-	 */
-	if (ip6_accept_rtadv == 0)
+	/* We accept RAs only if inet6 autoconf is enabled  */
+	if (!(ifp->if_xflags & IFXF_AUTOCONF6))
 		goto freeit;
 	if (!(ndi->flags & ND6_IFF_ACCEPT_RTADV))
 		goto freeit;
@@ -485,7 +481,8 @@ defrtrlist_del(struct nd_defrouter *dr)
 	 * Flush all the routing table entries that use the router
 	 * as a next hop.
 	 */
-	if (!ip6_forwarding && ip6_accept_rtadv) /* XXX: better condition? */
+	/* XXX: better condition? */
+	if (!ip6_forwarding && (dr->ifp->if_xflags & IFXF_AUTOCONF6))
 		rt6_flush(&dr->rtaddr, dr->ifp);
 
 	if (dr->installed) {
@@ -623,10 +620,11 @@ defrouter_select(void)
 	 * if the node is not an autoconfigured host, we explicitly exclude
 	 * such cases here for safety.
 	 */
-	if (ip6_forwarding || !ip6_accept_rtadv) {
+	/* XXX too strict? */
+	if (ip6_forwarding) {
 		nd6log((LOG_WARNING,
-		    "defrouter_select: called unexpectedly (forwarding=%d, "
-		    "accept_rtadv=%d)\n", ip6_forwarding, ip6_accept_rtadv));
+		    "defrouter_select: called unexpectedly (forwarding=%d)\n",
+		    ip6_forwarding));
 		splx(s);
 		return;
 	}
@@ -646,6 +644,8 @@ defrouter_select(void)
 	 * the ordering rule of the list described in defrtrlist_update().
 	 */
 	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
+		if (!(dr->ifp->if_xflags & IFXF_AUTOCONF6))
+			continue;
 		if (!selected_dr &&
 		    (rt = nd6_lookup(&dr->rtaddr, 0, dr->ifp,
 		     dr->ifp->if_rdomain)) &&
@@ -782,7 +782,7 @@ defrtrlist_update(struct nd_defrouter *new)
 	/* entry does not exist */
 	if (new->rtlifetime == 0) {
 		/* flush all possible redirects */
-		if (!ip6_forwarding && ip6_accept_rtadv)
+		if (!ip6_forwarding && (new->ifp->if_xflags & IFXF_AUTOCONF6))
 			rt6_flush(&new->rtaddr, new->ifp);
 		splx(s);
 		return (NULL);

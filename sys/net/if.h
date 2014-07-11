@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.155 2014/07/08 04:02:14 dlg Exp $	*/
+/*	$OpenBSD: if.h,v 1.156 2014/07/11 16:39:06 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -221,6 +221,7 @@ struct if_status_description {
 #define	IFXF_INET6_NOPRIVACY	0x4		/* don't autoconf privacy */
 #define	IFXF_MPLS		0x8		/* supports MPLS */
 #define	IFXF_WOL		0x10		/* wake on lan enabled */
+#define	IFXF_AUTOCONF6		0x20		/* v6 autoconf enabled */
 
 #define	IFXF_CANTCHANGE \
 	(IFXF_TXREADY)
