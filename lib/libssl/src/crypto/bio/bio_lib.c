@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.19 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.20 2014/07/11 15:40:32 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,9 +125,8 @@ BIO_free(BIO *a)
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, a, &a->ex_data);
 
-	if ((a->method == NULL) || (a->method->destroy == NULL))
-		return (1);
-	a->method->destroy(a);
+	if (a->method != NULL && a->method->destroy != NULL)
+		a->method->destroy(a);
 	free(a);
 	return (1);
 }
