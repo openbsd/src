@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.41 2007/11/03 15:13:56 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.42 2014/07/11 23:23:28 jsg Exp $
 
 INFODIR=	infodir=/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -6,7 +6,8 @@ INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
 MAN=	doc/info.1 doc/install-info.1 doc/makeinfo.1 doc/texi2dvi.1
 MAN+= doc/texindex.1 doc/info.5 doc/texinfo.5 doc/infokey.1
 
-GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" \
+XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}"
+GNUCFLAGS=	${XCFLAGS} \
 	ACLOCAL=true AUTOHEADER=true AUTOCONF=true AUTOMAKE=true \
 	MAKEINFOFLAGS='--no-split'
 
@@ -32,13 +33,13 @@ config: .FORCE
 	-rm -f config.cache
 .endif
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-	CFLAGS="${CFLAGS} ${COPTS}" \
+	${XCFLAGS} \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		/bin/sh ${.CURDIR}/configure --infodir=/usr/share/info --prefix=/usr --disable-nls ${CF}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-	CFLAGS="${CFLAGS} ${COPTS}" \
+	${XCFLAGS} \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		/bin/sh ${.CURDIR}/configure --infodir=/usr/share/info --prefix=/usr --disable-nls ${CF}
 
