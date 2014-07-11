@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.39 2014/05/07 08:14:59 mpi Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.40 2014/07/11 12:20:26 benno Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -553,7 +553,7 @@ struct icmp6stat {
 	{ "nd6_mmaxtries", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
-	{ "nodeinfo", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "errppslimit", CTLTYPE_INT }, \
 	{ "nd6_maxnudhint", CTLTYPE_INT }, \
 	{ "mtudisc_hiwat", CTLTYPE_INT }, \
@@ -577,7 +577,7 @@ struct icmp6stat {
 	&nd6_mmaxtries, \
 	NULL, \
 	NULL, \
-	&icmp6_nodeinfo, \
+	NULL, \
 	&icmp6errppslim, \
 	&nd6_maxnudhint, \
 	&icmp6_mtudisc_hiwat, \
