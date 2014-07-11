@@ -1,6 +1,6 @@
 define(MACHINE,loongson)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.17 2014/04/03 20:32:26 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.18 2014/07/11 22:04:09 tedu Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -67,7 +67,6 @@ _DEV(apm, 14)
 _DEV(au, 44)
 _DEV(bio, 49)
 _DEV(bpf, 12)
-_DEV(bthub, 68)
 _DEV(cry, 47)
 _DEV(diskmap, 70)
 _DEV(fdesc, 7)
@@ -106,7 +105,6 @@ target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
 target(all, sd, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
-target(all, bthub, 0, 1, 2)dnl
 target(ramd, pty, 0)dnl
 target(ramd, bio)dnl
 target(ramd, diskmap)dnl
