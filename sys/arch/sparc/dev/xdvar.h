@@ -1,8 +1,7 @@
-/*	$OpenBSD: xdvar.h,v 1.7 2011/06/05 18:40:33 matthew Exp $	*/
+/*	$OpenBSD: xdvar.h,v 1.8 2014/07/11 16:35:40 jsg Exp $	*/
 /*	$NetBSD: xdvar.h,v 1.5 1996/03/31 22:38:56 pk Exp $	*/
 
 /*
- *
  * Copyright (c) 1995 Charles D. Cranor
  * All rights reserved.
  *
@@ -14,11 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES

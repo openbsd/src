@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.33 2014/07/08 13:19:16 deraadt Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.34 2014/07/11 16:35:40 jsg Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -16,12 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor,
- *      Washington University, and the University of California, Berkeley
- *      and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
