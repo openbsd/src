@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.22 2014/07/09 11:10:51 bcook Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.23 2014/07/11 13:09:04 miod Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -179,9 +179,9 @@ dtls1_clear_queues(SSL *s)
 	}
 
 	while ((item = pqueue_pop(s->d1->buffered_app_data.q)) != NULL) {
-		frag = (hm_fragment *)item->data;
-		free(frag->fragment);
-		free(frag);
+		rdata = (DTLS1_RECORD_DATA *) item->data;
+		free(rdata->rbuf.buf);
+		free(item->data);
 		pitem_free(item);
 	}
 }
