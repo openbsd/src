@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2014/07/11 13:06:26 beck Exp $
+# $OpenBSD: Makefile,v 1.7 2014/07/11 13:21:05 beck Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -476,8 +476,6 @@ MLINKS+=\
 	EVP_DigestInit.3 EVP_ripemd160.3 \
 	EVP_DigestInit.3 EVP_sha.3 \
 	EVP_DigestInit.3 EVP_sha1.3 \
-	EVP_DigestInit.3 OBJ_nid2sn.3 \
-	EVP_DigestInit.3 OBJ_obj2nid.3 \
 	EVP_DigestSignInit.3 EVP_DigestSignUpdate.3 \
 	EVP_DigestSignInit.3 EVP_DigestSignFinal.3 \
 	EVP_DigestVerifyInit.3 EVP_DigestVerifyUpdate.3 \
@@ -509,8 +507,6 @@ MLINKS+=\
 	EVP_EncryptInit.3 EVP_get_cipherbyname.3 \
 	EVP_EncryptInit.3 EVP_get_cipherbynid.3 \
 	EVP_EncryptInit.3 EVP_get_cipherbyobj.3 \
-	EVP_EncryptInit.3 OBJ_nid2sn.3 \
-	EVP_EncryptInit.3 OBJ_obj2nid.3 \
 	EVP_OpenInit.3 EVP_OpenFinal.3 \
 	EVP_OpenInit.3 EVP_OpenUpdate.3 \
 	EVP_PKEY_CTX_ctrl.3 EVP_PKEY_ctrl_str.3 \
