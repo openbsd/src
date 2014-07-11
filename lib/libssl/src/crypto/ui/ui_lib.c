@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.25 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.26 2014/07/11 16:22:29 deraadt Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -173,7 +173,7 @@ general_allocate_string(UI *ui, const char *prompt, int prompt_freeable,
 			s->_.string_data.result_maxsize = maxsize;
 			s->_.string_data.test_buf = test_buf;
 			ret = sk_UI_STRING_push(ui->strings, s);
-			/* sk_push() returns 0 on error.  Let's addapt that */
+			/* sk_push() returns 0 on error.  Let's adapt that */
 			if (ret <= 0)
 				ret--;
 		} else
@@ -215,7 +215,7 @@ general_allocate_boolean(UI *ui, const char *prompt, const char *action_desc,
 				s->_.boolean_data.cancel_chars = cancel_chars;
 				ret = sk_UI_STRING_push(ui->strings, s);
 				/*
-				 * sk_push() returns 0 on error. Let's addapt
+				 * sk_push() returns 0 on error. Let's adapt
 				 * that
 				 */
 				if (ret <= 0)
