@@ -1,4 +1,4 @@
-/* $OpenBSD: chacha-merged.c,v 1.6 2014/06/24 18:12:09 jsing Exp $ */
+/* $OpenBSD: chacha-merged.c,v 1.7 2014/07/11 08:47:47 bcook Exp $ */
 /*
 chacha-merged.c version 20080118
 D. J. Bernstein
@@ -6,6 +6,8 @@ Public domain.
 */
 
 #include <sys/types.h>
+
+#include <stdint.h>
 
 #define CHACHA_MINKEYLEN 	16
 #define CHACHA_NONCELEN		8
@@ -15,8 +17,8 @@ Public domain.
 
 struct chacha_ctx {
 	u_int input[16];
-	u_int8_t ks[CHACHA_BLOCKLEN];
-	u_int8_t unused;
+	uint8_t ks[CHACHA_BLOCKLEN];
+	uint8_t unused;
 };
 
 static inline void chacha_keysetup(struct chacha_ctx *x, const u_char *k,
