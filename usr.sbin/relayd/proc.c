@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.14 2014/05/08 13:08:48 blambert Exp $	*/
+/*	$OpenBSD: proc.c,v 1.15 2014/07/11 16:39:10 krw Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -464,7 +464,7 @@ proc_dispatch(int fd, short event, void *arg)
 	}
 
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
+		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
 			fatal(title);
 	}
 
