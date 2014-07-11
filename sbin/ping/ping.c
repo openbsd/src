@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.108 2014/07/09 15:24:19 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.109 2014/07/11 15:26:55 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ main(int argc, char *argv[])
 	struct hostent *hp;
 	struct sockaddr_in *to;
 	struct in_addr saddr;
-	int ch, hold = 1, i, packlen, preload, maxsize, df = 0, tos = 0;
+	int ch, i, optval = 1, packlen, preload, maxsize, df = 0, tos = 0;
 	u_char *datap, *packet, ttl = MAXTTL, loop = 1;
 	char *target, hnamebuf[MAXHOSTNAMELEN];
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
@@ -394,8 +394,8 @@ main(int argc, char *argv[])
 	}
 
 	if (options & F_SO_DEBUG)
-		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, &hold,
-		    sizeof(hold));
+		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, &optval,
+		    sizeof(optval));
 
 	if (options & F_TTL) {
 		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
@@ -411,7 +411,7 @@ main(int argc, char *argv[])
 	if (options & F_HDRINCL) {
 		struct ip *ip = (struct ip *)outpackhdr;
 
-		setsockopt(s, IPPROTO_IP, IP_HDRINCL, &hold, sizeof(hold));
+		setsockopt(s, IPPROTO_IP, IP_HDRINCL, &optval, sizeof(optval));
 		ip->ip_v = IPVERSION;
 		ip->ip_hl = sizeof(struct ip) >> 2;
 		ip->ip_tos = tos;
