@@ -1,4 +1,4 @@
-/* $OpenBSD: pvkfmt.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: pvkfmt.c,v 1.10 2014/07/11 15:35:53 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -722,13 +722,14 @@ do_PVK_body(const unsigned char **in, unsigned int saltlen,
 	const unsigned char *p = *in;
 	unsigned int magic;
 	unsigned char *enctmp = NULL, *q;
-
 	EVP_CIPHER_CTX cctx;
+
 	EVP_CIPHER_CTX_init(&cctx);
 	if (saltlen) {
 		char psbuf[PEM_BUFSIZE];
 		unsigned char keybuf[20];
 		int enctmplen, inlen;
+
 		if (cb)
 			inlen = cb(psbuf, PEM_BUFSIZE, 0, u);
 		else
@@ -742,8 +743,8 @@ do_PVK_body(const unsigned char **in, unsigned int saltlen,
 			PEMerr(PEM_F_DO_PVK_BODY, ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
-		if (!derive_pvk_key(keybuf, p, saltlen,
-			    (unsigned char *)psbuf, inlen)) {
+		if (!derive_pvk_key(keybuf, p, saltlen, (unsigned char *)psbuf,
+		    inlen)) {
 			free(enctmp);
 			return NULL;
 		}
@@ -751,6 +752,11 @@ do_PVK_body(const unsigned char **in, unsigned int saltlen,
 		/* Copy BLOBHEADER across, decrypt rest */
 		memcpy(enctmp, p, 8);
 		p += 8;
+		if (keylen < 8) {
+			PEMerr(PEM_F_DO_PVK_BODY, PEM_R_PVK_TOO_SHORT);
+			free(enctmp);
+			return NULL;
+		}
 		inlen = keylen - 8;
 		q = enctmp + 8;
 		if (!EVP_DecryptInit_ex(&cctx, EVP_rc4(), NULL, keybuf, NULL))
