@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.109 2014/07/11 15:26:55 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.110 2014/07/11 15:29:46 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -1307,7 +1307,7 @@ check_icmph(struct ip *iph)
 
 #ifndef SMALL
 int
-map_tos(char *s, int *val)
+map_tos(char *key, int *val)
 {
 	/* DiffServ Codepoints and other TOS mappings */
 	const struct toskeywords {
@@ -1345,7 +1345,7 @@ map_tos(char *s, int *val)
 	};
 	
 	for (t = toskeywords; t->keyword != NULL; t++) {
-		if (strcmp(s, t->keyword) == 0) {
+		if (strcmp(key, t->keyword) == 0) {
 			*val = t->val;
 			return (1);
 		}
