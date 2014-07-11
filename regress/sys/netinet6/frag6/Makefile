@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2013/10/31 01:24:06 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.10 2014/07/11 18:25:50 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -168,6 +168,13 @@ run-regress-frag6-zerosecond: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 zero length second fragment
 	${SUDO} ${PYTHON}frag6_zerosecond.py
+
+# fragmented large ping packet that has to be refragmented by reflector
+TARGETS +=	frag6-refrag
+run-regress-frag6-refrag: addr.py
+	@echo '\n======== $@ ========'
+	@echo Check ping6 with fragmented reply
+	${SUDO} ${PYTHON}frag6_refrag.py
 
 # atomic fragmented udp packet
 TARGETS +=	frag6-udpatomic
