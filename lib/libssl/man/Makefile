@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.27 2014/07/11 16:30:23 beck Exp $
+# $OpenBSD: Makefile,v 1.28 2014/07/11 17:18:11 beck Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -158,12 +158,14 @@ MLINKS+=\
 	SSL_CTX_set_client_CA_list.3 SSL_CTX_add_client_CA.3 \
 	SSL_CTX_set_client_CA_list.3 SSL_add_client_CA.3 \
 	SSL_CTX_set_client_CA_list.3 SSL_set_client_CA_list.3 \
-	SSL_CTX_set_default_passwd_cb.3  SSL_CTX_set_default_passwd_cb_userdata.3 \
+	SSL_CTX_set_default_passwd_cb.3 SSL_CTX_set_default_passwd_cb_userdata.3 \
 	SSL_CTX_set_max_cert_list.3 SSL_CTX_get_max_cert_list.3 \
 	SSL_CTX_set_max_cert_list.3 SSL_get_max_cert_list.3 \
 	SSL_CTX_set_max_cert_list.3 SSL_set_max_cert_list.3 \
-	SSL_CTX_set_mode.3 SSL_CTX_get_mode.3 SSL_CTX_set_mode.3 SSL_get_mode.3 \
-	SSL_CTX_set_mode.3 SSL_set_mode.3 SSL_CTX_set_msg_callback.3 SSL_CTX_set_msg_callback_arg.3 \
+	SSL_CTX_set_mode.3 SSL_CTX_get_mode.3 
+	SSL_CTX_set_mode.3 SSL_get_mode.3 \
+	SSL_CTX_set_mode.3 SSL_set_mode.3 \
+	SSL_CTX_set_msg_callback.3 SSL_CTX_set_msg_callback_arg.3 \
 	SSL_CTX_set_msg_callback.3 SSL_set_msg_callback.3 \
 	SSL_CTX_set_msg_callback.3 SSL_set_msg_callback_arg.3 \
 	SSL_CTX_set_options.3 SSL_CTX_get_options.3 \
