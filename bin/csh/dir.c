@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.14 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.15 2014/07/11 07:54:04 tedu Exp $	*/
 /*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
 
 /*-
@@ -760,8 +760,8 @@ dcanon(Char *cp, Char *p)
 		!adrof(STRignore_symlinks) &&
 		(cc = readlink(short2str(cp), tlink,
 			       sizeof tlink-1)) >= 0) {
+		tlink[cc] = '\0';
 		(void) Strlcpy(link, str2short(tlink), sizeof link/sizeof(Char));
-		link[cc] = '\0';
 
 		/*
 		 * restore the '/'.
