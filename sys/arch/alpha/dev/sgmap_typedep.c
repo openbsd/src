@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_typedep.c,v 1.13 2014/03/31 21:10:10 kettenis Exp $ */
+/* $OpenBSD: sgmap_typedep.c,v 1.14 2014/07/11 12:55:32 dlg Exp $ */
 /* $NetBSD: sgmap_typedep.c,v 1.17 2001/07/19 04:27:37 thorpej Exp $ */
 
 /*-
@@ -63,6 +63,9 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	struct extent_region *regions = map->_dm_cookie;
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
 	int pteidx, error, spill;
+
+	if (seg >= map->_dm_segcnt)
+		return (EFBIG);
 
 	/* Initialize the spill page PTE if it hasn't been already. */
 	if (__C(SGMAP_TYPE,_prefetch_spill_page_pte) == 0)
