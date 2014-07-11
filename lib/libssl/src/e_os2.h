@@ -1,4 +1,4 @@
-/* $OpenBSD: e_os2.h,v 1.18 2014/07/11 09:36:34 jsing Exp $ */
+/* $OpenBSD: e_os2.h,v 1.19 2014/07/11 10:56:03 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
  *
@@ -73,8 +73,6 @@ extern "C" {
     OPENSSL_GLOBAL type _shadow_##name=value;
 #define OPENSSL_DECLARE_GLOBAL(type,name) OPENSSL_EXPORT type _shadow_##name
 #define OPENSSL_GLOBAL_REF(name) _shadow_##name
-
-#define ossl_ssize_t ssize_t
 
 #ifdef  __cplusplus
 }
