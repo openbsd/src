@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.77 2014/05/12 19:11:20 espie Exp $
+#	$OpenBSD: Makefile,v 1.78 2014/07/11 15:37:22 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -27,5 +27,39 @@ LINKS =	${BINDIR}/mandoc ${BINDIR}/apropos \
 	${BINDIR}/mandoc /usr/libexec/makewhatis
 
 MAN =	apropos.1 mandoc.1 whatis.1 makewhatis.8
+
+CLEANFILES += man.cgi cgi.o man.cgi.8.manlint
+
+
+# ----------------------------------------------------------------------
+# Variables and targets to build and install man.cgi(8),
+# not used during make build and make release.
+
+# To build, run:	make man.cgi
+# To install, run:	sudo make installcgi
+# After that, read:	man man.cgi.8
+
+LIBMDOC_OBJS =	mdoc_argv.o mdoc_hash.o mdoc_macro.o mdoc_validate.o \
+		mdoc.o arch.o att.o lib.o st.o vol.o
+LIBMAN_OBJS =	man.o man_hash.o man_macro.o man_validate.o
+LIBROFF_OBJS =	roff.o eqn.o tbl.o tbl_data.o tbl_layout.o tbl_opts.o
+LIBMANDOC_OBJS = ${LIBMDOC_OBJS} ${LIBMAN_OBJS} ${LIBROFF_OBJS} \
+		mandoc.o mandoc_aux.o chars.o msec.o read.o
+HTML_OBJS =	html.o mdoc_html.o man_html.o tbl_html.o eqn_html.o out.o
+CGI_OBJS =	${LIBMANDOC_OBJS} ${HTML_OBJS} \
+		mansearch.o mansearch_const.o cgi.o
+
+cgi.o: main.h mandoc.h mandoc_aux.h manpath.h mansearch.h
+
+man.cgi: ${CGI_OBJS}
+	${CC} ${LDFLAGS} -static -o ${.TARGET} ${CGI_OBJS} ${LDADD}
+
+installcgi: man.cgi
+	${INSTALL} -d -o root -g wheel -m 755 ${DESTDIR}/var/www/cgi-bin
+	${INSTALL} ${INSTALL_COPY} -S ${INSTALL_STRIP} \
+	    -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    man.cgi ${DESTDIR}/var/www/cgi-bin/man.cgi
+	${INSTALL} ${INSTALL_COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
+	    ${.CURDIR}/man.cgi.8 ${DESTDIR}${MANDIR}8/man.cgi.8
 
 .include <bsd.prog.mk>
