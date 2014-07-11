@@ -10,7 +10,6 @@
 ./usr/bin/g++
 ./usr/bin/gcc
 ./usr/bin/gcov
-./usr/include/ddb/db_dwarf.h
 ./usr/bin/gdb
 ./usr/bin/gprof
 ./usr/bin/ld
@@ -69,6 +68,7 @@
 ./usr/include/ddb/db_access.h
 ./usr/include/ddb/db_break.h
 ./usr/include/ddb/db_command.h
+./usr/include/ddb/db_dwarf.h
 ./usr/include/ddb/db_extern.h
 ./usr/include/ddb/db_interface.h
 ./usr/include/ddb/db_lex.h
@@ -1185,6 +1185,7 @@
 ./usr/include/openssl/objects.h
 ./usr/include/openssl/ocsp.h
 ./usr/include/openssl/opensslconf.h
+./usr/include/openssl/opensslfeatures.h
 ./usr/include/openssl/opensslv.h
 ./usr/include/openssl/ossl_typ.h
 ./usr/include/openssl/pem.h

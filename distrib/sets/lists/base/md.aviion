@@ -1844,6 +1844,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/objects.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/ocsp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/opensslconf.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/opensslfeatures.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/opensslv.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/ossl_typ.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/pem.ph

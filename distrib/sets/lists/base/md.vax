@@ -1246,6 +1246,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/objects.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/ocsp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/opensslconf.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/openssl/opensslfeatures.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/opensslv.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/ossl_typ.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/pem.ph

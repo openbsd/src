@@ -1918,6 +1918,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/objects.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/ocsp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/opensslconf.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/openssl/opensslfeatures.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/opensslv.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/ossl_typ.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/pem.ph

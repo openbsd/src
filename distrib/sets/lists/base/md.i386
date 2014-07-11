@@ -1966,6 +1966,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/objects.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/ocsp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/opensslconf.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/openssl/opensslfeatures.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/opensslv.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/ossl_typ.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/pem.ph

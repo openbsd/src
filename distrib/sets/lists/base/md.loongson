@@ -1947,6 +1947,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/objects.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/ocsp.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/opensslconf.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/opensslfeatures.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/opensslv.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/ossl_typ.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/pem.ph

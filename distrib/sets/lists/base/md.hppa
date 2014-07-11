@@ -1933,6 +1933,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/objects.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/ocsp.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/opensslconf.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/opensslfeatures.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/opensslv.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/ossl_typ.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/pem.ph

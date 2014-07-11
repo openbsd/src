@@ -1934,6 +1934,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/objects.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/ocsp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/opensslconf.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/opensslfeatures.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/opensslv.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/ossl_typ.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/pem.ph

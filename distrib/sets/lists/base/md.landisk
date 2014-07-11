@@ -1885,6 +1885,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/objects.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ocsp.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/opensslconf.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/openssl/opensslfeatures.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/opensslv.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ossl_typ.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/pem.ph
