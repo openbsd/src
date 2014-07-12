@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.11 2014/07/12 19:34:31 yasuoka Exp $ */
+/*	$OpenBSD: privsep.c,v 1.12 2014/07/12 20:07:07 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -1047,7 +1047,7 @@ static int
 privsep_npppd_check_get_if_addr(struct PRIVSEP_GET_IF_ADDR_ARG *arg)
 {
 	if (strncmp(arg->ifname, "tun", 3) == 0 ||
-	    strncmp(arg->ifname, "pppx", 4))
+	    strncmp(arg->ifname, "pppx", 4) == 0)
 		return (0);
 
 	return (1);
@@ -1057,7 +1057,7 @@ static int
 privsep_npppd_check_set_if_addr(struct PRIVSEP_SET_IF_ADDR_ARG *arg)
 {
 	if (strncmp(arg->ifname, "tun", 3) == 0 ||
-	    strncmp(arg->ifname, "pppx", 4))
+	    strncmp(arg->ifname, "pppx", 4) == 0)
 		return (0);
 
 	return (1);
@@ -1067,7 +1067,7 @@ static int
 privsep_npppd_check_del_if_addr(struct PRIVSEP_DEL_IF_ADDR_ARG *arg)
 {
 	if (strncmp(arg->ifname, "tun", 3) == 0 ||
-	    strncmp(arg->ifname, "pppx", 4))
+	    strncmp(arg->ifname, "pppx", 4) == 0)
 		return (0);
 
 	return (1);
@@ -1077,7 +1077,7 @@ static int
 privsep_npppd_check_get_if_flags(struct PRIVSEP_GET_IF_FLAGS_ARG *arg)
 {
 	if (strncmp(arg->ifname, "tun", 3) == 0 ||
-	    strncmp(arg->ifname, "pppx", 4))
+	    strncmp(arg->ifname, "pppx", 4) == 0)
 		return (0);
 
 	return (1);
@@ -1087,7 +1087,7 @@ static int
 privsep_npppd_check_set_if_flags(struct PRIVSEP_SET_IF_FLAGS_ARG *arg)
 {
 	if (strncmp(arg->ifname, "tun", 3) == 0 ||
-	    strncmp(arg->ifname, "pppx", 4))
+	    strncmp(arg->ifname, "pppx", 4) == 0)
 		return (0);
 
 	return (1);
