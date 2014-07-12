@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.25 2014/05/03 16:19:53 martynas Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.26 2014/07/12 02:48:33 guenther Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -183,6 +183,8 @@ size_t wcsnrtombs(char * __restrict, const wchar_t ** __restrict, size_t,
 #if __ISO_C_VISIBLE >= 1999
 float	wcstof(const wchar_t * __restrict, wchar_t ** __restrict);
 long double wcstold(const wchar_t * __restrict, wchar_t ** __restrict);
+
+struct tm;
 size_t wcsftime(wchar_t * __restrict, size_t, const wchar_t *__restrict,
 	const struct tm *__restrict);
 #endif
