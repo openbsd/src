@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.76 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.77 2014/07/12 19:45:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2410,18 +2410,30 @@ ssl_bad_method(int ver)
 }
 
 const char *
+ssl_version_string(int ver)
+{
+	switch (ver) {
+	case DTLS1_BAD_VER:
+		return (SSL_TXT_DTLS1_BAD);
+	case DTLS1_VERSION:
+		return (SSL_TXT_DTLS1);
+	case SSL3_VERSION:
+		return (SSL_TXT_SSLV3);
+	case TLS1_VERSION:
+		return (SSL_TXT_TLSV1);
+	case TLS1_1_VERSION:
+		return (SSL_TXT_TLSV1_1);
+	case TLS1_2_VERSION:
+		return (SSL_TXT_TLSV1_2);
+	default:
+		return ("unknown");
+	}
+}
+
+const char *
 SSL_get_version(const SSL *s)
 {
-	if (s->version == TLS1_2_VERSION)
-		return ("TLSv1.2");
-	else if (s->version == TLS1_1_VERSION)
-		return ("TLSv1.1");
-	else if (s->version == TLS1_VERSION)
-		return ("TLSv1");
-	else if (s->version == SSL3_VERSION)
-		return ("SSLv3");
-	else
-		return ("unknown");
+	return ssl_version_string(s->version);
 }
 
 SSL *

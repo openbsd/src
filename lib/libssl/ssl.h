@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.61 2014/07/11 09:24:44 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.62 2014/07/12 19:45:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -293,6 +293,8 @@ extern "C" {
 #define SSL_TXT_SHA256		"SHA256"
 #define SSL_TXT_SHA384		"SHA384"
 
+#define SSL_TXT_DTLS1		"DTLSv1"
+#define SSL_TXT_DTLS1_BAD	"DTLSv1-bad"
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
 #define SSL_TXT_TLSV1		"TLSv1"

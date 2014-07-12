@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.60 2014/07/12 13:11:53 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.61 2014/07/12 19:45:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -543,6 +543,7 @@ extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 extern SSL_CIPHER ssl3_ciphers[];
 
 SSL_METHOD *ssl_bad_method(int ver);
+const char *ssl_version_string(int ver);
 
 extern SSL3_ENC_METHOD TLSv1_enc_data;
 extern SSL3_ENC_METHOD TLSv1_1_enc_data;

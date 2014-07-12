@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_txt.c,v 1.23 2014/07/11 09:24:44 beck Exp $ */
+/* $OpenBSD: ssl_txt.c,v 1.24 2014/07/12 19:45:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -112,20 +112,8 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 		goto err;
 	if (BIO_puts(bp, "SSL-Session:\n") <= 0)
 		goto err;
-	if (x->ssl_version == SSL3_VERSION)
-		s = "SSLv3";
-	else if (x->ssl_version == TLS1_2_VERSION)
-		s = "TLSv1.2";
-	else if (x->ssl_version == TLS1_1_VERSION)
-		s = "TLSv1.1";
-	else if (x->ssl_version == TLS1_VERSION)
-		s = "TLSv1";
-	else if (x->ssl_version == DTLS1_VERSION)
-		s = "DTLSv1";
-	else if (x->ssl_version == DTLS1_BAD_VER)
-		s = "DTLSv1-bad";
-	else
-		s = "unknown";
+	
+	s = ssl_version_string(x->ssl_version);
 	if (BIO_printf(bp, "    Protocol  : %s\n", s) <= 0)
 		goto err;
 
