@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.77 2014/07/12 11:03:11 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.78 2014/07/12 13:23:59 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -412,6 +412,7 @@ e2fs_sbfill(struct vnode *devvp, struct m_ext2fs *fs, struct ext2fs *sb)
 	for (i = 0; i < fs->e2fs_ngdb; ++i) {
 		daddr_t dblk = ((fs->e2fs_bsize > 1024) ? 0 : 1) + i + 1;
 		size_t gdesc = i * fs->e2fs_bsize / sizeof(struct ext2_gd);
+		struct ext2_gd *gd;
 
 		error = bread(devvp, fsbtodb(fs, dblk), fs->e2fs_bsize, &bp);
 		if (error) {
@@ -421,7 +422,8 @@ e2fs_sbfill(struct vnode *devvp, struct m_ext2fs *fs, struct ext2fs *sb)
 			return (error);
 		}
 
-		e2fs_cgload(bp->b_data, fs->e2fs_gd + gdesc, fs->e2fs_bsize);
+		gd = (struct ext2_gd *) bp->b_data;
+		e2fs_cgload(gd, fs->e2fs_gd + gdesc, fs->e2fs_bsize);
 		brelse(bp);
 		bp = NULL;
 	}
