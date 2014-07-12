@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2014/07/12 21:41:49 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.9 2014/07/12 22:43:31 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -68,17 +68,17 @@ regress:
 	@echo check wether your test machines are set up properly
 .endif
 
-# pf rules on PF must look like this:
-#
-# pass to { $PF_IN/24 $PF_IN6/64 }
-# pass to { $RT_IN/24 $RT_IN6/64 }
-# pass to { $ECO_IN/24 $DST_IN6/64 }
-# pass to { $RDR_IN/24 $RDR_IN6/64 }
-#
-# pass in  to $RDR_IN/24  rdr-to $ECO_IN  allow-opts tag rdr
-# pass out                nat-to $PF_OUT  allow-opts tagged rdr
-# pass in  to $RDR_IN6/64 rdr-to $ECO_IN6 allow-opts tag rdr
-# pass out                nat-to $PF_OUT6 allow-opts tagged rdr
+.MAIN: all
+
+.if ! empty (PF_SSH)
+.if make (regress) || make (all)
+.BEGIN: pf.conf addr.py
+	@echo
+	${SUDO} true
+	ssh -t ${PF_SSH} ${SUDO} true
+	rm -f stamp-pfctl
+.endif
+.endif
 
 # Currently these test fail as pf does not fix the checksum of
 # NATed packets inside of icmp packets.
@@ -102,6 +102,12 @@ addr.py: Makefile
 .endfor
 	mv $@.tmp $@
 
+# load the pf rules into the kernel of the PF machine
+stamp-pfctl: addr.py
+	cat addr.py ${.CURDIR}/pf.conf | \
+	    ssh ${PF_SSH} ${SUDO} pfctl -a regress -f -
+	@date >$@
+
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
 .if ${.CURDIR} == ${.OBJDIR}
@@ -116,14 +122,14 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
 # by PF and handled by ECO.
 TARGETS +=	ping  ping6
 
-run-regress-ping:
+run-regress-ping: stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN
 	@echo Check ping ${ip}:
 	ping -n -c 1 ${${ip}}
 .endfor
 
-run-regress-ping6:
+run-regress-ping6: stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN
 	@echo Check ping ${ip}6:
@@ -135,7 +141,7 @@ run-regress-ping6:
 # Send 1 packet in advance for Path-MTU discovery.
 TARGETS +=	fragping  fragping6
 
-run-regress-fragping:
+run-regress-fragping: stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN
 	@echo Check ping ${ip}:
@@ -143,7 +149,7 @@ run-regress-fragping:
 	ping -n -c 1 -s 5000 ${${ip}}
 .endfor
 
-run-regress-fragping6:
+run-regress-fragping6: stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN
 	@echo Check ping ${ip}6:
@@ -157,14 +163,14 @@ run-regress-fragping6:
 # the router RT before.
 TARGETS +=	ping-mtu ping6-mtu
 
-run-regress-ping-mtu: addr.py
+run-regress-ping-mtu: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check path MTU to ${ip}
 	${SUDO} ${PYTHON}ping_mtu_1300.py ${${ip}}
 .endfor
 
-run-regress-ping6-mtu: addr.py
+run-regress-ping6-mtu: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check path MTU to ${ip}6
@@ -175,28 +181,28 @@ run-regress-ping6-mtu: addr.py
 # Check that checksum of the quoted original packet in icmp is correct.
 TARGETS +=	ping-cksum ping6-cksum udp-cksum udp6-cksum
 
-run-regress-ping-cksum: addr.py
+run-regress-ping-cksum: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check icmp chksum in fragmentation needed to ${ip}
 	${SUDO} ${PYTHON}ping_cksum.py ${${ip}}
 .endfor
 
-run-regress-ping6-cksum: addr.py
+run-regress-ping6-cksum: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check icmp6 chksum in packet too big to ${ip}6
 	${SUDO} ${PYTHON}ping6_cksum.py ${${ip}6}
 .endfor
 
-run-regress-udp-cksum: addr.py
+run-regress-udp-cksum: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check udp chksum in packet too big to ${ip}
 	${SUDO} ${PYTHON}udp_cksum.py ${${ip}}
 .endfor
 
-run-regress-udp6-cksum: addr.py
+run-regress-udp6-cksum: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check udp6 chksum in packet too big to ${ip}6
@@ -206,14 +212,14 @@ run-regress-udp6-cksum: addr.py
 # Send handcrafted fragmented packets with overlaps
 TARGETS +=	frag frag6
 
-run-regress-frag: addr.py
+run-regress-frag: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check ping reassembly ${ip}
 	${SUDO} ${PYTHON}frag.py ${${ip}}
 .endfor
 
-run-regress-frag6: addr.py
+run-regress-frag6: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check ping6 reassembly ${ip}6
@@ -222,7 +228,7 @@ run-regress-frag6: addr.py
 
 TARGETS +=	frag6-ext
 
-run-regress-frag6-ext: addr.py
+run-regress-frag6-ext: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check ping6 extension header reassembly ${ip}6
@@ -231,14 +237,14 @@ run-regress-frag6-ext: addr.py
 
 TARGETS +=	frag-cutnew frag6-cutnew
 
-run-regress-frag-cutnew: addr.py
+run-regress-frag-cutnew: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check ping head overlap reassembly ${ip}
 	${SUDO} ${PYTHON}frag_cutnew.py ${${ip}}
 .endfor
 
-run-regress-frag6-cutnew: addr.py
+run-regress-frag6-cutnew: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check ping6 head overlap reassembly ${ip}6
@@ -247,14 +253,14 @@ run-regress-frag6-cutnew: addr.py
 
 TARGETS +=	frag-cutold frag6-cutold
 
-run-regress-frag-cutold: addr.py
+run-regress-frag-cutold: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check ping tail overlap reassembly ${ip}
 	${SUDO} ${PYTHON}frag_cutold.py ${${ip}}
 .endfor
 
-run-regress-frag6-cutold: addr.py
+run-regress-frag6-cutold: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check ping6 tail overlap reassembly ${ip}6
@@ -263,14 +269,14 @@ run-regress-frag6-cutold: addr.py
 
 TARGETS +=	frag-dropold frag6-dropold
 
-run-regress-frag-dropold: addr.py
+run-regress-frag-dropold: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check ping total overlapping reassembly ${ip}
 	${SUDO} ${PYTHON}frag_dropold.py ${${ip}}
 .endfor
 
-run-regress-frag6-dropold: addr.py
+run-regress-frag6-dropold: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check ping6 total overlapping reassembly ${ip}6
@@ -279,14 +285,14 @@ run-regress-frag6-dropold: addr.py
 
 TARGETS +=	frag-dropnew frag6-dropnew
 
-run-regress-frag-dropnew: addr.py
+run-regress-frag-dropnew: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check ping total overlaped reassembly ${ip}
 	${SUDO} ${PYTHON}frag_dropnew.py ${${ip}}
 .endfor
 
-run-regress-frag6-dropnew: addr.py
+run-regress-frag6-dropnew: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check ping6 total overlaped reassembly ${ip}6
@@ -295,7 +301,7 @@ run-regress-frag6-dropnew: addr.py
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
-CLEANFILES +=		addr.py *.pyc *.log
+CLEANFILES +=		addr.py *.pyc *.log stamp-*
 
 .PHONY: check-setup
 

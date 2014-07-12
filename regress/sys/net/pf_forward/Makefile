@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2014/07/12 21:41:49 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2014/07/12 22:43:31 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -72,22 +72,17 @@ regress:
 	@echo check wether your test machines are set up properly
 .endif
 
-# pf rules on PF must look like this:
-#
-# pass to { $PF_IN/24 $PF_IN6/64 }
-# pass to { $RT_IN/24 $RT_IN6/64 }
-# pass to { $ECO_IN/24 $DST_IN6/64 }
-# pass to { $RDR_IN/24 $RDR_IN6/64 }
-#
-# pass in  to $RDR_IN/24  rdr-to $ECO_IN  tag rdr
-# pass out                nat-to $PF_OUT  tagged rdr
-# pass in  to $RDR_IN6/64 rdr-to $ECO_IN6 tag rdr
-# pass out                nat-to $PF_OUT6 tagged rdr
+.MAIN: all
 
-# pass in  to $AF_IN/24  af-to inet6 from $PF_OUT6 to $ECO_IN6/120 tag af
-# pass out                     inet6                               tagged af
-# pass in  to $AF_IN6/64 af-to inet  from $PF_OUT  to $ECO_IN/24   tag af
-# pass out                     inet                                tagged af
+.if ! empty (PF_SSH)
+.if make (regress) || make (all)
+.BEGIN: pf.conf addr.py
+	@echo
+	${SUDO} true
+	ssh -t ${PF_SSH} ${SUDO} true
+	rm -f stamp-pfctl
+.endif
+.endif
 
 # Currently these test fail as pf does not fix the checksum of
 # NATed packets inside of icmp packets.
@@ -107,6 +102,12 @@ addr.py: Makefile
 .endfor
 	mv $@.tmp $@
 
+# load the pf rules into the kernel of the PF machine
+stamp-pfctl: addr.py
+	cat addr.py ${.CURDIR}/pf.conf | \
+	    ssh ${PF_SSH} ${SUDO} pfctl -a regress -f -
+	@date >$@
+
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
 .if ${.CURDIR} == ${.OBJDIR}
@@ -121,14 +122,14 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
 # by PF and handled by ECO.
 TARGETS +=	ping  ping6
 
-run-regress-ping:
+run-regress-ping: stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN AF_IN
 	@echo Check ping ${ip}:
 	ping -n -c 1 ${${ip}}
 .endfor
 
-run-regress-ping6:
+run-regress-ping6: stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN AF_IN
 	@echo Check ping ${ip}6:
@@ -143,7 +144,7 @@ run-regress-ping6:
 # quoted packet are the same.
 TARGETS +=	ping-mtu ping6-mtu
 
-run-regress-ping-mtu: addr.py
+run-regress-ping-mtu: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check path MTU to ${ip} is 1300
@@ -152,7 +153,7 @@ run-regress-ping-mtu: addr.py
 	@echo Check path MTU to AF_IN is 1280
 	${SUDO} ${PYTHON}ping_mtu.py ${AF_IN} 1280
 
-run-regress-ping6-mtu: addr.py
+run-regress-ping6-mtu: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check path MTU to ${ip}6 is 1300
@@ -165,14 +166,14 @@ run-regress-ping6-mtu: addr.py
 # The response must arrive in 1 second.
 TARGETS +=	udp  udp6
 
-run-regress-udp:
+run-regress-udp: stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN AF_IN
 	@echo Check udp ${ip}:
 	( echo $$$$ | nc -u ${${ip}} 7 & sleep 1; kill $$! ) | grep $$$$
 .endfor
 
-run-regress-udp6:
+run-regress-udp6: stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN AF_IN
 	@echo Check udp ${ip}6:
@@ -184,14 +185,14 @@ run-regress-udp6:
 # Count the reflected bytes and compare with the transmitted ones.
 TARGETS +=	tcp  tcp6
 
-run-regress-tcp:
+run-regress-tcp: stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN AF_IN
 	@echo Check tcp ${ip}:
 	openssl rand 200000 | nc ${${ip}} 7 | wc -c | grep '200000$$'
 .endfor
 
-run-regress-tcp6:
+run-regress-tcp6: stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN AF_IN
 	@echo Check tcp ${ip}6:
@@ -200,7 +201,7 @@ run-regress-tcp6:
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
-CLEANFILES +=		addr.py *.pyc *.log
+CLEANFILES +=		addr.py *.pyc *.log stamp-*
 
 .PHONY: check-setup
 
