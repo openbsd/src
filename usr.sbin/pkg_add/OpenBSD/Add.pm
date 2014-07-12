@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.160 2014/07/11 12:49:20 espie Exp $
+# $OpenBSD: Add.pm,v 1.161 2014/07/12 19:50:43 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -482,10 +482,6 @@ sub prepare_to_extract
 
 	$file->set_name($fullname);
 	$file->{destdir} = $destdir;
-	# faked installation are VERY weird
-	if (defined $self->{symlink} && $state->{do_faked}) {
-		$file->{linkname} = $destdir.$file->{linkname};
-	}
 }
 
 sub tie
@@ -810,7 +806,6 @@ sub install
 {
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
-	return if $state->{do_faked};
 	$self->mark_ldconfig_directory($state);
 }
 

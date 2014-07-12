@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.68 2014/07/10 21:12:33 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.69 2014/07/12 19:50:43 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -107,17 +107,10 @@ sub handle_options
 	my $state = shift;
 	$state->SUPER::handle_options('ruUzl:A:P:Q:',
 	    '[-acinqrsUuvxz] [-A arch] [-B pkg-destdir] [-D name[=value]]',
-	    '[-L localbase] [-l file] [-P type] [-Q quick-destdir] pkg-name [...]');
+	    '[-L localbase] [-l file] [-P type] pkg-name [...]');
 
-	$state->{do_faked} = 0;
 	$state->{arch} = $state->opt('A');
 
-	if (defined $state->opt('Q') and defined $state->opt('B')) {
-		$state->usage("-Q and -B are incompatible options");
-	}
-	if (defined $state->opt('Q') and defined $state->opt('r')) {
-		$state->usage("-r and -Q are incompatible options");
-	}
 	if ($state->opt('P')) {
 		if ($state->opt('P') eq 'cdrom') {
 			$state->{cdrom_only} = 1;
@@ -129,10 +122,7 @@ sub handle_options
 		    $state->usage("bad option: -P #1", $state->opt('P'));
 		}
 	}
-	if (defined $state->opt('Q')) {
-		$state->{destdir} = $state->opt('Q');
-		$state->{do_faked} = 1;
-	} elsif (defined $state->opt('B')) {
+	if (defined $state->opt('B')) {
 		$state->{destdir} = $state->opt('B');
 	}
 	if (defined $state->{destdir}) {
@@ -270,9 +260,6 @@ sub setup_header
 		$state->{lastheader} = $header;
 		$state->print("#1", $header);
 		$state->print("(pretending) ") if $state->{not};
-		if ($state->{do_faked}) {
-			$state->print(" under #1", $state->{destdir});
-		}
 		$state->print("\n");
 	}
 }

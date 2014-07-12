@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.32 2014/02/11 08:58:34 sthen Exp $
+# $OpenBSD: PkgDelete.pm,v 1.33 2014/07/12 19:50:43 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -163,9 +163,6 @@ sub setup_header
 		$state->{lastheader} = $header;
 		$state->print("#1", $header);
 		$state->print("(pretending) ") if $state->{not};
-		if ($state->{do_faked}) {
-			$state->print(" under #1", $state->{destdir});
-		}
 		$state->print("\n");
 	}
 }
