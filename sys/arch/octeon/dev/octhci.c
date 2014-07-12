@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.12 2014/07/12 17:53:45 pirofti Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.13 2014/07/12 19:54:17 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -193,7 +193,7 @@ octhci_attach(struct device *parent, struct device *self, void *aux)
 	if (rc != 0)
 		panic(": can't map control registers");
 
-	/* 
+	/*
 	 * XXX: assume only one USB port is available.
 	 * Should write a get_nports routine to get the actual number based
 	 * on the model.
@@ -249,7 +249,7 @@ octhci_init(struct octhci_softc *sc)
 	bus_space_write_8(sc->sc_bust, sc->sc_regn, USBN_CLK_CTL_OFFSET, clk);
 	bus_space_read_8(sc->sc_bust, sc->sc_regn, USBN_CLK_CTL_OFFSET);
 
-	/* 
+	/*
 	 * Reset HCLK and wait for it to stabilize.
 	 */
 	octhci_regn_set(sc, USBN_CLK_CTL_OFFSET, USBN_CLK_CTL_HCLK_RST);
@@ -457,7 +457,7 @@ octhci_regc_clear(struct octhci_softc *sc, bus_size_t offset, uint32_t bits)
 inline void
 octhci_regc_write(struct octhci_softc *sc, bus_size_t offset, uint32_t value)
 {
-	/* 
+	/*
 	 * In the Cavium document, CSR addresses are written in little-endian
 	 * format. so the address should be swapped on the core running in
 	 * big-endian.
@@ -468,7 +468,7 @@ octhci_regc_write(struct octhci_softc *sc, bus_size_t offset, uint32_t value)
 inline uint32_t
 octhci_regc_read(struct octhci_softc *sc, bus_size_t offset)
 {
-	/* 
+	/*
 	 * In the Cavium document, CSR addresses are written in little-endian
 	 * format. so the address should be swapped on the core running in
 	 * big-endian.
@@ -840,7 +840,7 @@ octhci_root_ctrl_start(struct usbd_xfer *xfer)
 
 		/* Taken from the SDK Root Hub example */
 		USETW(hubd.wHubCharacteristics, UHD_OC_INDIVIDUAL);
-		hubd.bPwrOn2PwrGood = 1;	
+		hubd.bPwrOn2PwrGood = 1;
 		hubd.bDescLength = USB_HUB_DESCRIPTOR_SIZE;
 
 		l = min(len, hubd.bDescLength);
