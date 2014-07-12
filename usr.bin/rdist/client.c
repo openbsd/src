@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.29 2014/07/05 06:55:29 guenther Exp $	*/
+/*	$OpenBSD: client.c,v 1.30 2014/07/12 03:07:22 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -1037,7 +1037,7 @@ dostat(char *file, struct stat *statbuf, opt_t opts)
  * We need to just change file info.
  */
 static int
-statupdate(int u, char *target, opt_t opts, char *rname, int destdir,
+statupdate(int u, char *starget, opt_t opts, char *rname, int destdir,
 	   struct stat *st, char *user, char *group)
 {
 	int rv = 0;
@@ -1048,12 +1048,12 @@ statupdate(int u, char *target, opt_t opts, char *rname, int destdir,
 		if (IS_ON(opts, DO_VERIFY)) {
 			message(MT_INFO,
 				"%s: need to change to perm %04o, owner %s, group %s",
-				target, lmode, user, group);
-			runspecial(target, opts, rname, destdir);
+				starget, lmode, user, group);
+			runspecial(starget, opts, rname, destdir);
 		}
 		else {
 			message(MT_CHANGE, "%s: change to perm %04o, owner %s, group %s", 
-				target, lmode, user, group);
+				starget, lmode, user, group);
 			ENCODE(ername, rname);
 			(void) sendcmd(C_CHMOG, "%lo %04o %s %s %s",
 				       opts, lmode, user, group, ername);
@@ -1069,7 +1069,7 @@ statupdate(int u, char *target, opt_t opts, char *rname, int destdir,
  * We need to install/update:
  */
 static int
-fullupdate(int u, char *target, opt_t opts, char *rname, int destdir,
+fullupdate(int u, char *starget, opt_t opts, char *rname, int destdir,
 	   struct stat *st, char *user, char *group)
 {
 	/*
@@ -1077,12 +1077,12 @@ fullupdate(int u, char *target, opt_t opts, char *rname, int destdir,
 	 */
 	if (u == US_NOENT) {
 		if (IS_ON(opts, DO_VERIFY)) {
-			message(MT_INFO, "%s: need to install", target);
-			runspecial(target, opts, rname, destdir);
+			message(MT_INFO, "%s: need to install", starget);
+			runspecial(starget, opts, rname, destdir);
 			return(1);
 		}
 		if (!IS_ON(opts, DO_QUIET))
-			message(MT_CHANGE, "%s: installing", target);
+			message(MT_CHANGE, "%s: installing", starget);
 		FLAG_OFF(opts, (DO_COMPARE|DO_REMOVE));
 	}
 
@@ -1108,16 +1108,16 @@ fullupdate(int u, char *target, opt_t opts, char *rname, int destdir,
 	} else if (S_ISREG(st->st_mode)) {		
 		if (u == US_OUTDATE) {
 			if (IS_ON(opts, DO_VERIFY)) {
-				message(MT_INFO, "%s: need to update", target);
-				runspecial(target, opts, rname, destdir);
+				message(MT_INFO, "%s: need to update", starget);
+				runspecial(starget, opts, rname, destdir);
 				return(1);
 			}
 			if (!IS_ON(opts, DO_QUIET))
-				message(MT_CHANGE, "%s: updating", target);
+				message(MT_CHANGE, "%s: updating", starget);
 		}
 		return (sendfile(rname, opts, st, user, group, destdir) == 0);
 	} else {
-		message(MT_INFO, "%s: unknown file type 0%o", target,
+		message(MT_INFO, "%s: unknown file type 0%o", starget,
 			st->st_mode);
 		return(0);
 	}

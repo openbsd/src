@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.26 2014/07/12 02:58:18 guenther Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.27 2014/07/12 03:07:22 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,6 @@
  * Remote distribution program.
  */
 
-char   	       *distfile = NULL;		/* Name of distfile to use */
 int     	maxchildren = MAXCHILDREN;	/* Max no of concurrent PIDs */
 int		nflag = 0;			/* Say without doing */
 int64_t		min_freespace = 0;		/* Min filesys free space */
@@ -84,6 +83,7 @@ main(int argc, char **argv, char **envp)
 {
 	extern char *__progname;
 	struct namelist *hostlist = NULL;
+	char *distfile = NULL;
 	char *cp;
 	int cmdargs = 0;
 	int c;
