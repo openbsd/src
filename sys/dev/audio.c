@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.121 2014/05/19 07:00:15 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.122 2014/07/12 18:48:17 tedu Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -715,7 +715,7 @@ audio_free_ring(struct audio_softc *sc, struct audio_ringbuffer *r)
 	if (sc->hw_if->freem) {
 		sc->hw_if->freem(sc->hw_hdl, r->start, M_DEVBUF);
 	} else {
-		free(r->start, M_DEVBUF);
+		free(r->start, M_DEVBUF, 0);
 	}
 }
 
@@ -3269,7 +3269,7 @@ mixer_remove(struct audio_softc *sc, struct proc *p)
 		if ((*pm)->proc == p) {
 			m = *pm;
 			*pm = m->next;
-			free(m, M_DEVBUF);
+			free(m, M_DEVBUF, 0);
 			return;
 		}
 	}

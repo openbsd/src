@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.5 2009/07/03 04:34:51 dlg Exp $	*/
+/*	$OpenBSD: build.c,v 1.6 2014/07/12 18:48:18 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -297,7 +297,7 @@ main(int argc, char *argv[])
 	write_firmware(FILENAME_B09, bf, sizeof(*bf), chunks_b09,
 	    nitems(chunks_b09));
 
-	free(bf);
+	free(bf, 0);
 
 	rh = (struct bnx_rv2p_header *)malloc(sizeof *rh);
 
@@ -328,7 +328,7 @@ main(int argc, char *argv[])
 	write_firmware(FILENAME_XI90_RV2P, rh, sizeof(*rh), chunks_xi90_rv2p,
 	    nitems(chunks_xi90_rv2p));
 
-	free(rh);
+	free(rh, 0);
 
 	return 0;
 }

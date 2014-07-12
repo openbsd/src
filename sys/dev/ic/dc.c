@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.132 2014/04/18 14:56:59 henning Exp $	*/
+/*	$OpenBSD: dc.c,v 1.133 2014/07/12 18:48:17 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -3128,7 +3128,7 @@ dc_detach(struct dc_softc *sc)
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
 	if (sc->dc_srom)
-		free(sc->dc_srom, M_DEVBUF);
+		free(sc->dc_srom, M_DEVBUF, 0);
 
 	for (i = 0; i < DC_RX_LIST_CNT; i++)
 		bus_dmamap_destroy(sc->sc_dmat, sc->dc_cdata.dc_rx_chain[i].sd_map);

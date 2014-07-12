@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.39 2013/11/15 16:46:27 brad Exp $	*/
+/*	$OpenBSD: gus.c,v 1.40 2014/07/12 18:48:17 tedu Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -618,7 +618,7 @@ gusclose(void *addr)
 	sc->sc_flags &= ~(GUS_OPEN|GUS_LOCKED|GUS_DMAOUT_ACTIVE|GUS_DMAIN_ACTIVE);
 
 	if (sc->sc_deintr_buf) {
-		free(sc->sc_deintr_buf, M_DEVBUF);
+		free(sc->sc_deintr_buf, M_DEVBUF, 0);
 		sc->sc_deintr_buf = NULL;
 	}
 	/* turn off speaker, etc. */
@@ -1579,7 +1579,7 @@ gus_round_blocksize(addr, blocksize)
 	/* set up temporary buffer to hold the deinterleave, if necessary
 	   for stereo output */
 	if (sc->sc_deintr_buf) {
-		free(sc->sc_deintr_buf, M_DEVBUF);
+		free(sc->sc_deintr_buf, M_DEVBUF, 0);
 		sc->sc_deintr_buf = NULL;
 	}
 	sc->sc_deintr_buf = malloc(blocksize/2, M_DEVBUF, M_WAITOK);

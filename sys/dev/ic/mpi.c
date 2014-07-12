@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.191 2014/04/16 01:19:28 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.192 2014/07/12 18:48:17 tedu Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -399,7 +399,7 @@ free_ccbs:
 	while ((ccb = mpi_get_ccb(sc)) != NULL)
 		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
 	mpi_dmamem_free(sc, sc->sc_requests);
-	free(sc->sc_ccbs, M_DEVBUF);
+	free(sc->sc_ccbs, M_DEVBUF, 0);
 
 	return(1);
 }
@@ -563,7 +563,7 @@ mpi_run_ppr(struct mpi_softc *sc)
 	}
 
 out:
-	free(physdisk_pg, M_TEMP);
+	free(physdisk_pg, M_TEMP, 0);
 }
 
 int
@@ -859,7 +859,7 @@ mpi_cfg_sas(struct mpi_softc *sc)
 	}
 
 out:
-	free(pg, M_TEMP);
+	free(pg, M_TEMP, 0);
 	return (rv);
 }
 
@@ -1023,7 +1023,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, mdm->mdm_map);
 mdmfree:
-	free(mdm, M_DEVBUF);
+	free(mdm, M_DEVBUF, 0);
 
 	return (NULL);
 }
@@ -1037,7 +1037,7 @@ mpi_dmamem_free(struct mpi_softc *sc, struct mpi_dmamem *mdm)
 	bus_dmamem_unmap(sc->sc_dmat, mdm->mdm_kva, mdm->mdm_size);
 	bus_dmamem_free(sc->sc_dmat, &mdm->mdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, mdm->mdm_map);
-	free(mdm, M_DEVBUF);
+	free(mdm, M_DEVBUF, 0);
 }
 
 int
@@ -1105,7 +1105,7 @@ free_maps:
 
 	mpi_dmamem_free(sc, sc->sc_requests);
 free_ccbs:
-	free(sc->sc_ccbs, M_DEVBUF);
+	free(sc->sc_ccbs, M_DEVBUF, 0);
 
 	return (1);
 }
@@ -1163,7 +1163,7 @@ mpi_alloc_replies(struct mpi_softc *sc)
 
 	sc->sc_replies = mpi_dmamem_alloc(sc, sc->sc_repq * MPI_REPLY_SIZE);
 	if (sc->sc_replies == NULL) {
-		free(sc->sc_rcbs, M_DEVBUF);
+		free(sc->sc_rcbs, M_DEVBUF, 0);
 		return (1);
 	}
 
@@ -1637,7 +1637,7 @@ mpi_scsi_probe_virtual(struct scsi_link *link)
 	if (rv == 0)
 		SET(link->flags, SDEV_VIRTUAL);
 
-	free(rp0, M_TEMP);
+	free(rp0, M_TEMP, 0);
 	return (0);
 }
 
@@ -2722,7 +2722,7 @@ mpi_manufacturing(struct mpi_softc *sc)
 	rv = 0;
 
 out:
-	free(pg, M_TEMP);
+	free(pg, M_TEMP, 0);
 	return (rv);
 }
 
@@ -2775,7 +2775,7 @@ mpi_get_raid(struct mpi_softc *sc)
 		sc->sc_flags |= MPI_F_RAID;
 
 out:
-	free(vol_page, M_TEMP);
+	free(vol_page, M_TEMP, 0);
 }
 
 int
@@ -3098,7 +3098,7 @@ mpi_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 	scsi_io_put(&sc->sc_iopool, ccb);
 
 done:
-	free(rpg0, M_TEMP);
+	free(rpg0, M_TEMP, 0);
 	return (rv);
 }
 
@@ -3136,7 +3136,7 @@ mpi_bio_get_pg0_raid(struct mpi_softc *sc, int id)
 		goto done;
 	}
 	if (sc->sc_rpg0)
-		free(sc->sc_rpg0, M_DEVBUF);
+		free(sc->sc_rpg0, M_DEVBUF, 0);
 	sc->sc_rpg0 = rpg0;
 
 	/* get raid vol page 0 */
@@ -3464,7 +3464,7 @@ mpi_create_sensors(struct mpi_softc *sc)
 	return (0);
 
 bad:
-	free(sc->sc_sensors, M_DEVBUF);
+	free(sc->sc_sensors, M_DEVBUF, 0);
 	return (1);
 }
 

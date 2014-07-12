@@ -1,4 +1,4 @@
-/* $OpenBSD: aicasm_symbol.c,v 1.11 2012/12/05 23:20:19 deraadt Exp $ */
+/* $OpenBSD: aicasm_symbol.c,v 1.12 2014/07/12 18:48:18 tedu Exp $ */
 /*	$NetBSD: aicasm_symbol.c,v 1.4 2003/07/14 15:42:40 lukem Exp $	*/
 
 /*
@@ -96,11 +96,11 @@ symbol_delete(symbol_t *symbol)
 	case SRAMLOC:
 	case REGISTER:
 		if (symbol->info.rinfo != NULL)
-			free(symbol->info.rinfo);
+			free(symbol->info.rinfo, 0);
 		break;
 	case ALIAS:
 		if (symbol->info.ainfo != NULL)
-			free(symbol->info.ainfo);
+			free(symbol->info.ainfo, 0);
 		break;
 	case MASK:
 	case FIELD:
@@ -108,24 +108,24 @@ symbol_delete(symbol_t *symbol)
 	case ENUM_ENTRY:
 		if (symbol->info.finfo != NULL) {
 			symlist_free(&symbol->info.finfo->symrefs);
-			free(symbol->info.finfo);
+			free(symbol->info.finfo, 0);
 		}
 		break;
 	case DOWNLOAD_CONST:
 	case CONST:
 		if (symbol->info.cinfo != NULL)
-			free(symbol->info.cinfo);
+			free(symbol->info.cinfo, 0);
 		break;
 	case LABEL:
 		if (symbol->info.linfo != NULL)
-			free(symbol->info.linfo);
+			free(symbol->info.linfo, 0);
 		break;
 	case UNINITIALIZED:
 	default:
 		break;
 	}
-	free(symbol->name);
-	free(symbol);
+	free(symbol->name, 0);
+	free(symbol, 0);
 }
 
 void
@@ -299,7 +299,7 @@ symlist_free(symlist_t *symlist)
 	node1 = SLIST_FIRST(symlist);
 	while (node1 != NULL) {
 		node2 = SLIST_NEXT(node1, links);
-		free(node1);
+		free(node1, 0);
 		node1 = node2;
 	}
 	SLIST_INIT(symlist);
@@ -632,7 +632,7 @@ symtable_dump(FILE *ofile, FILE *dfile)
 		fprintf(ofile, "#define%s%-16s%s0x%02x\n",
 			tab_str, curnode->symbol->name, tab_str2,
 			value);
-		free(curnode);
+		free(curnode, 0);
 	}
 	fprintf(ofile, "\n\n");
 
@@ -644,7 +644,7 @@ symtable_dump(FILE *ofile, FILE *dfile)
 		fprintf(ofile, "#define\t%-8s\t0x%02x\n",
 			curnode->symbol->name,
 			curnode->symbol->info.cinfo->value);
-		free(curnode);
+		free(curnode, 0);
 	}
 
 	
@@ -658,7 +658,7 @@ symtable_dump(FILE *ofile, FILE *dfile)
 		fprintf(ofile, "#define\t%-8s\t0x%02x\n",
 			curnode->symbol->name,
 			curnode->symbol->info.cinfo->value);
-		free(curnode);
+		free(curnode, 0);
 	}
 	fprintf(ofile, "#define\tDOWNLOAD_CONST_COUNT\t0x%02x\n", i);
 
@@ -672,7 +672,7 @@ symtable_dump(FILE *ofile, FILE *dfile)
 		fprintf(ofile, "#define\tLABEL_%-8s\t0x%02x\n",
 			curnode->symbol->name,
 			curnode->symbol->info.linfo->address);
-		free(curnode);
+		free(curnode, 0);
 	}
 }
 

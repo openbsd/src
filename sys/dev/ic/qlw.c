@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.22 2014/04/06 20:17:23 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.23 2014/07/12 18:48:17 tedu Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -1673,7 +1673,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, m->qdm_map);
 qdmfree:
-	free(m, M_DEVBUF);
+	free(m, M_DEVBUF, 0);
 
 	return (NULL);
 }
@@ -1685,7 +1685,7 @@ qlw_dmamem_free(struct qlw_softc *sc, struct qlw_dmamem *m)
 	bus_dmamem_unmap(sc->sc_dmat, m->qdm_kva, m->qdm_size);
 	bus_dmamem_free(sc->sc_dmat, &m->qdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, m->qdm_map);
-	free(m, M_DEVBUF);
+	free(m, M_DEVBUF, 0);
 }
 
 int
@@ -1749,7 +1749,7 @@ free_maps:
 free_req:
 	qlw_dmamem_free(sc, sc->sc_requests);
 free_ccbs:
-	free(sc->sc_ccbs, M_DEVBUF);
+	free(sc->sc_ccbs, M_DEVBUF, 0);
 
 	return (1);
 }
@@ -1764,7 +1764,7 @@ qlw_free_ccbs(struct qlw_softc *sc)
 		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
 	qlw_dmamem_free(sc, sc->sc_responses);
 	qlw_dmamem_free(sc, sc->sc_requests);
-	free(sc->sc_ccbs, M_DEVBUF);
+	free(sc->sc_ccbs, M_DEVBUF, 0);
 }
 
 void *

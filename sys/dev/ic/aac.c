@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.63 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: aac.c,v 1.64 2014/07/12 18:48:17 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -470,7 +470,7 @@ aac_free(struct aac_softc *sc)
 	if (sc->aac_fib_dmat)
 		bus_dma_tag_destroy(sc->aac_fib_dmat);
 
-	free(sc->aac_commands, M_AACBUF);
+	free(sc->aac_commands, M_AACBUF, 0);
 
 	/* destroy the common area */
 	if (sc->aac_common) {
@@ -526,7 +526,7 @@ aac_detach(device_t dev)
 		if (error)
 			return (error);
 		TAILQ_REMOVE(&sc->aac_container_tqh, co, co_link);
-		free(co, M_AACBUF);
+		free(co, M_AACBUF, 0);
 	}
 
 	/* Remove the CAM SIMs */
@@ -535,7 +535,7 @@ aac_detach(device_t dev)
 		error = device_delete_child(dev, sim->sim_dev);
 		if (error)
 			return (error);
-		free(sim, M_AACBUF);
+		free(sim, M_AACBUF, 0);
 	}
 
 	if (sc->aifflags & AAC_AIFFLAGS_RUNNING) {
@@ -1267,7 +1267,7 @@ aac_alloc_commands(struct aac_softc *sc)
  exit_map:
 	bus_dmamem_free(sc->aac_dmat, &fm->aac_seg, fm->aac_nsegs);
  exit_alloc:
-	free(fm, M_DEVBUF);
+	free(fm, M_DEVBUF, 0);
  exit:
 	AAC_LOCK_RELEASE(&sc->aac_io_lock);
 	return (error);
@@ -1301,7 +1301,7 @@ aac_free_commands(struct aac_softc *sc)
 		bus_dmamem_unmap(sc->aac_dmat, (caddr_t)fm->aac_fibs,
 				 AAC_FIBMAP_SIZE);
 		bus_dmamem_free(sc->aac_dmat, &fm->aac_seg, fm->aac_nsegs);
-		free(fm, M_DEVBUF);
+		free(fm, M_DEVBUF, 0);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.85 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.86 2014/07/12 18:48:17 tedu Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -690,7 +690,7 @@ rtw_srom_read(struct rtw_regs *regs, u_int32_t flags, struct rtw_srom *sr,
 	/* TBD bus barriers */
 	if (!read_seeprom(&sd, sr->sr_content, 0, sr->sr_size/2)) {
 		printf("\n%s: could not read SROM\n", dvname);
-		free(sr->sr_content, M_DEVBUF);
+		free(sr->sr_content, M_DEVBUF, 0);
 		sr->sr_content = NULL;
 		return -1;	/* XXX */
 	}
@@ -3629,7 +3629,7 @@ rtw_txsoft_blk_cleanup_all(struct rtw_softc *sc)
 
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
 		tsb = &sc->sc_txsoft_blk[pri];
-		free(tsb->tsb_desc, M_DEVBUF);
+		free(tsb->tsb_desc, M_DEVBUF, 0);
 		tsb->tsb_desc = NULL;
 	}
 }
@@ -4073,7 +4073,7 @@ fail8:
 	sr = &sc->sc_srom;
 	sr->sr_size = 0;
 	if (sr->sr_content != NULL) {
-		free(sr->sr_content, M_DEVBUF);
+		free(sr->sr_content, M_DEVBUF, 0);
 		sr->sr_content = NULL;
 	}
 

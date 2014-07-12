@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.56 2012/01/28 12:45:48 stsp Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.57 2014/07/12 18:48:17 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -295,7 +295,7 @@ ath_hal_attach(u_int16_t device, void *arg, bus_space_tag_t st,
 	return (hal);
 
  failed:
-	free(hal, M_DEVBUF);
+	free(hal, M_DEVBUF, 0);
 	return (NULL);
 }
 
@@ -506,7 +506,7 @@ ath_hal_init_channels(struct ath_hal *hal, HAL_CHANNEL *channels,
  done:
 	bcopy(all_channels, channels, sizeof(HAL_CHANNEL) * max_channels);
 	*channels_size = c;
-	free(all_channels, M_TEMP);
+	free(all_channels, M_TEMP, 0);
 	return (AH_TRUE);
 }
 

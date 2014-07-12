@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.15 2014/07/10 14:21:20 deraadt Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.16 2014/07/12 18:48:18 tedu Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -452,7 +452,7 @@ spkrclose(dev_t dev, int flags, int mode, struct proc *p)
 		return (ENXIO);
 	else {
 		tone(0, 0);
-		free(spkr_inbuf, M_DEVBUF);
+		free(spkr_inbuf, M_DEVBUF, 0);
 		spkr_active = 0;
 	}
 	return (0);

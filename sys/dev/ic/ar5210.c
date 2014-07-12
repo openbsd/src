@@ -1,4 +1,4 @@
-/*     $OpenBSD: ar5210.c,v 1.45 2009/06/02 12:39:02 reyk Exp $        */
+/*     $OpenBSD: ar5210.c,v 1.46 2014/07/12 18:48:17 tedu Exp $        */
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -354,7 +354,7 @@ ar5k_ar5210_detach(struct ath_hal *hal)
 	/*
 	 * Free HAL structure, assume interrupts are down
 	 */
-	free(hal, M_DEVBUF);
+	free(hal, M_DEVBUF, 0);
 }
 
 HAL_BOOL

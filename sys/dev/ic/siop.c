@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.66 2013/05/27 21:19:31 miod Exp $ */
+/*	$OpenBSD: siop.c,v 1.67 2014/07/12 18:48:17 tedu Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -299,7 +299,7 @@ siop_reset(sc)
 				sc->sc_c.sc_dev.dv_xname, lunsw->lunsw_off);
 #endif
 		TAILQ_REMOVE(&sc->lunsw_list, lunsw, next);
-		free(lunsw, M_DEVBUF);
+		free(lunsw, M_DEVBUF, 0);
 	}
 	TAILQ_INIT(&sc->lunsw_list);
 	/* restore reselect switch */
@@ -312,7 +312,7 @@ siop_reset(sc)
 				sc->sc_c.sc_dev.dv_xname, i);
 #endif
 		target = (struct siop_target *)sc->sc_c.targets[i];
-		free(target->lunsw, M_DEVBUF);
+		free(target->lunsw, M_DEVBUF, 0);
 		target->lunsw = siop_get_lunsw(sc);
 		if (target->lunsw == NULL) {
 			printf("%s: can't alloc lunsw for target %d\n",
@@ -1426,7 +1426,7 @@ siop_scsiprobe(struct scsi_link *link)
 		if (siop_target->lunsw == NULL) {
 			printf("%s: can't alloc lunsw for target %d\n",
 			    sc->sc_c.sc_dev.dv_xname, target);
-			free(siop_target, M_DEVBUF);
+			free(siop_target, M_DEVBUF, 0);
 			return (ENOMEM);
 		}
 		for (i = 0; i < 8; i++)
@@ -1952,9 +1952,9 @@ bad0:
 bad1:
 	siop_dmamem_free(sc, newcbd->xfers);
 bad2:
-	free(newcbd->cmds, M_DEVBUF);
+	free(newcbd->cmds, M_DEVBUF, 0);
 bad3:
-	free(newcbd, M_DEVBUF);
+	free(newcbd, M_DEVBUF, 0);
 	return;
 }
 
@@ -2188,7 +2188,7 @@ siop_scsifree(struct scsi_link *link)
 #endif
 
 	siop_target = (struct siop_target *)sc->sc_c.targets[target];
-	free(siop_target->siop_lun[lun], M_DEVBUF);
+	free(siop_target->siop_lun[lun], M_DEVBUF, 0);
 	siop_target->siop_lun[lun] = NULL;
 	/* XXX compact sw entry too ? */
 	/* check if we can free the whole target */
@@ -2208,7 +2208,7 @@ siop_scsifree(struct scsi_link *link)
 	siop_script_write(sc, siop_target->reseloff, 0x800c00ff);
 	siop_script_sync(sc, BUS_DMASYNC_PREWRITE);
 	TAILQ_INSERT_TAIL(&sc->lunsw_list, siop_target->lunsw, next);
-	free(sc->sc_c.targets[target], M_DEVBUF);
+	free(sc->sc_c.targets[target], M_DEVBUF, 0);
 	sc->sc_c.targets[target] = NULL;
 	sc->sc_ntargets--;
 }
@@ -2265,7 +2265,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_c.sc_dmat, sdm->sdm_map);
 sdmfree:
-	free(sdm, M_DEVBUF);
+	free(sdm, M_DEVBUF, 0);
 
 	return (NULL);
 }
@@ -2277,6 +2277,6 @@ siop_dmamem_free(struct siop_softc *sc, struct siop_dmamem *sdm)
 	bus_dmamem_unmap(sc->sc_c.sc_dmat, sdm->sdm_kva, sdm->sdm_size);
 	bus_dmamem_free(sc->sc_c.sc_dmat, &sdm->sdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_c.sc_dmat, sdm->sdm_map);
-	free(sdm, M_DEVBUF);
+	free(sdm, M_DEVBUF, 0);
 }
 

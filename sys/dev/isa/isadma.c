@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.31 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.32 2014/07/12 18:48:18 tedu Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -719,7 +719,7 @@ isa_free(addr, pool)
 	*mp = m->next;
 	isa_dmamem_unmap(m->isadev, m->chan, kva, m->size);
 	isa_dmamem_free(m->isadev, m->chan, m->addr, m->size);
-	free(m, pool);
+	free(m, pool, 0);
 }
 
 paddr_t

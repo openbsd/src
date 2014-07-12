@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnpres.c,v 1.8 2013/11/15 16:46:27 brad Exp $	*/
+/*	$OpenBSD: isapnpres.c,v 1.9 2014/07/12 18:48:18 tedu Exp $	*/
 /*	$NetBSD: isapnpres.c,v 1.7.4.1 1997/11/20 07:46:13 mellon Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ isapnp_flatten(struct isa_attach_args *card)
 	struct isa_attach_args *dev, *conf, *d, *c, *pa;
 
 	dev = card->ipa_child;
-	free(card, M_DEVBUF);
+	free(card, M_DEVBUF, 0);
 
 	for (conf = c = NULL, d = dev; d; d = dev) {
 		dev = d->ipa_sibling;
@@ -198,7 +198,7 @@ isapnp_flatten(struct isa_attach_args *card)
 				isapnp_merge(pa, d);
 
 			pa = d->ipa_child;
-			free(d, M_DEVBUF);
+			free(d, M_DEVBUF, 0);
 		}
 
 		if (c == NULL)
@@ -514,7 +514,7 @@ parse:
 bad:
 	for (card = isapnp_flatten(card); card; ) {
 		dev = card->ipa_sibling;
-		free(card, M_DEVBUF);
+		free(card, M_DEVBUF, 0);
 		card = dev;
 	}
 	printf("%s: %s, card %d\n", sc->sc_dev.dv_xname,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.46 2013/05/30 16:15:01 deraadt Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.47 2014/07/12 18:48:17 tedu Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -241,7 +241,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, pcireg_t cis_ptr,
 		out:
 			while ((p = SIMPLEQ_FIRST(&rom_image)) != NULL) {
 				SIMPLEQ_REMOVE_HEAD(&rom_image, next);
-				free(p, M_DEVBUF);
+				free(p, M_DEVBUF, 0);
 			}
 			exrom = pci_conf_read(pc, tag, reg);
 			pci_conf_write(pc, tag, reg, exrom & ~1);
@@ -537,7 +537,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 		    cardbussubmatch)) == NULL) {
 			/* do not match */
 			disable_function(sc, function);
-			free(ct, M_DEVBUF);
+			free(ct, M_DEVBUF, 0);
 			*previous_next = NULL;
 		} else {
 			/* found */
@@ -551,7 +551,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 	 * if no functions were attached).
 	 */
 	disable_function(sc, 8);
-	free(tuple, M_TEMP);
+	free(tuple, M_TEMP, 0);
 
 	return (no_work_funcs);
 }
@@ -625,7 +625,7 @@ cardbus_detach_card(struct cardbus_softc *sc)
 		} else {
 			sc->sc_poweron_func &= ~(1 << ct->ct_func);
 			*prev_next = ct->ct_next;
-			free(ct, M_DEVBUF);
+			free(ct, M_DEVBUF, 0);
 		}
 	}
 

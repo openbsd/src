@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.124 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.125 2014/07/12 18:48:17 tedu Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -732,7 +732,7 @@ wdc_alloc_queue(void)
 void
 wdc_free_queue(struct channel_queue *queue)
 {
-	free(queue, M_DEVBUF);
+	free(queue, M_DEVBUF, 0);
 }
 
 void
@@ -2144,7 +2144,7 @@ wdc_ioctl(struct ata_drive_datas *drvp, u_long xfer, caddr_t addr, int flag,
 
 		if (log_to_copy != NULL) {
 			error = copyout(log_to_copy, agt->buf, size);
-			free(log_to_copy, M_TEMP);
+			free(log_to_copy, M_TEMP, 0);
 		}
 
 		agt->bytes_copied = size;

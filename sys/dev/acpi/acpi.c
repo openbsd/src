@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.264 2014/07/12 09:02:24 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.265 2014/07/12 18:48:17 tedu Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -512,13 +512,13 @@ acpi_getpci(struct aml_node *node, void *arg)
 
 	/* Check if PCI device exists */
 	if (pci->dev > 0x1F || pci->fun > 7) {
-		free(pci, M_DEVBUF);
+		free(pci, M_DEVBUF, 0);
 		return (1);
 	}
 	tag = pci_make_tag(pc, pci->bus, pci->dev, pci->fun);
 	reg = pci_conf_read(pc, tag, PCI_ID_REG);
 	if (PCI_VENDOR(reg) == PCI_VENDOR_INVALID) {
-		free(pci, M_DEVBUF);
+		free(pci, M_DEVBUF, 0);
 		return (1);
 	}
 	node->pci = pci;
@@ -1069,7 +1069,7 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 			acpi_maptable(sc, xsdt->table_offsets[i], NULL, NULL,
 			    NULL, 1);
 
-		free(sdt, M_DEVBUF);
+		free(sdt, M_DEVBUF, 0);
 	} else {
 		struct acpi_rsdt *rsdt;
 
@@ -1088,7 +1088,7 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 			acpi_maptable(sc, rsdt->table_offsets[i], NULL, NULL,
 			    NULL, 1);
 
-		free(sdt, M_DEVBUF);
+		free(sdt, M_DEVBUF, 0);
 	}
 
 	return (0);
@@ -1418,7 +1418,7 @@ acpi_dotask(struct acpi_softc *sc)
 
 	wq->handler(wq->arg0, wq->arg1);
 
-	free(wq, M_DEVBUF);
+	free(wq, M_DEVBUF, 0);
 
 	/* We did something */
 	return (1);	
@@ -1893,7 +1893,7 @@ acpi_foundprw(struct aml_node *node, void *arg)
 	wq->q_wakepkg = malloc(sizeof(struct aml_value), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
 	if (wq->q_wakepkg == NULL) {
-		free(wq, M_DEVBUF);
+		free(wq, M_DEVBUF, 0);
 		return 0;
 	}
 	dnprintf(10, "Found _PRW (%s)\n", node->parent->name);
@@ -2310,7 +2310,7 @@ acpi_thread(void *arg)
 		while(acpi_dotask(acpi_softc))
 			;
 	}
-	free(thread, M_DEVBUF);
+	free(thread, M_DEVBUF, 0);
 
 	kthread_exit(0);
 }

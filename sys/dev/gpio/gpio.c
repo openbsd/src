@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.c,v 1.12 2011/10/03 20:24:51 matthieu Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.13 2014/07/12 18:48:17 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -427,7 +427,7 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			    == 0) {
 				if (config_detach(gdev->sc_dev, 0) == 0) {
 					LIST_REMOVE(gdev, sc_next);
-					free(gdev, M_DEVBUF);
+					free(gdev, M_DEVBUF, 0);
 				}
 				break;
 			}
@@ -504,7 +504,7 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		LIST_FOREACH(nm, &sc->sc_names, gp_next) {
 			if (nm->gp_pin == pin) {
 				LIST_REMOVE(nm, gp_next);
-				free(nm, M_DEVBUF);
+				free(nm, M_DEVBUF, 0);
 				break;
 			}
 		}

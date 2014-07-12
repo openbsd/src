@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.52 2014/01/17 23:25:07 dlg Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.53 2014/07/12 18:48:17 tedu Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -667,7 +667,7 @@ void
 ahc_platform_free(struct ahc_softc *ahc)
 {
 	if (sizeof(struct ahc_platform_data) > 0)
-		free(ahc->platform_data, M_DEVBUF);
+		free(ahc->platform_data, M_DEVBUF, 0);
 }
 
 int

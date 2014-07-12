@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus_exrom.c,v 1.5 2013/06/20 09:52:09 mpi Exp $	*/
+/*	$OpenBSD: cardbus_exrom.c,v 1.6 2014/07/12 18:48:17 tedu Exp $	*/
 /*	$NetBSD: cardbus_exrom.c,v 1.4 2000/02/03 06:47:31 thorpej Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ cardbus_read_exrom(bus_space_tag_t romt, bus_space_handle_t romh,
 		if (bus_space_subregion(romt, romh, addr,
 		    image_size, &image->romh)) {
 			DPRINTF(("%s: bus_space_subregion failed", __func__));
-			free(image, M_DEVBUF);
+			free(image, M_DEVBUF, 0);
 			return (1);
 		}
 		SIMPLEQ_INSERT_TAIL(head, image, next);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.6 2014/06/27 17:51:08 miod Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.7 2014/07/12 18:48:17 tedu Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -813,7 +813,7 @@ wd33c93_scsidone(struct wd33c93_softc *sc, struct wd33c93_acb *acb, int status)
 		if (li->untagged == NULL && li->used == 0) {
 			if (sc_link->lun < SBIC_NLUN)
 				ti->lun[sc_link->lun] = NULL;
-			free(li, M_DEVBUF);
+			free(li, M_DEVBUF, 0);
 			li = NULL;
 		}
 	}
@@ -2295,7 +2295,7 @@ wd33c93_watchdog(void *arg)
 			if (li && li->last_used < old &&
 			    li->untagged == NULL && li->used == 0) {
 				ti->lun[li->lun] = NULL;
-				free(li, M_DEVBUF);
+				free(li, M_DEVBUF, 0);
 			}
 			splx(s);
 		}

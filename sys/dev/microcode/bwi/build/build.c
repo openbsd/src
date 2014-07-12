@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.1 2007/10/04 17:46:09 mglocker Exp $ */
+/*	$OpenBSD: build.c,v 1.2 2014/07/12 18:48:18 tedu Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -131,18 +131,18 @@ main(int argc, char *argv[])
 			err(1, "malloc");
 		}
 		if (read(fdin, p, h[i].filesize) < 1) {
-			free(p);
+			free(p, 0);
 			close(fdout);
 			close(fdin);
 			err(1, "read input file failed\n");
 		}
 		if (write(fdout, p, h[i].filesize) < 1) {
-			free(p);
+			free(p, 0);
 			close(fdout);
 			close(fdin);
 			err(1, "write to output file failed\n");
 		}
-		free(p);
+		free(p, 0);
 		close(fdin);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.73 2013/12/06 21:03:03 deraadt Exp $  */
+/*	$OpenBSD: pgt.c,v 1.74 2014/07/12 18:48:17 tedu Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -312,7 +312,7 @@ pgt_load_firmware(struct pgt_softc *sc)
 	if (size & 3) {
 		DPRINTF(("%s: bad firmware size %u\n",
 		    sc->sc_dev.dv_xname, size));
-		free(ucode, M_DEVBUF);
+		free(ucode, M_DEVBUF, 0);
 		return (EINVAL);
 	}
 
@@ -366,7 +366,7 @@ pgt_load_firmware(struct pgt_softc *sc)
 	pgt_write_memory_barrier(sc);
 	DELAY(PGT_WRITEIO_DELAY);
 
-	free(ucode, M_DEVBUF);
+	free(ucode, M_DEVBUF, 0);
 	
 	return (0);
 }
@@ -1827,7 +1827,7 @@ pgt_ieee80211_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 	struct pgt_ieee80211_node *pin;
 
 	pin = (struct pgt_ieee80211_node *)ni;
-	free(pin, M_DEVBUF);
+	free(pin, M_DEVBUF, 0);
 }
 
 void
@@ -1898,7 +1898,7 @@ pgt_net_attach(struct pgt_softc *sc)
 	freqs = malloc(j, M_DEVBUF, M_WAITOK);
 	error = pgt_oid_get(sc, PGT_OID_SUPPORTED_FREQUENCIES, freqs, j);
 	if (error) {
-		free(freqs, M_DEVBUF);
+		free(freqs, M_DEVBUF, 0);
 		return (error);
 	}
 
@@ -1909,7 +1909,7 @@ pgt_net_attach(struct pgt_softc *sc)
 		if (chan > IEEE80211_CHAN_MAX) {
 			printf("%s: reported bogus channel (%uMHz)\n",
 			    sc->sc_dev.dv_xname, chan);
-			free(freqs, M_DEVBUF);
+			free(freqs, M_DEVBUF, 0);
 			return (EIO);
 		}
 
@@ -1940,7 +1940,7 @@ pgt_net_attach(struct pgt_softc *sc)
 		    sc->sc_dev.dv_xname, chan,
 		    letoh16(freqs->pof_freqlist_mhz[i])));
 	}
-	free(freqs, M_DEVBUF);
+	free(freqs, M_DEVBUF, 0);
 	if (firstchan == -1) {
 		printf("%s: no channels found\n", sc->sc_dev.dv_xname);
 		return (EIO);
@@ -2348,9 +2348,9 @@ pgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t req)
 			na->na_nodes++;
 		}
 		if (nr)
-			free(nr, M_DEVBUF);
-		free(pob, M_DEVBUF);
-		free(wreq, M_DEVBUF);
+			free(nr, M_DEVBUF, 0);
+		free(pob, M_DEVBUF, 0);
+		free(wreq, M_DEVBUF, 0);
 		break;
 	}
 	case SIOCSIFADDR:
@@ -3184,7 +3184,7 @@ pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq)
 		if (error != 0) {
 			printf("%s: can not create DMA tag for fragment\n",
 			    sc->sc_dev.dv_xname);
-			free(pd, M_DEVBUF);
+			free(pd, M_DEVBUF, 0);
 			break;
 		}
 
@@ -3193,7 +3193,7 @@ pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq)
 		if (error != 0) {
 			printf("%s: error alloc frag %zu on queue %u\n",
 			    sc->sc_dev.dv_xname, i, pq);
-			free(pd, M_DEVBUF);
+			free(pd, M_DEVBUF, 0);
 			break;
 		}
 
@@ -3202,7 +3202,7 @@ pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq)
 		if (error != 0) {
 			printf("%s: error map frag %zu on queue %u\n",
 			    sc->sc_dev.dv_xname, i, pq);
-			free(pd, M_DEVBUF);
+			free(pd, M_DEVBUF, 0);
 			break;
 		}
 
@@ -3214,7 +3214,7 @@ pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq)
 				    sc->sc_dev.dv_xname, i, pq);
 				bus_dmamem_free(sc->sc_dmat, &pd->pd_dmas,
 				    nsegs);
-				free(pd, M_DEVBUF);
+				free(pd, M_DEVBUF, 0);
 				break;
 			}
 			pd->pd_dmaaddr = pd->pd_dmam->dm_segs[0].ds_addr;
@@ -3274,7 +3274,7 @@ pgt_dma_free_queue(struct pgt_softc *sc, enum pgt_queue pq)
 			pd->pd_dmam = NULL;
 		}
 		bus_dmamem_free(sc->sc_dmat, &pd->pd_dmas, 1);
-		free(pd, M_DEVBUF);
+		free(pd, M_DEVBUF, 0);
 	}
 }
 

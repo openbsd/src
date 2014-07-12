@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.61 2013/10/20 21:24:00 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.62 2014/07/12 18:48:17 tedu Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -702,13 +702,13 @@ vga_free_screen(void *v, void *cookie)
 		 * removes backing store for the last one
 		 */
 		if (vc->nscreens == 1)
-			free(LIST_FIRST(&vc->screens)->pcs.mem, M_DEVBUF);
+			free(LIST_FIRST(&vc->screens)->pcs.mem, M_DEVBUF, 0);
 
 		/* Last screen has no backing store */
 		if (vc->nscreens != 0)
-			free(vs->pcs.mem, M_DEVBUF);
+			free(vs->pcs.mem, M_DEVBUF, 0);
 
-		free(vs, M_DEVBUF);
+		free(vs, M_DEVBUF, 0);
 	} else
 		panic("vga_free_screen: console");
 

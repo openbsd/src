@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.40 2011/06/29 12:17:40 tedu Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.41 2014/07/12 18:48:18 tedu Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -427,7 +427,7 @@ isapnp_bestconfig(isa, sc, ipa)
 				return best;
 			}
 
-			free(best, M_DEVBUF);
+			free(best, M_DEVBUF, 0);
 			continue;
 		}
 		else {
@@ -439,7 +439,7 @@ isapnp_bestconfig(isa, sc, ipa)
 					continue;
 				d = c->ipa_sibling;
 				if (SAMEDEV(c, best))
-					free(c, M_DEVBUF);
+					free(c, M_DEVBUF, 0);
 				else {
 					if (n)
 						n->ipa_sibling = c;
@@ -923,7 +923,7 @@ isapnp_attach(parent, self, aux)
 			if (lpa->ipa_pref == ISAPNP_DEP_CONFLICTING) {
 				isapnp_print(lpa, self->dv_xname);
 				printf(" resource conflict\n");
-				free(lpa, M_DEVBUF);
+				free(lpa, M_DEVBUF, 0);
 				continue;
 			}
 
@@ -948,7 +948,7 @@ isapnp_attach(parent, self, aux)
 				printf(" not configured\n");
 				isapnp_write_reg(sc, ISAPNP_ACTIVATE, 0);
 			}
-			free(lpa, M_DEVBUF);
+			free(lpa, M_DEVBUF, 0);
 		}
 		isapnp_write_reg(sc, ISAPNP_WAKE, 0);    /* Good night cards */
 	}

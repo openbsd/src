@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.211 2014/06/25 18:56:22 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.212 2014/07/12 18:48:17 tedu Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -452,7 +452,7 @@ _acpi_os_free(void *ptr, const char *fn, int line)
 #endif
 
 		dnprintf(99, "free: %p %s:%d\n", sptr, fn, line);
-		free(sptr, M_ACPI);
+		free(sptr, M_ACPI, 0);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.57 2014/01/26 17:26:55 miod Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.58 2014/07/12 18:48:17 tedu Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -822,7 +822,7 @@ ncr53c9x_scsi_free(struct scsi_link *sc_link)
 		ti->lun[lun] = NULL;
 	splx(s);
 
-	free(li, M_DEVBUF);
+	free(li, M_DEVBUF, 0);
 }
 
 /*

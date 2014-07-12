@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.118 2013/12/09 11:44:52 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.119 2014/07/12 18:48:17 tedu Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -216,8 +216,8 @@ atascsi_detach(struct atascsi *as, int flags)
 	if (rv != 0)
 		return (rv);
 
-	free(as->as_host_ports, M_DEVBUF);
-	free(as, M_DEVBUF);
+	free(as->as_host_ports, M_DEVBUF, 0);
+	free(as, M_DEVBUF, 0);
 
 	return (0);
 }
@@ -437,7 +437,7 @@ atascsi_probe(struct scsi_link *link)
 
 	return (0);
 error:
-	free(ap, M_DEVBUF);
+	free(ap, M_DEVBUF, 0);
 unsupported:
 
 	as->as_methods->free(as->as_cookie, port, link->lun);
@@ -464,7 +464,7 @@ atascsi_free(struct scsi_link *link)
 		return;
 
 	ap = ahp->ahp_ports[link->lun];
-	free(ap, M_DEVBUF);
+	free(ap, M_DEVBUF, 0);
 	ahp->ahp_ports[link->lun] = NULL;
 
 	as->as_methods->free(as->as_cookie, port, link->lun);
@@ -474,7 +474,7 @@ atascsi_free(struct scsi_link *link)
 		 * free ahp itself.  this relies on the order luns are
 		 * detached in scsi_detach_target().
 		 */
-		free(ahp, M_DEVBUF);
+		free(ahp, M_DEVBUF, 0);
 		as->as_host_ports[port] = NULL;
 	}
 }

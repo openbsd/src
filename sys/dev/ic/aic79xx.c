@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.52 2013/12/03 22:49:07 brad Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.53 2014/07/12 18:48:17 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -2851,7 +2851,7 @@ ahd_free_tstate(struct ahd_softc *ahd, u_int scsi_id, char channel, int force)
 
 	tstate = ahd->enabled_targets[scsi_id];
 	if (tstate != NULL)
-		free(tstate, M_DEVBUF);
+		free(tstate, M_DEVBUF, 0);
 	ahd->enabled_targets[scsi_id] = NULL;
 }
 #endif
@@ -5274,7 +5274,7 @@ ahd_alloc(void *platform_arg, char *name)
 	    AHD_INT_COALESCING_STOP_THRESHOLD_DEFAULT;
 
 	if (ahd_platform_alloc(ahd, platform_arg) != 0) {
-		free(ahd->seep_config, M_DEVBUF);
+		free(ahd->seep_config, M_DEVBUF, 0);
 		return (NULL);
 	}	
 
@@ -5375,7 +5375,7 @@ void
 ahd_set_name(struct ahd_softc *ahd, char *name)
 {
 	if (ahd->name != NULL)
-		free(ahd->name, M_DEVBUF);
+		free(ahd->name, M_DEVBUF, 0);
 	ahd->name = name;
 }
 
@@ -5413,23 +5413,23 @@ ahd_free(struct ahd_softc *ahd)
 				lstate = tstate->enabled_luns[j];
 				if (lstate != NULL) {
 					xpt_free_path(lstate->path);
-					free(lstate, M_DEVBUF);
+					free(lstate, M_DEVBUF, 0);
 				}
 			}
 #endif
-			free(tstate, M_DEVBUF);
+			free(tstate, M_DEVBUF, 0);
 		}
 	}
 #if AHD_TARGET_MODE
 	if (ahd->black_hole != NULL) {
 		xpt_free_path(ahd->black_hole->path);
-		free(ahd->black_hole, M_DEVBUF);
+		free(ahd->black_hole, M_DEVBUF, 0);
 	}
 #endif
 	if (ahd->seep_config != NULL)
-		free(ahd->seep_config, M_DEVBUF);
+		free(ahd->seep_config, M_DEVBUF, 0);
 	if (ahd->saved_stack != NULL)
-		free(ahd->saved_stack, M_DEVBUF);
+		free(ahd->saved_stack, M_DEVBUF, 0);
 	return;
 }
 
@@ -5719,7 +5719,7 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
 		while ((sns_map = SLIST_FIRST(&scb_data->sense_maps)) != NULL) {
 			SLIST_REMOVE_HEAD(&scb_data->sense_maps, links);
 			ahd_freedmamem(ahd, sns_map);
-			free(sns_map, M_DEVBUF);
+			free(sns_map, M_DEVBUF, 0);
 		}
 		/* FALLTHROUGH */
 	}
@@ -5730,7 +5730,7 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
 		while ((sg_map = SLIST_FIRST(&scb_data->sg_maps)) != NULL) {
 			SLIST_REMOVE_HEAD(&scb_data->sg_maps, links);
 			ahd_freedmamem(ahd, sg_map);
-			free(sg_map, M_DEVBUF);
+			free(sg_map, M_DEVBUF, 0);
 		}
 		/* FALLTHROUGH */
 	}
@@ -5741,7 +5741,7 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
 		while ((hscb_map = SLIST_FIRST(&scb_data->hscb_maps)) != NULL) {
 			SLIST_REMOVE_HEAD(&scb_data->hscb_maps, links);
 			ahd_freedmamem(ahd, hscb_map);
-			free(hscb_map, M_DEVBUF);
+			free(hscb_map, M_DEVBUF, 0);
 		}
 		/* FALLTHROUGH */
 	}
@@ -5979,7 +5979,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		/* Allocate the next batch of hardware SCBs */
 		if (ahd_createdmamem(ahd, PAGE_SIZE, hscb_map,
 		    "hardware SCB structures") < 0) {
-			free(hscb_map, M_DEVBUF);
+			free(hscb_map, M_DEVBUF, 0);
 			return;
 		}
 
@@ -6009,7 +6009,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		/* Allocate the next batch of S/G lists */
 		if (ahd_createdmamem(ahd, ahd_sglist_allocsize(ahd), sg_map,
 		    "SG data structures") < 0) {
-			free(sg_map, M_DEVBUF);
+			free(sg_map, M_DEVBUF, 0);
 			return;
 		}
 
@@ -6043,7 +6043,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		/* Allocate the next batch of sense buffers */
 		if (ahd_createdmamem(ahd, PAGE_SIZE, sense_map,
 		    "Sense Data structures") < 0) {
-			free(sense_map, M_DEVBUF);
+			free(sense_map, M_DEVBUF, 0);
 			return;
 		}
 
@@ -6081,7 +6081,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		if (sizeof(*pdata) > 0) {
 			pdata = malloc(sizeof(*pdata), M_DEVBUF, M_NOWAIT);
 			if (pdata == NULL) {
-				free(next_scb, M_DEVBUF);
+				free(next_scb, M_DEVBUF, 0);
 				break;
 			}
 		}	
@@ -6116,8 +6116,8 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &next_scb->dmamap);
 
 		if (error != 0) {
-			free(next_scb, M_DEVBUF);
-			free(pdata, M_DEVBUF);
+			free(next_scb, M_DEVBUF, 0);
+			free(pdata, M_DEVBUF, 0);
 			break;
 		}
 		next_scb->hscb->tag = aic_htole16(scb_data->numscbs);
@@ -9601,7 +9601,7 @@ ahd_handle_en_lun(struct ahd_softc *ahd, struct cam_sim *sim, union ccb *ccb)
 					 xpt_path_target_id(ccb->ccb_h.path),
 					 xpt_path_lun_id(ccb->ccb_h.path));
 		if (status != CAM_REQ_CMP) {
-			free(lstate, M_DEVBUF);
+			free(lstate, M_DEVBUF, 0);
 			xpt_print_path(ccb->ccb_h.path);
 			printf("Couldn't allocate path\n");
 			ccb->ccb_h.status = CAM_RESRC_UNAVAIL;
@@ -9715,7 +9715,7 @@ ahd_handle_en_lun(struct ahd_softc *ahd, struct cam_sim *sim, union ccb *ccb)
 		xpt_print_path(ccb->ccb_h.path);
 		printf("Target mode disabled\n");
 		xpt_free_path(lstate->path);
-		free(lstate, M_DEVBUF);
+		free(lstate, M_DEVBUF, 0);
 
 		ahd_pause(ahd);
 		/* Can we clean up the target too? */

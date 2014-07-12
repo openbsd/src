@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.98 2014/03/19 10:09:19 mpi Exp $ */
+/*	$OpenBSD: malo.c,v 1.99 2014/07/12 18:48:17 tedu Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -683,7 +683,7 @@ malo_free_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring)
 			if (data->map != NULL)
 				bus_dmamap_destroy(sc->sc_dmat, data->map);
 		}
-		free(ring->data, M_DEVBUF);
+		free(ring->data, M_DEVBUF, 0);
 	}
 }
 
@@ -834,7 +834,7 @@ malo_free_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring)
 			if (data->map != NULL)
 				bus_dmamap_destroy(sc->sc_dmat, data->map);
 		}
-		free(ring->data, M_DEVBUF);
+		free(ring->data, M_DEVBUF, 0);
 	}
 }
 
@@ -1803,10 +1803,10 @@ malo_load_bootimg(struct malo_softc *sc)
 	if (i == 10) {
 		printf("%s: timeout at boot firmware load!\n",
 		    sc->sc_dev.dv_xname);
-		free(ucode, M_DEVBUF);
+		free(ucode, M_DEVBUF, 0);
 		return (ETIMEDOUT);
 	}
-	free(ucode, M_DEVBUF);
+	free(ucode, M_DEVBUF, 0);
 
 	/* tell the card we're done and... */
 	malo_mem_write2(sc, 0xbef8, 0x001);
@@ -1858,7 +1858,7 @@ malo_load_firmware(struct malo_softc *sc)
 		    BUS_DMASYNC_POSTWRITE);
 		delay(500);
 	}
-	free(ucode, M_DEVBUF);
+	free(ucode, M_DEVBUF, 0);
 
 	DPRINTF(1, "%s: firmware upload finished\n", sc->sc_dev.dv_xname);
 

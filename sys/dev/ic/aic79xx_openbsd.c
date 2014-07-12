@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.41 2014/01/17 23:23:58 dlg Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.42 2014/07/12 18:48:17 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -588,7 +588,7 @@ void
 ahd_platform_free(struct ahd_softc *ahd)
 {
 	if (sizeof(struct ahd_platform_data) > 0)
-		free(ahd->platform_data, M_DEVBUF);
+		free(ahd->platform_data, M_DEVBUF, 0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.37 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.38 2014/07/12 18:48:17 tedu Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1973,7 +1973,7 @@ ie_mc_reset(sc)
 	if (size > sc->mcast_addrs_size) {
 		/* Need to allocate more space */
 		if (sc->mcast_addrs_size)
-			free(sc->mcast_addrs, M_IFMADDR);
+			free(sc->mcast_addrs, M_IFMADDR, 0);
 		sc->mcast_addrs = (char *)
 			malloc(size, M_IFMADDR, M_WAITOK);
 		sc->mcast_addrs_size = size;

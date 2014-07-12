@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.28 2014/07/06 21:36:55 kettenis Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.29 2014/07/12 18:48:17 tedu Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -330,7 +330,7 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			if (!acpimadt_cfg_intr(entry->madt_override.flags, &map->redir)) {
 				printf("%s: bogus override for pin %d\n",
 				    self->dv_xname, pin);
-				free(map, M_DEVBUF);
+				free(map, M_DEVBUF, 0);
 				break;
 			}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.226 2013/10/19 13:03:43 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.227 2014/07/12 18:48:17 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -262,7 +262,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, am->am_map);
 amfree:
-	free(am, M_DEVBUF);
+	free(am, M_DEVBUF, 0);
 
 	return (NULL);
 }
@@ -274,7 +274,7 @@ ami_freemem(struct ami_softc *sc, struct ami_mem *am)
 	bus_dmamem_unmap(sc->sc_dmat, am->am_kva, am->am_size);
 	bus_dmamem_free(sc->sc_dmat, &am->am_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, am->am_map);
-	free(am, M_DEVBUF);
+	free(am, M_DEVBUF, 0);
 }
 
 void
@@ -363,7 +363,7 @@ free_list:
 
 	ami_freemem(sc, sc->sc_ccbmem_am);
 free_ccbs:
-	free(sc->sc_ccbs, M_DEVBUF);
+	free(sc->sc_ccbs, M_DEVBUF, 0);
 
 	return (1);
 }
@@ -1948,7 +1948,7 @@ ami_ioctl_inq(struct ami_softc *sc, struct bioc_inq *bi)
 	bcopy(bi, &sc->sc_bi, sizeof sc->sc_bi);
 	error = 0;
 bail:
-	free(p, M_DEVBUF);
+	free(p, M_DEVBUF, 0);
 done:
 	dma_free(inqbuf, sizeof(*inqbuf));
 	return (error);
@@ -2181,7 +2181,7 @@ ami_ioctl_vol(struct ami_softc *sc, struct bioc_vol *bv)
 	strlcpy(bv->bv_dev, sc->sc_hdr[i].dev, sizeof(bv->bv_dev));
 	
 bail:
-	free(p, M_DEVBUF);
+	free(p, M_DEVBUF, 0);
 
 	return (error);
 }
@@ -2293,7 +2293,7 @@ ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 done:
 	error = 0;
 bail:
-	free(p, M_DEVBUF);
+	free(p, M_DEVBUF, 0);
 	dma_free(vpdbuf, sizeof(*vpdbuf));
 	dma_free(inqbuf, sizeof(*inqbuf));
 
@@ -2444,9 +2444,9 @@ ami_create_sensors(struct ami_softc *sc)
 	return (0);
 
 freebd:
-	free(sc->sc_bd, M_DEVBUF);
+	free(sc->sc_bd, M_DEVBUF, 0);
 bad:
-	free(sc->sc_sensors, M_DEVBUF);
+	free(sc->sc_sensors, M_DEVBUF, 0);
 
 	return (1);
 }

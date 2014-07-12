@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.77 2011/01/03 15:28:46 fgsch Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.78 2014/07/12 18:48:17 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -818,7 +818,7 @@ ac97_attach(struct ac97_host_if *host_if)
 	as->host_if = host_if;
 
 	if ((error = host_if->attach(host_if->arg, &as->codec_if))) {
-		free(as, M_DEVBUF);
+		free(as, M_DEVBUF, 0);
 		return (error);
 	}
 

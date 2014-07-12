@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.27 2013/08/07 01:06:28 bluhm Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.28 2014/07/12 18:48:17 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -491,7 +491,7 @@ ar9003_read_rom(struct athn_softc *sc)
 	if (error == 0)
 		ops->swap_rom(sc);
 #endif
-	free(buf, M_DEVBUF);
+	free(buf, M_DEVBUF, 0);
 	return (error);
 }
 
@@ -793,7 +793,7 @@ ar9003_rx_free(struct athn_softc *sc, int qid)
 		if (bf->bf_m != NULL)
 			m_freem(bf->bf_m);
 	}
-	free(rxq->bf, M_DEVBUF);
+	free(rxq->bf, M_DEVBUF, 0);
 }
 
 void

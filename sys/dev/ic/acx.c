@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.102 2014/03/19 10:09:19 mpi Exp $ */
+/*	$OpenBSD: acx.c,v 1.103 2014/07/12 18:48:17 tedu Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1560,7 +1560,7 @@ acx_load_base_firmware(struct acx_softc *sc, const char *name)
 	/* Load base firmware */
 	error = acx_load_firmware(sc, 0, ucode, size);
 
-	free(ucode, M_DEVBUF);
+	free(ucode, M_DEVBUF, 0);
 
 	if (error) {
 		printf("%s: can't load base firmware\n", ifp->if_xname);
@@ -1611,21 +1611,21 @@ acx_load_radio_firmware(struct acx_softc *sc, const char *name)
 	 * radio firmware can be loaded after it.
 	 */
 	if (acx_get_conf(sc, ACX_CONF_MMAP, &mem_map, sizeof(mem_map)) != 0) {
-		free(ucode, M_DEVBUF);
+		free(ucode, M_DEVBUF, 0);
 		return (ENXIO);
 	}
 	radio_fw_ofs = letoh32(mem_map.code_end);
 
 	/* Put ECPU into sleeping state, before loading radio firmware */
 	if (acx_exec_command(sc, ACXCMD_SLEEP, NULL, 0, NULL, 0) != 0) {
-		free(ucode, M_DEVBUF);
+		free(ucode, M_DEVBUF, 0);
 		return (ENXIO);
 	}
 
 	/* Load radio firmware */
 	error = acx_load_firmware(sc, radio_fw_ofs, ucode, size);
 
-	free(ucode, M_DEVBUF);
+	free(ucode, M_DEVBUF, 0);
 
 	if (error) {
 		printf("%s: can't load radio firmware\n", ifp->if_xname);
