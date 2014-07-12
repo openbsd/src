@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.66 2014/05/12 19:29:16 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.67 2014/07/12 14:18:06 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -419,14 +419,6 @@ const static struct drm_pcidev inteldrm_pciidlist[] = {		/* aka */
 	INTEL_VGA_DEVICE(0x0D0E, &intel_haswell_d_info), /* CRW GT1 reserved */
 	INTEL_VGA_DEVICE(0x0D1E, &intel_haswell_d_info), /* CRW GT2 reserved */
 	INTEL_VGA_DEVICE(0x0D2E, &intel_haswell_d_info), /* CRW GT3 reserved */
-#ifdef notyet
-	INTEL_VGA_DEVICE(0x0f30, &intel_valleyview_m_info),
-	INTEL_VGA_DEVICE(0x0f31, &intel_valleyview_m_info),
-	INTEL_VGA_DEVICE(0x0f32, &intel_valleyview_m_info),
-	INTEL_VGA_DEVICE(0x0f33, &intel_valleyview_m_info),
-	INTEL_VGA_DEVICE(0x0157, &intel_valleyview_m_info),
-	INTEL_VGA_DEVICE(0x0155, &intel_valleyview_d_info),
-#endif
 	{0, 0, 0}
 };
 
