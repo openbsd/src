@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.19 2014/03/25 04:25:06 dlg Exp $ */
+/*	$OpenBSD: endian.h,v 1.20 2014/07/12 16:25:09 guenther Exp $ */
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -90,11 +90,14 @@ __swapm64(volatile __uint64_t *m, __uint64_t v)
 	__swapm32(a, v);
 }
 
-#define MD_SWAPIO
+#define __HAVE_MD_SWAPIO
 #endif /* _KERNEL */
 
 #undef _BIG_ENDIAN	/* XXX - gcc may define _BIG_ENDIAN too */
 #define _BYTE_ORDER _BIG_ENDIAN
+
+#ifndef __FROM_SYS__ENDIAN
 #include <sys/endian.h>
+#endif
 
 #endif /* _POWERPC_ENDIAN_H_ */

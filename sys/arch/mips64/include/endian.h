@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.8 2014/03/11 19:45:27 guenther Exp $ */
+/*	$OpenBSD: endian.h,v 1.9 2014/07/12 16:25:08 guenther Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -40,8 +40,10 @@
 #error "__MIPSEL__ or __MIPSEB__ must be defined to define BYTE_ORDER!!!"
 #endif
 
-#include <sys/endian.h>
-
 #define	__STRICT_ALIGNMENT
+
+#ifndef __FROM_SYS__ENDIAN
+#include <sys/endian.h>
+#endif
 
 #endif /* _MIPS64_ENDIAN_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.22 2014/07/10 03:16:13 dlg Exp $	*/
+/*	$OpenBSD: endian.h,v 1.23 2014/07/12 16:25:08 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -36,113 +36,40 @@
 #ifndef _SYS_ENDIAN_H_
 #define _SYS_ENDIAN_H_
 
-#include <sys/cdefs.h>
-#include <sys/_types.h>
+#include <sys/_endian.h>
 
-#define _LITTLE_ENDIAN	1234
-#define _BIG_ENDIAN	4321
-#define _PDP_ENDIAN	3412
-
-#if __BSD_VISIBLE
+/* Public names */
 #define LITTLE_ENDIAN	_LITTLE_ENDIAN
 #define BIG_ENDIAN	_BIG_ENDIAN
 #define PDP_ENDIAN	_PDP_ENDIAN
 #define BYTE_ORDER	_BYTE_ORDER
-#endif
 
-#ifdef __GNUC__
-
-#define __swap16gen(x) __statement({					\
-	__uint16_t __swap16gen_x = (x);					\
-									\
-	(__uint16_t)((__swap16gen_x & 0xff) << 8 |			\
-	    (__swap16gen_x & 0xff00) >> 8);				\
-})
-
-#define __swap32gen(x) __statement({					\
-	__uint32_t __swap32gen_x = (x);					\
-									\
-	(__uint32_t)((__swap32gen_x & 0xff) << 24 |			\
-	    (__swap32gen_x & 0xff00) << 8 |				\
-	    (__swap32gen_x & 0xff0000) >> 8 |				\
-	    (__swap32gen_x & 0xff000000) >> 24);			\
-})
-
-#define __swap64gen(x) __statement({					\
-	__uint64_t __swap64gen_x = (x);					\
-									\
-	(__uint64_t)((__swap64gen_x & 0xff) << 56 |			\
-	    (__swap64gen_x & 0xff00ULL) << 40 |				\
-	    (__swap64gen_x & 0xff0000ULL) << 24 |			\
-	    (__swap64gen_x & 0xff000000ULL) << 8 |			\
-	    (__swap64gen_x & 0xff00000000ULL) >> 8 |			\
-	    (__swap64gen_x & 0xff0000000000ULL) >> 24 |			\
-	    (__swap64gen_x & 0xff000000000000ULL) >> 40 |		\
-	    (__swap64gen_x & 0xff00000000000000ULL) >> 56);		\
-})
-
-#else /* __GNUC__ */
-
-/* Note that these macros evaluate their arguments several times.  */
-#define __swap16gen(x)							\
-    (__uint16_t)(((__uint16_t)(x) & 0xffU) << 8 | ((__uint16_t)(x) & 0xff00U) >> 8)
-
-#define __swap32gen(x)							\
-    (__uint32_t)(((__uint32_t)(x) & 0xff) << 24 |			\
-    ((__uint32_t)(x) & 0xff00) << 8 | ((__uint32_t)(x) & 0xff0000) >> 8 |\
-    ((__uint32_t)(x) & 0xff000000) >> 24)
-
-#define __swap64gen(x)							\
-	(__uint64_t)((((__uint64_t)(x) & 0xff) << 56) |			\
-	    ((__uint64_t)(x) & 0xff00ULL) << 40 |			\
-	    ((__uint64_t)(x) & 0xff0000ULL) << 24 |			\
-	    ((__uint64_t)(x) & 0xff000000ULL) << 8 |			\
-	    ((__uint64_t)(x) & 0xff00000000ULL) >> 8 |			\
-	    ((__uint64_t)(x) & 0xff0000000000ULL) >> 24 |		\
-	    ((__uint64_t)(x) & 0xff000000000000ULL) >> 40 |		\
-	    ((__uint64_t)(x) & 0xff00000000000000ULL) >> 56)
-
-#endif /* __GNUC__ */
 
 /*
- * Define MD_SWAP if you provide swap{16,32}md functions/macros that are
- * optimized for your architecture,  These will be used for swap{16,32}
- * unless the argument is a constant and we are using GCC, where we can
- * take advantage of the CSE phase much better by using the generic version.
+ * These are specified to be function-like macros to match the spec
  */
-#ifdef MD_SWAP
-#if __GNUC__
+#define htobe16(x)	__htobe16(x)
+#define htobe32(x)	__htobe32(x)
+#define htobe64(x)	__htobe64(x)
+#define htole16(x)	__htole16(x)
+#define htole32(x)	__htole32(x)
+#define htole64(x)	__htole64(x)
 
-#define __swap16(x) __statement({					\
-	__uint16_t __swap16_x = (x);					\
-									\
-	__builtin_constant_p(x) ? __swap16gen(__swap16_x) :		\
-	    __swap16md(__swap16_x);					\
-})
+/* POSIX names */
+#define be16toh(x)	__htobe16(x)
+#define be32toh(x)	__htobe32(x)
+#define be64toh(x)	__htobe64(x)
+#define le16toh(x)	__htole16(x)
+#define le32toh(x)	__htole32(x)
+#define le64toh(x)	__htole64(x)
 
-#define __swap32(x) __statement({					\
-	__uint32_t __swap32_x = (x);					\
-									\
-	__builtin_constant_p(x) ? __swap32gen(__swap32_x) :		\
-	    __swap32md(__swap32_x);					\
-})
 
-#define __swap64(x) __statement({					\
-	__uint64_t __swap64_x = (x);					\
-									\
-	__builtin_constant_p(x) ? __swap64gen(__swap64_x) :		\
-	    __swap64md(__swap64_x);					\
-})
+#if __BSD_VISIBLE
+#define swap16(x) __swap16(x)
+#define swap32(x) __swap32(x)
+#define swap64(x) __swap64(x)
 
-#endif /* __GNUC__  */
-
-#else /* MD_SWAP */
-#define __swap16 __swap16gen
-#define __swap32 __swap32gen
-#define __swap64 __swap64gen
-#endif /* MD_SWAP */
-
-#define __swap16_multi(v, n) do {						\
+#define swap16_multi(v, n) do {						\
 	__size_t __swap16_multi_n = (n);				\
 	__uint16_t *__swap16_multi_v = (v);				\
 									\
@@ -153,168 +80,43 @@
 	}								\
 } while (0)
 
-#if __BSD_VISIBLE
-#define swap16 __swap16
-#define swap32 __swap32
-#define swap64 __swap64
-#define swap16_multi __swap16_multi
+/* original BSD names */
+#define betoh16(x)	__htobe16(x)
+#define betoh32(x)	__htobe32(x)
+#define betoh64(x)	__htobe64(x)
+#define letoh16(x)	__htole16(x)
+#define letoh32(x)	__htole32(x)
+#define letoh64(x)	__htole64(x)
 
-__BEGIN_DECLS
-__uint64_t	htobe64(__uint64_t);
-__uint32_t	htobe32(__uint32_t);
-__uint16_t	htobe16(__uint16_t);
-__uint64_t	betoh64(__uint64_t);
-__uint32_t	betoh32(__uint32_t);
-__uint16_t	betoh16(__uint16_t);
-
-__uint64_t	htole64(__uint64_t);
-__uint32_t	htole32(__uint32_t);
-__uint16_t	htole16(__uint16_t);
-__uint64_t	letoh64(__uint64_t);
-__uint32_t	letoh32(__uint32_t);
-__uint16_t	letoh16(__uint16_t);
-__END_DECLS
-#endif /* __BSD_VISIBLE */
-
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-
-/* Can be overridden by machine/endian.h before inclusion of this file.  */
-#ifndef _QUAD_HIGHWORD
-#define _QUAD_HIGHWORD 1
-#endif
-#ifndef _QUAD_LOWWORD
-#define _QUAD_LOWWORD 0
+#ifndef htons
+/* these were exposed here before */
+#define htons(x)	__htobe16(x)
+#define htonl(x)	__htobe32(x)
+#define ntohs(x)	__htobe16(x)
+#define ntohl(x)	__htobe32(x)
 #endif
 
-#if __BSD_VISIBLE
-#define htobe16 __swap16
-#define htobe32 __swap32
-#define htobe64 __swap64
-#define betoh16 __swap16
-#define betoh32 __swap32
-#define betoh64 __swap64
-
-#define htole16(x) ((__uint16_t)(x))
-#define htole32(x) ((__uint32_t)(x))
-#define htole64(x) ((__uint64_t)(x))
-#define letoh16(x) ((__uint16_t)(x))
-#define letoh32(x) ((__uint32_t)(x))
-#define letoh64(x) ((__uint64_t)(x))
-#endif /* __BSD_VISIBLE */
-
-#define htons(x) __swap16(x)
-#define htonl(x) __swap32(x)
-#define ntohs(x) __swap16(x)
-#define ntohl(x) __swap32(x)
-
-#ifdef _KERNEL
-
-#ifdef MD_SWAPIO
-
-#define bemtoh16(_x) __mswap16(_x)
-#define bemtoh32(_x) __mswap32(_x)
-#define bemtoh64(_x) __mswap64(_x)
-
-#define htobem16(_x, _v) __swapm16((_x), (_v))
-#define htobem32(_x, _v) __swapm32((_x), (_v))
-#define htobem64(_x, _v) __swapm64((_x), (_v))
-
-#else /* MD_SWAPIO */
-
-#define bemtoh16(_x) htobe16(*(__uint16_t *)(_x))
-#define bemtoh32(_x) htobe32(*(__uint32_t *)(_x))
-#define bemtoh64(_x) htobe64(*(__uint64_t *)(_x))
-
-#define htobem16(_x, _v) (*(__uint16_t *)(_x) = htobe16(_v))
-#define htobem32(_x, _v) (*(__uint32_t *)(_x) = htobe32(_v))
-#define htobem64(_x, _v) (*(__uint64_t *)(_x) = htobe64(_v))
-
-#endif /* MD_SWAPIO */
-
-#define lemtoh16(_x) (*(__uint16_t *)(_x))
-#define lemtoh32(_x) (*(__uint32_t *)(_x))
-#define lemtoh64(_x) (*(__uint64_t *)(_x))
-
-#define htolem16(_x, _v) (*(__uint16_t *)(_x) = (__uint16_t)(_v))
-#define htolem32(_x, _v) (*(__uint32_t *)(_x) = (__uint32_t)(_v))
-#define htolem64(_x, _v) (*(__uint64_t *)(_x) = (__uint64_t)(_v))
-
-#endif /* _KERNEL */
-
-#endif /* _BYTE_ORDER == _LITTLE_ENDIAN */
-
-#if _BYTE_ORDER == _BIG_ENDIAN
-
-/* Can be overridden by machine/endian.h before inclusion of this file.  */
-#ifndef _QUAD_HIGHWORD
-#define _QUAD_HIGHWORD 0
-#endif
-#ifndef _QUAD_LOWWORD
-#define _QUAD_LOWWORD 1
-#endif
-
-#if __BSD_VISIBLE
-#define htole16 __swap16
-#define htole32 __swap32
-#define htole64 __swap64
-#define letoh16 __swap16
-#define letoh32 __swap32
-#define letoh64 __swap64
-
-#define htobe16(x) ((__uint16_t)(x))
-#define htobe32(x) ((__uint32_t)(x))
-#define htobe64(x) ((__uint64_t)(x))
-#define betoh16(x) ((__uint16_t)(x))
-#define betoh32(x) ((__uint32_t)(x))
-#define betoh64(x) ((__uint64_t)(x))
-#endif /* __BSD_VISIBLE */
-
-#define htons(x) ((__uint16_t)(x))
-#define htonl(x) ((__uint32_t)(x))
-#define ntohs(x) ((__uint16_t)(x))
-#define ntohl(x) ((__uint32_t)(x))
-
-#ifdef _KERNEL
-
-#ifdef MD_SWAPIO
-
-#define lemtoh16(_x) __mswap16(_x)
-#define lemtoh32(_x) __mswap32(_x)
-#define lemtoh64(_x) __mswap64(_x)
-
-#define htolem16(_x, _v) __swapm16((_x), (_v))
-#define htolem32(_x, _v) __swapm32((_x), (_v))
-#define htolem64(_x, _v) __swapm64((_x), (_v))
-
-#else /* MD_SWAPIO */
-
-#define lemtoh16(_x) htole16(*(__uint16_t *)(_x))
-#define lemtoh32(_x) htole32(*(__uint32_t *)(_x))
-#define lemtoh64(_x) htole64(*(__uint64_t *)(_x))
-
-#define htolem16(_x, _v) (*(__uint16_t *)(_x) = htole16(_v))
-#define htolem32(_x, _v) (*(__uint32_t *)(_x) = htole32(_v))
-#define htolem64(_x, _v) (*(__uint64_t *)(_x) = htole64(_v))
-
-#endif /* MD_SWAPIO */
-
-#define bemtoh16(_x) (*(__uint16_t *)(_x))
-#define bemtoh32(_x) (*(__uint32_t *)(_x))
-#define bemtoh64(_x) (*(__uint64_t *)(_x))
-
-#define htobem16(_x, _v) (*(__uint16_t *)(_x) = (__uint16_t)(_v))
-#define htobem32(_x, _v) (*(__uint32_t *)(_x) = (__uint32_t)(_v))
-#define htobem64(_x, _v) (*(__uint64_t *)(_x) = (__uint64_t)(_v))
-
-#endif /* _KERNEL */
-
-#endif /* _BYTE_ORDER == _BIG_ENDIAN */
-
-#if __BSD_VISIBLE
+/* ancient stuff */
 #define	NTOHL(x) (x) = ntohl((u_int32_t)(x))
 #define	NTOHS(x) (x) = ntohs((u_int16_t)(x))
 #define	HTONL(x) (x) = htonl((u_int32_t)(x))
 #define	HTONS(x) (x) = htons((u_int16_t)(x))
-#endif
+#endif /* __BSD_VISIBLE */
+
+#ifdef _KERNEL
+/* to/from memory conversions */
+#define bemtoh16	__bemtoh16
+#define bemtoh32	__bemtoh32
+#define bemtoh64	__bemtoh64
+#define htobem16	__htobem16
+#define htobem32	__htobem32
+#define htobem64	__htobem64
+#define lemtoh16	__lemtoh16
+#define lemtoh32	__lemtoh32
+#define lemtoh64	__lemtoh64
+#define htolem16	__htolem16
+#define htolem32	__htolem32
+#define htolem64	__htolem64
+#endif /* _KERNEL */
 
 #endif /* _SYS_ENDIAN_H_ */

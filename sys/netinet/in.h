@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.108 2014/04/25 09:44:38 mpi Exp $	*/
+/*	$OpenBSD: in.h,v 1.109 2014/07/12 16:25:08 guenther Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -42,7 +42,15 @@
 
 #ifndef _KERNEL
 #include <sys/types.h>
-#include <machine/endian.h>
+
+/* <sys/_endian.h> is pulled in by <sys/types.h> */
+#ifndef htons
+#define htons(x)	__htobe16(x)
+#define htonl(x)	__htobe32(x)
+#define ntohs(x)	__htobe16(x)
+#define ntohl(x)	__htobe32(x)
+#endif
+
 #endif /* _KERNEL */
 
 #ifndef	_SA_FAMILY_T_DEFINED_

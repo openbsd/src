@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.h,v 1.15 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: inet.h,v 1.16 2014/07/12 16:25:08 guenther Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -62,7 +62,14 @@
 /* External definitions for functions in inet(3) */
 
 #include <sys/types.h>
-#include <machine/endian.h>
+
+/* <sys/_endian.h> is pulled in by <sys/types.h> */
+#ifndef htons
+#define htons(x)	__htobe16(x)
+#define htonl(x)	__htobe32(x)
+#define ntohs(x)	__htobe16(x)
+#define ntohl(x)	__htobe32(x)
+#endif
 
 #ifndef	_SOCKLEN_T_DEFINED_
 #define	_SOCKLEN_T_DEFINED_

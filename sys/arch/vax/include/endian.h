@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.16 2013/07/05 21:10:50 miod Exp $	*/
+/*	$OpenBSD: endian.h,v 1.17 2014/07/12 16:25:09 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -32,7 +32,7 @@
 #define	__swap64md	__swap64gen
 
 #define	__swap32md(x) __statement({					\
-	u_int32_t __swap32md_y, __swap32md_x = (x);			\
+	__uint32_t __swap32md_y, __swap32md_x = (x);			\
 									\
 	__asm ("rotl $-8, %1, %0; insv %0, $16, $8, %0; "		\
 	    "rotl $8, %1, %%r1; movb %%r1, %0" :			\
@@ -41,7 +41,7 @@
 })
 
 #define __swap16md(x) __statement({					\
-	u_int16_t __swap16md_y, __swap16md_x = (x);			\
+	__uint16_t __swap16md_y, __swap16md_x = (x);			\
 									\
 	__asm ("rotl $8, %1, %0; rotl $-8, %1, %%r1; movb %%r1, %0; "	\
 	    "movzwl %0, %0" :						\
@@ -51,12 +51,15 @@
 
 /* Tell sys/endian.h we have MD variants of the swap macros.  */
 #ifdef notyet
-#define MD_SWAP
+#define __HAVE_MD_SWAP
 #endif
 
 #endif /* __GNUC__ */
 
 #define _BYTE_ORDER _LITTLE_ENDIAN
+
+#ifndef __FROM_SYS__ENDIAN
 #include <sys/endian.h>
+#endif
 
 #endif /* _MACHINE_ENDIAN_H_ */

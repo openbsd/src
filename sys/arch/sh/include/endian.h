@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.4 2011/03/23 16:54:36 pirofti Exp $	*/
+/*	$OpenBSD: endian.h,v 1.5 2014/07/12 16:25:09 guenther Exp $	*/
 /*	$NetBSD: endian.h,v 1.4 2000/03/17 00:09:25 mycroft Exp $	*/
 
 /* Written by Manuel Bouyer. Public domain */
@@ -27,7 +27,7 @@
 	rval;								\
 })
 
-#define MD_SWAP
+#define __HAVE_MD_SWAP
 
 #endif /* __GNUC_ */
 
@@ -36,8 +36,10 @@
 #else
 #define	_BYTE_ORDER _BIG_ENDIAN
 #endif
-#include <sys/endian.h>
-
 #define	__STRICT_ALIGNMENT
+
+#ifndef __FROM_SYS__ENDIAN
+#include <sys/endian.h>
+#endif
 
 #endif /* !_SH_ENDIAN_H_ */
