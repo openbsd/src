@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.h,v 1.7 2014/03/22 04:23:17 yasuoka Exp $ */
+/*	$OpenBSD: npppd_auth.h,v 1.8 2014/07/12 14:04:18 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -27,6 +27,8 @@
  */
 #ifndef	NPPPD_AUTH_H
 #define	NPPPD_AUTH_H 1
+
+#include <netinet/in.h>
 
 /** local authentication realm */
 #define	NPPPD_AUTH_TYPE_LOCAL		1

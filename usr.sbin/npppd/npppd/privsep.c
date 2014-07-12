@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.9 2013/02/08 12:35:52 yasuoka Exp $ */
+/*	$OpenBSD: privsep.c,v 1.10 2014/07/12 14:04:18 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -16,26 +16,21 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/param.h>
-#include <sys/socket.h>
+#include <sys/queue.h>
 #include <sys/uio.h>
-#include <sys/time.h>
-#include <sys/un.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
-
-#include <netinet/in.h>
-#include <net/pfkeyv2.h>
-#include <net/if.h>
 #include <arpa/inet.h>
+#include <net/pfkeyv2.h>
+#include <netinet/in.h>
 
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <imsg.h>
+#include <stddef.h>
 #include <stdlib.h>
-#include <err.h>
-#include <event.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "pathnames.h"
 #include "privsep.h"
@@ -47,7 +42,8 @@
 #define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-enum PRIVSEP_CMD {
+enum imsg_code {
+	PRIVSEP_OK,
 	PRIVSEP_OPEN,
 	PRIVSEP_SOCKET,
 	PRIVSEP_BIND,
@@ -62,140 +58,125 @@ enum PRIVSEP_CMD {
 };
 
 struct PRIVSEP_OPEN_ARG {
-	enum PRIVSEP_CMD cmd;
-	char path[PATH_MAX];
-	int flags;
-	mode_t mode;
+	char			 path[PATH_MAX];
+	int			 flags;
+	mode_t			 mode;
 };
 
 struct PRIVSEP_SOCKET_ARG {
-	enum PRIVSEP_CMD cmd;
-	int domain;
-	int type;
-	int protocol;
+	int			 domain;
+	int			 type;
+	int			 protocol;
 };
 
 struct PRIVSEP_BIND_ARG {
-	enum PRIVSEP_CMD cmd;
-	struct sockaddr_storage name;
-	socklen_t namelen;
+	struct sockaddr_storage	 name;
+	socklen_t		 namelen;
 };
 
 struct PRIVSEP_SENDTO_ARG {
-	enum PRIVSEP_CMD cmd;
-	size_t len;
-	int flags;
-	struct sockaddr_storage to;
-	socklen_t tolen;
-	u_char msg[0];
+	size_t			 len;
+	int			 flags;
+	struct sockaddr_storage	 to;
+	socklen_t		 tolen;
+	u_char			 msg[0];
 };
 
 struct PRIVSEP_UNLINK_ARG {
-	enum PRIVSEP_CMD cmd;
-	char path[PATH_MAX];
+	char			 path[PATH_MAX];
 };
 
 struct PRIVSEP_GET_USER_INFO_ARG {
-	enum PRIVSEP_CMD cmd;
-	char             path[PATH_MAX];
-	char             username[MAX_USERNAME_LENGTH];
+	char			 path[PATH_MAX];
+	char			 username[MAX_USERNAME_LENGTH];
 };
 
 struct PRIVSEP_GET_IF_ADDR_ARG {
-	enum PRIVSEP_CMD         cmd;
-	char                     ifname[IFNAMSIZ];
+	char			 ifname[IFNAMSIZ];
 };
 
 struct PRIVSEP_GET_IF_ADDR_RESP {
-	int                      retval;
-	int                      rerrno;
-	struct in_addr           addr;
+	int			 retval;
+	int			 rerrno;
+	struct in_addr		 addr;
 };
 
 struct PRIVSEP_SET_IF_ADDR_ARG {
-	enum PRIVSEP_CMD         cmd;
-	char                     ifname[IFNAMSIZ];
-	struct in_addr           addr;
+	char			 ifname[IFNAMSIZ];
+	struct in_addr		 addr;
 };
 
 struct PRIVSEP_DEL_IF_ADDR_ARG {
-	enum PRIVSEP_CMD         cmd;
-	char                     ifname[IFNAMSIZ];
+	char			 ifname[IFNAMSIZ];
 };
 
 struct PRIVSEP_GET_IF_FLAGS_ARG {
-	enum PRIVSEP_CMD         cmd;
-	char                     ifname[IFNAMSIZ];
-	int                      flags;
+	char			 ifname[IFNAMSIZ];
+	int			 flags;
 };
 
 struct PRIVSEP_GET_IF_FLAGS_RESP {
-	int                      retval;
-	int                      rerrno;
-	int                      flags;
+	int			 retval;
+	int			 rerrno;
+	int			 flags;
 };
 
 struct PRIVSEP_SET_IF_FLAGS_ARG {
-	enum PRIVSEP_CMD         cmd;
-	char                     ifname[IFNAMSIZ];
-	int                      flags;
+	char			 ifname[IFNAMSIZ];
+	int			 flags;
 };
 
 struct PRIVSEP_COMMON_RESP {
-	int retval;
-	int rerrno;
+	int			 retval;
+	int			 rerrno;
 };
 
 struct PRIVSEP_GET_USER_INFO_RESP {
-	int              retval;
-	int              rerrno;
-	char             password[MAX_PASSWORD_LENGTH];
-	struct in_addr   framed_ip_address;
-	struct in_addr   framed_ip_netmask;
-	char             calling_number[NPPPD_PHONE_NUMBER_LEN + 1];
+	int			 retval;
+	int			 rerrno;
+	char			 password[MAX_PASSWORD_LENGTH];
+	struct in_addr		 framed_ip_address;
+	struct in_addr		 framed_ip_netmask;
+	char			 calling_number[NPPPD_PHONE_NUMBER_LEN + 1];
 };
 
-static void  privsep_priv_main (int, int);
-static void  privsep_priv_on_sockio (int, short, void *);
-static void  privsep_priv_on_monpipeio (int, short, void *);
-static int   privsep_recvfd (void);
-static int   privsep_common_resp (void);
-static void  privsep_sendfd(int, int, int);
-static int   privsep_npppd_check_open (struct PRIVSEP_OPEN_ARG *);
-static int   privsep_npppd_check_socket (struct PRIVSEP_SOCKET_ARG *);
-static int   privsep_npppd_check_bind (struct PRIVSEP_BIND_ARG *);
-static int   privsep_npppd_check_sendto (struct PRIVSEP_SENDTO_ARG *);
-static int   privsep_npppd_check_unlink (struct PRIVSEP_UNLINK_ARG *);
-static int   privsep_npppd_check_get_user_info (struct PRIVSEP_GET_USER_INFO_ARG *);
-static int   privsep_npppd_check_get_if_addr (struct PRIVSEP_GET_IF_ADDR_ARG *);
-static int   privsep_npppd_check_set_if_addr (struct PRIVSEP_SET_IF_ADDR_ARG *);
-static int   privsep_npppd_check_del_if_addr (struct PRIVSEP_DEL_IF_ADDR_ARG *);
-static int   privsep_npppd_check_get_if_flags (struct PRIVSEP_GET_IF_FLAGS_ARG *);
-static int   privsep_npppd_check_set_if_flags (struct PRIVSEP_SET_IF_FLAGS_ARG *);
+static void	 privsep_priv_main (int);
+static void	 privsep_priv_dispatch_imsg (struct imsgbuf *);
+int		 imsg_read_and_get(struct imsgbuf *, struct imsg *);
+static int	 startswith(const char *, const char *);
+static int	 privsep_recvfd (void);
+static int	 privsep_common_resp (void);
 
-static int privsep_sock = -1, privsep_monpipe = -1;;
-static pid_t privsep_pid;
+static int	 privsep_npppd_check_open (struct PRIVSEP_OPEN_ARG *);
+static int	 privsep_npppd_check_socket (struct PRIVSEP_SOCKET_ARG *);
+static int	 privsep_npppd_check_bind (struct PRIVSEP_BIND_ARG *);
+static int	 privsep_npppd_check_sendto (struct PRIVSEP_SENDTO_ARG *);
+static int	 privsep_npppd_check_unlink (struct PRIVSEP_UNLINK_ARG *);
+static int	 privsep_npppd_check_get_user_info (
+		    struct PRIVSEP_GET_USER_INFO_ARG *);
+static int	 privsep_npppd_check_get_if_addr (
+		    struct PRIVSEP_GET_IF_ADDR_ARG *);
+static int	 privsep_npppd_check_set_if_addr (
+		    struct PRIVSEP_SET_IF_ADDR_ARG *);
+static int	 privsep_npppd_check_del_if_addr (
+		    struct PRIVSEP_DEL_IF_ADDR_ARG *);
+static int	 privsep_npppd_check_get_if_flags (
+		    struct PRIVSEP_GET_IF_FLAGS_ARG *);
+static int	 privsep_npppd_check_set_if_flags (
+		    struct PRIVSEP_SET_IF_FLAGS_ARG *);
+
+static int		 privsep_sock = -1;
+static struct imsgbuf	 privsep_ibuf;
+static pid_t		 privsep_pid;
 
 int
 privsep_init(void)
 {
-	pid_t pid;
-	int pairsock[] = { -1, -1 }, monpipe[] = { -1, -1 }, ival;
+	pid_t	 pid;
+	int	 pairsock[2];
 
-	if (socketpair(AF_UNIX, SOCK_DGRAM, PF_UNSPEC, pairsock) == -1)
-		return -1;
-
-	ival = PRIVSEP_BUFSIZE;
-	if (setsockopt(pairsock[1], SOL_SOCKET, SO_SNDBUF, &ival, sizeof(ival))
-	    != 0)
-		goto fail;
-	if (setsockopt(pairsock[0], SOL_SOCKET, SO_RCVBUF, &ival, sizeof(ival))
-	    != 0)
-		goto fail;
-
-	/* pipe for monitoring */
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, monpipe) == -1)
-		goto fail;
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pairsock) == -1)
+		return (-1);
 
 	if ((pid = fork()) < 0)
 		goto fail;
@@ -204,123 +185,93 @@ privsep_init(void)
 		/* privileged process */
 		setproctitle("[priv]");
 		close(pairsock[1]);
-		close(monpipe[1]);
-		privsep_priv_main(pairsock[0], monpipe[0]);
+		privsep_priv_main(pairsock[0]);
 		_exit(0);
 		/* NOTREACHED */
 	}
 	setproctitle("main");
 	close(pairsock[0]);
-	close(monpipe[0]);
 	privsep_sock = pairsock[1];
-	privsep_monpipe = monpipe[1];
 	privsep_pid = pid;
+	imsg_init(&privsep_ibuf, privsep_sock);
 
-	return 0;
+	return (0);
 	/* NOTREACHED */
 fail:
 	if (pairsock[0] >= 0) {
 		close(pairsock[0]);
 		close(pairsock[1]);
 	}
-	if (monpipe[0] >= 0) {
-		close(monpipe[0]);
-		close(monpipe[1]);
-	}
 
-	return -1;
+	return (-1);
 }
 
 void
 privsep_fini(void)
 {
+	imsg_clear(&privsep_ibuf);
 	if (privsep_sock >= 0) {
 		close(privsep_sock);
 		privsep_sock = -1;
 	}
-	if (privsep_monpipe >= 0) {
-		close(privsep_monpipe);
-		privsep_monpipe = -1;
-	}
 }
 
 pid_t
-privsep_priv_pid (void)
+privsep_priv_pid(void)
 {
-	return privsep_pid;
+	return (privsep_pid);
 }
+
 /***********************************************************************
  * Functions for from jail
  ***********************************************************************/
 int
 priv_bind(int sock, const struct sockaddr *name, socklen_t namelen)
 {
-	int retval;
-	struct PRIVSEP_BIND_ARG a;
-	struct msghdr m;
-	struct iovec iov[1];
-	struct cmsghdr *cm;
-	u_char cm_space[CMSG_LEN(sizeof(int))];
+	struct PRIVSEP_BIND_ARG	 a;
 
 	if (namelen > sizeof(a.name)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
-	memset(&m, 0, sizeof(m));
-
-	iov[0].iov_base = &a;
-	iov[0].iov_len = sizeof(a);
-	a.cmd = PRIVSEP_BIND;
 	memcpy(&a.name, name, namelen);
 	a.namelen = namelen;
 
-	cm = (struct cmsghdr *)cm_space;
-	cm->cmsg_len = sizeof(cm_space);
-	cm->cmsg_level = SOL_SOCKET;
-	cm->cmsg_type = SCM_RIGHTS;
-	*(int *)CMSG_DATA(cm) = sock;
+	(void)imsg_compose(&privsep_ibuf, PRIVSEP_BIND, 0, 0, sock,
+	    &a, sizeof(a));
+	imsg_flush(&privsep_ibuf);
 
-	m.msg_iov = iov;
-	m.msg_iovlen = nitems(iov);
-	m.msg_control = cm;
-	m.msg_controllen = sizeof(cm_space);
-
-	if ((retval = sendmsg(privsep_sock, &m, 0)) < 0)
-		return retval;
-
-	return privsep_common_resp();
+	return (privsep_common_resp());
 }
 
 int
 priv_socket(int domain, int type, int protocol)
 {
-	int retval;
 	struct PRIVSEP_SOCKET_ARG a;
 
-	a.cmd = PRIVSEP_SOCKET;
 	a.domain = domain;
 	a.type = type;
 	a.protocol = protocol;
-	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
-		return retval;
+	(void)imsg_compose(&privsep_ibuf, PRIVSEP_SOCKET, 0, 0, -1,
+	    &a, sizeof(a));
+	imsg_flush(&privsep_ibuf);
 
-	return privsep_recvfd();
+	return (privsep_recvfd());
 }
 
 int
 priv_open(const char *path, int flags, mode_t mode)
 {
-	int retval;
 	struct PRIVSEP_OPEN_ARG a;
 
-	a.cmd = PRIVSEP_OPEN;
 	strlcpy(a.path, path, sizeof(a.path));
 	a.flags = flags;
 	a.mode = mode;
-	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
-		return retval;
+	(void)imsg_compose(&privsep_ibuf, PRIVSEP_OPEN, 0, 0, -1,
+	    &a, sizeof(a));
+	imsg_flush(&privsep_ibuf);
 
-	return privsep_recvfd();
+	return (privsep_recvfd());
 }
 
 FILE *
@@ -329,7 +280,7 @@ priv_fopen(const char *path)
 	int f;
 
 	if ((f = priv_open(path, O_RDONLY, 0600)) < 0)
-		return NULL;
+		return (NULL);
 
 	return fdopen(f, "r");
 }
@@ -338,100 +289,87 @@ int
 priv_sendto(int s, const void *msg, int len, int flags,
     const struct sockaddr *to, socklen_t tolen)
 {
-	struct PRIVSEP_SENDTO_ARG a;
-	struct msghdr m;
-	struct iovec iov[2];
-	struct cmsghdr *cm;
-	u_char cm_space[CMSG_LEN(sizeof(int))];
-	int retval;
+	struct PRIVSEP_SENDTO_ARG	 a;
+	struct iovec			 iov[2];
 
 	if (tolen > sizeof(a.to)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
-	memset(&m, 0, sizeof(m));
 
-	iov[0].iov_base = &a;
-	/*
-	 * Don't assume sizeof(struct PRIVSEP_SENDTO_ARG) equals
-	 * offsetof(struct PRIVSEP_SENDTO_ARG, msg).
-	 */
-	iov[0].iov_len = offsetof(struct PRIVSEP_SENDTO_ARG, msg);
-	iov[1].iov_base = (void *)msg;
-	iov[1].iov_len = len;
-
-	a.cmd = PRIVSEP_SENDTO;
 	a.len = len;
 	a.flags = flags;
 	a.tolen = tolen;
 	if (tolen > 0)
 		memcpy(&a.to, to, tolen);
+	iov[0].iov_base = &a;
+	iov[0].iov_len = offsetof(struct PRIVSEP_SENDTO_ARG, msg);
+	iov[1].iov_base = (void *)msg;
+	iov[1].iov_len = len;
 
-	cm = (struct cmsghdr *)cm_space;
-	cm->cmsg_len = sizeof(cm_space);
-	cm->cmsg_level = SOL_SOCKET;
-	cm->cmsg_type = SCM_RIGHTS;
-	*(int *)CMSG_DATA(cm) = s;
+	(void)imsg_composev(&privsep_ibuf, PRIVSEP_SENDTO, 0, 0, s,
+	    iov, nitems(iov));
+	imsg_flush(&privsep_ibuf);
 
-	m.msg_iov = iov;
-	m.msg_iovlen = nitems(iov);
-	m.msg_control = cm;
-	m.msg_controllen = sizeof(cm_space);
-
-	if ((retval = sendmsg(privsep_sock, &m, 0)) < 0)
-		return retval;
-
-	return privsep_common_resp();
+	return (privsep_common_resp());
 }
 
 int
 priv_send(int s, const void *msg, int len, int flags)
 {
-	return priv_sendto(s, msg, len, flags, NULL, 0);
+	return (priv_sendto(s, msg, len, flags, NULL, 0));
 }
 
 int
 priv_unlink(const char *path)
 {
-	int retval;
 	struct PRIVSEP_UNLINK_ARG a;
 
-	a.cmd = PRIVSEP_UNLINK;
-	strlcpy(a.path, path, sizeof(a.path));
-	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
-		return retval;
+	(void)imsg_compose(&privsep_ibuf, PRIVSEP_UNLINK, 0, 0, -1,
+	    &a, sizeof(a));
+	imsg_flush(&privsep_ibuf);
 
-	return privsep_common_resp();
+	return (privsep_common_resp());
 }
 
 int
 priv_get_user_info(const char *path, const char *username,
     npppd_auth_user **puser)
 {
-	int                                n, sz, retval;
-	char                              *cp;
-	struct PRIVSEP_GET_USER_INFO_ARG   a;
-	struct PRIVSEP_GET_USER_INFO_RESP  r;
-	npppd_auth_user                   *u;
+	struct imsg				 imsg;
+	ssize_t					 n;
+	struct PRIVSEP_GET_USER_INFO_RESP	*r;
+	struct PRIVSEP_GET_USER_INFO_ARG	 a;
+	npppd_auth_user				*u;
+	char					*cp;
+	int					 sz;
 
-	a.cmd = PRIVSEP_GET_USER_INFO;
 	strlcpy(a.path, path, sizeof(a.path));
 	strlcpy(a.username, username, sizeof(a.username));
-	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
-		return retval;
 
-	if (recv(privsep_sock, &r, sizeof(r), 0) != sizeof(r))
-		return -1;
-	if (r.retval != 0) {
-		errno = r.rerrno;
-		return r.retval;
+	(void)imsg_compose(&privsep_ibuf, PRIVSEP_GET_USER_INFO, 0, 0, -1,
+	    &a, sizeof(a));
+	imsg_flush(&privsep_ibuf);
+
+	if ((n = imsg_read_and_get(&privsep_ibuf, &imsg)) == -1) {
+		errno = EACCES;
+		return (-1);
+	}
+	if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*r)) {
+		errno = EACCES;
+		return (-1);
+	}
+	r = imsg.data;
+	if (r->retval != 0) {
+		errno = r->rerrno;
+		return (r->retval);
 	}
 
-	sz = strlen(username) + strlen(r.password) +
-	    strlen(r.calling_number) + 3;
+	sz = strlen(username) + strlen(r->password) +
+	    strlen(r->calling_number) + 3;
 
 	if ((u = malloc(offsetof(npppd_auth_user, space[sz]))) == NULL)
-		return -1;
+		return (-1);
 
 	cp = u->space;
 
@@ -440,309 +378,295 @@ priv_get_user_info(const char *path, const char *username,
 	cp += ++n; sz -= n;
 
 	u->password = cp;
-	n = strlcpy(cp, r.password, sz);
+	n = strlcpy(cp, r->password, sz);
 	cp += ++n; sz -= n;
 
 	u->calling_number = cp;
-	n = strlcpy(cp, r.calling_number, sz);
+	n = strlcpy(cp, r->calling_number, sz);
 	cp += ++n; sz -= n;
 
-	u->framed_ip_address = r.framed_ip_address;
-	u->framed_ip_netmask = r.framed_ip_netmask;
+	u->framed_ip_address = r->framed_ip_address;
+	u->framed_ip_netmask = r->framed_ip_netmask;
 
 	*puser = u;
 
-	return 0;
+	return (0);
 }
 
 int
 priv_get_if_addr(const char *ifname, struct in_addr *addr)
 {
-	int                              retval;
 	struct PRIVSEP_GET_IF_ADDR_ARG   a;
-	struct PRIVSEP_GET_IF_ADDR_RESP  r;
+	struct PRIVSEP_GET_IF_ADDR_RESP *r;
+	struct imsg			 imsg;
 
-	a.cmd = PRIVSEP_GET_IF_ADDR;
 	strlcpy(a.ifname, ifname, sizeof(a.ifname));
-	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
-		return retval;
-	if ((retval = recv(privsep_sock, &r, sizeof(r), 0)) < 0) {
-		if (retval < 0)
-			return retval;
+
+	(void)imsg_compose(&privsep_ibuf, PRIVSEP_GET_IF_ADDR, 0, 0, -1,
+	    &a, sizeof(a));
+	imsg_flush(&privsep_ibuf);
+
+	if (imsg_read_and_get(&privsep_ibuf, &imsg) == -1) {
 		errno = EACCES;
-		return -1;
+		return (-1);
 	}
-
-	if (r.retval != -1)
-		*addr = r.addr;
+	if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*r)) {
+		errno = EACCES;
+		return (-1);
+	}
+	r = imsg.data;
+	if (r->retval != -1)
+		*addr = r->addr;
 	else
-		errno = r.rerrno;
+		errno = r->rerrno;
 
-	return 0;
+	return (r->retval);
 }
 
 int
 priv_delete_if_addr(const char *ifname)
 {
-	int                              retval;
 	struct PRIVSEP_DEL_IF_ADDR_ARG   a;
 
-	a.cmd = PRIVSEP_DEL_IF_ADDR;
 	strlcpy(a.ifname, ifname, sizeof(a.ifname));
-	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
-		return retval;
-	retval = privsep_common_resp();
+	(void)imsg_compose(&privsep_ibuf, PRIVSEP_DEL_IF_ADDR, 0, 0, -1,
+	    &a, sizeof(a));
+	imsg_flush(&privsep_ibuf);
 
-	return retval;
+	return (privsep_common_resp());
 }
 
 int
 priv_set_if_addr(const char *ifname, struct in_addr *addr)
 {
-	int                              retval;
 	struct PRIVSEP_SET_IF_ADDR_ARG   a;
 
-	a.cmd = PRIVSEP_SET_IF_ADDR;
 	strlcpy(a.ifname, ifname, sizeof(a.ifname));
 	a.addr = *addr;
-	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
-		return retval;
+	(void)imsg_compose(&privsep_ibuf, PRIVSEP_SET_IF_ADDR, 0, 0, -1,
+	    &a, sizeof(a));
+	imsg_flush(&privsep_ibuf);
 
-	return privsep_common_resp();
+	return (privsep_common_resp());
 }
 
 int
 priv_get_if_flags(const char *ifname, int *pflags)
 {
-	int                              retval;
-	struct PRIVSEP_GET_IF_FLAGS_ARG   a;
-	struct PRIVSEP_GET_IF_FLAGS_RESP  r;
+	struct PRIVSEP_GET_IF_FLAGS_ARG		 a;
+	struct PRIVSEP_GET_IF_FLAGS_RESP	*r;
+	struct imsg				 imsg;
 
-	a.cmd = PRIVSEP_GET_IF_FLAGS;
 	strlcpy(a.ifname, ifname, sizeof(a.ifname));
-	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
-		return retval;
-	if ((retval = recv(privsep_sock, &r, sizeof(r), 0)) < 0) {
-		if (retval < 0)
-			return retval;
+
+	(void)imsg_compose(&privsep_ibuf, PRIVSEP_GET_IF_FLAGS, 0, 0, -1,
+	    &a, sizeof(a));
+	imsg_flush(&privsep_ibuf);
+
+	if (imsg_read_and_get(&privsep_ibuf, &imsg) == -1) {
 		errno = EACCES;
-		return -1;
+		return (-1);
 	}
-	*pflags = r.flags;
+	if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*r)) {
+		errno = EACCES;
+		return (-1);
+	}
+	r = imsg.data;
+	*pflags = r->flags;
+	if (r->retval != 0)
+		errno = r->rerrno;
 
-	if (r.retval != 0)
-		errno = r.rerrno;
-
-	return 0;
+	return (r->retval);
 }
 
 int
 priv_set_if_flags(const char *ifname, int flags)
 {
-	int                               retval;
 	struct PRIVSEP_SET_IF_FLAGS_ARG   a;
 
-	a.cmd = PRIVSEP_SET_IF_FLAGS;
 	strlcpy(a.ifname, ifname, sizeof(a.ifname));
 	a.flags = flags;
-	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
-		return retval;
-	return privsep_common_resp();
+
+	(void)imsg_compose(&privsep_ibuf, PRIVSEP_SET_IF_FLAGS, 0, 0, -1,
+	    &a, sizeof(a));
+	imsg_flush(&privsep_ibuf);
+
+	return (privsep_common_resp());
 }
 
 static int
 privsep_recvfd(void)
 {
-	struct PRIVSEP_COMMON_RESP r;
-	struct msghdr m;
-	struct cmsghdr *cm;
-	struct iovec iov[1];
-	u_char cmsgbuf[256];
+	struct PRIVSEP_COMMON_RESP	*r;
+	struct imsg			 imsg;
 
-	memset(&m, 0, sizeof(m));
-
-	iov[0].iov_base = &r;
-	iov[0].iov_len = sizeof(r);
-	memset(cmsgbuf, 0, sizeof(cmsgbuf));
-	m.msg_iov = iov;
-	m.msg_iovlen = nitems(iov);
-	m.msg_control = cmsgbuf;
-	m.msg_controllen = sizeof(cmsgbuf);
-	if (recvmsg(privsep_sock, &m, 0) < sizeof(struct PRIVSEP_COMMON_RESP))
-		goto on_error;
-	if (r.retval < 0) {
-		errno = r.rerrno;
-		return r.retval;
+	if (imsg_read_and_get(&privsep_ibuf, &imsg) == -1) {
+		errno = EACCES;
+		return (-1);
 	}
-	for (cm = CMSG_FIRSTHDR(&m); m.msg_controllen != 0 && cm;
-	    cm = CMSG_NXTHDR(&m, cm)) {
-		if (cm->cmsg_level == SOL_SOCKET &&
-		    cm->cmsg_type == SCM_RIGHTS &&
-		    cm->cmsg_len >= CMSG_LEN(sizeof(int))) {
-			return *(int *)CMSG_DATA(cm);
-		} else
-			break;
+	if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*r)) {
+		errno = EACCES;
+		return (-1);
 	}
+	r = imsg.data;
+	if (r->retval != 0)
+		errno = r->rerrno;
 
-on_error:
-	errno = EACCES;
-	return -1;
+	return (imsg.fd);
 }
 
 static int
 privsep_common_resp(void)
 {
-	struct PRIVSEP_COMMON_RESP r;
+	struct PRIVSEP_COMMON_RESP	*r;
+	struct imsg			 imsg;
 
-	if (recv(privsep_sock, &r, sizeof(r), 0)
-	    < sizeof(struct PRIVSEP_COMMON_RESP)) {
+	if (imsg_read_and_get(&privsep_ibuf, &imsg) == -1) {
 		errno = EACCES;
-		return -1;
+		return (-1);
 	}
-	if (r.retval != 0)
-		errno = r.rerrno;
+	if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*r)) {
+		errno = EACCES;
+		return (-1);
+	}
+	r = imsg.data;
+	if (r->retval != 0)
+		errno = r->rerrno;
 
-	return r.retval;
+	return (r->retval);
 }
 
 /***********************************************************************
  * privileged process
  ***********************************************************************/
 static void
-privsep_priv_main(int sock, int monpipe)
+privsep_priv_main(int sock)
 {
-	struct event ev_sock, ev_monpipe;
+	struct imsgbuf	 imsg;
 
-	event_init();
-
-	event_set(&ev_sock, sock, EV_READ | EV_PERSIST, privsep_priv_on_sockio,
-	    NULL);
-	event_set(&ev_monpipe, monpipe, EV_READ, privsep_priv_on_monpipeio,
-	    NULL);
-
-	if (event_add(&ev_sock, NULL) != 0)
-		err(1, "event_add() failed on %s()", __func__);
-	if (event_add(&ev_monpipe, NULL) != 0)
-		err(1, "event_add() failed on %s()", __func__);
-
-	event_loop(0);
+	imsg_init(&imsg, sock);
+	privsep_priv_dispatch_imsg(&imsg);
+	imsg_clear(&imsg);
 	close(sock);
-	close(monpipe);
 
 	exit(EXIT_SUCCESS);
 }
 
 static void
-privsep_priv_on_sockio(int sock, short evmask, void *ctx)
+privsep_priv_dispatch_imsg(struct imsgbuf *ibuf)
 {
-	int retval, fdesc;
-	u_char rbuf[PRIVSEP_BUFSIZE], rcmsgbuf[128];
-	struct iovec riov[1];
-	struct msghdr rmsg;
-	struct cmsghdr *cm;
+	struct imsg	 imsg;
 
-	if (evmask & EV_READ) {
-		fdesc = -1;
-
-		memset(&rmsg, 0, sizeof(rmsg));
-		riov[0].iov_base = rbuf;
-		riov[0].iov_len = sizeof(rbuf);
-		rmsg.msg_iov = riov;
-		rmsg.msg_iovlen = nitems(riov);
-		rmsg.msg_control = rcmsgbuf;
-		rmsg.msg_controllen = sizeof(rcmsgbuf);
-
-		if ((retval = recvmsg(sock, &rmsg, 0)) < 0) {
-			event_loopexit(NULL);
+	for (;;) {
+		if (imsg_read_and_get(ibuf, &imsg) == -1)
 			return;
-		}
 
-		for (cm = CMSG_FIRSTHDR(&rmsg); rmsg.msg_controllen != 0 && cm;
-		    cm = CMSG_NXTHDR(&rmsg, cm)) {
-			if (cm->cmsg_level == SOL_SOCKET &&
-			    cm->cmsg_type == SCM_RIGHTS &&
-			    cm->cmsg_len >= CMSG_LEN(sizeof(int))) {
-				fdesc = *(int *)CMSG_DATA(cm);
-			}
-		}
-
-		switch (*(enum PRIVSEP_CMD *)rbuf) {
+		switch (imsg.hdr.type) {
 		case PRIVSEP_OPEN: {
-			struct PRIVSEP_OPEN_ARG	*a;
+			int				 f = -1;
+			struct PRIVSEP_OPEN_ARG		*a = imsg.data;
+			struct PRIVSEP_COMMON_RESP	 r = { -1, 0 };
 
-			a = (struct PRIVSEP_OPEN_ARG *)rbuf;
-			if (privsep_npppd_check_open(a))
-				privsep_sendfd(sock, -1, EACCES);
-			else
-				privsep_sendfd(sock,
-				    open(a->path, a->flags, a->mode), 0);
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*a))
+				r.rerrno = EINVAL;
+			else if (privsep_npppd_check_open(a))
+				r.rerrno = EACCES;
+			else {
+				if ((f = open(a->path, a->flags, a->mode))
+				    == -1)
+					r.rerrno = errno;
+				else
+					r.retval = 0;
+			}
+			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, f,
+			    &r, sizeof(r));
+			imsg_flush(ibuf);
+			close(f);
 		    }
 			break;
 		case PRIVSEP_SOCKET: {
-			struct PRIVSEP_SOCKET_ARG *a;
+			int				 s = -1;
+			struct PRIVSEP_SOCKET_ARG	*a = imsg.data;
+			struct PRIVSEP_COMMON_RESP	 r = { -1, 0 };
 
-			a = (struct PRIVSEP_SOCKET_ARG *)rbuf;
-			if (privsep_npppd_check_socket(a))
-				privsep_sendfd(sock, -1, EACCES);
-			else
-				privsep_sendfd(sock,
-				    socket(a->domain, a->type, a->protocol), 0);
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*a))
+				r.rerrno = EINVAL;
+			else if (privsep_npppd_check_socket(a))
+				r.rerrno = EACCES;
+			else {
+				if ((s = socket(a->domain, a->type,
+				    a->protocol)) == -1)
+					r.rerrno = errno;
+				else
+					r.retval = 0;
+			}
+			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, s,
+			    &r, sizeof(r));
+			imsg_flush(ibuf);
+			close(s);
 		    }
 			break;
 		case PRIVSEP_UNLINK: {
-			struct PRIVSEP_UNLINK_ARG *a;
-			struct PRIVSEP_COMMON_RESP r;
+			struct PRIVSEP_UNLINK_ARG *a = imsg.data;
+			struct PRIVSEP_COMMON_RESP r = { -1, 0 };
 
-			a = (struct PRIVSEP_UNLINK_ARG *)rbuf;
-			if (privsep_npppd_check_unlink(a)) {
-				r.retval = -1;
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*a))
+				r.rerrno = EINVAL;
+			else if (privsep_npppd_check_unlink(a))
 				r.rerrno = EACCES;
-			} else {
+			else {
 				if ((r.retval = unlink(a->path)) != 0)
 					r.rerrno = errno;
 			}
-			(void)send(sock, &r, sizeof(r), 0);
+
+			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, -1,
+			    &r, sizeof(r));
+			imsg_flush(ibuf);
 		    }
 			break;
 		case PRIVSEP_BIND: {
-			struct PRIVSEP_BIND_ARG	*a;
-			struct PRIVSEP_COMMON_RESP r;
+			struct PRIVSEP_BIND_ARG	*a = imsg.data;
+			struct PRIVSEP_COMMON_RESP r = { -1, 0 };
 
-			a = (struct PRIVSEP_BIND_ARG *)rbuf;
-			if (fdesc < 0) {
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*a) ||
+			    imsg.fd < 0)
 				r.rerrno = EINVAL;
-				r.retval = -1;
-			} else if (privsep_npppd_check_bind(a)) {
+			else if (privsep_npppd_check_bind(a))
 				r.rerrno = EACCES;
-				r.retval = -1;
-			} else {
-				if ((r.retval = bind(fdesc,
+			else {
+				if ((r.retval = bind(imsg.fd,
 				    (struct sockaddr *)&a->name, a->namelen))
 				    != 0)
 					r.rerrno = errno;
-				close(fdesc);
-				fdesc = -1;
+				close(imsg.fd);
 			}
-			(void)send(sock, &r, sizeof(r), 0);
+			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, -1,
+			    &r, sizeof(r));
+			imsg_flush(ibuf);
 		    }
 			break;
 		case PRIVSEP_GET_USER_INFO: {
-			struct PRIVSEP_GET_USER_INFO_ARG *a;
+			struct PRIVSEP_GET_USER_INFO_ARG *a = imsg.data;
 			struct PRIVSEP_GET_USER_INFO_RESP r;
 			int   retval;
 			char *str, *buf, *db[2] = { NULL, NULL };
 
-			a = (struct PRIVSEP_GET_USER_INFO_ARG *)rbuf;
 			memset(&r, 0, sizeof(r));
+			r.retval = -1;
 			r.framed_ip_address.s_addr = INADDR_NAS_SELECT;
 			r.framed_ip_netmask.s_addr = INADDR_NONE;
-			db[0] = a->path;
-
 			str = buf = NULL;
-			if (privsep_npppd_check_get_user_info(a)) {
-				r.retval = -1;
+
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*a)) {
+				r.rerrno = EINVAL;
+				(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, -1,
+				    &r, sizeof(r));
+				return;
+			}
+			db[0] = a->path;
+			if (privsep_npppd_check_get_user_info(a))
 				r.rerrno = EACCES;
-			} else if ((retval = cgetent(&buf, db, a->username))
+			else if ((retval = cgetent(&buf, db, a->username))
 			    == 0) {
 				if ((retval = cgetstr(buf, "password", &str))
 				    >= 0) {
@@ -795,52 +719,53 @@ on_broken_entry:
 				r.retval = retval;
 				r.rerrno = errno;
 			}
-			(void)send(sock, &r, sizeof(r), 0);
+			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, -1,
+			    &r, sizeof(r));
+			imsg_flush(ibuf);
 		    }
 			break;
 		case PRIVSEP_SENDTO: {
-			struct PRIVSEP_SENDTO_ARG *a;
-			struct PRIVSEP_COMMON_RESP r;
+			struct PRIVSEP_SENDTO_ARG *a = imsg.data;
+			struct PRIVSEP_COMMON_RESP r = { -1, 0 };
 
-			a = (struct PRIVSEP_SENDTO_ARG *)rbuf;
-			if (retval < sizeof(struct PRIVSEP_SENDTO_ARG) ||
-			    retval < offsetof(struct PRIVSEP_SENDTO_ARG,
-				    msg[a->len])) {
+			if (imsg.hdr.len < IMSG_HEADER_SIZE + sizeof(*a) ||
+			    imsg.hdr.len < IMSG_HEADER_SIZE +
+				offsetof(struct PRIVSEP_SENDTO_ARG,
+					msg[a->len]))
 				r.rerrno = EMSGSIZE;
-				r.retval = -1;
-			} else if (fdesc < 0) {
+			else if (imsg.fd < 0)
 				r.rerrno = EINVAL;
-				r.retval = -1;
-			} else if (privsep_npppd_check_sendto(a)) {
+			else if (privsep_npppd_check_sendto(a))
 				r.rerrno = EACCES;
-				r.retval = -1;
-			} else {
+			else {
 				if (a->tolen > 0)
-					r.retval = sendto(fdesc, a->msg, a->len,
-					    a->flags, (struct sockaddr *)&a->to,
+					r.retval = sendto(imsg.fd, a->msg,
+					    a->len, a->flags,
+					    (struct sockaddr *)&a->to,
 					    a->tolen);
 				else
-					r.retval = send(fdesc, a->msg, a->len,
+					r.retval = send(imsg.fd, a->msg, a->len,
 					    a->flags);
 				if (r.retval < 0)
 					r.rerrno = errno;
-				close(fdesc);
-				fdesc = -1;
+				close(imsg.fd);
 			}
-			(void)send(sock, &r, sizeof(r), 0);
+			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, -1,
+			    &r, sizeof(r));
+			imsg_flush(ibuf);
 		    }
 			break;
 		case PRIVSEP_GET_IF_ADDR: {
 			int                              s;
 			struct ifreq                     ifr;
-			struct PRIVSEP_GET_IF_ADDR_ARG  *a;
+			struct PRIVSEP_GET_IF_ADDR_ARG  *a = imsg.data;
 			struct PRIVSEP_GET_IF_ADDR_RESP  r;
 
-			a = (struct PRIVSEP_GET_IF_ADDR_ARG *)rbuf;
-			if (privsep_npppd_check_get_if_addr(a)) {
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*a))
+				r.rerrno = EINVAL;
+			else if (privsep_npppd_check_get_if_addr(a))
 				r.rerrno = EACCES;
-				r.retval = -1;
-			} else {
+			else {
 				memset(&ifr, 0, sizeof(ifr));
 				strlcpy(ifr.ifr_name, a->ifname,
 				    sizeof(ifr.ifr_name));
@@ -854,21 +779,23 @@ on_broken_entry:
 				if (s >= 0)
 					close(s);
 			}
-			(void)send(sock, &r, sizeof(r), 0);
+			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, -1,
+			    &r, sizeof(r));
+			imsg_flush(ibuf);
 		    }
 			break;
 		case PRIVSEP_SET_IF_ADDR: {
 			int                              s;
 			struct ifaliasreq                ifra;
-			struct PRIVSEP_SET_IF_ADDR_ARG  *a;
-			struct PRIVSEP_COMMON_RESP       r;
+			struct PRIVSEP_SET_IF_ADDR_ARG  *a = imsg.data;
+			struct PRIVSEP_COMMON_RESP       r = { -1, 0 };
 			struct sockaddr_in              *sin4;
 
-			a = (struct PRIVSEP_SET_IF_ADDR_ARG *)rbuf;
-			if (privsep_npppd_check_set_if_addr(a)) {
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*a))
+				r.rerrno = EINVAL;
+			else if (privsep_npppd_check_set_if_addr(a))
 				r.rerrno = EACCES;
-				r.retval = -1;
-			} else {
+			else {
 				memset(&ifra, 0, sizeof(ifra));
 				strlcpy(ifra.ifra_name, a->ifname,
 				    sizeof(ifra.ifra_name));
@@ -898,20 +825,22 @@ on_broken_entry:
 				if (s >= 0)
 					close(s);
 			}
-			(void)send(sock, &r, sizeof(r), 0);
+			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, -1,
+			    &r, sizeof(r));
+			imsg_flush(ibuf);
 		    }
 			break;
 		case PRIVSEP_DEL_IF_ADDR: {
 			int                              s;
 			struct ifreq                     ifr;
-			struct PRIVSEP_DEL_IF_ADDR_ARG  *a;
-			struct PRIVSEP_COMMON_RESP       r;
+			struct PRIVSEP_DEL_IF_ADDR_ARG  *a = imsg.data;
+			struct PRIVSEP_COMMON_RESP       r = { 0, -1 };
 
-			a = (struct PRIVSEP_DEL_IF_ADDR_ARG *)rbuf;
-			if (privsep_npppd_check_del_if_addr(a)) {
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*a))
+				r.rerrno = EINVAL;
+			else if (privsep_npppd_check_del_if_addr(a))
 				r.rerrno = EACCES;
-				r.retval = -1;
-			} else {
+			else {
 				memset(&ifr, 0, sizeof(ifr));
 				strlcpy(ifr.ifr_name, a->ifname,
 				    sizeof(ifr.ifr_name));
@@ -924,19 +853,24 @@ on_broken_entry:
 				if (s >= 0)
 					close(s);
 			}
-			(void)send(sock, &r, sizeof(r), 0);
+			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, -1,
+			    &r, sizeof(r));
+			imsg_flush(ibuf);
 		    }
 			break;
 		case PRIVSEP_GET_IF_FLAGS: {
 			int                               s;
 			struct ifreq                      ifr;
-			struct PRIVSEP_GET_IF_FLAGS_ARG  *a;
+			struct PRIVSEP_GET_IF_FLAGS_ARG  *a = imsg.data;
 			struct PRIVSEP_GET_IF_FLAGS_RESP  r;
 
-			a = (struct PRIVSEP_GET_IF_FLAGS_ARG *)rbuf;
-			if (privsep_npppd_check_get_if_flags(a)) {
+			memset(&r, 0, sizeof(r));
+			r.retval = -1;
+
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*a))
+				r.rerrno = EINVAL;
+			else if (privsep_npppd_check_get_if_flags(a)) {
 				r.rerrno = EACCES;
-				r.retval = -1;
 			} else {
 				memset(&ifr, 0, sizeof(ifr));
 				strlcpy(ifr.ifr_name, a->ifname,
@@ -952,20 +886,22 @@ on_broken_entry:
 				if (s >= 0)
 					close(s);
 			}
-			(void)send(sock, &r, sizeof(r), 0);
+			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, -1,
+			    &r, sizeof(r));
+			imsg_flush(ibuf);
 		    }
 			break;
 		case PRIVSEP_SET_IF_FLAGS: {
 			int                               s;
 			struct ifreq                      ifr;
-			struct PRIVSEP_SET_IF_FLAGS_ARG  *a;
-			struct PRIVSEP_COMMON_RESP        r;
+			struct PRIVSEP_SET_IF_FLAGS_ARG  *a = imsg.data;
+			struct PRIVSEP_COMMON_RESP        r = { -1, 0 };
 
-			a = (struct PRIVSEP_SET_IF_FLAGS_ARG *)rbuf;
-			if (privsep_npppd_check_set_if_flags(a)) {
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*a))
+				r.rerrno = EINVAL;
+			else if (privsep_npppd_check_set_if_flags(a))
 				r.rerrno = EACCES;
-				r.retval = -1;
-			} else {
+			else {
 				memset(&ifr, 0, sizeof(ifr));
 				strlcpy(ifr.ifr_name, a->ifname,
 				    sizeof(ifr.ifr_name));
@@ -979,53 +915,34 @@ on_broken_entry:
 				if (s >= 0)
 					close(s);
 			}
-			(void)send(sock, &r, sizeof(r), 0);
+			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, -1,
+			    &r, sizeof(r));
+			imsg_flush(ibuf);
 		    }
 			break;
 		}
 	}
 }
 
-static void
-privsep_priv_on_monpipeio(int sock, short evmask, void *ctx)
+int
+imsg_read_and_get(struct imsgbuf *ibuf, struct imsg *imsg)
 {
-	/* called when the monitoring pipe is closed or broken */
-	event_loopexit(NULL);
-}
+	ssize_t	 n;
 
-static void
-privsep_sendfd(int sock, int fdesc, int rerrno)
-{
-	struct PRIVSEP_COMMON_RESP r;
-	struct msghdr msg;
-	struct cmsghdr *cm;
-	struct iovec iov[1];
-	u_char cm_space[CMSG_LEN(sizeof(int))];
-
-	memset(&msg, 0, sizeof(msg));
-	cm = (struct cmsghdr *)cm_space;
-	iov[0].iov_base = &r;
-	iov[0].iov_len = sizeof(r);
-	r.rerrno = 0;
-	r.retval = fdesc;
-
-	if (fdesc < 0) {
-		msg.msg_control = NULL;
-		msg.msg_controllen = 0;
-		r.rerrno = (rerrno == 0)? errno : rerrno;
-	} else {
-		cm->cmsg_len = sizeof(cm_space);
-		cm->cmsg_level = SOL_SOCKET;
-		cm->cmsg_type = SCM_RIGHTS;
-		*(int *)CMSG_DATA(cm) = r.retval;
-		msg.msg_control = cm;
-		msg.msg_controllen = sizeof(cm_space);
+	for (;;) {
+		if ((n = imsg_read(&privsep_ibuf)) <= 0) {
+			if (n == 0 && (errno == EAGAIN || errno == EINTR))
+				continue;
+			return (-1);
+		}
+		if ((n = imsg_get(&privsep_ibuf, imsg)) < 0)
+			return (-1);
+		if (n == 0)
+			continue;
+		break;
 	}
-	msg.msg_iov = iov;
-	msg.msg_iovlen = nitems(iov);
-	(void)sendmsg(sock, &msg, 0);
-	if (fdesc >= 0)
-		close(fdesc);
+
+	return (0);
 }
 
 static int
@@ -1050,19 +967,19 @@ privsep_npppd_check_open(struct PRIVSEP_OPEN_ARG *arg)
 		{ "/dev/pppx",		1,	0 }
 	};
 
-	for (i = 0; i < nitems(allow_paths); i++) {
+	for (i = 0; i < (int)nitems(allow_paths); i++) {
 		if (allow_paths[i].path_is_prefix) {
 			if (!startswith(arg->path, allow_paths[i].path))
 				continue;
 		} else if (strcmp(arg->path, allow_paths[i].path) != 0)
 			continue;
 		if (allow_paths[i].readonly) {
-		    	if ((arg->flags & O_ACCMODE) != O_RDONLY)
+			if ((arg->flags & O_ACCMODE) != O_RDONLY)
 				continue;
 		}
- 		return 0;
+		return (0);
 	}
-	return 1;
+	return (1);
 }
 
 static int
@@ -1071,26 +988,25 @@ privsep_npppd_check_socket(struct PRIVSEP_SOCKET_ARG *arg)
 	/* npppd uses routing socket */
 	if (arg->domain == PF_ROUTE && arg->type == SOCK_RAW &&
 	    arg->protocol  == AF_UNSPEC)
-		return 0;
+		return (0);
 
 	/* npppd uses raw ip socket for GRE */
 	if (arg->domain == AF_INET && arg->type == SOCK_RAW &&
 	    arg->protocol == IPPROTO_GRE)
-		return 0;
+		return (0);
 
 	/* L2TP uses PF_KEY socket to delete IPsec-SA */
 	if (arg->domain == PF_KEY && arg->type == SOCK_RAW &&
 	    arg->protocol == PF_KEY_V2)
-		return 0;
+		return (0);
 
-	return 1;
+	return (1);
 }
 
 static int
 privsep_npppd_check_bind(struct PRIVSEP_BIND_ARG *arg)
 {
-
-	return 1;
+	return (1);
 }
 
 static int
@@ -1099,20 +1015,20 @@ privsep_npppd_check_sendto(struct PRIVSEP_SENDTO_ARG *arg)
 	/* for reply npppdctl's request */
 	if (arg->flags == 0 && arg->tolen > 0 &&
 	    arg->to.ss_family == AF_UNIX)
-		return 0;
+		return (0);
 
 	/* for sending a routing socket message. */
 	if (arg->flags == 0 && arg->tolen == 0)
-		return 0;
+		return (0);
 
-	return 1;
+	return (1);
 }
 
 static int
 privsep_npppd_check_unlink(struct PRIVSEP_UNLINK_ARG *arg)
 {
 
-	return 1;
+	return (1);
 }
 
 static int
@@ -1122,9 +1038,9 @@ privsep_npppd_check_get_user_info(struct PRIVSEP_GET_USER_INFO_ARG *arg)
 
 	l = strlen(NPPPD_DIR "/");
 	if (strncmp(arg->path, NPPPD_DIR "/", l) == 0)
-		return 0;
+		return (0);
 
-	return 1;
+	return (1);
 }
 
 static int
@@ -1132,9 +1048,9 @@ privsep_npppd_check_get_if_addr(struct PRIVSEP_GET_IF_ADDR_ARG *arg)
 {
 	if (strncmp(arg->ifname, "tun", 3) == 0 ||
 	    strncmp(arg->ifname, "pppx", 4))
-		return 0;
+		return (0);
 
-	return 1;
+	return (1);
 }
 
 static int
@@ -1142,9 +1058,9 @@ privsep_npppd_check_set_if_addr(struct PRIVSEP_SET_IF_ADDR_ARG *arg)
 {
 	if (strncmp(arg->ifname, "tun", 3) == 0 ||
 	    strncmp(arg->ifname, "pppx", 4))
-		return 0;
+		return (0);
 
-	return 1;
+	return (1);
 }
 
 static int
@@ -1152,9 +1068,9 @@ privsep_npppd_check_del_if_addr(struct PRIVSEP_DEL_IF_ADDR_ARG *arg)
 {
 	if (strncmp(arg->ifname, "tun", 3) == 0 ||
 	    strncmp(arg->ifname, "pppx", 4))
-		return 0;
+		return (0);
 
-	return 1;
+	return (1);
 }
 
 static int
@@ -1162,9 +1078,9 @@ privsep_npppd_check_get_if_flags(struct PRIVSEP_GET_IF_FLAGS_ARG *arg)
 {
 	if (strncmp(arg->ifname, "tun", 3) == 0 ||
 	    strncmp(arg->ifname, "pppx", 4))
-		return 0;
+		return (0);
 
-	return 1;
+	return (1);
 }
 
 static int
@@ -1172,7 +1088,7 @@ privsep_npppd_check_set_if_flags(struct PRIVSEP_SET_IF_FLAGS_ARG *arg)
 {
 	if (strncmp(arg->ifname, "tun", 3) == 0 ||
 	    strncmp(arg->ifname, "pppx", 4))
-		return 0;
+		return (0);
 
-	return 1;
+	return (1);
 }
