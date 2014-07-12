@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.10 2014/07/12 14:04:18 yasuoka Exp $ */
+/*	$OpenBSD: privsep.c,v 1.11 2014/07/12 19:34:31 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -542,11 +542,11 @@ privsep_common_resp(void)
 static void
 privsep_priv_main(int sock)
 {
-	struct imsgbuf	 imsg;
+	struct imsgbuf	 ibuf;
 
-	imsg_init(&imsg, sock);
-	privsep_priv_dispatch_imsg(&imsg);
-	imsg_clear(&imsg);
+	imsg_init(&ibuf, sock);
+	privsep_priv_dispatch_imsg(&ibuf);
+	imsg_clear(&ibuf);
 	close(sock);
 
 	exit(EXIT_SUCCESS);
@@ -930,12 +930,12 @@ imsg_read_and_get(struct imsgbuf *ibuf, struct imsg *imsg)
 	ssize_t	 n;
 
 	for (;;) {
-		if ((n = imsg_read(&privsep_ibuf)) <= 0) {
+		if ((n = imsg_read(ibuf)) <= 0) {
 			if (n == 0 && (errno == EAGAIN || errno == EINTR))
 				continue;
 			return (-1);
 		}
-		if ((n = imsg_get(&privsep_ibuf, imsg)) < 0)
+		if ((n = imsg_get(ibuf, imsg)) < 0)
 			return (-1);
 		if (n == 0)
 			continue;
