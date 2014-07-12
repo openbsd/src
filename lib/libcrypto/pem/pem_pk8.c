@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_pk8.c,v 1.7 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: pem_pk8.c,v 1.8 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -184,8 +184,7 @@ d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 	if (!ret)
 		return NULL;
 	if (x) {
-		if (*x)
-			EVP_PKEY_free(*x);
+		EVP_PKEY_free(*x);
 		*x = ret;
 	}
 	return ret;

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.20 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.21 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -212,12 +212,10 @@ err:
 		BN_free(r);
 		BN_free(s);
 	}
-	if (ctx != NULL)
-		BN_CTX_free(ctx);
+	BN_CTX_free(ctx);
 	BN_clear_free(&m);
 	BN_clear_free(&xr);
-	if (kinv != NULL) /* dsa->kinv is NULL now if we used it */
-	    BN_clear_free(kinv);
+	BN_clear_free(kinv);
 	return ret;
 }
 
@@ -295,19 +293,16 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	if ((kinv = BN_mod_inverse(NULL, &k, dsa->q, ctx)) == NULL)
 		goto err;
 
-	if (*kinvp != NULL)
-		BN_clear_free(*kinvp);
+	BN_clear_free(*kinvp);
 	*kinvp = kinv;
 	kinv = NULL;
-	if (*rp != NULL)
-		BN_clear_free(*rp);
+	BN_clear_free(*rp);
 	*rp = r;
 	ret = 1;
 err:
 	if (!ret) {
 		DSAerr(DSA_F_DSA_SIGN_SETUP, ERR_R_BN_LIB);
-		if (r != NULL)
-			BN_clear_free(r);
+		BN_clear_free(r);
 	}
 	if (ctx_in == NULL)
 		BN_CTX_free(ctx);
@@ -406,8 +401,7 @@ err:
 	   there is no error in BN. Test should be ret == -1 (Ben) */
 	if (ret != 1)
 		DSAerr(DSA_F_DSA_DO_VERIFY, ERR_R_BN_LIB);
-	if (ctx != NULL)
-		BN_CTX_free(ctx);
+	BN_CTX_free(ctx);
 	BN_free(&u1);
 	BN_free(&u2);
 	BN_free(&t1);
@@ -424,8 +418,7 @@ dsa_init(DSA *dsa)
 static int
 dsa_finish(DSA *dsa)
 {
-	if (dsa->method_mont_p)
-		BN_MONT_CTX_free(dsa->method_mont_p);
+	BN_MONT_CTX_free(dsa->method_mont_p);
 	return 1;
 }
 

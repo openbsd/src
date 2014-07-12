@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.75 2014/07/12 13:11:53 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.76 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -355,8 +355,7 @@ err:
 	if (s != NULL) {
 		if (s->cert != NULL)
 			ssl_cert_free(s->cert);
-		if (s->ctx != NULL)
-			SSL_CTX_free(s->ctx); /* decrement reference count */
+		SSL_CTX_free(s->ctx); /* decrement reference count */
 		free(s);
 	}
 	SSLerr(SSL_F_SSL_NEW,
@@ -528,8 +527,7 @@ SSL_free(SSL *s)
 	/* Free up if allocated */
 
 	free(s->tlsext_hostname);
-	if (s->initial_ctx)
-		SSL_CTX_free(s->initial_ctx);
+	SSL_CTX_free(s->initial_ctx);
 	free(s->tlsext_ecpointformatlist);
 	free(s->tlsext_ellipticcurvelist);
 	if (s->tlsext_ocsp_exts)
@@ -545,8 +543,7 @@ SSL_free(SSL *s)
 	if (s->method != NULL)
 		s->method->ssl_free(s);
 
-	if (s->ctx)
-		SSL_CTX_free(s->ctx);
+	SSL_CTX_free(s->ctx);
 
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1831,8 +1828,7 @@ err:
 	SSLerr(SSL_F_SSL_CTX_NEW,
 	    ERR_R_MALLOC_FAILURE);
 err2:
-	if (ret != NULL)
-		SSL_CTX_free(ret);
+	SSL_CTX_free(ret);
 	return (NULL);
 }
 
@@ -2725,8 +2721,7 @@ SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 		ssl_cert_free(ssl->cert);
 	ssl->cert = ssl_cert_dup(ctx->cert);
 	CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
-	if (ssl->ctx != NULL)
-		SSL_CTX_free(ssl->ctx); /* decrement reference count */
+	SSL_CTX_free(ssl->ctx); /* decrement reference count */
 	ssl->ctx = ctx;
 	return (ssl->ctx);
 }

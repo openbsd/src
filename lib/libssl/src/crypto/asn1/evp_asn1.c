@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_asn1.c,v 1.12 2014/07/11 13:41:59 miod Exp $ */
+/* $OpenBSD: evp_asn1.c,v 1.13 2014/07/12 16:03:36 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -193,9 +193,7 @@ err:
 		ASN1err(ASN1_F_ASN1_TYPE_GET_INT_OCTETSTRING,
 		    ASN1_R_DATA_IS_WRONG);
 	}
-	if (os != NULL)
-		M_ASN1_OCTET_STRING_free(os);
-	if (ai != NULL)
-		M_ASN1_INTEGER_free(ai);
+	M_ASN1_OCTET_STRING_free(os);
+	M_ASN1_INTEGER_free(ai);
 	return (ret);
 }

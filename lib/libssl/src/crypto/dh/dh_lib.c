@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.19 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.20 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -194,21 +194,14 @@ DH_free(DH *r)
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
 
-	if (r->p != NULL)
-		BN_clear_free(r->p);
-	if (r->g != NULL)
-		BN_clear_free(r->g);
-	if (r->q != NULL)
-		BN_clear_free(r->q);
-	if (r->j != NULL)
-		BN_clear_free(r->j);
+	BN_clear_free(r->p);
+	BN_clear_free(r->g);
+	BN_clear_free(r->q);
+	BN_clear_free(r->j);
 	free(r->seed);
-	if (r->counter != NULL)
-		BN_clear_free(r->counter);
-	if (r->pub_key != NULL)
-		BN_clear_free(r->pub_key);
-	if (r->priv_key != NULL)
-		BN_clear_free(r->priv_key);
+	BN_clear_free(r->counter);
+	BN_clear_free(r->pub_key);
+	BN_clear_free(r->priv_key);
 	free(r);
 }
 

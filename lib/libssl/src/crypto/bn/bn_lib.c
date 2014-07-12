@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.32 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.33 2014/07/12 16:03:36 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -585,8 +585,7 @@ BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 	i = ((n - 1) / BN_BYTES) + 1;
 	m = ((n - 1) % (BN_BYTES));
 	if (bn_wexpand(ret, (int)i) == NULL) {
-		if (bn)
-			BN_free(bn);
+		BN_free(bn);
 		return NULL;
 	}
 	ret->top = i;

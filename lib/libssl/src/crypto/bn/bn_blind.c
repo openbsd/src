@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.13 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.14 2014/07/12 16:03:36 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -181,14 +181,10 @@ BN_BLINDING_free(BN_BLINDING *r)
 	if (r == NULL)
 		return;
 
-	if (r->A  != NULL)
-		BN_clear_free(r->A );
-	if (r->Ai != NULL)
-		BN_clear_free(r->Ai);
-	if (r->e  != NULL)
-		BN_clear_free(r->e );
-	if (r->mod != NULL)
-		BN_clear_free(r->mod);
+	BN_clear_free(r->A);
+	BN_clear_free(r->Ai);
+	BN_clear_free(r->e);
+	BN_clear_free(r->mod);
 	free(r);
 }
 
@@ -341,8 +337,7 @@ BN_BLINDING_create_param(BN_BLINDING *b, const BIGNUM *e, BIGNUM *m,
 		goto err;
 
 	if (e != NULL) {
-		if (ret->e != NULL)
-			BN_free(ret->e);
+		BN_free(ret->e);
 		ret->e = BN_dup(e);
 	}
 	if (ret->e == NULL)

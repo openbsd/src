@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_gn.c,v 1.4 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: pmeth_gn.c,v 1.5 2014/07/12 16:03:37 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -222,7 +222,6 @@ EVP_PKEY_new_mac_key(int type, ENGINE *e, const unsigned char *key, int keylen)
 		goto merr;
 
 merr:
-	if (mac_ctx)
-		EVP_PKEY_CTX_free(mac_ctx);
+	EVP_PKEY_CTX_free(mac_ctx);
 	return mac_key;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.15 2014/06/22 19:09:37 guenther Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.16 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -201,8 +201,7 @@ ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 		}
 	}
 
-	if (c->pkeys[i].privatekey != NULL)
-		EVP_PKEY_free(c->pkeys[i].privatekey);
+	EVP_PKEY_free(c->pkeys[i].privatekey);
 	CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
 	c->pkeys[i].privatekey = pkey;
 	c->key = &(c->pkeys[i]);

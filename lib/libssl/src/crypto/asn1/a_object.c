@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.21 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: a_object.c,v 1.22 2014/07/12 16:03:36 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -206,15 +206,13 @@ a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 	}
 	if (tmp != ftmp)
 		free(tmp);
-	if (bl)
-		BN_free(bl);
+	BN_free(bl);
 	return (len);
 
 err:
 	if (tmp != ftmp)
 		free(tmp);
-	if (bl)
-		BN_free(bl);
+	BN_free(bl);
 	return (0);
 }
 

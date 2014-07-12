@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.8 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: ec_key.c,v 1.9 2014/07/12 16:03:37 miod Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -116,12 +116,9 @@ EC_KEY_free(EC_KEY * r)
 	if (i > 0)
 		return;
 
-	if (r->group != NULL)
-		EC_GROUP_free(r->group);
-	if (r->pub_key != NULL)
-		EC_POINT_free(r->pub_key);
-	if (r->priv_key != NULL)
-		BN_clear_free(r->priv_key);
+	EC_GROUP_free(r->group);
+	EC_POINT_free(r->pub_key);
+	BN_clear_free(r->priv_key);
 
 	EC_EX_DATA_free_all_data(&r->method_data);
 
@@ -143,8 +140,7 @@ EC_KEY_copy(EC_KEY * dest, const EC_KEY * src)
 	if (src->group) {
 		const EC_METHOD *meth = EC_GROUP_method_of(src->group);
 		/* clear the old group */
-		if (dest->group)
-			EC_GROUP_free(dest->group);
+		EC_GROUP_free(dest->group);
 		dest->group = EC_GROUP_new(meth);
 		if (dest->group == NULL)
 			return NULL;
@@ -153,8 +149,7 @@ EC_KEY_copy(EC_KEY * dest, const EC_KEY * src)
 	}
 	/* copy the public key */
 	if (src->pub_key && src->group) {
-		if (dest->pub_key)
-			EC_POINT_free(dest->pub_key);
+		EC_POINT_free(dest->pub_key);
 		dest->pub_key = EC_POINT_new(src->group);
 		if (dest->pub_key == NULL)
 			return NULL;
@@ -261,14 +256,12 @@ EC_KEY_generate_key(EC_KEY * eckey)
 	ok = 1;
 
 err:
-	if (order)
-		BN_free(order);
+	BN_free(order);
 	if (pub_key != NULL && eckey->pub_key == NULL)
 		EC_POINT_free(pub_key);
 	if (priv_key != NULL && eckey->priv_key == NULL)
 		BN_free(priv_key);
-	if (ctx != NULL)
-		BN_CTX_free(ctx);
+	BN_CTX_free(ctx);
 	return (ok);
 }
 
@@ -334,10 +327,8 @@ EC_KEY_check_key(const EC_KEY * eckey)
 	}
 	ok = 1;
 err:
-	if (ctx != NULL)
-		BN_CTX_free(ctx);
-	if (point != NULL)
-		EC_POINT_free(point);
+	BN_CTX_free(ctx);
+	EC_POINT_free(point);
 	return (ok);
 }
 
@@ -406,10 +397,8 @@ EC_KEY_set_public_key_affine_coordinates(EC_KEY * key, BIGNUM * x, BIGNUM * y)
 	ok = 1;
 
 err:
-	if (ctx)
-		BN_CTX_free(ctx);
-	if (point)
-		EC_POINT_free(point);
+	BN_CTX_free(ctx);
+	EC_POINT_free(point);
 	return ok;
 
 }
@@ -423,8 +412,7 @@ EC_KEY_get0_group(const EC_KEY * key)
 int 
 EC_KEY_set_group(EC_KEY * key, const EC_GROUP * group)
 {
-	if (key->group != NULL)
-		EC_GROUP_free(key->group);
+	EC_GROUP_free(key->group);
 	key->group = EC_GROUP_dup(group);
 	return (key->group == NULL) ? 0 : 1;
 }
@@ -438,8 +426,7 @@ EC_KEY_get0_private_key(const EC_KEY * key)
 int 
 EC_KEY_set_private_key(EC_KEY * key, const BIGNUM * priv_key)
 {
-	if (key->priv_key)
-		BN_clear_free(key->priv_key);
+	BN_clear_free(key->priv_key);
 	key->priv_key = BN_dup(priv_key);
 	return (key->priv_key == NULL) ? 0 : 1;
 }
@@ -453,8 +440,7 @@ EC_KEY_get0_public_key(const EC_KEY * key)
 int 
 EC_KEY_set_public_key(EC_KEY * key, const EC_POINT * pub_key)
 {
-	if (key->pub_key != NULL)
-		EC_POINT_free(key->pub_key);
+	EC_POINT_free(key->pub_key);
 	key->pub_key = EC_POINT_dup(pub_key, key->group);
 	return (key->pub_key == NULL) ? 0 : 1;
 }

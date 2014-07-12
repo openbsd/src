@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pkey.c,v 1.14 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: x_pkey.c,v 1.15 2014/07/12 16:03:36 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -149,10 +149,8 @@ X509_PKEY_free(X509_PKEY *x)
 
 	if (x->enc_algor != NULL)
 		X509_ALGOR_free(x->enc_algor);
-	if (x->enc_pkey != NULL)
-		M_ASN1_OCTET_STRING_free(x->enc_pkey);
-	if (x->dec_pkey != NULL)
-		EVP_PKEY_free(x->dec_pkey);
+	M_ASN1_OCTET_STRING_free(x->enc_pkey);
+	EVP_PKEY_free(x->dec_pkey);
 	if ((x->key_data != NULL) && (x->key_free))
 		free(x->key_data);
 	free(x);

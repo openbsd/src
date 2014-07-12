@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.8 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.9 2014/07/12 16:03:37 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -371,10 +371,8 @@ EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 		return;
 	if (ctx->pmeth && ctx->pmeth->cleanup)
 		ctx->pmeth->cleanup(ctx);
-	if (ctx->pkey)
-		EVP_PKEY_free(ctx->pkey);
-	if (ctx->peerkey)
-		EVP_PKEY_free(ctx->peerkey);
+	EVP_PKEY_free(ctx->pkey);
+	EVP_PKEY_free(ctx->peerkey);
 #ifndef OPENSSL_NO_ENGINE
 	if (ctx->engine)
 		/* The EVP_PKEY_CTX we used belongs to an ENGINE, release the

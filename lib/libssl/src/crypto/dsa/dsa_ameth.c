@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.12 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.13 2014/07/12 16:03:37 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -125,8 +125,7 @@ dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 err:
 	if (public_key)
 		ASN1_INTEGER_free(public_key);
-	if (dsa)
-		DSA_free(dsa);
+	DSA_free(dsa);
 	return 0;
 }
 
@@ -264,7 +263,7 @@ dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 	}
 
 	EVP_PKEY_assign_DSA(pkey, dsa);
-	BN_CTX_free (ctx);
+	BN_CTX_free(ctx);
 	if (ndsa)
 		sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
 	else
@@ -275,7 +274,7 @@ dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 decerr:
 	DSAerr(DSA_F_DSA_PRIV_DECODE, EVP_R_DECODE_ERROR);
 dsaerr:
-	BN_CTX_free (ctx);
+	BN_CTX_free(ctx);
 	if (privkey)
 		ASN1_INTEGER_free(privkey);
 	sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
@@ -358,20 +357,17 @@ dsa_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
 	if ((a = BN_dup(from->pkey.dsa->p)) == NULL)
 		return 0;
-	if (to->pkey.dsa->p != NULL)
-		BN_free(to->pkey.dsa->p);
+	BN_free(to->pkey.dsa->p);
 	to->pkey.dsa->p = a;
 
 	if ((a = BN_dup(from->pkey.dsa->q)) == NULL)
 		return 0;
-	if (to->pkey.dsa->q != NULL)
-		BN_free(to->pkey.dsa->q);
+	BN_free(to->pkey.dsa->q);
 	to->pkey.dsa->q = a;
 
 	if ((a = BN_dup(from->pkey.dsa->g)) == NULL)
 		return 0;
-	if (to->pkey.dsa->g != NULL)
-		BN_free(to->pkey.dsa->g);
+	BN_free(to->pkey.dsa->g);
 	to->pkey.dsa->g = a;
 	return 1;
 }

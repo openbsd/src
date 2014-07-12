@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_ossl.c,v 1.7 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: ech_ossl.c,v 1.8 2014/07/12 16:03:37 miod Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -201,9 +201,10 @@ static int ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 		}
 	
 err:
-	if (tmp) EC_POINT_free(tmp);
-	if (ctx) BN_CTX_end(ctx);
-	if (ctx) BN_CTX_free(ctx);
+	EC_POINT_free(tmp);
+	if (ctx)
+		BN_CTX_end(ctx);
+	BN_CTX_free(ctx);
 	free(buf);
 	return(ret);
 	}

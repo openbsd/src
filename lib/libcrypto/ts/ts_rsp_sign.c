@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_sign.c,v 1.17 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: ts_rsp_sign.c,v 1.18 2014/07/12 16:03:37 miod Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -195,8 +195,7 @@ TS_RESP_CTX_set_signer_cert(TS_RESP_CTX *ctx, X509 *signer)
 int
 TS_RESP_CTX_set_signer_key(TS_RESP_CTX *ctx, EVP_PKEY *key)
 {
-	if (ctx->signer_key)
-		EVP_PKEY_free(ctx->signer_key);
+	EVP_PKEY_free(ctx->signer_key);
 	ctx->signer_key = key;
 	CRYPTO_add(&ctx->signer_key->references, +1, CRYPTO_LOCK_EVP_PKEY);
 

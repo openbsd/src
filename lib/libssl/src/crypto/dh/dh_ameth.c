@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.11 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.12 2014/07/12 16:03:37 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -120,8 +120,7 @@ dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 err:
 	if (public_key)
 		ASN1_INTEGER_free(public_key);
-	if (dh)
-		DH_free(dh);
+	DH_free(dh);
 	return 0;
 }
 
@@ -409,14 +408,12 @@ dh_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
 	if ((a = BN_dup(from->pkey.dh->p)) == NULL)
 		return 0;
-	if (to->pkey.dh->p != NULL)
-		BN_free(to->pkey.dh->p);
+	BN_free(to->pkey.dh->p);
 	to->pkey.dh->p = a;
 
 	if ((a = BN_dup(from->pkey.dh->g)) == NULL)
 		return 0;
-	if (to->pkey.dh->g != NULL)
-		BN_free(to->pkey.dh->g);
+	BN_free(to->pkey.dh->g);
 	to->pkey.dh->g = a;
 
 	return 1;

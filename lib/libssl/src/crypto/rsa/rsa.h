@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.25 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.26 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -287,7 +287,7 @@ int RSA_public_decrypt(int flen, const unsigned char *from,
     unsigned char *to, RSA *rsa, int padding);
 int RSA_private_decrypt(int flen, const unsigned char *from,
     unsigned char *to, RSA *rsa, int padding);
-void RSA_free (RSA *r);
+void RSA_free(RSA *r);
 /* "up" the RSA object's reference count */
 int RSA_up_ref(RSA *r);
 

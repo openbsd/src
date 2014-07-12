@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_print.c,v 1.22 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: bn_print.c,v 1.23 2014/07/12 16:03:36 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -163,8 +163,7 @@ BN_bn2dec(const BIGNUM *a)
 
 err:
 	free(bn_data);
-	if (t != NULL)
-		BN_free(t);
+	BN_free(t);
 	if (!ok && buf) {
 		free(buf);
 		buf = NULL;

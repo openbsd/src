@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pubkey.c,v 1.21 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: x_pubkey.c,v 1.22 2014/07/12 16:03:36 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -183,8 +183,7 @@ X509_PUBKEY_get(X509_PUBKEY *key)
 	return ret;
 
 error:
-	if (ret != NULL)
-		EVP_PKEY_free(ret);
+	EVP_PKEY_free(ret);
 	return (NULL);
 }
 

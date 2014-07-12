@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_gen.c,v 1.15 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dsa_gen.c,v 1.16 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -322,12 +322,9 @@ end:
 	ok = 1;
 err:
 	if (ok) {
-		if (ret->p)
-			BN_free(ret->p);
-		if (ret->q)
-			BN_free(ret->q);
-		if (ret->g)
-			BN_free(ret->g);
+		BN_free(ret->p);
+		BN_free(ret->q);
+		BN_free(ret->g);
 		ret->p = BN_dup(p);
 		ret->q = BN_dup(q);
 		ret->g = BN_dup(g);
@@ -346,8 +343,7 @@ err:
 		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
 	}
-	if (mont != NULL)
-		BN_MONT_CTX_free(mont);
+	BN_MONT_CTX_free(mont);
 	return ok;
 }
 #endif

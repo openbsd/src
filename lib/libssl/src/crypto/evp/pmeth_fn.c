@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_fn.c,v 1.4 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: pmeth_fn.c,v 1.5 2014/07/12 16:03:37 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -331,8 +331,7 @@ EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 		return -1;
 	}
 
-	if (ctx->peerkey)
-		EVP_PKEY_free(ctx->peerkey);
+	EVP_PKEY_free(ctx->peerkey);
 	ctx->peerkey = peer;
 
 	ret = ctx->pmeth->ctrl(ctx, EVP_PKEY_CTRL_PEER_KEY, 1, peer);

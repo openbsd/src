@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_lib.c,v 1.13 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: pk7_lib.c,v 1.14 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -575,8 +575,7 @@ PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
 	return 1;
 
 err:
-	if (pkey)
-		EVP_PKEY_free(pkey);
+	EVP_PKEY_free(pkey);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_key.c,v 1.18 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dsa_key.c,v 1.19 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -128,8 +128,7 @@ err:
 		BN_free(pub_key);
 	if (priv_key != NULL && dsa->priv_key == NULL)
 		BN_free(priv_key);
-	if (ctx != NULL)
-		BN_CTX_free(ctx);
+	BN_CTX_free(ctx);
 	return ok;
 }
 #endif

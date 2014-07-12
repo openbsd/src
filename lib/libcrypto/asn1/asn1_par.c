@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_par.c,v 1.19 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: asn1_par.c,v 1.20 2014/07/12 16:03:36 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -291,10 +291,8 @@ asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offset,
 						nl = 1;
 					}
 				}
-				if (os != NULL) {
-					M_ASN1_OCTET_STRING_free(os);
-					os = NULL;
-				}
+				M_ASN1_OCTET_STRING_free(os);
+				os = NULL;
 			} else if (tag == V_ASN1_INTEGER) {
 				ASN1_INTEGER *bs;
 				int i;
@@ -376,8 +374,7 @@ asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offset,
 end:
 	if (o != NULL)
 		ASN1_OBJECT_free(o);
-	if (os != NULL)
-		M_ASN1_OCTET_STRING_free(os);
+	M_ASN1_OCTET_STRING_free(os);
 	*pp = p;
 	return (ret);
 }

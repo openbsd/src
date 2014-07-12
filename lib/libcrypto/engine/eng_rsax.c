@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_rsax.c,v 1.9 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: eng_rsax.c,v 1.10 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (c) 2010-2010 Intel Corp.
  *   Author: Vinodh.Gopal@intel.com
  *           Jim Guilford
@@ -307,12 +307,9 @@ e_rsax_rsa_finish(RSA *rsa)
 		free(hptr);
 		RSA_set_ex_data(rsa, rsax_ex_data_idx, NULL);
 	}
-	if (rsa->_method_mod_n)
-		BN_MONT_CTX_free(rsa->_method_mod_n);
-	if (rsa->_method_mod_p)
-		BN_MONT_CTX_free(rsa->_method_mod_p);
-	if (rsa->_method_mod_q)
-		BN_MONT_CTX_free(rsa->_method_mod_q);
+	BN_MONT_CTX_free(rsa->_method_mod_n);
+	BN_MONT_CTX_free(rsa->_method_mod_p);
+	BN_MONT_CTX_free(rsa->_method_mod_q);
 	return 1;
 }
 

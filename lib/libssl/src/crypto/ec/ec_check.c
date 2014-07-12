@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_check.c,v 1.3 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: ec_check.c,v 1.4 2014/07/12 16:03:37 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -109,9 +109,7 @@ EC_GROUP_check(const EC_GROUP * group, BN_CTX * ctx)
 err:
 	if (ctx != NULL)
 		BN_CTX_end(ctx);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
-	if (point)
-		EC_POINT_free(point);
+	BN_CTX_free(new_ctx);
+	EC_POINT_free(point);
 	return ret;
 }

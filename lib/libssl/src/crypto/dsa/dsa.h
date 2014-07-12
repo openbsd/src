@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.17 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: dsa.h,v 1.18 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -206,7 +206,7 @@ int	DSA_set_method(DSA *dsa, const DSA_METHOD *);
 
 DSA *	DSA_new(void);
 DSA *	DSA_new_method(ENGINE *engine);
-void	DSA_free (DSA *r);
+void	DSA_free(DSA *r);
 /* "up" the DSA object's reference count */
 int	DSA_up_ref(DSA *r);
 int	DSA_size(const DSA *);

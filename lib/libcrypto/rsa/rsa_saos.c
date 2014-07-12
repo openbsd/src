@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_saos.c,v 1.15 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: rsa_saos.c,v 1.16 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,8 +140,7 @@ RSA_verify_ASN1_OCTET_STRING(int dtype, const unsigned char *m,
 	} else
 		ret = 1;
 err:
-	if (sig != NULL)
-		M_ASN1_OCTET_STRING_free(sig);
+	M_ASN1_OCTET_STRING_free(sig);
 	if (s != NULL) {
 		OPENSSL_cleanse(s, (unsigned int)siglen);
 		free(s);

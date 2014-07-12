@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.11 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.12 2014/07/12 16:03:37 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -492,12 +492,9 @@ do_EC_KEY_print(BIO * bp, const EC_KEY * x, int off, int ktype)
 err:
 	if (!ret)
 		ECerr(EC_F_DO_EC_KEY_PRINT, reason);
-	if (pub_key)
-		BN_free(pub_key);
-	if (order)
-		BN_free(order);
-	if (ctx)
-		BN_CTX_free(ctx);
+	BN_free(pub_key);
+	BN_free(order);
+	BN_CTX_free(ctx);
 	free(buffer);
 	return (ret);
 }

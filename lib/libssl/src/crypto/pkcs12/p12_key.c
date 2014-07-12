@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_key.c,v 1.20 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: p12_key.c,v 1.21 2014/07/12 16:03:37 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -195,12 +195,12 @@ err:
 	PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UNI, ERR_R_MALLOC_FAILURE);
 
 end:
-	free (Ai);
-	free (B);
-	free (D);
-	free (I);
-	BN_free (Ij);
-	BN_free (Bpl1);
+	free(Ai);
+	free(B);
+	free(D);
+	free(I);
+	BN_free(Ij);
+	BN_free(Bpl1);
 	EVP_MD_CTX_cleanup(&ctx);
 	return ret;
 }

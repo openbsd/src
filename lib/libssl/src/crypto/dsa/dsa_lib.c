@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.20 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.21 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -201,20 +201,13 @@ DSA_free(DSA *r)
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);
 
-	if (r->p != NULL)
-		BN_clear_free(r->p);
-	if (r->q != NULL)
-		BN_clear_free(r->q);
-	if (r->g != NULL)
-		BN_clear_free(r->g);
-	if (r->pub_key != NULL)
-		BN_clear_free(r->pub_key);
-	if (r->priv_key != NULL)
-		BN_clear_free(r->priv_key);
-	if (r->kinv != NULL)
-		BN_clear_free(r->kinv);
-	if (r->r != NULL)
-		BN_clear_free(r->r);
+	BN_clear_free(r->p);
+	BN_clear_free(r->q);
+	BN_clear_free(r->g);
+	BN_clear_free(r->pub_key);
+	BN_clear_free(r->priv_key);
+	BN_clear_free(r->kinv);
+	BN_clear_free(r->r);
 	free(r);
 }
 
@@ -305,8 +298,7 @@ DSA_dup_DH(const DSA *r)
 	return ret;
 
 err:
-	if (ret != NULL)
-		DH_free(ret);
+	DH_free(ret);
 	return NULL;
 }
 #endif

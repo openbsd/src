@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.12 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.13 2014/07/12 16:03:37 miod Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -222,8 +222,7 @@ ec_GFp_simple_group_set_curve(EC_GROUP * group,
 
 err:
 	BN_CTX_end(ctx);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
+	BN_CTX_free(new_ctx);
 	return ret;
 }
 
@@ -267,8 +266,7 @@ ec_GFp_simple_group_get_curve(const EC_GROUP * group, BIGNUM * p, BIGNUM * a, BI
 	ret = 1;
 
 err:
-	if (new_ctx)
-		BN_CTX_free(new_ctx);
+	BN_CTX_free(new_ctx);
 	return ret;
 }
 
@@ -348,8 +346,7 @@ ec_GFp_simple_group_check_discriminant(const EC_GROUP * group, BN_CTX * ctx)
 err:
 	if (ctx != NULL)
 		BN_CTX_end(ctx);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
+	BN_CTX_free(new_ctx);
 	return ret;
 }
 
@@ -457,8 +454,7 @@ ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP * group, EC_POINT *
 	ret = 1;
 
 err:
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
+	BN_CTX_free(new_ctx);
 	return ret;
 }
 
@@ -506,8 +502,7 @@ ec_GFp_simple_get_Jprojective_coordinates_GFp(const EC_GROUP * group, const EC_P
 	ret = 1;
 
 err:
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
+	BN_CTX_free(new_ctx);
 	return ret;
 }
 
@@ -626,8 +621,7 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP * group, const EC_POIN
 
 err:
 	BN_CTX_end(ctx);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
+	BN_CTX_free(new_ctx);
 	return ret;
 }
 
@@ -810,8 +804,7 @@ ec_GFp_simple_add(const EC_GROUP * group, EC_POINT * r, const EC_POINT * a, cons
 end:
 	if (ctx)		/* otherwise we already called BN_CTX_end */
 		BN_CTX_end(ctx);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
+	BN_CTX_free(new_ctx);
 	return ret;
 }
 
@@ -951,8 +944,7 @@ ec_GFp_simple_dbl(const EC_GROUP * group, EC_POINT * r, const EC_POINT * a, BN_C
 
 err:
 	BN_CTX_end(ctx);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
+	BN_CTX_free(new_ctx);
 	return ret;
 }
 
@@ -1071,8 +1063,7 @@ ec_GFp_simple_is_on_curve(const EC_GROUP * group, const EC_POINT * point, BN_CTX
 
 err:
 	BN_CTX_end(ctx);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
+	BN_CTX_free(new_ctx);
 	return ret;
 }
 
@@ -1172,8 +1163,7 @@ ec_GFp_simple_cmp(const EC_GROUP * group, const EC_POINT * a, const EC_POINT * b
 
 end:
 	BN_CTX_end(ctx);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
+	BN_CTX_free(new_ctx);
 	return ret;
 }
 
@@ -1211,8 +1201,7 @@ ec_GFp_simple_make_affine(const EC_GROUP * group, EC_POINT * point, BN_CTX * ctx
 
 err:
 	BN_CTX_end(ctx);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
+	BN_CTX_free(new_ctx);
 	return ret;
 }
 
@@ -1377,16 +1366,14 @@ ec_GFp_simple_points_make_affine(const EC_GROUP * group, size_t num, EC_POINT * 
 
 err:
 	BN_CTX_end(ctx);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
+	BN_CTX_free(new_ctx);
 	if (heap != NULL) {
 		/*
 		 * heap[pow2/2] .. heap[pow2-1] have not been allocated
 		 * locally!
 		 */
 		for (i = pow2 / 2 - 1; i > 0; i--) {
-			if (heap[i] != NULL)
-				BN_clear_free(heap[i]);
+			BN_clear_free(heap[i]);
 		}
 		free(heap);
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_mult.c,v 1.4 2014/07/10 22:45:56 jsing Exp $ */
+/* $OpenBSD: ec2_mult.c,v 1.5 2014/07/12 16:03:37 miod Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -421,12 +421,9 @@ ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	ret = 1;
 
 err:
-	if (p)
-		EC_POINT_free(p);
-	if (acc)
-		EC_POINT_free(acc);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
+	EC_POINT_free(p);
+	EC_POINT_free(acc);
+	BN_CTX_free(new_ctx);
 	return ret;
 }
 

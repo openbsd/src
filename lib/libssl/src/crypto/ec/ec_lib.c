@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.14 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.15 2014/07/12 16:03:37 miod Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -124,8 +124,7 @@ EC_GROUP_free(EC_GROUP * group)
 
 	EC_EX_DATA_free_all_data(&group->extra_data);
 
-	if (group->generator != NULL)
-		EC_POINT_free(group->generator);
+	EC_POINT_free(group->generator);
 	BN_free(&group->order);
 	BN_free(&group->cofactor);
 
@@ -148,8 +147,7 @@ EC_GROUP_clear_free(EC_GROUP * group)
 
 	EC_EX_DATA_clear_free_all_data(&group->extra_data);
 
-	if (group->generator != NULL)
-		EC_POINT_clear_free(group->generator);
+	EC_POINT_clear_free(group->generator);
 	BN_clear_free(&group->order);
 	BN_clear_free(&group->cofactor);
 
@@ -200,10 +198,8 @@ EC_GROUP_copy(EC_GROUP * dest, const EC_GROUP * src)
 			return 0;
 	} else {
 		/* src->generator == NULL */
-		if (dest->generator != NULL) {
-			EC_POINT_clear_free(dest->generator);
-			dest->generator = NULL;
-		}
+		EC_POINT_clear_free(dest->generator);
+		dest->generator = NULL;
 	}
 
 	if (!BN_copy(&dest->order, &src->order))
@@ -252,8 +248,7 @@ EC_GROUP_dup(const EC_GROUP * a)
 
 err:
 	if (!ok) {
-		if (t)
-			EC_GROUP_free(t);
+		EC_GROUP_free(t);
 		return NULL;
 	} else
 		return t;

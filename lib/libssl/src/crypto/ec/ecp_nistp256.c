@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp256.c,v 1.13 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: ecp_nistp256.c,v 1.14 2014/07/12 16:03:37 miod Exp $ */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project
  */
@@ -1834,8 +1834,7 @@ ec_GFp_nistp256_group_set_curve(EC_GROUP * group, const BIGNUM * p,
 	ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
 err:
 	BN_CTX_end(ctx);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
+	BN_CTX_free(new_ctx);
 	return ret;
 }
 
@@ -2098,10 +2097,8 @@ ec_GFp_nistp256_points_mul(const EC_GROUP * group, EC_POINT * r,
 
 err:
 	BN_CTX_end(ctx);
-	if (generator != NULL)
-		EC_POINT_free(generator);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
+	EC_POINT_free(generator);
+	BN_CTX_free(new_ctx);
 	free(secrets);
 	free(pre_comp);
 	free(tmp_smallfelems);
@@ -2223,12 +2220,9 @@ ec_GFp_nistp256_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 	pre = NULL;
 err:
 	BN_CTX_end(ctx);
-	if (generator != NULL)
-		EC_POINT_free(generator);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
-	if (pre)
-		nistp256_pre_comp_free(pre);
+	EC_POINT_free(generator);
+	BN_CTX_free(new_ctx);
+	nistp256_pre_comp_free(pre);
 	return ret;
 }
 

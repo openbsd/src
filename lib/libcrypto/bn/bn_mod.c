@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mod.c,v 1.8 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: bn_mod.c,v 1.9 2014/07/12 16:03:36 miod Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================
@@ -253,8 +253,7 @@ BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m, BN_CTX *ctx)
 	ret = BN_mod_lshift_quick(r, r, n, (abs_m ? abs_m : m));
 	bn_check_top(r);
 
-	if (abs_m)
-		BN_free(abs_m);
+	BN_free(abs_m);
 	return ret;
 }
 

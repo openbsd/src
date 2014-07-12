@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.9 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.10 2014/07/12 16:03:37 miod Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -315,20 +315,13 @@ ECPKParameters_print(BIO * bp, const EC_GROUP * x, int off)
 err:
 	if (!ret)
 		ECerr(EC_F_ECPKPARAMETERS_PRINT, reason);
-	if (p)
-		BN_free(p);
-	if (a)
-		BN_free(a);
-	if (b)
-		BN_free(b);
-	if (gen)
-		BN_free(gen);
-	if (order)
-		BN_free(order);
-	if (cofactor)
-		BN_free(cofactor);
-	if (ctx)
-		BN_CTX_free(ctx);
+	BN_free(p);
+	BN_free(a);
+	BN_free(b);
+	BN_free(gen);
+	BN_free(order);
+	BN_free(cofactor);
+	BN_CTX_free(ctx);
 	free(buffer);
 	return (ret);
 }

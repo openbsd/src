@@ -1,4 +1,4 @@
-/* $OpenBSD: pvkfmt.c,v 1.10 2014/07/11 15:35:53 miod Exp $ */
+/* $OpenBSD: pvkfmt.c,v 1.11 2014/07/12 16:03:37 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -349,12 +349,9 @@ b2i_dss(const unsigned char **in, unsigned int length, unsigned int bitlen,
 
 memerr:
 	PEMerr(PEM_F_B2I_DSS, ERR_R_MALLOC_FAILURE);
-	if (dsa)
-		DSA_free(dsa);
-	if (ret)
-		EVP_PKEY_free(ret);
-	if (ctx)
-		BN_CTX_free(ctx);
+	DSA_free(dsa);
+	EVP_PKEY_free(ret);
+	BN_CTX_free(ctx);
 	return NULL;
 }
 
@@ -402,10 +399,8 @@ b2i_rsa(const unsigned char **in, unsigned int length, unsigned int bitlen,
 
 memerr:
 	PEMerr(PEM_F_B2I_RSA, ERR_R_MALLOC_FAILURE);
-	if (rsa)
-		RSA_free(rsa);
-	if (ret)
-		EVP_PKEY_free(ret);
+	RSA_free(rsa);
+	EVP_PKEY_free(ret);
 	return NULL;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.9 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.10 2014/07/12 16:03:37 miod Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -404,8 +404,8 @@ ec_asn1_group2fieldid(const EC_GROUP * group, X9_62_FIELDID * field)
 
 	ok = 1;
 
-err:	if (tmp)
-		BN_free(tmp);
+err:
+	BN_free(tmp);
 	return (ok);
 }
 
@@ -509,12 +509,11 @@ ec_asn1_group2curve(const EC_GROUP * group, X9_62_CURVE * curve)
 
 	ok = 1;
 
-err:	free(buffer_1);
+err:
+	free(buffer_1);
 	free(buffer_2);
-	if (tmp_1)
-		BN_free(tmp_1);
-	if (tmp_2)
-		BN_free(tmp_2);
+	BN_free(tmp_1);
+	BN_free(tmp_2);
 	return (ok);
 }
 
@@ -608,8 +607,7 @@ err:	if (!ok) {
 			ECPARAMETERS_free(ret);
 		ret = NULL;
 	}
-	if (tmp)
-		BN_free(tmp);
+	BN_free(tmp);
 	free(buffer);
 	return (ret);
 }
@@ -849,10 +847,8 @@ ec_asn1_parameters2group(const ECPARAMETERS * params)
 	}
 	/* extract the cofactor (optional) */
 	if (params->cofactor == NULL) {
-		if (b) {
-			BN_free(b);
-			b = NULL;
-		}
+		BN_free(b);
+		b = NULL;
 	} else if ((b = ASN1_INTEGER_to_BN(params->cofactor, b)) == NULL) {
 		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_ASN1_LIB);
 		goto err;
@@ -865,18 +861,13 @@ ec_asn1_parameters2group(const ECPARAMETERS * params)
 	ok = 1;
 
 err:	if (!ok) {
-		if (ret)
-			EC_GROUP_clear_free(ret);
+		EC_GROUP_clear_free(ret);
 		ret = NULL;
 	}
-	if (p)
-		BN_free(p);
-	if (a)
-		BN_free(a);
-	if (b)
-		BN_free(b);
-	if (point)
-		EC_POINT_free(point);
+	BN_free(p);
+	BN_free(a);
+	BN_free(b);
+	EC_POINT_free(point);
 	return (ret);
 }
 
@@ -992,8 +983,7 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 		ret = *a;
 
 	if (priv_key->parameters) {
-		if (ret->group)
-			EC_GROUP_clear_free(ret->group);
+		EC_GROUP_clear_free(ret->group);
 		ret->group = ec_asn1_pkparameters2group(priv_key->parameters);
 	}
 	if (ret->group == NULL) {
@@ -1022,8 +1012,7 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 		const unsigned char *pub_oct;
 		size_t pub_oct_len;
 
-		if (ret->pub_key)
-			EC_POINT_clear_free(ret->pub_key);
+		EC_POINT_clear_free(ret->pub_key);
 		ret->pub_key = EC_POINT_new(ret->group);
 		if (ret->pub_key == NULL) {
 			ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_EC_LIB);

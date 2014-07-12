@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_pkey.c,v 1.17 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: pem_pkey.c,v 1.18 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -99,8 +99,7 @@ PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 			goto p8err;
 		ret = EVP_PKCS82PKEY(p8inf);
 		if (x) {
-			if (*x)
-				EVP_PKEY_free((EVP_PKEY *)*x);
+			EVP_PKEY_free(*x);
 			*x = ret;
 		}
 		PKCS8_PRIV_KEY_INFO_free(p8inf);
@@ -128,8 +127,7 @@ PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 			goto p8err;
 		ret = EVP_PKCS82PKEY(p8inf);
 		if (x) {
-			if (*x)
-				EVP_PKEY_free((EVP_PKEY *)*x);
+			EVP_PKEY_free(*x);
 			*x = ret;
 		}
 		PKCS8_PRIV_KEY_INFO_free(p8inf);
@@ -194,8 +192,7 @@ PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
 			goto err;
 		}
 		if (x) {
-			if (*x)
-				EVP_PKEY_free((EVP_PKEY *)*x);
+			EVP_PKEY_free(*x);
 			*x = ret;
 		}
 	}

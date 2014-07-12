@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.7 2014/07/11 13:02:10 miod Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.8 2014/07/12 16:03:37 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -495,8 +495,7 @@ CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer)
 {
 	if (signer) {
 		CRYPTO_add(&signer->references, 1, CRYPTO_LOCK_X509);
-		if (si->pkey)
-			EVP_PKEY_free(si->pkey);
+		EVP_PKEY_free(si->pkey);
 		si->pkey = X509_get_pubkey(signer);
 	}
 	if (si->signer)

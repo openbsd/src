@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.21 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: digest.c,v 1.22 2014/07/12 16:03:37 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -358,8 +358,7 @@ EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 		OPENSSL_cleanse(ctx->md_data, ctx->digest->ctx_size);
 		free(ctx->md_data);
 	}
-	if (ctx->pctx)
-		EVP_PKEY_CTX_free(ctx->pctx);
+	EVP_PKEY_CTX_free(ctx->pctx);
 #ifndef OPENSSL_NO_ENGINE
 	if (ctx->engine)
 		/* The EVP_MD we used belongs to an ENGINE, release the
