@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.10 2014/07/12 15:53:44 pirofti Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.11 2014/07/12 16:43:31 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -931,21 +931,33 @@ octhci_root_ctrl_start(struct usbd_xfer *xfer)
 
 		switch (value) {
 		case UHF_PORT_ENABLE:
+			/* The application can't set the enable bit */
 			break;
 		case UHF_PORT_SUSPEND:
 			DPRINTFN(6, ("suspend port %u (LPM=%u)\n", index, i));
+			octhci_regc_set(sc, USBC_HPRT_OFFSET,
+			    USBC_HPRT_PRTSUSP);
 			break;
 		case UHF_PORT_RESET:
 			DPRINTFN(6, ("reset port %d\n", index));
+			/* Start reset sequence. */
+			octhci_regc_set(sc, USBC_HPRT_OFFSET, USBC_HPRT_PRTRST);
+			/* Wait for reset to complete. */
+			usb_delay_ms(&sc->sc_bus, USB_PORT_ROOT_RESET_DELAY);
+			if (sc->sc_bus.dying) {
+				err = USBD_IOERROR;
+				goto ret;
+			}
+			/* Terminate reset sequence. */
+			octhci_regc_clear(sc, USBC_HPRT_OFFSET,
+			    USBC_HPRT_PRTRST);
 			break;
 		case UHF_PORT_POWER:
 			DPRINTFN(3, ("set port power %d\n", index));
+			octhci_regc_set(sc, USBC_HPRT_OFFSET, USBC_HPRT_PRTPWR);
 			break;
 		case UHF_PORT_INDICATOR:
 			DPRINTFN(3, ("set port indicator %d\n", index));
-
-			break;
-		case UHF_C_PORT_RESET:
 			break;
 		default:
 			err = USBD_IOERROR;
