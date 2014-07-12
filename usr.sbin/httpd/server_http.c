@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.1 2014/07/12 23:34:54 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.2 2014/07/12 23:55:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -549,7 +549,8 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 		text = msg;
 
 	/* A CSS stylesheet allows minimal customization by the user */
-	style = "body { background-color: white; color: black; }";
+	style = "body { background-color: white; color: black; font-family: "
+	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }";
 
 	/* Generate simple HTTP+HTML error document */
 	if (asprintf(&httpmsg,
