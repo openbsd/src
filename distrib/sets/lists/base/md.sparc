@@ -134,11 +134,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/auconv.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/audio_if.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/biovar.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/bluetooth
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/bluetooth/btdev.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/bluetooth/bthid.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/bluetooth/bthidev.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/bluetooth/btsco.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/cardbus
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/cardbus/cardbus_exrom.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/cardbus/cardbusvar.ph
@@ -1214,13 +1209,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net80211/ieee80211_regdomain.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net80211/ieee80211_rssadapt.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net80211/ieee80211_var.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netbt
-./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/bluetooth.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/bt_var.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/hci.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/l2cap.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/rfcomm.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet

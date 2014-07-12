@@ -661,11 +661,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/auconv.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/audio_if.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/biovar.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/bluetooth
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/bluetooth/btdev.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/bluetooth/bthid.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/bluetooth/bthidev.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/bluetooth/btsco.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/cardbus
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/cardbus/cardbus_exrom.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/cardbus/cardbusvar.ph
@@ -1822,13 +1817,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/net80211/ieee80211_regdomain.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net80211/ieee80211_rssadapt.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net80211/ieee80211_var.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/netbt
-./usr/libdata/perl5/site_perl/i386-openbsd/netbt/bluetooth.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/netbt/bt_var.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/netbt/hci.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/netbt/l2cap.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/netbt/rfcomm.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/netinet

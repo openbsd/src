@@ -103,11 +103,6 @@
 ./usr/include/dev/auconv.h
 ./usr/include/dev/audio_if.h
 ./usr/include/dev/biovar.h
-./usr/include/dev/bluetooth
-./usr/include/dev/bluetooth/btdev.h
-./usr/include/dev/bluetooth/bthid.h
-./usr/include/dev/bluetooth/bthidev.h
-./usr/include/dev/bluetooth/btsco.h
 ./usr/include/dev/cardbus
 ./usr/include/dev/cardbus/cardbus_exrom.h
 ./usr/include/dev/cardbus/cardbusvar.h
@@ -1043,13 +1038,6 @@
 ./usr/include/net80211/ieee80211_regdomain.h
 ./usr/include/net80211/ieee80211_rssadapt.h
 ./usr/include/net80211/ieee80211_var.h
-./usr/include/netbt
-./usr/include/netbt/bluetooth.h
-./usr/include/netbt/bt_var.h
-./usr/include/netbt/hci.h
-./usr/include/netbt/l2cap.h
-./usr/include/netbt/rfcomm.h
-./usr/include/netbt/sco.h
 ./usr/include/netdb.h
 ./usr/include/netgroup.h
 ./usr/include/netinet

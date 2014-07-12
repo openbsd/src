@@ -1605,7 +1605,6 @@
 ./usr/share/man/man4/bha.4
 ./usr/share/man/man4/bio.4
 ./usr/share/man/man4/bktr.4
-./usr/share/man/man4/bluetooth.4
 ./usr/share/man/man4/bmtphy.4
 ./usr/share/man/man4/bnx.4
 ./usr/share/man/man4/boca.4
@@ -1613,9 +1612,6 @@
 ./usr/share/man/man4/brgphy.4
 ./usr/share/man/man4/bridge.4
 ./usr/share/man/man4/brswphy.4
-./usr/share/man/man4/btkbd.4
-./usr/share/man/man4/btms.4
-./usr/share/man/man4/btsco.4
 ./usr/share/man/man4/bwi.4
 ./usr/share/man/man4/cac.4
 ./usr/share/man/man4/cardbus.4
@@ -2009,7 +2005,6 @@
 ./usr/share/man/man4/safe.4
 ./usr/share/man/man4/safte.4
 ./usr/share/man/man4/san.4
-./usr/share/man/man4/sbt.4
 ./usr/share/man/man4/sbus.4
 ./usr/share/man/man4/schsio.4
 ./usr/share/man/man4/scsi.4
@@ -2270,7 +2265,6 @@
 ./usr/share/man/man4/uberry.4
 ./usr/share/man/man4/ubsa.4
 ./usr/share/man/man4/ubsec.4
-./usr/share/man/man4/ubt.4
 ./usr/share/man/man4/uchcom.4
 ./usr/share/man/man4/ucom.4
 ./usr/share/man/man4/ucycom.4

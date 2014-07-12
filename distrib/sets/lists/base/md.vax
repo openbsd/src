@@ -92,11 +92,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/auconv.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/audio_if.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/biovar.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/bluetooth
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/bluetooth/btdev.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/bluetooth/bthid.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/bluetooth/bthidev.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/bluetooth/btsco.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/cardbus
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/cardbus/cardbus_exrom.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/cardbus/cardbusvar.ph
@@ -1104,13 +1099,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/net80211/ieee80211_regdomain.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net80211/ieee80211_rssadapt.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net80211/ieee80211_var.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netbt
-./usr/libdata/perl5/site_perl/vax-openbsd/netbt/bluetooth.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netbt/bt_var.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netbt/hci.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netbt/l2cap.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netbt/rfcomm.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netinet

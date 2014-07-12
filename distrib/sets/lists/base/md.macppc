@@ -657,11 +657,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/auconv.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/audio_if.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/biovar.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/bluetooth
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/bluetooth/btdev.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/bluetooth/bthid.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/bluetooth/bthidev.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/bluetooth/btsco.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/cardbus
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/cardbus/cardbus_exrom.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/cardbus/cardbusvar.ph
@@ -1790,13 +1785,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net80211/ieee80211_regdomain.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net80211/ieee80211_rssadapt.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net80211/ieee80211_var.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/bluetooth.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/bt_var.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/hci.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/l2cap.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/rfcomm.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet
