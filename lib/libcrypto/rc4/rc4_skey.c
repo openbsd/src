@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4_skey.c,v 1.11 2014/07/09 11:10:51 bcook Exp $ */
+/* $OpenBSD: rc4_skey.c,v 1.12 2014/07/12 20:11:45 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -83,7 +83,7 @@ const char *RC4_options(void)
  * Date: Wed, 14 Sep 1994 06:35:31 GMT
  */
 
-void private_RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
+void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
 	{
         register RC4_INT tmp;
         register int id1,id2;

@@ -428,10 +428,10 @@ $idx="%r8";
 $ido="%r9";
 
 $code.=<<___;
-.globl	private_RC4_set_key
-.type	private_RC4_set_key,\@function,3
+.globl	RC4_set_key
+.type	RC4_set_key,\@function,3
 .align	16
-private_RC4_set_key:
+RC4_set_key:
 	lea	8($dat),$dat
 	lea	($inp,$len),$inp
 	neg	$len
@@ -498,7 +498,7 @@ private_RC4_set_key:
 	mov	%eax,-8($dat)
 	mov	%eax,-4($dat)
 	ret
-.size	private_RC4_set_key,.-private_RC4_set_key
+.size	RC4_set_key,.-RC4_set_key
 
 .globl	RC4_options
 .type	RC4_options,\@abi-omnipotent

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmll_locl.h,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: cmll_locl.h,v 1.4 2014/07/12 20:11:45 miod Exp $ */
 /* ====================================================================
  * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) . 
  * ALL RIGHTS RESERVED.
@@ -81,6 +81,4 @@ void Camellia_EncryptBlock(int keyBitLength, const u8 plaintext[],
 		const KEY_TABLE_TYPE keyTable, u8 ciphertext[]);
 void Camellia_DecryptBlock(int keyBitLength, const u8 ciphertext[], 
 		const KEY_TABLE_TYPE keyTable, u8 plaintext[]);
-int private_Camellia_set_key(const unsigned char *userKey, const int bits,
-			     CAMELLIA_KEY *key);
 #endif /* #ifndef HEADER_CAMELLIA_LOCL_H */
