@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2014/07/12 15:53:34 miod Exp $
+# $OpenBSD: Makefile,v 1.12 2014/07/12 20:56:21 miod Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -224,6 +224,7 @@ MLINKS+=\
 	ASN1_STRING_length.3 ASN1_STRING_cmp.3 \
 	ASN1_STRING_length.3 ASN1_STRING_data.3 \
 	ASN1_STRING_length.3 ASN1_STRING_dup.3 \
+	ASN1_STRING_length.3 ASN1_STRING_length_set.3 \
 	ASN1_STRING_length.3 ASN1_STRING_set.3 \
 	ASN1_STRING_length.3 ASN1_STRING_to_UTF8.3 \
 	ASN1_STRING_length.3 ASN1_STRING_type.3 \
@@ -254,6 +255,7 @@ MLINKS+=\
 	BIO_ctrl.3 BIO_set_close.3 \
 	BIO_ctrl.3 BIO_set_info_callback.3 \
 	BIO_ctrl.3 BIO_tell.3 \
+	BIO_ctrl.3 BIO_wpending.3 \
 	BIO_f_buffer.3 BIO_get_buffer_num_lines.3 \
 	BIO_f_buffer.3 BIO_set_buffer_read_data.3 \
 	BIO_f_buffer.3 BIO_set_buffer_size.3 \
@@ -352,9 +354,13 @@ MLINKS+=\
 	BN_add.3 BN_exp.3 \
 	BN_add.3 BN_gcd.3 \
 	BN_add.3 BN_mod.3 \
+	BN_add.3 BN_mod_add.3 \
 	BN_add.3 BN_mod_exp.3 \
 	BN_add.3 BN_mod_mul.3 \
+	BN_add.3 BN_mod_sqr.3 \
+	BN_add.3 BN_mod_sub.3 \
 	BN_add.3 BN_mul.3 \
+	BN_add.3 BN_nnmod.3 \
 	BN_add.3 BN_sqr.3 \
 	BN_add.3 BN_sub.3 \
 	BN_add_word.3 BN_div_word.3 \
@@ -422,6 +428,12 @@ MLINKS+=\
 	CONF_modules_free.3 CONF_modules_unload.3 \
 	CONF_modules_load_file.3 CONF_modules_load.3 \
 	CRYPTO_set_ex_data.3 CRYPTO_get_ex_data.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_THREADID_cmp.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_THREADID_cpy.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_THREADID_current.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_THREADID_get_callback.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_THREADID_hash.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_THREADID_set_callback.3 \
 	CRYPTO_set_locking_callback.3 CRYPTO_add.3 \
 	CRYPTO_set_locking_callback.3 CRYPTO_add_lock.3 \
 	CRYPTO_set_locking_callback.3 CRYPTO_destroy_dynlockid.3 \
@@ -436,6 +448,37 @@ MLINKS+=\
 	CRYPTO_set_locking_callback.3 CRYPTO_set_id_callback.3 \
 	CRYPTO_set_locking_callback.3 CRYPTO_w_lock.3 \
 	CRYPTO_set_locking_callback.3 CRYPTO_w_unlock.3 \
+	DES_set_key.3 DES_cbc_cksum.3 \
+	DES_set_key.3 DES_cfb64_encrypt.3 \
+	DES_set_key.3 DES_cfb_encrypt.3 \
+	DES_set_key.3 DES_crypt.3 \
+	DES_set_key.3 DES_ecb2_encrypt.3 \
+	DES_set_key.3 DES_ecb3_encrypt.3 \
+	DES_set_key.3 DES_ecb_encrypt.3 \
+	DES_set_key.3 DES_ede2_cbc_encrypt.3 \
+	DES_set_key.3 DES_ede2_cfb64_encrypt.3 \
+	DES_set_key.3 DES_ede2_ofb64_encrypt.3 \
+	DES_set_key.3 DES_ede3_cbc_encrypt.3 \
+	DES_set_key.3 DES_ede3_cbcm_encrypt.3 \
+	DES_set_key.3 DES_ede3_cfb64_encrypt.3 \
+	DES_set_key.3 DES_ede3_ofb64_encrypt.3 \
+	DES_set_key.3 DES_enc_read.3 \
+	DES_set_key.3 DES_enc_write.3 \
+	DES_set_key.3 DES_fcrypt.3 \
+	DES_set_key.3 DES_is_weak_key.3 \
+	DES_set_key.3 DES_key_sched.3 \
+	DES_set_key.3 DES_ncbc_encrypt.3 \
+	DES_set_key.3 DES_ofb64_encrypt.3 \
+	DES_set_key.3 DES_ofb_encrypt.3 \
+	DES_set_key.3 DES_pcbc_encrypt.3 \
+	DES_set_key.3 DES_quad_cksum.3 \
+	DES_set_key.3 DES_random_key.3 \
+	DES_set_key.3 DES_set_key_checked.3 \
+	DES_set_key.3 DES_set_key_unchecked.3 \
+	DES_set_key.3 DES_set_odd_parity.3 \
+	DES_set_key.3 DES_string_to_2keys.3 \
+	DES_set_key.3 DES_string_to_key.3 \
+	DES_set_key.3 DES_xcbc_encrypt.3 \
 	DH_generate_key.3 DH_compute_key.3 \
 	DH_generate_parameters.3 DH_check.3 \
 	DH_generate_parameters.3 DH_generate_parameters_ex.3 \
@@ -448,7 +491,11 @@ MLINKS+=\
 	DH_set_method.3 DH_new_method.3 \
 	DH_set_method.3 DH_set_default_method.3 \
 	DH_set_method.3 DH_set_default_openssl_method.3 \
+	DSA_SIG_new.3 DSA_SIG_free.3 \
+	DSA_do_sign.3 DSA_do_verify.3 \
 	DSA_generate_parameters.3 DSA_generate_parameters_ex.3 \
+	DSA_get_ex_new_index.3 DSA_get_ex_data.3 \
+	DSA_get_ex_new_index.3 DSA_set_ex_data.3 \
 	DSA_new.3 DSA_free.3 \
 	DSA_set_method.3 DSA_OpenSSL.3 \
 	DSA_set_method.3 DSA_get_default_method.3 \
@@ -564,7 +611,11 @@ MLINKS+=\
 	ERR_get_error.3 ERR_peek_error.3 \
 	ERR_get_error.3 ERR_peek_error_line.3 \
 	ERR_get_error.3 ERR_peek_error_line_data.3 \
+	ERR_get_error.3 ERR_peek_last_error.3 \
+	ERR_get_error.3 ERR_peek_last_error_line.3 \
+	ERR_get_error.3 ERR_peek_last_error_line_data.3 \
 	ERR_load_crypto_strings.3 ERR_free_strings.3 \
+	ERR_load_crypto_strings.3 SSL_load_error_strings.3 \
 	ERR_load_strings.3 ERR_PACK.3 \
 	ERR_load_strings.3 ERR_get_next_error_library.3 \
 	ERR_print_errors.3 ERR_print_errors_fp.3 \
@@ -703,6 +754,7 @@ MLINKS+=\
 	EVP_PKEY_keygen.3 EVP_PKEY_CTX_get_keygen_info.3 \
 	EVP_PKEY_keygen.3 EVP_PKEY_CTX_set_app_data.3 \
 	EVP_PKEY_keygen.3 EVP_PKEY_CTX_get_app_data.3 \
+	EVP_PKEY_new.3 EVP_PKEY_free.3 \
 	EVP_PKEY_print_private.3 EVP_PKEY_print_public.3 \
 	EVP_PKEY_print_private.3 EVP_PKEY_print_params.3 \
 	EVP_PKEY_sign.3 EVP_PKEY_sign_init.3 \
@@ -720,6 +772,9 @@ MLINKS+=\
 	EVP_PKEY_set1_RSA.3 EVP_PKEY_set1_DSA.3 \
 	EVP_PKEY_set1_RSA.3 EVP_PKEY_set1_EC_KEY.3 \
 	EVP_PKEY_set1_RSA.3 EVP_PKEY_type.3 \
+	EVP_PKEY_sign.3 EVP_PKEY_sign_init.3 \
+	EVP_PKEY_verify.3 EVP_PKEY_verify_init.3 \
+	EVP_PKEY_verify_recover.3 EVP_PKEY_verify_recover_init.3 \
 	EVP_SealInit.3 EVP_SealFinal.3 \
 	EVP_SealInit.3 EVP_SealUpdate.3 \
 	EVP_SignInit.3 EVP_PKEY_size.3 \
