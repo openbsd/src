@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.115 2014/07/11 21:54:38 tedu Exp $
+#	$OpenBSD: files.usb,v 1.116 2014/07/12 20:58:44 mpi Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -428,11 +428,6 @@ file	dev/usb/uow.c			uow
 device	uberry {}
 attach	uberry at uhub
 file	dev/usb/uberry.c		uberry
-
-# DFU driver
-device	udfu {}
-attach	udfu at uhub
-file	dev/usb/udfu.c			udfu
 
 # USB Power Devices
 device upd: hid
