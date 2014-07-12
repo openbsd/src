@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.23 2014/07/10 20:35:35 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.24 2014/07/12 03:09:29 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -304,7 +304,6 @@ extern int 		rtimeout;	/* Response time out in seconds */
 extern int		setjmp_ok;	/* setjmp/longjmp flag */
 extern uid_t 		userid;		/* User ID of rdist user */
 extern jmp_buf 		finish_jmpbuf;	/* Setjmp buffer for finish() */
-extern struct group    *gr;	/* pointer to static area used by getgrent */
 extern struct linkbuf  *ihead;	/* list of files with more than one link */
 extern struct passwd   *pw;	/* pointer to static area used by getpwent */
 extern char defowner[64];		/* Default owner */
