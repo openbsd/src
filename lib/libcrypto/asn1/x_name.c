@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.19 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: x_name.c,v 1.20 2014/07/12 11:25:25 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -335,7 +335,7 @@ x509_name_ex_print(BIO *out, ASN1_VALUE **pval, int indent, const char *fname,
  * In future we could also normalize the UTF8 too.
  *
  * By doing this comparison of Name structures can be rapidly
- * perfomed by just using memcmp() of the canonical encoding.
+ * performed by just using memcmp() of the canonical encoding.
  * By omitting the leading SEQUENCE name constraints of type
  * dirName can also be checked with a simple memcmp().
  */
