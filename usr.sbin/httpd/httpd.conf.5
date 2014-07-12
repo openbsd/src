@@ -1,0 +1,124 @@
+.\"	$OpenBSD: httpd.conf.5,v 1.1 2014/07/12 23:34:54 reyk Exp $
+.\"
+.\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 12 2014 $
+.Dt HTTPD.CONF 5
+.Os
+.Sh NAME
+.Nm httpd.conf
+.Nd HTTP daemon configuration file
+.Sh DESCRIPTION
+.Nm
+is the configuration file for the HTTP daemon,
+.Xr httpd 8 .
+.Sh SECTIONS
+.Nm
+is divided into three main sections:
+.Bl -tag -width xxxx
+.It Sy Macros
+User-defined variables may be defined and used later, simplifying the
+configuration file.
+.It Sy Global Configuration
+Global settings for
+.Xr httpd 8 .
+.It Sy Servers
+Listening HTTP web servers.
+.El
+.Pp
+Within the sections,
+a host
+.Ar address
+can be specified by IPv4 address, IPv6 address, interface name,
+interface group, or DNS hostname.
+If the address is an interface name,
+.Xr httpd 8
+will look up the first IPv4 address and any other IPv4 and IPv6
+addresses of the specified network interface.
+A
+.Ar port
+can be specified by number or name.
+The port name to number mappings are found in the file
+.Pa /etc/services ;
+see
+.Xr services 5
+for details.
+.Pp
+The current line can be extended over multiple lines using a backslash
+.Pq Sq \e .
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq # ,
+and extend to the end of the current line.
+Care should be taken when commenting out multi-line text:
+the comment is effective until the end of the entire block.
+.Pp
+Argument names not beginning with a letter, digit, or underscore
+must be quoted.
+.Pp
+Additional configuration files can be included with the
+.Ic include
+keyword, for example:
+.Bd -literal -offset indent
+include "/etc/httpd.conf.local"
+.Ed
+.Sh MACROS
+Macros can be defined that will later be expanded in context.
+Macro names must start with a letter, digit, or underscore,
+and may contain any of those characters.
+Macro names may not be reserved words (for example,
+.Ic table ,
+.Ic relay ,
+or
+.Ic timeout ) .
+Macros are not expanded inside quotes.
+.Pp
+For example:
+.Bd -literal -offset indent
+ext_ip="10.0.0.1"
+server \*(Ltwww\*(Gt {
+	listen on $ext_ip port 80
+}
+.Ed
+.Sh GLOBAL CONFIGURATION
+Here are the settings that can be set globally:
+.Bl -tag -width Ds
+.It Xo
+.Ic log
+.Pq Ic updates Ns | Ns Ic all
+.Xc
+Set logging verbosity.
+.It Ic prefork Ar number
+Run the specified number of server processes.
+This increases the performance and prevents delays when connecting
+to a server.
+.Xr httpd 8
+runs 3 server processes by default.
+.El
+.Sh SERVERS
+The configured web servers.
+.Pp
+The following general table options are available:
+.Bl -tag -width Ds
+.It Ic listen on Ar address Ic port Ar number
+Set the listen address and port.
+.El
+.Sh SEE ALSO
+.Xr httpd 8 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Xr httpd 8
+program was written by
+.An Reyk Floeter Aq Mt reyk@openbsd.org .

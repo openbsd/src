@@ -1,0 +1,55 @@
+.\"	$OpenBSD: httpd.8,v 1.36 2014/07/12 23:34:54 reyk Exp $
+.\"
+.\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 12 2014 $
+.Dt HTTPD 8
+.Os
+.Sh NAME
+.Nm httpd
+.Nd HTTP daemon
+.Sh SYNOPSIS
+.Nm
+.Op Fl dnv
+.Op Fl D Ar macro Ns = Ns Ar value
+.Op Fl f Ar file
+.Sh DESCRIPTION
+.Nm
+is a simple HTTP server that serves static files.
+.El
+.Sh FILES
+.Bl -tag -width "/var/run/httpd.sockXX" -compact
+.It /etc/httpd.conf
+Default configuration file.
+.It /var/run/httpd.sock
+.Ux Ns -domain
+socket used for communication with
+.Xr httpctl 8 .
+.El
+.Sh SEE ALSO
+.Xr httpd.conf 5 ,
+.Sh HISTORY
+.Nm
+is based on
+.Xr relayd 8 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+program was written by
+.An Reyk Floeter Aq Mt reyk@openbsd.org .
+.Sh CAVEATS
+.Nm
+is not finished yet.
