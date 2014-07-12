@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.61 2013/07/14 19:44:39 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.62 2014/07/12 16:59:06 henning Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: July 14 2013 $
+.Dd $Mdocdate: July 12 2014 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -262,13 +262,11 @@ IPv6 stateless address autoconfiguration.
 This should be used on single interface hosts only,
 since the IPv6 specifications are silent about the
 behavior on multi-interface hosts.
-Also note that the kernel must be configured to accept IPv6
-router advertisement, and configured as a host (i.e. non-router).
-Add the following lines into
+Also note that the kernel must be configured as a host (i.e. non-router).
+Add the following line into
 .Xr sysctl.conf 5 :
 .Bd -literal -offset indent
 net.inet6.ip6.forwarding=0
-net.inet6.ip6.accept_rtadv=1
 .Ed
 .It Va options
 Miscellaneous options to set on the interface, e.g.,
