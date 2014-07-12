@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.215 2014/04/07 08:27:23 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.216 2014/07/12 21:56:56 tedu Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -141,7 +141,6 @@ udav*	at uhub?		# Davicom DM9601 based Ethernet
 mos*	at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
 url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
-#uyap*	at uhub?		# Y@P firmware loader
 #ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB

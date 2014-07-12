@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.48 2014/04/08 02:25:33 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.49 2014/07/12 21:56:57 tedu Exp $
 
 machine	zaurus	arm
 
@@ -90,7 +90,6 @@ url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
 ugl*		at uhub?		# Genesys Logic GL620A-USB host-to-host
-#uyap*		at uhub?		# Y@P firmware loader
 #ugen*		at uhub?		# USB Generic driver
 umass*		at uhub?		# USB Mass Storage devices
 

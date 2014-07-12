@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.61 2014/04/05 16:34:10 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.62 2014/07/12 21:56:56 tedu Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -107,7 +107,6 @@ wskbd*	at ukbd? mux 1
 #upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 #ugl*	at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 #urio*	at uhub?		# Diamond Multimedia Rio 500
-#uyap*	at uhub?		# Y@P firmware loader
 #ugen*	at uhub?		# USB Generic driver
 
 pckbc0		at isa?		# PC keyboard controller

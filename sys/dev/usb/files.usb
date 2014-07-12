@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.116 2014/07/12 20:58:44 mpi Exp $
+#	$OpenBSD: files.usb,v 1.117 2014/07/12 21:56:57 tedu Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -24,10 +24,6 @@ attach	uhub at uhub with uhub_uhub
 
 # Modem and com serial port "bus"
 define	ucombus {[portno = -1]}
-
-# EZ-USB firmware loader
-define	ezload
-file	dev/usb/ezload.c		ezload
 
 # Audio devices
 device	uaudio: audio, auconv, mulaw
@@ -188,11 +184,6 @@ file	dev/usb/urio.c			urio			needs-flag
 device	uvisor: ucombus
 attach	uvisor at uhub
 file	dev/usb/uvisor.c		uvisor
-
-# YAP phone firmware loader
-device	uyap: ezload, firmload
-attach	uyap at uhub
-file	dev/usb/uyap.c			uyap
 
 # D-Link DSB-R100 FM radio
 device	udsbr: radiobus

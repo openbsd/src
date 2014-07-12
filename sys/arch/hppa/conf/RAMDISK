@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.101 2014/04/08 02:25:33 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.102 2014/07/12 21:56:56 tedu Exp $
 #
 # Diskless kernel config
 #
@@ -154,7 +154,6 @@ upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 ugl*	at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
 #urio*	at uhub?		# Diamond Multimedia Rio 500
-#uyap*	at uhub?		# Y@P firmware loader
 #udsbr*	at uhub?		# D-Link DSB-R100 radio
 #radio*	at udsbr?		# USB radio
 #ubt*	at uhub? disable	# USB Bluetooth
