@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.14 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: disk.c,v 1.15 2014/07/12 21:03:38 tedu Exp $	*/
 /*	$NetBSD: disk.c,v 1.6 1997/04/06 08:40:33 cgd Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ diskopen(f, ctlr, unit, part)
 
 	if (part >= lp->d_npartitions ||
 	    DL_GETPSIZE(&lp->d_partitions[part]) == 0) {
-bad:		free(sc, sizeof(struct disk_softc), 0);
+bad:		free(sc, sizeof(struct disk_softc));
 		return (ENXIO);
 	}
 	return (0);
@@ -170,7 +170,7 @@ diskclose(f)
 	sc = f->f_devdata;
 	(void)prom_close(sc->sc_fd);
 
-	free(sc, sizeof(struct disk_softc), 0);
+	free(sc, sizeof(struct disk_softc));
 	f->f_devdata = NULL;
 	return (0);
 }

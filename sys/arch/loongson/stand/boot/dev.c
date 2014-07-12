@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.6 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: dev.c,v 1.7 2014/07/12 21:03:38 tedu Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -160,7 +160,7 @@ pmon_ioclose(struct open_file *f)
 	if (f->f_devdata != NULL) {
 		pi = (struct pmon_iodata *)f->f_devdata;
 		rc = pmon_close(pi->fd);
-		free(pi, sizeof *pi, 0);
+		free(pi, sizeof *pi);
 		f->f_devdata = NULL;
 	} else
 		rc = 0;

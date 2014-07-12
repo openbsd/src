@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.4 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: sd.c,v 1.5 2014/07/12 21:03:38 tedu Exp $	*/
 /*	$NetBSD: sd.c,v 1.5 2013/01/22 15:48:40 tsutsui Exp $	*/
 
 /*
@@ -281,7 +281,7 @@ sdclose(struct open_file *f)
 {
 	struct sd_softc *sc = f->f_devdata;
 
-	free(sc, sizeof *sc, 0);
+	free(sc, sizeof *sc);
 	f->f_devdata = NULL;
 
 	return 0;

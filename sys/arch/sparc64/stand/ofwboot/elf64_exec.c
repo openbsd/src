@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64_exec.c,v 1.5 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: elf64_exec.c,v 1.6 2014/07/12 21:03:38 tedu Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 	elf->e_phnum = 0;
 	bcopy(elf, addr, sizeof(Elf_Ehdr));
 	bcopy(shp, addr + sizeof(Elf_Ehdr), elf->e_shnum * sizeof(Elf_Shdr));
-	free(shp, elf->e_shnum * sizeof(Elf_Shdr), 0);
+	free(shp, elf->e_shnum * sizeof(Elf_Shdr));
 	*ssymp = addr;
 
 	/*

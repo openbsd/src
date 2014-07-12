@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvma.c,v 1.6 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: dvma.c,v 1.7 2014/07/12 21:03:38 tedu Exp $	*/
 /*	$NetBSD: dvma.c,v 1.2 1995/09/17 00:50:56 pk Exp $	*/
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -135,7 +135,7 @@ dvma_alloc(int len)
 	return (dvma_mapin(mem, len));
 }
 
-extern void free(void *ptr, int len, 0);
+extern void free(void *ptr, int len);
 void
 dvma_free(char *dvma, int len)
 {
@@ -143,5 +143,5 @@ dvma_free(char *dvma, int len)
 
 	mem = dvma_mapout(dvma, len);
 	if (mem)
-		free(mem, len, 0);
+		free(mem, len);
 }

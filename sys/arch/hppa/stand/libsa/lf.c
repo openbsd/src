@@ -1,4 +1,4 @@
-/*	$OpenBSD: lf.c,v 1.9 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: lf.c,v 1.10 2014/07/12 21:03:38 tedu Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -47,7 +47,7 @@ lfopen(struct open_file *f, ...)
 int
 lfclose(struct open_file *f)
 {
-	free(f->f_devdata, sizeof(struct hppa_dev), 0);
+	free(f->f_devdata, sizeof(struct hppa_dev));
 	f->f_devdata = NULL;
 	return 0;
 }

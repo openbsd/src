@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.4 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.5 2014/07/12 21:03:38 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -74,7 +74,7 @@ hardprobe(void)
 		bzero(dip, sizeof(*dip));
 
 		if (bios_getdiskinfo(order[i], &dip->bios_info) != NULL) {
-			free(dip, 0, 0);
+			free(dip, 0);
 			continue;
 		}
 
