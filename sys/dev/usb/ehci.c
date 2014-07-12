@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.160 2014/07/10 20:57:40 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.161 2014/07/12 08:21:10 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1821,7 +1821,7 @@ usb_endpoint_descriptor_t ehci_endpd = {
 	UE_DIR_IN | EHCI_INTR_ENDPT,
 	UE_INTERRUPT,
 	{8, 0},			/* max packet */
-	255
+	12
 };
 
 usb_hub_descriptor_t ehci_hubd = {
