@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.25 2014/07/12 19:04:29 lteo Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.26 2014/07/12 19:05:45 lteo Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -87,7 +87,7 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	struct ifaddr *ifa;
 	int s, error = 0, p_hdrlen = 0, dir;
 	struct ip *ip;
-	u_int16_t off, csum_flag = 0;
+	u_int16_t off;
 
 	m->m_pkthdr.rcvif = NULL;
 	m->m_nextpkt = NULL;
@@ -120,15 +120,15 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	switch (ip->ip_p) {
 	case IPPROTO_TCP:
 		p_hdrlen = sizeof(struct tcphdr);
-		csum_flag = M_TCP_CSUM_OUT;
+		m->m_pkthdr.csum_flags |= M_TCP_CSUM_OUT;
 		break;
 	case IPPROTO_UDP:
 		p_hdrlen = sizeof(struct udphdr);
-		csum_flag = M_UDP_CSUM_OUT;
+		m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 		break;
 	case IPPROTO_ICMP:
 		p_hdrlen = sizeof(struct icmp);
-		csum_flag = M_ICMP_CSUM_OUT;
+		m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 		break;
 	default:
 		/* nothing */
@@ -136,9 +136,6 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	}
 	if (p_hdrlen && m->m_pkthdr.len < off + p_hdrlen)
 		goto fail;
-
-	if (csum_flag)
-		m->m_pkthdr.csum_flags |= csum_flag;
 
 	m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED_PACKET;
 
