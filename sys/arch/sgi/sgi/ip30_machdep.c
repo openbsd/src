@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.61 2014/07/12 14:12:44 uebayasi Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.62 2014/07/12 22:37:03 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -24,7 +24,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/reboot.h>
 #include <sys/tty.h>
 
 #include <mips64/arcbios.h>
@@ -482,8 +481,8 @@ ip30_nmi_handler()
 	kdb_trap(-1, fr0);
 
 	splx(s);
-	printf("Resetting system...\n");
-	reboot(RB_USERREQ);
+	panic("NMI");
+	/* NOTREACHED */
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.61 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.62 2014/07/12 22:37:03 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -26,7 +26,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/reboot.h>
 #include <sys/tty.h>
 
 #include <mips64/arcbios.h>
@@ -933,6 +932,6 @@ ip27_nmi(void *arg)
 #ifdef DDB
 	(void)kdb_trap(-1, &nmi_frame);
 #endif
-	printf("Resetting system...\n");
-	reboot(RB_USERREQ);
+	panic("NMI");
+	/* NOTREACHED */
 }

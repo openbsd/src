@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.227 2014/07/12 14:12:44 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.228 2014/07/12 22:37:03 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -32,7 +32,6 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
-#include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/file.h>
@@ -995,10 +994,9 @@ cpu_dumpsize(void)
 void
 hpmc_dump(void)
 {
-	printf("HPMC\n");
-
 	cold = 0;
-	reboot(RB_NOSYNC);
+	panic("HPMC");
+	/* NOTREACHED */
 }
 
 int
