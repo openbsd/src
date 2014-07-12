@@ -1,4 +1,4 @@
-/* $OpenBSD: x_bignum.c,v 1.6 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: x_bignum.c,v 1.7 2014/07/12 16:42:47 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -61,13 +61,12 @@
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
 
-/* Custom primitive type for BIGNUM handling. This reads in an ASN1_INTEGER as a
- * BIGNUM directly. Currently it ignores the sign which isn't a problem since all
- * BIGNUMs used are non negative and anything that looks negative is normally due
- * to an encoding error.
+/*
+ * Custom primitive type for BIGNUM handling. This reads in an ASN1_INTEGER as a
+ * BIGNUM directly. Currently it ignores the sign which isn't a problem since
+ * all BIGNUMs used are non negative and anything that looks negative is
+ * normally due to an encoding error.
  */
-
-#define BN_SENSITIVE	1
 
 static int bn_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void bn_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
@@ -92,7 +91,7 @@ ASN1_ITYPE_PRIMITIVE, V_ASN1_INTEGER, NULL, 0, &bignum_pf, 0, "BIGNUM"
 ASN1_ITEM_end(BIGNUM)
 
 ASN1_ITEM_start(CBIGNUM)
-ASN1_ITYPE_PRIMITIVE, V_ASN1_INTEGER, NULL, 0, &bignum_pf, BN_SENSITIVE, "BIGNUM"
+ASN1_ITYPE_PRIMITIVE, V_ASN1_INTEGER, NULL, 0, &bignum_pf, 0, "BIGNUM"
 ASN1_ITEM_end(CBIGNUM)
 
 static int
@@ -108,12 +107,9 @@ bn_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 static void
 bn_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-	if (!*pval)
+	if (*pval == NULL)
 		return;
-	if (it->size & BN_SENSITIVE)
-		BN_clear_free((BIGNUM *)*pval);
-	else
-		BN_free((BIGNUM *)*pval);
+	BN_clear_free((BIGNUM *)*pval);
 	*pval = NULL;
 }
 
@@ -121,9 +117,9 @@ static int
 bn_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype, const ASN1_ITEM *it)
 {
 	BIGNUM *bn;
-	int pad;
+	int pad, len;
 
-	if (!*pval)
+	if (*pval == NULL)
 		return -1;
 	bn = (BIGNUM *)*pval;
 	/* If MSB set in an octet we need a padding byte */
@@ -134,9 +130,10 @@ bn_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype, const ASN1_ITEM *it)
 	if (cont) {
 		if (pad)
 			*cont++ = 0;
-		BN_bn2bin(bn, cont);
-	}
-	return pad + BN_num_bytes(bn);
+		len = BN_bn2bin(bn, cont);
+	} else
+		len = BN_num_bytes(bn);
+	return pad + len;
 }
 
 static int
@@ -145,8 +142,10 @@ bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 {
 	BIGNUM *bn;
 
-	if (!*pval)
-		bn_new(pval, it);
+	if (*pval == NULL) {
+		if (bn_new(pval, it) == 0)
+			return 0;
+	}
 	bn = (BIGNUM *)*pval;
 	if (!BN_bin2bn(cont, len, bn)) {
 		bn_free(pval, it);
