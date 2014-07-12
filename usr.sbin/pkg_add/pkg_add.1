@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.125 2014/02/14 14:13:19 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.126 2014/07/12 19:53:43 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: February 14 2014 $
+.Dd $Mdocdate: July 12 2014 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -31,7 +31,6 @@
 .Op Fl L Ar localbase
 .Op Fl l Ar file
 .Op Fl P Ar type
-.Op Fl Q Ar quick-destdir
 .Ar pkg-name Op Ar ...
 .Ek
 .Sh DESCRIPTION
@@ -380,15 +379,6 @@ can be
 .Sq cdrom
 or
 .Sq ftp .
-.It Fl Q Ar quick-destdir
-Quick and dirty installation under
-.Ar quick-destdir .
-Contrary to
-.Fl B
-.Ar pkg-destdir ,
-symbolic links are resolved, and package installation stops at
-.Cm @endfake
-marker.
 .It Fl q
 Replace package quickly; do not bother with checksums before removing normal
 files.
