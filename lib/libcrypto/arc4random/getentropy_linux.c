@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.20 2014/07/12 15:43:49 beck Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.21 2014/07/12 20:41:47 wouter Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -65,6 +65,7 @@
 
 #define HR(x, l) (SHA512_Update(&ctx, (char *)(x), (l)))
 #define HD(x)	 (SHA512_Update(&ctx, (char *)&(x), sizeof (x)))
+#define HF(x)    (SHA512_Update(&ctx, (char *)&(x), sizeof (void*)))
 
 int	getentropy(void *buf, size_t len);
 
@@ -209,7 +210,7 @@ start:
 	}
 	for (i = 0; i < len; ) {
 		size_t wanted = len - i;
-		ssize_t ret = read(fd, buf + i, wanted);
+		ssize_t ret = read(fd, (char *)buf + i, wanted);
 
 		if (ret == -1) {
 			if (errno == EAGAIN || errno == EINTR)
@@ -234,11 +235,11 @@ static int
 getentropy_sysctl(void *buf, size_t len)
 {
 	static int mib[] = { CTL_KERN, KERN_RANDOM, RANDOM_UUID };
-	size_t i, chunk;
+	size_t i;
 	int save_errno = errno;
 
 	for (i = 0; i < len; ) {
-		chunk = min(len - i, 16);
+		size_t chunk = min(len - i, 16);
 
 		/* SYS__sysctl because some systems already removed sysctl() */
 		struct __sysctl_args args = {
@@ -290,7 +291,7 @@ static int
 getentropy_fallback(void *buf, size_t len)
 {
 	uint8_t results[SHA512_DIGEST_LENGTH];
-	int save_errno = errno, e, m, pgs = getpagesize(), faster = 0, repeat;
+	int save_errno = errno, e, pgs = getpagesize(), faster = 0, repeat;
 	static int cnt;
 	struct timespec ts;
 	struct timeval tv;
@@ -300,7 +301,7 @@ getentropy_fallback(void *buf, size_t len)
 	SHA512_CTX ctx;
 	static pid_t lastpid;
 	pid_t pid;
-	size_t i, ii;
+	size_t i, ii, m;
 	char *p;
 
 	pid = getpid();
@@ -329,7 +330,7 @@ getentropy_fallback(void *buf, size_t len)
 			HX((pid = getsid(pid)) == -1, pid);
 			HX((pid = getppid()) == -1, pid);
 			HX((pid = getpgid(0)) == -1, pid);
-			HX((m = getpriority(0, 0)) == -1, m);
+			HX((e = getpriority(0, 0)) == -1, e);
 
 			if (!faster) {
 				ts.tv_sec = 0;
@@ -341,9 +342,9 @@ getentropy_fallback(void *buf, size_t len)
 			HX(sigprocmask(SIG_BLOCK, NULL, &sigset) == -1,
 			    sigset);
 
-			HD(main);		/* an addr in program */
-			HD(getentropy);	/* an addr in this library */
-			HD(printf);		/* an addr in libc */
+			HF(main);		/* an addr in program */
+			HF(getentropy);	/* an addr in this library */
+			HF(printf);		/* an addr in libc */
 			p = (char *)&p;
 			HD(p);		/* an addr on stack */
 			p = (char *)&errno;
@@ -483,7 +484,7 @@ getentropy_fallback(void *buf, size_t len)
 #endif
 
 		SHA512_Final(results, &ctx);
-		memcpy(buf + i, results, min(sizeof(results), len - i));
+		memcpy((char *)buf + i, results, min(sizeof(results), len - i));
 		i += min(sizeof(results), len - i);
 	}
 	memset(results, 0, sizeof results);
