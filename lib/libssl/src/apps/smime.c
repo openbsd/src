@@ -1,4 +1,4 @@
-/* $OpenBSD: smime.c,v 1.26 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: smime.c,v 1.27 2014/07/12 17:54:31 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -120,9 +120,6 @@ smime_main(int argc, char **argv)
 
 	args = argv + 1;
 	ret = 1;
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 	while (!badarg && *args && *args[0] == '-') {
 		if (!strcmp(*args, "-encrypt"))

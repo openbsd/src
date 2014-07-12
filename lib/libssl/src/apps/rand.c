@@ -1,4 +1,4 @@
-/* $OpenBSD: rand.c,v 1.20 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: rand.c,v 1.21 2014/07/12 17:54:31 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -84,9 +84,6 @@ rand_main(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
 #endif
-
-	if (!load_config(bio_err, NULL))
-		goto err;
 
 	badopt = 0;
 	i = 0;

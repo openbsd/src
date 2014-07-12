@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.58 2014/07/11 09:24:44 beck Exp $ */
+/* $OpenBSD: s_server.c,v 1.59 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -639,9 +639,6 @@ s_server_main(int argc, char *argv[])
 	local_argv = argv;
 
 	s_server_init();
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 	verify_depth = 0;
 	s_nbio = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: dhparam.c,v 1.31 2014/07/09 21:02:35 tedu Exp $ */
+/* $OpenBSD: dhparam.c,v 1.32 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,9 +159,6 @@ dhparam_main(int argc, char **argv)
 	char *engine = NULL;
 #endif
 	int num = 0, g = 0;
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 	infile = NULL;
 	outfile = NULL;

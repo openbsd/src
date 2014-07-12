@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.c,v 1.26 2014/07/09 21:02:35 tedu Exp $ */
+/* $OpenBSD: dsa.c,v 1.27 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,9 +114,6 @@ dsa_main(int argc, char **argv)
 	int modulus = 0;
 
 	int pvk_encr = 2;
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 #ifndef OPENSSL_NO_ENGINE
 	engine = NULL;

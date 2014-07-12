@@ -1,4 +1,4 @@
-/* $OpenBSD: gendh.c,v 1.26 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: gendh.c,v 1.27 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,9 +102,6 @@ gendh_main(int argc, char **argv)
 	BIO *out = NULL;
 
 	BN_GENCB_set(&cb, dh_cb, bio_err);
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 	argv++;
 	argc--;

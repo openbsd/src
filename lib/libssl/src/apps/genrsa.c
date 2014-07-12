@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.35 2014/07/09 21:02:35 tedu Exp $ */
+/* $OpenBSD: genrsa.c,v 1.36 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -113,9 +113,6 @@ genrsa_main(int argc, char **argv)
 		goto err;
 
 	BN_GENCB_set(&cb, genrsa_cb, bio_err);
-
-	if (!load_config(bio_err, NULL))
-		goto err;
 
 	if ((out = BIO_new(BIO_s_file())) == NULL) {
 		BIO_printf(bio_err, "unable to create BIO for output\n");

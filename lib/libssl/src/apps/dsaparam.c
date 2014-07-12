@@ -1,4 +1,4 @@
-/* $OpenBSD: dsaparam.c,v 1.32 2014/07/09 21:02:35 tedu Exp $ */
+/* $OpenBSD: dsaparam.c,v 1.33 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,9 +125,6 @@ dsaparam_main(int argc, char **argv)
 	const char *errstr = NULL;
 	int timebomb = 0;
 #endif
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 	infile = NULL;
 	outfile = NULL;

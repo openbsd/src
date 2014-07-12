@@ -1,4 +1,4 @@
-/* $OpenBSD: passwd.c,v 1.21 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: passwd.c,v 1.22 2014/07/12 17:54:31 jsing Exp $ */
 
 #if defined OPENSSL_NO_MD5
 #define NO_MD5CRYPT_1
@@ -71,9 +71,6 @@ passwd_main(int argc, char **argv)
 	int passed_salt = 0, quiet = 0, table = 0, reverse = 0;
 	int usecrypt = 0, use1 = 0, useapr1 = 0;
 	size_t pw_maxlen = 0;
-
-	if (!load_config(bio_err, NULL))
-		goto err;
 
 	out = BIO_new(BIO_s_file());
 	if (out == NULL)

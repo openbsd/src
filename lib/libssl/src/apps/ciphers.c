@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.23 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: ciphers.c,v 1.24 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -95,8 +95,6 @@ ciphers_main(int argc, char **argv)
 	meth = SSLv3_server_method();
 
 	STDout = BIO_new_fp(stdout, BIO_NOCLOSE);
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 	argc--;
 	argv++;

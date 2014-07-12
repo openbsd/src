@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.27 2014/06/28 04:39:41 deraadt Exp $ */
+/* $OpenBSD: ocsp.c,v 1.28 2014/07/12 17:54:31 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -146,9 +146,6 @@ ocsp_main(int argc, char **argv)
 	int nmin = 0, ndays = -1;
 	const EVP_MD *cert_id_md = NULL;
 	const char *errstr = NULL;
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();

@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.17 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: ts.c,v 1.18 2014/07/12 17:54:31 jsing Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -155,9 +155,6 @@ ts_main(int argc, char **argv)
 	int token_out = 0;
 
 	ERR_load_crypto_strings();
-
-	if (!load_config(bio_err, NULL))
-		goto cleanup;
 
 	for (argc--, argv++; argc > 0; argc--, argv++) {
 		if (strcmp(*argv, "-config") == 0) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.c,v 1.19 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: pkcs7.c,v 1.20 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,9 +92,6 @@ pkcs7_main(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
 #endif
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 	infile = NULL;
 	outfile = NULL;

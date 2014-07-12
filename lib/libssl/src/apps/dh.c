@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.23 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: dh.c,v 1.24 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,9 +97,6 @@ dh_main(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 	char *engine;
 #endif
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 #ifndef OPENSSL_NO_ENGINE
 	engine = NULL;

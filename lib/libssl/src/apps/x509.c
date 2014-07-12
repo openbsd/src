@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.47 2014/07/09 21:02:35 tedu Exp $ */
+/* $OpenBSD: x509.c,v 1.48 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -208,9 +208,6 @@ x509_main(int argc, char **argv)
 	const char *errstr = NULL;
 
 	reqfile = 0;
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 	STDout = BIO_new_fp(stdout, BIO_NOCLOSE);
 

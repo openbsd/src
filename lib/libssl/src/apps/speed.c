@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.50 2014/07/09 21:02:35 tedu Exp $ */
+/* $OpenBSD: speed.c,v 1.51 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -493,9 +493,6 @@ speed_main(int argc, char **argv)
 		ecdh_a[i] = NULL;
 		ecdh_b[i] = NULL;
 	}
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 	memset(rsa_key, 0, sizeof(rsa_key));
 	for (i = 0; i < RSA_NUM; i++)

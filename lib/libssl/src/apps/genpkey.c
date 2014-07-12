@@ -1,4 +1,4 @@
-/* $OpenBSD: genpkey.c,v 1.11 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: genpkey.c,v 1.12 2014/07/12 17:54:31 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -94,9 +94,6 @@ genpkey_main(int argc, char **argv)
 	int ret = 1, rv;
 
 	int do_param = 0;
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 	outformat = FORMAT_PEM;
 

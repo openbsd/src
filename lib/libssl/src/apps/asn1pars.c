@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1pars.c,v 1.25 2014/06/28 04:39:41 deraadt Exp $ */
+/* $OpenBSD: asn1pars.c,v 1.26 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,9 +102,6 @@ asn1parse_main(int argc, char **argv)
 	ASN1_TYPE *at = NULL;
 
 	informat = FORMAT_PEM;
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 	prog = argv[0];
 	argc--;

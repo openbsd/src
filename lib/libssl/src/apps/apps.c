@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.64 2014/07/09 21:13:34 tedu Exp $ */
+/* $OpenBSD: apps.c,v 1.65 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1298,9 +1298,9 @@ load_config(BIO *err, CONF *cnf)
 	if (load_config_called)
 		return 1;
 	load_config_called = 1;
-	if (!cnf)
+	if (cnf == NULL)
 		cnf = config;
-	if (!cnf)
+	if (cnf == NULL)
 		return 1;
 
 	OPENSSL_load_builtin_modules();

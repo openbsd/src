@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.66 2014/07/11 09:24:44 beck Exp $ */
+/* $OpenBSD: s_client.c,v 1.67 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -401,9 +401,6 @@ s_client_main(int argc, char **argv)
 	c_debug = 0;
 	c_msg = 0;
 	c_showcerts = 0;
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 	if (((cbuf = malloc(BUFSIZZ)) == NULL) ||
 	    ((sbuf = malloc(BUFSIZZ)) == NULL) ||

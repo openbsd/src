@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.39 2014/07/10 09:15:51 tedu Exp $ */
+/* $OpenBSD: openssl.c,v 1.40 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -292,6 +292,12 @@ main(int argc, char **argv)
 			exit(1);
 		}
 	}
+
+	if (!load_config(bio_err, NULL)) {
+		BIO_printf(bio_err, "failed to load configuration\n");
+		goto end;
+	}
+
 	prog = prog_init();
 
 	/* first check the program name */
@@ -450,9 +456,6 @@ do_cmd(LHASH_OF(FUNCTION) * prog, int argc, char *argv[])
 		else		/* strcmp(argv[0],LIST_CIPHER_COMMANDS) == 0 */
 			list_type = FUNC_TYPE_CIPHER;
 		bio_stdout = BIO_new_fp(stdout, BIO_NOCLOSE);
-
-		if (!load_config(bio_err, NULL))
-			goto end;
 
 		if (list_type == FUNC_TYPE_PKEY)
 			list_pkey(bio_stdout);

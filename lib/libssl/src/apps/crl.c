@@ -1,4 +1,4 @@
-/* $OpenBSD: crl.c,v 1.23 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: crl.c,v 1.24 2014/07/12 17:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,9 +123,6 @@ crl_main(int argc, char **argv)
 	EVP_PKEY *pkey;
 	int do_ver = 0;
 	const EVP_MD *md_alg, *digest = EVP_sha1();
-
-	if (!load_config(bio_err, NULL))
-		goto end;
 
 	if (bio_out == NULL)
 		if ((bio_out = BIO_new(BIO_s_file())) != NULL) {
