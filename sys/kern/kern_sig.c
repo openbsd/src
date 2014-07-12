@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.170 2014/07/11 08:18:31 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.171 2014/07/12 21:21:19 matthew Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -472,6 +472,20 @@ sys_sigpending(struct proc *p, void *v, register_t *retval)
 }
 
 /*
+ * Temporarily replace calling proc's signal mask for the duration of a
+ * system call.  Original signal mask will be restored by userret().
+ */
+void
+dosigsuspend(struct proc *p, sigset_t newmask)
+{
+	KASSERT(p == curproc);
+
+	p->p_oldmask = p->p_sigmask;
+	atomic_setbits_int(&p->p_flag, P_SIGSUSPEND);
+	p->p_sigmask = newmask;
+}
+
+/*
  * Suspend process until signal, providing mask to be set
  * in the meantime.  Note nonstandard calling convention:
  * libc stub passes mask, not pointer, to save a copyin.
@@ -486,16 +500,7 @@ sys_sigsuspend(struct proc *p, void *v, register_t *retval)
 	struct process *pr = p->p_p;
 	struct sigacts *ps = pr->ps_sigacts;
 
-	/*
-	 * When returning from sigpause, we want
-	 * the old mask to be restored after the
-	 * signal handler has finished.  Thus, we
-	 * save it here and mark the sigacts structure
-	 * to indicate this.
-	 */
-	p->p_oldmask = p->p_sigmask;
-	atomic_setbits_int(&p->p_flag, P_SIGSUSPEND);
-	p->p_sigmask = SCARG(uap, mask) &~ sigcantmask;
+	dosigsuspend(p, SCARG(uap, mask) &~ sigcantmask);
 	while (tsleep(ps, PPAUSE|PCATCH, "pause", 0) == 0)
 		/* void */;
 	/* always return EINTR rather than ERESTART... */

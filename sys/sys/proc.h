@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.188 2014/07/11 08:18:31 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.189 2014/07/12 21:21:19 matthew Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -494,6 +494,7 @@ int	fork1(struct proc *, int, void *, pid_t *, void (*)(void *),
 	    void *, register_t *, struct proc **);
 int	groupmember(gid_t, struct ucred *);
 void	dorefreshcreds(struct process *, struct proc *);
+void	dosigsuspend(struct proc *, sigset_t);
 
 static inline void
 refreshcreds(struct proc *p)

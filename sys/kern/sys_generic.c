@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.89 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.90 2014/07/12 21:21:19 matthew Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -657,11 +657,8 @@ dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
 	}
 	timo = 0;
 
-	if (sigmask) {
-		p->p_oldmask = p->p_sigmask;
-		atomic_setbits_int(&p->p_flag, P_SIGSUSPEND);
-		p->p_sigmask = *sigmask &~ sigcantmask;
-	}
+	if (sigmask)
+		dosigsuspend(p, *sigmask &~ sigcantmask);
 
 retry:
 	ncoll = nselcoll;
@@ -965,11 +962,8 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 	}
 	timo = 0;
 
-	if (sigmask) {
-		p->p_oldmask = p->p_sigmask;
-		atomic_setbits_int(&p->p_flag, P_SIGSUSPEND);
-		p->p_sigmask = *sigmask &~ sigcantmask;
-	}
+	if (sigmask)
+		dosigsuspend(p, *sigmask &~ sigcantmask);
 
 retry:
 	ncoll = nselcoll;
