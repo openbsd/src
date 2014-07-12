@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.165 2014/07/11 14:36:44 uebayasi Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.166 2014/07/12 17:50:36 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -526,24 +526,6 @@ notfat:
 	error = checkdisklabel(bp->b_data + offset, lp,
 	    DL_GETBSTART((struct disklabel*)(bp->b_data+offset)),
 	    DL_GETBEND((struct disklabel *)(bp->b_data+offset)));
-	/* XXX Remove after 5.5. It's meant for a short sharp transition! */
-	if (error == ENOENT && lp->d_secsize != DEV_BSIZE) {
-		/*
-		 * Try looking at the (wrong but previously used) location
-		 * specified if dospartoff is considered a DEV_BSIZE address.
-		 */
-		bp->b_blkno = DL_BLKTOSEC(lp, dospartoff + DOS_LABELSECTOR) *
-		    DL_BLKSPERSEC(lp);
-		offset = DL_BLKOFFSET(lp, dospartoff + DOS_LABELSECTOR);
-		bp->b_bcount = lp->d_secsize;
-		CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-		SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-		(*strat)(bp);
-		if (biowait(bp))
-			return (bp->b_error);
-		error = checkdisklabel(bp->b_data + offset, lp, dospartoff,
-		    dospartend);
-	}
 
 	return (error);
 }
