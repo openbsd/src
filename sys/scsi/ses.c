@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.51 2011/03/17 21:30:24 deraadt Exp $ */
+/*	$OpenBSD: ses.c,v 1.52 2014/07/12 18:50:25 tedu Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -181,7 +181,7 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 				sensor = TAILQ_FIRST(&sc->sc_sensors);
 				TAILQ_REMOVE(&sc->sc_sensors, sensor,
 				    se_entry);
-				free(sensor, M_DEVBUF);
+				free(sensor, M_DEVBUF, 0);
 			}
 		} else {
 			TAILQ_FOREACH(sensor, &sc->sc_sensors, se_entry)
@@ -198,7 +198,7 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 		while (!TAILQ_EMPTY(&sc->sc_slots)) {
 			slot = TAILQ_FIRST(&sc->sc_slots);
 			TAILQ_REMOVE(&sc->sc_slots, slot, sl_entry);
-			free(slot, M_DEVBUF);
+			free(slot, M_DEVBUF, 0);
 		}
 	}
 #endif
@@ -230,7 +230,7 @@ ses_detach(struct device *self, int flags)
 		while (!TAILQ_EMPTY(&sc->sc_slots)) {
 			slot = TAILQ_FIRST(&sc->sc_slots);
 			TAILQ_REMOVE(&sc->sc_slots, slot, sl_entry);
-			free(slot, M_DEVBUF);
+			free(slot, M_DEVBUF, 0);
 		}
 	}
 #endif
@@ -243,7 +243,7 @@ ses_detach(struct device *self, int flags)
 			sensor = TAILQ_FIRST(&sc->sc_sensors);
 			sensor_detach(&sc->sc_sensordev, &sensor->se_sensor);
 			TAILQ_REMOVE(&sc->sc_sensors, sensor, se_entry);
-			free(sensor, M_DEVBUF);
+			free(sensor, M_DEVBUF, 0);
 		}
 	}
 
@@ -500,13 +500,13 @@ error:
 	while (!TAILQ_EMPTY(&sc->sc_slots)) {
 		slot = TAILQ_FIRST(&sc->sc_slots);
 		TAILQ_REMOVE(&sc->sc_slots, slot, sl_entry);
-		free(slot, M_DEVBUF);
+		free(slot, M_DEVBUF, 0);
 	}
 #endif
 	while (!TAILQ_EMPTY(&sc->sc_sensors)) {
 		sensor = TAILQ_FIRST(&sc->sc_sensors);
 		TAILQ_REMOVE(&sc->sc_sensors, sensor, se_entry);
-		free(sensor, M_DEVBUF);
+		free(sensor, M_DEVBUF, 0);
 	}
 	return (1);
 }

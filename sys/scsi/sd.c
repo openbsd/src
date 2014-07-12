@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.254 2014/07/10 19:13:55 mpi Exp $	*/
+/*	$OpenBSD: sd.c,v 1.255 2014/07/12 18:50:25 tedu Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -863,7 +863,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
 		sdgetdisklabel(dev, sc, lp, 0);
 		bcopy(lp, sc->sc_dk.dk_label, sizeof(*lp));
-		free(lp, M_TEMP);
+		free(lp, M_TEMP, 0);
 		goto exit;
 
 	case DIOCGPDINFO:

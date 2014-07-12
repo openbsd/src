@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.187 2014/04/22 07:29:11 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.188 2014/07/12 18:50:25 tedu Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -506,7 +506,7 @@ scsi_detach_lun(struct scsibus_softc *sc, int target, int lun, int flags)
 	/* 3. if its using the openings io allocator, clean it up */
 	if (ISSET(link->flags, SDEV_OWN_IOPL)) {
 		scsi_iopool_destroy(link->pool);
-		free(link->pool, M_DEVBUF);
+		free(link->pool, M_DEVBUF, 0);
 	}
 
 	/* 4. free up its state in the adapter */
@@ -517,7 +517,7 @@ scsi_detach_lun(struct scsibus_softc *sc, int target, int lun, int flags)
 	if (link->id != NULL)
 		devid_free(link->id);
 	scsi_remove_link(sc, link);
-	free(link, M_DEVBUF);
+	free(link, M_DEVBUF, 0);
 
 	return (0);
 }
@@ -1068,12 +1068,12 @@ free_devid:
 		devid_free(sc_link->id);
 bad:
 	if (ISSET(sc_link->flags, SDEV_OWN_IOPL))
-		free(sc_link->pool, M_DEVBUF);
+		free(sc_link->pool, M_DEVBUF, 0);
 
 	if (scsi->adapter_link->adapter->dev_free != NULL)
 		scsi->adapter_link->adapter->dev_free(sc_link);
 free:
-	free(sc_link, M_DEVBUF);
+	free(sc_link, M_DEVBUF, 0);
 	return (rslt);
 }
 
@@ -1310,7 +1310,7 @@ scsi_devid_pg80(struct scsi_link *link)
 	    sizeof(link->inqdata.vendor) + sizeof(link->inqdata.product) + len,
 	    id);
 
-	free(id, M_TEMP);
+	free(id, M_TEMP, 0);
 
 free:
 	dma_free(pg, pglen);
@@ -1372,5 +1372,5 @@ void
 devid_free(struct devid *d)
 {
 	if (--d->d_refcount == 0)
-		free(d, M_DEVBUF);
+		free(d, M_DEVBUF, 0);
 }

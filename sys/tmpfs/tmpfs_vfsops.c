@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.3 2013/12/14 18:01:52 espie Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.4 2014/07/12 18:50:25 tedu Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -255,7 +255,7 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	tmpfs_mntmem_destroy(tmp);
 	/* mutex_destroy(&tmp->tm_lock); */
 	/* kmem_free(tmp, sizeof(*tmp)); */
-	free(tmp, M_MISCFSMNT);
+	free(tmp, M_MISCFSMNT, 0);
 	mp->mnt_data = NULL;
 
 	return 0;

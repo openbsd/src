@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.213 2013/11/01 17:36:19 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.214 2014/07/12 18:50:25 tedu Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -792,7 +792,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
 		cdgetdisklabel(dev, sc, lp, 0);
 		bcopy(lp, sc->sc_dk.dk_label, sizeof(*lp));
-		free(lp, M_TEMP);
+		free(lp, M_TEMP, 0);
 		break;
 
 	case DIOCGPDINFO:

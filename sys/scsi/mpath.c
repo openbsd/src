@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.35 2014/05/01 10:25:44 jsg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.36 2014/07/12 18:50:25 tedu Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -503,7 +503,7 @@ mpath_path_attach(struct mpath_path *p, u_int g_id, const struct mpath_ops *ops)
 		    M_WAITOK | M_CANFAIL | M_ZERO);
 		if (g == NULL) {
 			if (newdev) {
-				free(d, M_DEVBUF);
+				free(d, M_DEVBUF, 0);
 				sc->sc_devs[target] = NULL;
 			}
 
@@ -567,7 +567,7 @@ mpath_path_detach(struct mpath_path *p)
 	mtx_leave(&d->d_mtx);
 
 	if (g != NULL)
-		free(g, M_DEVBUF);
+		free(g, M_DEVBUF, 0);
 
 	scsi_xsh_del(&p->p_xsh);
 
