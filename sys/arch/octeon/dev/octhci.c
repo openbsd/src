@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.9 2014/07/12 15:30:43 pirofti Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.10 2014/07/12 15:53:44 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -652,7 +652,7 @@ octhci_root_ctrl_start(struct usbd_xfer *xfer)
 	int l, totlen = 0;
 	int i;
 	/* int port; */
-	/* uint32_t v; */
+	uint32_t v;
 
 	KASSERT(xfer->rqflags & URQ_REQUEST);
 
@@ -874,41 +874,40 @@ octhci_root_ctrl_start(struct usbd_xfer *xfer)
 			err = USBD_IOERROR;
 			goto ret;
 		}
-#if 0
-		v = XOREAD4(sc, XHCI_PORTSC(index));
-		DPRINTFN(8,("xhci_root_ctrl_start: port status=0x%04x\n", v));
-		switch (XHCI_PS_SPEED(v)) {
-		case XHCI_SPEED_FULL:
+
+		v = octhci_regc_read(sc, USBC_HPRT_OFFSET);
+		DPRINTFN(8,("octhci_root_ctrl_start: port status=0x%04x\n", v));
+		switch ((v & USBC_HPRT_PRTSPD) >> USBC_HPRT_PRTSPD_OFFSET) {
+		case USBC_HPRT_PRTSPD_FULL:
 			i = UPS_FULL_SPEED;
 			break;
-		case XHCI_SPEED_LOW:
+		case USBC_HPRT_PRTSPD_LOW:
 			i = UPS_LOW_SPEED;
 			break;
-		case XHCI_SPEED_HIGH:
+		case USBC_HPRT_PRTSPD_HIGH:
+		default:
 			i = UPS_HIGH_SPEED;
 			break;
-		case XHCI_SPEED_SUPER:
-		default:
-			i = UPS_SUPER_SPEED;
-			break;
 		}
-		if (v & XHCI_PS_CCS)	i |= UPS_CURRENT_CONNECT_STATUS;
-		if (v & XHCI_PS_PED)	i |= UPS_PORT_ENABLED;
-		if (v & XHCI_PS_OCA)	i |= UPS_OVERCURRENT_INDICATOR;
-		if (v & XHCI_PS_PR)	i |= UPS_RESET;
-		if (v & XHCI_PS_PP)	i |= UPS_PORT_POWER;
-		USETW(ps.wPortStatus, i);
-		i = 0;
-		if (v & XHCI_PS_CSC)    i |= UPS_C_CONNECT_STATUS;
-		if (v & XHCI_PS_PEC)    i |= UPS_C_PORT_ENABLED;
-		if (v & XHCI_PS_OCC)    i |= UPS_C_OVERCURRENT_INDICATOR;
-		if (v & XHCI_PS_PRC)	i |= UPS_C_PORT_RESET;
-#endif
-		i = UPS_HIGH_SPEED;
+		if (v & USBC_HPRT_PRTCONNSTS)
+			i |= UPS_CURRENT_CONNECT_STATUS;
+		if (v & USBC_HPRT_PRTENA)
+			i |= UPS_PORT_ENABLED;
+		if (v & USBC_HPRT_PRTOVRCURRACT)
+			i |= UPS_OVERCURRENT_INDICATOR;
+		if (v & USBC_HPRT_PRTRST)
+			i |= UPS_RESET;
+		if (v & USBC_HPRT_PRTPWR)
+			i |= UPS_PORT_POWER;
 		USETW(ps.wPortStatus, i);
 
 		i = 0;
-		i |= UPS_C_PORT_ENABLED;
+		if (v & USBC_HPRT_PRTCONNDET)
+			i |= UPS_C_CONNECT_STATUS;
+		if (v & USBC_HPRT_PRTENCHNG)
+			i |= UPS_C_PORT_ENABLED;
+		if (v & USBC_HPRT_PRTOVRCURRCHNG)
+			i |= UPS_C_OVERCURRENT_INDICATOR;
 		USETW(ps.wPortChange, i);
 
 		l = min(len, sizeof ps);
