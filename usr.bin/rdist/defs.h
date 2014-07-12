@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.29 2014/07/12 03:40:16 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.30 2014/07/12 03:46:42 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -74,26 +74,6 @@
  */
 #define PIPE_READ		0
 #define PIPE_WRITE		1
-
-/*
- * This belongs in os-svr4.h but many SVR4 OS's
- * define SVR4 externel to Rdist so we put this
- * check here.
- */
-#if	defined(SVR4)
-#define NEED_FCNTL_H
-#define NEED_NETDB_H
-#endif	/* defined(SVR4) */
-
-#if	defined(NEED_NETDB_H)
-#include <netdb.h>
-#endif	/* NEED_NETDB_H */
-#if	defined(NEED_FCNTL_H)
-#include <fcntl.h>
-#endif	/* NEED_FCNTL_H */
-#if	defined(NEED_LIMITS_H)
-#include <limits.h>
-#endif	/* NEED_LIMITS_H */
 
 	/* boolean truth */
 #ifndef TRUE
