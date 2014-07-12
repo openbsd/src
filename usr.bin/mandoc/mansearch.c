@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.27 2014/05/12 19:11:20 espie Exp $ */
+/*	$Id: mansearch.c,v 1.28 2014/07/12 13:59:54 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -56,13 +56,14 @@ extern const char *const mansearch_keynames[];
 	} while (0)
 
 struct	expr {
-	uint64_t	 bits;    /* type-mask */
-	const char	*substr;  /* to search for, if applicable */
 	regex_t		 regexp;  /* compiled regexp, if applicable */
+	const char	*substr;  /* to search for, if applicable */
+	struct expr	*next;    /* next in sequence */
+	uint64_t	 bits;    /* type-mask */
+	int		 equal;   /* equality, not subsring match */
 	int		 open;    /* opening parentheses before */
 	int		 and;	  /* logical AND before */
 	int		 close;   /* closing parentheses after */
-	struct expr	*next;    /* next in sequence */
 };
 
 struct	match {
@@ -553,6 +554,9 @@ sql_statement(const struct expr *e)
 		    ? (NULL == e->substr
 			? "pageid IN (SELECT pageid FROM names "
 			  "WHERE name REGEXP ?)"
+			: e->equal
+			? "pageid IN (SELECT pageid FROM names "
+			  "WHERE name = ?)"
 			: "pageid IN (SELECT pageid FROM names "
 			  "WHERE name MATCH ?)")
 		    : (NULL == e->substr
@@ -694,7 +698,7 @@ exprterm(const struct mansearch *search, char *buf, int cs)
 {
 	char		 errbuf[BUFSIZ];
 	struct expr	*e;
-	char		*key, *v;
+	char		*key, *val;
 	uint64_t	 iterbit;
 	int		 i, irc;
 
@@ -703,40 +707,64 @@ exprterm(const struct mansearch *search, char *buf, int cs)
 
 	e = mandoc_calloc(1, sizeof(struct expr));
 
-	/*"whatis" mode uses an opaque string and default fields. */
-
-	if (MANSEARCH_WHATIS & search->flags) {
-		e->substr = buf;
+	if (MANSEARCH_MAN & search->flags) {
 		e->bits = search->deftype;
+		e->substr = buf;
+		e->equal = 1;
 		return(e);
 	}
 
 	/*
-	 * If no =~ is specified, search with equality over names and
-	 * descriptions.
-	 * If =~ begins the phrase, use name and description fields.
+	 * Look for an '=' or '~' operator,
+	 * unless forced to some fixed macro keys.
 	 */
 
-	if (NULL == (v = strpbrk(buf, "=~"))) {
-		e->substr = buf;
-		e->bits = search->deftype;
-		return(e);
-	} else if (v == buf)
-		e->bits = search->deftype;
+	if (MANSEARCH_WHATIS & search->flags)
+		val = NULL;
+	else
+		val = strpbrk(buf, "=~");
 
-	if ('~' == *v++) {
+	if (NULL == val) {
+		e->bits = search->deftype;
+		e->substr = buf;
+
+	/*
+	 * Found an operator.
+	 * Regexp search is requested by !e->substr.
+	 */
+
+	} else {
+		if (val == buf)
+			e->bits = search->deftype;
+		if ('=' == *val)
+			e->substr = val + 1;
+		*val++ = '\0';
 		if (NULL != strstr(buf, "arch"))
 			cs = 0;
-		if (0 != (irc = regcomp(&e->regexp, v,
-		    REG_EXTENDED | REG_NOSUB | (cs ? 0 : REG_ICASE)))) {
+	}
+
+	/* Compile regular expressions. */
+
+	if (MANSEARCH_WHATIS & search->flags) {
+		e->substr = NULL;
+		mandoc_asprintf(&val, "[[:<:]]%s[[:>:]]", buf);
+	}
+
+	if (NULL == e->substr) {
+		irc = regcomp(&e->regexp, val,
+		    REG_EXTENDED | REG_NOSUB | (cs ? 0 : REG_ICASE));
+		if (MANSEARCH_WHATIS & search->flags)
+			free(val);
+		if (irc) {
 			regerror(irc, &e->regexp, errbuf, sizeof(errbuf));
 			fprintf(stderr, "regcomp: %s\n", errbuf);
 			free(e);
 			return(NULL);
 		}
-	} else
-		e->substr = v;
-	v[-1] = '\0';
+	}
+
+	if (e->bits)
+		return(e);
 
 	/*
 	 * Parse out all possible fields.

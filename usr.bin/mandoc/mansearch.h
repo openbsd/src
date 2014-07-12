@@ -1,4 +1,4 @@
-/*	$Id: mansearch.h,v 1.9 2014/04/11 15:45:39 schwarze Exp $ */
+/*	$Id: mansearch.h,v 1.10 2014/07/12 13:59:54 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -82,7 +82,8 @@ struct	mansearch {
 	const char	*sec; /* mansection/NULL */
 	uint64_t	 deftype; /* type if no key  */
 	int		 flags;
-#define	MANSEARCH_WHATIS 0x01 /* whatis mode: equality, no key */
+#define	MANSEARCH_WHATIS 0x01 /* whatis(1) mode: whole words, no keys */
+#define	MANSEARCH_MAN    0x02 /* man(1) mode: string equality, no keys */
 };
 
 int	mansearch_setup(int);
