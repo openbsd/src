@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.62 2014/07/11 08:18:31 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.63 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -581,7 +581,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (error == 0) {
 			error = process_write_regs(t, regs);
 		}
-		free(regs, M_TEMP);
+		free(regs, M_TEMP, 0);
 		return (error);
 	case  PT_GETREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
@@ -593,7 +593,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (error == 0)
 			error = copyout(regs,
 			    SCARG(uap, addr), sizeof (*regs));
-		free(regs, M_TEMP);
+		free(regs, M_TEMP, 0);
 		return (error);
 #ifdef PT_SETFPREGS
 	case  PT_SETFPREGS:
@@ -606,7 +606,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (error == 0) {
 			error = process_write_fpregs(t, fpregs);
 		}
-		free(fpregs, M_TEMP);
+		free(fpregs, M_TEMP, 0);
 		return (error);
 #endif
 #ifdef PT_GETFPREGS
@@ -620,7 +620,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (error == 0)
 			error = copyout(fpregs,
 			    SCARG(uap, addr), sizeof(*fpregs));
-		free(fpregs, M_TEMP);
+		free(fpregs, M_TEMP, 0);
 		return (error);
 #endif
 #ifdef PT_SETXMMREGS
@@ -634,7 +634,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (error == 0) {
 			error = process_write_xmmregs(t, xmmregs);
 		}
-		free(xmmregs, M_TEMP);
+		free(xmmregs, M_TEMP, 0);
 		return (error);
 #endif
 #ifdef PT_GETXMMREGS
@@ -648,7 +648,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (error == 0)
 			error = copyout(xmmregs,
 			    SCARG(uap, addr), sizeof(*xmmregs));
-		free(xmmregs, M_TEMP);
+		free(xmmregs, M_TEMP, 0);
 		return (error);
 #endif
 #ifdef PT_WCOOKIE

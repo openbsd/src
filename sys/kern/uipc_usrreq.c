@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.73 2014/03/18 06:59:00 guenther Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.74 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -394,10 +394,10 @@ unp_detach(struct unpcb *unp)
 		 * gets them (resulting in a "panic: closef: count < 0").
 		 */
 		sorflush(unp->unp_socket);
-		free(unp, M_PCB);
+		free(unp, M_PCB, 0);
 		unp_gc();
 	} else
-		free(unp, M_PCB);
+		free(unp, M_PCB, 0);
 }
 
 int
@@ -636,7 +636,7 @@ unp_drop(struct unpcb *unp, int errno)
 		so->so_pcb = NULL;
 		sofree(so);
 		m_freem(unp->unp_addr);
-		free(unp, M_PCB);
+		free(unp, M_PCB, 0);
 	}
 }
 
@@ -767,7 +767,7 @@ restart:
  out:
 	fdpunlock(p->p_fd);
 	if (fdp)
-		free(fdp, M_TEMP);
+		free(fdp, M_TEMP, 0);
 	return (error);
 }
 
@@ -810,14 +810,14 @@ morespace:
 		/* allocate a cluster and try again */
 		MCLGET(control, M_WAIT);
 		if ((control->m_flags & M_EXT) == 0) {
-			free(tmp, M_TEMP);
+			free(tmp, M_TEMP, 0);
 			return (ENOBUFS);       /* allocation failed */
 		}
 
 		/* copy the data back into the cluster */
 		cm = mtod(control, struct cmsghdr *);
 		memcpy(cm, tmp, control->m_len);
-		free(tmp, M_TEMP);
+		free(tmp, M_TEMP, 0);
 		goto morespace;
 	}
 
@@ -980,7 +980,7 @@ unp_gc(void)
 		        sorflush((*fpp)->f_data);
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
 		(void) closef(*fpp, NULL);
-	free(extra_ref, M_FILE);
+	free(extra_ref, M_FILE, 0);
 	unp_gcing = 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.66 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.67 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
 		memset(argp, 0, nargs * sizeof(int));
 	kth.ktr_len = len;
 	ktrwrite(p, &kth, ktp);
-	free(ktp, M_TEMP);
+	free(ktp, M_TEMP, 0);
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
@@ -284,7 +284,7 @@ ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov,
 		len -= count;
 	}
 
-	free(ktp, M_TEMP);
+	free(ktp, M_TEMP, 0);
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
@@ -346,7 +346,7 @@ ktrstruct(struct proc *p, const char *name, const void *data, size_t datalen)
 	kth.ktr_len = buflen;
 
 	ktrwrite(p, &kth, buf);
-	free(buf, M_TEMP);
+	free(buf, M_TEMP, 0);
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
@@ -387,7 +387,7 @@ ktruser(struct proc *p, const char *id, const void *addr, size_t len)
 	ktrwrite(p, &kth, ktp);
 out:
 	if (memp != NULL)
-		free(memp, M_TEMP);
+		free(memp, M_TEMP, 0);
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 	return (error);
 }

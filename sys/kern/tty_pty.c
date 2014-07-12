@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.66 2014/07/09 15:46:22 tedu Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.67 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ check_pty(int minor)
 		newpt = ptyarralloc(newnpty);
 
 		memcpy(newpt, pt_softc, npty * sizeof(struct pt_softc *));
-		free(pt_softc, M_DEVBUF);
+		free(pt_softc, M_DEVBUF, 0);
 		pt_softc = newpt;
 		npty = newnpty;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.157 2014/07/11 03:06:08 mlarkin Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.158 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -408,7 +408,7 @@ bread_cluster_callback(struct buf *bp)
 		biodone(xbpp[i]);
 	}
 
-	free(xbpp, M_TEMP);
+	free(xbpp, M_TEMP, 0);
 
 	if (ISSET(bp->b_flags, B_ASYNC)) {
 		brelse(bp);
@@ -460,7 +460,7 @@ bread_cluster(struct vnode *vp, daddr_t blkno, int size, struct buf **rbpp)
 				SET(xbpp[i]->b_flags, B_INVAL);
 				brelse(xbpp[i]);
 			}
-			free(xbpp, M_TEMP);
+			free(xbpp, M_TEMP, 0);
 			goto out;
 		}
 	}

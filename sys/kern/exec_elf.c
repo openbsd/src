@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.98 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.99 2014/07/12 18:43:32 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -490,7 +490,7 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 bad1:
 	VOP_CLOSE(nd.ni_vp, FREAD, p->p_ucred, p);
 bad:
-	free(ph, M_TEMP);
+	free(ph, M_TEMP, 0);
 
 	*last = addr;
 	vput(nd.ni_vp);
@@ -750,14 +750,14 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 		epp->ep_interp_pos = pos;
 	}
 
-	free(ph, M_TEMP);
+	free(ph, M_TEMP, 0);
 	vn_marktext(epp->ep_vp);
 	return (exec_setup_stack(p, epp));
 
 bad:
 	if (interp)
 		pool_put(&namei_pool, interp);
-	free(ph, M_TEMP);
+	free(ph, M_TEMP, 0);
 	kill_vmcmds(&epp->ep_vmcmds);
 	return (ENOEXEC);
 }
@@ -783,7 +783,7 @@ ELFNAME2(exec,fixup)(struct proc *p, struct exec_package *epp)
 	ap = epp->ep_emul_arg;
 
 	if ((error = ELFNAME(load_file)(p, interp, epp, ap, &pos)) != 0) {
-		free(ap, M_TEMP);
+		free(ap, M_TEMP, 0);
 		pool_put(&namei_pool, interp);
 		kill_vmcmds(&epp->ep_vmcmds);
 		return (error);
@@ -834,7 +834,7 @@ ELFNAME2(exec,fixup)(struct proc *p, struct exec_package *epp)
 
 		error = copyout(ai, epp->ep_emul_argp, sizeof ai);
 	}
-	free(ap, M_TEMP);
+	free(ap, M_TEMP, 0);
 	pool_put(&namei_pool, interp);
 	return (error);
 }
@@ -879,7 +879,7 @@ ELFNAME(os_pt_note)(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 
 #if 0
 		if (np->type != ELF_NOTE_TYPE_OSVERSION) {
-			free(np, M_TEMP);
+			free(np, M_TEMP, 0);
 			np = NULL;
 			continue;
 		}
@@ -902,9 +902,9 @@ ELFNAME(os_pt_note)(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 out3:
 	error = ENOEXEC;
 out2:
-	free(np, M_TEMP);
+	free(np, M_TEMP, 0);
 out1:
-	free(hph, M_TEMP);
+	free(hph, M_TEMP, 0);
 	return error;
 }
 
@@ -1077,7 +1077,7 @@ ELFNAMEEND(coredump)(struct proc *p, void *cookie)
 	}
 
 out:
-	free(psections, M_TEMP);
+	free(psections, M_TEMP, 0);
 	return (error);
 #endif
 }

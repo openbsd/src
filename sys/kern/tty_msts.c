@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_msts.c,v 1.16 2010/04/12 12:57:52 tedu Exp $ */
+/*	$OpenBSD: tty_msts.c,v 1.17 2014/07/12 18:43:32 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -117,7 +117,7 @@ mstsopen(dev_t dev, struct tty *tp, struct proc *p)
 
 	error = linesw[TTYDISC].l_open(dev, tp, p);
 	if (error) {
-		free(np, M_DEVBUF);
+		free(np, M_DEVBUF, 0);
 		tp->t_sc = NULL;
 	} else {
 		sensordev_install(&np->timedev);
@@ -135,7 +135,7 @@ mstsclose(struct tty *tp, int flags, struct proc *p)
 	tp->t_line = TTYDISC;	/* switch back to termios */
 	timeout_del(&np->msts_tout);
 	sensordev_deinstall(&np->timedev);
-	free(np, M_DEVBUF);
+	free(np, M_DEVBUF, 0);
 	tp->t_sc = NULL;
 	msts_count--;
 	if (msts_count == 0)

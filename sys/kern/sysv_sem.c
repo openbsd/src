@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.46 2014/03/18 06:59:00 guenther Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.47 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -277,7 +277,7 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 		semaptr->sem_perm.cuid = cred->cr_uid;
 		semaptr->sem_perm.uid = cred->cr_uid;
 		semtot -= semaptr->sem_nsems;
-		free(semaptr->sem_base, M_SEM);
+		free(semaptr->sem_base, M_SEM, 0);
 		pool_put(&sema_pool, semaptr);
 		sema[ix] = NULL;
 		semundo_clear(ix, -1);
@@ -384,7 +384,7 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 
 error:
 	if (semval)
-		free(semval, M_TEMP);
+		free(semval, M_TEMP, 0);
 
 	return (error);
 }
@@ -446,7 +446,7 @@ sys_semget(struct proc *p, void *v, register_t *retval)
 					goto error;
 				}
 				if (semaptr_new != NULL) {
-					free(semaptr_new->sem_base, M_SEM);
+					free(semaptr_new->sem_base, M_SEM, 0);
 					pool_put(&sema_pool, semaptr_new);
 				}
 				goto found;
@@ -489,7 +489,7 @@ found:
 	return (0);
 error:
 	if (semaptr_new != NULL) {
-		free(semaptr_new->sem_base, M_SEM);
+		free(semaptr_new->sem_base, M_SEM, 0);
 		pool_put(&sema_pool, semaptr_new);
 	}
 	return (error);
@@ -753,7 +753,7 @@ done:
 	*retval = 0;
 done2:
 	if (sops != sopbuf)
-		free(sops, M_SEM);
+		free(sops, M_SEM, 0);
 	return (error);
 }
 
@@ -881,8 +881,8 @@ sysctl_sysvsem(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		    M_WAITOK|M_ZERO);
 		bcopy(semseqs, newseqs,
 		    seminfo.semmni * sizeof(unsigned short));
-		free(sema, M_SEM);
-		free(semseqs, M_SEM);
+		free(sema, M_SEM, 0);
+		free(semseqs, M_SEM, 0);
 		sema = sema_new;
 		semseqs = newseqs;
 		seminfo.semmni = val;

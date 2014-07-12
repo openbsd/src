@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.27 2014/07/09 15:46:22 tedu Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.28 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -73,11 +73,11 @@ clfree(struct clist *clp)
 {
 	if (clp->c_cs) {
 		explicit_bzero(clp->c_cs, clp->c_cn);
-		free(clp->c_cs, M_TTYS);
+		free(clp->c_cs, M_TTYS, 0);
 	}
 	if (clp->c_cq) {
 		explicit_bzero(clp->c_cq, QMEM(clp->c_cn));
-		free(clp->c_cq, M_TTYS);
+		free(clp->c_cq, M_TTYS, 0);
 	}
 	clp->c_cs = clp->c_cq = NULL;
 }

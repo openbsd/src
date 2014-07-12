@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.110 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.111 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -781,7 +781,7 @@ fdexpand(struct proc *p)
 	memset(newofileflags + copylen, 0, nfiles * sizeof(char) - copylen);
 
 	if (fdp->fd_nfiles > NDFILE)
-		free(fdp->fd_ofiles, M_FILEDESC);
+		free(fdp->fd_ofiles, M_FILEDESC, 0);
 
 	if (NDHISLOTS(nfiles) > NDHISLOTS(fdp->fd_nfiles)) {
 		newhimap = malloc(NDHISLOTS(nfiles) * sizeof(u_int),
@@ -800,8 +800,8 @@ fdexpand(struct proc *p)
 		    NDLOSLOTS(nfiles) * sizeof(u_int) - copylen);
 
 		if (NDHISLOTS(fdp->fd_nfiles) > NDHISLOTS(NDFILE)) {
-			free(fdp->fd_himap, M_FILEDESC);
-			free(fdp->fd_lomap, M_FILEDESC);
+			free(fdp->fd_himap, M_FILEDESC, 0);
+			free(fdp->fd_lomap, M_FILEDESC, 0);
 		}
 		fdp->fd_himap = newhimap;
 		fdp->fd_lomap = newlomap;
@@ -1015,19 +1015,19 @@ fdfree(struct proc *p)
 	}
 	p->p_fd = NULL;
 	if (fdp->fd_nfiles > NDFILE)
-		free(fdp->fd_ofiles, M_FILEDESC);
+		free(fdp->fd_ofiles, M_FILEDESC, 0);
 	if (NDHISLOTS(fdp->fd_nfiles) > NDHISLOTS(NDFILE)) {
-		free(fdp->fd_himap, M_FILEDESC);
-		free(fdp->fd_lomap, M_FILEDESC);
+		free(fdp->fd_himap, M_FILEDESC, 0);
+		free(fdp->fd_lomap, M_FILEDESC, 0);
 	}
 	if (fdp->fd_cdir)
 		vrele(fdp->fd_cdir);
 	if (fdp->fd_rdir)
 		vrele(fdp->fd_rdir);
 	if (fdp->fd_knlist)
-		free(fdp->fd_knlist, M_TEMP);
+		free(fdp->fd_knlist, M_TEMP, 0);
 	if (fdp->fd_knhash)
-		free(fdp->fd_knhash, M_TEMP);
+		free(fdp->fd_knhash, M_TEMP, 0);
 	pool_put(&fdesc_pool, fdp);
 }
 

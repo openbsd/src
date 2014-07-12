@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.50 2014/01/21 21:45:58 kettenis Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.51 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -236,7 +236,7 @@ extent_create(char *name, u_long start, u_long end, int mtype, caddr_t storage,
 		rp = extent_alloc_region_descriptor(ex, flags);
 		if (rp == NULL) {
 			if (!fixed_extent)
-				free(ex, mtype);
+				free(ex, mtype, 0);
 			return (NULL);
 		}
 		rp->er_start = start;
@@ -280,7 +280,7 @@ extent_destroy(struct extent *ex)
 
 	/* If we're not a fixed extent, free the extent descriptor itself. */
 	if ((ex->ex_flags & EXF_FIXED) == 0)
-		free(ex, ex->ex_mtype);
+		free(ex, ex->ex_mtype, 0);
 }
 
 /*

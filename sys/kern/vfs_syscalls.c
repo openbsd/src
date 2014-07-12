@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.207 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.208 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -304,7 +304,7 @@ update:
 	} else {
 		mp->mnt_vnodecovered->v_mountedhere = NULL;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		free(mp, M_MOUNT, 0);
 		vput(vp);
 	}
 	return (error);
@@ -454,7 +454,7 @@ dounmount(struct mount *mp, int flags, struct proc *p, struct vnode *olddp)
 		panic("unmount: dangling vnode");
 
 	vfs_unbusy(mp);
-	free(mp, M_MOUNT);
+	free(mp, M_MOUNT, 0);
 
 	return (0);
 }

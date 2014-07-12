@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.143 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.144 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -336,10 +336,10 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 				*dp++ = *cp++;
 			*dp++ = '\0';
 
-			free(*tmpfap, M_EXEC);
+			free(*tmpfap, M_EXEC, 0);
 			tmpfap++; argc++;
 		}
-		free(pack.ep_fa, M_EXEC);
+		free(pack.ep_fa, M_EXEC, 0);
 		pack.ep_flags &= ~EXEC_HASARGL;
 	}
 
@@ -662,7 +662,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	if (pr->ps_flags & PS_TRACED)
 		psignal(p, SIGTRAP);
 
-	free(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC, 0);
 
 	/*
 	 * Call emulation specific exec hook. This can setup per-process
@@ -724,14 +724,14 @@ bad:
 	if (pack.ep_interp != NULL)
 		pool_put(&namei_pool, pack.ep_interp);
 	if (pack.ep_emul_arg != NULL)
-		free(pack.ep_emul_arg, M_TEMP);
+		free(pack.ep_emul_arg, M_TEMP, 0);
 	/* close and put the exec'd file */
 	vn_close(pack.ep_vp, FREAD, cred, p);
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
  freehdr:
-	free(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC, 0);
 #if NSYSTRACE > 0
  clrflag:
 #endif
@@ -754,13 +754,13 @@ exec_abort:
 	if (pack.ep_interp != NULL)
 		pool_put(&namei_pool, pack.ep_interp);
 	if (pack.ep_emul_arg != NULL)
-		free(pack.ep_emul_arg, M_TEMP);
+		free(pack.ep_emul_arg, M_TEMP, 0);
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
 	vn_close(pack.ep_vp, FREAD, cred, p);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 free_pack_abort:
-	free(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC, 0);
 	exit1(p, W_EXITCODE(0, SIGABRT), EXIT_NORMAL);
 
 	/* NOTREACHED */

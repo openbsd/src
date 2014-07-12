@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.255 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.256 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1308,7 +1308,7 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 		error = EINVAL;
 		break;
 	}
-	free(kf, M_TEMP);
+	free(kf, M_TEMP, 0);
 
 	if (!error) {
 		if (where == NULL)
@@ -1471,7 +1471,7 @@ again:
 	}
 err:
 	if (kproc)
-		free(kproc, M_TEMP);
+		free(kproc, M_TEMP, 0);
 	return (error);
 }
 
@@ -1752,7 +1752,7 @@ more:
 
 out:
 	uvmspace_free(vm);
-	free(buf, M_TEMP);
+	free(buf, M_TEMP, 0);
 	return (error);
 }
 
@@ -1816,7 +1816,7 @@ sysctl_proc_cwd(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	}
 
 	vrele(vp);
-	free(path, M_TEMP);
+	free(path, M_TEMP, 0);
 
 	return (error);
 }
@@ -1849,9 +1849,9 @@ sysctl_diskinit(int update, struct proc *p)
 		tlen++;
 
 		if (disknames)
-			free(disknames, M_SYSCTL);
+			free(disknames, M_SYSCTL, 0);
 		if (diskstats)
-			free(diskstats, M_SYSCTL);
+			free(diskstats, M_SYSCTL, 0);
 		diskstats = NULL;
 		disknames = NULL;
 		diskstats = malloc(disk_count * sizeof(struct diskstats),
@@ -2029,7 +2029,7 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 	}
 	*sizep -= buflen;
 	error = copyout(buf, where, *sizep);
-	free(buf, M_TEMP);
+	free(buf, M_TEMP, 0);
 	/* If copyout succeeded, use return code set earlier. */
 	return (error ? error : ret);
 }
@@ -2074,7 +2074,7 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		ret = sysctl_rdstruct(oldp, oldlenp, newp, usd,
 		    sizeof(struct sensordev));
 
-		free(usd, M_TEMP);
+		free(usd, M_TEMP, 0);
 		return (ret);
 	}
 
@@ -2097,7 +2097,7 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	ret = sysctl_rdstruct(oldp, oldlenp, newp, us,
 	    sizeof(struct sensor));
-	free(us, M_TEMP);
+	free(us, M_TEMP, 0);
 	return (ret);
 }
 

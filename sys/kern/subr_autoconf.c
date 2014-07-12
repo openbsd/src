@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.76 2014/07/12 13:43:08 mpi Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.77 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -152,12 +152,12 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 
 	if (pri > m->pri) {
 		if (m->indirect && m->match)
-			free(m->match, M_DEVBUF);
+			free(m->match, M_DEVBUF, 0);
 		m->match = match;
 		m->pri = pri;
 	} else {
 		if (m->indirect)
-			free(match, M_DEVBUF);
+			free(match, M_DEVBUF, 0);
 	}
 }
 
@@ -468,7 +468,7 @@ config_make_softc(struct device *parent, struct cfdata *cf)
 			    old != 0 ? "expand" : "creat");
 		if (old != 0) {
 			bcopy(cd->cd_devs, nsp, old * sizeof(void *));
-			free(cd->cd_devs, M_DEVBUF);
+			free(cd->cd_devs, M_DEVBUF, 0);
 		}
 		cd->cd_devs = nsp;
 	}
@@ -610,7 +610,7 @@ config_detach(struct device *dev, int flags)
 		if (cd->cd_devs[i] != NULL)
 			break;
 	if (i == cd->cd_ndevs) {		/* nothing found; deallocate */
-		free(cd->cd_devs, M_DEVBUF);
+		free(cd->cd_devs, M_DEVBUF, 0);
 		cd->cd_devs = NULL;
 		cd->cd_ndevs = 0;
 		cf->cf_unit = 0;
@@ -689,7 +689,7 @@ config_process_deferred_children(struct device *parent)
 		if (dc->dc_dev->dv_parent == parent) {
 			TAILQ_REMOVE(&deferred_config_queue, dc, dc_queue);
 			(*dc->dc_func)(dc->dc_dev);
-			free(dc, M_DEVBUF);
+			free(dc, M_DEVBUF, 0);
 			config_pending_decr();
 		}
 	}
@@ -888,6 +888,6 @@ device_unref(struct device *dv)
 {
 	dv->dv_ref--;
 	if (dv->dv_ref == 0) {
-		free(dv, M_DEVBUF);
+		free(dv, M_DEVBUF, 0);
 	}
 }

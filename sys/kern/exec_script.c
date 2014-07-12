@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.29 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.30 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -311,10 +311,10 @@ fail:
 	/* free the fake arg list, because we're not returning it */
 	if ((tmpsap = shellargp) != NULL) {
 		while (*tmpsap != NULL) {
-			free(*tmpsap, M_EXEC);
+			free(*tmpsap, M_EXEC, 0);
 			tmpsap++;
 		}
-		free(shellargp, M_EXEC);
+		free(shellargp, M_EXEC, 0);
 	}
 
 	/*

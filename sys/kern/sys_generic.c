@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.88 2014/07/08 17:42:50 miod Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.89 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -212,13 +212,13 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	if (ktriov != NULL) {
 		if (error == 0)
 			ktrgenio(p, fd, UIO_READ, ktriov, cnt);
-		free(ktriov, M_TEMP);
+		free(ktriov, M_TEMP, 0);
 	}
 #endif
 	*retval = cnt;
  done:
 	if (needfree)
-		free(needfree, M_IOV);
+		free(needfree, M_IOV, 0);
  out:
 	FRELE(fp, p);
 	return (error);
@@ -368,13 +368,13 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	if (ktriov != NULL) {
 		if (error == 0)
 			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt);
-		free(ktriov, M_TEMP);
+		free(ktriov, M_TEMP, 0);
 	}
 #endif
 	*retval = cnt;
  done:
 	if (needfree)
-		free(needfree, M_IOV);
+		free(needfree, M_IOV, 0);
  out:
 	FRELE(fp, p);
 	return (error);
@@ -518,7 +518,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 out:
 	FRELE(fp, p);
 	if (memp)
-		free(memp, M_IOCTLOPS);
+		free(memp, M_IOCTLOPS, 0);
 	return (error);
 }
 
@@ -714,7 +714,7 @@ done:
 	}
 
 	if (pibits[0] != (fd_set *)&bits[0])
-		free(pibits[0], M_TEMP);
+		free(pibits[0], M_TEMP, 0);
 	return (error);
 }
 
@@ -1015,7 +1015,7 @@ done:
 	}
 bad:
 	if (pl != pfds)
-		free(pl, M_TEMP);
+		free(pl, M_TEMP, 0);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_endrun.c,v 1.3 2010/04/12 12:57:52 tedu Exp $ */
+/*	$OpenBSD: tty_endrun.c,v 1.4 2014/07/12 18:43:32 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -155,7 +155,7 @@ endrunopen(dev_t dev, struct tty *tp, struct proc *p)
 
 	error = linesw[TTYDISC].l_open(dev, tp, p);
 	if (error) {
-		free(np, M_DEVBUF);
+		free(np, M_DEVBUF, 0);
 		tp->t_sc = NULL;
 	} else {
 		sensordev_install(&np->timedev);
@@ -174,7 +174,7 @@ endrunclose(struct tty *tp, int flags, struct proc *p)
 	tp->t_line = TTYDISC;	/* switch back to termios */
 	timeout_del(&np->endrun_tout);
 	sensordev_deinstall(&np->timedev);
-	free(np, M_DEVBUF);
+	free(np, M_DEVBUF, 0);
 	tp->t_sc = NULL;
 	endrun_count--;
 	if (endrun_count == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.9 2014/06/11 08:47:53 blambert Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.10 2014/07/12 18:43:32 tedu Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -129,7 +129,7 @@ taskq_destroy(struct taskq *tq)
 	}
 	mtx_leave(&tq->tq_mtx);
 
-	free(tq, M_DEVBUF);
+	free(tq, M_DEVBUF, 0);
 }
 
 void
@@ -143,7 +143,7 @@ taskq_create_thread(void *arg)
 	switch (tq->tq_state) {
 	case TQ_S_DESTROYED:
 		mtx_leave(&tq->tq_mtx);
-		free(tq, M_DEVBUF);
+		free(tq, M_DEVBUF, 0);
 		return;
 
 	case TQ_S_CREATED:

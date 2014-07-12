@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.110 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.111 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1641,7 +1641,7 @@ read:
 out:
 	if (stime) {
 		timeout_del(stime);
-		free(stime, M_TEMP);
+		free(stime, M_TEMP, 0);
 	}
 	return (error);
 }
@@ -2358,7 +2358,7 @@ ttyfree(struct tty *tp)
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
-	free(tp, M_TTYS);
+	free(tp, M_TTYS, 0);
 }
 
 void
@@ -2416,7 +2416,7 @@ sysctl_tty(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		ttystats_init(&ttystats);
 		err = sysctl_rdstruct(oldp, oldlenp, newp, ttystats,
 		    tty_count * sizeof(struct itty));
-		free(ttystats, M_SYSCTL);
+		free(ttystats, M_SYSCTL, 0);
 		return (err);
 	    }
 	default:

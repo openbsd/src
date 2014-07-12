@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.112 2014/07/10 22:16:48 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.113 2014/07/12 18:43:32 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -354,7 +354,7 @@ out:
  * Free a block of memory allocated by malloc.
  */
 void
-free(void *addr, int type)
+free(void *addr, int type, size_t fauxsize)
 {
 	struct kmembuckets *kbp;
 	struct kmemusage *kup;
