@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.79 2014/07/12 13:11:53 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.80 2014/07/12 18:10:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -994,8 +994,6 @@ ssl3_get_server_certificate(SSL *s)
 	SESS_CERT		*sc;
 	EVP_PKEY		*pkey = NULL;
 
-	int			 need_cert = 1;
-
 	n = s->method->ssl_get_message(s, SSL3_ST_CR_CERT_A,
 	    SSL3_ST_CR_CERT_B, -1, s->max_cert_list, &ok);
 
@@ -1093,8 +1091,7 @@ ssl3_get_server_certificate(SSL *s)
 
 	pkey = X509_get_pubkey(x);
 
-	if (need_cert && ((pkey == NULL) ||
-	    EVP_PKEY_missing_parameters(pkey))) {
+	if (pkey == NULL || EVP_PKEY_missing_parameters(pkey))) {
 		x = NULL;
 		al = SSL3_AL_FATAL;
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
@@ -1103,7 +1100,7 @@ ssl3_get_server_certificate(SSL *s)
 	}
 
 	i = ssl_cert_type(x, pkey);
-	if (need_cert && i < 0) {
+	if (i < 0) {
 		x = NULL;
 		al = SSL3_AL_FATAL;
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
@@ -1111,30 +1108,21 @@ ssl3_get_server_certificate(SSL *s)
 		goto f_err;
 	}
 
-	if (need_cert) {
-		sc->peer_cert_type = i;
-		CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
-		/*
-		 * Why would the following ever happen?
-		 * We just created sc a couple of lines ago.
-		 */
-		if (sc->peer_pkeys[i].x509 != NULL)
-			X509_free(sc->peer_pkeys[i].x509);
-		sc->peer_pkeys[i].x509 = x;
-		sc->peer_key = &(sc->peer_pkeys[i]);
+	sc->peer_cert_type = i;
+	CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+	/*
+	 * Why would the following ever happen?
+	 * We just created sc a couple of lines ago.
+	 */
+	if (sc->peer_pkeys[i].x509 != NULL)
+		X509_free(sc->peer_pkeys[i].x509);
+	sc->peer_pkeys[i].x509 = x;
+	sc->peer_key = &(sc->peer_pkeys[i]);
 
-		if (s->session->peer != NULL)
-			X509_free(s->session->peer);
-		CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
-		s->session->peer = x;
-	} else {
-		sc->peer_cert_type = i;
-		sc->peer_key = NULL;
-
-		if (s->session->peer != NULL)
-			X509_free(s->session->peer);
-		s->session->peer = NULL;
-	}
+	if (s->session->peer != NULL)
+		X509_free(s->session->peer);
+	CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+	s->session->peer = x;
 	s->session->verify_result = s->verify_result;
 
 	x = NULL;
@@ -2621,8 +2609,8 @@ ssl3_check_cert_and_algorithm(SSL *s)
 
 	idx = sc->peer_cert_type;
 	if (idx == SSL_PKEY_ECC) {
-		if (ssl_check_srvr_ecc_cert_and_alg(sc->peer_pkeys[idx].x509,
-		    s) == 0) {
+		if (ssl_check_srvr_ecc_cert_and_alg(
+		    sc->peer_pkeys[idx].x509, s) == 0) {
 			/* check failed */
 			SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
 			    SSL_R_BAD_ECC_CERT);
@@ -2635,7 +2623,7 @@ ssl3_check_cert_and_algorithm(SSL *s)
 	i = X509_certificate_type(sc->peer_pkeys[idx].x509, pkey);
 	EVP_PKEY_free(pkey);
 
-	/* Check that we have a certificate if we require one */
+	/* Check that we have a certificate if we require one. */
 	if ((alg_a & SSL_aRSA) && !has_bits(i, EVP_PK_RSA|EVP_PKT_SIGN)) {
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
 		    SSL_R_MISSING_RSA_SIGNING_CERT);
