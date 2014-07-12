@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.70 2014/07/12 19:54:15 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.71 2014/07/12 19:58:20 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -105,7 +105,7 @@ our @ISA = qw(OpenBSD::AddDelete::State);
 sub handle_options
 {
 	my $state = shift;
-	$state->SUPER::handle_options('ruUzl:A:P:Q:',
+	$state->SUPER::handle_options('ruUzl:A:P:',
 	    '[-acinqrsUuvxz] [-A arch] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-l file] [-P type] pkg-name [...]');
 
