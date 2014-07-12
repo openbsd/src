@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.7 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.8 2014/07/12 20:58:31 tedu Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -315,7 +315,7 @@ srprobe(void)
 	}
 
 	explicit_bzero(md, SR_META_SIZE * 512);
-	free(md, 0, 0);
+	free(md, 0);
 }
 
 int
@@ -477,18 +477,18 @@ sr_clear_keys(void)
 			continue;
 		if (bv->sbv_keys != NULL) {
 			explicit_bzero(bv->sbv_keys, SR_CRYPTO_KEYBLOCK_BYTES);
-			free(bv->sbv_keys, 0, 0);
+			free(bv->sbv_keys, 0);
 			bv->sbv_keys = NULL;
 		}
 		if (bv->sbv_maskkey != NULL) {
 			explicit_bzero(bv->sbv_maskkey, SR_CRYPTO_MAXKEYBYTES);
-			free(bv->sbv_maskkey, 0, 0);
+			free(bv->sbv_maskkey, 0);
 			bv->sbv_maskkey = NULL;
 		}
 	}
 	SLIST_FOREACH(kd, &sr_keydisks, kd_link) {
 		explicit_bzero(kd, sizeof(*kd));
-		free(kd, 0, 0);
+		free(kd, 0);
 	}
 }
 
@@ -618,7 +618,7 @@ done:
 
 	if (keys != NULL && rv != 0) {
 		explicit_bzero(keys, SR_CRYPTO_KEYBLOCK_BYTES);
-		free(keys, 0, 0);
+		free(keys, 0);
 	}
 
 	return (rv);
