@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.15 2014/07/12 18:44:42 tedu Exp $ */
+/*	$OpenBSD: octcf.c,v 1.16 2014/07/12 20:36:45 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -367,13 +367,14 @@ octcfstart(void *arg)
 void
 _octcfstart(struct octcf_softc *wd, struct buf *bp)
 {
-	uint32_t blkno;
-	uint32_t nblks;
+	struct disklabel *lp;
+	u_int64_t secno;
+	u_int64_t nsecs;
 
-	blkno = bp->b_blkno +
-	    DL_GETPOFFSET(&wd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)]);
-	blkno /= (SECTOR_SIZE / DEV_BSIZE);
-	nblks = bp->b_bcount / SECTOR_SIZE;
+	lp = wd->sc_dk.dk_label;
+	secno = DL_BLKTOSEC(lp, bp->b_blkno) +
+	    DL_GETPOFFSET(lp->d_partitions[DISKPART(bp->b_dev)]);
+	nblks = howmany(bp->b_bcount, lp->d_secsize);
 
 	wd->sc_bp = bp;
 
@@ -381,9 +382,9 @@ _octcfstart(struct octcf_softc *wd, struct buf *bp)
 	disk_busy(&wd->sc_dk);
 
 	if (bp->b_flags & B_READ)
-		bp->b_error = octcf_read_sectors(wd, nblks, blkno, bp->b_data);
+		bp->b_error = octcf_read_sectors(wd, nsecs, secno, bp->b_data);
 	else
-		bp->b_error = octcf_write_sectors(wd, nblks, blkno, bp->b_data);
+		bp->b_error = octcf_write_sectors(wd, nsecs, secno, bp->b_data);
 
 	octcfdone(wd);
 }
