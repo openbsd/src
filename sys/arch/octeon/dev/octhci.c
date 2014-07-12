@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.7 2014/07/12 14:31:20 pirofti Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.8 2014/07/12 14:37:17 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -370,29 +370,13 @@ octhci_intr1(struct octhci_softc *sc)
 	intsts = octhci_regc_read(sc, USBC_GINTSTS_OFFSET);
 	intmsk = octhci_regc_read(sc, USBC_GINTMSK_OFFSET);
 
-	if ((intsts & intmsk) == 0)
+	if ((intsts & intmsk) == 0) {
+		DPRINTFN(16, ("%s: masked interrupt\n", DEVNAME(sc)));
 		return (0);
+	}
 
 	sc->sc_bus.intr_context++;
 	sc->sc_bus.no_intrs++;
-
-	if (intsts & USBC_GINTSTS_RXFLVL) {
-		/* Failed assumption: no DMA */
-		printf("%s: Packets pending to be read from RxFIFO\n",
-		    DEVNAME(sc));
-		sc->sc_bus.dying = 1;
-		sc->sc_bus.intr_context--;
-		return (1);
-	}
-	if ((intsts & USBC_GINTSTS_PTXFEMP) ||
-	    (intsts & USBC_GINTSTS_NPTXFEMP)) {
-		/* Failed assumption: no DMA */
-		printf("%s: Packets pending to be written on TxFIFO\n",
-		    DEVNAME(sc));
-		sc->sc_bus.dying = 1;
-		sc->sc_bus.intr_context--;
-		return (1);
-	}
 
 	octhci_regc_write(sc, USBC_GINTSTS_OFFSET, intsts); /* Acknowledge */
 	usb_schedsoftintr(&sc->sc_bus);
