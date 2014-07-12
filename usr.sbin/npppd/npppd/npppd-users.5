@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd-users.5,v 1.5 2013/02/08 12:04:15 yasuoka Exp $
+.\"	$OpenBSD: npppd-users.5,v 1.6 2014/07/12 14:55:22 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: February 8 2013 $
+.Dd $Mdocdate: July 12 2014 $
 .Dt NPPPD-USERS 5
 .Os
 .Sh NAME
@@ -38,6 +38,10 @@ The following attributes can be specified:
 .It Sy Name Ta Sy Description
 .It password Ta
 User's password.
+Some characters are needed to be represented by the escape sequence.
+See
+.Xr getcap 3
+for the escape sequence.
 .It framed-ip-address Ta
 IPv4 address to be assigned for the user.
 .It framed-ip-network Ta
@@ -62,4 +66,6 @@ hana:\\
 .Sh BUGS
 Colon
 .Pq Sq \&:
-characters cannot be used in username or password.
+characters or vertical bar
+.Pq Sq |
+characters cannot be used in the username.
