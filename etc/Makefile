@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.363 2014/07/12 15:38:42 ajacoutot Exp $
+#	$OpenBSD: Makefile,v 1.364 2014/07/12 16:00:27 ajacoutot Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -260,7 +260,7 @@ distribution:
 	sort ../distrib/sets/lists/etc/{mi,md.${MACHINE}} > $${TMPSUM}; \
 	grep -h '/etc/examples/' ../distrib/sets/lists/base/{mi,md.${MACHINE}} > $${EGSUM}; \
 	cd ${DESTDIR} && \
-		xargs cksum < $${TMPSUM} > ${DESTDIR}/var/db/sysmerge/etcsum; \
+		xargs sha256 < $${TMPSUM} > ${DESTDIR}/var/db/sysmerge/etcsum; \
 	cd ${DESTDIR} && \
 		xargs sha256 < $${EGSUM} > ${DESTDIR}/var/db/sysmerge/egsum; \
 	rm -f $${TMPSUM} $${EGSUM}
