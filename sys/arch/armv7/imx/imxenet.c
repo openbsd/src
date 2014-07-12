@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.5 2014/07/02 17:01:07 brad Exp $ */
+/* $OpenBSD: imxenet.c,v 1.6 2014/07/12 20:07:34 brad Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -547,6 +547,14 @@ imxenet_init(struct imxenet_softc *sc)
 void
 imxenet_stop(struct imxenet_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
+	/*
+	 * Mark the interface down and cancel the watchdog timer.
+	 */
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
+
 	/* reset the controller */
 	HSET4(sc, ENET_ECR, ENET_ECR_RESET);
 	while(HREAD4(sc, ENET_ECR) & ENET_ECR_RESET);
