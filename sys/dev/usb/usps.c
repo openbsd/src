@@ -1,4 +1,4 @@
-/*	$OpenBSD: usps.c,v 1.6 2014/07/12 18:48:53 tedu Exp $   */
+/*	$OpenBSD: usps.c,v 1.7 2014/07/12 21:24:33 mpi Exp $   */
 
 /*
  * Copyright (c) 2011 Yojiro UO <yuo@nui.org>
@@ -110,7 +110,6 @@ static const struct usb_devno usps_devs[] = {
 int  usps_match(struct device *, void *, void *);
 void usps_attach(struct device *, struct device *, void *);
 int  usps_detach(struct device *, int);
-int  usps_activate(struct device *, int);
 void usps_intr(struct usbd_xfer *, void *, usbd_status);
 
 usbd_status usps_cmd(struct usps_softc *, uint8_t, uint16_t, uint16_t);
@@ -127,11 +126,7 @@ struct cfdriver usps_cd = {
 };
 
 const struct cfattach usps_ca = {
-	sizeof(struct usps_softc),
-	usps_match,
-	usps_attach,
-	usps_detach,
-	usps_activate,
+	sizeof(struct usps_softc), usps_match, usps_attach, usps_detach
 };
 
 int
@@ -339,19 +334,6 @@ usps_detach(struct device *self, int flags)
 		sensor_task_unregister(sc->sc_sensortask);
 
 	return (rv);
-}
-
-int
-usps_activate(struct device *self, int act)
-{
-	struct usps_softc *sc = (struct usps_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return (0);
 }
 
 usbd_status

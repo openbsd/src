@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.31 2014/07/12 18:48:53 tedu Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.32 2014/07/12 21:24:33 mpi Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -203,21 +203,16 @@ static const struct usb_devno uvscom_devs [] = {
 	{ USB_VENDOR_SUNTAC, USB_PRODUCT_SUNTAC_IS96U },
 };
 
-int uvscom_match(struct device *, void *, void *); 
-void uvscom_attach(struct device *, struct device *, void *); 
-int uvscom_detach(struct device *, int); 
-int uvscom_activate(struct device *, int); 
+int uvscom_match(struct device *, void *, void *);
+void uvscom_attach(struct device *, struct device *, void *);
+int uvscom_detach(struct device *, int);
 
-struct cfdriver uvscom_cd = { 
-	NULL, "uvscom", DV_DULL 
-}; 
+struct cfdriver uvscom_cd = {
+	NULL, "uvscom", DV_DULL
+};
 
-const struct cfattach uvscom_ca = { 
-	sizeof(struct uvscom_softc), 
-	uvscom_match, 
-	uvscom_attach, 
-	uvscom_detach, 
-	uvscom_activate, 
+const struct cfattach uvscom_ca = {
+	sizeof(struct uvscom_softc), uvscom_match, uvscom_attach, uvscom_detach
 };
 
 int
@@ -382,19 +377,6 @@ uvscom_detach(struct device *self, int flags)
 	}
 
 	return (rv);
-}
-
-int
-uvscom_activate(struct device *self, int act)
-{
-	struct uvscom_softc *sc = (struct uvscom_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return (0);
 }
 
 usbd_status

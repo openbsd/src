@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.45 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: urio.c,v 1.46 2014/07/12 21:24:33 mpi Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -93,21 +93,16 @@ static const struct usb_devno urio_devs[] = {
 	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_PSAPLAY120},
 };
 
-int urio_match(struct device *, void *, void *); 
-void urio_attach(struct device *, struct device *, void *); 
-int urio_detach(struct device *, int); 
-int urio_activate(struct device *, int); 
+int urio_match(struct device *, void *, void *);
+void urio_attach(struct device *, struct device *, void *);
+int urio_detach(struct device *, int);
 
-struct cfdriver urio_cd = { 
-	NULL, "urio", DV_DULL 
-}; 
+struct cfdriver urio_cd = {
+	NULL, "urio", DV_DULL
+};
 
-const struct cfattach urio_ca = { 
-	sizeof(struct urio_softc), 
-	urio_match, 
-	urio_attach, 
-	urio_detach, 
-	urio_activate, 
+const struct cfattach urio_ca = {
+	sizeof(struct urio_softc), urio_match, urio_attach, urio_detach
 };
 
 int
@@ -220,19 +215,6 @@ urio_detach(struct device *self, int flags)
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
 
-	return (0);
-}
-
-int
-urio_activate(struct device *self, int act)
-{
-	struct urio_softc *sc = (struct urio_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
 	return (0);
 }
 

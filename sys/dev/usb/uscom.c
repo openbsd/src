@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscom.c,v 1.1 2014/03/25 03:29:23 jsg Exp $	*/
+/*	$OpenBSD: uscom.c,v 1.2 2014/07/12 21:24:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -57,21 +57,16 @@ static const struct usb_devno uscom_devs[] = {
 	{ USB_VENDOR_HP,	USB_PRODUCT_HP_HPX9GP }
 };
 
-int	 uscom_match(struct device *, void *, void *); 
-void	 uscom_attach(struct device *, struct device *, void *); 
-int	 uscom_detach(struct device *, int); 
-int	 uscom_activate(struct device *, int); 
+int	 uscom_match(struct device *, void *, void *);
+void	 uscom_attach(struct device *, struct device *, void *);
+int	 uscom_detach(struct device *, int);
 
-struct cfdriver uscom_cd = { 
-	NULL, "uscom", DV_DULL 
-}; 
+struct cfdriver uscom_cd = {
+	NULL, "uscom", DV_DULL
+};
 
-const struct cfattach uscom_ca = { 
-	sizeof(struct uscom_softc), 
-	uscom_match, 
-	uscom_attach, 
-	uscom_detach, 
-	uscom_activate, 
+const struct cfattach uscom_ca = {
+	sizeof(struct uscom_softc), uscom_match, uscom_attach, uscom_detach
 };
 
 int
@@ -168,17 +163,4 @@ uscom_detach(struct device *self, int flags)
 	}
 
 	return (rv);
-}
-
-int
-uscom_activate(struct device *self, int act)
-{
-	struct uscom_softc *sc = (struct uscom_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return (0);
 }

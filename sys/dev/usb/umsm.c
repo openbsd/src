@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.99 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.100 2014/07/12 21:24:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -53,7 +53,6 @@ int     umsmdebug = 0;
 int umsm_match(struct device *, void *, void *);
 void umsm_attach(struct device *, struct device *, void *);
 int umsm_detach(struct device *, int);
-int umsm_activate(struct device *, int);
 
 int umsm_open(void *, int);
 void umsm_close(void *, int);
@@ -268,11 +267,7 @@ struct cfdriver umsm_cd = {
 };
 
 const struct cfattach umsm_ca = {
-	sizeof(struct umsm_softc),
-	umsm_match,
-	umsm_attach,
-	umsm_detach,
-	umsm_activate,
+	sizeof(struct umsm_softc), umsm_match, umsm_attach, umsm_detach
 };
 
 int
@@ -430,19 +425,6 @@ umsm_detach(struct device *self, int flags)
 	}
 
 	return (rv);
-}
-
-int
-umsm_activate(struct device *self, int act)
-{
-	struct umsm_softc *sc = (struct umsm_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.48 2013/11/15 08:25:31 pirofti Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.49 2014/07/12 21:24:33 mpi Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -193,21 +193,16 @@ static const struct uvisor_type uvisor_devs[] = {
 };
 #define uvisor_lookup(v, p) ((struct uvisor_type *)usb_lookup(uvisor_devs, v, p))
 
-int uvisor_match(struct device *, void *, void *); 
-void uvisor_attach(struct device *, struct device *, void *); 
-int uvisor_detach(struct device *, int); 
-int uvisor_activate(struct device *, int); 
+int uvisor_match(struct device *, void *, void *);
+void uvisor_attach(struct device *, struct device *, void *);
+int uvisor_detach(struct device *, int);
 
-struct cfdriver uvisor_cd = { 
-	NULL, "uvisor", DV_DULL 
-}; 
+struct cfdriver uvisor_cd = {
+	NULL, "uvisor", DV_DULL
+};
 
-const struct cfattach uvisor_ca = { 
-	sizeof(struct uvisor_softc), 
-	uvisor_match, 
-	uvisor_attach, 
-	uvisor_detach, 
-	uvisor_activate, 
+const struct cfattach uvisor_ca = {
+	sizeof(struct uvisor_softc), uvisor_match, uvisor_attach, uvisor_detach
 };
 
 int
@@ -371,19 +366,6 @@ uvisor_attach(struct device *parent, struct device *self, void *aux)
 bad:
 	DPRINTF(("uvisor_attach: ATTACH ERROR\n"));
 	usbd_deactivate(sc->sc_udev);
-}
-
-int
-uvisor_activate(struct device *self, int act)
-{
-	struct uvisor_softc *sc = (struct uvisor_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return (0);
 }
 
 int

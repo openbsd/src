@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.25 2014/07/12 18:48:53 tedu Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.26 2014/07/12 21:24:33 mpi Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -175,18 +175,13 @@ struct ucom_methods uticom_methods = {
 int	uticom_match(struct device *, void *, void *);
 void	uticom_attach(struct device *, struct device *, void *);
 int	uticom_detach(struct device *, int);
-int	uticom_activate(struct device *, int);
 
 struct cfdriver uticom_cd = {
 	NULL, "uticom", DV_DULL
 };
 
 const struct cfattach uticom_ca = {
-	sizeof(struct uticom_softc),
-	uticom_match,
-	uticom_attach,
-	uticom_detach,
-	uticom_activate,
+	sizeof(struct uticom_softc), uticom_match, uticom_attach, uticom_detach
 };
 
 static const struct usb_devno uticom_devs[] = {
@@ -455,19 +450,6 @@ fwload_done:
 	    uca.bulkout, sc->sc_intr_number));
 
 	sc->sc_subdev = config_found_sm((struct device *)sc, &uca, ucomprint, ucomsubmatch);
-}
-
-int
-uticom_activate(struct device *self, int act)
-{
-	struct uticom_softc *sc = (struct uticom_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: moscom.c,v 1.19 2013/11/15 08:25:30 pirofti Exp $	*/
+/*	$OpenBSD: moscom.c,v 1.20 2014/07/12 21:24:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -163,21 +163,16 @@ static const struct usb_devno moscom_devs[] = {
 	{ USB_VENDOR_MOSCHIP,		USB_PRODUCT_MOSCHIP_MCS7703 }
 };
 
-int moscom_match(struct device *, void *, void *); 
-void moscom_attach(struct device *, struct device *, void *); 
-int moscom_detach(struct device *, int); 
-int moscom_activate(struct device *, int); 
+int moscom_match(struct device *, void *, void *);
+void moscom_attach(struct device *, struct device *, void *);
+int moscom_detach(struct device *, int);
 
-struct cfdriver moscom_cd = { 
-	NULL, "moscom", DV_DULL 
-}; 
+struct cfdriver moscom_cd = {
+	NULL, "moscom", DV_DULL
+};
 
-const struct cfattach moscom_ca = { 
-	sizeof(struct moscom_softc), 
-	moscom_match, 
-	moscom_attach, 
-	moscom_detach, 
-	moscom_activate, 
+const struct cfattach moscom_ca = {
+	sizeof(struct moscom_softc), moscom_match, moscom_attach, moscom_detach
 };
 
 int
@@ -274,19 +269,6 @@ moscom_detach(struct device *self, int flags)
 	}
 
 	return (rv);
-}
-
-int
-moscom_activate(struct device *self, int act)
-{
-	struct moscom_softc *sc = (struct moscom_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return (0);
 }
 
 int
