@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.25 2014/07/11 13:00:06 tedu Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.26 2014/07/12 02:58:18 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -84,7 +84,6 @@ main(int argc, char **argv, char **envp)
 {
 	extern char *__progname;
 	struct namelist *hostlist = NULL;
-	int x;
 	char *cp;
 	int cmdargs = 0;
 	int c;
