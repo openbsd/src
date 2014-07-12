@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.5 2014/07/12 16:13:36 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.6 2014/07/12 17:18:13 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -30,13 +30,6 @@
 #include "manpath.h"
 #include "mansearch.h"
 
-enum	page {
-	PAGE_INDEX,
-	PAGE_SEARCH,
-	PAGE_SHOW,
-	PAGE__MAX
-};
-
 /*
  * A query as passed to the search function.
  */
@@ -52,7 +45,6 @@ struct	req {
 	struct query	  q;
 	char		**p; /* array of available manpaths */
 	size_t		  psz; /* number of available manpaths */
-	enum page	  page;
 };
 
 static	void		 catman(const struct req *, const char *);
@@ -67,15 +59,13 @@ static	void		 http_print(const char *);
 static	void 		 http_putchar(char);
 static	void		 http_printquery(const struct req *);
 static	void		 pathgen(struct req *);
-static	void		 pg_index(const struct req *, char *);
-static	void		 pg_search(const struct req *, char *);
-static	void		 pg_show(const struct req *, char *);
+static	void		 pg_search(const struct req *);
+static	void		 pg_show(const struct req *, const char *);
 static	void		 resp_begin_html(int, const char *);
 static	void		 resp_begin_http(int, const char *);
 static	void		 resp_end_html(void);
 static	void		 resp_error_badrequest(const char *);
 static	void		 resp_error_internal(void);
-static	void		 resp_error_notfound(const char *);
 static	void		 resp_index(const struct req *);
 static	void		 resp_noresult(const struct req *,
 				const char *);
@@ -87,12 +77,6 @@ static	const char	 *scriptname; /* CGI script name */
 static	const char	 *mandir; /* contains all manpath directories */
 static	const char	 *cssdir; /* css directory */
 static	const char	 *httphost; /* hostname used in the URIs */
-
-static	const char * const pages[PAGE__MAX] = {
-	"index", /* PAGE_INDEX */ 
-	"search", /* PAGE_SEARCH */
-	"show", /* PAGE_SHOW */
-};
 
 /*
  * Print a character, escaping HTML along the way.
@@ -348,7 +332,7 @@ resp_searchform(const struct req *req)
 
 	puts("<!-- Begin search form. //-->");
 	printf("<DIV ID=\"mancgi\">\n"
-	       "<FORM ACTION=\"%s/search\" METHOD=\"get\">\n"
+	       "<FORM ACTION=\"%s\" METHOD=\"get\">\n"
 	       "<FIELDSET>\n"
 	       "<LEGEND>Search Parameters</LEGEND>\n"
 	       "<INPUT TYPE=\"submit\" VALUE=\"Search\"> "
@@ -410,9 +394,9 @@ resp_index(const struct req *req)
 	resp_searchform(req);
 	printf("<P>\n"
 	       "This web interface is documented in the "
-	       "<A HREF=\"%s/search?expr=Nm~^man\\.cgi$&amp;sec=8\">"
+	       "<A HREF=\"%s?query=man.cgi&amp;sec=8\">"
 	       "man.cgi</A> manual, and the "
-	       "<A HREF=\"%s/search?expr=Nm~^apropos$&amp;sec=1\">"
+	       "<A HREF=\"%s?query=apropos&amp;sec=1\">"
 	       "apropos</A> manual explains the query syntax.\n"
 	       "</P>\n",
 	       scriptname, scriptname);
@@ -445,24 +429,6 @@ resp_error_badrequest(const char *msg)
 }
 
 static void
-resp_error_notfound(const char *page)
-{
-
-	resp_begin_html(404, "Not Found");
-	puts("<H1>Page Not Found</H1>\n"
-	     "<P>\n"
-	     "The page you're looking for, ");
-	printf("<B>");
-	html_print(page);
-	printf("</B>,\n"
-	       "could not be found.\n"
-	       "Try searching from the\n"
-	       "<A HREF=\"%s\">main page</A>.\n"
-	       "</P>", scriptname);
-	resp_end_html();
-}
-
-static void
 resp_error_internal(void)
 {
 	resp_begin_html(500, "Internal Server Error");
@@ -481,7 +447,7 @@ resp_search(const struct req *req, struct manpage *r, size_t sz)
 		 * without any delay.
 		 */
 		printf("Status: 303 See Other\r\n");
-		printf("Location: http://%s%s/show/%s/%s?",
+		printf("Location: http://%s%s/%s/%s?",
 		    httphost, scriptname, req->q.manpath, r[0].file);
 		http_printquery(req);
 		printf("\r\n"
@@ -500,7 +466,7 @@ resp_search(const struct req *req, struct manpage *r, size_t sz)
 	for (i = 0; i < sz; i++) {
 		printf("<TR>\n"
 		       "<TD CLASS=\"title\">\n"
-		       "<A HREF=\"%s/show/%s/%s?", 
+		       "<A HREF=\"%s/%s/%s?", 
 		    scriptname, req->q.manpath, r[i].file);
 		html_printquery(req);
 		printf("\">");
@@ -516,14 +482,6 @@ resp_search(const struct req *req, struct manpage *r, size_t sz)
 	puts("</TABLE>\n"
 	     "</DIV>");
 	resp_end_html();
-}
-
-/* ARGSUSED */
-static void
-pg_index(const struct req *req, char *path)
-{
-
-	resp_index(req);
 }
 
 static void
@@ -693,7 +651,7 @@ format(const struct req *req, const char *file)
 	}
 
 	snprintf(opts, sizeof(opts),
-	    "fragment,man=%s/search?sec=%%S&expr=Nm~^%%N$",
+	    "fragment,man=%s?query=%%N&amp;sec=%%S",
 	    scriptname);
 
 	mparse_result(mp, &mdoc, &man, NULL);
@@ -723,7 +681,7 @@ format(const struct req *req, const char *file)
 }
 
 static void
-pg_show(const struct req *req, char *path)
+pg_show(const struct req *req, const char *path)
 {
 	char		*sub;
 
@@ -753,7 +711,7 @@ pg_show(const struct req *req, char *path)
 }
 
 static void
-pg_search(const struct req *req, char *path)
+pg_search(const struct req *req)
 {
 	struct mansearch	  search;
 	struct manpaths		  paths;
@@ -832,9 +790,10 @@ pg_search(const struct req *req, char *path)
 int
 main(void)
 {
-	int		 i;
 	struct req	 req;
-	char		*querystring, *path, *subpath;
+	const char	*path;
+	char		*querystring;
+	int		 i;
 
 	/* Scan our run-time environment. */
 
@@ -871,52 +830,20 @@ main(void)
 	if (NULL != (querystring = getenv("QUERY_STRING")))
 		http_parse(&req, querystring);
 
-	/*
-	 * Now juggle paths to extract information.
-	 * We want to extract our filetype (the file suffix), the
-	 * initial path component, then the trailing component(s).
-	 * Start with leading subpath component. 
-	 */
+	/* Dispatch to the three different pages. */
 
-	subpath = path = NULL;
-	req.page = PAGE__MAX;
+	path = getenv("PATH_INFO");
+	if (NULL == path)
+		path = "";
+	else if ('/' == *path)
+		path++;
 
-	if (NULL == (path = getenv("PATH_INFO")) || '\0' == *path)
-		req.page = PAGE_INDEX;
-
-	if (NULL != path && '/' == *path && '\0' == *++path)
-		req.page = PAGE_INDEX;
-
-	/* Resolve subpath component. */
-
-	if (NULL != path && NULL != (subpath = strchr(path, '/')))
-		*subpath++ = '\0';
-
-	/* Map path into one we recognise. */
-
-	if (NULL != path && '\0' != *path)
-		for (i = 0; i < (int)PAGE__MAX; i++) 
-			if (0 == strcmp(pages[i], path)) {
-				req.page = (enum page)i;
-				break;
-			}
-
-	/* Route pages. */
-
-	switch (req.page) {
-	case (PAGE_INDEX):
-		pg_index(&req, subpath);
-		break;
-	case (PAGE_SEARCH):
-		pg_search(&req, subpath);
-		break;
-	case (PAGE_SHOW):
-		pg_show(&req, subpath);
-		break;
-	default:
-		resp_error_notfound(path);
-		break;
-	}
+	if ('\0' != *path)
+		pg_show(&req, path);
+	else if (NULL != req.q.expr)
+		pg_search(&req);
+	else
+		resp_index(&req);
 
 	for (i = 0; i < (int)req.psz; i++)
 		free(req.p[i]);
