@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.399 2014/07/12 09:38:39 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.400 2014/07/12 17:10:51 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -254,7 +254,7 @@ Extract the distribution files under
 (but see
 .Ev EXTRACT_ONLY
 and
-.Ev NO_DEPENDS ).
+.Ev NO_DEPENDS ) .
 Refer to
 .Ev EXTRACT_CASES
 for a complete description.
@@ -1693,13 +1693,16 @@ Yields a suitable default for
 .It Ev GH_ACCOUNT
 Account name of the GitHub user hosting the project.
 .It Ev GH_COMMIT
-SHA1 commit id to fetch. It is good practice to always specify
+SHA1 commit id to fetch.
+It is good practice to always specify
 the commit id, even if ${GH_TAGNAME} was specified.
 .It Ev GH_PROJECT
 Name of the project on GitHub.
 .It Ev GH_TAGNAME
-Name of the tag to download. Setting ${GH_TAGNAME} to master is invalid
-and will throw an error. ${WRKDIST} is auto-generated based on the
+Name of the tag to download.
+Setting ${GH_TAGNAME} to master is invalid
+and will throw an error.
+${WRKDIST} is auto-generated based on the
 ${GH_TAGNAME} if specified, otherwise ${GH_COMMIT} will be used to generate
 ${WRKDIST}.
 .It Ev GMAKE
