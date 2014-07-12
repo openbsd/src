@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.85 2014/07/11 19:55:46 giovanni Exp $
+#	$OpenBSD: services,v 1.86 2014/07/12 08:01:47 ajacoutot Exp $
 #
 # Network services, Internet style
 #
@@ -38,6 +38,8 @@ time		37/udp		timserver
 rlp		39/udp		resource	# resource location
 nameserver	42/tcp		name		# IEN 116
 whois		43/tcp		nicname
+tacacs		49/tcp		tacas+		# Login Host Protocol (TACACS)
+tacacs		49/udp		tacas+		# Login Host Protocol (TACACS)
 domain		53/tcp		nameserver	# name-domain server
 domain		53/udp		nameserver
 mtp		57/tcp				# deprecated
@@ -130,6 +132,8 @@ svrloc		427/tcp				# Server Location
 svrloc		427/udp
 nnsp		433/tcp		usenet		# Network News Transfer
 https		443/tcp				# secure http (SSL)
+snpp		444/tcp				# Simple Network Paging Protocol
+snpp		444/udp				# Simple Network Paging Protocol
 microsoft-ds	445/tcp				# Microsoft-DS
 microsoft-ds	445/udp				# Microsoft-DS
 kpasswd		464/tcp				# Kerberos 5 password changing
@@ -185,14 +189,6 @@ dhcpv6-server	547/udp				# DHCPv6 server
 remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
 silc		706/tcp				# Secure Live Internet Conferencing
 silc		706/udp
-kerberos-adm	749/udp				# Kerberos 5 kadmin
-kerberos-adm	749/tcp				# Kerberos 5 kadmin
-kerberos-iv	750/udp		kdc		# Kerberos authentication--udp
-kerberos-iv	750/tcp		kdc		# Kerberos authentication--tcp
-kerberos_master 751/udp				# Kerberos 4 kadmin
-kerberos_master 751/tcp				# Kerberos 4 kadmin
-krb_prop	754/tcp		hprop		# Kerberos slave propagation
-krbupdate	760/tcp		kreg		# BSD Kerberos registration
 #
 # From ``Assigned Numbers'':
 #
@@ -235,6 +231,8 @@ kx		2111/tcp			# X over kerberos
 kip		2112/tcp			# IP over kerberos
 kauth		2120/tcp			# Remote kauth
 iprop		2121/tcp			# Kerberos incremental propagation
+cvspserver	2401/tcp			# cvs pserver
+cvspserver	2401/udp			# cvs pserver
 netplan		2983/tcp			# netplan daemon
 eppc		3031/tcp			# Remote AppleEvents/PPC Toolbox
 eppc		3031/udp			# Remote AppleEvents/PPC Toolbox
@@ -250,19 +248,43 @@ krb524		4444/tcp			# Kerberos 5->4
 krb524		4444/udp			# Kerberos 5->4
 ipsec-nat-t	4500/tcp	ipsec-msft	# IPsec NAT-Traversal
 ipsec-nat-t	4500/udp	ipsec-msft	# IPsec NAT-Traversal
+hylafax		4559/tcp			# HylaFAX client-server protocol
+hylafax		4559/udp			# HylaFAX client-server protocol
 vxlan		4789/udp			# VXLAN
 rfe		5002/tcp			# Radio Free Ethernet
 rfe		5002/udp			# Actually uses UDP only
 sip		5060/tcp			# SIP
 sip		5060/udp			# SIP
 postgresql	5432/tcp			# PostgreSQL
+ub-dns-control	8953/tcp			# unbound dns nameserver control
+#		8953/udp			# reserved
+git		9418/tcp			# git pack transfer service
+git		9418/udp			# git pack transfer service
 zabbix-agent	10050/tcp			# Zabbix Agent
 zabbix-agent	10050/udp			# Zabbix Agent
 zabbix-trapper	10051/tcp			# Zabbix Trapper
 zabbix-trapper	10051/udp			# Zabbix Trapper
+amt-soap-http	16992/tcp		# Intel AMT SOAP/HTTP
+amt-soap-http	16992/udp		# Intel AMT SOAP/HTTP
+amt-soap-https	16993/tcp		# Intel AMT SOAP/HTTPS
+amt-soap-https	16993/udp		# Intel AMT SOAP/HTTPS
+amt-redir-tcp	16994/tcp		# Intel AMT Redirection/TCP
+amt-redir-tcp	16994/udp		# Intel AMT Redirection/TCP
+amt-redir-tls	16995/tcp		# Intel AMT Redirection/TLS
+amt-redir-tls	16995/udp		# Intel AMT Redirection/TLS
+openwebnet	20005/tcp	xcept	# OpenWebNet protocol for electric network
+openwebnet	20005/udp	xcept	# OpenWebNet protocol for electric network
 #
-# AFS Services
+# Kerberos and AFS Services
 #
+kerberos-adm		749/udp		# Kerberos 5 kadmin
+kerberos-adm		749/tcp		# Kerberos 5 kadmin
+kerberos-iv		750/udp	kdc	# Kerberos authentication--udp
+kerberos-iv		750/tcp	kdc	# Kerberos authentication--tcp
+kerberos_master 	751/udp		# Kerberos 4 kadmin
+kerberos_master 	751/tcp		# Kerberos 4 kadmin
+krb_prop		754/tcp	hprop	# Kerberos slave propagation
+krbupdate		760/tcp	kreg	# BSD Kerberos registration
 afs3-fileserver		7000/udp	# AFS fileserver
 afs3-callback		7001/udp	# AFS callback server
 afs3-prserver		7002/udp	# AFS protection server
@@ -276,11 +298,7 @@ afs3-rmtsys		7009/udp	# AFS remote cache manager service
 #
 # Unofficial services
 #
-tacacs		49/tcp	tacas+		# Login Host Protocol (TACACS)
-tacacs		49/udp	tacas+		# Login Host Protocol (TACACS)
 pop3pw		106/tcp	poppassd	# Eudora compatible PW changer
-snpp		444/tcp			# Simple Network Paging Protocol
-snpp		444/udp			# Simple Network Paging Protocol
 smtps		465/tcp			# SSL-wrapped SMTP
 conserver	782/tcp			# console server
 supfilesrv	871/tcp			# SUP server
@@ -289,28 +307,14 @@ supfiledbg	1127/tcp		# SUP debugging
 support		1529/tcp		# GNATS, cygnus bug tracker
 datametrics	1645/udp
 ekshell2	2106/tcp		# Encrypted kshell - UColorado, Boulder
-cvspserver	2401/tcp		# cvs pserver
 webster		2627/tcp		# Network dictionary
-webster		2627/udp
-hylafax		4559/tcp		# HylaFAX client-server protocol
-hylafax		4559/udp		# HylaFAX client-server protocol
 canna		5680/tcp		# Kana->Kanji server
 sane-port	6566/tcp		# SANE Control Port
-sane-port	6566/udp		# SANE Control Port
 icb		7326/tcp		# Internet Citizen's Band
 spamd		8025/tcp		# spamd(8)
 spamd-sync	8025/udp		# spamd(8) synchronisation
 spamd-cfg	8026/tcp		# spamd(8) configuration
 dhcpd-sync	8067/udp		# dhcpd(8) synchronisation
-ub-dns-control	8953/tcp		# unbound dns nameserver control
-git		9418/tcp		# git pack transfer service
-git		9418/udp		# git pack transfer service
-amt-soap-http	16992/tcp		# Intel AMT SOAP/HTTP
-amt-soap-https	16993/tcp		# Intel AMT SOAP/HTTPS
-amt-redir-tcp	16994/tcp		# Intel AMT Redirection/TCP
-amt-redir-tls	16995/tcp		# Intel AMT Redirection/TLS
-openwebnet	20005/tcp	xcept	# OpenWebNet protocol for electric network
-openwebnet	20005/udp	xcept	# OpenWebNet protocol for electric network
 hunt		26740/udp		# hunt(6)
 #
 # Appletalk
