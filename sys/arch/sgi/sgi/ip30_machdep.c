@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.60 2014/04/03 08:07:16 mpi Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.61 2014/07/12 14:12:44 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -483,7 +483,7 @@ ip30_nmi_handler()
 
 	splx(s);
 	printf("Resetting system...\n");
-	boot(RB_USERREQ);
+	reboot(RB_USERREQ);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.59 2014/05/19 21:18:42 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.60 2014/07/12 14:12:44 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -934,5 +934,5 @@ ip27_nmi(void *arg)
 	(void)kdb_trap(-1, &nmi_frame);
 #endif
 	printf("Resetting system...\n");
-	boot(RB_USERREQ);
+	reboot(RB_USERREQ);
 }

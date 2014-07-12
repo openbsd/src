@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.226 2014/07/10 21:46:02 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.227 2014/07/12 14:12:44 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -998,7 +998,7 @@ hpmc_dump(void)
 	printf("HPMC\n");
 
 	cold = 0;
-	boot(RB_NOSYNC);
+	reboot(RB_NOSYNC);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.70 2014/01/24 09:36:23 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.71 2014/07/12 14:12:44 uebayasi Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -839,7 +839,7 @@ psycho_powerfail(void *arg)
 	 * We lost power.  Try to shut down NOW.
 	 */
 	printf("Power Failure Detected: Shutting down NOW.\n");
-	boot(RB_POWERDOWN|RB_HALT);
+	reboot(RB_POWERDOWN | RB_HALT);
 	return (1);
 }
 

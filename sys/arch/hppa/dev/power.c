@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.6 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: power.c,v 1.7 2014/07/12 14:12:44 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -154,7 +154,7 @@ power_thread_dr(void *v)
 		 * switch and thus we have do dampen it ourselves.
 		 */
 		if (sc->sc_dr_cnt == hz / 10)
-			boot(RB_POWERDOWN | RB_HALT);
+			reboot(RB_POWERDOWN | RB_HALT);
 
 		tsleep(v, PWAIT, "drpower", 10);
 	}
