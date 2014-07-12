@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.75 2014/05/08 21:32:45 miod Exp $
+#	$OpenBSD: Makefile.hppa,v 1.76 2014/07/12 21:49:27 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -33,7 +33,7 @@ CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
 		-fno-builtin-log2 -fno-builtin-malloc ${NOPIE_FLAGS}
 CMACHFLAGS+=	-fno-stack-protector
 
-COPTS?=		-Os
+COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
 LINKFLAGS=	-X -T ${_machdir}/conf/ld.script -Ttext 80000 --warn-common \
