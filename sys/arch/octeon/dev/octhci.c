@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.6 2014/07/11 17:01:48 pirofti Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.7 2014/07/12 14:31:20 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -817,23 +817,34 @@ octhci_root_ctrl_start(struct usbd_xfer *xfer)
 		}
 		switch (value) {
 		case UHF_PORT_ENABLE:
+			octhci_regc_clear(sc, USBC_HPRT_OFFSET,
+			    USBC_HPRT_PRTENA);
 			break;
 		case UHF_PORT_SUSPEND:
-			/* TODO */
+			octhci_regc_clear(sc, USBC_HPRT_OFFSET,
+			    USBC_HPRT_PRTSUSP);
 			break;
 		case UHF_PORT_POWER:
+			octhci_regc_clear(sc, USBC_HPRT_OFFSET,
+			    USBC_HPRT_PRTPWR);
 			break;
 		case UHF_PORT_INDICATOR:
 			break;
 		case UHF_C_PORT_CONNECTION:
 			break;
 		case UHF_C_PORT_ENABLE:
+			octhci_regc_clear(sc, USBC_HPRT_OFFSET,
+			    USBC_HPRT_PRTENCHNG);
 			break;
 		case UHF_C_PORT_SUSPEND:
 			break;
 		case UHF_C_PORT_OVER_CURRENT:
+			octhci_regc_clear(sc, USBC_HPRT_OFFSET,
+			    USBC_HPRT_PRTOVRCURRCHNG);
 			break;
 		case UHF_C_PORT_RESET:
+			octhci_regc_clear(sc, USBC_HPRT_OFFSET,
+			    USBC_HPRT_PRTRST);
 			break;
 		default:
 			err = USBD_IOERROR;
