@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.176 2014/07/09 19:18:29 jmc Exp $
+.\"	$OpenBSD: port-modules.5,v 1.177 2014/07/12 21:28:58 zhuk Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 9 2014 $
+.Dd $Mdocdate: July 12 2014 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -434,6 +434,43 @@ post-install:
 	${MODCPAN_POST_INSTALL}
 .Ed
 .It devel/cmake
+Adds
+.Pa devel/cmake
+to
+.Ev BUILD_DEPENDS
+and fills up
+.Ev CONFIGURE_ARGS ,
+.Ev CONFIGURE_ENV
+and
+.Ev MAKE_ENV .
+Sets up
+.Ar configure
+target.
+If
+.Ev CONFIGURE_STYLE
+was not set before, sets its value to `cmake'.
+Changes default value of
+.Ev SEPARATE_BUILD
+to `Yes' because modern CMake requires out-of-source build anyway.
+Changes
+.Ev REGRESS_TARGET
+to `test' as this is standard for CMake projects.
+Also this module have following knobs:
+.Bl -tag -width Ds
+.It MODCMAKE_WANTCOLOR
+If set to `Yes', CMake will colorize its output.
+Should not be used in ports Makefiles.
+Default value is `No'.
+.It MODCMAKE_VERBOSE
+If set to `Yes', CMake will print details during configure and build
+stages about exact command being run, etc.
+Should not be used in ports Makefiles.
+Default value is `Yes'.
+.El
+Also,
+.Sq nojunk
+is added to DPB_PROPERTIES because CMake's include files parser cheats
+too much.
 .It devel/dconf
 Sets
 .Ev CONFIGURE_ARGS ,
@@ -1260,6 +1297,242 @@ Some tools require the following goo in the PLIST:
 .It x11/gnustep
 .It x11/kde
 .It x11/kde4
+Required for building KDE4-enabled ports. Main variables are: MODKDE4_USE,
+MODKDE4_VERSION, MODKDE4_DEP_DIR, MODKDE4_DEP_VERSION, MODKDE4_FLAVOR.
+It's used both for KDE4 SC itself and for software built on top of it,
+e.g., Digikam.
+This module supports several KDE4 trees at the same time, see below.
+The following variables are designed to be used in both types of ports:
+.Bl -tag -width KDE4LIB
+.It Ev MODKDE4_USE
+Defines the core components of KDE4 to be used by the port.
+Could have zero or more of the following values, in any order:
+.Sq libs ,
+.Sq runtime ,
+.Sq pim ,
+.Sq games ,
+.Sq workspace .
+Could be forced to be empty, this will mean no automated dependencies.
+If
+.Sq libs
+is specified, no dependencies on runtime (kde-runtime or kdepim-runtime)
+will be recorded.
+The
+.Sq workspace
+component implies
+.Sq runtime .
+The
+.Sq games
+component is to be used by games and affects default HOMEPAGE, too.
+If neither
+.Sq libs
+or
+.Sq runtime
+are specified, the
+.Sq runtime
+is implied.
+If both
+.Sq libs
+and
+.Sq runtime
+are specified, then
+.Sq runtime
+takes precedence (actually, it's a libs+ anyway).
+The
+.Sq pim libs
+combination adds dependencies on both kdelibs and kdepimlibs,
+and
+.Sq pim runtime (
+or just
+.Sq pim )
+also adds dependencies on both kde-runtime and kdepim-runtime.
+Defaults to
+.Sq libs
+when
+.Ev MODKDE4_RESOURCES
+is set to
+.Sq Yes ,
+and
+.Sq runtime
+otherwise.
+.It Ev MODKDE4_DEP_DIR
+Expands to
+.Sq x11/kdeVERSION
+where version depends on current
+.Ev MODKDE4_VERSION ,
+see below.
+Read-only.
+.It Ev MODKDE4_DEP_VERSION
+Expands to a string to be used in dependency lines, see
+examples in
+.Pa x11/kde4/*
+ports.
+Read-only.
+.It Ev MODKDE4_RESOURCES
+Should be set to
+.Sq Yes
+for ports that only provide non-executable stuff like icons,
+localization files and so on.
+Affects
+.Ev FLAVORS ,
+.Ev MODKDE4_NO_QT ,
+.Ev MODKDE4_USE ,
+.Ev MODULES ,
+.Ev PKG_ARCH
+and
+.Ev SUBST_VARS
+variables.
+Defaults to
+.Sq No .
+.It Ev MODKDE4_INCLUDE_DIR
+Path where KDE4 headers to be placed/searched for, relative to
+.Ev PREFIX .
+Read-only.
+.It Ev MODKDE4_LIB_DIR
+Path where KDE4 headers to be placed/searched for, relative to
+.Ev PREFIX .
+Read-only.
+.It Ev KDE4LIB
+Shorter synonym for
+.Ev MODKDE4_LIB_DIR ,
+to be used in plists and
+.Ev WANTLIB
+declarations.
+Read-only.
+.It Ev MODKDE4_FIX_GETTEXT
+If set to
+.Sq Yes ,
+adds an additional step before before building port that
+searches for KDE-specific calls of GETTEXT_PROCESS_PO_FILES()
+CMake command and tweaks them to be compatible with the one from
+FindGettext.cmake module provided by CMake itself.
+Defaults to
+.Sq Yes .
+.It Ev MODKDE4_SYSCONF_FILES
+Some KDE ports install files under
+.Pa ${SYSCONFDIR} .
+We want to have them under
+.Ev ${PREFIX}/share/examples
+or such, and just be @sample'd under
+.Pa ${SYSCONFDIR} .
+So add
+.Sq file/dir destination
+pairs to this variable, and appropriate @sample lines to packing list, e.g.:
+.Bd -literal -offset indent
+# in Makefile:
+MODKDE4_SYSCONF_FILES = dbus-1      share/examples
+
+# in PLIST:
+share/examples/dbus-1/system.d/org.kde.baloo.filewatch.conf
+@sample ${SYSCONFDIR}/dbus-1/system.d/org.kde.baloo.filewatch.conf
+.Ed
+.El
+.Pp
+The following variables are mostly used only inside KDE4 SC:
+.Bl -tag -width KDE4LIB
+.It MODKDE4_LIB_LINKS
+If set to
+.Sq Yes ,
+soft links for shared libraries in
+.Pa ${PREFIX}/lib
+to
+.Pa ${MODKDE4_LIB_DIR}
+will be created.
+Used to distinguish libraries from different KDE versions (3, 4...).
+Defaults to
+.Sq No .
+.It KDE4_ONLY
+If set to
+.Sq Yes ,
+sets the
+.Xr dpb 1
+tag to
+.Sq kde4 .
+Defaults to
+.Sq No
+when
+.Ev MODKDE4_USE
+is empty, and to
+.Sq Yes
+otherwise.
+.El
+.Pp
+The following variables are likely to be used only outside KDE4 SC:
+.Bl -tag -width KDE4LIB
+.It MODKDE4_NO_QT
+If set to
+.Sq Yes ,
+avoids automatic addition of x11/qt4 to
+.Ev MODULES.
+.El
+.Pp
+The x11/kde4 module supports co-existance of different KDE4 SC version
+ports subtrees.
+There always is a so-called stable tree in
+.Pa ${PORTSDIR}/x11/kde4
+and additional trees are placed in
+.Pa ${PORTSDIR}/x11/kdeXYZ ,
+where
+.Sq XYZ
+correspond to the
+.Sq X.Y.Z
+KDE version.
+So, say, KDE 4.12.4 tree should be placed in
+.Pa ${PORTSDIR}/x11/kde4124
+directory.
+The process of preparing a new KDE SC version subtree is automated,
+just use kde-release-helper script:
+.Bd -literal -offset indent
+cd ${PORTSDIR}/x11/kde4
+\&./kde-release-helper prepare 4.12.4
+.Ed
+This will copy the x11/kde4 subtree to x11/kde4124 and strip it:
+remove
+.Ev REVISION
+marks, remove distinfo files and so on.
+.Pp
+To access the new version then you'll need to add appropriate
+values at the top of x11/kde4 module file itself.
+Then you be able to use automatically created
+.Sq kdeXYZ
+.Ev FLAVOR
+to reference corresponding KDE4 SC version outside x11/kde4*.
+.Pp
+The x11/kde4 module sets the following variables unless they're already
+set by a port:
+CONFIGURE_STYLE
+EXTRACT_SUFX
+ONLY_FOR_ARCHS
+PORTHOME
+SEPARATE_BUILD
+SHARED_ONLY
+.Pp
+The x11/kde4 module modifies the following variables if needed:
+BUILD_DEPENDS
+CONFIGURE_ARGS
+CONFIGURE_ENV
+LIB_DEPENDS
+RUN_DEPENDS
+WANTLIB
+.Pp
+The x11/kde4 module automatically adds devel/cmake to
+.Ev MODULES
+unless
+.Ev NO_BUILD
+is set to
+.Sq Yes .
+The x11/kde4 module automatically adds x11/qt4 to
+.Ev MODULES
+unless
+.Ev MODKDE4_NO_QT
+is set to
+.Sq Yes .
+The x11/kde4 module automatically adds gcc4 to
+.Ev MODULES
+unless
+.Ev MODKDE4_RESOURCES
+is set to
+.Sq Yes .
 .It x11/qt3 and x11/qt4
 Both qt modules share a common
 .Ev MODQT_*
