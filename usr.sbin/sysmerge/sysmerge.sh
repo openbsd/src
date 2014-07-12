@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.137 2014/07/12 16:26:35 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.138 2014/07/12 22:06:11 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -629,7 +629,7 @@ sm_compare() {
 }
 
 sm_check_an_eg() {
-	EGSUM=egsum
+	EGSUM=examplessum
 	local _egmods _i _managed
 	if [ -f "${DESTDIR}/${DBDIR}/${EGSUM}" ]; then
 		EGMODS="$(sha256 -c ${DESTDIR}/${DBDIR}/${EGSUM} 2>/dev/null | grep 'FAILED$' | awk '{ print $2 }' | sed -e "s,:,,")"
