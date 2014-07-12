@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.78 2014/07/11 15:37:22 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.79 2014/07/12 18:05:50 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,7 @@ CLEANFILES += man.cgi cgi.o man.cgi.8.manlint
 # Variables and targets to build and install man.cgi(8),
 # not used during make build and make release.
 
+# To configure, run:	cp cgi.h.example cgi.h; vi cgi.h
 # To build, run:	make man.cgi
 # To install, run:	sudo make installcgi
 # After that, read:	man man.cgi.8
@@ -49,7 +50,7 @@ HTML_OBJS =	html.o mdoc_html.o man_html.o tbl_html.o eqn_html.o out.o
 CGI_OBJS =	${LIBMANDOC_OBJS} ${HTML_OBJS} \
 		mansearch.o mansearch_const.o cgi.o
 
-cgi.o: main.h mandoc.h mandoc_aux.h manpath.h mansearch.h
+cgi.o: main.h mandoc.h mandoc_aux.h manpath.h mansearch.h cgi.h
 
 man.cgi: ${CGI_OBJS}
 	${CC} ${LDFLAGS} -static -o ${.TARGET} ${CGI_OBJS} ${LDADD}

@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.6 2014/07/12 17:18:13 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.7 2014/07/12 18:05:50 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -29,6 +29,7 @@
 #include "main.h"
 #include "manpath.h"
 #include "mansearch.h"
+#include "cgi.h"
 
 /*
  * A query as passed to the search function.
@@ -74,8 +75,6 @@ static	void		 resp_search(const struct req *,
 static	void		 resp_searchform(const struct req *);
 
 static	const char	 *scriptname; /* CGI script name */
-static	const char	 *mandir; /* contains all manpath directories */
-static	const char	 *cssdir; /* css directory */
 static	const char	 *httphost; /* hostname used in the URIs */
 
 /*
@@ -310,11 +309,11 @@ resp_begin_html(int code, const char *msg)
 	       " TYPE=\"text/css\" media=\"all\">\n"
 	       "<LINK REL=\"stylesheet\" HREF=\"%s/man.css\""
 	       " TYPE=\"text/css\" media=\"all\">\n"
-	       "<TITLE>System Manpage Reference</TITLE>\n"
+	       "<TITLE>%s</TITLE>\n"
 	       "</HEAD>\n"
 	       "<BODY>\n"
 	       "<!-- Begin page content. //-->\n",
-	       cssdir, cssdir);
+	       CSS_DIR, CSS_DIR, CUSTOMIZE_TITLE);
 }
 
 static void
@@ -330,6 +329,7 @@ resp_searchform(const struct req *req)
 {
 	int		 i;
 
+	puts(CUSTOMIZE_BEGIN);
 	puts("<!-- Begin search form. //-->");
 	printf("<DIV ID=\"mancgi\">\n"
 	       "<FORM ACTION=\"%s\" METHOD=\"get\">\n"
@@ -387,10 +387,6 @@ resp_index(const struct req *req)
 {
 
 	resp_begin_html(200, NULL);
-	puts("<H1>\n"
-	     "Online manuals with "
-	     "<A HREF=\"http://mdocml.bsd.lv/\">mandoc</A>\n"
-	     "</H1>");
 	resp_searchform(req);
 	printf("<P>\n"
 	       "This web interface is documented in the "
@@ -797,27 +793,21 @@ main(void)
 
 	/* Scan our run-time environment. */
 
-	if (NULL == (mandir = getenv("MAN_DIR")))
-		mandir = "/man";
-
 	if (NULL == (scriptname = getenv("SCRIPT_NAME")))
 		scriptname = "";
-
-	if (NULL == (cssdir = getenv("CSS_DIR")))
-		cssdir = "";
 
 	if (NULL == (httphost = getenv("HTTP_HOST")))
 		httphost = "localhost";
 
 	/*
-	 * First we change directory into the mandir so that
+	 * First we change directory into the MAN_DIR so that
 	 * subsequent scanning for manpath directories is rooted
 	 * relative to the same position.
 	 */
 
-	if (-1 == chdir(mandir)) {
+	if (-1 == chdir(MAN_DIR)) {
 		fprintf(stderr, "MAN_DIR: %s: %s\n",
-		    mandir, strerror(errno));
+		    MAN_DIR, strerror(errno));
 		resp_error_internal();
 		return(EXIT_FAILURE);
 	} 
