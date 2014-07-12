@@ -1,8 +1,8 @@
-.TH UCPP 1 "Oct 21 2000"
+.TH AUXCPP 1 "Oct 21 2000"
 .SH NAME
-ucpp \- C preprocessor
+auxcpp \- C preprocessor
 .SH SYNOPSIS
-.B ucpp 
+.B auxcpp 
 [
 .I options
 ]
@@ -11,7 +11,7 @@ ucpp \- C preprocessor
 ]
 .SH DESCRIPTION
 .LP
-.B ucpp
+.B auxcpp
 is a C preprocessor mostly compatible with ISO-C99.
 It is rather strict and uses only a small amount of memory. It uses
 standard input as primary input if no file argument is given.
@@ -75,7 +75,7 @@ enable
 and
 .B \-Y.
 This should make
-.B ucpp
+.B auxcpp
 behave closer to what is requested from a "modern" C preprocessor.
 .TP
 .BI \-c90
@@ -86,7 +86,7 @@ and
 and do not define
 .B __STDC_VERSION__.
 This should make
-.B ucpp
+.B auxcpp
 mimic older C90 behaviour.
 .TP
 .BI \-t
@@ -195,14 +195,14 @@ print version number, include path and (optionaly) defined assertions.
 print some help.
 .SH ENVIRONMENT
 .PP
-.B ucpp
+.B auxcpp
 is not itself affected by environment variables. However, it uses
 library functions that might be affected, depending on the system.
 .SH AUTHOR
 Thomas Pornin <pornin@bolet.org>
 .SH BUGS
 .PP
-.B ucpp
+.B auxcpp
 is considered stable software. However improbable it is, please report
 bugs to the author (possibly with a file that exhibits the problem) if
 the latest version, available from this site:
