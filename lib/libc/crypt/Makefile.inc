@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile.inc,v 1.21 2014/05/16 22:11:00 jmc Exp $
+#	$OpenBSD: Makefile.inc,v 1.22 2014/07/12 13:24:54 deraadt Exp $
 
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/crypt ${LIBCSRCDIR}/crypt
 
-SRCS+=	crypt.c crypt2.c cryptutil.c arc4random.c blowfish.c bcrypt.c
+SRCS+=	crypt.c crypt2.c cryptutil.c arc4random.c arc4random_uniform.c \
+	blowfish.c bcrypt.c
 
 MAN+=	crypt.3 blowfish.3 arc4random.3
 MLINKS+=crypt.3 setkey.3 crypt.3 crypt_checkpass.3 crypt.3 encrypt.3
