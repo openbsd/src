@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.1 2013/06/05 01:02:29 jasper Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.2 2014/07/12 20:36:52 jasper Exp $	*/
 
 /*
  * Copyright (c) 2013 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -34,7 +34,6 @@ void    run_loadfile(u_long *, int);
 /*
  * CN30XX UART
  */
-
 void	cn30xxuartcnprobe(struct consdev *);
 void	cn30xxuartcninit(struct consdev *);
 void	cn30xxuartcnputc(dev_t, int);
@@ -44,3 +43,5 @@ int	cn30xxuartcngetc(dev_t);
  * clock
  */
 void	delay(int);
+u_int	cp0_get_count(void);
+

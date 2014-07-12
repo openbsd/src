@@ -1,8 +1,8 @@
-/*	$OpenBSD: machdep.c,v 1.2 2013/06/13 20:01:01 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 2014/07/12 20:36:52 jasper Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
- * Copyright (c) 2013 Jasper Lievisse Adriaanse <jasper@openbsd.org>
+ * Copyright (c) 2013,2014 Jasper Lievisse Adriaanse <jasper@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -45,16 +45,28 @@
 #include <sys/param.h>
 #include <lib/libkern/libkern.h>
 #include "libsa.h"
+#include <stand/boot/cmd.h>
 #include <machine/cpu.h>
 #include <machine/octeonreg.h>
 #include <machine/octeonvar.h>
-#include <stand/boot/cmd.h>
 
+struct boot_desc *boot_desc;
+struct boot_info *boot_info;
+
+/*
+ * We need to save the arguments u-boot setup for us, so we can pass them
+ * onwards to the kernel later on.
+ */
 int
-main()
+mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
+	__register_t a3)
 {
+	boot_desc = (struct boot_desc *)a3;
+	boot_info =
+		(struct boot_info *)PHYS_TO_CKSEG0(boot_desc->boot_info_addr);
+
 	boot(0);
-	return (0);
+	return 0;
 }
 
 /*
@@ -141,9 +153,12 @@ devboot(dev_t dev, char *path)
 }
 
 time_t
-getsecs()
+getsecs(void)
 {
-	return (0);
+	u_int ticks = cp0_get_count();
+	uint32_t freq = boot_desc->eclock;
+
+	return (time_t)((0xffffffff - ticks) / freq);
 }
 
 void
@@ -158,4 +173,3 @@ _rtt()
 	octeon_xkphys_write_8(OCTEON_CIU_BASE + CIU_SOFT_RST, 1);
 	for (;;) ;
 }
-

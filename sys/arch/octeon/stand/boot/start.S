@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.2 2013/06/05 01:09:09 jasper Exp $	*/
+/*	$OpenBSD: start.S,v 1.3 2014/07/12 20:36:52 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -38,6 +38,13 @@
 	.globl	__start
 	.globl	kernel_text
 kernel_text = __start
+LEAF(cp0_get_count, 0)
+        MFC0    v0, COP_0_COUNT
+        MFC0_HAZARD
+        j       ra
+        NOP
+END(cp0_get_count)
+
 __start:
 /* initialize ebase */
 	dla	t0, 0xffffffff80000000
@@ -71,7 +78,8 @@ __start:
 	PTR_S	ra, CF_RA_OFFS(t0)		# save uboot return address
 	PTR_S	sp, 0(t0)			# and stack
 	move	sp, t0
-	jal	main				# main(argc, argv, envp, callvec, esym)
+	jal	mips_init			# mips_init(argc, argv, envp,
+	nop					#    callvec, esym)
 
 	beqz	v0, 1f				# upon failure, return to uboot
 	nop
