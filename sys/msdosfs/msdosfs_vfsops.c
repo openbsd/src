@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.67 2014/06/23 18:54:33 tobias Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.68 2014/07/12 18:50:41 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -586,8 +586,8 @@ error_exit:
 
 	if (pmp) {
 		if (pmp->pm_inusemap)
-			free(pmp->pm_inusemap, M_MSDOSFSFAT);
-		free(pmp, M_MSDOSFSMNT);
+			free(pmp->pm_inusemap, M_MSDOSFSFAT, 0);
+		free(pmp, M_MSDOSFSMNT, 0);
 		mp->mnt_data = (qaddr_t)0;
 	}
 	return (error);
@@ -627,8 +627,8 @@ msdosfs_unmount(struct mount *mp, int mntflags,struct proc *p)
 	error = VOP_CLOSE(vp,
 	   pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED, p);
 	vput(vp);
-	free(pmp->pm_inusemap, M_MSDOSFSFAT);
-	free(pmp, M_MSDOSFSMNT);
+	free(pmp->pm_inusemap, M_MSDOSFSFAT, 0);
+	free(pmp, M_MSDOSFSMNT, 0);
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
