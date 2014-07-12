@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.24 2014/07/11 14:38:51 miod Exp $ */
+/* $OpenBSD: e_aes.c,v 1.25 2014/07/12 19:31:03 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -385,75 +385,110 @@ aesni_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int aesni_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t len);
 
-#define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
-static const EVP_CIPHER aesni_##keylen##_##mode = { \
-	nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
-	flags|EVP_CIPH_##MODE##_MODE,	\
-	aesni_init_key,			\
-	aesni_##mode##_cipher,		\
-	NULL,				\
-	sizeof(EVP_AES_KEY),		\
-	NULL,NULL,NULL,NULL }; \
-static const EVP_CIPHER aes_##keylen##_##mode = { \
-	nid##_##keylen##_##nmode,blocksize,	\
-	keylen/8,ivlen, \
-	flags|EVP_CIPH_##MODE##_MODE,	\
-	aes_init_key,			\
-	aes_##mode##_cipher,		\
-	NULL,				\
-	sizeof(EVP_AES_KEY),		\
-	NULL,NULL,NULL,NULL }; \
-const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
-{ return AESNI_CAPABLE?&aesni_##keylen##_##mode:&aes_##keylen##_##mode; }
+#define BLOCK_CIPHER_generic(n,keylen,blocksize,ivlen,nmode,mode,MODE,fl) \
+static const EVP_CIPHER aesni_##keylen##_##mode = {			\
+	.nid = n##_##keylen##_##nmode,					\
+	.block_size = blocksize,					\
+	.key_len = keylen / 8,						\
+	.iv_len = ivlen, 						\
+	.flags = fl | EVP_CIPH_##MODE##_MODE,				\
+	.init = aesni_init_key,						\
+	.do_cipher = aesni_##mode##_cipher,				\
+	.ctx_size = sizeof(EVP_AES_KEY)					\
+};									\
+static const EVP_CIPHER aes_##keylen##_##mode = {			\
+	.nid = n##_##keylen##_##nmode,					\
+	.block_size = blocksize,					\
+	.key_len = keylen / 8,						\
+	.iv_len = ivlen, 						\
+	.flags = fl | EVP_CIPH_##MODE##_MODE,				\
+	.init = aes_init_key,						\
+	.do_cipher = aes_##mode##_cipher,				\
+	.ctx_size = sizeof(EVP_AES_KEY)					\
+};									\
+const EVP_CIPHER *							\
+EVP_aes_##keylen##_##mode(void)						\
+{									\
+	return AESNI_CAPABLE ?						\
+	    &aesni_##keylen##_##mode : &aes_##keylen##_##mode;		\
+}
 
-#define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,mode,MODE,flags) \
-static const EVP_CIPHER aesni_##keylen##_##mode = { \
-	nid##_##keylen##_##mode,blocksize, \
-	(EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE?2:1)*keylen/8, ivlen, \
-	flags|EVP_CIPH_##MODE##_MODE,	\
-	aesni_##mode##_init_key,	\
-	aesni_##mode##_cipher,		\
-	aes_##mode##_cleanup,		\
-	sizeof(EVP_AES_##MODE##_CTX),	\
-	NULL,NULL,aes_##mode##_ctrl,NULL }; \
-static const EVP_CIPHER aes_##keylen##_##mode = { \
-	nid##_##keylen##_##mode,blocksize, \
-	(EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE?2:1)*keylen/8, ivlen, \
-	flags|EVP_CIPH_##MODE##_MODE,	\
-	aes_##mode##_init_key,		\
-	aes_##mode##_cipher,		\
-	aes_##mode##_cleanup,		\
-	sizeof(EVP_AES_##MODE##_CTX),	\
-	NULL,NULL,aes_##mode##_ctrl,NULL }; \
-const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
-{ return AESNI_CAPABLE?&aesni_##keylen##_##mode:&aes_##keylen##_##mode; }
+#define BLOCK_CIPHER_custom(n,keylen,blocksize,ivlen,mode,MODE,fl)	\
+static const EVP_CIPHER aesni_##keylen##_##mode = {			\
+	.nid = n##_##keylen##_##mode,					\
+	.block_size = blocksize,					\
+	.key_len =							\
+	    (EVP_CIPH_##MODE##_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *	\
+	    keylen / 8,							\
+	.iv_len = ivlen,						\
+	.flags = fl | EVP_CIPH_##MODE##_MODE,				\
+	.init = aesni_##mode##_init_key,				\
+	.do_cipher = aesni_##mode##_cipher,				\
+	.cleanup = aes_##mode##_cleanup,				\
+	.ctx_size = sizeof(EVP_AES_##MODE##_CTX),			\
+	.ctrl = aes_##mode##_ctrl					\
+};									\
+static const EVP_CIPHER aes_##keylen##_##mode = {			\
+	.nid = n##_##keylen##_##mode,					\
+	.block_size = blocksize,					\
+	.key_len =							\
+	    (EVP_CIPH_##MODE##_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *	\
+	    keylen / 8,							\
+	.iv_len = ivlen,						\
+	.flags = fl | EVP_CIPH_##MODE##_MODE,				\
+	.init = aes_##mode##_init_key,					\
+	.do_cipher = aes_##mode##_cipher,				\
+	.cleanup = aes_##mode##_cleanup,				\
+	.ctx_size = sizeof(EVP_AES_##MODE##_CTX),			\
+	.ctrl = aes_##mode##_ctrl					\
+};									\
+const EVP_CIPHER *							\
+EVP_aes_##keylen##_##mode(void)						\
+{									\
+	return AESNI_CAPABLE ?						\
+	    &aesni_##keylen##_##mode : &aes_##keylen##_##mode;		\
+}
 
 #else
 
-#define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
-static const EVP_CIPHER aes_##keylen##_##mode = { \
-	nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
-	flags|EVP_CIPH_##MODE##_MODE,	\
-	aes_init_key,			\
-	aes_##mode##_cipher,		\
-	NULL,				\
-	sizeof(EVP_AES_KEY),		\
-	NULL,NULL,NULL,NULL }; \
-const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
-{ return &aes_##keylen##_##mode; }
+#define BLOCK_CIPHER_generic(n,keylen,blocksize,ivlen,nmode,mode,MODE,fl) \
+static const EVP_CIPHER aes_##keylen##_##mode = {			\
+	.nid = n##_##keylen##_##nmode,					\
+	.block_size = blocksize,					\
+	.key_len = keylen / 8,						\
+	.iv_len = ivlen,						\
+	.flags = fl | EVP_CIPH_##MODE##_MODE,				\
+	.init = aes_init_key,						\
+	.do_cipher = aes_##mode##_cipher,				\
+	.ctx_size = sizeof(EVP_AES_KEY)					\
+};									\
+const EVP_CIPHER *							\
+EVP_aes_##keylen##_##mode(void)						\
+{									\
+	return &aes_##keylen##_##mode;					\
+}
 
-#define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,mode,MODE,flags) \
-static const EVP_CIPHER aes_##keylen##_##mode = { \
-	nid##_##keylen##_##mode,blocksize, \
-	(EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE?2:1)*keylen/8, ivlen, \
-	flags|EVP_CIPH_##MODE##_MODE,	\
-	aes_##mode##_init_key,		\
-	aes_##mode##_cipher,		\
-	aes_##mode##_cleanup,		\
-	sizeof(EVP_AES_##MODE##_CTX),	\
-	NULL,NULL,aes_##mode##_ctrl,NULL }; \
-const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
-{ return &aes_##keylen##_##mode; }
+#define BLOCK_CIPHER_custom(n,keylen,blocksize,ivlen,mode,MODE,fl)	\
+static const EVP_CIPHER aes_##keylen##_##mode = {			\
+	.nid = n##_##keylen##_##mode,					\
+	.block_size = blocksize,					\
+	.key_len =							\
+	    (EVP_CIPH_##MODE##_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *	\
+	    keylen / 8,							\
+	.iv_len = ivlen,						\
+	.flags = fl | EVP_CIPH_##MODE##_MODE,				\
+	.init = aes_##mode##_init_key,					\
+	.do_cipher = aes_##mode##_cipher,				\
+	.cleanup = aes_##mode##_cleanup,				\
+	.ctx_size = sizeof(EVP_AES_##MODE##_CTX),			\
+	.ctrl = aes_##mode##_ctrl					\
+};									\
+const EVP_CIPHER *							\
+EVP_aes_##keylen##_##mode(void)						\
+{									\
+	return &aes_##keylen##_##mode;					\
+}
+
 #endif
 
 #define BLOCK_CIPHER_generic_pack(nid,keylen,flags)		\
