@@ -1,4 +1,3 @@
-./usr/libexec/auxcpp
 ./altroot
 ./bin
 ./bin/[
@@ -2547,6 +2546,7 @@
 ./usr/libexec/auth/login_tis
 ./usr/libexec/auth/login_token
 ./usr/libexec/auth/login_yubikey
+./usr/libexec/auxcpp
 ./usr/libexec/comsat
 ./usr/libexec/cvs
 ./usr/libexec/cvs/contrib
