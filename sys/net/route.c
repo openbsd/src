@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.172 2014/07/12 14:26:00 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.173 2014/07/12 17:57:26 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1216,11 +1216,13 @@ rt_ifa_addloop(struct ifaddr *ifa)
 		if (satosin(ifa->ifa_addr)->sin_addr.s_addr == INADDR_ANY)
 			return;
 		break;
+#ifdef INET6
 	case AF_INET6:
 		if (IN6_ARE_ADDR_EQUAL(&satosin6(ifa->ifa_addr)->sin6_addr,
 		    &in6addr_any))
 			return;
 		break;
+#endif
 	default:
 		break;
 	}
@@ -1252,11 +1254,13 @@ rt_ifa_delloop(struct ifaddr *ifa)
 		if (satosin(ifa->ifa_addr)->sin_addr.s_addr == INADDR_ANY)
 			return;
 		break;
+#ifdef INET6
 	case AF_INET6:
 		if (IN6_ARE_ADDR_EQUAL(&satosin6(ifa->ifa_addr)->sin6_addr,
 		    &in6addr_any))
 			return;
 		break;
+#endif
 	default:
 		break;
 	}
