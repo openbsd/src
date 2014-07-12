@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.53 2014/06/13 06:47:09 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.54 2014/07/12 18:44:22 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -397,7 +397,7 @@ pipex_add_session(struct pipex_session_req *req,
 #ifdef PIPEX_MPPE
     	if ((req->pr_ppp_flags & PIPEX_PPP_MPPE_ACCEPTED) != 0) {
 		if (req->pr_mppe_recv.keylenbits <= 0) {
-			free(session, M_TEMP);
+			free(session, M_TEMP, 0);
 			return (EINVAL);
 		}
 		pipex_session_init_mppe_recv(session,
@@ -406,7 +406,7 @@ pipex_add_session(struct pipex_session_req *req,
 	}
     	if ((req->pr_ppp_flags & PIPEX_PPP_MPPE_ENABLED) != 0) {
 		if (req->pr_mppe_send.keylenbits <= 0) {
-			free(session, M_TEMP);
+			free(session, M_TEMP, 0);
 			return (EINVAL);
 		}
 		pipex_session_init_mppe_send(session,
@@ -417,7 +417,7 @@ pipex_add_session(struct pipex_session_req *req,
 	if (pipex_session_is_mppe_required(session)) {
 		if (!pipex_session_is_mppe_enabled(session) ||
 		    !pipex_session_is_mppe_accepted(session)) {
-			free(session, M_TEMP);
+			free(session, M_TEMP, 0);
 			return (EINVAL);
 		}
 	}
@@ -429,7 +429,7 @@ pipex_add_session(struct pipex_session_req *req,
 		if (pipex_lookup_by_ip_address(session->ip_address.sin_addr)
 		    != NULL) {
 			splx(s);
-			free(session, M_TEMP);
+			free(session, M_TEMP, 0);
 			return (EADDRINUSE);
 		}
 
@@ -437,7 +437,7 @@ pipex_add_session(struct pipex_session_req *req,
 		    &session->ip_netmask, &pipex_rd_head4, session->ps4_rn, RTP_STATIC);
 		if (rn == NULL) {
 			splx(s);
-			free(session, M_TEMP);
+			free(session, M_TEMP, 0);
 			return (ENOMEM);
 		}
 	}
@@ -447,7 +447,7 @@ pipex_add_session(struct pipex_session_req *req,
                     RTP_STATIC);
                 if (rn == NULL) {
                         splx(s);
-                        free(session, M_TEMP);
+                        free(session, M_TEMP, 0);
                         return (ENOMEM);
                 }
 	}
@@ -626,8 +626,8 @@ pipex_destroy_session(struct pipex_session *session)
 	splx(s);
 
 	if (session->mppe_recv.old_session_keys)
-		free(session->mppe_recv.old_session_keys, M_TEMP);
-	free(session, M_TEMP);
+		free(session->mppe_recv.old_session_keys, M_TEMP, 0);
+	free(session, M_TEMP, 0);
 
 	return (0);
 }

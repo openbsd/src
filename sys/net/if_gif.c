@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.67 2014/05/05 11:44:33 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.68 2014/07/12 18:44:22 tedu Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -135,12 +135,12 @@ gif_clone_destroy(struct ifnet *ifp)
 	if_detach(ifp);
 
 	if (sc->gif_psrc)
-		free((caddr_t)sc->gif_psrc, M_IFADDR);
+		free((caddr_t)sc->gif_psrc, M_IFADDR, 0);
 	sc->gif_psrc = NULL;
 	if (sc->gif_pdst)
-		free((caddr_t)sc->gif_pdst, M_IFADDR);
+		free((caddr_t)sc->gif_pdst, M_IFADDR, 0);
 	sc->gif_pdst = NULL;
-	free(sc, M_DEVBUF);
+	free(sc, M_DEVBUF, 0);
 	return (0);
 }
 
@@ -500,13 +500,13 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 
 		if (sc->gif_psrc)
-			free((caddr_t)sc->gif_psrc, M_IFADDR);
+			free((caddr_t)sc->gif_psrc, M_IFADDR, 0);
 		sa = malloc(src->sa_len, M_IFADDR, M_WAITOK);
 		bcopy((caddr_t)src, (caddr_t)sa, src->sa_len);
 		sc->gif_psrc = sa;
 
 		if (sc->gif_pdst)
-			free((caddr_t)sc->gif_pdst, M_IFADDR);
+			free((caddr_t)sc->gif_pdst, M_IFADDR, 0);
 		sa = malloc(dst->sa_len, M_IFADDR, M_WAITOK);
 		bcopy((caddr_t)dst, (caddr_t)sa, dst->sa_len);
 		sc->gif_pdst = sa;
@@ -522,11 +522,11 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #ifdef SIOCDIFPHYADDR
 	case SIOCDIFPHYADDR:
 		if (sc->gif_psrc) {
-			free((caddr_t)sc->gif_psrc, M_IFADDR);
+			free((caddr_t)sc->gif_psrc, M_IFADDR, 0);
 			sc->gif_psrc = NULL;
 		}
 		if (sc->gif_pdst) {
-			free((caddr_t)sc->gif_pdst, M_IFADDR);
+			free((caddr_t)sc->gif_pdst, M_IFADDR, 0);
 			sc->gif_pdst = NULL;
 		}
 		/* change the IFF_{UP, RUNNING} flag as well? */

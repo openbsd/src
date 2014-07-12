@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.88 2014/07/09 09:30:49 henning Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.89 2014/07/12 18:44:22 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -169,7 +169,7 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 		if (trunk_protos[i].ti_proto == TRUNK_PROTO_DEFAULT) {
 			tr->tr_proto = trunk_protos[i].ti_proto;
 			if ((error = trunk_protos[i].ti_attach(tr)) != 0) {
-				free(tr, M_DEVBUF);
+				free(tr, M_DEVBUF, 0);
 				return (error);
 			}
 			break;
@@ -235,7 +235,7 @@ trunk_clone_destroy(struct ifnet *ifp)
 	if_detach(ifp);
 
 	SLIST_REMOVE(&trunk_list, tr, trunk_softc, tr_entries);
-	free(tr, M_DEVBUF);
+	free(tr, M_DEVBUF, 0);
 
 	splx(s);
 
@@ -337,7 +337,7 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 			tp->tp_flags |= TRUNK_PORT_STACK;
 			if (trunk_port_checkstacking(tr_ptr) >=
 			    TRUNK_MAX_STACKING) {
-				free(tp, M_DEVBUF);
+				free(tp, M_DEVBUF, 0);
 				return (E2BIG);
 			}
 		}
@@ -463,7 +463,7 @@ trunk_port_destroy(struct trunk_port *tp)
 	/* Reset the port lladdr */
 	trunk_port_lladdr(tp, tp->tp_lladdr);
 
-	free(tp, M_DEVBUF);
+	free(tp, M_DEVBUF, 0);
 
 	/* Update trunk capabilities */
 	tr->tr_capabilities = trunk_capabilities(tr);
@@ -841,7 +841,7 @@ trunk_ether_delmulti(struct trunk_softc *tr, struct ifreq *ifr)
 	}
 
 	SLIST_REMOVE(&tr->tr_mc_head, mc, trunk_mc, mc_entries);
-	free(mc, M_DEVBUF);
+	free(mc, M_DEVBUF, 0);
 
 	return (0);
 }
@@ -860,7 +860,7 @@ trunk_ether_purgemulti(struct trunk_softc *tr)
 		trunk_ioctl_allports(tr, SIOCDELMULTI, (caddr_t)ifr);
 
 		SLIST_REMOVE(&tr->tr_mc_head, mc, trunk_mc, mc_entries);
-		free(mc, M_DEVBUF);
+		free(mc, M_DEVBUF, 0);
 	}
 }
 
@@ -1414,7 +1414,7 @@ trunk_lb_detach(struct trunk_softc *tr)
 {
 	struct trunk_lb *lb = (struct trunk_lb *)tr->tr_psc;
 	if (lb != NULL)
-		free(lb, M_DEVBUF);
+		free(lb, M_DEVBUF, 0);
 	return (0);
 }
 

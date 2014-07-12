@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.80 2013/12/01 10:08:55 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.81 2014/07/12 18:44:22 tedu Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -217,9 +217,9 @@ ieee80211_node_detach(struct ifnet *ifp)
 	ieee80211_free_allnodes(ic);
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_aid_bitmap != NULL)
-		free(ic->ic_aid_bitmap, M_DEVBUF);
+		free(ic->ic_aid_bitmap, M_DEVBUF, 0);
 	if (ic->ic_tim_bitmap != NULL)
-		free(ic->ic_tim_bitmap, M_DEVBUF);
+		free(ic->ic_tim_bitmap, M_DEVBUF, 0);
 	timeout_del(&ic->ic_inact_timeout);
 	timeout_del(&ic->ic_node_cache_timeout);
 #endif
@@ -765,7 +765,7 @@ void
 ieee80211_node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	if (ni->ni_rsnie != NULL) {
-		free(ni->ni_rsnie, M_DEVBUF);
+		free(ni->ni_rsnie, M_DEVBUF, 0);
 		ni->ni_rsnie = NULL;
 	}
 }
@@ -774,7 +774,7 @@ void
 ieee80211_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	ieee80211_node_cleanup(ic, ni);
-	free(ni, M_DEVBUF);
+	free(ni, M_DEVBUF, 0);
 }
 
 void
@@ -1501,7 +1501,7 @@ ieee80211_node_leave_ht(struct ieee80211com *ic, struct ieee80211_node *ni)
 			for (i = 0; i < IEEE80211_BA_MAX_WINSZ; i++)
 				if (ba->ba_buf[i].m != NULL)
 					m_freem(ba->ba_buf[i].m);
-			free(ba->ba_buf, M_DEVBUF);
+			free(ba->ba_buf, M_DEVBUF, 0);
 			ba->ba_buf = NULL;
 		}
 	}

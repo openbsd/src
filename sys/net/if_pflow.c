@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.43 2014/04/21 12:22:25 henning Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.44 2014/07/12 18:44:22 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -271,8 +271,8 @@ pflow_clone_destroy(struct ifnet *ifp)
 	pflow_flush(sc);
 	if_detach(ifp);
 	SLIST_REMOVE(&pflowif_list, sc, pflow_softc, sc_next);
-	free(sc->sc_imo.imo_membership, M_IPMOPTS);
-	free(sc, M_DEVBUF);
+	free(sc->sc_imo.imo_membership, M_IPMOPTS, 0);
+	free(sc, M_DEVBUF, 0);
 	splx(s);
 	return (0);
 }

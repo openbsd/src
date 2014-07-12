@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.13 2014/04/21 12:22:25 henning Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.14 2014/07/12 18:44:22 tedu Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -168,8 +168,8 @@ vxlan_clone_destroy(struct ifnet *ifp)
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	free(sc->sc_imo.imo_membership, M_IPMOPTS);
-	free(sc, M_DEVBUF);
+	free(sc->sc_imo.imo_membership, M_IPMOPTS, 0);
+	free(sc, M_DEVBUF, 0);
 
 	return (0);
 }

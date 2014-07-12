@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.264 2014/07/11 15:25:44 henning Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.265 2014/07/12 18:44:23 tedu Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1238,7 +1238,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 				if (ipr->ref_type < IPSP_IDENTITY_PREFIX ||
 				    ipr->ref_type > IPSP_IDENTITY_CONNECTION ||
 				    ((char *)(ipr + 1))[ipr->ref_len - 1]) {
-					free(ipr, M_CREDENTIALS);
+					free(ipr, M_CREDENTIALS, 0);
 					error = EINVAL;
 				} else {
 					if (inp->inp_ipo->ipo_srcid != NULL)
@@ -1251,7 +1251,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 				if (ipr->ref_type < IPSP_IDENTITY_PREFIX ||
 				    ipr->ref_type > IPSP_IDENTITY_CONNECTION ||
 				    ((char *)(ipr + 1))[ipr->ref_len - 1]) {
-					free(ipr, M_CREDENTIALS);
+					free(ipr, M_CREDENTIALS, 0);
 					error = EINVAL;
 				} else {
 					if (inp->inp_ipo->ipo_dstid != NULL)
@@ -1262,7 +1262,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			case IP_IPSEC_LOCAL_CRED:
 				if (ipr->ref_type < IPSP_CRED_KEYNOTE ||
 				    ipr->ref_type > IPSP_CRED_X509) {
-					free(ipr, M_CREDENTIALS);
+					free(ipr, M_CREDENTIALS, 0);
 					error = EINVAL;
 				} else {
 					if (inp->inp_ipo->ipo_local_cred != NULL)
@@ -1273,7 +1273,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			case IP_IPSEC_LOCAL_AUTH:
 				if (ipr->ref_type < IPSP_AUTH_PASSPHRASE ||
 				    ipr->ref_type > IPSP_AUTH_RSA) {
-					free(ipr, M_CREDENTIALS);
+					free(ipr, M_CREDENTIALS, 0);
 					error = EINVAL;
 				} else {
 					if (inp->inp_ipo->ipo_local_auth != NULL)
@@ -1825,7 +1825,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 					bcopy(omships, nmships,
 					    sizeof(*omships) *
 					    imo->imo_max_memberships);
-					free(omships, M_IPMOPTS);
+					free(omships, M_IPMOPTS, 0);
 					imo->imo_membership = nmships;
 					imo->imo_max_memberships = newmax;
 				}
@@ -1915,8 +1915,8 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 	    imo->imo_multicast_ttl == IP_DEFAULT_MULTICAST_TTL &&
 	    imo->imo_multicast_loop == IP_DEFAULT_MULTICAST_LOOP &&
 	    imo->imo_num_memberships == 0) {
-		free(imo->imo_membership , M_IPMOPTS);
-		free(*imop, M_IPMOPTS);
+		free(imo->imo_membership , M_IPMOPTS, 0);
+		free(*imop, M_IPMOPTS, 0);
 		*imop = NULL;
 	}
 
@@ -1980,8 +1980,8 @@ ip_freemoptions(struct ip_moptions *imo)
 	if (imo != NULL) {
 		for (i = 0; i < imo->imo_num_memberships; ++i)
 			in_delmulti(imo->imo_membership[i]);
-		free(imo->imo_membership, M_IPMOPTS);
-		free(imo, M_IPMOPTS);
+		free(imo->imo_membership, M_IPMOPTS, 0);
+		free(imo, M_IPMOPTS, 0);
 	}
 }
 

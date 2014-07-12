@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.272 2014/04/22 14:41:03 mpi Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.273 2014/07/12 18:44:22 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -399,7 +399,7 @@ tag_unref(struct pf_tags *head, u_int16_t tag)
 		if (tag == p->tag) {
 			if (--p->ref == 0) {
 				TAILQ_REMOVE(head, p, entries);
-				free(p, M_TEMP);
+				free(p, M_TEMP, 0);
 			}
 			break;
 		}
@@ -729,7 +729,7 @@ pf_commit_rules(u_int32_t ticket, char *anchor)
 	while ((rule = TAILQ_FIRST(old_rules)) != NULL)
 		pf_rm_rule(old_rules, rule);
 	if (rs->rules.inactive.ptr_array)
-		free(rs->rules.inactive.ptr_array, M_TEMP);
+		free(rs->rules.inactive.ptr_array, M_TEMP, 0);
 	rs->rules.inactive.ptr_array = NULL;
 	rs->rules.inactive.rcount = 0;
 	rs->rules.inactive.open = 0;
@@ -751,7 +751,7 @@ pf_setup_pfsync_matching(struct pf_ruleset *rs)
 
 	MD5Init(&ctx);
 	if (rs->rules.inactive.ptr_array)
-		free(rs->rules.inactive.ptr_array, M_TEMP);
+		free(rs->rules.inactive.ptr_array, M_TEMP, 0);
 	rs->rules.inactive.ptr_array = NULL;
 
 	if (rs->rules.inactive.rcount) {
@@ -1482,7 +1482,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pf_state_export(pstore, state);
 				error = copyout(pstore, p, sizeof(*p));
 				if (error) {
-					free(pstore, M_TEMP);
+					free(pstore, M_TEMP, 0);
 					goto fail;
 				}
 				p++;
@@ -1493,7 +1493,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		ps->ps_len = sizeof(struct pfsync_state) * nr;
 
-		free(pstore, M_TEMP);
+		free(pstore, M_TEMP, 0);
 		break;
 	}
 
@@ -1948,8 +1948,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bzero(&pf_trans_set, sizeof(pf_trans_set));
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
-				free(table, M_TEMP);
-				free(ioe, M_TEMP);
+				free(table, M_TEMP, 0);
+				free(ioe, M_TEMP, 0);
 				error = EFAULT;
 				goto fail;
 			}
@@ -1960,29 +1960,29 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				    sizeof(table->pfrt_anchor));
 				if ((error = pfr_ina_begin(table,
 				    &ioe->ticket, NULL, 0))) {
-					free(table, M_TEMP);
-					free(ioe, M_TEMP);
+					free(table, M_TEMP, 0);
+					free(ioe, M_TEMP, 0);
 					goto fail;
 				}
 				break;
 			default:
 				if ((error = pf_begin_rules(&ioe->ticket,
 				    ioe->anchor))) {
-					free(table, M_TEMP);
-					free(ioe, M_TEMP);
+					free(table, M_TEMP, 0);
+					free(ioe, M_TEMP, 0);
 					goto fail;
 				}
 				break;
 			}
 			if (copyout(ioe, io->array+i, sizeof(io->array[i]))) {
-				free(table, M_TEMP);
-				free(ioe, M_TEMP);
+				free(table, M_TEMP, 0);
+				free(ioe, M_TEMP, 0);
 				error = EFAULT;
 				goto fail;
 			}
 		}
-		free(table, M_TEMP);
-		free(ioe, M_TEMP);
+		free(table, M_TEMP, 0);
+		free(ioe, M_TEMP, 0);
 		break;
 	}
 
@@ -2000,8 +2000,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		table = malloc(sizeof(*table), M_TEMP, M_WAITOK);
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
-				free(table, M_TEMP);
-				free(ioe, M_TEMP);
+				free(table, M_TEMP, 0);
+				free(ioe, M_TEMP, 0);
 				error = EFAULT;
 				goto fail;
 			}
@@ -2012,23 +2012,23 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				    sizeof(table->pfrt_anchor));
 				if ((error = pfr_ina_rollback(table,
 				    ioe->ticket, NULL, 0))) {
-					free(table, M_TEMP);
-					free(ioe, M_TEMP);
+					free(table, M_TEMP, 0);
+					free(ioe, M_TEMP, 0);
 					goto fail; /* really bad */
 				}
 				break;
 			default:
 				if ((error = pf_rollback_rules(ioe->ticket,
 				    ioe->anchor))) {
-					free(table, M_TEMP);
-					free(ioe, M_TEMP);
+					free(table, M_TEMP, 0);
+					free(ioe, M_TEMP, 0);
 					goto fail; /* really bad */
 				}
 				break;
 			}
 		}
-		free(table, M_TEMP);
-		free(ioe, M_TEMP);
+		free(table, M_TEMP, 0);
+		free(ioe, M_TEMP, 0);
 		break;
 	}
 
@@ -2048,8 +2048,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		/* first makes sure everything will succeed */
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
-				free(table, M_TEMP);
-				free(ioe, M_TEMP);
+				free(table, M_TEMP, 0);
+				free(ioe, M_TEMP, 0);
 				error = EFAULT;
 				goto fail;
 			}
@@ -2058,8 +2058,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				rs = pf_find_ruleset(ioe->anchor);
 				if (rs == NULL || !rs->topen || ioe->ticket !=
 				     rs->tticket) {
-					free(table, M_TEMP);
-					free(ioe, M_TEMP);
+					free(table, M_TEMP, 0);
+					free(ioe, M_TEMP, 0);
 					error = EBUSY;
 					goto fail;
 				}
@@ -2070,8 +2070,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				    !rs->rules.inactive.open ||
 				    rs->rules.inactive.ticket !=
 				    ioe->ticket) {
-					free(table, M_TEMP);
-					free(ioe, M_TEMP);
+					free(table, M_TEMP, 0);
+					free(ioe, M_TEMP, 0);
 					error = EBUSY;
 					goto fail;
 				}
@@ -2086,8 +2086,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		for (i = 0; i < PF_LIMIT_MAX; i++) {
 			if (((struct pool *)pf_pool_limits[i].pp)->pr_nout >
 			    pf_pool_limits[i].limit_new) {
-				free(table, M_TEMP);
-				free(ioe, M_TEMP);
+				free(table, M_TEMP, 0);
+				free(ioe, M_TEMP, 0);
 				error = EBUSY;
 				goto fail;
 			}
@@ -2095,8 +2095,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		/* now do the commit - no errors should happen here */
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
-				free(table, M_TEMP);
-				free(ioe, M_TEMP);
+				free(table, M_TEMP, 0);
+				free(ioe, M_TEMP, 0);
 				error = EFAULT;
 				goto fail;
 			}
@@ -2107,16 +2107,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				    sizeof(table->pfrt_anchor));
 				if ((error = pfr_ina_commit(table, ioe->ticket,
 				    NULL, NULL, 0))) {
-					free(table, M_TEMP);
-					free(ioe, M_TEMP);
+					free(table, M_TEMP, 0);
+					free(ioe, M_TEMP, 0);
 					goto fail; /* really bad */
 				}
 				break;
 			default:
 				if ((error = pf_commit_rules(ioe->ticket,
 				    ioe->anchor))) {
-					free(table, M_TEMP);
-					free(ioe, M_TEMP);
+					free(table, M_TEMP, 0);
+					free(ioe, M_TEMP, 0);
 					goto fail; /* really bad */
 				}
 				break;
@@ -2127,8 +2127,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    pf_pool_limits[i].limit &&
 			    pool_sethardlimit(pf_pool_limits[i].pp,
 			    pf_pool_limits[i].limit_new, NULL, 0) != 0) {
-				free(table, M_TEMP);
-				free(ioe, M_TEMP);
+				free(table, M_TEMP, 0);
+				free(ioe, M_TEMP, 0);
 				error = EBUSY;
 				goto fail; /* really bad */
 			}
@@ -2145,8 +2145,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		pfi_xcommit();
 		pf_trans_set_commit();
-		free(table, M_TEMP);
-		free(ioe, M_TEMP);
+		free(table, M_TEMP, 0);
+		free(ioe, M_TEMP, 0);
 		break;
 	}
 
@@ -2195,7 +2195,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 			error = copyout(pstore, p, sizeof(*p));
 			if (error) {
-				free(pstore, M_TEMP);
+				free(pstore, M_TEMP, 0);
 				goto fail;
 			}
 			p++;
@@ -2203,7 +2203,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		psn->psn_len = sizeof(struct pf_src_node) * nr;
 
-		free(pstore, M_TEMP);
+		free(pstore, M_TEMP, 0);
 		break;
 	}
 

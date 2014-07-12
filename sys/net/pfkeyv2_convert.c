@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.42 2013/10/24 11:31:43 mpi Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.43 2014/07/12 18:44:22 tedu Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -743,7 +743,7 @@ import_auth(struct tdb *tdb, struct sadb_x_cred *sadb_auth, int dstauth)
 		(*ipr)->ref_type = IPSP_AUTH_RSA;
 		break;
 	default:
-		free(*ipr, M_CREDENTIALS);
+		free(*ipr, M_CREDENTIALS, 0);
 		*ipr = NULL;
 		return;
 	}
@@ -781,7 +781,7 @@ import_credentials(struct tdb *tdb, struct sadb_x_cred *sadb_cred, int dstcred)
 		(*ipr)->ref_type = IPSP_CRED_KEYNOTE;
 		break;
 	default:
-		free(*ipr, M_CREDENTIALS);
+		free(*ipr, M_CREDENTIALS, 0);
 		*ipr = NULL;
 		return;
 	}
@@ -825,7 +825,7 @@ import_identity(struct tdb *tdb, struct sadb_ident *sadb_ident, int type)
 		(*ipr)->ref_type = IPSP_IDENTITY_CONNECTION;
 		break;
 	default:
-		free(*ipr, M_CREDENTIALS);
+		free(*ipr, M_CREDENTIALS, 0);
 		*ipr = NULL;
 		return;
 	}

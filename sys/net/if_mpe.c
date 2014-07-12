@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.33 2014/04/14 09:06:42 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.34 2014/07/12 18:44:22 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -129,7 +129,7 @@ mpe_clone_destroy(struct ifnet *ifp)
 	splx(s);
 
 	if_detach(ifp);
-	free(mpeif, M_DEVBUF);
+	free(mpeif, M_DEVBUF, 0);
 	return (0);
 }
 

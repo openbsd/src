@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.231 2014/07/09 09:30:49 henning Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.232 2014/07/12 18:44:23 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -729,7 +729,7 @@ carp_clone_create(ifc, unit)
 	LIST_INIT(&sc->carp_vhosts);
 	sc->sc_vhe_count = 0;
 	if (carp_new_vhost(sc, 0, 0)) {
-		free(sc, M_DEVBUF);
+		free(sc, M_DEVBUF, 0);
 		return (ENOMEM);
 	}
 
@@ -817,8 +817,8 @@ carp_clone_destroy(struct ifnet *ifp)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	carp_destroy_vhosts(ifp->if_softc);
-	free(sc->sc_imo.imo_membership, M_IPMOPTS);
-	free(sc, M_DEVBUF);
+	free(sc->sc_imo.imo_membership, M_IPMOPTS, 0);
+	free(sc, M_DEVBUF, 0);
 
 	return (0);
 }
@@ -865,7 +865,7 @@ carpdetach(struct carp_softc *sc)
 		if (!--cif->vhif_nvrs) {
 			ifpromisc(sc->sc_carpdev, 0);
 			sc->sc_carpdev->if_carp = NULL;
-			free(cif, M_IFADDR);
+			free(cif, M_IFADDR, 0);
 		}
 	}
 	sc->sc_carpdev = NULL;
@@ -893,7 +893,7 @@ carp_destroy_vhosts(struct carp_softc *sc)
 
 	for (vhe = LIST_FIRST(&sc->carp_vhosts); vhe != NULL; vhe = nvhe) {
 		nvhe = LIST_NEXT(vhe, vhost_entries);
-		free(vhe, M_DEVBUF);
+		free(vhe, M_DEVBUF, 0);
 	}
 	LIST_INIT(&sc->carp_vhosts);
 	sc->sc_vhe_count = 0;
@@ -1681,7 +1681,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 			if (ncif == NULL)
 				return (ENOBUFS);
 			if ((error = ifpromisc(ifp, 1))) {
-				free(ncif, M_IFADDR);
+				free(ncif, M_IFADDR, 0);
 				return (error);
 			}
 
@@ -2547,7 +2547,7 @@ carp_ether_addmulti(struct carp_softc *sc, struct ifreq *ifr)
 
  ioctl_failed:
 	LIST_REMOVE(mc, mc_entries);
-	free(mc, M_DEVBUF);
+	free(mc, M_DEVBUF, 0);
  alloc_failed:
 	(void)ether_delmulti(ifr, (struct arpcom *)&sc->sc_ac);
 
@@ -2594,7 +2594,7 @@ carp_ether_delmulti(struct carp_softc *sc, struct ifreq *ifr)
 	if (error == 0) {
 		/* And forget about this address. */
 		LIST_REMOVE(mc, mc_entries);
-		free(mc, M_DEVBUF);
+		free(mc, M_DEVBUF, 0);
 	} else
 		(void)ether_addmulti(ifr, (struct arpcom *)&sc->sc_ac);
 	return (error);
@@ -2626,6 +2626,6 @@ carp_ether_purgemulti(struct carp_softc *sc)
 		memcpy(&ifr->ifr_addr, &mc->mc_addr, mc->mc_addr.ss_len);
 		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)ifr);
 		LIST_REMOVE(mc, mc_entries);
-		free(mc, M_DEVBUF);
+		free(mc, M_DEVBUF, 0);
 	}
 }

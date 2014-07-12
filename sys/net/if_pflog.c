@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.60 2014/07/09 11:03:04 henning Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.61 2014/07/12 18:44:22 tedu Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -129,7 +129,7 @@ pflogifs_resize(size_t n)
 			p[i] = NULL;
 
 	if (pflogifs)
-		free(pflogifs, M_DEVBUF);
+		free(pflogifs, M_DEVBUF, 0);
 	pflogifs = p;
 	npflogifs = n;
 	return (0);
@@ -193,7 +193,7 @@ pflog_clone_destroy(struct ifnet *ifp)
 	splx(s);
 
 	if_detach(ifp);
-	free(pflogif, M_DEVBUF);
+	free(pflogif, M_DEVBUF, 0);
 	return (0);
 }
 

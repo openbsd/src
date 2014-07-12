@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.109 2014/07/09 09:30:49 henning Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.110 2014/07/12 18:44:23 tedu Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -191,7 +191,7 @@ ah_zeroize(struct tdb *tdbp)
 
 	if (tdbp->tdb_amxkey) {
 		explicit_bzero(tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
-		free(tdbp->tdb_amxkey, M_XDATA);
+		free(tdbp->tdb_amxkey, M_XDATA, 0);
 		tdbp->tdb_amxkey = NULL;
 	}
 
@@ -439,7 +439,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 						/* Free, if we allocated. */
 						if (alloc)
-							free(ptr, M_XDATA);
+							free(ptr, M_XDATA, 0);
 						return EINVAL;
 					}
 
@@ -460,7 +460,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 						/* Free, if we allocated. */
 						if (alloc)
-							free(ptr, M_XDATA);
+							free(ptr, M_XDATA, 0);
 						return EINVAL;
 					}
 				}
@@ -524,7 +524,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				DPRINTF(("ah_massage_headers(): unexpected "
 				    "IPv6 header type %d\n", off));
 				if (alloc)
-					free(ptr, M_XDATA);
+					free(ptr, M_XDATA, 0);
 				ahstat.ahs_hdrops++;
 				m_freem(m);
 				return EINVAL;
@@ -535,7 +535,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		if (alloc) {
 			m_copyback(m, sizeof(struct ip6_hdr),
 			    skip - sizeof(struct ip6_hdr), ptr, M_NOWAIT);
-			free(ptr, M_XDATA);
+			free(ptr, M_XDATA, 0);
 		}
 
 		break;
@@ -717,7 +717,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		if ((btsx = ah_massage_headers(&m, tdb->tdb_dst.sa.sa_family,
 		    skip, ahx->type, 0)) != 0) {
 			/* mbuf will be free'd by callee. */
-			free(tc, M_XDATA);
+			free(tc, M_XDATA, 0);
 			crypto_freereq(crp);
 			return btsx;
 		}
@@ -774,7 +774,7 @@ ah_input_cb(void *op)
 	m = (struct mbuf *) crp->crp_buf;
 	if (m == NULL) {
 		/* Shouldn't happen... */
-		free(tc, M_XDATA);
+		free(tc, M_XDATA, 0);
 		crypto_freereq(crp);
 		ahstat.ahs_crypto++;
 		DPRINTF(("ah_input_cb(): bogus returned buffer from "
@@ -786,7 +786,7 @@ ah_input_cb(void *op)
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
-		free(tc, M_XDATA);
+		free(tc, M_XDATA, 0);
 		ahstat.ahs_notdb++;
 		DPRINTF(("ah_input_cb(): TDB is expired while in crypto"));
 		error = EPERM;
@@ -804,7 +804,7 @@ ah_input_cb(void *op)
 			splx(s);
 			return crypto_dispatch(crp);
 		}
-		free(tc, M_XDATA);
+		free(tc, M_XDATA, 0);
 		ahstat.ahs_noxform++;
 		DPRINTF(("ah_input_cb(): crypto error %d\n", crp->crp_etype));
 		error = crp->crp_etype;
@@ -828,7 +828,7 @@ ah_input_cb(void *op)
 
 		/* Verify authenticator. */
 		if (timingsafe_bcmp(ptr + skip + rplen, calc, ahx->authsize)) {
-			free(tc, M_XDATA);
+			free(tc, M_XDATA, 0);
 
 			DPRINTF(("ah_input(): authentication failed for "
 			    "packet in SA %s/%08x\n",
@@ -850,7 +850,7 @@ ah_input_cb(void *op)
 		m_copyback(m, protoff, sizeof(u_int8_t), &prot, M_NOWAIT);
 	}
 
-	free(tc, M_XDATA);
+	free(tc, M_XDATA, 0);
 
 	/* Replay window checking, if applicable. */
 	if (tdb->tdb_wnd > 0) {
@@ -1243,7 +1243,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		if ((len = ah_massage_headers(&m, tdb->tdb_dst.sa.sa_family,
 		    skip, ahx->type, 1)) != 0) {
 			/* mbuf will be free'd by callee. */
-			free(tc, M_XDATA);
+			free(tc, M_XDATA, 0);
 			crypto_freereq(crp);
 			return len;
 		}
@@ -1297,7 +1297,7 @@ ah_output_cb(void *op)
 	m = (struct mbuf *) crp->crp_buf;
 	if (m == NULL) {
 		/* Shouldn't happen... */
-		free(tc, M_XDATA);
+		free(tc, M_XDATA, 0);
 		crypto_freereq(crp);
 		ahstat.ahs_crypto++;
 		DPRINTF(("ah_output_cb(): bogus returned buffer from "
@@ -1309,7 +1309,7 @@ ah_output_cb(void *op)
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
-		free(tc, M_XDATA);
+		free(tc, M_XDATA, 0);
 		ahstat.ahs_notdb++;
 		DPRINTF(("ah_output_cb(): TDB is expired while in crypto\n"));
 		error = EPERM;
@@ -1325,7 +1325,7 @@ ah_output_cb(void *op)
 			splx(s);
 			return crypto_dispatch(crp);
 		}
-		free(tc, M_XDATA);
+		free(tc, M_XDATA, 0);
 		ahstat.ahs_noxform++;
 		DPRINTF(("ah_output_cb(): crypto error %d\n", crp->crp_etype));
 		error = crp->crp_etype;
@@ -1339,7 +1339,7 @@ ah_output_cb(void *op)
 	if ((tdb->tdb_flags & TDBF_SKIPCRYPTO) == 0)
 		m_copyback(m, 0, skip, ptr, M_NOWAIT);
 
-	free(tc, M_XDATA);
+	free(tc, M_XDATA, 0);
 
 	/* No longer needed. */
 	crypto_freereq(crp);

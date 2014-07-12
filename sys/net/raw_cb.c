@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.c,v 1.6 2012/01/11 23:47:06 bluhm Exp $	*/
+/*	$OpenBSD: raw_cb.c,v 1.7 2014/07/12 18:44:22 tedu Exp $	*/
 /*	$NetBSD: raw_cb.c,v 1.9 1996/02/13 22:00:39 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ raw_detach(struct rawcb *rp)
 		m_freem(dtom(rp->rcb_laddr));
 	rp->rcb_laddr = 0;
 #endif
-	free((caddr_t)(rp), M_PCB);
+	free((caddr_t)(rp), M_PCB, 0);
 }
 
 /*

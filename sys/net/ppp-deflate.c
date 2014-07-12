@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp-deflate.c,v 1.9 2011/07/07 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: ppp-deflate.c,v 1.10 2014/07/12 18:44:22 tedu Exp $	*/
 /*	$NetBSD: ppp-deflate.c,v 1.1 1996/03/15 02:28:09 paulus Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ zcfree(notused, ptr)
     void *notused;
     void *ptr;
 {
-    free(ptr, M_DEVBUF);
+    free(ptr, M_DEVBUF, 0);
 }
 
 /*
@@ -173,7 +173,7 @@ z_comp_alloc(options, opt_len)
     state->strm.zfree = zcfree;
     if (deflateInit2(&state->strm, Z_DEFAULT_COMPRESSION, DEFLATE_METHOD_VAL,
 		     -w_size, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
-	free(state, M_DEVBUF);
+	free(state, M_DEVBUF, 0);
 	return NULL;
     }
 
@@ -189,7 +189,7 @@ z_comp_free(arg)
     struct deflate_state *state = (struct deflate_state *) arg;
 
     deflateEnd(&state->strm);
-    free(state, M_DEVBUF);
+    free(state, M_DEVBUF, 0);
 }
 
 static int
@@ -404,7 +404,7 @@ z_decomp_alloc(options, opt_len)
     state->strm.zalloc = zcalloc;
     state->strm.zfree = zcfree;
     if (inflateInit2(&state->strm, -w_size) != Z_OK) {
-	free(state, M_DEVBUF);
+	free(state, M_DEVBUF, 0);
 	return NULL;
     }
 
@@ -420,7 +420,7 @@ z_decomp_free(arg)
     struct deflate_state *state = (struct deflate_state *) arg;
 
     inflateEnd(&state->strm);
-    free(state, M_DEVBUF);
+    free(state, M_DEVBUF, 0);
 }
 
 static int

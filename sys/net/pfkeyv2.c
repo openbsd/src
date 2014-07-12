@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.132 2014/01/08 02:39:02 deraadt Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.133 2014/07/12 18:44:22 tedu Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -197,7 +197,7 @@ pfkeyv2_release(struct socket *socket)
 		if (pfkeyv2_socket->flags & PFKEYV2_SOCKETFLAGS_PROMISC)
 			npromisc--;
 
-		free(pfkeyv2_socket, M_PFKEY);
+		free(pfkeyv2_socket, M_PFKEY, 0);
 	}
 
 	return (0);
@@ -345,7 +345,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 ret:
 	if (buffer != NULL) {
 		bzero(buffer, j + sizeof(struct sadb_msg));
-		free(buffer, M_PFKEY);
+		free(buffer, M_PFKEY, 0);
 	}
 
 	return (rval);
@@ -753,7 +753,7 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state, int last)
 		    PFKEYV2_SENDMESSAGE_UNICAST, dump_state->socket, 0, 0,
 		    sa->tdb_rdomain);
 
-		free(buffer, M_PFKEY);
+		free(buffer, M_PFKEY, 0);
 		if (rval)
 			return (rval);
 	}
@@ -922,7 +922,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		/* Paranoid */
 		explicit_bzero(freeme, sizeof(struct sadb_msg) + len);
-		free(freeme, M_PFKEY);
+		free(freeme, M_PFKEY, 0);
 		freeme = NULL;
 	}
 
@@ -1872,13 +1872,13 @@ ret:
 
 realret:
 	if (freeme)
-		free(freeme, M_PFKEY);
+		free(freeme, M_PFKEY, 0);
 
 	explicit_bzero(message, len);
-	free(message, M_PFKEY);
+	free(message, M_PFKEY, 0);
 
 	if (sa1)
-		free(sa1, M_PFKEY);
+		free(sa1, M_PFKEY, 0);
 
 	return (rval);
 
@@ -2156,7 +2156,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 ret:
 	if (buffer != NULL) {
 		bzero(buffer, i);
-		free(buffer, M_PFKEY);
+		free(buffer, M_PFKEY, 0);
 	}
 
 	return (rval);
@@ -2238,7 +2238,7 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
  ret:
 	if (buffer != NULL) {
 		bzero(buffer, i);
-		free(buffer, M_PFKEY);
+		free(buffer, M_PFKEY, 0);
 	}
 
 	return (rval);
@@ -2302,7 +2302,7 @@ pfkeyv2_sysctl_walker(struct tdb *sa, void *arg, int last)
 
 done:
 	if (buffer)
-		free(buffer, M_PFKEY);
+		free(buffer, M_PFKEY, 0);
 	return (error);
 }
 
@@ -2515,7 +2515,7 @@ pfkeyv2_sysctl_policydumper(struct ipsec_policy *ipo, void *arg)
 
 done:
 	if (buffer)
-		free(buffer, M_PFKEY);
+		free(buffer, M_PFKEY, 0);
 	return (error);
 }
 

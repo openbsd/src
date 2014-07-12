@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.46 2012/01/18 14:35:56 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.47 2014/07/12 18:44:23 tedu Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -660,7 +660,7 @@ ieee80211_delba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 				if (ba->ba_buf[i].m != NULL)
 					m_freem(ba->ba_buf[i].m);
 			/* free reordering buffer */
-			free(ba->ba_buf, M_DEVBUF);
+			free(ba->ba_buf, M_DEVBUF, 0);
 			ba->ba_buf = NULL;
 		}
 	}

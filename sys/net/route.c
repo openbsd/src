@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.173 2014/07/12 17:57:26 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.174 2014/07/12 18:44:22 tedu Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -250,14 +250,14 @@ rtable_add(u_int id)
 		if ((p = malloc(newlen, M_RTABLE, M_NOWAIT|M_ZERO)) == NULL)
 			return (ENOMEM);
 		if ((q = malloc(newlen2, M_RTABLE, M_NOWAIT|M_ZERO)) == NULL) {
-			free(p, M_RTABLE);
+			free(p, M_RTABLE, 0);
 			return (ENOMEM);
 		}
 		if (rt_tables) {
 			bcopy(rt_tables, p, sizeof(void *) * (rtbl_id_max+1));
 			bcopy(rt_tab2dom, q, sizeof(u_int) * (rtbl_id_max+1));
-			free(rt_tables, M_RTABLE);
-			free(rt_tab2dom, M_RTABLE);
+			free(rt_tables, M_RTABLE, 0);
+			free(rt_tab2dom, M_RTABLE, 0);
 		}
 		rt_tables = p;
 		rt_tab2dom = q;
@@ -412,9 +412,9 @@ rtfree(struct rtentry *rt)
 		rtlabel_unref(rt->rt_labelid);
 #ifdef MPLS
 		if (rt->rt_flags & RTF_MPLS)
-			free(rt->rt_llinfo, M_TEMP);
+			free(rt->rt_llinfo, M_TEMP, 0);
 #endif
-		free(rt_key(rt), M_RTABLE);
+		free(rt_key(rt), M_RTABLE, 0);
 		pool_put(&rtentry_pool, rt);
 	}
 }
@@ -442,7 +442,7 @@ ifafree(struct ifaddr *ifa)
 	if (ifa == NULL)
 		panic("ifafree");
 	if (ifa->ifa_refcnt == 0)
-		free(ifa, M_IFADDR);
+		free(ifa, M_IFADDR, 0);
 	else
 		ifa->ifa_refcnt--;
 }
@@ -892,7 +892,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			    info->rti_flags & RTF_MPATH)) {
 				if (rt->rt_gwroute)
 					rtfree(rt->rt_gwroute);
-				free(rt_key(rt), M_RTABLE);
+				free(rt_key(rt), M_RTABLE, 0);
 				pool_put(&rtentry_pool, rt);
 				senderr(EEXIST);
 			}
@@ -929,7 +929,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			if (rt->rt_llinfo == NULL) {
 				if (rt->rt_gwroute)
 					rtfree(rt->rt_gwroute);
-				free(rt_key(rt), M_RTABLE);
+				free(rt_key(rt), M_RTABLE, 0);
 				pool_put(&rtentry_pool, rt);
 				senderr(ENOMEM);
 			}
@@ -999,7 +999,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 				rtfree(rt->rt_parent);
 			if (rt->rt_gwroute)
 				rtfree(rt->rt_gwroute);
-			free(rt_key(rt), M_RTABLE);
+			free(rt_key(rt), M_RTABLE, 0);
 			pool_put(&rtentry_pool, rt);
 			senderr(EEXIST);
 		}
@@ -1045,7 +1045,7 @@ rt_setgate(struct rtentry *rt, struct sockaddr *dst, struct sockaddr *gate,
 	memmove(rt->rt_gateway, gate, glen);
 	if (old) {
 		memmove(new, dst, dlen);
-		free(old, M_RTABLE);
+		free(old, M_RTABLE, 0);
 	}
 	if (rt->rt_gwroute != NULL) {
 		RTFREE(rt->rt_gwroute);
@@ -1372,7 +1372,7 @@ rt_timer_queue_destroy(struct rttimer_queue *rtq)
 	}
 
 	LIST_REMOVE(rtq, rtq_link);
-	free(rtq, M_RTABLE);
+	free(rtq, M_RTABLE, 0);
 }
 
 unsigned long
@@ -1569,7 +1569,7 @@ rtlabel_unref(u_int16_t id)
 		if (id == p->rtl_id) {
 			if (--p->rtl_ref == 0) {
 				TAILQ_REMOVE(&rt_labels, p, rtl_entry);
-				free(p, M_TEMP);
+				free(p, M_TEMP, 0);
 			}
 			break;
 		}

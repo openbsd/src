@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.130 2014/07/12 14:26:00 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.131 2014/07/12 18:44:23 tedu Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -271,7 +271,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 			la_hold_total--;
 			m_freem(m);
 		}
-		free(la, M_RTABLE);
+		free(la, M_RTABLE, 0);
 	}
 }
 

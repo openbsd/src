@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.79 2014/06/07 11:04:14 henning Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.80 2014/07/12 18:44:23 tedu Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1226,7 +1226,7 @@ nd6_dad_stop(struct ifaddr *ifa)
 	nd6_dad_stoptimer(dp);
 
 	TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
-	free(dp, M_IP6NDP);
+	free(dp, M_IP6NDP, 0);
 	dp = NULL;
 	ifafree(ifa);
 	ip6_dad_pending--;
@@ -1275,7 +1275,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 			ifa->ifa_ifp->if_xname));
 
 		TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
-		free(dp, M_IP6NDP);
+		free(dp, M_IP6NDP, 0);
 		dp = NULL;
 		ifafree(ifa);
 		ip6_dad_pending--;
@@ -1330,7 +1330,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 				addr, sizeof(addr))));
 
 			TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
-			free(dp, M_IP6NDP);
+			free(dp, M_IP6NDP, 0);
 			dp = NULL;
 			ifafree(ifa);
 			ip6_dad_pending--;
@@ -1373,7 +1373,7 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 	    ifa->ifa_ifp->if_xname);
 
 	TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
-	free(dp, M_IP6NDP);
+	free(dp, M_IP6NDP, 0);
 	dp = NULL;
 	ifafree(ifa);
 	ip6_dad_pending--;

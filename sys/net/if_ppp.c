@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.74 2014/05/05 11:44:33 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.75 2014/07/12 18:44:22 tedu Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ ppp_clone_destroy(struct ifnet *ifp)
 
     if_detach(ifp);
 
-    free(sc, M_DEVBUF);
+    free(sc, M_DEVBUF, 0);
     return (0);
 }
 
@@ -367,19 +367,19 @@ pppdealloc(struct ppp_softc *sc)
 #endif /* PPP_COMPRESS */
 #if NBPFILTER > 0
     if (sc->sc_pass_filt.bf_insns != 0) {
-	free(sc->sc_pass_filt.bf_insns, M_DEVBUF);
+	free(sc->sc_pass_filt.bf_insns, M_DEVBUF, 0);
 	sc->sc_pass_filt.bf_insns = 0;
 	sc->sc_pass_filt.bf_len = 0;
     }
     if (sc->sc_active_filt.bf_insns != 0) {
-	free(sc->sc_active_filt.bf_insns, M_DEVBUF);
+	free(sc->sc_active_filt.bf_insns, M_DEVBUF, 0);
 	sc->sc_active_filt.bf_insns = 0;
 	sc->sc_active_filt.bf_len = 0;
     }
 #endif
 #ifdef VJC
     if (sc->sc_comp != 0) {
-	free(sc->sc_comp, M_DEVBUF);
+	free(sc->sc_comp, M_DEVBUF, 0);
 	sc->sc_comp = 0;
     }
 #endif
@@ -569,11 +569,11 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 	    newcode = malloc(newcodelen, M_DEVBUF, M_WAITOK);
 	    if ((error = copyin((caddr_t)nbp->bf_insns, (caddr_t)newcode,
 			       newcodelen)) != 0) {
-		free(newcode, M_DEVBUF);
+		free(newcode, M_DEVBUF, 0);
 		return error;
 	    }
 	    if (!bpf_validate(newcode, nbp->bf_len)) {
-		free(newcode, M_DEVBUF);
+		free(newcode, M_DEVBUF, 0);
 		return EINVAL;
 	    }
 	} else
@@ -585,7 +585,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 	bp->bf_insns = newcode;
 	splx(s);
 	if (oldcode != 0)
-	    free(oldcode, M_DEVBUF);
+	    free(oldcode, M_DEVBUF, 0);
 	break;
 #endif
 

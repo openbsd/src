@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.137 2014/05/15 09:05:13 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.138 2014/07/12 18:44:23 tedu Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1459,7 +1459,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, int *errorp)
 		memcpy(&ifr.ifr_addr, &in6m->in6m_sin, sizeof(in6m->in6m_sin));
 		*errorp = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
 		if (*errorp) {
-			free(in6m, M_IPMADDR);
+			free(in6m, M_IPMADDR, 0);
 			return (NULL);
 		}
 
@@ -1513,7 +1513,7 @@ in6_delmulti(struct in6_multi *in6m)
 			splx(s);
 		}
 
-		free(in6m, M_IPMADDR);
+		free(in6m, M_IPMADDR, 0);
 	}
 }
 
@@ -1530,7 +1530,7 @@ in6_joingroup(struct ifnet *ifp, struct in6_addr *addr, int *errorp)
 	imm->i6mm_maddr = in6_addmulti(addr, ifp, errorp);
 	if (!imm->i6mm_maddr) {
 		/* *errorp is alrady set */
-		free(imm, M_IPMADDR);
+		free(imm, M_IPMADDR, 0);
 		return NULL;
 	}
 	return imm;
@@ -1542,7 +1542,7 @@ in6_leavegroup(struct in6_multi_mship *imm)
 
 	if (imm->i6mm_maddr)
 		in6_delmulti(imm->i6mm_maddr);
-	free(imm,  M_IPMADDR);
+	free(imm,  M_IPMADDR, 0);
 	return 0;
 }
 
@@ -2169,7 +2169,7 @@ in6_domifdetach(struct ifnet *ifp, void *aux)
 	struct in6_ifextra *ext = (struct in6_ifextra *)aux;
 
 	nd6_ifdetach(ext->nd_ifinfo);
-	free(ext->in6_ifstat, M_IFADDR);
-	free(ext->icmp6_ifstat, M_IFADDR);
-	free(ext, M_IFADDR);
+	free(ext->in6_ifstat, M_IFADDR, 0);
+	free(ext->icmp6_ifstat, M_IFADDR, 0);
+	free(ext, M_IFADDR, 0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.173 2014/07/08 07:10:12 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.174 2014/07/12 18:44:22 tedu Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -816,7 +816,7 @@ ether_ifdetach(struct ifnet *ifp)
 	    enm != NULL;
 	    enm = LIST_FIRST(&ac->ac_multiaddrs)) {
 		LIST_REMOVE(enm, enm_list);
-		free(enm, M_IFMADDR);
+		free(enm, M_IFMADDR, 0);
 	}
 
 #if 0
@@ -1111,7 +1111,7 @@ ether_delmulti(struct ifreq *ifr, struct arpcom *ac)
 	 * No remaining claims to this record; unlink and free it.
 	 */
 	LIST_REMOVE(enm, enm_list);
-	free(enm, M_IFMADDR);
+	free(enm, M_IFMADDR, 0);
 	ac->ac_multicnt--;
 	if (memcmp(addrlo, addrhi, ETHER_ADDR_LEN) != 0)
 		ac->ac_multirangecnt--;

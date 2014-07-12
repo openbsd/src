@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.125 2014/07/11 08:19:40 blambert Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.126 2014/07/12 18:44:22 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -172,7 +172,7 @@ ieee80211_input_print_task(void *arg1, void *arg2)
 	struct ieee80211printmsg *msg = arg1;
 
 	printf("%s", msg->text);
-	free(msg, M_DEVBUF);
+	free(msg, M_DEVBUF, 0);
 }
 
 void
@@ -1330,7 +1330,7 @@ ieee80211_save_ie(const u_int8_t *frm, u_int8_t **ie)
 {
 	if (*ie == NULL || (*ie)[1] != frm[1]) {
 		if (*ie != NULL)
-			free(*ie, M_DEVBUF);
+			free(*ie, M_DEVBUF, 0);
 		*ie = malloc(2 + frm[1], M_DEVBUF, M_NOWAIT);
 		if (*ie == NULL)
 			return ENOMEM;
@@ -2445,7 +2445,7 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 	if (ic->ic_ampdu_rx_start != NULL &&
 	    ic->ic_ampdu_rx_start(ic, ni, tid) != 0) {
 		/* driver failed to setup, rollback */
-		free(ba->ba_buf, M_DEVBUF);
+		free(ba->ba_buf, M_DEVBUF, 0);
 		ba->ba_buf = NULL;
 		status = IEEE80211_STATUS_REFUSED;
 		goto resp;
@@ -2583,7 +2583,7 @@ ieee80211_recv_delba(struct ieee80211com *ic, struct mbuf *m,
 				if (ba->ba_buf[i].m != NULL)
 					m_freem(ba->ba_buf[i].m);
 			/* free reordering buffer */
-			free(ba->ba_buf, M_DEVBUF);
+			free(ba->ba_buf, M_DEVBUF, 0);
 			ba->ba_buf = NULL;
 		}
 	} else {

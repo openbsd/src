@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.10 2014/06/30 12:47:23 pelikan Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.11 2014/07/12 18:44:22 tedu Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -150,7 +150,7 @@ hfsc_grow_class_tbl(struct hfsc_if *hif, u_int howmany)
 	hif->hif_class_tbl = newtbl;
 	hif->hif_allocated = howmany;
 
-	free(old, M_DEVBUF);
+	free(old, M_DEVBUF, 0);
 }
 
 int
@@ -188,8 +188,8 @@ hfsc_detach(struct ifnet *ifp)
 	ifp->if_snd.ifq_hfsc = NULL;
 
 	hfsc_ellist_destroy(hif->hif_eligible);
-	free(hif->hif_class_tbl, M_DEVBUF);
-	free(hif, M_DEVBUF);
+	free(hif->hif_class_tbl, M_DEVBUF, 0);
+	free(hif, M_DEVBUF, 0);
 
 	return (0);
 }
@@ -1007,7 +1007,7 @@ hfsc_ellist_alloc(void)
 void
 hfsc_ellist_destroy(hfsc_ellist_t *head)
 {
-	free(head, M_DEVBUF);
+	free(head, M_DEVBUF, 0);
 }
 
 void
@@ -1107,7 +1107,7 @@ hfsc_actlist_alloc(void)
 void
 hfsc_actlist_destroy(hfsc_actlist_t *head)
 {
-	free(head, M_DEVBUF);
+	free(head, M_DEVBUF, 0);
 }
 
 void

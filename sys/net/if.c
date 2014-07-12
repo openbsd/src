@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.296 2014/07/12 16:10:04 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.297 2014/07/12 18:44:22 tedu Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ if_attachsetup(struct ifnet *ifp)
 		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
 		if (ifindex2ifnet) {
 			bcopy((caddr_t)ifindex2ifnet, q, m);
-			free((caddr_t)ifindex2ifnet, M_IFADDR);
+			free((caddr_t)ifindex2ifnet, M_IFADDR, 0);
 		}
 		ifindex2ifnet = (struct ifnet **)q;
 	}
@@ -597,9 +597,9 @@ do { \
 		}
 	}
 
-	free(ifp->if_addrhooks, M_TEMP);
-	free(ifp->if_linkstatehooks, M_TEMP);
-	free(ifp->if_detachhooks, M_TEMP);
+	free(ifp->if_addrhooks, M_TEMP, 0);
+	free(ifp->if_linkstatehooks, M_TEMP, 0);
+	free(ifp->if_detachhooks, M_TEMP, 0);
 
 	for (dp = domains; dp; dp = dp->dom_next) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
@@ -834,7 +834,7 @@ if_congestion_clear(void *arg)
 	struct timeout *to = ifq->ifq_congestion;
 
 	ifq->ifq_congestion = NULL;
-	free(to, M_TEMP);
+	free(to, M_TEMP, 0);
 }
 
 /*
@@ -1871,7 +1871,7 @@ if_addgroup(struct ifnet *ifp, const char *groupname)
 		return (ENOMEM);
 
 	if ((ifgm = malloc(sizeof(*ifgm), M_TEMP, M_NOWAIT)) == NULL) {
-		free(ifgl, M_TEMP);
+		free(ifgl, M_TEMP, 0);
 		return (ENOMEM);
 	}
 
@@ -1880,8 +1880,8 @@ if_addgroup(struct ifnet *ifp, const char *groupname)
 			break;
 
 	if (ifg == NULL && (ifg = if_creategroup(groupname)) == NULL) {
-		free(ifgl, M_TEMP);
-		free(ifgm, M_TEMP);
+		free(ifgl, M_TEMP, 0);
+		free(ifgm, M_TEMP, 0);
 		return (ENOMEM);
 	}
 
@@ -1922,7 +1922,7 @@ if_delgroup(struct ifnet *ifp, const char *groupname)
 
 	if (ifgm != NULL) {
 		TAILQ_REMOVE(&ifgl->ifgl_group->ifg_members, ifgm, ifgm_next);
-		free(ifgm, M_TEMP);
+		free(ifgm, M_TEMP, 0);
 	}
 
 	if (--ifgl->ifgl_group->ifg_refcnt == 0) {
@@ -1930,10 +1930,10 @@ if_delgroup(struct ifnet *ifp, const char *groupname)
 #if NPF > 0
 		pfi_detach_ifgroup(ifgl->ifgl_group);
 #endif
-		free(ifgl->ifgl_group, M_TEMP);
+		free(ifgl->ifgl_group, M_TEMP, 0);
 	}
 
-	free(ifgl, M_TEMP);
+	free(ifgl, M_TEMP, 0);
 
 #if NPF > 0
 	pfi_group_change(groupname);

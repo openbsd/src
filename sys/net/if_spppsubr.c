@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.123 2014/05/05 11:44:33 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.124 2014/07/12 18:44:22 tedu Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -906,13 +906,13 @@ sppp_detach(struct ifnet *ifp)
 
 	/* release authentication data */
 	if (sp->myauth.name != NULL)
-		free(sp->myauth.name, M_DEVBUF);
+		free(sp->myauth.name, M_DEVBUF, 0);
 	if (sp->myauth.secret != NULL)
-		free(sp->myauth.secret, M_DEVBUF);
+		free(sp->myauth.secret, M_DEVBUF, 0);
 	if (sp->hisauth.name != NULL)
-		free(sp->hisauth.name, M_DEVBUF);
+		free(sp->hisauth.name, M_DEVBUF, 0);
 	if (sp->hisauth.secret != NULL)
-		free(sp->hisauth.secret, M_DEVBUF);
+		free(sp->hisauth.secret, M_DEVBUF, 0);
 }
 
 /*
@@ -2115,7 +2115,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	p = (void*) (h+1);
 	for (rlen = 0; len > 1; len -= p[1], p += p[1]) {
 		if (p[1] < 2 || p[1] > len) {
-			free(buf, M_TEMP);
+			free(buf, M_TEMP, 0);
 			return (-1);
 		}
 		if (debug)
@@ -2292,7 +2292,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	}
 
  end:
-	free(buf, M_TEMP);
+	free(buf, M_TEMP, 0);
 	return (rlen == 0);
 }
 
@@ -2698,7 +2698,7 @@ sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	p = (void*) (h+1);
 	for (rlen = 0; len > 1; len -= p[1], p += p[1]) {
 		if (p[1] < 2 || p[1] > len) {
-			free(buf, M_TEMP);
+			free(buf, M_TEMP, 0);
 			return (-1);
 		}
 		if (debug)
@@ -2842,7 +2842,7 @@ sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	}
 
  end:
-	free(buf, M_TEMP);
+	free(buf, M_TEMP, 0);
 	return (rlen == 0);
 }
 
@@ -3166,7 +3166,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	for (rlen=0; len>1 && p[1]; len-=p[1], p+=p[1]) {
 		/* Sanity check option length */
 		if (p[1] < 2 || p[1] > len) {
-			free(buf, M_TEMP);
+			free(buf, M_TEMP, 0);
 			return (-1);
 		}
 		if (debug)
@@ -3300,7 +3300,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	}
 
 end:
-	free(buf, M_TEMP);
+	free(buf, M_TEMP, 0);
 	return (rlen == 0);
 }
 
@@ -4880,10 +4880,10 @@ sppp_get_params(struct sppp *sp, struct ifreq *ifr)
 		spr->phase = sp->pp_phase;
 
 		if (copyout(spr, (caddr_t)ifr->ifr_data, sizeof(*spr)) != 0) {
-			free(spr, M_DEVBUF);
+			free(spr, M_DEVBUF, 0);
 			return EFAULT;
 		}
-		free(spr, M_DEVBUF);
+		free(spr, M_DEVBUF, 0);
 		break;
 	}
 	case SPPPIOGMAUTH:
@@ -4903,10 +4903,10 @@ sppp_get_params(struct sppp *sp, struct ifreq *ifr)
 			strlcpy(spa->name, auth->name, sizeof(spa->name));
 
 		if (copyout(spa, (caddr_t)ifr->ifr_data, sizeof(*spa)) != 0) {
-			free(spa, M_DEVBUF);
+			free(spa, M_DEVBUF, 0);
 			return EFAULT;
 		}
-		free(spa, M_DEVBUF);
+		free(spa, M_DEVBUF, 0);
 		break;
 	}
 	default:
@@ -4946,7 +4946,7 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 		spr = malloc(sizeof(*spr), M_DEVBUF, M_WAITOK);
 		
 		if (copyin((caddr_t)ifr->ifr_data, spr, sizeof(*spr)) != 0) {
-			free(spr, M_DEVBUF);
+			free(spr, M_DEVBUF, 0);
 			return EFAULT;
 		}
 		/*
@@ -4955,7 +4955,7 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 		 *
 		 * XXX Should allow to set or clear pp_flags.
 		 */
-		free(spr, M_DEVBUF);
+		free(spr, M_DEVBUF, 0);
 		break;
 	}
 	case SPPPIOSMAUTH:
@@ -4982,22 +4982,22 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 		auth = (cmd == SPPPIOSMAUTH) ? &sp->myauth : &sp->hisauth;
 
 		if (copyin((caddr_t)ifr->ifr_data, spa, sizeof(*spa)) != 0) {
-			free(spa, M_DEVBUF);
+			free(spa, M_DEVBUF, 0);
 			return EFAULT;
 		}
 
 		if (spa->proto != 0 && spa->proto != PPP_PAP &&
 		    spa->proto != PPP_CHAP) {
-			free(spa, M_DEVBUF);
+			free(spa, M_DEVBUF, 0);
 			return EINVAL;
 		}
 
 		if (spa->proto == 0) {
 			/* resetting auth */
 			if (auth->name != NULL)
-				free(auth->name, M_DEVBUF);
+				free(auth->name, M_DEVBUF, 0);
 			if (auth->secret != NULL)
-				free(auth->secret, M_DEVBUF);
+				free(auth->secret, M_DEVBUF, 0);
 			bzero(auth, sizeof *auth);
 			explicit_bzero(sp->chap_challenge, sizeof sp->chap_challenge);
 		} else {
@@ -5010,7 +5010,7 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 			p = malloc(len, M_DEVBUF, M_WAITOK);
 			strlcpy(p, spa->name, len);
 			if (auth->name != NULL)
-				free(auth->name, M_DEVBUF);
+				free(auth->name, M_DEVBUF, 0);
 			auth->name = p;
 
 			if (spa->secret[0] != '\0') {
@@ -5019,7 +5019,7 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 				p = malloc(len, M_DEVBUF, M_WAITOK);
 				strlcpy(p, spa->secret, len);
 				if (auth->secret != NULL)
-					free(auth->secret, M_DEVBUF);
+					free(auth->secret, M_DEVBUF, 0);
 				auth->secret = p;
 			} else if (!auth->secret) {
 				p = malloc(1, M_DEVBUF, M_WAITOK);
@@ -5027,7 +5027,7 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 				auth->secret = p;
 			}
 		}
-		free(spa, M_DEVBUF);
+		free(spa, M_DEVBUF, 0);
 		break;
 	}
 	default:

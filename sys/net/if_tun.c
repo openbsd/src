@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.125 2014/05/05 11:44:33 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.126 2014/07/12 18:44:22 tedu Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -246,7 +246,7 @@ tun_clone_destroy(struct ifnet *ifp)
 
 	if_detach(ifp);
 
-	free(tp, M_DEVBUF);
+	free(tp, M_DEVBUF, 0);
 	return (0);
 }
 
@@ -322,7 +322,7 @@ tun_switch(struct tun_softc *tp, int flags)
 	}
  abort:
 	if (ifgrpnames)
-		free(ifgrpnames, M_TEMP);
+		free(ifgrpnames, M_TEMP, 0);
 	return (r);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ruleset.c,v 1.7 2012/11/15 17:44:10 deraadt Exp $ */
+/*	$OpenBSD: pf_ruleset.c,v 1.8 2014/07/12 18:44:22 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,7 +58,7 @@
 
 #ifdef _KERNEL
 #define rs_malloc(x)		malloc(x, M_TEMP, M_WAITOK|M_CANFAIL|M_ZERO)
-#define rs_free(x)		free(x, M_TEMP)
+#define rs_free(x)		free(x, M_TEMP, 0)
 
 #else
 /* Userland equivalents so we can lend code to pfctl et al. */

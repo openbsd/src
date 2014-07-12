@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.66 2014/04/21 12:22:26 henning Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.67 2014/07/12 18:44:23 tedu Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -604,7 +604,7 @@ ip_mrouter_done()
 	}
 
 	memset(nexpire, 0, sizeof(nexpire));
-	free(mfchashtbl, M_MRTABLE);
+	free(mfchashtbl, M_MRTABLE, 0);
 	mfchashtbl = NULL;
 
 	bw_upcalls_n = 0;
@@ -1021,11 +1021,11 @@ expire_mfc(struct mfc *rt)
 	for (rte = rt->mfc_stall; rte != NULL; rte = nrte) {
 		nrte = rte->next;
 		m_freem(rte->m);
-		free(rte, M_MRTABLE);
+		free(rte, M_MRTABLE, 0);
 	}
 
 	LIST_REMOVE(rt, mfc_hash);
-	free(rt, M_MRTABLE);
+	free(rt, M_MRTABLE, 0);
 }
 
 /*
@@ -1118,7 +1118,7 @@ add_mfc(struct mbuf *m)
 					ip_mdq(rte->m, rte->ifp, rt);
 				}
 				m_freem(rte->m);
-				free(rte, M_MRTABLE);
+				free(rte, M_MRTABLE, 0);
 			}
 		}
 	}
@@ -1215,7 +1215,7 @@ del_mfc(struct mbuf *m)
 	rt->mfc_bw_meter = NULL;
 
 	LIST_REMOVE(rt, mfc_hash);
-	free(rt, M_MRTABLE);
+	free(rt, M_MRTABLE, 0);
 
 	splx(s);
 	return (0);
@@ -1331,7 +1331,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		mb0 = m_copy(m, 0, M_COPYALL);
 		M_PULLUP(mb0, hlen);
 		if (mb0 == NULL) {
-			free(rte, M_MRTABLE);
+			free(rte, M_MRTABLE, 0);
 			splx(s);
 			return (ENOBUFS);
 		}
@@ -1392,9 +1392,9 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 				    "socket queue full\n");
 				++mrtstat.mrts_upq_sockfull;
 			fail1:
-				free(rt, M_MRTABLE);
+				free(rt, M_MRTABLE, 0);
 			fail:
-				free(rte, M_MRTABLE);
+				free(rte, M_MRTABLE, 0);
 				m_freem(mb0);
 				splx(s);
 				return (ENOBUFS);
@@ -1437,7 +1437,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 				if (++npkts > MAX_UPQ) {
 					mrtstat.mrts_upq_ovflw++;
 				non_fatal:
-					free(rte, M_MRTABLE);
+					free(rte, M_MRTABLE, 0);
 					m_freem(mb0);
 					splx(s);
 					return (0);
@@ -1487,7 +1487,7 @@ expire_upcalls(void *v)
 				struct bw_meter *x = rt->mfc_bw_meter;
 
 				rt->mfc_bw_meter = x->bm_mfc_next;
-				free(x, M_BWMETER);
+				free(x, M_BWMETER, 0);
 			}
 
 			++mrtstat.mrts_cache_cleanups;
@@ -1877,7 +1877,7 @@ free_bw_list(struct bw_meter *list)
 
 		list = list->bm_mfc_next;
 		unschedule_bw_meter(x);
-		free(x, M_BWMETER);
+		free(x, M_BWMETER, 0);
 	}
 }
 
@@ -1945,7 +1945,7 @@ del_bw_upcall(struct mbuf *m)
 			unschedule_bw_meter(x);
 			splx(s);
 			/* Free the bw_meter entry */
-			free(x, M_BWMETER);
+			free(x, M_BWMETER, 0);
 			return (0);
 		} else {
 			splx(s);

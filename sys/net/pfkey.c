@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.20 2012/11/27 17:29:07 mikeb Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.21 2014/07/12 18:44:22 tedu Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -218,7 +218,7 @@ pfkey_attach(struct socket *socket, struct mbuf *proto, struct proc *p)
 	return (0);
 
 ret:
-	free(socket->so_pcb, M_PCB);
+	free(socket->so_pcb, M_PCB, 0);
 	return (rval);
 }
 
@@ -317,7 +317,7 @@ pfkey_buildprotosw(void)
 			}
 
 		if (pfkey_domain.dom_protosw)
-			free(pfkey_domain.dom_protosw, M_PFKEY);
+			free(pfkey_domain.dom_protosw, M_PFKEY, 0);
 
 		pfkey_domain.dom_protosw = protosw;
 		pfkey_domain.dom_protoswNPROTOSW = p;
@@ -330,7 +330,7 @@ pfkey_buildprotosw(void)
 		    sizeof(struct protosw));
 
 		if (pfkey_domain.dom_protosw)
-			free(pfkey_domain.dom_protosw, M_PFKEY);
+			free(pfkey_domain.dom_protosw, M_PFKEY, 0);
 
 		pfkey_domain.dom_protosw = protosw;
 		pfkey_domain.dom_protoswNPROTOSW = protosw;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.195 2014/07/08 17:19:26 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.196 2014/07/12 18:44:23 tedu Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -638,13 +638,13 @@ tdb_rehash(void)
 		}
 	}
 
-	free(tdbh, M_TDB);
+	free(tdbh, M_TDB, 0);
 	tdbh = new_tdbh;
 
-	free(tdbaddr, M_TDB);
+	free(tdbaddr, M_TDB, 0);
 	tdbaddr = new_tdbaddr;
 
-	free(tdbsrc, M_TDB);
+	free(tdbsrc, M_TDB, 0);
 	tdbsrc = new_srcaddr;
 }
 
@@ -892,7 +892,7 @@ tdb_free(struct tdb *tdbp)
 	if ((tdbp->tdb_inext) && (tdbp->tdb_inext->tdb_onext == tdbp))
 		tdbp->tdb_inext->tdb_onext = NULL;
 
-	free(tdbp, M_TDB);
+	free(tdbp, M_TDB, 0);
 }
 
 /*
@@ -1049,7 +1049,7 @@ ipsp_reffree(struct ipsec_ref *ipr)
 		    ipr->ref_count, ipr, ipr->ref_len, ipr->ref_malloctype);
 #endif
 	if (--ipr->ref_count <= 0)
-		free(ipr, ipr->ref_malloctype);
+		free(ipr, ipr->ref_malloctype, 0);
 }
 
 /* Mark a TDB as TDBF_SKIPCRYPTO. */

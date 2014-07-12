@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.224 2014/07/09 09:30:49 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.225 2014/07/12 18:44:22 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -195,7 +195,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_stp = bstp_create(&sc->sc_if);
 	if (!sc->sc_stp) {
-		free(sc, M_DEVBUF);
+		free(sc, M_DEVBUF, 0);
 		return (ENOMEM);
 	}
 
@@ -248,7 +248,7 @@ bridge_clone_destroy(struct ifnet *ifp)
 		bridge_delete(sc, bif);
 	while ((bif = TAILQ_FIRST(&sc->sc_spanlist)) != NULL) {
 		TAILQ_REMOVE(&sc->sc_spanlist, bif, next);
-		free(bif, M_DEVBUF);
+		free(bif, M_DEVBUF, 0);
 	}
 
 	s = splnet();
@@ -258,7 +258,7 @@ bridge_clone_destroy(struct ifnet *ifp)
 	bstp_destroy(sc->sc_stp);
 	if_detach(ifp);
 
-	free(sc, M_DEVBUF);
+	free(sc, M_DEVBUF, 0);
 	return (0);
 }
 
@@ -276,7 +276,7 @@ bridge_delete(struct bridge_softc *sc, struct bridge_iflist *p)
 	TAILQ_REMOVE(&sc->sc_iflist, p, next);
 	bridge_rtdelete(sc, p->ifp, 0);
 	bridge_flushrule(p);
-	free(p, M_DEVBUF);
+	free(p, M_DEVBUF, 0);
 
 	return (error);
 }
@@ -444,7 +444,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (strncmp(p->ifp->if_xname, req->ifbr_ifsname,
 			    sizeof(p->ifp->if_xname)) == 0) {
 				TAILQ_REMOVE(&sc->sc_spanlist, p, next);
-				free(p, M_DEVBUF);
+				free(p, M_DEVBUF, 0);
 				break;
 			}
 		}
@@ -817,7 +817,7 @@ bridge_bifconf(struct bridge_softc *sc, struct ifbifconf *bifc)
 
 done:
 	if (breq != NULL)
-		free(breq, M_DEVBUF);
+		free(breq, M_DEVBUF, 0);
 	bifc->ifbic_len = i * sizeof(*breq);
 	return (error);
 }
@@ -1886,7 +1886,7 @@ bridge_rtage(struct bridge_softc *sc)
 				p = LIST_NEXT(n, brt_next);
 				LIST_REMOVE(n, brt_next);
 				sc->sc_brtcnt--;
-				free(n, M_DEVBUF);
+				free(n, M_DEVBUF, 0);
 				n = p;
 			}
 		}
@@ -1945,7 +1945,7 @@ bridge_rtflush(struct bridge_softc *sc, int full)
 				p = LIST_NEXT(n, brt_next);
 				LIST_REMOVE(n, brt_next);
 				sc->sc_brtcnt--;
-				free(n, M_DEVBUF);
+				free(n, M_DEVBUF, 0);
 				n = p;
 			} else
 				n = LIST_NEXT(n, brt_next);
@@ -1967,7 +1967,7 @@ bridge_rtdaddr(struct bridge_softc *sc, struct ether_addr *ea)
 		if (bcmp(ea, &p->brt_addr, sizeof(p->brt_addr)) == 0) {
 			LIST_REMOVE(p, brt_next);
 			sc->sc_brtcnt--;
-			free(p, M_DEVBUF);
+			free(p, M_DEVBUF, 0);
 			return (0);
 		}
 	}
@@ -2004,7 +2004,7 @@ bridge_rtdelete(struct bridge_softc *sc, struct ifnet *ifp, int dynonly)
 			p = LIST_NEXT(n, brt_next);
 			LIST_REMOVE(n, brt_next);
 			sc->sc_brtcnt--;
-			free(n, M_DEVBUF);
+			free(n, M_DEVBUF, 0);
 			n = p;
 		}
 	}
@@ -2183,7 +2183,7 @@ bridge_flushrule(struct bridge_iflist *bif)
 #if NPF > 0
 		pf_tag_unref(p->brl_tag);
 #endif
-		free(p, M_DEVBUF);
+		free(p, M_DEVBUF, 0);
 	}
 	while (!SIMPLEQ_EMPTY(&bif->bif_brlout)) {
 		p = SIMPLEQ_FIRST(&bif->bif_brlout);
@@ -2191,7 +2191,7 @@ bridge_flushrule(struct bridge_iflist *bif)
 #if NPF > 0
 		pf_tag_unref(p->brl_tag);
 #endif
-		free(p, M_DEVBUF);
+		free(p, M_DEVBUF, 0);
 	}
 }
 

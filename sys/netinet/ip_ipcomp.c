@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.34 2014/07/09 09:30:49 henning Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.35 2014/07/12 18:44:23 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -230,7 +230,7 @@ ipcomp_input_cb(op)
 	m = (struct mbuf *) crp->crp_buf;
 	if (m == NULL) {
 		/* Shouldn't happen... */
-		free(tc, M_XDATA);
+		free(tc, M_XDATA, 0);
 		crypto_freereq(crp);
 		ipcompstat.ipcomps_crypto++;
 		DPRINTF(("ipcomp_input_cb(): bogus returned buffer from crypto\n"));
@@ -241,7 +241,7 @@ ipcomp_input_cb(op)
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
-		free(tc, M_XDATA);
+		free(tc, M_XDATA, 0);
 		ipcompstat.ipcomps_notdb++;
 		DPRINTF(("ipcomp_input_cb(): TDB expired while in crypto"));
 		error = EPERM;
@@ -255,7 +255,7 @@ ipcomp_input_cb(op)
 	/* Hard expiration */
 	if ((tdb->tdb_flags & TDBF_BYTES) &&
 	    (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)) {
-		free(tc, M_XDATA);
+		free(tc, M_XDATA, 0);
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
 		error = ENXIO;
@@ -277,14 +277,14 @@ ipcomp_input_cb(op)
 			splx(s);
 			return crypto_dispatch(crp);
 		}
-		free(tc, M_XDATA);
+		free(tc, M_XDATA, 0);
 		ipcompstat.ipcomps_noxform++;
 		DPRINTF(("ipcomp_input_cb(): crypto error %d\n",
 		    crp->crp_etype));
 		error = crp->crp_etype;
 		goto baddone;
 	}
-	free(tc, M_XDATA);
+	free(tc, M_XDATA, 0);
 
 	/* Length of data after processing */
 	clen = crp->crp_olen;
@@ -573,7 +573,7 @@ ipcomp_output_cb(cp)
 	m = (struct mbuf *) crp->crp_buf;
 	if (m == NULL) {
 		/* Shouldn't happen... */
-		free(tc, M_XDATA);
+		free(tc, M_XDATA, 0);
 		crypto_freereq(crp);
 		ipcompstat.ipcomps_crypto++;
 		DPRINTF(("ipcomp_output_cb(): bogus returned buffer from "
@@ -585,7 +585,7 @@ ipcomp_output_cb(cp)
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
-		free(tc, M_XDATA);
+		free(tc, M_XDATA, 0);
 		ipcompstat.ipcomps_notdb++;
 		DPRINTF(("ipcomp_output_cb(): TDB expired while in crypto\n"));
 		error = EPERM;
@@ -601,14 +601,14 @@ ipcomp_output_cb(cp)
 			splx(s);
 			return crypto_dispatch(crp);
 		}
-		free(tc, M_XDATA);
+		free(tc, M_XDATA, 0);
 		ipcompstat.ipcomps_noxform++;
 		DPRINTF(("ipcomp_output_cb(): crypto error %d\n",
 		    crp->crp_etype));
 		error = crp->crp_etype;
 		goto baddone;
 	}
-	free(tc, M_XDATA);
+	free(tc, M_XDATA, 0);
 
 	/* Check sizes. */
 	if (rlen < crp->crp_olen) {

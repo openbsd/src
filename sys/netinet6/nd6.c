@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.119 2014/07/11 16:39:06 henning Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.120 2014/07/12 18:44:23 tedu Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ void
 nd6_ifdetach(struct nd_ifinfo *nd)
 {
 
-	free(nd, M_IP6NDP);
+	free(nd, M_IP6NDP, 0);
 }
 
 void
@@ -1226,7 +1226,7 @@ nd6_rtrequest(int req, struct rtentry *rt)
 		rt->rt_flags &= ~RTF_LLINFO;
 		if (ln->ln_hold)
 			m_freem(ln->ln_hold);
-		free(ln, M_RTABLE);
+		free(ln, M_RTABLE, 0);
 	}
 }
 
@@ -1920,7 +1920,7 @@ nd6_sysctl(int name, void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 		break;
 	}
 	if (p)
-		free(p, M_TEMP);
+		free(p, M_TEMP, 0);
 
 	return (error);
 }

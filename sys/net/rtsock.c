@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.148 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.149 2014/07/12 18:44:22 tedu Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		else
 			error = raw_attach(so, (int)(long)nam);
 		if (error) {
-			free(rp, M_PCB);
+			free(rp, M_PCB, 0);
 			splx(s);
 			return (error);
 		}
@@ -718,7 +718,7 @@ report:
 					goto flush;
 				}
 				memcpy(new_rtm, rtm, rtm->rtm_msglen);
-				free(rtm, M_RTABLE);
+				free(rtm, M_RTABLE, 0);
 				rtm = new_rtm;
 			}
 			rt_msg2(rtm->rtm_type, RTM_VERSION, &info, (caddr_t)rtm,
@@ -805,7 +805,7 @@ report:
 				/* if gateway changed remove MPLS information */
 				if (rt->rt_llinfo != NULL &&
 				    rt->rt_flags & RTF_MPLS) {
-					free(rt->rt_llinfo, M_TEMP);
+					free(rt->rt_llinfo, M_TEMP, 0);
 					rt->rt_llinfo = NULL;
 					rt->rt_flags &= ~RTF_MPLS;
 				}
@@ -863,7 +863,7 @@ flush:
 	if (!(so->so_options & SO_USELOOPBACK)) {
 		if (route_cb.any_count <= 1) {
 fail:
-			free(rtm, M_RTABLE);
+			free(rtm, M_RTABLE, 0);
 			m_freem(m);
 			return (error);
 		}
@@ -878,7 +878,7 @@ fail:
 			m = NULL;
 		} else if (m->m_pkthdr.len > rtm->rtm_msglen)
 			m_adj(m, rtm->rtm_msglen - m->m_pkthdr.len);
-		free(rtm, M_RTABLE);
+		free(rtm, M_RTABLE, 0);
 	}
 	if (m)
 		route_input(m, &route_proto, &route_src, &route_dst);
@@ -1031,7 +1031,7 @@ again:
 		rw->w_needed += len;
 		if (rw->w_needed <= 0 && rw->w_where) {
 			if (rw->w_tmemsize < len) {
-				free(rw->w_tmem, M_RTABLE);
+				free(rw->w_tmem, M_RTABLE, 0);
 				rw->w_tmem = malloc(len, M_RTABLE, M_NOWAIT);
 				if (rw->w_tmem)
 					rw->w_tmemsize = len;
@@ -1403,7 +1403,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 		return (error);
 	}
 	splx(s);
-	free(w.w_tmem, M_RTABLE);
+	free(w.w_tmem, M_RTABLE, 0);
 	w.w_needed += w.w_given;
 	if (where) {
 		*given = w.w_where - (caddr_t)where;

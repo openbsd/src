@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.22 2014/01/19 13:47:03 pelikan Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.23 2014/07/12 18:44:22 tedu Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -327,7 +327,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 				    nwords * sizeof(int));
 			else
 				error = E2BIG;
-			free(kptr, M_TEMP);
+			free(kptr, M_TEMP, 0);
 		}
 		ifmr->ifm_count = nwords;
 		break;
@@ -380,7 +380,7 @@ ifmedia_delete_instance(struct ifmedia *ifm, u_int inst)
 		if (inst == IFM_INST_ANY ||
 		    inst == IFM_INST(ife->ifm_media)) {
 			TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
-			free(ife, M_IFADDR);
+			free(ife, M_IFADDR, 0);
 		}
 	}
 }
