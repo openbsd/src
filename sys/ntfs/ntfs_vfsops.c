@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.39 2014/07/08 17:19:26 deraadt Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.40 2014/07/12 18:43:52 tedu Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -457,8 +457,8 @@ out:
 
 	if (ntmp != NULL) {
 		if (ntmp->ntm_ad != NULL)
-			free(ntmp->ntm_ad, M_NTFSMNT);
-		free(ntmp, M_NTFSMNT);
+			free(ntmp->ntm_ad, M_NTFSMNT, 0);
+		free(ntmp, M_NTFSMNT, 0);
 		mp->mnt_data = NULL;
 	}
 
@@ -536,8 +536,8 @@ ntfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	DPRINTF("ntfs_unmount: freeing memory...\n");
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
-	free(ntmp->ntm_ad, M_NTFSMNT);
-	free(ntmp, M_NTFSMNT);
+	free(ntmp->ntm_ad, M_NTFSMNT, 0);
+	free(ntmp, M_NTFSMNT, 0);
 	return (error);
 }
 
@@ -595,7 +595,7 @@ ntfs_calccfree(struct ntfsmount *ntmp, cn_t *cfreep)
 	*cfreep = cfree;
 
     out:
-	free(tmp, M_TEMP);
+	free(tmp, M_TEMP, 0);
 	return(error);
 }
 

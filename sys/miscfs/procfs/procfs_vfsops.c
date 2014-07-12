@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.31 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.32 2014/07/12 18:43:52 tedu Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ procfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	if ((error = vflush(mp, 0, flags)) != 0)
 		return (error);
 
-	free(VFSTOPROC(mp), M_MISCFSMNT);
+	free(VFSTOPROC(mp), M_MISCFSMNT, 0);
 	mp->mnt_data = 0;
 
 	return (0);

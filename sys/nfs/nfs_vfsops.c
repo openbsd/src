@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.99 2013/12/01 16:40:56 krw Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.100 2014/07/12 18:43:52 tedu Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -678,7 +678,7 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam,
 	return (0);
 bad:
 	nfs_disconnect(nmp);
-	free((caddr_t)nmp, M_NFSMNT);
+	free((caddr_t)nmp, M_NFSMNT, 0);
 	m_freem(nam);
 	return (error);
 }
@@ -703,7 +703,7 @@ nfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	nfs_disconnect(nmp);
 	m_freem(nmp->nm_nam);
 	timeout_del(&nmp->nm_rtimeout);
-	free(nmp, M_NFSMNT);
+	free(nmp, M_NFSMNT, 0);
 	return (0);
 }
 

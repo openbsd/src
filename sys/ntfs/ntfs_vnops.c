@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.35 2013/12/14 02:57:25 guenther Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.36 2014/07/12 18:43:52 tedu Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -576,7 +576,7 @@ ntfs_readdir(void *v)
 */
 out:
 	if (fp->f_dirblbuf != NULL) {
-		free(fp->f_dirblbuf, M_NTFSDIR);
+		free(fp->f_dirblbuf, M_NTFSDIR, 0);
 		fp->f_dirblbuf = NULL;
 	}
 	return (error);

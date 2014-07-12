@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_cmdline.c,v 1.12 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: procfs_cmdline.c,v 1.13 2014/07/12 18:43:52 tedu Exp $	*/
 /*	$NetBSD: procfs_cmdline.c,v 1.3 1999/03/13 22:26:48 thorpej Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ procfs_docmdline(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct 
                 else
                         error = uiomove(arg, len - uio->uio_offset, uio);
 		
-                free(arg, M_TEMP);
+                free(arg, M_TEMP, 0);
                 return (error);	
 	}
 
@@ -100,7 +100,7 @@ procfs_docmdline(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct 
 	 */
 	/* XXXCDC: how should locking work here? */
 	if ((pr->ps_flags & PS_EXITING) || (pr->ps_vmspace->vm_refcnt < 1)) {
-		free(arg, M_TEMP);
+		free(arg, M_TEMP, 0);
 		return (EFAULT);
 	}
 	vm = pr->ps_vmspace;
@@ -181,6 +181,6 @@ procfs_docmdline(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct 
 
  bad:
 	uvmspace_free(vm);
-	free(arg, M_TEMP);
+	free(arg, M_TEMP, 0);
 	return (error);
 }

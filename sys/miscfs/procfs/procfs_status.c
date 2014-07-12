@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_status.c,v 1.15 2013/10/01 20:15:56 sf Exp $	*/
+/*	$OpenBSD: procfs_status.c,v 1.16 2014/07/12 18:43:52 tedu Exp $	*/
 /*	$NetBSD: procfs_status.c,v 1.11 1996/03/16 23:52:50 christos Exp $	*/
 
 /*
@@ -167,6 +167,6 @@ procfs_dostatus(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct u
 		error = uiomove(ps + uio->uio_offset, len, uio);
 	}
 
-	free(ps, M_TEMP);
+	free(ps, M_TEMP, 0);
 	return (error);
 }

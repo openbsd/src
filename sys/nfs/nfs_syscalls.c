@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.96 2013/11/03 13:50:24 miod Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.97 2014/07/12 18:43:52 tedu Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -456,7 +456,7 @@ loop:
 done:
 	TAILQ_REMOVE(&nfsd_head, nfsd, nfsd_chain);
 	splx(s);
-	free((caddr_t)nfsd, M_NFSD);
+	free((caddr_t)nfsd, M_NFSD, 0);
 	if (--nfs_numnfsd == 0)
 		nfsrv_init(1);	/* Reinitialize everything */
 	return (error);
@@ -506,7 +506,7 @@ nfsrv_slpderef(struct nfssvc_sock *slp)
 {
 	if (--(slp->ns_sref) == 0 && (slp->ns_flag & SLP_VALID) == 0) {
 		TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
-		free((caddr_t)slp, M_NFSSVC);
+		free((caddr_t)slp, M_NFSSVC, 0);
 	}
 }
 
@@ -530,7 +530,7 @@ nfsrv_init(int terminating)
 			if (slp->ns_flag & SLP_VALID)
 				nfsrv_zapsock(slp);
 			TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
-			free((caddr_t)slp, M_NFSSVC);
+			free((caddr_t)slp, M_NFSSVC, 0);
 		}
 		nfsrv_cleancache();	/* And clear out server cache */
 	}

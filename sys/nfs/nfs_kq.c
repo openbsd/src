@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.19 2014/07/08 17:19:26 deraadt Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.20 2014/07/12 18:43:52 tedu Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -203,7 +203,7 @@ filt_nfsdetach(struct knote *kn)
 			} else {
 				/* last user, g/c */
 				SLIST_REMOVE(&kevlist, ke, kevq, kev_link);
-				free(ke, M_KEVENT);
+				free(ke, M_KEVENT, 0);
 			}
 			break;
 		}

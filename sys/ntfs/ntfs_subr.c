@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.37 2014/01/19 18:35:45 tedu Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.38 2014/07/12 18:43:52 tedu Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -241,7 +241,7 @@ ntfs_ntvattrget(struct ntfsmount *ntmp, struct ntnode *ip, u_int32_t type,
 	    "name: %.*s, vcn: %llu\n", ip->i_number, type,
 	    (unsigned int)namelen, name, vcn);
 out:
-	free(alpool, M_TEMP);
+	free(alpool, M_TEMP, 0);
 	return (error);
 }
 
@@ -354,7 +354,7 @@ ntfs_loadntnode(struct ntfsmount *ntmp, struct ntnode *ip)
 	ntmp->ntm_ntnodes++;
 
 out:
-	free(mfrp, M_TEMP);
+	free(mfrp, M_TEMP, 0);
 	return (error);
 }
 
@@ -476,7 +476,7 @@ ntfs_ntput(struct ntnode *ip, struct proc *p)
 	}
 
 	vrele(ip->i_devvp);
-	free(ip, M_NTFSNTNODE);
+	free(ip, M_NTFSNTNODE, 0);
 }
 
 /*
@@ -515,14 +515,14 @@ ntfs_freentvattr(struct ntvattr *vap)
 {
 	if (vap->va_flag & NTFS_AF_INRUN) {
 		if (vap->va_vruncn)
-			free(vap->va_vruncn, M_NTFSRUN);
+			free(vap->va_vruncn, M_NTFSRUN, 0);
 		if (vap->va_vruncl)
-			free(vap->va_vruncl, M_NTFSRUN);
+			free(vap->va_vruncl, M_NTFSRUN, 0);
 	} else {
 		if (vap->va_datap)
-			free(vap->va_datap, M_NTFSRDATA);
+			free(vap->va_datap, M_NTFSRDATA, 0);
 	}
-	free(vap, M_NTFSNTVATTR);
+	free(vap, M_NTFSNTVATTR, 0);
 }
 
 /*
@@ -582,7 +582,7 @@ ntfs_attrtontvattr(struct ntfsmount *ntmp, struct ntvattr **rvapp,
 	DDPRINTF(", len: %llu", vap->va_datalen);
 
 	if (error)
-		free(vap, M_NTFSNTVATTR);
+		free(vap, M_NTFSNTVATTR, 0);
 	else
 		*rvapp = vap;
 
@@ -762,10 +762,10 @@ ntfs_frele(struct fnode *fp)
 	DPRINTF("ntfs_frele: deallocating fnode\n");
 	LIST_REMOVE(fp,f_fnlist);
 	if (fp->f_flag & FN_AATTRNAME)
-		free(fp->f_attrname, M_TEMP);
+		free(fp->f_attrname, M_TEMP, 0);
 	if (fp->f_dirblbuf)
-		free(fp->f_dirblbuf, M_NTFSDIR);
-	free(fp, M_NTFSFNODE);
+		free(fp->f_dirblbuf, M_NTFSDIR, 0);
+	free(fp, M_NTFSFNODE, 0);
 	ntfs_ntrele(ip);
 }
 
@@ -955,7 +955,7 @@ ntfs_ntlookupfile(struct ntfsmount *ntmp, struct vnode *vp,
 
 			/* free the buffer returned by ntfs_ntlookupattr() */
 			if (attrname) {
-				free(attrname, M_TEMP);
+				free(attrname, M_TEMP, 0);
 				attrname = NULL;
 			}
 
@@ -1048,7 +1048,7 @@ ntfs_ntlookupfile(struct ntfsmount *ntmp, struct vnode *vp,
 
 			tctx = lookup_ctx;
 			lookup_ctx = lookup_ctx->prev;
-			free(tctx, M_TEMP);
+			free(tctx, M_TEMP, 0);
 		} else {
 			DPRINTF("ntfs_ntlookupfile: nowhere to dive :-(\n");
 			error = ENOENT;
@@ -1072,14 +1072,14 @@ fail:
 	if (vap)
 		ntfs_ntvattrrele(vap);
 	if (rdbuf)
-		free(rdbuf, M_TEMP);
+		free(rdbuf, M_TEMP, 0);
 	if (attrname)
-		free(attrname, M_TEMP);
+		free(attrname, M_TEMP, 0);
 	if (lookup_ctx) {
 		while(lookup_ctx) {
 			tctx = lookup_ctx;
 			lookup_ctx = lookup_ctx->prev;
-			free(tctx, M_TEMP);
+			free(tctx, M_TEMP, 0);
 		}
 	}
 	ntfs_ntput(ip, p);
@@ -1272,7 +1272,7 @@ fail:
 	if (iavap)
 		ntfs_ntvattrrele(iavap);
 	if (bmp)
-		free(bmp, M_TEMP);
+		free(bmp, M_TEMP, 0);
 	ntfs_ntput(ip, p);
 
 	return (error);
@@ -1744,8 +1744,8 @@ ntfs_readattr(struct ntfsmount *ntmp, struct ntnode *ip, u_int32_t attrnum,
 			cn += NTFS_COMPUNIT_CL;
 		}
 
-		free(uup, M_NTFSDECOMP);
-		free(cup, M_NTFSDECOMP);
+		free(uup, M_NTFSDECOMP, 0);
+		free(cup, M_NTFSDECOMP, 0);
 	} else
 		error = ntfs_readattr_plain(ntmp, ip, attrnum, attrname,
 					     roff, rsize, rdata, &init, uio);
@@ -1927,7 +1927,7 @@ ntfs_toupper_unuse(struct proc *p)
 
 	ntfs_toupper_usecount--;
 	if (ntfs_toupper_usecount == 0) {
-		free(ntfs_toupper_tab, M_NTFSRDATA);
+		free(ntfs_toupper_tab, M_NTFSRDATA, 0);
 		ntfs_toupper_tab = NULL;
 	}
 #ifdef DIAGNOSTIC

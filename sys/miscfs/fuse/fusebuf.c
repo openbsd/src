@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.c,v 1.6 2013/10/07 18:15:21 syl Exp $ */
+/* $OpenBSD: fusebuf.c,v 1.7 2014/07/12 18:43:52 tedu Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -70,7 +70,7 @@ void
 fb_delete(struct fusebuf *fbuf)
 {
 	if (fbuf != NULL) {
-		free(fbuf->fb_dat, M_FUSEFS);
+		free(fbuf->fb_dat, M_FUSEFS, 0);
 		pool_put(&fusefs_fbuf_pool, fbuf);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.96 2014/07/08 17:19:26 deraadt Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.97 2014/07/12 18:43:52 tedu Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -633,7 +633,7 @@ nfsrv_read(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		uiop->uio_segflg = UIO_SYSSPACE;
 		error = VOP_READ(vp, uiop, IO_NODELOCKED, cred);
 		off = uiop->uio_offset;
-		free(iv2, M_TEMP);
+		free(iv2, M_TEMP, 0);
 		if (error || (getret = VOP_GETATTR(vp, &va, cred, procp)) != 0){
 			if (!error)
 				error = getret;
@@ -798,7 +798,7 @@ nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	    uiop->uio_offset = off;
 	    error = VOP_WRITE(vp, uiop, ioflags, cred);
 	    nfsstats.srvvop_writes++;
-	    free(iv, M_TEMP);
+	    free(iv, M_TEMP, 0);
 	}
 	aftat_ret = VOP_GETATTR(vp, &va, cred, procp);
 	vput(vp);
@@ -1727,7 +1727,7 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	}
 out:
 	if (pathcp)
-		free(pathcp, M_TEMP);
+		free(pathcp, M_TEMP, 0);
 	if (dirp) {
 		diraft_ret = VOP_GETATTR(dirp, &diraft, cred, procp);
 		vrele(dirp);
@@ -1758,7 +1758,7 @@ nfsmout:
 	if (nd.ni_vp)
 		vrele(nd.ni_vp);
 	if (pathcp)
-		free(pathcp, M_TEMP);
+		free(pathcp, M_TEMP, 0);
 	return (error);
 }
 
@@ -2102,7 +2102,7 @@ again:
 	VOP_UNLOCK(vp, 0, procp);
 	if (error) {
 		vrele(vp);
-		free((caddr_t)rbuf, M_TEMP);
+		free((caddr_t)rbuf, M_TEMP, 0);
 		nfsm_reply(NFSX_POSTOPATTR(info.nmi_v3));
 		nfsm_srvpostop_attr(nfsd, getret, &at, &info);
 		error = 0;
@@ -2128,7 +2128,7 @@ again:
 				tl = nfsm_build(&info.nmi_mb, 2 * NFSX_UNSIGNED);
 			*tl++ = nfs_false;
 			*tl = nfs_true;
-			free(rbuf, M_TEMP);
+			free(rbuf, M_TEMP, 0);
 			error = 0;
 			goto nfsmout;
 		}
@@ -2206,7 +2206,7 @@ again:
 		*tl = nfs_true;
 	else
 		*tl = nfs_false;
-	free(rbuf, M_TEMP);
+	free(rbuf, M_TEMP, 0);
 nfsmout:
 	return(error);
 }
@@ -2301,7 +2301,7 @@ again:
 		error = getret;
 	if (error) {
 		vrele(vp);
-		free((caddr_t)rbuf, M_TEMP);
+		free((caddr_t)rbuf, M_TEMP, 0);
 		nfsm_reply(NFSX_V3POSTOPATTR);
 		nfsm_srvpostop_attr(nfsd, getret, &at, &info);
 		error = 0;
@@ -2324,7 +2324,7 @@ again:
 			tl += 2;
 			*tl++ = nfs_false;
 			*tl = nfs_true;
-			free(rbuf, M_TEMP);
+			free(rbuf, M_TEMP, 0);
 			error = 0;
 			goto nfsmout;
 		}
@@ -2448,7 +2448,7 @@ invalid:
 		*tl = nfs_true;
 	else
 		*tl = nfs_false;
-	free(rbuf, M_TEMP);
+	free(rbuf, M_TEMP, 0);
 nfsmout:
 	return(error);
 }
