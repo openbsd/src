@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.186 2014/07/11 22:28:44 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.187 2014/07/12 14:34:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1075,7 +1075,6 @@ const char *table_check(enum table_check);
 const char *print_availability(u_long, u_long);
 const char *print_host(struct sockaddr_storage *, char *, size_t);
 const char *print_time(struct timeval *, struct timeval *, char *, size_t);
-const char *print_httperror(u_int);
 const char *printb_flags(const u_int32_t, const char *);
 void	 getmonotime(struct timeval *);
 
@@ -1162,6 +1161,8 @@ void	 relay_close_http(struct rsession *);
 u_int	 relay_httpmethod_byname(const char *);
 const char
 	*relay_httpmethod_byid(u_int);
+const char
+	*relay_httperror_byid(u_int);
 int	 relay_httpdesc_init(struct ctl_relay_event *);
 
 /* relay_udp.c */

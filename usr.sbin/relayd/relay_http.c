@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.25 2014/07/11 23:11:54 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.26 2014/07/12 14:34:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -68,6 +68,7 @@ int		 relay_writeresponse_http(struct ctl_relay_event *,
 		    struct ctl_relay_event *);
 void		 relay_reset_http(struct ctl_relay_event *);
 static int	 relay_httpmethod_cmp(const void *, const void *);
+static int	 relay_httperror_cmp(const void *, const void *);
 int		 relay_httpquery_test(struct ctl_relay_event *,
 		    struct relay_rule *, struct kvlist *);
 int		 relay_httpheader_test(struct ctl_relay_event *,
@@ -86,6 +87,7 @@ void		 relay_httpdesc_free(struct http_descriptor *);
 static struct relayd	*env = NULL;
 
 static struct http_method	 http_methods[] = HTTP_METHODS;
+static struct http_error	 http_errors[] = HTTP_ERRORS;
 
 void
 relay_http(struct relayd *x_env)
@@ -99,6 +101,9 @@ relay_http(struct relayd *x_env)
 	qsort(http_methods, sizeof(http_methods) /
 	    sizeof(http_methods[0]) - 1,
 	    sizeof(http_methods[0]), relay_httpmethod_cmp);
+	qsort(http_errors, sizeof(http_errors) /
+	    sizeof(http_errors[0]) - 1,
+	    sizeof(http_errors[0]), relay_httperror_cmp);
 }
 
 void
@@ -870,12 +875,15 @@ relay_abort_http(struct rsession *con, u_int code, const char *msg,
 {
 	struct relay		*rlay = con->se_relay;
 	struct bufferevent	*bev = con->se_in.bev;
-	const char		*httperr = print_httperror(code), *text = "";
+	const char		*httperr = NULL, *text = "";
 	char			*httpmsg;
 	time_t			 t;
 	struct tm		*lt;
 	char			 tmbuf[32], hbuf[128];
 	const char		*style, *label = NULL;
+
+	if ((httperr = relay_httperror_byid(code)) == NULL)
+		httperr = "Unknown Error";
 
 	if (labelid != 0)
 		label = label_id2name(labelid);
@@ -1157,6 +1165,29 @@ relay_httpmethod_cmp(const void *a, const void *b)
 	const struct http_method *ma = a;
 	const struct http_method *mb = b;
 	return (strcmp(ma->method_name, mb->method_name));
+}
+
+const char *
+relay_httperror_byid(u_int id)
+{
+	struct http_error	 error, *res = NULL;
+
+	/* Set up key */
+	error.error_code = (int)id;
+
+	res = bsearch(&error, http_errors,
+	    sizeof(http_errors) / sizeof(http_errors[0]) - 1,
+	    sizeof(http_errors[0]), relay_httperror_cmp);
+
+	return (res->error_name);
+}
+
+static int
+relay_httperror_cmp(const void *a, const void *b)
+{
+	const struct http_error *ea = a;
+	const struct http_error *eb = b;
+	return (ea->error_code - eb->error_code);
 }
 
 int
