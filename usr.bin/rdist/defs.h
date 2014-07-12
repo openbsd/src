@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.27 2014/07/12 03:25:03 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.28 2014/07/12 03:32:00 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -45,6 +45,7 @@
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
+#include <paths.h>
 #include <regex.h>
 #include <setjmp.h>
 #include <signal.h>

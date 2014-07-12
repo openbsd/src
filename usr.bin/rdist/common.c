@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.32 2014/07/12 03:25:03 guenther Exp $	*/
+/*	$OpenBSD: common.c,v 1.33 2014/07/12 03:32:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -620,33 +620,15 @@ notilde:
 int
 setfiletime(char *file, time_t atime, time_t mtime)
 {
-#if	SETFTIME_TYPE == SETFTIME_UTIMES
 	struct timeval tv[2];
 
 	if (atime != 0 && mtime != 0) {
 		tv[0].tv_sec = atime;
 		tv[1].tv_sec = mtime;
-		tv[0].tv_usec = tv[1].tv_usec = (time_t) 0;
-		return(utimes(file, tv));
+		tv[0].tv_usec = tv[1].tv_usec = 0;
+		return (utimes(file, tv));
 	} else	/* Set to current time */
-		return(utimes(file, NULL));
-
-#endif	/* SETFTIME_UTIMES */
-
-#if	SETFTIME_TYPE == SETFTIME_UTIME
-	struct utimbuf utbuf;
-
-	if (atime != 0 && mtime != 0) {
-		utbuf.actime = atime;
-		utbuf.modtime = mtime;
-		return(utime(file, &utbuf));
-	} else	/* Set to current time */
-		return(utime(file, NULL));
-#endif	/* SETFTIME_UTIME */
-
-#if	!defined(SETFTIME_TYPE)
-	There is no "SETFTIME_TYPE" defined!
-#endif	/* SETFTIME_TYPE */
+		return (utimes(file, NULL));
 }
 
 /*

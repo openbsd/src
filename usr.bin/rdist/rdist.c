@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.27 2014/07/12 03:07:22 guenther Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.28 2014/07/12 03:32:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -260,7 +260,7 @@ main(int argc, char **argv, char **envp)
 		if ((cp = getenv("RSH")) != NULL && *cp != '\0')
 			path_remsh = cp;
 		else
-			path_remsh = _PATH_REMSH;
+			path_remsh = _PATH_RSH;
 	}
 
 	/*
