@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.34 2013/11/26 11:59:38 henning Exp $ */
+/*	$OpenBSD: packet.c,v 1.35 2014/07/12 19:22:32 krw Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -507,7 +507,7 @@ session_write(int fd, short event, void *arg)
 	struct nbr *nbr = tcp->nbr;
 
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&tcp->wbuf.wbuf) == -1 && errno != EAGAIN) {
+		if (msgbuf_write(&tcp->wbuf.wbuf) <= 0 && errno != EAGAIN) {
 			if (nbr)
 				nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 		}

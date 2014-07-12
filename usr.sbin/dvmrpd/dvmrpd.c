@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.15 2013/11/26 11:32:30 henning Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.16 2014/07/12 19:22:32 krw Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -366,7 +366,7 @@ main_dispatch_dvmrpe(int fd, short event, void *bula)
 			fatalx("pipe closed");
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
+		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
 			fatal("msgbuf_write");
 	}
 
@@ -419,7 +419,7 @@ main_dispatch_rde(int fd, short event, void *bula)
 			fatalx("pipe closed");
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
+		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
 			fatal("msgbuf_write");
 	}
 
