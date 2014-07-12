@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.50 2014/07/11 13:37:02 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.51 2014/07/12 19:39:09 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -305,8 +305,8 @@ sub handle_options
 	my $self = shift;
 	$self->{no_exports} = 1;
 
-	$self->SUPER::handle_options('fB:Iiqs:X:',
-		'[-fIimnqvx] [-s src] [-X x11] [-B pkg-destdir] [-D value]');
+	$self->SUPER::handle_options('fB:Iiq',
+		'[-fIimnqvx] [-B pkg-destdir] [-D value]');
 	if ($self->opt('i')) {
 		$self->{interactive} = 1;
 	} elsif ($self->opt('I')) {
@@ -323,16 +323,6 @@ sub handle_options
 		$self->{destdir} .= '/';
 	} else {
 		$self->{destdir} = '';
-	}
-	if (defined $self->opt('s')) {
-		require OpenBSD::SetList;
-		OpenBSD::SetList::Source->walk($self, $self->opt('s'));
-		$self->{wholefs} = 1;
-	}
-	if (defined $self->opt('X')) {
-		require OpenBSD::SetList;
-		OpenBSD::SetList::Xenocara->walk($self, $self->opt('X'));
-		$self->{wholefs} = 1;
 	}
 }
 
@@ -480,11 +470,12 @@ sub new
 	    OpenBSD::RequiredBy->new($name));
 }
 
-package OpenBSD::Pkglocate;
+package OpenBSD::Locate;
 sub new
 {
 	my ($class, $state) = @_;
-	bless {state => $state, result => {}, params => []}, $class;
+	bless {state => $state, result => {unknown => []}, 
+	    params => []}, $class;
 }
 
 sub add_param
@@ -504,14 +495,31 @@ sub run_command
 		return;
 	}
 	my %h = map {($_, 1)} @{$self->{params}};
-	open(my $cmd, '-|', 'pkg_locate', map {"*:$_"} @{$self->{params}});
+	open(my $cmd, '-|', $self->command, map {"*:$_"} @{$self->{params}});
 	while (<$cmd>) {
 		chomp;
-		my ($pkgname, $pkgpath, $path) = split(':', $_);
+		my @r = split(':', $_);
+		my ($pkgname, $pkgpath, $path, $k);
+
+		$pkgname = shift @r;
+		if (@r > 1) {
+			$pkgpath = shift @r;
+			$k = join(':', $pkgname, $pkgpath);
+		} else {
+			$pkgpath = '';
+			$k = $pkgname;
+		}
+		$path = join(':', @r);
 		# pkglocate will return false positives, so trim them
 		if ($h{$path}) {
-			push(@{$self->{result}{"$pkgname:$pkgpath"} }, $path);
+			push(@{$self->{result}{$k} }, $path) if $pkgpath ne '';
 			delete $h{$path};
+		} elsif ($pkgpath ne '') {
+			$path = join(':', $pkgpath, $path);
+			$k = $pkgname;
+			if ($h{$path}) {
+				delete $h{$path};
+		    	}
 		}
 	}
 	close($cmd);
@@ -544,6 +552,21 @@ sub result
 			$state->say("\t#1", $e);
 		}
 	}
+}
+
+package OpenBSD::Pkglocate;
+our @ISA = qw(OpenBSD::Locate);
+sub command
+{
+	return ('pkg_locate');
+}
+
+package OpenBSD::Baselocate;
+our @ISA = qw(OpenBSD::Locate);
+sub command
+{
+	return ('locate', '-d', '/usr/lib/locate/src.db', '-d', 
+	    '/usr/X11R6/lib/locate/xorg.db');
 }
 
 package OpenBSD::PkgCheck;
@@ -725,7 +748,7 @@ sub install_pkglocate
 {
 	my ($self, $state) = @_;
 
-	my $spec = 'pkglocatedb->=0.4';
+	my $spec = 'pkglocatedb->=1.0';
 
 	my @l = installed_stems()->find('pkglocatedb');
 	require OpenBSD::PkgSpec;
@@ -787,8 +810,8 @@ sub display_tmps
 
 sub locate_unknown
 {
-	my ($self, $state) = @_;
-	my $locator = OpenBSD::Pkglocate->new($state);
+	my ($self, $state, $class) = @_;
+	my $locator = $class->new($state);
 	if (defined $state->{unknown}{file}) {
 		$state->progress->for_list("Locating unknown files", 
 		    $state->{unknown}{file},
@@ -816,14 +839,6 @@ sub fill_localbase
 	$state->{known}{$base."/lib/X11"}{'app-defaults'} = 1;
 	$state->{known}{$base."/libdata"} = {};
 	$state->{known}{$base."/libdata/perl5"} = {};
-	my $l = "/etc/mtree/BSD.local.dist";
-	if (-f $l) {
-		# XXX
-		OpenBSD::Mtree::parse($state->{known}, $base, $l, 1);
-	} else {
-		OpenBSD::Mtree::parse($state->{known}, $state->destdir('/'),
-		    "/etc/mtree/4.4BSD.dist", 1);
-	}
 }
 
 sub fill_root
@@ -839,12 +854,10 @@ sub localbase_check
 {
 	my ($self, $state) = @_;
 	$state->{known} //= {};
-	my $root = $state->destdir(OpenBSD::Paths->localbase);
-	$self->fill_localbase($state, $root);
-	if ($state->{wholefs}) {
-		$root = $state->{destdir} || '/';
-		$self->fill_root($state, $root);
-	}
+	$self->fill_localbase($state, 
+	    $state->destdir(OpenBSD::Paths->localbase));
+	my $root = $state->{destdir} || '/';
+	$self->fill_root($state, $root);
 
 	$state->progress->set_header("Checking file system");
 	find(sub {
@@ -856,12 +869,10 @@ sub localbase_check
 				$File::Find::prune = 1;
 				return;
 			}
-			if ($state->{wholefs}) {
-				# some directories we've got to ignore
-				for my $i ('/dev', '/home', OpenBSD::Paths->pkgdb, '/var/log', '/var/backups', '/var/cron', '/var/run', '/tmp', '/var/tmp') {
-					if ($File::Find::name eq $state->destdir($i)) {
-						$File::Find::prune = 1;
-					}
+			# some directories we've got to ignore
+			for my $i ('/dev', '/home', OpenBSD::Paths->pkgdb, '/var/log', '/var/backups', '/var/cron', '/var/run', '/tmp', '/var/tmp') {
+				if ($File::Find::name eq $state->destdir($i)) {
+					$File::Find::prune = 1;
 				}
 			}
 			if (! -r -x _) {
@@ -889,11 +900,13 @@ sub localbase_check
 		$self->display_tmps($state);
 	}
 	if (defined $state->{unknown}) {
+		my $locator;
 		if ($self->install_pkglocate($state)) {
-			$self->locate_unknown($state);
+			$locator = 'OpenBSD::Pkglocate';
 		} else {
-			$self->display_unknown($state);
+			$locator = 'OpenBSD::Baselocate';
 		}
+		$self->locate_unknown($state, $locator);
 	}
 }
 
