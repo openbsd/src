@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.778 2014/07/11 21:58:09 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.779 2014/07/12 11:33:13 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -452,7 +452,6 @@ ips*	at pci?			# IBM ServeRAID controllers
 qlw*	at pci?			# QLogic ISP SCSI
 qla*	at pci?			# QLogic ISP 2[123]xx FibreChannel
 qle*	at pci?			# QLogic ISP 2[45]xx FibreChannel
-#qli*	at pci?			# QLogic 4010 & 4022 iSCSI
 aic0	at isa? port 0x340 irq 11 # Adaptec 152[02] SCSI controllers
 aic*	at pcmcia?		# PCMCIA based aic SCSI controllers
 aic*	at isapnp?		# isapnp configured aic SCSI controllers
