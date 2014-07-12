@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.187 2014/07/11 13:15:34 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.188 2014/07/12 21:06:34 yasuoka Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -139,15 +139,14 @@ int	udp_output(struct inpcb *, struct mbuf *, struct mbuf *, struct mbuf *);
 void	udp_detach(struct inpcb *);
 void	udp_notify(struct inpcb *, int);
 
-#ifndef	UDBHASHSIZE
-#define	UDBHASHSIZE	128
+#ifndef	UDB_INITIAL_HASH_SIZE
+#define	UDB_INITIAL_HASH_SIZE	128
 #endif
-int	udbhashsize = UDBHASHSIZE;
 
 void
 udp_init()
 {
-	in_pcbinit(&udbtable, udbhashsize);
+	in_pcbinit(&udbtable, UDB_INITIAL_HASH_SIZE);
 }
 
 #ifdef INET6

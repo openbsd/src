@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.130 2014/07/12 18:44:23 tedu Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.131 2014/07/12 21:06:34 yasuoka Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -118,10 +118,9 @@ int	tcp_do_rfc3390 = 2;	/* Increase TCP's Initial Window to 10*mss */
 
 u_int32_t	tcp_now = 1;
 
-#ifndef TCBHASHSIZE
-#define	TCBHASHSIZE	128
+#ifndef TCB_INITIAL_HASH_SIZE
+#define	TCB_INITIAL_HASH_SIZE	128
 #endif
-int	tcbhashsize = TCBHASHSIZE;
 
 /* syn hash parameters */
 #define	TCP_SYN_HASH_SIZE	293
@@ -162,7 +161,7 @@ tcp_init()
 	    NULL);
 	pool_sethardlimit(&sackhl_pool, tcp_sackhole_limit, NULL, 0);
 #endif /* TCP_SACK */
-	in_pcbinit(&tcbtable, tcbhashsize);
+	in_pcbinit(&tcbtable, TCB_INITIAL_HASH_SIZE);
 
 #ifdef INET6
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.156 2014/06/04 13:45:47 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.157 2014/07/12 21:06:34 yasuoka Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -118,6 +118,10 @@ struct baddynamicports baddynamicports;
 struct pool inpcb_pool;
 int inpcb_pool_initialized = 0;
 
+int in_pcbresize (struct inpcbtable *, int);
+
+#define	INPCBHASH_LOADFACTOR(_x)	(((_x) * 3) / 4)
+
 #define	INPCBHASH(table, faddr, fport, laddr, lport, rdom) \
 	&(table)->inpt_hashtbl[(ntohl((faddr)->s_addr) + \
 	ntohs((fport)) + ntohs((lport)) + (rdom)) & (table->inpt_hash)]
@@ -144,6 +148,7 @@ in_pcbinit(struct inpcbtable *table, int hashsize)
 	if (table->inpt_lhashtbl == NULL)
 		panic("in_pcbinit: hashinit failed for lport");
 	table->inpt_lastport = 0;
+	table->inpt_count = 0;
 }
 
 /*
@@ -191,6 +196,9 @@ in_pcballoc(struct socket *so, struct inpcbtable *table)
 	inp->inp_seclevel[SL_IPCOMP] = IPSEC_IPCOMP_LEVEL_DEFAULT;
 	inp->inp_rtableid = curproc->p_p->ps_rtableid;
 	s = splnet();
+	if (table->inpt_hash != 0 &&
+	    table->inpt_count++ > INPCBHASH_LOADFACTOR(table->inpt_hash))
+		(void)in_pcbresize(table, (table->inpt_hash + 1) * 2);
 	TAILQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
 	LIST_INSERT_HEAD(INPCBLHASH(table, inp->inp_lport,
 	    inp->inp_rtableid), inp, inp_lhash);
@@ -502,6 +510,7 @@ in_pcbdetach(struct inpcb *inp)
 	LIST_REMOVE(inp, inp_lhash);
 	LIST_REMOVE(inp, inp_hash);
 	TAILQ_REMOVE(&inp->inp_table->inpt_queue, inp, inp_queue);
+	inp->inp_table->inpt_count--;
 	splx(s);
 	pool_put(&inpcb_pool, inp);
 }
@@ -878,6 +887,39 @@ in_pcbrehash(struct inpcb *inp)
 	}
 #endif /* INET6 */
 	splx(s);
+}
+
+int
+in_pcbresize(struct inpcbtable *table, int hashsize)
+{
+	u_long nhash, nlhash;
+	void *nhashtbl, *nlhashtbl, *ohashtbl, *olhashtbl;
+	struct inpcb *inp0, *inp1;
+
+	ohashtbl = table->inpt_hashtbl;
+	olhashtbl = table->inpt_lhashtbl;
+
+	nhashtbl = hashinit(hashsize, M_PCB, M_NOWAIT, &nhash);
+	nlhashtbl = hashinit(hashsize, M_PCB, M_NOWAIT, &nlhash);
+	if (nhashtbl == NULL || nlhashtbl == NULL) {
+		if (nhashtbl != NULL)
+			free(nhashtbl, M_PCB, 0);
+		if (nlhashtbl != NULL)
+			free(nlhashtbl, M_PCB, 0);
+		return (ENOBUFS);
+	}
+	table->inpt_hashtbl = nhashtbl;
+	table->inpt_lhashtbl = nlhashtbl;
+	table->inpt_hash = nhash;
+	table->inpt_lhash = nlhash;
+
+	TAILQ_FOREACH_SAFE(inp0, &table->inpt_queue, inp_queue, inp1) {
+		in_pcbrehash(inp0);
+	}
+	free(ohashtbl, M_PCB, 0);
+	free(olhashtbl, M_PCB, 0);
+
+	return (0);
 }
 
 #ifdef DIAGNOSTIC
