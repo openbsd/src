@@ -1,4 +1,4 @@
-/*	$OpenBSD: a2coff.c,v 1.12 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: a2coff.c,v 1.13 2014/07/12 19:01:49 tedu Exp $	*/
 /*
  * Copyright (c) 2006, 2013, Miodrag Vallat
  *
@@ -324,7 +324,7 @@ convert_elf(const char *infile, int infd, int outfd, Elf_Ehdr *ehdr)
 		last = n;
 	}
 
-	free(phdr, 0);
+	free(phdr);
 
 	/*
 	 * Fill ``data'' section.

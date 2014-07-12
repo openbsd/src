@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.7 2014/07/12 18:48:18 tedu Exp $	*/
+/*	$OpenBSD: build.c,v 1.8 2014/07/12 19:01:50 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -95,7 +95,7 @@ output(const char *name,
 		err(1, "%s", name);
 	if (rlen != len)
 		errx(1, "%s: short write", name);
-	free(tf, 0);
+	free(tf);
 	close(fd);
 }
 

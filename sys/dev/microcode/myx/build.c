@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.3 2014/07/12 18:48:18 tedu Exp $	*/
+/*	$OpenBSD: build.c,v 1.4 2014/07/12 19:01:49 tedu Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -82,7 +82,7 @@ myx_build_firmware(u_int8_t *fw, size_t len, size_t ulen, const char *file)
 	} while (total < ulen);
 
 	printf("%s: len %zu -> %zu\n", file, len, ulen);
-	free(ufw, 0);
+	free(ufw);
 	fclose(f);
 }
 

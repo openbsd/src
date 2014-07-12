@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.6 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: sd.c,v 1.7 2014/07/12 19:01:49 tedu Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -92,7 +92,7 @@ sdclose(struct open_file *f)
 		priv = (struct scsi_private *)f->f_devdata;
 		if (priv->scsicookie != NULL)
 			(*priv->scsidetach)(priv->scsicookie);
-		free(priv, sizeof(struct scsi_private), 0);
+		free(priv, sizeof(struct scsi_private));
 		f->f_devdata = NULL;
 	}
 

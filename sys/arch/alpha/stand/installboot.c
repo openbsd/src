@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.18 2014/07/12 18:44:40 tedu Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.19 2014/07/12 19:01:49 tedu Exp $	*/
 /*	$NetBSD: installboot.c,v 1.2 1997/04/06 08:41:12 cgd Exp $	*/
 
 /*
@@ -258,7 +258,7 @@ loadprotoblocks(char *fname, long *size)
 	}
 	if (read(fd, bp, statbuf.st_size) != statbuf.st_size) {
 		warn("read: %s", fname);
-		free(bp, 0);
+		free(bp);
 		close(fd);
 		return NULL;
 	}

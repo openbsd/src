@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdmtool.c,v 1.3 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: vdmtool.c,v 1.4 2014/07/12 19:01:49 tedu Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -534,7 +534,7 @@ read_vdit(int fd, uint32_t secno, size_t *vditsize)
 		curbuf = append_vdit_portion(fd, secno, curbuf, sector,
 		    first ? VDIT_BLOCK_HEAD_BE : VDIT_PORTION_HEADER_BLOCK);
 		if (curbuf == NULL) {
-			free(buf, 0);
+			free(buf);
 			return NULL;
 		}
 		first = 0;
@@ -606,10 +606,10 @@ report(int fd)
 			}
 			if (memcmp(vdit, vdit2, vditsize) != 0)
 				printf("VDIT and backup VDIT differ!\n");
-			free(vdit2, 0);
+			free(vdit2);
 		}
 
-		free(vdit, 0);
+		free(vdit);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extract.c,v 1.2 2014/07/12 18:48:18 tedu Exp $ */
+/*	$OpenBSD: extract.c,v 1.3 2014/07/12 19:01:49 tedu Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 			err(1, "read from input file failed");
 		if (write(fdout, p, h[i]->filesize) < 1)
 			err(1, "write to output file failed");
-		free(p, 0);
+		free(p);
 		close(fdout);
 		printf("extracting %s (filesize %d, fileoffset %d)\n",
 		    h[i]->filename, h[i]->filesize, h[i]->fileoffset);
@@ -93,8 +93,8 @@ main(int argc, char *argv[])
 
 	/* free header space */
 	for (i = 0; i < nfiles; i++)
-		free(h[i], 0);
-	free(h, 0);
+		free(h[i]);
+	free(h);
 
 	/* game over */
 	close (fdin);
