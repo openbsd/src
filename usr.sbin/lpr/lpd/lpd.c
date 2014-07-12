@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.53 2014/04/20 22:35:10 ajacoutot Exp $ */
+/*	$OpenBSD: lpd.c,v 1.54 2014/07/12 02:56:01 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -726,8 +726,9 @@ chkhost(struct sockaddr *f)
 			return;
 		}
 		(void)fclose(hostf);
-	}
-	fatal("Your host does not have line printer access");
+		fatal("Your host does not have line printer access (/etc/hosts.lpd)");
+	} else
+		fatal("Your host does not have line printer access (no /etc/hosts.lpd)");
 }
 
 static __dead void
