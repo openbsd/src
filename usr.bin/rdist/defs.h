@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.25 2014/07/12 03:13:12 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.26 2014/07/12 03:19:43 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -420,54 +420,6 @@ int rshrcmd(char **, u_short, char *, char *, char *, int *);
 
 /* server.c */
 void server(void);
-
-/* setargs.c */
-void setargs_settup(int, char **, char **);
-void _setproctitle(char *);
-void setproctitle(const char *, ...);
-
-/* signal.c */
-#ifdef NEED_SIGBLOCK
-int sigblock(int);
-#endif
-#ifdef NEED_SIGMASK
-int sigsetmask(int);
-#endif
-
-/* strcasecmp.c */
-#ifdef NEED_STRCASECMP
-int strcasecmp(char *, char *);
-int strncasecmp(char *, char *, int);
-#endif
-
-/* strerror.c */
-#ifdef NEED_STRERROR
-char *strerror(int);
-#endif
-
-/* strtol.c */
-#ifdef NEED_STRTOL
-long strtol(char *, char **, int);
-#endif
-
-/* unvis.c */
-#ifdef NEED_VIS
-int unvis(char *, int, int *, int );
-int strunvis(char *, const char *);
-#endif
-
-/* vis.c */
-#ifdef NEED_VIS
-char *vis(char *, int, int, int );
-int strvis(char *, const char *, int);
-int strvisx(char *, const char *, size_t, int);
-#endif
-
-/* vsnprintf.c */
-#ifdef NEED_VSNPRINTF
-int vsnprintf(char *, size_t, const char *, va_list);
-int snprintf(char *, size_t, const char *, ...);
-#endif
 
 /* zopen.c */
 int zread(void *, char *, int);
