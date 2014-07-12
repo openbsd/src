@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.17 2014/07/12 20:38:27 krw Exp $ */
+/*	$OpenBSD: octcf.c,v 1.18 2014/07/12 21:47:04 pirofti Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -373,7 +373,7 @@ _octcfstart(struct octcf_softc *wd, struct buf *bp)
 
 	lp = wd->sc_dk.dk_label;
 	secno = DL_BLKTOSEC(lp, bp->b_blkno) +
-	    DL_GETPOFFSET(lp->d_partitions[DISKPART(bp->b_dev)]);
+	    DL_GETPOFFSET(&lp->d_partitions[DISKPART(bp->b_dev)]);
 	nsecs = howmany(bp->b_bcount, lp->d_secsize);
 
 	wd->sc_bp = bp;
