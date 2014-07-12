@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.295 2014/07/11 21:54:38 tedu Exp $	*/
+/*	$OpenBSD: if.c,v 1.296 2014/07/12 16:10:04 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1120,20 +1120,10 @@ if_down(struct ifnet *ifp)
 void
 if_up(struct ifnet *ifp)
 {
-#ifdef notyet
-	struct ifaddr *ifa;
-#endif
-
 	splsoftassert(IPL_SOFTNET);
 
 	ifp->if_flags |= IFF_UP;
 	microtime(&ifp->if_lastchange);
-#ifdef notyet
-	/* this has no effect on IP, and will kill all ISO connections XXX */
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		pfctlinput(PRC_IFUP, ifa->ifa_addr);
-	}
-#endif
 #if NCARP > 0
 	if (ifp->if_carp)
 		carp_carpdev_state(ifp);
