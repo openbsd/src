@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.365 2014/07/12 22:03:44 ajacoutot Exp $
+#	$OpenBSD: Makefile,v 1.366 2014/07/12 22:05:16 ajacoutot Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -254,7 +254,7 @@ distribution:
 	exec ${SUDO} ${MAKE} distribution-etc-root-var
 	cd .. && exec ${SUDO} ${MAKE} install
 	touch ${DESTDIR}/var/db/sysmerge/etcsum
-	touch ${DESTDIR}/var/db/sysmerge/egsum
+	touch ${DESTDIR}/var/db/sysmerge/examplessum
 	ETCLIST=`mktemp /tmp/_etclist.XXXXXXXXXX` || exit 1; \
 	sort ../distrib/sets/lists/etc/{mi,md.${MACHINE}} > $${ETCLIST}; \
 	cd ${DESTDIR} && \
@@ -263,7 +263,7 @@ distribution:
 	EGLIST=`mktemp /tmp/_eglist.XXXXXXXXXX` || exit 1; \
 	grep -h '/etc/examples/' ../distrib/sets/lists/base/{mi,md.${MACHINE}} | sort > $${EGLIST}; \
 	cd ${DESTDIR} && \
-		xargs sha256 -h ${DESTDIR}/var/db/sysmerge/egsum < $${EGLIST}; \
+		xargs sha256 -h ${DESTDIR}/var/db/sysmerge/examplessum < $${EGLIST}; \
 	rm -f $${EGLIST}
 
 distrib-dirs:
