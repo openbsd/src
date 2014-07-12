@@ -1,8 +1,8 @@
-#	$OpenBSD: rc.subr,v 1.72 2014/07/09 14:19:22 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.73 2014/07/12 10:14:03 robert Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
-# Copyright (c) 2010, 2011 Robert Nagy <robert@openbsd.org>
+# Copyright (c) 2010, 2011, 2014 Robert Nagy <robert@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -19,39 +19,129 @@
 
 # Default functions and variables used by rc.d(8) scripts.
 
-rc_err() {
+_rc_err() {
 	echo $1 1>&2
 	exit 1
 }
 
-rc_is_supported() {
+_rc_is_supported() {
 	local _enotsup
 	eval _enotsup=\${rc_$1}
 	[ X"${_enotsup}" != X"NO" ]
 }
 
-rc_usage() {
+_rc_usage() {
 	local _a _allsup
 	for _a in start stop restart reload check; do
-		rc_is_supported ${_a} && _allsup="${_allsup:+$_allsup|}${_a}"
+		_rc_is_supported ${_a} && _allsup="${_allsup:+$_allsup|}${_a}"
 	done
-	rc_err "usage: $0 [-df] (${_allsup})"
+	_rc_err "usage: $0 [-df] (${_allsup})"
 }
 
-rc_write_runfile() {
+_rc_write_runfile() {
 	[ -d ${_RC_RUNDIR} ] || mkdir -p ${_RC_RUNDIR} && \
 		print -rn -- "${pexp}" > ${_RC_RUNFILE}
 }
 
-rc_read_runfile() {
+_rc_read_runfile() {
 	local _new_pexp
 	[ -f ${_RC_RUNFILE} ] && _new_pexp=$(< ${_RC_RUNFILE})
 	[ -n "${_new_pexp}" ] && pexp="${_new_pexp}"
 }
 
-rc_rm_runfile() {
+_rc_rm_runfile() {
 	rm -f ${_RC_RUNFILE}
 }
+
+_rc_do() {
+	if [ -n "${_RC_DEBUG}" ]; then
+		echo "doing $@" && "$@"
+	else
+		"$@" >/dev/null 2>&1
+	fi
+}
+
+_rc_exit() {
+	local _pfix
+	[ -z "${INRC}" -o X"$1" != X"ok" ] && _pfix="($1)"
+	echo ${INRC:+'-n'} "${_pfix}"
+	[ X"$1" = X"ok" ] && exit 0 || exit 1
+}
+
+_rc_wait() {
+	local _i=0
+	while [ $_i -lt ${daemon_timeout} ]; do
+		case "$1" in
+			reload|start)
+				_rc_do rc_check && return 0
+				;;
+			stop)
+				_rc_do rc_check || return 0
+				;;
+			*)
+				break
+				;;
+		esac
+		sleep 1
+		_i=$((_i+1))
+	done
+	return 1
+}
+
+_rc_quirks() {
+	unset mountd_flags nfsd_flags ypbind_flags
+
+	# special care needed for spamlogd to avoid starting it up and failing
+	# all the time
+	if [  X"${spamd_flags}" = X"NO" -o X"${spamd_black}" != X"NO" ]; then
+		spamlogd_flags=NO
+	fi
+
+	# special care needed for pflogd to avoid starting it up and failing
+	# if pf is not enabled
+	if [ X"${pf}" = X"NO" ]; then
+		pflogd_flags=NO
+	fi
+
+	: ${mountd_flags=$([ X"${nfs_server-NO}" = XYES ] || echo NO)}
+	: ${nfsd_flags=$([ X"${nfs_server-NO}" = XYES ] && echo "-tun 4" || echo NO)}
+	: ${ypbind_flags=$([ X"`domainname`" != X"" -a -d /var/yp/binding ] || echo NO)}
+}
+
+_rc_parse_conf() {
+	typeset -l _key
+	local _l _val
+	local _rcconf="/etc/rc.conf"
+	local _rcconf_local="/etc/rc.conf.local"
+	set -A _allowed_keys -- \
+		spamd_black pf ipsec check_quotas accounting \
+		multicast_hosts multicast_router amd_master \
+		pf_rules ipsec_rules shlib_dirs pkg_scripts \
+		nfs_server
+
+	for _rcfile in $_rcconf $_rcconf_local; do
+		[[ -f $_rcfile ]] || return
+		while IFS=' 	' read -r _l; do
+			[[ $_l == [!#=]*=* ]] || continue
+			_key=${_l%%*([[:blank:]])=*}
+			[[ $_key == *_@(flags|user|timeout) ]] || \
+				[[ " ${_allowed_keys[*]} " == *" $_key "* ]] || \
+				continue
+			[[ $_key == "" ]] && continue
+			_val=${_l##*([!=])=*([[:blank:]])}
+			_val=${_val%%#*}
+			_val=${_val%%*([[:blank:]])}
+			# remove leading and trailing quotes (backwards compat)
+			[[ $_val == @(\"*\"|\'*\') ]] && _val=${_val#?} _val=${_val%?}
+			[ -n "${_RC_DEBUG}" ] && printf "%18s\t>$_val<\n" $_key
+			eval "${_key}=\${_val}"
+		done < $_rcfile
+	done
+
+	_rc_do _rc_quirks
+}
+
+[ -n "${FUNCS_ONLY}" ] && return
 
 rc_start() {
 	${rcexec} "${daemon} ${daemon_flags} ${_bg}"
@@ -69,130 +159,93 @@ rc_stop() {
 	pkill -f "^${pexp}"
 }
 
-rc_do() {
-	if [ -n "${_RC_DEBUG}" ]; then
-		echo "doing $@" && "$@"
-	else
-		"$@" >/dev/null 2>&1
-	fi
-}
-
-rc_exit() {
-	local _pfix
-	[ -z "${INRC}" -o X"$1" != X"ok" ] && _pfix="($1)"
-	echo ${INRC:+'-n'} "${_pfix}"
-	[ X"$1" = X"ok" ] && exit 0 || exit 1
-}
-
-rc_wait() {
-	local _i=0
-	while [ $_i -lt ${daemon_timeout} ]; do
-		case "$1" in
-			reload|start)
-				rc_do rc_check && return 0
-				;;
-			stop)
-				rc_do rc_check || return 0
-				;;
-			*)
-				break
-				;;
-		esac
-		sleep 1
-		_i=$((_i+1))
-	done
-	return 1
-}
-
 rc_cmd() {
 	local _bg _n
 
 	[ "$(id -u)" -eq 0 ] || \
 		[ X"${rc_usercheck}" != X"NO" -a X"$1" = "Xcheck" ] || \
-		rc_err "$0: need root privileges"
+		_rc_err "$0: need root privileges"
 
-	if ! (rc_is_supported start && rc_is_supported stop); then
+	if ! (_rc_is_supported start && _rc_is_supported stop); then
 		rc_restart=NO
 	fi
 
-	if ! rc_is_supported $1; then
+	if ! _rc_is_supported $1; then
 		[ -n "${INRC}" ] && exit 1
-		rc_err "$0: $1 is not supported"
+		_rc_err "$0: $1 is not supported"
 	fi
 
 	[ X"${rc_bg}" = X"YES" ] && _bg="&"
 	[ -n "${_RC_DEBUG}" ] || _n="-n"
 
-	rc_do rc_read_runfile
+	_rc_do _rc_read_runfile
 
 	case "$1" in
 	check)
-		rc_do rc_check
+		_rc_do rc_check
 		;;
 	start)
 		if [ X"${daemon_flags}" = X"NO" ]; then
-			rc_err "$0: need -f to force $1 since ${_name}_flags=NO"
+			_rc_err "$0: need -f to force $1 since ${_name}_flags=NO"
 			exit 1
 		fi
-		[ -z "${INRC}" ] && rc_do rc_check && exit 0
+		[ -z "${INRC}" ] && _rc_do rc_check && exit 0
 		echo $_n "${INRC:+ }${_name}"
 		while true; do  # no real loop, only needed to break
 			if type rc_pre >/dev/null; then
-				rc_do rc_pre || break
+				_rc_do rc_pre || break
 			fi
 			# XXX only checks the status of the return code,
 			# and _not_ that the daemon is actually running
-			rc_do rc_start || break
+			_rc_do rc_start || break
 			if [ -n "${_bg}" ]; then
 				sleep 1
-				rc_do rc_wait start || break
+				_rc_do _rc_wait start || break
 			fi
-			rc_do rc_write_runfile
-			rc_exit ok
+			_rc_do _rc_write_runfile
+			_rc_exit ok
 		done
 		# handle failure
-		type rc_post >/dev/null && rc_do rc_post
-		rc_do rc_rm_runfile
-		rc_exit failed
+		type rc_post >/dev/null && _rc_do rc_post
+		_rc_do _rc_rm_runfile
+		_rc_exit failed
 		;;
 	stop)
-		rc_do rc_check || exit 0
+		_rc_do rc_check || exit 0
 		echo $_n "${INRC:+ }${_name}"
-		rc_do rc_stop || rc_exit failed
-		rc_do rc_wait stop || rc_exit failed
+		_rc_do rc_stop || _rc_exit failed
+		_rc_do _rc_wait stop || _rc_exit failed
 		if type rc_post >/dev/null; then \
-			rc_do rc_post || rc_exit failed
+			_rc_do rc_post || _rc_exit failed
 		fi
-		rc_do rc_rm_runfile
-		rc_exit ok
+		_rc_do _rc_rm_runfile
+		_rc_exit ok
 		;;
 	reload)
-		rc_do rc_check || exit 0
+		_rc_do rc_check || exit 0
 		echo $_n "${INRC:+ }${_name}"
-		rc_do rc_reload || rc_exit failed
-		rc_do rc_wait reload || rc_exit failed
-		rc_exit ok
+		_rc_do rc_reload || _rc_exit failed
+		_rc_do _rc_wait reload || _rc_exit failed
+		_rc_exit ok
 		;;
 	restart)
 		$0 ${_RC_DEBUG} ${_RC_FORCE} stop &&
 			$0 ${_RC_DEBUG} ${_RC_FORCE} start
 		;;
 	*)
-		rc_usage
+		_rc_usage
 		;;
 	esac
 }
 
-. /etc/rc.conf
-
-[ -n "${daemon}" ] || rc_err "$0: daemon is not set"
+[ -n "${daemon}" ] || _rc_err "$0: daemon is not set"
 
 unset _RC_DEBUG _RC_FORCE
 while getopts "df" c; do
 	case "$c" in
 		d) _RC_DEBUG=-d;;
 		f) _RC_FORCE=-f;;
-		*) rc_usage;;
+		*) _rc_usage;;
 	esac
 done
 shift $((OPTIND-1))
@@ -200,6 +253,9 @@ shift $((OPTIND-1))
 _name=$(basename $0)
 _RC_RUNDIR=/var/run/rc.d
 _RC_RUNFILE=${_RC_RUNDIR}/${_name}
+
+# parse /etc/rc.conf{.local} for the daemon_flags
+_rc_do _rc_parse_conf
 
 eval _rcflags=\${${_name}_flags}
 eval _rcuser=\${${_name}_user}

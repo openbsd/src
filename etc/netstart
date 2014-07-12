@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.139 2013/08/22 07:53:11 mpi Exp $
+#	$OpenBSD: netstart,v 1.140 2014/07/12 10:14:03 robert Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -148,8 +148,9 @@ ifmstart() {
 	done
 }
 
-# Re-read /etc/rc.conf
-. /etc/rc.conf
+# re-read rc.subr if we are not inside /etc/rc
+[ -n ${INRC} ] && FUNCS_ONLY=1 . /etc/rc.d/rc.subr
+_rc_parse_conf
 
 # If we were invoked with a list of interface names, just reconfigure these
 # interfaces (or bridges) and return.

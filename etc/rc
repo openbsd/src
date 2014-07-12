@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.427 2014/04/25 17:59:53 bluhm Exp $
+#	$OpenBSD: rc,v 1.428 2014/07/12 10:14:03 robert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -224,8 +224,11 @@ if [ -f /etc/defaultdomain ]; then
 	domainname `stripcom /etc/defaultdomain`
 fi
 
-# pick up option configuration
-. /etc/rc.conf
+# need to get local functions from rc.subr
+FUNCS_ONLY=1 . /etc/rc.d/rc.subr
+
+# load rc.conf into scope 
+_rc_parse_conf
 
 if [ X"$1" = X"shutdown" ]; then
 	random_seed
