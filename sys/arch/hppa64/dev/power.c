@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.3 2014/07/12 14:12:44 uebayasi Exp $	*/
+/*	$OpenBSD: power.c,v 1.4 2014/07/12 20:18:08 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -18,9 +18,10 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/kthread.h>
 
@@ -123,7 +124,7 @@ power_thread_reg(void *v)
 		    : "=&r" (r) : "r" (sc->sc_pwr_reg));
 
 		if (!(r & 1))
-			reboot(RB_POWERDOWN | RB_HALT);
+			prsignal(initprocess, SIGUSR2);
 
 		tsleep(v, PWAIT, "regpower", 10);
 	}

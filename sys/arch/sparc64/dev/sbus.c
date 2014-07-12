@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.41 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.42 2014/07/12 20:18:09 uebayasi Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -99,6 +99,8 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
@@ -571,8 +573,7 @@ sbus_overtemp(void *arg)
 	/* Should try a clean shutdown first */
 	printf("DANGER: OVER TEMPERATURE detected\nShutting down...\n");
 	delay(20);
-	reboot(RB_POWERDOWN | RB_HALT);
-	/*NOTREACHED*/
+	prsignal(initprocess, SIGUSR2);
 	return (1);
 }
 
