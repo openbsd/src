@@ -1,4 +1,4 @@
-/*	$OpenBSD: abtn.c,v 1.15 2013/11/04 11:57:26 mpi Exp $	*/
+/*	$OpenBSD: abtn.c,v 1.16 2014/07/12 07:20:00 blambert Exp $	*/
 /*	$NetBSD: abtn.c,v 1.1 1999/07/12 17:48:26 tsubai Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 
@@ -71,6 +71,9 @@ struct cfattach abtn_ca = {
 struct cfdriver abtn_cd = {
 	NULL, "abtn", DV_DULL
 };
+
+struct task eject_task =
+    TASK_INITIALIZER((void (*)(void *, void *))cd_eject, NULL, NULL);
 
 int
 abtn_match(struct device *parent, void *cf, void *aux)
@@ -146,7 +149,7 @@ abtn_adbcomplete(caddr_t buffer, caddr_t data, int adb_command)
 		break;
 #if NWSKBD > 0 && NCD > 0
 	case 0x0b:	/* eject tray */
-		workq_add_task(NULL, 0, (workq_fn)cd_eject, NULL, NULL);
+		task_add(systq, &eject_task);
 		break;
 #endif
 	case 0x7f:	/* numlock */
