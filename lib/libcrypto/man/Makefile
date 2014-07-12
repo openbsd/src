@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2014/07/11 16:34:06 beck Exp $
+# $OpenBSD: Makefile,v 1.11 2014/07/12 15:53:34 miod Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -888,6 +888,9 @@ MLINKS+=\
 	X509_NAME_add_entry_by_txt.3 X509_NAME_add_entry_by_NID.3 \
 	X509_NAME_add_entry_by_txt.3 X509_NAME_add_entry_by_OBJ.3 \
 	X509_NAME_add_entry_by_txt.3 X509_NAME_delete_entry.3 \
+	X509_NAME_print_ex.3 X509_NAME_oneline.3 \
+	X509_NAME_print_ex.3 X509_NAME_print.3 \
+	X509_NAME_print_ex.3 X509_NAME_print_ex_fp.3 \
 	X509_new.3 X509_free.3 \
 	X509_STORE_CTX_get_error.3 X509_STORE_CTX_get1_chain.3 \
 	X509_STORE_CTX_get_error.3 X509_STORE_CTX_get_current_cert.3 \
