@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.100 2014/06/03 14:41:56 stsp Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.101 2014/07/12 07:59:23 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -155,21 +155,16 @@ static const struct zyd_type {
 #define zyd_lookup(v, p)	\
 	((const struct zyd_type *)usb_lookup(zyd_devs, v, p))
 
-int zyd_match(struct device *, void *, void *); 
-void zyd_attach(struct device *, struct device *, void *); 
-int zyd_detach(struct device *, int); 
-int zyd_activate(struct device *, int); 
+int zyd_match(struct device *, void *, void *);
+void zyd_attach(struct device *, struct device *, void *);
+int zyd_detach(struct device *, int);
 
-struct cfdriver zyd_cd = { 
-	NULL, "zyd", DV_IFNET 
-}; 
+struct cfdriver zyd_cd = {
+	NULL, "zyd", DV_IFNET
+};
 
-const struct cfattach zyd_ca = { 
-	sizeof(struct zyd_softc), 
-	zyd_match, 
-	zyd_attach, 
-	zyd_detach, 
-	zyd_activate, 
+const struct cfattach zyd_ca = {
+	sizeof(struct zyd_softc), zyd_match, zyd_attach, zyd_detach
 };
 
 void		zyd_attachhook(void *);
@@ -2572,17 +2567,4 @@ zyd_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	     i > 0 && (ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL) > 72;
 	     i--);
 	ni->ni_txrate = i;
-}
-
-int
-zyd_activate(struct device *self, int act)
-{
-	struct zyd_softc *sc = (struct zyd_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return 0;
 }

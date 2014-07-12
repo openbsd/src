@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.61 2014/03/19 10:09:19 mpi Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.62 2014/07/12 07:59:23 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -87,7 +87,6 @@ int		upgt_match(struct device *, void *, void *);
 void		upgt_attach(struct device *, struct device *, void *);
 void		upgt_attach_hook(void *);
 int		upgt_detach(struct device *, int);
-int		upgt_activate(struct device *, int);
 
 int		upgt_device_type(struct upgt_softc *, uint16_t, uint16_t);
 int		upgt_device_init(struct upgt_softc *);
@@ -147,11 +146,7 @@ struct cfdriver upgt_cd = {
 };
 
 const struct cfattach upgt_ca = {
-	sizeof(struct upgt_softc),
-	upgt_match,
-	upgt_attach,
-	upgt_detach,
-	upgt_activate,
+	sizeof(struct upgt_softc), upgt_match, upgt_attach, upgt_detach
 };
 
 static const struct usb_devno upgt_devs_1[] = {
@@ -500,20 +495,6 @@ upgt_detach(struct device *self, int flags)
 	}
 
 	splx(s);
-
-	return (0);
-}
-
-int
-upgt_activate(struct device *self, int act)
-{
-	struct upgt_softc *sc = (struct upgt_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
 
 	return (0);
 }

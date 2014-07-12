@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.45 2014/03/19 10:09:19 mpi Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.46 2014/07/12 07:59:23 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -574,18 +574,13 @@ int		urtw_set_macaddr(struct urtw_softc *, const uint8_t *);
 int urtw_match(struct device *, void *, void *);
 void urtw_attach(struct device *, struct device *, void *);
 int urtw_detach(struct device *, int);
-int urtw_activate(struct device *, int);
 
 struct cfdriver urtw_cd = {
 	NULL, "urtw", DV_IFNET
 };
 
 const struct cfattach urtw_ca = {
-	sizeof(struct urtw_softc),
-	urtw_match,
-	urtw_attach,
-	urtw_detach,
-	urtw_activate,
+	sizeof(struct urtw_softc), urtw_match, urtw_attach, urtw_detach
 };
 
 int
@@ -787,20 +782,6 @@ urtw_detach(struct device *self, int flags)
 	urtw_close_pipes(sc);
 
 	splx(s);
-
-	return (0);
-}
-
-int
-urtw_activate(struct device *self, int act)
-{
-	struct urtw_softc *sc = (struct urtw_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
 
 	return (0);
 }

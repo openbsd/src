@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.100 2014/06/13 21:47:02 stsp Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.101 2014/07/12 07:59:23 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -330,7 +330,6 @@ static const struct usb_devno run_devs[] = {
 int		run_match(struct device *, void *, void *);
 void		run_attach(struct device *, struct device *, void *);
 int		run_detach(struct device *, int);
-int		run_activate(struct device *, int);
 int		run_alloc_rx_ring(struct run_softc *);
 void		run_free_rx_ring(struct run_softc *);
 int		run_alloc_tx_ring(struct run_softc *, int);
@@ -429,8 +428,7 @@ struct cfdriver run_cd = {
 };
 
 const struct cfattach run_ca = {
-	sizeof (struct run_softc), run_match, run_attach, run_detach,
-	    run_activate
+	sizeof (struct run_softc), run_match, run_attach, run_detach
 };
 
 static const struct {
@@ -4818,18 +4816,4 @@ run_stop(struct ifnet *ifp, int disable)
 	for (qid = 0; qid < 4; qid++)
 		run_free_tx_ring(sc, qid);
 	run_free_rx_ring(sc);
-}
-
-int
-run_activate(struct device *self, int act)
-{
-	struct run_softc *sc = (struct run_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-
-	return 0;
 }

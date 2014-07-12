@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.59 2013/12/07 20:17:42 brad Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.60 2014/07/12 07:59:23 mpi Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -111,21 +111,16 @@ const struct cdce_type cdce_devs[] = {
 #define cdce_lookup(v, p) \
     ((const struct cdce_type *)usb_lookup(cdce_devs, v, p))
 
-int cdce_match(struct device *, void *, void *); 
-void cdce_attach(struct device *, struct device *, void *); 
-int cdce_detach(struct device *, int); 
-int cdce_activate(struct device *, int); 
+int cdce_match(struct device *, void *, void *);
+void cdce_attach(struct device *, struct device *, void *);
+int cdce_detach(struct device *, int);
 
-struct cfdriver cdce_cd = { 
-	NULL, "cdce", DV_IFNET 
-}; 
+struct cfdriver cdce_cd = {
+	NULL, "cdce", DV_IFNET
+};
 
-const struct cfattach cdce_ca = { 
-	sizeof(struct cdce_softc), 
-	cdce_match, 
-	cdce_attach, 
-	cdce_detach, 
-	cdce_activate, 
+const struct cfattach cdce_ca = {
+	sizeof(struct cdce_softc), cdce_match, cdce_attach, cdce_detach
 };
 
 int
@@ -853,19 +848,6 @@ cdce_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		cdce_start(ifp);
 
 	splx(s);
-}
-
-int
-cdce_activate(struct device *self, int act)
-{
-	struct cdce_softc *sc = (struct cdce_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->cdce_udev);
-		break;
-	}
-	return (0);
 }
 
 void

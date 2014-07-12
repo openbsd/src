@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.126 2014/03/19 10:09:19 mpi Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.127 2014/07/12 07:59:23 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -184,21 +184,16 @@ static const uint32_t ural_rf2525e_r2[] =   RAL_RF2525E_R2;
 static const uint32_t ural_rf2526_hi_r2[] = RAL_RF2526_HI_R2;
 static const uint32_t ural_rf2526_r2[] =    RAL_RF2526_R2;
 
-int ural_match(struct device *, void *, void *); 
-void ural_attach(struct device *, struct device *, void *); 
-int ural_detach(struct device *, int); 
-int ural_activate(struct device *, int); 
+int ural_match(struct device *, void *, void *);
+void ural_attach(struct device *, struct device *, void *);
+int ural_detach(struct device *, int);
 
-struct cfdriver ural_cd = { 
-	NULL, "ural", DV_IFNET 
-}; 
+struct cfdriver ural_cd = {
+	NULL, "ural", DV_IFNET
+};
 
-const struct cfattach ural_ca = { 
-	sizeof(struct ural_softc), 
-	ural_match, 
-	ural_attach, 
-	ural_detach, 
-	ural_activate, 
+const struct cfattach ural_ca = {
+	sizeof(struct ural_softc), ural_match, ural_attach, ural_detach
 };
 
 int
@@ -2219,18 +2214,4 @@ ural_amrr_update(struct usbd_xfer *xfer, void *priv,
 
 	if (!usbd_is_dying(sc->sc_udev))
 		timeout_add_sec(&sc->amrr_to, 1);
-}
-
-int
-ural_activate(struct device *self, int act)
-{
-	struct ural_softc *sc = (struct ural_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-
-	return 0;
 }

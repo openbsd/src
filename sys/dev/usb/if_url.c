@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.68 2013/11/15 10:17:39 pirofti Exp $ */
+/*	$OpenBSD: if_url.c,v 1.69 2014/07/12 07:59:23 mpi Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -80,23 +80,16 @@
 
 #include <dev/usb/if_urlreg.h>
 
+int url_match(struct device *, void *, void *);
+void url_attach(struct device *, struct device *, void *);
+int url_detach(struct device *, int);
 
-/* Function declarations */
-int url_match(struct device *, void *, void *); 
-void url_attach(struct device *, struct device *, void *); 
-int url_detach(struct device *, int); 
-int url_activate(struct device *, int); 
+struct cfdriver url_cd = {
+	NULL, "url", DV_IFNET
+};
 
-struct cfdriver url_cd = { 
-	NULL, "url", DV_IFNET 
-}; 
-
-const struct cfattach url_ca = { 
-	sizeof(struct url_softc), 
-	url_match, 
-	url_attach, 
-	url_detach, 
-	url_activate, 
+const struct cfattach url_ca = {
+	sizeof(struct url_softc), url_match, url_attach, url_detach
 };
 
 int url_openpipes(struct url_softc *);
@@ -563,23 +556,6 @@ url_reset(struct url_softc *sc)
 	}
 
 	delay(10000);		/* XXX */
-}
-
-int
-url_activate(struct device *self, int act)
-{
-	struct url_softc *sc = (struct url_softc *)self;
-
-	DPRINTF(("%s: %s: enter, act=%d\n", sc->sc_dev.dv_xname,
-		 __func__, act));
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-
-	return (0);
 }
 
 void

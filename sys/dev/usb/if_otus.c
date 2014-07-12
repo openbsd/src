@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.39 2014/03/19 10:09:19 mpi Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.40 2014/07/12 07:59:23 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -99,7 +99,6 @@ static const struct usb_devno otus_devs[] = {
 int		otus_match(struct device *, void *, void *);
 void		otus_attach(struct device *, struct device *, void *);
 int		otus_detach(struct device *, int);
-int		otus_activate(struct device *, int);
 void		otus_attachhook(void *);
 void		otus_get_chanlist(struct otus_softc *);
 int		otus_load_firmware(struct otus_softc *, const char *,
@@ -174,8 +173,7 @@ struct cfdriver otus_cd = {
 };
 
 const struct cfattach otus_ca = {
-	sizeof (struct otus_softc), otus_match, otus_attach, otus_detach,
-	    otus_activate
+	sizeof (struct otus_softc), otus_match, otus_attach, otus_detach
 };
 
 int
@@ -259,20 +257,6 @@ otus_detach(struct device *self, int flags)
 	otus_close_pipes(sc);
 
 	splx(s);
-
-	return 0;
-}
-
-int
-otus_activate(struct device *self, int act)
-{
-	struct otus_softc *sc = (struct otus_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
 
 	return 0;
 }

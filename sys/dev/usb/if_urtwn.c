@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.35 2014/03/19 10:09:19 mpi Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.36 2014/07/12 07:59:23 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -149,7 +149,6 @@ static const struct usb_devno urtwn_devs[] = {
 int		urtwn_match(struct device *, void *, void *);
 void		urtwn_attach(struct device *, struct device *, void *);
 int		urtwn_detach(struct device *, int);
-int		urtwn_activate(struct device *, int);
 int		urtwn_open_pipes(struct urtwn_softc *);
 void		urtwn_close_pipes(struct urtwn_softc *);
 int		urtwn_alloc_rx_list(struct urtwn_softc *);
@@ -247,11 +246,7 @@ struct cfdriver urtwn_cd = {
 };
 
 const struct cfattach urtwn_ca = {
-	sizeof(struct urtwn_softc),
-	urtwn_match,
-	urtwn_attach,
-	urtwn_detach,
-	urtwn_activate
+	sizeof(struct urtwn_softc), urtwn_match, urtwn_attach, urtwn_detach
 };
 
 int
@@ -430,19 +425,6 @@ urtwn_detach(struct device *self, int flags)
 	urtwn_free_rx_list(sc);
 	splx(s);
 
-	return (0);
-}
-
-int
-urtwn_activate(struct device *self, int act)
-{
-	struct urtwn_softc *sc = (struct urtwn_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
 	return (0);
 }
 

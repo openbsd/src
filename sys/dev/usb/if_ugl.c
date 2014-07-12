@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ugl.c,v 1.5 2014/01/07 09:54:18 mpi Exp $	*/
+/*	$OpenBSD: if_ugl.c,v 1.6 2014/07/12 07:59:23 mpi Exp $	*/
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2013 SASANO Takayoshi <uaa@uaa.org.uk>
@@ -173,21 +173,16 @@ struct usb_devno ugl_devs[] = {
 	{ USB_VENDOR_GENESYS, USB_PRODUCT_GENESYS_GL620USB_A },
 };
 
-int ugl_match(struct device *, void *, void *); 
-void ugl_attach(struct device *, struct device *, void *); 
-int ugl_detach(struct device *, int); 
-int ugl_activate(struct device *, int); 
+int ugl_match(struct device *, void *, void *);
+void ugl_attach(struct device *, struct device *, void *);
+int ugl_detach(struct device *, int);
 
-struct cfdriver ugl_cd = { 
-	NULL, "ugl", DV_IFNET 
-}; 
+struct cfdriver ugl_cd = {
+	NULL, "ugl", DV_IFNET
+};
 
-const struct cfattach ugl_ca = { 
-	sizeof(struct ugl_softc), 
-	ugl_match, 
-	ugl_attach, 
-	ugl_detach, 
-	ugl_activate, 
+const struct cfattach ugl_ca = {
+	sizeof(struct ugl_softc), ugl_match, ugl_attach, ugl_detach
 };
 
 int ugl_openpipes(struct ugl_softc *);
@@ -337,19 +332,6 @@ ugl_detach(struct device *self, int flags)
 
 	splx(s);
 
-	return (0);
-}
-
-int
-ugl_activate(struct device *self, int act)
-{
-	struct ugl_softc *sc = (struct ugl_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.106 2014/03/19 10:09:19 mpi Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.107 2014/07/12 07:59:23 mpi Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -93,21 +93,16 @@ int atudebug = 1;
 #define DPRINTFN(n,x)
 #endif
 
-int atu_match(struct device *, void *, void *); 
-void atu_attach(struct device *, struct device *, void *); 
-int atu_detach(struct device *, int); 
-int atu_activate(struct device *, int); 
+int atu_match(struct device *, void *, void *);
+void atu_attach(struct device *, struct device *, void *);
+int atu_detach(struct device *, int);
 
-struct cfdriver atu_cd = { 
-	NULL, "atu", DV_IFNET 
-}; 
+struct cfdriver atu_cd = {
+	NULL, "atu", DV_IFNET
+};
 
-const struct cfattach atu_ca = { 
-	sizeof(struct atu_softc), 
-	atu_match, 
-	atu_attach, 
-	atu_detach, 
-	atu_activate, 
+const struct cfattach atu_ca = {
+	sizeof(struct atu_softc), atu_match, atu_attach, atu_detach
 };
 
 /*
@@ -1509,19 +1504,6 @@ atu_detach(struct device *self, int flags)
 	}
 
 	return(0);
-}
-
-int
-atu_activate(struct device *self, int act)
-{
-	struct atu_softc *sc = (struct atu_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->atu_udev);
-		break;
-	}
-	return (0);
 }
 
 /*

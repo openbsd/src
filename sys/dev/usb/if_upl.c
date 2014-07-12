@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.56 2014/01/07 09:54:18 mpi Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.57 2014/07/12 07:59:23 mpi Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -158,21 +158,16 @@ struct usb_devno upl_devs[] = {
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2302 }
 };
 
-int upl_match(struct device *, void *, void *); 
-void upl_attach(struct device *, struct device *, void *); 
-int upl_detach(struct device *, int); 
-int upl_activate(struct device *, int); 
+int upl_match(struct device *, void *, void *);
+void upl_attach(struct device *, struct device *, void *);
+int upl_detach(struct device *, int);
 
-struct cfdriver upl_cd = { 
-	NULL, "upl", DV_IFNET 
-}; 
+struct cfdriver upl_cd = {
+	NULL, "upl", DV_IFNET
+};
 
-const struct cfattach upl_ca = { 
-	sizeof(struct upl_softc), 
-	upl_match, 
-	upl_attach, 
-	upl_detach, 
-	upl_activate, 
+const struct cfattach upl_ca = {
+	sizeof(struct upl_softc), upl_match, upl_attach, upl_detach
 };
 
 int upl_openpipes(struct upl_softc *);
@@ -321,21 +316,6 @@ upl_detach(struct device *self, int flags)
 
 	splx(s);
 
-	return (0);
-}
-
-int
-upl_activate(struct device *self, int act)
-{
-	struct upl_softc *sc = (struct upl_softc *)self;
-
-	DPRINTFN(2,("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
 	return (0);
 }
 

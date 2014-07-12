@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.6 2014/03/16 02:46:57 jsg Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.7 2014/07/12 07:59:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -91,18 +91,13 @@ const struct axen_type axen_devs[] = {
 int	axen_match(struct device *, void *, void *);
 void	axen_attach(struct device *, struct device *, void *);
 int	axen_detach(struct device *, int);
-int	axen_activate(struct device *, int);
 
 struct cfdriver axen_cd = {
 	NULL, "axen", DV_IFNET
 };
 
 const struct cfattach axen_ca = {
-	sizeof(struct axen_softc),
-	axen_match,
-	axen_attach,
-	axen_detach,
-	axen_activate,
+	sizeof(struct axen_softc), axen_match, axen_attach, axen_detach
 };
 
 int	axen_tx_list_init(struct axen_softc *);
@@ -859,22 +854,6 @@ axen_detach(struct device *self, int flags)
 		usb_detach_wait(&sc->axen_dev);
 	}
 	splx(s);
-
-	return 0;
-}
-
-int
-axen_activate(struct device *self, int act)
-{
-	struct axen_softc *sc = (struct axen_softc *)self;
-
-	DPRINTFN(2,("%s: %s: enter\n", sc->axen_dev.dv_xname, __func__));
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->axen_udev);
-		break;
-	}
 
 	return 0;
 }

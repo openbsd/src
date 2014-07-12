@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.124 2014/04/12 14:02:19 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.125 2014/07/12 07:59:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -178,21 +178,16 @@ const struct axe_type axe_devs[] = {
 
 #define axe_lookup(v, p) ((struct axe_type *)usb_lookup(axe_devs, v, p))
 
-int axe_match(struct device *, void *, void *); 
-void axe_attach(struct device *, struct device *, void *); 
-int axe_detach(struct device *, int); 
-int axe_activate(struct device *, int); 
+int axe_match(struct device *, void *, void *);
+void axe_attach(struct device *, struct device *, void *);
+int axe_detach(struct device *, int);
 
-struct cfdriver axe_cd = { 
-	NULL, "axe", DV_IFNET 
-}; 
+struct cfdriver axe_cd = {
+	NULL, "axe", DV_IFNET
+};
 
-const struct cfattach axe_ca = { 
-	sizeof(struct axe_softc), 
-	axe_match, 
-	axe_attach, 
-	axe_detach, 
-	axe_activate, 
+const struct cfattach axe_ca = {
+	sizeof(struct axe_softc), axe_match, axe_attach, axe_detach
 };
 
 int axe_tx_list_init(struct axe_softc *);
@@ -886,21 +881,6 @@ axe_detach(struct device *self, int flags)
 	}
 	splx(s);
 
-	return (0);
-}
-
-int
-axe_activate(struct device *self, int act)
-{
-	struct axe_softc *sc = (struct axe_softc *)self;
-
-	DPRINTFN(2,("%s: %s: enter\n", sc->axe_dev.dv_xname, __func__));
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->axe_udev);
-		break;
-	}
 	return (0);
 }
 

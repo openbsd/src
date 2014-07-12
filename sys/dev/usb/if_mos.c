@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.24 2014/01/21 09:57:33 brad Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.25 2014/07/12 07:59:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -133,18 +133,13 @@ const struct mos_type mos_devs[] = {
 int mos_match(struct device *, void *, void *);
 void mos_attach(struct device *, struct device *, void *);
 int mos_detach(struct device *, int);
-int mos_activate(struct device *, int);
 
 struct cfdriver mos_cd = {
 	NULL, "mos", DV_IFNET
 };
 
 const struct cfattach mos_ca = {
-	sizeof(struct mos_softc),
-	mos_match,
-	mos_attach,
-	mos_detach,
-	mos_activate,
+	sizeof(struct mos_softc), mos_match, mos_attach, mos_detach
 };
 
 int mos_tx_list_init(struct mos_softc *);
@@ -812,22 +807,6 @@ mos_detach(struct device *self, int flags)
 	}
 	splx(s);
 
-	return (0);
-}
-
-
-int
-mos_activate(struct device *self, int act)
-{
-	struct mos_softc *sc = (struct mos_softc *)self;
-
-	DPRINTFN(2,("%s: %s: enter\n", sc->mos_dev.dv_xname, __func__));
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->mos_udev);
-		break;
-	}
 	return (0);
 }
 

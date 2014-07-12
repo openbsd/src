@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.46 2013/12/09 15:45:29 pirofti Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.47 2014/07/12 07:59:23 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -115,18 +115,13 @@ const struct urndis_class *urndis_lookup(usb_interface_descriptor_t *);
 int urndis_match(struct device *, void *, void *);
 void urndis_attach(struct device *, struct device *, void *);
 int urndis_detach(struct device *, int);
-int urndis_activate(struct device *, int);
 
 struct cfdriver urndis_cd = {
 	NULL, "urndis", DV_IFNET
 };
 
 struct cfattach urndis_ca = {
-	sizeof(struct urndis_softc),
-	urndis_match,
-	urndis_attach,
-	urndis_detach,
-	urndis_activate,
+	sizeof(struct urndis_softc), urndis_match, urndis_attach, urndis_detach
 };
 
 const struct urndis_class {
@@ -1510,20 +1505,3 @@ urndis_detach(struct device *self, int flags)
 
 	return 0;
 }
-
-int
-urndis_activate(struct device *self, int devact)
-{
-	struct urndis_softc *sc;
-
-	sc = (struct urndis_softc *)self;
-
-	switch (devact) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-
-	return 0;
-}
-

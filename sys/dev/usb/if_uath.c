@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.58 2014/03/19 10:09:19 mpi Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.59 2014/07/12 07:59:23 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -177,23 +177,17 @@ int	uath_switch_channel(struct uath_softc *, struct ieee80211_channel *);
 int	uath_init(struct ifnet *);
 void	uath_stop(struct ifnet *, int);
 int	uath_loadfirmware(struct uath_softc *, const u_char *, int);
-int	uath_activate(struct device *, int);
 
-int uath_match(struct device *, void *, void *); 
-void uath_attach(struct device *, struct device *, void *); 
-int uath_detach(struct device *, int); 
-int uath_activate(struct device *, int); 
+int uath_match(struct device *, void *, void *);
+void uath_attach(struct device *, struct device *, void *);
+int uath_detach(struct device *, int);
 
-struct cfdriver uath_cd = { 
+struct cfdriver uath_cd = {
 	NULL, "uath", DV_IFNET
-}; 
+};
 
-const struct cfattach uath_ca = { 
-	sizeof(struct uath_softc), 
-	uath_match, 
-	uath_attach, 
-	uath_detach, 
-	uath_activate, 
+const struct cfattach uath_ca = {
+	sizeof(struct uath_softc), uath_match, uath_attach, uath_detach
 };
 
 int
@@ -2114,17 +2108,4 @@ fail4:	usbd_free_xfer(rxxfer);
 fail3:	usbd_free_xfer(txxfer);
 fail2:	usbd_free_xfer(ctlxfer);
 fail1:	return error;
-}
-
-int
-uath_activate(struct device *self, int act)
-{
-	struct uath_softc *sc = (struct uath_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return 0;
 }

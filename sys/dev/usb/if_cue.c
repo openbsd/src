@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.64 2013/11/15 10:17:39 pirofti Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.65 2014/07/12 07:59:23 mpi Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -107,21 +107,16 @@ struct usb_devno cue_devs[] = {
 	/* Belkin F5U111 adapter covered by NETMATE entry */
 };
 
-int cue_match(struct device *, void *, void *); 
-void cue_attach(struct device *, struct device *, void *); 
-int cue_detach(struct device *, int); 
-int cue_activate(struct device *, int); 
+int cue_match(struct device *, void *, void *);
+void cue_attach(struct device *, struct device *, void *);
+int cue_detach(struct device *, int);
 
-struct cfdriver cue_cd = { 
-	NULL, "cue", DV_IFNET 
-}; 
+struct cfdriver cue_cd = {
+	NULL, "cue", DV_IFNET
+};
 
-const struct cfattach cue_ca = { 
-	sizeof(struct cue_softc), 
-	cue_match, 
-	cue_attach, 
-	cue_detach, 
-	cue_activate, 
+const struct cfattach cue_ca = {
+	sizeof(struct cue_softc), cue_match, cue_attach, cue_detach
 };
 
 int cue_open_pipes(struct cue_softc *);
@@ -578,21 +573,6 @@ cue_detach(struct device *self, int flags)
 
 	splx(s);
 
-	return (0);
-}
-
-int
-cue_activate(struct device *self, int act)
-{
-	struct cue_softc *sc = (struct cue_softc *)self;
-
-	DPRINTFN(2,("%s: %s: enter\n", sc->cue_dev.dv_xname, __func__));
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->cue_udev);
-		break;
-	}
 	return (0);
 }
 

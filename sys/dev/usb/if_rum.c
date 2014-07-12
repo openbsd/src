@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.103 2014/03/19 10:09:19 mpi Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.104 2014/07/12 07:59:23 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -215,21 +215,16 @@ static const struct rfprog {
 	RT2573_RF5225
 };
 
-int rum_match(struct device *, void *, void *); 
-void rum_attach(struct device *, struct device *, void *); 
-int rum_detach(struct device *, int); 
-int rum_activate(struct device *, int); 
+int rum_match(struct device *, void *, void *);
+void rum_attach(struct device *, struct device *, void *);
+int rum_detach(struct device *, int);
 
-struct cfdriver rum_cd = { 
-	NULL, "rum", DV_IFNET 
-}; 
+struct cfdriver rum_cd = {
+	NULL, "rum", DV_IFNET
+};
 
-const struct cfattach rum_ca = { 
-	sizeof(struct rum_softc), 
-	rum_match, 
-	rum_attach, 
-	rum_detach, 
-	rum_activate, 
+const struct cfattach rum_ca = {
+	sizeof(struct rum_softc), rum_match, rum_attach, rum_detach
 };
 
 int
@@ -2297,18 +2292,4 @@ rum_amrr_update(struct usbd_xfer *xfer, void *priv,
 
 	if (!usbd_is_dying(sc->sc_udev))
 		timeout_add_sec(&sc->amrr_to, 1);
-}
-
-int
-rum_activate(struct device *self, int act)
-{
-	struct rum_softc *sc = (struct rum_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-
-	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.71 2013/11/15 10:17:39 pirofti Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.72 2014/07/12 07:59:23 mpi Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -151,21 +151,16 @@ const struct usb_devno kue_devs[] = {
 	{ USB_VENDOR_SMC, USB_PRODUCT_SMC_2102USB },
 };
 
-int kue_match(struct device *, void *, void *); 
-void kue_attach(struct device *, struct device *, void *); 
-int kue_detach(struct device *, int); 
-int kue_activate(struct device *, int); 
+int kue_match(struct device *, void *, void *);
+void kue_attach(struct device *, struct device *, void *);
+int kue_detach(struct device *, int);
 
-struct cfdriver kue_cd = { 
-	NULL, "kue", DV_IFNET 
-}; 
+struct cfdriver kue_cd = {
+	NULL, "kue", DV_IFNET
+};
 
-const struct cfattach kue_ca = { 
-	sizeof(struct kue_softc), 
-	kue_match, 
-	kue_attach, 
-	kue_detach, 
-	kue_activate, 
+const struct cfattach kue_ca = {
+	sizeof(struct kue_softc), kue_match, kue_attach, kue_detach
 };
 
 int kue_tx_list_init(struct kue_softc *);
@@ -579,21 +574,6 @@ kue_detach(struct device *self, int flags)
 	sc->kue_attached = 0;
 	splx(s);
 
-	return (0);
-}
-
-int
-kue_activate(struct device *self, int act)
-{
-	struct kue_softc *sc = (struct kue_softc *)self;
-
-	DPRINTFN(2,("%s: %s: enter\n", sc->kue_dev.dv_xname, __func__));
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->kue_udev);
-		break;
-	}
 	return (0);
 }
 

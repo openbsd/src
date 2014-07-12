@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.11 2014/03/07 18:39:02 mpi Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.12 2014/07/12 07:59:23 mpi Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -148,7 +148,6 @@ int		 smsc_setmacaddress(struct smsc_softc *, const uint8_t *);
 int		 smsc_match(struct device *, void *, void *);
 void		 smsc_attach(struct device *, struct device *, void *);
 int		 smsc_detach(struct device *, int);
-int		 smsc_activate(struct device *, int);
 
 void		 smsc_init(void *);
 void		 smsc_stop(struct smsc_softc *);
@@ -182,11 +181,7 @@ struct cfdriver smsc_cd = {
 };
 
 const struct cfattach smsc_ca = {
-	sizeof(struct smsc_softc),
-	smsc_match,
-	smsc_attach,
-	smsc_detach,
-	smsc_activate
+	sizeof(struct smsc_softc), smsc_match, smsc_attach, smsc_detach,
 };
 
 int
@@ -1135,19 +1130,6 @@ smsc_tick_task(void *xsc)
 	timeout_add_sec(&sc->sc_stat_ch, 1);
 
 	splx(s);
-}
-
-int
-smsc_activate(struct device *self, int act)
-{
-	struct smsc_softc *sc = (struct smsc_softc *)self;
-
-        switch (act) {
-        case DVACT_DEACTIVATE:
-                usbd_deactivate(sc->sc_udev);
-                break;
-        }
-        return (0);
 }
 
 void
