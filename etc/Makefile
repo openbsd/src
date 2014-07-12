@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.364 2014/07/12 16:00:27 ajacoutot Exp $
+#	$OpenBSD: Makefile,v 1.365 2014/07/12 22:03:44 ajacoutot Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -255,15 +255,16 @@ distribution:
 	cd .. && exec ${SUDO} ${MAKE} install
 	touch ${DESTDIR}/var/db/sysmerge/etcsum
 	touch ${DESTDIR}/var/db/sysmerge/egsum
-	TMPSUM=`mktemp /tmp/_etcsum.XXXXXXXXXX` || exit 1; \
-	EGSUM=`mktemp /tmp/_egsum.XXXXXXXXXX` || exit 1; \
-	sort ../distrib/sets/lists/etc/{mi,md.${MACHINE}} > $${TMPSUM}; \
-	grep -h '/etc/examples/' ../distrib/sets/lists/base/{mi,md.${MACHINE}} > $${EGSUM}; \
+	ETCLIST=`mktemp /tmp/_etclist.XXXXXXXXXX` || exit 1; \
+	sort ../distrib/sets/lists/etc/{mi,md.${MACHINE}} > $${ETCLIST}; \
 	cd ${DESTDIR} && \
-		xargs sha256 < $${TMPSUM} > ${DESTDIR}/var/db/sysmerge/etcsum; \
+		xargs sha256 -h ${DESTDIR}/var/db/sysmerge/etcsum < $${ETCLIST}
+	rm -f $${ETCLIST}
+	EGLIST=`mktemp /tmp/_eglist.XXXXXXXXXX` || exit 1; \
+	grep -h '/etc/examples/' ../distrib/sets/lists/base/{mi,md.${MACHINE}} | sort > $${EGLIST}; \
 	cd ${DESTDIR} && \
-		xargs sha256 < $${EGSUM} > ${DESTDIR}/var/db/sysmerge/egsum; \
-	rm -f $${TMPSUM} $${EGSUM}
+		xargs sha256 -h ${DESTDIR}/var/db/sysmerge/egsum < $${EGLIST}; \
+	rm -f $${EGLIST}
 
 distrib-dirs:
 	if [ ! -d ${DESTDIR}/. ]; then \
