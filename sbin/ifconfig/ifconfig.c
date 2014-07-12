@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.286 2014/07/11 16:41:51 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.287 2014/07/12 19:58:17 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -476,7 +476,7 @@ const struct	cmd {
 	{ "txpower",	NEXTARG,	0,		setignore },
 	{ "nwflag",	NEXTARG,	0,		setignore },
 	{ "rdomain",	NEXTARG,	0,		setignore },
-	{ "-inet6",	IFXF_NOINET6,	0,		setignore } ,
+	{ "-inet6",	AF_INET6,	0,		removeaf },
 	{ "description", NEXTARG,	0,		setignore },
 	{ "descr",	NEXTARG,	0,		setignore },
 	{ "wol",	IFXF_WOL,	0,		setignore },
