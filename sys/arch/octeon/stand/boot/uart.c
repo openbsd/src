@@ -1,4 +1,4 @@
-/*	$OpenBSD: uart.c,v 1.6 2014/07/12 12:16:36 jasper Exp $	*/
+/*	$OpenBSD: uart.c,v 1.7 2014/07/12 14:12:53 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -65,10 +65,12 @@ int
 cn30xxuart_delay(void)
 {
 	int divisor;
-	uint8_t lcr;
+	int lcr;
 	lcr = octeon_xkphys_read_8(OCTEON_MIO_UART0_LCR);
 	octeon_xkphys_write_8(OCTEON_MIO_UART0_LCR, lcr | LCR_DLAB);
-	divisor = *(int *) (octeon_xkphys_read_8(OCTEON_MIO_UART0_DLL) | octeon_xkphys_read_8(OCTEON_MIO_UART0_DLH) << 8);
+
+	divisor = (octeon_xkphys_read_8(OCTEON_MIO_UART0_DLL) |
+			    (octeon_xkphys_read_8(OCTEON_MIO_UART0_DLH) << 8));
 	octeon_xkphys_write_8(OCTEON_MIO_UART0_LCR, lcr);
 
 	return (10);
@@ -85,6 +87,13 @@ cn30xxuart_wait_txhr_empty(int d)
 void
 cn30xxuartcninit(struct consdev *consdev)
 {
+	int ier;
+	/* Disable interrupts */
+	ier = octeon_xkphys_read_8(OCTEON_MIO_UART0_IER) & 0x0;
+	octeon_xkphys_write_8(OCTEON_MIO_UART0_IER, ier);
+
+	/* Enable RTS & DTR */
+	octeon_xkphys_write_8(OCTEON_MIO_UART0_MCR, MCR_RTS | MCR_DTR);
 }
 
 void
