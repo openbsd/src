@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.8 2014/07/12 14:37:17 pirofti Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.9 2014/07/12 15:30:43 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -843,21 +843,14 @@ octhci_root_ctrl_start(struct usbd_xfer *xfer)
 			err = USBD_IOERROR;
 			goto ret;
 		}
-		/* v = XREAD4(sc, XHCI_HCCPARAMS); */
 		hubd = octhci_hubd;
 		hubd.bNbrPorts = sc->sc_noport;
-#if 0
-		USETW(hubd.wHubCharacteristics,
-		    (XHCI_HCC_PPC(v) ? UHD_PWR_INDIVIDUAL : UHD_PWR_GANGED) |
-		    (XHCI_HCC_PIND(v) ? UHD_PORT_IND : 0));
-		hubd.bPwrOn2PwrGood = 10; /* xHCI section 5.4.9 */
-		for (i = 1; i <= sc->sc_noport; i++) {
-			v = XOREAD4(sc, XHCI_PORTSC(i));
-			if (v & XHCI_PS_DR)
-				hubd.DeviceRemovable[i / 8] |= 1U << (i % 8);
-		}
-#endif
-		hubd.bDescLength = USB_HUB_DESCRIPTOR_SIZE + i;
+
+		/* Taken from the SDK Root Hub example */
+		USETW(hubd.wHubCharacteristics, UHD_OC_INDIVIDUAL);
+		hubd.bPwrOn2PwrGood = 1;	
+		hubd.bDescLength = USB_HUB_DESCRIPTOR_SIZE;
+
 		l = min(len, hubd.bDescLength);
 		totlen = l;
 		memcpy(buf, &hubd, l);
