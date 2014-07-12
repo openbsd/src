@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.161 2014/07/12 08:21:10 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.162 2014/07/12 20:13:48 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
-#include <dev/usb/usb_quirks.h>
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
@@ -2316,22 +2315,20 @@ ehci_root_ctrl_done(struct usbd_xfer *xfer)
 struct ehci_soft_qh *
 ehci_alloc_sqh(struct ehci_softc *sc)
 {
-	struct ehci_soft_qh *sqh;
+	struct ehci_soft_qh *sqh = NULL;
 	usbd_status err;
 	int i, offs;
 	struct usb_dma dma;
+	int s;
 
+	s = splusb();
 	if (sc->sc_freeqhs == NULL) {
 		DPRINTFN(2, ("ehci_alloc_sqh: allocating chunk\n"));
 		err = usb_allocmem(&sc->sc_bus, EHCI_SQH_SIZE * EHCI_SQH_CHUNK,
 		    EHCI_PAGE_SIZE, &dma);
-#ifdef EHCI_DEBUG
 		if (err)
-			printf("ehci_alloc_sqh: usb_allocmem()=%d\n", err);
-#endif
-		if (err)
-			return (NULL);
-		for(i = 0; i < EHCI_SQH_CHUNK; i++) {
+			goto out;
+		for (i = 0; i < EHCI_SQH_CHUNK; i++) {
 			offs = i * EHCI_SQH_SIZE;
 			sqh = KERNADDR(&dma, offs);
 			sqh->physaddr = DMAADDR(&dma, offs);
@@ -2346,14 +2343,21 @@ ehci_alloc_sqh(struct ehci_softc *sc)
 	memset(&sqh->qh, 0, sizeof(struct ehci_qh));
 	sqh->next = NULL;
 	sqh->prev = NULL;
+
+out:
+	splx(s);
 	return (sqh);
 }
 
 void
 ehci_free_sqh(struct ehci_softc *sc, struct ehci_soft_qh *sqh)
 {
+	int s;
+
+	s = splusb();
 	sqh->next = sc->sc_freeqhs;
 	sc->sc_freeqhs = sqh;
+	splx(s);
 }
 
 struct ehci_soft_qtd *
@@ -2365,17 +2369,13 @@ ehci_alloc_sqtd(struct ehci_softc *sc)
 	struct usb_dma dma;
 	int s;
 
+	s = splusb();
 	if (sc->sc_freeqtds == NULL) {
 		DPRINTFN(2, ("ehci_alloc_sqtd: allocating chunk\n"));
 		err = usb_allocmem(&sc->sc_bus, EHCI_SQTD_SIZE*EHCI_SQTD_CHUNK,
 		    EHCI_PAGE_SIZE, &dma);
-#ifdef EHCI_DEBUG
 		if (err)
-			printf("ehci_alloc_sqtd: usb_allocmem()=%d\n", err);
-#endif
-		if (err)
-			return (NULL);
-		s = splusb();
+			goto out;
 		for(i = 0; i < EHCI_SQTD_CHUNK; i++) {
 			offs = i * EHCI_SQTD_SIZE;
 			sqtd = KERNADDR(&dma, offs);
@@ -2385,16 +2385,15 @@ ehci_alloc_sqtd(struct ehci_softc *sc)
 			sqtd->nextqtd = sc->sc_freeqtds;
 			sc->sc_freeqtds = sqtd;
 		}
-		splx(s);
 	}
 
-	s = splusb();
 	sqtd = sc->sc_freeqtds;
 	sc->sc_freeqtds = sqtd->nextqtd;
 	memset(&sqtd->qtd, 0, sizeof(struct ehci_qtd));
 	sqtd->nextqtd = NULL;
-	splx(s);
 
+out:
+	splx(s);
 	return (sqtd);
 }
 

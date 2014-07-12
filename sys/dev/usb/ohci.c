@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.135 2014/07/10 20:57:40 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.136 2014/07/12 20:13:48 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -386,18 +386,20 @@ ohci_detach(struct device *self, int flags)
 struct ohci_soft_ed *
 ohci_alloc_sed(struct ohci_softc *sc)
 {
-	struct ohci_soft_ed *sed;
+	struct ohci_soft_ed *sed = NULL;
 	usbd_status err;
 	int i, offs;
 	struct usb_dma dma;
+	int s;
 
+	s = splusb();
 	if (sc->sc_freeeds == NULL) {
 		DPRINTFN(2, ("ohci_alloc_sed: allocating chunk\n"));
 		err = usb_allocmem(&sc->sc_bus, OHCI_SED_SIZE * OHCI_SED_CHUNK,
 			  OHCI_ED_ALIGN, &dma);
 		if (err)
-			return (0);
-		for(i = 0; i < OHCI_SED_CHUNK; i++) {
+			goto out;
+		for (i = 0; i < OHCI_SED_CHUNK; i++) {
 			offs = i * OHCI_SED_SIZE;
 			sed = KERNADDR(&dma, offs);
 			sed->physaddr = DMAADDR(&dma, offs);
@@ -409,51 +411,57 @@ ohci_alloc_sed(struct ohci_softc *sc)
 	sc->sc_freeeds = sed->next;
 	memset(&sed->ed, 0, sizeof(struct ohci_ed));
 	sed->next = NULL;
+
+out:
+	splx(s);
 	return (sed);
 }
 
 void
 ohci_free_sed(struct ohci_softc *sc, struct ohci_soft_ed *sed)
 {
+	int s;
+
+	s = splusb();
 	sed->next = sc->sc_freeeds;
 	sc->sc_freeeds = sed;
+	splx(s);
 }
 
 struct ohci_soft_td *
 ohci_alloc_std(struct ohci_softc *sc)
 {
-	struct ohci_soft_td *std;
+	struct ohci_soft_td *std = NULL;
 	usbd_status err;
 	int i, offs;
 	struct usb_dma dma;
 	int s;
 
+	s = splusb();
 	if (sc->sc_freetds == NULL) {
 		DPRINTFN(2, ("ohci_alloc_std: allocating chunk\n"));
 		err = usb_allocmem(&sc->sc_bus, OHCI_STD_SIZE * OHCI_STD_CHUNK,
 			  OHCI_TD_ALIGN, &dma);
 		if (err)
-			return (NULL);
-		s = splusb();
-		for(i = 0; i < OHCI_STD_CHUNK; i++) {
+			goto out;
+		for (i = 0; i < OHCI_STD_CHUNK; i++) {
 			offs = i * OHCI_STD_SIZE;
 			std = KERNADDR(&dma, offs);
 			std->physaddr = DMAADDR(&dma, offs);
 			std->nexttd = sc->sc_freetds;
 			sc->sc_freetds = std;
 		}
-		splx(s);
 	}
 
-	s = splusb();
 	std = sc->sc_freetds;
 	sc->sc_freetds = std->nexttd;
 	memset(&std->td, 0, sizeof(struct ohci_td));
 	std->nexttd = NULL;
 	std->xfer = NULL;
 	ohci_hash_add_td(sc, std);
-	splx(s);
 
+out:
+	splx(s);
 	return (std);
 }
 

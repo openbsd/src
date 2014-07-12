@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.127 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.128 2014/07/12 20:13:48 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1445,19 +1445,19 @@ uhci_run(struct uhci_softc *sc, int run)
 struct uhci_soft_td *
 uhci_alloc_std(struct uhci_softc *sc)
 {
-	struct uhci_soft_td *std;
+	struct uhci_soft_td *std = NULL;
 	usbd_status err;
 	int i, offs;
 	struct usb_dma dma;
 	int s;
 
+	s = splusb();
 	if (sc->sc_freetds == NULL) {
 		DPRINTFN(2,("uhci_alloc_std: allocating chunk\n"));
 		err = usb_allocmem(&sc->sc_bus, UHCI_STD_SIZE * UHCI_STD_CHUNK,
 			  UHCI_TD_ALIGN, &dma);
 		if (err)
-			return (0);
-		s = splusb();
+			goto out;
 		for(i = 0; i < UHCI_STD_CHUNK; i++) {
 			offs = i * UHCI_STD_SIZE;
 			std = KERNADDR(&dma, offs);
@@ -1465,15 +1465,14 @@ uhci_alloc_std(struct uhci_softc *sc)
 			std->link.std = sc->sc_freetds;
 			sc->sc_freetds = std;
 		}
-		splx(s);
 	}
 
-	s = splusb();
 	std = sc->sc_freetds;
 	sc->sc_freetds = std->link.std;
 	memset(&std->td, 0, sizeof(struct uhci_td));
-	splx(s);
 
+out:
+	splx(s);
 	return (std);
 }
 
@@ -1500,18 +1499,20 @@ uhci_free_std(struct uhci_softc *sc, struct uhci_soft_td *std)
 struct uhci_soft_qh *
 uhci_alloc_sqh(struct uhci_softc *sc)
 {
-	struct uhci_soft_qh *sqh;
+	struct uhci_soft_qh *sqh = NULL;
 	usbd_status err;
 	int i, offs;
 	struct usb_dma dma;
+	int s;
 
+	s = splusb();
 	if (sc->sc_freeqhs == NULL) {
 		DPRINTFN(2, ("uhci_alloc_sqh: allocating chunk\n"));
 		err = usb_allocmem(&sc->sc_bus, UHCI_SQH_SIZE * UHCI_SQH_CHUNK,
 			  UHCI_QH_ALIGN, &dma);
 		if (err)
-			return (0);
-		for(i = 0; i < UHCI_SQH_CHUNK; i++) {
+			goto out;
+		for (i = 0; i < UHCI_SQH_CHUNK; i++) {
 			offs = i * UHCI_SQH_SIZE;
 			sqh = KERNADDR(&dma, offs);
 			sqh->physaddr = DMAADDR(&dma, offs);
@@ -1522,6 +1523,9 @@ uhci_alloc_sqh(struct uhci_softc *sc)
 	sqh = sc->sc_freeqhs;
 	sc->sc_freeqhs = sqh->hlink;
 	memset(&sqh->qh, 0, sizeof(struct uhci_qh));
+
+out:
+	splx(s);
 	return (sqh);
 }
 
