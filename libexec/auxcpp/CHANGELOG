@@ -1,0 +1,21 @@
+ucpp-1.3.2
+* Fixed Issue 8, Included files missing  a "terminating carriage
+  return character" will interrupt preprocessing in sample.c/LEXER
+  mode.
+  (http://code.google.com/p/ucpp/issues/detail?id=8)
+
+ucpp-1.3.1
+* Fixed Issue 5, "\r\n" carriage return characters are double
+  counted.
+  (http://code.google.com/p/ucpp/issues/detail?id=5)		
+* Fixed Issue 6, Included files missing a "terminating carriage
+  return character" will interrupt preprocessing in ucpp
+  (STAND_ALONE mode).
+  (http://code.google.com/p/ucpp/issues/detail?id=6)
+* Fixed Issue 7, STD_MACROS & STD_ASSERTS undefined when trying to
+  build ucpp -DSTAND_ALONE.
+  (http://code.google.com/p/ucpp/issues/detail?id=7)
+* Build ucpp & libucpp with 'make'.
+
+ucpp-1.3
+* Original import into svn at code.google.com/p/ucpp

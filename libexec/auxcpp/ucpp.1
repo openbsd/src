@@ -1,0 +1,212 @@
+.TH UCPP 1 "Oct 21 2000"
+.SH NAME
+ucpp \- C preprocessor
+.SH SYNOPSIS
+.B ucpp 
+[
+.I options
+]
+[
+.I file
+]
+.SH DESCRIPTION
+.LP
+.B ucpp
+is a C preprocessor mostly compatible with ISO-C99.
+It is rather strict and uses only a small amount of memory. It uses
+standard input as primary input if no file argument is given.
+.SH OPTIONS
+There are several classes of options.
+.TP
+.B Language Options
+.TP
+.BI \-C
+keep comments in the output.
+.TP
+.BI \-s
+if a rogue '#' is encountered, do not emit an error and keep it in
+the output.
+.TP
+.BI \-l
+supress the emission of '#line' directives in the output.
+.TP
+.BI \-lg
+convert the '#line' to the gcc-style equivalent.
+.TP
+.BI \-CC
+disable C++-like comments (a '//' begins a comment, up to the end
+of the line). Use this option to get closer to C90 behaviour.
+.TP
+.B \-a, \-na
+handle assertions (defined with #assert);
+.B \-a
+also defines the standard assertions
+.I #machine
+,
+.I #cpu
+and
+.I #system
+(see
+.B \-e
+to get the local definition of such assertions).
+.TP
+.BI \-a0
+disable assertion support.
+.TP
+.BI \-V
+disable support for macros with a variable number of arguments: in C99,
+a macro may be declared with
+.I ...
+as the last argument; inside the replacement list,
+.I __VA_ARGS__
+is replaced with the optional extra arguments given in the call to the macro.
+Use this option to get closer to C90 behaviour.
+.TP
+.BI \-u
+enable UTF-8 support: with this option, the source is considered as
+an ISO/10646 source, encoded in UTF-8. Characters represented as two bytes
+or more are considered as alphabetic characters, like letters, and
+therefore usable in identifiers. These characters hold the same
+syntactic value than the corresponding Universal Character Names.
+.TP
+.BI \-X
+enable
+.B \-a, \-u
+and
+.B \-Y.
+This should make
+.B ucpp
+behave closer to what is requested from a "modern" C preprocessor.
+.TP
+.BI \-c90
+enable
+.B \-V
+and
+.B \-CC,
+and do not define
+.B __STDC_VERSION__.
+This should make
+.B ucpp
+mimic older C90 behaviour.
+.TP
+.BI \-t
+disable trigraph support; this seems to be required for some legacy code.
+.TP
+.B Warning Options
+.TP
+.BI \-wt
+emit a final warning when trigraphs are encountered.
+.TP
+.BI \-wtt
+emit warnings for each trigraph encountered.
+.TP
+.BI \-wa
+emit annoying warnings (these are usually useless).
+.TP
+.BI \-w0
+supress standard warnings.
+.TP
+.B Directory Options
+.TP
+.BI \-I directory
+.TP
+.BI "\-I " directory
+add
+.I directory
+to the include path, before the standard include path.
+.TP
+.BI \-J directory
+.TP
+.BI "\-J " directory
+add
+.I directory
+to the include path, after the standard include path.
+.TP
+.BI \-zI
+do not use the standard (compile-time) include path.
+.TP
+.BI \-M
+emit only the names of encountered files, separated by spaces; this is
+intended for automatic generation of Makefile dependencies.
+.TP
+.BI \-Ma
+do the same as
+.B \-M
+but also for system files.
+.TP
+.BI "\-o " file
+direct the ouput to
+.I file
+instead of standard output.
+.TP
+.B Macro Options
+.TP
+.BI \-D macro
+predefine
+.I macro
+with content
+.B 1.
+.TP
+.BI \-D macro=def
+predefine
+.I macro
+with the content
+.I def.
+.TP
+.BI \-U macro
+undefine
+.I macro.
+.TP
+.BI \-Y
+predefine system-dependant macros.
+.TP
+.BI \-Z
+do not predefine special macros such as
+.B __TIME__.
+.TP
+.BI \-A foo(bar)
+add
+.I foo(bar)
+to the list of assertions.
+.TP
+.BI \-B foo(bar)
+remove
+.I foo(bar)
+of the list of assertions; you may also use
+.BI \-B foo
+to remove all
+.BI \-B foo(xxx)
+from the list of assertions.
+.TP
+.BI \-d
+instead of normal output, emit '#define' directives representing all
+macros defined during processing.
+.TP
+.BI \-e
+instead of normal output, emit '#assert' directives representing all
+assertions defined during processing.
+.TP
+.B Miscellaneous Options
+.TP
+.BI \-v
+print version number, include path and (optionaly) defined assertions.
+.TP
+.BI \-h
+print some help.
+.SH ENVIRONMENT
+.PP
+.B ucpp
+is not itself affected by environment variables. However, it uses
+library functions that might be affected, depending on the system.
+.SH AUTHOR
+Thomas Pornin <pornin@bolet.org>
+.SH BUGS
+.PP
+.B ucpp
+is considered stable software. However improbable it is, please report
+bugs to the author (possibly with a file that exhibits the problem) if
+the latest version, available from this site:
+.TP
+http://pornin.nerim.net/ucpp/
+.PP
+has the bug.
