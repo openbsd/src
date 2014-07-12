@@ -1,4 +1,4 @@
-/*	$OpenBSD: uart.c,v 1.7 2014/07/12 14:12:53 jasper Exp $	*/
+/*	$OpenBSD: uart.c,v 1.8 2014/07/12 14:15:06 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -123,8 +123,15 @@ cn30xxuartcngetc (dev_t dev)
 	/* 1/10th the time to transmit 1 character (estimate). */
 	d = cn30xxuart_delay();
 
+	if (dev & 0x80)
+		return octeon_xkphys_read_8(OCTEON_MIO_UART0_LSR) & LSR_RXRDY;
+
 	while ((octeon_xkphys_read_8(OCTEON_MIO_UART0_LSR) & LSR_RXRDY) == 0)
 		delay(d);
+
 	c = octeon_xkphys_read_8(OCTEON_MIO_UART0_RBR);
+	if (c == '\r')
+		c = '\n';
+
 	return (c);
 }
