@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_solaris.c,v 1.2 2014/07/12 13:19:44 beck Exp $	*/
+/*	$OpenBSD: getentropy_solaris.c,v 1.3 2014/07/12 14:46:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -43,7 +43,6 @@
 #define SHA512_Update SHA512Update
 #define SHA512_Final SHA512Final
 
-
 #include <sys/vfs.h>
 #include <sys/statfs.h>
 #include <sys/loadavg.h>
@@ -81,7 +80,7 @@ getentropy(void *buf, size_t len)
 	}
 
 	/*
-	 * Try to get entropy with /dev/urandom...
+	 * Try to get entropy with /dev/urandom
 	 *
 	 * Solaris provides /dev/urandom as a symbolic link to
 	 * /devices/pseudo/random@0:urandom which is provided by
@@ -132,8 +131,8 @@ getentropy(void *buf, size_t len)
 	 * providing a new failsafe API which works in a chroot or
 	 * when file descriptors are exhausted.
 	 */
-#undef FAIL_WHEN_SYSTEM_ENTROPY_FAILS
-#ifdef FAIL_WHEN_SYSTEM_ENTROPY_FAILS
+#undef FAIL_INSTEAD_OF_TRYING_FALLBACK
+#ifdef FAIL_INSTEAD_OF_TRYING_FALLBACK
 	raise(SIGKILL);
 #endif
 	ret = getentropy_fallback(buf, len);
@@ -215,7 +214,7 @@ nodevrandom:
 	return -1;
 }
 
-static int cl[] = {
+static const int cl[] = {
 	CLOCK_REALTIME,
 #ifdef CLOCK_MONOTONIC
 	CLOCK_MONOTONIC,
@@ -279,6 +278,7 @@ getentropy_fallback(void *buf, size_t len)
 
 			for (ii = 0; ii < sizeof(cl)/sizeof(cl[0]); ii++)
 				HX(clock_gettime(cl[ii], &ts) == -1, ts);
+
 			HX((pid = getpid()) == -1, pid);
 			HX((pid = getsid(pid)) == -1, pid);
 			HX((pid = getppid()) == -1, pid);

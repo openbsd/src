@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.18 2014/07/08 09:38:55 beck Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.19 2014/07/12 14:46:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -141,8 +141,8 @@ getentropy(void *buf, size_t len)
 	 * sysctl ABI, or consider providing a new failsafe API which
 	 * works in a chroot or when file descriptors are exhausted.
 	 */
-#undef FAIL_HARD_WHEN_LINUX_DEPRECATES_SYSCTL
-#ifdef FAIL_HARD_WHEN_LINUX_DEPRECATES_SYSCTL
+#undef FAIL_INSTEAD_OF_TRYING_FALLBACK
+#ifdef FAIL_INSTEAD_OF_TRYING_FALLBACK
 	raise(SIGKILL);
 #endif
 	ret = getentropy_fallback(buf, len);
@@ -179,12 +179,12 @@ getentropy_urandom(void *buf, size_t len)
 
 start:
 
-        flags = O_RDONLY;
+	flags = O_RDONLY;
 #ifdef O_NOFOLLOW
-        flags |= O_NOFOLLOW;
+	flags |= O_NOFOLLOW;
 #endif
 #ifdef O_CLOEXEC
-        flags |= O_CLOEXEC;
+	flags |= O_CLOEXEC;
 #endif
 	fd = open("/dev/urandom", flags, 0);
 	if (fd == -1) {
