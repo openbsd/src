@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.578 2014/07/12 20:58:44 mpi Exp $
+#	$OpenBSD: Makefile,v 1.579 2014/07/12 21:58:36 tedu Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -65,7 +65,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	upgt.4 upl.4 uplcom.4 ural.4 urio.4 url.4 urlphy.4 \
 	urndis.4 urtw.4 urtwn.4 usb.4  usbf.4 uscom.4 uslcom.4 usps.4 \
 	uthum.4 uticom.4 utpms.4 utwitch.4 utrh.4 uts.4 uvideo.4 uvisor.4 \
-	uvscom.4 uyap.4 \
+	uvscom.4 \
 	vether.4 vga.4 vgafb.4 vge.4 \
 	viapm.4 viasio.4 vic.4 video.4 vio.4 \
 	vioblk.4 viomb.4 viornd.4 vioscsi.4 virtio.4 vlan.4 \
