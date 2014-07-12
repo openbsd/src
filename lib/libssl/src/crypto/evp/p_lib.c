@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.15 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: p_lib.c,v 1.16 2014/07/12 22:26:01 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,7 +60,6 @@
 
 #include <openssl/opensslconf.h>
 
-#include <openssl/asn1_mac.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
