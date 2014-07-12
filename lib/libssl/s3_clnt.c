@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.81 2014/07/12 18:37:28 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.82 2014/07/12 22:17:59 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1000,7 +1000,7 @@ ssl3_get_server_certificate(SSL *s)
 	if (!ok)
 		return ((int)n);
 
-	if ((s->s3->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE)) {
+	if (s->s3->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) {
 		s->s3->tmp.reuse_message = 1;
 		return (1);
 	}
