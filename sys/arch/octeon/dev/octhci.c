@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.11 2014/07/12 16:43:31 pirofti Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.12 2014/07/12 17:53:45 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -601,21 +601,13 @@ const usb_endpoint_descriptor_t octhci_endpd = {
 	UDESC_ENDPOINT,
 	UE_DIR_IN | OCTHCI_INTR_ENDPT,
 	UE_INTERRUPT,
-	{2, 0},                 /* max 15 ports */
-	255
-};
-
-const usb_endpoint_ss_comp_descriptor_t octhci_endpcd = {
-	USB_ENDPOINT_SS_COMP_DESCRIPTOR_SIZE,
-	UDESC_ENDPOINT_SS_COMP,
-	0,
-	0,
-	{0, 0}			/* XXX */
+	{8, 0},                 /* max packet */
+	12
 };
 
 const usb_hub_descriptor_t octhci_hubd = {
 	USB_HUB_DESCRIPTOR_SIZE,
-	UDESC_SS_HUB,
+	UDESC_HUB,
 	0,
 	{0,0},
 	0,
