@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2013/08/29 20:22:17 naddy Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2014/07/12 03:41:04 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -201,20 +201,6 @@ main(argc, argv)
 	writerecord(&Player, Fileloc);
 
 	Statptr = &Stattable[Player.p_type];	/* initialize pointer */
-
-	/* catch interrupts */
-#ifdef	BSD41
-	sigset(SIGINT, interrupt);
-#endif
-#ifdef	BSD42
-	signal(SIGINT, interrupt);
-#endif
-#ifdef	SYS3
-	signal(SIGINT, interrupt);
-#endif
-#ifdef	SYS5
-	signal(SIGINT, interrupt);
-#endif
 
 	altercoordinates(Player.p_x, Player.p_y, A_FORCED);	/* set some flags */
 
@@ -1166,83 +1152,6 @@ genchar(type)
 void
 playinit()
 {
-	/* catch/ignore signals */
-
-#ifdef	BSD41
-	sigignore(SIGQUIT);
-	sigignore(SIGALRM);
-	sigignore(SIGTERM);
-	sigignore(SIGTSTP);
-	sigignore(SIGTTIN);
-	sigignore(SIGTTOU);
-	sighold(SIGINT);
-	sigset(SIGHUP, ill_sig);
-	sigset(SIGTRAP, ill_sig);
-	sigset(SIGIOT, ill_sig);
-	sigset(SIGEMT, ill_sig);
-	sigset(SIGFPE, ill_sig);
-	sigset(SIGBUS, ill_sig);
-#ifdef SIGSEGV_CHECK
-	sigset(SIGSEGV, ill_sig);
-#endif
-	sigset(SIGSYS, ill_sig);
-	sigset(SIGPIPE, ill_sig);
-#endif
-#ifdef	BSD42
-	signal(SIGQUIT, ill_sig);
-	signal(SIGALRM, SIG_IGN);
-	signal(SIGTERM, SIG_IGN);
-	signal(SIGTSTP, SIG_IGN);
-	signal(SIGTTIN, SIG_IGN);
-	signal(SIGTTOU, SIG_IGN);
-	signal(SIGINT, ill_sig);
-	signal(SIGHUP, SIG_DFL);
-	signal(SIGTRAP, ill_sig);
-	signal(SIGIOT, ill_sig);
-	signal(SIGEMT, ill_sig);
-	signal(SIGFPE, ill_sig);
-	signal(SIGBUS, ill_sig);
-#ifdef SIGSEGV_CHECK
-	signal(SIGSEGV, ill_sig);
-#endif
-	signal(SIGSYS, ill_sig);
-	signal(SIGPIPE, ill_sig);
-#endif
-#ifdef	SYS3
-	signal(SIGINT, SIG_IGN);
-	signal(SIGQUIT, SIG_IGN);
-	signal(SIGTERM, SIG_IGN);
-	signal(SIGALRM, SIG_IGN);
-	signal(SIGHUP, ill_sig);
-	signal(SIGTRAP, ill_sig);
-	signal(SIGIOT, ill_sig);
-	signal(SIGEMT, ill_sig);
-	signal(SIGFPE, ill_sig);
-	signal(SIGBUS, ill_sig);
-#ifdef SIGSEGV_CHECK
-	signal(SIGSEGV, ill_sig);
-#endif
-	signal(SIGSYS, ill_sig);
-	signal(SIGPIPE, ill_sig);
-#endif
-#ifdef	SYS5
-	signal(SIGINT, SIG_IGN);
-	signal(SIGQUIT, SIG_IGN);
-	signal(SIGTERM, SIG_IGN);
-	signal(SIGALRM, SIG_IGN);
-	signal(SIGHUP, ill_sig);
-	signal(SIGTRAP, ill_sig);
-	signal(SIGIOT, ill_sig);
-	signal(SIGEMT, ill_sig);
-	signal(SIGFPE, ill_sig);
-	signal(SIGBUS, ill_sig);
-#ifdef SIGSEGV_CHECK
-	signal(SIGSEGV, ill_sig);
-#endif
-	signal(SIGSYS, ill_sig);
-	signal(SIGPIPE, ill_sig);
-#endif
-
 	initscr();		/* turn on curses */
 	noecho();		/* do not echo input */
 	cbreak();		/* do not process erase, kill */

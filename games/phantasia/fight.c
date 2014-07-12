@@ -1,4 +1,4 @@
-/*	$OpenBSD: fight.c,v 1.10 2010/12/15 06:40:39 tedu Exp $	*/
+/*	$OpenBSD: fight.c,v 1.11 2014/07/12 03:41:04 deraadt Exp $	*/
 /*	$NetBSD: fight.c,v 1.2 1995/03/24 03:58:39 cgd Exp $	*/
 
 /*
@@ -48,10 +48,6 @@ encounter(particular)
 	/* let others know what we are doing */
 	Player.p_status = S_MONSTER;
 	writerecord(&Player, Fileloc);
-
-#ifdef SYS5
-	flushinp();
-#endif
 
 	Shield = 0.0;		/* no shield up yet */
 

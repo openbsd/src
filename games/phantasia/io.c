@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.5 2002/01/16 01:28:54 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.6 2014/07/12 03:41:04 deraadt Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/24 03:58:50 cgd Exp $	*/
 
 /*
@@ -241,13 +241,6 @@ interrupt()
 	int     ch;		/* input */
 	unsigned savealarm;	/* to save alarm value */
 
-#ifdef SYS3
-	signal(SIGINT, SIG_IGN);
-#endif
-#ifdef SYS5
-	signal(SIGINT, SIG_IGN);
-#endif
-
 	savealarm = alarm(0);	/* turn off any alarms */
 
 	getyx(stdscr, y, x);	/* save cursor location */
@@ -277,13 +270,6 @@ interrupt()
 	mvaddstr(4, 0, line);	/* restore data on screen */
 	move(y, x);		/* restore cursor */
 	refresh();
-
-#ifdef SYS3
-	signal(SIGINT, interrupt);
-#endif
-#ifdef SYS5
-	signal(SIGINT, interrupt);
-#endif
 
 	alarm(savealarm);	/* restore alarm */
 }
@@ -350,11 +336,7 @@ getanswer(choices, def)
 		{
 			clrtoeol();
 			refresh();
-#ifdef BSD41
-			sigset(SIGALRM, catchalarm);
-#else
 			signal(SIGALRM, catchalarm);
-#endif
 			/* set timeout */
 			if (Timeout)
 				alarm(7);	/* short */

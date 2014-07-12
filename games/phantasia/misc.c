@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.15 2013/08/29 20:22:17 naddy Exp $	*/
+/*	$OpenBSD: misc.c,v 1.16 2014/07/12 03:41:04 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
@@ -1465,42 +1465,6 @@ distance(x1, x2, y1, y2)
 	deltay = y1 - y2;
 	return (sqrt(deltax * deltax + deltay * deltay));
 }
-/**/
-/************************************************************************
-/
-/ FUNCTION NAME: ill_sig()
-/
-/ FUNCTION: exit upon trapping an illegal signal
-/
-/ AUTHOR: E. A. Estes, 12/4/85
-/
-/ ARGUMENTS:
-/	int whichsig - signal which occurred to cause jump to here
-/
-/ RETURN VALUE: none
-/
-/ MODULES CALLED: wclear(), printw(), cleanup()
-/
-/ GLOBAL INPUTS: *stdscr
-/
-/ GLOBAL OUTPUTS: none
-/
-/ DESCRIPTION:
-/	When an illegal signal is caught, print a message, and cleanup.
-/
-*************************************************************************/
-
-void
-ill_sig(whichsig)
-	int     whichsig;
-{
-	clear();
-	if (!(whichsig == SIGINT || whichsig == SIGQUIT))
-		printw("Error: caught signal # %d.\n", whichsig);
-	cleanup(TRUE);
-	/* NOTREACHED */
-}
-/**/
 /************************************************************************
 /
 / FUNCTION NAME: descrstatus()
