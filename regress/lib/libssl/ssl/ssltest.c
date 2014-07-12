@@ -175,9 +175,7 @@
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
-#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
-#endif
 #include <openssl/bn.h>
 
 #define _XOPEN_SOURCE_EXTENDED	1
@@ -203,11 +201,9 @@ struct app_verify_arg {
 	char *proxy_cond;
 };
 
-#ifndef OPENSSL_NO_DH
 static DH *get_dh512(void);
 static DH *get_dh1024(void);
 static DH *get_dh1024dsa(void);
-#endif
 
 static BIO *bio_err = NULL;
 static BIO *bio_stdout = NULL;
@@ -235,14 +231,10 @@ sv_usage(void)
 	fprintf(stderr, " -reuse        - use session-id reuse\n");
 	fprintf(stderr, " -num <val>    - number of connections to perform\n");
 	fprintf(stderr, " -bytes <val>  - number of bytes to swap between client/server\n");
-#ifndef OPENSSL_NO_DH
 	fprintf(stderr, " -dhe1024      - use 1024 bit key (safe prime) for DHE\n");
 	fprintf(stderr, " -dhe1024dsa   - use 1024 bit key (with 160-bit subprime) for DHE\n");
 	fprintf(stderr, " -no_dhe       - disable DHE\n");
-#endif
-#ifndef OPENSSL_NO_ECDH
 	fprintf(stderr, " -no_ecdhe     - disable ECDHE\n");
-#endif
 	fprintf(stderr, " -dtls1        - use DTLSv1\n");
 	fprintf(stderr, " -ssl3         - use SSLv3\n");
 	fprintf(stderr, " -tls1         - use TLSv1\n");
@@ -256,11 +248,9 @@ sv_usage(void)
 	fprintf(stderr, " -bio_pair     - Use BIO pairs\n");
 	fprintf(stderr, " -f            - Test even cases that can't work\n");
 	fprintf(stderr, " -time         - measure processor time used by client and server\n");
-#ifndef OPENSSL_NO_ECDH
 	fprintf(stderr, " -named_curve arg  - Elliptic curve name to use for ephemeral ECDH keys.\n" \
 	               "                 Use \"openssl ecparam -list_curves\" for all names\n"  \
 	               "                 (default is sect163r2).\n");
-#endif
 	fprintf(stderr, " -test_cipherlist - verifies the order of the ssl cipher lists\n");
 }
 
@@ -370,22 +360,16 @@ main(int argc, char *argv[])
 	char *server_key = NULL;
 	char *client_cert = TEST_CLIENT_CERT;
 	char *client_key = NULL;
-#ifndef OPENSSL_NO_ECDH
 	char *named_curve = NULL;
-#endif
 	SSL_CTX *s_ctx = NULL;
 	SSL_CTX *c_ctx = NULL;
 	const SSL_METHOD *meth = NULL;
 	SSL *c_ssl, *s_ssl;
 	int number = 1, reuse = 0;
 	long bytes = 256L;
-#ifndef OPENSSL_NO_DH
 	DH *dh;
 	int dhe1024 = 0, dhe1024dsa = 0;
-#endif
-#ifndef OPENSSL_NO_ECDH
 	EC_KEY *ecdh = NULL;
-#endif
 	int no_dhe = 0;
 	int no_ecdhe = 0;
 	int print_time = 0;
@@ -429,17 +413,9 @@ main(int argc, char *argv[])
 		else if (strcmp(*argv, "-reuse") == 0)
 			reuse = 1;
 		else if (strcmp(*argv, "-dhe1024") == 0) {
-#ifndef OPENSSL_NO_DH
 			dhe1024 = 1;
-#else
-			fprintf(stderr, "ignoring -dhe1024, since I'm compiled without DH\n");
-#endif
 		} else if (strcmp(*argv, "-dhe1024dsa") == 0) {
-#ifndef OPENSSL_NO_DH
 			dhe1024dsa = 1;
-#else
-			fprintf(stderr, "ignoring -dhe1024, since I'm compiled without DH\n");
-#endif
 		} else if (strcmp(*argv, "-no_dhe") == 0)
 			no_dhe = 1;
 		else if (strcmp(*argv, "-no_ecdhe") == 0)
@@ -514,12 +490,7 @@ main(int argc, char *argv[])
 		} else if (strcmp(*argv, "-named_curve") == 0) {
 			if (--argc < 1)
 				goto bad;
-#ifndef OPENSSL_NO_ECDH		
 			named_curve = *(++argv);
-#else
-			fprintf(stderr, "ignoring -named_curve, since I'm compiled without ECDH\n");
-			++argv;
-#endif
 		} else if (strcmp(*argv, "-app_verify") == 0) {
 			app_verify_arg.app_verify = 1;
 		} else if (strcmp(*argv, "-proxy") == 0) {
@@ -594,7 +565,6 @@ bad:
 		SSL_CTX_set_cipher_list(s_ctx, cipher);
 	}
 
-#ifndef OPENSSL_NO_DH
 	if (!no_dhe) {
 		if (dhe1024dsa) {
 			/* use SSL_OP_SINGLE_DH_USE to avoid small subgroup attacks */
@@ -607,11 +577,7 @@ bad:
 		SSL_CTX_set_tmp_dh(s_ctx, dh);
 		DH_free(dh);
 	}
-#else
-	(void)no_dhe;
-#endif
 
-#ifndef OPENSSL_NO_ECDH
 	if (!no_ecdhe) {
 		int nid;
 
@@ -638,9 +604,6 @@ bad:
 		SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_ECDH_USE);
 		EC_KEY_free(ecdh);
 	}
-#else
-	(void)no_ecdhe;
-#endif
 
 	SSL_CTX_set_tmp_rsa_callback(s_ctx, tmp_rsa_cb);
 
@@ -1798,9 +1761,7 @@ app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 		X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_ALLOW_PROXY_CERTS);
 	}
 
-#ifndef OPENSSL_NO_X509_VERIFY
 	ok = X509_verify_cert(ctx);
-#endif
 
 	if (cb_arg->proxy_auth) {
 		if (ok > 0) {
@@ -1864,7 +1825,6 @@ free_tmp_rsa(void)
 	}
 }
 
-#ifndef OPENSSL_NO_DH
 /* These DH parameters have been generated as follows:
  *    $ openssl dhparam -C -noout 512
  *    $ openssl dhparam -C -noout 1024
@@ -1969,7 +1929,6 @@ get_dh1024dsa()
 	dh->length = 160;
 	return (dh);
 }
-#endif
 
 static int
 do_test_cipherlist(void)
