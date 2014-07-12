@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.24 2013/11/13 20:49:49 benno Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.25 2014/07/12 20:16:38 krw Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -366,8 +366,10 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
+		if (n == 0)	/* connection closed */
+			shut = 1;
 	}
 
 	for (;;) {
@@ -438,8 +440,10 @@ main_dispatch_rde(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
+		if (n == 0)	/* connection closed */
+			shut = 1;
 	}
 
 	for (;;) {

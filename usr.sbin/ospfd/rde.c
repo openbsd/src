@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.95 2013/11/13 20:43:00 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.96 2014/07/12 20:16:38 krw Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -261,8 +261,10 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
+		if (n == 0)	/* connection closed */
+			shut = 1;
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &tp);
@@ -624,8 +626,10 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
+		if (n == 0)	/* connection closed */
+			shut = 1;
 	}
 
 	for (;;) {

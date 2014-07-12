@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.15 2013/11/26 12:00:19 henning Exp $ */
+/*	$OpenBSD: ripe.c,v 1.16 2014/07/12 20:16:38 krw Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -240,8 +240,10 @@ ripe_dispatch_main(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
+		if (n == 0)	/* connection closed */
+			shut = 1;
 	}
 
 	for (;;) {
@@ -318,8 +320,10 @@ ripe_dispatch_rde(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
+		if (n == 0)	/* connection closed */
+			shut = 1;
 	}
 
 	for (;;) {
