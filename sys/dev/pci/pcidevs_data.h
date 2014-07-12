@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1732 2014/07/09 23:30:38 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1733 2014/07/12 09:32:47 yuo Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -10432,10 +10432,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I/OAT",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_XHCI,
-	    "7 Series xHCI",
-	},
-	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82597EX_SR,
 	    "82597EX",
 	},
@@ -10790,6 +10786,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_EHCI_2,
 	    "7 Series USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_XHCI,
+	    "7 Series xHCI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_MEI_1,

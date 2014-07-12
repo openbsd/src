@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1732 2014/07/09 23:30:38 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1733 2014/07/12 09:32:47 yuo Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3222,7 +3222,6 @@
 #define	PCI_PRODUCT_INTEL_82845_HB	0x1a30		/* 82845 Host */
 #define	PCI_PRODUCT_INTEL_82845_AGP	0x1a31		/* 82845 AGP */
 #define	PCI_PRODUCT_INTEL_IOAT	0x1a38		/* I/OAT */
-#define	PCI_PRODUCT_INTEL_7SERIES_XHCI	0x1e31		/* 7 Series xHCI */
 #define	PCI_PRODUCT_INTEL_82597EX_SR	0x1a48		/* 82597EX */
 #define	PCI_PRODUCT_INTEL_82597EX_LR	0x1b48		/* 82597EX */
 #define	PCI_PRODUCT_INTEL_6SERIES_SATA_1	0x1c00		/* 6 Series SATA */
@@ -3312,6 +3311,7 @@
 #define	PCI_PRODUCT_INTEL_7SERIES_SMB	0x1e22		/* 7 Series SMBus */
 #define	PCI_PRODUCT_INTEL_7SERIES_EHCI_1	0x1e26		/* 7 Series USB */
 #define	PCI_PRODUCT_INTEL_7SERIES_EHCI_2	0x1e2d		/* 7 Series USB */
+#define	PCI_PRODUCT_INTEL_7SERIES_XHCI	0x1e31		/* 7 Series xHCI */
 #define	PCI_PRODUCT_INTEL_7SERIES_MEI_1	0x1e3a		/* 7 Series MEI */
 #define	PCI_PRODUCT_INTEL_7SERIES_MEI_2	0x1e3b		/* 7 Series MEI */
 #define	PCI_PRODUCT_INTEL_7SERIES_KT	0x1e3d		/* 7 Series KT */
