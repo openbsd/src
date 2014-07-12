@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.177 2014/07/12 21:28:58 zhuk Exp $
+.\"	$OpenBSD: port-modules.5,v 1.178 2014/07/12 22:27:09 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -1297,7 +1297,8 @@ Some tools require the following goo in the PLIST:
 .It x11/gnustep
 .It x11/kde
 .It x11/kde4
-Required for building KDE4-enabled ports. Main variables are: MODKDE4_USE,
+Required for building KDE4-enabled ports.
+Main variables are: MODKDE4_USE,
 MODKDE4_VERSION, MODKDE4_DEP_DIR, MODKDE4_DEP_VERSION, MODKDE4_FLAVOR.
 It's used both for KDE4 SC itself and for software built on top of it,
 e.g., Digikam.
@@ -1402,7 +1403,7 @@ Read-only.
 .It Ev MODKDE4_FIX_GETTEXT
 If set to
 .Sq Yes ,
-adds an additional step before before building port that
+adds an additional step before building port that
 searches for KDE-specific calls of GETTEXT_PROCESS_PO_FILES()
 CMake command and tweaks them to be compatible with the one from
 FindGettext.cmake module provided by CMake itself.
@@ -1463,10 +1464,10 @@ The following variables are likely to be used only outside KDE4 SC:
 If set to
 .Sq Yes ,
 avoids automatic addition of x11/qt4 to
-.Ev MODULES.
+.Ev MODULES .
 .El
 .Pp
-The x11/kde4 module supports co-existance of different KDE4 SC version
+The x11/kde4 module supports co-existence of different KDE4 SC version
 ports subtrees.
 There always is a so-called stable tree in
 .Pa ${PORTSDIR}/x11/kde4
