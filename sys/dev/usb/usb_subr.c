@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.104 2014/07/12 07:11:17 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.105 2014/07/12 07:18:16 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1456,21 +1456,8 @@ usb_free_device(struct usbd_device *dev)
 }
 
 /*
- * The general mechanism for detaching drivers works as follows: Each
- * driver is responsible for maintaining a reference count on the
- * number of outstanding references to its softc (e.g.  from
- * processing hanging in a read or write).  The detach method of the
- * driver decrements this counter and flags in the softc that the
- * driver is dying and then wakes any sleepers.  It then sleeps on the
- * softc.  Each place that can sleep must maintain the reference
- * count.  When the reference count drops to -1 (0 is the normal value
- * of the reference count) the a wakeup on the softc is performed
- * signaling to the detach waiter that all references are gone.
- */
-
-/*
- * Called from process context when we discover that a port has
- * been disconnected.
+ * Should only be called by the USB thread doing bus exploration to
+ * avoid connect/disconnect races.
  */
 int
 usbd_detach(struct usbd_device *dev, struct device *parent)
