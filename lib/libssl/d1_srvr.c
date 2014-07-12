@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.30 2014/07/11 09:24:44 beck Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.31 2014/07/12 10:06:04 jsing Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -484,24 +484,38 @@ dtls1_accept(SSL *s)
 
 		case SSL3_ST_SW_CERT_REQ_A:
 		case SSL3_ST_SW_CERT_REQ_B:
-			if (/* don't request cert unless asked for it: */
-			    !(s->verify_mode & SSL_VERIFY_PEER) ||
-				/* if SSL_VERIFY_CLIENT_ONCE is set,
-				 * don't request cert during re-negotiation: */
+			/*
+			 * Determine whether or not we need to request a
+			 * certificate.
+			 *
+			 * Do not request a certificate if:
+			 *
+			 * - We did not ask for it (SSL_VERIFY_PEER is unset).
+			 *
+			 * - SSL_VERIFY_CLIENT_ONCE is set and we are
+			 *   renegotiating.
+			 *
+			 * - We are using an anonymous ciphersuites
+			 *   (see section "Certificate request" in SSL 3 drafts
+			 *   and in RFC 2246) ... except when the application
+			 *   insists on verification (against the specs, but
+			 *   s3_clnt.c accepts this for SSL 3).
+			 *
+			 * - We are using a Kerberos ciphersuite.
+			 *
+			 * - We are using normal PSK certificates and
+			 *   Certificate Requests are omitted
+			 */
+			if (!(s->verify_mode & SSL_VERIFY_PEER) ||
 			    ((s->session->peer != NULL) &&
-			    (s->verify_mode & SSL_VERIFY_CLIENT_ONCE)) ||
-				/* never request cert in anonymous ciphersuites
-				 * (see section "Certificate request" in SSL 3 drafts
-				 * and in RFC 2246): */
-			    ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) &&
-				 /* ... except when the application insists on verification
-				  * (against the specs, but s3_clnt.c accepts this for SSL 3) */
-			    !(s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) ||
-				/* never request cert in Kerberos ciphersuites */
-			    (s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5)
-				/* With normal PSK Certificates and
-				 * Certificate Requests are omitted */
-			    || (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK)) {
+			     (s->verify_mode & SSL_VERIFY_CLIENT_ONCE)) ||
+			    ((s->s3->tmp.new_cipher->algorithm_auth &
+			     SSL_aNULL) && !(s->verify_mode &
+			     SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) ||
+			    (s->s3->tmp.new_cipher->algorithm_auth &
+			     SSL_aKRB5) ||
+			    (s->s3->tmp.new_cipher->algorithm_mkey &
+			     SSL_kPSK)) {
 				/* no cert request */
 				skip = 1;
 				s->s3->tmp.cert_request = 0;
