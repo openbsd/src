@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.24 2014/07/10 03:17:59 lteo Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.25 2014/07/12 03:27:00 lteo Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -89,10 +89,9 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	struct sockaddr_in6 *sin6;
 	struct socket *so;
 	struct ifaddr *ifa;
-	int s, error = 0, p_hdrlen = 0, nxt = 0, off;
+	int s, error = 0, p_hdrlen = 0, nxt = 0, off, dir;
 	struct ip6_hdr *ip6;
-	u_int16_t csum = 0;
-	size_t p_off = 0;
+	u_int16_t csum_flag = 0;
 
 	m->m_pkthdr.rcvif = NULL;
 	m->m_nextpkt = NULL;
@@ -125,39 +124,35 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	off = ip6_lasthdr(m, 0, IPPROTO_IPV6, &nxt);
 	if (off < sizeof(struct ip6_hdr))
 		goto fail;
+
+	dir = (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) ? PF_OUT : PF_IN);
+
 	switch (nxt) {
 	case IPPROTO_TCP:
 		p_hdrlen = sizeof(struct tcphdr);
-		p_off = offsetof(struct tcphdr, th_sum);
+		csum_flag = M_TCP_CSUM_OUT;
 		break;
 	case IPPROTO_UDP:
 		p_hdrlen = sizeof(struct udphdr);
-		p_off = offsetof(struct udphdr, uh_sum);
+		csum_flag = M_UDP_CSUM_OUT;
 		break;
 	case IPPROTO_ICMPV6:
 		p_hdrlen = sizeof(struct icmp6_hdr);
-		p_off = offsetof(struct icmp6_hdr, icmp6_cksum);
+		csum_flag = M_ICMP_CSUM_OUT;
 		break;
 	default:
 		/* nothing */
 		break;
 	}
-	if (p_hdrlen) {
-		if (m->m_pkthdr.len < off + p_hdrlen)
-			goto fail;
+	if (p_hdrlen && m->m_pkthdr.len < off + p_hdrlen)
+		goto fail;
 
-		if ((error = m_copyback(m, off + p_off, sizeof(csum), &csum, M_NOWAIT)))
-			goto fail;
-		csum = in6_cksum(m, nxt, off, m->m_pkthdr.len - off);
-		if (nxt == IPPROTO_UDP && csum == 0)
-			csum = 0xffff;
-		if ((error = m_copyback(m, off + p_off, sizeof(csum), &csum, M_NOWAIT)))
-			goto fail;
-	}
+	if (csum_flag)
+		m->m_pkthdr.csum_flags |= csum_flag;
 
 	m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED_PACKET;
 
-	if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
+	if (dir == PF_IN) {
 		ip6addr.sin6_addr = sin6->sin6_addr;
 		ifa = ifa_ifwithaddr(sin6tosa(&ip6addr),
 		    m->m_pkthdr.ph_rtableid);
@@ -168,6 +163,13 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		m->m_pkthdr.rcvif = ifa->ifa_ifp;
 
 		inq = &ip6intrq;
+
+		/*
+		 * Recalculate the protocol checksum for the inbound packet
+		 * since the userspace application may have modified the packet
+		 * prior to reinjection.
+		 */
+		in6_proto_cksum_out(m, NULL);
 
 		s = splnet();
 		IF_INPUT_ENQUEUE(inq, m);

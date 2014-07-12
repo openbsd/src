@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.23 2014/07/10 03:17:59 lteo Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.24 2014/07/12 03:27:00 lteo Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -85,11 +85,9 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	struct sockaddr_in *sin;
 	struct socket *so;
 	struct ifaddr *ifa;
-	int s, error = 0, p_hdrlen = 0;
+	int s, error = 0, p_hdrlen = 0, dir;
 	struct ip *ip;
-	u_int16_t off, csum = 0;
-	u_int8_t nxt;
-	size_t p_off = 0;
+	u_int16_t off, csum_flag = 0;
 
 	m->m_pkthdr.rcvif = NULL;
 	m->m_nextpkt = NULL;
@@ -117,47 +115,34 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	    m->m_pkthdr.len < ntohs(ip->ip_len))
 		goto fail;
 
-	/*
-	 * Recalculate IP and protocol checksums since the userspace application
-	 * may have modified the packet prior to reinjection.
-	 */
-	ip->ip_sum = 0;
-	ip->ip_sum = in_cksum(m, off);
-	nxt = ip->ip_p;
+	dir = (sin->sin_addr.s_addr == INADDR_ANY ? PF_OUT : PF_IN);
+
 	switch (ip->ip_p) {
 	case IPPROTO_TCP:
 		p_hdrlen = sizeof(struct tcphdr);
-		p_off = offsetof(struct tcphdr, th_sum);
+		csum_flag = M_TCP_CSUM_OUT;
 		break;
 	case IPPROTO_UDP:
 		p_hdrlen = sizeof(struct udphdr);
-		p_off = offsetof(struct udphdr, uh_sum);
+		csum_flag = M_UDP_CSUM_OUT;
 		break;
 	case IPPROTO_ICMP:
 		p_hdrlen = sizeof(struct icmp);
-		p_off = offsetof(struct icmp, icmp_cksum);
-		nxt = 0;
+		csum_flag = M_ICMP_CSUM_OUT;
 		break;
 	default:
 		/* nothing */
 		break;
 	}
-	if (p_hdrlen) {
-		if (m->m_pkthdr.len < off + p_hdrlen)
-			goto fail;
+	if (p_hdrlen && m->m_pkthdr.len < off + p_hdrlen)
+		goto fail;
 
-		if ((error = m_copyback(m, off + p_off, sizeof(csum), &csum, M_NOWAIT)))
-			goto fail;
-		csum = in4_cksum(m, nxt, off, m->m_pkthdr.len - off);
-		if (ip->ip_p == IPPROTO_UDP && csum == 0)
-			csum = 0xffff;
-		if ((error = m_copyback(m, off + p_off, sizeof(csum), &csum, M_NOWAIT)))
-			goto fail;
-	}
+	if (csum_flag)
+		m->m_pkthdr.csum_flags |= csum_flag;
 
 	m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED_PACKET;
 
-	if (sin->sin_addr.s_addr != INADDR_ANY) {
+	if (dir == PF_IN) {
 		ipaddr.sin_addr = sin->sin_addr;
 		ifa = ifa_ifwithaddr(sintosa(&ipaddr), m->m_pkthdr.ph_rtableid);
 		if (ifa == NULL) {
@@ -167,6 +152,15 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		m->m_pkthdr.rcvif = ifa->ifa_ifp;
 
 		inq = &ipintrq;
+
+		/*
+		 * Recalculate IP and protocol checksums for the inbound packet
+		 * since the userspace application may have modified the packet
+		 * prior to reinjection.
+		 */
+		ip->ip_sum = 0;
+		ip->ip_sum = in_cksum(m, off);
+		in_proto_cksum_out(m, NULL);
 
 		s = splnet();
 		IF_INPUT_ENQUEUE(inq, m);
