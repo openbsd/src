@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.13 2014/07/12 19:54:17 pirofti Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.14 2014/07/12 21:07:33 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -80,7 +80,8 @@ void octhci_init_core(struct octhci_softc *);
 void octhci_init_host(struct octhci_softc *);
 int octhci_intr(void *);
 
-int	octhci_intr1(struct octhci_softc *);
+int octhci_intr1(struct octhci_softc *);
+int octhci_intr_host_port(struct octhci_softc *);
 
 const struct cfattach octhci_ca = {
 	sizeof(struct octhci_softc), octhci_match, octhci_attach,
@@ -379,32 +380,56 @@ octhci_intr1(struct octhci_softc *sc)
 	sc->sc_bus.no_intrs++;
 
 	octhci_regc_write(sc, USBC_GINTSTS_OFFSET, intsts); /* Acknowledge */
-	usb_schedsoftintr(&sc->sc_bus);
-#if 0
-	if ((intsts & USBC_GINTSTS_DISCONNINT) ||
-	    (intsts & USBC_GINTSTS_PRTINT)) {
-		/* Device disconnected */
 
-		/* XXX: user callback */
-
-		octhci_regc_clear(sc, USBC_HPRT_OFFSET, USBC_HPRT_PRTENA);
+	if (intsts & USBC_GINTSTS_WKUPINT) {
+		DPRINTFN(16, ("%s: wake-up interrupt\n", DEVNAME(sc)));
+		octhci_regc_set(sc, USBC_GINTSTS_OFFSET,
+		    USBC_GINTSTS_WKUPINT);
+	}
+	if (intsts & USBC_GINTSTS_SESSREQINT) {
+		DPRINTFN(16, ("%s: session request interrupt\n", DEVNAME(sc)));
+		octhci_regc_set(sc, USBC_GINTSTS_OFFSET,
+		    USBC_GINTSTS_SESSREQINT);
+	}
+	if (intsts & USBC_GINTSTS_DISCONNINT) {
+		DPRINTFN(16, ("%s: disco interrupt\n", DEVNAME(sc)));
+		octhci_regc_set(sc, USBC_GINTSTS_OFFSET,
+		    USBC_GINTSTS_DISCONNINT);
+	}
+	if (intsts & USBC_GINTSTS_CONIDSTSCHNG) {
+		DPRINTFN(16, ("%s: connector ID interrupt\n", DEVNAME(sc)));
+		octhci_regc_set(sc, USBC_GINTSTS_OFFSET,
+		    USBC_GINTSTS_CONIDSTSCHNG);
 	}
 	if (intsts & USBC_GINTSTS_HCHINT) {
-		/* Host Channel Interrupt */
-		uint32_t haint;
-		int chan;
-
-		/* XXX: Assume single USB port */
-		for (haint = octhci_regc_read(sc, USBC_HAINT_OFFSET);
-		    haint != 0; haint ^= (1 << chan)) {
-			chan = ffs32(haint) - 1;
-			/* XXX: implement octhci_poll_chan(sc, chan); */
-		}
+		DPRINTFN(16, ("%s: host channel interrupt\n", DEVNAME(sc)));
+		/* XXX: add host channel irq handler */
 	}
-#endif
+	if (intsts & USBC_GINTSTS_PRTINT) {
+		DPRINTFN(16, ("%s: host port interrupt\n", DEVNAME(sc)));
+		octhci_intr_host_port(sc);
+	}
+	if (intsts & USBC_GINTSTS_MODEMIS) {
+		DPRINTFN(16, ("%s: mode missmatch\n", DEVNAME(sc)));
+	}
+	if (intsts & USBC_GINTSTS_OTGINT) {
+		DPRINTFN(16, ("%s: OTG interrupt\n", DEVNAME(sc)));
+	}
+
+	usb_schedsoftintr(&sc->sc_bus);
 
 	sc->sc_bus.intr_context--;
 	return (1);
+}
+
+int
+octhci_intr_host_port(struct octhci_softc *sc)
+{
+	uint32_t hprt = octhci_regc_read(sc, USBC_HPRT_OFFSET);
+
+	octhci_regc_write(sc, USBC_HPRT_OFFSET, hprt);	/* Acknowledge */
+
+	return (USBD_NORMAL_COMPLETION);
 }
 
 inline void
