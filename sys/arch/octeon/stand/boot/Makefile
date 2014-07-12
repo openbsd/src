@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2013/06/05 01:02:29 jasper Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/07/12 23:45:33 jasper Exp $
 
 NOMAN=
 #MAN=		boot.8
@@ -11,7 +11,7 @@ PROG=		boot
 NOPROG=
 .endif
 
-CFLAGS+=-fno-pie
+CFLAGS+=-fno-pie -DCONSPEED=15200
 AFLAGS+=-fno-pie
 LDFLAGS+=-nopie
 
