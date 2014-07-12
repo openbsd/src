@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.78 2014/06/01 00:37:37 mlarkin Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.79 2014/07/12 23:16:23 jsg Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -81,6 +81,9 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/pci/drm/i915/i915_devlist.h>
+#include <dev/pci/drm/radeon/radeon_devlist.h>
+
 #include <dev/pci/agpvar.h>
 
 #include <dev/ic/mc6845reg.h>
@@ -121,7 +124,7 @@ int	vesafb_getcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
 void	vga_save_state(struct vga_pci_softc *);
 void	vga_restore_state(struct vga_pci_softc *);
 #endif
-
+int	vga_aperture_needed(struct pci_attach_args *);
 
 /*
  * Function pointers for wsconsctl parameter handling.
@@ -171,6 +174,28 @@ static const struct vga_device_description vga_devs[] = {
 };
 #endif
 
+static const struct pci_matchid aperture_blacklist[] = {
+	/* server adapters found in mga200 drm driver */
+	{ PCI_VENDOR_MATROX,	PCI_PRODUCT_MATROX_G200E_SE },
+	{ PCI_VENDOR_MATROX,	PCI_PRODUCT_MATROX_G200E_SE_B },
+	{ PCI_VENDOR_MATROX,	PCI_PRODUCT_MATROX_G200EH },
+	{ PCI_VENDOR_MATROX,	PCI_PRODUCT_MATROX_G200ER },
+	{ PCI_VENDOR_MATROX,	PCI_PRODUCT_MATROX_G200EV },
+	{ PCI_VENDOR_MATROX,	PCI_PRODUCT_MATROX_G200EW },
+
+	/* server adapters found in ast drm driver */
+	{ PCI_VENDOR_ASPEED,	PCI_PRODUCT_ASPEED_AST2000 },
+	{ PCI_VENDOR_ASPEED,	PCI_PRODUCT_ASPEED_AST2100 },
+
+	/* ati adapters found in servers */
+	{ PCI_VENDOR_ATI,		PCI_PRODUCT_ATI_RAGEXL },
+	{ PCI_VENDOR_ATI,		PCI_PRODUCT_ATI_ES1000 },
+
+	/* xgi found in some poweredges/supermicros/tyans */
+	{ PCI_VENDOR_XGI,		PCI_PRODUCT_XGI_VOLARI_Z7 },
+	{ PCI_VENDOR_XGI,		PCI_PRODUCT_XGI_VOLARI_Z9 },
+};
+
 int
 vga_pci_match(struct device *parent, void *match, void *aux)
 {
@@ -195,6 +220,19 @@ vga_pci_match(struct device *parent, void *match, void *aux)
 	if (!vga_common_probe(pa->pa_iot, pa->pa_memt))
 		return (0);
 
+	return (1);
+}
+
+int
+vga_aperture_needed(struct pci_attach_args *pa)
+{
+#if defined(__i386__) || defined(__amd64__) || \
+    defined(__sparc64__) || defined(__macppc__)
+	if (pci_matchbyid(pa, i915_devices, nitems(i915_devices)) ||
+	    pci_matchbyid(pa, radeon_devices, nitems(radeon_devices)) ||
+	    pci_matchbyid(pa, aperture_blacklist, nitems(aperture_blacklist)))
+		return (0);
+#endif
 	return (1);
 }
 
@@ -253,6 +291,9 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		}
 #endif
+
+	if (vga_aperture_needed(pa))
+		printf("%s: aperture needed\n", sc->sc_dev.dv_xname);
 
 #if NINTAGP > 0
 	/*
