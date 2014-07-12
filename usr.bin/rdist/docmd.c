@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.29 2014/07/05 07:22:18 guenther Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.30 2014/07/12 03:02:27 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -888,9 +888,7 @@ docmdhost(struct cmd *cmd, char **filev)
 
 	if (!nflag) {
 		currenthost = (cmd->c_name) ? cmd->c_name : "<unknown>";
-#if	defined(SETARGS) || defined(HAVE_SETPROCTITLE)
 		setproctitle("update %s", currenthost);
-#endif 	/* SETARGS || HAVE_SETPROCTITLE */
 	}
 
 	switch (cmd->c_type) {

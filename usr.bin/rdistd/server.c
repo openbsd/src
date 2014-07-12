@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.31 2014/07/05 07:39:18 guenther Exp $	*/
+/*	$OpenBSD: server.c,v 1.32 2014/07/12 03:02:27 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -1304,9 +1304,7 @@ setconfig(char *cmd)
 		if (!fromhost) {
 			fromhost = xstrdup(cp);
 			message(MT_SYSLOG, "startup for %s", fromhost);
-#if defined(SETARGS) || defined(HAVE_SETPROCTITLE)
 			setproctitle("serving %s", cp);
-#endif /* SETARGS || HAVE_SETPROCTITLE */
 		}
 		break;
 

@@ -29,7 +29,7 @@
  */
 
 /*
- * $OpenBSD: os-openbsd.h,v 1.23 2014/07/10 14:29:27 tedu Exp $
+ * $OpenBSD: os-openbsd.h,v 1.24 2014/07/12 03:02:27 guenther Exp $
  */
 
 /*
@@ -37,34 +37,9 @@
  */
 
 /*
- * NOTE: OpenBSD uses 64-bit file size semantics, and so you
- * must be careful when using varargs-type functions
- * like the *printf family when printing elements which
- * might be 64-bits (such as stat->st_size from stat.h).
- */
-
-/*
- * Set process args to messages that show up when running ps(1)
- *
- * OpenBSD has setproctitle() in libc so we don't want to use rdist's.
- */
-#define HAVE_SETPROCTITLE
-
-/*
- * Use f_fstypename in struct statfs.
- */
-#define HAVE_FSTYPENAME	1
-
-/*
  * Type of set file time function available
  */
 #define SETFTIME_TYPE	SETFTIME_UTIMES
-
-/*
- * Things we have
- */
-#define HAVE_VIS			/* Have vis() */
-#define HAVE_PATHS_H			/* Have <paths.h> */
 
 /*
  * Path to remote shell command
