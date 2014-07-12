@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.1 2014/03/08 14:34:11 mpi Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.2 2014/07/12 17:38:51 yuo Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -44,7 +44,9 @@
 #define PCI_XHCI_FLADJ		0x61	/* RW frame length adjust */
 
 #define PCI_XHCI_INTEL_XUSB2PR	0xd0	/* Intel USB2 Port Routing */
+#define PCI_XHCI_INTEL_XUSB2PRM	0xd4	/* Intel USB2 Port Routing Mask */
 #define PCI_XHCI_INTEL_USB3_PSSEN 0xd8	/* Intel USB3 Port SuperSpeed Enable */
+#define PCI_XHCI_INTEL_USB3PRM	0xdc	/* Intel USB3 Port Routing Mask */
 
 /* XHCI capability registers */
 #define XHCI_CAPLENGTH		0x00	/* RO Capability reg. length field */
@@ -194,7 +196,8 @@
 #define  XHCI_IMOD_IVAL_SET(x)	(((x) & 0xffff) << 0)	/* 250ns unit */
 #define  XHCI_IMOD_ICNT_GET(x)	(((x) >> 16) & 0xffff)	/* 250ns unit */
 #define  XHCI_IMOD_ICNT_SET(x)	(((x) & 0xffff) << 16)	/* 250ns unit */
-#define  XHCI_IMOD_DEFAULT	0x000003E8U		/* 8000 IRQ/second */
+#define  XHCI_IMOD_DEFAULT	0x000001F4U		/* 8000 IRQ/second */
+#define  XHCI_IMOD_DEFAULT_LP	0x000003E8U		/* 4000 IRQ/second */
 
 /* XHCI event ring segment table size */
 #define XHCI_ERSTSZ(n)		(0x0028 + (0x20 * (n)))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_pci.c,v 1.3 2014/04/07 23:32:41 brad Exp $ */
+/*	$OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -87,6 +87,41 @@ xhci_pci_match(struct device *parent, void *match, void *aux)
 	return (0);
 }
 
+static int
+xhci_pci_port_route(struct xhci_pci_softc *psc)
+{
+	pcireg_t val;
+
+	/* 
+	 * Check USB3 Port Routing Mask register that indicates the ports
+	 * can be changed from OS, and turn on by USB3 Port SS Enable register.
+	 */ 
+	val = pci_conf_read(psc->sc_pc, psc->sc_tag, PCI_XHCI_INTEL_USB3PRM);
+	DPRINTF(("%s: USB3PRM / USB3.0 configurable ports: 0x%08x\n",
+	    psc->sc.sc_bus.bdev.dv_xname, val));
+
+	pci_conf_write(psc->sc_pc, psc->sc_tag, PCI_XHCI_INTEL_USB3_PSSEN, val);
+	val = pci_conf_read(psc->sc_pc, psc->sc_tag, PCI_XHCI_INTEL_USB3_PSSEN);
+	DPRINTF(("%s: USB3_PSSEN / Enabled USB3.0 ports under xHCI: 0x%08x\n",
+	    psc->sc.sc_bus.bdev.dv_xname, val));
+
+	/*
+	 * Check USB2 Port Routing Mask register that indicates the USB2.0 
+	 * ports to be controlled by xHCI HC, and switch them to xHCI HC.
+	 */
+	val = pci_conf_read(psc->sc_pc, psc->sc_tag, PCI_XHCI_INTEL_XUSB2PRM);
+	DPRINTF(("%s: XUSB2PRM / USB2.0 ports can switch from EHCI to xHCI:"
+	    "0x%08x\n", psc->sc.sc_bus.bdev.dv_xname, val));
+
+	pci_conf_write(psc->sc_pc, psc->sc_tag, PCI_XHCI_INTEL_XUSB2PR, val);
+	val = pci_conf_read(psc->sc_pc, psc->sc_tag, PCI_XHCI_INTEL_XUSB2PR);
+	DPRINTF(("%s: XUSB2PR / USB2.0 ports under xHCI: 0x%08x\n",
+	    psc->sc.sc_bus.bdev.dv_xname, val));
+
+	return (0);
+}
+
+
 void
 xhci_pci_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -152,6 +187,17 @@ xhci_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: init failed, error=%d\n",
 		    psc->sc.sc_bus.bdev.dv_xname, error);
 		goto disestablish_ret;
+	}
+
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_INTEL:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_INTEL_8SERIES_XHCI:
+		case PCI_PRODUCT_INTEL_8SERIES_LP_XHCI:
+		case PCI_PRODUCT_INTEL_7SERIES_XHCI:
+			xhci_pci_port_route(psc);
+			break;
+		}
 	}
 
 	/* Attach usb device. */
