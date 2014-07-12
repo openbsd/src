@@ -1,17 +1,14 @@
-#	$OpenBSD: services,v 1.86 2014/07/12 08:01:47 ajacoutot Exp $
+# $OpenBSD: services,v 1.87 2014/07/12 14:51:07 ajacoutot Exp $
 #
 # Network services, Internet style
+# https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
 #
 # Note that it is presently the policy of IANA to assign a single well-known
 # port number for both TCP and UDP; hence, most entries here have two entries
 # even if the protocol doesn't support UDP operations.
-# Updated from RFC 1340, ``Assigned Numbers'' (July 1992).  Not all ports
-# are included, only the more common ones.
-# See also http://www.iana.org/assignments/port-numbers
 #
-#	from: @(#)services	5.8 (Berkeley) 5/9/91
-#
-tcpmux		1/tcp		# TCP port service multiplexer
+
+tcpmux		1/tcp				# TCP port service multiplexer
 echo		7/tcp
 echo		7/udp
 discard		9/tcp		sink null
@@ -21,11 +18,11 @@ daytime		13/tcp
 daytime		13/udp
 netstat		15/tcp
 qotd		17/tcp		quote
-msp		18/tcp		# message send protocol
-msp		18/udp		# message send protocol
+msp		18/tcp				# message send protocol
+msp		18/udp				# message send protocol
 chargen		19/tcp		ttytst source
 chargen		19/udp		ttytst source
-ftp-data	20/tcp		# default ftp data port
+ftp-data	20/tcp				# default ftp data port
 ftp		21/tcp
 ssh		22/tcp
 ssh		22/udp
@@ -43,17 +40,17 @@ tacacs		49/udp		tacas+		# Login Host Protocol (TACACS)
 domain		53/tcp		nameserver	# name-domain server
 domain		53/udp		nameserver
 mtp		57/tcp				# deprecated
-bootps		67/tcp		# BOOTP server
+bootps		67/tcp				# BOOTP server
 bootps		67/udp
-bootpc		68/tcp		# BOOTP client
+bootpc		68/tcp				# BOOTP client
 bootpc		68/udp
 tftp		69/udp
-gopher		70/tcp		# Internet Gopher
+gopher		70/tcp				# Internet Gopher
 gopher		70/udp
 rje		77/tcp		netrjs
 finger		79/tcp
-www		80/tcp		http	# WorldWideWeb HTTP
-www		80/udp			# HyperText Transfer Protocol
+www		80/tcp		http		# WorldWideWeb HTTP
+www		80/udp				# HyperText Transfer Protocol
 link		87/tcp		ttylink
 kerberos	88/udp		kerberos-sec	# Kerberos 5 UDP
 kerberos	88/tcp		kerberos-sec	# Kerberos 5 TCP
@@ -61,15 +58,15 @@ supdup		95/tcp
 # 100 - reserved
 hostnames	101/tcp		hostname	# usually from sri-nic
 iso-tsap	102/tcp		tsap		# part of ISODE.
-x400		103/tcp			# ISO E-mail
+x400		103/tcp				# ISO E-mail
 x400-snd	104/tcp
-csnet-ns	105/tcp		cso-ns	# also used by CSO name server
+csnet-ns	105/tcp		cso-ns		# also used by CSO name server
 csnet-ns	105/udp		cso-ns
-rtelnet		107/tcp		# Remote Telnet
+rtelnet		107/tcp				# Remote Telnet
 rtelnet		107/udp
 pop2		109/tcp		postoffice	# POP version 2
 pop2		109/udp
-pop3		110/tcp		# POP version 3
+pop3		110/tcp				# POP version 3
 pop3		110/udp
 sunrpc		111/tcp		portmap rpcbind
 sunrpc		111/udp		portmap rpcbind
@@ -141,31 +138,6 @@ kpasswd		464/udp				# Kerberos 5 password changing
 photuris	468/tcp				# Photuris Key Management
 photuris	468/udp
 isakmp		500/udp				# ISAKMP key management
-klogin		543/tcp				# Kerberos authenticated rlogin
-kshell		544/tcp		krcmd		# Kerberos remote shell
-ekshell		545/tcp				# Kerberos encrypted shell
-afpovertcp	548/tcp				# AFP over TCP
-afpovertcp	548/udp				# AFP over TCP
-rtsp		554/tcp				# Real Time Stream Control Proto
-rtsp		554/udp				# Real Time Stream Control Proto
-submission	587/tcp		msa		# mail message submission
-submission	587/udp		msa		# mail message submission
-asf-rmcp	623/udp				# ASF/IPMI Proto
-ipp		631/tcp				# Internet Printing Protocol
-ipp		631/udp				# Internet Printing Protocol
-ldaps		636/tcp				# LDAP over SSL
-ldaps		636/udp
-ldp		646/tcp
-ldp		646/udp
-rsync		873/tcp				# rsync server
-cddb		888/tcp		cddbp		# Audio CD Database
-imaps		993/tcp				# imap4 protocol over TLS/SSL
-imaps		993/udp				# imap4 protocol over TLS/SSL
-pop3s		995/tcp		spop3		# pop3 protocol over TLS/SSL
-pop3s		995/udp		spop3		# pop3 protocol over TLS/SSL
-#
-# UNIX specific services
-#
 exec		512/tcp
 biff		512/udp		comsat
 login		513/tcp
@@ -184,26 +156,35 @@ conference	531/tcp		chat
 netnews		532/tcp		readnews
 netwall		533/udp				# -for emergency broadcasts
 uucp		540/tcp		uucpd		# uucp daemon
+klogin		543/tcp				# Kerberos authenticated rlogin
+kshell		544/tcp		krcmd		# Kerberos remote shell
+ekshell		545/tcp				# Kerberos encrypted shell
 dhcpv6-client	546/udp				# DHCPv6 client
 dhcpv6-server	547/udp				# DHCPv6 server
 remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
+afpovertcp	548/tcp				# AFP over TCP
+afpovertcp	548/udp				# AFP over TCP
+rtsp		554/tcp				# Real Time Stream Control Proto
+rtsp		554/udp				# Real Time Stream Control Proto
+submission	587/tcp		msa		# mail message submission
+submission	587/udp		msa		# mail message submission
+asf-rmcp	623/udp				# ASF/IPMI Proto
+ipp		631/tcp				# Internet Printing Protocol
+ipp		631/udp				# Internet Printing Protocol
+ldaps		636/tcp				# LDAP over SSL
+ldaps		636/udp
+ldp		646/tcp
+ldp		646/udp
 silc		706/tcp				# Secure Live Internet Conferencing
 silc		706/udp
-#
-# From ``Assigned Numbers'':
-#
-#> The Registered Ports are not controlled by the IANA and on most systems
-#> can be used by ordinary user processes or programs executed by ordinary
-#> users.
-#
-#> Ports are used in the TCP [45,106] to name the ends of logical
-#> connections which carry long term conversations.  For the purpose of
-#> providing services to unknown callers, a service contact port is
-#> defined.  This list specifies the port used by the server process as its
-#> contact port.  While the IANA can not control uses of these ports it
-#> does register or list uses of these ports as a convenience to the
-#> community.
-#
+kerberos-adm	749/tcp				# Kerberos 5 kadmin
+kerberos-adm	749/udp				# Kerberos 5 kadmin
+rsync		873/tcp				# rsync server
+cddb		888/tcp		cddbp		# Audio CD Database
+imaps		993/tcp				# imap4 protocol over TLS/SSL
+imaps		993/udp				# imap4 protocol over TLS/SSL
+pop3s		995/tcp		spop3		# pop3 protocol over TLS/SSL
+pop3s		995/udp		spop3		# pop3 protocol over TLS/SSL
 socks		1080/tcp			# Socks
 kpop		1109/tcp			# Pop with Kerberos
 ms-sql-s	1433/tcp	Microsoft-SQL-Server
@@ -256,70 +237,75 @@ rfe		5002/udp			# Actually uses UDP only
 sip		5060/tcp			# SIP
 sip		5060/udp			# SIP
 postgresql	5432/tcp			# PostgreSQL
+postgresql	5432/udp			# PostgreSQL
+afs3-fileserver	7000/tcp			# AFS fileserver
+afs3-fileserver	7000/udp			# AFS fileserver
+afs3-callback	7001/tcp			# AFS callback server
+afs3-callback	7001/udp			# AFS callback server
+afs3-prserver	7002/tcp			# AFS protection server
+afs3-prserver	7002/udp			# AFS protection server
+afs3-vlserver	7003/tcp			# AFS volumelocation server
+afs3-vlserver	7003/udp			# AFS volumelocation server
+afs3-kaserver	7004/tcp			# AFS kerberos authentication server
+afs3-kaserver	7004/udp			# AFS kerberos authentication server
+afs3-volser	7005/tcp			# AFS volume server
+afs3-volser	7005/udp			# AFS volume server
+afs3-errors	7006/tcp			# AFS error interpretation service
+afs3-errors	7006/udp			# AFS error interpretation service
+afs3-bos	7007/tcp			# AFS basic overseer process
+afs3-bos	7007/udp			# AFS basic overseer process
+afs3-update	7008/tcp			# AFS server to server update
+afs3-update	7008/udp			# AFS server to server update
+afs3-rmtsys	7009/tcp			# AFS remote cache manager service
+afs3-rmtsys	7009/udp			# AFS remote cache manager service
 ub-dns-control	8953/tcp			# unbound dns nameserver control
-#		8953/udp			# reserved
 git		9418/tcp			# git pack transfer service
 git		9418/udp			# git pack transfer service
 zabbix-agent	10050/tcp			# Zabbix Agent
 zabbix-agent	10050/udp			# Zabbix Agent
 zabbix-trapper	10051/tcp			# Zabbix Trapper
 zabbix-trapper	10051/udp			# Zabbix Trapper
-amt-soap-http	16992/tcp		# Intel AMT SOAP/HTTP
-amt-soap-http	16992/udp		# Intel AMT SOAP/HTTP
-amt-soap-https	16993/tcp		# Intel AMT SOAP/HTTPS
-amt-soap-https	16993/udp		# Intel AMT SOAP/HTTPS
-amt-redir-tcp	16994/tcp		# Intel AMT Redirection/TCP
-amt-redir-tcp	16994/udp		# Intel AMT Redirection/TCP
-amt-redir-tls	16995/tcp		# Intel AMT Redirection/TLS
-amt-redir-tls	16995/udp		# Intel AMT Redirection/TLS
-openwebnet	20005/tcp	xcept	# OpenWebNet protocol for electric network
-openwebnet	20005/udp	xcept	# OpenWebNet protocol for electric network
-#
-# Kerberos and AFS Services
-#
-kerberos-adm		749/udp		# Kerberos 5 kadmin
-kerberos-adm		749/tcp		# Kerberos 5 kadmin
-kerberos-iv		750/udp	kdc	# Kerberos authentication--udp
-kerberos-iv		750/tcp	kdc	# Kerberos authentication--tcp
-kerberos_master 	751/udp		# Kerberos 4 kadmin
-kerberos_master 	751/tcp		# Kerberos 4 kadmin
-krb_prop		754/tcp	hprop	# Kerberos slave propagation
-krbupdate		760/tcp	kreg	# BSD Kerberos registration
-afs3-fileserver		7000/udp	# AFS fileserver
-afs3-callback		7001/udp	# AFS callback server
-afs3-prserver		7002/udp	# AFS protection server
-afs3-vlserver		7003/udp	# AFS volumelocation server
-afs3-kaserver		7004/udp	# AFS kerberos authentication server
-afs3-volser		7005/udp	# AFS volume server
-afs3-errors		7006/udp	# AFS error server ?
-afs3-bos		7007/udp	# AFS basic over-see server ?
-afs3-update		7008/udp	# AFS server to server update
-afs3-rmtsys		7009/udp	# AFS remote cache manager service
+amt-soap-http	16992/tcp			# Intel AMT SOAP/HTTP
+amt-soap-http	16992/udp			# Intel AMT SOAP/HTTP
+amt-soap-https	16993/tcp			# Intel AMT SOAP/HTTPS
+amt-soap-https	16993/udp			# Intel AMT SOAP/HTTPS
+amt-redir-tcp	16994/tcp			# Intel AMT Redirection/TCP
+amt-redir-tcp	16994/udp			# Intel AMT Redirection/TCP
+amt-redir-tls	16995/tcp			# Intel AMT Redirection/TLS
+amt-redir-tls	16995/udp			# Intel AMT Redirection/TLS
+openwebnet	20005/tcp	xcept		# OpenWebNet protocol for electric network
+openwebnet	20005/udp	xcept		# OpenWebNet protocol for electric network
 #
 # Unofficial services
 #
-pop3pw		106/tcp	poppassd	# Eudora compatible PW changer
-smtps		465/tcp			# SSL-wrapped SMTP
-conserver	782/tcp			# console server
-supfilesrv	871/tcp			# SUP server
-swat		901/tcp			# Samba Web Administration Tool
-supfiledbg	1127/tcp		# SUP debugging
-support		1529/tcp		# GNATS, cygnus bug tracker
+pop3pw		106/tcp		poppassd	# Eudora compatible PW changer
+smtps		465/tcp				# SSL-wrapped SMTP
+kerberos-iv	750/udp		kdc		# Kerberos authentication--udp
+kerberos-iv	750/tcp		kdc		# Kerberos authentication--tcp
+kerberos_master	751/udp				# Kerberos 4 kadmin
+kerberos_master	751/tcp				# Kerberos 4 kadmin
+krb_prop	754/tcp		hprop		# Kerberos slave propagation
+krbupdate	760/tcp		kreg		# BSD Kerberos registration
+conserver	782/tcp				# console server
+supfilesrv	871/tcp				# SUP server
+swat		901/tcp				# Samba Web Administration Tool
+supfiledbg	1127/tcp			# SUP debugging
+support		1529/tcp			# GNATS, cygnus bug tracker
 datametrics	1645/udp
-ekshell2	2106/tcp		# Encrypted kshell - UColorado, Boulder
-webster		2627/tcp		# Network dictionary
-canna		5680/tcp		# Kana->Kanji server
-sane-port	6566/tcp		# SANE Control Port
-icb		7326/tcp		# Internet Citizen's Band
-spamd		8025/tcp		# spamd(8)
-spamd-sync	8025/udp		# spamd(8) synchronisation
-spamd-cfg	8026/tcp		# spamd(8) configuration
-dhcpd-sync	8067/udp		# dhcpd(8) synchronisation
-hunt		26740/udp		# hunt(6)
+ekshell2	2106/tcp			# Encrypted kshell - UColorado, Boulder
+webster		2627/tcp			# Network dictionary
+canna		5680/tcp			# Kana->Kanji server
+sane-port	6566/tcp			# SANE Control Port
+icb		7326/tcp			# Internet Citizen's Band
+spamd		8025/tcp			# spamd(8)
+spamd-sync	8025/udp			# spamd(8) synchronisation
+spamd-cfg	8026/tcp			# spamd(8) configuration
+dhcpd-sync	8067/udp			# dhcpd(8) synchronisation
+hunt		26740/udp			# hunt(6)
 #
 # Appletalk
 #
-rtmp		1/ddp			# Routing Table Maintenance Protocol
-nbp		2/ddp			# Name Binding Protocol
-echo		4/ddp			# AppleTalk Echo Protocol
-zip		6/ddp			# Zone Information Protocol
+rtmp		1/ddp				# Routing Table Maintenance Protocol
+nbp		2/ddp				# Name Binding Protocol
+echo		4/ddp				# AppleTalk Echo Protocol
+zip		6/ddp				# Zone Information Protocol
