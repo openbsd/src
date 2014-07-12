@@ -21,5 +21,5 @@ zcfree(notused, ptr)
     void *notused;
     void *ptr;
 {
-    free(ptr, M_DEVBUF);
+    free(ptr, M_DEVBUF, 0);
 }
