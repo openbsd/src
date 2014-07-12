@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.32 2014/07/12 03:02:27 guenther Exp $	*/
+/*	$OpenBSD: server.c,v 1.33 2014/07/12 03:10:03 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -94,7 +94,7 @@ cattarget(char *string)
  * Set uid and gid ownership of a file.
  */
 static int
-setownership(char *file, int fd, uid_t uid, gid_t gid, int link)
+setownership(char *file, int fd, uid_t uid, gid_t gid, int islink)
 {
 	int status = -1;
 
@@ -104,13 +104,13 @@ setownership(char *file, int fd, uid_t uid, gid_t gid, int link)
 	if (getuid() != 0) 
 		uid = -1;
 
-	if (link)
+	if (islink)
 		status = lchown(file, uid, gid);
 
-	if (fd != -1 && !link)
+	if (fd != -1 && !islink)
 		status = fchown(fd, uid, gid);
 
-	if (status < 0 && !link)
+	if (status < 0 && !islink)
 		status = chown(file, uid, gid);
 
 	if (status < 0) {
@@ -130,20 +130,20 @@ setownership(char *file, int fd, uid_t uid, gid_t gid, int link)
  * Set mode of a file
  */
 static int
-setfilemode(char *file, int fd, int mode, int link)
+setfilemode(char *file, int fd, int mode, int islink)
 {
 	int status = -1;
 
 	if (mode == -1)
 		return(0);
 
-	if (link)
+	if (islink)
 		status = fchmodat(AT_FDCWD, file, mode, AT_SYMLINK_NOFOLLOW);
 
-	if (fd != -1 && !link)
+	if (fd != -1 && !islink)
 		status = fchmod(fd, mode);
 
-	if (status < 0 && !link)
+	if (status < 0 && !islink)
 		status = chmod(file, mode);
 
 	if (status < 0) {
