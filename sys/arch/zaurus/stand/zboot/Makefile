@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2013/09/10 21:00:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 2014/07/12 21:54:58 jasper Exp $
 
 MAN=	boot.8
 MANSUBDIR=zaurus
@@ -29,7 +29,7 @@ SRCS+=	close.c closeall.c cons.c ctime.c disklabel.c dkcksum.c fstat.c \
 	readdir.c snprintf.c stat.c strerror.c strtol.c ufs.c
 
 .PATH:	${S}/lib/libkern/arch/arm ${S}/lib/libkern
-SRCS+=	strcmp.c strlcpy.c strlen.c strncmp.c strncpy.c write.c \
+SRCS+=	getchar.c strcmp.c strlcpy.c strlen.c strncmp.c strncpy.c write.c \
 	ashrdi3.c divsi3.S divdi3.c moddi3.c qdivrem.c
 
 # local overrides and additions

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_socppc.c,v 1.2 2010/12/06 18:44:49 jasper Exp $	*/
+/*	$OpenBSD: dev_socppc.c,v 1.3 2014/07/12 21:54:58 jasper Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -69,22 +69,6 @@ putchar(c)
 		pch_pos++;
 		break;
 	}
-}
-
-int
-getchar()
-{
-	int c = cngetc();
-
-	if (c == '\r')
-		c = '\n';
-
-	if ((c < ' ' && c != '\n') || c == '\177')
-		return(c);
-
-	putchar(c);
-
-	return(c);
 }
 
 char ttyname_buf[8];

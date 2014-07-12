@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.15 2008/05/25 16:55:31 miod Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.16 2014/07/12 21:54:58 jasper Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -513,22 +513,6 @@ putchar(int c)
 	if (c == '\n')
 		putchar('\r');
 	OF_write(stdout, &ch, 1);
-}
-
-int
-getchar()
-{
-	int c = cngetc();
-
-	if (c == '\r')
-		c = '\n';
-
-	if ((c < ' ' && c != '\n') || c == '\177')
-		return(c);
-
-	putchar(c);
-
-	return(c);
 }
 
 void

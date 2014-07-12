@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2012/08/31 16:13:20 pascal Exp $
+#	$OpenBSD: Makefile,v 1.17 2014/07/12 21:54:58 jasper Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -20,7 +20,7 @@ SRCS=	machdep.c pdc.c itecons.c dev_hppa.c time.c \
 	ct.c dk.c lf.c lif.c cmd_hppa.c loadfile.c elf32.c elf64.c
 
 # stand routines
-SRCS+=	alloc.c exit.c getfile.c gets.c globals.c \
+SRCS+=	alloc.c exit.c getfile.c gets.c getchar.c globals.c \
 	printf.c strerror.c strtol.c strchr.c ctime.c snprintf.c
 
 # io routines

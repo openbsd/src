@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.13 2012/10/30 14:06:29 jsing Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.14 2014/07/12 21:54:58 jasper Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -189,22 +189,6 @@ putchar(int c)
 		pch_pos++;
 		break;
 	}
-}
-
-int
-getchar(void)
-{
-	register int c = cngetc();
-
-	if (c == '\r')
-		c = '\n';
-
-	if ((c < ' ' && c != '\n') || c == '\177')
-		return c;
-
-	putchar(c);
-
-	return c;
 }
 
 char ttyname_buf[8];

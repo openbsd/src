@@ -1,4 +1,4 @@
-/*	$OpenBSD: devs.c,v 1.7 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: devs.c,v 1.8 2014/07/12 21:54:58 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -145,19 +145,4 @@ putchar(int c)
 		pch_pos++;
 		break;
 	}
-}
-
-int
-getchar(void)
-{
-	int c = scif_getc();
-
-	if (c == '\r')
-		c = '\n';
-
-	if ((c < ' ' && c != '\n') || c == '\177')
-		return c;
-
-	putchar(c);
-	return c;
 }

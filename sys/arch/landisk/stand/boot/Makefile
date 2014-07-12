@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2012/09/02 16:21:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2014/07/12 21:54:58 jasper Exp $
 
 MAN=	boot.8
 MLINKS=	boot.8 boot.conf.5
@@ -23,7 +23,7 @@ AFLAGS+= -fno-pie
 SRCS+=	boot.c cmd.c vars.c bootarg.c
 
 .PATH:	${S}/lib/libkern/arch/sh ${S}/lib/libkern
-SRCS+=	strlen.c strlcpy.c
+SRCS+=	getchar.c strlen.c strlcpy.c
 
 SAREL=
 SA_ZLIB=

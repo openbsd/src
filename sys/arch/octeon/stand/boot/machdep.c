@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 2014/07/12 20:36:52 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 2014/07/12 21:54:58 jasper Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -77,22 +77,6 @@ int
 cnspeed(dev_t dev, int s)
 {
 	return (CONSPEED);
-}
-
-int
-getchar()
-{
-	int c = cngetc();
-
-	if (c == '\r')
-		c = '\n';
-
-	if ((c < ' ' && c != '\n') || c == '\177')
-		return c;
-
-	putchar(c);
-
-	return c;
 }
 
 int pch_pos;

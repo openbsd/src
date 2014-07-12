@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.9 2011/06/26 23:19:11 tedu Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.10 2014/07/12 21:54:58 jasper Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -173,22 +173,6 @@ putchar(int c)
 		pch_pos++;
 		break;
 	}
-}
-
-int
-getchar(void)
-{
-	register int c = cngetc();
-
-	if (c == '\r')
-		c = '\n';
-
-	if ((c < ' ' && c != '\n') || c == '\177')
-		return c;
-
-	putchar(c);
-
-	return c;
 }
 
 char ttyname_buf[8];

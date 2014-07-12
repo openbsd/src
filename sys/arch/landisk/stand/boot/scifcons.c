@@ -1,4 +1,4 @@
-/*	$OpenBSD: scifcons.c,v 1.3 2008/06/27 06:03:08 ray Exp $	*/
+/*	$OpenBSD: scifcons.c,v 1.4 2014/07/12 21:54:58 jasper Exp $	*/
 /*	$NetBSD: scifcons.c,v 1.1 2006/09/01 21:26:18 uwe Exp $ */
 /*	NetBSD: scif.c,v 1.38 2004/12/13 02:14:13 chs Exp */
 
@@ -162,7 +162,7 @@ scif_init(unsigned int bps)
 }
 
 int
-scif_getc(void)
+getc(void)
 {
 	unsigned char c, err_c;
 	unsigned short err_c2;

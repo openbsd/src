@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2013/12/28 15:16:28 jsing Exp $
+#	$OpenBSD: Makefile,v 1.27 2014/07/12 21:54:57 jasper Exp $
 
 COPTS?=
 MAN?=	boot.8
@@ -33,8 +33,9 @@ SRCS+=	softraid.c
 .endif
 
 .PATH:	${S}/lib/libsa
-SRCS+=	alloc.c ctime.c exit.c memcmp.c memcpy.c memset.c printf.c snprintf.c \
-	strcmp.c strerror.c strlen.c strncmp.c strncpy.c strtol.c strtoll.c
+SRCS+=	alloc.c ctime.c exit.c getchar.c memcmp.c memcpy.c memset.c printf.c \
+	snprintf.c strcmp.c strerror.c strlen.c strncmp.c strncpy.c strtol.c \
+	strtoll.c
 SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
 	lseek.c open.c read.c readdir.c stat.c
 SRCS+=	elf32.c elf64.c loadfile.c
