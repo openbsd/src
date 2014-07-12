@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.75 2014/07/12 09:04:35 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.76 2014/07/12 09:30:02 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 extern struct lock ufs_hashlock;
 
 int ext2fs_sbupdate(struct ufsmount *, int);
-static int ext2fs_checksb(struct ext2fs *, int);
+static int	e2fs_sbcheck(struct ext2fs *, int);
 
 const struct vfsops ext2fs_vfsops = {
 	ext2fs_mount,
@@ -425,7 +425,7 @@ ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 		return (error);
 	}
 	newfs = (struct ext2fs *)bp->b_data;
-	error = ext2fs_checksb(newfs, (mountp->mnt_flag & MNT_RDONLY) != 0);
+	error = e2fs_sbcheck(newfs, (mountp->mnt_flag & MNT_RDONLY));
 	if (error) {
 		brelse(bp);
 		return (error);
@@ -531,7 +531,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
-	error = ext2fs_checksb(fs, ronly);
+	error = e2fs_sbcheck(fs, ronly);
 	if (error)
 		goto out;
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK | M_ZERO);
@@ -1060,46 +1060,56 @@ ext2fs_cgupdate(struct ufsmount *mp, int waitfor)
 	return (allerror);
 }
 
+/* This is called before the superblock is copied.  Watch out for endianity! */
 static int
-ext2fs_checksb(struct ext2fs *fs, int ronly)
+e2fs_sbcheck(struct ext2fs *fs, int ronly)
 {
-	if (fs2h16(fs->e2fs_magic) != E2FS_MAGIC) {
+	u_int32_t tmp;
+
+	tmp = letoh16(fs->e2fs_magic);
+	if (tmp != E2FS_MAGIC) {
+		printf("ext2fs: wrong magic number 0x%x\n", tmp);
 		return (EIO);		/* XXX needs translation */
 	}
-	if (fs2h32(fs->e2fs_rev) > E2FS_REV1) {
-#ifdef DIAGNOSTIC
-		printf("Ext2 fs: unsupported revision number: %x\n",
-		    fs2h32(fs->e2fs_rev));
-#endif
-		return (EIO);		/* XXX needs translation */
-	}
-	if (fs2h32(fs->e2fs_log_bsize) > 2) { /* block size = 1024|2048|4096 */
-#ifdef DIAGNOSTIC
-		printf("Ext2 fs: bad block size: %d (expected <=2 for ext2 fs)\n",
-		    fs2h32(fs->e2fs_log_bsize));
-#endif
+
+	tmp = letoh32(fs->e2fs_log_bsize);
+	if (tmp > 2) {
+		/* skewed log(block size): 1024 -> 0 | 2048 -> 1 | 4096 -> 2 */
+		tmp += 10;
+		printf("ext2fs: wrong log2(block size) %d\n", tmp);
 		return (EIO);	   /* XXX needs translation */
 	}
+
 	if (fs->e2fs_bpg == 0) {
-#ifdef DIAGNOSTIC
-		printf("Ext2 fs: bad blocks per group: 0\n");
-#endif
+		printf("ext2fs: zero blocks per group\n");
 		return (EIO);
 	}
-	if (fs2h32(fs->e2fs_rev) > E2FS_REV0) {
-		if (fs2h32(fs->e2fs_first_ino) != EXT2_FIRSTINO) {
-			printf("Ext2 fs: unsupported first inode position");
-			return (EINVAL);      /* XXX needs translation */
-		}
-		if (fs2h32(fs->e2fs_features_incompat) &
-		    ~EXT2F_INCOMPAT_SUPP) {
-			printf("Ext2 fs: unsupported optional feature\n");
-			return (EINVAL);      /* XXX needs translation */
-		}
-		if (!ronly && fs2h32(fs->e2fs_features_rocompat) &
-		    ~EXT2F_ROCOMPAT_SUPP) {
-			return (EROFS);      /* XXX needs translation */
-		}
+
+	tmp = letoh32(fs->e2fs_rev);
+	if (tmp > E2FS_REV1) {
+		printf("ext2fs: wrong revision number 0x%x\n", tmp);
+		return (EIO);		/* XXX needs translation */
 	}
+	else if (tmp == E2FS_REV0)
+		return (0);
+
+	tmp = letoh32(fs->e2fs_first_ino);
+	if (tmp != EXT2_FIRSTINO) {
+		printf("ext2fs: first inode at 0x%x\n", tmp);
+		return (EINVAL);      /* XXX needs translation */
+	}
+
+	tmp = letoh32(fs->e2fs_features_incompat);
+	if (tmp & ~EXT2F_INCOMPAT_SUPP) {
+		printf("ext2fs: unsupported incompat features 0x%x\n", tmp);
+		return (EINVAL);      /* XXX needs translation */
+	}
+
+	tmp = letoh32(fs->e2fs_features_rocompat);
+	if (!ronly && (tmp & ~EXT2F_ROCOMPAT_SUPP)) {
+		printf("ext2fs: unsupported R/O compat features 0x%x\n", tmp);
+		return (EROFS);      /* XXX needs translation */
+	}
+
 	return (0);
 }
