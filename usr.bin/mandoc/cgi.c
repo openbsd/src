@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.7 2014/07/12 18:05:50 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.8 2014/07/12 23:40:44 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -76,6 +76,39 @@ static	void		 resp_searchform(const struct req *);
 
 static	const char	 *scriptname; /* CGI script name */
 static	const char	 *httphost; /* hostname used in the URIs */
+
+static	const char *const sec_numbers[] = {
+    "0", "1", "2", "3", "3p", "4", "5", "6", "7", "8", "9"
+};
+static	const char *const sec_names[] = {
+    "All Sections",
+    "1 - General Commands",
+    "2 - System Calls",
+    "3 - Subroutines",
+    "3p - Perl Subroutines",
+    "4 - Special Files",
+    "5 - File Formats",
+    "6 - Games",
+    "7 - Macros and Conventions",
+    "8 - Maintenance Commands",
+    "9 - Kernel Interface"
+};
+static	const int sec_MAX = sizeof(sec_names) / sizeof(char *);
+
+static	const char *const arch_names[] = {
+    "amd64",       "alpha",       "armish",      "armv7",
+    "aviion",      "hppa",        "hppa64",      "i386",
+    "ia64",        "landisk",     "loongson",    "luna88k",
+    "macppc",      "mips64",      "octeon",      "sgi",
+    "socppc",      "solbourne",   "sparc",       "sparc64",
+    "vax",         "zaurus",
+    "amiga",       "arc",         "arm32",       "atari",
+    "beagle",      "cats",        "hp300",       "mac68k",
+    "mvme68k",     "mvme88k",     "mvmeppc",     "palm",
+    "pc532",       "pegasos",     "pmax",        "powerpc",
+    "sun3",        "wgrisc",      "x68k"
+};
+static	const int arch_MAX = sizeof(arch_names) / sizeof(char *);
 
 /*
  * Print a character, escaping HTML along the way.
@@ -334,38 +367,65 @@ resp_searchform(const struct req *req)
 	printf("<DIV ID=\"mancgi\">\n"
 	       "<FORM ACTION=\"%s\" METHOD=\"get\">\n"
 	       "<FIELDSET>\n"
-	       "<LEGEND>Search Parameters</LEGEND>\n"
-	       "<INPUT TYPE=\"submit\" VALUE=\"Search\"> "
-	       "for manuals \n",
+	       "<LEGEND>Manual Page Search Parameters</LEGEND>\n",
 	       scriptname);
-	printf("<SELECT NAME=\"apropos\">\n"
-	       "<OPTION VALUE=\"0\"");
+
+	/* Write query input box. */
+
+	printf(	"<TABLE><TR><TD>\n"
+		"<INPUT TYPE=\"text\" NAME=\"query\" VALUE=\"");
+	if (NULL != req->q.expr)
+		html_print(req->q.expr);
+	puts("\" SIZE=\"40\">");
+
+	/* Write submission and reset buttons. */
+
+	printf(	"<INPUT TYPE=\"submit\" VALUE=\"Submit\">\n"
+		"<INPUT TYPE=\"reset\" VALUE=\"Reset\">\n");
+
+	/* Write show radio button */
+
+	printf(	"</TD><TD>\n"
+		"<INPUT TYPE=\"radio\" ");
 	if (req->q.equal)
-		printf(" SELECTED=\"selected\"");
-	printf(">named</OPTION>\n"
-	       "<OPTION VALUE=\"1\"");
-	if (0 == req->q.equal)
-		printf(" SELECTED=\"selected\"");
-	printf(">matching</OPTION>\n"
-	       "</SELECT>\n"
-	       "<INPUT TYPE=\"text\" NAME=\"query\" VALUE=\"");
-	html_print(req->q.expr ? req->q.expr : "");
-	printf("\">, section "
-	       "<INPUT TYPE=\"text\""
-	       " SIZE=\"4\" NAME=\"sec\" VALUE=\"");
-	html_print(req->q.sec ? req->q.sec : "");
-	printf("\">, arch "
-	       "<INPUT TYPE=\"text\""
-	       " SIZE=\"8\" NAME=\"arch\" VALUE=\"");
-	html_print(req->q.arch ? req->q.arch : "");
-	printf("\">");
+		printf("CHECKED ");
+	printf(	"NAME=\"apropos\" ID=\"show\" VALUE=\"0\">\n"
+		"<LABEL FOR=\"show\">Show named manual page</LABEL>\n");
+
+	/* Write section selector. */
+
+	printf(	"</TD></TR><TR><TD>\n"
+		"<SELECT NAME=\"sec\">");
+	for (i = 0; i < sec_MAX; i++) {
+		printf("<OPTION VALUE=\"%s\"", sec_numbers[i]);
+		if (NULL != req->q.sec &&
+		    0 == strcmp(sec_numbers[i], req->q.sec))
+			printf(" SELECTED");
+		printf(">%s</OPTION>\n", sec_names[i]);
+	}
+	puts("</SELECT>");
+
+	/* Write architecture selector. */
+
+	puts("<SELECT NAME=\"arch\">");
+	for (i = 0; i < arch_MAX; i++) {
+		printf("<OPTION VALUE=\"%s\"", arch_names[i]);
+		if (NULL != req->q.arch &&
+		    0 == strcmp(arch_names[i], req->q.arch))
+			printf(" SELECTED");
+		printf(">%s</OPTION>\n", arch_names[i]);
+	}
+	puts("</SELECT>");
+
+	/* Write manpath selector. */
+
 	if (req->psz > 1) {
-		puts(", in <SELECT NAME=\"manpath\">");
+		puts("<SELECT NAME=\"manpath\">");
 		for (i = 0; i < (int)req->psz; i++) {
 			printf("<OPTION ");
 			if (NULL == req->q.manpath ? 0 == i :
 			    0 == strcmp(req->q.manpath, req->p[i]))
-				printf("SELECTED=\"selected\" ");
+				printf("SELECTED ");
 			printf("VALUE=\"");
 			html_print(req->p[i]);
 			printf("\">");
@@ -374,8 +434,17 @@ resp_searchform(const struct req *req)
 		}
 		puts("</SELECT>");
 	}
-	puts("&mdash;\n"
-	     "<INPUT TYPE=\"reset\" VALUE=\"Reset\">\n"
+
+	/* Write search radio button */
+
+	printf(	"</TD><TD>\n"
+		"<INPUT TYPE=\"radio\" ");
+	if (0 == req->q.equal)
+		printf("CHECKED ");
+	printf(	"NAME=\"apropos\" ID=\"search\" VALUE=\"1\">\n"
+		"<LABEL FOR=\"search\">Search with apropos query</LABEL>\n");
+
+	puts("</TD></TR></TABLE>\n"
 	     "</FIELDSET>\n"
 	     "</FORM>\n"
 	     "</DIV>");
