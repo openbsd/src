@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.24 2014/07/12 03:09:29 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.25 2014/07/12 03:13:12 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -96,17 +96,6 @@
 #endif
 #ifndef FALSE
 #define FALSE		0
-#endif
-
-	/* file modes */
-#ifndef S_IXUSR
-#define S_IXUSR		0000100
-#endif
-#ifndef S_IXGRP
-#define S_IXGRP		0000010
-#endif
-#ifndef S_IXOTH
-#define S_IXOTH		0000001
 #endif
 
 	/* lexical definitions */
@@ -289,9 +278,6 @@ extern int		optind;		/* Option index into argv */
 extern int 		debug;		/* Debugging flag */
 extern opt_t 		defoptions;	/* Default install options */
 extern int 		do_fork;	/* Should we do fork()'ing */
-#ifndef __STDC__
-extern int 		errno;		/* System error number */
-#endif
 extern int 		isserver;	/* Acting as remote server */
 extern int 		nerrs;		/* Number of errors seen */
 extern int 		nflag;		/* NOP flag, don't execute commands */
