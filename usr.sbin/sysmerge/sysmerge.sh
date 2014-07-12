@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.135 2014/07/12 15:31:54 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.136 2014/07/12 15:58:14 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -114,9 +114,8 @@ extract_sets() {
 			error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks ./var/db/sysmerge/${_set}sum"
 
 		(cd ${TEMPROOT} && tar -xzphf "${_tgz}" && \
-			tar -tzf "${_tgz}" | while read _f; do
-				[[ ! -h ${_f} ]] && cksum ${_f} >> ${WRKDIR}/${_set}sum; done) || \
-					error_rm_wrkdir "failed to extract ${_tgz} and create checksum file"
+			find . -type f -and ! -type l | xargs sha256 -h ${WRKDIR}/${_set}sum) || \
+			error_rm_wrkdir "failed to extract ${_tgz} and create checksum file"
 		rm "${_tgz}"
 	done
 }
@@ -158,7 +157,7 @@ prepare_src() {
 	# 2>/dev/null: distribution-etc-root-var complains /var/tmp is world writable
 	(cd ${SRCDIR}/etc && \
 	 make DESTDIR=${TEMPROOT} distribution-etc-root-var >/dev/null 2>&1 && \
-	 cd ${TEMPROOT} && find . -type f -and ! -type l | xargs cksum > ${WRKDIR}/${SRCSUM}) || \
+	 cd ${TEMPROOT} && find . -type f -and ! -type l | xargs sha256 -h ${WRKDIR}/${SRCSUM}) || \
 		error_rm_wrkdir "failed to populate from ${SRCDIR} and create checksum file"
 }
 
@@ -186,7 +185,7 @@ sm_populate() {
 			if [ -z "${DIFFMODE}" ]; then
 				# 2>/dev/null: if file got removed manually but is still in the sum file
 				_R=$(cd ${TEMPROOT} && \
-					cksum -c ${DESTDIR}/${DBDIR}/${i} 2>/dev/null | awk '/OK/ { print $2 }' | sed 's/[:]//')
+					sha256 -c ${DESTDIR}/${DBDIR}/${i} 2>/dev/null | awk '/OK/ { print $2 }' | sed 's/[:]//')
 				for _r in ${_R}; do
 					if [ -f ${DESTDIR}/${_r} -a -f ${TEMPROOT}/${_r} ]; then
 						rm -f ${TEMPROOT}/${_r}
@@ -198,7 +197,7 @@ sm_populate() {
 			_D=$(diff -u ${WRKDIR}/${i} ${DESTDIR}/${DBDIR}/${i} | grep -E '^\+' | sed '1d' | awk '{print $3}')
 			for _d in ${_D}; do
 				# 2>/dev/null: if file got removed manually but is still in the sum file
-				CURSUM=$(cd ${DESTDIR:=/} && cksum ${_d} 2>/dev/null)
+				CURSUM=$(cd ${DESTDIR:=/} && sha256 ${_d} 2>/dev/null)
 				[ -n "$(grep "${CURSUM}" ${DESTDIR}/${DBDIR}/${i})" -a -z "$(grep "${CURSUM}" ${WRKDIR}/${i})" ] && \
 					_array="${_array} ${_d}"
 			done
