@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.52 2014/04/07 10:04:17 mpi Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.53 2014/07/12 18:50:00 tedu Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -1381,7 +1381,7 @@ linux_sa_get(p, sgp, sap, osa, osalen)
 
     out:
 	*osalen = alloclen;
-	free(kosa, M_TEMP);
+	free(kosa, M_TEMP, 0);
 	return (error);
 }
 

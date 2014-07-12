@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.20 2013/06/11 16:42:15 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.21 2014/07/12 18:50:00 tedu Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -287,10 +287,10 @@ searchloop:
 			cd9660_rrip_getname(ep,altname,&namelen,&dp->i_ino,imp);
 			if (namelen == cnp->cn_namelen
 			    && !bcmp(name,altname,namelen)) {
-				free(altname, M_TEMP);
+				free(altname, M_TEMP, 0);
 				goto found;
 			}
-			free(altname, M_TEMP);
+			free(altname, M_TEMP, 0);
 			ino = 0;
 			break;
 		}

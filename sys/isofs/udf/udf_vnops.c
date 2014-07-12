@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.54 2013/12/14 02:57:25 guenther Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.55 2014/07/12 18:50:00 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -598,7 +598,7 @@ udf_getfid(struct udf_dirstream *ds)
 	 */
 	if (ds->fid_fragment && ds->buf != NULL) {
 		ds->fid_fragment = 0;
-		free(ds->buf, M_UDFFID);
+		free(ds->buf, M_UDFFID, 0);
 	}
 
 	fid = (struct fileid_desc*)&ds->data[ds->off];
@@ -699,7 +699,7 @@ udf_closedir(struct udf_dirstream *ds)
 	}
 
 	if (ds->fid_fragment && ds->buf != NULL)
-		free(ds->buf, M_UDFFID);
+		free(ds->buf, M_UDFFID, 0);
 
 	pool_put(&udf_ds_pool, ds);
 }
@@ -1172,7 +1172,7 @@ udf_reclaim(void *v)
 		}
 
 		if (up->u_fentry != NULL)
-			free(up->u_fentry, M_UDFFENTRY);
+			free(up->u_fentry, M_UDFFENTRY, 0);
 
 		pool_put(&unode_pool, up);
 		vp->v_data = NULL;

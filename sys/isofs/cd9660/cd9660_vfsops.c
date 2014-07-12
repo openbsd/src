@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.67 2014/05/09 03:54:28 tedu Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.68 2014/07/12 18:50:00 tedu Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -109,7 +109,7 @@ cd9660_mountroot()
 	if ((error = iso_mountfs(rootvp, mp, p, &args)) != 0) {
 		mp->mnt_vfc->vfc_refcount--;
 		vfs_unbusy(mp);
-                free(mp, M_MOUNT);
+                free(mp, M_MOUNT, 0);
                 return (error);
         }
 
@@ -456,7 +456,7 @@ out:
 	VOP_UNLOCK(devvp, 0, p);
 
 	if (isomp) {
-		free((caddr_t)isomp, M_ISOFSMNT);
+		free((caddr_t)isomp, M_ISOFSMNT, 0);
 		mp->mnt_data = (qaddr_t)0;
 	}
 	return (error);
@@ -588,7 +588,7 @@ cd9660_unmount(mp, mntflags, p)
 	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
 	vput(isomp->im_devvp);
-	free((caddr_t)isomp, M_ISOFSMNT);
+	free((caddr_t)isomp, M_ISOFSMNT, 0);
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);

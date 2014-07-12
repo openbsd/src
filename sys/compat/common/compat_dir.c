@@ -1,4 +1,4 @@
-/* 	$OpenBSD: compat_dir.c,v 1.8 2014/01/15 05:31:51 deraadt Exp $	*/
+/* 	$OpenBSD: compat_dir.c,v 1.9 2014/07/12 18:50:00 tedu Exp $	*/
 
 /*
  * Copyright (c) 2000 Constantine Sapuntzakis
@@ -71,7 +71,7 @@ readdir_with_callback(struct file *fp, off_t *off, u_long nbytes,
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, curproc);
 	if (error) {
-		free(buf, M_TEMP);
+		free(buf, M_TEMP, 0);
 		return (error);
 	}
 
@@ -124,6 +124,6 @@ again:
 eof:
 out:
 	VOP_UNLOCK(vp, 0, curproc);
-	free(buf, M_TEMP);
+	free(buf, M_TEMP, 0);
 	return (error);
 }

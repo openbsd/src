@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.41 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.42 2014/07/12 18:50:00 tedu Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*-
@@ -154,7 +154,7 @@ linux_e_proc_exit(struct proc *p)
 	}
 
 	/* free Linux emuldata and set the pointer to null */
-	free(p->p_emuldata, M_EMULDATA);
+	free(p->p_emuldata, M_EMULDATA, 0);
 	p->p_emuldata = NULL;
 }
 
@@ -228,7 +228,7 @@ recognized:
 		if ((error = emul_find(p, NULL, linux_emul_path, itp, &bp, 0)))
 			return (error);
 		error = copystr(bp, itp, MAXPATHLEN, &len);
-		free(bp, M_TEMP);
+		free(bp, M_TEMP, 0);
 		if (error)
 			return (error);
 	}

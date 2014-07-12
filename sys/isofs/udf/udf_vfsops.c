@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.41 2013/05/30 17:35:01 guenther Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.42 2014/07/12 18:50:00 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -438,10 +438,10 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 
 bail:
 	if (ump->um_hashtbl != NULL)
-		free(ump->um_hashtbl, M_UDFMOUNT);
+		free(ump->um_hashtbl, M_UDFMOUNT, 0);
 
 	if (ump != NULL) {
-		free(ump, M_UDFMOUNT);
+		free(ump, M_UDFMOUNT, 0);
 		mp->mnt_data = NULL;
 		mp->mnt_flag &= ~MNT_LOCAL;
 	}
@@ -482,15 +482,15 @@ udf_unmount(struct mount *mp, int mntflags, struct proc *p)
 	vrele(devvp);
 
 	if (ump->um_flags & UDF_MNT_USES_VAT)
-		free(ump->um_vat, M_UDFMOUNT);
+		free(ump->um_vat, M_UDFMOUNT, 0);
 
 	if (ump->um_stbl != NULL)
-		free(ump->um_stbl, M_UDFMOUNT);
+		free(ump->um_stbl, M_UDFMOUNT, 0);
 
 	if (ump->um_hashtbl != NULL)
-		free(ump->um_hashtbl, M_UDFMOUNT);
+		free(ump->um_hashtbl, M_UDFMOUNT, 0);
 
-	free(ump, M_UDFMOUNT);
+	free(ump, M_UDFMOUNT, 0);
 
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
@@ -634,7 +634,7 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	bp = NULL;
 
 	if ((error = udf_allocv(mp, &vp, p))) {
-		free(up->u_fentry, M_UDFFENTRY);
+		free(up->u_fentry, M_UDFFENTRY, 0);
 		pool_put(&unode_pool, up);
 		return (error); /* Error from udf_allocv() */
 	}
@@ -792,7 +792,7 @@ udf_get_spartmap(struct umount *ump, struct part_map_spare *pms)
 	if (error) {
 		if (bp != NULL)
 			brelse(bp);
-		free(ump->um_stbl, M_UDFMOUNT);
+		free(ump->um_stbl, M_UDFMOUNT, 0);
 		return (error); /* Failed to read sparing table */
 	}
 
@@ -801,7 +801,7 @@ udf_get_spartmap(struct umount *ump, struct part_map_spare *pms)
 	bp = NULL;
 
 	if (udf_checktag(&ump->um_stbl->tag, 0)) {
-		free(ump->um_stbl, M_UDFMOUNT);
+		free(ump->um_stbl, M_UDFMOUNT, 0);
 		return (EINVAL); /* Invalid sparing table found */
 	}
 

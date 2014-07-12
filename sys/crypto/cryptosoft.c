@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.69 2013/08/25 14:26:56 jsing Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.70 2014/07/12 18:50:00 tedu Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -683,7 +683,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 	else
 		result = cxf->decompress(data, crd->crd_len, &out);
 
-	free(data, M_CRYPTO_DATA);
+	free(data, M_CRYPTO_DATA, 0);
 	if (result == 0)
 		return EINVAL;
 
@@ -695,7 +695,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 	if (crd->crd_flags & CRD_F_COMP) {
 		if (result > crd->crd_len) {
 			/* Compression was useless, we lost time */
-			free(out, M_CRYPTO_DATA);
+			free(out, M_CRYPTO_DATA, 0);
 			return 0;
 		}
 	}
@@ -726,7 +726,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 			}
 		}
 	}
-	free(out, M_CRYPTO_DATA);
+	free(out, M_CRYPTO_DATA, 0);
 	return 0;
 }
 
@@ -774,7 +774,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		if (swcr_sessions) {
 			bcopy(swcr_sessions, swd,
 			    (swcr_sesnum / 2) * sizeof(struct swcr_data *));
-			free(swcr_sessions, M_CRYPTO_DATA);
+			free(swcr_sessions, M_CRYPTO_DATA, 0);
 		}
 
 		swcr_sessions = swd;
@@ -1023,7 +1023,7 @@ swcr_freesession(u_int64_t tid)
 
 			if (swd->sw_kschedule) {
 				explicit_bzero(swd->sw_kschedule, txf->ctxsize);
-				free(swd->sw_kschedule, M_CRYPTO_DATA);
+				free(swd->sw_kschedule, M_CRYPTO_DATA, 0);
 			}
 			break;
 
@@ -1037,11 +1037,11 @@ swcr_freesession(u_int64_t tid)
 
 			if (swd->sw_ictx) {
 				explicit_bzero(swd->sw_ictx, axf->ctxsize);
-				free(swd->sw_ictx, M_CRYPTO_DATA);
+				free(swd->sw_ictx, M_CRYPTO_DATA, 0);
 			}
 			if (swd->sw_octx) {
 				explicit_bzero(swd->sw_octx, axf->ctxsize);
-				free(swd->sw_octx, M_CRYPTO_DATA);
+				free(swd->sw_octx, M_CRYPTO_DATA, 0);
 			}
 			break;
 
@@ -1051,11 +1051,11 @@ swcr_freesession(u_int64_t tid)
 
 			if (swd->sw_ictx) {
 				explicit_bzero(swd->sw_ictx, axf->ctxsize);
-				free(swd->sw_ictx, M_CRYPTO_DATA);
+				free(swd->sw_ictx, M_CRYPTO_DATA, 0);
 			}
 			if (swd->sw_octx) {
 				explicit_bzero(swd->sw_octx, swd->sw_klen);
-				free(swd->sw_octx, M_CRYPTO_DATA);
+				free(swd->sw_octx, M_CRYPTO_DATA, 0);
 			}
 			break;
 
@@ -1068,12 +1068,12 @@ swcr_freesession(u_int64_t tid)
 
 			if (swd->sw_ictx) {
 				explicit_bzero(swd->sw_ictx, axf->ctxsize);
-				free(swd->sw_ictx, M_CRYPTO_DATA);
+				free(swd->sw_ictx, M_CRYPTO_DATA, 0);
 			}
 			break;
 		}
 
-		free(swd, M_CRYPTO_DATA);
+		free(swd, M_CRYPTO_DATA, 0);
 	}
 	return 0;
 }

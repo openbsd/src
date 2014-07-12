@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.80 2012/10/28 21:26:11 mikeb Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.81 2014/07/12 18:50:00 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -268,11 +268,11 @@ bail:
 		if (error) {
 			if (crie.cri_key) {
 				explicit_bzero(crie.cri_key, crie.cri_klen / 8);
-				free(crie.cri_key, M_XDATA);
+				free(crie.cri_key, M_XDATA, 0);
 			}
 			if (cria.cri_key) {
 				explicit_bzero(cria.cri_key, cria.cri_klen / 8);
-				free(cria.cri_key, M_XDATA);
+				free(cria.cri_key, M_XDATA, 0);
 			}
 		}
 		break;
@@ -586,10 +586,10 @@ fail:
 			if (krp->krp_param[i].crp_p) {
 				explicit_bzero(krp->krp_param[i].crp_p,
 				    (krp->krp_param[i].crp_nbits + 7) / 8);
-				free(krp->krp_param[i].crp_p, M_XDATA);
+				free(krp->krp_param[i].crp_p, M_XDATA, 0);
 			}
 		}
-		free(krp, M_XDATA);
+		free(krp, M_XDATA, 0);
 	}
 	return (error);
 }
@@ -626,7 +626,7 @@ cryptof_close(struct file *fp, struct proc *p)
 		TAILQ_REMOVE(&fcr->csessions, cse, next);
 		(void)csefree(cse);
 	}
-	free(fcr, M_XDATA);
+	free(fcr, M_XDATA, 0);
 	fp->f_data = NULL;
 	return 0;
 }
@@ -671,7 +671,7 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		error = falloc(p, &f, &fd);
 		fdpunlock(p->p_fd);
 		if (error) {
-			free(fcr, M_XDATA);
+			free(fcr, M_XDATA, 0);
 			return (error);
 		}
 		f->f_flag = FREAD | FWRITE;
@@ -751,9 +751,9 @@ csefree(struct csession *cse)
 
 	error = crypto_freesession(cse->sid);
 	if (cse->key)
-		free(cse->key, M_XDATA);
+		free(cse->key, M_XDATA, 0);
 	if (cse->mackey)
-		free(cse->mackey, M_XDATA);
-	free(cse, M_XDATA);
+		free(cse->mackey, M_XDATA, 0);
+	free(cse, M_XDATA, 0);
 	return (error);
 }
