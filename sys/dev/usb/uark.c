@@ -1,4 +1,4 @@
-/*	$OpenBSD: uark.c,v 1.19 2013/11/15 08:25:31 pirofti Exp $	*/
+/*	$OpenBSD: uark.c,v 1.20 2014/07/12 20:26:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -90,21 +90,16 @@ static const struct usb_devno uark_devs[] = {
 	{ USB_VENDOR_ARKMICRO,		USB_PRODUCT_ARKMICRO_ARK3116 }
 };
 
-int uark_match(struct device *, void *, void *); 
-void uark_attach(struct device *, struct device *, void *); 
-int uark_detach(struct device *, int); 
-int uark_activate(struct device *, int); 
+int uark_match(struct device *, void *, void *);
+void uark_attach(struct device *, struct device *, void *);
+int uark_detach(struct device *, int);
 
-struct cfdriver uark_cd = { 
-	NULL, "uark", DV_DULL 
-}; 
+struct cfdriver uark_cd = {
+	NULL, "uark", DV_DULL
+};
 
-const struct cfattach uark_ca = { 
-	sizeof(struct uark_softc), 
-	uark_match, 
-	uark_attach, 
-	uark_detach, 
-	uark_activate, 
+const struct cfattach uark_ca = {
+	sizeof(struct uark_softc), uark_match, uark_attach, uark_detach
 };
 
 int
@@ -201,19 +196,6 @@ uark_detach(struct device *self, int flags)
 	}
 
 	return (rv);
-}
-
-int
-uark_activate(struct device *self, int act)
-{
-	struct uark_softc *sc = (struct uark_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return (0);
 }
 
 void

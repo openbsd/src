@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.78 2014/07/12 18:48:52 tedu Exp $ */
+/*	$OpenBSD: ugen.c,v 1.79 2014/07/12 20:26:33 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -121,15 +121,13 @@ int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
 int ugen_match(struct device *, void *, void *);
 void ugen_attach(struct device *, struct device *, void *);
 int ugen_detach(struct device *, int);
-int ugen_activate(struct device *, int);
 
 struct cfdriver ugen_cd = {
 	NULL, "ugen", DV_DULL
 };
 
 const struct cfattach ugen_ca = {
-	sizeof(struct ugen_softc), ugen_match, ugen_attach, ugen_detach,
-	ugen_activate,
+	sizeof(struct ugen_softc), ugen_match, ugen_attach, ugen_detach
 };
 
 int
@@ -735,19 +733,6 @@ ugenwrite(dev_t dev, struct uio *uio, int flag)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(&sc->sc_dev);
 	return (error);
-}
-
-int
-ugen_activate(struct device *self, int act)
-{
-	struct ugen_softc *sc = (struct ugen_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return (0);
 }
 
 int

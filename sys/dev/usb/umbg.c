@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.22 2013/11/15 10:17:39 pirofti Exp $ */
+/*	$OpenBSD: umbg.c,v 1.23 2014/07/12 20:26:33 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -132,10 +132,9 @@ static int t_wait, t_trust;
 void umbg_intr(void *);
 void umbg_it_intr(void *);
 
-int umbg_match(struct device *, void *, void *); 
-void umbg_attach(struct device *, struct device *, void *); 
-int umbg_detach(struct device *, int); 
-int umbg_activate(struct device *, int); 
+int umbg_match(struct device *, void *, void *);
+void umbg_attach(struct device *, struct device *, void *);
+int umbg_detach(struct device *, int);
 
 void umbg_task(void *);
 
@@ -147,11 +146,7 @@ struct cfdriver umbg_cd = {
 };
 
 const struct cfattach umbg_ca = {
-	sizeof(struct umbg_softc),
-	umbg_match,
-	umbg_attach,
-	umbg_detach,
-	umbg_activate
+	sizeof(struct umbg_softc), umbg_match, umbg_attach, umbg_detach
 };
 
 int
@@ -437,17 +432,4 @@ umbg_it_intr(void *xsc)
 		timeout_add_sec(&sc->sc_it_to, t_trust);
 	} else
 		sc->sc_timedelta.status = SENSOR_S_CRIT;
-}
-
-int
-umbg_activate(struct device *self, int act)
-{
-	struct umbg_softc *sc = (struct umbg_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return 0;
 }

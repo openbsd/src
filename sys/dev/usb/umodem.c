@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.56 2014/05/01 03:45:08 sasano Exp $ */
+/*	$OpenBSD: umodem.c,v 1.57 2014/07/12 20:26:33 mpi Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -138,23 +138,18 @@ struct ucom_methods umodem_methods = {
 	NULL,
 };
 
-int umodem_match(struct device *, void *, void *); 
-void umodem_attach(struct device *, struct device *, void *); 
-int umodem_detach(struct device *, int); 
-int umodem_activate(struct device *, int); 
+int umodem_match(struct device *, void *, void *);
+void umodem_attach(struct device *, struct device *, void *);
+int umodem_detach(struct device *, int);
 
 void umodem_get_caps(struct usb_attach_arg *, int, int *, int *, int *);
 
-struct cfdriver umodem_cd = { 
-	NULL, "umodem", DV_DULL 
-}; 
+struct cfdriver umodem_cd = {
+	NULL, "umodem", DV_DULL
+};
 
-const struct cfattach umodem_ca = { 
-	sizeof(struct umodem_softc), 
-	umodem_match, 
-	umodem_attach, 
-	umodem_detach, 
-	umodem_activate, 
+const struct cfattach umodem_ca = {
+	sizeof(struct umodem_softc), umodem_match, umodem_attach, umodem_detach
 };
 
 void
@@ -738,19 +733,6 @@ umodem_set_comm_feature(struct umodem_softc *sc, int feature, int state)
 	}
 
 	return (USBD_NORMAL_COMPLETION);
-}
-
-int
-umodem_activate(struct device *self, int act)
-{
-	struct umodem_softc *sc = (struct umodem_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return (0);
 }
 
 int

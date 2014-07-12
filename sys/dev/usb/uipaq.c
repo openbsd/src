@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.23 2013/11/15 08:25:31 pirofti Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.24 2014/07/12 20:26:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -123,21 +123,16 @@ static const struct uipaq_type uipaq_devs[] = {
 
 #define uipaq_lookup(v, p) ((struct uipaq_type *)usb_lookup(uipaq_devs, v, p))
 
-int uipaq_match(struct device *, void *, void *); 
-void uipaq_attach(struct device *, struct device *, void *); 
-int uipaq_detach(struct device *, int); 
-int uipaq_activate(struct device *, int); 
+int uipaq_match(struct device *, void *, void *);
+void uipaq_attach(struct device *, struct device *, void *);
+int uipaq_detach(struct device *, int);
 
-struct cfdriver uipaq_cd = { 
-	NULL, "uipaq", DV_DULL 
-}; 
+struct cfdriver uipaq_cd = {
+	NULL, "uipaq", DV_DULL
+};
 
-const struct cfattach uipaq_ca = { 
-	sizeof(struct uipaq_softc), 
-	uipaq_match, 
-	uipaq_attach, 
-	uipaq_detach, 
-	uipaq_activate, 
+const struct cfattach uipaq_ca = {
+	sizeof(struct uipaq_softc), uipaq_match, uipaq_attach, uipaq_detach
 };
 
 int
@@ -351,19 +346,6 @@ uipaq_set(void *addr, int portno, int reg, int onoff)
 	}
 }
 
-
-int
-uipaq_activate(struct device *self, int act)
-{
-	struct uipaq_softc *sc = (struct uipaq_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return (0);
-}
 
 int
 uipaq_detach(struct device *self, int flags)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.28 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.29 2014/07/12 20:26:33 mpi Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -152,21 +152,16 @@ const struct usb_devno ucycom_devs[] = {
 	{ USB_VENDOR_DELORME, USB_PRODUCT_DELORME_EMLT20 },
 };
 
-int ucycom_match(struct device *, void *, void *); 
-void ucycom_attach(struct device *, struct device *, void *); 
-int ucycom_detach(struct device *, int); 
-int ucycom_activate(struct device *, int); 
+int ucycom_match(struct device *, void *, void *);
+void ucycom_attach(struct device *, struct device *, void *);
+int ucycom_detach(struct device *, int);
 
-struct cfdriver ucycom_cd = { 
-	NULL, "ucycom", DV_DULL 
-}; 
+struct cfdriver ucycom_cd = {
+	NULL, "ucycom", DV_DULL
+};
 
-const struct cfattach ucycom_ca = { 
-	sizeof(struct ucycom_softc), 
-	ucycom_match, 
-	ucycom_attach, 
-	ucycom_detach, 
-	ucycom_activate, 
+const struct cfattach ucycom_ca = {
+	sizeof(struct ucycom_softc), ucycom_match, ucycom_attach, ucycom_detach
 };
 
 int
@@ -586,20 +581,5 @@ ucycom_detach(struct device *self, int flags)
 	if (sc->sc_hdev.sc_state & UHIDEV_OPEN)
 		uhidev_close(&sc->sc_hdev);
 
-	return (0);
-}
-
-int
-ucycom_activate(struct device *self, int act)
-{
-	struct ucycom_softc *sc = (struct ucycom_softc *)self;
-
-	DPRINTFN(5,("ucycom_activate: %d\n", act));
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
 	return (0);
 }

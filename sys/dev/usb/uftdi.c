@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.71 2014/02/04 12:03:12 mpi Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.72 2014/07/12 20:26:33 mpi Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -116,21 +116,16 @@ struct ucom_methods uftdi_methods = {
 	uftdi_write,
 };
 
-int uftdi_match(struct device *, void *, void *); 
-void uftdi_attach(struct device *, struct device *, void *); 
-int uftdi_detach(struct device *, int); 
-int uftdi_activate(struct device *, int); 
+int uftdi_match(struct device *, void *, void *);
+void uftdi_attach(struct device *, struct device *, void *);
+int uftdi_detach(struct device *, int);
 
-struct cfdriver uftdi_cd = { 
-	NULL, "uftdi", DV_DULL 
-}; 
+struct cfdriver uftdi_cd = {
+	NULL, "uftdi", DV_DULL
+};
 
-const struct cfattach uftdi_ca = { 
-	sizeof(struct uftdi_softc), 
-	uftdi_match, 
-	uftdi_attach, 
-	uftdi_detach, 
-	uftdi_activate, 
+const struct cfattach uftdi_ca = {
+	sizeof(struct uftdi_softc), uftdi_match, uftdi_attach, uftdi_detach
 };
 
 static const struct usb_devno uftdi_devs[] = {
@@ -893,19 +888,6 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 bad:
 	DPRINTF(("uftdi_attach: ATTACH ERROR\n"));
 	usbd_deactivate(sc->sc_udev);
-}
-
-int
-uftdi_activate(struct device *self, int act)
-{
-	struct uftdi_softc *sc = (struct uftdi_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return (0);
 }
 
 int

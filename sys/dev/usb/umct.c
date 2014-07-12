@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.40 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: umct.c,v 1.41 2014/07/12 20:26:33 mpi Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -144,21 +144,16 @@ static const struct usb_devno umct_devs[] = {
 	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U409 },
 };
 
-int umct_match(struct device *, void *, void *); 
-void umct_attach(struct device *, struct device *, void *); 
-int umct_detach(struct device *, int); 
-int umct_activate(struct device *, int); 
+int umct_match(struct device *, void *, void *);
+void umct_attach(struct device *, struct device *, void *);
+int umct_detach(struct device *, int);
 
-struct cfdriver umct_cd = { 
-	NULL, "umct", DV_DULL 
-}; 
+struct cfdriver umct_cd = {
+	NULL, "umct", DV_DULL
+};
 
-const struct cfattach umct_ca = { 
-	sizeof(struct umct_softc), 
-	umct_match, 
-	umct_attach, 
-	umct_detach, 
-	umct_activate, 
+const struct cfattach umct_ca = {
+	sizeof(struct umct_softc), umct_match, umct_attach, umct_detach
 };
 
 int
@@ -325,19 +320,6 @@ umct_detach(struct device *self, int flags)
 	}
 
 	return (rv);
-}
-
-int
-umct_activate(struct device *self, int act)
-{
-	struct umct_softc *sc = (struct umct_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return (0);
 }
 
 void

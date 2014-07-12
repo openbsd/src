@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.21 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.22 2014/07/12 20:26:33 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -54,24 +54,19 @@ struct usb_devno const uberry_devices[] = {
 	{ USB_VENDOR_RIM, USB_PRODUCT_RIM_PEARL }
 };
 
-int uberry_match(struct device *, void *, void *); 
-void uberry_attach(struct device *, struct device *, void *); 
-int uberry_detach(struct device *, int); 
-int uberry_activate(struct device *, int); 
+int uberry_match(struct device *, void *, void *);
+void uberry_attach(struct device *, struct device *, void *);
+int uberry_detach(struct device *, int);
 
 void uberry_pearlmode(struct uberry_softc *);
 void uberry_charge(struct uberry_softc *);
 
-struct cfdriver uberry_cd = { 
-	NULL, "uberry", DV_DULL 
-}; 
+struct cfdriver uberry_cd = {
+	NULL, "uberry", DV_DULL
+};
 
-const struct cfattach uberry_ca = { 
-	sizeof(struct uberry_softc), 
-	uberry_match, 
-	uberry_attach, 
-	uberry_detach, 
-	uberry_activate, 
+const struct cfattach uberry_ca = {
+	sizeof(struct uberry_softc), uberry_match, uberry_attach, uberry_detach
 };
 
 int
@@ -147,19 +142,6 @@ uberry_detach(struct device *self, int flags)
 {
 	/* struct uberry_softc *sc = (struct uberry_softc *)self; */
 
-	return 0;
-}
-
-int
-uberry_activate(struct device *self, int act)
-{
-	struct uberry_softc *sc = (struct uberry_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
 	return 0;
 }
 

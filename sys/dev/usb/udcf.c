@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.57 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: udcf.c,v 1.58 2014/07/12 20:26:33 mpi Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -133,10 +133,9 @@ void	udcf_mg_probe(void *);
 void	udcf_sl_probe(void *);
 void	udcf_ct_probe(void *);
 
-int udcf_match(struct device *, void *, void *); 
-void udcf_attach(struct device *, struct device *, void *); 
-int udcf_detach(struct device *, int); 
-int udcf_activate(struct device *, int); 
+int udcf_match(struct device *, void *, void *);
+void udcf_attach(struct device *, struct device *, void *);
+int udcf_detach(struct device *, int);
 
 int udcf_nc_signal(struct udcf_softc *);
 int udcf_nc_init_hw(struct udcf_softc *);
@@ -148,11 +147,7 @@ struct cfdriver udcf_cd = {
 };
 
 const struct cfattach udcf_ca = {
-	sizeof(struct udcf_softc),
-	udcf_match,
-	udcf_attach,
-	udcf_detach,
-	udcf_activate
+	sizeof(struct udcf_softc), udcf_match, udcf_attach, udcf_detach,
 };
 
 static const struct usb_devno udcf_devs[] = {
@@ -794,15 +789,3 @@ udcf_ct_probe(void *xsc)
 		clockname[CLOCK_HBG] : clockname[CLOCK_DCF77]));
 }
 
-int
-udcf_activate(struct device *self, int act)
-{
-	struct udcf_softc *sc = (struct udcf_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return 0;
-}

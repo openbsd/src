@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.21 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.22 2014/07/12 20:26:33 mpi Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -200,10 +200,9 @@ int		uchcom_setup_comm(struct uchcom_softc *);
 int		uchcom_setup_intr_pipe(struct uchcom_softc *);
 
 
-int		uchcom_match(struct device *, void *, void *); 
-void		uchcom_attach(struct device *, struct device *, void *); 
-int		uchcom_detach(struct device *, int); 
-int		uchcom_activate(struct device *, int);
+int		uchcom_match(struct device *, void *, void *);
+void		uchcom_attach(struct device *, struct device *, void *);
+int		uchcom_detach(struct device *, int);
 
 struct	ucom_methods uchcom_methods = {
 	uchcom_get_status,
@@ -222,16 +221,12 @@ static const struct usb_devno uchcom_devs[] = {
 	{ USB_VENDOR_WCH2, USB_PRODUCT_WCH2_CH341A }
 };
 
-struct cfdriver uchcom_cd = { 
-	NULL, "uchcom", DV_DULL 
-}; 
+struct cfdriver uchcom_cd = {
+	NULL, "uchcom", DV_DULL
+};
 
-const struct cfattach uchcom_ca = { 
-	sizeof(struct uchcom_softc), 
-	uchcom_match, 
-	uchcom_attach, 
-	uchcom_detach, 
-	uchcom_activate, 
+const struct cfattach uchcom_ca = {
+	sizeof(struct uchcom_softc), uchcom_match, uchcom_attach, uchcom_detach
 };
 
 /* ----------------------------------------------------------------------
@@ -324,20 +319,6 @@ uchcom_detach(struct device *self, int flags)
 	}
 
 	return rv;
-}
-
-int
-uchcom_activate(struct device *self, int act)
-{
-	struct uchcom_softc *sc = (struct uchcom_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		uchcom_close_intr_pipe(sc);
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return 0;
 }
 
 int
