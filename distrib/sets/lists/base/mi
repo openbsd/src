@@ -52,7 +52,10 @@
 ./etc/examples/chio.conf
 ./etc/examples/dhcpd.conf
 ./etc/examples/dvmrpd.conf
+./etc/examples/exports
+./etc/examples/ftpchroot
 ./etc/examples/hostapd.conf
+./etc/examples/hosts.lpd
 ./etc/examples/ifstated.conf
 ./etc/examples/iked.conf
 ./etc/examples/inetd.conf
