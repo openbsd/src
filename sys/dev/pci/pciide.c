@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.345 2014/04/24 15:38:25 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.346 2014/07/12 18:48:52 tedu Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2532,7 +2532,7 @@ default_chip_unmap(struct pciide_softc *sc, int flags)
 	pciide_unmapreg_dma(sc);
 
 	if (sc->sc_cookie)
-		free(sc->sc_cookie, M_DEVBUF);
+		free(sc->sc_cookie, M_DEVBUF, 0);
 }
 
 void

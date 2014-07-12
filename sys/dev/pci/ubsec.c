@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.157 2014/05/04 20:09:15 sf Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.158 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -271,7 +271,7 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_dmachunk),
 		    &dmap->d_alloc, 0)) {
 			printf(": can't allocate dma buffers\n");
-			free(q, M_DEVBUF);
+			free(q, M_DEVBUF, 0);
 			break;
 		}
 		dmap->d_dma = (struct ubsec_dmachunk *)dmap->d_alloc.dma_vaddr;
@@ -701,7 +701,7 @@ ubsec_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			    sizeof(struct ubsec_session));
 			explicit_bzero(sc->sc_sessions, sesn *
 			    sizeof(struct ubsec_session));
-			free(sc->sc_sessions, M_DEVBUF);
+			free(sc->sc_sessions, M_DEVBUF, 0);
 			sc->sc_sessions = ses;
 			ses = &sc->sc_sessions[sesn];
 			sc->sc_nsessions++;
@@ -1880,7 +1880,7 @@ ubsec_kfree(struct ubsec_softc *sc, struct ubsec_q2 *q)
 		ubsec_dma_free(sc, &me->me_E);
 		ubsec_dma_free(sc, &me->me_C);
 		ubsec_dma_free(sc, &me->me_epb);
-		free(me, M_DEVBUF);
+		free(me, M_DEVBUF, 0);
 		break;
 	}
 	case UBS_CTXOP_RSAPRIV: {
@@ -1890,7 +1890,7 @@ ubsec_kfree(struct ubsec_softc *sc, struct ubsec_q2 *q)
 		ubsec_dma_free(sc, &rp->rpr_q.q_ctx);
 		ubsec_dma_free(sc, &rp->rpr_msgin);
 		ubsec_dma_free(sc, &rp->rpr_msgout);
-		free(rp, M_DEVBUF);
+		free(rp, M_DEVBUF, 0);
 		break;
 	}
 	default:
@@ -2131,7 +2131,7 @@ errout:
 		}
 		if (me->me_epb.dma_map != NULL)
 			ubsec_dma_free(sc, &me->me_epb);
-		free(me, M_DEVBUF);
+		free(me, M_DEVBUF, 0);
 	}
 	krp->krp_status = err;
 	crypto_kdone(krp);
@@ -2330,7 +2330,7 @@ errout:
 		}
 		if (me->me_epb.dma_map != NULL)
 			ubsec_dma_free(sc, &me->me_epb);
-		free(me, M_DEVBUF);
+		free(me, M_DEVBUF, 0);
 	}
 	krp->krp_status = err;
 	crypto_kdone(krp);
@@ -2516,7 +2516,7 @@ errout:
 			    rp->rpr_msgout.dma_size);
 			ubsec_dma_free(sc, &rp->rpr_msgout);
 		}
-		free(rp, M_DEVBUF);
+		free(rp, M_DEVBUF, 0);
 	}
 	krp->krp_status = err;
 	crypto_kdone(krp);

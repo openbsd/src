@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.14 2014/06/21 04:47:58 jsg Exp $	*/
+/*	$OpenBSD: si.c,v 1.15 2014/07/12 18:48:52 tedu Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -388,23 +388,23 @@ out:
 			       "si_cp: Failed to load firmware \"%s\"\n",
 			       fw_name);
 		if (rdev->pfp_fw) {
-			free(rdev->pfp_fw, M_DEVBUF);
+			free(rdev->pfp_fw, M_DEVBUF, 0);
 			rdev->pfp_fw = NULL;
 		}
 		if (rdev->me_fw) {
-			free(rdev->pfp_fw, M_DEVBUF);
+			free(rdev->pfp_fw, M_DEVBUF, 0);
 			rdev->me_fw = NULL;
 		}
 		if (rdev->ce_fw) {
-			free(rdev->ce_fw, M_DEVBUF);
+			free(rdev->ce_fw, M_DEVBUF, 0);
 			rdev->ce_fw = NULL;
 		}
 		if (rdev->rlc_fw) {
-			free(rdev->rlc_fw, M_DEVBUF);
+			free(rdev->rlc_fw, M_DEVBUF, 0);
 			rdev->rlc_fw = NULL;
 		}
 		if (rdev->mc_fw) {
-			free(rdev->mc_fw, M_DEVBUF);
+			free(rdev->mc_fw, M_DEVBUF, 0);
 			rdev->mc_fw = NULL;
 		}
 	}

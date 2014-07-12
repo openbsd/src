@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.29 2011/01/12 17:01:26 deraadt Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.30 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Jason L. Wright (jason@thought.net)
@@ -200,7 +200,7 @@ lofn_intr(vsc)
 			q = sc->sc_current;
 			sc->sc_current = NULL;
 			q->q_finish(sc, q);
-			free(q, M_DEVBUF);
+			free(q, M_DEVBUF, 0);
 			lofn_feed(sc);
 		}
 	}
@@ -317,7 +317,7 @@ lofn_kprocess(krp)
 		    sc->sc_dv.dv_xname, krp->krp_op);
 		krp->krp_status = EOPNOTSUPP;
 		crypto_kdone(krp);
-		free(q, M_DEVBUF);
+		free(q, M_DEVBUF, 0);
 		return (0);
 	}
 }
@@ -540,7 +540,7 @@ lofn_feed(sc)
 			break;
 		} else {
 			SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q_next);
-			free(q, M_DEVBUF);
+			free(q, M_DEVBUF, 0);
 		}
 	}
 }

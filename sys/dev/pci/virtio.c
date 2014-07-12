@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.7 2014/06/26 07:46:17 jasper Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.8 2014/07/12 18:48:52 tedu Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -430,7 +430,7 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 	/* tell device that there's no virtqueue any longer */
 	virtio_setup_queue(sc, vq->vq_index, 0);
 
-	free(vq->vq_entries, M_DEVBUF);
+	free(vq->vq_entries, M_DEVBUF, 0);
 	bus_dmamap_unload(sc->sc_dmat, vq->vq_dmamap);
 	bus_dmamap_destroy(sc->sc_dmat, vq->vq_dmamap);
 	bus_dmamem_unmap(sc->sc_dmat, vq->vq_vaddr, vq->vq_bytesize);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.27 2014/01/22 02:58:35 jsg Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.28 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -254,7 +254,7 @@ cfxga_remove_function(struct pcmcia_function *pf)
 	/* we are the first and only entry... */
 	cfe = SIMPLEQ_FIRST(&pf->cfe_head);
 	SIMPLEQ_REMOVE_HEAD(&pf->cfe_head, cfe_list);
-	free(cfe, M_DEVBUF);
+	free(cfe, M_DEVBUF, 0);
 
 	/* And we're a figment of the kernel's imagination again. */
 	pf->pf_flags |= PFF_FAKE;
@@ -505,7 +505,7 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	scr->scr_mem = malloc(scrsize, M_DEVBUF,
 	    (cold ? M_NOWAIT : M_WAITOK) | M_ZERO);
 	if (scr->scr_mem == NULL) {
-		free(scr, M_DEVBUF);
+		free(scr, M_DEVBUF, 0);
 		return (ENOMEM);
 	}
 
@@ -572,8 +572,8 @@ cfxga_free_screen(void *v, void *cookie)
 		cfxga_burner(sc, 0, 0);
 	}
 
-	free(scr->scr_mem, M_DEVBUF);
-	free(scr, M_DEVBUF);
+	free(scr->scr_mem, M_DEVBUF, 0);
+	free(scr, M_DEVBUF, 0);
 }
 
 int

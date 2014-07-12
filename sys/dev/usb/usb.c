@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.99 2014/07/11 08:43:38 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.100 2014/07/12 18:48:52 tedu Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -542,7 +542,7 @@ usb_fill_udc_task(void *arg)
 	if (cdesc == NULL)
 		return;
 	udc->udc_desc = *cdesc;
-	free(cdesc, M_TEMP);
+	free(cdesc, M_TEMP, 0);
 }
 
 void
@@ -661,7 +661,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 	ret:
 		if (ptr)
-			free(ptr, M_TEMP);
+			free(ptr, M_TEMP, 0);
 		return (error);
 	}
 
@@ -783,7 +783,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		uio.uio_rw = UIO_READ;
 		uio.uio_procp = p;
 		error = uiomove((void *)cdesc, len, &uio);
-		free(cdesc, M_TEMP);
+		free(cdesc, M_TEMP, 0);
 		return (error);
 	}
 

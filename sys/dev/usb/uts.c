@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.33 2014/03/07 18:39:02 mpi Exp $ */
+/*	$OpenBSD: uts.c,v 1.34 2014/07/12 18:48:53 tedu Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -278,7 +278,7 @@ uts_enable(void *v)
 	    USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc, sc->sc_ibuf,
 	    sc->sc_isize, uts_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
-		free(sc->sc_ibuf, M_USBDEV);
+		free(sc->sc_ibuf, M_USBDEV, 0);
 		sc->sc_intr_pipe = NULL;
 		return (EIO);
 	}
@@ -307,7 +307,7 @@ uts_disable(void *v)
 	}
 
 	if (sc->sc_ibuf != NULL) {
-		free(sc->sc_ibuf, M_USBDEV);
+		free(sc->sc_ibuf, M_USBDEV, 0);
 		sc->sc_ibuf = NULL;
 	}
 

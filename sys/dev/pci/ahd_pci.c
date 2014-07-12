@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.23 2013/11/18 17:40:39 guenther Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.24 2014/07/12 18:48:51 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -771,7 +771,7 @@ ahd_check_extport(struct ahd_softc *ahd)
 		ahd->flags |= AHD_USEDEFAULTS;
 		error = ahd_default_config(ahd);
 		adapter_control = CFAUTOTERM|CFSEAUTOTERM;
-		free(ahd->seep_config, M_DEVBUF);
+		free(ahd->seep_config, M_DEVBUF, 0);
 		ahd->seep_config = NULL;
 	} else {
 		error = ahd_parse_cfgdata(ahd, sc);

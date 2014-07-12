@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.35 2013/10/20 21:24:01 miod Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.36 2014/07/12 18:48:53 tedu Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -337,8 +337,8 @@ wsfont_rotate_internal(struct wsdisplay_font *font)
 		 * If we seem to have rotated this font already, drop the
 		 * new one...
 		 */
-		free(newbits, M_DEVBUF);
-		free(newfont, M_DEVBUF);
+		free(newbits, M_DEVBUF, 0);
+		free(newfont, M_DEVBUF, 0);
 		newfont = NULL;
 	}
 
@@ -504,13 +504,13 @@ wsfont_remove(int cookie)
 
 	/* Don't free statically allocated font data */
 	if ((ent->flg & WSFONT_STATIC) != 0) {
-		free(ent->font->data, M_DEVBUF);
-		free(ent->font, M_DEVBUF);
+		free(ent->font->data, M_DEVBUF, 0);
+		free(ent->font, M_DEVBUF, 0);
 	}
 
 	/* Remove from list, free entry */
 	TAILQ_REMOVE(&list, ent, chain);
-	free(ent, M_DEVBUF);
+	free(ent, M_DEVBUF, 0);
 	splx(s);
 	return (0);
 }

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.285 2014/07/08 05:35:18 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.286 2014/07/12 18:48:51 tedu Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2297,7 +2297,7 @@ em_free_transmit_structures(struct em_softc *sc)
 		}
 	}
 	if (sc->tx_buffer_area != NULL) {
-		free(sc->tx_buffer_area, M_DEVBUF);
+		free(sc->tx_buffer_area, M_DEVBUF, 0);
 		sc->tx_buffer_area = NULL;
 	}
 	if (sc->txtag != NULL)
@@ -2747,7 +2747,7 @@ em_free_receive_structures(struct em_softc *sc)
 		}
 	}
 	if (sc->rx_buffer_area != NULL) {
-		free(sc->rx_buffer_area, M_DEVBUF);
+		free(sc->rx_buffer_area, M_DEVBUF, 0);
 		sc->rx_buffer_area = NULL;
 	}
 	if (sc->rxtag != NULL)

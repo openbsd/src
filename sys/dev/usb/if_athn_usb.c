@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.20 2014/07/12 07:59:23 mpi Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.21 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -447,7 +447,7 @@ athn_usb_close_pipes(struct athn_usb_softc *usc)
 		usbd_close_pipe(usc->rx_intr_pipe);
 	}
 	if (usc->ibuf != NULL)
-		free(usc->ibuf, M_USBDEV);
+		free(usc->ibuf, M_USBDEV, 0);
 }
 
 int
@@ -664,14 +664,14 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 		USETW(req.wLength, mlen);
 		error = usbd_do_request(usc->sc_udev, &req, ptr);
 		if (error != 0) {
-			free(fw, M_DEVBUF);
+			free(fw, M_DEVBUF, 0);
 			return (error);
 		}
 		addr += mlen >> 8;
 		ptr  += mlen;
 		size -= mlen;
 	}
-	free(fw, M_DEVBUF);
+	free(fw, M_DEVBUF, 0);
 
 	/* Start firmware. */
 	if (usc->flags & ATHN_USB_FLAG_AR7010)

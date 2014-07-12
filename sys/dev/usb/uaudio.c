@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.103 2014/06/04 08:01:25 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.104 2014/07/12 18:48:52 tedu Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -682,7 +682,7 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 	/* Copy old data, if there was any */
 	if (sc->sc_nctls != 0) {
 		bcopy(sc->sc_ctls, nmc, sizeof(*mc) * (sc->sc_nctls));
-		free(sc->sc_ctls, M_USBDEV);
+		free(sc->sc_ctls, M_USBDEV, 0);
 	}
 	sc->sc_ctls = nmc;
 
@@ -1402,13 +1402,13 @@ uaudio_io_terminaltype(int outtype, struct io_terminal *iot, int id)
 		memcpy(tml, it->output, TERMINAL_LIST_SIZE(it->output->size));
 		tml->terminals[it->output->size] = outtype;
 		tml->size++;
-		free(it->output, M_TEMP);
+		free(it->output, M_TEMP, 0);
 		it->output = tml;
 		if (it->inputs != NULL) {
 			for (i = 0; i < it->inputs_size; i++)
 				if (it->inputs[i] != NULL)
-					free(it->inputs[i], M_TEMP);
-			free(it->inputs, M_TEMP);
+					free(it->inputs[i], M_TEMP, 0);
+			free(it->inputs, M_TEMP, 0);
 		}
 		it->inputs_size = 0;
 		it->inputs = NULL;
@@ -1435,7 +1435,7 @@ uaudio_io_terminaltype(int outtype, struct io_terminal *iot, int id)
 		tml = malloc(TERMINAL_LIST_SIZE(1), M_TEMP, M_NOWAIT);
 		if (tml == NULL) {
 			printf("uaudio_io_terminaltype: no memory\n");
-			free(it->inputs, M_TEMP);
+			free(it->inputs, M_TEMP, 0);
 			it->inputs = NULL;
 			return NULL;
 		}
@@ -1557,7 +1557,7 @@ uaudio_add_alt(struct uaudio_softc *sc, const struct as_info *ai)
 	/* Copy old data, if there was any */
 	if (sc->sc_nalts != 0) {
 		bcopy(sc->sc_alts, nai, sizeof(*ai) * (sc->sc_nalts));
-		free(sc->sc_alts, M_USBDEV);
+		free(sc->sc_alts, M_USBDEV, 0);
 	}
 	sc->sc_alts = nai;
 	DPRINTFN(2,("uaudio_add_alt: adding alt=%d, enc=%d\n",
@@ -1973,7 +1973,7 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 			break;
 		dp = (const usb_descriptor_t *)ibuf;
 		if (ibuf + dp->bLength > ibufend) {
-			free(iot, M_TEMP);
+			free(iot, M_TEMP, 0);
 			return (USBD_INVAL);
 		}
 		if (dp->bDescriptorType != UDESC_CS_INTERFACE) {
@@ -1998,7 +1998,7 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 		pot = iot[i].d.ot;
 		tml = uaudio_io_terminaltype(UGETW(pot->wTerminalType), iot, i);
 		if (tml != NULL)
-			free(tml, M_TEMP);
+			free(tml, M_TEMP, 0);
 	}
 
 #ifdef UAUDIO_DEBUG
@@ -2113,15 +2113,15 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 		if (iot[i].inputs != NULL) {
 			for (j = 0; j < iot[i].inputs_size; j++) {
 				if (iot[i].inputs[j] != NULL)
-					free(iot[i].inputs[j], M_TEMP);
+					free(iot[i].inputs[j], M_TEMP, 0);
 			}
-			free(iot[i].inputs, M_TEMP);
+			free(iot[i].inputs, M_TEMP, 0);
 		}
 		if (iot[i].output != NULL)
-			free(iot[i].output, M_TEMP);
+			free(iot[i].output, M_TEMP, 0);
 		iot[i].d.desc = NULL;
 	}
-	free(iot, M_TEMP);
+	free(iot, M_TEMP, 0);
 
 	return (USBD_NORMAL_COMPLETION);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.20 2014/02/14 14:00:08 jmatthew Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.21 2014/07/12 18:48:52 tedu Exp $	*/
 /* $NetBSD: isp_sbus.c,v 1.46 2001/09/26 20:53:14 eeh Exp $ */
 /*
  * SBus specific probe and attach routines for QLogic ISP SCSI adapters.
@@ -462,7 +462,7 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 	n = sizeof (bus_dmamap_t) * isp->isp_maxcmds;
 	sbc->sbus_dmamap = (bus_dmamap_t *) malloc(n, M_DEVBUF, M_WAITOK);
 	if (sbc->sbus_dmamap == NULL) {
-		free(isp->isp_xflist, M_DEVBUF);
+		free(isp->isp_xflist, M_DEVBUF, 0);
 		isp->isp_xflist = NULL;
 		isp_prt(isp, ISP_LOGERR, "cannot alloc dmamap array");
 		return (1);
@@ -480,8 +480,8 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 			bus_dmamap_destroy(isp->isp_dmatag,
 			    sbc->sbus_dmamap[i]);
 		}
-		free(isp->isp_xflist, M_DEVBUF);
-		free(sbc->sbus_dmamap, M_DEVBUF);
+		free(isp->isp_xflist, M_DEVBUF, 0);
+		free(sbc->sbus_dmamap, M_DEVBUF, 0);
 		isp->isp_xflist = NULL;
 		sbc->sbus_dmamap = NULL;
 		return (1);
@@ -555,8 +555,8 @@ dmafail:
 	for (i = 0; i < isp->isp_maxcmds; i++) {
 		bus_dmamap_destroy(isp->isp_dmatag, sbc->sbus_dmamap[i]);
 	}
-	free(sbc->sbus_dmamap, M_DEVBUF);
-	free(isp->isp_xflist, M_DEVBUF);
+	free(sbc->sbus_dmamap, M_DEVBUF, 0);
+	free(isp->isp_xflist, M_DEVBUF, 0);
 	isp->isp_xflist = NULL;
 	sbc->sbus_dmamap = NULL;
 	return (1);

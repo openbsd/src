@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_edid.c,v 1.9 2014/03/09 11:07:18 jsg Exp $	*/
+/*	$OpenBSD: drm_edid.c,v 1.10 2014/07/12 18:48:52 tedu Exp $	*/
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
  * Copyright (c) 2007-2008 Intel Corporation
@@ -329,7 +329,7 @@ drm_do_get_edid(struct drm_connector *connector, struct i2c_controller *adapter)
 	if (!new)
 		goto out;
 	bcopy(block, new, EDID_LENGTH);
-	free(block, M_DRM);
+	free(block, M_DRM, 0);
 	block = new;
 
 	for (j = 1; j <= block[0x7e]; j++) {
@@ -360,7 +360,7 @@ drm_do_get_edid(struct drm_connector *connector, struct i2c_controller *adapter)
 		if (!new)
 			goto out;
 		bcopy(block, new, (valid_extensions + 1) * EDID_LENGTH);
-		free(block, M_DRM);
+		free(block, M_DRM, 0);
 		block = new;
 	}
 

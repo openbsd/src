@@ -1,4 +1,4 @@
-/*	$OpenBSD: r100.c,v 1.7 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: r100.c,v 1.8 2014/07/12 18:48:52 tedu Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1057,7 +1057,7 @@ static int r100_cp_init_microcode(struct radeon_device *rdev)
 		       "radeon_cp: Bogus length %zu in firmware \"%s\"\n",
 		       rdev->me_fw_size, fw_name);
 		err = -EINVAL;
-		free(rdev->me_fw, M_DEVBUF);
+		free(rdev->me_fw, M_DEVBUF, 0);
 		rdev->me_fw = NULL;
 	}
 

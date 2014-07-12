@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.161 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.162 2014/07/12 18:48:51 tedu Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1258,7 +1258,7 @@ azalia_mixer_ensure_capacity(codec_t *this, size_t newsize)
 		return ENOMEM;
 	}
 	bcopy(this->mixers, newbuf, this->maxmixers * sizeof(mixer_item_t));
-	free(this->mixers, M_DEVBUF);
+	free(this->mixers, M_DEVBUF, 0);
 	this->mixers = newbuf;
 	this->maxmixers = newmax;
 	return 0;
@@ -1484,7 +1484,7 @@ int
 azalia_mixer_delete(codec_t *this)
 {
 	if (this->mixers != NULL) {
-		free(this->mixers, M_DEVBUF);
+		free(this->mixers, M_DEVBUF, 0);
 		this->mixers = NULL;
 	}
 	return 0;

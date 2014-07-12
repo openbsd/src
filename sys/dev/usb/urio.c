@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.44 2013/11/07 13:10:43 pirofti Exp $	*/
+/*	$OpenBSD: urio.c,v 1.45 2014/07/12 18:48:52 tedu Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -504,7 +504,7 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 ret:
 	if (ptr != NULL)
-		free(ptr, M_TEMP);
+		free(ptr, M_TEMP, 0);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.100 2014/05/17 12:40:25 ratchov Exp $	*/
+/*	$OpenBSD: auich.c,v 1.101 2014/07/12 18:48:51 tedu Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -1308,7 +1308,7 @@ auich_allocm(void *v, int direction, size_t size, int pool, int flags)
 
 	error = auich_allocmem(sc, size, PAGE_SIZE, p);
 	if (error) {
-		free(p, pool);
+		free(p, pool, 0);
 		return NULL;
 	}
 
@@ -1339,7 +1339,7 @@ auich_freem(void *v, void *ptr, int pool)
 		return;
 
 	auich_freemem(sc, p);
-	free(p, pool);
+	free(p, pool, 0);
 }
 
 size_t

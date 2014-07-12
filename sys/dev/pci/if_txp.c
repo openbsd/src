@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.108 2013/11/26 09:50:33 mpi Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.109 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -436,10 +436,10 @@ txp_download_fw(struct txp_softc *sc)
 	WRITE_REG(sc, TXP_IER, ier);
 	WRITE_REG(sc, TXP_IMR, imr);
 
-	free(buf, M_DEVBUF);
+	free(buf, M_DEVBUF, 0);
 	return (0);
 fail:
-	free(buf, M_DEVBUF);
+	free(buf, M_DEVBUF, 0);
 	return (-1);
 }
 
@@ -639,7 +639,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 		bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
 		bus_dmamap_destroy(sc->sc_dmat, sd->sd_map);
 		m = sd->sd_mbuf;
-		free(sd, M_DEVBUF);
+		free(sd, M_DEVBUF, 0);
 		m->m_pkthdr.len = m->m_len = letoh16(rxd->rx_len);
 
 #ifdef __STRICT_ALIGNMENT
@@ -806,7 +806,7 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 err_mbuf:
 	m_freem(sd->sd_mbuf);
 err_sd:
-	free(sd, M_DEVBUF);
+	free(sd, M_DEVBUF, 0);
 }
 
 /*
@@ -1105,7 +1105,7 @@ bail_rxbufring:
 	for (i = 0; i < RXBUF_ENTRIES; i++) {
 		bcopy((u_long *)&sc->sc_rxbufs[i].rb_vaddrlo, &sd, sizeof(sd));
 		if (sd)
-			free(sd, M_DEVBUF);
+			free(sd, M_DEVBUF, 0);
 	}
 	txp_dma_free(sc, &sc->sc_rxbufring_dma);
 bail_rspring:
@@ -1289,7 +1289,7 @@ txp_tick(void *vsc)
 
 out:
 	if (rsp != NULL)
-		free(rsp, M_DEVBUF);
+		free(rsp, M_DEVBUF, 0);
 
 	splx(s);
 	timeout_add_sec(&sc->sc_tick, 1);
@@ -1495,7 +1495,7 @@ txp_command(struct txp_softc *sc, u_int16_t id, u_int16_t in1,
 		*out2 = letoh32(rsp->rsp_par2);
 	if (out3 != NULL)
 		*out3 = letoh32(rsp->rsp_par3);
-	free(rsp, M_DEVBUF);
+	free(rsp, M_DEVBUF, 0);
 	return (0);
 }
 
@@ -1956,5 +1956,5 @@ txp_capabilities(struct txp_softc *sc)
 
 out:
 	if (rsp != NULL)
-		free(rsp, M_DEVBUF);
+		free(rsp, M_DEVBUF, 0);
 }

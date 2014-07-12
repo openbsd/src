@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.33 2014/03/05 21:35:21 sthen Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.34 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -487,7 +487,7 @@ sdmmc_function_alloc(struct sdmmc_softc *sc)
 void
 sdmmc_function_free(struct sdmmc_function *sf)
 {
-	free(sf, M_DEVBUF);
+	free(sf, M_DEVBUF, 0);
 }
 
 /*
@@ -810,7 +810,7 @@ sdmmc_ioctl(struct device *self, u_long request, caddr_t addr)
 			return EFAULT;
 
 		if (ucmd->c_data)
-			free(data, M_TEMP);
+			free(data, M_TEMP, 0);
 		break;
 
 	default:

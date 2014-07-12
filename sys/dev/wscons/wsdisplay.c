@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.118 2014/05/14 18:11:24 shadchin Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.119 2014/07/12 18:48:53 tedu Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -310,8 +310,8 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 
 fail:
 	if (dconf != NULL)
-		free(dconf, M_DEVBUF);
-	free(scr, M_DEVBUF);
+		free(dconf, M_DEVBUF, 0);
+	free(scr, M_DEVBUF, 0);
 	return (NULL);
 }
 
@@ -326,8 +326,8 @@ wsscreen_detach(struct wsscreen *scr)
 	}
 	(*scr->scr_dconf->wsemul->detach)(scr->scr_dconf->wsemulcookie,
 	    &ccol, &crow);
-	free(scr->scr_dconf, M_DEVBUF);
-	free(scr, M_DEVBUF);
+	free(scr->scr_dconf, M_DEVBUF, 0);
+	free(scr, M_DEVBUF, 0);
 }
 
 const struct wsscreen_descr *
@@ -1349,14 +1349,14 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 		buf = malloc(fontsz, M_DEVBUF, M_WAITOK);
 		error = copyin(d->data, buf, fontsz);
 		if (error) {
-			free(buf, M_DEVBUF);
+			free(buf, M_DEVBUF, 0);
 			return (error);
 		}
 		d->data = buf;
 		error =
 		  (*sc->sc_accessops->load_font)(sc->sc_accesscookie, 0, d);
 		if (error)
-			free(buf, M_DEVBUF);
+			free(buf, M_DEVBUF, 0);
 		return (error);
 
 	case WSDISPLAYIO_LSFONT:
@@ -3356,7 +3356,7 @@ allocate_copybuffer(struct wsdisplay_softc *sc)
 	}
 	if (size != sc->sc_copybuffer_size && sc->sc_copybuffer_size != 0) {
 		bzero(sc->sc_copybuffer, sc->sc_copybuffer_size);
-		free(sc->sc_copybuffer, M_DEVBUF);
+		free(sc->sc_copybuffer, M_DEVBUF, 0);
 	}
 	if ((sc->sc_copybuffer = (char *)malloc(size, M_DEVBUF, M_NOWAIT)) ==
 	    NULL) {

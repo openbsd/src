@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.102 2014/05/04 20:09:15 sf Exp $	*/
+/*	$OpenBSD: pci.c,v 1.103 2014/07/12 18:48:52 tedu Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -577,7 +577,7 @@ pci_detach_devices(struct pci_softc *sc, int flags)
 	for (pd = LIST_FIRST(&sc->sc_devs);
 	     pd != LIST_END(&sc->sc_devs); pd = next) {
 		next = LIST_NEXT(pd, pd_next);
-		free(pd, M_DEVBUF);
+		free(pd, M_DEVBUF, 0);
 	}
 	LIST_INIT(&sc->sc_devs);
 

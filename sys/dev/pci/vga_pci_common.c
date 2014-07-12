@@ -73,7 +73,7 @@ vga_pci_bar_init(struct vga_pci_softc *dev, struct pci_attach_args *pa)
 		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, addr,
 		    dev->bars[i]->maptype, &dev->bars[i]->base,
 		    &dev->bars[i]->maxsize, &dev->bars[i]->flags) != 0) {
-			free(dev->bars[i], M_DEVBUF);
+			free(dev->bars[i], M_DEVBUF, 0);
 			dev->bars[i] = NULL;
 		}
 

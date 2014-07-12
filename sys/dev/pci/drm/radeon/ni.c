@@ -1,4 +1,4 @@
-/*	$OpenBSD: ni.c,v 1.7 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: ni.c,v 1.8 2014/07/12 18:48:52 tedu Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -393,19 +393,19 @@ out:
 			       "ni_cp: Failed to load firmware \"%s\"\n",
 			       fw_name);
 		if (rdev->pfp_fw) {
-			free(rdev->pfp_fw, M_DEVBUF);
+			free(rdev->pfp_fw, M_DEVBUF, 0);
 			rdev->pfp_fw = NULL;
 		}
 		if (rdev->me_fw) {
-			free(rdev->me_fw, M_DEVBUF);
+			free(rdev->me_fw, M_DEVBUF, 0);
 			rdev->me_fw = NULL;
 		}
 		if (rdev->rlc_fw) {
-			free(rdev->rlc_fw, M_DEVBUF);
+			free(rdev->rlc_fw, M_DEVBUF, 0);
 			rdev->rlc_fw = NULL;
 		}
 		if (rdev->mc_fw) {
-			free(rdev->mc_fw, M_DEVBUF);
+			free(rdev->mc_fw, M_DEVBUF, 0);
 			rdev->mc_fw = NULL;
 		}
 	}

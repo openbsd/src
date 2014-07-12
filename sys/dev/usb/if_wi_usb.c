@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.61 2014/07/12 07:59:23 mpi Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.62 2014/07/12 18:48:52 tedu Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -432,7 +432,7 @@ wi_usb_detach(struct device *self, int flags)
 	while (sc->wi_usb_nummem) {
 		sc->wi_usb_nummem--;
 		if (sc->wi_usb_txmem[sc->wi_usb_nummem] != NULL)
-			free(sc->wi_usb_txmem[sc->wi_usb_nummem], M_DEVBUF);
+			free(sc->wi_usb_txmem[sc->wi_usb_nummem], M_DEVBUF, 0);
 		sc->wi_usb_txmem[sc->wi_usb_nummem] = NULL;
 	}
 
@@ -563,7 +563,7 @@ wi_cmd_usb(struct wi_softc *wsc, int cmd, int val0, int val1, int val2)
 		/* free alloc_nicmem regions */
 		while (sc->wi_usb_nummem) {
 			sc->wi_usb_nummem--;
-			free(sc->wi_usb_txmem[sc->wi_usb_nummem], M_DEVBUF);
+			free(sc->wi_usb_txmem[sc->wi_usb_nummem], M_DEVBUF, 0);
 			sc->wi_usb_txmem[sc->wi_usb_nummem] = NULL;
 		}
 

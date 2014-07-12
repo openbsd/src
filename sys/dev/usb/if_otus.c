@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.40 2014/07/12 07:59:23 mpi Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.41 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -459,7 +459,7 @@ otus_load_firmware(struct otus_softc *sc, const char *name, uint32_t addr)
 		ptr  += mlen;
 		size -= mlen;
 	}
-	free(fw, M_DEVBUF);
+	free(fw, M_DEVBUF, 0);
 	return error;
 }
 
@@ -571,7 +571,7 @@ otus_close_pipes(struct otus_softc *sc)
 		usbd_close_pipe(sc->cmd_rx_pipe);
 	}
 	if (sc->ibuf != NULL)
-		free(sc->ibuf, M_USBDEV);
+		free(sc->ibuf, M_USBDEV, 0);
 	if (sc->data_tx_pipe != NULL)
 		usbd_close_pipe(sc->data_tx_pipe);
 	if (sc->cmd_tx_pipe != NULL)

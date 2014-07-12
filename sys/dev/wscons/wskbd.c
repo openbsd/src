@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.79 2014/07/11 08:18:31 guenther Exp $ */
+/* $OpenBSD: wskbd.c,v 1.80 2014/07/12 18:48:53 tedu Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -624,7 +624,7 @@ wskbd_detach(struct device  *self, int flags)
 		splx(s);
 	}
 
-	free(sc->sc_map, M_DEVBUF);
+	free(sc->sc_map, M_DEVBUF, 0);
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
@@ -1116,7 +1116,7 @@ getkeyrepeat:
 			    KB_HANDLEDBYWSKBD);
 			wskbd_update_layout(sc->id, enc);
 		}
-		free(buf, M_TEMP);
+		free(buf, M_TEMP, 0);
 		return(error);
 
 	case WSKBDIO_GETMAP:

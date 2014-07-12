@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.c,v 1.25 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: usb_mem.c,v 1.26 2014/07/12 18:48:53 tedu Exp $ */
 /*	$NetBSD: usb_mem.c,v 1.26 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ unmap:
 free1:
 	bus_dmamem_free(tag, p->segs, p->nsegs);
 free0:
-	free(p, M_USB);
+	free(p, M_USB, 0);
 	return (USBD_NOMEM);
 }
 
@@ -180,7 +180,7 @@ usb_block_real_freemem(struct usb_dma_block *p)
 	bus_dmamap_destroy(p->tag, p->map);
 	bus_dmamem_unmap(p->tag, p->kaddr, p->size);
 	bus_dmamem_free(p->tag, p->segs, p->nsegs);
-	free(p, M_USB);
+	free(p, M_USB, 0);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.36 2013/11/15 16:46:27 brad Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.37 2014/07/12 18:48:52 tedu Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -1776,7 +1776,7 @@ salloc_new(caddr_t addr, size_t size, int nzones)
 void
 salloc_destroy(salloc_t pool)
 {
-	free(pool, M_TEMP);
+	free(pool, M_TEMP, 0);
 }
 
 void

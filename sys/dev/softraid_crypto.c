@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.109 2014/01/22 01:46:08 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.110 2014/07/12 18:48:51 tedu Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -357,7 +357,7 @@ sr_crypto_get_kdf(struct bioc_createraid *bc, struct sr_discipline *sd)
 	rv = 0;
 out:
 	explicit_bzero(kdfinfo, bc->bc_opaque_size);
-	free(kdfinfo, M_DEVBUF);
+	free(kdfinfo, M_DEVBUF, 0);
 
 	return (rv);
 }
@@ -591,7 +591,7 @@ sr_crypto_change_maskkey(struct sr_discipline *sd,
 out:
 	if (p) {
 		explicit_bzero(p, ksz);
-		free(p, M_DEVBUF);
+		free(p, M_DEVBUF, 0);
 	}
 
 	explicit_bzero(check_digest, sizeof(check_digest));
@@ -753,18 +753,18 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 
 fail:
 	if (key_disk)
-		free(key_disk, M_DEVBUF);
+		free(key_disk, M_DEVBUF, 0);
 	key_disk = NULL;
 
 done:
 	if (omi)
-		free(omi, M_DEVBUF);
+		free(omi, M_DEVBUF, 0);
 	if (fakesd && fakesd->sd_vol.sv_chunks)
-		free(fakesd->sd_vol.sv_chunks, M_DEVBUF);
+		free(fakesd->sd_vol.sv_chunks, M_DEVBUF, 0);
 	if (fakesd)
-		free(fakesd, M_DEVBUF);
+		free(fakesd, M_DEVBUF, 0);
 	if (sm)
-		free(sm, M_DEVBUF);
+		free(sm, M_DEVBUF, 0);
 	if (open) {
 		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
 		vput(vn);
@@ -890,12 +890,12 @@ done:
 	for (omi = SLIST_FIRST(&som); omi != SLIST_END(&som); omi = omi_next) {
 		omi_next = SLIST_NEXT(omi, omi_link);
 		if (omi->omi_som)
-			free(omi->omi_som, M_DEVBUF);
-		free(omi, M_DEVBUF);
+			free(omi->omi_som, M_DEVBUF, 0);
+		free(omi, M_DEVBUF, 0);
 	}
 
 	if (sm)
-		free(sm, M_DEVBUF);
+		free(sm, M_DEVBUF, 0);
 
 	if (vn && open) {
 		VOP_CLOSE(vn, FREAD, NOCRED, curproc);
@@ -1002,7 +1002,7 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 	if (sd->mds.mdd_crypto.key_disk != NULL) {
 		explicit_bzero(sd->mds.mdd_crypto.key_disk, sizeof
 		    sd->mds.mdd_crypto.key_disk);
-		free(sd->mds.mdd_crypto.key_disk, M_DEVBUF);
+		free(sd->mds.mdd_crypto.key_disk, M_DEVBUF, 0);
 	}
 
 	sr_hotplug_unregister(sd, sr_crypto_hotplug);

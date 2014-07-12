@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.31 2013/10/18 22:06:41 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.32 2014/07/12 18:48:53 tedu Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -238,7 +238,7 @@ wsemul_vt100_detach(void *cookie, u_int *crowp, u_int *ccolp)
 
 	*crowp = edp->crow;
 	*ccolp = edp->ccol;
-#define f(ptr) if (ptr) {free(ptr, M_DEVBUF); ptr = NULL;}
+#define f(ptr) if (ptr) {free(ptr, M_DEVBUF, 0); ptr = NULL;}
 	f(edp->tabs)
 	f(edp->dblwid)
 	f(edp->dcsarg)
@@ -248,7 +248,7 @@ wsemul_vt100_detach(void *cookie, u_int *crowp, u_int *ccolp)
 	f(edp->nrctab)
 #undef f
 	if (edp != &wsemul_vt100_console_emuldata)
-		free(edp, M_DEVBUF);
+		free(edp, M_DEVBUF, 0);
 }
 
 void

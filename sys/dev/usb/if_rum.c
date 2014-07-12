@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.104 2014/07/12 07:59:23 mpi Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.105 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -259,7 +259,7 @@ rum_attachhook(void *xsc)
 		    sc->sc_dev.dv_xname);
 	}
 
-	free(ucode, M_DEVBUF);
+	free(ucode, M_DEVBUF, 0);
 }
 
 void

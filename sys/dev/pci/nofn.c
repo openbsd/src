@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofn.c,v 1.18 2011/01/12 17:01:26 deraadt Exp $	*/
+/*	$OpenBSD: nofn.c,v 1.19 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -201,7 +201,7 @@ nofn_intr(vsc)
 			q = sc->sc_pk_current;
 			sc->sc_pk_current = NULL;
 			q->q_finish(sc, q);
-			free(q, M_DEVBUF);
+			free(q, M_DEVBUF, 0);
 			nofn_pk_feed(sc);
 		}
 	}
@@ -409,7 +409,7 @@ nofn_pk_feed(sc)
 			break;
 		} else {
 			SIMPLEQ_REMOVE_HEAD(&sc->sc_pk_queue, q_next);
-			free(q, M_DEVBUF);
+			free(q, M_DEVBUF, 0);
 		}
 	}
 }
@@ -452,7 +452,7 @@ nofn_pk_process(krp)
 		    sc->sc_dev.dv_xname, krp->krp_op);
 		krp->krp_status = EOPNOTSUPP;
 		crypto_kdone(krp);
-		free(q, M_DEVBUF);
+		free(q, M_DEVBUF, 0);
 		return (0);
 	}
 }

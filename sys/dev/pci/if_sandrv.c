@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sandrv.c,v 1.15 2013/11/11 03:08:20 dlg Exp $	*/
+/*	$OpenBSD: if_sandrv.c,v 1.16 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -385,7 +385,7 @@ sdladrv_exit(void)
 			return EBUSY;
 		}
 		LIST_REMOVE(tmp, next);
-		free(tmp, M_DEVBUF);
+		free(tmp, M_DEVBUF, 0);
 	}
 #endif
 	return (0);
@@ -632,7 +632,7 @@ sdla_card_unregister(u_int16_t atype, int slot_no, int bus_no, int ioport)
 		return (EBUSY);
 	}
 	LIST_REMOVE(tmp_card, next);
-	free(tmp_card, M_DEVBUF);
+	free(tmp_card, M_DEVBUF, 0);
 	return 0;
 }
 #endif
@@ -723,7 +723,7 @@ sdla_hw_unregister(sdlahw_card_t* hwcard, int cpu_no)
 	tmp_hw->hwcard = NULL;
 	hwcard->used--;			/* Decrement card usage */
 	LIST_REMOVE(tmp_hw, next);
-	free(tmp_hw, M_DEVBUF);
+	free(tmp_hw, M_DEVBUF, 0);
 
 	return (0);
 }

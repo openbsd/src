@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.38 2013/11/10 10:22:39 pirofti Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.39 2014/07/12 18:48:52 tedu Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -414,7 +414,7 @@ alloc_all_endpoints(struct umidi_softc *sc)
 				ep--;
 				free_pipe(ep);
 			}
-			free(sc->sc_endpoints, M_USBDEV);
+			free(sc->sc_endpoints, M_USBDEV, 0);
 			sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
 			break;
 		}
@@ -430,7 +430,7 @@ free_all_endpoints(struct umidi_softc *sc)
 	for (i=0; i<sc->sc_in_num_endpoints+sc->sc_out_num_endpoints; i++)
 	    free_pipe(&sc->sc_endpoints[i]);
 	if (sc->sc_endpoints != NULL)
-		free(sc->sc_endpoints, M_USBDEV);
+		free(sc->sc_endpoints, M_USBDEV, 0);
 	sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
 }
 
@@ -518,7 +518,7 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 
 	return USBD_NORMAL_COMPLETION;
 error:
-	free(sc->sc_endpoints, M_USBDEV);
+	free(sc->sc_endpoints, M_USBDEV, 0);
 	sc->sc_endpoints = NULL;
 	return err;
 }
@@ -794,7 +794,7 @@ free_all_jacks(struct umidi_softc *sc)
 
 	s = splusb();
 	if (sc->sc_out_jacks) {
-		free(sc->sc_jacks, M_USBDEV);
+		free(sc->sc_jacks, M_USBDEV, 0);
 		sc->sc_jacks = sc->sc_in_jacks = sc->sc_out_jacks = NULL;
 	}
 	splx(s);
@@ -981,7 +981,7 @@ free_all_mididevs(struct umidi_softc *sc)
 {
 	sc->sc_num_mididevs = 0;
 	if (sc->sc_mididevs)
-		free(sc->sc_mididevs, M_USBDEV);
+		free(sc->sc_mididevs, M_USBDEV, 0);
 }
 
 static usbd_status

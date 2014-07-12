@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.86 2014/05/12 19:29:16 kettenis Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.87 2014/07/12 18:48:51 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -509,7 +509,7 @@ out:
 		if (isc->gatt->ag_size != 0)
 			agp_free_dmamem(pa->pa_dmat, isc->gatt->ag_size,
 			    isc->gatt->ag_dmamap, &isc->gatt->ag_dmaseg);
-		free(isc->gatt, M_AGP);
+		free(isc->gatt, M_AGP, 0);
 	}
 	if (isc->gtt_map != NULL)
 		vga_pci_bar_unmap(isc->gtt_map);
@@ -645,14 +645,14 @@ agp_i810_alloc_memory(void *softc, int type, vsize_t size)
 		 */
 		if ((mem->am_dmaseg = malloc(sizeof (*mem->am_dmaseg), M_AGP,
 		    M_WAITOK | M_CANFAIL)) == NULL) {
-			free(mem, M_AGP);
+			free(mem, M_AGP, 0);
 			return (NULL);
 		}
 
 		if ((error = agp_alloc_dmamem(sc->sc_dmat, size,
 		    &mem->am_dmamap, &mem->am_physical, mem->am_dmaseg)) != 0) {
-			free(mem->am_dmaseg, M_AGP);
-			free(mem, M_AGP);
+			free(mem->am_dmaseg, M_AGP, 0);
+			free(mem, M_AGP, 0);
 			printf("agp: agp_alloc_dmamem(%d)\n", error);
 			return (NULL);
 		}
@@ -660,7 +660,7 @@ agp_i810_alloc_memory(void *softc, int type, vsize_t size)
 		if ((error = bus_dmamap_create(sc->sc_dmat, size,
 		    size / PAGE_SIZE + 1, size, 0, BUS_DMA_NOWAIT,
 		    &mem->am_dmamap)) != 0) {
-			free(mem, M_AGP);
+			free(mem, M_AGP, 0);
 			printf("agp: bus_dmamap_create(%d)\n", error);
 			return (NULL);
 		}
@@ -684,14 +684,14 @@ agp_i810_free_memory(void *softc, struct agp_memory *mem)
 	if (mem->am_type == 2) {
 		agp_free_dmamem(sc->sc_dmat, mem->am_size, mem->am_dmamap,
 		    mem->am_dmaseg);
-		free(mem->am_dmaseg, M_AGP);
+		free(mem->am_dmaseg, M_AGP, 0);
 	} else if (mem->am_type != 1) {
 		bus_dmamap_destroy(sc->sc_dmat, mem->am_dmamap);
 	}
 
 	sc->sc_allocated -= mem->am_size;
 	TAILQ_REMOVE(&sc->sc_memory, mem, am_link);
-	free(mem, M_AGP);
+	free(mem, M_AGP, 0);
 	return (0);
 }
 

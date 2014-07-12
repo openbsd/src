@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.356 2014/07/08 05:35:18 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.357 2014/07/12 18:48:51 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1478,7 +1478,7 @@ bge_free_tx_ring(struct bge_softc *sc)
 	while ((dma = SLIST_FIRST(&sc->txdma_list))) {
 		SLIST_REMOVE_HEAD(&sc->txdma_list, link);
 		bus_dmamap_destroy(sc->bge_dmatag, dma->dmamap);
-		free(dma, M_DEVBUF);
+		free(dma, M_DEVBUF, 0);
 	}
 
 	sc->bge_flags &= ~BGE_TXRING_VALID;

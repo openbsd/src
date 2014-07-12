@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.51 2014/05/18 15:27:28 stsp Exp $ */
+/* $OpenBSD: pms.c,v 1.52 2014/07/12 18:48:52 tedu Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -992,7 +992,7 @@ pms_enable_synaptics(struct pms_softc *sc)
 		}
 
 		if (synaptics_get_hwinfo(sc)) {
-			free(sc->synaptics, M_DEVBUF);
+			free(sc->synaptics, M_DEVBUF, 0);
 			sc->synaptics = NULL;
 			goto err;
 		}
@@ -1273,7 +1273,7 @@ pms_enable_alps(struct pms_softc *sc)
 		}
 
 		if (alps_get_hwinfo(sc)) {
-			free(sc->alps, M_DEVBUF);
+			free(sc->alps, M_DEVBUF, 0);
 			sc->alps = NULL;
 			goto err;
 		}
@@ -1828,7 +1828,7 @@ pms_enable_elantech_v1(struct pms_softc *sc)
 		}
 
 		if (elantech_get_hwinfo_v1(sc)) {
-			free(sc->elantech, M_DEVBUF);
+			free(sc->elantech, M_DEVBUF, 0);
 			sc->elantech = NULL;
 			goto err;
 		}
@@ -1867,7 +1867,7 @@ pms_enable_elantech_v2(struct pms_softc *sc)
 		}
 
 		if (elantech_get_hwinfo_v2(sc)) {
-			free(sc->elantech, M_DEVBUF);
+			free(sc->elantech, M_DEVBUF, 0);
 			sc->elantech = NULL;
 			goto err;
 		}
@@ -1903,7 +1903,7 @@ pms_enable_elantech_v3(struct pms_softc *sc)
 		}
 
 		if (elantech_get_hwinfo_v3(sc)) {
-			free(sc->elantech, M_DEVBUF);
+			free(sc->elantech, M_DEVBUF, 0);
 			sc->elantech = NULL;
 			goto err;
 		}
@@ -1939,7 +1939,7 @@ pms_enable_elantech_v4(struct pms_softc *sc)
 		}
 
 		if (elantech_get_hwinfo_v4(sc)) {
-			free(sc->elantech, M_DEVBUF);
+			free(sc->elantech, M_DEVBUF, 0);
 			sc->elantech = NULL;
 			goto err;
 		}

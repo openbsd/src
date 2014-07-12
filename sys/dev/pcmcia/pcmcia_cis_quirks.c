@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis_quirks.c,v 1.9 2011/03/31 13:05:27 jasper Exp $	*/
+/*	$OpenBSD: pcmcia_cis_quirks.c,v 1.10 2014/07/12 18:48:52 tedu Exp $	*/
 /*	$NetBSD: pcmcia_cis_quirks.c,v 1.3 1998/12/29 09:00:28 marc Exp $	*/
 
 /*
@@ -252,10 +252,10 @@ void pcmcia_check_cis_quirks(sc)
 					for (cfe = SIMPLEQ_FIRST(&pf->cfe_head); cfe != NULL;
 					     cfe = cfe_next) {
 						cfe_next = SIMPLEQ_NEXT(cfe, cfe_list);
-						free(cfe, M_DEVBUF);
+						free(cfe, M_DEVBUF, 0);
 					}
 					pf_next = SIMPLEQ_NEXT(pf, pf_list);
-					free(pf, M_DEVBUF);
+					free(pf, M_DEVBUF, 0);
 				}
 
 				SIMPLEQ_INIT(&sc->card.pf_head);

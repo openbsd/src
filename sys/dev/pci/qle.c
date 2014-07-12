@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.29 2014/05/21 22:59:26 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.30 2014/07/12 18:48:52 tedu Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -902,11 +902,11 @@ qle_add_loop_port(struct qle_softc *sc, struct qle_fc_port *port)
 		sc->sc_targets[port->loopid] = port;
 		break;
 	case QLE_PORT_DISP_DUP:
-		free(port, M_DEVBUF);
+		free(port, M_DEVBUF, 0);
 		break;
 	case QLE_PORT_DISP_SAME:
 		TAILQ_REMOVE(&sc->sc_ports_gone, pport, update);
-		free(port, M_DEVBUF);
+		free(port, M_DEVBUF, 0);
 		break;
 	}
 	mtx_leave(&sc->sc_port_mtx);
@@ -932,7 +932,7 @@ qle_add_fabric_port(struct qle_softc *sc, struct qle_fc_port *port)
 	struct qle_get_port_db *pdb;
 
 	if (qle_get_port_db(sc, port->loopid, sc->sc_scratch) != 0) {
-		free(port, M_DEVBUF);
+		free(port, M_DEVBUF, 0);
 		return (1);
 	}
 	pdb = QLE_DMA_KVA(sc->sc_scratch);
@@ -1619,13 +1619,13 @@ qle_clear_port_lists(struct qle_softc *sc)
 	while (!TAILQ_EMPTY(&sc->sc_ports_found)) {
 		p = TAILQ_FIRST(&sc->sc_ports_found);
 		TAILQ_REMOVE(&sc->sc_ports_found, p, update);
-		free(p, M_DEVBUF);
+		free(p, M_DEVBUF, 0);
 	}
 
 	while (!TAILQ_EMPTY(&sc->sc_ports_new)) {
 		p = TAILQ_FIRST(&sc->sc_ports_new);
 		TAILQ_REMOVE(&sc->sc_ports_new, p, update);
-		free(p, M_DEVBUF);
+		free(p, M_DEVBUF, 0);
 	}
 
 	while (!TAILQ_EMPTY(&sc->sc_ports_gone)) {
@@ -2115,7 +2115,7 @@ qle_do_update(void *xsc, void *x)
 				if (port->location & QLE_LOCATION_FABRIC)
 					qle_fabric_plogo(sc, port);
 
-				free(port, M_DEVBUF);
+				free(port, M_DEVBUF, 0);
 			}
 
 			qle_update_done(sc, QLE_UPDATE_TASK_CLEAR_ALL);
@@ -2207,12 +2207,12 @@ qle_do_update(void *xsc, void *x)
 				DPRINTF(QLE_D_PORT, "%s: loop port %04x\n",
 				    DEVNAME(sc), fport->loopid);
 				if (qle_add_loop_port(sc, fport) != 0)
-					free(fport, M_DEVBUF);
+					free(fport, M_DEVBUF, 0);
 			} else if (fport->location & QLE_LOCATION_FABRIC) {
 				qle_add_fabric_port(sc, fport);
 			} else {
 				/* already processed */
-				free(fport, M_DEVBUF);
+				free(fport, M_DEVBUF, 0);
 			}
 			continue;
 		}
@@ -2250,7 +2250,7 @@ qle_do_update(void *xsc, void *x)
 					    fport, update);
 					break;
 				case QLE_PORT_DISP_DUP:
-					free(fport, M_DEVBUF);
+					free(fport, M_DEVBUF, 0);
 					break;
 				case QLE_PORT_DISP_SAME:
 					DPRINTF(QLE_D_PORT, "%s: existing port "
@@ -2258,7 +2258,7 @@ qle_do_update(void *xsc, void *x)
 					    fport->portid);
 					TAILQ_REMOVE(&sc->sc_ports_gone, port,
 					    update);
-					free(fport, M_DEVBUF);
+					free(fport, M_DEVBUF, 0);
 					break;
 				}
 				mtx_leave(&sc->sc_port_mtx);
@@ -2291,7 +2291,7 @@ qle_do_update(void *xsc, void *x)
 					DPRINTF(QLE_D_PORT, "%s: plogi %06x "
 					    "failed\n", DEVNAME(sc),
 					    port->portid);
-					free(port, M_DEVBUF);
+					free(port, M_DEVBUF, 0);
 				}
 			} else {
 				DPRINTF(QLE_D_PORT, "%s: done with logins\n",
@@ -2339,7 +2339,7 @@ qle_do_update(void *xsc, void *x)
 				if (port->location & QLE_LOCATION_FABRIC)
 					qle_fabric_plogo(sc, port);
 
-				free(port, M_DEVBUF);
+				free(port, M_DEVBUF, 0);
 			} else {
 				DPRINTF(QLE_D_PORT, "%s: nothing to detach\n",
 				    DEVNAME(sc));
@@ -2816,7 +2816,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, m->qdm_map);
 qdmfree:
-	free(m, M_DEVBUF);
+	free(m, M_DEVBUF, 0);
 
 	return (NULL);
 }
@@ -2828,7 +2828,7 @@ qle_dmamem_free(struct qle_softc *sc, struct qle_dmamem *m)
 	bus_dmamem_unmap(sc->sc_dmat, m->qdm_kva, m->qdm_size);
 	bus_dmamem_free(sc->sc_dmat, &m->qdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, m->qdm_map);
-	free(m, M_DEVBUF);
+	free(m, M_DEVBUF, 0);
 }
 
 int
@@ -2923,7 +2923,7 @@ free_res:
 free_req:
 	qle_dmamem_free(sc, sc->sc_requests);
 free_ccbs:
-	free(sc->sc_ccbs, M_DEVBUF);
+	free(sc->sc_ccbs, M_DEVBUF, 0);
 
 	return (1);
 }
@@ -2939,7 +2939,7 @@ qle_free_ccbs(struct qle_softc *sc)
 	qle_dmamem_free(sc, sc->sc_segments);
 	qle_dmamem_free(sc, sc->sc_responses);
 	qle_dmamem_free(sc, sc->sc_requests);
-	free(sc->sc_ccbs, M_DEVBUF);
+	free(sc->sc_ccbs, M_DEVBUF, 0);
 }
 
 void *

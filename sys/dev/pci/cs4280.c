@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.44 2013/12/06 21:03:03 deraadt Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.45 2014/07/12 18:48:51 tedu Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -1380,7 +1380,7 @@ cs4280_malloc(void *addr, int direction, size_t size, int pool, int flags)
 		return (0);
 	p = malloc(sizeof(*p), pool, flags);
 	if (!p) {
-		free(q,pool);
+		free(q,pool, 0);
 		return (0);
 	}
 	/* 
@@ -1389,8 +1389,8 @@ cs4280_malloc(void *addr, int direction, size_t size, int pool, int flags)
 	error = cs4280_allocmem(sc, CS4280_DCHUNK, CS4280_DALIGN, p);
 
 	if (error) {
-		free(q, pool);
-		free(p, pool);
+		free(q, pool, 0);
+		free(p, pool, 0);
 		return (0);
 	}
 
@@ -1411,8 +1411,8 @@ cs4280_free(void *addr, void *ptr, int pool)
 		if (BUFADDR(p) == ptr) {
 			cs4280_freemem(sc, p);
 			*pp = p->next;
-			free(p->dum, pool);
-			free(p, pool);
+			free(p->dum, pool, 0);
+			free(p, pool, 0);
 			return;
 		}
 	}

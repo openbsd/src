@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_mem_util.h,v 1.1 2013/08/12 04:11:52 jsg Exp $	*/
+/*	$OpenBSD: drm_mem_util.h,v 1.2 2014/07/12 18:48:52 tedu Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -65,10 +65,10 @@ static __inline__ void *drm_malloc_ab(size_t nmemb, size_t size)
 
 static __inline void drm_free_large(void *ptr)
 {
-	free(ptr, M_DRM);
+	free(ptr, M_DRM, 0);
 #ifdef notyet
 	if (!is_vmalloc_addr(ptr))
-		return free(ptr, M_DRM);
+		return free(ptr, M_DRM, 0);
 
 	vfree(ptr);
 #endif

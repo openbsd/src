@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.107 2014/07/12 07:59:23 mpi Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.108 2014/07/12 18:48:52 tedu Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -908,7 +908,7 @@ atu_internal_firmware(void *arg)
 			if (err) {
 				DPRINTF(("%s: dfu_getstatus failed!\n",
 				    sc->atu_dev.dv_xname));
-				free(firm, M_DEVBUF);
+				free(firm, M_DEVBUF, 0);
 				goto fail;
 			}
 			/* success means state => DnLoadIdle */
@@ -930,7 +930,7 @@ atu_internal_firmware(void *arg)
 			if (err) {
 				DPRINTF(("%s: dfu_dnload failed\n",
 				    sc->atu_dev.dv_xname));
-				free(firm, M_DEVBUF);
+				free(firm, M_DEVBUF, 0);
 				goto fail;
 			}
 
@@ -949,7 +949,7 @@ atu_internal_firmware(void *arg)
 
 		state = atu_get_dfu_state(sc);
 	}
-	free(firm, M_DEVBUF);
+	free(firm, M_DEVBUF, 0);
 
 	if (state != DFUState_ManifestSync) {
 		DPRINTF(("%s: state != manifestsync... eek!\n",
@@ -1021,7 +1021,7 @@ atu_external_firmware(void *arg)
 		if (err) {
 			DPRINTF(("%s: could not load external firmware "
 			    "block\n", sc->atu_dev.dv_xname));
-			free(firm, M_DEVBUF);
+			free(firm, M_DEVBUF, 0);
 			return;
 		}
 
@@ -1029,7 +1029,7 @@ atu_external_firmware(void *arg)
 		block++;
 		bytes_left -= block_size;
 	}
-	free(firm, M_DEVBUF);
+	free(firm, M_DEVBUF, 0);
 
 	err = atu_usb_request(sc, UT_WRITE_VENDOR_DEVICE, 0x0e, 0x0802,
 	    block, 0, NULL);

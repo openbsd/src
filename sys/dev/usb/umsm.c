@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.98 2014/05/16 13:53:35 dcoppa Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.99 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -419,7 +419,7 @@ umsm_detach(struct device *self, int flags)
 	if (sc->sc_intr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_intr_pipe);
 		usbd_close_pipe(sc->sc_intr_pipe);
-		free(sc->sc_intr_buf, M_USBDEV);
+		free(sc->sc_intr_buf, M_USBDEV, 0);
 		sc->sc_intr_pipe = NULL;
 	}
 
@@ -492,7 +492,7 @@ umsm_close(void *addr, int portno)
 			printf("%s: close interrupt pipe failed: %s\n",
 			    sc->sc_dev.dv_xname,
 			    usbd_errstr(err));
-		free(sc->sc_intr_buf, M_USBDEV);
+		free(sc->sc_intr_buf, M_USBDEV, 0);
 		sc->sc_intr_pipe = NULL;
 	}
 }

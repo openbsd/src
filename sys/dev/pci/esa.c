@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.27 2013/05/24 07:58:46 ratchov Exp $	*/
+/*	$OpenBSD: esa.c,v 1.28 2014/07/12 18:48:51 tedu Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -513,7 +513,7 @@ esa_malloc(void *hdl, int direction, size_t size, int type, int flags)
 		return (0);
 	error = esa_allocmem(sc, size, 16, p);
 	if (error) {
-		free(p, type);
+		free(p, type, 0);
 		printf("%s: esa_malloc: not enough memory\n",
 		    sc->sc_dev.dv_xname);
 		return (0);
@@ -536,7 +536,7 @@ esa_free(void *hdl, void *addr, int type)
 		if (KERNADDR(p) == addr) {
 			esa_freemem(sc, p);
 			*pp = p->next;
-			free(p, type);
+			free(p, type, 0);
 			return;
 		}
 }
@@ -1125,7 +1125,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	if (ac97_attach(&sc->host_if) != 0) {
 		pci_intr_disestablish(pc, sc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
-		free(sc->savemem, M_DEVBUF);
+		free(sc->savemem, M_DEVBUF, 0);
 		return;
 	}
 
@@ -1170,7 +1170,7 @@ esa_detach(struct device *self, int flags)
 	if (sc->sc_ios)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 
-	free(sc->savemem, M_DEVBUF);
+	free(sc->savemem, M_DEVBUF, 0);
 
 	return (0);
 }

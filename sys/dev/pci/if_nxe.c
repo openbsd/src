@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.64 2013/11/21 19:08:14 gsoares Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.65 2014/07/12 18:48:51 tedu Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1651,7 +1651,7 @@ nxe_board_info(struct nxe_softc *sc)
 
 	rv = 0;
 out:
-	free(ni, M_TEMP);
+	free(ni, M_TEMP, 0);
 	return (rv);
 }
 
@@ -1693,7 +1693,7 @@ nxe_user_info(struct nxe_softc *sc)
 
 	rv = 0;
 out:
-	free(nu, M_TEMP);
+	free(nu, M_TEMP, 0);
 	return (rv);
 }
 
@@ -1852,7 +1852,7 @@ nxe_ring_alloc(struct nxe_softc *sc, size_t desclen, u_int nentries)
 
 	nr->nr_dmamem = nxe_dmamem_alloc(sc, desclen * nentries, PAGE_SIZE);
 	if (nr->nr_dmamem == NULL) {
-		free(nr, M_DEVBUF);
+		free(nr, M_DEVBUF, 0);
 		return (NULL);
 	}
 
@@ -1875,7 +1875,7 @@ void
 nxe_ring_free(struct nxe_softc *sc, struct nxe_ring *nr)
 {
 	nxe_dmamem_free(sc, nr->nr_dmamem);
-	free(nr, M_DEVBUF);
+	free(nr, M_DEVBUF, 0);
 }
 
 int
@@ -1956,8 +1956,8 @@ nxe_pkt_free(struct nxe_softc *sc, struct nxe_pkt_list *npl)
 	while ((pkt = nxe_pkt_get(npl)) != NULL)
 		bus_dmamap_destroy(sc->sc_dmat, pkt->pkt_dmap);
 
-	free(npl->npl_pkts, M_DEVBUF);
-	free(npl, M_DEVBUF);
+	free(npl->npl_pkts, M_DEVBUF, 0);
+	free(npl, M_DEVBUF, 0);
 }
 
 struct nxe_pkt *
@@ -2022,7 +2022,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, ndm->ndm_map);
 ndmfree:
-	free(ndm, M_DEVBUF);
+	free(ndm, M_DEVBUF, 0);
 
 	return (NULL);
 }
@@ -2033,7 +2033,7 @@ nxe_dmamem_free(struct nxe_softc *sc, struct nxe_dmamem *ndm)
 	bus_dmamem_unmap(sc->sc_dmat, ndm->ndm_kva, ndm->ndm_size);
 	bus_dmamem_free(sc->sc_dmat, &ndm->ndm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, ndm->ndm_map);
-	free(ndm, M_DEVBUF);
+	free(ndm, M_DEVBUF, 0);
 }
 
 u_int32_t

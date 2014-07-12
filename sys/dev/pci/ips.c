@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.108 2011/07/17 22:46:48 matthew Exp $	*/
+/*	$OpenBSD: ips.c,v 1.109 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -815,7 +815,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (sensor_task_register(sc, ips_sensors, 10) == NULL) {
 		printf(": no sensors support\n");
-		free(sc->sc_sensors, M_DEVBUF);
+		free(sc->sc_sensors, M_DEVBUF, 0);
 		return;
 	}
 	sensordev_install(&sc->sc_sensordev);
@@ -2002,7 +2002,7 @@ ips_ccb_alloc(struct ips_softc *sc, int n)
 fail:
 	for (; i > 0; i--)
 		bus_dmamap_destroy(sc->sc_dmat, ccb[i - 1].c_dmam);
-	free(ccb, M_DEVBUF);
+	free(ccb, M_DEVBUF, 0);
 	return (NULL);
 }
 
@@ -2013,7 +2013,7 @@ ips_ccb_free(struct ips_softc *sc, struct ips_ccb *ccb, int n)
 
 	for (i = 0; i < n; i++)
 		bus_dmamap_destroy(sc->sc_dmat, ccb[i - 1].c_dmam);
-	free(ccb, M_DEVBUF);
+	free(ccb, M_DEVBUF, 0);
 }
 
 void *

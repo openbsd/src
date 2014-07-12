@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.57 2014/01/29 18:30:39 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.58 2014/07/12 18:48:52 tedu Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -337,19 +337,19 @@ ppbdetach(struct device *self, int flags)
 	if (sc->sc_ioex) {
 		name = sc->sc_ioex->ex_name;
 		extent_destroy(sc->sc_ioex);
-		free(name, M_DEVBUF);
+		free(name, M_DEVBUF, 0);
 	}
 
 	if (sc->sc_memex) {
 		name = sc->sc_memex->ex_name;
 		extent_destroy(sc->sc_memex);
-		free(name, M_DEVBUF);
+		free(name, M_DEVBUF, 0);
 	}
 
 	if (sc->sc_pmemex) {
 		name = sc->sc_pmemex->ex_name;
 		extent_destroy(sc->sc_pmemex);
-		free(name, M_DEVBUF);
+		free(name, M_DEVBUF, 0);
 	}
 
 	return (rv);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla_sbus.c,v 1.1 2014/02/02 13:01:58 kettenis Exp $	*/
+/*	$OpenBSD: qla_sbus.c,v 1.2 2014/07/12 18:48:52 tedu Exp $	*/
 /*
  * Copyright (c) 2014 Mark Kettenis
  *
@@ -152,5 +152,5 @@ qla_sbus_attach(struct device *parent, struct device *self, void *aux)
 unmap:
 	bus_space_unmap(iot, ioh, sa->sa_size);
 free:
-	free(iot, M_DEVBUF);
+	free(iot, M_DEVBUF, 0);
 }

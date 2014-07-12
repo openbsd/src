@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.128 2014/07/02 06:09:49 matthew Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.129 2014/07/12 18:48:52 tedu Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -1155,7 +1155,7 @@ free:
 destroy:
 	bus_dmamap_destroy(dmat, mem->map);
 strfree:
-	free(mem, M_DRM);
+	free(mem, M_DRM, 0);
 
 	return (NULL);
 }
@@ -1170,7 +1170,7 @@ drm_dmamem_free(bus_dma_tag_t dmat, struct drm_dmamem *mem)
 	bus_dmamem_unmap(dmat, mem->kva, mem->size);
 	bus_dmamem_free(dmat, mem->segs, mem->nsegs);
 	bus_dmamap_destroy(dmat, mem->map);
-	free(mem, M_DRM);
+	free(mem, M_DRM, 0);
 }
 
 /**

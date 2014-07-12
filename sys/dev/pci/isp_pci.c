@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.59 2014/02/14 05:17:05 jmatthew Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.60 2014/07/12 18:48:52 tedu Exp $	*/
 /* $FreeBSD: src/sys/dev/isp/isp_pci.c,v 1.148 2007/06/26 23:08:57 mjacob Exp $*/
 /*-
  * Copyright (c) 1997-2006 by Matthew Jacob
@@ -752,7 +752,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		free(isp->isp_param, M_DEVBUF);
+		free(isp->isp_param, M_DEVBUF, 0);
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
@@ -763,7 +763,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pcs->pci_ih == NULL) {
 		printf(": couldn't establish interrupt at %s\n",
 			intrstr);
-		free(isp->isp_param, M_DEVBUF);
+		free(isp->isp_param, M_DEVBUF, 0);
 		return;
 	}
 
@@ -783,7 +783,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
 		ISP_UNLOCK(isp);
-		free(isp->isp_param, M_DEVBUF);
+		free(isp->isp_param, M_DEVBUF, 0);
 		return;
 	}
 	ISP_ENABLE_INTS(isp);
@@ -791,7 +791,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (isp->isp_state != ISP_INITSTATE) {
 		isp_uninit(isp);
 		ISP_UNLOCK(isp);
-		free(isp->isp_param, M_DEVBUF);
+		free(isp->isp_param, M_DEVBUF, 0);
 		return;
 	}
 	/*
@@ -801,7 +801,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (isp->isp_state != ISP_RUNSTATE) {
 		isp_uninit(isp);
 		ISP_UNLOCK(isp);
-		free(isp->isp_param, M_DEVBUF);
+		free(isp->isp_param, M_DEVBUF, 0);
 	} else {
 		ISP_UNLOCK(isp);
 	}
@@ -1084,7 +1084,7 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	len = isp->isp_maxcmds * sizeof (bus_dmamap_t);
 	pcs->pci_xfer_dmap = (bus_dmamap_t *) malloc(len, M_DEVBUF, M_NOWAIT);
 	if (pcs->pci_xfer_dmap == NULL) {
-		free(isp->isp_xflist, M_DEVBUF);
+		free(isp->isp_xflist, M_DEVBUF, 0);
 		isp->isp_xflist = NULL;
 		isp_prt(isp, ISP_LOGERR, "cannot malloc dma map array");
 		return (1);
@@ -1102,8 +1102,8 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 		while (--i >= 0) {
 			bus_dmamap_destroy(dmat, pcs->pci_xfer_dmap[i]);
 		}
-		free(isp->isp_xflist, M_DEVBUF);
-		free(pcs->pci_xfer_dmap, M_DEVBUF);
+		free(isp->isp_xflist, M_DEVBUF, 0);
+		free(pcs->pci_xfer_dmap, M_DEVBUF, 0);
 		isp->isp_xflist = NULL;
 		pcs->pci_xfer_dmap = NULL;
 		return (1);
@@ -1165,8 +1165,8 @@ dmafail:
 	for (i = 0; i < isp->isp_maxcmds; i++) {
 		bus_dmamap_destroy(dmat, pcs->pci_xfer_dmap[i]);
 	}
-	free(isp->isp_xflist, M_DEVBUF);
-	free(pcs->pci_xfer_dmap, M_DEVBUF);
+	free(isp->isp_xflist, M_DEVBUF, 0);
+	free(pcs->pci_xfer_dmap, M_DEVBUF, 0);
 	isp->isp_xflist = NULL;
 	pcs->pci_xfer_dmap = NULL;
 	return (1);

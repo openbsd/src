@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.28 2014/04/01 20:16:50 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.29 2014/07/12 18:48:52 tedu Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -102,8 +102,8 @@ eb_get_object(struct eb_objects *eb, unsigned long handle)
 static void
 eb_destroy(struct eb_objects *eb)
 {
-	free(eb->buckets, M_DRM);
-	free(eb, M_DRM);
+	free(eb->buckets, M_DRM, 0);
+	free(eb, M_DRM, 0);
 }
 
 static inline int use_cpu_reloc(struct drm_i915_gem_object *obj)

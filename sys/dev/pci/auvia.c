@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.52 2013/12/06 21:03:03 deraadt Exp $ */
+/*	$OpenBSD: auvia.c,v 1.53 2014/07/12 18:48:51 tedu Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -914,7 +914,7 @@ fail_create:
 fail_map:
 	bus_dmamem_free(sc->sc_dmat, &p->seg, 1);
 fail_alloc:
-	free(p, pool);
+	free(p, pool, 0);
 	return 0;
 }
 
@@ -933,7 +933,7 @@ auvia_free(void *addr, void *ptr, int pool)
 			bus_dmamem_free(sc->sc_dmat, &p->seg, 1);
 
 			*pp = p->next;
-			free(p, pool);
+			free(p, pool, 0);
 			return;
 		}
 

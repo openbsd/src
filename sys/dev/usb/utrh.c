@@ -1,4 +1,4 @@
-/*	$OpenBSD: utrh.c,v 1.15 2014/05/07 08:17:21 mpi Exp $   */
+/*	$OpenBSD: utrh.c,v 1.16 2014/07/12 18:48:53 tedu Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -179,7 +179,7 @@ utrh_detach(struct device *self, int flags)
 		uhidev_close(&sc->sc_hdev);
 
 	if (sc->sc_ibuf != NULL) {
-		free(sc->sc_ibuf, M_USBDEV);
+		free(sc->sc_ibuf, M_USBDEV, 0);
 		sc->sc_ibuf = NULL;
 	}
 

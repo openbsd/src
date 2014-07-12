@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.14 2013/11/18 20:21:51 deraadt Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.15 2014/07/12 18:48:51 tedu Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -494,7 +494,7 @@ out:
 			if (d->d_dev != NULL)
 				config_detach(d->d_dev, DETACH_FORCE);
 			TAILQ_REMOVE(&sc->sc_devs, d, d_list);
-			free(d, M_DEVBUF);
+			free(d, M_DEVBUF, 0);
 		}
 	}
 }

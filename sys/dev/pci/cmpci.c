@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.36 2013/12/06 21:03:03 deraadt Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.37 2014/07/12 18:48:51 tedu Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -1362,7 +1362,7 @@ cmpci_alloc_dmamem(struct cmpci_softc *sc, size_t size, int type, int flags,
 	bus_dmamem_free(n->cd_tag,
 			n->cd_segs, nitems(n->cd_segs));
  mfree:
-	free(n, type);
+	free(n, type, 0);
  quit:
 	return error;
 }
@@ -1380,7 +1380,7 @@ cmpci_free_dmamem(struct cmpci_softc *sc, caddr_t addr, int type)
 			bus_dmamem_unmap(n->cd_tag, n->cd_addr, n->cd_size);
 			bus_dmamem_free(n->cd_tag, n->cd_segs,
 			    nitems(n->cd_segs));
-			free(n, type);
+			free(n, type, 0);
 			return 0;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.75 2014/07/08 05:35:18 dlg Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.76 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1987,7 +1987,7 @@ oce_create_wq(struct oce_softc *sc, struct oce_eq *eq)
 
 	wq->ring = oce_create_ring(sc, sc->sc_tx_ring_size, NIC_WQE_SIZE, 8);
 	if (!wq->ring) {
-		free(wq, M_DEVBUF);
+		free(wq, M_DEVBUF, 0);
 		return (NULL);
 	}
 
@@ -1995,7 +1995,7 @@ oce_create_wq(struct oce_softc *sc, struct oce_eq *eq)
 	    1, 0, 3);
 	if (!cq) {
 		oce_destroy_ring(sc, wq->ring);
-		free(wq, M_DEVBUF);
+		free(wq, M_DEVBUF, 0);
 		return (NULL);
 	}
 
@@ -2066,7 +2066,7 @@ oce_destroy_wq(struct oce_wq *wq)
 		oce_destroy_ring(sc, wq->ring);
 	while ((pkt = oce_pkt_get(&wq->pkt_free)) != NULL)
 		oce_pkt_free(sc, pkt);
-	free(wq, M_DEVBUF);
+	free(wq, M_DEVBUF, 0);
 }
 
 /**
@@ -2095,7 +2095,7 @@ oce_create_rq(struct oce_softc *sc, struct oce_eq *eq, int rss)
 	rq->ring = oce_create_ring(sc, sc->sc_rx_ring_size,
 	    sizeof(struct oce_nic_rqe), 2);
 	if (!rq->ring) {
-		free(rq, M_DEVBUF);
+		free(rq, M_DEVBUF, 0);
 		return (NULL);
 	}
 
@@ -2103,7 +2103,7 @@ oce_create_rq(struct oce_softc *sc, struct oce_eq *eq, int rss)
 	    1, 0, 3);
 	if (!cq) {
 		oce_destroy_ring(sc, rq->ring);
-		free(rq, M_DEVBUF);
+		free(rq, M_DEVBUF, 0);
 		return (NULL);
 	}
 
@@ -2172,7 +2172,7 @@ oce_destroy_rq(struct oce_rq *rq)
 		oce_destroy_ring(sc, rq->ring);
 	while ((pkt = oce_pkt_get(&rq->pkt_free)) != NULL)
 		oce_pkt_free(sc, pkt);
-	free(rq, M_DEVBUF);
+	free(rq, M_DEVBUF, 0);
 }
 
 struct oce_eq *
@@ -2187,7 +2187,7 @@ oce_create_eq(struct oce_softc *sc)
 
 	eq->ring = oce_create_ring(sc, EQ_LEN_1024, EQE_SIZE_4, 8);
 	if (!eq->ring) {
-		free(eq, M_DEVBUF);
+		free(eq, M_DEVBUF, 0);
 		return (NULL);
 	}
 
@@ -2199,7 +2199,7 @@ oce_create_eq(struct oce_softc *sc)
 
 	if (oce_new_eq(sc, eq)) {
 		oce_destroy_ring(sc, eq->ring);
-		free(eq, M_DEVBUF);
+		free(eq, M_DEVBUF, 0);
 		return (NULL);
 	}
 
@@ -2250,7 +2250,7 @@ oce_destroy_eq(struct oce_eq *eq)
 	}
 	if (eq->ring != NULL)
 		oce_destroy_ring(sc, eq->ring);
-	free(eq, M_DEVBUF);
+	free(eq, M_DEVBUF, 0);
 }
 
 struct oce_mq *
@@ -2266,7 +2266,7 @@ oce_create_mq(struct oce_softc *sc, struct oce_eq *eq)
 
 	mq->ring = oce_create_ring(sc, 128, sizeof(struct oce_mbx), 8);
 	if (!mq->ring) {
-		free(mq, M_DEVBUF);
+		free(mq, M_DEVBUF, 0);
 		return (NULL);
 	}
 
@@ -2274,7 +2274,7 @@ oce_create_mq(struct oce_softc *sc, struct oce_eq *eq)
 	    1, 0, 0);
 	if (!cq) {
 		oce_destroy_ring(sc, mq->ring);
-		free(mq, M_DEVBUF);
+		free(mq, M_DEVBUF, 0);
 		return (NULL);
 	}
 
@@ -2287,7 +2287,7 @@ oce_create_mq(struct oce_softc *sc, struct oce_eq *eq)
 	if (oce_new_mq(sc, mq)) {
 		oce_destroy_cq(mq->cq);
 		oce_destroy_ring(sc, mq->ring);
-		free(mq, M_DEVBUF);
+		free(mq, M_DEVBUF, 0);
 		return (NULL);
 	}
 
@@ -2332,7 +2332,7 @@ oce_destroy_mq(struct oce_mq *mq)
 		oce_destroy_ring(sc, mq->ring);
 	if (mq->cq != NULL)
 		oce_destroy_cq(mq->cq);
-	free(mq, M_DEVBUF);
+	free(mq, M_DEVBUF, 0);
 }
 
 /**
@@ -2358,7 +2358,7 @@ oce_create_cq(struct oce_softc *sc, struct oce_eq *eq, int nitems, int isize,
 
 	cq->ring = oce_create_ring(sc, nitems, isize, 4);
 	if (!cq->ring) {
-		free(cq, M_DEVBUF);
+		free(cq, M_DEVBUF, 0);
 		return (NULL);
 	}
 
@@ -2371,7 +2371,7 @@ oce_create_cq(struct oce_softc *sc, struct oce_eq *eq, int nitems, int isize,
 
 	if (oce_new_cq(sc, cq)) {
 		oce_destroy_ring(sc, cq->ring);
-		free(cq, M_DEVBUF);
+		free(cq, M_DEVBUF, 0);
 		return (NULL);
 	}
 
@@ -2394,7 +2394,7 @@ oce_destroy_cq(struct oce_cq *cq)
 	}
 	if (cq->ring != NULL)
 		oce_destroy_ring(sc, cq->ring);
-	free(cq, M_DEVBUF);
+	free(cq, M_DEVBUF, 0);
 }
 
 /**
@@ -2561,7 +2561,7 @@ fail_2:
 fail_1:
 	bus_dmamap_destroy(dma->tag, dma->map);
 fail_0:
-	free(ring, M_DEVBUF);
+	free(ring, M_DEVBUF, 0);
 	return (NULL);
 }
 
@@ -2569,7 +2569,7 @@ void
 oce_destroy_ring(struct oce_softc *sc, struct oce_ring *ring)
 {
 	oce_dma_free(sc, &ring->dma);
-	free(ring, M_DEVBUF);
+	free(ring, M_DEVBUF, 0);
 }
 
 int

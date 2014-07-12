@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.37 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.38 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -242,7 +242,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	return 0;
 
 err:
-	free(hp, M_DEVBUF);
+	free(hp, M_DEVBUF, 0);
 	sc->sc_host[sc->sc_nhosts - 1] = NULL;
 	sc->sc_nhosts--;
 	return (error);

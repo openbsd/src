@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.12 2014/03/24 17:06:49 kettenis Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.13 2014/07/12 18:48:52 tedu Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -455,9 +455,9 @@ static void ivybridge_parity_work(void *arg1, void *arg2)
 		  row, bank, subbank);
 
 #if 0
-	free(parity_event[3], M_DRM);
-	free(parity_event[2], M_DRM);
-	free(parity_event[1], M_DRM);
+	free(parity_event[3], M_DRM, 0);
+	free(parity_event[2], M_DRM, 0);
+	free(parity_event[1], M_DRM, 0);
 #endif
 }
 

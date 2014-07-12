@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.70 2014/03/07 09:38:14 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.71 2014/07/12 18:48:53 tedu Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -273,7 +273,7 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 	pipe->methods->close(pipe);
 	if (pipe->intrxfer != NULL)
 		usbd_free_xfer(pipe->intrxfer);
-	free(pipe, M_USB);
+	free(pipe, M_USB, 0);
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -652,7 +652,7 @@ usbd_set_interface(struct usbd_interface *iface, int altidx)
 
 	/* new setting works, we can free old endpoints */
 	if (endpoints != NULL)
-		free(endpoints, M_USB);
+		free(endpoints, M_USB, 0);
 
 #ifdef DIAGNOSTIC
 	if (iface->idesc == NULL) {

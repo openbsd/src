@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis.c,v 1.19 2013/07/10 05:36:40 brad Exp $	*/
+/*	$OpenBSD: pcmcia_cis.c,v 1.20 2014/07/12 18:48:52 tedu Exp $	*/
 /*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
 
 /*
@@ -725,7 +725,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			for (pf = SIMPLEQ_FIRST(&state->card->pf_head);
 			    pf != NULL; pf = pfnext) {
 				pfnext = SIMPLEQ_NEXT(pf, pf_list);
-				free(pf, M_DEVBUF);
+				free(pf, M_DEVBUF, 0);
 			}
 
 			SIMPLEQ_INIT(&state->card->pf_head);

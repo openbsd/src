@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.25 2014/04/18 21:18:50 guenther Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.26 2014/07/12 18:48:53 tedu Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -115,7 +115,7 @@ usl_sync_init(struct wsscreen *scr, struct usl_syncdata **sdp,
 	timeout_set(&sd->s_detach_ch, usl_detachtimeout, sd);
 	res = wsscreen_attach_sync(scr, &usl_syncops, sd);
 	if (res) {
-		free(sd, M_DEVBUF);
+		free(sd, M_DEVBUF, 0);
 		return (res);
 	}
 	*sdp = sd;
@@ -134,7 +134,7 @@ usl_sync_done(struct usl_syncdata *sd)
 		(*sd->s_callback)(sd->s_cbarg, ENXIO, 0);
 	}
 	wsscreen_detach_sync(sd->s_scr);
-	free(sd, M_DEVBUF);
+	free(sd, M_DEVBUF, 0);
 }
 
 int

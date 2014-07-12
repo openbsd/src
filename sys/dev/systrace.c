@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.69 2014/06/17 03:49:03 guenther Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.70 2014/07/12 18:48:51 tedu Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -458,7 +458,7 @@ systracef_close(struct file *fp, struct proc *p)
 		vrele(fst->fd_rdir);
 	rw_exit_write(&fst->lock);
 
-	free(fp->f_data, M_XDATA);
+	free(fp->f_data, M_XDATA, 0);
 	fp->f_data = NULL;
 
 	return (0);
@@ -511,7 +511,7 @@ systraceioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		error = falloc(p, &f, &fd);
 		fdpunlock(p->p_fd);
 		if (error) {
-			free(fst, M_XDATA);
+			free(fst, M_XDATA, 0);
 			return (error);
 		}
 		f->f_flag = FREAD | FWRITE;
@@ -929,7 +929,7 @@ systrace_inject(struct str_process *strp, int docopy)
 		if (!ret && docopy &&
 		    copyout(inject->kaddr, inject->uaddr, inject->len))
 			ret = EINVAL;
-		free(inject->kaddr, M_XDATA);
+		free(inject->kaddr, M_XDATA, 0);
 	}
 
 	strp->injectind = 0;
@@ -958,7 +958,7 @@ systrace_prepinject(struct str_process *strp, struct systrace_inject *inj)
 	kaddr = malloc(inj->stri_len, M_XDATA, M_WAITOK);
 	ret = copyin(inj->stri_addr, kaddr, inj->stri_len);
 	if (ret) {
-		free(kaddr, M_XDATA);
+		free(kaddr, M_XDATA, 0);
 		return (ret);
 	}
 
@@ -1322,7 +1322,7 @@ systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
 		return (ret);
 
 	if (strp->replace != NULL) {
-		free(strp->replace, M_XDATA);
+		free(strp->replace, M_XDATA, 0);
 		strp->replace = NULL;
 	}
 
@@ -1358,7 +1358,7 @@ systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
 	memcpy(strp->replace, repl, sizeof(struct systrace_replace));
 	ret = copyin(repl->strr_base, strp->replace + 1, len);
 	if (ret) {
-		free(strp->replace, M_XDATA);
+		free(strp->replace, M_XDATA, 0);
 		strp->replace = NULL;
 		return (ret);
 	}
@@ -1437,7 +1437,7 @@ void
 systrace_replacefree(struct str_process *strp)
 {
 	if (strp->replace != NULL) {
-		free(strp->replace, M_XDATA);
+		free(strp->replace, M_XDATA, 0);
 		strp->replace = NULL;
 	}
 	while (strp->nfname > 0) {
@@ -1585,7 +1585,7 @@ systrace_closepolicy(struct fsystrace *fst, struct str_policy *policy)
 	fst->npolicies--;
 
 	if (policy->nsysent)
-		free(policy->sysent, M_XDATA);
+		free(policy->sysent, M_XDATA, 0);
 
 	TAILQ_REMOVE(&fst->policies, policy, next);
 

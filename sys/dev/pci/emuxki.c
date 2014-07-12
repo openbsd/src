@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.44 2013/12/06 21:03:03 deraadt Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.45 2014/07/12 18:48:51 tedu Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -273,8 +273,8 @@ static const int emuxki_recbuf_sz[] = {
 void
 emuxki_dmamem_delete(struct dmamem *mem, int type)
 {
-	free(mem->segs, type);
-	free(mem, type);
+	free(mem->segs, type, 0);
+	free(mem, type, 0);
 }
 
 struct dmamem *
@@ -295,7 +295,7 @@ emuxki_dmamem_alloc(bus_dma_tag_t dmat, size_t size, bus_size_t align,
 
 	mem->segs = malloc(mem->nsegs * sizeof(*(mem->segs)), type, flags);
 	if (mem->segs == NULL) {
-		free(mem, type);
+		free(mem, type, 0);
 		return (NULL);
 	}
 
@@ -1024,7 +1024,7 @@ emuxki_mem_new(struct emuxki_softc *sc, int ptbidx,
 	mem->ptbidx = ptbidx;
 	if ((mem->dmamem = emuxki_dmamem_alloc(sc->sc_dmat, size,
 	    EMU_DMA_ALIGN, EMU_DMAMEM_NSEG, type, flags)) == NULL) {
-		free(mem, type);
+		free(mem, type, 0);
 		return (NULL);
 	}
 	return (mem);
@@ -1034,7 +1034,7 @@ void
 emuxki_mem_delete(struct emuxki_mem *mem, int type)
 {
 	emuxki_dmamem_free(mem->dmamem, type);
-	free(mem, type);
+	free(mem, type, 0);
 }
 
 void *
@@ -1188,7 +1188,7 @@ void
 emuxki_channel_delete(struct emuxki_channel *chan)
 {
 	chan->voice->sc->channel[chan->num] = NULL;
-	free(chan, M_DEVBUF);
+	free(chan, M_DEVBUF, 0);
 }
 
 void
@@ -1559,7 +1559,7 @@ emuxki_voice_delete(struct emuxki_voice *voice)
 
 	if (lvoice) {
 		emuxki_voice_dataloc_destroy(lvoice);
-		free(lvoice, M_DEVBUF);
+		free(lvoice, M_DEVBUF, 0);
 	}
 }
 

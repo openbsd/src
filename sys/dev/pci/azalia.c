@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.213 2014/07/10 14:21:20 deraadt Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.214 2014/07/12 18:48:51 tedu Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -628,7 +628,7 @@ azalia_pci_detach(struct device *self, int flags)
 	}
 	az->ncodecs = 0;
 	if (az->codecs != NULL) {
-		free(az->codecs, M_DEVBUF);
+		free(az->codecs, M_DEVBUF, 0);
 		az->codecs = NULL;
 	}
 
@@ -638,7 +638,7 @@ azalia_pci_detach(struct device *self, int flags)
 	if (az->rirb_dma.addr != NULL)
 		azalia_free_dmamem(az, &az->rirb_dma);
 	if (az->unsolq != NULL) {
-		free(az->unsolq, M_DEVBUF);
+		free(az->unsolq, M_DEVBUF, 0);
 		az->unsolq = NULL;
 	}
 
@@ -2217,7 +2217,7 @@ azalia_codec_select_dacs(codec_t *this)
 		}
 	}
 
-	free(convs, M_DEVBUF);
+	free(convs, M_DEVBUF, 0);
 	return(err);
 }
 
@@ -2612,43 +2612,43 @@ azalia_codec_delete(codec_t *this)
 	azalia_mixer_delete(this);
 
 	if (this->formats != NULL) {
-		free(this->formats, M_DEVBUF);
+		free(this->formats, M_DEVBUF, 0);
 		this->formats = NULL;
 	}
 	this->nformats = 0;
 
 	if (this->encs != NULL) {
-		free(this->encs, M_DEVBUF);
+		free(this->encs, M_DEVBUF, 0);
 		this->encs = NULL;
 	}
 	this->nencs = 0;
 
 	if (this->opins != NULL) {
-		free(this->opins, M_DEVBUF);
+		free(this->opins, M_DEVBUF, 0);
 		this->opins = NULL;
 	}
 	this->nopins = 0;
 
 	if (this->opins_d != NULL) {
-		free(this->opins_d, M_DEVBUF);
+		free(this->opins_d, M_DEVBUF, 0);
 		this->opins_d = NULL;
 	}
 	this->nopins_d = 0;
 
 	if (this->ipins != NULL) {
-		free(this->ipins, M_DEVBUF);
+		free(this->ipins, M_DEVBUF, 0);
 		this->ipins = NULL;
 	}
 	this->nipins = 0;
 
 	if (this->ipins_d != NULL) {
-		free(this->ipins_d, M_DEVBUF);
+		free(this->ipins_d, M_DEVBUF, 0);
 		this->ipins_d = NULL;
 	}
 	this->nipins_d = 0;
 
 	if (this->w != NULL) {
-		free(this->w, M_DEVBUF);
+		free(this->w, M_DEVBUF, 0);
 		this->w = NULL;
 	}
 
@@ -2722,7 +2722,7 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	}
 
 	if (this->formats != NULL)
-		free(this->formats, M_DEVBUF);
+		free(this->formats, M_DEVBUF, 0);
 	this->nformats = 0;
 	this->formats = malloc(sizeof(struct audio_format) * variation,
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
@@ -4425,7 +4425,7 @@ azalia_create_encodings(codec_t *this)
 	}
 
 	if (this->encs != NULL)
-		free(this->encs, M_DEVBUF);
+		free(this->encs, M_DEVBUF, 0);
 	this->nencs = 0;
 	this->encs = malloc(sizeof(struct audio_encoding) * nencs,
 	    M_DEVBUF, M_NOWAIT | M_ZERO);

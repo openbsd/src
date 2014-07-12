@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.99 2014/03/27 11:32:29 daniel Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.100 2014/07/12 18:48:51 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1690,7 +1690,7 @@ ipw_read_firmware(struct ipw_softc *sc, struct ipw_firmware *fw)
 
 	return 0;
 
-fail:	free(fw->data, M_DEVBUF);
+fail:	free(fw->data, M_DEVBUF, 0);
 	return error;
 }
 
@@ -2031,7 +2031,7 @@ ipw_init(struct ifnet *ifp)
 		goto fail2;
 	}
 	sc->sc_flags |= IPW_FLAG_FW_INITED;
-	free(fw.data, M_DEVBUF);
+	free(fw.data, M_DEVBUF, 0);
 	fw.data = NULL;
 
 	/* retrieve information tables base addresses */
@@ -2056,7 +2056,7 @@ ipw_init(struct ifnet *ifp)
 
 	return 0;
 
-fail2:	free(fw.data, M_DEVBUF);
+fail2:	free(fw.data, M_DEVBUF, 0);
 	fw.data = NULL;
 fail1:	ipw_stop(ifp, 0);
 	return error;

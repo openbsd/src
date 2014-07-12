@@ -1,4 +1,4 @@
-/* $OpenBSD: wsevent.c,v 1.8 2012/12/05 23:20:22 deraadt Exp $ */
+/* $OpenBSD: wsevent.c,v 1.9 2014/07/12 18:48:53 tedu Exp $ */
 /* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
@@ -117,7 +117,7 @@ wsevent_fini(struct wseventvar *ev)
 #endif
 		return;
 	}
-	free(ev->q, M_DEVBUF);
+	free(ev->q, M_DEVBUF, 0);
 	ev->q = NULL;
 }
 

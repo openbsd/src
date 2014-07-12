@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.94 2014/07/08 05:35:18 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.95 2014/07/12 18:48:51 tedu Exp $	*/
 
 /******************************************************************************
 
@@ -302,7 +302,7 @@ err_late:
 	ixgbe_free_receive_structures(sc);
 err_out:
 	ixgbe_free_pci_resources(sc);
-	free(sc->mta, M_DEVBUF);
+	free(sc->mta, M_DEVBUF, 0);
 }
 
 /*********************************************************************
@@ -340,7 +340,7 @@ ixgbe_detach(struct device *self, int flags)
 
 	ixgbe_free_transmit_structures(sc);
 	ixgbe_free_receive_structures(sc);
-	free(sc->mta, M_DEVBUF);
+	free(sc->mta, M_DEVBUF, 0);
 
 	return (0);
 }
@@ -1790,10 +1790,10 @@ err_rx_desc:
 err_tx_desc:
 	for (txr = sc->tx_rings; txconf > 0; txr++, txconf--)
 		ixgbe_dma_free(sc, &txr->txdma);
-	free(sc->rx_rings, M_DEVBUF);
+	free(sc->rx_rings, M_DEVBUF, 0);
 	sc->rx_rings = NULL;
 rx_fail:
-	free(sc->tx_rings, M_DEVBUF);
+	free(sc->tx_rings, M_DEVBUF, 0);
 	sc->tx_rings = NULL;
 fail:
 	return (ENOMEM);
@@ -2028,7 +2028,7 @@ ixgbe_free_transmit_buffers(struct tx_ring *txr)
 	}
 
 	if (txr->tx_buffers != NULL)
-		free(txr->tx_buffers, M_DEVBUF);
+		free(txr->tx_buffers, M_DEVBUF, 0);
 	txr->tx_buffers = NULL;
 	txr->txtag = NULL;
 }
@@ -2773,7 +2773,7 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 			bus_dmamap_destroy(rxr->rxdma.dma_tag, rxbuf->map);
 			rxbuf->map = NULL;
 		}
-		free(rxr->rx_buffers, M_DEVBUF);
+		free(rxr->rx_buffers, M_DEVBUF, 0);
 		rxr->rx_buffers = NULL;
 	}
 }

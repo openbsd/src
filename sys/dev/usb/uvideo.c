@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.174 2014/01/22 03:21:23 jsg Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.175 2014/07/12 18:48:53 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1624,12 +1624,12 @@ uvideo_vs_free_frame(struct uvideo_softc *sc)
 	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
 
 	if (fb->buf != NULL) {
-		free(fb->buf, M_DEVBUF);
+		free(fb->buf, M_DEVBUF, 0);
 		fb->buf = NULL;
 	}
 
 	if (sc->sc_mmap_buffer != NULL) {
-		free(sc->sc_mmap_buffer, M_DEVBUF);
+		free(sc->sc_mmap_buffer, M_DEVBUF, 0);
 		sc->sc_mmap_buffer = NULL;
 	}
 
@@ -3343,7 +3343,7 @@ uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 	qctrl->flags = 0;
 
 out:
-	free(ctrl_data, M_USBDEV);
+	free(ctrl_data, M_USBDEV, 0);
 
 	return (ret);
 }
@@ -3394,7 +3394,7 @@ uvideo_g_ctrl(void *v, struct v4l2_control *gctrl)
 	}
 
 out:
-	free(ctrl_data, M_USBDEV);
+	free(ctrl_data, M_USBDEV, 0);
 
 	return (0);
 }
@@ -3441,7 +3441,7 @@ uvideo_s_ctrl(void *v, struct v4l2_control *sctrl)
 	if (error != USBD_NORMAL_COMPLETION)
 		ret = EINVAL;
 
-	free(ctrl_data, M_USBDEV);
+	free(ctrl_data, M_USBDEV, 0);
 
 	return (ret);
 }
@@ -3585,7 +3585,7 @@ uvideo_ucode_loader_ricoh(struct uvideo_softc *sc)
 	while (remain > 0) {
 		if (remain < 3) {
 			printf("%s: ucode file incomplete!\n", DEVNAME(sc));
-			free(ucode, M_DEVBUF);
+			free(ucode, M_DEVBUF, 0);
 			return (USBD_INVAL);
 		}
 
@@ -3599,7 +3599,7 @@ uvideo_ucode_loader_ricoh(struct uvideo_softc *sc)
 		if (error != USBD_NORMAL_COMPLETION) {
 			printf("%s: ucode upload error=%s!\n",
 			    DEVNAME(sc), usbd_errstr(error));
-			free(ucode, M_DEVBUF);
+			free(ucode, M_DEVBUF, 0);
 			return (USBD_INVAL);
 		}
 		DPRINTF(1, "%s: uploaded %d bytes ucode to addr 0x%x\n",
@@ -3608,7 +3608,7 @@ uvideo_ucode_loader_ricoh(struct uvideo_softc *sc)
 		offset += len;
 		remain -= len;
 	}
-	free(ucode, M_DEVBUF);
+	free(ucode, M_DEVBUF, 0);
 
 	/* activate microcode */
 	cbuf = 0;
@@ -3664,7 +3664,7 @@ uvideo_ucode_loader_apple_isight(struct uvideo_softc *sc)
 		if (len < 1 || len > 1023) {
 			printf("%s: ucode header contains wrong value!\n",
 			    DEVNAME(sc));
-			free(ucode, M_DEVBUF);
+			free(ucode, M_DEVBUF, 0);
 			return (USBD_INVAL);
 		}
 		code += 4;
@@ -3681,14 +3681,14 @@ uvideo_ucode_loader_apple_isight(struct uvideo_softc *sc)
 			if (error) {
 				printf("%s: ucode load failed: %s\n",
 				    DEVNAME(sc), usbd_errstr(error));
-				free(ucode, M_DEVBUF);
+				free(ucode, M_DEVBUF, 0);
 				return (USBD_INVAL);
 			}
 
 			code += llen;
 		}
 	}
-	free(ucode, M_DEVBUF);
+	free(ucode, M_DEVBUF, 0);
 
 	/* send finished request */
 	cbuf = 0;

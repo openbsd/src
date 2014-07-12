@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.29 2014/04/22 08:48:51 dlg Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.30 2014/07/12 18:48:51 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -530,7 +530,7 @@ vscsi_devevent_task(void *xsc, void *xdt)
 gone:
 	device_unref(&sc->sc_dev);
 
-	free(dt, M_TEMP);
+	free(dt, M_TEMP, 0);
 }
 
 int

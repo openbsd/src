@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.105 2014/07/12 07:18:16 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.106 2014/07/12 18:48:53 tedu Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -570,7 +570,7 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 
  bad:
 	if (ifc->endpoints != NULL) {
-		free(ifc->endpoints, M_USB);
+		free(ifc->endpoints, M_USB, 0);
 		ifc->endpoints = NULL;
 	}
 	return (USBD_INVAL);
@@ -581,7 +581,7 @@ usbd_free_iface_data(struct usbd_device *dev, int ifcno)
 {
 	struct usbd_interface *ifc = &dev->ifaces[ifcno];
 	if (ifc->endpoints)
-		free(ifc->endpoints, M_USB);
+		free(ifc->endpoints, M_USB, 0);
 }
 
 usbd_status
@@ -634,8 +634,8 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		nifc = dev->cdesc->bNumInterface;
 		for (ifcidx = 0; ifcidx < nifc; ifcidx++)
 			usbd_free_iface_data(dev, ifcidx);
-		free(dev->ifaces, M_USB);
-		free(dev->cdesc, M_USB);
+		free(dev->ifaces, M_USB, 0);
+		free(dev->cdesc, M_USB, 0);
 		dev->ifaces = NULL;
 		dev->cdesc = NULL;
 		dev->config = USB_UNCONFIG_NO;
@@ -780,7 +780,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	return (USBD_NORMAL_COMPLETION);
 
  bad:
-	free(cdp, M_USB);
+	free(cdp, M_USB, 0);
 	return (err);
 }
 
@@ -808,7 +808,7 @@ usbd_setup_pipe(struct usbd_device *dev, struct usbd_interface *iface,
 	if (err) {
 		DPRINTF(("%s: endpoint=0x%x failed, error=%s\n", __func__,
 			 ep->edesc->bEndpointAddress, usbd_errstr(err)));
-		free(p, M_USB);
+		free(p, M_USB, 0);
 		return (err);
 	}
 	*pipe = p;
@@ -924,7 +924,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 		len = (nifaces + 2) * sizeof dv;
 		dev->subdevs = malloc(len, M_USB, M_NOWAIT | M_ZERO);
 		if (dev->subdevs == NULL) {
-			free(ifaces, M_USB);
+			free(ifaces, M_USB, 0);
 			err = USBD_NOMEM;
 			goto fail;
 		}
@@ -941,7 +941,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 				usbd_claim_iface(dev, i);
 			}
 		}
-		free(ifaces, M_USB);
+		free(ifaces, M_USB, 0);
 
 		if (dev->ndevs > 0) {
 			for (i = 0; i < nifaces; i++) {
@@ -954,7 +954,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 				goto fail;
 		}
 
-		free(dev->subdevs, M_USB);
+		free(dev->subdevs, M_USB, 0);
 		dev->subdevs = NULL;
 	}
 	/* No interfaces were attached in any of the configurations. */
@@ -1273,7 +1273,7 @@ usbd_print(void *aux, const char *pnp)
 	DPRINTFN(15, ("usbd_print dev=%p\n", uaa->device));
 	if (pnp) {
 		if (!uaa->usegeneric) {
-			free(devinfop, M_TEMP);
+			free(devinfop, M_TEMP, 0);
 			return (QUIET);
 		}
 		printf("%s at %s", devinfop, pnp);
@@ -1287,7 +1287,7 @@ usbd_print(void *aux, const char *pnp)
 
 	if (!pnp)
 		printf(" %s\n", devinfop);
-	free(devinfop, M_TEMP);
+	free(devinfop, M_TEMP, 0);
 	return (UNCONF);
 }
 
@@ -1422,7 +1422,7 @@ usbd_get_cdesc(struct usbd_device *dev, int index, int *lenp)
 		cdesc = malloc(len, M_TEMP, M_WAITOK);
 		err = usbd_get_desc(dev, UDESC_CONFIG, index, len, cdesc);
 		if (err) {
-			free(cdesc, M_TEMP);
+			free(cdesc, M_TEMP, 0);
 			return (0);
 		}
 	}
@@ -1444,15 +1444,15 @@ usb_free_device(struct usbd_device *dev)
 		nifc = dev->cdesc->bNumInterface;
 		for (ifcidx = 0; ifcidx < nifc; ifcidx++)
 			usbd_free_iface_data(dev, ifcidx);
-		free(dev->ifaces, M_USB);
+		free(dev->ifaces, M_USB, 0);
 	}
 	if (dev->cdesc != NULL)
-		free(dev->cdesc, M_USB);
+		free(dev->cdesc, M_USB, 0);
 	if (dev->subdevs != NULL)
-		free(dev->subdevs, M_USB);
+		free(dev->subdevs, M_USB, 0);
 	dev->bus->devices[dev->address] = NULL;
 
-	free(dev, M_USB);
+	free(dev, M_USB, 0);
 }
 
 /*

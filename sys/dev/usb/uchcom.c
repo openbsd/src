@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.20 2014/05/16 14:05:39 sasano Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.21 2014/07/12 18:48:52 tedu Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -843,7 +843,7 @@ uchcom_close_intr_pipe(struct uchcom_softc *sc)
 		if (err)
 			printf("%s: close interrupt pipe failed: %s\n",
 			       sc->sc_dev.dv_xname, usbd_errstr(err));
-		free(sc->sc_intr_buf, M_USBDEV);
+		free(sc->sc_intr_buf, M_USBDEV, 0);
 		sc->sc_intr_pipe = NULL;
 	}
 }

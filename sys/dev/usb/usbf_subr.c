@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf_subr.c,v 1.18 2014/03/07 18:56:14 mpi Exp $	*/
+/*	$OpenBSD: usbf_subr.c,v 1.19 2014/07/12 18:48:53 tedu Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -74,7 +74,7 @@ usbf_realloc(void **pp, size_t *sizep, size_t newsize)
 
 	if (newsize == 0) {
 		if (*sizep > 0)
-			free(*pp, M_USB);
+			free(*pp, M_USB, 0);
 		*pp = NULL;
 		*sizep = 0;
 		return NULL;
@@ -90,7 +90,7 @@ usbf_realloc(void **pp, size_t *sizep, size_t newsize)
 #if 0
 	/* XXX must leak for now; something unknown has a pointer */
 	if (*pp != NULL)
-		free(*pp, M_USB);
+		free(*pp, M_USB, 0);
 #endif
 	*pp = p;
 	*sizep = newsize;
@@ -141,7 +141,7 @@ usbf_remove_device(struct usbf_device *dev, struct usbf_port *up)
 	if (dev->default_pipe != NULL)
 		usbf_close_pipe(dev->default_pipe);
 	up->device = NULL;
-	free(dev, M_USB);
+	free(dev, M_USB, 0);
 }
 
 usbf_status
@@ -193,7 +193,7 @@ usbf_new_device(struct device *parent, struct usbf_bus *bus, int depth,
 	err = usbf_setup_pipe(dev, NULL, &dev->def_ep, 0,
 	    &dev->default_pipe);
 	if (err) {
-		free(dev, M_USB);
+		free(dev, M_USB, 0);
 		return err;
 	}
 
@@ -204,7 +204,7 @@ usbf_new_device(struct device *parent, struct usbf_bus *bus, int depth,
 		if (dev->default_xfer != NULL)
 			usbf_free_xfer(dev->default_xfer);
 		usbf_close_pipe(dev->default_pipe);
-		free(dev, M_USB);
+		free(dev, M_USB, 0);
 		return USBF_NOMEM;
 	}
 
@@ -216,7 +216,7 @@ usbf_new_device(struct device *parent, struct usbf_bus *bus, int depth,
 		usbf_free_xfer(dev->default_xfer);
 		usbf_free_xfer(dev->data_xfer);
 		usbf_close_pipe(dev->default_pipe);
-		free(dev, M_USB);
+		free(dev, M_USB, 0);
 		return err;
 	}
 
@@ -289,7 +289,7 @@ void
 usbf_devinfo_free(char *devinfo)
 {
 	if (devinfo != NULL)
-		free(devinfo, M_USB);
+		free(devinfo, M_USB, 0);
 }
 
 /*
@@ -407,7 +407,7 @@ usbf_add_config(struct usbf_device *dev, struct usbf_config **ucp)
 
 	cd = malloc(sizeof *cd, M_USB, M_NOWAIT | M_ZERO);
 	if (cd == NULL) {
-		free(uc, M_USB);
+		free(uc, M_USB, 0);
 		return USBF_NOMEM;
 	}
 
@@ -483,7 +483,7 @@ usbf_add_interface(struct usbf_config *uc, u_int8_t bInterfaceClass,
 
 	id = malloc(sizeof *id, M_USB, M_NOWAIT | M_ZERO);
 	if (id == NULL) {
-		free(ui, M_USB);
+		free(ui, M_USB, 0);
 		return USBF_NOMEM;
 	}
 
@@ -524,7 +524,7 @@ usbf_add_endpoint(struct usbf_interface *ui, u_int8_t bEndpointAddress,
 
 	ed = malloc(sizeof *ed, M_USB, M_NOWAIT | M_ZERO);
 	if (ed == NULL) {
-		free(ue, M_USB);
+		free(ue, M_USB, 0);
 		return USBF_NOMEM;
 	}
 
@@ -566,7 +566,7 @@ usbf_end_config(struct usbf_config *uc)
 		if (err)
 			break;
 
-		free(ui->idesc, M_USB);
+		free(ui->idesc, M_USB, 0);
 		ui->idesc = (usb_interface_descriptor_t *)d;
 
 		SIMPLEQ_FOREACH(ue, &ui->endpoint_head, next) {
@@ -575,7 +575,7 @@ usbf_end_config(struct usbf_config *uc)
 			if (err)
 				break;
 
-			free(ue->edesc, M_USB);
+			free(ue->edesc, M_USB, 0);
 			ue->edesc = (usb_endpoint_descriptor_t *)d;
 		}
 	}
@@ -671,7 +671,7 @@ usbf_setup_pipe(struct usbf_device *dev, struct usbf_interface *iface,
 	SIMPLEQ_INIT(&p->queue);
 	err = dev->bus->methods->open_pipe(p);
 	if (err) {
-		free(p, M_USB);
+		free(p, M_USB, 0);
 		return err;
 	}
 	*pipe = p;
@@ -707,7 +707,7 @@ usbf_close_pipe(struct usbf_pipe *pipe)
 	usbf_abort_pipe(pipe);
 	pipe->methods->close(pipe);
 	pipe->endpoint->refcnt--;
-	free(pipe, M_USB);
+	free(pipe, M_USB, 0);
 }
 
 void

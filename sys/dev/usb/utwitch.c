@@ -1,4 +1,4 @@
-/*	$OpenBSD: utwitch.c,v 1.12 2014/05/07 08:17:21 mpi Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.13 2014/07/12 18:48:53 tedu Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -193,7 +193,7 @@ utwitch_detach(struct device *self, int flags)
 		uhidev_close(&sc->sc_hdev);
 
 	if (sc->sc_ibuf != NULL) {
-		free(sc->sc_ibuf, M_USBDEV);
+		free(sc->sc_ibuf, M_USBDEV, 0);
 		sc->sc_ibuf = NULL;
 	}
 

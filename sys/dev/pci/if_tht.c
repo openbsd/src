@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.126 2013/04/02 13:43:40 brad Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.127 2014/07/12 18:48:52 tedu Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1728,7 +1728,7 @@ tht_fw_load(struct tht_softc *sc)
 	tht_write(sc, THT_REG_INIT_SEMAPHORE, 0x1);
 
 err:
-	free(fw, M_DEVBUF);
+	free(fw, M_DEVBUF, 0);
 	return (error);
 }
 
@@ -1854,7 +1854,7 @@ free:
 destroy:
 	bus_dmamap_destroy(dmat, tdm->tdm_map);
 tdmfree:
-	free(tdm, M_DEVBUF);
+	free(tdm, M_DEVBUF, 0);
 
 	return (NULL);
 }
@@ -1868,7 +1868,7 @@ tht_dmamem_free(struct tht_softc *sc, struct tht_dmamem *tdm)
 	bus_dmamem_unmap(dmat, tdm->tdm_kva, tdm->tdm_size);
 	bus_dmamem_free(dmat, &tdm->tdm_seg, 1);
 	bus_dmamap_destroy(dmat, tdm->tdm_map);
-	free(tdm, M_DEVBUF);
+	free(tdm, M_DEVBUF, 0);
 }
 
 int
@@ -1909,7 +1909,7 @@ tht_pkt_free(struct tht_softc *sc, struct tht_pkt_list *tpl)
 
 	while ((pkt = tht_pkt_get(tpl)) != NULL)
 		bus_dmamap_destroy(dmat, pkt->tp_dmap);
-	free(tpl->tpl_pkts, M_DEVBUF);
+	free(tpl->tpl_pkts, M_DEVBUF, 0);
 	tpl->tpl_pkts = NULL;
 }
 

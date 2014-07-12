@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.167 2012/01/13 09:53:24 mikeb Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.168 2014/07/12 18:48:51 tedu Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1853,7 +1853,7 @@ hifn_newsession(u_int32_t *sidp, struct cryptoini *cri)
 				return (ENOMEM);
 			bcopy(sc->sc_sessions, ses, sesn * sizeof(*ses));
 			explicit_bzero(sc->sc_sessions, sesn * sizeof(*ses));
-			free(sc->sc_sessions, M_DEVBUF);
+			free(sc->sc_sessions, M_DEVBUF, 0);
 			sc->sc_sessions = ses;
 			ses = &sc->sc_sessions[sesn];
 			sc->sc_nsessions++;
@@ -2174,7 +2174,7 @@ hifn_process(struct cryptop *crp)
 errout:
 	if (cmd != NULL) {
 		explicit_bzero(cmd, sizeof(*cmd));
-		free(cmd, M_DEVBUF);
+		free(cmd, M_DEVBUF, 0);
 	}
 	if (err == EINVAL)
 		hifnstats.hst_invalid++;
@@ -2237,7 +2237,7 @@ hifn_abort(struct hifn_softc *sc)
 			bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
 
 			explicit_bzero(cmd, sizeof(*cmd));
-			free(cmd, M_DEVBUF);
+			free(cmd, M_DEVBUF, 0);
 			if (crp->crp_etype != EAGAIN)
 				crypto_done(crp);
 		}
@@ -2366,7 +2366,7 @@ out:
 	bus_dmamap_unload(sc->sc_dmat, cmd->src_map);
 	bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
 	explicit_bzero(cmd, sizeof(*cmd));
-	free(cmd, M_DEVBUF);
+	free(cmd, M_DEVBUF, 0);
 	crypto_done(crp);
 }
 
@@ -2491,7 +2491,7 @@ fail:
 		bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
 	}
 	explicit_bzero(cmd, sizeof(*cmd));
-	free(cmd, M_DEVBUF);
+	free(cmd, M_DEVBUF, 0);
 	if (err == EINVAL)
 		hifnstats.hst_invalid++;
 	else
@@ -2708,7 +2708,7 @@ hifn_callback_comp(struct hifn_softc *sc, struct hifn_command *cmd,
 
 	m_freem(cmd->srcu.src_m);
 	explicit_bzero(cmd, sizeof(*cmd));
-	free(cmd, M_DEVBUF);
+	free(cmd, M_DEVBUF, 0);
 	crp->crp_etype = 0;
 	crypto_done(crp);
 	return;
@@ -2727,7 +2727,7 @@ out:
 	if (cmd->dstu.dst_m != NULL)
 		m_freem(cmd->dstu.dst_m);
 	explicit_bzero(cmd, sizeof(*cmd));
-	free(cmd, M_DEVBUF);
+	free(cmd, M_DEVBUF, 0);
 	crp->crp_etype = err;
 	crypto_done(crp);
 }

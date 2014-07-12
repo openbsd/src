@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.35 2012/12/05 23:20:20 deraadt Exp $	*/
+/*	$OpenBSD: safe.c,v 1.36 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -1352,7 +1352,7 @@ safe_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			    sizeof(struct safe_session));
 			explicit_bzero(sc->sc_sessions, sesn *
 			    sizeof(struct safe_session));
-			free(sc->sc_sessions, M_DEVBUF);
+			free(sc->sc_sessions, M_DEVBUF, 0);
 			sc->sc_sessions = ses;
 			ses = &sc->sc_sessions[sesn];
 			sc->sc_nsessions++;
@@ -1949,7 +1949,7 @@ safe_kfeed(struct safe_softc *sc)
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_pkq, pkq_next);
 		if (safe_kstart(sc) != 0) {
 			crypto_kdone(q->pkq_krp);
-			free(q, M_DEVBUF);
+			free(q, M_DEVBUF, 0);
 			sc->sc_pkq_cur = NULL;
 		} else {
 			/* op started, start polling */
@@ -1993,7 +1993,7 @@ safe_kpoll(void *vsc)
 
 	explicit_bzero(&buf, sizeof(buf));
 	crypto_kdone(q->pkq_krp);
-	free(q, M_DEVBUF);
+	free(q, M_DEVBUF, 0);
 	sc->sc_pkq_cur = NULL;
 
 	safe_kfeed(sc);

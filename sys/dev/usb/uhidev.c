@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.61 2014/07/10 08:56:40 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.62 2014/07/12 18:48:52 tedu Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		if (usbd_get_report_descriptor(sc->sc_udev, sc->sc_ifaceno,
 		    desc, size)) {
 			printf("%s: no report descriptor\n", DEVNAME(sc));
-			free(desc, M_USBDEV);
+			free(desc, M_USBDEV, 0);
 			return;
 		}
 	}
@@ -391,7 +391,7 @@ uhidev_detach(struct device *self, int flags)
 	}
 
 	if (sc->sc_repdesc != NULL)
-		free(sc->sc_repdesc, M_USBDEV);
+		free(sc->sc_repdesc, M_USBDEV, 0);
 
 	/*
 	 * XXX Check if we have only one children claiming all the Report
@@ -559,7 +559,7 @@ out2:
 	usbd_close_pipe(sc->sc_ipipe);
 out1:
 	DPRINTF(("uhidev_open: failed in someway"));
-	free(sc->sc_ibuf, M_USBDEV);
+	free(sc->sc_ibuf, M_USBDEV, 0);
 	scd->sc_state &= ~UHIDEV_OPEN;
 	sc->sc_refcnt = 0;
 	sc->sc_ipipe = NULL;
@@ -620,7 +620,7 @@ uhidev_close(struct uhidev *scd)
 	}
 
 	if (sc->sc_ibuf != NULL) {
-		free(sc->sc_ibuf, M_USBDEV);
+		free(sc->sc_ibuf, M_USBDEV, 0);
 		sc->sc_ibuf = NULL;
 	}
 }
@@ -643,7 +643,7 @@ uhidev_set_report(struct uhidev *scd, int type, int id, void *data, int len)
 	retstat = usbd_set_report(sc->sc_udev, sc->sc_ifaceno, type,
 				  id, buf, len + 1);
 
-	free(buf, M_TEMP);
+	free(buf, M_TEMP, 0);
 
 	return retstat;
 }
@@ -674,7 +674,7 @@ uhidev_set_report_async(struct uhidev *scd, int type, int id, void *data,
 	 * the buffer right after submitting the transfer because
 	 * it won't be used afterward.
 	 */
-	free(buf, M_TEMP);
+	free(buf, M_TEMP, 0);
 
 	return retstat;
 }

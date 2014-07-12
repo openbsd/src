@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.27 2014/05/18 21:43:11 jca Exp $ */
+/*	$OpenBSD: hid.c,v 1.28 2014/07/12 18:48:52 tedu Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -160,7 +160,7 @@ hid_end_parse(struct hid_data *s)
 	if (s == NULL)
 		return;
 
-	free(s, M_TEMP);
+	free(s, M_TEMP, 0);
 }
 
 static uint8_t

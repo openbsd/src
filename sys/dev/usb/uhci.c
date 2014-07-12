@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.126 2014/07/10 20:57:40 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.127 2014/07/12 18:48:52 tedu Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1992,7 +1992,7 @@ uhci_device_intr_close(struct usbd_pipe *pipe)
 
 	for(i = 0; i < npoll; i++)
 		uhci_free_sqh(sc, upipe->u.intr.qhs[i]);
-	free(upipe->u.intr.qhs, M_USBHC);
+	free(upipe->u.intr.qhs, M_USBHC, 0);
 
 	/* XXX free other resources */
 }
@@ -2357,7 +2357,7 @@ uhci_device_isoc_close(struct usbd_pipe *pipe)
 	}
 	splx(s);
 
-	free(iso->stds, M_USBHC);
+	free(iso->stds, M_USBHC, 0);
 }
 
 usbd_status
@@ -2411,7 +2411,7 @@ uhci_setup_isoc(struct usbd_pipe *pipe)
  bad:
 	while (--i >= 0)
 		uhci_free_std(sc, iso->stds[i]);
-	free(iso->stds, M_USBHC);
+	free(iso->stds, M_USBHC, 0);
 	return (USBD_NOMEM);
 }
 
@@ -2641,7 +2641,7 @@ uhci_device_setintr(struct uhci_softc *sc, struct uhci_pipe *upipe, int ival)
 		if (sqh == NULL) {
 			while (i > 0)
 				uhci_free_sqh(sc, qhs[--i]);
-			free(qhs, M_USBHC);
+			free(qhs, M_USBHC, 0);
 			return (USBD_NOMEM);
 		}
 		sqh->elink = NULL;

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.333 2014/07/12 07:39:11 blambert Exp $ */
+/* $OpenBSD: softraid.c,v 1.334 2014/07/12 18:48:51 tedu Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -523,7 +523,7 @@ sr_meta_clear(struct sr_discipline *sd)
 
 	bzero(sd->sd_meta, SR_META_SIZE * 512);
 
-	free(m, M_DEVBUF);
+	free(m, M_DEVBUF, 0);
 	rv = 0;
 done:
 	return (rv);
@@ -726,7 +726,7 @@ restart:
 		wu.swu_dis = sd;
 		sd->sd_scsi_sync(&wu);
 	}
-	free(m, M_DEVBUF);
+	free(m, M_DEVBUF, 0);
 	return (0);
 bad:
 	return (1);
@@ -797,9 +797,9 @@ sr_meta_read(struct sr_discipline *sd)
 		cp++;
 	}
 
-	free(sm, M_DEVBUF);
+	free(sm, M_DEVBUF, 0);
 	if (fm)
-		free(fm, M_DEVBUF);
+		free(fm, M_DEVBUF, 0);
 
 done:
 	DNPRINTF(SR_D_META, "%s: sr_meta_read found %d parts\n", DEVNAME(sc),
@@ -1129,9 +1129,9 @@ sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
 
 done:
 	if (fake_sd)
-		free(fake_sd, M_DEVBUF);
+		free(fake_sd, M_DEVBUF, 0);
 	if (md)
-		free(md, M_DEVBUF);
+		free(md, M_DEVBUF, 0);
 
 	return (rv);
 }
@@ -1467,36 +1467,36 @@ unwind:
 		    bc1 != SLIST_END(&bv1->sbv_chunks); bc1 = bc2) {
 			bc2 = SLIST_NEXT(bc1, sbc_link);
 			if (bc1->sbc_metadata)
-				free(bc1->sbc_metadata, M_DEVBUF);
-			free(bc1, M_DEVBUF);
+				free(bc1->sbc_metadata, M_DEVBUF, 0);
+			free(bc1, M_DEVBUF, 0);
 		}
-		free(bv1, M_DEVBUF);
+		free(bv1, M_DEVBUF, 0);
 	}
 	/* Free keydisks chunks. */
 	for (bc1 = SLIST_FIRST(&kdh); bc1 != SLIST_END(&kdh); bc1 = bc2) {
 		bc2 = SLIST_NEXT(bc1, sbc_link);
 		if (bc1->sbc_metadata)
-			free(bc1->sbc_metadata, M_DEVBUF);
-		free(bc1, M_DEVBUF);
+			free(bc1->sbc_metadata, M_DEVBUF, 0);
+		free(bc1, M_DEVBUF, 0);
 	}
 	/* Free unallocated chunks. */
 	for (bc1 = SLIST_FIRST(&bch); bc1 != SLIST_END(&bch); bc1 = bc2) {
 		bc2 = SLIST_NEXT(bc1, sbc_link);
 		if (bc1->sbc_metadata)
-			free(bc1->sbc_metadata, M_DEVBUF);
-		free(bc1, M_DEVBUF);
+			free(bc1->sbc_metadata, M_DEVBUF, 0);
+		free(bc1, M_DEVBUF, 0);
 	}
 
 	while (!SLIST_EMPTY(&sdklist)) {
 		sdk = SLIST_FIRST(&sdklist);
 		SLIST_REMOVE_HEAD(&sdklist, sdk_link);
-		free(sdk, M_DEVBUF);
+		free(sdk, M_DEVBUF, 0);
 	}
 
 	if (devs)
-		free(devs, M_DEVBUF);
+		free(devs, M_DEVBUF, 0);
 	if (ondisk)
-		free(ondisk, M_DEVBUF);
+		free(ondisk, M_DEVBUF, 0);
 
 	return (rv);
 }
@@ -1693,7 +1693,7 @@ sr_meta_native_attach(struct sr_discipline *sd, int force)
 	rv = 0;
 bad:
 	if (md)
-		free(md, M_DEVBUF);
+		free(md, M_DEVBUF, 0);
 	return (rv);
 }
 
@@ -1758,7 +1758,7 @@ sr_hotplug_unregister(struct sr_discipline *sd, void *func)
 		if (mhe->sh_hotplug == func) {
 			SLIST_REMOVE(&sr_hotplug_callbacks, mhe,
 			    sr_hotplug_list, shl_link);
-			free(mhe, M_DEVBUF);
+			free(mhe, M_DEVBUF, 0);
 			if (SLIST_EMPTY(&sr_hotplug_callbacks))
 				SLIST_INIT(&sr_hotplug_callbacks);
 			return;
@@ -1963,7 +1963,7 @@ sr_ccb_free(struct sr_discipline *sd)
 		TAILQ_REMOVE(&sd->sd_ccb_freeq, ccb, ccb_link);
 
 	if (sd->sd_ccb)
-		free(sd->sd_ccb, M_DEVBUF);
+		free(sd->sd_ccb, M_DEVBUF, 0);
 }
 
 struct sr_ccb *
@@ -2142,7 +2142,7 @@ sr_wu_free(struct sr_discipline *sd)
 
 	while ((wu = TAILQ_FIRST(&sd->sd_wu)) != NULL) {
 		TAILQ_REMOVE(&sd->sd_wu, wu, swu_next);
-		free(wu, M_DEVBUF);
+		free(wu, M_DEVBUF, 0);
 	}
 }
 
@@ -2962,15 +2962,15 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 
 fail:
 	if (hotspare)
-		free(hotspare, M_DEVBUF);
+		free(hotspare, M_DEVBUF, 0);
 
 done:
 	if (sd && sd->sd_vol.sv_chunks)
-		free(sd->sd_vol.sv_chunks, M_DEVBUF);
+		free(sd->sd_vol.sv_chunks, M_DEVBUF, 0);
 	if (sd)
-		free(sd, M_DEVBUF);
+		free(sd, M_DEVBUF, 0);
 	if (sm)
-		free(sm, M_DEVBUF);
+		free(sm, M_DEVBUF, 0);
 	if (open) {
 		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
 		vput(vn);
@@ -3076,7 +3076,7 @@ sr_hotspare_rebuild(struct sr_discipline *sd)
 			/* Remove hotspare from available list. */
 			sc->sc_hotspare_no--;
 			SLIST_REMOVE(cl, hotspare, sr_chunk, src_link);
-			free(hotspare, M_DEVBUF);
+			free(hotspare, M_DEVBUF, 0);
 
 		}
 		rw_exit_write(&sc->sc_lock);
@@ -3342,7 +3342,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 				    &sd->sd_meta->ssdi.ssd_uuid);
 				sr_error(sc, "disk %s is currently in use; "
 				    "cannot force create", uuid);
-				free(uuid, M_DEVBUF);
+				free(uuid, M_DEVBUF, 0);
 				goto unwind;
 			}
 
@@ -3399,7 +3399,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 		if (sr_already_assembled(sd)) {
 			uuid = sr_uuid_format(&sd->sd_meta->ssdi.ssd_uuid);
 			sr_error(sc, "disk %s already assembled", uuid);
-			free(uuid, M_DEVBUF);
+			free(uuid, M_DEVBUF, 0);
 			goto unwind;
 		}
 
@@ -3758,9 +3758,9 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 
 done:
 	if (bootblk)
-		free(bootblk, M_DEVBUF);
+		free(bootblk, M_DEVBUF, 0);
 	if (bootldr)
-		free(bootldr, M_DEVBUF);
+		free(bootldr, M_DEVBUF, 0);
 
 	return (rv);
 }
@@ -3793,7 +3793,7 @@ sr_chunks_unwind(struct sr_softc *sc, struct sr_chunk_head *cl)
 			    curproc);
 			vput(ch_entry->src_vn);
 		}
-		free(ch_entry, M_DEVBUF);
+		free(ch_entry, M_DEVBUF, 0);
 	}
 	SLIST_INIT(cl);
 }
@@ -3817,18 +3817,18 @@ sr_discipline_free(struct sr_discipline *sd)
 	if (sd->sd_free_resources)
 		sd->sd_free_resources(sd);
 	if (sd->sd_vol.sv_chunks)
-		free(sd->sd_vol.sv_chunks, M_DEVBUF);
+		free(sd->sd_vol.sv_chunks, M_DEVBUF, 0);
 	if (sd->sd_meta)
-		free(sd->sd_meta, M_DEVBUF);
+		free(sd->sd_meta, M_DEVBUF, 0);
 	if (sd->sd_meta_foreign)
-		free(sd->sd_meta_foreign, M_DEVBUF);
+		free(sd->sd_meta_foreign, M_DEVBUF, 0);
 
 	som = &sd->sd_meta_opt;
 	for (omi = SLIST_FIRST(som); omi != SLIST_END(som); omi = omi_next) {
 		omi_next = SLIST_NEXT(omi, omi_link);
 		if (omi->omi_som)
-			free(omi->omi_som, M_DEVBUF);
-		free(omi, M_DEVBUF);
+			free(omi->omi_som, M_DEVBUF, 0);
+		free(omi, M_DEVBUF, 0);
 	}
 
 	if (sd->sd_target != 0) {
@@ -3844,7 +3844,7 @@ sr_discipline_free(struct sr_discipline *sd)
 	}
 
 	explicit_bzero(sd, sizeof *sd);
-	free(sd, M_DEVBUF);
+	free(sd, M_DEVBUF, 0);
 }
 
 void
@@ -4458,7 +4458,7 @@ sr_uuid_print(struct sr_uuid *uuid, int cr)
 
 	uuidstr = sr_uuid_format(uuid);
 	printf("%s%s", uuidstr, (cr ? "\n" : ""));
-	free(uuidstr, M_DEVBUF);
+	free(uuidstr, M_DEVBUF, 0);
 }
 
 int

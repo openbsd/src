@@ -1,4 +1,4 @@
-/*	$OpenBSD: bba.c,v 1.3 2013/05/15 08:29:26 ratchov Exp $	*/
+/*	$OpenBSD: bba.c,v 1.4 2014/07/12 18:48:52 tedu Exp $	*/
 /* $NetBSD: bba.c,v 1.38 2011/06/04 01:27:57 tsutsui Exp $ */
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -358,7 +358,7 @@ bba_freem(void *v, void *ptr, int mtype)
 	seg.ds_addr = m->addr;
 	seg.ds_len = m->size;
 	bus_dmamem_free(sc->sc_dmat, &seg, 1);
-	free(m, mtype);
+	free(m, mtype, 0);
 }
 
 size_t

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.36 2014/01/21 04:23:14 jsing Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.37 2014/07/12 18:48:51 tedu Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -215,7 +215,7 @@ sr_aoe_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
 		s = splnet();
 		TAILQ_REMOVE(&aoe_handlers, ah, next);
 		splx(s);
-		free(ah, M_DEVBUF);
+		free(ah, M_DEVBUF, 0);
 		return rv;
 	}
 #endif
@@ -268,11 +268,11 @@ sr_aoe_free_resources(struct sr_discipline *sd)
 		s = splnet();
 		TAILQ_REMOVE(&aoe_handlers, ah, next);
 		splx(s);
-		free(ah, M_DEVBUF);
+		free(ah, M_DEVBUF, 0);
 	}
 
 	if (sd->sd_meta)
-		free(sd->sd_meta, M_DEVBUF);
+		free(sd->sd_meta, M_DEVBUF, 0);
 
 	sr_wu_free(sd);
 	sr_ccb_free(sd);
@@ -328,7 +328,7 @@ sr_send_aoe_chunk(struct sr_workunit *wu, daddr_t blk, int i)
 		s = splbio();
 		TAILQ_REMOVE(&ah->reqs, ar, next);
 		splx(s);
-		free(ar, M_DEVBUF);
+		free(ar, M_DEVBUF, 0);
 		return ENOMEM;
 	}
 
@@ -370,7 +370,7 @@ sr_send_aoe_chunk(struct sr_workunit *wu, daddr_t blk, int i)
 		s = splbio();
 		TAILQ_REMOVE(&ah->reqs, ar, next);
 		splx(s);
-		free(ar, M_DEVBUF);
+		free(ar, M_DEVBUF, 0);
 	}
 
 	return rv;
@@ -498,7 +498,7 @@ sr_aoe_request_done(struct aoe_req *ar, struct aoe_packet *ap)
 	}
 	splx(s);
 
-	free(ar, M_DEVBUF);
+	free(ar, M_DEVBUF, 0);
 }
 
 void
@@ -650,7 +650,7 @@ sr_aoe_server_free_resources(struct sr_discipline *sd)
 	s = splnet();
 	if (sd->mds.mdd_aoe.sra_ah) {
 		TAILQ_REMOVE(&aoe_handlers, sd->mds.mdd_aoe.sra_ah, next);
-		free(sd->mds.mdd_aoe.sra_ah, M_DEVBUF);
+		free(sd->mds.mdd_aoe.sra_ah, M_DEVBUF, 0);
 	}
 	splx(s);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.91 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.92 2014/07/12 18:48:52 tedu Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -1565,7 +1565,7 @@ pccbb_intr_disestablish(struct pccbb_softc *sc, void *ih)
 		if (pil == ih) {
 			evcount_detach(&pil->pil_count);
 			*pil_prev = pil->pil_next;
-			free(pil, M_DEVBUF);
+			free(pil, M_DEVBUF, 0);
 			DPRINTF(("pccbb_intr_disestablish frees one pil\n"));
 			break;
 		}
@@ -2670,7 +2670,7 @@ pccbb_winlist_delete(struct pccbb_win_chain_head *head, bus_space_handle_t bsh,
 		}
 
 		TAILQ_REMOVE(head, chainp, wc_list);
-		free(chainp, M_DEVBUF);
+		free(chainp, M_DEVBUF, 0);
 
 		return 0;
 	}

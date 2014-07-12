@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.60 2013/11/26 09:50:33 mpi Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.61 2014/07/12 18:48:51 tedu Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1273,7 +1273,7 @@ ixgb_free_transmit_structures(struct ixgb_softc *sc)
 		}
 	}
 	if (sc->tx_buffer_area != NULL) {
-		free(sc->tx_buffer_area, M_DEVBUF);
+		free(sc->tx_buffer_area, M_DEVBUF, 0);
 		sc->tx_buffer_area = NULL;
 	}
 	if (sc->txtag != NULL) {
@@ -1686,7 +1686,7 @@ ixgb_free_receive_structures(struct ixgb_softc *sc)
 		}
 	}
 	if (sc->rx_buffer_area != NULL) {
-		free(sc->rx_buffer_area, M_DEVBUF);
+		free(sc->rx_buffer_area, M_DEVBUF, 0);
 		sc->rx_buffer_area = NULL;
 	}
 	if (sc->rxtag != NULL)

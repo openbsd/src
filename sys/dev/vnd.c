@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.152 2013/11/12 14:11:07 krw Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.153 2014/07/12 18:48:51 tedu Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -537,7 +537,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		/* Free crypto key */
 		if (sc->sc_keyctx) {
 			explicit_bzero(sc->sc_keyctx, sizeof(*sc->sc_keyctx));
-			free(sc->sc_keyctx, M_DEVBUF);
+			free(sc->sc_keyctx, M_DEVBUF, 0);
 		}
 
 		/* Detach the disk. */
@@ -579,7 +579,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
 		vndgetdisklabel(dev, sc, lp, 0);
 		*(sc->sc_dk.dk_label) = *lp;
-		free(lp, M_TEMP);
+		free(lp, M_TEMP, 0);
 		return (0);
 
 	case DIOCGPDINFO:
@@ -651,7 +651,7 @@ vndsetcred(struct vnd_softc *sc, struct ucred *cred)
 	error = vn_rdwr(UIO_READ, sc->sc_vp, buf, size, 0, UIO_SYSSPACE, 0,
 	    sc->sc_cred, NULL, curproc);
 
-	free(buf, M_TEMP);
+	free(buf, M_TEMP, 0);
 	return (error);
 }
 

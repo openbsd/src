@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.102 2014/07/12 15:26:54 stsp Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.103 2014/07/12 18:48:52 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -270,7 +270,7 @@ zyd_attachhook(void *xsc)
 	}
 
 	error = zyd_loadfirmware(sc, fw, size);
-	free(fw, M_DEVBUF);
+	free(fw, M_DEVBUF, 0);
 	if (error != 0) {
 		printf("%s: could not load firmware (error=%d)\n",
 		    sc->sc_dev.dv_xname, error);
@@ -534,7 +534,7 @@ zyd_close_pipes(struct zyd_softc *sc)
 		}
 	}
 	if (sc->ibuf != NULL) {
-		free(sc->ibuf, M_USBDEV);
+		free(sc->ibuf, M_USBDEV, 0);
 		sc->ibuf = NULL;
 	}
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.30 2013/10/18 22:06:41 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.31 2014/07/12 18:48:53 tedu Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -1062,7 +1062,7 @@ wsemul_sun_detach(void *cookie, u_int *crowp, u_int *ccolp)
 	*crowp = edp->crow;
 	*ccolp = edp->ccol;
 	if (edp != &wsemul_sun_console_emuldata)
-		free(edp, M_DEVBUF);
+		free(edp, M_DEVBUF, 0);
 }
 
 void

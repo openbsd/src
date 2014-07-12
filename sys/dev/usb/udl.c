@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.79 2013/12/06 21:03:05 deraadt Exp $ */
+/*	$OpenBSD: udl.c,v 1.80 2014/07/12 18:48:52 tedu Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -680,7 +680,7 @@ udl_free_screen(void *v, void *cookie)
 
 	/* free character backing store */
 	if (sc->sc_cbs != NULL)
-		free(sc->sc_cbs, M_DEVBUF);
+		free(sc->sc_cbs, M_DEVBUF, 0);
 
 	sc->sc_nscreens--;
 }
@@ -1429,7 +1429,7 @@ void
 udl_free_huffman(struct udl_softc *sc)
 {
 	if (sc->sc_huffman != NULL) {
-		free(sc->sc_huffman, M_DEVBUF);
+		free(sc->sc_huffman, M_DEVBUF, 0);
 		sc->sc_huffman = NULL;
 		sc->sc_huffman_size = 0;
 		DPRINTF(1, "%s: huffman table freed\n", DN(sc));
@@ -1457,7 +1457,7 @@ void
 udl_fbmem_free(struct udl_softc *sc)
 {
 	if (sc->sc_fbmem != NULL) {
-		free(sc->sc_fbmem, M_DEVBUF);
+		free(sc->sc_fbmem, M_DEVBUF, 0);
 		sc->sc_fbmem = NULL;
 	}
 }
@@ -1528,7 +1528,7 @@ udl_cmd_free_buf(struct udl_softc *sc)
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 
 	if (cb->buf != NULL) {
-		free(cb->buf, M_DEVBUF);
+		free(cb->buf, M_DEVBUF, 0);
 		cb->buf = NULL;
 	}
 	cb->off = 0;

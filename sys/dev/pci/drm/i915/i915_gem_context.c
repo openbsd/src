@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_context.c,v 1.8 2014/02/18 02:36:49 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_context.c,v 1.9 2014/07/12 18:48:52 tedu Exp $	*/
 /*
  * Copyright © 2011-2012 Intel Corporation
  *
@@ -326,7 +326,7 @@ void i915_gem_context_close(struct drm_device *dev, struct drm_file *file)
 		nxt = SPLAY_NEXT(i915_ctx_tree, &file_priv->ctx_tree, han);
 		context_idr_cleanup(han->handle, han->ctx, NULL);
 		SPLAY_REMOVE(i915_ctx_tree, &file_priv->ctx_tree, han);
-		free(han, M_DRM);
+		free(han, M_DRM, 0);
 	}
 }
 

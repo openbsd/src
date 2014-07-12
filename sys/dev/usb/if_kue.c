@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.72 2014/07/12 07:59:23 mpi Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.73 2014/07/12 18:48:52 tedu Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -275,7 +275,7 @@ kue_load_fw(struct kue_softc *sc)
 	if (err) {
 		printf("%s: failed to load code segment: %s\n",
 		    sc->kue_dev.dv_xname, usbd_errstr(err));
-		free(buf, M_DEVBUF);
+		free(buf, M_DEVBUF, 0);
 		return (EIO);
 	}
 
@@ -287,7 +287,7 @@ kue_load_fw(struct kue_softc *sc)
 	if (err) {
 		printf("%s: failed to load fixup segment: %s\n",
 		    sc->kue_dev.dv_xname, usbd_errstr(err));
-		free(buf, M_DEVBUF);
+		free(buf, M_DEVBUF, 0);
 		return (EIO);
 	}
 
@@ -300,10 +300,10 @@ kue_load_fw(struct kue_softc *sc)
 	if (err) {
 		printf("%s: failed to load trigger segment: %s\n",
 		    sc->kue_dev.dv_xname, usbd_errstr(err));
-		free(buf, M_DEVBUF);
+		free(buf, M_DEVBUF, 0);
 		return (EIO);
 	}
-	free(buf, M_DEVBUF);
+	free(buf, M_DEVBUF, 0);
 
 	usbd_delay_ms(sc->kue_udev, 10);
 
@@ -551,7 +551,7 @@ kue_detach(struct device *self, int flags)
 	s = splusb();		/* XXX why? */
 
 	if (sc->kue_mcfilters != NULL) {
-		free(sc->kue_mcfilters, M_USBDEV);
+		free(sc->kue_mcfilters, M_USBDEV, 0);
 		sc->kue_mcfilters = NULL;
 	}
 
