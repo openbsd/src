@@ -114,7 +114,7 @@ consists of 8 bytes with odd parity.  The least significant bit in
 each byte is the parity bit.  The key schedule is an expanded form of
 the key; it is used to speed the encryption process.
 
-DES_random_key() generates a random key.
+DES_random_key() generates a random key in odd parity.
 
 Before a DES key can be used, it must be converted into the
 architecture dependent I<DES_key_schedule> via the
@@ -134,8 +134,7 @@ depend on a global variable.
 DES_set_odd_parity() sets the parity of the passed I<key> to odd.
 
 DES_is_weak_key() returns 1 is the passed key is a weak key, 0 if it
-is ok.  The probability that a randomly generated key is weak is
-1/2^52, so it is not really worth checking for them.
+is ok.
 
 The following routines mostly operate on an input and output stream of
 I<DES_cblock>s.
