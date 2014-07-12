@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.63 2014/07/11 09:24:44 beck Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.64 2014/07/12 07:52:36 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1062,7 +1062,7 @@ ssl_cipher_apply_rule(unsigned long cipher_id, unsigned long alg_mkey,
     unsigned long alg_ssl, unsigned long algo_strength,
     int rule, int strength_bits, CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 {
-	CIPHER_ORDER *head, *tail, *curr, *curr2, *last;
+	CIPHER_ORDER *head, *tail, *curr, *next, *last;
 	const SSL_CIPHER *cp;
 	int reverse = 0;
 
@@ -1074,19 +1074,19 @@ ssl_cipher_apply_rule(unsigned long cipher_id, unsigned long alg_mkey,
 	tail = *tail_p;
 
 	if (reverse) {
-		curr = tail;
+		next = tail;
 		last = head;
 	} else {
-		curr = head;
+		next = head;
 		last = tail;
 	}
 
-	curr2 = curr;
+	curr = NULL;
 	for (;;) {
-		if ((curr == NULL)
-			|| (curr == last)) break;
-		curr = curr2;
-		curr2 = reverse ? curr->prev : curr->next;
+		if (curr == last)
+			break;
+		curr = next;
+		next = reverse ? curr->prev : curr->next;
 
 		cp = curr->cipher;
 
