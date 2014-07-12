@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.78 2014/07/11 22:57:25 miod Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.79 2014/07/12 13:11:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -339,11 +339,9 @@ ssl3_connect(SSL *s)
 				s->init_num = 0;
 				break;
 			}
-			/* Check if it is anon DH/ECDH or PSK */
+			/* Check if it is anon DH/ECDH. */
 			if (!(s->s3->tmp.new_cipher->algorithm_auth &
-			    SSL_aNULL) &&
-			    !(s->s3->tmp.new_cipher->algorithm_mkey &
-			    SSL_kPSK)) {
+			    SSL_aNULL)) {
 				ret = ssl3_get_server_certificate(s);
 				if (ret <= 0)
 					goto end;
@@ -996,7 +994,6 @@ ssl3_get_server_certificate(SSL *s)
 	SESS_CERT		*sc;
 	EVP_PKEY		*pkey = NULL;
 
-	/* VRS: 0=> will allow null cert if auth == KRB5 */
 	int			 need_cert = 1;
 
 	n = s->method->ssl_get_message(s, SSL3_ST_CR_CERT_A,
@@ -1005,9 +1002,7 @@ ssl3_get_server_certificate(SSL *s)
 	if (!ok)
 		return ((int)n);
 
-	if ((s->s3->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) ||
-	    ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5) &&
-	    (s->s3->tmp.message_type == SSL3_MT_SERVER_DONE))) {
+	if ((s->s3->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE)) {
 		s->s3->tmp.reuse_message = 1;
 		return (1);
 	}
@@ -1097,12 +1092,6 @@ ssl3_get_server_certificate(SSL *s)
 	/* VRS 19990621: possible memory leak; sk=null ==> !sk_pop_free() @end*/
 
 	pkey = X509_get_pubkey(x);
-
-	/* VRS: allow null cert if auth == KRB5 */
-	need_cert = ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_kKRB5) &&
-	    (s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5))
-	    ? 0 : 1;
-
 
 	if (need_cert && ((pkey == NULL) ||
 	    EVP_PKEY_missing_parameters(pkey))) {
@@ -1553,8 +1542,8 @@ ssl3_get_key_exchange(SSL *s)
 			}
 		}
 	} else {
-		/* aNULL or kPSK do not need public keys */
-		if (!(alg_a & SSL_aNULL) && !(alg_k & SSL_kPSK)) {
+		/* aNULL does not need public keys. */
+		if (!(alg_a & SSL_aNULL)) {
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
 			    ERR_R_INTERNAL_ERROR);
 			goto err;
@@ -2615,7 +2604,7 @@ ssl3_check_cert_and_algorithm(SSL *s)
 	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 
 	/* We don't have a certificate. */
-	if ((alg_a & (SSL_aDH|SSL_aNULL|SSL_aKRB5)) || (alg_k & SSL_kPSK))
+	if (alg_a & (SSL_aDH|SSL_aNULL))
 		return (1);
 
 	sc = s->session->sess_cert;

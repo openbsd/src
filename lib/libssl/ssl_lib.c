@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.74 2014/07/11 09:24:44 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.75 2014/07/12 13:11:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2137,9 +2137,6 @@ ssl_get_server_send_pkey(const SSL *s)
 			i = SSL_PKEY_RSA_SIGN;
 		else
 			i = SSL_PKEY_RSA_ENC;
-	} else if (alg_a & SSL_aKRB5) {
-		/* VRS something else here? */
-		return (NULL);
 	} else if (alg_a & SSL_aGOST94) {
 		i = SSL_PKEY_GOST94;
 	} else if (alg_a & SSL_aGOST01) {

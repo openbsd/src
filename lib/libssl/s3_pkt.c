@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.49 2014/07/10 08:51:14 tedu Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.50 2014/07/12 13:11:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1134,10 +1134,6 @@ start:
 				    SSL_R_NO_RENEGOTIATION);
 				goto f_err;
 			}
-#ifdef SSL_AD_MISSING_SRP_USERNAME
-			else if (alert_descr == SSL_AD_MISSING_SRP_USERNAME)
-				return (0);
-#endif
 		} else if (alert_level == 2) {
 			/* fatal */
 			s->rwstate = SSL_NOTHING;

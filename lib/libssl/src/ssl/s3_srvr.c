@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.76 2014/07/12 10:06:04 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.77 2014/07/12 13:11:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -373,13 +373,9 @@ ssl3_accept(SSL *s)
 
 		case SSL3_ST_SW_CERT_A:
 		case SSL3_ST_SW_CERT_B:
-			/* Check if it is anon DH or anon ECDH, */
-			/* normal PSK or KRB5 or SRP */
-			if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)
-			    && !(s->s3->tmp.new_cipher->algorithm_mkey &
-			    SSL_kPSK)
-			    && !(s->s3->tmp.new_cipher->algorithm_auth &
-			    SSL_aKRB5)) {
+			/* Check if it is anon DH or anon ECDH. */
+			if (!(s->s3->tmp.new_cipher->algorithm_auth &
+			    SSL_aNULL)) {
 				ret = ssl3_send_server_certificate(s);
 				if (ret <= 0)
 					goto end;
@@ -417,10 +413,7 @@ ssl3_accept(SSL *s)
 
 			/*
 			 * Only send if a DH key exchange, fortezza or
-			 * RSA but we have a sign only certificate
-			 *
-			 * PSK: send ServerKeyExchange if PSK identity
-			 * hint is provided
+			 * RSA but we have a sign only certificate.
 			 *
 			 * For ECC ciphersuites, we send a serverKeyExchange
 			 * message only if the cipher suite is either
@@ -428,13 +421,12 @@ ssl3_accept(SSL *s)
 			 * server certificate contains the server's
 			 * public key for key exchange.
 			 */
-			if (s->s3->tmp.use_rsa_tmp
-			    || (alg_k & (SSL_kDHr|SSL_kDHd|SSL_kEDH))
-			    || (alg_k & SSL_kEECDH)
-			    || ((alg_k & SSL_kRSA)
-			    && (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey ==
-			    NULL
-			    ))) {
+			if (s->s3->tmp.use_rsa_tmp ||
+			    (alg_k & (SSL_kDHr|SSL_kDHd|SSL_kEDH)) ||
+			    (alg_k & SSL_kEECDH) ||
+			    ((alg_k & SSL_kRSA) &&
+			     (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey ==
+			     NULL))) {
 				ret = ssl3_send_server_key_exchange(s);
 				if (ret <= 0)
 					goto end;
@@ -463,22 +455,13 @@ ssl3_accept(SSL *s)
 			 *   and in RFC 2246) ... except when the application
 			 *   insists on verification (against the specs, but
 			 *   s3_clnt.c accepts this for SSL 3).
-			 *
-			 * - We are using a Kerberos ciphersuite.
-			 *
-			 * - We are using normal PSK certificates and
-			 *   Certificate Requests are omitted
 			 */
 			if (!(s->verify_mode & SSL_VERIFY_PEER) ||
 			    ((s->session->peer != NULL) &&
 			     (s->verify_mode & SSL_VERIFY_CLIENT_ONCE)) ||
 			    ((s->s3->tmp.new_cipher->algorithm_auth &
 			     SSL_aNULL) && !(s->verify_mode &
-			     SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) ||
-			    (s->s3->tmp.new_cipher->algorithm_auth &
-			     SSL_aKRB5) ||
-			    (s->s3->tmp.new_cipher->algorithm_mkey &
-			     SSL_kPSK)) {
+			     SSL_VERIFY_FAIL_IF_NO_PEER_CERT))) {
 				/* No cert request */
 				skip = 1;
 				s->s3->tmp.cert_request = 0;
@@ -1605,8 +1588,7 @@ ssl3_send_server_key_exchange(SSL *s)
 			n += 2 + nr[i];
 		}
 
-		if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) &&
-		    !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK)) {
+		if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)) {
 			if ((pkey = ssl_get_sign_pkey(
 			    s, s->s3->tmp.new_cipher, &md)) == NULL) {
 				al = SSL_AD_DECODE_ERROR;
@@ -2681,15 +2663,9 @@ ssl3_send_server_certificate(SSL *s)
 	if (s->state == SSL3_ST_SW_CERT_A) {
 		x = ssl_get_server_send_cert(s);
 		if (x == NULL) {
-			/* VRS: allow null cert if auth == KRB5 */
-			if ((s->s3->tmp.new_cipher->algorithm_auth !=
-			    SSL_aKRB5) ||
-			    (s->s3->tmp.new_cipher->algorithm_mkey &
-			    SSL_kKRB5)) {
-				SSLerr(SSL_F_SSL3_SEND_SERVER_CERTIFICATE,
-				    ERR_R_INTERNAL_ERROR);
-				return (0);
-			}
+			SSLerr(SSL_F_SSL3_SEND_SERVER_CERTIFICATE,
+			    ERR_R_INTERNAL_ERROR);
+			return (0);
 		}
 
 		l = ssl3_output_cert_chain(s, x);

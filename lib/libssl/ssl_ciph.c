@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.64 2014/07/12 07:52:36 guenther Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.65 2014/07/12 13:11:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -273,11 +273,6 @@ static const SSL_CIPHER cipher_aliases[] = {
 	},
 	
 	{
-		.name = SSL_TXT_kKRB5,
-		.algorithm_mkey = SSL_kKRB5,
-	},
-	
-	{
 		.name = SSL_TXT_kECDHr,
 		.algorithm_mkey = SSL_kECDHr,
 	},
@@ -299,14 +294,6 @@ static const SSL_CIPHER cipher_aliases[] = {
 	},
 	
 	{
-		.name = SSL_TXT_kPSK,
-		.algorithm_mkey = SSL_kPSK,
-	},
-	{
-		.name = SSL_TXT_kSRP,
-		.algorithm_mkey = SSL_kSRP,
-	},
-	{
 		.name = SSL_TXT_kGOST,
 		.algorithm_mkey = SSL_kGOST,
 	},
@@ -323,10 +310,6 @@ static const SSL_CIPHER cipher_aliases[] = {
 	{
 		.name = SSL_TXT_DSS,
 		.algorithm_auth = SSL_aDSS,
-	},
-	{
-		.name = SSL_TXT_aKRB5,
-		.algorithm_auth = SSL_aKRB5,
 	},
 	{
 		.name = SSL_TXT_aNULL,
@@ -348,10 +331,6 @@ static const SSL_CIPHER cipher_aliases[] = {
 	{
 		.name = SSL_TXT_ECDSA,
 		.algorithm_auth = SSL_aECDSA,
-	},
-	{
-		.name = SSL_TXT_aPSK,
-		.algorithm_auth = SSL_aPSK,
 	},
 	{
 		.name = SSL_TXT_aGOST94,
@@ -382,11 +361,6 @@ static const SSL_CIPHER cipher_aliases[] = {
 		.algorithm_enc = SSL_eNULL,
 	},
 	{
-		.name = SSL_TXT_KRB5,
-		.algorithm_mkey = SSL_kKRB5,
-		.algorithm_auth = SSL_aKRB5,
-	},
-	{
 		.name = SSL_TXT_RSA,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
@@ -401,16 +375,7 @@ static const SSL_CIPHER cipher_aliases[] = {
 		.algorithm_mkey = SSL_kEECDH,
 		.algorithm_auth = SSL_aNULL,
 	},
-	{
-		.name = SSL_TXT_PSK,
-		.algorithm_mkey = SSL_kPSK,
-		.algorithm_auth = SSL_aPSK,
-	},
-	{
-		.name = SSL_TXT_SRP,
-		.algorithm_mkey = SSL_kSRP,
-	},
-	
+
 	/* symmetric encryption aliases */
 	{
 		.name = SSL_TXT_DES,
@@ -881,11 +846,7 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, unsigned long 
 
 	*mkey |= SSL_kDHr|SSL_kDHd; /* no such ciphersuites supported! */
 	*auth |= SSL_aDH;
-	*mkey |= SSL_kKRB5;
-	*auth |= SSL_aKRB5;
-	*mkey |= SSL_kPSK;
-	*auth |= SSL_aPSK;
-	*mkey |= SSL_kSRP;
+
 	/* Check for presence of GOST 34.10 algorithms, and if they
 	 * do not present, disable  appropriate auth and key exchange */
 	if (!get_optional_pkey_id("gost94")) {
@@ -1515,8 +1476,6 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	ssl_cipher_apply_rule(0, 0, SSL_aECDH, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
 	/* ssl_cipher_apply_rule(0, 0, SSL_aDH, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail); */
 	ssl_cipher_apply_rule(0, SSL_kRSA, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
-	ssl_cipher_apply_rule(0, SSL_kPSK, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
-	ssl_cipher_apply_rule(0, SSL_kKRB5, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
 
 	/* RC4 is sort-of broken -- move the the end */
 	ssl_cipher_apply_rule(0, 0, 0, SSL_RC4, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
@@ -1650,9 +1609,6 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_kDHd:
 		kx = "DH/DSS";
 		break;
-	case SSL_kKRB5:
-		kx = "KRB5";
-		break;
 	case SSL_kEDH:
 		kx = "DH";
 		break;
@@ -1664,12 +1620,6 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_kEECDH:
 		kx = "ECDH";
-		break;
-	case SSL_kPSK:
-		kx = "PSK";
-		break;
-	case SSL_kSRP:
-		kx = "SRP";
 		break;
 	default:
 		kx = "unknown";
@@ -1685,9 +1635,6 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_aDH:
 		au = "DH";
 		break;
-	case SSL_aKRB5:
-		au = "KRB5";
-		break;
 	case SSL_aECDH:
 		au = "ECDH";
 		break;
@@ -1696,9 +1643,6 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_aECDSA:
 		au = "ECDSA";
-		break;
-	case SSL_aPSK:
-		au = "PSK";
 		break;
 	default:
 		au = "unknown";

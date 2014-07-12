@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.31 2014/07/12 10:06:04 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.32 2014/07/12 13:11:53 jsing Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -427,9 +427,9 @@ dtls1_accept(SSL *s)
 
 		case SSL3_ST_SW_CERT_A:
 		case SSL3_ST_SW_CERT_B:
-			/* Check if it is anon DH or normal PSK */
-			if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) &&
-			    !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK)) {
+			/* Check if it is anon DH. */
+			if (!(s->s3->tmp.new_cipher->algorithm_auth &
+			    SSL_aNULL)) {
 				dtls1_start_timer(s);
 				ret = dtls1_send_server_certificate(s);
 				if (ret <= 0)
@@ -500,22 +500,13 @@ dtls1_accept(SSL *s)
 			 *   and in RFC 2246) ... except when the application
 			 *   insists on verification (against the specs, but
 			 *   s3_clnt.c accepts this for SSL 3).
-			 *
-			 * - We are using a Kerberos ciphersuite.
-			 *
-			 * - We are using normal PSK certificates and
-			 *   Certificate Requests are omitted
 			 */
 			if (!(s->verify_mode & SSL_VERIFY_PEER) ||
 			    ((s->session->peer != NULL) &&
 			     (s->verify_mode & SSL_VERIFY_CLIENT_ONCE)) ||
 			    ((s->s3->tmp.new_cipher->algorithm_auth &
 			     SSL_aNULL) && !(s->verify_mode &
-			     SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) ||
-			    (s->s3->tmp.new_cipher->algorithm_auth &
-			     SSL_aKRB5) ||
-			    (s->s3->tmp.new_cipher->algorithm_mkey &
-			     SSL_kPSK)) {
+			     SSL_VERIFY_FAIL_IF_NO_PEER_CERT))) {
 				/* no cert request */
 				skip = 1;
 				s->s3->tmp.cert_request = 0;
@@ -1216,8 +1207,7 @@ dtls1_send_server_key_exchange(SSL *s)
 			n += 2 + nr[i];
 		}
 
-		if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)
-		    && !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK)) {
+		if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)) {
 			if ((pkey = ssl_get_sign_pkey(s,
 			    s->s3->tmp.new_cipher, NULL)) == NULL) {
 				al = SSL_AD_DECODE_ERROR;
@@ -1463,12 +1453,9 @@ dtls1_send_server_certificate(SSL *s)
 	if (s->state == SSL3_ST_SW_CERT_A) {
 		x = ssl_get_server_send_cert(s);
 		if (x == NULL) {
-			/* VRS: allow null cert if auth == KRB5 */
-			if ((s->s3->tmp.new_cipher->algorithm_mkey != SSL_kKRB5) ||
-				(s->s3->tmp.new_cipher->algorithm_auth != SSL_aKRB5)) {
-				SSLerr(SSL_F_DTLS1_SEND_SERVER_CERTIFICATE, ERR_R_INTERNAL_ERROR);
-				return (0);
-			}
+			SSLerr(SSL_F_DTLS1_SEND_SERVER_CERTIFICATE,
+			    ERR_R_INTERNAL_ERROR);
+			return (0);
 		}
 
 		l = dtls1_output_cert_chain(s, x);
