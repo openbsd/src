@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.18 2014/07/09 18:31:34 pirofti Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.19 2014/07/12 20:31:52 jasper Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -203,7 +203,7 @@ struct octeon_fau_map {
 #define	BOARD_TYPE_SIM			1
 #define	BOARD_TYPE_UBIQUITI_E100	20002
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #define OCTEON_ARGV_MAX 64
 
 /* Maximum number of cores on <= CN52XX */
@@ -278,6 +278,7 @@ struct boot_info {
 extern struct boot_desc *octeon_boot_desc;
 extern struct boot_info *octeon_boot_info;
 
+#ifdef _KERNEL
 /* Device capabilities advertised in boot_info->config_flags */
 #define BOOTINFO_CFG_FLAG_PCI_HOST	(1ull << 0)
 #define BOOTINFO_CFG_FLAG_PCI_TARGET	(1ull << 1)
@@ -294,6 +295,7 @@ int	octeon_get_ethaddr(int, u_int8_t *);
 int	octeon_ioclock_speed(void);
 
 #endif /* _KERNEL */
+#endif /* _KERNEL || _STANDALONE */
 
 static inline int
 ffs64(uint64_t val)
