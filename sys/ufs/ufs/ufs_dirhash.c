@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.25 2013/12/12 19:15:32 tedu Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.26 2014/07/12 18:44:01 tedu Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -246,11 +246,11 @@ fail:
 		for (i = 0; i < narrays; i++)
 			if (dh->dh_hash[i] != NULL)
 				DIRHASH_BLKFREE(dh->dh_hash[i]);
-		free(dh->dh_hash, M_DIRHASH);
+		free(dh->dh_hash, M_DIRHASH, 0);
 	}
 	if (dh->dh_blkfree != NULL)
-		free(dh->dh_blkfree, M_DIRHASH);
-	free(dh, M_DIRHASH);
+		free(dh->dh_blkfree, M_DIRHASH, 0);
+	free(dh, M_DIRHASH, 0);
 	ip->i_dirhash = NULL;
 	DIRHASHLIST_LOCK();
 	ufs_dirhashmem -= memreqd;
@@ -282,13 +282,13 @@ ufsdirhash_free(struct inode *ip)
 	if (dh->dh_hash != NULL) {
 		for (i = 0; i < dh->dh_narrays; i++)
 			DIRHASH_BLKFREE(dh->dh_hash[i]);
-		free(dh->dh_hash, M_DIRHASH);
-		free(dh->dh_blkfree, M_DIRHASH);
+		free(dh->dh_hash, M_DIRHASH, 0);
+		free(dh->dh_blkfree, M_DIRHASH, 0);
 		mem += dh->dh_narrays * sizeof(*dh->dh_hash) +
 		    dh->dh_narrays * DH_NBLKOFF * sizeof(**dh->dh_hash) +
 		    dh->dh_nblk * sizeof(*dh->dh_blkfree);
 	}
-	free(dh, M_DIRHASH);
+	free(dh, M_DIRHASH, 0);
 	ip->i_dirhash = NULL;
 
 	DIRHASHLIST_LOCK();
@@ -1042,8 +1042,8 @@ ufsdirhash_recycle(int wanted)
 		DIRHASHLIST_UNLOCK();
 		for (i = 0; i < narrays; i++)
 			DIRHASH_BLKFREE(hash[i]);
-		free(hash, M_DIRHASH);
-		free(blkfree, M_DIRHASH);
+		free(hash, M_DIRHASH, 0);
+		free(blkfree, M_DIRHASH, 0);
 
 		/* Account for the returned memory, and repeat if necessary. */
 		DIRHASHLIST_LOCK();

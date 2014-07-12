@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.140 2013/12/12 19:00:10 tedu Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.141 2014/07/12 18:44:01 tedu Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ ffs_mountroot(void)
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_vfc->vfc_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		free(mp, M_MOUNT, 0);
 		vrele(swapdev_vp);
 		vrele(rootvp);
 		return (error);
@@ -436,7 +436,7 @@ success:
 			fs->fs_clean = ronly &&
 			    (fs->fs_flags & FS_UNCLEAN) == 0 ? 1 : 0;
 			if (ronly)
-				free(fs->fs_contigdirs, M_UFSMNT);
+				free(fs->fs_contigdirs, M_UFSMNT, 0);
 		}
 		if (!ronly) {
 			if (mp->mnt_flag & MNT_SOFTDEP)
@@ -809,7 +809,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 			size = (blks - i) * fs->fs_fsize;
 		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size, &bp);
 		if (error) {
-			free(fs->fs_csp, M_UFSMNT);
+			free(fs->fs_csp, M_UFSMNT, 0);
 			goto out;
 		}
 		memcpy(space, bp->b_data, size);
@@ -882,8 +882,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	if (ronly == 0) {
 		if ((fs->fs_flags & FS_DOSOFTDEP) &&
 		    (error = softdep_mount(devvp, mp, fs, cred)) != 0) {
-			free(fs->fs_csp, M_UFSMNT);
-			free(fs->fs_contigdirs, M_UFSMNT);
+			free(fs->fs_csp, M_UFSMNT, 0);
+			free(fs->fs_contigdirs, M_UFSMNT, 0);
 			goto out;
 		}
 		fs->fs_fmod = 1;
@@ -907,8 +907,8 @@ out:
 	VOP_UNLOCK(devvp, 0, p);
 
 	if (ump) {
-		free(ump->um_fs, M_UFSMNT);
-		free(ump, M_UFSMNT);
+		free(ump->um_fs, M_UFSMNT, 0);
+		free(ump, M_UFSMNT, 0);
 		mp->mnt_data = (qaddr_t)0;
 	}
 	return (error);
@@ -1017,7 +1017,7 @@ ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 			fs->fs_clean = 0;
 			return (error);
 		}
-		free(fs->fs_contigdirs, M_UFSMNT);
+		free(fs->fs_contigdirs, M_UFSMNT, 0);
 	}
 	ump->um_devvp->v_specmountpoint = NULL;
 
@@ -1026,9 +1026,9 @@ ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	error = VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
 	vput(ump->um_devvp);
-	free(fs->fs_csp, M_UFSMNT);
-	free(fs, M_UFSMNT);
-	free(ump, M_UFSMNT);
+	free(fs->fs_csp, M_UFSMNT, 0);
+	free(fs, M_UFSMNT, 0);
+	free(ump, M_UFSMNT, 0);
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);

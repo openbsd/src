@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.78 2014/07/12 13:23:59 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.79 2014/07/12 18:44:01 tedu Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ ext2fs_mountroot(void)
 	if ((error = ext2fs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_vfc->vfc_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		free(mp, M_MOUNT, 0);
 		vrele(rootvp);
 		return (error);
 	}
@@ -416,7 +416,7 @@ e2fs_sbfill(struct vnode *devvp, struct m_ext2fs *fs, struct ext2fs *sb)
 
 		error = bread(devvp, fsbtodb(fs, dblk), fs->e2fs_bsize, &bp);
 		if (error) {
-			free(fs->e2fs_gd, M_UFSMNT);
+			free(fs->e2fs_gd, M_UFSMNT, 0);
 			fs->e2fs_gd = NULL;
 			brelse(bp);
 			return (error);
@@ -598,8 +598,8 @@ out:
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
 	VOP_UNLOCK(devvp, 0, p);
 	if (ump) {
-		free(ump->um_e2fs, M_UFSMNT);
-		free(ump, M_UFSMNT);
+		free(ump->um_e2fs, M_UFSMNT, 0);
+		free(ump, M_UFSMNT, 0);
 		mp->mnt_data = (qaddr_t)0;
 	}
 	return (error);
@@ -635,9 +635,9 @@ ext2fs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	error = VOP_CLOSE(ump->um_devvp, fs->e2fs_ronly ? FREAD : FREAD|FWRITE,
 	    NOCRED, p);
 	vput(ump->um_devvp);
-	free(fs->e2fs_gd, M_UFSMNT);
-	free(fs, M_UFSMNT);
-	free(ump, M_UFSMNT);
+	free(fs->e2fs_gd, M_UFSMNT, 0);
+	free(fs, M_UFSMNT, 0);
+	free(ump, M_UFSMNT, 0);
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);

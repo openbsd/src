@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.34 2014/07/12 10:55:33 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.35 2014/07/12 18:44:01 tedu Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ ext2fs_readdir(void *v)
 		/* we need to correct uio_offset */
 		uio->uio_offset = off;
 	}
-	free(dirbuf, M_TEMP);
+	free(dirbuf, M_TEMP, 0);
 	*ap->a_eofflag = ext2fs_size(VTOI(ap->a_vp)) <= uio->uio_offset;
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.127 2014/05/22 02:02:39 guenther Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.128 2014/07/12 18:44:01 tedu Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -2288,7 +2288,7 @@ check_inode_unwritten(struct inodedep *inodedep)
 	if (inodedep->id_state & ONWORKLIST)
 		WORKLIST_REMOVE(&inodedep->id_list);
 	if (inodedep->id_savedino1 != NULL) {
-		free(inodedep->id_savedino1, M_INODEDEP);
+		free(inodedep->id_savedino1, M_INODEDEP, 0);
 		inodedep->id_savedino1 = NULL;
 	}
 	if (free_inodedep(inodedep) == 0) {
@@ -3826,7 +3826,7 @@ softdep_disk_write_complete(struct buf *bp)
 			if (indirdep->ir_state & GOINGAWAY)
 				panic("disk_write_complete: indirdep gone");
 			memcpy(bp->b_data, indirdep->ir_saveddata, bp->b_bcount);
-			free(indirdep->ir_saveddata, M_INDIRDEP);
+			free(indirdep->ir_saveddata, M_INDIRDEP, 0);
 			indirdep->ir_saveddata = NULL;
 			indirdep->ir_state &= ~UNDONE;
 			indirdep->ir_state |= ATTACHED;
@@ -4015,7 +4015,7 @@ handle_written_inodeblock(struct inodedep *inodedep, struct buf *bp)
 			*dp1 = *inodedep->id_savedino1;
 		else
 			*dp2 = *inodedep->id_savedino2;
-		free(inodedep->id_savedino1, M_INODEDEP);
+		free(inodedep->id_savedino1, M_INODEDEP, 0);
 		inodedep->id_savedino1 = NULL;
 		if ((bp->b_flags & B_DELWRI) == 0)
 			stat_inode_bitmap++;

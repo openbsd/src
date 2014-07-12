@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.52 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.53 2014/07/12 18:44:01 tedu Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -238,10 +238,10 @@ amap_free(struct vm_amap *amap)
 	KASSERT(amap->am_ref == 0 && amap->am_nused == 0);
 	KASSERT((amap->am_flags & AMAP_SWAPOFF) == 0);
 
-	free(amap->am_slots, M_UVMAMAP);
+	free(amap->am_slots, M_UVMAMAP, 0);
 #ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
-		free(amap->am_ppref, M_UVMAMAP);
+		free(amap->am_ppref, M_UVMAMAP, 0);
 #endif
 	pool_put(&uvm_amap_pool, amap);
 
@@ -333,7 +333,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 		    M_WAITOK | M_CANFAIL);
 		if (newppref == NULL) {
 			/* give up if malloc fails */
-			free(amap->am_ppref, M_UVMAMAP);
+			free(amap->am_ppref, M_UVMAMAP, 0);
 			amap->am_ppref = PPREF_NONE;
 		}
 	}
@@ -343,7 +343,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 	if (newsl == NULL) {
 #ifdef UVM_AMAP_PPREF
 		if (newppref != NULL) {
-			free(newppref, M_UVMAMAP);
+			free(newppref, M_UVMAMAP, 0);
 		}
 #endif
 		return (ENOMEM);
@@ -394,10 +394,10 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 	amap->am_maxslot = slotalloc;
 
 	/* and free */
-	free(oldsl, M_UVMAMAP);
+	free(oldsl, M_UVMAMAP, 0);
 #ifdef UVM_AMAP_PPREF
 	if (oldppref && oldppref != PPREF_NONE)
-		free(oldppref, M_UVMAMAP);
+		free(oldppref, M_UVMAMAP, 0);
 #endif
 	return (0);
 }

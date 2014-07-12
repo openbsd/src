@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.97 2014/07/08 11:38:48 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.98 2014/07/12 18:44:01 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ sys_mincore(struct proc *p, void *v, register_t *retval)
 	 * storing the status byte for a page.
 	 */
 	if ((error = uvm_vslock(p, vec, npgs, VM_PROT_WRITE)) != 0) {
-		free(pgs, M_TEMP);
+		free(pgs, M_TEMP, 0);
 		return (error);
 	}
 
@@ -292,7 +292,7 @@ sys_mincore(struct proc *p, void *v, register_t *retval)
 	/* now the map is unlocked we can copyout without fear. */
 	if (error == 0)
 		copyout(pgs, vec, npgs * sizeof(char));
-	free(pgs, M_TEMP);
+	free(pgs, M_TEMP, 0);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.170 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.171 2014/07/12 18:44:01 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3685,7 +3685,7 @@ uvm_map_deallocate(vm_map_t map)
 	    TRUE, FALSE);
 	pmap_destroy(map->pmap);
 	KASSERT(RB_EMPTY(&map->addr));
-	free(map, M_VMMAP);
+	free(map, M_VMMAP, 0);
 
 	uvm_unmap_detach(&dead, 0);
 }

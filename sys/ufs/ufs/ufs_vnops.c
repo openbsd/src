@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.114 2014/07/08 17:19:26 deraadt Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.115 2014/07/12 18:44:01 tedu Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1514,7 +1514,7 @@ ufs_readdir(void *v)
 	if ((char *)dp + offsetof(struct direct, d_name) < edp &&
 	    dp->d_reclen <= offsetof(struct direct, d_name))
 		error = EIO;
-	free(diskbuf, M_TEMP);
+	free(diskbuf, M_TEMP, 0);
 
 	uio->uio_offset = off;
 	*ap->a_eofflag = DIP(VTOI(ap->a_vp), size) <= off;
