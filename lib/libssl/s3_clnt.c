@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.80 2014/07/12 18:10:21 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.81 2014/07/12 18:37:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1091,7 +1091,7 @@ ssl3_get_server_certificate(SSL *s)
 
 	pkey = X509_get_pubkey(x);
 
-	if (pkey == NULL || EVP_PKEY_missing_parameters(pkey))) {
+	if (pkey == NULL || EVP_PKEY_missing_parameters(pkey)) {
 		x = NULL;
 		al = SSL3_AL_FATAL;
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
