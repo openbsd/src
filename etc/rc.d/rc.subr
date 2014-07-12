@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.73 2014/07/12 10:14:03 robert Exp $
+#	$OpenBSD: rc.subr,v 1.74 2014/07/12 15:32:43 robert Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -89,8 +89,6 @@ _rc_wait() {
 }
 
 _rc_quirks() {
-	unset mountd_flags nfsd_flags ypbind_flags
-
 	# special care needed for spamlogd to avoid starting it up and failing
 	# all the time
 	if [  X"${spamd_flags}" = X"NO" -o X"${spamd_black}" != X"NO" ]; then
@@ -103,9 +101,15 @@ _rc_quirks() {
 		pflogd_flags=NO
 	fi
 
-	: ${mountd_flags=$([ X"${nfs_server-NO}" = XYES ] || echo NO)}
-	: ${nfsd_flags=$([ X"${nfs_server-NO}" = XYES ] && echo "-tun 4" || echo NO)}
-	: ${ypbind_flags=$([ X"`domainname`" != X"" -a -d /var/yp/binding ] || echo NO)}
+	# special care needed if nfs_server=YES to startup nfsd and mountd with
+	# sane default flags
+	if [ X"${nfs_server}" = X"YES" ]; then
+		[ X"${nfsd_flags}" = X"NO" ] && nfsd_flags="-tun 4"
+		[ X"${mountd_flags}" = X"NO" ] && mountd_flags=
+	fi
+
+	# in case domainname is set and /var/yp/binding exists enable ypbind
+	[ X"`domainname`" != X"" -a -d /var/yp/binding ] && ypbind_flags=
 }
 
 _rc_parse_conf() {
