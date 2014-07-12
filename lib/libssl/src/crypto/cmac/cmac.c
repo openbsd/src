@@ -1,4 +1,4 @@
-/* $OpenBSD: cmac.c,v 1.8 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: cmac.c,v 1.9 2014/07/12 14:58:32 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -123,6 +123,9 @@ CMAC_CTX_get0_cipher_ctx(CMAC_CTX *ctx)
 void
 CMAC_CTX_free(CMAC_CTX *ctx)
 {
+	if (ctx == NULL)
+		return;
+
 	CMAC_CTX_cleanup(ctx);
 	free(ctx);
 }

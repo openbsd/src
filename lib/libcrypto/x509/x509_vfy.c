@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.34 2014/07/11 12:52:41 miod Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.35 2014/07/12 14:58:32 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1979,6 +1979,9 @@ X509_STORE_CTX_new(void)
 void
 X509_STORE_CTX_free(X509_STORE_CTX *ctx)
 {
+	if (ctx == NULL)
+		return;
+
 	X509_STORE_CTX_cleanup(ctx);
 	free(ctx);
 }
