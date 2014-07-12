@@ -1849,6 +1849,7 @@
 ./usr/share/man/man2/semop.2
 ./usr/share/man/man2/send.2
 ./usr/share/man/man2/sendmsg.2
+./usr/share/man/man2/sendsyslog.2
 ./usr/share/man/man2/sendto.2
 ./usr/share/man/man2/setegid.2
 ./usr/share/man/man2/seteuid.2
