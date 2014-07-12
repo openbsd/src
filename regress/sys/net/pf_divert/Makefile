@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2014/07/11 20:41:20 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.10 2014/07/12 21:00:46 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -26,6 +26,8 @@ regress:
 # local and remote.
 # You must have an anchor "regress" for the divert rules in the pf.conf
 # of the remote machine.  The kernel of the remote machine gets testet.
+#
+# Run make check-setup to see if you got the setup correct.
 
 LOCAL_ADDR ?=
 REMOTE_ADDR ?=
@@ -145,6 +147,7 @@ stamp-syntax: ${ARGS}
 
 # Check wether the address, route and remote setup is correct
 check-setup:
+	@echo '\n======== $@ ========'
 	ping -n -c 1 ${LOCAL_ADDR}
 	ping -n -c 1 ${REMOTE_ADDR}
 	ping6 -n -c 1 ${LOCAL_ADDR6}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2013/10/17 02:20:15 lteo Exp $
+#	$OpenBSD: Makefile,v 1.7 2014/07/12 21:00:46 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -7,51 +7,60 @@
 # scapy               powerful interactive packet manipulation in python
 
 # This test needs a manual setup of four machines
-# Set up machines: SRC PF RT DST
+# Set up machines: SRC PF RT ECO
 # SRC is the machine where this makefile is running.
 # PF is running OpenBSD forwarding through pf, it is the test target.
 # RT is a router forwarding packets, maximum MTU is 1300.
-# DST is reflecting the ping and UDP echo packets.
-# RDR does not exist, PF redirects the traffic to DST.
+# ECO is reflecting the ping and UDP echo packets.
+# RDR does not exist, PF redirects the traffic to ECO.
 #
-# +---+   1   +--+   2   +--+   3   +---+   4   +---+
-# |SRC| ----> |PF| ----> |RT| ----> |DST|       |RDR|
+# +---+   0   +--+   1   +--+   2   +---+   3   +---+
+# |SRC| ----> |PF| ----> |RT| ----> |ECO|       |RDR|
 # +---+       +--+       +--+       +---+       +---+
 #     out    in  out    in  out    in          in
 
-# Configure Addresses on the machines, there must be routes for the networks.
-# Adapt interface and addresse variables to your local setup.
+# Configure Addresses on the machines, there must be routes for the
+# networks.  Adapt interface and addresse variables to your local
+# setup.  To control the remote machine you need a hostname for
+# ssh to log in.
+# You must have an anchor "regress" for the divert rules in the pf.conf
+# of the PF machine.  The kernel of the PF machine gets testet.
 #
-SRC_IF =	tun0
-SRC_MAC =	fe:e1:ba:d1:0a:dc
-PF_MAC =	52:54:00:12:34:50
+# Run make check-setup to see if you got the setup correct.
 
-SRC_OUT =	10.188.211.10
-PF_IN =		10.188.211.50
-PF_OUT =	10.188.212.50
-RT_IN =		10.188.212.51
-RT_OUT =	10.188.213.51
-DST_IN =	10.188.213.52
-RDR_IN =	10.188.214.1
+SRC_IF ?=	tun0
+SRC_MAC ?=	fe:e1:ba:d1:0a:dc
+PF_MAC ?=	52:54:00:12:34:50
+PF_SSH ?=	q50
+RT_SSH ?=	q51
+ECO_SSH ?=	q52
 
-SRC_OUT6 =	fdd7:e83e:66bc:211:fce1:baff:fed1:561f
-PF_IN6 =	fdd7:e83e:66bc:211:5054:ff:fe12:3450
-PF_OUT6 =	fdd7:e83e:66bc:212:5054:ff:fe12:3450
-RT_IN6 =	fdd7:e83e:66bc:212:5054:ff:fe12:3451
-RT_OUT6 =	fdd7:e83e:66bc:213:5054:ff:fe12:3451
-DST_IN6 =	fdd7:e83e:66bc:213:5054:ff:fe12:3452
-RDR_IN6 =	fdd7:e83e:66bc:214::1
+SRC_OUT ?=	10.188.210.10
+PF_IN ?=	10.188.210.50
+PF_OUT ?=	10.188.211.50
+RT_IN ?=	10.188.211.51
+RT_OUT ?=	10.188.212.51
+ECO_IN ?=	10.188.212.52
+RDR_IN ?=	10.188.213.188
+
+SRC_OUT6 ?=	fdd7:e83e:66bc:210:fce1:baff:fed1:561f
+PF_IN6 ?=	fdd7:e83e:66bc:210:5054:ff:fe12:3450
+PF_OUT6 ?=	fdd7:e83e:66bc:211:5054:ff:fe12:3450
+RT_IN6 ?=	fdd7:e83e:66bc:211:5054:ff:fe12:3451
+RT_OUT6 ?=	fdd7:e83e:66bc:212:5054:ff:fe12:3451
+ECO_IN6 ?=	fdd7:e83e:66bc:212:5054:ff:fe12:3452
+RDR_IN6 ?=	fdd7:e83e:66bc:213::188
 
 # pf rules on PF must look like this:
 #
 # pass to { $PF_IN/24 $PF_IN6/64 }
 # pass to { $RT_IN/24 $RT_IN6/64 }
-# pass to { $DST_IN/24 $DST_IN6/64 }
+# pass to { $ECO_IN/24 $DST_IN6/64 }
 # pass to { $RDR_IN/24 $RDR_IN6/64 }
 #
-# pass in  to $RDR_IN/24  rdr-to $DST_IN  allow-opts tag rdr
+# pass in  to $RDR_IN/24  rdr-to $ECO_IN  allow-opts tag rdr
 # pass out                nat-to $PF_OUT  allow-opts tagged rdr
-# pass in  to $RDR_IN6/64 rdr-to $DST_IN6 allow-opts tag rdr
+# pass in  to $RDR_IN6/64 rdr-to $ECO_IN6 allow-opts tag rdr
 # pass out                nat-to $PF_OUT6 allow-opts tagged rdr
 
 # Currently these test fail as pf does not fix the checksum of
@@ -70,52 +79,28 @@ addr.py: Makefile
 	echo 'SRC_IF="${SRC_IF}"' >>$@.tmp
 	echo 'SRC_MAC="${SRC_MAC}"' >>$@.tmp
 	echo 'PF_MAC="${PF_MAC}"' >>$@.tmp
-.for var in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT DST_IN RDR_IN
+.for var in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN
 	echo '${var}="${${var}}"' >>$@.tmp
 	echo '${var}6="${${var}6}"' >>$@.tmp
 .endfor
 	mv $@.tmp $@
 
-# Make sure that the routing table on the SRC machine is correct.
-# All packets must be forwarded to PF target machine.
-TARGETS +=	route route6
-
-run-regress-route:
-	@echo '\n======== $@ ========'
-	@echo Check route SRC_OUT:
-	route -n get -inet ${SRC_OUT} | fgrep -q 'interface: lo0'
-	@echo Check route PF_IN:
-	route -n get -inet ${PF_IN} | fgrep -q 'if address: ${SRC_OUT}'
-.for ip in PF_OUT RT_IN RT_OUT DST_IN RDR_IN
-	@echo Check route ${ip}:
-	route -n get -inet ${${ip}} | fgrep -q 'gateway: ${PF_IN}'
-.endfor
-
-run-regress-route6:
-	@echo '\n======== $@ ========'
-	@echo Check route SRC_OUT6:
-	route -n get -inet6 ${SRC_OUT6} | fgrep -q 'interface: lo0'
-.for ip in PF_OUT RT_IN RT_OUT DST_IN RDR_IN
-	@echo Check route ${ip}6:
-	route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${PF_IN6}'
-.endfor
-
 # Ping all addresses.  This ensures that the ip addresses are configured
 # and all routing table are set up to allow bidirectional packet flow.
 # Note that RDR does not exist physically.  So this traffic is rewritten
-# by PF and handled by DST.
+# by PF and handled by ECO.
 TARGETS +=	ping  ping6
 
 run-regress-ping:
 	@echo '\n======== $@ ========'
-.for ip in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT DST_IN RDR_IN
+.for ip in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN
 	@echo Check ping ${ip}:
 	ping -n -c 1 ${${ip}}
 .endfor
 
 run-regress-ping6:
 	@echo '\n======== $@ ========'
-.for ip in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT DST_IN RDR_IN
+.for ip in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN
 	@echo Check ping ${ip}6:
 	ping6 -n -c 1 ${${ip}6}
 .endfor
@@ -127,7 +112,7 @@ TARGETS +=	fragping  fragping6
 
 run-regress-fragping:
 	@echo '\n======== $@ ========'
-.for ip in PF_IN PF_OUT RT_IN RT_OUT DST_IN RDR_IN
+.for ip in PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN
 	@echo Check ping ${ip}:
 	-ping -n -c 1 -s 1400 -D ${${ip}}
 	ping -n -c 1 -s 5000 ${${ip}}
@@ -135,7 +120,7 @@ run-regress-fragping:
 
 run-regress-fragping6:
 	@echo '\n======== $@ ========'
-.for ip in PF_IN PF_OUT RT_IN RT_OUT DST_IN RDR_IN
+.for ip in PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN
 	@echo Check ping ${ip}6:
 	-ping6 -n -c 1 -s 1400 -m ${${ip}6}
 	ping6 -n -c 1 -s 5000 -m ${${ip}6}
@@ -149,14 +134,14 @@ TARGETS +=	ping-mtu ping6-mtu
 
 run-regress-ping-mtu: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check path MTU to ${ip}
 	${SUDO} python2.7 ping_mtu_1300.py ${${ip}}
 .endfor
 
 run-regress-ping6-mtu: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check path MTU to ${ip}6
 	${SUDO} python2.7 ping6_mtu_1300.py ${${ip}6}
 .endfor
@@ -167,28 +152,28 @@ TARGETS +=	ping-cksum ping6-cksum udp-cksum udp6-cksum
 
 run-regress-ping-cksum: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check icmp chksum in fragmentation needed to ${ip}
 	${SUDO} python2.7 ping_cksum.py ${${ip}}
 .endfor
 
 run-regress-ping6-cksum: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check icmp6 chksum in packet too big to ${ip}6
 	${SUDO} python2.7 ping6_cksum.py ${${ip}6}
 .endfor
 
 run-regress-udp-cksum: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check udp chksum in packet too big to ${ip}
 	${SUDO} python2.7 udp_cksum.py ${${ip}}
 .endfor
 
 run-regress-udp6-cksum: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check udp6 chksum in packet too big to ${ip}6
 	${SUDO} python2.7 udp6_cksum.py ${${ip}6}
 .endfor
@@ -198,14 +183,14 @@ TARGETS +=	frag frag6
 
 run-regress-frag: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check ping reassembly ${ip}
 	${SUDO} python2.7 frag.py ${${ip}}
 .endfor
 
 run-regress-frag6: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check ping6 reassembly ${ip}6
 	${SUDO} python2.7 frag6.py ${${ip}6}
 .endfor
@@ -214,7 +199,7 @@ TARGETS +=	frag6-ext
 
 run-regress-frag6-ext: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check ping6 extension header reassembly ${ip}6
 	${SUDO} python2.7 frag6_ext.py ${${ip}6}
 .endfor
@@ -223,14 +208,14 @@ TARGETS +=	frag-cutnew frag6-cutnew
 
 run-regress-frag-cutnew: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check ping head overlap reassembly ${ip}
 	${SUDO} python2.7 frag_cutnew.py ${${ip}}
 .endfor
 
 run-regress-frag6-cutnew: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check ping6 head overlap reassembly ${ip}6
 	${SUDO} python2.7 frag6_cutnew.py ${${ip}6}
 .endfor
@@ -239,14 +224,14 @@ TARGETS +=	frag-cutold frag6-cutold
 
 run-regress-frag-cutold: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check ping tail overlap reassembly ${ip}
 	${SUDO} python2.7 frag_cutold.py ${${ip}}
 .endfor
 
 run-regress-frag6-cutold: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check ping6 tail overlap reassembly ${ip}6
 	${SUDO} python2.7 frag6_cutold.py ${${ip}6}
 .endfor
@@ -255,14 +240,14 @@ TARGETS +=	frag-dropold frag6-dropold
 
 run-regress-frag-dropold: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check ping total overlapping reassembly ${ip}
 	${SUDO} python2.7 frag_dropold.py ${${ip}}
 .endfor
 
 run-regress-frag6-dropold: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check ping6 total overlapping reassembly ${ip}6
 	${SUDO} python2.7 frag6_dropold.py ${${ip}6}
 .endfor
@@ -271,14 +256,14 @@ TARGETS +=	frag-dropnew frag6-dropnew
 
 run-regress-frag-dropnew: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check ping total overlaped reassembly ${ip}
 	${SUDO} python2.7 frag_dropnew.py ${${ip}}
 .endfor
 
 run-regress-frag6-dropnew: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_IN RDR_IN
+.for ip in ECO_IN RDR_IN
 	@echo Check ping6 total overlaped reassembly ${ip}6
 	${SUDO} python2.7 frag6_dropnew.py ${${ip}6}
 .endfor
@@ -286,5 +271,82 @@ run-regress-frag6-dropnew: addr.py
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
 CLEANFILES +=		addr.py *.pyc *.log
+
+.PHONY: check-setup
+
+# Check wether the address, route and remote setup is correct
+check-setup:
+	@echo '\n======== $@ SRC ========'
+	ping -n -c 1 ${SRC_OUT}  # SRC_OUT
+	route -n get -inet ${SRC_OUT} | fgrep -q 'interface: lo0'  # SRC_OUT
+	ping -n -c 1 ${PF_IN}  # PF_IN
+	route -n get -inet ${PF_IN} | fgrep -q 'interface: ${SRC_IF}'  # PF_IN SRC_IF
+.for ip in PF_OUT RT_IN RT_OUT ECO_IN RDR_IN
+	route -n get -inet ${${ip}} | fgrep -q 'gateway: ${PF_IN}'  # ${ip} PF_IN
+.endfor
+	ping6 -n -c 1 ${SRC_OUT6}  # SRC_OUT6
+	route -n get -inet6 ${SRC_OUT6} | fgrep -q 'interface: lo0'  # SRC_OUT6
+	ping6 -n -c 1 ${PF_IN6}  # PF_IN6
+	route -n get -inet6 ${PF_IN6} | fgrep -q 'interface: ${SRC_IF}'  # PF_IN6 SRC_IF
+.for ip in PF_OUT RT_IN RT_OUT ECO_IN RDR_IN
+	route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${PF_IN6}'  # ${ip}6 PF_IN6
+.endfor
+	@echo '\n======== $@ PF ========'
+	ssh ${PF_SSH} ping -n -c 1 ${PF_IN}  # PF_IN
+	ssh ${PF_SSH} route -n get -inet ${PF_IN} | fgrep -q 'interface: lo0'  # PF_IN
+	ssh ${PF_SSH} ping -n -c 1 ${SRC_OUT}  # SRC_OUT
+	ssh ${PF_SSH} ping -n -c 1 ${PF_OUT}  # PF_OUT
+	ssh ${PF_SSH} route -n get -inet ${PF_OUT} | fgrep -q 'interface: lo0'  # PF_OUT
+	ssh ${PF_SSH} ping -n -c 1 ${RT_IN}  # RT_IN
+.for ip in RT_OUT ECO_IN
+	ssh ${PF_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${RT_IN}'  # ${ip} RT_IN
+.endfor
+	ssh ${PF_SSH} ping6 -n -c 1 ${PF_IN6}  # PF_IN6
+	ssh ${PF_SSH} route -n get -inet6 ${PF_IN6} | fgrep -q 'interface: lo0'  # PF_IN6 
+	ssh ${PF_SSH} ping6 -n -c 1 ${SRC_OUT6}  # SRC_OUT6
+	ssh ${PF_SSH} ping6 -n -c 1 ${PF_OUT6}  # PF_OUT6
+	ssh ${PF_SSH} route -n get -inet6 ${PF_OUT6} | fgrep -q 'interface: lo0'  # PF_OUT6 
+	ssh ${PF_SSH} ping6 -n -c 1 ${RT_IN6}  # RT_IN6
+.for ip in RT_OUT ECO_IN
+	ssh ${PF_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${RT_IN6}'  # ${ip}6 RT_IN6
+.endfor
+	ssh ${PF_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
+	ssh ${PF_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
+	ssh ${PF_SSH} sysctl net.inet.ip.forwarding | fgrep 1
+	ssh ${PF_SSH} sysctl net.inet6.ip6.forwarding | fgrep 1
+	@echo '\n======== $@ RT ========'
+	ssh ${RT_SSH} ping -n -c 1 ${RT_IN}  # RT_IN
+	ssh ${RT_SSH} route -n get -inet ${RT_IN} | fgrep -q 'interface: lo0'  # RT_IN
+	ssh ${RT_SSH} ping -n -c 1 ${PF_OUT}  # PF_OUT
+.for ip in PF_IN SRC_OUT
+	ssh ${RT_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${PF_OUT}'  # ${ip} PF_OUT
+.endfor
+	ssh ${RT_SSH} ping -n -c 1 ${RT_OUT}  # RT_OUT
+	ssh ${RT_SSH} route -n get -inet ${RT_OUT} | fgrep -q 'interface: lo0'  # RT_OUT
+	ssh ${RT_SSH} ping -n -c 1 ${ECO_IN}  # ECO_IN
+	ssh ${RT_SSH} ping6 -n -c 1 ${RT_IN6}  # RT_IN6
+	ssh ${RT_SSH} route -n get -inet6 ${RT_IN6} | fgrep -q 'interface: lo0'  # RT_IN6 
+	ssh ${RT_SSH} ping6 -n -c 1 ${PF_OUT6}  # PF_OUT6
+.for ip in PF_IN SRC_OUT
+	ssh ${RT_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${PF_OUT6}'  # ${ip}6 PF_OUT6
+.endfor
+	ssh ${RT_SSH} ping6 -n -c 1 ${RT_OUT6}  # RT_OUT6
+	ssh ${RT_SSH} route -n get -inet6 ${RT_OUT6} | fgrep -q 'interface: lo0'  # RT_OUT6 
+	ssh ${RT_SSH} ping6 -n -c 1 ${ECO_IN6}  # ECO_IN6
+	ssh ${RT_SSH} sysctl net.inet.ip.forwarding | fgrep 1
+	ssh ${RT_SSH} sysctl net.inet6.ip6.forwarding | fgrep 1
+	@echo '\n======== $@ ECO ========'
+	ssh ${ECO_SSH} ping -n -c 1 ${ECO_IN}  # ECO_IN
+	ssh ${ECO_SSH} route -n get -inet ${ECO_IN} | fgrep -q 'interface: lo0'  # ECO_IN
+	ssh ${ECO_SSH} ping -n -c 1 ${RT_OUT}  # RT_OUT
+.for ip in RT_IN PF_OUT PF_IN SRC_OUT
+	ssh ${ECO_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${RT_OUT}'  # ${ip} RT_OUT
+.endfor
+	ssh ${ECO_SSH} ping6 -n -c 1 ${ECO_IN6}  # ECO_IN6
+	ssh ${ECO_SSH} route -n get -inet6 ${ECO_IN6} | fgrep -q 'interface: lo0'  # ECO_IN6 
+	ssh ${ECO_SSH} ping6 -n -c 1 ${RT_OUT6}  # RT_OUT6
+.for ip in RT_IN PF_OUT PF_IN SRC_OUT
+	ssh ${ECO_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${RT_OUT6}'  # ${ip}6 RT_OUT6
+.endfor
 
 .include <bsd.regress.mk>
