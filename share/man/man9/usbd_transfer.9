@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbd_transfer.9,v 1.4 2014/07/12 08:48:19 mpi Exp $
+.\" $OpenBSD: usbd_transfer.9,v 1.5 2014/07/12 16:07:06 mpi Exp $
 .\"
 .\" Copyright (c) 2013 Martin Pieuchot
 .\"
@@ -70,7 +70,7 @@ Do not report short reads, when the length of the data read is lower than
 as errors.
 .It Dv USBD_FORCE_SHORT_XFER
 Submit a supplementary zero length packet at the end of the written data.
-Some requests may need such packet in order to be properly terminated.
+Some requests may need such packets in order to be properly terminated.
 .It Dv USBD_CATCH
 Used in conjunction with the
 .Dv USBD_SYNCHRONOUS
