@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.397 2014/06/25 09:43:36 zhuk Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.398 2014/07/12 09:26:27 robert Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 25 2014 $
+.Dd $Mdocdate: July 12 2014 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1685,6 +1685,18 @@ Use with
 or
 .Ev ONLY_FOR_ARCHS
 to limit ports to architectures where they compile.
+.It Ev GH_ACCOUNT
+Account name of the GitHub user hosting the project.
+.It Ev GH_COMMIT
+SHA1 commit id to fetch. It is good practice to always specify
+the commit id, even if ${GH_TAGNAME} was specified.
+.It Ev GH_PROJECT
+Name of the project on GitHub.
+.It Ev GH_TAGNAME
+Name of the tag to download. Setting ${GH_TAGNAME} to master is invalid
+and will throw an error. ${WRKDIST} is auto-generated based on the the
+${GH_TAGNAME} if specified, otherwise ${GH_COMMIT} will be used to generate
+${WRKDIST}.
 .It Ev GMAKE
 Location of the GNU make binary, if needed.
 Defaults to gmake.
