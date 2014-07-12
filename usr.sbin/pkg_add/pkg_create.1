@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.96 2014/01/23 12:21:44 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.97 2014/07/12 19:44:54 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: January 23 2014 $
+.Dd $Mdocdate: July 12 2014 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -366,12 +366,6 @@ If
 .Ar name
 does not begin with an @, same as
 .Dl name/
-.Pp
-.It Cm @endfake
-Mark end of packing-list for
-.Xr pkg_add 1
-.Fl Q
-option.
 .Pp
 .It Cm @exec Ar command
 Execute
