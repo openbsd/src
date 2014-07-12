@@ -1,4 +1,4 @@
-/*	$OpenBSD: itecons.c,v 1.2 2008/01/23 16:37:56 jsing Exp $	*/
+/*	$OpenBSD: itecons.c,v 1.3 2014/07/12 23:34:54 jasper Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -60,11 +60,9 @@ char cnbuf[IODC_MINIOSIZ] __attribute__ ((aligned (IODC_MINIOSIZ)));
 int kycode[IODC_MAXSIZE/sizeof(int)];
 
 int
-cnspeed(dev, sp)
-	dev_t	dev;
-	int	sp;
+cnspeed(dev_t dev, int sp)
 {
-	return 9600;
+	return CONSPEED;
 }
 
 void

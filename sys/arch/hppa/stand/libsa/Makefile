@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2014/07/12 21:54:58 jasper Exp $
+#	$OpenBSD: Makefile,v 1.18 2014/07/12 23:34:54 jasper Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -41,3 +41,4 @@ install:
 CPPFLAGS+=-DHEAP_LIMIT=${HEAP_LIMIT} ${DEBUGFLAGS} -DNO_NET
 CPPFLAGS+=-I${S}/stand/boot
 CFLAGS+=${SACFLAGS} -D__INTERNAL_LIBSA_CREAD -DCOMPAT_UFS -fno-pie
+CFLAGS+=-DCONSPEED=9600

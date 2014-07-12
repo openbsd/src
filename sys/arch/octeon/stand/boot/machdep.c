@@ -1,8 +1,8 @@
-/*	$OpenBSD: machdep.c,v 1.4 2014/07/12 21:54:58 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.5 2014/07/12 23:34:54 jasper Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
- * Copyright (c) 2013,2014 Jasper Lievisse Adriaanse <jasper@openbsd.org>
+ * Copyright (c) 2013, 2014 Jasper Lievisse Adriaanse <jasper@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -76,7 +76,7 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 int
 cnspeed(dev_t dev, int s)
 {
-	return (CONSPEED);
+	return CONSPEED;
 }
 
 int pch_pos;

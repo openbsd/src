@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.6 2014/07/12 21:54:58 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.7 2014/07/12 23:34:54 jasper Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -61,7 +61,7 @@ extern int bootprompt;
 int
 cnspeed(dev_t dev, int sp)
 {
-	return 9600;
+	return CONSPEED;
 }
 
 int pch_pos;
