@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.263 2014/07/11 08:18:31 guenther Exp $ */
+/* $OpenBSD: acpi.c,v 1.264 2014/07/12 09:02:24 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2117,8 +2117,10 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 		goto fail_quiesce;
 
 #ifdef HIBERNATE
-	if (state == ACPI_STATE_S4)
+	if (state == ACPI_STATE_S4) {
+		uvmpd_hibernate();
 		hibernate_suspend_bufcache();
+	}
 #endif /* HIBERNATE */
 
 	bufq_quiesce();

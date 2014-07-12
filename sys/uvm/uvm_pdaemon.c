@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.70 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.71 2014/07/12 09:02:24 kettenis Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -75,6 +75,10 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 
+#ifdef HIBERNATE
+#include <sys/hibernate.h>
+#endif
+
 #include <uvm/uvm.h>
 
 /*
@@ -94,6 +98,7 @@
 void		uvmpd_scan(void);
 boolean_t	uvmpd_scan_inactive(struct pglist *);
 void		uvmpd_tune(void);
+void		uvmpd_drop(struct pglist *);
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
@@ -920,3 +925,56 @@ uvmpd_scan(void)
 		}
 	}
 }
+
+#ifdef HIBERNATE
+
+/*
+ * uvmpd_drop: drop clean pages from list
+ */
+void
+uvmpd_drop(struct pglist *pglst)
+{
+	struct vm_page *p, *nextpg;
+
+	for (p = TAILQ_FIRST(pglst); p != NULL; p = nextpg) {
+		nextpg = TAILQ_NEXT(p, pageq);
+
+		if (p->pg_flags & PQ_ANON || p->uobject == NULL)
+			continue;
+
+		if (p->pg_flags & PG_BUSY)
+			continue;
+
+		if (p->pg_flags & PG_CLEAN) {
+			/*
+			 * we now have the page queues locked.
+			 * the page is not busy.   if the page is clean we
+			 * can free it now and continue.
+			 */
+			if (p->pg_flags & PG_CLEAN) {
+				if (p->pg_flags & PQ_SWAPBACKED) {
+					/* this page now lives only in swap */
+					uvmexp.swpgonly++;
+				}
+
+				/* zap all mappings with pmap_page_protect... */
+				pmap_page_protect(p, VM_PROT_NONE);
+				uvm_pagefree(p);
+			}
+		}
+	}
+}
+
+void
+uvmpd_hibernate(void)
+{
+	uvm_lock_pageq();
+
+	uvmpd_drop(&uvm.page_inactive_swp);
+	uvmpd_drop(&uvm.page_inactive_obj);
+	uvmpd_drop(&uvm.page_active);
+
+	uvm_unlock_pageq();
+}
+
+#endif
