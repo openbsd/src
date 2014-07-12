@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.315 2014/07/11 21:08:20 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.316 2014/07/12 09:04:21 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -303,6 +303,8 @@ routehandler(void)
 			    inet_ntoa(client->active->address));
 			memset(&b, 0, sizeof(b));
 			add_address(ifi->name, 0, b, b);
+			/* No need to write resolv.conf now. */
+			client->flags &= ~IS_RESPONSIBLE;
 			quit = INTERNALSIG;
 			break;
 		}
@@ -368,7 +370,8 @@ routehandler(void)
 	}
 
 	/* Something has happened. Try to write out the resolv.conf. */
-	if (client->active && client->active->resolv_conf)
+	if (client->active && client->active->resolv_conf &&
+	    client->flags & IS_RESPONSIBLE)
 		write_file("/etc/resolv.conf",
 		    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
 		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0,
@@ -840,6 +843,13 @@ bind_lease(void)
 		goto newlease;
 	}
 
+	client->new->resolv_conf = resolv_conf_contents(
+	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS]);
+
+	/* Replace the old active lease with the new one. */
+	client->active = client->new;
+	client->new = NULL;
+
 	/* Deleting the addresses also clears out arp entries. */
 	delete_addresses(ifi->name, ifi->rdomain);
 	flush_routes(ifi->name, ifi->rdomain);
@@ -854,7 +864,7 @@ bind_lease(void)
 	 * Add address and default route last, so we know when the binding
 	 * is done by the RTM_NEWADDR message being received.
 	 */
-	add_address(ifi->name, ifi->rdomain, client->new->address, mask);
+	add_address(ifi->name, ifi->rdomain, client->active->address, mask);
 	if (options[DHO_CLASSLESS_STATIC_ROUTES].len) {
 		add_classless_static_routes(ifi->rdomain,
 		    &options[DHO_CLASSLESS_STATIC_ROUTES]);
@@ -876,12 +886,12 @@ bind_lease(void)
 			 */
 			if (mask.s_addr == INADDR_BROADCAST) {
 				add_route(ifi->rdomain, gateway, mask,
-				    client->new->address,
+				    client->active->address,
 				    RTA_DST | RTA_NETMASK | RTA_GATEWAY,
 				    RTF_CLONING | RTF_STATIC);
 			}
 
-			add_default_route(ifi->rdomain, client->new->address,
+			add_default_route(ifi->rdomain, client->active->address,
 			    gateway);
 		}
 		if (options[DHO_STATIC_ROUTES].len)
@@ -889,18 +899,7 @@ bind_lease(void)
 			    &options[DHO_STATIC_ROUTES]);
 	}
 
-	client->new->resolv_conf = resolv_conf_contents(
-	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS]);
-	if (client->new->resolv_conf)
-		write_file("/etc/resolv.conf",
-		    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
-		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0,
-		    client->new->resolv_conf, strlen(client->new->resolv_conf));
-
 newlease:
-	/* Replace the old active lease with the new one. */
-	client->active = client->new;
-	client->new = NULL;
 	rewrite_option_db(client->active, lease);
 	free_client_lease(lease);
 
