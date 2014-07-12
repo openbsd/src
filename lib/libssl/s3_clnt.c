@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.82 2014/07/12 22:17:59 jsg Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.83 2014/07/12 22:33:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1253,7 +1253,7 @@ ssl3_get_key_exchange(SSL *s)
 		}
 		s->session->sess_cert->peer_rsa_tmp = rsa;
 		rsa = NULL;
-	} else if (alg_k & SSL_kEDH) {
+	} else if (alg_k & SSL_kDHE) {
 		if ((dh = DH_new()) == NULL) {
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
 			    ERR_R_DH_LIB);
@@ -1328,7 +1328,7 @@ ssl3_get_key_exchange(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
 		    SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER);
 		goto f_err;
-	} else if (alg_k & SSL_kEECDH) {
+	} else if (alg_k & SSL_kECDHE) {
 		EC_GROUP *ngroup;
 		const EC_GROUP *group;
 
@@ -1987,7 +1987,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			    s->method->ssl3_enc->generate_master_secret(
 			    s, s->session->master_key, tmp_buf, sizeof tmp_buf);
 			OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
-		} else if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd)) {
+		} else if (alg_k & (SSL_kDHE|SSL_kDHr|SSL_kDHd)) {
 			DH *dh_srvr, *dh_clnt;
 
 			if (s->session->sess_cert == NULL) {
@@ -2051,7 +2051,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			DH_free(dh_clnt);
 
 			/* perhaps clean things up a bit EAY EAY EAY EAY*/
-		} else if (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe)) {
+		} else if (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe)) {
 			const EC_GROUP *srvr_group = NULL;
 			EC_KEY *tkey;
 			int ecdh_clnt_cert = 0;
@@ -2640,7 +2640,7 @@ ssl3_check_cert_and_algorithm(SSL *s)
 		    SSL_R_MISSING_RSA_ENCRYPTING_CERT);
 		goto f_err;
 	}
-	if ((alg_k & SSL_kEDH) &&
+	if ((alg_k & SSL_kDHE) &&
 	    !(has_bits(i, EVP_PK_DH|EVP_PKT_EXCH) || (dh != NULL))) {
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
 		    SSL_R_MISSING_DH_KEY);

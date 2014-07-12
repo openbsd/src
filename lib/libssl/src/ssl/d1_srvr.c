@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.32 2014/07/12 13:11:53 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.33 2014/07/12 22:33:39 jsing Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -464,8 +464,8 @@ dtls1_accept(SSL *s)
 			/* only send if a DH key exchange or
 			 * RSA but we have a sign only certificate */
 			if (s->s3->tmp.use_rsa_tmp
-			|| (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
-			|| (alg_k & SSL_kEECDH)
+			|| (alg_k & (SSL_kDHE|SSL_kDHr|SSL_kDHd))
+			|| (alg_k & SSL_kECDHE)
 			|| ((alg_k & SSL_kRSA)
 			&& (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
 			)
@@ -1052,7 +1052,7 @@ dtls1_send_server_key_exchange(SSL *s)
 			r[1] = rsa->e;
 			s->s3->tmp.use_rsa_tmp = 1;
 		} else
-		if (type & SSL_kEDH) {
+		if (type & SSL_kDHE) {
 			dhp = cert->dh_tmp;
 			if ((dhp == NULL) && (s->cert->dh_tmp_cb != NULL))
 				dhp = s->cert->dh_tmp_cb(s, 0, 0);
@@ -1094,7 +1094,7 @@ dtls1_send_server_key_exchange(SSL *s)
 			r[1] = dh->g;
 			r[2] = dh->pub_key;
 		} else
-		if (type & SSL_kEECDH) {
+		if (type & SSL_kECDHE) {
 			const EC_GROUP *group;
 
 			ecdhp = cert->ecdh_tmp;
@@ -1232,7 +1232,7 @@ dtls1_send_server_key_exchange(SSL *s)
 			p += nr[i];
 		}
 
-		if (type & SSL_kEECDH) {
+		if (type & SSL_kECDHE) {
 			/* XXX: For now, we only support named (not generic) curves.
 			 * In this situation, the serverKeyExchange message has:
 			 * [1 byte CurveType], [2 byte CurveName]

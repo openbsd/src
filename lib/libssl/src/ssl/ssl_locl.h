@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.61 2014/07/12 19:45:53 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.62 2014/07/12 22:33:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -256,10 +256,10 @@
 #define SSL_kRSA		0x00000001L /* RSA key exchange */
 #define SSL_kDHr		0x00000002L /* DH cert, RSA CA cert */ /* no such ciphersuites supported! */
 #define SSL_kDHd		0x00000004L /* DH cert, DSA CA cert */ /* no such ciphersuite supported! */
-#define SSL_kEDH		0x00000008L /* tmp DH key no DH cert */
+#define SSL_kDHE		0x00000008L /* tmp DH key no DH cert */
 #define SSL_kECDHr		0x00000020L /* ECDH cert, RSA CA cert */
 #define SSL_kECDHe		0x00000040L /* ECDH cert, ECDSA CA cert */
-#define SSL_kEECDH		0x00000080L /* ephemeral ECDH */
+#define SSL_kECDHE		0x00000080L /* ephemeral ECDH */
 #define SSL_kGOST		0x00000200L /* GOST key exchange */
 
 /* Bits for algorithm_auth (server authentication) */
@@ -397,7 +397,7 @@
 /* SSL_kRSA <- RSA_ENC | (RSA_TMP & RSA_SIGN) |
  * 	    <- (EXPORT & (RSA_ENC | RSA_TMP) & RSA_SIGN)
  * SSL_kDH  <- DH_ENC & (RSA_ENC | RSA_SIGN | DSA_SIGN)
- * SSL_kEDH <- RSA_ENC | RSA_SIGN | DSA_SIGN
+ * SSL_kDHE <- RSA_ENC | RSA_SIGN | DSA_SIGN
  * SSL_aRSA <- RSA_ENC | RSA_SIGN
  * SSL_aDSS <- DSA_SIGN
  */

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.77 2014/07/12 13:11:53 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.78 2014/07/12 22:33:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -422,8 +422,8 @@ ssl3_accept(SSL *s)
 			 * public key for key exchange.
 			 */
 			if (s->s3->tmp.use_rsa_tmp ||
-			    (alg_k & (SSL_kDHr|SSL_kDHd|SSL_kEDH)) ||
-			    (alg_k & SSL_kEECDH) ||
+			    (alg_k & (SSL_kDHr|SSL_kDHd|SSL_kDHE)) ||
+			    (alg_k & SSL_kECDHE) ||
 			    ((alg_k & SSL_kRSA) &&
 			     (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey ==
 			     NULL))) {
@@ -1416,7 +1416,7 @@ ssl3_send_server_key_exchange(SSL *s)
 			r[1] = rsa->e;
 			s->s3->tmp.use_rsa_tmp = 1;
 		} else
-		if (type & SSL_kEDH) {
+		if (type & SSL_kDHE) {
 			dhp = cert->dh_tmp;
 			if ((dhp == NULL) && (s->cert->dh_tmp_cb != NULL))
 				dhp = s->cert->dh_tmp_cb(s, 0, 0);
@@ -1463,7 +1463,7 @@ ssl3_send_server_key_exchange(SSL *s)
 			r[1] = dh->g;
 			r[2] = dh->pub_key;
 		} else
-		if (type & SSL_kEECDH) {
+		if (type & SSL_kECDHE) {
 			const EC_GROUP *group;
 
 			ecdhp = cert->ecdh_tmp;
@@ -1614,7 +1614,7 @@ ssl3_send_server_key_exchange(SSL *s)
 			p += nr[i];
 		}
 
-		if (type & SSL_kEECDH) {
+		if (type & SSL_kECDHE) {
 			/*
 			 * XXX: For now, we only support named (not generic)
 			 * curves.
@@ -1968,7 +1968,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		    p, i);
 		OPENSSL_cleanse(p, i);
 	} else
-	if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd)) {
+	if (alg_k & (SSL_kDHE|SSL_kDHr|SSL_kDHd)) {
 		if (2 > n)
 			goto truncated;
 		n2s(p, i);
@@ -2026,7 +2026,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		OPENSSL_cleanse(p, i);
 	} else
 
-	if (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe)) {
+	if (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe)) {
 		int ret = 1;
 		int field_size = 0;
 		const EC_KEY   *tkey;
@@ -2072,7 +2072,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		if (n == 0L) {
 			/* Client Publickey was in Client Certificate */
 
-			if (alg_k & SSL_kEECDH) {
+			if (alg_k & SSL_kECDHE) {
 				al = SSL_AD_HANDSHAKE_FAILURE;
 				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
 				    SSL_R_MISSING_TMP_ECDH_KEY);

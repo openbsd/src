@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.65 2014/07/12 13:11:53 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.66 2014/07/12 22:33:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -233,7 +233,7 @@ static const SSL_CIPHER cipher_aliases[] = {
 	 */
 	{
 		.name = SSL_TXT_CMPDEF,
-		.algorithm_mkey = SSL_kEDH|SSL_kEECDH,
+		.algorithm_mkey = SSL_kDHE|SSL_kECDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = ~SSL_eNULL,
 	},
@@ -265,11 +265,11 @@ static const SSL_CIPHER cipher_aliases[] = {
 	},
 	{
 		.name = SSL_TXT_kEDH,
-		.algorithm_mkey = SSL_kEDH,
+		.algorithm_mkey = SSL_kDHE,
 	},
 	{
 		.name = SSL_TXT_DH,
-		.algorithm_mkey = SSL_kDHr|SSL_kDHd|SSL_kEDH,
+		.algorithm_mkey = SSL_kDHr|SSL_kDHd|SSL_kDHE,
 	},
 	
 	{
@@ -286,11 +286,11 @@ static const SSL_CIPHER cipher_aliases[] = {
 	},
 	{
 		.name = SSL_TXT_kEECDH,
-		.algorithm_mkey = SSL_kEECDH,
+		.algorithm_mkey = SSL_kECDHE,
 	},
 	{
 		.name = SSL_TXT_ECDH,
-		.algorithm_mkey = SSL_kECDHr|SSL_kECDHe|SSL_kEECDH,
+		.algorithm_mkey = SSL_kECDHr|SSL_kECDHe|SSL_kECDHE,
 	},
 	
 	{
@@ -348,12 +348,12 @@ static const SSL_CIPHER cipher_aliases[] = {
 	/* aliases combining key exchange and server authentication */
 	{
 		.name = SSL_TXT_EDH,
-		.algorithm_mkey = SSL_kEDH,
+		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = ~SSL_aNULL,
 	},
 	{
 		.name = SSL_TXT_EECDH,
-		.algorithm_mkey = SSL_kEECDH,
+		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = ~SSL_aNULL,
 	},
 	{
@@ -367,12 +367,12 @@ static const SSL_CIPHER cipher_aliases[] = {
 	},
 	{
 		.name = SSL_TXT_ADH,
-		.algorithm_mkey = SSL_kEDH,
+		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aNULL,
 	},
 	{
 		.name = SSL_TXT_AECDH,
-		.algorithm_mkey = SSL_kEECDH,
+		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aNULL,
 	},
 
@@ -1451,8 +1451,8 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	/* Now arrange all ciphers by preference: */
 
 	/* Everything else being equal, prefer ephemeral ECDH over other key exchange mechanisms */
-	ssl_cipher_apply_rule(0, SSL_kEECDH, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
-	ssl_cipher_apply_rule(0, SSL_kEECDH, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
+	ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
+	ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
 
 	/*
 	 * CHACHA20 is fast and safe on all hardware and is thus our preferred
@@ -1609,7 +1609,7 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_kDHd:
 		kx = "DH/DSS";
 		break;
-	case SSL_kEDH:
+	case SSL_kDHE:
 		kx = "DH";
 		break;
 	case SSL_kECDHr:
@@ -1618,7 +1618,7 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_kECDHe:
 		kx = "ECDH/ECDSA";
 		break;
-	case SSL_kEECDH:
+	case SSL_kECDHE:
 		kx = "ECDH";
 		break;
 	default:

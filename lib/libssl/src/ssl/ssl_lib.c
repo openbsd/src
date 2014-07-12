@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.77 2014/07/12 19:45:53 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.78 2014/07/12 22:33:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1973,7 +1973,7 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 		mask_k|=SSL_kRSA;
 
 	if (dh_tmp)
-		mask_k|=SSL_kEDH;
+		mask_k|=SSL_kDHE;
 
 	if (dh_rsa)
 		mask_k|=SSL_kDHr;
@@ -2022,7 +2022,7 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	}
 
 	if (have_ecdh_tmp) {
-		mask_k|=SSL_kEECDH;
+		mask_k|=SSL_kECDHE;
 	}
 
 
@@ -2108,10 +2108,10 @@ ssl_get_server_send_pkey(const SSL *s)
 
 	if (alg_k & (SSL_kECDHr|SSL_kECDHe)) {
 		/*
-		 * We don't need to look at SSL_kEECDH
+		 * We don't need to look at SSL_kECDHE
 		 * since no certificate is needed for
 		 * anon ECDH and for authenticated
-		 * EECDH, the check for the auth
+		 * ECDHE, the check for the auth
 		 * algorithm will set i correctly
 		 * NOTE: For ECDH-RSA, we need an ECC
 		 * not an RSA cert but for EECDH-RSA
