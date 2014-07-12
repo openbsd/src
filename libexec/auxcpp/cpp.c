@@ -115,6 +115,7 @@ void ucpp_error(long line, char *fmt, ...)
 		freemem(sc);
 	}
 	va_end(ap);
+	exit(1);
 }
 
 /*
@@ -2417,6 +2418,8 @@ static int parse_opt(int argc, char *argv[], struct lexer_state *ls)
 		} else if (!strcmp(argv[i], "-s")) {
 			ls->flags &= ~FAIL_SHARP;
 		} else if (!strcmp(argv[i], "-l")) {
+			ls->flags &= ~LINE_NUM;
+		} else if (!strcmp(argv[i], "-P")) {
 			ls->flags &= ~LINE_NUM;
 		} else if (!strcmp(argv[i], "-lg")) {
 			ls->flags |= GCC_LINE_NUM;
