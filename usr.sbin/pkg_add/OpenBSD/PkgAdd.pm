@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.69 2014/07/12 19:50:43 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.70 2014/07/12 19:54:15 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -264,6 +264,33 @@ sub setup_header
 	}
 }
 
+my $checked = {};
+
+sub check_security
+{
+	my ($set, $state, $plist, $h) = @_;
+	return if $checked->{$plist->fullpkgpath};
+	$checked->{$plist->fullpkgpath} = 1;
+	my ($error, $bad);
+	$state->run_quirks(
+		sub {
+			my $quirks = shift;
+			return unless $quirks->can("check_security");
+			$bad = $quirks->check_security($plist->fullpkgpath);
+			if (defined $bad) {
+				require OpenBSD::PkgSpec;
+				my $spec = OpenBSD::PkgSpec->new($bad);
+				if ($spec->match_locations([$h->{location}])) {
+					$error++;
+				}
+			}
+		});
+	if ($error) {
+		$state->errsay("Package #1 found, matching insecure #2", 
+		    $h->pkgname, $bad);
+	}
+}
+
 sub display_timestamp
 {
 	my ($pkgname, $plist, $state) = @_;
@@ -299,6 +326,7 @@ sub find_kept_handle
 	      !$state->defines('installed') &&
 	      !$plist->has_different_sig($state) &&
 	      !$plist->uses_old_libs)) {
+	      	$set->check_security($state, $plist, $n);
 	      	return;
 	}
 	my $o = $set->{older}{$pkgname};
@@ -311,6 +339,7 @@ sub find_kept_handle
 		    	return;
 		}
 	}
+	$set->check_security($state, $plist, $o);
 	$set->move_kept($o);
 	$o->{tweaked} =
 	    OpenBSD::Add::tweak_package_status($pkgname, $state);
@@ -933,6 +962,10 @@ sub process_set
 
 	if (!$set->complete($state)) {
 		return $set;
+	}
+
+	for my $h ($set->newer) {
+		$set->check_security($state, $h->plist, $h);
 	}
 
 	if (newer_has_errors($set, $state)) {
