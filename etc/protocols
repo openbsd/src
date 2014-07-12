@@ -1,23 +1,21 @@
+# $OpenBSD: protocols,v 1.24 2014/07/12 14:38:38 ajacoutot Exp $
 #
-# Internet (IP) protocols
+# Internet (IP) protocols, RFC 1340
+# https://www.iana.org/assignments/protocol-numbers/protocol-numbers.txt
 #
-#	$OpenBSD: protocols,v 1.23 2011/09/08 19:30:29 matthieu Exp $
-#
-# Updated based on RFC 1340, Assigned Numbers (July 1992).
-# See also http://www.iana.org/assignments/protocol-numbers
-#
+
 ip	0	IP HOPOPT	# internet protocol, pseudo protocol number
 icmp	1	ICMP		# internet control message protocol
 igmp	2	IGMP		# Internet Group Management
 ggp	3	GGP		# gateway-gateway protocol
 ipencap	4	IP-ENCAP	# IP encapsulated in IP (officially ``IP'')
-st	5	ST		# ST datagram mode
+st2	5	ST ST2		# ST2 datagram mode
 tcp	6	TCP		# transmission control protocol
-ucl	7	UCL CBT		# UCL
+cbt	7	UCL CBT		# CBT
 egp	8	EGP		# exterior gateway protocol
 igp	9	IGP		# any private interior gateway
-bbn-rcc-mon 10	BBN-RCC-MON	# BBN RCC Monitoring
-nvp-ii	11	NVP-II		# Network Voice Protocol
+bbn-rcc	10	BBN-RCC-MON	# BBN RCC Monitoring
+nvp	11	NVP-II		# Network Voice Protocol
 pup	12	PUP		# PARC universal packet protocol
 argus	13	ARGUS		# ARGUS
 emcon	14	EMCON		# EMCON
@@ -25,7 +23,7 @@ xnet	15	XNET		# Cross Net Debugger
 chaos	16	CHAOS		# Chaos
 udp	17	UDP		# user datagram protocol
 mux	18	MUX		# Multiplexing
-dcn-meas 19	DCN-MEAS	# DCN Measurement Subsystems
+dcn	19	DCN-MEAS	# DCN Measurement Subsystems
 hmp	20	HMP		# host monitoring protocol
 prm	21	PRM		# Packet Radio Measurement
 xns-idp	22	XNS-IDP		# Xerox NS IDP
@@ -39,7 +37,7 @@ iso-tp4	29	ISO-TP4		# ISO Transport Protocol class 4
 netblt	30	NETBLT		# Bulk Data Transfer Protocol
 mfe-nsp	31	MFE-NSP		# MFE Network Services Protocol
 merit-inp 32	MERIT-INP	# MERIT Internodal Protocol
-sep	33	SEP		# Sequential Exchange Protocol
+dccp	33	SEP DCCP	# Datagram Congestion Control Protocol
 3pc	34	3PC		# Third Party Connect Protocol
 idpr	35	IDPR		# Inter-Domain Policy Routing Protocol
 xtp	36	XTP		# Xpress Transfer Protocol
@@ -49,23 +47,23 @@ tp++	39	TP++		# TP++ Transport Protocol
 il	40	IL		# IL Transport Protocol
 ipv6	41	IPv6		# Internet Protocol version 6
 sdrp	42	SDRP		# Source Demand Routing Protocol
-ipv6-route 43	IPv6-Route	# Routing Header for IPv6
-ipv6-frag 44	IPv6-Frag	# Fragment Header for IPv6
+ipv6-route 43	IPV6-ROUTE	# Routing Header for IPv6
+ipv6-frag 44	IPV6-FRAG	# Fragment Header for IPv6
 idrp	45	IDRP		# Inter-Domain Routing Protocol
 rsvp	46	RSVP		# Reservation Protocol
 gre	47	GRE		# General Routing Encapsulation
-mhrp	48	MHRP		# Mobile Host Routing Protocol
+dsr	48	DSR		# Dynamic Source Routing Protocol
 bna	49	BNA		# BNA
 esp	50	IPSEC-ESP ESP	# Encap Security Payload
 ah	51	IPSEC-AH AH	# Authentication Header
 i-nlsp	52	I-NLSP		# Integrated Net Layer Security TUBA
 swipe	53	SWIPE		# IP with Encryption
-nhrp	54	NHRP NARP	# NBMA Next Hop Resolution Protocol
-mobileip 55	MOBILEIP MOBILE	# MobileIP encapsulation
+narp	54	NHRP NARP	# NBMA Next Hop Resolution Protocol
+mobile	55	MOBILEIP MOBILE	# MobileIP encapsulation
 skip	57	SKIP		# SKIP
-ipv6-icmp 58	IPv6-ICMP icmp6	# ICMP for IPv6
-ipv6-nonxt 59	IPv6-NoNxt	# No Next Header for IPv6
-ipv6-opts 60	IPv6-Opts	# Destination Options for IPv6
+ipv6-icmp 58	IPV6-ICMP icmp6	# ICMP for IPv6
+ipv6-nonxt 59	IPV6-NONXT	# No Next Header for IPv6
+ipv6-opts 60	IPV6-OPTS	# Destination Options for IPv6
 any	61	any		# host internal protocol
 cftp	62	CFTP		# CFTP
 any	63	any		# local network
@@ -139,7 +137,17 @@ sps	130	SPS		# Secure Packet Shield
 pipe	131	PIPE		# Private IP Encapsulation within IP
 sctp	132	SCTP		# Stream Control Transmission Protocol
 fc	133	FC		# Fibre Channel
-rsvp-e2e-ignore	134	RSVP-E2E-IGNORE
+rsvp-e2e-ignore	134	RSVP-E2E-IGNORE # Aggregation of RSVP for IP reservations
+rsvp-e2e-ignore	134	RSVP-E2E-IGNORE	# Aggregation of RSVP for IP reservations
+mobility-header	135	Mobility-Header	# Mobility Support in IPv6
+udplite	136	UDPLite	#	The UDP-Lite Protocol
+mpls-in-ip	137	MPLS-IN-IP	# Encapsulating MPLS in IP
+manet	138	MANET	# MANET Protocols (RFC5498)
+hip	139	HIP	# Host Identity Protocol (RFC5201)
+shim6	140	SHIM6	# Shim6 Protocol (RFC5533)
+wesp	141	WESP	# Wrapped Encapsulating Security Payload (RFC5840)
+rohc	142	ROHC	# Robust Header Compression (RFC5858)
 pfsync	240	PFSYNC		# PF Synchronization
+#	253-254			# Use for experimentation and testing (RFC3692)
 reserved 255	Reserved	#
 divert	258	DIVERT		# Divert pseudo-protocol [non IANA]
