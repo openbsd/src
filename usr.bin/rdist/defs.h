@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.26 2014/07/12 03:19:43 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.27 2014/07/12 03:25:03 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -387,11 +387,6 @@ struct namelist *makenl(char *);
 struct subcmd *makesubcmd(int);
 int yyparse(void);
 
-/* hasmntopt.c */
-#ifdef NEED_HASMNTOPT
-char *hasmntopt(struct mntent *, char *);
-#endif
-
 /* isexec.c */
 int isexec(char *, struct stat *);
 
@@ -415,17 +410,8 @@ FILE *opendist(char *);
 void docmdargs(int, char *[]);
 char *getnlstr(struct namelist *);
 
-/* rshrcmd.c */
-int rshrcmd(char **, u_short, char *, char *, char *, int *);
-
 /* server.c */
 void server(void);
-
-/* zopen.c */
-int zread(void *, char *, int);
-int zwrite(void *, const char *, int);
-int z_close(void *);
-void *z_open(int, char *, int);
 
 #include <vis.h>
 #define DECODE(a, b)	strunvis(a, b)

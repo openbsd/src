@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.31 2014/07/10 14:29:03 guenther Exp $	*/
+/*	$OpenBSD: common.c,v 1.32 2014/07/12 03:25:03 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -108,10 +108,6 @@ init(int argc, char **argv, char **envp)
 	realargv = (char **) xmalloc(sizeof(char *) * (argc+1));
 	for (i = 0; i < argc; i++)
 		realargv[i] = xstrdup(argv[i]);
-
-#if	defined(SETARGS)
-	setargs_settup(argc, argv, envp);
-#endif	/* SETARGS */
 
 	pw = getpwuid(userid = getuid());
 	if (pw == NULL) {
