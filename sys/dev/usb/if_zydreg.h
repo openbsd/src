@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.27 2013/11/26 20:33:19 deraadt Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.28 2014/07/12 15:26:54 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1056,11 +1056,12 @@ struct zyd_cmd {
 #define ZYD_NOTIF_MACINTR	0x9001	/* interrupt notification */
 #define ZYD_NOTIF_RETRYSTATUS	0xa001	/* Tx retry notification */
 
-	uint8_t		data[64];
+#define ZYD_MAX_DATA	64
+	uint8_t		data[ZYD_MAX_DATA];
 } __packed;
 
-/* structure for command ZYD_CMD_IOWR */
-struct zyd_pair {
+/* structure for command ZYD_CMD_IORD/ZYD_CMD_IOWR */
+struct zyd_io {
 	uint16_t	reg;
 /* helpers macros to read/write 32-bit registers */
 #define ZYD_REG32_LO(reg)	(reg)
@@ -1194,8 +1195,9 @@ struct zyd_softc {
 
 	struct ieee80211_amrr		amrr;
 
-	void				*odata;
+	uint8_t				odata[ZYD_MAX_DATA];
 	int				olen;
+	int				odone;
 
 	uint16_t			fwbase;
 	uint8_t				regdomain;

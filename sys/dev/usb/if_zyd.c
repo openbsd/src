@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.101 2014/07/12 07:59:23 mpi Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.102 2014/07/12 15:26:54 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -180,10 +180,10 @@ int		zyd_media_change(struct ifnet *);
 void		zyd_next_scan(void *);
 void		zyd_task(void *);
 int		zyd_newstate(struct ieee80211com *, enum ieee80211_state, int);
-int		zyd_cmd(struct zyd_softc *, uint16_t, const void *, int,
-		    void *, int, u_int);
+int		zyd_cmd_read(struct zyd_softc *, const void *, size_t, int);
 int		zyd_read16(struct zyd_softc *, uint16_t, uint16_t *);
 int		zyd_read32(struct zyd_softc *, uint16_t, uint32_t *);
+int		zyd_cmd_write(struct zyd_softc *, u_int16_t, const void *, int);
 int		zyd_write16(struct zyd_softc *, uint16_t, uint16_t);
 int		zyd_write32(struct zyd_softc *, uint16_t, uint32_t);
 int		zyd_rfwrite(struct zyd_softc *, uint32_t);
@@ -756,107 +756,134 @@ zyd_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	return 0;
 }
 
+/*
+ * Issue a read command for the specificed register (of size regsize)
+ * and await a reply of olen bytes in sc->odata.
+ */
 int
-zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
-    void *odata, int olen, u_int flags)
+zyd_cmd_read(struct zyd_softc *sc, const void *reg, size_t regsize, int olen)
 {
 	struct usbd_xfer *xfer;
 	struct zyd_cmd cmd;
-	uint16_t xferflags;
 	usbd_status error;
 	int s;
 
 	if ((xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL)
 		return ENOMEM;
 
-	cmd.code = htole16(code);
-	bcopy(idata, cmd.data, ilen);
+	bzero(&cmd, sizeof(cmd));
+	cmd.code = htole16(ZYD_CMD_IORD);
+	bcopy(reg, cmd.data, regsize);
 
-	xferflags = USBD_FORCE_SHORT_XFER;
-	if (!(flags & ZYD_CMD_FLAG_READ))
-		xferflags |= USBD_SYNCHRONOUS;
-	else
-		s = splusb();
+	bzero(sc->odata, sizeof(sc->odata));
+	sc->olen = olen;
 
-	sc->odata = odata;
-	sc->olen  = olen;
-
-	usbd_setup_xfer(xfer, sc->zyd_ep[ZYD_ENDPT_IOUT], 0, &cmd,
-	    sizeof (uint16_t) + ilen, xferflags, ZYD_INTR_TIMEOUT, NULL);
+	usbd_setup_xfer(xfer, sc->zyd_ep[ZYD_ENDPT_IOUT], 0,
+	    &cmd, sizeof(cmd.code) + regsize,
+	    USBD_FORCE_SHORT_XFER | USBD_SYNCHRONOUS,
+	    ZYD_INTR_TIMEOUT, NULL);
+	s = splusb();
+	sc->odone = 0;
 	error = usbd_transfer(xfer);
-	if (error != USBD_IN_PROGRESS && error != 0) {
-		if (flags & ZYD_CMD_FLAG_READ)
-			splx(s);
-		printf("%s: could not send command (error=%s)\n",
+	splx(s);
+	if (error) {
+		printf("%s: could not send command: %s\n",
 		    sc->sc_dev.dv_xname, usbd_errstr(error));
 		usbd_free_xfer(xfer);
 		return EIO;
 	}
-	if (!(flags & ZYD_CMD_FLAG_READ)) {
-		usbd_free_xfer(xfer);
-		return 0;	/* write: don't wait for reply */
-	}
-	/* wait at most one second for command reply */
-	error = tsleep(sc, PCATCH, "zydcmd", hz);
-	sc->odata = NULL;	/* in case answer is received too late */
-	splx(s);
 
+	if (!sc->odone) {
+		/* wait for ZYD_NOTIF_IORD interrupt */
+		if (tsleep(sc, PWAIT, "zydcmd", ZYD_INTR_TIMEOUT) != 0)
+			printf("%s: read command failed\n",
+			    sc->sc_dev.dv_xname);
+	}
 	usbd_free_xfer(xfer);
+
 	return error;
 }
 
 int
 zyd_read16(struct zyd_softc *sc, uint16_t reg, uint16_t *val)
 {
-	struct zyd_pair tmp;
+	struct zyd_io *odata;
 	int error;
 
 	reg = htole16(reg);
-	error = zyd_cmd(sc, ZYD_CMD_IORD, &reg, sizeof reg, &tmp, sizeof tmp,
-	    ZYD_CMD_FLAG_READ);
-	if (error == 0)
-		*val = letoh16(tmp.val);
+	error = zyd_cmd_read(sc, &reg, sizeof(reg), sizeof(*odata));
+	if (error == 0) {
+		odata = (struct zyd_io *)sc->odata;
+		*val = letoh16(odata[0].val);
+	}
 	return error;
 }
 
 int
 zyd_read32(struct zyd_softc *sc, uint16_t reg, uint32_t *val)
 {
-	struct zyd_pair tmp[2];
+	struct zyd_io *odata;
 	uint16_t regs[2];
 	int error;
 
 	regs[0] = htole16(ZYD_REG32_HI(reg));
 	regs[1] = htole16(ZYD_REG32_LO(reg));
-	error = zyd_cmd(sc, ZYD_CMD_IORD, regs, sizeof regs, tmp, sizeof tmp,
-	    ZYD_CMD_FLAG_READ);
-	if (error == 0)
-		*val = letoh16(tmp[0].val) << 16 | letoh16(tmp[1].val);
+	error = zyd_cmd_read(sc, regs, sizeof(regs), sizeof(*odata) * 2);
+	if (error == 0) {
+		odata = (struct zyd_io *)sc->odata;
+		*val = letoh16(odata[0].val) << 16 | letoh16(odata[1].val);
+	}
+	return error;
+}
+
+int
+zyd_cmd_write(struct zyd_softc *sc, u_int16_t code, const void *data, int len)
+{
+	struct usbd_xfer *xfer;
+	struct zyd_cmd cmd;
+	usbd_status error;
+
+	if ((xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL)
+		return ENOMEM;
+
+	bzero(&cmd, sizeof(cmd));
+	cmd.code = htole16(code);
+	bcopy(data, cmd.data, len);
+
+	usbd_setup_xfer(xfer, sc->zyd_ep[ZYD_ENDPT_IOUT], 0,
+	    &cmd, sizeof(cmd.code) + len,
+	    USBD_FORCE_SHORT_XFER | USBD_SYNCHRONOUS,
+	    ZYD_INTR_TIMEOUT, NULL);
+	error = usbd_transfer(xfer);
+	if (error)
+		printf("%s: could not send command: %s\n",
+		    sc->sc_dev.dv_xname, usbd_errstr(error));
+
+	usbd_free_xfer(xfer);
 	return error;
 }
 
 int
 zyd_write16(struct zyd_softc *sc, uint16_t reg, uint16_t val)
-{
-	struct zyd_pair pair;
+{ 
+	struct zyd_io io;
 
-	pair.reg = htole16(reg);
-	pair.val = htole16(val);
-
-	return zyd_cmd(sc, ZYD_CMD_IOWR, &pair, sizeof pair, NULL, 0, 0);
+	io.reg = htole16(reg);
+	io.val = htole16(val);
+	return zyd_cmd_write(sc, ZYD_CMD_IOWR, &io, sizeof(io));
 }
 
 int
 zyd_write32(struct zyd_softc *sc, uint16_t reg, uint32_t val)
 {
-	struct zyd_pair pair[2];
+	struct zyd_io io[2];
 
-	pair[0].reg = htole16(ZYD_REG32_HI(reg));
-	pair[0].val = htole16(val >> 16);
-	pair[1].reg = htole16(ZYD_REG32_LO(reg));
-	pair[1].val = htole16(val & 0xffff);
+	io[0].reg = htole16(ZYD_REG32_HI(reg));
+	io[0].val = htole16(val >> 16);
+	io[1].reg = htole16(ZYD_REG32_LO(reg));
+	io[1].val = htole16(val & 0xffff);
 
-	return zyd_cmd(sc, ZYD_CMD_IOWR, pair, sizeof pair, NULL, 0, 0);
+	return zyd_cmd_write(sc, ZYD_CMD_IOWR, io, sizeof(io));
 }
 
 int
@@ -877,7 +904,7 @@ zyd_rfwrite(struct zyd_softc *sc, uint32_t val)
 		if (val & (1 << (rf->width - 1 - i)))
 			req.bit[i] |= htole16(ZYD_RF_DATA);
 	}
-	return zyd_cmd(sc, ZYD_CMD_RFCFG, &req, 4 + 2 * rf->width, NULL, 0, 0);
+	return zyd_cmd_write(sc, ZYD_CMD_RFCFG, &req, 4 + 2 * rf->width);
 }
 
 void
@@ -1863,14 +1890,13 @@ zyd_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		if (letoh16(*(uint16_t *)cmd->data) == ZYD_CR_INTERRUPT)
 			return;	/* HMAC interrupt */
 
-		if (sc->odata == NULL)
-			return;	/* unexpected IORD notification */
-
-		/* copy answer into caller-supplied buffer */
-		usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
-		bcopy(cmd->data, sc->odata, sc->olen);
-
-		wakeup(sc);	/* wakeup caller */
+		if (!sc->odone) {
+			/* copy answer into sc->odata buffer */
+			usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
+			bcopy(cmd->data, sc->odata, sc->olen);
+			sc->odone = 1;
+			wakeup(sc); /* wakeup zyd_cmd_read() */
+		}
 
 	} else {
 		printf("%s: unknown notification %x\n", sc->sc_dev.dv_xname,
