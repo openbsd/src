@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.47 2014/07/12 15:31:54 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.48 2014/07/12 16:26:35 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -123,9 +123,11 @@ be automatically (re)created.
 .Pp
 Each time
 .Nm
-is run, it will compare the checksum of the files stored under
+is run it will compare the checksum of each file stored under
 .Pa /etc/examples
-against the previous run and warn if they do not match.
+against the previous one, then warn if it does not match and the
+corresponding file exists under
+.Pa /etc .
 .Pp
 .Nm
 will finish by running

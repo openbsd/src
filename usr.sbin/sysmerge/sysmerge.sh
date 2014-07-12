@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.136 2014/07/12 15:58:14 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.137 2014/07/12 16:26:35 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -686,7 +686,7 @@ sm_post() {
 		report ""
 	fi
 	if [ -n "${EGMODS}" ]; then
-		report "===> Example(s) modified since last run"
+		report "===> Example(s) with corresponding used files modified since last run"
 		report "${EGMODS}"
 		report ""
 	fi
