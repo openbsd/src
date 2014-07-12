@@ -976,7 +976,7 @@ static inline char *stringify_string(char *x)
  */
 static char *stringify(struct token_fifo *tf)
 {
-	size_t tlen;
+	size_t tlen, len;
 	size_t i;
 	char *x, *y;
 
@@ -984,11 +984,12 @@ static char *stringify(struct token_fifo *tf)
 		if (tf->t[i].type < CPPERR && tf->t[i].type != OPT_NONE)
 			tlen += strlen(token_name(tf->t + i));
 	if (tlen == 0) return sdup("\"\"");
-	x = getmem(tlen + 1);
+	len = tlen + 1;
+	x = getmem(len);
 	for (tlen = 0, i = 0; i < tf->nt; i ++) {
 		if (tf->t[i].type >= CPPERR || tf->t[i].type == OPT_NONE)
 			continue;
-		strcpy(x + tlen, token_name(tf->t + i));
+		strlcpy(x + tlen, token_name(tf->t + i), len - tlen);
 		tlen += strlen(token_name(tf->t + i));
 	}
 	/* no need to add a trailing 0: strcpy() did that (and the string
@@ -1062,7 +1063,7 @@ int substitute_macro(struct lexer_state *ls, struct macro *m,
 		case MAC_LINE:
 			t.type = NUMBER;
 			t.line = l;
-			sprintf(buf, "%ld", l);
+			snprintf(buf, sizeof(buf), "%ld", l);
 			t.name = buf;
 			print_space(ls);
 			print_token(ls, &t, 0);

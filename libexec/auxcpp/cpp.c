@@ -546,12 +546,13 @@ static void print_line_info(struct lexer_state *ls, unsigned long flags)
 	char *fn = current_long_filename ?
 		current_long_filename : current_filename;
 	char *b, *d;
+	size_t len = 50 + strlen(fn);
 
-	b = getmem(50 + strlen(fn));
+	b = getmem(len);
 	if (flags & GCC_LINE_NUM) {
-		sprintf(b, "# %ld \"%s\"\n", ls->line, fn);
+		snprintf(b, len, "# %ld \"%s\"\n", ls->line, fn);
 	} else {
-		sprintf(b, "#line %ld \"%s\"\n", ls->line, fn);
+		snprintf(b, len, "#line %ld \"%s\"\n", ls->line, fn);
 	}
 	for (d = b; *d; d ++) put_char(ls, (unsigned char)(*d));
 	freemem(b);
@@ -1357,15 +1358,17 @@ include_macro2:
 		string_fname = 1;
 	} else if (left_angle(tf2.t[x].type) && right_angle(tf2.t[y].type)) {
 		int i, j;
+		size_t len;
 
 		if (ls->flags & WARN_ANNOYING) warning(l, "reconstruction "
 			"of <foo> in #include");
 		for (j = 0, i = x; i <= y; i ++) if (!ttWHI(tf2.t[i].type))
 			j += strlen(tname(tf2.t[i]));
-		fname = getmem(j + 1);
+		len = j + 1;
+		fname = getmem(len);
 		for (j = 0, i = x; i <= y; i ++) {
 			if (ttWHI(tf2.t[i].type)) continue;
-			strcpy(fname + j, tname(tf2.t[i]));
+			strlcpy(fname + j, tname(tf2.t[i]), len - j);
 			j += strlen(tname(tf2.t[i]));
 		}
 		*(fname + j - 1) = 0;

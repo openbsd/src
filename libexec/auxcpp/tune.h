@@ -382,12 +382,6 @@
 #undef UCPP_MMAP
 #endif
 
-#if defined(UCPP_MMAP) || defined(POSIX_JMP)
-#ifndef _POSIX_SOURCE
-#define _POSIX_SOURCE	1
-#endif
-#endif
-
 /*
  * C90 does not know about the "inline" keyword, but C99 does know,
  * and some C90 compilers know it as an extension. This part detects
