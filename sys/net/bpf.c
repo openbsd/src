@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.101 2014/07/10 11:48:14 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.102 2014/07/12 11:27:45 henning Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1308,7 +1308,7 @@ bpf_mtap_af(caddr_t arg, u_int32_t af, struct mbuf *m, u_int direction)
 	u_int32_t    afh;
 
 	afh = htonl(af);
-	bpf_mtap_hdr(arg, (caddr_t)&afh, 4, m, direction, NULL);
+	bpf_mtap_hdr(arg, (caddr_t)&afh, sizeof(afh), m, direction, NULL);
 }
 
 /*
