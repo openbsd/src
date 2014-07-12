@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1733 2014/07/12 09:32:47 yuo Exp 
+ *	OpenBSD: pcidevs,v 1.1734 2014/07/12 10:08:53 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -15632,8 +15632,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MGA G200e",
 	},
 	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200E_SE_B,
+	    "MGA G200e",
+	},
+	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_II_G400_AGP,
 	    "MGA G400/G450 AGP",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200EV,
+	    "MGA G200eV",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200EW,
@@ -15642,6 +15650,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200EH,
 	    "MGA G200eH",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200ER,
+	    "MGA G200eR",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
