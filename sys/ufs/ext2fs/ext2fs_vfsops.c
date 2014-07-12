@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.76 2014/07/12 09:30:02 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.77 2014/07/12 11:03:11 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -301,7 +301,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 			fs->e2fs.e2fs_wtime = time_second;
 		else
 			printf("%s: file system not clean; please fsck(8)\n",
-				mp->mnt_stat.f_mntfromname);
+			    mp->mnt_stat.f_mntfromname);
 		ext2fs_cgupdate(ump, MNT_WAIT);
 	}
 
@@ -384,6 +384,60 @@ ext2fs_maxfilesize(struct m_ext2fs *fs)
 	return MIN(logically, physically);
 }
 
+static int
+e2fs_sbfill(struct vnode *devvp, struct m_ext2fs *fs, struct ext2fs *sb)
+{
+	struct buf *bp = NULL;
+	int i, error;
+
+	/* XXX assume hardware block size == 512 */
+	fs->e2fs_ncg = howmany(sb->e2fs_bcount - sb->e2fs_first_dblock,
+	    sb->e2fs_bpg);
+	fs->e2fs_fsbtodb = sb->e2fs_log_bsize + 1;
+	fs->e2fs_bsize = 1024 << sb->e2fs_log_bsize;
+	fs->e2fs_bshift = LOG_MINBSIZE + sb->e2fs_log_bsize;
+
+	fs->e2fs_qbmask = fs->e2fs_bsize - 1;
+	fs->e2fs_bmask = ~fs->e2fs_qbmask;
+
+	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE(fs);
+	fs->e2fs_itpg = sb->e2fs_ipg / fs->e2fs_ipb;
+
+	/* Re-read group descriptors from the disk. */
+	fs->e2fs_ngdb = howmany(fs->e2fs_ncg,
+	    fs->e2fs_bsize / sizeof(struct ext2_gd));
+	fs->e2fs_gd = mallocarray(fs->e2fs_ngdb, fs->e2fs_bsize,
+	    M_UFSMNT, M_WAITOK);
+
+	for (i = 0; i < fs->e2fs_ngdb; ++i) {
+		daddr_t dblk = ((fs->e2fs_bsize > 1024) ? 0 : 1) + i + 1;
+		size_t gdesc = i * fs->e2fs_bsize / sizeof(struct ext2_gd);
+
+		error = bread(devvp, fsbtodb(fs, dblk), fs->e2fs_bsize, &bp);
+		if (error) {
+			free(fs->e2fs_gd, M_UFSMNT);
+			fs->e2fs_gd = NULL;
+			brelse(bp);
+			return (error);
+		}
+
+		e2fs_cgload(bp->b_data, fs->e2fs_gd + gdesc, fs->e2fs_bsize);
+		brelse(bp);
+		bp = NULL;
+	}
+
+	if ((sb->e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGEFILE) == 0 ||
+	    (sb->e2fs_rev == E2FS_REV0))
+		fs->e2fs_maxfilesize = INT_MAX;
+	else
+		fs->e2fs_maxfilesize = ext2fs_maxfilesize(fs);
+
+	if (sb->e2fs_features_incompat & EXT2F_INCOMPAT_EXTENTS)
+		fs->e2fs_maxfilesize *= 4;
+
+	return (0);
+}
+
 /*
  * Reload all incore data for a filesystem (used after running fsck on
  * the root filesystem and finding things to fix). The filesystem must
@@ -404,7 +458,7 @@ ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	struct buf *bp;
 	struct m_ext2fs *fs;
 	struct ext2fs *newfs;
-	int i, error;
+	int error;
 	struct ext2fs_reload_args era;
 
 	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
@@ -433,49 +487,12 @@ ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 
 	fs = VFSTOUFS(mountp)->um_e2fs;
 	/*
-	 * copy in new superblock, and compute in-memory values
+	 * Copy in the new superblock, compute in-memory values
+	 * and load group descriptors.
 	 */
 	e2fs_sbload(newfs, &fs->e2fs);
-	fs->e2fs_ncg =
-	    howmany(fs->e2fs.e2fs_bcount - fs->e2fs.e2fs_first_dblock,
-	    fs->e2fs.e2fs_bpg);
-	/* XXX assume hw bsize = 512 */
-	fs->e2fs_fsbtodb = fs->e2fs.e2fs_log_bsize + 1;
-	fs->e2fs_bsize = 1024 << fs->e2fs.e2fs_log_bsize;
-	fs->e2fs_bshift = LOG_MINBSIZE + fs->e2fs.e2fs_log_bsize;
-	fs->e2fs_qbmask = fs->e2fs_bsize - 1;
-	fs->e2fs_bmask = ~fs->e2fs_qbmask;
-	fs->e2fs_ngdb = howmany(fs->e2fs_ncg,
-	    fs->e2fs_bsize / sizeof(struct ext2_gd));
-	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE(fs);
-	fs->e2fs_itpg = fs->e2fs.e2fs_ipg/fs->e2fs_ipb;
-
-	if ((fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGEFILE) == 0 ||
-	    (fs->e2fs.e2fs_rev == E2FS_REV0))
-		fs->e2fs_maxfilesize = INT_MAX;
-	else
-		fs->e2fs_maxfilesize = ext2fs_maxfilesize(fs);
-
-	if (fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_EXTENTS)
-		fs->e2fs_maxfilesize *= 4;
-
-	/*
-	 * Step 3: re-read summary information from disk.
-	 */
-
-	for (i=0; i < fs->e2fs_ngdb; i++) {
-		error = bread(devvp ,
-		    fsbtodb(fs, ((fs->e2fs_bsize>1024)? 0 : 1) + i + 1),
-		    fs->e2fs_bsize, &bp);
-		if (error) {
-			brelse(bp);
-			return (error);
-		}
-		e2fs_cgload((struct ext2_gd*)bp->b_data,
-		    &fs->e2fs_gd[i* fs->e2fs_bsize / sizeof(struct ext2_gd)],
-		    fs->e2fs_bsize);
-		brelse(bp);
-	}
+	if ((error = e2fs_sbfill(devvp, fs, newfs)) != 0)
+		return (error);
 
 	era.p = p;
 	era.cred = cred;
@@ -496,9 +513,8 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	struct ufsmount *ump;
 	struct buf *bp;
 	struct ext2fs *fs;
-	struct m_ext2fs *m_fs;
 	dev_t dev;
-	int error, i, ronly;
+	int error, ronly;
 	struct ucred *cred;
 
 	dev = devvp->v_rdev;
@@ -524,9 +540,9 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	bp = NULL;
 	ump = NULL;
 
-#ifdef DEBUG_EXT2
-	printf("ext2 sb size: %d\n", sizeof(struct ext2fs));
-#endif
+	/*
+	 * Read the superblock from disk.
+	 */
 	error = bread(devvp, (daddr_t)(SBOFF / DEV_BSIZE), SBSIZE, &bp);
 	if (error)
 		goto out;
@@ -534,58 +550,30 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	error = e2fs_sbcheck(fs, ronly);
 	if (error)
 		goto out;
+
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK | M_ZERO);
 	ump->um_e2fs = malloc(sizeof(struct m_ext2fs), M_UFSMNT,
 	    M_WAITOK | M_ZERO);
-	e2fs_sbload((struct ext2fs*)bp->b_data, &ump->um_e2fs->e2fs);
+
+	/*
+	 * Copy in the superblock, compute in-memory values
+	 * and load group descriptors.
+	 */
+	e2fs_sbload(fs, &ump->um_e2fs->e2fs);
+	if ((error = e2fs_sbfill(devvp, ump->um_e2fs, fs)) != 0)
+		goto out;
 	brelse(bp);
 	bp = NULL;
-	m_fs = ump->um_e2fs;
-	m_fs->e2fs_ronly = ronly;
+	fs = &ump->um_e2fs->e2fs;
+	ump->um_e2fs->e2fs_ronly = ronly;
 	ump->um_fstype = UM_EXT2FS;
 
-#ifdef DEBUG_EXT2
-	printf("ext2 ino size %d\n", EXT2_DINODE_SIZE(m_fs));
-#endif
 	if (ronly == 0) {
-		if (m_fs->e2fs.e2fs_state == E2FS_ISCLEAN)
-			m_fs->e2fs.e2fs_state = 0;
+		if (fs->e2fs_state == E2FS_ISCLEAN)
+			fs->e2fs_state = 0;
 		else
-			m_fs->e2fs.e2fs_state = E2FS_ERRORS;
-		m_fs->e2fs_fmod = 1;
-	}
-
-	/* compute dynamic sb infos */
-	m_fs->e2fs_ncg =
-		howmany(m_fs->e2fs.e2fs_bcount - m_fs->e2fs.e2fs_first_dblock,
-		m_fs->e2fs.e2fs_bpg);
-	/* XXX assume hw bsize = 512 */
-	m_fs->e2fs_fsbtodb = m_fs->e2fs.e2fs_log_bsize + 1;
-	m_fs->e2fs_bsize = 1024 << m_fs->e2fs.e2fs_log_bsize;
-	m_fs->e2fs_bshift = LOG_MINBSIZE + m_fs->e2fs.e2fs_log_bsize;
-	m_fs->e2fs_qbmask = m_fs->e2fs_bsize - 1;
-	m_fs->e2fs_bmask = ~m_fs->e2fs_qbmask;
-	m_fs->e2fs_ngdb = howmany(m_fs->e2fs_ncg,
-		m_fs->e2fs_bsize / sizeof(struct ext2_gd));
-	m_fs->e2fs_ipb = m_fs->e2fs_bsize / EXT2_DINODE_SIZE(m_fs);
-	m_fs->e2fs_itpg = m_fs->e2fs.e2fs_ipg/m_fs->e2fs_ipb;
-
-	m_fs->e2fs_gd = malloc(m_fs->e2fs_ngdb * m_fs->e2fs_bsize,
-	    M_UFSMNT, M_WAITOK);
-	for (i=0; i < m_fs->e2fs_ngdb; i++) {
-		error = bread(devvp ,
-		    fsbtodb(m_fs, ((m_fs->e2fs_bsize>1024)? 0 : 1) + i + 1),
-		    m_fs->e2fs_bsize, &bp);
-		if (error) {
-			free(m_fs->e2fs_gd, M_UFSMNT);
-			goto out;
-		}
-		e2fs_cgload((struct ext2_gd*)bp->b_data,
-		    &m_fs->e2fs_gd[i * m_fs->e2fs_bsize
-		    / sizeof(struct ext2_gd)],
-		    m_fs->e2fs_bsize);
-		brelse(bp);
-		bp = NULL;
+			fs->e2fs_state = E2FS_ERRORS;
+		ump->um_e2fs->e2fs_fmod = 1;
 	}
 
 	mp->mnt_data = (qaddr_t)ump;
@@ -596,8 +584,8 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;
-	ump->um_nindir = NINDIR(m_fs);
-	ump->um_bptrtodb = m_fs->e2fs_fsbtodb;
+	ump->um_nindir = NINDIR(ump->um_e2fs);
+	ump->um_bptrtodb = ump->um_e2fs->e2fs_fsbtodb;
 	ump->um_seqinc = 1; /* no frags */
 	devvp->v_specmountpoint = mp;
 	return (0);
