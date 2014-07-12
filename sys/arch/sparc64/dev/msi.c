@@ -1,4 +1,4 @@
-/*	$OpenBSD: msi.c,v 1.1 2011/07/06 05:35:53 kettenis Exp $	*/
+/*	$OpenBSD: msi.c,v 1.2 2014/07/12 18:44:43 tedu Exp $	*/
 /*
  * Copyright (c) 2011 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -82,5 +82,5 @@ msi_eq_free(bus_dma_tag_t t, struct msi_eq *meq)
 	bus_dmamem_unmap(t, meq->meq_va, size);
 	bus_dmamem_free(t, &meq->meq_seg, 1);
 	bus_dmamap_destroy(t, meq->meq_map);
-	free(meq, M_DEVBUF);
+	free(meq, M_DEVBUF, 0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.14 2014/05/08 21:17:00 miod Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.15 2014/07/12 18:44:41 tedu Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -758,7 +758,7 @@ pmap_free_l1(pmap_t pm)
 	/* free backing va */
 	uvm_km_free(kernel_map, (vaddr_t)l1->l1_kva, L1_TABLE_SIZE);
 
-	free(l1, M_VMPMAP);
+	free(l1, M_VMPMAP, 0);
 }
 
 /*

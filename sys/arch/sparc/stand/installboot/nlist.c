@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.1 2013/10/30 18:04:47 deraadt Exp $ */
+/*	$OpenBSD: nlist.c,v 1.2 2014/07/12 18:44:43 tedu Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -137,7 +137,7 @@ __aout_fdnlist(int fd, struct nlist *list)
 	}
 aout_done:
 	if (usemalloc)
-		free(strtab);
+		free(strtab, 0);
 	else
 		munmap(strtab, strsize);
 	return (nent);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.23 2014/05/08 21:17:00 miod Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.24 2014/07/12 18:44:41 tedu Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -330,7 +330,7 @@ pxa2x0_gpio_intr_disestablish(void *cookie)
 #endif /* PXAGPIO_HAS_GPION_INTRS */
 	}
 
-	free(gh, M_DEVBUF); 
+	free(gh, M_DEVBUF, 0);
 }
 
 #ifdef PXAGPIO_HAS_GPION_INTRS

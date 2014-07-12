@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.163 2014/07/11 22:28:06 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.164 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -325,7 +325,7 @@ setregs(p, pack, stack, retval)
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
 		fpusave_proc(p, 0);
-		free(p->p_md.md_fpstate, M_SUBPROC);
+		free(p->p_md.md_fpstate, M_SUBPROC, 0);
 		p->p_md.md_fpstate = NULL;
 	}
 	bzero((caddr_t)tf, sizeof *tf);
@@ -1002,7 +1002,7 @@ _bus_dmamap_destroy(t, t0, map)
 	if (map->dm_nsegs)
 		bus_dmamap_unload(t0, map);
 
-	free(map, M_DEVBUF);
+	free(map, M_DEVBUF, 0);
 }
 
 /*
@@ -1420,7 +1420,7 @@ _bus_dmamem_free(t, t0, segs, nsegs)
 	 * Return the list of pages back to the VM system.
 	 */
 	uvm_pglistfree(segs[0]._ds_mlist);
-	free(segs[0]._ds_mlist, M_DEVBUF);
+	free(segs[0]._ds_mlist, M_DEVBUF, 0);
 }
 
 /*
@@ -1814,7 +1814,7 @@ bus_intr_allocate(bus_space_tag_t t, int (*handler)(void *), void *arg,
 void
 bus_intr_free(void *arg)
 {
-	free(arg, M_DEVBUF);
+	free(arg, M_DEVBUF, 0);
 }
 
 void *

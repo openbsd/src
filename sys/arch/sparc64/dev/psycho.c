@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.71 2014/07/12 14:12:44 uebayasi Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.72 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -891,7 +891,7 @@ psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 		}
 #undef TSBCASE
 		DPRINTF(PDB_CONF, ("psycho_iommu_init: iobase=0x%x\n", iobase));
-		free(vdma, M_DEVBUF);
+		free(vdma, M_DEVBUF, 0);
 	} else {
 		DPRINTF(PDB_CONF, ("psycho_iommu_init: getprop failed, "
 		    "iobase=0x%x, tsbsize=%d\n", iobase, tsbsize));

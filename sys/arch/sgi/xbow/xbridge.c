@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.89 2014/05/19 21:18:42 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.90 2014/07/12 18:44:42 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -641,16 +641,16 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 fail2:
-	free(xb->xb_dmat, M_DEVBUF);
+	free(xb->xb_dmat, M_DEVBUF, 0);
 fail1:
 	if (xb->xb_io_bus_space_sw != NULL)
-		free(xb->xb_io_bus_space_sw, M_DEVBUF);
+		free(xb->xb_io_bus_space_sw, M_DEVBUF, 0);
 	if (xb->xb_io_bus_space != NULL)
-		free(xb->xb_io_bus_space, M_DEVBUF);
+		free(xb->xb_io_bus_space, M_DEVBUF, 0);
 	if (xb->xb_mem_bus_space_sw != NULL)
-		free(xb->xb_mem_bus_space_sw, M_DEVBUF);
+		free(xb->xb_mem_bus_space_sw, M_DEVBUF, 0);
 	if (xb->xb_mem_bus_space != NULL)
-		free(xb->xb_mem_bus_space, M_DEVBUF);
+		free(xb->xb_mem_bus_space, M_DEVBUF, 0);
 	if (errmsg == NULL)
 		errmsg = "not enough memory to build bus access structures";
 	printf("%s\n", errmsg);
@@ -1090,7 +1090,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 		LIST_INIT(&xi->xi_handlers);
 
 		if (xbow_intr_register(xb->xb_widget, level, &intrsrc) != 0) {
-			free(xi, M_DEVBUF);
+			free(xi, M_DEVBUF, 0);
 			return NULL;
 		}
 
@@ -1198,7 +1198,7 @@ xbridge_intr_disestablish(void *cookie, void *vih)
 		 */
 	}
 
-	free(xih, M_DEVBUF);
+	free(xih, M_DEVBUF, 0);
 }
 
 int

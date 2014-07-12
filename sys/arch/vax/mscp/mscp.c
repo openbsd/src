@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp.c,v 1.11 2012/12/05 23:20:15 deraadt Exp $	*/
+/*	$OpenBSD: mscp.c,v 1.12 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: mscp.c,v 1.16 2001/11/13 07:38:28 lukem Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ loop:
 			panic("mscp_dorsp");
 		if (mi->mi_driveno) {
 			bcopy(mi->mi_dp, tmp, mi->mi_driveno);
-			free(mi->mi_dp, mi->mi_driveno);
+			free(mi->mi_dp, mi->mi_driveno, 0);
 		}
 		mi->mi_driveno = tmpno;
 		mi->mi_dp = tmp;

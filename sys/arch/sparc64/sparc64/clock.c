@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.53 2014/05/10 12:15:19 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.54 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -445,7 +445,7 @@ getidprom()
 	if (getprop(node, "idprom", sizeof(*idp), &n, (void **)&idp) != 0)
 		return (NULL);
 	if (n != 1) {
-		free(idp, M_DEVBUF);
+		free(idp, M_DEVBUF, 0);
 		return (NULL);
 	}
 	return (idp);
@@ -544,7 +544,7 @@ myetheraddr(cp)
 	cp[4] = idp->id_ether[4];
 	cp[5] = idp->id_ether[5];
 	if (idprom == NULL)
-		free(idp, M_DEVBUF);
+		free(idp, M_DEVBUF, 0);
 }
 
 /*

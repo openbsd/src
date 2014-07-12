@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.56 2013/01/16 19:04:43 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.57 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -107,7 +107,7 @@ dvma_malloc_space(len, kaddr, flags, space)
 	*(vaddr_t *)kaddr = kva;
 	dva = dvma_mapin_space(kernel_map, kva, len, (flags & M_NOWAIT) ? 0 : 1, space);
 	if (dva == 0) {
-		free((void *)kva, M_DEVBUF);
+		free((void *)kva, M_DEVBUF, 0);
 		return (NULL);
 	}
 	return (caddr_t)dva;
@@ -133,7 +133,7 @@ dvma_free(dva, len, kaddr)
 	if (!has_iocache)
 #endif
 		kvm_recache(kaddr, atop(len));
-	free((void *)kva, M_DEVBUF);
+	free((void *)kva, M_DEVBUF, 0);
 }
 
 u_long dvma_cachealign = 0;
@@ -468,7 +468,7 @@ cpu_exit(p)
 			savefpstate(fs);
 			cpuinfo.fpproc = NULL;
 		}
-		free((void *)fs, M_SUBPROC);
+		free((void *)fs, M_SUBPROC, 0);
 	}
 
 	pmap_deactivate(p);

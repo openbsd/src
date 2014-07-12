@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.25 2014/07/11 09:36:25 mpi Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.26 2014/07/12 18:44:41 tedu Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -173,7 +173,7 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
 	map->_dm_proc = NULL;
 
-	free(map, M_DEVBUF);
+	free(map, M_DEVBUF, 0);
 }
 
 /*

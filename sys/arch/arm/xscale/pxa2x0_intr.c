@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.25 2014/05/08 21:17:00 miod Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.26 2014/07/12 18:44:41 tedu Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -590,7 +590,7 @@ pxa2x0_intr_disestablish(void *cookie)
 	psw = disable_interrupts(I32_bit);
 	TAILQ_REMOVE(&handler[irqno].list, ih, ih_list);
 
-	free(ih, M_DEVBUF);
+	free(ih, M_DEVBUF, 0);
 
 	pxa2x0_update_intr_masks();
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.22 2008/06/11 05:15:43 kettenis Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.23 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -272,13 +272,13 @@ void
 ebus_destroy_attach_args(struct ebus_attach_args *ea)
 {
 	if (ea->ea_name)
-		free((void *)ea->ea_name, M_DEVBUF);
+		free((void *)ea->ea_name, M_DEVBUF, 0);
 	if (ea->ea_regs)
-		free((void *)ea->ea_regs, M_DEVBUF);
+		free((void *)ea->ea_regs, M_DEVBUF, 0);
 	if (ea->ea_intrs)
-		free((void *)ea->ea_intrs, M_DEVBUF);
+		free((void *)ea->ea_intrs, M_DEVBUF, 0);
 	if (ea->ea_vaddrs)
-		free((void *)ea->ea_vaddrs, M_DEVBUF);
+		free((void *)ea->ea_vaddrs, M_DEVBUF, 0);
 }
 
 int

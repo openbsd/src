@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.14 2014/05/10 11:49:31 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.15 2014/07/12 18:44:43 tedu Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -203,7 +203,7 @@ vpci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc->conf_write = vpci_conf_write;
 	pba.pba_pc->intr_map = vpci_intr_map;
 
-	free(busranges, M_DEVBUF);
+	free(busranges, M_DEVBUF, 0);
 
 	config_found(&sc->sc_dv, &pba, vpci_print);
 }
@@ -280,7 +280,7 @@ disable_queue:
 free_queue:
 	msi_eq_free(sc->sc_dmat, pbm->vp_meq);
 free_table:
-	free(pbm->vp_msi, M_DEVBUF);
+	free(pbm->vp_msi, M_DEVBUF, 0);
 }
 
 int

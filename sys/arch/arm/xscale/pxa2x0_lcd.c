@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.25 2013/10/21 10:36:09 miod Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.26 2014/07/12 18:44:41 tedu Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -703,7 +703,7 @@ pxa2x0_lcd_alloc_screen(void *v, const struct wsscreen_descr *_type,
 
 	error = pxa2x0_lcd_new_screen(sc, scr, type->depth);
 	if (error != 0) {
-		free(scr, M_DEVBUF);
+		free(scr, M_DEVBUF, 0);
 		return (error);
 	}
 
@@ -751,7 +751,7 @@ pxa2x0_lcd_free_screen(void *v, void *cookie)
 	if (scr->nsegs > 0)
 		bus_dmamem_free(sc->dma_tag, scr->segs, scr->nsegs);
 
-	free(scr, M_DEVBUF);
+	free(scr, M_DEVBUF, 0);
 }
 
 int

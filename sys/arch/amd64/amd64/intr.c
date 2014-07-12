@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.36 2014/03/29 18:09:28 guenther Exp $	*/
+/*	$OpenBSD: intr.c,v 1.37 2014/07/12 18:44:41 tedu Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -316,7 +316,7 @@ found:
 		idtvec = idt_vec_alloc(APIC_LEVEL(level), IDT_INTR_HIGH);
 		if (idtvec == 0) {
 			simple_lock(&ci->ci_slock);
-			free(ci->ci_isources[slot], M_DEVBUF);
+			free(ci->ci_isources[slot], M_DEVBUF, 0);
 			ci->ci_isources[slot] = NULL;
 			simple_unlock(&ci->ci_slock);
 			return EBUSY;
@@ -377,7 +377,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 
 	if (source->is_handlers != NULL &&
 	    source->is_pic->pic_type != pic->pic_type) {
-		free(ih, M_DEVBUF);
+		free(ih, M_DEVBUF, 0);
 		printf("intr_establish: can't share intr source between "
 		       "different PIC types (legacy_irq %d pin %d slot %d)\n",
 		    legacy_irq, pin, slot);
@@ -405,7 +405,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 			printf("intr_establish: pic %s pin %d: can't share "
 			       "type %d with %d\n", pic->pic_name, pin,
 				source->is_type, type);
-			free(ih, M_DEVBUF);
+			free(ih, M_DEVBUF, 0);
 			return NULL;
 		}
 		break;
@@ -518,14 +518,14 @@ intr_disestablish(struct intrhand *ih)
 #endif
 
 	if (source->is_handlers == NULL) {
-		free(source, M_DEVBUF);
+		free(source, M_DEVBUF, 0);
 		ci->ci_isources[ih->ih_slot] = NULL;
 		if (pic != &i8259_pic)
 			idt_vec_free(idtvec);
 	}
 
 	evcount_detach(&ih->ih_count);
-	free(ih, M_DEVBUF);
+	free(ih, M_DEVBUF, 0);
 
 	simple_unlock(&ci->ci_slock);
 }

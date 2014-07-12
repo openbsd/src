@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.164 2014/04/08 13:23:51 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.165 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -3633,7 +3633,7 @@ pmap_destroy(pm)
 	simple_unlock(&pm->pm_lock);
 	if (count == 0) {
 		pmap_release(pm);
-		free(pm, M_VMPMAP);
+		free(pm, M_VMPMAP, 0);
 	}
 }
 
@@ -3695,7 +3695,7 @@ if (pmapdebug) {
 }
 #endif
 	if (pm->pm_regstore)
-		free(pm->pm_regstore, M_VMPMAP);
+		free(pm->pm_regstore, M_VMPMAP, 0);
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
@@ -4091,10 +4091,10 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 			pm->pm_stats.resident_count--;
 		}
 		if ((sp->sg_npte = nleft) == 0) {
-			free(pte0, M_VMPMAP);
+			free(pte0, M_VMPMAP, 0);
 			sp->sg_pte = NULL;
 			if (--rp->rg_nsegmap == 0) {
-				free(rp->rg_segmap, M_VMPMAP);
+				free(rp->rg_segmap, M_VMPMAP, 0);
 				rp->rg_segmap = NULL;
 #if defined(SUN4_MMU3L)
 				if (HASSUN4_MMU3L && rp->rg_smeg != reginval) {
@@ -4175,12 +4175,12 @@ if (pm->pm_ctx == NULL) {
 			setregmap(0, rp->rg_smeg);
 			setsegmap(vs << SGSHIFT, seginval);
 		}
-		free(pte0, M_VMPMAP);
+		free(pte0, M_VMPMAP, 0);
 		sp->sg_pte = NULL;
 		me_free(pm, pmeg);
 
 		if (--rp->rg_nsegmap == 0) {
-			free(rp->rg_segmap, M_VMPMAP);
+			free(rp->rg_segmap, M_VMPMAP, 0);
 			rp->rg_segmap = NULL;
 			GAP_WIDEN(pm,vr);
 
@@ -4301,7 +4301,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 			if (pm->pm_ctx)
 				tlb_flush_context(); 	/* Paranoia? */
 			setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
-			free(rp->rg_segmap, M_VMPMAP);
+			free(rp->rg_segmap, M_VMPMAP, 0);
 			rp->rg_segmap = NULL;
 			pool_put(&L23_pool, rp->rg_seg_ptps);
 		}
@@ -4382,10 +4382,10 @@ pmap_page_protect4_4c(struct vm_page *pg, vm_prot_t prot)
 			if (nleft) {
 				sp->sg_pte[VA_VPG(va)] = 0;
 			} else {
-				free(sp->sg_pte, M_VMPMAP);
+				free(sp->sg_pte, M_VMPMAP, 0);
 				sp->sg_pte = NULL;
 				if (--rp->rg_nsegmap == 0) {
-					free(rp->rg_segmap, M_VMPMAP);
+					free(rp->rg_segmap, M_VMPMAP, 0);
 					rp->rg_segmap = NULL;
 					GAP_WIDEN(pm,vr);
 #if defined(SUN4_MMU3L)
@@ -4464,7 +4464,7 @@ pmap_page_protect4_4c(struct vm_page *pg, vm_prot_t prot)
 				setsegmap(vs << SGSHIFT, seginval);
 			}
 #endif
-			free(sp->sg_pte, M_VMPMAP);
+			free(sp->sg_pte, M_VMPMAP, 0);
 			sp->sg_pte = NULL;
 			me_free(pm, sp->sg_pmeg);
 
@@ -4477,7 +4477,7 @@ pmap_page_protect4_4c(struct vm_page *pg, vm_prot_t prot)
 					region_free(pm, rp->rg_smeg);
 				}
 #endif
-				free(rp->rg_segmap, M_VMPMAP);
+				free(rp->rg_segmap, M_VMPMAP, 0);
 				rp->rg_segmap = NULL;
 				GAP_WIDEN(pm,vr);
 			}
@@ -4805,7 +4805,7 @@ pmap_page_protect4m(struct vm_page *pg, vm_prot_t prot)
 				if (pm->pm_ctx)
 					tlb_flush_context();
 				setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
-				free(rp->rg_segmap, M_VMPMAP);
+				free(rp->rg_segmap, M_VMPMAP, 0);
 				rp->rg_segmap = NULL;
 				pool_put(&L23_pool, rp->rg_seg_ptps);
 			}

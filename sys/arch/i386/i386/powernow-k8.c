@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.26 2010/04/20 22:05:41 tedu Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.27 2014/07/12 18:44:41 tedu Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -512,5 +512,5 @@ k8_powernow_init(void)
 		setperf_prio = 1;
 		return;
 	}
-	free(cstate, M_DEVBUF);
+	free(cstate, M_DEVBUF, 0);
 }

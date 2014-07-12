@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.8 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: intr.c,v 1.9 2014/07/12 18:44:42 tedu Exp $	*/
 /*	$NetBSD: intr.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -237,7 +237,7 @@ extintr_disestablish(void *aux)
 		evcount_detach(&ih->ih_count);
 #endif
 
-	free((void *)ih, M_DEVBUF);
+	free((void *)ih, M_DEVBUF, 0);
 
 	if (--eih->eih_nih == 0) {
 		intc_intr_disestablish(eih->eih_func);

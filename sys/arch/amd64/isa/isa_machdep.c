@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.22 2010/11/20 20:58:51 miod Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.23 2014/07/12 18:44:41 tedu Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -452,7 +452,7 @@ _isa_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
  out:
 	if (error) {
 		if (map->_dm_cookie != NULL)
-			free(map->_dm_cookie, M_DEVBUF);
+			free(map->_dm_cookie, M_DEVBUF, 0);
 		_bus_dmamap_destroy(t, map);
 	}
 	return (error);
@@ -472,7 +472,7 @@ _isa_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	if (cookie->id_flags & ID_HAS_BOUNCE)
 		_isa_dma_free_bouncebuf(t, map);
 
-	free(cookie, M_DEVBUF);
+	free(cookie, M_DEVBUF, 0);
 	_bus_dmamap_destroy(t, map);
 }
 

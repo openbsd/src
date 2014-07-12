@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskio.c,v 1.7 2012/03/19 17:38:31 miod Exp $ */
+/*	$OpenBSD: diskio.c,v 1.8 2014/07/12 18:44:42 tedu Exp $ */
 
 /*
  * Copyright (c) 2000 Opsycon AB  (www.opsycon.se)
@@ -125,7 +125,7 @@ int
 dioclose(struct open_file *f)
 {
 	Bios_Close(((struct dio_softc *)f->f_devdata)->sc_fd);
-	free(f->f_devdata, sizeof(struct dio_softc));
+	free(f->f_devdata, sizeof(struct dio_softc), 0);
 	f->f_devdata = NULL;
 	return (0);
 }

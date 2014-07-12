@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.27 2013/10/29 21:44:50 mikeb Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.28 2014/07/12 18:44:42 tedu Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -383,7 +383,7 @@ glxsb_crypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 		if (sesn != 0) {
 			bcopy(sc->sc_sessions, ses, sesn * sizeof(*ses));
 			explicit_bzero(sc->sc_sessions, sesn * sizeof(*ses));
-			free(sc->sc_sessions, M_DEVBUF);
+			free(sc->sc_sessions, M_DEVBUF, 0);
 		}
 		sc->sc_sessions = ses;
 		ses = &sc->sc_sessions[sesn];
@@ -525,22 +525,22 @@ glxsb_crypto_freesession(uint64_t tid)
 
 		if (swd->sw_kschedule) {
 			explicit_bzero(swd->sw_kschedule, txf->ctxsize);
-			free(swd->sw_kschedule, M_CRYPTO_DATA);
+			free(swd->sw_kschedule, M_CRYPTO_DATA, 0);
 		}
-		free(swd, M_CRYPTO_DATA);
+		free(swd, M_CRYPTO_DATA, 0);
 	}
 	if ((swd = sc->sc_sessions[sesn].ses_swd_auth)) {
 		axf = swd->sw_axf;
 
 		if (swd->sw_ictx) {
 			explicit_bzero(swd->sw_ictx, axf->ctxsize);
-			free(swd->sw_ictx, M_CRYPTO_DATA);
+			free(swd->sw_ictx, M_CRYPTO_DATA, 0);
 		}
 		if (swd->sw_octx) {
 			explicit_bzero(swd->sw_octx, axf->ctxsize);
-			free(swd->sw_octx, M_CRYPTO_DATA);
+			free(swd->sw_octx, M_CRYPTO_DATA, 0);
 		}
-		free(swd, M_CRYPTO_DATA);
+		free(swd, M_CRYPTO_DATA, 0);
 	}
 	explicit_bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));
 	return (0);

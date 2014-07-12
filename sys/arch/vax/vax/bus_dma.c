@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.28 2014/07/11 09:36:26 mpi Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.29 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.5 1999/11/13 00:32:20 thorpej Exp $	*/
 
 /*-
@@ -137,7 +137,7 @@ _bus_dmamap_destroy(t, map)
 	if (map->dm_nsegs > 0)
 		printf("bus_dmamap_destroy() called for map with valid mappings\n");
 #endif	/* DIAGNOSTIC */
-	free(map, M_DEVBUF);
+	free(map, M_DEVBUF, 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uba.c,v 1.11 2003/11/10 21:05:04 miod Exp $	*/
+/*	$OpenBSD: if_uba.c,v 1.12 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: if_uba.c,v 1.15 1999/01/01 21:43:18 ragge Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ bad:
 		ubarelse(ifu->iff_softc, &ifw[nw].ifw_info);
 	while (--nr >= 0)
 		ubarelse(ifu->iff_softc, &ifr[nr].ifrw_info);
-	free(cp, M_DEVBUF);
+	free(cp, M_DEVBUF, 0);
 	ifr[0].ifrw_addr = 0;
 	return (0);
 }

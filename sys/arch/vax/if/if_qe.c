@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.26 2013/11/27 08:56:31 mpi Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.27 2014/07/12 18:44:43 tedu Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -195,7 +195,7 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	 * All done with the bus resources.
 	 */
 	ubfree((void *)parent, &ui);
-	free(ring, M_TEMP);
+	free(ring, M_TEMP, 0);
 	return 1;
 }
 

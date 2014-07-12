@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.14 2014/02/08 20:41:48 kettenis Exp $	*/
+/*	$OpenBSD: astro.c,v 1.15 2014/07/12 18:44:41 tedu Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -620,7 +620,7 @@ iommu_iomap_destroy(struct iommu_map_state *ims)
 		    ims->ims_map.ipm_pagecnt);
 #endif
 
-	free(ims, M_DEVBUF);
+	free(ims, M_DEVBUF, 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: l1.c,v 1.7 2011/03/12 23:43:19 miod Exp $	*/
+/*	$OpenBSD: l1.c,v 1.8 2014/07/12 18:44:42 tedu Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -771,7 +771,7 @@ l1_read_board_ia(int16_t nasid, int type, u_char **ria, size_t *rialen)
 
 fail:
 	if (ia != NULL)
-		free(ia, M_DEVBUF);
+		free(ia, M_DEVBUF, 0);
 	return rc;
 }
 
@@ -914,7 +914,7 @@ l1_get_brick_ethernet_address(int16_t nasid, uint8_t *enaddr)
 	enaddr_aton(hexaddr, enaddr);
 
 out:
-	free(ia, M_DEVBUF);
+	free(ia, M_DEVBUF, 0);
 	return rc;
 }
 
@@ -1188,6 +1188,6 @@ l1_get_brick_spd_record(int16_t nasid, int dimm, u_char **rspd, size_t *rspdlen)
 
 fail:
 	if (spd != NULL)
-		free(spd, M_DEVBUF);
+		free(spd, M_DEVBUF, 0);
 	return rc;
 }

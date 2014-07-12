@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.19 2013/10/21 10:36:21 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.20 2014/07/12 18:44:43 tedu Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -367,7 +367,7 @@ fail2:
 			vax_unmap_physmem((vaddr_t)ss->ss_ramdac[i], 1);
 	vax_unmap_physmem(ss->ss_reg, LCSPX_REG_SIZE / VAX_NBPG);
 fail1:
-	free(ss, M_DEVBUF);
+	free(ss, M_DEVBUF, 0);
 }
 
 static __inline__ void

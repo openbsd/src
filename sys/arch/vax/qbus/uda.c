@@ -1,4 +1,4 @@
-/*	$OpenBSD: uda.c,v 1.9 2011/07/06 18:32:59 miod Exp $	*/
+/*	$OpenBSD: uda.c,v 1.10 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: uda.c,v 1.36 2000/06/04 06:17:05 matt Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -331,7 +331,7 @@ udaready(uu)
 		return 0;
 	mscp_dgo(sc->sc_softc, mxi);
 	sc->sc_inq--;
-	free(uu, M_DEVBUF);
+	free(uu, M_DEVBUF, 0);
 	return 1;
 }
 

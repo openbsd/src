@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_flash.c,v 1.12 2014/05/08 21:17:01 miod Exp $	*/
+/*	$OpenBSD: zaurus_flash.c,v 1.13 2014/07/12 18:44:43 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -583,15 +583,15 @@ zflash_write_strategy(struct zflash_softc *sc, struct buf *bp,
 	}
 
 	bp->b_resid = bp->b_bcount - sc->sc_flash.sc_flashdev->pagesize;
-	free(oob, M_DEVBUF);
-	free(buf, M_DEVBUF);
+	free(oob, M_DEVBUF, 0);
+	free(buf, M_DEVBUF, 0);
 	return;
 bad:
 	bp->b_flags |= B_ERROR;
 	if (oob != NULL)
-		free(oob, M_DEVBUF);
+		free(oob, M_DEVBUF, 0);
 	if (buf != NULL)
-		free(buf, M_DEVBUF);
+		free(buf, M_DEVBUF, 0);
 }
 
 int
@@ -650,7 +650,7 @@ zflash_safe_start(struct zflash_softc *sc, dev_t dev)
 	phyuse = (u_int16_t *)malloc(sp->sp_pblks * sizeof(u_int16_t),
 	    M_DEVBUF, M_NOWAIT);
 	if (phyuse == NULL) {
-		free(sp, M_DEVBUF);
+		free(sp, M_DEVBUF, 0);
 		return ENOMEM;
 	}
 	sp->sp_phyuse = phyuse;
@@ -659,8 +659,8 @@ zflash_safe_start(struct zflash_softc *sc, dev_t dev)
 	logmap = (u_int *)malloc(sp->sp_lblks * sizeof(u_int),
 	    M_DEVBUF, M_NOWAIT);
 	if (logmap == NULL) {
-		free(phyuse, M_DEVBUF);
-		free(sp, M_DEVBUF);
+		free(phyuse, M_DEVBUF, 0);
+		free(sp, M_DEVBUF, 0);
 		return ENOMEM;
 	}
 	sp->sp_logmap = logmap;
@@ -747,9 +747,9 @@ zflash_safe_stop(struct zflash_softc *sc, dev_t dev)
 		return;
 
 	sp = sc->sc_safe[part];
-	free(sp->sp_phyuse, M_DEVBUF);
-	free(sp->sp_logmap, M_DEVBUF);
-	free(sp, M_DEVBUF);
+	free(sp->sp_phyuse, M_DEVBUF, 0);
+	free(sp->sp_logmap, M_DEVBUF, 0);
+	free(sp, M_DEVBUF, 0);
 	sc->sc_safe[part] = NULL;
 }
 

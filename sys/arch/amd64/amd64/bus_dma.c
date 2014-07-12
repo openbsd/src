@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.44 2014/07/11 09:36:25 mpi Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.45 2014/07/12 18:44:41 tedu Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -164,7 +164,7 @@ void
 _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
-	free(map, M_DEVBUF);
+	free(map, M_DEVBUF, 0);
 }
 
 /*

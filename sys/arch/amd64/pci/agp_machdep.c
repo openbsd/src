@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.11 2014/04/01 09:05:03 mpi Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.12 2014/07/12 18:44:41 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -90,7 +90,7 @@ agp_init_map(bus_space_tag_t tag, bus_addr_t address, bus_size_t size,
 	map->size = size;
 	
 	if ((err = bus_space_map(tag, address, size, flags, &map->bsh)) != 0) {
-		free(map, M_AGP);
+		free(map, M_AGP, 0);
 		return (err);
 	}
 	*mapp = map;
@@ -101,7 +101,7 @@ void
 agp_destroy_map(struct agp_map *map)
 {
 	bus_space_unmap(map->bst, map->bsh, map->size);
-	free(map, M_AGP);
+	free(map, M_AGP, 0);
 }
 
 

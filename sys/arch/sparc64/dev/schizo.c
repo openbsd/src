@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.65 2014/05/10 12:18:38 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.66 2014/07/12 18:44:43 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -244,7 +244,7 @@ schizo_init(struct schizo_softc *sc, int busa)
 	pba.pba_pc->conf_write = schizo_conf_write;
 	pba.pba_pc->intr_map = schizo_intr_map;
 
-	free(busranges, M_DEVBUF);
+	free(busranges, M_DEVBUF, 0);
 
 	schizo_pbm_write(pbm, SCZ_PCI_INTR_RETRY, 5);
 
@@ -445,7 +445,7 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 		}
 #undef TSBCASE
 		DPRINTF(SDB_BUSMAP, ("schizo_iommu_init: iobase=0x%x\n", iobase));
-		free(vdma, M_DEVBUF);
+		free(vdma, M_DEVBUF, 0);
 	} else {
 		DPRINTF(SDB_BUSMAP, ("schizo_iommu_init: getprop failed, "
 		    "using iobase=0x%x, tsbsize=%d\n", iobase, tsbsize));
@@ -557,7 +557,7 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 	    map, clr, name);
 	if (ih == NULL) {
 		printf("set_intr failed...\n");
-		free(name, M_DEVBUF);
+		free(name, M_DEVBUF, 0);
 		return;
 	}
 

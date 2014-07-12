@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.48 2014/05/10 12:29:58 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.49 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -339,7 +339,7 @@ void
 softintr_disestablish(cookie)
 	void *cookie;
 {
-	free(cookie, M_DEVBUF);
+	free(cookie, M_DEVBUF, 0);
 }
 
 void

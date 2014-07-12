@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.30 2014/07/08 05:35:18 dlg Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.31 2014/07/12 18:44:42 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -1077,7 +1077,7 @@ tsec_down(struct tsec_softc *sc)
 	}
 
 	tsec_dmamem_free(sc, sc->sc_rxring);
-	free(sc->sc_rxbuf, M_DEVBUF);
+	free(sc->sc_rxbuf, M_DEVBUF, 0);
 }
 
 void
@@ -1258,7 +1258,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, tdm->tdm_map);
 tdmfree:
-	free(tdm, M_DEVBUF);
+	free(tdm, M_DEVBUF, 0);
 
 	return (NULL);
 }
@@ -1269,7 +1269,7 @@ tsec_dmamem_free(struct tsec_softc *sc, struct tsec_dmamem *tdm)
 	bus_dmamem_unmap(sc->sc_dmat, tdm->tdm_kva, tdm->tdm_size);
 	bus_dmamem_free(sc->sc_dmat, &tdm->tdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, tdm->tdm_map);
-	free(tdm, M_DEVBUF);
+	free(tdm, M_DEVBUF, 0);
 }
 
 struct mbuf *

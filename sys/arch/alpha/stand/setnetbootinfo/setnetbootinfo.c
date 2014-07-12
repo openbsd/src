@@ -1,4 +1,4 @@
-/*	$OpenBSD: setnetbootinfo.c,v 1.2 2003/05/11 19:41:09 deraadt Exp $	*/
+/*	$OpenBSD: setnetbootinfo.c,v 1.3 2014/07/12 18:44:41 tedu Exp $	*/
 /*	$NetBSD: setnetbootinfo.c,v 1.5 1997/04/06 08:41:37 cgd Exp $	*/
 
 /*
@@ -244,9 +244,9 @@ main(argc, argv)
 		printf("closing %s...\n", outfilename);
 	close(fd);
 
-	free(netbb);
+	free(netbb, 0);
 	if (outfile == NULL)
-		free(outfilename);
+		free(outfilename, 0);
 
 	exit (0);
 }

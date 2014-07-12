@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.2 2013/09/06 21:40:28 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.3 2014/07/12 18:44:41 tedu Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -561,7 +561,7 @@ ampintc_intr_disestablish(void *cookie)
 	TAILQ_REMOVE(&sc->sc_ampintc_handler[irqno].iq_list, ih, ih_list);
 	if (ih->ih_name != NULL)
 		evcount_detach(&ih->ih_count);
-	free(ih, M_DEVBUF);
+	free(ih, M_DEVBUF, 0);
 	restore_interrupts(psw);
 #endif
 }

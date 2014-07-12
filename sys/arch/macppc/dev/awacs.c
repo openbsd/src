@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.28 2013/05/15 08:29:23 ratchov Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.29 2014/07/12 18:44:42 tedu Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -975,7 +975,7 @@ awacs_allocm(void *h, int dir, size_t size, int type, int flags)
 	    1, &p->nsegs, flags)) != 0) {
 		printf("%s: unable to allocate dma, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
-		free(p, type);
+		free(p, type, 0);
 		return NULL;
 	}
 
@@ -984,7 +984,7 @@ awacs_allocm(void *h, int dir, size_t size, int type, int flags)
 		printf("%s: unable to map dma, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		bus_dmamem_free(sc->sc_dmat, p->segs, p->nsegs);
-		free(p, type);
+		free(p, type, 0);
 		return NULL;
 	}
 
@@ -994,7 +994,7 @@ awacs_allocm(void *h, int dir, size_t size, int type, int flags)
 		    sc->sc_dev.dv_xname, error);
 		bus_dmamem_unmap(sc->sc_dmat, p->addr, size);
 		bus_dmamem_free(sc->sc_dmat, p->segs, p->nsegs);
-		free(p, type);
+		free(p, type, 0);
 		return NULL;
 	}
 
@@ -1005,7 +1005,7 @@ awacs_allocm(void *h, int dir, size_t size, int type, int flags)
 		bus_dmamap_destroy(sc->sc_dmat, p->map);
 		bus_dmamem_unmap(sc->sc_dmat, p->addr, size);
 		bus_dmamem_free(sc->sc_dmat, p->segs, p->nsegs);
-		free(p, type);
+		free(p, type, 0);
 		return NULL;
 	}
 

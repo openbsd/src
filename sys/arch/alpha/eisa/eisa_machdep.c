@@ -1,4 +1,4 @@
-/* $OpenBSD: eisa_machdep.c,v 1.4 2013/07/17 13:57:24 martin Exp $ */
+/* $OpenBSD: eisa_machdep.c,v 1.5 2014/07/12 18:44:40 tedu Exp $ */
 /* $NetBSD: eisa_machdep.c,v 1.1 2000/07/29 23:18:47 thorpej Exp $ */
 
 /*-
@@ -572,8 +572,8 @@ eisa_init(eisa_chipset_tag_t ec)
 		}
 	}
 
-	free(cdata, M_TEMP);
-	free(data, M_TEMP);
+	free(cdata, M_TEMP, 0);
+	free(data, M_TEMP, 0);
 }
 
 /*

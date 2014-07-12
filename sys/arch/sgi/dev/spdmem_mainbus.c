@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem_mainbus.c,v 1.1 2010/03/22 21:22:08 miod Exp $	*/
+/*	$OpenBSD: spdmem_mainbus.c,v 1.2 2014/07/12 18:44:42 tedu Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -66,7 +66,7 @@ spdmem_mainbus_match(struct device *parent, void *vcf, void *aux)
 	rc = l1_get_brick_spd_record(saa->maa.maa_nasid, saa->dimm,
 	    &spd, &spdlen);
 	if (rc == 0) {
-		free(spd, M_DEVBUF);
+		free(spd, M_DEVBUF, 0);
 		return 1;
 	} else
 		return 0;
@@ -92,7 +92,7 @@ spdmem_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	spdmem_attach_common(&sc->sc_base);
 	/* free record, as it won't be accessed anymore */
 	sc->sc_spdlen = 0;
-	free(sc->sc_spd, M_DEVBUF);
+	free(sc->sc_spd, M_DEVBUF, 0);
 }
 
 uint8_t

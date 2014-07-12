@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldc.c,v 1.9 2012/10/21 18:56:00 kettenis Exp $	*/
+/*	$OpenBSD: ldc.c,v 1.10 2014/07/12 18:44:43 tedu Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -508,7 +508,7 @@ ldc_queue_free(bus_dma_tag_t t, struct ldc_queue *lq)
 	bus_dmamem_unmap(t, lq->lq_va, size);
 	bus_dmamem_free(t, &lq->lq_seg, 1);
 	bus_dmamap_destroy(t, lq->lq_map);
-	free(lq, M_DEVBUF);
+	free(lq, M_DEVBUF, 0);
 }
 
 struct ldc_map *
@@ -568,5 +568,5 @@ ldc_map_free(bus_dma_tag_t t, struct ldc_map *lm)
 	bus_dmamem_unmap(t, (caddr_t)lm->lm_slot, size);
 	bus_dmamem_free(t, &lm->lm_seg, 1);
 	bus_dmamap_destroy(t, lm->lm_map);
-	free(lm, M_DEVBUF);
+	free(lm, M_DEVBUF, 0);
 }

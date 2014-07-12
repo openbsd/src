@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.8 2014/05/10 11:49:31 kettenis Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.9 2014/07/12 18:44:43 tedu Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -509,13 +509,13 @@ vldcpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			    hi->hi_cookie + offset, pa, nbytes, &nbytes);
 			if (err != H_EOK) {
 				printf("hv_ldc_copy %d\n", err);
-				free(buf, M_DEVBUF);
+				free(buf, M_DEVBUF, 0);
 				device_unref(&sc->sc_dv);
 				return (EINVAL);
 			}
 			err = copyout(buf, (caddr_t)hi->hi_addr + offset, nbytes);
 			if (err) {
-				free(buf, M_DEVBUF);
+				free(buf, M_DEVBUF, 0);
 				device_unref(&sc->sc_dv);
 				return (err);
 			}
@@ -531,7 +531,7 @@ vldcpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			nbytes = min(PAGE_SIZE, size);
 			err = copyin((caddr_t)hi->hi_addr + offset, buf, nbytes);
 			if (err) {
-				free(buf, M_DEVBUF);
+				free(buf, M_DEVBUF, 0);
 				device_unref(&sc->sc_dv);
 				return (err);
 			}
@@ -539,7 +539,7 @@ vldcpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			    hi->hi_cookie + offset, pa, nbytes, &nbytes);
 			if (err != H_EOK) {
 				printf("hv_ldc_copy %d\n", err);
-				free(buf, M_DEVBUF);
+				free(buf, M_DEVBUF, 0);
 				device_unref(&sc->sc_dv);
 				return (EINVAL);
 			}
@@ -550,7 +550,7 @@ vldcpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	}
 
-	free(buf, M_DEVBUF);
+	free(buf, M_DEVBUF, 0);
 
 	device_unref(&sc->sc_dv);
 	return (0);

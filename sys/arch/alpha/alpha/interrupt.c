@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.32 2014/01/26 17:40:09 miod Exp $ */
+/* $OpenBSD: interrupt.c,v 1.33 2014/07/12 18:44:40 tedu Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -586,7 +586,7 @@ softintr_disestablish(void *arg)
 	}
 	mtx_leave(&asi->softintr_mtx);
 
-	free(sih, M_DEVBUF);
+	free(sih, M_DEVBUF, 0);
 }
 
 /*

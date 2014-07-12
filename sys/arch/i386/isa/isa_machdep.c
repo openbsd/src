@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.75 2013/07/14 18:22:08 kettenis Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.76 2014/07/12 18:44:42 tedu Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 /*-
@@ -513,7 +513,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 
 	if (!LEGAL_IRQ(irq) || type == IST_NONE) {
 		printf("%s: isa_intr_establish: bogus irq or type\n", ih_what);
-		free(ih, M_DEVBUF);
+		free(ih, M_DEVBUF, 0);
 		return (NULL);
 	}
 	switch (intrtype[irq]) {
@@ -531,7 +531,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 			/*printf("%s: intr_establish: can't share %s with %s, irq %d\n",
 			    ih_what, isa_intr_typename(intrtype[irq]),
 			    isa_intr_typename(type), irq);*/
-			free(ih, M_DEVBUF);
+			free(ih, M_DEVBUF, 0);
 			return (NULL);
 		}
 		break;
@@ -601,7 +601,7 @@ isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 	else
 		panic("intr_disestablish: handler not registered");
 	evcount_detach(&ih->ih_count);
-	free(ih, M_DEVBUF);
+	free(ih, M_DEVBUF, 0);
 
 	intr_calculatemasks();
 
@@ -725,7 +725,7 @@ _isa_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
  out:
 	if (error) {
 		if (map->_dm_cookie != NULL)
-			free(map->_dm_cookie, M_DEVBUF);
+			free(map->_dm_cookie, M_DEVBUF, 0);
 		_bus_dmamap_destroy(t, map);
 	}
 	return (error);
@@ -745,7 +745,7 @@ _isa_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	if (cookie->id_flags & ID_HAS_BOUNCE)
 		_isa_dma_free_bouncebuf(t, map);
 
-	free(cookie, M_DEVBUF);
+	free(cookie, M_DEVBUF, 0);
 	_bus_dmamap_destroy(t, map);
 }
 

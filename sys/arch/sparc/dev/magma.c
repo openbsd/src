@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.27 2010/07/02 17:27:01 nicm Exp $	*/
+/*	$OpenBSD: magma.c,v 1.28 2014/07/12 18:44:43 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -1754,7 +1754,7 @@ again:		/* goto bad */
 		uio->uio_resid += (len - cnt);
 	}
 
-	free(buffer, M_DEVBUF);
+	free(buffer, M_DEVBUF, 0);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: oaic.c,v 1.1 2013/10/16 16:59:34 miod Exp $	*/
+/*	$OpenBSD: oaic.c,v 1.2 2014/07/12 18:44:41 tedu Exp $	*/
 
 /*
  * Copyright (c) 2010, 2013 Miodrag Vallat.
@@ -225,7 +225,7 @@ oaic_attach(uint32_t addr, int id, int lun)
 void
 oaic_detach(void *cookie)
 {
-	free(cookie, sizeof(struct aic6250_softc));
+	free(cookie, sizeof(struct aic6250_softc), 0);
 }
 
 /*

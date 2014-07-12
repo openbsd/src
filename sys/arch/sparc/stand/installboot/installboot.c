@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.8 2013/09/29 21:30:50 jmc Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.9 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: installboot.c,v 1.1 1997/06/01 03:39:45 mrg Exp $	*/
 
 /*
@@ -251,7 +251,7 @@ loadprotoblocks(fname, size)
 	}
 	if (read(fd, bp, statbuf.st_size) != statbuf.st_size) {
 		warn("read: %s", fname);
-		free(bp);
+		free(bp, 0);
 		close(fd);
 		return NULL;
 	}
@@ -269,21 +269,21 @@ loadprotoblocks(fname, size)
 	if ((int)block_table & 3) {
 		warn("%s: invalid address: block_table = %x",
 		     fname, block_table);
-		free(bp);
+		free(bp, 0);
 		close(fd);
 		return NULL;
 	}
 	if ((int)block_count_p & 3) {
 		warn("%s: invalid address: block_count_p = %x",
 		     fname, block_count_p);
-		free(bp);
+		free(bp, 0);
 		close(fd);
 		return NULL;
 	}
 	if ((int)block_size_p & 3) {
 		warn("%s: invalid address: block_size_p = %x",
 		     fname, block_size_p);
-		free(bp);
+		free(bp, 0);
 		close(fd);
 		return NULL;
 	}

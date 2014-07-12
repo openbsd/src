@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.17 2013/10/04 18:46:07 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.18 2014/07/12 18:44:41 tedu Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -387,13 +387,13 @@ printf("num %ld ", pdc_pat_io_num.num);
 		if ((err = pdc_call((iodcio_t)pdc, 0, PDC_PAT_IO,
 		    PDC_PAT_IO_GET_PCI_RT, rt, cell))) {
 			printf("irt fetch error %d\n", err);
-			free(rt, M_DEVBUF);
+			free(rt, M_DEVBUF, 0);
 			return (NULL);
 		}
 	} else if ((err = pdc_call((iodcio_t)pdc, 0, PDC_PCI_INDEX,
 	    PDC_PCI_GET_INT_TBL, &pdc_pat_io_num, cpu_gethpa(0), pdc_rt))) {
 		printf("irt fetch error %d\n", err);
-		free(rt, M_DEVBUF);
+		free(rt, M_DEVBUF, 0);
 		return (NULL);
 	}
 	bcopy(pdc_rt, rt, num * sizeof(*rt));

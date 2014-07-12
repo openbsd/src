@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.32 2014/07/08 02:59:51 dlg Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.33 2014/07/12 18:44:43 tedu Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -1492,5 +1492,5 @@ vnet_dring_free(bus_dma_tag_t t, struct vnet_dring *vd)
 	bus_dmamem_unmap(t, (caddr_t)vd->vd_desc, size);
 	bus_dmamem_free(t, &vd->vd_seg, 1);
 	bus_dmamap_destroy(t, vd->vd_map);
-	free(vd, M_DEVBUF);
+	free(vd, M_DEVBUF, 0);
 }

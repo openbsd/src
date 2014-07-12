@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: intc.c,v 1.3 2014/07/12 18:44:41 tedu Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -380,7 +380,7 @@ intc_intr_disestablish(void *cookie)
 	TAILQ_REMOVE(&intc_handler[irqno].iq_list, ih, ih_list);
 	if (ih->ih_name != NULL)
 		evcount_detach(&ih->ih_count);
-	free(ih, M_DEVBUF);
+	free(ih, M_DEVBUF, 0);
 	restore_interrupts(psw);
 }
 

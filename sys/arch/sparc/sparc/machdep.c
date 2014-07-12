@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.160 2014/07/11 22:28:06 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.161 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -264,7 +264,7 @@ setregs(p, pack, stack, retval)
 			savefpstate(fs);
 			cpuinfo.fpproc = NULL;
 		}
-		free((void *)fs, M_SUBPROC);
+		free((void *)fs, M_SUBPROC, 0);
 		p->p_md.md_fpstate = NULL;
 	}
 	bzero((caddr_t)tf, sizeof *tf);
@@ -969,7 +969,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 void
 _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
-	free(map, M_DEVBUF);
+	free(map, M_DEVBUF, 0);
 }
 
 /*
@@ -1083,7 +1083,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 	 * Return the list of pages back to the VM system.
 	 */
 	uvm_pglistfree(segs[0]._ds_mlist);
-	free(segs[0]._ds_mlist, M_DEVBUF);
+	free(segs[0]._ds_mlist, M_DEVBUF, 0);
 }
 
 /*

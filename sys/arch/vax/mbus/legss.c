@@ -1,4 +1,4 @@
-/*	$OpenBSD: legss.c,v 1.6 2013/10/21 10:36:20 miod Exp $	*/
+/*	$OpenBSD: legss.c,v 1.7 2014/07/12 18:44:43 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -254,7 +254,7 @@ bad2:
 	vax_unmap_physmem(scr->ss_vram,
 	    (LEGSS_VISHEIGHT * LEGSS_WIDTH * 32 / NBBY) / VAX_NBPG);
 bad1:
-	free(scr, M_DEVBUF);
+	free(scr, M_DEVBUF, 0);
 }
 
 /*

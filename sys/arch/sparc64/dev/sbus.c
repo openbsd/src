@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.40 2014/07/12 14:12:44 uebayasi Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.41 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -484,16 +484,16 @@ void
 sbus_destroy_attach_args(struct sbus_attach_args *sa)
 {
 	if (sa->sa_name != NULL)
-		free(sa->sa_name, M_DEVBUF);
+		free(sa->sa_name, M_DEVBUF, 0);
 
 	if (sa->sa_nreg != 0)
-		free(sa->sa_reg, M_DEVBUF);
+		free(sa->sa_reg, M_DEVBUF, 0);
 
 	if (sa->sa_intr)
-		free(sa->sa_intr, M_DEVBUF);
+		free(sa->sa_intr, M_DEVBUF, 0);
 
 	if (sa->sa_promvaddrs)
-		free((void *)sa->sa_promvaddrs, M_DEVBUF);
+		free((void *)sa->sa_promvaddrs, M_DEVBUF, 0);
 
 	bzero(sa, sizeof(struct sbus_attach_args)); /*DEBUG*/
 }
@@ -638,7 +638,7 @@ sbus_get_intr(struct sbus_softc *sc, int node, struct sbus_intr **ipp, int *np,
 			ip[n].sbi_pri = pri | ipl[n];
 			ip[n].sbi_vec = ipl[n];
 		}
-		free(ipl, M_DEVBUF);
+		free(ipl, M_DEVBUF, 0);
 		*ipp = ip;
 	}
 	

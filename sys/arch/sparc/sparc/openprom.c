@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.5 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.6 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: openprom.c,v 1.8 1996/03/31 23:45:34 pk Exp $ */
 
 /*
@@ -246,9 +246,9 @@ openpromioctl(dev, cmd, data, flags, p)
 	}
 
 	if (name)
-		free(name, M_TEMP);
+		free(name, M_TEMP, 0);
 	if (value)
-		free(value, M_TEMP);
+		free(value, M_TEMP, 0);
 
 	return (error);
 }

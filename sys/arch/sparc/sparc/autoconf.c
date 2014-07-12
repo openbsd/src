@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.94 2014/05/09 20:15:06 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.95 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1039,7 +1039,7 @@ romprop(rp, cp, node)
 				rp->ra_intr[n].int_vec = 0;
 			};
 			len *= sizeof(struct rom_intr);
-			free(interrupts, M_TEMP);
+			free(interrupts, M_TEMP, 0);
 		} else
 			len = 0;
 	}

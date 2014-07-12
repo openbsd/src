@@ -1,4 +1,4 @@
-/* $OpenBSD: omdisplay.c,v 1.4 2013/12/11 12:51:51 naddy Exp $ */
+/* $OpenBSD: omdisplay.c,v 1.5 2014/07/12 18:44:41 tedu Exp $ */
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
  *
@@ -1157,7 +1157,7 @@ omdisplay_alloc_screen(void *v, const struct wsscreen_descr *_type,
 
 	error = omdisplay_new_screen(sc, scr, type->depth);
 	if (error != 0) {
-		free(scr, M_DEVBUF);
+		free(scr, M_DEVBUF, 0);
 		return (error);
 	}
 
@@ -1337,7 +1337,7 @@ omdisplay_free_screen(void *v, void *cookie)
 	if (scr->nsegs > 0)
 		bus_dmamem_free(sc->sc_dma_tag, scr->segs, scr->nsegs);
 
-	free(scr, M_DEVBUF);
+	free(scr, M_DEVBUF, 0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssm.c,v 1.1 2008/07/06 08:51:44 kettenis Exp $	*/
+/*	$OpenBSD: ssm.c,v 1.2 2014/07/12 18:44:43 tedu Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -74,7 +74,7 @@ ssm_attach(struct device *parent, struct device *self, void *aux)
 		getprop(node, "reg", sizeof(*nma.ma_reg),
 		    &nma.ma_nreg, (void **)&nma.ma_reg);
 		config_found(self, &nma, ssm_print);
-		free(nma.ma_reg, M_DEVBUF);
+		free(nma.ma_reg, M_DEVBUF, 0);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_i2s.c,v 1.7 2006/04/04 11:45:40 pascoe Exp $	*/
+/*	$OpenBSD: pxa2x0_i2s.c,v 1.8 2014/07/12 18:44:41 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -225,7 +225,7 @@ fail_create:
 fail_map:
 	bus_dmamem_free(sc->sc_dmat, &p->seg, 1);
 fail_alloc:
-	free(p, type);
+	free(p, type, 0);
 	return 0;
 }
 
@@ -244,7 +244,7 @@ pxa2x0_i2s_freem(void *hdl, void *ptr, int type)
 			bus_dmamem_free(sc->sc_dmat, &p->seg, 1);
 
 			*pp = p->next;
-			free(p, type);
+			free(p, type, 0);
 			return;
 		}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_common.c,v 1.12 2014/06/14 23:11:20 jmatthew Exp $ */
+/* $OpenBSD: sgmap_common.c,v 1.13 2014/07/12 18:44:40 tedu Exp $ */
 /* $NetBSD: sgmap_common.c,v 1.13 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
@@ -187,7 +187,7 @@ void
 alpha_sgmap_dmamap_teardown(map)
 	bus_dmamap_t map;
 {
-	free(map->_dm_cookie, M_DEVBUF);
+	free(map->_dm_cookie, M_DEVBUF, 0);
 }
 
 void

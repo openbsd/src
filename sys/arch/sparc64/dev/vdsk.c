@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.38 2014/05/10 11:49:31 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.39 2014/07/12 18:44:43 tedu Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -920,7 +920,7 @@ vdsk_dring_free(bus_dma_tag_t t, struct vdsk_dring *vd)
 	bus_dmamem_unmap(t, (caddr_t)vd->vd_desc, size);
 	bus_dmamem_free(t, &vd->vd_seg, 1);
 	bus_dmamap_destroy(t, vd->vd_map);
-	free(vd, M_DEVBUF);
+	free(vd, M_DEVBUF, 0);
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 2014/07/11 22:28:05 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.39 2014/07/12 18:44:42 tedu Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -254,7 +254,7 @@ setregs(p, pack, stack, retval)
 			savefpstate(fs);
 			cpuinfo.fpproc = NULL;
 		}
-		free((void *)fs, M_SUBPROC);
+		free((void *)fs, M_SUBPROC, 0);
 		p->p_md.md_fpstate = NULL;
 	}
 	bzero((caddr_t)tf, sizeof *tf);

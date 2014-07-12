@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.119 2014/05/10 12:29:58 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.120 2014/07/12 18:44:43 tedu Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1013,7 +1013,7 @@ extern bus_space_tag_t mainbus_space_tag;
 		rv = getprop(node, "interrupts", sizeof(*ma.ma_interrupts), 
 			&ma.ma_ninterrupts, (void **)&ma.ma_interrupts);
 		if (rv != 0 && rv != ENOENT) {
-			free(ma.ma_reg, M_DEVBUF);
+			free(ma.ma_reg, M_DEVBUF, 0);
 			continue;
 		}
 #ifdef DEBUG
@@ -1028,9 +1028,9 @@ extern bus_space_tag_t mainbus_space_tag;
 		rv = getprop(node, "address", sizeof(*ma.ma_address), 
 			&ma.ma_naddress, (void **)&ma.ma_address);
 		if (rv != 0 && rv != ENOENT) {
-			free(ma.ma_reg, M_DEVBUF);
+			free(ma.ma_reg, M_DEVBUF, 0);
 			if (ma.ma_ninterrupts)
-				free(ma.ma_interrupts, M_DEVBUF);
+				free(ma.ma_interrupts, M_DEVBUF, 0);
 			continue;
 		}
 #ifdef DEBUG
@@ -1043,11 +1043,11 @@ extern bus_space_tag_t mainbus_space_tag;
 		}
 #endif
 		config_found(dev, &ma, mbprint);
-		free(ma.ma_reg, M_DEVBUF);
+		free(ma.ma_reg, M_DEVBUF, 0);
 		if (ma.ma_ninterrupts)
-			free(ma.ma_interrupts, M_DEVBUF);
+			free(ma.ma_interrupts, M_DEVBUF, 0);
 		if (ma.ma_naddress)
-			free(ma.ma_address, M_DEVBUF);
+			free(ma.ma_address, M_DEVBUF, 0);
 	}
 
 	extern int prom_cngetc(dev_t);

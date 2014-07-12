@@ -1,4 +1,4 @@
-/*	$OpenBSD: vbus.c,v 1.6 2013/07/16 21:08:06 kettenis Exp $	*/
+/*	$OpenBSD: vbus.c,v 1.7 2014/07/12 18:44:43 tedu Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -168,7 +168,7 @@ vbus_intr_map(int node, int ino, uint64_t *sysino)
 			node = imap[address_cells + interrupt_cells];
 			devino = imap[address_cells + interrupt_cells + 1];
 
-			free(reg, M_DEVBUF);
+			free(reg, M_DEVBUF, 0);
 			reg = NULL;
 
 			getprop(node, "reg", sizeof(*reg), &nreg, (void **)&reg);

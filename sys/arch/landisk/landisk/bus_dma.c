@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.10 2014/07/11 09:36:26 mpi Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.11 2014/07/12 18:44:42 tedu Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 
 	DPRINTF(("bus_dmamap_destroy: t = %p, map = %p\n", t, map));
 
-	free(map, M_DEVBUF);
+	free(map, M_DEVBUF, 0);
 }
 
 static inline int

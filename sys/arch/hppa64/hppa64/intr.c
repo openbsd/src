@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.9 2014/07/08 17:19:24 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.10 2014/07/12 18:44:41 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -132,7 +132,7 @@ cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *), void *arg,
 	iv = &ivb[irq];
 	if (iv->handler) {
 		if (!pv->share) {
-			free(cnt, M_DEVBUF);
+			free(cnt, M_DEVBUF, 0);
 			return (NULL);
 		} else {
 			iv = pv->share;
@@ -308,7 +308,7 @@ softintr_disestablish(void *cookie)
 			iv->handler = nv->handler;
 			iv->arg = nv->arg;
 			iv->next = nv->next;
-			free(nv, M_DEVBUF);
+			free(nv, M_DEVBUF, 0);
 			return;
 		} else {
 			iv->handler = NULL;
@@ -320,7 +320,7 @@ softintr_disestablish(void *cookie)
 	for (iv = &intr_table[irq]; iv; iv = iv->next) {
 		if (iv->next == cookie) {
 			iv->next = iv->next->next;
-			free(cookie, M_DEVBUF);
+			free(cookie, M_DEVBUF, 0);
 			return;
 		}
 	}

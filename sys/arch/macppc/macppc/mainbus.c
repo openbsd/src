@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.22 2014/07/02 15:34:43 tobiasu Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.23 2014/07/12 18:44:42 tedu Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -90,7 +90,7 @@ mbattach(struct device *parent, struct device *self, void *aux)
 			slen = strlen(t) + strlen(name) - 3;
 			if ((hw_prod = malloc(slen, M_DEVBUF, M_NOWAIT)) != NULL) {
 				snprintf(hw_prod, slen, "%s %s", t, name + 5);
-				free(t, M_DEVBUF);
+				free(t, M_DEVBUF, 0);
 			}
 		} else {
 			/* New World Macintosh or Unknown */

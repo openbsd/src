@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.17 2014/04/01 09:05:03 mpi Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.18 2014/07/12 18:44:42 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -144,7 +144,7 @@ agp_destroy_map(struct agp_map *map)
 	if (extent_free(ex, map->addr, map->size,
 	    EX_NOWAIT | EX_MALLOCOK ))
 		printf("agp_destroy_map: can't free region\n");
-	free(map, M_AGP);
+	free(map, M_AGP, 0);
 }
 
 

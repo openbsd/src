@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.3 2013/11/20 13:32:40 rapha Exp $ */
+/* $OpenBSD: omgpio.c,v 1.4 2014/07/12 18:44:41 tedu Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -662,7 +662,7 @@ omgpio_intr_disestablish(struct omgpio_softc *sc, void *cookie)
 
 	evcount_detach(&ih->ih_count);
 
-	free(ih, M_DEVBUF);
+	free(ih, M_DEVBUF, 0);
 
 	omgpio_intr_level(gpio, IST_NONE);
 	omgpio_intr_mask(gpio);

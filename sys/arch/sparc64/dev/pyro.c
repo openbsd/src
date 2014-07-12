@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.26 2014/01/21 10:59:30 dlg Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.27 2014/07/12 18:44:43 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -250,7 +250,7 @@ pyro_init(struct pyro_softc *sc, int busa)
 	pba.pba_pc->conf_write = pyro_conf_write;
 	pba.pba_pc->intr_map = pyro_intr_map;
 
-	free(busranges, M_DEVBUF);
+	free(busranges, M_DEVBUF, 0);
 
 #ifdef DDB
 	db_register_xir(pyro_xir, sc);
@@ -347,7 +347,7 @@ pyro_init_msi(struct pyro_softc *sc, struct pyro_pbm *pbm)
 	return;
 
 free_table:
-	free(pbm->pp_msi, M_DEVBUF);
+	free(pbm->pp_msi, M_DEVBUF, 0);
 }
 
 int
