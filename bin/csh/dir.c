@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.15 2014/07/11 07:54:04 tedu Exp $	*/
+/*	$OpenBSD: dir.c,v 1.16 2014/07/12 02:47:51 guenther Exp $	*/
 /*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@ dinit(Char *hp)
     Char *cp;
     struct directory *dp;
     char    path[MAXPATHLEN];
-    static char *emsg = "csh: Trying to start from \"%s\"\n";
+    static const char emsg[] = "csh: Trying to start from \"%s\"\n";
 
     /* Don't believe the login shell home, because it may be a symlink */
     tcp = getcwd(path, MAXPATHLEN);
