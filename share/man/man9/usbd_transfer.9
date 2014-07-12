@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbd_transfer.9,v 1.3 2014/03/27 13:33:02 jmc Exp $
+.\" $OpenBSD: usbd_transfer.9,v 1.4 2014/07/12 08:48:19 mpi Exp $
 .\"
 .\" Copyright (c) 2013 Martin Pieuchot
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2014 $
+.Dd $Mdocdate: July 12 2014 $
 .Dt USBD_TRANSFER 9
 .Os
 .Sh NAME
@@ -69,9 +69,8 @@ Do not report short reads, when the length of the data read is lower than
 .Fa length ,
 as errors.
 .It Dv USBD_FORCE_SHORT_XFER
-Submit a supplementary zero length packet at the end of the data if
-.Fa length
-is a multiple of the endpoint's wMaxPacketSize.
+Submit a supplementary zero length packet at the end of the written data.
+Some requests may need such packet in order to be properly terminated.
 .It Dv USBD_CATCH
 Used in conjunction with the
 .Dv USBD_SYNCHRONOUS
