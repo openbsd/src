@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.59 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.60 2014/07/12 19:31:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -927,9 +927,6 @@ bad:
 			sv_usage();
 		goto end;
 	}
-
-	SSL_load_error_strings();
-	OpenSSL_add_ssl_algorithms();
 
 #ifndef OPENSSL_NO_ENGINE
 	e = setup_engine(bio_err, engine_id, 1);

@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.67 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.68 2014/07/12 19:31:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -655,9 +655,6 @@ bad:
 			sc_usage();
 		goto end;
 	}
-
-	OpenSSL_add_ssl_algorithms();
-	SSL_load_error_strings();
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	next_proto.status = -1;

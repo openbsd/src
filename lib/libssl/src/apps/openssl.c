@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.40 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: openssl.c,v 1.41 2014/07/12 19:31:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -208,8 +208,9 @@ openssl_startup(void)
 	signal(SIGPIPE, SIG_IGN);
 
 	CRYPTO_malloc_init();
-	ERR_load_crypto_strings();
 	OpenSSL_add_all_algorithms();
+	SSL_library_init();
+	SSL_load_error_strings();
 
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE_load_builtin_engines();

@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.32 2014/06/28 04:39:41 deraadt Exp $ */
+/* $OpenBSD: s_time.c,v 1.33 2014/07/12 19:31:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -332,7 +332,6 @@ s_time_main(int argc, char **argv)
 	if (parseArgs(argc, argv) < 0)
 		goto end;
 
-	OpenSSL_add_ssl_algorithms();
 	if ((tm_ctx = SSL_CTX_new(s_time_meth)) == NULL)
 		return (1);
 
@@ -343,8 +342,6 @@ s_time_main(int argc, char **argv)
 	SSL_CTX_set_cipher_list(tm_ctx, tm_cipher);
 	if (!set_cert_stuff(tm_ctx, t_cert_file, t_key_file))
 		goto end;
-
-	SSL_load_error_strings();
 
 	if ((!SSL_CTX_load_verify_locations(tm_ctx, CAfile, CApath)) ||
 	    (!SSL_CTX_set_default_verify_paths(tm_ctx))) {
