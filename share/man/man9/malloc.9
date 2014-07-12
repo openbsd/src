@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.55 2014/07/12 10:47:21 tedu Exp $
+.\"	$OpenBSD: malloc.9,v 1.56 2014/07/12 18:51:10 tedu Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 .Ft void *
 .Fn mallocarray "size_t nmemb" "size_t size" "int type" "int flags"
 .Ft void
-.Fn free "void *addr" "int type"
+.Fn free "void *addr" "int type" "size_t size"
 .Sh DESCRIPTION
 The
 .Fn malloc
@@ -66,6 +66,8 @@ function releases memory at address
 that was previously allocated by
 .Fn malloc
 for re-use.
+The size of the object should be specified by
+.Fa size .
 If
 .Fa addr
 is a null pointer, no action occurs.
