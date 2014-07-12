@@ -1,10 +1,19 @@
-#	$OpenBSD: Makefile,v 1.4 2014/07/12 21:00:46 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.5 2014/07/12 21:41:49 bluhm Exp $
 
 # The following ports must be installed:
 #
 # python-2.7          interpreted object-oriented programming language
 # py-libdnet          python interface to libdnet
 # scapy               powerful interactive packet manipulation in python
+
+# Check wether all required python packages are installed.  If some
+# are missing print a warning and skip the tests, but do not fail.
+PYTHON_IMPORT != python2.7 -c 'from scapy.all import *' 2>&1 || true
+.if ! empty(PYTHON_IMPORT)
+regress:
+	@echo '${PYTHON_IMPORT}'
+	@echo install python and the scapy module for additional tests
+.endif
 
 # This test needs a manual setup of four machines
 # The setup is the same as for regress/sys/net/pf_fragment
@@ -33,9 +42,9 @@
 SRC_IF ?=	tun0
 SRC_MAC ?=	fe:e1:ba:d1:0a:dc
 PF_MAC ?=	52:54:00:12:34:50
-PF_SSH ?=	q50
-RT_SSH ?=	q51
-ECO_SSH ?=	q52
+PF_SSH ?=
+RT_SSH ?=
+ECO_SSH ?=
 
 SRC_OUT ?=	10.188.210.10
 PF_IN ?=	10.188.210.50
@@ -54,6 +63,14 @@ RT_OUT6 ?=	fdd7:e83e:66bc:212:5054:ff:fe12:3451
 ECO_IN6 ?=	fdd7:e83e:66bc:212:5054:ff:fe12:3452
 RDR_IN6 ?=	fdd7:e83e:66bc:213::188
 AF_IN6 ?=	fdd7:e83e:66bc:214::188
+
+.if empty (PF_SSH) || empty (RT_SSH) || empty (ECO_SSH)
+regress:
+	@echo this tests needs three remote machines to operate on
+	@echo PF_SSH RT_SSH ECO_SSH are empty
+	@echo fill out these variables for additional tests, then
+	@echo check wether your test machines are set up properly
+.endif
 
 # pf rules on PF must look like this:
 #
@@ -90,6 +107,14 @@ addr.py: Makefile
 .endfor
 	mv $@.tmp $@
 
+# Set variables so that make runs with and without obj directory.
+# Only do that if necessary to keep visible output short.
+.if ${.CURDIR} == ${.OBJDIR}
+PYTHON =	python2.7 ./
+.else
+PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
+.endif
+
 # Ping all addresses.  This ensures that the ip addresses are configured
 # and all routing table are set up to allow bidirectional packet flow.
 # Note that RDR does not exist physically.  So this traffic is rewritten
@@ -122,19 +147,19 @@ run-regress-ping-mtu: addr.py
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check path MTU to ${ip} is 1300
-	${SUDO} python2.7 ping_mtu.py ${${ip}} 1300
+	${SUDO} ${PYTHON}ping_mtu.py ${${ip}} 1300
 .endfor
 	@echo Check path MTU to AF_IN is 1280
-	${SUDO} python2.7 ping_mtu.py ${AF_IN} 1280
+	${SUDO} ${PYTHON}ping_mtu.py ${AF_IN} 1280
 
 run-regress-ping6-mtu: addr.py
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN
 	@echo Check path MTU to ${ip}6 is 1300
-	${SUDO} python2.7 ping6_mtu.py ${${ip}6} 1300
+	${SUDO} ${PYTHON}ping6_mtu.py ${${ip}6} 1300
 .endfor
 	@echo Check path MTU to AF_IN6 is 1320
-	${SUDO} python2.7 ping6_mtu.py ${AF_IN6} 1320
+	${SUDO} ${PYTHON}ping6_mtu.py ${AF_IN6} 1320
 
 # Send one udp echo port 7 packet to all destination addresses with netcat.
 # The response must arrive in 1 second.
@@ -207,10 +232,10 @@ check-setup:
 	ssh ${PF_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${RT_IN}'  # ${ip} RT_IN
 .endfor
 	ssh ${PF_SSH} ping6 -n -c 1 ${PF_IN6}  # PF_IN6
-	ssh ${PF_SSH} route -n get -inet6 ${PF_IN6} | fgrep -q 'interface: lo0'  # PF_IN6 
+	ssh ${PF_SSH} route -n get -inet6 ${PF_IN6} | fgrep -q 'interface: lo0'  # PF_IN6
 	ssh ${PF_SSH} ping6 -n -c 1 ${SRC_OUT6}  # SRC_OUT6
 	ssh ${PF_SSH} ping6 -n -c 1 ${PF_OUT6}  # PF_OUT6
-	ssh ${PF_SSH} route -n get -inet6 ${PF_OUT6} | fgrep -q 'interface: lo0'  # PF_OUT6 
+	ssh ${PF_SSH} route -n get -inet6 ${PF_OUT6} | fgrep -q 'interface: lo0'  # PF_OUT6
 	ssh ${PF_SSH} ping6 -n -c 1 ${RT_IN6}  # RT_IN6
 .for ip in RT_OUT ECO_IN
 	ssh ${PF_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${RT_IN6}'  # ${ip}6 RT_IN6
@@ -230,13 +255,13 @@ check-setup:
 	ssh ${RT_SSH} route -n get -inet ${RT_OUT} | fgrep -q 'interface: lo0'  # RT_OUT
 	ssh ${RT_SSH} ping -n -c 1 ${ECO_IN}  # ECO_IN
 	ssh ${RT_SSH} ping6 -n -c 1 ${RT_IN6}  # RT_IN6
-	ssh ${RT_SSH} route -n get -inet6 ${RT_IN6} | fgrep -q 'interface: lo0'  # RT_IN6 
+	ssh ${RT_SSH} route -n get -inet6 ${RT_IN6} | fgrep -q 'interface: lo0'  # RT_IN6
 	ssh ${RT_SSH} ping6 -n -c 1 ${PF_OUT6}  # PF_OUT6
 .for ip in PF_IN SRC_OUT
 	ssh ${RT_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${PF_OUT6}'  # ${ip}6 PF_OUT6
 .endfor
 	ssh ${RT_SSH} ping6 -n -c 1 ${RT_OUT6}  # RT_OUT6
-	ssh ${RT_SSH} route -n get -inet6 ${RT_OUT6} | fgrep -q 'interface: lo0'  # RT_OUT6 
+	ssh ${RT_SSH} route -n get -inet6 ${RT_OUT6} | fgrep -q 'interface: lo0'  # RT_OUT6
 	ssh ${RT_SSH} ping6 -n -c 1 ${ECO_IN6}  # ECO_IN6
 	ssh ${RT_SSH} sysctl net.inet.ip.forwarding | fgrep 1
 	ssh ${RT_SSH} sysctl net.inet6.ip6.forwarding | fgrep 1
@@ -248,7 +273,7 @@ check-setup:
 	ssh ${ECO_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${RT_OUT}'  # ${ip} RT_OUT
 .endfor
 	ssh ${ECO_SSH} ping6 -n -c 1 ${ECO_IN6}  # ECO_IN6
-	ssh ${ECO_SSH} route -n get -inet6 ${ECO_IN6} | fgrep -q 'interface: lo0'  # ECO_IN6 
+	ssh ${ECO_SSH} route -n get -inet6 ${ECO_IN6} | fgrep -q 'interface: lo0'  # ECO_IN6
 	ssh ${ECO_SSH} ping6 -n -c 1 ${RT_OUT6}  # RT_OUT6
 .for ip in RT_IN PF_OUT PF_IN SRC_OUT
 	ssh ${ECO_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${RT_OUT6}'  # ${ip}6 RT_OUT6
