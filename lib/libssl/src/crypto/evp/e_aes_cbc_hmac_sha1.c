@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.7 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.8 2014/07/12 20:37:07 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2011-2013 The OpenSSL Project.  All rights reserved.
  *
@@ -65,10 +65,6 @@
 #define EVP_CIPH_FLAG_AEAD_CIPHER	0x200000
 #define EVP_CTRL_AEAD_TLS1_AAD		0x16
 #define EVP_CTRL_AEAD_SET_MAC_KEY	0x17
-#endif
-
-#if !defined(EVP_CIPH_FLAG_DEFAULT_ASN1)
-#define EVP_CIPH_FLAG_DEFAULT_ASN1 0
 #endif
 
 #define TLS1_1_VERSION 0x0302
@@ -486,7 +482,7 @@ aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 			unsigned int  i;
 			unsigned char hmac_key[64];
 
-			memset (hmac_key, 0, sizeof(hmac_key));
+			memset(hmac_key, 0, sizeof(hmac_key));
 
 			if (arg > (int)sizeof(hmac_key)) {
 				SHA1_Init(&key->head);
@@ -544,52 +540,50 @@ aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 
 static EVP_CIPHER aesni_128_cbc_hmac_sha1_cipher = {
 #ifdef NID_aes_128_cbc_hmac_sha1
-	NID_aes_128_cbc_hmac_sha1,
+	.nid = NID_aes_128_cbc_hmac_sha1,
 #else
-	NID_undef,
+	.nid = NID_undef,
 #endif
-	16, 16, 16,
-	EVP_CIPH_CBC_MODE|EVP_CIPH_FLAG_DEFAULT_ASN1|EVP_CIPH_FLAG_AEAD_CIPHER,
-	aesni_cbc_hmac_sha1_init_key,
-	aesni_cbc_hmac_sha1_cipher,
-	NULL,
-	sizeof(EVP_AES_HMAC_SHA1),
-	EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_set_asn1_iv,
-	EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_get_asn1_iv,
-	aesni_cbc_hmac_sha1_ctrl,
-	NULL
+	.block_size = 16,
+	.key_len = 16,
+	.iv_len = 16,
+	.flags = EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_DEFAULT_ASN1 |
+	    EVP_CIPH_FLAG_AEAD_CIPHER,
+	.init = aesni_cbc_hmac_sha1_init_key,
+	.do_cipher = aesni_cbc_hmac_sha1_cipher,
+	.ctx_size = sizeof(EVP_AES_HMAC_SHA1),
+	.ctrl = aesni_cbc_hmac_sha1_ctrl
 };
 
 static EVP_CIPHER aesni_256_cbc_hmac_sha1_cipher = {
 #ifdef NID_aes_256_cbc_hmac_sha1
-	NID_aes_256_cbc_hmac_sha1,
+	.nid = NID_aes_256_cbc_hmac_sha1,
 #else
-	NID_undef,
+	.nid = NID_undef,
 #endif
-	16, 32, 16,
-	EVP_CIPH_CBC_MODE|EVP_CIPH_FLAG_DEFAULT_ASN1|EVP_CIPH_FLAG_AEAD_CIPHER,
-	aesni_cbc_hmac_sha1_init_key,
-	aesni_cbc_hmac_sha1_cipher,
-	NULL,
-	sizeof(EVP_AES_HMAC_SHA1),
-	EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_set_asn1_iv,
-	EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_get_asn1_iv,
-	aesni_cbc_hmac_sha1_ctrl,
-	NULL
+	.block_size = 16,
+	.key_len = 32,
+	.iv_len = 16,
+	.flags = EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_DEFAULT_ASN1 |
+	    EVP_CIPH_FLAG_AEAD_CIPHER,
+	.init = aesni_cbc_hmac_sha1_init_key,
+	.do_cipher = aesni_cbc_hmac_sha1_cipher,
+	.ctx_size = sizeof(EVP_AES_HMAC_SHA1),
+	.ctrl = aesni_cbc_hmac_sha1_ctrl
 };
 
 const EVP_CIPHER *
 EVP_aes_128_cbc_hmac_sha1(void)
 {
-	return(OPENSSL_ia32cap_P[1] & AESNI_CAPABLE?
-	&aesni_128_cbc_hmac_sha1_cipher : NULL);
+	return OPENSSL_ia32cap_P[1] & AESNI_CAPABLE ?
+	    &aesni_128_cbc_hmac_sha1_cipher : NULL;
 }
 
 const EVP_CIPHER *
 EVP_aes_256_cbc_hmac_sha1(void)
 {
-	return(OPENSSL_ia32cap_P[1] & AESNI_CAPABLE?
-	&aesni_256_cbc_hmac_sha1_cipher : NULL);
+	return OPENSSL_ia32cap_P[1] & AESNI_CAPABLE ?
+	    &aesni_256_cbc_hmac_sha1_cipher : NULL;
 }
 #else
 const EVP_CIPHER *
