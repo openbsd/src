@@ -1161,7 +1161,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/ppbreg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/pucvar.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/qlereg.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/qlireg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/safereg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/safevar.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/siop_pci_common.ph
@@ -1375,6 +1374,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dlfcn.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/elf_abi.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/endian.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/eti.ph
@@ -2061,6 +2061,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys
+./usr/libdata/perl5/site_perl/sh-openbsd/sys/_endian.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/_time.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/acct.ph

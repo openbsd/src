@@ -1,3 +1,5 @@
+./usr/include/endian.h
+./usr/include/sys/_endian.h
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -648,7 +650,9 @@
 ./usr/include/dev/pci/ppbreg.h
 ./usr/include/dev/pci/pucvar.h
 ./usr/include/dev/pci/qlereg.h
-./usr/include/dev/pci/qlireg.h
+./usr/share/man/man3/X509_NAME_oneline.3
+./usr/share/man/man3/X509_NAME_print.3
+./usr/share/man/man3/X509_NAME_print_ex_fp.3
 ./usr/include/dev/pci/safereg.h
 ./usr/include/dev/pci/safevar.h
 ./usr/include/dev/pci/siop_pci_common.h

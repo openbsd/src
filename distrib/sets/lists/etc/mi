@@ -1,3 +1,4 @@
+./var/db/sysmerge/egsum
 ./.cshrc
 ./.profile
 ./etc/amd/master.sample

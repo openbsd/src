@@ -679,7 +679,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/ppbreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pucvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/qlereg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/qlireg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/safereg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/safevar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/siop_pci_common.ph
@@ -893,6 +892,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dlfcn.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/elf_abi.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/endian.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/eti.ph
@@ -1536,6 +1536,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/_endian.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/_time.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/acct.ph

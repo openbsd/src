@@ -637,7 +637,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/ppbreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pucvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/qlereg.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/qlireg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/safereg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/safevar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/siop_pci_common.ph
@@ -851,6 +850,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dlfcn.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/elf_abi.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/endian.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/eti.ph
@@ -1366,6 +1366,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/_endian.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/_time.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/acct.ph
