@@ -1,4 +1,4 @@
-#	$OpenBSD: printcap,v 1.4 2003/03/28 21:32:30 jmc Exp $
+#	$OpenBSD: printcap,v 1.1 2014/07/12 03:52:39 deraadt Exp $
 
 #lp|local line printer:\
 #	:lp=/dev/lp:sd=/var/spool/output:lf=/var/log/lpd-errs:

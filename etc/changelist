@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.90 2014/07/11 21:20:10 deraadt Exp $
+#	$OpenBSD: changelist,v 1.91 2014/07/12 03:52:39 deraadt Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -28,10 +28,10 @@
 /etc/distfile
 +/etc/dvmrpd.conf
 /etc/ethers
-/etc/exports
++/etc/exports
 /etc/fbtab
 /etc/fstab
-/etc/ftpchroot
++/etc/ftpchroot
 /etc/ftpusers
 /etc/ftpwelcome
 /etc/gettytab
@@ -101,7 +101,7 @@
 /etc/pf.conf
 /etc/pf.os
 /etc/pkg.conf
-/etc/printcap
++/etc/printcap
 /etc/profile
 /etc/protocols
 +/etc/pwd.db
@@ -114,7 +114,7 @@
 /etc/rc.securelevel
 /etc/rc.shutdown
 +/etc/relayd.conf
-/etc/remote
++/etc/remote
 /etc/resolv.conf
 /etc/resolv.conf.tail
 +/etc/ripd.conf
