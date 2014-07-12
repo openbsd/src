@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.30 2014/07/12 03:46:42 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.31 2014/07/12 03:48:04 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -280,10 +280,6 @@ extern struct passwd   *pw;	/* pointer to static area used by getpwent */
 extern char defowner[64];		/* Default owner */
 extern char defgroup[64];		/* Default group */
 extern volatile sig_atomic_t contimedout; /* Connection timed out */
-#ifdef USE_STATDB
-extern int 		dostatdb;
-extern int 		juststatdb;
-#endif /* USE_STATDB */
 
 /*
  * Our own declarations.

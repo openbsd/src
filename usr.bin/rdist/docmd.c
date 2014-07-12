@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.30 2014/07/12 03:02:27 guenther Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.31 2014/07/12 03:48:04 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -962,21 +962,6 @@ docmds(struct namelist *hostlist, int argc, char **argv)
 
 	if (!nflag)
 		setvbuf(stdout, NULL, _IOLBF, 0);
-
-#if	defined(USE_STATDB)
-	if (!nflag && (dostatdb || juststatdb)) {
-		extern long reccount;
-		message(MT_INFO, "Making stat database [%s] ... \n", 
-			       gettimestr());
-		if (mkstatdb() < 0)
-			error("Warning: Make stat database failed.");
-		message(MT_INFO,
-			      "Stat database created: %d files stored [%s].\n",
-			       reccount, gettimestr());
-		if (juststatdb)
-			return;
-	}
-#endif	/* USE_STATDB */
 
 	/*
 	 * Print errors for any command line targets we didn't find.
