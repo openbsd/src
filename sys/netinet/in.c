@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.99 2014/06/26 13:08:25 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.100 2014/07/12 14:26:00 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -619,8 +619,10 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 	 * Always remove the address from the tree to make sure its
 	 * position gets updated in case the key changes.
 	 */
-	if (!newaddr)
+	if (!newaddr) {
+		rt_ifa_delloop(&ia->ia_ifa);
 		ifa_del(ifp, &ia->ia_ifa);
+	}
 	oldaddr = ia->ia_addr;
 	ia->ia_addr = *sin;
 
@@ -702,6 +704,7 @@ out:
 	 * carp(4).
 	 */
 	ifa_add(ifp, &ia->ia_ifa);
+	rt_ifa_addloop(&ia->ia_ifa);
 
 	if (error && newaddr)
 		in_purgeaddr(&ia->ia_ifa);
@@ -719,7 +722,9 @@ in_purgeaddr(struct ifaddr *ifa)
 
 	in_ifscrub(ifp, ia);
 
+	rt_ifa_delloop(&ia->ia_ifa);
 	ifa_del(ifp, &ia->ia_ifa);
+
 	TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
 	if (ia->ia_allhosts != NULL) {
 		in_delmulti(ia->ia_allhosts);

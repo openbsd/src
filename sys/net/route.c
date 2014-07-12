@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.171 2014/06/16 19:47:21 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.172 2014/07/12 14:26:00 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1129,7 +1129,8 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 			if (ifa->ifa_rtrequest)
 				ifa->ifa_rtrequest(RTM_ADD, rt);
 		}
-		rt_newaddrmsg(RTM_ADD, ifa, error, nrt);
+		if (flags & RTF_LOCAL)
+			rt_newaddrmsg(RTM_ADD, ifa, error, nrt);
 	}
 	return (error);
 }
@@ -1183,7 +1184,8 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 
 	error = rtrequest1(RTM_DELETE, &info, prio, &nrt, rtableid);
 	if (error == 0 && (rt = nrt) != NULL) {
-		rt_newaddrmsg(RTM_DELETE, ifa, error, nrt);
+		if (flags & RTF_LOCAL)
+			rt_newaddrmsg(RTM_DELETE, ifa, error, nrt);
 		if (rt->rt_refcnt <= 0) {
 			rt->rt_refcnt++;
 			rtfree(rt);
@@ -1203,6 +1205,26 @@ rt_ifa_addloop(struct ifaddr *ifa)
 {
 	struct rtentry *rt;
 
+	/*
+	 * If the configured address correspond to the magical "any"
+	 * address do not add a local route entry because that might
+	 * corrupt the routing tree which uses this value for the
+	 * default routes.
+	 */
+	switch (ifa->ifa_addr->sa_family) {
+	case AF_INET:
+		if (satosin(ifa->ifa_addr)->sin_addr.s_addr == INADDR_ANY)
+			return;
+		break;
+	case AF_INET6:
+		if (IN6_ARE_ADDR_EQUAL(&satosin6(ifa->ifa_addr)->sin6_addr,
+		    &in6addr_any))
+			return;
+		break;
+	default:
+		break;
+	}
+
 	/* If there is no loopback entry, allocate one. */
 	rt = rtalloc1(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
 	if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0 ||
@@ -1220,6 +1242,24 @@ void
 rt_ifa_delloop(struct ifaddr *ifa)
 {
 	struct rtentry *rt;
+
+	/*
+	 * We do not add local routes for such address, so do not bother
+	 * removing them.
+	 */
+	switch (ifa->ifa_addr->sa_family) {
+	case AF_INET:
+		if (satosin(ifa->ifa_addr)->sin_addr.s_addr == INADDR_ANY)
+			return;
+		break;
+	case AF_INET6:
+		if (IN6_ARE_ADDR_EQUAL(&satosin6(ifa->ifa_addr)->sin6_addr,
+		    &in6addr_any))
+			return;
+		break;
+	default:
+		break;
+	}
 
 	/*
 	 * Before deleting, check if a corresponding loopbacked host
