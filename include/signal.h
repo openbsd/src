@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.21 2014/03/16 18:38:30 guenther Exp $	*/
+/*	$OpenBSD: signal.h,v 1.22 2014/07/12 02:51:52 guenther Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -43,8 +43,8 @@
 
 __BEGIN_DECLS
 #if __BSD_VISIBLE
-extern __const char *__const sys_signame[_NSIG];
-extern __const char *__const sys_siglist[_NSIG];
+extern const char *const sys_signame[_NSIG];
+extern const char *const sys_siglist[_NSIG];
 #endif
 
 int	raise(int);
