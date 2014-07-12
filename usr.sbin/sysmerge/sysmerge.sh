@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.134 2014/07/10 11:00:03 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.135 2014/07/12 15:31:54 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -20,8 +20,8 @@
 
 umask 0022
 
-unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE ETCSUM NEED_NEWALIASES NEWGRP
-unset NEWUSR NEED_REBOOT NOSIGCHECK SRCDIR SRCSUM TGZ XETCSUM XTGZ
+unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE EGSUM ETCSUM NEED_NEWALIASES
+unset NEWGRP NEWUSR NEED_REBOOT NOSIGCHECK SRCDIR SRCSUM TGZ XETCSUM XTGZ
 
 # forced variables
 WRKDIR=$(mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX) || exit 1
@@ -51,7 +51,7 @@ clean_src() {
 # they did not exist
 restore_sum() {
 	local i _i
-	for i in ${DESTDIR}/${DBDIR}/.{${SRCSUM},${ETCSUM},${XETCSUM}}.bak; do
+	for i in ${DESTDIR}/${DBDIR}/.{${SRCSUM},${ETCSUM},${XETCSUM},${EGSUM}}.bak; do
 		_i=$(basename ${i} .bak)
 		if [ -f "${i}" ]; then
 			mv ${i} ${DESTDIR}/${DBDIR}/${_i#.}
@@ -77,6 +77,8 @@ report() {
 # remove newly created work directory and exit with status 1
 error_rm_wrkdir() {
 	(($#)) && echo "**** ERROR: $@"
+	restore_sum
+	clean_src
 	# do not remove the entire WRKDIR in case sysmerge stopped half
 	# way since it contains our backup files
 	rm -rf ${TEMPROOT}
@@ -86,7 +88,7 @@ error_rm_wrkdir() {
 	exit 1
 }
 
-trap "restore_sum; clean_src; error_rm_wrkdir; exit 1" 1 2 3 13 15
+trap "error_rm_wrkdir; exit 1" 1 2 3 13 15
 
 if (($(id -u) != 0)); then
 	usage
@@ -549,7 +551,7 @@ diff_loop() {
 			fi
 			;;
 		'')
-			echo "\n===> ${COMPFILE} will remain for your consideration"
+			echo "===> ${COMPFILE} will remain for your consideration"
 			;;
 		*)
 			echo "invalid choice: ${HANDLE_COMPFILE}\n"
@@ -627,6 +629,33 @@ sm_compare() {
 	done
 }
 
+sm_check_an_eg() {
+	EGSUM=egsum
+	local _egmods _i _managed
+	if [ -f "${DESTDIR}/${DBDIR}/${EGSUM}" ]; then
+		EGMODS="$(sha256 -c ${DESTDIR}/${DBDIR}/${EGSUM} 2>/dev/null | grep 'FAILED$' | awk '{ print $2 }' | sed -e "s,:,,")"
+		mv ${DESTDIR}/${DBDIR}/${EGSUM} ${DESTDIR}/${DBDIR}/.${EGSUM}.bak
+	fi
+	for _i in ${EGMODS}; do
+		_managed=$(echo ${_i} | sed -e "s,etc/examples,etc,")
+		if [ -f "${DESTDIR}/${_managed}" ]; then
+			_egmods="${_egmods} ${_managed##*/}"
+		fi
+	done
+	if [ -n "${_egmods}" ]; then
+		warn "example file(s) changed for:${_egmods}"
+	else
+		# example changed but we have no corresponding file under /etc
+		unset EGMODS
+	fi
+	cd ${DESTDIR:=/} && \
+		find ./etc/examples -type f | xargs sha256 -h ${DESTDIR}/${DBDIR}/${EGSUM} || \
+		error_rm_wrkdir "failed to create ${EGSUM} checksum file"
+	if [ -f "${DESTDIR}/${DBDIR}/.${EGSUM}.bak" ]; then
+		rm ${DESTDIR}/${DBDIR}/.${EGSUM}.bak
+	fi
+}
+
 sm_post() {
 	local FILES_IN_TEMPROOT FILES_IN_BKPDIR
 
@@ -655,6 +684,11 @@ sm_post() {
 		report "===> The following user(s)/group(s) have been added"
 		[[ -n ${NEWUSR} ]] && report "user(s): ${NEWUSR[@]}"
 		[[ -n ${NEWGRP} ]] && report "group(s): ${NEWGRP[@]}"
+		report ""
+	fi
+	if [ -n "${EGMODS}" ]; then
+		report "===> Example(s) modified since last run"
+		report "${EGMODS}"
 		report ""
 	fi
 	if [ -n "${FILES_IN_TEMPROOT}" ]; then
@@ -748,4 +782,5 @@ BKPDIR="${WRKDIR}/backups"
 sm_fetch_and_verify
 sm_populate
 sm_compare
+sm_check_an_eg
 sm_post
