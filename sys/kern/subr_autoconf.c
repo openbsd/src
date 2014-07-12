@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.75 2014/03/29 18:09:31 guenther Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.76 2014/07/12 13:43:08 mpi Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -523,13 +523,11 @@ config_detach(struct device *dev, int flags)
 	cd = cf->cf_driver;
 
 	/*
-	 * Ensure the device is deactivated.  If the device doesn't
-	 * have an activation entry point, we allow DVF_ACTIVE to
-	 * remain set.  Otherwise, if DVF_ACTIVE is still set, the
+	 * Ensure the device is deactivated.  If the device has an
+	 * activation entry point and DVF_ACTIVE is still set, the
 	 * device is busy, and the detach fails.
 	 */
-	if (ca->ca_activate != NULL)
-		rv = config_deactivate(dev);
+	rv = config_deactivate(dev);
 
 	/*
 	 * Try to detach the device.  If that's not possible, then
@@ -637,15 +635,11 @@ done:
 int
 config_deactivate(struct device *dev)
 {
-	struct cfattach *ca = dev->dv_cfdata->cf_attach;
 	int rv = 0, oflags = dev->dv_flags;
-
-	if (ca->ca_activate == NULL)
-		return (EOPNOTSUPP);
 
 	if (dev->dv_flags & DVF_ACTIVE) {
 		dev->dv_flags &= ~DVF_ACTIVE;
-		rv = (*ca->ca_activate)(dev, DVACT_DEACTIVATE);
+		rv = config_suspend(dev, DVACT_DEACTIVATE);
 		if (rv)
 			dev->dv_flags = oflags;
 	}
@@ -767,7 +761,7 @@ config_suspend(struct device *dev, int act)
 		r = (*ca->ca_activate)(dev, act);
 	else
 		r = config_activate_children(dev, act);
-	device_unref(dev);      
+	device_unref(dev);
 	return (r);
 }
 
