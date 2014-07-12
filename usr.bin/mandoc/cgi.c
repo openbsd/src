@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.4 2014/07/12 01:52:57 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.5 2014/07/12 16:13:36 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -45,7 +45,7 @@ struct	query {
 	const char	*arch; /* architecture */
 	const char	*sec; /* manual section */
 	const char	*expr; /* unparsed expression string */
-	int		 legacy; /* whether legacy mode */
+	int		 equal; /* match whole names, not substrings */
 };
 
 struct	req {
@@ -138,9 +138,11 @@ http_printquery(const struct req *req)
 		http_print(req->q.arch);
 	}
 	if (NULL != req->q.expr) {
-		printf("&expr=");
-		http_print(req->q.expr ? req->q.expr : "");
+		printf("&query=");
+		http_print(req->q.expr);
 	}
+	if (0 == req->q.equal)
+		printf("&apropos=1");
 }
 
 static void
@@ -160,9 +162,11 @@ html_printquery(const struct req *req)
 		html_print(req->q.arch);
 	}
 	if (NULL != req->q.expr) {
-		printf("&amp;expr=");
+		printf("&amp;query=");
 		html_print(req->q.expr);
 	}
+	if (0 == req->q.equal)
+		printf("&amp;apropos=1");
 }
 
 static void
@@ -198,12 +202,11 @@ static void
 http_parse(struct req *req, char *p)
 {
 	char            *key, *val;
-	int		 legacy;
 
 	memset(&req->q, 0, sizeof(struct query));
 	req->q.manpath = req->p[0];
+	req->q.equal = 1;
 
-	legacy = -1;
 	while ('\0' != *p) {
 		key = p;
 		val = NULL;
@@ -224,37 +227,21 @@ http_parse(struct req *req, char *p)
 		if (NULL != val && ! http_decode(val))
 			break;
 
-		if (0 == strcmp(key, "expr"))
+		if (0 == strcmp(key, "query"))
 			req->q.expr = val;
-		else if (0 == strcmp(key, "query"))
-			req->q.expr = val;
-		else if (0 == strcmp(key, "sec"))
-			req->q.sec = val;
-		else if (0 == strcmp(key, "sektion"))
-			req->q.sec = val;
-		else if (0 == strcmp(key, "arch"))
-			req->q.arch = val;
 		else if (0 == strcmp(key, "manpath"))
 			req->q.manpath = val;
 		else if (0 == strcmp(key, "apropos"))
-			legacy = 0 == strcmp(val, "0");
+			req->q.equal = !strcmp(val, "0");
+		else if (0 == strcmp(key, "sec") ||
+			 0 == strcmp(key, "sektion")) {
+			if (strcmp(val, "0"))
+				req->q.sec = val;
+		} else if (0 == strcmp(key, "arch")) {
+			if (strcmp(val, "default"))
+				req->q.arch = val;
+		}
 	}
-
-	/* Test for old man.cgi compatibility mode. */
-
-	req->q.legacy = legacy > 0;
-
-	/* 
-	 * Section "0" means no section when in legacy mode.
-	 * For some man.cgi scripts, "default" arch is none.
-	 */
-
-	if (req->q.legacy && NULL != req->q.sec)
-		if (0 == strcmp(req->q.sec, "0"))
-			req->q.sec = NULL;
-	if (req->q.legacy && NULL != req->q.arch)
-		if (0 == strcmp(req->q.arch, "default"))
-			req->q.arch = NULL;
 }
 
 static void
@@ -364,10 +351,20 @@ resp_searchform(const struct req *req)
 	       "<FORM ACTION=\"%s/search\" METHOD=\"get\">\n"
 	       "<FIELDSET>\n"
 	       "<LEGEND>Search Parameters</LEGEND>\n"
-	       "<INPUT TYPE=\"submit\" "
-	       " VALUE=\"Search\"> for manuals matching \n"
-	       "<INPUT TYPE=\"text\" NAME=\"expr\" VALUE=\"",
+	       "<INPUT TYPE=\"submit\" VALUE=\"Search\"> "
+	       "for manuals \n",
 	       scriptname);
+	printf("<SELECT NAME=\"apropos\">\n"
+	       "<OPTION VALUE=\"0\"");
+	if (req->q.equal)
+		printf(" SELECTED=\"selected\"");
+	printf(">named</OPTION>\n"
+	       "<OPTION VALUE=\"1\"");
+	if (0 == req->q.equal)
+		printf(" SELECTED=\"selected\"");
+	printf(">matching</OPTION>\n"
+	       "</SELECT>\n"
+	       "<INPUT TYPE=\"text\" NAME=\"query\" VALUE=\"");
 	html_print(req->q.expr ? req->q.expr : "");
 	printf("\">, section "
 	       "<INPUT TYPE=\"text\""
@@ -780,8 +777,8 @@ pg_search(const struct req *req, char *path)
 
 	search.arch = req->q.arch;
 	search.sec = req->q.sec;
-	search.deftype = TYPE_Nm | TYPE_Nd;
-	search.flags = 0;
+	search.deftype = req->q.equal ? TYPE_Nm : (TYPE_Nm | TYPE_Nd);
+	search.flags = req->q.equal ? MANSEARCH_MAN : 0;
 
 	paths.sz = 1;
 	paths.paths = mandoc_malloc(sizeof(char *));
