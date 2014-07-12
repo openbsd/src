@@ -1,0 +1,57 @@
+.\"	$OpenBSD: sendsyslog.2,v 1.1 2014/07/12 02:28:56 deraadt Exp $
+.\"
+.\" Copyright (c) 2014 Theo de Raadt
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 12 2014 $
+.Dt SENDSYSLOG 2
+.Os
+.Sh NAME
+.Nm sendsyslog ,
+.Nd send a message to syslogd
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Ft int
+.Fn sendsyslog "const void *msg" "size_t len"
+.Sh DESCRIPTION
+.Fn sendsyslog
+is used to transmit a
+.Xr syslog 3
+formatted message direct to
+.Xr syslogd 8
+without requiring the allocation of a socket.
+This is used internally by
+.Xr syslog_r 3 ,
+so that messages can be sent during difficult situations.
+.Pp
+.Sh RETURN VALUES
+The call returns 0 on success, or \-1
+if an error occurred.
+.Sh ERRORS
+.Fn sendsyslog
+fail if:
+.Bl -tag -width Er
+.It Bq Er ENOTCONN
+The message cannot be sent, likely because
+.Xr syslogd 8
+is not running.
+.El
+.Sh SEE ALSO
+.Xr syslog_r 3 ,
+.Xr syslogd 8
+.Sh HISTORY
+The
+.Fn sendsyslog
+function call appeared in
+.Ox 5.6 .

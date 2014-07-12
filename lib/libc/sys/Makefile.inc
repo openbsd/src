@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.118 2014/06/13 08:26:10 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.119 2014/07/12 02:28:56 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -48,7 +48,7 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	open.o openat.o pathconf.o pipe.o poll.o ppoll.o profil.o pselect.o \
 	quotactl.o read.o readlink.o readlinkat.o readv.o reboot.o \
 	recvfrom.o recvmsg.o rename.o renameat.o revoke.o rmdir.o \
-	sched_yield.o select.o semget.o semop.o sendmsg.o sendto.o \
+	sched_yield.o select.o semget.o semop.o sendmsg.o sendsyslog.o sendto.o \
 	setegid.o seteuid.o setgid.o setgroups.o setitimer.o \
 	setpgid.o setpriority.o setregid.o setresgid.o setresuid.o \
 	setreuid.o setrlimit.o setrtable.o setsid.o setsockopt.o \
@@ -213,8 +213,8 @@ MAN+=	__get_tcb.2 __thrsigdivert.2 __thrsleep.2 _exit.2 accept.2 \
 	ptrace.2 quotactl.2 read.2 readlink.2 reboot.2 recv.2 \
 	rename.2 revoke.2 rmdir.2 select.2 semctl.2 semget.2 \
 	semop.2 send.2 setgroups.2 setpgid.2 setregid.2 \
-	setresuid.2 setreuid.2 setsid.2 setuid.2 shmat.2 shmctl.2 \
-	shmget.2 shutdown.2 sigaction.2 sigaltstack.2 sigpending.2 \
+	setresuid.2 setreuid.2 setsid.2 sendsyslog.2 setuid.2 shmat.2 \
+	shmctl.2 shmget.2 shutdown.2 sigaction.2 sigaltstack.2 sigpending.2 \
 	sigprocmask.2 sigreturn.2 sigsuspend.2 socket.2 \
 	socketpair.2 stat.2 statfs.2 swapctl.2 symlink.2 \
 	sync.2 sysarch.2 syscall.2 truncate.2 umask.2 unlink.2 \
