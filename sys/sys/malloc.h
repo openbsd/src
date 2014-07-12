@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.109 2014/07/10 19:33:16 matthew Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.110 2014/07/12 10:51:35 tedu Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -168,7 +168,7 @@
 
 #define	M_KEVENT	137	/* kqueue related */
 
-#define	M_BLUETOOTH	138	/* Bluetooth */
+	/*		138	   free */
 
 #define M_BWMETER	139	/* Multicast upcall bw meters */
 
@@ -176,7 +176,7 @@
 #define M_UDFFENTRY	141	/* UDF file entry */
 #define M_UDFFID	142	/* UDF file id */
 
-#define	M_BTHIDEV	143	/* Bluetooth HID */
+	/*		143	   free */
 
 #define M_AGP		144	/* AGP Memory */
 
@@ -307,12 +307,12 @@
 	"NTFS decomp",	/* 135 M_NTFSDECOMP */ \
 	"NTFS vrun",	/* 136 M_NTFSRUN */ \
 	"kqueue",	/* 137 M_KEVENT */ \
-	"bluetooth",	/* 138 M_BLUETOOTH */ \
+	NULL,	/* 138 free */ \
 	"bwmeter",	/* 139 M_BWMETER */ \
 	"UDF mount",	/* 140 M_UDFMOUNT */ \
 	"UDF file entry",	/* 141 M_UDFFENTRY */ \
 	"UDF file id",	/* 142 M_UDFFID */ \
-	"Bluetooth HID",	/* 143 M_BTHIDEV */ \
+	NULL,	/* 143 free */ \
 	"AGP Memory",	/* 144 M_AGP */ \
 	"DRM",	/* 145 M_DRM */ \
 }
