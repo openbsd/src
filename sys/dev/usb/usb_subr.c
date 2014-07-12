@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.103 2014/07/10 11:47:14 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.104 2014/07/12 07:11:17 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1475,9 +1475,13 @@ usb_free_device(struct usbd_device *dev)
 int
 usbd_detach(struct usbd_device *dev, struct device *parent)
 {
-	int rv;
+	int i, rv = 0;
 
-	rv = config_detach_children(parent, DETACH_FORCE);
+	usbd_deactivate(dev);
+
+	for (i = 0; dev->subdevs[i] != NULL; i++)
+		rv |= config_detach(dev->subdevs[i], DETACH_FORCE);
+
 	if (rv == 0)
 		usb_free_device(dev);
 
