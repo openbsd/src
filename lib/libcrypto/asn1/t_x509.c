@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.24 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: t_x509.c,v 1.25 2014/07/12 16:33:25 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -505,7 +505,9 @@ X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 	l = 80 - 2 - obase;
 
 	b = X509_NAME_oneline(name, NULL, 0);
-	if (!*b) {
+	if (b == NULL)
+		return 0;
+	if (*b == '\0') {
 		free(b);
 		return 1;
 	}
