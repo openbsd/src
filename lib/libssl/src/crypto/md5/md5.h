@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.h,v 1.17 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: md5.h,v 1.18 2014/07/13 10:27:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,6 +60,9 @@
 
 #ifndef HEADER_MD5_H
 #define HEADER_MD5_H
+#if !defined(HAVE_ATTRIBUTE__BOUNDED__) || !defined(__OpenBSD__)
+#define __bounded__(x, y, z)
+#endif
 
 #include <openssl/opensslconf.h>
 

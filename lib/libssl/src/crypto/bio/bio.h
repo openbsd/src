@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.24 2014/06/22 14:41:10 jsing Exp $ */
+/* $OpenBSD: bio.h,v 1.25 2014/07/13 10:27:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,7 +58,9 @@
 
 #ifndef HEADER_BIO_H
 #define HEADER_BIO_H
-
+#if !defined(HAVE_ATTRIBUTE__BOUNDED__) || !defined(__OpenBSD__)
+#define __bounded__(x, y, z)
+#endif
 #include <openssl/opensslconf.h>
 
 # include <stdio.h>
