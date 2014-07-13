@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.51 2014/07/13 16:03:10 beck Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.52 2014/07/13 16:33:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -346,28 +346,31 @@ tls1_ec_nid2curve_id(int nid)
 	}
 }
 
-
-/* List of supported signature algorithms and hashes. Should make this
+/*
+ * List of supported signature algorithms and hashes. Should make this
  * customisable at some point, for now include everything we support.
  */
 
-#define tlsext_sigalg_rsa(md) md, TLSEXT_signature_rsa,
-
-#define tlsext_sigalg_dsa(md) md, TLSEXT_signature_dsa,
-
-#define tlsext_sigalg_ecdsa(md) md, TLSEXT_signature_ecdsa,
-
-#define tlsext_sigalg(md) \
-	tlsext_sigalg_rsa(md) \
-	tlsext_sigalg_dsa(md) \
-	tlsext_sigalg_ecdsa(md)
-
 static unsigned char tls12_sigalgs[] = {
-	tlsext_sigalg(TLSEXT_hash_sha512)
-	tlsext_sigalg(TLSEXT_hash_sha384)
-	tlsext_sigalg(TLSEXT_hash_sha256)
-	tlsext_sigalg(TLSEXT_hash_sha224)
-	tlsext_sigalg(TLSEXT_hash_sha1)
+	TLSEXT_hash_sha512, TLSEXT_signature_rsa,
+	TLSEXT_hash_sha512, TLSEXT_signature_dsa,
+	TLSEXT_hash_sha512, TLSEXT_signature_ecdsa,
+
+	TLSEXT_hash_sha384, TLSEXT_signature_rsa,
+	TLSEXT_hash_sha384, TLSEXT_signature_dsa,
+	TLSEXT_hash_sha384, TLSEXT_signature_ecdsa,
+
+	TLSEXT_hash_sha256, TLSEXT_signature_rsa,
+	TLSEXT_hash_sha256, TLSEXT_signature_dsa,
+	TLSEXT_hash_sha256, TLSEXT_signature_ecdsa,
+
+	TLSEXT_hash_sha224, TLSEXT_signature_rsa,
+	TLSEXT_hash_sha224, TLSEXT_signature_dsa,
+	TLSEXT_hash_sha224, TLSEXT_signature_ecdsa,
+
+	TLSEXT_hash_sha1, TLSEXT_signature_rsa,
+	TLSEXT_hash_sha1, TLSEXT_signature_dsa,
+	TLSEXT_hash_sha1, TLSEXT_signature_ecdsa,
 };
 
 int
