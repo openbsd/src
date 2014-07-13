@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.171 2014/07/12 18:44:01 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.172 2014/07/13 08:15:16 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3541,7 +3541,11 @@ uvm_map_hint(struct vmspace *vm, vm_prot_t prot)
 	}
 #endif
 
+#ifdef __LP64__
+	spacing = (MIN((4UL * 1024 * 1024 * 1024), BRKSIZ) - 1);
+#else
 	spacing = (MIN((256 * 1024 * 1024), BRKSIZ) - 1);
+#endif
 
 	addr = (vaddr_t)vm->vm_daddr;
 	/*
