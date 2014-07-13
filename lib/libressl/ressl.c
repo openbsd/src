@@ -65,21 +65,29 @@ ressl_set_error(struct ressl *ctx, char *fmt, ...)
 }
 
 struct ressl *
-ressl_new(struct ressl_config *config)
+ressl_new(void)
 {
 	struct ressl *ctx;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
 		return (NULL);
 
+	ctx->config = &ressl_config_default;
+
+	ressl_reset(ctx);
+
+	return (ctx);
+}
+
+int
+ressl_configure(struct ressl *ctx, struct ressl_config *config)
+{
 	if (config == NULL)
 		config = &ressl_config_default;
 
 	ctx->config = config;
 
-	ressl_reset(ctx);
-
-	return (ctx);
+	return (0);
 }
 
 void
