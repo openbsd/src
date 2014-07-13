@@ -1327,7 +1327,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ehcireg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ehcivar.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/hid.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/hidkbdsc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/hidkbdvar.ph

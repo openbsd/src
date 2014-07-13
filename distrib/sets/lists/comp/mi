@@ -737,7 +737,6 @@
 ./usr/include/dev/usb
 ./usr/include/dev/usb/ehcireg.h
 ./usr/include/dev/usb/ehcivar.h
-./usr/include/dev/usb/ezload.h
 ./usr/include/dev/usb/hid.h
 ./usr/include/dev/usb/hidkbdsc.h
 ./usr/include/dev/usb/hidkbdvar.h

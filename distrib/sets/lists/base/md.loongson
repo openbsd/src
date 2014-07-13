@@ -1254,7 +1254,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/ehcireg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/ehcivar.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/hid.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/hidkbdsc.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/hidkbdvar.ph

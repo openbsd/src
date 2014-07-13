@@ -768,7 +768,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ehcireg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ehcivar.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/hid.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/hidkbdsc.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/hidkbdvar.ph
