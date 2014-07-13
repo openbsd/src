@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.18 2014/05/24 02:27:31 krw Exp $	*/
+/*	$OpenBSD: dir.c,v 1.19 2014/07/13 16:08:53 pelikan Exp $	*/
 /*	$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ dirscan(struct inodesc *idesc)
 	}
 	idesc->id_loc = 0;
 	for (dp = fsck_readdir(idesc); dp != NULL; dp = fsck_readdir(idesc)) {
-		dsize = fs2h16(dp->e2d_reclen);
+		dsize = letoh16(dp->e2d_reclen);
 		memcpy(dbuf, dp, (size_t)dsize);
 		idesc->id_dirp = (struct ext2fs_direct *)dbuf;
 		if ((n = (*idesc->id_func)(idesc)) & ALTERED) {
@@ -172,7 +172,7 @@ fsck_readdir(struct inodesc *idesc)
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bp = getdirblk(idesc->id_blkno, blksiz);
 		dp = (struct ext2fs_direct *)(bp->b_un.b_buf + idesc->id_loc);
-		dp->e2d_reclen = h2fs16(sblock.e2fs_bsize);
+		dp->e2d_reclen = htole16(sblock.e2fs_bsize);
 		dp->e2d_ino = 0;
 		dp->e2d_namlen = 0;
 		dp->e2d_type = 0;
@@ -188,8 +188,8 @@ dpok:
 		return NULL;
 	dploc = idesc->id_loc;
 	dp = (struct ext2fs_direct *)(bp->b_un.b_buf + dploc);
-	idesc->id_loc += fs2h16(dp->e2d_reclen);
-	idesc->id_filesize -= fs2h16(dp->e2d_reclen);
+	idesc->id_loc += letoh16(dp->e2d_reclen);
+	idesc->id_filesize -= letoh16(dp->e2d_reclen);
 	if ((idesc->id_loc % sblock.e2fs_bsize) == 0)
 		return (dp);
 	ndp = (struct ext2fs_direct *)(bp->b_un.b_buf + idesc->id_loc);
@@ -203,7 +203,7 @@ dpok:
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bp = getdirblk(idesc->id_blkno, blksiz);
 		dp = (struct ext2fs_direct *)(bp->b_un.b_buf + dploc);
-		dp->e2d_reclen = h2fs16(fs2h16(dp->e2d_reclen) + size);
+		dp->e2d_reclen = htole16(letoh16(dp->e2d_reclen) + size);
 		if (fix)
 			dirty(bp);
 	}
@@ -220,10 +220,10 @@ dircheck(struct inodesc *idesc, struct ext2fs_direct *dp)
 	int size;
 	char *cp;
 	int spaceleft;
-	u_int16_t reclen = fs2h16(dp->e2d_reclen);
+	u_int16_t reclen = letoh16(dp->e2d_reclen);
 
 	spaceleft = sblock.e2fs_bsize - (idesc->id_loc % sblock.e2fs_bsize);
-	if (fs2h32(dp->e2d_ino) > maxino ||
+	if (letoh32(dp->e2d_ino) > maxino ||
 	    reclen == 0 ||
 	    reclen > spaceleft ||
 	    (reclen & 0x3) != 0)
@@ -269,7 +269,7 @@ fileerror(ino_t cwd, ino_t ino, char *errmesg)
 	dp = ginode(ino);
 	if (ftypeok(dp))
 		pfatal("%s=%s\n",
-		    (fs2h16(dp->e2di_mode) & IFMT) == IFDIR ? "DIR" : "FILE", pathbuf);
+		    (letoh16(dp->e2di_mode) & IFMT) == IFDIR ? "DIR" : "FILE", pathbuf);
 	else
 		pfatal("NAME=%s\n", pathbuf);
 }
@@ -280,15 +280,15 @@ adjust(struct inodesc *idesc, short lcnt)
 	struct ext2fs_dinode *dp;
 
 	dp = ginode(idesc->id_number);
-	if (fs2h16(dp->e2di_nlink) == lcnt) {
+	if (letoh16(dp->e2di_nlink) == lcnt) {
 		if (linkup(idesc->id_number, (ino_t)0) == 0)
 			clri(idesc, "UNREF", 0);
 	} else {
 		pwarn("LINK COUNT %s", (lfdir == idesc->id_number) ? lfname :
-			((fs2h16(dp->e2di_mode) & IFMT) == IFDIR ? "DIR" : "FILE"));
+			((letoh16(dp->e2di_mode) & IFMT) == IFDIR ? "DIR" : "FILE"));
 		pinode(idesc->id_number);
 		printf(" COUNT %d SHOULD BE %d",
-			fs2h16(dp->e2di_nlink), fs2h16(dp->e2di_nlink) - lcnt);
+			letoh16(dp->e2di_nlink), letoh16(dp->e2di_nlink) - lcnt);
 		if (preen) {
 			if (lcnt < 0) {
 				printf("\n");
@@ -297,7 +297,7 @@ adjust(struct inodesc *idesc, short lcnt)
 			printf(" (ADJUSTED)\n");
 		}
 		if (preen || reply("ADJUST") == 1) {
-			dp->e2di_nlink = h2fs16(fs2h16(dp->e2di_nlink) - lcnt);
+			dp->e2di_nlink = htole16(letoh16(dp->e2di_nlink) - lcnt);
 			inodirty();
 		}
 	}
@@ -320,12 +320,12 @@ mkentry(struct inodesc *idesc)
 		oldlen = EXT2FS_DIRSIZ(dirp->e2d_namlen);
 	else
 		oldlen = 0;
-	if (fs2h16(dirp->e2d_reclen) - oldlen < newlen)
+	if (letoh16(dirp->e2d_reclen) - oldlen < newlen)
 		return (KEEPON);
-	newent.e2d_reclen = h2fs16(fs2h16(dirp->e2d_reclen) - oldlen);
-	dirp->e2d_reclen = h2fs16(oldlen);
+	newent.e2d_reclen = htole16(letoh16(dirp->e2d_reclen) - oldlen);
+	dirp->e2d_reclen = htole16(oldlen);
 	dirp = (struct ext2fs_direct *)(((char *)dirp) + oldlen);
-	dirp->e2d_ino = h2fs32(idesc->id_parent); /* ino to be entered is in id_parent */
+	dirp->e2d_ino = htole32(idesc->id_parent); /* ino to be entered is in id_parent */
 	dirp->e2d_reclen = newent.e2d_reclen;
 	dirp->e2d_namlen = newent.e2d_namlen;
 	dirp->e2d_type = newent.e2d_type;
@@ -342,7 +342,7 @@ chgino(struct inodesc *idesc)
 	if (strlen(idesc->id_name) != namlen ||
 		strncmp(dirp->e2d_name, idesc->id_name, (int)namlen))
 		return (KEEPON);
-	dirp->e2d_ino = h2fs32(idesc->id_parent);
+	dirp->e2d_ino = htole32(idesc->id_parent);
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
 		dirp->e2d_type = inot2ext2dt(typemap[idesc->id_parent]);
@@ -362,7 +362,7 @@ linkup(ino_t orphan, ino_t parentdir)
 
 	memset(&idesc, 0, sizeof(struct inodesc));
 	dp = ginode(orphan);
-	lostdir = (fs2h16(dp->e2di_mode) & IFMT) == IFDIR;
+	lostdir = (letoh16(dp->e2di_mode) & IFMT) == IFDIR;
 	pwarn("UNREF %s ", lostdir ? "DIR" : "FILE");
 	pinode(orphan);
 	if (preen && inosize(dp) == 0)
@@ -404,7 +404,7 @@ linkup(ino_t orphan, ino_t parentdir)
 		}
 	}
 	dp = ginode(lfdir);
-	if ((fs2h16(dp->e2di_mode) & IFMT) != IFDIR) {
+	if ((letoh16(dp->e2di_mode) & IFMT) != IFDIR) {
 		pfatal("lost+found IS NOT A DIRECTORY");
 		if (reply("REALLOCATE") == 0)
 			return (0);
@@ -441,7 +441,7 @@ linkup(ino_t orphan, ino_t parentdir)
 		    parentdir != (ino_t)-1)
 			(void)makeentry(orphan, lfdir, "..");
 		dp = ginode(lfdir);
-		dp->e2di_nlink = h2fs16(fs2h16(dp->e2di_nlink) +1);
+		dp->e2di_nlink = htole16(letoh16(dp->e2di_nlink) +1);
 		inodirty();
 		lncntp[lfdir]++;
 		pwarn("DIR I=%llu CONNECTED. ", (unsigned long long)orphan);
@@ -518,16 +518,16 @@ expanddir(struct ext2fs_dinode *dp, char *name)
 	char *firstblk;
 
 	lastbn = lblkno(&sblock, inosize(dp));
-	if (lastbn >= NDADDR - 1 || fs2h32(dp->e2di_blocks[lastbn]) == 0 ||
+	if (lastbn >= NDADDR - 1 || letoh32(dp->e2di_blocks[lastbn]) == 0 ||
 		inosize(dp) == 0)
 		return (0);
 	if ((newblk = allocblk()) == 0)
 		return (0);
 	dp->e2di_blocks[lastbn + 1] = dp->e2di_blocks[lastbn];
-	dp->e2di_blocks[lastbn] = h2fs32(newblk);
+	dp->e2di_blocks[lastbn] = htole32(newblk);
 	inossize(dp, inosize(dp) + sblock.e2fs_bsize);
-	dp->e2di_nblock = h2fs32(fs2h32(dp->e2di_nblock) + 1);
-	bp = getdirblk(fs2h32(dp->e2di_blocks[lastbn + 1]),
+	dp->e2di_nblock = htole32(letoh32(dp->e2di_nblock) + 1);
+	bp = getdirblk(letoh32(dp->e2di_blocks[lastbn + 1]),
 		sblock.e2fs_bsize);
 	if (bp->b_errs)
 		goto bad;
@@ -544,11 +544,11 @@ expanddir(struct ext2fs_dinode *dp, char *name)
 	memcpy(bp->b_un.b_buf, firstblk, sblock.e2fs_bsize);
 	free(firstblk);
 	dirty(bp);
-	bp = getdirblk(fs2h32(dp->e2di_blocks[lastbn + 1]),
+	bp = getdirblk(letoh32(dp->e2di_blocks[lastbn + 1]),
 		sblock.e2fs_bsize);
 	if (bp->b_errs)
 		goto bad;
-	emptydir.dot_reclen = h2fs16(sblock.e2fs_bsize);
+	emptydir.dot_reclen = htole16(sblock.e2fs_bsize);
 	memcpy(bp->b_un.b_buf, &emptydir, sizeof emptydir);
 	pwarn("NO SPACE LEFT IN %s", name);
 	if (preen)
@@ -561,9 +561,9 @@ expanddir(struct ext2fs_dinode *dp, char *name)
 bad:
 	dp->e2di_blocks[lastbn] = dp->e2di_blocks[lastbn + 1];
 	dp->e2di_blocks[lastbn + 1] = 0;
-	dp->e2di_size = h2fs32(fs2h32(dp->e2di_size) - sblock.e2fs_bsize);
+	dp->e2di_size = htole32(letoh32(dp->e2di_size) - sblock.e2fs_bsize);
 	inossize(dp, inosize(dp) - sblock.e2fs_bsize);
-	dp->e2di_nblock = h2fs32(fs2h32(dp->e2di_nblock) - 1);
+	dp->e2di_nblock = htole32(letoh32(dp->e2di_nblock) - 1);
 	freeblk(newblk);
 	return (0);
 }
@@ -580,8 +580,8 @@ allocdir(ino_t parent, ino_t request, int mode)
 	struct ext2fs_dirtemplate *dirp;
 
 	ino = allocino(request, IFDIR|mode);
-	dirhead.dot_reclen = h2fs16(12); /* XXX */
-	dirhead.dotdot_reclen = h2fs16(sblock.e2fs_bsize - 12); /* XXX */
+	dirhead.dot_reclen = htole16(12); /* XXX */
+	dirhead.dotdot_reclen = htole16(sblock.e2fs_bsize - 12); /* XXX */
 	dirhead.dot_namlen = 1;
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
@@ -595,20 +595,20 @@ allocdir(ino_t parent, ino_t request, int mode)
 	else
 		dirhead.dotdot_type = 0;
 	dirp = &dirhead;
-	dirp->dot_ino = h2fs32(ino);
-	dirp->dotdot_ino = h2fs32(parent);
+	dirp->dot_ino = htole32(ino);
+	dirp->dotdot_ino = htole32(parent);
 	dp = ginode(ino);
-	bp = getdirblk(fs2h32(dp->e2di_blocks[0]), sblock.e2fs_bsize);
+	bp = getdirblk(letoh32(dp->e2di_blocks[0]), sblock.e2fs_bsize);
 	if (bp->b_errs) {
 		freeino(ino);
 		return (0);
 	}
 	memcpy(bp->b_un.b_buf, dirp, sizeof(struct ext2fs_dirtemplate));
 	dirty(bp);
-	dp->e2di_nlink = h2fs16(2);
+	dp->e2di_nlink = htole16(2);
 	inodirty();
 	if (ino == EXT2_ROOTINO) {
-		lncntp[ino] = fs2h16(dp->e2di_nlink);
+		lncntp[ino] = letoh16(dp->e2di_nlink);
 		cacheino(dp, ino);
 		return(ino);
 	}
@@ -619,11 +619,11 @@ allocdir(ino_t parent, ino_t request, int mode)
 	cacheino(dp, ino);
 	statemap[ino] = statemap[parent];
 	if (statemap[ino] == DSTATE) {
-		lncntp[ino] = fs2h16(dp->e2di_nlink);
+		lncntp[ino] = letoh16(dp->e2di_nlink);
 		lncntp[parent]++;
 	}
 	dp = ginode(parent);
-	dp->e2di_nlink = h2fs16(fs2h16(dp->e2di_nlink) + 1);
+	dp->e2di_nlink = htole16(letoh16(dp->e2di_nlink) + 1);
 	inodirty();
 	return (ino);
 }
@@ -638,7 +638,7 @@ freedir(ino_t ino, ino_t parent)
 
 	if (ino != parent) {
 		dp = ginode(parent);
-		dp->e2di_nlink = h2fs16(fs2h16(dp->e2di_nlink) - 1);
+		dp->e2di_nlink = htole16(letoh16(dp->e2di_nlink) - 1);
 		inodirty();
 	}
 	freeino(ino);

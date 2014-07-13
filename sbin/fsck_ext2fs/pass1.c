@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.13 2013/04/24 13:46:27 deraadt Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.14 2014/07/13 16:08:53 pelikan Exp $	*/
 /*	$NetBSD: pass1.c,v 1.9 2000/01/31 11:40:12 bouyer Exp $	*/
 
 /*
@@ -67,18 +67,18 @@ pass1(void)
 		dbase = c * sblock.e2fs.e2fs_bpg +
 		    sblock.e2fs.e2fs_first_dblock;
 		/* Mark the blocks used for the inode table */
-		if (fs2h32(sblock.e2fs_gd[c].ext2bgd_i_tables) >= dbase) {
+		if (letoh32(sblock.e2fs_gd[c].ext2bgd_i_tables) >= dbase) {
 			for (i = 0; i < sblock.e2fs_itpg; i++)
 				setbmap(
-				    fs2h32(sblock.e2fs_gd[c].ext2bgd_i_tables)
+				    letoh32(sblock.e2fs_gd[c].ext2bgd_i_tables)
 				    + i);
 		}
 		/* Mark the blocks used for the block bitmap */
-		if (fs2h32(sblock.e2fs_gd[c].ext2bgd_b_bitmap) >= dbase)
-			setbmap(fs2h32(sblock.e2fs_gd[c].ext2bgd_b_bitmap));
+		if (letoh32(sblock.e2fs_gd[c].ext2bgd_b_bitmap) >= dbase)
+			setbmap(letoh32(sblock.e2fs_gd[c].ext2bgd_b_bitmap));
 		/* Mark the blocks used for the inode bitmap */
-		if (fs2h32(sblock.e2fs_gd[c].ext2bgd_i_bitmap) >= dbase)
-			setbmap(fs2h32(sblock.e2fs_gd[c].ext2bgd_i_bitmap));
+		if (letoh32(sblock.e2fs_gd[c].ext2bgd_i_bitmap) >= dbase)
+			setbmap(letoh32(sblock.e2fs_gd[c].ext2bgd_i_bitmap));
 
 		if (sblock.e2fs.e2fs_rev == E2FS_REV0 ||
 		    (sblock.e2fs.e2fs_features_rocompat &
@@ -130,7 +130,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	if (inumber < EXT2_FIRSTINO && inumber != EXT2_ROOTINO)
 		return;
 
-	mode = fs2h16(dp->e2di_mode) & IFMT;
+	mode = letoh16(dp->e2di_mode) & IFMT;
 	if (mode == 0 || (dp->e2di_dtime != 0 && dp->e2di_nlink == 0)) {
 		if (mode == 0 && (
 			memcmp(dp->e2di_blocks, zino.e2di_blocks,
@@ -154,7 +154,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 			if (preen || reply("CORRECT")) {
 				time_t t;
 				time(&t);
-				dp->e2di_dtime = h2fs32(t);
+				dp->e2di_dtime = htole32(t);
 				dp = ginode(inumber);
 				inodirty();
 			}
@@ -165,7 +165,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	}
 	lastino = inumber;
 	if (dp->e2di_dtime != 0) {
-		time_t t = fs2h32(dp->e2di_dtime);
+		time_t t = letoh32(dp->e2di_dtime);
 		char *p = ctime(&t);
 		pwarn("INODE I=%llu HAS DTIME=%12.12s %4.4s",
 		    (unsigned long long)inumber, &p[4], &p[20]);
@@ -185,7 +185,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	}
 	if (!preen && mode == IFMT && reply("HOLD BAD BLOCK") == 1) {
 		dp = ginode(inumber);
-		dp->e2di_mode = h2fs16(IFREG|0600);
+		dp->e2di_mode = htole16(IFREG|0600);
 		inossize(dp, sblock.e2fs_bsize);
 		inodirty();
 	}
@@ -220,7 +220,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 			if (dp->e2di_blocks[j] != 0) {
 				if (debug)
 					printf("bad direct addr: %d\n",
-					    fs2h32(dp->e2di_blocks[j]));
+					    letoh32(dp->e2di_blocks[j]));
 				goto unknown;
 			}
 		for (j = 0, ndb -= NDADDR; ndb > 0; j++)
@@ -229,7 +229,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 			if (dp->e2di_blocks[j+NDADDR] != 0) {
 				if (debug)
 					printf("bad indirect addr: %d\n",
-					    fs2h32(dp->e2di_blocks[j+NDADDR]));
+					    letoh32(dp->e2di_blocks[j+NDADDR]));
 				goto unknown;
 			}
 		}
@@ -237,7 +237,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	if (ftypeok(dp) == 0)
 		goto unknown;
 	n_files++;
-	lncntp[inumber] = fs2h16(dp->e2di_nlink);
+	lncntp[inumber] = letoh16(dp->e2di_nlink);
 	if (dp->e2di_nlink == 0) {
 		zlnp = (struct zlncnt *)malloc(sizeof *zlnp);
 		if (zlnp == NULL) {
@@ -264,16 +264,16 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	idesc->id_number = inumber;
 	(void)ckinode(dp, idesc);
 	idesc->id_entryno *= btodb(sblock.e2fs_bsize);
-	if (fs2h32(dp->e2di_nblock) != idesc->id_entryno) {
+	if (letoh32(dp->e2di_nblock) != idesc->id_entryno) {
 		pwarn("INCORRECT BLOCK COUNT I=%llu (%d should be %d)",
 		    (unsigned long long)inumber,
-		    fs2h32(dp->e2di_nblock), idesc->id_entryno);
+		    letoh32(dp->e2di_nblock), idesc->id_entryno);
 		if (preen)
 			printf(" (CORRECTED)\n");
 		else if (reply("CORRECT") == 0)
 			return;
 		dp = ginode(inumber);
-		dp->e2di_nblock = h2fs32(idesc->id_entryno);
+		dp->e2di_nblock = htole32(idesc->id_entryno);
 		inodirty();
 	}
 	return;

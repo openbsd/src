@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.22 2014/05/24 14:54:49 krw Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.23 2014/07/13 16:08:53 pelikan Exp $	*/
 /*	$NetBSD: utilities.c,v 1.6 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ static void rwerror(char *, daddr32_t);
 int
 ftypeok(struct ext2fs_dinode *dp)
 {
-	switch (fs2h16(dp->e2di_mode) & IFMT) {
+	switch (letoh16(dp->e2di_mode) & IFMT) {
 
 	case IFDIR:
 	case IFREG:
@@ -68,7 +68,7 @@ ftypeok(struct ext2fs_dinode *dp)
 
 	default:
 		if (debug)
-			printf("bad file type 0%o\n", fs2h16(dp->e2di_mode));
+			printf("bad file type 0%o\n", letoh16(dp->e2di_mode));
 		return (0);
 	}
 }

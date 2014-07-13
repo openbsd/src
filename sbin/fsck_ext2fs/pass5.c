@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.16 2013/04/24 13:46:27 deraadt Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.17 2014/07/13 16:08:53 pelikan Exp $	*/
 /*	$NetBSD: pass5.c,v 1.7 2000/01/28 16:01:46 bouyer Exp $ */
 
 /*
@@ -81,17 +81,17 @@ pass5(void)
 		ndirs = 0;
 
 		if (blk_bitmap == NULL) {
-			blk_bitmap = getdatablk(fs2h32(fs->e2fs_gd[c].ext2bgd_b_bitmap),
+			blk_bitmap = getdatablk(letoh32(fs->e2fs_gd[c].ext2bgd_b_bitmap),
 				fs->e2fs_bsize);
 		} else {
-			getblk(blk_bitmap, fs2h32(fs->e2fs_gd[c].ext2bgd_b_bitmap),
+			getblk(blk_bitmap, letoh32(fs->e2fs_gd[c].ext2bgd_b_bitmap),
 				fs->e2fs_bsize);
 		}
 		if (ino_bitmap == NULL) {
-			ino_bitmap = getdatablk(fs2h32(fs->e2fs_gd[c].ext2bgd_i_bitmap),
+			ino_bitmap = getdatablk(letoh32(fs->e2fs_gd[c].ext2bgd_i_bitmap),
 				fs->e2fs_bsize);
 		} else {
-			getblk(ino_bitmap, fs2h32(fs->e2fs_gd[c].ext2bgd_i_bitmap),
+			getblk(ino_bitmap, letoh32(fs->e2fs_gd[c].ext2bgd_i_bitmap),
 				fs->e2fs_bsize);
 		}
 		memset(bbmap, 0, fs->e2fs_bsize);
@@ -160,27 +160,27 @@ pass5(void)
 		cs_nifree += nifree;
 		cs_ndir += ndirs;
 
-		if (debug && (fs2h16(fs->e2fs_gd[c].ext2bgd_nbfree) != nbfree ||
-		    fs2h16(fs->e2fs_gd[c].ext2bgd_nifree) != nifree ||
-		    fs2h16(fs->e2fs_gd[c].ext2bgd_ndirs) != ndirs)) {
+		if (debug && (letoh16(fs->e2fs_gd[c].ext2bgd_nbfree) != nbfree ||
+		    letoh16(fs->e2fs_gd[c].ext2bgd_nifree) != nifree ||
+		    letoh16(fs->e2fs_gd[c].ext2bgd_ndirs) != ndirs)) {
 			printf("summary info for cg %d is %d, %d, %d,"
 					"should be %d, %d, %d\n", c,
-					fs2h16(fs->e2fs_gd[c].ext2bgd_nbfree),
-					fs2h16(fs->e2fs_gd[c].ext2bgd_nifree),
-					fs2h16(fs->e2fs_gd[c].ext2bgd_ndirs),
+					letoh16(fs->e2fs_gd[c].ext2bgd_nbfree),
+					letoh16(fs->e2fs_gd[c].ext2bgd_nifree),
+					letoh16(fs->e2fs_gd[c].ext2bgd_ndirs),
 					nbfree,
 					nifree,
 					ndirs);
 		}
 		(void)snprintf(msg, sizeof(msg),
 		    "SUMMARY INFORMATIONS WRONG FOR CG #%d", c);
-		if ((fs2h16(fs->e2fs_gd[c].ext2bgd_nbfree) != nbfree ||
-			fs2h16(fs->e2fs_gd[c].ext2bgd_nifree) != nifree ||
-			fs2h16(fs->e2fs_gd[c].ext2bgd_ndirs) != ndirs) &&
+		if ((letoh16(fs->e2fs_gd[c].ext2bgd_nbfree) != nbfree ||
+			letoh16(fs->e2fs_gd[c].ext2bgd_nifree) != nifree ||
+			letoh16(fs->e2fs_gd[c].ext2bgd_ndirs) != ndirs) &&
 			dofix(&idesc[0], msg)) {
-			fs->e2fs_gd[c].ext2bgd_nbfree = h2fs16(nbfree);
-			fs->e2fs_gd[c].ext2bgd_nifree = h2fs16(nifree);
-			fs->e2fs_gd[c].ext2bgd_ndirs = h2fs16(ndirs);
+			fs->e2fs_gd[c].ext2bgd_nbfree = htole16(nbfree);
+			fs->e2fs_gd[c].ext2bgd_nifree = htole16(nifree);
+			fs->e2fs_gd[c].ext2bgd_ndirs = htole16(ndirs);
 			sbdirty();
 		}
 
