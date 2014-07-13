@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.317 2014/07/12 21:04:07 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.318 2014/07/13 14:50:03 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -840,9 +840,11 @@ bind_lease(void)
 	    compare_lease(client->active, client->new) == 0) {
 		client->new->resolv_conf = client->active->resolv_conf;
 		client->active->resolv_conf = NULL;
+		client->active = client->new;
+		client->new = NULL;
 		note("bound to %s -- renewal in %lld seconds.",
-		    inet_ntoa(client->new->address),
-		    (long long)(client->new->renewal - time(NULL)));
+		    inet_ntoa(client->active->address),
+		    (long long)(client->active->renewal - time(NULL)));
 		goto newlease;
 	}
 
