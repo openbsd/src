@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.54 2014/07/11 22:28:05 uebayasi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.55 2014/07/13 13:19:01 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -591,7 +591,7 @@ get_ncpusfound(void)
 {
 	extern struct boot_desc *octeon_boot_desc;
 	uint64_t core_mask = octeon_boot_desc->core_mask;
-	uint64_t i, m, ncpus = 1;
+	uint64_t i, m, ncpus = 0;
 
 	for (i = 0, m = 1 ; i < OCTEON_MAXCPUS; i++, m <<= 1)
 		if (core_mask & m)
@@ -834,7 +834,7 @@ hw_cpu_hatch(struct cpu_info *ci)
 	Octeon_ConfigCache(ci);
 	Mips_SyncCache(ci);
 
-	printf("cpu%d launched\n", cpu_number());
+	printf("cpu%lu launched\n", cpu_number());
 
 	(*md_startclock)(ci);
 	ncpus++;
@@ -900,4 +900,4 @@ hw_ipi_intr_clear(u_long cpuid)
 		bus_space_read_8(&iobus_tag, iobus_h, CIU_MBOX_CLR(cpuid));
 	bus_space_write_8(&iobus_tag, iobus_h, CIU_MBOX_CLR(cpuid), clr);
 }
-#endif
+#endif /* MULTIPROCESSOR */
