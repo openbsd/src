@@ -79,7 +79,7 @@ Recover digest originally signed using PKCS#1 and SHA256 digest:
  if (EVP_PKEY_verify_recover(ctx, NULL, &routlen, sig, siglen) <= 0)
 	/* Error */
 
- rout = OPENSSL_malloc(routlen);
+ rout = malloc(routlen);
 
  if (!rout)
 	/* malloc failure */

@@ -91,7 +91,7 @@ Allocate and encode the DER encoding of an X509 structure:
 
  len = i2d_X509(x, NULL);
 
- buf = OPENSSL_malloc(len);
+ buf = malloc(len);
 
  if (buf == NULL)
 	/* error */
@@ -159,7 +159,7 @@ mistake is to attempt to use a buffer directly as follows:
 
  len = i2d_X509(x, NULL);
 
- buf = OPENSSL_malloc(len);
+ buf = malloc(len);
 
  if (buf == NULL)
 	/* error */
@@ -168,12 +168,12 @@ mistake is to attempt to use a buffer directly as follows:
 
  /* Other stuff ... */
 
- OPENSSL_free(buf);
+ free(buf);
 
 This code will result in B<buf> apparently containing garbage because
 it was incremented after the call to point after the data just written.
-Also B<buf> will no longer contain the pointer allocated by B<OPENSSL_malloc()>
-and the subsequent call to B<OPENSSL_free()> may well crash.
+Also B<buf> will no longer contain the pointer allocated by B<malloc()>
+and the subsequent call to B<free()> may well crash.
 
 The auto allocation feature (setting buf to NULL) only works on OpenSSL
 0.9.7 and later. Attempts to use it on earlier versions will typically

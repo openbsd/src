@@ -67,7 +67,7 @@ Decrypt data using OAEP (for RSA keys):
  if (EVP_PKEY_decrypt(ctx, NULL, &outlen, in, inlen) <= 0)
 	/* Error */
 
- out = OPENSSL_malloc(outlen);
+ out = malloc(outlen);
 
  if (!out)
 	/* malloc failure */

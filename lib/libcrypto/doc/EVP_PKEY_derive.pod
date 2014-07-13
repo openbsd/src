@@ -68,7 +68,7 @@ Derive shared secret (for example DH or EC keys):
  if (EVP_PKEY_derive(ctx, NULL, &skeylen) <= 0)
 	/* Error */
 
- skey = OPENSSL_malloc(skeylen);
+ skey = malloc(skeylen);
 
  if (!skey)
 	/* malloc failure */

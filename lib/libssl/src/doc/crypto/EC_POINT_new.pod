@@ -91,7 +91,7 @@ The function EC_POINT_point2oct must be supplied with a buffer long enough to st
 octets stored. Calling the function with a NULL buffer will not perform the conversion but will still return the required buffer length.
 
 The function EC_POINT_point2hex will allocate sufficient memory to store the hexadecimal string. It is the caller's responsibility to free
-this memory with a subsequent call to OPENSSL_free().
+this memory with a subsequent call to free().
 
 =head1 RETURN VALUES
 
