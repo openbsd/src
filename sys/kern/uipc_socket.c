@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.129 2014/07/09 15:43:33 tedu Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.130 2014/07/13 15:52:38 tedu Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1012,8 +1012,8 @@ sorflush(struct socket *so)
 	socantrcvmore(so);
 	sbunlock(sb);
 	asb = *sb;
-	bzero(sb, sizeof (*sb));
-	/* XXX - the bzero stomps all over so_rcv */
+	memset(sb, 0, sizeof (*sb));
+	/* XXX - the memset stomps all over so_rcv */
 	if (asb.sb_flags & SB_KNOTE) {
 		sb->sb_sel.si_note = asb.sb_sel.si_note;
 		sb->sb_flags = SB_KNOTE;
@@ -1312,7 +1312,7 @@ somove(struct socket *so, int wait)
 	m->m_nextpkt = NULL;
 	if (m->m_flags & M_PKTHDR) {
 		m_tag_delete_chain(m);
-		bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
+		memset(&m->m_pkthdr, 0, sizeof(m->m_pkthdr));
 		m->m_pkthdr.len = len;
 		m->m_pkthdr.pf.prio = IFQ_DEFPRIO;
 	}

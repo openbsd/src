@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.191 2014/07/13 09:52:48 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.192 2014/07/13 15:52:38 tedu Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -246,7 +246,7 @@ m_gethdr(int nowait, int type)
 		m->m_nextpkt = NULL;
 		m->m_data = m->m_pktdat;
 		m->m_flags = M_PKTHDR;
-		bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
+		memset(&m->m_pkthdr, 0, sizeof(m->m_pkthdr));
 		m->m_pkthdr.pf.prio = IFQ_DEFPRIO;
 	}
 	return (m);
@@ -260,7 +260,7 @@ m_inithdr(struct mbuf *m)
 	m->m_nextpkt = NULL;
 	m->m_data = m->m_pktdat;
 	m->m_flags = M_PKTHDR;
-	bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
+	memset(&m->m_pkthdr, 0, sizeof(m->m_pkthdr));
 	m->m_pkthdr.pf.prio = IFQ_DEFPRIO;
 
 	return (m);
@@ -655,7 +655,7 @@ m_copyback(struct mbuf *m0, int off, int len, const void *_cp, int wait)
 					goto out;
 				}
 			}
-			bzero(mtod(n, caddr_t), off);
+			memset(mtod(n, caddr_t), 0, off);
 			n->m_len = len + off;
 			m->m_next = n;
 		}

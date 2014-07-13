@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.75 2014/07/13 15:29:04 tedu Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.76 2014/07/13 15:52:38 tedu Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -429,7 +429,7 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 	nam2->m_len = sizeof(struct sockaddr_un);
 	memcpy(mtod(nam2, struct sockaddr_un *), soun,
 	    offsetof(struct sockaddr_un, sun_path) + pathlen);
-	/* No need to NUL terminate: m_getclr() returns bzero'd mbufs. */
+	/* No need to NUL terminate: m_getclr() returns zero'd mbufs. */
 
 	soun = mtod(nam2, struct sockaddr_un *);
 

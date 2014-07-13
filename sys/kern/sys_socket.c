@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.18 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.19 2014/07/13 15:52:38 tedu Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ soo_stat(struct file *fp, struct stat *ub, struct proc *p)
 {
 	struct socket *so = fp->f_data;
 
-	bzero(ub, sizeof (*ub));
+	memset(ub, 0, sizeof (*ub));
 	ub->st_mode = S_IFSOCK;
 	if ((so->so_state & SS_CANTRCVMORE) == 0 ||
 	    so->so_rcv.sb_cc != 0)
