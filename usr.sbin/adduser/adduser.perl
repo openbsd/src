@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.61 2014/02/15 06:27:50 tedu Exp $
+#	$OpenBSD: adduser.perl,v 1.62 2014/07/13 20:09:38 tedu Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -96,7 +96,7 @@ sub variables {
     # common shells, first element has higher priority
     @shellpref = ('csh', 'sh', 'bash', 'tcsh', 'ksh');
 
-    @encryption_methods = ('auto', 'blowfish', 'md5', 'des', 'old');
+    @encryption_methods = ('auto', 'blowfish' );
 
     $defaultshell = 'ksh';	# defaultshell if not empty
     $group_uniq = 'USER';
@@ -958,18 +958,7 @@ sub uniq {
 # That may be a DES salt or a blowfish rotation count
 sub salt {
     local($salt);		# initialization
-    if ($encryptionmethod eq "des" || $encryptionmethod eq "old") {
-        local($i, $rand);
-        local(@itoa64) = ( '0' .. '9', 'a' .. 'z', 'A' .. 'Z' ); # 0 .. 63
-
-        warn "calculate salt\n" if $verbose > 1;
-
-        for ($i = 0; $i < 8; $i++) {
-	    srand(time + $rand + $$);
-	    $rand = rand(25*29*17 + $rand);
-	    $salt .=  $itoa64[$rand & $#itoa64];
-        }
-    } elsif ($encryptionmethod eq "md5" || $encryptionmethod eq "auto") {
+    if ($encryptionmethod eq "auto") {
         $salt = "";
     } elsif ($encryptionmethod =~ /^blowfish/ ) {
         ($encryptionmethod, $salt) = split(/\,/, $encryptionmethod);
@@ -991,11 +980,7 @@ sub encrypt {
     local($pass, $salt) = ($_[0], $_[1]);
     local(@args, $crypt);
 
-    if ($encryptionmethod eq "des" || $encryptionmethod eq "old") {
-        @args = ("-s", $salt);
-    } elsif ($encryptionmethod eq "md5") {
-        @args = ("-m");
-    } elsif ($encryptionmethod eq "blowfish") {
+    if ($encryptionmethod eq "blowfish") {
         @args = ("-b", $salt);
     } elsif ($encryptionmethod eq "auto") {
         @args = ("-c", $log_cl);
