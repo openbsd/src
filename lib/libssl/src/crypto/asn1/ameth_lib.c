@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.13 2014/07/11 13:41:59 miod Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.14 2014/07/13 16:03:09 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -294,14 +294,14 @@ EVP_PKEY_asn1_new(int id, int flags, const char *pem_str, const char *info)
 	ameth->pkey_flags = flags | ASN1_PKEY_DYNAMIC;
 
 	if (info) {
-		ameth->info = BUF_strdup(info);
+		ameth->info = strdup(info);
 		if (!ameth->info)
 			goto err;
 	} else
 		ameth->info = NULL;
 
 	if (pem_str) {
-		ameth->pem_str = BUF_strdup(pem_str);
+		ameth->pem_str = strdup(pem_str);
 		if (!ameth->pem_str)
 			goto err;
 	} else

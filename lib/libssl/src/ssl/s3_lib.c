@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.70 2014/07/12 22:33:39 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.71 2014/07/13 16:03:10 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2566,7 +2566,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 				    SSL_R_SSL3_EXT_INVALID_SERVERNAME);
 				return 0;
 			}
-			if ((s->tlsext_hostname = BUF_strdup((char *)parg))
+			if ((s->tlsext_hostname = strdup((char *)parg))
 			    == NULL) {
 				SSLerr(SSL_F_SSL3_CTRL,
 				    ERR_R_INTERNAL_ERROR);

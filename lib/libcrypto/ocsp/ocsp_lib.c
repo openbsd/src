@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_lib.c,v 1.14 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: ocsp_lib.c,v 1.15 2014/07/13 16:03:09 beck Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -191,7 +191,7 @@ OCSP_parse_url(char *url, char **phost, char **pport, char **ppath, int *pssl)
 	*ppath = NULL;
 
 	/* dup the buffer since we are going to mess with it */
-	buf = BUF_strdup(url);
+	buf = url ? strdup(url) : NULL;
 	if (!buf)
 		goto mem_err;
 
@@ -222,9 +222,9 @@ OCSP_parse_url(char *url, char **phost, char **pport, char **ppath, int *pssl)
 	/* Check for trailing part of path */
 	p = strchr(p, '/');
 	if (!p)
-		*ppath = BUF_strdup("/");
+		*ppath = strdup("/");
 	else {
-		*ppath = BUF_strdup(p);
+		*ppath = strdup(p);
 		/* Set start of path to 0 so hostname is valid */
 		*p = '\0';
 	}
@@ -244,11 +244,11 @@ OCSP_parse_url(char *url, char **phost, char **pport, char **ppath, int *pssl)
 			port = "80";
 	}
 
-	*pport = BUF_strdup(port);
+	*pport = strdup(port);
 	if (!*pport)
 		goto mem_err;
 
-	*phost = BUF_strdup(host);
+	*phost = strdup(host);
 
 	if (!*phost)
 		goto mem_err;

@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_asid.c,v 1.10 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_asid.c,v 1.11 2014/07/13 16:03:10 beck Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -643,7 +643,7 @@ v2i_ASIdentifiers(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 				goto err;
 			}
 		} else {
-			char *s = BUF_strdup(val->value);
+			char *s = strdup(val->value);
 			if (s == NULL) {
 				X509V3err(X509V3_F_V2I_ASIDENTIFIERS,
 				    ERR_R_MALLOC_FAILURE);

@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.65 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.66 2014/07/13 16:03:09 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -473,7 +473,7 @@ app_get_pass(BIO *err, char *arg, int keepbio)
 	int i;
 
 	if (!strncmp(arg, "pass:", 5))
-		return BUF_strdup(arg + 5);
+		return strdup(arg + 5);
 	if (!strncmp(arg, "env:", 4)) {
 		tmp = getenv(arg + 4);
 		if (!tmp) {
@@ -481,7 +481,7 @@ app_get_pass(BIO *err, char *arg, int keepbio)
 			    arg + 4);
 			return NULL;
 		}
-		return BUF_strdup(tmp);
+		return strdup(tmp);
 	}
 	if (!keepbio || !pwdbio) {
 		if (!strncmp(arg, "file:", 5)) {
@@ -537,7 +537,7 @@ app_get_pass(BIO *err, char *arg, int keepbio)
 	tmp = strchr(tpass, '\n');
 	if (tmp)
 		*tmp = 0;
-	return BUF_strdup(tpass);
+	return strdup(tpass);
 }
 
 int

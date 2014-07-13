@@ -1,4 +1,4 @@
-/* $OpenBSD: srp_vfy.c,v 1.7 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: srp_vfy.c,v 1.8 2014/07/13 16:03:10 beck Exp $ */
 /* Written by Christophe Renou (christophe.renou@edelweb.fr) with 
  * the precious help of Peter Sylvester (peter.sylvester@edelweb.fr) 
  * for the EdelKey project and contributed to the OpenSSL project 2004.
@@ -218,9 +218,9 @@ static void SRP_user_pwd_set_gN(SRP_user_pwd *vinfo, const BIGNUM *g,
 static int SRP_user_pwd_set_ids(SRP_user_pwd *vinfo, const char *id,
 				const char *info)
 	{
-	if (id != NULL && NULL == (vinfo->id = BUF_strdup(id)))
+	if (id != NULL && NULL == (vinfo->id = strdup(id)))
 		return 0;
-	return (info == NULL || NULL != (vinfo->info = BUF_strdup(info))) ;
+	return (info == NULL || NULL != (vinfo->info = strdup(info))) ;
 	}
 
 static int SRP_user_pwd_set_sv(SRP_user_pwd *vinfo, const char *s,
@@ -261,7 +261,7 @@ SRP_VBASE *SRP_VBASE_new(char *seed_key)
 	vb->default_N = NULL;
 	vb->seed_key = NULL;
 	if ((seed_key != NULL) && 
-		(vb->seed_key = BUF_strdup(seed_key)) == NULL)
+		(vb->seed_key = strdup(seed_key)) == NULL)
 		{
 		sk_SRP_user_pwd_free(vb->users_pwd);
 		sk_SRP_gN_cache_free(vb->gN_cache);

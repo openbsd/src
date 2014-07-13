@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.22 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.23 2014/07/13 16:03:10 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -87,9 +87,9 @@ X509V3_add_value(const char *name, const char *value,
 	CONF_VALUE *vtmp = NULL;
 	char *tname = NULL, *tvalue = NULL;
 
-	if (name && !(tname = BUF_strdup(name)))
+	if (name && !(tname = strdup(name)))
 		goto err;
-	if (value && !(tvalue = BUF_strdup(value)))
+	if (value && !(tvalue = strdup(value)))
 		goto err;
 	if (!(vtmp = malloc(sizeof(CONF_VALUE))))
 		goto err;
@@ -301,7 +301,10 @@ X509V3_parse_list(const char *line)
 	int state;
 
 	/* We are going to modify the line so copy it first */
-	linebuf = BUF_strdup(line);
+	if ((linebuf = strdup(line)) == NULL) {
+		X509V3err(X509V3_F_X509V3_PARSE_LIST, ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 	state = HDR_NAME;
 	ntmp = NULL;
 
@@ -632,7 +635,7 @@ append_ia5(STACK_OF(OPENSSL_STRING) **sk, ASN1_IA5STRING *email)
 	/* Don't add duplicates */
 	if (sk_OPENSSL_STRING_find(*sk, (char *)email->data) != -1)
 		return 1;
-	emtmp = BUF_strdup((char *)email->data);
+	emtmp = strdup((char *)email->data);
 	if (!emtmp || !sk_OPENSSL_STRING_push(*sk, emtmp)) {
 		X509_email_free(*sk);
 		*sk = NULL;
@@ -686,7 +689,7 @@ a2i_IPADDRESS_NC(const char *ipasc)
 	p = strchr(ipasc, '/');
 	if (!p)
 		return NULL;
-	iptmp = BUF_strdup(ipasc);
+	iptmp = strdup(ipasc);
 	if (!iptmp)
 		return NULL;
 	p = iptmp + (p - ipasc);

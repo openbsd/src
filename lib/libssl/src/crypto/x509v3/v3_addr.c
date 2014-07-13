@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_addr.c,v 1.12 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_addr.c,v 1.13 2014/07/13 16:03:10 beck Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1032,9 +1032,9 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 				goto err;
 			}
 			t += strspn(t, " \t");
-			s = BUF_strdup(t);
+			s = strdup(t);
 		} else {
-			s = BUF_strdup(val->value);
+			s = strdup(val->value);
 		}
 		if (s == NULL) {
 			X509V3err(X509V3_F_V2I_IPADDRBLOCKS,

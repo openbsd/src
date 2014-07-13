@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.26 2014/07/11 16:22:29 deraadt Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.27 2014/07/13 16:03:10 beck Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -245,7 +245,7 @@ UI_dup_input_string(UI *ui, const char *prompt, int flags, char *result_buf,
 	char *prompt_copy = NULL;
 
 	if (prompt) {
-		prompt_copy = BUF_strdup(prompt);
+		prompt_copy = strdup(prompt);
 		if (prompt_copy == NULL) {
 			UIerr(UI_F_UI_DUP_INPUT_STRING, ERR_R_MALLOC_FAILURE);
 			return 0;
@@ -270,7 +270,7 @@ UI_dup_verify_string(UI *ui, const char *prompt, int flags,
 	char *prompt_copy = NULL;
 
 	if (prompt) {
-		prompt_copy = BUF_strdup(prompt);
+		prompt_copy = strdup(prompt);
 		if (prompt_copy == NULL) {
 			UIerr(UI_F_UI_DUP_VERIFY_STRING, ERR_R_MALLOC_FAILURE);
 			return -1;
@@ -298,28 +298,28 @@ UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
 	char *cancel_chars_copy = NULL;
 
 	if (prompt) {
-		prompt_copy = BUF_strdup(prompt);
+		prompt_copy = strdup(prompt);
 		if (prompt_copy == NULL) {
 			UIerr(UI_F_UI_DUP_INPUT_BOOLEAN, ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
 	if (action_desc) {
-		action_desc_copy = BUF_strdup(action_desc);
+		action_desc_copy = strdup(action_desc);
 		if (action_desc_copy == NULL) {
 			UIerr(UI_F_UI_DUP_INPUT_BOOLEAN, ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
 	if (ok_chars) {
-		ok_chars_copy = BUF_strdup(ok_chars);
+		ok_chars_copy = strdup(ok_chars);
 		if (ok_chars_copy == NULL) {
 			UIerr(UI_F_UI_DUP_INPUT_BOOLEAN, ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
 	if (cancel_chars) {
-		cancel_chars_copy = BUF_strdup(cancel_chars);
+		cancel_chars_copy = strdup(cancel_chars);
 		if (cancel_chars_copy == NULL) {
 			UIerr(UI_F_UI_DUP_INPUT_BOOLEAN, ERR_R_MALLOC_FAILURE);
 			goto err;
@@ -350,7 +350,7 @@ UI_dup_info_string(UI *ui, const char *text)
 	char *text_copy = NULL;
 
 	if (text) {
-		text_copy = BUF_strdup(text);
+		text_copy = strdup(text);
 		if (text_copy == NULL) {
 			UIerr(UI_F_UI_DUP_INFO_STRING, ERR_R_MALLOC_FAILURE);
 			return -1;
@@ -373,7 +373,7 @@ UI_dup_error_string(UI *ui, const char *text)
 	char *text_copy = NULL;
 
 	if (text) {
-		text_copy = BUF_strdup(text);
+		text_copy = strdup(text);
 		if (text_copy == NULL) {
 			UIerr(UI_F_UI_DUP_ERROR_STRING, ERR_R_MALLOC_FAILURE);
 			return -1;

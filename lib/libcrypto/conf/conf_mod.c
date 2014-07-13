@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.23 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.24 2014/07/13 16:03:09 beck Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -347,8 +347,8 @@ module_init(CONF_MODULE *pmod, char *name, char *value, const CONF *cnf)
 		goto err;
 
 	imod->pmod = pmod;
-	imod->name = BUF_strdup(name);
-	imod->value = BUF_strdup(value);
+	imod->name = name ? strdup(name) : NULL;
+	imod->value = value ? strdup(value) : NULL;
 	imod->usr_data = NULL;
 
 	if (!imod->name || !imod->value)
@@ -547,7 +547,7 @@ CONF_get1_default_config_file(void)
 	if (issetugid() == 0)
 		file = getenv("OPENSSL_CONF");
 	if (file)
-		return BUF_strdup(file);
+		return strdup(file);
 	if (asprintf(&file, "%s/openssl.cnf",
 	    X509_get_default_cert_area()) == -1)
 		return (NULL);

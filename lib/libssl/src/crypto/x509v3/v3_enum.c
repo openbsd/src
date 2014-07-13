@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_enum.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_enum.c,v 1.10 2014/07/13 16:03:10 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-
+#include <string.h>
 #include <openssl/x509v3.h>
 
 static ENUMERATED_NAMES crl_reasons[] = {
@@ -93,7 +93,7 @@ i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *e)
 	strval = ASN1_ENUMERATED_get(e);
 	for (enam = method->usr_data; enam->lname; enam++) {
 		if (strval == enam->bitnum)
-			return BUF_strdup(enam->lname);
+			return strdup(enam->lname);
 	}
 	return i2s_ASN1_ENUMERATED(method, e);
 }

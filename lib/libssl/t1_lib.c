@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.50 2014/07/12 22:33:39 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.51 2014/07/13 16:03:10 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1426,7 +1426,8 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 	if (!s->hit && tlsext_servername == 1) {
 		if (s->tlsext_hostname) {
 			if (s->session->tlsext_hostname == NULL) {
-				s->session->tlsext_hostname = BUF_strdup(s->tlsext_hostname);
+				s->session->tlsext_hostname =
+				    strdup(s->tlsext_hostname);
 
 				if (!s->session->tlsext_hostname) {
 					*al = SSL_AD_UNRECOGNIZED_NAME;

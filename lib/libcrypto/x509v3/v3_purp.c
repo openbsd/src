@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_purp.c,v 1.21 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_purp.c,v 1.22 2014/07/13 16:03:10 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -227,8 +227,8 @@ X509_PURPOSE_add(int id, int trust, int flags,
 		free(ptmp->sname);
 	}
 	/* dup supplied name */
-	ptmp->name = BUF_strdup(name);
-	ptmp->sname = BUF_strdup(sname);
+	ptmp->name = name ? strdup(name) : NULL;
+	ptmp->sname = sname ? strdup(sname) : NULL;
 	if (!ptmp->name || !ptmp->sname) {
 		free(ptmp->name);
 		free(ptmp->sname);

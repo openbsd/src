@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_mime.c,v 1.21 2014/07/11 13:41:59 miod Exp $ */
+/* $OpenBSD: asn_mime.c,v 1.22 2014/07/13 16:03:09 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -833,13 +833,13 @@ mime_hdr_new(char *name, char *value)
 	char *tmpname = NULL, *tmpval = NULL, *p;
 
 	if (name) {
-		if (!(tmpname = BUF_strdup(name)))
+		if (!(tmpname = strdup(name)))
 			goto err;
 		for (p = tmpname; *p; p++)
 			*p = tolower((unsigned char)*p);
 	}
 	if (value) {
-		if (!(tmpval = BUF_strdup(value)))
+		if (!(tmpval = strdup(value)))
 			goto err;
 		for (p = tmpval; *p; p++)
 			*p = tolower((unsigned char)*p);
@@ -867,14 +867,14 @@ mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 	MIME_PARAM *mparam;
 
 	if (name) {
-		tmpname = BUF_strdup(name);
+		tmpname = strdup(name);
 		if (!tmpname)
 			goto err;
 		for (p = tmpname; *p; p++)
 			*p = tolower((unsigned char)*p);
 	}
 	if (value) {
-		tmpval = BUF_strdup(value);
+		tmpval = strdup(value);
 		if (!tmpval)
 			goto err;
 	}

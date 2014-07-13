@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.62 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: ca.c,v 1.63 2014/07/13 16:03:09 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1729,7 +1729,7 @@ again2:
 	}
 
 	if (BN_is_zero(serial))
-		row[DB_serial] = BUF_strdup("00");
+		row[DB_serial] = strdup("00");
 	else
 		row[DB_serial] = BN_bn2hex(serial);
 	if (row[DB_serial] == NULL) {
@@ -2195,7 +2195,7 @@ do_revoke(X509 * x509, CA_DB * db, int type, char *value)
 	if (!bn)
 		goto err;
 	if (BN_is_zero(bn))
-		row[DB_serial] = BUF_strdup("00");
+		row[DB_serial] = strdup("00");
 	else
 		row[DB_serial] = BN_bn2hex(bn);
 	BN_free(bn);
@@ -2631,7 +2631,10 @@ unpack_revinfo(ASN1_TIME ** prevtm, int *preason, ASN1_OBJECT ** phold,
 	ASN1_OBJECT *hold = NULL;
 	ASN1_GENERALIZEDTIME *comp_time = NULL;
 
-	tmp = BUF_strdup(str);
+	if ((tmp = strdup(str)) == NULL) {
+		BIO_printf(bio_err, "malloc failed\n");
+		goto err;
+	}
 	p = strchr(tmp, ',');
 	rtime_str = tmp;
 

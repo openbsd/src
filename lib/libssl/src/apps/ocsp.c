@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.29 2014/07/12 19:31:21 jsing Exp $ */
+/* $OpenBSD: ocsp.c,v 1.30 2014/07/13 16:03:09 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -991,7 +991,7 @@ lookup_serial(CA_DB * db, ASN1_INTEGER * ser)
 	OPENSSL_assert(bn);	/* FIXME: should report an error at this
 				 * point and abort */
 	if (BN_is_zero(bn))
-		itmp = BUF_strdup("00");
+		itmp = strdup("00");
 	else
 		itmp = BN_bn2hex(bn);
 	row[DB_serial] = itmp;

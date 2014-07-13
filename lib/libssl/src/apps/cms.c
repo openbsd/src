@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.19 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: cms.c,v 1.20 2014/07/13 16:03:09 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -747,8 +747,7 @@ argerr:
 			secret_keyid = NULL;
 		}
 		if (pwri_pass) {
-			pwri_tmp =
-			    (unsigned char *)BUF_strdup((char *)pwri_pass);
+			pwri_tmp = strdup(pwri_pass);
 			if (!pwri_tmp)
 				goto end;
 			if (!CMS_add0_recipient_password(cms, -1, NID_undef,

@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_conn.c,v 1.29 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: bss_conn.c,v 1.30 2014/07/13 16:03:09 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -152,7 +152,7 @@ conn_state(BIO *b, BIO_CONNECT *c)
 							break;
 						}
 					free(c->param_port);
-					c->param_port = BUF_strdup(p);
+					c->param_port = strdup(p);
 				}
 			}
 
@@ -471,10 +471,10 @@ conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 			b->init = 1;
 			if (num == 0) {
 				free(data->param_hostname);
-				data->param_hostname = BUF_strdup(ptr);
+				data->param_hostname = strdup(ptr);
 			} else if (num == 1) {
 				free(data->param_port);
-				data->param_port = BUF_strdup(ptr);
+				data->param_port = strdup(ptr);
 			} else if (num == 2) {
 				unsigned char *p = ptr;
 				free(data->param_hostname);

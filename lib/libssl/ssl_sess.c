@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.37 2014/07/12 23:59:11 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.38 2014/07/13 16:03:10 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -367,7 +367,7 @@ ssl_get_new_session(SSL *s, int session)
 
 sess_id_done:
 		if (s->tlsext_hostname) {
-			ss->tlsext_hostname = BUF_strdup(s->tlsext_hostname);
+			ss->tlsext_hostname = strdup(s->tlsext_hostname);
 			if (ss->tlsext_hostname == NULL) {
 				SSLerr(SSL_F_SSL_GET_NEW_SESSION,
 				    ERR_R_INTERNAL_ERROR);

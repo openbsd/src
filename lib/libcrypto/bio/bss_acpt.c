@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_acpt.c,v 1.23 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: bss_acpt.c,v 1.24 2014/07/13 16:03:09 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -354,7 +354,7 @@ acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
 			if (num == 0) {
 				b->init = 1;
 				free(data->param_addr);
-				data->param_addr = BUF_strdup(ptr);
+				data->param_addr = strdup(ptr);
 			} else if (num == 1) {
 				data->accept_nbio = (ptr != NULL);
 			} else if (num == 2) {
