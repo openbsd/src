@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.8 2014/07/12 23:40:44 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.9 2014/07/13 09:58:52 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -459,10 +459,10 @@ resp_index(const struct req *req)
 	resp_searchform(req);
 	printf("<P>\n"
 	       "This web interface is documented in the "
-	       "<A HREF=\"%s?query=man.cgi&amp;sec=8\">"
-	       "man.cgi</A> manual, and the "
-	       "<A HREF=\"%s?query=apropos&amp;sec=1\">"
-	       "apropos</A> manual explains the query syntax.\n"
+	       "<A HREF=\"%s/mandoc/man8/man.cgi.8\">man.cgi</A> "
+	       "manual, and the "
+	       "<A HREF=\"%s/mandoc/man1/apropos.1\">apropos</A> "
+	       "manual explains the query syntax.\n"
 	       "</P>\n",
 	       scriptname, scriptname);
 	resp_end_html();

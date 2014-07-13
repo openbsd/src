@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.79 2014/07/12 18:05:50 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.80 2014/07/13 09:58:52 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -60,7 +60,11 @@ installcgi: man.cgi
 	${INSTALL} ${INSTALL_COPY} -S ${INSTALL_STRIP} \
 	    -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    man.cgi ${DESTDIR}/var/www/cgi-bin/man.cgi
+	${INSTALL} -d -o root -g wheel -m 755 ${DESTDIR}/var/www/man/mandoc/man1
+	${INSTALL} -d -o root -g wheel -m 755 ${DESTDIR}/var/www/man/mandoc/man8
 	${INSTALL} ${INSTALL_COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
-	    ${.CURDIR}/man.cgi.8 ${DESTDIR}${MANDIR}8/man.cgi.8
+	    ${.CURDIR}/apropos.1 ${DESTDIR}/var/www/man/mandoc/man1/apropos.1
+	${INSTALL} ${INSTALL_COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
+	    ${.CURDIR}/man.cgi.8 ${DESTDIR}/var/www/man/mandoc/man8/man.cgi.8
 
 .include <bsd.prog.mk>
