@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.22 2014/06/15 05:10:58 deraadt Exp $ */
+/*	$OpenBSD: random.c,v 1.23 2014/07/13 14:21:14 tedu Exp $ */
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -176,6 +176,8 @@ static int rand_type = TYPE_3;
 static int rand_deg = DEG_3;
 static int rand_sep = SEP_3;
 
+static int use_arc4random;
+
 _THREAD_PRIVATE_MUTEX(random);
 static long random_l(void);
 
@@ -201,6 +203,7 @@ srandom_l(unsigned int x)
 	int32_t test;
 	div_t val;
 
+	use_arc4random = 0;
 	if (rand_type == TYPE_0)
 		state[0] = x;
 	else {
@@ -254,17 +257,7 @@ srandomdev(void)
 	size_t len;
 
 	LOCK();
-	if (rand_type == TYPE_0)
-		len = sizeof(state[0]);
-	else
-		len = rand_deg * sizeof(state[0]);
-
-	arc4random_buf(state, len);
-
-	if (rand_type != TYPE_0) {
-		fptr = &state[rand_sep];
-		rptr = &state[0];
-	}
+	use_arc4random = 1;
 	UNLOCK();
 }
 
@@ -298,6 +291,7 @@ initstate(u_int seed, char *arg_state, size_t n)
 	char *ostate = (char *)(&state[-1]);
 
 	LOCK();
+	use_arc4random = 0;
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
 	else
@@ -362,6 +356,7 @@ setstate(char *arg_state)
 	char *ostate = (char *)(&state[-1]);
 
 	LOCK();
+	use_arc4random = 0;
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
 	else
@@ -411,6 +406,9 @@ static long
 random_l(void)
 {
 	int32_t i;
+
+	if (use_arc4random)
+		return arc4random() & 0x7fffffff;
 
 	if (rand_type == TYPE_0)
 		i = state[0] = (state[0] * 1103515245 + 12345) & 0x7fffffff;
