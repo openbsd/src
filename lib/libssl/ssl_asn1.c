@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.34 2014/07/13 17:56:56 jsing Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.35 2014/07/13 21:35:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -274,11 +274,10 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	c.p = *pp;
 	c.q = *pp;
 	c.max = (length == 0) ? 0 : (c.p + length);
-	c.error = ERR_R_NESTED_ASN1_ERROR;
 
 	if (a == NULL || *a == NULL) {
 		if ((ret = SSL_SESSION_new()) == NULL) {
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 			goto err;
 		}
 	} else
@@ -288,7 +287,7 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	osp = &os;
 
 	if (!asn1_GetSequence(&c, &length)) {
-		c.line = __LINE__;
+		SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 		goto err;
 	}
 
@@ -296,7 +295,7 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	ai.length = 0;
 	c.q = c.p;
 	if (d2i_ASN1_INTEGER(&aip, &c.p, c.slen) == NULL) {
-		c.line = __LINE__;
+		SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 		goto err;
 	}
 	c.slen -= (c.p - c.q);
@@ -310,7 +309,7 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	/* we don't care about the version right now :-) */
 	c.q = c.p;
 	if (d2i_ASN1_INTEGER(&aip, &c.p, c.slen) == NULL) {
-		c.line = __LINE__;
+		SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 		goto err;
 	}
 	c.slen -= (c.p - c.q);
@@ -326,21 +325,20 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	os.length = 0;
 	c.q = c.p;
 	if (d2i_ASN1_OCTET_STRING(&osp, &c.p, c.slen) == NULL) {
-		c.line = __LINE__;
+		SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 		goto err;
 	}
 	c.slen -= (c.p - c.q);
 	if ((ssl_version >> 8) >= SSL3_VERSION_MAJOR) {
 		if (os.length != 2) {
-			c.error = SSL_R_CIPHER_CODE_WRONG_LENGTH;
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION,
+			    SSL_R_CIPHER_CODE_WRONG_LENGTH);
 			goto err;
 		}
 		id = 0x03000000L | ((unsigned long)os.data[0]<<8L) |
 		    (unsigned long)os.data[1];
 	} else {
-		c.error = SSL_R_UNKNOWN_SSL_VERSION;
-		c.line = __LINE__;
+		SSLerr(SSL_F_D2I_SSL_SESSION, SSL_R_UNKNOWN_SSL_VERSION);
 		goto err;
 	}
 
@@ -349,7 +347,7 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 
 	c.q = c.p;
 	if (d2i_ASN1_OCTET_STRING(&osp, &c.p, c.slen) == NULL) {
-		c.line = __LINE__;
+		SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 		goto err;
 	}
 	c.slen -= (c.p - c.q);
@@ -366,7 +364,7 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 
 	c.q = c.p;
 	if (d2i_ASN1_OCTET_STRING(&osp, &c.p, c.slen) == NULL) {
-		c.line = __LINE__;
+		SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 		goto err;
 	}
 	c.slen -= (c.p - c.q);
@@ -386,21 +384,21 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		c.q = c.p;
 		Tinf = ASN1_get_object(&c.p, &Tlen, &Ttag, &Tclass, c.slen);
 		if (Tinf & 0x80) {
-			c.error = ERR_R_BAD_ASN1_OBJECT_HEADER;
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION,
+			    ERR_R_BAD_ASN1_OBJECT_HEADER);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1))
 			Tlen = c.slen - (c.p - c.q) - 2;
 		if (d2i_ASN1_INTEGER(&aip, &c.p, Tlen) == NULL) {
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1)) {
 			Tlen = c.slen - (c.p - c.q);
 			if(!ASN1_const_check_infinite_end(&c.p, Tlen)) {
-				c.error = ERR_R_MISSING_ASN1_EOS;
-				c.line = __LINE__;
+				SSLerr(SSL_F_D2I_SSL_SESSION,
+				    ERR_R_MISSING_ASN1_EOS);
 				goto err;
 			}
 		}
@@ -421,21 +419,21 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		c.q = c.p;
 		Tinf = ASN1_get_object(&c.p, &Tlen, &Ttag, &Tclass, c.slen);
 		if (Tinf & 0x80) {
-			c.error = ERR_R_BAD_ASN1_OBJECT_HEADER;
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION,
+			    ERR_R_BAD_ASN1_OBJECT_HEADER);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1))
 			Tlen = c.slen - (c.p - c.q) - 2;
 		if (d2i_ASN1_INTEGER(&aip, &c.p, Tlen) == NULL) {
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1)) {
 			Tlen = c.slen - (c.p - c.q);
 			if(!ASN1_const_check_infinite_end(&c.p, Tlen)) {
-				c.error = ERR_R_MISSING_ASN1_EOS;
-				c.line = __LINE__;
+				SSLerr(SSL_F_D2I_SSL_SESSION,
+				    ERR_R_MISSING_ASN1_EOS);
 				goto err;
 			}
 		}
@@ -459,21 +457,21 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		c.q = c.p;
 		Tinf = ASN1_get_object(&c.p, &Tlen, &Ttag, &Tclass, c.slen);
 		if (Tinf & 0x80) {
-			c.error = ERR_R_BAD_ASN1_OBJECT_HEADER;
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION,
+			    ERR_R_BAD_ASN1_OBJECT_HEADER);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1))
 			Tlen = c.slen - (c.p - c.q) - 2;
 		if (d2i_X509(&ret->peer, &c.p, Tlen) == NULL) {
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1)) {
 			Tlen = c.slen - (c.p - c.q);
 			if(!ASN1_const_check_infinite_end(&c.p, Tlen)) {
-				c.error = ERR_R_MISSING_ASN1_EOS;
-				c.line = __LINE__;
+				SSLerr(SSL_F_D2I_SSL_SESSION,
+				    ERR_R_MISSING_ASN1_EOS);
 				goto err;
 			}
 		}
@@ -488,21 +486,21 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		c.q = c.p;
 		Tinf = ASN1_get_object(&c.p, &Tlen, &Ttag, &Tclass, c.slen);
 		if (Tinf & 0x80) {
-			c.error = ERR_R_BAD_ASN1_OBJECT_HEADER;
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION,
+			    ERR_R_BAD_ASN1_OBJECT_HEADER);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1))
 			Tlen = c.slen - (c.p - c.q) - 2;
 		if (d2i_ASN1_OCTET_STRING(&osp, &c.p, Tlen) == NULL) {
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1)) {
 			Tlen = c.slen - (c.p - c.q);
 			if(!ASN1_const_check_infinite_end(&c.p, Tlen)) {
-				c.error = ERR_R_MISSING_ASN1_EOS;
-				c.line = __LINE__;
+				SSLerr(SSL_F_D2I_SSL_SESSION,
+				    ERR_R_MISSING_ASN1_EOS);
 				goto err;
 			}
 		}
@@ -510,8 +508,7 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	}
 	if (os.data != NULL) {
 		if (os.length > SSL_MAX_SID_CTX_LENGTH) {
-			c.error = SSL_R_BAD_LENGTH;
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION, SSL_R_BAD_LENGTH);
 			goto err;
 		} else {
 			ret->sid_ctx_length = os.length;
@@ -530,21 +527,21 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		c.q = c.p;
 		Tinf = ASN1_get_object(&c.p, &Tlen, &Ttag, &Tclass, c.slen);
 		if (Tinf & 0x80) {
-			c.error = ERR_R_BAD_ASN1_OBJECT_HEADER;
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION,
+			    ERR_R_BAD_ASN1_OBJECT_HEADER);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1))
 			Tlen = c.slen - (c.p - c.q) - 2;
 		if (d2i_ASN1_INTEGER(&aip, &c.p, Tlen) == NULL) {
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1)) {
 			Tlen = c.slen - (c.p - c.q);
 			if(!ASN1_const_check_infinite_end(&c.p, Tlen)) {
-				c.error = ERR_R_MISSING_ASN1_EOS;
-				c.line = __LINE__;
+				SSLerr(SSL_F_D2I_SSL_SESSION,
+				    ERR_R_MISSING_ASN1_EOS);
 				goto err;
 			}
 		}
@@ -566,21 +563,21 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		c.q = c.p;
 		Tinf = ASN1_get_object(&c.p, &Tlen, &Ttag, &Tclass, c.slen);
 		if (Tinf & 0x80) {
-			c.error = ERR_R_BAD_ASN1_OBJECT_HEADER;
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION,
+			    ERR_R_BAD_ASN1_OBJECT_HEADER);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1))
 			Tlen = c.slen - (c.p - c.q) - 2;
 		if (d2i_ASN1_OCTET_STRING(&osp, &c.p, Tlen) == NULL) {
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1)) {
 			Tlen = c.slen - (c.p - c.q);
 			if(!ASN1_const_check_infinite_end(&c.p, Tlen)) {
-				c.error = ERR_R_MISSING_ASN1_EOS;
-				c.line = __LINE__;
+				SSLerr(SSL_F_D2I_SSL_SESSION,
+				    ERR_R_MISSING_ASN1_EOS);
 				goto err;
 			}
 		}
@@ -604,21 +601,21 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		c.q = c.p;
 		Tinf = ASN1_get_object(&c.p, &Tlen, &Ttag, &Tclass, c.slen);
 		if (Tinf & 0x80) {
-			c.error = ERR_R_BAD_ASN1_OBJECT_HEADER;
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION,
+			    ERR_R_BAD_ASN1_OBJECT_HEADER);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1))
 			Tlen = c.slen - (c.p - c.q) - 2;
 		if (d2i_ASN1_INTEGER(&aip, &c.p, Tlen) == NULL) {
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1)) {
 			Tlen = c.slen - (c.p - c.q);
 			if(!ASN1_const_check_infinite_end(&c.p, Tlen)) {
-				c.error = ERR_R_MISSING_ASN1_EOS;
-				c.line = __LINE__;
+				SSLerr(SSL_F_D2I_SSL_SESSION,
+				    ERR_R_MISSING_ASN1_EOS);
 				goto err;
 			}
 		}
@@ -642,21 +639,21 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		c.q = c.p;
 		Tinf = ASN1_get_object(&c.p, &Tlen, &Ttag, &Tclass, c.slen);
 		if (Tinf & 0x80) {
-			c.error = ERR_R_BAD_ASN1_OBJECT_HEADER;
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION,
+			    ERR_R_BAD_ASN1_OBJECT_HEADER);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1))
 			Tlen = c.slen - (c.p - c.q) - 2;
 		if (d2i_ASN1_OCTET_STRING(&osp, &c.p, Tlen) == NULL) {
-			c.line = __LINE__;
+			SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 			goto err;
 		}
 		if (Tinf == (V_ASN1_CONSTRUCTED + 1)) {
 			Tlen = c.slen - (c.p - c.q);
 			if(!ASN1_const_check_infinite_end(&c.p, Tlen)) {
-				c.error = ERR_R_MISSING_ASN1_EOS;
-				c.line = __LINE__;
+				SSLerr(SSL_F_D2I_SSL_SESSION,
+				    ERR_R_MISSING_ASN1_EOS);
 				goto err;
 			}
 		}
@@ -674,7 +671,7 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	/* 12 - SRP username (OCTET STRING). */
 
 	if (!asn1_const_Finish(&c)) {
-		c.line = __LINE__;
+		SSLerr(SSL_F_D2I_SSL_SESSION, ERR_R_NESTED_ASN1_ERROR);
 		goto err;
 	}
 
@@ -685,9 +682,7 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	return (ret);
 
 err:
-	ERR_PUT_error(ERR_LIB_SSL, SSL_F_D2I_SSL_SESSION,
-	    c.error, __FILE__, c.line);
-	asn1_add_error(*pp, (int)(c.q - *pp));
+	ERR_asprintf_error_data("address=%p offset=%d", *pp, (int)(c.q - *pp));
 	if (ret != NULL && (a == NULL || *a != ret))
 		SSL_SESSION_free(ret);
 
