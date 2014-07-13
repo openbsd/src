@@ -1,4 +1,4 @@
-/*      $OpenBSD: criov.c,v 1.17 2014/07/08 17:19:25 deraadt Exp $	*/
+/*      $OpenBSD: criov.c,v 1.18 2014/07/13 17:39:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Theo de Raadt
@@ -29,7 +29,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 
