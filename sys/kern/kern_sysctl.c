@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.256 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.257 2014/07/13 15:29:04 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1854,7 +1854,7 @@ sysctl_diskinit(int update, struct proc *p)
 			free(diskstats, M_SYSCTL, 0);
 		diskstats = NULL;
 		disknames = NULL;
-		diskstats = malloc(disk_count * sizeof(struct diskstats),
+		diskstats = mallocarray(disk_count, sizeof(struct diskstats),
 		    M_SYSCTL, M_WAITOK);
 		disknames = malloc(tlen, M_SYSCTL, M_WAITOK);
 		disknames[0] = '\0';

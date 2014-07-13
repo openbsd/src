@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.40 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.41 2014/07/13 15:29:04 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -485,7 +485,7 @@ userconf_change(int devno)
 			if (share) {
 				for (i = 0; locnamp[ln+i] != -1 ; i++)
 					;
-				lk = l = (int *)malloc(sizeof(int) * i,
+				lk = l = mallocarray(i, sizeof(int),
 				    M_TEMP, M_NOWAIT);
 				if (lk == NULL) {
 					printf("out of memory.\n");

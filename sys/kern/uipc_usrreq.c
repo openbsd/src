@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.74 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.75 2014/07/13 15:29:04 tedu Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -670,7 +670,7 @@ unp_externalize(struct mbuf *rights, socklen_t controllen)
 
 	rp = (struct file **)CMSG_DATA(cm);
 
-	fdp = malloc(nfds * sizeof(int), M_TEMP, M_WAITOK);
+	fdp = mallocarray(nfds, sizeof(int), M_TEMP, M_WAITOK);
 
 	/* Make sure the recipient should be able to see the descriptors.. */
 	if (p->p_fd->fd_rdir != NULL) {
@@ -961,7 +961,7 @@ unp_gc(void)
 	 *
 	 * 91/09/19, bsy@cs.cmu.edu
 	 */
-	extra_ref = malloc(nfiles * sizeof(struct file *), M_FILE, M_WAITOK);
+	extra_ref = mallocarray(nfiles, sizeof(struct file *), M_FILE, M_WAITOK);
 	for (nunref = 0, fp = LIST_FIRST(&filehead), fpp = extra_ref;
 	    fp != NULL; fp = nextfp) {
 		nextfp = LIST_NEXT(fp, f_list);

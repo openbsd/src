@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.36 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.37 2014/07/13 15:29:04 tedu Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ vmcmdset_extend(struct exec_vmcmd_set *evsp)
 	evsp->evs_cnt += ocnt;
 
 	/* reallocate the command set */
-	nvcp = malloc(evsp->evs_cnt * sizeof(struct exec_vmcmd), M_EXEC,
+	nvcp = mallocarray(evsp->evs_cnt, sizeof(struct exec_vmcmd), M_EXEC,
 	    M_WAITOK);
 	bcopy(evsp->evs_cmds, nvcp, (ocnt * sizeof(struct exec_vmcmd)));
 	if (evsp->evs_cmds != evsp->evs_start)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.158 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.159 2014/07/13 15:29:04 tedu Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -441,7 +441,7 @@ bread_cluster(struct vnode *vp, daddr_t blkno, int size, struct buf **rbpp)
 	if (howmany > maxra)
 		howmany = maxra;
 
-	xbpp = malloc((howmany + 1) * sizeof(struct buf *), M_TEMP, M_NOWAIT);
+	xbpp = mallocarray((howmany + 1), sizeof(struct buf *), M_TEMP, M_NOWAIT);
 	if (xbpp == NULL)
 		goto out;
 

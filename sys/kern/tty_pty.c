@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.67 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.68 2014/07/13 15:29:04 tedu Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ ptyarralloc(int nelem)
 {
 	struct pt_softc **pt;
 
-	pt = malloc(nelem * sizeof(struct pt_softc *), M_DEVBUF,
+	pt = mallocarray(nelem, sizeof(struct pt_softc *), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
 	return pt;
 }

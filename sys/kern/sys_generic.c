@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.90 2014/07/12 21:21:19 matthew Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.91 2014/07/13 15:29:04 tedu Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -616,7 +616,7 @@ dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
 	if (ni > sizeof(bits[0])) {
 		caddr_t mbits;
 
-		mbits = malloc(ni * 6, M_TEMP, M_WAITOK|M_ZERO);
+		mbits = mallocarray(6, ni, M_TEMP, M_WAITOK|M_ZERO);
 		pibits[0] = (fd_set *)&mbits[ni * 0];
 		pibits[1] = (fd_set *)&mbits[ni * 1];
 		pibits[2] = (fd_set *)&mbits[ni * 2];

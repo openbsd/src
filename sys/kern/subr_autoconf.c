@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.77 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.78 2014/07/13 15:29:04 tedu Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -462,7 +462,7 @@ config_make_softc(struct device *parent, struct cfdata *cf)
 		while (new <= dev->dv_unit)
 			new *= 2;
 		cd->cd_ndevs = new;
-		nsp = malloc(new * sizeof(void *), M_DEVBUF, M_NOWAIT|M_ZERO);
+		nsp = mallocarray(new, sizeof(void *), M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (nsp == NULL)
 			panic("config_make_softc: %sing dev array",
 			    old != 0 ? "expand" : "creat");

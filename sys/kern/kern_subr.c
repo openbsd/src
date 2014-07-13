@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.38 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.39 2014/07/13 15:29:04 tedu Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ hashinit(int elements, int type, int flags, u_long *hashmask)
 		panic("hashinit: bad cnt");
 	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
 		continue;
-	hashtbl = malloc(hashsize * sizeof(*hashtbl), type, flags);
+	hashtbl = mallocarray(hashsize, sizeof(*hashtbl), type, flags);
 	if (hashtbl == NULL)
 		return NULL;
 	for (i = 0; i < hashsize; i++)

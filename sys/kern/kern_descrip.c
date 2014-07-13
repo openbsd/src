@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.111 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.112 2014/07/13 15:29:04 tedu Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -765,7 +765,7 @@ fdexpand(struct proc *p)
 	else
 		nfiles = 2 * fdp->fd_nfiles;
 
-	newofile = malloc(nfiles * OFILESIZE, M_FILEDESC, M_WAITOK);
+	newofile = mallocarray(nfiles, OFILESIZE, M_FILEDESC, M_WAITOK);
 	newofileflags = (char *) &newofile[nfiles];
 
 	/*
@@ -784,9 +784,9 @@ fdexpand(struct proc *p)
 		free(fdp->fd_ofiles, M_FILEDESC, 0);
 
 	if (NDHISLOTS(nfiles) > NDHISLOTS(fdp->fd_nfiles)) {
-		newhimap = malloc(NDHISLOTS(nfiles) * sizeof(u_int),
+		newhimap = mallocarray(NDHISLOTS(nfiles), sizeof(u_int),
 		    M_FILEDESC, M_WAITOK);
-		newlomap = malloc(NDLOSLOTS(nfiles) * sizeof(u_int),
+		newlomap = mallocarray(NDLOSLOTS(nfiles), sizeof(u_int),
 		    M_FILEDESC, M_WAITOK);
 
 		copylen = NDHISLOTS(fdp->fd_nfiles) * sizeof(u_int);
@@ -939,7 +939,7 @@ fdcopy(struct process *pr)
 		i = newfdp->fd_nfiles;
 		while (i >= 2 * NDEXTENT && i > newfdp->fd_lastfile * 2)
 			i /= 2;
-		newfdp->fd_ofiles = malloc(i * OFILESIZE, M_FILEDESC, M_WAITOK);
+		newfdp->fd_ofiles = mallocarray(i, OFILESIZE, M_FILEDESC, M_WAITOK);
 		newfdp->fd_ofileflags = (char *) &newfdp->fd_ofiles[i];
 	}
 	if (NDHISLOTS(i) <= NDHISLOTS(NDFILE)) {
@@ -948,9 +948,9 @@ fdcopy(struct process *pr)
 		newfdp->fd_lomap =
 			((struct filedesc0 *) newfdp)->fd_dlomap;
 	} else {
-		newfdp->fd_himap = malloc(NDHISLOTS(i) * sizeof(u_int),
+		newfdp->fd_himap = mallocarray(NDHISLOTS(i), sizeof(u_int),
 		    M_FILEDESC, M_WAITOK);
-		newfdp->fd_lomap = malloc(NDLOSLOTS(i) * sizeof(u_int),
+		newfdp->fd_lomap = mallocarray(NDLOSLOTS(i), sizeof(u_int),
 		    M_FILEDESC, M_WAITOK);
 	}
 	newfdp->fd_nfiles = i;
