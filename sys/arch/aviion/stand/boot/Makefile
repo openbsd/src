@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.5 2013/10/17 16:44:22 miod Exp $
+#	$OpenBSD: Makefile,v 1.6 2014/07/13 21:18:44 jasper Exp $
 
 SIZE?=	size
 
 S=	${.CURDIR}/../../../..
-DEFS=	-DSUN_BOOTPARAMS 
+DEFS=	-DSUN_BOOTPARAMS
 #DEFS+=	-DNETIF_DEBUG
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libprom \
 	-I${S} -I${S}/lib/libsa
@@ -17,7 +17,7 @@ CLEANFILES+=boot boot.ELF
 
 # Keep crt.c first in the object list for ld's sake.
 SRCS=	crt.c boot.c conf.c devopen.c version.c
-SRCS+=	oaic.c oosiop.c scsi.c sd.c 
+SRCS+=	oaic.c oosiop.c scsi.c sd.c
 SRCS+=	dev_net.c if_le.c
 OBJS=  ${SRCS:S/.c/.o/g}
 LIBS=	${LIBSA} ${LIBPROM} ${LIBZ}

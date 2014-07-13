@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2014/07/13 09:26:08 jasper Exp $
+#	$OpenBSD: Makefile,v 1.21 2014/07/13 21:18:44 jasper Exp $
 
 MAN=	pxeboot.8
 
@@ -11,7 +11,7 @@ SRCS=	srt0.S conf.c devopen.c net.c open.c
 LD?=	ld
 SIZE?=	size
 LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -nopie
-LDFLAGS+=-melf_i386 -L/usr/libdata 
+LDFLAGS+=-melf_i386 -L/usr/libdata
 INSTALL_STRIP=
 
 .PATH:	${SADIR}/libsa

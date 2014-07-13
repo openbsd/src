@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2013/01/17 12:25:11 jsing Exp $
+#	$OpenBSD: Makefile,v 1.8 2014/07/13 21:18:44 jasper Exp $
 #
 
 S=	${.CURDIR}/../../../..
@@ -14,7 +14,7 @@ AFLAGS+=-fno-pie
 LD=ld
 ORG=	0x0000
 LDFLAGS=-nostdlib -Ttext ${ORG} -x -N -s -Bstatic -e start -nopie
-LDFLAGS+=-melf_i386 -L/usr/libdata 
+LDFLAGS+=-melf_i386 -L/usr/libdata
 INSTALL_STRIP=
 
 NOMAN=
