@@ -10,10 +10,7 @@ zcalloc(notused, items, size)
     void *notused;
     u_int items, size;
 {
-    void *ptr;
-
-    ptr = malloc(items * size, M_DEVBUF, M_NOWAIT);
-    return ptr;
+    return mallocarray(items, size, M_DEVBUF, M_NOWAIT);
 }
 
 void
