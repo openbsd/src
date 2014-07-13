@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.33 2014/06/10 14:38:27 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.34 2014/07/13 21:46:25 claudio Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -311,14 +311,14 @@ main(int argc, char *argv[])
 
 	pw = getpwnam(SLOWCGI_USER);
 	if (pw == NULL)
-		errx(1, "no %s user", SLOWCGI_USER);
+		lerrx(1, "no %s user", SLOWCGI_USER);
 
 	slowcgi_listen(fcgi_socket, pw);
 
 	lwarnx("slowcgi_user: %s", slowcgi_user);
 	pw = getpwnam(slowcgi_user);
 	if (pw == NULL)
-		errx(1, "no %s user", slowcgi_user);
+		lerrx(1, "no %s user", slowcgi_user);
 
 	if (chrootpath == NULL)
 		chrootpath = pw->pw_dir;
