@@ -115,7 +115,6 @@
 ./var/cron/log
 ./var/cron/tabs/root
 ./var/db/locate.database
-./var/db/sysmerge/examplessum
 ./var/db/sysmerge/etcsum
 ./var/log/authlog
 ./var/log/daemon

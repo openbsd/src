@@ -28,6 +28,8 @@
 ./etc/firmware/tusb3410
 ./etc/firmware/tusb3410-license
 ./etc/firmware/udl_huffman
+./etc/firmware/uyap
+./etc/firmware/uyap-license
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-license
 ./etc/firmware/zd1211b
@@ -1254,6 +1256,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/ehcireg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/ehcivar.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/hid.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/hidkbdsc.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/hidkbdvar.ph
@@ -1377,7 +1380,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dlfcn.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/elf_abi.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/endian.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/eti.ph
@@ -2064,7 +2066,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys
-./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/_endian.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/_time.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/acct.ph
