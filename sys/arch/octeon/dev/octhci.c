@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.15 2014/07/13 10:58:19 pirofti Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.16 2014/07/13 17:19:17 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -63,6 +63,10 @@ struct octhci_softc {
 
 	char sc_vendor[16];		/* Vendor string for root hub */
 	int sc_id_vendor;		/* Vendor ID for root hub */
+
+	int sc_port_connect;		/* Device connected to port */
+	int sc_port_change;		/* Connect status changed */
+	int sc_port_reset;		/* Port reset finished */
 };
 
 struct pool *octhcixfer;
@@ -395,6 +399,7 @@ octhci_intr1(struct octhci_softc *sc)
 	}
 	if (intsts & USBC_GINTSTS_DISCONNINT) {
 		DPRINTFN(16, ("%s: disco interrupt\n", DEVNAME(sc)));
+		sc->sc_port_connect = 0;
 		octhci_regc_set(sc, USBC_GINTSTS_OFFSET,
 		    USBC_GINTSTS_DISCONNINT);
 	}
@@ -424,11 +429,34 @@ octhci_intr1(struct octhci_softc *sc)
 	return (1);
 }
 
+#define OCTHCI_PS_CLEAR \
+    (USBC_HPRT_PRTENCHNG | USBC_HPRT_PRTOVRCURRCHNG | USBC_HPRT_PRTCONNDET)
 int
 octhci_intr_host_port(struct octhci_softc *sc)
 {
+	struct usbd_xfer *xfer = sc->sc_intrxfer;
+	u_char *p;
+	int i, m;
 	uint32_t hprt = octhci_regc_read(sc, USBC_HPRT_OFFSET);
 
+	if (xfer == NULL)
+		goto ack;
+
+	p = KERNADDR(&xfer->dmabuf, 0);
+	m = min(sc->sc_noport, xfer->length * 8 - 1);
+	memset(p, 0, xfer->length);
+	for (i = 1; i <= m; i++) {
+		/* Pick out CHANGE bits from the status reg. */
+		if (hprt & OCTHCI_PS_CLEAR)
+			p[i/8] |= 1 << (i%8);
+	}
+	DPRINTF(("%s: change=0x%02x\n", __func__, *p));
+	xfer->actlen = xfer->length;
+	xfer->status = USBD_NORMAL_COMPLETION;
+
+	usb_transfer_complete(xfer);
+
+ack:
 	octhci_regc_write(sc, USBC_HPRT_OFFSET, hprt);	/* Acknowledge */
 
 	return (USBD_NORMAL_COMPLETION);
@@ -572,6 +600,7 @@ octhci_open(struct usbd_pipe *pipe)
 		return (USBD_NORMAL_COMPLETION);
 	}
 
+	DPRINTFN(16, ("%s: Not a Root Hub\n", DEVNAME(sc)));
 	/* XXX: not supported yet */
 	return (USBD_INVAL);
 }
@@ -883,6 +912,7 @@ octhci_root_ctrl_start(struct usbd_xfer *xfer)
 		case UHF_C_PORT_RESET:
 			octhci_regc_clear(sc, USBC_HPRT_OFFSET,
 			    USBC_HPRT_PRTRST);
+			sc->sc_port_reset = 0;
 			break;
 		default:
 			err = USBD_IOERROR;
@@ -943,8 +973,11 @@ octhci_root_ctrl_start(struct usbd_xfer *xfer)
 			i = UPS_HIGH_SPEED;
 			break;
 		}
-		if (v & USBC_HPRT_PRTCONNSTS)
+		if (v & USBC_HPRT_PRTCONNSTS) {
 			i |= UPS_CURRENT_CONNECT_STATUS;
+			sc->sc_port_change = (sc->sc_port_connect != 1);
+			sc->sc_port_connect = 1;
+		}
 		if (v & USBC_HPRT_PRTENA)
 			i |= UPS_PORT_ENABLED;
 		if (v & USBC_HPRT_PRTOVRCURRACT)
@@ -956,12 +989,14 @@ octhci_root_ctrl_start(struct usbd_xfer *xfer)
 		USETW(ps.wPortStatus, i);
 
 		i = 0;
-		if (v & USBC_HPRT_PRTCONNDET)
+		if (v & USBC_HPRT_PRTCONNDET || sc->sc_port_change)
 			i |= UPS_C_CONNECT_STATUS;
 		if (v & USBC_HPRT_PRTENCHNG)
 			i |= UPS_C_PORT_ENABLED;
 		if (v & USBC_HPRT_PRTOVRCURRCHNG)
 			i |= UPS_C_OVERCURRENT_INDICATOR;
+		if (sc->sc_port_reset)
+			i |= UPS_C_PORT_RESET;
 		USETW(ps.wPortChange, i);
 
 		l = min(len, sizeof ps);
@@ -1005,6 +1040,7 @@ octhci_root_ctrl_start(struct usbd_xfer *xfer)
 			/* Terminate reset sequence. */
 			octhci_regc_clear(sc, USBC_HPRT_OFFSET,
 			    USBC_HPRT_PRTRST);
+			sc->sc_port_reset = 1;
 			break;
 		case UHF_PORT_POWER:
 			DPRINTFN(3, ("set port power %d\n", index));
