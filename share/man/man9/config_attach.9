@@ -1,4 +1,4 @@
-.\"     $OpenBSD: config_attach.9,v 1.1 2014/07/13 09:28:06 mpi Exp $
+.\"     $OpenBSD: config_attach.9,v 1.2 2014/07/13 10:09:12 jmc Exp $
 .\"     $NetBSD: autoconf.9,v 1.9 2002/02/13 08:18:35 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 .Ft "int"
 .Fn config_detach_children "struct device *parent" "int flags"
 .Sh DESCRIPTION
-.Pp
 The
 .Fn config_attach
 function attaches a found device.
@@ -80,4 +79,4 @@ which have a device open).
 .Fn config_detach
 returns zero if successful and an error code otherwise.
 .Sh SEE ALSO
-.Xr config_found 9 
+.Xr config_found 9
