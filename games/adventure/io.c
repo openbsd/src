@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.17 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.18 2014/07/13 19:40:57 tedu Exp $	*/
 /*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
 
 /*-
@@ -175,18 +175,18 @@ char   *inptr;			/* Pointer into virtual disk	*/
 int     outsw = 0;		/* putting stuff to data file?	*/
 
 const char iotape[] = "Ax3F'\003tt$8h\315qer*h\017nGKrX\207:!l";
-const char *tape = iotape;	/* pointer to encryption tape	*/
+const char *tape = iotape;	/* pointer to obfuscation tape	*/
 
 int
 next(void)			/* next virtual char, bump adr	*/
 {
 	int ch;
 
-	ch=(*inptr ^ random()) & 0xFF;	/* Decrypt input data		*/
-	if (outsw) {		/* putting data in tmp file	*/
+	ch=(*inptr ^ random()) & 0xFF;	/* Deobfuscate input data	*/
+	if (outsw) {			/* putting data in tmp file	*/
 		if (*tape == 0)
-			tape = iotape;	/* rewind encryption tape	*/
-		*inptr = ch ^ *tape++;	/* re-encrypt and replace value */
+			tape = iotape;	/* rewind obfuscation tape	*/
+		*inptr = ch ^ *tape++;	/* re-obfuscate and replace value */
 	}
 	inptr++;
 	return (ch);
@@ -201,7 +201,7 @@ rdata(void)			/* "read" data from virtual file */
 	char    ch;
 
 	inptr = data_file;	/* Pointer to virtual data file */
-	srandom(SEED);		/* which is lightly encrypted.	*/
+	srandom(SEED);		/* which is slightly obfuscated.*/
 
 	clsses = 1;
 	for (;;) {		/* read data sections		*/
@@ -276,7 +276,7 @@ rnum(void)			/* read initial location num	*/
 {
 	char	*s;
 
-	tape = iotape;		/* restart encryption tape	*/
+	tape = iotape;		/* restart obfuscation tape	*/
 	for (s = nbf, *s = 0;; s++)
 		if ((*s = next()) == TAB || *s == '\n' || *s == LF)
 			break;
@@ -530,7 +530,7 @@ mspeak(int msg)
 }
 
 /*
- * Read, decrypt, and print a message (not ptext)
+ * Read, deobfuscate, and print a message (not ptext)
  * msg is a pointer to seek address and length of mess
  */
 void
@@ -541,7 +541,7 @@ speak(const struct text *msg)
 	s = msg->seekadr;
 	nonfirst = 0;
 	while (s - msg->seekadr < msg->txtlen) { /* read a line at a time */
-		tape = iotape;		/* restart decryption tape	*/
+		tape = iotape;		/* restart deobfuscation tape	*/
 		while ((*s++ ^ *tape++) != TAB); /* read past loc num	*/
 		/* assume tape is longer than location number		*/
 		/*  plus the lookahead put together			*/
@@ -560,7 +560,7 @@ speak(const struct text *msg)
 }
 
 /*
- * Read, decrypt an print a ptext message
+ * Read, deobfuscate, and print a ptext message
  * msg is the number of all the p msgs for this place
  * assumes object 1 doesn't have prop 1, obj 2 no prop 2 &c
  */
@@ -580,12 +580,12 @@ pspeak(int m, int skip)
 
 	nonfirst = 0;
 	while (s - tbuf < msg->txtlen) {	/* read line at a time	*/
-		tape = iotape;		/* restart decryption tape	*/
+		tape = iotape;			/* restart dobfuscation tape */
 		for (numst = s; (*s ^= *tape++) != TAB; s++)
 			; /* get number	*/
 
 		save = *s; /* Temporarily trash the string (cringe)	*/
-		*s++ = 0; /* decrypting number within the string	*/
+		*s++ = 0; /* deobfuscation number within the string	*/
 
 		if (atoi(numst) != 100 * skip && skip >= 0) {
 			while ((*s++ ^ * tape++) != LF) /* flush the line */

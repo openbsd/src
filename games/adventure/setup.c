@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.9 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.10 2014/07/13 19:40:57 tedu Exp $	*/
 /*	$NetBSD: setup.c,v 1.2 1995/03/21 12:05:10 cgd Exp $	*/
 
 /*-
@@ -36,7 +36,7 @@
 /*
  * Setup: keep the structure of the original Adventure port, but use an
  * internal copy of the data file, serving as a sort of virtual disk.  It's
- * lightly encrypted to prevent casual snooping of the executable.
+ * lightly obfuscated to prevent casual snooping of the executable.
  *
  * Also do appropriate things to tabs so that bogus editors will do the right
  * thing with the data file.
