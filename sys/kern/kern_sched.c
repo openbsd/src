@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.32 2014/05/04 05:03:26 guenther Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.33 2014/07/13 21:44:58 matthew Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -272,7 +272,7 @@ sched_chooseproc(void)
 	if (spc->spc_schedflags & SPCF_SHOULDHALT) {
 		if (spc->spc_whichqs) {
 			for (queue = 0; queue < SCHED_NQS; queue++) {
-				TAILQ_FOREACH(p, &spc->spc_qs[queue], p_runq) {
+				while ((p = TAILQ_FIRST(&spc->spc_qs[queue]))) {
 					remrunqueue(p);
 					p->p_cpu = sched_choosecpu(p);
 					setrunqueue(p);
