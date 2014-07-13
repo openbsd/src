@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.80 2014/07/13 13:28:26 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.81 2014/07/13 15:07:01 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ ext2fs_mountroot(void)
 	if ((error = ext2fs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_vfc->vfc_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT, 0);
+		free(mp, M_MOUNT, sizeof *mp);
 		vrele(rootvp);
 		return (error);
 	}
@@ -417,7 +417,9 @@ e2fs_sbfill(struct vnode *devvp, struct m_ext2fs *fs, struct ext2fs *sb)
 
 		error = bread(devvp, fsbtodb(fs, dblk), fs->e2fs_bsize, &bp);
 		if (error) {
-			free(fs->e2fs_gd, M_UFSMNT, 0);
+			size_t gdescs_space = fs->e2fs_ngdb * fs->e2fs_bsize;
+
+			free(fs->e2fs_gd, M_UFSMNT, gdescs_space);
 			fs->e2fs_gd = NULL;
 			brelse(bp);
 			return (error);
@@ -599,8 +601,8 @@ out:
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
 	VOP_UNLOCK(devvp, 0, p);
 	if (ump) {
-		free(ump->um_e2fs, M_UFSMNT, 0);
-		free(ump, M_UFSMNT, 0);
+		free(ump->um_e2fs, M_UFSMNT, sizeof *ump->um_e2fs);
+		free(ump, M_UFSMNT, sizeof *ump);
 		mp->mnt_data = (qaddr_t)0;
 	}
 	return (error);
@@ -615,6 +617,7 @@ ext2fs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	struct ufsmount *ump;
 	struct m_ext2fs *fs;
 	int error, flags;
+	size_t gdescs_space;
 
 	flags = 0;
 	if (mntflags & MNT_FORCE)
@@ -623,9 +626,10 @@ ext2fs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		return (error);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
-	if (fs->e2fs_ronly == 0 &&
-		ext2fs_cgupdate(ump, MNT_WAIT) == 0 &&
-		(fs->e2fs.e2fs_state & E2FS_ERRORS) == 0) {
+	gdescs_space = fs->e2fs_ngdb * fs->e2fs_bsize;
+
+	if (!fs->e2fs_ronly && ext2fs_cgupdate(ump, MNT_WAIT) == 0 &&
+	    (fs->e2fs.e2fs_state & E2FS_ERRORS) == 0) {
 		fs->e2fs.e2fs_state = E2FS_ISCLEAN;
 		(void) ext2fs_sbupdate(ump, MNT_WAIT);
 	}
@@ -636,9 +640,9 @@ ext2fs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	error = VOP_CLOSE(ump->um_devvp, fs->e2fs_ronly ? FREAD : FREAD|FWRITE,
 	    NOCRED, p);
 	vput(ump->um_devvp);
-	free(fs->e2fs_gd, M_UFSMNT, 0);
-	free(fs, M_UFSMNT, 0);
-	free(ump, M_UFSMNT, 0);
+	free(fs->e2fs_gd, M_UFSMNT, gdescs_space);
+	free(fs, M_UFSMNT, sizeof *fs);
+	free(ump, M_UFSMNT, sizeof *ump);
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);

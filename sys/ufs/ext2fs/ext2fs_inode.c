@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.52 2014/07/12 18:44:01 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.53 2014/07/13 15:07:01 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -519,7 +519,7 @@ ext2fs_indirtrunc(struct inode *ip, int32_t lbn, int32_t dbn, int32_t lastbn, in
 	}
 
 	if (copy != NULL) {
-		free(copy, M_TEMP, 0);
+		free(copy, M_TEMP, fs->e2fs_bsize);
 	} else {
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
