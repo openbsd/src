@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.778 2014/07/12 15:27:15 rpe Exp $
+#	$OpenBSD: install.sub,v 1.779 2014/07/13 13:53:36 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1809,16 +1809,9 @@ apply()
 	if [[ $ntpd == y ]]; then
 		echo "ntpd_flags=		# enabled during install" \
 			>>/mnt/etc/rc.conf.local
-		if [[ $ntpd_server != default ]]; then
-			# Comment out the default 'servers' line, and add a
-			# 'servers' line with the first token in $resp as the
-			# server.
-			set -- $ntpd_server
-			sed "s/^servers /#&/;/#server /a\\
-servers $1
-" /mnt/etc/ntpd.conf >/tmp/ntpd.conf
-			cp /tmp/ntpd.conf /mnt/etc/ntpd.conf
-		fi
+		[[ $ntpd_server == default ]] && ntpd_server=pool.ntp.org
+		echo "# created during install\nservers ${ntpd_server%% *}" \
+			>/mnt/etc/ntpd.conf
 	fi
 
 	if [[ $x11 == y ]]; then

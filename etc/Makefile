@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.369 2014/07/13 13:01:48 ajacoutot Exp $
+#	$OpenBSD: Makefile,v 1.370 2014/07/13 13:53:36 rpe Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -36,10 +36,11 @@ BIN1=	changelist csh.cshrc csh.login csh.logout daily \
 	newsyslog.conf protocols rc rc.conf rc.local \
 	rc.securelevel rc.shutdown rpc services shells syslog.conf \
 	weekly etc.${MACHINE}/login.conf etc.${MACHINE}/disktab \
-	dhclient.conf mailer.conf ntpd.conf moduli pf.os mixerctl.conf
+	dhclient.conf mailer.conf moduli pf.os mixerctl.conf
 
 EXAMPLES=chio.conf dhcpd.conf exports ftpchroot hosts.lpd ifstated.conf \
-	inetd.conf mrouted.conf printcap rbootd.conf remote sensorsd.conf
+	inetd.conf mrouted.conf ntpd.conf printcap rbootd.conf remote \
+	sensorsd.conf
 
 EXAMPLES_600=bgpd.conf dvmrpd.conf hostapd.conf iked.conf ipsec.conf \
 	ldapd.conf ldpd.conf ospf6d.conf ospfd.conf relayd.conf ripd.conf \

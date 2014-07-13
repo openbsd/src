@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.91 2014/07/12 03:52:39 deraadt Exp $
+#	$OpenBSD: changelist,v 1.92 2014/07/13 13:53:36 rpe Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -94,7 +94,7 @@
 /etc/nginx/nginx.conf
 /etc/npppd/npppd.conf
 +/etc/npppd/npppd-users
-/etc/ntpd.conf
++/etc/ntpd.conf
 +/etc/ospf6d.conf
 +/etc/ospfd.conf
 /etc/passwd
