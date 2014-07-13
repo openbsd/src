@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.25 2014/07/08 17:12:37 tobias Exp $ */
+/*	$OpenBSD: identd.c,v 1.26 2014/07/13 17:53:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -275,7 +275,7 @@ main(int argc, char *argv[])
 
 	pw = getpwnam(IDENTD_USER);
 	if (pw == NULL)
-		err(1, "no %s user", IDENTD_USER);
+		errx(1, "no %s user", IDENTD_USER);
 
 	if (!debug && daemon(1, 0) == -1)
 		err(1, "daemon");
