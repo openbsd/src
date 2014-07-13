@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.428 2014/07/12 10:14:03 robert Exp $
+#	$OpenBSD: rc,v 1.429 2014/07/13 12:12:30 claudio Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -205,6 +205,42 @@ setup_X_sockets()
 	fi
 }
 
+do_fsck()
+{
+	local _flags=$1
+
+	fsck -p $_flags
+	case $? in
+	0)
+		;;
+	2)
+		exit 1
+		;;
+	4)
+		echo "Rebooting..."
+		reboot
+		echo "Reboot failed; help!"
+		exit 1
+		;;
+	8)
+		echo "Automatic file system check failed; help!"
+		exit 1
+		;;
+	12)
+		echo "Boot interrupted."
+		exit 1
+		;;
+	130)
+		# interrupt before catcher installed
+		exit 1
+		;;
+	*)
+		echo "Unknown error; help!"
+		exit 1
+		;;
+	esac
+}
+
 # End subroutines
 
 stty status '^T'
@@ -272,36 +308,7 @@ if [ -e /fastboot ]; then
 	echo "Fast boot: skipping disk checks."
 elif [ X"$1" = X"autoboot" ]; then
 	echo "Automatic boot in progress: starting file system checks."
-	fsck -p
-	case $? in
-	0)
-		;;
-	2)
-		exit 1
-		;;
-	4)
-		echo "Rebooting..."
-		reboot
-		echo "Reboot failed; help!"
-		exit 1
-		;;
-	8)
-		echo "Automatic file system check failed; help!"
-		exit 1
-		;;
-	12)
-		echo "Boot interrupted."
-		exit 1
-		;;
-	130)
-		# interrupt before catcher installed
-		exit 1
-		;;
-	*)
-		echo "Unknown error; help!"
-		exit 1
-		;;
-	esac
+	do_fsck
 fi
 
 trap "echo 'Boot interrupted.'; exit 1" 3
@@ -394,7 +401,7 @@ make_keys
 
 echo -n 'starting early daemons:'
 start_daemon syslogd ldattach pflogd named nsd unbound ntpd
-start_daemon isakmpd iked sasyncd ldapd npppd
+start_daemon iscsid isakmpd iked sasyncd ldapd npppd
 echo '.'
 
 if [ X"${ipsec}" != X"NO" ]; then
@@ -413,6 +420,10 @@ echo '.'
 
 mount -a
 swapctl -A -t noblk
+
+# check and mount networked filesystems
+do_fsck -N
+mount -a -N
 
 # /var/crash should be a directory or a symbolic link
 # to the crash directory if core dumps are to be saved.
