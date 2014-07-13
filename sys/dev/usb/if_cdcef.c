@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.33 2013/12/07 20:17:42 brad Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.34 2014/07/13 15:52:49 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -43,8 +43,6 @@
 #endif
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 
 

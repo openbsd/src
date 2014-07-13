@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.25 2014/07/12 07:59:23 mpi Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.26 2014/07/13 15:52:49 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -92,12 +92,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

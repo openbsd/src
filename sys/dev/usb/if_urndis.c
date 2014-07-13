@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.48 2014/07/12 18:48:52 tedu Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.49 2014/07/13 15:52:49 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -41,12 +41,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.108 2014/07/12 18:48:52 tedu Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.109 2014/07/13 15:52:49 mpi Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -74,10 +74,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>

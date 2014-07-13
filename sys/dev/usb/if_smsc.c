@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.12 2014/07/12 07:59:23 mpi Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.13 2014/07/13 15:52:49 mpi Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -83,8 +83,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
 

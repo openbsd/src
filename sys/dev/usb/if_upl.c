@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.57 2014/07/12 07:59:23 mpi Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.58 2014/07/13 15:52:49 mpi Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -55,14 +55,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#else
-#error upl without INET?
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

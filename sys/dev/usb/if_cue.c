@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.65 2014/07/12 07:59:23 mpi Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.66 2014/07/13 15:52:49 mpi Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -74,12 +74,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

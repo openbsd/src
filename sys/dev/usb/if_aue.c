@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.93 2014/07/12 07:59:23 mpi Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.94 2014/07/13 15:52:49 mpi Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -97,12 +97,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

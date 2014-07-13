@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.127 2014/07/12 07:59:23 mpi Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.128 2014/07/13 15:52:49 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -48,9 +48,7 @@
 #include <net/if_types.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip.h>
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>

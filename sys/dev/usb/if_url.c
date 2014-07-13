@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.69 2014/07/12 07:59:23 mpi Exp $ */
+/*	$OpenBSD: if_url.c,v 1.70 2014/07/13 15:52:49 mpi Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -62,12 +62,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

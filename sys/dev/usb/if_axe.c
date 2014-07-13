@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.125 2014/07/12 07:59:23 mpi Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.126 2014/07/13 15:52:49 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -109,12 +109,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
