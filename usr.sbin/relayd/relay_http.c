@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.27 2014/07/12 15:47:18 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.28 2014/07/13 00:18:05 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1229,6 +1229,13 @@ relay_httpheader_test(struct ctl_relay_event *cre, struct relay_rule *rule,
 	} else if (match == NULL) {
 		/* Fail if header doesn't exist */
 		return (-1);
+	} else {
+		if (fnmatch(kv->kv_key, match->kv_key, FNM_CASEFOLD) == FNM_NOMATCH)
+			return (-1);
+		if (kv->kv_value != NULL &&
+		    match->kv_value != NULL &&
+		    fnmatch(kv->kv_value, match->kv_value, 0) == FNM_NOMATCH)
+			return (-1);
 	}
 
 	relay_match(actions, kv, match, &desc->http_headers);
