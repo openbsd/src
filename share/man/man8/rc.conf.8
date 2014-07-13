@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.conf.8,v 1.21 2014/07/13 08:07:51 robert Exp $
+.\"	$OpenBSD: rc.conf.8,v 1.22 2014/07/13 10:05:49 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Ian F. Darwin
 .\" All rights reserved.
@@ -38,11 +38,12 @@
 The file
 .Nm rc.conf
 contains a series of variable assignments that are used to configure
-the system daemons. These variables are read by
-.Xr rc 8 early on in the boot sequence and every time a
-.Xr rc.d 5
+the system daemons.
+These variables are read by
+.Xr rc 8
+early on in the boot sequence and every time an
+.Xr rc.d 8
 script is executed.
-that are used to configure the system daemons.
 .Pp
 It is advisable to leave
 .Nm rc.conf
