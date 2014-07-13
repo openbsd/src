@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.74 2014/07/13 09:52:48 dlg Exp $
+.\"     $OpenBSD: mbuf.9,v 1.75 2014/07/13 10:59:49 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -640,8 +640,8 @@ for a description of
 "void (*free)(caddr_t, u_int, void *)" "void *arg"
 Add pre-allocated storage to the mbuf pointed to by
 .Fa m .
-On success, the flag M_EXT is set in the mbuf, and M_EXTWR if specified in
-.Fa flags ..
+On success, the flag M_EXT is set in the mbuf, and M_EXTWR is specified in
+.Fa flags .
 .It Fn M_ALIGN "struct mbuf *m" "int len"
 Set the
 .Fa m_data
