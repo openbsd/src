@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoconf.9,v 1.13 2014/07/13 09:28:06 mpi Exp $
+.\"     $OpenBSD: autoconf.9,v 1.14 2014/07/13 09:37:22 mpi Exp $
 .\"     $NetBSD: autoconf.9,v 1.9 2002/02/13 08:18:35 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,15 +73,6 @@ ends with a unit number.
 The unit number identifies an instance of the driver.
 Device data structures are allocated dynamically during autoconfiguration,
 giving a unique address for each instance.
-.Sh INITIALIZATION
-.nr nS 1
-.Ft "void"
-.Fn config_init "void"
-.nr nS 0
-.Pp
-The
-.Fn config_init
-function initializes the autoconfiguration data structures.
 .Sh INDIRECT CONFIGURATION
 .nr nS 1
 .Ft "void *"
