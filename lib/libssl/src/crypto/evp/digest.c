@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.22 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: digest.c,v 1.23 2014/07/13 11:14:02 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -192,13 +192,19 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 	}
 #endif
 	if (ctx->digest != type) {
-		if (ctx->digest && ctx->digest->ctx_size)
+		if (ctx->digest && ctx->digest->ctx_size && ctx->md_data &&
+		    !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE)) {
+			explicit_bzero(ctx->md_data, ctx->digest->ctx_size);
 			free(ctx->md_data);
+			ctx->md_data = NULL;
+		}
 		ctx->digest = type;
 		if (!(ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) && type->ctx_size) {
 			ctx->update = type->update;
 			ctx->md_data = malloc(type->ctx_size);
 			if (ctx->md_data == NULL) {
+				EVP_PKEY_CTX_free(ctx->pctx);
+				ctx->pctx = NULL;
 				EVPerr(EVP_F_EVP_DIGESTINIT_EX,
 				    ERR_R_MALLOC_FAILURE);
 				return 0;
@@ -355,7 +361,7 @@ EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 		ctx->digest->cleanup(ctx);
 	if (ctx->digest && ctx->digest->ctx_size && ctx->md_data &&
 	    !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE)) {
-		OPENSSL_cleanse(ctx->md_data, ctx->digest->ctx_size);
+		explicit_bzero(ctx->md_data, ctx->digest->ctx_size);
 		free(ctx->md_data);
 	}
 	EVP_PKEY_CTX_free(ctx->pctx);
