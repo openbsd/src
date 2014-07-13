@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# $OpenBSD: iscsid,v 1.1 2014/07/13 12:07:11 claudio Exp $
+
+daemon="/usr/sbin/iscsid"
+control="/usr/sbin/iscsictl"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+rc_stop=NO
+
+rc_start() {
+	${rcexec} "${daemon} ${daemon_flags} && ${control} reload"
+}
+
+rc_cmd $1
