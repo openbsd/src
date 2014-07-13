@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.53 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.54 2014/07/13 23:10:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -6177,8 +6177,8 @@ ahd_init(struct ahd_softc *ahd)
 	AHD_ASSERT_MODES(ahd, AHD_MODE_SCSI_MSK, AHD_MODE_SCSI_MSK);
 
 	ahd->stack_size = ahd_probe_stack_size(ahd);
-	ahd->saved_stack = malloc(ahd->stack_size * sizeof(uint16_t), M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
+	ahd->saved_stack = mallocarray(ahd->stack_size, sizeof(uint16_t),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ahd->saved_stack == NULL)
 		return (ENOMEM);
 

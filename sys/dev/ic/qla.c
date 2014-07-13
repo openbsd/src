@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.42 2014/07/12 18:48:17 tedu Exp $ */
+/*	$OpenBSD: qla.c,v 1.43 2014/07/13 23:10:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -2547,7 +2547,7 @@ qla_alloc_ccbs(struct qla_softc *sc)
 	mtx_init(&sc->sc_port_mtx, IPL_BIO);
 	mtx_init(&sc->sc_mbox_mtx, IPL_BIO);
 
-	sc->sc_ccbs = malloc(sizeof(struct qla_ccb) * sc->sc_maxcmds,
+	sc->sc_ccbs = mallocarray(sc->sc_maxcmds, sizeof(struct qla_ccb),
 	    M_DEVBUF, M_WAITOK | M_CANFAIL | M_ZERO);
 	if (sc->sc_ccbs == NULL) {
 		printf("%s: unable to allocate ccbs\n", DEVNAME(sc));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.23 2014/07/12 18:48:17 tedu Exp $ */
+/*	$OpenBSD: qlw.c,v 1.24 2014/07/13 23:10:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -1699,7 +1699,7 @@ qlw_alloc_ccbs(struct qlw_softc *sc)
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 	mtx_init(&sc->sc_queue_mtx, IPL_BIO);
 
-	sc->sc_ccbs = malloc(sizeof(struct qlw_ccb) * sc->sc_maxccbs,
+	sc->sc_ccbs = mallocarray(sc->sc_maxccbs, sizeof(struct qlw_ccb),
 	    M_DEVBUF, M_WAITOK | M_CANFAIL | M_ZERO);
 	if (sc->sc_ccbs == NULL) {
 		printf("%s: unable to allocate ccbs\n", DEVNAME(sc));

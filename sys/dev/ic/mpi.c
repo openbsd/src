@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.192 2014/07/12 18:48:17 tedu Exp $ */
+/*	$OpenBSD: mpi.c,v 1.193 2014/07/13 23:10:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -340,8 +340,8 @@ mpi_attach(struct mpi_softc *sc)
 				    DEVNAME(sc));
 			}
 
-			sc->sc_vol_page = malloc(sc->sc_cfg_hdr.page_length * 4,
-			    M_TEMP, M_WAITOK | M_CANFAIL);
+			sc->sc_vol_page = mallocarray(sc->sc_cfg_hdr.page_length,
+			    4, M_TEMP, M_WAITOK | M_CANFAIL);
 			if (sc->sc_vol_page == NULL) {
 				panic("%s: can't get memory for IOC page 2, "
 				    "bio disabled", DEVNAME(sc));
@@ -1050,7 +1050,7 @@ mpi_alloc_ccbs(struct mpi_softc *sc)
 	SLIST_INIT(&sc->sc_ccb_free);
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 
-	sc->sc_ccbs = malloc(sizeof(struct mpi_ccb) * sc->sc_maxcmds,
+	sc->sc_ccbs = mallocarray(sc->sc_maxcmds, sizeof(struct mpi_ccb),
 	    M_DEVBUF, M_WAITOK | M_CANFAIL | M_ZERO);
 	if (sc->sc_ccbs == NULL) {
 		printf("%s: unable to allocate ccbs\n", DEVNAME(sc));
@@ -1156,7 +1156,7 @@ mpi_alloc_replies(struct mpi_softc *sc)
 {
 	DNPRINTF(MPI_D_MISC, "%s: mpi_alloc_replies\n", DEVNAME(sc));
 
-	sc->sc_rcbs = malloc(sc->sc_repq * sizeof(struct mpi_rcb), M_DEVBUF,
+	sc->sc_rcbs = mallocarray(sc->sc_repq, sizeof(struct mpi_rcb), M_DEVBUF,
 	    M_WAITOK|M_CANFAIL);
 	if (sc->sc_rcbs == NULL)
 		return (1);
@@ -3430,7 +3430,7 @@ mpi_create_sensors(struct mpi_softc *sc)
 	if (vol == 0)
 		return (0);
 
-	sc->sc_sensors = malloc(sizeof(struct ksensor) * vol,
+	sc->sc_sensors = mallocarray(vol, sizeof(struct ksensor),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_sensors == NULL)
 		return (1);

@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.62 2014/07/12 18:48:17 tedu Exp $ */
+/* $OpenBSD: vga.c,v 1.63 2014/07/13 23:10:23 deraadt Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -663,9 +663,8 @@ vga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 		 * XXX We could be more clever and use video RAM.
 		 */
 		scr = LIST_FIRST(&vc->screens);
-		scr->pcs.mem =
-		  malloc(scr->pcs.type->ncols * scr->pcs.type->nrows * 2,
-		    M_DEVBUF, M_WAITOK);
+		scr->pcs.mem = mallocarray(scr->pcs.type->ncols,
+		    scr->pcs.type->nrows * 2, M_DEVBUF, M_WAITOK);
 	}
 
 	scr = malloc(sizeof(struct vgascreen), M_DEVBUF, M_WAITOK);
@@ -676,8 +675,8 @@ vga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 		vc->active = scr;
 		vc->currenttype = type;
 	} else {
-		scr->pcs.mem = malloc(type->ncols * type->nrows * 2,
-				      M_DEVBUF, M_WAITOK);
+		scr->pcs.mem = mallocarray(type->ncols,
+		    type->nrows * 2, M_DEVBUF, M_WAITOK);
 		pcdisplay_eraserows(&scr->pcs, 0, type->nrows, *defattrp);
 	}
 

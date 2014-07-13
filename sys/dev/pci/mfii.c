@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.16 2014/07/12 18:48:52 tedu Exp $ */
+/* $OpenBSD: mfii.c,v 1.17 2014/07/13 23:10:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -1382,7 +1382,7 @@ mfii_init_ccb(struct mfii_softc *sc)
 	u_int i;
 	int error;
 
-	sc->sc_ccb = malloc(sizeof(struct mfii_ccb) * sc->sc_max_cmds,
+	sc->sc_ccb = mallocarray(sc->sc_max_cmds, sizeof(struct mfii_ccb),
 	    M_DEVBUF, M_WAITOK|M_ZERO);
 
 	for (i = 0; i < sc->sc_max_cmds; i++) {

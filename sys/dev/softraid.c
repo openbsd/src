@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.334 2014/07/12 18:48:51 tedu Exp $ */
+/* $OpenBSD: softraid.c,v 1.335 2014/07/13 23:10:23 deraadt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -252,7 +252,7 @@ sr_meta_attach(struct sr_discipline *sd, int chunk_no, int force)
 
 	/* we have a valid list now create an array index */
 	cl = &sd->sd_vol.sv_chunk_list;
-	sd->sd_vol.sv_chunks = malloc(sizeof(struct sr_chunk *) * chunk_no,
+	sd->sd_vol.sv_chunks = mallocarray(chunk_no, sizeof(struct sr_chunk *),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* fill out chunk array */
@@ -1284,13 +1284,13 @@ sr_boot_assembly(struct sr_softc *sc)
 	}
 
 	/* Allocate memory for device and ondisk version arrays. */
-	devs = malloc(BIOC_CRMAXLEN * sizeof(dev_t), M_DEVBUF,
+	devs = mallocarray(BIOC_CRMAXLEN, sizeof(dev_t), M_DEVBUF,
 	    M_NOWAIT | M_CANFAIL);
 	if (devs == NULL) {
 		printf("%s: failed to allocate device array\n", DEVNAME(sc));
 		goto unwind;
 	}
-	ondisk = malloc(BIOC_CRMAXLEN * sizeof(u_int64_t), M_DEVBUF,
+	ondisk = mallocarray(BIOC_CRMAXLEN, sizeof(u_int64_t), M_DEVBUF,
 	    M_NOWAIT | M_CANFAIL);
 	if (ondisk == NULL) {
 		printf("%s: failed to allocate ondisk array\n", DEVNAME(sc));
@@ -1934,8 +1934,9 @@ sr_ccb_alloc(struct sr_discipline *sd)
 	if (sd->sd_ccb)
 		return (1);
 
-	sd->sd_ccb = malloc(sizeof(struct sr_ccb) *
-	    sd->sd_max_wu * sd->sd_max_ccb_per_wu, M_DEVBUF, M_WAITOK | M_ZERO);
+	sd->sd_ccb = mallocarray(sd->sd_max_wu,
+	    sd->sd_max_ccb_per_wu * sizeof(struct sr_ccb),
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 	TAILQ_INIT(&sd->sd_ccb_freeq);
 	for (i = 0; i < sd->sd_max_wu * sd->sd_max_ccb_per_wu; i++) {
 		ccb = &sd->sd_ccb[i];

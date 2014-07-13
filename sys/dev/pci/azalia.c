@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.214 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.215 2014/07/13 23:10:23 deraadt Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -829,7 +829,7 @@ azalia_get_ctrlr_caps(azalia_t *az)
 		printf("%s: no HD-Audio codecs\n", XNAME(az));
 		return -1;
 	}
-	az->codecs = malloc(sizeof(codec_t) * az->ncodecs, M_DEVBUF,
+	az->codecs = mallocarray(az->ncodecs, sizeof(codec_t), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
 	if (az->codecs == NULL) {
 		printf("%s: can't allocate memory for codecs\n", XNAME(az));
@@ -1631,7 +1631,8 @@ azalia_codec_init(codec_t *this)
 		return -1;
 	}
 	this->wend = this->wstart + COP_NSUBNODES(result);
-	this->w = malloc(sizeof(widget_t) * this->wend, M_DEVBUF, M_NOWAIT | M_ZERO);
+	this->w = mallocarray(this->wend, sizeof(widget_t), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
 	if (this->w == NULL) {
 		printf("%s: out of memory\n", XNAME(this->az));
 		return ENOMEM;
@@ -2054,7 +2055,7 @@ azalia_codec_sort_pins(codec_t *this)
 		}
 	}
 
-	this->opins = malloc(nopins * sizeof(struct io_pin), M_DEVBUF,
+	this->opins = mallocarray(nopins, sizeof(struct io_pin), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
 	if (this->opins == NULL)
 		return(ENOMEM);
@@ -2072,7 +2073,7 @@ azalia_codec_sort_pins(codec_t *this)
 			break;
 	}
 
-	this->opins_d = malloc(nopins_d * sizeof(struct io_pin), M_DEVBUF,
+	this->opins_d = mallocarray(nopins_d, sizeof(struct io_pin), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
 	if (this->opins_d == NULL)
 		return(ENOMEM);
@@ -2090,7 +2091,7 @@ azalia_codec_sort_pins(codec_t *this)
 			break;
 	}
 
-	this->ipins = malloc(nipins * sizeof(struct io_pin), M_DEVBUF,
+	this->ipins = mallocarray(nipins, sizeof(struct io_pin), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
 	if (this->ipins == NULL)
 		return(ENOMEM);
@@ -2108,7 +2109,7 @@ azalia_codec_sort_pins(codec_t *this)
 			break;
 	}
 
-	this->ipins_d = malloc(nipins_d * sizeof(struct io_pin), M_DEVBUF,
+	this->ipins_d = mallocarray(nipins_d, sizeof(struct io_pin), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
 	if (this->ipins_d == NULL)
 		return(ENOMEM);
@@ -2161,7 +2162,7 @@ azalia_codec_select_dacs(codec_t *this)
 	int nconv, conv;
 	int i, j, k, err;
 
-	convs = malloc(this->na_dacs * sizeof(nid_t), M_DEVBUF,
+	convs = mallocarray(this->na_dacs, sizeof(nid_t), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
 	if (convs == NULL)
 		return(ENOMEM);
@@ -2724,7 +2725,7 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	if (this->formats != NULL)
 		free(this->formats, M_DEVBUF, 0);
 	this->nformats = 0;
-	this->formats = malloc(sizeof(struct audio_format) * variation,
+	this->formats = mallocarray(variation, sizeof(struct audio_format),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->formats == NULL) {
 		printf("%s: out of memory in %s\n",
@@ -3411,7 +3412,7 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 		}
 	}
 
-	this->connections = malloc(sizeof(nid_t) * nconn, M_DEVBUF, M_NOWAIT);
+	this->connections = mallocarray(nconn, sizeof(nid_t), M_DEVBUF, M_NOWAIT);
 	if (this->connections == NULL) {
 		printf("%s: out of memory\n", XNAME(codec->az));
 		return ENOMEM;
@@ -4427,7 +4428,7 @@ azalia_create_encodings(codec_t *this)
 	if (this->encs != NULL)
 		free(this->encs, M_DEVBUF, 0);
 	this->nencs = 0;
-	this->encs = malloc(sizeof(struct audio_encoding) * nencs,
+	this->encs = mallocarray(nencs, sizeof(struct audio_encoding),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->encs == NULL) {
 		printf("%s: out of memory in %s\n",

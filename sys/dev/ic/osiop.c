@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.48 2011/06/23 16:31:16 deraadt Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.49 2014/07/13 23:10:23 deraadt Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -267,7 +267,7 @@ osiop_attach(sc)
 	/*
 	 * Allocate (malloc) memory for acb's.
 	 */
-	acb = malloc(sizeof(*acb) * OSIOP_NACB, M_DEVBUF, M_NOWAIT | M_ZERO);
+	acb = mallocarray(OSIOP_NACB, sizeof(*acb), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (acb == NULL) {
 		printf(": can't allocate memory for acb\n");
 		return;

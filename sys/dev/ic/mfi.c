@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.153 2014/07/12 18:48:17 tedu Exp $ */
+/* $OpenBSD: mfi.c,v 1.154 2014/07/13 23:10:23 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -246,7 +246,7 @@ mfi_init_ccb(struct mfi_softc *sc)
 
 	DNPRINTF(MFI_D_CCB, "%s: mfi_init_ccb\n", DEVNAME(sc));
 
-	sc->sc_ccb = malloc(sizeof(struct mfi_ccb) * sc->sc_max_cmds,
+	sc->sc_ccb = mallocarray(sc->sc_max_cmds, sizeof(struct mfi_ccb),
 	    M_DEVBUF, M_WAITOK|M_ZERO);
 
 	for (i = 0; i < sc->sc_max_cmds; i++) {
@@ -2127,7 +2127,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 	    sizeof(sc->sc_sensordev.xname));
 
 	if (ISSET(letoh32(sc->sc_info.mci_adapter_ops ), MFI_INFO_AOPS_BBU)) {
-		sc->sc_bbu = malloc(sizeof(*sc->sc_bbu) * 4,
+		sc->sc_bbu = mallocarray(4, sizeof(*sc->sc_bbu),
 		    M_DEVBUF, M_WAITOK | M_ZERO);
 
 		sc->sc_bbu[0].type = SENSOR_INDICATOR;
@@ -2162,7 +2162,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 		}
 	}
 
-	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_ld_cnt,
+	sc->sc_sensors = mallocarray(sc->sc_ld_cnt, sizeof(struct ksensor),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_sensors == NULL)
 		return (1);

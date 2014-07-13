@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.36 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: safe.c,v 1.37 2014/07/13 23:10:23 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -1344,7 +1344,7 @@ safe_newsession(u_int32_t *sidp, struct cryptoini *cri)
 
 		if (ses == NULL) {
 			sesn = sc->sc_nsessions;
-			ses = (struct safe_session *)malloc((sesn + 1) *
+			ses = mallocarray((sesn + 1),
 			    sizeof(struct safe_session), M_DEVBUF, M_NOWAIT);
 			if (ses == NULL)
 				return (ENOMEM);

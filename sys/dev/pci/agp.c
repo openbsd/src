@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.44 2014/07/12 18:48:51 tedu Exp $ */
+/* $OpenBSD: agp.c,v 1.45 2014/07/13 23:10:23 deraadt Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -398,7 +398,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	 */
 
 	nseg = (mem->am_size + PAGE_SIZE - 1) / PAGE_SIZE;
-	segs = malloc(nseg * sizeof *segs, M_AGP, M_WAITOK);
+	segs = mallocarray(nseg, sizeof *segs, M_AGP, M_WAITOK);
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, mem->am_size, PAGE_SIZE, 0,
 	    segs, nseg, &mem->am_nseg, BUS_DMA_ZERO | BUS_DMA_WAITOK)) != 0) {
 		free(segs, M_AGP, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.19 2012/03/26 16:23:22 deraadt Exp $ */
+/*	$OpenBSD: cz.c,v 1.20 2014/07/13 23:10:23 deraadt Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -388,8 +388,8 @@ cz_attach(parent, self, aux)
 		return;
 	}
 
-	cz->cz_ports = malloc(sizeof(struct cztty_softc) * cz->cz_nchannels,
-	    M_DEVBUF, M_WAITOK | M_ZERO);
+	cz->cz_ports = mallocarray(cz->cz_nchannels,
+	    sizeof(struct cztty_softc), M_DEVBUF, M_WAITOK | M_ZERO);
 	cztty_attached_ttys += cz->cz_nchannels;
 
 	for (i = 0; i < cz->cz_nchannels; i++) {

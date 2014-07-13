@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.64 2014/07/12 18:48:17 tedu Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.65 2014/07/13 23:10:23 deraadt Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -388,8 +388,8 @@ rt2560_alloc_tx_ring(struct rt2560_softc *sc, struct rt2560_tx_ring *ring,
 
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
-	ring->data = malloc(count * sizeof (struct rt2560_tx_data), M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
+	ring->data = mallocarray(count, sizeof (struct rt2560_tx_data),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ring->data == NULL) {
 		printf("%s: could not allocate soft data\n",
 		    sc->sc_dev.dv_xname);
@@ -532,8 +532,8 @@ rt2560_alloc_rx_ring(struct rt2560_softc *sc, struct rt2560_rx_ring *ring,
 
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
-	ring->data = malloc(count * sizeof (struct rt2560_rx_data), M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
+	ring->data = mallocarray(count, sizeof (struct rt2560_rx_data),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ring->data == NULL) {
 		printf("%s: could not allocate soft data\n",
 		    sc->sc_dev.dv_xname);

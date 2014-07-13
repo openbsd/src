@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.24 2013/04/21 14:44:16 sebastia Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.25 2014/07/13 23:10:23 deraadt Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -342,8 +342,8 @@ zstty_attach(struct device *parent, struct device *self, void *aux)
 	tp->t_hwiflow = zshwiflow;
 
 	zst->zst_tty = tp;
-	zst->zst_rbuf = malloc(zstty_rbuf_size << 1, M_DEVBUF, M_WAITOK);
-	zst->zst_ebuf = zst->zst_rbuf + (zstty_rbuf_size << 1);
+	zst->zst_rbuf = mallocarray(zstty_rbuf_size, 2, M_DEVBUF, M_WAITOK);
+	zst->zst_ebuf = zst->zst_rbuf + (zstty_rbuf_size * 2);
 	/* Disable the high water mark. */
 	zst->zst_r_hiwat = 0;
 	zst->zst_r_lowat = 0;

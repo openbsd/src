@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.227 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: ami.c,v 1.228 2014/07/13 23:10:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -299,7 +299,7 @@ ami_alloc_ccbs(struct ami_softc *sc, int nccbs)
 	struct ami_ccbmem *ccbmem, *mem;
 	int i, error;
 
-	sc->sc_ccbs = malloc(sizeof(struct ami_ccb) * nccbs,
+	sc->sc_ccbs = mallocarray(nccbs, sizeof(struct ami_ccb),
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->sc_ccbs == NULL) {
 		printf(": unable to allocate ccbs\n");
@@ -566,7 +566,7 @@ ami_attach(struct ami_softc *sc)
 #endif
 #endif
 
-	rsc = malloc(sizeof(struct ami_rawsoftc) * sc->sc_channels,
+	rsc = mallocarray(sc->sc_channels, sizeof(struct ami_rawsoftc),
 	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (!rsc) {
 		printf("%s: no memory for raw interface\n", DEVNAME(sc));
@@ -2408,7 +2408,7 @@ ami_create_sensors(struct ami_softc *sc)
 	if (ssc == NULL)
 		return (1);
 
-	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_nunits,
+	sc->sc_sensors = mallocarray(sc->sc_nunits, sizeof(struct ksensor),
 	    M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);
 	if (sc->sc_sensors == NULL)
 		return (1);

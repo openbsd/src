@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.162 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.163 2014/07/13 23:10:23 deraadt Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -658,7 +658,7 @@ azalia_mixer_init(codec_t *this)
 
 	this->maxmixers = 10;
 	this->nmixers = 0;
-	this->mixers = malloc(sizeof(mixer_item_t) * this->maxmixers,
+	this->mixers = mallocarray(this->maxmixers, sizeof(mixer_item_t),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->mixers == NULL) {
 		printf("%s: out of memory in %s\n", XNAME(this), __func__);
@@ -1252,7 +1252,8 @@ azalia_mixer_ensure_capacity(codec_t *this, size_t newsize)
 	newmax = this->maxmixers + 10;
 	if (newmax < newsize)
 		newmax = newsize;
-	newbuf = malloc(sizeof(mixer_item_t) * newmax, M_DEVBUF, M_NOWAIT | M_ZERO);
+	newbuf = mallocarray(newmax, sizeof(mixer_item_t), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
 	if (newbuf == NULL) {
 		printf("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;

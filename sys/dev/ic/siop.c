@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.67 2014/07/12 18:48:17 tedu Exp $ */
+/*	$OpenBSD: siop.c,v 1.68 2014/07/13 23:10:23 deraadt Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1833,7 +1833,7 @@ siop_morecbd(sc)
 	}
 
 	/* allocate cmd list */
-	newcbd->cmds = malloc(sizeof(struct siop_cmd) * SIOP_NCMDPB,
+	newcbd->cmds = mallocarray(SIOP_NCMDPB, sizeof(struct siop_cmd),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (newcbd->cmds == NULL) {
 		printf("%s: can't allocate memory for command descriptors\n",

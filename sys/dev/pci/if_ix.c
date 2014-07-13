@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.95 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.96 2014/07/13 23:10:23 deraadt Exp $	*/
 
 /******************************************************************************
 
@@ -1703,25 +1703,22 @@ ixgbe_allocate_queues(struct ix_softc *sc)
 	int txconf = 0, rxconf = 0, i;
 
 	/* First allocate the top level queue structs */
-	if (!(sc->queues =
-	    (struct ix_queue *) malloc(sizeof(struct ix_queue) *
-	    sc->num_queues, M_DEVBUF, M_NOWAIT | M_ZERO))) {
+	if (!(sc->queues = mallocarray(sc->num_queues,
+	    sizeof(struct ix_queue), M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate queue memory\n", ifp->if_xname);
 		goto fail;
 	}
 
 	/* Then allocate the TX ring struct memory */
-	if (!(sc->tx_rings =
-	    (struct tx_ring *) malloc(sizeof(struct tx_ring) *
-	    sc->num_queues, M_DEVBUF, M_NOWAIT | M_ZERO))) {
+	if (!(sc->tx_rings = mallocarray(sc->num_queues,
+	    sizeof(struct tx_ring), M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate TX ring memory\n", ifp->if_xname);
 		goto fail;
 	}
 
 	/* Next allocate the RX */
-	if (!(sc->rx_rings =
-	    (struct rx_ring *) malloc(sizeof(struct rx_ring) *
-	    sc->num_queues, M_DEVBUF, M_NOWAIT | M_ZERO))) {
+	if (!(sc->rx_rings = mallocarray(sc->num_queues,
+	    sizeof(struct rx_ring), M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate RX ring memory\n", ifp->if_xname);
 		goto rx_fail;
 	}
@@ -1814,9 +1811,8 @@ ixgbe_allocate_transmit_buffers(struct tx_ring *txr)
 	struct ixgbe_tx_buf	*txbuf;
 	int			 error, i;
 
-	if (!(txr->tx_buffers =
-	    (struct ixgbe_tx_buf *) malloc(sizeof(struct ixgbe_tx_buf) *
-	    sc->num_tx_desc, M_DEVBUF, M_NOWAIT | M_ZERO))) {
+	if (!(txr->tx_buffers = mallocarray(sc->num_tx_desc,
+	    sizeof(struct ixgbe_tx_buf), M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate tx_buffer memory\n",
 		    ifp->if_xname);
 		error = ENOMEM;

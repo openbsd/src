@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.8 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.9 2014/07/13 23:10:23 deraadt Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -379,8 +379,8 @@ virtio_alloc_vq(struct virtio_softc *sc,
 	vq->vq_maxnsegs = maxnsegs;
 
 	/* free slot management */
-	vq->vq_entries = malloc(sizeof(struct vq_entry)*vq_size,
-				     M_DEVBUF, M_NOWAIT | M_ZERO);
+	vq->vq_entries = mallocarray(vq_size, sizeof(struct vq_entry),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (vq->vq_entries == NULL) {
 		r = ENOMEM;
 		goto err;

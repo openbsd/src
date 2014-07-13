@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.127 2014/07/12 18:48:52 tedu Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.128 2014/07/13 23:10:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1879,8 +1879,8 @@ tht_pkt_alloc(struct tht_softc *sc, struct tht_pkt_list *tpl, int npkts,
 	struct tht_pkt			*pkt;
 	int				i;
 
-	tpl->tpl_pkts = malloc(sizeof(struct tht_pkt) * npkts, M_DEVBUF,
-	    M_WAITOK | M_ZERO);
+	tpl->tpl_pkts = mallocarray(npkts, sizeof(struct tht_pkt),
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	TAILQ_INIT(&tpl->tpl_free);
 	TAILQ_INIT(&tpl->tpl_used);

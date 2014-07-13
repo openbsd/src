@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.286 2014/07/12 18:48:51 tedu Exp $ */
+/* $OpenBSD: if_em.c,v 1.287 2014/07/13 23:10:23 deraadt Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2119,8 +2119,8 @@ em_dma_free(struct em_softc *sc, struct em_dma_alloc *dma)
 int
 em_allocate_transmit_structures(struct em_softc *sc)
 {
-	if (!(sc->tx_buffer_area = malloc(sizeof(struct em_buffer) *
-	    sc->num_tx_desc, M_DEVBUF, M_NOWAIT | M_ZERO))) {
+	if (!(sc->tx_buffer_area = mallocarray(sc->num_tx_desc,
+	    sizeof(struct em_buffer), M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate tx_buffer memory\n", 
 		       sc->sc_dv.dv_xname);
 		return (ENOMEM);
@@ -2553,8 +2553,8 @@ em_allocate_receive_structures(struct em_softc *sc)
 	int		i, error;
 	struct em_buffer *rx_buffer;
 
-	if (!(sc->rx_buffer_area = malloc(sizeof(struct em_buffer) *
-	    sc->num_rx_desc, M_DEVBUF, M_NOWAIT | M_ZERO))) {
+	if (!(sc->rx_buffer_area = mallocarray(sc->num_rx_desc,
+	    sizeof(struct em_buffer), M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate rx_buffer memory\n", 
 		       sc->sc_dv.dv_xname);
 		return (ENOMEM);

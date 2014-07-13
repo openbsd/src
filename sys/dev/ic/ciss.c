@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.69 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.70 2014/07/13 23:10:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -347,7 +347,7 @@ ciss_attach(struct ciss_softc *sc)
 		return -1;
 	}
 
-	if (!(sc->sc_lds = malloc(sc->maxunits * sizeof(*sc->sc_lds),
+	if (!(sc->sc_lds = mallocarray(sc->maxunits, sizeof(*sc->sc_lds),
 	    M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		bus_dmamem_free(sc->dmat, sc->cmdseg, 1);
 		bus_dmamap_destroy(sc->dmat, sc->cmdmap);
@@ -385,7 +385,7 @@ ciss_attach(struct ciss_softc *sc)
 
 	sc->sc_flags |= CISS_BIO;
 #ifndef SMALL_KERNEL
-	sc->sensors = malloc(sizeof(struct ksensor) * sc->maxunits,
+	sc->sensors = mallocarray(sc->maxunits, sizeof(struct ksensor),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sensors) {
 		struct device *dev;

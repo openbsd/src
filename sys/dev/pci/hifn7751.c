@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.168 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.169 2014/07/13 23:10:23 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1847,8 +1847,8 @@ hifn_newsession(u_int32_t *sidp, struct cryptoini *cri)
 
 		if (ses == NULL) {
 			sesn = sc->sc_nsessions;
-			ses = (struct hifn_session *)malloc((sesn + 1) *
-			    sizeof(*ses), M_DEVBUF, M_NOWAIT);
+			ses = mallocarray((sesn + 1), sizeof(*ses),
+			    M_DEVBUF, M_NOWAIT);
 			if (ses == NULL)
 				return (ENOMEM);
 			bcopy(sc->sc_sessions, ses, sesn * sizeof(*ses));

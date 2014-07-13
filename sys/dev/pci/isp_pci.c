@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.60 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.61 2014/07/13 23:10:23 deraadt Exp $	*/
 /* $FreeBSD: src/sys/dev/isp/isp_pci.c,v 1.148 2007/06/26 23:08:57 mjacob Exp $*/
 /*-
  * Copyright (c) 1997-2006 by Matthew Jacob
@@ -560,7 +560,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pa->pa_id == PCI_QLOGIC_ISP1240) {
 		isp->isp_mdvec = &mdvec_1080;
 		isp->isp_type = ISP_HA_SCSI_1240;
-		isp->isp_param = malloc(2 * sizeof(sdparam), M_DEVBUF,
+		isp->isp_param = mallocarray(2, sizeof(sdparam), M_DEVBUF,
 		    M_NOWAIT | M_ZERO);
 		if (isp->isp_param == NULL) {
 			printf(nomem);
@@ -572,7 +572,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pa->pa_id == PCI_QLOGIC_ISP1280) {
 		isp->isp_mdvec = &mdvec_1080;
 		isp->isp_type = ISP_HA_SCSI_1280;
-		isp->isp_param = malloc(2 * sizeof(sdparam),
+		isp->isp_param = mallocarray(2, sizeof(sdparam),
 		    M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (isp->isp_param == NULL) {
 			printf(nomem);
@@ -596,7 +596,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pa->pa_id == PCI_QLOGIC_ISP12160) {
 		isp->isp_mdvec = &mdvec_12160;
 		isp->isp_type = ISP_HA_SCSI_12160;
-		isp->isp_param = malloc(2 * sizeof(sdparam),
+		isp->isp_param = mallocarray(2, sizeof(sdparam),
 		    M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (isp->isp_param == NULL) {
 			printf(nomem);

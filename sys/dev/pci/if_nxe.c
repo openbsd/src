@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.65 2014/07/12 18:48:51 tedu Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.66 2014/07/13 23:10:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1926,7 +1926,7 @@ nxe_pkt_alloc(struct nxe_softc *sc, u_int npkts, int nsegs)
 	int				i;
 
 	npl = malloc(sizeof(*npl), M_DEVBUF, M_WAITOK | M_ZERO);
-	pkt = malloc(sizeof(*pkt) * npkts, M_DEVBUF, M_WAITOK | M_ZERO);
+	pkt = mallocarray(npkts, sizeof(*pkt), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	npl->npl_pkts = pkt;
 	TAILQ_INIT(&npl->npl_free);

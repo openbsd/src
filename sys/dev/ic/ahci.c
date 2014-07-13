@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.15 2014/07/12 18:48:17 tedu Exp $ */
+/*	$OpenBSD: ahci.c,v 1.16 2014/07/13 23:10:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -527,8 +527,8 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	}
 
 	/* Allocate a CCB for each command slot */
-	ap->ap_ccbs = malloc(sizeof(struct ahci_ccb) * sc->sc_ncmds, M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
+	ap->ap_ccbs = mallocarray(sc->sc_ncmds, sizeof(struct ahci_ccb),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ap->ap_ccbs == NULL) {
 		printf("%s: unable to allocate command list for port %d\n",
 		    DEVNAME(sc), port);

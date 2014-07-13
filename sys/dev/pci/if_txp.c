@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.109 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.110 2014/07/13 23:10:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1585,9 +1585,8 @@ txp_response(struct txp_softc *sc, u_int32_t ridx, u_int16_t id,
 		rsp = (struct txp_rsp_desc *)(((u_int8_t *)sc->sc_rspring.base) + ridx);
 
 		if (id == letoh16(rsp->rsp_id) && letoh16(rsp->rsp_seq) == seq) {
-			*rspp = (struct txp_rsp_desc *)malloc(
-			    sizeof(struct txp_rsp_desc) * (rsp->rsp_numdesc + 1),
-			    M_DEVBUF, M_NOWAIT);
+			*rspp = mallocarray(rsp->rsp_numdesc + 1,
+			    sizeof(struct txp_rsp_desc), M_DEVBUF, M_NOWAIT);
 			if ((*rspp) == NULL)
 				return (-1);
 			txp_rsp_fixup(sc, rsp, *rspp);

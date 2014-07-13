@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.86 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.87 2014/07/13 23:10:23 deraadt Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -3614,7 +3614,7 @@ rtw_txsoft_blk_setup(struct rtw_txsoft_blk *tsb, u_int qlen)
 	SIMPLEQ_INIT(&tsb->tsb_dirtyq);
 	SIMPLEQ_INIT(&tsb->tsb_freeq);
 	tsb->tsb_ndesc = qlen;
-	tsb->tsb_desc = malloc(qlen * sizeof(*tsb->tsb_desc), M_DEVBUF,
+	tsb->tsb_desc = mallocarray(qlen, sizeof(*tsb->tsb_desc), M_DEVBUF,
 	    M_NOWAIT);
 	if (tsb->tsb_desc == NULL)
 		return ENOMEM;

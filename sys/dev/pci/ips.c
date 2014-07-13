@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.109 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: ips.c,v 1.110 2014/07/13 23:10:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -796,7 +796,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 
 #ifndef SMALL_KERNEL
 	/* Add sensors */
-	if ((sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_nunits,
+	if ((sc->sc_sensors = mallocarray(sc->sc_nunits, sizeof(struct ksensor),
 	    M_DEVBUF, M_NOWAIT | M_ZERO)) == NULL) {
 		printf(": can't alloc sensors\n");
 		return;
@@ -1981,7 +1981,7 @@ ips_ccb_alloc(struct ips_softc *sc, int n)
 	struct ips_ccb *ccb;
 	int i;
 
-	if ((ccb = malloc(n * sizeof(*ccb), M_DEVBUF,
+	if ((ccb = mallocarray(n, sizeof(*ccb), M_DEVBUF,
 	    M_NOWAIT | M_ZERO)) == NULL)
 		return (NULL);
 

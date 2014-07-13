@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.51 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: cac.c,v 1.52 2014/07/13 23:10:23 deraadt Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -230,8 +230,8 @@ cac_init(struct cac_softc *sc, int startfw)
 	}
 
 	sc->sc_nunits = cinfo.num_drvs;
-	sc->sc_dinfos = malloc(cinfo.num_drvs * sizeof(struct cac_drive_info),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	sc->sc_dinfos = mallocarray(cinfo.num_drvs,
+	    sizeof(struct cac_drive_info), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_dinfos == NULL) {
 		printf("%s: cannot allocate memory for drive_info\n",
 		    sc->sc_dv.dv_xname);
@@ -911,8 +911,8 @@ cac_create_sensors(struct cac_softc *sc)
 	if (ssc == NULL)
 		return (1);
 
-	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_nunits,
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	sc->sc_sensors = mallocarray(sc->sc_nunits,
+	    sizeof(struct ksensor), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_sensors == NULL)
 		return (1);
 

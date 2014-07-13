@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.57 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.58 2014/07/13 23:10:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -388,7 +388,7 @@ ath_hal_init_channels(struct ath_hal *hal, HAL_CHANNEL *channels,
 	u_int domain_5ghz, domain_2ghz;
 	HAL_CHANNEL *all_channels;
 
-	if ((all_channels = malloc(sizeof(HAL_CHANNEL) * max_channels,
+	if ((all_channels = mallocarray(max_channels, sizeof(HAL_CHANNEL),
 	    M_TEMP, M_NOWAIT | M_ZERO)) == NULL)
 		return (AH_FALSE);
 

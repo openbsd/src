@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.102 2014/07/12 18:48:51 tedu Exp $ */
+/*	$OpenBSD: arc.c,v 1.103 2014/07/13 23:10:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2618,7 +2618,7 @@ arc_create_sensors(void *xsc, void *arg)
 	}
 	sc->sc_nsensors = bi.bi_novol;
 
-	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_nsensors,
+	sc->sc_sensors = mallocarray(sc->sc_nsensors, sizeof(struct ksensor),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),

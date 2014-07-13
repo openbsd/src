@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.5 2014/07/12 18:48:17 tedu Exp $ */
+/*	$OpenBSD: nvme.c,v 1.6 2014/07/13 23:10:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -511,7 +511,7 @@ nvme_ccbs_alloc(struct nvme_softc *sc, u_int nccbs)
 	struct nvme_ccb *ccb;
 	u_int i;
 
-	sc->sc_ccbs = malloc(sizeof(*ccb) * nccbs, M_DEVBUF,
+	sc->sc_ccbs = mallocarray(nccbs, sizeof(*ccb), M_DEVBUF,
 	    M_WAITOK | M_CANFAIL);
 	if (sc->sc_ccbs == NULL)
 		return (1);

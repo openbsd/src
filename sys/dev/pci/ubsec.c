@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.158 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.159 2014/07/13 23:10:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -693,7 +693,7 @@ ubsec_newsession(u_int32_t *sidp, struct cryptoini *cri)
 
 		if (ses == NULL) {
 			sesn = sc->sc_nsessions;
-			ses = (struct ubsec_session *)malloc((sesn + 1) *
+			ses = mallocarray((sesn + 1),
 			    sizeof(struct ubsec_session), M_DEVBUF, M_NOWAIT);
 			if (ses == NULL)
 				return (ENOMEM);

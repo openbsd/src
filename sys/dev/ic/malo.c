@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.99 2014/07/12 18:48:17 tedu Exp $ */
+/*	$OpenBSD: malo.c,v 1.100 2014/07/13 23:10:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -575,8 +575,8 @@ malo_alloc_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring, int count)
 
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
-	ring->data = malloc(count * sizeof (struct malo_rx_data), M_DEVBUF,
-	    M_NOWAIT);
+	ring->data = mallocarray(count, sizeof (struct malo_rx_data),
+	    M_DEVBUF, M_NOWAIT);
 	if (ring->data == NULL) {
 		printf("%s: could not allocate soft data\n",
 		    sc->sc_dev.dv_xname);
@@ -734,8 +734,8 @@ malo_alloc_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring,
 
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
-	ring->data = malloc(count * sizeof(struct malo_tx_data), M_DEVBUF,
-	    M_NOWAIT);
+	ring->data = mallocarray(count, sizeof(struct malo_tx_data),
+	    M_DEVBUF, M_NOWAIT);
 	if (ring->data == NULL) {
 		printf("%s: could not allocate soft data\n",
 		    sc->sc_dev.dv_xname);

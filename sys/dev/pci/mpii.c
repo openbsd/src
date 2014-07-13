@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.95 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.96 2014/07/13 23:10:23 deraadt Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -553,7 +553,7 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	sc->sc_devs = malloc(sc->sc_max_devices *
+	sc->sc_devs = mallocarray(sc->sc_max_devices,
 	    sizeof(struct mpii_device *), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_devs == NULL) {
 		printf("%s: unable to allocate memory for mpii_device\n",
@@ -2366,7 +2366,7 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 	scsi_ioh_set(&sc->sc_ccb_tmo_handler, &sc->sc_iopool,
 	    mpii_scsi_cmd_tmo_handler, sc);
 
-	sc->sc_ccbs = malloc(sizeof(*ccb) * (sc->sc_max_cmds-1),
+	sc->sc_ccbs = mallocarray((sc->sc_max_cmds-1), sizeof(*ccb),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_ccbs == NULL) {
 		printf("%s: unable to allocate ccbs\n", DEVNAME(sc));
@@ -2471,8 +2471,8 @@ mpii_alloc_replies(struct mpii_softc *sc)
 {
 	DNPRINTF(MPII_D_MISC, "%s: mpii_alloc_replies\n", DEVNAME(sc));
 
-	sc->sc_rcbs = malloc(sc->sc_num_reply_frames * sizeof(struct mpii_rcb),
-	    M_DEVBUF, M_NOWAIT);
+	sc->sc_rcbs = mallocarray(sc->sc_num_reply_frames,
+	    sizeof(struct mpii_rcb), M_DEVBUF, M_NOWAIT);
 	if (sc->sc_rcbs == NULL)
 		return (1);
 
@@ -3530,7 +3530,7 @@ mpii_create_sensors(struct mpii_softc *sc)
 	struct scsi_link	*link;
 	int			i;
 
-	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_vd_count,
+	sc->sc_sensors = mallocarray(sc->sc_vd_count, sizeof(struct ksensor),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_sensors == NULL)
 		return (1);

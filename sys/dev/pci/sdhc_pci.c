@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.14 2013/01/04 23:19:40 stsp Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.15 2014/07/13 23:10:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -158,8 +158,8 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	nslots = SDHC_PCI_NUM_SLOTS(slotinfo);
 
 	/* Allocate an array big enough to hold all the possible hosts */
-	sc->sc.sc_host = malloc(sizeof(struct sdhc_host *) * nslots, M_DEVBUF,
-	    M_WAITOK);
+	sc->sc.sc_host = mallocarray(nslots, sizeof(struct sdhc_host *),
+	    M_DEVBUF, M_WAITOK);
 
 	/* XXX: handle 64-bit BARs */
 	for (reg = SDHC_PCI_BAR_START + SDHC_PCI_FIRST_BAR(slotinfo) *
