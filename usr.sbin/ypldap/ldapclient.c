@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.29 2014/07/13 12:07:59 krw Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.30 2014/07/13 15:38:09 krw Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -152,7 +152,7 @@ client_sig_handler(int sig, short event, void *p)
 }
 
 void
-client_dispatch_dns(int fd, short event, void *p)
+client_dispatch_dns(int fd, short events, void *p)
 {
 	struct imsg		 imsg;
 	u_int16_t		 dlen;
@@ -166,21 +166,21 @@ client_dispatch_dns(int fd, short event, void *p)
 	struct imsgev		*iev = env->sc_iev_dns;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 
-	switch (event) {
-	case EV_READ:
+	if ((events & (EV_READ | EV_WRITE)) == 0)
+		fatalx("unknown event");
+
+	if (events & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0)
 			shut = 1;
-		break;
-	case EV_WRITE:
+	}
+	if (events & EV_WRITE) {
 		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
 		if (n == 0)
 			shut = 1;
 		goto done;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -260,7 +260,7 @@ done:
 }
 
 void
-client_dispatch_parent(int fd, short event, void *p)
+client_dispatch_parent(int fd, short events, void *p)
 {
 	int			 n;
 	int			 shut = 0;
@@ -269,22 +269,21 @@ client_dispatch_parent(int fd, short event, void *p)
 	struct imsgev		*iev = env->sc_iev;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 
+	if ((events & (EV_READ | EV_WRITE)) == 0)
+		fatalx("unknown event");
 
-	switch (event) {
-	case EV_READ:
+	if (events & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0)
 			shut = 1;
-		break;
-	case EV_WRITE:
+	}
+	if (events & EV_WRITE) {
 		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
 		if (n == 0)
 			shut = 1;
 		goto done;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
