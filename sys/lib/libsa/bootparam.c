@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparam.c,v 1.11 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: bootparam.c,v 1.12 2014/07/13 15:31:20 mpi Exp $	*/
 /*	$NetBSD: bootparam.c,v 1.10 1996/10/14 21:16:55 thorpej Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 
 #include <nfs/rpcv2.h>
 
@@ -58,7 +57,7 @@
 #endif
 
 struct in_addr	bp_server_addr;	/* net order */
-n_short		bp_server_port;	/* net order */
+u_int16_t	bp_server_port;	/* net order */
 
 /*
  * RPC definitions for bootparamd
@@ -115,14 +114,14 @@ bp_whoami(int sockfd)
 		u_int16_t port;
 		u_int32_t encap_len;
 		/* encapsulated data here */
-		n_long  capsule[64];
+		u_int32_t  capsule[64];
 	} *repl;
 	struct {
-		n_long	h[RPC_HEADER_WORDS];
+		u_int32_t	h[RPC_HEADER_WORDS];
 		struct args d;
 	} sdata;
 	struct {
-		n_long	h[RPC_HEADER_WORDS];
+		u_int32_t	h[RPC_HEADER_WORDS];
 		struct repl d;
 	} rdata;
 	char *send_tail, *recv_head;
@@ -229,12 +228,12 @@ int
 bp_getfile(int sockfd, char *key, struct in_addr *serv_addr, char *pathname)
 {
 	struct {
-		n_long	h[RPC_HEADER_WORDS];
-		n_long  d[64];
+		u_int32_t	h[RPC_HEADER_WORDS];
+		u_int32_t  d[64];
 	} sdata;
 	struct {
-		n_long	h[RPC_HEADER_WORDS];
-		n_long  d[128];
+		u_int32_t	h[RPC_HEADER_WORDS];
+		u_int32_t  d[128];
 	} rdata;
 	char serv_name[FNAME_SIZE];
 	char *send_tail, *recv_head;
@@ -368,7 +367,7 @@ xdr_inaddr_encode(char **pkt, struct in_addr ia)
 	u_char *cp;
 	int32_t *ip;
 	union {
-		n_long l;	/* network order */
+		u_int32_t l;	/* network order */
 		u_char c[4];
 	} uia;
 
@@ -399,7 +398,7 @@ xdr_inaddr_decode(char **pkt, struct in_addr *ia)
 	u_char *cp;
 	int32_t *ip;
 	union {
-		n_long l;	/* network order */
+		u_int32_t l;	/* network order */
 		u_char c[4];
 	} uia;
 

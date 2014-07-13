@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.c,v 1.10 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.11 2014/07/13 15:31:20 mpi Exp $	*/
 /*	$NetBSD: nfs.c,v 1.19 1996/10/13 02:29:04 christos Exp $	*/
 
 /*-
@@ -35,7 +35,6 @@
 #include <sys/stat.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 
 #include "rpcv2.h"
 #include "nfsv2.h"
@@ -49,17 +48,17 @@
 
 /* Define our own NFS attributes without NQNFS stuff. */
 struct nfsv2_fattrs {
-	n_long	fa_type;
-	n_long	fa_mode;
-	n_long	fa_nlink;
-	n_long	fa_uid;
-	n_long	fa_gid;
-	n_long	fa_size;
-	n_long	fa_blocksize;
-	n_long	fa_rdev;
-	n_long	fa_blocks;
-	n_long	fa_fsid;
-	n_long	fa_fileid;
+	u_int32_t	fa_type;
+	u_int32_t	fa_mode;
+	u_int32_t	fa_nlink;
+	u_int32_t	fa_uid;
+	u_int32_t	fa_gid;
+	u_int32_t	fa_size;
+	u_int32_t	fa_blocksize;
+	u_int32_t	fa_rdev;
+	u_int32_t	fa_blocks;
+	u_int32_t	fa_fsid;
+	u_int32_t	fa_fileid;
 	struct nfsv2_time fa_atime;
 	struct nfsv2_time fa_mtime;
 	struct nfsv2_time fa_ctime;
@@ -68,23 +67,23 @@ struct nfsv2_fattrs {
 
 struct nfs_read_args {
 	u_char	fh[NFS_FHSIZE];
-	n_long	off;
-	n_long	len;
-	n_long	xxx;			/* XXX what's this for? */
+	u_int32_t	off;
+	u_int32_t	len;
+	u_int32_t	xxx;			/* XXX what's this for? */
 };
 
 /* Data part of nfs rpc reply (also the largest thing we receive) */
 #define NFSREAD_SIZE 1024
 struct nfs_read_repl {
-	n_long	errno;
+	u_int32_t	errno;
 	struct	nfsv2_fattrs fa;
-	n_long	count;
+	u_int32_t	count;
 	u_char	data[NFSREAD_SIZE];
 };
 
 struct nfs_readlnk_repl {
-	n_long	errno;
-	n_long	len;
+	u_int32_t	errno;
+	u_int32_t	len;
 	char	path[NFS_MAXPATHLEN];
 };
 
@@ -107,19 +106,19 @@ nfs_getrootfh(struct iodesc *d, char *path, u_char *fhp)
 {
 	int len;
 	struct args {
-		n_long	len;
+		u_int32_t	len;
 		char	path[FNAME_SIZE];
 	} *args;
 	struct repl {
-		n_long	errno;
+		u_int32_t	errno;
 		u_char	fh[NFS_FHSIZE];
 	} *repl;
 	struct {
-		n_long	h[RPC_HEADER_WORDS];
+		u_int32_t	h[RPC_HEADER_WORDS];
 		struct args d;
 	} sdata;
 	struct {
-		n_long	h[RPC_HEADER_WORDS];
+		u_int32_t	h[RPC_HEADER_WORDS];
 		struct repl d;
 	} rdata;
 	size_t cc;
@@ -168,20 +167,20 @@ nfs_lookupfh(struct nfs_iodesc *d, char *name, struct nfs_iodesc *newfd)
 	int len, rlen;
 	struct args {
 		u_char	fh[NFS_FHSIZE];
-		n_long	len;
+		u_int32_t	len;
 		char	name[FNAME_SIZE];
 	} *args;
 	struct repl {
-		n_long	errno;
+		u_int32_t	errno;
 		u_char	fh[NFS_FHSIZE];
 		struct	nfsv2_fattrs fa;
 	} *repl;
 	struct {
-		n_long	h[RPC_HEADER_WORDS];
+		u_int32_t	h[RPC_HEADER_WORDS];
 		struct args d;
 	} sdata;
 	struct {
-		n_long	h[RPC_HEADER_WORDS];
+		u_int32_t	h[RPC_HEADER_WORDS];
 		struct repl d;
 	} rdata;
 	ssize_t cc;
@@ -228,11 +227,11 @@ static int
 nfs_readlink(struct nfs_iodesc *d, char *buf)
 {
 	struct {
-		n_long	h[RPC_HEADER_WORDS];
+		u_int32_t	h[RPC_HEADER_WORDS];
 		u_char fh[NFS_FHSIZE];
 	} sdata;
 	struct {
-		n_long	h[RPC_HEADER_WORDS];
+		u_int32_t	h[RPC_HEADER_WORDS];
 		struct nfs_readlnk_repl d;
 	} rdata;
 	ssize_t cc;
@@ -274,11 +273,11 @@ nfs_readdata(struct nfs_iodesc *d, off_t off, void *addr, size_t len)
 	struct nfs_read_args *args;
 	struct nfs_read_repl *repl;
 	struct {
-		n_long	h[RPC_HEADER_WORDS];
+		u_int32_t	h[RPC_HEADER_WORDS];
 		struct nfs_read_args d;
 	} sdata;
 	struct {
-		n_long	h[RPC_HEADER_WORDS];
+		u_int32_t	h[RPC_HEADER_WORDS];
 		struct nfs_read_repl d;
 	} rdata;
 	size_t cc;
@@ -289,11 +288,11 @@ nfs_readdata(struct nfs_iodesc *d, off_t off, void *addr, size_t len)
 	repl = &rdata.d;
 
 	bcopy(d->fh, args->fh, NFS_FHSIZE);
-	args->off = htonl((n_long)off);
+	args->off = htonl((u_int32_t)off);
 	if (len > NFSREAD_SIZE)
 		len = NFSREAD_SIZE;
-	args->len = htonl((n_long)len);
-	args->xxx = htonl((n_long)0);
+	args->len = htonl((u_int32_t)len);
+	args->xxx = htonl((u_int32_t)0);
 	hlen = sizeof(*repl) - NFSREAD_SIZE;
 
 	cc = rpc_call(d->iodesc, NFS_PROG, NFS_VER2, NFSPROC_READ,
@@ -564,7 +563,7 @@ off_t
 nfs_seek(struct open_file *f, off_t offset, int where)
 {
 	struct nfs_iodesc *d = (struct nfs_iodesc *)f->f_fsdata;
-	n_long size = ntohl(d->fa.fa_size);
+	u_int32_t size = ntohl(d->fa.fa_size);
 
 	switch (where) {
 	case SEEK_SET:
@@ -591,7 +590,7 @@ int
 nfs_stat(struct open_file *f, struct stat *sb)
 {
 	struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
-	n_long ftype, mode;
+	u_int32_t ftype, mode;
 
 	ftype = ntohl(fp->fa.fa_type);
 	mode  = ntohl(fp->fa.fa_mode);

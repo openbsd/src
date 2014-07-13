@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.c,v 1.13 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: rpc.c,v 1.14 2014/07/13 15:31:20 mpi Exp $	*/
 /*	$NetBSD: rpc.c,v 1.16 1996/10/13 02:29:06 christos Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 
 #include <nfs/rpcv2.h>
 
@@ -98,7 +97,7 @@ struct rpc_reply {
 
 /* Local forwards */
 static	ssize_t recvrpc(struct iodesc *, void *, size_t, time_t);
-static	int rpc_getport(struct iodesc *, n_long, n_long);
+static	int rpc_getport(struct iodesc *, u_int32_t, u_int32_t);
 
 int rpc_xid;
 int rpc_port = 0x400;	/* predecrement */
@@ -108,7 +107,7 @@ int rpc_port = 0x400;	/* predecrement */
  * Note: Caller must leave room for headers.
  */
 ssize_t
-rpc_call(struct iodesc *d, n_long prog, n_long vers, n_long proc, void *sdata,
+rpc_call(struct iodesc *d, u_int32_t prog, u_int32_t vers, u_int32_t proc, void *sdata,
     size_t slen, void *rdata, size_t rlen)
 {
 	ssize_t cc;
@@ -117,7 +116,7 @@ rpc_call(struct iodesc *d, n_long prog, n_long vers, n_long proc, void *sdata,
 	struct rpc_reply *reply;
 	char *send_head, *send_tail;
 	char *recv_head, *recv_tail;
-	n_long x;
+	u_int32_t x;
 	int port;	/* host order */
 
 #ifdef RPC_DEBUG
@@ -283,8 +282,8 @@ rpc_fromaddr(void *pkt, struct in_addr *addr, u_short *port)
 {
 	struct hackhdr {
 		/* Tail of IP header: just IP addresses */
-		n_long ip_src;
-		n_long ip_dst;
+		u_int32_t ip_src;
+		u_int32_t ip_dst;
 		/* UDP header: */
 		u_int16_t uh_sport;		/* source port */
 		u_int16_t uh_dport;		/* destination port */
@@ -356,25 +355,25 @@ rpc_pmap_putcache(struct in_addr addr, u_int prog, u_int vers, int port)
  * Returns the port in host order.
  */
 int
-rpc_getport(struct iodesc *d, n_long prog, n_long vers)
+rpc_getport(struct iodesc *d, u_int32_t prog, u_int32_t vers)
 {
 	struct args {
-		n_long	prog;		/* call program */
-		n_long	vers;		/* call version */
-		n_long	proto;		/* call protocol */
-		n_long	port;		/* call port (unused) */
+		u_int32_t	prog;		/* call program */
+		u_int32_t	vers;		/* call version */
+		u_int32_t	proto;		/* call protocol */
+		u_int32_t	port;		/* call port (unused) */
 	} *args;
 	struct res {
-		n_long port;
+		u_int32_t port;
 	} *res;
 	struct {
-		n_long	h[RPC_HEADER_WORDS];
+		u_int32_t	h[RPC_HEADER_WORDS];
 		struct args d;
 	} sdata;
 	struct {
-		n_long	h[RPC_HEADER_WORDS];
+		u_int32_t	h[RPC_HEADER_WORDS];
 		struct res d;
-		n_long  pad;
+		u_int32_t  pad;
 	} rdata;
 	ssize_t cc;
 	int port;

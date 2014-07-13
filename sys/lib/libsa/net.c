@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.13 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: net.c,v 1.14 2014/07/13 15:31:20 mpi Exp $	*/
 /*	$NetBSD: net.c,v 1.14 1996/10/13 02:29:02 christos Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
@@ -321,7 +320,7 @@ sendrecv(struct iodesc *d, ssize_t (*sproc)(struct iodesc *, void *, size_t),
  * Like inet_addr() in the C library, but we only accept base-10.
  * Return values are in network order.
  */
-n_long
+u_int32_t
 inet_addr(char *cp)
 {
 	u_long val;
@@ -406,7 +405,7 @@ inet_ntoa(struct in_addr ia)
 
 /* Similar to inet_ntoa() */
 char *
-intoa(n_long addr)
+intoa(u_int32_t addr)
 {
 	char *cp;
 	u_int byte;
@@ -443,11 +442,11 @@ number(char *s, int *n)
 	return s;
 }
 
-n_long
+u_int32_t
 ip_convertaddr(char *p)
 {
 #define IP_ANYADDR	0
-	n_long addr = 0, n;
+	u_int32_t addr = 0, n;
 
 	if (p == (char *)0 || *p == '\0')
 		return IP_ANYADDR;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.h,v 1.8 2014/03/28 01:12:58 guenther Exp $	*/
+/*	$OpenBSD: net.h,v 1.9 2014/07/13 15:31:20 mpi Exp $	*/
 /*	$NetBSD: net.h,v 1.10 1995/10/20 00:46:30 cgd Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 #define BA { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }
 
-/* Returns true if n_long's on the same net */
+/* Returns true if u_int32_t's on the same net */
 #define	SAMENET(a1, a2, m) ((a1.s_addr & m) == (a2.s_addr & m))
 
 #define MACPY(s, d) bcopy((char *)s, (char *)d, 6)
@@ -88,7 +88,7 @@ extern	struct in_addr rootip;
 extern	struct in_addr swapip;
 extern	struct in_addr gateip;
 extern	struct in_addr nameip;
-extern	n_long netmask;
+extern	u_int32_t netmask;
 
 extern	int debug;			/* defined in the machdep sources */
 
@@ -98,7 +98,7 @@ extern struct iodesc sockets[SOPEN_MAX];
 u_char	*arpwhohas(struct iodesc *, struct in_addr);
 void	arp_reply(struct iodesc *, void *);
 int	rarp_getipaddress(int);
-n_long	ip_convertaddr(char *);
+u_int32_t	ip_convertaddr(char *);
 
 /* Link functions: */
 ssize_t sendether(struct iodesc *d, void *pkt, size_t len,
@@ -117,8 +117,8 @@ ssize_t	sendrecv(struct iodesc *,
 char	*ether_sprintf(u_char *);
 int	in_cksum(void *, int);
 char	*inet_ntoa(struct in_addr);
-char	*intoa(n_long);		/* similar to inet_ntoa */
-n_long	inet_addr(char *);
+char	*intoa(u_int32_t);		/* similar to inet_ntoa */
+u_int32_t inet_addr(char *);
 
 /* Machine-dependent functions: */
 time_t	getsecs(void);

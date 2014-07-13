@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.2 2013/10/29 21:49:07 miod Exp $	*/
+/*	$OpenBSD: dev_net.c,v 1.3 2014/07/13 15:31:20 mpi Exp $	*/
 /*	$NetBSD: dev_net.c,v 1.26 2011/07/17 20:54:52 joerg Exp $	*/
 
 /*-
@@ -51,7 +51,6 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 
 #include <lib/libkern/libkern.h>
 
@@ -204,7 +203,7 @@ static int
 net_getparams(int sock)
 {
 	char buf[MAXHOSTNAMELEN];
-	n_long smask;
+	u_int32_t smask;
 
 #ifdef	SUPPORT_BOOTP
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.c,v 1.3 1996/09/23 14:18:54 mickey Exp $	*/
+/*	$OpenBSD: globals.c,v 1.4 2014/07/13 15:31:20 mpi Exp $	*/
 /*	$NetBSD: globals.c,v 1.3 1995/09/18 21:19:27 pk Exp $	*/
 
 /*
@@ -12,7 +12,6 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 
 #include "stand.h"
 #include "net.h"
@@ -31,4 +30,4 @@ struct	in_addr nameip;			/* DNS server ip address */
 struct	in_addr rootip;			/* root ip address */
 struct	in_addr swapip;			/* swap ip address */
 struct	in_addr gateip;			/* swap ip address */
-n_long	netmask = 0xffffff00;		/* subnet or net mask */
+u_int32_t netmask = 0xffffff00;		/* subnet or net mask */

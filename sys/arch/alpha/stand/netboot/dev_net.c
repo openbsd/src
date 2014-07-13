@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.3 2002/03/14 03:15:51 millert Exp $	*/
+/*	$OpenBSD: dev_net.c,v 1.4 2014/07/13 15:31:20 mpi Exp $	*/
 /*	$NetBSD: dev_net.c,v 1.4 1997/04/06 08:41:24 cgd Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
@@ -78,7 +77,7 @@ u_char bcea[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 struct	in_addr myip;		/* my ip address */
 struct	in_addr rootip;		/* root ip address */
 struct	in_addr gateip;		/* swap ip address */
-n_long	netmask;		/* subnet or net mask */
+u_int32_t	netmask;		/* subnet or net mask */
 
 char rootpath[FNAME_SIZE];
 
