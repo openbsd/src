@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.58 2014/07/13 22:13:07 uebayasi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.59 2014/07/13 22:53:39 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -718,7 +718,7 @@ haltsys:
 	}
 
 	for (;;) ;
-	/*NOTREACHED*/
+	/* NOTREACHED */
 }
 
 u_long	dumpmag = 0x8fca0101;	/* Magic number for savecore. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 2014/07/13 22:13:06 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.38 2014/07/13 22:53:39 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -246,7 +246,7 @@ haltsys:
 	printf("rebooting...\n");
 	machine_reset();
 
-	/*NOTREACHED*/
+	/* NOTREACHED */
 	for (;;) {
 		continue;
 	}

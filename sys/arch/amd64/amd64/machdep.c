@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.187 2014/07/13 22:13:06 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.188 2014/07/13 22:53:38 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -812,7 +812,7 @@ haltsys:
 		delay(cpureset_delay * 1000);
 	cpu_reset();
 	for(;;) ;
-	/*NOTREACHED*/
+	/* NOTREACHED */
 }
 
 /*

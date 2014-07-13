@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.49 2014/07/13 22:13:07 uebayasi Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.50 2014/07/13 22:53:39 uebayasi Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -355,8 +355,8 @@ haltsys:
 	zapm_restart();
 #endif
 	printf("reboot failed; spinning\n");
-	while(1);
-	/*NOTREACHED*/
+	for (;;) ;
+	/* NOTREACHED */
 }
 
 static __inline

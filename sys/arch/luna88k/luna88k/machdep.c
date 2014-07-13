@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.106 2014/07/13 22:13:07 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.107 2014/07/13 22:53:39 uebayasi Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -518,8 +518,8 @@ haltsys:
 		*((volatile unsigned *)0x6d000010) = 0;
 	}
 
-	for (;;);  /* to keep compiler happy, and me from going crazy */
-	/*NOTREACHED*/
+	for (;;) ;
+	/* NOTREACHED */
 }
 
 u_long dumpmag = 0x8fca0101;	 /* magic number for savecore */

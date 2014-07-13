@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.12 2014/07/13 22:13:06 uebayasi Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.13 2014/07/13 22:53:38 uebayasi Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -316,8 +316,8 @@ boot(int howto)
 	delay(500000);
 	platform_watchdog_reset();
 	printf("reboot failed; spinning\n");
-	while(1);
-	/*NOTREACHED*/
+	for (;;) ;
+	/* NOTREACHED */
 }
 
 static __inline

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.146 2014/07/13 22:13:07 uebayasi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.147 2014/07/13 22:53:39 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -879,7 +879,7 @@ haltsys:
 
 	printf("Failed!!! Please reset manually.\n");
 	for (;;) ;
-	/*NOTREACHED*/
+	/* NOTREACHED */
 }
 
 void

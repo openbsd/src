@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.68 2014/07/13 22:13:06 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.69 2014/07/13 22:53:39 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -600,7 +600,7 @@ haltsys:
 		    :: "r" (CMD_RESET), "r" (HPPA_LBCAST + iomod_command));
 	}
 
-	for (;;) ; /* loop while bus reset is coming up */
+	for (;;) ;
 	/* NOTREACHED */
 }
 

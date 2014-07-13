@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.40 2014/07/13 22:13:07 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.41 2014/07/13 22:53:39 uebayasi Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -570,7 +570,8 @@ haltsys:
 	} else
 		str[0] = 0;
 	romboot(str);
-	/*NOTREACHED*/
+	for (;;) ;
+	/* NOTREACHED */
 }
 
 /* XXX - needs to be written */

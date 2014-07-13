@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.165 2014/07/13 22:13:07 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.166 2014/07/13 22:53:39 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -694,7 +694,8 @@ haltsys:
 		str[0] = 0;
 	OF_boot(str);
 	panic("cpu_reboot -- failed");
-	/*NOTREACHED*/
+	for (;;) ;
+	/* NOTREACHED */
 }
 
 u_long	dumpmag = 0x8fca0101;	/* magic number for savecore */

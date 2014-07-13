@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.141 2014/07/13 22:13:07 uebayasi Exp $ */
+/* $OpenBSD: machdep.c,v 1.142 2014/07/13 22:53:39 uebayasi Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -537,7 +537,6 @@ boot(int howto)
 
 	if (howto & RB_DUMP)
 		dumpsys();
-
 
 haltsys:
 	doshutdownhooks();

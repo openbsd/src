@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.162 2014/07/13 22:13:07 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.163 2014/07/13 22:53:39 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -592,7 +592,8 @@ haltsys:
 	} else
 		str[0] = 0;
 	romboot(str);
-	/*NOTREACHED*/
+	for (;;) ;
+	/* NOTREACHED */
 }
 
 /* XXX - dumpmag not eplicitly used, savecore may search for it to get here */

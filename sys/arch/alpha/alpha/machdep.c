@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.161 2014/07/13 22:13:06 uebayasi Exp $ */
+/* $OpenBSD: machdep.c,v 1.162 2014/07/13 22:53:38 uebayasi Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1031,7 +1031,7 @@ boot(int howto)
 		    cpus_running);
 #endif
 
-	if (howto & RB_DUMP)
+	if ((howto & RB_DUMP) != 0)
 		dumpsys();
 
 haltsys:
@@ -1056,7 +1056,8 @@ haltsys:
 	}
 	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
 	prom_halt(howto & RB_HALT);
-	/*NOTREACHED*/
+	for (;;) ;
+	/* NOTREACHED */
 }
 
 /*
