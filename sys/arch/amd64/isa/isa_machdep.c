@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.23 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.24 2014/07/13 21:51:12 kettenis Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -634,7 +634,11 @@ _isa_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			bcopy(cookie->id_origbuf + offset,
 			    cookie->id_bouncebuf + offset,
 			    len);
-	} else if (op & BUS_DMASYNC_POSTREAD) {
+	}
+
+	_bus_dmamap_sync(t, map, offset, len, op);
+
+	if (op & BUS_DMASYNC_POSTREAD) {
 		/*
 		 * If we're bouncing this transfer, copy the
 		 * bounce buffer to the caller's buffer.
@@ -644,11 +648,6 @@ _isa_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			    cookie->id_origbuf + offset,
 			    len);
 	}
-
-#if 0
-	/* This is a noop anyhow, so why bother calling it? */
-	_bus_dmamap_sync(t, map, op);
-#endif
 }
 
 /*
