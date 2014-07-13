@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.30 2014/07/13 00:30:07 jsing Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.31 2014/07/13 16:30:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,7 +116,8 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	unsigned char ibuf3[LSIZE2], ibuf4[LSIZE2], ibuf5[LSIZE2];
 	unsigned char ibuf6[LSIZE2];
 	SSL_SESSION_ASN1 a;
-	M_ASN1_I2D_vars(in);
+	unsigned char *p;
+	int len = 0, ret;
 	long l;
 
 	if ((in == NULL) || ((in->cipher == NULL) && (in->cipher_id == 0)))
@@ -133,40 +134,39 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	a.version.type = V_ASN1_INTEGER;
 	a.version.data = ibuf1;
 	ASN1_INTEGER_set(&(a.version), SSL_SESSION_ASN1_VERSION);
+	len += i2d_ASN1_INTEGER(&(a.version), NULL);
 
 	a.ssl_version.length = LSIZE2;
 	a.ssl_version.type = V_ASN1_INTEGER;
 	a.ssl_version.data = ibuf2;
 	ASN1_INTEGER_set(&(a.ssl_version), in->ssl_version);
+	len += i2d_ASN1_INTEGER(&(a.ssl_version), NULL);
 
-	a.cipher.type = V_ASN1_OCTET_STRING;
-	a.cipher.data = buf;
-
-	if (in->cipher == NULL)
-		l = in->cipher_id;
-	else
-		l = in->cipher->id;
 	a.cipher.length = 2;
-	buf[0] = ((unsigned char)(l >> 8L))&0xff;
-	buf[1] = ((unsigned char)(l    ))&0xff;
+	a.cipher.type = V_ASN1_OCTET_STRING;
+	l = (in->cipher == NULL) ? in->cipher_id : in->cipher->id;
+	buf[0] = ((unsigned char)(l >> 8L)) & 0xff;
+	buf[1] = ((unsigned char)(l)) & 0xff;
+	a.cipher.data = buf;
+	len += i2d_ASN1_OCTET_STRING(&(a.cipher), NULL);
 
 	a.master_key.length = in->master_key_length;
 	a.master_key.type = V_ASN1_OCTET_STRING;
 	a.master_key.data = in->master_key;
+	len += i2d_ASN1_OCTET_STRING(&(a.master_key), NULL);
 
 	a.session_id.length = in->session_id_length;
 	a.session_id.type = V_ASN1_OCTET_STRING;
 	a.session_id.data = in->session_id;
-
-	a.session_id_context.length = in->sid_ctx_length;
-	a.session_id_context.type = V_ASN1_OCTET_STRING;
-	a.session_id_context.data = in->sid_ctx;
+	len += i2d_ASN1_OCTET_STRING(&(a.session_id), NULL);
 
 	if (in->time != 0L) {
 		a.time.length = LSIZE2;
 		a.time.type = V_ASN1_INTEGER;
 		a.time.data = ibuf3;
 		ASN1_INTEGER_set(&(a.time), in->time);	/* XXX 2038 */
+		v1 = i2d_ASN1_INTEGER(&(a.time), NULL); 
+		len += ASN1_object_size(1, v1, 1);
 	}
 
 	if (in->timeout != 0L) {
@@ -174,89 +174,112 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		a.timeout.type = V_ASN1_INTEGER;
 		a.timeout.data = ibuf4;
 		ASN1_INTEGER_set(&(a.timeout), in->timeout);
+		v2 = i2d_ASN1_INTEGER(&(a.timeout), NULL); 
+		len += ASN1_object_size(1, v2, 2);
 	}
+
+	if (in->peer != NULL) {
+		v3 = i2d_X509(in->peer, NULL); 
+		len += ASN1_object_size(1, v3, 3);
+	}
+
+	a.session_id_context.length = in->sid_ctx_length;
+	a.session_id_context.type = V_ASN1_OCTET_STRING;
+	a.session_id_context.data = in->sid_ctx;
+	v4 = i2d_ASN1_OCTET_STRING(&(a.session_id_context), NULL); 
+	len += ASN1_object_size(1, v4, 4);
 
 	if (in->verify_result != X509_V_OK) {
 		a.verify_result.length = LSIZE2;
 		a.verify_result.type = V_ASN1_INTEGER;
 		a.verify_result.data = ibuf5;
 		ASN1_INTEGER_set(&a.verify_result, in->verify_result);
+		v5 = i2d_ASN1_INTEGER(&(a.verify_result), NULL); 
+		len += ASN1_object_size(1, v5, 5);
 	}
 
 	if (in->tlsext_hostname) {
 		a.tlsext_hostname.length = strlen(in->tlsext_hostname);
 		a.tlsext_hostname.type = V_ASN1_OCTET_STRING;
 		a.tlsext_hostname.data = (unsigned char *)in->tlsext_hostname;
+		v6 = i2d_ASN1_OCTET_STRING(&(a.tlsext_hostname), NULL); 
+		len += ASN1_object_size(1, v6, 6);
 	}
-	if (in->tlsext_tick) {
-		a.tlsext_tick.length = in->tlsext_ticklen;
-		a.tlsext_tick.type = V_ASN1_OCTET_STRING;
-		a.tlsext_tick.data = (unsigned char *)in->tlsext_tick;
-	}
+
+	/* 7 - PSK identity hint. */
+	/* 8 - PSK identity. */
+
 	if (in->tlsext_tick_lifetime_hint > 0) {
 		a.tlsext_tick_lifetime.length = LSIZE2;
 		a.tlsext_tick_lifetime.type = V_ASN1_INTEGER;
 		a.tlsext_tick_lifetime.data = ibuf6;
 		ASN1_INTEGER_set(&a.tlsext_tick_lifetime,
 		    in->tlsext_tick_lifetime_hint);
+		v9 = i2d_ASN1_INTEGER(&(a.tlsext_tick_lifetime), NULL); 
+		len += ASN1_object_size(1, v9, 9);
 	}
 
-	M_ASN1_I2D_len(&(a.version), i2d_ASN1_INTEGER);
-	M_ASN1_I2D_len(&(a.ssl_version), i2d_ASN1_INTEGER);
-	M_ASN1_I2D_len(&(a.cipher), i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_len(&(a.session_id), i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_len(&(a.master_key), i2d_ASN1_OCTET_STRING);
+	if (in->tlsext_tick) {
+		a.tlsext_tick.length = in->tlsext_ticklen;
+		a.tlsext_tick.type = V_ASN1_OCTET_STRING;
+		a.tlsext_tick.data = (unsigned char *)in->tlsext_tick;
+		v10 = i2d_ASN1_OCTET_STRING(&(a.tlsext_tick), NULL); 
+		len += ASN1_object_size(1, v10, 10);
+	}
 
-	if (in->time != 0L)
-		M_ASN1_I2D_len_EXP_opt(&(a.time), i2d_ASN1_INTEGER, 1, v1);
-	if (in->timeout != 0L)
-		M_ASN1_I2D_len_EXP_opt(&(a.timeout), i2d_ASN1_INTEGER, 2, v2);
-	if (in->peer != NULL)
-		M_ASN1_I2D_len_EXP_opt(in->peer, i2d_X509, 3, v3);
-	M_ASN1_I2D_len_EXP_opt(&a.session_id_context,
-	    i2d_ASN1_OCTET_STRING, 4, v4);
-	if (in->verify_result != X509_V_OK)
-		M_ASN1_I2D_len_EXP_opt(&(a.verify_result),
-		    i2d_ASN1_INTEGER, 5, v5);
-	if (in->tlsext_tick_lifetime_hint > 0)
-		M_ASN1_I2D_len_EXP_opt(&a.tlsext_tick_lifetime,
-		    i2d_ASN1_INTEGER, 9, v9);
-	if (in->tlsext_tick)
-		M_ASN1_I2D_len_EXP_opt(&(a.tlsext_tick),
-		    i2d_ASN1_OCTET_STRING, 10, v10);
-	if (in->tlsext_hostname)
-		M_ASN1_I2D_len_EXP_opt(&(a.tlsext_hostname),
-		    i2d_ASN1_OCTET_STRING, 6, v6);
+	/* 11 - Compression method. */
+	/* 12 - SRP username. */
 
-	M_ASN1_I2D_seq_total();
+	/* If given a NULL pointer, return the length only. */
+	ret = (ASN1_object_size(1, len, V_ASN1_SEQUENCE));
+	if (pp == NULL)
+		return (ret);
 
-	M_ASN1_I2D_put(&(a.version), i2d_ASN1_INTEGER);
-	M_ASN1_I2D_put(&(a.ssl_version), i2d_ASN1_INTEGER);
-	M_ASN1_I2D_put(&(a.cipher), i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_put(&(a.session_id), i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_put(&(a.master_key), i2d_ASN1_OCTET_STRING);
-	if (in->time != 0L)
-		M_ASN1_I2D_put_EXP_opt(&(a.time), i2d_ASN1_INTEGER, 1, v1);
-	if (in->timeout != 0L)
-		M_ASN1_I2D_put_EXP_opt(&(a.timeout), i2d_ASN1_INTEGER, 2, v2);
-	if (in->peer != NULL)
-		M_ASN1_I2D_put_EXP_opt(in->peer, i2d_X509, 3, v3);
-	M_ASN1_I2D_put_EXP_opt(&a.session_id_context,
-	    i2d_ASN1_OCTET_STRING, 4, v4);
-	if (in->verify_result != X509_V_OK)
-		M_ASN1_I2D_put_EXP_opt(&a.verify_result,
-		    i2d_ASN1_INTEGER, 5, v5);
-	if (in->tlsext_hostname)
-		M_ASN1_I2D_put_EXP_opt(&(a.tlsext_hostname),
-		    i2d_ASN1_OCTET_STRING, 6, v6);
-	if (in->tlsext_tick_lifetime_hint > 0)
-		M_ASN1_I2D_put_EXP_opt(&a.tlsext_tick_lifetime,
-		    i2d_ASN1_INTEGER, 9, v9);
-	if (in->tlsext_tick)
-		M_ASN1_I2D_put_EXP_opt(&(a.tlsext_tick),
-		    i2d_ASN1_OCTET_STRING, 10, v10);
+	/* Burp out the ASN1. */
+	p = *pp;
+	ASN1_put_object(&p, 1, len, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
+	i2d_ASN1_INTEGER(&(a.version), &p);
+	i2d_ASN1_INTEGER(&(a.ssl_version), &p);
+	i2d_ASN1_OCTET_STRING(&(a.cipher), &p);
+	i2d_ASN1_OCTET_STRING(&(a.session_id), &p);
+	i2d_ASN1_OCTET_STRING(&(a.master_key), &p);
+	if (in->time != 0L) {
+		ASN1_put_object(&p, 1, v1, 1, V_ASN1_CONTEXT_SPECIFIC);
+		i2d_ASN1_INTEGER(&(a.time), &p);
+	}
+	if (in->timeout != 0L) {
+		ASN1_put_object(&p, 1, v2, 2, V_ASN1_CONTEXT_SPECIFIC);
+		i2d_ASN1_INTEGER(&(a.timeout), &p);
+	}
+	if (in->peer != NULL) {
+		ASN1_put_object(&p, 1, v3, 3, V_ASN1_CONTEXT_SPECIFIC);
+		i2d_X509(in->peer, &p);
+	}
+	ASN1_put_object(&p, 1, v4, 4, V_ASN1_CONTEXT_SPECIFIC);
+	i2d_ASN1_OCTET_STRING(&(a.session_id_context), &p);
+	if (in->verify_result != X509_V_OK) {
+		ASN1_put_object(&p, 1, v5, 5, V_ASN1_CONTEXT_SPECIFIC);
+		i2d_ASN1_INTEGER(&(a.verify_result), &p);
+	}
+	if (in->tlsext_hostname) {
+		ASN1_put_object(&p, 1, v6, 6, V_ASN1_CONTEXT_SPECIFIC);
+		i2d_ASN1_OCTET_STRING(&(a.tlsext_hostname), &p);
+	}
+	/* 7 - PSK identity hint. */
+	/* 8 - PSK identity. */
+	if (in->tlsext_tick_lifetime_hint > 0) {
+		ASN1_put_object(&p, 1, v9, 9, V_ASN1_CONTEXT_SPECIFIC);
+		i2d_ASN1_INTEGER(&(a.tlsext_tick_lifetime), &p);
+	}
+	if (in->tlsext_tick) {
+		ASN1_put_object(&p, 1, v10, 10, V_ASN1_CONTEXT_SPECIFIC);
+		i2d_ASN1_OCTET_STRING(&(a.tlsext_tick), &p);
+	}
+	/* 11 - Compression method. */
+	/* 12 - SRP username. */
 
-	M_ASN1_I2D_finish();
+	*pp = p;
+        return (ret);
 }
 
 SSL_SESSION *
