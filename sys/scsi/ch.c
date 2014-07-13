@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.47 2014/07/12 18:50:25 tedu Exp $	*/
+/*	$OpenBSD: ch.c,v 1.48 2014/07/13 17:34:25 deraadt Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -596,9 +596,10 @@ ch_usergetelemstatus(struct ch_softc *sc,
 		error = EINVAL;
 		goto done;
 	}
-	udsize = avail * sizeof(struct changer_element_status);
 
-	user_data = malloc(udsize, M_DEVBUF, M_WAITOK | M_ZERO);
+	user_data = mallocarray(avail, sizeof(struct changer_element_status),
+	    M_DEVBUF, M_WAITOK | M_ZERO);
+	udsize = avail * sizeof(struct changer_element_status);
 
 	desc = (caddr_t)(pg_hdr + 1);
 	for (i = 0; i < avail; ++i) {
