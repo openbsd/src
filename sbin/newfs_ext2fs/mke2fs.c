@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.8 2014/07/11 15:16:22 pelikan Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.9 2014/07/13 13:37:22 pelikan Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -238,10 +238,10 @@ mke2fs(const char *fsys, int fi, int fo)
 	}
 
 	sblock.e2fs.e2fs_log_bsize = ilog2(bsize) - LOG_MINBSIZE;
-	/* Umm, why not e2fs_log_fsize? */
-	sblock.e2fs.e2fs_fsize = ilog2(fsize) - LOG_MINBSIZE;
+	sblock.e2fs.e2fs_log_fsize = ilog2(fsize) - LOG_MINFSIZE;
 
 	sblock.e2fs_bsize = bsize;
+	sblock.e2fs_fsize = fsize;
 	sblock.e2fs_bshift = sblock.e2fs.e2fs_log_bsize + LOG_MINBSIZE;
 	sblock.e2fs_qbmask = sblock.e2fs_bsize - 1;
 	sblock.e2fs_bmask = ~sblock.e2fs_qbmask;
