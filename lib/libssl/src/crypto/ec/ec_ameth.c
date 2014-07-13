@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.12 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.13 2014/07/13 15:47:51 logan Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -373,6 +373,7 @@ ec_bits(const EVP_PKEY * pkey)
 	}
 	group = EC_KEY_get0_group(pkey->pkey.ec);
 	if (!EC_GROUP_get_order(group, order, NULL)) {
+		BN_free(order);
 		ERR_clear_error();
 		return 0;
 	}
