@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.26 2013/11/19 04:12:17 guenther Exp $	*/
+/*	$OpenBSD: bios.c,v 1.27 2014/07/13 12:11:01 jasper Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -314,7 +314,7 @@ fixstring(char *s)
 	char *p, *e;
 	int i;
 
-	for (i = 0; i < sizeof(smbios_uninfo)/sizeof(smbios_uninfo[0]); i++)
+	for (i = 0; i < nitems(smbios_uninfo); i++)
 		if ((strncasecmp(s, smbios_uninfo[i],
 		    strlen(smbios_uninfo[i])))==0)
 			return NULL;

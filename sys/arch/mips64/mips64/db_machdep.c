@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.41 2014/07/09 12:58:08 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.42 2014/07/13 12:11:01 jasper Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -125,7 +125,7 @@ struct db_variable db_regs[] = {
     { "cs",  (long *)&ddb_regs.cause,   FCN_NULL },
     { "pc",  (long *)&ddb_regs.pc,      FCN_NULL },
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+struct db_variable *db_eregs = db_regs + nitems(db_regs);
 
 extern label_t  *db_recover;
 

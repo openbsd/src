@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.18 2008/03/30 18:24:04 miod Exp $	*/
+/*	$OpenBSD: db_machdep.c,v 1.19 2014/07/13 12:11:01 jasper Exp $	*/
 /*	$NetBSD: db_machdep.c,v 1.17 1999/06/20 00:58:23 ragge Exp $	*/
 
 /* 
@@ -227,7 +227,7 @@ struct db_variable db_regs[] = {
 	{"pc",	(long *)&ddb_regs.pc,	FCN_NULL},
 	{"psl",	(long *)&ddb_regs.psl,	FCN_NULL},
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+struct db_variable *db_eregs = db_regs + nitems(db_regs);
 
 #define IN_USERLAND(x)	(((u_int)(x) & 0x80000000) == 0)
 

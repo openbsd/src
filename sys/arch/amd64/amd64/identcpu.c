@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.53 2014/07/03 21:15:28 matthew Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.54 2014/07/13 12:11:01 jasper Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -385,7 +385,7 @@ identifycpu(struct cpu_info *ci)
 	u_int32_t dummy, val, pnfeatset;
 	u_int32_t brand[12];
 	char mycpu_model[48];
-	int i, max;
+	int i;
 	char *brandstr_from, *brandstr_to;
 	int skipspace;
 
@@ -477,37 +477,29 @@ identifycpu(struct cpu_info *ci)
 
 	printf("\n%s: ", ci->ci_dev->dv_xname);
 
-	max = sizeof(cpu_cpuid_features) / sizeof(cpu_cpuid_features[0]);
-	for (i = 0; i < max; i++)
+	for (i = 0; i < nitems(cpu_cpuid_features); i++)
 		if (ci->ci_feature_flags & cpu_cpuid_features[i].bit)
 			printf("%s%s", i? "," : "", cpu_cpuid_features[i].str);
-	max = sizeof(cpu_cpuid_ecxfeatures) / sizeof(cpu_cpuid_ecxfeatures[0]);
-	for (i = 0; i < max; i++)
+	for (i = 0; i < nitems(cpu_cpuid_ecxfeatures); i++)
 		if (cpu_ecxfeature & cpu_cpuid_ecxfeatures[i].bit)
 			printf(",%s", cpu_cpuid_ecxfeatures[i].str);
-	max = sizeof(cpu_ecpuid_features) / sizeof(cpu_ecpuid_features[0]);
-	for (i = 0; i < max; i++)
+	for (i = 0; i < nitems(cpu_ecpuid_features); i++)
 		if (ci->ci_feature_eflags & cpu_ecpuid_features[i].bit)
 			printf(",%s", cpu_ecpuid_features[i].str);
-	max = sizeof(cpu_ecpuid_ecxfeatures) / sizeof(cpu_ecpuid_ecxfeatures[0]);
-	for (i = 0; i < max; i++)
+	for (i = 0; i < nitems(cpu_ecpuid_ecxfeatures); i++)
 		if (ecpu_ecxfeature & cpu_ecpuid_ecxfeatures[i].bit)
 			printf(",%s", cpu_ecpuid_ecxfeatures[i].str);
-	max = sizeof(cpu_cpuid_perf_eax) / sizeof(cpu_cpuid_perf_eax[0]);
-	for (i = 0; i < max; i++)
+	for (i = 0; i < nitems(cpu_cpuid_perf_eax); i++)
 		if (cpu_perf_eax & cpu_cpuid_perf_eax[i].bit)
 			printf(",%s", cpu_cpuid_perf_eax[i].str);
-	max = sizeof(cpu_cpuid_apmi_edx) / sizeof(cpu_cpuid_apmi_edx[0]);
-	for (i = 0; i < max; i++)
+	for (i = 0; i < nitems(cpu_cpuid_apmi_edx); i++)
 		if (cpu_apmi_edx & cpu_cpuid_apmi_edx[i].bit)
 			printf(",%s", cpu_cpuid_apmi_edx[i].str);
 
 	if (cpuid_level >= 0x07) {
 		/* "Structured Extended Feature Flags" */
 		CPUID_LEAF(0x7, 0, dummy, ci->ci_feature_sefflags, dummy, dummy);
-		max = sizeof(cpu_seff0_ebxfeatures) /
-		    sizeof(cpu_seff0_ebxfeatures[0]);
-		for (i = 0; i < max; i++)
+		for (i = 0; i < nitems(cpu_seff0_ebxfeatures); i++)
 			if (ci->ci_feature_sefflags &
 			    cpu_seff0_ebxfeatures[i].bit)
 				printf(",%s", cpu_seff0_ebxfeatures[i].str);

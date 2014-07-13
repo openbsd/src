@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.35 2014/05/10 18:46:20 kettenis Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.36 2014/07/13 12:11:01 jasper Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -195,7 +195,7 @@ struct db_variable db_regs[] = {
 	{ "gsr", (long *)&DDB_FP->fs_gsr, FCN_NULL, },
 
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+struct db_variable *db_eregs = db_regs + nitems(db_regs);
 
 extern label_t	*db_recover;
 

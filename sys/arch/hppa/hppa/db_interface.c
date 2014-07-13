@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.34 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.35 2014/07/13 12:11:01 jasper Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -121,7 +121,7 @@ struct db_variable db_regs[] = {
 	{ "cr28",  (long *)&ddb_regs.tf_cr28,  FCN_NULL },
 	{ "cr30",  (long *)&ddb_regs.tf_cr30,  FCN_NULL },
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+struct db_variable *db_eregs = db_regs + nitems(db_regs);
 int db_active = 0;
 
 void

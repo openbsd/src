@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.5 2008/06/22 21:02:11 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.6 2014/07/13 12:11:01 jasper Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.19 2006/01/21 22:10:59 uwe Exp $	*/
 
 /*-
@@ -71,8 +71,7 @@ struct db_variable db_regs[] = {
 	{ "macl", (long *)&ddb_regs.tf_macl, FCN_NULL },
 };
 
-struct db_variable *db_eregs =
-	db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+struct db_variable *db_eregs = db_regs + nitems(db_regs);
 
 void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,

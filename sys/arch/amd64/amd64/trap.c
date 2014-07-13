@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.41 2014/07/09 07:29:00 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.42 2014/07/13 12:11:01 jasper Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -124,7 +124,7 @@ const char *trap_type[] = {
 	"SSE FP exception",			/* 19 T_XMM */
 	"reserved trap",			/* 20 T_RESERVED */
 };
-int	trap_types = sizeof trap_type / sizeof trap_type[0];
+int	trap_types = nitems(trap_type);
 
 #ifdef DEBUG
 int	trapdebug = 0;

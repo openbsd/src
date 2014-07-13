@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.4 2003/10/15 01:06:13 drahn Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.5 2014/07/13 12:11:01 jasper Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ struct db_variable db_regs[] = {
 	{ "msr", (long *)&(DDB_REGS->tf.srr1),	FCN_NULL },
 };
 
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+struct db_variable *db_eregs = db_regs + nitems(db_regs);
 
 extern label_t	*db_recover;
 

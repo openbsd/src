@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.185 2014/07/11 22:28:05 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.186 2014/07/13 12:11:01 jasper Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1862,7 +1862,7 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 				int unit = minor(cdp->consdev);
 				int consaddr = cdp->consaddr;
 				if (consaddr == -1 && unit >= 0 &&
-				    unit < (sizeof(ports)/sizeof(ports[0])))
+				    unit < nitems(ports))
 					consaddr = ports[unit];
 				if (major(cdp->consdev) == 8 &&
 				    consaddr != -1) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: amd64_mem.c,v 1.7 2013/08/24 04:26:15 mlarkin Exp $ */
+/* $OpenBSD: amd64_mem.c,v 1.8 2014/07/13 12:11:01 jasper Exp $ */
 /*
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -106,12 +106,10 @@ int mtrrtomrt[] = {
 	MDF_WRITEBACK
 };
 
-#define MTRRTOMRTLEN (sizeof(mtrrtomrt) / sizeof(mtrrtomrt[0]))
-
 int
 mtrr2mrt(int val)
 {
-	if (val < 0 || val >= MTRRTOMRTLEN)
+	if (val < 0 || val >= nitems(mtrrtomrt))
 		return MDF_UNKNOWN;
 	return mtrrtomrt[val];
 }
@@ -249,7 +247,7 @@ mtrrtype(u_int64_t flags)
 	
 	flags &= MDF_ATTRMASK;
 	
-	for (i = 0; i < MTRRTOMRTLEN; i++) {
+	for (i = 0; i < nitems(mtrrtomrt); i++) {
 		if (mtrrtomrt[i] == MDF_UNKNOWN)
 			continue;
 		if (flags == mtrrtomrt[i])

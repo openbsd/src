@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.7 2010/09/27 10:08:28 mikeb Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.8 2014/07/13 12:11:01 jasper Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /* 
@@ -79,8 +79,7 @@ struct db_variable db_regs[] = {
 	{ "rsp",	dbreg(rsp),    db_x86_64_regop },
 	{ "ss",		dbreg(ss),     db_x86_64_regop },
 };
-struct db_variable * db_eregs =
-	db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+struct db_variable * db_eregs = db_regs + nitems(db_regs);
 
 static int
 db_x86_64_regop(struct db_variable *vp, db_expr_t *val, int opcode)
