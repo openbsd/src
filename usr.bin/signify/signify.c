@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.90 2014/05/30 21:20:49 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.91 2014/07/13 18:59:40 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -230,11 +230,11 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 {
 	char header[1024];
 	char b64[1024];
-	int fd, rv;
+	int fd, rv, nr;
 
 	fd = xopen(filename, O_CREAT|oflags|O_NOFOLLOW|O_WRONLY, mode);
-	if (snprintf(header, sizeof(header), "%s%s\n",
-	    COMMENTHDR, comment) >= sizeof(header))
+	if ((nr = snprintf(header, sizeof(header), "%s%s\n",
+	    COMMENTHDR, comment)) == -1 || nr >= sizeof(header))
 		errx(1, "comment too long");
 	writeall(fd, header, strlen(header), filename);
 	if ((rv = b64_ntop(buf, buflen, b64, sizeof(b64)-1)) == -1)
@@ -304,7 +304,7 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 	uint8_t fingerprint[FPLEN];
 	char commentbuf[COMMENTMAXLEN];
 	SHA2_CTX ctx;
-	int i;
+	int i, nr;
 
 	crypto_sign_ed25519_keypair(pubkey.pubkey, enckey.seckey);
 	arc4random_buf(fingerprint, sizeof(fingerprint));
@@ -325,8 +325,8 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 	explicit_bzero(digest, sizeof(digest));
 	explicit_bzero(xorkey, sizeof(xorkey));
 
-	if (snprintf(commentbuf, sizeof(commentbuf), "%s secret key",
-	    comment) >= sizeof(commentbuf))
+	if ((nr = snprintf(commentbuf, sizeof(commentbuf), "%s secret key",
+	    comment)) == -1 || nr >= sizeof(commentbuf))
 		errx(1, "comment too long");
 	writeb64file(seckeyfile, commentbuf, &enckey,
 	    sizeof(enckey), NULL, 0, O_EXCL, 0600);
@@ -334,8 +334,8 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 
 	memcpy(pubkey.pkalg, PKALG, 2);
 	memcpy(pubkey.fingerprint, fingerprint, FPLEN);
-	if (snprintf(commentbuf, sizeof(commentbuf), "%s public key",
-	    comment) >= sizeof(commentbuf))
+	if ((nr = snprintf(commentbuf, sizeof(commentbuf), "%s public key",
+	    comment)) == -1 || nr >= sizeof(commentbuf))
 		errx(1, "comment too long");
 	writeb64file(pubkeyfile, commentbuf, &pubkey,
 	    sizeof(pubkey), NULL, 0, O_EXCL, 0666);
@@ -353,7 +353,7 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 	char comment[COMMENTMAXLEN], sigcomment[COMMENTMAXLEN];
 	char *secname;
 	unsigned long long msglen;
-	int i, rounds;
+	int i, rounds, nr;
 	SHA2_CTX ctx;
 
 	readb64file(seckeyfile, &enckey, sizeof(enckey), comment);
@@ -382,12 +382,12 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 	memcpy(sig.pkalg, PKALG, 2);
 	secname = strstr(seckeyfile, ".sec");
 	if (secname && strlen(secname) == 4) {
-		if (snprintf(sigcomment, sizeof(sigcomment), VERIFYWITH "%.*s.pub",
-		    (int)strlen(seckeyfile) - 4, seckeyfile) >= sizeof(sigcomment))
+		if ((nr = snprintf(sigcomment, sizeof(sigcomment), VERIFYWITH "%.*s.pub",
+		    (int)strlen(seckeyfile) - 4, seckeyfile)) == -1 || nr >= sizeof(sigcomment))
 			errx(1, "comment too long");
 	} else {
-		if (snprintf(sigcomment, sizeof(sigcomment), "signature from %s",
-		    comment) >= sizeof(sigcomment))
+		if ((nr = snprintf(sigcomment, sizeof(sigcomment), "signature from %s",
+		    comment)) == -1 || nr >= sizeof(sigcomment))
 			errx(1, "comment too long");
 	}
 	if (embedded)
@@ -767,10 +767,11 @@ main(int argc, char **argv)
 		usage(NULL);
 
 	if (!sigfile && msgfile) {
+		int nr;
 		if (strcmp(msgfile, "-") == 0)
 			usage("must specify sigfile with - message");
-		if (snprintf(sigfilebuf, sizeof(sigfilebuf), "%s.sig",
-		    msgfile) >= sizeof(sigfilebuf))
+		if ((nr = snprintf(sigfilebuf, sizeof(sigfilebuf), "%s.sig",
+		    msgfile)) == -1 || nr >= sizeof(sigfilebuf))
 			errx(1, "path too long");
 		sigfile = sigfilebuf;
 	}
