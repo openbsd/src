@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.22 2014/05/27 14:31:24 krw Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.23 2014/07/13 13:28:26 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
@@ -53,10 +53,13 @@
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ext2fs/ext2fs.h>
+#include <ufs/ext2fs/ext2fs_extents.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
-static int ext2fs_bmaparray(struct vnode *, int32_t, daddr_t *,
-    struct indir *, int *, int *);
+static int	ext4_bmapext(struct vnode *, daddr_t, daddr_t *, struct indir *,
+    int *, int *);
+static int	ext2fs_bmaparray(struct vnode *, daddr_t, daddr_t *, struct indir *,
+    int *, int *);
 
 /*
  * Bmap converts a the logical block number of a file to its physical block
@@ -67,6 +70,7 @@ int
 ext2fs_bmap(void *v)
 {
 	struct vop_bmap_args *ap = v;
+
 	/*
 	 * Check for underlying vnode requests and ensure that logical
 	 * to physical mapping is requested.
@@ -76,8 +80,42 @@ ext2fs_bmap(void *v)
 	if (ap->a_bnp == NULL)
 		return (0);
 
+	if (VTOI(ap->a_vp)->i_e2din->e2di_flags & EXT4_EXTENTS) {
+		return (ext4_bmapext(ap->a_vp, ap->a_bn, ap->a_bnp, NULL, NULL,
+		    ap->a_runp));
+	}
 	return (ext2fs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL, NULL,
 		ap->a_runp));
+}
+
+/*
+ * Logical block number of a file -> physical block number on disk within ext4 extents.
+ */
+int
+ext4_bmapext(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap, int *nump, int *runp)
+{
+	struct inode *ip;
+	struct m_ext2fs *fs;
+	struct ext4_extent *ep;
+	struct ext4_extent_path path;
+	daddr_t pos;
+
+	ip = VTOI(vp);
+	fs = ip->i_e2fs;
+
+	if (runp != NULL)
+		*runp = 0;
+	if (nump != NULL)
+		*nump = 0;
+
+	ext4_ext_find_extent(fs, ip, bn, &path);
+	if ((ep = path.ep_ext) == NULL)
+		return (EIO);
+
+	pos = bn - ep->e_blk + (((daddr_t)ep->e_start_hi << 32) | ep->e_start_lo);
+	if ((*bnp = fsbtodb(fs, pos)) == 0)
+		*bnp = -1;
+	return (0);
 }
 
 /*
@@ -95,7 +133,7 @@ ext2fs_bmap(void *v)
  */
 
 int
-ext2fs_bmaparray(struct vnode *vp, int32_t bn, daddr_t *bnp,
+ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp,
     struct indir *ap, int *nump, int *runp)
 {
 	struct inode *ip;

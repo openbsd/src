@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.47 2014/07/11 12:08:21 pelikan Exp $	*/
+/*	$OpenBSD: inode.h,v 1.48 2014/07/13 13:28:26 pelikan Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -42,16 +42,18 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
+#include <ufs/ext2fs/ext2fs_extents.h>
 
 
 /*
  * Per-filesystem inode extensions.
  */
 struct ext2fs_inode_ext {
-       int32_t	ext2fs_last_lblk; /* last logical block allocated */
-       int32_t	ext2fs_last_blk; /* last block allocated on disk */
-       u_int32_t	ext2fs_effective_uid; /* effective inode uid */
-       u_int32_t	ext2fs_effective_gid; /* effective inode gid */
+	int32_t	ext2fs_last_lblk;	/* last logical block allocated */
+	int32_t	ext2fs_last_blk;	/* last block allocated on disk */
+	u_int32_t	ext2fs_effective_uid;	/* effective inode uid */
+	u_int32_t	ext2fs_effective_gid;	/* effective inode gid */
+	struct ext4_extent_cache	ext2fs_extent_cache;
 };
 
 /*
@@ -108,6 +110,7 @@ struct inode {
 #define i_e2fs_last_blk		inode_ext.e2fs.ext2fs_last_blk
 #define i_e2fs_uid		inode_ext.e2fs.ext2fs_effective_uid
 #define i_e2fs_gid		inode_ext.e2fs.ext2fs_effective_gid
+#define i_e2fs_ext_cache	inode_ext.e2fs.ext2fs_extent_cache
 #define	i_dirhash		inode_ext.dirhash
 
 	/*

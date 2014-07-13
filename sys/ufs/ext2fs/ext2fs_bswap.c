@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bswap.c,v 1.5 2014/07/11 16:04:25 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_bswap.c,v 1.6 2014/07/13 13:28:26 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_bswap.c,v 1.6 2000/07/24 00:23:10 mycroft Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
 	new->e2fs_ficount	=	swap32(old->e2fs_ficount);
 	new->e2fs_first_dblock	=	swap32(old->e2fs_first_dblock);
 	new->e2fs_log_bsize	=	swap32(old->e2fs_log_bsize);
-	new->e2fs_fsize		=	swap32(old->e2fs_fsize);
+	new->e2fs_log_fsize	=	swap32(old->e2fs_log_fsize);
 	new->e2fs_bpg		=	swap32(old->e2fs_bpg);
 	new->e2fs_fpg		=	swap32(old->e2fs_fpg);
 	new->e2fs_ipg		=	swap32(old->e2fs_ipg);

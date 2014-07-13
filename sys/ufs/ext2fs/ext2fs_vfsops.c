@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.79 2014/07/12 18:44:01 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.80 2014/07/13 13:28:26 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -396,6 +396,7 @@ e2fs_sbfill(struct vnode *devvp, struct m_ext2fs *fs, struct ext2fs *sb)
 	fs->e2fs_fsbtodb = sb->e2fs_log_bsize + 1;
 	fs->e2fs_bsize = 1024 << sb->e2fs_log_bsize;
 	fs->e2fs_bshift = LOG_MINBSIZE + sb->e2fs_log_bsize;
+	fs->e2fs_fsize = 1024 << sb->e2fs_log_fsize;
 
 	fs->e2fs_qbmask = fs->e2fs_bsize - 1;
 	fs->e2fs_bmask = ~fs->e2fs_qbmask;
@@ -1090,9 +1091,20 @@ e2fs_sbcheck(struct ext2fs *fs, int ronly)
 	}
 
 	tmp = letoh32(fs->e2fs_features_incompat);
-	if (tmp & ~EXT2F_INCOMPAT_SUPP) {
+	if (tmp & ~(EXT2F_INCOMPAT_SUPP | EXT4F_RO_INCOMPAT_SUPP)) {
 		printf("ext2fs: unsupported incompat features 0x%x\n", tmp);
 		return (EINVAL);      /* XXX needs translation */
+	}
+
+	if (!ronly && (tmp & EXT4F_RO_INCOMPAT_SUPP)) {
+		printf("ext4fs: only read-only support right now\n");
+		return (EROFS);      /* XXX needs translation */
+	}
+
+	if (tmp & EXT2F_INCOMPAT_RECOVER) {
+		printf("ext2fs: your file system says it needs recovery\n");
+		if (!ronly)
+			return (EROFS);	/* XXX needs translation */
 	}
 
 	tmp = letoh32(fs->e2fs_features_rocompat);

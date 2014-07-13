@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.573 2014/07/11 21:54:38 tedu Exp $
+#	$OpenBSD: files,v 1.574 2014/07/13 13:28:26 pelikan Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -926,6 +926,7 @@ file ufs/ext2fs/ext2fs_alloc.c		ext2fs
 file ufs/ext2fs/ext2fs_balloc.c		ext2fs
 file ufs/ext2fs/ext2fs_bmap.c		ext2fs
 file ufs/ext2fs/ext2fs_bswap.c		ext2fs
+file ufs/ext2fs/ext2fs_extents.c	ext2fs
 file ufs/ext2fs/ext2fs_inode.c		ext2fs
 file ufs/ext2fs/ext2fs_lookup.c		ext2fs
 file ufs/ext2fs/ext2fs_readwrite.c	ext2fs

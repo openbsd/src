@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs.h,v 1.18 2014/07/11 14:30:52 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs.h,v 1.19 2014/07/13 13:28:26 pelikan Exp $	*/
 /*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -69,9 +69,12 @@
  * thus changes to (struct cg) must keep its size within MINBSIZE.
  * Note that super blocks are always of size SBSIZE,
  * and that both SBSIZE and MAXBSIZE must be >= MINBSIZE.
+ * FSIZE means fragment size.
  */
-#define LOG_MINBSIZE 10
+#define LOG_MINBSIZE	10
 #define MINBSIZE	(1 << LOG_MINBSIZE)
+#define LOG_MINFSIZE	10
+#define MINFSIZE	(1 << LOG_MINFSIZE)
 
 /*
  * The path name on which the file system is mounted is maintained
@@ -105,7 +108,7 @@ struct ext2fs {
 	u_int32_t  e2fs_ficount;	/* free inodes count */
 	u_int32_t  e2fs_first_dblock;	/* first data block */
 	u_int32_t  e2fs_log_bsize;	/* block size = 1024*(2^e2fs_log_bsize) */
-	u_int32_t  e2fs_fsize;		/* fragment size */
+	u_int32_t  e2fs_log_fsize;	/* fragment size log2 */
 	u_int32_t  e2fs_bpg;		/* blocks per group */
 	u_int32_t  e2fs_fpg;		/* frags per group */
 	u_int32_t  e2fs_ipg;		/* inodes per group */
@@ -147,6 +150,7 @@ struct m_ext2fs {
 	u_char	e2fs_fsmnt[MAXMNTLEN];	/* name mounted on */
 	int8_t	e2fs_ronly;	/* mounted read-only flag */
 	int8_t	e2fs_fmod;	/* super block modified flag */
+	int32_t e2fs_fsize;	/* fragment size */
 	int32_t	e2fs_bsize;	/* block size */
 	int32_t e2fs_bshift;	/* ``lblkno'' calc of logical blkno */
 	int32_t e2fs_bmask;	/* ``blkoff'' calc of blk offsets */
