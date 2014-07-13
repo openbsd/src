@@ -36,7 +36,7 @@ void ressl_config_set_verify_depth(struct ressl_config *config,
 void ressl_config_insecure_no_verify(struct ressl_config *config);
 void ressl_config_verify(struct ressl_config *config);
 
-struct ressl *ressl_new(void);
+struct ressl *ressl_client(void);
 int ressl_configure(struct ressl *ctx, struct ressl_config *config);
 void ressl_reset(struct ressl *ctx);
 void ressl_free(struct ressl *ctx);

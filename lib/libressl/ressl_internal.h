@@ -33,8 +33,12 @@ struct ressl_config {
         int verify_depth;
 };
 
+#define RESSL_CLIENT		(1 << 0)
+#define RESSL_SERVER		(1 << 1)
+
 struct ressl {
         struct ressl_config *config;
+	uint64_t flags;
 
         int err;
         char *errmsg;
@@ -44,6 +48,8 @@ struct ressl {
         SSL *ssl_conn;
         SSL_CTX *ssl_ctx;
 };
+
+struct ressl *ressl_new(void);
 
 int ressl_check_hostname(X509 *cert, const char *host);
 int ressl_host_port(const char *hostport, char **host, char **port);

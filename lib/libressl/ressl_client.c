@@ -28,6 +28,19 @@
 #include <ressl.h>
 #include "ressl_internal.h"
 
+struct ressl *
+ressl_client(void)
+{
+	struct ressl *ctx;
+
+	if ((ctx = ressl_new()) == NULL)
+		return (NULL);
+
+	ctx->flags |= RESSL_CLIENT;
+
+	return (ctx);
+}
+
 int
 ressl_connect(struct ressl *ctx, const char *host, const char *port)
 {
@@ -35,6 +48,11 @@ ressl_connect(struct ressl *ctx, const char *host, const char *port)
 	const char *h = NULL, *p = NULL;
 	char *hs = NULL, *ps = NULL;
 	int rv = -1, s = -1, ret;
+
+	if ((ctx->flags & RESSL_CLIENT) == 0) {
+		ressl_set_error(ctx, "not a client context");
+		goto err;
+	}
 
 	if (host == NULL) {
 		ressl_set_error(ctx, "host not specified");
@@ -107,6 +125,11 @@ ressl_connect_socket(struct ressl *ctx, int socket, const char *hostname)
 	union { struct in_addr ip4; struct in6_addr ip6; } addrbuf;
 	X509 *cert = NULL;
 	int ret;
+
+	if ((ctx->flags & RESSL_CLIENT) == 0) {
+		ressl_set_error(ctx, "not a client context");
+		goto err;
+	}
 
 	ctx->socket = socket;
 
