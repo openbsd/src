@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 2014/07/12 23:34:54 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.8 2014/07/13 09:26:08 jasper Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -62,37 +62,6 @@ int
 cnspeed(dev_t dev, int sp)
 {
 	return CONSPEED;
-}
-
-int pch_pos;
-
-void
-putchar(int c)
-{
-	switch (c) {
-	case '\177':	/* DEL erases */
-		cnputc('\b');
-		cnputc(' ');
-	case '\b':
-		cnputc('\b');
-		if (pch_pos)
-			pch_pos--;
-		break;
-	case '\t':
-		do
-			cnputc(' ');
-		while (++pch_pos % 8) ;
-		break;
-	case '\n':
-	case '\r':
-		cnputc(c);
-		pch_pos = 0;
-		break;
-	default:
-		cnputc(c);
-		pch_pos++;
-		break;
-	}
 }
 
 char *

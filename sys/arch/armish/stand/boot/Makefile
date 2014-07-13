@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2014/07/12 21:54:58 jasper Exp $
+#	$OpenBSD: Makefile,v 1.11 2014/07/13 09:26:08 jasper Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -22,7 +22,7 @@ SRCS=		start.S
 SRCS+=		boot.c cmd.c vars.c
 SRCS+=		conf.c devopen.c exec.c machdep.c dev_armish.c time.c
 SRCS+=		clock.c ns16550.c wd.c wdc.c pciide.c
-SRCS+=		ctime.c strtol.c getchar.c
+SRCS+=		ctime.c strtol.c getchar.c putchar.c
 
 .PATH:	${S}/lib/libkern/arch/arm ${S}/lib/libkern
 SRCS+=	divsi3.S divdi3.c moddi3.c qdivrem.c strlcpy.c strlen.c ashrdi3.c

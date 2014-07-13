@@ -1,4 +1,4 @@
-/*	$OpenBSD: scifcons.c,v 1.4 2014/07/12 21:54:58 jasper Exp $	*/
+/*	$OpenBSD: scifcons.c,v 1.5 2014/07/13 09:26:08 jasper Exp $	*/
 /*	$NetBSD: scifcons.c,v 1.1 2006/09/01 21:26:18 uwe Exp $ */
 /*	NetBSD: scif.c,v 1.38 2004/12/13 02:14:13 chs Exp */
 
@@ -196,7 +196,7 @@ getc(void)
 }
 
 void
-scif_putc(int c)
+putc(int c)
 {
 
 	/* wait for ready */

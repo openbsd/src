@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2014/07/12 21:54:58 jasper Exp $
+#	$OpenBSD: Makefile,v 1.20 2014/07/13 09:26:08 jasper Exp $
 
 MAN=	pxeboot.8
 
@@ -26,8 +26,8 @@ SRCS+=	softraid.c
 SRCS+=	boot.c cmd.c vars.c bootarg.c
 
 .PATH:	${S}/lib/libsa
-SRCS+=	alloc.c exit.c getchar.c getfile.c gets.c globals.c strcmp.c strlen.c \
-	strncmp.c memcmp.c memcpy.c memset.c printf.c snprintf.c \
+SRCS+=	alloc.c exit.c getchar.c getfile.c gets.c globals.c putchar.c strcmp.c \
+	strlen.c strncmp.c memcmp.c memcpy.c memset.c printf.c snprintf.c \
 	strerror.c strncpy.c strtol.c strtoll.c ctime.c strlcpy.c strlcat.c
 SRCS+=	aes_xts.c explicit_bzero.c hmac_sha1.c pbkdf2.c rijndael.c sha1.c
 

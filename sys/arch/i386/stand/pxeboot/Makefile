@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2014/07/12 21:54:58 jasper Exp $
+#	$OpenBSD: Makefile,v 1.18 2014/07/13 09:26:08 jasper Exp $
 
 MAN=	pxeboot.8
 
@@ -28,8 +28,8 @@ SRCS+=	boot.c cmd.c vars.c bootarg.c
 
 .PATH:	${S}/lib/libsa
 SRCS+=	alloc.c ctime.c exit.c getchar.c globals.c memcmp.c memcpy.c memset.c \
-	printf.c snprintf.c strcmp.c strerror.c strlen.c strncmp.c strncpy.c \
-	strtol.c strtoll.c
+	printf.c putchar.c snprintf.c strcmp.c strerror.c strlen.c strncmp.c \
+	strncpy.c strtol.c strtoll.c
 SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
 	lseek.c read.c readdir.c stat.c
 SRCS+=	elf32.c elf64.c loadfile.c
