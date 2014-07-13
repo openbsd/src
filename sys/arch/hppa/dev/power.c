@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.8 2014/07/12 20:18:08 uebayasi Exp $	*/
+/*	$OpenBSD: power.c,v 1.9 2014/07/13 09:09:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -172,7 +172,7 @@ power_thread_reg(void *v)
 		    : "=&r" (r) : "r" (sc->sc_pwr_reg));
 
 		if (!(r & 1))
-			boot(RB_POWERDOWN | RB_HALT);
+			prsignal(initprocess, SIGUSR2);
 
 		tsleep(v, PWAIT, "regpower", 10);
 	}
