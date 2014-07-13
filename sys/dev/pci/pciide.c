@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.346 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.347 2014/07/13 23:19:51 sasano Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -123,6 +123,7 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <dev/pci/pciide_ixp_reg.h>
 #include <dev/pci/pciide_svwsata_reg.h>
 #include <dev/pci/pciide_jmicron_reg.h>
+#include <dev/pci/pciide_rdc_reg.h>
 #include <dev/pci/cy82c693var.h>
 
 /* functions for reading/writing 8-bit PCI registers */
@@ -281,6 +282,9 @@ void phison_setup_channel(struct channel_softc *);
 
 void sch_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void sch_setup_channel(struct channel_softc *);
+
+void rdc_chip_map(struct pciide_softc *, struct pci_attach_args *);
+void rdc_setup_channel(struct channel_softc *);
 
 struct pciide_product_desc {
 	u_int32_t ide_product;
@@ -1335,6 +1339,13 @@ const struct pciide_product_desc pciide_phison_products[] = {
 	},
 };
 
+const struct pciide_product_desc pciide_rdc_products[] = {
+	{ PCI_PRODUCT_RDC_R1012_IDE,
+	  0,
+	  rdc_chip_map
+	},
+};
+
 struct pciide_vendor_desc {
 	u_int32_t ide_vendor;
 	const struct pciide_product_desc *ide_products;
@@ -1379,7 +1390,9 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	{ PCI_VENDOR_JMICRON, pciide_jmicron_products,
 	  nitems(pciide_jmicron_products) },
 	{ PCI_VENDOR_PHISON, pciide_phison_products,
-	  nitems(pciide_phison_products) }
+	  nitems(pciide_phison_products) },
+	{ PCI_VENDOR_RDC, pciide_rdc_products,
+	  nitems(pciide_rdc_products) }
 };
 
 /* options passed via the 'flags' config keyword */
@@ -1581,6 +1594,7 @@ pciide_activate(struct device *self, int act)
 		    sc->sc_pp->chip_map == piix_chip_map ||
 		    sc->sc_pp->chip_map == amd756_chip_map ||
 		    sc->sc_pp->chip_map == phison_chip_map ||
+		    sc->sc_pp->chip_map == rdc_chip_map ||
 		    sc->sc_pp->chip_map == ixp_chip_map ||
 		    sc->sc_pp->chip_map == acard_chip_map ||
 		    sc->sc_pp->chip_map == apollo_chip_map ||
@@ -9103,4 +9117,151 @@ pio:
 	}
 
 	pciide_print_modes(cp);
+}
+
+void
+rdc_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	struct pciide_channel *cp;
+	int channel;
+	u_int32_t patr;
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	bus_size_t cmdsize, ctlsize;
+
+	printf(": DMA");
+	pciide_mapreg_dma(sc, pa);
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA |
+			WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+		sc->sc_wdcdev.dma_init = pciide_dma_init;
+	}
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap = 5;
+	sc->sc_wdcdev.set_modes = rdc_setup_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+
+	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
+
+	WDCDEBUG_PRINT(("rdc_chip_map: old PATR=0x%x, "
+			"PSD1ATR=0x%x, UDCCR=0x%x, IIOCR=0x%x\n",
+			pci_conf_read(sc->sc_pc, sc->sc_tag, RDCIDE_PATR),
+			pci_conf_read(sc->sc_pc, sc->sc_tag, RDCIDE_PSD1ATR),
+			pci_conf_read(sc->sc_pc, sc->sc_tag, RDCIDE_UDCCR),
+			pci_conf_read(sc->sc_pc, sc->sc_tag, RDCIDE_IIOCR)),
+		       DEBUG_PROBE);
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+		patr = pci_conf_read(sc->sc_pc, sc->sc_tag, RDCIDE_PATR);
+		if ((patr & RDCIDE_PATR_EN(channel)) == 0) {
+			printf("%s: %s ignored (disabled)\n",
+			       sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			continue;
+		}
+		pciide_map_compat_intr(pa, cp, channel, interface);
+		if (cp->hw_ok == 0)
+			continue;
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+			       pciide_pci_intr);
+		if (cp->hw_ok == 0)
+			goto next;
+		if (pciide_chan_candisable(cp)) {
+			patr &= ~RDCIDE_PATR_EN(channel);
+			pci_conf_write(sc->sc_pc, sc->sc_tag, RDCIDE_PATR,
+				       patr);
+		}
+		if (cp->hw_ok == 0)
+			goto next;
+		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
+next:
+		if (cp->hw_ok == 0)
+			pciide_unmap_compat_intr(pa, cp, channel, interface);
+	}
+
+	WDCDEBUG_PRINT(("rdc_chip_map: PATR=0x%x, "
+			"PSD1ATR=0x%x, UDCCR=0x%x, IIOCR=0x%x\n",
+			pci_conf_read(sc->sc_pc, sc->sc_tag, RDCIDE_PATR),
+			pci_conf_read(sc->sc_pc, sc->sc_tag, RDCIDE_PSD1ATR),
+			pci_conf_read(sc->sc_pc, sc->sc_tag, RDCIDE_UDCCR),
+			pci_conf_read(sc->sc_pc, sc->sc_tag, RDCIDE_IIOCR)),
+		       DEBUG_PROBE);
+}
+
+void
+rdc_setup_channel(struct channel_softc *chp)
+{
+	u_int8_t drive;
+	u_int32_t patr, psd1atr, udccr, iiocr;
+	struct pciide_channel *cp = (struct pciide_channel *)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct ata_drive_datas *drvp;
+
+	patr = pci_conf_read(sc->sc_pc, sc->sc_tag, RDCIDE_PATR);
+	psd1atr = pci_conf_read(sc->sc_pc, sc->sc_tag, RDCIDE_PSD1ATR);
+	udccr = pci_conf_read(sc->sc_pc, sc->sc_tag, RDCIDE_UDCCR);
+	iiocr = pci_conf_read(sc->sc_pc, sc->sc_tag, RDCIDE_IIOCR);
+
+	/* setup DMA */
+	pciide_channel_dma_setup(cp);
+
+	/* clear modes */
+	patr = patr & (RDCIDE_PATR_EN(0) | RDCIDE_PATR_EN(1));
+	psd1atr &= ~RDCIDE_PSD1ATR_SETUP_MASK(chp->channel);
+	psd1atr &= ~RDCIDE_PSD1ATR_HOLD_MASK(chp->channel);
+	for (drive = 0; drive < 2; drive++) {
+		udccr &= ~RDCIDE_UDCCR_EN(chp->channel, drive);
+		udccr &= ~RDCIDE_UDCCR_TIM_MASK(chp->channel, drive);
+		iiocr &= ~RDCIDE_IIOCR_CLK_MASK(chp->channel, drive);
+	}
+	/* now setup modes */
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &cp->wdc_channel.ch_drive[drive];
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+		if (drvp->drive_flags & DRIVE_ATAPI)
+			patr |= RDCIDE_PATR_ATA(chp->channel, drive);
+		if (drive == 0) {
+			patr |= RDCIDE_PATR_SETUP(rdcide_setup[drvp->PIO_mode],
+						  chp->channel);
+			patr |= RDCIDE_PATR_HOLD(rdcide_hold[drvp->PIO_mode],
+						 chp->channel);
+		} else {
+			patr |= RDCIDE_PATR_DEV1_TEN(chp->channel);
+			psd1atr |= RDCIDE_PSD1ATR_SETUP(
+				rdcide_setup[drvp->PIO_mode],
+				chp->channel);
+			psd1atr |= RDCIDE_PSD1ATR_HOLD(
+				rdcide_hold[drvp->PIO_mode],
+				chp->channel);
+		}
+		if (drvp->PIO_mode > 0) {
+			patr |= RDCIDE_PATR_FTIM(chp->channel, drive);
+			patr |= RDCIDE_PATR_IORDY(chp->channel, drive);
+		}
+		if (drvp->drive_flags & DRIVE_DMA)
+			patr |= RDCIDE_PATR_DMAEN(chp->channel, drive);
+		if ((drvp->drive_flags & DRIVE_UDMA) == 0)
+			continue;
+
+		if ((iiocr & RDCIDE_IIOCR_CABLE(chp->channel, drive)) == 0
+		    && drvp->UDMA_mode > 2)
+			drvp->UDMA_mode = 2;
+		udccr |= RDCIDE_UDCCR_EN(chp->channel, drive);
+		udccr |= RDCIDE_UDCCR_TIM(rdcide_udmatim[drvp->UDMA_mode],
+			chp->channel, drive);
+		iiocr |= RDCIDE_IIOCR_CLK(rdcide_udmaclk[drvp->UDMA_mode],
+			chp->channel, drive);
+	}
+
+	pci_conf_write(sc->sc_pc, sc->sc_tag, RDCIDE_PATR, patr);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, RDCIDE_PSD1ATR, psd1atr);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, RDCIDE_UDCCR, udccr);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, RDCIDE_IIOCR, iiocr);
 }
