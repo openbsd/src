@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.66 2014/07/12 22:37:03 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.67 2014/07/13 09:08:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -23,6 +23,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
+#include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/file.h>
