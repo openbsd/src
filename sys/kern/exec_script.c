@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.30 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.31 2014/07/13 23:59:58 tedu Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -208,7 +208,7 @@ check_shell:
 	epp->ep_flags |= EXEC_INDIR;
 
 	/* and set up the fake args list, for later */
-	shellargp = malloc(4 * sizeof(char *), M_EXEC, M_WAITOK);
+	shellargp = mallocarray(4, sizeof(char *), M_EXEC, M_WAITOK);
 	tmpsap = shellargp;
 	*tmpsap = malloc(shellnamelen + 1, M_EXEC, M_WAITOK);
 	strlcpy(*tmpsap++, shellname, shellnamelen + 1);

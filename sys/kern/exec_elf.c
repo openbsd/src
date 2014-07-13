@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.99 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.100 2014/07/13 23:59:58 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -355,8 +355,8 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 		goto bad1;
 	}
 
+	ph = mallocarray(eh.e_phnum, sizeof(Elf_Phdr), M_TEMP, M_WAITOK);
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
-	ph = malloc(phsize, M_TEMP, M_WAITOK);
 
 	if ((error = ELFNAME(read_from)(p, nd.ni_vp, eh.e_phoff, (caddr_t)ph,
 	    phsize)) != 0)
@@ -539,8 +539,8 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	 * Allocate space to hold all the program headers, and read them
 	 * from the file
 	 */
+	ph = mallocarray(eh->e_phnum, sizeof(Elf_Phdr), M_TEMP, M_WAITOK);
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
-	ph = malloc(phsize, M_TEMP, M_WAITOK);
 
 	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff, (caddr_t)ph,
 	    phsize)) != 0)
@@ -860,8 +860,8 @@ ELFNAME(os_pt_note)(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 	size_t phsize;
 	int error;
 
+	hph = mallocarray(eh->e_phnum, sizeof(Elf_Phdr), M_TEMP, M_WAITOK);
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
-	hph = malloc(phsize, M_TEMP, M_WAITOK);
 	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff,
 	    (caddr_t)hph, phsize)) != 0)
 		goto out1;
@@ -1005,7 +1005,7 @@ ELFNAMEEND(coredump)(struct proc *p, void *cookie)
 	notestart = offset + sizeof(phdr) * cs.npsections;
 	secstart = notestart + notesize;
 
-	psections = malloc(cs.npsections * sizeof(Elf_Phdr),
+	psections = mallocarray(cs.npsections, sizeof(Elf_Phdr),
 	    M_TEMP, M_WAITOK|M_ZERO);
 
 	/* Pass 2: now write the P-section headers. */
