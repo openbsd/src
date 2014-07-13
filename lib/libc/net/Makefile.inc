@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.54 2014/06/11 16:59:47 chrisz Exp $
+#	$OpenBSD: Makefile.inc,v 1.55 2014/07/13 13:17:16 guenther Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/net ${LIBCSRCDIR}/net
@@ -27,18 +27,18 @@ SRCS+=	ip6opt.c rthdr.c vars6.c
 
 MAN+=	byteorder.3 ethers.3 gai_strerror.3 getaddrinfo.3 gethostbyname.3 \
 	getifaddrs.3 getnameinfo.3 getnetent.3 getpeereid.3 getprotoent.3 \
-	getrrsetbyname.3 getservent.3 if_indextoname.3 \
+	getrrsetbyname.3 getservent.3 htonl.3 if_indextoname.3 \
 	inet_addr.3 inet_lnaof.3 inet_net.3 inet_ntop.3 \
 	inet6_opt_init.3 inet6_rth_space.3 link_addr.3 \
 	rcmd.3 rcmdsh.3 resolver.3
 
-MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
-	byteorder.3 ntohs.3 byteorder.3 htobe16.3 byteorder.3 htobe32.3 \
-	byteorder.3 htobe64.3 byteorder.3 betoh16.3 byteorder.3 betoh32.3 \
-	byteorder.3 betoh64.3 byteorder.3 htole16.3 byteorder.3 htole32.3 \
-	byteorder.3 htole64.3 byteorder.3 letoh16.3 byteorder.3 letoh32.3 \
-	byteorder.3 letoh64.3 byteorder.3 swap16.3 byteorder.3 swap32.3 \
-	byteorder.3 swap64.3
+MLINKS+=byteorder.3 htobe16.3 byteorder.3 htobe32.3 byteorder.3 htobe64.3 \
+	byteorder.3 be16toh.3 byteorder.3 be32toh.3 byteorder.3 be64toh.3 \
+	byteorder.3 betoh16.3 byteorder.3 betoh32.3 byteorder.3 betoh64.3 \
+	byteorder.3 htole16.3 byteorder.3 htole32.3 byteorder.3 htole64.3 \
+	byteorder.3 le16toh.3 byteorder.3 le32toh.3 byteorder.3 le64toh.3 \
+	byteorder.3 letoh16.3 byteorder.3 letoh32.3 byteorder.3 letoh64.3 \
+	byteorder.3 swap16.3 byteorder.3 swap32.3 byteorder.3 swap64.3
 MLINKS+=ethers.3 ether_aton.3 ethers.3 ether_hostton.3 ethers.3 ether_line.3 \
 	ethers.3 ether_ntoa.3 ethers.3 ether_ntohost.3
 MLINKS+=getaddrinfo.3 freeaddrinfo.3
@@ -59,6 +59,7 @@ MLINKS+=getservent.3 endservent.3 getservent.3 getservbyname.3 \
 	getservent.3 getservent_r.3 getservent.3 getservbyname_r.3 \
 	getservent.3 getservbyport_r.3 getservent.3 setservent_r.3 \
 	getservent.3 endservent_r.3
+MLINKS+=htonl.3 htons.3 htonl.3 ntohl.3 htonl.3 ntohs.3
 MLINKS+= if_indextoname.3 if_nametoindex.3 if_indextoname.3 if_nameindex.3 \
 	if_indextoname.3 if_freenameindex.3
 MLINKS+=inet_addr.3 inet_aton.3 inet_addr.3 inet_network.3 \
