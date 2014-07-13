@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.10 2014/07/13 13:07:30 miod Exp $
+#	$OpenBSD: Makefile,v 1.11 2014/07/13 21:11:40 deraadt Exp $
 #       $NetBSD: Makefile,v 1.1 1996/09/30 16:35:05 ws Exp $
 
 S=      ${.CURDIR}/../../../..
 R=              ..
 .PATH:          $(.CURDIR)/$(R)
-RELOC=		E00000				
+RELOC=		E00000
 ENTRY=		_entry
 NOMAN=
 PROG=           boot.mac
@@ -28,7 +28,8 @@ SRCS+=		moddi3.c
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC} -DCONSPEED=57600
-CPPFLAGS+=	-DXCOFF_GLUE		# for booting PCI Powermacs
+# for booting PCI Powermacs
+CPPFLAGS+=	-DXCOFF_GLUE
 CFLAGS+=	-fno-pie
 
 LIBS!=          cd $(.CURDIR)/$(R); $(MAKE) libdep
