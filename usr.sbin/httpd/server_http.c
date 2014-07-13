@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.2 2014/07/12 23:55:35 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.3 2014/07/13 09:46:19 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -550,8 +550,14 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 
 	/* A CSS stylesheet allows minimal customization by the user */
 	style = "body { background-color: white; color: black; font-family: "
-	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }";
-
+	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }"
+	    "blink { animation:blink 1s; animation-iteration-count: infinite;"
+	    "-webkit-animation:blink 1s;"
+	    "-webkit-animation-iteration-count: infinite;}"
+	    "@keyframes blink { 0%{opacity:0.0;} 50%{opacity:0.0;}"
+	    "50.01%{opacity:1.0;} 100%{opacity:1.0;} }"
+	    "@-webkit-keyframes blink { 0%{opacity:0.0;} 50%{opacity:0.0;}"
+	    "50.01%{opacity:1.0;} 100%{opacity:1.0;} }";
 	/* Generate simple HTTP+HTML error document */
 	if (asprintf(&httpmsg,
 	    "HTTP/1.0 %03d %s\r\n"
@@ -568,7 +574,7 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
 	    "</head>\n"
 	    "<body>\n"
-	    "<h1>%s</h1>\n"
+	    "<h1><blink>%s</blink></h1>\n"
 	    "<div id='m'>%s</div>\n"
 	    "<hr><address>%s at %s port %d</address>\n"
 	    "</body>\n"
