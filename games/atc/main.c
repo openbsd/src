@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2014/07/13 13:00:40 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2014/07/13 14:01:04 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -112,9 +112,7 @@ main(int ac, char *av[])
 		}
 	}
 	if (seed != NULL)
-		srandom(atol(seed));
-	else
-		srandomdev();
+		setseed(seed);
 
 	if (f_usage)
 		fprintf(stderr, 
