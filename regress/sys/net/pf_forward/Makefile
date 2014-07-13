@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2014/07/12 22:43:31 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2014/07/13 01:47:20 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -53,7 +53,7 @@ RT_IN ?=	10.188.211.51
 RT_OUT ?=	10.188.212.51
 ECO_IN ?=	10.188.212.52
 RDR_IN ?=	10.188.213.188
-AF_IN ?=	10.188.214.188
+AF_IN ?=	10.188.214.82		# /24 must be dec(ECO_IN6/120)
 
 SRC_OUT6 ?=	fdd7:e83e:66bc:210:fce1:baff:fed1:561f
 PF_IN6 ?=	fdd7:e83e:66bc:210:5054:ff:fe12:3450
@@ -62,7 +62,7 @@ RT_IN6 ?=	fdd7:e83e:66bc:211:5054:ff:fe12:3451
 RT_OUT6 ?=	fdd7:e83e:66bc:212:5054:ff:fe12:3451
 ECO_IN6 ?=	fdd7:e83e:66bc:212:5054:ff:fe12:3452
 RDR_IN6 ?=	fdd7:e83e:66bc:213::188
-AF_IN6 ?=	fdd7:e83e:66bc:214::188
+AF_IN6 ?=	fdd7:e83e:66bc:214::34	# /120 must be hex(ECO_IN/24)
 
 .if empty (PF_SSH) || empty (RT_SSH) || empty (ECO_SSH)
 regress:
@@ -83,10 +83,6 @@ regress:
 	rm -f stamp-pfctl
 .endif
 .endif
-
-# Currently these test fail as pf does not fix the checksum of
-# NATed packets inside of icmp packets.
-# ping6-mtu
 
 depend: addr.py
 
@@ -189,14 +185,14 @@ run-regress-tcp: stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN AF_IN
 	@echo Check tcp ${ip}:
-	openssl rand 200000 | nc ${${ip}} 7 | wc -c | grep '200000$$'
+	openssl rand 200000 | nc -N ${${ip}} 7 | wc -c | grep '200000$$'
 .endfor
 
 run-regress-tcp6: stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN AF_IN
 	@echo Check tcp ${ip}6:
-	openssl rand 200000 | nc ${${ip}6} 7 | wc -c | grep '200000$$'
+	openssl rand 200000 | nc -N ${${ip}6} 7 | wc -c | grep '200000$$'
 .endfor
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
@@ -243,8 +239,8 @@ check-setup:
 .endfor
 	ssh ${PF_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
 	ssh ${PF_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
-	ssh ${PF_SSH} sysctl net.inet.ip.forwarding | fgrep 1
-	ssh ${PF_SSH} sysctl net.inet6.ip6.forwarding | fgrep 1
+	ssh ${PF_SSH} sysctl net.inet.ip.forwarding | fgrep =1
+	ssh ${PF_SSH} sysctl net.inet6.ip6.forwarding | fgrep =1
 	@echo '\n======== $@ RT ========'
 	ssh ${RT_SSH} ping -n -c 1 ${RT_IN}  # RT_IN
 	ssh ${RT_SSH} route -n get -inet ${RT_IN} | fgrep -q 'interface: lo0'  # RT_IN
@@ -264,8 +260,9 @@ check-setup:
 	ssh ${RT_SSH} ping6 -n -c 1 ${RT_OUT6}  # RT_OUT6
 	ssh ${RT_SSH} route -n get -inet6 ${RT_OUT6} | fgrep -q 'interface: lo0'  # RT_OUT6
 	ssh ${RT_SSH} ping6 -n -c 1 ${ECO_IN6}  # ECO_IN6
-	ssh ${RT_SSH} sysctl net.inet.ip.forwarding | fgrep 1
-	ssh ${RT_SSH} sysctl net.inet6.ip6.forwarding | fgrep 1
+	ssh ${RT_SSH} sysctl net.inet.ip.forwarding | fgrep =1
+	ssh ${RT_SSH} sysctl net.inet6.ip6.forwarding | fgrep =1
+	ssh ${RT_SSH} ifconfig | fgrep 'mtu 1300'
 	@echo '\n======== $@ ECO ========'
 	ssh ${ECO_SSH} ping -n -c 1 ${ECO_IN}  # ECO_IN
 	ssh ${ECO_SSH} route -n get -inet ${ECO_IN} | fgrep -q 'interface: lo0'  # ECO_IN
