@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2014/07/13 22:42:01 jsing Exp $
+#	$OpenBSD: Makefile,v 1.4 2014/07/13 23:36:24 jsing Exp $
 
 CFLAGS+= -Wall -Werror -Wimplicit
 CFLAGS+= -DLIBRESSL_INTERNAL
@@ -12,6 +12,7 @@ HDRS=	ressl.h
 SRCS=	ressl.c \
 	ressl_client.c \
 	ressl_config.c \
+	ressl_server.c \
 	ressl_util.c \
 	ressl_verify.c
 

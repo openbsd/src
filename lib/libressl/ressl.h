@@ -37,12 +37,16 @@ void ressl_config_insecure_no_verify(struct ressl_config *config);
 void ressl_config_verify(struct ressl_config *config);
 
 struct ressl *ressl_client(void);
+struct ressl *ressl_server(void);
 int ressl_configure(struct ressl *ctx, struct ressl_config *config);
 void ressl_reset(struct ressl *ctx);
 void ressl_free(struct ressl *ctx);
 
+int ressl_accept(struct ressl *ctx);
+int ressl_accept_socket(struct ressl *ctx, int socket);
 int ressl_connect(struct ressl *ctx, const char *host, const char *port);
 int ressl_connect_socket(struct ressl *ctx, int s, const char *hostname);
+int ressl_listen(struct ressl *ctx, const char *host, const char *port, int af);
 int ressl_read(struct ressl *ctx, char *buf, size_t buflen, size_t *outlen);
 int ressl_write(struct ressl *ctx, const char *buf, size_t buflen,
     size_t *outlen);
