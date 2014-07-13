@@ -14,7 +14,7 @@ our %args = (
 	],
 	loggrep => {
 	    qr/\[Host: foo.bar\]/ => 1,
-	    qr/\[Server: Perl\/[^\s]+\s*\]/ => 1,
+	    qr/\{Server: Perl\/[^\s]+\s*\};/ => 1,
 	},
     },
     server => {

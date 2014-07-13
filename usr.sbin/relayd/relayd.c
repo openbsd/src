@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.129 2014/07/11 11:48:50 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.130 2014/07/13 00:32:08 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -804,25 +804,28 @@ kv_inherit(struct kv *dst, struct kv *src)
 }
 
 int
-kv_log(struct evbuffer *log, struct kv *kv, u_int16_t labelid)
+kv_log(struct rsession *con, struct kv *kv, u_int16_t labelid,
+    enum direction dir)
 {
 	char	*msg;
 
-	if (log == NULL)
+	if (con->se_log == NULL)
 		return (0);
-	if (asprintf(&msg, " [%s%s%s%s%s]",
+	if (asprintf(&msg, " %s%s%s%s%s%s%s",
+	    dir == RELAY_DIR_REQUEST ? "[" : "{",
 	    labelid == 0 ? "" : label_id2name(labelid),
 	    labelid == 0 ? "" : ", ",
 	    kv->kv_key == NULL ? "(unknown)" : kv->kv_key,
 	    kv->kv_value == NULL ? "" : ": ",
-	    kv->kv_value == NULL ? "" : kv->kv_value) == -1)
+	    kv->kv_value == NULL ? "" : kv->kv_value,
+	    dir == RELAY_DIR_REQUEST ? "]" : "}") == -1)
 		return (-1);
-	if (evbuffer_add(log, msg, strlen(msg)) == -1) {
+	if (evbuffer_add(con->se_log, msg, strlen(msg)) == -1) {
 		free(msg);
 		return (-1);
 	}
 	free(msg);
-
+	con->se_haslog = 1;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.28 2014/07/13 00:18:05 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.29 2014/07/13 00:32:08 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1389,6 +1389,8 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions)
 	struct kv		*kv, *match, *kp, *mp, kvcopy, matchcopy, key;
 	int			 addkv, ret;
 	char			 buf[IBUF_READ_SIZE], *ptr;
+	char			*msg = NULL;
+	const char		*meth = NULL;
 
 	memset(&kvcopy, 0, sizeof(kvcopy));
 	memset(&matchcopy, 0, sizeof(matchcopy));
@@ -1553,7 +1555,8 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions)
 			default:
 				break;
 			}
-			if (kv_log(con->se_log, mp, con->se_label) == -1)
+			if (kv_log(con, mp, con->se_label, cre->dir)
+			    == -1)
 				goto fail;
 			break;
 		default:
@@ -1569,6 +1572,16 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions)
 		kv_free(&matchcopy);
 	}
 
+	/*
+	 * log tag for request and response, request method
+	 * and end of request marker ","
+	 */
+	if ((con->se_log != NULL) &&
+	    ((meth = relay_httpmethod_byid(desc->http_method)) != NULL) &&
+	    (asprintf(&msg, " %s",meth) >= 0))
+		evbuffer_add(con->se_log, msg, strlen(msg));
+	free(msg);
+	relay_log(con, cre->dir == RELAY_DIR_REQUEST ? "" : ";");
 	ret = 0;
  fail:
 	kv_free(&kvcopy);

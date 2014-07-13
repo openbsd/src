@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.173 2014/07/11 16:59:38 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.174 2014/07/13 00:32:08 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1084,6 +1084,7 @@ relay_accept(int fd, short event, void *arg)
 	}
 
 	/* Pre-allocate log buffer */
+	con->se_haslog = 0;
 	con->se_log = evbuffer_new();
 	if (con->se_log == NULL) {
 		relay_close(con, "failed to allocate log buffer");
@@ -2653,6 +2654,14 @@ relay_session_cmp(struct rsession *a, struct rsession *b)
 		return ((*proto->cmp)(a, b));
 
 	return ((int)a->se_id - b->se_id);
+}
+
+void
+relay_log(struct rsession *con, char *msg)
+{
+	if (con->se_haslog && con->se_log != NULL) {
+		evbuffer_add(con->se_log, msg, strlen(msg));
+	}
 }
 
 SPLAY_GENERATE(session_tree, rsession, se_nodes, relay_session_cmp);

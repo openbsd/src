@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.187 2014/07/12 14:34:13 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.188 2014/07/13 00:32:08 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -525,6 +525,7 @@ struct rsession {
 	int				 se_retry;
 	int				 se_retrycount;
 	int				 se_connectcount;
+	int				 se_haslog;
 	struct evbuffer			*se_log;
 	struct relay			*se_relay;
 	struct ctl_natlook		*se_cnl;
@@ -1253,7 +1254,9 @@ struct kv	*kv_extend(struct kvtree *, struct kv *, char *);
 void		 kv_purge(struct kvtree *);
 void		 kv_free(struct kv *);
 struct kv	*kv_inherit(struct kv *, struct kv *);
-int		 kv_log(struct evbuffer *, struct kv *, u_int16_t);
+void		 relay_log(struct rsession *, char *);
+int		 kv_log(struct rsession *, struct kv *, u_int16_t,
+		     enum direction);
 struct kv	*kv_find(struct kvtree *, struct kv *);
 int		 kv_cmp(struct kv *, struct kv *);
 int		 rule_add(struct protocol *, struct relay_rule *, const char
