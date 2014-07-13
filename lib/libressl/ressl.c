@@ -26,8 +26,7 @@
 
 #include <openssl/x509.h>
 
-#include <ressl/ressl.h>
-
+#include <ressl.h>
 #include "ressl_internal.h"
 
 extern struct ressl_config ressl_config_default;

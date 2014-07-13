@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2014/07/12 01:20:24 jsing Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/07/13 22:13:52 jsing Exp $
 
 CFLAGS+= -Wall -Werror -Wimplicit
 CFLAGS+= -DLIBRESSL_INTERNAL
@@ -7,7 +7,7 @@ LIB=	ressl
 
 DPADD=	${LIBCRYPTO} ${LIBSSL}
 
-HDRS=	ressl.h ressl_config.h
+HDRS=	ressl.h
 
 SRCS=	ressl.c \
 	ressl_config.c \
@@ -15,12 +15,10 @@ SRCS=	ressl.c \
 	ressl_verify.c
 
 includes:
-	@test -d ${DESTDIR}/usr/include/ressl || \
-	    mkdir ${DESTDIR}/usr/include/ressl
 	@cd ${.CURDIR}; for i in $(HDRS); do \
-	    j="cmp -s $$i ${DESTDIR}/usr/include/ressl/$$i || \
+	    j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
 	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i\
-		${DESTDIR}/usr/include/ressl"; \
+		${DESTDIR}/usr/include/"; \
 	    echo $$j; \
 	    eval "$$j"; \
 	done;

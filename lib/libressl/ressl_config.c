@@ -17,8 +17,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#include <ressl/ressl.h>
-
+#include <ressl.h>
 #include "ressl_internal.h"
 
 /*
