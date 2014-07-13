@@ -63,6 +63,7 @@
 ./etc/examples/ldapd.conf
 ./etc/examples/ldpd.conf
 ./etc/examples/mrouted.conf
+./etc/examples/ntpd.conf
 ./etc/examples/ospf6d.conf
 ./etc/examples/ospfd.conf
 ./etc/examples/rbootd.conf
