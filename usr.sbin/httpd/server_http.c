@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.3 2014/07/13 09:46:19 beck Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.4 2014/07/13 14:17:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -319,7 +319,7 @@ server_read_http(struct bufferevent *bev, void *arg)
 
  done:
 		if (clt->clt_toread <= 0) {
-			if (server_response(clt) == -1)
+			if (server_response(env, clt) == -1)
 				return;
 		}
 

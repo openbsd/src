@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.1 2014/07/12 23:34:54 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.2 2014/07/13 14:17:37 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 12 2014 $
+.Dd $Mdocdate: July 13 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@ is the configuration file for the HTTP daemon,
 .Xr httpd 8 .
 .Sh SECTIONS
 .Nm
-is divided into three main sections:
+is divided into four main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
@@ -36,6 +36,8 @@ Global settings for
 .Xr httpd 8 .
 .It Sy Servers
 Listening HTTP web servers.
+.It Sy Types
+Media types and extensions.
 .El
 .Pp
 Within the sections,
@@ -114,6 +116,73 @@ The following general table options are available:
 .It Ic listen on Ar address Ic port Ar number
 Set the listen address and port.
 .El
+.Sh TYPES
+Configure the supported media types.
+.Nm httpd
+will set the
+.Ar Content-Type
+of the response header based on the file extension that is listed in the
+.Ic types
+section.
+If not specified,
+.Nm httpd
+will use built-in media types for
+.Ar text/css ,
+.Ar text/html ,
+.Ar text/plain ,
+.Ar image/gif ,
+.Ar image/png ,
+.Ar image/jpeg ,
+and
+.Ar application/javascript .
+.Pp
+The
+.Ic types
+section must include one or more lines of the following syntax:
+.Bl -tag -width Ds
+.It Ar type/subtype Ar name Oo Ar name ... Oc Ic ;
+Set the media
+.Ar type
+and
+.Ar subtype
+to the specified extension
+.Ar name .
+One or more names can be specified per line.
+.El
+.Sh EAMPLES
+The following example will start two pre-forked servers that are
+listening on the primary IP address of the network interface that is a
+member of the
+.Ar egress
+group.
+It additionally defines some media types overriding the defaults.
+.Bd -literal -offset indent
+prefork 2
+
+server "default" {
+	listen on egress port 80
+}
+
+types {
+	text/css			css;
+	text/html			html html;
+	text/txt			txt;
+	image/gif			gif;
+	image/jpeg			jpg jpeg;
+	image/png			png;
+	application/javascript		js;
+	application/xml			xml;
+}
+.Ed
+.Pp
+The syntax of the types section is compatible to the format that is used by
+.Xr nginx 8 ,
+so you can optionally include its
+.Pa mime.types
+file directly:
+.Bd -literal -offset indent
+include "/etc/nginx/mime.types"
+.Ed
 .Sh SEE ALSO
 .Xr httpd 8 .
 .Sh AUTHORS

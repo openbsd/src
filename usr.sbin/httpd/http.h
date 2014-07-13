@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.1 2014/07/12 23:34:54 reyk Exp $	*/
+/*	$OpenBSD: http.h,v 1.2 2014/07/13 14:17:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -117,6 +117,24 @@ struct http_error {
 	{ 504,	"Gateway Timeout" },			\
 	{ 505,	"HTTP Version Not Supported" },		\
 	{ 0,	NULL }					\
+}
+
+struct http_mediatype {
+	char		*media_name;
+	char		*media_type;
+	char		*media_subtype;
+};
+/* Some default media types */
+#define MEDIA_TYPES		{			\
+	{ "css",	"text",		"css" },	\
+	{ "html",	"text",		"html" },	\
+	{ "txt",	"text",		"plain" },	\
+	{ "gif",	"image",	"gif" },	\
+	{ "jpeg",	"image",	"jpeg" },	\
+	{ "jpg",	"image",	"jpeg" },	\
+	{ "png",	"image",	"png" },	\
+	{ "js",		"application",	"javascript" },	\
+	{ NULL }					\
 }
 
 /* Used during runtime */

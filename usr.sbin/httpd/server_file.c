@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.1 2014/07/12 23:34:54 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.2 2014/07/13 14:17:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -47,11 +47,12 @@
 #include "http.h"
 
 int
-server_response(struct client *clt)
+server_response(struct httpd *env, struct client *clt)
 {
 	struct http_descriptor	*desc = clt->clt_desc;
 	struct server		*srv = clt->clt_server;
-	struct kv		*kv;
+	struct kv		*ct, *cl;
+	struct media_type	*media;
 	const char		*errstr = NULL;
 	int			 fd = -1;
 	char			 path[MAXPATHLEN];
@@ -90,14 +91,31 @@ server_response(struct client *clt)
 	if ((fd = open(path, O_RDONLY)) == -1 || fstat(fd, &st) == -1)
 		goto fail;
 
-	/* XXX verify results XXX */
 	kv_purge(&desc->http_headers);
-	kv_add(&desc->http_headers, "Server", HTTPD_SERVERNAME);
-	kv_add(&desc->http_headers, "Connection", "close");
-	if ((kv = kv_add(&desc->http_headers, "Content-Length", NULL)) != NULL)
-		kv_set(kv, "%ld", st.st_size);
-	kv_setkey(&desc->http_pathquery, "200");
-	kv_set(&desc->http_pathquery, "%s", server_httperror_byid(200));
+
+	/* Add error codes */
+	if (kv_setkey(&desc->http_pathquery, "200") == -1 ||
+	    kv_set(&desc->http_pathquery, "%s",
+	    server_httperror_byid(200)) == -1)
+		goto fail;		
+
+	/* Add headers */
+	if (kv_add(&desc->http_headers, "Server", HTTPD_SERVERNAME) == NULL ||
+	    kv_add(&desc->http_headers, "Connection", "close") == NULL ||
+	    (ct = kv_add(&desc->http_headers, "Content-Type", NULL)) == NULL ||
+	    (cl = kv_add(&desc->http_headers, "Content-Length", NULL)) == NULL)
+		goto fail;
+
+	/* Set content type */
+	media = media_find(env->sc_mediatypes, path);
+	if (kv_set(ct, "%s/%s",
+	    media == NULL ? "application" : media->media_type,
+	    media == NULL ? "octet-stream" : media->media_subtype) == -1)
+		goto fail;
+
+	/* Set content length */
+	if (kv_set(cl, "%ld", st.st_size) == -1)
+		goto fail;
 
 	if (server_writeresponse_http(clt) == -1 ||
 	    server_bufferevent_print(clt, "\r\n") == -1 ||

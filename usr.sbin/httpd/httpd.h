@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.1 2014/07/12 23:34:54 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.2 2014/07/13 14:17:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -42,8 +42,12 @@
 #define SERVER_BACKLOG		10
 #define SERVER_OUTOF_FD_RETRIES	5
 
+#define MEDIATYPE_NAMEMAX	128	/* file name extension */
+#define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
+
 #define CONFIG_RELOAD		0x00
-#define CONFIG_SERVERS		0x01
+#define CONFIG_MEDIA		0x01
+#define CONFIG_SERVERS		0x02
 #define CONFIG_ALL		0xff
 
 #define TCPFLAG_NODELAY		0x01
@@ -182,6 +186,7 @@ enum imsg_type {
 	IMSG_CTL_END,
 	IMSG_CTL_START,
 	IMSG_CFG_SERVER,
+	IMSG_CFG_MEDIA,
 	IMSG_CFG_DONE
 };
 
@@ -304,6 +309,15 @@ struct server {
 };
 TAILQ_HEAD(serverlist, server);
 
+struct media_type {
+	char			 media_name[MEDIATYPE_NAMEMAX];
+	char			 media_type[MEDIATYPE_TYPEMAX];
+	char			 media_subtype[MEDIATYPE_TYPEMAX];
+	char			*media_encoding;
+	RB_ENTRY(media_type)	 media_entry;
+};
+RB_HEAD(mediatypes, media_type);
+
 struct httpd {
 	u_int8_t		 sc_opts;
 	u_int32_t		 sc_flags;
@@ -313,6 +327,7 @@ struct httpd {
 	u_int16_t		 sc_id;
 
 	struct serverlist	*sc_servers;
+	struct mediatypes	*sc_mediatypes;
 
 	struct privsep		*sc_ps;
 	int			 sc_reload;
@@ -383,7 +398,7 @@ void	 server_reset_http(struct client *);
 void	 server_close_http(struct client *);
 
 /* server_file.c */
-int	 server_response(struct client *);
+int	 server_response(struct httpd *, struct client *);
 
 /* httpd.c */
 void		 event_again(struct event *, int, short,
@@ -409,7 +424,15 @@ struct kv	*kv_inherit(struct kv *, struct kv *);
 int		 kv_log(struct evbuffer *, struct kv *);
 struct kv	*kv_find(struct kvtree *, struct kv *);
 int		 kv_cmp(struct kv *, struct kv *);
+struct media_type
+		*media_add(struct mediatypes *, struct media_type *);
+void		 media_delete(struct mediatypes *, struct media_type *);
+void		 media_purge(struct mediatypes *);
+struct media_type *
+		 media_find(struct mediatypes *, char *);
+int		 media_cmp(struct media_type *, struct media_type *);
 RB_PROTOTYPE(kvtree, kv, kv_node, kv_cmp);
+RB_PROTOTYPE(mediatypes, media_type, media_entry, media_cmp);
 
 /* log.c */
 void	log_init(int);
@@ -459,5 +482,7 @@ int	 config_getreset(struct httpd *, struct imsg *);
 int	 config_getcfg(struct httpd *, struct imsg *);
 int	 config_setserver(struct httpd *, struct server *);
 int	 config_getserver(struct httpd *, struct imsg *);
+int	 config_setmedia(struct httpd *, struct media_type *);
+int	 config_getmedia(struct httpd *, struct imsg *);
 
 #endif /* _HTTPD_H */

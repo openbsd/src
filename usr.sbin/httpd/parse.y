@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2014/07/12 23:34:54 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.2 2014/07/13 14:17:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -96,6 +96,7 @@ uint32_t		 last_server_id = 0;
 
 static struct server	*srv = NULL;
 struct serverlist	 servers;
+struct media_type	 media;
 
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
@@ -125,7 +126,7 @@ typedef struct {
 
 %}
 
-%token	ALL PORT LISTEN PREFORK SERVER ERROR INCLUDE LOG VERBOSE ON
+%token	ALL PORT LISTEN PREFORK SERVER ERROR INCLUDE LOG VERBOSE ON TYPES
 %token	UPDATES INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -140,6 +141,7 @@ grammar		: /* empty */
 		| grammar varset '\n'
 		| grammar main '\n'
 		| grammar server '\n'
+		| grammar types '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
 
@@ -264,6 +266,51 @@ serveroptsl	: LISTEN ON STRING port {
 		}
 		;
 
+types		: TYPES	'{' optnl mediaopts_l '}'
+		;
+
+mediaopts_l	: mediaopts_l mediaoptsl nl
+		| mediaoptsl optnl
+		;
+
+mediaoptsl	: STRING '/' STRING 			{
+			if (strlcpy(media.media_type, $1,
+			    sizeof(media.media_type)) >=
+			    sizeof(media.media_type) ||
+			    strlcpy(media.media_subtype, $3,
+			    sizeof(media.media_subtype)) >=
+			    sizeof(media.media_subtype)) {
+				yyerror("media type too long");
+				free($1);
+				free($3);
+				YYERROR;
+			}
+			free($1);
+			free($3);
+		} medianames_l ';'
+		;
+
+medianames_l	: medianames_l medianamesl
+		| medianamesl
+		;
+
+medianamesl	: STRING				{
+			if (strlcpy(media.media_name, $1,
+			    sizeof(media.media_name)) >=
+			    sizeof(media.media_name)) {
+				yyerror("media name too long");
+				free($1);
+				YYERROR;
+			}
+			free($1);
+
+			if (media_add(conf->sc_mediatypes, &media) == NULL) {
+				yyerror("failed to add media type");
+				YYERROR;
+			}
+		}
+		;
+
 port		: PORT STRING {
 			char		*a, *b;
 			int		 p[2];
@@ -302,11 +349,6 @@ port		: PORT STRING {
 
 loglevel	: UPDATES		{ $$ = HTTPD_OPT_LOGUPDATE; }
 		| ALL			{ $$ = HTTPD_OPT_LOGALL; }
-		;
-
-comma		: ','
-		| nl
-		| /* empty */
 		;
 
 optnl		: '\n' optnl
@@ -358,6 +400,7 @@ lookup(char *s)
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
 		{ "server",		SERVER },
+		{ "types",		TYPES },
 		{ "updates",		UPDATES }
 	};
 	const struct keywords	*p;
@@ -585,7 +628,7 @@ nodigits:
 	(isalnum(x) || (ispunct(x) && x != '(' && x != ')' && \
 	x != '{' && x != '}' && x != '<' && x != '>' && \
 	x != '!' && x != '=' && x != '#' && \
-	x != ',' && x != '/'))
+	x != ',' && x != ';' && x != '/'))
 
 	if (isalnum(c) || c == ':' || c == '_') {
 		do {
@@ -722,6 +765,9 @@ int
 load_config(const char *filename, struct httpd *x_conf)
 {
 	struct sym		*sym, *next;
+	struct http_mediatype	 mediatypes[] = MEDIA_TYPES;
+	struct media_type	 m;
+	int			 i;
 
 	conf = x_conf;
 	conf->sc_flags = 0;
@@ -762,6 +808,25 @@ load_config(const char *filename, struct httpd *x_conf)
 	if (TAILQ_EMPTY(conf->sc_servers)) {
 		log_warnx("no actions, nothing to do");
 		errors++;
+	}
+
+	if (RB_EMPTY(conf->sc_mediatypes)) {
+		/* Add default media types */
+		for (i = 0; mediatypes[i].media_name != NULL; i++) {
+			(void)strlcpy(m.media_name, mediatypes[i].media_name,
+			    sizeof(m.media_name));
+			(void)strlcpy(m.media_type, mediatypes[i].media_type,
+			    sizeof(m.media_type));
+			(void)strlcpy(m.media_subtype,
+			    mediatypes[i].media_subtype,
+			    sizeof(m.media_subtype));
+
+			if (media_add(conf->sc_mediatypes, &m) == NULL) {
+				log_warnx("failed to add default media \"%s\"",
+				    m.media_name);
+				errors++;
+			}
+		}		
 	}
 
 	return (errors ? -1 : 0);

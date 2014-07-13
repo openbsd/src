@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.1 2014/07/12 23:34:54 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.2 2014/07/13 14:17:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -57,7 +57,7 @@ config_init(struct httpd *env)
 		env->sc_prefork_server = SERVER_NUMPROC;
 
 		ps->ps_what[PROC_PARENT] = CONFIG_ALL;
-		ps->ps_what[PROC_SERVER] = CONFIG_SERVERS;
+		ps->ps_what[PROC_SERVER] = CONFIG_SERVERS|CONFIG_MEDIA;
 	}
 
 	/* Other configuration */
@@ -68,6 +68,13 @@ config_init(struct httpd *env)
 		    calloc(1, sizeof(*env->sc_servers))) == NULL)
 			return (-1);
 		TAILQ_INIT(env->sc_servers);
+	}
+
+	if (what & CONFIG_MEDIA) {
+		if ((env->sc_mediatypes =
+		    calloc(1, sizeof(*env->sc_mediatypes))) == NULL)
+			return (-1);
+		RB_INIT(env->sc_mediatypes);
 	}
 
 	return (0);
@@ -88,6 +95,9 @@ config_purge(struct httpd *env, u_int reset)
 			free(srv);
 		}
 	}
+
+	if (what & CONFIG_MEDIA && env->sc_mediatypes != NULL)
+		media_purge(env->sc_mediatypes);
 }
 
 int
@@ -223,6 +233,54 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	DPRINTF("%s: %s %d received configuration \"%s\"", __func__,
 	    ps->ps_title[privsep_process], ps->ps_instance,
 	    srv->srv_conf.name);
+
+	return (0);
+}
+
+int
+config_setmedia(struct httpd *env, struct media_type *media)
+{
+	struct privsep		*ps = env->sc_ps;
+	int			 id;
+	u_int			 what;
+
+	for (id = 0; id < PROC_MAX; id++) {
+		what = ps->ps_what[id];
+
+		if ((what & CONFIG_MEDIA) == 0 || id == privsep_process)
+			continue;
+
+		DPRINTF("%s: sending media \"%s\" to %s", __func__,
+		    media->media_name, ps->ps_title[id]);
+
+		proc_compose_imsg(ps, id, -1, IMSG_CFG_MEDIA, -1,
+		    media, sizeof(*media));
+	}
+
+	return (0);
+}
+
+int
+config_getmedia(struct httpd *env, struct imsg *imsg)
+{
+#ifdef DEBUG
+	struct privsep		*ps = env->sc_ps;
+#endif
+	struct media_type	 media;
+	u_int8_t		*p = imsg->data;
+
+	IMSG_SIZE_CHECK(imsg, &media);
+	memcpy(&media, p, sizeof(media));
+
+	if (media_add(env->sc_mediatypes, &media) == NULL) {
+		log_debug("%s: failed to add media \"%s\"",
+		    __func__, media.media_name);
+		return (-1);
+	}
+
+	DPRINTF("%s: %s %d received media \"%s\"", __func__,
+	    ps->ps_title[privsep_process], ps->ps_instance,
+	    media.media_name);
 
 	return (0);
 }

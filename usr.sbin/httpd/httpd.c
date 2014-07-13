@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.1 2014/07/12 23:34:54 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.2 2014/07/13 14:17:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -269,10 +269,16 @@ parent_configure(struct httpd *env)
 	struct ctl_flags	 cf;
 	int			 ret = -1;
 	struct server		*srv;
+	struct media_type	*media;
+
+	RB_FOREACH(media, mediatypes, env->sc_mediatypes) {
+		if (config_setmedia(env, media) == -1)
+			fatal("send media");
+	}
 
 	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
 		if (config_setserver(env, srv) == -1)
-			fatal("create server");
+			fatal("send server");
 	}
 
 	/* The servers need to reload their config. */
@@ -290,7 +296,7 @@ parent_configure(struct httpd *env)
 
 	ret = 0;
 
-	config_purge(env, CONFIG_ALL & ~CONFIG_SERVERS);
+	config_purge(env, CONFIG_ALL);
 	return (ret);
 }
 
@@ -735,3 +741,72 @@ kv_cmp(struct kv *a, struct kv *b)
 }
 
 RB_GENERATE(kvtree, kv, kv_node, kv_cmp);
+
+struct media_type *
+media_add(struct mediatypes *types, struct media_type *media)
+{
+	struct media_type	*entry;
+
+	if ((entry = RB_FIND(mediatypes, types, media)) != NULL) {
+		log_debug("%s: duplicated entry for \"%s\"", __func__,
+		    media->media_name);
+		return (NULL);
+	}
+
+	if ((entry = malloc(sizeof(*media))) == NULL)
+		return (NULL);
+
+	memcpy(entry, media, sizeof(*entry));
+	RB_INSERT(mediatypes, types, entry);
+
+	return (entry);
+}
+
+void
+media_delete(struct mediatypes *types, struct media_type *media)
+{
+	RB_REMOVE(mediatypes, types, media);
+	if (media->media_encoding != NULL)
+		free(media->media_encoding);
+	free(media);
+}
+
+void
+media_purge(struct mediatypes *types)
+{
+	struct media_type	*media;
+
+	while ((media = RB_MIN(mediatypes, types)) != NULL)
+		media_delete(types, media);
+}
+
+struct media_type *
+media_find(struct mediatypes *types, char *file)
+{
+	struct media_type	*match, media;
+	char			*p;
+
+	if ((p = strrchr(file, '.')) == NULL) {
+		p = file;
+	} else if (*p++ == '\0') {
+		return (NULL);
+	}
+	if (strlcpy(media.media_name, p,
+	    sizeof(media.media_name)) >=
+	    sizeof(media.media_name)) {
+		return (NULL);
+	}
+
+	/* Find media type by extension name */
+	match = RB_FIND(mediatypes, types, &media);
+
+	return (match);
+}
+
+int
+media_cmp(struct media_type *a, struct media_type *b)
+{
+	return (strcasecmp(a->media_name, b->media_name));
+}
+
+RB_GENERATE(mediatypes, media_type, media_entry, media_cmp);

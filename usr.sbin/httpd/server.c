@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.1 2014/07/12 23:34:54 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.2 2014/07/13 14:17:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -566,6 +566,9 @@ int
 server_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	switch (imsg->hdr.type) {
+	case IMSG_CFG_MEDIA:
+		config_getmedia(env, imsg);
+		break;
 	case IMSG_CFG_SERVER:
 		config_getserver(env, imsg);
 		break;
