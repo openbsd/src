@@ -116,6 +116,7 @@
 ./usr/share/man/man1/atrm.1
 ./usr/share/man/man1/aucat.1
 ./usr/share/man/man1/audioctl.1
+./usr/share/man/man1/auxcpp.1
 ./usr/share/man/man1/awk.1
 ./usr/share/man/man1/b64decode.1
 ./usr/share/man/man1/b64encode.1
@@ -2079,7 +2080,6 @@
 ./usr/share/man/man4/ucycom.4
 ./usr/share/man/man4/udav.4
 ./usr/share/man/man4/udcf.4
-./usr/share/man/man4/udfu.4
 ./usr/share/man/man4/udl.4
 ./usr/share/man/man4/udp.4
 ./usr/share/man/man4/udsbr.4
@@ -2135,7 +2135,6 @@
 ./usr/share/man/man4/uvideo.4
 ./usr/share/man/man4/uvisor.4
 ./usr/share/man/man4/uvscom.4
-./usr/share/man/man4/uyap.4
 ./usr/share/man/man4/vax
 ./usr/share/man/man4/vax/asc.4
 ./usr/share/man/man4/vax/autoconf.4

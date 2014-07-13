@@ -49,8 +49,6 @@
 ./etc/firmware/tusb3410
 ./etc/firmware/tusb3410-license
 ./etc/firmware/udl_huffman
-./etc/firmware/uyap
-./etc/firmware/uyap-license
 ./etc/firmware/yds
 ./etc/firmware/yds-license
 ./etc/firmware/zd1211
@@ -1284,7 +1282,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ehcireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ehcivar.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/hid.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/hidkbdsc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/hidkbdvar.ph
@@ -1408,6 +1405,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dlfcn.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/elf_abi.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/endian.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/eti.ph
@@ -2084,6 +2082,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/_endian.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/_time.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/acct.ph
@@ -2230,6 +2229,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ext2fs/ext2fs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ext2fs/ext2fs_dinode.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ext2fs/ext2fs_dir.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ext2fs/ext2fs_extents.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ext2fs/ext2fs_extern.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ffs
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ffs/ffs_extern.ph

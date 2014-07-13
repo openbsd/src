@@ -129,6 +129,7 @@
 ./etc/rc.d/iked
 ./etc/rc.d/inetd
 ./etc/rc.d/isakmpd
+./etc/rc.d/iscsid
 ./etc/rc.d/ldapd
 ./etc/rc.d/ldattach
 ./etc/rc.d/ldomd
@@ -2549,6 +2550,7 @@
 ./usr/libexec/auth/login_tis
 ./usr/libexec/auth/login_token
 ./usr/libexec/auth/login_yubikey
+./usr/libexec/auxcpp
 ./usr/libexec/comsat
 ./usr/libexec/cvs
 ./usr/libexec/cvs/contrib
