@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.29 2014/07/13 00:32:08 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.30 2014/07/13 15:39:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1090,7 +1090,6 @@ relay_writeheader_kv(struct ctl_relay_event *dst, struct kv *hdr)
 		key = hdr->kv_key;
 
 	ptr = hdr->kv_value;
-	DPRINTF("%s: ptr %s", __func__, ptr);
 	if (relay_bufferevent_print(dst, key) == -1 ||
 	    (ptr != NULL &&
 	    (relay_bufferevent_print(dst, ": ") == -1 ||
