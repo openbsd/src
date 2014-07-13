@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.122 2014/05/07 08:09:33 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.123 2014/07/13 13:57:56 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ icmp_init(void)
 }
 
 struct mbuf *
-icmp_do_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
+icmp_do_error(struct mbuf *n, int type, int code, u_int32_t dest, int destmtu)
 {
 	struct ip *oip = mtod(n, struct ip *), *nip;
 	unsigned oiplen = oip->ip_hl << 2;
@@ -289,7 +289,7 @@ freeit:
  * The ip packet inside has ip_off and ip_len in host byte order.
  */
 void
-icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
+icmp_error(struct mbuf *n, int type, int code, u_int32_t dest, int destmtu)
 {
 	struct mbuf *m;
 
@@ -849,7 +849,7 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 	ip_output(m, opts, NULL, 0, NULL, NULL, 0);
 }
 
-n_time
+u_int32_t
 iptime(void)
 {
 	struct timeval atv;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_systm.h,v 1.6 2013/10/19 14:50:21 deraadt Exp $	*/
+/*	$OpenBSD: in_systm.h,v 1.7 2014/07/13 13:57:56 mpi Exp $	*/
 /*	$NetBSD: in_systm.h,v 1.8 1995/04/13 06:29:22 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ typedef u_int32_t n_long;
 typedef u_int32_t n_time;		/* ms since 00:00 GMT */
 
 #ifdef _KERNEL
-n_time	 iptime(void);
+u_int32_t iptime(void);
 #endif /* _KERNEL */
 
 #endif /* _NETINET_IN_SYSTM_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.h,v 1.15 2014/05/12 09:15:00 mpi Exp $	*/
+/*	$OpenBSD: ip.h,v 1.16 2014/07/13 13:57:56 mpi Exp $	*/
 /*	$NetBSD: ip.h,v 1.9 1995/05/15 01:22:44 cgd Exp $	*/
 
 /*
@@ -176,10 +176,10 @@ struct	ip_timestamp {
 		 ipt_flg:4;		/* flags, see below */
 #endif
 	union ipt_timestamp {
-		 n_time	ipt_time[1];
+		 u_int32_t ipt_time[1];
 		 struct	ipt_ta {
 			struct in_addr ipt_addr;
-			n_time ipt_time;
+			u_int32_t ipt_time;
 		 } ipt_ta[1];
 	} ipt_timestamp;
 };

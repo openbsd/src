@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.h,v 1.7 2003/06/02 23:28:14 millert Exp $	*/
+/*	$OpenBSD: tcp_debug.h,v 1.8 2014/07/13 13:57:56 mpi Exp $	*/
 /*	$NetBSD: tcp_debug.h,v 1.5 1994/06/29 06:38:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #include <netinet6/tcpipv6.h>
 
 struct	tcp_debug {
-	n_time	td_time;
+	uint32_t td_time;
 	short	td_act;
 	short	td_ostate;
 	caddr_t	td_tcb;

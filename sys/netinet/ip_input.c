@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.234 2014/06/04 12:20:00 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.235 2014/07/13 13:57:56 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1008,7 +1008,7 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 	struct in_ifaddr *ia;
 	int opt, optlen, cnt, off, code, type = ICMP_PARAMPROB, forward = 0;
 	struct in_addr sin, dst;
-	n_time ntime;
+	u_int32_t ntime;
 
 	dst = ip->ip_dst;
 	cp = (u_char *)(ip + 1);
@@ -1161,7 +1161,7 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 			memcpy(&ipt, cp, sizeof(struct ip_timestamp));
 			if (ipt.ipt_ptr < 5 || ipt.ipt_len < 5)
 				goto bad;
-			if (ipt.ipt_ptr - 1 + sizeof(n_time) > ipt.ipt_len) {
+			if (ipt.ipt_ptr - 1 + sizeof(u_int32_t) > ipt.ipt_len) {
 				if (++ipt.ipt_oflw == 0)
 					goto bad;
 				break;
@@ -1173,7 +1173,7 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 				break;
 
 			case IPOPT_TS_TSANDADDR:
-				if (ipt.ipt_ptr - 1 + sizeof(n_time) +
+				if (ipt.ipt_ptr - 1 + sizeof(u_int32_t) +
 				    sizeof(struct in_addr) > ipt.ipt_len)
 					goto bad;
 				memset(&ipaddr, 0, sizeof(ipaddr));
@@ -1190,7 +1190,7 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 				break;
 
 			case IPOPT_TS_PRESPEC:
-				if (ipt.ipt_ptr - 1 + sizeof(n_time) +
+				if (ipt.ipt_ptr - 1 + sizeof(u_int32_t) +
 				    sizeof(struct in_addr) > ipt.ipt_len)
 					goto bad;
 				memset(&ipaddr, 0, sizeof(ipaddr));
@@ -1210,8 +1210,8 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 				goto bad;
 			}
 			ntime = iptime();
-			memcpy(cp + ipt.ipt_ptr - 1, &ntime, sizeof(n_time));
-			ipt.ipt_ptr += sizeof(n_time);
+			memcpy(cp + ipt.ipt_ptr - 1, &ntime, sizeof(u_int32_t));
+			ipt.ipt_ptr += sizeof(u_int32_t);
 		}
 	}
 	if (forward && ipforwarding) {
@@ -1396,7 +1396,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 	struct rtentry *rt;
 	int error, type = 0, code = 0, destmtu = 0, fake = 0, len;
 	u_int rtableid = 0;
-	n_long dest;
+	u_int32_t dest;
 
 	dest = 0;
 	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {

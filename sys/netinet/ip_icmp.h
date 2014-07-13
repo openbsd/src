@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.25 2013/08/08 14:29:29 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.26 2014/07/13 13:57:56 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -51,8 +51,8 @@
  * ICMP Router Advertisement data
  */
 struct icmp_ra_addr {
-	n_long ira_addr;
-	n_long ira_preference;
+	u_int32_t ira_addr;
+	u_int32_t ira_preference;
 };
 
 /*
@@ -70,21 +70,21 @@ struct icmp {
 		} ih_exthdr;
 		struct in_addr ih_gwaddr;	/* ICMP_REDIRECT */
 		struct ih_idseq {
-			  n_short icd_id;
-			  n_short icd_seq;
+			  u_int16_t icd_id;
+			  u_int16_t icd_seq;
 		} ih_idseq;
 		int32_t   ih_void;
 
 		/* ICMP_UNREACH_NEEDFRAG -- Path MTU Discovery (RFC1191) */
 		struct ih_pmtu {
-			  n_short ipm_void;
-			  n_short ipm_nextmtu;
+			  u_int16_t ipm_void;
+			  u_int16_t ipm_nextmtu;
 		} ih_pmtu;
 
 		struct ih_rtradv {
 			u_int8_t irt_num_addrs;
 			u_int8_t irt_wpa;
-			n_short irt_lifetime;
+			u_int16_t irt_lifetime;
 		} ih_rtradv;
 	} icmp_hun;
 #define	icmp_pptr	  icmp_hun.ih_pptr
@@ -100,9 +100,9 @@ struct icmp {
 #define	icmp_lifetime	  icmp_hun.ih_rtradv.irt_lifetime
 	union {
 		struct id_ts {
-			  n_time its_otime;
-			  n_time its_rtime;
-			  n_time its_ttime;
+			  u_int32_t its_otime;
+			  u_int32_t its_rtime;
+			  u_int32_t its_ttime;
 		} id_ts;
 		struct id_ip  {
 			  struct ip idi_ip;
@@ -153,7 +153,7 @@ struct icmp_ext_obj_hdr {
  * ip header length.
  */
 #define	ICMP_MINLEN	8				/* abs minimum */
-#define	ICMP_TSLEN	(8 + 3 * sizeof (n_time))	/* timestamp */
+#define	ICMP_TSLEN	(8 + 3 * sizeof (u_int32_t))	/* timestamp */
 #define	ICMP_MASKLEN	12				/* address mask */
 #define	ICMP_ADVLENMIN	(8 + sizeof (struct ip) + 8)	/* min */
 #define	ICMP_ADVLEN(p)	(8 + ((p)->icmp_ip.ip_hl << 2) + 8)
@@ -230,8 +230,8 @@ struct icmp_ext_obj_hdr {
 
 #ifdef _KERNEL
 struct mbuf *
-	icmp_do_error(struct mbuf *, int, int, n_long, int);
-void	icmp_error(struct mbuf *, int, int, n_long, int);
+	icmp_do_error(struct mbuf *, int, int, u_int32_t, int);
+void	icmp_error(struct mbuf *, int, int, u_int32_t, int);
 void	icmp_input(struct mbuf *, ...);
 void	icmp_init(void);
 int	icmp_reflect(struct mbuf *, struct mbuf **, struct in_ifaddr *);
