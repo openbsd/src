@@ -1,4 +1,4 @@
-.\"     $Id: man.cgi.8,v 1.3 2014/07/13 09:58:52 schwarze Exp $
+.\"     $Id: man.cgi.8,v 1.4 2014/07/13 15:38:06 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -159,6 +159,62 @@ When using
 the
 .Xr slowcgi 8
 proxy daemon is needed to translate FastCGI requests to plain old CGI.
+.Pp
+To compile
+.Nm ,
+first copy
+.Pa cgi.h.example
+to
+.Pa cgi.h
+and edit it according to your needs.
+It contains the following compile-time definitions:
+.Bl -tag -width Ds
+.It Ev COMPAT_OLDURI
+Only useful for running on www.openbsd.org to deal with old URIs containing
+.Qq "manpath=OpenBSD "
+where the blank character has to be translated to a hyphen.
+When compiling for other sites, this definition can be deleted.
+.It Ev CSS_DIR
+An optional path to the directory containing the CSS files,
+to be specified relative to the server's document root,
+and to be specified without a trailing slash.
+When not specified, the CSS files
+are assumed to be in the document root.
+This is used in generated HTML code.
+.It Ev CUSTOMIZE_BEGIN
+A HTML string to be inserted right after opening the
+.Aq BODY
+element.
+.It Ev CUSTOMIZE_TITLE
+An ASCII string to be used for the HTML
+.Aq TITLE
+element.
+.It Ev MAN_DIR
+A path to the
+.Nm
+data directory to be used instead of
+.Pa /var/www/man ,
+relative to the web server
+.Xr chroot 2
+directory, to be specified without a trailing slash.
+This is prepended to the manpath when opening
+.Xr mandoc.db 5
+and manual page files.
+.El
+.Pp
+After editing
+.Pa cgi.h ,
+run
+.Pp
+.Dl make man.cgi
+.Pp
+and copy the files to the proper locations.
+Reading the
+.Cm installcgi
+target in the
+.Pa Makefile
+can help with that, but do not run it without carefully checking it
+because the directory layouts of web servers vary greatly.
 .Ss URI interface
 .Nm
 uniform resource identifiers are not needed for interactive use,
@@ -282,27 +338,6 @@ An example
 source file located below the
 .Dq OpenBSD-current
 manpath.
-.El
-.Sh COMPILE-TIME DEFINES
-.Bl -tag -width Ds
-.It Ev CSS_DIR
-An optional path to the directory containing the CSS files,
-to be specified relative to the server's document root,
-and to be specified without a trailing slash.
-When not specified, the CSS files
-are assumed to be in the document root.
-This is used in generated HTML code.
-.It Ev MAN_DIR
-A path to the
-.Nm
-data directory to be used instead of
-.Pa /var/www/man ,
-relative to the web server
-.Xr chroot 2
-directory, to be specified without a trailing slash.
-This is prepended to the manpath when opening
-.Xr mandoc.db 5
-and manual page files.
 .El
 .Sh COMPATIBILITY
 The

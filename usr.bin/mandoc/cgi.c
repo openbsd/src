@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.12 2014/07/13 12:55:24 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.13 2014/07/13 15:38:06 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -246,14 +246,25 @@ http_parse(struct req *req, char *p)
 
 		if (0 == strcmp(key, "query"))
 			req->q.expr = val;
-		else if (0 == strcmp(key, "manpath"))
+		else if (0 == strcmp(key, "manpath")) {
+#ifdef COMPAT_OLDURI
+			if (0 == strncmp(val, "OpenBSD ", 8)) {
+				val[7] = '-';
+				if ('C' == val[8])
+					val[8] = 'c';
+			}
+#endif
 			req->q.manpath = val;
-		else if (0 == strcmp(key, "apropos"))
+		} else if (0 == strcmp(key, "apropos"))
 			req->q.equal = !strcmp(val, "0");
-		else if (0 == strcmp(key, "sec") ||
-			 0 == strcmp(key, "sektion")) {
+		else if (0 == strcmp(key, "sec")) {
 			if (strcmp(val, "0"))
 				req->q.sec = val;
+#ifdef COMPAT_OLDURI
+		} else if (0 == strcmp(key, "sektion")) {
+			if (strcmp(val, "0"))
+				req->q.sec = val;
+#endif
 		} else if (0 == strcmp(key, "arch")) {
 			if (strcmp(val, "default"))
 				req->q.arch = val;
