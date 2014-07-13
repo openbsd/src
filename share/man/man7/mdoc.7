@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.114 2014/07/02 19:54:39 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.115 2014/07/13 10:23:06 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 2 2014 $
+.Dd $Mdocdate: July 13 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1578,19 +1578,31 @@ Function argument.
 Its syntax is as follows:
 .Bd -ragged -offset indent
 .Pf \. Sx \&Fa
-.Op Cm argtype
-.Cm argname
+.Qo
+.Op Ar argtype
+.Op Ar argname
+.Qc Ar \&...
 .Ed
 .Pp
-This may be invoked for names with or without the corresponding type.
-It is also used to specify the field name of a structure.
+Each argument may be a name and a type (recommended for the
+.Em SYNOPSIS
+section), a name alone (for function invocations),
+or a type alone (for function prototypes).
+If both a type and a name are given or if the type consists of multiple
+words, all words belonging to the same function argument have to be
+given in a single argument to the
+.Sx \&Fa
+macro.
+.Pp
+This macro is also used to specify the field name of a structure.
+.Pp
 Most often, the
 .Sx \&Fa
 macro is used in the
 .Em SYNOPSIS
 within
 .Sx \&Fo
-section when documenting multi-line function prototypes.
+blocks when documenting multi-line function prototypes.
 If invoked with multiple arguments, the arguments are separated by a
 comma.
 Furthermore, if the following macro is another
@@ -1600,7 +1612,7 @@ the last argument will also have a trailing comma.
 Examples:
 .Dl \&.Fa \(dqconst char *p\(dq
 .Dl \&.Fa \(dqint a\(dq \(dqint b\(dq \(dqint c\(dq
-.Dl \&.Fa foo
+.Dl \&.Fa \(dqchar *\(dq size_t
 .Pp
 See also
 .Sx \&Fo .
@@ -1703,7 +1715,7 @@ Invocations usually occur in the following context:
 .br
 .Pf \. Sx \&Fo Ar funcname
 .br
-.Pf \. Sx \&Fa Oo Ar argtype Oc Ar argname
+.Pf \. Sx \&Fa Qq Ar argtype Ar argname
 .br
 \&.\.\.
 .br
