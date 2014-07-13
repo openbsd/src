@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_solaris.c,v 1.6 2014/07/13 13:03:09 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_solaris.c,v 1.7 2014/07/13 13:37:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <link.h>
 #include <termios.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -74,6 +75,7 @@ static int gotdata(char *buf, size_t len);
 static int getentropy_urandom(void *buf, size_t len, const char *path,
     int devfscheck);
 static int getentropy_fallback(void *buf, size_t len);
+static int getentropy_phdr(struct dl_phdr_info *info, size_t size, void *data);
 
 int
 getentropy(void *buf, size_t len)
@@ -246,6 +248,15 @@ static const int cl[] = {
 };
 
 static int
+getentropy_phdr(struct dl_phdr_info *info, size_t size, void *data)
+{
+	SHA512_CTX *ctx = data;
+
+	SHA512_Update(ctx, &info->dlpi_addr, sizeof (info->dlpi_addr));
+	return 0;
+}
+
+static int
 getentropy_fallback(void *buf, size_t len)
 {
 	uint8_t results[SHA512_DIGEST_LENGTH];
@@ -281,6 +292,8 @@ getentropy_fallback(void *buf, size_t len)
 				cnt += (int)tv.tv_sec;
 				cnt += (int)tv.tv_usec;
 			}
+
+			dl_iterate_phdr(getentropy_phdr, &ctx);
 
 			for (ii = 0; ii < sizeof(cl)/sizeof(cl[0]); ii++)
 				HX(clock_gettime(cl[ii], &ts) == -1, ts);
