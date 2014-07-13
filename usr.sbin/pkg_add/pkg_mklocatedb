@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
-# $OpenBSD: pkg_mklocatedb,v 1.42 2014/04/14 20:40:41 espie Exp $
+# $OpenBSD: pkg_mklocatedb,v 1.43 2014/07/13 15:54:28 espie Exp $
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -31,63 +31,16 @@ sub handle_options
 {
 	my $state = shift;
 	$state->{no_exports} = 1;
-	$state->SUPER::handle_options('aCd:Knqs:x:X:r:p:Pu', 
-	    '[-aCKnPqu] [-d repository] [-p portsdir] [-r release] [-s src] ',
-	    '[-X X11src] [pkg-name [...]]');
-	$state->{srcdir} = $state->opt('s');
-	$state->{xdir} = $state->opt('X') // $state->opt('x');
-	$state->{releasedir} = $state->opt('r');
+	$state->SUPER::handle_options('ad:Knqp:Pu', 
+	    '[-aKnPqu] [-d repository] [-p portsdir] [pkg-name ...]');
 	$state->{portsdir} = $state->opt('p');
 	$state->{pkgdir} = $state->opt('d');
 	$state->{quiet} = $state->opt('q');
 	$state->{pkgpath} = $state->opt('P');
 	$state->{allinfo} = $state->opt('a');
 	$state->{nopipe} = $state->opt('n');
-	$state->{check} = $state->opt('C');
 	$state->{full} = $state->opt('K');
 	$state->{update} = $state->opt('u');
-	if ($state->{check}) {
-		unless ($state->{srcdir} or $state->{portsdir}) {
-			$state->usage("-C without -s dir or -x dir");
-		}
-	}
-}
-
-sub build_tag
-{
-	my ($state, $dir, $set, $rev) = @_;
-	my $r;
-	if ($state->{allinfo}) {
-		$r = "$dir/$set:$set$rev";
-	} elsif ($state->{pkgpath}) {
-		$r = "$dir/$set";
-	} else {
-		$r = "$set$rev";
-	}
-	$state->errsay($r) unless $state->{quiet};
-	$state->{current_set} = $set;
-	$state->{current_tag} = $r;
-}
-
-sub process_entry
-{
-	my ($state, $e) = @_;
-	if ($state->{check} && !-e $e) {
-		$state->sync_error($e);
-	}
-	print {$state->{out}} "$state->{current_tag}:$e\n";
-}
-
-sub sync_error
-{
-	my ($state, $e) = @_;
-	my $set = $state->{current_set};
-	if ($set =~ m/etc/) {
-		$state->errsay("Couldn't find #1 from set #2:\n\tDid you run sysmerge recently ?", $e, $set);
-	} else {
-		$state->errsay("Couldn't find #1 from set #2:\n\tsrc and installation out of synch ?", $e, $set);
-		$state->{fatals}++;
-	}
 }
 
 package OpenBSD::PackingElement;
@@ -173,32 +126,6 @@ sub open_output
 	}
 }
 
-sub do_release
-{
-	my $state = shift;
-
-	require OpenBSD::Ustar;
-
-	opendir(my $dir, $state->{releasedir}) or return;
-	while (my $e = readdir $dir) {
-		if ($e =~ m/^(\w+\d\d)\.tgz$/o) {
-			my $set = $1;
-			open my $arc, '-|', OpenBSD::Paths->gzip, '-c', '-d', 
-			    "--", $state->{releasedir}."/".$e or
-			$state->fatal("couldn't open pipe from gzip: #1", $!);
-
-			my $u = OpenBSD::Ustar->new($arc, $state, '/');
-			while (my $f = $u->next) {
-				my $name = $f->{name};
-				$name =~ s/^\.//o;
-				print {$state->{out}} "$set:$name\n";
-			}
-			close $arc;
-		}
-	}
-	closedir($dir);
-}
-
 sub print_out
 {
 	my ($plist, $state) = @_;
@@ -269,20 +196,8 @@ $state->handle_options;
 
 open_output($state);
 
-if ($state->{srcdir}) {
-	require OpenBSD::SetList;
-	OpenBSD::SetList::Source->walk($state, $state->{srcdir});
-}
-if ($state->{xdir}) {
-	require OpenBSD::SetList;
-	OpenBSD::SetList::Xenocara->walk($state, $state->{xdir});
-}
 if ($state->{fatals}) {
 	$state->fatal("Files not found, can't continue");
-}
-
-if ($state->{releasedir}) {
-	do_release($state);
 }
 
 if ($state->{portsdir}) {

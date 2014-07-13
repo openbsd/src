@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_mklocatedb.1,v 1.16 2014/04/14 20:40:41 espie Exp $
+.\"	$OpenBSD: pkg_mklocatedb.1,v 1.17 2014/07/13 15:54:28 espie Exp $
 .\" Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 14 2014 $
+.Dd $Mdocdate: July 13 2014 $
 .Dt PKG_MKLOCATEDB 1
 .Os
 .Sh NAME
@@ -22,13 +22,10 @@
 .Sh SYNOPSIS
 .Nm pkg_mklocatedb
 .Bk -words
-.Op Fl aCKnPqu
+.Op Fl aKnPqu
 .Op Fl d Ar repository
 .Op Fl p Ar portsdir
-.Op Fl r Ar release
-.Op Fl s Ar src
-.Op Fl X Ar X11src
-.Op Ar pkg-name Op Ar ...
+.Op Ar pkg-name ...
 .Ek
 .Sh DESCRIPTION
 The
@@ -79,19 +76,10 @@ the list of names is fed to
 .Pa /usr/libexec/locate.mklocatedb
 and the end result should be redirected to a file.
 .Pp
-In addition,
-.Nm
-can also list files in the base sets of an
-.Ox
-distribution, which are not exactly packages in the usual sense.
-.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Prepend file names with pkgpath information and package names.
-.It Fl C
-Check that files from the source and xenocara sets actually exist.
-This prevents badly out-of-synch errors.
 .It Fl d Ar repository
 Scan directory
 .Ar repository
@@ -111,30 +99,10 @@ Prepend file names with pkgpath information instead of package name.
 Retrieve packing-lists from the ports tree instead of binary packages.
 .It Fl q
 Be quiet: do not report every package processed to standard error.
-.It Fl r Ar release
-Specify the location of a release directory
-.Po
-see
-.Xr release 8
-.Pc .
-.Nm
-will list release tar balls from that directory.
-.It Fl s Ar src
-Specify the location of
-.Ox
-source.
-.Nm
-will list sets found under that source directory.
 .It Fl u
 Update an existing list.
 The list must come from standard input, and contain pkgpath information
 for items to be replaced.
-This can also be used to supplement an existing database with source and
-x11 information.
-.It Fl X Ar X11src
-Specify the location of X11 source.
-.Nm
-will list sets found under that X11 source directory.
 .El
 .Sh SEE ALSO
 .Xr locate 1 ,
