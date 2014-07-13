@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.56 2014/07/13 14:16:09 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.57 2014/07/13 18:07:38 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -626,9 +626,9 @@ process_bootargs(void)
 
 		/*
 		 * XXX: We currently only expect one other argument,
-		 * argv[1], root=ROOTDEV.
+		 * argv[1], rootdev=ROOTDEV.
 		 */
-		if (strncmp(arg, "root=", 5) == 0) {
+		if (strncmp(arg, "rootdev=", 8) == 0) {
 			if (*uboot_rootdev == '\0') {
 				strlcpy(uboot_rootdev, arg,
 					sizeof(uboot_rootdev));
