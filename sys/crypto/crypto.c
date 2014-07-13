@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.64 2014/07/12 18:50:00 tedu Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.65 2014/07/13 23:24:47 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -220,7 +220,7 @@ crypto_get_driverid(u_int8_t flags)
 
 	if (crypto_drivers_num == 0) {
 		crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
-		crypto_drivers = malloc(crypto_drivers_num *
+		crypto_drivers = mallocarray(crypto_drivers_num,
 		    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT);
 		if (crypto_drivers == NULL) {
 			crypto_drivers_num = 0;
@@ -250,8 +250,8 @@ crypto_get_driverid(u_int8_t flags)
 			return -1;
 		}
 
-		newdrv = malloc(2 * crypto_drivers_num *
-		    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT);
+		newdrv = mallocarray(crypto_drivers_num,
+		    2 * sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT);
 		if (newdrv == NULL) {
 			splx(s);
 			return -1;

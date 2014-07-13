@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.70 2014/07/12 18:50:00 tedu Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.71 2014/07/13 23:24:47 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -759,7 +759,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		} else
 			swcr_sesnum *= 2;
 
-		swd = malloc(swcr_sesnum * sizeof(struct swcr_data *),
+		swd = mallocarray(swcr_sesnum, sizeof(struct swcr_data *),
 		    M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
 		if (swd == NULL) {
 			/* Reset session number */
