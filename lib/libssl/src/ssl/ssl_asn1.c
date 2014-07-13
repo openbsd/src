@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.36 2014/07/13 21:38:23 jsing Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.37 2014/07/13 23:34:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -683,7 +683,7 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	return (ret);
 
 err:
-	ERR_asprintf_error_data("address=%p offset=%d", *pp, (int)(c.q - *pp));
+	ERR_asprintf_error_data("offset=%d", (int)(c.q - *pp));
 	if (ret != NULL && (a == NULL || *a != ret))
 		SSL_SESSION_free(ret);
 
