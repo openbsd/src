@@ -1,4 +1,4 @@
-/*	$OpenBSD: graphics.c,v 1.8 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: graphics.c,v 1.9 2014/07/13 13:00:40 tedu Exp $	*/
 /*	$NetBSD: graphics.c,v 1.3 1995/03/21 15:04:04 cgd Exp $	*/
 
 /*-
@@ -59,15 +59,10 @@ int
 getAChar(void)
 {
 	int c;
-#ifdef BSD
+
 	if ((c = getchar()) == EOF && feof(stdin))
 		quit(0);
 	return (c);
-#endif
-#ifdef SYSV
-	while ((c = getchar()) == -1 && errno == EINTR) ;
-	return(c);
-#endif
 }
 
 void
@@ -282,9 +277,7 @@ void
 quit(int dummy)
 {
 	int			c, y, x;
-#ifdef BSD
 	struct itimerval	itv;
-#endif
 
 	getyx(input, y, x);
 	wmove(input, 2, 0);
@@ -296,14 +289,9 @@ quit(int dummy)
 	c = getchar();
 	if (c == EOF || c == 'y') {
 		/* disable timer */
-#ifdef BSD
 		itv.it_value.tv_sec = 0;
 		itv.it_value.tv_usec = 0;
 		setitimer(ITIMER_REAL, &itv, NULL);
-#endif
-#ifdef SYSV
-		alarm(0);
-#endif
 		fflush(stdout);
 		clear();
 		refresh();
@@ -324,15 +312,10 @@ planewin(void)
 	PLANE	*pp;
 	int	warning = 0;
 
-#ifdef BSD
 	wclear(planes);
-#endif
 
 	wmove(planes, 0,0);
 
-#ifdef SYSV
-	wclrtobot(planes);
-#endif
 	wprintw(planes, "Time: %-4d Safe: %d", clck, safe_planes);
 	wmove(planes, 2, 0);
 
@@ -365,19 +348,12 @@ void
 loser(const PLANE *p, const char *s)
 {
 	int			c;
-#ifdef BSD
 	struct itimerval	itv;
-#endif
 
 	/* disable timer */
-#ifdef BSD
 	itv.it_value.tv_sec = 0;
 	itv.it_value.tv_usec = 0;
 	setitimer(ITIMER_REAL, &itv, NULL);
-#endif
-#ifdef SYSV
-	alarm(0);
-#endif
 
 	wmove(input, 0, 0);
 	wclrtobot(input);

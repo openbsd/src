@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2014/07/13 13:00:40 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -54,9 +54,7 @@ main(int ac, char *av[])
 	char			*name, *ptr, *seed;
 	struct sigaction	sa;
 	gid_t			gid;
-#ifdef BSD
 	struct itimerval	itv;
-#endif
 
 	open_score_file();
 
@@ -154,10 +152,8 @@ main(int ac, char *av[])
 
 	signal(SIGINT, quit);
 	signal(SIGQUIT, quit);
-#ifdef BSD
 	signal(SIGTSTP, SIG_IGN);
 	signal(SIGSTOP, SIG_IGN);
-#endif
 	signal(SIGHUP, log_score_quit);
 	signal(SIGTERM, log_score_quit);
 
@@ -177,42 +173,27 @@ main(int ac, char *av[])
 	sa.sa_flags = 0;
 	sigaction(SIGALRM, &sa, (struct sigaction *)0);
 
-#ifdef BSD
 	itv.it_value.tv_sec = 0;
 	itv.it_value.tv_usec = 1;
 	itv.it_interval.tv_sec = sp->update_secs;
 	itv.it_interval.tv_usec = 0;
 	setitimer(ITIMER_REAL, &itv, NULL);
-#endif
-#ifdef SYSV
-	alarm(sp->update_secs);
-#endif
 
 	for (;;) {
 		if (getcommand() != 1)
 			planewin();
 		else {
-#ifdef BSD
 			itv.it_value.tv_sec = 0;
 			itv.it_value.tv_usec = 0;
 			setitimer(ITIMER_REAL, &itv, NULL);
-#endif
-#ifdef SYSV
-			alarm(0);
-#endif
 
 			update(0);
 
-#ifdef BSD
 			itv.it_value.tv_sec = sp->update_secs;
 			itv.it_value.tv_usec = 0;
 			itv.it_interval.tv_sec = sp->update_secs;
 			itv.it_interval.tv_usec = 0;
 			setitimer(ITIMER_REAL, &itv, NULL);
-#endif
-#ifdef SYSV
-			alarm(sp->update_secs);
-#endif
 		}
 	}
 }

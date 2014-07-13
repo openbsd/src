@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.17 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.18 2014/07/13 13:00:40 tedu Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -126,13 +126,7 @@ log_score(int list_em)
 
 	if (score_fp == NULL)
 		return (-1);
-#ifdef BSD
-	if (flock(fileno(score_fp), LOCK_EX) < 0)
-#endif
-#ifdef SYSV
-	while (lockf(fileno(score_fp), F_LOCK, 1) < 0)
-#endif
-	{
+	if (flock(fileno(score_fp), LOCK_EX) < 0) {
 		perror("flock");
 		return (-1);
 	}
@@ -225,19 +219,10 @@ log_score(int list_em)
 		}
 		putchar('\n');
 	}
-#ifdef BSD
 	flock(fileno(score_fp), LOCK_UN);
-#endif
-#ifdef SYSV
-	/* lock will evaporate upon close */
-#endif
-#if 0
-	fclose(score_fp);
-#else
 	fflush(score_fp);
 	fsync(fileno(score_fp));
 	rewind(score_fp);
-#endif
 	printf("%2s:  %-31s  %-18s  %4s  %9s  %4s\n", "#", "name",
 		"game", "time", "real time", "safe");
 	puts("-------------------------------------------------------------------------------");

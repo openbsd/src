@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.12 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: update.c,v 1.13 2014/07/13 13:00:40 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -48,11 +48,6 @@ update(int dummy)
 {
 	int	i, dir_diff, unclean;
 	PLANE	*pp, *p1, *p2;
-
-#ifdef SYSV
-	alarm(0);
-	signal(SIGALRM, update);
-#endif
 
 	clck++;
 
@@ -203,10 +198,6 @@ update(int dummy)
 	 */
 	if ((random() % sp->newplane_time) == 0)
 		addplane();
-
-#ifdef SYSV
-	alarm(sp->update_secs);
-#endif
 }
 
 const char *
