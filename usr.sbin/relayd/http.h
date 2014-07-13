@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.3 2014/07/12 14:34:13 reyk Exp $	*/
+/*	$OpenBSD: http.h,v 1.4 2014/07/13 15:11:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _RELAYD_HTTP_H
-#define _RELAYD_HTTP_H
+#ifndef _HTTP_H
+#define _HTTP_H
 
 enum httpmethod {
 	HTTP_METHOD_NONE	= 0,
@@ -119,6 +119,24 @@ struct http_error {
 	{ 0,	NULL }					\
 }
 
+struct http_mediatype {
+	char		*media_name;
+	char		*media_type;
+	char		*media_subtype;
+};
+/* Some default media types */
+#define MEDIA_TYPES		{			\
+	{ "css",	"text",		"css" },	\
+	{ "html",	"text",		"html" },	\
+	{ "txt",	"text",		"plain" },	\
+	{ "gif",	"image",	"gif" },	\
+	{ "jpeg",	"image",	"jpeg" },	\
+	{ "jpg",	"image",	"jpeg" },	\
+	{ "png",	"image",	"png" },	\
+	{ "js",		"application",	"javascript" },	\
+	{ NULL }					\
+}
+
 /* Used during runtime */
 struct http_descriptor {
 	struct kv		 http_pathquery;
@@ -139,4 +157,4 @@ struct http_descriptor {
 	struct kv		*http_lastheader;
 };
 
-#endif /* _RELAYD_HTTP_H */
+#endif /* _HTTP_H */

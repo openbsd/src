@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.2 2014/07/13 14:17:37 reyk Exp $	*/
+/*	$OpenBSD: http.h,v 1.3 2014/07/13 15:11:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _HTTPD_HTTP_H
-#define _HTTPD_HTTP_H
+#ifndef _HTTP_H
+#define _HTTP_H
 
 enum httpmethod {
 	HTTP_METHOD_NONE	= 0,
@@ -140,10 +140,13 @@ struct http_mediatype {
 /* Used during runtime */
 struct http_descriptor {
 	struct kv		 http_pathquery;
+	struct kv		 http_matchquery;
 #define http_path		 http_pathquery.kv_key
 #define http_query		 http_pathquery.kv_value
 #define http_rescode		 http_pathquery.kv_key
 #define http_resmesg		 http_pathquery.kv_value
+#define query_key		 http_matchquery.kv_key
+#define query_val		 http_matchquery.kv_value
 
 	char			*http_version;
 	enum httpmethod		 http_method;
@@ -154,4 +157,4 @@ struct http_descriptor {
 	struct kv		*http_lastheader;
 };
 
-#endif /* _HTTPD_HTTP_H */
+#endif /* _HTTP_H */
