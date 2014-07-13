@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.190 2014/07/09 13:05:45 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.191 2014/07/13 09:52:48 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ u_int	mclsizes[] = {
 static	char mclnames[MCLPOOLS][8];
 struct	pool mclpools[MCLPOOLS];
 
-int	m_clpool(u_int);
+struct pool *m_clpool(u_int);
 
 int max_linkhdr;		/* largest link-level header */
 int max_protohdr;		/* largest protocol header */
@@ -278,29 +278,32 @@ m_getclr(int nowait, int type)
 	return (m);
 }
 
-int
+struct pool *
 m_clpool(u_int pktlen)
 {
+	struct pool *pp;
 	int pi;
 
-	for (pi = 0; pi < MCLPOOLS; pi++) {
-		if (pktlen <= mclsizes[pi])
-			return (pi);
+	for (pi = 0; pi < nitems(mclpools); pi++) {
+		pp = &mclpools[pi];
+		if (pktlen <= pp->pr_size)
+			return (pp);
 	}
 
-	return (-1);
+	return (NULL);
 }
 
 struct mbuf *
 m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 {
 	struct mbuf *m0 = NULL;
-	int pi;
+	struct pool *pp;
+	caddr_t buf;
 	int s;
 
-	pi = m_clpool(pktlen);
+	pp = m_clpool(pktlen);
 #ifdef DIAGNOSTIC
-	if (pi == -1)
+	if (pp == NULL)
 		panic("m_clget: request for %u byte cluster", pktlen);
 #endif
 
@@ -313,9 +316,8 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 		}
 		m = m0;
 	}
-	m->m_ext.ext_buf = pool_get(&mclpools[pi],
-	    how == M_WAIT ? PR_WAITOK : PR_NOWAIT);
-	if (!m->m_ext.ext_buf) {
+	buf = pool_get(pp, how == M_WAIT ? PR_WAITOK : PR_NOWAIT);
+	if (buf == NULL) {
 		if (m0)
 			m_freem(m0);
 		splx(s);
@@ -323,13 +325,15 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 	}
 	splx(s);
 
-	m->m_data = m->m_ext.ext_buf;
-	m->m_flags |= M_EXT|M_CLUSTER;
-	m->m_ext.ext_size = mclpools[pi].pr_size;
-	m->m_ext.ext_free = NULL;
-	m->m_ext.ext_arg = &mclpools[pi];
-	MCLINITREFERENCE(m);
+	MEXTADD(m, buf, pp->pr_size, M_EXTWR, m_extfree_pool, pp);
 	return (m);
+}
+
+void
+m_extfree_pool(caddr_t buf, u_int size, void *pp)
+{
+	splassert(IPL_NET);
+	pool_put(pp, buf);
 }
 
 struct mbuf *
@@ -375,15 +379,13 @@ m_extfree(struct mbuf *m)
 		    m->m_ext.ext_prevref;
 		m->m_ext.ext_prevref->m_ext.ext_nextref =
 		    m->m_ext.ext_nextref;
-	} else if (m->m_flags & M_CLUSTER) {
-		pool_put(m->m_ext.ext_arg, m->m_ext.ext_buf);
 	} else if (m->m_ext.ext_free)
 		(*(m->m_ext.ext_free))(m->m_ext.ext_buf,
 		    m->m_ext.ext_size, m->m_ext.ext_arg);
 	else
 		panic("unknown type of extension buffer");
 	m->m_ext.ext_size = 0;
-	m->m_flags &= ~(M_EXT|M_CLUSTER);
+	m->m_flags &= ~(M_EXT|M_EXTWR);
 }
 
 void
@@ -449,7 +451,7 @@ m_defrag(struct mbuf *m, int how)
 	if (m0->m_flags & M_EXT) {
 		memcpy(&m->m_ext, &m0->m_ext, sizeof(struct mbuf_ext));
 		MCLINITREFERENCE(m);
-		m->m_flags |= M_EXT|M_CLUSTER;
+		m->m_flags |= m0->m_flags & (M_EXT|M_EXTWR);
 		m->m_data = m->m_ext.ext_buf;
 	} else {
 		m->m_data = m->m_pktdat;
@@ -457,7 +459,7 @@ m_defrag(struct mbuf *m, int how)
 	}
 	m->m_pkthdr.len = m->m_len = m0->m_len;
 
-	m0->m_flags &= ~(M_EXT|M_CLUSTER);	/* cluster is gone */
+	m0->m_flags &= ~(M_EXT|M_EXTWR);	/* cluster is gone */
 	m_free(m0);
 
 	return (0);
@@ -1186,7 +1188,7 @@ m_dup_pkthdr(struct mbuf *to, struct mbuf *from, int wait)
 
 	KASSERT(from->m_flags & M_PKTHDR);
 
-	to->m_flags = (to->m_flags & (M_EXT | M_CLUSTER));
+	to->m_flags = (to->m_flags & (M_EXT | M_EXTWR));
 	to->m_flags |= (from->m_flags & M_COPYFLAGS);
 	to->m_pkthdr = from->m_pkthdr;
 

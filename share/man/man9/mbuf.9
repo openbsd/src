@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.73 2014/07/13 05:23:24 dlg Exp $
+.\"     $OpenBSD: mbuf.9,v 1.74 2014/07/13 09:52:48 dlg Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -83,7 +83,7 @@
 .Fn MCLGET "struct mbuf *m" "int how"
 .Ft struct mbuf *
 .Fn MCLGETI "struct mbuf *m" "int how" "struct ifnet *ifp" "int len"
-.Fn MEXTADD "struct mbuf *m" "caddr_t buf" "u_int size" "int type" \
+.Fn MEXTADD "struct mbuf *m" "caddr_t buf" "u_int size" "int flags" \
 "void (*free)(caddr_t, u_int, void *)" "void *arg"
 .Fn M_ALIGN "struct mbuf *m" "int len"
 .Fn MH_ALIGN "struct mbuf *m" "int len"
@@ -636,11 +636,12 @@ See
 .Fn m_get
 for a description of
 .Fa how .
-.It Fn MEXTADD "struct mbuf *m" "caddr_t buf" "u_int size" "int type" \
+.It Fn MEXTADD "struct mbuf *m" "caddr_t buf" "u_int size" "int flags" \
 "void (*free)(caddr_t, u_int, void *)" "void *arg"
 Add pre-allocated storage to the mbuf pointed to by
 .Fa m .
-On success, the flag M_EXT is set in the mbuf.
+On success, the flag M_EXT is set in the mbuf, and M_EXTWR if specified in
+.Fa flags ..
 .It Fn M_ALIGN "struct mbuf *m" "int len"
 Set the
 .Fa m_data

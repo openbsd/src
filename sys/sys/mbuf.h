@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.179 2014/07/09 13:05:45 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.180 2014/07/13 09:52:48 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ struct mbuf {
 #define	M_EXT		0x0001	/* has associated external storage */
 #define	M_PKTHDR	0x0002	/* start of record */
 #define	M_EOR		0x0004	/* end of record */
-#define M_CLUSTER	0x0008	/* external storage is a cluster */
+#define M_EXTWR		0x0008	/* external storage is writable */
 #define	M_PROTO1	0x0010	/* protocol-specific */
 
 /* mbuf pkthdr flags, also in m_flags */
@@ -185,7 +185,7 @@ struct mbuf {
 
 #ifdef _KERNEL
 #define M_BITS \
-    ("\20\1M_EXT\2M_PKTHDR\3M_EOR\4M_CLUSTER\5M_PROTO1\6M_VLANTAG\7M_LOOP" \
+    ("\20\1M_EXT\2M_PKTHDR\3M_EOR\4M_EXTWR\5M_PROTO1\6M_VLANTAG\7M_LOOP" \
     "\10M_FILDROP\11M_BCAST\12M_MCAST\13M_CONF\14M_AUTH\15M_TUNNEL" \
     "\16M_ZEROIZE\17M_COMP\20M_LINK0")
 #endif
@@ -267,7 +267,7 @@ struct mbuf {
 
 #define	MCLADDREFERENCE(o, n)	do {					\
 		int ms = splnet();					\
-		(n)->m_flags |= ((o)->m_flags & (M_EXT|M_CLUSTER));	\
+		(n)->m_flags |= ((o)->m_flags & (M_EXT|M_EXTWR));	\
 		(n)->m_ext.ext_nextref = (o)->m_ext.ext_nextref;	\
 		(n)->m_ext.ext_prevref = (o);				\
 		(o)->m_ext.ext_nextref = (n);				\
@@ -292,10 +292,9 @@ struct mbuf {
  * MCLGET allocates and adds an mbuf cluster to a normal mbuf;
  * the flag M_EXT is set upon success.
  */
-#define	MEXTADD(m, buf, size, type, free, arg) do {			\
+#define	MEXTADD(m, buf, size, mflags, free, arg) do {			\
 	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf);		\
-	(m)->m_flags |= M_EXT;						\
-	(m)->m_flags &= ~M_CLUSTER;					\
+	(m)->m_flags |= M_EXT | (mflags & M_EXTWR);			\
 	(m)->m_ext.ext_size = (size);					\
 	(m)->m_ext.ext_free = (free);					\
 	(m)->m_ext.ext_arg = (arg);					\
@@ -327,7 +326,7 @@ struct mbuf {
  * from must have M_PKTHDR set, and to must be empty.
  */
 #define	M_MOVE_PKTHDR(to, from) do {					\
-	(to)->m_flags = ((to)->m_flags & (M_EXT | M_CLUSTER));		\
+	(to)->m_flags = ((to)->m_flags & (M_EXT | M_EXTWR));		\
 	(to)->m_flags |= (from)->m_flags & M_COPYFLAGS;			\
 	M_MOVE_HDR((to), (from));					\
 	if (((to)->m_flags & M_EXT) == 0)				\
@@ -354,7 +353,7 @@ struct mbuf {
  */
 #define	M_READONLY(m)							\
 	(((m)->m_flags & M_EXT) != 0 &&					\
-	  (((m)->m_flags & M_CLUSTER) == 0 || MCLISREFERENCED(m)))
+	  (((m)->m_flags & M_EXTWR) == 0 || MCLISREFERENCED(m)))
 
 /*
  * Compute the amount of space available
@@ -428,6 +427,7 @@ struct  mbuf *m_getptr(struct mbuf *, int, int *);
 int	m_leadingspace(struct mbuf *);
 int	m_trailingspace(struct mbuf *);
 struct mbuf *m_clget(struct mbuf *, int, struct ifnet *, u_int);
+void	m_extfree_pool(caddr_t, u_int, void *);
 void	m_adj(struct mbuf *, int);
 int	m_copyback(struct mbuf *, int, int, const void *, int);
 void	m_freem(struct mbuf *);
