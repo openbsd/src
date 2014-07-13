@@ -25,7 +25,7 @@ our %args = (
 	    'match request header log "X-Header*"',
 	    'match response header log "X-Header*"',
 	],
-	loggrep => { qr/ (?:done|last write \(done\)), \[X-Header-Client: ABC\]\ \[X-Header-Server: XYZ\]/ => 1 },
+	loggrep => { qr/ (?:done|last write \(done\)), \[X-Header-Client: ABC\]\ GET \{X-Header-Server: XYZ\};/ => 1 },
     },
     server => {
 	func => \&http_server,
