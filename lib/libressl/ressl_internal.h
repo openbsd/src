@@ -27,8 +27,9 @@
 struct ressl_config {
 	const char *ca_file;
 	const char *ca_path;
+	const char *cert_file;
 	const char *ciphers;
-	const char *server_name;
+	const char *key_file;
 	int verify;
 	int verify_depth;
 };

@@ -63,9 +63,27 @@ ressl_config_set_ca_path(struct ressl_config *config, char *ca_path)
 }
 
 void
+ressl_config_set_cert_file(struct ressl_config *config, char *cert_file)
+{
+	config->cert_file = cert_file;
+}
+
+void
 ressl_config_set_ciphers(struct ressl_config *config, char *ciphers)
 {
 	config->ciphers = ciphers;
+}
+
+void
+ressl_config_set_key_file(struct ressl_config *config, char *key_file)
+{
+	config->key_file = key_file;
+}
+
+void
+ressl_config_set_verify_depth(struct ressl_config *config, int verify_depth)
+{
+	config->verify_depth = verify_depth;
 }
 
 void
@@ -78,10 +96,4 @@ void
 ressl_config_verify(struct ressl_config *config)
 {
 	config->verify = 1;
-}
-
-void
-ressl_config_set_verify_depth(struct ressl_config *config, int verify_depth)
-{
-	config->verify_depth = verify_depth;
 }

@@ -29,7 +29,9 @@ void ressl_config_free(struct ressl_config *config);
 
 void ressl_config_set_ca_file(struct ressl_config *config, char *ca_file);
 void ressl_config_set_ca_path(struct ressl_config *config, char *ca_path);
+void ressl_config_set_cert_file(struct ressl_config *config, char *cert_file);
 void ressl_config_set_ciphers(struct ressl_config *config, char *ciphers);
+void ressl_config_set_key_file(struct ressl_config *config, char *key_file);
 void ressl_config_set_verify_depth(struct ressl_config *config,
     int verify_depth);
 
