@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.68 2014/07/13 15:00:40 tedu Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.69 2014/07/13 15:46:21 uebayasi Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -332,9 +332,7 @@ ktrstruct(struct proc *p, const char *name, const void *data, size_t datalen)
 	void *buf;
 	size_t buflen;
 
-#ifdef MULTIPROCESSOR
-	KASSERT(__mp_lock_held(&kernel_lock) > 0);
-#endif
+	KERNEL_ASSERT_LOCKED();
 	atomic_setbits_int(&p->p_flag, P_INKTR);
 	ktrinitheader(&kth, p, KTR_STRUCT);
 	
