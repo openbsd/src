@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.113 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.114 2014/07/13 14:59:28 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -354,7 +354,7 @@ out:
  * Free a block of memory allocated by malloc.
  */
 void
-free(void *addr, int type, size_t fauxsize)
+free(void *addr, int type, size_t freedsize)
 {
 	struct kmembuckets *kbp;
 	struct kmemusage *kup;
@@ -387,6 +387,11 @@ free(void *addr, int type, size_t fauxsize)
 	kbp = &bucket[kup->ku_indx];
 	s = splvm();
 #ifdef DIAGNOSTIC
+	if (freedsize != 0 && freedsize > size)
+		panic("freed too much: %zu > %ld (%p)", freedsize, size, addr);
+	if (freedsize != 0 && size > MINALLOCSIZE && freedsize < size / 2)
+		panic("freed too little: %zu < %ld / 2 (%p)",
+		    freedsize, size, addr);
 	/*
 	 * Check for returns of data that do not point to the
 	 * beginning of the allocation.
