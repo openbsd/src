@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2014/07/13 09:26:08 jasper Exp $
+#	$OpenBSD: Makefile,v 1.11 2014/07/13 20:53:35 miod Exp $
 #	$NetBSD: Makefile,v 1.2 1997/04/17 07:46:24 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -22,7 +22,7 @@ BINDIR=         /usr/mdec
 .PATH:          ${S}/lib/libsa
 
 .PATH:		${S}/lib/libkern/arch/powerpc ${S}/lib/libkern
-SRCS+=		getchar.c putchar.c strlcpy.c memcpy.c strlen.c strrchr.c \
+SRCS+=		getchar.c strlcpy.c memcpy.c strlen.c strrchr.c \
 		strlcat.c ashrdi3.c 
 SRCS+=		moddi3.c
 
