@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.10 2013/12/04 23:20:19 jmc Exp $
+dnl	$OpenBSD: install,v 1.11 2014/07/13 18:08:16 jasper Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -55,7 +55,7 @@ ${bootcmd} which will load an ELF file called 'bsd' from the first active FAT
 partition on the first CF card (created by the installer) and save the
 environment to persistent storage:
 
-	# setenv bootcmd 'fatload ide 0:1 ${loadaddr} bsd;bootoctlinux root=/dev/octcf0'
+	# setenv bootcmd 'fatload ide 0:1 ${loadaddr} bsd;bootoctlinux rootdev=/dev/octcf0'
 	# setenv bootdelay 5
 	# saveenv
 	Saving Environment to Flash...
