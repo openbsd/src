@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.42 2014/07/12 18:57:41 deraadt Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.43 2014/07/13 09:32:42 beck Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -34,9 +34,7 @@
 #include <sys/time.h>
 #include <sys/mman.h>
 
-#ifdef __OpenBSD__
 #include "thread_private.h"
-#endif /* __OpenBSD__ */
 
 #define KEYSTREAM_ONLY
 #include "chacha_private.h"
