@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.29 2014/07/13 12:03:48 claudio Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.30 2014/07/13 17:28:13 jmc Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -502,7 +502,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s "
-	    "[-dfnpvy] [-b block#] [-l maxparallel] [-T fstype:fsoptions]\n"
+	    "[-dfNnpvy] [-b block#] [-l maxparallel] [-T fstype:fsoptions]\n"
 	    "            [-t fstype] [special | node ...]\n", __progname);
 	exit(1);
 }
