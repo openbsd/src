@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap_dns.c,v 1.5 2012/03/16 01:57:42 jmatthew Exp $ */
+/*	$OpenBSD: ypldap_dns.c,v 1.6 2014/07/13 12:07:59 krw Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -142,10 +142,11 @@ dns_dispatch_imsg(int fd, short event, void *p)
 			shut = 1;
 		break;
 	case EV_WRITE:
-		if (msgbuf_write(&ibuf->w) == -1)
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
-		imsg_event_add(iev);
-		return;
+		if (n == 0)
+			shut = 1;
+		goto done;
 	default:
 		fatalx("unknown event");
 	}
@@ -189,6 +190,8 @@ dns_dispatch_imsg(int fd, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
+
+done:
 	if (!shut)
 		imsg_event_add(iev);
 	else {

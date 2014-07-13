@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.12 2012/03/15 01:44:22 jmatthew Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.13 2014/07/13 12:07:59 krw Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -27,6 +27,7 @@
 #include <arpa/inet.h>
 
 #include <err.h>
+#include <errno.h>
 #include <event.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -363,10 +364,11 @@ main_dispatch_client(int fd, short event, void *p)
 			shut = 1;
 		break;
 	case EV_WRITE:
-		if (msgbuf_write(&ibuf->w) == -1)
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
-		imsg_event_add(iev);
-		return;
+		if (n == 0)
+			shut = 1;
+		goto done;
 	default:
 		fatalx("unknown event");
 	}
@@ -447,6 +449,8 @@ main_dispatch_client(int fd, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
+
+done:
 	if (!shut)
 		imsg_event_add(iev);
 	else {

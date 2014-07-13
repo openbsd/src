@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.28 2013/11/26 12:02:59 henning Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.29 2014/07/13 12:07:59 krw Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -174,10 +174,11 @@ client_dispatch_dns(int fd, short event, void *p)
 			shut = 1;
 		break;
 	case EV_WRITE:
-		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
-		imsg_event_add(iev);
-		return;
+		if (n == 0)
+			shut = 1;
+		goto done;
 	default:
 		fatalx("unknown event");
 	}
@@ -248,6 +249,7 @@ client_dispatch_dns(int fd, short event, void *p)
 		imsg_compose_event(env->sc_iev, IMSG_END_UPDATE, 0, 0, -1,
 		    NULL, 0);
 
+done:
 	if (!shut)
 		imsg_event_add(iev);
 	else {
@@ -276,10 +278,11 @@ client_dispatch_parent(int fd, short event, void *p)
 			shut = 1;
 		break;
 	case EV_WRITE:
-		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
-		imsg_event_add(iev);
-		return;
+		if (n == 0)
+			shut = 1;
+		goto done;
 	default:
 		fatalx("unknown event");
 	}
@@ -332,6 +335,8 @@ client_dispatch_parent(int fd, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
+
+done:
 	if (!shut)
 		imsg_event_add(iev);
 	else {
