@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.131 2014/07/08 17:19:26 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.132 2014/07/13 21:13:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -528,6 +528,8 @@ dosum(void)
 	(void)printf("%11u forks where vmspace is shared\n",
 		     uvmexp.forks_sharevm);
 	(void)printf("%11u kernel map entries\n", uvmexp.kmapent);
+	(void)printf("%11u zeroed page hits\n", uvmexp.pga_zerohit);
+	(void)printf("%11u zeroed page misses\n", uvmexp.pga_zeromiss);
 
 	/* daemon counters */
 	(void)printf("%11u number of times the pagedaemon woke up\n",
