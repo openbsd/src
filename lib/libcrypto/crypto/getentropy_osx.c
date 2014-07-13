@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_osx.c,v 1.5 2014/07/13 08:24:20 beck Exp $	*/
+/*	$OpenBSD: getentropy_osx.c,v 1.6 2014/07/13 13:03:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -15,6 +15,9 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Emulation of getentropy(2) as documented at:
+ * http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man2/getentropy.2
  */
 
 #include <sys/types.h>
