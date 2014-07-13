@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.214 2014/07/10 19:33:16 matthew Exp $
+#	$OpenBSD: Makefile,v 1.215 2014/07/13 09:28:06 mpi Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -8,7 +8,7 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	atomic_sub_int.9 atomic_swap_uint.9 \
 	audio.9 autoconf.9 \
 	bemtoh32.9 bio_register.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
-	copy.9 crypto.9 delay.9 \
+	copy.9 config_attach.9 crypto.9 delay.9 \
 	disk.9 disklabel.9 dma_alloc.9 dohooks.9 dopowerhooks.9 \
 	domountroothooks.9 doshutdownhooks.9 dostartuphooks.9 \
 	evcount.9 extent.9 fb_setup.9 file.9 fork1.9 \
@@ -59,8 +59,6 @@ MLINKS+=atomic_swap_uint.9 atomic_swap_ulong.9 \
 MLINKS+=autoconf.9 config_init.9 autoconf.9 config_search.9 \
 	autoconf.9 config_rootsearch.9 autoconf.9 config_found_sm.9 \
 	autoconf.9 config_found.9 autoconf.9 config_rootfound.9 \
-	autoconf.9 config_attach.9 autoconf.9 config_detach.9 \
-	autoconf.9 config_activate.9 autoconf.9 config_deactivate.9 \
 	autoconf.9 config_defer.9
 MLINKS+=bemtoh32.9 bemtoh16.9 bemtoh32.9 bemtoh64.9 \
 	bemtoh32.9 htobem16.9 bemtoh32.9 htobem32.9 bemtoh32.9 htobem64.9 \
@@ -133,6 +131,7 @@ MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
 	bus_space.9 bus_space_write_raw_region_2.9 \
 	bus_space.9 bus_space_write_raw_region_4.9 \
 	bus_space.9 bus_space_write_raw_region_8.9
+MLINKS+=config_attach.9 config_detach.9 config_attach.9 config_detach_children.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
 	copy.9 copyinstr.9 copy.9 copyoutstr.9 \
 	copy.9 kcopy.9
