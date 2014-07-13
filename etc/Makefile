@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.367 2014/07/13 12:07:40 claudio Exp $
+#	$OpenBSD: Makefile,v 1.368 2014/07/13 12:14:37 ajacoutot Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -38,12 +38,12 @@ BIN1=	changelist csh.cshrc csh.login csh.logout daily \
 	weekly etc.${MACHINE}/login.conf etc.${MACHINE}/disktab \
 	dhclient.conf mailer.conf ntpd.conf moduli pf.os mixerctl.conf
 
-EXAMPLES=bgpd.conf chio.conf dhcpd.conf dvmrpd.conf exports ftpchroot \
-	hostapd.conf hosts.lpd ifstated.conf iked.conf \
-	inetd.conf ipsec.conf ldapd.conf ldpd.conf mrouted.conf \
-	ospf6d.conf ospfd.conf printcap rbootd.conf relayd.conf \
-	remote ripd.conf sasyncd.conf sensorsd.conf snmpd.conf \
-	ypldap.conf
+EXAMPLES=chio.conf dhcpd.conf exports ftpchroot hosts.lpd ifstated.conf \
+	inetd.conf mrouted.conf printcap rbootd.conf remote sensorsd.conf
+
+EXAMPLES_600=bgpd.conf dvmrpd.conf hostapd.conf iked.conf ipsec.conf \
+	ldapd.conf ldpd.conf ospf6d.conf ospfd.conf relayd.conf ripd.conf \
+	sasyncd.conf snmpd.conf ypldap.conf
 
 .if ${MACHINE} != "aviion" 
 BIN1+=	wsconsctl.conf
@@ -165,6 +165,8 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/ppp
 	cd examples; \
 		${INSTALL} -c -o root -g wheel -m 644 ${EXAMPLES} \
+		    ${DESTDIR}/etc/examples; \
+		${INSTALL} -c -o root -g wheel -m 600 ${EXAMPLES_600} \
 		    ${DESTDIR}/etc/examples
 	cd signify; \
 		${INSTALL} -c -o root -g wheel -m 644 *.pub \
