@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.3 2009/08/07 00:10:17 martynas Exp $	*/
+/*	$OpenBSD: build.c,v 1.4 2014/07/13 07:06:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <dev/usb/ezload.h>
 #include "tusb3410.h"
 #define FILENAME "tusb3410"
 
