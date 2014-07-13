@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstab.5,v 1.50 2014/07/13 12:04:25 claudio Exp $
+.\"	$OpenBSD: fstab.5,v 1.51 2014/07/13 17:39:57 jmc Exp $
 .\"	$NetBSD: fstab.5,v 1.5.2.1 1995/11/16 20:11:11 pk Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -151,10 +151,10 @@ a file system not to be mounted automatically (with
 or
 .Ic mount -a ,
 or at system boot time).
-Similar the option
+Similarly, the option
 .Dq net
 can be used to cause a file system to be considered only if the
-.Ar -N
+.Fl N
 flag is passed to
 .Xr mount 8
 or
