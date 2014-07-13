@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.55 2014/07/13 13:19:01 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.56 2014/07/13 14:16:09 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -407,38 +407,38 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	DUMP_BOOT_DESC(heap_start, %llx);
 	DUMP_BOOT_DESC(heap_end, %llx);
 	DUMP_BOOT_DESC(argc, %d);
-	DUMP_BOOT_DESC(flags, %x);
-	DUMP_BOOT_DESC(core_mask, %x);
+	DUMP_BOOT_DESC(flags, %#x);
+	DUMP_BOOT_DESC(core_mask, %#x);
 	DUMP_BOOT_DESC(dram_size, %d);
-	DUMP_BOOT_DESC(phy_mem_desc_addr, %x);
-	DUMP_BOOT_DESC(debugger_flag_addr, %x);
+	DUMP_BOOT_DESC(phy_mem_desc_addr, %#x);
+	DUMP_BOOT_DESC(debugger_flag_addr, %#x);
 	DUMP_BOOT_DESC(eclock, %d);
-	DUMP_BOOT_DESC(boot_info_addr, %llx);
+	DUMP_BOOT_DESC(boot_info_addr, %#llx);
 
 	DUMP_BOOT_INFO(ver_major, %d);
 	DUMP_BOOT_INFO(ver_minor, %d);
 	DUMP_BOOT_INFO(stack_top, %llx);
 	DUMP_BOOT_INFO(heap_start, %llx);
 	DUMP_BOOT_INFO(heap_end, %llx);
-	DUMP_BOOT_INFO(boot_desc_addr, %llx);
-	DUMP_BOOT_INFO(exception_base_addr, %x);
+	DUMP_BOOT_INFO(boot_desc_addr, %#llx);
+	DUMP_BOOT_INFO(exception_base_addr, %#x);
 	DUMP_BOOT_INFO(stack_size, %d);
-	DUMP_BOOT_INFO(flags, %x);
-	DUMP_BOOT_INFO(core_mask, %x);
+	DUMP_BOOT_INFO(flags, %#x);
+	DUMP_BOOT_INFO(core_mask, %#x);
 	DUMP_BOOT_INFO(dram_size, %d);
-	DUMP_BOOT_INFO(phys_mem_desc_addr, %x);
-	DUMP_BOOT_INFO(debugger_flags_addr, %x);
+	DUMP_BOOT_INFO(phys_mem_desc_addr, %#x);
+	DUMP_BOOT_INFO(debugger_flags_addr, %#x);
 	DUMP_BOOT_INFO(eclock, %d);
 	DUMP_BOOT_INFO(dclock, %d);
 	DUMP_BOOT_INFO(board_type, %d);
 	DUMP_BOOT_INFO(board_rev_major, %d);
 	DUMP_BOOT_INFO(board_rev_minor, %d);
 	DUMP_BOOT_INFO(mac_addr_count, %d);
-	DUMP_BOOT_INFO(cf_common_addr, %llx);
-	DUMP_BOOT_INFO(cf_attr_addr, %llx);
-	DUMP_BOOT_INFO(led_display_addr, %llx);
+	DUMP_BOOT_INFO(cf_common_addr, %#llx);
+	DUMP_BOOT_INFO(cf_attr_addr, %#llx);
+	DUMP_BOOT_INFO(led_display_addr, %#llx);
 	DUMP_BOOT_INFO(dfaclock, %d);
-	DUMP_BOOT_INFO(config_flags, %x);
+	DUMP_BOOT_INFO(config_flags, %#x);
 #endif
 
 	/*
