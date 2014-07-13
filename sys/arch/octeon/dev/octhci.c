@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.14 2014/07/12 21:07:33 pirofti Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.15 2014/07/13 10:58:19 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -82,6 +82,8 @@ int octhci_intr(void *);
 
 int octhci_intr1(struct octhci_softc *);
 int octhci_intr_host_port(struct octhci_softc *);
+int octhci_intr_host_chan(struct octhci_softc *);
+int octhci_intr_host_chan_n(struct octhci_softc *, int);
 
 const struct cfattach octhci_ca = {
 	sizeof(struct octhci_softc), octhci_match, octhci_attach,
@@ -403,7 +405,7 @@ octhci_intr1(struct octhci_softc *sc)
 	}
 	if (intsts & USBC_GINTSTS_HCHINT) {
 		DPRINTFN(16, ("%s: host channel interrupt\n", DEVNAME(sc)));
-		/* XXX: add host channel irq handler */
+		octhci_intr_host_chan(sc);
 	}
 	if (intsts & USBC_GINTSTS_PRTINT) {
 		DPRINTFN(16, ("%s: host port interrupt\n", DEVNAME(sc)));
@@ -428,6 +430,41 @@ octhci_intr_host_port(struct octhci_softc *sc)
 	uint32_t hprt = octhci_regc_read(sc, USBC_HPRT_OFFSET);
 
 	octhci_regc_write(sc, USBC_HPRT_OFFSET, hprt);	/* Acknowledge */
+
+	return (USBD_NORMAL_COMPLETION);
+}
+
+int
+octhci_intr_host_chan(struct octhci_softc *sc)
+{
+	int chan = 0;
+	uint32_t haint;
+
+	haint = octhci_regc_read(sc, USBC_HAINT_OFFSET);
+	haint &= octhci_regc_read(sc, USBC_HAINTMSK_OFFSET);
+
+	DPRINTFN(16, ("%s: haint %X\n", DEVNAME(sc), haint));
+
+	for (; haint != 0; haint ^= (1 << chan)) {
+		chan = ffs32(haint) - 1;
+		octhci_intr_host_chan_n(sc, chan);
+	}
+
+	return (USBD_NORMAL_COMPLETION);
+}
+
+int
+octhci_intr_host_chan_n(struct octhci_softc *sc, int chan)
+{
+	uint32_t hcintn;
+
+	hcintn = octhci_regc_read(sc, USBC_HCINT0_OFFSET + chan * 0x20);
+	hcintn &= octhci_regc_read(sc, USBC_HCINTMSK0_OFFSET + chan * 0x20);
+
+	DPRINTFN(16, ("%s: chan %d hcintn %d\n", DEVNAME(sc), chan, hcintn));
+
+	/* Acknowledge */
+	octhci_regc_write(sc, USBC_HCINT0_OFFSET + chan * 0x20, hcintn);
 
 	return (USBD_NORMAL_COMPLETION);
 }
