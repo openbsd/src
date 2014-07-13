@@ -138,7 +138,7 @@ imsgev_dispatch(int fd, short ev, void *humppa)
 		 * closed, or some error occured. Both case are not recoverable
 		 * from the imsg perspective, so we treat it as a WRITE error.
 		 */
-		if ((n = msgbuf_write(&ibuf->w)) != 1 && errno != EAGAIN) {
+		if ((n = msgbuf_write(&ibuf->w)) <= 0 && errno != EAGAIN) {
 			imsgev_disconnect(iev, IMSGEV_EWRITE);
 			return;
 		}
