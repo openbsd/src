@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kern.9,v 1.18 2013/07/11 01:24:12 jsg Exp $
+.\"	$OpenBSD: kern.9,v 1.19 2014/07/13 23:49:40 uebayasi Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 11 2013 $
+.Dd $Mdocdate: July 13 2014 $
 .Dt KERN 9
 .Os
 .Sh NAME
@@ -93,6 +93,10 @@ function computes the absolute value of integer
 .Fn KASSERT "CONDITION"
 .Ft "void"
 .Fn KDASSERT "CONDITION"
+.Ft "void"
+.Fn KASSERTMSG "CONDITION" "fmt" "..."
+.Ft "void"
+.Fn KDASSERTMSG "CONDITION" "fmt" "..."
 .nr nS 0
 .Pp
 These macros cause kernel
@@ -101,13 +105,29 @@ if the given condition evaluates to false.
 .Fn assert
 tests are always compiled in.
 .Fn KASSERT
+and
+.Fn KASSERTMSG
 tests are only included if the kernel has
 .Dv DIAGNOSTIC
 enabled.
 .Fn KDASSERT
+and
+.Fn KDASSERTMSG
 tests are only included if the kernel has
 .Dv DEBUG
 enabled.
+The
+.Fn KASSERTMSG
+and
+.Fn KDASSERTMSG
+macros append
+to the
+.Xr panic 9
+format string the message specified by
+.Fa format
+and its subsequent arguments, similar to
+.Xr printf 9
+functions.
 .Pp
 .nr nS 1
 .Fn CTASSERT "CONDITION"
@@ -251,3 +271,8 @@ The
 and
 .Fn scanc
 functions are based on vax instructions of the same name.
+The
+.Fn KASSERTMSG
+and
+.Fn KDASSERTMSG
+macros are taken from NetBSD.
