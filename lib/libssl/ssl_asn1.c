@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.29 2014/07/11 12:07:30 miod Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.30 2014/07/13 00:30:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,7 +84,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "ssl_locl.h"
+
 #include <openssl/asn1_mac.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
@@ -109,23 +111,24 @@ int
 i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 {
 #define LSIZE2 (sizeof(long)*2)
-	int v1 = 0, v2 = 0, v3 = 0, v4 = 0, v5 = 0;
+	int v1 = 0, v2 = 0, v3 = 0, v4 = 0, v5 = 0, v6 = 0, v9 = 0, v10 = 0;
 	unsigned char buf[4], ibuf1[LSIZE2], ibuf2[LSIZE2];
 	unsigned char ibuf3[LSIZE2], ibuf4[LSIZE2], ibuf5[LSIZE2];
-	int v6 = 0, v9 = 0, v10 = 0;
 	unsigned char ibuf6[LSIZE2];
-	long l;
 	SSL_SESSION_ASN1 a;
 	M_ASN1_I2D_vars(in);
+	long l;
 
 	if ((in == NULL) || ((in->cipher == NULL) && (in->cipher_id == 0)))
 		return (0);
 
-	/* Note that I cheat in the following 2 assignments.  I know
-	 * that if the ASN1_INTEGER passed to ASN1_INTEGER_set
+	/*
+	 * Note that I cheat in the following 2 assignments.
+	 * I know that if the ASN1_INTEGER passed to ASN1_INTEGER_set
 	 * is > sizeof(long)+1, the buffer will not be re-malloc()ed.
 	 * This is a bit evil but makes things simple, no dynamic allocation
-	 * to clean up :-) */
+	 * to clean up :-)
+	 */
 	a.version.length = LSIZE2;
 	a.version.type = V_ASN1_INTEGER;
 	a.version.data = ibuf1;
@@ -147,7 +150,6 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	buf[0] = ((unsigned char)(l >> 8L))&0xff;
 	buf[1] = ((unsigned char)(l    ))&0xff;
 
-
 	a.master_key.length = in->master_key_length;
 	a.master_key.type = V_ASN1_OCTET_STRING;
 	a.master_key.data = in->master_key;
@@ -159,7 +161,6 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	a.session_id_context.length = in->sid_ctx_length;
 	a.session_id_context.type = V_ASN1_OCTET_STRING;
 	a.session_id_context.data = in->sid_ctx;
-
 
 	if (in->time != 0L) {
 		a.time.length = LSIZE2;
@@ -196,54 +197,65 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		a.tlsext_tick_lifetime.length = LSIZE2;
 		a.tlsext_tick_lifetime.type = V_ASN1_INTEGER;
 		a.tlsext_tick_lifetime.data = ibuf6;
-		ASN1_INTEGER_set(&a.tlsext_tick_lifetime, in->tlsext_tick_lifetime_hint);
+		ASN1_INTEGER_set(&a.tlsext_tick_lifetime,
+		    in->tlsext_tick_lifetime_hint);
 	}
 
-	M_ASN1_I2D_len(&(a.version),		i2d_ASN1_INTEGER);
-	M_ASN1_I2D_len(&(a.ssl_version),	i2d_ASN1_INTEGER);
-	M_ASN1_I2D_len(&(a.cipher),		i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_len(&(a.session_id),		i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_len(&(a.master_key),		i2d_ASN1_OCTET_STRING);
+	M_ASN1_I2D_len(&(a.version), i2d_ASN1_INTEGER);
+	M_ASN1_I2D_len(&(a.ssl_version), i2d_ASN1_INTEGER);
+	M_ASN1_I2D_len(&(a.cipher), i2d_ASN1_OCTET_STRING);
+	M_ASN1_I2D_len(&(a.session_id), i2d_ASN1_OCTET_STRING);
+	M_ASN1_I2D_len(&(a.master_key), i2d_ASN1_OCTET_STRING);
+
 	if (in->time != 0L)
 		M_ASN1_I2D_len_EXP_opt(&(a.time), i2d_ASN1_INTEGER, 1, v1);
 	if (in->timeout != 0L)
 		M_ASN1_I2D_len_EXP_opt(&(a.timeout), i2d_ASN1_INTEGER, 2, v2);
 	if (in->peer != NULL)
 		M_ASN1_I2D_len_EXP_opt(in->peer, i2d_X509, 3, v3);
-	M_ASN1_I2D_len_EXP_opt(&a.session_id_context, i2d_ASN1_OCTET_STRING, 4, v4);
+	M_ASN1_I2D_len_EXP_opt(&a.session_id_context,
+	    i2d_ASN1_OCTET_STRING, 4, v4);
 	if (in->verify_result != X509_V_OK)
-		M_ASN1_I2D_len_EXP_opt(&(a.verify_result), i2d_ASN1_INTEGER, 5, v5);
-
+		M_ASN1_I2D_len_EXP_opt(&(a.verify_result),
+		    i2d_ASN1_INTEGER, 5, v5);
 	if (in->tlsext_tick_lifetime_hint > 0)
-		M_ASN1_I2D_len_EXP_opt(&a.tlsext_tick_lifetime, i2d_ASN1_INTEGER, 9, v9);
+		M_ASN1_I2D_len_EXP_opt(&a.tlsext_tick_lifetime,
+		    i2d_ASN1_INTEGER, 9, v9);
 	if (in->tlsext_tick)
-		M_ASN1_I2D_len_EXP_opt(&(a.tlsext_tick), i2d_ASN1_OCTET_STRING, 10, v10);
+		M_ASN1_I2D_len_EXP_opt(&(a.tlsext_tick),
+		    i2d_ASN1_OCTET_STRING, 10, v10);
 	if (in->tlsext_hostname)
-		M_ASN1_I2D_len_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING, 6, v6);
+		M_ASN1_I2D_len_EXP_opt(&(a.tlsext_hostname),
+		    i2d_ASN1_OCTET_STRING, 6, v6);
 
 	M_ASN1_I2D_seq_total();
 
-	M_ASN1_I2D_put(&(a.version),		i2d_ASN1_INTEGER);
-	M_ASN1_I2D_put(&(a.ssl_version),	i2d_ASN1_INTEGER);
-	M_ASN1_I2D_put(&(a.cipher),		i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_put(&(a.session_id),		i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_put(&(a.master_key),		i2d_ASN1_OCTET_STRING);
+	M_ASN1_I2D_put(&(a.version), i2d_ASN1_INTEGER);
+	M_ASN1_I2D_put(&(a.ssl_version), i2d_ASN1_INTEGER);
+	M_ASN1_I2D_put(&(a.cipher), i2d_ASN1_OCTET_STRING);
+	M_ASN1_I2D_put(&(a.session_id), i2d_ASN1_OCTET_STRING);
+	M_ASN1_I2D_put(&(a.master_key), i2d_ASN1_OCTET_STRING);
 	if (in->time != 0L)
 		M_ASN1_I2D_put_EXP_opt(&(a.time), i2d_ASN1_INTEGER, 1, v1);
 	if (in->timeout != 0L)
 		M_ASN1_I2D_put_EXP_opt(&(a.timeout), i2d_ASN1_INTEGER, 2, v2);
 	if (in->peer != NULL)
 		M_ASN1_I2D_put_EXP_opt(in->peer, i2d_X509, 3, v3);
-	M_ASN1_I2D_put_EXP_opt(&a.session_id_context, i2d_ASN1_OCTET_STRING, 4,
-	v4);
+	M_ASN1_I2D_put_EXP_opt(&a.session_id_context,
+	    i2d_ASN1_OCTET_STRING, 4, v4);
 	if (in->verify_result != X509_V_OK)
-		M_ASN1_I2D_put_EXP_opt(&a.verify_result, i2d_ASN1_INTEGER, 5, v5);
+		M_ASN1_I2D_put_EXP_opt(&a.verify_result,
+		    i2d_ASN1_INTEGER, 5, v5);
 	if (in->tlsext_hostname)
-		M_ASN1_I2D_put_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING, 6, v6);
+		M_ASN1_I2D_put_EXP_opt(&(a.tlsext_hostname),
+		    i2d_ASN1_OCTET_STRING, 6, v6);
 	if (in->tlsext_tick_lifetime_hint > 0)
-		M_ASN1_I2D_put_EXP_opt(&a.tlsext_tick_lifetime, i2d_ASN1_INTEGER, 9, v9);
+		M_ASN1_I2D_put_EXP_opt(&a.tlsext_tick_lifetime,
+		    i2d_ASN1_INTEGER, 9, v9);
 	if (in->tlsext_tick)
-		M_ASN1_I2D_put_EXP_opt(&(a.tlsext_tick), i2d_ASN1_OCTET_STRING, 10, v10);
+		M_ASN1_I2D_put_EXP_opt(&(a.tlsext_tick),
+		    i2d_ASN1_OCTET_STRING, 10, v10);
+
 	M_ASN1_I2D_finish();
 }
 
@@ -290,9 +302,8 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 			c.line = __LINE__;
 			goto err;
 		}
-		id = 0x03000000L|
-		((unsigned long)os.data[0]<<8L)|
-		(unsigned long)os.data[1];
+		id = 0x03000000L | ((unsigned long)os.data[0]<<8L) |
+		    (unsigned long)os.data[1];
 	} else {
 		c.error = SSL_R_UNKNOWN_SSL_VERSION;
 		c.line = __LINE__;
@@ -412,7 +423,6 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		os.length = 0;
 	} else
 		ret->tlsext_tick = NULL;
-
 
 	M_ASN1_D2I_Finish(a, SSL_SESSION_free, SSL_F_D2I_SSL_SESSION);
 }
