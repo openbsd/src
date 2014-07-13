@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.62 2014/07/13 15:32:28 miod Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.63 2014/07/13 16:50:25 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -384,7 +384,7 @@ struct partinfo {
 
 /* GUID partition table -- located at sector 1 of some disks. */
 #define	GPTSECTOR		1	/* DOS boot block relative sector # */
-#define	GPTSIGNATURE		0x5452415020494645
+#define	GPTSIGNATURE		0x5452415020494645LL
 				/* ASCII string "EFI PART" encoded as 64-bit */
 #define	GPTREVISION		0x10000		/* GPT header version 1.0 */
 #define	NGPTPARTITIONS		128
