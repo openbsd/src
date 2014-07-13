@@ -1,4 +1,4 @@
-/*	$OpenBSD: mntopts.h,v 1.15 2005/05/26 01:37:49 pedro Exp $	*/
+/*	$OpenBSD: mntopts.h,v 1.16 2014/07/13 12:01:30 claudio Exp $	*/
 /*	$NetBSD: mntopts.h,v 1.3 1995/03/18 14:56:59 cgd Exp $	*/
 
 /*-
@@ -75,12 +75,14 @@ union mntval {
 #define MOPT_RO		{ "ro",		MNT_RDONLY, MFLAG_SET }
 #define MOPT_RW		{ "rw",		MNT_RDONLY, MFLAG_INVERSE | MFLAG_SET }
 
-/* This is parsed by mount(8), but is ignored by specific mount_*(8)s. */
+/* These are parsed by mount(8), but are ignored by specific mount_*(8)s. */
 #define MOPT_AUTO		{ "auto",	0, MFLAG_SET }
+#define MOPT_NET		{ "net",	0, MFLAG_SET }
 
 #define MOPT_FSTAB_COMPAT						\
 	MOPT_RO,							\
 	MOPT_RW,							\
+	MOPT_NET,							\
 	MOPT_AUTO
 
 /* Standard options which all mounts can understand. */

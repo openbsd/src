@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.55 2014/06/24 02:32:43 daniel Exp $	*/
+/*	$OpenBSD: mount.c,v 1.56 2014/07/13 12:01:30 claudio Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 
 int	debug, verbose, skip;
 char	**typelist = NULL;
+enum { NONET_FILTER, NET_FILTER } filter = NONET_FILTER;
 
 int	selected(const char *);
 char   *catopt(char *, const char *);
@@ -109,7 +110,7 @@ main(int argc, char * const argv[])
 	all = forceall = 0;
 	options = NULL;
 	vfstype = "ffs";
-	while ((ch = getopt(argc, argv, "Aadfo:rswt:uv")) != -1)
+	while ((ch = getopt(argc, argv, "AadfNo:rswt:uv")) != -1)
 		switch (ch) {
 		case 'A':
 			all = forceall = 1;
@@ -123,6 +124,9 @@ main(int argc, char * const argv[])
 		case 'f':
 			if (!hasopt(options, "force"))
 				options = catopt(options, "force");
+			break;
+		case 'N':
+			filter = NET_FILTER;
 			break;
 		case 'o':
 			if (*optarg)
@@ -172,6 +176,16 @@ main(int argc, char * const argv[])
 			while ((fs = getfsent()) != NULL) {
 				if (BADTYPE(fs->fs_type))
 					continue;
+				switch (filter) {
+				case NET_FILTER:
+					if (!hasopt(fs->fs_mntops, "net"))
+						continue;
+					break;
+				case NONET_FILTER:
+					if (hasopt(fs->fs_mntops, "net"))
+						continue;
+					break;
+				}
 				if (!selected(fs->fs_vfstype))
 					continue;
 				if (hasopt(fs->fs_mntops, "noauto"))
