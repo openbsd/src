@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs.h,v 1.19 2014/07/13 13:28:26 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs.h,v 1.20 2014/07/13 16:59:35 pelikan Exp $	*/
 /*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -265,14 +265,9 @@ cg_has_sb(i)
 }
 
 /*
- * EXT2FS metadatas are stored in little-endian byte order. These macros
- * helps reading theses metadatas
+ * Ext2 metadata is stored in little-endian byte order.
+ * JBD2 journal used in ext3 and ext4 is big-endian!
  */
-
-#define h2fs16(x) htole16(x)
-#define h2fs32(x) htole32(x)
-#define fs2h16(x) letoh16(x)
-#define fs2h32(x) letoh32(x)
 #if BYTE_ORDER == LITTLE_ENDIAN
 #define e2fs_sbload(old, new) memcpy((new), (old), SBSIZE);
 #define e2fs_cgload(old, new, size) memcpy((new), (old), (size));

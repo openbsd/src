@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.66 2014/07/08 17:19:26 deraadt Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.67 2014/07/13 16:59:35 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ ext2fs_mknod(void *v)
 		 * Want to be able to use this to make badblock
 		 * inodes, so don't truncate the dev number.
 		 */
-		ip->i_e2din->e2di_rdev = h2fs32(vap->va_rdev);
+		ip->i_e2din->e2di_rdev = htole32(vap->va_rdev);
 	}
 	/*
 	 * Remove inode so that it will be reloaded by VFS_VGET and
@@ -176,7 +176,7 @@ ext2fs_getattr(void *v)
 	vap->va_nlink = ip->i_e2fs_nlink;
 	vap->va_uid = ip->i_e2fs_uid;
 	vap->va_gid = ip->i_e2fs_gid;
-	vap->va_rdev = (dev_t)fs2h32(ip->i_e2din->e2di_rdev);
+	vap->va_rdev = (dev_t) letoh32(ip->i_e2din->e2di_rdev);
 	vap->va_size = ext2fs_size(ip);
 	vap->va_atime.tv_sec = ip->i_e2fs_atime;
 	vap->va_atime.tv_nsec = 0;
@@ -836,7 +836,7 @@ abortit:
 					ufs_dirbad(xp, (doff_t)12,
 					    "ext2fs_rename: mangled dir");
 				} else {
-					dirbuf.dotdot_ino = h2fs32(newparent);
+					dirbuf.dotdot_ino = htole32(newparent);
 					(void) vn_rdwr(UIO_WRITE, fvp,
 					    (caddr_t)&dirbuf,
 					    sizeof (struct dirtemplate),
@@ -933,16 +933,16 @@ ext2fs_mkdir(void *v)
 
 	/* Initialize directory with "." and ".." from static template. */
 	memset(&dirtemplate, 0, sizeof(dirtemplate));
-	dirtemplate.dot_ino = h2fs32(ip->i_number);
-	dirtemplate.dot_reclen = h2fs16(12);
+	dirtemplate.dot_ino = htole32(ip->i_number);
+	dirtemplate.dot_reclen = htole16(12);
 	dirtemplate.dot_namlen = 1;
 	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0 &&
 	    (ip->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)) {
 		dirtemplate.dot_type = EXT2_FT_DIR;
 	}
 	dirtemplate.dot_name[0] = '.';
-	dirtemplate.dotdot_ino = h2fs32(dp->i_number);
-	dirtemplate.dotdot_reclen = h2fs16(VTOI(dvp)->i_e2fs->e2fs_bsize - 12);
+	dirtemplate.dotdot_ino = htole32(dp->i_number);
+	dirtemplate.dotdot_reclen = htole16(VTOI(dvp)->i_e2fs->e2fs_bsize - 12);
 	dirtemplate.dotdot_namlen = 2;
 	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0 &&
 	    (ip->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)) {

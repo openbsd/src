@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_subr.c,v 1.31 2014/07/13 13:28:26 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_subr.c,v 1.32 2014/07/13 16:59:35 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ ext2fs_vinit(struct mount *mp, struct vops *specops,
 	case VBLK:
 		vp->v_op = specops;
 
-		nvp = checkalias(vp, fs2h32(ip->i_e2din->e2di_rdev), mp);
+		nvp = checkalias(vp, letoh32(ip->i_e2din->e2di_rdev), mp);
 		if (nvp != NULL) {
 			/*
 			 * Discard unneeded vnode, but save its inode. Note

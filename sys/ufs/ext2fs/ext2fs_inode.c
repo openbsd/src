@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.53 2014/07/13 15:07:01 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.54 2014/07/13 16:59:35 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -354,7 +354,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	indir_lbn[DOUBLE] = indir_lbn[SINGLE] - NINDIR(fs) -1;
 	indir_lbn[TRIPLE] = indir_lbn[DOUBLE] - NINDIR(fs) * NINDIR(fs) - 1;
 	for (level = TRIPLE; level >= SINGLE; level--) {
-		bn = fs2h32(oip->i_e2fs_blocks[NDADDR + level]);
+		bn = letoh32(oip->i_e2fs_blocks[NDADDR + level]);
 		if (bn != 0) {
 			error = ext2fs_indirtrunc(oip, indir_lbn[level],
 			    fsbtodb(fs, bn), lastiblock[level], level, &count);
@@ -375,7 +375,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	 * All whole direct blocks or frags.
 	 */
 	for (i = NDADDR - 1; i > lastblock; i--) {
-		bn = fs2h32(oip->i_e2fs_blocks[i]);
+		bn = letoh32(oip->i_e2fs_blocks[i]);
 		if (bn == 0)
 			continue;
 		oip->i_e2fs_blocks[i] = 0;
@@ -488,7 +488,7 @@ ext2fs_indirtrunc(struct inode *ip, int32_t lbn, int32_t dbn, int32_t lastbn, in
 	for (i = NINDIR(fs) - 1,
 		nlbn = lbn + 1 - i * factor; i > last;
 		i--, nlbn += factor) {
-		nb = fs2h32(bap[i]);
+		nb = letoh32(bap[i]);
 		if (nb == 0)
 			continue;
 		if (level > SINGLE) {
@@ -508,7 +508,7 @@ ext2fs_indirtrunc(struct inode *ip, int32_t lbn, int32_t dbn, int32_t lastbn, in
 	 */
 	if (level > SINGLE && lastbn >= 0) {
 		last = lastbn % factor;
-		nb = fs2h32(bap[i]);
+		nb = letoh32(bap[i]);
 		if (nb != 0) {
 			error = ext2fs_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
 						   last, level - 1, &blkcount);

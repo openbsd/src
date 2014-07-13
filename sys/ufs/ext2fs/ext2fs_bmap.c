@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.23 2014/07/13 13:28:26 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.24 2014/07/13 16:59:35 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
@@ -173,20 +173,22 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp,
 
 	num = *nump;
 	if (num == 0) {
-		*bnp = blkptrtodb(ump, fs2h32(ip->i_e2fs_blocks[bn]));
+		*bnp = blkptrtodb(ump, letoh32(ip->i_e2fs_blocks[bn]));
 		if (*bnp == 0)
 			*bnp = -1;
 		else if (runp)
 			for (++bn; bn < NDADDR && *runp < maxrun &&
-				is_sequential(ump, fs2h32(ip->i_e2fs_blocks[bn - 1]),
-							  fs2h32(ip->i_e2fs_blocks[bn]));
-				++bn, ++*runp);
+			    is_sequential(ump,
+			    letoh32(ip->i_e2fs_blocks[bn - 1]),
+			    letoh32(ip->i_e2fs_blocks[bn]));
+			    ++bn, ++*runp)
+				/* nothing */;
 		return (0);
 	}
 
 
 	/* Get disk address out of indirect block array */
-	daddr = fs2h32(ip->i_e2fs_blocks[NDADDR + xap->in_off]);
+	daddr = letoh32(ip->i_e2fs_blocks[NDADDR + xap->in_off]);
 
 	devvp = VFSTOUFS(vp->v_mount)->um_devvp;
 
@@ -234,7 +236,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp,
 			}
 		}
 
-		daddr = fs2h32(((int32_t *)bp->b_data)[xap->in_off]);
+		daddr = letoh32(((int32_t *)bp->b_data)[xap->in_off]);
 		if (num == 1 && daddr && runp)
 			for (bn = xap->in_off + 1;
 				bn < MNINDIR(ump) && *runp < maxrun &&

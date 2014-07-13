@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.31 2014/05/27 14:31:24 krw Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.32 2014/07/13 16:59:35 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -163,7 +163,8 @@ ext2fs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 	ip = VTOI(*vpp);
 	if (ip->i_e2fs_mode && ip->i_e2fs_nlink != 0) {
 		printf("mode = 0%o, nlinks %u, inum = %u, fs = %s\n",
-			ip->i_e2fs_mode, ip->i_e2fs_nlink, ip->i_number, fs->e2fs_fsmnt);
+		    ip->i_e2fs_mode, ip->i_e2fs_nlink, ip->i_number,
+		    fs->e2fs_fsmnt);
 		panic("ext2fs_valloc: dup alloc");
 	}
 
@@ -242,7 +243,7 @@ ext2fs_blkpref(struct inode *ip, int32_t lbn, int indx, int32_t *bap)
 	if (bap) {
 		for (i = indx; i >= 0 ; i--) {
 			if (bap[i]) {
-				return fs2h32(bap[i]) + 1;
+				return letoh32(bap[i]) + 1;
 			}
 		}
 	}
@@ -323,8 +324,7 @@ ext2fs_alloccg(struct inode *ip, int cg, int32_t bpref, int size)
 	if (fs->e2fs_gd[cg].ext2bgd_nbfree == 0)
 		return (0);
 	error = bread(ip->i_devvp, fsbtodb(fs,
-		fs->e2fs_gd[cg].ext2bgd_b_bitmap),
-		(int)fs->e2fs_bsize, &bp);
+	    fs->e2fs_gd[cg].ext2bgd_b_bitmap), (int)fs->e2fs_bsize, &bp);
 	if (error || fs->e2fs_gd[cg].ext2bgd_nbfree == 0) {
 		brelse(bp);
 		return (0);
@@ -408,8 +408,7 @@ ext2fs_nodealloccg(struct inode *ip, int cg, int32_t ipref, int mode)
 	if (fs->e2fs_gd[cg].ext2bgd_nifree == 0)
 		return (0);
 	error = bread(ip->i_devvp, fsbtodb(fs,
-		fs->e2fs_gd[cg].ext2bgd_i_bitmap),
-		(int)fs->e2fs_bsize, &bp);
+	    fs->e2fs_gd[cg].ext2bgd_i_bitmap), (int)fs->e2fs_bsize, &bp);
 	if (error) {
 		brelse(bp);
 		return (0);
@@ -516,11 +515,11 @@ ext2fs_inode_free(struct inode *pip, ufsino_t ino, mode_t mode)
 	fs = pip->i_e2fs;
 	if ((u_int)ino > fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
 		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s",
-			pip->i_dev, ino, fs->e2fs_fsmnt);
+		    pip->i_dev, ino, fs->e2fs_fsmnt);
 	cg = ino_to_cg(fs, ino);
 	error = bread(pip->i_devvp,
-	        fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
-		(int)fs->e2fs_bsize, &bp);
+	    fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
+	    (int)fs->e2fs_bsize, &bp);
 	if (error) {
 		brelse(bp);
 		return (0);
@@ -529,7 +528,7 @@ ext2fs_inode_free(struct inode *pip, ufsino_t ino, mode_t mode)
 	ino = (ino - 1) % fs->e2fs.e2fs_ipg;
 	if (isclr(ibp, ino)) {
 		printf("dev = 0x%x, ino = %d, fs = %s\n",
-			pip->i_dev, ino, fs->e2fs_fsmnt);
+		    pip->i_dev, ino, fs->e2fs_fsmnt);
 		if (fs->e2fs_ronly == 0)
 			panic("ifree: freeing free inode");
 	}
