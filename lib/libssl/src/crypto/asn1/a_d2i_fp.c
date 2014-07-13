@@ -1,4 +1,4 @@
-/* $OpenBSD: a_d2i_fp.c,v 1.10 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: a_d2i_fp.c,v 1.11 2014/07/13 11:10:20 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,7 +59,7 @@
 #include <limits.h>
 #include <stdio.h>
 
-#include <openssl/asn1_mac.h>
+#include <openssl/asn1.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 
