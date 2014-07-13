@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.110 2014/03/18 18:53:29 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.111 2014/07/13 17:24:06 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -114,10 +114,6 @@ sub parse
 		require OpenBSD::PackageRepository::SCP;
 
 		return $class->scp->parse_fullurl($r, $state);
-	} elsif ($u =~ m/^src\:/io) {
-		require OpenBSD::PackageRepository::Source;
-
-		return $class->source->parse_fullurl($r, $state);
 	} elsif ($u =~ m/^file\:/io) {
 		return $class->file->parse_fullurl($r, $state);
 	} elsif ($u =~ m/^inst\:$/io) {
