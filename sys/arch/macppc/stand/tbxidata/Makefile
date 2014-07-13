@@ -1,7 +1,7 @@
-#       $OpenBSD: Makefile,v 1.3 2012/09/02 23:07:26 deraadt Exp $
+#       $OpenBSD: Makefile,v 1.4 2014/07/13 21:13:30 jasper Exp $
 
 NOMACHINE=
-FILES=	bsd.tbxi 
+FILES=	bsd.tbxi
 NOOBJ=	noobj
 
 install:
