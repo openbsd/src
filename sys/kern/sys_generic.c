@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.91 2014/07/13 15:29:04 tedu Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.92 2014/07/13 15:48:41 tedu Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -945,7 +945,7 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 
 	/* optimize for the default case, of a small nfds value */
 	if (sz > sizeof(pfds))
-		pl = (struct pollfd *) malloc(sz, M_TEMP, M_WAITOK);
+		pl = malloc(sz, M_TEMP, M_WAITOK);
 
 	if ((error = copyin(fds, pl, sz)) != 0)
 		goto bad;
