@@ -2208,6 +2208,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/unpcb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/user.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/utsname.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/uuid.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/videoio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/vmmeter.ph

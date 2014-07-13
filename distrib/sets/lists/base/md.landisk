@@ -2184,6 +2184,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/unpcb.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/user.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/utsname.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/sys/uuid.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/varargs.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/videoio.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/vmmeter.ph

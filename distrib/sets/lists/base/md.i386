@@ -2210,6 +2210,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/unpcb.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/user.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/utsname.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/uuid.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/varargs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/videoio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/vmmeter.ph

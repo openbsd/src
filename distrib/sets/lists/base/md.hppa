@@ -2176,6 +2176,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/unpcb.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/user.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/utsname.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/sys/uuid.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/varargs.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/videoio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/vmmeter.ph

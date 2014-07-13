@@ -2190,6 +2190,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/unpcb.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/user.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/utsname.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/uuid.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/varargs.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/videoio.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/vmmeter.ph
