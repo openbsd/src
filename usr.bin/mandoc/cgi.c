@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.10 2014/07/13 12:31:00 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.11 2014/07/13 12:44:57 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -764,6 +764,8 @@ format(const struct req *req, const char *file)
 static void
 resp_show(const struct req *req, const char *file)
 {
+	if ('.' == file[0] || '/' == file[1])
+		file += 2;
 
 	if ('c' == *file)
 		catman(req, file);
