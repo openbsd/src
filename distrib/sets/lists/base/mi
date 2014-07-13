@@ -66,8 +66,10 @@
 ./etc/examples/ntpd.conf
 ./etc/examples/ospf6d.conf
 ./etc/examples/ospfd.conf
+./etc/examples/printcap
 ./etc/examples/rbootd.conf
 ./etc/examples/relayd.conf
+./etc/examples/remote
 ./etc/examples/ripd.conf
 ./etc/examples/sasyncd.conf
 ./etc/examples/sensorsd.conf

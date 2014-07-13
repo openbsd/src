@@ -10,8 +10,6 @@
 ./etc/dhclient.conf
 ./etc/disktab
 ./etc/dumpdates
-./etc/examples/printcap
-./etc/examples/remote
 ./etc/fbtab
 ./etc/ftpusers
 ./etc/gettytab
