@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.257 2014/07/13 15:29:04 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.258 2014/07/13 16:41:21 claudio Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -116,6 +116,8 @@ extern void nmbclust_update(void);
 int sysctl_diskinit(int, struct proc *);
 int sysctl_proc_args(int *, u_int, void *, size_t *, struct proc *);
 int sysctl_proc_cwd(int *, u_int, void *, size_t *, struct proc *);
+int sysctl_proc_nobroadcastkill(int *, u_int, void *, size_t, void *, size_t *,
+	struct proc *);
 int sysctl_intrcnt(int *, u_int, void *, size_t *);
 int sysctl_sensors(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_emul(int *, u_int, void *, size_t *, void *, size_t);
@@ -284,6 +286,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		case KERN_POOL:
 		case KERN_PROC_ARGS:
 		case KERN_PROC_CWD:
+		case KERN_PROC_NOBROADCASTKILL:
 		case KERN_SYSVIPC_INFO:
 		case KERN_SEMINFO:
 		case KERN_SHMINFO:
@@ -372,6 +375,9 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_PROC_CWD:
 		return (sysctl_proc_cwd(name + 1, namelen - 1, oldp, oldlenp,
 		     p));
+	case KERN_PROC_NOBROADCASTKILL:
+		return (sysctl_proc_nobroadcastkill(name + 1, namelen - 1,
+		     newp, newlen, oldp, oldlenp, p));
 	case KERN_FILE:
 		return (sysctl_file(name + 1, namelen - 1, oldp, oldlenp, p));
 #endif
@@ -1817,6 +1823,47 @@ sysctl_proc_cwd(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	vrele(vp);
 	free(path, M_TEMP, 0);
+
+	return (error);
+}
+
+int
+sysctl_proc_nobroadcastkill(int *name, u_int namelen, void *newp, size_t newlen,
+    void *oldp, size_t *oldlenp, struct proc *cp)
+{
+	struct process *findpr;
+	pid_t pid;
+	int error, flag;
+
+	if (namelen > 1)
+		return (ENOTDIR);
+	if (namelen < 1)
+		return (EINVAL);
+
+	pid = name[0];
+	if ((findpr = prfind(pid)) == NULL)
+		return (ESRCH);
+
+	/* Either system process or exiting/zombie */
+	if (findpr->ps_flags & (PS_SYSTEM | PS_EXITING))
+		return (EINVAL);
+
+	/* Only root can change PS_NOBROADCASTKILL */
+	if (newp != 0 && (error = suser(cp, 0)) != 0)
+		return (error);
+
+	/* get the PS_NOBROADCASTKILL flag */
+	flag = findpr->ps_flags & PS_NOBROADCASTKILL ? 1 : 0;
+
+	error = sysctl_int(oldp, oldlenp, newp, newlen, &flag);
+	if (error == 0 && newp) {
+		if (flag)
+			atomic_setbits_int(&findpr->ps_flags,
+			    PS_NOBROADCASTKILL);
+		else
+			atomic_clearbits_int(&findpr->ps_flags,
+			    PS_NOBROADCASTKILL);
+	}
 
 	return (error);
 }

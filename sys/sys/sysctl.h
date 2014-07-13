@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.147 2014/07/08 17:19:26 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.148 2014/07/13 16:41:22 claudio Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -179,7 +179,8 @@ struct ctlname {
 #define	KERN_NETLIVELOCKS	76	/* int: number of network livelocks */
 #define	KERN_POOL_DEBUG		77	/* int: enable pool_debug */
 #define	KERN_PROC_CWD		78      /* node: proc cwd */
-#define	KERN_MAXID		79	/* number of valid kern ids */
+#define	KERN_PROC_NOBROADCASTKILL 79	/* node: proc no broadcast kill */
+#define	KERN_MAXID		80	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -261,6 +262,7 @@ struct ctlname {
 	{ "netlivelocks", CTLTYPE_INT }, \
 	{ "pool_debug", CTLTYPE_INT }, \
 	{ "proc_cwd", CTLTYPE_NODE }, \
+	{ "proc_nobroadcastkill", CTLTYPE_NODE }, \
 }
 
 /*

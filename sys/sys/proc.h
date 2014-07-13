@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.189 2014/07/12 21:21:19 matthew Exp $	*/
+/*	$OpenBSD: proc.h,v 1.190 2014/07/13 16:41:21 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -247,12 +247,13 @@ struct process {
 #define	PS_SYSTEM	0x00010000	/* No sigs, stats or swapping. */
 #define	PS_EMBRYO	0x00020000	/* New process, not yet fledged */
 #define	PS_ZOMBIE	0x00040000	/* Dead and ready to be waited for */
+#define	PS_NOBROADCASTKILL 0x00080000	/* Process excluded from kill -1. */
 
 #define	PS_BITS \
     ("\20\01CONTROLT\02EXEC\03INEXEC\04EXITING\05SUGID" \
      "\06SUGIDEXEC\07PPWAIT\010ISPWAIT\011PROFIL\012TRACED" \
      "\013WAITED\014COREDUMP\015SINGLEEXIT\016SINGLEUNWIND" \
-     "\017NOZOMBIE\020STOPPED\021SYSTEM\022EMBRYO\023ZOMBIE")
+     "\017NOZOMBIE\020STOPPED\021SYSTEM\022EMBRYO\023ZOMBIE\024NOBROADCASTKILL")
 
 
 struct proc {
