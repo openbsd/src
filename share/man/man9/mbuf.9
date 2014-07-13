@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.72 2014/04/22 14:41:03 mpi Exp $
+.\"     $OpenBSD: mbuf.9,v 1.73 2014/07/13 05:23:24 dlg Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 22 2014 $
+.Dd $Mdocdate: July 13 2014 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -628,10 +628,6 @@ Then allocate and add an mbuf cluster of length
 .Fa len
 to the mbuf pointed to by
 .Fa m .
-If
-.Fa ifp
-is passed in, then per-interface accounting for the mbuf will occur,
-and thus mbuf allocation can fail when limits are reached.
 Returns either the mbuf
 .Fa m
 that was passed in, or the newly allocated one which was allocated; in
