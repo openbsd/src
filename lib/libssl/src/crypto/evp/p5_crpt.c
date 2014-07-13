@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt.c,v 1.13 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: p5_crpt.c,v 1.14 2014/07/13 12:46:44 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -86,7 +86,6 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	const unsigned char *pbuf;
 	int mdsize;
 	int rv = 0;
-	EVP_MD_CTX_init(&ctx);
 
 	/* Extract useful info from parameter */
 	if (param == NULL || param->type != V_ASN1_SEQUENCE ||
@@ -94,6 +93,10 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 		EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, EVP_R_DECODE_ERROR);
 		return 0;
 	}
+
+	mdsize = EVP_MD_size(md);
+	if (mdsize < 0)
+		return 0;
 
 	pbuf = param->value.sequence->data;
 	if (!(pbe = d2i_PBEPARAM(NULL, &pbuf, param->value.sequence->length))) {
@@ -113,18 +116,16 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	else if (passlen == -1)
 		passlen = strlen(pass);
 
+	EVP_MD_CTX_init(&ctx);
+
 	if (!EVP_DigestInit_ex(&ctx, md, NULL))
 		goto err;
 	if (!EVP_DigestUpdate(&ctx, pass, passlen))
 		goto err;
 	if (!EVP_DigestUpdate(&ctx, salt, saltlen))
 		goto err;
-	PBEPARAM_free(pbe);
 	if (!EVP_DigestFinal_ex(&ctx, md_tmp, NULL))
 		goto err;
-	mdsize = EVP_MD_size(md);
-	if (mdsize < 0)
-		return 0;
 	for (i = 1; i < iter; i++) {
 		if (!EVP_DigestInit_ex(&ctx, md, NULL))
 			goto err;
@@ -146,5 +147,6 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	rv = 1;
 err:
 	EVP_MD_CTX_cleanup(&ctx);
+	PBEPARAM_free(pbe);
 	return rv;
 }
