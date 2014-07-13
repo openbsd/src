@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.217 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.218 2014/07/13 15:00:40 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1066,7 +1066,7 @@ vgonel(struct vnode *vp, struct proc *p)
 				vx->v_flag &= ~VALIASED;
 			vp->v_flag &= ~VALIASED;
 		}
-		free(vp->v_specinfo, M_VNODE, 0);
+		free(vp->v_specinfo, M_VNODE, sizeof(struct specinfo));
 		vp->v_specinfo = NULL;
 	}
 	/*
@@ -1281,7 +1281,7 @@ vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		ret = sysctl_rdstruct(oldp, oldlenp, newp, tmpvfsp,
 		    sizeof(struct vfsconf));
 
-		free(tmpvfsp, M_TEMP, 0);
+		free(tmpvfsp, M_TEMP, sizeof(*tmpvfsp));
 		return (ret);
 	case VFS_BCACHESTAT:	/* buffer cache statistics */
 		ret = sysctl_rdstruct(oldp, oldlenp, newp, &bcstats,

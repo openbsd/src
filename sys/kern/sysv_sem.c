@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.47 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.48 2014/07/13 15:00:40 tedu Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -384,7 +384,8 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 
 error:
 	if (semval)
-		free(semval, M_TEMP, 0);
+		free(semval, M_TEMP,
+		    semaptr->sem_nsems * sizeof(arg->array[0]));
 
 	return (error);
 }
@@ -446,7 +447,8 @@ sys_semget(struct proc *p, void *v, register_t *retval)
 					goto error;
 				}
 				if (semaptr_new != NULL) {
-					free(semaptr_new->sem_base, M_SEM, 0);
+					free(semaptr_new->sem_base, M_SEM,
+					    nsems * sizeof(struct sem));
 					pool_put(&sema_pool, semaptr_new);
 				}
 				goto found;
@@ -489,7 +491,7 @@ found:
 	return (0);
 error:
 	if (semaptr_new != NULL) {
-		free(semaptr_new->sem_base, M_SEM, 0);
+		free(semaptr_new->sem_base, M_SEM, nsems * sizeof(struct sem));
 		pool_put(&sema_pool, semaptr_new);
 	}
 	return (error);
@@ -753,7 +755,7 @@ done:
 	*retval = 0;
 done2:
 	if (sops != sopbuf)
-		free(sops, M_SEM, 0);
+		free(sops, M_SEM, nsops * sizeof(struct sembuf));
 	return (error);
 }
 
