@@ -1445,6 +1445,7 @@
 ./usr/include/sys/unpcb.h
 ./usr/include/sys/user.h
 ./usr/include/sys/utsname.h
+./usr/include/sys/uuid.h
 ./usr/include/sys/varargs.h
 ./usr/include/sys/videoio.h
 ./usr/include/sys/vmmeter.h

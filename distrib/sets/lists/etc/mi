@@ -8,7 +8,6 @@
 ./etc/csh.logout
 ./etc/daily
 ./etc/dhclient.conf
-./etc/disktab
 ./etc/dumpdates
 ./etc/fbtab
 ./etc/ftpusers
@@ -21,9 +20,6 @@
 ./etc/iked/pubkeys/ipv6
 ./etc/iked/pubkeys/ufqdn
 ./etc/ksh.kshrc
-./etc/ldap/core.schema
-./etc/ldap/inetorgperson.schema
-./etc/ldap/nis.schema
 ./etc/localtime
 ./etc/locate.rc
 ./etc/login.conf
@@ -57,12 +53,10 @@
 ./etc/monthly
 ./etc/motd
 ./etc/myname
-./etc/netstart
 ./etc/newsyslog.conf
 ./etc/nginx/fastcgi_params
 ./etc/nginx/koi-utf
 ./etc/nginx/koi-win
-./etc/nginx/mime.types
 ./etc/nginx/nginx.conf
 ./etc/nginx/scgi_params
 ./etc/nginx/uwsgi_params
@@ -75,7 +69,6 @@
 ./etc/ppp/options
 ./etc/ppp/pap-secrets
 ./etc/pwd.db
-./etc/rc
 ./etc/rc.conf
 ./etc/rc.local
 ./etc/rc.securelevel
