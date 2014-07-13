@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.12 2014/07/12 20:07:07 yasuoka Exp $ */
+/*	$OpenBSD: privsep.c,v 1.13 2014/07/13 21:34:35 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -234,6 +234,9 @@ priv_bind(int sock, const struct sockaddr *name, socklen_t namelen)
 		errno = EINVAL;
 		return (-1);
 	}
+	if ((sock = dup(sock)) == -1)
+		return (-1);
+
 	memcpy(&a.name, name, namelen);
 	a.namelen = namelen;
 
@@ -296,6 +299,8 @@ priv_sendto(int s, const void *msg, int len, int flags,
 		errno = EINVAL;
 		return (-1);
 	}
+	if ((s = dup(s)) == -1)
+		return (-1);
 
 	a.len = len;
 	a.flags = flags;
@@ -581,7 +586,6 @@ privsep_priv_dispatch_imsg(struct imsgbuf *ibuf)
 			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, f,
 			    &r, sizeof(r));
 			imsg_flush(ibuf);
-			close(f);
 		    }
 			break;
 		case PRIVSEP_SOCKET: {
@@ -603,7 +607,6 @@ privsep_priv_dispatch_imsg(struct imsgbuf *ibuf)
 			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, s,
 			    &r, sizeof(r));
 			imsg_flush(ibuf);
-			close(s);
 		    }
 			break;
 		case PRIVSEP_UNLINK: {
