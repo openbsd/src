@@ -51,37 +51,37 @@ ressl_config_free(struct ressl_config *config)
 }
 
 void
-ressl_config_ca_file(struct ressl_config *config, char *ca_file)
+ressl_config_set_ca_file(struct ressl_config *config, char *ca_file)
 {
 	config->ca_file = ca_file;
 }
 
 void
-ressl_config_ca_path(struct ressl_config *config, char *ca_path)
+ressl_config_set_ca_path(struct ressl_config *config, char *ca_path)
 {
 	config->ca_path = ca_path;
 }
 
 void
-ressl_config_ciphers(struct ressl_config *config, char *ciphers)
+ressl_config_set_ciphers(struct ressl_config *config, char *ciphers)
 {
 	config->ciphers = ciphers;
 }
 
 void
-ressl_config_insecure(struct ressl_config *config)
+ressl_config_insecure_no_verify(struct ressl_config *config)
 {
 	config->verify = 0;
 }
 
 void
-ressl_config_secure(struct ressl_config *config)
+ressl_config_verify(struct ressl_config *config)
 {
 	config->verify = 1;
 }
 
 void
-ressl_config_verify_depth(struct ressl_config *config, int verify_depth)
+ressl_config_set_verify_depth(struct ressl_config *config, int verify_depth)
 {
 	config->verify_depth = verify_depth;
 }

@@ -27,13 +27,14 @@ const char *ressl_error(struct ressl *ctx);
 struct ressl_config *ressl_config_new(void);
 void ressl_config_free(struct ressl_config *config);
 
-void ressl_config_ca_file(struct ressl_config *config, char *ca_file);
-void ressl_config_ca_path(struct ressl_config *config, char *ca_path);
-void ressl_config_ciphers(struct ressl_config *config, char *ciphers);
-void ressl_config_verify_depth(struct ressl_config *config, int verify_depth);
+void ressl_config_set_ca_file(struct ressl_config *config, char *ca_file);
+void ressl_config_set_ca_path(struct ressl_config *config, char *ca_path);
+void ressl_config_set_ciphers(struct ressl_config *config, char *ciphers);
+void ressl_config_set_verify_depth(struct ressl_config *config,
+    int verify_depth);
 
-void ressl_config_insecure(struct ressl_config *config);
-void ressl_config_secure(struct ressl_config *config);
+void ressl_config_insecure_no_verify(struct ressl_config *config);
+void ressl_config_verify(struct ressl_config *config);
 
 struct ressl *ressl_new(struct ressl_config *config);
 void ressl_reset(struct ressl *ctx);
