@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.229 2014/07/13 09:08:20 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.230 2014/07/13 22:13:06 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -912,10 +912,11 @@ boot(int howto)
 		waittime = 0;
 		vfs_shutdown();
 
-		if ((howto & RB_TIMEBAD) == 0)
+		if ((howto & RB_TIMEBAD) == 0) {
 			resettodr();
-		else
+		} else {
 			printf("WARNING: not updating battery clock\n");
+		}
 	}
 	if_downall();
 
