@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.3 2014/07/13 14:46:52 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.4 2014/07/13 15:07:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -384,6 +384,7 @@ void
 server_error(struct bufferevent *bev, short error, void *arg)
 {
 	struct client		*clt = arg;
+	struct evbuffer		*dst;
 
 	if (error & EVBUFFER_TIMEOUT) {
 		server_close(clt, "buffer event timeout");
@@ -397,8 +398,15 @@ server_error(struct bufferevent *bev, short error, void *arg)
 		bufferevent_disable(bev, EV_READ|EV_WRITE);
 
 		clt->clt_done = 1;
-		server_close(clt, "done");
 
+		if (bev != clt->clt_bev) {
+			dst = EVBUFFER_OUTPUT(clt->clt_bev);
+			if (EVBUFFER_LENGTH(dst))
+				return;
+		} else
+			return;
+
+		server_close(clt, "done");
 		return;
 	}
 	server_close(clt, "buffer event error");
