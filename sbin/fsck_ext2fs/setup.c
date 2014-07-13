@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.21 2014/07/11 15:54:52 tobias Exp $	*/
+/*	$OpenBSD: setup.c,v 1.22 2014/07/13 13:50:00 pelikan Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -387,7 +387,7 @@ copyback_sb(struct bufarea *bp)
 	bp->b_un.b_fs->e2fs_first_dblock =
 					fs2h32(sblock.e2fs.e2fs_first_dblock);
 	bp->b_un.b_fs->e2fs_log_bsize = fs2h32(sblock.e2fs.e2fs_log_bsize);
-	bp->b_un.b_fs->e2fs_fsize = fs2h32(sblock.e2fs.e2fs_fsize);
+	bp->b_un.b_fs->e2fs_log_fsize = fs2h32(sblock.e2fs.e2fs_log_fsize);
 	bp->b_un.b_fs->e2fs_bpg = fs2h32(sblock.e2fs.e2fs_bpg);
 	bp->b_un.b_fs->e2fs_fpg = fs2h32(sblock.e2fs.e2fs_fpg);
 	bp->b_un.b_fs->e2fs_ipg = fs2h32(sblock.e2fs.e2fs_ipg);
