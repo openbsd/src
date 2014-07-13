@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pss.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: rsa_pss.c,v 1.10 2014/07/13 12:53:46 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -199,6 +199,8 @@ RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 	unsigned char *H, *salt = NULL, *p;
 	EVP_MD_CTX ctx;
 
+	EVP_MD_CTX_init(&ctx);
+
 	if (mgf1Hash == NULL)
 		mgf1Hash = Hash;
 
@@ -246,7 +248,6 @@ RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 	}
 	maskedDBLen = emLen - hLen - 1;
 	H = EM + maskedDBLen;
-	EVP_MD_CTX_init(&ctx);
 	if (!EVP_DigestInit_ex(&ctx, Hash, NULL) ||
 	    !EVP_DigestUpdate(&ctx, zeroes, sizeof zeroes) ||
 	    !EVP_DigestUpdate(&ctx, mHash, hLen))
@@ -255,7 +256,6 @@ RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 		goto err;
 	if (!EVP_DigestFinal_ex(&ctx, H, NULL))
 		goto err;
-	EVP_MD_CTX_cleanup(&ctx);
 
 	/* Generate dbMask in place then perform XOR on it */
 	if (PKCS1_MGF1(EM, maskedDBLen, H, hLen, mgf1Hash))
@@ -284,6 +284,7 @@ RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 
 err:
 	free(salt);
+	EVP_MD_CTX_cleanup(&ctx);
 
 	return ret;
 }
