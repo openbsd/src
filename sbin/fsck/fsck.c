@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.28 2010/11/17 11:22:42 jsing Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.29 2014/07/13 12:03:48 claudio Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include "fsutil.h"
 
 static enum { IN_LIST, NOT_IN_LIST } which = NOT_IN_LIST;
+static enum { NONET_FILTER, NET_FILTER } filter = NONET_FILTER;
 
 TAILQ_HEAD(fstypelist, entry) opthead, selhead;
 
@@ -64,9 +65,9 @@ struct entry {
 	TAILQ_ENTRY(entry) entries;
 };
 
-static int maxrun = 0;
-static char *options = NULL;
-static int flags = 0;
+static int maxrun;
+static char *options;
+static int flags;
 
 int main(int, char *[]);
 
@@ -80,6 +81,7 @@ static char *catopt(char *, const char *, int);
 static void mangle(char *, int *, const char ***, int *);
 static void usage(void);
 static void *isok(struct fstab *);
+static int hasopt(const char *, const char *);
 
 
 int
@@ -108,7 +110,7 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&selhead);
 	TAILQ_INIT(&opthead);
 
-	while ((i = getopt(argc, argv, "dvpfnyb:l:T:t:")) != -1)
+	while ((i = getopt(argc, argv, "b:dfl:nNpT:t:vy")) != -1)
 		switch (i) {
 		case 'd':
 			flags |= CHECK_DEBUG;
@@ -150,6 +152,10 @@ main(int argc, char *argv[])
 
 			maketypelist(optarg);
 			vfstype = optarg;
+			break;
+
+		case 'N':
+			filter = NET_FILTER;
 			break;
 
 		case '?':
@@ -207,6 +213,16 @@ isok(struct fstab *fs)
 	if (BADTYPE(fs->fs_type))
 		return NULL;
 
+	switch (filter) {
+	case NET_FILTER:
+		if (!hasopt(fs->fs_mntops, "net"))
+			return NULL;
+		break;
+	case NONET_FILTER:
+		if (hasopt(fs->fs_mntops, "net"))
+			return NULL;
+		break;
+	}
 	if (!selected(fs->fs_vfstype))
 		return NULL;
 
@@ -461,6 +477,22 @@ mangle(char *opts, int *argcp, const char ***argvp, int *maxargcp)
 	*argcp = argc;
 	*argvp = argv;
 	*maxargcp = maxargc;
+}
+
+static int
+hasopt(const char *mntopts, const char *option)
+{
+	int found;
+	char *opt, *optbuf;
+
+	if (mntopts == NULL)
+		return (0);
+	optbuf = strdup(mntopts);
+	found = 0;
+	for (opt = optbuf; !found && opt != NULL; strsep(&opt, ","))
+		found = !strncmp(opt, option, strlen(option));
+	free(optbuf);
+	return (found);
 }
 
 
