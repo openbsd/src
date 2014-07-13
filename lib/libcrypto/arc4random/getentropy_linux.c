@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.21 2014/07/12 20:41:47 wouter Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.22 2014/07/13 08:24:20 beck Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -69,7 +69,9 @@
 
 int	getentropy(void *buf, size_t len);
 
+#if 0
 extern int main(int, char *argv[]);
+#endif
 static int gotdata(char *buf, size_t len);
 static int getentropy_urandom(void *buf, size_t len);
 #ifdef CTL_MAXNAME
@@ -342,7 +344,9 @@ getentropy_fallback(void *buf, size_t len)
 			HX(sigprocmask(SIG_BLOCK, NULL, &sigset) == -1,
 			    sigset);
 
+#if 0
 			HF(main);		/* an addr in program */
+#endif
 			HF(getentropy);	/* an addr in this library */
 			HF(printf);		/* an addr in libc */
 			p = (char *)&p;
