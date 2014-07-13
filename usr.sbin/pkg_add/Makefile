@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.80 2014/04/14 10:56:11 espie Exp $
+# $OpenBSD: Makefile,v 1.81 2014/07/13 15:58:40 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -55,7 +55,6 @@ PACKAGES= \
     OpenBSD/Replace.pm \
     OpenBSD/RequiredBy.pm \
     OpenBSD/Search.pm \
-    OpenBSD/SetList.pm \
     OpenBSD/Signature.pm \
     OpenBSD/Signer.pm \
     OpenBSD/SharedItems.pm \
