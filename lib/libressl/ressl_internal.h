@@ -25,28 +25,28 @@
 #define _PATH_SSL_CA_FILE "/etc/ssl/cert.pem"
 
 struct ressl_config {
-        const char *ca_file;
-        const char *ca_path;
-        const char *ciphers;
-        const char *server_name;
-        int verify;
-        int verify_depth;
+	const char *ca_file;
+	const char *ca_path;
+	const char *ciphers;
+	const char *server_name;
+	int verify;
+	int verify_depth;
 };
 
 #define RESSL_CLIENT		(1 << 0)
 #define RESSL_SERVER		(1 << 1)
 
 struct ressl {
-        struct ressl_config *config;
+	struct ressl_config *config;
 	uint64_t flags;
 
-        int err;
-        char *errmsg;
+	int err;
+	char *errmsg;
 
-        int socket;
+	int socket;
 
-        SSL *ssl_conn;
-        SSL_CTX *ssl_ctx;
+	SSL *ssl_conn;
+	SSL_CTX *ssl_ctx;
 };
 
 struct ressl *ressl_new(void);

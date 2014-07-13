@@ -24,11 +24,11 @@
  * Default configuration.
  */
 struct ressl_config ressl_config_default = {
-        .ca_file = _PATH_SSL_CA_FILE,
-        .ca_path = NULL,
-        .ciphers = NULL,
-        .verify = 1,
-        .verify_depth = 6,
+	.ca_file = _PATH_SSL_CA_FILE,
+	.ca_path = NULL,
+	.ciphers = NULL,
+	.verify = 1,
+	.verify_depth = 6,
 };
 
 struct ressl_config *

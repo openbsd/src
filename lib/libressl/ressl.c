@@ -50,16 +50,16 @@ ressl_error(struct ressl *ctx)
 int
 ressl_set_error(struct ressl *ctx, char *fmt, ...)
 {
-        va_list ap;
-        int rv;
+	va_list ap;
+	int rv;
 
 	ctx->err = errno;
 	free(ctx->errmsg);
 	ctx->errmsg = NULL;
 
-        va_start(ap, fmt);
-        rv = vasprintf(&ctx->errmsg, fmt, ap);
-        va_end(ap);
+	va_start(ap, fmt);
+	rv = vasprintf(&ctx->errmsg, fmt, ap);
+	va_end(ap);
 
 	return (rv);
 }
