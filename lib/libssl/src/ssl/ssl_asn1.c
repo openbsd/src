@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.31 2014/07/13 16:30:50 jsing Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.32 2014/07/13 16:39:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -95,7 +95,6 @@ typedef struct ssl_session_asn1_st {
 	ASN1_INTEGER version;
 	ASN1_INTEGER ssl_version;
 	ASN1_OCTET_STRING cipher;
-	ASN1_OCTET_STRING comp_id;
 	ASN1_OCTET_STRING master_key;
 	ASN1_OCTET_STRING session_id;
 	ASN1_OCTET_STRING session_id_context;
