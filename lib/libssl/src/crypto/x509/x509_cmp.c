@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cmp.c,v 1.23 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: x509_cmp.c,v 1.24 2014/07/13 11:15:54 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -93,6 +93,8 @@ X509_issuer_and_serial_hash(X509 *a)
 
 	EVP_MD_CTX_init(&ctx);
 	f = X509_NAME_oneline(a->cert_info->issuer, NULL, 0);
+	if (f == NULL)
+		goto err;
 	if (!EVP_DigestInit_ex(&ctx, EVP_md5(), NULL))
 		goto err;
 	if (!EVP_DigestUpdate(&ctx, (unsigned char *)f, strlen(f)))
