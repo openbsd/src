@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.35 2014/07/13 21:35:27 jsing Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.36 2014/07/13 21:38:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -274,6 +274,7 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	c.p = *pp;
 	c.q = *pp;
 	c.max = (length == 0) ? 0 : (c.p + length);
+	c.slen = length;
 
 	if (a == NULL || *a == NULL) {
 		if ((ret = SSL_SESSION_new()) == NULL) {
