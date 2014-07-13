@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.106 2014/06/15 11:43:24 sf Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.107 2014/07/13 15:32:28 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -92,6 +92,12 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+
+#if defined(GPT)
+	error = readgptlabel(bp, strat, lp, NULL, spoofonly);
+	if (error == 0)
+		goto done;
+#endif
 
 	error = readdoslabel(bp, strat, lp, NULL, spoofonly);
 	if (error == 0)

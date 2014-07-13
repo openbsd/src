@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.61 2014/07/01 05:22:09 dlg Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.62 2014/07/13 15:32:28 miod Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -46,6 +46,8 @@
  * partition are machine dependent.
  */
 #include <machine/disklabel.h>
+
+#include <sys/uuid.h>
 
 /*
  * The absolute maximum number of disk partitions allowed.
@@ -380,6 +382,96 @@ struct partinfo {
 	struct partition *part;
 };
 
+/* GUID partition table -- located at sector 1 of some disks. */
+#define	GPTSECTOR		1	/* DOS boot block relative sector # */
+#define	GPTSIGNATURE		0x5452415020494645
+				/* ASCII string "EFI PART" encoded as 64-bit */
+#define	GPTREVISION		0x10000		/* GPT header version 1.0 */
+#define	NGPTPARTITIONS		128
+#define	GPTDOSACTIVE		0x2
+#define	GPTMINHDRSIZE		92
+#define	GPTMINPARTSIZE		128
+
+/* all values in the GPT need to be little endian as per UEFI specification */
+struct gpt_header {
+	u_int64_t gh_sig;	/* "EFI PART" */
+	u_int32_t gh_rev;	/* GPT Version 1.0: 0x00000100 */
+	u_int32_t gh_size;	/* Little-Endian */
+	u_int32_t gh_csum;	/* CRC32: with this field as 0 */
+	u_int32_t gh_rsvd;	/* always zero */
+	u_int64_t gh_lba_self;	/* LBA of this header */
+	u_int64_t gh_lba_alt;	/* LBA of alternate header */
+	u_int64_t gh_lba_start;	/* first usable LBA */
+	u_int64_t gh_lba_end;	/* last usable LBA */
+	struct uuid gh_guid;	/* disk GUID used to identify the disk */
+	u_int64_t gh_part_lba;	/* starting LBA of GPT partition entries */
+	u_int32_t gh_part_num;	/* # of partition entries */
+	u_int32_t gh_part_size;	/* size per entry, shall be 128*(2**n)
+				   with n >= 0 */
+	u_int32_t gh_part_csum;	/* CRC32 checksum of all partition entries:
+				 * starts at gh_part_lba and is computed over
+				 * a byte length of gh_part_num*gh_part_size */
+	/* the rest of the block is reserved by UEFI and must be zero */
+};
+
+struct gpt_partition {
+	struct uuid gp_type;	/* partition type GUID */
+	struct uuid gp_guid;	/* unique partition GUID */
+	u_int64_t gp_lba_start;	/* starting LBA of this partition */
+	u_int64_t gp_lba_end;	/* ending LBA of this partition, inclusive,
+				   usually odd */
+	u_int64_t gp_attrs;	/* attribute flags */
+	u_int16_t gp_name[36];	/* partition name, utf-16le */
+	/* the rest of the GPT partition entry, if any, is reserved by UEFI
+	   and must be zero */
+};
+
+#define GPT_PARTSPERSEC(gh)	(DEV_BSIZE / letoh32((gh)->gh_part_size))
+#define GPT_SECOFFSET(gh, n)	((gh)->gh_part_size * n)
+
+#define GPT_UUID_UNUSED \
+    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+#define GPT_UUID_MSDOS \
+    { 0xeb, 0xd0, 0xa0, 0xa2, 0xb9, 0xe5, 0x44, 0x33, \
+      0x87, 0xc0, 0x68, 0xb6, 0xb7, 0x26, 0x99, 0xc7 }
+#define GPT_UUID_EFI_SYSTEM \
+    { 0xc1, 0x2a, 0x73, 0x28, 0xf8, 0x1f, 0x11, 0xd2, \
+      0xba, 0x4b, 0x00, 0xa0, 0xc9, 0x3e, 0xc9, 0x3b }
+#define GPT_UUID_LEGACY_MBR \
+    { 0x02, 0x4d, 0xee, 0x41, 0x33, 0x37, 0x11, 0xd3, \
+      0x9d, 0x69, 0x00, 0x08, 0xc7, 0x81, 0xf3, 0x9f }
+#define GPT_UUID_OPENBSD \
+    { 0x82, 0x4c, 0xc7, 0xa0, 0x36, 0xa8, 0x11, 0xe3, \
+      0x89, 0x0a, 0x95, 0x25, 0x19, 0xad, 0x3f, 0x61 }
+#define GPT_UUID_CHROMEROOTFS \
+    { 0x3c, 0xb8, 0xe2, 0x02, 0x3b, 0x7e, 0x47, 0xdd, \
+      0x8a, 0x3c, 0x7f, 0xf2, 0xa1, 0x3c, 0xfc, 0xec }
+#define GPT_UUID_LINUX \
+    { 0x0f, 0xc6, 0x3d, 0xaf, 0x84, 0x83, 0x47, 0x72, \
+      0x8e, 0x79, 0x3d, 0x69, 0xd8, 0x47, 0x7d, 0xe4 }
+#define GPT_UUID_LINUX_HOME \
+    { 0x93, 0x3a, 0xc7, 0xe1, 0x2e, 0xb4, 0x4f, 0x13, \
+      0xb8, 0x44, 0x0e, 0x14, 0xe2, 0xae, 0xf9, 0x15 }
+#define GPT_UUID_LINUX_SRV \
+    { 0x3b, 0x8f, 0x84, 0x25, 0x20, 0xe0, 0x4f, 0x3b, \
+      0x90, 0x7f, 0x1a, 0x25, 0xa7, 0x6f, 0x98, 0xe8 }
+#define GPT_UUID_FBSD_DATA \
+    { 0x51, 0x6e, 0x7c, 0xb4, 0x6e, 0xcf, 0x11, 0xd6, \
+      0x8f, 0xf8, 0x00, 0x02, 0x2d, 0x09, 0x71, 0x2b }
+#define GPT_UUID_FBSD_UFS \
+    { 0x51, 0x6e, 0x7c, 0xb6, 0x6e, 0xcf, 0x11, 0xd6, \
+      0x8f, 0xf8, 0x00, 0x02, 0x2d, 0x09, 0x71, 0x2b }
+#define GPT_UUID_NBSD_UFS \
+    { 0x49, 0xf4, 0x8d, 0x5a, 0xb1, 0x0e, 0x11, 0xdc, \
+      0xb9, 0x9b, 0x00, 0x19, 0xd1, 0x87, 0x96, 0x48 }
+#define GPT_UUID_APPLE_HFS \
+    { 0x48, 0x46, 0x53, 0x00, 0x00, 0x00, 0x11, 0xaa, \
+      0xaa, 0x11, 0x00, 0x30, 0x65, 0x43, 0xec, 0xac }
+#define GPT_UUID_APPLE_UFS \
+    { 0x55, 0x46, 0x53, 0x00, 0x00, 0x00, 0x11, 0xaa, \
+      0xaa, 0x11, 0x00, 0x30, 0x65, 0x43, 0xec, 0xac }
+
 /* DOS partition table -- located at start of some disks. */
 #define	DOS_LABELSECTOR 1
 #define	DOSBBSECTOR	0		/* DOS boot block relative sector # */
@@ -445,6 +537,10 @@ int	 writedisklabel(dev_t, void (*)(struct buf *), struct disklabel *);
 int	 bounds_check_with_label(struct buf *, struct disklabel *);
 int	 readdoslabel(struct buf *, void (*)(struct buf *),
 	    struct disklabel *, daddr_t *, int);
+#ifdef GPT
+int	 readgptlabel(struct buf *, void (*)(struct buf *),
+	    struct disklabel *, daddr_t *, int);
+#endif
 #ifdef CD9660
 int iso_disklabelspoof(dev_t dev, void (*strat)(struct buf *),
 	struct disklabel *lp);
