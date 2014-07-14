@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.h,v 1.17 2013/01/14 23:06:10 deraadt Exp $ */
+/*	$OpenBSD: ip_ether.h,v 1.18 2014/07/14 12:18:30 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@adk.gr)
  *
@@ -43,12 +43,12 @@ struct etheripstat {
 
 struct etherip_header {
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_int		eip_oldver:4;	/* reserved */
+	u_int		eip_res:4;	/* reserved */
 	u_int		eip_ver:4;	/* version */
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
 	u_int		eip_ver:4;	/* version */
-	u_int		eip_oldver:4;	/* reserved */
+	u_int		eip_res:4;	/* reserved */
 #endif
 	u_int8_t	eip_pad;	/* required padding byte */
 } __packed;
