@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 2014/07/13 22:53:39 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.39 2014/07/14 08:36:31 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -217,7 +217,6 @@ boot(int howto)
 	splhigh();
 	cold = 1;
 
-	/* Do a dump if requested. */
 	if (howto & RB_DUMP)
 		dumpsys();
 
