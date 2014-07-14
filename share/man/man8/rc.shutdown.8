@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.shutdown.8,v 1.13 2011/07/08 02:14:13 ajacoutot Exp $
+.\"	$OpenBSD: rc.shutdown.8,v 1.14 2014/07/14 09:14:11 ajacoutot Exp $
 .\"
 .\" Copyright (c) 1999 Aaron Campbell
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 8 2011 $
+.Dd $Mdocdate: July 14 2014 $
 .Dt RC.SHUTDOWN 8
 .Os
 .Sh NAME
@@ -69,13 +69,6 @@ any commands they wish to have executed during shutdown.
 Finally, all
 .Xr carp 4
 interfaces are brought down and then the system shuts down.
-If
-.Nm
-has the variable
-.Va powerdown
-set to
-.Dq YES ,
-the machine will attempt to power off after it has halted.
 .Pp
 If
 .Xr init 8
