@@ -70,6 +70,9 @@
 ./etc/ppp/pap-secrets
 ./etc/pwd.db
 ./etc/rc.conf
+./etc/rc.local
+./etc/rc.securelevel
+./etc/rc.shutdown
 ./etc/shells
 ./etc/skel/.Xdefaults
 ./etc/skel/.cshrc
