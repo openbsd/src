@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.400 2014/07/12 17:10:51 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.401 2014/07/14 08:22:10 zhuk Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 12 2014 $
+.Dd $Mdocdate: July 14 2014 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -677,7 +677,7 @@ Force rebuild of the port.
 Run regression tests for the port.
 Essentially depend on a correct build and invoke
 .Bd -literal
-env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${ALL_TEST_FLAGS} \e
+env -i ${ALL_TEST_ENV} ${MAKE_PROGRAM} ${ALL_TEST_FLAGS} \e
 	-f ${MAKE_FILE} ${TEST_TARGET} ${TEST_LOG}
 .Ed
 .Pp
@@ -892,6 +892,11 @@ one variable value per line.
 Flags passed to ${MAKE} invocations during the fake process.
 Equals
 .Li ${MAKE_FLAGS} ${DESTDIRNAME}=${WRKINST} ${FAKE_FLAGS} .
+Read-only.
+.It Ev ALL_TEST_ENV
+Environment passed to test.
+Equals
+.Li ${MAKE_ENV} ${TEST_ENV} .
 Read-only.
 .It Ev ALL_TEST_FLAGS
 Flags passed to ${MAKE} invocations during test.
@@ -1844,7 +1849,7 @@ E-mail address with full name of the port's maintainer.
 Defaults to
 .Mt ports@openbsd.org .
 .It Ev MAKE_ENV
-Environment variables passed to make invocations.
+Environment variables passed to make invocations and tests.
 Sets at least PATH, PREFIX, LOCALBASE, X11BASE, CFLAGS, TRUEPREFIX, DESTDIR,
 and the BSD_INSTALL_* macros.
 .It Ev MAKE_FLAGS
@@ -2548,6 +2553,9 @@ See
 .Ev BUILD_DEPENDS
 for specification.
 Test dependencies are only checked if the test stage is invoked.
+.It Ev TEST_ENV
+Additional environment variables passed to tests.
+Empty by default.
 .It Ev TEST_FLAGS
 Extra flags passed to ${MAKE_PROGRAM} to run the regression tests.
 Empty by default.
