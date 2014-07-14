@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.22 2011/11/06 01:43:50 guenther Exp $	*/
+/*	$OpenBSD: proc.c,v 1.23 2014/07/14 05:53:29 guenther Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -689,13 +689,12 @@ pprint(struct process *pp, bool flag)
 		hadnl = 0;
 	    }
 	    if (flag & (REASON | AREASON)) {
+		int width = 0;
 		if (flag & NAME)
-		    format = "%-23s";
-		else
-		    format = "%s";
+		    width = -23;
 		if (pstatus == status)
 		    if (pp->p_reason == reason) {
-			(void) fprintf(cshout, format, "");
+			(void) fprintf(cshout, "%*s", width, "");
 			hadnl = 0;
 			goto prcomd;
 		    }
@@ -708,7 +707,7 @@ pprint(struct process *pp, bool flag)
 		switch (status) {
 
 		case PRUNNING:
-		    (void) fprintf(cshout, format, "Running ");
+		    (void) fprintf(cshout, "%*s", width, "Running ");
 		    hadnl = 0;
 		    break;
 
@@ -725,7 +724,7 @@ pprint(struct process *pp, bool flag)
 			    && reason != SIGINT
 			    && (reason != SIGPIPE
 				|| (pp->p_flags & PPOU) == 0))) {
-			(void) fprintf(cshout, format,
+			(void) fprintf(cshout, "%*s", width,
 				       sys_siglist[(unsigned char)
 						   pp->p_reason]);
 			hadnl = 0;
@@ -738,7 +737,7 @@ pprint(struct process *pp, bool flag)
 			if (pp->p_reason)
 			    (void) fprintf(cshout, "Exit %-18d", pp->p_reason);
 			else
-			    (void) fprintf(cshout, format, "Done");
+			    (void) fprintf(cshout, "%*s", width, "Done");
 			hadnl = 0;
 		    }
 		    break;
