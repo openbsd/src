@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.28 2014/04/18 10:00:48 schwarze Exp $
+# $OpenBSD: Paths.pm,v 1.29 2014/07/14 08:47:49 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -67,6 +67,8 @@ sub portsdir() { '/usr/ports' }
 sub library_dirs() { ("/usr", "/usr/X11R6") }
 sub master_keys() { ("/etc/master_key") }
 sub pkgconf() { "/etc/pkg.conf" }
+sub srclocatedb() { "/usr/lib/locate/src.db" }
+sub xlocatedb() { "/usr/X11R6/lib/locate/xorg.db" }
 
 sub font_cruft() { ("fonts.alias", "fonts.dir", "fonts.cache-1", "fonts.scale") }
 sub man_cruft() { ("whatis.db", "mandoc.db", "mandoc.index") }

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.52 2014/07/13 17:17:21 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.53 2014/07/14 08:47:49 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -551,8 +551,8 @@ sub fill_base_system
 {
 	my ($self, $state) = @_;
 	open(my $cmd, '-|', 'locate', 
-	    '-d', '/usr/lib/locate/src.db', 
-	    '-d', '/usr/X11R6/lib/locate/xorg.db', ':');
+	    '-d', OpenBSD::Paths->srclocatedb,
+	    '-d', OpenBSD::Paths->xlocatedb, ':');
 	while (<$cmd>) {
 		chomp;
 		my ($set, $path) = split(':', $_, 2);
@@ -723,8 +723,6 @@ sub package_files_check
 		} else {
 			$plist->thorough_check($state);
 		}
-		$state->{known}{$plist->infodir}{OpenBSD::PackageInfo::REQUIRED_BY} = 1;
-		$state->{known}{$plist->infodir}{OpenBSD::PackageInfo::REQUIRING} = 1;
 		$plist->mark_available_lib($plist->pkgname, $state);
 	});
 }
@@ -835,7 +833,7 @@ sub fill_root
 	    '/etc/mtree/BSD.x11.dist', 1);
 }
 
-sub localbase_check
+sub filesystem_check
 {
 	my ($self, $state) = @_;
 	$state->{known} //= {};
@@ -848,6 +846,13 @@ sub localbase_check
 	$state->progress->set_header("Checking file system");
 	find(sub {
 		$state->progress->working(1024);
+		if (-d $_) {
+			for my $i ('/dev', '/home', OpenBSD::Paths->pkgdb, '/var/log', '/var/backups', '/var/cron', '/var/run', '/tmp', '/var/tmp') {
+				if ($File::Find::name eq $state->destdir($i)) {
+					$File::Find::prune = 1;
+				}
+			}
+		}
 		if (defined $state->{basesystem}{$File::Find::name}) {
 			delete $state->{basesystem}{$File::Find::name};
 			return;
@@ -860,11 +865,6 @@ sub localbase_check
 				return;
 			}
 			# some directories we've got to ignore
-			for my $i ('/dev', '/home', OpenBSD::Paths->pkgdb, '/var/log', '/var/backups', '/var/cron', '/var/run', '/tmp', '/var/tmp') {
-				if ($File::Find::name eq $state->destdir($i)) {
-					$File::Find::prune = 1;
-				}
-			}
 			if (! -r -x _) {
 				$File::Find::prune = 1;
 				$state->errsay("can't enter #1", 
@@ -910,7 +910,7 @@ sub run
 	$state->log->dump;
 	$self->package_files_check($state, \@list);
 	$state->log->dump;
-	$self->localbase_check($state);
+	$self->filesystem_check($state);
 	$state->progress->next;
 }
 
