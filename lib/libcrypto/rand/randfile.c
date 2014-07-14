@@ -1,4 +1,4 @@
-/* $OpenBSD: randfile.c,v 1.38 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: randfile.c,v 1.39 2014/07/14 00:01:39 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,6 +59,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 
 #include <openssl/crypto.h>
@@ -91,35 +92,28 @@ RAND_write_file(const char *file)
 	unsigned char buf[BUFSIZE];
 	int i, ret = 0, rand_err = 0;
 	FILE *out = NULL;
-	int n;
+	int n, fd;
 	struct stat sb;
 
-	i = stat(file, &sb);
-	if (i != -1) {
-		if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
-			/* this file is a device. we don't write back to it.
-			 * we "succeed" on the assumption this is some sort
-			 * of random device. Otherwise attempting to write to
-			 * and chmod the device causes problems.
-			 */
-			return (1);
-		}
+	/*
+	 * If this file is a device, avoid opening it.
+	 * XXX TOCTOU
+	 */
+	if (stat(file, &sb) != -1 &&
+	    (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode))) {
+		return (1);
 	}
 
-	{
-		/* chmod(..., 0600) is too late to protect the file,
-		 * permissions should be restrictive from the start */
-		int fd = open(file, O_WRONLY|O_CREAT, 0600);
-		if (fd != -1)
-			out = fdopen(fd, "wb");
+	fd = open(file, O_WRONLY|O_CREAT, 0600);
+	if (fd == -1)
+		return (1);
+	out = fdopen(fd, "wb");
+
+	if (out == NULL) {
+		close(fd);
+		return (1);
 	}
 
-	if (out == NULL)
-		out = fopen(file, "wb");
-	if (out == NULL)
-		goto err;
-
-	chmod(file, 0600);
 	n = RAND_DATA;
 	for (;;) {
 		i = (n > BUFSIZE) ? BUFSIZE : n;
@@ -138,13 +132,11 @@ RAND_write_file(const char *file)
 
 	fclose(out);
 	OPENSSL_cleanse(buf, BUFSIZE);
-
-err:
 	return (rand_err ? -1 : ret);
 }
 
 const char *
-RAND_file_name(char *buf, size_t size)
+RAND_file_name(char * buf, size_t size)
 {
 	if (strlcpy(buf, "/dev/urandom", size) >= size)
 		return (NULL);
