@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.34 2014/05/24 18:51:00 guenther Exp $	*/
+/*	$OpenBSD: tables.c,v 1.35 2014/07/14 05:58:19 guenther Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -292,7 +292,6 @@ lnk_end(void)
 			free(ppt);
 		}
 	}
-	return;
 }
 
 /*
@@ -607,7 +606,6 @@ sub_name(char *oname, int *onamelen, size_t onamesize)
 	/*
 	 * no match, just return
 	 */
-	return;
 }
 
 /*
@@ -1004,7 +1002,6 @@ add_atdir(char *fname, dev_t dev, ino_t ino, time_t mtime, time_t atime)
 
 	sigprocmask(SIG_SETMASK, &savedsigs, NULL);
 	paxwarn(1, "Directory access time reset table ran out of memory");
-	return;
 }
 
 /*
