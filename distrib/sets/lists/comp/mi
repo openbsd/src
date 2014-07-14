@@ -634,6 +634,7 @@
 ./usr/include/dev/pci/pciide_opti_reg.h
 ./usr/include/dev/pci/pciide_pdc202xx_reg.h
 ./usr/include/dev/pci/pciide_piix_reg.h
+./usr/include/dev/pci/pciide_rdc_reg.h
 ./usr/include/dev/pci/pciide_sii3112_reg.h
 ./usr/include/dev/pci/pciide_sis_reg.h
 ./usr/include/dev/pci/pciide_svwsata_reg.h
@@ -1232,6 +1233,7 @@
 ./usr/include/readpassphrase.h
 ./usr/include/regex.h
 ./usr/include/resolv.h
+./usr/include/ressl.h
 ./usr/include/rmd160.h
 ./usr/include/rpc
 ./usr/include/rpc/auth.h
@@ -1581,6 +1583,8 @@
 ./usr/lib/libpthread_p.a
 ./usr/lib/libreadline.a
 ./usr/lib/libreadline_p.a
+./usr/lib/libressl.a
+./usr/lib/libressl_p.a
 ./usr/lib/librpcsvc.a
 ./usr/lib/librpcsvc_p.a
 ./usr/lib/libskey.a
@@ -5926,7 +5930,9 @@
 ./usr/share/man/man9/FREF.9
 ./usr/share/man/man9/FRELE.9
 ./usr/share/man/man9/KASSERT.9
+./usr/share/man/man9/KASSERTMSG.9
 ./usr/share/man/man9/KDASSERT.9
+./usr/share/man/man9/KDASSERTMSG.9
 ./usr/share/man/man9/KNOTE.9
 ./usr/share/man/man9/KTRPOINT.9
 ./usr/share/man/man9/MCLGET.9

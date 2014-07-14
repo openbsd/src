@@ -1,8 +1,4 @@
-./etc/nginx/mime.types
-./etc/netstart
-./etc/rc
 ./altroot
-./etc/disktab
 ./bin
 ./bin/[
 ./bin/cat
@@ -51,6 +47,7 @@
 ./etc
 ./etc/amd
 ./etc/disklabels
+./etc/disktab
 ./etc/examples
 ./etc/examples/bgpd.conf
 ./etc/examples/chio.conf
@@ -99,6 +96,9 @@
 ./etc/isakmpd/pubkeys/ufqdn
 ./etc/ldap
 ./etc/ldap/certs
+./etc/ldap/core.schema
+./etc/ldap/inetorgperson.schema
+./etc/ldap/nis.schema
 ./etc/magic
 ./etc/mail
 ./etc/moduli
@@ -107,14 +107,17 @@
 ./etc/mtree/BSD.local.dist
 ./etc/mtree/BSD.x11.dist
 ./etc/mtree/special
+./etc/netstart
 ./etc/networks
 ./etc/nginx
+./etc/nginx/mime.types
 ./etc/npppd
 ./etc/pf.os
 ./etc/ppp
 ./etc/ppp/chatscript.sample
 ./etc/ppp/options.sample
 ./etc/protocols
+./etc/rc
 ./etc/rc.d
 ./etc/rc.d/amd
 ./etc/rc.d/apmd
@@ -127,9 +130,6 @@
 ./etc/rc.d/ftpd
 ./etc/rc.d/ftpproxy
 ./etc/rc.d/hostapd
-./etc/ldap/core.schema
-./etc/ldap/inetorgperson.schema
-./etc/ldap/nis.schema
 ./etc/rc.d/hotplugd
 ./etc/rc.d/identd
 ./etc/rc.d/ifstated
@@ -1130,7 +1130,6 @@
 ./usr/libdata/perl5/OpenBSD/PackageRepository/Installed.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository/Persistant.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository/SCP.pm
-./usr/libdata/perl5/OpenBSD/PackageRepository/Source.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepositoryList.pm
 ./usr/libdata/perl5/OpenBSD/PackingElement.pm
 ./usr/libdata/perl5/OpenBSD/PackingList.pm

@@ -36,6 +36,7 @@
 ./usr/lib/libperl.so.15.0
 ./usr/lib/libpthread.so.18.0
 ./usr/lib/libreadline.so.4.0
+./usr/lib/libressl.so.1.0
 ./usr/lib/librpcsvc.so.2.0
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.6.0
@@ -1224,6 +1225,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_pdc202xx_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_piix_reg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_rdc_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_sii3112_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_sis_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_svwsata_reg.ph
@@ -1965,6 +1967,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/regex.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/resolv.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/ressl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/rmd160.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/rpc
 ./usr/libdata/perl5/site_perl/arm-openbsd/rpc/auth.ph
