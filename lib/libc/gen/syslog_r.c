@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.4 2013/04/29 00:28:23 okan Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.5 2014/07/14 03:52:04 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,10 +29,8 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/uio.h>
-#include <sys/un.h>
 #include <netdb.h>
 
 #include <errno.h>
@@ -46,8 +44,7 @@
 
 extern char	*__progname;		/* Program name, from crt0. */
 
-static void	disconnectlog_r(struct syslog_data *);	/* disconnect from syslogd */
-static void	connectlog_r(struct syslog_data *);	/* (re)connect to syslogd */
+int	sendsyslog(const char *, size_t);
 
 void	__vsyslog_r(int pri, struct syslog_data *, size_t (*)(char *, size_t),
     const char *, va_list);
@@ -210,32 +207,11 @@ __vsyslog_r(int pri, struct syslog_data *data,
 		(void)writev(STDERR_FILENO, iov, 2);
 	}
 
-	/* Get connected, output the message to the local logger. */
-	if (!data->opened)
-		openlog_r(data->log_tag, data->log_stat, 0, data);
-	connectlog_r(data);
-
 	/*
-	 * If the send() failed, there are two likely scenarios:
-	 *  1) syslogd was restarted
-	 *  2) /dev/log is out of socket buffer space
-	 * We attempt to reconnect to /dev/log to take care of
-	 * case #1 and keep send()ing data to cover case #2
-	 * to give syslogd a chance to empty its socket buffer.
+	 * If the sendsyslog() fails, it means that syslogd
+	 * is not running.
 	 */
-	if ((error = send(data->log_file, tbuf, cnt, 0)) < 0) {
-		if (errno != ENOBUFS) {
-			disconnectlog_r(data);
-			connectlog_r(data);
-		}
-		do {
-			struct timespec rqt = { 0, 1000 };
-
-			nanosleep(&rqt, NULL);
-			if ((error = send(data->log_file, tbuf, cnt, 0)) >= 0)
-				break;
-		} while (errno == ENOBUFS);
-	}
+	error = sendsyslog(tbuf, cnt);
 
 	/*
 	 * Output the message to the console; try not to block
@@ -256,46 +232,6 @@ __vsyslog_r(int pri, struct syslog_data *data,
 	}
 }
 
-static void
-disconnectlog_r(struct syslog_data *data)
-{
-	/*
-	 * If the user closed the FD and opened another in the same slot,
-	 * that's their problem.  They should close it before calling on
-	 * system services.
-	 */
-	if (data->log_file != -1) {
-		close(data->log_file);
-		data->log_file = -1;
-	}
-	data->connected = 0;		/* retry connect */
-}
-
-static void
-connectlog_r(struct syslog_data *data)
-{
-	struct sockaddr_un SyslogAddr;	/* AF_UNIX address of local logger */
-
-	if (data->log_file == -1) {
-		if ((data->log_file = socket(AF_UNIX, SOCK_DGRAM, 0)) == -1)
-			return;
-		(void)fcntl(data->log_file, F_SETFD, FD_CLOEXEC);
-	}
-	if (data->log_file != -1 && !data->connected) {
-		memset(&SyslogAddr, '\0', sizeof(SyslogAddr));
-		SyslogAddr.sun_len = sizeof(SyslogAddr);
-		SyslogAddr.sun_family = AF_UNIX;
-		strlcpy(SyslogAddr.sun_path, _PATH_LOG,
-		    sizeof(SyslogAddr.sun_path));
-		if (connect(data->log_file, (struct sockaddr *)&SyslogAddr,
-		    sizeof(SyslogAddr)) == -1) {
-			(void)close(data->log_file);
-			data->log_file = -1;
-		} else
-			data->connected = 1;
-	}
-}
-
 void
 openlog_r(const char *ident, int logstat, int logfac, struct syslog_data *data)
 {
@@ -304,19 +240,11 @@ openlog_r(const char *ident, int logstat, int logfac, struct syslog_data *data)
 	data->log_stat = logstat;
 	if (logfac != 0 && (logfac &~ LOG_FACMASK) == 0)
 		data->log_fac = logfac;
-
-	if (data->log_stat & LOG_NDELAY)	/* open immediately */
-		connectlog_r(data);
-
-	data->opened = 1;	/* ident and facility has been set */
 }
 
 void
 closelog_r(struct syslog_data *data)
 {
-	(void)close(data->log_file);
-	data->log_file = -1;
-	data->connected = 0;
 	data->log_tag = NULL;
 }
 

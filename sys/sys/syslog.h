@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.h,v 1.14 2014/07/10 08:55:35 deraadt Exp $	*/
+/*	$OpenBSD: syslog.h,v 1.15 2014/07/14 03:52:04 deraadt Exp $	*/
 /*	$NetBSD: syslog.h,v 1.14 1996/04/03 20:46:44 christos Exp $	*/
 
 /*
@@ -147,16 +147,13 @@ CODE facilitynames[] = {
 /* Used by reentrant functions */
 
 struct syslog_data {
-	int	log_file;
-	int	connected;
-	int	opened;
 	int	log_stat;
 	const char 	*log_tag;
 	int 	log_fac;
 	int 	log_mask;
 };
 
-#define SYSLOG_DATA_INIT {-1, 0, 0, 0, (const char *)0, LOG_USER, 0xff}
+#define SYSLOG_DATA_INIT {0, (const char *)0, LOG_USER, 0xff}
 
 #ifdef _KERNEL
 #define	LOG_PRINTF	-1	/* pseudo-priority to indicate use of printf */
