@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.19 2014/07/12 20:31:52 jasper Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.20 2014/07/14 10:23:58 jasper Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -210,36 +210,36 @@ struct octeon_fau_map {
 #define OCTEON_MAXCPUS	4
 
 struct boot_desc {
-	uint32_t desc_ver;
-	uint32_t desc_size;
-	uint64_t stack_top;
-	uint64_t heap_start;
-	uint64_t heap_end;
-	uint64_t __unused17;
-	uint64_t __unused16;
-	uint32_t __unused18;
-	uint32_t __unused15;
-	uint32_t __unused14;
-	uint32_t argc;
-	uint32_t argv[OCTEON_ARGV_MAX];
-	uint32_t flags;
-	uint32_t core_mask;
-	uint32_t dram_size;
-	uint32_t phy_mem_desc_addr;
-	uint32_t debugger_flag_addr;
-	uint32_t eclock;
-	uint32_t __unused10;
-	uint32_t __unused9;
-	uint16_t __unused8;
-	uint8_t __unused7;
-	uint8_t __unused6;
-	uint16_t __unused5;
-	uint8_t __unused4;
-	uint8_t __unused3;
-	uint8_t __unused2[20];
-	uint8_t __unused1[6];
-	uint8_t __unused0;
-	uint64_t boot_info_addr;
+	uint32_t	desc_ver;
+	uint32_t	desc_size;
+	uint64_t	stack_top;
+	uint64_t 	heap_start;
+	uint64_t	heap_end;
+	uint64_t      	__unused17;
+	uint64_t     	__unused16;
+	uint32_t      	__unused18;
+	uint32_t      	__unused15;
+	uint32_t      	__unused14;
+	uint32_t	argc;
+	uint32_t	argv[OCTEON_ARGV_MAX];
+	uint32_t	flags;
+	uint32_t	core_mask;
+	uint32_t	dram_size;
+	uint32_t	phy_mem_desc_addr;
+	uint32_t	debugger_flag_addr;
+	uint32_t	eclock;
+	uint32_t      	__unused10;
+	uint32_t      	__unused9;
+	uint16_t      	__unused8;
+	uint8_t 	__unused7;
+	uint8_t 	__unused6;
+	uint16_t 	__unused5;
+	uint8_t 	__unused4;
+	uint8_t 	__unused3;
+	uint8_t 	__unused2[20];
+	uint8_t 	__unused1[6];
+	uint8_t 	__unused0;
+	uint64_t 	boot_info_addr;
 };
 
 struct boot_info {
