@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.6 2004/05/09 22:51:52 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2014/07/14 06:39:23 jmc Exp $
 
 PROG=	mount
 SRCS=	mount.c
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
 MAN=	mount.8
-# We do NOT install the getmntopts.3 man page.
 
 .include <bsd.prog.mk>
