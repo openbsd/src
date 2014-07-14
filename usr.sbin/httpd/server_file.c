@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.3 2014/07/13 15:07:50 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.4 2014/07/14 00:19:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -47,19 +47,15 @@
 #include "http.h"
 
 int
-server_response(struct httpd *env, struct client *clt)
+server_file(struct httpd *env, struct client *clt)
 {
 	struct http_descriptor	*desc = clt->clt_desc;
 	struct server		*srv = clt->clt_server;
-	struct kv		*ct, *cl;
 	struct media_type	*media;
 	const char		*errstr = NULL;
-	int			 fd = -1;
+	int			 fd = -1, ret;
 	char			 path[MAXPATHLEN];
 	struct stat		 st;
-
-	if (desc->http_path == NULL)
-		goto fail;
 
 	/* 
 	 * XXX This is not ready XXX
@@ -91,39 +87,22 @@ server_response(struct httpd *env, struct client *clt)
 	if ((fd = open(path, O_RDONLY)) == -1 || fstat(fd, &st) == -1)
 		goto fail;
 
-	kv_purge(&desc->http_headers);
-
-	/* Add error codes */
-	if (kv_setkey(&desc->http_pathquery, "200") == -1 ||
-	    kv_set(&desc->http_pathquery, "%s",
-	    server_httperror_byid(200)) == -1)
-		goto fail;		
-
-	/* Add headers */
-	if (kv_add(&desc->http_headers, "Server", HTTPD_SERVERNAME) == NULL ||
-	    kv_add(&desc->http_headers, "Connection", "close") == NULL ||
-	    (ct = kv_add(&desc->http_headers, "Content-Type", NULL)) == NULL ||
-	    (cl = kv_add(&desc->http_headers, "Content-Length", NULL)) == NULL)
-		goto fail;
-
-	/* Set content type */
 	media = media_find(env->sc_mediatypes, path);
-	if (kv_set(ct, "%s/%s",
-	    media == NULL ? "application" : media->media_type,
-	    media == NULL ? "octet-stream" : media->media_subtype) == -1)
+	ret = server_response_http(clt, 200, media, st.st_size);
+	switch (ret) {
+	case -1:
 		goto fail;
-
-	/* Set content length */
-	if (kv_set(cl, "%ld", st.st_size) == -1)
-		goto fail;
-
-	if (server_writeresponse_http(clt) == -1 ||
-	    server_bufferevent_print(clt, "\r\n") == -1 ||
-	    server_writeheader_http(clt) == -1 ||
-	    server_bufferevent_print(clt, "\r\n") == -1)
-		goto fail;
+	case 0:
+		/* Connection is already finished */
+		close(fd);
+		return (0);
+	default:
+		break;
+	}
 
 	clt->clt_fd = fd;
+	if (clt->clt_file != NULL)
+		bufferevent_free(clt->clt_file);
 	clt->clt_file = bufferevent_new(clt->clt_fd, server_read,
 	    server_write, server_error, clt);
 	if (clt->clt_file == NULL) {

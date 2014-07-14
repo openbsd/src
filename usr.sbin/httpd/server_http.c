@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.5 2014/07/13 15:39:01 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.6 2014/07/14 00:19:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -322,8 +322,6 @@ server_read_http(struct bufferevent *bev, void *arg)
 			if (server_response(env, clt) == -1)
 				return;
 		}
-
-		server_reset_http(clt);
 	}
 	if (clt->clt_done) {
 		server_close(clt, "done");
@@ -513,6 +511,8 @@ server_reset_http(struct client *clt)
 	clt->clt_headerlen = 0;
 	clt->clt_line = 0;
 	clt->clt_done = 0;
+	clt->clt_toread = TOREAD_HTTP_HEADER;
+	clt->clt_bev->readcb = server_read_http;
 }
 
 void
@@ -606,6 +606,109 @@ server_close_http(struct client *clt)
 		return;
 	server_httpdesc_free(desc);
 	free(desc);
+}
+
+int
+server_response(struct httpd *httpd, struct client *clt)
+{
+	struct http_descriptor	*desc	= clt->clt_desc;
+	struct kv		*kv, key;
+	int			 ret;
+
+	if (desc->http_path == NULL)
+		goto fail;
+
+	if (strcmp(desc->http_version, "HTTP/1.1") == 0) {
+		/* Host header is mandatory */
+		key.kv_key = "Host";
+		if ((kv = kv_find(&desc->http_headers, &key)) == NULL)
+			goto fail;
+
+		/* Is the connection persistent? */		
+		if ((kv = kv_find(&desc->http_headers, &key)) != NULL &&
+		    strcasecmp("close", kv->kv_value) == 0)
+			clt->clt_persist = 0;
+		else
+			clt->clt_persist = 1;
+	} else {
+		/* Keep-Alive with HTTP/1.0 not supported */
+		clt->clt_persist = 0;
+	}
+
+	if ((ret = server_file(httpd, clt)) == -1)
+		return (-1);
+
+	/* XXX */
+	if (!(desc->http_method == HTTP_METHOD_HEAD && clt->clt_persist == 0))
+		server_reset_http(clt);
+
+	return (ret);
+ fail:
+	server_abort_http(clt, 400, "bad request");
+	return (-1);
+}
+
+int
+server_response_http(struct client *clt, u_int code,
+    struct media_type *media, size_t size)
+{
+	struct http_descriptor	*desc = clt->clt_desc;
+	const char		*error;
+	struct kv		*ct, *cl;
+
+	if (desc == NULL || (error = server_httperror_byid(code)) == NULL)
+		return (-1);
+
+	kv_purge(&desc->http_headers);
+
+	/* Add error codes */
+	if (kv_setkey(&desc->http_pathquery, "%lu", code) == -1 ||
+	    kv_set(&desc->http_pathquery, "%s", error) == -1)
+		return (-1);
+
+	/* Add headers */
+	if (kv_add(&desc->http_headers, "Server", HTTPD_SERVERNAME) == NULL)
+		return (-1);
+
+	/* Is it a persistent connection? */
+	if (clt->clt_persist) {
+		if (kv_add(&desc->http_headers,
+		    "Connection", "keep-alive") == NULL)
+			return (-1);
+	} else if (kv_add(&desc->http_headers, "Connection", "close") == NULL)
+		return (-1);
+
+	/* Set media type */
+	if ((ct = kv_add(&desc->http_headers, "Content-Type", NULL)) == NULL ||
+	    kv_set(ct, "%s/%s",
+	    media == NULL ? "application" : media->media_type,
+	    media == NULL ? "octet-stream" : media->media_subtype) == -1)
+		return (-1);
+
+	/* Set content length, if specified */
+	if (size && ((cl =
+	    kv_add(&desc->http_headers, "Content-Length", NULL)) == NULL ||
+	    kv_set(cl, "%ld", size) == -1))
+		return (-1);
+
+	/* Write completed header */
+	if (server_writeresponse_http(clt) == -1 ||
+	    server_bufferevent_print(clt, "\r\n") == -1 ||
+	    server_writeheader_http(clt) == -1 ||
+	    server_bufferevent_print(clt, "\r\n") == -1)
+		return (-1);
+
+	if (desc->http_method == HTTP_METHOD_HEAD) {
+		bufferevent_enable(clt->clt_bev, EV_READ|EV_WRITE);
+		if (clt->clt_persist)
+			clt->clt_toread = TOREAD_HTTP_HEADER;
+		else
+			clt->clt_toread = TOREAD_HTTP_NONE;
+		clt->clt_done = 0;
+		return (0);
+	}
+
+	return (1);
 }
 
 int

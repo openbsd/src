@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.2 2014/07/13 14:17:37 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.3 2014/07/14 00:19:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -68,7 +68,8 @@ enum httpchunk {
 	TOREAD_UNLIMITED		= -1,
 	TOREAD_HTTP_HEADER		= -2,
 	TOREAD_HTTP_CHUNK_LENGTH	= -3,
-	TOREAD_HTTP_CHUNK_TRAILER	= -4
+	TOREAD_HTTP_CHUNK_TRAILER	= -4,
+	TOREAD_HTTP_NONE		= -5
 };
 
 #if DEBUG > 1
@@ -264,6 +265,7 @@ struct client {
 	struct bufferevent	*clt_file;
 
 	off_t			 clt_toread;
+	int			 clt_persist;
 	int			 clt_line;
 	size_t			 clt_headerlen;
 	int			 clt_done;
@@ -394,11 +396,14 @@ void	 server_read_httpchunks(struct bufferevent *, void *);
 int	 server_writeheader_kv(struct client *, struct kv *);
 int	 server_writeheader_http(struct client *);
 int	 server_writeresponse_http(struct client *);
+int	 server_response_http(struct client *, u_int, struct media_type *,
+	    size_t);
 void	 server_reset_http(struct client *);
 void	 server_close_http(struct client *);
+int	 server_response(struct httpd *, struct client *);
 
 /* server_file.c */
-int	 server_response(struct httpd *, struct client *);
+int	 server_file(struct httpd *, struct client *);
 
 /* httpd.c */
 void		 event_again(struct event *, int, short,
