@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.66 2014/07/09 15:16:38 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.67 2014/07/14 18:16:27 miod Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -101,7 +101,7 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
 		if ((bufp = realloc(buf, needed)) == NULL) {
 			free(buf);
 			errmsg = "routes buf malloc:";
-			continue;
+			break;
 		}
 		buf = bufp;
 		if (sysctl(mib, 7, buf, &needed, NULL, 0) == -1) {
@@ -138,7 +138,7 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
 		case ROUTE_LABEL_DHCLIENT_OURS:
 			/* Always delete routes we labeled. */
 			delete_route(s, imsg->rdomain, rtm);
-			break;;
+			break;
 		case ROUTE_LABEL_DHCLIENT_DEAD:
 			if (imsg->zapzombies)
 				delete_route(s, imsg->rdomain, rtm);
