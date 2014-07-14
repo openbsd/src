@@ -1,4 +1,4 @@
-.\"     $OpenBSD: securelevel.7,v 1.23 2011/06/24 19:47:48 naddy Exp $
+.\"     $OpenBSD: securelevel.7,v 1.24 2014/07/14 09:21:04 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2000 Hugh Graham
 .\"
@@ -23,7 +23,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 24 2011 $
+.Dd $Mdocdate: July 14 2014 $
 .Dt SECURELEVEL 7
 .Os
 .Sh NAME
@@ -129,9 +129,9 @@ filter and NAT rules may not be altered
 Securelevel provides convenient means of
 .Dq locking down
 a system to a degree suited to its environment.
-It is normally set at boot via the
-.Xr rc.securelevel 8
-script, or the superuser may raise securelevel at any time by modifying the
+It is normally set at boot by
+.Xr rc 8 ,
+or the superuser may raise securelevel at any time by modifying the
 .Va kern.securelevel
 .Xr sysctl 8
 variable.
