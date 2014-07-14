@@ -69,6 +69,9 @@
 ./etc/examples/ospfd.conf
 ./etc/examples/printcap
 ./etc/examples/rbootd.conf
+./etc/examples/rc.local
+./etc/examples/rc.securelevel
+./etc/examples/rc.shutdown
 ./etc/examples/relayd.conf
 ./etc/examples/remote
 ./etc/examples/ripd.conf
