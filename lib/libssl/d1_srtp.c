@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srtp.c,v 1.7 2014/06/29 12:25:47 jsing Exp $ */
+/* $OpenBSD: d1_srtp.c,v 1.8 2014/07/14 08:21:47 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -299,14 +299,14 @@ ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len, int *al)
 	int mki_len;
 	int i, j;
 	int id;
-	int ret;
+	int ret = 1;
 
 	/* Length value + the MKI length */
 	if (len < 3) {
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
 		    SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
 		*al = SSL_AD_DECODE_ERROR;
-		return 1;
+		goto done;
 	}
 
 	/* Pull off the length of the cipher suite list */
@@ -318,7 +318,7 @@ ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len, int *al)
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
 		    SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
 		*al = SSL_AD_DECODE_ERROR;
-		return 1;
+		goto done;
 	}
 
 	/* Check that lengths are consistent */
@@ -326,7 +326,7 @@ ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len, int *al)
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
 		    SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
 		*al = SSL_AD_DECODE_ERROR;
-		return 1;
+		goto done;
 	}
 
 
@@ -354,7 +354,7 @@ ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len, int *al)
 		    SSL_R_BAD_SRTP_MKI_VALUE);
 		*al = SSL_AD_DECODE_ERROR;
 		sk_SRTP_PROTECTION_PROFILE_free(clnt);
-		return 1;
+		goto done;
 	}
 
 	srvr = SSL_get_srtp_profiles(s);
