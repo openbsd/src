@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.433 2014/07/14 09:44:45 ajacoutot Exp $
+#	$OpenBSD: rc,v 1.434 2014/07/14 10:10:44 ajacoutot Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -282,9 +282,7 @@ if [ X"$1" = X"shutdown" ]; then
 			echo '.'
 		fi
 
-		echo /etc/rc.shutdown in progress...
 		[ -f /etc/rc.shutdown ] && sh /etc/rc.shutdown
-		echo /etc/rc.shutdown complete.
 	else
 		echo single user: not running shutdown scripts
 	fi
