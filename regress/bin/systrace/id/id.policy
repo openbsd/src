@@ -1,33 +1,36 @@
-# $OpenBSD: id.policy,v 1.3 2014/07/14 05:44:59 guenther Exp $
+# $OpenBSD: id.policy,v 1.4 2014/07/14 05:49:14 guenther Exp $
 Policy: /usr/bin/id, Emulation: native
-	native-issetugid: permit
-	native-mprotect: permit
-	native-mmap: permit
-	native-fsread: filename eq "/var/run/ld.so.hints" then permit
-	native-fstat: permit
-	native-close: permit
-	native-fsread: filename match "/usr/lib/libc.so.*" then permit
-	native-read: permit
-	native-mquery: permit
-	native-munmap: permit
-	native-sigprocmask: permit
+	native-__kbind: permit
+	native-__set_tcb: permit
 	native-__sysctl: permit
-	native-fsread: filename eq "/etc/malloc.conf" then permit
 	native-break: permit
-	native-getuid: permit
-	native-ioctl: permit
-	native-fsread: filename eq "/etc/spwd.db" then permit
-	native-fsread: filename eq "/etc/pwd.db" then permit
+	native-close: permit
+	native-exit: permit
 	native-fcntl: permit
-	native-pread: permit
+	native-fsread: filename eq "/etc/group" then permit
+	native-fsread: filename eq "/etc/malloc.conf" then permit
+	native-fsread: filename eq "/etc/pwd.db" then permit
+	native-fsread: filename eq "/etc/spwd.db" then permit
+	native-fsread: filename eq "/var/run/ld.so.hints" then permit
+	native-fsread: filename match "/usr/lib/libc.so.*" then permit
+	native-fstat: permit
+	native-getegid: permit
+	native-getentropy: permit
 	native-geteuid: permit
 	native-getgid: permit
-	native-fsread: filename eq "/etc/group" then permit
-	native-getegid: permit
 	native-getgroups: permit
-	native-write: permit
-	native-exit: permit
+	native-getpid: permit
 	native-getrlimit: permit
-	native-getentropy: permit
+	native-getuid: permit
+	native-ioctl: permit
+	native-issetugid: permit
 	native-minherit: permit
-
+	native-mmap: permit
+	native-mprotect: permit
+	native-mquery: permit
+	native-munmap: permit
+	native-pread: permit
+	native-read: permit
+	native-sendsyslog: permit
+	native-sigprocmask: permit
+	native-write: permit

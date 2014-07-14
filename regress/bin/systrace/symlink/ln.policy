@@ -1,17 +1,17 @@
-# $OpenBSD: ln.policy,v 1.2 2014/07/14 05:44:59 guenther Exp $
+# $OpenBSD: ln.policy,v 1.3 2014/07/14 05:49:14 guenther Exp $
 
 Policy: /bin/ln, Emulation: native
 	native-__sysctl: permit
+	native-close: permit
+	native-exit: permit
+	native-fsread: permit
+	native-fstat: permit
+	native-getentropy: permit
+	native-issetugid: permit
+	native-minherit: permit
 	native-mmap: permit
 	native-mprotect: permit
-	native-fsread: permit
-	native-symlink: filename match "/*" then permit
 	native-munmap: permit
-	native-exit: permit
+	native-sendsyslog: permit
+	native-symlink: filename match "/*" then permit
 	native-write: permit
-	native-issetugid: permit
-	native-fstat: permit
-	native-close: permit
-	native-getentropy: permit
-	native-minherit: permit
-
