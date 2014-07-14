@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.34 2014/07/09 12:51:21 guenther Exp $ */
+/*	$OpenBSD: syscall.h,v 1.35 2014/07/14 03:54:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -46,7 +46,6 @@ void	_dl_exit(int);
 int	_dl_fstat(int, struct stat *);
 int	_dl_getcwd(char *, size_t);
 ssize_t	_dl_getdents(int, char *, size_t);
-int	_dl_getentropy(char *, size_t);
 int	_dl_gettimeofday(struct timeval *, struct timezone *);
 int	_dl_issetugid(void);
 int	_dl_lstat(const char *, struct stat *);
@@ -61,6 +60,8 @@ long	_dl__syscall(quad_t, ...);
 int	_dl_sysctl(const int *, u_int, void *, size_t *, void *, size_t);
 int	_dl_utrace(const char *, const void *, size_t);
 ssize_t	_dl_write(int, const char *, size_t);
+int	_dl_getentropy(char *, size_t);
+int	_dl_sendsyslog(const char *, size_t);
 
 static inline off_t
 _dl_lseek(int fildes, off_t offset, int whence)

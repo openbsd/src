@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.26 2014/07/09 12:51:21 guenther Exp $ */
+/*	$OpenBSD: syscall.h,v 1.27 2014/07/14 03:54:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -58,6 +58,7 @@ int	_dl_lstat(const char *, struct stat *);
 int	_dl_getcwd(char *, size_t);
 int	_dl_utrace(const char *, const void *, size_t);
 int	_dl_getentropy(char *, size_t);
+int	_dl_sendsyslog(const char *, size_t);
 
 static inline off_t
 _dl_lseek(int fildes, off_t offset, int whence)
