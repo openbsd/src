@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.41 2014/05/23 19:47:49 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.42 2014/07/14 06:00:22 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -274,7 +274,7 @@ int get_atdir(dev_t, ino_t, time_t *, time_t *);
 int dir_start(void);
 void add_dir(char *, struct stat *, int);
 void proc_dir(int _in_sig);
-u_int st_hash(char *, int, int);
+u_int st_hash(const char *, int, int);
 
 /*
  * tar.c
