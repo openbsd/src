@@ -1,4 +1,4 @@
-# $OpenBSD: ln.policy,v 1.1 2006/08/10 09:00:20 espie Exp $
+# $OpenBSD: ln.policy,v 1.2 2014/07/14 05:44:59 guenther Exp $
 
 Policy: /bin/ln, Emulation: native
 	native-__sysctl: permit
@@ -12,4 +12,6 @@ Policy: /bin/ln, Emulation: native
 	native-issetugid: permit
 	native-fstat: permit
 	native-close: permit
+	native-getentropy: permit
+	native-minherit: permit
 

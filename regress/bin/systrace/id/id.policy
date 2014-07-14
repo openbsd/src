@@ -1,4 +1,4 @@
-# $OpenBSD: id.policy,v 1.2 2004/08/07 18:28:35 marius Exp $
+# $OpenBSD: id.policy,v 1.3 2014/07/14 05:44:59 guenther Exp $
 Policy: /usr/bin/id, Emulation: native
 	native-issetugid: permit
 	native-mprotect: permit
@@ -28,4 +28,6 @@ Policy: /usr/bin/id, Emulation: native
 	native-write: permit
 	native-exit: permit
 	native-getrlimit: permit
+	native-getentropy: permit
+	native-minherit: permit
 
