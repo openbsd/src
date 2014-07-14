@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.89 2014/07/11 18:19:45 halex Exp $	*/
+/*	$OpenBSD: main.c,v 1.90 2014/07/14 05:54:12 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -467,8 +467,12 @@ main(volatile int argc, char *argv[])
 void
 intr(void)
 {
+	int save_errno = errno;
 
+	write(fileno(ttyout), "\n\r", 2);
 	alarmtimer(0);
+
+	errno = save_errno;
 	longjmp(toplevel, 1);
 }
 
@@ -552,8 +556,11 @@ cmdscanner(int top)
 			const char *buf;
 			cursor_pos = NULL;
 
-			if ((buf = el_gets(el, &num)) == NULL || num == 0)
+			if ((buf = el_gets(el, &num)) == NULL || num == 0) {
+				putc('\n', ttyout);
+				fflush(ttyout);
 				quit(0, 0);
+			}
 			if (buf[--num] == '\n') {
 				if (num == 0)
 					break;
