@@ -1,4 +1,4 @@
-# $OpenBSD: usr_sbin_lpd,v 1.5 2004/05/13 04:50:04 sturm Exp $
+# $OpenBSD: usr_sbin_lpd,v 1.6 2014/07/14 05:48:18 guenther Exp $
 #
 # Policy for lpd.
 # This policy works for the default configuration of lpd.
@@ -51,6 +51,7 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-ftruncate: permit
 	native-getdirentries: permit
 	native-getegid: permit
+	native-getentropy: permit
 	native-geteuid: permit
 	native-getpid: permit
 	native-getsockname: permit
@@ -60,6 +61,7 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-kill: permit
 	native-listen: permit
 	native-lseek: permit
+	native-minherit: permit
 	native-mmap: permit
 	native-mprotect: permit
 	native-mquery: permit
@@ -69,6 +71,7 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-read: permit
 	native-recvfrom: permit
 	native-select: permit
+	native-sendsyslog: permit
 	native-sendto: permit
 	native-setegid: gid eq "1" then permit
 	native-seteuid: uid eq "0" then permit
@@ -84,4 +87,3 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-umask: permit
 	native-wait4: permit
 	native-write: permit
-
