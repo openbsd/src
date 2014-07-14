@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.430 2014/07/14 03:45:55 deraadt Exp $
+#	$OpenBSD: rc,v 1.431 2014/07/14 09:04:02 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -283,7 +283,7 @@ if [ X"$1" = X"shutdown" ]; then
 		fi
 
 		echo /etc/rc.shutdown in progress...
-		[ -f /etc/rc.shutdown ] && . /etc/rc.shutdown
+		[ -f /etc/rc.shutdown ] && sh /etc/rc.shutdown
 		echo /etc/rc.shutdown complete.
 	else
 		echo single user: not running shutdown scripts
@@ -296,9 +296,6 @@ if [ X"$1" = X"shutdown" ]; then
 		esac
 	done
 
-	if [ X"${powerdown}" = X"YES" ]; then
-		exit 2
-	fi
 	exit 0
 fi
 
@@ -460,11 +457,8 @@ echo clearing /tmp
 
 setup_X_sockets
 
-[ -f /etc/rc.securelevel ] && . /etc/rc.securelevel
-if [ X"${securelevel}" != X"" ]; then
-	echo -n 'setting kernel security level: '
-	sysctl kern.securelevel=${securelevel}
-fi
+[ -f /etc/rc.securelevel ] && sh /etc/rc.securelevel
+sysctl kern.securelevel=1
 
 # patch /etc/motd
 if [ ! -f /etc/motd ]; then
@@ -537,7 +531,7 @@ if [ -n "${pkg_scripts}" ]; then
 	echo '.'
 fi
 
-[ -f /etc/rc.local ] && . /etc/rc.local
+[ -f /etc/rc.local ] && sh /etc/rc.local
 
 ifconfig -g carp -carpdemote 128	# disable carp interlock
 

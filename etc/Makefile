@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.370 2014/07/13 13:53:36 rpe Exp $
+#	$OpenBSD: Makefile,v 1.371 2014/07/14 09:04:02 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -30,25 +30,24 @@ kernels: bootblocks ${ALL_KERNELS}
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-BIN1=	changelist csh.cshrc csh.login csh.logout daily \
+BIN1=	changelist csh.cshrc csh.login csh.logout daily dhclient.conf \
+	etc.${MACHINE}/disktab etc.${MACHINE}/login.conf \
 	ftpusers gettytab group hosts ksh.kshrc locate.rc \
-	man.conf monthly motd myname netstart networks \
-	newsyslog.conf protocols rc rc.conf rc.local \
-	rc.securelevel rc.shutdown rpc services shells syslog.conf \
-	weekly etc.${MACHINE}/login.conf etc.${MACHINE}/disktab \
-	dhclient.conf mailer.conf moduli pf.os mixerctl.conf
+	mailer.conf man.conf mixerctl.conf moduli monthly motd \
+	myname netstart networks newsyslog.conf pf.os protocols \
+	rc rc.conf rpc services shells syslog.conf weekly
+.if ${MACHINE} != "aviion" 
+BIN1+=	wsconsctl.conf
+.endif
 
 EXAMPLES=chio.conf dhcpd.conf exports ftpchroot hosts.lpd ifstated.conf \
 	inetd.conf mrouted.conf ntpd.conf printcap rbootd.conf remote \
 	sensorsd.conf
 
 EXAMPLES_600=bgpd.conf dvmrpd.conf hostapd.conf iked.conf ipsec.conf \
-	ldapd.conf ldpd.conf ospf6d.conf ospfd.conf relayd.conf ripd.conf \
-	sasyncd.conf snmpd.conf ypldap.conf
-
-.if ${MACHINE} != "aviion" 
-BIN1+=	wsconsctl.conf
-.endif
+	ldapd.conf ldpd.conf ospf6d.conf ospfd.conf rc.local \
+	rc.securelevel rc.shutdown relayd.conf ripd.conf \
+	sasyncd.conf snmpd.conf ypldap.conf 
 
 # -rw-rw-r--
 BIN2=	motd

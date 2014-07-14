@@ -1,10 +1,6 @@
-#	$OpenBSD: rc.shutdown,v 1.12 2011/04/22 06:08:14 ajacoutot Exp $
+#	$OpenBSD: rc.shutdown,v 1.1 2014/07/14 09:04:02 deraadt Exp $
 #
 # If it exists, this script is run at system-shutdown by reboot(8),
 # halt(8).  If the architecture supports keyboard requested halting,
 # it is also run by init(8) when such an event happens.
 #
-
-powerdown=NO	# set to YES for powerdown
-
-# Add your local shutdown actions here.

@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.local,v 1.44 2011/04/22 06:08:14 ajacoutot Exp $
+#	$OpenBSD: rc.local,v 1.1 2014/07/14 09:04:02 deraadt Exp $
 
 # Site-specific startup actions, daemons, and other things which
 # can be done AFTER your system goes into securemode.  For actions
