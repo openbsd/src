@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.192 2014/07/12 16:25:08 guenther Exp $
+#	$OpenBSD: Makefile,v 1.193 2014/07/14 01:01:27 deraadt Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -38,13 +38,13 @@ LDIRS=	crypto ddb dev isofs miscfs msdosfs net netinet netinet6 \
 PRDIRS=
 
 # Directories with an includes target
-RDIRS=	../lib/libcrypto ../lib/libcurses \
-	../lib/libedit ../lib/libevent ../lib/libexpat \
-	../lib/libform ../lib/libfuse ../lib/libkeynote \
-	../lib/libmenu ../lib/libocurses ../lib/libossaudio \
-	../lib/libpanel ../lib/libpcap ../lib/librpcsvc ../lib/librthread \
-	../lib/libskey ../lib/libsqlite3 ../lib/libssl \
-	../lib/libusbhid ../lib/libutil ../lib/libz \
+RDIRS=	../lib/libcrypto ../lib/libcurses ../lib/libedit \
+	../lib/libevent ../lib/libexpat ../lib/libform \
+	../lib/libfuse ../lib/libkeynote ../lib/libmenu \
+	../lib/libocurses ../lib/libossaudio ../lib/libpanel \
+	../lib/libpcap ../lib/libressl ../lib/librpcsvc \
+	../lib/librthread ../lib/libskey ../lib/libsqlite3 \
+	../lib/libssl ../lib/libusbhid ../lib/libutil ../lib/libz \
 	../usr.bin/lex ../gnu/lib/libreadline \
 	../gnu/usr.sbin/sendmail/libmilter \
 	../sys/arch/${MACHINE}
