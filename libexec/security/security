@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.30 2014/06/26 16:00:16 schwarze Exp $
+# $OpenBSD: security,v 1.31 2014/07/14 08:49:27 schwarze Exp $
 #
 # Copyright (c) 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -461,6 +461,7 @@ sub check_mailboxes {
 # File systems should not be globally exported.
 sub check_exports {
 	my $filename = '/etc/exports';
+	return unless -e $filename;
 	nag !(open my $fh, '<', $filename), "open: $filename: $!" and return;
 
 	LINE: while (<$fh>) {
