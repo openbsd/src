@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.30 2014/07/13 15:39:01 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.31 2014/07/14 00:11:12 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -173,6 +173,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	struct kv		*hdr = NULL;
 
 	getmonotime(&con->se_tv_last);
+	cre->timedout = 0;
 
 	size = EVBUFFER_LENGTH(src);
 	DPRINTF("%s: session %d: size %lu, to read %lld",
@@ -457,6 +458,7 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	size_t			 size;
 
 	getmonotime(&con->se_tv_last);
+	cre->timedout = 0;
 
 	size = EVBUFFER_LENGTH(src);
 	DPRINTF("%s: session %d: size %lu, to read %lld", __func__,
@@ -510,6 +512,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	size_t			 size;
 
 	getmonotime(&con->se_tv_last);
+	cre->timedout = 0;
 
 	size = EVBUFFER_LENGTH(src);
 	DPRINTF("%s: session %d: size %lu, to read %lld", __func__,

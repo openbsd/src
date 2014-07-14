@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.188 2014/07/13 00:32:08 benno Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.189 2014/07/14 00:11:12 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -183,10 +183,11 @@ struct ctl_relay_event {
 	enum sslreneg_state	 sslreneg_state;
 
 	off_t			 splicelen;
-	int			 line;
-	size_t			 headerlen;
 	off_t			 toread;
+	size_t			 headerlen;
+	int			 line;
 	int			 done;
+	int			 timedout;
 	enum direction		 dir;
 
 	u_int8_t		*buf;
