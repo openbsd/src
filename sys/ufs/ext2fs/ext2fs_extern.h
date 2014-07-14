@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.34 2014/05/27 14:31:24 krw Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.35 2014/07/14 08:54:13 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -57,95 +57,89 @@ extern struct pool ext2fs_dinode_pool;	/* memory pool for dinodes */
 __BEGIN_DECLS
 
 /* ext2fs_alloc.c */
-int ext2fs_alloc(struct inode *, int32_t, int32_t , struct ucred *,
-		   int32_t *);
-int ext2fs_realloccg(struct inode *, int32_t, int32_t, int, int,
-			  struct ucred *, struct buf **);
-int ext2fs_reallocblks(void *);
-int ext2fs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *,
-    struct vnode **);
-daddr_t ext2fs_blkpref(struct inode *, int32_t, int, int32_t *);
-void ext2fs_blkfree(struct inode *, int32_t);
-int ext2fs_inode_free(struct inode *pip, ufsino_t ino, mode_t mode);
+int	ext2fs_alloc(struct inode *, u_int32_t, u_int32_t , struct ucred *,
+	    u_int32_t *);
+int	ext2fs_inode_alloc(struct inode *, mode_t mode, struct ucred *,
+	    struct vnode **);
+daddr_t	ext2fs_blkpref(struct inode *, u_int32_t, int, u_int32_t *);
+void	ext2fs_blkfree(struct inode *, u_int32_t);
+void	ext2fs_inode_free(struct inode *, ufsino_t, mode_t);
 
 /* ext2fs_balloc.c */
-int ext2fs_buf_alloc(struct inode *, daddr_t, int, struct ucred *,
-			struct buf **, int);
+int	ext2fs_buf_alloc(struct inode *, u_int32_t, int, struct ucred *,
+	    struct buf **, int);
 
 /* ext2fs_bmap.c */
-int ext2fs_bmap(void *);
+int	ext2fs_bmap(void *);
 
 /* ext2fs_inode.c */
-int ext2fs_init(struct vfsconf *);
-u_int64_t ext2fs_size(struct inode *);
-int ext2fs_setsize(struct inode *, u_int64_t);
-int ext2fs_update(struct inode *ip, int waitfor);
-int ext2fs_truncate(struct inode *, off_t, int, struct ucred *);
-int ext2fs_inactive(void *);
+u_int64_t	ext2fs_size(struct inode *);
+int	ext2fs_init(struct vfsconf *);
+int	ext2fs_setsize(struct inode *, u_int64_t);
+int	ext2fs_update(struct inode *ip, int waitfor);
+int	ext2fs_truncate(struct inode *, off_t, int, struct ucred *);
+int	ext2fs_inactive(void *);
 
 /* ext2fs_lookup.c */
-int ext2fs_readdir(void *);
-int ext2fs_lookup(void *);
-int ext2fs_direnter(struct inode *, struct vnode *,
-									struct componentname *);
-int ext2fs_dirremove(struct vnode *, struct componentname *);
-int ext2fs_dirrewrite(struct inode *, struct inode *,
-								struct componentname *);
-int ext2fs_dirempty(struct inode *, ufsino_t, struct ucred *);
-int ext2fs_checkpath(struct inode *, struct inode *, struct ucred *);
+int	ext2fs_readdir(void *);
+int	ext2fs_lookup(void *);
+int	ext2fs_direnter(struct inode *, struct vnode *, struct componentname *);
+int	ext2fs_dirremove(struct vnode *, struct componentname *);
+int	ext2fs_dirrewrite(struct inode *, struct inode *, struct componentname *);
+int	ext2fs_dirempty(struct inode *, ufsino_t, struct ucred *);
+int	ext2fs_checkpath(struct inode *, struct inode *, struct ucred *);
 
 /* ext2fs_subr.c */
-int ext2fs_bufatoff(struct inode *, off_t, char **, struct buf **);
-int ext2fs_vinit(struct mount *, struct vops *, struct vops *,
-    struct vnode **);
-void ext2fs_fragacct(struct m_ext2fs *, int, int32_t[], int);
+int	ext2fs_bufatoff(struct inode *, off_t, char **, struct buf **);
+int	ext2fs_vinit(struct mount *, struct vops *, struct vops *,
+	    struct vnode **);
 #ifdef DIAGNOSTIC
 void	ext2fs_checkoverlap(struct buf *, struct inode *);
 #endif
 
 /* ext2fs_vfsops.c */
-int ext2fs_mountroot(void);
-int ext2fs_mount(struct mount *, const char *, void *,
-		   struct nameidata *, struct proc *);
-int ext2fs_reload(struct mount *, struct ucred *, struct proc *);
-int ext2fs_mountfs(struct vnode *, struct mount *, struct proc *);
-int ext2fs_unmount(struct mount *, int, struct proc *);
-int ext2fs_flushfiles(struct mount *, int, struct proc *);
-int ext2fs_statfs(struct mount *, struct statfs *, struct proc *);
-int ext2fs_sync(struct mount *, int, struct ucred *, struct proc *);
-int ext2fs_vget(struct mount *, ino_t, struct vnode **);
-int ext2fs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int ext2fs_vptofh(struct vnode *, struct fid *);
-int ext2fs_sbupdate(struct ufsmount *, int);
-int ext2fs_cgupdate(struct ufsmount *, int);
-int ext2fs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-		       struct proc *);
+int	ext2fs_mountroot(void);
+int	ext2fs_mount(struct mount *, const char *, void *, struct nameidata *,
+	    struct proc *);
+int	ext2fs_reload(struct mount *, struct ucred *, struct proc *);
+int	ext2fs_mountfs(struct vnode *, struct mount *, struct proc *);
+int	ext2fs_unmount(struct mount *, int, struct proc *);
+int	ext2fs_flushfiles(struct mount *, int, struct proc *);
+int	ext2fs_statfs(struct mount *, struct statfs *, struct proc *);
+int	ext2fs_sync(struct mount *, int, struct ucred *, struct proc *);
+int	ext2fs_vget(struct mount *, ino_t, struct vnode **);
+int	ext2fs_fhtovp(struct mount *, struct fid *, struct vnode **);
+int	ext2fs_vptofh(struct vnode *, struct fid *);
+int	ext2fs_sbupdate(struct ufsmount *, int);
+int	ext2fs_cgupdate(struct ufsmount *, int);
+int	ext2fs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
+	    struct proc *);
 
 /* ext2fs_readwrite.c */
-int ext2fs_read(void *);
-int ext2fs_write(void *);
+int	ext2fs_read(void *);
+int	ext2fs_write(void *);
 
 /* ext2fs_vnops.c */
-int ext2fs_create(void *);
-int ext2fs_mknod(void *);
-int ext2fs_open(void *);
-int ext2fs_access(void *);
-int ext2fs_getattr(void *);
-int ext2fs_setattr(void *);
-int ext2fs_remove(void *);
-int ext2fs_link(void *);
-int ext2fs_rename(void *);
-int ext2fs_mkdir(void *);
-int ext2fs_rmdir(void *);
-int ext2fs_symlink(void *);
-int ext2fs_readlink(void *);
-int ext2fs_pathconf(void *);
-int ext2fs_advlock(void *);
-int ext2fs_makeinode(int, struct vnode *, struct vnode **,
-                     struct componentname *cnp);
-int ext2fs_fsync(void *);
-int ext2fs_reclaim(void *);
-int ext2fsfifo_reclaim(void *);
+int	ext2fs_create(void *);
+int	ext2fs_mknod(void *);
+int	ext2fs_open(void *);
+int	ext2fs_access(void *);
+int	ext2fs_getattr(void *);
+int	ext2fs_setattr(void *);
+int	ext2fs_remove(void *);
+int	ext2fs_link(void *);
+int	ext2fs_rename(void *);
+int	ext2fs_mkdir(void *);
+int	ext2fs_rmdir(void *);
+int	ext2fs_symlink(void *);
+int	ext2fs_readlink(void *);
+int	ext2fs_pathconf(void *);
+int	ext2fs_advlock(void *);
+int	ext2fs_makeinode(int, struct vnode *, struct vnode **,
+	    struct componentname *cnp);
+int	ext2fs_fsync(void *);
+int	ext2fs_reclaim(void *);
+int	ext2fsfifo_reclaim(void *);
 
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_balloc.c,v 1.22 2014/07/13 16:59:35 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_balloc.c,v 1.23 2014/07/14 08:54:13 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_balloc.c,v 1.10 2001/07/04 21:16:01 chs Exp $	*/
 
 /*
@@ -54,17 +54,17 @@
  * the inode and the logical block number in a file.
  */
 int
-ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
+ext2fs_buf_alloc(struct inode *ip, u_int32_t bn, int size, struct ucred *cred,
     struct buf **bpp, int flags)
 {
 	struct m_ext2fs *fs;
 	struct buf *bp, *nbp;
 	struct vnode *vp = ITOV(ip);
 	struct indir indirs[NIADDR + 2];
-	int32_t nb, newb, *bap;
+	u_int32_t nb, newb, *bap;
 	int num, i, error;
 	u_int deallocated;
-	int32_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
+	u_int32_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
 	int unwindidx = -1;
 	daddr_t lbn, pref;
 
@@ -126,7 +126,7 @@ ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
 	allocib = NULL;
 	allocblk = allociblk;
 	if (nb == 0) {
-		pref = ext2fs_blkpref(ip, lbn, 0, (int32_t *)0);
+		pref = ext2fs_blkpref(ip, lbn, 0, NULL);
 		error = ext2fs_alloc(ip, lbn, pref, cred, &newb);
 		if (error)
 			return (error);
@@ -156,7 +156,7 @@ ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
 			brelse(bp);
 			goto fail;
 		}
-		bap = (int32_t *)bp->b_data;
+		bap = (u_int32_t *)bp->b_data;
 		nb = letoh32(bap[indirs[i].in_off]);
 		if (i == num)
 			break;
@@ -165,7 +165,7 @@ ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
 			brelse(bp);
 			continue;
 		}
-		pref = ext2fs_blkpref(ip, lbn, 0, (int32_t *)0);
+		pref = ext2fs_blkpref(ip, lbn, 0, NULL);
 		error = ext2fs_alloc(ip, lbn, pref, cred, &newb);
 		if (error) {
 			brelse(bp);
@@ -202,7 +202,7 @@ ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
 	 * Get the data block, allocating if necessary.
 	 */
 	if (nb == 0) {
-		pref = ext2fs_blkpref(ip, lbn, indirs[num].in_off, &bap[0]);
+		pref = ext2fs_blkpref(ip, lbn, indirs[num].in_off, bap);
 		error = ext2fs_alloc(ip, lbn, pref, cred, &newb);
 		if (error) {
 			brelse(bp);
@@ -263,7 +263,7 @@ fail:
 			if (r) {
 				panic("Could not unwind indirect block, error %d", r);
 			} else {
-				bap = (int32_t *)bp->b_data;
+				bap = (u_int32_t *)bp->b_data;
 				bap[indirs[unwindidx].in_off] = 0;
 				if (flags & B_SYNC)
 					bwrite(bp);

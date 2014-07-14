@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bswap.c,v 1.6 2014/07/13 13:28:26 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_bswap.c,v 1.7 2014/07/14 08:54:13 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_bswap.c,v 1.6 2000/07/24 00:23:10 mycroft Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #if defined(_KERNEL)
 #include <sys/systm.h>
 #endif
+
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 
@@ -83,6 +84,15 @@ e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
 	new->e2fs_features_incompat =	swap32(old->e2fs_features_incompat);
 	new->e2fs_features_rocompat =	swap32(old->e2fs_features_rocompat);
 	new->e2fs_algo		=	swap32(old->e2fs_algo);
+
+	/* SOME journaling-related fields. */
+	new->e2fs_journal_ino	=	swap32(old->e2fs_journal_ino);
+	new->e2fs_journal_dev	=	swap32(old->e2fs_journal_dev);
+	new->e2fs_last_orphan	=	swap32(old->e2fs_last_orphan);
+	new->e2fs_gdesc_size	=	swap16(old->e2fs_gdesc_size);
+	new->e2fs_default_mount_opts	=	swap32(old->e2fs_default_mount_opts);
+	new->e2fs_first_meta_bg	=	swap32(old->e2fs_first_meta_bg);
+	new->e2fs_mkfs_time	=	swap32(old->e2fs_mkfs_time);
 }
 
 void

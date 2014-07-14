@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs.h,v 1.20 2014/07/13 16:59:35 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs.h,v 1.21 2014/07/14 08:54:13 pelikan Exp $	*/
 /*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -59,8 +59,11 @@
 #define	SBLOCK		((daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
 
 /*
- * Addresses stored in inodes are capable of addressing blocks
- * XXX
+ * Inodes are, like in UFS, 32-bit unsigned integers and therefore ufsino_t.
+ * Disk blocks are 32-bit, if the filesystem isn't operating in 64-bit mode
+ * (the incompatible ext4 64BIT flag).  More work is needed to properly use
+ * daddr_t as the disk block data type on both BE and LE architectures.
+ * XXX disk blocks are simply u_int32_t for now.
  */
 
 /*
@@ -140,7 +143,20 @@ struct ext2fs {
 	u_int8_t   e2fs_prealloc;	/* # of blocks to preallocate */
 	u_int8_t   e2fs_dir_prealloc;	/* # of blocks to preallocate for dir */
 	u_int16_t  e2fs_reserved_ngdb;	/* # of reserved gd blocks for resize */
-	u_int32_t  reserved2[204];
+	/* Ext3 JBD2 journaling. */
+	u_int8_t   e2fs_journal_uuid[16];
+	u_int32_t  e2fs_journal_ino;
+	u_int32_t  e2fs_journal_dev;
+	u_int32_t  e2fs_last_orphan;	/* start of list of inodes to delete */
+	u_int32_t  e2fs_hash_seed[4];	/* htree hash seed */
+	u_int8_t   e2fs_def_hash_version;
+	u_int8_t   e2fs_journal_backup_type;
+	u_int16_t  e2fs_gdesc_size;
+	u_int32_t  e2fs_default_mount_opts;
+	u_int32_t  e2fs_first_meta_bg;
+	u_int32_t  e2fs_mkfs_time;
+	u_int32_t  e2fs_journal_backup[17];
+	u_int32_t  reserved2[76];
 };
 
 

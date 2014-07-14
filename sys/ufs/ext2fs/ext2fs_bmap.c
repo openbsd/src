@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.24 2014/07/13 16:59:35 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.25 2014/07/14 08:54:13 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
@@ -239,10 +239,11 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp,
 		daddr = letoh32(((int32_t *)bp->b_data)[xap->in_off]);
 		if (num == 1 && daddr && runp)
 			for (bn = xap->in_off + 1;
-				bn < MNINDIR(ump) && *runp < maxrun &&
-				is_sequential(ump, ((int32_t *)bp->b_data)[bn - 1],
-				((int32_t *)bp->b_data)[bn]);
-				++bn, ++*runp);
+			    bn < MNINDIR(ump) && *runp < maxrun &&
+			    is_sequential(ump, ((u_int32_t *)bp->b_data)[bn - 1],
+			    ((u_int32_t *)bp->b_data)[bn]);
+			    ++bn, ++*runp)
+				/* nothing */;
 	}
 	if (bp)
 		brelse(bp);
