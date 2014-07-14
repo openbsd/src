@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.156 2014/07/11 16:39:06 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.157 2014/07/14 03:45:43 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -70,15 +70,6 @@ struct if_clonereq {
 
 #define MCLPOOLS	7		/* number of cluster pools */
 
-struct mclpool {
-	int	mcl_grown;
-	u_int	mcl_livelocks;
-	u_short	mcl_alive;
-	u_short mcl_hwm;
-	u_short mcl_cwm;
-	u_short mcl_lwm;
-};
-
 struct if_rxring {
 	int     rxr_adjusted;
 	u_int	rxr_alive;
@@ -127,8 +118,6 @@ struct	if_data {
 	u_int64_t	ifi_noproto;		/* destined for unsupported protocol */
 	u_int32_t	ifi_capabilities;	/* interface capabilities */
 	struct	timeval ifi_lastchange;	/* last operational state change */
-
-	struct mclpool	ifi_mclpool[MCLPOOLS];
 };
 
 #define IFQ_NQUEUES	8
