@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.6 2014/07/14 00:19:48 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.7 2014/07/14 09:03:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -624,15 +624,21 @@ server_response(struct httpd *httpd, struct client *clt)
 		if ((kv = kv_find(&desc->http_headers, &key)) == NULL)
 			goto fail;
 
-		/* Is the connection persistent? */		
+		/* Is the connection persistent? */
+		key.kv_key = "Connection";
 		if ((kv = kv_find(&desc->http_headers, &key)) != NULL &&
 		    strcasecmp("close", kv->kv_value) == 0)
 			clt->clt_persist = 0;
 		else
-			clt->clt_persist = 1;
+			clt->clt_persist++;
 	} else {
-		/* Keep-Alive with HTTP/1.0 not supported */
-		clt->clt_persist = 0;
+		/* Is the connection persistent? */
+		key.kv_key = "Connection";
+		if ((kv = kv_find(&desc->http_headers, &key)) != NULL &&
+		    strcasecmp("keep-alive", kv->kv_value) == 0)
+			clt->clt_persist++;
+		else
+			clt->clt_persist = 0;
 	}
 
 	if ((ret = server_file(httpd, clt)) == -1)
