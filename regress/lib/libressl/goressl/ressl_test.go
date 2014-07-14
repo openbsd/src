@@ -64,7 +64,7 @@ func TestResslBasic(t *testing.T) {
 	defer cfg.Free()
 	cfg.SetCAFile(caFile)
 
-	ssl, err := New(cfg)
+	ssl, err := NewClient(cfg)
 	if err != nil {
 		t.Fatal(err)
 	}

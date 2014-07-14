@@ -6,7 +6,7 @@ package ressl
 
 #include <stdlib.h>
 
-#include <ressl/ressl.h>
+#include <ressl.h>
 
 typedef void *ressl;
 */
@@ -55,17 +55,17 @@ func (c *ResslConfig) SetCAFile(filename string) {
 		C.free(unsafe.Pointer(c.caFile))
 	}
 	c.caFile = C.CString(filename)
-	C.ressl_config_ca_file(c.resslCfg, c.caFile)
+	C.ressl_config_set_ca_file(c.resslCfg, c.caFile)
 }
 
 // SetInsecure disables verification for the connection.
-func (c *ResslConfig) SetInsecure() {
-	C.ressl_config_insecure(c.resslCfg)
+func (c *ResslConfig) InsecureNoVerify() {
+	C.ressl_config_insecure_no_verify(c.resslCfg)
 }
 
 // SetSecure enables verification for the connection.
-func (c *ResslConfig) SetSecure() {
-	C.ressl_config_secure(c.resslCfg)
+func (c *ResslConfig) SetVerify() {
+	C.ressl_config_verify(c.resslCfg)
 }
 
 // Free frees resources associated with the ressl configuration.
@@ -77,16 +77,20 @@ func (c *ResslConfig) Free() {
 	c.resslCfg = nil
 }
 
-// New returns a new ressl context, using the optional configuration. If no
-// configuration is specified the defaults will be used.
-func New(config *ResslConfig) (*Ressl, error) {
+// NewClient returns a new ressl client context, using the optional
+// configuration. If no configuration is specified the default configuration
+// will be used.
+func NewClient(config *ResslConfig) (*Ressl, error) {
 	var sslCfg *C.struct_ressl_config
 	if config != nil {
 		sslCfg = config.resslCfg
 	}
-	ctx := C.ressl_new(sslCfg)
+	ctx := C.ressl_client()
 	if ctx == nil {
-		return nil, errors.New("ressl new failed")
+		return nil, errors.New("ressl client failed")
+	}
+	if C.ressl_configure(ctx, sslCfg) != 0 {
+		return nil, errors.New("ressl configure failed")
 	}
 	return &Ressl{
 		cfg: config,
