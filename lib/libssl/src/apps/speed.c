@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.51 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: speed.c,v 1.52 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -165,7 +165,7 @@ static int usertime = 1;
 
 static double Time_F(int s);
 static void print_message(const char *s, long num, int length);
-static void 
+static void
 pkey_print_message(const char *str, const char *str2,
     long num, int bits, int sec);
 static void print_result(int alg, int run_no, int count, double time_used);
@@ -207,7 +207,7 @@ sig_done(int sig)
 #define STOP	1
 
 
-static double 
+static double
 Time_F(int s)
 {
 	return app_tminterval(s, usertime);
@@ -232,7 +232,7 @@ KDF1_SHA1(const void *in, size_t inlen, void *out, size_t * outlen)
 
 int speed_main(int, char **);
 
-int 
+int
 speed_main(int argc, char **argv)
 {
 	unsigned char *buf = NULL, *buf2 = NULL;
@@ -1934,11 +1934,11 @@ end:
 			EC_KEY_free(ecdh_b[i]);
 	}
 
-	
+
 	return (mret);
 }
 
-static void 
+static void
 print_message(const char *s, long num, int length)
 {
 	BIO_printf(bio_err, mr ? "+DT:%s:%d:%d\n"
@@ -1947,7 +1947,7 @@ print_message(const char *s, long num, int length)
 	alarm(SECONDS);
 }
 
-static void 
+static void
 pkey_print_message(const char *str, const char *str2, long num,
     int bits, int tm)
 {
@@ -1957,7 +1957,7 @@ pkey_print_message(const char *str, const char *str2, long num,
 	alarm(tm);
 }
 
-static void 
+static void
 print_result(int alg, int run_no, int count, double time_used)
 {
 	BIO_printf(bio_err, mr ? "+R:%d:%s:%f\n"
@@ -1993,7 +1993,7 @@ sstrsep(char **string, const char *delim)
 	return token;
 }
 
-static int 
+static int
 do_multi(int multi)
 {
 	int n;

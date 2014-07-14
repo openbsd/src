@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.37 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: enc.c,v 1.38 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,7 +78,7 @@ int set_hex(char *in, unsigned char *out, int size);
 #define BSIZE	(8*1024)
 #define	PROG	enc_main
 
-static void 
+static void
 show_ciphers(const OBJ_NAME * name, void *bio_)
 {
 	BIO *bio = bio_;
@@ -97,7 +97,7 @@ show_ciphers(const OBJ_NAME * name, void *bio_)
 
 int enc_main(int, char **);
 
-int 
+int
 enc_main(int argc, char **argv)
 {
 	static const char magic[] = "Salted__";
@@ -613,11 +613,11 @@ end:
 		BIO_free(bzl);
 #endif
 	free(pass);
-	
+
 	return (ret);
 }
 
-int 
+int
 set_hex(char *in, unsigned char *out, int size)
 {
 	int i, n;

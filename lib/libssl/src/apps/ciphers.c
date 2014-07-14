@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.25 2014/07/12 19:31:21 jsing Exp $ */
+/* $OpenBSD: ciphers.c,v 1.26 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -187,6 +187,6 @@ end:
 		SSL_free(ssl);
 	if (STDout != NULL)
 		BIO_free_all(STDout);
-	
+
 	return (ret);
 }

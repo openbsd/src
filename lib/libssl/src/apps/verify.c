@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.25 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: verify.c,v 1.26 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -238,7 +238,7 @@ end:
 	sk_X509_pop_free(untrusted, X509_free);
 	sk_X509_pop_free(trusted, X509_free);
 	sk_X509_CRL_pop_free(crls, X509_CRL_free);
-	
+
 	return (ret < 0 ? 2 : ret);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.48 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: x509.c,v 1.49 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -933,7 +933,7 @@ end:
 	sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
 	sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
 	free(passin);
-	
+
 	return (ret);
 }
 

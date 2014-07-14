@@ -1,4 +1,4 @@
-/* $OpenBSD: dhparam.c,v 1.32 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: dhparam.c,v 1.33 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -447,7 +447,7 @@ end:
 		BIO_free_all(out);
 	if (dh != NULL)
 		DH_free(dh);
-	
+
 	return (ret);
 }
 

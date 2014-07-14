@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1pars.c,v 1.26 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: asn1pars.c,v 1.27 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -343,7 +343,7 @@ end:
 	if (osk != NULL)
 		sk_OPENSSL_STRING_free(osk);
 	OBJ_cleanup();
-	
+
 	return (ret);
 }
 

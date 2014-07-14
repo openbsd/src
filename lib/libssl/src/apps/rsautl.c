@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.23 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: rsautl.c,v 1.24 2014/07/14 00:35:10 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -80,7 +80,7 @@ static void usage(void);
 
 int rsautl_main(int argc, char **);
 
-int 
+int
 rsautl_main(int argc, char **argv)
 {
 	ENGINE *e = NULL;
@@ -313,7 +313,7 @@ end:
 	return ret;
 }
 
-static void 
+static void
 usage()
 {
 	BIO_printf(bio_err, "Usage: rsautl [options]\n");

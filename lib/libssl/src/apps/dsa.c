@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.c,v 1.27 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: dsa.c,v 1.28 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -328,6 +328,6 @@ end:
 		DSA_free(dsa);
 	free(passin);
 	free(passout);
-	
+
 	return (ret);
 }

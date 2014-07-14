@@ -1,4 +1,4 @@
-/* $OpenBSD: sess_id.c,v 1.18 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: sess_id.c,v 1.19 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,7 +86,7 @@ static SSL_SESSION *load_sess_id(char *file, int format);
 
 int sess_id_main(int, char **);
 
-int 
+int
 sess_id_main(int argc, char **argv)
 {
 	SSL_SESSION *x = NULL;
@@ -240,7 +240,7 @@ end:
 		BIO_free_all(out);
 	if (x != NULL)
 		SSL_SESSION_free(x);
-	
+
 	return (ret);
 }
 

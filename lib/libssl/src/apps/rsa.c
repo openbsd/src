@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.c,v 1.26 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: rsa.c,v 1.27 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,7 +97,7 @@
 
 int rsa_main(int, char **);
 
-int 
+int
 rsa_main(int argc, char **argv)
 {
 	ENGINE *e = NULL;
@@ -387,6 +387,6 @@ end:
 		RSA_free(rsa);
 	free(passin);
 	free(passout);
-	
+
 	return (ret);
 }

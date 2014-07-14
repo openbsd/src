@@ -1,4 +1,4 @@
-/* $OpenBSD: prime.c,v 1.11 2014/06/28 04:39:41 deraadt Exp $ */
+/* $OpenBSD: prime.c,v 1.12 2014/07/14 00:35:10 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  *
@@ -57,7 +57,7 @@
 
 int prime_main(int, char **);
 
-int 
+int
 prime_main(int argc, char **argv)
 {
 	int hex = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.c,v 1.20 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: pkcs7.c,v 1.21 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,7 +79,7 @@
 
 int pkcs7_main(int, char **);
 
-int 
+int
 pkcs7_main(int argc, char **argv)
 {
 	PKCS7 *p7 = NULL;
@@ -279,6 +279,6 @@ end:
 		BIO_free(in);
 	if (out != NULL)
 		BIO_free_all(out);
-	
+
 	return (ret);
 }

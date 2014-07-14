@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.66 2014/07/13 16:03:09 beck Exp $ */
+/* $OpenBSD: apps.c,v 1.67 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1800,7 +1800,7 @@ parse_name(char *subject, long chtype, int multirdn)
 	int *mval;
 
 	/*
-	 * Buffer to copy the types and values into. Due to escaping the 
+	 * Buffer to copy the types and values into. Due to escaping the
 	 * copy can only become shorter.
 	 */
 	buflen = strlen(subject) + 1;

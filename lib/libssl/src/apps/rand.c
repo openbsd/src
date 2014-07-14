@@ -1,4 +1,4 @@
-/* $OpenBSD: rand.c,v 1.21 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: rand.c,v 1.22 2014/07/14 00:35:10 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -71,7 +71,7 @@
 
 int rand_main(int, char **);
 
-int 
+int
 rand_main(int argc, char **argv)
 {
 	int i, r, ret = 1;
@@ -189,6 +189,6 @@ err:
 	ERR_print_errors(bio_err);
 	if (out)
 		BIO_free_all(out);
-	
+
 	return (ret);
 }

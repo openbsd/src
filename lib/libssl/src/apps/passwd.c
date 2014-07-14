@@ -1,4 +1,4 @@
-/* $OpenBSD: passwd.c,v 1.22 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: passwd.c,v 1.23 2014/07/14 00:35:10 deraadt Exp $ */
 
 #if defined OPENSSL_NO_MD5
 #define NO_MD5CRYPT_1
@@ -36,7 +36,7 @@ static unsigned const char cov_2char[64] = {
 	0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A
 };
 
-static int 
+static int
 do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
     char *passwd, BIO * out, int quiet, int table, int reverse,
     size_t pw_maxlen, int usecrypt, int use1, int useapr1);
@@ -55,7 +55,7 @@ do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 
 int passwd_main(int, char **);
 
-int 
+int
 passwd_main(int argc, char **argv)
 {
 	int ret = 1;
@@ -246,7 +246,7 @@ err:
 		BIO_free(in);
 	if (out)
 		BIO_free_all(out);
-	
+
 	return (ret);
 }
 
@@ -366,7 +366,7 @@ md5crypt(const char *passwd, const char *magic, const char *salt)
 #endif
 
 
-static int 
+static int
 do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
     char *passwd, BIO * out, int quiet, int table, int reverse,
     size_t pw_maxlen, int usecrypt, int use1, int useapr1)
@@ -449,7 +449,7 @@ err:
 }
 #else
 
-int 
+int
 passwd_main(int argc, char **argv)
 {
 	fputs("Program not available.\n", stderr)

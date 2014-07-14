@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.60 2014/07/12 19:31:21 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.61 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -185,7 +185,7 @@ static void close_accept_socket(void);
 static void sv_usage(void);
 static int init_ssl_connection(SSL * s);
 static void print_stats(BIO * bp, SSL_CTX * ctx);
-static int 
+static int
 generate_session_id(const SSL * ssl, unsigned char *id,
     unsigned int *id_len);
 #ifndef OPENSSL_NO_DH
@@ -282,7 +282,7 @@ static int cert_chain = 0;
 
 
 
-static void 
+static void
 s_server_init(void)
 {
 	accept_socket = -1;
@@ -312,7 +312,7 @@ s_server_init(void)
 #endif
 }
 
-static void 
+static void
 sv_usage(void)
 {
 	BIO_printf(bio_err, "usage: s_server [args ...]\n");
@@ -415,7 +415,7 @@ typedef struct tlsextctx_st {
 } tlsextctx;
 
 
-static int 
+static int
 ssl_servername_cb(SSL * s, int *ad, void *arg)
 {
 	tlsextctx *p = (tlsextctx *) arg;
@@ -461,7 +461,7 @@ static tlsextstatusctx tlscstatp = {NULL, NULL, NULL, 0, -1, NULL, 0};
  * considered "expired".
  */
 
-static int 
+static int
 cert_status_cb(SSL * s, void *arg)
 {
 	tlsextstatusctx *srctx = arg;
@@ -577,7 +577,7 @@ typedef struct tlsextnextprotoctx_st {
 	unsigned int len;
 } tlsextnextprotoctx;
 
-static int 
+static int
 next_proto_cb(SSL * s, const unsigned char **data, unsigned int *len, void *arg)
 {
 	tlsextnextprotoctx *next_proto = arg;
@@ -598,7 +598,7 @@ int s_server_main(int, char **);
 static char *srtp_profiles = NULL;
 #endif
 
-int 
+int
 s_server_main(int argc, char *argv[])
 {
 	X509_VERIFY_PARAM *vpm = NULL;
@@ -1315,11 +1315,11 @@ end:
 		BIO_free(bio_s_out);
 		bio_s_out = NULL;
 	}
-	
+
 	return (ret);
 }
 
-static void 
+static void
 print_stats(BIO * bio, SSL_CTX * ssl_ctx)
 {
 	BIO_printf(bio, "%4ld items in the session cache\n",
@@ -1345,7 +1345,7 @@ print_stats(BIO * bio, SSL_CTX * ssl_ctx)
 	    SSL_CTX_sess_get_cache_size(ssl_ctx));
 }
 
-static int 
+static int
 sv_body(char *hostname, int s, unsigned char *context)
 {
 	char *buf = NULL;
@@ -1653,7 +1653,7 @@ err:
 	return (ret);
 }
 
-static void 
+static void
 close_accept_socket(void)
 {
 	BIO_printf(bio_err, "shutdown accept socket\n");
@@ -1663,7 +1663,7 @@ close_accept_socket(void)
 	}
 }
 
-static int 
+static int
 init_ssl_connection(SSL * con)
 {
 	int i;
@@ -1779,7 +1779,7 @@ err:
 }
 #endif
 
-static int 
+static int
 www_body(char *hostname, int s, unsigned char *context)
 {
 	char *buf = NULL;
@@ -2128,7 +2128,7 @@ tmp_rsa_cb(SSL * s, int is_export, int keylength)
 }
 
 #define MAX_SESSION_ID_ATTEMPTS 10
-static int 
+static int
 generate_session_id(const SSL * ssl, unsigned char *id,
     unsigned int *id_len)
 {

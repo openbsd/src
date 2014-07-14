@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.c,v 1.26 2014/07/12 19:31:21 jsing Exp $ */
+/* $OpenBSD: engine.c,v 1.27 2014/07/14 00:35:10 deraadt Exp $ */
 /* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
  * project 2000.
  */
@@ -87,13 +87,13 @@ static const char *engine_usage[] = {
 	NULL
 };
 
-static void 
+static void
 identity(char *ptr)
 {
 	return;
 }
 
-static int 
+static int
 append_buf(char **buf, const char *s, int *size, int step)
 {
 	int l = strlen(s);
@@ -122,7 +122,7 @@ append_buf(char **buf, const char *s, int *size, int step)
 	return 1;
 }
 
-static int 
+static int
 util_flags(BIO * bio_out, unsigned int flags, const char *indent)
 {
 	int started = 0, err = 0;
@@ -181,7 +181,7 @@ util_flags(BIO * bio_out, unsigned int flags, const char *indent)
 	return 1;
 }
 
-static int 
+static int
 util_verbose(ENGINE * e, int verbose, BIO * bio_out, const char *indent)
 {
 	static const int line_wrap = 78;
@@ -277,7 +277,7 @@ err:
 	return ret;
 }
 
-static void 
+static void
 util_do_cmds(ENGINE * e, STACK_OF(OPENSSL_STRING) * cmds,
     BIO * bio_out, const char *indent)
 {
@@ -319,7 +319,7 @@ util_do_cmds(ENGINE * e, STACK_OF(OPENSSL_STRING) * cmds,
 
 int engine_main(int, char **);
 
-int 
+int
 engine_main(int argc, char **argv)
 {
 	int ret = 1, i;
@@ -488,7 +488,7 @@ end:
 	sk_OPENSSL_STRING_pop_free(post_cmds, identity);
 	if (bio_out != NULL)
 		BIO_free_all(bio_out);
-	
+
 	return (ret);
 }
 #endif

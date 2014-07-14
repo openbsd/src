@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.63 2014/07/13 16:03:09 beck Exp $ */
+/* $OpenBSD: ca.c,v 1.64 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1369,7 +1369,7 @@ err:
 	NCONF_free(conf);
 	NCONF_free(extconf);
 	OBJ_cleanup();
-	
+
 	return (ret);
 }
 

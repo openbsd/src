@@ -1,4 +1,4 @@
-/* $OpenBSD: errstr.c,v 1.18 2014/07/12 19:31:21 jsing Exp $ */
+/* $OpenBSD: errstr.c,v 1.19 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -103,6 +103,6 @@ errstr_main(int argc, char **argv)
 			ret++;
 		}
 	}
-	
+
 	return (ret);
 }

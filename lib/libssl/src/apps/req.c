@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.45 2014/07/09 21:02:35 tedu Exp $ */
+/* $OpenBSD: req.c,v 1.46 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -909,11 +909,11 @@ end:
 	if (passargout && passout)
 		free(passout);
 	OBJ_cleanup();
-	
+
 	return (ex);
 }
 
-static int 
+static int
 make_REQ(X509_REQ * req, EVP_PKEY * pkey, char *subj, int multirdn,
     int attribs, unsigned long chtype)
 {
@@ -978,7 +978,7 @@ err:
  * subject is expected to be in the format /type0=value0/type1=value1/type2=...
  * where characters may be escaped by \
  */
-static int 
+static int
 build_subject(X509_REQ * req, char *subject, unsigned long chtype, int multirdn)
 {
 	X509_NAME *n;
@@ -995,7 +995,7 @@ build_subject(X509_REQ * req, char *subject, unsigned long chtype, int multirdn)
 }
 
 
-static int 
+static int
 prompt_info(X509_REQ * req,
     STACK_OF(CONF_VALUE) * dn_sk, char *dn_sect,
     STACK_OF(CONF_VALUE) * attr_sk, char *attr_sect, int attribs,
@@ -1180,7 +1180,7 @@ start2:			for (;;) {
 
 }
 
-static int 
+static int
 auto_info(X509_REQ * req, STACK_OF(CONF_VALUE) * dn_sk,
     STACK_OF(CONF_VALUE) * attr_sk, int attribs, unsigned long chtype)
 {
@@ -1235,7 +1235,7 @@ auto_info(X509_REQ * req, STACK_OF(CONF_VALUE) * dn_sk,
 }
 
 
-static int 
+static int
 add_DN_object(X509_NAME * n, char *text, const char *def, char *value,
     int nid, int n_min, int n_max, unsigned long chtype, int mval)
 {
@@ -1286,7 +1286,7 @@ err:
 	return (ret);
 }
 
-static int 
+static int
 add_attribute_object(X509_REQ * req, char *text, const char *def,
     char *value, int nid, int n_min,
     int n_max, unsigned long chtype)
@@ -1343,7 +1343,7 @@ err:
 	return (0);
 }
 
-static int 
+static int
 req_check_len(int len, int n_min, int n_max)
 {
 	if ((n_min > 0) && (len < n_min)) {
@@ -1358,7 +1358,7 @@ req_check_len(int len, int n_min, int n_max)
 }
 
 /* Check if the end of a string matches 'end' */
-static int 
+static int
 check_end(const char *str, const char *end)
 {
 	int elen, slen;
@@ -1392,7 +1392,7 @@ set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
 		if (errstr) {
 			BIO_printf(err, "bad algorithm %s: %s\n", gstr, errstr);
 			return NULL;
-		} 
+		}
 		*pkeylen = keylen;
 	} else if (!strncmp(gstr, "param:", 6))
 		paramfile = gstr + 6;
@@ -1429,7 +1429,7 @@ set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
 				if (errstr) {
 					BIO_printf(err, "bad algorithm %s: %s\n",
 					    p + 1, errstr);
-					return NULL;					
+					return NULL;
 				}
 				*pkeylen = keylen;
 			} else
@@ -1516,7 +1516,7 @@ set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
 	return gctx;
 }
 
-static int 
+static int
 genpkey_cb(EVP_PKEY_CTX * ctx)
 {
 	char c = '*';
@@ -1536,7 +1536,7 @@ genpkey_cb(EVP_PKEY_CTX * ctx)
 	return 1;
 }
 
-static int 
+static int
 do_sign_init(BIO * err, EVP_MD_CTX * ctx, EVP_PKEY * pkey,
     const EVP_MD * md, STACK_OF(OPENSSL_STRING) * sigopts)
 {
@@ -1556,7 +1556,7 @@ do_sign_init(BIO * err, EVP_MD_CTX * ctx, EVP_PKEY * pkey,
 	return 1;
 }
 
-int 
+int
 do_X509_sign(BIO * err, X509 * x, EVP_PKEY * pkey, const EVP_MD * md,
     STACK_OF(OPENSSL_STRING) * sigopts)
 {
@@ -1571,7 +1571,7 @@ do_X509_sign(BIO * err, X509 * x, EVP_PKEY * pkey, const EVP_MD * md,
 }
 
 
-int 
+int
 do_X509_REQ_sign(BIO * err, X509_REQ * x, EVP_PKEY * pkey, const EVP_MD * md,
     STACK_OF(OPENSSL_STRING) * sigopts)
 {
@@ -1587,7 +1587,7 @@ do_X509_REQ_sign(BIO * err, X509_REQ * x, EVP_PKEY * pkey, const EVP_MD * md,
 
 
 
-int 
+int
 do_X509_CRL_sign(BIO * err, X509_CRL * x, EVP_PKEY * pkey, const EVP_MD * md,
     STACK_OF(OPENSSL_STRING) * sigopts)
 {

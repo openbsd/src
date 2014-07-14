@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.37 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.38 2014/07/14 00:35:10 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -610,11 +610,11 @@ end:
 		sk_OPENSSL_STRING_free(canames);
 	free(passin);
 	free(passout);
-	
+
 	return (ret);
 }
 
-int 
+int
 dump_certs_keys_p12(BIO * out, PKCS12 * p12, char *pass,
     int passlen, int options, char *pempass)
 {
@@ -661,7 +661,7 @@ err:
 	return ret;
 }
 
-int 
+int
 dump_certs_pkeys_bags(BIO * out, STACK_OF(PKCS12_SAFEBAG) * bags,
     char *pass, int passlen, int options, char *pempass)
 {
@@ -676,7 +676,7 @@ dump_certs_pkeys_bags(BIO * out, STACK_OF(PKCS12_SAFEBAG) * bags,
 	return 1;
 }
 
-int 
+int
 dump_certs_pkeys_bag(BIO * out, PKCS12_SAFEBAG * bag, char *pass,
     int passlen, int options, char *pempass)
 {
@@ -760,7 +760,7 @@ dump_certs_pkeys_bag(BIO * out, PKCS12_SAFEBAG * bag, char *pass,
 
 /* Hope this is OK .... */
 
-int 
+int
 get_cert_chain(X509 * cert, X509_STORE * store, STACK_OF(X509) ** chain)
 {
 	X509_STORE_CTX store_ctx;
@@ -792,7 +792,7 @@ err:
 	return i;
 }
 
-int 
+int
 alg_print(BIO * x, X509_ALGOR * alg)
 {
 	PBEPARAM *pbe;
@@ -810,7 +810,7 @@ alg_print(BIO * x, X509_ALGOR * alg)
 
 /* Load all certificates from a given file */
 
-int 
+int
 cert_load(BIO * in, STACK_OF(X509) * sk)
 {
 	int ret;
@@ -827,7 +827,7 @@ cert_load(BIO * in, STACK_OF(X509) * sk)
 
 /* Generalised attribute print: handle PKCS#8 and bag attributes */
 
-int 
+int
 print_attribs(BIO * out, STACK_OF(X509_ATTRIBUTE) * attrlst, const char *name)
 {
 	X509_ATTRIBUTE *attr;
@@ -885,7 +885,7 @@ print_attribs(BIO * out, STACK_OF(X509_ATTRIBUTE) * attrlst, const char *name)
 	return 1;
 }
 
-void 
+void
 hex_prin(BIO * out, unsigned char *buf, int len)
 {
 	int i;
@@ -893,7 +893,7 @@ hex_prin(BIO * out, unsigned char *buf, int len)
 		BIO_printf(out, "%02X ", buf[i]);
 }
 
-static int 
+static int
 set_pbe(BIO * err, int *ppbe, const char *str)
 {
 	if (!str)

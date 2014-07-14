@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.33 2014/07/12 19:31:21 jsing Exp $ */
+/* $OpenBSD: s_time.c,v 1.34 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,7 +123,7 @@ static int st_bugs = 0;
 static int perform = 0;
 static int t_nbio = 0;
 
-static void 
+static void
 s_time_init(void)
 {
 	host = SSL_CONNECT_NAME;
@@ -147,7 +147,7 @@ s_time_init(void)
 /***********************************************************************
  * usage - display usage message
  */
-static void 
+static void
 s_time_usage(void)
 {
 	static const char umsg[] = "\
@@ -178,7 +178,7 @@ s_time_usage(void)
  *
  * Returns 0 if ok, -1 on bad args
  */
-static int 
+static int
 parseArgs(int argc, char **argv)
 {
 	int badop = 0;
@@ -301,7 +301,7 @@ bad:
 #define START	0
 #define STOP	1
 
-static double 
+static double
 tm_Time_F(int s)
 {
 	return app_tminterval(s, 1);
@@ -313,7 +313,7 @@ tm_Time_F(int s)
  */
 int s_time_main(int, char **);
 
-int 
+int
 s_time_main(int argc, char **argv)
 {
 	double totalTime = 0.0;
@@ -517,7 +517,7 @@ end:
 		SSL_CTX_free(tm_ctx);
 		tm_ctx = NULL;
 	}
-	
+
 	return (ret);
 }
 

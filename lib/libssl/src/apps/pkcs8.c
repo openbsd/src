@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs8.c,v 1.20 2014/07/12 17:54:31 jsing Exp $ */
+/* $OpenBSD: pkcs8.c,v 1.21 2014/07/14 00:35:10 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -68,7 +68,7 @@
 
 int pkcs8_main(int, char **);
 
-int 
+int
 pkcs8_main(int argc, char **argv)
 {
 	ENGINE *e = NULL;

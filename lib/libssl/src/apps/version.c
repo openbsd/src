@@ -1,4 +1,4 @@
-/* $OpenBSD: version.c,v 1.17 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: version.c,v 1.18 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -203,6 +203,6 @@ version_main(int argc, char **argv)
 	if (dir)
 		printf("%s\n", SSLeay_version(SSLEAY_DIR));
 end:
-	
+
 	return (ret);
 }

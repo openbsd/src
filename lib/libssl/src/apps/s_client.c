@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.68 2014/07/12 19:31:21 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.69 2014/07/14 00:35:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -199,7 +199,7 @@ static int c_quiet = 0;
 static int c_ign_eof = 0;
 
 
-static void 
+static void
 sc_usage(void)
 {
 	BIO_printf(bio_err, "usage: s_client args\n");
@@ -276,7 +276,7 @@ typedef struct tlsextctx_st {
 } tlsextctx;
 
 
-static int 
+static int
 ssl_servername_cb(SSL * s, int *ad, void *arg)
 {
 	tlsextctx *p = (tlsextctx *) arg;
@@ -303,7 +303,7 @@ typedef struct tlsextnextprotoctx_st {
 
 static tlsextnextprotoctx next_proto;
 
-static int 
+static int
 next_proto_cb(SSL * s, unsigned char **out, unsigned char *outlen, const unsigned char *in, unsigned int inlen, void *arg)
 {
 	tlsextnextprotoctx *ctx = arg;
@@ -338,7 +338,7 @@ enum {
 
 int s_client_main(int, char **);
 
-int 
+int
 s_client_main(int argc, char **argv)
 {
 	unsigned int off = 0, clr = 0;
@@ -436,7 +436,7 @@ s_client_main(int argc, char **argv)
 				goto bad;
 			verify_depth = strtonum(*(++argv), 0, INT_MAX, &errstr);
 			if (errstr)
-				goto bad;			
+				goto bad;
 			BIO_printf(bio_err, "verify depth is %d\n", verify_depth);
 		} else if (strcmp(*argv, "-cert") == 0) {
 			if (--argc < 1)
@@ -1297,12 +1297,12 @@ end:
 		BIO_free(bio_c_out);
 		bio_c_out = NULL;
 	}
-	
+
 	return (ret);
 }
 
 
-static void 
+static void
 print_stuff(BIO * bio, SSL * s, int full)
 {
 	X509 *peer = NULL;
@@ -1478,7 +1478,7 @@ print_stuff(BIO * bio, SSL * s, int full)
 
 #ifndef OPENSSL_NO_TLSEXT
 
-static int 
+static int
 ocsp_resp_cb(SSL * s, void *arg)
 {
 	const unsigned char *p;
