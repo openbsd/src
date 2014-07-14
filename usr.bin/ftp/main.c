@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.90 2014/07/14 05:54:12 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.91 2014/07/14 09:26:27 jsing Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -76,8 +76,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "ftp_var.h"
+#include <ressl.h>
+
 #include "cmds.h"
+#include "ftp_var.h"
 
 #ifndef SMALL
 char * const ssl_verify_opts[] = {
@@ -95,11 +97,8 @@ char * const ssl_verify_opts[] = {
 	"depth",
 	NULL
 };
-char	*ssl_ciphers;
-int	 ssl_verify = 1;
-int	 ssl_verify_depth = -1;
-char	*ssl_ca_file;
-char	*ssl_ca_path;
+
+struct ressl_config *ressl_config;
 #endif /* !SMALL */
 
 int family = PF_UNSPEC;
@@ -114,6 +113,9 @@ main(volatile int argc, char *argv[])
 	char *outfile = NULL;
 	const char *errstr;
 	int dumb_terminal = 0;
+#ifndef SMALL
+	long long depth;
+#endif
 
 	ftpport = "ftp";
 	httpport = "http";
@@ -307,6 +309,12 @@ main(volatile int argc, char *argv[])
 
 		case 'S':
 #ifndef SMALL
+			if (ressl_config == NULL) {
+				ressl_config = ressl_config_new();
+				if (ressl_config == NULL)
+					errx(1, "ressl config failed");
+			}
+
 			cp = optarg;
 			while (*cp) {
 				char	*str;
@@ -314,34 +322,40 @@ main(volatile int argc, char *argv[])
 				case SSL_CAFILE:
 					if (str == NULL)
 						errx(1, "missing CA file");
-					ssl_ca_file = str;
+					ressl_config_set_ca_file(ressl_config,
+					    str);
 					break;
 				case SSL_CAPATH:
 					if (str == NULL)
 						errx(1, "missing CA directory"
 						    " path");
-					ssl_ca_path = str;
+					ressl_config_set_ca_path(ressl_config,
+					    str);
 					break;
 				case SSL_CIPHERS:
 					if (str == NULL)
 						errx(1, "missing cipher list");
-					ssl_ciphers = str;
+					ressl_config_set_ciphers(ressl_config,
+					    str);
 					break;
 				case SSL_DONTVERIFY:
-					ssl_verify = 0;
+					ressl_config_insecure_no_verify(
+					    ressl_config);
 					break;
 				case SSL_DOVERIFY:
-					ssl_verify = 1;
+					ressl_config_verify(ressl_config);
 					break;
 				case SSL_VERIFYDEPTH:
 					if (str == NULL)
 						errx(1, "missing depth");
-					ssl_verify_depth = strtonum(str, 0,
-					    INT_MAX, &errstr);
+					depth = strtonum(str, 0, INT_MAX,
+					    &errstr);
 					if (errstr)
 						errx(1, "certificate "
 						    "validation depth is %s",
 						    errstr);
+					ressl_config_set_verify_depth(
+					    ressl_config, (int)depth);
 					break;
 				default:
 					errx(1, "unknown -S suboption `%s'",
