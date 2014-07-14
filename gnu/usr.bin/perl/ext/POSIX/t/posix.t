@@ -331,7 +331,9 @@ SKIP: {
     }
 
     foreach (qw(int_frac_digits frac_digits p_cs_precedes p_sep_by_space
-		n_cs_precedes n_sep_by_space p_sign_posn n_sign_posn)) {
+		n_cs_precedes n_sep_by_space p_sign_posn n_sign_posn
+		int_p_cs_precedes int_p_sep_by_space int_n_cs_precedes
+		int_n_sep_by_space int_p_sign_posn int_n_sign_posn)) {
     SKIP: {
 	    skip("localeconv has no result for $_", 1)
 		unless exists $conv->{$_};

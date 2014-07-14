@@ -505,6 +505,12 @@ const struct lconv_offset lconv_integers[] = {
     {"n_sep_by_space",    offsetof(struct lconv, n_sep_by_space)},
     {"p_sign_posn",       offsetof(struct lconv, p_sign_posn)},
     {"n_sign_posn",       offsetof(struct lconv, n_sign_posn)},
+    {"int_p_cs_precedes",	offsetof(struct lconv, int_p_cs_precedes)},
+    {"int_p_sep_by_space",	offsetof(struct lconv, int_p_sep_by_space)},
+    {"int_n_cs_precedes",	offsetof(struct lconv, int_n_cs_precedes)},
+    {"int_n_sep_by_space",	offsetof(struct lconv, int_n_sep_by_space)},
+    {"int_p_sign_posn",		offsetof(struct lconv, int_p_sign_posn)},
+    {"int_n_sign_posn",		offsetof(struct lconv, int_n_sign_posn)},
     {NULL, 0}
 };
 

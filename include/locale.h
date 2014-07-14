@@ -1,4 +1,4 @@
-/*	$OpenBSD: locale.h,v 1.8 2011/07/03 18:51:01 jsg Exp $	*/
+/*	$OpenBSD: locale.h,v 1.9 2014/07/14 07:22:07 pelikan Exp $	*/
 /*	$NetBSD: locale.h,v 1.6 1994/10/26 00:56:02 cgd Exp $	*/
 
 /*
@@ -54,6 +54,12 @@ struct lconv {
 	char	n_sep_by_space;
 	char	p_sign_posn;
 	char	n_sign_posn;
+	char	int_p_cs_precedes;
+	char	int_p_sep_by_space;
+	char	int_n_cs_precedes;
+	char	int_n_sep_by_space;
+	char	int_p_sign_posn;
+	char	int_n_sign_posn;
 };
 
 #ifndef NULL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: localeconv.c,v 1.5 2005/08/08 08:05:35 espie Exp $ */
+/*	$OpenBSD: localeconv.c,v 1.6 2014/07/14 07:22:07 pelikan Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -44,6 +44,12 @@ localeconv(void)
 	ret.n_sep_by_space	= _CurrentMonetaryLocale->n_sep_by_space;
 	ret.p_sign_posn		= _CurrentMonetaryLocale->p_sign_posn;
 	ret.n_sign_posn		= _CurrentMonetaryLocale->n_sign_posn;
+	ret.int_p_cs_precedes	= _CurrentMonetaryLocale->int_p_cs_precedes;
+	ret.int_p_sep_by_space	= _CurrentMonetaryLocale->int_p_sep_by_space;
+	ret.int_n_cs_precedes	= _CurrentMonetaryLocale->int_n_cs_precedes;
+	ret.int_n_sep_by_space	= _CurrentMonetaryLocale->int_n_sep_by_space;
+	ret.int_p_sign_posn	= _CurrentMonetaryLocale->int_p_sign_posn;
+	ret.int_n_sign_posn	= _CurrentMonetaryLocale->int_n_sign_posn;
 	__mlocale_changed = 0;
     }
 
