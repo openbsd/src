@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.141 2014/07/12 21:56:56 tedu Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.142 2014/07/14 09:51:16 zhuk Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -14,7 +14,7 @@ option		DST=0		# daylight saving time used by RTC
 
 option		FFS		# UFS
 option		FFS2		# UFS2
-#option		EXT2FS		# Linux ext2fs
+option		EXT2FS		# Linux ext2fs
 
 option		NFSCLIENT	# Network File System client
 
