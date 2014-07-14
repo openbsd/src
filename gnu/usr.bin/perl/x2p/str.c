@@ -200,7 +200,7 @@ str_gets(STR *str, FILE *fp)
     for (;;) {
 	while (--cnt >= 0) {
 	    if ((*bp++ = *ptr++) == newline) {
-		if (bp <= str->str_ptr || bp[-2] != '\\')
+		if (bp <= str->str_ptr + 1 || bp[-2] != '\\')
 		    goto thats_all_folks;
 		else {
 		    line++;
