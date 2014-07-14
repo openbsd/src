@@ -70,9 +70,6 @@
 ./etc/ppp/pap-secrets
 ./etc/pwd.db
 ./etc/rc.conf
-./etc/rc.local
-./etc/rc.securelevel
-./etc/rc.shutdown
 ./etc/shells
 ./etc/skel/.Xdefaults
 ./etc/skel/.cshrc
@@ -129,7 +126,6 @@
 ./var/named/standard/loopback
 ./var/named/standard/loopback6.arpa
 ./var/nsd/etc/nsd.conf
-./var/run/utmp
 ./var/unbound/etc/unbound.conf
 ./var/www/conf/bgplg.css
 ./var/www/conf/bgplg.foot
