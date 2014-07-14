@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.431 2014/07/14 09:04:02 deraadt Exp $
+#	$OpenBSD: rc,v 1.432 2014/07/14 09:44:07 ajacoutot Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -458,7 +458,10 @@ echo clearing /tmp
 setup_X_sockets
 
 [ -f /etc/rc.securelevel ] && sh /etc/rc.securelevel
-sysctl kern.securelevel=1
+# rc.securelevel did not specifically set -1 or 2, so select the default: 1
+if [ `sysctl -n kern.securelevel` -eq 0 ]; then
+	sysctl kern.securelevel=1
+endif
 
 # patch /etc/motd
 if [ ! -f /etc/motd ]; then
