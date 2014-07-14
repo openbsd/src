@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.110 2014/02/04 23:28:05 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.111 2014/07/14 04:02:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -286,7 +286,7 @@ main(int argc, char *argv[])
 	socklen_t len;
 	char *p, *line;
 	char resolve[MAXHOSTNAMELEN];
-	int lockpipe[2] = { -1, -1}, nullfd;
+	int lockpipe[2] = { -1, -1}, pair[2], nullfd;
 	struct addrinfo hints, *res, *res0;
 	FILE *fp;
 
@@ -436,6 +436,14 @@ main(int argc, char *argv[])
 		pfd[PFD_UNIX_0 + i].events = POLLIN;
 	}
 
+	nfunix++;
+	if (socketpair(AF_UNIX, SOCK_DGRAM, PF_UNSPEC, pair) == -1)
+		die(0);
+	fd = pair[0];
+	double_rbuf(fd);
+	pfd[PFD_UNIX_0 + i].fd = fd;
+	pfd[PFD_UNIX_0 + i].events = POLLIN;
+
 	if (ctlsock_path != NULL) {
 		fd = unix_socket(ctlsock_path, SOCK_STREAM, 0600);
 		if (fd != -1) {
@@ -455,6 +463,10 @@ main(int argc, char *argv[])
 		pfd[PFD_KLOG].fd = fd;
 		pfd[PFD_KLOG].events = POLLIN;
 	}
+
+	if (ioctl(fd, LIOCSFD, &pair[1]) == -1)
+		dprintf("LIOCSFD errno %d\n", errno);
+	close(pair[1]);
 
 	dprintf("off & running....\n");
 
