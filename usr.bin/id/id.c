@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.20 2013/09/06 19:48:46 okan Exp $	*/
+/*	$OpenBSD: id.c,v 1.21 2014/07/14 05:41:00 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -201,7 +201,7 @@ current(void)
 	int cnt, ngroups;
 	uid_t uid, euid;
 	gid_t groups[NGROUPS], gid, egid, lastgid;
-	char *fmt;
+	char *prefix;
 
 	uid = getuid();
 	(void)printf("uid=%u", uid);
@@ -222,12 +222,12 @@ current(void)
 			(void)printf("(%s)", gr->gr_name);
 	}
 	if ((ngroups = getgroups(NGROUPS, groups))) {
-		for (fmt = " groups=%u", lastgid = (gid_t)-1, cnt = 0;
-		    cnt < ngroups; fmt = ", %u", lastgid = gid) {
+		for (prefix = " groups=", lastgid = (gid_t)-1, cnt = 0;
+		    cnt < ngroups; prefix = ", ", lastgid = gid) {
 			gid = groups[cnt++];
 			if (lastgid == gid)
 				continue;
-			(void)printf(fmt, gid);
+			(void)printf("%s%u", prefix, gid);
 			if ((gr = getgrgid(gid)))
 				(void)printf("(%s)", gr->gr_name);
 		}
@@ -242,7 +242,7 @@ user(struct passwd *pw)
 	int cnt, ngroups;
 	uid_t uid;
 	struct group *gr;
-	char *fmt;
+	char *prefix;
 
 	uid = pw->pw_uid;
 	(void)printf("uid=%u(%s)", uid, pw->pw_name);
@@ -251,11 +251,11 @@ user(struct passwd *pw)
 		(void)printf("(%s)", gr->gr_name);
 	ngroups = NGROUPS + 1;
 	(void) getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
-	fmt = " groups=%u";
+	prefix = " groups=";
 	for (cnt = 0; cnt < ngroups;) {
 		gid = groups[cnt];
-		(void)printf(fmt, gid);
-		fmt = ", %u";
+		(void)printf("%s%u", prefix, gid);
+		prefix = ", ";
 		if ((gr = getgrgid(gid)))
 			(void)printf("(%s)", gr->gr_name);
 		/* Skip same gid entries. */
@@ -270,7 +270,7 @@ group(struct passwd *pw, int nflag)
 	int cnt, ngroups;
 	gid_t gid, groups[NGROUPS + 1];
 	struct group *gr;
-	char *fmt;
+	char *prefix;
 
 	if (pw) {
 		ngroups = NGROUPS + 1;
@@ -279,20 +279,18 @@ group(struct passwd *pw, int nflag)
 		groups[0] = getgid();
 		ngroups = getgroups(NGROUPS, groups + 1) + 1;
 	}
-	fmt = nflag ? "%s" : "%u";
+	prefix = "";
 	for (cnt = 0; cnt < ngroups;) {
 		gid = groups[cnt];
 		if (nflag) {
 			if ((gr = getgrgid(gid)))
-				(void)printf(fmt, gr->gr_name);
+				(void)printf("%s%s", prefix, gr->gr_name);
 			else
-				(void)printf(*fmt == ' ' ? " %u" : "%u",
-				    gid);
-			fmt = " %s";
+				(void)printf("%s%u", prefix, gid);
 		} else {
-			(void)printf(fmt, gid);
-			fmt = " %u";
+			(void)printf("%s%u", prefix, gid);
 		}
+		prefix = " ";
 		/* Skip same gid entries. */
 		while (++cnt < ngroups && gid == groups[cnt]);
 	}
