@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.216 2014/07/12 21:56:56 tedu Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.217 2014/07/15 22:12:10 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -411,8 +411,6 @@ mlphy*	at mii?				# Micro Linear 6692 PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 pseudo-device	loop	1		# network loopback
-#pseudo-device	sl	1		# CSLIP
-#pseudo-device	ppp	1		# PPP
 pseudo-device	vlan			# IEEE 802.1Q VLAN 
 pseudo-device	bpfilter 1		# packet filter
 pseudo-device	rd	1		# ramdisk

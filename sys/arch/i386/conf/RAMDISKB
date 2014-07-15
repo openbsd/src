@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.127 2014/04/05 16:33:54 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.128 2014/07/15 22:12:10 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -267,8 +267,6 @@ ciphy*	at mii?				# Cicada CS8201 10/100/1000 copper PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 pseudo-device	loop	1		# network loopback
-#pseudo-device	sl	1		# CSLIP
-#pseudo-device	ppp	1		# PPP
 pseudo-device	bpfilter 1		# packet filter
 pseudo-device	rd	1		# ramdisk
 pseudo-device	wsmux	2
