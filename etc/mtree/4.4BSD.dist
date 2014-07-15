@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.254 2014/07/15 09:03:00 sthen Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.255 2014/07/15 09:12:09 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -678,6 +678,10 @@ usr
         snmp
             mibs
             ..
+        ..
+
+	# ./usr/share/sysmerge
+        sysmerge
         ..
 
         # ./usr/share/tabset
