@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.74 2014/07/11 21:58:32 tedu Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.75 2014/07/15 17:36:13 miod Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -163,7 +163,6 @@ target(all, pci, 0, 1, 2, 3)dnl
 twrget(all, wsmouse, wscons)dnl
 target(all, par, 0)dnl
 target(all, apci, 0)dnl
-target(all, ppi, 0)dnl
 target(all, local)dnl
 target(all, gpr, 0)dnl
 target(all, ptm)dnl
@@ -356,7 +355,6 @@ _mkdev(lpt, lpt*|lpa*,
 	esac
 	M $n$U c major_lpt_c Add($U, $f) 600-})dnl
 __devitem(lpa, lpa*, Polled printer port,lpt)dnl
-__devitem(ppi, ppi*, HP-IB plotters)dnl
 __devtitle({-usb-}, USB devices)dnl
 __devitem({-usb-}, usb*, Bus control devices used by usbd for attach/detach)dnl
 _mkdev({-usb-}, usb*, {-[ "$i" = "usb" ] && u= || u=$U
