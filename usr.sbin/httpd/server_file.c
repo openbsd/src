@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.4 2014/07/14 00:19:48 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.5 2014/07/15 09:51:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -70,6 +70,7 @@ server_file(struct httpd *env, struct client *clt)
 		strlcat(path, "index.html", sizeof(path));
 
 	if (access(path, R_OK) == -1) {
+		strlcpy(path, desc->http_path, sizeof(path));
 		switch (errno) {
 		case EACCES:
 			server_abort_http(clt, 403, path);
