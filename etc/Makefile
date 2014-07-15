@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.373 2014/07/15 08:28:43 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.374 2014/07/15 09:11:18 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -101,7 +101,7 @@ distribution-etc-root-var: distrib-dirs
 	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/ttys && \
 	    chmod 644 ${DESTDIR}/etc/ttys
-	cat sysctl.conf etc.${MACHINE}/sysctl.conf > \
+	cat examples/sysctl.conf etc.${MACHINE}/sysctl.conf > \
 	    ${DESTDIR}/etc/examples/sysctl.conf && \
 	    chown ${BINOWN} ${DESTDIR}/etc/examples/sysctl.conf && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/examples/sysctl.conf && \
