@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.56 2014/07/13 12:01:30 claudio Exp $	*/
+/*	$OpenBSD: mount.c,v 1.57 2014/07/15 11:25:22 jmc Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -721,7 +721,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: mount [-Aadfruvw] [-t type]\n"
+	    "usage: mount [-AadfNruvw] [-t type]\n"
 	    "       mount [-dfrsuvw] special | node\n"
 	    "       mount [-dfruvw] [-o options] [-t type] special node\n");
 	exit(1);
