@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.113 2014/04/14 07:03:19 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.114 2014/07/15 23:07:19 deraadt Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: April 14 2014 $
+.Dd $Mdocdate: July 15 2014 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -61,11 +61,9 @@ By default, this
 .Ar makefile
 is determined as follows:
 first the file
-.Sq Pa BSDmakefile ,
-if it exists, then the files
 .Sq Pa makefile
-and
-.Sq Pa Makefile ,
+if it exists, then the file
+.Sq Pa Makefile
 in that order.
 If none of these files exist,
 .Nm
@@ -79,10 +77,8 @@ exists, it will also be read after the main
 .Xr mkdep 1 ) .
 .Pp
 The handling of
-.Sq Pa BSDmakefile
-and
 .Sq Pa .depend
-are
+is a
 .Bx
 extensions.
 .Pp
@@ -1466,11 +1462,8 @@ also ignores and unsets
 .Bl -tag -width /usr/share/mk -compact
 .It Pa .depend
 list of dependencies
-.It Pa BSDmakefile
-default makefile
 .It Pa makefile
-default makefile if
-.Pa BSDmakefile
+default makefile
 does not exist
 .It Pa Makefile
 default makefile if
