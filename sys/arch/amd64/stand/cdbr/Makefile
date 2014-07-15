@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2014/07/13 21:18:44 jasper Exp $
+#	$OpenBSD: Makefile,v 1.9 2014/07/15 22:14:37 deraadt Exp $
 #
 
 S=	${.CURDIR}/../../../..
@@ -16,6 +16,7 @@ ORG=	0x0000
 LDFLAGS=-nostdlib -Ttext ${ORG} -x -N -s -Bstatic -e start -nopie
 LDFLAGS+=-melf_i386 -L/usr/libdata
 INSTALL_STRIP=
+BINMODE=644
 
 NOMAN=
 #MAN+=	cdbr.8

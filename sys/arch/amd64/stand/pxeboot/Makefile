@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2014/07/13 21:18:44 jasper Exp $
+#	$OpenBSD: Makefile,v 1.22 2014/07/15 22:14:37 deraadt Exp $
 
 MAN=	pxeboot.8
 
@@ -13,6 +13,7 @@ SIZE?=	size
 LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -nopie
 LDFLAGS+=-melf_i386 -L/usr/libdata
 INSTALL_STRIP=
+BINMODE=644
 
 .PATH:	${SADIR}/libsa
 # i386 stuff (so, it will possibly load in the same 64k)
