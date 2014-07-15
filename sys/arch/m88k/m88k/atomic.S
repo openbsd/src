@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.S,v 1.5 2014/07/13 08:13:07 miod Exp $	*/
+/*	$OpenBSD: atomic.S,v 1.6 2014/07/15 16:26:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -18,13 +18,21 @@
 
 #include <machine/asm.h>
 
+#ifdef M88110
+#define	CACHE_LINE	32
+#else
+#define	CACHE_LINE	16
+#endif
 	.data
 
 /*
- * A __cpu_simple_lock_t used to provide the inter-processor interlock.
+ * A __cpu_simple_lock_t used to provide the inter-processor interlock,
+ * alone on its cache line.
  */
+	.balign	CACHE_LINE
 ASLOCAL(__atomic_interlock)
 	.word	0
+	.balign	CACHE_LINE
 
 	.text
 
@@ -68,7 +76,7 @@ ENTRY(atomic_add_int_nv_mp)
 
 	or	%r9, %r2, %r0
 	ld	%r2, %r9, %r0
-	addu	%r2, %r2, %r4
+	addu	%r2, %r2, %r3
 	st	%r2, %r9, %r0
 
 	br	_C_LABEL(__atomic_unlock)
@@ -79,7 +87,7 @@ ENTRY(atomic_sub_int_nv_mp)
 
 	or	%r9, %r2, %r0
 	ld	%r2, %r9, %r0
-	subu	%r2, %r2, %r4
+	subu	%r2, %r2, %r3
 	st	%r2, %r9, %r0
 
 	br	_C_LABEL(__atomic_unlock)
@@ -90,7 +98,7 @@ ENTRY(atomic_cas_uint_mp)
 
 	ld	%r9, %r2, %r0
 	cmp	%r3, %r3, %r9
-	bcnd	ne0, %r3, 1f
+	bb0	eq,  %r3, 1f
 	st	%r4, %r2, %r0
 1:
 	or	%r2, %r9, %r0
@@ -122,14 +130,14 @@ ASLOCAL(__atomic_lock_88110)
 	 * then grab the interlock.
 	 */
 
+	or.u	%r6, %r0, %hi16(_ASM_LABEL(__atomic_interlock))
+	or	%r6, %r6, %lo16(_ASM_LABEL(__atomic_interlock))
+
 	ldcr	%r7, PSR
 	set	%r8, %r7, 1<PSR_INTERRUPT_DISABLE_BIT>
 	set	%r8, %r8, 1<PSR_SHADOW_FREEZE_BIT>
 	stcr	%r8, PSR
 	FLUSH_PIPELINE
-
-	or.u	%r6, %r0, %hi16(_ASM_LABEL(__atomic_interlock))
-	or	%r6, %r6, %lo16(_ASM_LABEL(__atomic_interlock))
 1:
 	or	%r9, %r0, 1	/* __SIMPLELOCK_LOCKED */
 	xmem	%r9, %r6, %r0
@@ -149,13 +157,14 @@ GLOBAL(__atomic_lock_88100)
 	 * the interlock.
 	 */
 
+	or.u	%r6, %r0, %hi16(_ASM_LABEL(__atomic_interlock))
+	or	%r6, %r6, %lo16(_ASM_LABEL(__atomic_interlock))
+
 	ldcr	%r7, PSR
 	set	%r8, %r7, 1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	%r8, PSR
 	FLUSH_PIPELINE
 
-	or.u	%r6, %r0, %hi16(_ASM_LABEL(__atomic_interlock))
-	or	%r6, %r6, %lo16(_ASM_LABEL(__atomic_interlock))
 1:
 	or	%r9, %r0, 1	/* __SIMPLELOCK_LOCKED */
 	xmem	%r9, %r6, %r0
