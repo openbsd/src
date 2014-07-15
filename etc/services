@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.87 2014/07/12 14:51:07 ajacoutot Exp $
+# $OpenBSD: services,v 1.88 2014/07/15 15:52:38 sthen Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -286,7 +286,6 @@ kerberos_master	751/udp				# Kerberos 4 kadmin
 kerberos_master	751/tcp				# Kerberos 4 kadmin
 krb_prop	754/tcp		hprop		# Kerberos slave propagation
 krbupdate	760/tcp		kreg		# BSD Kerberos registration
-conserver	782/tcp				# console server
 supfilesrv	871/tcp				# SUP server
 swat		901/tcp				# Samba Web Administration Tool
 supfiledbg	1127/tcp			# SUP debugging
@@ -294,6 +293,7 @@ support		1529/tcp			# GNATS, cygnus bug tracker
 datametrics	1645/udp
 ekshell2	2106/tcp			# Encrypted kshell - UColorado, Boulder
 webster		2627/tcp			# Network dictionary
+conserver	3109/tcp			# console server
 canna		5680/tcp			# Kana->Kanji server
 sane-port	6566/tcp			# SANE Control Port
 icb		7326/tcp			# Internet Citizen's Band
