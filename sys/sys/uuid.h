@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuid.h,v 1.1 2014/07/13 15:32:28 miod Exp $	*/
+/*	$OpenBSD: uuid.h,v 1.2 2014/07/15 23:10:27 miod Exp $	*/
 /*	$NetBSD: uuid.h,v 1.5 2008/11/18 14:01:03 joerg Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ void	uuid_enc_le(void *, const struct uuid *);
 
 #else	/* _KERNEL */
 
-typedef struct uuid uuid_t;
+/* typedef struct uuid uuid_t; */
 
 #endif	/* _KERNEL */
 
