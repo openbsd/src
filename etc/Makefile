@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.375 2014/07/15 09:27:04 ajacoutot Exp $
+#	$OpenBSD: Makefile,v 1.376 2014/07/15 10:09:36 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -84,8 +84,6 @@ install-mtree:
 	${INSTALL} -c -o root -g wheel -m 600 mtree/special \
 	    ${DESTDIR}${MTREEDIR}
 	${INSTALL} -c -o root -g wheel -m 444 mtree/4.4BSD.dist \
-	    ${DESTDIR}${MTREEDIR}
-	${INSTALL} -c -o root -g wheel -m 444 mtree/BSD.local.dist \
 	    ${DESTDIR}${MTREEDIR}
 	${INSTALL} -c -o root -g wheel -m 444 mtree/BSD.x11.dist \
 	    ${DESTDIR}${MTREEDIR}
