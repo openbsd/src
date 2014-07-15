@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.780 2014/07/13 21:24:43 rpe Exp $
+#	$OpenBSD: install.sub,v 1.781 2014/07/15 08:49:50 deraadt Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1815,9 +1815,8 @@ apply()
 	fi
 
 	if [[ -n $aperture ]]; then
-		sed "s/^#\(machdep\.allowaperture=$aperture\)/\1	/" \
-			/mnt/etc/sysctl.conf >/tmp/sysctl.conf
-		cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
+		echo "machdep.allowaperture=$aperture # See xf86(4)" \
+		    >>/mnt/etc/sysctl.conf
 	fi
 
 	if [[ $xdm == y && -x /mnt/usr/X11R6/bin/xdm ]]; then
