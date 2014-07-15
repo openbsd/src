@@ -1,7 +1,6 @@
 ./.cshrc
 ./.profile
 ./etc/amd/master.sample
-./etc/authpf
 ./etc/changelist
 ./etc/csh.cshrc
 ./etc/csh.login
@@ -14,11 +13,6 @@
 ./etc/gettytab
 ./etc/group
 ./etc/hosts
-./etc/hotplug
-./etc/iked/pubkeys/fqdn
-./etc/iked/pubkeys/ipv4
-./etc/iked/pubkeys/ipv6
-./etc/iked/pubkeys/ufqdn
 ./etc/ksh.kshrc
 ./etc/localtime
 ./etc/locate.rc
@@ -26,7 +20,6 @@
 ./etc/lynx.cfg
 ./etc/mail.rc
 ./etc/mail/Makefile
-./etc/mail/README
 ./etc/mail/access
 ./etc/mail/access.db
 ./etc/mail/aliases
@@ -55,12 +48,9 @@
 ./etc/myname
 ./etc/newsyslog.conf
 ./etc/nginx/fastcgi_params
-./etc/nginx/koi-utf
-./etc/nginx/koi-win
 ./etc/nginx/nginx.conf
 ./etc/nginx/scgi_params
 ./etc/nginx/uwsgi_params
-./etc/nginx/win-utf
 ./etc/npppd/npppd-users
 ./etc/npppd/npppd.conf
 ./etc/passwd
@@ -86,7 +76,6 @@
 ./etc/ssl/openssl.cnf
 ./etc/ssl/x509v3.cnf
 ./etc/sudoers
-./etc/sysctl.conf
 ./etc/syslog.conf
 ./etc/systrace/usr_sbin_lpd
 ./etc/systrace/usr_sbin_named

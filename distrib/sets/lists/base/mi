@@ -46,6 +46,7 @@
 ./dev/MAKEDEV
 ./etc
 ./etc/amd
+./etc/authpf
 ./etc/disklabels
 ./etc/disktab
 ./etc/examples
@@ -78,14 +79,20 @@
 ./etc/examples/sasyncd.conf
 ./etc/examples/sensorsd.conf
 ./etc/examples/snmpd.conf
+./etc/examples/sysctl.conf
 ./etc/examples/ypldap.conf
 ./etc/firmware
+./etc/hotplug
 ./etc/iked
 ./etc/iked/ca
 ./etc/iked/certs
 ./etc/iked/crls
 ./etc/iked/private
 ./etc/iked/pubkeys
+./etc/iked/pubkeys/fqdn
+./etc/iked/pubkeys/ipv4
+./etc/iked/pubkeys/ipv6
+./etc/iked/pubkeys/ufqdn
 ./etc/isakmpd
 ./etc/isakmpd/ca
 ./etc/isakmpd/certs
@@ -104,6 +111,7 @@
 ./etc/ldap/nis.schema
 ./etc/magic
 ./etc/mail
+./etc/mail/README
 ./etc/moduli
 ./etc/mtree
 ./etc/mtree/4.4BSD.dist
@@ -113,7 +121,10 @@
 ./etc/netstart
 ./etc/networks
 ./etc/nginx
+./etc/nginx/koi-utf
+./etc/nginx/koi-win
 ./etc/nginx/mime.types
+./etc/nginx/win-utf
 ./etc/npppd
 ./etc/pf.os
 ./etc/ppp
@@ -3328,6 +3339,7 @@
 ./usr/share/snmp/mibs/OPENBSD-PF-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-SENSORS-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-SNMPD-CONF.txt
+./usr/share/sysmerge
 ./usr/share/tabset
 ./usr/share/tabset/std
 ./usr/share/tabset/stdcrt
