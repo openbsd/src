@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.372 2014/07/14 09:11:27 ajacoutot Exp $
+#	$OpenBSD: Makefile,v 1.373 2014/07/15 08:28:43 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -101,10 +101,11 @@ distribution-etc-root-var: distrib-dirs
 	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/ttys && \
 	    chmod 644 ${DESTDIR}/etc/ttys
-	cat sysctl.conf etc.${MACHINE}/sysctl.conf > ${DESTDIR}/etc/sysctl.conf && \
-	    chown ${BINOWN} ${DESTDIR}/etc/sysctl.conf && \
-	    chgrp ${BINGRP} ${DESTDIR}/etc/sysctl.conf && \
-	    chmod 644 ${DESTDIR}/etc/sysctl.conf
+	cat sysctl.conf etc.${MACHINE}/sysctl.conf > \
+	    ${DESTDIR}/etc/examples/sysctl.conf && \
+	    chown ${BINOWN} ${DESTDIR}/etc/examples/sysctl.conf && \
+	    chgrp ${BINGRP} ${DESTDIR}/etc/examples/sysctl.conf && \
+	    chmod 644 ${DESTDIR}/etc/examples/sysctl.conf
 	cat fbtab.head etc.${MACHINE}/fbtab fbtab.tail > ${DESTDIR}/etc/fbtab && \
 	    chown ${BINOWN} ${DESTDIR}/etc/fbtab && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/fbtab && \

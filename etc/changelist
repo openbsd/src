@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.93 2014/07/14 09:04:02 deraadt Exp $
+#	$OpenBSD: changelist,v 1.94 2014/07/15 08:28:43 deraadt Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -142,7 +142,7 @@
 /etc/ssl/cert.pem
 /etc/sudoers
 /etc/suid_profile
-/etc/sysctl.conf
++/etc/sysctl.conf
 /etc/syslog.conf
 /etc/sysmerge.ignore
 /etc/ttys
