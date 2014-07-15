@@ -1,6 +1,6 @@
-From deraadt@do-not-reply.openbsd.org Wed Nov  1 07:54:54 MST 2014
+From deraadt@do-not-reply.openbsd.org Sat Nov  1 07:56:56 MST 2014
 Return-Path: root
-Date: Nov 1 07:54:54 MST 2014
+Date: Nov 1 07:56:56 MST 2014
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
 Subject: Welcome to OpenBSD 5.6!
