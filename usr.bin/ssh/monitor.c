@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.134 2014/06/24 01:13:21 djm Exp $ */
+/* $OpenBSD: monitor.c,v 1.135 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -66,6 +66,7 @@
 #include "sshlogin.h"
 #include "canohost.h"
 #include "log.h"
+#include "misc.h"
 #include "servconf.h"
 #include "monitor.h"
 #include "monitor_mm.h"
@@ -74,7 +75,6 @@
 #endif
 #include "monitor_wrap.h"
 #include "monitor_fdpass.h"
-#include "misc.h"
 #include "compat.h"
 #include "ssh2.h"
 #include "roaming.h"
