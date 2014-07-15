@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.139 2014/07/13 07:12:41 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.140 2014/07/15 09:27:04 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -36,7 +36,7 @@ fi
 # sysmerge specific variables (overridable)
 MERGE_CMD="${MERGE_CMD:=sdiff -as -w ${SWIDTH} -o}"
 REPORT="${REPORT:=${WRKDIR}/sysmerge.log}"
-DBDIR="${DBDIR:=/var/db/sysmerge}"
+DBDIR="${DBDIR:=/usr/share/sysmerge}"
 
 # system-wide variables (overridable)
 PAGER="${PAGER:=/usr/bin/more}"
@@ -110,8 +110,8 @@ extract_sets() {
 		[[ ${_set} == etc ]] && _tgz=${WRKDIR}/${TGZ##*/}
 		[[ ${_set} == xetc ]] && _tgz=${WRKDIR}/${XTGZ##*/}
 
-		tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null ||
-			error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks ./var/db/sysmerge/${_set}sum"
+		tar -tzf "${_tgz}" .${DBDIR}/sysmerge/${_set}sum >/dev/null ||
+			error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks .${DBDIR}/sysmerge/${_set}sum"
 
 		(cd ${TEMPROOT} && tar -xzphf "${_tgz}" && \
 			find . -type f -and ! -type l | xargs sha256 -h ${WRKDIR}/${_set}sum) || \
@@ -217,8 +217,8 @@ sm_populate() {
 		      /etc/passwd
 		      /etc/motd
 		      /etc/myname
+		      /usr/share/sysmerge/{etc,examples,xetc}sum
 		      /var/db/locate.database
-		      /var/db/sysmerge/{etc,examples,xetc}sum
 		      /var/mail/root"
 	CF_FILES="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
 	for cf in ${CF_FILES}; do

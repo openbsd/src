@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.33 2014/07/10 07:12:28 espie Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.34 2014/07/15 09:27:04 ajacoutot Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -422,8 +422,6 @@
             ..
         ..
         db
-            sysmerge
-            ..
             xkb
             ..
         ..
