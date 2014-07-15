@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.88 2014/07/15 15:52:38 sthen Exp $
+# $OpenBSD: services,v 1.89 2014/07/15 15:58:39 sthen Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -214,6 +214,15 @@ kauth		2120/tcp			# Remote kauth
 iprop		2121/tcp			# Kerberos incremental propagation
 cvspserver	2401/tcp			# cvs pserver
 cvspserver	2401/udp			# cvs pserver
+zebrasrv	2600/tcp			# Quagga/Zebra
+zebra		2601/tcp			# Quagga/Zebra
+ripd		2602/tcp			# Quagga/Zebra
+ripng		2603/tcp			# Quagga/Zebra
+ospfd		2604/tcp			# Quagga/Zebra
+bgpd		2605/tcp			# Quagga/Zebra
+ospf6d		2606/tcp			# Quagga/Zebra
+ospfapi		2607/tcp			# Quagga/Zebra
+isisd		2608/tcp			# Quagga/Zebra
 netplan		2983/tcp			# netplan daemon
 eppc		3031/tcp			# Remote AppleEvents/PPC Toolbox
 eppc		3031/udp			# Remote AppleEvents/PPC Toolbox
