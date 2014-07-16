@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.5 2014/07/15 09:51:06 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.6 2014/07/16 10:25:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -46,6 +46,8 @@
 #include "httpd.h"
 #include "http.h"
 
+void	 server_file_error(struct bufferevent *, short, void *);
+
 int
 server_file(struct httpd *env, struct client *clt)
 {
@@ -88,6 +90,9 @@ server_file(struct httpd *env, struct client *clt)
 	if ((fd = open(path, O_RDONLY)) == -1 || fstat(fd, &st) == -1)
 		goto fail;
 
+	/* File descriptor is opened, decrement inflight counter */
+	server_inflight_dec(clt, __func__);
+
 	media = media_find(env->sc_mediatypes, path);
 	ret = server_response_http(clt, 200, media, st.st_size);
 	switch (ret) {
@@ -104,8 +109,9 @@ server_file(struct httpd *env, struct client *clt)
 	clt->clt_fd = fd;
 	if (clt->clt_file != NULL)
 		bufferevent_free(clt->clt_file);
+
 	clt->clt_file = bufferevent_new(clt->clt_fd, server_read,
-	    server_write, server_error, clt);
+	    server_write, server_file_error, clt);
 	if (clt->clt_file == NULL) {
 		errstr = "failed to allocate file buffer event";
 		goto fail;
@@ -114,6 +120,7 @@ server_file(struct httpd *env, struct client *clt)
 	bufferevent_settimeout(clt->clt_file,
 	    srv->srv_conf.timeout.tv_sec, srv->srv_conf.timeout.tv_sec);
 	bufferevent_enable(clt->clt_file, EV_READ);
+	bufferevent_disable(clt->clt_bev, EV_READ);
 
 	return (0);
  fail:
@@ -121,4 +128,47 @@ server_file(struct httpd *env, struct client *clt)
 		errstr = strerror(errno);
 	server_abort_http(clt, 500, errstr);
 	return (-1);
+}
+
+void
+server_file_error(struct bufferevent *bev, short error, void *arg)
+{
+	struct client		*clt = arg;
+	struct evbuffer		*dst;
+
+	if (error & EVBUFFER_TIMEOUT) {
+		server_close(clt, "buffer event timeout");
+		return;
+	}
+	if (error & (EVBUFFER_READ|EVBUFFER_WRITE|EVBUFFER_EOF)) {
+		bufferevent_disable(bev, EV_READ);
+
+		clt->clt_done = 1;
+
+		dst = EVBUFFER_OUTPUT(clt->clt_bev);
+		if (EVBUFFER_LENGTH(dst)) {
+			/* Finish writing all data first */
+			bufferevent_enable(clt->clt_bev, EV_WRITE);
+			return;
+		}
+
+		if (clt->clt_persist) {
+			/* Close input file and wait for next HTTP request */
+			if (clt->clt_fd != -1)
+				close(clt->clt_fd);
+			clt->clt_fd = -1;
+			clt->clt_toread = TOREAD_HTTP_HEADER;
+			server_reset_http(clt);
+			bufferevent_enable(clt->clt_bev, EV_READ|EV_WRITE);
+			return;
+		}
+		server_close(clt, "done");
+		return;
+	}
+	if (error & EVBUFFER_ERROR && errno == EFBIG) {
+		bufferevent_enable(bev, EV_READ);
+		return;
+	}
+	server_close(clt, "buffer event error");
+	return;
 }

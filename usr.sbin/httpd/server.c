@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.5 2014/07/14 00:19:48 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.6 2014/07/16 10:25:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -389,7 +389,6 @@ void
 server_error(struct bufferevent *bev, short error, void *arg)
 {
 	struct client		*clt = arg;
-	struct evbuffer		*dst;
 
 	if (error & EVBUFFER_TIMEOUT) {
 		server_close(clt, "buffer event timeout");
@@ -403,20 +402,7 @@ server_error(struct bufferevent *bev, short error, void *arg)
 		bufferevent_disable(bev, EV_READ|EV_WRITE);
 
 		clt->clt_done = 1;
-
-		if (bev != clt->clt_bev) {
-			dst = EVBUFFER_OUTPUT(clt->clt_bev);
-			if (EVBUFFER_LENGTH(dst))
-				return;
-		} else
-			return;
-
-		if (clt->clt_persist) {
-			server_reset_http(clt);
-			bufferevent_enable(clt->clt_bev, EV_READ|EV_WRITE);
-			return;
-		} else
-			server_close(clt, "done");
+		server_close(clt, "done");
 		return;
 	}
 	server_close(clt, "buffer event error");
@@ -468,6 +454,7 @@ server_accept(int fd, short event, void *arg)
 	clt->clt_id = ++server_cltid;
 	clt->clt_serverid = srv->srv_conf.id;
 	clt->clt_pid = getpid();
+	clt->clt_inflight = 1;
 	switch (ss.ss_family) {
 	case AF_INET:
 		clt->clt_port = ((struct sockaddr_in *)&ss)->sin_port;
@@ -513,10 +500,24 @@ server_accept(int fd, short event, void *arg)
 		 * the client struct was not completly set up, but still
 		 * counted as an inflight client. account for this.
 		 */
-		server_inflight--;
-		log_debug("%s: inflight decremented, now %d",
-		    __func__, server_inflight);
+		server_inflight_dec(clt, __func__);
 	}
+}
+
+void
+server_inflight_dec(struct client *clt, const char *why)
+{
+	if (clt != NULL) {
+		/* the flight already left inflight mode. */
+		if (clt->clt_inflight == 0)
+			return;
+		clt->clt_inflight = 0;
+	}
+
+	/* the file was never opened, thus this was an inflight client. */
+	server_inflight--;
+	log_debug("%s: inflight decremented, now %d, %s",
+	    __func__, server_inflight, why);
 }
 
 void
@@ -559,19 +560,10 @@ server_close(struct client *clt, const char *msg)
 		bufferevent_free(clt->clt_file);
 	if (clt->clt_fd != -1)
 		close(clt->clt_fd);
-
-	if (clt->clt_s != -1) {
+	if (clt->clt_s != -1)
 		close(clt->clt_s);
-		if (/* XXX */ -1) {
-			/*
-			 * the output was never connected,
-			 * thus this was an inflight client.
-			 */
-			server_inflight--;
-			log_debug("%s: clients inflight decremented, now %d",
-			    __func__, server_inflight);
-		}
-	}
+
+	server_inflight_dec(clt, __func__);
 
 	if (clt->clt_log != NULL)
 		evbuffer_free(clt->clt_log);

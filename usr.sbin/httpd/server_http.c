@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.7 2014/07/14 09:03:08 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.8 2014/07/16 10:25:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -319,8 +319,8 @@ server_read_http(struct bufferevent *bev, void *arg)
 
  done:
 		if (clt->clt_toread <= 0) {
-			if (server_response(env, clt) == -1)
-				return;
+			server_response(env, clt);
+			return;
 		}
 	}
 	if (clt->clt_done) {
@@ -511,7 +511,6 @@ server_reset_http(struct client *clt)
 	clt->clt_headerlen = 0;
 	clt->clt_line = 0;
 	clt->clt_done = 0;
-	clt->clt_toread = TOREAD_HTTP_HEADER;
 	clt->clt_bev->readcb = server_read_http;
 }
 
@@ -644,11 +643,9 @@ server_response(struct httpd *httpd, struct client *clt)
 	if ((ret = server_file(httpd, clt)) == -1)
 		return (-1);
 
-	/* XXX */
-	if (!(desc->http_method == HTTP_METHOD_HEAD && clt->clt_persist == 0))
-		server_reset_http(clt);
+	server_reset_http(clt);
 
-	return (ret);
+	return (0);
  fail:
 	server_abort_http(clt, 400, "bad request");
 	return (-1);

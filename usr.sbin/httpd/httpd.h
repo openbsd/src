@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.3 2014/07/14 00:19:48 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.4 2014/07/16 10:25:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -265,10 +265,11 @@ struct client {
 	struct bufferevent	*clt_file;
 
 	off_t			 clt_toread;
+	size_t			 clt_headerlen;
 	int			 clt_persist;
 	int			 clt_line;
-	size_t			 clt_headerlen;
 	int			 clt_done;
+	int			 clt_inflight;
 
 	struct evbuffer		*clt_log;
 	struct timeval		 clt_timeout;
@@ -377,6 +378,7 @@ int	 server_bufferevent_write_chunk(struct client *,
 	    struct evbuffer *, size_t);
 int	 server_bufferevent_add(struct event *, int);
 int	 server_bufferevent_write(struct client *, void *, size_t);
+void	 server_inflight_dec(struct client *, const char *);
 
 SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
 
