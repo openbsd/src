@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.91 2014/07/14 09:26:27 jsing Exp $	*/
+/*	$OpenBSD: main.c,v 1.92 2014/07/16 04:52:43 lteo Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -867,61 +867,25 @@ help(int argc, char *argv[])
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s "
+	fprintf(stderr, "usage: "
 #ifndef SMALL
-	    "[-46AadEegimnptVv] [-D title] [-k seconds] [-P port] "
+	    "%1$s [-46AadEegimnptVv] [-D title] [-k seconds] [-P port] "
 	    "[-r seconds]\n"
 	    "           [-s srcaddr] [host [port]]\n"
-	    "       %s [-C] "
-#endif /* !SMALL */
-	    "[-o output] "
-#ifndef SMALL
-	    "[-s srcaddr]\n"
-	    "           "
-#endif /* !SMALL */
-	    "ftp://[user:password@]host[:port]/file[/] ...\n"
-	    "       %s "
-#ifndef SMALL
-	    "[-C] [-c cookie] "
-#endif /* !SMALL */
-	    "[-o output] "
-#ifndef SMALL
-	    "[-S ssl_options] "
+	    "       %1$s [-C] [-o output] [-s srcaddr]\n"
+	    "           ftp://[user:password@]host[:port]/file[/] ...\n"
+	    "       %1$s [-C] [-c cookie] [-o output] [-S ssl_options] "
 	    "[-s srcaddr]\n"
 	    "           [-U useragent] "
-#endif /* !SMALL */
-	    "http"
-#ifndef SMALL
-	    "[s]"
-#endif
-	    "://"
-#ifndef SMALL
-	    "[user:password@]"
-#endif
-	    "host[:port]/file ...\n"
-	    "       %s "
-#ifndef SMALL
-	    "[-C] "
-#endif /* !SMALL */
-	    "[-o output] "
-#ifndef SMALL
-	    "[-s srcaddr] "
-#endif /* !SMALL */
-	    "file:file ...\n"
-	    "       %s "
-#ifndef SMALL
-	    "[-C] "
-#endif /* !SMALL */
-	    "[-o output] "
-#ifndef SMALL
-	    "[-s srcaddr] "
-#endif /* !SMALL */
-	    "host:/file[/] ...\n",
-#ifndef SMALL
-	    __progname, __progname, __progname, __progname, __progname);
+	    "http[s]://[user:password@]host[:port]/file ...\n"
+	    "       %1$s [-C] [-o output] [-s srcaddr] file:file ...\n"
+	    "       %1$s [-C] [-o output] [-s srcaddr] host:/file[/] ...\n",
 #else /* !SMALL */
-	    __progname, __progname, __progname, __progname);
+	    "%1$s [-o output] ftp://[user:password@]host[:port]/file[/] ...\n"
+	    "       %1$s [-o output] http://host[:port]/file ...\n"
+	    "       %1$s [-o output] file:file ...\n"
+	    "       %1$s [-o output] host:/file[/] ...\n",
 #endif /* !SMALL */
+	    __progname);
 	exit(1);
 }
-
