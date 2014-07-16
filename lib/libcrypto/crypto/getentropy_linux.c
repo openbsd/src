@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.24 2014/07/13 13:37:38 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.25 2014/07/16 14:26:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -486,6 +486,7 @@ getentropy_fallback(void *buf, size_t len)
 
 			HD(cnt);
 		}
+#ifdef HAVE_GETAUXVAL
 #ifdef AT_RANDOM
 		/* Not as random as you think but we take what we are given */
 		p = (char *) getauxval(AT_RANDOM);
@@ -501,6 +502,7 @@ getentropy_fallback(void *buf, size_t len)
 		p = (char *) getauxval(AT_BASE);
 		if (p)
 			HD(p);
+#endif
 #endif
 
 		SHA512_Final(results, &ctx);
