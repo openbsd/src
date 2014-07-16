@@ -1,4 +1,3 @@
-./usr/local/lib/pkgconfig
 ./altroot
 ./bin
 ./bin/[
@@ -2631,6 +2630,7 @@
 ./usr/local/include
 ./usr/local/info
 ./usr/local/lib
+./usr/local/lib/pkgconfig
 ./usr/local/libdata
 ./usr/local/libdata/perl5
 ./usr/local/libdata/perl5/site_perl

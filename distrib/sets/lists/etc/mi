@@ -85,14 +85,14 @@
 ./root/.cvsrc
 ./root/.login
 ./root/.profile
+./usr/share/sysmerge/etcsum
+./usr/share/sysmerge/examplessum
 ./var/crash/minfree
 ./var/cron/at.deny
 ./var/cron/cron.deny
 ./var/cron/log
 ./var/cron/tabs/root
 ./var/db/locate.database
-./usr/share/sysmerge/etcsum
-./usr/share/sysmerge/examplessum
 ./var/log/authlog
 ./var/log/daemon
 ./var/log/failedlogin
