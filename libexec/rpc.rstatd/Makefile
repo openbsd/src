@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2002/06/29 08:14:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2014/07/16 20:02:45 okan Exp $
 
 PROG =	rpc.rstatd
 .PATH: ${.CURDIR}/../../usr.bin/vmstat
@@ -11,4 +11,3 @@ DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc
 
 .include <bsd.prog.mk>
-
