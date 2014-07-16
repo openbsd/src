@@ -1,3 +1,4 @@
+./etc/examples/wsconsctl.conf
 ./sbin/kbd
 ./sbin/wsconsctl
 ./usr/lib/gcc-lib/m88k-unknown-openbsd5.6

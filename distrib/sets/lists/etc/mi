@@ -41,7 +41,6 @@
 ./etc/mailer.conf
 ./etc/man.conf
 ./etc/master.passwd
-./etc/mixerctl.conf
 ./etc/monthly
 ./etc/motd
 ./etc/myname

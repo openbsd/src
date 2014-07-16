@@ -1,3 +1,4 @@
+./etc/examples/wsconsctl.conf
 ./etc/firmware/rum-license
 ./etc/firmware/rum-rt2573
 ./etc/firmware/run-license

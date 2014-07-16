@@ -1,3 +1,4 @@
+./etc/examples/wsconsctl.conf
 ./etc/firmware/atu-at76c503-i3863-ext
 ./etc/firmware/atu-at76c503-i3863-int
 ./etc/firmware/atu-at76c503-rfmd-acc-ext

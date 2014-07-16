@@ -64,10 +64,12 @@
 ./etc/examples/ipsec.conf
 ./etc/examples/ldapd.conf
 ./etc/examples/ldpd.conf
+./etc/examples/mixerctl.conf
 ./etc/examples/mrouted.conf
 ./etc/examples/ntpd.conf
 ./etc/examples/ospf6d.conf
 ./etc/examples/ospfd.conf
+./etc/examples/pf.conf
 ./etc/examples/printcap
 ./etc/examples/rbootd.conf
 ./etc/examples/rc.local
