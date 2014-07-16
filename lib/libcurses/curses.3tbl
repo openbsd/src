@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: curses.3tbl,v 1.23 2010/09/11 21:01:12 jmc Exp $
+.\" $OpenBSD: curses.3tbl,v 1.24 2014/07/16 14:21:45 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curses.3tbl,v 1.23 2010/09/11 21:01:12 jmc Exp $
+.\" $Id: curses.3tbl,v 1.24 2014/07/16 14:21:45 jmc Exp $
 .hy 0
 .TH ncurses 3 ""
 .ds n 5
@@ -996,12 +996,6 @@ terminal capability database
 .SH SEE ALSO
 \fBterminfo\fR(\*n) and related pages whose names begin "curs_" for detailed routine
 descriptions.
-.TP
-/usr/share/doc/html/curses/ncurses-intro.html
-intro to ncurses.
-.TP
-/usr/share/doc/html/curses/hackguide.html
-ncurses hacker's guide.
 .SH EXTENSIONS
 The \fBncurses\fR library can be compiled with an option (\fB-DUSE_GETCAP\fR)
 that falls back to the old-style /etc/termcap file if the terminal setup code
