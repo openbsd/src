@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2012/09/12 09:19:54 haesbaert Exp $
+#	$OpenBSD: Makefile,v 1.4 2014/07/16 20:07:03 okan Exp $
 
 .if ${MACHINE} == "sparc64"
 
@@ -14,4 +14,3 @@ MAN=	mksuncd.1
 MANSUBDIR=sparc64
 
 .include <bsd.prog.mk>
-

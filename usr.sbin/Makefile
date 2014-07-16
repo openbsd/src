@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.177 2014/04/26 11:02:45 florian Exp $
+#	$OpenBSD: Makefile,v 1.178 2014/07/16 20:07:03 okan Exp $
 
 .include <bsd.own.mk>
 
@@ -25,4 +25,3 @@ SUBDIR+=ypbind ypldap yppoll ypset ypserv
 .endif
 
 .include <bsd.subdir.mk>
-
