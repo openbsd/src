@@ -1,6 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2004/05/12 22:54:13 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/07/16 20:04:21 okan Exp $
 
 PROG=	probe
 
 .include <bsd.regress.mk>
-

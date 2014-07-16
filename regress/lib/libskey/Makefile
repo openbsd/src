@@ -1,4 +1,4 @@
-#       $OpenBSD: Makefile,v 1.2 2003/06/16 13:35:33 mickey Exp $
+#       $OpenBSD: Makefile,v 1.3 2014/07/16 20:04:21 okan Exp $
 
 PROG=	skeytest
 CFLAGS+=-Wall
@@ -12,4 +12,3 @@ REGRESS_TARGETS=skey-regress
 .PHONY: ${REGRESS_TARGETS}
 
 .include <bsd.regress.mk>
-

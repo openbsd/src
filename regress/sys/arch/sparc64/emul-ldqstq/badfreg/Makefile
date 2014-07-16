@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2003/07/12 04:23:15 jason Exp $
+#	$OpenBSD: Makefile,v 1.3 2014/07/16 20:04:21 okan Exp $
 
 PROG=badfpreg
 NOMAN=
@@ -215,4 +215,3 @@ t_ld_f62_reg: ${PROG}
 
 t_st_f62_reg: ${PROG}
 	${.OBJDIR}/${PROG} 62 st reg
-

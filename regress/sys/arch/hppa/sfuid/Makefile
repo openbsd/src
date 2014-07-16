@@ -1,6 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2004/05/13 01:22:05 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/07/16 20:04:21 okan Exp $
 
 PROG=	sfuid
 
 .include <bsd.regress.mk>
-

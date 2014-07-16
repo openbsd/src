@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2004/12/29 04:39:17 david Exp $
+#	$OpenBSD: Makefile,v 1.8 2014/07/16 20:04:21 okan Exp $
 #	$NetBSD: Makefile,v 1.3 1995/04/20 22:42:19 cgd Exp $
 #
 # C Optimizer (-O) breaks this program - don't use !!
@@ -31,4 +31,3 @@ REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
 .PHONY: ${REGRESS_TARGETS}
 
 .include <bsd.regress.mk>
-

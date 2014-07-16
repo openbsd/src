@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2002/10/09 20:09:15 marc Exp $
+# $OpenBSD: Makefile,v 1.6 2014/07/16 20:04:21 okan Exp $
 
 PROG=	socket2a
 CFLAGS+= -I${.CURDIR}/../../include
@@ -16,4 +16,3 @@ dummy: ${PROG}
 	@echo ${PROG} ready
 
 .include <bsd.regress.mk>
-

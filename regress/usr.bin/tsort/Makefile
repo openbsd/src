@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2002/09/02 20:01:44 avsm Exp $
+# $OpenBSD: Makefile,v 1.8 2014/07/16 20:04:21 okan Exp $
 
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6
 REGRESS_SLOW_TARGETS=t4
@@ -49,4 +49,3 @@ pairs4:
 CLEANFILES+=t1.out t2.out t3.out t4.out t5.out t6.out pairs3 pairs4
 
 .include <bsd.regress.mk>
-

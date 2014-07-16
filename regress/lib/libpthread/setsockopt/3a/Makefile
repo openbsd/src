@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2009/12/26 01:34:18 fgsch Exp $
+# $OpenBSD: Makefile,v 1.2 2014/07/16 20:04:21 okan Exp $
 
 PROG=	setsockopt3a
 CFLAGS+= -I${.CURDIR}/../../include
@@ -15,4 +15,3 @@ dummy: ${PROG}
 	ln -sf ${.OBJDIR}/${PROG}
 
 .include <bsd.regress.mk>
-
