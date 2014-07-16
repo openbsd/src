@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.383 2014/07/16 15:18:35 okan Exp $
+#	$OpenBSD: Makefile,v 1.384 2014/07/16 19:08:54 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -62,19 +62,6 @@ RCDAEMONS=	amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd \
 
 MISETS=	base${OSrev}.tgz comp${OSrev}.tgz \
 	man${OSrev}.tgz game${OSrev}.tgz etc${OSrev}.tgz
-
-# Use NOGZIP on architectures where the gzip'ing would take too much time
-# (pmax or slower :-)).  This way you get only tar'ed snap files and you can
-# gzip them on a faster machine
-.ifndef NOGZIP
-GZIPCMD?=	gzip
-GZIPFLAGS?=	-9
-GZIPEXT?=	.gz
-.else
-GZIPCMD=	cat
-GZIPFLAGS=
-GZIPEXT=
-.endif
 
 all clean cleandir depend etc install lint:
 
