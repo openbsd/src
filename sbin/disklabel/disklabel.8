@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.110 2014/05/07 18:55:52 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.111 2014/07/16 13:46:30 deraadt Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 7 2014 $
+.Dd $Mdocdate: July 16 2014 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -592,8 +592,6 @@ swap		 5% of disk.   1M \(en 2x max physical memory
 .Ed
 .Sh FILES
 .Bl -tag -width Pa -compact
-.It Pa /etc/disklabels
-Directory for backup labels.
 .It Pa /etc/disktab
 Disk description file.
 .It Pa /usr/mdec/ Ns Em xx Ns boot

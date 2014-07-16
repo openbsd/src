@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.257 2014/07/16 10:35:48 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.258 2014/07/16 13:46:30 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -15,8 +15,6 @@ etc
     amd
     ..
     authpf			uname=root mode=0755
-    ..
-    disklabels
     ..
     examples
     ..
