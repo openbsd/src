@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.25 2014/07/09 15:03:12 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.26 2014/07/16 17:44:16 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -57,6 +57,7 @@ extern	void hibernate_flush(void);
 extern	caddr_t start, end;
 extern	int mem_cluster_cnt;
 extern  phys_ram_seg_t mem_clusters[];
+extern	bios_memmap_t *bios_memmap;
 extern	struct hibernate_state *hibernate_state;
 
 /*
@@ -107,6 +108,7 @@ int
 get_hibernate_info_md(union hibernate_info *hiber_info)
 {
 	int i;
+	bios_memmap_t *bmp;
 
 	/* Calculate memory ranges */
 	hiber_info->nranges = mem_cluster_cnt;
@@ -120,6 +122,8 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 	}
 
 #if NACPI > 0
+	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
+		return (1);
 	hiber_info->ranges[hiber_info->nranges].base = ACPI_TRAMPOLINE;
 	hiber_info->ranges[hiber_info->nranges].end =
 	    hiber_info->ranges[hiber_info->nranges].base + PAGE_SIZE;
@@ -127,12 +131,29 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 	hiber_info->nranges++;
 #endif
 #ifdef MULTIPROCESSOR
+	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
+		return (1);
 	hiber_info->ranges[hiber_info->nranges].base = MP_TRAMPOLINE;
 	hiber_info->ranges[hiber_info->nranges].end =
 	    hiber_info->ranges[hiber_info->nranges].base + PAGE_SIZE;
 	hiber_info->image_size += PAGE_SIZE;
 	hiber_info->nranges++;
 #endif
+
+	for (bmp = bios_memmap; bmp->type != BIOS_MAP_END; bmp++) {
+		/* Skip non-NVS ranges (already processed) */
+		if (bmp->type != BIOS_MAP_NVS)
+			continue;
+		if (hiber_info->nranges >= VM_PHYSSEG_MAX)
+			return (1);
+
+		i = hiber_info->nranges;	
+		hiber_info->ranges[i].base = round_page(bmp->addr);
+		hiber_info->ranges[i].end = trunc_page(bmp->addr + bmp->size);
+		hiber_info->image_size += hiber_info->ranges[i].end -
+			hiber_info->ranges[i].base;
+		hiber_info->nranges++;
+	}
 
 	hibernate_sort_ranges(hiber_info);
 
