@@ -1,12 +1,10 @@
-#	$OpenBSD: Makefile,v 1.5 1998/02/26 07:58:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2014/07/16 16:56:45 okan Exp $
 
 PROG=	caesar
 MAN=	caesar.6
 DPADD=	${LIBM}
 LDADD=	-lm
 MLINKS=	caesar.6 rot13.6
-
-beforeinstall:
-	(cd ${DESTDIR}/usr/games; rm -f rot13; ln -s caesar rot13)
+LINKS=	${BINDIR}/caesar ${BINDIR}/rot13
 
 .include <bsd.prog.mk>
