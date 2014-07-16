@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.377 2014/07/16 10:25:38 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.378 2014/07/16 12:25:52 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -48,9 +48,6 @@ EXAMPLES_600=bgpd.conf dvmrpd.conf hostapd.conf iked.conf ipsec.conf \
 	ldapd.conf ldpd.conf ospf6d.conf ospfd.conf rc.local \
 	rc.securelevel rc.shutdown relayd.conf ripd.conf \
 	sasyncd.conf snmpd.conf ypldap.conf 
-
-# -rw-rw-r--
-BIN2=	motd
 
 # -r-xr-xr-x
 RCDAEMONS=	amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd \
@@ -108,7 +105,7 @@ distribution-etc-root-var: distrib-dirs
 	    chown ${BINOWN} ${DESTDIR}/etc/fbtab && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/fbtab && \
 	    chmod 644 ${DESTDIR}/etc/fbtab
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
+	${INSTALL} -c -o ${BINOWN} -g operator -m 664 motd ${DESTDIR}/etc
 	${INSTALL} -c -o root -g crontab -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
