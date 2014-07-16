@@ -47,7 +47,6 @@
 ./etc
 ./etc/amd
 ./etc/authpf
-./etc/disklabels
 ./etc/disktab
 ./etc/examples
 ./etc/examples/bgpd.conf
