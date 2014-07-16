@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.20 2014/04/24 18:52:11 jmc Exp $
+.\"	$OpenBSD: daily.8,v 1.21 2014/07/16 17:03:17 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2014 $
+.Dd $Mdocdate: July 16 2014 $
 .Dt DAILY 8
 .Os
 .Sh NAME
@@ -197,7 +197,7 @@ The following variables can be set in
 .Pp
 .Bl -tag -width "CHECKFILESYSTEMS" -compact
 .It Ev CALENDAR
-If set to 1, run
+If set to 0, do not run
 .Xr calendar 1 .
 .It Ev CHECKFILESYSTEMS
 If set to 1, run
