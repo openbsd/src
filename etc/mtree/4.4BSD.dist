@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.255 2014/07/15 09:12:09 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.256 2014/07/16 02:02:49 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -445,12 +445,6 @@ usr
         # ./usr/share/doc
         doc
             html
-                lynx_help
-                    keystrokes
-                    ..
-                ..
-
-                # ./usr/share/doc/html/bind
                 bind
                 ..
                 curses
