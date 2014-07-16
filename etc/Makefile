@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.382 2014/07/16 14:34:33 okan Exp $
+#	$OpenBSD: Makefile,v 1.383 2014/07/16 15:18:35 okan Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -186,10 +186,8 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/var/named/standard/loopback; \
 		${INSTALL} -c -o root -g wheel -m 644 db.loopback6.arpa \
 		    ${DESTDIR}/var/named/standard/loopback6.arpa
-	/bin/rm -f ${DESTDIR}/etc/localtime
-	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
-	/bin/rm -f ${DESTDIR}/etc/rmt
-	ln -s /usr/sbin/rmt ${DESTDIR}/etc/rmt
+	ln -fs ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
+	ln -fs /usr/sbin/rmt ${DESTDIR}/etc/rmt
 	${INSTALL} -c -o root -g wheel -m 644 minfree \
 	    ${DESTDIR}/var/crash
 	${INSTALL} -c -o ${BINOWN} -g operator -m 664 /dev/null \
@@ -270,7 +268,7 @@ distrib-dirs:
 	if [ ! -d ${DESTDIR}/usr/src ]; then \
 		${INSTALL} -d -o root -g wsrc -m 775 ${DESTDIR}/usr/src; \
 	fi
-	cd ${DESTDIR}/; rm -f sys; ln -s usr/src/sys sys
+	cd ${DESTDIR}/; ln -fhs usr/src/sys sys
 
 .ifndef RELEASEDIR
 release:
