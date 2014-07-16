@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.378 2014/07/16 12:25:52 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.379 2014/07/16 12:46:16 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -45,7 +45,7 @@ EXAMPLES=chio.conf dhcpd.conf exports ftpchroot hosts.lpd ifstated.conf \
 	sensorsd.conf
 
 EXAMPLES_600=bgpd.conf dvmrpd.conf hostapd.conf iked.conf ipsec.conf \
-	ldapd.conf ldpd.conf ospf6d.conf ospfd.conf rc.local \
+	ldapd.conf ldpd.conf ospf6d.conf ospfd.conf pf.conf rc.local \
 	rc.securelevel rc.shutdown relayd.conf ripd.conf \
 	sasyncd.conf snmpd.conf ypldap.conf 
 
