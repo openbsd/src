@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.31 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.32 2014/07/16 10:45:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -1063,7 +1063,7 @@ tsec_down(struct tsec_softc *sc)
 	}
 
 	tsec_dmamem_free(sc, sc->sc_txring);
-	free (sc->sc_txbuf, M_DEVBUF);
+	free(sc->sc_txbuf, M_DEVBUF, 0);
 
 	for (i = 0; i < TSEC_NRXDESC; i++) {
 		rxb = &sc->sc_rxbuf[i];
