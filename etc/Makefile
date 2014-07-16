@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.380 2014/07/16 12:50:42 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.381 2014/07/16 13:21:33 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -31,19 +31,20 @@ kernels: bootblocks ${ALL_KERNELS}
 BINOWN= root
 BINGRP= wheel
 MUTABLE=changelist csh.cshrc csh.login csh.logout daily dhclient.conf \
-	etc.${MACHINE}/disktab etc.${MACHINE}/login.conf \
-	ftpusers gettytab group hosts ksh.kshrc locate.rc \
-	mailer.conf man.conf mixerctl.conf moduli monthly motd \
-	myname netstart networks newsyslog.conf pf.os protocols \
-	rc rc.conf rpc services shells syslog.conf weekly
+	etc.${MACHINE}/disktab etc.${MACHINE}/login.conf ftpusers \
+	gettytab group hosts ksh.kshrc locate.rc mailer.conf man.conf \
+	moduli monthly myname netstart networks newsyslog.conf \
+	pf.os protocols rc rc.conf rpc services shells syslog.conf weekly
+
+# -rw-r--r--
+EXAMPLES=chio.conf dhcpd.conf exports ftpchroot hosts.lpd ifstated.conf \
+	inetd.conf mixerctl.conf mrouted.conf ntpd.conf printcap \
+	rbootd.conf remote sensorsd.conf
 .if ${MACHINE} != "aviion" 
-MUTABLE+=wsconsctl.conf
+EXAMPLES+= wsconsctl.conf
 .endif
 
-EXAMPLES=chio.conf dhcpd.conf exports ftpchroot hosts.lpd ifstated.conf \
-	inetd.conf mrouted.conf ntpd.conf printcap rbootd.conf remote \
-	sensorsd.conf
-
+# -rw-------
 EXAMPLES_600=bgpd.conf dvmrpd.conf hostapd.conf iked.conf ipsec.conf \
 	ldapd.conf ldpd.conf ospf6d.conf ospfd.conf pf.conf rc.local \
 	rc.securelevel rc.shutdown relayd.conf ripd.conf \
