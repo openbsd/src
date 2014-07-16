@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2013/03/25 17:40:12 deraadt Exp $
+# $OpenBSD: Makefile,v 1.10 2014/07/16 20:08:25 okan Exp $
 
 NOPROG=
 NOMAN=
@@ -21,4 +21,3 @@ afterinstall:
 .endif
 
 .include <bsd.prog.mk>
-
