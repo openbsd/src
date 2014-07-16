@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.781 2014/07/15 08:49:50 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.782 2014/07/16 08:27:14 ajacoutot Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1815,6 +1815,8 @@ apply()
 	fi
 
 	if [[ -n $aperture ]]; then
+		[[ ! -f /mnt/etc/sysctl.conf ]] && \
+			echo "# created during install" >/mnt/etc/sysctl.conf
 		echo "machdep.allowaperture=$aperture # See xf86(4)" \
 		    >>/mnt/etc/sysctl.conf
 	fi
