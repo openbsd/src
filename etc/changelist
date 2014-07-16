@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.95 2014/07/15 10:09:36 deraadt Exp $
+#	$OpenBSD: changelist,v 1.96 2014/07/16 10:25:38 deraadt Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -53,7 +53,6 @@
 +/etc/ldpd.conf
 /etc/locate.rc
 /etc/login.conf
-/etc/lynx.cfg
 /etc/mail.rc
 /etc/mail/access
 /etc/mail/aliases
