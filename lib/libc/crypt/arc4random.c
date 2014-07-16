@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.44 2014/07/16 00:15:35 bcook Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.45 2014/07/16 00:18:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -65,12 +65,14 @@ static struct {
 
 static inline void _rs_rekey(u_char *dat, size_t datlen);
 
+#ifndef MAP_INHERIT_ZERO
 static inline void
 _rs_forkhandler(void)
 {
 	if (rs)
 		rs->rs_count = 0;
 }
+#endif /* MAP_INHERIT_ZERO */
 
 static inline void
 _rs_init(u_char *buf, size_t n)
