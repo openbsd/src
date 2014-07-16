@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.34 2014/07/12 09:02:24 kettenis Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.35 2014/07/16 07:42:51 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -126,7 +126,7 @@ void	hibernate_inflate_region(union hibernate_info *, paddr_t, paddr_t,
 size_t	hibernate_deflate(union hibernate_info *, paddr_t, size_t *);
 void	hibernate_process_chunk(union hibernate_info *,
 	    struct hibernate_disk_chunk *, paddr_t);
-int	hibernate_inflate_page(void);
+int	hibernate_inflate_page(int *);
 
 int	hibernate_block_io(union hibernate_info *, daddr_t, size_t, vaddr_t, int);
 int	hibernate_write_signature(union hibernate_info *);

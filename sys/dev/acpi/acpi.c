@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.265 2014/07/12 18:48:17 tedu Exp $ */
+/* $OpenBSD: acpi.c,v 1.266 2014/07/16 07:42:50 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2162,6 +2162,13 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	sc->sc_state = ACPI_STATE_S0;
 	/* Resume */
 
+#ifdef HIBERNATE
+	if (state == ACPI_STATE_S4) {
+		uvm_pmr_dirty_everything();
+		uvm_pmr_zero_everything();
+	}
+#endif /* HIBERNATE */
+
 	acpi_resume_clocks(sc);		/* AML may need clocks */
 	acpi_resume_pm(sc, state);
 	acpi_resume_cpu(sc);
@@ -2199,7 +2206,6 @@ fail_quiesce:
 #ifdef HIBERNATE
 	if (state == ACPI_STATE_S4) {
 		hibernate_free();
-		uvm_pmr_dirty_everything();
 		hibernate_resume_bufcache();
 	}
 #endif /* HIBERNATE */
