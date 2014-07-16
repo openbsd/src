@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.379 2014/07/16 12:46:16 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.380 2014/07/16 12:50:42 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -30,14 +30,14 @@ kernels: bootblocks ${ALL_KERNELS}
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-BIN1=	changelist csh.cshrc csh.login csh.logout daily dhclient.conf \
+MUTABLE=changelist csh.cshrc csh.login csh.logout daily dhclient.conf \
 	etc.${MACHINE}/disktab etc.${MACHINE}/login.conf \
 	ftpusers gettytab group hosts ksh.kshrc locate.rc \
 	mailer.conf man.conf mixerctl.conf moduli monthly motd \
 	myname netstart networks newsyslog.conf pf.os protocols \
 	rc rc.conf rpc services shells syslog.conf weekly
 .if ${MACHINE} != "aviion" 
-BIN1+=	wsconsctl.conf
+MUTABLE+=wsconsctl.conf
 .endif
 
 EXAMPLES=chio.conf dhcpd.conf exports ftpchroot hosts.lpd ifstated.conf \
@@ -91,7 +91,7 @@ distribution-etc-root-var distribution distrib-dirs release:
 	@false
 .else
 distribution-etc-root-var: distrib-dirs
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${MUTABLE} ${DESTDIR}/etc
 	ksh ttys.pty | cat etc.${MACHINE}/ttys - > ${DESTDIR}/etc/ttys && \
 	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/ttys && \
