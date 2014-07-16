@@ -38,5 +38,3 @@ intro.2.tbl: intro.2
 	${TBL} intro.2 > intro.2.tbl
 
 .include <bsd.doc.mk>
-
-

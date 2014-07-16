@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2011/03/12 04:12:29 guenther Exp $
+#	$OpenBSD: Makefile,v 1.7 2014/07/16 20:02:17 okan Exp $
 #	$NetBSD: Makefile,v 1.1 1996/02/21 02:45:47 jtk Exp $
 
 MAN+=	i386_get_ldt.2 \
@@ -24,4 +24,3 @@ SRCS+=	i386_get_ldt.c i386_set_ldt.c \
 NOPROG=
 .include <bsd.prog.mk>
 .endif
-

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.6 2013/06/02 22:03:12 tedu Exp $
+# $OpenBSD: Makefile.inc,v 1.7 2014/07/16 20:02:17 okan Exp $
 
 includes:
 	@cd ${SRCDIR}/include; \
@@ -9,4 +9,3 @@ includes:
 		 ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
 			$$h ${DESTDIR}/usr/include) || exit 1; \
 	 done
-

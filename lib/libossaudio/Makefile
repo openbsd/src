@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2012/08/02 13:38:39 okan Exp $
+#	$OpenBSD: Makefile,v 1.5 2014/07/16 20:02:17 okan Exp $
 #	$NetBSD: Makefile,v 1.5 1998/04/13 14:18:45 lukem Exp $
 
 LIB=	ossaudio
@@ -14,4 +14,3 @@ includes:
 	  ${DESTDIR}/usr/include
 
 .include <bsd.lib.mk>
-

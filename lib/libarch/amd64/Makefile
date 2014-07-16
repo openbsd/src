@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2013/05/05 19:27:23 tedu Exp $
+#	$OpenBSD: Makefile,v 1.12 2014/07/16 20:02:17 okan Exp $
 #	$NetBSD: Makefile,v 1.1 1996/02/21 02:45:47 jtk Exp $
 
 MANSUBDIR=amd64
@@ -14,4 +14,3 @@ SRCS+=	amd64_iopl.c amd64_get_fsbase.c amd64_set_fsbase.c
 NOPROG=
 .include <bsd.prog.mk>
 .endif
-
