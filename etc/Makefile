@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.381 2014/07/16 13:21:33 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.382 2014/07/16 14:34:33 okan Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -93,7 +93,7 @@ distribution-etc-root-var distribution distrib-dirs release:
 .else
 distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${MUTABLE} ${DESTDIR}/etc
-	ksh ttys.pty | cat etc.${MACHINE}/ttys - > ${DESTDIR}/etc/ttys && \
+	sh ttys.pty | cat etc.${MACHINE}/ttys - > ${DESTDIR}/etc/ttys && \
 	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/ttys && \
 	    chmod 644 ${DESTDIR}/etc/ttys

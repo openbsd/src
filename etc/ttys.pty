@@ -1,4 +1,6 @@
-#! /bin/ksh
+#! /bin/sh
+#
+# $OpenBSD: ttys.pty,v 1.6 2014/07/16 14:34:33 okan Exp $
 #
 # Copyright (c) 2004 Dale Rahn <drahn@openbsd.org>
 #
