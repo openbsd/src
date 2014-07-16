@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2014/03/02 18:46:17 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2014/07/16 19:59:30 okan Exp $
 
 .PATH: ${.CURDIR}/../ramdisk
 RAMDISK=RAMDISK_CD
@@ -10,4 +10,3 @@ LBA=1
 .include "${.CURDIR}/../common/Makefile.inc"
 
 LISTS+=		${.CURDIR}/list.local
-

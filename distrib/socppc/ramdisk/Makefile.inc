@@ -1,4 +1,3 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2008/05/11 22:29:14 kettenis Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2014/07/16 19:59:30 okan Exp $
 
 CRUNCHGENOPTS= -E
-
