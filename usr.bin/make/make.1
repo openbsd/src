@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.114 2014/07/15 23:07:19 deraadt Exp $
+.\"	$OpenBSD: make.1,v 1.115 2014/07/16 14:11:50 jmc Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: July 15 2014 $
+.Dd $Mdocdate: July 16 2014 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -54,18 +54,15 @@
 .Nm
 is a program designed to simplify the maintenance of other programs.
 Its input is a
-.Ar makefile :
+.Em makefile :
 a list of specifications (target rules) describing build
 relationships between programs and other files.
-By default, this
-.Ar makefile
-is determined as follows:
-first the file
-.Sq Pa makefile
-if it exists, then the file
-.Sq Pa Makefile
-in that order.
-If none of these files exist,
+By default, the file
+.Pa makefile
+is used;
+if no such file is found, it tries
+.Pa Makefile .
+If neither of these exist,
 .Nm
 can still rely on a set of built-in system rules.
 .Pp
@@ -80,7 +77,7 @@ The handling of
 .Sq Pa .depend
 is a
 .Bx
-extensions.
+extension.
 .Pp
 Standard options are as follows:
 .Bl -tag -width Ds
@@ -1464,7 +1461,6 @@ also ignores and unsets
 list of dependencies
 .It Pa makefile
 default makefile
-does not exist
 .It Pa Makefile
 default makefile if
 .Pa makefile
