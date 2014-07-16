@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 2007/12/09 13:39:42 jakob Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.13 2014/07/16 01:23:39 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -36,19 +36,7 @@ MAN=	bin/check/named-checkconf.8 \
 	bin/rndc/rndc.8 \
 	bin/rndc/rndc.conf.5
 
-HTML=	doc/arm/Bv9ARM.html \
-	doc/arm/Bv9ARM.ch01.html \
-	doc/arm/Bv9ARM.ch02.html \
-	doc/arm/Bv9ARM.ch03.html \
-	doc/arm/Bv9ARM.ch04.html \
-	doc/arm/Bv9ARM.ch05.html \
-	doc/arm/Bv9ARM.ch06.html \
-	doc/arm/Bv9ARM.ch07.html \
-	doc/arm/Bv9ARM.ch08.html \
-	doc/arm/Bv9ARM.ch09.html
-
 BINDIR=		/usr/sbin
-HTMLDIR=	/usr/share/doc/html/bind
 
 
 all:	config.status
@@ -74,14 +62,7 @@ maninstall:
 	@echo NOMAN is set
 .endif
 
-htmlinstall:
-.for file in ${HTML}
-	${INSTALL} ${INSTALL_COPY} \
-	-o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} \
-	${.CURDIR}/${file} ${DESTDIR}${HTMLDIR}
-.endfor
-
-install: maninstall htmlinstall
+install: maninstall
 .for file in ${PROG}
 	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} \
 	-o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
