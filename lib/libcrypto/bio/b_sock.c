@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.55 2014/07/13 16:03:09 beck Exp $ */
+/* $OpenBSD: b_sock.c,v 1.56 2014/07/16 10:43:06 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,7 +80,6 @@ BIO_get_host_ip(const char *str, unsigned char *ip)
 {
 	int i;
 	int err = 1;
-	int locked = 0;
 	struct hostent *he;
 
 	if (inet_pton(AF_INET, str, ip) == 1)
@@ -88,7 +87,6 @@ BIO_get_host_ip(const char *str, unsigned char *ip)
 
 	/* do a gethostbyname */
 	CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
-	locked = 1;
 	he = BIO_gethostbyname(str);
 	if (he == NULL) {
 		BIOerr(BIO_F_BIO_GET_HOST_IP, BIO_R_BAD_HOSTNAME_LOOKUP);
@@ -106,8 +104,7 @@ BIO_get_host_ip(const char *str, unsigned char *ip)
 	err = 0;
 
 err:
-	if (locked)
-		CRYPTO_w_unlock(CRYPTO_LOCK_GETHOSTBYNAME);
+	CRYPTO_w_unlock(CRYPTO_LOCK_GETHOSTBYNAME);
 	if (err) {
 		ERR_asprintf_error_data("host=%s", str);
 		return 0;
