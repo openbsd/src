@@ -1,4 +1,4 @@
-/*	$OpenBSD: devs.c,v 1.9 2014/07/13 09:26:08 jasper Exp $	*/
+/*	$OpenBSD: devs.c,v 1.10 2014/07/17 13:14:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -27,8 +27,7 @@ void
 machdep(void)
 {
 	tick_init();
-
-	/* scif_init(9600); */
+	cninit();
 }
 
 int

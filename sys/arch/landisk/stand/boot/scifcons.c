@@ -1,4 +1,4 @@
-/*	$OpenBSD: scifcons.c,v 1.5 2014/07/13 09:26:08 jasper Exp $	*/
+/*	$OpenBSD: scifcons.c,v 1.6 2014/07/17 13:14:06 miod Exp $	*/
 /*	$NetBSD: scifcons.c,v 1.1 2006/09/01 21:26:18 uwe Exp $ */
 /*	NetBSD: scif.c,v 1.38 2004/12/13 02:14:13 chs Exp */
 
@@ -92,6 +92,7 @@
  */
 
 #include <libsa.h>
+#include <dev/cons.h>
 
 #include <arch/sh/dev/scifreg.h>
 
@@ -161,13 +162,27 @@ scif_init(unsigned int bps)
 	scif_ssr_write(scif_ssr_read() & SCSSR2_TDFE); /* Clear Status */
 }
 
+void
+scif_cnprobe(struct consdev *cn)
+{
+	cn->cn_pri = CN_HIGHPRI;
+}
+
+void
+scif_cninit(struct consdev *cn)
+{
+	scif_init(9600);
+}
+
 int
-getc(void)
+scif_cngetc(dev_t dev)
 {
 	unsigned char c, err_c;
 	unsigned short err_c2;
 
 	if (serbuf_read != serbuf_write) {
+		if (dev & 0x80)
+			return 1;
 		c = serbuf[serbuf_read];
 		serbuf_read = (serbuf_read + 1) % SERBUFSIZE;
 		return (c);
@@ -175,28 +190,35 @@ getc(void)
 
 	for (;;) {
 		/* wait for ready */
-		while ((scif_fdr_read() & SCFDR2_RECVCNT) == 0)
-			continue;
+		if ((scif_fdr_read() & SCFDR2_RECVCNT) != 0) {
+			c = scif_frdr_read();
+			err_c = scif_ssr_read();
+			scif_ssr_write(scif_ssr_read() &
+			    ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_RDF | SCSSR2_DR));
 
-		c = scif_frdr_read();
-		err_c = scif_ssr_read();
-		scif_ssr_write(scif_ssr_read()
-			& ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_RDF | SCSSR2_DR));
+			err_c2 = scif_lsr_read();
+			scif_lsr_write(scif_lsr_read() & ~SCLSR2_ORER);
 
-		err_c2 = scif_lsr_read();
-		scif_lsr_write(scif_lsr_read() & ~SCLSR2_ORER);
-
-		if ((err_c & (SCSSR2_ER | SCSSR2_BRK | SCSSR2_FER
-		    | SCSSR2_PER)) == 0) {
-			if ((err_c2 & SCLSR2_ORER) == 0) {
-				return (c);
+			if ((err_c & (SCSSR2_ER | SCSSR2_BRK | SCSSR2_FER |
+			    SCSSR2_PER)) == 0) {
+				if ((err_c2 & SCLSR2_ORER) == 0) {
+					if ((dev & 0x80) == 0)
+						return (c);
+					/* stuff char into preread buffer */
+					serbuf[serbuf_write] = (u_char)c;
+					serbuf_write = (serbuf_write + 1) %
+					    SERBUFSIZE;
+					return (1);
+				}
 			}
 		}
+		if (dev & 0x80)
+			return 0;
 	}
 }
 
 void
-putc(int c)
+scif_cnputc(dev_t dev, int c)
 {
 
 	/* wait for ready */
@@ -208,36 +230,4 @@ putc(int c)
 
 	/* clear ready flag */
 	scif_ssr_write(scif_ssr_read() & ~(SCSSR2_TDFE | SCSSR2_TEND));
-}
-
-int
-cnischar(void)
-{
-	unsigned char c, err_c;
-	unsigned short err_c2;
-
-	/* check if any preread input is already there */
-	if (serbuf_read != serbuf_write)
-		return (1);
-
-	if (scif_fdr_read() & SCFDR2_RECVCNT) {
-		c = scif_frdr_read();
-		err_c = scif_ssr_read();
-		scif_ssr_write(scif_ssr_read()
-			& ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_RDF | SCSSR2_DR));
-
-		err_c2 = scif_lsr_read();
-		scif_lsr_write(scif_lsr_read() & ~SCLSR2_ORER);
-
-		if ((err_c & (SCSSR2_ER | SCSSR2_BRK | SCSSR2_FER
-		    | SCSSR2_PER)) == 0) {
-			if ((err_c2 & SCLSR2_ORER) == 0) {
-				/* stuff char into preread buffer */
-				serbuf[serbuf_write] = (u_char)c;
-				serbuf_write = (serbuf_write + 1) % SERBUFSIZE;
-				return (1);
-			}
-		}
-	}
-	return (0);	/* nothing out there... */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.3 2006/10/29 14:47:59 drahn Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.4 2014/07/17 13:14:06 miod Exp $	*/
 /*	$NetBSD: boot.S,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -110,13 +110,6 @@ ENTRY(_rtt)
  * int raise(int sig);
  */
 ENTRY(raise)
-	rts
-	 nop
-
-/* 
- *
- */
-ENTRY(cnset)
 	rts
 	 nop
 
