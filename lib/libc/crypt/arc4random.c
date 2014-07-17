@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.45 2014/07/16 00:18:54 deraadt Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.46 2014/07/17 14:30:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -69,6 +69,10 @@ static inline void _rs_rekey(u_char *dat, size_t datlen);
 static inline void
 _rs_forkhandler(void)
 {
+	/*
+	 * Race-free because we're running single-threaded in a new
+	 * address space, and once allocated rs is never deallocated.
+	 */
 	if (rs)
 		rs->rs_count = 0;
 }
