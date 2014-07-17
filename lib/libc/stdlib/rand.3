@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: rand.3,v 1.15 2014/04/07 17:57:56 schwarze Exp $
+.\"	$OpenBSD: rand.3,v 1.16 2014/07/17 23:12:28 deraadt Exp $
 .\"
-.Dd $Mdocdate: April 7 2014 $
+.Dd $Mdocdate: July 17 2014 $
 .Dt RAND 3
 .Os
 .Sh NAME
@@ -50,7 +50,10 @@
 .Sh DESCRIPTION
 .Bf -symbolic
 These interfaces are obsoleted by
-.Xr random 3 .
+.Xr random 3 ,
+which is also unsafe.
+Consider using
+.Xr arc4random 3 .
 .Ef
 .Pp
 The
