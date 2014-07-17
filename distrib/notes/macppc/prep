@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.22 2013/11/27 13:12:48 mpi Exp $
+dnl	$OpenBSD: prep,v 1.23 2014/07/17 03:21:48 deraadt Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of Open Firmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -31,7 +31,7 @@ up in sequence (similar to KITT from Knight Rider), repeatedly
 press the System Identifier button until the seventh LED from
 the right is highlighted on the lower bank.  Now hold the
 System Identifier button for two seconds.  For more details, read:
-http://docs.info.apple.com/article.html?artnum=75489
+http://support.apple.com/kb/TA26930
 
 dnl XXX Move the boot commands to install in sections (booting from network,
 dnl XXX booting from cd-rom, etc)
