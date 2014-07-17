@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.107 2014/07/17 13:18:10 deraadt Exp $
+#	$OpenBSD: special,v 1.108 2014/07/17 18:55:42 deraadt Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -21,17 +21,17 @@ csh.login	type=file mode=0644 uname=root gname=wheel
 csh.logout	type=file mode=0644 uname=root gname=wheel
 daily		type=file mode=0644 uname=root gname=wheel
 daily.local	type=file mode=0644 uname=root gname=wheel optional
-dhcpd.conf	type=file mode=0640 uname=root gname=wheel optional
+dhcpd.conf	type=file mode=0644 uname=root gname=wheel optional
 dvmrpd.conf	type=file mode=0600 uname=root gname=wheel optional
 exports		type=file mode=0644 uname=root gname=wheel optional
 fbtab		type=file mode=0644 uname=root gname=wheel
 fstab		type=file mode=0644 uname=root gname=wheel
-ftpchroot	type=file mode=0640 uname=root gname=wheel optional
+ftpchroot	type=file mode=0644 uname=root gname=wheel optional
 ftpusers	type=file mode=0644 uname=root gname=wheel
 group		type=file mode=0644 uname=root gname=wheel
 hostapd.conf	type=file mode=0600 uname=root gname=wheel optional
 hosts		type=file mode=0644 uname=root gname=wheel
-ifstated.conf	type=file mode=0640 uname=root gname=wheel optional
+ifstated.conf	type=file mode=0644 uname=root gname=wheel optional
 iked		type=dir mode=0755 uname=root gname=wheel
 ..	#iked
 iked.conf	type=file mode=0600 uname=root gname=wheel optional
@@ -49,7 +49,7 @@ mailer.conf	type=file mode=0644 uname=root gname=wheel
 master.passwd	type=file mode=0600 uname=root gname=wheel
 monthly		type=file mode=0644 uname=root gname=wheel
 monthly.local	type=file mode=0644 uname=root gname=wheel optional
-mrouted.conf	type=file mode=0640 uname=root gname=wheel optional
+mrouted.conf	type=file mode=0644 uname=root gname=wheel optional
 mail		type=dir mode=0755 uname=root gname=wheel
 aliases		type=file mode=0644 uname=root gname=wheel optional
 aliases.db	type=file mode=0644 uname=root gname=wheel optional
@@ -82,10 +82,10 @@ rc.local	type=file mode=0644 uname=root gname=wheel optional
 rc.securelevel	type=file mode=0644 uname=root gname=wheel optional
 rc.shutdown	type=file mode=0644 uname=root gname=wheel optional
 relayd.conf	type=file mode=0600 uname=root gname=wheel optional
-remote		type=file mode=0640 uname=root gname=wheel optional
+remote		type=file mode=0644 uname=root gname=wheel optional
 resolv.conf	type=file mode=0644 uname=root gname=wheel optional
 resolv.conf.tail type=file mode=0644 uname=root gname=wheel optional
-rbootd.conf	type=file mode=0640 uname=root gname=wheel optional
+rbootd.conf	type=file mode=0644 uname=root gname=wheel optional
 ripd.conf	type=file mode=0600 uname=root gname=wheel optional
 sasyncd.conf	type=file mode=0600 uname=root gname=wheel optional
 sensorsd.conf	type=file mode=0644 uname=root gname=wheel optional
