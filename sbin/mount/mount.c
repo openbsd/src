@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.57 2014/07/15 11:25:22 jmc Exp $	*/
+/*	$OpenBSD: mount.c,v 1.58 2014/07/17 06:25:12 guenther Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -395,7 +395,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 	}
 
 	argvsize = 64;
-	if((argv = calloc(argvsize, sizeof(char *))) == NULL)
+	if((argv = reallocarray(NULL, argvsize, sizeof(char *))) == NULL)
 		err(1, "malloc");
 	argc = 0;
 	argv[argc++] = NULL;	/* this should be a full path name */
@@ -434,7 +434,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 
 		if (errno == ENOENT)
 			warn("no mount helper program found for %s", vfstype);
-		exit(1);
+		_exit(1);
 		/* NOTREACHED */
 	default:				/* Parent. */
 		free(optbuf);
@@ -506,7 +506,7 @@ prmount(struct statfs *sf)
 
 	/*
 	 * Filesystem-specific options
-	 * We only print the "interesting" values unless in verboser
+	 * We only print the "interesting" values unless in verbose
 	 * mode in order to keep the signal/noise ratio high.
 	 */
 	if (strcmp(sf->f_fstypename, MOUNT_NFS) == 0) {
@@ -661,8 +661,8 @@ maketypelist(char *fslist)
 		++nextcp;
 
 	/* Build an array of that many types. */
-	if ((av = typelist = calloc(i + 1, sizeof(char *))) == NULL)
-		err(1, NULL);
+	if ((av = typelist = reallocarray(NULL, i + 1, sizeof(char *))) == NULL)
+		err(1, "malloc");
 	av[0] = fslist;
 	for (i = 1, nextcp = fslist; (nextcp = strchr(nextcp, ',')); i++) {
 		*nextcp = '\0';
