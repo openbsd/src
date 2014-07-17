@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.36 2014/07/12 18:44:42 tedu Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.37 2014/07/17 19:51:58 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -68,7 +68,7 @@
 
 #include <machine/bus.h>
 
-#if defined(TGT_INDIGO2)
+#if defined(TGT_INDY) || defined(TGT_INDIGO2)
 #include <sgi/sgi/ip22.h>
 #endif
 
@@ -311,11 +311,33 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 {
 	int nsegs;
 	int curseg;
+	int how;
 	struct cpu_info *ci;
 
 #ifdef TGT_COHERENT
+	/* we only need to writeback here */
 	if ((op & BUS_DMASYNC_PREWRITE) == 0)
 		return;
+	else
+		how = CACHE_SYNC_W;
+#else
+	/*
+	 * If only PREWRITE is requested, writeback.
+	 * PREWRITE with PREREAD writebacks and invalidates (since noncoherent)
+	 * *all* cache levels.
+	 * Otherwise, just invalidate (since noncoherent).
+	 */
+	if (op & BUS_DMASYNC_PREWRITE) {
+		if (op & BUS_DMASYNC_PREREAD)
+			how = CACHE_SYNC_X;
+		else
+			how = CACHE_SYNC_W;
+	} else {
+		if (op & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTREAD))
+			how = CACHE_SYNC_R;
+		else
+			return;
+	}
 #endif
 
 	ci = curcpu();
@@ -353,28 +375,17 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 #endif
 
 		if (ssize != 0) {
-#ifdef TGT_COHERENT
-			/* we only need to writeback here */
-			Mips_IOSyncDCache(ci, vaddr, ssize, CACHE_SYNC_W);
-#else
+			Mips_IOSyncDCache(ci, vaddr, ssize, how);
+#if defined(TGT_INDY) || defined(TGT_INDIGO2)
 			/*
-			 * If only PREWRITE is requested, writeback.
-			 * PREWRITE with PREREAD writebacks
-			 * and invalidates (if noncoherent) *all* cache levels.
-			 * Otherwise, just invalidate (if noncoherent).
+			 * Also flush external L2 if available - this could
+			 * (and used to) be done in Mips_IOSyncDCache, but
+			 * as the external L2 is physically addressed, this
+			 * would require the physical address to be
+			 * recomputed, although we know it here.
 			 */
-			if (op & BUS_DMASYNC_PREWRITE) {
-				if (op & BUS_DMASYNC_PREREAD)
-					Mips_IOSyncDCache(ci, vaddr,
-					    ssize, CACHE_SYNC_X);
-				else
-					Mips_IOSyncDCache(ci, vaddr,
-					    ssize, CACHE_SYNC_W);
-			} else
-			if (op & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTREAD)) {
-				Mips_IOSyncDCache(ci, vaddr,
-				    ssize, CACHE_SYNC_R);
-			}
+			if (ip22_extsync != NULL)
+				(*ip22_extsync)(ci, paddr, ssize, how);
 #endif
 			size -= ssize;
 		}

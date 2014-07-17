@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.19 2014/07/02 17:44:35 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.20 2014/07/17 19:51:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -62,9 +62,12 @@ int	hpc_old = 0;
 int	bios_year;
 int	ip22_ecc = 0;
 
+void	(*ip22_extsync)(struct cpu_info *, paddr_t, size_t, int);
+
 void	ip22_arcbios_walk(void);
 int	ip22_arcbios_walk_component(arc_config_t *);
 void	ip22_cache_halt(int);
+void	ip22_cache_sync(struct cpu_info *, paddr_t, size_t, int);
 void	ip22_ecc_halt(int);
 void	ip22_ecc_init(int);
 void	ip22_memory_setup(void);
@@ -780,7 +783,7 @@ ip22_ConfigCache(struct cpu_info *ci)
 	ci->ci_l2 = l2;
 
 	ci->ci_SyncCache = ip22_SyncCache;
-	ci->ci_IOSyncDCache = ip22_IOSyncDCache;
+	ip22_extsync = ip22_cache_sync;
 
 	md_halt = ip22_cache_halt;
 	ip22_l2_enable();
@@ -803,14 +806,10 @@ ip22_SyncCache(struct cpu_info *ci)
 }
 
 void
-ip22_IOSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz, int how)
+ip22_cache_sync(struct cpu_info *ci, paddr_t _pa, size_t _sz, int how)
 {
-	vaddr_t va;
 	size_t sz;
-	paddr_t pa;
-
-	/* do whatever L1 work is necessary */
-	Mips5k_IOSyncDCache(ci, _va, _sz, how);
+	paddr_t pa, tagbase;
 
 	switch (how) {
 	default:
@@ -819,34 +818,20 @@ ip22_IOSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz, int how)
 	case CACHE_SYNC_X:
 	case CACHE_SYNC_R:
 		/* extend the range to integral cache lines */
-		va = _va & ~(IP22_L2_LINE - 1);
-		sz = ((_va + _sz + IP22_L2_LINE - 1) & ~(IP22_L2_LINE - 1)) -
-		    va;
+		pa = _pa & ~(IP22_L2_LINE - 1);
+		sz = ((_pa + _sz + IP22_L2_LINE - 1) & ~(IP22_L2_LINE - 1)) -
+		    pa;
+
+		pa &= ci->ci_l2.size - 1;
+		tagbase = PHYS_TO_XKPHYS(IP22_CACHE_TAG_ADDRESS, CCA_NC);
 
 		while (sz != 0) {
-			/* get the proper physical address */
-			if (pmap_extract(pmap_kernel(), va, &pa) == 0) {
-#ifdef DIAGNOSTIC
-				panic("%s: invalid va %p",
-				    __func__, (void *)va);
-#else
-				/* should not happen */
-#endif
-			}
+			/* word write: invalidate line */
+			*(volatile uint32_t *)(tagbase | pa) = 0;
 
+			pa += IP22_L2_LINE;
 			pa &= ci->ci_l2.size - 1;
-			pa |= PHYS_TO_XKPHYS(IP22_CACHE_TAG_ADDRESS, CCA_NC);
-
-			while (sz != 0) {
-				/* word write: invalidate line */
-				*(volatile uint32_t *)pa = 0;
-
-				pa += IP22_L2_LINE;
-				va += IP22_L2_LINE;
-				sz -= IP22_L2_LINE;
-				if ((va & PAGE_MASK) == 0)
-					break;	/* need pmap_extract() */
-			}
+			sz -= IP22_L2_LINE;
 		}
 		break;
 	}
