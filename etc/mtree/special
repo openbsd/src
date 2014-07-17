@@ -1,6 +1,4 @@
-#	$OpenBSD: special,v 1.106 2014/06/10 17:19:25 millert Exp $
-#	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
-#	@(#)special	8.2 (Berkeley) 1/23/94
+#	$OpenBSD: special,v 1.107 2014/07/17 13:18:10 deraadt Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -15,41 +13,43 @@ mem		type=char mode=0640 uname=root gname=kmem
 ..	#dev
 
 etc		type=dir mode=0755 uname=root gname=wheel
-bgpd.conf	type=file mode=0600 uname=root gname=wheel
-chio.conf	type=file mode=0644 uname=root gname=operator
+bgpd.conf	type=file mode=0600 uname=root gname=wheel optional
+chio.conf	type=file mode=0644 uname=root gname=operator optional
 crontab		type=file mode=0600 uname=root gname=wheel optional
 csh.cshrc	type=file mode=0644 uname=root gname=wheel
 csh.login	type=file mode=0644 uname=root gname=wheel
 csh.logout	type=file mode=0644 uname=root gname=wheel
 daily		type=file mode=0644 uname=root gname=wheel
 daily.local	type=file mode=0644 uname=root gname=wheel optional
-disklabels	type=dir mode=0755 uname=root gname=wheel ignore
-..	#disklabels
-dvmrpd.conf	type=file mode=0600 uname=root gname=wheel
+dhcpd.conf	type=file mode=0640 uname=root gname=wheel optional
+dvmrpd.conf	type=file mode=0600 uname=root gname=wheel optional
 exports		type=file mode=0644 uname=root gname=wheel optional
 fbtab		type=file mode=0644 uname=root gname=wheel
 fstab		type=file mode=0644 uname=root gname=wheel
+ftpchroot	type=file mode=0640 uname=root gname=wheel optional
 ftpusers	type=file mode=0644 uname=root gname=wheel
 group		type=file mode=0644 uname=root gname=wheel
-hostapd.conf	type=file mode=0600 uname=root gname=wheel
+hostapd.conf	type=file mode=0600 uname=root gname=wheel optional
 hosts		type=file mode=0644 uname=root gname=wheel
+ifstated.conf	type=file mode=0640 uname=root gname=wheel optional
 iked		type=dir mode=0755 uname=root gname=wheel
 ..	#iked
-iked.conf	type=file mode=0600 uname=root gname=wheel
-inetd.conf	type=file mode=0644 uname=root gname=wheel
-ipsec.conf	type=file mode=0600 uname=root gname=wheel
+iked.conf	type=file mode=0600 uname=root gname=wheel optional
+inetd.conf	type=file mode=0644 uname=root gname=wheel optional
+ipsec.conf	type=file mode=0600 uname=root gname=wheel optional
 isakmpd		type=dir mode=0755 uname=root gname=wheel
 isakmpd.conf	type=file mode=0600 uname=root gname=wheel optional
 isakmpd.policy	type=file mode=0600 uname=root gname=wheel optional
 ..	#isakmpd
-ldapd.conf	type=file mode=0600 uname=root gname=wheel
-ldpd.conf	type=file mode=0600 uname=root gname=wheel
+ldapd.conf	type=file mode=0600 uname=root gname=wheel optional
+ldpd.conf	type=file mode=0600 uname=root gname=wheel optional
 login.conf	type=file mode=0644 uname=root gname=wheel
 mail.rc		type=file mode=0644 uname=root gname=wheel
 mailer.conf	type=file mode=0644 uname=root gname=wheel
 master.passwd	type=file mode=0600 uname=root gname=wheel
 monthly		type=file mode=0644 uname=root gname=wheel
 monthly.local	type=file mode=0644 uname=root gname=wheel optional
+mrouted.conf	type=file mode=0640 uname=root gname=wheel optional
 mail		type=dir mode=0755 uname=root gname=wheel
 aliases		type=file mode=0644 uname=root gname=wheel optional
 aliases.db	type=file mode=0644 uname=root gname=wheel optional
@@ -69,28 +69,30 @@ npppd		type=dir mode=0755 uname=root gname=wheel
 npppd.conf	type=file mode=0640 uname=root gname=wheel
 npppd-users	type=file mode=0600 uname=root gname=wheel
 ..	#npppd
-ntpd.conf	type=file mode=0644 uname=root gname=wheel
-ospfd.conf	type=file mode=0600 uname=root gname=wheel
-ospf6d.conf	type=file mode=0600 uname=root gname=wheel
+ntpd.conf	type=file mode=0644 uname=root gname=wheel optional
+ospfd.conf	type=file mode=0600 uname=root gname=wheel optional
+ospf6d.conf	type=file mode=0600 uname=root gname=wheel optional
 passwd		type=file mode=0644 uname=root gname=wheel
 pf.conf		type=file mode=0600 uname=root gname=wheel optional
-printcap	type=file mode=0644 uname=root gname=wheel
+printcap	type=file mode=0644 uname=root gname=wheel optional
 rc		type=file mode=0644 uname=root gname=wheel
 rc.conf		type=file mode=0644 uname=root gname=wheel
 rc.conf.local	type=file mode=0644 uname=root gname=wheel optional
-rc.local	type=file mode=0644 uname=root gname=wheel
-rc.securelevel	type=file mode=0644 uname=root gname=wheel
-rc.shutdown	type=file mode=0644 uname=root gname=wheel
-relayd.conf	type=file mode=0600 uname=root gname=wheel
+rc.local	type=file mode=0644 uname=root gname=wheel optional
+rc.securelevel	type=file mode=0644 uname=root gname=wheel optional
+rc.shutdown	type=file mode=0644 uname=root gname=wheel optional
+relayd.conf	type=file mode=0600 uname=root gname=wheel optional
+remote		type=file mode=0640 uname=root gname=wheel optional
 resolv.conf	type=file mode=0644 uname=root gname=wheel optional
 resolv.conf.tail type=file mode=0644 uname=root gname=wheel optional
-ripd.conf	type=file mode=0600 uname=root gname=wheel
-sasyncd.conf	type=file mode=0600 uname=root gname=wheel
-sensorsd.conf	type=file mode=0644 uname=root gname=wheel
+rbootd.conf	type=file mode=0640 uname=root gname=wheel optional
+ripd.conf	type=file mode=0600 uname=root gname=wheel optional
+sasyncd.conf	type=file mode=0600 uname=root gname=wheel optional
+sensorsd.conf	type=file mode=0644 uname=root gname=wheel optional
 shells		type=file mode=0644 uname=root gname=wheel
 skey		type=dir mode=01730 uname=root gname=auth optional
 ..	#skey
-snmpd.conf	type=file mode=0600 uname=root gname=wheel
+snmpd.conf	type=file mode=0600 uname=root gname=wheel optional
 spwd.db		type=file mode=0640 uname=root gname=_shadow
 ssh		type=dir mode=0755 uname=root gname=wheel optional
 ssh_config	type=file mode=0644 uname=root gname=wheel
@@ -113,7 +115,7 @@ syslog.conf	type=file mode=0644 uname=root gname=wheel
 ttys		type=file mode=0644 uname=root gname=wheel
 weekly		type=file mode=0644 uname=root gname=wheel
 weekly.local	type=file mode=0644 uname=root gname=wheel optional
-ypldap.conf	type=file mode=0600 uname=root gname=wheel
+ypldap.conf	type=file mode=0600 uname=root gname=wheel optional
 uucp		type=dir mode=0755 uname=root gname=wheel optional ignore
 ..	#uucp
 ..	#etc
