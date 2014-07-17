@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.258 2014/07/13 16:41:21 claudio Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.259 2014/07/17 13:44:21 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -423,6 +423,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			arc4random_buf(buf, *oldlenp);
 			if ((error = copyout(buf, oldp, *oldlenp)))
 				return (error);
+			explicit_bzero(buf, sizeof(buf));
 		}
 		return (0);
 	}
