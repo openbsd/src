@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.8 2014/07/16 10:25:28 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.9 2014/07/17 11:35:26 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -787,10 +787,6 @@ server_httpmethod_byname(const char *name)
 	/* Set up key */
 	method.method_name = name;
 
-	/*
-	 * RFC 2616 section 5.1.1 says that the method is case
-	 * sensitive so we don't do a strcasecmp here.
-	 */
 	if ((res = bsearch(&method, http_methods,
 	    sizeof(http_methods) / sizeof(http_methods[0]) - 1,
 	    sizeof(http_methods[0]), server_httpmethod_cmp)) != NULL)
@@ -820,6 +816,11 @@ server_httpmethod_cmp(const void *a, const void *b)
 {
 	const struct http_method *ma = a;
 	const struct http_method *mb = b;
+
+	/*
+	 * RFC 2616 section 5.1.1 says that the method is case
+	 * sensitive so we don't do a strcasecmp here.
+	 */
 	return (strcmp(ma->method_name, mb->method_name));
 }
 
