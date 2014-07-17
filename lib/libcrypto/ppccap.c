@@ -1,8 +1,9 @@
-/* $OpenBSD: ppccap.c,v 1.5 2014/06/12 15:49:27 deraadt Exp $ */
-#include <unistd.h>
-#include <sys/param.h>
+/* $OpenBSD: ppccap.c,v 1.6 2014/07/17 23:48:24 deraadt Exp $ */
+
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
+#include <unistd.h>
 
 #include <crypto.h>
 #include <openssl/bn.h>
