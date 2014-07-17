@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.258 2014/07/16 13:46:30 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.259 2014/07/17 11:28:29 ajacoutot Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -740,8 +740,6 @@ var
         ns
         ..
         pkg
-        ..
-        sysmerge
         ..
         yubikey			uname=root gname=auth mode=0770
         ..
