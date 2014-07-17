@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.36 2014/07/12 17:35:23 deraadt Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.37 2014/07/17 07:13:02 logan Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -230,7 +230,9 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		}
 		break;
 	}
-
+	sk_X509_free(sktmp);
+	sktmp = NULL;
+	
 	/* at this point, chain should contain a list of untrusted
 	 * certificates.  We now need to add at least one trusted one,
 	 * if possible, otherwise we complain. */
