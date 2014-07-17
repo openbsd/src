@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.83 2014/07/12 22:33:39 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.84 2014/07/17 11:32:21 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1678,6 +1678,11 @@ ssl3_get_certificate_request(SSL *s)
 	}
 
 	for (nc = 0; nc < llen; ) {
+		if (p + 2 - d > n) {
+			SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
+			    SSL_R_DATA_LENGTH_TOO_LONG);
+			goto err;
+		}
 		n2s(p, l);
 		if ((l + nc + 2) > llen) {
 			if ((s->options & SSL_OP_NETSCAPE_CA_DN_BUG))
