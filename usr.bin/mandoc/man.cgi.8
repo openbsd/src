@@ -1,4 +1,4 @@
-.\"     $Id: man.cgi.8,v 1.4 2014/07/13 15:38:06 schwarze Exp $
+.\"     $Id: man.cgi.8,v 1.5 2014/07/18 19:02:07 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2014 $
+.Dd $Mdocdate: July 18 2014 $
 .Dt MAN.CGI 8
 .Os
 .Sh NAME
@@ -266,11 +266,6 @@ is supported as an alias for
 The web server may pass the following CGI variables to
 .Nm :
 .Bl -tag -width Ds
-.It Ev HTTP_HOST
-The FQDN of the (possibly virtual) host the HTTP server is running on.
-This is used for
-.Ic Location:
-headers in HTTP 303 responses.
 .It Ev PATH_INFO
 The final part of the URI path passed from the client to the server,
 starting after the
