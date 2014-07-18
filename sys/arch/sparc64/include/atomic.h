@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.12 2014/07/18 10:40:14 dlg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.13 2014/07/18 12:44:53 dlg Exp $	*/
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -71,8 +71,21 @@ _f(volatile _t *p, _t v)						\
 
 def_atomic_swap(_atomic_swap_uint, unsigned int, atomic_cas_uint)
 def_atomic_swap(_atomic_swap_ulong, unsigned long, atomic_cas_ulong)
-def_atomic_swap(_atomic_swap_ptr, void *, atomic_cas_ptr)
 #undef def_atomic_swap
+
+static inline void *
+_atomic_swap_ptr(volatile void *p, void *v)
+{
+	void *e, *r;
+
+	r = *(void **)p;
+	do {
+		e = r;
+		r = atomic_cas_ptr(p, e, v);
+	} while (r != e);
+
+	return (r);
+}
 
 #define atomic_swap_uint(_p, _v)  _atomic_swap_uint(_p, _v)
 #define atomic_swap_ulong(_p, _v)  _atomic_swap_ulong(_p, _v)
