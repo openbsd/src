@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.13 2014/07/13 21:34:35 yasuoka Exp $ */
+/*	$OpenBSD: privsep.c,v 1.14 2014/07/18 13:16:22 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
+#include <net/if.h>
 #include <net/pfkeyv2.h>
 #include <netinet/in.h>
 
@@ -356,25 +357,23 @@ priv_get_user_info(const char *path, const char *username,
 	    &a, sizeof(a));
 	imsg_flush(&privsep_ibuf);
 
-	if ((n = imsg_read_and_get(&privsep_ibuf, &imsg)) == -1) {
-		errno = EACCES;
+	if ((n = imsg_read_and_get(&privsep_ibuf, &imsg)) == -1)
 		return (-1);
-	}
 	if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*r)) {
 		errno = EACCES;
-		return (-1);
+		goto on_error;
 	}
 	r = imsg.data;
 	if (r->retval != 0) {
 		errno = r->rerrno;
-		return (r->retval);
+		goto on_error;
 	}
 
 	sz = strlen(username) + strlen(r->password) +
 	    strlen(r->calling_number) + 3;
 
 	if ((u = malloc(offsetof(npppd_auth_user, space[sz]))) == NULL)
-		return (-1);
+		goto on_error;
 
 	cp = u->space;
 
@@ -394,8 +393,13 @@ priv_get_user_info(const char *path, const char *username,
 	u->framed_ip_netmask = r->framed_ip_netmask;
 
 	*puser = u;
+	imsg_free(&imsg);
 
 	return (0);
+
+on_error:
+	imsg_free(&imsg);
+	return (-1);
 }
 
 int
@@ -404,6 +408,7 @@ priv_get_if_addr(const char *ifname, struct in_addr *addr)
 	struct PRIVSEP_GET_IF_ADDR_ARG   a;
 	struct PRIVSEP_GET_IF_ADDR_RESP *r;
 	struct imsg			 imsg;
+	int				 retval = -1;
 
 	strlcpy(a.ifname, ifname, sizeof(a.ifname));
 
@@ -411,21 +416,22 @@ priv_get_if_addr(const char *ifname, struct in_addr *addr)
 	    &a, sizeof(a));
 	imsg_flush(&privsep_ibuf);
 
-	if (imsg_read_and_get(&privsep_ibuf, &imsg) == -1) {
-		errno = EACCES;
+	if (imsg_read_and_get(&privsep_ibuf, &imsg) == -1)
 		return (-1);
-	}
-	if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*r)) {
-		errno = EACCES;
-		return (-1);
-	}
-	r = imsg.data;
-	if (r->retval != -1)
-		*addr = r->addr;
-	else
-		errno = r->rerrno;
 
-	return (r->retval);
+	if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*r))
+		errno = EACCES;
+	else {
+		r = imsg.data;
+		if (r->retval != -1)
+			*addr = r->addr;
+		else
+			errno = r->rerrno;
+		retval = r->retval;
+	}
+	imsg_free(&imsg);
+
+	return (retval);
 }
 
 int
@@ -461,6 +467,7 @@ priv_get_if_flags(const char *ifname, int *pflags)
 	struct PRIVSEP_GET_IF_FLAGS_ARG		 a;
 	struct PRIVSEP_GET_IF_FLAGS_RESP	*r;
 	struct imsg				 imsg;
+	int					 retval = -1;
 
 	strlcpy(a.ifname, ifname, sizeof(a.ifname));
 
@@ -468,20 +475,20 @@ priv_get_if_flags(const char *ifname, int *pflags)
 	    &a, sizeof(a));
 	imsg_flush(&privsep_ibuf);
 
-	if (imsg_read_and_get(&privsep_ibuf, &imsg) == -1) {
-		errno = EACCES;
+	if (imsg_read_and_get(&privsep_ibuf, &imsg) == -1)
 		return (-1);
-	}
-	if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*r)) {
+	if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*r))
 		errno = EACCES;
-		return (-1);
+	else {
+		r = imsg.data;
+		*pflags = r->flags;
+		if (r->retval != 0)
+			errno = r->rerrno;
+		retval = r->retval;
 	}
-	r = imsg.data;
-	*pflags = r->flags;
-	if (r->retval != 0)
-		errno = r->rerrno;
+	imsg_free(&imsg);
 
-	return (r->retval);
+	return (retval);
 }
 
 int
@@ -504,20 +511,23 @@ privsep_recvfd(void)
 {
 	struct PRIVSEP_COMMON_RESP	*r;
 	struct imsg			 imsg;
+	int				 retval = -1;
 
-	if (imsg_read_and_get(&privsep_ibuf, &imsg) == -1) {
-		errno = EACCES;
+	if (imsg_read_and_get(&privsep_ibuf, &imsg) == -1)
 		return (-1);
-	}
-	if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*r)) {
+	if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*r))
 		errno = EACCES;
-		return (-1);
+	else {
+		r = imsg.data;
+		retval = r->retval;
+		if (r->retval != 0)
+			errno = r->rerrno;
+		else
+			retval = imsg.fd;
 	}
-	r = imsg.data;
-	if (r->retval != 0)
-		errno = r->rerrno;
+	imsg_free(&imsg);
 
-	return (imsg.fd);
+	return (retval);
 }
 
 static int
@@ -525,20 +535,23 @@ privsep_common_resp(void)
 {
 	struct PRIVSEP_COMMON_RESP	*r;
 	struct imsg			 imsg;
+	int				 retval = -1;
 
 	if (imsg_read_and_get(&privsep_ibuf, &imsg) == -1) {
 		errno = EACCES;
 		return (-1);
 	}
-	if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*r)) {
+	if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*r))
 		errno = EACCES;
-		return (-1);
+	else {
+		r = imsg.data;
+		if (r->retval != 0)
+			errno = r->rerrno;
+		retval = r->retval;
 	}
-	r = imsg.data;
-	if (r->retval != 0)
-		errno = r->rerrno;
+	imsg_free(&imsg);
 
-	return (r->retval);
+	return (retval);
 }
 
 /***********************************************************************
@@ -924,6 +937,7 @@ on_broken_entry:
 		    }
 			break;
 		}
+		imsg_free(&imsg);
 	}
 }
 
@@ -1049,8 +1063,7 @@ privsep_npppd_check_get_user_info(struct PRIVSEP_GET_USER_INFO_ARG *arg)
 static int
 privsep_npppd_check_get_if_addr(struct PRIVSEP_GET_IF_ADDR_ARG *arg)
 {
-	if (strncmp(arg->ifname, "tun", 3) == 0 ||
-	    strncmp(arg->ifname, "pppx", 4) == 0)
+	if (startswith(arg->ifname, "tun") || startswith(arg->ifname, "pppx"))
 		return (0);
 
 	return (1);
@@ -1059,8 +1072,7 @@ privsep_npppd_check_get_if_addr(struct PRIVSEP_GET_IF_ADDR_ARG *arg)
 static int
 privsep_npppd_check_set_if_addr(struct PRIVSEP_SET_IF_ADDR_ARG *arg)
 {
-	if (strncmp(arg->ifname, "tun", 3) == 0 ||
-	    strncmp(arg->ifname, "pppx", 4) == 0)
+	if (startswith(arg->ifname, "tun") || startswith(arg->ifname, "pppx"))
 		return (0);
 
 	return (1);
@@ -1069,8 +1081,7 @@ privsep_npppd_check_set_if_addr(struct PRIVSEP_SET_IF_ADDR_ARG *arg)
 static int
 privsep_npppd_check_del_if_addr(struct PRIVSEP_DEL_IF_ADDR_ARG *arg)
 {
-	if (strncmp(arg->ifname, "tun", 3) == 0 ||
-	    strncmp(arg->ifname, "pppx", 4) == 0)
+	if (startswith(arg->ifname, "tun") || startswith(arg->ifname, "pppx"))
 		return (0);
 
 	return (1);
@@ -1079,8 +1090,7 @@ privsep_npppd_check_del_if_addr(struct PRIVSEP_DEL_IF_ADDR_ARG *arg)
 static int
 privsep_npppd_check_get_if_flags(struct PRIVSEP_GET_IF_FLAGS_ARG *arg)
 {
-	if (strncmp(arg->ifname, "tun", 3) == 0 ||
-	    strncmp(arg->ifname, "pppx", 4) == 0)
+	if (startswith(arg->ifname, "tun") || startswith(arg->ifname, "pppx"))
 		return (0);
 
 	return (1);
@@ -1089,8 +1099,7 @@ privsep_npppd_check_get_if_flags(struct PRIVSEP_GET_IF_FLAGS_ARG *arg)
 static int
 privsep_npppd_check_set_if_flags(struct PRIVSEP_SET_IF_FLAGS_ARG *arg)
 {
-	if (strncmp(arg->ifname, "tun", 3) == 0 ||
-	    strncmp(arg->ifname, "pppx", 4) == 0)
+	if (startswith(arg->ifname, "tun") || startswith(arg->ifname, "pppx"))
 		return (0);
 
 	return (1);
