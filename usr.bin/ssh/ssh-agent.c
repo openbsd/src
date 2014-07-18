@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.188 2014/07/15 15:54:14 millert Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.189 2014/07/18 02:46:01 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,6 +40,7 @@
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 #include <sys/param.h>
 
@@ -1029,6 +1030,7 @@ main(int ac, char **av)
 	char pidstrbuf[1 + 3 * sizeof pid];
 	struct timeval *tvp = NULL;
 	size_t len;
+	mode_t prev_mask;
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
@@ -1133,12 +1135,14 @@ main(int ac, char **av)
 	 * Create socket early so it will exist before command gets run from
 	 * the parent.
 	 */
+	prev_mask = umask(0177);
 	sock = unix_listener(socket_name, SSH_LISTEN_BACKLOG, 0);
 	if (sock < 0) {
 		/* XXX - unix_listener() calls error() not perror() */
 		*socket_name = '\0'; /* Don't unlink any existing file */
 		cleanup_exit(1);
 	}
+	umask(prev_mask);
 
 	/*
 	 * Fork, and have the parent execute the command, if any, or present
