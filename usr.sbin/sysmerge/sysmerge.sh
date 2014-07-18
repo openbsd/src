@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.141 2014/07/15 15:30:56 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.142 2014/07/18 10:43:29 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -114,7 +114,7 @@ extract_sets() {
 			error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks .${DBDIR}/${_set}sum"
 
 		(cd ${TEMPROOT} && tar -xzphf "${_tgz}" && \
-			find . -type f -and ! -type l | xargs sha256 -h ${WRKDIR}/${_set}sum) || \
+			find . -type f | xargs sha256 -h ${WRKDIR}/${_set}sum) || \
 			error_rm_wrkdir "failed to extract ${_tgz} and create checksum file"
 		rm "${_tgz}"
 	done
@@ -157,7 +157,7 @@ prepare_src() {
 	# 2>/dev/null: distribution-etc-root-var complains /var/tmp is world writable
 	(cd ${SRCDIR}/etc && \
 	 make DESTDIR=${TEMPROOT} distribution-etc-root-var >/dev/null 2>&1 && \
-	 cd ${TEMPROOT} && find . -type f -and ! -type l | xargs sha256 -h ${WRKDIR}/${SRCSUM}) || \
+	 cd ${TEMPROOT} && find . -type f | xargs sha256 -h ${WRKDIR}/${SRCSUM}) || \
 		error_rm_wrkdir "failed to populate from ${SRCDIR} and create checksum file"
 }
 
@@ -608,8 +608,8 @@ sm_compare() {
 		if [[ -z ${DIFFMODE} && \
 			${COMPFILE} != ./etc/@(fbtab|sysctl.conf|ttys) && \
 			-z ${IS_LINK} ]]; then
-			CVSID1=$(grep "[$]OpenBSD:" ${DESTDIR}${COMPFILE#.} 2>/dev/null)
-			CVSID2=$(grep "[$]OpenBSD:" ${COMPFILE} 2>/dev/null) || CVSID2=none
+			CVSID1=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${DESTDIR}${COMPFILE#.} 2>/dev/null)
+			CVSID2=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${COMPFILE} 2>/dev/null) || CVSID2=none
 			[[ ${CVSID2} == ${CVSID1} ]] && rm "${COMPFILE}"
 		fi
 
