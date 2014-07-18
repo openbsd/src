@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: random.3,v 1.24 2014/07/17 23:12:28 deraadt Exp $
+.\"	$OpenBSD: random.3,v 1.25 2014/07/18 06:20:36 jmc Exp $
 .\"
-.Dd $Mdocdate: July 17 2014 $
+.Dd $Mdocdate: July 18 2014 $
 .Dt RANDOM 3
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@
 .Fn setstate "char *state"
 .Sh DESCRIPTION
 .Bf -symbolic
-This interface is not cryptographically secure, so consider using 
+This interface is not cryptographically secure, so consider using
 .Xr arc4random 3
 instead.
 .Ef
