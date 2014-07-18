@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.435 2014/07/17 15:08:29 deraadt Exp $
+#	$OpenBSD: rc,v 1.436 2014/07/18 18:17:28 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -263,7 +263,7 @@ fi
 # need to get local functions from rc.subr
 FUNCS_ONLY=1 . /etc/rc.d/rc.subr
 
-# load rc.conf into scope 
+# load rc.conf into scope
 _rc_parse_conf
 
 if [ X"$1" = X"shutdown" ]; then
