@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsearch.c,v 1.4 2009/10/27 23:59:59 deraadt Exp $	*/
+/*	$OpenBSD: lsearch.c,v 1.5 2014/07/18 04:16:09 matthew Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ static void *linear_base(const void *, const void *, size_t *, size_t,
     cmp_fn_t, int);
 
 void *
-lsearch(const void *key, const void *base, size_t *nelp, size_t width,
+lsearch(const void *key, void *base, size_t *nelp, size_t width,
     	cmp_fn_t compar)
 {
 
