@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.46 2014/07/17 14:30:41 deraadt Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.47 2014/07/18 02:05:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -52,10 +52,15 @@
 #define RSBUFSZ	(16*BLOCKSZ)
 
 /* Marked MAP_INHERIT_ZERO, so zero'd out in fork children. */
-static struct {
+static struct _rs {
 	size_t		rs_have;	/* valid bytes at end of rs_buf */
 	size_t		rs_count;	/* bytes till reseed */
 } *rs;
+
+static inline void *_rs_allocate(size_t len);
+static inline void _rs_forkdetect(void);
+static inline void _rs_forkdetectsetup(struct _rs *buf, size_t len);
+#include "arc4random.h"
 
 /* Preserved in fork children. */
 static struct {
@@ -65,19 +70,6 @@ static struct {
 
 static inline void _rs_rekey(u_char *dat, size_t datlen);
 
-#ifndef MAP_INHERIT_ZERO
-static inline void
-_rs_forkhandler(void)
-{
-	/*
-	 * Race-free because we're running single-threaded in a new
-	 * address space, and once allocated rs is never deallocated.
-	 */
-	if (rs)
-		rs->rs_count = 0;
-}
-#endif /* MAP_INHERIT_ZERO */
-
 static inline void
 _rs_init(u_char *buf, size_t n)
 {
@@ -85,19 +77,12 @@ _rs_init(u_char *buf, size_t n)
 		return;
 
 	if (rs == NULL) {
-		if ((rs = mmap(NULL, sizeof(*rs), PROT_READ|PROT_WRITE,
-		    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED)
+		if ((rs = _rs_allocate(sizeof(*rs))) == NULL)
 			abort();
-#ifdef MAP_INHERIT_ZERO
-		if (minherit(rs, sizeof(*rs), MAP_INHERIT_ZERO) == -1)
-			abort();
-#else
-		_ARC4_ATFORK(_rs_forkhandler);
-#endif
+		_rs_forkdetectsetup(rs, sizeof(*rs));
 	}
 	if (rsx == NULL) {
-		if ((rsx = mmap(NULL, sizeof(*rsx), PROT_READ|PROT_WRITE,
-		    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED)
+		if ((rsx = _rs_allocate(sizeof(*rsx))) == NULL)
 			abort();
 	}
 
@@ -129,17 +114,7 @@ _rs_stir(void)
 static inline void
 _rs_stir_if_needed(size_t len)
 {
-#ifndef MAP_INHERIT_ZERO
-	static pid_t _rs_pid = 0;
-	pid_t pid = getpid();
-
-	/* If a system lacks MAP_INHERIT_ZERO, resort to getpid() */
-	if (_rs_pid == 0 || _rs_pid != pid) {
-		_rs_pid = pid;
-		if (rs)
-			rs->rs_count = 0;
-	}
-#endif
+	_rs_forkdetect();
 	if (!rs || rs->rs_count <= len)
 		_rs_stir();
 	if (rs->rs_count <= len)
