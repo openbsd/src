@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.6 2014/07/13 09:26:08 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.7 2014/07/18 07:27:47 jasper Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -53,6 +53,11 @@
 struct boot_desc *boot_desc;
 struct boot_info *boot_info;
 
+char uboot_rootdev[OCTEON_ARGV_MAX];
+char bootdev[16];
+
+int parse_rootdev(void);
+
 /*
  * We need to save the arguments u-boot setup for us, so we can pass them
  * onwards to the kernel later on.
@@ -98,11 +103,59 @@ ttydev(char *name)
 void
 devboot(dev_t dev, char *path)
 {
-	/* XXX:
-	 * Assumes we booted from CF as this is currently the only supported
-	 * disk. We may need to dig deeper to figure out the real root device.
+	int i;
+
+	/*
+	 * Decode the uboot 'rootdev' argument into a device and partition
+	 * we can use to load the kernel off. We skip the first two arguments
+	 * since they're always the same (bootoctlinux, $image).
+	 * We expect the 'rootdev' argument to be 'octcf0a' or the like.
 	 */
+	for (i = 1; i < boot_desc->argc; i++) {
+		const char *arg =
+		    (const char*)PHYS_TO_CKSEG0(boot_desc->argv[i]);
+
+		if (arg == NULL)
+			continue;
+
+		if (strncmp(arg, "rootdev=", 8) == 0) {
+			if (*uboot_rootdev == '\0') {
+				strlcpy(uboot_rootdev, arg,
+					sizeof(uboot_rootdev));
+				if (parse_rootdev() == 0) {
+					strlcpy(path, bootdev, BOOTDEVLEN);
+					return;
+				}
+			} else {
+				break; /* No point in going on. */
+			}
+		}
+	}
+
+	/* No arguments given, or it couldn't be parsed. */
 	strlcpy(path, "octcf0a", BOOTDEVLEN);
+}
+
+int
+parse_rootdev(void)
+{
+	char *p;
+	size_t len;
+
+	/*
+	 * Take 'rootdev=sd0a' and return the device.
+         */
+        p = strchr(uboot_rootdev, '=');
+	if (p == NULL)
+		return 1;
+	p++;
+	len = strlen(p);
+        if (len <= 2 || len >= sizeof bootdev - 1)
+                return 1;
+
+	memcpy(bootdev, p, len);
+
+	return 0;
 }
 
 time_t
