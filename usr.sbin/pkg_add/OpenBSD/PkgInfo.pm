@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.32 2014/07/08 16:45:44 zhuk Exp $
+# $OpenBSD: PkgInfo.pm,v 1.33 2014/07/18 16:57:41 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -124,8 +124,8 @@ sub printfile_sorted
 	my @lines = (<$fh>);
 	close $fh;
 	foreach my $line (sort @lines) {
-		chomp;
-		$state->say("#1", $_);
+		chomp $line;
+		$state->say("#1", $line);
 	}
 	$state->say;
 }
