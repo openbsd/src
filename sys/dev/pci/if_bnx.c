@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.106 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.107 2014/07/18 07:11:04 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4882,9 +4882,18 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 	/* Map the mbuf into our DMA address space. */
 	error = bus_dmamap_load_mbuf(sc->bnx_dmatag, map, m,
 	    BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: Error mapping mbuf into TX chain!\n",
-		    sc->bnx_dev.dv_xname);
+	switch (error) {
+	case 0:
+		break;
+
+	case EFBIG:
+		if ((error = m_defrag(m, M_DONTWAIT)) == 0 &&
+		    (error = bus_dmamap_load_mbuf(sc->bnx_dmatag, map, m,
+		     BUS_DMA_NOWAIT)) == 0)
+			break;
+
+		/* FALLTHROUGH */
+	default:
 		sc->tx_dma_map_failures++;
 		goto maperr;
 	}
