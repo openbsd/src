@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.13 2014/07/13 15:38:06 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.14 2014/07/18 14:46:20 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -966,8 +966,12 @@ pathgen(struct req *req)
 	char	*dp;
 	size_t	 dpsz;
 
-	if (NULL == (fp = fopen("manpath.conf", "r")))
-		return;
+	if (NULL == (fp = fopen("manpath.conf", "r"))) {
+		fprintf(stderr, "%s/manpath.conf: %s\n",
+			MAN_DIR, strerror(errno));
+		pg_error_internal();
+		exit(EXIT_FAILURE);
+	}
 
 	while (NULL != (dp = fgetln(fp, &dpsz))) {
 		if ('\n' == dp[dpsz - 1])
@@ -975,5 +979,11 @@ pathgen(struct req *req)
 		req->p = mandoc_realloc(req->p,
 		    (req->psz + 1) * sizeof(char *));
 		req->p[req->psz++] = mandoc_strndup(dp, dpsz);
+	}
+
+	if ( req->p == NULL ) {
+		fprintf(stderr, "%s/manpath.conf is empty\n", MAN_DIR);
+		pg_error_internal();
+		exit(EXIT_FAILURE);
 	}
 }
