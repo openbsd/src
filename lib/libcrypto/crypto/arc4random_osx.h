@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random_osx.h,v 1.1 2014/07/18 02:05:55 deraadt Exp $	*/
+/*	$OpenBSD: arc4random_osx.h,v 1.2 2014/07/18 21:40:54 matthew Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -27,21 +27,18 @@ _rs_allocate(size_t len)
 {
 	void *p;
 
-	if ((p = mmap(NULL, sizeof(*rs), PROT_READ|PROT_WRITE,
+	if ((p = mmap(NULL, len, PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED)
 		return (NULL);
 	return (p);
 }
 
+static volatile sig_atomic_t _rs_forked;
+
 static inline void
 _rs_forkhandler(void)
 {
-	/*
-	 * Race-free because we're running single-threaded in a new
-	 * address space, and once allocated rs is never deallocated.
-	 */
-	if (rs)
-		rs->rs_count = 0;
+	_rs_forked = 1;
 }
 
 static inline void
@@ -50,11 +47,11 @@ _rs_forkdetect(void)
 	static pid_t _rs_pid = 0;
 	pid_t pid = getpid();
 
-	/* If a system lacks MAP_INHERIT_ZERO, resort to getpid() */
-	if (_rs_pid == 0 || _rs_pid != pid) {
+	if (_rs_pid == 0 || _rs_pid != pid || _rs_forked) {
 		_rs_pid = pid;
+		_rs_forked = 0;
 		if (rs)
-			rs->rs_count = 0;
+			memset(rs, 0, sizeof(*rs));
 	}
 }
 
