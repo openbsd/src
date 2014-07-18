@@ -1,3 +1,4 @@
+./usr/local/share/pkgconfig
 ./altroot
 ./bin
 ./bin/[
@@ -5201,16 +5202,13 @@
 ./var/db/ldap
 ./var/db/ns
 ./var/db/pkg
-./var/db/sysmerge
 ./var/db/yubikey
 ./var/empty
-./var/empty/dev
 ./var/games
 ./var/log
 ./var/log/rdist
 ./var/mail
 ./var/named
-./var/named/dev
 ./var/named/etc
 ./var/named/master
 ./var/named/slave
@@ -5218,7 +5216,6 @@
 ./var/named/tmp
 ./var/nsd
 ./var/nsd/db
-./var/nsd/dev
 ./var/nsd/etc
 ./var/nsd/run
 ./var/nsd/run/xfr
@@ -5242,7 +5239,6 @@
 ./var/tmp/vi.recover
 ./var/unbound
 ./var/unbound/db
-./var/unbound/dev
 ./var/unbound/etc
 ./var/www
 ./var/www/bin
@@ -5255,7 +5251,6 @@
 ./var/www/cgi-bin
 ./var/www/cgi-bin/bgplg
 ./var/www/conf
-./var/www/dev
 ./var/www/htdocs
 ./var/www/htdocs/bgplg
 ./var/www/logs
