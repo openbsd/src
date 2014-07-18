@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.259 2014/07/17 11:28:29 ajacoutot Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.260 2014/07/18 11:35:32 ajacoutot Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -405,6 +405,8 @@ usr
                 ..
                 uk_UA.KOI8-U
                 ..
+            ..
+            pkgconfig
             ..
             skel
             ..
