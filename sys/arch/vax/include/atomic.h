@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.7 2014/07/12 09:47:05 miod Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.8 2014/07/18 10:40:14 dlg Exp $	*/
 
 /* Public Domain */
 
@@ -93,20 +93,20 @@ atomic_swap_uint_sp(unsigned int *p, unsigned int v)
 #define	atomic_swap_uint	atomic_swap_uint_sp
 
 #define	atomic_add_long_nv(p,v) \
-	((unsigned long)atomic_add_int_nv((unsigned int *)p, (unsigned int)v))
+	((unsigned long)atomic_add_int_nv((unsigned long *)p, (unsigned long)v))
 #define	atomic_sub_long_nv(p,v) \
-	((unsigned long)atomic_sub_int_nv((unsigned int *)p, (unsigned int)v))
+	((unsigned long)atomic_sub_int_nv((unsigned long *)p, (unsigned long)v))
 
 #define	atomic_cas_ulong(p,o,n) \
-	((unsigned long)atomic_cas_uint((unsigned int *)p, (unsigned int)o, \
-	 (unsigned int)n))
+	((unsigned long)atomic_cas_uint((unsigned long *)p, (unsigned long)o, \
+	 (unsigned long)n))
 #define	atomic_cas_ptr(p,o,n) \
-	((void *)atomic_cas_uint((void **)p, (void *)o, (void *)n))
+	((void *)atomic_cas_uint((void *)p, (void *)o, (void *)n))
 
 #define	atomic_swap_ulong(p,o) \
-	((unsigned long)atomic_swap_uint((unsigned int *)p, (unsigned int)o)
+	((unsigned long)atomic_swap_uint((unsigned long *)p, (unsigned long)o)
 #define	atomic_swap_ptr(p,o) \
-	((void *)atomic_swap_uint((void **)p, (void *)o))
+	((void *)atomic_swap_uint((void *)p, (void *)o))
 
 static inline void
 __sync_synchronize(void)

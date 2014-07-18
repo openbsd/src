@@ -1,4 +1,4 @@
-.\" $OpenBSD: atomic_swap_uint.9,v 1.5 2014/02/13 12:03:47 dlg Exp $
+.\" $OpenBSD: atomic_swap_uint.9,v 1.6 2014/07/18 10:40:14 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 13 2014 $
+.Dd $Mdocdate: July 18 2014 $
 .Dt ATOMIC_SWAP_UINT 9
 .Os
 .Sh NAME
@@ -30,7 +30,7 @@
 .Ft unsigned long
 .Fn atomic_swap_ulong "volatile unsigned long *p" "unsigned long new"
 .Ft void *
-.Fn atomic_swap_ptr "volatile void **p" "void *new"
+.Fn atomic_swap_ptr "volatile void *p" "void *new"
 .Sh DESCRIPTION
 The atomic_swap set of functions provide an interface for atomically
 performing swap operations with respect to interrupts and multiple

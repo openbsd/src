@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.11 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.12 2014/07/18 10:40:14 dlg Exp $	*/
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -43,11 +43,11 @@ _atomic_cas_ulong(volatile unsigned long *p, unsigned long e, unsigned long n)
 #define atomic_cas_ulong(_p, _e, _n) _atomic_cas_ulong((_p), (_e), (_n))
 
 static inline void *
-_atomic_cas_ptr(volatile void **p, void *e, void *n)
+_atomic_cas_ptr(volatile void *p, void *e, void *n)
 {
 	__asm volatile("casx [%2], %3, %0"
-	    : "+r" (n), "=m" (*p)
-	    : "r" (p), "r" (e), "m" (*p));
+	    : "+r" (n), "=m" (*(volatile unsigned long *)p)
+	    : "r" (p), "r" (e), "m" (*(volatile unsigned long *)p));
 
 	return (n);
 }
