@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2014/07/13 02:01:23 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.11 2014/07/18 23:54:55 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -23,7 +23,7 @@ regress:
 # ECO is reflecting the ping and UDP echo packets.
 # RDR does not exist, PF redirects the traffic to ECO.
 #
-# +---+   0   +--+   1   +--+   2   +---+   3   +---+
+# +---+   0   +--+   1   +--+   2   +---+ 3   4 +---+
 # |SRC| ----> |PF| ----> |RT| ----> |ECO|       |RDR|
 # +---+       +--+       +--+       +---+       +---+
 #     out    in  out    in  out    in          in
@@ -50,7 +50,7 @@ PF_OUT ?=	10.188.211.50
 RT_IN ?=	10.188.211.51
 RT_OUT ?=	10.188.212.51
 ECO_IN ?=	10.188.212.52
-RDR_IN ?=	10.188.213.188
+RDR_IN ?=	10.188.214.188
 
 SRC_OUT6 ?=	fdd7:e83e:66bc:210:fce1:baff:fed1:561f
 PF_IN6 ?=	fdd7:e83e:66bc:210:5054:ff:fe12:3450
@@ -58,7 +58,7 @@ PF_OUT6 ?=	fdd7:e83e:66bc:211:5054:ff:fe12:3450
 RT_IN6 ?=	fdd7:e83e:66bc:211:5054:ff:fe12:3451
 RT_OUT6 ?=	fdd7:e83e:66bc:212:5054:ff:fe12:3451
 ECO_IN6 ?=	fdd7:e83e:66bc:212:5054:ff:fe12:3452
-RDR_IN6 ?=	fdd7:e83e:66bc:213::188
+RDR_IN6 ?=	fdd7:e83e:66bc:214::188
 
 .if empty (PF_SSH) || empty (RT_SSH) || empty (ECO_SSH)
 regress:

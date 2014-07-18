@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2014/07/13 01:47:20 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2014/07/18 23:54:55 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -25,10 +25,10 @@ regress:
 # RDR does not exist, PF redirects the traffic to ECO.
 # AF does not exist, PF translates address family and sends to ECO.
 #
-# +---+   0   +--+   1   +--+   2   +---+   3   +---+  4  +--+
-# |SRC| ----> |PF| ----> |RT| ----> |ECO|       |RDR|     |AF|
-# +---+       +--+       +--+       +---+       +---+     +--+
-#     out    in  out    in  out    in          in        in
+# +---+   0   +--+   1   +--+   2   +---+ 3   4 +---+ 5   6 +--+
+# |SRC| ----> |PF| ----> |RT| ----> |ECO|       |RDR|       |AF|
+# +---+       +--+       +--+       +---+       +---+       +--+
+#     out    in  out    in  out    in   out    in   out    in
 
 # Configure Addresses on the machines, there must be routes for the
 # networks.  Adapt interface and addresse variables to your local
@@ -52,8 +52,10 @@ PF_OUT ?=	10.188.211.50
 RT_IN ?=	10.188.211.51
 RT_OUT ?=	10.188.212.51
 ECO_IN ?=	10.188.212.52
-RDR_IN ?=	10.188.213.188
-AF_IN ?=	10.188.214.82		# /24 must be dec(ECO_IN6/120)
+ECO_OUT ?=	10.188.213.52
+RDR_IN ?=	10.188.214.188
+RDR_OUT ?=	10.188.215.188
+AF_IN ?=	10.188.216.82		# /24 must be dec(ECO_IN6/120)
 
 SRC_OUT6 ?=	fdd7:e83e:66bc:210:fce1:baff:fed1:561f
 PF_IN6 ?=	fdd7:e83e:66bc:210:5054:ff:fe12:3450
@@ -61,8 +63,10 @@ PF_OUT6 ?=	fdd7:e83e:66bc:211:5054:ff:fe12:3450
 RT_IN6 ?=	fdd7:e83e:66bc:211:5054:ff:fe12:3451
 RT_OUT6 ?=	fdd7:e83e:66bc:212:5054:ff:fe12:3451
 ECO_IN6 ?=	fdd7:e83e:66bc:212:5054:ff:fe12:3452
-RDR_IN6 ?=	fdd7:e83e:66bc:213::188
-AF_IN6 ?=	fdd7:e83e:66bc:214::34	# /120 must be hex(ECO_IN/24)
+ECO_OUT6 ?=	fdd7:e83e:66bc:213:5054:ff:fe12:3452
+RDR_IN6 ?=	fdd7:e83e:66bc:214::188
+RDR_OUT6 ?=	fdd7:e83e:66bc:215::188
+AF_IN6 ?=	fdd7:e83e:66bc:216::34	# /120 must be hex(ECO_IN/24)
 
 .if empty (PF_SSH) || empty (RT_SSH) || empty (ECO_SSH)
 regress:
@@ -92,7 +96,7 @@ addr.py: Makefile
 	echo 'SRC_IF="${SRC_IF}"' >>$@.tmp
 	echo 'SRC_MAC="${SRC_MAC}"' >>$@.tmp
 	echo 'PF_MAC="${PF_MAC}"' >>$@.tmp
-.for var in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN AF_IN
+.for var in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN ECO_OUT RDR_IN RDR_OUT AF_IN
 	echo '${var}="${${var}}"' >>$@.tmp
 	echo '${var}6="${${var}6}"' >>$@.tmp
 .endfor
@@ -120,14 +124,14 @@ TARGETS +=	ping  ping6
 
 run-regress-ping: stamp-pfctl
 	@echo '\n======== $@ ========'
-.for ip in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN AF_IN
+.for ip in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN ECO_OUT RDR_IN RDR_OUT AF_IN
 	@echo Check ping ${ip}:
 	ping -n -c 1 ${${ip}}
 .endfor
 
 run-regress-ping6: stamp-pfctl
 	@echo '\n======== $@ ========'
-.for ip in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN AF_IN
+.for ip in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN ECO_OUT RDR_IN RDR_OUT AF_IN
 	@echo Check ping ${ip}6:
 	ping6 -n -c 1 ${${ip}6}
 .endfor
@@ -142,7 +146,7 @@ TARGETS +=	ping-mtu ping6-mtu
 
 run-regress-ping-mtu: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
-.for ip in ECO_IN RDR_IN
+.for ip in ECO_IN ECO_OUT RDR_IN RDR_OUT
 	@echo Check path MTU to ${ip} is 1300
 	${SUDO} ${PYTHON}ping_mtu.py ${${ip}} 1300
 .endfor
@@ -151,7 +155,7 @@ run-regress-ping-mtu: addr.py stamp-pfctl
 
 run-regress-ping6-mtu: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
-.for ip in ECO_IN RDR_IN
+.for ip in ECO_IN ECO_OUT RDR_IN RDR_OUT
 	@echo Check path MTU to ${ip}6 is 1300
 	${SUDO} ${PYTHON}ping6_mtu.py ${${ip}6} 1300
 .endfor
@@ -164,14 +168,14 @@ TARGETS +=	udp  udp6
 
 run-regress-udp: stamp-pfctl
 	@echo '\n======== $@ ========'
-.for ip in ECO_IN RDR_IN AF_IN
+.for ip in ECO_IN ECO_OUT RDR_IN RDR_OUT AF_IN
 	@echo Check udp ${ip}:
 	( echo $$$$ | nc -u ${${ip}} 7 & sleep 1; kill $$! ) | grep $$$$
 .endfor
 
 run-regress-udp6: stamp-pfctl
 	@echo '\n======== $@ ========'
-.for ip in ECO_IN RDR_IN AF_IN
+.for ip in ECO_IN ECO_OUT RDR_IN RDR_OUT AF_IN
 	@echo Check udp ${ip}6:
 	( echo $$$$ | nc -u ${${ip}6} 7 & sleep 1; kill $$! ) | grep $$$$
 .endfor
@@ -183,14 +187,14 @@ TARGETS +=	tcp  tcp6
 
 run-regress-tcp: stamp-pfctl
 	@echo '\n======== $@ ========'
-.for ip in ECO_IN RDR_IN AF_IN
+.for ip in ECO_IN ECO_OUT RDR_IN RDR_OUT AF_IN
 	@echo Check tcp ${ip}:
 	openssl rand 200000 | nc -N ${${ip}} 7 | wc -c | grep '200000$$'
 .endfor
 
 run-regress-tcp6: stamp-pfctl
 	@echo '\n======== $@ ========'
-.for ip in ECO_IN RDR_IN AF_IN
+.for ip in ECO_IN ECO_OUT RDR_IN RDR_OUT AF_IN
 	@echo Check tcp ${ip}6:
 	openssl rand 200000 | nc -N ${${ip}6} 7 | wc -c | grep '200000$$'
 .endfor
@@ -208,14 +212,14 @@ check-setup:
 	route -n get -inet ${SRC_OUT} | fgrep -q 'interface: lo0'  # SRC_OUT
 	ping -n -c 1 ${PF_IN}  # PF_IN
 	route -n get -inet ${PF_IN} | fgrep -q 'interface: ${SRC_IF}'  # PF_IN SRC_IF
-.for ip in PF_OUT RT_IN RT_OUT ECO_IN RDR_IN AF_IN
+.for ip in PF_OUT RT_IN RT_OUT ECO_IN ECO_OUT RDR_IN RDR_OUT AF_IN
 	route -n get -inet ${${ip}} | fgrep -q 'gateway: ${PF_IN}'  # ${ip} PF_IN
 .endfor
 	ping6 -n -c 1 ${SRC_OUT6}  # SRC_OUT6
 	route -n get -inet6 ${SRC_OUT6} | fgrep -q 'interface: lo0'  # SRC_OUT6
 	ping6 -n -c 1 ${PF_IN6}  # PF_IN6
 	route -n get -inet6 ${PF_IN6} | fgrep -q 'interface: ${SRC_IF}'  # PF_IN6 SRC_IF
-.for ip in PF_OUT RT_IN RT_OUT ECO_IN RDR_IN AF_IN
+.for ip in PF_OUT RT_IN RT_OUT ECO_IN ECO_OUT RDR_IN RDR_OUT AF_IN
 	route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${PF_IN6}'  # ${ip}6 PF_IN6
 .endfor
 	@echo '\n======== $@ PF ========'
@@ -225,7 +229,7 @@ check-setup:
 	ssh ${PF_SSH} ping -n -c 1 ${PF_OUT}  # PF_OUT
 	ssh ${PF_SSH} route -n get -inet ${PF_OUT} | fgrep -q 'interface: lo0'  # PF_OUT
 	ssh ${PF_SSH} ping -n -c 1 ${RT_IN}  # RT_IN
-.for ip in RT_OUT ECO_IN
+.for ip in RT_OUT ECO_IN ECO_OUT
 	ssh ${PF_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${RT_IN}'  # ${ip} RT_IN
 .endfor
 	ssh ${PF_SSH} ping6 -n -c 1 ${PF_IN6}  # PF_IN6
@@ -234,7 +238,7 @@ check-setup:
 	ssh ${PF_SSH} ping6 -n -c 1 ${PF_OUT6}  # PF_OUT6
 	ssh ${PF_SSH} route -n get -inet6 ${PF_OUT6} | fgrep -q 'interface: lo0'  # PF_OUT6
 	ssh ${PF_SSH} ping6 -n -c 1 ${RT_IN6}  # RT_IN6
-.for ip in RT_OUT ECO_IN
+.for ip in RT_OUT ECO_IN ECO_OUT
 	ssh ${PF_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${RT_IN6}'  # ${ip}6 RT_IN6
 .endfor
 	ssh ${PF_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
@@ -251,6 +255,7 @@ check-setup:
 	ssh ${RT_SSH} ping -n -c 1 ${RT_OUT}  # RT_OUT
 	ssh ${RT_SSH} route -n get -inet ${RT_OUT} | fgrep -q 'interface: lo0'  # RT_OUT
 	ssh ${RT_SSH} ping -n -c 1 ${ECO_IN}  # ECO_IN
+	ssh ${RT_SSH} route -n get -inet ${ECO_OUT} | fgrep -q 'gateway: ${ECO_IN}'  # ECO_OUT ECO_IN
 	ssh ${RT_SSH} ping6 -n -c 1 ${RT_IN6}  # RT_IN6
 	ssh ${RT_SSH} route -n get -inet6 ${RT_IN6} | fgrep -q 'interface: lo0'  # RT_IN6
 	ssh ${RT_SSH} ping6 -n -c 1 ${PF_OUT6}  # PF_OUT6
@@ -260,6 +265,7 @@ check-setup:
 	ssh ${RT_SSH} ping6 -n -c 1 ${RT_OUT6}  # RT_OUT6
 	ssh ${RT_SSH} route -n get -inet6 ${RT_OUT6} | fgrep -q 'interface: lo0'  # RT_OUT6
 	ssh ${RT_SSH} ping6 -n -c 1 ${ECO_IN6}  # ECO_IN6
+	ssh ${RT_SSH} route -n get -inet6 ${ECO_OUT6} | fgrep -q 'gateway: ${ECO_IN6}'  # ECO_OUT6 ECO_IN6
 	ssh ${RT_SSH} sysctl net.inet.ip.forwarding | fgrep =1
 	ssh ${RT_SSH} sysctl net.inet6.ip6.forwarding | fgrep =1
 	ssh ${RT_SSH} ifconfig | fgrep 'mtu 1300'
@@ -270,16 +276,24 @@ check-setup:
 .for ip in RT_IN PF_OUT PF_IN SRC_OUT
 	ssh ${ECO_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${RT_OUT}'  # ${ip} RT_OUT
 .endfor
+	ssh ${ECO_SSH} ping -n -c 1 ${ECO_OUT}  # ECO_OUT
+	ssh ${ECO_SSH} route -n get -inet ${ECO_OUT} | fgrep -q 'interface: lo0'  # ECO_OUT
 	ssh ${ECO_SSH} ping6 -n -c 1 ${ECO_IN6}  # ECO_IN6
 	ssh ${ECO_SSH} route -n get -inet6 ${ECO_IN6} | fgrep -q 'interface: lo0'  # ECO_IN6
 	ssh ${ECO_SSH} ping6 -n -c 1 ${RT_OUT6}  # RT_OUT6
 .for ip in RT_IN PF_OUT PF_IN SRC_OUT
 	ssh ${ECO_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${RT_OUT6}'  # ${ip}6 RT_OUT6
+	ssh ${ECO_SSH} ping6 -n -c 1 ${ECO_OUT6}  # ECO_OUT6
+	ssh ${ECO_SSH} route -n get -inet6 ${ECO_OUT6} | fgrep -q 'interface: lo0'  # ECO_OUT6
 .endfor
 .for af in inet inet6
 .for proto in udp tcp
 	ssh ${ECO_SSH} netstat -a -f ${af} -p ${proto} | fgrep ' *.echo '
 .endfor
 .endfor
+	ssh ${ECO_SSH} netstat -av -f inet -p udp | fgrep ' ${ECO_IN}.echo '
+	ssh ${ECO_SSH} netstat -av -f inet -p udp | fgrep ' ${ECO_OUT}.echo '
+	ssh ${ECO_SSH} netstat -av -f inet6 -p udp | fgrep ' ${ECO_IN6}.echo '
+	ssh ${ECO_SSH} netstat -av -f inet6 -p udp | fgrep ' ${ECO_OUT6}.echo '
 
 .include <bsd.regress.mk>
