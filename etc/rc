@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.436 2014/07/18 18:17:28 deraadt Exp $
+#	$OpenBSD: rc,v 1.437 2014/07/19 21:27:16 bluhm Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -267,7 +267,12 @@ FUNCS_ONLY=1 . /etc/rc.d/rc.subr
 _rc_parse_conf
 
 if [ X"$1" = X"shutdown" ]; then
-	random_seed
+	if echo 2>/dev/null >>/var/db/host.random || \
+	    echo 2>/dev/null >>/etc/random.seed; then
+		random_seed
+	else
+		echo warning: cannot write random seed to disk
+	fi
 
 	# If we are in secure level 0, assume single user mode.
 	if [ `sysctl -n kern.securelevel` -ne 0 ]; then
