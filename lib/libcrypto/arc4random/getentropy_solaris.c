@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_solaris.c,v 1.7 2014/07/13 13:37:38 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_solaris.c,v 1.8 2014/07/19 16:12:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -68,9 +68,6 @@
 
 int	getentropy(void *buf, size_t len);
 
-#if 0
-extern int main(int, char *argv[]);
-#endif
 static int gotdata(char *buf, size_t len);
 static int getentropy_urandom(void *buf, size_t len, const char *path,
     int devfscheck);
@@ -315,9 +312,6 @@ getentropy_fallback(void *buf, size_t len)
 			HX(sigprocmask(SIG_BLOCK, NULL, &sigset) == -1,
 			    sigset);
 
-#if 0
-			HF(main);		/* an addr in program */
-#endif
 			HF(getentropy);	/* an addr in this library */
 			HF(printf);		/* an addr in libc */
 			p = (char *)&p;
