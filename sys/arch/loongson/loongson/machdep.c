@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.56 2014/07/13 22:53:39 uebayasi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.57 2014/07/19 18:01:23 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -936,8 +936,10 @@ boot(int howto)
 haltsys:
 	doshutdownhooks();
 	mainbus = device_mainbus();
-	if (mainbus != NULL)
+	if (mainbus != NULL) {
+		pci_dopm = 0;
 		config_suspend(mainbus, DVACT_POWERDOWN);
+	}
 
 	if (howto & RB_HALT) {
 		if (howto & RB_POWERDOWN) {
