@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.25 2014/07/16 14:26:47 kettenis Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.26 2014/07/19 16:10:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -20,8 +20,8 @@
  * http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man2/getentropy.2
  */
 
-#define	_POSIX_C_SOURCE 199309L
-#define	_GNU_SOURCE     1
+#define	_POSIX_C_SOURCE	199309L
+#define	_GNU_SOURCE	1
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
