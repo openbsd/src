@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random_osx.h,v 1.4 2014/07/19 13:02:28 bcook Exp $	*/
+/*	$OpenBSD: arc4random_osx.h,v 1.5 2014/07/19 14:34:38 bcook Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -21,6 +21,12 @@
 /*
  * Stub functions for portability.
  */
+
+#include <pthread.h>
+
+static pthread_mutex_t arc4random_mtx = PTHREAD_MUTEX_INITIALIZER;
+#define _ARC4_LOCK()   pthread_mutex_lock(&arc4random_mtx)
+#define _ARC4_UNLOCK() pthread_mutex_unlock(&arc4random_mtx)
 
 static volatile sig_atomic_t _rs_forked;
 
