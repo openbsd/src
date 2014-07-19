@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random_osx.h,v 1.2 2014/07/18 21:40:54 matthew Exp $	*/
+/*	$OpenBSD: arc4random_osx.h,v 1.3 2014/07/19 00:08:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -22,15 +22,21 @@
  * Stub functions for portability.
  */
 
-static inline void *
-_rs_allocate(size_t len)
+static inline int
+_rs_allocate(struct _rs **rsp, struct _rsx **rsxp)
 {
-	void *p;
-
-	if ((p = mmap(NULL, len, PROT_READ|PROT_WRITE,
+	if ((*rsp = mmap(NULL, sizeof(**rsp), PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED)
-		return (NULL);
-	return (p);
+		return (-1);
+
+	if ((*rsxp = mmap(NULL, sizeof(**rsxp) PROT_READ|PROT_WRITE,
+	    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED) {
+		munmap(*rsxp, sizeof(**rsxp);
+		return (-1);
+	}
+
+	_ARC4_ATFORK(_rs_forkhandler);
+	return (0);
 }
 
 static volatile sig_atomic_t _rs_forked;
@@ -54,10 +60,3 @@ _rs_forkdetect(void)
 			memset(rs, 0, sizeof(*rs));
 	}
 }
-
-static inline void
-_rs_forkdetectsetup(struct _rs *rs, size_t len)
-{
-	_ARC4_ATFORK(_rs_forkhandler);
-}
-

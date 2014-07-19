@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.h,v 1.1 2014/07/18 02:05:55 deraadt Exp $	*/
+/*	$OpenBSD: arc4random.h,v 1.2 2014/07/19 00:08:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -22,25 +22,28 @@
  * Stub functions for portability.
  */
 
-static inline void *
-_rs_allocate(size_t len)
+static inline int
+_rs_allocate(struct _rs **rsp, struct _rsx **rsxp)
 {
-	void *p;
+	struct {
+		struct _rs rs;
+		struct _rsx rsx;
+	} *p;
 
-	if ((p = mmap(NULL, sizeof(*rs), PROT_READ|PROT_WRITE,
+	if ((p = mmap(NULL, sizeof(*p), PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED)
-		return (NULL);
-	return (p);
+		return (-1);
+	if (minherit(p, sizeof(*p), MAP_INHERIT_ZERO) == -1) {
+		munmap(p, sizeof(*p));
+		return (-1);
+	}
+
+	*rsp = &p->rs;
+	*rsxp = &p->rsx;
+	return (0);
 }
 
 static inline void
 _rs_forkdetect(void)
 {
-}
-
-static inline void
-_rs_forkdetectsetup(struct _rs *rs, size_t len)
-{
-	if (minherit(rs, len, MAP_INHERIT_ZERO) == -1)
-		abort();
 }

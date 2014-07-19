@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random_win.h,v 1.1 2014/07/18 02:05:55 deraadt Exp $	*/
+/*	$OpenBSD: arc4random_win.h,v 1.2 2014/07/19 00:08:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -22,10 +22,19 @@
  * Stub functions for portability.
  */
 
-static inline void *
-_rs_allocate(size_t len)
+static inline int
+_rs_allocate(struct _rs **rsp, struct _rsx **rsxp)
 {
-	return calloc(1, sizeof(*rs));
+	*rsp = calloc(1, sizeof(**rsp));
+	if (*rsp == NULL)
+		return (-1);
+
+	*rsxp = calloc(1, sizeof(**rsxp));
+	if (*rsxp == NULL) {
+		free(*rsp);
+		return (-1);
+	}
+	return (0);
 }
 
 static inline void
@@ -37,9 +46,3 @@ static inline void
 _rs_forkdetect(void)
 {
 }
-
-static inline void
-_rs_forkdetectsetup(struct _rs *rs, size_t len)
-{
-}
-

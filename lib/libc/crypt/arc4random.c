@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.47 2014/07/18 02:05:55 deraadt Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.48 2014/07/19 00:08:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -57,16 +57,15 @@ static struct _rs {
 	size_t		rs_count;	/* bytes till reseed */
 } *rs;
 
-static inline void *_rs_allocate(size_t len);
-static inline void _rs_forkdetect(void);
-static inline void _rs_forkdetectsetup(struct _rs *buf, size_t len);
-#include "arc4random.h"
-
-/* Preserved in fork children. */
-static struct {
+/* Maybe be preserved in fork children, if _rs_allocate() decides. */
+static struct _rsx {
 	chacha_ctx	rs_chacha;	/* chacha context for random keystream */
 	u_char		rs_buf[RSBUFSZ];	/* keystream blocks */
 } *rsx;
+
+static inline int _rs_allocate(struct _rs **, struct _rsx **);
+static inline void _rs_forkdetect(void);
+#include "arc4random.h"
 
 static inline void _rs_rekey(u_char *dat, size_t datlen);
 
@@ -77,12 +76,7 @@ _rs_init(u_char *buf, size_t n)
 		return;
 
 	if (rs == NULL) {
-		if ((rs = _rs_allocate(sizeof(*rs))) == NULL)
-			abort();
-		_rs_forkdetectsetup(rs, sizeof(*rs));
-	}
-	if (rsx == NULL) {
-		if ((rsx = _rs_allocate(sizeof(*rsx))) == NULL)
+		if (_rs_allocate(&rs, &rsx) == -1)
 			abort();
 	}
 
