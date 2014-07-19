@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcvtimeo.c,v 1.4 2003/09/02 23:52:17 david Exp $	*/
+/*	$OpenBSD: rcvtimeo.c,v 1.5 2014/07/19 18:11:12 miod Exp $	*/
 
 /*	Written by Michael Shalayeff, 2002, Public Domain */
 
@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <err.h>
 
@@ -40,6 +41,7 @@ main(int argc, char *argv[])
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 		err(1, "socket");
 
+	memset(&sin, 0, sizeof(sin));
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(30000);	/* XXX assuming nothing is there */
