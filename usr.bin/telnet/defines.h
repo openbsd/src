@@ -1,4 +1,4 @@
-/*	$OpenBSD: defines.h,v 1.7 2003/06/11 23:31:51 deraadt Exp $	*/
+/*	$OpenBSD: defines.h,v 1.8 2014/07/19 23:50:38 guenther Exp $	*/
 /*	$NetBSD: defines.h,v 1.5 1996/02/28 21:03:55 thorpej Exp $	*/
 
 /*
@@ -32,13 +32,16 @@
  *	from: @(#)defines.h	8.1 (Berkeley) 6/6/93
  */
 
+typedef struct {
+    int
+	system,			/* what the current time is */
+	echotoggle,		/* last time user entered echo character */
+	modenegotiated;		/* last time operating mode negotiated */
+} Clocks;
+
+extern Clocks clocks;
+
 #define	settimer(x)	clocks.x = clocks.system++
-
-#if	!defined(TN3270)
-
-#define	SetIn3270()
-
-#endif	/* !defined(TN3270) */
 
 #define	NETADD(c)	{ *netoring.supply = c; ring_supplied(&netoring, 1); }
 #define	NET2ADD(c1,c2)	{ NETADD(c1); NETADD(c2); }
@@ -62,4 +65,3 @@
 #define MODE_OUT8      0x8000 /* binary mode sans -opost */
 
 void upcase(char *);
-

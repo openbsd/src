@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.6 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.7 2014/07/19 23:50:38 guenther Exp $	*/
 /*	$NetBSD: terminal.c,v 1.5 1996/02/28 21:04:17 thorpej Exp $	*/
 
 /*
@@ -37,7 +37,6 @@ unsigned char	ttyobuf[2*BUFSIZ], ttyibuf[BUFSIZ];
 
 int termdata;			/* Debugging flag */
 
-#ifdef	USE_TERMIO
 # ifndef VDISCARD
 cc_t termFlushChar;
 # endif
@@ -68,10 +67,6 @@ cc_t termForw2Char;
 # ifndef VSTATUS
 cc_t termAytChar;
 # endif
-#else
-cc_t termForw2Char;
-cc_t termAytChar;
-#endif
 
 /*
  * initialize the terminal data structures.
@@ -163,9 +158,6 @@ getconnmode()
     extern int kludgelinemode;
 #endif
 
-    if (In3270)
-	return(MODE_FLOW);
-
     if (my_want_state_is_dont(TELOPT_ECHO))
 	mode |= MODE_ECHO;
 
@@ -201,29 +193,10 @@ setconnmode(force)
     int force;
 {
     int newmode;
-#ifdef ENCRYPTION
-    static int enc_passwd = 0;
-#endif
 
     newmode = getconnmode()|(force?MODE_FORCE:0);
 
     TerminalNewMode(newmode);
-
-#ifdef  ENCRYPTION
-    if ((newmode & (MODE_ECHO|MODE_EDIT)) == MODE_EDIT) {
-	if (my_want_state_is_will(TELOPT_ENCRYPT)
-	    && (enc_passwd == 0) && !encrypt_output) {
-	    encrypt_request_start(0, 0);
-	    enc_passwd = 1;
-	}
-    } else {
-	if (enc_passwd) {
-	    encrypt_request_end();
-	    enc_passwd = 0;
-	}
-    }
-#endif
-
 }
 
 

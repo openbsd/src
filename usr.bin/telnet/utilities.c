@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.11 2013/04/21 09:51:24 millert Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.12 2014/07/19 23:50:38 guenther Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -59,29 +59,6 @@ upcase(argument)
     }
 }
 
-/*
- * SetSockOpt()
- *
- * Compensate for differences in 4.2 and 4.3 systems.
- */
-
-    int
-SetSockOpt(fd, level, option, yesno)
-    int fd, level, option, yesno;
-{
-#ifndef	NOT43
-    return setsockopt(fd, level, option,
-				(void *)&yesno, sizeof yesno);
-#else	/* NOT43 */
-    if (yesno == 0) {		/* Can't do that in 4.2! */
-	fprintf(stderr, "Error: attempt to turn off an option 0x%x.\n",
-				option);
-	return -1;
-    }
-    return setsockopt(fd, level, option, 0, 0);
-#endif	/* NOT43 */
-}
-
 /*
  * The following are routines used to print out debugging information.
  */
@@ -277,9 +254,6 @@ printsub(direction, pointer, length)
     int		  length;	/* length of suboption data */
 {
     int i;
-#if defined(AUTHENTICATION) || defined(ENCRYPTION)
-    char buf[512];
-#endif
     extern int want_status_response;
 
     if (showoptions || direction == 0 ||
@@ -401,145 +375,6 @@ printsub(direction, pointer, length)
 	    for (i = 5; i < length; i++)
 		fprintf(NetTrace, " ?%d?", pointer[i]);
 	    break;
-
-#if	defined(AUTHENTICATION)
-	case TELOPT_AUTHENTICATION:
-	    fprintf(NetTrace, "AUTHENTICATION");
-	    if (length < 2) {
-		fprintf(NetTrace, " (empty suboption??\?)");
-		break;
-	    }
-	    switch (pointer[1]) {
-	    case TELQUAL_REPLY:
-	    case TELQUAL_IS:
-		fprintf(NetTrace, " %s ", (pointer[1] == TELQUAL_IS) ?
-							"IS" : "REPLY");
-		if (AUTHTYPE_NAME_OK(pointer[2]))
-		    fprintf(NetTrace, "%s ", AUTHTYPE_NAME(pointer[2]));
-		else
-		    fprintf(NetTrace, "%d ", pointer[2]);
-		if (length < 3) {
-		    fprintf(NetTrace, "(partial suboption??\?)");
-		    break;
-		}
-		fprintf(NetTrace, "%s|%s",
-			((pointer[3] & AUTH_WHO_MASK) == AUTH_WHO_CLIENT) ?
-			"CLIENT" : "SERVER",
-			((pointer[3] & AUTH_HOW_MASK) == AUTH_HOW_MUTUAL) ?
-			"MUTUAL" : "ONE-WAY");
-
-		auth_printsub(&pointer[1], length - 1, buf, sizeof(buf));
-		fprintf(NetTrace, "%s", buf);
-		break;
-
-	    case TELQUAL_SEND:
-		i = 2;
-		fprintf(NetTrace, " SEND ");
-		while (i < length) {
-		    if (AUTHTYPE_NAME_OK(pointer[i]))
-			fprintf(NetTrace, "%s ", AUTHTYPE_NAME(pointer[i]));
-		    else
-			fprintf(NetTrace, "%d ", pointer[i]);
-		    if (++i >= length) {
-			fprintf(NetTrace, "(partial suboption??\?)");
-			break;
-		    }
-		    fprintf(NetTrace, "%s|%s ",
-			((pointer[i] & AUTH_WHO_MASK) == AUTH_WHO_CLIENT) ?
-							"CLIENT" : "SERVER",
-			((pointer[i] & AUTH_HOW_MASK) == AUTH_HOW_MUTUAL) ?
-							"MUTUAL" : "ONE-WAY");
-		    ++i;
-		}
-		break;
-
-	    case TELQUAL_NAME:
-		i = 2;
-		fprintf(NetTrace, " NAME \"");
-		while (i < length)
-		    putc(pointer[i++], NetTrace);
-		putc('"', NetTrace);
-		break;
-
-	    default:
-		    for (i = 2; i < length; i++)
-			fprintf(NetTrace, " ?%d?", pointer[i]);
-		    break;
-	    }
-	    break;
-#endif
-
-#if    defined(ENCRYPTION)
-	case TELOPT_ENCRYPT:
-	    fprintf(NetTrace, "ENCRYPT");
-	    if (length < 2) {
-		fprintf(NetTrace, " (empty suboption?)");
-		break;
-	    }
-	    switch (pointer[1]) {
-	    case ENCRYPT_START:
-		fprintf(NetTrace, " START");
-		break;
-		
-	    case ENCRYPT_END:
-		fprintf(NetTrace, " END");
-		break;
-		
-	    case ENCRYPT_REQSTART:
-		fprintf(NetTrace, " REQUEST-START");
-		break;
-
-	    case ENCRYPT_REQEND:
-		fprintf(NetTrace, " REQUEST-END");
-		break;
-		
-	    case ENCRYPT_IS:
-	    case ENCRYPT_REPLY:
-		fprintf(NetTrace, " %s ", (pointer[1] == ENCRYPT_IS) ?
-			"IS" : "REPLY");
-		if (length < 3) {
-		    fprintf(NetTrace, " (partial suboption?)");
-		    break;
-		}
-		if (ENCTYPE_NAME_OK(pointer[2]))
-		    fprintf(NetTrace, "%s ", ENCTYPE_NAME(pointer[2]));
-		else
-		    fprintf(NetTrace, " %d (unknown)", pointer[2]);
-		
-		encrypt_printsub(&pointer[1], length - 1, buf, sizeof(buf));
-		fprintf(NetTrace, "%s", buf);
-		break;
-		
-	    case ENCRYPT_SUPPORT:
-		i = 2;
-		fprintf(NetTrace, " SUPPORT ");
-		while (i < length) {
-		    if (ENCTYPE_NAME_OK(pointer[i]))
-			fprintf(NetTrace, "%s ", ENCTYPE_NAME(pointer[i]));
-		    else
-			fprintf(NetTrace, "%d ", pointer[i]);
-		    i++;
-		}
-		break;
-		
-	    case ENCRYPT_ENC_KEYID:
-		fprintf(NetTrace, " ENC_KEYID ");
-		goto encommon;
-		
-	    case ENCRYPT_DEC_KEYID:
-		fprintf(NetTrace, " DEC_KEYID ");
-		goto encommon;
-		
-	    default:
-		fprintf(NetTrace, " %d (unknown)", pointer[1]);
-	    encommon:
-		for (i = 2; i < length; i++)
-		    fprintf(NetTrace, " %d", pointer[i]);
-		break;
-	    }
-	    break;
-#endif
-
 
 	case TELOPT_LINEMODE:
 	    fprintf(NetTrace, "LINEMODE ");
@@ -738,12 +573,6 @@ printsub(direction, pointer, length)
 
 	case TELOPT_NEW_ENVIRON:
 	    fprintf(NetTrace, "NEW-ENVIRON ");
-#ifdef	OLD_ENVIRON
-	    goto env_common1;
-	case TELOPT_OLD_ENVIRON:
-	    fprintf(NetTrace, "OLD-ENVIRON");
-	env_common1:
-#endif
 	    switch (pointer[1]) {
 	    case TELQUAL_IS:
 		fprintf(NetTrace, "IS ");
@@ -756,39 +585,14 @@ printsub(direction, pointer, length)
 	    env_common:
 		{
 		    int noquote = 2;
-#if defined(ENV_HACK) && defined(OLD_ENVIRON)
-		    extern int old_env_var, old_env_value;
-#endif
 		    for (i = 2; i < length; i++ ) {
 			switch (pointer[i]) {
 			case NEW_ENV_VALUE:
-#ifdef OLD_ENVIRON
-		     /*	case NEW_ENV_OVAR: */
-			    if (pointer[0] == TELOPT_OLD_ENVIRON) {
-# ifdef	ENV_HACK
-				if (old_env_var == OLD_ENV_VALUE)
-				    fprintf(NetTrace, "\" (VALUE) " + noquote);
-				else
-# endif
-				    fprintf(NetTrace, "\" VAR " + noquote);
-			    } else
-#endif /* OLD_ENVIRON */
 				fprintf(NetTrace, "\" VALUE " + noquote);
 			    noquote = 2;
 			    break;
 
 			case NEW_ENV_VAR:
-#ifdef OLD_ENVIRON
-		     /* case OLD_ENV_VALUE: */
-			    if (pointer[0] == TELOPT_OLD_ENVIRON) {
-# ifdef	ENV_HACK
-				if (old_env_value == OLD_ENV_VAR)
-				    fprintf(NetTrace, "\" (VAR) " + noquote);
-				else
-# endif
-				    fprintf(NetTrace, "\" VALUE " + noquote);
-			    } else
-#endif /* OLD_ENVIRON */
 				fprintf(NetTrace, "\" VAR " + noquote);
 			    noquote = 2;
 			    break;
@@ -872,24 +676,13 @@ EmptyTerminal()
 SetForExit()
 {
     setconnmode(0);
-#if	defined(TN3270)
-    if (In3270) {
-	Finish3270();
-    }
-#else	/* defined(TN3270) */
     do {
 	(void)telrcv();			/* Process any incoming data */
 	EmptyTerminal();
     } while (ring_full_count(&netiring));	/* While there is any */
-#endif	/* defined(TN3270) */
     setcommandmode();
     fflush(stdout);
     fflush(stderr);
-#if	defined(TN3270)
-    if (In3270) {
-	StopScreen(1);
-    }
-#endif	/* defined(TN3270) */
     setconnmode(0);
     EmptyTerminal();			/* Flush the path to the tty */
     setcommandmode();

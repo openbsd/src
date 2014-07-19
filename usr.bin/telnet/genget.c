@@ -1,4 +1,4 @@
-/*     $OpenBSD: genget.c,v 1.2 2009/10/27 23:59:44 deraadt Exp $  */
+/*     $OpenBSD: genget.c,v 1.3 2014/07/19 23:50:38 guenther Exp $  */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
 /* $KTH: genget.c,v 1.6 1997/05/04 09:01:34 assar Exp $ */
 
 #include <ctype.h>
-#include "misc-proto.h"
+#include "telnet_locl.h"
 
 #define	LOWER(x) (isupper((int)x) ? tolower((int)x) : (x))
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ring.h,v 1.6 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: ring.h,v 1.7 2014/07/19 23:50:38 guenther Exp $	*/
 /*	$NetBSD: ring.h,v 1.5 1996/02/28 21:04:09 thorpej Exp $	*/
 
 /*
@@ -48,10 +48,6 @@ typedef struct {
 			*bottom,	/* lowest address in buffer */
 			*top,		/* highest address+1 in buffer */
 			*mark;		/* marker (user defined) */
-#if    defined(ENCRYPTION)
-    unsigned char	*clearto;       /* Data to this point is clear text */
-    unsigned char	*encryyptedto;  /* Data is encrypted to here */
-#endif
     int		size;		/* size in bytes of buffer */
     u_long	consumetime,	/* help us keep straight full, empty, etc. */
 		supplytime;
@@ -66,10 +62,6 @@ extern int
 /* Data movement routines */
 extern void
 	ring_supply_data(Ring *ring, unsigned char *buffer, int count);
-#ifdef notdef
-extern void
-	ring_consume_data(Ring *ring, unsigned char *buffer, int count);
-#endif
 
 /* Buffer state transition routines */
 extern void
@@ -82,13 +74,6 @@ extern int
 	ring_empty_consecutive(Ring *ring),
 	ring_full_count(Ring *ring),
 	ring_full_consecutive(Ring *ring);
-
-#if    defined(ENCRYPTION)
-extern void
-	ring_encrypt (Ring *ring, void (*func)()),
-	ring_clearto (Ring *ring);
-#endif
-
 
 extern void
     ring_clear_mark(Ring *),

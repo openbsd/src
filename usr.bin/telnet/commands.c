@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.55 2013/10/26 21:33:29 sthen Exp $	*/
+/*	$OpenBSD: commands.c,v 1.56 2014/07/19 23:50:38 guenther Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -33,9 +33,7 @@
 #include "telnet_locl.h"
 #include <err.h>
 
-#if	defined(IPPROTO_IP) && defined(IP_TOS)
 int tos = -1;
-#endif	/* defined(IPPROTO_IP) && defined(IP_TOS) */
 
 char	*hostname;
 
@@ -474,18 +472,10 @@ lclchars()
     static int
 togdebug()
 {
-#ifndef	NOT43
     if (net > 0 &&
-	(SetSockOpt(net, SOL_SOCKET, SO_DEBUG, debug)) < 0) {
+	(setsockopt(net, SOL_SOCKET, SO_DEBUG, &debug, sizeof(debug))) == -1) {
 	    perror("setsockopt (SO_DEBUG)");
     }
-#else	/* NOT43 */
-    if (debug) {
-	if (net > 0 && SetSockOpt(net, SOL_SOCKET, SO_DEBUG, 0, 0) < 0)
-	    perror("setsockopt (SO_DEBUG)");
-    } else
-	printf("Cannot turn off socket debugging\r\n");
-#endif	/* NOT43 */
     return 1;
 }
 
@@ -598,16 +588,6 @@ togxbinary(val)
 
 
 static int togglehelp(void);
-#if	defined(AUTHENTICATION)
-extern int auth_togdebug(int);
-#endif
-#if    defined(ENCRYPTION)
-extern int EncryptAutoEnc(int);
-extern int EncryptAutoDec(int);
-extern int EncryptDebug(int);
-extern int EncryptVerbose(int);
-#endif
-
 
 struct togglelist {
     char	*name;		/* name of toggle */
@@ -629,40 +609,11 @@ static struct togglelist Togglelist[] = {
 	    0,
 		&autosynch,
 		    "send interrupt characters in urgent mode" },
-#if	defined(AUTHENTICATION)
     { "autologin",
 	"automatic sending of login and/or authentication info",
 	    0,
 		&autologin,
 		    "send login name and/or authentication information" },
-    { "authdebug",
-	"Toggle authentication debugging",
-	    auth_togdebug,
-		0,
-		     "print authentication debugging information" },
-#endif
-#if    defined(ENCRYPTION)
-    { "autoencrypt",
-       "automatic encryption of data stream",
-           EncryptAutoEnc,
-               0,
-                   "automatically encrypt output" },
-    { "autodecrypt",
-       "automatic decryption of data stream",
-           EncryptAutoDec,
-               0,
-                   "automatically decrypt input" },
-    { "verbose_encrypt",
-       "Toggle verbose encryption output",
-           EncryptVerbose,
-               0,
-                   "print verbose encryption output" },
-    { "encdebug",
-       "Toggle encryption debugging",
-           EncryptDebug,
-               0,
-                   "print encryption debugging information" },
-#endif
     { "skiprc",
 	"don't read ~/.telnetrc file",
 	    0,
@@ -699,18 +650,6 @@ static struct togglelist Togglelist[] = {
 		&localchars,
 		    "recognize certain control characters" },
     { " ", "", 0, 0 },		/* empty line */
-#if	defined(unix) && defined(TN3270)
-    { "apitrace",
-	"(debugging) toggle tracing of API transactions",
-	    0,
-		&apitrace,
-		    "trace API transactions", 0 },
-    { "cursesdata",
-	"(debugging) toggle printing of hexadecimal curses data",
-	    0,
-		&cursesdata,
-		    "print hexadecimal representation of curses data", 0 },
-#endif	/* defined(unix) && defined(TN3270) */
     { "debug",
 	"debugging",
 	    togdebug,
@@ -731,13 +670,11 @@ static struct togglelist Togglelist[] = {
 	    0,
 		&showoptions,
 		    "show option processing" },
-#if	defined(unix)
     { "termdata",
 	"(debugging) toggle printing of hexadecimal terminal data",
 	    0,
 		&termdata,
 		    "print hexadecimal representation of terminal traffic" },
-#endif	/* defined(unix) */
     { "?",
 	0,
 	    togglehelp },
@@ -836,9 +773,7 @@ toggle(argc, argv)
  * The following perform the "set" command.
  */
 
-#ifdef	USE_TERMIO
 struct termios new_tc = { 0 };
-#endif
 
 struct setlist {
     char *name;				/* name */
@@ -1261,9 +1196,6 @@ display(argc, argv)
 	}
     }
 /*@*/optionstatus();
-#if    defined(ENCRYPTION)
-    EncryptStatus();
-#endif
     return 1;
 #undef	doset
 #undef	dotog
@@ -1297,9 +1229,7 @@ setescape(argc, argv)
 	}
 	if (arg[0] != '\0')
 		escape = arg[0];
-	if (!In3270) {
-		printf("Escape character is '%s'.\r\n", control(escape));
-	}
+	printf("Escape character is '%s'.\r\n", control(escape));
 	(void) fflush(stdout);
 	return 1;
 }
@@ -1345,7 +1275,6 @@ telnetsuspend()
     return 1;
 }
 
-#if	!defined(TN3270)
     /*ARGSUSED*/
     int
 shell(argc, argv)
@@ -1394,9 +1323,6 @@ shell(argc, argv)
     }
     return 1;
 }
-#else	/* !defined(TN3270) */
-extern int shell();
-#endif	/* !defined(TN3270) */
 
     /*VARARGS*/
     static int
@@ -1412,14 +1338,8 @@ bye(argc, argv)
 	(void) NetClose(net);
 	connected = 0;
 	resettermname = 1;
-#if	defined(AUTHENTICATION) || defined(ENCRYPTION)
-	auth_encrypt_connect(connected);
-#endif	/* defined(AUTHENTICATION) */
 	/* reset options */
 	tninit();
-#if	defined(TN3270)
-	SetIn3270();		/* Get out of 3270 mode */
-#endif	/* defined(TN3270) */
     }
     if ((argc != 2) || (strcmp(argv[1], "fromquit") != 0)) {
 	longjmp(toplevel, 1);
@@ -1548,10 +1468,6 @@ struct envlist EnvList[] = {
     { "send",	"Send an environment variable", env_send,	1 },
     { "list",	"List the current environment variables",
 						env_list,	0 },
-#if defined(OLD_ENVIRON) && defined(ENV_HACK)
-    { "varval", "Reverse VAR and VALUE (auto, right, wrong, status)",
-						env_varval,    1 },
-#endif
     { "help",	0,				env_help,		0 },
     { "?",	"Print help information",	env_help,		0 },
     { 0 },
@@ -1769,9 +1685,6 @@ env_send(var)
 	struct env_lst *ep;
 
 	if (my_state_is_wont(TELOPT_NEW_ENVIRON)
-#ifdef	OLD_ENVIRON
-	    && my_state_is_wont(TELOPT_OLD_ENVIRON)
-#endif
 		) {
 		fprintf(stderr,
 		    "Cannot send '%s': Telnet ENVIRON option not enabled\r\n",
@@ -1831,265 +1744,6 @@ env_getvalue(var, exported_only)
 	return(NULL);
 }
 
-#if defined(OLD_ENVIRON) && defined(ENV_HACK)
-	void
-env_varval(what)
-	unsigned char *what;
-{
-	extern int old_env_var, old_env_value, env_auto;
-	int len = strlen((char *)what);
-
-	if (len == 0)
-		goto unknown;
-
-	if (strncasecmp((char *)what, "status", len) == 0) {
-		if (env_auto)
-			printf("%s%s", "VAR and VALUE are/will be ",
-					"determined automatically\r\n");
-		if (old_env_var == OLD_ENV_VAR)
-			printf("VAR and VALUE set to correct definitions\r\n");
-		else
-			printf("VAR and VALUE definitions are reversed\r\n");
-	} else if (strncasecmp((char *)what, "auto", len) == 0) {
-		env_auto = 1;
-		old_env_var = OLD_ENV_VALUE;
-		old_env_value = OLD_ENV_VAR;
-	} else if (strncasecmp((char *)what, "right", len) == 0) {
-		env_auto = 0;
-		old_env_var = OLD_ENV_VAR;
-		old_env_value = OLD_ENV_VALUE;
-	} else if (strncasecmp((char *)what, "wrong", len) == 0) {
-		env_auto = 0;
-		old_env_var = OLD_ENV_VALUE;
-		old_env_value = OLD_ENV_VAR;
-	} else {
-unknown:
-		printf("Unknown \"varval\" command. (\"auto\", \"right\", \"wrong\", \"status\")\r\n");
-	}
-}
-#endif
-
-#if	defined(AUTHENTICATION)
-/*
- * The AUTHENTICATE command.
- */
-
-struct authlist {
-	char	*name;
-	char	*help;
-	int	(*handler)();
-	int	narg;
-};
-
-static int
-	auth_help(void);
-
-struct authlist AuthList[] = {
-    { "status",	"Display current status of authentication information",
-						auth_status,	0 },
-    { "disable", "Disable an authentication type ('auth disable ?' for more)",
-						auth_disable,	1 },
-    { "enable", "Enable an authentication type ('auth enable ?' for more)",
-						auth_enable,	1 },
-    { "help",	0,				auth_help,		0 },
-    { "?",	"Print help information",	auth_help,		0 },
-    { 0 },
-};
-
-    static int
-auth_help()
-{
-    struct authlist *c;
-
-    for (c = AuthList; c->name; c++) {
-	if (c->help) {
-	    if (*c->help)
-		printf("%-15s %s\r\n", c->name, c->help);
-	    else
-		printf("\r\n");
-	}
-    }
-    return 0;
-}
-
-    int
-auth_cmd(argc, argv)
-    int  argc;
-    char *argv[];
-{
-    struct authlist *c;
-
-    if (argc < 2) {
-	fprintf(stderr,
-	    "Need an argument to 'auth' command.  'auth ?' for help.\r\n");
-	return 0;
-    }
-
-    c = (struct authlist *)
-		genget(argv[1], (char **) AuthList, sizeof(struct authlist));
-    if (c == 0) {
-	fprintf(stderr, "'%s': unknown argument ('auth ?' for help).\r\n",
-    				argv[1]);
-	return 0;
-    }
-    if (Ambiguous(c)) {
-	fprintf(stderr, "'%s': ambiguous argument ('auth ?' for help).\r\n",
-    				argv[1]);
-	return 0;
-    }
-    if (c->narg + 2 != argc) {
-	fprintf(stderr,
-	    "Need %s%d argument%s to 'auth %s' command.  'auth ?' for help.\r\n",
-		c->narg < argc + 2 ? "only " : "",
-		c->narg, c->narg == 1 ? "" : "s", c->name);
-	return 0;
-    }
-    return((*c->handler)(argv[2], argv[3]));
-}
-#endif
-
-#if    defined(ENCRYPTION)
-/*
- * The ENCRYPT command.
- */
-
-struct encryptlist {
-       char    *name;
-       char    *help;
-       int     (*handler)();
-       int     needconnect;
-       int     minarg;
-       int     maxarg;
-};
- 
-static int
-       EncryptHelp (void);
-
-struct encryptlist EncryptList[] = {
-    { "enable", "Enable encryption. ('encrypt enable ?' for more)",
-                                               EncryptEnable, 1, 1, 2 },
-    { "disable", "Disable encryption. ('encrypt enable ?' for more)",
-                                               EncryptDisable, 0, 1, 2 },
-    { "type", "Set encryption type. ('encrypt type ?' for more)",
-                                               EncryptType, 0, 1, 1 },
-    { "start", "Start encryption. ('encrypt start ?' for more)",
-                                               EncryptStart, 1, 0, 1 },
-    { "stop", "Stop encryption. ('encrypt stop ?' for more)",
-                                               EncryptStop, 1, 0, 1 },
-    { "input", "Start encrypting the input stream",
-                                               EncryptStartInput, 1, 0, 0 },
-    { "-input", "Stop encrypting the input stream",
-                                               EncryptStopInput, 1, 0, 0 },
-    { "output", "Start encrypting the output stream",
-                                               EncryptStartOutput, 1, 0, 0 },
-    { "-output", "Stop encrypting the output stream",
-                                               EncryptStopOutput, 1, 0, 0 },
-
-    { "status",        "Display current status of authentication information",
-                                               EncryptStatus,  0, 0, 0 },
-    { "help",  0,                              EncryptHelp,    0, 0, 0 },
-    { "?",     "Print help information",       EncryptHelp,    0, 0, 0 },
-    { 0 },
-};
-
-static int
-EncryptHelp()
-{
-    struct encryptlist *c;
-
-    for (c = EncryptList; c->name; c++) {
-       if (c->help) {
-           if (*c->help)
-               printf("%-15s %s\r\n", c->name, c->help);
-           else
-               printf("\r\n");
-       }
-    }
-    return 0;
-}
-
-static int
-encrypt_cmd(int argc, char **argv)
-{
-    struct encryptlist *c;
-
-    if (argc < 2) {
-	fprintf(stderr, "Need at least one argument for 'encrypt' command.\n");
-	fprintf(stderr, "('encrypt ?' for help)\n");
-	return 0;
-    }
-
-    c = (struct encryptlist *)
-               genget(argv[1], (char **) EncryptList, sizeof(struct encryptlist));
-    if (c == 0) {
-        fprintf(stderr, "'%s': unknown argument ('encrypt ?' for help).\r\n",
-                               argv[1]);
-        return 0;
-    }
-    if (Ambiguous(c)) {
-        fprintf(stderr, "'%s': ambiguous argument ('encrypt ?' for help).\r\n",
-                               argv[1]);
-        return 0;
-    }
-    argc -= 2;
-    if (argc < c->minarg || argc > c->maxarg) {
-       if (c->minarg == c->maxarg) {
-           fprintf(stderr, "Need %s%d argument%s ",
-               c->minarg < argc ? "only " : "", c->minarg,
-               c->minarg == 1 ? "" : "s");
-       } else {
-           fprintf(stderr, "Need %s%d-%d arguments ",
-               c->maxarg < argc ? "only " : "", c->minarg, c->maxarg);
-       }
-       fprintf(stderr, "to 'encrypt %s' command.  'encrypt ?' for help.\r\n",
-               c->name);
-       return 0;
-    }
-    if (c->needconnect && !connected) {
-       if (!(argc && (isprefix(argv[2], "help") || isprefix(argv[2], "?")))) {
-           printf("?Need to be connected first.\r\n");
-           return 0;
-       }
-    }
-    return ((*c->handler)(argc > 0 ? argv[2] : 0,
-                       argc > 1 ? argv[3] : 0,
-                       argc > 2 ? argv[4] : 0));
-}
-#endif
-
-#if	defined(unix) && defined(TN3270)
-    static void
-filestuff(fd)
-    int fd;
-{
-    int res;
-
-#ifdef	F_GETOWN
-    setconnmode(0);
-    res = fcntl(fd, F_GETOWN, 0);
-    setcommandmode();
-
-    if (res == -1) {
-	perror("fcntl");
-	return;
-    }
-    printf("\tOwner is %d.\r\n", res);
-#endif
-
-    setconnmode(0);
-    res = fcntl(fd, F_GETFL, 0);
-    setcommandmode();
-
-    if (res == -1) {
-	perror("fcntl");
-	return;
-    }
-#ifdef notdef
-    printf("\tFlags are 0x%x: %s\r\n", res, decodeflags(res));
-#endif
-}
-#endif /* defined(unix) && defined(TN3270) */
-
 /*
  * Print status about the connection.
  */
@@ -2122,44 +1776,12 @@ status(argc, argv)
 	    printf("%s character echo\r\n", (mode&MODE_ECHO) ? "Local" : "Remote");
 	    if (my_want_state_is_will(TELOPT_LFLOW))
 		printf("%s flow control\r\n", (mode&MODE_FLOW) ? "Local" : "No");
-#if    defined(ENCRYPTION)
-           encrypt_display();
-#endif
 	}
     } else {
 	printf("No connection.\r\n");
     }
-#   if !defined(TN3270)
     printf("Escape character is '%s'.\r\n", control(escape));
     (void) fflush(stdout);
-#   else /* !defined(TN3270) */
-    if ((!In3270) && ((argc < 2) || strcmp(argv[1], "notmuch"))) {
-	printf("Escape character is '%s'.\r\n", control(escape));
-    }
-#   if defined(unix)
-    if ((argc >= 2) && !strcmp(argv[1], "everything")) {
-	printf("SIGIO received %d time%s.\r\n",
-				sigiocount, (sigiocount == 1)? "":"s");
-	if (In3270) {
-	    printf("Process ID %ld, process group %ld.\r\n",
-					    (long)getpid(), (long)getpgrp());
-	    printf("Terminal input:\r\n");
-	    filestuff(tin);
-	    printf("Terminal output:\r\n");
-	    filestuff(tout);
-	    printf("Network socket:\r\n");
-	    filestuff(net);
-	}
-    }
-    if (In3270 && transcom) {
-       printf("Transparent mode command is '%s'.\r\n", transcom);
-    }
-#   endif /* defined(unix) */
-    (void) fflush(stdout);
-    if (In3270) {
-	return 0;
-    }
-#   endif /* defined(TN3270) */
     fflush(stdout);
     return 1;
 }
@@ -2268,10 +1890,8 @@ tn(argc, argv)
     struct sockaddr_in sin;
     unsigned long temp;
     extern char *inet_ntoa();
-#if	defined(IP_OPTIONS) && defined(IPPROTO_IP)
     char *srp = 0;
     int srlen;
-#endif
     char *cmd, *hostp = 0, *portp = 0, *user = 0, *aliasp = 0;
     int retry;
     const int niflags = NI_NUMERICHOST;
@@ -2329,13 +1949,12 @@ tn(argc, argv)
 	    continue;
 	}
     usage:
-	printf("usage: %s [-l user] [-a] host-name [port]\r\n", cmd);
+	printf("usage: %s [-a] [-b hostalias] [-l user] host-name [port]\r\n", cmd);
 	return 0;
     }
     if (hostp == 0)
 	goto usage;
 
-#if	defined(IP_OPTIONS) && defined(IPPROTO_IP)
     if (hostp[0] == '@' || hostp[0] == '!') {
 	if ((hostname = strrchr(hostp, ':')) == NULL)
 	    hostname = strrchr(hostp, '@');
@@ -2352,7 +1971,6 @@ tn(argc, argv)
 	    abort();
 	}
     } else
-#endif
     {
 	hostname = hostp;
 	memset(&hints, 0, sizeof(hints));
@@ -2423,30 +2041,24 @@ tn(argc, argv)
             }
 	    freeaddrinfo(ares);
 	}
-#if	defined(IP_OPTIONS) && defined(IPPROTO_IP)
 	if (srp && res->ai_family == AF_INET
-	 && setsockopt(net, IPPROTO_IP, IP_OPTIONS, (char *)srp, srlen) < 0)
+	 && setsockopt(net, IPPROTO_IP, IP_OPTIONS, srp, srlen) < 0)
 		perror("setsockopt (IP_OPTIONS)");
-#endif
-#if	defined(IPPROTO_IP) && defined(IP_TOS)
 	if (res->ai_family == AF_INET) {
-# if	defined(HAS_GETTOS)
-	    struct tosent *tp;
-	    if (tos < 0 && (tp = gettosbyname("telnet", "tcp")))
-		tos = tp->t_tos;
-# endif
 	    if (tos < 0)
 		tos = IPTOS_LOWDELAY;	/* Low Delay bit */
 	    if (tos
-		&& (setsockopt(net, IPPROTO_IP, IP_TOS,
-		    (void *)&tos, sizeof(int)) < 0)
+		&& (setsockopt(net, IPPROTO_IP, IP_TOS, &tos, sizeof(int)) < 0)
 		&& (errno != ENOPROTOOPT))
 		    perror("telnet: setsockopt (IP_TOS) (ignored)");
 	}
-#endif	/* defined(IPPROTO_IP) && defined(IP_TOS) */
 
-	if (debug && SetSockOpt(net, SOL_SOCKET, SO_DEBUG, 1) < 0) {
-		perror("setsockopt (SO_DEBUG)");
+	if (debug) {
+		int one = 1;
+
+		if (setsockopt(net, SOL_SOCKET, SO_DEBUG, &one,
+		    sizeof(one)) < 0)
+			perror("setsockopt (SO_DEBUG)");
 	}
 
 	if (connect(net, res->ai_addr, res->ai_addrlen) < 0) {
@@ -2466,9 +2078,6 @@ tn(argc, argv)
 	}
 
 	connected++;
-#if	defined(AUTHENTICATION) || defined(ENCRYPTION)
-	auth_encrypt_connect(connected);
-#endif	/* defined(AUTHENTICATION) */
 	break;
     }
     freeaddrinfo(res0);
@@ -2516,15 +2125,6 @@ static char
 	togglestring[] ="toggle operating parameters ('toggle ?' for more)",
 	slchelp[] =	"change state of special charaters ('slc ?' for more)",
 	displayhelp[] =	"display operating parameters",
-#if	defined(TN3270) && defined(unix)
-	transcomhelp[] = "specify Unix command for transparent mode pipe",
-#endif	/* defined(TN3270) && defined(unix) */
-#if	defined(AUTHENTICATION)
-	authhelp[] =	"turn on (off) authentication ('auth ?' for more)",
-#endif
-#if     defined(ENCRYPTION)
-        encrypthelp[] = "turn on (off) encryption ('encrypt ?' for more)",
-#endif
 	zhelp[] =	"suspend telnet",
 #ifdef SKEY
 	skeyhelp[] =	"compute response to s/key challenge",
@@ -2548,22 +2148,9 @@ static Command cmdtab[] = {
 	{ "status",	statushelp,	status,		0 },
 	{ "toggle",	togglestring,	toggle,		0 },
 	{ "slc",	slchelp,	slccmd,		0 },
-#if	defined(TN3270) && defined(unix)
-	{ "transcom",	transcomhelp,	settranscom,	0 },
-#endif	/* defined(TN3270) && defined(unix) */
-#if	defined(AUTHENTICATION)
-	{ "auth",	authhelp,	auth_cmd,	0 },
-#endif
-#if    defined(ENCRYPTION)
-	{ "encrypt",    encrypthelp,    encrypt_cmd,    0 },
-#endif
 
 	{ "z",		zhelp,		telnetsuspend,	0 },
-#if	defined(TN3270)
-	{ "!",		shellhelp,	shell,		1 },
-#else
 	{ "!",		shellhelp,	shell,		0 },
-#endif
 	{ "environ",	envhelp,	env_cmd,	0 },
 	{ "?",		helphelp,	help,		0 },
 #if	defined(SKEY)
@@ -2624,11 +2211,9 @@ command(top, tbuf, cnt)
     setcommandmode();
     if (!top) {
 	putchar('\n');
-#if	defined(unix)
     } else {
 	(void) signal(SIGINT, SIG_DFL);
 	(void) signal(SIGQUIT, SIG_DFL);
-#endif	/* defined(unix) */
     }
     for (;;) {
 	if (rlogin == _POSIX_VDISABLE)
@@ -2684,13 +2269,7 @@ command(top, tbuf, cnt)
 	    longjmp(toplevel, 1);
 	    /*NOTREACHED*/
 	}
-#if	defined(TN3270)
-	if (shell_active == 0) {
-	    setconnmode(0);
-	}
-#else	/* defined(TN3270) */
 	setconnmode(0);
-#endif	/* defined(TN3270) */
     }
 }
 
@@ -2726,8 +2305,6 @@ help(argc, argv)
 	}
 	return 0;
 }
-
-#if	defined(IP_OPTIONS) && defined(IPPROTO_IP)
 
 /*
  * Source route is handed in as
@@ -2775,9 +2352,6 @@ sourceroute(arg, cpp, lenp)
 	int	*lenp;
 {
 	static char lsr[44];
-#ifdef	sysV88
-	static IOPTN ipopt;
-#endif
 	char *cp, *cp2, *lsrp, *lsrep;
 	int tmp;
 	struct in_addr sin_addr;
@@ -2811,27 +2385,17 @@ sourceroute(arg, cpp, lenp)
 	 * route or a strict source route, and fill in
 	 * the begining of the option.
 	 */
-#ifndef	sysV88
 	if (*cp == '!') {
 		cp++;
 		*lsrp++ = IPOPT_SSRR;
 	} else
 		*lsrp++ = IPOPT_LSRR;
-#else
-	if (*cp == '!') {
-		cp++;
-		ipopt.io_type = IPOPT_SSRR;
-	} else
-		ipopt.io_type = IPOPT_LSRR;
-#endif
 
 	if (*cp != '@')
 		return((unsigned long)-1);
 
-#ifndef	sysV88
 	lsrp++;		/* skip over length, we'll fill it in later */
 	*lsrp++ = 4;
-#endif
 
 	cp++;
 
@@ -2859,14 +2423,9 @@ sourceroute(arg, cpp, lenp)
 		if ((tmp = inet_addr(cp)) != -1) {
 			sin_addr.s_addr = tmp;
 		} else if ((host = gethostbyname(cp))) {
-#if	defined(h_addr)
 			memmove((caddr_t)&sin_addr,
 				host->h_addr_list[0], 
 				sizeof(sin_addr));
-#else
-			memmove((caddr_t)&sin_addr, host->h_addr, 
-				sizeof(sin_addr));
-#endif
 		} else {
 			*cpp = cp;
 			return(0);
@@ -2883,7 +2442,6 @@ sourceroute(arg, cpp, lenp)
 		if (lsrp + 4 > lsrep)
 			return((unsigned long)-1);
 	}
-#ifndef	sysV88
 	if ((*(*cpp+IPOPT_OLEN) = lsrp - *cpp) <= 7) {
 		*cpp = 0;
 		*lenp = 0;
@@ -2891,16 +2449,5 @@ sourceroute(arg, cpp, lenp)
 	}
 	*lsrp++ = IPOPT_NOP; /* 32 bit word align it */
 	*lenp = lsrp - *cpp;
-#else
-	ipopt.io_len = lsrp - *cpp;
-	if (ipopt.io_len <= 5) {		/* Is 3 better ? */
-		*cpp = 0;
-		*lenp = 0;
-		return((unsigned long)-1);
-	}
-	*lenp = sizeof(ipopt);
-	*cpp = (char *) &ipopt;
-#endif
 	return(sin_addr.s_addr);
 }
-#endif

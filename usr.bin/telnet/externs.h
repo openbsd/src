@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.17 2013/10/26 21:33:29 sthen Exp $	*/
+/*	$OpenBSD: externs.h,v 1.18 2014/07/19 23:50:38 guenther Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -32,21 +32,6 @@
  *	@(#)externs.h	8.3 (Berkeley) 5/30/95
  */
 
-#ifndef	BSD
-# define BSD 43
-#endif
-
-#ifndef	_POSIX_VDISABLE
-# ifdef sun
-#  include <sys/param.h>	/* pick up VDISABLE definition, mayby */
-# endif
-# ifdef VDISABLE
-#  define _POSIX_VDISABLE VDISABLE
-# else
-#  define _POSIX_VDISABLE ((cc_t)'\377')
-# endif
-#endif
-
 #define	SUBBUFSIZE	256
 
 extern int
@@ -59,7 +44,6 @@ extern int
     connected,		/* Are we connected to the other side? */
     globalmode,		/* Mode tty should be in */
     telnetport,		/* Are we connected to the telnet port? */
-    In3270,            /* Are we in 3270 mode? */
     localflow,		/* Flow control handled locally */
     restartany,		/* If flow control, restart output on any character */
     localchars,		/* we recognize interrupt/quit */
@@ -78,10 +62,6 @@ extern int
     crmod,
     netdata,		/* Print out network data flow */
     prettydump,		/* Print "netdata" output in user readable format */
-#if    defined(TN3270)
-    cursesdata,		/* Print out curses data flow */
-    apitrace,		/* Trace API transactions */
-#endif /* defined(TN3270) */
     termdata,		/* Print out terminal data flow */
     debug;		/* Debug level */
 
@@ -103,10 +83,6 @@ extern char
     wont[],
     options[],		/* All the little options */
     *hostname;		/* Who are we connected to? */
-#if	defined(ENCRYPTION)
-extern void (*encrypt_output) (unsigned char *, int);
-extern int (*decrypt_input) (int);
-#endif
 
 extern int	rtableid;	/* routing table to use */
 
@@ -184,17 +160,6 @@ extern jmp_buf
     peerdied,
     toplevel;		/* For error conditions. */
 
-/* authenc.c */
-
-#if	defined(AUTHENTICATION) || defined(ENCRYPTION)
-int net_write(unsigned char *str, int len);
-void net_encrypt(void);
-int telnet_spin(void);
-char *telnet_getenv(const char *val);
-char *telnet_gets(char *prompt, char *result, int length, int echo);
-int Scheduler(int block);
-#endif
-
 /* commands.c */
 
 struct env_lst *env_define (unsigned char *, unsigned char *);
@@ -210,25 +175,6 @@ unsigned char * env_getvalue(unsigned char *var, int exported_only);
 
 void set_escape_char(char *s);
 unsigned long sourceroute(char *arg, char **cpp, int *lenp);
-
-#if	defined(AUTHENTICATION)
-int auth_enable (char *);
-int auth_disable (char *);
-int auth_status (void);
-#endif
-
-#if defined(ENCRYPTION)
-int 	EncryptEnable (char *, char *);
-int 	EncryptDisable (char *, char *);
-int 	EncryptType (char *, char *);
-int 	EncryptStart (char *);
-int 	EncryptStartInput (void);
-int 	EncryptStartOutput (void);
-int 	EncryptStop (char *);
-int 	EncryptStopInput (void);
-int 	EncryptStopOutput (void);
-int 	EncryptStatus (void);
-#endif
 
 #ifdef SIGINFO
 void ayt_status(void);
@@ -290,7 +236,6 @@ void xmitEC(void);
 
 void     Dump (char, unsigned char *, int);
 void     printoption (char *, int, int);
-void     printsub (int, unsigned char *, int);
 void     sendnaws (void);
 void     setconnmode (int);
 void     setcommandmode (void);
@@ -347,6 +292,12 @@ cc_t *tcval (int);
 
 int quit (void);
 
+/* genget.c */
+
+char	**genget(char *name, char **table, int stlen);
+int	isprefix(char *s1, char *s2);
+int	Ambiguous(void *s);
+
 /* terminal.c */
 
 void init_terminal(void);
@@ -355,7 +306,6 @@ int getconnmode(void);
 
 /* utilities.c */
 
-int SetSockOpt(int fd, int level, int option, int yesno);
 void SetNetTrace(char *file);
 void Dump(char direction, unsigned char *buffer, int length);
 void printoption(char *direction, int cmd, int option);
@@ -435,27 +385,3 @@ extern Ring
     netiring,
     ttyoring,
     ttyiring;
-
-/* Tn3270 section */
-#if    defined(TN3270)
-
-extern int
-    HaveInput,         /* Whether an asynchronous I/O indication came in */
-    noasynchtty,       /* Don't do signals on I/O (SIGURG, SIGIO) */
-    noasynchnet,       /* Don't do signals on I/O (SIGURG, SIGIO) */
-    sigiocount,                /* Count of SIGIO receptions */
-    shell_active;      /* Subshell is active */
-
-extern char
-    *Ibackp,           /* Oldest byte of 3270 data */
-    Ibuf[],            /* 3270 buffer */
-    *Ifrontp,          /* Where next 3270 byte goes */
-    tline[200],
-    *transcom;         /* Transparent command */
-
-extern int
-    settranscom(int, char**);
-
-extern void
-    inputAvailable(int);
-#endif /* defined(TN3270) */

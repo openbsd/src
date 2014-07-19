@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.20 2009/04/28 06:46:03 chl Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.21 2014/07/19 23:50:38 guenther Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -60,17 +60,11 @@ int
 	skiprc = 0,
 	connected,
 	showoptions,
-	In3270,		/* Are we in 3270 mode? */
 	ISend,		/* trying to send network data in */
 	debug = 0,
 	crmod,
 	netdata,	/* Print out network data flow */
 	crlf,		/* Should '\r' be mapped to <CR><LF> (or <CR><NUL>)? */
-#if	defined(TN3270)
-	noasynchtty = 0,/* User specified "-noasynch" on command line */
-	noasynchnet = 0,/* User specified "-noasynch" on command line */
-	askedSGA = 0,	/* We have talked about suppress go ahead */
-#endif	/* defined(TN3270) */
 	telnetport,
 	wantencryption = 0,
 	SYNCHing,	/* we are in TELNET SYNCH mode */
@@ -110,11 +104,7 @@ cc_t echoc;
 #define	TS_SE		8		/* looking for sub-option end */
 
 static int	telrcv_state;
-#ifdef	OLD_ENVIRON
-unsigned char telopt_environ = TELOPT_NEW_ENVIRON;
-#else
 # define telopt_environ TELOPT_NEW_ENVIRON
-#endif
 
 jmp_buf	toplevel = { 0 };
 jmp_buf	peerdied;
@@ -146,10 +136,7 @@ init_telnet()
     SB_CLEAR();
     memset((char *)options, 0, sizeof options);
 
-    connected = In3270 = ISend = localflow = donebinarytoggle = 0;
-#if	defined(AUTHENTICATION) || defined(ENCRYPTION)
-    auth_encrypt_connect(connected);
-#endif	/* defined(AUTHENTICATION) || defined(ENCRYPTION) */
+    connected = ISend = localflow = donebinarytoggle = 0;
     restartany = -1;
 
     SYNCHing = 0;
@@ -257,41 +244,11 @@ willoption(option)
 	    switch (option) {
 
 	    case TELOPT_ECHO:
-#	    if defined(TN3270)
-		/*
-		 * The following is a pain in the rear-end.
-		 * Various IBM servers (some versions of Wiscnet,
-		 * possibly Fibronics/Spartacus, and who knows who
-		 * else) will NOT allow us to send "DO SGA" too early
-		 * in the setup proceedings.  On the other hand,
-		 * 4.2 servers (telnetd) won't set SGA correctly.
-		 * So, we are stuck.  Empirically (but, based on
-		 * a VERY small sample), the IBM servers don't send
-		 * out anything about ECHO, so we postpone our sending
-		 * "DO SGA" until we see "WILL ECHO" (which 4.2 servers
-		 * DO send).
-		  */
-		{
-		    if (askedSGA == 0) {
-			askedSGA = 1;
-			if (my_want_state_is_dont(TELOPT_SGA))
-			    send_do(TELOPT_SGA, 1);
-		    }
-		}
-		    /* Fall through */
-	    case TELOPT_EOR:
-#endif	    /* defined(TN3270) */
 	    case TELOPT_BINARY:
 	    case TELOPT_SGA:
 		settimer(modenegotiated);
 		/* FALL THROUGH */
 	    case TELOPT_STATUS:
-#if	defined(AUTHENTICATION)
-	    case TELOPT_AUTHENTICATION:
-#endif
-#if    defined(ENCRYPTION)
-	    case TELOPT_ENCRYPT:
-#endif
 		new_state_ok = 1;
 		break;
 
@@ -321,10 +278,6 @@ willoption(option)
 	    }
 	}
 	set_my_state_do(option);
-#if    defined(ENCRYPTION)
-	if (option == TELOPT_ENCRYPT)
-		encrypt_send_support();
-#endif
 
 }
 
@@ -359,11 +312,6 @@ wontoption(option)
 		set_my_state_dont(option);
 		return;		/* Never reply to TM will's/wont's */
 
-#ifdef ENCRYPTION
-	    case TELOPT_ENCRYPT:
-		encrypt_not();
-		break;
-#endif
 	    default:
 		break;
 	    }
@@ -409,41 +357,18 @@ dooption(option)
 		set_my_state_wont(TELOPT_TM);
 		return;
 
-#	if defined(TN3270)
-	    case TELOPT_EOR:		/* end of record */
-#	endif	/* defined(TN3270) */
 	    case TELOPT_BINARY:		/* binary mode */
 	    case TELOPT_NAWS:		/* window size */
 	    case TELOPT_TSPEED:		/* terminal speed */
 	    case TELOPT_LFLOW:		/* local flow control */
 	    case TELOPT_TTYPE:		/* terminal type option */
 	    case TELOPT_SGA:		/* no big deal */
-#if    defined(ENCRYPTION)
-	    case TELOPT_ENCRYPT:        /* encryption variable option */
-#endif
 		new_state_ok = 1;
 		break;
 
 	    case TELOPT_NEW_ENVIRON:	/* New environment variable option */
-#ifdef	OLD_ENVIRON
-		if (my_state_is_will(TELOPT_OLD_ENVIRON))
-			send_wont(TELOPT_OLD_ENVIRON, 1); /* turn off the old */
-		goto env_common;
-	    case TELOPT_OLD_ENVIRON:	/* Old environment variable option */
-		if (my_state_is_will(TELOPT_NEW_ENVIRON))
-			break;		/* Don't enable if new one is in use! */
-	    env_common:
-		telopt_environ = option;
-#endif
 		new_state_ok = 1;
 		break;
-
-#if	defined(AUTHENTICATION)
-	    case TELOPT_AUTHENTICATION:
-		if (autologin)
-			new_state_ok = 1;
-		break;
-#endif
 
 	    case TELOPT_XDISPLOC:	/* X Display location */
 		if (env_getvalue((unsigned char *)"DISPLAY", 0))
@@ -511,16 +436,6 @@ dontoption(option)
 	    case TELOPT_LINEMODE:
 		linemode = 0;	/* put us back to the default state */
 		break;
-#ifdef	OLD_ENVIRON
-	    case TELOPT_NEW_ENVIRON:
-		/*
-		 * The new environ option wasn't recognized, try
-		 * the old one.
-		 */
-		send_will(TELOPT_OLD_ENVIRON, 1);
-		telopt_environ = TELOPT_OLD_ENVIRON;
-		break;
-#endif
 	    }
 	    /* we always accept a DONT */
 	    set_my_want_state_wont(option);
@@ -730,11 +645,6 @@ suboption()
 	    unsigned char temp[50];
 	    int len;
 
-#if	defined(TN3270)
-	    if (tn3270_ttype()) {
-		return;
-	    }
-#endif	/* defined(TN3270) */
 	    name = gettermname();
 	    len = strlen(name) + 4 + 2;
 	    if (len < NETROOM()) {
@@ -827,9 +737,6 @@ suboption()
 	}
 	break;
 
-#ifdef	OLD_ENVIRON
-    case TELOPT_OLD_ENVIRON:
-#endif
     case TELOPT_NEW_ENVIRON:
 	if (SB_EOF())
 	    return;
@@ -880,98 +787,6 @@ suboption()
 	}
 	break;
 
-#if	defined(AUTHENTICATION)
-	case TELOPT_AUTHENTICATION: {
-		if (!autologin)
-			break;
-		if (SB_EOF())
-			return;
-		switch(SB_GET()) {
-		case TELQUAL_IS:
-			if (my_want_state_is_dont(TELOPT_AUTHENTICATION))
-				return;
-			auth_is(subpointer, SB_LEN());
-			break;
-		case TELQUAL_SEND:
-			if (my_want_state_is_wont(TELOPT_AUTHENTICATION))
-				return;
-			auth_send(subpointer, SB_LEN());
-			break;
-		case TELQUAL_REPLY:
-			if (my_want_state_is_wont(TELOPT_AUTHENTICATION))
-				return;
-			auth_reply(subpointer, SB_LEN());
-			break;
-		case TELQUAL_NAME:
-			if (my_want_state_is_dont(TELOPT_AUTHENTICATION))
-				return;
-			auth_name(subpointer, SB_LEN());
-			break;
-		}
-	}
-	break;
-#endif
-#if    defined(ENCRYPTION)
-	case TELOPT_ENCRYPT:
-		if (SB_EOF())
-			return;
-		switch(SB_GET()) {
-		case ENCRYPT_START:
-			if (my_want_state_is_dont(TELOPT_ENCRYPT))
-				return;
-			encrypt_start(subpointer, SB_LEN());
-			break;
-               case ENCRYPT_END:
-			if (my_want_state_is_dont(TELOPT_ENCRYPT))
-				return;
-			encrypt_end();
-			break;
-               case ENCRYPT_SUPPORT:
-                        if (my_want_state_is_wont(TELOPT_ENCRYPT))
-                                return;
-			encrypt_support(subpointer, SB_LEN());
-			break;
-               case ENCRYPT_REQSTART:
-                        if (my_want_state_is_wont(TELOPT_ENCRYPT))
-			        return;
-			encrypt_request_start(subpointer, SB_LEN());
-			break;
-               case ENCRYPT_REQEND:
-                        if (my_want_state_is_wont(TELOPT_ENCRYPT))
-                                return;
-			/*
-			 * We can always send an REQEND so that we cannot
-			 * get stuck encrypting.  We should only get this
-			 * if we have been able to get in the correct mode
-			 * anyhow.
-			 */
-			encrypt_request_end();
-			break;
-               case ENCRYPT_IS:
-                        if (my_want_state_is_dont(TELOPT_ENCRYPT))
-                                return;
-			encrypt_is(subpointer, SB_LEN());
-			break;
-               case ENCRYPT_REPLY:
-		        if (my_want_state_is_wont(TELOPT_ENCRYPT))
-                                return;
-			encrypt_reply(subpointer, SB_LEN());
-			break;
-               case ENCRYPT_ENC_KEYID:
-                        if (my_want_state_is_dont(TELOPT_ENCRYPT))
-                                return;
-                        encrypt_enc_keyid(subpointer, SB_LEN());
-                        break;
-               case ENCRYPT_DEC_KEYID:
-                        if (my_want_state_is_wont(TELOPT_ENCRYPT))
-                                return;
-                        encrypt_dec_keyid(subpointer, SB_LEN());
-                        break;
-               default:
-                        break;
-               }
-               break;
-#endif
     default:
 	break;
     }
@@ -1135,27 +950,17 @@ slc_init()
 	/* No EOR */
 	initfunc(SLC_ABORT, SLC_FLUSHIN|SLC_FLUSHOUT);
 	initfunc(SLC_EOF, 0);
-#ifndef	SYSV_TERMIO
 	initfunc(SLC_SUSP, SLC_FLUSHIN);
-#endif
 	initfunc(SLC_EC, 0);
 	initfunc(SLC_EL, 0);
-#ifndef	SYSV_TERMIO
 	initfunc(SLC_EW, 0);
 	initfunc(SLC_RP, 0);
 	initfunc(SLC_LNEXT, 0);
-#endif
 	initfunc(SLC_XON, 0);
 	initfunc(SLC_XOFF, 0);
-#ifdef	SYSV_TERMIO
-	spc_data[SLC_XON].mylevel = SLC_CANTCHANGE;
-	spc_data[SLC_XOFF].mylevel = SLC_CANTCHANGE;
-#endif
 	initfunc(SLC_FORW1, 0);
-#ifdef	USE_TERMIO
 	initfunc(SLC_FORW2, 0);
 	/* No FORW2 */
-#endif
 
 	initfunc(SLC_IP, SLC_FLUSHIN|SLC_FLUSHOUT);
 #undef	initfunc
@@ -1410,26 +1215,6 @@ slc_update()
 	return(need_update);
 }
 
-#ifdef	OLD_ENVIRON
-# ifdef	ENV_HACK
-/*
- * Earlier version of telnet/telnetd from the BSD code had
- * the definitions of VALUE and VAR reversed.  To ensure
- * maximum interoperability, we assume that the server is
- * an older BSD server, until proven otherwise.  The newer
- * BSD servers should be able to handle either definition,
- * so it is better to use the wrong values if we don't
- * know what type of server it is.
- */
-int env_auto = 1;
-int old_env_var = OLD_ENV_VAR;
-int old_env_value = OLD_ENV_VALUE;
-# else
-#  define old_env_var OLD_ENV_VAR
-#  define old_env_value OLD_ENV_VALUE
-# endif
-#endif
-
 	void
 env_opt(buf, len)
 	unsigned char *buf;
@@ -1445,27 +1230,7 @@ env_opt(buf, len)
 			env_opt_add(NULL);
 		} else for (i = 1; i < len; i++) {
 			switch (buf[i]&0xff) {
-#ifdef	OLD_ENVIRON
-			case OLD_ENV_VAR:
-# ifdef	ENV_HACK
-				if (telopt_environ == TELOPT_OLD_ENVIRON
-				    && env_auto) {
-					/* Server has the same definitions */
-					old_env_var = OLD_ENV_VAR;
-					old_env_value = OLD_ENV_VALUE;
-				}
-				/* FALL THROUGH */
-# endif
-			case OLD_ENV_VALUE:
-				/*
-				 * Although OLD_ENV_VALUE is not legal, we will
-				 * still recognize it, just in case it is an
-				 * old server that has VAR & VALUE mixed up...
-				 */
-				/* FALL THROUGH */
-#else
 			case NEW_ENV_VAR:
-#endif
 			case ENV_USERVAR:
 				if (ep) {
 					*epc = 0;
@@ -1585,11 +1350,6 @@ env_opt_add(ep)
 		opt_reply = p;
 	}
 	if (opt_welldefined((char *)ep))
-#ifdef	OLD_ENVIRON
-		if (telopt_environ == TELOPT_OLD_ENVIRON)
-			opt_add(old_env_var);
-		else
-#endif
 			opt_add(NEW_ENV_VAR);
 	else
 		opt_add(ENV_USERVAR);
@@ -1610,11 +1370,6 @@ env_opt_add(ep)
 			opt_add(c);
 		}
 		if ((ep = vp)) {
-#ifdef	OLD_ENVIRON
-			if (telopt_environ == TELOPT_OLD_ENVIRON)
-				opt_add(old_env_value);
-			else
-#endif
 				opt_add(NEW_ENV_VALUE);
 			vp = NULL;
 		} else
@@ -1686,10 +1441,6 @@ telrcv()
 	}
 
 	c = *sbp++ & 0xff, scc--; count++;
-#if    defined(ENCRYPTION)
-	if (decrypt_input)
-                c = (*decrypt_input)(c);
-#endif
 
 	switch (telrcv_state) {
 
@@ -1709,19 +1460,6 @@ telrcv()
 		telrcv_state = TS_IAC;
 		break;
 	    }
-#	    if defined(TN3270)
-	    if (In3270) {
-		*Ifrontp++ = c;
-		while (scc > 0) {
-		    c = *sbp++ & 0377, scc--; count++;
-		    if (c == IAC) {
-			telrcv_state = TS_IAC;
-			break;
-		    }
-		    *Ifrontp++ = c;
-		}
-	    } else
-#	    endif /* defined(TN3270) */
 		    /*
 		     * The 'crmod' hack (see following) is needed
 		     * since we can't set CRMOD on output only.
@@ -1732,10 +1470,6 @@ telrcv()
 	    if ((c == '\r') && my_want_state_is_dont(TELOPT_BINARY)) {
 		if (scc > 0) {
 		    c = *sbp&0xff;
-#if    defined(ENCRYPTION)
-		    if (decrypt_input)
-                        c = (*decrypt_input)(c);
-#endif
 		    if (c == 0) {
 			sbp++, scc--; count++;
 			/* a "true" CR */
@@ -1745,10 +1479,6 @@ telrcv()
 			sbp++, scc--; count++;
 			TTYADD('\n');
 		    } else {
-#if    defined(ENCRYPTION)
-			if (decrypt_input)
-			    (*decrypt_input)(-1);
-#endif
 			TTYADD('\r');
 			if (crmod) {
 				TTYADD('\n');
@@ -1796,7 +1526,6 @@ process_iac:
 		SYNCHing = 1;
 		(void) ttyflush(1);
 		SYNCHing = stilloob();
-		settimer(gotDM);
 		break;
 
 	    case SB:
@@ -1804,31 +1533,8 @@ process_iac:
 		telrcv_state = TS_SB;
 		continue;
 
-#	    if defined(TN3270)
-	    case EOR:
-		if (In3270) {
-		    if (Ibackp == Ifrontp) {
-			Ibackp = Ifrontp = Ibuf;
-			ISend = 0;	/* should have been! */
-		    } else {
-			Ibackp += DataFromNetwork(Ibackp, Ifrontp-Ibackp, 1);
-			ISend = 1;
-		    }
-		}
-		printoption("RCVD", IAC, EOR);
-		break;
-#	    endif /* defined(TN3270) */
-
 	    case IAC:
-#	    if !defined(TN3270)
 		TTYADD(IAC);
-#	    else /* !defined(TN3270) */
-		if (In3270) {
-		    *Ifrontp++ = IAC;
-		} else {
-		    TTYADD(IAC);
-		}
-#	    endif /* !defined(TN3270) */
 		break;
 
 	    case NOP:
@@ -1843,21 +1549,18 @@ process_iac:
 	case TS_WILL:
 	    printoption("RCVD", WILL, c);
 	    willoption(c);
-	    SetIn3270();
 	    telrcv_state = TS_DATA;
 	    continue;
 
 	case TS_WONT:
 	    printoption("RCVD", WONT, c);
 	    wontoption(c);
-	    SetIn3270();
 	    telrcv_state = TS_DATA;
 	    continue;
 
 	case TS_DO:
 	    printoption("RCVD", DO, c);
 	    dooption(c);
-	    SetIn3270();
 	    if (c == TELOPT_NAWS) {
 		sendnaws();
 	    } else if (c == TELOPT_LFLOW) {
@@ -1873,7 +1576,6 @@ process_iac:
 	    dontoption(c);
 	    flushline = 1;
 	    setconnmode(0);	/* set new tty mode (maybe) */
-	    SetIn3270();
 	    telrcv_state = TS_DATA;
 	    continue;
 
@@ -1907,7 +1609,6 @@ process_iac:
 
 		    printoption("In SUBOPTION processing, RCVD", IAC, c);
 		    suboption();	/* handle sub-option */
-		    SetIn3270();
 		    telrcv_state = TS_IAC;
 		    goto process_iac;
 		}
@@ -1919,7 +1620,6 @@ process_iac:
 		subpointer -= 2;
 		SB_TERM();
 		suboption();	/* handle sub-option */
-		SetIn3270();
 		telrcv_state = TS_DATA;
 	    }
 	}
@@ -2118,17 +1818,9 @@ Scheduler(block)
 			my_want_state_is_will(TELOPT_BINARY));
     ttyout = ring_full_count(&ttyoring);
 
-#if	defined(TN3270)
-    ttyin = ring_empty_count(&ttyiring) && (clienteof == 0) && (shell_active == 0);
-#else	/* defined(TN3270) */
     ttyin = ring_empty_count(&ttyiring) && (clienteof == 0);
-#endif	/* defined(TN3270) */
 
-#if	defined(TN3270)
-    netin = ring_empty_count(&netiring);
-#   else /* !defined(TN3270) */
     netin = !ISend && ring_empty_count(&netiring);
-#   endif /* !defined(TN3270) */
 
     netex = !SYNCHing;
 
@@ -2138,13 +1830,6 @@ Scheduler(block)
 	ttyin = ttyout = 0;
     }
 
-#   if defined(TN3270) && defined(unix)
-    if (HaveInput) {
-	HaveInput = 0;
-	(void) signal(SIGIO, inputAvailable);
-    }
-#endif	/* defined(TN3270) && defined(unix) */
-
     /* Call to system code to process rings */
 
     returnValue = process_rings(netin, netout, netex, ttyin, ttyout, !block);
@@ -2152,30 +1837,11 @@ Scheduler(block)
     /* Now, look at the input rings, looking for work to do. */
 
     if (ring_full_count(&ttyiring)) {
-#   if defined(TN3270)
-	if (In3270) {
-	    int c;
-
-	    c = DataFromTerminal(ttyiring.consume,
-					ring_full_consecutive(&ttyiring));
-	    if (c) {
-		returnValue = 1;
-		ring_consumed(&ttyiring, c);
-	    }
-	} else {
-#   endif /* defined(TN3270) */
-	    returnValue |= telsnd();
-#   if defined(TN3270)
-	}
-#   endif /* defined(TN3270) */
+        returnValue |= telsnd();
     }
 
     if (ring_full_count(&netiring)) {
-#	if !defined(TN3270)
 	returnValue |= telrcv();
-#	else /* !defined(TN3270) */
-	returnValue = Push3270();
-#	endif /* !defined(TN3270) */
     }
     return returnValue;
 }
@@ -2189,28 +1855,7 @@ telnet(user)
 {
     sys_telnet_init();
 
-#if	defined(AUTHENTICATION) || defined(ENCRYPTION)
-    {
-	static char local_host[256] = { 0 };
-
-	if (!local_host[0]) {
-		gethostname(local_host, sizeof(local_host));
-		local_host[sizeof(local_host)-1] = 0;
-	}
-	auth_encrypt_init(local_host, hostname, "TELNET", 0);
-	auth_encrypt_user(user);
-    }
-#endif	/* defined(AUTHENTICATION) || defined(ENCRYPTION) */
-#   if !defined(TN3270)
     if (telnetport) {
-#if	defined(AUTHENTICATION)
-	if (autologin)
-		send_will(TELOPT_AUTHENTICATION, 1);
-#endif
-#if    defined(ENCRYPTION)
-	send_do(TELOPT_ENCRYPT, 1);
-	send_will(TELOPT_ENCRYPT, 1);
-#endif
 	send_do(TELOPT_SGA, 1);
 	send_will(TELOPT_TTYPE, 1);
 	send_will(TELOPT_NAWS, 1);
@@ -2224,72 +1869,7 @@ telnet(user)
 	if (binary)
 	    tel_enter_binary(binary);
     }
-#   endif /* !defined(TN3270) */
 
-#ifdef ENCRYPTION
-    /*
-     * Note: we assume a tie to the authentication option here.  This
-     * is necessary so that authentication fails, we don't spin
-     * forever. 
-     */
-    if (wantencryption) {
-	extern int auth_has_failed;
-	time_t timeout = time(0) + 60;
-	int printed_encrypt = 0;
-	
-	send_do(TELOPT_ENCRYPT, 1);
-	send_will(TELOPT_ENCRYPT, 1);
-	while (1) {
-	    if (my_want_state_is_wont(TELOPT_AUTHENTICATION)) {
-		if (wantencryption == -1) {
-		    break;
-		} else {
-		    printf("\nServer refused to negotiate authentication,");
-		    printf(" which is required for encryption.\n");
-		    Exit(1);
-		}
-	    }
-	    if (auth_has_failed) {
-		printf("\nAuthentication negotiation has failed,");
-		printf(" which is required for encryption.\n");
-		Exit(1);
-	    }
-	    if (my_want_state_is_dont(TELOPT_ENCRYPT) ||
-		my_want_state_is_wont(TELOPT_ENCRYPT)) {
-		printf("\nServer refused to negotiate encryption.\n");
-		Exit(1);
-	    }
-	    if (encrypt_is_encrypting())
-		break;
-	    if (time(0) > timeout) {
-		printf("\nEncryption could not be enabled.\n");
-		Exit(1);
-	    }
-	    if (printed_encrypt == 0) {
-		printed_encrypt = 1;
-		printf("Waiting for encryption to be negotiated...\n");
-		/*
-		 * Turn on MODE_TRAPSIG and then turn off localchars 
-		 * so that ^C will cause telnet to exit.
-		 */
-		TerminalNewMode(getconnmode()|MODE_TRAPSIG);
-		intr_waiting = 1;
-	    }
-	    if (intr_happened) {
-		printf("\nUser interrupt.\n");
-		Exit(1);
-	    }
-	    telnet_spin();
-	}
-	if (printed_encrypt) {
-	    printf("Encryption negotiated.\n");
-	    intr_waiting = 0;
-	    setconnmode(0);
-	}
-    }
-#endif
-    
-#   if !defined(TN3270)
     for (;;) {
 	int schedValue;
 
@@ -2305,45 +1885,6 @@ telnet(user)
 	    return;
 	}
     }
-#   else /* !defined(TN3270) */
-    for (;;) {
-	int schedValue;
-
-	while (!In3270 && !shell_active) {
-	    if (Scheduler(1) == -1) {
-		setcommandmode();
-		return;
-	    }
-	}
-
-	while ((schedValue = Scheduler(0)) != 0) {
-	    if (schedValue == -1) {
-		setcommandmode();
-		return;
-	    }
-	}
-		/* If there is data waiting to go out to terminal, don't
-		 * schedule any more data for the terminal.
-		 */
-	if (ring_full_count(&ttyoring)) {
-	    schedValue = 1;
-	} else {
-	    if (shell_active) {
-		if (shell_continue() == 0) {
-		    ConnectScreen();
-		}
-	    } else if (In3270) {
-		schedValue = DoTerminalOutput();
-	    }
-	}
-	if (schedValue && (shell_active == 0)) {
-	    if (Scheduler(1) == -1) {
-		setcommandmode();
-		return;
-	    }
-	}
-    }
-#   endif /* !defined(TN3270) */
 }
 
 #if	0	/* XXX - this not being in is a bug */

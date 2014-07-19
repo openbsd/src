@@ -1,4 +1,4 @@
-/*	$OpenBSD: ring.c,v 1.5 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: ring.c,v 1.6 2014/07/19 23:50:38 guenther Exp $	*/
 /*	$NetBSD: ring.c,v 1.7 1996/02/28 21:04:07 thorpej Exp $	*/
 
 /*
@@ -94,10 +94,6 @@ ring_init(ring, buffer, count)
 
     ring->top = ring->bottom+ring->size;
 
-#if    defined(ENCRYPTION)
-    ring->clearto = 0;
-#endif
-
     return 1;
 }
 
@@ -167,15 +163,6 @@ ring_consumed(ring, count)
 		(ring_subtract(ring, ring->mark, ring->consume) < count)) {
 	ring->mark = 0;
     }
-#if    defined(ENCRYPTION)
-    if (ring->consume < ring->clearto &&
-               ring->clearto <= ring->consume + count)
-	ring->clearto = 0;
-    else if (ring->consume + count > ring->top &&
-               ring->bottom <= ring->clearto &&
-               ring->bottom + ((ring->consume + count) - ring->top))
-	ring->clearto = 0;
-#endif
     ring->consume = ring_increment(ring, ring->consume, count);
     ring->consumetime = ++ring_clock;
     /*
@@ -283,60 +270,3 @@ ring_supply_data(ring, buffer, count)
 	buffer += i;
     }
 }
-
-#ifdef notdef
-
-/*
- * Move data from the "consume" portion of the ring buffer
- */
-    void
-ring_consume_data(ring, buffer, count)
-    Ring *ring;
-    unsigned char *buffer;
-    int count;
-{
-    int i;
-
-    while (count) {
-	i = MIN(count, ring_full_consecutive(ring));
-	memmove(buffer, ring->consume, i);
-	ring_consumed(ring, i);
-	count -= i;
-	buffer += i;
-    }
-}
-#endif
-
-#if    defined(ENCRYPTION)
-void
-ring_encrypt(Ring *ring, void (*encryptor)())
-{
-    unsigned char *s, *c;
-
-    if (ring_empty(ring) || ring->clearto == ring->supply)
-	return;
-
-    if (!(c = ring->clearto))
-	c = ring->consume;
-
-    s = ring->supply;
-    
-    if (s <= c) {
-	(*encryptor)(c, ring->top - c);
-	(*encryptor)(ring->bottom, s - ring->bottom);
-    } else
-	(*encryptor)(c, s - c);
-    
-    ring->clearto = ring->supply;
-}
-
-void
-ring_clearto(Ring *ring)
-{
-    if (!ring_empty(ring))
-	ring->clearto = ring->supply;
-    else
-	ring->clearto = 0;
-}
-#endif
-
