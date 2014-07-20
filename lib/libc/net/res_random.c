@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.20 2013/11/12 07:00:24 deraadt Exp $ */
+/* $OpenBSD: res_random.c,v 1.21 2014/07/20 04:22:34 guenther Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -87,7 +87,7 @@ struct prf_ctx {
 };
 
 #define PFAC_N 3
-const static u_int16_t pfacts[PFAC_N] = {
+static const u_int16_t pfacts[PFAC_N] = {
 	2, 
 	3,
 	2729

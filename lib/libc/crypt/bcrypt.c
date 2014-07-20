@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.44 2014/05/17 15:18:06 chl Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.45 2014/07/20 04:22:34 guenther Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -231,10 +231,10 @@ bcrypt_checkpass(const char *pass, const char *goodhash)
 /*
  * internal utilities
  */
-const static u_int8_t Base64Code[] =
+static const u_int8_t Base64Code[] =
 "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-const static u_int8_t index_64[128] = {
+static const u_int8_t index_64[128] = {
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
