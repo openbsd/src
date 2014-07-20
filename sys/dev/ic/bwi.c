@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.104 2014/07/20 11:57:05 stsp Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.105 2014/07/20 11:57:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -645,7 +645,7 @@ bwi_intr(void *xsc)
 			printf("intr PHY TX error\n");
 			/* XXX to netisr0? */
 			bwi_init_statechg(sc, 0);
-			return (0);
+			return (1);
 		}
 	}
 
