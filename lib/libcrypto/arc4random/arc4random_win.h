@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random_win.h,v 1.2 2014/07/19 00:08:43 deraadt Exp $	*/
+/*	$OpenBSD: arc4random_win.h,v 1.3 2014/07/20 16:59:31 bcook Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -21,6 +21,26 @@
 /*
  * Stub functions for portability.
  */
+
+#include <windows.h>
+
+static volatile HANDLE arc4random_mtx = NULL;
+
+/*
+ * Initialize the mutex on the first lock attempt. On collision, each thread
+ * will attempt to allocate a mutex and compare-and-swap it into place as the
+ * global mutex. On failure to swap in the global mutex, the mutex is closed.
+ */
+#define _ARC4_LOCK() { \
+	if (!arc4random_mtx) { \
+		HANDLE p = CreateMutex(NULL, FALSE, NULL); \
+		if (InterlockedCompareExchangePointer((void **)&arc4random_mtx, (void *)p, NULL)) \
+			CloseHandle(p); \
+	} \
+	WaitForSingleObject(arc4random_mtx, INFINITE); \
+} \
+
+#define _ARC4_UNLOCK() ReleaseMutex(arc4random_mtx)
 
 static inline int
 _rs_allocate(struct _rs **rsp, struct _rsx **rsxp)
