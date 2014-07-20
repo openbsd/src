@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.105 2014/07/20 11:57:49 stsp Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.106 2014/07/20 11:59:12 stsp Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -72,6 +72,8 @@
 
 #include <dev/ic/bwireg.h>
 #include <dev/ic/bwivar.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef BWI_DEBUG
 int bwi_debug = 1;
@@ -307,6 +309,7 @@ int		 bwi_dma_ring_alloc(struct bwi_softc *,
 int		 bwi_dma_txstats_alloc(struct bwi_softc *, uint32_t,
 		     bus_size_t);
 void		 bwi_dma_txstats_free(struct bwi_softc *);
+int		 bwi_dma_mbuf_create30(struct bwi_softc *);
 int		 bwi_dma_mbuf_create(struct bwi_softc *);
 void		 bwi_dma_mbuf_destroy(struct bwi_softc *, int, int);
 void		 bwi_enable_intrs(struct bwi_softc *, uint32_t);
@@ -325,6 +328,7 @@ int		 bwi_init_txstats64(struct bwi_softc *);
 void		 bwi_setup_rx_desc64(struct bwi_softc *, int, bus_addr_t, int);
 void		 bwi_setup_tx_desc64(struct bwi_softc *, struct bwi_ring_data *,
 		     int, bus_addr_t, int);
+int		 bwi_newbuf30(struct bwi_softc *, int, int);
 int		 bwi_newbuf(struct bwi_softc *, int, int);
 void		 bwi_set_addr_filter(struct bwi_softc *, uint16_t,
 		     const uint8_t *);
@@ -918,6 +922,7 @@ bwi_detach(void *arg)
 		bwi_mac_detach(&sc->sc_mac[i]);
 
 	bwi_dma_free(sc);
+	bwi_dma_mbuf_destroy(sc, BWI_TX_NRING, 1);
 
 	return (0);
 }
@@ -6222,6 +6227,9 @@ bwi_setup_desc32(struct bwi_softc *sc, struct bwi_desc32 *desc_array,
 	struct bwi_desc32 *desc = &desc_array[desc_idx];
 	uint32_t ctrl, addr, addr_hi, addr_lo;
 
+	if (sc->sc_bus_space == BWI_BUS_SPACE_30BIT && paddr >= 0x40000000)
+		panic("bad paddr 0x%lx\n", (long)paddr);
+
 	addr_lo = __SHIFTOUT(paddr, BWI_DESC32_A_ADDR_MASK);
 	addr_hi = __SHIFTOUT(paddr, BWI_DESC32_A_FUNC_MASK);
 
@@ -7515,6 +7523,13 @@ bwi_node_alloc(struct ieee80211com *ic)
 	return ((struct ieee80211_node *)bn);
 }
 
+struct uvm_constraint_range bwi_constraint = { 0x0, (0x40000000 - 1) };
+struct kmem_pa_mode bwi_pa_mode = {
+	.kp_align = BWI_RING_ALIGN,
+	.kp_constraint = &bwi_constraint,
+	.kp_zero = 1
+};
+
 int
 bwi_dma_alloc(struct bwi_softc *sc)
 {
@@ -7532,6 +7547,16 @@ bwi_dma_alloc(struct bwi_softc *sc)
 
 	switch (sc->sc_bus_space) {
 	case BWI_BUS_SPACE_30BIT:
+		/* 
+		 * 30bit devices must use bounce buffers but
+		 * otherwise work like 32bit devices.
+		 */
+		sc->sc_newbuf = bwi_newbuf30;
+
+		/* XXX implement txstats for 30bit? */
+		has_txstats = 0;
+
+		/* FALLTHROUGH */
 	case BWI_BUS_SPACE_32BIT:
 		desc_sz = sizeof(struct bwi_desc32);
 		txrx_ctrl_step = 0x20;
@@ -7540,6 +7565,8 @@ bwi_dma_alloc(struct bwi_softc *sc)
 		sc->sc_free_tx_ring = bwi_free_tx_ring32;
 		sc->sc_init_rx_ring = bwi_init_rx_ring32;
 		sc->sc_free_rx_ring = bwi_free_rx_ring32;
+		if (sc->sc_newbuf == NULL)
+			sc->sc_newbuf = bwi_newbuf;
 		sc->sc_setup_rxdesc = bwi_setup_rx_desc32;
 		sc->sc_setup_txdesc = bwi_setup_tx_desc32;
 		sc->sc_rxeof = bwi_rxeof32;
@@ -7559,6 +7586,7 @@ bwi_dma_alloc(struct bwi_softc *sc)
 		sc->sc_free_tx_ring = bwi_free_tx_ring64;
 		sc->sc_init_rx_ring = bwi_init_rx_ring64;
 		sc->sc_free_rx_ring = bwi_free_rx_ring64;
+		sc->sc_newbuf = bwi_newbuf;
 		sc->sc_setup_rxdesc = bwi_setup_rx_desc64;
 		sc->sc_setup_txdesc = bwi_setup_tx_desc64;
 		sc->sc_rxeof = bwi_rxeof64;
@@ -7569,6 +7597,8 @@ bwi_dma_alloc(struct bwi_softc *sc)
 			sc->sc_txeof_status = bwi_txeof_status64;
 		}
 		break;
+	default:
+		panic("unsupported bus space type %d", sc->sc_bus_space);
 	}
 
 	KASSERT(desc_sz != 0);
@@ -7582,19 +7612,12 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	 * Create TX ring DMA stuffs
 	 */
 	for (i = 0; i < BWI_TX_NRING; ++i) {
-		error = bus_dmamap_create(sc->sc_dmat, tx_ring_sz, 1,
-		    tx_ring_sz, 0, BUS_DMA_NOWAIT,
-		    &sc->sc_tx_rdata[i].rdata_dmap);
-		if (error) {
-			printf("%s: %dth TX ring DMA create failed\n",
-			    sc->sc_dev.dv_xname, i);
-			return (error);
-		}
 		error = bwi_dma_ring_alloc(sc,
 		    &sc->sc_tx_rdata[i], tx_ring_sz, TXRX_CTRL(i));
 		if (error) {
 			printf("%s: %dth TX ring DMA alloc failed\n",
 			    sc->sc_dev.dv_xname, i);
+			bwi_dma_free(sc);
 			return (error);
 		}
 	}
@@ -7602,18 +7625,11 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	/*
 	 * Create RX ring DMA stuffs
 	 */
-	error = bus_dmamap_create(sc->sc_dmat, rx_ring_sz, 1,
-	    rx_ring_sz, 0, BUS_DMA_NOWAIT,
-	    &sc->sc_rx_rdata.rdata_dmap);
-	if (error) {
-		printf("%s: RX ring DMA create failed\n", sc->sc_dev.dv_xname);
-		return (error);
-	}
-
 	error = bwi_dma_ring_alloc(sc, &sc->sc_rx_rdata,
 	    rx_ring_sz, TXRX_CTRL(0));
 	if (error) {
 		printf("%s: RX ring DMA alloc failed\n", sc->sc_dev.dv_xname);
+		bwi_dma_free(sc);
 		return (error);
 	}
 
@@ -7622,12 +7638,20 @@ bwi_dma_alloc(struct bwi_softc *sc)
 		if (error) {
 			printf("%s: TX stats DMA alloc failed\n",
 			    sc->sc_dev.dv_xname);
+			bwi_dma_free(sc);
 			return (error);
 		}
 	}
 #undef TXRX_CTRL
 
-	return (bwi_dma_mbuf_create(sc));
+	if (sc->sc_bus_space == BWI_BUS_SPACE_30BIT)
+		error = bwi_dma_mbuf_create30(sc);
+	else
+		error = bwi_dma_mbuf_create(sc);
+	if (error)
+		bwi_dma_free(sc);
+
+	return (error);
 }
 
 void
@@ -7640,10 +7664,10 @@ bwi_dma_free(struct bwi_softc *sc)
 		rd = &sc->sc_tx_rdata[i];
 
 		if (rd->rdata_desc != NULL) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    rd->rdata_dmap);
-			bus_dmamem_free(sc->sc_dmat,
-			    &rd->rdata_seg, 1);
+			bus_dmamap_unload(sc->sc_dmat, rd->rdata_dmap);
+			km_free(rd->rdata_desc, rd->rdata_ring_sz,
+			    &kv_intrsafe, &bwi_pa_mode);
+			rd->rdata_desc = NULL;
 		}
 	}
 
@@ -7651,30 +7675,51 @@ bwi_dma_free(struct bwi_softc *sc)
 
 	if (rd->rdata_desc != NULL) {
 		bus_dmamap_unload(sc->sc_dmat, rd->rdata_dmap);
-		bus_dmamem_free(sc->sc_dmat, &rd->rdata_seg, 1);
+		km_free(rd->rdata_desc, rd->rdata_ring_sz,
+		    &kv_intrsafe, &bwi_pa_mode);
+		rd->rdata_desc = NULL;
 	}
 
 	bwi_dma_txstats_free(sc);
-	bwi_dma_mbuf_destroy(sc, BWI_TX_NRING, 1);
+
+	if (sc->sc_bus_space == BWI_BUS_SPACE_30BIT) {
+		for (i = 0; i < BWI_TX_NRING; ++i) {
+			if (sc->sc_bounce_tx_data[i] != NULL) {
+				km_free(sc->sc_bounce_tx_data[i],
+				    BWI_TX_NDESC * MCLBYTES,
+				    &kv_intrsafe, &bwi_pa_mode);
+				sc->sc_bounce_tx_data[i] = NULL;
+			}
+		}
+
+		if (sc->sc_bounce_rx_data != NULL) {
+			km_free(sc->sc_bounce_rx_data, BWI_RX_NDESC * MCLBYTES,
+			    &kv_intrsafe, &bwi_pa_mode);
+			sc->sc_bounce_rx_data = NULL;
+		}
+	}
 }
 
 int
 bwi_dma_ring_alloc(struct bwi_softc *sc,
     struct bwi_ring_data *rd, bus_size_t size, uint32_t txrx_ctrl)
 {
-	int error, nsegs;
+	int error;
 
-	error = bus_dmamem_alloc(sc->sc_dmat, size, BWI_ALIGN, 0,
-	    &rd->rdata_seg, 1, &nsegs, BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: can't allocate DMA mem\n", sc->sc_dev.dv_xname);
-		return (error);
+	/* Allocate rings below 1GB so 30bit devices can access them.*/
+	rd->rdata_desc = (caddr_t)km_alloc(size, &kv_intrsafe, &bwi_pa_mode,
+	    &kd_nowait);
+	if (rd->rdata_desc == NULL) {
+		printf(": could not allocate ring DMA memory\n");
+		return (ENOMEM);
 	}
 
-	error = bus_dmamem_map(sc->sc_dmat, &rd->rdata_seg, nsegs,
-	    size, (caddr_t *)&rd->rdata_desc, BUS_DMA_NOWAIT);
+	error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	    BUS_DMA_NOWAIT, &rd->rdata_dmap);
 	if (error) {
-		printf("%s: can't map DMA mem\n", sc->sc_dev.dv_xname);
+		printf(": cannot create ring DMA map (error %d)\n", error);
+		km_free(rd->rdata_desc, size, &kv_intrsafe, &bwi_pa_mode);
+		rd->rdata_desc = NULL;
 		return (error);
 	}
 
@@ -7682,11 +7727,13 @@ bwi_dma_ring_alloc(struct bwi_softc *sc,
 	    size, NULL, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: can't load DMA mem\n", sc->sc_dev.dv_xname);
-		bus_dmamem_free(sc->sc_dmat, &rd->rdata_seg, nsegs);
+		bus_dmamap_destroy(sc->sc_dmat, rd->rdata_dmap);
+		km_free(rd->rdata_desc, size, &kv_intrsafe, &bwi_pa_mode);
 		rd->rdata_desc = NULL;
 		return (error);
 	}
 
+	rd->rdata_ring_sz = size;
 	rd->rdata_paddr = rd->rdata_dmap->dm_segs[0].ds_addr;
 	rd->rdata_txrx_ctrl = txrx_ctrl;
 
@@ -7802,6 +7849,126 @@ bwi_dma_txstats_free(struct bwi_softc *sc)
 	bus_dmamem_free(sc->sc_dmat, &st->stats_seg, 1);
 
 	free(st, M_DEVBUF, 0);
+}
+
+int
+bwi_dma_mbuf_create30(struct bwi_softc *sc)
+{
+	int i, j, k, error;
+
+	for (i = 0; i < BWI_TX_NRING; ++i) {
+		struct bwi_txbuf_data *tbd = &sc->sc_tx_bdata[i];
+
+		sc->sc_bounce_tx_data[i] = (caddr_t)km_alloc(
+		    BWI_TX_NDESC * MCLBYTES, &kv_intrsafe,
+		    &bwi_pa_mode, &kd_waitok);
+		if (sc->sc_bounce_tx_data[i] == NULL) {
+			printf(": could not allocate TX mbuf bounce buffer\n");
+			error = ENOMEM;
+			break;
+		}
+
+		for (j = 0; j < BWI_TX_NDESC; ++j) {
+			error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+			    1, MCLBYTES, 0, BUS_DMA_NOWAIT,
+			    &tbd->tbd_buf[j].tb_dmap);
+			if (error) {
+				printf(": cannot create TX mbuf DMA map\n");
+				for (k = 0; k < j; ++k) {
+					bus_dmamap_destroy(sc->sc_dmat,
+					    tbd->tbd_buf[k].tb_dmap);
+				}
+				break;
+			}
+		}
+	}
+	if (error) {
+		bwi_dma_mbuf_destroy(sc, i, 0);
+		for (j = 0; j < i; ++j)
+			km_free(sc->sc_bounce_tx_data[j], BWI_TX_NDESC,
+			    &kv_intrsafe, &bwi_pa_mode);
+		return (error);
+	}
+
+	for (i = 0; i < BWI_TX_NRING; ++i) {
+		struct bwi_txbuf_data *tbd = &sc->sc_tx_bdata[i];
+
+		for (j = 0; j < BWI_TX_NDESC; ++j) {
+			struct bwi_txbuf *tb = &tbd->tbd_buf[j];
+
+			error = bus_dmamap_load(sc->sc_dmat, tb->tb_dmap,
+			    sc->sc_bounce_tx_data[i] + (MCLBYTES * j),
+			    MCLBYTES, NULL, BUS_DMA_NOWAIT);
+			if (error) {
+				printf(": cannot create TX mbuf DMA map\n");
+				for (k = 0; k < j; ++k) {
+					bus_dmamap_destroy(sc->sc_dmat,
+					    tbd->tbd_buf[k].tb_dmap);
+				}
+				break;
+			}
+		}
+	}
+	if (error) {
+		bwi_dma_mbuf_destroy(sc, BWI_TX_NRING, 0);
+		for (i = 0; i < BWI_TX_NRING; ++i)
+			km_free(sc->sc_bounce_tx_data[i], BWI_TX_NDESC,
+			    &kv_intrsafe, &bwi_pa_mode);
+		return (error);
+	}
+
+	sc->sc_bounce_rx_data = (caddr_t)km_alloc(BWI_RX_NDESC * MCLBYTES,
+	    &kv_intrsafe, &bwi_pa_mode, &kd_waitok);
+	if (sc->sc_bounce_rx_data == NULL) {
+		printf(": could not allocate RX mbuf bounce buffer\n");
+		bwi_dma_mbuf_destroy(sc, BWI_TX_NRING, 0);
+		for (i = 0; i < BWI_TX_NRING; ++i)
+			km_free(sc->sc_bounce_tx_data[i], BWI_TX_NDESC,
+			    &kv_intrsafe, &bwi_pa_mode);
+		return (ENOMEM);
+	}
+
+	for (i = 0; i < BWI_RX_NDESC; ++i) {
+		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT,
+		    &sc->sc_rx_bdata.rbd_buf[i].rb_dmap);
+		if (error) {
+			printf(": cannot create RX mbuf DMA map\n");
+			for (j = 0; j < i; ++j) {
+				bus_dmamap_destroy(sc->sc_dmat,
+				    sc->sc_rx_bdata.rbd_buf[j].rb_dmap);
+			}
+			break;
+		}
+	}
+	if (error) {
+		bwi_dma_mbuf_destroy(sc, BWI_TX_NRING, 0);
+		for (i = 0; i < BWI_TX_NRING; ++i)
+			km_free(sc->sc_bounce_tx_data[i], BWI_TX_NDESC,
+			    &kv_intrsafe, &bwi_pa_mode);
+		km_free(sc->sc_bounce_rx_data, BWI_RX_NDESC * MCLBYTES,
+		    &kv_intrsafe, &bwi_pa_mode);
+		return (error);
+	}
+
+	for (i = 0; i < BWI_RX_NDESC; ++i) {
+		error = bwi_newbuf30(sc, i, 1);
+		if (error) {
+			printf(": cannot create RX mbuf DMA map\n");
+			break;
+		}
+	}
+	if (error) {
+		bwi_dma_mbuf_destroy(sc, BWI_TX_NRING, 1);
+		for (i = 0; i < BWI_TX_NRING; ++i)
+			km_free(sc->sc_bounce_tx_data[i], BWI_TX_NDESC,
+			    &kv_intrsafe, &bwi_pa_mode);
+		km_free(sc->sc_bounce_rx_data, BWI_RX_NDESC * MCLBYTES,
+		    &kv_intrsafe, &bwi_pa_mode);
+		return (error);
+	}
+
+	return (0);
 }
 
 int
@@ -7986,9 +8153,10 @@ bwi_init_rx_ring32(struct bwi_softc *sc)
 	int i, error;
 
 	sc->sc_rx_bdata.rbd_idx = 0;
+	bzero(rd->rdata_desc, sizeof(struct bwi_desc32) * BWI_RX_NDESC);
 
 	for (i = 0; i < BWI_RX_NDESC; ++i) {
-		error = bwi_newbuf(sc, i, 1);
+		error = sc->sc_newbuf(sc, i, 1);
 		if (error) {
 			printf("%s: can't allocate %dth RX buffer\n",
 			    sc->sc_dev.dv_xname, i);
@@ -8084,6 +8252,58 @@ bwi_setup_tx_desc64(struct bwi_softc *sc, struct bwi_ring_data *rd,
     int buf_idx, bus_addr_t paddr, int buf_len)
 {
 	/* TODO: 64 */
+}
+
+int
+bwi_newbuf30(struct bwi_softc *sc, int buf_idx, int init)
+{
+	struct bwi_rxbuf_data *rbd = &sc->sc_rx_bdata;
+	struct bwi_rxbuf *rb = &rbd->rbd_buf[buf_idx];
+	struct mbuf *m;
+	struct bwi_rxbuf_hdr *hdr;
+	int error;
+
+	KASSERT(buf_idx < BWI_RX_NDESC);
+
+	/* Create host-side mbuf. */
+	MGETHDR(m, init ? M_WAITOK : M_NOWAIT, MT_DATA);
+	if (m == NULL)
+		return (ENOBUFS);
+	MCLGET(m, init ? M_WAITOK : M_NOWAIT);
+	if (m == NULL)
+		return (ENOBUFS);
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
+
+	if (init) {
+		/* Load device-side RX DMA buffer. */
+		error = bus_dmamap_load(sc->sc_dmat, rb->rb_dmap,
+		    sc->sc_bounce_rx_data + (MCLBYTES * buf_idx),
+		    MCLBYTES, NULL, BUS_DMA_WAITOK);
+		if (error) {
+			m_freem(m);
+			return (error);
+		}
+	}
+
+	rb->rb_mbuf = m;
+	rb->rb_paddr = rb->rb_dmap->dm_segs[0].ds_addr;
+
+	/*
+	 * Clear RX buf header
+	 */
+	hdr = (struct bwi_rxbuf_hdr *)(sc->sc_bounce_rx_data +
+	    (MCLBYTES * buf_idx));
+	bzero(hdr, sizeof(*hdr));
+	bus_dmamap_sync(sc->sc_dmat, rb->rb_dmap, 0,
+	    rb->rb_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
+
+	/*
+	 * Setup RX buf descriptor
+	 */
+	sc->sc_setup_rxdesc(sc, buf_idx, rb->rb_paddr,
+	    m->m_len - sizeof(*hdr));
+
+	return (0);
 }
 
 int
@@ -8233,11 +8453,22 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		uint16_t flags2;
 		int buflen, wh_ofs, hdr_extra, rssi, type, rate;
 
-		m = rb->rb_mbuf;
 		bus_dmamap_sync(sc->sc_dmat, rb->rb_dmap, 0,
 		    rb->rb_dmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-		if (bwi_newbuf(sc, idx, 0)) {
+		if (sc->sc_bus_space == BWI_BUS_SPACE_30BIT) {
+			/* Bounce for 30bit devices. */
+			if (m_copyback(rb->rb_mbuf, 0, MCLBYTES,
+			    sc->sc_bounce_rx_data + (MCLBYTES * idx),
+			    M_NOWAIT) == ENOBUFS) {
+				ifp->if_ierrors++;
+				goto next;
+			}
+		}
+
+		m = rb->rb_mbuf;
+
+		if (sc->sc_newbuf(sc, idx, 0)) {
 			ifp->if_ierrors++;
 			goto next;
 		}
@@ -8835,30 +9066,37 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	hdr = NULL;
 	wh = NULL;
 
-	/* DMA load */
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, tb->tb_dmap, m,
-	    BUS_DMA_NOWAIT);
-	if (error && error != EFBIG) {
-		printf("%s: can't load TX buffer (1) %d\n",
-		    sc->sc_dev.dv_xname, error);
-		goto back;
-	}
-
-	if (error) {	/* error == EFBIG */
-		if (m_defrag(m, M_DONTWAIT)) {
-			printf("%s: can't defrag TX buffer\n",
-			    sc->sc_dev.dv_xname);
-			goto back;
-		}
+	if (sc->sc_bus_space == BWI_BUS_SPACE_30BIT) {
+		/* Bounce for 30bit devices. */
+		m_copydata(m, 0, m->m_pkthdr.len,
+		    sc->sc_bounce_tx_data[BWI_TX_DATA_RING] +
+		    (MCLBYTES * idx));
+	} else {
+		/* DMA load */
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, tb->tb_dmap, m,
 		    BUS_DMA_NOWAIT);
-		if (error) {
-			printf("%s: can't load TX buffer (2) %d\n",
+		if (error && error != EFBIG) {
+			printf("%s: can't load TX buffer (1) %d\n",
 			    sc->sc_dev.dv_xname, error);
 			goto back;
 		}
+
+		if (error) {	/* error == EFBIG */
+			if (m_defrag(m, M_DONTWAIT)) {
+				printf("%s: can't defrag TX buffer\n",
+				    sc->sc_dev.dv_xname);
+				goto back;
+			}
+			error = bus_dmamap_load_mbuf(sc->sc_dmat, tb->tb_dmap,
+			    m, BUS_DMA_NOWAIT);
+			if (error) {
+				printf("%s: can't load TX buffer (2) %d\n",
+				    sc->sc_dev.dv_xname, error);
+				goto back;
+			}
+		}
+		error = 0;
 	}
-	error = 0;
 
 	bus_dmamap_sync(sc->sc_dmat, tb->tb_dmap, 0,
 	    tb->tb_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.29 2013/12/06 21:03:02 deraadt Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.30 2014/07/20 11:59:12 stsp Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -195,7 +195,7 @@ struct bwi_txstats {
 
 struct bwi_ring_data {
 	uint32_t		 rdata_txrx_ctrl;
-	bus_dma_segment_t	 rdata_seg;
+	bus_size_t		 rdata_ring_sz;
 	bus_dmamap_t		 rdata_dmap;
 	bus_addr_t		 rdata_paddr;
 	void			*rdata_desc;
@@ -556,6 +556,10 @@ struct bwi_softc {
  
 	enum bwi_bus_space	 sc_bus_space;
 
+	/* bounce buffers for 30 bit bus space devices */
+	caddr_t			 sc_bounce_tx_data[BWI_TX_NRING];
+	caddr_t			 sc_bounce_rx_data;
+
 	struct bwi_txbuf_data	 sc_tx_bdata[BWI_TX_NRING];
 	struct bwi_rxbuf_data	 sc_rx_bdata;
 
@@ -575,6 +579,7 @@ struct bwi_softc {
 
 	int			 (*sc_init_rx_ring)(struct bwi_softc *);
 	void			 (*sc_free_rx_ring)(struct bwi_softc *);
+	int			 (*sc_newbuf)(struct bwi_softc *, int, int);
 
 	int			 (*sc_init_txstats)(struct bwi_softc *);
 	void			 (*sc_free_txstats)(struct bwi_softc *);
