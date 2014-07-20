@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot_flag.h,v 1.3 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: boot_flag.h,v 1.4 2014/07/20 18:24:34 deraadt Exp $	*/
 /*	$NetBSD: boot_flag.h,v 1.3 2001/07/01 02:56:21 gmcgarry Exp $	*/
 
 /*-
@@ -52,9 +52,6 @@
 		break;						\
 	case 'd': /* break into the kernel debugger ASAP (if compiled in) */ \
 		(retval) |= RB_KDB;				\
-		break;						\
-	case 'm': /* mini root present in memory */		\
-		(retval) |= RB_MINIROOT;			\
 		break;						\
 	case 's': /* boot to single user */			\
 		(retval) |= RB_SINGLE;				\
