@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.65 2014/07/20 09:59:42 guenther Exp $	*/
+/*	$OpenBSD: commands.c,v 1.66 2014/07/20 10:18:10 guenther Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -347,7 +347,6 @@ sendcmd(argc, argv)
 	if ((s = GETSEND(argv[i])) == 0) {
 	    fprintf(stderr, "Telnet 'send' error - argument disappeared!\r\n");
 	    quit();
-	    /*NOTREACHED*/
 	}
 	if (s->handler) {
 	    count++;
@@ -1249,7 +1248,6 @@ setescape(argc, argv)
 	return 1;
 }
 
-    /*VARARGS*/
     static int
 togcrmod()
 {
@@ -1260,7 +1258,6 @@ togcrmod()
     return 1;
 }
 
-    /*VARARGS*/
     int
 telnetsuspend()
 {
@@ -1286,7 +1283,6 @@ telnetsuspend()
     return 1;
 }
 
-    /*ARGSUSED*/
     int
 shell(argc, argv)
     int argc;
@@ -1335,7 +1331,6 @@ shell(argc, argv)
     return 1;
 }
 
-    /*VARARGS*/
     static int
 bye(argc, argv)
     int  argc;		/* Number of arguments */
@@ -1352,11 +1347,9 @@ bye(argc, argv)
 	/* reset options */
 	tninit();
     }
-    if ((argc != 2) || (strcmp(argv[1], "fromquit") != 0)) {
+    if ((argc != 2) || (strcmp(argv[1], "fromquit") != 0))
 	longjmp(toplevel, 1);
-	/* NOTREACHED */
-    }
-    return 0; /* NOTREACHED */
+    return 0;
 }
 
 void
@@ -1372,7 +1365,6 @@ quitcmd(int unused1, char *unused2[])
 	quit();
 }
 
-/*VARARGS*/
 	static int
 logout()
 {
@@ -1762,7 +1754,6 @@ env_getvalue(var, exported_only)
 /*
  * Print status about the connection.
  */
-    /*ARGSUSED*/
     static int
 status(argc, argv)
     int	 argc;
@@ -2120,8 +2111,6 @@ tn(argc, argv)
 	telnet(user);
     (void) NetClose(net);
     ExitString("Connection closed by foreign host.\r\n",1);
-    /*NOTREACHED*/
-    return 0;
 }
 
 #define HELPINDENT (sizeof ("connect"))
@@ -2248,10 +2237,8 @@ command(top, tbuf, cnt)
 	    if (rlogin != _POSIX_VDISABLE)
 		printf("%s> ", prompt);
 	    if (fgets(line, sizeof(line), stdin) == NULL) {
-		if (feof(stdin) || ferror(stdin)) {
+		if (feof(stdin) || ferror(stdin))
 		    quit();
-		    /*NOTREACHED*/
-		}
 		break;
 	    }
 	}
@@ -2279,10 +2266,8 @@ command(top, tbuf, cnt)
 	}
     }
     if (!top) {
-	if (!connected) {
+	if (!connected)
 	    longjmp(toplevel, 1);
-	    /*NOTREACHED*/
-	}
 	setconnmode(0);
     }
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: network.c,v 1.14 2014/07/20 08:56:47 guenther Exp $	*/
+/*	$OpenBSD: network.c,v 1.15 2014/07/20 10:18:10 guenther Exp $	*/
 /*	$NetBSD: network.c,v 1.5 1996/02/28 21:04:06 thorpej Exp $	*/
 
 /*
@@ -130,7 +130,6 @@ netflush()
 	    (void)NetClose(net);
 	    ring_clear_mark(&netoring);
 	    longjmp(peerdied, -1);
-	    /*NOTREACHED*/
 	}
 	n = 0;
     }

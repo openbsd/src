@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.23 2014/07/20 09:59:42 guenther Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.24 2014/07/20 10:18:10 guenther Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -563,7 +563,6 @@ NetNonblockingIO(fd, onoff)
  * Various signal handling routines.
  */
 
-    /* ARGSUSED */
     void
 deadpeer(sig)
     int sig;
@@ -572,7 +571,6 @@ deadpeer(sig)
 	longjmp(peerdied, -1);
 }
 
-    /* ARGSUSED */
     void
 intr(sig)
     int sig;
@@ -585,7 +583,6 @@ intr(sig)
     longjmp(toplevel, -1);
 }
 
-    /* ARGSUSED */
     void
 intr2(sig)
     int sig;
@@ -601,7 +598,6 @@ intr2(sig)
     }
 }
 
-    /* ARGSUSED */
     void
 susp(sig)
     int sig;
@@ -613,7 +609,6 @@ susp(sig)
 }
 
 #ifdef	SIGWINCH
-    /* ARGSUSED */
     void
 sendwin(sig)
     int sig;
@@ -625,7 +620,6 @@ sendwin(sig)
 #endif
 
 #ifdef	SIGINFO
-    /* ARGSUSED */
     void
 ayt(sig)
     int sig;

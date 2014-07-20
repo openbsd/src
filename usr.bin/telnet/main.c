@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2014/07/20 08:12:45 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2014/07/20 10:18:10 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -55,8 +55,8 @@ tninit()
     init_sys();
 }
 
-	void
-usage()
+static __dead void
+usage(void)
 {
 	extern char *__progname;
 
@@ -165,7 +165,6 @@ main(argc, argv)
 		case '?':
 		default:
 			usage();
-			/* NOTREACHED */
 		}
 	}
 

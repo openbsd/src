@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.25 2014/07/20 08:56:47 guenther Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.26 2014/07/20 10:18:10 guenther Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -655,10 +655,8 @@ suboption()
 			 TELQUAL_IS, name, IAC, SE);
 		ring_supply_data(&netoring, temp, len);
 		printsub('>', &temp[2], len-2);
-	    } else {
+	    } else
 		ExitString("No room in buffer for terminal type.\n", 1);
-		/*NOTREACHED*/
-	    }
 	}
 	break;
     case TELOPT_TSPEED:
