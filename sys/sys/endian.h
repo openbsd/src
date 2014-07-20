@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.23 2014/07/12 16:25:08 guenther Exp $	*/
+/*	$OpenBSD: endian.h,v 1.24 2014/07/20 21:41:54 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -25,12 +25,13 @@
  */
 
 /*
- * Generic definitions for little- and big-endian systems.  Other endianesses
- * has to be dealt with in the specific machine/endian.h file for that port.
+ * Public definitions for little- and big-endian systems.
+ * This file should be included as <endian.h> in userspace and as
+ * <sys/endian.h> in the kernel.
  *
- * This file is meant to be included from a little- or big-endian port's
- * machine/endian.h after setting _BYTE_ORDER to either 1234 for little endian
- * or 4321 for big..
+ * System headers that need endian information but that can't or don't
+ * want to export the public names here should include <sys/_endian.h>
+ * and use the internal names: _BYTE_ORDER, _*_ENDIAN, etc.
  */
 
 #ifndef _SYS_ENDIAN_H_
