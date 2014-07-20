@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.67 2014/07/20 10:55:26 guenther Exp $	*/
+/*	$OpenBSD: commands.c,v 1.68 2014/07/20 12:08:55 guenther Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -48,13 +48,16 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef SKEY
+#include <sys/wait.h>
+#define PATH_SKEY	"/usr/bin/skey"
+#endif
+
+static unsigned long sourceroute(char *arg, char **cpp, int *lenp);
+
 int tos = -1;
 
 char	*hostname;
-
-typedef int (*intrtn_t)(int, char**);
-static int call(intrtn_t, ...);
-static unsigned long sourceroute(char *arg, char **cpp, int *lenp);
 
 typedef struct {
 	char	*name;		/* command name */
@@ -68,9 +71,7 @@ static char saveline[256];
 static int margc;
 static char *margv[20];
 
-#if	defined(SKEY)
-#include <sys/wait.h>
-#define PATH_SKEY	"/usr/bin/skey"
+#ifdef SKEY
     int
 skey_calc(argc, argv)
 	int argc;
@@ -994,8 +995,6 @@ unsetcmd(argc, argv)
  * 'mode' command.
  */
 #ifdef	KLUDGELINEMODE
-extern int kludgelinemode;
-
     static int
 dokludgemode()
 {
@@ -1037,7 +1036,6 @@ dolmmode(bit, on)
     int bit, on;
 {
     unsigned char c;
-    extern int linemode;
 
     if (my_want_state_is_wont(TELOPT_LINEMODE)) {
 	printf("?Need to have LINEMODE option enabled first.\r\n");
@@ -1332,31 +1330,33 @@ shell(argc, argv)
     return 1;
 }
 
-    static int
+static void
+close_connection(void)
+{
+	if (connected) {
+		(void) shutdown(net, 2);
+		printf("Connection closed.\r\n");
+		(void)close(net);
+		connected = 0;
+		resettermname = 1;
+		/* reset options */
+		tninit();
+	}
+}
+
+static int
 bye(argc, argv)
     int  argc;		/* Number of arguments */
     char *argv[];	/* arguments */
 {
-    extern int resettermname;
-
-    if (connected) {
-	(void) shutdown(net, 2);
-	printf("Connection closed.\r\n");
-	(void)close(net);
-	connected = 0;
-	resettermname = 1;
-	/* reset options */
-	tninit();
-    }
-    if ((argc != 2) || (strcmp(argv[1], "fromquit") != 0))
+	close_connection();
 	longjmp(toplevel, 1);
-    return 0;
 }
 
 void
 quit(void)
 {
-	(void) call(bye, "bye", "fromquit", 0);
+	close_connection();
 	Exit(0);
 }
 
@@ -1758,45 +1758,54 @@ env_getvalue(var, exported_only)
 	return(NULL);
 }
 
+static void
+connection_status(int local_only)
+{
+	if (!connected)
+		printf("No connection.\r\n");
+	else {
+		printf("Connected to %s.\r\n", hostname);
+		if (!local_only) {
+			int mode = getconnmode();
+
+			printf("Operating ");
+			if (my_want_state_is_will(TELOPT_LINEMODE)) {
+				printf("with LINEMODE option\r\n"
+				    "%s line editing\r\n"
+				    "%s catching of signals\r\n",
+				    (mode & MODE_EDIT) ? "Local" : "No",
+				    (mode & MODE_TRAPSIG) ? "Local" : "No");
+				slcstate();
+#ifdef	KLUDGELINEMODE
+			} else if (kludgelinemode &&
+			    my_want_state_is_dont(TELOPT_SGA)) {
+				printf("in obsolete linemode\r\n");
+#endif
+			} else {
+				printf("in single character mode\r\n");
+				if (localchars)
+					printf("Catching signals locally\r\n");
+			}
+
+			printf("%s character echo\r\n",
+			    (mode & MODE_ECHO) ? "Local" : "Remote");
+			if (my_want_state_is_will(TELOPT_LFLOW))
+				printf("%s flow control\r\n",
+				    (mode & MODE_FLOW) ? "Local" : "No");
+		}
+	}
+	printf("Escape character is '%s'.\r\n", control(escape));
+	(void) fflush(stdout);
+}
+
 /*
  * Print status about the connection.
  */
-    static int
-status(argc, argv)
-    int	 argc;
-    char *argv[];
+static int
+status(int argc, char *argv[])
 {
-    if (connected) {
-	printf("Connected to %s.\r\n", hostname);
-	if ((argc < 2) || strcmp(argv[1], "notmuch")) {
-	    int mode = getconnmode();
-
-	    if (my_want_state_is_will(TELOPT_LINEMODE)) {
-		printf("Operating with LINEMODE option\r\n");
-		printf("%s line editing\r\n", (mode&MODE_EDIT) ? "Local" : "No");
-		printf("%s catching of signals\r\n",
-					(mode&MODE_TRAPSIG) ? "Local" : "No");
-		slcstate();
-#ifdef	KLUDGELINEMODE
-	    } else if (kludgelinemode && my_want_state_is_dont(TELOPT_SGA)) {
-		printf("Operating in obsolete linemode\r\n");
-#endif
-	    } else {
-		printf("Operating in single character mode\r\n");
-		if (localchars)
-		    printf("Catching signals locally\r\n");
-	    }
-	    printf("%s character echo\r\n", (mode&MODE_ECHO) ? "Local" : "Remote");
-	    if (my_want_state_is_will(TELOPT_LFLOW))
-		printf("%s flow control\r\n", (mode&MODE_FLOW) ? "Local" : "No");
-	}
-    } else {
-	printf("No connection.\r\n");
-    }
-    printf("Escape character is '%s'.\r\n", control(escape));
-    (void) fflush(stdout);
-    fflush(stdout);
-    return 1;
+	connection_status(0);
+	return 1;
 }
 
 #ifdef	SIGINFO
@@ -1804,9 +1813,9 @@ status(argc, argv)
  * Function that gets called when SIGINFO is received.
  */
 void
-ayt_status()
+ayt_status(int sig)
 {
-    (void) call(status, "status", "notmuch", 0);
+	connection_status(1);
 }
 #endif
 
@@ -2113,7 +2122,7 @@ tn(argc, argv)
 	env_define((unsigned char *)"USER", (unsigned char *)user);
 	env_export((unsigned char *)"USER");
     }
-    (void) call(status, "status", "notmuch", 0);
+    connection_status(1);
     if (setjmp(peerdied) == 0)
 	telnet(user);
     (void)close(net);
@@ -2163,7 +2172,7 @@ static Command cmdtab[] = {
 	{ "!",		shellhelp,	shell,		0 },
 	{ "environ",	envhelp,	env_cmd,	0 },
 	{ "?",		helphelp,	help,		0 },
-#if	defined(SKEY)
+#ifdef SKEY
 	{ "skey",	skeyhelp,	skey_calc,	0 },
 #endif		
 	{ 0,		0,		0,		0 }
@@ -2178,25 +2187,6 @@ static Command cmdtab2[] = {
 	{ "crmod",	crmodhelp,	togcrmod,	0 },
 	{ 0,		0,		0,		0 }
 };
-
-
-/*
- * Call routine with argc, argv set from args (terminated by 0).
- */
-
-    /*VARARGS1*/
-    static int
-call(intrtn_t routine, ...)
-{
-    va_list ap;
-    char *args[100];
-    int argno = 0;
-
-    va_start(ap, routine);
-    while ((args[argno++] = va_arg(ap, char *)) != 0);
-    va_end(ap);
-    return (*routine)(argno-1, args);
-}
 
 
     static Command *

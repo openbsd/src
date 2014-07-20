@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.26 2014/07/20 10:55:26 guenther Exp $	*/
+/*	$OpenBSD: externs.h,v 1.27 2014/07/20 12:08:55 guenther Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -62,6 +62,10 @@ extern int
     netdata,		/* Print out network data flow */
     prettydump,		/* Print "netdata" output in user readable format */
     termdata,		/* Print out terminal data flow */
+    resettermname,
+    linemode,
+    kludgelinemode,
+    want_status_response,
     debug;		/* Debug level */
 
 extern cc_t escape;	/* Escape to command mode */
@@ -78,6 +82,8 @@ extern char
     dont[],
     will[],
     wont[],
+    will_wont_resp[],
+    do_dont_resp[],
     options[],		/* All the little options */
     *hostname;		/* Who are we connected to? */
 
@@ -165,7 +171,7 @@ unsigned char * env_getvalue(unsigned char *var, int exported_only);
 void set_escape_char(char *s);
 
 #ifdef SIGINFO
-void ayt_status(void);
+void ayt_status(int sig);
 #endif
 int tn(int argc, char **argv);
 void command(int top, char *tbuf, int cnt);

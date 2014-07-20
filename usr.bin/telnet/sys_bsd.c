@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.25 2014/07/20 10:55:26 guenther Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.26 2014/07/20 12:08:55 guenther Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -56,7 +56,6 @@ int
 #define TELNET_FD_NUM	3
 
 struct	termios old_tc = { 0 };
-extern struct termios new_tc;
 
     void
 init_sys()
@@ -68,9 +67,6 @@ init_sys()
 }
 
 
-#ifdef	KLUDGELINEMODE
-extern int kludgelinemode;
-#endif
 /*
  * TerminalSpecialChars()
  *
@@ -413,9 +409,7 @@ TerminalNewMode(f)
     } else {
 	sigset_t mask;
 #ifdef	SIGINFO
-	void ayt_status();
-
-	(void) signal(SIGINFO, (void (*)(int))ayt_status);
+	(void) signal(SIGINFO, ayt_status);
 #endif
 	(void) signal(SIGTSTP, SIG_DFL);
 	sigemptyset(&mask);
@@ -610,7 +604,7 @@ ayt(sig)
     if (connected)
 	sendayt();
     else
-	ayt_status();
+	ayt_status(sig);
 }
 #endif
 

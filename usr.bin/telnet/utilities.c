@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.18 2014/07/20 09:20:48 guenther Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.19 2014/07/20 12:08:55 guenther Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -177,7 +177,6 @@ printoption(direction, cmd, option)
 optionstatus()
 {
     int i;
-    extern char will_wont_resp[], do_dont_resp[];
 
     for (i = 0; i < 256; i++) {
 	if (do_dont_resp[i]) {
@@ -257,7 +256,6 @@ printsub(direction, pointer, length)
     int		  length;	/* length of suboption data */
 {
     int i;
-    extern int want_status_response;
 
     if (showoptions || direction == 0 ||
 	(want_status_response && (pointer[0] == TELOPT_STATUS))) {
