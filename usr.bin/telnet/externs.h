@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.19 2014/07/20 03:00:31 deraadt Exp $	*/
+/*	$OpenBSD: externs.h,v 1.20 2014/07/20 05:22:02 guenther Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -289,7 +289,7 @@ int dosynch (void);
 
 cc_t *tcval (int);
 
-int quit (void);
+__dead int quit(void);
 
 /* genget.c */
 
@@ -312,7 +312,7 @@ void optionstatus(void);
 void printsub(int direction, unsigned char *pointer, int length);
 void EmptyTerminal(void);
 void SetForExit(void);
-void Exit(int returnCode);
+__dead void Exit(int returnCode);
 void ExitString(char *string, int returnCode);
 
 extern struct	termios new_tc;

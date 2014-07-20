@@ -1,4 +1,4 @@
-/*	$OpenBSD: network.c,v 1.10 2014/07/19 23:50:38 guenther Exp $	*/
+/*	$OpenBSD: network.c,v 1.11 2014/07/20 05:22:02 guenther Exp $	*/
 /*	$NetBSD: network.c,v 1.5 1996/02/28 21:04:06 thorpej Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include "telnet_locl.h"
-#include <err.h>
+#include <poll.h>
 
 Ring		netoring, netiring;
 unsigned char	netobuf[2*BUFSIZ], netibuf[BUFSIZ];
@@ -72,8 +72,7 @@ stilloob()
 
     if (value < 0) {
 	perror("poll");
-	(void) quit();
-	/* NOTREACHED */
+	quit();
     }
     if (pfd[0].revents & POLLRDBAND)
 	return 1;

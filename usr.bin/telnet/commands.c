@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.58 2014/07/20 04:07:16 guenther Exp $	*/
+/*	$OpenBSD: commands.c,v 1.59 2014/07/20 05:22:02 guenther Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -31,7 +31,14 @@
  */
 
 #include "telnet_locl.h"
+
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
+
 #include <err.h>
+#include <pwd.h>
+#include <stdarg.h>
 
 int tos = -1;
 
@@ -1348,13 +1355,11 @@ bye(argc, argv)
     return 0; /* NOTREACHED */
 }
 
-/*VARARGS*/
-	int
-quit()
+int
+quit(void)
 {
 	(void) call(bye, "bye", "fromquit", 0);
 	Exit(0);
-	return 0; /*NOTREACHED*/
 }
 
 /*VARARGS*/
@@ -1889,7 +1894,6 @@ tn(argc, argv)
     int error;
     struct sockaddr_in sin;
     unsigned long temp;
-    extern char *inet_ntoa();
     char *srp = 0;
     int srlen;
     char *cmd, *hostp = 0, *portp = 0, *user = 0, *aliasp = 0;
@@ -2353,7 +2357,6 @@ sourceroute(arg, cpp, lenp)
 {
 	static char lsr[44];
 	char *cp, *cp2, *lsrp, *lsrep;
-	int tmp;
 	struct in_addr sin_addr;
 	struct hostent *host = 0;
 	char c;
@@ -2420,8 +2423,7 @@ sourceroute(arg, cpp, lenp)
 		if (!c)
 			cp2 = 0;
 
-		if ((tmp = inet_addr(cp)) != -1) {
-			sin_addr.s_addr = tmp;
+		if ((sin_addr.s_addr = inet_addr(cp)) != INADDR_NONE) {
 		} else if ((host = gethostbyname(cp))) {
 			memmove((caddr_t)&sin_addr,
 				host->h_addr_list[0], 

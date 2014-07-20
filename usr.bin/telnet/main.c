@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2014/07/19 23:50:38 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2014/07/20 05:22:02 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -78,8 +78,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
 	int ch;
 	char *user, *alias;
 	const char *errstr;

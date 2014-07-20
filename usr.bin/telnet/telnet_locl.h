@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet_locl.h,v 1.5 2014/07/19 23:50:38 guenther Exp $	*/
+/*	$OpenBSD: telnet_locl.h,v 1.6 2014/07/20 05:22:02 guenther Exp $	*/
 /* $KTH: telnet_locl.h,v 1.13 1997/11/03 21:37:55 assar Exp $ */
 
 /*
@@ -39,42 +39,25 @@
  * SUCH DAMAGE.
  */
 
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <ctype.h>
-#include <signal.h>
-#include <errno.h>
-#include <setjmp.h>
 #include <sys/types.h>
-#include <unistd.h>
+#include <sys/socket.h>
 
-/* termios.h *must* be included before curses.h */
-#include <termios.h>
+#include <ctype.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include <pwd.h>
-#include <poll.h>
-#include <sys/time.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <termios.h>
 #include <time.h>
-#include <sys/param.h>
-#include <sys/ioctl.h>
-#include <sys/resource.h>
-#include <sys/wait.h>
-#include <sys/file.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#include <arpa/inet.h>
+#include <unistd.h>
 
 #include <arpa/telnet.h>
 
 #include "ring.h"
 #include "externs.h"
 #include "defines.h"
-
-/* prototypes */
 

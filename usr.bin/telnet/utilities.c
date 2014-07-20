@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.12 2014/07/19 23:50:38 guenther Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.13 2014/07/20 05:22:02 guenther Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -30,11 +30,13 @@
  * SUCH DAMAGE.
  */
 
+/* these three defines affect the behavior of <arpa/telnet.h> */
 #define	TELOPTS
 #define	TELCMDS
 #define	SLC_NAMES
 
 #include "telnet_locl.h"
+#include <poll.h>
 
 FILE	*NetTrace = 0;		/* Not in bss, since needs to stay */
 int	prettydump;
