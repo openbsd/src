@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.14 2014/07/20 06:39:41 guenther Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.15 2014/07/20 07:34:43 guenther Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include "telnet_locl.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <poll.h>
 
 FILE	*NetTrace = 0;		/* Not in bss, since needs to stay */
@@ -62,7 +63,7 @@ upcase(char *argument)
  * The following are routines used to print out debugging information.
  */
 
-unsigned char NetTraceFile[MAXPATHLEN] = "(standard output)";
+unsigned char NetTraceFile[PATH_MAX] = "(standard output)";
 
     void
 SetNetTrace(file)
