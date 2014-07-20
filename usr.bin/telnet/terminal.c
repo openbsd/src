@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.10 2014/07/20 08:12:46 guenther Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.11 2014/07/20 09:31:25 guenther Exp $	*/
 /*	$NetBSD: terminal.c,v 1.5 1996/02/28 21:04:17 thorpej Exp $	*/
 
 /*
@@ -46,9 +46,6 @@ cc_t termFlushChar;
 # endif
 # ifndef VLNEXT
 cc_t termLiteralNextChar;
-# endif
-# ifndef VSUSP
-cc_t termSuspChar;
 # endif
 # ifndef VWERASE
 cc_t termWerasChar;

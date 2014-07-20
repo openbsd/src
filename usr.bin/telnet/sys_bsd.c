@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.21 2014/07/20 09:20:48 guenther Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.22 2014/07/20 09:31:25 guenther Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -166,11 +166,9 @@ tcval(func)
     case SLC_XOFF:	return(&termStopChar);
     case SLC_FORW1:	return(&termForw1Char);
     case SLC_FORW2:	return(&termForw2Char);
+    case SLC_SUSP:	return(&termSuspChar);
 # ifdef	VDISCARD
     case SLC_AO:	return(&termFlushChar);
-# endif
-# ifdef	VSUSP
-    case SLC_SUSP:	return(&termSuspChar);
 # endif
 # ifdef	VWERASE
     case SLC_EW:	return(&termWerasChar);
@@ -242,9 +240,7 @@ TerminalDefaultChars()
  *		local/no signal mapping
  */
 
-#ifdef SIGTSTP
 static void susp();
-#endif /* SIGTSTP */
 #ifdef SIGINFO
 static void ayt();
 #endif
@@ -381,9 +377,7 @@ TerminalNewMode(f)
     }
 
     if (f != -1) {
-#ifdef	SIGTSTP
 	(void) signal(SIGTSTP, susp);
-#endif	/* SIGTSTP */
 #ifdef	SIGINFO
 	(void) signal(SIGINFO, ayt);
 #endif
@@ -417,20 +411,16 @@ TerminalNewMode(f)
 # endif
 	}
     } else {
-#ifdef	SIGTSTP
 	sigset_t mask;
-#endif	/* SIGTSTP */
 #ifdef	SIGINFO
 	void ayt_status();
 
 	(void) signal(SIGINFO, (void (*)(int))ayt_status);
 #endif
-#ifdef	SIGTSTP
 	(void) signal(SIGTSTP, SIG_DFL);
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGTSTP);
 	sigprocmask(SIG_UNBLOCK, &mask, NULL);
-#endif	/* SIGTSTP */
 	tmp_tc = old_tc;
     }
     if (tcsetattr(tin, TCSADRAIN, &tmp_tc) < 0)
@@ -611,7 +601,6 @@ intr2(sig)
     }
 }
 
-#ifdef	SIGTSTP
     /* ARGSUSED */
     void
 susp(sig)
@@ -622,7 +611,6 @@ susp(sig)
     if (localchars)
 	sendsusp();
 }
-#endif
 
 #ifdef	SIGWINCH
     /* ARGSUSED */
@@ -661,9 +649,7 @@ sys_telnet_init()
 #ifdef	SIGWINCH
     (void) signal(SIGWINCH, sendwin);
 #endif
-#ifdef	SIGTSTP
     (void) signal(SIGTSTP, susp);
-#endif
 #ifdef	SIGINFO
     (void) signal(SIGINFO, ayt);
 #endif

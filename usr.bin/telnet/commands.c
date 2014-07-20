@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.63 2014/07/20 08:56:47 guenther Exp $	*/
+/*	$OpenBSD: commands.c,v 1.64 2014/07/20 09:31:25 guenther Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -1264,7 +1264,6 @@ togcrmod()
     int
 telnetsuspend()
 {
-#ifdef	SIGTSTP
     setcommandmode();
     {
 	long oldrows, oldcols, newrows, newcols, err;
@@ -1284,9 +1283,6 @@ telnetsuspend()
     /* reget parameters in case they were changed */
     TerminalSaveState();
     setconnmode(0);
-#else
-    printf("Suspend is not supported.  Try the '!' command instead\r\n");
-#endif
     return 1;
 }
 
