@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.103 2014/07/20 11:56:15 stsp Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.104 2014/07/20 11:57:05 stsp Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -7856,7 +7856,7 @@ bwi_dma_mbuf_create(struct bwi_softc *sc)
 
 			for (k = 0; k < j; ++k) {
 				bus_dmamap_destroy(sc->sc_dmat,
-				    rbd->rbd_buf[j].rb_dmap);
+				    rbd->rbd_buf[k].rb_dmap);
 			}
 			bus_dmamap_destroy(sc->sc_dmat,
 			    rbd->rbd_tmp_dmap);
