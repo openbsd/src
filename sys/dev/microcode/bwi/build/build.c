@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.3 2014/07/12 19:01:49 tedu Exp $ */
+/*	$OpenBSD: build.c,v 1.4 2014/07/20 02:03:21 guenther Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -104,12 +105,14 @@ main(int argc, char *argv[])
 
 	/* write header */
 	if (write(fdout, &nfiles, sizeof(nfiles)) < 1) {
+		int saved_errno = errno;
 		close(fdout);
-		err(1, "write header 1 to output file failed\n");
+		errc(1, saved_errno, "write header 1 to output file failed");
 	}
 	if (write(fdout, h, headersize - sizeof(nfiles)) < 1) {
+		int saved_errno = errno;
 		close(fdout);
-		err(1, "write header 2 to output file failed\n");
+		errc(1, saved_errno, "write header 2 to output file failed");
 	}
 
 	/* network to host byte order */
@@ -122,25 +125,29 @@ main(int argc, char *argv[])
 	/* write each file */
 	for (i = 0; i < nfiles; i++) {
 		if ((fdin = open(h[i].filename, O_RDONLY)) == -1) {
+			int saved_errno = errno;
 			close(fdout);
-			err(1, "open input file failed\n");
+			errc(1, saved_errno, "open input file failed");
 		}
 		if ((p = malloc(h[i].filesize)) == NULL) {
+			int saved_errno = errno;
 			close(fdout);
 			close(fdin);
-			err(1, "malloc");
+			errc(1, saved_errno, "malloc");
 		}
 		if (read(fdin, p, h[i].filesize) < 1) {
+			int saved_errno = errno;
 			free(p);
 			close(fdout);
 			close(fdin);
-			err(1, "read input file failed\n");
+			errc(1, saved_errno, "read input file failed");
 		}
 		if (write(fdout, p, h[i].filesize) < 1) {
+			int saved_errno = errno;
 			free(p);
 			close(fdout);
 			close(fdin);
-			err(1, "write to output file failed\n");
+			errc(1, saved_errno, "write to output file failed");
 		}
 		free(p);
 		close(fdin);
