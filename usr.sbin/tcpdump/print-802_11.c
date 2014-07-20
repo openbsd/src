@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.13 2013/01/17 02:53:07 claudio Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.14 2014/07/20 17:52:34 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -153,7 +153,7 @@ ieee80211_data(struct ieee80211_frame *wh, u_int len)
 	u_int8_t *t = (u_int8_t *)wh;
 	struct ieee80211_frame_addr4 *w4;
 	u_int datalen;
-	int data = !(wh->i_fc[1] & IEEE80211_FC0_SUBTYPE_NODATA);
+	int data = !(wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_NODATA);
 	u_char *esrc = NULL, *edst = NULL;
 
 	TCHECK(*wh);
