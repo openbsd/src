@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.783 2014/07/20 18:13:22 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.784 2014/07/20 20:08:44 deraadt Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1821,6 +1821,13 @@ apply()
 		    >>/mnt/etc/sysctl.conf
 	fi
 
+	if [[ -n $lidsuspend ]]; then
+		[[ ! -f /mnt/etc/sysctl.conf ]] && \
+			echo "# created during install" >/mnt/etc/sysctl.conf
+		echo "machdep.lidsuspend=1 # Try to suspend on lid close" \
+		    >>/mnt/etc/sysctl.conf
+	fi
+
 	if [[ $xdm == y && -x /mnt/usr/X11R6/bin/xdm ]]; then
 		echo "xdm_flags=		# enabled during install" \
 			>>/mnt/etc/rc.conf.local
@@ -1853,6 +1860,7 @@ questions() {
 
 	aperture=
 	xdm=
+	lidsuspend=
 	if [[ -n $DISPLAY ]]; then
 		[[ -n $(scan_dmesg '/^vga.*: aperture needed/p') ]] &&
 			ask_yn "Do you expect to run the X Window System?" yes &&
@@ -1861,6 +1869,10 @@ questions() {
 		if [[ -n $MDXDM ]]; then
 			ask_yn "Do you want the X Window System to be started by xdm(1)?"
 			xdm=$resp
+		fi
+		if [[ -n $MDLID ]]; then
+			ask_yn "Do you want to suspend on lid close?" yes && \
+			    lidsuspend=$resp
 		fi
 	fi
 
