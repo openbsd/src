@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.37 2014/07/20 18:05:21 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.38 2014/07/20 19:47:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -90,10 +90,9 @@ get_hibernate_io_function(dev_t dev)
 		    vaddr_t addr, size_t size, int op, void *page);
 		extern int sr_hibernate_io(dev_t dev, daddr_t blkno,
 		    vaddr_t addr, size_t size, int op, void *page);
-		struct device *dv;
+		struct device *dv = disk_lookup(&sd_cd, DISKUNIT(dev));
 
 #if NAHCI > 0
-		dv = disk_lookup(&sd_cd, DISKUNIT(swdevt[0].sw_dev));
 		if (dv && dv->dv_parent && dv->dv_parent->dv_parent &&
 		    strcmp(dv->dv_parent->dv_parent->dv_cfdata->cf_driver->cd_name,
 		    "ahci") == 0)
