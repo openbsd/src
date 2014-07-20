@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.102 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.103 2014/07/20 11:56:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -1720,11 +1720,14 @@ bwi_mac_fw_alloc(struct bwi_mac *mac)
 	char fwname[64];
 	int idx, error;
 
-	error = loadfirmware(name, &mac->mac_fw, &mac->mac_fw_size);
-	if (error != 0) {
-		printf("%s: error %d, could not read firmware %s\n",
-		    sc->sc_dev.dv_xname, error, name);
-		return (EIO);
+	if (mac->mac_fw == NULL) {
+		error = loadfirmware(name, &mac->mac_fw, &mac->mac_fw_size);
+		if (error != 0) {
+			printf("%s: error %d, could not read firmware %s\n",
+			    sc->sc_dev.dv_xname, error, name);
+			mac->mac_fw = NULL;
+			return (EIO);
+		}
 	}
 
 	if (mac->mac_ucode == NULL) {
