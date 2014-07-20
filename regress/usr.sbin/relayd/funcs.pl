@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.15 2014/07/10 19:42:59 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.16 2014/07/20 19:18:32 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -407,16 +407,31 @@ sub check_len {
 sub check_md5 {
 	my ($c, $r, $s, %args) = @_;
 
-	my $cmd5 = $c->loggrep(qr/^MD5: /) unless $args{client}{nocheck};
-	my $smd5 = $s->loggrep(qr/^MD5: /) unless $args{server}{nocheck};
-	!$cmd5 || !$smd5 || ref($args{md5}) eq 'ARRAY' || $cmd5 eq $smd5
-	    or die "client: $cmd5", "server: $smd5", "md5 mismatch";
-	my $md5 = ref($args{md5}) eq 'ARRAY' ?
-	    join('|', @{$args{md5}}) : $args{md5};
-	!$md5 || !$cmd5 || $cmd5 =~ /^MD5: ($md5)$/
-	    or die "client: $cmd5", "md5 $md5 expected";
-	!$md5 || !$smd5 || $smd5 =~ /^MD5: ($md5)$/
-	    or die "server: $smd5", "md5 $md5 expected";
+	my @cmd5 = $c->loggrep(qr/^MD5: /) unless $args{client}{nocheck};
+	my @smd5 = $s->loggrep(qr/^MD5: /) unless $args{server}{nocheck};
+	!@cmd5 || !@smd5 || $cmd5[0] eq $smd5[0]
+	    or die "client: $cmd5[0]", "server: $smd5[0]", "md5 mismatch";
+
+	my @md5 = ref($args{md5}) eq 'ARRAY' ? @{$args{md5}} : $args{md5} || ()
+	    or return;
+	foreach my $md5 (@md5) {
+		unless ($args{client}{nocheck}) {
+			my $cmd5 = shift @cmd5
+			    or die "too few md5 in client log";
+			$cmd5 =~ /^MD5: ($md5)$/
+			    or die "client: $cmd5", "md5 $md5 expected";
+		}
+		unless ($args{server}{nocheck}) {
+			my $smd5 = shift @smd5
+			    or die "too few md5 in server log";
+			$smd5 =~ /^MD5: ($md5)$/
+			    or die "server: $smd5", "md5 $md5 expected";
+		}
+	}
+	@cmd5 && ref($args{md5}) eq 'ARRAY'
+	    and die "too many md5 in client log";
+	@smd5 && ref($args{md5}) eq 'ARRAY'
+	    and die "too many md5 in server log";
 }
 
 sub check_loggrep {
