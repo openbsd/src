@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2014/07/20 10:32:23 jsg Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2014/07/20 11:20:52 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ main(argc, argv)
 	argv += optind;
 
 	if (argc) {
-		char *args[7], **argp = args;
+		char *args[8], **argp = args;
 
 		if (argc > 2)
 			usage();
