@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.7 2014/07/19 23:50:38 guenther Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.8 2014/07/20 06:24:19 guenther Exp $	*/
 /*	$NetBSD: terminal.c,v 1.5 1996/02/28 21:04:17 thorpej Exp $	*/
 
 /*
@@ -72,16 +72,12 @@ cc_t termAytChar;
  * initialize the terminal data structures.
  */
 
-    void
+void
 init_terminal()
 {
-    if (ring_init(&ttyoring, ttyobuf, sizeof ttyobuf) != 1) {
-	exit(1);
-    }
-    if (ring_init(&ttyiring, ttyibuf, sizeof ttyibuf) != 1) {
-	exit(1);
-    }
-    autoflush = TerminalAutoFlush();
+	ring_init(&ttyoring, ttyobuf, sizeof ttyobuf);
+	ring_init(&ttyiring, ttyibuf, sizeof ttyibuf);
+	autoflush = TerminalAutoFlush();
 }
 
 

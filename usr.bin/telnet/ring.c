@@ -1,4 +1,4 @@
-/*	$OpenBSD: ring.c,v 1.6 2014/07/19 23:50:38 guenther Exp $	*/
+/*	$OpenBSD: ring.c,v 1.7 2014/07/20 06:24:19 guenther Exp $	*/
 /*	$NetBSD: ring.c,v 1.7 1996/02/28 21:04:07 thorpej Exp $	*/
 
 /*
@@ -80,21 +80,19 @@ static u_long ring_clock = 0;
 
 /* Buffer state transition routines */
 
-    int
+void
 ring_init(ring, buffer, count)
     Ring *ring;
     unsigned char *buffer;
     int count;
 {
-    memset((char *)ring, 0, sizeof *ring);
+    memset(ring, 0, sizeof *ring);
 
     ring->size = count;
 
     ring->supply = ring->consume = ring->bottom = buffer;
 
     ring->top = ring->bottom+ring->size;
-
-    return 1;
 }
 
 /* Mark routines */

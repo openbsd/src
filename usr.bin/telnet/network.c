@@ -1,4 +1,4 @@
-/*	$OpenBSD: network.c,v 1.11 2014/07/20 05:22:02 guenther Exp $	*/
+/*	$OpenBSD: network.c,v 1.12 2014/07/20 06:24:19 guenther Exp $	*/
 /*	$NetBSD: network.c,v 1.5 1996/02/28 21:04:06 thorpej Exp $	*/
 
 /*
@@ -40,16 +40,12 @@ unsigned char	netobuf[2*BUFSIZ], netibuf[BUFSIZ];
  * Initialize internal network data structures.
  */
 
-    void
-init_network()
+void
+init_network(void)
 {
-    if (ring_init(&netoring, netobuf, sizeof netobuf) != 1) {
-	exit(1);
-    }
-    if (ring_init(&netiring, netibuf, sizeof netibuf) != 1) {
-	exit(1);
-    }
-    NetTrace = stdout;
+	ring_init(&netoring, netobuf, sizeof netobuf);
+	ring_init(&netiring, netibuf, sizeof netibuf);
+	NetTrace = stdout;
 }
 
 
