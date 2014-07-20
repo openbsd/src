@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.66 2014/07/20 10:18:10 guenther Exp $	*/
+/*	$OpenBSD: commands.c,v 1.67 2014/07/20 10:55:26 guenther Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -54,6 +54,7 @@ char	*hostname;
 
 typedef int (*intrtn_t)(int, char**);
 static int call(intrtn_t, ...);
+static unsigned long sourceroute(char *arg, char **cpp, int *lenp);
 
 typedef struct {
 	char	*name;		/* command name */
@@ -1341,7 +1342,7 @@ bye(argc, argv)
     if (connected) {
 	(void) shutdown(net, 2);
 	printf("Connection closed.\r\n");
-	(void) NetClose(net);
+	(void)close(net);
 	connected = 0;
 	resettermname = 1;
 	/* reset options */
@@ -1462,6 +1463,12 @@ struct envlist {
 };
 
 static void	env_help(void);
+static void	env_undefine(unsigned char *);
+static void	env_export(unsigned char *);
+static void	env_unexport(unsigned char *);
+static void	env_send(unsigned char *);
+static void	env_list(void);
+static struct env_lst *env_find(unsigned char *var);
 
 struct envlist EnvList[] = {
     { "define",	"Define an environment variable",
@@ -1480,7 +1487,7 @@ struct envlist EnvList[] = {
     { 0 },
 };
 
-    static void
+static void
 env_help()
 {
     struct envlist *c;
@@ -1495,7 +1502,7 @@ env_help()
     }
 }
 
-    static struct envlist *
+static struct envlist *
 getenvcmd(name)
     char *name;
 {
@@ -1503,7 +1510,7 @@ getenvcmd(name)
 		genget(name, (char **) EnvList, sizeof(struct envlist));
 }
 
-    int
+static int
 env_cmd(argc, argv)
     int  argc;
     char *argv[];
@@ -1548,7 +1555,7 @@ struct env_lst {
 
 struct env_lst envlisthead;
 
-	struct env_lst *
+static struct env_lst *
 env_find(var)
 	unsigned char *var;
 {
@@ -1647,7 +1654,7 @@ env_define(var, value)
 	return(ep);
 }
 
-	void
+static void
 env_undefine(var)
 	unsigned char *var;
 {
@@ -1665,7 +1672,7 @@ env_undefine(var)
 	}
 }
 
-	void
+static void
 env_export(var)
 	unsigned char *var;
 {
@@ -1675,7 +1682,7 @@ env_export(var)
 		ep->export = 1;
 }
 
-	void
+static void
 env_unexport(var)
 	unsigned char *var;
 {
@@ -1685,7 +1692,7 @@ env_unexport(var)
 		ep->export = 0;
 }
 
-	void
+static void
 env_send(var)
 	unsigned char *var;
 {
@@ -1709,7 +1716,7 @@ env_send(var)
 	env_opt_end(0);
 }
 
-	void
+static void
 env_list()
 {
 	struct env_lst *ep;
@@ -2109,7 +2116,7 @@ tn(argc, argv)
     (void) call(status, "status", "notmuch", 0);
     if (setjmp(peerdied) == 0)
 	telnet(user);
-    (void) NetClose(net);
+    (void)close(net);
     ExitString("Connection closed by foreign host.\r\n",1);
 }
 
@@ -2344,7 +2351,8 @@ help(argc, argv)
  *		pointed to by *cpp is.
  *
  */
-	unsigned long
+
+static unsigned long
 sourceroute(arg, cpp, lenp)
 	char	*arg;
 	char	**cpp;

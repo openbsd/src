@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.27 2014/07/20 10:32:23 jsg Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.28 2014/07/20 10:55:26 guenther Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -53,6 +53,23 @@ static unsigned char	subbuffer[SUBBUFSIZE],
 #define	SB_PEEK()	((*subpointer)&0xff)
 #define	SB_EOF()	(subpointer >= subend)
 #define	SB_LEN()	(subend - subpointer)
+
+static void	lm_will(unsigned char *, int);
+static void	lm_wont(unsigned char *, int);
+static void	lm_do(unsigned char *, int);
+static void	lm_dont(unsigned char *, int);
+
+static void	slc_init(void);
+static void	slc_import(int);
+static void	slc_export(void);
+static void	slc_start_reply(void);
+static void	slc_add_reply(unsigned char, unsigned char, cc_t);
+static void	slc_end_reply(void);
+static void	slc(unsigned char *, int);
+static int	slc_update(void);
+
+static void	env_opt(unsigned char *, int);
+static void	env_opt_start(void);
 
 char	options[256];		/* The combined options */
 char	do_dont_resp[256];
@@ -229,7 +246,7 @@ send_wont(c, init)
 }
 
 
-	void
+static void
 willoption(option)
 	int option;
 {
@@ -283,7 +300,7 @@ willoption(option)
 
 }
 
-	void
+static void
 wontoption(option)
 	int option;
 {
@@ -332,7 +349,7 @@ wontoption(option)
 	set_my_state_dont(option);
 }
 
-	static void
+static void
 dooption(option)
 	int option;
 {
@@ -422,7 +439,7 @@ dooption(option)
 	set_my_state_will(option);
 }
 
-	static void
+static void
 dontoption(option)
 	int option;
 {
@@ -794,7 +811,7 @@ suboption()
 
 static unsigned char str_lm[] = { IAC, SB, TELOPT_LINEMODE, 0, 0, IAC, SE };
 
-    void
+static void
 lm_will(cmd, len)
     unsigned char *cmd;
     int len;
@@ -817,7 +834,7 @@ lm_will(cmd, len)
     }
 }
 
-    void
+static void
 lm_wont(cmd, len)
     unsigned char *cmd;
     int len;
@@ -834,7 +851,7 @@ lm_wont(cmd, len)
     }
 }
 
-    void
+static void
 lm_do(cmd, len)
     unsigned char *cmd;
     int len;
@@ -857,7 +874,7 @@ lm_do(cmd, len)
     }
 }
 
-    void
+static void
 lm_dont(cmd, len)
     unsigned char *cmd;
     int len;
@@ -920,7 +937,7 @@ struct spc {
 #define SLC_RVALUE	2
 static int slc_mode = SLC_EXPORT;
 
-	void
+static void
 slc_init()
 {
 	struct spc *spcp;
@@ -1005,7 +1022,7 @@ unsigned char slc_import_def[] = {
 	IAC, SB, TELOPT_LINEMODE, LM_SLC, 0, SLC_DEFAULT, 0, IAC, SE
 };
 
-    void
+static void
 slc_import(def)
     int def;
 {
@@ -1021,7 +1038,7 @@ slc_import(def)
 /*@*/ else printf("slc_import: not enough room\n");
 }
 
-    void
+static void
 slc_export()
 {
     struct spc *spcp;
@@ -1045,7 +1062,7 @@ slc_export()
     setconnmode(1);	/* Make sure the character values are set */
 }
 
-	void
+static void
 slc(cp, len)
 	unsigned char *cp;
 	int len;
@@ -1147,7 +1164,7 @@ slc_add(unsigned char ch)
 	return *slc_replyp++ = ch;
 }
 
-	void
+static void
 slc_start_reply()
 {
 	slc_replyp = slc_reply;
@@ -1157,7 +1174,7 @@ slc_start_reply()
 	slc_add(LM_SLC);
 }
 
-	void
+static void
 slc_add_reply(func, flags, value)
 	unsigned char func;
 	unsigned char flags;
@@ -1175,7 +1192,7 @@ slc_add_reply(func, flags, value)
 		slc_add(IAC);
 }
 
-    void
+static void
 slc_end_reply()
 {
     int len;
@@ -1197,7 +1214,7 @@ slc_end_reply()
 /*@*/else printf("slc_end_reply: not enough room\n");
 }
 
-	int
+static int
 slc_update()
 {
 	struct spc *spcp;
@@ -1215,7 +1232,7 @@ slc_update()
 	return(need_update);
 }
 
-	void
+static void
 env_opt(buf, len)
 	unsigned char *buf;
 	int len;
@@ -1276,7 +1293,7 @@ opt_add(unsigned char ch)
 		return;
 	*opt_replyp++ = ch;
 }
-	void
+static void
 env_opt_start()
 {
 	unsigned char *p;

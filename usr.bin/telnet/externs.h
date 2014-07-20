@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.25 2014/07/20 10:18:10 guenther Exp $	*/
+/*	$OpenBSD: externs.h,v 1.26 2014/07/20 10:55:26 guenther Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -158,18 +158,11 @@ extern jmp_buf
 /* commands.c */
 
 struct env_lst *env_define (unsigned char *, unsigned char *);
-struct env_lst *env_find(unsigned char *var);
 void env_init (void);
-void env_undefine (unsigned char *);
-void env_export (unsigned char *);
-void env_unexport (unsigned char *);
-void env_send (unsigned char *);
-void env_list (void);
 unsigned char * env_default(int init, int welldefined);
 unsigned char * env_getvalue(unsigned char *var, int exported_only);
 
 void set_escape_char(char *s);
-unsigned long sourceroute(char *arg, char **cpp, int *lenp);
 
 #ifdef SIGINFO
 void ayt_status(void);
@@ -196,8 +189,9 @@ void TerminalDefaultChars(void);
 cc_t *tcval(int func);
 void TerminalSpeeds(long *input_speed, long *output_speed);
 int TerminalWindowSize(long *rows, long *cols);
-int NetClose(int fd);
-void NetNonblockingIO(int fd, int onoff);
+void TerminalNewMode(int);
+void TerminalSaveState(void);
+void sys_telnet_init(void);
 int process_rings(int netin, int netout, int netex, int ttyin, int ttyout,
 		  int poll);
 
@@ -208,6 +202,7 @@ void init_telnet(void);
 void tel_leave_binary(int rw);
 void tel_enter_binary(int rw);
 int opt_welldefined(char *ep);
+void telnet(char *);
 int telrcv(void);
 int rlogin_susp(void);
 void intp(void);
@@ -216,55 +211,24 @@ void sendabort(void);
 void sendsusp(void);
 void sendeof(void);
 void sendayt(void);
+void sendnaws(void);
 
 void xmitAO(void);
 void xmitEL(void);
 void xmitEC(void);
-
-
-void     Dump (char, unsigned char *, int);
-void     printoption (char *, int, int);
-void     sendnaws (void);
-void     setconnmode (int);
-void     setcommandmode (void);
-void     setneturg (void);
-void     sys_telnet_init (void);
-void     telnet (char *);
-void     tel_enter_binary (int);
-void     TerminalNewMode (int);
-void     TerminalRestoreState (void);
-void     TerminalSaveState (void);
-void     tninit (void);
-void     willoption (int);
-void     wontoption (int);
-
 
 void     send_do (int, int);
 void     send_dont (int, int);
 void     send_will (int, int);
 void     send_wont (int, int);
 
-void     lm_will (unsigned char *, int);
-void     lm_wont (unsigned char *, int);
-void     lm_do (unsigned char *, int);
-void     lm_dont (unsigned char *, int);
 void     lm_mode (unsigned char *, int, int);
 
-void     slc_init (void);
 void     slcstate (void);
 void     slc_mode_export (int);
 void     slc_mode_import (int);
-void     slc_import (int);
-void     slc_export (void);
-void     slc (unsigned char *, int);
 void     slc_check (void);
-void     slc_start_reply (void);
-void     slc_add_reply (unsigned char, unsigned char, cc_t);
-void     slc_end_reply (void);
-int	 slc_update (void);
 
-void     env_opt (unsigned char *, int);
-void     env_opt_start (void);
 void     env_opt_start_info (void);
 void     env_opt_add (unsigned char *);
 void     env_opt_end (int);
@@ -290,6 +254,8 @@ int	Ambiguous(void *s);
 void init_terminal(void);
 int ttyflush(int drop);
 int getconnmode(void);
+void setconnmode(int);
+void setcommandmode(void);
 
 /* utilities.c */
 

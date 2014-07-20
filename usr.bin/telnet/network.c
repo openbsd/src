@@ -1,4 +1,4 @@
-/*	$OpenBSD: network.c,v 1.15 2014/07/20 10:18:10 guenther Exp $	*/
+/*	$OpenBSD: network.c,v 1.16 2014/07/20 10:55:26 guenther Exp $	*/
 /*	$NetBSD: network.c,v 1.5 1996/02/28 21:04:06 thorpej Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/socket.h>
 #include <errno.h>
 #include <poll.h>
+#include <unistd.h>
 
 Ring		netoring, netiring;
 unsigned char	netobuf[2*BUFSIZ], netibuf[BUFSIZ];
@@ -127,7 +128,7 @@ netflush()
 	if (errno != ENOBUFS && errno != EWOULDBLOCK) {
 	    setcommandmode();
 	    perror(hostname);
-	    (void)NetClose(net);
+	    (void)close(net);
 	    ring_clear_mark(&netoring);
 	    longjmp(peerdied, -1);
 	}
