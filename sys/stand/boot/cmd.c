@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.62 2014/06/27 20:35:37 tobias Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.63 2014/07/20 19:33:54 tobias Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -129,7 +129,6 @@ read_conf(void)
 		char *p = cmd_buf;
 
 		cmd.cmd = NULL;
-
 		do {
 			rc = read(fd, p, 1);
 		} while (rc > 0 && *p++ != '\n' &&
@@ -155,10 +154,8 @@ read_conf(void)
 				/* Don't want to run the truncated command */
 				rc = -1;
 			}
-
 			*p = '\0';
 		}
-
 	} while (rc > 0 && !(rc = docmd()));
 
 	close(fd);
@@ -378,25 +375,25 @@ Xstty(void)
 	char *cp;
 	dev_t dev;
 
-	if (cmd.argc == 1)
+	if (cmd.argc == 1) {
 		printf("%s speed is %d\n", ttyname(0), cnspeed(0, -1));
-	else {
-		dev = ttydev(cmd.argv[1]);
-		if (dev == NODEV)
-			printf("%s not a console device\n", cmd.argv[1]);
-		else {
-			if (cmd.argc == 2)
-				printf("%s speed is %d\n", cmd.argv[1],
-				       cnspeed(dev, -1));
-			else {
-				sp = 0;
-				for (cp = cmd.argv[2]; *cp && isdigit(*cp); cp++)
-					sp = sp * 10 + (*cp - '0');
-				cnspeed(dev, sp);
-			}
-		}
+		return 0;
+	}
+	dev = ttydev(cmd.argv[1]);
+	if (dev == NODEV) {
+		printf("%s not a console device\n", cmd.argv[1]);
+		return 0;
 	}
 
+	if (cmd.argc == 2)
+		printf("%s speed is %d\n", cmd.argv[1],
+		    cnspeed(dev, -1));
+	else {
+		sp = 0;
+		for (cp = cmd.argv[2]; isdigit(*cp); cp++)
+			sp = sp * 10 + (*cp - '0');
+		cnspeed(dev, sp);
+	}
 	return 0;
 }
 
@@ -407,8 +404,6 @@ Xtime(void)
 
 	if (cmd.argc == 1)
 		printf(ctime(&tt));
-	else {
-	}
 
 	return 0;
 }
@@ -429,8 +424,8 @@ Xls(void)
 		ls(cmd.path, &sb);
 	else {
 		if ((fd = opendir(cmd.path)) < 0) {
-			printf ("opendir(%s): %s\n", cmd.path,
-				strerror(errno));
+			printf("opendir(%s): %s\n", cmd.path,
+			    strerror(errno));
 			return 0;
 		}
 
@@ -440,10 +435,10 @@ Xls(void)
 		*p++ = '/';
 		*p = '\0';
 
-		while(readdir(fd, p) >= 0) {
+		while (readdir(fd, p) >= 0) {
 			if (stat(cmd.path, &sb) < 0)
 				printf("stat(%s): %s\n", cmd.path,
-				       strerror(errno));
+				    strerror(errno));
 			else
 				ls(p, &sb);
 		}
