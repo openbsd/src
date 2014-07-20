@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.19 2014/07/20 07:35:04 guenther Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.20 2014/07/20 08:12:46 guenther Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,11 @@
 #include "telnet_locl.h"
 
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <arpa/telnet.h>
+#include <errno.h>
 #include <poll.h>
+#include <string.h>
 #include <unistd.h>
 
 /*
@@ -578,18 +582,11 @@ deadpeer(sig)
 	longjmp(peerdied, -1);
 }
 
-volatile sig_atomic_t intr_happened = 0;
-volatile sig_atomic_t intr_waiting = 0;
-
     /* ARGSUSED */
     void
 intr(sig)
     int sig;
 {
-    if (intr_waiting) {
-	intr_happened = 1;
-	return;
-    }
     if (localchars) {
 	intp();
 	return;

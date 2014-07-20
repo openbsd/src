@@ -1,4 +1,4 @@
-/*	$OpenBSD: ring.c,v 1.7 2014/07/20 06:24:19 guenther Exp $	*/
+/*	$OpenBSD: ring.c,v 1.8 2014/07/20 08:12:46 guenther Exp $	*/
 /*	$NetBSD: ring.c,v 1.7 1996/02/28 21:04:07 thorpej Exp $	*/
 
 /*
@@ -30,7 +30,8 @@
  * SUCH DAMAGE.
  */
 
-#include "telnet_locl.h"
+#include <string.h>
+#include "ring.h"
 
 /*
  * This defines a structure for a ring buffer.
@@ -66,7 +67,7 @@
  * to ZERO on allocation, we need to make sure, when interpreting the
  * clock, that when the times are EQUAL, then the buffer is FULL.
  */
-static u_long ring_clock = 0;
+static unsigned long ring_clock = 0;
 
 
 #define	ring_empty(d) (((d)->consume == (d)->supply) && \

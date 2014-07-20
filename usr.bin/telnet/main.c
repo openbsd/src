@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2014/07/20 06:39:41 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2014/07/20 08:12:45 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -32,6 +32,9 @@
 
 #include "telnet_locl.h"
 
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 int family = AF_UNSPEC;

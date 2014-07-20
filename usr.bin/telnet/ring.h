@@ -1,4 +1,4 @@
-/*	$OpenBSD: ring.h,v 1.8 2014/07/20 06:24:19 guenther Exp $	*/
+/*	$OpenBSD: ring.h,v 1.9 2014/07/20 08:12:46 guenther Exp $	*/
 /*	$NetBSD: ring.h,v 1.5 1996/02/28 21:04:09 thorpej Exp $	*/
 
 /*
@@ -49,8 +49,8 @@ typedef struct {
 	unsigned char	*top;		/* highest address+1 in buffer */
 	unsigned char	*mark;		/* marker (user defined) */
 	int		size;		/* size in bytes of buffer */
-	u_long	consumetime;	/* help us keep straight full, empty, etc. */
-	u_long	supplytime;
+	unsigned long	consumetime;	/* help us keep straight full, empty, etc. */
+	unsigned long	supplytime;
 } Ring;
 
 /* Here are some functions and macros to deal with the ring buffer */

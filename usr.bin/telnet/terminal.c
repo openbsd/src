@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.9 2014/07/20 07:35:04 guenther Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.10 2014/07/20 08:12:46 guenther Exp $	*/
 /*	$NetBSD: terminal.c,v 1.5 1996/02/28 21:04:17 thorpej Exp $	*/
 
 /*
@@ -32,6 +32,8 @@
 
 #include "telnet_locl.h"
 
+#include <arpa/telnet.h>
+#include <errno.h>
 #include <unistd.h>
 
 Ring		ttyoring, ttyiring;

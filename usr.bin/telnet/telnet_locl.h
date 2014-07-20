@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet_locl.h,v 1.8 2014/07/20 07:35:04 guenther Exp $	*/
+/*	$OpenBSD: telnet_locl.h,v 1.9 2014/07/20 08:12:46 guenther Exp $	*/
 /* $KTH: telnet_locl.h,v 1.13 1997/11/03 21:37:55 assar Exp $ */
 
 /*
@@ -39,19 +39,10 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-
-#include <errno.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <termios.h>
-#include <time.h>
-
-#include <arpa/telnet.h>
 
 #include "ring.h"
 #include "externs.h"

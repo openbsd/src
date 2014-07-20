@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.15 2014/07/20 07:34:43 guenther Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.16 2014/07/20 08:12:46 guenther Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -37,9 +37,12 @@
 
 #include "telnet_locl.h"
 
+#include <arpa/telnet.h>
 #include <ctype.h>
 #include <limits.h>
 #include <poll.h>
+#include <stdlib.h>
+#include <string.h>
 
 FILE	*NetTrace = 0;		/* Not in bss, since needs to stay */
 int	prettydump;

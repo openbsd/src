@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.21 2014/07/20 07:35:04 guenther Exp $	*/
+/*	$OpenBSD: externs.h,v 1.22 2014/07/20 08:12:45 guenther Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -63,8 +63,6 @@ extern int
     prettydump,		/* Print "netdata" output in user readable format */
     termdata,		/* Print out terminal data flow */
     debug;		/* Debug level */
-
-extern volatile sig_atomic_t intr_happened, intr_waiting;	/* for interrupt handling */
 
 extern cc_t escape;	/* Escape to command mode */
 extern cc_t rlogin;	/* Rlogin mode escape character */

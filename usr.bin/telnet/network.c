@@ -1,4 +1,4 @@
-/*	$OpenBSD: network.c,v 1.12 2014/07/20 06:24:19 guenther Exp $	*/
+/*	$OpenBSD: network.c,v 1.13 2014/07/20 08:12:46 guenther Exp $	*/
 /*	$NetBSD: network.c,v 1.5 1996/02/28 21:04:06 thorpej Exp $	*/
 
 /*
@@ -31,6 +31,9 @@
  */
 
 #include "telnet_locl.h"
+
+#include <sys/socket.h>
+#include <errno.h>
 #include <poll.h>
 
 Ring		netoring, netiring;

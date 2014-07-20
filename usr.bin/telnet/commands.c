@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.61 2014/07/20 07:35:04 guenther Exp $	*/
+/*	$OpenBSD: commands.c,v 1.62 2014/07/20 08:12:45 guenther Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -32,15 +32,20 @@
 
 #include "telnet_locl.h"
 
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
+#include <arpa/telnet.h>
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 int tos = -1;
