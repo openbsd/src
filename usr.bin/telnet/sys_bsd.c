@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.22 2014/07/20 09:31:25 guenther Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.23 2014/07/20 09:59:42 guenther Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ tcval(func)
     void
 TerminalDefaultChars()
 {
-    memmove(new_tc.c_cc, old_tc.c_cc, sizeof(old_tc.c_cc));
+    memcpy(new_tc.c_cc, old_tc.c_cc, sizeof(old_tc.c_cc));
 # ifndef	VDISCARD
     termFlushChar = CONTROL('O');
 # endif

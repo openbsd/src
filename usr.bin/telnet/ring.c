@@ -1,4 +1,4 @@
-/*	$OpenBSD: ring.c,v 1.8 2014/07/20 08:12:46 guenther Exp $	*/
+/*	$OpenBSD: ring.c,v 1.9 2014/07/20 09:59:42 guenther Exp $	*/
 /*	$NetBSD: ring.c,v 1.7 1996/02/28 21:04:07 thorpej Exp $	*/
 
 /*
@@ -45,11 +45,6 @@
  */
 
 /* Internal macros */
-
-#if	!defined(MIN)
-#define	MIN(a,b)	(((a)<(b))? (a):(b))
-#endif	/* !defined(MIN) */
-
 #define	ring_subtract(d,a,b)	(((a)-(b) >= 0)? \
 					(a)-(b): (((a)-(b))+(d)->size))
 
@@ -262,8 +257,10 @@ ring_supply_data(ring, buffer, count)
     int i;
 
     while (count) {
-	i = MIN(count, ring_empty_consecutive(ring));
-	memmove(ring->supply, buffer, i);
+	i = ring_empty_consecutive(ring);
+	if (i > count)
+		i = count;
+	memcpy(ring->supply, buffer, i);
 	ring_supplied(ring, i);
 	count -= i;
 	buffer += i;

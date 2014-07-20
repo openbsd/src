@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.64 2014/07/20 09:31:25 guenther Exp $	*/
+/*	$OpenBSD: commands.c,v 1.65 2014/07/20 09:59:42 guenther Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2367,7 +2367,7 @@ sourceroute(arg, cpp, lenp)
 {
 	static char lsr[44];
 	char *cp, *cp2, *lsrp, *lsrep;
-	struct in_addr sin_addr;
+	struct in_addr addr;
 	struct hostent *host = 0;
 	char c;
 
@@ -2412,7 +2412,7 @@ sourceroute(arg, cpp, lenp)
 
 	cp++;
 
-	sin_addr.s_addr = 0;
+	addr.s_addr = 0;
 
 	for (c = 0;;) {
 		if (c == ':')
@@ -2433,16 +2433,14 @@ sourceroute(arg, cpp, lenp)
 		if (!c)
 			cp2 = 0;
 
-		if ((sin_addr.s_addr = inet_addr(cp)) != INADDR_NONE) {
-		} else if ((host = gethostbyname(cp))) {
-			memmove((caddr_t)&sin_addr,
-				host->h_addr_list[0], 
-				sizeof(sin_addr));
-		} else {
-			*cpp = cp;
-			return(0);
+		if ((addr.s_addr = inet_addr(cp)) == INADDR_NONE) {
+			if ((host = gethostbyname(cp)) == NULL) {
+				*cpp = cp;
+				return(0);
+			}
+			memcpy(&addr, host->h_addr_list[0], sizeof addr);
 		}
-		memmove(lsrp, (char *)&sin_addr, 4);
+		memcpy(lsrp, &addr, 4);
 		lsrp += 4;
 		if (cp2)
 			cp = cp2;
@@ -2461,5 +2459,5 @@ sourceroute(arg, cpp, lenp)
 	}
 	*lsrp++ = IPOPT_NOP; /* 32 bit word align it */
 	*lenp = lsrp - *cpp;
-	return(sin_addr.s_addr);
+	return(addr.s_addr);
 }
