@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.8 2014/07/20 06:24:19 guenther Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.9 2014/07/20 07:35:04 guenther Exp $	*/
 /*	$NetBSD: terminal.c,v 1.5 1996/02/28 21:04:17 thorpej Exp $	*/
 
 /*
@@ -31,6 +31,8 @@
  */
 
 #include "telnet_locl.h"
+
+#include <unistd.h>
 
 Ring		ttyoring, ttyiring;
 unsigned char	ttyobuf[2*BUFSIZ], ttyibuf[BUFSIZ];
@@ -75,9 +77,13 @@ cc_t termAytChar;
 void
 init_terminal()
 {
+	struct termios tc;
+
 	ring_init(&ttyoring, ttyobuf, sizeof ttyobuf);
 	ring_init(&ttyiring, ttyibuf, sizeof ttyibuf);
-	autoflush = TerminalAutoFlush();
+
+	tcgetattr(0, &tc);
+	autoflush = (tc.c_lflag & NOFLSH) == 0;
 }
 
 
@@ -101,10 +107,10 @@ ttyflush(drop)
     n0 = ring_full_count(&ttyoring);
     if ((n1 = n = ring_full_consecutive(&ttyoring)) > 0) {
 	if (drop) {
-	    TerminalFlushOutput();
+	    tcflush(fileno(stdout), TCOFLUSH);
 	    /* we leave 'n' alone! */
 	} else {
-	    n = TerminalWrite((char *)ttyoring.consume, n);
+	    n = write(tout, ttyoring.consume, n);
 	}
     }
     if (n > 0) {
@@ -119,7 +125,7 @@ ttyflush(drop)
 	if (n1 == n && n0 > n) {
 		n1 = n0 - n;
 		if (!drop)
-			n1 = TerminalWrite(ttyoring.bottom, n1);
+			n1 = write(tout, ttyoring.bottom, n1);
 		if (n1 > 0)
 			n += n1;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.18 2014/07/20 06:39:41 guenther Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.19 2014/07/20 07:35:04 guenther Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -64,39 +64,6 @@ init_sys()
 }
 
 
-    int
-TerminalWrite(buf, n)
-    char *buf;
-    int  n;
-{
-    return write(tout, buf, n);
-}
-
-    int
-TerminalRead(buf, n)
-    unsigned char *buf;
-    int  n;
-{
-    return read(tin, buf, n);
-}
-
-/*
- *
- */
-
-    int
-TerminalAutoFlush()
-{
-#if	defined(LNOFLSH)
-    int flush;
-
-    ioctl(0, TIOCLGET, (char *)&flush);
-    return !(flush&LNOFLSH);	/* if LNOFLSH, no autoflush */
-#else	/* LNOFLSH */
-    return 1;
-#endif	/* LNOFLSH */
-}
-
 #ifdef	KLUDGELINEMODE
 extern int kludgelinemode;
 #endif
@@ -149,22 +116,6 @@ TerminalSpecialChars(c)
 	}
     }
     return 1;
-}
-
-
-/*
- * Flush output to the terminal
- */
-
-    void
-TerminalFlushOutput()
-{
-#ifdef	TIOCFLUSH
-    int com = FWRITE;
-    (void) ioctl(fileno(stdout), TIOCFLUSH, (int *) &com);
-#else
-    (void) ioctl(fileno(stdout), TCFLSH, (int *) 0);
-#endif
 }
 
     void
@@ -828,7 +779,7 @@ process_rings(netin, netout, netex, ttyin, ttyout, dopoll)
      * Something to read from the tty...
      */
     if (pfd[TELNET_FD_TIN].revents & (POLLIN|POLLHUP)) {
-	c = TerminalRead(ttyiring.supply, ring_empty_consecutive(&ttyiring));
+	c = read(tin, ttyiring.supply, ring_empty_consecutive(&ttyiring));
 	if (c < 0 && errno == EIO)
 	    c = 0;
 	if (c < 0 && errno == EWOULDBLOCK) {

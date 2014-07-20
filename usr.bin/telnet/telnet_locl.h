@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet_locl.h,v 1.7 2014/07/20 06:39:41 guenther Exp $	*/
+/*	$OpenBSD: telnet_locl.h,v 1.8 2014/07/20 07:35:04 guenther Exp $	*/
 /* $KTH: telnet_locl.h,v 1.13 1997/11/03 21:37:55 assar Exp $ */
 
 /*
@@ -43,8 +43,6 @@
 #include <sys/socket.h>
 
 #include <errno.h>
-#include <fcntl.h>
-#include <netdb.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>

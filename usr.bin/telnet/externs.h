@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.20 2014/07/20 05:22:02 guenther Exp $	*/
+/*	$OpenBSD: externs.h,v 1.21 2014/07/20 07:35:04 guenther Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -196,14 +196,8 @@ int netflush(void);
 /* sys_bsd.c */
 
 void init_sys(void);
-int TerminalWrite(char *buf, int n);
-int TerminalRead(unsigned char *buf, int n);
-int TerminalAutoFlush(void);
 int TerminalSpecialChars(int c);
-void TerminalFlushOutput(void);
-void TerminalSaveState(void);
 void TerminalDefaultChars(void);
-void TerminalNewMode(int f);
 cc_t *tcval(int func);
 void TerminalSpeeds(long *input_speed, long *output_speed);
 int TerminalWindowSize(long *rows, long *cols);
@@ -242,7 +236,6 @@ void     setneturg (void);
 void     sys_telnet_init (void);
 void     telnet (char *);
 void     tel_enter_binary (int);
-void     TerminalFlushOutput (void);
 void     TerminalNewMode (int);
 void     TerminalRestoreState (void);
 void     TerminalSaveState (void);

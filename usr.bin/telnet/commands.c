@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.60 2014/07/20 06:39:41 guenther Exp $	*/
+/*	$OpenBSD: commands.c,v 1.61 2014/07/20 07:35:04 guenther Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <netdb.h>
 #include <pwd.h>
 #include <stdarg.h>
 #include <unistd.h>
