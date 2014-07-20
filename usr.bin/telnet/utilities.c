@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.17 2014/07/20 08:56:47 guenther Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.18 2014/07/20 09:20:48 guenther Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -667,11 +667,11 @@ EmptyTerminal()
     pfd[0].events = POLLOUT;
 
     if (TTYBYTES() == 0) {
-	(void) poll(pfd, 1, -1); /* wait for TTLOWAT */
+	(void) poll(pfd, 1, INFTIM); /* wait for TTLOWAT */
     } else {
 	while (TTYBYTES()) {
 	    (void) ttyflush(0);
-	    (void) poll(pfd, 1, -1); /* wait for TTLOWAT */
+	    (void) poll(pfd, 1, INFTIM); /* wait for TTLOWAT */
 	}
     }
 }

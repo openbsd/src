@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.20 2014/07/20 08:12:46 guenther Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.21 2014/07/20 09:20:48 guenther Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -726,20 +726,7 @@ process_rings(netin, netout, netex, ttyin, ttyout, dopoll)
 	pfd[TELNET_FD_NET].fd = -1;
     }
 
-    if ((c = poll(pfd, TELNET_FD_NUM, dopoll ? 0 : -1)) < 0) {
-	if (c == -1) {
-		    /*
-		     * we can get EINTR if we are in line mode,
-		     * and the user does an escape (TSTP), or
-		     * some other signal generator.
-		     */
-	    if (errno == EINTR) {
-		return 0;
-	    }
-		    /* I don't like this, does it ever happen? */
-	    printf("sleep(5) from telnet, after poll\r\n");
-	    sleep(5);
-	}
+    if ((c = poll(pfd, TELNET_FD_NUM, dopoll ? 0 : INFTIM)) < 0) {
 	return 0;
     }
 
