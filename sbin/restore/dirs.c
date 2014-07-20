@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.35 2013/04/25 06:43:20 otto Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.36 2014/07/20 01:38:40 guenther Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <protocols/dumprestore.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>
@@ -148,9 +149,11 @@ extractdirs(int genmode)
 	} else
 		fd = open(dirfile, O_RDWR|O_CREAT|O_EXCL, 0666);
 	if (fd == -1 || (df = fdopen(fd, "w")) == NULL) {
+		int saved_errno = errno;
 		if (fd != -1)
 			close(fd);
-		err(1, "cannot create directory temporary %s", dirfile);
+		errc(1, saved_errno,
+		    "cannot create directory temporary %s", dirfile);
 	}
 	if (genmode != 0) {
 		(void)snprintf(modefile, sizeof(modefile), "%s/rstmode%lld",
@@ -161,9 +164,11 @@ extractdirs(int genmode)
 		} else
 			fd = open(modefile, O_RDWR|O_CREAT|O_EXCL, 0666);
 		if (fd == -1 || (mf = fdopen(fd, "w")) == NULL) {
+			int saved_errno = errno;
 			if (fd != -1)
 				close(fd);
-			err(1, "cannot create modefile %s", modefile);
+			errc(1, saved_errno,
+			    "cannot create modefile %s", modefile);
 		}
 	}
 	nulldir.d_ino = 0;

@@ -49,11 +49,12 @@ main(void)
 	strlcpy(sfn, "/tmp/barnacles.XXXXXXXX", sizeof(sfn));
 	if ((fd = mkstemp(sfn)) == -1 ||
 	    (sfp = fdopen(fd, "w+")) == NULL) {
+		int saved_errno = errno;
 		if (fd != -1) {
 			unlink(sfn);
 			close(fd);
 		}
-		err(1, "could not open temporary file");
+		errc(1, saved_errno, "could not open temporary file");
 	}
 
 	for (i = 0; i < 4096 * THREAD_COUNT; i++)

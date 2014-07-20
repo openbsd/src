@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.123 2014/07/08 20:14:46 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.124 2014/07/20 01:38:40 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -1089,11 +1089,12 @@ display(const char *s)
 
 		if ((fd = mkstemp(sfn)) == -1 ||
 		    (ofp = fdopen(fd, "w+")) == NULL) {
+			int saved_errno = errno;
 			if (fd != -1) {
 				unlink(sfn);
 				close(fd);
 			}
-			err(1, "mkstemp");
+			errc(1, saved_errno, "mkstemp");
 		}
 		unlink(sfn);
 

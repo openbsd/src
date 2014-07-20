@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.96 2014/07/20 00:46:26 guenther Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.97 2014/07/20 01:38:40 guenther Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -756,11 +756,12 @@ copy(char *src, char *dst, struct mfs_args *args)
 		mount_args.fspec = src;
 		ret = mount(MOUNT_FFS, mountpoint, MNT_RDONLY, &mount_args);
 		if (ret != 0) {
+			int saved_errno = errno;
 			if (created && rmdir(mountpoint) != 0)
 				warn("rmdir %s", mountpoint);
 			if (unmount(dst, 0) != 0)
 				warn("unmount %s", dst);
-			err(1, "mount %s %s", src, mountpoint);
+			errc(1, saved_errno, "mount %s %s", src, mountpoint);
 		}
 	}
 	ret = do_exec(mountpoint, "/bin/pax", argv);

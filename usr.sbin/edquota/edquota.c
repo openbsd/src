@@ -153,8 +153,9 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		if (editit(tmpfil) == -1) {
+			int saved_errno = errno;
 			unlink(tmpfil);
-			err(1, "error starting editor");
+			errc(1, saved_errno, "error starting editor");
 		}
 		if (readtimes(protoprivs, tmpfd))
 			putprivs(0, quotatype, protoprivs);

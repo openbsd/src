@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.24 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: indent.c,v 1.25 2014/07/20 01:38:40 guenther Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -1200,7 +1200,8 @@ bakcopy(void)
     /* now the original input file will be the output */
     output = fopen(in_name, "w");
     if (output == NULL) {
+	int saved_errno = errno;
 	unlink(bakfile);
-	err(1, "%s", in_name);
+	errc(1, saved_errno, "%s", in_name);
     }
 }

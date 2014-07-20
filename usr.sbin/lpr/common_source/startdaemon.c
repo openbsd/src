@@ -1,4 +1,4 @@
-/*	$OpenBSD: startdaemon.c,v 1.13 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: startdaemon.c,v 1.14 2014/07/20 01:38:40 guenther Exp $	*/
 /*	$NetBSD: startdaemon.c,v 1.10 1998/07/18 05:04:39 lukem Exp $	*/
 
 /*
@@ -67,6 +67,7 @@ startdaemon(char *printer)
 	siginterrupt(SIGINT, 1);
 	PRIV_START;
 	if (connect(s, (struct sockaddr *)&un, SUN_LEN(&un)) < 0) {
+		int saved_errno = errno;
 		if (errno == EINTR && gotintr) {
 			PRIV_END;
 			siginterrupt(SIGINT, 0);
@@ -75,7 +76,7 @@ startdaemon(char *printer)
 		}
 		PRIV_END;
 		siginterrupt(SIGINT, 0);
-		warn("connect");
+		warnc(saved_errno, "connect");
 		(void)close(s);
 		return(0);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.195 2014/05/05 16:33:34 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.196 2014/07/20 01:38:40 guenther Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -816,9 +816,9 @@ edit(struct disklabel *lp, int f)
 	u_int64_t total_sectors, starting_sector, ending_sector;
 
 	if ((fd = mkstemp(tmpfil)) == -1 || (fp = fdopen(fd, "w")) == NULL) {
+		warn("%s", tmpfil);
 		if (fd != -1)
 			close(fd);
-		warn("%s", tmpfil);
 		return (1);
 	}
 	display(fp, lp, 0, 1);

@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.98 2013/11/23 17:14:05 deraadt Exp $ */
+/* $OpenBSD: user.c,v 1.99 2014/07/20 01:38:40 guenther Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -38,6 +38,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <login_cap.h>
@@ -341,15 +342,15 @@ creategid(char *group, gid_t gid, const char *name)
 	(void) fstat(fileno(from), &st);
 	(void) snprintf(f, sizeof(f), "%s.XXXXXXXX", _PATH_GROUP);
 	if ((fd = mkstemp(f)) < 0) {
-		(void) fclose(from);
 		warn("can't create gid: mkstemp failed");
+		(void) fclose(from);
 		return 0;
 	}
 	if ((to = fdopen(fd, "w")) == NULL) {
+		warn("can't create gid: fdopen `%s' failed", f);
 		(void) fclose(from);
 		(void) close(fd);
 		(void) unlink(f);
-		warn("can't create gid: fdopen `%s' failed", f);
 		return 0;
 	}
 	while ((buf = fgetln(from, &len)) != NULL && len > 0) {
@@ -360,10 +361,10 @@ creategid(char *group, gid_t gid, const char *name)
 		}
 		if (ret == -1 ||
 		    fprintf(to, "%*.*s", (int)len, (int)len, buf) != len) {
+			warn("can't create gid: short write to `%s'", f);
 			(void) fclose(from);
 			(void) fclose(to);
 			(void) unlink(f);
-			warn("can't create gid: short write to `%s'", f);
 			return 0;
 		}
 	}
@@ -372,14 +373,14 @@ creategid(char *group, gid_t gid, const char *name)
 		ret = fprintf(to, "%s:*:%u:%s\n", group, gid, name);
 	(void) fclose(from);
 	if (fclose(to) == EOF || ret == -1) {
-		(void) unlink(f);
 		warn("can't create gid: short write to `%s'", f);
+		(void) unlink(f);
 		return 0;
 	}
 	if (rename(f, _PATH_GROUP) < 0) {
-		(void) unlink(f);
 		warn("can't create gid: can't rename `%s' to `%s'", f,
 		    _PATH_GROUP);
+		(void) unlink(f);
 		return 0;
 	}
 	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
@@ -413,15 +414,15 @@ modify_gid(char *group, char *newent)
 	(void) fstat(fileno(from), &st);
 	(void) snprintf(f, sizeof(f), "%s.XXXXXXXX", _PATH_GROUP);
 	if ((fd = mkstemp(f)) < 0) {
-		(void) fclose(from);
 		warn("can't modify gid: mkstemp failed");
+		(void) fclose(from);
 		return 0;
 	}
 	if ((to = fdopen(fd, "w")) == NULL) {
+		warn("can't modify gid: fdopen `%s' failed", f);
 		(void) fclose(from);
 		(void) close(fd);
 		(void) unlink(f);
-		warn("can't modify gid: fdopen `%s' failed", f);
 		return 0;
 	}
 	groupc = strlen(group);
@@ -459,22 +460,22 @@ modify_gid(char *group, char *newent)
 			}
 		}
 		if (fwrite(buf, cc, 1, to) != 1) {
+			warn("can't modify gid: short write to `%s'", f);
 			(void) fclose(from);
 			(void) fclose(to);
 			(void) unlink(f);
-			warn("can't modify gid: short write to `%s'", f);
 			return 0;
 		}
 	}
 	(void) fclose(from);
 	if (fclose(to) == EOF) {
-		(void) unlink(f);
 		warn("can't modify gid: short write to `%s'", f);
+		(void) unlink(f);
 		return 0;
 	}
 	if (rename(f, _PATH_GROUP) < 0) {
-		(void) unlink(f);
 		warn("can't modify gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
+		(void) unlink(f);
 		return 0;
 	}
 	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
@@ -535,15 +536,15 @@ append_group(char *user, int ngroups, const char **groups)
 	(void) fstat(fileno(from), &st);
 	(void) snprintf(f, sizeof(f), "%s.XXXXXXXX", _PATH_GROUP);
 	if ((fd = mkstemp(f)) < 0) {
-		(void) fclose(from);
 		warn("can't append group: mkstemp failed");
+		(void) fclose(from);
 		return 0;
 	}
 	if ((to = fdopen(fd, "w")) == NULL) {
+		warn("can't append group: fdopen `%s' failed", f);
 		(void) fclose(from);
 		(void) close(fd);
 		(void) unlink(f);
-		warn("can't append group: fdopen `%s' failed", f);
 		return 0;
 	}
 	while (fgets(buf, sizeof(buf), from) != NULL) {
@@ -586,22 +587,22 @@ append_group(char *user, int ngroups, const char **groups)
 			}
 		}
 		if (fwrite(buf, cc, 1, to) != 1) {
+			warn("can't append group: short write to `%s'", f);
 			(void) fclose(from);
 			(void) fclose(to);
 			(void) unlink(f);
-			warn("can't append group: short write to `%s'", f);
 			return 0;
 		}
 	}
 	(void) fclose(from);
 	if (fclose(to) == EOF) {
-		(void) unlink(f);
 		warn("can't append group: short write to `%s'", f);
+		(void) unlink(f);
 		return 0;
 	}
 	if (rename(f, _PATH_GROUP) < 0) {
-		(void) unlink(f);
 		warn("can't append group: can't rename `%s' to `%s'", f, _PATH_GROUP);
+		(void) unlink(f);
 		return 0;
 	}
 	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
@@ -980,15 +981,17 @@ adduser(char *login_name, user_t *up)
 	}
 	pw_init();
 	if ((ptmpfd = pw_lock(WAITSECS)) < 0) {
+		int saved_errno = errno;
 		(void) close(masterfd);
-		err(EXIT_FAILURE, "can't obtain pw_lock");
+		errc(EXIT_FAILURE, saved_errno, "can't obtain pw_lock");
 	}
 	if ((fp = fdopen(masterfd, "r")) == NULL) {
+		int saved_errno = errno;
 		(void) close(masterfd);
 		(void) close(ptmpfd);
 		pw_abort();
-		err(EXIT_FAILURE, "can't fdopen `%s' for reading",
-		    _PATH_MASTERPASSWD);
+		errc(EXIT_FAILURE, saved_errno,
+		    "can't fdopen `%s' for reading", _PATH_MASTERPASSWD);
 	}
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		cc = strlen(buf);
@@ -1002,17 +1005,21 @@ adduser(char *login_name, user_t *up)
 			break;
 		}
 		if (write(ptmpfd, buf, (size_t)(cc)) != cc) {
+			int saved_errno = errno;
 			(void) fclose(fp);
 			(void) close(ptmpfd);
 			pw_abort();
-			err(EXIT_FAILURE, "short write to /etc/ptmp (not %d chars)", cc);
+			errc(EXIT_FAILURE, saved_errno,
+			    "short write to /etc/ptmp (not %d chars)", cc);
 		}
 	}
 	if (ferror(fp)) {
+		int saved_errno = errno;
 		(void) fclose(fp);
 		(void) close(ptmpfd);
 		pw_abort();
-		err(EXIT_FAILURE, "read error on %s", _PATH_MASTERPASSWD);
+		errc(EXIT_FAILURE, saved_errno, "read error on %s",
+		    _PATH_MASTERPASSWD);
 	}
 	/* if no uid was specified, get next one in [low_uid..high_uid] range */
 	sync_uid_gid = (strcmp(up->u_primgrp, "=uid") == 0);
@@ -1132,9 +1139,10 @@ adduser(char *login_name, user_t *up)
 		errx(EXIT_FAILURE, "can't add `%s', line too long", buf);
 	}
 	if (write(ptmpfd, buf, (size_t) cc) != cc) {
+		int saved_errno = errno;
 		(void) close(ptmpfd);
 		pw_abort();
-		err(EXIT_FAILURE, "can't add `%s'", buf);
+		errc(EXIT_FAILURE, saved_errno, "can't add `%s'", buf);
 	}
 	if (yp) {
 		/* put back the + line */
@@ -1145,25 +1153,31 @@ adduser(char *login_name, user_t *up)
 			errx(EXIT_FAILURE, "can't add `%s', line too long", buf);
 		}
 		if (write(ptmpfd, buf, (size_t) cc) != cc) {
+			int saved_errno = errno;
 			(void) close(ptmpfd);
 			pw_abort();
-			err(EXIT_FAILURE, "can't add `%s'", buf);
+			errc(EXIT_FAILURE, saved_errno, "can't add `%s'", buf);
 		}
 		/* copy the entries following it, if any */
 		while (fgets(buf, sizeof(buf), fp) != NULL) {
 			cc = strlen(buf);
 			if (write(ptmpfd, buf, (size_t)(cc)) != cc) {
+				int saved_errno = errno;
 				(void) fclose(fp);
 				(void) close(ptmpfd);
 				pw_abort();
-				err(EXIT_FAILURE, "short write to /etc/ptmp (not %d chars)", cc);
+				errc(EXIT_FAILURE, saved_errno,
+				    "short write to /etc/ptmp (not %d chars)",
+				    cc);
 			}
 		}
 		if (ferror(fp)) {
+			int saved_errno = errno;
 			(void) fclose(fp);
 			(void) close(ptmpfd);
 			pw_abort();
-			err(EXIT_FAILURE, "read error on %s", _PATH_MASTERPASSWD);
+			errc(EXIT_FAILURE, saved_errno, "read error on %s",
+			    _PATH_MASTERPASSWD);
 		}
 	}
 	if (up->u_flags & F_MKDIR) {
@@ -1174,9 +1188,11 @@ adduser(char *login_name, user_t *up)
 			    home);
 		} else {
 			if (asystem("%s -p %s", MKDIR, home) != 0) {
+				int saved_errno = errno;
 				(void) close(ptmpfd);
 				pw_abort();
-				err(EXIT_FAILURE, "can't mkdir `%s'", home);
+				errc(EXIT_FAILURE, saved_errno,
+				    "can't mkdir `%s'", home);
 			}
 			(void) copydotfiles(up->u_skeldir, up->u_uid, gid, home);
 			(void) asystem("%s -R -P %u:%u %s", CHOWN, up->u_uid,
@@ -1233,16 +1249,16 @@ rm_user_from_groups(char *login_name)
 	(void) fstat(fileno(from), &st);
 	(void) snprintf(f, sizeof(f), "%s.XXXXXXXX", _PATH_GROUP);
 	if ((fd = mkstemp(f)) < 0) {
-		(void) fclose(from);
 		warn("can't remove gid for `%s': mkstemp failed", login_name);
+		(void) fclose(from);
 		return 0;
 	}
 	if ((to = fdopen(fd, "w")) == NULL) {
+		warn("can't remove gid for `%s': fdopen `%s' failed",
+		    login_name, f);
 		(void) fclose(from);
 		(void) close(fd);
 		(void) unlink(f);
-		warn("can't remove gid for `%s': fdopen `%s' failed",
-		    login_name, f);
 		return 0;
 	}
 	while (fgets(buf, sizeof(buf), from) != NULL) {
@@ -1281,26 +1297,26 @@ rm_user_from_groups(char *login_name)
 			}
 		}
 		if (fwrite(buf, strlen(buf), 1, to) != 1) {
+			warn("can't remove gid for `%s': short write to `%s'",
+			    login_name, f);
 			(void) fclose(from);
 			(void) fclose(to);
 			(void) unlink(f);
-			warn("can't remove gid for `%s': short write to `%s'",
-			    login_name, f);
 			return 0;
 		}
 	}
 	(void) fchmod(fileno(to), st.st_mode & 07777);
 	(void) fclose(from);
 	if (fclose(to) == EOF) {
-		(void) unlink(f);
 		warn("can't remove gid for `%s': short write to `%s'",
 		    login_name, f);
+		(void) unlink(f);
 		return 0;
 	}
 	if (rename(f, _PATH_GROUP) < 0) {
-		(void) unlink(f);
 		warn("can't remove gid for `%s': can't rename `%s' to `%s'",
 		    login_name, f, _PATH_GROUP);
+		(void) unlink(f);
 		return 0;
 	}
 	return 1;
@@ -1394,14 +1410,17 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	}
 	pw_init();
 	if ((ptmpfd = pw_lock(WAITSECS)) < 0) {
+		int saved_errno = errno;
 		(void) close(masterfd);
-		err(EXIT_FAILURE, "can't obtain pw_lock");
+		errc(EXIT_FAILURE, saved_errno, "can't obtain pw_lock");
 	}
 	if ((master = fdopen(masterfd, "r")) == NULL) {
+		int saved_errno = errno;
 		(void) close(masterfd);
 		(void) close(ptmpfd);
 		pw_abort();
-		err(EXIT_FAILURE, "can't fdopen fd for %s", _PATH_MASTERPASSWD);
+		errc(EXIT_FAILURE, saved_errno, "can't fdopen fd for %s",
+		    _PATH_MASTERPASSWD);
 	}
 	if (up != NULL) {
 		if (up->u_flags & F_USERNAME) {
@@ -1585,18 +1604,22 @@ moduser(char *login_name, char *newlogin, user_t *up)
 					    newlogin));
 				}
 				if (write(ptmpfd, buf, len) != len) {
+					int saved_errno = errno;
 					(void) close(ptmpfd);
 					pw_abort();
-					err(EXIT_FAILURE, "can't add `%s'", buf);
+					errc(EXIT_FAILURE, saved_errno,
+					    "can't add `%s'", buf);
 				}
 			}
 		} else {
 			len = strlen(buf);
 			if ((cc = write(ptmpfd, buf, len)) != len) {
+				int saved_errno = errno;
 				(void) close(masterfd);
 				(void) close(ptmpfd);
 				pw_abort();
-				err(EXIT_FAILURE, "short write to /etc/ptmp (%lld not %lld chars)",
+				errc(EXIT_FAILURE, saved_errno,
+				    "short write to /etc/ptmp (%lld not %lld chars)",
 				    (long long)cc, (long long)len);
 			}
 		}
@@ -1604,10 +1627,11 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	if (up != NULL) {
 		if ((up->u_flags & F_MKDIR) &&
 		    asystem("%s %s %s", MV, homedir, pwp->pw_dir) != 0) {
+			int saved_errno = errno;
 			(void) close(ptmpfd);
 			pw_abort();
-			err(EXIT_FAILURE, "can't move `%s' to `%s'",
-			    homedir, pwp->pw_dir);
+			errc(EXIT_FAILURE, saved_errno,
+			    "can't move `%s' to `%s'", homedir, pwp->pw_dir);
 		}
 		if (up->u_flags & F_SETSECGROUP) {
 		    for (i = 0 ; i < up->u_groupc ; i++) {

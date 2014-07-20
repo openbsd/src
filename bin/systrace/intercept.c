@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.61 2014/04/24 01:57:06 tedu Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.62 2014/07/20 01:38:40 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -356,22 +356,26 @@ intercept_run(int bg, int *fdp, uid_t uid, gid_t gid,
 	
 	/* Setup done, restore signal handling state */
 	if (signal(SIGUSR1, ohandler) == SIG_ERR) {
+		int saved_errno = errno;
 		kill(pid, SIGKILL);
-		err(1, "signal");
+		errc(1, saved_errno, "signal");
 	}
 	if (sigprocmask(SIG_SETMASK, &oset, NULL) == -1) {
+		int saved_errno = errno;
 		kill(pid, SIGKILL);
-		err(1, "sigprocmask");
+		errc(1, saved_errno, "sigprocmask");
 	}
 
 	if (bg) {
 		if (daemon(1, 1) == -1) {
+			int saved_errno = errno;
 			kill(pid, SIGKILL);
-			err(1, "daemon");
+			errc(1, saved_errno, "daemon");
 		}
 		if ((*fdp = intercept_open()) == -1) {
+			int saved_errno = errno;
 			kill(pid, SIGKILL);
-			err(1, "intercept_open");
+			errc(1, saved_errno, "intercept_open");
 		}
 	}
 

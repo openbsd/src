@@ -1,4 +1,4 @@
-/* $OpenBSD: getpeereid_test.c,v 1.1 2006/10/23 15:18:47 espie Exp $ */
+/* $OpenBSD: getpeereid_test.c,v 1.2 2014/07/20 01:38:40 guenther Exp $ */
 /* Written by Marc Espie in 2006 */
 /* Public domain */
 #include <sys/types.h>
@@ -85,15 +85,17 @@ server(struct sockaddr_un *sun)
 	if (bind(s, (struct sockaddr *)sun, sizeof(*sun)) != 0)
 		err(1, "bind");
 	if (listen(s, 5) != 0) {
+		int saved_errno = errno;
 		unlink(path);
 		rmdir(dir);
-		err(1, "listen");
+		errc(1, saved_errno, "listen");
 	}
 	fd = accept(s, (struct sockaddr *)&client_addr, &client_len);
 	if (fd == -1) {
+		int saved_errno = errno;
 		unlink(path);
 		rmdir(dir);
-		err(1, "accept");
+		errc(1, saved_errno, "accept");
 	}
 	problem = check_id(fd);
 	if (problem)  {
