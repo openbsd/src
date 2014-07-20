@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random_linux.h,v 1.6 2014/07/19 15:29:25 bcook Exp $	*/
+/*	$OpenBSD: arc4random_linux.h,v 1.7 2014/07/20 20:51:13 bcook Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -22,7 +22,10 @@
  * Stub functions for portability.
  */
 
+#include <sys/mman.h>
+
 #include <pthread.h>
+#include <signal.h>
 
 static pthread_mutex_t arc4random_mtx = PTHREAD_MUTEX_INITIALIZER;
 #define _ARC4_LOCK()   pthread_mutex_lock(&arc4random_mtx)
@@ -35,6 +38,12 @@ extern int __register_atfork(void (*)(void), void(*)(void), void (*)(void), void
 #else
 #define _ARC4_ATFORK(f) pthread_atfork(NULL, NULL, (f))
 #endif
+
+static inline void
+_getentropy_fail(void)
+{
+	raise(SIGKILL);
+}
 
 static volatile sig_atomic_t _rs_forked;
 

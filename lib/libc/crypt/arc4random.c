@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.48 2014/07/19 00:08:41 deraadt Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.49 2014/07/20 20:51:13 bcook Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -32,9 +32,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/mman.h>
-
-#include "thread_private.h"
 
 #define KEYSTREAM_ONLY
 #include "chacha_private.h"
@@ -90,7 +87,7 @@ _rs_stir(void)
 	u_char rnd[KEYSZ + IVSZ];
 
 	if (getentropy(rnd, sizeof rnd) == -1)
-		raise(SIGKILL);
+		_getentropy_fail();
 
 	if (!rs)
 		_rs_init(rnd, sizeof(rnd));

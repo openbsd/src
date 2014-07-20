@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.h,v 1.2 2014/07/19 00:08:41 deraadt Exp $	*/
+/*	$OpenBSD: arc4random.h,v 1.3 2014/07/20 20:51:13 bcook Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -21,6 +21,17 @@
 /*
  * Stub functions for portability.
  */
+#include <sys/mman.h>
+
+#include <signal.h>
+
+#include "thread_private.h"
+
+static inline void
+_getentropy_fail(void)
+{
+	raise(SIGKILL);
+}
 
 static inline int
 _rs_allocate(struct _rs **rsp, struct _rsx **rsxp)

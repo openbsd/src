@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random_win.h,v 1.3 2014/07/20 16:59:31 bcook Exp $	*/
+/*	$OpenBSD: arc4random_win.h,v 1.4 2014/07/20 20:51:13 bcook Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -41,6 +41,12 @@ static volatile HANDLE arc4random_mtx = NULL;
 } \
 
 #define _ARC4_UNLOCK() ReleaseMutex(arc4random_mtx)
+
+static inline void
+_getentropy_fail(void)
+{
+	TerminateProcess(GetCurrentProcess(), 0);
+}
 
 static inline int
 _rs_allocate(struct _rs **rsp, struct _rsx **rsxp)
