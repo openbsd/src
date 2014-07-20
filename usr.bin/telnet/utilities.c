@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.13 2014/07/20 05:22:02 guenther Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.14 2014/07/20 06:39:41 guenther Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -36,6 +36,8 @@
 #define	SLC_NAMES
 
 #include "telnet_locl.h"
+
+#include <ctype.h>
 #include <poll.h>
 
 FILE	*NetTrace = 0;		/* Not in bss, since needs to stay */
@@ -47,18 +49,13 @@ int	prettydump;
  *	Upcase (in place) the argument.
  */
 
-    void
-upcase(argument)
-    char *argument;
+void
+upcase(char *argument)
 {
-    int c;
+	int c;
 
-    while ((c = *argument) != 0) {
-	if (islower(c)) {
-	    *argument = toupper(c);
-	}
-	argument++;
-    }
+	while ((c = *argument) != '\0')
+		*argument++ = toupper((unsigned char)c);
 }
 
 /*
@@ -610,7 +607,8 @@ printsub(direction, pointer, length)
 			    break;
 
 			default:
-			    if (isprint(pointer[i]) && pointer[i] != '"') {
+			    if (isprint((unsigned char)pointer[i]) &&
+				pointer[i] != '"') {
 				if (noquote) {
 				    putc('"', NetTrace);
 				    noquote = 0;

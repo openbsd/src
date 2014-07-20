@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.59 2014/07/20 05:22:02 guenther Exp $	*/
+/*	$OpenBSD: commands.c,v 1.60 2014/07/20 06:39:41 guenther Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -36,9 +36,11 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <pwd.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 int tos = -1;
 
@@ -108,7 +110,7 @@ makeargv()
     }
     while ((c = *cp)) {
 	int inquote = 0;
-	while (isspace(c))
+	while (isspace((unsigned char)c))
 	    c = *++cp;
 	if (c == '\0')
 	    break;
@@ -130,7 +132,7 @@ makeargv()
 		} else if (c == '\'') {
 		    inquote = '\'';
 		    continue;
-		} else if (isspace(c))
+		} else if (isspace((unsigned char)c))
 		    break;
 	    }
 	    *cp2++ = c;
@@ -1842,11 +1844,11 @@ cmdrc(char *m1, char *m2)
 	if (line[0] == '#')
 	    continue;
 	if (gotmachine) {
-	    if (!isspace(line[0]))
+	    if (!isspace((unsigned char)line[0]))
 		gotmachine = 0;
 	}
 	if (gotmachine == 0) {
-	    if (isspace(line[0]))
+	    if (isspace((unsigned char)line[0]))
 		continue;
 	    if (strncasecmp(line, m1, l1) == 0)
 		strncpy(line, &line[l1], sizeof(line) - l1);

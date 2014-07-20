@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet_locl.h,v 1.6 2014/07/20 05:22:02 guenther Exp $	*/
+/*	$OpenBSD: telnet_locl.h,v 1.7 2014/07/20 06:39:41 guenther Exp $	*/
 /* $KTH: telnet_locl.h,v 1.13 1997/11/03 21:37:55 assar Exp $ */
 
 /*
@@ -42,7 +42,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -53,7 +52,6 @@
 #include <string.h>
 #include <termios.h>
 #include <time.h>
-#include <unistd.h>
 
 #include <arpa/telnet.h>
 

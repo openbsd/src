@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2014/07/20 05:22:02 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2014/07/20 06:39:41 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -32,10 +32,7 @@
 
 #include "telnet_locl.h"
 
-/* These values need to be the same as defined in libtelnet/kerberos5.c */
-/* Either define them in both places, or put in some common header file. */
-#define OPTS_FORWARD_CREDS	0x00000002
-#define OPTS_FORWARDABLE_CREDS	0x00000001
+#include <unistd.h>
 
 int family = AF_UNSPEC;
 int rtableid = -1;

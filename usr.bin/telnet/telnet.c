@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.22 2014/07/20 03:00:31 deraadt Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.23 2014/07/20 06:39:41 guenther Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -31,6 +31,8 @@
  */
 
 #include "telnet_locl.h"
+
+#include <ctype.h>
 #include <curses.h>
 #include <term.h>
 
@@ -528,8 +530,8 @@ mklist(buf, name)
 #define ISASCII(c) (!((c)&0x80))
 		if ((c == ' ') || !ISASCII(c))
 			n = 1;
-		else if (islower(c))
-			*cp = toupper(c);
+		else
+			*cp = toupper((unsigned char)c);
 	}
 
 	/*

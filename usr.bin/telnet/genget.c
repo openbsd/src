@@ -1,4 +1,4 @@
-/*     $OpenBSD: genget.c,v 1.3 2014/07/19 23:50:38 guenther Exp $  */
+/*     $OpenBSD: genget.c,v 1.4 2014/07/20 06:39:41 guenther Exp $  */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,6 @@
 #include <ctype.h>
 #include "telnet_locl.h"
 
-#define	LOWER(x) (isupper((int)x) ? tolower((int)x) : (x))
 /*
  * The prefix function returns 0 if *s1 is not a prefix
  * of *s2.  If *s1 exactly matches *s2, the negative of
@@ -52,7 +51,7 @@ isprefix(char *s1, char *s2)
     os1 = s1;
     c1 = *s1;
     c2 = *s2;
-    while (LOWER(c1) == LOWER(c2)) {
+    while (tolower((unsigned char)c1) == tolower((unsigned char)c2)) {
 	if (c1 == '\0')
 	    break;
 	c1 = *++s1;
