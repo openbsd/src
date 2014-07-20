@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.6 2007/01/08 19:37:04 deraadt Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.7 2014/07/20 20:27:19 tobias Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.3 1995/04/22 13:53:48 cgd Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ in_cksum(void *p, size_t l)
 
 	/* ensure that < 2^16 bytes being summed */
 	if (l >= (1 << 16))
-		fatalx("in_cksum: packet to big");
+		fatalx("in_cksum: packet too big");
 	len = (int)l;
 
 	if (((long)cp & 1) == 0) {
