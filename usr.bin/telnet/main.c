@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2014/07/20 10:18:10 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2014/07/20 10:32:23 jsg Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ main(argc, argv)
 		*argp++ = argv[0];		/* host */
 		if (argc > 1)
 			*argp++ = argv[1];	/* port */
-		*argp = 0;
+		*argp = NULL;
 
 		if (setjmp(toplevel) != 0)
 			Exit(0);
@@ -202,7 +202,7 @@ main(argc, argv)
 	}
 	(void)setjmp(toplevel);
 	for (;;) {
-		command(1, 0, 0);
+		command(1, NULL, 0);
 	}
 	return 0;
 }

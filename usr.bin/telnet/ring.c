@@ -1,4 +1,4 @@
-/*	$OpenBSD: ring.c,v 1.9 2014/07/20 09:59:42 guenther Exp $	*/
+/*	$OpenBSD: ring.c,v 1.10 2014/07/20 10:32:23 jsg Exp $	*/
 /*	$NetBSD: ring.c,v 1.7 1996/02/28 21:04:07 thorpej Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ ring_at_mark(ring)
 ring_clear_mark(ring)
     Ring *ring;
 {
-    ring->mark = 0;
+    ring->mark = NULL;
 }
 
 /*
@@ -155,7 +155,7 @@ ring_consumed(ring, count)
 
     if (ring->mark &&
 		(ring_subtract(ring, ring->mark, ring->consume) < count)) {
-	ring->mark = 0;
+	ring->mark = NULL;
     }
     ring->consume = ring_increment(ring, ring->consume, count);
     ring->consumetime = ++ring_clock;
@@ -211,7 +211,7 @@ ring_empty_consecutive(ring)
 ring_full_count(ring)
     Ring *ring;
 {
-    if ((ring->mark == 0) || (ring->mark == ring->consume)) {
+    if ((ring->mark == NULL) || (ring->mark == ring->consume)) {
 	if (ring_full(ring)) {
 	    return ring->size;	/* nothing consumed, but full */
 	} else {
@@ -230,7 +230,7 @@ ring_full_count(ring)
 ring_full_consecutive(ring)
     Ring *ring;
 {
-    if ((ring->mark == 0) || (ring->mark == ring->consume)) {
+    if ((ring->mark == NULL) || (ring->mark == ring->consume)) {
 	if ((ring->supply < ring->consume) || ring_full(ring)) {
 	    return ring_subtract(ring, ring->top, ring->consume);
 	} else {

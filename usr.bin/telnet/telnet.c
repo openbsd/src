@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.26 2014/07/20 10:18:10 guenther Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.27 2014/07/20 10:32:23 jsg Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ int
 	globalmode,
 	clienteof = 0;
 
-char *prompt = 0;
+char *prompt = NULL;
 
 int scheduler_lockout_tty = 0;
 
@@ -457,7 +457,7 @@ dontoption(option)
 int is_unique(char *, char **, char **);
 
 static char *name_unknown = "UNKNOWN";
-static char *unknown[] = { 0, 0 };
+static char *unknown[] = { NULL, NULL };
 
 	char **
 mklist(buf, name)
@@ -468,7 +468,7 @@ mklist(buf, name)
 
 	if (name) {
 		if ((int)strlen(name) > 40) {
-			name = 0;
+			name = NULL;
 			unknown[0] = name_unknown;
 		} else {
 			unknown[0] = name;
@@ -487,13 +487,13 @@ mklist(buf, name)
 	 * Allocate an array to put the name pointers into
 	 */
 	argv = (char **)malloc((n+3)*sizeof(char *));
-	if (argv == 0)
+	if (argv == NULL)
 		return(unknown);
 
 	/*
 	 * Fill up the array of pointers to names.
 	 */
-	*argv = 0;
+	*argv = NULL;
 	argvp = argv+1;
 	n = 0;
 	for (cp = cp2 = buf; (c = *cp);  cp++) {
@@ -554,9 +554,9 @@ mklist(buf, name)
 	 */
 	cp = *(argvp-1);
 	*argvp++ = cp;
-	*argvp = 0;
+	*argvp = NULL;
 
-	if (*argv == 0) {
+	if (*argv == NULL) {
 		if (name)
 			*argv = name;
 		else {
@@ -591,7 +591,7 @@ int resettermname = 1;
 gettermname()
 {
 	char *tname;
-	static char **tnamep = 0;
+	static char **tnamep = NULL;
 	static char **next;
 	int errret;
 
@@ -612,7 +612,7 @@ gettermname()
 		}
 		next = tnamep;
 	}
-	if (*next == 0)
+	if (*next == NULL)
 		next = tnamep;
 	return(*next++);
 }
@@ -928,7 +928,7 @@ slc_init()
 	localchars = 1;
 	for (spcp = spc_data; spcp < &spc_data[NSLC+1]; spcp++) {
 		spcp->val = 0;
-		spcp->valp = 0;
+		spcp->valp = NULL;
 		spcp->flags = spcp->mylevel = SLC_NOSUPPORT;
 	}
 
