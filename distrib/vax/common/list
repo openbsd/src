@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.29 2014/03/03 07:40:34 deraadt Exp $
+#	$OpenBSD: list,v 1.30 2014/07/20 02:37:35 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin
@@ -47,12 +47,12 @@ LINK	instbin					sbin/route
 LINK	instbin					sbin/rtsol
 LINK	instbin					sbin/shutdown
 LINK	instbin					sbin/slattach
+LINK	instbin					sbin/sysctl
 LINK	instbin					sbin/umount
 LINK	instbin					usr/bin/awk
 LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/more
 LINK	instbin					usr/bin/sed
-LINK	instbin					sbin/sysctl
 LINK	instbin					usr/bin/signify
 LINK	instbin					usr/bin/tar
 LINK	instbin					usr/sbin/chown
