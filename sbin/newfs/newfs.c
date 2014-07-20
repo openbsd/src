@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.95 2013/11/22 04:12:48 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.96 2014/07/20 00:46:26 guenther Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -79,7 +79,9 @@ struct mntopt mopts[] = {
 	{ NULL },
 };
 
-void	fatal(const char *fmt, ...);
+void	fatal(const char *fmt, ...)
+	    __attribute__((__format__ (printf, 1, 2)))
+	    __attribute__((__nonnull__ (1)));
 __dead void	usage(void);
 void	mkfs(struct partition *, char *, int, int, mode_t, uid_t, gid_t);
 void	rewritelabel(char *, int, struct disklabel *);
@@ -561,8 +563,6 @@ havelabel:
 	exit(0);
 }
 
-char lmsg[] = "%s: can't read disk label; disk type must be specified";
-
 struct disklabel *
 getdisklabel(char *s, int fd)
 {
@@ -579,7 +579,8 @@ getdisklabel(char *s, int fd)
 			return (lp);
 		}
 		warn("ioctl (GDINFO)");
-		fatal(lmsg, s);
+		fatal("%s: can't read disk label; disk type must be specified",
+		    s);
 	}
 	return (&lab);
 }
