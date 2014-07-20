@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.57 2014/07/20 04:00:47 guenther Exp $	*/
+/*	$OpenBSD: commands.c,v 1.58 2014/07/20 04:07:16 guenther Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2088,9 +2088,9 @@ tn(argc, argv)
     if (autologin && user == NULL) {
 	struct passwd *pw;
 
-	user = getenv("USER");
+	user = getlogin();
 	if (user == NULL ||
-	    ((pw = getpwnam(user)) && pw->pw_uid != getuid())) {
+	    (pw = getpwnam(user)) == NULL || pw->pw_uid != getuid()) {
 		if ((pw = getpwuid(getuid())) != NULL)
 			user = pw->pw_name;
 		else
