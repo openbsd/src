@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.21 2014/07/19 23:50:38 guenther Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.22 2014/07/20 03:00:31 deraadt Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -66,7 +66,6 @@ int
 	netdata,	/* Print out network data flow */
 	crlf,		/* Should '\r' be mapped to <CR><LF> (or <CR><NUL>)? */
 	telnetport,
-	wantencryption = 0,
 	SYNCHing,	/* we are in TELNET SYNCH mode */
 	flushout,	/* flush output */
 	autoflush = 0,	/* flush output when interrupting? */
