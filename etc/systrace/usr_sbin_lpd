@@ -1,4 +1,4 @@
-# $OpenBSD: usr_sbin_lpd,v 1.6 2014/07/14 05:48:18 guenther Exp $
+# $OpenBSD: usr_sbin_lpd,v 1.7 2014/07/20 04:29:07 deraadt Exp $
 #
 # Policy for lpd.
 # This policy works for the default configuration of lpd.
@@ -14,7 +14,6 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-chmod: filename eq "/var/run/printer" then permit
 	native-chown: filename eq "/var/run/printer" then permit
 	native-close: permit
-	native-connect: sockaddr eq "/dev/log" then permit
 	native-connect: sockaddr match "inet-*:53" then permit
 	native-connect: sockaddr sub ":515" then permit
 	native-dup2: permit
