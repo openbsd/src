@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.22 2014/07/20 08:12:45 guenther Exp $	*/
+/*	$OpenBSD: externs.h,v 1.23 2014/07/20 08:56:47 guenther Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -146,8 +146,6 @@ extern int	rtableid;	/* routing table to use */
 #define	set_his_want_state_wont		set_my_want_state_dont
 
 
-extern FILE
-    *NetTrace;		/* Where debugging output goes */
 extern unsigned char
     NetTraceFile[];	/* Name of file where debugging output goes */
 extern void
@@ -255,7 +253,7 @@ void     lm_mode (unsigned char *, int, int);
 
 void     slc_init (void);
 void     slcstate (void);
-void     slc_mode_export (void);
+void     slc_mode_export (int);
 void     slc_mode_import (int);
 void     slc_import (int);
 void     slc_export (void);
@@ -280,7 +278,7 @@ int dosynch (void);
 
 cc_t *tcval (int);
 
-__dead int quit(void);
+__dead void quit(void);
 
 /* genget.c */
 

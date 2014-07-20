@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.24 2014/07/20 08:12:46 guenther Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.25 2014/07/20 08:56:47 guenther Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -144,8 +144,6 @@ init_telnet()
     restartany = -1;
 
     SYNCHing = 0;
-
-    /* Don't change NetTrace */
 
     escape = CONTROL(']');
     rlogin = _POSIX_VDISABLE;
@@ -986,7 +984,7 @@ slcstate()
 }
 
     void
-slc_mode_export()
+slc_mode_export(int unused)
 {
     slc_mode = SLC_EXPORT;
     if (my_state_is_will(TELOPT_LINEMODE))

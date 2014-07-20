@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.16 2014/07/20 08:12:46 guenther Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.17 2014/07/20 08:56:47 guenther Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-FILE	*NetTrace = 0;		/* Not in bss, since needs to stay */
+static FILE	*NetTrace = NULL;
 int	prettydump;
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: network.c,v 1.13 2014/07/20 08:12:46 guenther Exp $	*/
+/*	$OpenBSD: network.c,v 1.14 2014/07/20 08:56:47 guenther Exp $	*/
 /*	$NetBSD: network.c,v 1.5 1996/02/28 21:04:06 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ init_network(void)
 {
 	ring_init(&netoring, netobuf, sizeof netobuf);
 	ring_init(&netiring, netibuf, sizeof netibuf);
-	NetTrace = stdout;
+	SetNetTrace(NULL);
 }
 
 

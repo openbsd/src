@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.62 2014/07/20 08:12:45 guenther Exp $	*/
+/*	$OpenBSD: commands.c,v 1.63 2014/07/20 08:56:47 guenther Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ static int call(intrtn_t, ...);
 typedef struct {
 	char	*name;		/* command name */
 	char	*help;		/* help string (NULL for no help) */
-	int	(*handler)();	/* routine which executes command */
+	int	(*handler)(int, char **);/* routine which executes command */
 	int	needconnect;	/* Do we need to be connected to execute? */
 } Command;
 
@@ -346,7 +346,7 @@ sendcmd(argc, argv)
     for (i = 1; i < argc; i++) {
 	if ((s = GETSEND(argv[i])) == 0) {
 	    fprintf(stderr, "Telnet 'send' error - argument disappeared!\r\n");
-	    (void) quit();
+	    quit();
 	    /*NOTREACHED*/
 	}
 	if (s->handler) {
@@ -602,12 +602,12 @@ togxbinary(val)
 }
 
 
-static int togglehelp(void);
+static int togglehelp(int);
 
 struct togglelist {
-    char	*name;		/* name of toggle */
-    char	*help;		/* help message */
-    int		(*handler)();	/* routine to do actual setting */
+    char	*name;			/* name of toggle */
+    char	*help;			/* help message */
+    int		(*handler)(int);	/* routine to do actual setting */
     int		*variable;
     char	*actionexplanation;
     int		needconnect;	/* Need to be connected */
@@ -700,7 +700,7 @@ static struct togglelist Togglelist[] = {
 };
 
     static int
-togglehelp()
+togglehelp(int unused)
 {
     struct togglelist *c;
 
@@ -793,7 +793,7 @@ struct termios new_tc = { 0 };
 struct setlist {
     char *name;				/* name */
     char *help;				/* help information */
-    void (*handler)();
+    void (*handler)(char *);
     cc_t *charp;			/* where it is located at */
 };
 
@@ -979,7 +979,7 @@ unsetcmd(argc, argv)
 			name);
 	    return 0;
 	} else if (ct->handler) {
-	    (*ct->handler)(0);
+	    (*ct->handler)(NULL);
 	    printf("%s reset to \"%s\".\r\n", ct->name, (char *)ct->charp);
 	} else {
 	    *(ct->charp) = _POSIX_VDISABLE;
@@ -1068,12 +1068,12 @@ tn_clearmode(bit)
 struct modelist {
 	char	*name;		/* command name */
 	char	*help;		/* help string */
-	int	(*handler)();	/* routine which executes command */
+	int	(*handler)(int);/* routine which executes command */
 	int	needconnect;	/* Do we need to be connected to execute? */
 	int	arg1;
 };
 
-static int modehelp(void);
+static int modehelp(int);
 
 static struct modelist ModeList[] = {
     { "character", "Disable LINEMODE option",	docharmode, 1 },
@@ -1109,7 +1109,7 @@ static struct modelist ModeList[] = {
 
 
     static int
-modehelp()
+modehelp(int unused)
 {
     struct modelist *mt;
 
@@ -1363,11 +1363,17 @@ bye(argc, argv)
     return 0; /* NOTREACHED */
 }
 
-int
+void
 quit(void)
 {
 	(void) call(bye, "bye", "fromquit", 0);
 	Exit(0);
+}
+
+static int
+quitcmd(int unused1, char *unused2[])
+{
+	quit();
 }
 
 /*VARARGS*/
@@ -1387,11 +1393,11 @@ logout()
 struct slclist {
 	char	*name;
 	char	*help;
-	void	(*handler)();
+	void	(*handler)(int);
 	int	arg;
 };
 
-static void slc_help();
+static void slc_help(int);
 
 struct slclist SlcList[] = {
     { "export",	"Use local special character definitions",
@@ -1406,7 +1412,7 @@ struct slclist SlcList[] = {
 };
 
     static void
-slc_help()
+slc_help(int unused)
 {
     struct slclist *c;
 
@@ -2153,7 +2159,7 @@ static Command cmdtab[] = {
 	{ "display",	displayhelp,	display,	0 },
 	{ "mode",	modestring,	modecmd,	0 },
 	{ "open",	openhelp,	tn,		0 },
-	{ "quit",	quithelp,	quit,		0 },
+	{ "quit",	quithelp,	quitcmd,	0 },
 	{ "send",	sendhelp,	sendcmd,	0 },
 	{ "set",	sethelp,	setcmd,		0 },
 	{ "unset",	unsethelp,	unsetcmd,	0 },
@@ -2247,7 +2253,7 @@ command(top, tbuf, cnt)
 		printf("%s> ", prompt);
 	    if (fgets(line, sizeof(line), stdin) == NULL) {
 		if (feof(stdin) || ferror(stdin)) {
-		    (void) quit();
+		    quit();
 		    /*NOTREACHED*/
 		}
 		break;
