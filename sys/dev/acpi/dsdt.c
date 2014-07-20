@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.212 2014/07/12 18:48:17 tedu Exp $ */
+/* $OpenBSD: dsdt.c,v 1.213 2014/07/20 12:20:38 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2311,7 +2311,8 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
 		aml_bufcpy(vbit, 0, tbit, bpos, blen);
 	} else {
 		/* Write bits to opregion */
-		if (AML_FIELD_UPDATE(flag) == AML_FIELD_PRESERVE) {
+		if (AML_FIELD_UPDATE(flag) == AML_FIELD_PRESERVE &&
+		    (bpos != 0 || blen != tlen)) {
 			acpi_gasio(acpi_softc, ACPI_IOREAD, type, pi.addr,
 			    sz, tlen >> 3, tbit);
 		} else if (AML_FIELD_UPDATE(flag) == AML_FIELD_WRITEASONES) {
