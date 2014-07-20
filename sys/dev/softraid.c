@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.336 2014/07/20 18:05:21 mlarkin Exp $ */
+/* $OpenBSD: softraid.c,v 1.337 2014/07/20 18:10:15 deraadt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -5004,7 +5004,7 @@ sr_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 		char pad[3072];
 		struct sr_discipline *srd;
 		hibio_fn subfn;		/* underlying device i/o fn */
-		dev_t subdev;		/* underlying device dev_t */	
+		dev_t subdev;		/* underlying device dev_t */
 		daddr_t sr_swapoff; /* ofs of swap part in sr volume */
 		char buf[DEV_BSIZE];	/* encryption performed into this buf */
 	} *my = page;
@@ -5069,7 +5069,7 @@ sr_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 
 		/* Find the offset of the SR part in the underlying device */
 		sub_raidoff = my->srd->sd_meta->ssd_data_offset +
-			DL_GETPOFFSET(&dl.d_partitions[DISKPART(my->subdev)]);
+		    DL_GETPOFFSET(&dl.d_partitions[DISKPART(my->subdev)]);
 		DNPRINTF(SR_D_MISC,"sr_hibernate_io: blk trans ofs: %d blks\n",
 		    sub_raidoff);
 
@@ -5125,8 +5125,7 @@ sr_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 		if (res != 0)
 			return (res);
 		key_blkno++;
-	}		
-
+	}
 	return (0);
 }
 #endif /* HIBERNATE */
