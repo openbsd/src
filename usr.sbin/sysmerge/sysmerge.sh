@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.142 2014/07/18 10:43:29 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.143 2014/07/20 08:19:59 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -194,7 +194,7 @@ sm_populate() {
 			fi
 
 			# set auto-upgradable files
-			_D=$(diff -u ${WRKDIR}/${i} ${DESTDIR}/${DBDIR}/${i} | grep -E '^\+' | sed '1d' | awk '{print $3}')
+			_D=$(diff -u ${WRKDIR}/${i} ${DESTDIR}/${DBDIR}/${i} | sed -n 's/^+SHA256 (\(.*\)).*/\1/p')
 			for _d in ${_D}; do
 				# 2>/dev/null: if file got removed manually but is still in the sum file
 				CURSUM=$(cd ${DESTDIR:=/} && sha256 ${_d} 2>/dev/null)
