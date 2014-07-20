@@ -42,7 +42,6 @@ int
 main(void)
 {
 	char sfn[24];
-	char buf[sizeof(TEXT)];
 	FILE *sfp;
 	int fd, i;
 

@@ -41,7 +41,7 @@ main(void)
 	char sfn[24];
 	char buf[sizeof(TEXT)];
 	FILE *sfp;
-	int fd, i;
+	int fd;
 
 	strlcpy(sfn, "/tmp/barnacles.XXXXXXXX", sizeof(sfn));
 	if ((fd = mkstemp(sfn)) == -1 ||
