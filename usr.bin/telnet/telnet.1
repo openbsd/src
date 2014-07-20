@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.50 2014/07/19 23:50:38 guenther Exp $
+.\"	$OpenBSD: telnet.1,v 1.51 2014/07/20 04:08:13 guenther Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)telnet.1	8.4 (Berkeley) 2/3/94
 .\"
-.Dd $Mdocdate: July 19 2014 $
+.Dd $Mdocdate: July 20 2014 $
 .Dt TELNET 1
 .Os
 .Sh NAME
@@ -1247,16 +1247,6 @@ The initial value for this toggle is
 Toggles the display of all terminal data (in hexadecimal format).
 The initial value for this toggle is
 .Dv FALSE .
-.It Ic verbose_encrypt
-When the
-.Ic verbose_encrypt
-toggle is
-.Dv TRUE ,
-.Nm
-prints out a message each time encryption is enabled or
-disabled.
-The initial value for this toggle is
-.Dv FALSE .
 .It Ic \&?
 Displays the legal
 .Ic toggle
@@ -1265,8 +1255,8 @@ commands.
 .It Ic z
 Suspend
 .Nm telnet .
-This command only works when the user is using the
-.Xr csh 1 .
+This command only works when the user is using a shell with
+job control enabled.
 .It Ic \&! Op Ar command
 Execute a single command in a subshell on the local
 system.
