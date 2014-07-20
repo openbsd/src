@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.15 2014/07/10 12:14:48 mlarkin Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.16 2014/07/20 02:48:59 guenther Exp $	*/
 /* $NetBSD: lock_machdep.c,v 1.1.2.3 2000/05/03 14:40:30 sommerfeld Exp $ */
 
 /*-
@@ -64,10 +64,6 @@ __mp_lock_init(struct __mp_lock *mpl)
 #ifndef DDB
 #error "MP_LOCKDEBUG requires DDB"
 #endif
-
-extern void Debugger(void);
-extern int db_printf(const char *, ...)
-    __attribute__((__format__(__kprintf__,1,2)));
 
 /* CPU-dependent timing, needs this to be settable from ddb. */
 extern int __mp_lock_spinout;
