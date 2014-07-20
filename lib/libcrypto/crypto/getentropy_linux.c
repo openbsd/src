@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.27 2014/07/19 16:12:00 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.28 2014/07/20 03:24:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -74,6 +74,7 @@
 int	getentropy(void *buf, size_t len);
 
 static int gotdata(char *buf, size_t len);
+static int getentropy_getrandom(void *buf, size_t len);
 static int getentropy_urandom(void *buf, size_t len);
 #ifdef CTL_MAXNAME
 static int getentropy_sysctl(void *buf, size_t len);
@@ -90,6 +91,13 @@ getentropy(void *buf, size_t len)
 		errno = EIO;
 		return -1;
 	}
+
+	/*
+	 * Try descriptor-less getrandom()
+	 */
+	ret = getentropy_getrandom(buf, len);
+	if (ret != -1)
+		return (ret);
 
 	/*
 	 * Try to get entropy with /dev/urandom
@@ -174,6 +182,34 @@ gotdata(char *buf, size_t len)
 	if (any_set == 0)
 		return -1;
 	return 0;
+}
+
+static int
+getentropy_getrandom(void *buf, size_t len)
+{
+#if 0
+
+/* Hand-definitions until the API becomes commonplace */
+#ifndef SYS__getrandom
+#ifdef __LP64__
+#define SYS__getrandom 317
+#else
+#define SYS__getrandom 354
+#endif
+#endif
+	struct __getrandom_args args = {
+		.buf = buf;
+		.len = len;
+		.flags = 0;
+	};
+
+	if (len > 256)
+		return (-1);
+	ret = syscall(SYS__getrandom, &args);
+	if (ret == len)
+		return (0);
+#endif
+	return -1;
 }
 
 static int
