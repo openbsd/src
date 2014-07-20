@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_memstreamtest.c,v 1.3 2013/03/28 09:35:58 mpi Exp $ */
+/*	$OpenBSD: open_memstreamtest.c,v 1.4 2014/07/20 01:58:37 guenther Exp $ */
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -78,7 +78,7 @@ main(void)
 	}
 
 	if (size != OFFSET + sizeof(hello)-1) {
-		warnx("failed, size %zu should be %u. (8)",
+		warnx("failed, size %zu should be %zu. (8)",
 		    size, OFFSET + sizeof(hello)-1);
 		failures++;
 	}
@@ -99,7 +99,7 @@ main(void)
 	}
 
 	if (size != sizeof(start)-1) {
-		warnx("failed, size %zu should be %u. (12)",
+		warnx("failed, size %zu should be %zu. (12)",
 		    size, sizeof(start)-1);
 		failures++;
 	}
@@ -127,13 +127,13 @@ main(void)
 		failures++;
 	}
 
-	if (fclose(fp) == EOF) {
-		warnx("fclose failed. (17)");
+	if (fflush(fp) == EOF) {
+		warnx("fflush failed. (17)");
 		failures++;
 	}
 
 	if (size != OFFSET + sizeof(hello)-1) {
-		warnx("failed, size %zu should be %u. (18)",
+		warnx("failed, size %zu should be %zu. (18)",
 		    size, OFFSET + sizeof(hello)-1);
 		failures++;
 	}
@@ -156,6 +156,22 @@ main(void)
 
 	if (ftell(fp) != 7) {
 		warnx("failed seeking backward. (22)");
+		failures++;
+	}
+
+	if (fseek(fp, 5, SEEK_CUR) != 0) {
+		warnx("failed to fseek. (23)");
+		failures++;
+	}
+
+	if (fclose(fp) == EOF) {
+		warnx("fclose failed. (24)");
+		failures++;
+	}
+
+	if (size != 12) {
+		warnx("failed, size %zu should be %u.  (25)",
+		    size, 12);
 		failures++;
 	}
 
