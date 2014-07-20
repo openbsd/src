@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.335 2014/07/13 23:10:23 deraadt Exp $ */
+/* $OpenBSD: softraid.c,v 1.336 2014/07/20 18:05:21 mlarkin Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -56,6 +56,12 @@
 
 #include <dev/softraidvar.h>
 #include <dev/rndvar.h>
+
+#ifdef HIBERNATE
+#include <lib/libsa/aes_xts.h>
+#include <sys/hibernate.h>
+#include <scsi/sdvar.h>
+#endif /* HIBERNATE */
 
 /* #define SR_FANCY_STATS */
 
@@ -4968,3 +4974,159 @@ sr_dump_mem(u_int8_t *p, int len)
 }
 
 #endif /* SR_DEBUG */
+
+#ifdef HIBERNATE
+/*
+ * Side-effect free (no malloc, printf, pool, splx) softraid crypto writer.
+ *
+ * This function must perform the following:
+ * 1. Determine the underlying device's own side-effect free I/O function
+ *    (eg, ahci_hibernate_io, wd_hibernate_io, etc).
+ * 2. Store enough information in the provided page argument for subsequent
+ *    I/O calls (such as the crypto discipline structure for the keys, the
+ *    offset of the softraid partition on the underlying disk, as well as
+ *    the offset of the swap partition within the crypto volume.
+ * 3. Encrypt the incoming data using the sr_discipline keys, then pass
+ *    the request to the underlying device's own I/O function.
+ */
+int
+sr_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, void *page)
+{
+	/* Struct for stashing data obtained on HIB_INIT.
+	 * XXX
+	 * We share the page with the underlying device's own
+	 * side-effect free I/O function, so we pad our data to
+	 * the end of the page. Presently this does not overlap
+	 * with either of the two other side-effect free i/o
+	 * functions (ahci/wd).
+	 */
+	struct {
+		char pad[3072];
+		struct sr_discipline *srd;
+		hibio_fn subfn;		/* underlying device i/o fn */
+		dev_t subdev;		/* underlying device dev_t */	
+		daddr_t sr_swapoff; /* ofs of swap part in sr volume */
+		char buf[DEV_BSIZE];	/* encryption performed into this buf */
+	} *my = page;
+	extern struct cfdriver sd_cd;
+	char errstr[128], *dl_ret;
+	struct sr_chunk *schunk;
+	struct sd_softc *sd;
+	struct aes_xts_ctx ctx;
+	struct sr_softc *sc;
+	struct device *dv;
+	daddr_t key_blkno;
+	uint32_t sub_raidoff;  /* ofs of sr part in underlying dev */
+	struct disklabel dl;
+	size_t i, j;
+	u_char iv[8];
+
+	/*
+	 * In HIB_INIT, we are passed the swap partition size and offset
+	 * in 'size' and 'blkno' respectively. These are relative to the
+	 * start of the softraid partition, and we need to save these
+	 * for later translation to the underlying device's layout.
+	 */
+	if (op == HIB_INIT) {
+		dv = disk_lookup(&sd_cd, DISKUNIT(dev));
+		sd = (struct sd_softc *)dv;
+		sc = (struct sr_softc *)dv->dv_parent->dv_parent;
+
+		/*
+		 * Look up the sr discipline. This is used to determine
+		 * if we are SR crypto and what the underlying device is.
+		 */
+		my->srd = sc->sc_targets[sd->sc_link->target];
+		DNPRINTF(SR_D_MISC, "sr_hibernate_io: discipline is %s\n",
+			my->srd->sd_name);
+		if (strncmp(my->srd->sd_name, "CRYPTO", 10))
+			return (ENOTSUP);
+
+		/* Find the underlying device */
+		schunk = my->srd->sd_vol.sv_chunks[0];
+		my->subdev = schunk->src_dev_mm;
+
+		/*
+		 * Find the appropriate underlying device side effect free
+		 * I/O function, based on the type of device it is.
+		 */
+		my->subfn = get_hibernate_io_function(my->subdev);
+
+		/*
+		 * Find block offset where this raid partition is on
+		 * the underlying disk.
+		 */
+		dl_ret = disk_readlabel(&dl, my->subdev, errstr,
+		    sizeof(errstr));
+		if (dl_ret) {
+			printf("Hibernate error reading disklabel: %s\n", dl_ret);
+			return (ENOTSUP);
+		}
+
+		if (dl.d_partitions[DISKPART(my->subdev)].p_fstype != FS_RAID ||
+		    DL_GETPSIZE(&dl.d_partitions[DISKPART(my->subdev)]) == 0)
+			return (ENOTSUP);
+
+		/* Find the offset of the SR part in the underlying device */
+		sub_raidoff = my->srd->sd_meta->ssd_data_offset +
+			DL_GETPOFFSET(&dl.d_partitions[DISKPART(my->subdev)]);
+		DNPRINTF(SR_D_MISC,"sr_hibernate_io: blk trans ofs: %d blks\n",
+		    sub_raidoff);
+
+		/* Save the offset of the swap partition in the SR disk */
+		my->sr_swapoff = blkno;
+
+		/* Initialize the sub-device */
+		return my->subfn(my->subdev, sub_raidoff + blkno,
+		    addr, size, op, page);
+	}
+
+	/* Hibernate only uses (and we only support) writes */
+	if (op != HIB_W)
+		return (ENOTSUP);
+
+	/*
+	 * Blocks act as the IV for the encryption. These block numbers
+	 * are relative to the start of the sr partition, but the 'blkno'
+	 * passed above is relative to the start of the swap partition
+	 * inside the sr partition, so bias appropriately.
+	 */
+	key_blkno = my->sr_swapoff + blkno;
+
+	/* Process each disk block one at a time. */
+	for (i = 0; i < size; i += DEV_BSIZE) {
+		int res;
+
+		bzero(&ctx, sizeof(ctx));
+
+		/*
+		 * Set encryption key (from the sr discipline stashed
+		 * during HIB_INIT. This code is based on the softraid
+		 * bootblock code.
+		 */
+		aes_xts_setkey(&ctx, my->srd->mds.mdd_crypto.scr_key[0], 64);
+		/* We encrypt DEV_BSIZE bytes at a time in my->buf */
+		bcopy(((char *)addr) + i, my->buf, DEV_BSIZE);
+
+		/* Block number is the IV */
+		bcopy(&key_blkno, &iv, sizeof(key_blkno));
+		aes_xts_reinit(&ctx, iv);
+
+		/* Encrypt DEV_BSIZE bytes, AES_XTS_BLOCKSIZE bytes at a time */
+		for (j = 0; j < DEV_BSIZE; j += AES_XTS_BLOCKSIZE)
+			aes_xts_encrypt(&ctx, my->buf + j);
+
+		/*
+		 * Write one block out from my->buf to the underlying device
+		 * using its own side-effect free I/O function.
+		 */
+		res = my->subfn(my->subdev, blkno + (i / DEV_BSIZE),
+		    (vaddr_t)(my->buf), DEV_BSIZE, op, page);
+		if (res != 0)
+			return (res);
+		key_blkno++;
+	}		
+
+	return (0);
+}
+#endif /* HIBERNATE */

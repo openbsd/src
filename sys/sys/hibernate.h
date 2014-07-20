@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.35 2014/07/16 07:42:51 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.36 2014/07/20 18:05:21 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -115,7 +115,7 @@ void	 uvm_pmr_free_piglet(vaddr_t, vsize_t);
 int	 uvm_page_rle(paddr_t);
 void	 uvmpd_hibernate(void);
 
-hibio_fn get_hibernate_io_function(void);
+hibio_fn get_hibernate_io_function(dev_t);
 int	get_hibernate_info(union hibernate_info *, int);
 
 int	hibernate_zlib_reset(union hibernate_info *, int);

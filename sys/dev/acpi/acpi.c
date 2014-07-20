@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.266 2014/07/16 07:42:50 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.267 2014/07/20 18:05:21 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2625,7 +2625,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = EBADF;
 			break;
 		}
-		if (get_hibernate_io_function() == NULL) {
+		if (get_hibernate_io_function(swdevt[0].sw_dev) == NULL) {
 			error = EOPNOTSUPP;
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.36 2014/07/16 17:44:16 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.37 2014/07/20 18:05:21 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -43,6 +43,7 @@
 #include "acpi.h"
 #include "wd.h"
 #include "ahci.h"
+#include "softraid.h"
 #include "sd.h"
 
 /* Hibernate support */
@@ -68,12 +69,13 @@ extern	struct hibernate_state *hibernate_state;
  * Returns the hibernate write I/O function to use on this machine
  */
 hibio_fn
-get_hibernate_io_function(void)
+get_hibernate_io_function(dev_t dev)
 {
-	char *blkname = findblkname(major(swdevt[0].sw_dev));
+	char *blkname = findblkname(major(dev));
 
 	if (blkname == NULL)
 		return NULL;
+
 #if NWD > 0
 	if (strcmp(blkname, "wd") == 0) {
 		extern int wd_hibernate_io(dev_t dev, daddr_t blkno,
@@ -81,20 +83,30 @@ get_hibernate_io_function(void)
 		return wd_hibernate_io;
 	}
 #endif
-#if NAHCI > 0 && NSD > 0
+#if NSD > 0
 	if (strcmp(blkname, "sd") == 0) {
 		extern struct cfdriver sd_cd;
 		extern int ahci_hibernate_io(dev_t dev, daddr_t blkno,
 		    vaddr_t addr, size_t size, int op, void *page);
+		extern int sr_hibernate_io(dev_t dev, daddr_t blkno,
+		    vaddr_t addr, size_t size, int op, void *page);
 		struct device *dv;
 
+#if NAHCI > 0
 		dv = disk_lookup(&sd_cd, DISKUNIT(swdevt[0].sw_dev));
 		if (dv && dv->dv_parent && dv->dv_parent->dv_parent &&
 		    strcmp(dv->dv_parent->dv_parent->dv_cfdata->cf_driver->cd_name,
 		    "ahci") == 0)
 			return ahci_hibernate_io;
+#endif
+#if NSOFTRAID > 0
+		if (dv && dv->dv_parent && dv->dv_parent->dv_parent &&
+		    strcmp(dv->dv_parent->dv_parent->dv_cfdata->cf_driver->cd_name,
+		    "softraid") == 0)
+			return sr_hibernate_io;
 	}
 #endif
+#endif /* NSD > 0 */
 	return NULL;
 }
 
