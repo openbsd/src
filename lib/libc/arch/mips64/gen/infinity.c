@@ -1,8 +1,8 @@
-/*	$OpenBSD: infinity.c,v 1.2 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: infinity.c,v 1.3 2014/07/21 01:51:10 guenther Exp $ */
 /* infinity.c */
 
+#include <endian.h>
 #include <math.h>
-#include <sys/types.h>
 
 /* bytes for +Infinity on a MIPS */
 #if BYTE_ORDER == BIG_ENDIAN

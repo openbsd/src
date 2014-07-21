@@ -1,10 +1,9 @@
-/*	$OpenBSD: nan.c,v 1.2 2008/09/07 20:36:07 martynas Exp $	*/
+/*	$OpenBSD: nan.c,v 1.3 2014/07/21 01:51:10 guenther Exp $	*/
 
 /* Written by Martynas Venckus.  Public Domain. */
 
-#include <sys/types.h>
+#include <endian.h>
 #include <math.h>
-#include <machine/endian.h>
 
 /* bytes for qNaN on a mips64 (IEEE single format) */
 char __nan[] __attribute__((__aligned__(sizeof(float)))) =

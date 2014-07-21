@@ -1,13 +1,12 @@
-/*	$OpenBSD: infinity.c,v 1.3 2004/02/02 07:03:21 drahn Exp $	*/
+/*	$OpenBSD: infinity.c,v 1.4 2014/07/21 01:51:10 guenther Exp $	*/
 /*	$NetBSD: infinity.c,v 1.3 2002/02/19 20:08:19 bjh21 Exp $	*/
 
 /*
  * IEEE-compatible infinity.c -- public domain.
  */
 
-#include <sys/types.h>
+#include <endian.h>
 #include <math.h>
-#include <machine/endian.h>
 
 char __infinity[] __attribute__((__aligned__(sizeof(double)))) =
 #if BYTE_ORDER == BIG_ENDIAN

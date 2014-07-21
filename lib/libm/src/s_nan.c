@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_nan.c,v 1.12 2013/11/22 18:27:25 deraadt Exp $	*/
+/*	$OpenBSD: s_nan.c,v 1.13 2014/07/21 01:51:11 guenther Exp $	*/
 /*-
  * Copyright (c) 2007 David Schultz
  * All rights reserved.
@@ -28,8 +28,8 @@
  */
 
 #include <sys/types.h>
-#include <sys/endian.h>
 #include <ctype.h>
+#include <endian.h>
 #include <float.h>
 #include <math.h>
 #include <stdint.h>
@@ -81,7 +81,7 @@ _scan_nan(uint32_t *words, int num_words, const char *s)
 		;
 
 	/* Scan backwards, filling in the bits in words[] as we go. */
-#if _BYTE_ORDER == _LITTLE_ENDIAN
+#if BYTE_ORDER == LITTLE_ENDIAN
 	for (bitpos = 0; bitpos < 32 * num_words; bitpos += 4) {
 #else
 	for (bitpos = 32 * num_words - 4; bitpos >= 0; bitpos -= 4) {
@@ -101,7 +101,7 @@ nan(const char *s)
 	} u;
 
 	_scan_nan(u.bits, 2, s);
-#if _BYTE_ORDER == _LITTLE_ENDIAN
+#if BYTE_ORDER == LITTLE_ENDIAN
 	u.bits[1] |= 0x7ff80000;
 #else
 	u.bits[0] |= 0x7ff80000;

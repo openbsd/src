@@ -1,4 +1,4 @@
-/*	$OpenBSD: mppe.c,v 1.10 2013/02/13 22:10:38 yasuoka Exp $ */
+/*	$OpenBSD: mppe.c,v 1.11 2014/07/21 01:51:11 guenther Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: mppe.c,v 1.10 2013/02/13 22:10:38 yasuoka Exp $ */
+/* $Id: mppe.c,v 1.11 2014/07/21 01:51:11 guenther Exp $ */
 /**@file
  *
  * The implementation of MPPE(Microsoft Point-To-Point Encryption Protocol)
@@ -37,11 +37,11 @@
 #define	WORKAROUND_OUT_OF_SEQUENCE_PPP_FRAMING	1
 
 #include <sys/types.h>
-#include <sys/endian.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <net/if_dl.h>
 #include <netinet/in.h>
+#include <endian.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>

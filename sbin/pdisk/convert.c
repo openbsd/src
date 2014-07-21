@@ -28,7 +28,7 @@
  */
 
 #include <sys/types.h>
-#include <machine/endian.h>
+#include <endian.h>
 
 #include "convert.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_exp2l.c,v 1.1 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: s_exp2l.c,v 1.2 2014/07/21 01:51:11 guenther Exp $	*/
 /*-
  * Copyright (c) 2005-2008 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -26,7 +26,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/endian.h>
 #include <machine/ieee.h>
 #include <float.h>
 #include <math.h>

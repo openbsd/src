@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.11 2014/04/14 12:55:10 blambert Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.12 2014/07/21 01:51:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
 #define SNMP_HEADER
 
 #include <sys/types.h>
-#include <machine/endian.h>
+#include <endian.h>
 
 /*
  * SNMP IMSG interface

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.14 2014/03/22 04:18:18 yasuoka Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.15 2014/07/21 01:51:11 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,11 +28,10 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.14 2014/03/22 04:18:18 yasuoka Exp $
+ * $Id: pppoed.c,v 1.15 2014/07/21 01:51:11 guenther Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/endian.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -47,6 +46,7 @@
 #include <net/if_dl.h>
 #include <net/ethertypes.h>
 #include <net/bpf.h>
+#include <endian.h>
 #include <string.h>
 #include <syslog.h>
 #include <stdio.h>

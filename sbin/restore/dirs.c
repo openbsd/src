@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.36 2014/07/20 01:38:40 guenther Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.37 2014/07/21 01:51:11 guenther Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <ufs/ufs/dir.h>
 #include <protocols/dumprestore.h>
 
+#include <endian.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -52,8 +53,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <machine/endian.h>
 
 #include "restore.h"
 #include "extern.h"

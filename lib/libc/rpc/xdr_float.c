@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_float.c,v 1.20 2011/07/26 11:43:01 martynas Exp $ */
+/*	$OpenBSD: xdr_float.c,v 1.21 2014/07/21 01:51:11 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -81,7 +81,7 @@ static struct sgl_limits {
 };
 
 #else
-#include <machine/endian.h>
+#include <endian.h>
 #define IEEEFP
 #endif
 
