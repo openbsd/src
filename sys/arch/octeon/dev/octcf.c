@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.18 2014/07/12 21:47:04 pirofti Exp $ */
+/*	$OpenBSD: octcf.c,v 1.19 2014/07/21 21:07:34 jasper Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -191,7 +191,7 @@ octcfattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < 8; i++) {
-		uint64_t cfg = 
+		uint64_t cfg =
 		*(uint64_t *)PHYS_TO_XKPHYS(
 			OCTEON_MIO_BOOT_BASE + MIO_BOOT_REG_CFG(i), CCA_NC);
 
@@ -236,7 +236,7 @@ octcfattach(struct device *parent, struct device *self, void *aux)
 	*q++ = '\0';
 
 	printf(": <%s>\n", buf);
-	printf("%s: %d-sector PIO,", 
+	printf("%s: %d-sector PIO,",
 		wd->sc_dev.dv_xname, wd->sc_params.atap_multi & 0xff);
 
 	wd->sc_capacity =
@@ -308,8 +308,10 @@ octcfstrategy(struct buf *bp)
 		bp->b_error = ENXIO;
 		goto bad;
 	}
+
 	OCTCFDEBUG_PRINT(("%s (%s)\n", __func__, wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
+
 	/* If device invalidated (e.g. media change, door open), error. */
 	if ((wd->sc_flags & OCTCFF_LOADED) == 0) {
 		bp->b_error = EIO;
@@ -326,10 +328,8 @@ octcfstrategy(struct buf *bp)
 		goto bad;
 	}
 
-	/* Queue the I/O */
-	bufq_queue(&wd->sc_bufq, bp);
-
 	/* Queue transfer on drive, activate drive and controller if idle. */
+	bufq_queue(&wd->sc_bufq, bp);
 	s = splbio();
 	octcfstart(wd);
 	splx(s);
@@ -432,14 +432,14 @@ octcfopen(dev_t dev, int flag, int fmt, struct proc *p)
 
 	unit = DISKUNIT(dev);
 	wd = octcflookup(unit);
-	if (wd == NULL) 
+	if (wd == NULL)
 		return ENXIO;
 
 	/*
 	 * If this is the first open of this device, add a reference
 	 * to the adapter.
 	 */
-	if ((error = disk_lock(&wd->sc_dk)) != 0) 
+	if ((error = disk_lock(&wd->sc_dk)) != 0)
 		goto bad4;
 
 	if (wd->sc_dk.dk_openmask != 0) {
@@ -547,7 +547,7 @@ octcfgetdefaultlabel(struct octcf_softc *wd, struct disklabel *lp)
 	lp->d_nsectors = wd->sc_params.atap_sectors;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 	lp->d_ncylinders = DL_GETDSIZE(lp) / lp->d_secpercyl;
- lp->d_type = DTYPE_ESDI;
+	lp->d_type = DTYPE_ESDI;
 	strncpy(lp->d_typename, "ESDI/IDE disk", sizeof lp->d_typename);
 
 	/* XXX - user viscopy() like sd.c */
@@ -683,7 +683,6 @@ octcfioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 int
 wdformat(struct buf *bp)
 {
-
 	bp->b_flags |= B_FORMAT;
 	return octcfstrategy(bp);
 }
@@ -729,8 +728,8 @@ octcfdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	return ENXIO;
 }
 
-int 
-octcf_read_sectors(struct octcf_softc *wd, uint32_t nr_sectors, 
+int
+octcf_read_sectors(struct octcf_softc *wd, uint32_t nr_sectors,
 	uint32_t start_sector, void *buf)
 {
 	uint32_t count;
@@ -759,7 +758,7 @@ octcf_read_sectors(struct octcf_softc *wd, uint32_t nr_sectors,
 }
 
 int
-octcf_write_sectors(struct octcf_softc *wd, uint32_t nr_sectors, 
+octcf_write_sectors(struct octcf_softc *wd, uint32_t nr_sectors,
 	uint32_t start_sector, void *buf)
 {
 	uint32_t count;
@@ -789,18 +788,18 @@ void
 octcf_command(struct octcf_softc *wd, uint32_t lba, uint8_t cmd)
 {
 	OCTCF_REG_WRITE(wd, wdr_seccnt, 1 | ((lba & 0xff) << 8));
-	OCTCF_REG_WRITE(wd, wdr_cyl_lo, 
+	OCTCF_REG_WRITE(wd, wdr_cyl_lo,
 		((lba >> 8) & 0xff) | (((lba >> 16) & 0xff) << 8));
-	OCTCF_REG_WRITE(wd, wdr_sdh, 
+	OCTCF_REG_WRITE(wd, wdr_sdh,
 		(((lba >> 24) & 0xff) | 0xe0) | (cmd << 8));
 }
 
-int 
+int
 octcf_wait_busy(struct octcf_softc *wd)
 {
 	uint8_t status;
 
-	status = OCTCF_REG_READ(wd, wdr_status)>>8;	
+	status = OCTCF_REG_READ(wd, wdr_status)>>8;
 	while ((status & WDCS_BSY) == WDCS_BSY) {
 		if ((status & WDCS_DWF) != 0)
 			return (EIO);
@@ -808,7 +807,7 @@ octcf_wait_busy(struct octcf_softc *wd)
 		status = (uint8_t)(OCTCF_REG_READ(wd, wdr_status)>>8);
 	}
 
-	if ((status & WDCS_DRQ) == 0) 
+	if ((status & WDCS_DRQ) == 0)
 		return (ENXIO);
 
 	return (0);
@@ -816,7 +815,7 @@ octcf_wait_busy(struct octcf_softc *wd)
 
 /* Get the disk's parameters */
 int
-octcf_get_params(struct octcf_softc *wd, struct ataparams *prms)
+octcf_get_params(struct octcf_softc *wd, struct ataparams *params)
 {
 	char *tb;
 	int i;
@@ -856,46 +855,46 @@ octcf_get_params(struct octcf_softc *wd, struct ataparams *prms)
 		return CMD_ERR;
 	} else {
 #if BYTE_ORDER == BIG_ENDIAN
-		/* All the fields in the params structure are 16-bit
-		   integers except for the ID strings which are char
-		   strings.  The 16-bit integers are currently in
-		   memory in little-endian, regardless of architecture.
-		   So, they need to be swapped on big-endian architectures
-		   before they are accessed through the ataparams structure.
-
-		   The swaps below avoid touching the char strings.
+		/*
+		 * All the fields in the params structure are 16-bit
+		 * integers except for the ID strings which are char
+		 * strings.  The 16-bit integers are currently in
+		 * memory in little-endian, regardless of architecture.
+		 * So, they need to be swapped on big-endian architectures
+		 * before they are accessed through the ataparams structure.
+		 *
+		 * The swaps below avoid touching the char strings.
 		*/
-
 		swap16_multi((u_int16_t *)tb, 10);
 		swap16_multi((u_int16_t *)tb + 20, 3);
 		swap16_multi((u_int16_t *)tb + 47, ATAPARAMS_SIZE / 2 - 47);
 #endif
 		/* Read in parameter block. */
-		bcopy(tb, prms, sizeof(struct ataparams));
+		bcopy(tb, params, sizeof(struct ataparams));
 
 		/*
 		 * Shuffle string byte order.
 		 * ATAPI Mitsumi and NEC drives don't need this.
 		 */
-		if ((prms->atap_config & WDC_CFG_ATAPI_MASK) ==
+		if ((params->atap_config & WDC_CFG_ATAPI_MASK) ==
 		    WDC_CFG_ATAPI &&
-		    ((prms->atap_model[0] == 'N' &&
-			prms->atap_model[1] == 'E') ||
-		     (prms->atap_model[0] == 'F' &&
-			 prms->atap_model[1] == 'X'))) {
+		    ((params->atap_model[0] == 'N' &&
+			params->atap_model[1] == 'E') ||
+		     (params->atap_model[0] == 'F' &&
+			 params->atap_model[1] == 'X'))) {
 			free(tb, M_DEVBUF, 0);
 			return CMD_OK;
 		}
-		for (i = 0; i < sizeof(prms->atap_model); i += 2) {
-			p = (u_short *)(prms->atap_model + i);
+		for (i = 0; i < sizeof(params->atap_model); i += 2) {
+			p = (u_short *)(params->atap_model + i);
 			*p = swap16(*p);
 		}
-		for (i = 0; i < sizeof(prms->atap_serial); i += 2) {
-			p = (u_short *)(prms->atap_serial + i);
+		for (i = 0; i < sizeof(params->atap_serial); i += 2) {
+			p = (u_short *)(params->atap_serial + i);
 			*p = swap16(*p);
 		}
-		for (i = 0; i < sizeof(prms->atap_revision); i += 2) {
-			p = (u_short *)(prms->atap_revision + i);
+		for (i = 0; i < sizeof(params->atap_revision); i += 2) {
+			p = (u_short *)(params->atap_revision + i);
 			*p = swap16(*p);
 		}
 
