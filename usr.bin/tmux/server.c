@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.114 2014/05/14 06:21:19 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.115 2014/07/21 10:52:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -111,6 +111,7 @@ server_start(int lockfd, char *lockfile)
 	/* The first client is special and gets a socketpair; create it. */
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pair) != 0)
 		fatal("socketpair failed");
+	log_debug("starting server");
 
 	switch (fork()) {
 	case -1:
