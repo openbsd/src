@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_osx.c,v 1.7 2014/07/19 16:12:00 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_osx.c,v 1.8 2014/07/21 20:19:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -418,7 +418,8 @@ getentropy_fallback(void *buf, size_t len)
 		memcpy((char *)buf + i, results, min(sizeof(results), len - i));
 		i += min(sizeof(results), len - i);
 	}
-	memset(results, 0, sizeof results);
+	explicit_bzero(&ctx, sizeof ctx);
+	explicit_bzero(results, sizeof results);
 	if (gotdata(buf, len) == 0) {
 		errno = save_errno;
 		return 0;		/* satisfied */
