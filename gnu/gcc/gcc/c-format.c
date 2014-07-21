@@ -771,7 +771,7 @@ static const format_kind_info format_types_orig[] =
   },
   { "kprintf",   kprintf_length_specs,  kprint_char_table, " +#0-'I", NULL,  
     printf_flag_specs, printf_flag_pairs, 
-    FMT_FLAG_ARG_CONVERT|FMT_FLAG_DOLLAR_MULTIPLE|FMT_FLAG_USE_DOLLAR|FMT_FLAG_EMPTY_PREC_OK, 
+    FMT_FLAG_ARG_CONVERT|FMT_FLAG_EMPTY_PREC_OK, 
     'w', 0, 'p', 0, 'L', 
     &integer_type_node, &integer_type_node 
   }, 
