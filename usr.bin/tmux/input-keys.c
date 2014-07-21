@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.38 2014/07/21 10:25:48 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.39 2014/07/21 20:45:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -205,21 +205,6 @@ input_mouse(struct window_pane *wp, struct session *s, struct mouse_event *m)
 	char			 buf[40];
 	size_t			 len;
 	struct paste_buffer	*pb;
-	u_int			 i;
-
-	/*
-	 * If the alternate screen is active and hasn't enabled the mouse, send
-	 * up and down key presses for the mouse wheel.
-	 */
-	if (wp->saved_grid != NULL && !(wp->screen->mode & ALL_MOUSE_MODES)) {
-		for (i = 0; i < m->scroll; i++) {
-			if (m->wheel == MOUSE_WHEEL_UP)
-				input_key(wp, KEYC_UP);
-			else
-				input_key(wp, KEYC_DOWN);
-		}
-		return;
-	}
 
 	if (wp->screen->mode & ALL_MOUSE_MODES) {
 		/*
