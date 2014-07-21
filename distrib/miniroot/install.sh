@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.249 2014/07/16 08:27:14 ajacoutot Exp $
+#	$OpenBSD: install.sh,v 1.250 2014/07/21 20:34:14 naddy Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -308,13 +308,6 @@ fi
 	mkdir /mnt/root/.ssh
 	print -r -- "$rootkey" >> /mnt/root/.ssh/authorized_keys
 )
-
-if grep -qs '^rtsol' /mnt/etc/hostname.*; then
-	[[ ! -f /mnt/etc/sysctl.conf ]] && \
-		echo "# created during install" >/mnt/etc/sysctl.conf
-	echo 'net.inet6.ip6.accept_rtadv=1   # 1=Permit IPv6 autoconf (forwarding must be 0)' >>/mnt/etc/sysctl.conf
-	echo 'net.inet6.icmp6.rediraccept=1  # 1=Accept IPv6 ICMP redirects (for hosts)' >>/mnt/etc/sysctl.conf
-fi
 
 # Perform final steps common to both an install and an upgrade.
 finish_up
