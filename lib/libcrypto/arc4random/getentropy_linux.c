@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.28 2014/07/20 03:24:10 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.29 2014/07/21 19:15:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -285,7 +285,7 @@ getentropy_sysctl(void *buf, size_t len)
 		struct __sysctl_args args = {
 			.name = mib,
 			.nlen = 3,
-			.oldval = buf + i,
+			.oldval = (char *)buf + i,
 			.oldlenp = &chunk,
 		};
 		if (syscall(SYS__sysctl, &args) != 0)
