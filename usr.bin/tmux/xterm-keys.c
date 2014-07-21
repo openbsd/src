@@ -1,4 +1,4 @@
-/* $OpenBSD: xterm-keys.c,v 1.14 2014/05/27 13:04:42 nicm Exp $ */
+/* $OpenBSD: xterm-keys.c,v 1.15 2014/07/21 10:25:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -69,14 +69,6 @@ const struct xterm_keys_entry xterm_keys_table[] = {
 	{ KEYC_F10,	"\033[21;_~" },
 	{ KEYC_F11,	"\033[23;_~" },
 	{ KEYC_F12,	"\033[24;_~" },
-	{ KEYC_F13,	"\033[25;_~" },
-	{ KEYC_F14,	"\033[26;_~" },
-	{ KEYC_F15,	"\033[28;_~" },
-	{ KEYC_F16,	"\033[29;_~" },
-	{ KEYC_F17,	"\033[31;_~" },
-	{ KEYC_F18,	"\033[32;_~" },
-	{ KEYC_F19,	"\033[33;_~" },
-	{ KEYC_F20,	"\033[34;_~" },
 	{ KEYC_UP,	"\033[1;_A" },
 	{ KEYC_DOWN,	"\033[1;_B" },
 	{ KEYC_RIGHT,	"\033[1;_C" },

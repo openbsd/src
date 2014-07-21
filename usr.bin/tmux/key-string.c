@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.24 2013/03/22 10:30:04 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.25 2014/07/21 10:25:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -42,14 +42,6 @@ const struct {
 	{ "F10",	KEYC_F10 },
 	{ "F11",	KEYC_F11 },
 	{ "F12",	KEYC_F12 },
-	{ "F13",	KEYC_F13 },
-	{ "F14",	KEYC_F14 },
-	{ "F15",	KEYC_F15 },
-	{ "F16",	KEYC_F16 },
-	{ "F17",	KEYC_F17 },
-	{ "F18",	KEYC_F18 },
-	{ "F19",	KEYC_F19 },
-	{ "F20",	KEYC_F20 },
 	{ "IC",		KEYC_IC },
 	{ "DC",		KEYC_DC },
 	{ "Home",	KEYC_HOME },
