@@ -211,6 +211,7 @@
 ./etc/signify/openbsd-56-base.pub
 ./etc/signify/openbsd-56-fw.pub
 ./etc/signify/openbsd-56-pkg.pub
+./etc/signify/openbsd-57-base.pub
 ./etc/skel
 ./etc/skel/.ssh
 ./etc/sliphome
