@@ -1,4 +1,4 @@
-.\"     $Id: man.cgi.8,v 1.5 2014/07/18 19:02:07 schwarze Exp $
+.\"     $Id: man.cgi.8,v 1.6 2014/07/21 15:44:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 18 2014 $
+.Dd $Mdocdate: July 21 2014 $
 .Dt MAN.CGI 8
 .Os
 .Sh NAME
@@ -189,6 +189,11 @@ element.
 An ASCII string to be used for the HTML
 .Aq TITLE
 element.
+.It Ev HTTP_HOST
+The FQDN of the (possibly virtual) host the HTTP server is running on.
+This is used for
+.Ic Location:
+headers in HTTP 303 responses.
 .It Ev MAN_DIR
 A path to the
 .Nm

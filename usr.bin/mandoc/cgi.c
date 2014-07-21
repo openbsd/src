@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.17 2014/07/19 13:15:07 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.18 2014/07/21 15:44:22 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -560,8 +560,8 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 		 * without any delay.
 		 */
 		printf("Status: 303 See Other\r\n");
-		printf("Location: %s/%s/%s?",
-		    scriptname, req->q.manpath, r[0].file);
+		printf("Location: http://%s%s/%s/%s?",
+		    HTTP_HOST, scriptname, req->q.manpath, r[0].file);
 		http_printquery(req);
 		printf("\r\n"
 		     "Content-Type: text/html; charset=utf-8\r\n"
