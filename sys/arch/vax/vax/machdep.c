@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.142 2014/07/13 22:53:39 uebayasi Exp $ */
+/* $OpenBSD: machdep.c,v 1.143 2014/07/21 17:25:47 uebayasi Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -535,7 +535,7 @@ boot(int howto)
 	splhigh();
 	cold = 1;
 
-	if (howto & RB_DUMP)
+	if ((howto & RB_DUMP) != 0)
 		dumpsys();
 
 haltsys:
@@ -544,7 +544,7 @@ haltsys:
 	if (mainbus != NULL)
 		config_suspend(mainbus, DVACT_POWERDOWN);
 
-	if (howto & RB_HALT) {
+	if ((howto & RB_HALT) != 0) {
 		if (dep_call->cpu_halt)
 			(*dep_call->cpu_halt) ();
 		printf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");

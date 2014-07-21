@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.163 2014/07/20 18:24:34 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.164 2014/07/21 17:25:47 uebayasi Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1035,7 +1035,8 @@ haltsys:
 		config_suspend(mainbus, DVACT_POWERDOWN);
 
 #ifdef BOOTKEY
-	printf("hit any key to %s...\n", howto & RB_HALT ? "halt" : "reboot");
+	printf("hit any key to %s...\n",
+	    (howto & RB_HALT) != 0 ? "halt" : "reboot");
 	cnpollc(1);	/* for proper keyboard command handling */
 	cngetc();
 	cnpollc(0);
@@ -1043,13 +1044,14 @@ haltsys:
 #endif
 
 	/* Finally, powerdown/halt/reboot the system. */
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN &&
+	if ((howto & RB_POWERDOWN) != 0 &&
 	    platform.powerdown != NULL) {
 		(*platform.powerdown)();
 		printf("WARNING: powerdown failed!\n");
 	}
-	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
-	prom_halt(howto & RB_HALT);
+	printf("%s\n\n",
+	    (howto & RB_HALT) != 0 ? "halted." : "rebooting...");
+	prom_halt((howto & RB_HALT) != 0);
 	for (;;) ;
 	/* NOTREACHED */
 }

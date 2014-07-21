@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.188 2014/07/13 22:53:38 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.189 2014/07/21 17:25:47 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -748,7 +748,7 @@ boot(int howto)
 {
 	struct device *mainbus;
 
-	if (howto & RB_POWERDOWN)
+	if ((howto & RB_POWERDOWN) != 0)
 		lid_suspend = 0;
 
 	if (cold) {
@@ -776,7 +776,7 @@ boot(int howto)
 	splhigh();
 	cold = 1;
 
-	if (howto & RB_DUMP)
+	if ((howto & RB_DUMP) != 0)
 		dumpsys();
 
 haltsys:
@@ -789,13 +789,13 @@ haltsys:
 	x86_broadcast_ipi(X86_IPI_HALT);
 #endif
 
-	if (howto & RB_HALT) {
+	if ((howto & RB_HALT) != 0) {
 #if NACPI > 0 && !defined(SMALL_KERNEL)
 		extern int acpi_enabled;
 
 		if (acpi_enabled) {
 			delay(500000);
-			if (howto & RB_POWERDOWN)
+			if ((howto & RB_POWERDOWN) != 0)
 				acpi_powerdown();
 		}
 #endif
@@ -811,7 +811,7 @@ haltsys:
 	if (cpureset_delay > 0)
 		delay(cpureset_delay * 1000);
 	cpu_reset();
-	for(;;) ;
+	for (;;) ;
 	/* NOTREACHED */
 }
 

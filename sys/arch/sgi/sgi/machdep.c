@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.147 2014/07/13 22:53:39 uebayasi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.148 2014/07/21 17:25:47 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -857,7 +857,7 @@ boot(int howto)
 	splhigh();
 	cold = 1;
 
-	if (howto & RB_DUMP)
+	if ((howto & RB_DUMP) != 0)
 		dumpsys();
 
 haltsys:
@@ -866,8 +866,8 @@ haltsys:
 	if (mainbus != NULL)
 		config_suspend(mainbus, DVACT_POWERDOWN);
 
-	if (howto & RB_HALT) {
-		if (howto & RB_POWERDOWN)
+	if ((howto & RB_HALT) != 0) {
+		if ((howto & RB_POWERDOWN) != 0)
 			printf("System Power Down.\n");
 		else
 			printf("System Halt.\n");

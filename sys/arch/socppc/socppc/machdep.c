@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.54 2014/07/13 22:53:39 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.55 2014/07/21 17:25:47 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1066,8 +1066,8 @@ haltsys:
 	if (mainbus != NULL)
 		config_suspend(mainbus, DVACT_POWERDOWN);
 
-	if (howto & RB_HALT) {
-		if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+	if ((howto & RB_HALT) != 0) {
+		if ((howto & RB_POWERDOWN) != 0) {
 			;
 		}
 

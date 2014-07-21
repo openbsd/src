@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.69 2014/07/13 22:53:39 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.70 2014/07/21 17:25:47 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -545,7 +545,7 @@ boot(int howto)
 
 	boothowto = howto | (boothowto & RB_HALT);
 
-	if (!(howto & RB_NOSYNC)) {
+	if ((howto & RB_NOSYNC) == 0) {
 		waittime = 0;
 		vfs_shutdown();
 
@@ -561,7 +561,7 @@ boot(int howto)
 	splhigh();
 	cold = 1;
 
-	if (howto & RB_DUMP)
+	if ((howto & RB_DUMP) != 0)
 		dumpsys();
 
 haltsys:
@@ -574,8 +574,8 @@ haltsys:
 	if (cold_hook)
 		(*cold_hook)(HPPA_COLD_COLD);
 
-	if (howto & RB_HALT) {
-		if (howto & RB_POWERDOWN && cold_hook) {
+	if ((howto & RB_HALT) != 0) {
+		if ((howto & RB_POWERDOWN) != 0 && cold_hook) {
 			printf("Powering off...");
 			DELAY(2000000);
 			(*cold_hook)(HPPA_COLD_OFF);

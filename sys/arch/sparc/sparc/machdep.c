@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.163 2014/07/13 22:53:39 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.164 2014/07/21 17:25:47 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -553,7 +553,7 @@ boot(int howto)
 	splhigh();
 	cold = 1;
 
-	if (howto & RB_DUMP)
+	if ((howto & RB_DUMP) != 0)
 		dumpsys();
 
 haltsys:
@@ -562,9 +562,9 @@ haltsys:
 	if (mainbus != NULL)
 		config_suspend(mainbus, DVACT_POWERDOWN);
 
-	if ((howto & RB_HALT) || (howto & RB_POWERDOWN)) {
+	if ((howto & RB_HALT) != 0 || (howto & RB_POWERDOWN) != 0) {
 #if defined(SUN4M)
-		if (howto & RB_POWERDOWN) {
+		if ((howto & RB_POWERDOWN) != 0) {
 			printf("attempting to power down...\n");
 #if NTCTRL > 0
 			tadpole_powerdown();
@@ -582,9 +582,9 @@ haltsys:
 
 	printf("rebooting\n\n");
 	i = 1;
-	if (howto & RB_SINGLE)
+	if ((howto & RB_SINGLE) != 0)
 		str[i++] = 's';
-	if (howto & RB_KDB)
+	if ((howto & RB_KDB) != 0)
 		str[i++] = 'd';
 	if (i > 1) {
 		str[0] = '-';

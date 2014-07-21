@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2014/07/13 22:53:39 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.42 2014/07/21 17:25:47 uebayasi Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -544,7 +544,7 @@ boot(int howto)
 	splhigh();
 	cold = 1;
 
-	if (howto & RB_DUMP)
+	if ((howto & RB_DUMP) != 0)
 		dumpsys();
 
 haltsys:
@@ -553,16 +553,16 @@ haltsys:
 	if (mainbus != NULL)
 		config_suspend(mainbus, DVACT_POWERDOWN);
 
-	if ((howto & RB_HALT) || (howto & RB_POWERDOWN)) {
+	if ((howto & RB_HALT) != 0 || (howto & RB_POWERDOWN) != 0) {
 		printf("halted\n\n");
 		romhalt();
 	}
 
 	printf("rebooting\n\n");
 	i = 1;
-	if (howto & RB_SINGLE)
+	if ((howto & RB_SINGLE) != 0)
 		str[i++] = 's';
-	if (howto & RB_KDB)
+	if ((howto & RB_KDB) != 0)
 		str[i++] = 'd';
 	if (i > 1) {
 		str[0] = '-';

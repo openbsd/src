@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.166 2014/07/13 22:53:39 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.167 2014/07/21 17:25:47 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -643,7 +643,7 @@ boot(int howto)
 	splhigh();
 	cold = 1;
 
-	if (howto & RB_DUMP)
+	if ((howto & RB_DUMP) != 0)
 		dumpsys();
 
 haltsys:
@@ -653,7 +653,7 @@ haltsys:
 		config_suspend(mainbus, DVACT_POWERDOWN);
 
 	/* If powerdown was requested, do it. */
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+	if ((howto & RB_POWERDOWN) != 0) {
 		/* Let the OBP do the work. */
 		OF_poweroff();
 		printf("WARNING: powerdown failed!\n");
@@ -662,7 +662,7 @@ haltsys:
 		 */
 	}
 
-	if (howto & RB_HALT) {
+	if ((howto & RB_HALT) != 0) {
 		printf("halted\n\n");
 		OF_exit();
 		panic("PROM exit failed");
@@ -682,9 +682,9 @@ haltsys:
 		str[0] = '\0';
 	}
 			
-	if (howto & RB_SINGLE)
+	if ((howto & RB_SINGLE) != 0)
 		str[i++] = 's';
-	if (howto & RB_KDB)
+	if ((howto & RB_KDB) != 0)
 		str[i++] = 'd';
 	if (i > 1) {
 		if (str[0] == '\0')

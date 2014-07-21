@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.70 2014/07/13 22:53:38 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.71 2014/07/21 17:25:47 uebayasi Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -321,7 +321,7 @@ boot(int howto)
 	splhigh();
 	cold = 1;
 
-	if (howto & RB_DUMP)
+	if ((howto & RB_DUMP) != 0)
 		dumpsys();
 
 haltsys:
@@ -330,7 +330,7 @@ haltsys:
 	if (mainbus != NULL)
 		config_suspend(mainbus, DVACT_POWERDOWN);
 
-	if (howto & RB_HALT) {
+	if ((howto & RB_HALT) != 0) {
 		printf("System halted.\n\n");
 		bootstack();
 		cmmu_shutdown();
