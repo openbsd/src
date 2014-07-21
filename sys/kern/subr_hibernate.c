@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.98 2014/07/20 18:05:21 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.99 2014/07/21 01:57:55 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -43,9 +43,9 @@
  *
  * Offset from piglet_base	Purpose
  * ----------------------------------------------------------------------------
- * 0				I/O page used during resume
- * 1*PAGE_SIZE		 	I/O page used during hibernate suspend
- * 2*PAGE_SIZE		 	I/O page used during hibernate suspend
+ * 0				Private page for suspend I/O write functions
+ * 1*PAGE_SIZE			I/O page used during hibernate suspend
+ * 2*PAGE_SIZE			I/O page used during hibernate suspend
  * 3*PAGE_SIZE			copy page used during hibernate suspend
  * 4*PAGE_SIZE			final chunk ordering list (8 pages)
  * 12*PAGE_SIZE			piglet chunk ordering list (8 pages)
@@ -749,20 +749,18 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 
 	} else {
 		/*
-		 * Resuming kernels use a regular I/O page since we won't
-		 * have access to the suspended kernel's piglet VA at this
-		 * point. No need to free this I/O page as it will vanish
-		 * as part of the resume.
+		 * Resuming kernels use a regular private page for the driver
+		 * No need to free this I/O page as it will vanish as part of
+		 * the resume.
 		 */
 		hib->io_page = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
 		if (!hib->io_page)
-			return (1);
+			goto fail;
 	}
 
 
 	if (get_hibernate_info_md(hib))
 		goto fail;
-
 
 	return (0);
 fail:
@@ -1682,7 +1680,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 
 		out_remaining = hibernate_state->hib_stream.avail_out;
 
-		used = 2*PAGE_SIZE - out_remaining;
+		used = 2 * PAGE_SIZE - out_remaining;
 		nblocks = used / DEV_BSIZE;
 
 		/* Round up to next block if needed */
