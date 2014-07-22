@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.97 2014/06/25 06:57:42 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.98 2014/07/22 06:28:10 guenther Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: June 25 2014 $
+.Dd $Mdocdate: July 22 2014 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -5851,40 +5851,36 @@ It can be overridden by the
 .Fl reqexts
 command line switch.
 .It Ar string_mask
-This option masks out the use of certain string types in certain
+This option limits the string types for encoding certain
 fields.
-Most users will not need to change this option.
-.Pp
-It can be set to several values:
-.Ar default ,
-which is also the default option, uses
-.Em PrintableStrings , T61Strings
+The following values may be used, limiting strings to the indicated types:
+.Bl -tag -width "MASK:number"
+.It Ar utf8only
+.Em UTF8String.
+This is the default, as recommended by PKIX in RFC 2459.
+.It Ar default
+.Em PrintableString , IA5String , T61String , BMPString , UTF8String .
+.It Ar pkix
+.Em PrintableString , IA5String , BMPString , UTF8String .
+This was inspired by the PKIX recommendation in RFC 2459 for certificates
+generated before 2004, but differs by also permitting
+.Em IA5String .
+.It Ar nombstr
+.Em PrintableString , IA5String , T61String , UniversalString .
+This was a workaround for some ancient software that had problems
+with the variable-sized
+.Em BMPString
 and
-.Em BMPStrings ;
-if the
-.Ar pkix
-value is used, then only
-.Em PrintableStrings
-and
-.Em BMPStrings
-will be used.
-This follows the PKIX recommendation in RFC 2459.
-If the
-.Fl utf8only
-option is used, then only
-.Em UTF8Strings
-will be used: this is the PKIX recommendation in RFC 2459 after 2003.
-Finally, the
-.Ar nombstr
-option just uses
-.Em PrintableStrings
-and
-.Em T61Strings :
-certain software has problems with
-.Em BMPStrings
-and
-.Em UTF8Strings :
-in particular Netscape.
+.Em UTF8String
+types.
+.It Li MASK : Ns Ar number
+This is an explicit bitmask of permitted types, where
+.Ar number
+is a C-style hex, decimal, or octal number that's a bit-wise OR of
+.Dv B_ASN1_*
+values from
+.In openssl/asn1.h .
+.El
 .It Ar utf8
 If set to the value
 .Em yes ,
