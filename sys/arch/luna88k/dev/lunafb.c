@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.21 2014/01/15 11:13:53 aoyama Exp $ */
+/* $OpenBSD: lunafb.c,v 1.22 2014/07/22 13:39:16 aoyama Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -81,29 +81,6 @@ struct hwcmap {
 	u_int8_t r[CMAP_SIZE];
 	u_int8_t g[CMAP_SIZE];
 	u_int8_t b[CMAP_SIZE];
-};
-
-static const struct {
-	u_int8_t r;
-	u_int8_t g;
-	u_int8_t b;
-} ansicmap[16] = {
-	{    0,    0,    0},
-	{ 0x80,    0,    0},
-	{    0, 0x80,    0},
-	{ 0x80, 0x80,    0},
-	{    0,    0, 0x80},
-	{ 0x80,    0, 0x80},
-	{    0, 0x80, 0x80},
-	{ 0xc0, 0xc0, 0xc0},
-	{ 0x80, 0x80, 0x80},
-	{ 0xff,    0,    0},
-	{    0, 0xff,    0},
-	{ 0xff, 0xff,    0},
-	{    0,    0, 0xff},
-	{ 0xff,    0, 0xff},
-	{    0, 0xff, 0xff},
-	{ 0xff, 0xff, 0xff},
 };
 
 struct om_hwdevconfig {
@@ -602,7 +579,19 @@ omfb_clear_framebuffer(struct om_hwdevconfig *dc)
 }
 
 /*
- * set default colormap; white on black for 1bpp, ANSI 16 colors for 4/8 bpp.
+ * Set default colormap; white on black for 1bpp, ANSI 16 colors for 4/8 bpp.
+ *
+ * Note about workaround for 8bpp frame buffer:
+ *
+ * Current LUNA wscons touches only first 4 planes (plane #0-#3), but
+ * other program (e.g. mlterm-fb) can use all 8 planes on an 8bpp
+ * frame buffer.  When such program exits, it may not clear all planes,
+ * so there may be some visible garbage data on the other 4 planes
+ * (plane #4-#7) when we use default 256 rasops_cmap directly.
+ *
+ * We should manage all 8 planes on LUNA, but that will be too much
+ * overhead for 16 colors wscons.  So, by repeating 16 colors in 256
+ * colormap, we can ignore the values on the other 4 planes.
  */
 void
 omfb_set_default_cmap(struct om_hwdevconfig *dc)
@@ -624,13 +613,13 @@ omfb_set_default_cmap(struct om_hwdevconfig *dc)
 			}
 		} else {
 			for (i = 0; i < 16; i++) {
-			/* ANSI 16 colors */
+			/* Set ANSI 16 colors */
 				odac->bt_cmap = dc->dc_cmap.r[i]
-				    = ansicmap[i].r;
+				    = rasops_cmap[i * 3];
 				odac->bt_cmap = dc->dc_cmap.g[i]
-				    = ansicmap[i].g;
+				    = rasops_cmap[i * 3 + 1];
 				odac->bt_cmap = dc->dc_cmap.b[i]
-				    = ansicmap[i].b;
+				    = rasops_cmap[i * 3 + 2];
 			}
 		}
 	} else if (hwplanebits == 8) {
@@ -662,16 +651,17 @@ omfb_set_default_cmap(struct om_hwdevconfig *dc)
 			}
 		} else {
 			/*
-			 * Set ANSI 16 colors.  We only supports 4bpp console
-			 * right now, repeat 16 colors in 256 colormap.
+			 * Set ANSI 16 colors.  On 8bpp frame buffer, repeat
+			 * 16 colors in 256 colormap as described above.
 			 */
 			for (i = 0; i < 256; i++) {
+				int index = i % 16;
 				ndac->bt_cmap = dc->dc_cmap.r[i]
-				    = ansicmap[i % 16].r;
+				    = rasops_cmap[index * 3];
 				ndac->bt_cmap = dc->dc_cmap.g[i]
-				    = ansicmap[i % 16].g;
+				    = rasops_cmap[index * 3 + 1];
 				ndac->bt_cmap = dc->dc_cmap.b[i]
-				    = ansicmap[i % 16].b;
+				    = rasops_cmap[index * 3 + 2];
 			}
 		}
 	}
