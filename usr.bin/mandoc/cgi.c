@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.19 2014/07/21 22:32:55 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.20 2014/07/22 18:14:05 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -460,6 +460,20 @@ resp_searchform(const struct req *req)
 	     "</FORM>\n"
 	     "</DIV>");
 	puts("<!-- End search form. //-->");
+}
+
+static int
+validate_urifrag(const char *frag)
+{
+
+	while ('\0' != *frag) {
+		if ( ! (isalnum((unsigned char)*frag) ||
+		    '-' == *frag || '.' == *frag ||
+		    '/' == *frag || '_' == *frag))
+			return(0);
+		frag++;
+	}
+	return(1);
 }
 
 static int
@@ -956,6 +970,13 @@ main(void)
 	if (NULL == (scriptname = getenv("SCRIPT_NAME")))
 		scriptname = "";
 
+	if ( ! validate_urifrag(scriptname)) {
+		fprintf(stderr, "unsafe SCRIPT_NAME \"%s\"\n",
+		    scriptname);
+		pg_error_internal();
+		return(EXIT_FAILURE);
+	}
+
 	/*
 	 * First we change directory into the MAN_DIR so that
 	 * subsequent scanning for manpath directories is rooted
@@ -980,6 +1001,12 @@ main(void)
 	if ( ! validate_manpath(&req, req.q.manpath)) {
 		pg_error_badrequest(
 		    "You specified an invalid manpath.");
+		return(EXIT_FAILURE);
+	}
+
+	if ( ! (NULL == req.q.arch || validate_urifrag(req.q.arch))) {
+		pg_error_badrequest(
+		    "You specified an invalid architecture.");
 		return(EXIT_FAILURE);
 	}
 
@@ -1034,7 +1061,20 @@ pathgen(struct req *req)
 			dpsz--;
 		req->p = mandoc_realloc(req->p,
 		    (req->psz + 1) * sizeof(char *));
-		req->p[req->psz++] = mandoc_strndup(dp, dpsz);
+		dp = mandoc_strndup(dp, dpsz);
+		if ( ! validate_urifrag(dp)) {
+			fprintf(stderr, "%s/manpath.conf contains "
+			    "unsafe path \"%s\"\n", MAN_DIR, dp);
+			pg_error_internal();
+			exit(EXIT_FAILURE);
+		}
+		if (NULL != strchr(dp, '/')) {
+			fprintf(stderr, "%s/manpath.conf contains "
+			    "path with slash \"%s\"\n", MAN_DIR, dp);
+			pg_error_internal();
+			exit(EXIT_FAILURE);
+		}
+		req->p[req->psz++] = dp;
 	}
 
 	if ( req->p == NULL ) {

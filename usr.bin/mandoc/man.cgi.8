@@ -1,4 +1,4 @@
-.\"     $Id: man.cgi.8,v 1.6 2014/07/21 15:44:22 schwarze Exp $
+.\"     $Id: man.cgi.8,v 1.7 2014/07/22 18:14:05 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 21 2014 $
+.Dd $Mdocdate: July 22 2014 $
 .Dt MAN.CGI 8
 .Os
 .Sh NAME
@@ -267,6 +267,34 @@ For backward compatibility with the traditional
 is supported as an alias for
 .Cm sec .
 .El
+.Ss Restricted character set
+For security reasons, in particular to prevent cross site scripting
+attacks, some strings used by
+.Nm
+can only contain the following characters:
+.Pp
+.Bl -dash -compact -offset indent
+.It
+lower case and upper case ASCII letters
+.It
+the ten decimal digits
+.It
+the dash
+.Pq Sq -
+.It
+the dot
+.Pq Sq \&.
+.It
+the slash
+.Pq Sq /
+.It
+the underscore
+.Pq Sq _
+.El
+.Pp
+In particular, this applies to the
+.Ev SCRIPT_NAME ,
+to all manpaths, and to all architecture names.
 .Sh ENVIRONMENT
 The web server may pass the following CGI variables to
 .Nm :
@@ -293,6 +321,10 @@ binary relative to the server root, usually
 .Pa /cgi-bin/man.cgi .
 This is used for generating URIs to be embedded
 in generated HTML code and HTTP headers.
+If this contains any character not contained in the
+.Sx Restricted character set ,
+.Nm
+reports an internal server error and exits without doing anything.
 .El
 .Sh FILES
 .Bl -tag -width Ds
@@ -332,6 +364,12 @@ Manual pages documenting
 itself, linked from the index page.
 .It Pa /man/manpath.conf
 The list of available manpaths, one per line.
+If any of the lines in this file contains a slash
+.Pq Sq /
+or any character not contained in the
+.Sx Restricted character set ,
+.Nm
+reports an internal server error and exits without doing anything.
 .It Pa /man/OpenBSD-current/man1/mandoc.1
 An example
 .Xr mdoc 7
