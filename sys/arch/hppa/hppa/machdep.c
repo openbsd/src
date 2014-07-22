@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.232 2014/07/21 17:25:47 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.233 2014/07/22 01:04:04 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -942,7 +942,7 @@ haltsys:
 		(*cold_hook)(HPPA_COLD_COLD);
 
 	if ((howto & RB_HALT) != 0) {
-		if ((howto & RB_POWERDOWN) != 0 && cold_hook) {
+		if ((howto & RB_POWERDOWN) != 0) {
 			printf("Powering off...");
 			DELAY(2000000);
 			(*cold_hook)(HPPA_COLD_OFF);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.70 2014/07/21 17:25:47 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.71 2014/07/22 01:04:04 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -537,6 +537,15 @@ boot(int howto)
 {
 	struct device *mainbus;
 
+	/*
+	 * On older systems without software power control, prevent mi code
+	 * from spinning disks off, in case the operator changes his mind
+	 * and prefers to reboot - the firmware will not send a spin up
+	 * command to the disks.
+	 */
+	if (cold_hook == NULL)
+		howto &= ~RB_POWERDOWN;
+
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
@@ -575,7 +584,7 @@ haltsys:
 		(*cold_hook)(HPPA_COLD_COLD);
 
 	if ((howto & RB_HALT) != 0) {
-		if ((howto & RB_POWERDOWN) != 0 && cold_hook) {
+		if ((howto & RB_POWERDOWN) != 0) {
 			printf("Powering off...");
 			DELAY(2000000);
 			(*cold_hook)(HPPA_COLD_OFF);
