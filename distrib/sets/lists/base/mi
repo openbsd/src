@@ -1,4 +1,3 @@
-./usr/local/share/pkgconfig
 ./altroot
 ./bin
 ./bin/[
@@ -212,6 +211,7 @@
 ./etc/signify/openbsd-56-fw.pub
 ./etc/signify/openbsd-56-pkg.pub
 ./etc/signify/openbsd-57-base.pub
+./etc/signify/openbsd-57-pkg.pub
 ./etc/skel
 ./etc/skel/.ssh
 ./etc/sliphome
@@ -2733,6 +2733,7 @@
 ./usr/local/share/nls/ru_RU.KOI8-R
 ./usr/local/share/nls/sv_SE.ISO_8859-1
 ./usr/local/share/nls/uk_UA.KOI8-U
+./usr/local/share/pkgconfig
 ./usr/local/share/skel
 ./usr/mdec
 ./usr/obj
