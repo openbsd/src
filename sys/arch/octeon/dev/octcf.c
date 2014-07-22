@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.20 2014/07/22 14:45:34 jasper Exp $ */
+/*	$OpenBSD: octcf.c,v 1.21 2014/07/22 14:49:49 jasper Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -366,7 +366,6 @@ _octcfstart(struct octcf_softc *wd, struct buf *bp)
 	secno = DL_BLKTOSEC(lp, bp->b_blkno) +
 	    DL_GETPOFFSET(&lp->d_partitions[DISKPART(bp->b_dev)]);
 	nsecs = howmany(bp->b_bcount, lp->d_secsize);
-
 	wd->sc_bp = bp;
 
 	/* Instrumentation. */
@@ -656,8 +655,9 @@ daddr_t
 octcfsize(dev_t dev)
 {
 	struct octcf_softc *wd;
+	struct disklabel *lp;
 	int part, omask;
-	int64_t size;
+	daddr_t size;
 
 	OCTCFDEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
@@ -673,8 +673,8 @@ octcfsize(dev_t dev)
 		goto exit;
 	}
 
-	size = DL_GETPSIZE(&wd->sc_dk.dk_label->d_partitions[part]) *
-	    (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	lp = wd->sc_dk.dk_label;
+	size = DL_SECTOBLK(lp, DL_GETPSIZE(&lp->d_partitions[part]));
 	if (omask == 0 && octcfclose(dev, 0, S_IFBLK, NULL) != 0)
 		size = -1;
 
