@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.19 2014/07/21 21:07:34 jasper Exp $ */
+/*	$OpenBSD: octcf.c,v 1.20 2014/07/22 14:45:34 jasper Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -275,17 +275,8 @@ int
 octcfdetach(struct device *self, int flags)
 {
 	struct octcf_softc *sc = (struct octcf_softc *)self;
-	int bmaj, cmaj, mn;
 
-	/* Locate the lowest minor number to be detached. */
-	mn = DISKMINOR(self->dv_unit, 0);
-
-	for (bmaj = 0; bmaj < nblkdev; bmaj++)
-		if (bdevsw[bmaj].d_open == octcfopen)
-			vdevgone(bmaj, mn, mn + MAXPARTITIONS - 1, VBLK);
-	for (cmaj = 0; cmaj < nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == octcfopen)
-			vdevgone(cmaj, mn, mn + MAXPARTITIONS - 1, VCHR);
+	disk_gone(octcfopen, self->dv_unit);
 
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
@@ -468,26 +459,8 @@ octcfopen(dev_t dev, int flag, int fmt, struct proc *p)
 	}
 
 	part = DISKPART(dev);
-
-	/* Check that the partition exists. */
-	if (part != RAW_PART &&
-	    (part >= wd->sc_dk.dk_label->d_npartitions ||
-	     wd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
-		error = ENXIO;
+	if ((error = disk_openpart(&wd->sc_dk, part, fmt, 1)) != 0)
 		goto bad;
-	}
-
-	/* Insure only one open at a time. */
-	switch (fmt) {
-	case S_IFCHR:
-		wd->sc_dk.dk_copenmask |= (1 << part);
-		break;
-	case S_IFBLK:
-		wd->sc_dk.dk_bopenmask |= (1 << part);
-		break;
-	}
-	wd->sc_dk.dk_openmask =
-	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
 	disk_unlock(&wd->sc_dk);
 	device_unref(&wd->sc_dev);
@@ -518,16 +491,7 @@ octcfclose(dev_t dev, int flag, int fmt, struct proc *p)
 
 	disk_lock_nointr(&wd->sc_dk);
 
-	switch (fmt) {
-	case S_IFCHR:
-		wd->sc_dk.dk_copenmask &= ~(1 << part);
-		break;
-	case S_IFBLK:
-		wd->sc_dk.dk_bopenmask &= ~(1 << part);
-		break;
-	}
-	wd->sc_dk.dk_openmask =
-	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
+	disk_closepart(&wd->sc_dk, part, fmt);
 
 	disk_unlock(&wd->sc_dk);
 
