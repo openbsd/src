@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.90 2014/03/19 10:09:19 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.91 2014/07/22 11:06:10 mpi Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -54,7 +54,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #ifdef INET6
 #include <netinet/ip6.h>

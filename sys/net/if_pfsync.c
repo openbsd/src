@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.207 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.208 2014/07/22 11:06:09 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -66,7 +66,6 @@
 #include <netinet/tcp_seq.h>
 
 #ifdef	INET
-#include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>

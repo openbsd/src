@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.30 2014/06/03 13:32:24 mpi Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.31 2014/07/22 11:06:10 mpi Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -75,7 +75,6 @@
 
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>

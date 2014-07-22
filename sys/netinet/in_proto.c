@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.60 2013/12/17 02:41:07 matthew Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.61 2014/07/22 11:06:10 mpi Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -111,7 +111,6 @@
 #endif
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>

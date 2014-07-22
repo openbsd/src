@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.124 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.125 2014/07/22 11:06:09 mpi Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -60,7 +60,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.18 2011/05/04 16:05:49 blambert Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.19 2014/07/22 11:06:10 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -39,7 +39,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/in_systm.h>
 #endif
 
 #include <net80211/ieee80211_var.h>

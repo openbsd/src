@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.31 2014/07/12 18:44:22 tedu Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.32 2014/07/22 11:06:09 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -70,7 +70,6 @@
 #include <net/if_dl.h>
 
 #ifdef INET
-#include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>

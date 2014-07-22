@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.56 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.57 2014/07/22 11:06:09 mpi Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -124,7 +124,6 @@
 
 #ifdef	INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #endif
 

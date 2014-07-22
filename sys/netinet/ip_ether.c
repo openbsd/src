@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.67 2014/07/14 12:18:30 deraadt Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.68 2014/07/22 11:06:10 mpi Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -43,7 +43,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>

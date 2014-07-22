@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.232 2014/07/12 18:44:23 tedu Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.233 2014/07/22 11:06:10 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -61,7 +61,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>

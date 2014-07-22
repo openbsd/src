@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.67 2014/07/12 18:44:23 tedu Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.68 2014/07/22 11:06:10 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -79,7 +79,6 @@
 #include <net/raw_cb.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>

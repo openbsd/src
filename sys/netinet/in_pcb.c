@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.157 2014/07/12 21:06:34 yasuoka Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.158 2014/07/22 11:06:10 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -85,7 +85,6 @@
 #include <net/pfvar.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.42 2014/07/12 18:44:23 tedu Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.43 2014/07/22 11:06:10 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -89,7 +89,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/igmp.h>

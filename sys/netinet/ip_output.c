@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.265 2014/07/12 18:44:23 tedu Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.266 2014/07/22 11:06:10 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>

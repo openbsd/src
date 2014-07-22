@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.52 2014/04/21 12:22:26 henning Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.53 2014/07/22 11:06:10 mpi Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -38,7 +38,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>

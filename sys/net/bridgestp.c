@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.48 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.49 2014/07/22 11:06:09 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -55,7 +55,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.67 2014/07/12 18:44:23 tedu Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.68 2014/07/22 11:06:10 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -88,7 +88,6 @@
 #include <netinet6/ip6_mroute.h>
 #endif
 #include <netinet/icmp6.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet6/nd6.h>

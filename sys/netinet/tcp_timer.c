@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.47 2013/08/08 14:29:29 mpi Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.48 2014/07/22 11:06:10 mpi Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>

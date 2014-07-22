@@ -1,4 +1,4 @@
-/*	$OpenBSD: slcompress.c,v 1.10 2013/06/11 18:15:53 deraadt Exp $	*/
+/*	$OpenBSD: slcompress.c,v 1.11 2014/07/22 11:06:10 mpi Exp $	*/
 /*	$NetBSD: slcompress.c,v 1.17 1997/05/17 21:12:10 christos Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/systm.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 

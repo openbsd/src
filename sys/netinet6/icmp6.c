@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.146 2014/07/11 12:20:26 benno Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.147 2014/07/22 11:06:10 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -83,7 +83,6 @@
 #include <net/if_types.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>

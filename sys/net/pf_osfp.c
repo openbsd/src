@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.28 2013/11/11 09:15:34 mpi Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.29 2014/07/22 11:06:10 mpi Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -27,7 +27,6 @@
 #include <sys/syslog.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 

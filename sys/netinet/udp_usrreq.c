@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.188 2014/07/12 21:06:34 yasuoka Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.189 2014/07/22 11:06:10 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -82,7 +82,6 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>

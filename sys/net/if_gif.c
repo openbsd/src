@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.68 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.69 2014/07/22 11:06:09 mpi Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 
 #ifdef	INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/in_gif.h>
 #include <netinet/ip.h>

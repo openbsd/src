@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.63 2014/06/03 13:32:24 mpi Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.64 2014/07/22 11:06:10 mpi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -113,7 +113,6 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
