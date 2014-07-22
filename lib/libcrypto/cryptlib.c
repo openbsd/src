@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.32 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.33 2014/07/22 02:21:20 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -210,7 +210,7 @@ CRYPTO_get_new_lockid(char *name)
 		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID, ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
-	if ((str = BUF_strdup(name)) == NULL) {
+	if (name == NULL || (str = strdup(name)) == NULL) {
 		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID, ERR_R_MALLOC_FAILURE);
 		return (0);
 	}

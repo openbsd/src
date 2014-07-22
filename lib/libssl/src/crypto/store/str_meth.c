@@ -1,4 +1,4 @@
-/* $OpenBSD: str_meth.c,v 1.6 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: str_meth.c,v 1.7 2014/07/22 02:21:20 beck Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2003.
  */
@@ -65,8 +65,8 @@ STORE_create_method(char *name)
 {
 	STORE_METHOD *store_method = calloc(1, sizeof(STORE_METHOD));
 
-	if (store_method)
-		store_method->name = BUF_strdup(name);
+	if (store_method && name)
+		store_method->name = strdup(name);
 
 	return store_method;
 }

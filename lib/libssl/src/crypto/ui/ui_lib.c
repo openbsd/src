@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.27 2014/07/13 16:03:10 beck Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.28 2014/07/22 02:21:20 beck Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -585,8 +585,8 @@ UI_create_method(char *name)
 {
 	UI_METHOD *ui_method = calloc(1, sizeof(UI_METHOD));
 
-	if (ui_method)
-		ui_method->name = BUF_strdup(name);
+	if (ui_method && name)
+		ui_method->name = strdup(name);
 
 	return ui_method;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: srp_vfy.c,v 1.8 2014/07/13 16:03:10 beck Exp $ */
+/* $OpenBSD: srp_vfy.c,v 1.9 2014/07/22 02:21:20 beck Exp $ */
 /* Written by Christophe Renou (christophe.renou@edelweb.fr) with 
  * the precious help of Peter Sylvester (peter.sylvester@edelweb.fr) 
  * for the EdelKey project and contributed to the OpenSSL project 2004.
@@ -291,7 +291,7 @@ static SRP_gN_cache *SRP_gN_new_init(const char *ch)
 	if (newgN == NULL)
 		return NULL;
 
-	if ((newgN->b64_bn = BUF_strdup(ch)) == NULL)
+	if (ch == NULL || (newgN->b64_bn = strdup(ch)) == NULL)
 		goto err;
 
 	len = t_fromb64(tmp, ch);
@@ -402,7 +402,8 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
 			if ((gN = malloc(sizeof(SRP_gN))) == NULL) 
  				goto err;
 
-			if  (!(gN->id = BUF_strdup(pp[DB_srpid]))
+			if  ( (pp[DB_srpid] == NULL)
+			||  !(gN->id = strdup(pp[DB_srpid]))
 	                ||  !(gN->N = SRP_gN_place_bn(vb->gN_cache,pp[DB_srpverifier]))
 			||  !(gN->g = SRP_gN_place_bn(vb->gN_cache,pp[DB_srpsalt]))
 			||  sk_SRP_gN_insert(SRP_gN_tab,gN,0) == 0)

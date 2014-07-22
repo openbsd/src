@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.24 2014/07/13 16:03:09 beck Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.25 2014/07/22 02:21:20 beck Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -283,6 +283,8 @@ module_add(DSO *dso, const char *name, conf_init_func *ifunc,
 {
 	CONF_MODULE *tmod = NULL;
 
+	if (name == NULL)
+		return NULL;
 	if (supported_modules == NULL)
 		supported_modules = sk_CONF_MODULE_new_null();
 	if (supported_modules == NULL)
@@ -292,7 +294,7 @@ module_add(DSO *dso, const char *name, conf_init_func *ifunc,
 		return NULL;
 
 	tmod->dso = dso;
-	tmod->name = BUF_strdup(name);
+	tmod->name = strdup(name);
 	tmod->init = ifunc;
 	tmod->finish = ffunc;
 	tmod->links = 0;
