@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.384 2014/07/16 19:08:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.385 2014/07/22 17:05:45 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -217,6 +217,7 @@ distribution-etc-root-var: distrib-dirs
 	cd ../lib/libcrypto && exec ${MAKE} distribution
 	cd ../usr.bin/bgplg && exec ${MAKE} distribution
 	cd ../usr.bin/mail && exec ${MAKE} distribution
+	cd ../usr.sbin/sliplogin && exec ${MAKE} distribution
 	cd ../usr.sbin/ldapd && exec ${MAKE} distribution
 	cd ../usr.sbin/nginx && exec ${MAKE} -f Makefile.bsd-wrapper distribution
 	cd ../usr.sbin/npppd && exec ${MAKE} distribution

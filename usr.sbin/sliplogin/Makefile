@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2013/04/16 06:16:26 jmc Exp $
+#	$OpenBSD: Makefile,v 1.8 2014/07/22 17:05:45 deraadt Exp $
 
 PROG=	sliplogin
 MAN=	sliplogin.8
@@ -11,7 +11,7 @@ BINMODE=4550
 
 .include <bsd.prog.mk>
 
-afterinstall:
+distribution:
 	@echo installing ${FILES}
 	@-for i in ${FILES}; do \
 		if [ ! -f ${DESTDIR}/etc/sliphome/$$i ]; then \
