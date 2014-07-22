@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des.c,v 1.11 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: e_des.c,v 1.12 2014/07/22 18:10:48 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,8 +80,8 @@ des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
 	BLOCK_CIPHER_ecb_loop()
-	DES_ecb_encrypt((DES_cblock *)(in + i), (DES_cblock *)(out + i),
-	    ctx->cipher_data, ctx->encrypt);
+		DES_ecb_encrypt((DES_cblock *)(in + i), (DES_cblock *)(out + i),
+		    ctx->cipher_data, ctx->encrypt);
 	return 1;
 }
 
@@ -220,9 +220,8 @@ des_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
 	switch (type) {
 	case EVP_CTRL_RAND_KEY:
-		if (RAND_bytes(ptr, 8) <= 0)
+		if (DES_random_key((DES_cblock *)ptr) == 0)
 			return 0;
-		DES_set_odd_parity((DES_cblock *)ptr);
 		return 1;
 
 	default:

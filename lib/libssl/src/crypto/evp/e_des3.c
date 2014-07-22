@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des3.c,v 1.16 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: e_des3.c,v 1.17 2014/07/22 18:10:48 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -271,13 +271,12 @@ des3_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
 	switch (type) {
 	case EVP_CTRL_RAND_KEY:
-		if (RAND_bytes(ptr, c->key_len) <= 0)
+		if (DES_random_key(deskey) == 0)
 			return 0;
-		DES_set_odd_parity(deskey);
-		if (c->key_len >= 16)
-			DES_set_odd_parity(deskey + 1);
-		if (c->key_len >= 24)
-			DES_set_odd_parity(deskey + 2);
+		if (c->key_len >= 16 && DES_random_key(deskey + 1) == 0)
+			return 0;
+		if (c->key_len >= 24 && DES_random_key(deskey + 2) == 0)
+			return 0;
 		return 1;
 
 	default:
