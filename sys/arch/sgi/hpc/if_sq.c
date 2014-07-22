@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.9 2013/08/17 15:50:06 bluhm Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.10 2014/07/22 10:35:35 mpi Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -54,16 +54,11 @@
 #include <net/if_media.h>
 #include <net/if_types.h>
 
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#endif
-
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
+#include <netinet/in.h>
 #include <netinet/if_ether.h>
 
 #include <machine/autoconf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.10 2014/05/19 21:18:42 miod Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.11 2014/07/22 10:35:35 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -98,16 +98,11 @@
 #include <net/if_media.h>
 #include <net/if_types.h>
 
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#endif
-
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
+#include <netinet/in.h>
 #include <netinet/if_ether.h>
 
 #include <machine/autoconf.h>

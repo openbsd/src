@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.20 2013/09/05 20:55:58 bluhm Exp $	*/
+/*	$OpenBSD: qec.c,v 1.21 2014/07/22 10:35:35 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -44,12 +44,8 @@
 #include <net/netisr.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <sparc/autoconf.h>
 #include <sparc/cpu.h>

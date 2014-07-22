@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_sbus.c,v 1.2 2013/09/05 20:55:58 bluhm Exp $	*/
+/*	$OpenBSD: if_gem_sbus.c,v 1.3 2014/07/22 10:35:35 mpi Exp $	*/
 /*	$NetBSD: if_gem_sbus.c,v 1.1 2006/11/24 13:23:32 martin Exp $	*/
 
 /*-
@@ -45,12 +45,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

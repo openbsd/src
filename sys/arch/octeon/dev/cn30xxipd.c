@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipd.c,v 1.3 2013/10/22 14:06:08 bcallah Exp $	*/
+/*	$OpenBSD: cn30xxipd.c,v 1.4 2014/07/22 10:35:35 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -40,8 +40,6 @@
 #include <octeon/dev/cn30xxipdvar.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 
 #define IP_OFFSET(data, word2) \
 	((caddr_t)(data) + ((word2 & PIP_WQE_WORD2_IP_OFFSET) >> PIP_WQE_WORD2_IP_OFFSET_SHIFT))

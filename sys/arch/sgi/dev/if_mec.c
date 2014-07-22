@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.26 2013/08/17 15:44:08 bluhm Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.27 2014/07/22 10:35:35 mpi Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -82,16 +82,11 @@
 #include <net/if_media.h>
 #include <net/if_types.h>
 
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#endif
-
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
+#include <netinet/in.h>
 #include <netinet/if_ether.h>
 
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.65 2014/04/22 15:52:05 naddy Exp $	*/
+/*	$OpenBSD: hme.c,v 1.66 2014/07/22 10:35:35 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -56,14 +56,8 @@
 #include <net/netisr.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
