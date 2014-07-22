@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.27 2014/07/20 12:08:55 guenther Exp $	*/
+/*	$OpenBSD: externs.h,v 1.28 2014/07/22 07:30:24 jsg Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -269,7 +269,7 @@ void SetNetTrace(char *file);
 void Dump(char direction, unsigned char *buffer, int length);
 void printoption(char *direction, int cmd, int option);
 void optionstatus(void);
-void printsub(int direction, unsigned char *pointer, int length);
+void printsub(char direction, unsigned char *pointer, int length);
 void EmptyTerminal(void);
 void SetForExit(void);
 __dead void Exit(int returnCode);

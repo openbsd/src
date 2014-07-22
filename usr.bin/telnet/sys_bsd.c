@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.26 2014/07/20 12:08:55 guenther Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.27 2014/07/22 07:30:24 jsg Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -57,8 +57,8 @@ int
 
 struct	termios old_tc = { 0 };
 
-    void
-init_sys()
+void
+init_sys(void)
 {
     tout = fileno(stdout);
     tin = fileno(stdin);
@@ -79,9 +79,8 @@ init_sys()
  *	1	Do add this character
  */
 
-    int
-TerminalSpecialChars(c)
-    int	c;
+int
+TerminalSpecialChars(int c)
 {
     if (c == termIntChar) {
 	intp();
@@ -118,8 +117,8 @@ TerminalSpecialChars(c)
     return 1;
 }
 
-    void
-TerminalSaveState()
+void
+TerminalSaveState(void)
 {
     tcgetattr(0, &old_tc);
 
@@ -148,9 +147,8 @@ TerminalSaveState()
 #endif
 }
 
-    cc_t *
-tcval(func)
-    int func;
+cc_t *
+tcval(int func)
 {
     switch(func) {
     case SLC_IP:	return(&termIntChar);
@@ -187,8 +185,8 @@ tcval(func)
     }
 }
 
-    void
-TerminalDefaultChars()
+void
+TerminalDefaultChars(void)
 {
     memcpy(new_tc.c_cc, old_tc.c_cc, sizeof(old_tc.c_cc));
 # ifndef	VDISCARD
@@ -241,9 +239,8 @@ static void susp();
 static void ayt();
 #endif
 
-    void
-TerminalNewMode(f)
-    int f;
+void
+TerminalNewMode(int f)
 {
     static int prevmode = 0;
     struct termios tmp_tc;
@@ -489,10 +486,8 @@ struct termspeeds {
 };
 #endif	/* DECODE_BAUD */
 
-    void
-TerminalSpeeds(ispeed, ospeed)
-    long *ispeed;
-    long *ospeed;
+void
+TerminalSpeeds(long *ispeed, long *ospeed)
 {
 #ifdef	DECODE_BAUD
     struct termspeeds *tp;
@@ -520,9 +515,8 @@ TerminalSpeeds(ispeed, ospeed)
 #endif	/* DECODE_BAUD */
 }
 
-    int
-TerminalWindowSize(rows, cols)
-    long *rows, *cols;
+int
+TerminalWindowSize(long *rows, long *cols)
 {
 #ifdef	TIOCGWINSZ
     struct winsize ws;
@@ -540,17 +534,15 @@ TerminalWindowSize(rows, cols)
  * Various signal handling routines.
  */
 
-    void
-deadpeer(sig)
-    int sig;
+void
+deadpeer(int sig)
 {
 	setcommandmode();
 	longjmp(peerdied, -1);
 }
 
-    void
-intr(sig)
-    int sig;
+void
+intr(int sig)
 {
     if (localchars) {
 	intp();
@@ -560,9 +552,8 @@ intr(sig)
     longjmp(toplevel, -1);
 }
 
-    void
-intr2(sig)
-    int sig;
+void
+intr2(int sig)
 {
     if (localchars) {
 #ifdef	KLUDGELINEMODE
@@ -575,9 +566,8 @@ intr2(sig)
     }
 }
 
-    void
-susp(sig)
-    int sig;
+void
+susp(int sig)
 {
     if ((rlogin != _POSIX_VDISABLE) && rlogin_susp())
 	return;
@@ -586,9 +576,8 @@ susp(sig)
 }
 
 #ifdef	SIGWINCH
-    void
-sendwin(sig)
-    int sig;
+void
+sendwin(int sig)
 {
     if (connected) {
 	sendnaws();
@@ -597,9 +586,8 @@ sendwin(sig)
 #endif
 
 #ifdef	SIGINFO
-    void
-ayt(sig)
-    int sig;
+void
+ayt(int sig)
 {
     if (connected)
 	sendayt();
@@ -609,8 +597,8 @@ ayt(sig)
 #endif
 
 
-    void
-sys_telnet_init()
+void
+sys_telnet_init(void)
 {
     int one = 1;
 
@@ -649,9 +637,9 @@ sys_telnet_init()
  *	The return value is 1 if something happened, 0 if not.
  */
 
-    int
-process_rings(netin, netout, netex, ttyin, ttyout, dopoll)
-    int dopoll;		/* If 0, then block until something to do */
+int
+process_rings(int netin, int netout, int netex, int ttyin, int ttyout,
+    int dopoll)		/* If 0, then block until something to do */
 {
     int c;
 		/* One wants to be a bit careful about setting returnValue

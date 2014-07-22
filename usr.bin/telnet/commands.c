@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.68 2014/07/20 12:08:55 guenther Exp $	*/
+/*	$OpenBSD: commands.c,v 1.69 2014/07/22 07:30:24 jsg Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -72,10 +72,8 @@ static int margc;
 static char *margv[20];
 
 #ifdef SKEY
-    int
-skey_calc(argc, argv)
-	int argc;
-	char **argv;
+int
+skey_calc(int argc, char **argv)
 {
 	int status;
 
@@ -99,11 +97,9 @@ skey_calc(argc, argv)
 	}
 }
 #endif
-   	
 
-
-    static void
-makeargv()
+static void
+makeargv(void)
 {
     char *cp, *cp2, c;
     char **argp = margv;
@@ -159,9 +155,8 @@ makeargv()
  * Todo:  1.  Could take random integers (12, 0x12, 012, 0b1).
  */
 
-	static char
-special(s)
-	char *s;
+static char
+special(char *s)
 {
 	char c;
 	char b;
@@ -186,9 +181,8 @@ special(s)
  * Construct a control character sequence
  * for a special character.
  */
-	static char *
-control(c)
-	cc_t c;
+static char *
+control(cc_t c)
 {
 	static char buf[5];
 	/*
@@ -221,8 +215,6 @@ control(c)
 	}
 	return (buf);
 }
-
-
 
 /*
  *	The following are data structures and routines for
@@ -281,10 +273,8 @@ static struct sendlist Sendlist[] = {
 #define	GETSEND(name) ((struct sendlist *) genget(name, (char **) Sendlist, \
 				sizeof(struct sendlist)))
 
-    static int
-sendcmd(argc, argv)
-    int  argc;
-    char **argv;
+static int
+sendcmd(int argc, char **argv)
 {
     int count;		/* how many bytes we are going to need to send */
     int i;
@@ -363,46 +353,41 @@ sendcmd(argc, argv)
     return (count == success);
 }
 
-	static int
-send_tncmd(void (*func)(), char *cmd, char *name);
+static int send_tncmd(void (*func)(int, int), char *cmd, char *name);
 
-    static int
-send_esc()
+static int
+send_esc(void)
 {
     NETADD(escape);
     return 1;
 }
 
-    static int
-send_docmd(name)
-    char *name;
+static int
+send_docmd(char *name)
 {
     return(send_tncmd(send_do, "do", name));
 }
 
-    static int
-send_dontcmd(name)
-    char *name;
+static int
+send_dontcmd(char *name)
 {
     return(send_tncmd(send_dont, "dont", name));
 }
-    static int
-send_willcmd(name)
-    char *name;
+
+static int
+send_willcmd(char *name)
 {
     return(send_tncmd(send_will, "will", name));
 }
-    static int
-send_wontcmd(name)
-    char *name;
+
+static int
+send_wontcmd(char *name)
 {
     return(send_tncmd(send_wont, "wont", name));
 }
 
-    int
-send_tncmd(func, cmd, name)
-    void	(*func)();
-    char	*cmd, *name;
+int
+send_tncmd(void (*func)(int, int), char *cmd, char *name)
 {
     char **cpp;
     extern char *telopts[];
@@ -462,8 +447,8 @@ send_tncmd(func, cmd, name)
     return 1;
 }
 
-    static int
-send_help()
+static int
+send_help(void)
 {
     struct sendlist *s;	/* pointer to current command */
     for (s = Sendlist; s->name; s++) {
@@ -478,15 +463,15 @@ send_help()
  * to by the arguments to the "toggle" command.
  */
 
-    static int
-lclchars()
+static int
+lclchars(int unused)
 {
     donelclchars = 1;
     return 1;
 }
 
-    static int
-togdebug()
+static int
+togdebug(int unused)
 {
     if (net > 0 &&
 	(setsockopt(net, SOL_SOCKET, SO_DEBUG, &debug, sizeof(debug))) == -1) {
@@ -495,9 +480,8 @@ togdebug()
     return 1;
 }
 
-
-    static int
-togcrlf()
+static int
+togcrlf(int unused)
 {
     if (crlf) {
 	printf("Will send carriage returns as telnet <CR><LF>.\r\n");
@@ -509,9 +493,8 @@ togcrlf()
 
 int binmode;
 
-    static int
-togbinary(val)
-    int val;
+static int
+togbinary(int val)
 {
     donebinarytoggle = 1;
 
@@ -548,9 +531,8 @@ togbinary(val)
     return 1;
 }
 
-    static int
-togrbinary(val)
-    int val;
+static int
+togrbinary(int val)
 {
     donebinarytoggle = 1;
 
@@ -575,9 +557,8 @@ togrbinary(val)
     return 1;
 }
 
-    static int
-togxbinary(val)
-    int val;
+static int
+togxbinary(int val)
 {
     donebinarytoggle = 1;
 
@@ -700,7 +681,7 @@ static struct togglelist Togglelist[] = {
     { 0 }
 };
 
-    static int
+static int
 togglehelp(int unused)
 {
     struct togglelist *c;
@@ -718,9 +699,8 @@ togglehelp(int unused)
     return 0;
 }
 
-    static void
-settogglehelp(set)
-    int set;
+static void
+settogglehelp(int set)
 {
     struct togglelist *c;
 
@@ -738,10 +718,8 @@ settogglehelp(set)
 #define	GETTOGGLE(name) (struct togglelist *) \
 		genget(name, (char **) Togglelist, sizeof(struct togglelist))
 
-    static int
-toggle(argc, argv)
-    int  argc;
-    char *argv[];
+static int
+toggle(int argc, char *argv[])
 {
     int retval = 1;
     char *name;
@@ -827,17 +805,15 @@ static struct setlist Setlist[] = {
     { 0 }
 };
 
-    static struct setlist *
-getset(name)
-    char *name;
+static struct setlist *
+getset(char *name)
 {
     return (struct setlist *)
 		genget(name, (char **) Setlist, sizeof(struct setlist));
 }
 
-    void
-set_escape_char(s)
-    char *s;
+void
+set_escape_char(char *s)
 {
 	if (rlogin != _POSIX_VDISABLE) {
 		rlogin = (s && *s) ? special(s) : _POSIX_VDISABLE;
@@ -849,10 +825,8 @@ set_escape_char(s)
 	}
 }
 
-    static int
-setcmd(argc, argv)
-    int  argc;
-    char *argv[];
+static int
+setcmd(int argc, char *argv[])
 {
     int value;
     struct setlist *ct;
@@ -927,10 +901,8 @@ setcmd(argc, argv)
     return 1;
 }
 
-    static int
-unsetcmd(argc, argv)
-    int  argc;
-    char *argv[];
+static int
+unsetcmd(int argc, char *argv[])
 {
     struct setlist *ct;
     struct togglelist *c;
@@ -995,8 +967,8 @@ unsetcmd(argc, argv)
  * 'mode' command.
  */
 #ifdef	KLUDGELINEMODE
-    static int
-dokludgemode()
+static int
+dokludgemode(int unused)
 {
     kludgelinemode = 1;
     send_wont(TELOPT_LINEMODE, 1);
@@ -1006,8 +978,8 @@ dokludgemode()
 }
 #endif
 
-    static int
-dolinemode()
+static int
+dolinemode(int unused)
 {
 #ifdef	KLUDGELINEMODE
     if (kludgelinemode)
@@ -1018,8 +990,8 @@ dolinemode()
     return 1;
 }
 
-    static int
-docharmode()
+static int
+docharmode(int unused)
 {
 #ifdef	KLUDGELINEMODE
     if (kludgelinemode)
@@ -1031,9 +1003,8 @@ docharmode()
     return 1;
 }
 
-    static int
-dolmmode(bit, on)
-    int bit, on;
+static int
+dolmmode(int bit, int on)
 {
     unsigned char c;
 
@@ -1051,14 +1022,14 @@ dolmmode(bit, on)
     return 1;
 }
 
-    int
-tn_setmode(bit)
+int
+tn_setmode(int bit)
 {
     return dolmmode(bit, 1);
 }
 
-    int
-tn_clearmode(bit)
+int
+tn_clearmode(int bit)
 {
     return dolmmode(bit, 0);
 }
@@ -1105,8 +1076,7 @@ static struct modelist ModeList[] = {
     { 0 },
 };
 
-
-    static int
+static int
 modehelp(int unused)
 {
     struct modelist *mt;
@@ -1126,10 +1096,8 @@ modehelp(int unused)
 #define	GETMODECMD(name) (struct modelist *) \
 		genget(name, (char **) ModeList, sizeof(struct modelist))
 
-    static int
-modecmd(argc, argv)
-    int  argc;
-    char *argv[];
+static int
+modecmd(int argc, char *argv[])
 {
     struct modelist *mt;
 
@@ -1154,10 +1122,8 @@ modecmd(argc, argv)
  * "display" command.
  */
 
-    static int
-display(argc, argv)
-    int  argc;
-    char *argv[];
+static int
+display(int argc, char *argv[])
 {
     struct togglelist *tl;
     struct setlist *sl;
@@ -1222,10 +1188,8 @@ display(argc, argv)
 /*
  * Set the escape character.
  */
-	static int
-setescape(argc, argv)
-	int argc;
-	char *argv[];
+static int
+setescape(int argc, char *argv[])
 {
 	char *arg;
 	char buf[50];
@@ -1247,8 +1211,8 @@ setescape(argc, argv)
 	return 1;
 }
 
-    static int
-togcrmod()
+static int
+togcrmod(int unused1, char *unused2[])
 {
     crmod = !crmod;
     printf("Deprecated usage - please use 'toggle crmod' in the future.\r\n");
@@ -1257,8 +1221,8 @@ togcrmod()
     return 1;
 }
 
-    int
-telnetsuspend()
+int
+telnetsuspend(int unused1, char *unused2[])
 {
     setcommandmode();
     {
@@ -1282,10 +1246,8 @@ telnetsuspend()
     return 1;
 }
 
-    int
-shell(argc, argv)
-    int argc;
-    char *argv[];
+int
+shell(int argc, char *argv[])
 {
     long oldrows, oldcols, newrows, newcols, err;
 
@@ -1345,9 +1307,7 @@ close_connection(void)
 }
 
 static int
-bye(argc, argv)
-    int  argc;		/* Number of arguments */
-    char *argv[];	/* arguments */
+bye(int argc, char *argv[])
 {
 	close_connection();
 	longjmp(toplevel, 1);
@@ -1366,8 +1326,8 @@ quitcmd(int unused1, char *unused2[])
 	quit();
 }
 
-	static int
-logout()
+static int
+logout(int unused1, char *unused2[])
 {
 	send_do(TELOPT_LOGOUT, 1);
 	(void) netflush();
@@ -1400,7 +1360,7 @@ struct slclist SlcList[] = {
     { 0 },
 };
 
-    static void
+static void
 slc_help(int unused)
 {
     struct slclist *c;
@@ -1415,18 +1375,15 @@ slc_help(int unused)
     }
 }
 
-    static struct slclist *
-getslc(name)
-    char *name;
+static struct slclist *
+getslc(char *name)
 {
     return (struct slclist *)
 		genget(name, (char **) SlcList, sizeof(struct slclist));
 }
 
-    static int
-slccmd(argc, argv)
-    int  argc;
-    char *argv[];
+static int
+slccmd(int argc, char *argv[])
 {
     struct slclist *c;
 
@@ -1488,7 +1445,7 @@ struct envlist EnvList[] = {
 };
 
 static void
-env_help()
+env_help(void)
 {
     struct envlist *c;
 
@@ -1503,17 +1460,14 @@ env_help()
 }
 
 static struct envlist *
-getenvcmd(name)
-    char *name;
+getenvcmd(char *name)
 {
     return (struct envlist *)
 		genget(name, (char **) EnvList, sizeof(struct envlist));
 }
 
 static int
-env_cmd(argc, argv)
-    int  argc;
-    char *argv[];
+env_cmd(int argc, char *argv[])
 {
     struct envlist *c;
 
@@ -1556,8 +1510,7 @@ struct env_lst {
 struct env_lst envlisthead;
 
 static struct env_lst *
-env_find(var)
-	unsigned char *var;
+env_find(unsigned char *var)
 {
 	struct env_lst *ep;
 
@@ -1568,8 +1521,8 @@ env_find(var)
 	return(NULL);
 }
 
-	void
-env_init()
+void
+env_init(void)
 {
 	extern char **environ;
 	char **epp, *cp;
@@ -1625,9 +1578,8 @@ env_init()
 	env_export((unsigned char *)"XAUTHORITY");
 }
 
-	struct env_lst *
-env_define(var, value)
-	unsigned char *var, *value;
+struct env_lst *
+env_define(unsigned char *var, unsigned char *value)
 {
 	struct env_lst *ep;
 
@@ -1655,8 +1607,7 @@ env_define(var, value)
 }
 
 static void
-env_undefine(var)
-	unsigned char *var;
+env_undefine(unsigned char *var)
 {
 	struct env_lst *ep;
 
@@ -1673,8 +1624,7 @@ env_undefine(var)
 }
 
 static void
-env_export(var)
-	unsigned char *var;
+env_export(unsigned char *var)
 {
 	struct env_lst *ep;
 
@@ -1683,8 +1633,7 @@ env_export(var)
 }
 
 static void
-env_unexport(var)
-	unsigned char *var;
+env_unexport(unsigned char *var)
 {
 	struct env_lst *ep;
 
@@ -1693,8 +1642,7 @@ env_unexport(var)
 }
 
 static void
-env_send(var)
-	unsigned char *var;
+env_send(unsigned char *var)
 {
 	struct env_lst *ep;
 
@@ -1717,7 +1665,7 @@ env_send(var)
 }
 
 static void
-env_list()
+env_list(void)
 {
 	struct env_lst *ep;
 
@@ -1727,9 +1675,8 @@ env_list()
 	}
 }
 
-	unsigned char *
-env_default(init, welldefined)
-	int init;
+unsigned char *
+env_default(int init, int welldefined)
 {
 	static struct env_lst *nep = NULL;
 
@@ -1746,10 +1693,8 @@ env_default(init, welldefined)
 	return(NULL);
 }
 
-	unsigned char *
-env_getvalue(var, exported_only)
-	unsigned char *var;
-	int exported_only;
+unsigned char *
+env_getvalue(unsigned char *var, int exported_only)
 {
 	struct env_lst *ep;
 
@@ -1901,11 +1846,8 @@ cmdrc(char *m1, char *m2)
     fclose(rcfile);
 }
 
-
-    int
-tn(argc, argv)
-    int argc;
-    char *argv[];
+int
+tn(int argc, char *argv[])
 {
     struct addrinfo hints, *res, *res0;
     int error;
@@ -2189,9 +2131,8 @@ static Command cmdtab2[] = {
 };
 
 
-    static Command *
-getcmd(name)
-    char *name;
+static Command *
+getcmd(char *name)
 {
     Command *cm;
 
@@ -2200,11 +2141,8 @@ getcmd(name)
     return (Command *) genget(name, (char **) cmdtab2, sizeof(Command));
 }
 
-    void
-command(top, tbuf, cnt)
-    int top;
-    char *tbuf;
-    int cnt;
+void
+command(int top, char *tbuf, int cnt)
 {
     Command *c;
 
@@ -2272,10 +2210,8 @@ command(top, tbuf, cnt)
 /*
  * Help command.
  */
-	static int
-help(argc, argv)
-	int argc;
-	char *argv[];
+static int
+help(int argc, char *argv[])
 {
 	Command *c;
 
@@ -2343,10 +2279,7 @@ help(argc, argv)
  */
 
 static unsigned long
-sourceroute(arg, cpp, lenp)
-	char	*arg;
-	char	**cpp;
-	int	*lenp;
+sourceroute(char *arg, char **cpp, int *lenp)
 {
 	static char lsr[44];
 	char *cp, *cp2, *lsrp, *lsrep;

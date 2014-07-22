@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.12 2014/07/20 12:08:55 guenther Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.13 2014/07/22 07:30:24 jsg Exp $	*/
 /*	$NetBSD: terminal.c,v 1.5 1996/02/28 21:04:17 thorpej Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ cc_t termAytChar;
  */
 
 void
-init_terminal()
+init_terminal(void)
 {
 	struct termios tc;
 
@@ -84,7 +84,6 @@ init_terminal()
 	tcgetattr(0, &tc);
 	autoflush = (tc.c_lflag & NOFLSH) == 0;
 }
-
 
 /*
  *		Send as much data as possible to the terminal.
@@ -96,10 +95,8 @@ init_terminal()
  *			 n: All data - n was written out.
  */
 
-
-    int
-ttyflush(drop)
-    int drop;
+int
+ttyflush(int drop)
 {
     int n, n0, n1;
 
@@ -149,9 +146,8 @@ ttyflush(drop)
  * of various global variables).
  */
 
-
-    int
-getconnmode()
+int
+getconnmode(void)
 {
     int mode = 0;
 
@@ -185,9 +181,8 @@ getconnmode()
     return(mode);
 }
 
-    void
-setconnmode(force)
-    int force;
+void
+setconnmode(int force)
 {
     int newmode;
 
@@ -196,9 +191,8 @@ setconnmode(force)
     TerminalNewMode(newmode);
 }
 
-
-    void
-setcommandmode()
+void
+setcommandmode(void)
 {
     TerminalNewMode(-1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: network.c,v 1.16 2014/07/20 10:55:26 guenther Exp $	*/
+/*	$OpenBSD: network.c,v 1.17 2014/07/22 07:30:24 jsg Exp $	*/
 /*	$NetBSD: network.c,v 1.5 1996/02/28 21:04:06 thorpej Exp $	*/
 
 /*
@@ -58,8 +58,8 @@ init_network(void)
  * Telnet "synch" processing).
  */
 
-    int
-stilloob()
+int
+stilloob(void)
 {
     struct pollfd pfd[1];
     int value;
@@ -80,19 +80,17 @@ stilloob()
 	return 0;
 }
 
-
 /*
  *  setneturg()
  *
  *	Sets "neturg" to the current location.
  */
 
-    void
-setneturg()
+void
+setneturg(void)
 {
     ring_mark(&netoring);
 }
-
 
 /*
  *  netflush
@@ -103,9 +101,8 @@ setneturg()
  *	useful work.
  */
 
-
-    int
-netflush()
+int
+netflush(void)
 {
     int n, n1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.19 2014/07/20 12:08:55 guenther Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.20 2014/07/22 07:30:24 jsg Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -68,9 +68,8 @@ upcase(char *argument)
 
 unsigned char NetTraceFile[PATH_MAX] = "(standard output)";
 
-    void
-SetNetTrace(file)
-    char *file;
+void
+SetNetTrace(char *file)
 {
     if (NetTrace && NetTrace != stdout)
 	fclose(NetTrace);
@@ -86,11 +85,8 @@ SetNetTrace(file)
     strlcpy((char *)NetTraceFile, "(standard output)", sizeof(NetTraceFile));
 }
 
-    void
-Dump(direction, buffer, length)
-    char direction;
-    unsigned char *buffer;
-    int length;
+void
+Dump(char direction, unsigned char *buffer, int length)
 {
 #   define BYTES_PER_LINE	32
 #   define min(x,y)	((x<y)? x:y)
@@ -136,11 +132,8 @@ Dump(direction, buffer, length)
     fflush(NetTrace);
 }
 
-
-	void
-printoption(direction, cmd, option)
-	char *direction;
-	int cmd, option;
+void
+printoption(char *direction, int cmd, int option)
 {
 	if (!showoptions)
 		return;
@@ -173,8 +166,8 @@ printoption(direction, cmd, option)
 	return;
 }
 
-    void
-optionstatus()
+void
+optionstatus(void)
 {
     int i;
 
@@ -249,11 +242,10 @@ optionstatus()
 
 }
 
-    void
-printsub(direction, pointer, length)
-    char direction;	/* '<' or '>' */
-    unsigned char *pointer;	/* where suboption data sits */
-    int		  length;	/* length of suboption data */
+void
+printsub(char direction,	/* '<' or '>' */
+    unsigned char *pointer,	/* where suboption data sits */
+    int length)			/* length of suboption data */
 {
     int i;
 
@@ -656,8 +648,8 @@ printsub(direction, pointer, length)
  *			way to the kernel (thus the poll).
  */
 
-    void
-EmptyTerminal()
+void
+EmptyTerminal(void)
 {
     struct pollfd pfd[1];
 
@@ -674,8 +666,8 @@ EmptyTerminal()
     }
 }
 
-    void
-SetForExit()
+void
+SetForExit(void)
 {
     setconnmode(0);
     do {
@@ -690,18 +682,15 @@ SetForExit()
     setcommandmode();
 }
 
-    void
-Exit(returnCode)
-    int returnCode;
+void
+Exit(int returnCode)
 {
     SetForExit();
     exit(returnCode);
 }
 
-    void
-ExitString(string, returnCode)
-    char *string;
-    int returnCode;
+void
+ExitString(char *string, int returnCode)
 {
     SetForExit();
     fwrite(string, 1, strlen(string), stderr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2014/07/20 11:20:52 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2014/07/22 07:30:24 jsg Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -43,8 +43,8 @@ int rtableid = -1;
 /*
  * Initialize variables.
  */
-    void
-tninit()
+void
+tninit(void)
 {
     init_terminal();
 
@@ -73,10 +73,8 @@ usage(void)
  * main.  Parse arguments, invoke the protocol or command parser.
  */
 
-	int
-main(argc, argv)
-	int argc;
-	char *argv[];
+int
+main(int argc, char *argv[])
 {
 	int ch;
 	char *user, *alias;
