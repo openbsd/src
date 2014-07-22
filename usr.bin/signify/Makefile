@@ -1,7 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2014/01/13 01:41:00 tedu Exp $
-
-.PATH: ${.CURDIR}/../ssh
-CPPFLAGS += -I${.CURDIR}/../ssh
+#	$OpenBSD: Makefile,v 1.10 2014/07/22 00:41:19 deraadt Exp $
 
 SRCS=	signify.c
 SRCS+=	fe25519.c sc25519.c smult_curve25519_ref.c
