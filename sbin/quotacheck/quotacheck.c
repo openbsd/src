@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.33 2014/05/20 21:11:16 krw Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.34 2014/07/22 18:28:40 jca Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ main(int argc, char *argv[])
 	if (flags&CHECK_PREEN)
 		exit(checkfstab(flags, maxrun, needchk, chkquota));
 	if (setfsent() == 0)
-		err(1, "%s: can't open", FSTAB);
+		err(1, "%s: can't open", _PATH_FSTAB);
 	while ((fs = getfsent()) != NULL) {
 		if (((argnum = oneof_realpath(fs->fs_file, argv, argc)) >= 0 ||
 		    (argnum = oneof_specname(fs->fs_spec, argv, argc)) >= 0) &&
@@ -201,7 +201,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < argc; i++)
 		if ((done & (1 << i)) == 0)
 			fprintf(stderr, "%s not found in %s\n",
-			    argv[i], FSTAB);
+			    argv[i], _PATH_FSTAB);
 	exit(errs);
 }
 
