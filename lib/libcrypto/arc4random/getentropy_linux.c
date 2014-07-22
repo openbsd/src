@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.31 2014/07/21 23:34:54 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.32 2014/07/22 01:15:58 bcook Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -197,15 +197,9 @@ getentropy_getrandom(void *buf, size_t len)
 #define SYS__getrandom 354
 #endif
 #endif
-	struct __getrandom_args args = {
-		.buf = buf;
-		.len = len;
-		.flags = 0;
-	};
-
 	if (len > 256)
 		return (-1);
-	ret = syscall(SYS__getrandom, &args);
+	ret = syscall(SYS__getrandom, buf, len, 0);
 	if (ret == len)
 		return (0);
 #endif
