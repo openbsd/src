@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.21 2014/07/22 14:49:49 jasper Exp $ */
+/*	$OpenBSD: octcf.c,v 1.22 2014/07/22 14:52:35 jasper Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -198,7 +198,7 @@ octcfattach(struct device *parent, struct device *self, void *aux)
 		if ((cfg & BOOT_CFG_BASE_MASK) ==
 			(OCTEON_CF_BASE >> BOOT_CFG_BASE_SHIFT)) {
 			if ((cfg & BOOT_CFG_WIDTH_MASK) == 0)
-				printf(": Doesn't support 8bit card\n");
+				printf(": doesn't support 8bit cards\n");
 			break;
 		}
 	}
@@ -458,6 +458,7 @@ octcfopen(dev_t dev, int flag, int fmt, struct proc *p)
 	}
 
 	part = DISKPART(dev);
+
 	if ((error = disk_openpart(&wd->sc_dk, part, fmt, 1)) != 0)
 		goto bad;
 
