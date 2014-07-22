@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.62 2014/07/22 04:44:09 deraadt Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.63 2014/07/22 04:53:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -54,8 +54,6 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
-
-#include <dev/pci/vga_pcivar.h>
 
 #include <machine/fbvar.h>
 
