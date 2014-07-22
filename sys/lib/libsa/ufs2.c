@@ -217,7 +217,7 @@ block_map(struct open_file *f, daddr_t file_block, daddr_t *disk_block_p)
 		}
 
 		if (fp->f_blkno[level] != ind_block_num) {
-			if (fp->f_blk[level] == (char *)0)
+			if (fp->f_blk[level] == NULL)
 				fp->f_blk[level] =
 				    alloc(fs->fs_bsize);
 			twiddle();
@@ -269,7 +269,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 		if (rc)
 			return (rc);
 
-		if (fp->f_buf == (char *)0)
+		if (fp->f_buf == NULL)
 			fp->f_buf = alloc(fs->fs_bsize);
 
 		if (disk_block == 0) {
@@ -534,8 +534,8 @@ ufs2_close(struct open_file *f)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 
-	f->f_fsdata = (void *)0;
-	if (fp == (struct file *)0)
+	f->f_fsdata = NULL;
+	if (fp == NULL)
 		return (0);
 
 	return (ufs2_close_internal(fp));
