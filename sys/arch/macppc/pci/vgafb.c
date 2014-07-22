@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.58 2013/10/21 10:36:16 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.59 2014/07/22 04:42:51 jsg Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -166,6 +166,9 @@ vgafb_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_backlight_on = WSDISPLAYIO_VIDEO_OFF;
 		vgafb_burn(sc, WSDISPLAYIO_VIDEO_ON, 0);	/* paranoia */
 	}
+
+	if (vga_aperture_needed(pa))
+		printf("%s: aperture needed\n", sc->sc_dev.dv_xname);
 
 	config_found(self, &waa, wsemuldisplaydevprint);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pcivar.h,v 1.17 2013/08/12 04:11:52 jsg Exp $ */
+/* $OpenBSD: vga_pcivar.h,v 1.18 2014/07/22 04:42:51 jsg Exp $ */
 /* $NetBSD: vga_pcivar.h,v 1.1 1998/03/22 15:16:19 drochner Exp $ */
 
 /*
@@ -90,6 +90,7 @@ struct	vga_pci_bar *vga_pci_bar_info(struct vga_pci_softc *, int);
 struct	vga_pci_bar *vga_pci_bar_map(struct vga_pci_softc *, int,
 	    bus_size_t, int);
 void	vga_pci_bar_unmap(struct vga_pci_bar*);
+int	vga_aperture_needed(struct pci_attach_args *);
 
 #if NDRM > 0
 int	vga_drmsubmatch(struct device *, void *, void *);
