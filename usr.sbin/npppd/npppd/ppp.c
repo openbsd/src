@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.21 2014/05/30 05:06:00 yasuoka Exp $ */
+/*	$OpenBSD: ppp.c,v 1.22 2014/07/22 02:58:32 guenther Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.21 2014/05/30 05:06:00 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.22 2014/07/22 02:58:32 guenther Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -1227,7 +1227,7 @@ struct tunnconf tunnconf_default_pptp = {
 			.hostname = NULL,
 			.vendor_name = NULL,
 			.listen = TAILQ_HEAD_INITIALIZER(
-			    tunnconf_default_l2tp.proto.l2tp.listen),
+			    tunnconf_default_pptp.proto.pptp.listen),
 			/* .echo_interval, */
 			/* .echo_timeout, */
 		}
