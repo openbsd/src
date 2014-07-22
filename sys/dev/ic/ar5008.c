@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.25 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.26 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -51,9 +51,7 @@
 #include <net/if_types.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip.h>
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>

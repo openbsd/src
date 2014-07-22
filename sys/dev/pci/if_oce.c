@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.76 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.77 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -75,8 +75,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.61 2014/06/21 01:14:32 deraadt Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.62 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -54,8 +54,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #endif
 
 #include <sys/ioctl.h>

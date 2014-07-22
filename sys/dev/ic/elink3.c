@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.79 2013/08/07 01:06:29 bluhm Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.80 2014/07/22 13:12:11 mpi Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -51,12 +51,8 @@
 #include <net/netisr.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.34 2013/08/07 01:06:31 bluhm Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.35 2014/07/22 13:12:12 mpi Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -95,8 +95,6 @@
 #ifdef INET
 #include <netinet/in.h> 
 #include <netinet/if_ether.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #endif
 
 #if NBPFILTER > 0

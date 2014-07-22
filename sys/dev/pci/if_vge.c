@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.57 2013/08/21 05:21:44 dlg Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.58 2014/07/22 13:12:11 mpi Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -101,8 +101,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
 

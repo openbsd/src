@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vte.c,v 1.8 2013/11/21 16:16:08 mpi Exp $	*/
+/*	$OpenBSD: if_vte.c,v 1.9 2014/07/22 13:12:11 mpi Exp $	*/
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -51,8 +51,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
 

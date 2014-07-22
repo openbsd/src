@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.66 2014/07/08 05:35:18 dlg Exp $	*/
+/*	$OpenBSD: hme.c,v 1.67 2014/07/22 13:12:12 mpi Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -56,11 +56,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
 #endif
 
 #if NBPFILTER > 0

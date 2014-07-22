@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.357 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.358 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -91,8 +91,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
 

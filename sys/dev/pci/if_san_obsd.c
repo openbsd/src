@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.c,v 1.14 2013/11/18 23:36:09 deraadt Exp $	*/
+/*	$OpenBSD: if_san_obsd.c,v 1.15 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -58,7 +58,6 @@
 #include <net/if_media.h>
 #include <net/netisr.h>
 #include <net/if_sppp.h>
-#include <netinet/in_systm.h>
 #include <netinet/in.h>
 
 #include <netinet/udp.h>

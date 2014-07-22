@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.155 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.156 2014/07/22 13:12:12 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,8 +81,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
 

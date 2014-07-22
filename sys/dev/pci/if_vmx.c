@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.18 2014/07/08 08:54:00 stsp Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.19 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -34,7 +34,6 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>

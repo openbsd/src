@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.22 2013/08/07 01:06:35 bluhm Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.23 2014/07/22 13:12:11 mpi Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -58,8 +58,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
 

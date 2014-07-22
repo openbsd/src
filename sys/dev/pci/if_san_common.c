@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.c,v 1.17 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: if_san_common.c,v 1.18 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -59,7 +59,6 @@
 # include <net/ppp_defs.h>
 # include <net/if_ppp.h>
 # include <net/if_sppp.h>
-# include <netinet/in_systm.h>
 # include <netinet/in.h>
 # include <netinet/udp.h>
 # include <netinet/ip.h>

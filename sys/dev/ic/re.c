@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.154 2014/07/08 05:35:18 dlg Exp $	*/
+/*	$OpenBSD: re.c,v 1.155 2014/07/22 13:12:12 mpi Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -127,8 +127,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
 

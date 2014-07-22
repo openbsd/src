@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.26 2013/12/28 03:34:53 deraadt Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.27 2014/07/22 13:12:11 mpi Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -51,8 +51,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
 

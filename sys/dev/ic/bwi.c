@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.106 2014/07/20 11:59:12 stsp Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.107 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -63,7 +63,6 @@
 #endif
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211_var.h>

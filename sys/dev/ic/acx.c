@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.103 2014/07/12 18:48:17 tedu Exp $ */
+/*	$OpenBSD: acx.c,v 1.104 2014/07/22 13:12:11 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -115,9 +115,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip.h>
 #endif
 
 #include <net80211/ieee80211_var.h>

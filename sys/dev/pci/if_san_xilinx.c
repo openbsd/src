@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.29 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.30 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -52,7 +52,6 @@
 #include <net/if_media.h>
 #include <net/netisr.h>
 #include <net/if_sppp.h>
-#include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/udp.h>
 #include <netinet/ip.h>

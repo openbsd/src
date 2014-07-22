@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.21 2013/08/07 01:06:33 bluhm Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.22 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -52,8 +52,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
 

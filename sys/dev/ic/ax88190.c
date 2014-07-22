@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax88190.c,v 1.4 2013/08/07 01:06:28 bluhm Exp $	*/
+/*	$OpenBSD: ax88190.c,v 1.5 2014/07/22 13:12:11 mpi Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -40,12 +40,8 @@
 #include <net/if_types.h>
 #include <net/if_media.h>
 
-#ifdef INET
-#include <netinet/in.h>   
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
+#include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <machine/bus.h>
 

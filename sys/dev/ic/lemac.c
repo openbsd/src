@@ -1,4 +1,4 @@
-/* $OpenBSD: lemac.c,v 1.16 2014/07/08 17:19:25 deraadt Exp $ */
+/* $OpenBSD: lemac.c,v 1.17 2014/07/22 13:12:12 mpi Exp $ */
 /* $NetBSD: lemac.c,v 1.20 2001/06/13 10:46:02 wiz Exp $ */
 
 /*-
@@ -52,8 +52,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
 

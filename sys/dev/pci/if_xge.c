@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.56 2013/11/26 09:50:33 mpi Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.57 2014/07/22 13:12:11 mpi Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -57,11 +57,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
 #endif
 
 #if NVLAN > 0

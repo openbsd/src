@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_ee.c,v 1.3 2013/08/07 01:06:39 bluhm Exp $ */
+/* $OpenBSD: ixgb_ee.c,v 1.4 2014/07/22 13:12:11 mpi Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
 

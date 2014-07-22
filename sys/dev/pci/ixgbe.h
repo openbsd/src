@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.15 2014/07/10 14:21:20 deraadt Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.16 2014/07/22 13:12:11 mpi Exp $	*/
 
 /******************************************************************************
 
@@ -59,13 +59,9 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
-#include <netinet/ip6.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.110 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.111 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -50,8 +50,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
 

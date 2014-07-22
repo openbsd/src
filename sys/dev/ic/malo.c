@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.100 2014/07/13 23:10:23 deraadt Exp $ */
+/*	$OpenBSD: malo.c,v 1.101 2014/07/22 13:12:12 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -43,7 +43,6 @@
 #endif
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211_var.h>

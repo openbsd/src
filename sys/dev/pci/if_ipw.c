@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.100 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.101 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -51,9 +51,7 @@
 #include <net/if_types.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip.h>
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>

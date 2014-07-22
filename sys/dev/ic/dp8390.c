@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.46 2013/11/26 09:50:33 mpi Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.47 2014/07/22 13:12:11 mpi Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -30,12 +30,8 @@
 #include <net/if_types.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

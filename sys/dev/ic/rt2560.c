@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.65 2014/07/13 23:10:23 deraadt Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.66 2014/07/22 13:12:12 mpi Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -49,9 +49,7 @@
 #include <net/if_types.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip.h>
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
