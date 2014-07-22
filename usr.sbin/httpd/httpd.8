@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.38 2014/07/22 17:54:43 reyk Exp $
+.\"	$OpenBSD: httpd.8,v 1.39 2014/07/22 19:03:21 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -28,7 +28,6 @@
 .Sh DESCRIPTION
 .Nm
 is a simple HTTP server that serves static files.
-.El
 .Sh FILES
 .Bl -tag -width "/var/run/httpd.sockXX" -compact
 .It /etc/httpd.conf
@@ -36,7 +35,7 @@ Default configuration file.
 .It /var/run/httpd.sock
 .Ux Ns -domain
 socket used for communication with
-.Xr httpd 8 .
+.Nm .
 .El
 .Sh SEE ALSO
 .Xr httpd.conf 5

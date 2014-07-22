@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.4 2014/07/22 18:31:16 ajacoutot Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.5 2014/07/22 19:03:21 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -121,7 +121,7 @@ Configure the supported media types.
 .Nm httpd
 will set the
 .Ar Content-Type
-of the response header based on the file extension that is listed in the
+of the response header based on the file extension listed in the
 .Ic types
 section.
 If not specified,
@@ -140,7 +140,7 @@ The
 .Ic types
 section must include one or more lines of the following syntax:
 .Bl -tag -width Ds
-.It Ar type/subtype Ar name Oo Ar name ... Oc Ic ;
+.It Ar type/subtype Ar name Op Ar name ... ;
 Set the media
 .Ar type
 and
@@ -175,16 +175,16 @@ types {
 }
 .Ed
 .Pp
-The syntax of the types section is compatible to the format that is used by
+The syntax of the types section is compatible with the format used by
 .Xr nginx 8 ,
-so you can optionally include its
+so it is possible to include its
 .Pa mime.types
 file directly:
 .Bd -literal -offset indent
 include "/etc/nginx/mime.types"
 .Ed
 .Sh SEE ALSO
-.Xr httpd 8 .
+.Xr httpd 8
 .Sh AUTHORS
 .An -nosplit
 The
