@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.785 2014/07/22 06:45:31 ajacoutot Exp $
+#	$OpenBSD: install.sub,v 1.786 2014/07/22 17:01:33 deraadt Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1854,10 +1854,10 @@ questions() {
 	xdm=
 	lidsuspend=
 	if [[ -n $DISPLAY ]]; then
-		[[ -n $(scan_dmesg '/^vga.*: aperture needed/p') ]] &&
+		if [[ -n $(scan_dmesg '/^vga.*: aperture needed/p') ]]; then
 			ask_yn "Do you expect to run the X Window System?" yes &&
-			aperture=$MDXAPERTURE
-
+			    aperture=$MDXAPERTURE
+		fi
 		if [[ -n $MDXDM ]]; then
 			ask_yn "Do you want the X Window System to be started by xdm(1)?"
 			xdm=$resp
