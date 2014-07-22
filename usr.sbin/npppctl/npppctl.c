@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppctl.c,v 1.3 2014/04/03 07:10:18 yasuoka Exp $	*/
+/*	$OpenBSD: npppctl.c,v 1.4 2014/07/22 02:02:59 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2012 Internet Initiative Japan Inc.
@@ -511,7 +511,7 @@ imsg_wait_command_completion(void)
 	int  n;
 
 	while (ctl_ibuf.w.queued)
-		if (msgbuf_write(&ctl_ibuf.w) < -1)
+		if (msgbuf_write(&ctl_ibuf.w) <= 0 && errno != EAGAIN)
 			return (-1);
 	do {
 		if ((n = imsg_get(&ctl_ibuf, &ctl_imsg)) == -1)
