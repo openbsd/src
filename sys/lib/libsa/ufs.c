@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.22 2013/05/30 19:19:09 guenther Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.23 2014/07/22 16:51:00 deraadt Exp $	*/
 /*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
@@ -502,7 +502,7 @@ ufs_open(char *path, struct open_file *f)
 				if (rc)
 					goto out;
 
-				bcopy((char *)buf, namebuf, (unsigned)link_len);
+				bcopy(buf, namebuf, (unsigned)link_len);
 			}
 
 			/*
