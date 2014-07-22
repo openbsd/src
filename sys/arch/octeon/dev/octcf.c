@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.22 2014/07/22 14:52:35 jasper Exp $ */
+/*	$OpenBSD: octcf.c,v 1.23 2014/07/22 17:26:03 jasper Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -72,8 +72,6 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/dkio.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -179,8 +177,8 @@ octcfattach(struct device *parent, struct device *self, void *aux)
 	struct iobus_attach_args *aa = aux;
 	int i, blank;
 	char buf[41], c, *p, *q;
-	OCTCFDEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS | DEBUG_PROBE);
 	uint8_t status;
+	OCTCFDEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS | DEBUG_PROBE);
 
 	wd->sc_iot = aa->aa_bust;
 
@@ -592,7 +590,7 @@ octcfioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 			goto exit;
 
 		error = setdisklabel(wd->sc_dk.dk_label,
-		    (struct disklabel *)addr, /*wd->sc_dk.dk_openmask : */0);
+		    (struct disklabel *)addr, wd->sc_dk.dk_openmask);
 		if (error == 0) {
 			if (xfer == DIOCWDINFO)
 				error = writedisklabel(DISKLABELDEV(dev),
