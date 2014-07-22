@@ -1,4 +1,4 @@
-/* $OpenBSD: spkac.c,v 1.21 2014/07/14 00:35:10 deraadt Exp $ */
+/* $OpenBSD: spkac.c,v 1.22 2014/07/22 06:55:22 guenther Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999. Based on an original idea by Massimiliano Pala
  * (madwolf@openca.org).
@@ -190,21 +190,25 @@ bad:
 		NETSCAPE_SPKI_set_pubkey(spki, pkey);
 		NETSCAPE_SPKI_sign(spki, pkey, EVP_md5());
 		spkstr = NETSCAPE_SPKI_b64_encode(spki);
+		if (spkstr == NULL) {
+			BIO_printf(bio_err, "Error encoding SPKAC\n");
+			ERR_print_errors(bio_err);
+			goto end;
+		}
 
 		if (outfile)
 			out = BIO_new_file(outfile, "w");
-		else {
+		else
 			out = BIO_new_fp(stdout, BIO_NOCLOSE);
-		}
 
 		if (!out) {
 			BIO_printf(bio_err, "Error opening output file\n");
 			ERR_print_errors(bio_err);
-			goto end;
+		} else {
+			BIO_printf(out, "SPKAC=%s\n", spkstr);
+			ret = 0;
 		}
-		BIO_printf(out, "SPKAC=%s\n", spkstr);
 		free(spkstr);
-		ret = 0;
 		goto end;
 	}
 	if (infile)
