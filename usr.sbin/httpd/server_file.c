@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.7 2014/07/23 19:03:56 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.8 2014/07/23 21:43:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -46,7 +46,70 @@
 #include "httpd.h"
 #include "http.h"
 
+int	 server_file_access(struct http_descriptor *, char *, size_t,
+	    struct stat *);
 void	 server_file_error(struct bufferevent *, short, void *);
+
+int
+server_file_access(struct http_descriptor *desc, char *path, size_t len,
+    struct stat *st)
+{
+	errno = 0;
+	if (access(path, R_OK) == -1) {
+		goto fail;
+	} else if (stat(path, st) == -1) {
+		goto fail;
+	} else if (S_ISDIR(st->st_mode)) {
+		/* XXX Should we support directory listing? */
+
+		if (!len) {
+			/* Recursion - the index "file" is a directory? */
+			errno = EACCES;
+			goto fail;
+		}
+
+		/* Redirect to path with trailing "/" */
+		if (path[strlen(path) - 1] != '/') {
+			/* Remove the document root to get the relative URL */
+			if (canonicalize_path(NULL,
+			    desc->http_path, path, len) == NULL ||
+			    strlcat(path, "/", len) >= len) {
+				errno = EINVAL;
+				goto fail;
+			}
+
+			/* Indicate that the file has been moved */
+			return (301);
+		}
+
+		/* Otherwise append the default index file */
+		if (strlcat(path, HTTPD_INDEX, len) >= len) {
+			errno = EACCES;
+			goto fail;
+		}
+
+		/* Check again but set len to 0 to avoid recursion */
+		return (server_file_access(desc, path, 0, st));
+	} else if (!S_ISREG(st->st_mode)) {
+		/* Don't follow symlinks and ignore special files */
+		errno = EACCES;
+		goto fail;
+	}
+
+	return (0);
+
+ fail:
+	switch (errno) {
+	case ENOENT:
+		return (404);
+	case EACCES:
+		return (403);
+	default:
+		return (500);
+	}
+
+	/* NOTREACHED */
+}
 
 int
 server_file(struct httpd *env, struct client *clt)
@@ -59,41 +122,21 @@ server_file(struct httpd *env, struct client *clt)
 	char			 path[MAXPATHLEN];
 	struct stat		 st;
 
-	/* 
-	 * XXX This is not ready XXX
-	 * XXX Don't expect anything from this code yet,
-	 */
-
 	if (canonicalize_path(HTTPD_DOCROOT,
 	    desc->http_path, path, sizeof(path)) == NULL) {
-		server_abort_http(clt, 404, path);
+		/* Do not echo the uncanonicalized path */
+		server_abort_http(clt, 500, "invalid request path");
 		return (-1);
 	}
 
-	/* Prepend default index file */
-	if (path[strlen(path) - 1] == '/' &&
-	    strlcat(path, HTTPD_INDEX, sizeof(path)) >= sizeof(path)) {
-		server_abort_http(clt, 404, path);
+	/* Returns HTTP status code on error */
+	if ((ret = server_file_access(desc, path, sizeof(path), &st)) != 0) {
+		server_abort_http(clt, ret, path);
 		return (-1);
 	}
 
-	if (access(path, R_OK) == -1) {
-		strlcpy(path, desc->http_path, sizeof(path));
-		switch (errno) {
-		case EACCES:
-			server_abort_http(clt, 403, path);
-			break;
-		case ENOENT:
-			server_abort_http(clt, 404, path);
-			break;
-		default:
-			server_abort_http(clt, 500, path);
-			break;
-		}
-		return (-1);
-	}
-
-	if ((fd = open(path, O_RDONLY)) == -1 || fstat(fd, &st) == -1)
+	/* Now open the file, should be readable or we have another problem */
+	if ((fd = open(path, O_RDONLY)) == -1)
 		goto fail;
 
 	/* File descriptor is opened, decrement inflight counter */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.9 2014/07/17 11:35:26 stsp Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.10 2014/07/23 21:43:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -520,7 +520,7 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	struct server		*srv = clt->clt_server;
 	struct bufferevent	*bev = clt->clt_bev;
 	const char		*httperr = NULL, *text = "";
-	char			*httpmsg;
+	char			*httpmsg, *extraheader = NULL;
 	time_t			 t;
 	struct tm		*lt;
 	char			 tmbuf[32], hbuf[128];
@@ -544,8 +544,21 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 		tmbuf[strlen(tmbuf) - 1] = '\0';	/* skip final '\n' */
 
 	/* Do not send details of the Internal Server Error */
-	if (code != 500)
+	switch (code) {
+	case 500:
+		/* Do not send details of the Internal Server Error */
+		break;
+	case 301:
+	case 302:
+		if (asprintf(&extraheader, "Location: %s\r\n", msg) == -1) {
+			code = 500;
+			extraheader = NULL;
+		}
+		break;
+	default:
 		text = msg;
+		break;
+	}
 
 	/* A CSS stylesheet allows minimal customization by the user */
 	style = "body { background-color: white; color: black; font-family: "
@@ -564,6 +577,7 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	    "Server: %s\r\n"
 	    "Connection: close\r\n"
 	    "Content-Type: text/html\r\n"
+	    "%s"
 	    "\r\n"
 	    "<!DOCTYPE HTML PUBLIC "
 	    "\"-//W3C//DTD HTML 4.01 Transitional//EN\">\n"
@@ -579,6 +593,7 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	    "</body>\n"
 	    "</html>\n",
 	    code, httperr, tmbuf, HTTPD_SERVERNAME,
+	    extraheader == NULL ? "" : extraheader,
 	    code, httperr, style, httperr, text,
 	    HTTPD_SERVERNAME, hbuf, ntohs(srv->srv_conf.port)) == -1)
 		goto done;
@@ -588,6 +603,7 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	free(httpmsg);
 
  done:
+	free(extraheader);
 	if (asprintf(&httpmsg, "%s (%03d %s)", msg, code, httperr) == -1)
 		server_close(clt, msg);
 	else {
