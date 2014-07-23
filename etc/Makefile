@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.387 2014/07/23 08:01:15 ajacoutot Exp $
+#	$OpenBSD: Makefile,v 1.388 2014/07/23 11:49:06 reyk Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -37,18 +37,18 @@ MUTABLE=changelist csh.cshrc csh.login csh.logout daily dhclient.conf \
 	pf.os protocols rc rc.conf rpc services shells syslog.conf weekly
 
 # -rw-r--r--
-EXAMPLES=chio.conf dhcpd.conf exports ftpchroot hosts.lpd ifstated.conf \
-	inetd.conf mixerctl.conf mrouted.conf ntpd.conf printcap \
-	rbootd.conf remote sensorsd.conf
+EXAMPLES=chio.conf dhcpd.conf exports ftpchroot hosts.lpd httpd.conf \
+	ifstated.conf inetd.conf mixerctl.conf mrouted.conf ntpd.conf \
+	printcap rbootd.conf remote sensorsd.conf
 .if ${MACHINE} != "aviion" 
 EXAMPLES+= wsconsctl.conf
 .endif
 
 # -rw-------
-EXAMPLES_600=bgpd.conf dvmrpd.conf hostapd.conf httpd.conf iked.conf \
-	ipsec.conf ldapd.conf ldpd.conf ospf6d.conf ospfd.conf pf.conf \
-	rc.local rc.securelevel rc.shutdown relayd.conf ripd.conf \
-	sasyncd.conf snmpd.conf ypldap.conf
+EXAMPLES_600=bgpd.conf dvmrpd.conf hostapd.conf iked.conf ipsec.conf \
+	ldapd.conf ldpd.conf ospf6d.conf ospfd.conf pf.conf rc.local \
+	rc.securelevel rc.shutdown relayd.conf ripd.conf \
+	sasyncd.conf snmpd.conf ypldap.conf 
 
 # -r-xr-xr-x
 RCDAEMONS=	amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd \
