@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.4 2014/07/23 22:02:02 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.5 2014/07/23 22:56:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -490,10 +490,7 @@ canonicalize_path(const char *root, const char *input, char *path, size_t len)
 	start = p;
 	end = p + (len - 1);
 
-	/* Set path pointer and make sure that we start with '/' */
-	*p = '\0';
-
-	while (*i != '\0' && p <= end) {
+	while (*i != '\0' && p < end) {
 		/* 1. check for special path elements */
 		if (i[0] == '/') {
 			if (i[1] == '/') {
