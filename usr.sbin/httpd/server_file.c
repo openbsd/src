@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.8 2014/07/23 21:43:12 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.9 2014/07/23 22:18:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -99,6 +99,10 @@ server_file_access(struct http_descriptor *desc, char *path, size_t len,
 	return (0);
 
  fail:
+	/* Remove the document root */
+	if (len && canonicalize_path(NULL, desc->http_path, path, len) == NULL)
+		return (500);
+
 	switch (errno) {
 	case ENOENT:
 		return (404);
