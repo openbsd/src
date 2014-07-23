@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.56 2014/07/12 18:51:10 tedu Exp $
+.\"	$OpenBSD: malloc.9,v 1.57 2014/07/23 02:30:12 dlg Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 12 2014 $
+.Dd $Mdocdate: July 23 2014 $
 .Dt MALLOC 9
 .Os
 .Sh NAME
@@ -51,11 +51,12 @@ The
 function allocates uninitialized memory in kernel address space for an
 object whose size is specified by
 .Fa size .
+.Pp
 The
 .Fn mallocarray
 function is the same as
 .Fn malloc ,
-except it allocates space for an array of
+but allocates space for an array of
 .Fa nmemb
 objects and checks for arithmetic overflow.
 .Pp
@@ -65,6 +66,8 @@ function releases memory at address
 .Fa addr
 that was previously allocated by
 .Fn malloc
+or
+.Fn mallocarray
 for re-use.
 The size of the object should be specified by
 .Fa size .
@@ -74,14 +77,13 @@ is a null pointer, no action occurs.
 .Pp
 The
 .Fa flags
-argument further qualifies
-.Fn malloc Ns 's
-operational characteristics as follows:
+argument affects the operational characteristics of
+.Fn malloc
+and
+.Fn mallocarray
+as follows:
 .Bl -tag -width xxx -offset indent
 .It Dv M_WAITOK
-The same as having no other
-.Fa flags
-specified.
 If memory is currently unavailable,
 .Fn malloc
 may call sleep to wait for resources to be released by other processes.
@@ -91,11 +93,6 @@ Causes
 to return
 .Dv NULL
 if the request cannot be immediately fulfilled due to resource shortage.
-One of
-.Dv M_NOWAIT
-or
-.Dv M_WAITOK
-must be specified.
 .It Dv M_CANFAIL
 In the
 .Dv M_WAITOK
@@ -103,15 +100,26 @@ case, if not enough memory is available, return
 .Dv NULL
 instead of calling
 .Xr panic 9 .
-.Dv M_CANFAIL
-has no effect if
-.Dv M_NOWAIT
-is specified.
-.It Dv M_ZERO
-Causes
+If
+.Fn mallocarray
+detects an overflow
+or
 .Fn malloc
-to return zeroed memory.
+detects an excessive allocation, return
+.Dv NULL
+instead of calling
+.Xr panic 9 . 
+.It Dv M_ZERO
+Causes allocated memory to be zeroed.
 .El
+.Pp
+One of
+.Dv M_NOWAIT
+or
+.Dv M_WAITOK
+must be specified via the
+.Fa flags
+argument.
 .Pp
 The
 .Fa type
@@ -303,13 +311,14 @@ Direct Rendering Manager.
 .El
 .Sh CONTEXT
 .Fn malloc
-can be called,
+and
+.Fn mallocarray
+can be called during autoconf, from process context, or from interrupt context
 if
 .Dv M_NOWAIT
 is passed via
-.Fa flags ,
-during autoconf, from process context, or from interrupt context;
-it can't be called from interrupt context if
+.Fa flags.
+They can't be called from interrupt context if
 .Dv M_WAITOK
 is passed via
 .Fa flags .
@@ -318,17 +327,20 @@ is passed via
 can be called during autoconf, from process context, or from interrupt context.
 .Sh RETURN VALUES
 .Fn malloc
-returns a kernel virtual address that is suitably aligned for storage of
+and
+.Fn mallocarray
+return a kernel virtual address that is suitably aligned for storage of
 any type of object.
 .Sh DIAGNOSTICS
 A kernel compiled with the
 .Dv DIAGNOSTIC
 configuration option attempts to detect memory corruption caused by
-such things as writing outside the allocated area and unbalanced calls to the
+such things as writing outside the allocated area and unbalanced calls to
 .Fn malloc
+or
+.Fn mallocarray ,
 and
-.Fn free
-functions.
+.Fn free .
 Failing consistency checks will cause a panic or a system console message:
 .Pp
 .Bl -bullet -offset indent -compact
@@ -394,6 +406,8 @@ debugging.
 .Pp
 Every call to
 .Fn malloc
+or
+.Fn mallocarray
 with a memory type and size that matches the debugged type and size will
 allocate two virtual pages.
 The pointer returned will be aligned so that
@@ -403,7 +417,7 @@ This way we can catch reads and writes outside the allocated area.
 .Pp
 Every call to
 .Fn free
-with memory that was returned by the debugging malloc will cause the memory
+with memory that was returned by the debugging allocators will cause the memory
 area to become unmapped so that we can catch dangling reads and writes to
 freed memory.
 .Pp
