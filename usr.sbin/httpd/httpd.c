@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.3 2014/07/23 19:03:56 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.4 2014/07/23 22:02:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -820,6 +820,11 @@ media_add(struct mediatypes *types, struct media_type *media)
 		return (NULL);
 
 	memcpy(entry, media, sizeof(*entry));
+	if (media->media_encoding != NULL &&
+	    (entry->media_encoding = strdup(media->media_encoding)) == NULL) {
+		free(entry);
+		return (NULL);
+	}
 	RB_INSERT(mediatypes, types, entry);
 
 	return (entry);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2014/07/13 14:17:37 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2014/07/23 22:02:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -820,6 +820,7 @@ load_config(const char *filename, struct httpd *x_conf)
 			(void)strlcpy(m.media_subtype,
 			    mediatypes[i].media_subtype,
 			    sizeof(m.media_subtype));
+			m.media_encoding = NULL;
 
 			if (media_add(conf->sc_mediatypes, &m) == NULL) {
 				log_warnx("failed to add default media \"%s\"",
