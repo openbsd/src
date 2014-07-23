@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.57 2014/07/23 02:30:12 dlg Exp $
+.\"	$OpenBSD: malloc.9,v 1.58 2014/07/23 06:22:28 jmc Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ or
 detects an excessive allocation, return
 .Dv NULL
 instead of calling
-.Xr panic 9 . 
+.Xr panic 9 .
 .It Dv M_ZERO
 Causes allocated memory to be zeroed.
 .El
@@ -317,7 +317,7 @@ can be called during autoconf, from process context, or from interrupt context
 if
 .Dv M_NOWAIT
 is passed via
-.Fa flags.
+.Fa flags .
 They can't be called from interrupt context if
 .Dv M_WAITOK
 is passed via
