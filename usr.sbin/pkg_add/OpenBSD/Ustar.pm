@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.79 2014/07/07 16:43:55 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.80 2014/07/23 14:35:17 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -38,8 +38,8 @@ use constant {
 	MAXPREFIX => 155,
 	MAXUSERNAME => 32,
 	MAXGROUPNAME => 32,
-	# XXX those are NOT supported, just recognized
 	XHDR => 'x',
+	# XXX those are NOT supported, just recognized
 	GHDR => 'g',
 	LONGLINK => 'K',
 	LONGNAME => 'L',
