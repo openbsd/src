@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.5 2014/07/23 22:56:00 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.6 2014/07/23 23:10:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -490,7 +490,11 @@ canonicalize_path(const char *root, const char *input, char *path, size_t len)
 	start = p;
 	end = p + (len - 1);
 
-	while (*i != '\0' && p < end) {
+	while (*i != '\0') {
+		/* Detect truncation */
+		if (p >= end)
+			return (NULL);
+
 		/* 1. check for special path elements */
 		if (i[0] == '/') {
 			if (i[1] == '/') {
