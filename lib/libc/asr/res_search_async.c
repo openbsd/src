@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_search_async.c,v 1.13 2014/03/26 18:13:15 eric Exp $	*/
+/*	$OpenBSD: res_search_async.c,v 1.14 2014/07/23 21:26:25 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -93,6 +93,12 @@ res_search_async_run(struct asr_query *as, struct asr_result *ar)
 	switch (as->as_state) {
 
 	case ASR_STATE_INIT:
+
+		if (as->as.search.name[0] == '\0') {
+			ar->ar_h_errno = NO_DATA;
+			async_set_state(as, ASR_STATE_HALT);
+			break;
+		}
 
 		as->as.search.saved_h_errno = HERRNO_UNSET;
 		async_set_state(as, ASR_STATE_NEXT_DOMAIN);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.29 2014/05/13 11:57:35 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.30 2014/07/23 21:26:25 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -173,8 +173,15 @@ gethostnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 			break;
 		}
 
-		/* Name might be an IP address string */
 		if (as->as_type == ASR_GETHOSTBYNAME) {
+
+			if (as->as.hostnamadr.name[0] == '\0') {
+				ar->ar_h_errno = NO_DATA;
+				async_set_state(as, ASR_STATE_HALT);
+				break;
+			}
+
+			/* Name might be an IP address string */
 			for (c = as->as.hostnamadr.name; *c; c++)
 				if (!isdigit((unsigned char)*c) &&
 				     *c != '.' && *c != ':')

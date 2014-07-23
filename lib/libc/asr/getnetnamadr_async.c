@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr_async.c,v 1.15 2014/05/13 11:57:35 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr_async.c,v 1.16 2014/07/23 21:26:25 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -121,6 +121,13 @@ getnetnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 		if (as->as.netnamadr.family != AF_INET) {
 			ar->ar_h_errno = NETDB_INTERNAL;
 			ar->ar_errno = EAFNOSUPPORT;
+			async_set_state(as, ASR_STATE_HALT);
+			break;
+		}
+
+		if (as->as_type == ASR_GETNETBYNAME &&
+		    as->as.netnamadr.name[0] == '\0') {
+			ar->ar_h_errno = NO_DATA;
 			async_set_state(as, ASR_STATE_HALT);
 			break;
 		}
