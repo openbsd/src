@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.401 2014/07/14 08:22:10 zhuk Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.402 2014/07/23 10:19:51 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 14 2014 $
+.Dd $Mdocdate: July 23 2014 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -3499,10 +3499,10 @@ are special.
 At the beginning of the build, during
 .Ar prepare ,
 all build dependencies will be checked,
-which includes both
+which includes
 .Ev LIB_DEPENDS ,
 .Ev WANTLIB
-and the subpackage-specific versions of these.
+for every subpackage.
 As an exception, any
 .Ev LIB_DEPENDS-sub
 that references the current port will be ignored as a build dependency,
