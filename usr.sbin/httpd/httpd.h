@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.6 2014/07/23 13:26:39 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.7 2014/07/23 19:03:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -31,6 +31,8 @@
 #define HTTPD_SOCKET		"/var/run/httpd.sock"
 #define HTTPD_USER		"www"
 #define HTTPD_SERVERNAME	"OpenBSD httpd"
+#define HTTPD_DOCROOT		"/htdocs"
+#define HTTPD_INDEX		"index.html"
 #define FD_RESERVE		5
 
 #define SERVER_MAX_CLIENTS	1024
@@ -413,6 +415,7 @@ void		 event_again(struct event *, int, short,
 		    void (*)(int, short, void *),
 		    struct timeval *, struct timeval *, void *);
 const char	*canonicalize_host(const char *, char *, size_t);
+const char	*canonicalize_path(const char *, const char *, char *, size_t);
 void		 imsg_event_add(struct imsgev *);
 int		 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 		    pid_t, int, void *, u_int16_t);

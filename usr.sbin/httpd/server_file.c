@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.6 2014/07/16 10:25:28 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.7 2014/07/23 19:03:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -64,12 +64,18 @@ server_file(struct httpd *env, struct client *clt)
 	 * XXX Don't expect anything from this code yet,
 	 */
 
-	strlcpy(path, "/htdocs", sizeof(path));
-	if (desc->http_path[0] != '/')
-		strlcat(path, "/", sizeof(path));
-	strlcat(path, desc->http_path, sizeof(path));
-	if (desc->http_path[strlen(desc->http_path) - 1] == '/')
-		strlcat(path, "index.html", sizeof(path));
+	if (canonicalize_path(HTTPD_DOCROOT,
+	    desc->http_path, path, sizeof(path)) == NULL) {
+		server_abort_http(clt, 404, path);
+		return (-1);
+	}
+
+	/* Prepend default index file */
+	if (path[strlen(path) - 1] == '/' &&
+	    strlcat(path, HTTPD_INDEX, sizeof(path)) >= sizeof(path)) {
+		server_abort_http(clt, 404, path);
+		return (-1);
+	}
 
 	if (access(path, R_OK) == -1) {
 		strlcpy(path, desc->http_path, sizeof(path));
