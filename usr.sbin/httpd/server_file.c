@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.9 2014/07/23 22:18:57 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.10 2014/07/23 22:20:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -64,7 +64,7 @@ server_file_access(struct http_descriptor *desc, char *path, size_t len,
 
 		if (!len) {
 			/* Recursion - the index "file" is a directory? */
-			errno = EACCES;
+			errno = EINVAL;
 			goto fail;
 		}
 
