@@ -1572,6 +1572,7 @@
 ./usr/share/man/man4/luna88k/lcd.4
 ./usr/share/man/man4/luna88k/le.4
 ./usr/share/man/man4/luna88k/mem.4
+./usr/share/man/man4/luna88k/pcexio.4
 ./usr/share/man/man4/luna88k/spc.4
 ./usr/share/man/man4/luphy.4
 ./usr/share/man/man4/lxtphy.4
@@ -2207,6 +2208,7 @@
 ./usr/share/man/man5/hppa/boot.conf.5
 ./usr/share/man/man5/hppa64
 ./usr/share/man/man5/hppa64/boot.conf.5
+./usr/share/man/man5/httpd.conf.5
 ./usr/share/man/man5/i386
 ./usr/share/man/man5/i386/boot.conf.5
 ./usr/share/man/man5/ifstated.conf.5
@@ -2449,6 +2451,7 @@
 ./usr/share/man/man8/hppa64/boot.8
 ./usr/share/man/man8/hppa64/boot_hppa64.8
 ./usr/share/man/man8/hppa64/mkboot.8
+./usr/share/man/man8/httpd.8
 ./usr/share/man/man8/i386
 ./usr/share/man/man8/i386/MAKEDEV.8
 ./usr/share/man/man8/i386/ZZZ.8
