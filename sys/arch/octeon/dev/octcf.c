@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.23 2014/07/22 17:26:03 jasper Exp $ */
+/*	$OpenBSD: octcf.c,v 1.24 2014/07/23 10:06:18 jasper Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -274,9 +274,12 @@ octcfdetach(struct device *self, int flags)
 {
 	struct octcf_softc *sc = (struct octcf_softc *)self;
 
+	bufq_drain(&sc->sc_bufq);
+
 	disk_gone(octcfopen, self->dv_unit);
 
 	/* Detach disk. */
+	bufq_destroy(&sc->sc_bufq);
 	disk_detach(&sc->sc_dk);
 
 	return (0);
