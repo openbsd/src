@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.4 2014/07/16 10:25:28 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.5 2014/07/23 12:01:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -72,7 +72,7 @@ enum httpchunk {
 	TOREAD_HTTP_NONE		= -5
 };
 
-#if DEBUG > 1
+#if DEBUG
 #define DPRINTF		log_debug
 #else
 #define DPRINTF(x...)	do {} while(0)
