@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.108 2014/07/17 18:55:42 deraadt Exp $
+#	$OpenBSD: special,v 1.109 2014/07/23 11:44:35 ajacoutot Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -31,6 +31,7 @@ ftpusers	type=file mode=0644 uname=root gname=wheel
 group		type=file mode=0644 uname=root gname=wheel
 hostapd.conf	type=file mode=0600 uname=root gname=wheel optional
 hosts		type=file mode=0644 uname=root gname=wheel
+httpd.conf	type=file mode=0644 uname=root gname=wheel optional
 ifstated.conf	type=file mode=0644 uname=root gname=wheel optional
 iked		type=dir mode=0755 uname=root gname=wheel
 ..	#iked
