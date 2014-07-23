@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.2 2014/07/13 14:17:37 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.3 2014/07/23 13:26:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -90,10 +90,8 @@ config_purge(struct httpd *env, u_int reset)
 	what = ps->ps_what[privsep_process] & reset;
 
 	if (what & CONFIG_SERVERS && env->sc_servers != NULL) {
-		while ((srv = TAILQ_FIRST(env->sc_servers)) != NULL) {
-			TAILQ_REMOVE(env->sc_servers, srv, srv_entry);
-			free(srv);
-		}
+		while ((srv = TAILQ_FIRST(env->sc_servers)) != NULL)
+			server_purge(srv);
 	}
 
 	if (what & CONFIG_MEDIA && env->sc_mediatypes != NULL)

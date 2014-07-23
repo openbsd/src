@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.6 2014/07/16 10:25:28 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.7 2014/07/23 13:26:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -146,6 +146,28 @@ server_launch(void)
 		event_add(&srv->srv_ev, NULL);
 		evtimer_set(&srv->srv_evt, server_accept, srv);
 	}
+}
+
+void
+server_purge(struct server *srv)
+{
+	struct client	*clt;
+
+	/* shutdown and remove server */
+	if (event_initialized(&srv->srv_ev))
+		event_del(&srv->srv_ev);
+	if (evtimer_initialized(&srv->srv_evt))
+		evtimer_del(&srv->srv_evt);
+
+	close(srv->srv_s);
+	TAILQ_REMOVE(env->sc_servers, srv, srv_entry);
+
+	/* cleanup sessions */
+	while ((clt =
+	    SPLAY_ROOT(&srv->srv_clients)) != NULL)
+		server_close(clt, NULL);
+
+	free(srv);
 }
 
 int
