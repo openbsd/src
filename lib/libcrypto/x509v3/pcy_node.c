@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_node.c,v 1.4 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: pcy_node.c,v 1.5 2014/07/23 20:49:52 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -139,9 +139,9 @@ level_add_node(X509_POLICY_LEVEL *level, const X509_POLICY_DATA *data,
 		if (!tree->extra_data)
 			tree->extra_data = sk_X509_POLICY_DATA_new_null();
 		if (!tree->extra_data)
-			goto node_error;
+			goto node_error_cond;
 		if (!sk_X509_POLICY_DATA_push(tree->extra_data, data))
-			goto node_error;
+			goto node_error_cond;
 	}
 
 	if (parent)
@@ -149,9 +149,12 @@ level_add_node(X509_POLICY_LEVEL *level, const X509_POLICY_DATA *data,
 
 	return node;
 
+node_error_cond:
+	if (level)
+		node = NULL;
 node_error:
 	policy_node_free(node);
-	return 0;
+	return NULL;
 }
 
 void
