@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.37 2014/07/22 22:41:29 schwarze Exp $ */
+/*	$Id: html.c,v 1.38 2014/07/23 15:00:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -106,6 +106,7 @@ static	const char	*const roffscales[SCALE_MAX] = {
 
 static	void	 bufncat(struct html *, const char *, size_t);
 static	void	 print_ctag(struct html *, enum htmltag);
+static	int	 print_escape(char);
 static	int	 print_encode(struct html *, const char *, int);
 static	void	 print_metaf(struct html *, enum mandoc_esc);
 static	void	 print_attr(struct html *, const char *, const char *);
@@ -320,6 +321,37 @@ html_strlen(const char *cp)
 }
 
 static int
+print_escape(char c)
+{
+
+	switch (c) {
+	case '<':
+		printf("&lt;");
+		break;
+	case '>':
+		printf("&gt;");
+		break;
+	case '&':
+		printf("&amp;");
+		break;
+	case '"':
+		printf("&quot;");
+		break;
+	case ASCII_NBRSP:
+		putchar('-');
+		break;
+	case ASCII_HYPH:
+		putchar('-');
+		/* FALLTHROUGH */
+	case ASCII_BREAK:
+		break;
+	default:
+		return(0);
+	}
+	return(1);
+}
+
+static int
 print_encode(struct html *h, const char *p, int norecurse)
 {
 	size_t		 sz;
@@ -346,30 +378,8 @@ print_encode(struct html *h, const char *p, int norecurse)
 		if ('\0' == *p)
 			break;
 
-		switch (*p++) {
-		case '<':
-			printf("&lt;");
+		if (print_escape(*p++))
 			continue;
-		case '>':
-			printf("&gt;");
-			continue;
-		case '&':
-			printf("&amp;");
-			continue;
-		case '"':
-			printf("&quot;");
-			continue;
-		case ASCII_NBRSP:
-			putchar('-');
-			continue;
-		case ASCII_HYPH:
-			putchar('-');
-			/* FALLTHROUGH */
-		case ASCII_BREAK:
-			continue;
-		default:
-			break;
-		}
 
 		esc = mandoc_escape(&p, &seq, &len);
 		if (ESCAPE_ERROR == esc)
@@ -404,21 +414,22 @@ print_encode(struct html *h, const char *p, int norecurse)
 
 		switch (esc) {
 		case ESCAPE_UNICODE:
-			/* Skip passed "u" header. */
+			/* Skip past "u" header. */
 			c = mchars_num2uc(seq + 1, len - 1);
 			if ('\0' != c)
 				printf("&#x%x;", c);
 			break;
 		case ESCAPE_NUMBERED:
 			c = mchars_num2char(seq, len);
-			if ('\0' != c)
+			if ( ! ('\0' == c || print_escape(c)))
 				putchar(c);
 			break;
 		case ESCAPE_SPECIAL:
 			c = mchars_spec2cp(h->symtab, seq, len);
 			if (c > 0)
 				printf("&#%d;", c);
-			else if (-1 == c && 1 == len)
+			else if (-1 == c && 1 == len &&
+			    !print_escape(*seq))
 				putchar((int)*seq);
 			break;
 		case ESCAPE_NOSPACE:

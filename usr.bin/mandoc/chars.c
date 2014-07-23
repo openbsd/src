@@ -1,4 +1,4 @@
-/*	$Id: chars.c,v 1.28 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: chars.c,v 1.29 2014/07/23 15:00:00 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -123,7 +123,18 @@ mchars_num2uc(const char *p, size_t sz)
 
 	if ((i = mandoc_strntoi(p, sz, 16)) < 0)
 		return('\0');
-	/* FIXME: make sure we're not in a bogus range. */
+
+	/*
+	 * Security warning:
+	 * Never extend the range of accepted characters
+	 * to overlap with the ASCII range, 0x00-0x7F
+	 * without re-auditing the callers of this function.
+	 * Some callers might relay on the fact that we never
+	 * return ASCII characters for their escaping decisions.
+	 *
+	 * XXX Code is missing here to exclude bogus ranges.
+	 */
+
 	return(i > 0x80 && i <= 0x10FFFF ? i : '\0');
 }
 
