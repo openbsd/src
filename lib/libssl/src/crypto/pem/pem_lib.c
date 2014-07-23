@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_lib.c,v 1.33 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: pem_lib.c,v 1.34 2014/07/23 20:43:56 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,17 +85,22 @@ static int load_iv(char **fromp, unsigned char *to, int num);
 static int check_pem(const char *nm, const char *name);
 int pem_check_suffix(const char *pem_str, const char *suffix);
 
+/* XXX LSSL ABI XXX return value and `num' ought to be size_t */
 int
 PEM_def_callback(char *buf, int num, int w, void *key)
 {
-	int i, j;
+	size_t l;
+	int i;
 	const char *prompt;
 
 	if (key) {
-		i = strlen(key);
-		i = (i > num) ? num : i;
-		memcpy(buf, key, i);
-		return (i);
+		l = strlen(key);
+		if (num < 0)
+			return -1;
+		if (l > (size_t)num)
+			l = (size_t)num;
+		memcpy(buf, key, l);
+		return (int)l;
 	}
 
 	prompt = EVP_get_pw_prompt();
@@ -110,13 +115,15 @@ PEM_def_callback(char *buf, int num, int w, void *key)
 			memset(buf, 0, num);
 			return (-1);
 		}
-		j = strlen(buf);
-		if (j < MIN_LENGTH) {
-			fprintf(stderr, "phrase is too short, needs to be at least %d chars\n", MIN_LENGTH);
+		l = strlen(buf);
+		if (l < MIN_LENGTH) {
+			fprintf(stderr, "phrase is too short, "
+			    "needs to be at least %zu chars\n",
+			    (size_t)MIN_LENGTH);
 		} else
 			break;
 	}
-	return (j);
+	return (int)l;
 }
 
 void
