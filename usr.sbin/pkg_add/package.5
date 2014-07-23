@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.20 2014/02/11 08:04:18 espie Exp $
+.\"	$OpenBSD: package.5,v 1.21 2014/07/23 14:43:44 espie Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: February 11 2014 $
+.Dd $Mdocdate: July 23 2014 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -78,13 +78,30 @@ which are optional: the package description (+DESC),
 a display message (+DISPLAY), etc.
 .Pp
 The basic ustar format has some limitations with respect to file names.
-Accordingly, the package tools will replace very long names with
-.Pa LongName#n
-and long link names with
-.Pa LongLink#n .
-The packing-list will hold the real file names, and the package tools
-will reconstitute the correct names behind the scenes.
-Extended ustar headers are currently recognized, but not supported.
+Packages now use the 
+.Qq extended record specification
+(header type x)
+for long links and long file names.
+Other extended ustar headers are currently recognized, but not supported.
+.Pp
+Starting with
+.Ox 5.5 ,
+the compressed archive may be composed of several
+.Xr gzip 1
+archives concatenated together.
+.Xr gzip 1
+doesn't mind, and
+.Xr tar 1
+is happy as long as the uncompressed stream is sane.
+This allows for faster signing and better rsync properties.
+.Pp
+Starting with
+.Ox 5.6 ,
+tarballs are stored
+.Qq out-of-order :
+each archive entry will match an entry in the packing-list (and all file-like
+entries will be matched), but the order will be adjusted so that most recently
+changed files come first, in order to allow faster updates.
 .Sh PACKING LIST ANNOTATIONS
 User annotations are described in
 .Xr pkg_create 1 .
@@ -177,6 +194,11 @@ Added after a file entry by
 to record the files's cryptographic checksum,
 as a sha256 digest encoded in base64.
 .Pp
+.It Cm @signer
+Internal annotation necessary to identify packages signed with
+.Xr signify 1
+keys, as those keys don't carry any identity.
+.Pp
 .It Cm @size
 Added after a file entry by
 .Xr pkg_create 1
@@ -192,10 +214,14 @@ Original location of the package, automatically recorded in installed packages
 by
 .Xr pkg_add 1 .
 .Pp
-.It Cm @signer
-Internal annotation necessary to identify packages signed with
-.Xr signify 1
-keys, as those keys don't carry any identity.
+.It Cm @ts Ar timestamp
+Added after a file entry to record the actual file timestamp.
+The package tools read and process that annotation correctly.
+Starting with
+.Ox 5.7 ,
+.Xr pkg_create 1
+will migrate timestamps from the tarball meta-info to the packing-list
+to better create unchanging archive chunks.
 .Pp
 .It Cm @wantlib Ar libspec
 Record a library requirement declared using the option
