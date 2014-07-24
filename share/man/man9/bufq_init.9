@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bufq_init.9,v 1.1 2014/07/24 01:18:23 dlg Exp $
+.\"	$OpenBSD: bufq_init.9,v 1.2 2014/07/24 01:26:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -103,7 +103,7 @@ is a convenience function for devices that have detached.
 It removes all the bufs currently queued on
 .Fa bufq ,
 marks them as failed with an
-.Dv ENXIO
+.Er ENXIO
 error, and returns them to the block layer via
 .Xr biodone 9 .
 .Sh CONTEXT
@@ -130,7 +130,7 @@ will return 0 on success, or an error code as per
 .Fn bufq_dequeue
 returns the next buf that is scheduled to be serviced by the disk.
 .Dv NULL
-is returned If there are no bufs available on the queue.
+is returned if there are no bufs available on the queue.
 .Pp
 .Fn bufq_peek
 returns 1 if there are bufs available to be scheduled on the disk, otherwise 0.
