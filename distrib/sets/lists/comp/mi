@@ -6058,6 +6058,14 @@
 ./usr/share/man/man9/breadn.9
 ./usr/share/man/man9/brelse.9
 ./usr/share/man/man9/buffercache.9
+./usr/share/man/man9/bufq_dequeue.9
+./usr/share/man/man9/bufq_destroy.9
+./usr/share/man/man9/bufq_drain.9
+./usr/share/man/man9/bufq_init.9
+./usr/share/man/man9/bufq_peek.9
+./usr/share/man/man9/bufq_queue.9
+./usr/share/man/man9/bufq_requeue.9
+./usr/share/man/man9/bufq_switch.9
 ./usr/share/man/man9/bus_dma.9
 ./usr/share/man/man9/bus_dmamap_create.9
 ./usr/share/man/man9/bus_dmamap_destroy.9
