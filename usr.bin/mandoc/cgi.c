@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.21 2014/07/24 08:25:45 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.22 2014/07/24 20:30:38 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -49,7 +49,6 @@ struct	req {
 };
 
 static	void		 catman(const struct req *, const char *);
-static	int	 	 cmp(const void *, const void *);
 static	void		 format(const struct req *, const char *);
 static	void		 html_print(const char *);
 static	void		 html_printquery(const struct req *);
@@ -589,8 +588,6 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 		return;
 	}
 
-	qsort(r, sz, sizeof(struct manpage), cmp);
-
 	resp_begin_html(200, NULL);
 	resp_searchform(req);
 	puts("<DIV CLASS=\"results\">");
@@ -1053,14 +1050,6 @@ main(void)
 		free(req.p[i]);
 	free(req.p);
 	return(EXIT_SUCCESS);
-}
-
-static int
-cmp(const void *p1, const void *p2)
-{
-
-	return(strcasecmp(((const struct manpage *)p1)->names,
-	    ((const struct manpage *)p2)->names));
 }
 
 /*

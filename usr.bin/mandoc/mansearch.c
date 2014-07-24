@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.28 2014/07/12 13:59:54 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.29 2014/07/24 20:30:38 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -86,6 +86,7 @@ static	void		 exprfree(struct expr *);
 static	struct expr	*exprspec(struct expr *, uint64_t,
 				 const char *, const char *);
 static	struct expr	*exprterm(const struct mansearch *, char *, int);
+static	int		 manpage_compare(const void *, const void *);
 static	void		 sql_append(char **sql, size_t *sz,
 				const char *newstr, int count);
 static	void		 sql_match(sqlite3_context *context,
@@ -323,6 +324,7 @@ mansearch(const struct mansearch *search,
 				    maxres, sizeof(struct manpage));
 			}
 			mpage = *res + cur;
+			mpage->sec = 10;
 			mpage->form = mp->form;
 			buildnames(mpage, db, s, mp->pageid,
 			    paths->paths[i], mp->form);
@@ -339,6 +341,7 @@ mansearch(const struct mansearch *search,
 		sqlite3_close(db);
 		ohash_delete(&htab);
 	}
+	qsort(*res, cur, sizeof(struct manpage), manpage_compare);
 	rc = 1;
 out:
 	if (-1 != fd) {
@@ -350,6 +353,18 @@ out:
 	free(sql);
 	*sz = cur;
 	return(rc);
+}
+
+static int
+manpage_compare(const void *vp1, const void *vp2)
+{
+	const struct manpage	*mp1, *mp2;
+	int			 diff;
+
+	mp1 = vp1;
+	mp2 = vp2;
+	diff = mp1->sec - mp2->sec;
+	return(diff ? diff : strcasecmp(mp1->names, mp2->names));
 }
 
 static void
@@ -383,6 +398,11 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 		sec = sqlite3_column_text(s, 0);
 		arch = sqlite3_column_text(s, 1);
 		name = sqlite3_column_text(s, 2);
+
+		/* Remember the first section found. */
+
+		if (9 < mpage->sec && '1' <= *sec && '9' >= *sec)
+			mpage->sec = (*sec - '1') + 1;
 
 		/* If the section changed, append the old one. */
 
