@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.20 2014/07/22 18:14:05 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.21 2014/07/24 08:25:45 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -418,7 +418,11 @@ resp_searchform(const struct req *req)
 
 	/* Write architecture selector. */
 
-	puts("<SELECT NAME=\"arch\">");
+	printf(	"<SELECT NAME=\"arch\">\n"
+		"<OPTION VALUE=\"default\"");
+	if (NULL == req->q.arch)
+		printf(" SELECTED");
+	puts(">All Architectures</OPTION>");
 	for (i = 0; i < arch_MAX; i++) {
 		printf("<OPTION VALUE=\"%s\"", arch_names[i]);
 		if (NULL != req->q.arch &&
@@ -555,7 +559,9 @@ pg_error_internal(void)
 static void
 pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 {
+	char		*arch, *archend;
 	size_t		 i, iuse, isec;
+	int		 archprio, archpriouse;
 	int		 prio, priouse;
 	char		 sec;
 
@@ -618,12 +624,30 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 		puts("<HR>");
 		iuse = 0;
 		priouse = 10;
+		archpriouse = 3;
 		for (i = 0; i < sz; i++) {
 			isec = strcspn(r[i].file, "123456789");
 			sec = r[i].file[isec];
 			if ('\0' == sec)
 				continue;
 			prio = sec_prios[sec - '1'];
+			if (NULL == req->q.arch) {
+				archprio =
+				    (NULL == (arch = strchr(
+					r[i].file + isec, '/'))) ? 3 :
+				    (NULL == (archend = strchr(
+					arch + 1, '/'))) ? 0 :
+				    strncmp(arch, "amd64/",
+					archend - arch) ? 2 : 1;
+				if (archprio < archpriouse) {
+					archpriouse = archprio;
+					priouse = prio;
+					iuse = i;
+					continue;
+				}
+				if (archprio > archpriouse)
+					continue;
+			}
 			if (prio >= priouse)
 				continue;
 			priouse = prio;
