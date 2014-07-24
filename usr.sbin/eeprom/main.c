@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2008/06/26 05:42:21 ray Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2014/07/24 19:19:26 miod Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -53,7 +53,11 @@
 static	char *nlistf = NULL;
 
 struct	keytabent eekeytab[] = {
+#ifndef SMALL
 	{ "hwupdate",		0x10,	ee_hwupdate },
+#else
+	{ "hwupdate",		0x00,	ee_notsupp },
+#endif
 	{ "memsize",		0x14,	ee_num8 },
 	{ "memtest",		0x15,	ee_num8 },
 	{ "scrsize",		0x16,	ee_screensize },
