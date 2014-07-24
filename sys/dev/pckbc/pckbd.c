@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.37 2014/03/23 11:48:23 ratchov Exp $ */
+/* $OpenBSD: pckbd.c,v 1.38 2014/07/24 22:38:19 mpi Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -173,7 +173,7 @@ void	pckbd_bell(u_int, u_int, u_int, int);
 int	pckbd_scancode_translate(struct pckbd_internal *, int);
 int	pckbd_set_xtscancode(pckbc_tag_t, pckbc_slot_t,
 	    struct pckbd_internal *);
-int	pckbd_init(struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t, int);
+void	pckbd_init(struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t, int);
 void	pckbd_input(void *, int);
 
 static int	pckbd_decode(struct pckbd_internal *, int,
@@ -350,9 +350,6 @@ pckbdprobe(struct device *parent, void *match, void *aux)
 	 */
 	pckbc_flush(pa->pa_tag, pa->pa_slot);
 
-	if (pckbd_set_xtscancode(pa->pa_tag, pa->pa_slot, NULL))
-		return (0);
-
 	return (2);
 }
 
@@ -371,6 +368,9 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 
 	if (isconsole) {
 		sc->id = &pckbd_consdata;
+		if (sc->id->t_table == 0)
+			pckbd_set_xtscancode(pa->pa_tag, pa->pa_slot, sc->id);
+
 		/*
 		 * Some keyboards are not enabled after a reset,
 		 * so make sure it is enabled now.
@@ -382,7 +382,8 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	} else {
 		sc->id = malloc(sizeof(struct pckbd_internal),
 				M_DEVBUF, M_WAITOK);
-		(void) pckbd_init(sc->id, pa->pa_tag, pa->pa_slot, 0);
+		pckbd_init(sc->id, pa->pa_tag, pa->pa_slot, 0);
+		pckbd_set_xtscancode(pa->pa_tag, pa->pa_slot, sc->id);
 
 		/* no interrupts until enabled */
 		cmd[0] = KBC_DISABLE;
@@ -843,7 +844,7 @@ pckbd_decode(struct pckbd_internal *id, int datain, u_int *type, int *dataout)
 	return 1;
 }
 
-int
+void
 pckbd_init(struct pckbd_internal *t, pckbc_tag_t kbctag, pckbc_slot_t kbcslot,
     int console)
 {
@@ -852,8 +853,6 @@ pckbd_init(struct pckbd_internal *t, pckbc_tag_t kbctag, pckbc_slot_t kbcslot,
 	t->t_isconsole = console;
 	t->t_kbctag = kbctag;
 	t->t_kbcslot = kbcslot;
-
-	return (pckbd_set_xtscancode(kbctag, kbcslot, t));
 }
 
 static int
@@ -986,22 +985,8 @@ pckbd_hookup_bell(void (*fn)(void *, u_int, u_int, u_int, int), void *arg)
 int
 pckbd_cnattach(pckbc_tag_t kbctag)
 {
-	char cmd[1];
-	int res;
 
-	res = pckbd_init(&pckbd_consdata, kbctag, PCKBC_KBD_SLOT, 1);
-#if 0 /* we allow the console to be attached if no keyboard is present */
-	if (res)
-		return (res);
-#endif
-
-	/* Just to be sure. */
-	cmd[0] = KBC_ENABLE;
-	res = pckbc_poll_cmd(kbctag, PCKBC_KBD_SLOT, cmd, 1, 0, NULL, 0);
-#if 0
-	if (res)
-		return (res);
-#endif
+	pckbd_init(&pckbd_consdata, kbctag, PCKBC_KBD_SLOT, 1);
 
 	wskbd_cnattach(&pckbd_consops, &pckbd_consdata, &pckbd_keymapdata);
 
@@ -1035,6 +1020,20 @@ pckbd_cnpollc(void *v, int on)
 	struct pckbd_internal *t = v;
 
 	pckbc_set_poll(t->t_kbctag, t->t_kbcslot, on);
+
+	/*
+	 * If we enter ukc or ddb before having attached the console
+	 * keyboard we need to probe its scan code set.
+	 */
+	if (t->t_table == 0) {
+		char cmd[1];
+
+		pckbd_set_xtscancode(t->t_kbctag, t->t_kbcslot, t);
+
+		/* Just to be sure. */
+		cmd[0] = KBC_ENABLE;
+		pckbc_poll_cmd(t->t_kbctag, PCKBC_KBD_SLOT, cmd, 1, 0, NULL, 0);
+	}
 }
 
 void
