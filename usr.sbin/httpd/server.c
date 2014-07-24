@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.7 2014/07/23 13:26:39 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.8 2014/07/24 08:32:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -550,6 +550,9 @@ server_close(struct client *clt, const char *msg)
 
 	SPLAY_REMOVE(client_tree, &srv->srv_clients, clt);
 
+	/* free the HTTP descriptors incl. headers */
+	server_close_http(clt);
+
 	event_del(&clt->clt_ev);
 	if (clt->clt_bev != NULL)
 		bufferevent_disable(clt->clt_bev, EV_READ|EV_WRITE);
@@ -575,7 +578,7 @@ server_close(struct client *clt, const char *msg)
 
 	if (clt->clt_bev != NULL)
 		bufferevent_free(clt->clt_bev);
-	else if (clt->clt_output != NULL)
+	if (clt->clt_output != NULL)
 		evbuffer_free(clt->clt_output);
 
 	if (clt->clt_file != NULL)

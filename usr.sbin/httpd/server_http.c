@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.10 2014/07/23 21:43:12 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.11 2014/07/24 08:32:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -110,6 +110,7 @@ server_httpdesc_free(struct http_descriptor *desc)
 		desc->http_version = NULL;
 	}
 	kv_purge(&desc->http_headers);
+	desc->http_lastheader = NULL;
 }
 
 void

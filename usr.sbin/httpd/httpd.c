@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.6 2014/07/23 23:10:27 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.7 2014/07/24 08:32:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -720,8 +720,6 @@ kv_purge(struct kvtree *keys)
 void
 kv_free(struct kv *kv)
 {
-	if (kv->kv_type == KEY_TYPE_NONE)
-		return;
 	if (kv->kv_key != NULL) {
 		free(kv->kv_key);
 	}
