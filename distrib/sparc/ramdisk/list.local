@@ -1,4 +1,4 @@
-#	$OpenBSD: list.local,v 1.5 2014/01/08 21:53:35 deraadt Exp $
+#	$OpenBSD: list.local,v 1.6 2014/07/24 19:23:51 miod Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -6,6 +6,7 @@ LINK	instbin					sbin/disklabel
 #LINK	instbin					sbin/restore
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/less usr/bin/more
+LINK	instbin					usr/sbin/eeprom
 
 SYMLINK	/tmp	var/tmp
 
