@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.217 2014/07/13 23:49:40 uebayasi Exp $
+#	$OpenBSD: Makefile,v 1.218 2014/07/24 01:18:23 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -7,7 +7,8 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	atomic_dec_int.9 atomic_inc_int.9 atomic_setbits_int.9 \
 	atomic_sub_int.9 atomic_swap_uint.9 \
 	audio.9 autoconf.9 \
-	bemtoh32.9 bio_register.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
+	bemtoh32.9 bio_register.9 boot.9 buffercache.9 bufq_init.9 bus_dma.9 \
+	bus_space.9 \
 	copy.9 config_attach.9 crypto.9 delay.9 \
 	disk.9 disklabel.9 dma_alloc.9 dohooks.9 dopowerhooks.9 \
 	domountroothooks.9 doshutdownhooks.9 dostartuphooks.9 \
@@ -71,6 +72,10 @@ MLINKS+=buffercache.9 bread.9 buffercache.9 breadn.9 \
 	buffercache.9 geteblk.9 buffercache.9 incore.9 \
 	buffercache.9 allocbuf.9 buffercache.9 brelse.9 \
 	buffercache.9 biodone.9 buffercache.9 biowait.9
+MLINKS+=bufq_init.9 bufq_switch.9 bufq_init.9 bufq_destroy.9 \
+	bufq_init.9 bufq_queue.9 bufq_init.9 bufq_dequeue.9 \
+	bufq_init.9 bufq_requeue.9 bufq_init.9 bufq_peek.9 \
+	bufq_init.9 bufq_drain.9
 MLINKS+=bus_dma.9 bus_dmamap_create.9 bus_dma.9 bus_dmamap_destroy.9 \
 	bus_dma.9 bus_dmamap_load.9 bus_dma.9 bus_dmamap_load_mbuf.9 \
 	bus_dma.9 bus_dmamap_load_uio.9 bus_dma.9 bus_dmamap_load_raw.9 \
