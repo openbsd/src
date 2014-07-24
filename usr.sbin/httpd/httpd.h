@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.7 2014/07/23 19:03:56 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.8 2014/07/24 08:11:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -303,10 +303,6 @@ struct server {
 	u_int8_t		 srv_tcpipminttl;
 
 	int			 srv_s;
-	struct bufferevent	*srv_bev;
-	int			 srv_dsts;
-	struct bufferevent	*srv_dstbev;
-
 	struct event		 srv_ev;
 	struct event		 srv_evt;
 
