@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2014/07/25 16:23:19 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2014/07/25 17:04:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -264,6 +264,7 @@ serveroptsl	: LISTEN ON STRING port {
 			memcpy(&srv->srv_conf.ss, &h->ss,
 			    sizeof(s->srv_conf.ss));
 			s->srv_conf.port = h->port.val[0];
+			s->srv_conf.prefixlen = h->prefixlen;
 			host_free(&al);
 		}
 		| ROOT STRING		{
