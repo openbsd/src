@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.15 2014/07/25 21:29:58 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.16 2014/07/25 21:36:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -523,7 +523,7 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	const char		*httperr = NULL, *text = "";
 	char			*httpmsg, *extraheader = NULL;
 	time_t			 t;
-	struct tm		*lt;
+	struct tm		 tm;
 	char			 tmbuf[32], hbuf[128];
 	const char		*style;
 
@@ -537,12 +537,10 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	if (print_host(&srv_conf->ss, hbuf, sizeof(hbuf)) == NULL)
 		goto done;
 
-	/* RFC 2616 "tolerates" asctime() */
+	/* New HTTP/1.1 RFC 7231 prefers IMF-fixdate from RFC 5322 */
 	time(&t);
-	lt = localtime(&t);
-	tmbuf[0] = '\0';
-	if (asctime_r(lt, tmbuf) != NULL)
-		tmbuf[strlen(tmbuf) - 1] = '\0';	/* skip final '\n' */
+	gmtime_r(&t, &tm);
+	strftime(tmbuf, sizeof(tmbuf), "%a, %d %h %Y %T %Z", &tm);
 
 	/* Do not send details of the Internal Server Error */
 	switch (code) {
