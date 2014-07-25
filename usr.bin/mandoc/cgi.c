@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.28 2014/07/25 18:19:33 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.29 2014/07/25 19:36:02 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -1082,7 +1082,8 @@ main(void)
 	if (NULL != (querystring = getenv("QUERY_STRING")))
 		http_parse(&req, querystring);
 
-	if ( ! validate_manpath(&req, req.q.manpath)) {
+	if ( ! (NULL == req.q.manpath ||
+	    validate_manpath(&req, req.q.manpath))) {
 		pg_error_badrequest(
 		    "You specified an invalid manpath.");
 		return(EXIT_FAILURE);
