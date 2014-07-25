@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.22 2014/07/24 20:30:38 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.23 2014/07/25 16:06:19 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -35,10 +35,10 @@
  * A query as passed to the search function.
  */
 struct	query {
-	const char	*manpath; /* desired manual directory */
-	const char	*arch; /* architecture */
-	const char	*sec; /* manual section */
-	const char	*expr; /* unparsed expression string */
+	char		*manpath; /* desired manual directory */
+	char		*arch; /* architecture */
+	char		*sec; /* manual section */
+	char		*expr; /* unparsed expression string */
 	int		 equal; /* match whole names, not substrings */
 };
 
@@ -54,7 +54,7 @@ static	void		 html_print(const char *);
 static	void		 html_printquery(const struct req *);
 static	void		 html_putchar(char);
 static	int 		 http_decode(char *);
-static	void		 http_parse(struct req *, char *);
+static	void		 http_parse(struct req *, const char *);
 static	void		 http_print(const char *);
 static	void 		 http_putchar(char);
 static	void		 http_printquery(const struct req *);
@@ -209,65 +209,114 @@ html_print(const char *p)
 }
 
 /*
- * Parse out key-value pairs from an HTTP request variable.
- * This can be either a cookie or a POST/GET string, although man.cgi
- * uses only GET for simplicity.
+ * Transfer the responsibility for the allocated string *val
+ * to the query structure.
  */
 static void
-http_parse(struct req *req, char *p)
+set_query_attr(char **attr, char **val)
 {
-	char            *key, *val;
 
-	memset(&req->q, 0, sizeof(struct query));
-	req->q.manpath = req->p[0];
-	req->q.equal = 1;
+	free(*attr);
+	if (**val == '\0') {
+		*attr = NULL;
+		free(*val);
+	} else
+		*attr = *val;
+	*val = NULL;
+}
 
-	while ('\0' != *p) {
-		key = p;
-		val = NULL;
+/*
+ * Parse the QUERY_STRING for key-value pairs
+ * and store the values into the query structure.
+ */
+static void
+http_parse(struct req *req, const char *qs)
+{
+	char		*key, *val;
+	size_t		 keysz, valsz;
 
-		p += (int)strcspn(p, ";&");
-		if ('\0' != *p)
-			*p++ = '\0';
-		if (NULL != (val = strchr(key, '=')))
-			*val++ = '\0';
+	req->q.manpath	= NULL;
+	req->q.arch	= NULL;
+	req->q.sec	= NULL;
+	req->q.expr	= NULL;
+	req->q.equal	= 1;
 
-		if ('\0' == *key || NULL == val || '\0' == *val)
-			continue;
+	key = val = NULL;
+	while (*qs != '\0') {
 
-		/* Just abort handling. */
+		/* Parse one key. */
 
-		if ( ! http_decode(key))
-			break;
-		if (NULL != val && ! http_decode(val))
-			break;
+		keysz = strcspn(qs, "=;&");
+		key = mandoc_strndup(qs, keysz);
+		qs += keysz;
+		if (*qs != '=')
+			goto next;
 
-		if (0 == strcmp(key, "query"))
-			req->q.expr = val;
-		else if (0 == strcmp(key, "manpath")) {
+		/* Parse one value. */
+
+		valsz = strcspn(++qs, ";&");
+		val = mandoc_strndup(qs, valsz);
+		qs += valsz;
+
+		/* Decode and catch encoding errors. */
+
+		if ( ! (http_decode(key) && http_decode(val)))
+			goto next;
+
+		/* Handle key-value pairs. */
+
+		if ( ! strcmp(key, "query"))
+			set_query_attr(&req->q.expr, &val);
+
+		else if ( ! strcmp(key, "apropos"))
+			req->q.equal = !strcmp(val, "0");
+
+		else if ( ! strcmp(key, "manpath")) {
 #ifdef COMPAT_OLDURI
-			if (0 == strncmp(val, "OpenBSD ", 8)) {
+			if ( ! strncmp(val, "OpenBSD ", 8)) {
 				val[7] = '-';
 				if ('C' == val[8])
 					val[8] = 'c';
 			}
 #endif
-			req->q.manpath = val;
-		} else if (0 == strcmp(key, "apropos"))
-			req->q.equal = !strcmp(val, "0");
-		else if (0 == strcmp(key, "sec")) {
-			if (strcmp(val, "0"))
-				req->q.sec = val;
-#ifdef COMPAT_OLDURI
-		} else if (0 == strcmp(key, "sektion")) {
-			if (strcmp(val, "0"))
-				req->q.sec = val;
-#endif
-		} else if (0 == strcmp(key, "arch")) {
-			if (strcmp(val, "default"))
-				req->q.arch = val;
+			set_query_attr(&req->q.manpath, &val);
 		}
+
+		else if ( ! (strcmp(key, "sec")
+#ifdef COMPAT_OLDURI
+		    && strcmp(key, "sektion")
+#endif
+		    )) {
+			if ( ! strcmp(val, "0"))
+				*val = '\0';
+			set_query_attr(&req->q.sec, &val);
+		}
+
+		else if ( ! strcmp(key, "arch")) {
+			if ( ! strcmp(val, "default"))
+				*val = '\0';
+			set_query_attr(&req->q.arch, &val);
+		}
+
+		/*
+		 * The key must be freed in any case.
+		 * The val may have been handed over to the query
+		 * structure, in which case it is now NULL.
+		 */
+next:
+		free(key);
+		key = NULL;
+		free(val);
+		val = NULL;
+
+		if (*qs != '\0')
+			qs++;
 	}
+
+	/* Fall back to the default manpath. */
+
+	if (req->q.manpath == NULL)
+		req->q.manpath = mandoc_strdup(req->p[0]);
 }
 
 static void
@@ -891,8 +940,10 @@ pg_show(struct req *req, const char *path)
 		return;
 	}
 
-	if (strcmp(path, "mandoc"))
-		req->q.manpath = path;
+	if (strcmp(path, "mandoc")) {
+		free(req->q.manpath);
+		req->q.manpath = mandoc_strdup(path);
+	}
 
 	resp_begin_html(200, NULL);
 	resp_searchform(req);
@@ -983,7 +1034,7 @@ main(void)
 {
 	struct req	 req;
 	const char	*path;
-	char		*querystring;
+	const char	*querystring;
 	int		 i;
 
 	/* Scan our run-time environment. */
@@ -1046,6 +1097,10 @@ main(void)
 	else
 		pg_index(&req);
 
+	free(req.q.manpath);
+	free(req.q.arch);
+	free(req.q.sec);
+	free(req.q.expr);
 	for (i = 0; i < (int)req.psz; i++)
 		free(req.p[i]);
 	free(req.p);
