@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.14 2014/07/25 20:13:06 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.15 2014/07/25 21:29:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -54,7 +54,9 @@ int
 server_file_access(struct http_descriptor *desc, char *path, size_t len,
     struct stat *st)
 {
+	char	*newpath;
 	errno = 0;
+
 	if (access(path, R_OK) == -1) {
 		goto fail;
 	} else if (stat(path, st) == -1) {
@@ -70,13 +72,10 @@ server_file_access(struct http_descriptor *desc, char *path, size_t len,
 
 		/* Redirect to path with trailing "/" */
 		if (path[strlen(path) - 1] != '/') {
-			/* Remove the document root to get the relative URL */
-			if (canonicalize_path(NULL,
-			    desc->http_path, path, len) == NULL ||
-			    strlcat(path, "/", len) >= len) {
-				errno = EINVAL;
-				goto fail;
-			}
+			if (asprintf(&newpath, "%s/", desc->http_path) == -1)
+				return (500);
+			free(desc->http_path);
+			desc->http_path = newpath;
 
 			/* Indicate that the file has been moved */
 			return (301);
@@ -89,8 +88,7 @@ server_file_access(struct http_descriptor *desc, char *path, size_t len,
 		}
 
 		/* Check again but set len to 0 to avoid recursion */
-		if (server_file_access(desc, path, 0, st) != 0)
-			goto fail;
+		return (server_file_access(desc, path, 0, st));
 	} else if (!S_ISREG(st->st_mode)) {
 		/* Don't follow symlinks and ignore special files */
 		errno = EACCES;
@@ -100,10 +98,6 @@ server_file_access(struct http_descriptor *desc, char *path, size_t len,
 	return (0);
 
  fail:
-	/* Remove the document root */
-	if (len && canonicalize_path(NULL, desc->http_path, path, len) == NULL)
-		return (500);
-
 	switch (errno) {
 	case ENOENT:
 		return (404);
@@ -127,16 +121,17 @@ server_file(struct httpd *env, struct client *clt)
 	char			 path[MAXPATHLEN];
 	struct stat		 st;
 
-	if (canonicalize_path(srv_conf->docroot,
-	    desc->http_path, path, sizeof(path)) == NULL) {
+	/* Request path is already canonicalized */
+	if ((size_t)snprintf(path, sizeof(path), "%s/%s",
+	    srv_conf->docroot, desc->http_path) >= sizeof(path)) {
 		/* Do not echo the uncanonicalized path */
-		server_abort_http(clt, 500, "invalid request path");
+		server_abort_http(clt, 500, desc->http_path);
 		return (-1);
 	}
 
 	/* Returns HTTP status code on error */
 	if ((ret = server_file_access(desc, path, sizeof(path), &st)) != 0) {
-		server_abort_http(clt, ret, path);
+		server_abort_http(clt, ret, desc->http_path);
 		return (-1);
 	}
 
