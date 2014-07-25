@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.5 2014/07/22 19:03:21 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.6 2014/07/25 15:47:11 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 22 2014 $
+.Dd $Mdocdate: July 25 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -115,6 +115,16 @@ The following general table options are available:
 .Bl -tag -width Ds
 .It Ic listen on Ar address Ic port Ar number
 Set the listen address and port.
+.It Ic root Ar directory
+Set the document root of the server.
+The
+.Ar directory
+is a pathname within the
+.Xr chroot 2
+root directory of
+.Nm httpd .
+If not specified, it defaults to
+.Pa /htdocs .
 .El
 .Sh TYPES
 Configure the supported media types.

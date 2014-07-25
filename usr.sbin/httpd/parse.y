@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2014/07/25 12:42:05 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.5 2014/07/25 15:47:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -126,7 +126,7 @@ typedef struct {
 
 %}
 
-%token	ALL PORT LISTEN PREFORK SERVER ERROR INCLUDE LOG VERBOSE ON TYPES
+%token	ALL PORT LISTEN PREFORK ROOT SERVER ERROR LOG VERBOSE ON TYPES
 %token	UPDATES INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -266,6 +266,16 @@ serveroptsl	: LISTEN ON STRING port {
 			s->srv_conf.port = h->port.val[0];
 			host_free(&al);
 		}
+		| ROOT STRING		{
+			if (strlcpy(srv->srv_conf.docroot, $2,
+			    sizeof(srv->srv_conf.docroot)) >=
+			    sizeof(srv->srv_conf.docroot)) {
+				yyerror("document root too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
 		;
 
 types		: TYPES	'{' optnl mediaopts_l '}'
@@ -401,6 +411,7 @@ lookup(char *s)
 		{ "on",			ON },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
+		{ "root",		ROOT },
 		{ "server",		SERVER },
 		{ "types",		TYPES },
 		{ "updates",		UPDATES }
