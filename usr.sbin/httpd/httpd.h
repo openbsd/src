@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.14 2014/07/25 23:23:39 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.15 2014/07/25 23:30:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -388,7 +388,7 @@ int	 server_bufferevent_add(struct event *, int);
 int	 server_bufferevent_write(struct client *, void *, size_t);
 void	 server_inflight_dec(struct client *, const char *);
 struct server *
-	 server_byaddr(struct sockaddr *);
+	 server_byaddr(struct sockaddr *, in_port_t);
 
 SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.4 2014/07/25 16:23:19 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.5 2014/07/25 23:30:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -249,7 +249,7 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 
 	/* Check if server with matching listening socket already exists */
 	if ((srv = server_byaddr((struct sockaddr *)
-	    &srv_conf.ss)) != NULL) {
+	    &srv_conf.ss, srv_conf.port)) != NULL) {
 		/* Add "host" to existing listening server */
 		close(imsg->fd);
 		return (config_getserver_config(env,
