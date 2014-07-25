@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.6 2014/07/25 15:47:11 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.7 2014/07/25 17:49:11 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -160,9 +160,9 @@ to the specified extension
 One or more names can be specified per line.
 .El
 .Sh EXAMPLES
-The following example will start two pre-forked servers that are
-listening on the primary IP address of the network interface that is a
-member of the
+The following example will start one server that is pre-forked two
+times and listening on the primary IP address of the network interface
+that is a member of the
 .Ar egress
 group.
 It additionally defines some media types overriding the defaults.
@@ -182,6 +182,28 @@ types {
 	image/png			png;
 	application/javascript		js;
 	application/xml			xml;
+}
+.Ed
+.Pp
+Multiple servers can be configured to support hosting of different domains.
+If the same address is repeated multiple times in the
+.Ic listen on
+statement,
+the server will be matched based on the requested host name.
+.Bd -literal -offset indent
+server "www.a.example.com" {
+	listen on 203.0.113.1 port 80
+	root "/htdocs/www.a.example.com"
+}
+
+server "www.b.example.com" {
+	listen on 203.0.113.1 port 80
+	root "/htdocs/www.b.example.com"
+}
+
+server "intranet.example.com" {
+	listen on 10.0.0.1 port 80
+	root "/htdocs/intranet.example.com"
 }
 .Ed
 .Pp
