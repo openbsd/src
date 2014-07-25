@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.26 2014/07/25 17:33:51 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.27 2014/07/25 17:51:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -870,8 +870,9 @@ format(const struct req *req, const char *file)
 	}
 
 	snprintf(opts, sizeof(opts), "fragment,man=%s?"
-	    "manpath=%s&amp;query=%%N&amp;sec=%%S&amp;arch=%s",
+	    "manpath=%s&query=%%N&sec=%%S%s%s",
 	    scriptname, req->q.manpath,
+	    req->q.arch ? "&arch=" : "",
 	    req->q.arch ? req->q.arch : "");
 
 	mparse_result(mp, &mdoc, &man, NULL);
