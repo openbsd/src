@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.13 2014/07/25 13:10:18 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.14 2014/07/25 20:13:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -89,7 +89,8 @@ server_file_access(struct http_descriptor *desc, char *path, size_t len,
 		}
 
 		/* Check again but set len to 0 to avoid recursion */
-		return (server_file_access(desc, path, 0, st));
+		if (server_file_access(desc, path, 0, st) != 0)
+			goto fail;
 	} else if (!S_ISREG(st->st_mode)) {
 		/* Don't follow symlinks and ignore special files */
 		errno = EACCES;
