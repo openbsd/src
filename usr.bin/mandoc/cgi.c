@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.30 2014/07/25 20:08:49 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.31 2014/07/25 21:05:38 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -51,13 +51,12 @@ struct	req {
 static	void		 catman(const struct req *, const char *);
 static	void		 format(const struct req *, const char *);
 static	void		 html_print(const char *);
-static	void		 html_printquery(const struct req *);
 static	void		 html_putchar(char);
 static	int 		 http_decode(char *);
 static	void		 http_parse(struct req *, const char *);
 static	void		 http_print(const char *);
 static	void 		 http_putchar(char);
-static	void		 http_printquery(const struct req *);
+static	void		 http_printquery(const struct req *, const char *);
 static	void		 pathgen(struct req *);
 static	void		 pg_error_badrequest(const char *);
 static	void		 pg_error_internal(void);
@@ -141,7 +140,7 @@ html_putchar(char c)
 }
 
 static void
-http_printquery(const struct req *req)
+http_printquery(const struct req *req, const char *sep)
 {
 
 	if (NULL != req->q.query) {
@@ -149,44 +148,19 @@ http_printquery(const struct req *req)
 		http_print(req->q.query);
 	}
 	if (0 == req->q.equal)
-		printf("&apropos=1");
+		printf("%sapropos=1", sep);
 	if (NULL != req->q.sec) {
-		printf("&sec=");
+		printf("%ssec=", sep);
 		http_print(req->q.sec);
 	}
 	if (NULL != req->q.arch) {
-		printf("&arch=");
+		printf("%sarch=", sep);
 		http_print(req->q.arch);
 	}
 	if (NULL != req->q.manpath &&
 	    strcmp(req->q.manpath, req->p[0])) {
-		printf("&manpath=");
+		printf("%smanpath=", sep);
 		http_print(req->q.manpath);
-	}
-}
-
-static void
-html_printquery(const struct req *req)
-{
-
-	if (NULL != req->q.query) {
-		printf("query=");
-		html_print(req->q.query);
-	}
-	if (0 == req->q.equal)
-		printf("&amp;apropos=1");
-	if (NULL != req->q.sec) {
-		printf("&amp;sec=");
-		html_print(req->q.sec);
-	}
-	if (NULL != req->q.arch) {
-		printf("&amp;arch=");
-		html_print(req->q.arch);
-	}
-	if (NULL != req->q.manpath &&
-	    strcmp(req->q.manpath, req->p[0])) {
-		printf("&amp;manpath=");
-		html_print(req->q.manpath);
 	}
 }
 
@@ -636,7 +610,7 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 		printf("Status: 303 See Other\r\n");
 		printf("Location: http://%s%s/%s/%s?",
 		    HTTP_HOST, scriptname, req->q.manpath, r[0].file);
-		http_printquery(req);
+		http_printquery(req, "&");
 		printf("\r\n"
 		     "Content-Type: text/html; charset=utf-8\r\n"
 		     "\r\n");
@@ -653,7 +627,7 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 		       "<TD CLASS=\"title\">\n"
 		       "<A HREF=\"%s/%s/%s?", 
 		    scriptname, req->q.manpath, r[i].file);
-		html_printquery(req);
+		http_printquery(req, "&amp;");
 		printf("\">");
 		html_print(r[i].names);
 		printf("</A>\n"
