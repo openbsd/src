@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.29 2014/07/25 19:36:02 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.30 2014/07/25 20:08:49 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -847,12 +847,13 @@ static void
 format(const struct req *req, const char *file)
 {
 	struct mparse	*mp;
-	int		 fd;
 	struct mdoc	*mdoc;
 	struct man	*man;
 	void		*vp;
+	char		*opts;
 	enum mandoclevel rc;
-	char		 opts[PATH_MAX + 128];
+	int		 fd;
+	int		 usepath;
 
 	if (-1 == (fd = open(file, O_RDONLY, 0))) {
 		puts("<P>You specified an invalid manual file.</P>");
@@ -871,11 +872,14 @@ format(const struct req *req, const char *file)
 		return;
 	}
 
-	snprintf(opts, sizeof(opts), "fragment,man=%s?"
-	    "manpath=%s&query=%%N&sec=%%S%s%s",
-	    scriptname, req->q.manpath,
-	    req->q.arch ? "&arch=" : "",
-	    req->q.arch ? req->q.arch : "");
+	usepath = strcmp(req->q.manpath, req->p[0]);
+	mandoc_asprintf(&opts,
+	    "fragment,man=%s?query=%%N&sec=%%S%s%s%s%s",
+	    scriptname,
+	    req->q.arch	? "&arch="       : "",
+	    req->q.arch	? req->q.arch    : "",
+	    usepath	? "&manpath="    : "",
+	    usepath	? req->q.manpath : "");
 
 	mparse_result(mp, &mdoc, &man, NULL);
 	if (NULL == man && NULL == mdoc) {
@@ -895,6 +899,7 @@ format(const struct req *req, const char *file)
 
 	html_free(vp);
 	mparse_free(mp);
+	free(opts);
 }
 
 static void
