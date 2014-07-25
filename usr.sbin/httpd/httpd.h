@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.9 2014/07/25 12:42:05 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.10 2014/07/25 12:46:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -252,8 +252,8 @@ struct privsep_proc {
 struct client {
 	u_int32_t		 clt_id;
 	pid_t			 clt_pid;
-	void			*clt_server;
-	u_int32_t		 clt_serverid;
+	void			*clt_srv;
+	u_int32_t		 clt_srv_id;
 
 	int			 clt_s;
 	in_port_t		 clt_port;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.11 2014/07/24 08:32:36 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.12 2014/07/25 12:46:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -518,7 +518,7 @@ server_reset_http(struct client *clt)
 void
 server_abort_http(struct client *clt, u_int code, const char *msg)
 {
-	struct server		*srv = clt->clt_server;
+	struct server		*srv = clt->clt_srv;
 	struct bufferevent	*bev = clt->clt_bev;
 	const char		*httperr = NULL, *text = "";
 	char			*httpmsg, *extraheader = NULL;

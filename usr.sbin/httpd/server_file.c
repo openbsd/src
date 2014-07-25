@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.11 2014/07/25 12:42:05 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.12 2014/07/25 12:46:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -119,7 +119,7 @@ int
 server_file(struct httpd *env, struct client *clt)
 {
 	struct http_descriptor	*desc = clt->clt_desc;
-	struct server		*srv = clt->clt_server;
+	struct server		*srv = clt->clt_srv;
 	struct media_type	*media;
 	const char		*errstr = NULL;
 	int			 fd = -1, ret;

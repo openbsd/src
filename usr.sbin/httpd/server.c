@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.8 2014/07/24 08:32:36 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.9 2014/07/25 12:46:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -316,7 +316,7 @@ server_socket_listen(struct sockaddr_storage *ss, in_port_t port,
 void
 server_input(struct client *clt)
 {
-	struct server	*srv = clt->clt_server;
+	struct server	*srv = clt->clt_srv;
 	evbuffercb	 inrd = server_read;
 	evbuffercb	 inwr = server_write;
 
@@ -472,9 +472,9 @@ server_accept(int fd, short event, void *arg)
 	clt->clt_s = s;
 	clt->clt_fd = -1;
 	clt->clt_toread = TOREAD_UNLIMITED;
-	clt->clt_server = srv;
+	clt->clt_srv = srv;
 	clt->clt_id = ++server_cltid;
-	clt->clt_serverid = srv->srv_conf.id;
+	clt->clt_srv_id = srv->srv_conf.id;
 	clt->clt_pid = getpid();
 	clt->clt_inflight = 1;
 	switch (ss.ss_family) {
@@ -546,7 +546,7 @@ void
 server_close(struct client *clt, const char *msg)
 {
 	char		 ibuf[128], obuf[128], *ptr = NULL;
-	struct server	*srv = clt->clt_server;
+	struct server	*srv = clt->clt_srv;
 
 	SPLAY_REMOVE(client_tree, &srv->srv_clients, clt);
 
