@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.23 2014/07/14 00:35:10 deraadt Exp $ */
+/* $OpenBSD: ecparam.c,v 1.24 2014/07/25 06:05:32 doug Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -578,8 +578,7 @@ end:
 	if (ec_cofactor)
 		BN_free(ec_cofactor);
 	free(buffer);
-	if (in != NULL)
-		BIO_free(in);
+	BIO_free(in);
 	if (out != NULL)
 		BIO_free_all(out);
 	if (group != NULL)

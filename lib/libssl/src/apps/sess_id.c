@@ -1,4 +1,4 @@
-/* $OpenBSD: sess_id.c,v 1.19 2014/07/14 00:35:10 deraadt Exp $ */
+/* $OpenBSD: sess_id.c,v 1.20 2014/07/25 06:05:32 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -277,7 +277,6 @@ load_sess_id(char *infile, int format)
 		goto end;
 	}
 end:
-	if (in != NULL)
-		BIO_free(in);
+	BIO_free(in);
 	return (x);
 }

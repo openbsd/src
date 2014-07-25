@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_acpt.c,v 1.24 2014/07/13 16:03:09 beck Exp $ */
+/* $OpenBSD: bss_acpt.c,v 1.25 2014/07/25 06:05:32 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -153,8 +153,7 @@ BIO_ACCEPT_free(BIO_ACCEPT *a)
 
 	free(a->param_addr);
 	free(a->addr);
-	if (a->bio_chain != NULL)
-		BIO_free(a->bio_chain);
+	BIO_free(a->bio_chain);
 	free(a);
 }
 
@@ -358,8 +357,7 @@ acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
 			} else if (num == 1) {
 				data->accept_nbio = (ptr != NULL);
 			} else if (num == 2) {
-				if (data->bio_chain != NULL)
-					BIO_free(data->bio_chain);
+				BIO_free(data->bio_chain);
 				data->bio_chain = (BIO *)ptr;
 			}
 		}

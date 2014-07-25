@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lib.c,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: cms_lib.c,v 1.4 2014/07/25 06:05:32 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -360,8 +360,7 @@ cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm)
 	return mdbio;
 
 err:
-	if (mdbio)
-		BIO_free(mdbio);
+	BIO_free(mdbio);
 	return NULL;
 }
 

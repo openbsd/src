@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.c,v 1.16 2014/07/14 00:35:10 deraadt Exp $ */
+/* $OpenBSD: ec.c,v 1.17 2014/07/25 06:05:32 doug Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -328,8 +328,7 @@ bad:
 	} else
 		ret = 0;
 end:
-	if (in)
-		BIO_free(in);
+	BIO_free(in);
 	if (out)
 		BIO_free_all(out);
 	if (eckey)

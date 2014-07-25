@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.68 2014/07/19 03:40:26 lteo Exp $ */
+/* $OpenBSD: apps.c,v 1.69 2014/07/25 06:05:31 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -669,8 +669,7 @@ end:
 		BIO_printf(err, "unable to load certificate\n");
 		ERR_print_errors(err);
 	}
-	if (cert != NULL)
-		BIO_free(cert);
+	BIO_free(cert);
 	return (x);
 }
 
@@ -745,8 +744,7 @@ load_key(BIO *err, const char *file, int format, int maybe_stdin,
 		goto end;
 	}
 end:
-	if (key != NULL)
-		BIO_free(key);
+	BIO_free(key);
 	if (pkey == NULL) {
 		BIO_printf(err, "unable to load %s\n", key_descrip);
 		ERR_print_errors(err);
@@ -833,8 +831,7 @@ load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 	}
 
 end:
-	if (key != NULL)
-		BIO_free(key);
+	BIO_free(key);
 	if (pkey == NULL)
 		BIO_printf(err, "unable to load %s\n", key_descrip);
 	return (pkey);

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.c,v 1.28 2014/07/14 00:35:10 deraadt Exp $ */
+/* $OpenBSD: dsa.c,v 1.29 2014/07/25 06:05:31 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -320,8 +320,7 @@ bad:
 	} else
 		ret = 0;
 end:
-	if (in != NULL)
-		BIO_free(in);
+	BIO_free(in);
 	if (out != NULL)
 		BIO_free_all(out);
 	if (dsa != NULL)

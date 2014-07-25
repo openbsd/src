@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.28 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.29 2014/07/25 06:05:32 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -133,8 +133,7 @@ PKCS7_bio_add_digest(BIO **pbio, X509_ALGOR *alg)
 	return 1;
 
 err:
-	if (btmp)
-		BIO_free(btmp);
+	BIO_free(btmp);
 	return 0;
 
 }

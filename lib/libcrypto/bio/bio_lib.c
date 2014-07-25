@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.20 2014/07/11 15:40:32 miod Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.21 2014/07/25 06:05:32 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -575,8 +575,7 @@ BIO_dup_chain(BIO *in)
 	}
 	return (ret);
 err:
-	if (ret != NULL)
-		BIO_free(ret);
+	BIO_free(ret);
 	return (NULL);
 
 }

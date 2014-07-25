@@ -1,4 +1,4 @@
-/* $OpenBSD: passwd.c,v 1.23 2014/07/14 00:35:10 deraadt Exp $ */
+/* $OpenBSD: passwd.c,v 1.24 2014/07/25 06:05:32 doug Exp $ */
 
 #if defined OPENSSL_NO_MD5
 #define NO_MD5CRYPT_1
@@ -242,8 +242,7 @@ err:
 	ERR_print_errors(bio_err);
 	free(salt_malloc);
 	free(passwd_malloc);
-	if (in)
-		BIO_free(in);
+	BIO_free(in);
 	if (out)
 		BIO_free_all(out);
 

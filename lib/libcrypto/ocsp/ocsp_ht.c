@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ht.c,v 1.20 2014/07/12 14:58:32 miod Exp $ */
+/* $OpenBSD: ocsp_ht.c,v 1.21 2014/07/25 06:05:32 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -111,8 +111,7 @@ OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx)
 	if (rctx == NULL)
 		return;
 
-	if (rctx->mem)
-		BIO_free(rctx->mem);
+	BIO_free(rctx->mem);
 	free(rctx->iobuf);
 	free(rctx);
 }
