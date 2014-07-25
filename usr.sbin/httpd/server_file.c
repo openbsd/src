@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.10 2014/07/23 22:20:37 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.11 2014/07/25 12:42:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -126,7 +126,7 @@ server_file(struct httpd *env, struct client *clt)
 	char			 path[MAXPATHLEN];
 	struct stat		 st;
 
-	if (canonicalize_path(HTTPD_DOCROOT,
+	if (canonicalize_path(srv->srv_conf.docroot,
 	    desc->http_path, path, sizeof(path)) == NULL) {
 		/* Do not echo the uncanonicalized path */
 		server_abort_http(clt, 500, "invalid request path");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.8 2014/07/24 08:11:27 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.9 2014/07/25 12:42:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -287,6 +287,7 @@ struct server_config {
 	u_int32_t		 id;
 	u_int32_t		 flags;
 	char			 name[MAXHOSTNAMELEN];
+	char			 docroot[MAXPATHLEN];
 	in_port_t		 port;
 	struct sockaddr_storage	 ss;
 	struct timeval		 timeout;

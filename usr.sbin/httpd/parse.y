@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2014/07/23 22:02:02 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.4 2014/07/25 12:42:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -215,6 +215,8 @@ server		: SERVER STRING		{
 			}
 			free($2);
 
+			strlcpy(s->srv_conf.docroot, HTTPD_DOCROOT,
+			    sizeof(s->srv_conf.docroot));
 			s->srv_conf.id = ++last_server_id;
 			s->srv_conf.timeout.tv_sec = SERVER_TIMEOUT;
 
