@@ -1,6 +1,6 @@
-/* $OpenBSD: poly1305.h,v 1.2 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: poly1305.h,v 1.3 2014/07/25 14:04:51 jsing Exp $ */
 /*
- * Copyright (c) Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
