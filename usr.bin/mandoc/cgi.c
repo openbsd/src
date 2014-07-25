@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.24 2014/07/25 16:43:05 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.25 2014/07/25 16:55:40 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -38,7 +38,7 @@ struct	query {
 	char		*manpath; /* desired manual directory */
 	char		*arch; /* architecture */
 	char		*sec; /* manual section */
-	char		*expr; /* unparsed expression string */
+	char		*query; /* unparsed query expression */
 	int		 equal; /* match whole names, not substrings */
 };
 
@@ -72,6 +72,10 @@ static	void		 resp_begin_http(int, const char *);
 static	void		 resp_end_html(void);
 static	void		 resp_searchform(const struct req *);
 static	void		 resp_show(const struct req *, const char *);
+static	void		 set_query_attr(char **, char **);
+static	int		 validate_filename(const char *);
+static	int		 validate_manpath(const struct req *, const char *);
+static	int		 validate_urifrag(const char *);
 
 static	const char	 *scriptname; /* CGI script name */
 
@@ -152,9 +156,9 @@ http_printquery(const struct req *req)
 		printf("&arch=");
 		http_print(req->q.arch);
 	}
-	if (NULL != req->q.expr) {
+	if (NULL != req->q.query) {
 		printf("&query=");
-		http_print(req->q.expr);
+		http_print(req->q.query);
 	}
 	if (0 == req->q.equal)
 		printf("&apropos=1");
@@ -176,9 +180,9 @@ html_printquery(const struct req *req)
 		printf("&amp;arch=");
 		html_print(req->q.arch);
 	}
-	if (NULL != req->q.expr) {
+	if (NULL != req->q.query) {
 		printf("&amp;query=");
-		html_print(req->q.expr);
+		html_print(req->q.query);
 	}
 	if (0 == req->q.equal)
 		printf("&amp;apropos=1");
@@ -238,7 +242,7 @@ http_parse(struct req *req, const char *qs)
 	req->q.manpath	= NULL;
 	req->q.arch	= NULL;
 	req->q.sec	= NULL;
-	req->q.expr	= NULL;
+	req->q.query	= NULL;
 	req->q.equal	= 1;
 
 	key = val = NULL;
@@ -266,7 +270,7 @@ http_parse(struct req *req, const char *qs)
 		/* Handle key-value pairs. */
 
 		if ( ! strcmp(key, "query"))
-			set_query_attr(&req->q.expr, &val);
+			set_query_attr(&req->q.query, &val);
 
 		else if ( ! strcmp(key, "apropos"))
 			req->q.equal = !strcmp(val, "0");
@@ -433,8 +437,8 @@ resp_searchform(const struct req *req)
 
 	printf(	"<TABLE><TR><TD>\n"
 		"<INPUT TYPE=\"text\" NAME=\"query\" VALUE=\"");
-	if (NULL != req->q.expr)
-		html_print(req->q.expr);
+	if (NULL != req->q.query)
+		html_print(req->q.query);
 	puts("\" SIZE=\"40\">");
 
 	/* Write submission and reset buttons. */
@@ -994,7 +998,7 @@ pg_search(const struct req *req)
 	 * Yes, this is half-ass.  But it works for now.
 	 */
 
-	ep = req->q.expr;
+	ep = req->q.query;
 	while (ep && isspace((unsigned char)*ep))
 		ep++;
 
@@ -1097,7 +1101,7 @@ main(void)
 
 	if ('\0' != *path)
 		pg_show(&req, path);
-	else if (NULL != req.q.expr)
+	else if (NULL != req.q.query)
 		pg_search(&req);
 	else
 		pg_index(&req);
@@ -1105,7 +1109,7 @@ main(void)
 	free(req.q.manpath);
 	free(req.q.arch);
 	free(req.q.sec);
-	free(req.q.expr);
+	free(req.q.query);
 	for (i = 0; i < (int)req.psz; i++)
 		free(req.p[i]);
 	free(req.p);
