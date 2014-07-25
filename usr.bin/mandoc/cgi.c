@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.23 2014/07/25 16:06:19 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.24 2014/07/25 16:43:05 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -904,20 +904,23 @@ resp_show(const struct req *req, const char *file)
 }
 
 static void
-pg_show(struct req *req, const char *path)
+pg_show(struct req *req, const char *fullpath)
 {
-	char		*sub;
+	char		*manpath;
+	const char	*file;
 
-	if (NULL == path || NULL == (sub = strchr(path, '/'))) {
+	if ((file = strchr(fullpath, '/')) == NULL) {
 		pg_error_badrequest(
 		    "You did not specify a page to show.");
 		return;
 	} 
-	*sub++ = '\0';
+	manpath = mandoc_strndup(fullpath, file - fullpath);
+	file++;
 
-	if ( ! validate_manpath(req, path)) {
+	if ( ! validate_manpath(req, manpath)) {
 		pg_error_badrequest(
 		    "You specified an invalid manpath.");
+		free(manpath);
 		return;
 	}
 
@@ -927,27 +930,29 @@ pg_show(struct req *req, const char *path)
 	 * relative to the manpath root.
 	 */
 
-	if (-1 == chdir(path)) {
+	if (chdir(manpath) == -1) {
 		fprintf(stderr, "chdir %s: %s\n",
-		    path, strerror(errno));
+		    manpath, strerror(errno));
 		pg_error_internal();
+		free(manpath);
 		return;
 	}
 
-	if ( ! validate_filename(sub)) {
+	if (strcmp(manpath, "mandoc")) {
+		free(req->q.manpath);
+		req->q.manpath = manpath;
+	} else
+		free(manpath);
+
+	if ( ! validate_filename(file)) {
 		pg_error_badrequest(
 		    "You specified an invalid manual file.");
 		return;
 	}
 
-	if (strcmp(path, "mandoc")) {
-		free(req->q.manpath);
-		req->q.manpath = mandoc_strdup(path);
-	}
-
 	resp_begin_html(200, NULL);
 	resp_searchform(req);
-	resp_show(req, sub);
+	resp_show(req, file);
 	resp_end_html();
 }
 
