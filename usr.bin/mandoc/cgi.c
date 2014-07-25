@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.27 2014/07/25 17:51:33 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.28 2014/07/25 18:19:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -144,10 +144,12 @@ static void
 http_printquery(const struct req *req)
 {
 
-	if (NULL != req->q.manpath) {
-		printf("&manpath=");
-		http_print(req->q.manpath);
+	if (NULL != req->q.query) {
+		printf("query=");
+		http_print(req->q.query);
 	}
+	if (0 == req->q.equal)
+		printf("&apropos=1");
 	if (NULL != req->q.sec) {
 		printf("&sec=");
 		http_print(req->q.sec);
@@ -156,22 +158,23 @@ http_printquery(const struct req *req)
 		printf("&arch=");
 		http_print(req->q.arch);
 	}
-	if (NULL != req->q.query) {
-		printf("&query=");
-		http_print(req->q.query);
+	if (NULL != req->q.manpath &&
+	    strcmp(req->q.manpath, req->p[0])) {
+		printf("&manpath=");
+		http_print(req->q.manpath);
 	}
-	if (0 == req->q.equal)
-		printf("&apropos=1");
 }
 
 static void
 html_printquery(const struct req *req)
 {
 
-	if (NULL != req->q.manpath) {
-		printf("&amp;manpath=");
-		html_print(req->q.manpath);
+	if (NULL != req->q.query) {
+		printf("query=");
+		html_print(req->q.query);
 	}
+	if (0 == req->q.equal)
+		printf("&amp;apropos=1");
 	if (NULL != req->q.sec) {
 		printf("&amp;sec=");
 		html_print(req->q.sec);
@@ -180,12 +183,11 @@ html_printquery(const struct req *req)
 		printf("&amp;arch=");
 		html_print(req->q.arch);
 	}
-	if (NULL != req->q.query) {
-		printf("&amp;query=");
-		html_print(req->q.query);
+	if (NULL != req->q.manpath &&
+	    strcmp(req->q.manpath, req->p[0])) {
+		printf("&amp;manpath=");
+		html_print(req->q.manpath);
 	}
-	if (0 == req->q.equal)
-		printf("&amp;apropos=1");
 }
 
 static void
