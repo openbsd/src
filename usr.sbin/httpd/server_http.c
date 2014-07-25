@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.18 2014/07/25 23:23:39 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.19 2014/07/25 23:25:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -506,6 +506,7 @@ void
 server_reset_http(struct client *clt)
 {
 	struct http_descriptor	*desc = clt->clt_desc;
+	struct server		*srv = clt->clt_srv;
 
 	server_httpdesc_free(desc);
 	desc->http_method = 0;
@@ -514,6 +515,7 @@ server_reset_http(struct client *clt)
 	clt->clt_line = 0;
 	clt->clt_done = 0;
 	clt->clt_bev->readcb = server_read_http;
+	clt->clt_srv_conf = &srv->srv_conf;
 }
 
 static void
