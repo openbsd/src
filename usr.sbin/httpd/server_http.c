@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.16 2014/07/25 21:36:37 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.17 2014/07/25 21:48:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -48,6 +48,7 @@
 #include "httpd.h"
 #include "http.h"
 
+static void	 server_http_date(char *, size_t);
 static int	 server_httpmethod_cmp(const void *, const void *);
 static int	 server_httperror_cmp(const void *, const void *);
 void		 server_httpdesc_free(struct http_descriptor *);
@@ -515,6 +516,18 @@ server_reset_http(struct client *clt)
 	clt->clt_bev->readcb = server_read_http;
 }
 
+static void
+server_http_date(char *tmbuf, size_t len)
+{
+	time_t			 t;
+	struct tm		 tm;
+
+	/* New HTTP/1.1 RFC 7231 prefers IMF-fixdate from RFC 5322 */
+	time(&t);
+	gmtime_r(&t, &tm);
+	strftime(tmbuf, len, "%a, %d %h %Y %T %Z", &tm);
+}
+
 void
 server_abort_http(struct client *clt, u_int code, const char *msg)
 {
@@ -522,8 +535,6 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	struct bufferevent	*bev = clt->clt_bev;
 	const char		*httperr = NULL, *text = "";
 	char			*httpmsg, *extraheader = NULL;
-	time_t			 t;
-	struct tm		 tm;
 	char			 tmbuf[32], hbuf[128];
 	const char		*style;
 
@@ -537,10 +548,7 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	if (print_host(&srv_conf->ss, hbuf, sizeof(hbuf)) == NULL)
 		goto done;
 
-	/* New HTTP/1.1 RFC 7231 prefers IMF-fixdate from RFC 5322 */
-	time(&t);
-	gmtime_r(&t, &tm);
-	strftime(tmbuf, sizeof(tmbuf), "%a, %d %h %Y %T %Z", &tm);
+	server_http_date(tmbuf, sizeof(tmbuf));
 
 	/* Do not send details of the Internal Server Error */
 	switch (code) {
@@ -698,6 +706,7 @@ server_response_http(struct client *clt, u_int code,
 	struct http_descriptor	*desc = clt->clt_desc;
 	const char		*error;
 	struct kv		*ct, *cl;
+	char			 tmbuf[32];
 
 	if (desc == NULL || (error = server_httperror_byid(code)) == NULL)
 		return (-1);
@@ -732,6 +741,11 @@ server_response_http(struct client *clt, u_int code,
 	if (size && ((cl =
 	    kv_add(&desc->http_headers, "Content-Length", NULL)) == NULL ||
 	    kv_set(cl, "%ld", size) == -1))
+		return (-1);
+
+	/* Date header is mandatory and should be added last */
+	server_http_date(tmbuf, sizeof(tmbuf));
+	if (kv_add(&desc->http_headers, "Date", tmbuf) == NULL)
 		return (-1);
 
 	/* Write completed header */
