@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.25 2014/07/25 16:55:40 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.26 2014/07/25 17:33:51 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -451,19 +451,19 @@ resp_searchform(const struct req *req)
 	printf(	"</TD><TD>\n"
 		"<INPUT TYPE=\"radio\" ");
 	if (req->q.equal)
-		printf("CHECKED ");
+		printf("CHECKED=\"checked\" ");
 	printf(	"NAME=\"apropos\" ID=\"show\" VALUE=\"0\">\n"
 		"<LABEL FOR=\"show\">Show named manual page</LABEL>\n");
 
 	/* Write section selector. */
 
-	printf(	"</TD></TR><TR><TD>\n"
+	puts(	"</TD></TR><TR><TD>\n"
 		"<SELECT NAME=\"sec\">");
 	for (i = 0; i < sec_MAX; i++) {
 		printf("<OPTION VALUE=\"%s\"", sec_numbers[i]);
 		if (NULL != req->q.sec &&
 		    0 == strcmp(sec_numbers[i], req->q.sec))
-			printf(" SELECTED");
+			printf(" SELECTED=\"selected\"");
 		printf(">%s</OPTION>\n", sec_names[i]);
 	}
 	puts("</SELECT>");
@@ -473,13 +473,13 @@ resp_searchform(const struct req *req)
 	printf(	"<SELECT NAME=\"arch\">\n"
 		"<OPTION VALUE=\"default\"");
 	if (NULL == req->q.arch)
-		printf(" SELECTED");
+		printf(" SELECTED=\"selected\"");
 	puts(">All Architectures</OPTION>");
 	for (i = 0; i < arch_MAX; i++) {
 		printf("<OPTION VALUE=\"%s\"", arch_names[i]);
 		if (NULL != req->q.arch &&
 		    0 == strcmp(arch_names[i], req->q.arch))
-			printf(" SELECTED");
+			printf(" SELECTED=\"selected\"");
 		printf(">%s</OPTION>\n", arch_names[i]);
 	}
 	puts("</SELECT>");
@@ -492,7 +492,7 @@ resp_searchform(const struct req *req)
 			printf("<OPTION ");
 			if (NULL == req->q.manpath ? 0 == i :
 			    0 == strcmp(req->q.manpath, req->p[i]))
-				printf("SELECTED ");
+				printf("SELECTED=\"selected\" ");
 			printf("VALUE=\"");
 			html_print(req->p[i]);
 			printf("\">");
@@ -507,7 +507,7 @@ resp_searchform(const struct req *req)
 	printf(	"</TD><TD>\n"
 		"<INPUT TYPE=\"radio\" ");
 	if (0 == req->q.equal)
-		printf("CHECKED ");
+		printf("CHECKED=\"checked\" ");
 	printf(	"NAME=\"apropos\" ID=\"search\" VALUE=\"1\">\n"
 		"<LABEL FOR=\"search\">Search with apropos query</LABEL>\n");
 
@@ -565,10 +565,10 @@ pg_index(const struct req *req)
 	resp_begin_html(200, NULL);
 	resp_searchform(req);
 	printf("<P>\n"
-	       "This web interface is documented in the "
-	       "<A HREF=\"%s/mandoc/man8/man.cgi.8\">man.cgi</A> "
-	       "manual, and the "
-	       "<A HREF=\"%s/mandoc/man1/apropos.1\">apropos</A> "
+	       "This web interface is documented in the\n"
+	       "<A HREF=\"%s/mandoc/man8/man.cgi.8\">man.cgi</A>\n"
+	       "manual, and the\n"
+	       "<A HREF=\"%s/mandoc/man1/apropos.1\">apropos</A>\n"
 	       "manual explains the query syntax.\n"
 	       "</P>\n",
 	       scriptname, scriptname);
