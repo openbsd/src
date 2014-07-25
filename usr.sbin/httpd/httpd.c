@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.7 2014/07/24 08:32:36 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.8 2014/07/25 16:23:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -577,6 +577,102 @@ get_data(u_int8_t *ptr, size_t len)
 	memcpy(data, ptr, len);
 
 	return (data);
+}
+
+int
+sockaddr_cmp(struct sockaddr *a, struct sockaddr *b, int prefixlen)
+{
+	struct sockaddr_in	*a4, *b4;
+	struct sockaddr_in6	*a6, *b6;
+	u_int32_t		 av[4], bv[4], mv[4];
+
+	if (a->sa_family == AF_UNSPEC || b->sa_family == AF_UNSPEC)
+		return (0);
+	else if (a->sa_family > b->sa_family)
+		return (1);
+	else if (a->sa_family < b->sa_family)
+		return (-1);
+
+	if (prefixlen == -1)
+		memset(&mv, 0xff, sizeof(mv));
+
+	switch (a->sa_family) {
+	case AF_INET:
+		a4 = (struct sockaddr_in *)a;
+		b4 = (struct sockaddr_in *)b;
+
+		av[0] = a4->sin_addr.s_addr;
+		bv[0] = b4->sin_addr.s_addr;
+		if (prefixlen != -1)
+			mv[0] = prefixlen2mask(prefixlen);
+
+		if ((av[0] & mv[0]) > (bv[0] & mv[0]))
+			return (1);
+		if ((av[0] & mv[0]) < (bv[0] & mv[0]))
+			return (-1);
+		break;
+	case AF_INET6:
+		a6 = (struct sockaddr_in6 *)a;
+		b6 = (struct sockaddr_in6 *)b;
+
+		memcpy(&av, &a6->sin6_addr.s6_addr, 16);
+		memcpy(&bv, &b6->sin6_addr.s6_addr, 16);
+		if (prefixlen != -1)
+			prefixlen2mask6(prefixlen, mv);
+
+		if ((av[3] & mv[3]) > (bv[3] & mv[3]))
+			return (1);
+		if ((av[3] & mv[3]) < (bv[3] & mv[3]))
+			return (-1);
+		if ((av[2] & mv[2]) > (bv[2] & mv[2]))
+			return (1);
+		if ((av[2] & mv[2]) < (bv[2] & mv[2]))
+			return (-1);
+		if ((av[1] & mv[1]) > (bv[1] & mv[1]))
+			return (1);
+		if ((av[1] & mv[1]) < (bv[1] & mv[1]))
+			return (-1);
+		if ((av[0] & mv[0]) > (bv[0] & mv[0]))
+			return (1);
+		if ((av[0] & mv[0]) < (bv[0] & mv[0]))
+			return (-1);
+		break;
+	}
+
+	return (0);
+}
+
+u_int32_t
+prefixlen2mask(u_int8_t prefixlen)
+{
+	if (prefixlen == 0)
+		return (0);
+
+	if (prefixlen > 32)
+		prefixlen = 32;
+
+	return (htonl(0xffffffff << (32 - prefixlen)));
+}
+
+struct in6_addr *
+prefixlen2mask6(u_int8_t prefixlen, u_int32_t *mask)
+{
+	static struct in6_addr  s6;
+	int			i;
+
+	if (prefixlen > 128)
+		prefixlen = 128;
+
+	bzero(&s6, sizeof(s6));
+	for (i = 0; i < prefixlen / 8; i++)
+		s6.s6_addr[i] = 0xff;
+	i = prefixlen % 8;
+	if (i)
+		s6.s6_addr[prefixlen / 8] = 0xff00 >> i;
+
+	memcpy(mask, &s6, sizeof(s6));
+
+	return (&s6);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.13 2014/07/25 13:10:18 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.14 2014/07/25 16:23:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -628,6 +628,8 @@ int
 server_response(struct httpd *httpd, struct client *clt)
 {
 	struct http_descriptor	*desc	= clt->clt_desc;
+	struct server		*srv = clt->clt_srv;
+	struct server_config	*srv_conf;
 	struct kv		*kv, key;
 	int			 ret;
 
@@ -655,6 +657,23 @@ server_response(struct httpd *httpd, struct client *clt)
 			clt->clt_persist++;
 		else
 			clt->clt_persist = 0;
+	}
+
+	/*
+	 * Do we have a Host header and matching configuration?
+	 * XXX the Host can also appear in the URL path.
+	 */
+	key.kv_key = "Host";
+	if ((kv = kv_find(&desc->http_headers, &key)) != NULL) {
+		/* XXX maybe better to turn srv_hosts into a tree */
+		TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
+			if (fnmatch(srv_conf->name, kv->kv_value,
+			    FNM_CASEFOLD) == 0) {
+				/* Replace host configuration */
+				clt->clt_srv_conf = srv_conf;
+				break;
+			}
+		}
 	}
 
 	if ((ret = server_file(httpd, clt)) == -1)

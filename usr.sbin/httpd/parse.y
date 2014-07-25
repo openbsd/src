@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2014/07/25 15:47:11 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.6 2014/07/25 16:23:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -937,7 +937,10 @@ host_v4(const char *s)
 	sain->sin_len = sizeof(struct sockaddr_in);
 	sain->sin_family = AF_INET;
 	sain->sin_addr.s_addr = ina.s_addr;
-
+	if (sain->sin_addr.s_addr == INADDR_ANY)
+		h->prefixlen = 0; /* 0.0.0.0 address */
+	else
+		h->prefixlen = -1; /* host address */
 	return (h);
 }
 
@@ -963,7 +966,11 @@ host_v6(const char *s)
 		    sizeof(sa_in6->sin6_addr));
 		sa_in6->sin6_scope_id =
 		    ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
-
+		if (memcmp(&sa_in6->sin6_addr, &in6addr_any,
+		    sizeof(sa_in6->sin6_addr)) == 0)
+			h->prefixlen = 0; /* any address */
+		else
+			h->prefixlen = -1; /* host address */
 		freeaddrinfo(res);
 	}
 
@@ -1016,6 +1023,7 @@ host_dns(const char *s, struct addresslist *al, int max,
 		if (ipproto != -1)
 			h->ipproto = ipproto;
 		h->ss.ss_family = res->ai_family;
+		h->prefixlen = -1; /* host address */
 
 		if (res->ai_family == AF_INET) {
 			sain = (struct sockaddr_in *)&h->ss;
@@ -1078,6 +1086,7 @@ host_if(const char *s, struct addresslist *al, int max,
 		if (ipproto != -1)
 			h->ipproto = ipproto;
 		h->ss.ss_family = af;
+		h->prefixlen = -1; /* host address */
 
 		if (af == AF_INET) {
 			sain = (struct sockaddr_in *)&h->ss;

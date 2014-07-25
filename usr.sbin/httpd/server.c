@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.10 2014/07/25 13:10:18 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.11 2014/07/25 16:23:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -151,7 +151,8 @@ server_launch(void)
 void
 server_purge(struct server *srv)
 {
-	struct client	*clt;
+	struct client		*clt;
+	struct server_config	*srv_conf;
 
 	/* shutdown and remove server */
 	if (event_initialized(&srv->srv_ev))
@@ -167,7 +168,31 @@ server_purge(struct server *srv)
 	    SPLAY_ROOT(&srv->srv_clients)) != NULL)
 		server_close(clt, NULL);
 
+	/* cleanup hosts */
+	while ((srv_conf =
+	    TAILQ_FIRST(&srv->srv_hosts)) != NULL) {
+		TAILQ_REMOVE(&srv->srv_hosts, srv_conf, entry);
+
+		/* It might point to our own "default" entry */
+		if (srv_conf != &srv->srv_conf)
+			free(srv_conf);
+	}
+
 	free(srv);
+}
+
+struct server *
+server_byaddr(struct sockaddr *addr)
+{
+	struct server	*srv;
+
+	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
+		if (sockaddr_cmp((struct sockaddr *)&srv->srv_conf.ss,
+		    addr, srv->srv_conf.prefixlen) == 0)
+			return (srv);
+	}
+
+	return (NULL);
 }
 
 int

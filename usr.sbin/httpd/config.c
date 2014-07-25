@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.3 2014/07/23 13:26:39 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.4 2014/07/25 16:23:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -45,6 +45,9 @@
 #include <openssl/ssl.h>
 
 #include "httpd.h"
+
+int	 config_getserver_config(struct httpd *, struct server *,
+	    struct imsg *);
 
 int
 config_init(struct httpd *env)
@@ -205,27 +208,67 @@ config_setserver(struct httpd *env, struct server *srv)
 }
 
 int
+config_getserver_config(struct httpd *env, struct server *srv,
+    struct imsg *imsg)
+{
+#ifdef DEBUG
+	struct privsep		*ps = env->sc_ps;
+#endif
+	struct server_config	*srv_conf;
+	u_int8_t		*p = imsg->data;
+
+	if ((srv_conf = calloc(1, sizeof(*srv_conf))) == NULL)
+		return (-1);
+
+	IMSG_SIZE_CHECK(imsg, srv_conf);
+	memcpy(srv_conf, p, sizeof(*srv_conf));
+
+	TAILQ_INSERT_TAIL(&srv->srv_hosts, srv_conf, entry);
+
+	DPRINTF("%s: %s %d received configuration \"%s\", parent \"%s\"",
+	    __func__, ps->ps_title[privsep_process], ps->ps_instance,
+	    srv_conf->name, srv->srv_conf.name);
+
+	return (0);
+}
+
+int
 config_getserver(struct httpd *env, struct imsg *imsg)
 {
 #ifdef DEBUG
 	struct privsep		*ps = env->sc_ps;
 #endif
 	struct server		*srv;
+	struct server_config	 srv_conf;
 	u_int8_t		*p = imsg->data;
 	size_t			 s;
 
+	IMSG_SIZE_CHECK(imsg, &srv_conf);
+	memcpy(&srv_conf, p, sizeof(srv_conf));
+	s = sizeof(srv_conf);
+
+	/* Check if server with matching listening socket already exists */
+	if ((srv = server_byaddr((struct sockaddr *)
+	    &srv_conf.ss)) != NULL) {
+		/* Add "host" to existing listening server */
+		close(imsg->fd);
+		return (config_getserver_config(env,
+		    srv, imsg));
+	}
+
+	/* Otherwise create a new server */
 	if ((srv = calloc(1, sizeof(*srv))) == NULL) {
 		close(imsg->fd);
 		return (-1);
 	}
 
-	IMSG_SIZE_CHECK(imsg, &srv->srv_conf);
-	memcpy(&srv->srv_conf, p, sizeof(srv->srv_conf));
-	s = sizeof(srv->srv_conf);
-
+	memcpy(&srv->srv_conf, &srv_conf, sizeof(srv->srv_conf));
 	srv->srv_s = imsg->fd;
 
 	SPLAY_INIT(&srv->srv_clients);
+	TAILQ_INIT(&srv->srv_hosts);
+
+	TAILQ_INSERT_TAIL(&srv->srv_hosts, &srv->srv_conf, entry);
 	TAILQ_INSERT_TAIL(env->sc_servers, srv, srv_entry);
 
 	DPRINTF("%s: %s %d received configuration \"%s\"", __func__,
