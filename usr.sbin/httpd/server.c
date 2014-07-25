@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.9 2014/07/25 12:46:23 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.10 2014/07/25 13:10:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -316,9 +316,9 @@ server_socket_listen(struct sockaddr_storage *ss, in_port_t port,
 void
 server_input(struct client *clt)
 {
-	struct server	*srv = clt->clt_srv;
-	evbuffercb	 inrd = server_read;
-	evbuffercb	 inwr = server_write;
+	struct server_config	*srv_conf = clt->clt_srv_conf;
+	evbuffercb		 inrd = server_read;
+	evbuffercb		 inwr = server_write;
 
 	if (server_httpdesc_init(clt) == -1) {
 		server_close(clt,
@@ -340,7 +340,7 @@ server_input(struct client *clt)
 	}
 
 	bufferevent_settimeout(clt->clt_bev,
-	    srv->srv_conf.timeout.tv_sec, srv->srv_conf.timeout.tv_sec);
+	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);
 	bufferevent_enable(clt->clt_bev, EV_READ|EV_WRITE);
 }
 
@@ -473,6 +473,7 @@ server_accept(int fd, short event, void *arg)
 	clt->clt_fd = -1;
 	clt->clt_toread = TOREAD_UNLIMITED;
 	clt->clt_srv = srv;
+	clt->clt_srv_conf = &srv->srv_conf;
 	clt->clt_id = ++server_cltid;
 	clt->clt_srv_id = srv->srv_conf.id;
 	clt->clt_pid = getpid();
@@ -545,8 +546,9 @@ server_inflight_dec(struct client *clt, const char *why)
 void
 server_close(struct client *clt, const char *msg)
 {
-	char		 ibuf[128], obuf[128], *ptr = NULL;
-	struct server	*srv = clt->clt_srv;
+	char			 ibuf[128], obuf[128], *ptr = NULL;
+	struct server		*srv = clt->clt_srv;
+	struct server_config	*srv_conf = clt->clt_srv_conf;
 
 	SPLAY_REMOVE(client_tree, &srv->srv_clients, clt);
 
@@ -563,13 +565,13 @@ server_close(struct client *clt, const char *msg)
 		memset(&ibuf, 0, sizeof(ibuf));
 		memset(&obuf, 0, sizeof(obuf));
 		(void)print_host(&clt->clt_ss, ibuf, sizeof(ibuf));
-		(void)print_host(&srv->srv_conf.ss, obuf, sizeof(obuf));
+		(void)print_host(&srv_conf->ss, obuf, sizeof(obuf));
 		if (EVBUFFER_LENGTH(clt->clt_log) &&
 		    evbuffer_add_printf(clt->clt_log, "\r\n") != -1)
 			ptr = evbuffer_readline(clt->clt_log);
 		log_info("server %s, "
 		    "client %d (%d active), %s -> %s:%d, "
-		    "%s%s%s", srv->srv_conf.name, clt->clt_id, server_clients,
+		    "%s%s%s", srv_conf->name, clt->clt_id, server_clients,
 		    ibuf, obuf, ntohs(clt->clt_port), msg,
 		    ptr == NULL ? "" : ",", ptr == NULL ? "" : ptr);
 		if (ptr != NULL)

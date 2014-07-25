@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.10 2014/07/25 12:46:23 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.11 2014/07/25 13:10:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -253,6 +253,7 @@ struct client {
 	u_int32_t		 clt_id;
 	pid_t			 clt_pid;
 	void			*clt_srv;
+	void			*clt_srv_conf;
 	u_int32_t		 clt_srv_id;
 
 	int			 clt_s;

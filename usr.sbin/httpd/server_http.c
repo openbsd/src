@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.12 2014/07/25 12:46:23 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.13 2014/07/25 13:10:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -518,7 +518,7 @@ server_reset_http(struct client *clt)
 void
 server_abort_http(struct client *clt, u_int code, const char *msg)
 {
-	struct server		*srv = clt->clt_srv;
+	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct bufferevent	*bev = clt->clt_bev;
 	const char		*httperr = NULL, *text = "";
 	char			*httpmsg, *extraheader = NULL;
@@ -534,7 +534,7 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 		goto done;
 
 	/* Some system information */
-	if (print_host(&srv->srv_conf.ss, hbuf, sizeof(hbuf)) == NULL)
+	if (print_host(&srv_conf->ss, hbuf, sizeof(hbuf)) == NULL)
 		goto done;
 
 	/* RFC 2616 "tolerates" asctime() */
@@ -596,7 +596,7 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	    code, httperr, tmbuf, HTTPD_SERVERNAME,
 	    extraheader == NULL ? "" : extraheader,
 	    code, httperr, style, httperr, text,
-	    HTTPD_SERVERNAME, hbuf, ntohs(srv->srv_conf.port)) == -1)
+	    HTTPD_SERVERNAME, hbuf, ntohs(srv_conf->port)) == -1)
 		goto done;
 
 	/* Dump the message without checking for success */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.12 2014/07/25 12:46:23 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.13 2014/07/25 13:10:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -119,14 +119,14 @@ int
 server_file(struct httpd *env, struct client *clt)
 {
 	struct http_descriptor	*desc = clt->clt_desc;
-	struct server		*srv = clt->clt_srv;
+	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct media_type	*media;
 	const char		*errstr = NULL;
 	int			 fd = -1, ret;
 	char			 path[MAXPATHLEN];
 	struct stat		 st;
 
-	if (canonicalize_path(srv->srv_conf.docroot,
+	if (canonicalize_path(srv_conf->docroot,
 	    desc->http_path, path, sizeof(path)) == NULL) {
 		/* Do not echo the uncanonicalized path */
 		server_abort_http(clt, 500, "invalid request path");
@@ -171,7 +171,7 @@ server_file(struct httpd *env, struct client *clt)
 	}
 
 	bufferevent_settimeout(clt->clt_file,
-	    srv->srv_conf.timeout.tv_sec, srv->srv_conf.timeout.tv_sec);
+	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);
 	bufferevent_enable(clt->clt_file, EV_READ);
 	bufferevent_disable(clt->clt_bev, EV_READ);
 
