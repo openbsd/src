@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.11 2014/07/25 16:23:19 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.12 2014/07/25 23:23:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -503,6 +503,19 @@ server_accept(int fd, short event, void *arg)
 	clt->clt_srv_id = srv->srv_conf.id;
 	clt->clt_pid = getpid();
 	clt->clt_inflight = 1;
+
+	/* get local address */
+	slen = sizeof(clt->clt_srv_ss);
+	if (getsockname(s, (struct sockaddr *)&clt->clt_srv_ss,
+	    &slen) == -1) {
+		server_close(clt, "listen address lookup failed");
+		return;
+	}
+
+	/* get client address */
+	memcpy(&clt->clt_ss, &ss, sizeof(clt->clt_ss));
+
+	/* get ports */
 	switch (ss.ss_family) {
 	case AF_INET:
 		clt->clt_port = ((struct sockaddr_in *)&ss)->sin_port;
@@ -511,7 +524,6 @@ server_accept(int fd, short event, void *arg)
 		clt->clt_port = ((struct sockaddr_in6 *)&ss)->sin6_port;
 		break;
 	}
-	memcpy(&clt->clt_ss, &ss, sizeof(clt->clt_ss));
 
 	getmonotime(&clt->clt_tv_start);
 	memcpy(&clt->clt_tv_last, &clt->clt_tv_start, sizeof(clt->clt_tv_last));
@@ -571,7 +583,8 @@ server_inflight_dec(struct client *clt, const char *why)
 void
 server_close(struct client *clt, const char *msg)
 {
-	char			 ibuf[128], obuf[128], *ptr = NULL;
+	char			 ibuf[MAXHOSTNAMELEN], obuf[MAXHOSTNAMELEN];
+	char			*ptr = NULL;
 	struct server		*srv = clt->clt_srv;
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 
@@ -590,14 +603,14 @@ server_close(struct client *clt, const char *msg)
 		memset(&ibuf, 0, sizeof(ibuf));
 		memset(&obuf, 0, sizeof(obuf));
 		(void)print_host(&clt->clt_ss, ibuf, sizeof(ibuf));
-		(void)print_host(&srv_conf->ss, obuf, sizeof(obuf));
+		(void)server_http_host(&clt->clt_srv_ss, obuf, sizeof(obuf));
 		if (EVBUFFER_LENGTH(clt->clt_log) &&
 		    evbuffer_add_printf(clt->clt_log, "\r\n") != -1)
 			ptr = evbuffer_readline(clt->clt_log);
 		log_info("server %s, "
-		    "client %d (%d active), %s -> %s:%d, "
+		    "client %d (%d active), %s:%u -> %s, "
 		    "%s%s%s", srv_conf->name, clt->clt_id, server_clients,
-		    ibuf, obuf, ntohs(clt->clt_port), msg,
+		    ibuf, ntohs(clt->clt_port), obuf, msg,
 		    ptr == NULL ? "" : ",", ptr == NULL ? "" : ptr);
 		if (ptr != NULL)
 			free(ptr);

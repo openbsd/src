@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.15 2014/07/25 21:29:58 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.16 2014/07/25 23:23:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -72,7 +72,8 @@ server_file_access(struct http_descriptor *desc, char *path, size_t len,
 
 		/* Redirect to path with trailing "/" */
 		if (path[strlen(path) - 1] != '/') {
-			if (asprintf(&newpath, "%s/", desc->http_path) == -1)
+			if (asprintf(&newpath, "http://%s%s/",
+			    desc->http_host, desc->http_path) == -1)
 				return (500);
 			free(desc->http_path);
 			desc->http_path = newpath;

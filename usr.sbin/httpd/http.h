@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.3 2014/07/13 15:11:23 reyk Exp $	*/
+/*	$OpenBSD: http.h,v 1.4 2014/07/25 23:23:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -18,6 +18,9 @@
 
 #ifndef _HTTP_H
 #define _HTTP_H
+
+#define HTTP_PORT	80
+#define HTTPS_PORT	443
 
 enum httpmethod {
 	HTTP_METHOD_NONE	= 0,
@@ -148,13 +151,14 @@ struct http_descriptor {
 #define query_key		 http_matchquery.kv_key
 #define query_val		 http_matchquery.kv_value
 
-	char			*http_version;
+	char			 http_host[MAXHOSTNAMELEN];
 	enum httpmethod		 http_method;
 	int			 http_chunked;
+	char			*http_version;
 
 	/* A tree of headers and attached lists for repeated headers. */
-	struct kvtree		 http_headers;
 	struct kv		*http_lastheader;
+	struct kvtree		 http_headers;
 };
 
 #endif /* _HTTP_H */

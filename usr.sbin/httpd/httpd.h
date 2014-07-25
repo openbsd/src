@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.13 2014/07/25 21:29:58 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.14 2014/07/25 23:23:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -256,6 +256,7 @@ struct client {
 	void			*clt_srv;
 	void			*clt_srv_conf;
 	u_int32_t		 clt_srv_id;
+	struct sockaddr_storage	 clt_srv_ss;
 
 	int			 clt_s;
 	in_port_t		 clt_port;
@@ -412,6 +413,8 @@ int	 server_response_http(struct client *, u_int, struct media_type *,
 void	 server_reset_http(struct client *);
 void	 server_close_http(struct client *);
 int	 server_response(struct httpd *, struct client *);
+const char *
+	 server_http_host(struct sockaddr_storage *, char *, size_t);
 
 /* server_file.c */
 int	 server_file(struct httpd *, struct client *);
