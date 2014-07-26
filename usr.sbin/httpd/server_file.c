@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.16 2014/07/25 23:23:39 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.17 2014/07/26 22:38:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -123,7 +123,7 @@ server_file(struct httpd *env, struct client *clt)
 	struct stat		 st;
 
 	/* Request path is already canonicalized */
-	if ((size_t)snprintf(path, sizeof(path), "%s/%s",
+	if ((size_t)snprintf(path, sizeof(path), "%s%s",
 	    srv_conf->docroot, desc->http_path) >= sizeof(path)) {
 		/* Do not echo the uncanonicalized path */
 		server_abort_http(clt, 500, desc->http_path);
