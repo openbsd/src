@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.33 2014/07/13 21:44:58 matthew Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.34 2014/07/26 16:07:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -275,6 +275,7 @@ sched_chooseproc(void)
 				while ((p = TAILQ_FIRST(&spc->spc_qs[queue]))) {
 					remrunqueue(p);
 					p->p_cpu = sched_choosecpu(p);
+					KASSERT(p->p_cpu != curcpu());
 					setrunqueue(p);
 				}
 			}
@@ -408,6 +409,7 @@ sched_choosecpu(struct proc *p)
 	 */
 	if (cpuset_isset(&set, p->p_cpu) ||
 	    (p->p_cpu == curcpu() && p->p_cpu->ci_schedstate.spc_nrun == 0 &&
+	    (p->p_cpu->ci_schedstate.spc_schedflags & SPCF_SHOULDHALT) == 0 &&
 	    curproc == p)) {
 		sched_wasidle++;
 		return (p->p_cpu);
