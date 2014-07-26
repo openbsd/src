@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.9 2014/07/25 21:29:58 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.10 2014/07/26 09:59:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -654,7 +654,7 @@ prefixlen2mask6(u_int8_t prefixlen, u_int32_t *mask)
 	if (prefixlen > 128)
 		prefixlen = 128;
 
-	bzero(&s6, sizeof(s6));
+	memset(&s6, 0, sizeof(s6));
 	for (i = 0; i < prefixlen / 8; i++)
 		s6.s6_addr[i] = 0xff;
 	i = prefixlen % 8;
