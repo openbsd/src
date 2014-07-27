@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.31 2014/07/08 16:52:47 espie Exp $
+# $OpenBSD: State.pm,v 1.32 2014/07/27 22:19:18 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -432,6 +432,12 @@ sub system
 	my $self = shift;
 	my $r = $self->_system(@_);
 	if ($r != 0) {
+		if (ref $_[0] eq 'CODE') {
+			shift;
+		}
+		if (ref $_[0] eq 'CODE') {
+			shift;
+		}
 		$self->say("system(#1) failed: #2",
 		    join(", ", @_), $self->child_error);
 	}
