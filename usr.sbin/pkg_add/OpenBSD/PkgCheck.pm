@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.53 2014/07/14 08:47:49 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.54 2014/07/27 22:18:36 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -255,6 +255,7 @@ sub find_dependencies
 			my $i = $lib->origin;
 			if ($i eq 'system') {
 				$okay = 1;
+				$state->{needed_libs}{$lib->to_string} = 1;
 				next;
 			}
 			if ($checker->find($i)) {
@@ -684,6 +685,7 @@ sub dependencies_check
 	OpenBSD::SharedLibs::add_libs_from_system($state->{destdir}, $state);
 	$self->for_all_packages($state, $l, "Direct dependencies", sub {
 		my $name = shift;
+		$state->log->set_context($name);
 		my $plist = OpenBSD::PackingList->from_installation($name,
 		    \&OpenBSD::PackingList::DependOnly);
 		my $checker = OpenBSD::DirectDependencyCheck->new($state,
@@ -791,6 +793,15 @@ sub display_tmps
 	}
 }
 
+sub display_unregs
+{
+	my ($self, $state) = @_;
+	$state->say("System libs NOT in locate dbs:");
+	for my $e (sort @{$state->{unreg_libs}}) {
+		$state->say("\t#1", $e);
+	}
+}
+
 sub locate_unknown
 {
 	my ($self, $state) = @_;
@@ -857,6 +868,10 @@ sub filesystem_check
 			delete $state->{basesystem}{$File::Find::name};
 			return;
 		}
+		if (defined $state->{needed_libs}{$File::Find::name}) {
+			push(@{$state->{unreg_libs}}, $File::Find::name);
+			return;
+		}
 		if (-d $_) {
 			if ($_ eq "lost+found") {
 				$state->say("fsck(8) info found: #1",
@@ -888,6 +903,9 @@ sub filesystem_check
 	}, $root);
 	if (defined $state->{tmps}) {
 		$self->display_tmps($state);
+	}
+	if (defined $state->{unreg_libs}) {
+		$self->display_unregs($state);
 	}
 	if (defined $state->{unknown}) {
 		if ($self->install_pkglocate($state)) {
