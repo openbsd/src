@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2014/07/12 23:34:54 reyk Exp $
+#	$OpenBSD: Makefile,v 1.21 2014/07/27 23:52:05 deraadt Exp $
 
 PROG=		httpd
 SRCS=		parse.y
@@ -9,7 +9,7 @@ MAN=		httpd.8 httpd.conf.5
 LDADD=		-levent -lssl -lcrypto -lutil
 DPADD=		${LIBEVENT} ${LIBSSL} ${LIBCRYPTO} ${LIBUTIL}
 #DEBUG=		-g -DDEBUG=3
-CFLAGS+=	-Wall -I${.CURDIR} -Werror
+CFLAGS+=	-Wall -I${.CURDIR}
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith
