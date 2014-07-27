@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Log.pm,v 1.8 2014/03/18 18:53:29 espie Exp $
+# $OpenBSD: Log.pm,v 1.9 2014/07/27 22:17:33 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -36,12 +36,14 @@ sub set_context
 sub messages
 {
 	my $self = shift;
+	$self->{context} //= "???";
 	return $self->{messages}{$self->{context}} //= [];
 }
 
 sub errmessages
 {
 	my $self = shift;
+	$self->{context} //= "???";
 	return $self->{errmessages}{$self->{context}} //= [];
 }
 
