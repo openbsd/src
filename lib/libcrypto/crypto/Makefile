@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.45 2014/07/12 20:11:45 miod Exp $
+# $OpenBSD: Makefile,v 1.46 2014/07/28 17:57:18 tedu Exp $
 
 LIB=	crypto
 
@@ -223,9 +223,6 @@ SRCS+= rsa_pmeth.c rsa_crpt.c
 # sha/
 SRCS+= sha_dgst.c sha1dgst.c sha_one.c sha1_one.c sha256.c sha512.c
 
-# srp/
-#SRCS+= srp_lib.c srp_vfy.c
-
 # stack/
 SRCS+= stack.c
 
@@ -374,7 +371,6 @@ HDRS=\
 	crypto/ripemd/ripemd.h \
 	crypto/rsa/rsa.h \
 	crypto/sha/sha.h \
-	crypto/srp/srp.h \
 	crypto/stack/safestack.h \
 	crypto/stack/stack.h \
 	crypto/store/store.h \

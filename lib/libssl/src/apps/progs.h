@@ -1,4 +1,4 @@
-/* $OpenBSD: progs.h,v 1.21 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: progs.h,v 1.22 2014/07/28 17:57:18 tedu Exp $ */
 /* Public domain */
 
 extern int asn1parse_main(int argc, char *argv[]);
@@ -42,7 +42,6 @@ extern int sess_id_main(int argc, char *argv[]);
 extern int smime_main(int argc, char *argv[]);
 extern int speed_main(int argc, char *argv[]);
 extern int spkac_main(int argc, char *argv[]);
-extern int srp_main(int argc, char *argv[]);
 extern int ts_main(int argc, char *argv[]);
 extern int verify_main(int argc, char *argv[]);
 extern int version_main(int argc, char *argv[]);
