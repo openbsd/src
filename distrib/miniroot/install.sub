@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.786 2014/07/22 17:01:33 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.787 2014/07/28 05:42:26 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -642,7 +642,7 @@ configure_ifs() {
 	while :; do
 		_vd=$(ifconfig vlan$_vl 2>&1)
 		[[ $_vd == @(*no such interface*) ]] && break
-		[[ $_vd == @(vlan$_vl: flags=0<>*) ]] && break
+		[[ $_vd == @(*vlan: +([[:digit:]]) parent interface:*) ]] || break
 		((_vl++))
 	done
 	_vd=
