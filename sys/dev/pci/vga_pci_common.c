@@ -154,6 +154,7 @@ vga_pci_bar_unmap(struct vga_pci_bar *bar)
 	}
 }
 
+#ifdef RAMDISK_HOOKS
 static const struct pci_matchid aperture_blacklist[] = {
 	/* server adapters found in mga200 drm driver */
 	{ PCI_VENDOR_MATROX,	PCI_PRODUCT_MATROX_G200E_SE },
@@ -188,3 +189,4 @@ vga_aperture_needed(struct pci_attach_args *pa)
 #endif
 	return (1);
 }
+#endif /* RAMDISK_HOOKS */

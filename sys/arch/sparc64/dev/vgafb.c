@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.63 2014/07/22 04:53:59 deraadt Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.64 2014/07/28 15:00:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -184,8 +184,10 @@ vgafbattach(parent, self, aux)
 		/* sc->sc_ofhandle = PCITAG_NODE(sc->sc_pcitag); */
 	}
 
+#ifdef RAMDISK_HOOKS
 	if (vga_aperture_needed(pa))
 		printf("%s: aperture needed\n", sc->sc_sunfb.sf_dev.dv_xname);
+#endif
 
 	fbwscons_attach(&sc->sc_sunfb, &vgafb_accessops, sc->sc_console);
 }

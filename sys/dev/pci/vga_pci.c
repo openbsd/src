@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.80 2014/07/22 04:42:51 jsg Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.81 2014/07/28 15:00:27 jsg Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -121,7 +121,6 @@ int	vesafb_getcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
 void	vga_save_state(struct vga_pci_softc *);
 void	vga_restore_state(struct vga_pci_softc *);
 #endif
-int	vga_aperture_needed(struct pci_attach_args *);
 
 /*
  * Function pointers for wsconsctl parameter handling.
@@ -254,8 +253,10 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 		}
 #endif
 
+#ifdef RAMDISK_HOOKS
 	if (vga_aperture_needed(pa))
 		printf("%s: aperture needed\n", sc->sc_dev.dv_xname);
+#endif
 
 #if NINTAGP > 0
 	/*
