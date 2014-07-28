@@ -69,8 +69,7 @@ fillbuf(Buf *buf)
 static void
 usage()
 {
-	extern const char *__progname;
-	errx(1, "usage: %s [-bp]", __progname);
+	errx(1, "usage: arc4random-fork [-bp]");
 }
 
 static pid_t
