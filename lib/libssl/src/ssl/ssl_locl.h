@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.62 2014/07/12 22:33:39 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.63 2014/07/28 04:23:12 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -367,6 +367,12 @@
 #define SSL_LOW			0x00000020L
 #define SSL_MEDIUM		0x00000040L
 #define SSL_HIGH		0x00000080L
+
+/*
+ * The keylength (measured in RSA key bits, I guess)  for temporary keys.
+ * Cipher argument is so that this can be variable in the future.
+ */
+#define SSL_C_PKEYLENGTH(c)	1024
 
 /* Check if an SSL structure is using DTLS. */
 #define SSL_IS_DTLS(s) (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.78 2014/07/12 22:33:39 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.79 2014/07/28 04:23:12 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1395,7 +1395,8 @@ ssl3_send_server_key_exchange(SSL *s)
 		if (type & SSL_kRSA) {
 			rsa = cert->rsa_tmp;
 			if ((rsa == NULL) && (s->cert->rsa_tmp_cb != NULL)) {
-				rsa = s->cert->rsa_tmp_cb(s, 0, 0);
+				rsa = s->cert->rsa_tmp_cb(s, 0,
+				    SSL_C_PKEYLENGTH(s->s3->tmp.new_cipher));
 				if (rsa == NULL) {
 					al = SSL_AD_HANDSHAKE_FAILURE;
 					SSLerr(
@@ -1419,7 +1420,8 @@ ssl3_send_server_key_exchange(SSL *s)
 		if (type & SSL_kDHE) {
 			dhp = cert->dh_tmp;
 			if ((dhp == NULL) && (s->cert->dh_tmp_cb != NULL))
-				dhp = s->cert->dh_tmp_cb(s, 0, 0);
+				dhp = s->cert->dh_tmp_cb(s, 0,
+				    SSL_C_PKEYLENGTH(s->s3->tmp.new_cipher));
 			if (dhp == NULL) {
 				al = SSL_AD_HANDSHAKE_FAILURE;
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
@@ -1468,7 +1470,8 @@ ssl3_send_server_key_exchange(SSL *s)
 
 			ecdhp = cert->ecdh_tmp;
 			if (ecdhp == NULL && s->cert->ecdh_tmp_cb != NULL)
-				ecdhp = s->cert->ecdh_tmp_cb(s, 0, 0);
+				ecdhp = s->cert->ecdh_tmp_cb(s, 0,
+				    SSL_C_PKEYLENGTH(s->s3->tmp.new_cipher));
 			if (ecdhp == NULL) {
 				al = SSL_AD_HANDSHAKE_FAILURE;
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
