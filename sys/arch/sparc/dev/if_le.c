@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.34 2013/09/24 20:10:49 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.35 2014/07/28 18:31:39 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -583,19 +583,21 @@ leattach(struct device *parent, struct device *self, void *aux)
 	if (lebufchild) {
 		sc->sc_supmedia = lebufmedia;
 		sc->sc_nsupmedia = nitems(lebufmedia);
+		sc->sc_defaultmedia = sc->sc_supmedia[sc->sc_nsupmedia - 1];
 	} else
 #endif
 #if defined(SUN4M)
 	if (CPU_ISSUN4M && lesc->sc_dma) {
 		sc->sc_supmedia = ledmamedia;
 		sc->sc_nsupmedia = nitems(ledmamedia);
+		sc->sc_defaultmedia = lesc->sc_dma->sc_defaultmedia;
 	} else
 #endif
 	{
 		sc->sc_supmedia = lebaremedia;
 		sc->sc_nsupmedia = nitems(lebaremedia);
+		sc->sc_defaultmedia = sc->sc_supmedia[sc->sc_nsupmedia - 1];
 	}
-	sc->sc_defaultmedia = sc->sc_supmedia[sc->sc_nsupmedia - 1];
 
 	am7990_config(&lesc->sc_am7990);
 

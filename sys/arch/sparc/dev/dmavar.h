@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmavar.h,v 1.7 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: dmavar.h,v 1.8 2014/07/28 18:31:39 miod Exp $	*/
 /*	$NetBSD: dmavar.h,v 1.11 1996/11/27 21:49:53 pk Exp $ */
 
 /*
@@ -27,7 +27,7 @@
 struct dma_softc {
 	struct device sc_dev;			/* us as a device */
 	struct esp_softc *sc_esp;		/* my scsi */
-	struct le_softc *sc_le;			/* my ethernet */
+	struct le_softc *sc_le;			/* my Ethernet */
 	struct dma_regs *sc_regs;		/* the registers */
 	int	sc_active;			/* DMA active ? */
 	u_int	sc_rev;				/* revision */
@@ -44,6 +44,7 @@ struct dma_softc {
 	int (*setup)(struct dma_softc *, caddr_t *, size_t *, int, size_t *);
 	void (*go)(struct dma_softc *);
 	u_int	sc_dmactl;
+	int	sc_defaultmedia;		/* default Ethernet media */
 };
 
 #define DMACSR(sc)	(sc->sc_regs->csr)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.29 2014/05/09 20:15:06 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.30 2014/07/28 18:31:39 miod Exp $	*/
 /*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
 
 /*
@@ -32,6 +32,7 @@
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
@@ -41,6 +42,9 @@
 #include <sparc/cpu.h>
 
 #include <sparc/sparc/cpuvar.h>
+
+#include <net/if.h>
+#include <net/if_media.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -157,11 +161,14 @@ dmaattach(parent, self, aux)
 		char *cabletype = getpropstring(devnode, "cable-selection");
 		if (strcmp(cabletype, "tpe") == 0) {
 			sc->sc_regs->csr |= E_TP_AUI;
+			sc->sc_defaultmedia = IFM_ETHER | IFM_10_T;
 		} else if (strcmp(cabletype, "aui") == 0) {
 			sc->sc_regs->csr &= ~E_TP_AUI;
+			sc->sc_defaultmedia = IFM_ETHER | IFM_10_5;
 		} else {
 			/* assume TP if nothing there */
 			sc->sc_regs->csr |= E_TP_AUI;
+			sc->sc_defaultmedia = IFM_ETHER | IFM_AUTO;
 		}
 		delay(20000);	/* manual says we need 20ms delay */
 	}
