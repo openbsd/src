@@ -1889,7 +1889,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/rsa.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/safestack.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/sha.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/openssl/srp.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/srtp.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ssl.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ssl2.ph

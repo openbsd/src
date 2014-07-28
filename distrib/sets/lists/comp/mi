@@ -1189,7 +1189,6 @@
 ./usr/include/openssl/rsa.h
 ./usr/include/openssl/safestack.h
 ./usr/include/openssl/sha.h
-./usr/include/openssl/srp.h
 ./usr/include/openssl/srtp.h
 ./usr/include/openssl/ssl.h
 ./usr/include/openssl/ssl2.h
