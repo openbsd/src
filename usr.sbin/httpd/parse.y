@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2014/07/25 17:04:47 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2014/07/29 16:17:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -126,8 +126,9 @@ typedef struct {
 
 %}
 
-%token	ALL PORT LISTEN PREFORK ROOT SERVER ERROR LOG VERBOSE ON TYPES
-%token	UPDATES INCLUDE
+%token	ALL AUTO DIRECTORY INDEX LISTEN LOG NO ON PORT PREFORK ROOT SERVER
+%token	TYPES UPDATES VERBOSE
+%token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.number>	loglevel
@@ -217,6 +218,8 @@ server		: SERVER STRING		{
 
 			strlcpy(s->srv_conf.docroot, HTTPD_DOCROOT,
 			    sizeof(s->srv_conf.docroot));
+			strlcpy(s->srv_conf.index, HTTPD_INDEX,
+			    sizeof(s->srv_conf.index));
 			s->srv_conf.id = ++last_server_id;
 			s->srv_conf.timeout.tv_sec = SERVER_TIMEOUT;
 
@@ -276,6 +279,38 @@ serveroptsl	: LISTEN ON STRING port {
 				YYERROR;
 			}
 			free($2);
+		}
+		| DIRECTORY dirflags
+		| DIRECTORY '{' dirflags_l '}'
+		;
+
+dirflags_l	: dirflags comma dirflags_l
+		| dirflags
+		;
+
+dirflags	: INDEX STRING		{
+			if (strlcpy(srv->srv_conf.index, $2,
+			    sizeof(srv->srv_conf.index)) >=
+			    sizeof(srv->srv_conf.index)) {
+				yyerror("index file too long");
+				free($2);
+				YYERROR;
+			}
+			srv->srv_conf.flags &= ~SRVFLAG_NO_INDEX;
+			srv->srv_conf.flags |= SRVFLAG_INDEX;
+			free($2);
+		}
+		| NO INDEX		{
+			srv->srv_conf.flags &= ~SRVFLAG_INDEX;
+			srv->srv_conf.flags |= SRVFLAG_NO_INDEX;
+		}
+		| AUTO INDEX		{
+			srv->srv_conf.flags &= ~SRVFLAG_NO_AUTO_INDEX;
+			srv->srv_conf.flags |= SRVFLAG_AUTO_INDEX;
+		}	
+		| NO AUTO INDEX		{
+			srv->srv_conf.flags &= ~SRVFLAG_AUTO_INDEX;
+			srv->srv_conf.flags |= SRVFLAG_NO_AUTO_INDEX;
 		}
 		;
 
@@ -364,6 +399,11 @@ loglevel	: UPDATES		{ $$ = HTTPD_OPT_LOGUPDATE; }
 		| ALL			{ $$ = HTTPD_OPT_LOGALL; }
 		;
 
+comma		: ','
+		| nl
+		| /* empty */
+		;
+
 optnl		: '\n' optnl
 		|
 		;
@@ -406,9 +446,13 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "all",		ALL },
+		{ "auto",		AUTO },
+		{ "directory",		DIRECTORY },
 		{ "include",		INCLUDE },
+		{ "index",		INDEX },
 		{ "listen",		LISTEN },
 		{ "log",		LOG },
+		{ "no",			NO },
 		{ "on",			ON },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },

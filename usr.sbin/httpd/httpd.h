@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.16 2014/07/29 12:16:36 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.17 2014/07/29 16:17:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -272,6 +272,14 @@ struct client {
 };
 SPLAY_HEAD(client_tree, client);
 
+#define SRVFLAG_INDEX		0x01
+#define SRVFLAG_NO_INDEX	0x02
+#define SRVFLAG_AUTO_INDEX	0x04
+#define SRVFLAG_NO_AUTO_INDEX	0x08
+
+#define SRVFLAG_BITS						\
+	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"
+
 #define TCPFLAG_NODELAY		0x01
 #define TCPFLAG_NNODELAY	0x02
 #define TCPFLAG_SACK		0x04
@@ -288,14 +296,16 @@ SPLAY_HEAD(client_tree, client);
 
 struct server_config {
 	u_int32_t		 id;
-	u_int32_t		 flags;
 	char			 name[MAXHOSTNAMELEN];
 	char			 docroot[MAXPATHLEN];
+	char			 index[NAME_MAX];
+
 	in_port_t		 port;
 	struct sockaddr_storage	 ss;
 	int			 prefixlen;
 	struct timeval		 timeout;
 
+	u_int8_t		 flags;
 	u_int8_t		 tcpflags;
 	int			 tcpbufsiz;
 	int			 tcpbacklog;

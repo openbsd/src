@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.7 2014/07/25 17:49:11 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.8 2014/07/29 16:17:28 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 25 2014 $
+.Dd $Mdocdate: July 29 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -111,8 +111,19 @@ runs 3 server processes by default.
 .Sh SERVERS
 The configured web servers.
 .Pp
-The following general table options are available:
+The following general server options are available:
 .Bl -tag -width Ds
+.It Ic directory Oo Ic no Oc Ic auto index
+If no index file is found, automatically generate a directory listing.
+This is disabled by default.
+.It Ic directory Ic index Ar string
+Set the directory index file.
+If not specified, it defaults to
+.Pa index.html .
+.It Ic directory no index
+Disable the directory index.
+.Nm httpd
+will neither display nor generate a directory index.
 .It Ic listen on Ar address Ic port Ar number
 Set the listen address and port.
 .It Ic root Ar directory
