@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.149 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.150 2014/07/29 12:18:41 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -533,20 +533,13 @@ route_output(struct mbuf *m, ...)
 	}
 
 
-	/* Do not let userland play with kernel-only flags. */
-	if ((rtm->rtm_flags & (RTF_LOCAL|RTF_BROADCAST)) != 0) {
-		error = EINVAL;
-		goto fail;
-	}
-
 	/* make sure that kernel-only bits are not set */
 	rtm->rtm_priority &= RTP_MASK;
 	rtm->rtm_flags &= ~(RTF_DONE|RTF_CLONED);
 	rtm->rtm_fmask &= RTF_FMASK;
 
 	if (rtm->rtm_priority != 0) {
-		if (rtm->rtm_priority > RTP_MAX ||
-		    rtm->rtm_priority == RTP_LOCAL) {
+		if (rtm->rtm_priority > RTP_MAX) {
 			error = EINVAL;
 			goto fail;
 		}
