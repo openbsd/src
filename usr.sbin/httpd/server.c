@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.14 2014/07/29 12:16:36 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.15 2014/07/29 16:38:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -577,7 +577,7 @@ server_inflight_dec(struct client *clt, const char *why)
 
 	/* the file was never opened, thus this was an inflight client. */
 	server_inflight--;
-	log_debug("%s: inflight decremented, now %d, %s",
+	DPRINTF("%s: inflight decremented, now %d, %s",
 	    __func__, server_inflight, why);
 }
 
