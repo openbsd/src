@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.64 2014/07/14 00:35:10 deraadt Exp $ */
+/* $OpenBSD: ca.c,v 1.65 2014/07/29 08:51:49 blambert Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -128,7 +128,7 @@
 static const char *ca_usage[] = {
 	"usage: ca args\n",
 	"\n",
-	" -verbose        - Talk alot while doing things\n",
+	" -verbose        - Talk a lot while doing things\n",
 	" -config file    - A config file\n",
 	" -name arg       - The particular CA definition to use\n",
 	" -gencrl         - Generate a new CRL\n",
