@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.15 2014/07/25 23:30:58 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.16 2014/07/29 12:16:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -51,20 +51,6 @@
 #define CONFIG_MEDIA		0x01
 #define CONFIG_SERVERS		0x02
 #define CONFIG_ALL		0xff
-
-#define TCPFLAG_NODELAY		0x01
-#define TCPFLAG_NNODELAY	0x02
-#define TCPFLAG_SACK		0x04
-#define TCPFLAG_NSACK		0x08
-#define TCPFLAG_BUFSIZ		0x10
-#define TCPFLAG_IPTTL		0x20
-#define TCPFLAG_IPMINTTL	0x40
-#define TCPFLAG_NSPLICE		0x80
-#define TCPFLAG_DEFAULT		0x00
-
-#define TCPFLAG_BITS						\
-	"\10\01NODELAY\02NO_NODELAY\03SACK\04NO_SACK"		\
-	"\05SOCKET_BUFFER_SIZE\06IP_TTL\07IP_MINTTL\10NO_SPLICE"
 
 enum httpchunk {
 	TOREAD_UNLIMITED		= -1,
@@ -286,6 +272,20 @@ struct client {
 };
 SPLAY_HEAD(client_tree, client);
 
+#define TCPFLAG_NODELAY		0x01
+#define TCPFLAG_NNODELAY	0x02
+#define TCPFLAG_SACK		0x04
+#define TCPFLAG_NSACK		0x08
+#define TCPFLAG_BUFSIZ		0x10
+#define TCPFLAG_IPTTL		0x20
+#define TCPFLAG_IPMINTTL	0x40
+#define TCPFLAG_NSPLICE		0x80
+#define TCPFLAG_DEFAULT		0x00
+
+#define TCPFLAG_BITS						\
+	"\10\01NODELAY\02NO_NODELAY\03SACK\04NO_SACK"		\
+	"\05SOCKET_BUFFER_SIZE\06IP_TTL\07IP_MINTTL\10NO_SPLICE"
+
 struct server_config {
 	u_int32_t		 id;
 	u_int32_t		 flags;
@@ -296,6 +296,12 @@ struct server_config {
 	int			 prefixlen;
 	struct timeval		 timeout;
 
+	u_int8_t		 tcpflags;
+	int			 tcpbufsiz;
+	int			 tcpbacklog;
+	u_int8_t		 tcpipttl;
+	u_int8_t		 tcpipminttl;
+
 	TAILQ_ENTRY(server_config) entry;
 };
 TAILQ_HEAD(serverhosts, server_config);
@@ -304,12 +310,6 @@ struct server {
 	TAILQ_ENTRY(server)	 srv_entry;
 	struct server_config	 srv_conf;
 	struct serverhosts	 srv_hosts;
-
-	u_int8_t		 srv_tcpflags;
-	int			 srv_tcpbufsiz;
-	int			 srv_tcpbacklog;
-	u_int8_t		 srv_tcpipttl;
-	u_int8_t		 srv_tcpipminttl;
 
 	int			 srv_s;
 	struct event		 srv_ev;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.13 2014/07/25 23:30:58 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.14 2014/07/29 12:16:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -55,9 +55,9 @@ void		 server_shutdown(void);
 void		 server_init(struct privsep *, struct privsep_proc *p, void *);
 void		 server_launch(void);
 int		 server_socket(struct sockaddr_storage *, in_port_t,
-		    struct server *, int, int);
+		    struct server_config *, int, int);
 int		 server_socket_listen(struct sockaddr_storage *, in_port_t,
-		    struct server *);
+		    struct server_config *);
 
 void		 server_accept(int, short, void *);
 void		 server_input(struct client *);
@@ -99,7 +99,7 @@ server_privinit(struct server *srv)
 	log_debug("%s: adding server %s", __func__, srv->srv_conf.name);
 
 	if ((srv->srv_s = server_socket_listen(&srv->srv_conf.ss,
-	    srv->srv_conf.port, srv)) == -1)
+	    srv->srv_conf.port, &srv->srv_conf)) == -1)
 		return (-1);
 
 	return (0);
@@ -235,7 +235,7 @@ server_socket_getport(struct sockaddr_storage *ss)
 
 int
 server_socket(struct sockaddr_storage *ss, in_port_t port,
-    struct server *srv, int fd, int reuseport)
+    struct server_config *srv_conf, int fd, int reuseport)
 {
 	struct linger	lng;
 	int		s = -1, val;
@@ -261,12 +261,12 @@ server_socket(struct sockaddr_storage *ss, in_port_t port,
 	}
 	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
 		goto bad;
-	if (srv->srv_tcpflags & TCPFLAG_BUFSIZ) {
-		val = srv->srv_tcpbufsiz;
+	if (srv_conf->tcpflags & TCPFLAG_BUFSIZ) {
+		val = srv_conf->tcpbufsiz;
 		if (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
 		    &val, sizeof(val)) == -1)
 			goto bad;
-		val = srv->srv_tcpbufsiz;
+		val = srv_conf->tcpbufsiz;
 		if (setsockopt(s, SOL_SOCKET, SO_SNDBUF,
 		    &val, sizeof(val)) == -1)
 			goto bad;
@@ -275,14 +275,14 @@ server_socket(struct sockaddr_storage *ss, in_port_t port,
 	/*
 	 * IP options
 	 */
-	if (srv->srv_tcpflags & TCPFLAG_IPTTL) {
-		val = (int)srv->srv_tcpipttl;
+	if (srv_conf->tcpflags & TCPFLAG_IPTTL) {
+		val = (int)srv_conf->tcpipttl;
 		if (setsockopt(s, IPPROTO_IP, IP_TTL,
 		    &val, sizeof(val)) == -1)
 			goto bad;
 	}
-	if (srv->srv_tcpflags & TCPFLAG_IPMINTTL) {
-		val = (int)srv->srv_tcpipminttl;
+	if (srv_conf->tcpflags & TCPFLAG_IPMINTTL) {
+		val = (int)srv_conf->tcpipminttl;
 		if (setsockopt(s, IPPROTO_IP, IP_MINTTL,
 		    &val, sizeof(val)) == -1)
 			goto bad;
@@ -291,8 +291,8 @@ server_socket(struct sockaddr_storage *ss, in_port_t port,
 	/*
 	 * TCP options
 	 */
-	if (srv->srv_tcpflags & (TCPFLAG_NODELAY|TCPFLAG_NNODELAY)) {
-		if (srv->srv_tcpflags & TCPFLAG_NNODELAY)
+	if (srv_conf->tcpflags & (TCPFLAG_NODELAY|TCPFLAG_NNODELAY)) {
+		if (srv_conf->tcpflags & TCPFLAG_NNODELAY)
 			val = 0;
 		else
 			val = 1;
@@ -300,8 +300,8 @@ server_socket(struct sockaddr_storage *ss, in_port_t port,
 		    &val, sizeof(val)) == -1)
 			goto bad;
 	}
-	if (srv->srv_tcpflags & (TCPFLAG_SACK|TCPFLAG_NSACK)) {
-		if (srv->srv_tcpflags & TCPFLAG_NSACK)
+	if (srv_conf->tcpflags & (TCPFLAG_SACK|TCPFLAG_NSACK)) {
+		if (srv_conf->tcpflags & TCPFLAG_NSACK)
 			val = 0;
 		else
 			val = 1;
@@ -320,16 +320,16 @@ server_socket(struct sockaddr_storage *ss, in_port_t port,
 
 int
 server_socket_listen(struct sockaddr_storage *ss, in_port_t port,
-    struct server *srv)
+    struct server_config *srv_conf)
 {
 	int s;
 
-	if ((s = server_socket(ss, port, srv, -1, 1)) == -1)
+	if ((s = server_socket(ss, port, srv_conf, -1, 1)) == -1)
 		return (-1);
 
 	if (bind(s, (struct sockaddr *)ss, ss->ss_len) == -1)
 		goto bad;
-	if (listen(s, srv->srv_tcpbacklog) == -1)
+	if (listen(s, srv_conf->tcpbacklog) == -1)
 		goto bad;
 
 	return (s);
