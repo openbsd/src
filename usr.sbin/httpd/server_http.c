@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.20 2014/07/30 10:05:14 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.21 2014/07/30 13:49:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -671,7 +671,7 @@ server_response(struct httpd *httpd, struct client *clt)
 	char			 path[MAXPATHLEN];
 	struct http_descriptor	*desc	= clt->clt_desc;
 	struct server		*srv = clt->clt_srv;
-	struct server_config	*srv_conf = &srv->srv_conf;
+	struct server_config	*srv_conf = &srv->srv_conf, *location;
 	struct kv		*kv, key, *host;
 	int			 ret;
 
@@ -717,11 +717,9 @@ server_response(struct httpd *httpd, struct client *clt)
 	if (host != NULL) {
 		/* XXX maybe better to turn srv_hosts into a tree */
 		TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
-			if (((srv_conf->flags & SRVFLAG_LOCATION) &&
-			    fnmatch(srv_conf->location,
-			    desc->http_path, FNM_CASEFOLD) == 0) ||
-			    (fnmatch(srv_conf->name, host->kv_value,
-			    FNM_CASEFOLD) == 0)) {
+			if ((srv_conf->flags & SRVFLAG_LOCATION) == 0 &&
+			    fnmatch(srv_conf->name, host->kv_value,
+			    FNM_CASEFOLD) == 0) {
 				/* Replace host configuration */
 				clt->clt_srv_conf = srv_conf;
 				srv_conf = NULL;
@@ -740,6 +738,20 @@ server_response(struct httpd *httpd, struct client *clt)
 		if (strlcpy(desc->http_host, host->kv_value,
 		    sizeof(desc->http_host)) >= sizeof(desc->http_host))
 			goto fail;
+		srv_conf = clt->clt_srv_conf;
+	}
+
+	/* Now search for the location */
+	TAILQ_FOREACH(location, &srv->srv_hosts, entry) {
+		if ((location->flags & SRVFLAG_LOCATION) &&
+		    location->id == srv_conf->id &&
+		    fnmatch(location->location, desc->http_path,
+		    FNM_CASEFOLD) == 0) {
+			/* Replace host configuration */
+			clt->clt_srv_conf = location;
+			srv_conf = NULL;
+			break;
+		}
 	}
 
 	if ((ret = server_file(httpd, clt)) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.16 2014/07/30 10:05:14 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.17 2014/07/30 13:49:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -193,19 +193,6 @@ server_byaddr(struct sockaddr *addr, in_port_t port)
 		if (port == srv->srv_conf.port &&
 		    sockaddr_cmp((struct sockaddr *)&srv->srv_conf.ss,
 		    addr, srv->srv_conf.prefixlen) == 0)
-			return (srv);
-	}
-
-	return (NULL);
-}
-
-struct server *
-server_byname(const char *name)
-{
-	struct server	*srv;
-
-	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
-		if (strcmp(srv->srv_conf.name, name) == 0)
 			return (srv);
 	}
 

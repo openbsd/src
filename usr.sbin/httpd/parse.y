@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2014/07/30 10:05:14 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.10 2014/07/30 13:49:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -233,6 +233,11 @@ server		: SERVER STRING		{
 			SPLAY_INIT(&srv->srv_clients);
 			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
 		} '{' optnl serveropts_l '}'	{
+			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
+				yyerror("listen address not specified");
+				free($2);
+				YYERROR;
+			}
 			srv = NULL;
 		}
 		;
@@ -294,6 +299,12 @@ serveroptsl	: LISTEN ON STRING port {
 		| LOCATION STRING		{
 			struct server	*s;
 
+			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
+				yyerror("listen address not specified");
+				free($2);
+				YYERROR;
+			}
+
 			if (parentsrv != NULL) {
 				yyerror("location %s inside location", $2);
 				free($2);
@@ -337,8 +348,13 @@ serveroptsl	: LISTEN ON STRING port {
 				YYERROR;
 			}
 
-			s->srv_conf.id = ++last_server_id;
+			/* A location entry uses the parent id */
+			s->srv_conf.id = srv->srv_conf.id;
 			s->srv_conf.flags = SRVFLAG_LOCATION;
+			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
+			    sizeof(s->srv_conf.ss));
+			s->srv_conf.port = srv->srv_conf.port;
+			s->srv_conf.prefixlen = srv->srv_conf.prefixlen;
 
 			if (last_server_id == INT_MAX) {
 				yyerror("too many servers/locations defined");

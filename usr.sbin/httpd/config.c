@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.6 2014/07/30 10:05:14 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.7 2014/07/30 13:49:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -275,22 +275,18 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	memcpy(&srv_conf, p, sizeof(srv_conf));
 	s = sizeof(srv_conf);
 
-	if (srv_conf.flags & SRVFLAG_LOCATION) {
-		if ((srv = server_byname(srv_conf.name)) == NULL) {
-			log_warnx("%s: invalid location", __func__);
-			return (-1);
-		}
-		return (config_getserver_config(env, srv, imsg));
-	}
-
 	/* Check if server with matching listening socket already exists */
 	if ((srv = server_byaddr((struct sockaddr *)
 	    &srv_conf.ss, srv_conf.port)) != NULL) {
 		/* Add "host" to existing listening server */
-		close(imsg->fd);
+		if (imsg->fd != -1)
+			close(imsg->fd);
 		return (config_getserver_config(env,
 		    srv, imsg));
 	}
+
+	if (srv_conf.flags & SRVFLAG_LOCATION)
+		fatalx("invalid location");
 
 	/* Otherwise create a new server */
 	if ((srv = calloc(1, sizeof(*srv))) == NULL) {
