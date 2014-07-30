@@ -2573,7 +2573,6 @@
 ./usr/libexec/auth/login_tis
 ./usr/libexec/auth/login_token
 ./usr/libexec/auth/login_yubikey
-./usr/libexec/auxcpp
 ./usr/libexec/comsat
 ./usr/libexec/cvs
 ./usr/libexec/cvs/contrib
@@ -2629,6 +2628,7 @@
 ./usr/libexec/spellprog
 ./usr/libexec/ssh-keysign
 ./usr/libexec/ssh-pkcs11-helper
+./usr/libexec/tradcpp
 ./usr/libexec/vi.recover
 ./usr/lkm
 ./usr/local

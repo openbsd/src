@@ -34,7 +34,6 @@
 ./usr/share/man/man1/atrm.1
 ./usr/share/man/man1/aucat.1
 ./usr/share/man/man1/audioctl.1
-./usr/share/man/man1/auxcpp.1
 ./usr/share/man/man1/awk.1
 ./usr/share/man/man1/b64decode.1
 ./usr/share/man/man1/b64encode.1
@@ -489,6 +488,7 @@
 ./usr/share/man/man1/touch.1
 ./usr/share/man/man1/tput.1
 ./usr/share/man/man1/tr.1
+./usr/share/man/man1/tradcpp.1
 ./usr/share/man/man1/true.1
 ./usr/share/man/man1/tset.1
 ./usr/share/man/man1/tsort.1
