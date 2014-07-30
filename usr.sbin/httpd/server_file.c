@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.18 2014/07/29 16:17:28 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.19 2014/07/30 07:09:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -170,9 +170,6 @@ server_file(struct httpd *env, struct client *clt)
 	if ((fd = open(path, O_RDONLY)) == -1)
 		goto fail;
 
-	/* File descriptor is opened, decrement inflight counter */
-	server_inflight_dec(clt, __func__);
-
 	media = media_find(env->sc_mediatypes, path);
 	ret = server_response_http(clt, 200, media, st.st_size);
 	switch (ret) {
@@ -234,9 +231,6 @@ server_file_index(struct httpd *env, struct client *clt)
 	/* Now open the file, should be readable or we have another problem */
 	if ((fd = open(path, O_RDONLY)) == -1)
 		goto fail;
-
-	/* File descriptor is opened, decrement inflight counter */
-	server_inflight_dec(clt, __func__);
 
 	if ((evb = evbuffer_new()) == NULL)
 		goto fail;
