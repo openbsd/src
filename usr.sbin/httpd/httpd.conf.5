@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.8 2014/07/29 16:17:28 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.9 2014/07/30 09:51:40 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 29 2014 $
+.Dd $Mdocdate: July 30 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -89,7 +89,7 @@ Macros are not expanded inside quotes.
 For example:
 .Bd -literal -offset indent
 ext_ip="10.0.0.1"
-server \*(Ltwww\*(Gt {
+server "default" {
 	listen on $ext_ip port 80
 }
 .Ed
@@ -111,7 +111,11 @@ runs 3 server processes by default.
 .Sh SERVERS
 The configured web servers.
 .Pp
-The following general server options are available:
+Each
+.Ic server
+must have a
+.Ar name
+and include one or more lines of the following syntax:
 .Bl -tag -width Ds
 .It Ic directory Oo Ic no Oc Ic auto index
 If no index file is found, automatically generate a directory listing.
