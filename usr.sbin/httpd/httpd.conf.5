@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.9 2014/07/30 09:51:40 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.10 2014/07/30 10:05:14 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -130,6 +130,16 @@ Disable the directory index.
 will neither display nor generate a directory index.
 .It Ic listen on Ar address Ic port Ar number
 Set the listen address and port.
+.It Ic location Ar path { ... }
+Specify server configuration rules for a specific location.
+The
+.Ar path
+argument will be matched against the URL path with shell globbing rules.
+A location section may include all of the server configuration rules
+except
+.Ic listen on
+and
+.Ic location .
 .It Ic root Ar directory
 Set the document root of the server.
 The

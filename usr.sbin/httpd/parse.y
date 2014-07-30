@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2014/07/29 16:17:28 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.9 2014/07/30 10:05:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -94,7 +94,7 @@ static int		 errors = 0;
 static int		 loadcfg = 0;
 uint32_t		 last_server_id = 0;
 
-static struct server	*srv = NULL;
+static struct server	*srv = NULL, *parentsrv = NULL;
 struct serverlist	 servers;
 struct media_type	 media;
 
@@ -126,8 +126,8 @@ typedef struct {
 
 %}
 
-%token	ALL AUTO DIRECTORY INDEX LISTEN LOG NO ON PORT PREFORK ROOT SERVER
-%token	TYPES UPDATES VERBOSE
+%token	ALL AUTO DIRECTORY INDEX LISTEN LOCATION LOG NO ON PORT PREFORK ROOT
+%token	SERVER TYPES UPDATES VERBOSE
 %token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -229,9 +229,11 @@ server		: SERVER STRING		{
 				YYERROR;
 			}
 			srv = s;
-		} '{' optnl serveropts_l '}'	{
+
 			SPLAY_INIT(&srv->srv_clients);
 			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
+		} '{' optnl serveropts_l '}'	{
+			srv = NULL;
 		}
 		;
 
@@ -243,6 +245,12 @@ serveroptsl	: LISTEN ON STRING port {
 			struct addresslist	 al;
 			struct address		*h;
 			struct server		*s;
+
+			if (parentsrv != NULL) {
+				yyerror("listen %s inside location", $3);
+				free($3);
+				YYERROR;
+			}
 
 			if (srv->srv_conf.ss.ss_family != AF_UNSPEC) {
 				yyerror("listen address already specified");
@@ -279,9 +287,72 @@ serveroptsl	: LISTEN ON STRING port {
 				YYERROR;
 			}
 			free($2);
+			srv->srv_conf.flags |= SRVFLAG_DOCROOT;
 		}
 		| DIRECTORY dirflags
 		| DIRECTORY '{' dirflags_l '}'
+		| LOCATION STRING		{
+			struct server	*s;
+
+			if (parentsrv != NULL) {
+				yyerror("location %s inside location", $2);
+				free($2);
+				YYERROR;
+			}
+
+			if (!loadcfg) {
+				free($2);
+				YYACCEPT;
+			}
+
+			TAILQ_FOREACH(s, conf->sc_servers, srv_entry)
+				if (strcmp(s->srv_conf.name,
+				    srv->srv_conf.name) == 0 &&
+				    strcmp(s->srv_conf.location, $2) == 0)
+					break;
+			if (s != NULL) {
+				yyerror("location %s defined twice", $2);
+				free($2);
+				YYERROR;
+			}
+
+			if ((s = calloc(1, sizeof (*s))) == NULL)
+				fatal("out of memory");
+
+			if (strlcpy(s->srv_conf.location, $2,
+			    sizeof(s->srv_conf.location)) >=
+			    sizeof(s->srv_conf.location)) {
+				yyerror("server location truncated");
+				free($2);
+				free(s);
+				YYERROR;
+			}
+			free($2);
+
+			if (strlcpy(s->srv_conf.name, srv->srv_conf.name,
+			    sizeof(s->srv_conf.name)) >=
+			    sizeof(s->srv_conf.name)) {
+				yyerror("server name truncated");
+				free(s);
+				YYERROR;
+			}
+
+			s->srv_conf.id = ++last_server_id;
+			s->srv_conf.flags = SRVFLAG_LOCATION;
+
+			if (last_server_id == INT_MAX) {
+				yyerror("too many servers/locations defined");
+				free(s);
+				YYERROR;
+			}
+			parentsrv = srv;
+			srv = s;
+			SPLAY_INIT(&srv->srv_clients);
+			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
+		} '{' optnl serveropts_l '}'	{
+			srv = parentsrv;
+			parentsrv = NULL;
+		}
 		;
 
 dirflags_l	: dirflags comma dirflags_l
@@ -451,6 +522,7 @@ lookup(char *s)
 		{ "include",		INCLUDE },
 		{ "index",		INDEX },
 		{ "listen",		LISTEN },
+		{ "location",		LOCATION },
 		{ "log",		LOG },
 		{ "no",			NO },
 		{ "on",			ON },

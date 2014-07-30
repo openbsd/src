@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.15 2014/07/29 16:38:34 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.16 2014/07/30 10:05:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -96,6 +96,9 @@ server_shutdown(void)
 int
 server_privinit(struct server *srv)
 {
+	if (srv->srv_conf.flags & SRVFLAG_LOCATION)
+		return (0);
+
 	log_debug("%s: adding server %s", __func__, srv->srv_conf.name);
 
 	if ((srv->srv_s = server_socket_listen(&srv->srv_conf.ss,
@@ -190,6 +193,19 @@ server_byaddr(struct sockaddr *addr, in_port_t port)
 		if (port == srv->srv_conf.port &&
 		    sockaddr_cmp((struct sockaddr *)&srv->srv_conf.ss,
 		    addr, srv->srv_conf.prefixlen) == 0)
+			return (srv);
+	}
+
+	return (NULL);
+}
+
+struct server *
+server_byname(const char *name)
+{
+	struct server	*srv;
+
+	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
+		if (strcmp(srv->srv_conf.name, name) == 0)
 			return (srv);
 	}
 

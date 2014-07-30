@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.5 2014/07/25 23:30:58 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.6 2014/07/30 10:05:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -185,7 +185,8 @@ config_setserver(struct httpd *env, struct server *srv)
 		iov[c].iov_base = &s;
 		iov[c++].iov_len = sizeof(s);
 
-		if (id == PROC_SERVER) {
+		if (id == PROC_SERVER &&
+		    (srv->srv_conf.flags & SRVFLAG_LOCATION) == 0) {
 			/* XXX imsg code will close the fd after 1st call */
 			n = -1;
 			proc_range(ps, id, &n, &m);
@@ -216,6 +217,7 @@ config_getserver_config(struct httpd *env, struct server *srv,
 #endif
 	struct server_config	*srv_conf;
 	u_int8_t		*p = imsg->data;
+	u_int			 f;
 
 	if ((srv_conf = calloc(1, sizeof(*srv_conf))) == NULL)
 		return (-1);
@@ -223,11 +225,37 @@ config_getserver_config(struct httpd *env, struct server *srv,
 	IMSG_SIZE_CHECK(imsg, srv_conf);
 	memcpy(srv_conf, p, sizeof(*srv_conf));
 
-	TAILQ_INSERT_TAIL(&srv->srv_hosts, srv_conf, entry);
+	if (srv_conf->flags & SRVFLAG_LOCATION) {
+		/* Inherit configuration from the parent */
+		f = SRVFLAG_INDEX|SRVFLAG_NO_INDEX;
+		if ((srv_conf->flags & f) == 0) {
+			srv_conf->flags |= srv->srv_conf.flags & f;
+			(void)strlcpy(srv_conf->index, srv->srv_conf.index,
+			    sizeof(srv_conf->index));
+		}
 
-	DPRINTF("%s: %s %d received configuration \"%s\", parent \"%s\"",
-	    __func__, ps->ps_title[privsep_process], ps->ps_instance,
-	    srv_conf->name, srv->srv_conf.name);
+		f = SRVFLAG_AUTO_INDEX|SRVFLAG_NO_AUTO_INDEX;
+		if ((srv_conf->flags & f) == 0)
+			srv_conf->flags |= srv->srv_conf.flags & f;
+
+		f = SRVFLAG_DOCROOT;
+		if ((srv_conf->flags & f) == 0) {
+			(void)strlcpy(srv_conf->docroot,
+			    srv->srv_conf.docroot,
+			    sizeof(srv_conf->docroot));
+		}
+
+		DPRINTF("%s: %s %d received location \"%s\", parent \"%s\"",
+		    __func__, ps->ps_title[privsep_process], ps->ps_instance,
+		    srv_conf->location, srv->srv_conf.name);
+	} else {
+		/* Add a new "virtual" server */
+		DPRINTF("%s: %s %d received server \"%s\", parent \"%s\"",
+		    __func__, ps->ps_title[privsep_process], ps->ps_instance,
+		    srv_conf->name, srv->srv_conf.name);
+	}
+
+	TAILQ_INSERT_TAIL(&srv->srv_hosts, srv_conf, entry);
 
 	return (0);
 }
@@ -246,6 +274,14 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	IMSG_SIZE_CHECK(imsg, &srv_conf);
 	memcpy(&srv_conf, p, sizeof(srv_conf));
 	s = sizeof(srv_conf);
+
+	if (srv_conf.flags & SRVFLAG_LOCATION) {
+		if ((srv = server_byname(srv_conf.name)) == NULL) {
+			log_warnx("%s: invalid location", __func__);
+			return (-1);
+		}
+		return (config_getserver_config(env, srv, imsg));
+	}
 
 	/* Check if server with matching listening socket already exists */
 	if ((srv = server_byaddr((struct sockaddr *)

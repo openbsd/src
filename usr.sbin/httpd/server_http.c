@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.19 2014/07/25 23:25:38 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.20 2014/07/30 10:05:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -565,7 +565,8 @@ server_http_host(struct sockaddr_storage *ss, char *buf, size_t len)
 void
 server_abort_http(struct client *clt, u_int code, const char *msg)
 {
-	struct server_config	*srv_conf = clt->clt_srv_conf;
+	struct server		*srv = clt->clt_srv;
+	struct server_config	*srv_conf = &srv->srv_conf;
 	struct bufferevent	*bev = clt->clt_bev;
 	const char		*httperr = NULL, *text = "";
 	char			*httpmsg, *extraheader = NULL;
@@ -716,8 +717,11 @@ server_response(struct httpd *httpd, struct client *clt)
 	if (host != NULL) {
 		/* XXX maybe better to turn srv_hosts into a tree */
 		TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
-			if (fnmatch(srv_conf->name, host->kv_value,
-			    FNM_CASEFOLD) == 0) {
+			if (((srv_conf->flags & SRVFLAG_LOCATION) &&
+			    fnmatch(srv_conf->location,
+			    desc->http_path, FNM_CASEFOLD) == 0) ||
+			    (fnmatch(srv_conf->name, host->kv_value,
+			    FNM_CASEFOLD) == 0)) {
 				/* Replace host configuration */
 				clt->clt_srv_conf = srv_conf;
 				srv_conf = NULL;
