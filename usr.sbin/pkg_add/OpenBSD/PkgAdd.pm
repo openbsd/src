@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.73 2014/07/19 08:48:44 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.74 2014/07/30 12:44:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -85,7 +85,7 @@ sub tie_files
 	my ($self, $sha, $state) = @_;
 	return if $self->{link} or $self->{symlink} or $self->{nochecksum};
 	# XXX python doesn't like this, overreliance on timestamps
-	return if $self->{name} =~ m/\.py$/;
+	return if $self->{name} =~ m/\.py$/ && !defined $self->{ts};
 	if (defined $sha->{$self->{d}->key}) {
 		my $tied = $sha->{$self->{d}->key};
 		# don't tie if there's a problem with the file
