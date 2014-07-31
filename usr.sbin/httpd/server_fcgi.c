@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.1 2014/07/31 09:23:53 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.2 2014/07/31 14:18:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -105,7 +105,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	len = strlcpy(sun.sun_path, "/run/slowcgi.sock", sizeof(sun.sun_path));
+	len = strlcpy(sun.sun_path, srv_conf->path, sizeof(sun.sun_path));
 	if (len >= sizeof(sun.sun_path)) {
 		errstr = "socket path to long";
 		goto fail;

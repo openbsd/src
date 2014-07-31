@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2014/07/31 13:28:15 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.13 2014/07/31 14:18:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -127,7 +127,7 @@ typedef struct {
 %}
 
 %token	ALL AUTO DIRECTORY FCGI INDEX LISTEN LOCATION LOG NO ON PORT
-%token	PREFORK ROOT SERVER TYPES UPDATES VERBOSE
+%token	PREFORK ROOT SERVER SOCKET TYPES UPDATES VERBOSE
 %token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -284,6 +284,11 @@ serveroptsl	: LISTEN ON STRING port {
 			host_free(&al);
 		}
 		| ROOT STRING		{
+			if (srv->srv_conf.flags & SRVFLAG_FCGI) {
+				yyerror("root conflicts with fastcgi");
+				free($2);
+				YYERROR;
+			}
 			if (strlcpy(srv->srv_conf.path, $2,
 			    sizeof(srv->srv_conf.path)) >=
 			    sizeof(srv->srv_conf.path)) {
@@ -296,14 +301,7 @@ serveroptsl	: LISTEN ON STRING port {
 		}
 		| DIRECTORY dirflags
 		| DIRECTORY '{' dirflags_l '}'
-		| NO FCGI		{
-			srv->srv_conf.flags &= ~SRVFLAG_FCGI;
-			srv->srv_conf.flags |= SRVFLAG_NO_FCGI;
-		}
-		| FCGI			{
-			srv->srv_conf.flags &= ~SRVFLAG_NO_FCGI;
-			srv->srv_conf.flags |= SRVFLAG_FCGI;
-		}
+		| fastcgi
 		| LOCATION STRING		{
 			struct server	*s;
 
@@ -376,6 +374,41 @@ serveroptsl	: LISTEN ON STRING port {
 		} '{' optnl serveropts_l '}'	{
 			srv = parentsrv;
 			parentsrv = NULL;
+		}
+		;
+
+fastcgi		: NO FCGI		{
+			srv->srv_conf.flags &= ~SRVFLAG_FCGI;
+			srv->srv_conf.flags |= SRVFLAG_NO_FCGI;
+		}
+		| FCGI				{
+			srv->srv_conf.flags &= ~SRVFLAG_NO_FCGI;
+			srv->srv_conf.flags |= SRVFLAG_FCGI;
+		}
+		| FCGI 				{
+			srv->srv_conf.flags &= ~SRVFLAG_NO_FCGI;
+			srv->srv_conf.flags |= SRVFLAG_FCGI;
+		} '{' fcgiflags_l '}'
+		| FCGI				{
+			srv->srv_conf.flags &= ~SRVFLAG_NO_FCGI;
+			srv->srv_conf.flags |= SRVFLAG_FCGI;
+		} fcgiflags
+		;
+
+fcgiflags_l	: fcgiflags comma fcgiflags_l
+		| fcgiflags
+		;
+
+fcgiflags	: SOCKET STRING		{
+			if (strlcpy(srv->srv_conf.path, $2,
+			    sizeof(srv->srv_conf.path)) >=
+			    sizeof(srv->srv_conf.path)) {
+				yyerror("fastcgi socket too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			srv->srv_conf.flags |= SRVFLAG_PATH;
 		}
 		;
 
@@ -555,6 +588,7 @@ lookup(char *s)
 		{ "prefork",		PREFORK },
 		{ "root",		ROOT },
 		{ "server",		SERVER },
+		{ "socket",		SOCKET },
 		{ "types",		TYPES },
 		{ "updates",		UPDATES }
 	};
