@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.4 2014/07/31 17:55:09 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.5 2014/07/31 18:07:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -230,7 +230,8 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 		DPRINTF("%s", (char *) &buf +
                     sizeof(struct fcgi_record_header));
 
-		server_fcgi_header(clt, 200);
+		if (++clt->clt_chunk == 1)
+			server_fcgi_header(clt, 200);
 		server_bufferevent_write(clt, (char *)&buf +
 		    sizeof(struct fcgi_record_header),
 		    len - sizeof(struct fcgi_record_header));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.25 2014/07/31 17:55:09 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.26 2014/07/31 18:07:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -261,6 +261,7 @@ struct client {
 	int			 clt_persist;
 	int			 clt_line;
 	int			 clt_done;
+	int			 clt_chunk;
 	int			 clt_inflight;
 
 	struct evbuffer		*clt_log;

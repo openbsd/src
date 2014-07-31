@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.24 2014/07/31 17:55:09 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.25 2014/07/31 18:07:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -513,6 +513,7 @@ server_reset_http(struct client *clt)
 	clt->clt_headerlen = 0;
 	clt->clt_line = 0;
 	clt->clt_done = 0;
+	clt->clt_chunk = 0;
 	clt->clt_bev->readcb = server_read_http;
 	clt->clt_srv_conf = &srv->srv_conf;
 }
