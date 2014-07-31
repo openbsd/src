@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.82 2014/07/31 17:37:52 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.83 2014/07/31 19:11:38 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -385,24 +385,24 @@ ext2fs_maxfilesize(struct m_ext2fs *fs)
 }
 
 static int
-e2fs_sbfill(struct vnode *devvp, struct m_ext2fs *fs, struct ext2fs *sb)
+e2fs_sbfill(struct vnode *devvp, struct m_ext2fs *fs)
 {
 	struct buf *bp = NULL;
 	int i, error;
 
 	/* XXX assume hardware block size == 512 */
-	fs->e2fs_ncg = howmany(sb->e2fs_bcount - sb->e2fs_first_dblock,
-	    sb->e2fs_bpg);
-	fs->e2fs_fsbtodb = sb->e2fs_log_bsize + 1;
-	fs->e2fs_bsize = 1024 << sb->e2fs_log_bsize;
-	fs->e2fs_bshift = LOG_MINBSIZE + sb->e2fs_log_bsize;
-	fs->e2fs_fsize = 1024 << sb->e2fs_log_fsize;
+	fs->e2fs_ncg = howmany(fs->e2fs.e2fs_bcount - fs->e2fs.e2fs_first_dblock,
+	    fs->e2fs.e2fs_bpg);
+	fs->e2fs_fsbtodb = fs->e2fs.e2fs_log_bsize + 1;
+	fs->e2fs_bsize = 1024 << fs->e2fs.e2fs_log_bsize;
+	fs->e2fs_bshift = LOG_MINBSIZE + fs->e2fs.e2fs_log_bsize;
+	fs->e2fs_fsize = 1024 << fs->e2fs.e2fs_log_fsize;
 
 	fs->e2fs_qbmask = fs->e2fs_bsize - 1;
 	fs->e2fs_bmask = ~fs->e2fs_qbmask;
 
 	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE(fs);
-	fs->e2fs_itpg = sb->e2fs_ipg / fs->e2fs_ipb;
+	fs->e2fs_itpg = fs->e2fs.e2fs_ipg / fs->e2fs_ipb;
 
 	/* Re-read group descriptors from the disk. */
 	fs->e2fs_ngdb = howmany(fs->e2fs_ncg,
@@ -431,13 +431,13 @@ e2fs_sbfill(struct vnode *devvp, struct m_ext2fs *fs, struct ext2fs *sb)
 		bp = NULL;
 	}
 
-	if ((sb->e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGEFILE) == 0 ||
-	    (sb->e2fs_rev == E2FS_REV0))
+	if ((fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGEFILE) == 0 ||
+	    (fs->e2fs.e2fs_rev == E2FS_REV0))
 		fs->e2fs_maxfilesize = INT_MAX;
 	else
 		fs->e2fs_maxfilesize = ext2fs_maxfilesize(fs);
 
-	if (sb->e2fs_features_incompat & EXT2F_INCOMPAT_EXTENTS)
+	if (fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_EXTENTS)
 		fs->e2fs_maxfilesize *= 4;
 
 	return (0);
@@ -496,7 +496,7 @@ ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	 * and load group descriptors.
 	 */
 	e2fs_sbload(newfs, &fs->e2fs);
-	if ((error = e2fs_sbfill(devvp, fs, newfs)) != 0)
+	if ((error = e2fs_sbfill(devvp, fs)) != 0)
 		return (error);
 
 	era.p = p;
@@ -565,7 +565,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	 * and load group descriptors.
 	 */
 	e2fs_sbload(fs, &ump->um_e2fs->e2fs);
-	if ((error = e2fs_sbfill(devvp, ump->um_e2fs, fs)) != 0)
+	if ((error = e2fs_sbfill(devvp, ump->um_e2fs)) != 0)
 		goto out;
 	brelse(bp);
 	bp = NULL;
