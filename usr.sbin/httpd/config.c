@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.7 2014/07/30 13:49:48 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.8 2014/07/31 09:34:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -244,6 +244,10 @@ config_getserver_config(struct httpd *env, struct server *srv,
 			    srv->srv_conf.docroot,
 			    sizeof(srv_conf->docroot));
 		}
+
+		f = SRVFLAG_FCGI|SRVFLAG_NO_FCGI;
+		if ((srv_conf->flags & f) == 0)
+			srv_conf->flags |= srv->srv_conf.flags & f;
 
 		DPRINTF("%s: %s %d received location \"%s\", parent \"%s\"",
 		    __func__, ps->ps_title[privsep_process], ps->ps_instance,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.10 2014/07/30 10:05:14 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.11 2014/07/31 09:34:57 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 30 2014 $
+.Dd $Mdocdate: July 31 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -128,6 +128,8 @@ If not specified, it defaults to
 Disable the directory index.
 .Nm httpd
 will neither display nor generate a directory index.
+.It Oo Ic no Oc Ic fastcgi
+Enable FastCGI instead of serving files.
 .It Ic listen on Ar address Ic port Ar number
 Set the listen address and port.
 .It Ic location Ar path { ... }

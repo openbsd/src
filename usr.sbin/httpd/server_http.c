@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.22 2014/07/31 09:23:53 florian Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.23 2014/07/31 09:34:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -748,18 +748,17 @@ server_response(struct httpd *httpd, struct client *clt)
 		    fnmatch(location->location, desc->http_path,
 		    FNM_CASEFOLD) == 0) {
 			/* Replace host configuration */
-			clt->clt_srv_conf = location;
-			srv_conf = NULL;
+			clt->clt_srv_conf = srv_conf = location;
 			break;
 		}
 	}
 
-	if (strlen(desc->http_path) > strlen("/cgi-bin/") &&
-	    strncmp("/cgi-bin/", desc->http_path, strlen("/cgi-bin/")) == 0) {
-		if ((ret = server_fcgi(httpd, clt)) == -1)
-			return (-1);
-	} else if ((ret = server_file(httpd, clt)) == -1)
-		return (-1);
+	if (srv_conf->flags & SRVFLAG_FCGI)
+		ret = server_fcgi(httpd, clt);
+	else
+		ret = server_file(httpd, clt);
+	if (ret == -1)
+		return (ret);
 
 	server_reset_http(clt);
 

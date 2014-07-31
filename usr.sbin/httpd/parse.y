@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2014/07/30 13:49:48 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.11 2014/07/31 09:34:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -126,8 +126,8 @@ typedef struct {
 
 %}
 
-%token	ALL AUTO DIRECTORY INDEX LISTEN LOCATION LOG NO ON PORT PREFORK ROOT
-%token	SERVER TYPES UPDATES VERBOSE
+%token	ALL AUTO DIRECTORY FCGI INDEX LISTEN LOCATION LOG NO ON PORT
+%token	PREFORK ROOT SERVER TYPES UPDATES VERBOSE
 %token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -296,6 +296,14 @@ serveroptsl	: LISTEN ON STRING port {
 		}
 		| DIRECTORY dirflags
 		| DIRECTORY '{' dirflags_l '}'
+		| NO FCGI		{
+			srv->srv_conf.flags &= ~SRVFLAG_FCGI;
+			srv->srv_conf.flags |= SRVFLAG_NO_FCGI;
+		}
+		| FCGI			{
+			srv->srv_conf.flags &= ~SRVFLAG_NO_FCGI;
+			srv->srv_conf.flags |= SRVFLAG_FCGI;
+		}
 		| LOCATION STRING		{
 			struct server	*s;
 
@@ -535,6 +543,7 @@ lookup(char *s)
 		{ "all",		ALL },
 		{ "auto",		AUTO },
 		{ "directory",		DIRECTORY },
+		{ "fastcgi",		FCGI },
 		{ "include",		INCLUDE },
 		{ "index",		INDEX },
 		{ "listen",		LISTEN },

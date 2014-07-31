@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.20 2014/07/31 09:23:53 florian Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.21 2014/07/31 09:34:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -279,9 +279,12 @@ SPLAY_HEAD(client_tree, client);
 #define SRVFLAG_NO_AUTO_INDEX	0x08
 #define SRVFLAG_DOCROOT		0x10
 #define SRVFLAG_LOCATION	0x20
+#define SRVFLAG_FCGI		0x40
+#define SRVFLAG_NO_FCGI		0x80
 
 #define SRVFLAG_BITS						\
-	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX\05LOCATION"
+	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"	\
+	"\05LOCATION\06FCGI\07NO_FCGI"
 
 #define TCPFLAG_NODELAY		0x01
 #define TCPFLAG_NNODELAY	0x02
