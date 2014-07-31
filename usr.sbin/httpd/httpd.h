@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.23 2014/07/31 14:18:38 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.24 2014/07/31 14:25:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -254,8 +254,7 @@ struct client {
 	void			*clt_desc;
 
 	int			 clt_fd;
-	struct bufferevent	*clt_file;
-	struct bufferevent	*clt_fcgi;
+	struct bufferevent	*clt_srvbev;
 
 	off_t			 clt_toread;
 	size_t			 clt_headerlen;

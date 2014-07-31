@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.2 2014/07/31 14:18:38 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.3 2014/07/31 14:25:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -73,13 +73,13 @@ struct fcgi_record_header {
 	uint16_t	content_len;
 	uint8_t		padding_len;
 	uint8_t		reserved;
-}__packed;
+} __packed;
 
 struct fcgi_begin_request_body {
 	uint16_t	role;
 	uint8_t		flags;
 	uint8_t		reserved[5];
-}__packed;
+} __packed;
 
 void	server_fcgi_read(struct bufferevent *, void *);
 void	server_fcgi_error(struct bufferevent *, short, void *);
@@ -116,17 +116,17 @@ server_fcgi(struct httpd *env, struct client *clt)
 	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		goto fail;
 
-	if (clt->clt_fcgi != NULL)
-		bufferevent_free(clt->clt_fcgi);
-	clt->clt_fcgi = bufferevent_new(fd, server_fcgi_read,
+	if (clt->clt_srvbev != NULL)
+		bufferevent_free(clt->clt_srvbev);
+	clt->clt_srvbev = bufferevent_new(fd, server_fcgi_read,
 	    NULL, server_fcgi_error, clt);
-	if (clt->clt_fcgi == NULL) {
+	if (clt->clt_srvbev == NULL) {
 		errstr = "failed to allocate fcgi buffer event";
 		goto fail;
 	}
-	bufferevent_settimeout(clt->clt_fcgi,
+	bufferevent_settimeout(clt->clt_srvbev,
 	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);
-	bufferevent_enable(clt->clt_fcgi, EV_READ);
+	bufferevent_enable(clt->clt_srvbev, EV_READ);
 
 	bzero(&buf, sizeof(buf));
 
@@ -141,7 +141,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 	    fcgi_record_header)];
 	begin->role = htons(FCGI_RESPONDER);
 
-	bufferevent_write(clt->clt_fcgi, &buf,
+	bufferevent_write(clt->clt_srvbev, &buf,
 	    sizeof(struct fcgi_record_header) +
 	    sizeof(struct fcgi_begin_request_body));
 
@@ -158,18 +158,18 @@ server_fcgi(struct httpd *env, struct client *clt)
 	
 	h->content_len = htons(total_len);
 
-	bufferevent_write(clt->clt_fcgi, &buf,
+	bufferevent_write(clt->clt_srvbev, &buf,
 	    sizeof(struct fcgi_record_header) +
 	    ntohs(h->content_len));
 
 	h->content_len = 0;
 
-	bufferevent_write(clt->clt_fcgi, &buf,
+	bufferevent_write(clt->clt_srvbev, &buf,
 	    sizeof(struct fcgi_record_header));
 
 	h->type = FCGI_STDIN;
 
-	bufferevent_write(clt->clt_fcgi, &buf,
+	bufferevent_write(clt->clt_srvbev, &buf,
 	    sizeof(struct fcgi_record_header));
 
 	return (0);

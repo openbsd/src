@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.20 2014/07/31 13:28:15 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.21 2014/07/31 14:25:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -184,19 +184,19 @@ server_file(struct httpd *env, struct client *clt)
 	}
 
 	clt->clt_fd = fd;
-	if (clt->clt_file != NULL)
-		bufferevent_free(clt->clt_file);
+	if (clt->clt_srvbev != NULL)
+		bufferevent_free(clt->clt_srvbev);
 
-	clt->clt_file = bufferevent_new(clt->clt_fd, server_read,
+	clt->clt_srvbev = bufferevent_new(clt->clt_fd, server_read,
 	    server_write, server_file_error, clt);
-	if (clt->clt_file == NULL) {
+	if (clt->clt_srvbev == NULL) {
 		errstr = "failed to allocate file buffer event";
 		goto fail;
 	}
 
-	bufferevent_settimeout(clt->clt_file,
+	bufferevent_settimeout(clt->clt_srvbev,
 	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);
-	bufferevent_enable(clt->clt_file, EV_READ);
+	bufferevent_enable(clt->clt_srvbev, EV_READ);
 	bufferevent_disable(clt->clt_bev, EV_READ);
 
 	return (0);

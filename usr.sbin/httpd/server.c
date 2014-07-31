@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.17 2014/07/30 13:49:48 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.18 2014/07/31 14:25:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -600,8 +600,8 @@ server_close(struct client *clt, const char *msg)
 	event_del(&clt->clt_ev);
 	if (clt->clt_bev != NULL)
 		bufferevent_disable(clt->clt_bev, EV_READ|EV_WRITE);
-	if (clt->clt_file != NULL)
-		bufferevent_disable(clt->clt_file, EV_READ|EV_WRITE);
+	if (clt->clt_srvbev != NULL)
+		bufferevent_disable(clt->clt_srvbev, EV_READ|EV_WRITE);
 
 	if ((env->sc_opts & HTTPD_OPT_LOGUPDATE) && msg != NULL) {
 		memset(&ibuf, 0, sizeof(ibuf));
@@ -625,8 +625,8 @@ server_close(struct client *clt, const char *msg)
 	if (clt->clt_output != NULL)
 		evbuffer_free(clt->clt_output);
 
-	if (clt->clt_file != NULL)
-		bufferevent_free(clt->clt_file);
+	if (clt->clt_srvbev != NULL)
+		bufferevent_free(clt->clt_srvbev);
 	if (clt->clt_fd != -1)
 		close(clt->clt_fd);
 	if (clt->clt_s != -1)
