@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.21 2014/07/31 14:25:14 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.22 2014/07/31 17:55:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -51,7 +51,6 @@
 int	 server_file_access(struct client *, char *, size_t,
 	    struct stat *);
 int	 server_file_index(struct httpd *, struct client *);
-void	 server_file_error(struct bufferevent *, short, void *);
 
 int
 server_file_access(struct client *clt, char *path, size_t len,
@@ -178,7 +177,7 @@ server_file(struct httpd *env, struct client *clt)
 	case 0:
 		/* Connection is already finished */
 		close(fd);
-		return (0);
+		goto done;
 	default:
 		break;
 	}
@@ -199,6 +198,8 @@ server_file(struct httpd *env, struct client *clt)
 	bufferevent_enable(clt->clt_srvbev, EV_READ);
 	bufferevent_disable(clt->clt_bev, EV_READ);
 
+ done:
+	server_reset_http(clt);
 	return (0);
  fail:
 	if (errstr == NULL)
@@ -309,7 +310,7 @@ server_file_index(struct httpd *env, struct client *clt)
 	case 0:
 		/* Connection is already finished */
 		evbuffer_free(evb);
-		return (0);
+		goto done;
 	default:
 		break;
 	}
@@ -325,6 +326,8 @@ server_file_index(struct httpd *env, struct client *clt)
 		clt->clt_toread = TOREAD_HTTP_NONE;
 	clt->clt_done = 0;
 
+ done:
+	server_reset_http(clt);
 	return (0);
 
  fail:

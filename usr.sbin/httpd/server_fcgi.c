@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.3 2014/07/31 14:25:14 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.4 2014/07/31 17:55:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -81,8 +81,8 @@ struct fcgi_begin_request_body {
 	uint8_t		reserved[5];
 } __packed;
 
+int	server_fcgi_header(struct client *, u_int);
 void	server_fcgi_read(struct bufferevent *, void *);
-void	server_fcgi_error(struct bufferevent *, short, void *);
 int	fcgi_add_param(uint8_t *, char *, char *, int);
 
 int
@@ -99,7 +99,6 @@ server_fcgi(struct httpd *env, struct client *clt)
 	uint8_t				 buf[FCGI_RECORD_SIZE];
 	uint8_t				*params;
 
-	log_info("server_fcgi");
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		goto fail;
 
@@ -112,21 +111,18 @@ server_fcgi(struct httpd *env, struct client *clt)
 	}
 	sun.sun_len = len;
 
-	log_info("path: %s", sun.sun_path);
 	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		goto fail;
 
 	if (clt->clt_srvbev != NULL)
 		bufferevent_free(clt->clt_srvbev);
+
 	clt->clt_srvbev = bufferevent_new(fd, server_fcgi_read,
-	    NULL, server_fcgi_error, clt);
+	    NULL, server_file_error, clt);
 	if (clt->clt_srvbev == NULL) {
 		errstr = "failed to allocate fcgi buffer event";
 		goto fail;
 	}
-	bufferevent_settimeout(clt->clt_srvbev,
-	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);
-	bufferevent_enable(clt->clt_srvbev, EV_READ);
 
 	bzero(&buf, sizeof(buf));
 
@@ -155,7 +151,14 @@ server_fcgi(struct httpd *env, struct client *clt)
 	    FCGI_CONTENT_SIZE);
 	params += len;
 	total_len += len;
-	
+
+	if (desc->http_query) {
+		len = fcgi_add_param(params, "QUERY_STRING", desc->http_query,
+		    FCGI_CONTENT_SIZE);
+		params += len;
+		total_len += len;
+	}
+
 	h->content_len = htons(total_len);
 
 	bufferevent_write(clt->clt_srvbev, &buf,
@@ -172,6 +175,18 @@ server_fcgi(struct httpd *env, struct client *clt)
 	bufferevent_write(clt->clt_srvbev, &buf,
 	    sizeof(struct fcgi_record_header));
 
+	bufferevent_settimeout(clt->clt_srvbev,
+	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);
+	bufferevent_enable(clt->clt_srvbev, EV_READ|EV_WRITE);
+	bufferevent_disable(clt->clt_bev, EV_READ);
+
+	/*
+	 * persist is not supported yet because we don't get the
+	 * Content-Length from slowcgi and don't support chunked encoding.
+	 */
+	clt->clt_persist = 0;
+	clt->clt_done = 0;
+
 	return (0);
  fail:
 	if (errstr == NULL)
@@ -184,7 +199,7 @@ int
 fcgi_add_param(uint8_t *buf, char *key, char *val, int size)
 {
 	int len = 0;
-	log_info("%s => %s", key, val);
+	DPRINTF("%s: %s => %s", __func__, key, val);
 	buf[0] = strlen(key);
 	len++;
 	buf[1] = strlen(val);
@@ -204,27 +219,63 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 	size_t	 len;
 
 	len = bufferevent_read(bev, &buf, FCGI_RECORD_SIZE);
-
-	log_info("server_fcgi_read: %lu", len);
+	DPRINTF("%s: %lu", __func__, len);
 	
 	h = (struct fcgi_record_header *) &buf;
-	log_info("h->version: %d", h->version);
-	log_info("h->type: %d", h->type);
-	log_info("h->id: %d", ntohs(h->id));
-	log_info("h->content_len: %d", ntohs(h->content_len));
-	
+	DPRINTF("%s: record header: version %d type %d id %d content len %d",
+	    __func__, h->version, h->type, ntohs(h->id),
+	    ntohs(h->content_len));
+
 	if (h->type == FCGI_STDOUT && ntohs(h->content_len) > 0) {
-		log_info("%s", (char*) &buf +
-		     sizeof(struct fcgi_record_header));
-		server_bufferevent_print(clt, "HTTP/1.1 200 OK\r\n");
-		server_bufferevent_print(clt, (char*) &buf +
-		     sizeof(struct fcgi_record_header));
-		
+		DPRINTF("%s", (char *) &buf +
+                    sizeof(struct fcgi_record_header));
+
+		server_fcgi_header(clt, 200);
+		server_bufferevent_write(clt, (char *)&buf +
+		    sizeof(struct fcgi_record_header),
+		    len - sizeof(struct fcgi_record_header));
 	}
 }
 
-void
-server_fcgi_error(struct bufferevent *bev, short error, void *arg)
+int
+server_fcgi_header(struct client *clt, u_int code)
 {
-	log_info("server_fcgi_error: %d", error);
+	struct http_descriptor	*desc = clt->clt_desc;
+	const char		*error;
+	char			 tmbuf[32];
+
+	if (desc == NULL || (error = server_httperror_byid(code)) == NULL)
+		return (-1);
+
+	kv_purge(&desc->http_headers);
+
+	/* Add error codes */
+	if (kv_setkey(&desc->http_pathquery, "%lu", code) == -1 ||
+	    kv_set(&desc->http_pathquery, "%s", error) == -1)
+		return (-1);
+
+	/* Add headers */
+	if (kv_add(&desc->http_headers, "Server", HTTPD_SERVERNAME) == NULL)
+		return (-1);
+
+	/* Is it a persistent connection? */
+	if (clt->clt_persist) {
+		if (kv_add(&desc->http_headers,
+		    "Connection", "keep-alive") == NULL)
+			return (-1);
+	} else if (kv_add(&desc->http_headers, "Connection", "close") == NULL)
+		return (-1);
+
+	/* Date header is mandatory and should be added last */
+	server_http_date(tmbuf, sizeof(tmbuf));
+	if (kv_add(&desc->http_headers, "Date", tmbuf) == NULL)
+		return (-1);
+
+	/* Write initial header (fcgi might append more) */
+	if (server_writeresponse_http(clt) == -1 ||
+	    server_bufferevent_print(clt, "\r\n") == -1 ||
+	    server_writeheader_http(clt) == -1)
+		return (-1);
+
+	return (0);
 }

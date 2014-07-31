@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.23 2014/07/31 09:34:57 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.24 2014/07/31 17:55:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -48,7 +48,6 @@
 #include "httpd.h"
 #include "http.h"
 
-static void	 server_http_date(char *, size_t);
 static int	 server_httpmethod_cmp(const void *, const void *);
 static int	 server_httperror_cmp(const void *, const void *);
 void		 server_httpdesc_free(struct http_descriptor *);
@@ -518,7 +517,7 @@ server_reset_http(struct client *clt)
 	clt->clt_srv_conf = &srv->srv_conf;
 }
 
-static void
+void
 server_http_date(char *tmbuf, size_t len)
 {
 	time_t			 t;
@@ -673,7 +672,6 @@ server_response(struct httpd *httpd, struct client *clt)
 	struct server		*srv = clt->clt_srv;
 	struct server_config	*srv_conf = &srv->srv_conf, *location;
 	struct kv		*kv, key, *host;
-	int			 ret;
 
 	/* Canonicalize the request path */
 	if (desc->http_path == NULL ||
@@ -754,15 +752,8 @@ server_response(struct httpd *httpd, struct client *clt)
 	}
 
 	if (srv_conf->flags & SRVFLAG_FCGI)
-		ret = server_fcgi(httpd, clt);
-	else
-		ret = server_file(httpd, clt);
-	if (ret == -1)
-		return (ret);
-
-	server_reset_http(clt);
-
-	return (0);
+		return (server_fcgi(httpd, clt));
+	return (server_file(httpd, clt));
  fail:
 	server_abort_http(clt, 400, "bad request");
 	return (-1);
