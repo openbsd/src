@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.10 2014/07/13 16:44:20 pelikan Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.11 2014/07/31 19:49:25 pelikan Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -1347,7 +1347,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 
 	dp = (struct ext2fs_dinode *)(bp +
 	    inodesize * ino_to_fsbo(&sblock, ino));
-	e2fs_isave(ip, dp);
+	e2fs_isave(&sblock, ip, dp);
 	/* e2fs_i_bswap() doesn't swap e2di_blocks addrs */
 	if ((ip->e2di_mode & EXT2_IFMT) != EXT2_IFLNK) {
 		for (i = 0; i < NDADDR + NIADDR; i++)
