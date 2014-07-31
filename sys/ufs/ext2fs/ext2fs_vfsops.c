@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.81 2014/07/13 15:07:01 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.82 2014/07/31 17:37:52 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -365,7 +365,7 @@ ext2fs_reload_vnode(struct vnode *vp, void *args)
 	}
 	cp = (caddr_t)bp->b_data +
 	    (ino_to_fsbo(era->fs, ip->i_number) * EXT2_DINODE_SIZE(era->fs));
-	e2fs_iload((struct ext2fs_dinode *)cp, ip->i_e2din);
+	e2fs_iload(era->fs, (struct ext2fs_dinode *)cp, ip->i_e2din);
 	brelse(bp);
 	vput(vp);
 	return (0);
@@ -891,7 +891,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	    + EXT2_DINODE_SIZE(fs) * ino_to_fsbo(fs, ino));
 
 	ip->i_e2din = pool_get(&ext2fs_dinode_pool, PR_WAITOK);
-	e2fs_iload(dp, ip->i_e2din);
+	e2fs_iload(fs, dp, ip->i_e2din);
 	brelse(bp);
 
 	ip->i_effnlink = ip->i_e2fs_nlink;

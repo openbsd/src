@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_dinode.h,v 1.16 2014/07/11 12:53:19 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_dinode.h,v 1.17 2014/07/31 17:37:52 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_dinode.h,v 1.6 2000/01/26 16:21:33 bouyer Exp $	*/
 
 /*
@@ -154,10 +154,13 @@ struct ext2fs_dinode {
 
 /* e2fs needs byte swapping on big-endian systems */
 #if BYTE_ORDER == LITTLE_ENDIAN
-#	define e2fs_iload(old, new) memcpy((new),(old),sizeof(struct ext2fs_dinode))
-#	define e2fs_isave(old, new) memcpy((new),(old),sizeof(struct ext2fs_dinode))
+#	define e2fs_iload(fs, old, new)	\
+		memcpy((new),(old), MIN(EXT2_DINODE_SIZE(fs), sizeof(*new)))
+#	define e2fs_isave(fs, old, new) \
+		memcpy((new),(old), MIN(EXT2_DINODE_SIZE(fs), sizeof(*new)))
 #else
-void e2fs_i_bswap(struct ext2fs_dinode *, struct ext2fs_dinode *);
-#	define e2fs_iload(old, new) e2fs_i_bswap((old), (new))
-#	define e2fs_isave(old, new) e2fs_i_bswap((old), (new))
+struct m_ext2fs;
+void e2fs_i_bswap(struct m_ext2fs *, struct ext2fs_dinode *, struct ext2fs_dinode *);
+#	define e2fs_iload(fs, old, new) e2fs_i_bswap((fs), (old), (new))
+#	define e2fs_isave(fs, old, new) e2fs_i_bswap((fs), (old), (new))
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bswap.c,v 1.7 2014/07/14 08:54:13 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_bswap.c,v 1.8 2014/07/31 17:37:52 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_bswap.c,v 1.6 2000/07/24 00:23:10 mycroft Exp $	*/
 
 /*
@@ -110,7 +110,8 @@ e2fs_cg_bswap(struct ext2_gd *old, struct ext2_gd *new, int size)
 }
 
 void
-e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new)
+e2fs_i_bswap(struct m_ext2fs *fs, struct ext2fs_dinode *old,
+    struct ext2fs_dinode *new)
 {
 	new->e2di_mode		=	swap16(old->e2di_mode);
 	new->e2di_uid_low	=	swap16(old->e2di_uid_low);
@@ -133,5 +134,9 @@ e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new)
 	new->e2di_facl_hi	=	swap16(old->e2di_facl_hi);
 	memcpy(&new->e2di_blocks[0], &old->e2di_blocks[0],
 		(NDADDR+NIADDR) * sizeof(int));
+
+	if (EXT2_DINODE_SIZE(fs) <= EXT2_REV0_DINODE_SIZE)
+		return;
+	new->e2di_isize		=	swap16(old->e2di_isize);
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.54 2014/07/13 16:59:35 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.55 2014/07/31 17:37:52 pelikan Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -189,7 +189,7 @@ ext2fs_update(struct inode *ip, int waitfor)
 	ip->i_e2fs_uid_high = ip->i_e2fs_uid >> 16;
 	ip->i_e2fs_gid_high = ip->i_e2fs_gid >> 16;
 
-	e2fs_isave(ip->i_e2din, (struct ext2fs_dinode *)cp);
+	e2fs_isave(fs, ip->i_e2din, (struct ext2fs_dinode *)cp);
 	if (waitfor)
 		return (bwrite(bp));
 	else {
