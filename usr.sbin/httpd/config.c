@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.8 2014/07/31 09:34:57 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.9 2014/07/31 13:28:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -238,11 +238,11 @@ config_getserver_config(struct httpd *env, struct server *srv,
 		if ((srv_conf->flags & f) == 0)
 			srv_conf->flags |= srv->srv_conf.flags & f;
 
-		f = SRVFLAG_DOCROOT;
+		f = SRVFLAG_PATH;
 		if ((srv_conf->flags & f) == 0) {
-			(void)strlcpy(srv_conf->docroot,
-			    srv->srv_conf.docroot,
-			    sizeof(srv_conf->docroot));
+			(void)strlcpy(srv_conf->path,
+			    srv->srv_conf.path,
+			    sizeof(srv_conf->path));
 		}
 
 		f = SRVFLAG_FCGI|SRVFLAG_NO_FCGI;

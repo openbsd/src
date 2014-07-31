@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2014/07/31 09:34:57 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.12 2014/07/31 13:28:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -216,8 +216,8 @@ server		: SERVER STRING		{
 			}
 			free($2);
 
-			strlcpy(s->srv_conf.docroot, HTTPD_DOCROOT,
-			    sizeof(s->srv_conf.docroot));
+			strlcpy(s->srv_conf.path, HTTPD_DOCROOT,
+			    sizeof(s->srv_conf.path));
 			strlcpy(s->srv_conf.index, HTTPD_INDEX,
 			    sizeof(s->srv_conf.index));
 			s->srv_conf.id = ++last_server_id;
@@ -284,15 +284,15 @@ serveroptsl	: LISTEN ON STRING port {
 			host_free(&al);
 		}
 		| ROOT STRING		{
-			if (strlcpy(srv->srv_conf.docroot, $2,
-			    sizeof(srv->srv_conf.docroot)) >=
-			    sizeof(srv->srv_conf.docroot)) {
+			if (strlcpy(srv->srv_conf.path, $2,
+			    sizeof(srv->srv_conf.path)) >=
+			    sizeof(srv->srv_conf.path)) {
 				yyerror("document root too long");
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			srv->srv_conf.flags |= SRVFLAG_DOCROOT;
+			srv->srv_conf.flags |= SRVFLAG_PATH;
 		}
 		| DIRECTORY dirflags
 		| DIRECTORY '{' dirflags_l '}'

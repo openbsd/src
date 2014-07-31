@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.19 2014/07/30 07:09:38 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.20 2014/07/31 13:28:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -149,7 +149,7 @@ server_file(struct httpd *env, struct client *clt)
 
 	/* Request path is already canonicalized */
 	if ((size_t)snprintf(path, sizeof(path), "%s%s",
-	    srv_conf->docroot, desc->http_path) >= sizeof(path)) {
+	    srv_conf->path, desc->http_path) >= sizeof(path)) {
 		/* Do not echo the uncanonicalized path */
 		server_abort_http(clt, 500, desc->http_path);
 		return (-1);
@@ -225,7 +225,7 @@ server_file_index(struct httpd *env, struct client *clt)
 
 	/* Request path is already canonicalized */
 	if ((size_t)snprintf(path, sizeof(path), "%s%s",
-	    srv_conf->docroot, desc->http_path) >= sizeof(path))
+	    srv_conf->path, desc->http_path) >= sizeof(path))
 		goto fail;
 
 	/* Now open the file, should be readable or we have another problem */
