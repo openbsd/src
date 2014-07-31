@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.75 2014/07/30 13:18:59 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.76 2014/07/31 14:57:41 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -114,7 +114,7 @@ _rc_quirks() {
 
 _rc_parse_conf() {
 	typeset -l _key
-	local _l _val
+	local _conf _i _l _val
 	local _rcconf="/etc/rc.conf"
 	local _rcconf_local="/etc/rc.conf.local"
 	set -A _allowed_keys -- \
@@ -137,12 +137,18 @@ _rc_parse_conf() {
 			_val=${_val%%*([[:blank:]])}
 			# remove leading and trailing quotes (backwards compat)
 			[[ $_val == @(\"*\"|\'*\') ]] && _val=${_val#?} _val=${_val%?}
-			[ -n "${_RC_DEBUG}" ] && printf "%18s\t>$_val<\n" $_key
 			eval "${_key}=\${_val}"
+			_conf="${_conf} ${_key}"
 		done < $_rcfile
 	done
 
 	_rc_do _rc_quirks
+
+	if [ -n "${_RC_DEBUG}" ]; then
+		for _i in ${_conf}; do
+			printf "%18s\t>$(eval echo '$'${_i})<\n" ${_i}
+		done | sort -uk 1b
+	fi
 }
 
 [ -n "${FUNCS_ONLY}" ] && return
