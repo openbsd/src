@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.26 2014/08/01 21:51:02 doug Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.27 2014/08/01 22:24:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -517,6 +517,8 @@ server_reset_http(struct client *clt)
 	clt->clt_chunk = 0;
 	clt->clt_bev->readcb = server_read_http;
 	clt->clt_srv_conf = &srv->srv_conf;
+
+	server_log(clt);
 }
 
 void
@@ -1008,7 +1010,8 @@ server_log_http(struct client *clt, u_int code, size_t len)
 	 */
 	switch (srv_conf->logformat) {
 	case LOG_FORMAT_COMMON:
-		log_info("%s %s - - [%s] \"%s %s%s%s%s%s\" %03d %zu",
+		if (evbuffer_add_printf(clt->clt_log,
+		    "%s %s - - [%s] \"%s %s%s%s%s%s\" %03d %zu\n",
 		    srv_conf->name, ip, tstamp,
 		    server_httpmethod_byid(desc->http_method),
 		    desc->http_path == NULL ? "" : desc->http_path,
@@ -1016,7 +1019,8 @@ server_log_http(struct client *clt, u_int code, size_t len)
 		    desc->http_query == NULL ? "" : desc->http_query,
 		    desc->http_version == NULL ? "" : " ",
 		    desc->http_version == NULL ? "" : desc->http_version,
-		    code, len);
+		    code, len) == -1)
+			return (-1);
 		break;
 
 	case LOG_FORMAT_COMBINED:
@@ -1030,8 +1034,8 @@ server_log_http(struct client *clt, u_int code, size_t len)
 		    agent->kv_value == NULL)
 			agent = NULL;
 
-		log_info("%s %s - - [%s] \"%s %s%s%s%s%s\" %03d %zu"
-		    " \"%s\" \"%s\"",
+		if (evbuffer_add_printf(clt->clt_log,
+		    "%s %s - - [%s] \"%s %s%s%s%s%s\" %03d %zu \"%s\" \"%s\"\n",
 		    srv_conf->name, ip, tstamp,
 		    server_httpmethod_byid(desc->http_method),
 		    desc->http_path == NULL ? "" : desc->http_path,
@@ -1041,10 +1045,11 @@ server_log_http(struct client *clt, u_int code, size_t len)
 		    desc->http_version == NULL ? "" : desc->http_version,
 		    code, len,
 		    referrer == NULL ? "" : referrer->kv_value,
-		    agent == NULL ? "" : agent->kv_value);
+		    agent == NULL ? "" : agent->kv_value) == -1)
+			return (-1);
 		break;
 
-	default:
+	case LOG_FORMAT_NONE:
 		return (-1);
 	}
 

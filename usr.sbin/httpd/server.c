@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.20 2014/08/01 21:59:56 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.21 2014/08/01 22:24:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -585,12 +585,26 @@ server_inflight_dec(struct client *clt, const char *why)
 }
 
 void
+server_log(struct client *clt)
+{
+	char		*ptr = NULL;
+
+	if (!EVBUFFER_LENGTH(clt->clt_log))
+		return;
+
+	while ((ptr = evbuffer_readline(clt->clt_log)) != NULL) {
+		log_info("%s", ptr);
+		free(ptr);
+	}
+}
+
+void
 server_close(struct client *clt, const char *msg)
 {
 	char			 ibuf[MAXHOSTNAMELEN], obuf[MAXHOSTNAMELEN];
-	char			*ptr = NULL;
 	struct server		*srv = clt->clt_srv;
 	struct server_config	*srv_conf = clt->clt_srv_conf;
+	extern int		 debug;
 
 	SPLAY_REMOVE(client_tree, &srv->srv_clients, clt);
 
@@ -603,21 +617,17 @@ server_close(struct client *clt, const char *msg)
 	if (clt->clt_srvbev != NULL)
 		bufferevent_disable(clt->clt_srvbev, EV_READ|EV_WRITE);
 
-	if (msg != NULL) {
+	server_log(clt);
+
+	if (debug && msg != NULL) {
 		memset(&ibuf, 0, sizeof(ibuf));
 		memset(&obuf, 0, sizeof(obuf));
 		(void)print_host(&clt->clt_ss, ibuf, sizeof(ibuf));
 		(void)server_http_host(&clt->clt_srv_ss, obuf, sizeof(obuf));
-		if (EVBUFFER_LENGTH(clt->clt_log) &&
-		    evbuffer_add_printf(clt->clt_log, "\r\n") != -1)
-			ptr = evbuffer_readline(clt->clt_log);
-		log_info("server %s, "
+		log_debug("server %s, "
 		    "client %d (%d active), %s:%u -> %s, "
-		    "%s%s%s", srv_conf->name, clt->clt_id, server_clients,
-		    ibuf, ntohs(clt->clt_port), obuf, msg,
-		    ptr == NULL ? "" : ",", ptr == NULL ? "" : ptr);
-		if (ptr != NULL)
-			free(ptr);
+		    "%s", srv_conf->name, clt->clt_id, server_clients,
+		    ibuf, ntohs(clt->clt_port), obuf, msg);
 	}
 
 	if (clt->clt_bev != NULL)
