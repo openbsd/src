@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.18 2014/07/31 14:25:14 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.19 2014/08/01 08:34:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -624,6 +624,8 @@ server_close(struct client *clt, const char *msg)
 		bufferevent_free(clt->clt_bev);
 	if (clt->clt_output != NULL)
 		evbuffer_free(clt->clt_output);
+	if (clt->clt_srvevb != NULL)
+		evbuffer_free(clt->clt_srvevb);
 
 	if (clt->clt_srvbev != NULL)
 		bufferevent_free(clt->clt_srvbev);

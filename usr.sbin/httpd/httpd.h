@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.26 2014/07/31 18:07:11 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.27 2014/08/01 08:34:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -237,6 +237,11 @@ struct privsep_proc {
 	struct httpd		*p_env;
 };
 
+enum fcgistate {
+	FCGI_READ_HEADER,
+	FCGI_READ_CONTENT
+};
+
 struct client {
 	u_int32_t		 clt_id;
 	pid_t			 clt_pid;
@@ -263,6 +268,10 @@ struct client {
 	int			 clt_done;
 	int			 clt_chunk;
 	int			 clt_inflight;
+	enum fcgistate		 clt_fcgi_state;
+	int			 clt_fcgi_toread;
+	int			 clt_fcgi_type;
+	struct evbuffer		*clt_srvevb;
 
 	struct evbuffer		*clt_log;
 	struct timeval		 clt_timeout;
