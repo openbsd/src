@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.13 2014/08/01 21:51:02 doug Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.14 2014/08/01 21:59:56 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -97,10 +97,6 @@ server "default" {
 Here are the settings that can be set globally:
 .Bl -tag -width Ds
 .It Xo
-.Ic log
-.Pq Ic updates Ns | Ns Ic all
-.Xc
-Set logging verbosity.
 .It Ic prefork Ar number
 Run the specified number of server processes.
 This increases the performance and prevents delays when connecting

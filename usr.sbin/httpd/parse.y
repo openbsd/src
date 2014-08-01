@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2014/08/01 21:51:02 doug Exp $	*/
+/*	$OpenBSD: parse.y,v 1.15 2014/08/01 21:59:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -126,12 +126,11 @@ typedef struct {
 
 %}
 
-%token	ALL AUTO DIRECTORY FCGI INDEX LISTEN LOCATION LOG NO ON PORT
-%token	PREFORK ROOT SERVER SOCKET TYPES UPDATES VERBOSE
+%token	AUTO DIRECTORY FCGI INDEX LISTEN LOCATION LOG NO ON PORT
+%token	PREFORK ROOT SERVER SOCKET TYPES
 %token	ERROR INCLUDE COMMON COMBINED
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
-%type	<v.number>	loglevel
 %type	<v.port>	port
 
 %%
@@ -169,12 +168,7 @@ varset		: STRING '=' STRING	{
 		}
 		;
 
-main		: LOG loglevel		{
-			if (loadcfg)
-				break;
-			conf->sc_opts |= $2;
-		}
-		| PREFORK NUMBER	{
+main		: PREFORK NUMBER	{
 			if (loadcfg)
 				break;
 			if ($2 <= 0 || $2 > SERVER_MAXPROC) {
@@ -535,10 +529,6 @@ port		: PORT STRING {
 		}
 		;
 
-loglevel	: UPDATES		{ $$ = HTTPD_OPT_LOGUPDATE; }
-		| ALL			{ $$ = HTTPD_OPT_LOGALL; }
-		;
-
 comma		: ','
 		| nl
 		| /* empty */
@@ -585,7 +575,6 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
-		{ "all",		ALL },
 		{ "auto",		AUTO },
 		{ "combined",		COMBINED },
 		{ "common",		COMMON },
@@ -603,8 +592,7 @@ lookup(char *s)
 		{ "root",		ROOT },
 		{ "server",		SERVER },
 		{ "socket",		SOCKET },
-		{ "types",		TYPES },
-		{ "updates",		UPDATES }
+		{ "types",		TYPES }
 	};
 	const struct keywords	*p;
 

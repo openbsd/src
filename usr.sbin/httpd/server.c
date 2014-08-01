@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.19 2014/08/01 08:34:46 florian Exp $	*/
+/*	$OpenBSD: server.c,v 1.20 2014/08/01 21:59:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -603,7 +603,7 @@ server_close(struct client *clt, const char *msg)
 	if (clt->clt_srvbev != NULL)
 		bufferevent_disable(clt->clt_srvbev, EV_READ|EV_WRITE);
 
-	if ((env->sc_opts & HTTPD_OPT_LOGUPDATE) && msg != NULL) {
+	if (msg != NULL) {
 		memset(&ibuf, 0, sizeof(ibuf));
 		memset(&obuf, 0, sizeof(obuf));
 		(void)print_host(&clt->clt_ss, ibuf, sizeof(ibuf));

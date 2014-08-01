@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.28 2014/08/01 21:51:02 doug Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.29 2014/08/01 21:59:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -380,9 +380,6 @@ struct httpd {
 
 #define HTTPD_OPT_VERBOSE		0x01
 #define HTTPD_OPT_NOACTION		0x04
-#define HTTPD_OPT_LOGUPDATE		0x08
-#define HTTPD_OPT_LOGNOTIFY		0x10
-#define HTTPD_OPT_LOGALL		0x18
 
 /* control.c */
 int	 control_init(struct privsep *, struct control_sock *);
