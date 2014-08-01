@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.76 2014/07/31 14:57:41 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.77 2014/08/01 04:57:01 rpe Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -124,7 +124,7 @@ _rc_parse_conf() {
 		nfs_server
 
 	for _rcfile in $_rcconf $_rcconf_local; do
-		[[ -f $_rcfile ]] || return
+		[[ -f $_rcfile ]] || continue
 		while IFS=' 	' read -r _l; do
 			[[ $_l == [!#=]*=* ]] || continue
 			_key=${_l%%*([[:blank:]])=*}
