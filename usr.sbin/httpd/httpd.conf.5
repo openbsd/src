@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.12 2014/07/31 14:18:38 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.13 2014/08/01 21:51:02 doug Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 31 2014 $
+.Dd $Mdocdate: August 1 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -150,6 +150,17 @@ except
 .Ic listen on
 and
 .Ic location .
+.It Oo Ic no Oc Ic log Op Ar style
+Enable writing an access log to syslog.
+The
+.Ar style
+can be
+.Ar common
+or
+.Ar combined .
+It is similar to the Apache and nginx logging format.
+If not specified, the default is
+.Ar common .
 .It Ic root Ar directory
 Set the document root of the server.
 The

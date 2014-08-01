@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2014/07/31 14:18:38 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.14 2014/08/01 21:51:02 doug Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -128,7 +128,7 @@ typedef struct {
 
 %token	ALL AUTO DIRECTORY FCGI INDEX LISTEN LOCATION LOG NO ON PORT
 %token	PREFORK ROOT SERVER SOCKET TYPES UPDATES VERBOSE
-%token	ERROR INCLUDE
+%token	ERROR INCLUDE COMMON COMBINED
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.number>	loglevel
@@ -301,6 +301,7 @@ serveroptsl	: LISTEN ON STRING port {
 		}
 		| DIRECTORY dirflags
 		| DIRECTORY '{' dirflags_l '}'
+		| logformat
 		| fastcgi
 		| LOCATION STRING		{
 			struct server	*s;
@@ -442,6 +443,17 @@ dirflags	: INDEX STRING		{
 		}
 		;
 
+logformat	: LOG COMMON {
+			srv->srv_conf.logformat = LOG_FORMAT_COMMON;
+		}
+		| LOG COMBINED {
+			srv->srv_conf.logformat = LOG_FORMAT_COMBINED;
+		}
+		| NO LOG {
+			srv->srv_conf.logformat = LOG_FORMAT_NONE;
+		}
+		;
+
 types		: TYPES	'{' optnl mediaopts_l '}'
 		;
 
@@ -575,6 +587,8 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "all",		ALL },
 		{ "auto",		AUTO },
+		{ "combined",		COMBINED },
+		{ "common",		COMMON },
 		{ "directory",		DIRECTORY },
 		{ "fastcgi",		FCGI },
 		{ "include",		INCLUDE },

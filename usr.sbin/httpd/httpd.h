@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.27 2014/08/01 08:34:46 florian Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.28 2014/08/01 21:51:02 doug Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -310,6 +310,12 @@ SPLAY_HEAD(client_tree, client);
 	"\10\01NODELAY\02NO_NODELAY\03SACK\04NO_SACK"		\
 	"\05SOCKET_BUFFER_SIZE\06IP_TTL\07IP_MINTTL\10NO_SPLICE"
 
+enum log_format {
+	LOG_FORMAT_NONE = -1,
+	LOG_FORMAT_COMMON = 0,
+	LOG_FORMAT_COMBINED,
+};
+
 struct server_config {
 	u_int32_t		 id;
 	char			 name[MAXHOSTNAMELEN];
@@ -328,6 +334,8 @@ struct server_config {
 	int			 tcpbacklog;
 	u_int8_t		 tcpipttl;
 	u_int8_t		 tcpipminttl;
+
+	enum log_format		 logformat;
 
 	TAILQ_ENTRY(server_config) entry;
 };
@@ -443,6 +451,7 @@ int	 server_response(struct httpd *, struct client *);
 const char *
 	 server_http_host(struct sockaddr_storage *, char *, size_t);
 void	 server_http_date(char *, size_t);
+int	 server_log_http(struct client *, u_int, size_t);
 
 /* server_file.c */
 int	 server_file(struct httpd *, struct client *);

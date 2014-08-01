@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.25 2014/07/31 18:07:11 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.26 2014/08/01 21:51:02 doug Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <err.h>
 #include <pwd.h>
+#include <syslog.h>
 #include <event.h>
 #include <fnmatch.h>
 
@@ -772,6 +773,9 @@ server_response_http(struct client *clt, u_int code,
 	if (desc == NULL || (error = server_httperror_byid(code)) == NULL)
 		return (-1);
 
+	if (server_log_http(clt, code, size) == -1)
+		return (-1);
+
 	kv_purge(&desc->http_headers);
 
 	/* Add error codes */
@@ -960,4 +964,89 @@ server_httperror_cmp(const void *a, const void *b)
 	const struct http_error *ea = a;
 	const struct http_error *eb = b;
 	return (ea->error_code - eb->error_code);
+}
+
+int
+server_log_http(struct client *clt, u_int code, size_t len)
+{
+	static char tstamp[64];
+	static char ip[INET6_ADDRSTRLEN];
+	time_t t;
+	struct tm *tm;
+	struct server_config	*srv_conf;
+	struct http_descriptor	*desc;
+	struct kv		key, *agent, *referrer;
+
+	if ((srv_conf = clt->clt_srv_conf) == NULL)
+		return (-1);
+	if ((desc = clt->clt_desc) == NULL)
+		return (-1);
+	if (srv_conf->logformat == LOG_FORMAT_NONE)
+		return (0);
+
+	if ((t = time(NULL)) == -1)
+		return (-1);
+	if ((tm = localtime(&t)) == NULL)
+		return (-1);
+	if (strftime(tstamp, sizeof(tstamp), "%d/%b/%Y:%H:%M:%S %z", tm) == 0)
+		return (-1);
+
+	if (clt->clt_ss.ss_family == AF_INET) {
+		struct sockaddr_in *in = (struct sockaddr_in *)&clt->clt_ss;
+		if (inet_ntop(AF_INET, &in->sin_addr, ip, sizeof(ip)) == NULL)
+			return (-1);
+	} else if (clt->clt_ss.ss_family == AF_INET6) {
+		struct sockaddr_in6 *in = (struct sockaddr_in6 *)&clt->clt_ss;
+		if (inet_ntop(AF_INET6, &in->sin6_addr, ip, sizeof(ip)) == NULL)
+			return (-1);
+	} else
+		return (-1);
+
+	/*
+	 * For details on common log format, see:
+	 * https://httpd.apache.org/docs/current/mod/mod_log_config.html
+	 */
+	switch (srv_conf->logformat) {
+	case LOG_FORMAT_COMMON:
+		log_info("%s %s - - [%s] \"%s %s%s%s%s%s\" %03d %zu",
+		    srv_conf->name, ip, tstamp,
+		    server_httpmethod_byid(desc->http_method),
+		    desc->http_path == NULL ? "" : desc->http_path,
+		    desc->http_query == NULL ? "" : "?",
+		    desc->http_query == NULL ? "" : desc->http_query,
+		    desc->http_version == NULL ? "" : " ",
+		    desc->http_version == NULL ? "" : desc->http_version,
+		    code, len);
+		break;
+
+	case LOG_FORMAT_COMBINED:
+		key.kv_key = "Referer"; /* sic */
+		if ((referrer = kv_find(&desc->http_headers, &key)) != NULL &&
+		    referrer->kv_value == NULL)
+			referrer = NULL;
+
+		key.kv_key = "User-Agent";
+		if ((agent = kv_find(&desc->http_headers, &key)) != NULL &&
+		    agent->kv_value == NULL)
+			agent = NULL;
+
+		log_info("%s %s - - [%s] \"%s %s%s%s%s%s\" %03d %zu"
+		    " \"%s\" \"%s\"",
+		    srv_conf->name, ip, tstamp,
+		    server_httpmethod_byid(desc->http_method),
+		    desc->http_path == NULL ? "" : desc->http_path,
+		    desc->http_query == NULL ? "" : "?",
+		    desc->http_query == NULL ? "" : desc->http_query,
+		    desc->http_version == NULL ? "" : " ",
+		    desc->http_version == NULL ? "" : desc->http_version,
+		    code, len,
+		    referrer == NULL ? "" : referrer->kv_value,
+		    agent == NULL ? "" : agent->kv_value);
+		break;
+
+	default:
+		return (-1);
+	}
+
+	return (0);
 }
