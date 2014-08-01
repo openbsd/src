@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.337 2014/07/20 18:10:15 deraadt Exp $ */
+/* $OpenBSD: softraid.c,v 1.338 2014/08/01 01:32:09 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3183,7 +3183,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 
 	/* Is the partition large enough? */
 	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part])) -
-	    SR_DATA_OFFSET;
+	    sd->sd_meta->ssd_data_offset;
 	if (size < csize) {
 		sr_error(sc, "%s partition too small, at least %lld bytes "
 		    "required", devname, (long long)(csize << DEV_BSHIFT));
