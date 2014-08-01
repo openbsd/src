@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.6 2014/08/01 08:34:46 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.7 2014/08/01 18:26:32 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -83,7 +83,8 @@ struct fcgi_begin_request_body {
 
 int	server_fcgi_header(struct client *, u_int);
 void	server_fcgi_read(struct bufferevent *, void *);
-int	fcgi_add_param(uint8_t *, char *, char *, int);
+int	fcgi_add_param(uint8_t *, const char *, const char *, int *,
+    struct client *);
 
 int
 server_fcgi(struct httpd *env, struct client *clt)
@@ -93,16 +94,19 @@ server_fcgi(struct httpd *env, struct client *clt)
 	struct sockaddr_un		 sun;
 	struct fcgi_record_header 	*h;
 	struct fcgi_begin_request_body	*begin;
-	size_t				 len, total_len;
-	int				 fd;
+	struct kv			*kv, key;
+	size_t				 len;
+	int				 fd, total_len;
 	const char			*errstr = NULL;
 	uint8_t				 buf[FCGI_RECORD_SIZE];
-	uint8_t				*params;
+	char				 hbuf[MAXHOSTNAMELEN];
+	char				*request_uri;
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		goto fail;
 
 	bzero(&sun, sizeof(sun));
+	bzero(&hbuf, sizeof(hbuf));
 	sun.sun_family = AF_UNIX;
 	len = strlcpy(sun.sun_path, srv_conf->path, sizeof(sun.sun_path));
 	if (len >= sizeof(sun.sun_path)) {
@@ -154,31 +158,168 @@ server_fcgi(struct httpd *env, struct client *clt)
 	    sizeof(struct fcgi_begin_request_body));
 
 	h->type = FCGI_PARAMS;
-	h->content_len = 0;
-	params = &buf[sizeof(struct fcgi_record_header)];
+	h->content_len = total_len = 0;
 
-	total_len = 0;
-
-	len = fcgi_add_param(params, "SCRIPT_NAME", desc->http_path,
-	    FCGI_CONTENT_SIZE);
-	params += len;
-	total_len += len;
-
-	if (desc->http_query) {
-		len = fcgi_add_param(params, "QUERY_STRING", desc->http_query,
-		    FCGI_CONTENT_SIZE);
-		params += len;
-		total_len += len;
+	if (fcgi_add_param(buf, "SCRIPT_NAME", desc->http_path, &total_len,
+	    clt) == -1) {
+		errstr = "failed to encode param";
+		goto fail;
 	}
 
-	h->content_len = htons(total_len);
+	if (desc->http_query)
+		if (fcgi_add_param(buf, "QUERY_STRING", desc->http_query,
+		    &total_len, clt) == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
 
-	bufferevent_write(clt->clt_srvbev, &buf,
-	    sizeof(struct fcgi_record_header) +
-	    ntohs(h->content_len));
+	if (fcgi_add_param(buf, "DOCUMENT_URI", desc->http_path, &total_len,
+	    clt) == -1) {
+		errstr = "failed to encode param";
+		goto fail;
+	}
+	if (fcgi_add_param(buf, "GATEWAY_INTERFACE", "CGI/1.1", &total_len,
+	    clt) == -1) {
+		errstr = "failed to encode param";
+		goto fail;
+	}
 
+	key.kv_key = "Accept";
+	if ((kv = kv_find(&desc->http_headers, &key)) != NULL &&
+	    kv->kv_value != NULL)
+		if (fcgi_add_param(buf, "HTTP_ACCEPT", kv->kv_value,
+		    &total_len, clt) == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
+
+	key.kv_key = "Accept-Encoding";
+	if ((kv = kv_find(&desc->http_headers, &key)) != NULL &&
+	    kv->kv_value != NULL)
+		if (fcgi_add_param(buf, "HTTP_ACCEPT_ENCODING", kv->kv_value,
+		    &total_len, clt) == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
+
+	key.kv_key = "Accept-Language";
+	if ((kv = kv_find(&desc->http_headers, &key)) != NULL &&
+	    kv->kv_value != NULL)
+		if (fcgi_add_param(buf, "HTTP_ACCEPT_LANGUAGE", kv->kv_value,
+		    &total_len, clt) == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
+
+	key.kv_key = "Connection";
+	if ((kv = kv_find(&desc->http_headers, &key)) != NULL &&
+	    kv->kv_value != NULL)
+		if (fcgi_add_param(buf, "HTTP_CONNECTION", kv->kv_value,
+		    &total_len, clt) == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
+
+	key.kv_key = "Cookie";
+	if ((kv = kv_find(&desc->http_headers, &key)) != NULL &&
+	    kv->kv_value != NULL)
+		if (fcgi_add_param(buf, "HTTP_COOKIE", kv->kv_value,
+		    &total_len, clt) == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
+
+	key.kv_key = "Host";
+	if ((kv = kv_find(&desc->http_headers, &key)) != NULL &&
+	    kv->kv_value != NULL)
+		if (fcgi_add_param(buf, "HTTP_HOST", kv->kv_value,
+		    &total_len, clt) == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
+
+	key.kv_key = "User-Agent";
+	if ((kv = kv_find(&desc->http_headers, &key)) != NULL &&
+	    kv->kv_value != NULL)
+		if (fcgi_add_param(buf, "HTTP_USER_AGENT", kv->kv_value,
+		    &total_len, clt) == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
+
+	(void)print_host(&clt->clt_ss, hbuf, sizeof(hbuf));
+	if (fcgi_add_param(buf, "REMOTE_ADDR", hbuf, &total_len, clt) == -1) {
+		errstr = "failed to encode param";
+		goto fail;
+	}
+
+	(void)snprintf(hbuf, sizeof(hbuf), "%d", ntohs(clt->clt_port));
+	if (fcgi_add_param(buf, "REMOTE_PORT", hbuf, &total_len, clt) == -1) {
+		errstr = "failed to encode param";
+		goto fail;
+	}
+
+	if (fcgi_add_param(buf, "REQUEST_METHOD",
+	    server_httpmethod_byid(desc->http_method), &total_len, clt) == -1) {
+		errstr = "failed to encode param";
+		goto fail;
+	}
+
+	if (!desc->http_query) {
+		if (fcgi_add_param(buf, "REQUEST_URI", desc->http_path,
+		    &total_len, clt) == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
+	} else if (asprintf(&request_uri, "%s?%s", desc->http_path,
+	    desc->http_query) != -1) {
+		if (fcgi_add_param(buf, "REQUEST_URI", request_uri, &total_len,
+		    clt) == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
+		free(request_uri);
+	}
+
+	(void)print_host(&clt->clt_srv_ss, hbuf, sizeof(hbuf));
+	if (fcgi_add_param(buf, "SERVER_ADDR", hbuf, &total_len, clt) == -1) {
+		errstr = "failed to encode param";
+		goto fail;
+	}
+
+	(void)snprintf(hbuf, sizeof(hbuf), "%d",
+	    ntohs(server_socket_getport(&clt->clt_srv_ss)));
+	if (fcgi_add_param(buf, "SERVER_PORT", hbuf, &total_len, clt) == -1) {
+		errstr = "failed to encode param";
+		goto fail;
+	}
+
+	if (fcgi_add_param(buf, "SERVER_NAME", srv_conf->name, &total_len,
+	    clt) == -1) {
+		errstr = "failed to encode param";
+		goto fail;
+	}
+
+	if (fcgi_add_param(buf, "SERVER_PROTOCOL", desc->http_version,
+	    &total_len, clt) == -1) {
+		errstr = "failed to encode param";
+		goto fail;
+	}
+
+	if (fcgi_add_param(buf, "SERVER_SOFTWARE", HTTPD_SERVERNAME, &total_len,
+	    clt) == -1) {
+		errstr = "failed to encode param";
+		goto fail;
+	}
+
+	if (total_len != 0) {	/* send last params record */
+		bufferevent_write(clt->clt_srvbev, &buf,
+		    sizeof(struct fcgi_record_header) +
+		    ntohs(h->content_len));
+	}
+
+	/* send "no more params" message */
 	h->content_len = 0;
-
 	bufferevent_write(clt->clt_srvbev, &buf,
 	    sizeof(struct fcgi_record_header));
 
@@ -208,18 +349,58 @@ server_fcgi(struct httpd *env, struct client *clt)
 }
 
 int
-fcgi_add_param(uint8_t *buf, char *key, char *val, int size)
+fcgi_add_param(uint8_t *buf, const char *key, const char *val, int *total_len,
+    struct client *clt)
 {
-	int len = 0;
-	DPRINTF("%s: %s => %s", __func__, key, val);
-	buf[0] = strlen(key);
-	len++;
-	buf[1] = strlen(val);
-	len++;
-	len += strlcpy(buf + len, key, size - len);
-	len += strlcpy(buf + len, val, size - len);
+	struct fcgi_record_header	*h;
+	int				 len = 0;
+	int				 key_len = strlen(key);
+	int				 val_len = strlen(val);
+	uint8_t				*param;
 
-	return len;
+	len += key_len + val_len;
+	len += key_len > 127 ? 4 : 1;
+	len += val_len > 127 ? 4 : 1;
+
+	DPRINTF("%s: %s[%d] => %s[%d], total_len: %d", __func__, key, key_len,
+	    val, val_len, *total_len);
+
+	if (len > FCGI_CONTENT_SIZE)
+		return (-1);
+
+	if (*total_len + len > FCGI_CONTENT_SIZE) {
+		bufferevent_write(clt->clt_srvbev, buf,
+		    sizeof(struct fcgi_record_header) + *total_len);
+		*total_len = 0;
+	}
+
+	h = (struct fcgi_record_header *) buf;
+	param = buf + sizeof(struct fcgi_record_header) + *total_len;
+
+	if (key_len > 127) {
+		*param++ = ((key_len >> 24) & 0xff) | 0x80;
+		*param++ = ((key_len >> 16) & 0xff);
+		*param++ = ((key_len >> 8) & 0xff);
+		*param++ = (key_len & 0xff);
+	} else
+		*param++ = key_len;
+
+	if (val_len > 127) {
+		*param++ = ((val_len >> 24) & 0xff) | 0x80;
+		*param++ = ((val_len >> 16) & 0xff);
+		*param++ = ((val_len >> 8) & 0xff);
+		*param++ = (val_len & 0xff);
+	} else
+		*param++ = val_len;
+
+	memcpy(param, key, key_len);
+	param += key_len;
+	memcpy(param, val, val_len);
+
+	*total_len += len;
+
+	h->content_len = htons(*total_len);
+	return (0);
 }
 
 void
