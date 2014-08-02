@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.10 2014/08/02 11:59:04 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.11 2014/08/02 17:05:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -451,10 +451,12 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 			h = (struct fcgi_record_header *)
 			    EVBUFFER_DATA(clt->clt_srvevb);
 			DPRINTF("%s: record header: version %d type %d id %d "
-			    "content len %d", __func__, h->version, h->type,
-			    ntohs(h->id), ntohs(h->content_len));
+			    "content len %d padding %d", __func__,
+			     h->version, h->type, ntohs(h->id),
+			     ntohs(h->content_len), h->padding_len);
 			clt->clt_fcgi_type = h->type;
 			clt->clt_fcgi_toread = ntohs(h->content_len);
+			clt->clt_fcgi_padding_len = h->padding_len;
 			evbuffer_drain(clt->clt_srvevb,
 			    EVBUFFER_LENGTH(clt->clt_srvevb));
 			if (clt->clt_fcgi_toread != 0)
@@ -471,9 +473,23 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 			}
 			evbuffer_drain(clt->clt_srvevb,
 			    EVBUFFER_LENGTH(clt->clt_srvevb));
+			if (!clt->clt_fcgi_padding_len) {
+				clt->clt_fcgi_state = FCGI_READ_HEADER;
+				clt->clt_fcgi_toread =
+				    sizeof(struct fcgi_record_header);
+			} else {
+				clt->clt_fcgi_state = FCGI_READ_PADDING;
+				clt->clt_fcgi_toread =
+				    clt->clt_fcgi_padding_len;
+			}
+			break;
+		case FCGI_READ_PADDING:
+			evbuffer_drain(clt->clt_srvevb,
+			    EVBUFFER_LENGTH(clt->clt_srvevb));
 			clt->clt_fcgi_state = FCGI_READ_HEADER;
 			clt->clt_fcgi_toread =
 			    sizeof(struct fcgi_record_header);
+			break;
 		}
 	} while (len > 0);
 }
