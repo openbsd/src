@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.22 2014/07/31 17:55:09 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.23 2014/08/02 09:46:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -277,14 +277,14 @@ server_file_index(struct httpd *env, struct client *clt)
 		if (dp->d_name[0] == '.' &&
 		    !(dp->d_name[1] == '.' && dp->d_name[2] == '\0')) {
 			/* ignore hidden files starting with a dot */
-		} else if (dp->d_type == DT_DIR) {
+		} else if (S_ISDIR(st.st_mode)) {
 			namewidth -= 1; /* trailing slash */
 			if (evbuffer_add_printf(evb,
 			    "<a href=\"%s\">%s/</a>%*s%s%20s\n",
 			    dp->d_name, dp->d_name,
 			    MAX(namewidth, 0), " ", tmstr, "-") == -1)
 				skip = 1;
-		} else if (dp->d_type == DT_REG) {
+		} else if (S_ISREG(st.st_mode)) {
 			if (evbuffer_add_printf(evb,
 			    "<a href=\"%s\">%s</a>%*s%s%20llu\n",
 			    dp->d_name, dp->d_name,
