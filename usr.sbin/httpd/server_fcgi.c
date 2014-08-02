@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.9 2014/08/02 11:52:01 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.10 2014/08/02 11:59:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -434,46 +434,48 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 	struct fcgi_record_header	*h;
 	size_t				 len;
 
-	len = bufferevent_read(bev, &buf, clt->clt_fcgi_toread);
-	/* XXX error handling */
-	evbuffer_add(clt->clt_srvevb, &buf, len);
-	clt->clt_fcgi_toread -= len;
-	DPRINTF("%s: len: %lu toread: %d state: %d", __func__, len,
-	    clt->clt_fcgi_toread, clt->clt_fcgi_state);
+	do {
+		len = bufferevent_read(bev, &buf, clt->clt_fcgi_toread);
+		/* XXX error handling */
+		evbuffer_add(clt->clt_srvevb, &buf, len);
+		clt->clt_fcgi_toread -= len;
+		DPRINTF("%s: len: %lu toread: %d state: %d", __func__, len,
+		    clt->clt_fcgi_toread, clt->clt_fcgi_state);
 
-	if (clt->clt_fcgi_toread != 0)
-		return;
-
-	switch (clt->clt_fcgi_state) {
-	case FCGI_READ_HEADER:
-		clt->clt_fcgi_state = FCGI_READ_CONTENT;
-		h = (struct fcgi_record_header *)
-		    EVBUFFER_DATA(clt->clt_srvevb);
-		DPRINTF("%s: record header: version %d type %d id %d "
-		    "content len %d", __func__, h->version, h->type,
-		    ntohs(h->id), ntohs(h->content_len));
-		clt->clt_fcgi_type = h->type;
-		clt->clt_fcgi_toread = ntohs(h->content_len);
-		evbuffer_drain(clt->clt_srvevb,
-		    EVBUFFER_LENGTH(clt->clt_srvevb));
 		if (clt->clt_fcgi_toread != 0)
-			break;
+			return;
 
-		/* fallthrough if content_len == 0 */
-	case FCGI_READ_CONTENT:
-		if (clt->clt_fcgi_type == FCGI_STDOUT &&
-		    EVBUFFER_LENGTH(clt->clt_srvevb) > 0) {
-			if (++clt->clt_chunk == 1)
-				server_fcgi_header(clt, 200);
-			server_bufferevent_write_buffer(clt,
-			    clt->clt_srvevb);
+		switch (clt->clt_fcgi_state) {
+		case FCGI_READ_HEADER:
+			clt->clt_fcgi_state = FCGI_READ_CONTENT;
+			h = (struct fcgi_record_header *)
+			    EVBUFFER_DATA(clt->clt_srvevb);
+			DPRINTF("%s: record header: version %d type %d id %d "
+			    "content len %d", __func__, h->version, h->type,
+			    ntohs(h->id), ntohs(h->content_len));
+			clt->clt_fcgi_type = h->type;
+			clt->clt_fcgi_toread = ntohs(h->content_len);
+			evbuffer_drain(clt->clt_srvevb,
+			    EVBUFFER_LENGTH(clt->clt_srvevb));
+			if (clt->clt_fcgi_toread != 0)
+				break;
+
+			/* fallthrough if content_len == 0 */
+		case FCGI_READ_CONTENT:
+			if (clt->clt_fcgi_type == FCGI_STDOUT &&
+			    EVBUFFER_LENGTH(clt->clt_srvevb) > 0) {
+				if (++clt->clt_chunk == 1)
+					server_fcgi_header(clt, 200);
+				server_bufferevent_write_buffer(clt,
+				    clt->clt_srvevb);
+			}
+			evbuffer_drain(clt->clt_srvevb,
+			    EVBUFFER_LENGTH(clt->clt_srvevb));
+			clt->clt_fcgi_state = FCGI_READ_HEADER;
+			clt->clt_fcgi_toread =
+			    sizeof(struct fcgi_record_header);
 		}
-		evbuffer_drain(clt->clt_srvevb,
-		    EVBUFFER_LENGTH(clt->clt_srvevb));
-		clt->clt_fcgi_state = FCGI_READ_HEADER;
-		clt->clt_fcgi_toread =
-		    sizeof(struct fcgi_record_header);
-	}
+	} while (len > 0);
 }
 
 int
