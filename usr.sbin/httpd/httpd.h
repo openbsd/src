@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.32 2014/08/02 17:05:18 florian Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.33 2014/08/02 21:21:47 doug Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -285,18 +285,20 @@ struct client {
 };
 SPLAY_HEAD(client_tree, client);
 
-#define SRVFLAG_INDEX		0x01
-#define SRVFLAG_NO_INDEX	0x02
-#define SRVFLAG_AUTO_INDEX	0x04
-#define SRVFLAG_NO_AUTO_INDEX	0x08
-#define SRVFLAG_PATH		0x10
-#define SRVFLAG_LOCATION	0x20
-#define SRVFLAG_FCGI		0x40
-#define SRVFLAG_NO_FCGI		0x80
+#define SRVFLAG_INDEX		0x001
+#define SRVFLAG_NO_INDEX	0x002
+#define SRVFLAG_AUTO_INDEX	0x004
+#define SRVFLAG_NO_AUTO_INDEX	0x008
+#define SRVFLAG_PATH		0x010
+#define SRVFLAG_LOCATION	0x020
+#define SRVFLAG_FCGI		0x040
+#define SRVFLAG_NO_FCGI		0x080
+#define SRVFLAG_LOG		0x100
+#define SRVFLAG_NO_LOG		0x200
 
 #define SRVFLAG_BITS						\
 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"	\
-	"\05PATH\06LOCATION\07FCGI\10NO_FCGI"
+	"\05PATH\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG"
 
 #define TCPFLAG_NODELAY		0x01
 #define TCPFLAG_NNODELAY	0x02
@@ -313,9 +315,8 @@ SPLAY_HEAD(client_tree, client);
 	"\05SOCKET_BUFFER_SIZE\06IP_TTL\07IP_MINTTL\10NO_SPLICE"
 
 enum log_format {
-	LOG_FORMAT_NONE = -1,
-	LOG_FORMAT_COMMON = 0,
-	LOG_FORMAT_COMBINED,
+	LOG_FORMAT_COMMON,
+	LOG_FORMAT_COMBINED
 };
 
 struct server_config {
@@ -330,7 +331,7 @@ struct server_config {
 	int			 prefixlen;
 	struct timeval		 timeout;
 
-	u_int8_t		 flags;
+	u_int16_t		 flags;
 	u_int8_t		 tcpflags;
 	int			 tcpbufsiz;
 	int			 tcpbacklog;

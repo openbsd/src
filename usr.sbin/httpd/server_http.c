@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.27 2014/08/01 22:24:05 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.28 2014/08/02 21:21:47 doug Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -971,20 +971,20 @@ server_httperror_cmp(const void *a, const void *b)
 int
 server_log_http(struct client *clt, u_int code, size_t len)
 {
-	static char tstamp[64];
-	static char ip[INET6_ADDRSTRLEN];
-	time_t t;
-	struct tm *tm;
+	static char		 tstamp[64];
+	static char		 ip[INET6_ADDRSTRLEN];
+	time_t			 t;
+	struct kv		 key, *agent, *referrer;
+	struct tm		*tm;
 	struct server_config	*srv_conf;
 	struct http_descriptor	*desc;
-	struct kv		key, *agent, *referrer;
 
 	if ((srv_conf = clt->clt_srv_conf) == NULL)
 		return (-1);
+	if ((srv_conf->flags & SRVFLAG_LOG) == 0)
+		return (0);
 	if ((desc = clt->clt_desc) == NULL)
 		return (-1);
-	if (srv_conf->logformat == LOG_FORMAT_NONE)
-		return (0);
 
 	if ((t = time(NULL)) == -1)
 		return (-1);
@@ -994,11 +994,11 @@ server_log_http(struct client *clt, u_int code, size_t len)
 		return (-1);
 
 	if (clt->clt_ss.ss_family == AF_INET) {
-		struct sockaddr_in *in = (struct sockaddr_in *)&clt->clt_ss;
+		struct sockaddr_in	*in = (struct sockaddr_in *)&clt->clt_ss;
 		if (inet_ntop(AF_INET, &in->sin_addr, ip, sizeof(ip)) == NULL)
 			return (-1);
 	} else if (clt->clt_ss.ss_family == AF_INET6) {
-		struct sockaddr_in6 *in = (struct sockaddr_in6 *)&clt->clt_ss;
+		struct sockaddr_in6	*in = (struct sockaddr_in6 *)&clt->clt_ss;
 		if (inet_ntop(AF_INET6, &in->sin6_addr, ip, sizeof(ip)) == NULL)
 			return (-1);
 	} else
@@ -1007,6 +1007,10 @@ server_log_http(struct client *clt, u_int code, size_t len)
 	/*
 	 * For details on common log format, see:
 	 * https://httpd.apache.org/docs/current/mod/mod_log_config.html
+	 *
+	 * httpd's format is similar to these Apache LogFormats:
+	 * "%v %h %l %u %t \"%r\" %>s %B"
+	 * "%v %h %l %u %t \"%r\" %>s %B \"%{Referer}i\" \"%{User-agent}i\""
 	 */
 	switch (srv_conf->logformat) {
 	case LOG_FORMAT_COMMON:
@@ -1048,9 +1052,6 @@ server_log_http(struct client *clt, u_int code, size_t len)
 		    agent == NULL ? "" : agent->kv_value) == -1)
 			return (-1);
 		break;
-
-	case LOG_FORMAT_NONE:
-		return (-1);
 	}
 
 	return (0);

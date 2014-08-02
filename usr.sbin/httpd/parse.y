@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2014/08/01 21:59:56 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.16 2014/08/02 21:21:47 doug Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -216,6 +216,8 @@ server		: SERVER STRING		{
 			    sizeof(s->srv_conf.index));
 			s->srv_conf.id = ++last_server_id;
 			s->srv_conf.timeout.tv_sec = SERVER_TIMEOUT;
+			s->srv_conf.flags |= SRVFLAG_LOG;
+			s->srv_conf.logformat = LOG_FORMAT_COMMON;
 
 			if (last_server_id == INT_MAX) {
 				yyerror("too many servers defined");
@@ -438,13 +440,18 @@ dirflags	: INDEX STRING		{
 		;
 
 logformat	: LOG COMMON {
+			srv->srv_conf.flags &= ~SRVFLAG_NO_LOG;
+			srv->srv_conf.flags |= SRVFLAG_LOG;
 			srv->srv_conf.logformat = LOG_FORMAT_COMMON;
 		}
 		| LOG COMBINED {
+			srv->srv_conf.flags &= ~SRVFLAG_NO_LOG;
+			srv->srv_conf.flags |= SRVFLAG_LOG;
 			srv->srv_conf.logformat = LOG_FORMAT_COMBINED;
 		}
 		| NO LOG {
-			srv->srv_conf.logformat = LOG_FORMAT_NONE;
+			srv->srv_conf.flags &= ~SRVFLAG_LOG;
+			srv->srv_conf.flags |= SRVFLAG_NO_LOG;
 		}
 		;
 

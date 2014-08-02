@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.10 2014/07/31 14:18:38 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.11 2014/08/02 21:21:47 doug Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -256,6 +256,12 @@ config_getserver_config(struct httpd *env, struct server *srv,
 		f = SRVFLAG_FCGI|SRVFLAG_NO_FCGI;
 		if ((srv_conf->flags & f) == 0)
 			srv_conf->flags |= srv->srv_conf.flags & f;
+
+		f = SRVFLAG_LOG|SRVFLAG_NO_LOG;
+		if ((srv_conf->flags & f) == 0) {
+			srv_conf->flags |= srv->srv_conf.flags & f;
+			srv_conf->logformat = srv->srv_conf.logformat;
+		}
 
 		DPRINTF("%s: %s %d received location \"%s\", parent \"%s\"",
 		    __func__, ps->ps_title[privsep_process], ps->ps_instance,
