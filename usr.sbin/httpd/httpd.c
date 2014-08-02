@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.11 2014/08/01 21:59:56 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.12 2014/08/02 09:54:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -490,7 +490,7 @@ canonicalize_path(const char *input, char *path, size_t len)
 				while (i[1] == '/')
 					i++;
 				continue;
-			} else if (i[1] == '.' && i[2] == '.' && 
+			} else if (i[1] == '.' && i[2] == '.' &&
 			    (i[3] == '/' || i[3] == '\0')) {
 				/* b) revert '..' to previous directory */
 				i += 3;

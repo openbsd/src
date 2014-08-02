@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.7 2014/08/01 18:26:32 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.8 2014/08/02 09:54:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -89,17 +89,17 @@ int	fcgi_add_param(uint8_t *, const char *, const char *, int *,
 int
 server_fcgi(struct httpd *env, struct client *clt)
 {
+	uint8_t				 buf[FCGI_RECORD_SIZE];
+	char				 hbuf[MAXHOSTNAMELEN];
 	struct server_config		*srv_conf = clt->clt_srv_conf;
 	struct http_descriptor		*desc	= clt->clt_desc;
 	struct sockaddr_un		 sun;
-	struct fcgi_record_header 	*h;
+	struct fcgi_record_header	*h;
 	struct fcgi_begin_request_body	*begin;
 	struct kv			*kv, key;
 	size_t				 len;
 	int				 fd, total_len;
 	const char			*errstr = NULL;
-	uint8_t				 buf[FCGI_RECORD_SIZE];
-	char				 hbuf[MAXHOSTNAMELEN];
 	char				*request_uri;
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
@@ -406,10 +406,10 @@ fcgi_add_param(uint8_t *buf, const char *key, const char *val, int *total_len,
 void
 server_fcgi_read(struct bufferevent *bev, void *arg)
 {
-	struct client *clt = (struct client *) arg;
-	struct fcgi_record_header 	*h;
-	uint8_t	 buf[FCGI_RECORD_SIZE];
-	size_t	 len;
+	uint8_t				 buf[FCGI_RECORD_SIZE];
+	struct client			*clt = (struct client *) arg;
+	struct fcgi_record_header	*h;
+	size_t				 len;
 
 	len = bufferevent_read(bev, &buf, clt->clt_fcgi_toread);
 	/* XXX error handling */

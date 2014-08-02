@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.23 2014/08/02 09:46:51 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.24 2014/08/02 09:54:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -270,7 +270,7 @@ server_file_index(struct httpd *env, struct client *clt)
 		}
 
 		t = st.st_mtime;
-		localtime_r(&t, &tm);			
+		localtime_r(&t, &tm);
 		strftime(tmstr, sizeof(tmstr), "%d-%h-%Y %R", &tm);
 		namewidth = 51 - strlen(dp->d_name);
 
