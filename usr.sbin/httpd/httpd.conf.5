@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.15 2014/08/02 08:07:07 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.16 2014/08/02 10:24:36 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -123,7 +123,7 @@ If not specified, it defaults to
 Disable the directory index.
 .Nm httpd
 will neither display nor generate a directory index.
-.It Oo Ic no Oc Ic fastcgi Op Ar socket
+.It Oo Ic no Oc Ic fastcgi Op Ic socket Ar socket
 Enable FastCGI instead of serving files.
 The
 .Ar socket
