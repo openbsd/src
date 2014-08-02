@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.8 2014/08/02 09:54:13 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.9 2014/08/02 11:52:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -98,26 +98,49 @@ server_fcgi(struct httpd *env, struct client *clt)
 	struct fcgi_begin_request_body	*begin;
 	struct kv			*kv, key;
 	size_t				 len;
-	int				 fd, total_len;
+	int				 fd = -1, total_len;
 	const char			*errstr = NULL;
-	char				*request_uri;
+	char				*request_uri, *p;
+	in_port_t			 port;
+	struct sockaddr_storage		 ss;
 
-	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-		goto fail;
+	if (srv_conf->path[0] == ':') {
+		p = srv_conf->path + 1;
 
-	bzero(&sun, sizeof(sun));
-	bzero(&hbuf, sizeof(hbuf));
-	sun.sun_family = AF_UNIX;
-	len = strlcpy(sun.sun_path, srv_conf->path, sizeof(sun.sun_path));
-	if (len >= sizeof(sun.sun_path)) {
-		errstr = "socket path to long";
-		goto fail;
+		port = strtonum(p, 0, 0xffff, &errstr);
+		if (errstr != NULL) {
+			log_warn("%s: strtonum %s, %s", __func__, p, errstr);
+			goto fail;
+		}
+		memset(&ss, 0, sizeof(ss));
+		ss.ss_family = AF_INET;
+		((struct sockaddr_in *)
+		    &ss)->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+		port = htons(port);
+
+		if ((fd = server_socket_connect(&ss, port, srv_conf)) == -1)
+			goto fail;
+	} else {
+		if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+			goto fail;
+
+		memset(&sun, 0, sizeof(sun));
+		sun.sun_family = AF_UNIX;
+		len = strlcpy(sun.sun_path,
+		    srv_conf->path, sizeof(sun.sun_path));
+		if (len >= sizeof(sun.sun_path)) {
+			errstr = "socket path to long";
+			goto fail;
+		}
+		sun.sun_len = len;
+
+		if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
+			goto fail;
 	}
-	sun.sun_len = len;
 
-	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
-		goto fail;
+	socket_set_blockmode(fd, BM_NONBLOCK);
 
+	memset(&hbuf, 0, sizeof(hbuf));
 	clt->clt_fcgi_state = FCGI_READ_HEADER;
 	clt->clt_fcgi_toread = sizeof(struct fcgi_record_header);
 
@@ -140,7 +163,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 		goto fail;
 	}
 
-	bzero(&buf, sizeof(buf));
+	memset(&buf, 0, sizeof(buf));
 
 	h = (struct fcgi_record_header *) &buf;
 	h->version = 1;

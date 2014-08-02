@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.21 2014/08/01 22:24:05 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.22 2014/08/02 11:52:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -334,6 +334,27 @@ server_socket_listen(struct sockaddr_storage *ss, in_port_t port,
 		goto bad;
 	if (listen(s, srv_conf->tcpbacklog) == -1)
 		goto bad;
+
+	return (s);
+
+ bad:
+	close(s);
+	return (-1);
+}
+
+int
+server_socket_connect(struct sockaddr_storage *ss, in_port_t port,
+    struct server_config *srv_conf)
+{
+	int	s;
+
+	if ((s = server_socket(ss, port, srv_conf, -1, 0)) == -1)
+		return (-1);
+
+	if (connect(s, (struct sockaddr *)ss, ss->ss_len) == -1) {
+		if (errno != EINPROGRESS)
+			goto bad;
+	}
 
 	return (s);
 
