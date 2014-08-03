@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.13 2014/08/03 10:38:42 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.14 2014/08/03 11:16:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -98,14 +98,14 @@ server_fcgi(struct httpd *env, struct client *clt)
 	struct fcgi_begin_request_body	*begin;
 	struct kv			*kv, key;
 	size_t				 len;
-	int				 fd = -1, total_len;
+	int				 fd = -1, total_len, ret;
 	const char			*errstr = NULL;
-	char				*request_uri, *p;
+	char				*str, *p;
 	in_port_t			 port;
 	struct sockaddr_storage		 ss;
 
-	if (srv_conf->path[0] == ':') {
-		p = srv_conf->path + 1;
+	if (srv_conf->socket[0] == ':') {
+		p = srv_conf->socket + 1;
 
 		port = strtonum(p, 0, 0xffff, &errstr);
 		if (errstr != NULL) {
@@ -127,7 +127,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 		memset(&sun, 0, sizeof(sun));
 		sun.sun_family = AF_UNIX;
 		len = strlcpy(sun.sun_path,
-		    srv_conf->path, sizeof(sun.sun_path));
+		    srv_conf->socket, sizeof(sun.sun_path));
 		if (len >= sizeof(sun.sun_path)) {
 			errstr = "socket path to long";
 			goto fail;
@@ -188,6 +188,16 @@ server_fcgi(struct httpd *env, struct client *clt)
 	    clt) == -1) {
 		errstr = "failed to encode param";
 		goto fail;
+	}
+
+	if (asprintf(&str, "%s%s", srv_conf->root, desc->http_path) != -1) {
+		ret = fcgi_add_param(buf, "SCRIPT_FILENAME", str,
+		    &total_len, clt);
+		free(str);
+		if (ret == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
 	}
 
 	if (desc->http_query)
@@ -295,14 +305,15 @@ server_fcgi(struct httpd *env, struct client *clt)
 			errstr = "failed to encode param";
 			goto fail;
 		}
-	} else if (asprintf(&request_uri, "%s?%s", desc->http_path,
+	} else if (asprintf(&str, "%s?%s", desc->http_path,
 	    desc->http_query) != -1) {
-		if (fcgi_add_param(buf, "REQUEST_URI", request_uri, &total_len,
-		    clt) == -1) {
+		ret = fcgi_add_param(buf, "REQUEST_URI", str,
+		    &total_len, clt);
+		free(str);
+		if (ret == -1) {	
 			errstr = "failed to encode param";
 			goto fail;
 		}
-		free(request_uri);
 	}
 
 	(void)print_host(&clt->clt_srv_ss, hbuf, sizeof(hbuf));

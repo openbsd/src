@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2014/08/03 10:26:43 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.18 2014/08/03 11:16:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -210,8 +210,8 @@ server		: SERVER STRING		{
 			}
 			free($2);
 
-			strlcpy(s->srv_conf.path, HTTPD_DOCROOT,
-			    sizeof(s->srv_conf.path));
+			strlcpy(s->srv_conf.root, HTTPD_DOCROOT,
+			    sizeof(s->srv_conf.root));
 			strlcpy(s->srv_conf.index, HTTPD_INDEX,
 			    sizeof(s->srv_conf.index));
 			s->srv_conf.id = ++last_server_id;
@@ -280,20 +280,15 @@ serveroptsl	: LISTEN ON STRING port {
 			host_free(&al);
 		}
 		| ROOT STRING		{
-			if (srv->srv_conf.flags & SRVFLAG_FCGI) {
-				yyerror("root conflicts with fastcgi");
-				free($2);
-				YYERROR;
-			}
-			if (strlcpy(srv->srv_conf.path, $2,
-			    sizeof(srv->srv_conf.path)) >=
-			    sizeof(srv->srv_conf.path)) {
+			if (strlcpy(srv->srv_conf.root, $2,
+			    sizeof(srv->srv_conf.root)) >=
+			    sizeof(srv->srv_conf.root)) {
 				yyerror("document root too long");
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			srv->srv_conf.flags |= SRVFLAG_PATH;
+			srv->srv_conf.flags |= SRVFLAG_ROOT;
 		}
 		| DIRECTORY dirflags
 		| DIRECTORY '{' dirflags_l '}'
@@ -397,15 +392,15 @@ fcgiflags_l	: fcgiflags comma fcgiflags_l
 		;
 
 fcgiflags	: SOCKET STRING		{
-			if (strlcpy(srv->srv_conf.path, $2,
-			    sizeof(srv->srv_conf.path)) >=
-			    sizeof(srv->srv_conf.path)) {
+			if (strlcpy(srv->srv_conf.socket, $2,
+			    sizeof(srv->srv_conf.socket)) >=
+			    sizeof(srv->srv_conf.socket)) {
 				yyerror("fastcgi socket too long");
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			srv->srv_conf.flags |= SRVFLAG_PATH;
+			srv->srv_conf.flags |= SRVFLAG_SOCKET;
 		}
 		;
 

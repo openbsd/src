@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.34 2014/08/03 10:26:43 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.35 2014/08/03 11:16:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -285,20 +285,21 @@ struct client {
 };
 SPLAY_HEAD(client_tree, client);
 
-#define SRVFLAG_INDEX		0x001
-#define SRVFLAG_NO_INDEX	0x002
-#define SRVFLAG_AUTO_INDEX	0x004
-#define SRVFLAG_NO_AUTO_INDEX	0x008
-#define SRVFLAG_PATH		0x010
-#define SRVFLAG_LOCATION	0x020
-#define SRVFLAG_FCGI		0x040
-#define SRVFLAG_NO_FCGI		0x080
-#define SRVFLAG_LOG		0x100
-#define SRVFLAG_NO_LOG		0x200
+#define SRVFLAG_INDEX		0x0001
+#define SRVFLAG_NO_INDEX	0x0002
+#define SRVFLAG_AUTO_INDEX	0x0004
+#define SRVFLAG_NO_AUTO_INDEX	0x0008
+#define SRVFLAG_ROOT		0x0010
+#define SRVFLAG_LOCATION	0x0020
+#define SRVFLAG_FCGI		0x0040
+#define SRVFLAG_NO_FCGI		0x0080
+#define SRVFLAG_LOG		0x0100
+#define SRVFLAG_NO_LOG		0x0200
+#define SRVFLAG_SOCKET		0x0400
 
 #define SRVFLAG_BITS						\
 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"	\
-	"\05PATH\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG"
+	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG\13SOCKET"
 
 #define TCPFLAG_NODELAY		0x01
 #define TCPFLAG_NNODELAY	0x02
@@ -325,7 +326,8 @@ struct server_config {
 	char			 name[MAXHOSTNAMELEN];
 	char			 location[NAME_MAX];
 	char			 index[NAME_MAX];
-	char			 path[MAXPATHLEN];
+	char			 root[MAXPATHLEN];
+	char			 socket[MAXPATHLEN];
 
 	in_port_t		 port;
 	struct sockaddr_storage	 ss;
