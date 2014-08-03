@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.12 2014/08/02 17:42:24 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.13 2014/08/03 10:38:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -503,6 +503,9 @@ server_fcgi_header(struct client *clt, u_int code)
 	char			 tmbuf[32];
 
 	if (desc == NULL || (error = server_httperror_byid(code)) == NULL)
+		return (-1);
+
+	if (server_log_http(clt, code, 0) == -1)
 		return (-1);
 
 	kv_purge(&desc->http_headers);
