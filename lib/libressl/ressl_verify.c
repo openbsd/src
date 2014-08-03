@@ -143,7 +143,7 @@ ressl_check_common_name(X509 *cert, const char *host)
 {
 	X509_NAME *name;
 	char *common_name = NULL;
-	size_t common_name_len;
+	int common_name_len;
 	int rv = -1;
 
 	name = X509_get_subject_name(cert);
