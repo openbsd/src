@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.32 2014/08/03 20:39:40 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.33 2014/08/03 21:33:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -109,6 +109,10 @@ server_httpdesc_free(struct http_descriptor *desc)
 	if (desc->http_version != NULL) {
 		free(desc->http_version);
 		desc->http_version = NULL;
+	}
+	if (desc->http_host != NULL) {
+		free(desc->http_host);
+		desc->http_host = NULL;
 	}
 	kv_purge(&desc->http_headers);
 	desc->http_lastheader = NULL;
@@ -672,6 +676,7 @@ int
 server_response(struct httpd *httpd, struct client *clt)
 {
 	char			 path[MAXPATHLEN];
+	char			 hostname[MAXHOSTNAMELEN];
 	struct http_descriptor	*desc	= clt->clt_desc;
 	struct server		*srv = clt->clt_srv;
 	struct server_config	*srv_conf = &srv->srv_conf, *location;
@@ -732,16 +737,19 @@ server_response(struct httpd *httpd, struct client *clt)
 
 	if (srv_conf != NULL) {
 		/* Use the actual server IP address */
-		if (server_http_host(&clt->clt_srv_ss, desc->http_host,
-		    sizeof(desc->http_host)) == NULL)
+		if (server_http_host(&clt->clt_srv_ss, hostname,
+		    sizeof(hostname)) == NULL)
 			goto fail;
 	} else {
 		/* Host header was valid and found */
-		if (strlcpy(desc->http_host, host->kv_value,
-		    sizeof(desc->http_host)) >= sizeof(desc->http_host))
+		if (strlcpy(hostname, host->kv_value, sizeof(hostname)) >=
+		    sizeof(hostname))
 			goto fail;
 		srv_conf = clt->clt_srv_conf;
 	}
+
+	if ((desc->http_host = strdup(hostname)) == NULL)
+		goto fail;
 
 	/* Now search for the location */
 	TAILQ_FOREACH(location, &srv->srv_hosts, entry) {

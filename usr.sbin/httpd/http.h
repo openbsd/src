@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.4 2014/07/25 23:23:39 reyk Exp $	*/
+/*	$OpenBSD: http.h,v 1.5 2014/08/03 21:33:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -151,7 +151,7 @@ struct http_descriptor {
 #define query_key		 http_matchquery.kv_key
 #define query_val		 http_matchquery.kv_value
 
-	char			 http_host[MAXHOSTNAMELEN];
+	char			*http_host;
 	enum httpmethod		 http_method;
 	int			 http_chunked;
 	char			*http_version;
