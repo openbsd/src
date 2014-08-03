@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.35 2014/08/03 11:16:10 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.36 2014/08/03 12:26:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -446,8 +446,8 @@ const char
 	*server_httperror_byid(u_int);
 void	 server_read_httpcontent(struct bufferevent *, void *);
 void	 server_read_httpchunks(struct bufferevent *, void *);
-int	 server_writeheader_kv(struct client *, struct kv *);
-int	 server_writeheader_http(struct client *);
+int	 server_writeheader_http(struct client *clt, struct kv *);
+int	 server_headers(struct client *, int (*)(struct client *, struct kv *));
 int	 server_writeresponse_http(struct client *);
 int	 server_response_http(struct client *, u_int, struct media_type *,
 	    size_t);

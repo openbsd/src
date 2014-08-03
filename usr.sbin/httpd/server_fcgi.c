@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.14 2014/08/03 11:16:10 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.15 2014/08/03 12:26:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -546,7 +546,7 @@ server_fcgi_header(struct client *clt, u_int code)
 	/* Write initial header (fcgi might append more) */
 	if (server_writeresponse_http(clt) == -1 ||
 	    server_bufferevent_print(clt, "\r\n") == -1 ||
-	    server_writeheader_http(clt) == -1)
+	    server_headers(clt, server_writeheader_http) == -1)
 		return (-1);
 
 	return (0);

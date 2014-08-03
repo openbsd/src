@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.30 2014/08/03 10:26:44 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.31 2014/08/03 12:26:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -818,7 +818,7 @@ server_response_http(struct client *clt, u_int code,
 	/* Write completed header */
 	if (server_writeresponse_http(clt) == -1 ||
 	    server_bufferevent_print(clt, "\r\n") == -1 ||
-	    server_writeheader_http(clt) == -1 ||
+	    server_headers(clt, server_writeheader_http) == -1 ||
 	    server_bufferevent_print(clt, "\r\n") == -1)
 		return (-1);
 
@@ -854,7 +854,7 @@ server_writeresponse_http(struct client *clt)
 }
 
 int
-server_writeheader_kv(struct client *clt, struct kv *hdr)
+server_writeheader_http(struct client *clt, struct kv *hdr)
 {
 	char			*ptr;
 	const char		*key;
@@ -882,16 +882,16 @@ server_writeheader_kv(struct client *clt, struct kv *hdr)
 }
 
 int
-server_writeheader_http(struct client *clt)
+server_headers(struct client *clt, int (*hdr_cb)(struct client *, struct kv *))
 {
 	struct kv		*hdr, *kv;
 	struct http_descriptor	*desc = (struct http_descriptor *)clt->clt_desc;
 
 	RB_FOREACH(hdr, kvtree, &desc->http_headers) {
-		if (server_writeheader_kv(clt, hdr) == -1)
+		if ((hdr_cb)(clt, hdr) == -1)
 			return (-1);
 		TAILQ_FOREACH(kv, &hdr->kv_children, kv_entry) {
-			if (server_writeheader_kv(clt, kv) == -1)
+			if ((hdr_cb)(clt, kv) == -1)
 				return (-1);
 		}
 	}
