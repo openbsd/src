@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.28 2014/08/02 21:21:47 doug Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.29 2014/08/03 10:22:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -993,16 +993,7 @@ server_log_http(struct client *clt, u_int code, size_t len)
 	if (strftime(tstamp, sizeof(tstamp), "%d/%b/%Y:%H:%M:%S %z", tm) == 0)
 		return (-1);
 
-	if (clt->clt_ss.ss_family == AF_INET) {
-		struct sockaddr_in	*in = (struct sockaddr_in *)&clt->clt_ss;
-		if (inet_ntop(AF_INET, &in->sin_addr, ip, sizeof(ip)) == NULL)
-			return (-1);
-	} else if (clt->clt_ss.ss_family == AF_INET6) {
-		struct sockaddr_in6	*in = (struct sockaddr_in6 *)&clt->clt_ss;
-		if (inet_ntop(AF_INET6, &in->sin6_addr, ip, sizeof(ip)) == NULL)
-			return (-1);
-	} else
-		return (-1);
+	print_host(&clt->clt_ss, ip, sizeof(ip));
 
 	/*
 	 * For details on common log format, see:
