@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.33 2014/08/03 21:33:27 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.34 2014/08/03 22:38:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -584,6 +584,9 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 		httperr = "Unknown Error";
 
 	if (bev == NULL)
+		goto done;
+
+	if (server_log_http(clt, code, 0) == -1)
 		goto done;
 
 	/* Some system information */

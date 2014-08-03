@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.25 2014/08/03 11:16:10 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.26 2014/08/03 22:38:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -142,22 +142,22 @@ server_file(struct httpd *env, struct client *clt)
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct media_type	*media;
 	const char		*errstr = NULL;
-	int			 fd = -1, ret;
+	int			 fd = -1, ret, code = 500;
 	char			 path[MAXPATHLEN];
 	struct stat		 st;
 
 	/* Request path is already canonicalized */
 	if ((size_t)snprintf(path, sizeof(path), "%s%s",
 	    srv_conf->root, desc->http_path) >= sizeof(path)) {
-		/* Do not echo the uncanonicalized path */
-		server_abort_http(clt, 500, desc->http_path);
-		return (-1);
+		errstr = desc->http_path;
+		goto abort;
 	}
 
 	/* Returns HTTP status code on error */
 	if ((ret = server_file_access(clt, path, sizeof(path), &st)) != 0) {
-		server_abort_http(clt, ret, desc->http_path);
-		return (-1);
+		code = ret;
+		errstr = desc->http_path;
+		goto abort;
 	}
 
 	if (S_ISDIR(st.st_mode)) {
@@ -167,7 +167,7 @@ server_file(struct httpd *env, struct client *clt)
 
 	/* Now open the file, should be readable or we have another problem */
 	if ((fd = open(path, O_RDONLY)) == -1)
-		goto fail;
+		goto abort;
 
 	media = media_find(env->sc_mediatypes, path);
 	ret = server_response_http(clt, 200, media, st.st_size);
@@ -202,9 +202,13 @@ server_file(struct httpd *env, struct client *clt)
 	server_reset_http(clt);
 	return (0);
  fail:
+	bufferevent_disable(clt->clt_bev, EV_READ|EV_WRITE);
+	bufferevent_free(clt->clt_bev);
+	clt->clt_bev = NULL;
+ abort:
 	if (errstr == NULL)
 		errstr = strerror(errno);
-	server_abort_http(clt, 500, errstr);
+	server_abort_http(clt, code, errstr);
 	return (-1);
 }
 
@@ -227,17 +231,17 @@ server_file_index(struct httpd *env, struct client *clt)
 	/* Request path is already canonicalized */
 	if ((size_t)snprintf(path, sizeof(path), "%s%s",
 	    srv_conf->root, desc->http_path) >= sizeof(path))
-		goto fail;
+		goto abort;
 
 	/* Now open the file, should be readable or we have another problem */
 	if ((fd = open(path, O_RDONLY)) == -1)
-		goto fail;
+		goto abort;
 
 	if ((evb = evbuffer_new()) == NULL)
-		goto fail;
+		goto abort;
 
 	if ((namesize = scandir(path, &namelist, NULL, alphasort)) == -1)
-		goto fail;
+		goto abort;
 
 	/* Indicate failure but continue going through the list */
 	skip = 0;
@@ -298,9 +302,10 @@ server_file_index(struct httpd *env, struct client *clt)
 	if (skip ||
 	    evbuffer_add_printf(evb,
 	    "</pre>\n<hr>\n</body>\n</html>\n") == -1)
-		goto fail;
+		goto abort;
 
 	close(fd);
+	fd = -1;
 
 	media = media_find(env->sc_mediatypes, "index.html");
 	ret = server_response_http(clt, 200, media, EVBUFFER_LENGTH(evb));
@@ -318,6 +323,7 @@ server_file_index(struct httpd *env, struct client *clt)
 	if (server_bufferevent_write_buffer(clt, evb) == -1)
 		goto fail;
 	evbuffer_free(evb);
+	evb = NULL;
 
 	bufferevent_enable(clt->clt_bev, EV_READ|EV_WRITE);
 	if (clt->clt_persist)
@@ -329,8 +335,11 @@ server_file_index(struct httpd *env, struct client *clt)
  done:
 	server_reset_http(clt);
 	return (0);
-
  fail:
+	bufferevent_disable(clt->clt_bev, EV_READ|EV_WRITE);
+	bufferevent_free(clt->clt_bev);
+	clt->clt_bev = NULL;
+ abort:
 	if (fd != -1)
 		close(fd);
 	if (evb != NULL)
