@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.26 2014/08/03 22:38:12 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.27 2014/08/03 22:47:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -62,6 +62,15 @@ server_file_access(struct client *clt, char *path, size_t len,
 	char			*newpath;
 
 	errno = 0;
+
+	switch (desc->http_method) {
+	case HTTP_METHOD_GET:
+	case HTTP_METHOD_HEAD:
+		break;
+	default:
+		/* Other methods are not allowed */
+		return (405);
+	}
 
 	if (access(path, R_OK) == -1) {
 		goto fail;
