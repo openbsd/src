@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.237 2014/07/12 21:56:56 tedu Exp $g
+#	$OpenBSD: GENERIC,v 1.238 2014/08/03 17:52:10 stsp Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -344,6 +344,7 @@ com*		at cardbus?
 malo*		at cardbus?	# Marvell Libertas
 acx*		at cardbus?	# TI ACX100/ACX111 (802.11b/g)
 bwi*		at cardbus?	# Broadcom AirForce (802.11b/g)
+ral*		at cardbus?	# Ralink RT2500/RT2501/RT2600
 
 wsdisplay*	at vgafb?
 
