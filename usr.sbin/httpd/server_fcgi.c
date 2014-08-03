@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.16 2014/08/03 20:39:40 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.17 2014/08/03 20:43:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -258,7 +258,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 	    desc->http_query) != -1) {
 		ret = fcgi_add_param(&param, "REQUEST_URI", str, clt);
 		free(str);
-		if (ret == -1) {	
+		if (ret == -1) {
 			errstr = "failed to encode param";
 			goto fail;
 		}

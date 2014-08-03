@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.23 2014/08/03 10:26:44 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.24 2014/08/03 20:43:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -259,7 +259,7 @@ server_socket(struct sockaddr_storage *ss, in_port_t port,
 	if (reuseport) {
 		val = 1;
 		if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &val,
-			sizeof(int)) == -1)
+		    sizeof(int)) == -1)
 			goto bad;
 	}
 	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
@@ -623,7 +623,7 @@ server_log(struct client *clt, const char *msg)
 			log_cb = log_debug;
 		if (EVBUFFER_LENGTH(clt->clt_log)) {
 			while ((ptr =
-			   evbuffer_readline(clt->clt_log)) != NULL) {
+			    evbuffer_readline(clt->clt_log)) != NULL) {
 				log_info("%s", ptr);
 				free(ptr);
 			}

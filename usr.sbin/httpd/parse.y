@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.18 2014/08/03 11:16:10 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.19 2014/08/03 20:43:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -128,7 +128,7 @@ typedef struct {
 
 %token	AUTO COMMON COMBINED CONNECTION DIRECTORY FCGI INDEX LISTEN LOCATION
 %token	LOG NO ON PORT PREFORK ROOT SERVER SOCKET TYPES
-%token	ERROR INCLUDE 
+%token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.port>	port
@@ -373,15 +373,15 @@ fastcgi		: NO FCGI		{
 			srv->srv_conf.flags &= ~SRVFLAG_FCGI;
 			srv->srv_conf.flags |= SRVFLAG_NO_FCGI;
 		}
-		| FCGI				{
+		| FCGI			{
 			srv->srv_conf.flags &= ~SRVFLAG_NO_FCGI;
 			srv->srv_conf.flags |= SRVFLAG_FCGI;
 		}
-		| FCGI 				{
+		| FCGI			{
 			srv->srv_conf.flags &= ~SRVFLAG_NO_FCGI;
 			srv->srv_conf.flags |= SRVFLAG_FCGI;
 		} '{' fcgiflags_l '}'
-		| FCGI				{
+		| FCGI			{
 			srv->srv_conf.flags &= ~SRVFLAG_NO_FCGI;
 			srv->srv_conf.flags |= SRVFLAG_FCGI;
 		} fcgiflags
@@ -427,29 +427,29 @@ dirflags	: INDEX STRING		{
 		| AUTO INDEX		{
 			srv->srv_conf.flags &= ~SRVFLAG_NO_AUTO_INDEX;
 			srv->srv_conf.flags |= SRVFLAG_AUTO_INDEX;
-		}	
+		}
 		| NO AUTO INDEX		{
 			srv->srv_conf.flags &= ~SRVFLAG_AUTO_INDEX;
 			srv->srv_conf.flags |= SRVFLAG_NO_AUTO_INDEX;
 		}
 		;
 
-logformat	: LOG COMMON {
+logformat	: LOG COMMON		{
 			srv->srv_conf.flags &= ~SRVFLAG_NO_LOG;
 			srv->srv_conf.flags |= SRVFLAG_LOG;
 			srv->srv_conf.logformat = LOG_FORMAT_COMMON;
 		}
-		| LOG COMBINED {
+		| LOG COMBINED		{
 			srv->srv_conf.flags &= ~SRVFLAG_NO_LOG;
 			srv->srv_conf.flags |= SRVFLAG_LOG;
 			srv->srv_conf.logformat = LOG_FORMAT_COMBINED;
 		}
-		| LOG CONNECTION {
+		| LOG CONNECTION	{
 			srv->srv_conf.flags &= ~SRVFLAG_NO_LOG;
 			srv->srv_conf.flags |= SRVFLAG_LOG;
 			srv->srv_conf.logformat = LOG_FORMAT_CONNECTION;
 		}
-		| NO LOG {
+		| NO LOG		{
 			srv->srv_conf.flags &= ~SRVFLAG_LOG;
 			srv->srv_conf.flags |= SRVFLAG_NO_LOG;
 		}
@@ -462,7 +462,7 @@ mediaopts_l	: mediaopts_l mediaoptsl nl
 		| mediaoptsl optnl
 		;
 
-mediaoptsl	: STRING '/' STRING 			{
+mediaoptsl	: STRING '/' STRING	{
 			if (strlcpy(media.media_type, $1,
 			    sizeof(media.media_type)) >=
 			    sizeof(media.media_type) ||
@@ -1026,7 +1026,7 @@ load_config(const char *filename, struct httpd *x_conf)
 				    m.media_name);
 				errors++;
 			}
-		}		
+		}
 	}
 
 	return (errors ? -1 : 0);
