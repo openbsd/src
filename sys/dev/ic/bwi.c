@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.107 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.108 2014/08/03 14:23:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -8946,7 +8946,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	uint32_t mac_ctrl;
 	uint16_t phy_ctrl;
 	bus_addr_t paddr;
-	int pkt_len, error;
+	int pkt_len, error = 0;
 #if 0
 	const uint8_t *p;
 	int i;
