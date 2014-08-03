@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.17 2014/08/03 20:43:03 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.18 2014/08/03 22:06:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -523,8 +523,8 @@ server_fcgi_writeheader(struct client *clt, struct kv *hdr, void *arg)
 		return (-1);
 
 	for (p = name; *p != '\0'; p++) {
-		if (isalpha((int)*p))
-			*p = (char)toupper((int)*p);
+		if (isalpha((unsigned char)*p))
+			*p = toupper((unsigned char)*p);
 		else
 			*p = '_';
 	}
