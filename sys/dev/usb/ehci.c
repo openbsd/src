@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.162 2014/07/12 20:13:48 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.163 2014/08/03 14:30:28 jsg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2363,7 +2363,7 @@ ehci_free_sqh(struct ehci_softc *sc, struct ehci_soft_qh *sqh)
 struct ehci_soft_qtd *
 ehci_alloc_sqtd(struct ehci_softc *sc)
 {
-	struct ehci_soft_qtd *sqtd;
+	struct ehci_soft_qtd *sqtd = NULL;
 	usbd_status err;
 	int i, offs;
 	struct usb_dma dma;
