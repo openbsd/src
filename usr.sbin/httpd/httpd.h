@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.33 2014/08/02 21:21:47 doug Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.34 2014/08/03 10:26:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -316,7 +316,8 @@ SPLAY_HEAD(client_tree, client);
 
 enum log_format {
 	LOG_FORMAT_COMMON,
-	LOG_FORMAT_COMBINED
+	LOG_FORMAT_COMBINED,
+	LOG_FORMAT_CONNECTION
 };
 
 struct server_config {
@@ -413,7 +414,7 @@ int	 server_socket_connect(struct sockaddr_storage *, in_port_t,
 void	 server_write(struct bufferevent *, void *);
 void	 server_read(struct bufferevent *, void *);
 void	 server_error(struct bufferevent *, short, void *);
-void	 server_log(struct client *);
+void	 server_log(struct client *, const char *);
 void	 server_close(struct client *, const char *);
 void	 server_dump(struct client *, const void *, size_t);
 int	 server_client_cmp(struct client *, struct client *);

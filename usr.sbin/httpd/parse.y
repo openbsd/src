@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2014/08/02 21:21:47 doug Exp $	*/
+/*	$OpenBSD: parse.y,v 1.17 2014/08/03 10:26:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -126,9 +126,9 @@ typedef struct {
 
 %}
 
-%token	AUTO DIRECTORY FCGI INDEX LISTEN LOCATION LOG NO ON PORT
-%token	PREFORK ROOT SERVER SOCKET TYPES
-%token	ERROR INCLUDE COMMON COMBINED
+%token	AUTO COMMON COMBINED CONNECTION DIRECTORY FCGI INDEX LISTEN LOCATION
+%token	LOG NO ON PORT PREFORK ROOT SERVER SOCKET TYPES
+%token	ERROR INCLUDE 
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.port>	port
@@ -449,6 +449,11 @@ logformat	: LOG COMMON {
 			srv->srv_conf.flags |= SRVFLAG_LOG;
 			srv->srv_conf.logformat = LOG_FORMAT_COMBINED;
 		}
+		| LOG CONNECTION {
+			srv->srv_conf.flags &= ~SRVFLAG_NO_LOG;
+			srv->srv_conf.flags |= SRVFLAG_LOG;
+			srv->srv_conf.logformat = LOG_FORMAT_CONNECTION;
+		}
 		| NO LOG {
 			srv->srv_conf.flags &= ~SRVFLAG_LOG;
 			srv->srv_conf.flags |= SRVFLAG_NO_LOG;
@@ -585,6 +590,7 @@ lookup(char *s)
 		{ "auto",		AUTO },
 		{ "combined",		COMBINED },
 		{ "common",		COMMON },
+		{ "connection",		CONNECTION },
 		{ "directory",		DIRECTORY },
 		{ "fastcgi",		FCGI },
 		{ "include",		INCLUDE },

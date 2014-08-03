@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.29 2014/08/03 10:22:30 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.30 2014/08/03 10:26:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -518,7 +518,7 @@ server_reset_http(struct client *clt)
 	clt->clt_bev->readcb = server_read_http;
 	clt->clt_srv_conf = &srv->srv_conf;
 
-	server_log(clt);
+	server_log(clt, NULL);
 }
 
 void
@@ -993,7 +993,8 @@ server_log_http(struct client *clt, u_int code, size_t len)
 	if (strftime(tstamp, sizeof(tstamp), "%d/%b/%Y:%H:%M:%S %z", tm) == 0)
 		return (-1);
 
-	print_host(&clt->clt_ss, ip, sizeof(ip));
+	if (print_host(&clt->clt_ss, ip, sizeof(ip)) == NULL)
+		return (-1);
 
 	/*
 	 * For details on common log format, see:
@@ -1041,6 +1042,12 @@ server_log_http(struct client *clt, u_int code, size_t len)
 		    code, len,
 		    referrer == NULL ? "" : referrer->kv_value,
 		    agent == NULL ? "" : agent->kv_value) == -1)
+			return (-1);
+		break;
+
+	case LOG_FORMAT_CONNECTION:
+		if (evbuffer_add_printf(clt->clt_log, " [%s]",
+		    desc->http_path == NULL ? "" : desc->http_path) == -1)
 			return (-1);
 		break;
 	}

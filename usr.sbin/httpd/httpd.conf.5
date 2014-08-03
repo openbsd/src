@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.17 2014/08/02 21:21:47 doug Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.18 2014/08/03 10:26:43 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 2 2014 $
+.Dd $Mdocdate: August 3 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -150,10 +150,22 @@ Enable writing an access log to syslog.
 The
 .Ar style
 can be
-.Ar common
+.Ar common ,
+.Ar combined
 or
-.Ar combined .
-It is similar to the default Apache and nginx access log.
+.Ar connection .
+The styles
+.Ar common
+and
+.Ar combined
+write a log entry after each request similar to the standard Apache
+and nginx access log formats.
+The style
+.Ar connection
+writes a summarized log entry after each connection,
+that can have multiple requests,
+similar to the format that is used by
+.Xr relayd 8 .
 If not specified, the default is
 .Ar common .
 .It Ic root Ar directory
