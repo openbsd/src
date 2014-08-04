@@ -118,35 +118,47 @@ ressl_reset(struct ressl *ctx)
 int
 ressl_read(struct ressl *ctx, char *buf, size_t buflen, size_t *outlen)
 {
-	int ret;
+	int ret, ssl_err;
 
-	/* XXX - handle async/non-blocking. */
 	ret = SSL_read(ctx->ssl_conn, buf, buflen);
-	if (ret <= 0) {
-		ret = SSL_get_error(ctx->ssl_conn, ret);
-		if (ret == SSL_ERROR_WANT_READ)
-			return (-2);
-		ressl_set_error(ctx, "read failed: %i", ret);
+	if (ret > 0) {
+		*outlen = (size_t)ret;
+		return (0);
+	}
+
+	ssl_err = SSL_get_error(ctx->ssl_conn, ret);
+	switch (ssl_err) {
+	case SSL_ERROR_WANT_READ:
+		return (RESSL_READ_AGAIN);
+	case SSL_ERROR_WANT_WRITE:
+		return (RESSL_WRITE_AGAIN);
+	default:
+		ressl_set_error(ctx, "read failed (%i)", ssl_err);
 		return (-1);
 	}
-	*outlen = (size_t)ret;
-	return (0);
 }
 
 int
 ressl_write(struct ressl *ctx, const char *buf, size_t buflen, size_t *outlen)
 {
-	int ret;
+	int ret, ssl_err;
 
-	/* XXX - handle async/non-blocking. */
 	ret = SSL_write(ctx->ssl_conn, buf, buflen);
-	if (ret < 0) {
-		ressl_set_error(ctx, "write failed %d",
-		    SSL_get_error(ctx->ssl_conn, ret));
+	if (ret > 0) {
+		*outlen = (size_t)ret;
+		return (0);
+	}
+
+	ssl_err = SSL_get_error(ctx->ssl_conn, ret);
+	switch (ssl_err) {
+	case SSL_ERROR_WANT_READ:
+		return (RESSL_READ_AGAIN);
+	case SSL_ERROR_WANT_WRITE:
+		return (RESSL_WRITE_AGAIN);
+	default:
+		ressl_set_error(ctx, "write failed (%i)", ssl_err);
 		return (-1);
 	}
-	*outlen = (size_t)ret;
-	return (0);
 }
 
 int

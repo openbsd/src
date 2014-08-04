@@ -17,6 +17,9 @@
 #ifndef HEADER_RESSL_H
 #define HEADER_RESSL_H
 
+#define RESSL_READ_AGAIN	-2
+#define RESSL_WRITE_AGAIN	-3
+
 struct ressl;
 struct ressl_config;
 
