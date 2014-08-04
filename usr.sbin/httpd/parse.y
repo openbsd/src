@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2014/08/04 15:49:28 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.22 2014/08/04 16:07:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -125,7 +125,7 @@ typedef struct {
 %}
 
 %token	AUTO COMMON COMBINED CONNECTION DIRECTORY FCGI FILE INDEX LISTEN
-%token	LOCATION LOG NO ON PORT PREFORK ROOT SERVER SOCKET SYSLOG TYPES
+%token	LOCATION LOG NO ON PORT PREFORK ROOT SERVER SOCKET STYLE SYSLOG TYPES
 %token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -445,7 +445,19 @@ logflags_l	: logflags comma logflags_l
 		| logflags
 		;
 
-logflags	: COMMON		{
+
+logflags	: STYLE logstyle
+		| SYSLOG		{
+			srv->srv_conf.flags &= ~SRVFLAG_NO_SYSLOG;
+			srv->srv_conf.flags |= SRVFLAG_SYSLOG;
+		}
+		| NO SYSLOG		{
+			srv->srv_conf.flags &= ~SRVFLAG_SYSLOG;
+			srv->srv_conf.flags |= SRVFLAG_NO_SYSLOG;
+		}
+		;
+
+logstyle	: COMMON		{
 			srv->srv_conf.flags &= ~SRVFLAG_NO_LOG;
 			srv->srv_conf.flags |= SRVFLAG_LOG;
 			srv->srv_conf.logformat = LOG_FORMAT_COMMON;
@@ -459,14 +471,6 @@ logflags	: COMMON		{
 			srv->srv_conf.flags &= ~SRVFLAG_NO_LOG;
 			srv->srv_conf.flags |= SRVFLAG_LOG;
 			srv->srv_conf.logformat = LOG_FORMAT_CONNECTION;
-		}
-		| SYSLOG		{
-			srv->srv_conf.flags &= ~SRVFLAG_NO_SYSLOG;
-			srv->srv_conf.flags |= SRVFLAG_SYSLOG;
-		}
-		| NO SYSLOG		{
-			srv->srv_conf.flags &= ~SRVFLAG_SYSLOG;
-			srv->srv_conf.flags |= SRVFLAG_NO_SYSLOG;
 		}
 		;
 
@@ -616,6 +620,7 @@ lookup(char *s)
 		{ "root",		ROOT },
 		{ "server",		SERVER },
 		{ "socket",		SOCKET },
+		{ "style",		STYLE },
 		{ "syslog",		SYSLOG },
 		{ "types",		TYPES }
 	};
