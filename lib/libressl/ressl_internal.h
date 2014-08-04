@@ -56,6 +56,7 @@ struct ressl *ressl_server_conn(struct ressl *ctx);
 
 int ressl_check_hostname(X509 *cert, const char *host);
 int ressl_configure_keypair(struct ressl *ctx);
+int ressl_configure_server(struct ressl *ctx);
 int ressl_host_port(const char *hostport, char **host, char **port);
 int ressl_set_error(struct ressl *ctx, char *fmt, ...);
 

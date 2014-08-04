@@ -14,6 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <openssl/ec.h>
+#include <openssl/ssl.h>
+
 #include "ressl_internal.h"
 
 struct ressl *
@@ -40,6 +43,40 @@ ressl_server_conn(struct ressl *ctx)
 	conn_ctx->flags |= RESSL_SERVER_CONN;
 
 	return (conn_ctx);
+}
+
+int
+ressl_configure_server(struct ressl *ctx)
+{
+	EC_KEY *ecdh_key;
+
+	/* XXX - add a configuration option to control versions. */
+	if ((ctx->ssl_ctx = SSL_CTX_new(SSLv23_server_method())) == NULL) {
+		ressl_set_error(ctx, "ssl context failure");
+		goto err;
+	}
+
+	if (ressl_configure_keypair(ctx) != 0)
+		goto err;
+
+	if (ctx->config->ciphers != NULL) {
+		if (SSL_CTX_set_cipher_list(ctx->ssl_ctx,
+		    ctx->config->ciphers) != 1) {
+			ressl_set_error(ctx, "failed to set ciphers");
+			goto err;
+		}
+	}
+
+	if ((ecdh_key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1)) == NULL)
+		goto err;
+	SSL_CTX_set_tmp_ecdh(ctx->ssl_ctx, ecdh_key);
+	SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_SINGLE_ECDH_USE);
+	EC_KEY_free(ecdh_key);
+
+	return (0);
+
+err:
+	return (-1);
 }
 
 int

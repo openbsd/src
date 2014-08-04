@@ -87,6 +87,9 @@ ressl_configure(struct ressl *ctx, struct ressl_config *config)
 
 	ctx->config = config;
 
+	if ((ctx->flags & RESSL_SERVER) != 0)
+		return (ressl_configure_server(ctx));
+
 	return (0);
 }
 
