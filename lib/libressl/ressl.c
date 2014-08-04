@@ -102,11 +102,8 @@ ressl_free(struct ressl *ctx)
 void
 ressl_reset(struct ressl *ctx)
 {
-	/* SSL_free frees the SSL context. */
-	if (ctx->ssl_conn != NULL)
-		SSL_free(ctx->ssl_conn);
-	else
-		SSL_CTX_free(ctx->ssl_ctx);
+	SSL_CTX_free(ctx->ssl_ctx);
+	SSL_free(ctx->ssl_conn);
 
 	ctx->ssl_conn = NULL;
 	ctx->ssl_ctx = NULL;
