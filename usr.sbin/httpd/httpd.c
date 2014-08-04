@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.13 2014/08/04 11:09:25 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.14 2014/08/04 14:49:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
 #include <sys/hash.h>
@@ -513,6 +514,30 @@ canonicalize_path(const char *input, char *path, size_t len)
 	*p++ = '\0';
 
 	return (path);
+}
+
+ssize_t
+path_info(char *name)
+{
+	char		*p, *start, *end;
+	char		 path[MAXPATHLEN];
+	struct stat	 st;
+
+	if (strlcpy(path, name, sizeof(path)) >= sizeof(path))
+		return (-1);
+
+	start = path;
+	end = start + strlen(path);
+
+	for (p = end; p > start; p--) {
+		if (*p != '/')
+			continue;
+		if (stat(path, &st) == 0)
+			break;
+		*p = '\0';
+	}
+
+	return (strlen(path));
 }
 
 void

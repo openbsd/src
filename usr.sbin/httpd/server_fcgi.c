@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.19 2014/08/04 11:09:25 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.20 2014/08/04 14:49:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -102,9 +102,10 @@ server_fcgi(struct httpd *env, struct client *clt)
 	struct fcgi_record_header	*h;
 	struct fcgi_begin_request_body	*begin;
 	size_t				 len;
+	ssize_t				 scriptlen;
 	int				 fd = -1, ret;
 	const char			*errstr = NULL;
-	char				*str, *p;
+	char				*str, *p, *script = NULL;
 	in_port_t			 port;
 	struct sockaddr_storage		 ss;
 
@@ -188,20 +189,30 @@ server_fcgi(struct httpd *env, struct client *clt)
 	h->type = FCGI_PARAMS;
 	h->content_len = param.total_len = 0;
 
-	if (fcgi_add_param(&param, "SCRIPT_NAME", desc->http_path,
-	    clt) == -1) {
-		errstr = "failed to encode param";
+	if (asprintf(&script, "%s%s", srv_conf->root,
+	    desc->http_path) == -1 ||
+	    (scriptlen = path_info(script)) == -1) {
+		errstr = "failed to get script name";
 		goto fail;
 	}
 
-	if (asprintf(&str, "%s%s", srv_conf->root, desc->http_path) != -1) {
-		ret = fcgi_add_param(&param, "SCRIPT_FILENAME", str,
-		    clt);
-		free(str);
-		if (ret == -1) {
+	if (scriptlen) {
+		if (fcgi_add_param(&param, "PATH_INFO",
+		    script + scriptlen, clt) == -1) {
 			errstr = "failed to encode param";
 			goto fail;
 		}
+		script[scriptlen] = '\0';
+	}
+
+	if (fcgi_add_param(&param, "SCRIPT_NAME",
+	    script + strlen(srv_conf->root), clt) == -1) {
+		errstr = "failed to encode param";
+		goto fail;
+	}
+	if (fcgi_add_param(&param, "SCRIPT_FILENAME", script, clt) == -1) {
+		errstr = "failed to encode param";
+		goto fail;
 	}
 
 	if (desc->http_query)
@@ -211,6 +222,11 @@ server_fcgi(struct httpd *env, struct client *clt)
 			goto fail;
 		}
 
+	if (fcgi_add_param(&param, "DOCUMENT_ROOT", srv_conf->root,
+	    clt) == -1) {
+		errstr = "failed to encode param";
+		goto fail;
+	}
 	if (fcgi_add_param(&param, "DOCUMENT_URI", desc->http_path,
 	    clt) == -1) {
 		errstr = "failed to encode param";
@@ -321,8 +337,10 @@ server_fcgi(struct httpd *env, struct client *clt)
 	clt->clt_persist = 0;
 	clt->clt_done = 0;
 
+	free(script);
 	return (0);
  fail:
+	free(script);
 	if (errstr == NULL)
 		errstr = strerror(errno);
 	server_abort_http(clt, 500, errstr);
