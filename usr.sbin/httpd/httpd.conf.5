@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.19 2014/08/04 15:49:28 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.20 2014/08/04 17:12:44 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -145,8 +145,8 @@ except
 .Ic listen on
 and
 .Ic location .
-.It Oo Ic no Oc Ic log style Op Ar style
-Enable writing an access log to the log files or syslog.
+.It Ic log style Op Ar style
+Set the logging style.
 The
 .Ar style
 can be
@@ -168,8 +168,10 @@ similar to the format that is used by
 .Xr relayd 8 .
 If not specified, the default is
 .Ar common .
-.It Oo Ic no Oc Ic log syslog
-Log to syslog instead of the log files.
+.It Ic log Oo Ic no Oc Ic syslog
+Enable or disable logging to syslog instead of the log files.
+.It Ic no log
+Disable logging.
 .It Ic root Ar directory
 Set the document root of the server.
 The
