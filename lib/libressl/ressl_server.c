@@ -17,6 +17,7 @@
 #include <openssl/ec.h>
 #include <openssl/ssl.h>
 
+#include <ressl.h>
 #include "ressl_internal.h"
 
 struct ressl *
@@ -92,7 +93,7 @@ err:
 }
 
 int
-ressl_accept(struct ressl *ctx)
+ressl_accept(struct ressl *ctx, struct ressl **cctx)
 {
 	if ((ctx->flags & RESSL_SERVER) == 0) {
 		ressl_set_error(ctx, "not a server context");
@@ -104,12 +105,52 @@ err:
 }
 
 int
-ressl_accept_socket(struct ressl *ctx, int socket)
+ressl_accept_socket(struct ressl *ctx, struct ressl **cctx, int socket)
 {
+	struct ressl *conn_ctx = *cctx;
+	int ret, ssl_err;
+	
 	if ((ctx->flags & RESSL_SERVER) == 0) {
 		ressl_set_error(ctx, "not a server context");
 		goto err;
 	}
+
+	if (conn_ctx == NULL) {
+		if ((conn_ctx = ressl_server_conn(ctx)) == NULL) {
+			ressl_set_error(ctx, "connection context failure");
+			goto err;
+		}
+		*cctx = conn_ctx;
+
+		conn_ctx->socket = socket;
+
+		if ((conn_ctx->ssl_conn = SSL_new(ctx->ssl_ctx)) == NULL) {
+			ressl_set_error(ctx, "ssl failure");
+			goto err;
+		}
+
+		if (SSL_set_fd(conn_ctx->ssl_conn, socket) != 1) {
+			ressl_set_error(ctx, "ssl set fd failure");
+			goto err;
+		}
+		SSL_set_app_data(conn_ctx->ssl_conn, conn_ctx);
+	}
+
+	if ((ret = SSL_accept(conn_ctx->ssl_conn)) != 1) {
+		ssl_err = SSL_get_error(conn_ctx->ssl_conn, ret);
+		switch (ssl_err) {
+		case SSL_ERROR_WANT_READ:
+			return (RESSL_READ_AGAIN);
+		case SSL_ERROR_WANT_WRITE:
+			return (RESSL_WRITE_AGAIN);
+		default:
+			ressl_set_error(ctx, "ssl accept failure (%i)",
+			    ssl_err);
+			goto err;
+		}
+	}
+
+	return (0);
 
 err:
 	return (-1);
