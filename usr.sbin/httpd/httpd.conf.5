@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.20 2014/08/04 17:12:44 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.21 2014/08/04 17:38:12 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -133,7 +133,7 @@ root directory of
 .Nm httpd
 and defaults to
 .Pa /run/slowcgi.sock .
-.It Ic listen on Ar address Ic port Ar number
+.It Ic listen on Ar address Ic port Ar number Op Ic ssl
 Set the listen address and port.
 .It Ic location Ar path { ... }
 Specify server configuration rules for a specific location.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.14 2014/08/04 15:49:28 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.15 2014/08/04 17:38:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -305,8 +305,7 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 		/* Add "host" to existing listening server */
 		if (imsg->fd != -1)
 			close(imsg->fd);
-		return (config_getserver_config(env,
-		    srv, imsg));
+		return (config_getserver_config(env, srv, imsg));
 	}
 
 	if (srv_conf.flags & SRVFLAG_LOCATION)

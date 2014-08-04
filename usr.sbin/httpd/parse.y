@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2014/08/04 16:07:59 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.23 2014/08/04 17:38:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -125,11 +125,13 @@ typedef struct {
 %}
 
 %token	AUTO COMMON COMBINED CONNECTION DIRECTORY FCGI FILE INDEX LISTEN
-%token	LOCATION LOG NO ON PORT PREFORK ROOT SERVER SOCKET STYLE SYSLOG TYPES
+%token	LOCATION LOG NO ON PORT PREFORK ROOT SERVER SOCKET SSL STYLE SYSLOG
+%token	TYPES
 %token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.port>	port
+%type	<v.number>	optssl
 
 %%
 
@@ -164,6 +166,10 @@ varset		: STRING '=' STRING	{
 			free($1);
 			free($3);
 		}
+		;
+
+optssl		: /*empty*/	{ $$ = 0; }
+		| SSL		{ $$ = 1; }
 		;
 
 main		: PREFORK NUMBER	{
@@ -240,7 +246,7 @@ serveropts_l	: serveropts_l serveroptsl nl
 		| serveroptsl optnl
 		;
 
-serveroptsl	: LISTEN ON STRING port {
+serveroptsl	: LISTEN ON STRING port optssl {
 			struct addresslist	 al;
 			struct address		*h;
 			struct server		*s;
@@ -276,6 +282,10 @@ serveroptsl	: LISTEN ON STRING port {
 			s->srv_conf.port = h->port.val[0];
 			s->srv_conf.prefixlen = h->prefixlen;
 			host_free(&al);
+
+			if ($5) {
+				s->srv_conf.flags |= SRVFLAG_SSL;
+			}
 		}
 		| ROOT STRING		{
 			if (strlcpy(srv->srv_conf.root, $2,
@@ -620,6 +630,7 @@ lookup(char *s)
 		{ "root",		ROOT },
 		{ "server",		SERVER },
 		{ "socket",		SOCKET },
+		{ "ssl",		SSL },
 		{ "style",		STYLE },
 		{ "syslog",		SYSLOG },
 		{ "types",		TYPES }

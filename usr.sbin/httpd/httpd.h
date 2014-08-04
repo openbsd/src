@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.40 2014/08/04 15:49:28 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.41 2014/08/04 17:38:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/param.h>		/* MAXHOSTNAMELEN */
 #include <limits.h>
 #include <imsg.h>
+#include <ressl.h>
 
 #define CONF_FILE		"/etc/httpd.conf"
 #define HTTPD_SOCKET		"/var/run/httpd.sock"
@@ -262,11 +263,14 @@ struct client {
 	in_port_t		 clt_port;
 	struct sockaddr_storage	 clt_ss;
 	struct bufferevent	*clt_bev;
+	char			*clt_buf;
+	size_t			 clt_buflen;
 	struct evbuffer		*clt_output;
 	struct event		 clt_ev;
 	void			*clt_desc;
 
 	int			 clt_fd;
+	struct ressl		*clt_ressl_ctx;
 	struct bufferevent	*clt_srvbev;
 
 	off_t			 clt_toread;
@@ -305,6 +309,7 @@ SPLAY_HEAD(client_tree, client);
 #define SRVFLAG_SOCKET		0x0400
 #define SRVFLAG_SYSLOG		0x0800
 #define SRVFLAG_NO_SYSLOG	0x1000
+#define SRVFLAG_SSL		0x2000
 
 #define SRVFLAG_BITS							\
 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
@@ -365,6 +370,9 @@ struct server {
 	int			 srv_s;
 	struct event		 srv_ev;
 	struct event		 srv_evt;
+
+	struct ressl		 *srv_ressl_ctx;
+	struct ressl_config	 *srv_ressl_config;
 
 	struct client_tree	 srv_clients;
 };
