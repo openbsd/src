@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.2 2014/08/04 06:35:31 deraadt Exp $	*/
+/*	$OpenBSD: control.c,v 1.3 2014/08/04 11:09:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -31,8 +31,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
-
-#include <openssl/ssl.h>
 
 #include "httpd.h"
 

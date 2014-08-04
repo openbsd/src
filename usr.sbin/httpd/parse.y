@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2014/08/03 20:43:03 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.20 2014/08/04 11:09:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -52,8 +52,6 @@
 #include <string.h>
 #include <ifaddrs.h>
 #include <syslog.h>
-
-#include <openssl/ssl.h>
 
 #include "httpd.h"
 #include "http.h"

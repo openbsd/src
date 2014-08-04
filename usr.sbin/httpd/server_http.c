@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.35 2014/08/04 06:35:10 deraadt Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.36 2014/08/04 11:09:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -43,8 +43,6 @@
 #include <syslog.h>
 #include <event.h>
 #include <fnmatch.h>
-
-#include <openssl/ssl.h>
 
 #include "httpd.h"
 #include "http.h"

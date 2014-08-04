@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.24 2014/08/03 20:43:03 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.25 2014/08/04 11:09:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -42,9 +42,6 @@
 #include <pwd.h>
 #include <event.h>
 #include <fnmatch.h>
-
-#include <openssl/dh.h>
-#include <openssl/ssl.h>
 
 #include "httpd.h"
 

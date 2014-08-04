@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.12 2014/08/02 09:54:13 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.13 2014/08/04 11:09:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -41,8 +41,6 @@
 #include <pwd.h>
 #include <sha1.h>
 #include <md5.h>
-
-#include <openssl/ssl.h>
 
 #include "httpd.h"
 

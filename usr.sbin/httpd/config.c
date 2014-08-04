@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.12 2014/08/03 11:16:10 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.13 2014/08/04 11:09:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -36,13 +36,12 @@
 #include <event.h>
 #include <limits.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <netdb.h>
 #include <string.h>
 #include <ifaddrs.h>
-
-#include <openssl/ssl.h>
 
 #include "httpd.h"
 

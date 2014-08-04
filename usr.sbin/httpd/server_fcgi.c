@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.18 2014/08/03 22:06:51 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.19 2014/08/04 11:09:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -41,8 +41,6 @@
 #include <ctype.h>
 #include <err.h>
 #include <event.h>
-
-#include <openssl/ssl.h>
 
 #include "httpd.h"
 #include "http.h"
