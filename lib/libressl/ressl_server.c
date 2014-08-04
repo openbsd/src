@@ -88,7 +88,7 @@ ressl_listen(struct ressl *ctx, const char *host, const char *port, int af)
 	}
 
 err:
-	return (1);
+	return (-1);
 }
 
 int
@@ -100,7 +100,7 @@ ressl_accept(struct ressl *ctx)
 	}
 
 err:
-	return (1);
+	return (-1);
 }
 
 int
@@ -112,5 +112,5 @@ ressl_accept_socket(struct ressl *ctx, int socket)
 	}
 
 err:
-	return (1);
+	return (-1);
 }
