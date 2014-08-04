@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.37 2014/08/03 20:39:40 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.38 2014/08/04 06:35:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -483,7 +483,7 @@ int		 sockaddr_cmp(struct sockaddr *, struct sockaddr *, int);
 struct in6_addr *prefixlen2mask6(u_int8_t, u_int32_t *);
 u_int32_t	 prefixlen2mask(u_int8_t);
 int		 accept_reserve(int, struct sockaddr *, socklen_t *, int,
-		     volatile int *);
+		    volatile int *);
 struct kv	*kv_add(struct kvtree *, char *, char *);
 int		 kv_set(struct kv *, char *, ...);
 int		 kv_setkey(struct kv *, char *, ...);
