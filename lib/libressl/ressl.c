@@ -90,6 +90,26 @@ ressl_configure(struct ressl *ctx, struct ressl_config *config)
 	return (0);
 }
 
+int
+ressl_configure_keypair(struct ressl *ctx)
+{
+	if (SSL_CTX_use_certificate_file(ctx->ssl_ctx, ctx->config->cert_file,
+	    SSL_FILETYPE_PEM) != 1) {
+		ressl_set_error(ctx, "failed to load certificate");
+		return (1);
+	}
+	if (SSL_CTX_use_PrivateKey_file(ctx->ssl_ctx, ctx->config->key_file,
+	    SSL_FILETYPE_PEM) != 1) {
+		ressl_set_error(ctx, "failed to load private key");
+		return (1);
+	}
+	if (SSL_CTX_check_private_key(ctx->ssl_ctx) != 1) {
+		ressl_set_error(ctx, "private/public key mismatch");
+		return (1);
+	}
+	return (0);
+}
+
 void
 ressl_free(struct ressl *ctx)
 {
