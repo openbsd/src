@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.15 2014/08/04 17:38:12 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.16 2014/08/04 18:00:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -265,6 +265,9 @@ config_getserver_config(struct httpd *env, struct server *srv,
 		f = SRVFLAG_SYSLOG|SRVFLAG_NO_SYSLOG;
 		if ((srv_conf->flags & f) == 0)
 			srv_conf->flags |= srv->srv_conf.flags & f;
+
+		f = SRVFLAG_SSL;
+		srv_conf->flags |= srv->srv_conf.flags & f;
 
 		DPRINTF("%s: %s %d location \"%s\", "
 		    "parent \"%s\", flags: %s",

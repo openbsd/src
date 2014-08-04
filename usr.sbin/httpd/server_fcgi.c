@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.20 2014/08/04 14:49:24 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.21 2014/08/04 18:00:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -243,6 +243,12 @@ server_fcgi(struct httpd *env, struct client *clt)
 		errstr = "failed to encode param";
 		goto fail;
 	}
+
+	if (srv_conf->flags & SRVFLAG_SSL)
+		if (fcgi_add_param(&param, "HTTPS", "on", clt) == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
 
 	(void)print_host(&clt->clt_ss, hbuf, sizeof(hbuf));
 	if (fcgi_add_param(&param, "REMOTE_ADDR", hbuf, clt) == -1) {
