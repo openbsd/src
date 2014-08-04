@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.1 2014/08/04 15:49:28 reyk Exp $	*/
+/*	$OpenBSD: logger.c,v 1.2 2014/08/04 15:57:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -95,11 +95,15 @@ logger_start(void)
 {
 	logger_close();
 	if ((log_fd = open(HTTPD_ACCESS_LOG,
-	    O_WRONLY|O_APPEND|O_CREAT, 0644)) == -1)
+	    O_WRONLY|O_APPEND|O_CREAT, 0644)) == -1) {
+		log_warn("failed to open %s", HTTPD_ACCESS_LOG);
 		return (-1);
+	}
 	if ((error_fd = open(HTTPD_ERROR_LOG,
-	    O_WRONLY|O_APPEND|O_CREAT, 0644)) == -1)
+	    O_WRONLY|O_APPEND|O_CREAT, 0644)) == -1) {
+		log_warn("failed to open %s", HTTPD_ERROR_LOG);
 		return (-1);
+	}
 	return (0);
 }
 
