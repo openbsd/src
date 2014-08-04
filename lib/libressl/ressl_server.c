@@ -29,6 +29,19 @@ ressl_server(void)
 	return (ctx);
 }
 
+struct ressl *
+ressl_server_conn(struct ressl *ctx)
+{
+	struct ressl *conn_ctx;
+
+	if ((conn_ctx = ressl_new()) == NULL)
+		return (NULL);
+
+	conn_ctx->flags |= RESSL_SERVER_CONN;
+
+	return (conn_ctx);
+}
+
 int
 ressl_listen(struct ressl *ctx, const char *host, const char *port, int af)
 {

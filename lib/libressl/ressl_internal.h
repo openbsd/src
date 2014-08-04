@@ -36,6 +36,7 @@ struct ressl_config {
 
 #define RESSL_CLIENT		(1 << 0)
 #define RESSL_SERVER		(1 << 1)
+#define RESSL_SERVER_CONN	(1 << 2)
 
 struct ressl {
 	struct ressl_config *config;
@@ -51,6 +52,7 @@ struct ressl {
 };
 
 struct ressl *ressl_new(void);
+struct ressl *ressl_server_conn(struct ressl *ctx);
 
 int ressl_check_hostname(X509 *cert, const char *host);
 int ressl_configure_keypair(struct ressl *ctx);
