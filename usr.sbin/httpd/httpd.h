@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.41 2014/08/04 17:38:12 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.42 2014/08/04 18:12:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -37,6 +37,8 @@
 #define HTTPD_FCGI_SOCKET	"/run/slowcgi.sock"
 #define HTTPD_ACCESS_LOG	"/logs/access.log"
 #define HTTPD_ERROR_LOG		"/logs/error.log"
+#define HTTPD_SSL_KEY		"/conf/server.key"
+#define HTTPD_SSL_CERT		"/conf/server.crt"
 #define FD_RESERVE		5
 
 #define SERVER_MAX_CLIENTS	1024

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.27 2014/08/04 17:38:12 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.28 2014/08/04 18:12:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -135,9 +135,12 @@ server_ssl_init(struct server *srv)
 		return (-1);
 	}
 
-	/* XXX - make these configurable. */
-	ressl_config_set_cert_file(srv->srv_ressl_config, "/server.crt");
-	ressl_config_set_key_file(srv->srv_ressl_config, "/server.key");
+	/*
+	 * XXX Make these configurable and move keys out of the chroot.
+	 * XXX The RSA privsep code in relayd should be adopted to ressl.
+	 */
+	ressl_config_set_cert_file(srv->srv_ressl_config, HTTPD_SSL_CERT);
+	ressl_config_set_key_file(srv->srv_ressl_config, HTTPD_SSL_KEY);
 
 	if (ressl_configure(srv->srv_ressl_ctx, srv->srv_ressl_config) != 0) {
 		log_warn("%s: failed to configure SSL - %s", __func__,

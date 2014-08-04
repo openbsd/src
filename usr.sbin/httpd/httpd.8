@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.40 2014/08/04 17:12:44 reyk Exp $
+.\"	$OpenBSD: httpd.8,v 1.41 2014/08/04 18:12:15 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -36,6 +36,10 @@ Default configuration file.
 .Ux Ns -domain
 socket used for communication with
 .Nm .
+.It /var/www/conf/server.key
+Default SSL/TLS server key.
+.It /var/www/conf/server.crt
+Default SSL/TLS server certificate.
 .It /var/www/logs/access.log
 Default access log file.
 .It /var/www/logs/error.log
