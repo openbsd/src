@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.13 2014/08/04 11:09:25 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.14 2014/08/04 15:49:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -60,6 +60,7 @@ config_init(struct httpd *env)
 
 		ps->ps_what[PROC_PARENT] = CONFIG_ALL;
 		ps->ps_what[PROC_SERVER] = CONFIG_SERVERS|CONFIG_MEDIA;
+		ps->ps_what[PROC_LOGGER] = 0;
 	}
 
 	/* Other configuration */
@@ -261,14 +262,21 @@ config_getserver_config(struct httpd *env, struct server *srv,
 			srv_conf->logformat = srv->srv_conf.logformat;
 		}
 
-		DPRINTF("%s: %s %d received location \"%s\", parent \"%s\"",
+		f = SRVFLAG_SYSLOG|SRVFLAG_NO_SYSLOG;
+		if ((srv_conf->flags & f) == 0)
+			srv_conf->flags |= srv->srv_conf.flags & f;
+
+		DPRINTF("%s: %s %d location \"%s\", "
+		    "parent \"%s\", flags: %s",
 		    __func__, ps->ps_title[privsep_process], ps->ps_instance,
-		    srv_conf->location, srv->srv_conf.name);
+		    srv_conf->location, srv->srv_conf.name,
+		    printb_flags(srv_conf->flags, SRVFLAG_BITS));
 	} else {
 		/* Add a new "virtual" server */
-		DPRINTF("%s: %s %d received server \"%s\", parent \"%s\"",
+		DPRINTF("%s: %s %d server \"%s\", parent \"%s\", flags: %s",
 		    __func__, ps->ps_title[privsep_process], ps->ps_instance,
-		    srv_conf->name, srv->srv_conf.name);
+		    srv_conf->name, srv->srv_conf.name,
+    		    printb_flags(srv_conf->flags, SRVFLAG_BITS));
 	}
 
 	TAILQ_INSERT_TAIL(&srv->srv_hosts, srv_conf, entry);
@@ -319,9 +327,10 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	TAILQ_INSERT_TAIL(&srv->srv_hosts, &srv->srv_conf, entry);
 	TAILQ_INSERT_TAIL(env->sc_servers, srv, srv_entry);
 
-	DPRINTF("%s: %s %d received configuration \"%s\"", __func__,
+	DPRINTF("%s: %s %d configuration \"%s\", flags: %s", __func__,
 	    ps->ps_title[privsep_process], ps->ps_instance,
-	    srv->srv_conf.name);
+	    srv->srv_conf.name,
+	    printb_flags(srv->srv_conf.flags, SRVFLAG_BITS));
 
 	return (0);
 }

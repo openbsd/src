@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.3 2014/08/04 11:09:25 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.4 2014/08/04 15:49:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -269,6 +269,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_SHUTDOWN:
 		case IMSG_CTL_RELOAD:
+		case IMSG_CTL_REOPEN:
 			proc_forward_imsg(env->sc_ps, &imsg, PROC_PARENT, -1);
 			break;
 		case IMSG_CTL_NOTIFY:

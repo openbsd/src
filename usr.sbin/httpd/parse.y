@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.20 2014/08/04 11:09:25 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.21 2014/08/04 15:49:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -124,8 +124,8 @@ typedef struct {
 
 %}
 
-%token	AUTO COMMON COMBINED CONNECTION DIRECTORY FCGI INDEX LISTEN LOCATION
-%token	LOG NO ON PORT PREFORK ROOT SERVER SOCKET TYPES
+%token	AUTO COMMON COMBINED CONNECTION DIRECTORY FCGI FILE INDEX LISTEN
+%token	LOCATION LOG NO ON PORT PREFORK ROOT SERVER SOCKET SYSLOG TYPES
 %token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -432,24 +432,41 @@ dirflags	: INDEX STRING		{
 		}
 		;
 
-logformat	: LOG COMMON		{
+
+logformat	: LOG logflags
+		| LOG '{' logflags_l '}'
+		| NO LOG		{
+			srv->srv_conf.flags &= ~SRVFLAG_LOG;
+			srv->srv_conf.flags |= SRVFLAG_NO_LOG;
+		}
+		;
+
+logflags_l	: logflags comma logflags_l
+		| logflags
+		;
+
+logflags	: COMMON		{
 			srv->srv_conf.flags &= ~SRVFLAG_NO_LOG;
 			srv->srv_conf.flags |= SRVFLAG_LOG;
 			srv->srv_conf.logformat = LOG_FORMAT_COMMON;
 		}
-		| LOG COMBINED		{
+		| COMBINED		{
 			srv->srv_conf.flags &= ~SRVFLAG_NO_LOG;
 			srv->srv_conf.flags |= SRVFLAG_LOG;
 			srv->srv_conf.logformat = LOG_FORMAT_COMBINED;
 		}
-		| LOG CONNECTION	{
+		| CONNECTION		{
 			srv->srv_conf.flags &= ~SRVFLAG_NO_LOG;
 			srv->srv_conf.flags |= SRVFLAG_LOG;
 			srv->srv_conf.logformat = LOG_FORMAT_CONNECTION;
 		}
-		| NO LOG		{
-			srv->srv_conf.flags &= ~SRVFLAG_LOG;
-			srv->srv_conf.flags |= SRVFLAG_NO_LOG;
+		| SYSLOG		{
+			srv->srv_conf.flags &= ~SRVFLAG_NO_SYSLOG;
+			srv->srv_conf.flags |= SRVFLAG_SYSLOG;
+		}
+		| NO SYSLOG		{
+			srv->srv_conf.flags &= ~SRVFLAG_SYSLOG;
+			srv->srv_conf.flags |= SRVFLAG_NO_SYSLOG;
 		}
 		;
 
@@ -586,6 +603,7 @@ lookup(char *s)
 		{ "connection",		CONNECTION },
 		{ "directory",		DIRECTORY },
 		{ "fastcgi",		FCGI },
+		{ "file",		FILE },
 		{ "include",		INCLUDE },
 		{ "index",		INDEX },
 		{ "listen",		LISTEN },
@@ -598,6 +616,7 @@ lookup(char *s)
 		{ "root",		ROOT },
 		{ "server",		SERVER },
 		{ "socket",		SOCKET },
+		{ "syslog",		SYSLOG },
 		{ "types",		TYPES }
 	};
 	const struct keywords	*p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.3 2014/08/04 11:09:25 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.4 2014/08/04 15:49:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -321,6 +321,7 @@ proc_sig_handler(int sig, short event, void *arg)
 	case SIGCHLD:
 	case SIGHUP:
 	case SIGPIPE:
+	case SIGUSR1:
 		/* ignore */
 		break;
 	default:
@@ -407,12 +408,14 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	signal_set(&ps->ps_evsigchld, SIGCHLD, proc_sig_handler, p);
 	signal_set(&ps->ps_evsighup, SIGHUP, proc_sig_handler, p);
 	signal_set(&ps->ps_evsigpipe, SIGPIPE, proc_sig_handler, p);
+	signal_set(&ps->ps_evsigusr1, SIGUSR1, proc_sig_handler, p);
 
 	signal_add(&ps->ps_evsigint, NULL);
 	signal_add(&ps->ps_evsigterm, NULL);
 	signal_add(&ps->ps_evsigchld, NULL);
 	signal_add(&ps->ps_evsighup, NULL);
 	signal_add(&ps->ps_evsigpipe, NULL);
+	signal_add(&ps->ps_evsigusr1, NULL);
 
 	proc_listen(ps, procs, nproc);
 

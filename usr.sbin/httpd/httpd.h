@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.39 2014/08/04 14:49:24 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.40 2014/08/04 15:49:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -34,6 +34,8 @@
 #define HTTPD_DOCROOT		"/htdocs"
 #define HTTPD_INDEX		"index.html"
 #define HTTPD_FCGI_SOCKET	"/run/slowcgi.sock"
+#define HTTPD_ACCESS_LOG	"/logs/access.log"
+#define HTTPD_ERROR_LOG		"/logs/error.log"
 #define FD_RESERVE		5
 
 #define SERVER_MAX_CLIENTS	1024
@@ -176,20 +178,24 @@ enum imsg_type {
 	IMSG_CTL_NOTIFY,
 	IMSG_CTL_END,
 	IMSG_CTL_START,
+	IMSG_CTL_REOPEN,
 	IMSG_CFG_SERVER,
 	IMSG_CFG_MEDIA,
-	IMSG_CFG_DONE
+	IMSG_CFG_DONE,
+	IMSG_LOG_ACCESS,
+	IMSG_LOG_ERROR
 };
 
 enum privsep_procid {
 	PROC_ALL	= -1,
 	PROC_PARENT	= 0,
 	PROC_SERVER,
+	PROC_LOGGER,
 	PROC_MAX
 } privsep_process;
 
 /* Attach the control socket to the following process */
-#define PROC_CONTROL	PROC_PARENT
+#define PROC_CONTROL	PROC_LOGGER
 
 struct privsep_pipes {
 	int				*pp_pipes[PROC_MAX];
@@ -217,6 +223,7 @@ struct privsep {
 	struct event			 ps_evsigchld;
 	struct event			 ps_evsighup;
 	struct event			 ps_evsigpipe;
+	struct event			 ps_evsigusr1;
 
 	int				 ps_noaction;
 	struct passwd			*ps_pw;
@@ -296,10 +303,13 @@ SPLAY_HEAD(client_tree, client);
 #define SRVFLAG_LOG		0x0100
 #define SRVFLAG_NO_LOG		0x0200
 #define SRVFLAG_SOCKET		0x0400
+#define SRVFLAG_SYSLOG		0x0800
+#define SRVFLAG_NO_SYSLOG	0x1000
 
-#define SRVFLAG_BITS						\
-	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"	\
-	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG\13SOCKET"
+#define SRVFLAG_BITS							\
+	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
+	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG\13SOCKET"	\
+	"\14SYSLOG\15NO_SYSLOG"
 
 #define TCPFLAG_NODELAY		0x01
 #define TCPFLAG_NNODELAY	0x02
@@ -376,6 +386,7 @@ struct httpd {
 	struct event		 sc_ev;
 	u_int16_t		 sc_prefork_server;
 	u_int16_t		 sc_id;
+	int			 sc_paused;
 
 	struct serverlist	*sc_servers;
 	struct mediatypes	*sc_mediatypes;
@@ -417,6 +428,10 @@ void	 server_write(struct bufferevent *, void *);
 void	 server_read(struct bufferevent *, void *);
 void	 server_error(struct bufferevent *, short, void *);
 void	 server_log(struct client *, const char *);
+void	 server_log_access(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+void	 server_log_error(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
 void	 server_close(struct client *, const char *);
 void	 server_dump(struct client *, const void *, size_t);
 int	 server_client_cmp(struct client *, struct client *);
@@ -556,5 +571,8 @@ int	 config_setserver(struct httpd *, struct server *);
 int	 config_getserver(struct httpd *, struct imsg *);
 int	 config_setmedia(struct httpd *, struct media_type *);
 int	 config_getmedia(struct httpd *, struct imsg *);
+
+/* logger.c */
+pid_t	 logger(struct privsep *, struct privsep_proc *);
 
 #endif /* _HTTPD_H */

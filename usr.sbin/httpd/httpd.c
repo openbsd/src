@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.14 2014/08/04 14:49:24 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.15 2014/08/04 15:49:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -50,15 +50,19 @@ __dead void	 usage(void);
 int		 parent_configure(struct httpd *);
 void		 parent_configure_done(struct httpd *);
 void		 parent_reload(struct httpd *, u_int, const char *);
+void		 parent_reopen(struct httpd *);
 void		 parent_sig_handler(int, short, void *);
 void		 parent_shutdown(struct httpd *);
 int		 parent_dispatch_server(int, struct privsep_proc *,
+		    struct imsg *);
+int		 parent_dispatch_logger(int, struct privsep_proc *,
 		    struct imsg *);
 
 struct httpd			*httpd_env;
 
 static struct privsep_proc procs[] = {
-	{ "server",	PROC_SERVER, parent_dispatch_server, server }
+	{ "server",	PROC_SERVER, parent_dispatch_server, server },
+	{ "logger",	PROC_LOGGER, parent_dispatch_logger, logger }
 };
 
 void
@@ -121,6 +125,11 @@ parent_sig_handler(int sig, short event, void *arg)
 		break;
 	case SIGPIPE:
 		/* ignore */
+		break;
+	case SIGUSR1:
+		log_info("%s: reopen requested with SIGUSR1", __func__);
+
+		parent_reopen(ps->ps_env);
 		break;
 	default:
 		fatalx("unexpected signal");
@@ -227,12 +236,14 @@ main(int argc, char *argv[])
 	signal_set(&ps->ps_evsigchld, SIGCHLD, parent_sig_handler, ps);
 	signal_set(&ps->ps_evsighup, SIGHUP, parent_sig_handler, ps);
 	signal_set(&ps->ps_evsigpipe, SIGPIPE, parent_sig_handler, ps);
+	signal_set(&ps->ps_evsigusr1, SIGUSR1, parent_sig_handler, ps);
 
 	signal_add(&ps->ps_evsigint, NULL);
 	signal_add(&ps->ps_evsigterm, NULL);
 	signal_add(&ps->ps_evsigchld, NULL);
 	signal_add(&ps->ps_evsighup, NULL);
 	signal_add(&ps->ps_evsigpipe, NULL);
+	signal_add(&ps->ps_evsigusr1, NULL);
 
 	proc_listen(ps, procs, nitems(procs));
 
@@ -278,7 +289,7 @@ parent_configure(struct httpd *env)
 	}
 
 	/* The servers need to reload their config. */
-	env->sc_reload = env->sc_prefork_server;
+	env->sc_reload = env->sc_prefork_server + 1;
 
 	for (id = 0; id < PROC_MAX; id++) {
 		if (id == privsep_process)
@@ -330,6 +341,13 @@ parent_reload(struct httpd *env, u_int reset, const char *filename)
 }
 
 void
+parent_reopen(struct httpd *env)
+{
+	proc_compose_imsg(env->sc_ps, PROC_LOGGER, -1, IMSG_CTL_REOPEN,
+	    -1, NULL, 0);
+}
+
+void
 parent_configure_done(struct httpd *env)
 {
 	int	 id;
@@ -373,6 +391,42 @@ parent_dispatch_server(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct httpd		*env = p->p_env;
 
 	switch (imsg->hdr.type) {
+	case IMSG_CFG_DONE:
+		parent_configure_done(env);
+		break;
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+parent_dispatch_logger(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	struct httpd		*env = p->p_env;
+	u_int			 v;
+	char			*str = NULL;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_RESET:
+		IMSG_SIZE_CHECK(imsg, &v);
+		memcpy(&v, imsg->data, sizeof(v));
+		parent_reload(env, v, NULL);
+		break;
+	case IMSG_CTL_RELOAD:
+		if (IMSG_DATA_SIZE(imsg) > 0)
+			str = get_string(imsg->data, IMSG_DATA_SIZE(imsg));
+		parent_reload(env, CONFIG_RELOAD, str);
+		if (str != NULL)
+			free(str);
+		break;
+	case IMSG_CTL_SHUTDOWN:
+		parent_shutdown(env);
+		break;
+	case IMSG_CTL_REOPEN:
+		parent_reopen(env);
+		break;
 	case IMSG_CFG_DONE:
 		parent_configure_done(env);
 		break;

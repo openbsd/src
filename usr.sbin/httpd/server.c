@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.25 2014/08/04 11:09:25 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.26 2014/08/04 15:49:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -47,6 +47,8 @@
 
 int		 server_dispatch_parent(int, struct privsep_proc *,
 		    struct imsg *);
+int		 server_dispatch_logger(int, struct privsep_proc *,
+		    struct imsg *);
 void		 server_shutdown(void);
 
 void		 server_init(struct privsep *, struct privsep_proc *p, void *);
@@ -70,7 +72,8 @@ static struct httpd		*env = NULL;
 int				 proc_id;
 
 static struct privsep_proc procs[] = {
-	{ "parent",	PROC_PARENT,	server_dispatch_parent }
+	{ "parent",	PROC_PARENT,	server_dispatch_parent },
+	{ "logger",	PROC_LOGGER,	server_dispatch_logger }
 };
 
 pid_t
@@ -603,32 +606,79 @@ server_inflight_dec(struct client *clt, const char *why)
 }
 
 void
+server_log_access(const char *emsg, ...)
+{
+	va_list	 ap;
+	char	*msg;
+	int	 ret;
+
+	va_start(ap, emsg);
+	ret = vasprintf(&msg, emsg, ap);
+	va_end(ap);
+	if (ret == -1) {
+		log_warn("%s: vasprintf", __func__);
+		return;
+	}
+
+	proc_compose_imsg(env->sc_ps, PROC_LOGGER, -1,
+	    IMSG_LOG_ACCESS, -1, msg, strlen(msg) + 1);
+}
+
+void
+server_log_error(const char *emsg, ...)
+{
+	va_list	 ap;
+	char	*msg;
+	int	 ret;
+
+	va_start(ap, emsg);
+	ret = vasprintf(&msg, emsg, ap);
+	va_end(ap);
+	if (ret == -1) {
+		log_warn("%s: vasprintf", __func__);
+		return;
+	}
+
+	proc_compose_imsg(env->sc_ps, PROC_LOGGER, -1,
+	    IMSG_LOG_ERROR, -1, msg, strlen(msg) + 1);
+}
+
+void
 server_log(struct client *clt, const char *msg)
 {
 	char			 ibuf[MAXHOSTNAMELEN], obuf[MAXHOSTNAMELEN];
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	char			*ptr = NULL;
-	void			(*log_cb)(const char *, ...) = NULL;
-	extern int		 debug;
+	void			(*log_infocb)(const char *, ...);
+	void			(*log_debugcb)(const char *, ...);
+	extern int		 verbose;
+
+	if (srv_conf->flags & SRVFLAG_SYSLOG) {
+		log_infocb = log_info;
+		log_debugcb = log_debug;
+	} else {
+		log_infocb = server_log_access;
+		log_debugcb = server_log_error;
+	}
 
 	switch (srv_conf->logformat) {
 	case LOG_FORMAT_CONNECTION:
-		log_cb = log_info;
+		log_debugcb = server_log_error;
 		break;
 	default:
-		if (debug)
-			log_cb = log_debug;
+		if (verbose <= 1)
+			log_debugcb = NULL;
 		if (EVBUFFER_LENGTH(clt->clt_log)) {
 			while ((ptr =
 			    evbuffer_readline(clt->clt_log)) != NULL) {
-				log_info("%s", ptr);
+				(log_infocb)("%s", ptr);
 				free(ptr);
 			}
 		}
 		break;
 	}
 
-	if (log_cb != NULL && msg != NULL) {
+	if (log_debugcb != NULL && msg != NULL) {
 		memset(&ibuf, 0, sizeof(ibuf));
 		memset(&obuf, 0, sizeof(obuf));
 		(void)print_host(&clt->clt_ss, ibuf, sizeof(ibuf));
@@ -636,7 +686,7 @@ server_log(struct client *clt, const char *msg)
 		if (EVBUFFER_LENGTH(clt->clt_log) &&
 		    evbuffer_add_printf(clt->clt_log, "\n") != -1)
 			ptr = evbuffer_readline(clt->clt_log);
-		log_cb("server %s, "
+		(log_debugcb)("server %s, "
 		    "client %d (%d active), %s:%u -> %s, "
 		    "%s%s%s", srv_conf->name, clt->clt_id, server_clients,
 		    ibuf, ntohs(clt->clt_port), obuf, msg,
@@ -706,6 +756,17 @@ server_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CTL_RESET:
 		config_getreset(env, imsg);
 		break;
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+server_dispatch_logger(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	switch (imsg->hdr.type) {
 	default:
 		return (-1);
 	}

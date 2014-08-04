@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.18 2014/08/03 10:26:43 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.19 2014/08/04 15:49:28 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 3 2014 $
+.Dd $Mdocdate: August 4 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -145,8 +145,8 @@ except
 .Ic listen on
 and
 .Ic location .
-.It Oo Ic no Oc Ic log Op Ar style
-Enable writing an access log to syslog.
+.It Oo Ic no Oc Ic log style Op Ar style
+Enable writing an access log to the log files or syslog.
 The
 .Ar style
 can be
@@ -168,6 +168,8 @@ similar to the format that is used by
 .Xr relayd 8 .
 If not specified, the default is
 .Ar common .
+.It Oo Ic no Oc Ic log syslog
+Log to syslog instead of the log files.
 .It Ic root Ar directory
 Set the document root of the server.
 The
