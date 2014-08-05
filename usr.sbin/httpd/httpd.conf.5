@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.24 2014/08/05 17:03:21 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.25 2014/08/05 17:13:16 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -119,17 +119,22 @@ must have a
 .Ar name
 and include one or more lines of the following syntax:
 .Bl -tag -width Ds
-.It Ic directory Oo Ic no Oc Ic auto index
+.It Ic directory Ar option
+Set the specified options when serving or accessing directories.
+Valid options are:
+.Bl -tag -width Ds
+.It Oo Ic no Oc Ic auto index
 If no index file is found, automatically generate a directory listing.
 This is disabled by default.
-.It Ic directory Ic index Ar string
+.It Ic index Ar string
 Set the directory index file.
 If not specified, it defaults to
 .Pa index.html .
-.It Ic directory no index
+.It Ic no index
 Disable the directory index.
 .Nm httpd
 will neither display nor generate a directory index.
+.El
 .It Oo Ic no Oc Ic fastcgi Op Ic socket Ar socket
 Enable FastCGI instead of serving files.
 The
@@ -153,19 +158,32 @@ except
 .Ic location
 and
 .Ic tcp .
-.It Ic log access Ar name
+.It Oo Ic no Oc Ic log Op Ar option
+Set the specified logging options.
+Logging is enabled by default using the standard
+.Ic access
+and
+.Ic error
+log files,
+but can be changed per server or location.
+Use the
+.Ic no log
+directive to disable logging of any requests.
+Valid options are:
+.Bl -tag -width Ds
+.It Ic access Ar name
 Set the
 .Ar name
 of the access log file relative to the log directory.
 If not specified, it defaults to
 .Pa access.log .
-.It Ic log error Ar name
+.It Ic error Ar name
 Set the
 .Ar name
 of the error log file relative to the log directory.
 If not specified, it defaults to
 .Pa error.log .
-.It Ic log style Ar style
+.It Ic style Ar style
 Set the logging style.
 The
 .Ar style
@@ -188,10 +206,9 @@ similar to the format that is used by
 .Xr relayd 8 .
 If not specified, the default is
 .Ar common .
-.It Ic log Oo Ic no Oc Ic syslog
+.It Oo Ic no Oc Ic syslog
 Enable or disable logging to syslog instead of the log files.
-.It Ic no log
-Disable logging.
+.El
 .It Ic root Ar directory
 Set the document root of the server.
 The
