@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.128 2014/07/12 20:13:48 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.129 2014/08/05 20:26:15 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1967,7 +1967,7 @@ uhci_device_ctrl_close(struct usbd_pipe *pipe)
 void
 uhci_device_intr_abort(struct usbd_xfer *xfer)
 {
-	KASSERT(xfer->pipe->intrxfer == xfer);
+	KASSERT(!xfer->pipe->repeat || xfer->pipe->intrxfer == xfer);
 
 	uhci_abort_xfer(xfer, USBD_CANCELLED);
 }
