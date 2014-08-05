@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.42 2013/09/03 20:44:01 jmc Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.43 2014/08/05 16:35:37 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 3 2013 $
+.Dd $Mdocdate: August 5 2014 $
 .Dt HOSTAPD.CONF 5
 .Os
 .Sh NAME
@@ -798,8 +798,8 @@ For example:
 .Bd -literal -offset indent
 # Assign IP addresses to layer 2 addresses
 table <clients> {
-	00:02:6f:42:d0:01 -> 172.23.5.1/30
-	00:05:4e:45:d3:b8 -> 172.23.5.4/30
+	00:02:6f:42:d0:01 -> 172.23.5.1/30,
+	00:05:4e:45:d3:b8 -> 172.23.5.4/30,
 	00:04:2e:12:03:e0 -> 172.23.5.8/30
 }
 
