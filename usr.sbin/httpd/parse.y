@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.27 2014/08/05 17:03:21 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.28 2014/08/05 18:01:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -126,13 +126,15 @@ typedef struct {
 %}
 
 %token	ACCESS AUTO BACKLOG BUFFER CHROOT COMMON COMBINED CONNECTION
-%token	DIRECTORY ERR FCGI INDEX IP LISTEN LOCATION LOG NO NODELAY ON PORT
-%token	PREFORK ROOT SACK SERVER SOCKET SSL STYLE SYSLOG TCP TYPES
+%token	DIRECTORY ERR FCGI INDEX IP LISTEN LOCATION LOG MAXIMUM NO NODELAY
+%token	ON PORT	PREFORK REQUESTS ROOT SACK SERVER SOCKET SSL STYLE SYSLOG
+%token	TCP TIMEOUT TYPES
 %token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.port>	port
 %type	<v.number>	optssl
+%type	<v.tv>		timeout
 
 %%
 
@@ -228,6 +230,7 @@ server		: SERVER STRING		{
 			    sizeof(s->srv_conf.errorlog));
 			s->srv_conf.id = ++last_server_id;
 			s->srv_conf.timeout.tv_sec = SERVER_TIMEOUT;
+			s->srv_conf.maxrequests = SERVER_MAXREQUESTS;
 			s->srv_conf.flags |= SRVFLAG_LOG;
 			s->srv_conf.logformat = LOG_FORMAT_COMMON;
 
@@ -302,13 +305,13 @@ serveroptsl	: LISTEN ON STRING port optssl {
 				yyerror("tcp flags inside location");
 				YYERROR;
 			}
-		} tcpflags
-		| TCP 			{
+		} tcpip
+		| CONNECTION 		{
 			if (parentsrv != NULL) {
-				yyerror("tcp flags inside location");
+				yyerror("connection options inside location");
 				YYERROR;
 			}
-		} '{' tcpflags_l '}'
+		} connection
 		| ROOT STRING		{
 			if (strlcpy(srv->srv_conf.root, $2,
 			    sizeof(srv->srv_conf.root)) >=
@@ -436,6 +439,23 @@ fcgiflags	: SOCKET STRING		{
 		}
 		;
 
+connection	: '{' conflags_l '}'
+		| conflags
+		;
+
+conflags_l	: conflags comma conflags_l
+		| conflags
+		;
+
+conflags	: TIMEOUT timeout		{
+			memcpy(&srv_conf->timeout, &$2,
+			    sizeof(struct timeval));
+		}
+		| MAXIMUM REQUESTS NUMBER	{
+			srv_conf->maxrequests = $3;
+		}
+		;
+
 dirflags_l	: dirflags comma dirflags_l
 		| dirflags
 		;
@@ -528,6 +548,10 @@ logstyle	: COMMON		{
 			srv_conf->flags |= SRVFLAG_LOG;
 			srv_conf->logformat = LOG_FORMAT_CONNECTION;
 		}
+		;
+
+tcpip		: '{' tcpflags_l '}'
+		| tcpflags
 		;
 
 tcpflags_l	: tcpflags comma tcpflags_l
@@ -658,6 +682,17 @@ port		: PORT STRING {
 		}
 		;
 
+timeout		: NUMBER
+		{
+			if ($1 < 0) {
+				yyerror("invalid timeout: %d\n", $1);
+				YYERROR;
+			}
+			$$.tv_sec = $1;
+			$$.tv_usec = 0;
+		}
+		;
+
 comma		: ','
 		| nl
 		| /* empty */
@@ -721,11 +756,13 @@ lookup(char *s)
 		{ "listen",		LISTEN },
 		{ "location",		LOCATION },
 		{ "log",		LOG },
+		{ "max",		MAXIMUM },
 		{ "no",			NO },
 		{ "nodelay",		NODELAY },
 		{ "on",			ON },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
+		{ "requests",		REQUESTS },
 		{ "root",		ROOT },
 		{ "sack",		SACK },
 		{ "server",		SERVER },
@@ -734,6 +771,7 @@ lookup(char *s)
 		{ "style",		STYLE },
 		{ "syslog",		SYSLOG },
 		{ "tcp",		TCP },
+		{ "timeout",		TIMEOUT },
 		{ "types",		TYPES }
 	};
 	const struct keywords	*p;

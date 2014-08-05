@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.45 2014/08/05 16:30:35 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.46 2014/08/05 18:01:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -280,7 +280,7 @@ struct client {
 
 	off_t			 clt_toread;
 	size_t			 clt_headerlen;
-	int			 clt_persist;
+	u_int			 clt_persist;
 	int			 clt_line;
 	int			 clt_done;
 	int			 clt_chunk;
@@ -363,8 +363,9 @@ struct server_config {
 
 	in_port_t		 port;
 	struct sockaddr_storage	 ss;
-	struct timeval		 timeout;
 	int			 prefixlen;
+	struct timeval		 timeout;
+	u_int32_t		 maxrequests;
 
 	u_int16_t		 flags;
 	u_int8_t		 tcpflags;

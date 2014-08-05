@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.18 2014/08/05 15:36:59 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.19 2014/08/05 18:01:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -284,6 +284,10 @@ config_getserver_config(struct httpd *env, struct server *srv,
 			    srv->srv_conf.errorlog,
 			    sizeof(srv_conf->errorlog));
 		}
+
+		memcpy(&srv_conf->timeout, &srv->srv_conf.timeout,
+		    sizeof(srv_conf->timeout));
+		srv_conf->maxrequests = srv->srv_conf.maxrequests;
 
 		DPRINTF("%s: %s %d location \"%s\", "
 		    "parent \"%s\", flags: %s",

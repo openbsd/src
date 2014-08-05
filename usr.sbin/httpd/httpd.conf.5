@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.25 2014/08/05 17:13:16 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.26 2014/08/05 18:01:10 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -119,6 +119,21 @@ must have a
 .Ar name
 and include one or more lines of the following syntax:
 .Bl -tag -width Ds
+.It Ic connection Ar option
+Set the specified options and limits for HTTP connections.
+Valid options are:
+.Bl -tag -width Ds
+.It Ic max requests Ar number
+Set the maximum number of requests per persistent HTTP connection.
+Persistent connections are negotiated using the Keep-Alive header in
+HTTP/1.0 and enabled by default in HTTP/1.1.
+The default maximum number of requests per connection is
+.Ar 100 .
+.It Ic timeout Ar seconds
+Specify the inactivity timeout in seconds for accepted sessions.
+The default timeout is 600 seconds (10 minutes).
+The maximum is 2147483647 seconds (68 years).
+.El
 .It Ic directory Ar option
 Set the specified options when serving or accessing directories.
 Valid options are:
@@ -152,8 +167,9 @@ Specify server configuration rules for a specific location.
 The
 .Ar path
 argument will be matched against the URL path with shell globbing rules.
-A location section may include all of the server configuration rules
+A location section may include most of the server configuration rules
 except
+.Ic connection ,
 .Ic listen on ,
 .Ic location
 and

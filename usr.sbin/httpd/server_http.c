@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.38 2014/08/05 16:30:36 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.39 2014/08/05 18:01:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -711,7 +711,7 @@ server_response(struct httpd *httpd, struct client *clt)
 			clt->clt_persist = 0;
 	}
 
-	if (clt->clt_persist >= SERVER_MAXREQUESTS)
+	if (clt->clt_persist >= srv_conf->maxrequests)
 		clt->clt_persist = 0;
 
 	/*
