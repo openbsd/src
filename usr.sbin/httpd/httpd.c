@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.15 2014/08/04 15:49:28 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.16 2014/08/05 09:24:21 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -150,6 +150,7 @@ int
 main(int argc, char *argv[])
 {
 	int			 c;
+	unsigned int		 proc;
 	int			 debug = 0, verbose = 0;
 	u_int32_t		 opts = 0;
 	struct httpd		*env;
@@ -224,6 +225,9 @@ main(int argc, char *argv[])
 
 	ps->ps_instances[PROC_SERVER] = env->sc_prefork_server;
 	ps->ps_ninstances = env->sc_prefork_server;
+
+	for (proc = 0; proc < nitems(procs); proc++)
+		procs[proc].p_chroot = env->sc_chroot;
 
 	proc_init(ps, procs, nitems(procs));
 

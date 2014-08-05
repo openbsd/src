@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.23 2014/08/04 17:38:12 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.24 2014/08/05 09:24:21 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -124,7 +124,7 @@ typedef struct {
 
 %}
 
-%token	AUTO COMMON COMBINED CONNECTION DIRECTORY FCGI FILE INDEX LISTEN
+%token	AUTO CHROOT COMMON COMBINED CONNECTION DIRECTORY FCGI FILE INDEX LISTEN
 %token	LOCATION LOG NO ON PORT PREFORK ROOT SERVER SOCKET SSL STYLE SYSLOG
 %token	TYPES
 %token	ERROR INCLUDE
@@ -181,6 +181,9 @@ main		: PREFORK NUMBER	{
 				YYERROR;
 			}
 			conf->sc_prefork_server = $2;
+		}
+		| CHROOT STRING		{
+			conf->sc_chroot = $2;
 		}
 		;
 
@@ -612,6 +615,7 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "auto",		AUTO },
+		{ "chroot",		CHROOT },
 		{ "combined",		COMBINED },
 		{ "common",		COMMON },
 		{ "connection",		CONNECTION },
