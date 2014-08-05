@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.22 2014/08/05 09:24:21 jsg Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.23 2014/08/05 15:36:59 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -152,7 +152,19 @@ except
 .Ic listen on
 and
 .Ic location .
-.It Ic log style Op Ar style
+.It Ic log access Ar name
+Set the
+.Ar name
+of the access log file relative to the log directory.
+If not specified, it defaults to
+.Pa access.log .
+.It Ic log error Ar name
+Set the
+.Ar name
+of the error log file relative to the log directory.
+If not specified, it defaults to
+.Pa error.log .
+.It Ic log style Ar style
 Set the logging style.
 The
 .Ar style

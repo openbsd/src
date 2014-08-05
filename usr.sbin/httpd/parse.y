@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2014/08/05 09:24:21 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.25 2014/08/05 15:36:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -124,9 +124,9 @@ typedef struct {
 
 %}
 
-%token	AUTO CHROOT COMMON COMBINED CONNECTION DIRECTORY FCGI FILE INDEX LISTEN
-%token	LOCATION LOG NO ON PORT PREFORK ROOT SERVER SOCKET SSL STYLE SYSLOG
-%token	TYPES
+%token	ACCESS AUTO CHROOT COMMON COMBINED CONNECTION DIRECTORY ERR FCGI
+%token	INDEX LISTEN LOCATION LOG NO ON PORT PREFORK ROOT SERVER SOCKET SSL
+%token	STYLE SYSLOG TYPES
 %token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -221,6 +221,10 @@ server		: SERVER STRING		{
 			    sizeof(s->srv_conf.root));
 			strlcpy(s->srv_conf.index, HTTPD_INDEX,
 			    sizeof(s->srv_conf.index));
+			strlcpy(s->srv_conf.accesslog, HTTPD_ACCESS_LOG,
+			    sizeof(s->srv_conf.accesslog));
+			strlcpy(s->srv_conf.errorlog, HTTPD_ERROR_LOG,
+			    sizeof(s->srv_conf.errorlog));
 			s->srv_conf.id = ++last_server_id;
 			s->srv_conf.timeout.tv_sec = SERVER_TIMEOUT;
 			s->srv_conf.flags |= SRVFLAG_LOG;
@@ -468,6 +472,28 @@ logflags	: STYLE logstyle
 			srv->srv_conf.flags &= ~SRVFLAG_SYSLOG;
 			srv->srv_conf.flags |= SRVFLAG_NO_SYSLOG;
 		}
+		| ACCESS STRING		{
+			if (strlcpy(srv->srv_conf.accesslog, $2,
+			    sizeof(srv->srv_conf.accesslog)) >=
+			    sizeof(srv->srv_conf.accesslog)) {
+				yyerror("access log name too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			srv->srv_conf.flags |= SRVFLAG_ACCESS_LOG;
+		}
+		| ERR STRING		{
+			if (strlcpy(srv->srv_conf.errorlog, $2,
+			    sizeof(srv->srv_conf.errorlog)) >=
+			    sizeof(srv->srv_conf.errorlog)) {
+				yyerror("error log name too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			srv->srv_conf.flags |= SRVFLAG_ERROR_LOG;
+		}
 		;
 
 logstyle	: COMMON		{
@@ -614,14 +640,15 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "access",		ACCESS },
 		{ "auto",		AUTO },
 		{ "chroot",		CHROOT },
 		{ "combined",		COMBINED },
 		{ "common",		COMMON },
 		{ "connection",		CONNECTION },
 		{ "directory",		DIRECTORY },
+		{ "error",		ERR },
 		{ "fastcgi",		FCGI },
-		{ "file",		FILE },
 		{ "include",		INCLUDE },
 		{ "index",		INDEX },
 		{ "listen",		LISTEN },

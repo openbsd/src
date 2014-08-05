@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.43 2014/08/05 09:24:21 jsg Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.44 2014/08/05 15:36:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -35,8 +35,9 @@
 #define HTTPD_DOCROOT		"/htdocs"
 #define HTTPD_INDEX		"index.html"
 #define HTTPD_FCGI_SOCKET	"/run/slowcgi.sock"
-#define HTTPD_ACCESS_LOG	"/logs/access.log"
-#define HTTPD_ERROR_LOG		"/logs/error.log"
+#define HTTPD_LOGROOT		"/logs"
+#define HTTPD_ACCESS_LOG	"access.log"
+#define HTTPD_ERROR_LOG		"error.log"
 #define HTTPD_SSL_KEY		"/conf/server.key"
 #define HTTPD_SSL_CERT		"/conf/server.crt"
 #define FD_RESERVE		5
@@ -186,7 +187,8 @@ enum imsg_type {
 	IMSG_CFG_MEDIA,
 	IMSG_CFG_DONE,
 	IMSG_LOG_ACCESS,
-	IMSG_LOG_ERROR
+	IMSG_LOG_ERROR,
+	IMSG_LOG_OPEN
 };
 
 enum privsep_procid {
@@ -312,11 +314,13 @@ SPLAY_HEAD(client_tree, client);
 #define SRVFLAG_SYSLOG		0x0800
 #define SRVFLAG_NO_SYSLOG	0x1000
 #define SRVFLAG_SSL		0x2000
+#define SRVFLAG_ACCESS_LOG	0x4000
+#define SRVFLAG_ERROR_LOG	0x8000
 
 #define SRVFLAG_BITS							\
 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
 	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG\13SOCKET"	\
-	"\14SYSLOG\15NO_SYSLOG"
+	"\14SYSLOG\15NO_SYSLOG\16SSL\17ACCESS_LOG\20ERROR_LOG"
 
 #define TCPFLAG_NODELAY		0x01
 #define TCPFLAG_NNODELAY	0x02
@@ -338,6 +342,14 @@ enum log_format {
 	LOG_FORMAT_CONNECTION
 };
 
+struct log_file {
+	char			log_name[NAME_MAX];
+	int			log_fd;
+	u_int32_t		log_id;
+	TAILQ_ENTRY(log_file)	log_entry;
+};
+TAILQ_HEAD(log_files, log_file) log_files;
+
 struct server_config {
 	u_int32_t		 id;
 	char			 name[MAXHOSTNAMELEN];
@@ -345,11 +357,13 @@ struct server_config {
 	char			 index[NAME_MAX];
 	char			 root[MAXPATHLEN];
 	char			 socket[MAXPATHLEN];
+	char			 accesslog[NAME_MAX];
+	char			 errorlog[NAME_MAX];
 
 	in_port_t		 port;
 	struct sockaddr_storage	 ss;
-	int			 prefixlen;
 	struct timeval		 timeout;
+	int			 prefixlen;
 
 	u_int16_t		 flags;
 	u_int8_t		 tcpflags;
@@ -359,6 +373,8 @@ struct server_config {
 	u_int8_t		 tcpipminttl;
 
 	enum log_format		 logformat;
+	struct log_file		*logaccess;
+	struct log_file		*logerror;
 
 	TAILQ_ENTRY(server_config) entry;
 };
@@ -439,10 +455,8 @@ void	 server_write(struct bufferevent *, void *);
 void	 server_read(struct bufferevent *, void *);
 void	 server_error(struct bufferevent *, short, void *);
 void	 server_log(struct client *, const char *);
-void	 server_log_access(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	 server_log_error(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
+void	 server_sendlog(struct server_config *, int, const char *, ...)
+	    __attribute__((__format__ (printf, 3, 4)));
 void	 server_close(struct client *, const char *);
 void	 server_dump(struct client *, const void *, size_t);
 int	 server_client_cmp(struct client *, struct client *);
@@ -456,6 +470,10 @@ int	 server_bufferevent_write(struct client *, void *, size_t);
 void	 server_inflight_dec(struct client *, const char *);
 struct server *
 	 server_byaddr(struct sockaddr *, in_port_t);
+struct server_config *
+	 serverconfig_byid(u_int32_t);
+int	 server_foreach(int (*)(struct server *,
+	    struct server_config *, void *), void *);
 
 SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
 
@@ -585,5 +603,6 @@ int	 config_getmedia(struct httpd *, struct imsg *);
 
 /* logger.c */
 pid_t	 logger(struct privsep *, struct privsep_proc *);
+int	 logger_open_priv(struct imsg *);
 
 #endif /* _HTTPD_H */

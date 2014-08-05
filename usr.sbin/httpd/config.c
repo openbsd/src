@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.17 2014/08/05 14:35:47 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.18 2014/08/05 15:36:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -60,7 +60,7 @@ config_init(struct httpd *env)
 
 		ps->ps_what[PROC_PARENT] = CONFIG_ALL;
 		ps->ps_what[PROC_SERVER] = CONFIG_SERVERS|CONFIG_MEDIA;
-		ps->ps_what[PROC_LOGGER] = 0;
+		ps->ps_what[PROC_LOGGER] = CONFIG_SERVERS;
 	}
 
 	/* Other configuration */
@@ -268,6 +268,22 @@ config_getserver_config(struct httpd *env, struct server *srv,
 
 		f = SRVFLAG_SSL;
 		srv_conf->flags |= srv->srv_conf.flags & f;
+
+		f = SRVFLAG_ACCESS_LOG;
+		if ((srv_conf->flags & f) == 0) {
+			srv_conf->flags |= srv->srv_conf.flags & f;
+			(void)strlcpy(srv_conf->accesslog,
+			    srv->srv_conf.accesslog,
+			    sizeof(srv_conf->accesslog));
+		}
+
+		f = SRVFLAG_ERROR_LOG;
+		if ((srv_conf->flags & f) == 0) {
+			srv_conf->flags |= srv->srv_conf.flags & f;
+			(void)strlcpy(srv_conf->errorlog,
+			    srv->srv_conf.errorlog,
+			    sizeof(srv_conf->errorlog));
+		}
 
 		DPRINTF("%s: %s %d location \"%s\", "
 		    "parent \"%s\", flags: %s",

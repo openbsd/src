@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.28 2014/08/04 18:12:15 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.29 2014/08/05 15:36:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/uio.h>
 #include <sys/tree.h>
 #include <sys/hash.h>
 
@@ -36,6 +37,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <err.h>
@@ -244,6 +246,43 @@ server_byaddr(struct sockaddr *addr, in_port_t port)
 	}
 
 	return (NULL);
+}
+
+struct server_config *
+serverconfig_byid(u_int32_t id)
+{
+	struct server		*srv;
+	struct server_config	*srv_conf;
+
+	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
+		if (srv->srv_conf.id == id)
+			return (&srv->srv_conf);
+		TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
+			if (srv_conf->id == id)
+				return (srv_conf);
+		}
+	}
+
+	return (NULL);
+}
+
+int
+server_foreach(int (*srv_cb)(struct server *,
+    struct server_config *, void *), void *arg)
+{
+	struct server		*srv;
+	struct server_config	*srv_conf;
+
+	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
+		if ((srv_cb)(srv, &srv->srv_conf, arg) == -1)
+			return (-1);
+		TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
+			if ((srv_cb)(srv, srv_conf, arg) == -1)
+				return (-1);
+		}
+	}
+
+	return (0);
 }
 
 int
@@ -819,11 +858,20 @@ server_inflight_dec(struct client *clt, const char *why)
 }
 
 void
-server_log_access(const char *emsg, ...)
+server_sendlog(struct server_config *srv_conf, int cmd, const char *emsg, ...)
 {
-	va_list	 ap;
-	char	*msg;
-	int	 ret;
+	va_list		 ap;
+	char		*msg;
+	int		 ret;
+	struct iovec	 iov[2];
+
+	if (srv_conf->flags & SRVFLAG_SYSLOG) {
+		if (cmd == IMSG_LOG_ACCESS)
+			vlog(LOG_INFO, emsg, ap);
+		else
+			vlog(LOG_DEBUG, emsg, ap);
+		return;
+	}
 
 	va_start(ap, emsg);
 	ret = vasprintf(&msg, emsg, ap);
@@ -833,27 +881,12 @@ server_log_access(const char *emsg, ...)
 		return;
 	}
 
-	proc_compose_imsg(env->sc_ps, PROC_LOGGER, -1,
-	    IMSG_LOG_ACCESS, -1, msg, strlen(msg) + 1);
-}
+	iov[0].iov_base = &srv_conf->id;
+	iov[0].iov_len = sizeof(srv_conf->id);
+	iov[1].iov_base = msg;
+	iov[1].iov_len = strlen(msg) + 1;
 
-void
-server_log_error(const char *emsg, ...)
-{
-	va_list	 ap;
-	char	*msg;
-	int	 ret;
-
-	va_start(ap, emsg);
-	ret = vasprintf(&msg, emsg, ap);
-	va_end(ap);
-	if (ret == -1) {
-		log_warn("%s: vasprintf", __func__);
-		return;
-	}
-
-	proc_compose_imsg(env->sc_ps, PROC_LOGGER, -1,
-	    IMSG_LOG_ERROR, -1, msg, strlen(msg) + 1);
+	proc_composev_imsg(env->sc_ps, PROC_LOGGER, -1, cmd, -1, iov, 2);
 }
 
 void
@@ -862,36 +895,28 @@ server_log(struct client *clt, const char *msg)
 	char			 ibuf[MAXHOSTNAMELEN], obuf[MAXHOSTNAMELEN];
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	char			*ptr = NULL;
-	void			(*log_infocb)(const char *, ...);
-	void			(*log_debugcb)(const char *, ...);
+	int			 debug_cmd = -1;
 	extern int		 verbose;
-
-	if (srv_conf->flags & SRVFLAG_SYSLOG) {
-		log_infocb = log_info;
-		log_debugcb = log_debug;
-	} else {
-		log_infocb = server_log_access;
-		log_debugcb = server_log_error;
-	}
 
 	switch (srv_conf->logformat) {
 	case LOG_FORMAT_CONNECTION:
-		log_debugcb = server_log_error;
+		debug_cmd = IMSG_LOG_ACCESS;
 		break;
 	default:
-		if (verbose <= 1)
-			log_debugcb = NULL;
+		if (verbose > 1)
+			debug_cmd = IMSG_LOG_ERROR;
 		if (EVBUFFER_LENGTH(clt->clt_log)) {
 			while ((ptr =
 			    evbuffer_readline(clt->clt_log)) != NULL) {
-				(log_infocb)("%s", ptr);
+				server_sendlog(srv_conf,
+				    IMSG_LOG_ACCESS, "%s", ptr);
 				free(ptr);
 			}
 		}
 		break;
 	}
 
-	if (log_debugcb != NULL && msg != NULL) {
+	if (debug_cmd != -1 && msg != NULL) {
 		memset(&ibuf, 0, sizeof(ibuf));
 		memset(&obuf, 0, sizeof(obuf));
 		(void)print_host(&clt->clt_ss, ibuf, sizeof(ibuf));
@@ -899,7 +924,7 @@ server_log(struct client *clt, const char *msg)
 		if (EVBUFFER_LENGTH(clt->clt_log) &&
 		    evbuffer_add_printf(clt->clt_log, "\n") != -1)
 			ptr = evbuffer_readline(clt->clt_log);
-		(log_debugcb)("server %s, "
+		server_sendlog(srv_conf, debug_cmd, "server %s, "
 		    "client %d (%d active), %s:%u -> %s, "
 		    "%s%s%s", srv_conf->name, clt->clt_id, server_clients,
 		    ibuf, ntohs(clt->clt_port), obuf, msg,

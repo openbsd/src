@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.16 2014/08/05 09:24:21 jsg Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.17 2014/08/05 15:36:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -226,6 +226,8 @@ main(int argc, char *argv[])
 	ps->ps_instances[PROC_SERVER] = env->sc_prefork_server;
 	ps->ps_ninstances = env->sc_prefork_server;
 
+	if (env->sc_chroot == NULL)
+		env->sc_chroot = ps->ps_pw->pw_dir;
 	for (proc = 0; proc < nitems(procs); proc++)
 		procs[proc].p_chroot = env->sc_chroot;
 
@@ -433,6 +435,10 @@ parent_dispatch_logger(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_CFG_DONE:
 		parent_configure_done(env);
+		break;
+	case IMSG_LOG_OPEN:
+		if (logger_open_priv(imsg) == -1)
+			fatalx("failed to open log file");
 		break;
 	default:
 		return (-1);
