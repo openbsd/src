@@ -1,3 +1,4 @@
+/* $OpenBSD: ressl_internal.h,v 1.8 2014/08/05 12:46:16 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>

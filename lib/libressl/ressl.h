@@ -1,3 +1,4 @@
+/* $OpenBSD: ressl.h,v 1.10 2014/08/05 12:46:16 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *

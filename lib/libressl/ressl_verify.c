@@ -1,3 +1,4 @@
+/* $OpenBSD: ressl_verify.c,v 1.3 2014/08/05 12:46:16 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
