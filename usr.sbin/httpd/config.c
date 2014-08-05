@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.16 2014/08/04 18:00:06 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.17 2014/08/05 14:35:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -279,7 +279,7 @@ config_getserver_config(struct httpd *env, struct server *srv,
 		DPRINTF("%s: %s %d server \"%s\", parent \"%s\", flags: %s",
 		    __func__, ps->ps_title[privsep_process], ps->ps_instance,
 		    srv_conf->name, srv->srv_conf.name,
-    		    printb_flags(srv_conf->flags, SRVFLAG_BITS));
+		    printb_flags(srv_conf->flags, SRVFLAG_BITS));
 	}
 
 	TAILQ_INSERT_TAIL(&srv->srv_hosts, srv_conf, entry);
