@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.44 2014/08/05 15:36:59 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.45 2014/08/05 16:30:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -48,6 +48,7 @@
 #define SERVER_NUMPROC		3
 #define SERVER_MAXPROC		32
 #define SERVER_MAXHEADERLENGTH	8192
+#define SERVER_MAXREQUESTS	100	/* max requests per connection */
 #define SERVER_BACKLOG		10
 #define SERVER_OUTOF_FD_RETRIES	5
 
