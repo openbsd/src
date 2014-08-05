@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2014/08/05 15:36:59 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.26 2014/08/05 16:46:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -93,6 +93,7 @@ static int		 loadcfg = 0;
 uint32_t		 last_server_id = 0;
 
 static struct server	*srv = NULL, *parentsrv = NULL;
+static struct server_config *srv_conf = NULL;
 struct serverlist	 servers;
 struct media_type	 media;
 
@@ -236,6 +237,7 @@ server		: SERVER STRING		{
 				YYERROR;
 			}
 			srv = s;
+			srv_conf = &srv->srv_conf;
 
 			SPLAY_INIT(&srv->srv_clients);
 			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
@@ -246,6 +248,7 @@ server		: SERVER STRING		{
 				YYERROR;
 			}
 			srv = NULL;
+			srv_conf = NULL;
 		}
 		;
 
@@ -376,29 +379,31 @@ serveroptsl	: LISTEN ON STRING port optssl {
 			}
 			parentsrv = srv;
 			srv = s;
+			srv_conf = &srv->srv_conf;
 			SPLAY_INIT(&srv->srv_clients);
 			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
 		} '{' optnl serveropts_l '}'	{
 			srv = parentsrv;
+			srv_conf = &parentsrv->srv_conf;
 			parentsrv = NULL;
 		}
 		;
 
 fastcgi		: NO FCGI		{
-			srv->srv_conf.flags &= ~SRVFLAG_FCGI;
-			srv->srv_conf.flags |= SRVFLAG_NO_FCGI;
+			srv_conf->flags &= ~SRVFLAG_FCGI;
+			srv_conf->flags |= SRVFLAG_NO_FCGI;
 		}
 		| FCGI			{
-			srv->srv_conf.flags &= ~SRVFLAG_NO_FCGI;
-			srv->srv_conf.flags |= SRVFLAG_FCGI;
+			srv_conf->flags &= ~SRVFLAG_NO_FCGI;
+			srv_conf->flags |= SRVFLAG_FCGI;
 		}
 		| FCGI			{
-			srv->srv_conf.flags &= ~SRVFLAG_NO_FCGI;
-			srv->srv_conf.flags |= SRVFLAG_FCGI;
+			srv_conf->flags &= ~SRVFLAG_NO_FCGI;
+			srv_conf->flags |= SRVFLAG_FCGI;
 		} '{' fcgiflags_l '}'
 		| FCGI			{
-			srv->srv_conf.flags &= ~SRVFLAG_NO_FCGI;
-			srv->srv_conf.flags |= SRVFLAG_FCGI;
+			srv_conf->flags &= ~SRVFLAG_NO_FCGI;
+			srv_conf->flags |= SRVFLAG_FCGI;
 		} fcgiflags
 		;
 
@@ -407,15 +412,15 @@ fcgiflags_l	: fcgiflags comma fcgiflags_l
 		;
 
 fcgiflags	: SOCKET STRING		{
-			if (strlcpy(srv->srv_conf.socket, $2,
-			    sizeof(srv->srv_conf.socket)) >=
-			    sizeof(srv->srv_conf.socket)) {
+			if (strlcpy(srv_conf->socket, $2,
+			    sizeof(srv_conf->socket)) >=
+			    sizeof(srv_conf->socket)) {
 				yyerror("fastcgi socket too long");
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			srv->srv_conf.flags |= SRVFLAG_SOCKET;
+			srv_conf->flags |= SRVFLAG_SOCKET;
 		}
 		;
 
@@ -424,28 +429,28 @@ dirflags_l	: dirflags comma dirflags_l
 		;
 
 dirflags	: INDEX STRING		{
-			if (strlcpy(srv->srv_conf.index, $2,
-			    sizeof(srv->srv_conf.index)) >=
-			    sizeof(srv->srv_conf.index)) {
+			if (strlcpy(srv_conf->index, $2,
+			    sizeof(srv_conf->index)) >=
+			    sizeof(srv_conf->index)) {
 				yyerror("index file too long");
 				free($2);
 				YYERROR;
 			}
-			srv->srv_conf.flags &= ~SRVFLAG_NO_INDEX;
-			srv->srv_conf.flags |= SRVFLAG_INDEX;
+			srv_conf->flags &= ~SRVFLAG_NO_INDEX;
+			srv_conf->flags |= SRVFLAG_INDEX;
 			free($2);
 		}
 		| NO INDEX		{
-			srv->srv_conf.flags &= ~SRVFLAG_INDEX;
-			srv->srv_conf.flags |= SRVFLAG_NO_INDEX;
+			srv_conf->flags &= ~SRVFLAG_INDEX;
+			srv_conf->flags |= SRVFLAG_NO_INDEX;
 		}
 		| AUTO INDEX		{
-			srv->srv_conf.flags &= ~SRVFLAG_NO_AUTO_INDEX;
-			srv->srv_conf.flags |= SRVFLAG_AUTO_INDEX;
+			srv_conf->flags &= ~SRVFLAG_NO_AUTO_INDEX;
+			srv_conf->flags |= SRVFLAG_AUTO_INDEX;
 		}
 		| NO AUTO INDEX		{
-			srv->srv_conf.flags &= ~SRVFLAG_AUTO_INDEX;
-			srv->srv_conf.flags |= SRVFLAG_NO_AUTO_INDEX;
+			srv_conf->flags &= ~SRVFLAG_AUTO_INDEX;
+			srv_conf->flags |= SRVFLAG_NO_AUTO_INDEX;
 		}
 		;
 
@@ -453,8 +458,8 @@ dirflags	: INDEX STRING		{
 logformat	: LOG logflags
 		| LOG '{' logflags_l '}'
 		| NO LOG		{
-			srv->srv_conf.flags &= ~SRVFLAG_LOG;
-			srv->srv_conf.flags |= SRVFLAG_NO_LOG;
+			srv_conf->flags &= ~SRVFLAG_LOG;
+			srv_conf->flags |= SRVFLAG_NO_LOG;
 		}
 		;
 
@@ -465,51 +470,51 @@ logflags_l	: logflags comma logflags_l
 
 logflags	: STYLE logstyle
 		| SYSLOG		{
-			srv->srv_conf.flags &= ~SRVFLAG_NO_SYSLOG;
-			srv->srv_conf.flags |= SRVFLAG_SYSLOG;
+			srv_conf->flags &= ~SRVFLAG_NO_SYSLOG;
+			srv_conf->flags |= SRVFLAG_SYSLOG;
 		}
 		| NO SYSLOG		{
-			srv->srv_conf.flags &= ~SRVFLAG_SYSLOG;
-			srv->srv_conf.flags |= SRVFLAG_NO_SYSLOG;
+			srv_conf->flags &= ~SRVFLAG_SYSLOG;
+			srv_conf->flags |= SRVFLAG_NO_SYSLOG;
 		}
 		| ACCESS STRING		{
-			if (strlcpy(srv->srv_conf.accesslog, $2,
-			    sizeof(srv->srv_conf.accesslog)) >=
-			    sizeof(srv->srv_conf.accesslog)) {
+			if (strlcpy(srv_conf->accesslog, $2,
+			    sizeof(srv_conf->accesslog)) >=
+			    sizeof(srv_conf->accesslog)) {
 				yyerror("access log name too long");
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			srv->srv_conf.flags |= SRVFLAG_ACCESS_LOG;
+			srv_conf->flags |= SRVFLAG_ACCESS_LOG;
 		}
 		| ERR STRING		{
-			if (strlcpy(srv->srv_conf.errorlog, $2,
-			    sizeof(srv->srv_conf.errorlog)) >=
-			    sizeof(srv->srv_conf.errorlog)) {
+			if (strlcpy(srv_conf->errorlog, $2,
+			    sizeof(srv_conf->errorlog)) >=
+			    sizeof(srv_conf->errorlog)) {
 				yyerror("error log name too long");
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			srv->srv_conf.flags |= SRVFLAG_ERROR_LOG;
+			srv_conf->flags |= SRVFLAG_ERROR_LOG;
 		}
 		;
 
 logstyle	: COMMON		{
-			srv->srv_conf.flags &= ~SRVFLAG_NO_LOG;
-			srv->srv_conf.flags |= SRVFLAG_LOG;
-			srv->srv_conf.logformat = LOG_FORMAT_COMMON;
+			srv_conf->flags &= ~SRVFLAG_NO_LOG;
+			srv_conf->flags |= SRVFLAG_LOG;
+			srv_conf->logformat = LOG_FORMAT_COMMON;
 		}
 		| COMBINED		{
-			srv->srv_conf.flags &= ~SRVFLAG_NO_LOG;
-			srv->srv_conf.flags |= SRVFLAG_LOG;
-			srv->srv_conf.logformat = LOG_FORMAT_COMBINED;
+			srv_conf->flags &= ~SRVFLAG_NO_LOG;
+			srv_conf->flags |= SRVFLAG_LOG;
+			srv_conf->logformat = LOG_FORMAT_COMBINED;
 		}
 		| CONNECTION		{
-			srv->srv_conf.flags &= ~SRVFLAG_NO_LOG;
-			srv->srv_conf.flags |= SRVFLAG_LOG;
-			srv->srv_conf.logformat = LOG_FORMAT_CONNECTION;
+			srv_conf->flags &= ~SRVFLAG_NO_LOG;
+			srv_conf->flags |= SRVFLAG_LOG;
+			srv_conf->logformat = LOG_FORMAT_CONNECTION;
 		}
 		;
 
