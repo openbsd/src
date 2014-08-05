@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.23 2014/08/05 15:36:59 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.24 2014/08/05 17:03:21 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -149,9 +149,10 @@ The
 argument will be matched against the URL path with shell globbing rules.
 A location section may include all of the server configuration rules
 except
-.Ic listen on
+.Ic listen on ,
+.Ic location
 and
-.Ic location .
+.Ic tcp .
 .It Ic log access Ar name
 Set the
 .Ar name
@@ -201,6 +202,45 @@ root directory of
 .Nm httpd .
 If not specified, it defaults to
 .Pa /htdocs .
+.It Ic tcp Ar option
+Enable or disable the specified TCP/IP options; see
+.Xr tcp 4
+and
+.Xr ip 4
+for more information about the options.
+Valid options are:
+.Bl -tag -width Ds
+.It Ic backlog Ar number
+Set the maximum length the queue of pending connections may grow to.
+The backlog option is 10 by default and is limited by the
+.Ic kern.somaxconn
+.Xr sysctl 8
+variable.
+.It Ic ip minttl Ar number
+This option for the underlying IP connection may be used to discard packets
+with a TTL lower than the specified value.
+This can be used to implement the
+.Ar Generalized TTL Security Mechanism (GTSM)
+according to RFC 5082.
+.It Ic ip ttl Ar number
+Change the default time-to-live value in the IP headers.
+.It Xo
+.Op Ic no
+.Ic nodelay
+.Xc
+Enable the TCP NODELAY option for this connection.
+This is recommended to avoid delays in the relayed data stream,
+e.g. for SSH connections.
+.It Xo
+.Op Ic no
+.Ic sack
+.Xc
+Use selective acknowledgements for this connection.
+.It Ic socket buffer Ar number
+Set the socket-level buffer size for input and output for this
+connection.
+This will affect the TCP window size.
+.El
 .El
 .Sh TYPES
 Configure the supported media types.

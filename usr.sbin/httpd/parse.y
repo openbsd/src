@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2014/08/05 16:46:35 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.27 2014/08/05 17:03:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -125,9 +125,9 @@ typedef struct {
 
 %}
 
-%token	ACCESS AUTO CHROOT COMMON COMBINED CONNECTION DIRECTORY ERR FCGI
-%token	INDEX LISTEN LOCATION LOG NO ON PORT PREFORK ROOT SERVER SOCKET SSL
-%token	STYLE SYSLOG TYPES
+%token	ACCESS AUTO BACKLOG BUFFER CHROOT COMMON COMBINED CONNECTION
+%token	DIRECTORY ERR FCGI INDEX IP LISTEN LOCATION LOG NO NODELAY ON PORT
+%token	PREFORK ROOT SACK SERVER SOCKET SSL STYLE SYSLOG TCP TYPES
 %token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -297,6 +297,18 @@ serveroptsl	: LISTEN ON STRING port optssl {
 				s->srv_conf.flags |= SRVFLAG_SSL;
 			}
 		}
+		| TCP 			{
+			if (parentsrv != NULL) {
+				yyerror("tcp flags inside location");
+				YYERROR;
+			}
+		} tcpflags
+		| TCP 			{
+			if (parentsrv != NULL) {
+				yyerror("tcp flags inside location");
+				YYERROR;
+			}
+		} '{' tcpflags_l '}'
 		| ROOT STRING		{
 			if (strlcpy(srv->srv_conf.root, $2,
 			    sizeof(srv->srv_conf.root)) >=
@@ -518,6 +530,53 @@ logstyle	: COMMON		{
 		}
 		;
 
+tcpflags_l	: tcpflags comma tcpflags_l
+		| tcpflags
+		;
+
+tcpflags	: SACK			{ srv_conf->tcpflags |= TCPFLAG_SACK; }
+		| NO SACK		{ srv_conf->tcpflags |= TCPFLAG_NSACK; }
+		| NODELAY		{
+			srv_conf->tcpflags |= TCPFLAG_NODELAY;
+		}
+		| NO NODELAY		{
+			srv_conf->tcpflags |= TCPFLAG_NNODELAY;
+		}
+		| BACKLOG NUMBER	{
+			if ($2 < 0 || $2 > SERVER_MAX_CLIENTS) {
+				yyerror("invalid backlog: %d", $2);
+				YYERROR;
+			}
+			srv_conf->tcpbacklog = $2;
+		}
+		| SOCKET BUFFER NUMBER	{
+			srv_conf->tcpflags |= TCPFLAG_BUFSIZ;
+			if ((srv_conf->tcpbufsiz = $3) < 0) {
+				yyerror("invalid socket buffer size: %d", $3);
+				YYERROR;
+			}
+		}
+		| IP STRING NUMBER	{
+			if ($3 < 0) {
+				yyerror("invalid ttl: %d", $3);
+				free($2);
+				YYERROR;
+			}
+			if (strcasecmp("ttl", $2) == 0) {
+				srv_conf->tcpflags |= TCPFLAG_IPTTL;
+				srv_conf->tcpipttl = $3;
+			} else if (strcasecmp("minttl", $2) == 0) {
+				srv_conf->tcpflags |= TCPFLAG_IPMINTTL;
+				srv_conf->tcpipminttl = $3;
+			} else {
+				yyerror("invalid TCP/IP flag: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		;
+
 types		: TYPES	'{' optnl mediaopts_l '}'
 		;
 
@@ -647,6 +706,8 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "access",		ACCESS },
 		{ "auto",		AUTO },
+		{ "backlog",		BACKLOG },
+		{ "buffer",		BUFFER },
 		{ "chroot",		CHROOT },
 		{ "combined",		COMBINED },
 		{ "common",		COMMON },
@@ -656,19 +717,23 @@ lookup(char *s)
 		{ "fastcgi",		FCGI },
 		{ "include",		INCLUDE },
 		{ "index",		INDEX },
+		{ "ip",			IP },
 		{ "listen",		LISTEN },
 		{ "location",		LOCATION },
 		{ "log",		LOG },
 		{ "no",			NO },
+		{ "nodelay",		NODELAY },
 		{ "on",			ON },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
 		{ "root",		ROOT },
+		{ "sack",		SACK },
 		{ "server",		SERVER },
 		{ "socket",		SOCKET },
 		{ "ssl",		SSL },
 		{ "style",		STYLE },
 		{ "syslog",		SYSLOG },
+		{ "tcp",		TCP },
 		{ "types",		TYPES }
 	};
 	const struct keywords	*p;
