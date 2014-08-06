@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.36 2014/08/06 15:08:04 florian Exp $	*/
+/*	$OpenBSD: server.c,v 1.37 2014/08/06 16:09:02 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -188,6 +188,8 @@ server_ssl_init(struct server *srv)
 		return (-1);
 	}
 
+	ressl_config_set_ciphers(srv->srv_ressl_config,
+	    srv->srv_conf.ssl_ciphers);
 	ressl_config_set_cert_mem(srv->srv_ressl_config,
 	    srv->srv_conf.ssl_cert, srv->srv_conf.ssl_cert_len);
 	ressl_config_set_key_mem(srv->srv_ressl_config,

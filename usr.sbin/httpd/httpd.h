@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.49 2014/08/06 15:08:04 florian Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.50 2014/08/06 16:09:02 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -38,8 +38,9 @@
 #define HTTPD_LOGROOT		"/logs"
 #define HTTPD_ACCESS_LOG	"access.log"
 #define HTTPD_ERROR_LOG		"error.log"
-#define HTTPD_SSL_KEY		"/etc/ssl/private/server.key"
 #define HTTPD_SSL_CERT		"/etc/ssl/server.crt"
+#define HTTPD_SSL_KEY		"/etc/ssl/private/server.key"
+#define HTTPD_SSL_CIPHERS	"HIGH:!aNULL"
 #define FD_RESERVE		5
 
 #define SERVER_MAX_CLIENTS	1024
@@ -373,6 +374,7 @@ struct server_config {
 	char			*ssl_cert;
 	off_t			 ssl_cert_len;
 	char			*ssl_cert_file;
+	char			 ssl_ciphers[NAME_MAX];
 	char			*ssl_key;
 	off_t			 ssl_key_len;
 	char			*ssl_key_file;

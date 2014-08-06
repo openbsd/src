@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.30 2014/08/06 12:56:58 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.31 2014/08/06 16:09:02 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -235,6 +235,8 @@ server		: SERVER STRING		{
 			s->srv_conf.logformat = LOG_FORMAT_COMMON;
 			s->srv_conf.ssl_cert_file = HTTPD_SSL_CERT;
 			s->srv_conf.ssl_key_file = HTTPD_SSL_KEY;
+			strlcpy(s->srv_conf.ssl_ciphers, HTTPD_SSL_CIPHERS,
+			    sizeof(s->srv_conf.ssl_ciphers));
 
 			if (last_server_id == INT_MAX) {
 				yyerror("too many servers defined");
