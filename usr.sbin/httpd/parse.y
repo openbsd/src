@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.31 2014/08/06 16:09:02 jsing Exp $	*/
+/*	$OpenBSD: parse.y,v 1.32 2014/08/06 16:11:34 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -125,10 +125,10 @@ typedef struct {
 
 %}
 
-%token	ACCESS AUTO BACKLOG BUFFER CHROOT COMMON COMBINED CONNECTION
-%token	DIRECTORY ERR FCGI INDEX IP LISTEN LOCATION LOG MAXIMUM NO NODELAY
-%token	ON PORT	PREFORK REQUESTS ROOT SACK SERVER SOCKET SSL STYLE SYSLOG
-%token	TCP TIMEOUT TYPES
+%token	ACCESS AUTO BACKLOG BUFFER CERTIFICATE CHROOT CIPHERS COMMON COMBINED
+%token	CONNECTION DIRECTORY ERR FCGI INDEX IP KEY LISTEN LOCATION LOG MAXIMUM
+%token	NO NODELAY ON PORT PREFORK REQUESTS ROOT SACK SERVER SOCKET SSL STYLE
+%token	SYSLOG TCP TIMEOUT TYPES
 %token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -233,8 +233,12 @@ server		: SERVER STRING		{
 			s->srv_conf.maxrequests = SERVER_MAXREQUESTS;
 			s->srv_conf.flags |= SRVFLAG_LOG;
 			s->srv_conf.logformat = LOG_FORMAT_COMMON;
-			s->srv_conf.ssl_cert_file = HTTPD_SSL_CERT;
-			s->srv_conf.ssl_key_file = HTTPD_SSL_KEY;
+			if ((s->srv_conf.ssl_cert_file =
+			    strdup(HTTPD_SSL_CERT)) == NULL)
+				fatal("out of memory");
+			if ((s->srv_conf.ssl_key_file =
+			    strdup(HTTPD_SSL_KEY)) == NULL)
+				fatal("out of memory");
 			strlcpy(s->srv_conf.ssl_ciphers, HTTPD_SSL_CIPHERS,
 			    sizeof(s->srv_conf.ssl_ciphers));
 
@@ -321,6 +325,12 @@ serveroptsl	: LISTEN ON STRING port optssl {
 				YYERROR;
 			}
 		} connection
+		| SSL			{
+			if (parentsrv != NULL) {
+				yyerror("ssl configuration inside location");
+				YYERROR;
+			}
+		} ssl
 		| ROOT STRING		{
 			if (strlcpy(srv->srv_conf.root, $2,
 			    sizeof(srv->srv_conf.root)) >=
@@ -462,6 +472,38 @@ conflags	: TIMEOUT timeout		{
 		}
 		| MAXIMUM REQUESTS NUMBER	{
 			srv_conf->maxrequests = $3;
+		}
+		;
+
+ssl		: '{' sslopts_l '}'
+		| sslopts
+		;
+
+sslopts_l	: sslopts comma sslopts_l
+		| sslopts
+		;
+
+sslopts		: CERTIFICATE STRING		{
+			free(srv_conf->ssl_cert_file);
+			if ((srv_conf->ssl_cert_file = strdup($2)) == NULL)
+				fatal("out of memory");
+			free($2);
+		}
+		| KEY STRING			{
+			free(srv_conf->ssl_key_file);
+			if ((srv_conf->ssl_key_file = strdup($2)) == NULL)
+				fatal("out of memory");
+			free($2);
+		}
+		| CIPHERS STRING		{
+			if (strlcpy(srv_conf->ssl_ciphers, $2,
+			    sizeof(srv_conf->ssl_ciphers)) >=
+			    sizeof(srv_conf->ssl_ciphers)) {
+				yyerror("ciphers too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
 		}
 		;
 
@@ -752,7 +794,9 @@ lookup(char *s)
 		{ "auto",		AUTO },
 		{ "backlog",		BACKLOG },
 		{ "buffer",		BUFFER },
+		{ "certificate",	CERTIFICATE },
 		{ "chroot",		CHROOT },
+		{ "ciphers",		CIPHERS },
 		{ "combined",		COMBINED },
 		{ "common",		COMMON },
 		{ "connection",		CONNECTION },
@@ -762,6 +806,7 @@ lookup(char *s)
 		{ "include",		INCLUDE },
 		{ "index",		INDEX },
 		{ "ip",			IP },
+		{ "key",		KEY },
 		{ "listen",		LISTEN },
 		{ "location",		LOCATION },
 		{ "log",		LOG },
