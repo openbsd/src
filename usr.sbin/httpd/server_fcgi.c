@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.26 2014/08/06 20:56:23 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.27 2014/08/06 21:08:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -440,6 +440,7 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 	struct client			*clt = (struct client *) arg;
 	struct fcgi_record_header	*h;
 	size_t				 len;
+	char				*ptr;
 
 	do {
 		len = bufferevent_read(bev, &buf, clt->clt_fcgi_toread);
@@ -476,6 +477,16 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 
 			/* fallthrough if content_len == 0 */
 		case FCGI_READ_CONTENT:
+			if (clt->clt_fcgi_type == FCGI_STDERR && len) {
+				if ((ptr = get_string(
+				    EVBUFFER_DATA(clt->clt_srvevb),
+				    EVBUFFER_LENGTH(clt->clt_srvevb)))
+				    != NULL) {
+					server_sendlog(clt->clt_srv_conf,
+					    IMSG_LOG_ERROR, "%s", ptr);
+					free(ptr);
+				}
+			}
 			if (clt->clt_fcgi_type == FCGI_STDOUT &&
 			    EVBUFFER_LENGTH(clt->clt_srvevb) > 0) {
 				if (++clt->clt_chunk == 1)
