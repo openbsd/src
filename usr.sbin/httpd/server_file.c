@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.30 2014/08/06 09:36:31 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.31 2014/08/06 11:24:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -375,13 +375,6 @@ server_file_error(struct bufferevent *bev, short error, void *arg)
 
 		clt->clt_done = 1;
 
-		dst = EVBUFFER_OUTPUT(clt->clt_bev);
-		if (EVBUFFER_LENGTH(dst)) {
-			/* Finish writing all data first */
-			bufferevent_enable(clt->clt_bev, EV_WRITE);
-			return;
-		}
-
 		if (clt->clt_persist) {
 			/* Close input file and wait for next HTTP request */
 			if (clt->clt_fd != -1)
@@ -392,6 +385,14 @@ server_file_error(struct bufferevent *bev, short error, void *arg)
 			bufferevent_enable(clt->clt_bev, EV_READ|EV_WRITE);
 			return;
 		}
+
+		dst = EVBUFFER_OUTPUT(clt->clt_bev);
+		if (EVBUFFER_LENGTH(dst)) {
+			/* Finish writing all data first */
+			bufferevent_enable(clt->clt_bev, EV_WRITE);
+			return;
+		}
+
 		server_close(clt, "done");
 		return;
 	}

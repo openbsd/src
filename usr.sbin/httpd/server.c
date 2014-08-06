@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.33 2014/08/06 09:40:04 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.34 2014/08/06 11:24:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -688,9 +688,11 @@ server_write(struct bufferevent *bev, void *arg)
 
 	if (clt->clt_done)
 		goto done;
+
+	bufferevent_enable(bev, EV_READ);
 	return;
  done:
-	server_close(clt, "last write (done)");
+	(*bev->errorcb)(bev, EVBUFFER_WRITE|EVBUFFER_EOF, bev->cbarg);
 	return;
 }
 
@@ -728,10 +730,9 @@ server_read(struct bufferevent *bev, void *arg)
 		goto fail;
 	if (clt->clt_done)
 		goto done;
-	bufferevent_enable(bev, EV_READ);
 	return;
  done:
-	server_close(clt, "last read (done)");
+	(*bev->errorcb)(bev, EVBUFFER_READ|EVBUFFER_EOF, bev->cbarg);
 	return;
  fail:
 	server_close(clt, strerror(errno));
