@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.34 2014/07/28 04:23:12 guenther Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.35 2014/08/06 20:11:09 miod Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -1065,7 +1065,6 @@ dtls1_send_server_key_exchange(SSL *s)
 			}
 
 			if (s->s3->tmp.dh != NULL) {
-				DH_free(dh);
 				SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
 				goto err;
 			}
@@ -1110,8 +1109,6 @@ dtls1_send_server_key_exchange(SSL *s)
 			}
 
 			if (s->s3->tmp.ecdh != NULL) {
-				EC_KEY_free(s->s3->tmp.ecdh);
-
 				SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
 				goto err;
 			}
