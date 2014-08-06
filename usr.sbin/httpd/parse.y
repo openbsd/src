@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.33 2014/08/06 18:21:14 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.34 2014/08/06 20:29:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -273,7 +273,7 @@ serveropts_l	: serveropts_l serveroptsl nl
 		| serveroptsl optnl
 		;
 
-serveroptsl	: LISTEN ON STRING port optssl {
+serveroptsl	: LISTEN ON STRING optssl port {
 			struct addresslist	 al;
 			struct address		*h;
 			struct server		*s;
@@ -290,14 +290,14 @@ serveroptsl	: LISTEN ON STRING port optssl {
 				YYERROR;
 			} else
 				s = srv;
-			if ($4.op != PF_OP_EQ) {
+			if ($5.op != PF_OP_EQ) {
 				yyerror("invalid port");
 				free($3);
 				YYERROR;
 			}
 
 			TAILQ_INIT(&al);
-			if (host($3, &al, 1, &$4, NULL, -1) <= 0) {
+			if (host($3, &al, 1, &$5, NULL, -1) <= 0) {
 				yyerror("invalid listen ip: %s", $3);
 				free($3);
 				YYERROR;
@@ -310,7 +310,7 @@ serveroptsl	: LISTEN ON STRING port optssl {
 			s->srv_conf.prefixlen = h->prefixlen;
 			host_free(&al);
 
-			if ($5) {
+			if ($4) {
 				s->srv_conf.flags |= SRVFLAG_SSL;
 			}
 		}
