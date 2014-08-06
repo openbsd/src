@@ -1,4 +1,4 @@
-/* $OpenBSD: encode.c,v 1.18 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: encode.c,v 1.19 2014/08/06 16:01:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -261,7 +261,8 @@ EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 		}
 
 		/* There should not be base64 data after padding. */
-		if (eof && tmp != '=' && tmp != '\r' && tmp != '\n') {
+		if (eof && tmp != '=' && tmp != '\r' && tmp != '\n' &&
+		    v != B64_EOF) {
 			rv = -1;
 			goto end;
 		}
