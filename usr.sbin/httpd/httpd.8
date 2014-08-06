@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.43 2014/08/06 02:31:47 doug Exp $
+.\"	$OpenBSD: httpd.8,v 1.44 2014/08/06 05:47:40 doug Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -26,8 +26,13 @@
 .Op Fl D Ar macro Ns = Ns Ar value
 .Op Fl f Ar config_file
 .Sh DESCRIPTION
+The
 .Nm
-is a simple HTTP server that serves static files.
+daemon is a HTTP server with FastCGI and SSL support.
+.Pp
+The FastCGI implementation has optional socket support.
+.Nm
+can log to syslog or per-server files with several standard formats.
 .Pp
 The options are as follows:
 .Bl -tag -width Dssmacro=value
