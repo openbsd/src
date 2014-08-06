@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.42 2014/08/06 02:04:42 jsing Exp $
+.\"	$OpenBSD: httpd.8,v 1.43 2014/08/06 02:31:47 doug Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -24,10 +24,34 @@
 .Nm
 .Op Fl dnv
 .Op Fl D Ar macro Ns = Ns Ar value
-.Op Fl f Ar file
+.Op Fl f Ar config_file
 .Sh DESCRIPTION
 .Nm
 is a simple HTTP server that serves static files.
+.Pp
+The options are as follows:
+.Bl -tag -width Dssmacro=value
+.It Fl d
+Debug mode.
+Create one server and don't detach or become a daemon.
+This allows for easy monitoring of
+.Nm .
+.It Fl n
+Check that the configuration is valid, but don't start any servers.
+.It Fl v
+Verbose mode.
+Multiple
+.Fl v
+options increases the verbosity.
+.It Fl D Ar macro Ns = Ns Ar value
+Set a
+.Ar macro
+to a
+.Ar value .
+Macros can be referenced in the configuration files.
+.It Fl f Ar config_file
+Specifies the name of the configuration file.
+.El
 .Sh FILES
 .Bl -tag -width "/var/www/logs/access.logXX" -compact
 .It /etc/httpd.conf
@@ -48,6 +72,10 @@ Default error log file.
 .Sh SEE ALSO
 .Xr httpd.conf 5
 .Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 5.6 .
 .Nm
 is based on
 .Xr relayd 8 .
