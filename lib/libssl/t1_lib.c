@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.52 2014/07/13 16:33:01 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.53 2014/08/06 23:16:16 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1339,16 +1339,20 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				*al = TLS1_AD_DECODE_ERROR;
 				return 0;
 			}
-			s->session->tlsext_ecpointformatlist_length = 0;
+			if (s->hit) {
+				free(s->session->tlsext_ecpointformatlist);
+				s->session->tlsext_ecpointformatlist_length = 0;
 
-			free(s->session->tlsext_ecpointformatlist);
-			if ((s->session->tlsext_ecpointformatlist =
-			    malloc(ecpointformatlist_length)) == NULL) {
-				*al = TLS1_AD_INTERNAL_ERROR;
-				return 0;
+				if ((s->session->tlsext_ecpointformatlist =
+				    malloc(ecpointformatlist_length)) == NULL) {
+					*al = TLS1_AD_INTERNAL_ERROR;
+					return 0;
+				}
+				s->session->tlsext_ecpointformatlist_length =
+				    ecpointformatlist_length;
+				memcpy(s->session->tlsext_ecpointformatlist,
+				    sdata, ecpointformatlist_length);
 			}
-			s->session->tlsext_ecpointformatlist_length = ecpointformatlist_length;
-			memcpy(s->session->tlsext_ecpointformatlist, sdata, ecpointformatlist_length);
 		}
 		else if (type == TLSEXT_TYPE_session_ticket) {
 			if (s->tls_session_ticket_ext_cb &&
