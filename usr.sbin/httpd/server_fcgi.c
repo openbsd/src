@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.25 2014/08/06 18:40:15 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.26 2014/08/06 20:56:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -468,6 +468,11 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 			    EVBUFFER_LENGTH(clt->clt_srvevb));
 			if (clt->clt_fcgi_toread != 0)
 				break;
+			else if (clt->clt_fcgi_type == FCGI_STDOUT &&
+			    !clt->clt_chunk) {
+				server_abort_http(clt, 500, "empty stdout");
+				return;
+			}
 
 			/* fallthrough if content_len == 0 */
 		case FCGI_READ_CONTENT:
