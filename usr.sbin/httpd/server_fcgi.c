@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.24 2014/08/06 18:38:11 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.25 2014/08/06 18:40:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -358,6 +358,7 @@ fcgi_add_stdin(struct client *clt, struct evbuffer *evbuf)
 {
 	struct fcgi_record_header	h;
 
+	memset(&h, 0, sizeof(h));
 	h.version = 1;
 	h.type = FCGI_STDIN;
 	h.id = htons(1);
