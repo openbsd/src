@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.27 2014/08/06 16:31:09 jsing Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.28 2014/08/06 18:21:14 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -123,6 +123,11 @@ and include one or more lines of the following syntax:
 Set the specified options and limits for HTTP connections.
 Valid options are:
 .Bl -tag -width Ds
+.It Ic max request body Ar number
+Set the maximum body size in bytes that the client can send to the server.
+The default value is
+.Ar 1048576
+bytes (1M).
 .It Ic max requests Ar number
 Set the maximum number of requests per persistent HTTP connection.
 Persistent connections are negotiated using the Keep-Alive header in

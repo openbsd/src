@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.32 2014/08/06 16:11:34 jsing Exp $	*/
+/*	$OpenBSD: parse.y,v 1.33 2014/08/06 18:21:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -125,10 +125,10 @@ typedef struct {
 
 %}
 
-%token	ACCESS AUTO BACKLOG BUFFER CERTIFICATE CHROOT CIPHERS COMMON COMBINED
-%token	CONNECTION DIRECTORY ERR FCGI INDEX IP KEY LISTEN LOCATION LOG MAXIMUM
-%token	NO NODELAY ON PORT PREFORK REQUESTS ROOT SACK SERVER SOCKET SSL STYLE
-%token	SYSLOG TCP TIMEOUT TYPES
+%token	ACCESS AUTO BACKLOG BODY BUFFER CERTIFICATE CHROOT CIPHERS COMMON
+%token	COMBINED CONNECTION DIRECTORY ERR FCGI INDEX IP KEY LISTEN LOCATION
+%token	LOG MAXIMUM NO NODELAY ON PORT PREFORK REQUEST REQUESTS ROOT SACK
+%token	SERVER SOCKET SSL STYLE SYSLOG TCP TIMEOUT TYPES
 %token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -231,6 +231,7 @@ server		: SERVER STRING		{
 			s->srv_conf.id = ++last_server_id;
 			s->srv_conf.timeout.tv_sec = SERVER_TIMEOUT;
 			s->srv_conf.maxrequests = SERVER_MAXREQUESTS;
+			s->srv_conf.maxrequestbody = SERVER_MAXREQUESTBODY;
 			s->srv_conf.flags |= SRVFLAG_LOG;
 			s->srv_conf.logformat = LOG_FORMAT_COMMON;
 			if ((s->srv_conf.ssl_cert_file =
@@ -472,6 +473,9 @@ conflags	: TIMEOUT timeout		{
 		}
 		| MAXIMUM REQUESTS NUMBER	{
 			srv_conf->maxrequests = $3;
+		}
+		| MAXIMUM REQUEST BODY NUMBER	{
+			srv_conf->maxrequestbody = $4;
 		}
 		;
 
@@ -793,6 +797,7 @@ lookup(char *s)
 		{ "access",		ACCESS },
 		{ "auto",		AUTO },
 		{ "backlog",		BACKLOG },
+		{ "body",		BODY },
 		{ "buffer",		BUFFER },
 		{ "certificate",	CERTIFICATE },
 		{ "chroot",		CHROOT },
@@ -816,6 +821,7 @@ lookup(char *s)
 		{ "on",			ON },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
+		{ "request",		REQUEST },
 		{ "requests",		REQUESTS },
 		{ "root",		ROOT },
 		{ "sack",		SACK },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.41 2014/08/06 15:08:04 florian Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.42 2014/08/06 18:21:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -120,6 +120,7 @@ void
 server_read_http(struct bufferevent *bev, void *arg)
 {
 	struct client		*clt = arg;
+	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct http_descriptor	*desc = clt->clt_desc;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	char			*line = NULL, *key, *value;
@@ -259,6 +260,11 @@ server_read_http(struct bufferevent *bev, void *arg)
 			    &errstr);
 			if (errstr) {
 				server_abort_http(clt, 500, errstr);
+				goto abort;
+			}
+			if ((size_t)clt->clt_toread >
+			    srv_conf->maxrequestbody) {
+				server_abort_http(clt, 413, NULL);
 				goto abort;
 			}
 		}

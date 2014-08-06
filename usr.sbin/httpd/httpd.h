@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.50 2014/08/06 16:09:02 jsing Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.51 2014/08/06 18:21:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -50,6 +50,7 @@
 #define SERVER_MAXPROC		32
 #define SERVER_MAXHEADERLENGTH	8192
 #define SERVER_MAXREQUESTS	100	/* max requests per connection */
+#define SERVER_MAXREQUESTBODY	1048576	/* 1M */
 #define SERVER_BACKLOG		10
 #define SERVER_OUTOF_FD_RETRIES	5
 
@@ -370,6 +371,7 @@ struct server_config {
 	int			 prefixlen;
 	struct timeval		 timeout;
 	u_int32_t		 maxrequests;
+	size_t			 maxrequestbody;
 
 	char			*ssl_cert;
 	off_t			 ssl_cert_len;
