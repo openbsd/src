@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.c,v 1.10 2014/08/05 12:46:16 jsing Exp $ */
+/* $OpenBSD: ressl.c,v 1.11 2014/08/06 01:54:01 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -20,6 +20,11 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
 
 #include <ressl.h>
 #include "ressl_internal.h"
@@ -97,21 +102,78 @@ ressl_configure(struct ressl *ctx, struct ressl_config *config)
 int
 ressl_configure_keypair(struct ressl *ctx)
 {
-	if (SSL_CTX_use_certificate_file(ctx->ssl_ctx, ctx->config->cert_file,
-	    SSL_FILETYPE_PEM) != 1) {
-		ressl_set_error(ctx, "failed to load certificate");
-		return (1);
+	EVP_PKEY *pkey = NULL;
+	X509 *cert = NULL;
+	BIO *bio = NULL;
+
+	if (ctx->config->cert_mem != NULL) {
+		if ((bio = BIO_new_mem_buf(ctx->config->cert_mem,
+		    ctx->config->cert_len)) == NULL) {
+			ressl_set_error(ctx, "failed to create buffer");
+			goto err;
+		}
+		if ((cert = PEM_read_bio_X509(bio, NULL, NULL, NULL)) == NULL) {
+			ressl_set_error(ctx, "failed to read certificate");
+			goto err;
+		}
+		if (SSL_CTX_use_certificate(ctx->ssl_ctx, cert) != 1) {
+			ressl_set_error(ctx, "failed to load certificate");
+			goto err;
+		}
+		BIO_free(bio);
+		bio = NULL;
+		X509_free(cert);
+		cert = NULL;
 	}
-	if (SSL_CTX_use_PrivateKey_file(ctx->ssl_ctx, ctx->config->key_file,
-	    SSL_FILETYPE_PEM) != 1) {
-		ressl_set_error(ctx, "failed to load private key");
-		return (1);
+	if (ctx->config->key_mem != NULL) {
+		if ((bio = BIO_new_mem_buf(ctx->config->key_mem,
+		    ctx->config->key_len)) == NULL) {
+			ressl_set_error(ctx, "failed to create buffer");
+			goto err;
+		}
+		if ((pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL,
+		    NULL)) == NULL) {
+			ressl_set_error(ctx, "failed to read private key");
+			goto err;
+		}
+		if (SSL_CTX_use_PrivateKey(ctx->ssl_ctx, pkey) != 1) {
+			ressl_set_error(ctx, "failed to load private key");
+			goto err;
+		}
+		BIO_free(bio);
+		bio = NULL;
+		EVP_PKEY_free(pkey);
+		pkey = NULL;
 	}
+
+	if (ctx->config->cert_file != NULL) {
+		if (SSL_CTX_use_certificate_file(ctx->ssl_ctx,
+		    ctx->config->cert_file, SSL_FILETYPE_PEM) != 1) {
+			ressl_set_error(ctx, "failed to load certificate file");
+			goto err;
+		}
+	}
+	if (ctx->config->key_file != NULL) {
+		if (SSL_CTX_use_PrivateKey_file(ctx->ssl_ctx,
+		    ctx->config->key_file, SSL_FILETYPE_PEM) != 1) {
+			ressl_set_error(ctx, "failed to load private key file");
+			goto err;
+		}
+	}
+
 	if (SSL_CTX_check_private_key(ctx->ssl_ctx) != 1) {
 		ressl_set_error(ctx, "private/public key mismatch");
-		return (1);
+		goto err;
 	}
+
 	return (0);
+
+err:
+	EVP_PKEY_free(pkey);
+	X509_free(cert);
+	BIO_free(bio);
+
+	return (1);
 }
 
 void

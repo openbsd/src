@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_config.c,v 1.6 2014/08/05 12:46:16 jsing Exp $ */
+/* $OpenBSD: ressl_config.c,v 1.7 2014/08/06 01:54:01 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -70,6 +70,13 @@ ressl_config_set_cert_file(struct ressl_config *config, char *cert_file)
 }
 
 void
+ressl_config_set_cert_mem(struct ressl_config *config, char *cert, size_t len)
+{
+	config->cert_mem = cert;
+	config->cert_len = len;
+}
+
+void
 ressl_config_set_ciphers(struct ressl_config *config, char *ciphers)
 {
 	config->ciphers = ciphers;
@@ -79,6 +86,13 @@ void
 ressl_config_set_key_file(struct ressl_config *config, char *key_file)
 {
 	config->key_file = key_file;
+}
+
+void
+ressl_config_set_key_mem(struct ressl_config *config, char *key, size_t len)
+{
+	config->key_mem = key;
+	config->key_len = len;
 }
 
 void
