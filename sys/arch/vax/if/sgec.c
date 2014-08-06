@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.22 2014/06/13 21:06:24 miod Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.23 2014/08/06 15:40:40 jsg Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -240,13 +240,13 @@ sgec_attach(sc)
 	}
  fail_5:
 	for (i = 0; i < RXDESCS; i++) {
-		if (sc->sc_xmtmap[i] != NULL)
-			bus_dmamap_destroy(sc->sc_dmat, sc->sc_xmtmap[i]);
+		if (sc->sc_rcvmap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rcvmap[i]);
 	}
  fail_4:
 	for (i = 0; i < TXDESCS; i++) {
-		if (sc->sc_rcvmap[i] != NULL)
-			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rcvmap[i]);
+		if (sc->sc_xmtmap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_xmtmap[i]);
 	}
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_cmap);
  fail_3:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.27 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.28 2014/08/06 15:40:40 jsg Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -345,13 +345,13 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	}
  fail_5:
 	for (i = 0; i < RXDESCS; i++) {
-		if (sc->sc_xmtmap[i] != NULL)
-			bus_dmamap_destroy(sc->sc_dmat, sc->sc_xmtmap[i]);
+		if (sc->sc_rcvmap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rcvmap[i]);
 	}
  fail_4:
 	for (i = 0; i < TXDESCS; i++) {
-		if (sc->sc_rcvmap[i] != NULL)
-			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rcvmap[i]);
+		if (sc->sc_xmtmap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_xmtmap[i]);
 	}
 }
 
