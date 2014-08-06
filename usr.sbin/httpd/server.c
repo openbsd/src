@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.37 2014/08/06 16:09:02 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.38 2014/08/06 16:10:02 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -201,10 +201,14 @@ server_ssl_init(struct server *srv)
 		return (-1);
 	}
 
-	/* We're now done with the key... */
+	/* We're now done with the public/private key... */
+	explicit_bzero(srv->srv_conf.ssl_cert, srv->srv_conf.ssl_cert_len);
 	explicit_bzero(srv->srv_conf.ssl_key, srv->srv_conf.ssl_key_len);
+	free(srv->srv_conf.ssl_cert);
 	free(srv->srv_conf.ssl_key);
+	srv->srv_conf.ssl_cert = NULL;
 	srv->srv_conf.ssl_key = NULL;
+	srv->srv_conf.ssl_cert_len = 0;
 	srv->srv_conf.ssl_key_len = 0;
 
 	return (0);
