@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.19 2014/08/05 18:01:10 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.20 2014/08/06 02:04:42 jsing Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -184,6 +184,14 @@ config_setserver(struct httpd *env, struct server *srv)
 		c = 0;
 		iov[c].iov_base = &s;
 		iov[c++].iov_len = sizeof(s);
+		if (srv->srv_conf.ssl_cert_len != 0) {
+			iov[c].iov_base = srv->srv_conf.ssl_cert;
+			iov[c++].iov_len = srv->srv_conf.ssl_cert_len;
+		}
+		if (srv->srv_conf.ssl_key_len != 0) {
+			iov[c].iov_base = srv->srv_conf.ssl_key;
+			iov[c++].iov_len = srv->srv_conf.ssl_key_len;
+		}
 
 		if (id == PROC_SERVER &&
 		    (srv->srv_conf.flags & SRVFLAG_LOCATION) == 0) {
@@ -313,7 +321,7 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 #ifdef DEBUG
 	struct privsep		*ps = env->sc_ps;
 #endif
-	struct server		*srv;
+	struct server		*srv = NULL;
 	struct server_config	 srv_conf;
 	u_int8_t		*p = imsg->data;
 	size_t			 s;
@@ -321,6 +329,12 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	IMSG_SIZE_CHECK(imsg, &srv_conf);
 	memcpy(&srv_conf, p, sizeof(srv_conf));
 	s = sizeof(srv_conf);
+
+	if ((u_int)(IMSG_DATA_SIZE(imsg) - s) <
+	    (srv_conf.ssl_cert_len + srv_conf.ssl_key_len)) {
+		log_debug("%s: invalid message length", __func__);
+		goto fail;
+	}
 
 	/* Check if server with matching listening socket already exists */
 	if ((srv = server_byaddr((struct sockaddr *)
@@ -354,7 +368,27 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	    srv->srv_conf.name,
 	    printb_flags(srv->srv_conf.flags, SRVFLAG_BITS));
 
+	if (srv->srv_conf.ssl_cert_len != 0) {
+		if ((srv->srv_conf.ssl_cert = get_data(p + s,
+		    srv->srv_conf.ssl_cert_len)) == NULL)
+			goto fail;
+		s += srv->srv_conf.ssl_cert_len;
+	}
+	if (srv->srv_conf.ssl_key_len != 0) {
+		if ((srv->srv_conf.ssl_key = get_data(p + s,
+		    srv->srv_conf.ssl_key_len)) == NULL)
+			goto fail;
+		s += srv->srv_conf.ssl_key_len;
+	}
+
 	return (0);
+
+ fail:
+	free(srv->srv_conf.ssl_cert);
+	free(srv->srv_conf.ssl_key);
+	free(srv);
+
+	return (-1);
 }
 
 int

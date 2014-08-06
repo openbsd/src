@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.28 2014/08/05 18:01:10 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.29 2014/08/06 02:04:42 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -233,6 +233,8 @@ server		: SERVER STRING		{
 			s->srv_conf.maxrequests = SERVER_MAXREQUESTS;
 			s->srv_conf.flags |= SRVFLAG_LOG;
 			s->srv_conf.logformat = LOG_FORMAT_COMMON;
+			s->srv_conf.ssl_cert_file = HTTPD_SSL_CERT;
+			s->srv_conf.ssl_key_file = HTTPD_SSL_KEY;
 
 			if (last_server_id == INT_MAX) {
 				yyerror("too many servers defined");
@@ -248,6 +250,11 @@ server		: SERVER STRING		{
 			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
 				yyerror("listen address not specified");
 				free($2);
+				YYERROR;
+			}
+			if (server_ssl_load_keypair(srv) == -1) {
+				yyerror("failed to load public/private keys "
+				    "for server %s", srv->srv_conf.name);
 				YYERROR;
 			}
 			srv = NULL;

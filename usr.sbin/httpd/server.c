@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.29 2014/08/05 15:36:59 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.30 2014/08/06 02:04:42 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -116,6 +116,57 @@ server_privinit(struct server *srv)
 	return (0);
 }
 
+static char *
+server_load_file(const char *filename, off_t *len)
+{
+	struct stat		 st;
+	off_t			 size;
+	char			*buf = NULL;
+	int			 fd;
+
+	if ((fd = open(filename, O_RDONLY)) == -1)
+		return (NULL);
+	if (fstat(fd, &st) != 0)
+		goto fail;
+	size = st.st_size;
+	if ((buf = calloc(1, size + 1)) == NULL)
+		goto fail;
+	if (read(fd, buf, size) != size)
+		goto fail;
+
+	close(fd);
+
+	*len = size;
+	return (buf);
+
+ fail:
+	free(buf);
+	close(fd);
+
+	return (NULL);
+}
+
+int
+server_ssl_load_keypair(struct server *srv)
+{
+	if ((srv->srv_conf.flags & SRVFLAG_SSL) == 0)
+		return (0);
+
+	if ((srv->srv_conf.ssl_cert = server_load_file(
+	    srv->srv_conf.ssl_cert_file, &srv->srv_conf.ssl_cert_len)) == NULL)
+		return (-1);
+	log_debug("%s: using certificate %s", __func__,
+	    srv->srv_conf.ssl_cert_file);
+
+	if ((srv->srv_conf.ssl_key = server_load_file(
+	    srv->srv_conf.ssl_key_file, &srv->srv_conf.ssl_key_len)) == NULL)
+		return (-1);
+	log_debug("%s: using private key %s", __func__,
+	    srv->srv_conf.ssl_key_file);
+
+	return (0);
+}
+
 int
 server_ssl_init(struct server *srv)
 {
@@ -137,18 +188,22 @@ server_ssl_init(struct server *srv)
 		return (-1);
 	}
 
-	/*
-	 * XXX Make these configurable and move keys out of the chroot.
-	 * XXX The RSA privsep code in relayd should be adopted to ressl.
-	 */
-	ressl_config_set_cert_file(srv->srv_ressl_config, HTTPD_SSL_CERT);
-	ressl_config_set_key_file(srv->srv_ressl_config, HTTPD_SSL_KEY);
+	ressl_config_set_cert_mem(srv->srv_ressl_config,
+	    srv->srv_conf.ssl_cert, srv->srv_conf.ssl_cert_len);
+	ressl_config_set_key_mem(srv->srv_ressl_config,
+	    srv->srv_conf.ssl_key, srv->srv_conf.ssl_key_len);
 
 	if (ressl_configure(srv->srv_ressl_ctx, srv->srv_ressl_config) != 0) {
 		log_warn("%s: failed to configure SSL - %s", __func__,
 		    ressl_error(srv->srv_ressl_ctx));
 		return (-1);
 	}
+
+	/* We're now done with the key... */
+	explicit_bzero(srv->srv_conf.ssl_key, srv->srv_conf.ssl_key_len);
+	free(srv->srv_conf.ssl_key);
+	srv->srv_conf.ssl_key = NULL;
+	srv->srv_conf.ssl_key_len = 0;
 
 	return (0);
 }
@@ -223,8 +278,11 @@ server_purge(struct server *srv)
 		TAILQ_REMOVE(&srv->srv_hosts, srv_conf, entry);
 
 		/* It might point to our own "default" entry */
-		if (srv_conf != &srv->srv_conf)
+		if (srv_conf != &srv->srv_conf) {
+			free(srv_conf->ssl_cert);
+			free(srv_conf->ssl_key);
 			free(srv_conf);
+		}
 	}
 
 	ressl_config_free(srv->srv_ressl_config);

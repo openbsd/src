@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.46 2014/08/05 18:01:10 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.47 2014/08/06 02:04:42 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -38,8 +38,8 @@
 #define HTTPD_LOGROOT		"/logs"
 #define HTTPD_ACCESS_LOG	"access.log"
 #define HTTPD_ERROR_LOG		"error.log"
-#define HTTPD_SSL_KEY		"/conf/server.key"
-#define HTTPD_SSL_CERT		"/conf/server.crt"
+#define HTTPD_SSL_KEY		"/etc/ssl/private/server.key"
+#define HTTPD_SSL_CERT		"/etc/ssl/server.crt"
 #define FD_RESERVE		5
 
 #define SERVER_MAX_CLIENTS	1024
@@ -367,6 +367,13 @@ struct server_config {
 	struct timeval		 timeout;
 	u_int32_t		 maxrequests;
 
+	char			*ssl_cert;
+	off_t			 ssl_cert_len;
+	char			*ssl_cert_file;
+	char			*ssl_key;
+	off_t			 ssl_key_len;
+	char			*ssl_key_file;
+
 	u_int16_t		 flags;
 	u_int8_t		 tcpflags;
 	int			 tcpbufsiz;
@@ -446,6 +453,7 @@ int	 cmdline_symset(char *);
 
 /* server.c */
 pid_t	 server(struct privsep *, struct privsep_proc *);
+int	 server_ssl_load_keypair(struct server *);
 int	 server_privinit(struct server *);
 void	 server_purge(struct server *);
 int	 server_socket_af(struct sockaddr_storage *, in_port_t);
