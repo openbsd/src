@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.39 2014/08/05 18:01:10 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.40 2014/08/06 09:34:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -647,9 +647,9 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 
  done:
 	free(extraheader);
-	if (asprintf(&httpmsg, "%s (%03d %s)", msg, code, httperr) == -1)
+	if (asprintf(&httpmsg, "%s (%03d %s)", msg, code, httperr) == -1) {
 		server_close(clt, msg);
-	else {
+	} else {
 		server_close(clt, httpmsg);
 		free(httpmsg);
 	}
