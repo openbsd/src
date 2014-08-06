@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.26 2014/08/05 18:01:10 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.27 2014/08/06 16:31:09 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 5 2014 $
+.Dd $Mdocdate: August 6 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -235,6 +235,33 @@ root directory of
 .Nm httpd .
 If not specified, it defaults to
 .Pa /htdocs .
+.It Ic ssl Ar option
+Set the SSL configuration for the server.
+These options are only used if SSL has been enabled via the listen directive.
+Valid options are:
+.Bl -tag -width Ds
+.It Ic certificate Ar file
+Specify the certificate to use for this server.
+The
+.Ar file
+should contain a PEM encoded certificate.
+.It Ic ciphers Ar string
+Specify the SSL cipher string.
+If not specified, the default value
+.Ar HIGH:!aNULL
+will be used (strong crypto cipher suites without anonymous DH).
+See the CIPHERS section of
+.Xr openssl 1
+for information about SSL cipher suites and preference lists.
+.It Ic key Ar file
+Specify the private key to use for this server.
+The
+.Ar file
+should contain a PEM encoded private key and reside outside of the
+.Xr chroot 2
+root directory of
+.Nm httpd .
+.El
 .It Ic tcp Ar option
 Enable or disable the specified TCP/IP options; see
 .Xr tcp 4
