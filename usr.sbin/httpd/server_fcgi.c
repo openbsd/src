@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.21 2014/08/04 18:00:06 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.22 2014/08/06 13:40:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -541,8 +541,14 @@ server_fcgi_writeheader(struct client *clt, struct kv *hdr, void *arg)
 
 	val = hdr->kv_value;
 
-	if (asprintf(&name, "HTTP_%s", key) == -1)
-		return (-1);
+	if (strcasecmp(key, "Content-Length") == 0 ||
+	    strcasecmp(key, "Content-Type") == 0) {
+		if ((name = strdup(key)) == NULL)
+			return (-1);
+	} else {
+		if (asprintf(&name, "HTTP_%s", key) == -1)
+			return (-1);
+	}
 
 	for (p = name; *p != '\0'; p++) {
 		if (isalpha((unsigned char)*p))
