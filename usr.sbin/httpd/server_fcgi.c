@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.23 2014/08/06 15:08:04 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.24 2014/08/06 18:38:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -144,7 +144,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 
 	socket_set_blockmode(fd, BM_NONBLOCK);
 
-	memset(&hbuf, 0, sizeof(hbuf));
+	memset(hbuf, 0, sizeof(hbuf));
 	clt->clt_fcgi_state = FCGI_READ_HEADER;
 	clt->clt_fcgi_toread = sizeof(struct fcgi_record_header);
 
