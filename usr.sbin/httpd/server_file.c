@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.29 2014/08/04 17:43:20 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.30 2014/08/06 09:36:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -200,6 +200,10 @@ server_file(struct httpd *env, struct client *clt)
 		errstr = "failed to allocate file buffer event";
 		goto fail;
 	}
+
+	/* Adjust read watermark to the socket output buffer size */
+	bufferevent_setwatermark(clt->clt_srvbev, EV_READ, 0,
+	    clt->clt_sndbufsiz);
 
 	bufferevent_settimeout(clt->clt_srvbev,
 	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);

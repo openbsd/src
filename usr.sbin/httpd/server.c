@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.31 2014/08/06 04:39:50 jsg Exp $	*/
+/*	$OpenBSD: server.c,v 1.32 2014/08/06 09:36:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -631,6 +631,7 @@ server_input(struct client *clt)
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	evbuffercb		 inrd = server_read;
 	evbuffercb		 inwr = server_write;
+	socklen_t		 slen;
 
 	if (server_httpdesc_init(clt) == -1) {
 		server_close(clt, "failed to allocate http descriptor");
@@ -639,6 +640,13 @@ server_input(struct client *clt)
 
 	clt->clt_toread = TOREAD_HTTP_HEADER;
 	inrd = server_read_http;
+
+	slen = sizeof(clt->clt_sndbufsiz);
+	if (getsockopt(clt->clt_s, SOL_SOCKET, SO_SNDBUF,
+	    &clt->clt_sndbufsiz, &slen) == -1) {
+		server_close(clt, "failed to get send buffer size");
+		return;
+	}
 
 	/*
 	 * Client <-> Server
@@ -656,6 +664,10 @@ server_input(struct client *clt)
 		event_set(&clt->clt_bev->ev_write, clt->clt_s, EV_WRITE,
 		    server_ssl_writecb, clt->clt_bev);
 	}
+
+	/* Adjust write watermark to the socket buffer output size */
+	bufferevent_setwatermark(clt->clt_bev, EV_WRITE,
+	    clt->clt_sndbufsiz, 0);
 
 	bufferevent_settimeout(clt->clt_bev,
 	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);

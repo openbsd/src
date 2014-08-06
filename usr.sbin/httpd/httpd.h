@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.47 2014/08/06 02:04:42 jsing Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.48 2014/08/06 09:36:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -273,6 +273,7 @@ struct client {
 	struct evbuffer		*clt_output;
 	struct event		 clt_ev;
 	void			*clt_desc;
+	int			 clt_sndbufsiz;
 
 	int			 clt_fd;
 	struct ressl		*clt_ressl_ctx;
