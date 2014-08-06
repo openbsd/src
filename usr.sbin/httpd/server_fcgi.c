@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.22 2014/08/06 13:40:18 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.23 2014/08/06 15:08:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -45,7 +45,6 @@
 #include "httpd.h"
 #include "http.h"
 
-#define FCGI_CONTENT_SIZE	 65535
 #define FCGI_PADDING_SIZE	 255
 #define FCGI_RECORD_SIZE	 \
     (sizeof(struct fcgi_record_header) + FCGI_CONTENT_SIZE + FCGI_PADDING_SIZE)
@@ -326,15 +325,16 @@ server_fcgi(struct httpd *env, struct client *clt)
 	bufferevent_write(clt->clt_srvbev, &param.buf,
 	    sizeof(struct fcgi_record_header));
 
-	h->type = FCGI_STDIN;
-
-	bufferevent_write(clt->clt_srvbev, &param.buf,
-	    sizeof(struct fcgi_record_header));
-
 	bufferevent_settimeout(clt->clt_srvbev,
 	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);
 	bufferevent_enable(clt->clt_srvbev, EV_READ|EV_WRITE);
-	bufferevent_disable(clt->clt_bev, EV_READ);
+	if (clt->clt_toread != 0) {
+		server_read_httpcontent(clt->clt_bev, clt);
+		bufferevent_enable(clt->clt_bev, EV_READ);
+	} else {
+		bufferevent_disable(clt->clt_bev, EV_READ);
+		fcgi_add_stdin(clt, NULL);
+	}
 
 	/*
 	 * persist is not supported yet because we don't get the
@@ -351,6 +351,30 @@ server_fcgi(struct httpd *env, struct client *clt)
 		errstr = strerror(errno);
 	server_abort_http(clt, 500, errstr);
 	return (-1);
+}
+
+int
+fcgi_add_stdin(struct client *clt, struct evbuffer *evbuf)
+{
+	struct fcgi_record_header	h;
+
+	h.version = 1;
+	h.type = FCGI_STDIN;
+	h.id = htons(1);
+	h.padding_len = 0;
+
+	if (evbuf == NULL) {
+		h.content_len = 0;
+		return bufferevent_write(clt->clt_srvbev, &h,
+		    sizeof(struct fcgi_record_header));
+	} else {
+		h.content_len = htons(EVBUFFER_LENGTH(evbuf));
+		if (bufferevent_write(clt->clt_srvbev, &h,
+		    sizeof(struct fcgi_record_header)) == -1)
+			return -1;
+		return bufferevent_write_buffer(clt->clt_srvbev, evbuf);
+	}
+	return (0);
 }
 
 int

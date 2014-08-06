@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.48 2014/08/06 09:36:31 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.49 2014/08/06 15:08:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -59,6 +59,8 @@
 #define CONFIG_MEDIA		0x01
 #define CONFIG_SERVERS		0x02
 #define CONFIG_ALL		0xff
+
+#define FCGI_CONTENT_SIZE	65535
 
 enum httpchunk {
 	TOREAD_UNLIMITED		= -1,
@@ -521,6 +523,7 @@ void	 server_file_error(struct bufferevent *, short, void *);
 
 /* server_fcgi.c */
 int	 server_fcgi(struct httpd *, struct client *);
+int	 fcgi_add_stdin(struct client *, struct evbuffer *);
 
 /* httpd.c */
 void		 event_again(struct event *, int, short,

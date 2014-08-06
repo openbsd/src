@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.40 2014/08/06 09:34:21 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.41 2014/08/06 15:08:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -322,10 +322,10 @@ server_read_http(struct bufferevent *bev, void *arg)
 		}
 
  done:
-		if (clt->clt_toread <= 0) {
-			server_response(env, clt);
-			return;
-		}
+		if (clt->clt_toread != 0)
+			bufferevent_disable(bev, EV_READ);
+		server_response(env, clt);
+		return;
 	}
 	if (clt->clt_done) {
 		server_close(clt, "done");
@@ -361,12 +361,11 @@ server_read_httpcontent(struct bufferevent *bev, void *arg)
 		/* Read content data */
 		if ((off_t)size > clt->clt_toread) {
 			size = clt->clt_toread;
-			if (server_bufferevent_write_chunk(clt,
-			    src, size) == -1)
+			if (fcgi_add_stdin(clt, src) == -1)
 				goto fail;
 			clt->clt_toread = 0;
 		} else {
-			if (server_bufferevent_write_buffer(clt, src) == -1)
+			if (fcgi_add_stdin(clt, src) == -1)
 				goto fail;
 			clt->clt_toread -= size;
 		}
@@ -374,17 +373,19 @@ server_read_httpcontent(struct bufferevent *bev, void *arg)
 		    size, clt->clt_toread);
 	}
 	if (clt->clt_toread == 0) {
+		fcgi_add_stdin(clt, NULL);
 		clt->clt_toread = TOREAD_HTTP_HEADER;
+		bufferevent_disable(bev, EV_READ);
 		bev->readcb = server_read_http;
+		return;
 	}
 	if (clt->clt_done)
 		goto done;
 	if (bev->readcb != server_read_httpcontent)
 		bev->readcb(bev, arg);
-	bufferevent_enable(bev, EV_READ);
+
 	return;
  done:
-	server_close(clt, "last http content read");
 	return;
  fail:
 	server_close(clt, strerror(errno));

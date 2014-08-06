@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.35 2014/08/06 12:56:58 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.36 2014/08/06 15:08:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -668,6 +668,8 @@ server_input(struct client *clt)
 	/* Adjust write watermark to the socket buffer output size */
 	bufferevent_setwatermark(clt->clt_bev, EV_WRITE,
 	    clt->clt_sndbufsiz, 0);
+	/* Read at most amount of data that fits in one fcgi record. */
+	bufferevent_setwatermark(clt->clt_bev, EV_READ, 0, FCGI_CONTENT_SIZE);
 
 	bufferevent_settimeout(clt->clt_bev,
 	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);
