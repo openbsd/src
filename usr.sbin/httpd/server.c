@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.30 2014/08/06 02:04:42 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.31 2014/08/06 04:39:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -924,10 +924,12 @@ server_sendlog(struct server_config *srv_conf, int cmd, const char *emsg, ...)
 	struct iovec	 iov[2];
 
 	if (srv_conf->flags & SRVFLAG_SYSLOG) {
+		va_start(ap, emsg);
 		if (cmd == IMSG_LOG_ACCESS)
 			vlog(LOG_INFO, emsg, ap);
 		else
 			vlog(LOG_DEBUG, emsg, ap);
+		va_end(ap);
 		return;
 	}
 
