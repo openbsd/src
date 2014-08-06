@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.109 2014/05/09 21:15:17 rpe Exp $
+dnl	$OpenBSD: m4.common,v 1.110 2014/08/06 02:34:23 doug Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -133,7 +133,7 @@ define({:-OpenBSDetc-:},
 		 system from scratch, but should NOT be used if you are
 		 upgrading.  (If you are upgrading, it's recommended that
 		 you get a copy of this set and CAREFULLY upgrade your
-		 configuration files by hand; see the section named 
+		 configuration files by hand; see the section named
 		 "Upgrading a previously-installed OpenBSD System" below.)-:},.)showsize($1,$2)-:})dnl
 dnl
 dnl
@@ -246,6 +246,11 @@ define({:-OpenBSDminiroot-:},
 {:-	miniroot{:--:}OSrev.fs	A miniroot filesystem image to be used if you
 			for some reason can't or don't want to use the
 			ramdisk installation method.-:})dnl
+dnl
+define({:-OpenBSDinstallfs-:},
+{:-	install{:--:}OSrev.fs	A boot and installation image which contains
+			the base and X sets.  An install or upgrade can be
+			done with a USB key without network connectivity.-:})dnl
 dnl
 dnl
 dnl ========== Various Install Instructions
@@ -705,7 +710,7 @@ define({:-OpenBSDInstallWrapup-:},
 	If there have been errors extracting the sets from the previous
 	location, or if some sets have been missing, this allows you to
 	select a better source.
-		
+
 	Also, if the installation program complains that the distribution
 	sets you have been using do not match their recorded checksums, you
 	might want to check your installation source (although this can
@@ -912,7 +917,7 @@ define({:-OpenBSDXferCDROM-:},
 	OpenBSD users should be able to do this with the cdio command.
 	"cdio tao install{:--:}OSrev.iso"
 
-	Users of other operating systems should consult the 
+	Users of other operating systems should consult the
 	appropriate documentation.-:})dnl
 dnl
 define({:-OpenBSDXferFloppyFromDOS-:},
@@ -926,7 +931,7 @@ define({:-OpenBSDXferFloppyFromDOS-:},
 	browser.  In either case, take care to do "binary" transfers, since
 	these are images files and any DOS cr/lf translations or Control-z
 	EOF interpretations will result in corrupted transfers.
-	
+
 	You will also need to go to the "tools" directory and grab a copy of
 	the ntrw.exe utility.  Run it with the correct arguments like this
 	"ntrw <image> <drive>:"
@@ -937,7 +942,7 @@ dnl
 define({:-OpenBSDXferFloppyFromUNIX-:},
 {:-Creating a bootable floppy disk using a Un*x-like system:
 
-	First, you will need obtain a local copy of the bootable filesystem
+	First, you will need to obtain a local copy of the bootable filesystem
 	image as described above.  You should use the signify(1) and sha256(1)
 	commands to verify the integrity of the images with the SHA256.sig file
 	on the mirror site.
@@ -963,6 +968,41 @@ define({:-OpenBSDXferFloppyFromUNIX-:},
 
 	Note that, when installing, the boot floppy can be write-protected
 	(i.e. read-only).-:})dnl
+dnl
+define({:-OpenBSDXferUSBFromUNIX-:},
+{:-Creating a bootable USB key using a Un*x-like system:
+
+	Some older systems may not be able to boot from USB keys or require
+	changing boot priority.  Check your BIOS settings if you run into
+	problems.
+
+	First, you will need to obtain a local copy of the bootable filesystem
+	image miniroot{:--:}OSrev.fs or install{:--:}OSrev.fs as described above.
+	You should use the signify(1) and sha256(1) commands to verify
+	the integrity of the images with the SHA256.sig file on the mirror site.
+
+	Next, use the dd(1) utility to copy the file to the USB storage device.
+	The command would likely be, under OpenBSD:
+		dd if=miniroot{:--:}OSrev.fs of=/dev/rsdNc bs=1m
+
+	where N is the device number.  You can find the correct device number
+	by checking dmesg(8) when inserting the media.
+
+	If you are using another operating system, you may have to adapt
+	this to conform to local naming conventions for the USB key and
+	options suitable for copying to a "raw" disk image.  The key
+	issue is that the device name used for the USB key *must* be one
+	that refers to the correct block device, not a partition or
+	compatibility mode, and the copy command needs to be compatible
+	with the requirement that writes to a raw device must be in
+	multiples of 512-byte blocks.  The variations are endless and
+	beyond the scope of this document.
+
+	If you're doing this on the system you intend to boot the USB key on,
+	copying the image back to a file and doing a compare or checksum
+	is a good way to verify that the USB key is readable and free of
+	read/write errors.-:})dnl
+dnl
 dnl OpenBSDXferNFS [(noupgrade)]
 define({:-OpenBSDXferNFS-:},
 {:-To install OpenBSD using a remote partition, mounted via

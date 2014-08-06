@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.48 2014/04/22 10:50:15 henning Exp $
+dnl	$OpenBSD: INSTALL,v 1.49 2014/08/06 02:34:23 doug Exp $
 include(INCLUDE/../m4.common)dnl
 includeit(features)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
@@ -74,6 +74,22 @@ OpenBSD System Requirements and Supported Devices:
 --------------------------------------------------
 
 includeit(hardware)
+
+
+Verifying the OpenBSD Installation Media:
+-----------------------------------------
+
+As of OpenBSD 5.5, installations are able to verify files for the next
+release.  The OpenBSD OSREV release was signed with the
+/etc/signify/openbsd-{:--:}OSrev-base.pub release key.
+
+If you have an existing OpenBSD 5.5 or higher installation, you can run
+signify(1) to verify the signature and checksum.  For example, run the following
+to verify that the cd{:--:}OSrev.iso file was distributed by the OpenBSD team:
+	signify -C -p /etc/signify/openbsd-{:--:}OSrev-base.pub -x SHA256.sig cd{:--:}OSrev.iso
+
+If you are unable to run or compile signify(1), use sha256(1) with the SHA256
+file to see if a file was corrupt during the transfer.
 
 
 Getting the OpenBSD System onto Useful Media:
@@ -188,7 +204,7 @@ dnl
 dnl Use of 'sendbug' is encouraged, however, because bugs reported with it
 dnl are entered into the OpenBSD bugs database, and thus can't slip through
 dnl the cracks.
-dnl 
+dnl
 As a favor, please avoid mailing huge documents or files to the
 mailing lists.  Instead, put the material you would have sent on
 a web server, then mail the appropriate list about it, or if

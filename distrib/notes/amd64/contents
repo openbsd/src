@@ -1,5 +1,8 @@
-dnl	$OpenBSD: contents,v 1.33 2014/07/29 02:57:09 miod Exp $
+dnl	$OpenBSD: contents,v 1.34 2014/08/06 02:34:23 doug Exp $
 TopPart
+
+OpenBSDminiroot
+			It can be copied to a small USB key to start the install.
 
 OpenBSDfloppy
 
@@ -15,6 +18,8 @@ OpenBSDbsdmp
 OpenBSDrd
 
 OpenBSDinstalliso
+
+OpenBSDinstallfs
 
 OpenBSDcd
 
