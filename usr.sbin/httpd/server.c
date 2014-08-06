@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.34 2014/08/06 11:24:12 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.35 2014/08/06 12:56:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -555,11 +555,11 @@ server_ssl_readcb(int fd, short event, void *arg)
 		(*bufev->readcb)(bufev, bufev->cbarg);
 	return;
 
-retry:
+ retry:
 	server_bufferevent_add(&bufev->ev_read, bufev->timeout_read);
 	return;
 
-err:
+ err:
 	(*bufev->errorcb)(bufev, what, bufev->cbarg);
 }
 
@@ -611,12 +611,12 @@ server_ssl_writecb(int fd, short event, void *arg)
 		(*bufev->writecb)(bufev, bufev->cbarg);
 	return;
 
-retry:
+ retry:
 	if (clt->clt_buflen != 0)
 		server_bufferevent_add(&bufev->ev_write, bufev->timeout_write);
 	return;
 
-err:
+ err:
 	if (clt->clt_buf != NULL) {
 		free(clt->clt_buf);
 		clt->clt_buf = NULL;

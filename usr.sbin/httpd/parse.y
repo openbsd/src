@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.29 2014/08/06 02:04:42 jsing Exp $	*/
+/*	$OpenBSD: parse.y,v 1.30 2014/08/06 12:56:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -307,13 +307,13 @@ serveroptsl	: LISTEN ON STRING port optssl {
 				s->srv_conf.flags |= SRVFLAG_SSL;
 			}
 		}
-		| TCP 			{
+		| TCP			{
 			if (parentsrv != NULL) {
 				yyerror("tcp flags inside location");
 				YYERROR;
 			}
 		} tcpip
-		| CONNECTION 		{
+		| CONNECTION		{
 			if (parentsrv != NULL) {
 				yyerror("connection options inside location");
 				YYERROR;
