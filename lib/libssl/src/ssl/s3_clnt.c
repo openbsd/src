@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.84 2014/07/17 11:32:21 miod Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.85 2014/08/07 01:24:10 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1944,6 +1944,14 @@ ssl3_send_client_key_exchange(SSL *s)
 		if (alg_k & SSL_kRSA) {
 			RSA *rsa;
 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
+
+			if (s->session->sess_cert == NULL) {
+				/* We should always have a server
+				 * certificate with SSL_kRSA. */
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+				    ERR_R_INTERNAL_ERROR);
+				goto err;
+			}
 
 			if (s->session->sess_cert->peer_rsa_tmp != NULL)
 				rsa = s->session->sess_cert->peer_rsa_tmp;
