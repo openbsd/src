@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.28 2014/08/07 10:52:34 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.29 2014/08/07 12:43:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -478,7 +478,8 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 
 			/* fallthrough if content_len == 0 */
 		case FCGI_READ_CONTENT:
-			if (clt->clt_fcgi_type == FCGI_STDERR && len) {
+			if (clt->clt_fcgi_type == FCGI_STDERR &&
+			    EVBUFFER_LENGTH(clt->clt_srvevb) > 0) {
 				if ((ptr = get_string(
 				    EVBUFFER_DATA(clt->clt_srvevb),
 				    EVBUFFER_LENGTH(clt->clt_srvevb)))
