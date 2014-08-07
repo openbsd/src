@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.32 2014/08/07 04:49:53 deraadt Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.33 2014/08/07 19:46:31 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -448,11 +448,8 @@ ssl23_get_client_hello(SSL *s)
 		}
 
 		j = ssl23_read_bytes(s, n + 2);
-		/* We previously read 11 bytes, so if j > 0, we must have
-		 * j == n+2 == s->packet_length. We have at least 11 valid
-		 * packet bytes. */
-		if (j <= 0)
-			return (j);
+		if (j != n + 2)
+			return -1;
 
 		ssl3_finish_mac(s, s->packet + 2, s->packet_length - 2);
 		if (s->msg_callback)
