@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.53 2014/08/06 23:16:16 deraadt Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.54 2014/08/07 22:27:28 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1339,7 +1339,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				*al = TLS1_AD_DECODE_ERROR;
 				return 0;
 			}
-			if (s->hit) {
+			if (!s->hit) {
 				free(s->session->tlsext_ecpointformatlist);
 				s->session->tlsext_ecpointformatlist_length = 0;
 
