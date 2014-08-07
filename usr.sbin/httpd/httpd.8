@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.46 2014/08/07 06:56:41 deraadt Exp $
+.\"	$OpenBSD: httpd.8,v 1.47 2014/08/07 18:21:13 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -37,11 +37,7 @@ can log to syslog or per-server files with several standard formats.
 .Nm
 rereads its configuration file when it receives
 .Dv SIGHUP
-by re-executing itself with the name and options it was started
-with, e.g.\&
-.Pa /usr/sbin/httpd .
-.Nm
-reopens log files when it receives
+and reopens log files when it receives
 .Dv SIGUSR1 .
 .Pp
 The options are as follows:
