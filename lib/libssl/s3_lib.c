@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.72 2014/08/07 19:46:31 miod Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.73 2014/08/07 20:02:23 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2333,7 +2333,7 @@ ssl3_new(SSL *s)
 	SSL3_STATE	*s3;
 
 	if ((s3 = calloc(1, sizeof *s3)) == NULL)
-		return 0;
+		goto err;
 	memset(s3->rrec.seq_num, 0, sizeof(s3->rrec.seq_num));
 	memset(s3->wrec.seq_num, 0, sizeof(s3->wrec.seq_num));
 
@@ -2341,6 +2341,8 @@ ssl3_new(SSL *s)
 
 	s->method->ssl_clear(s);
 	return (1);
+err:
+	return (0);
 }
 
 void

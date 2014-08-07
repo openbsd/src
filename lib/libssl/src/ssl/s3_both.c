@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.27 2014/08/07 19:46:31 miod Exp $ */
+/* $OpenBSD: s3_both.c,v 1.28 2014/08/07 20:02:23 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -161,7 +161,7 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 		p = &(d[4]);
 
 		i = s->method->ssl3_enc->final_finish_mac(s,
-		    sender, slen, s->s3->tmp.finish_md);
+		sender, slen, s->s3->tmp.finish_md);
 		if (i == 0)
 			return 0;
 		s->s3->tmp.finish_md_len = i;
@@ -171,14 +171,15 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 
                 /* Copy the finished so we can use it for
                    renegotiation checks */
-		OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
 		if (s->type == SSL_ST_CONNECT) {
+			OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
 			memcpy(s->s3->previous_client_finished,
-			    s->s3->tmp.finish_md, i);
+			s->s3->tmp.finish_md, i);
 			s->s3->previous_client_finished_len = i;
 		} else {
+			OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
 			memcpy(s->s3->previous_server_finished,
-			    s->s3->tmp.finish_md, i);
+			s->s3->tmp.finish_md, i);
 			s->s3->previous_server_finished_len = i;
 		}
 
@@ -215,7 +216,7 @@ ssl3_take_mac(SSL *s)
 	}
 
 	s->s3->tmp.peer_finish_md_len = s->method->ssl3_enc->final_finish_mac(s,
-	    sender, slen, s->s3->tmp.peer_finish_md);
+	sender, slen, s->s3->tmp.peer_finish_md);
 }
 #endif
 
@@ -249,7 +250,7 @@ ssl3_get_finished(SSL *s, int a, int b)
 	p = (unsigned char *)s->init_msg;
 	i = s->s3->tmp.peer_finish_md_len;
 
-	if (i != n || i > EVP_MAX_MD_SIZE) {
+	if (i != n) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_FINISHED, SSL_R_BAD_DIGEST_LENGTH);
 		goto f_err;
@@ -264,12 +265,14 @@ ssl3_get_finished(SSL *s, int a, int b)
         /* Copy the finished so we can use it for
            renegotiation checks */
 	if (s->type == SSL_ST_ACCEPT) {
+		OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
 		memcpy(s->s3->previous_client_finished,
-		    s->s3->tmp.peer_finish_md, i);
+		s->s3->tmp.peer_finish_md, i);
 		s->s3->previous_client_finished_len = i;
 	} else {
+		OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
 		memcpy(s->s3->previous_server_finished,
-		    s->s3->tmp.peer_finish_md, i);
+		s->s3->tmp.peer_finish_md, i);
 		s->s3->previous_server_finished_len = i;
 	}
 

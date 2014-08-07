@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.32 2014/08/07 19:46:31 miod Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.33 2014/08/07 20:02:23 miod Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -778,9 +778,8 @@ dtls1_client_hello(SSL *s)
 
 		/* if client_random is initialized, reuse it, we are
 		 * required to use same upon reply to HelloVerify */
-		for (i = 0; i < sizeof(s->s3->client_random); i++)
-			if (p[i] != '\0')
-				break;
+		for (i = 0; p[i]=='\0' && i < sizeof(s->s3->client_random); i++)
+			;
 		if (i == sizeof(s->s3->client_random))
 			RAND_pseudo_bytes(p, sizeof(s->s3->client_random));
 
@@ -1339,6 +1338,7 @@ dtls1_send_client_certificate(SSL *s)
 		/* If we get an error, we need to
 		 * ssl->rwstate=SSL_X509_LOOKUP; return(-1);
 		 * We then get retied later */
+		i = 0;
 		i = ssl_do_client_cert_cb(s, &x509, &pkey);
 		if (i < 0) {
 			s->rwstate = SSL_X509_LOOKUP;

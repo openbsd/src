@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.68 2014/08/07 19:46:31 miod Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.69 2014/08/07 20:02:23 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -319,7 +319,7 @@ tls1_aead_ctx_init(SSL_AEAD_CTX **aead_ctx)
 
 static int
 tls1_change_cipher_state_aead(SSL *s, char is_read, const unsigned char *key,
-    unsigned int key_len, const unsigned char *iv, unsigned int iv_len)
+    unsigned key_len, const unsigned char *iv, unsigned iv_len)
 {
 	const EVP_AEAD *aead = s->s3->tmp.new_aead;
 	SSL_AEAD_CTX *aead_ctx;
@@ -856,7 +856,6 @@ tls1_enc(SSL *s, int send)
 				rec->length += pad;
 			}
 		} else if ((bs != 1) && send) {
-			/* XXX divide by zero if bs == 0 (should not happen) */
 			i = bs - ((int)l % bs);
 
 			/* Add weird padding of upto 256 bytes */
@@ -1121,7 +1120,7 @@ tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 		currentvalpos++;
 		val[currentvalpos] = contextlen & 0xff;
 		currentvalpos++;
-		if (contextlen != 0 && context != NULL) {
+		if ((contextlen > 0) || (context != NULL)) {
 			memcpy(val + currentvalpos, context, contextlen);
 		}
 	}
