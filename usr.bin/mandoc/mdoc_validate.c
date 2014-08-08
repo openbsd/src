@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.149 2014/08/08 15:03:25 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.150 2014/08/08 15:10:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -96,6 +96,7 @@ static	int	 post_dt(POST_ARGS);
 static	int	 post_en(POST_ARGS);
 static	int	 post_es(POST_ARGS);
 static	int	 post_eoln(POST_ARGS);
+static	int	 post_ex(POST_ARGS);
 static	int	 post_hyph(POST_ARGS);
 static	int	 post_ignpar(POST_ARGS);
 static	int	 post_it(POST_ARGS);
@@ -112,7 +113,6 @@ static	int	 post_sh(POST_ARGS);
 static	int	 post_sh_body(POST_ARGS);
 static	int	 post_sh_head(POST_ARGS);
 static	int	 post_st(POST_ARGS);
-static	int	 post_std(POST_ARGS);
 static	int	 post_vt(POST_ARGS);
 static	int	 pre_an(PRE_ARGS);
 static	int	 pre_bd(PRE_ARGS);
@@ -145,6 +145,7 @@ static	v_post	 posts_dl[] = { post_literal, bwarn_ge1, NULL };
 static	v_post	 posts_dt[] = { post_dt, post_prol, NULL };
 static	v_post	 posts_en[] = { post_en, NULL };
 static	v_post	 posts_es[] = { post_es, NULL };
+static	v_post	 posts_ex[] = { post_ex, NULL };
 static	v_post	 posts_fo[] = { hwarn_eq1, bwarn_ge1, NULL };
 static	v_post	 posts_hyph[] = { post_hyph, NULL };
 static	v_post	 posts_hyphtext[] = { ewarn_ge1, post_hyph, NULL };
@@ -161,7 +162,6 @@ static	v_post	 posts_sh[] = { post_ignpar,hwarn_ge1,post_sh,post_hyph,NULL };
 static	v_post	 posts_sp[] = { post_par, ewarn_le1, NULL };
 static	v_post	 posts_ss[] = { post_ignpar, hwarn_ge1, post_hyph, NULL };
 static	v_post	 posts_st[] = { post_st, NULL };
-static	v_post	 posts_std[] = { post_std, NULL };
 static	v_post	 posts_text[] = { ewarn_ge1, NULL };
 static	v_post	 posts_text1[] = { ewarn_eq1, NULL };
 static	v_post	 posts_vt[] = { post_vt, NULL };
@@ -203,7 +203,7 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Dv */
 	{ NULL, NULL },				/* Er */
 	{ NULL, NULL },				/* Ev */
-	{ pres_std, posts_std },		/* Ex */
+	{ pres_std, posts_ex },			/* Ex */
 	{ NULL, NULL },				/* Fa */
 	{ NULL, posts_text },			/* Fd */
 	{ NULL, NULL },				/* Fl */
@@ -217,7 +217,7 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Op */
 	{ pres_obsolete, NULL },		/* Ot */
 	{ NULL, posts_defaults },		/* Pa */
-	{ pres_std, posts_std },		/* Rv */
+	{ pres_std, NULL },			/* Rv */
 	{ NULL, posts_st },			/* St */
 	{ NULL, NULL },				/* Va */
 	{ NULL, posts_vt },			/* Vt */
@@ -530,12 +530,6 @@ check_argv(struct mdoc *mdoc, struct mdoc_node *n, struct mdoc_argv *v)
 
 	for (i = 0; i < (int)v->sz; i++)
 		check_text(mdoc, v->line, v->pos, v->value[i]);
-
-	/* FIXME: move to post_std(). */
-
-	if (MDOC_Std == v->arg)
-		if ( ! (v->sz || mdoc->meta.name))
-			mdoc_nmsg(mdoc, n, MANDOCERR_NONAME);
 }
 
 static void
@@ -1124,10 +1118,8 @@ post_nm(POST_ARGS)
 
 	mdoc_deroff(&mdoc->meta.name, mdoc->last);
 
-	if (NULL == mdoc->meta.name) {
-		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_NONAME);
-		mdoc->meta.name = mandoc_strdup("UNKNOWN");
-	}
+	if (NULL == mdoc->meta.name)
+		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_NM_NONAME);
 	return(1);
 }
 
@@ -2391,32 +2383,31 @@ post_os(POST_ARGS)
 	return(1);
 }
 
+/*
+ * If no argument is provided,
+ * fill in the name of the current manual page.
+ */
 static int
-post_std(POST_ARGS)
+post_ex(POST_ARGS)
 {
-	struct mdoc_node *nn, *n;
+	struct mdoc_node *n;
 
 	n = mdoc->last;
-
-	/*
-	 * Macros accepting `-std' as an argument have the name of the
-	 * current document (`Nm') filled in as the argument if it's not
-	 * provided.
-	 */
 
 	if (n->child)
 		return(1);
 
-	if (NULL == mdoc->meta.name)
+	if (mdoc->meta.name == NULL) {
+		mdoc_nmsg(mdoc, n, MANDOCERR_EX_NONAME);
 		return(1);
+	}
 
-	nn = n;
 	mdoc->next = MDOC_NEXT_CHILD;
 
 	if ( ! mdoc_word_alloc(mdoc, n->line, n->pos, mdoc->meta.name))
 		return(0);
 
-	mdoc->last = nn;
+	mdoc->last = n;
 	return(1);
 }
 

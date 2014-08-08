@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.65 2014/07/04 16:11:41 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.66 2014/08/08 15:10:15 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -79,6 +79,7 @@ static	int	  pre_en(DECL_ARGS);
 static	int	  pre_enc(DECL_ARGS);
 static	int	  pre_em(DECL_ARGS);
 static	int	  pre_es(DECL_ARGS);
+static	int	  pre_ex(DECL_ARGS);
 static	int	  pre_fa(DECL_ARGS);
 static	int	  pre_fd(DECL_ARGS);
 static	int	  pre_fl(DECL_ARGS);
@@ -95,6 +96,7 @@ static	int	  pre_no(DECL_ARGS);
 static	int	  pre_ns(DECL_ARGS);
 static	int	  pre_pp(DECL_ARGS);
 static	int	  pre_rs(DECL_ARGS);
+static	int	  pre_rv(DECL_ARGS);
 static	int	  pre_sm(DECL_ARGS);
 static	int	  pre_sp(DECL_ARGS);
 static	int	  pre_sect(DECL_ARGS);
@@ -135,9 +137,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, pre_li, post_font, NULL, NULL }, /* Dv */
 	{ NULL, pre_li, post_font, NULL, NULL }, /* Er */
 	{ NULL, pre_li, post_font, NULL, NULL }, /* Ev */
-	{ NULL, pre_enc, post_enc, "The \\fB",
-	    "\\fP\nutility exits 0 on success, and >0 if an error occurs."
-	    }, /* Ex */
+	{ NULL, pre_ex, NULL, NULL, NULL }, /* Ex */
 	{ NULL, pre_fa, post_fa, NULL, NULL }, /* Fa */
 	{ NULL, pre_fd, post_fd, NULL, NULL }, /* Fd */
 	{ NULL, pre_fl, post_fl, NULL, NULL }, /* Fl */
@@ -151,11 +151,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Op */
 	{ NULL, pre_ft, post_font, NULL, NULL }, /* Ot */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Pa */
-	{ NULL, pre_enc, post_enc, "The \\fB",
-		"\\fP\nfunction returns the value 0 if successful;\n"
-		"otherwise the value -1 is returned and the global\n"
-		"variable \\fIerrno\\fP is set to indicate the error."
-		}, /* Rv */
+	{ NULL, pre_rv, NULL, NULL, NULL }, /* Rv */
 	{ NULL, NULL, NULL, NULL, NULL }, /* St */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Va */
 	{ NULL, pre_vt, post_vt, NULL, NULL }, /* Vt */
@@ -667,6 +663,42 @@ post_enc(DECL_ARGS)
 		return;
 	outflags &= ~(MMAN_spc | MMAN_nl);
 	print_word(suffix);
+}
+
+static int
+pre_ex(DECL_ARGS)
+{
+	int	 nchild;
+
+	outflags |= MMAN_br | MMAN_nl;
+
+	print_word("The");
+
+	nchild = n->nchild;
+	for (n = n->child; n; n = n->next) {
+		font_push('B');
+		print_word(n->string);
+		font_pop();
+
+		if (n->next == NULL)
+			continue;
+
+		if (nchild > 2) {
+			outflags &= ~MMAN_spc;
+			print_word(",");
+		}
+		if (n->next->next == NULL)
+			print_word("and");
+	}
+
+	if (nchild > 1)
+		print_word("utilities exit\\~0");
+	else
+		print_word("utility exits\\~0");
+
+	print_word("on success, and\\~>0 if an error occurs.");
+	outflags |= MMAN_nl;
+	return(0);
 }
 
 static void
@@ -1507,7 +1539,8 @@ post_nm(DECL_ARGS)
 	case MDOC_HEAD:
 		/* FALLTHROUGH */
 	case MDOC_ELEM:
-		font_pop();
+		if (n->child != NULL || meta->name != NULL)
+			font_pop();
 		break;
 	default:
 		break;
@@ -1557,6 +1590,58 @@ pre_rs(DECL_ARGS)
 		outflags &= ~MMAN_br;
 	}
 	return(1);
+}
+
+static int
+pre_rv(DECL_ARGS)
+{
+	int	 nchild;
+
+	outflags |= MMAN_br | MMAN_nl;
+
+	nchild = n->nchild;
+	if (nchild > 0) {
+		print_word("The");
+
+		for (n = n->child; n; n = n->next) {
+			font_push('B');
+			print_word(n->string);
+			font_pop();
+
+			outflags &= ~MMAN_spc;
+			print_word("()");
+
+			if (n->next == NULL)
+				continue;
+
+			if (nchild > 2) {
+				outflags &= ~MMAN_spc;
+				print_word(",");
+			}
+			if (n->next->next == NULL)
+				print_word("and");
+		}
+
+		if (nchild > 1)
+			print_word("functions return");
+		else
+			print_word("function returns");
+
+		print_word("the value\\~0 if successful;");
+	} else
+		print_word("Upon successful completion, "
+		    "the value\\~0 is returned;");
+
+	print_word("otherwise the value\\~\\-1 is returned"
+	    " and the global variable");
+
+	font_push('I');
+	print_word("errno");
+	font_pop();
+
+	print_word("is set to indicate the error.");
+	outflags |= MMAN_nl;
+	return(0);
 }
 
 static int

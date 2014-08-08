@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.174 2014/08/08 15:03:24 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.175 2014/08/08 15:10:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1163,33 +1163,42 @@ termp_rv_pre(DECL_ARGS)
 	int		 nchild;
 
 	term_newln(p);
-	term_word(p, "The");
 
 	nchild = n->nchild;
-	for (n = n->child; n; n = n->next) {
-		term_fontpush(p, TERMFONT_BOLD);
-		term_word(p, n->string);
-		term_fontpop(p);
+	if (nchild > 0) {
+		term_word(p, "The");
 
-		p->flags |= TERMP_NOSPACE;
-		term_word(p, "()");
+		for (n = n->child; n; n = n->next) {
+			term_fontpush(p, TERMFONT_BOLD);
+			term_word(p, n->string);
+			term_fontpop(p);
 
-		if (nchild > 2 && n->next) {
 			p->flags |= TERMP_NOSPACE;
-			term_word(p, ",");
+			term_word(p, "()");
+
+			if (n->next == NULL)
+				continue;
+
+			if (nchild > 2) {
+				p->flags |= TERMP_NOSPACE;
+				term_word(p, ",");
+			}
+			if (n->next->next == NULL)
+				term_word(p, "and");
 		}
 
-		if (n->next && NULL == n->next->next)
-			term_word(p, "and");
-	}
+		if (nchild > 1)
+			term_word(p, "functions return");
+		else
+			term_word(p, "function returns");
 
-	if (nchild > 1)
-		term_word(p, "functions return");
-	else
-		term_word(p, "function returns");
+		term_word(p, "the value\\~0 if successful;");
+	} else
+		term_word(p, "Upon successful completion,"
+		    " the value\\~0 is returned;");
 
-	term_word(p, "the value 0 if successful; otherwise the "
-	    "value -1 is returned and the global variable");
+	term_word(p, "otherwise the value\\~\\-1 is returned"
+	    " and the global variable");
 
 	term_fontpush(p, TERMFONT_UNDER);
 	term_word(p, "errno");
@@ -1225,11 +1234,11 @@ termp_ex_pre(DECL_ARGS)
 	}
 
 	if (nchild > 1)
-		term_word(p, "utilities exit");
+		term_word(p, "utilities exit\\~0");
 	else
-		term_word(p, "utility exits");
+		term_word(p, "utility exits\\~0");
 
-	term_word(p, "0 on success, and >0 if an error occurs.");
+	term_word(p, "on success, and\\~>0 if an error occurs.");
 
 	p->flags |= TERMP_SENTENCE;
 	return(0);

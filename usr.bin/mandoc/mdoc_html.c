@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.75 2014/07/02 19:54:39 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.76 2014/08/08 15:10:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1065,11 +1065,11 @@ mdoc_ex_pre(MDOC_ARGS)
 	}
 
 	if (nchild > 1)
-		print_text(h, "utilities exit");
+		print_text(h, "utilities exit\\~0");
 	else
-		print_text(h, "utility exits");
+		print_text(h, "utility exits\\~0");
 
-	print_text(h, "0 on success, and >0 if an error occurs.");
+	print_text(h, "on success, and\\~>0 if an error occurs.");
 	return(0);
 }
 
@@ -1740,35 +1740,41 @@ mdoc_rv_pre(MDOC_ARGS)
 
 	PAIR_CLASS_INIT(&tag, "fname");
 
-	print_text(h, "The");
-
 	nchild = n->nchild;
-	for (n = n->child; n; n = n->next) {
-		assert(MDOC_TEXT == n->type);
+	if (nchild > 0) {
+		print_text(h, "The");
 
-		t = print_otag(h, TAG_B, 1, &tag);
-		print_text(h, n->string);
-		print_tagq(h, t);
+		for (n = n->child; n; n = n->next) {
+			t = print_otag(h, TAG_B, 1, &tag);
+			print_text(h, n->string);
+			print_tagq(h, t);
 
-		h->flags |= HTML_NOSPACE;
-		print_text(h, "()");
-
-		if (nchild > 2 && n->next) {
 			h->flags |= HTML_NOSPACE;
-			print_text(h, ",");
+			print_text(h, "()");
+
+			if (n->next == NULL)
+				continue;
+
+			if (nchild > 2) {
+				h->flags |= HTML_NOSPACE;
+				print_text(h, ",");
+			}
+			if (n->next->next == NULL)
+				print_text(h, "and");
 		}
 
-		if (n->next && NULL == n->next->next)
-			print_text(h, "and");
-	}
+		if (nchild > 1)
+			print_text(h, "functions return");
+		else
+			print_text(h, "function returns");
 
-	if (nchild > 1)
-		print_text(h, "functions return");
-	else
-		print_text(h, "function returns");
+		print_text(h, "the value\\~0 if successful;");
+	} else
+		print_text(h, "Upon successful completion,"
+                    " the value\\~0 is returned;");
 
-	print_text(h, "the value 0 if successful; otherwise the "
-	    "value -1 is returned and the global variable");
+	print_text(h, "otherwise the value\\~\\-1 is returned"
+	   " and the global variable");
 
 	PAIR_CLASS_INIT(&tag, "var");
 	t = print_otag(h, TAG_B, 1, &tag);
