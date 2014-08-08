@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1734 2014/07/12 10:08:53 jsg Exp $
+$OpenBSD: pcidevs,v 1.1735 2014/08/08 16:02:03 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -198,6 +198,7 @@ vendor	ESSENTIAL	0x120f	Essential Communications
 vendor	O2MICRO		0x1217	O2 Micro
 vendor	3DFX		0x121a	3DFX
 vendor	ATML		0x121b	ATML
+vendor	BOCHS		0x1234	Bochs
 vendor	CCUBE		0x123f	C-Cube
 vendor	AVM		0x1244	AVM
 vendor	STALLION	0x124d	Stallion
@@ -1901,6 +1902,9 @@ product BIT3 PCIVME2706		0x0300	VME 2706
 /* Bluesteel Networks */
 product BLUESTEEL 5501		0x0000	5501
 product BLUESTEEL 5601		0x5601	5601
+
+/* Bochs */
+product BOCHS VGA		0x1111	VGA
 
 /* Broadcom */
 product BROADCOM BCM43224_1	0x0576	BCM43224 
@@ -4612,6 +4616,7 @@ product MSI RT3090		0x891a	RT3090
 /* Microsoft products */
 product MICROSOFT MN120		0x0001	MN-120 10/100
 product MICROSOFT MN130		0x0002	MN-130 10/100
+product MICROSOFT VGA		0x5353	VGA
 
 /* Miro Computer Products AG */
 product MIRO 2IVDC		0x5607	2IVDC-PCX1
