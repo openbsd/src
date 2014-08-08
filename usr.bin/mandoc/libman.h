@@ -1,4 +1,4 @@
-/*	$Id: libman.h,v 1.35 2014/07/07 19:17:39 schwarze Exp $ */
+/*	$Id: libman.h,v 1.36 2014/08/08 15:32:17 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,12 +26,9 @@ struct	man {
 	struct mparse	*parse; /* parse pointer */
 	int		 quick; /* abort parse early */
 	int		 flags; /* parse flags */
-#define	MAN_HALT	(1 << 0) /* badness happened: die */
 #define	MAN_ELINE	(1 << 1) /* Next-line element scope. */
 #define	MAN_BLINE	(1 << 2) /* Next-line block scope. */
-#define	MAN_ILINE	(1 << 3) /* Ignored in next-line scope. */
 #define	MAN_LITERAL	(1 << 4) /* Literal input. */
-#define	MAN_BPLINE	(1 << 5)
 #define	MAN_NEWLINE	(1 << 6) /* first macro/text in a line */
 	enum man_next	 next; /* where to put the next node */
 	struct man_node	*last; /* the last parsed node */

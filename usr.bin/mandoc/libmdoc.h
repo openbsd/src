@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.56 2014/07/09 11:30:07 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.57 2014/08/08 15:32:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,7 +28,6 @@ struct	mdoc {
 	const char	 *defos; /* default argument for .Os */
 	int		  quick; /* abort parse early */
 	int		  flags; /* parse flags */
-#define	MDOC_HALT	 (1 << 0) /* error in parse: halt */
 #define	MDOC_LITERAL	 (1 << 1) /* in a literal scope */
 #define	MDOC_PBODY	 (1 << 2) /* in the document body */
 #define	MDOC_NEWLINE	 (1 << 3) /* first macro/text in a line */

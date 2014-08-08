@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.110 2014/07/09 11:30:07 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.111 2014/08/08 15:32:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -100,7 +100,6 @@ const struct mdoc_node *
 mdoc_node(const struct mdoc *mdoc)
 {
 
-	assert( ! (MDOC_HALT & mdoc->flags));
 	return(mdoc->first);
 }
 
@@ -108,7 +107,6 @@ const struct mdoc_meta *
 mdoc_meta(const struct mdoc *mdoc)
 {
 
-	assert( ! (MDOC_HALT & mdoc->flags));
 	return(&mdoc->meta);
 }
 
@@ -201,27 +199,17 @@ mdoc_alloc(struct roff *roff, struct mparse *parse,
 	return(p);
 }
 
-/*
- * Climb back up the parse tree, validating open scopes.  Mostly calls
- * through to macro_end() in macro.c.
- */
 int
 mdoc_endparse(struct mdoc *mdoc)
 {
 
-	assert( ! (MDOC_HALT & mdoc->flags));
-	if (mdoc_macroend(mdoc))
-		return(1);
-	mdoc->flags |= MDOC_HALT;
-	return(0);
+	return(mdoc_macroend(mdoc));
 }
 
 int
 mdoc_addeqn(struct mdoc *mdoc, const struct eqn *ep)
 {
 	struct mdoc_node *n;
-
-	assert( ! (MDOC_HALT & mdoc->flags));
 
 	n = node_alloc(mdoc, ep->ln, ep->pos, MDOC_MAX, MDOC_EQN);
 	n->eqn = ep;
@@ -237,8 +225,6 @@ int
 mdoc_addspan(struct mdoc *mdoc, const struct tbl_span *sp)
 {
 	struct mdoc_node *n;
-
-	assert( ! (MDOC_HALT & mdoc->flags));
 
 	n = node_alloc(mdoc, sp->line, 0, MDOC_MAX, MDOC_TBL);
 	n->span = sp;
@@ -257,8 +243,6 @@ mdoc_addspan(struct mdoc *mdoc, const struct tbl_span *sp)
 int
 mdoc_parseln(struct mdoc *mdoc, int ln, char *buf, int offs)
 {
-
-	assert( ! (MDOC_HALT & mdoc->flags));
 
 	mdoc->flags |= MDOC_NEWLINE;
 
@@ -879,11 +863,8 @@ mdoc_pmacro(struct mdoc *mdoc, int ln, char *buf, int offs)
 	 * into macro processing.
 	 */
 
-	if (NULL == mdoc->last || MDOC_It == tok || MDOC_El == tok) {
-		if ( ! mdoc_macro(mdoc, tok, ln, sv, &offs, buf))
-			goto err;
-		return(1);
-	}
+	if (NULL == mdoc->last || MDOC_It == tok || MDOC_El == tok)
+		return(mdoc_macro(mdoc, tok, ln, sv, &offs, buf));
 
 	n = mdoc->last;
 	assert(mdoc->last);
@@ -896,9 +877,7 @@ mdoc_pmacro(struct mdoc *mdoc, int ln, char *buf, int offs)
 	if (MDOC_Bl == n->tok && MDOC_BODY == n->type &&
 	    LIST_column == n->norm->Bl.type) {
 		mdoc->flags |= MDOC_FREECOL;
-		if ( ! mdoc_macro(mdoc, MDOC_It, ln, sv, &sv, buf))
-			goto err;
-		return(1);
+		return(mdoc_macro(mdoc, MDOC_It, ln, sv, &sv, buf));
 	}
 
 	/*
@@ -912,15 +891,13 @@ mdoc_pmacro(struct mdoc *mdoc, int ln, char *buf, int offs)
 	    MDOC_Bl == n->parent->tok &&
 	    LIST_column == n->parent->norm->Bl.type) {
 		mdoc->flags |= MDOC_FREECOL;
-		if ( ! mdoc_macro(mdoc, MDOC_It, ln, sv, &sv, buf))
-			goto err;
-		return(1);
+		return(mdoc_macro(mdoc, MDOC_It, ln, sv, &sv, buf));
 	}
 
 	/* Normal processing of a macro. */
 
 	if ( ! mdoc_macro(mdoc, tok, ln, sv, &offs, buf))
-		goto err;
+		return(0);
 
 	/* In quick mode (for mandocdb), abort after the NAME section. */
 
@@ -929,11 +906,6 @@ mdoc_pmacro(struct mdoc *mdoc, int ln, char *buf, int offs)
 		return(2);
 
 	return(1);
-
-err:	/* Error out. */
-
-	mdoc->flags |= MDOC_HALT;
-	return(0);
 }
 
 enum mdelim

@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.48 2014/07/09 11:27:20 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.49 2014/08/08 15:32:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -409,13 +409,6 @@ in_line_eoln(MACRO_PROT_ARGS)
 		assert( ! (MAN_NSCOPED & man_macros[tok].flags));
 		man->flags |= MAN_ELINE;
 		return(1);
-	}
-
-	/* Set ignorable context, if applicable. */
-
-	if (MAN_NSCOPED & man_macros[tok].flags) {
-		assert( ! (MAN_SCOPED & man_macros[tok].flags));
-		man->flags |= MAN_ILINE;
 	}
 
 	assert(MAN_ROOT != man->last->type);
