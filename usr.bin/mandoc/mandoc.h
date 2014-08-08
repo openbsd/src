@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.93 2014/08/08 15:45:58 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.94 2014/08/08 15:48:43 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -165,7 +165,6 @@ enum	mandocerr {
 	MANDOCERR_BADDISP, /* NOT IMPLEMENTED: .Bd -file */
 	MANDOCERR_SO_PATH, /* NOT IMPLEMENTED: .so with absolute path or ".." */
 	MANDOCERR_SO_FAIL, /* .so request failed */
-	MANDOCERR_MEM, /* static buffer exhausted */
 
 	/* ===== system errors ===== */
 

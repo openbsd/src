@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.95 2014/08/08 15:15:27 schwarze Exp $ */
+/*	$Id: roff.c,v 1.96 2014/08/08 15:48:43 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -102,11 +102,8 @@ struct	roffreg {
 
 struct	roff {
 	struct mparse	*parse; /* parse point */
-	int		 options; /* parse options */
 	struct roffnode	*last; /* leaf of stack */
-	int		 rstack[RSTACK_MAX]; /* stack of !`ie' rules */
-	char		 control; /* control character */
-	int		 rstackpos; /* position in rstack */
+	int		*rstack; /* stack of inverted `ie' values */
 	struct roffreg	*regtab; /* number registers */
 	struct roffkv	*strtab; /* user-defined strings & macros */
 	struct roffkv	*xmbtab; /* multi-byte trans table (`tr') */
@@ -118,6 +115,10 @@ struct	roff {
 	struct eqn_node	*last_eqn; /* last equation parsed */
 	struct eqn_node	*first_eqn; /* first equation parsed */
 	struct eqn_node	*eqn; /* current equation being parsed */
+	int		 options; /* parse options */
+	int		 rstacksz; /* current size limit of rstack */
+	int		 rstackpos; /* position in rstack */
+	char		 control; /* control character */
 };
 
 struct	roffnode {
@@ -416,32 +417,32 @@ roff_free1(struct roff *r)
 		r->first_tbl = tbl->next;
 		tbl_free(tbl);
 	}
-
 	r->first_tbl = r->last_tbl = r->tbl = NULL;
 
 	while (NULL != (e = r->first_eqn)) {
 		r->first_eqn = e->next;
 		eqn_free(e);
 	}
-
 	r->first_eqn = r->last_eqn = r->eqn = NULL;
 
 	while (r->last)
 		roffnode_pop(r);
 
-	roff_freestr(r->strtab);
-	roff_freestr(r->xmbtab);
-
-	r->strtab = r->xmbtab = NULL;
+	free (r->rstack);
+	r->rstack = NULL;
+	r->rstacksz = 0;
+	r->rstackpos = -1;
 
 	roff_freereg(r->regtab);
-
 	r->regtab = NULL;
+
+	roff_freestr(r->strtab);
+	roff_freestr(r->xmbtab);
+	r->strtab = r->xmbtab = NULL;
 
 	if (r->xtab)
 		for (i = 0; i < 128; i++)
 			free(r->xtab[i].p);
-
 	free(r->xtab);
 	r->xtab = NULL;
 }
@@ -1279,10 +1280,10 @@ roff_cond(ROFF_ARGS)
 	 */
 
 	if (ROFF_ie == tok) {
-		if (r->rstackpos == RSTACK_MAX - 1) {
-			mandoc_msg(MANDOCERR_MEM,
-			    r->parse, ln, ppos, NULL);
-			return(ROFF_ERR);
+		if (r->rstackpos + 1 == r->rstacksz) {
+			r->rstacksz += 16;
+			r->rstack = mandoc_reallocarray(r->rstack,
+			    r->rstacksz, sizeof(int));
 		}
 		r->rstack[++r->rstackpos] = !r->last->rule;
 	}
