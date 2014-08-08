@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.42 2014/08/06 18:21:14 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.43 2014/08/08 15:46:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -817,9 +817,9 @@ server_response_http(struct client *clt, u_int code,
 		return (-1);
 
 	/* Set content length, if specified */
-	if (size && ((cl =
+	if ((cl =
 	    kv_add(&desc->http_headers, "Content-Length", NULL)) == NULL ||
-	    kv_set(cl, "%ld", size) == -1))
+	    kv_set(cl, "%ld", size) == -1)
 		return (-1);
 
 	/* Date header is mandatory and should be added last */
@@ -834,7 +834,7 @@ server_response_http(struct client *clt, u_int code,
 	    server_bufferevent_print(clt, "\r\n") == -1)
 		return (-1);
 
-	if (desc->http_method == HTTP_METHOD_HEAD) {
+	if (size == 0 || desc->http_method == HTTP_METHOD_HEAD) {
 		bufferevent_enable(clt->clt_bev, EV_READ|EV_WRITE);
 		if (clt->clt_persist)
 			clt->clt_toread = TOREAD_HTTP_HEADER;
