@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.2 2014/07/12 17:38:51 yuo Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.3 2014/08/08 14:28:02 mpi Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -245,22 +245,15 @@ struct xhci_erseg {
 struct xhci_sctx {
 	 uint32_t		info_lo;
 #define XHCI_SCTX_ROUTE(x)		((x) & 0xfffff)
-#define XHCI_SCTX_SET_SPEED(x)		(((x) & 0xf) << 20)
-#define XHCI_SCTX_GET_SPEED(x)		(((x) >> 20) & 0xf)
-#define XHCI_SCTX_SET_MTT(x)		(((x) & 0x1) << 25)
-#define XHCI_SCTX_GET_MTT(x)		(((x) >> 25) & 0x1)
-#define XHCI_SCTX_SET_HUB(x)		(((x) & 0x1) << 26)
-#define XHCI_SCTX_GET_HUB(x)		(((x) >> 26) & 0x1)
-#define XHCI_SCTX_SET_DCI(x)		(((x) & 0x1f) << 27)
-#define XHCI_SCTX_GET_DCI(x)		(((x) >> 27) & 0x1f)
+#define XHCI_SCTX_SPEED(x)		(((x) & 0xf) << 20)
+#define XHCI_SCTX_MTT(x)		(((x) & 0x1) << 25)
+#define XHCI_SCTX_HUB(x)		(((x) & 0x1) << 26)
+#define XHCI_SCTX_DCI(x)		(((x) & 0x1f) << 27)
 
 	 uint32_t		info_hi;
-#define XHCI_SCTX_SET_MAX_EL(x)		((x) & 0xffff)
-#define XHCI_SCTX_GET_MAX_EL(x)		((x) & 0xffff)
-#define XHCI_SCTX_SET_RHPORT(x)		(((x) & 0xff) << 16)
-#define XHCI_SCTX_GET_RHPORT(x)		(((x) >> 16) & 0xff)
-#define XHCI_SCTX_SET_NPORTS(x)		(((x) & 0xff) << 24)
-#define XHCI_SCTX_GET_NPORTS(x)		(((x) >> 24) & 0xff)
+#define XHCI_SCTX_MAX_EL(x)		((x) & 0xffff)
+#define XHCI_SCTX_RHPORT(x)		(((x) & 0xff) << 16)
+#define XHCI_SCTX_NPORTS(x)		(((x) & 0xff) << 24)
 
 	 uint32_t		tt;
 #define XHCI_SCTX_TT_HUB_SID(x)		((x) & 0xff)

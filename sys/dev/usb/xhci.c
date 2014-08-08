@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.18 2014/08/08 14:22:45 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.19 2014/08/08 14:28:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -932,23 +932,40 @@ xhci_pipe_open(struct usbd_pipe *pipe)
 	return (USBD_NORMAL_COMPLETION);
 }
 
+/*
+ * Set the maximum Endpoint Service Interface Time (ESIT) payload and
+ * the average TRB buffer length for an endpoint.
+ */
 static inline uint32_t
-xhci_endpoint_txinfo(struct xhci_softc *sc, usb_endpoint_descriptor_t *ed)
+xhci_get_txinfo(struct xhci_softc *sc, struct usbd_pipe *pipe)
 {
+	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
+	uint32_t mep, atl, mps = UGETW(ed->wMaxPacketSize);
+
 	switch (ed->bmAttributes & UE_XFERTYPE) {
 	case UE_CONTROL:
-		return (XHCI_EPCTX_AVG_TRB_LEN(8));
-	case UE_BULK:
-		return (0);
+		mep = 0;
+		atl = 8;
+		break;
 	case UE_INTERRUPT:
 	case UE_ISOCHRONOUS:
-	default:
+		if (pipe->device->speed == USB_SPEED_SUPER) {
+			/*  XXX Read the companion descriptor */
+		}
+
+		mep = (UE_GET_TRANS(mps) | 0x1) * UE_GET_SIZE(mps);
+		atl = min(sc->sc_pagesize, mep);
 		break;
+	case UE_BULK:
+	default:
+		mep = 0;
+		atl = 0;
 	}
 
-	DPRINTF(("%s: partial stub\n", __func__));
+	DPRINTF(("%s: max ESIT payload = %u, average TRB length = %u\n",
+	    DEVNAME(sc), mep, atl));
 
-	return (XHCI_EPCTX_MAX_ESIT_PAYLOAD(0) | XHCI_EPCTX_AVG_TRB_LEN(0));
+	return (XHCI_EPCTX_MAX_ESIT_PAYLOAD(mep) | XHCI_EPCTX_AVG_TRB_LEN(atl));
 }
 
 int
@@ -1031,7 +1048,7 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
 	}
 
 	/* XXX Until we fix wMaxPacketSize for ctrl ep depending on the speed */
-	mps = max(mps, UGETW(ed->wMaxPacketSize));
+	mps = max(mps, UE_GET_SIZE(UGETW(ed->wMaxPacketSize)));
 
 	if (pipe->interval != USBD_DEFAULT_INTERVAL)
 		ival = min(ival, pipe->interval);
@@ -1054,7 +1071,7 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
 	    XHCI_EPCTX_SET_MPS(mps) | XHCI_EPCTX_SET_EPTYPE(xfertype) |
 	    XHCI_EPCTX_SET_CERR(cerr) | XHCI_EPCTX_SET_MAXB(0)
 	);
-	sdev->ep_ctx[xp->dci-1]->txinfo = htole32(xhci_endpoint_txinfo(sc, ed));
+	sdev->ep_ctx[xp->dci-1]->txinfo = htole32(xhci_get_txinfo(sc, pipe));
 	sdev->ep_ctx[xp->dci-1]->deqp = htole64(
 	    DMAADDR(&xp->ring.dma, 0) | XHCI_EPCTX_DCS
 	);
@@ -1064,14 +1081,14 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
 	sdev->input_ctx->add_flags = htole32(XHCI_INCTX_MASK_DCI(xp->dci));
 
 	/* Setup the slot context */
-	sdev->slot_ctx->info_lo = htole32(XHCI_SCTX_SET_DCI(xp->dci));
+	sdev->slot_ctx->info_lo = htole32(XHCI_SCTX_DCI(xp->dci));
 	sdev->slot_ctx->info_hi = 0;
 	sdev->slot_ctx->tt = 0;
 	sdev->slot_ctx->state = 0;
 
 	if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_CONTROL) {
-		sdev->slot_ctx->info_lo |= htole32(XHCI_SCTX_SET_SPEED(speed));
-		sdev->slot_ctx->info_hi |= htole32(XHCI_SCTX_SET_RHPORT(port));
+		sdev->slot_ctx->info_lo |= htole32(XHCI_SCTX_SPEED(speed));
+		sdev->slot_ctx->info_hi |= htole32(XHCI_SCTX_RHPORT(port));
 	}
 
 	usb_syncmem(&sdev->ictx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
@@ -1118,7 +1135,7 @@ xhci_pipe_close(struct usbd_pipe *pipe)
 		if (lxp != NULL && lxp != xp)
 			break;
 	}
-	sdev->slot_ctx->info_lo = htole32(XHCI_SCTX_SET_DCI(lxp->dci));
+	sdev->slot_ctx->info_lo = htole32(XHCI_SCTX_DCI(lxp->dci));
 
 	/* Clear the Endpoint Context */
 	memset(&sdev->ep_ctx[xp->dci - 1], 0, sizeof(struct xhci_epctx));
