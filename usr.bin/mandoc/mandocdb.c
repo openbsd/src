@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.111 2014/06/21 16:17:56 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.112 2014/08/08 16:17:09 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1190,8 +1190,9 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 			goto nextpage;
 		} else if (NULL != mdoc) {
 			mpage->form = FORM_SRC;
-			mpage->sec =
-			    mandoc_strdup(mdoc_meta(mdoc)->msec);
+			mpage->sec = mdoc_meta(mdoc)->msec;
+			mpage->sec = mandoc_strdup(
+			    NULL == mpage->sec ? "" : mpage->sec);
 			mpage->arch = mdoc_meta(mdoc)->arch;
 			mpage->arch = mandoc_strdup(
 			    NULL == mpage->arch ? "" : mpage->arch);

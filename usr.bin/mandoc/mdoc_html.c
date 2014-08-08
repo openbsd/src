@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.77 2014/08/08 16:00:23 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.78 2014/08/08 16:17:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -376,8 +376,9 @@ print_mdoc_head(MDOC_ARGS)
 
 	print_gen_head(h);
 	bufinit(h);
-	bufcat_fmt(h, "%s(%s)", meta->title, meta->msec);
-
+	bufcat(h, meta->title);
+	if (meta->msec)
+		bufcat_fmt(h, "(%s)", meta->msec);
 	if (meta->arch)
 		bufcat_fmt(h, " (%s)", meta->arch);
 
@@ -521,7 +522,11 @@ mdoc_root_pre(MDOC_ARGS)
 		mandoc_asprintf(&volume, "%s (%s)",
 		    meta->vol, meta->arch);
 
-	mandoc_asprintf(&title, "%s(%s)", meta->title, meta->msec);
+	if (NULL == meta->msec)
+		title = mandoc_strdup(meta->title);
+	else
+		mandoc_asprintf(&title, "%s(%s)",
+		    meta->title, meta->msec);
 
 	PAIR_SUMMARY_INIT(&tag[0], "Document Header");
 	PAIR_CLASS_INIT(&tag[1], "head");

@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.95 2014/08/08 15:54:10 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.96 2014/08/08 16:17:09 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,16 +49,19 @@ enum	mandocerr {
 	MANDOCERR_WARNING, /* ===== start of warnings ===== */
 
 	/* related to the prologue */
-	MANDOCERR_TH_MISSING, /* missing .TH macro, using "unknown 1" */
+	MANDOCERR_DT_NOTITLE, /* missing manual title, using UNTITLED: line */
+	MANDOCERR_TH_NOTITLE, /* missing manual title, using "": [macro] */
 	MANDOCERR_TITLE_CASE, /* lower case character in document title */
+	MANDOCERR_MSEC_MISSING, /* missing manual section, using "": macro */
 	MANDOCERR_MSEC_BAD, /* unknown manual section: Dt ... section */
 	MANDOCERR_ARCH_BAD, /* unknown manual volume or arch: Dt ... volume */
 	MANDOCERR_DATE_MISSING, /* missing date, using today's date */
 	MANDOCERR_DATE_BAD, /* cannot parse date, using it verbatim: date */
-	MANDOCERR_PROLOG_ORDER, /* prologue macros out of order: macro */
+	MANDOCERR_OS_MISSING, /* missing Os macro, using "" */
 	MANDOCERR_PROLOG_REP, /* duplicate prologue macro: macro */
-	MANDOCERR_PROLOG_BAD, /* incomplete prologue, terminated by: macro */
-	MANDOCERR_PROLOG_ONLY, /* skipping prologue macro in body: macro */
+	MANDOCERR_PROLOG_LATE, /* late prologue macro: macro */
+	MANDOCERR_DT_LATE, /* skipping late title macro: Dt args */
+	MANDOCERR_PROLOG_ORDER, /* prologue macros out of order: macros */
 
 	/* related to document structure */
 	MANDOCERR_SO, /* .so is fragile, better use ln(1): so path */

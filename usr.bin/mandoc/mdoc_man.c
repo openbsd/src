@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.66 2014/08/08 15:10:15 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.67 2014/08/08 16:17:09 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -544,8 +544,9 @@ man_mdoc(void *arg, const struct mdoc *mdoc)
 	n = mdoc_node(mdoc);
 
 	printf(".TH \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"\n",
-	    meta->title, meta->msec, meta->date,
-	    meta->os, meta->vol);
+	    meta->title,
+	    (meta->msec == NULL ? "" : meta->msec),
+	    meta->date, meta->os, meta->vol);
 
 	/* Disable hyphenation and if nroff, disable justification. */
 	printf(".nh\n.if n .ad l");

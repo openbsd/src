@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.76 2014/08/08 16:05:42 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.77 2014/08/08 16:17:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -39,7 +39,6 @@ typedef	int	(*v_check)(CHKARGS);
 static	int	  check_eq0(CHKARGS);
 static	int	  check_eq2(CHKARGS);
 static	int	  check_le1(CHKARGS);
-static	int	  check_ge2(CHKARGS);
 static	int	  check_le5(CHKARGS);
 static	int	  check_par(CHKARGS);
 static	int	  check_part(CHKARGS);
@@ -138,7 +137,7 @@ check_root(CHKARGS)
 		man->meta.hasbody = 1;
 
 	if (NULL == man->meta.title) {
-		mandoc_msg(MANDOCERR_TH_MISSING, man->parse,
+		mandoc_msg(MANDOCERR_TH_NOTITLE, man->parse,
 		    n->line, n->pos, NULL);
 
 		/*
@@ -146,8 +145,8 @@ check_root(CHKARGS)
 		 * implication, date and section also aren't set).
 		 */
 
-		man->meta.title = mandoc_strdup("unknown");
-		man->meta.msec = mandoc_strdup("1");
+		man->meta.title = mandoc_strdup("");
+		man->meta.msec = mandoc_strdup("");
 		man->meta.date = man->quick ? mandoc_strdup("") :
 		    mandoc_normdate(man->parse, NULL, n->line, n->pos);
 	}
@@ -185,7 +184,6 @@ check_##name(CHKARGS) \
 INEQ_DEFINE(0, ==, eq0)
 INEQ_DEFINE(2, ==, eq2)
 INEQ_DEFINE(1, <=, le1)
-INEQ_DEFINE(2, >=, ge2)
 INEQ_DEFINE(5, <=, le5)
 
 static int
@@ -320,7 +318,6 @@ post_TH(CHKARGS)
 	struct man_node	*nb;
 	const char	*p;
 
-	check_ge2(man, n);
 	check_le5(man, n);
 
 	free(man->meta.title);
@@ -350,8 +347,11 @@ post_TH(CHKARGS)
 			}
 		}
 		man->meta.title = mandoc_strdup(n->string);
-	} else
+	} else {
 		man->meta.title = mandoc_strdup("");
+		mandoc_msg(MANDOCERR_TH_NOTITLE, man->parse,
+		    nb->line, nb->pos, "TH");
+	}
 
 	/* TITLE ->MSEC<- DATE SOURCE VOL */
 
@@ -359,8 +359,11 @@ post_TH(CHKARGS)
 		n = n->next;
 	if (n && n->string)
 		man->meta.msec = mandoc_strdup(n->string);
-	else
+	else {
 		man->meta.msec = mandoc_strdup("");
+		mandoc_vmsg(MANDOCERR_MSEC_MISSING, man->parse,
+		    nb->line, nb->pos, "TH %s", man->meta.title);
+	}
 
 	/* TITLE MSEC ->DATE<- SOURCE VOL */
 
