@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.29 2014/07/24 20:30:38 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.30 2014/08/08 17:36:21 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -291,7 +291,7 @@ mansearch(const struct mansearch *search,
 			mp->pageid = pageid;
 			mp->form = sqlite3_column_int(s, 1);
 			if (TYPE_Nd == outbit)
-				mp->desc = mandoc_strdup(
+				mp->desc = mandoc_strdup((const char *)
 				    sqlite3_column_text(s, 0));
 			ohash_insert(&htab, idx, mp);
 		}
@@ -395,9 +395,9 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 
 		/* Fetch the next name. */
 
-		sec = sqlite3_column_text(s, 0);
-		arch = sqlite3_column_text(s, 1);
-		name = sqlite3_column_text(s, 2);
+		sec = (const char *)sqlite3_column_text(s, 0);
+		arch = (const char *)sqlite3_column_text(s, 1);
+		name = (const char *)sqlite3_column_text(s, 2);
 
 		/* Remember the first section found. */
 
@@ -486,7 +486,7 @@ buildoutput(sqlite3 *db, sqlite3_stmt *s, uint64_t pageid, uint64_t outbit)
 			oldoutput = output;
 			sep1 = " # ";
 		}
-		data = sqlite3_column_text(s, 1);
+		data = (const char *)sqlite3_column_text(s, 1);
 		mandoc_asprintf(&newoutput, "%s%s%s",
 		    oldoutput, sep1, data);
 		free(output);
