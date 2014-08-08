@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.159 2014/08/08 16:08:19 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.160 2014/08/08 16:11:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -57,7 +57,7 @@ typedef	int	(*v_post)(POST_ARGS);
 
 struct	valids {
 	v_pre	 pre;
-	v_post	*post;
+	v_post	 post;
 };
 
 static	int	 check_count(struct mdoc *, enum mdoc_type,
@@ -83,12 +83,14 @@ static	int	 hwarn_ge1(POST_ARGS);
 static	int	 post_an(POST_ARGS);
 static	int	 post_at(POST_ARGS);
 static	int	 post_bf(POST_ARGS);
+static	int	 post_bk(POST_ARGS);
 static	int	 post_bl(POST_ARGS);
 static	int	 post_bl_block(POST_ARGS);
 static	int	 post_bl_block_width(POST_ARGS);
 static	int	 post_bl_block_tag(POST_ARGS);
 static	int	 post_bl_head(POST_ARGS);
 static	int	 post_bx(POST_ARGS);
+static	int	 post_d1(POST_ARGS);
 static	int	 post_defaults(POST_ARGS);
 static	int	 post_dd(POST_ARGS);
 static	int	 post_dt(POST_ARGS);
@@ -96,11 +98,14 @@ static	int	 post_en(POST_ARGS);
 static	int	 post_es(POST_ARGS);
 static	int	 post_eoln(POST_ARGS);
 static	int	 post_ex(POST_ARGS);
+static	int	 post_fo(POST_ARGS);
 static	int	 post_hyph(POST_ARGS);
+static	int	 post_hyphtext(POST_ARGS);
 static	int	 post_ignpar(POST_ARGS);
 static	int	 post_it(POST_ARGS);
 static	int	 post_lb(POST_ARGS);
 static	int	 post_literal(POST_ARGS);
+static	int	 post_nd(POST_ARGS);
 static	int	 post_nm(POST_ARGS);
 static	int	 post_ns(POST_ARGS);
 static	int	 post_os(POST_ARGS);
@@ -125,107 +130,70 @@ static	int	 pre_os(PRE_ARGS);
 static	int	 pre_par(PRE_ARGS);
 static	int	 pre_std(PRE_ARGS);
 
-static	v_post	 posts_an[] = { post_an, NULL };
-static	v_post	 posts_at[] = { post_at, post_defaults, NULL };
-static	v_post	 posts_bd[] = { post_literal, hwarn_eq0, bwarn_ge1, NULL };
-static	v_post	 posts_bf[] = { post_bf, NULL };
-static	v_post	 posts_bk[] = { hwarn_eq0, bwarn_ge1, NULL };
-static	v_post	 posts_bl[] = { bwarn_ge1, post_bl, NULL };
-static	v_post	 posts_bx[] = { post_bx, NULL };
-static	v_post	 posts_bool[] = { ebool, NULL };
-static	v_post	 posts_eoln[] = { post_eoln, NULL };
-static	v_post	 posts_defaults[] = { post_defaults, NULL };
-static	v_post	 posts_d1[] = { bwarn_ge1, post_hyph, NULL };
-static	v_post	 posts_dd[] = { post_dd, post_prol, NULL };
-static	v_post	 posts_dl[] = { post_literal, bwarn_ge1, NULL };
-static	v_post	 posts_dt[] = { post_dt, post_prol, NULL };
-static	v_post	 posts_en[] = { post_en, NULL };
-static	v_post	 posts_es[] = { post_es, NULL };
-static	v_post	 posts_ex[] = { post_ex, NULL };
-static	v_post	 posts_fo[] = { hwarn_eq1, bwarn_ge1, NULL };
-static	v_post	 posts_hyph[] = { post_hyph, NULL };
-static	v_post	 posts_hyphtext[] = { ewarn_ge1, post_hyph, NULL };
-static	v_post	 posts_it[] = { post_it, NULL };
-static	v_post	 posts_lb[] = { post_lb, NULL };
-static	v_post	 posts_nd[] = { berr_ge1, post_hyph, NULL };
-static	v_post	 posts_nm[] = { post_nm, NULL };
-static	v_post	 posts_notext[] = { ewarn_eq0, NULL };
-static	v_post	 posts_ns[] = { post_ns, NULL };
-static	v_post	 posts_os[] = { post_os, post_prol, NULL };
-static	v_post	 posts_pp[] = { post_par, ewarn_eq0, NULL };
-static	v_post	 posts_rs[] = { post_rs, NULL };
-static	v_post	 posts_sh[] = { post_ignpar,hwarn_ge1,post_sh,post_hyph,NULL };
-static	v_post	 posts_sp[] = { post_par, ewarn_le1, NULL };
-static	v_post	 posts_ss[] = { post_ignpar, hwarn_ge1, post_hyph, NULL };
-static	v_post	 posts_st[] = { post_st, NULL };
-static	v_post	 posts_text[] = { ewarn_ge1, NULL };
-static	v_post	 posts_text1[] = { ewarn_eq1, NULL };
-static	v_post	 posts_vt[] = { post_vt, NULL };
-
 static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Ap */
-	{ pre_dd, posts_dd },			/* Dd */
-	{ pre_dt, posts_dt },			/* Dt */
-	{ pre_os, posts_os },			/* Os */
-	{ NULL, posts_sh },			/* Sh */
-	{ NULL, posts_ss },			/* Ss */
-	{ pre_par, posts_pp },			/* Pp */
-	{ pre_display, posts_d1 },		/* D1 */
-	{ pre_literal, posts_dl },		/* Dl */
-	{ pre_bd, posts_bd },			/* Bd */
+	{ pre_dd, post_dd },			/* Dd */
+	{ pre_dt, post_dt },			/* Dt */
+	{ pre_os, post_os },			/* Os */
+	{ NULL, post_sh },			/* Sh */
+	{ NULL, post_ignpar },			/* Ss */
+	{ pre_par, post_par },			/* Pp */
+	{ pre_display, post_d1 },		/* D1 */
+	{ pre_literal, post_literal },		/* Dl */
+	{ pre_bd, post_literal },		/* Bd */
 	{ NULL, NULL },				/* Ed */
-	{ pre_bl, posts_bl },			/* Bl */
+	{ pre_bl, post_bl },			/* Bl */
 	{ NULL, NULL },				/* El */
-	{ pre_par, posts_it },			/* It */
+	{ pre_par, post_it },			/* It */
 	{ NULL, NULL },				/* Ad */
-	{ pre_an, posts_an },			/* An */
-	{ NULL, posts_defaults },		/* Ar */
+	{ pre_an, post_an },			/* An */
+	{ NULL, post_defaults },		/* Ar */
 	{ NULL, NULL },				/* Cd */
 	{ NULL, NULL },				/* Cm */
 	{ NULL, NULL },				/* Dv */
 	{ NULL, NULL },				/* Er */
 	{ NULL, NULL },				/* Ev */
-	{ pre_std, posts_ex },			/* Ex */
+	{ pre_std, post_ex },			/* Ex */
 	{ NULL, NULL },				/* Fa */
-	{ NULL, posts_text },			/* Fd */
+	{ NULL, ewarn_ge1 },			/* Fd */
 	{ NULL, NULL },				/* Fl */
 	{ NULL, NULL },				/* Fn */
 	{ NULL, NULL },				/* Ft */
 	{ NULL, NULL },				/* Ic */
-	{ NULL, posts_text1 },			/* In */
-	{ NULL, posts_defaults },		/* Li */
-	{ NULL, posts_nd },			/* Nd */
-	{ NULL, posts_nm },			/* Nm */
+	{ NULL, ewarn_eq1 },			/* In */
+	{ NULL, post_defaults },		/* Li */
+	{ NULL, post_nd },			/* Nd */
+	{ NULL, post_nm },			/* Nm */
 	{ NULL, NULL },				/* Op */
 	{ pre_obsolete, NULL },			/* Ot */
-	{ NULL, posts_defaults },		/* Pa */
+	{ NULL, post_defaults },		/* Pa */
 	{ pre_std, NULL },			/* Rv */
-	{ NULL, posts_st },			/* St */
+	{ NULL, post_st },			/* St */
 	{ NULL, NULL },				/* Va */
-	{ NULL, posts_vt },			/* Vt */
-	{ NULL, posts_text },			/* Xr */
-	{ NULL, posts_text },			/* %A */
-	{ NULL, posts_hyphtext },		/* %B */ /* FIXME: can be used outside Rs/Re. */
-	{ NULL, posts_text },			/* %D */
-	{ NULL, posts_text },			/* %I */
-	{ NULL, posts_text },			/* %J */
-	{ NULL, posts_hyphtext },		/* %N */
-	{ NULL, posts_hyphtext },		/* %O */
-	{ NULL, posts_text },			/* %P */
-	{ NULL, posts_hyphtext },		/* %R */
-	{ NULL, posts_hyphtext },		/* %T */ /* FIXME: can be used outside Rs/Re. */
-	{ NULL, posts_text },			/* %V */
+	{ NULL, post_vt },			/* Vt */
+	{ NULL, ewarn_ge1 },			/* Xr */
+	{ NULL, ewarn_ge1 },			/* %A */
+	{ NULL, post_hyphtext },		/* %B */ /* FIXME: can be used outside Rs/Re. */
+	{ NULL, ewarn_ge1 },			/* %D */
+	{ NULL, ewarn_ge1 },			/* %I */
+	{ NULL, ewarn_ge1 },			/* %J */
+	{ NULL, post_hyphtext },		/* %N */
+	{ NULL, post_hyphtext },		/* %O */
+	{ NULL, ewarn_ge1 },			/* %P */
+	{ NULL, post_hyphtext },		/* %R */
+	{ NULL, post_hyphtext },		/* %T */ /* FIXME: can be used outside Rs/Re. */
+	{ NULL, ewarn_ge1 },			/* %V */
 	{ NULL, NULL },				/* Ac */
 	{ NULL, NULL },				/* Ao */
 	{ NULL, NULL },				/* Aq */
-	{ NULL, posts_at },			/* At */
+	{ NULL, post_at },			/* At */
 	{ NULL, NULL },				/* Bc */
-	{ NULL, posts_bf },			/* Bf */
+	{ NULL, post_bf },			/* Bf */
 	{ NULL, NULL },				/* Bo */
 	{ NULL, NULL },				/* Bq */
 	{ NULL, NULL },				/* Bsx */
-	{ NULL, posts_bx },			/* Bx */
-	{ NULL, posts_bool },			/* Db */
+	{ NULL, post_bx },			/* Bx */
+	{ NULL, ebool },			/* Db */
 	{ NULL, NULL },				/* Dc */
 	{ NULL, NULL },				/* Do */
 	{ NULL, NULL },				/* Dq */
@@ -235,12 +203,12 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Eo */
 	{ NULL, NULL },				/* Fx */
 	{ NULL, NULL },				/* Ms */
-	{ NULL, posts_notext },			/* No */
-	{ NULL, posts_ns },			/* Ns */
+	{ NULL, ewarn_eq0 },			/* No */
+	{ NULL, post_ns },			/* Ns */
 	{ NULL, NULL },				/* Nx */
 	{ NULL, NULL },				/* Ox */
 	{ NULL, NULL },				/* Pc */
-	{ NULL, posts_text1 },			/* Pf */
+	{ NULL, ewarn_eq1 },			/* Pf */
 	{ NULL, NULL },				/* Po */
 	{ NULL, NULL },				/* Pq */
 	{ NULL, NULL },				/* Qc */
@@ -248,42 +216,42 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Qo */
 	{ NULL, NULL },				/* Qq */
 	{ NULL, NULL },				/* Re */
-	{ NULL, posts_rs },			/* Rs */
+	{ NULL, post_rs },			/* Rs */
 	{ NULL, NULL },				/* Sc */
 	{ NULL, NULL },				/* So */
 	{ NULL, NULL },				/* Sq */
-	{ NULL, posts_bool },			/* Sm */
-	{ NULL, posts_hyph },			/* Sx */
+	{ NULL, ebool },			/* Sm */
+	{ NULL, post_hyph },			/* Sx */
 	{ NULL, NULL },				/* Sy */
 	{ NULL, NULL },				/* Tn */
 	{ NULL, NULL },				/* Ux */
 	{ NULL, NULL },				/* Xc */
 	{ NULL, NULL },				/* Xo */
-	{ NULL, posts_fo },			/* Fo */
+	{ NULL, post_fo },			/* Fo */
 	{ NULL, NULL },				/* Fc */
 	{ NULL, NULL },				/* Oo */
 	{ NULL, NULL },				/* Oc */
-	{ NULL, posts_bk },			/* Bk */
+	{ NULL, post_bk },			/* Bk */
 	{ NULL, NULL },				/* Ek */
-	{ NULL, posts_eoln },			/* Bt */
+	{ NULL, post_eoln },			/* Bt */
 	{ NULL, NULL },				/* Hf */
 	{ pre_obsolete, NULL },			/* Fr */
-	{ NULL, posts_eoln },			/* Ud */
-	{ NULL, posts_lb },			/* Lb */
-	{ pre_par, posts_pp },			/* Lp */
+	{ NULL, post_eoln },			/* Ud */
+	{ NULL, post_lb },			/* Lb */
+	{ pre_par, post_par },			/* Lp */
 	{ NULL, NULL },				/* Lk */
-	{ NULL, posts_defaults },		/* Mt */
+	{ NULL, post_defaults },		/* Mt */
 	{ NULL, NULL },				/* Brq */
 	{ NULL, NULL },				/* Bro */
 	{ NULL, NULL },				/* Brc */
-	{ NULL, posts_text },			/* %C */
-	{ pre_obsolete, posts_es },		/* Es */
-	{ pre_obsolete, posts_en },		/* En */
+	{ NULL, ewarn_ge1 },			/* %C */
+	{ pre_obsolete, post_es },		/* Es */
+	{ pre_obsolete, post_en },		/* En */
 	{ NULL, NULL },				/* Dx */
-	{ NULL, posts_text },			/* %Q */
-	{ NULL, posts_pp },			/* br */
-	{ NULL, posts_sp },			/* sp */
-	{ NULL, posts_text1 },			/* %U */
+	{ NULL, ewarn_ge1 },			/* %Q */
+	{ NULL, post_par },			/* br */
+	{ NULL, post_par },			/* sp */
+	{ NULL, ewarn_eq1 },			/* %U */
 	{ NULL, NULL },				/* Ta */
 	{ NULL, NULL },				/* ll */
 };
@@ -361,13 +329,15 @@ mdoc_valid_pre(struct mdoc *mdoc, struct mdoc_node *n)
 int
 mdoc_valid_post(struct mdoc *mdoc)
 {
-	v_post		*p;
+	struct mdoc_node *n;
+	v_post p;
 
-	if (MDOC_VALID & mdoc->last->flags)
+	n = mdoc->last;
+	if (n->flags & MDOC_VALID)
 		return(1);
-	mdoc->last->flags |= MDOC_VALID;
+	n->flags |= MDOC_VALID;
 
-	switch (mdoc->last->type) {
+	switch (n->type) {
 	case MDOC_TEXT:
 		/* FALLTHROUGH */
 	case MDOC_EQN:
@@ -377,16 +347,9 @@ mdoc_valid_post(struct mdoc *mdoc)
 	case MDOC_ROOT:
 		return(post_root(mdoc));
 	default:
-		break;
+		p = mdoc_valids[n->tok].post;
+		return(*p ? (*p)(mdoc) : 1);
 	}
-
-	if (NULL == mdoc_valids[mdoc->last->tok].post)
-		return(1);
-	for (p = mdoc_valids[mdoc->last->tok].post; *p; p++)
-		if ( ! (*p)(mdoc))
-			return(0);
-
-	return(1);
 }
 
 static int
@@ -1033,6 +996,15 @@ post_eoln(POST_ARGS)
 }
 
 static int
+post_fo(POST_ARGS)
+{
+
+	hwarn_eq1(mdoc);
+	bwarn_ge1(mdoc);
+	return(1);
+}
+
+static int
 post_vt(POST_ARGS)
 {
 	const struct mdoc_node *n;
@@ -1072,8 +1044,28 @@ post_nm(POST_ARGS)
 }
 
 static int
+post_nd(POST_ARGS)
+{
+
+	berr_ge1(mdoc);
+	return(post_hyph(mdoc));
+}
+
+static int
+post_d1(POST_ARGS)
+{
+
+	bwarn_ge1(mdoc);
+	return(post_hyph(mdoc));
+}
+
+static int
 post_literal(POST_ARGS)
 {
+
+	if (mdoc->last->tok == MDOC_Bd)
+		hwarn_eq0(mdoc);
+	bwarn_ge1(mdoc);
 
 	/*
 	 * The `Dl' (note "el" not "one") and `Bd' macros unset the
@@ -1112,12 +1104,6 @@ post_defaults(POST_ARGS)
 		if ( ! mdoc_word_alloc(mdoc, nn->line, nn->pos, "..."))
 			return(0);
 		break;
-	case MDOC_At:
-		if ( ! mdoc_word_alloc(mdoc, nn->line, nn->pos, "AT&T"))
-			return(0);
-		if ( ! mdoc_word_alloc(mdoc, nn->line, nn->pos, "UNIX"))
-			return(0);
-		break;
 	case MDOC_Li:
 		if ( ! mdoc_word_alloc(mdoc, nn->line, nn->pos, ""))
 			return(0);
@@ -1144,15 +1130,22 @@ post_at(POST_ARGS)
 	const char		*std_att;
 	char			*att;
 
+	n = mdoc->last;
+	if (n->child == NULL) {
+		mdoc->next = MDOC_NEXT_CHILD;
+		if ( ! mdoc_word_alloc(mdoc, n->line, n->pos, "AT&T UNIX"))
+			return(0);
+		mdoc->last = n;
+		return(1);
+	}
+
 	/*
 	 * If we have a child, look it up in the standard keys.  If a
 	 * key exist, use that instead of the child; if it doesn't,
 	 * prefix "AT&T UNIX " to the existing data.
 	 */
 
-	if (NULL == (n = mdoc->last->child))
-		return(1);
-
+	n = n->child;
 	assert(MDOC_TEXT == n->type);
 	if (NULL == (std_att = mdoc_a2att(n->string))) {
 		mandoc_vmsg(MANDOCERR_AT_BAD, mdoc->parse,
@@ -1520,6 +1513,8 @@ post_bl(POST_ARGS)
 		return(1);
 	}
 
+	bwarn_ge1(mdoc);
+
 	nchild = nbody->child;
 	while (NULL != nchild) {
 		if (MDOC_It == nchild->tok || MDOC_Sm == nchild->tok) {
@@ -1573,6 +1568,15 @@ post_bl(POST_ARGS)
 		nchild = nnext;
 	}
 
+	return(1);
+}
+
+static int
+post_bk(POST_ARGS)
+{
+
+	hwarn_eq0(mdoc);
+	bwarn_ge1(mdoc);
 	return(1);
 }
 
@@ -1817,6 +1821,14 @@ post_hyph(POST_ARGS)
 }
 
 static int
+post_hyphtext(POST_ARGS)
+{
+
+	ewarn_ge1(mdoc);
+	return(post_hyph(mdoc));
+}
+
+static int
 post_ns(POST_ARGS)
 {
 
@@ -1829,6 +1841,8 @@ post_ns(POST_ARGS)
 static int
 post_sh(POST_ARGS)
 {
+
+	post_ignpar(mdoc);
 
 	if (MDOC_HEAD == mdoc->last->type)
 		return(post_sh_head(mdoc));
@@ -2000,6 +2014,9 @@ post_ignpar(POST_ARGS)
 {
 	struct mdoc_node *np;
 
+	hwarn_ge1(mdoc);
+	post_hyph(mdoc);
+
 	if (MDOC_BODY != mdoc->last->type)
 		return(1);
 
@@ -2061,6 +2078,11 @@ static int
 post_par(POST_ARGS)
 {
 	struct mdoc_node *np;
+
+	if (mdoc->last->tok == MDOC_sp)
+		ewarn_le1(mdoc);
+	else
+		ewarn_eq0(mdoc);
 
 	if (MDOC_ELEM != mdoc->last->type &&
 	    MDOC_BLOCK != mdoc->last->type)
@@ -2130,7 +2152,7 @@ post_dd(POST_ARGS)
 	if (NULL == n->child || '\0' == n->child->string[0]) {
 		mdoc->meta.date = mdoc->quick ? mandoc_strdup("") :
 		    mandoc_normdate(mdoc->parse, NULL, n->line, n->pos);
-		return(1);
+		return(post_prol(mdoc));
 	}
 
 	datestr = NULL;
@@ -2142,7 +2164,7 @@ post_dd(POST_ARGS)
 		    datestr, n->line, n->pos);
 		free(datestr);
 	}
-	return(1);
+	return(post_prol(mdoc));
 }
 
 static int
@@ -2186,7 +2208,7 @@ post_dt(POST_ARGS)
 		mdoc->meta.title = mandoc_strdup("UNKNOWN");
 		mdoc->meta.vol = mandoc_strdup("LOCAL");
 		mdoc->meta.msec = mandoc_strdup("1");
-		return(1);
+		return(post_prol(mdoc));
 	}
 
 	/* Handles: `.Dt TITLE'
@@ -2201,7 +2223,7 @@ post_dt(POST_ARGS)
 		/* XXX: make this a macro value. */
 		mdoc->meta.vol = mandoc_strdup("LOCAL");
 		mdoc->meta.msec = mandoc_strdup("1");
-		return(1);
+		return(post_prol(mdoc));
 	}
 
 	/* Handles: `.Dt TITLE SEC'
@@ -2223,7 +2245,7 @@ post_dt(POST_ARGS)
 	}
 
 	if (NULL == (nn = nn->next))
-		return(1);
+		return(post_prol(mdoc));
 
 	/* Handles: `.Dt TITLE SEC VOL'
 	 * title = TITLE,
@@ -2250,7 +2272,7 @@ post_dt(POST_ARGS)
 	/* Ignore any subsequent parameters... */
 	/* FIXME: warn about subsequent parameters. */
 
-	return(1);
+	return(post_prol(mdoc));
 }
 
 static int
@@ -2311,11 +2333,11 @@ post_os(POST_ARGS)
 	mdoc->meta.os = NULL;
 	mdoc_deroff(&mdoc->meta.os, n);
 	if (mdoc->meta.os)
-		return(1);
+		return(post_prol(mdoc));
 
 	if (mdoc->defos) {
 		mdoc->meta.os = mandoc_strdup(mdoc->defos);
-		return(1);
+		return(post_prol(mdoc));
 	}
 
 #ifdef OSNAME
@@ -2332,7 +2354,7 @@ post_os(POST_ARGS)
 	}
 	mdoc->meta.os = mandoc_strdup(defbuf);
 #endif /*!OSNAME*/
-	return(1);
+	return(post_prol(mdoc));
 }
 
 /*
