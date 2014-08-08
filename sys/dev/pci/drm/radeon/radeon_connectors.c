@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_connectors.c,v 1.3 2014/02/10 00:56:17 jsg Exp $	*/
+/*	$OpenBSD: radeon_connectors.c,v 1.4 2014/08/08 16:41:16 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1355,7 +1355,7 @@ bool radeon_connector_is_dp12_capable(struct drm_connector *connector)
 	struct radeon_device *rdev = dev->dev_private;
 
 	if (ASIC_IS_DCE5(rdev) &&
-	    (rdev->clock.dp_extclk >= 53900) &&
+	    (rdev->clock.default_dispclk >= 53900) &&
 	    radeon_connector_encoder_is_hbr2(connector)) {
 		return true;
 	}
