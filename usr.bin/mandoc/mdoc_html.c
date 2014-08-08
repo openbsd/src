@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.76 2014/08/08 15:10:14 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.77 2014/08/08 16:00:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -695,7 +695,7 @@ mdoc_nm_pre(MDOC_ARGS)
 	if (0 == len && meta->name)
 		len = html_strlen(meta->name);
 
-	SCALE_HS_INIT(&su, (double)len);
+	SCALE_HS_INIT(&su, len);
 	bufinit(h);
 	bufcat_su(h, "width", &su);
 	PAIR_STYLE_INIT(&tag, h);
@@ -1561,7 +1561,7 @@ mdoc_sp_pre(MDOC_ARGS)
 			if ( ! a2roffsu(n->string, &su, SCALE_VS))
 				SCALE_VS_INIT(&su, atoi(n->string));
 	} else
-		su.scale = 0;
+		su.scale = 0.0;
 
 	bufinit(h);
 	bufcat_su(h, "height", &su);

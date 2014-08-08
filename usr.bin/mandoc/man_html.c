@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.54 2014/04/23 16:07:06 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.55 2014/08/08 16:00:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -384,7 +384,7 @@ man_br_pre(MAN_ARGS)
 			if ( ! a2roffsu(n->string, &su, SCALE_VS))
 				SCALE_VS_INIT(&su, atoi(n->string));
 	} else
-		su.scale = 0;
+		su.scale = 0.0;
 
 	bufinit(h);
 	bufcat_su(h, "height", &su);

@@ -1,4 +1,4 @@
-/*	$Id: term_ps.c,v 1.26 2014/07/27 21:53:04 schwarze Exp $ */
+/*	$Id: term_ps.c,v 1.27 2014/08/08 16:00:23 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1116,13 +1116,13 @@ ps_hspan(const struct termp *p, const struct roffsu *su)
 		r = PNT2AFM(p, su->scale * 28.34);
 		break;
 	case SCALE_IN:
-		r = PNT2AFM(p, su->scale * 72);
+		r = PNT2AFM(p, su->scale * 72.0);
 		break;
 	case SCALE_PC:
-		r = PNT2AFM(p, su->scale * 12);
+		r = PNT2AFM(p, su->scale * 12.0);
 		break;
 	case SCALE_PT:
-		r = PNT2AFM(p, su->scale * 100);
+		r = PNT2AFM(p, su->scale * 100.0);
 		break;
 	case SCALE_EM:
 		r = su->scale *

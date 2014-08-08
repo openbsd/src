@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.85 2014/07/06 18:51:08 schwarze Exp $ */
+/*	$Id: term.c,v 1.86 2014/08/08 16:00:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -765,25 +765,25 @@ term_vspan(const struct termp *p, const struct roffsu *su)
 
 	switch (su->unit) {
 	case SCALE_CM:
-		r = su->scale * 2;
+		r = su->scale * 2.0;
 		break;
 	case SCALE_IN:
-		r = su->scale * 6;
+		r = su->scale * 6.0;
 		break;
 	case SCALE_PC:
 		r = su->scale;
 		break;
 	case SCALE_PT:
-		r = su->scale / 8;
+		r = su->scale / 8.0;
 		break;
 	case SCALE_MM:
-		r = su->scale / 1000;
+		r = su->scale / 1000.0;
 		break;
 	case SCALE_VS:
 		r = su->scale;
 		break;
 	default:
-		r = su->scale - 1;
+		r = su->scale - 1.0;
 		break;
 	}
 
@@ -797,7 +797,7 @@ term_hspan(const struct termp *p, const struct roffsu *su)
 {
 	double		 v;
 
-	v = ((*p->hspan)(p, su));
+	v = (*p->hspan)(p, su);
 	if (v < 0.0)
 		v = 0.0;
 	return((size_t)v);
