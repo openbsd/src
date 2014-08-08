@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.19 2014/08/08 14:28:02 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.20 2014/08/08 14:34:11 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -52,7 +52,6 @@ int xhcidebug = 3;
 #define DEVNAME(sc)		((sc)->sc_bus.bdev.dv_xname)
 
 #define TRBOFF(ring, trb)	((void *)(trb) - (void *)((ring).trbs))
-#define TRBADDR(ring, trb)	DMAADDR(&(ring).dma, TRBOFF(ring, trb))
 
 struct pool *xhcixfer;
 
@@ -718,21 +717,27 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 void
 xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 {
+	struct xhci_trb *trb;
 	struct usbd_xfer *xfer;
 	struct xhci_pipe *xp;
 	uint32_t flags;
 	uint8_t dci, slot;
-	int i;
+	int i, trb_idx;
 
-	KASSERT(paddr == TRBADDR(sc->sc_cmd_ring, sc->sc_cmd_trb));
+	trb_idx = (paddr - DMAADDR(&sc->sc_cmd_ring.dma, 0)) / sizeof(*trb);
+	if (trb_idx < 0 || trb_idx >= sc->sc_cmd_ring.ntrb) {
+		printf("%s: wrong trb index (%d) max is %zu\n", DEVNAME(sc),
+		    trb_idx, sc->sc_cmd_ring.ntrb - 1);
+		return;
+	}
 
-	flags = letoh32(sc->sc_cmd_trb->trb_flags);
+	trb = &sc->sc_cmd_ring.trbs[trb_idx];
+
+	flags = letoh32(trb->trb_flags);
 
 	slot = XHCI_TRB_GET_SLOT(flags);
 	dci = XHCI_TRB_GET_EP(flags);
 	xp = sc->sc_sdevs[slot].pipes[dci - 1];
-
-	sc->sc_cmd_trb = NULL;
 
 	switch (flags & XHCI_TRB_TYPE_MASK) {
 	case XHCI_CMD_RESET_EP:
@@ -764,6 +769,8 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 		break;
 	default:
 		/* All other commands are synchronous. */
+		KASSERT(sc->sc_cmd_trb == trb);
+		sc->sc_cmd_trb = NULL;
 		wakeup(&sc->sc_cmd_trb);
 		break;
 	}
@@ -1347,7 +1354,7 @@ xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 	struct xhci_trb *trb;
 	int error = 0;
 
-	KASSERT(sc->sc_cmd_trb == NULL);
+	KASSERT(timeout == 0 || sc->sc_cmd_trb == NULL);
 
 	trb0->trb_flags |= htole32(sc->sc_cmd_ring.toggle);
 
@@ -1356,7 +1363,9 @@ xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 	usb_syncmem(&sc->sc_cmd_ring.dma, TRBOFF(sc->sc_cmd_ring, trb),
 	    sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
 
-	sc->sc_cmd_trb = trb;
+	if (timeout)
+		sc->sc_cmd_trb = trb;
+
 	XDWRITE4(sc, XHCI_DOORBELL(0), 0);
 
 	if (timeout == 0)
@@ -1372,6 +1381,7 @@ xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 		printf("cmd = %d " ,XHCI_TRB_TYPE(letoh32(trb->trb_flags)));
 		xhci_dump_trb(trb);
 #endif
+		KASSERT(sc->sc_cmd_trb == trb);
 		sc->sc_cmd_trb = NULL;
 		return (error);
 	}
