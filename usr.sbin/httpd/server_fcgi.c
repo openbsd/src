@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.29 2014/08/07 12:43:22 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.30 2014/08/08 18:29:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -190,7 +190,8 @@ server_fcgi(struct httpd *env, struct client *clt)
 	h->content_len = param.total_len = 0;
 
 	if (asprintf(&script, "%s%s", srv_conf->root,
-	    desc->http_path) == -1 ||
+	    desc->http_path_alias != NULL ?
+	    desc->http_path_alias : desc->http_path) == -1 ||
 	    (scriptlen = path_info(script)) == -1) {
 		errstr = "failed to get script name";
 		goto fail;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.43 2014/08/08 15:46:01 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.44 2014/08/08 18:29:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -99,6 +99,10 @@ server_httpdesc_free(struct http_descriptor *desc)
 	if (desc->http_path != NULL) {
 		free(desc->http_path);
 		desc->http_path = NULL;
+	}
+	if (desc->http_path_alias != NULL) {
+		free(desc->http_path_alias);
+		desc->http_path_alias = NULL;
 	}
 	if (desc->http_query != NULL) {
 		free(desc->http_query);
@@ -680,7 +684,7 @@ server_response(struct httpd *httpd, struct client *clt)
 	char			 hostname[MAXHOSTNAMELEN];
 	struct http_descriptor	*desc	= clt->clt_desc;
 	struct server		*srv = clt->clt_srv;
-	struct server_config	*srv_conf = &srv->srv_conf, *location;
+	struct server_config	*srv_conf = &srv->srv_conf;
 	struct kv		*kv, key, *host;
 
 	/* Canonicalize the request path */
@@ -756,23 +760,32 @@ server_response(struct httpd *httpd, struct client *clt)
 		goto fail;
 
 	/* Now search for the location */
+	srv_conf = server_getlocation(clt, desc->http_path);
+
+	return (server_file(httpd, clt));
+ fail:
+	server_abort_http(clt, 400, "bad request");
+	return (-1);
+}
+
+struct server_config *
+server_getlocation(struct client *clt, const char *path)
+{
+	struct server		*srv = clt->clt_srv;
+	struct server_config	*srv_conf = clt->clt_srv_conf, *location;
+
+	/* Now search for the location */
 	TAILQ_FOREACH(location, &srv->srv_hosts, entry) {
 		if ((location->flags & SRVFLAG_LOCATION) &&
 		    location->id == srv_conf->id &&
-		    fnmatch(location->location, desc->http_path,
-		    FNM_CASEFOLD) == 0) {
+		    fnmatch(location->location, path, FNM_CASEFOLD) == 0) {
 			/* Replace host configuration */
 			clt->clt_srv_conf = srv_conf = location;
 			break;
 		}
 	}
 
-	if (srv_conf->flags & SRVFLAG_FCGI)
-		return (server_fcgi(httpd, clt));
-	return (server_file(httpd, clt));
- fail:
-	server_abort_http(clt, 400, "bad request");
-	return (-1);
+	return (srv_conf);
 }
 
 int
