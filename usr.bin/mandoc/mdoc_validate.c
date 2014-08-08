@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.155 2014/08/08 15:42:39 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.156 2014/08/08 15:45:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -564,8 +564,9 @@ static int
 pre_bl(PRE_ARGS)
 {
 	struct mdoc_node *np;
-	struct mdoc_argv *argv;
+	struct mdoc_argv *argv, *wa;
 	int		  i;
+	enum mdocargt	  mdoclt;
 	enum mdoc_list	  lt;
 
 	if (MDOC_BLOCK != n->type) {
@@ -587,6 +588,8 @@ pre_bl(PRE_ARGS)
 	 * ones.  If we find no list type, we default to LIST_item.
 	 */
 
+	wa = n->args->argv;
+	mdoclt = MDOC_ARG_MAX;
 	for (i = 0; n->args && i < (int)n->args->argc; i++) {
 		argv = n->args->argv + i;
 		lt = LIST__NONE;
@@ -634,6 +637,7 @@ pre_bl(PRE_ARGS)
 			n->norm->Bl.comp = 1;
 			break;
 		case MDOC_Width:
+			wa = argv;
 			if (0 == argv->sz) {
 				mandoc_msg(MANDOCERR_ARG_EMPTY,
 				    mdoc->parse, argv->line,
@@ -667,6 +671,7 @@ pre_bl(PRE_ARGS)
 		}
 		if (LIST__NONE == lt)
 			continue;
+		mdoclt = argv->arg;
 
 		/* Check: multiple list types. */
 
@@ -722,7 +727,9 @@ pre_bl(PRE_ARGS)
 		/* FALLTHROUGH */
 	case LIST_item:
 		if (n->norm->Bl.width)
-			mdoc_nmsg(mdoc, n, MANDOCERR_IGNARGV);
+			mandoc_vmsg(MANDOCERR_BL_SKIPW, mdoc->parse,
+			    wa->line, wa->pos, "Bl -%s",
+			    mdoc_argnames[mdoclt]);
 		break;
 	case LIST_bullet:
 		/* FALLTHROUGH */
@@ -834,18 +841,23 @@ pre_bd(PRE_ARGS)
 static int
 pre_an(PRE_ARGS)
 {
-	int		 i;
+	struct mdoc_argv *argv;
+	size_t	 i;
 
-	if (NULL == n->args)
+	if (n->args == NULL)
 		return(1);
 
-	for (i = 1; i < (int)n->args->argc; i++)
-		mdoc_pmsg(mdoc, n->args->argv[i].line,
-		    n->args->argv[i].pos, MANDOCERR_IGNARGV);
+	for (i = 1; i < n->args->argc; i++) {
+		argv = n->args->argv + i;
+		mandoc_vmsg(MANDOCERR_AN_REP,
+		    mdoc->parse, argv->line, argv->pos,
+		    "An -%s", mdoc_argnames[argv->arg]);
+	}
 
-	if (MDOC_Split == n->args->argv[0].arg)
+	argv = n->args->argv;
+	if (argv->arg == MDOC_Split)
 		n->norm->An.auth = AUTH_split;
-	else if (MDOC_Nosplit == n->args->argv[0].arg)
+	else if (argv->arg == MDOC_Nosplit)
 		n->norm->An.auth = AUTH_nosplit;
 	else
 		abort();
