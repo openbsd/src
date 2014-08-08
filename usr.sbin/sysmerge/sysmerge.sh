@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.144 2014/07/30 16:54:09 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.145 2014/08/08 16:38:25 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -642,7 +642,7 @@ sm_check_an_eg() {
 		fi
 	done
 	if [ -n "${_egmods}" ]; then
-		warn "example file(s) changed for:${_egmods}"
+		warn "example(s) changed for:${_egmods}"
 	else
 		# example changed but we have no corresponding file under /etc
 		unset EGMODS
@@ -686,7 +686,7 @@ sm_post() {
 		report ""
 	fi
 	if [ -n "${EGMODS}" ]; then
-		report "===> Example(s) with corresponding used files modified since last run"
+		report "===> Matching example(s) modified since last run"
 		report "${EGMODS}"
 		report ""
 	fi
