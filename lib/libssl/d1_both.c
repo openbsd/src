@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.27 2014/08/07 20:24:12 guenther Exp $ */
+/* $OpenBSD: d1_both.c,v 1.28 2014/08/08 05:06:56 guenther Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -597,6 +597,11 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	    msg_hdr->msg_len > dtls1_max_handshake_message_len(s))
 		goto err;
 
+	if (frag_len == 0) {
+		i = DTLS1_HM_FRAGMENT_RETRY;
+		goto err;
+	}
+
 	/* Try to find item in queue */
 	memset(seq64be, 0, sizeof(seq64be));
 	seq64be[6] = (unsigned char)(msg_hdr->seq >> 8);
@@ -725,7 +730,7 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 			frag_len -= i;
 		}
 	} else {
-		if (frag_len && frag_len < msg_hdr->msg_len)
+		if (frag_len < msg_hdr->msg_len)
 			return dtls1_reassemble_fragment(s, msg_hdr, ok);
 
 		if (frag_len > dtls1_max_handshake_message_len(s))
