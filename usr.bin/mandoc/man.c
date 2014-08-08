@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.85 2014/08/08 15:54:10 schwarze Exp $ */
+/*	$Id: man.c,v 1.86 2014/08/08 16:05:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -182,10 +182,11 @@ man_node_append(struct man *man, struct man_node *p)
 	assert(p->parent);
 	p->parent->nchild++;
 
-	if ( ! man_valid_pre(man, p))
-		return(0);
-
 	switch (p->type) {
+	case MAN_BLOCK:
+		if (p->tok == MAN_SH || p->tok == MAN_SS)
+			man->flags &= ~MAN_LITERAL;
+		break;
 	case MAN_HEAD:
 		assert(MAN_BLOCK == p->parent->type);
 		p->parent->head = p;
