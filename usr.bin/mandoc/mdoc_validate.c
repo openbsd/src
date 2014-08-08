@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.158 2014/08/08 15:57:05 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.159 2014/08/08 16:08:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -56,7 +56,7 @@ typedef	int	(*v_pre)(PRE_ARGS);
 typedef	int	(*v_post)(POST_ARGS);
 
 struct	valids {
-	v_pre	*pre;
+	v_pre	 pre;
 	v_post	*post;
 };
 
@@ -161,43 +161,31 @@ static	v_post	 posts_st[] = { post_st, NULL };
 static	v_post	 posts_text[] = { ewarn_ge1, NULL };
 static	v_post	 posts_text1[] = { ewarn_eq1, NULL };
 static	v_post	 posts_vt[] = { post_vt, NULL };
-static	v_pre	 pres_an[] = { pre_an, NULL };
-static	v_pre	 pres_bd[] = { pre_display, pre_bd, pre_literal, pre_par, NULL };
-static	v_pre	 pres_bl[] = { pre_bl, pre_par, NULL };
-static	v_pre	 pres_d1[] = { pre_display, NULL };
-static	v_pre	 pres_dl[] = { pre_literal, pre_display, NULL };
-static	v_pre	 pres_dd[] = { pre_dd, NULL };
-static	v_pre	 pres_dt[] = { pre_dt, NULL };
-static	v_pre	 pres_it[] = { pre_par, NULL };
-static	v_pre	 pres_obsolete[] = { pre_obsolete, NULL };
-static	v_pre	 pres_os[] = { pre_os, NULL };
-static	v_pre	 pres_pp[] = { pre_par, NULL };
-static	v_pre	 pres_std[] = { pre_std, NULL };
 
 static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Ap */
-	{ pres_dd, posts_dd },			/* Dd */
-	{ pres_dt, posts_dt },			/* Dt */
-	{ pres_os, posts_os },			/* Os */
+	{ pre_dd, posts_dd },			/* Dd */
+	{ pre_dt, posts_dt },			/* Dt */
+	{ pre_os, posts_os },			/* Os */
 	{ NULL, posts_sh },			/* Sh */
 	{ NULL, posts_ss },			/* Ss */
-	{ pres_pp, posts_pp },			/* Pp */
-	{ pres_d1, posts_d1 },			/* D1 */
-	{ pres_dl, posts_dl },			/* Dl */
-	{ pres_bd, posts_bd },			/* Bd */
+	{ pre_par, posts_pp },			/* Pp */
+	{ pre_display, posts_d1 },		/* D1 */
+	{ pre_literal, posts_dl },		/* Dl */
+	{ pre_bd, posts_bd },			/* Bd */
 	{ NULL, NULL },				/* Ed */
-	{ pres_bl, posts_bl },			/* Bl */
+	{ pre_bl, posts_bl },			/* Bl */
 	{ NULL, NULL },				/* El */
-	{ pres_it, posts_it },			/* It */
+	{ pre_par, posts_it },			/* It */
 	{ NULL, NULL },				/* Ad */
-	{ pres_an, posts_an },			/* An */
+	{ pre_an, posts_an },			/* An */
 	{ NULL, posts_defaults },		/* Ar */
 	{ NULL, NULL },				/* Cd */
 	{ NULL, NULL },				/* Cm */
 	{ NULL, NULL },				/* Dv */
 	{ NULL, NULL },				/* Er */
 	{ NULL, NULL },				/* Ev */
-	{ pres_std, posts_ex },			/* Ex */
+	{ pre_std, posts_ex },			/* Ex */
 	{ NULL, NULL },				/* Fa */
 	{ NULL, posts_text },			/* Fd */
 	{ NULL, NULL },				/* Fl */
@@ -209,9 +197,9 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_nd },			/* Nd */
 	{ NULL, posts_nm },			/* Nm */
 	{ NULL, NULL },				/* Op */
-	{ pres_obsolete, NULL },		/* Ot */
+	{ pre_obsolete, NULL },			/* Ot */
 	{ NULL, posts_defaults },		/* Pa */
-	{ pres_std, NULL },			/* Rv */
+	{ pre_std, NULL },			/* Rv */
 	{ NULL, posts_st },			/* St */
 	{ NULL, NULL },				/* Va */
 	{ NULL, posts_vt },			/* Vt */
@@ -279,18 +267,18 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Ek */
 	{ NULL, posts_eoln },			/* Bt */
 	{ NULL, NULL },				/* Hf */
-	{ pres_obsolete, NULL },		/* Fr */
+	{ pre_obsolete, NULL },			/* Fr */
 	{ NULL, posts_eoln },			/* Ud */
 	{ NULL, posts_lb },			/* Lb */
-	{ pres_pp, posts_pp },			/* Lp */
+	{ pre_par, posts_pp },			/* Lp */
 	{ NULL, NULL },				/* Lk */
 	{ NULL, posts_defaults },		/* Mt */
 	{ NULL, NULL },				/* Brq */
 	{ NULL, NULL },				/* Bro */
 	{ NULL, NULL },				/* Brc */
 	{ NULL, posts_text },			/* %C */
-	{ pres_obsolete, posts_es },		/* Es */
-	{ pres_obsolete, posts_en },		/* En */
+	{ pre_obsolete, posts_es },		/* Es */
+	{ pre_obsolete, posts_en },		/* En */
 	{ NULL, NULL },				/* Dx */
 	{ NULL, posts_text },			/* %Q */
 	{ NULL, posts_pp },			/* br */
@@ -349,16 +337,11 @@ static	const char * const secnames[SEC__MAX] = {
 int
 mdoc_valid_pre(struct mdoc *mdoc, struct mdoc_node *n)
 {
-	v_pre		*p;
-	int		 line, pos;
-	char		*tp;
+	v_pre	 p;
 
 	switch (n->type) {
 	case MDOC_TEXT:
-		tp = n->string;
-		line = n->line;
-		pos = n->pos;
-		check_text(mdoc, line, pos, tp);
+		check_text(mdoc, n->line, n->pos, n->string);
 		/* FALLTHROUGH */
 	case MDOC_TBL:
 		/* FALLTHROUGH */
@@ -371,13 +354,8 @@ mdoc_valid_pre(struct mdoc *mdoc, struct mdoc_node *n)
 	}
 
 	check_args(mdoc, n);
-
-	if (NULL == mdoc_valids[n->tok].pre)
-		return(1);
-	for (p = mdoc_valids[n->tok].pre; *p; p++)
-		if ( ! (*p)(mdoc, n))
-			return(0);
-	return(1);
+	p = mdoc_valids[n->tok].pre;
+	return(*p ? (*p)(mdoc, n) : 1);
 }
 
 int
@@ -749,7 +727,7 @@ pre_bl(PRE_ARGS)
 		break;
 	}
 
-	return(1);
+	return(pre_par(mdoc, n));
 }
 
 static int
@@ -759,6 +737,8 @@ pre_bd(PRE_ARGS)
 	struct mdoc_argv *argv;
 	int		  i;
 	enum mdoc_disp	  dt;
+
+	pre_literal(mdoc, n);
 
 	if (MDOC_BLOCK != n->type) {
 		if (ENDBODY_NOT != n->end) {
@@ -839,7 +819,7 @@ pre_bd(PRE_ARGS)
 		n->norm->Bd.type = DISP_ragged;
 	}
 
-	return(1);
+	return(pre_par(mdoc, n));
 }
 
 static int
@@ -2108,6 +2088,8 @@ post_par(POST_ARGS)
 static int
 pre_literal(PRE_ARGS)
 {
+
+	pre_display(mdoc, n);
 
 	if (MDOC_BODY != n->type)
 		return(1);
