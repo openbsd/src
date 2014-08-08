@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.30 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.31 2014/08/08 04:53:43 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -495,6 +495,10 @@ OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 	unsigned long l;
 	const unsigned char *p;
 
+	/* Ensure that, at every state, |buf| is NUL-terminated. */
+	if (buf_len > 0)
+		buf[0] = '\0';
+
 	if ((a == NULL) || (a->data == NULL))
 		goto err;
 
@@ -554,8 +558,9 @@ OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 				i = (int)(l / 40);
 				l -= (long)(i * 40);
 			}
-			if (buf_len > 0) {
+			if (buf_len > 1) {
 				*buf++ = i + '0';
+				*buf = '\0';
 				buf_len--;
 			}
 			ret++;
