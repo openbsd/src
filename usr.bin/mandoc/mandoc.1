@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.58 2014/06/23 22:03:03 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.59 2014/08/08 16:25:15 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 23 2014 $
+.Dd $Mdocdate: August 8 2014 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -496,31 +496,22 @@ parser:
 .Pp
 .Dl $ mandoc \-Tman foo.mdoc \*(Gt foo.man
 .Sh DIAGNOSTICS
-Standard error messages reporting parsing errors are prefixed by
+Messages displayed by
+.Nm
+follow this format:
 .Pp
-.D1 Nm Ns : Ar file : Ns Ar line : Ns Ar column : level :
+.D1 Nm Ns : Ar file : Ns Ar line : Ns Ar column : level : message : macro args
 .Pp
-where the fields have the following meanings:
-.Bl -tag -width "column"
-.It Ar file
-The name of the input file causing the message.
-.It Ar line
-The line number in that input file.
-Line numbering starts at 1.
-.It Ar column
-The column number in that input file.
-Column numbering starts at 1.
-If the issue is caused by a word, the column number usually
-points to the first character of the word.
-.It Ar level
-The message level, printed in capital letters.
-.El
-.Pp
-The
-.Ar line
+Line and column numbers start at 1.
+Both are omitted for messages referring to an input file as a whole.
+Macro names and arguments are omitted where meaningless.
+Fatal messages about invalid command line arguments
+or operating system errors, for example when memory is exhausted,
+may also omit the
+.Ar file
 and
-.Ar column
-fields are omitted when meaningless.
+.Ar level
+fields.
 .Pp
 Message levels have the following meanings:
 .Bl -tag -width "warning"
@@ -558,12 +549,6 @@ levels are hidden unless their level, or a lower level, is requested using a
 option or
 .Fl T Ns Cm lint
 output mode.
-.Pp
-The
-.Nm
-utility may also print messages related to invalid command line arguments
-or operating system errors, for example when memory is exhausted.
-Such messages may not carry the prefix described above.
 .Sh COMPATIBILITY
 This section summarises
 .Nm
