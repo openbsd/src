@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.31 2014/07/13 00:32:08 benno Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.32 2014/08/08 18:26:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -218,6 +218,8 @@ relay_udp_server(int fd, short sig, void *arg)
 	u_int8_t buf[IBUF_READ_SIZE];
 	void *priv = NULL;
 	ssize_t len;
+
+	event_add(&rlay->rl_ev, NULL);
 
 	if (relay_sessions >= RELAY_MAX_SESSIONS ||
 	    rlay->rl_conf.flags & F_DISABLE)
@@ -498,7 +500,7 @@ relay_dns_request(struct rsession *con)
 	}
 
 	event_again(&con->se_ev, con->se_out.s, EV_TIMEOUT|EV_READ,
-	    relay_udp_response, &con->se_tv_start, &env->sc_timeout, con);
+	    relay_udp_response, &con->se_tv_start, &rlay->rl_conf.timeout, con);
 
 	return (0);
 }
