@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.17 2014/08/08 14:17:52 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.18 2014/08/08 14:22:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -575,7 +575,21 @@ xhci_poll(struct usbd_bus *bus)
 void
 xhci_waitintr(struct xhci_softc *sc, struct usbd_xfer *xfer)
 {
-	DPRINTF(("%s: stub\n", __func__));
+	int timo;
+
+	for (timo = xfer->timeout; timo >= 0; timo--) {
+		usb_delay_ms(&sc->sc_bus, 1);
+		if (sc->sc_bus.dying)
+			break;
+
+		if (xfer->status != USBD_IN_PROGRESS)
+			return;
+
+		xhci_intr1(sc);
+	}
+
+	xfer->status = USBD_TIMEOUT;
+	usb_transfer_complete(xfer);
 }
 
 void
