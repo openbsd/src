@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.84 2014/08/08 15:32:17 schwarze Exp $ */
+/*	$Id: man.c,v 1.85 2014/08/08 15:54:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -492,8 +492,8 @@ man_pmacro(struct man *man, int ln, char *buf, int offs)
 	tok = (i > 0 && i < 4) ? man_hash_find(mac) : MAN_MAX;
 
 	if (MAN_MAX == tok) {
-		mandoc_vmsg(MANDOCERR_MACRO, man->parse, ln, ppos,
-		    "%s", buf + ppos - 1);
+		mandoc_msg(MANDOCERR_MACRO, man->parse,
+		    ln, ppos, buf + ppos - 1);
 		return(1);
 	}
 

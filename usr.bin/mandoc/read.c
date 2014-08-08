@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.55 2014/08/08 15:48:43 schwarze Exp $ */
+/*	$Id: read.c,v 1.56 2014/08/08 15:54:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -115,8 +115,8 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"nested displays are not portable",
 	"moving content out of list",
 	".Vt block has child macro",
-	"fill mode already enabled, skipping .fi",
-	"fill mode already disabled, skipping .nf",
+	"fill mode already enabled, skipping",
+	"fill mode already disabled, skipping",
 	"line scope broken",
 
 	/* related to missing macro arguments */
@@ -128,7 +128,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"missing display type, using -ragged",
 	"list type is not the first argument",
 	"missing -width in -tag list, using 8n",
-	"missing name for .Ex, using \"\"",
+	"missing utility name, using \"\"",
 	"empty head in list item",
 	"empty list item",
 	"missing font type, using \\fR",
@@ -198,7 +198,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"generic fatal error",
 
 	"input too large",
-	"NOT IMPLEMENTED: .Bd -file",
+	"NOT IMPLEMENTED: Bd -file",
 	"NOT IMPLEMENTED: .so with absolute path or \"..\"",
 	".so request failed",
 
@@ -345,8 +345,8 @@ mparse_buf_r(struct mparse *curp, struct buf blk, int start)
 
 			if ( ! (isascii(c) &&
 			    (isgraph(c) || isblank(c)))) {
-				mandoc_msg(MANDOCERR_BADCHAR, curp,
-				    curp->line, pos, NULL);
+				mandoc_vmsg(MANDOCERR_BADCHAR, curp,
+				    curp->line, pos, "0x%x", c);
 				i++;
 				ln.buf[pos++] = '?';
 				continue;
@@ -402,8 +402,8 @@ mparse_buf_r(struct mparse *curp, struct buf blk, int start)
 
 			if ( ! (isascii(c) &&
 			    (isgraph(c) || isblank(c)))) {
-				mandoc_msg(MANDOCERR_BADCHAR, curp,
-				    curp->line, pos, NULL);
+				mandoc_vmsg(MANDOCERR_BADCHAR, curp,
+				    curp->line, pos, "0x%x", c);
 				i += 2;
 				ln.buf[pos++] = '?';
 				continue;

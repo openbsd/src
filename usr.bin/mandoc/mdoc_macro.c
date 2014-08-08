@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.95 2014/08/08 15:26:28 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.96 2014/08/08 15:54:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -1781,7 +1781,7 @@ phrase_ta(MACRO_PROT_ARGS)
 		n = n->parent;
 	if (NULL == n || LIST_column != n->norm->Bl.type) {
 		mandoc_msg(MANDOCERR_TA_STRAY, mdoc->parse,
-		    line, ppos, NULL);
+		    line, ppos, "Ta");
 		return(1);
 	}
 

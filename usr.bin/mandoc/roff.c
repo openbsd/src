@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.96 2014/08/08 15:48:43 schwarze Exp $ */
+/*	$Id: roff.c,v 1.97 2014/08/08 15:54:10 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1971,7 +1971,7 @@ roff_so(ROFF_ARGS)
 	char *name;
 
 	name = *bufp + pos;
-	mandoc_vmsg(MANDOCERR_SO, r->parse, ln, ppos, ".so %s", name);
+	mandoc_vmsg(MANDOCERR_SO, r->parse, ln, ppos, "so %s", name);
 
 	/*
 	 * Handle `so'.  Be EXTREMELY careful, as we shouldn't be
@@ -2063,7 +2063,8 @@ roff_getname(struct roff *r, char **cpp, int ln, int pos)
 		cp++;
 		if ('\\' == *cp)
 			continue;
-		mandoc_msg(MANDOCERR_NAMESC, r->parse, ln, pos, NULL);
+		mandoc_vmsg(MANDOCERR_NAMESC, r->parse, ln, pos,
+		    "%.*s", (int)(cp - name + 1), name);
 		mandoc_escape((const char **)&cp, NULL, NULL);
 		break;
 	}

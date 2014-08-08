@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.94 2014/08/08 15:48:43 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.95 2014/08/08 15:54:10 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -51,8 +51,8 @@ enum	mandocerr {
 	/* related to the prologue */
 	MANDOCERR_TH_MISSING, /* missing .TH macro, using "unknown 1" */
 	MANDOCERR_TITLE_CASE, /* lower case character in document title */
-	MANDOCERR_MSEC_BAD, /* unknown manual section: section */
-	MANDOCERR_ARCH_BAD, /* unknown manual volume or arch: volume */
+	MANDOCERR_MSEC_BAD, /* unknown manual section: Dt ... section */
+	MANDOCERR_ARCH_BAD, /* unknown manual volume or arch: Dt ... volume */
 	MANDOCERR_DATE_MISSING, /* missing date, using today's date */
 	MANDOCERR_DATE_BAD, /* cannot parse date, using it verbatim: date */
 	MANDOCERR_PROLOG_ORDER, /* prologue macros out of order: macro */
@@ -61,14 +61,14 @@ enum	mandocerr {
 	MANDOCERR_PROLOG_ONLY, /* skipping prologue macro in body: macro */
 
 	/* related to document structure */
-	MANDOCERR_SO, /* .so is fragile, better use ln(1): .so path */
+	MANDOCERR_SO, /* .so is fragile, better use ln(1): so path */
 	MANDOCERR_DOC_EMPTY, /* no document body */
 	MANDOCERR_SEC_BEFORE, /* content before first section header: macro */
-	MANDOCERR_NAMESEC_FIRST, /* first section is not "NAME": title */
+	MANDOCERR_NAMESEC_FIRST, /* first section is not NAME: Sh title */
 	MANDOCERR_NAMESEC_BAD, /* bad NAME section contents: macro */
-	MANDOCERR_SEC_ORDER, /* sections out of conventional order: title */
-	MANDOCERR_SEC_REP, /* duplicate section title: title */
-	MANDOCERR_SEC_MSEC, /* unexpected section: title for ... only */
+	MANDOCERR_SEC_ORDER, /* sections out of conventional order: Sh title */
+	MANDOCERR_SEC_REP, /* duplicate section title: Sh title */
+	MANDOCERR_SEC_MSEC, /* unexpected section: Sh title for ... only */
 
 	/* related to macros and nesting */
 	MANDOCERR_MACRO_OBS, /* obsolete macro: macro */
@@ -79,8 +79,8 @@ enum	mandocerr {
 	MANDOCERR_BD_NEST, /* nested displays are not portable: macro ... */
 	MANDOCERR_BL_MOVE, /* moving content out of list: macro */
 	MANDOCERR_VT_CHILD, /* .Vt block has child macro: macro */
-	MANDOCERR_FI_SKIP, /* fill mode already enabled, skipping .fi */
-	MANDOCERR_NF_SKIP, /* fill mode already disabled, skipping .nf */
+	MANDOCERR_FI_SKIP, /* fill mode already enabled, skipping: fi */
+	MANDOCERR_NF_SKIP, /* fill mode already disabled, skipping: nf */
 	MANDOCERR_BLK_LINE, /* line scope broken: macro breaks macro */
 
 	/* related to missing arguments */
@@ -89,27 +89,27 @@ enum	mandocerr {
 	MANDOCERR_MACRO_EMPTY, /* skipping empty macro: macro */
 	MANDOCERR_ARG_EMPTY, /* empty argument, using 0n: macro arg */
 	MANDOCERR_ARGCWARN, /* argument count wrong */
-	MANDOCERR_BD_NOTYPE, /* missing display type, using -ragged */
-	MANDOCERR_BL_LATETYPE, /* list type is not the first argument: arg */
+	MANDOCERR_BD_NOTYPE, /* missing display type, using -ragged: Bd */
+	MANDOCERR_BL_LATETYPE, /* list type is not the first argument: Bl arg */
 	MANDOCERR_BL_NOWIDTH, /* missing -width in -tag list, using 8n */
-	MANDOCERR_EX_NONAME, /* missing name for .Ex, using "" */
-	MANDOCERR_IT_NOHEAD, /* empty head in list item: type */
-	MANDOCERR_IT_NOBODY, /* empty list item: type */
-	MANDOCERR_BF_NOFONT, /* missing font type, using \fR */
-	MANDOCERR_BF_BADFONT, /* unknown font type, using \fR: macro font */
+	MANDOCERR_EX_NONAME, /* missing utility name, using "": Ex */
+	MANDOCERR_IT_NOHEAD, /* empty head in list item: Bl -type It */
+	MANDOCERR_IT_NOBODY, /* empty list item: Bl -type It */
+	MANDOCERR_BF_NOFONT, /* missing font type, using \fR: Bf */
+	MANDOCERR_BF_BADFONT, /* unknown font type, using \fR: Bf font */
 	MANDOCERR_ARG_STD, /* missing -std argument, adding it: macro */
 
 	/* related to bad arguments */
 	MANDOCERR_ARG_QUOTE, /* unterminated quoted argument */
 	MANDOCERR_ARG_REP, /* duplicate argument: macro arg */
 	MANDOCERR_AN_REP, /* skipping duplicate argument: An -arg */
-	MANDOCERR_BD_REP, /* skipping duplicate display type: type */
-	MANDOCERR_BL_REP, /* skipping duplicate list type: type */
+	MANDOCERR_BD_REP, /* skipping duplicate display type: Bd -type */
+	MANDOCERR_BL_REP, /* skipping duplicate list type: Bl -type */
 	MANDOCERR_BL_SKIPW, /* skipping -width argument: Bl -type */
-	MANDOCERR_AT_BAD, /* unknown AT&T UNIX version: version */
+	MANDOCERR_AT_BAD, /* unknown AT&T UNIX version: At version */
 	MANDOCERR_RS_BAD, /* invalid content in Rs block: macro */
 	MANDOCERR_SM_BAD, /* invalid Boolean argument: macro arg */
-	MANDOCERR_FT_BAD, /* unknown font, skipping request: request font */
+	MANDOCERR_FT_BAD, /* unknown font, skipping request: ft font */
 
 	/* related to plain text */
 	MANDOCERR_FI_BLANK, /* blank line in fill mode, using .sp */
@@ -140,21 +140,21 @@ enum	mandocerr {
 
 	/* related to document structure and macros */
 	MANDOCERR_ROFFLOOP, /* input stack limit exceeded, infinite loop? */
-	MANDOCERR_BADCHAR, /* skipping bad character */
-	MANDOCERR_MACRO, /* skipping unknown macro */
-	MANDOCERR_IT_STRAY, /* skipping item outside list */
-	MANDOCERR_TA_STRAY, /* skipping column outside column list */
+	MANDOCERR_BADCHAR, /* skipping bad character: number */
+	MANDOCERR_MACRO, /* skipping unknown macro: macro */
+	MANDOCERR_IT_STRAY, /* skipping item outside list: It ... */
+	MANDOCERR_TA_STRAY, /* skipping column outside column list: Ta */
 	MANDOCERR_BLK_NOTOPEN, /* skipping end of block that is not open */
 	MANDOCERR_BLK_BROKEN, /* inserting missing end of block: macro ... */
 	MANDOCERR_BLK_NOEND, /* appending missing end of block: macro */
 
 	/* related to request and macro arguments */
-	MANDOCERR_NAMESC, /* escaped character not allowed in a name */
+	MANDOCERR_NAMESC, /* escaped character not allowed in a name: name */
 	MANDOCERR_ARGCOUNT, /* argument count wrong */
-	MANDOCERR_BL_NOTYPE, /* missing list type, using -item */
-	MANDOCERR_NM_NONAME, /* missing manual name, using "" */
+	MANDOCERR_BL_NOTYPE, /* missing list type, using -item: Bl */
+	MANDOCERR_NM_NONAME, /* missing manual name, using "": Nm */
 	MANDOCERR_OS_UNAME, /* uname(3) system call failed, using UNKNOWN */
-	MANDOCERR_ST_BAD, /* unknown standard specifier: standard */
+	MANDOCERR_ST_BAD, /* unknown standard specifier: St standard */
 	MANDOCERR_IT_NONUM, /* skipping request without numeric argument */
 	MANDOCERR_ARG_SKIP, /* skipping all arguments: macro args */
 	MANDOCERR_ARG_EXCESS, /* skipping excess arguments: macro ... args */
@@ -162,7 +162,7 @@ enum	mandocerr {
 	MANDOCERR_FATAL, /* ===== start of fatal errors ===== */
 
 	MANDOCERR_TOOLARGE, /* input too large */
-	MANDOCERR_BADDISP, /* NOT IMPLEMENTED: .Bd -file */
+	MANDOCERR_BD_FILE, /* NOT IMPLEMENTED: Bd -file */
 	MANDOCERR_SO_PATH, /* NOT IMPLEMENTED: .so with absolute path or ".." */
 	MANDOCERR_SO_FAIL, /* .so request failed */
 

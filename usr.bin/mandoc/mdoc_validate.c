@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.156 2014/08/08 15:45:58 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.157 2014/08/08 15:54:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -676,9 +676,9 @@ pre_bl(PRE_ARGS)
 		/* Check: multiple list types. */
 
 		if (LIST__NONE != n->norm->Bl.type) {
-			mandoc_msg(MANDOCERR_BL_REP,
+			mandoc_vmsg(MANDOCERR_BL_REP,
 			    mdoc->parse, n->line, n->pos,
-			    mdoc_argnames[argv->arg]);
+			    "Bl -%s", mdoc_argnames[argv->arg]);
 			continue;
 		}
 
@@ -687,8 +687,8 @@ pre_bl(PRE_ARGS)
 		if (n->norm->Bl.width ||
 		    n->norm->Bl.offs ||
 		    n->norm->Bl.comp)
-			mandoc_msg(MANDOCERR_BL_LATETYPE,
-			    mdoc->parse, n->line, n->pos,
+			mandoc_vmsg(MANDOCERR_BL_LATETYPE,
+			    mdoc->parse, n->line, n->pos, "Bl -%s",
 			    mdoc_argnames[n->args->argv[0].arg]);
 
 		n->norm->Bl.type = lt;
@@ -701,7 +701,8 @@ pre_bl(PRE_ARGS)
 	/* Allow lists to default to LIST_item. */
 
 	if (LIST__NONE == n->norm->Bl.type) {
-		mdoc_nmsg(mdoc, n, MANDOCERR_BL_NOTYPE);
+		mandoc_msg(MANDOCERR_BL_NOTYPE, mdoc->parse,
+		    n->line, n->pos, "Bl");
 		n->norm->Bl.type = LIST_item;
 	}
 
@@ -715,7 +716,8 @@ pre_bl(PRE_ARGS)
 	switch (n->norm->Bl.type) {
 	case LIST_tag:
 		if (NULL == n->norm->Bl.width)
-			mdoc_nmsg(mdoc, n, MANDOCERR_BL_NOWIDTH);
+			mandoc_msg(MANDOCERR_BL_NOWIDTH, mdoc->parse,
+			    n->line, n->pos, "Bl -tag");
 		break;
 	case LIST_column:
 		/* FALLTHROUGH */
@@ -792,7 +794,8 @@ pre_bd(PRE_ARGS)
 			dt = DISP_literal;
 			break;
 		case MDOC_File:
-			mdoc_nmsg(mdoc, n, MANDOCERR_BADDISP);
+			mandoc_msg(MANDOCERR_BD_FILE, mdoc->parse,
+			    n->line, n->pos, NULL);
 			return(0);
 		case MDOC_Offset:
 			if (0 == argv->sz) {
@@ -825,13 +828,14 @@ pre_bd(PRE_ARGS)
 		if (DISP__NONE == n->norm->Bd.type)
 			n->norm->Bd.type = dt;
 		else
-			mandoc_msg(MANDOCERR_BD_REP,
+			mandoc_vmsg(MANDOCERR_BD_REP,
 			    mdoc->parse, n->line, n->pos,
-			    mdoc_argnames[argv->arg]);
+			    "Bd -%s", mdoc_argnames[argv->arg]);
 	}
 
 	if (DISP__NONE == n->norm->Bd.type) {
-		mdoc_nmsg(mdoc, n, MANDOCERR_BD_NOTYPE);
+		mandoc_msg(MANDOCERR_BD_NOTYPE, mdoc->parse,
+		    n->line, n->pos, "Bd");
 		n->norm->Bd.type = DISP_ragged;
 	}
 
@@ -968,7 +972,8 @@ post_bf(POST_ARGS)
 	nch = np->child;
 	if (NULL == np->parent->args) {
 		if (NULL == nch) {
-			mdoc_nmsg(mdoc, np, MANDOCERR_BF_NOFONT);
+			mandoc_msg(MANDOCERR_BF_NOFONT, mdoc->parse,
+			    np->line, np->pos, "Bf");
 			return(1);
 		}
 		nch = nch->next;
@@ -1081,7 +1086,8 @@ post_nm(POST_ARGS)
 	mdoc_deroff(&mdoc->meta.name, mdoc->last);
 
 	if (NULL == mdoc->meta.name)
-		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_NM_NONAME);
+		mandoc_msg(MANDOCERR_NM_NONAME, mdoc->parse,
+		    mdoc->last->line, mdoc->last->pos, "Nm");
 	return(1);
 }
 
@@ -1169,8 +1175,8 @@ post_at(POST_ARGS)
 
 	assert(MDOC_TEXT == n->type);
 	if (NULL == (std_att = mdoc_a2att(n->string))) {
-		mandoc_msg(MANDOCERR_AT_BAD, mdoc->parse,
-		    n->line, n->pos, n->string);
+		mandoc_vmsg(MANDOCERR_AT_BAD, mdoc->parse,
+		    n->line, n->pos, "At %s", n->string);
 		mandoc_asprintf(&att, "AT&T UNIX %s", n->string);
 	} else
 		att = mandoc_strdup(std_att);
@@ -1237,8 +1243,9 @@ post_it(POST_ARGS)
 		/* FALLTHROUGH */
 	case LIST_diag:
 		if (NULL == nit->head->child)
-			mandoc_msg(MANDOCERR_IT_NOHEAD,
+			mandoc_vmsg(MANDOCERR_IT_NOHEAD,
 			    mdoc->parse, nit->line, nit->pos,
+			    "Bl -%s It",
 			    mdoc_argnames[nbl->args->argv[0].arg]);
 		break;
 	case LIST_bullet:
@@ -1249,8 +1256,9 @@ post_it(POST_ARGS)
 		/* FALLTHROUGH */
 	case LIST_hyphen:
 		if (NULL == nit->body->child)
-			mandoc_msg(MANDOCERR_IT_NOBODY,
+			mandoc_vmsg(MANDOCERR_IT_NOBODY,
 			    mdoc->parse, nit->line, nit->pos,
+			    "Bl -%s It",
 			    mdoc_argnames[nbl->args->argv[0].arg]);
 		/* FALLTHROUGH */
 	case LIST_item:
@@ -1681,8 +1689,8 @@ post_st(POST_ARGS)
 	assert(MDOC_TEXT == nch->type);
 
 	if (NULL == (p = mdoc_a2st(nch->string))) {
-		mandoc_msg(MANDOCERR_ST_BAD, mdoc->parse,
-		    nch->line, nch->pos, nch->string);
+		mandoc_vmsg(MANDOCERR_ST_BAD, mdoc->parse,
+		    nch->line, nch->pos, "St %s", nch->string);
 		mdoc_node_delete(mdoc, n);
 	} else {
 		free(nch->string);
@@ -1909,8 +1917,9 @@ post_sh_head(POST_ARGS)
 	/* The NAME should be first. */
 
 	if (SEC_NAME != sec && SEC_NONE == mdoc->lastnamed)
-		mandoc_msg(MANDOCERR_NAMESEC_FIRST, mdoc->parse,
-		    mdoc->last->line, mdoc->last->pos, secname);
+		mandoc_vmsg(MANDOCERR_NAMESEC_FIRST, mdoc->parse,
+		    mdoc->last->line, mdoc->last->pos,
+		    "Sh %s", secname);
 
 	/* The SYNOPSIS gets special attention in other areas. */
 
@@ -1953,12 +1962,14 @@ post_sh_head(POST_ARGS)
 	 */
 
 	if (sec == mdoc->lastnamed)
-		mandoc_msg(MANDOCERR_SEC_REP, mdoc->parse,
-		    mdoc->last->line, mdoc->last->pos, secname);
+		mandoc_vmsg(MANDOCERR_SEC_REP, mdoc->parse,
+		    mdoc->last->line, mdoc->last->pos,
+		    "Sh %s", secname);
 
 	if (sec < mdoc->lastnamed)
-		mandoc_msg(MANDOCERR_SEC_ORDER, mdoc->parse,
-		    mdoc->last->line, mdoc->last->pos, secname);
+		mandoc_vmsg(MANDOCERR_SEC_ORDER, mdoc->parse,
+		    mdoc->last->line, mdoc->last->pos,
+		    "Sh %s", secname);
 
 	/* Mark the last named section. */
 
@@ -1992,7 +2003,7 @@ post_sh_head(POST_ARGS)
 			goodsec = "9";
 		mandoc_vmsg(MANDOCERR_SEC_MSEC, mdoc->parse,
 		    mdoc->last->line, mdoc->last->pos,
-		    "%s for %s only", secname, goodsec);
+		    "Sh %s for %s only", secname, goodsec);
 		break;
 	default:
 		break;
@@ -2174,10 +2185,10 @@ post_dt(POST_ARGS)
 		for (p = nn->string; *p; p++) {
 			if (toupper((unsigned char)*p) == *p)
 				continue;
-			mandoc_msg(MANDOCERR_TITLE_CASE,
+			mandoc_vmsg(MANDOCERR_TITLE_CASE,
 			    mdoc->parse, nn->line,
 			    nn->pos + (p - nn->string),
-			    nn->string);
+			    "Dt %s", nn->string);
 			break;
 		}
 
@@ -2221,8 +2232,8 @@ post_dt(POST_ARGS)
 		mdoc->meta.vol = mandoc_strdup(cp);
 		mdoc->meta.msec = mandoc_strdup(nn->string);
 	} else {
-		mandoc_msg(MANDOCERR_MSEC_BAD, mdoc->parse,
-		    nn->line, nn->pos, nn->string);
+		mandoc_vmsg(MANDOCERR_MSEC_BAD, mdoc->parse,
+		    nn->line, nn->pos, "Dt ... %s", nn->string);
 		mdoc->meta.vol = mandoc_strdup(nn->string);
 		mdoc->meta.msec = mandoc_strdup(nn->string);
 	}
@@ -2244,8 +2255,8 @@ post_dt(POST_ARGS)
 	} else {
 		cp = mdoc_a2arch(nn->string);
 		if (NULL == cp) {
-			mandoc_msg(MANDOCERR_ARCH_BAD, mdoc->parse,
-			    nn->line, nn->pos, nn->string);
+			mandoc_vmsg(MANDOCERR_ARCH_BAD, mdoc->parse,
+			    nn->line, nn->pos, "Dt ... %s", nn->string);
 			free(mdoc->meta.vol);
 			mdoc->meta.vol = mandoc_strdup(nn->string);
 		} else
@@ -2355,7 +2366,8 @@ post_ex(POST_ARGS)
 		return(1);
 
 	if (mdoc->meta.name == NULL) {
-		mdoc_nmsg(mdoc, n, MANDOCERR_EX_NONAME);
+		mandoc_msg(MANDOCERR_EX_NONAME, mdoc->parse,
+		    n->line, n->pos, "Ex");
 		return(1);
 	}
 
