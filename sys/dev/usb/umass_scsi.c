@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.40 2013/11/06 14:37:31 pirofti Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.41 2014/08/08 14:16:43 mpi Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ umass_scsi_attach(struct umass_softc *sc)
 	saa.saa_sc_link = &scbus->sc_link;
 
 	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n"
-			     "sc = 0x%x, scbus = 0x%x\n",
+			     "sc = 0x%p, scbus = 0x%p\n",
 			     sc->sc_dev.dv_xname, sc, scbus));
 
 	sc->sc_refcnt++;
@@ -128,7 +128,7 @@ umass_atapi_attach(struct umass_softc *sc)
 	saa.saa_sc_link = &scbus->sc_link;
 
 	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n"
-			     "sc = 0x%x, scbus = 0x%x\n",
+			     "sc = 0x%p, scbus = 0x%p\n",
 			     sc->sc_dev.dv_xname, sc, scbus));
 
 	sc->sc_refcnt++;
@@ -380,7 +380,7 @@ umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	}
 
 	DPRINTF(UDMASS_CMD,("umass_scsi_cb: at %lld.%06ld: return error=%d, "
-			    "status=0x%x resid=%d\n",
+			    "status=0x%x resid=%zu\n",
 			    (long long)tv.tv_sec, tv.tv_usec,
 			    xs->error, xs->status, xs->resid));
 
@@ -431,7 +431,7 @@ umass_scsi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 	}
 
 	DPRINTF(UDMASS_CMD,("umass_scsi_sense_cb: return xs->error=%d, "
-		"xs->flags=0x%x xs->resid=%d\n", xs->error, xs->status,
+		"xs->flags=0x%x xs->resid=%zu\n", xs->error, xs->status,
 		xs->resid));
 
 	if ((xs->flags & SCSI_POLL) && (xs->error == XS_NOERROR)) {
