@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.148 2014/07/07 16:12:06 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.149 2014/08/08 15:03:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -798,7 +798,7 @@ pre_bd(PRE_ARGS)
 
 		switch (argv->arg) {
 		case MDOC_Centred:
-			dt = DISP_centred;
+			dt = DISP_centered;
 			break;
 		case MDOC_Ragged:
 			dt = DISP_ragged;

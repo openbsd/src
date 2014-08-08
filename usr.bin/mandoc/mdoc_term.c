@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.173 2014/07/07 15:03:24 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.174 2014/08/08 15:03:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1567,7 +1567,7 @@ termp_fa_pre(DECL_ARGS)
 static int
 termp_bd_pre(DECL_ARGS)
 {
-	size_t			 tabwidth, rm, rmax;
+	size_t			 tabwidth, lm, len, rm, rmax;
 	struct mdoc_node	*nn;
 
 	if (MDOC_BLOCK == n->type) {
@@ -1588,18 +1588,29 @@ termp_bd_pre(DECL_ARGS)
 	 */
 
 	if (DISP_literal != n->norm->Bd.type &&
-	    DISP_unfilled != n->norm->Bd.type)
+	    DISP_unfilled != n->norm->Bd.type &&
+	    DISP_centered != n->norm->Bd.type)
 		return(1);
 
 	tabwidth = p->tabwidth;
 	if (DISP_literal == n->norm->Bd.type)
 		p->tabwidth = term_len(p, 8);
 
+	lm = p->offset;
 	rm = p->rmargin;
 	rmax = p->maxrmargin;
 	p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
 
 	for (nn = n->child; nn; nn = nn->next) {
+		if (DISP_centered == n->norm->Bd.type) {
+			if (MDOC_TEXT == nn->type) {
+				len = term_strlen(p, nn->string);
+				p->offset = len >= rm ? 0 :
+				    lm + len >= rm ? rm - len :
+				    (lm + rm - len) / 2;
+			} else
+				p->offset = lm;
+		}
 		print_mdoc_node(p, pair, meta, nn);
 		/*
 		 * If the printed node flushes its own line, then we
