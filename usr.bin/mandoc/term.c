@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.86 2014/08/08 16:00:23 schwarze Exp $ */
+/*	$Id: term.c,v 1.87 2014/08/08 16:02:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -789,7 +789,7 @@ term_vspan(const struct termp *p, const struct roffsu *su)
 
 	if (r < 0.0)
 		r = 0.0;
-	return((size_t)r);
+	return((size_t)(r + 0.0005));
 }
 
 size_t
@@ -800,5 +800,5 @@ term_hspan(const struct termp *p, const struct roffsu *su)
 	v = (*p->hspan)(p, su);
 	if (v < 0.0)
 		v = 0.0;
-	return((size_t)v);
+	return((size_t)(v + 0.0005));
 }
