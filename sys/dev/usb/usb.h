@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.46 2014/03/08 11:47:26 mpi Exp $ */
+/*	$OpenBSD: usb.h,v 1.47 2014/08/08 14:20:05 mpi Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -328,9 +328,21 @@ typedef struct {
 	uByte		DeviceRemovable[32]; /* max 255 ports */
 #define UHD_NOT_REMOV(desc, i) \
     (((desc)->DeviceRemovable[(i)/8] >> ((i) % 8)) & 1)
-	/* deprecated */ uByte		PortPowerCtrlMask[1];
 } __packed usb_hub_descriptor_t;
-#define USB_HUB_DESCRIPTOR_SIZE 9 /* includes deprecated PortPowerCtrlMask */
+#define USB_HUB_DESCRIPTOR_SIZE 8
+
+typedef struct {
+	uByte		bDescLength;
+	uByte		bDescriptorType;
+	uByte		bNbrPorts;
+	uWord		wHubCharacteristics;
+	uByte		bPwrOn2PwrGood;	/* delay in 2 ms units */
+	uByte		bHubContrCurrent;
+	uByte		bHubHdrDecLat;
+	uWord		wHubDelay;
+	uByte		DeviceRemovable[32]; /* max 255 ports */
+} __packed usb_hub_ss_descriptor_t;
+#define USB_HUB_SS_DESCRIPTOR_SIZE 11
 
 typedef struct {
 	uByte		bLength;
