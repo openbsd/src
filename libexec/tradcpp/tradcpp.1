@@ -1,3 +1,4 @@
+.\"	$OpenBSD: tradcpp.1,v 1.2 2014/08/08 20:50:28 jmc Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 11, 2013
+.Dd $Mdocdate: August 8 2014 $
 .Dt TRADCPP 1
 .Os
 .Sh NAME
@@ -42,7 +43,7 @@ The
 command provides a traditional K&R-style C macro preprocessor.
 It is intended to be suitable for historical Unix uses of the
 preprocessor, such as
-.Xr imake 1 ,
+.Xr imake ,
 particularly those that depend on preservation of whitespace.
 .Pp
 The chief ways in which traditional cpp differs from
@@ -96,7 +97,7 @@ Suppress line number information in the output.
 Currently line number information is not generated at all and this
 option has no effect.
 .It Fl Umacro
-Remove any existing defintion for the named macro.
+Remove any existing definition for the named macro.
 Note that like many Unix compilers,
 .Nm
 does not accept a space between the
