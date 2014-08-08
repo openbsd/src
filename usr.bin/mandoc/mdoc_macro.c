@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.94 2014/07/07 21:35:42 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.95 2014/08/08 15:26:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -420,6 +420,8 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 			return(REWIND_NONE);
 		/* FALLTHROUGH */
 	case MDOC_Sh:
+		if (MDOC_ROOT == p->parent->type)
+			return(REWIND_THIS);
 		if (MDOC_Nd == p->tok || MDOC_Ss == p->tok ||
 		    MDOC_Sh == p->tok)
 			return(REWIND_MORE);
@@ -1030,6 +1032,22 @@ blk_full(MACRO_PROT_ARGS)
 	char		 *p;
 
 	nl = MDOC_NEWLINE & mdoc->flags;
+
+	/* Skip items outside lists. */
+
+	if (tok == MDOC_It) {
+		for (n = mdoc->last; n; n = n->parent)
+			if (n->tok == MDOC_Bl)
+				break;
+		if (n == NULL) {
+			mandoc_vmsg(MANDOCERR_IT_STRAY, mdoc->parse,
+			    line, ppos, "It %s", buf + *pos);
+			if ( ! mdoc_elem_alloc(mdoc, line, ppos,
+			    MDOC_br, NULL))
+				return(0);
+			return(rew_elem(mdoc, MDOC_br));
+		}
+	}
 
 	/* Close out prior implicit scope. */
 

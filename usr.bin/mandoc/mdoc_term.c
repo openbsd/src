@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.175 2014/08/08 15:10:15 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.176 2014/08/08 15:26:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1766,6 +1766,9 @@ termp_ss_pre(DECL_ARGS)
 		term_fontpush(p, TERMFONT_BOLD);
 		p->offset = term_len(p, (p->defindent+1)/2);
 		break;
+	case MDOC_BODY:
+		p->offset = term_len(p, p->defindent);
+		break;
 	default:
 		break;
 	}
@@ -1777,7 +1780,7 @@ static void
 termp_ss_post(DECL_ARGS)
 {
 
-	if (MDOC_HEAD == n->type)
+	if (n->type == MDOC_HEAD || n->type == MDOC_BODY)
 		term_newln(p);
 }
 

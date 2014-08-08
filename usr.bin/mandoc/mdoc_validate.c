@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.152 2014/08/08 15:21:17 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.153 2014/08/08 15:26:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -62,7 +62,6 @@ struct	valids {
 
 static	int	 check_count(struct mdoc *, enum mdoc_type,
 			enum check_lvl, enum check_ineq, int);
-static	int	 check_parent(PRE_ARGS, enum mdoct, enum mdoc_type);
 static	void	 check_text(struct mdoc *, int, int, char *);
 static	void	 check_argv(struct mdoc *,
 			struct mdoc_node *, struct mdoc_argv *);
@@ -120,13 +119,10 @@ static	int	 pre_bl(PRE_ARGS);
 static	int	 pre_dd(PRE_ARGS);
 static	int	 pre_display(PRE_ARGS);
 static	int	 pre_dt(PRE_ARGS);
-static	int	 pre_it(PRE_ARGS);
 static	int	 pre_literal(PRE_ARGS);
 static	int	 pre_obsolete(PRE_ARGS);
 static	int	 pre_os(PRE_ARGS);
 static	int	 pre_par(PRE_ARGS);
-static	int	 pre_sh(PRE_ARGS);
-static	int	 pre_ss(PRE_ARGS);
 static	int	 pre_std(PRE_ARGS);
 
 static	v_post	 posts_an[] = { post_an, NULL };
@@ -172,12 +168,10 @@ static	v_pre	 pres_d1[] = { pre_display, NULL };
 static	v_pre	 pres_dl[] = { pre_literal, pre_display, NULL };
 static	v_pre	 pres_dd[] = { pre_dd, NULL };
 static	v_pre	 pres_dt[] = { pre_dt, NULL };
-static	v_pre	 pres_it[] = { pre_it, pre_par, NULL };
+static	v_pre	 pres_it[] = { pre_par, NULL };
 static	v_pre	 pres_obsolete[] = { pre_obsolete, NULL };
 static	v_pre	 pres_os[] = { pre_os, NULL };
 static	v_pre	 pres_pp[] = { pre_par, NULL };
-static	v_pre	 pres_sh[] = { pre_sh, NULL };
-static	v_pre	 pres_ss[] = { pre_ss, NULL };
 static	v_pre	 pres_std[] = { pre_std, NULL };
 
 static	const struct valids mdoc_valids[MDOC_MAX] = {
@@ -185,8 +179,8 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ pres_dd, posts_dd },			/* Dd */
 	{ pres_dt, posts_dt },			/* Dt */
 	{ pres_os, posts_os },			/* Os */
-	{ pres_sh, posts_sh },			/* Sh */
-	{ pres_ss, posts_ss },			/* Ss */
+	{ NULL, posts_sh },			/* Sh */
+	{ NULL, posts_ss },			/* Ss */
 	{ pres_pp, posts_pp },			/* Pp */
 	{ pres_d1, posts_d1 },			/* D1 */
 	{ pres_dl, posts_dl },			/* Dl */
@@ -546,22 +540,6 @@ check_text(struct mdoc *mdoc, int ln, int pos, char *p)
 }
 
 static int
-check_parent(PRE_ARGS, enum mdoct tok, enum mdoc_type t)
-{
-
-	assert(n->parent);
-	if ((MDOC_ROOT == t || tok == n->parent->tok) &&
-			(t == n->parent->type))
-		return(1);
-
-	mandoc_vmsg(MANDOCERR_SYNTCHILD, mdoc->parse,
-	    n->line, n->pos, "want parent %s",
-	    MDOC_ROOT == t ? "<root>" : mdoc_macronames[tok]);
-	return(0);
-}
-
-
-static int
 pre_display(PRE_ARGS)
 {
 	struct mdoc_node *node;
@@ -851,34 +829,6 @@ pre_bd(PRE_ARGS)
 	}
 
 	return(1);
-}
-
-static int
-pre_ss(PRE_ARGS)
-{
-
-	if (MDOC_BLOCK != n->type)
-		return(1);
-	return(check_parent(mdoc, n, MDOC_Sh, MDOC_BODY));
-}
-
-static int
-pre_sh(PRE_ARGS)
-{
-
-	if (MDOC_BLOCK != n->type)
-		return(1);
-	return(check_parent(mdoc, n, MDOC_MAX, MDOC_ROOT));
-}
-
-static int
-pre_it(PRE_ARGS)
-{
-
-	if (MDOC_BLOCK != n->type)
-		return(1);
-
-	return(check_parent(mdoc, n, MDOC_Bl, MDOC_BODY));
 }
 
 static int
