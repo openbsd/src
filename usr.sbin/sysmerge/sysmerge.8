@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.50 2014/07/15 09:27:04 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.51 2014/08/08 17:04:55 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2014 $
+.Dd $Mdocdate: August 8 2014 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -33,15 +33,6 @@ is a
 .Xr ksh 1
 script designed to help the administrator update configuration files
 after upgrading to a new release or snapshot.
-The configuration files are typically those held in
-.Pa /etc ,
-though
-.Nm
-is also able to update files held in
-.Pa /dev ,
-.Pa /root ,
-and
-.Pa /var .
 .Pp
 .Nm
 works by comparing a temporary reference root directory
@@ -88,12 +79,11 @@ stopping immediately should signatures not match.
 .Nm
 will work through the fileset,
 offering the chance to merge any differences using ${MERGE_CMD}.
-Merged files may be edited using a default editor,
-or one defined by the ${VISUAL} or ${EDITOR} environment variables.
-Files may also be left to deal with at a later date.
+Merged files may be edited using the default editor or be left to deal
+with at a later date.
 Should any problems occur,
 such as a failure to upgrade a file,
-the user will be notified and have to deal with the issue by hand.
+the user will be notified and will have to deal with the issue by hand.
 .Pp
 By default (if
 .Fl d
@@ -105,8 +95,7 @@ provided that they have no local changes.
 It automatically installs missing files and binaries,
 and updates files differing only by CVS Id.
 Files whose reference sources have matching CVS Id are skipped from comparison.
-.Pa /etc/fbtab ,
-.Pa /etc/sysctl.conf ,
+.Pa /etc/fbtab
 and
 .Pa /etc/ttys
 are created using helper scripts and are
