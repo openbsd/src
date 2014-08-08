@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1734 2014/07/12 10:08:53 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1735 2014/08/08 16:02:03 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5786,6 +5786,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_BLUESTEEL, PCI_PRODUCT_BLUESTEEL_5601,
 	    "5601",
+	},
+	{
+	    PCI_VENDOR_BOCHS, PCI_PRODUCT_BOCHS_VGA,
+	    "VGA",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43224_1,
@@ -15764,6 +15768,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MN-130 10/100",
 	},
 	{
+	    PCI_VENDOR_MICROSOFT, PCI_PRODUCT_MICROSOFT_VGA,
+	    "VGA",
+	},
+	{
 	    PCI_VENDOR_MIRO, PCI_PRODUCT_MIRO_2IVDC,
 	    "2IVDC-PCX1",
 	},
@@ -24234,6 +24242,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ATML,
 	    "ATML",
+	},
+	{
+	    PCI_VENDOR_BOCHS,
+	    "Bochs",
 	},
 	{
 	    PCI_VENDOR_CCUBE,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1734 2014/07/12 10:08:53 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1735 2014/08/08 16:02:03 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -203,6 +203,7 @@
 #define	PCI_VENDOR_O2MICRO	0x1217		/* O2 Micro */
 #define	PCI_VENDOR_3DFX	0x121a		/* 3DFX */
 #define	PCI_VENDOR_ATML	0x121b		/* ATML */
+#define	PCI_VENDOR_BOCHS	0x1234		/* Bochs */
 #define	PCI_VENDOR_CCUBE	0x123f		/* C-Cube */
 #define	PCI_VENDOR_AVM	0x1244		/* AVM */
 #define	PCI_VENDOR_STALLION	0x124d		/* Stallion */
@@ -1906,6 +1907,9 @@
 /* Bluesteel Networks */
 #define	PCI_PRODUCT_BLUESTEEL_5501	0x0000		/* 5501 */
 #define	PCI_PRODUCT_BLUESTEEL_5601	0x5601		/* 5601 */
+
+/* Bochs */
+#define	PCI_PRODUCT_BOCHS_VGA	0x1111		/* VGA */
 
 /* Broadcom */
 #define	PCI_PRODUCT_BROADCOM_BCM43224_1	0x0576		/* BCM43224 */
@@ -4617,6 +4621,7 @@
 /* Microsoft products */
 #define	PCI_PRODUCT_MICROSOFT_MN120	0x0001		/* MN-120 10/100 */
 #define	PCI_PRODUCT_MICROSOFT_MN130	0x0002		/* MN-130 10/100 */
+#define	PCI_PRODUCT_MICROSOFT_VGA	0x5353		/* VGA */
 
 /* Miro Computer Products AG */
 #define	PCI_PRODUCT_MIRO_2IVDC	0x5607		/* 2IVDC-PCX1 */
