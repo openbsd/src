@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoinstall.8,v 1.9 2014/08/04 13:24:42 jasper Exp $
+.\"     $OpenBSD: autoinstall.8,v 1.10 2014/08/08 14:52:53 schwarze Exp $
 .\"
 .\" Copyright (c) 2013 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 4 2014 $
+.Dd $Mdocdate: August 8 2014 $
 .Dt AUTOINSTALL 8
 .Os
 .Sh NAME
@@ -29,83 +29,97 @@ answers from a response file.
 .Nm
 uses DHCP to discover the location of the response
 file and HTTP to fetch the file.
-.Ss AUTOINSTALL METHODS
+.Ss Autoinstall methods
 The first method is to choose '(A)utoinstall' at the install prompt.
-If there is only one network interface, the installer will fetch the response
+If there is only one network interface, the installer fetches the response
 file via that interface.
 If there is more than one network interface, a selection is presented
 and the installer fetches the response file via the selected interface.
 .Pp
 The second method is to netboot the machine.
-In this situation
+In this situation the
 .Nm
-feature will be invoked if the user does not intervene within
+feature is invoked if the user does not intervene within
 a short time.
-It will behave as if the user selected '(A)utoinstall', but will
-always fetch the response file via the netboot interface.
-.Ss FETCHING THE RESPONSE FILE
+It behaves as if the user selected '(A)utoinstall', but
+always fetches the response file via the netboot interface.
+.Ss Fetching the response file
 .Nm
-will use HTTP to fetch one of the files
-.Ql install.conf
+uses HTTP to fetch one of the files
+.Pa install.conf
 or
-.Ql <MAC address>-install.conf
-for install answers, and one of
-.Ql upgrade.conf
+.Ar MAC_address Ns - Ns Pa install.conf
+for install answers, or one of
+.Pa upgrade.conf
 or
-.Ql <MAC address>-upgrade.conf
+.Ar MAC_address Ns - Ns Pa upgrade.conf
 for upgrade answers.
 The URL used to fetch the file is constructed from information provided in
-the DHCP options
-.Ql next-server
+the
+.Xr dhcpd.conf 5
+statements
+.Ic next-server
 and
-.Ql filename .
-If
-.Ql filename
+.Ic filename .
+If the
+.Ar filename
 is
-.Ql auto_install
+.Cm auto_install ,
 then the URLs tried are, in order:
-.Bd -literal -offset indent
-http://<next-server>/<MAC address>-install.conf
-http://<next-server>/install.conf
+.Sm off
+.Bd -unfilled -offset indent
+.No http:// Ar next-server No / Ar MAC_address No -install.conf
+.No http:// Ar next-server No /install.conf
 .Ed
+.Sm on
 .Pp
-where <MAC address> is a string of six hex octets separated by colons
+where
+.Ar MAC_address
+is a string of six hex octets separated by colons
 representing the MAC
 address of the interface being used to fetch the files.
 .Pp
-If
-.Ql filename
+If the
+.Ar filename
 is
-.Ql auto_upgrade
+.Cm auto_upgrade ,
 the URLs tried are, in order:
-.Bd -literal -offset indent
-http://<next-server>/<MAC address>-upgrade.conf
-http://<next-server>/upgrade.conf
+.Sm off
+.Bd -unfilled -offset indent
+.No http:// Ar next-server No / Ar MAC_address No -upgrade.conf
+.No http:// Ar next-server No /upgrade.conf
 .Ed
+.Sm on
 .Pp
-On architectures where
-.Ql filename
-is used to provide the name of the file to netboot it is necessary to
-create symbolic links called
-.Ql auto_install
+On architectures where the
+.Ic filename
+statement is used to provide the name of the file to netboot
+it is necessary to create symbolic links called
+.Pa auto_install
 and
-.Ql auto_upgrade
+.Pa auto_upgrade
 that point to the expected boot program
-and to change the value of the filename option in the dhcpd.conf file
-to be auto_install or auto_upgrade.
+and to change the value of the
+.Ic filename
+statement in the
+.Xr dhcpd.conf 5
+file to be
+.Cm auto_install
+or
+.Cm auto_upgrade .
 .Pp
 Note that in these cases, the HTTP server and TFTP server must
 be on the same machine.
-.Ss RESPONSE FILE FORMAT
-The format of a response file is:
-.Bd -literal -offset indent
-question = answer
-.Ed
+.Ss Response file format
+The response file is a line-oriented ASCII text file.
+The format of each line is:
 .Pp
-.Ql question
-is an installer question (up to the question mark) or a non-ambiguous
+.D1 Ar question No = Ar answer
+.Pp
+.Ar question
+is an installer question (not including the question mark) or a non-ambiguous
 part of it, consisting of whitespace separated words.
-.Ql answer
+.Ar answer
 is the answer to the question.
 Passwords may be in plaintext, encrypted with
 .Xr encrypt 1 ,
@@ -123,14 +137,17 @@ provided by the installer is used.
 .Sh FILES
 .Bl -tag -width "/etc/dhcpd.confXXX" -compact
 .It Pa /etc/dhcpd.conf
-dhcpd(8) configuration file
+.Xr dhcpd 8
+configuration file
 .It Pa install.conf
 response file for unattended installation
 .It Pa upgrade.conf
 response file for unattended upgrade
 .El
 .Sh EXAMPLES
-A typical install.conf file will look something like this:
+A typical
+.Pa install.conf
+file will look something like this:
 .Bd -literal -offset indent
 System hostname = server1
 Password for root = $2a$14$Z4xRMg8vDpgYH...GVot3ySoj8yby
@@ -145,12 +162,15 @@ HTTP Server = ftp.eu.openbsd.org
 .Ed
 .Pp
 The same file could be used for upgrades by creating a symbolic link called
-upgrade.conf that points to install.conf.
+.Pa upgrade.conf
+that points to
+.Pa install.conf .
 The upgrade process will only use the answers it needs.
 .Pp
 And an example
 .Xr dhcpd.conf 5
-host entry:
+.Ic host
+declaration:
 .Bd -literal -offset indent
 host foo {
   hardware ethernet 00:50:60:49:8b:84;
@@ -162,3 +182,10 @@ host foo {
 .Sh SEE ALSO
 .Xr dhcpd.conf 5 ,
 .Xr diskless 8
+.Sh HISTORY
+The
+.Nm
+feature first appeared in
+.Ox 5.5 .
+.Sh AUTHORS
+.An Robert Peichaer Aq Mt rpe@openbsd.org
