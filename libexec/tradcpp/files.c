@@ -400,7 +400,7 @@ file_readabsolute(struct place *place, const char *name)
 
 	assert(place != NULL);
 
-	if (name == NULL) {
+	if ((name == NULL) || !strcmp(name, "-")) {
 		fd = STDIN_FILENO;
 		pf = place_addfile(place, "<standard-input>", false);
 	} else {

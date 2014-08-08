@@ -47,7 +47,7 @@ static
 void
 output_open(void)
 {
-	if (mode.output_file == NULL) {
+	if ((mode.output_file == NULL) || !strcmp(mode.output_file, "-")) {
 		outputfd = STDOUT_FILENO;
 	} else {
 		outputfd = open(mode.output_file, O_WRONLY|O_CREAT|O_TRUNC,

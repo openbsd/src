@@ -1040,7 +1040,7 @@ main(int argc, char *argv[])
 	init();
 
 	for (i=1; i<argc; i++) {
-		if (argv[i][0] != '-') {
+		if ((argv[i][0] != '-') || !strcmp(argv[i], "-")) {
 			break;
 		}
 		place_setcommandline(&cmdplace, i, 1);
