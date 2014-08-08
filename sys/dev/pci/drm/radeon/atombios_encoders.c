@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_encoders.c,v 1.7 2014/04/12 06:05:53 jsg Exp $	*/
+/*	$OpenBSD: atombios_encoders.c,v 1.8 2014/08/08 16:35:56 jsg Exp $	*/
 /*
  * Copyright 2007-11 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1876,8 +1876,11 @@ atombios_set_encoder_crtc_source(struct drm_encoder *encoder)
 					args.v2.ucEncodeMode = ATOM_ENCODER_MODE_CRT;
 				else
 					args.v2.ucEncodeMode = atombios_get_encoder_mode(encoder);
-			} else
+			} else if (radeon_encoder->devices & (ATOM_DEVICE_LCD_SUPPORT)) {
+				args.v2.ucEncodeMode = ATOM_ENCODER_MODE_LVDS;
+			} else {
 				args.v2.ucEncodeMode = atombios_get_encoder_mode(encoder);
+			}
 			switch (radeon_encoder->encoder_id) {
 			case ENCODER_OBJECT_ID_INTERNAL_UNIPHY:
 			case ENCODER_OBJECT_ID_INTERNAL_UNIPHY1:
