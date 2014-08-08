@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.115 2014/07/13 10:23:06 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.116 2014/08/08 16:32:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2014 $
+.Dd $Mdocdate: August 8 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1195,7 +1195,7 @@ Close a
 block.
 Does not have any tail arguments.
 .Ss \&Dd
-Document date.
+Document date for display in the page footer.
 This is the mandatory first macro of any
 .Nm
 manual.
@@ -1224,8 +1224,11 @@ the special string
 .Dq $\&Mdocdate$
 can be given as an argument.
 .It
-A few alternative date formats are accepted as well
-and converted to the standard form.
+The traditional, purely numeric
+.Xr man 7
+format
+.Ar year Ns \(en Ns Ar month Ns \(en Ns Ar day
+is accepted, too.
 .It
 If a date string cannot be parsed, it is used verbatim.
 .It
@@ -1285,30 +1288,26 @@ See also
 and
 .Sx \&Do .
 .Ss \&Dt
-Document title.
+Document title for display in the page header.
 This is the mandatory second macro of any
 .Nm
 file.
 Its syntax is as follows:
 .Bd -ragged -offset indent
 .Pf \. Sx \&Dt
-.Oo
-.Ar title
-.Oo
+.Ar TITLE
 .Ar section
-.Op Ar volume
-.Op Ar arch
-.Oc
-.Oc
+.Op Ar volume | arch
 .Ed
 .Pp
 Its arguments are as follows:
-.Bl -tag -width Ds -offset Ds
-.It Ar title
+.Bl -tag -width section -offset 2n
+.It Ar TITLE
 The document's title (name), defaulting to
-.Dq UNKNOWN
+.Dq UNTITLED
 if unspecified.
-It should be capitalised.
+To achieve a uniform appearance of page header lines,
+it should by convention be all caps.
 .It Ar section
 The manual section.
 This may be one of
@@ -1346,8 +1345,7 @@ or
 .Cm paper
 .Pq paper .
 It should correspond to the manual's filename suffix and defaults to
-.Cm 1
-if unspecified.
+the empty string if unspecified.
 .It Ar volume
 This overrides the volume inferred from
 .Ar section .
@@ -2125,7 +2123,7 @@ Examples:
 See also
 .Sx \&Oo .
 .Ss \&Os
-Document operating system version.
+Operating system version for display in the page footer.
 This is the mandatory third macro of
 any
 .Nm
