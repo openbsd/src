@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.57 2014/08/08 15:32:17 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.58 2014/08/08 15:57:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -104,10 +104,6 @@ extern	const struct mdoc_macro *const mdoc_macros;
 
 __BEGIN_DECLS
 
-#define		  mdoc_pmsg(mdoc, l, p, t) \
-		  mandoc_msg((t), (mdoc)->parse, (l), (p), NULL)
-#define		  mdoc_nmsg(mdoc, n, t) \
-		  mandoc_msg((t), (mdoc)->parse, (n)->line, (n)->pos, NULL)
 int		  mdoc_macro(MACRO_PROT_ARGS);
 int		  mdoc_word_alloc(struct mdoc *,
 			int, int, const char *);

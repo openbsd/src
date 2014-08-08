@@ -1,4 +1,4 @@
-/*	$Id: libman.h,v 1.36 2014/08/08 15:32:17 schwarze Exp $ */
+/*	$Id: libman.h,v 1.37 2014/08/08 15:57:05 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -59,10 +59,6 @@ extern	const struct man_macro *const man_macros;
 
 __BEGIN_DECLS
 
-#define		  man_pmsg(man, l, p, t) \
-		  mandoc_msg((t), (man)->parse, (l), (p), NULL)
-#define		  man_nmsg(man, n, t) \
-		  mandoc_msg((t), (man)->parse, (n)->line, (n)->pos, NULL)
 int		  man_word_alloc(struct man *, int, int, const char *);
 int		  man_block_alloc(struct man *, int, int, enum mant);
 int		  man_head_alloc(struct man *, int, int, enum mant);

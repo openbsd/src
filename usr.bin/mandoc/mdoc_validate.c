@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.157 2014/08/08 15:54:10 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.158 2014/08/08 15:57:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1661,7 +1661,8 @@ post_root(POST_ARGS)
 	/* Check that we begin with a proper `Sh'. */
 
 	if (NULL == n->child)
-		mdoc_nmsg(mdoc, n, MANDOCERR_DOC_EMPTY);
+		mandoc_msg(MANDOCERR_DOC_EMPTY, mdoc->parse,
+		    n->line, n->pos, NULL);
 	else if (MDOC_Sh != n->child->tok)
 		mandoc_msg(MANDOCERR_SEC_BEFORE, mdoc->parse,
 		    n->child->line, n->child->pos,
@@ -1840,7 +1841,8 @@ post_ns(POST_ARGS)
 {
 
 	if (MDOC_LINE & mdoc->last->flags)
-		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_NS_SKIP);
+		mandoc_msg(MANDOCERR_NS_SKIP, mdoc->parse,
+		    mdoc->last->line, mdoc->last->pos, NULL);
 	return(1);
 }
 
