@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.87 2014/08/08 15:10:14 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.88 2014/08/08 15:15:27 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -149,11 +149,11 @@ enum	mandocerr {
 	/* related to request and macro arguments */
 	MANDOCERR_NAMESC, /* escaped character not allowed in a name */
 	MANDOCERR_ARGCOUNT, /* argument count wrong */
-	MANDOCERR_NM_NONAME, /* missing manual name, using "" */
-	MANDOCERR_ST_BAD, /* unknown standard specifier: standard */
-	MANDOCERR_UNAME, /* uname(3) system call failed */
-	MANDOCERR_NUMERIC, /* request requires a numeric argument */
 	MANDOCERR_BL_NOTYPE, /* missing list type, using -item */
+	MANDOCERR_NM_NONAME, /* missing manual name, using "" */
+	MANDOCERR_OS_UNAME, /* uname(3) system call failed, using UNKNOWN */
+	MANDOCERR_ST_BAD, /* unknown standard specifier: standard */
+	MANDOCERR_IT_NONUM, /* skipping request without numeric argument */
 	MANDOCERR_ARG_SKIP, /* skipping all arguments: macro args */
 	MANDOCERR_ARG_EXCESS, /* skipping excess arguments: macro ... args */
 

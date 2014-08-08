@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.94 2014/07/07 21:35:42 schwarze Exp $ */
+/*	$Id: roff.c,v 1.95 2014/08/08 15:15:27 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1754,7 +1754,7 @@ roff_it(ROFF_ARGS)
 	len = strcspn(cp, " \t");
 	cp[len] = '\0';
 	if ((iv = mandoc_strntoi(cp, len, 10)) <= 0) {
-		mandoc_msg(MANDOCERR_NUMERIC, r->parse,
+		mandoc_msg(MANDOCERR_IT_NONUM, r->parse,
 		    ln, ppos, *bufp + 1);
 		return(ROFF_IGN);
 	}
