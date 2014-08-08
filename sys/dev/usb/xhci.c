@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.16 2014/07/11 16:38:58 pirofti Exp $ */
+/* $OpenBSD: xhci.c,v 1.17 2014/08/08 14:17:52 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -674,6 +674,8 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 		xfer->status = USBD_NORMAL_COMPLETION;
 		break;
 	case XHCI_CODE_STALL:
+		/* XXX We need to report this condition for umass(4). */
+		xfer->status = USBD_STALLED;
 	case XHCI_CODE_BABBLE:
 		/*
 		 * Since the stack might try to start a new transfer as
@@ -739,7 +741,8 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 		for (i = 0; i < XHCI_MAX_TRANSFERS; i++) {
 			xfer = xp->pending_xfers[i];
 			if (xfer != NULL && xfer->done == 0) {
-				xfer->status = USBD_IOERROR;
+				if (xfer->status != USBD_STALLED)
+					xfer->status = USBD_IOERROR;
 				usb_transfer_complete(xfer);
 			}
 			xp->pending_xfers[i] = NULL;
