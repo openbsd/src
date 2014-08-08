@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.154 2014/08/08 15:38:46 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.155 2014/08/08 15:42:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1447,6 +1447,7 @@ static int
 post_bl_head(POST_ARGS)
 {
 	struct mdoc_node *np, *nn, *nnp;
+	struct mdoc_argv *argv;
 	int		  i, j;
 
 	if (LIST_column != mdoc->last->norm->Bl.type)
@@ -1454,22 +1455,12 @@ post_bl_head(POST_ARGS)
 		return(hwarn_eq0(mdoc));
 
 	/*
-	 * Convert old-style lists, where the column width specifiers
+	 * Append old-style lists, where the column width specifiers
 	 * trail as macro parameters, to the new-style ("normal-form")
 	 * lists where they're argument values following -column.
 	 */
 
-	/* First, disallow both types and allow normal-form. */
-
-	/*
-	 * TODO: technically, we can accept both and just merge the two
-	 * lists, but I'll leave that for another day.
-	 */
-
-	if (mdoc->last->norm->Bl.ncols && mdoc->last->nchild) {
-		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_COLUMNS);
-		return(0);
-	} else if (NULL == mdoc->last->child)
+	if (mdoc->last->child == NULL)
 		return(1);
 
 	np = mdoc->last->parent;
@@ -1480,7 +1471,6 @@ post_bl_head(POST_ARGS)
 			break;
 
 	assert(j < (int)np->args->argc);
-	assert(0 == np->args->argv[j].sz);
 
 	/*
 	 * Accommodate for new-style groff column syntax.  Shuffle the
@@ -1488,15 +1478,17 @@ post_bl_head(POST_ARGS)
 	 * column field.  Then, delete the head children.
 	 */
 
-	np->args->argv[j].sz = (size_t)mdoc->last->nchild;
-	np->args->argv[j].value = mandoc_reallocarray(NULL,
-	    (size_t)mdoc->last->nchild, sizeof(char *));
+	argv = np->args->argv + j;
+	i = argv->sz;
+	argv->sz += mdoc->last->nchild;
+	argv->value = mandoc_reallocarray(argv->value,
+	    argv->sz, sizeof(char *));
 
-	mdoc->last->norm->Bl.ncols = np->args->argv[j].sz;
-	mdoc->last->norm->Bl.cols = (void *)np->args->argv[j].value;
+	mdoc->last->norm->Bl.ncols = argv->sz;
+	mdoc->last->norm->Bl.cols = (void *)argv->value;
 
-	for (i = 0, nn = mdoc->last->child; nn; i++) {
-		np->args->argv[j].value[i] = nn->string;
+	for (nn = mdoc->last->child; nn; i++) {
+		argv->value[i] = nn->string;
 		nn->string = NULL;
 		nnp = nn;
 		nn = nn->next;
