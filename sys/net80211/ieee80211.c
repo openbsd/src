@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.40 2013/11/21 16:16:08 mpi Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.41 2014/08/08 15:16:39 jasper Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -660,7 +660,6 @@ ieee80211_setbasicrates(struct ieee80211com *ic)
 int
 ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 {
-#define	N(a)	(sizeof(a) / sizeof(a[0]))
 	struct ifnet *ifp = &ic->ic_if;
 	static const u_int chanflags[] = {
 		0,			/* IEEE80211_MODE_AUTO */
@@ -684,7 +683,7 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	 * Verify at least one channel is present in the available
 	 * channel list before committing to the new mode.
 	 */
-	if (mode >= N(chanflags))
+	if (mode >= nitems(chanflags))
 		panic("Unexpected mode %u", mode);
 	modeflags = chanflags[mode];
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
@@ -747,7 +746,6 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	ieee80211_reset_erp(ic);	/* reset ERP state */
 
 	return 0;
-#undef N
 }
 
 enum ieee80211_phymode
@@ -826,7 +824,6 @@ int
 ieee80211_rate2media(struct ieee80211com *ic, int rate,
     enum ieee80211_phymode mode)
 {
-#define	N(a)	(sizeof(a) / sizeof(a[0]))
 	static const struct {
 		u_int	m;	/* rate + mode */
 		u_int	r;	/* if_media rate */
@@ -876,17 +873,15 @@ ieee80211_rate2media(struct ieee80211com *ic, int rate,
 		mask |= IFM_IEEE80211_11G;
 		break;
 	}
-	for (i = 0; i < N(rates); i++)
+	for (i = 0; i < nitems(rates); i++)
 		if (rates[i].m == mask)
 			return rates[i].r;
 	return IFM_AUTO;
-#undef N
 }
 
 int
 ieee80211_media2rate(int mword)
 {
-#define	N(a)	(sizeof(a) / sizeof(a[0]))
 	int i;
 	static const struct {
 		int subtype;
@@ -910,12 +905,11 @@ ieee80211_media2rate(int mword)
 		{ IFM_IEEE80211_OFDM54,	108	},
 		{ IFM_IEEE80211_OFDM72,	144	},
 	};
-	for (i = 0; i < N(ieeerates); i++) {
+	for (i = 0; i < nitems(ieeerates); i++) {
 		if (ieeerates[i].subtype == IFM_SUBTYPE(mword))
 			return ieeerates[i].rate;
 	}
 	return 0;
-#undef N
 }
 
 /*

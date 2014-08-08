@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_regdomain.c,v 1.7 2006/11/26 19:46:28 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_regdomain.c,v 1.8 2014/08/08 15:16:39 jasper Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -101,8 +101,7 @@ ieee80211_name2countrycode(const char *name)
 	const struct ieee80211_countryname key = { CTRY_DEFAULT, name }, *value;
 
 	if ((value = bsearch(&key, &ieee80211_r_ctry,
-	    sizeof(ieee80211_r_ctry) / sizeof(ieee80211_r_ctry[0]),
-	    sizeof(struct ieee80211_countryname),
+	    nitems(ieee80211_r_ctry), sizeof(struct ieee80211_countryname),
 	    ieee80211_regdomain_compare_cn)) != NULL)
 		return (value->cn_code);
 
@@ -119,8 +118,7 @@ ieee80211_name2regdomain(const char *name)
 	key.rn_name = name;
 
 	if ((value = bsearch(&key, &ieee80211_r_names,
-	    sizeof(ieee80211_r_names) / sizeof(ieee80211_r_names[0]),
-	    sizeof(struct ieee80211_regdomainname),
+	    nitems(ieee80211_r_names), sizeof(struct ieee80211_regdomainname),
 	    ieee80211_regdomain_compare_rn)) != NULL)
 		return ((u_int32_t)value->rn_domain);
 
@@ -181,8 +179,7 @@ ieee80211_countrycode2regdomain(u_int16_t code)
 {
 	int i;
 
-	for (i = 0;
-	     i < (sizeof(ieee80211_r_ctry) / sizeof(ieee80211_r_ctry[0])); i++)
+	for (i = 0; i < nitems(ieee80211_r_ctry); i++)
 		if (ieee80211_r_ctry[i].cn_code == code)
 			return (ieee80211_r_ctry[i].cn_domain);
 
