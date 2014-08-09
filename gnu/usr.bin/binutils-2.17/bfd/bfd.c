@@ -75,7 +75,7 @@ CODE_FRAGMENT
 .  bfd_boolean mtime_set;
 .
 .  {* File modified time, if mtime_set is TRUE.  *}
-.  long mtime;
+.  time_t mtime;
 .
 .  {* Reserved for an unimplemented file locking extension.  *}
 .  int ifd;

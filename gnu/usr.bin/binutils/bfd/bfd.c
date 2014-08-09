@@ -46,11 +46,10 @@ CODE_FRAGMENT
 .  const struct bfd_target *xvec;
 .
 .  {* To avoid dragging too many header files into every file that
-.     includes `<<bfd.h>>', IOSTREAM has been declared as a "char *",
-.     and MTIME as a "long".  Their correct types, to which they
-.     are cast when used, are "FILE *" and "time_t".    The iostream
-.     is the result of an fopen on the filename.  However, if the
-.     BFD_IN_MEMORY flag is set, then iostream is actually a pointer
+.     includes `<<bfd.h>>', IOSTREAM has been declared as a "void *".
+.     Its correct type, to which it's cast when used, is "FILE *". The
+.     iostream is the result of an fopen on the filename.  However, if
+.     the BFD_IN_MEMORY flag is set, then iostream is actually a pointer
 .     to a bfd_in_memory struct.  *}
 .  void *iostream;
 .
@@ -79,7 +78,7 @@ CODE_FRAGMENT
 .  bfd_boolean mtime_set;
 .
 .  {* File modified time, if mtime_set is TRUE.  *}
-.  long mtime;
+.  time_t mtime;
 .
 .  {* Reserved for an unimplemented file locking extension.  *}
 .  int ifd;
