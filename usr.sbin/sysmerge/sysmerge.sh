@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.147 2014/08/09 12:45:03 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.148 2014/08/09 12:46:51 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -235,7 +235,7 @@ copy_pkg_samples() {
 			#   been created at this point
 			# - we have no knowledge of the required owner,
 			#   group and mode of the directory hierarchy
-			#   because the dir is not a @sample
+			#   because the dir is not a @sample (e.g. mail/femail,-chroot)
 			# - it's not the job of sysmerge to repair
 			#   broken pkg installations
 			#_pkghier=$(dirname ${_sample[5]})
