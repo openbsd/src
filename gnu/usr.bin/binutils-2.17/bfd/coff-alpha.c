@@ -2204,7 +2204,7 @@ alpha_ecoff_get_elt_at_filepos (archive, filepos)
   bim->buffer = buf;
 
   nbfd->mtime_set = TRUE;
-  nbfd->mtime = strtol (hdr->ar_date, (char **) NULL, 10);
+  nbfd->mtime = strtoll (hdr->ar_date, (char **) NULL, 10);
 
   nbfd->flags |= BFD_IN_MEMORY;
   nbfd->iostream = (PTR) bim;
