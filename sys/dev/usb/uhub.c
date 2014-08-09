@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.70 2014/08/09 09:45:14 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.71 2014/08/09 09:48:32 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -112,7 +112,10 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->device;
 	struct usbd_hub *hub = NULL;
-	usb_hub_descriptor_t hubdesc;
+	union {
+		usb_hub_descriptor_t	hs;
+		usb_hub_ss_descriptor_t	ss;
+	} hd;
 	int p, port, nports, powerdelay;
 	struct usbd_interface *iface;
 	usb_endpoint_descriptor_t *ed;
@@ -138,11 +141,19 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Get hub descriptor. */
-	err = usbd_get_hub_descriptor(dev, &hubdesc, 1);
-	nports = hubdesc.bNbrPorts;
-	powerdelay = (hubdesc.bPwrOn2PwrGood * UHD_PWRON_FACTOR);
-	if (!err && nports > 7)
-		usbd_get_hub_descriptor(dev, &hubdesc, nports);
+	if (dev->speed == USB_SPEED_SUPER) {
+		err = usbd_get_hub_ss_descriptor(dev, &hd.ss, 1);
+		if (!err && nports > 7)
+			usbd_get_hub_ss_descriptor(dev, &hd.ss, nports);
+	} else {
+		err = usbd_get_hub_descriptor(dev, &hd.hs, 1);
+		if (!err && nports > 7)
+			usbd_get_hub_descriptor(dev, &hd.hs, nports);
+	}
+
+	nports = hd.hs.bNbrPorts;
+	powerdelay = (hd.hs.bPwrOn2PwrGood * UHD_PWRON_FACTOR);
+
 	if (err) {
 		DPRINTF("%s: getting hub descriptor failed, error=%s\n",
 			 sc->sc_dev.dv_xname, usbd_errstr(err));
@@ -150,9 +161,15 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #ifdef UHUB_DEBUG
-	for (nremov = 0, port = 1; port <= nports; port++)
-		if (!UHD_NOT_REMOV(&hubdesc, port))
-			nremov++;
+	for (nremov = 0, port = 1; port <= nports; port++) {
+		if (dev->speed == USB_SPEED_SUPER) {
+			if (!UHD_NOT_REMOV(&hd.ss, port))
+				nremov++;
+		} else {
+			if (!UHD_NOT_REMOV(&hd.hs, port))
+				nremov++;
+		}
+	}
 
 	printf("%s: %d port%s with %d removable, %s powered",
 	       sc->sc_dev.dv_xname, nports, nports != 1 ? "s" : "",
