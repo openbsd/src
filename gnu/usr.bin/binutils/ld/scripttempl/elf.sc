@@ -181,8 +181,6 @@ OUTPUT_ARCH(${OUTPUT_ARCH})
 ENTRY(${ENTRY})
 
 ${RELOCATING+${LIB_SEARCH_DIRS}}
-${RELOCATING+/* Do we need any of these for elf?
-   __DYNAMIC = 0; ${STACKZERO+${STACKZERO}} ${SHLIB_PATH+${SHLIB_PATH}}  */}
 ${RELOCATING+${EXECUTABLE_SYMBOLS}}
 ${RELOCATING+${INPUT_FILES}}
 ${RELOCATING- /* For some reason, the Solaris linker makes bad executables
@@ -319,12 +317,10 @@ cat <<EOF
   .fini_array   ${RELOCATING-0} : { *(.fini_array) }
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__fini_array_end = .);}}
 
-  ${RELOCATING+${CREATE_SHLIB-PROVIDE (__openbsd_randomdata_start = .);}}
   .openbsd.randomdata   ${RELOCATING-0} :
   {
     *(.openbsd.randomdata${RELOCATING+ .openbsd.randomdata.*})
   }
-  ${RELOCATING+${CREATE_SHLIB-PROVIDE (__openbsd_randomdata_end = .);}}
 
   .data         ${RELOCATING-0} :
   {
