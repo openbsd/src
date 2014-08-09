@@ -252,7 +252,7 @@ struct objfile
     /* The modification timestamp of the object file, as of the last time
        we read its symbols.  */
 
-    long mtime;
+    time_t mtime;
 
     /* Obstack to hold objects that should be freed when we load a new symbol
        table from this object file. */
