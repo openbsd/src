@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.20 2014/08/08 14:34:11 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.21 2014/08/09 10:32:36 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -991,8 +991,7 @@ xhci_device_setup(struct xhci_softc *sc, struct usbd_device *dev, uint8_t slot)
 	if (error)
 		return (error);
 
-	usb_syncmem(&sdev->octx_dma, 0, sc->sc_pagesize,
-	    BUS_DMASYNC_POSTREAD);
+	usb_syncmem(&sdev->octx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_POSTREAD);
 
 	/* Get output slot context. */
 	sctx = KERNADDR(&sdev->octx_dma, 0);
@@ -1004,8 +1003,6 @@ xhci_device_setup(struct xhci_softc *sc, struct usbd_device *dev, uint8_t slot)
 
 	return (0);
 }
-
-
 
 int
 xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
@@ -1088,14 +1085,21 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
 	sdev->input_ctx->add_flags = htole32(XHCI_INCTX_MASK_DCI(xp->dci));
 
 	/* Setup the slot context */
-	sdev->slot_ctx->info_lo = htole32(XHCI_SCTX_DCI(xp->dci));
-	sdev->slot_ctx->info_hi = 0;
+	sdev->slot_ctx->info_lo = htole32(
+	    XHCI_SCTX_DCI(xp->dci) | XHCI_SCTX_SPEED(speed)
+	);
+	sdev->slot_ctx->info_hi = htole32(XHCI_SCTX_RHPORT(port));
 	sdev->slot_ctx->tt = 0;
 	sdev->slot_ctx->state = 0;
 
-	if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_CONTROL) {
-		sdev->slot_ctx->info_lo |= htole32(XHCI_SCTX_SPEED(speed));
-		sdev->slot_ctx->info_hi |= htole32(XHCI_SCTX_RHPORT(port));
+	if (pipe->device->hub != NULL) {
+		int nports = pipe->device->hub->nports;
+
+		/* Unmask the slot context */
+		sdev->input_ctx->add_flags |= htole32(XHCI_INCTX_MASK_DCI(0));
+
+		sdev->slot_ctx->info_lo |= htole32(XHCI_SCTX_HUB(1));
+		sdev->slot_ctx->info_hi |= htole32(XHCI_SCTX_NPORTS(nports));
 	}
 
 	usb_syncmem(&sdev->ictx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
@@ -1106,12 +1110,12 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
 		error = xhci_cmd_configure_ep(sc, xp->slot,
 		    DMAADDR(&sdev->ictx_dma, 0));
 
+	usb_syncmem(&sdev->octx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_POSTREAD);
+
 	if (error) {
 		xhci_ring_free(sc, &xp->ring);
 		return (EIO);
 	}
-
-	usb_syncmem(&sdev->octx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_POSTREAD);
 
 	return (0);
 }
