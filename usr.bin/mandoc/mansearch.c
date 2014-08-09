@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.30 2014/08/08 17:36:21 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.31 2014/08/09 14:24:49 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -112,7 +112,8 @@ mansearch_setup(int start)
 		}
 
 		pagecache = mmap(NULL, PC_PAGESIZE * PC_NUMPAGES,
-		    PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+		    PROT_READ | PROT_WRITE,
+		    MAP_SHARED | MAP_ANON, -1, 0);
 
 		if (MAP_FAILED == pagecache) {
 			perror("mmap");
