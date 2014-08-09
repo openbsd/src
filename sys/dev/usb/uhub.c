@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.71 2014/08/09 09:48:32 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.72 2014/08/09 09:58:11 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -414,9 +414,11 @@ uhub_explore(struct usbd_device *dev)
 		}
 
 		/* Connected */
-		if (!(status & UPS_PORT_POWER))
-			printf("%s: strange, connected port %d has no power\n",
+		if (!(status & (UPS_PORT_POWER|UPS_PORT_POWER_SS))) {
+			printf("%s: connected port %d has no power\n",
 			       sc->sc_dev.dv_xname, port);
+			continue;
+		}
 
 		/* Wait for maximum device power up time. */
 		usbd_delay_ms(dev, USB_PORT_POWERUP_DELAY);
@@ -443,15 +445,31 @@ uhub_explore(struct usbd_device *dev)
 			continue;
 		}
 
-		/* Figure out device speed */
+		/*
+		 * Figure out device speed.  This is a bit tricky because
+		 * UPS_PORT_POWER_SS and UPS_LOW_SPEED share the same bit.
+		 */
+		if ((status & UPS_PORT_POWER) == 0)
+			status &= ~UPS_PORT_POWER_SS;
+
 		if (status & UPS_SUPER_SPEED)
 			speed = USB_SPEED_SUPER;
 		else if (status & UPS_HIGH_SPEED)
 			speed = USB_SPEED_HIGH;
 		else if (status & UPS_LOW_SPEED)
 			speed = USB_SPEED_LOW;
-		else
-			speed = USB_SPEED_FULL;
+		else {
+			/*
+			 * If there is no power bit set, it is certainly
+			 * a Super Speed device, so use the speed of its
+			 * parent hub.
+			 */
+			if (status & UPS_PORT_POWER)
+				speed = USB_SPEED_FULL;
+			else
+				speed = sc->sc_hub->speed;
+		}
+
 		/* Get device info and set its address. */
 		err = usbd_new_device(&sc->sc_dev, dev->bus,
 			  dev->depth + 1, speed, port, up);
