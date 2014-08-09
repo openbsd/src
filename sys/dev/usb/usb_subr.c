@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.106 2014/07/12 18:48:53 tedu Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.107 2014/08/09 09:45:14 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1070,7 +1070,7 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	    adev = hub, hub = hub->myhub)
 		;
 	if (hub) {
-		for (p = 0; p < hub->hub->hubdesc.bNbrPorts; p++) {
+		for (p = 0; p < hub->hub->nports; p++) {
 			if (hub->hub->ports[p].device == adev) {
 				dev->myhsport = &hub->hub->ports[p];
 				goto found;
@@ -1367,8 +1367,7 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 
 	if (dev->hub) {
 		for (i = 0;
-		    i < nitems(di->udi_ports) &&
-		    i < dev->hub->hubdesc.bNbrPorts; i++) {
+		    i < nitems(di->udi_ports) && i < dev->hub->nports; i++) {
 			p = &dev->hub->ports[i];
 			if (p->device)
 				err = p->device->address;
@@ -1385,7 +1384,7 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 			}
 			di->udi_ports[i] = err;
 		}
-		di->udi_nports = dev->hub->hubdesc.bNbrPorts;
+		di->udi_nports = dev->hub->nports;
 	} else
 		di->udi_nports = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.69 2014/07/12 18:48:52 tedu Exp $ */
+/*	$OpenBSD: uhub.c,v 1.70 2014/08/09 09:45:14 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -113,7 +113,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	struct usbd_device *dev = uaa->device;
 	struct usbd_hub *hub = NULL;
 	usb_hub_descriptor_t hubdesc;
-	int p, port, nports, pwrdly;
+	int p, port, nports, powerdelay;
 	struct usbd_interface *iface;
 	usb_endpoint_descriptor_t *ed;
 	struct usbd_tt *tts = NULL;
@@ -140,6 +140,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	/* Get hub descriptor. */
 	err = usbd_get_hub_descriptor(dev, &hubdesc, 1);
 	nports = hubdesc.bNbrPorts;
+	powerdelay = (hubdesc.bPwrOn2PwrGood * UHD_PWRON_FACTOR);
 	if (!err && nports > 7)
 		usbd_get_hub_descriptor(dev, &hubdesc, nports);
 	if (err) {
@@ -183,7 +184,8 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	dev->hub = hub;
 	dev->hub->hubsoftc = sc;
 	hub->explore = uhub_explore;
-	hub->hubdesc = hubdesc;
+	hub->nports = nports;
+	hub->powerdelay = powerdelay;
 
 	if (!dev->self_powered && dev->powersrc->parent != NULL &&
 	    !dev->powersrc->parent->self_powered) {
@@ -277,10 +279,6 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	/* XXX should check for none, individual, or ganged power? */
-
-	pwrdly = dev->hub->hubdesc.bPwrOn2PwrGood * UHD_PWRON_FACTOR
-	    + USB_EXTRA_POWER_UP_TIME;
 	for (port = 1; port <= nports; port++) {
 		/* Turn the power on. */
 		err = usbd_set_port_feature(dev, port, UHF_PORT_POWER);
@@ -290,9 +288,9 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 			       usbd_errstr(err));
 	}
 
-	/* Wait for stable power.  Root hubs delay in their event thread. */
+	/* Wait for stable power. */
         if (dev->powersrc->parent != NULL)
-		usbd_delay_ms(dev, pwrdly);
+		usbd_delay_ms(dev, powerdelay + USB_EXTRA_POWER_UP_TIME);
 
 	/* The usual exploration will finish the setup. */
 
@@ -314,7 +312,6 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 int
 uhub_explore(struct usbd_device *dev)
 {
-	usb_hub_descriptor_t *hd = &dev->hub->hubdesc;
 	struct uhub_softc *sc = dev->hub->hubsoftc;
 	struct usbd_port *up;
 	usbd_status err;
@@ -332,7 +329,7 @@ uhub_explore(struct usbd_device *dev)
 	if (dev->depth > USB_HUB_MAX_DEPTH)
 		return (EOPNOTSUPP);
 
-	for (port = 1; port <= hd->bNbrPorts; port++) {
+	for (port = 1; port <= dev->hub->nports; port++) {
 		up = &dev->hub->ports[port-1];
 		err = usbd_get_port_status(dev, port, &up->status);
 		if (err) {
@@ -478,7 +475,7 @@ uhub_detach(struct device *self, int flags)
 	struct uhub_softc *sc = (struct uhub_softc *)self;
 	struct usbd_hub *hub = sc->sc_hub->hub;
 	struct usbd_port *rup;
-	int port, nports;
+	int port;
 
 	if (hub == NULL)		/* Must be partially working */
 		return (0);
@@ -486,8 +483,7 @@ uhub_detach(struct device *self, int flags)
 	usbd_abort_pipe(sc->sc_ipipe);
 	usbd_close_pipe(sc->sc_ipipe);
 
-	nports = hub->hubdesc.bNbrPorts;
-	for(port = 0; port < nports; port++) {
+	for (port = 0; port < hub->nports; port++) {
 		rup = &hub->ports[port];
 		if (rup->device != NULL) {
 			usbd_detach(rup->device, self);

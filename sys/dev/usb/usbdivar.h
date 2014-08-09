@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.61 2014/07/09 18:15:04 mpi Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.62 2014/08/09 09:45:14 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -90,7 +90,8 @@ struct usbd_port {
 struct usbd_hub {
 	int		      (*explore)(struct usbd_device *);
 	void		       *hubsoftc;
-	usb_hub_descriptor_t	hubdesc;
+	int			 nports;
+	u_int8_t		 powerdelay;
 	struct usbd_port        *ports;
 };
 

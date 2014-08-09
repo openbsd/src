@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.100 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: usb.c,v 1.101 2014/08/09 09:45:14 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -835,8 +835,8 @@ usb_explore(void *v)
 		timersub(&now, &sc->sc_ptime, &waited);
 		waited_ms = waited.tv_sec * 1000 + waited.tv_usec / 1000;
 
-		pwrdly = sc->sc_bus->root_hub->hub->hubdesc.bPwrOn2PwrGood * 
-		    UHD_PWRON_FACTOR + USB_EXTRA_POWER_UP_TIME;
+		pwrdly = sc->sc_bus->root_hub->hub->powerdelay +
+		    USB_EXTRA_POWER_UP_TIME;
 		if (pwrdly > waited_ms)
 			usb_delay_ms(sc->sc_bus, pwrdly - waited_ms);
 	}
