@@ -2770,6 +2770,9 @@ Frame_Chunk;
 /* A marker for a col_type that means this column was never referenced
    in the frame info.  */
 #define DW_CFA_unreferenced (-1)
+/* Like DW_CFA_unreferenced, except indicating that it was referenced before
+   (and therefore needs space in the columnar output). */
+#define DW_CFA_placeholder  (-2)
 
 static void
 frame_need_space (Frame_Chunk *fc, int reg)
@@ -2851,6 +2854,9 @@ frame_display_row (Frame_Chunk *fc, int *need_col_headers, int *max_regs)
 	      break;
 	    case DW_CFA_val_expression:
 	      strcpy (tmp, "vexp");
+	      break;
+	    case DW_CFA_placeholder:
+	      tmp[0] = '\0';
 	      break;
 	    default:
 	      strcpy (tmp, "n/a");
@@ -3311,7 +3317,9 @@ display_debug_frames (struct dwarf_section *section,
 	    case DW_CFA_restore:
 	      if (! do_debug_frames_interp)
 		printf ("  DW_CFA_restore: r%d\n", opa);
-	      fc->col_type[opa] = cie->col_type[opa];
+	      if ((fc->col_type[opa] = cie->col_type[opa]) ==
+		  DW_CFA_unreferenced)
+		fc->col_type[opa] = DW_CFA_placeholder;
 	      fc->col_offset[opa] = cie->col_offset[opa];
 	      break;
 
@@ -3385,7 +3393,9 @@ display_debug_frames (struct dwarf_section *section,
 	      reg = LEB ();
 	      if (! do_debug_frames_interp)
 		printf ("  DW_CFA_restore_extended: r%ld\n", reg);
-	      fc->col_type[reg] = cie->col_type[reg];
+	      if ((fc->col_type[opa] = cie->col_type[opa]) ==
+		  DW_CFA_unreferenced)
+		fc->col_type[opa] = DW_CFA_placeholder;
 	      fc->col_offset[reg] = cie->col_offset[reg];
 	      break;
 
