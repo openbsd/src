@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.30 2014/08/09 08:54:03 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.31 2014/08/09 09:07:14 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -80,10 +80,10 @@ Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, digit, or underscore,
 and may contain any of those characters.
 Macro names may not be reserved words (for example,
-.Ic table ,
-.Ic relay ,
+.Ic directory ,
+.Ic log ,
 or
-.Ic timeout ) .
+.Ic root ) .
 Macros are not expanded inside quotes.
 .Pp
 For example:
@@ -125,15 +125,12 @@ Valid options are:
 .Bl -tag -width Ds
 .It Ic max request body Ar number
 Set the maximum body size in bytes that the client can send to the server.
-The default value is
-.Ar 1048576
-bytes (1M).
+The default value is 1048576 bytes (1M).
 .It Ic max requests Ar number
 Set the maximum number of requests per persistent HTTP connection.
 Persistent connections are negotiated using the Keep-Alive header in
 HTTP/1.0 and enabled by default in HTTP/1.1.
-The default maximum number of requests per connection is
-.Ar 100 .
+The default maximum number of requests per connection is 100.
 .It Ic timeout Ar seconds
 Specify the inactivity timeout in seconds for accepted sessions.
 The default timeout is 600 seconds (10 minutes).
@@ -152,7 +149,7 @@ If not specified, it defaults to
 .Pa index.html .
 .It Ic no index
 Disable the directory index.
-.Nm httpd
+.Xr httpd 8
 will neither display nor generate a directory index.
 .El
 .It Oo Ic no Oc Ic fastcgi Op Ic socket Ar socket
@@ -162,7 +159,7 @@ The
 is a local path name within the
 .Xr chroot 2
 root directory of
-.Nm httpd
+.Xr httpd 8
 and defaults to
 .Pa /run/slowcgi.sock .
 .It Ic listen on Ar address Oo Ic ssl Oc Ic port Ar number
@@ -209,26 +206,28 @@ Set the logging style.
 The
 .Ar style
 can be
-.Ar common ,
-.Ar combined
+.Cm common ,
+.Cm combined
 or
-.Ar connection .
+.Cm connection .
 The styles
-.Ar common
+.Cm common
 and
-.Ar combined
+.Cm combined
 write a log entry after each request similar to the standard Apache
 and nginx access log formats.
 The style
-.Ar connection
+.Cm connection
 writes a summarized log entry after each connection,
 that can have multiple requests,
 similar to the format that is used by
 .Xr relayd 8 .
 If not specified, the default is
-.Ar common .
+.Cm common .
 .It Oo Ic no Oc Ic syslog
-Enable or disable logging to syslog instead of the log files.
+Enable or disable logging to
+.Xr syslog 3
+instead of the log files.
 .El
 .It Ic root Ar directory
 Set the document root of the server.
@@ -253,7 +252,7 @@ should contain a PEM encoded certificate.
 .It Ic ciphers Ar string
 Specify the SSL cipher string.
 If not specified, the default value
-.Ar HIGH:!aNULL
+.Qq HIGH:!aNULL
 will be used (strong crypto cipher suites without anonymous DH).
 See the CIPHERS section of
 .Xr openssl 1
@@ -278,7 +277,7 @@ Valid options are:
 .It Ic backlog Ar number
 Set the maximum length the queue of pending connections may grow to.
 The backlog option is 10 by default and is limited by the
-.Ic kern.somaxconn
+.Va kern.somaxconn
 .Xr sysctl 8
 variable.
 .It Ic ip minttl Ar number
@@ -289,17 +288,11 @@ Generalized TTL Security Mechanism (GTSM)
 according to RFC 5082.
 .It Ic ip ttl Ar number
 Change the default time-to-live value in the IP headers.
-.It Xo
-.Op Ic no
-.Ic nodelay
-.Xc
+.It Oo Ic no Oc Ic nodelay
 Enable the TCP NODELAY option for this connection.
 This is recommended to avoid delays in the relayed data stream,
 e.g. for SSH connections.
-.It Xo
-.Op Ic no
-.Ic sack
-.Xc
+.It Oo Ic no Oc Ic sack
 Use selective acknowledgements for this connection.
 .It Ic socket buffer Ar number
 Set the socket-level buffer size for input and output for this
@@ -309,14 +302,14 @@ This will affect the TCP window size.
 .El
 .Sh TYPES
 Configure the supported media types.
-.Nm httpd
+.Xr httpd 8
 will set the
 .Ar Content-Type
 of the response header based on the file extension listed in the
 .Ic types
 section.
 If not specified,
-.Nm httpd
+.Xr httpd 8
 will use built-in media types for
 .Ar text/css ,
 .Ar text/html ,
@@ -344,7 +337,7 @@ One or more names can be specified per line.
 The following example will start one server that is pre-forked two
 times and listening on the primary IP address of the network interface
 that is a member of the
-.Ar egress
+.Qq egress
 group.
 It additionally defines some media types overriding the defaults.
 .Bd -literal -offset indent
