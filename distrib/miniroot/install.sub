@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.788 2014/07/28 14:12:14 kettenis Exp $
+#	$OpenBSD: install.sub,v 1.789 2014/08/09 21:51:29 halex Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1813,12 +1813,12 @@ apply()
 
 	if [[ -n $aperture ]]; then
 		echo "machdep.allowaperture=$aperture # See xf86(4)" \
-		    >>/mnt/etc/sysctl.conf
+			>>/mnt/etc/sysctl.conf
 	fi
 
 	if [[ -n $lidsuspend ]]; then
 		echo "machdep.lidsuspend=1 # Try to suspend on lid close" \
-		    >>/mnt/etc/sysctl.conf
+			>>/mnt/etc/sysctl.conf
 	fi
 
 	if [[ $xdm == y && -x /mnt/usr/X11R6/bin/xdm ]]; then
@@ -1856,7 +1856,7 @@ questions() {
 	if [[ -n $DISPLAY ]]; then
 		if [[ -n $(scan_dmesg '/^[a-z]*[01]: aperture needed/p') ]]; then
 			ask_yn "Do you expect to run the X Window System?" yes &&
-			    aperture=$MDXAPERTURE
+				aperture=$MDXAPERTURE
 		fi
 		if [[ -n $MDXDM ]]; then
 			ask_yn "Do you want the X Window System to be started by xdm(1)?"
@@ -1864,7 +1864,7 @@ questions() {
 		fi
 		if [[ -n $MDLID ]]; then
 			ask_yn "Do you want to suspend on lid close?" yes && \
-			    lidsuspend=$resp
+				lidsuspend=$resp
 		fi
 	fi
 
@@ -1894,16 +1894,16 @@ upgrade_to64time_t() {
 # Feed the random pool some entropy before we read from it
 feed_random() {
 	(dmesg; cat $CGI_INFO /*.conf; sysctl; route -n show; df;
-	    ifconfig -A; hostname) >/dev/random 2>&1
+		ifconfig -A; hostname) >/dev/random 2>&1
 	if [[ -e /mnt/var/db/host.random ]]; then
 		dd if=/mnt/var/db/host.random of=/dev/random bs=65536 count=1 \
-		    status=none
+			status=none
 	fi
 }
 
 store_random() {
 	dd if=/dev/random of=/mnt/var/db/host.random bs=65536 count=1 \
-	    status=none
+		status=none
 	dd if=/dev/random of=/mnt/etc/random.seed bs=512 count=1 status=none
 	chmod 600 /mnt/var/db/host.random /mnt/etc/random.seed
 }
@@ -2091,8 +2091,8 @@ get_responsefile() {
 		else
 			while :; do
 				ask_which "network interface" \
-				    "should be used for the initial DHCP request" \
-				    "$*"
+					"should be used for the initial DHCP request" \
+					"$*"
 				isin "$resp" $* && _ifdev=$resp && break
 			done
 		fi
