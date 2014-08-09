@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.52 2014/08/09 12:34:05 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.53 2014/08/09 12:45:03 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -135,6 +135,13 @@ Diff mode.
 In this mode,
 .Nm
 will not take any automatic action, allowing for a full diff comparison.
+.It Fl p
+.Xr packages 7
+mode.
+In this mode,
+.Nm
+will compare the default configuration files of installed packages
+against their target on the system (@sample).
 .It Fl S
 Do not verify signatures for tgz sets.
 This option has no effect when sets aren't used.
@@ -152,6 +159,13 @@ A tarball path specified as a URL will be passed
 to
 .Xr ftp 1 .
 .El
+.Pp
+The
+.Fl p
+option is mutually exclusive with
+.Fl s
+and
+.Fl x .
 .Pp
 Files and directories can be excluded from comparison
 by listing them in the file

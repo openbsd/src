@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.146 2014/08/09 12:34:05 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.147 2014/08/09 12:45:03 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -20,8 +20,9 @@
 
 umask 0022
 
-unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE EGSUM ETCSUM NEED_NEWALIASES
-unset NEWGRP NEWUSR NEED_REBOOT NOSIGCHECK SRCDIR SRCSUM TGZ XETCSUM XTGZ
+unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE EGSUM ETCSUM
+unset NEED_NEWALIASES NEWGRP NEWUSR NEED_REBOOT NOSIGCHECK PKGMODE
+unset PKGSUM SRCDIR SRCSUM TGZ XETCSUM XTGZ
 
 # forced variables
 WRKDIR=$(mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX) || exit 1
@@ -51,7 +52,7 @@ clean_src() {
 # they did not exist
 restore_sum() {
 	local i _i
-	for i in ${DESTDIR}/${DBDIR}/.{${SRCSUM},${ETCSUM},${XETCSUM},${EGSUM}}.bak; do
+	for i in ${DESTDIR}/${DBDIR}/.{${SRCSUM},${ETCSUM},${XETCSUM},${EGSUM},${PKGSUM}}.bak; do
 		_i=$(basename ${i} .bak)
 		if [ -f "${i}" ]; then
 			mv ${i} ${DESTDIR}/${DBDIR}/${_i#.}
@@ -63,7 +64,7 @@ restore_sum() {
 }
 
 usage() {
-	echo "usage: ${0##*/} [-bdS] [-s [src | etcXX.tgz]] [-x xetcXX.tgz]" >&2
+	echo "usage: ${0##*/} [-bdS] [-p | [-s [src | etcXX.tgz]] [-x xetcXX.tgz]]" >&2
 }
 
 warn() {
@@ -99,6 +100,7 @@ fi
 # stores sum filename in ETCSUM or XETCSUM (see eval);
 extract_sets() {
 	[[ -n ${SRCDIR} ]] && return
+	[[ -n ${PKGMODE} ]] && return
 	local _e _x _set _tgz
 
 	[[ -f ${WRKDIR}/${TGZ##*/} ]] && _e=etc
@@ -123,6 +125,7 @@ extract_sets() {
 # fetch and verify sets, abort on failure
 sm_fetch_and_verify() {
 	[[ -n ${SRCDIR} ]] && return
+	[[ -n ${PKGMODE} ]] && return
 	local _file _sigdone _url;
 	local _key="/etc/signify/openbsd-${RELINT}-base.pub"
 
@@ -161,6 +164,99 @@ prepare_src() {
 		error_rm_wrkdir "failed to populate from ${SRCDIR} and create checksum file"
 }
 
+# get pkg @sample information
+exec_espie() {
+	TEMPROOT=${TEMPROOT} /usr/bin/perl <<'EOF'
+use strict;
+use warnings;
+
+package OpenBSD::PackingElement;
+
+sub walk_sample
+{
+}
+
+package OpenBSD::PackingElement::Sampledir;
+sub walk_sample
+{
+	my $item = shift;
+	print "0-DIR", " ",
+	      $item->{owner} // "root", " ",
+	      $item->{group} // "wheel", " ",
+	      $item->{mode} // "0755", " ",
+	      $ENV{'TEMPROOT'}, $item->fullname,
+	      "\n";
+}
+
+package OpenBSD::PackingElement::Sample;
+sub walk_sample
+{
+	my $item = shift;
+	print "1-FILE", " ",
+	      $item->{owner} // "root", " ",
+	      $item->{group} // "wheel", " ",
+	      $item->{mode} // "0644", " ",
+	      $item->{copyfrom}->fullname, " ",
+	      $ENV{'TEMPROOT'}, $item->fullname,
+	      "\n";
+}
+
+package main;
+use OpenBSD::PackageInfo;
+use OpenBSD::PackingList;
+
+for my $i (installed_packages()) {
+	my $plist = OpenBSD::PackingList->from_installation($i);
+	$plist->walk_sample();
+}
+EOF
+}
+
+copy_pkg_samples() {
+	[[ -z ${PKGMODE} ]] && return
+
+	local _install_args _l _ret _sample
+	PKGSUM=pkgsum
+
+	# access to base system hierarchy is implied in packages
+	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${TEMPROOT} -U >/dev/null
+	mtree -qdef ${DESTDIR}/etc/mtree/BSD.x11.dist -p ${TEMPROOT} -U >/dev/null
+
+	# @sample directories are processed first
+	exec_espie | sort -u | while read _l; do
+		set -A _sample -- ${_l}
+		_install_args="-o ${_sample[1]} -g ${_sample[2]} -m ${_sample[3]}"
+		if [ "${_sample[0]}" = "0-DIR" ]; then
+			install -d ${_install_args} ${_sample[4]} || return 1
+		else
+			# the directory we want to copy the @sample file
+			# into does not exist, ignore @sample and move on for now:
+			# - if the directory was a @sample, it would have
+			#   been created at this point
+			# - we have no knowledge of the required owner,
+			#   group and mode of the directory hierarchy
+			#   because the dir is not a @sample
+			# - it's not the job of sysmerge to repair
+			#   broken pkg installations
+			#_pkghier=$(dirname ${_sample[5]})
+			#if [ ! -d "${_pkghier}" ]; then
+			#	install -d -o root -g wheel -m 0755 ${_pkghier}
+			#fi
+			if [ -d "${DESTDIR}/$(dirname ${_sample[5]})" ]; then
+				install ${_install_args} ${_sample[4]} ${_sample[5]} || return 1
+			fi
+		fi
+	done
+	_ret=$?
+	if [ "${_ret}" -eq 0 ]; then
+		cd ${TEMPROOT} && find . -type f | sort | xargs sha256 -h ${WRKDIR}/${PKGSUM} || \
+			_ret=1
+	fi
+	if [ "${_ret}" -ne 0 ]; then
+		error_rm_wrkdir "failed to populate packages @samples and create checksum file"
+	fi
+}
+
 sm_populate() {
 	local cf i _array _d _r _D _R CF_DIFF CF_FILES CURSUM IGNORE_FILES
 	echo "===> Populating temporary root under ${TEMPROOT}"
@@ -175,10 +271,12 @@ sm_populate() {
 	# - after extracting the sets (so we have the new files)
 	# - before running distribution-etc-root-var (using files from SRCDIR)
 	extract_sets
+	copy_pkg_samples
 	install_user_group
 	prepare_src
 
-	for i in ${SRCSUM} ${ETCSUM} ${XETCSUM}; do
+	# EGSUM is used differently, see sm_check_an_eg()
+	for i in ${SRCSUM} ${ETCSUM} ${XETCSUM} ${PKGSUM}; do
 		if [ -f ${DESTDIR}/${DBDIR}/${i} ]; then
 			# delete file in temproot if it has not changed since last release
 			# and is present in current installation
@@ -316,7 +414,7 @@ install_user_group() {
 		local _gr="${TEMPROOT}/etc/group"
 	fi
 
-	# when running with '-x' only
+	# when running with '-x' only or in PKGMODE
 	[ ! -f ${_pw} -o ! -f ${_gr} ] && return
 
 	while read l; do
@@ -606,6 +704,7 @@ sm_compare() {
 		# several files are generated from scripts so CVS ID is not a
 		# reliable way of detecting changes; leave for a full diff.
 		if [[ -z ${DIFFMODE} && \
+			-z ${PKGMODE} && \
 			${COMPFILE} != ./etc/@(fbtab|ttys) && \
 			-z ${IS_LINK} ]]; then
 			CVSID1=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${DESTDIR}${COMPFILE#.} 2>/dev/null)
@@ -725,7 +824,7 @@ sm_post() {
 }
 
 
-while getopts bdSs:x: arg; do
+while getopts bdpSs:x: arg; do
 	case ${arg} in
 	b)
 		BATCHMODE=1
@@ -733,8 +832,15 @@ while getopts bdSs:x: arg; do
 	d)
 		DIFFMODE=1
 		;;
+	p)
+		PKGMODE=1
+		;;
 	s)
 		if [ -d "${OPTARG}" ]; then
+			if [ -n "${PKGMODE}" ]; then
+				usage
+				error_rm_wrkdir "conflicting options"
+			fi
 			SRCDIR="${OPTARG}"
 			[[ -f ${SRCDIR}/etc/Makefile ]] || \
 				error_rm_wrkdir "${SRCDIR}: invalid \"src\" tree, missing ${SRCDIR}/etc/Makefile"
@@ -762,16 +868,23 @@ if (($# != 0)); then
 fi
 
 if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
-	if [ -n "${SM_PATH}" ]; then
-		TGZ="${SM_PATH}/etc${RELINT}.tgz"
-		if [ -d ${DESTDIR}/etc/X11 ]; then
-			XTGZ="${SM_PATH}/xetc${RELINT}.tgz"
+	if [ -z "${PKGMODE}" ]; then
+		if [ -n "${SM_PATH}" ]; then
+			TGZ="${SM_PATH}/etc${RELINT}.tgz"
+			if [ -d ${DESTDIR}/etc/X11 ]; then
+				XTGZ="${SM_PATH}/xetc${RELINT}.tgz"
+			fi
+		elif [ -f "/usr/src/etc/Makefile" ]; then
+			SRCDIR=/usr/src
+		else
+			usage
+			error_rm_wrkdir "please specify a valid path to src or (x)etcXX.tgz"
 		fi
-	elif [ -f "/usr/src/etc/Makefile" ]; then
-		SRCDIR=/usr/src
-	else
+	fi
+else
+	if [ -n "${PKGMODE}" ]; then
 		usage
-		error_rm_wrkdir "please specify a valid path to src or (x)etcXX.tgz"
+		error_rm_wrkdir "conflicting options"
 	fi
 fi
 
