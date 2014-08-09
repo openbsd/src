@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.47 2014/08/07 18:21:13 reyk Exp $
+.\"	$OpenBSD: httpd.8,v 1.48 2014/08/09 08:49:48 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 7 2014 $
+.Dd $Mdocdate: August 9 2014 $
 .Dt HTTPD 8
 .Os
 .Sh NAME
@@ -24,15 +24,17 @@
 .Nm
 .Op Fl dnv
 .Op Fl D Ar macro Ns = Ns Ar value
-.Op Fl f Ar config_file
+.Op Fl f Ar file
 .Sh DESCRIPTION
 The
 .Nm
-daemon is a HTTP server with FastCGI and SSL support.
+daemon is an HTTP server with FastCGI and SSL support.
 .Pp
 The FastCGI implementation has optional socket support.
 .Nm
-can log to syslog or per-server files with several standard formats.
+can log to
+.Xr syslog 3
+or per-server files with several standard formats.
 .Pp
 .Nm
 rereads its configuration file when it receives
@@ -42,11 +44,21 @@ and reopens log files when it receives
 .Pp
 The options are as follows:
 .Bl -tag -width Dssmacro=value
+.It Fl D Ar macro Ns = Ns Ar value
+Set a
+.Ar macro
+to a
+.Ar value .
+Macros can be referenced in the configuration files.
 .It Fl d
 Debug mode.
 Create one server and don't detach or become a daemon.
 This allows for easy monitoring of
 .Nm .
+.It Fl f Ar file
+Specifies the configuration file.
+The default is
+.Pa /etc/httpd.conf .
 .It Fl n
 Check that the configuration is valid, but don't start any servers.
 .It Fl v
@@ -54,27 +66,19 @@ Verbose mode.
 Multiple
 .Fl v
 options increases the verbosity.
-.It Fl D Ar macro Ns = Ns Ar value
-Set a
-.Ar macro
-to a
-.Ar value .
-Macros can be referenced in the configuration files.
-.It Fl f Ar config_file
-Specifies the name of the configuration file.
 .El
 .Sh FILES
-.Bl -tag -width "/var/www/logs/access.logXX" -compact
+.Bl -tag -width "/etc/ssl/private/server.key" -compact
 .It /etc/httpd.conf
 Default configuration file.
+.It /etc/ssl/private/server.key
+Default SSL/TLS server key.
+.It /etc/ssl/server.crt
+Default SSL/TLS server certificate.
 .It /var/run/httpd.sock
 .Ux Ns -domain
 socket used for communication with
 .Nm .
-.It /etc/ssl/server.crt
-Default SSL/TLS server certificate.
-.It /etc/ssl/private/server.key
-Default SSL/TLS server key.
 .It /var/www/logs/access.log
 Default access log file.
 .It /var/www/logs/error.log
