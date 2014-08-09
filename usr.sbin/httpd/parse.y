@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.34 2014/08/06 20:29:54 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.35 2014/08/09 07:35:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -693,6 +693,9 @@ medianamesl	: STRING				{
 				YYERROR;
 			}
 			free($1);
+
+			if (!loadcfg)
+				break;
 
 			if (media_add(conf->sc_mediatypes, &media) == NULL) {
 				yyerror("failed to add media type");
