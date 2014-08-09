@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.122 2014/07/13 20:51:08 krw Exp $ */
+/* $OpenBSD: server-client.c,v 1.123 2014/08/09 07:33:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -647,7 +647,7 @@ server_client_reset_state(struct client *c)
 	 */
 	mode = s->mode;
 	if ((c->tty.mouse.flags & MOUSE_RESIZE_PANE) &&
-	    !(mode & (MODE_MOUSE_BUTTON|MODE_MOUSE_ANY)))
+	    !(mode & MODE_MOUSE_BUTTON))
 		mode |= MODE_MOUSE_BUTTON;
 
 	/*

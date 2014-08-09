@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.47 2014/05/27 12:49:36 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.48 2014/08/09 07:33:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -601,8 +601,6 @@ format_window_pane(struct format_tree *ft, struct window_pane *wp)
 	    !!(wp->base.mode & MODE_MOUSE_STANDARD));
 	format_add(ft, "mouse_button_flag", "%d",
 	    !!(wp->base.mode & MODE_MOUSE_BUTTON));
-	format_add(ft, "mouse_any_flag", "%d",
-	    !!(wp->base.mode & MODE_MOUSE_ANY));
 	format_add(ft, "mouse_utf8_flag", "%d",
 	    !!(wp->base.mode & MODE_MOUSE_UTF8));
 
