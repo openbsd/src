@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.29 2014/08/06 20:29:54 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.30 2014/08/09 08:54:03 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 6 2014 $
+.Dd $Mdocdate: August 9 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -96,12 +96,6 @@ server "default" {
 .Sh GLOBAL CONFIGURATION
 Here are the settings that can be set globally:
 .Bl -tag -width Ds
-.It Ic prefork Ar number
-Run the specified number of server processes.
-This increases the performance and prevents delays when connecting
-to a server.
-.Xr httpd 8
-runs 3 server processes by default.
 .It Ic chroot Ar directory
 Set the
 .Xr chroot 2
@@ -109,6 +103,12 @@ directory.
 If not specified, it defaults to
 .Pa /var/www ,
 the home directory of the www user.
+.It Ic prefork Ar number
+Run the specified number of server processes.
+This increases the performance and prevents delays when connecting
+to a server.
+.Xr httpd 8
+runs 3 server processes by default.
 .El
 .Sh SERVERS
 The configured web servers.
@@ -285,7 +285,7 @@ variable.
 This option for the underlying IP connection may be used to discard packets
 with a TTL lower than the specified value.
 This can be used to implement the
-.Ar Generalized TTL Security Mechanism (GTSM)
+Generalized TTL Security Mechanism (GTSM)
 according to RFC 5082.
 .It Ic ip ttl Ar number
 Change the default time-to-live value in the IP headers.
