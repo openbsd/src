@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.145 2014/08/08 16:38:25 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.146 2014/08/09 12:34:05 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -76,7 +76,7 @@ report() {
 
 # remove newly created work directory and exit with status 1
 error_rm_wrkdir() {
-	(($#)) && echo "**** ERROR: $@"
+	(($#)) && echo "!!!! ERROR: $@"
 	restore_sum
 	clean_src
 	# do not remove the entire WRKDIR in case sysmerge stopped half
@@ -606,7 +606,7 @@ sm_compare() {
 		# several files are generated from scripts so CVS ID is not a
 		# reliable way of detecting changes; leave for a full diff.
 		if [[ -z ${DIFFMODE} && \
-			${COMPFILE} != ./etc/@(fbtab|sysctl.conf|ttys) && \
+			${COMPFILE} != ./etc/@(fbtab|ttys) && \
 			-z ${IS_LINK} ]]; then
 			CVSID1=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${DESTDIR}${COMPFILE#.} 2>/dev/null)
 			CVSID2=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${COMPFILE} 2>/dev/null) || CVSID2=none
