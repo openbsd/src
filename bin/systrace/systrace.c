@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.58 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.59 2014/08/09 22:44:15 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -753,7 +753,8 @@ main(int argc, char **argv)
 
 	if (pidattach == 0) {
 		/* Run a command and attach to it */
-		if ((args = calloc(argc + 1, sizeof(char *))) == NULL)
+		args = reallocarray(NULL, argc + 1, sizeof(char *));
+		if (args == NULL)
 			err(1, "malloc");
 
 		for (i = 0; i < argc; i++)
