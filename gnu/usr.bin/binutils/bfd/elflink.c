@@ -89,6 +89,9 @@ _bfd_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
       h = (struct elf_link_hash_entry *) bh;
       h->elf_link_hash_flags |= ELF_LINK_HASH_DEF_REGULAR;
       h->type = STT_OBJECT;
+      if (ELF_ST_VISIBILITY (h->other) != STV_INTERNAL)
+	    h->other = (h->other & ~ELF_ST_VISIBILITY (-1)) | STV_HIDDEN;
+      (*bed->elf_backend_hide_symbol) (info, h, TRUE);
 
       if (! info->executable
 	  && ! bfd_elf_link_record_dynamic_symbol (info, h))
@@ -219,6 +222,9 @@ _bfd_elf_link_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
   h = (struct elf_link_hash_entry *) bh;
   h->elf_link_hash_flags |= ELF_LINK_HASH_DEF_REGULAR;
   h->type = STT_OBJECT;
+  if (ELF_ST_VISIBILITY (h->other) != STV_INTERNAL)
+	h->other = (h->other & ~ELF_ST_VISIBILITY (-1)) | STV_HIDDEN;
+  (*bed->elf_backend_hide_symbol) (info, h, TRUE);
 
   if (! info->executable
       && ! bfd_elf_link_record_dynamic_symbol (info, h))
@@ -284,6 +290,9 @@ _bfd_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
       h = (struct elf_link_hash_entry *) bh;
       h->elf_link_hash_flags |= ELF_LINK_HASH_DEF_REGULAR;
       h->type = STT_OBJECT;
+      if (ELF_ST_VISIBILITY (h->other) != STV_INTERNAL)
+	    h->other = (h->other & ~ELF_ST_VISIBILITY (-1)) | STV_HIDDEN;
+      (*bed->elf_backend_hide_symbol) (info, h, TRUE);
 
       if (! info->executable
 	  && ! bfd_elf_link_record_dynamic_symbol (info, h))
