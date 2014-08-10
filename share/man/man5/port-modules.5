@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.179 2014/07/13 14:14:41 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.180 2014/08/10 21:09:26 zhuk Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 13 2014 $
+.Dd $Mdocdate: August 10 2014 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -1515,20 +1515,22 @@ to reference corresponding KDE4 SC version outside x11/kde4*.
 .Pp
 The x11/kde4 module sets the following variables unless they're already
 set by a port:
-CONFIGURE_STYLE
-EXTRACT_SUFX
-ONLY_FOR_ARCHS
-PORTHOME
-SEPARATE_BUILD
-SHARED_ONLY
+.Ev CONFIGURE_STYLE ,
+.Ev EXTRACT_SUFX ,
+.Ev ONLY_FOR_ARCHS ,
+.Ev PORTHOME ,
+.Ev SEPARATE_BUILD
+and
+.Ev SHARED_ONLY .
 .Pp
 The x11/kde4 module modifies the following variables if needed:
-BUILD_DEPENDS
-CONFIGURE_ARGS
-CONFIGURE_ENV
-LIB_DEPENDS
-RUN_DEPENDS
-WANTLIB
+.Ev BUILD_DEPENDS ,
+.Ev CONFIGURE_ARGS ,
+.Ev CONFIGURE_ENV ,
+.Ev LIB_DEPENDS ,
+.Ev RUN_DEPENDS ,
+and
+.Ev WANTLIB .
 .Pp
 The x11/kde4 module automatically adds devel/cmake to
 .Ev MODULES
