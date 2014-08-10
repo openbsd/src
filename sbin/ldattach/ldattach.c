@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldattach.c,v 1.14 2009/10/31 02:53:11 ckuethe Exp $	*/
+/*	$OpenBSD: ldattach.c,v 1.15 2014/08/10 02:09:35 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -272,6 +272,7 @@ main(int argc, char *argv[])
 	/* line discpline specific setup */
 	switch (ldisc) {
 	case NMEADISC:
+	case MSTSDISC:
 	case ENDRUNDISC:
 		if (ioctl(fd, TIOCSTSTAMP, &tstamps) < 0) {
 			warnx("TIOCSTSTAMP");
