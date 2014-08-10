@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldtoa.c,v 1.1 2008/09/07 20:36:08 martynas Exp $	*/
+/*	$OpenBSD: ldtoa.c,v 1.2 2014/08/10 02:15:18 guenther Exp $	*/
 /*-
  * Copyright (c) 2003 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -30,7 +30,7 @@
 #include <machine/ieee.h>
 #endif /* !__vax__ */
 #include <float.h>
-#include <inttypes.h>
+#include <stdint.h>
 #include <limits.h>
 #include <math.h>
 #include <stdlib.h>
