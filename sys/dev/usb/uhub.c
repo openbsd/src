@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.72 2014/08/09 09:58:11 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.73 2014/08/10 13:32:14 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -143,16 +143,17 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	/* Get hub descriptor. */
 	if (dev->speed == USB_SPEED_SUPER) {
 		err = usbd_get_hub_ss_descriptor(dev, &hd.ss, 1);
+		nports = hd.ss.bNbrPorts;
+		powerdelay = (hd.ss.bPwrOn2PwrGood * UHD_PWRON_FACTOR);
 		if (!err && nports > 7)
 			usbd_get_hub_ss_descriptor(dev, &hd.ss, nports);
 	} else {
 		err = usbd_get_hub_descriptor(dev, &hd.hs, 1);
+		nports = hd.hs.bNbrPorts;
+		powerdelay = (hd.hs.bPwrOn2PwrGood * UHD_PWRON_FACTOR);
 		if (!err && nports > 7)
 			usbd_get_hub_descriptor(dev, &hd.hs, nports);
 	}
-
-	nports = hd.hs.bNbrPorts;
-	powerdelay = (hd.hs.bPwrOn2PwrGood * UHD_PWRON_FACTOR);
 
 	if (err) {
 		DPRINTF("%s: getting hub descriptor failed, error=%s\n",
