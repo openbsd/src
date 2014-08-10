@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.2 2013/03/28 09:36:03 eric Exp $	*/
+/*	$OpenBSD: common.c,v 1.3 2014/08/10 07:31:58 guenther Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -56,14 +56,13 @@ struct kv kv_family[] = {
 	{ AF_UNIX,	"unix" },
 	{ AF_INET,	"inet" },
 	{ AF_INET6,	"inet6" },
-	{ AF_IMPLINK,	"implink" },
-	{ AF_BLUETOOTH,	"bluetooth" },
 	{ 0,	NULL, }
 };
 struct kv kv_socktype[] = {
-	{ SOCK_STREAM,	"stream" },
-	{ SOCK_DGRAM,	"dgram" },
-	{ SOCK_RAW,	"raw" },
+	{ SOCK_STREAM,		"stream" },
+	{ SOCK_DGRAM,		"dgram" },
+	{ SOCK_RAW,		"raw" },
+	{ SOCK_SEQPACKET,	"seqpacket" },
 	{ 0,	NULL, }
 };
 struct kv kv_protocol[] = {
