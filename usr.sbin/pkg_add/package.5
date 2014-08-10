@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.21 2014/07/23 14:43:44 espie Exp $
+.\"	$OpenBSD: package.5,v 1.22 2014/08/10 11:26:07 jasper Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: July 23 2014 $
+.Dd $Mdocdate: August 10 2014 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -78,7 +78,7 @@ which are optional: the package description (+DESC),
 a display message (+DISPLAY), etc.
 .Pp
 The basic ustar format has some limitations with respect to file names.
-Packages now use the 
+Packages now use the
 .Qq extended record specification
 (header type x)
 for long links and long file names.
