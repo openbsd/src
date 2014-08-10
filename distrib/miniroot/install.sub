@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.789 2014/08/09 21:51:29 halex Exp $
+#	$OpenBSD: install.sub,v 1.790 2014/08/10 16:32:28 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -945,9 +945,7 @@ v6_config() {
 		;;
 	rtsol)	[[ ! -x /sbin/rtsol ]] && { echo "No /sbin/rtsol."; return; }
 		ifconfig $_ifs up
-		if rtsol -F $_ifs; then
-			echo "up\nrtsol" >>$_hn
-		fi
+		rtsol -F $_ifs && echo "up\nrtsol" >>$_hn
 		return
 		;;
 	esac
@@ -1161,10 +1159,10 @@ install_files() {
 	for _f in $THESETS; do
 		isin $_f $_files || continue;
 		_sets=$(addel $_f $_sets)
-		if [[ -z $DISPLAY && ! -d /mnt/etc/X11 ]]; then
-			# No displays and X isn't installed ==> skip X sets
-			isin ${_f%${VERSION}.tgz} xbase xetc xshare xfont xserv && continue
-		fi
+		# No displays and X isn't installed ==> skip X sets
+		[[ -z $DISPLAY && ! -d /mnt/etc/X11 ]] &&
+			isin ${_f%${VERSION}.tgz} xbase xetc xshare xfont xserv &&
+			continue
 		isin $_f $DEFAULTSETS "site$VERSION-$(hostname -s).tgz" &&
 			_get_sets=$(addel $_f $_get_sets)
 	done
@@ -1797,9 +1795,7 @@ donetconfig() {
 
 apply()
 {
-	if [[ $sshd == n ]]; then
-		echo "sshd_flags=NO" >>/mnt/etc/rc.conf.local
-	fi
+	[[ $sshd == n ]] && echo "sshd_flags=NO" >>/mnt/etc/rc.conf.local
 	if [[ $sshd_disableroot == y ]]; then
 		sed "/^#\(PermitRootLogin\) yes/s//\1 no/" \
 			< /mnt/etc/ssh/sshd_config >/tmp/sshd_config
@@ -1811,19 +1807,16 @@ apply()
 		echo "servers ${ntpd_server%% *}" >>/mnt/etc/ntpd.conf
 	fi
 
-	if [[ -n $aperture ]]; then
+	[[ -n $aperture ]] &&
 		echo "machdep.allowaperture=$aperture # See xf86(4)" \
 			>>/mnt/etc/sysctl.conf
-	fi
 
-	if [[ -n $lidsuspend ]]; then
+	[[ -n $lidsuspend ]] &&
 		echo "machdep.lidsuspend=1 # Try to suspend on lid close" \
 			>>/mnt/etc/sysctl.conf
-	fi
 
-	if [[ $xdm == y && -x /mnt/usr/X11R6/bin/xdm ]]; then
+	[[ $xdm == y && -x /mnt/usr/X11R6/bin/xdm ]] &&
 		echo "xdm_flags=" >>/mnt/etc/rc.conf.local
-	fi
 
 	if [[ $defcons == y ]]; then
 		cp /mnt/etc/ttys /tmp/ttys
