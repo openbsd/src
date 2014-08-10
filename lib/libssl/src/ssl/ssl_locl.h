@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.63 2014/07/28 04:23:12 guenther Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.64 2014/08/10 14:42:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -475,11 +475,6 @@ typedef struct sess_cert_st {
 /*#define SSL_DEBUG	*/
 /*#define RSA_DEBUG	*/ 
 
-#define ssl_put_cipher_by_char(ssl,ciph,ptr) \
-		((ssl)->method->put_cipher_by_char((ciph),(ptr)))
-#define ssl_get_cipher_by_char(ssl,ptr) \
-		((ssl)->method->get_cipher_by_char(ptr))
-
 /* This is for the SSLv3/TLSv1.0 differences in crypto/hash stuff
  * It is a bit of a mess of functions, but hell, think of it as
  * an opaque structure :-) */
@@ -576,7 +571,7 @@ int ssl_cipher_ptr_id_cmp(const SSL_CIPHER * const *ap,
 STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, unsigned char *p,
     int num, STACK_OF(SSL_CIPHER) **skp);
 int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
-    unsigned char *p, int (*put_cb)(const SSL_CIPHER *, unsigned char *));
+    unsigned char *p);
 STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *meth,
     STACK_OF(SSL_CIPHER) **pref, STACK_OF(SSL_CIPHER) **sorted,
     const char *rule_str);
@@ -664,7 +659,6 @@ long ssl3_default_timeout(void);
 int ssl23_read(SSL *s, void *buf, int len);
 int ssl23_peek(SSL *s, void *buf, int len);
 int ssl23_write(SSL *s, const void *buf, int len);
-int ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
 long ssl23_default_timeout(void);
 
 long tls1_default_timeout(void);

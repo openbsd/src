@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.31 2014/07/11 08:17:36 miod Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.32 2014/08/10 14:42:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -139,8 +139,6 @@ const SSL_METHOD SSLv23_client_method_data = {
 	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.ssl_ctrl = ssl3_ctrl,
 	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl23_put_cipher_by_char,
 	.ssl_pending = ssl_undefined_const_function,
 	.num_ciphers = ssl3_num_ciphers,
 	.get_cipher = ssl3_get_cipher,
@@ -360,8 +358,7 @@ ssl23_client_hello(SSL *s)
 		*(p++) = 0;
 
 		/* Ciphers supported (using SSL 3.0/TLS 1.0 format) */
-		i = ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), &(p[2]),
-		    ssl3_put_cipher_by_char);
+		i = ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), &p[2]);
 		if (i == 0) {
 			SSLerr(SSL_F_SSL23_CLIENT_HELLO,
 			    SSL_R_NO_CIPHERS_AVAILABLE);

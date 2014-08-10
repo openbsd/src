@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.79 2014/07/28 04:23:12 guenther Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.80 2014/08/10 14:42:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -184,8 +184,6 @@ const SSL_METHOD SSLv3_server_method_data = {
 	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.ssl_ctrl = ssl3_ctrl,
 	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
 	.ssl_pending = ssl3_pending,
 	.num_ciphers = ssl3_num_ciphers,
 	.get_cipher = ssl3_get_cipher,

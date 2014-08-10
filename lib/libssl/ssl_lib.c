@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.78 2014/07/12 22:33:39 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.79 2014/08/10 14:42:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1367,10 +1367,9 @@ SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
 }
 
 int
-ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p,
-    int (*put_cb)(const SSL_CIPHER *, unsigned char *))
+ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p)
 {
-	int		 i, j = 0;
+	int		 i;
 	SSL_CIPHER	*c;
 	unsigned char	*q;
 
@@ -1380,13 +1379,14 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p,
 
 	for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
 		c = sk_SSL_CIPHER_value(sk, i);
+
 		/* Skip TLS v1.2 only ciphersuites if lower than v1.2 */
 		if ((c->algorithm_ssl & SSL_TLSV1_2) &&
 		    (TLS1_get_client_version(s) < TLS1_2_VERSION))
 			continue;
-		j = put_cb ? put_cb(c, p) : ssl_put_cipher_by_char(s, c, p);
-		p += j;
+		p += ssl3_put_cipher_by_char(c, p);
 	}
+
 	/*
 	 * If p == q, no ciphers and caller indicates an error. Otherwise
 	 * add SCSV if not renegotiating.
@@ -1395,9 +1395,7 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p,
 		static SSL_CIPHER scsv = {
 			0, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
 		};
-		j = put_cb ? put_cb(&scsv, p) :
-		    ssl_put_cipher_by_char(s, &scsv, p);
-		p += j;
+		p += ssl3_put_cipher_by_char(&scsv, p);
 	}
 
 	return (p - q);
@@ -1414,7 +1412,7 @@ ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num,
 	if (s->s3)
 		s->s3->send_connection_binding = 0;
 
-	n = ssl_put_cipher_by_char(s, NULL, NULL);
+	n = ssl3_put_cipher_by_char(NULL, NULL);
 	if ((num % n) != 0) {
 		SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,
 		    SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
@@ -1446,7 +1444,7 @@ ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num,
 			continue;
 		}
 
-		c = ssl_get_cipher_by_char(s, p);
+		c = ssl3_get_cipher_by_char(p);
 		p += n;
 		if (c != NULL) {
 			if (!sk_SSL_CIPHER_push(sk, c)) {

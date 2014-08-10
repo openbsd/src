@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_lib.c,v 1.16 2014/07/11 08:17:36 miod Exp $ */
+/* $OpenBSD: s23_lib.c,v 1.17 2014/08/10 14:42:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,21 +64,6 @@ long
 ssl23_default_timeout(void)
 {
 	return (300);
-}
-
-int
-ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
-{
-	long l;
-
-	/* We can write SSLv2 and SSLv3 ciphers */
-	if (p != NULL) {
-		l = c->id;
-		p[0] = ((unsigned char)(l >> 16L))&0xFF;
-		p[1] = ((unsigned char)(l >> 8L))&0xFF;
-		p[2] = ((unsigned char)(l     ))&0xFF;
-	}
-	return (3);
 }
 
 int
