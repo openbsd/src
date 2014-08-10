@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.28 2014/06/13 02:12:17 matthew Exp $	*/
+/*	$OpenBSD: string.h,v 1.29 2014/08/10 02:49:24 guenther Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -119,9 +119,6 @@ char	*stpcpy(char *__restrict, const char *__restrict);
 char	*stpncpy(char *__restrict, const char *__restrict, size_t);
 char	*strndup(const char *, size_t);
 size_t	 strnlen(const char *, size_t);
-#endif
-
-#if __POSIX_VISIBLE >= 200809
 char	*strsignal(int);
 #endif
 
