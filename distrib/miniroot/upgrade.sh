@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.78 2014/08/03 16:00:15 rpe Exp $
+#	$OpenBSD: upgrade.sh,v 1.79 2014/08/10 14:59:22 rpe Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -52,16 +52,16 @@ done
 ROOTDEV=$resp
 
 echo -n "Checking root filesystem (fsck -fp /dev/$ROOTDEV)..."
-fsck -fp /dev/$ROOTDEV >/dev/null 2>&1 || { echo "FAILED." ; exit ; }
+fsck -fp /dev/$ROOTDEV >/dev/null 2>&1 || { echo "FAILED."; exit; }
 echo	"OK."
 
 echo -n "Mounting root filesystem (mount -o ro /dev/$ROOTDEV /mnt)..."
-mount -o ro /dev/$ROOTDEV /mnt || { echo "FAILED." ; exit ; }
+mount -o ro /dev/$ROOTDEV /mnt || { echo "FAILED."; exit; }
 echo	"OK."
 
 # The fstab, hosts and myname files are required.
 for _f in fstab hosts myname; do
-	[[ -f /mnt/etc/$_f ]] || { echo "No /mnt/etc/$_f!" ; exit ; }
+	[[ -f /mnt/etc/$_f ]] || { echo "No /mnt/etc/$_f!"; exit; }
 	cp /mnt/etc/$_f /tmp/$_f
 done
 hostname $(stripcom /tmp/myname)
@@ -79,7 +79,7 @@ munge_fstab
 check_fs
 
 # Mount filesystems in /etc/fstab.
-umount /mnt || { echo "Can't umount $ROOTDEV!" ; exit ; }
+umount /mnt || { echo "Can't umount $ROOTDEV!"; exit; }
 mount_fs
 
 feed_random

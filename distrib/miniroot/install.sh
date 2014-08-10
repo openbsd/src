@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.254 2014/08/09 21:51:29 halex Exp $
+#	$OpenBSD: install.sh,v 1.255 2014/08/10 14:59:22 rpe Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -98,11 +98,11 @@ while :; do
 	# /tmp/fstab.$DISK is created here with 'disklabel -f' or
 	# 'disklabel -F' depending on the value of $FSTABFLAG.
 	rm -f /tmp/*.$DISK
-	md_prep_disklabel $DISK || { DISK= ; continue ; }
+	md_prep_disklabel $DISK || { DISK=; continue; }
 
 	# Make sure there is a '/' mount point.
 	grep -qs " / ffs " /tmp/fstab.$ROOTDISK ||
-		{ DISK= ; echo "'/' must be configured!" ; continue ; }
+		{ DISK=; echo "'/' must be configured!"; continue; }
 
 	if [[ -f /tmp/fstab.$DISK ]]; then
 		# Avoid duplicate mount points on different disks.
@@ -114,7 +114,7 @@ while :; do
 			fi
 			# Non-swap mountpoints must be in only one file.
 			[[ /tmp/fstab.$DISK == $(grep -l " $_mp " /tmp/fstab.*) ]] ||
-				{ _rest=$DISK ; DISK= ; break ; }
+				{ _rest=$DISK; DISK=; break; }
 		done </tmp/fstab.$DISK
 		if [[ -z $DISK ]]; then
 			# Duplicate mountpoint.
@@ -151,7 +151,7 @@ for _mp in $(bsort $_fsent); do
 
 	# Only '/' is neither nodev nor nosuid. i.e. it can obviously
 	# *always* contain devices or setuid programs.
-	[[ $_mp == / ]] && { echo " 1 1" ; continue ; }
+	[[ $_mp == / ]] && { echo " 1 1"; continue; }
 
 	# Every other mounted filesystem is nodev. If the user chooses
 	# to mount /dev as a separate filesystem, then on the user's
@@ -259,7 +259,7 @@ fi
 
 # Append dhclient.conf to installed dhclient.conf.
 _f=dhclient.conf
-[[ -f /tmp/$_f ]] && { cat /tmp/$_f >>/mnt/etc/$_f ; rm /tmp/$_f ; }
+[[ -f /tmp/$_f ]] && { cat /tmp/$_f >>/mnt/etc/$_f; rm /tmp/$_f; }
 
 # Possible files to copy from /tmp: fstab hostname.* kbdtype mygate
 #     myname ttys boot.conf resolv.conf sysctl.conf resolv.conf.tail
