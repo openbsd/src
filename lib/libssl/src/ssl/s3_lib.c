@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.74 2014/08/10 14:57:04 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.75 2014/08/10 15:06:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -282,7 +282,9 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 168,
 	},
 
-	/* The Ephemeral DH ciphers */
+	/*
+	 * Ephemeral DH (DHE) ciphers.
+	 */
 
 	/* Cipher 12 */
 	{
@@ -396,7 +398,9 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 168,
 	},
 
-	/* New AES ciphersuites */
+	/*
+	 * AES ciphersuites.
+	 */
 
 	/* Cipher 2F */
 	{
@@ -742,6 +746,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 
 	/* GOST Ciphersuites */
 
+	/* Cipher 80 */
 	{
 		.valid = 1,
 		.name = "GOST94-GOST89-GOST89",
@@ -757,6 +762,8 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256
 	},
+
+	/* Cipher 81 */
 	{
 		.valid = 1,
 		.name = "GOST2001-GOST89-GOST89",
@@ -772,6 +779,8 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256
 	},
+
+	/* Cipher 82 */
 	{
 		.valid = 1,
 		.name = "GOST94-NULL-GOST94",
@@ -786,6 +795,8 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 0,
 		.alg_bits = 0
 	},
+
+	/* Cipher 83 */
 	{
 		.valid = 1,
 		.name = "GOST2001-NULL-GOST94",
@@ -869,8 +880,9 @@ SSL_CIPHER ssl3_ciphers[] = {
 	},
 #endif /* OPENSSL_NO_CAMELLIA */
 
-
-	/* GCM ciphersuites from RFC5288 */
+	/*
+	 * GCM ciphersuites from RFC5288.
+	 */
 
 	/* Cipher 9C */
 	{
@@ -1709,6 +1721,8 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
+
+	/* Cipher FF01 */
 	{
 		.valid = 1,
 		.name = "GOST-GOST94",
@@ -1723,6 +1737,8 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256
 	},
+
+	/* Cipher FF02 */
 	{
 		.valid = 1,
 		.name = "GOST-GOST89MAC",
@@ -1737,6 +1753,8 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256
 	},
+
+	/* Cipher FF03 */
 	{
 		.valid = 1,
 		.name = "GOST-GOST89STREAM",
@@ -1755,6 +1773,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 #endif
 
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+	/* Cipher CC13 */
 	{
 		.valid = 1,
 		.name = TLS1_TXT_ECDHE_RSA_WITH_CHACHA20_POLY1305,
@@ -1771,6 +1790,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 0,
 	},
 
+	/* Cipher CC14 */
 	{
 		.valid = 1,
 		.name = TLS1_TXT_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
@@ -1787,6 +1807,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 0,
 	},
 
+	/* Cipher CC15 */
 	{
 		.valid = 1,
 		.name = TLS1_TXT_DHE_RSA_WITH_CHACHA20_POLY1305,
