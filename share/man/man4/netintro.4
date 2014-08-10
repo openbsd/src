@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netintro.4,v 1.46 2014/07/11 22:10:51 tedu Exp $
+.\"	$OpenBSD: netintro.4,v 1.47 2014/08/10 07:23:59 guenther Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)netintro.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: July 11 2014 $
+.Dd $Mdocdate: August 10 2014 $
 .Dt NETINTRO 4
 .Os
 .Sh NAME
@@ -158,10 +158,9 @@ The following address values for
 are known to the system
 (and additional formats are defined for possible future implementation):
 .Bd -literal
-#define AF_LOCAL	1	/* local to host (pipes, portals) */
+#define AF_LOCAL	1	/* local to host */
 #define AF_INET		2	/* internetwork: UDP, TCP, etc. */
 #define AF_INET6	24	/* IPv6 */
-#define AF_BLUETOOTH	32	/* Bluetooth */
 #define AF_MPLS		33	/* Multiprotocol Label Switching */
 .Ed
 .Pp
