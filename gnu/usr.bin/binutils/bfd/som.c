@@ -6249,7 +6249,7 @@ som_write_armap (abfd, elength, map, orl_count, stridx)
     lst.checksum ^= *p++;
 
   sprintf (hdr.ar_name, "/               ");
-  sprintf (hdr.ar_date, "%ld", bfd_ardata (abfd)->armap_timestamp);
+  sprintf (hdr.ar_date, "%lld", (long long)bfd_ardata (abfd)->armap_timestamp);
   sprintf (hdr.ar_uid, "%ld", (long) getuid ());
   sprintf (hdr.ar_gid, "%ld", (long) getgid ());
   sprintf (hdr.ar_mode, "%-8o", (unsigned int) statbuf.st_mode);

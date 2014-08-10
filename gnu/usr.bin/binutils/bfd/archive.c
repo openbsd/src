@@ -1937,7 +1937,7 @@ bsd_write_armap (bfd *arch,
   bfd_ardata (arch)->armap_timestamp = statbuf.st_mtime + ARMAP_TIME_OFFSET;
   bfd_ardata (arch)->armap_datepos = (SARMAG
 				      + offsetof (struct ar_hdr, ar_date[0]));
-  sprintf (hdr.ar_date, "%ld", bfd_ardata (arch)->armap_timestamp);
+  sprintf (hdr.ar_date, "%lld", (long long)bfd_ardata (arch)->armap_timestamp);
   sprintf (hdr.ar_uid, "%ld", (long) getuid ());
   sprintf (hdr.ar_gid, "%ld", (long) getgid ());
   sprintf (hdr.ar_size, "%-10d", (int) mapsize);
@@ -2030,7 +2030,7 @@ _bfd_archive_bsd_update_armap_timestamp (bfd *arch)
 
   /* Prepare an ASCII version suitable for writing.  */
   memset (hdr.ar_date, 0, sizeof (hdr.ar_date));
-  sprintf (hdr.ar_date, "%ld", bfd_ardata (arch)->armap_timestamp);
+  sprintf (hdr.ar_date, "%lld", (long long)bfd_ardata (arch)->armap_timestamp);
   for (i = 0; i < sizeof (hdr.ar_date); i++)
     if (hdr.ar_date[i] == '\0')
       (hdr.ar_date)[i] = ' ';
