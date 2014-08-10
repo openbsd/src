@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.138 2014/08/10 11:00:36 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.139 2014/08/10 11:18:57 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -726,6 +726,7 @@ ohci_init(struct ohci_softc *sc)
 		}
 		pool_init(ohcixfer, sizeof(struct ohci_xfer), 0, 0, 0,
 		    "ohcixfer", NULL);
+		pool_setipl(ohcixfer, IPL_SOFTUSB);
 	}
 
 	/* XXX determine alignment by R/W */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.165 2014/08/10 11:00:35 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.166 2014/08/10 11:18:57 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -334,6 +334,7 @@ ehci_init(struct ehci_softc *sc)
 		}
 		pool_init(ehcixfer, sizeof(struct ehci_xfer), 0, 0, 0,
 		    "ehcixfer", NULL);
+		pool_setipl(ehcixfer, IPL_SOFTUSB);
 	}
 
 	/* frame list size at default, read back what we got and use that */

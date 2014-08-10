@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.22 2014/08/10 11:00:36 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.23 2014/08/10 11:18:57 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -245,6 +245,7 @@ xhci_init(struct xhci_softc *sc)
 		}
 		pool_init(xhcixfer, sizeof(struct xhci_xfer), 0, 0, 0,
 		    "xhcixfer", NULL);
+		pool_setipl(xhcixfer, IPL_SOFTUSB);
 	}
 
 	hcr = XREAD4(sc, XHCI_HCCPARAMS);

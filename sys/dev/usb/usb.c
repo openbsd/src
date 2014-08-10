@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.101 2014/08/09 09:45:14 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.102 2014/08/10 11:18:57 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -195,8 +195,7 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 	usb_init_task(&sc->sc_explore_task, usb_explore, sc,
 	    USB_TASK_TYPE_EXPLORE);
 
-	/* XXX we should have our own level */
-	sc->sc_bus->soft = softintr_establish(IPL_SOFTNET,
+	sc->sc_bus->soft = softintr_establish(IPL_SOFTUSB,
 	    sc->sc_bus->methods->soft_intr, sc->sc_bus);
 	if (sc->sc_bus->soft == NULL) {
 		printf("%s: can't register softintr\n", sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.130 2014/08/10 11:00:36 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.131 2014/08/10 11:18:57 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -373,6 +373,7 @@ uhci_init(struct uhci_softc *sc)
 		}
 		pool_init(uhcixfer, sizeof(struct uhci_xfer), 0, 0, 0,
 		    "uhcixfer", NULL);
+		pool_setipl(uhcixfer, IPL_SOFTUSB);
 	}
 
 	/* Restore saved SOF. */
