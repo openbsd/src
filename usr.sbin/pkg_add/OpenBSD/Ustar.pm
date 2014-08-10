@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.82 2014/08/10 10:03:46 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.83 2014/08/10 10:04:39 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -488,6 +488,7 @@ package OpenBSD::Ustar::Object;
 sub recheck_owner
 {
 	my $entry = shift;
+	# XXX weird format to prevent cvs from expanding OpenBSD id
 	$entry->{uid} //= $OpenBSD::Ustar::uidcache
 	    ->lookup($entry->{uname});
 	$entry->{gid} //= $OpenBSD::Ustar::gidcache
