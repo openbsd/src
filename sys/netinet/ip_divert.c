@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.28 2014/08/10 03:24:51 lteo Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.29 2014/08/10 03:26:20 lteo Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -126,7 +126,7 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 		break;
 	case IPPROTO_ICMP:
-		min_hdrlen = sizeof(struct icmp);
+		min_hdrlen = ICMP_MINLEN;
 		m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 		break;
 	default:
