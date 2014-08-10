@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-errno.h,v 1.1 2002/06/04 17:20:04 provos Exp $	*/
+/*	$OpenBSD: systrace-errno.h,v 1.2 2014/08/10 00:20:55 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -115,6 +115,14 @@
 #define SYSTRACE_EAUTH 80
 #define SYSTRACE_ENEEDAUTH 81
 #define SYSTRACE_EIPSEC 82
-#define SYSTRACE_ELAST 82
+#define SYSTRACE_ENOATTR 83
+#define SYSTRACE_EILSEQ 84
+#define SYSTRACE_ENOMEDIUM 85
+#define SYSTRACE_EMEDIUMTYPE 86
+#define SYSTRACE_EOVERFLOW 87
+#define SYSTRACE_ECANCELED 88
+#define SYSTRACE_EIDRM 89
+#define SYSTRACE_ENOMSG 90
+#define SYSTRACE_ENOTSUP 91
 
 #endif
