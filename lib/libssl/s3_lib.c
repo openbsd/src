@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.73 2014/08/07 20:02:23 miod Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.74 2014/08/10 14:57:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -200,22 +200,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 0,
 	},
 
-	/* Cipher 03 */
-	{
-		.valid = 0,	/* Weakened 40-bit export cipher. */
-		.name = SSL3_TXT_RSA_RC4_40_MD5,
-		.id = SSL3_CK_RSA_RC4_40_MD5,
-		.algorithm_mkey = SSL_kRSA,
-		.algorithm_auth = SSL_aRSA,
-		.algorithm_enc = SSL_RC4,
-		.algorithm_mac = SSL_MD5,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = 0,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 40,
-		.alg_bits = 128,
-	},
-
 	/* Cipher 04 */
 	{
 		.valid = 1,
@@ -248,22 +232,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 128,
 	},
 
-	/* Cipher 06 */
-	{
-		.valid = 0,	/* Weakened 40-bit export cipher. */
-		.name = SSL3_TXT_RSA_RC2_40_MD5,
-		.id = SSL3_CK_RSA_RC2_40_MD5,
-		.algorithm_mkey = SSL_kRSA,
-		.algorithm_auth = SSL_aRSA,
-		.algorithm_enc = SSL_RC2,
-		.algorithm_mac = SSL_MD5,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = 0,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 40,
-		.alg_bits = 128,
-	},
-
 	/* Cipher 07 */
 #ifndef OPENSSL_NO_IDEA
 	{
@@ -281,22 +249,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 128,
 	},
 #endif
-
-	/* Cipher 08 */
-	{
-		.valid = 0,	/* Weakened 40-bit export cipher. */
-		.name = SSL3_TXT_RSA_DES_40_CBC_SHA,
-		.id = SSL3_CK_RSA_DES_40_CBC_SHA,
-		.algorithm_mkey = SSL_kRSA,
-		.algorithm_auth = SSL_aRSA,
-		.algorithm_enc = SSL_DES,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = 0,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 40,
-		.alg_bits = 56,
-	},
 
 	/* Cipher 09 */
 	{
@@ -330,119 +282,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 168,
 	},
 
-	/* The DH ciphers */
-	/* Cipher 0B */
-	{
-		.valid = 0,	/* Weakened 40-bit export cipher. */
-		.name = SSL3_TXT_DH_DSS_DES_40_CBC_SHA,
-		.id = SSL3_CK_DH_DSS_DES_40_CBC_SHA,
-		.algorithm_mkey = SSL_kDHd,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_DES,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = 0,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 40,
-		.alg_bits = 56,
-	},
-
-	/* Cipher 0C */
-	{
-		.valid = 0, /* not implemented (non-ephemeral DH) */
-		.name = SSL3_TXT_DH_DSS_DES_64_CBC_SHA,
-		.id = SSL3_CK_DH_DSS_DES_64_CBC_SHA,
-		.algorithm_mkey = SSL_kDHd,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_DES,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_LOW,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 56,
-		.alg_bits = 56,
-	},
-
-	/* Cipher 0D */
-	{
-		.valid = 0, /* not implemented (non-ephemeral DH) */
-		.name = SSL3_TXT_DH_DSS_DES_192_CBC3_SHA,
-		.id = SSL3_CK_DH_DSS_DES_192_CBC3_SHA,
-		.algorithm_mkey = SSL_kDHd,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_3DES,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 112,
-		.alg_bits = 168,
-	},
-
-	/* Cipher 0E */
-	{
-		.valid = 0, /* not implemented (non-ephemeral DH) */
-		.name = SSL3_TXT_DH_RSA_DES_40_CBC_SHA,
-		.id = SSL3_CK_DH_RSA_DES_40_CBC_SHA,
-		.algorithm_mkey = SSL_kDHr,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_DES,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = 0,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 40,
-		.alg_bits = 56,
-	},
-
-	/* Cipher 0F */
-	{
-		.valid = 0, /* not implemented (non-ephemeral DH) */
-		.name = SSL3_TXT_DH_RSA_DES_64_CBC_SHA,
-		.id = SSL3_CK_DH_RSA_DES_64_CBC_SHA,
-		.algorithm_mkey = SSL_kDHr,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_DES,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_LOW,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 56,
-		.alg_bits = 56,
-	},
-
-	/* Cipher 10 */
-	{
-		.valid = 0, /* not implemented (non-ephemeral DH) */
-		.name = SSL3_TXT_DH_RSA_DES_192_CBC3_SHA,
-		.id = SSL3_CK_DH_RSA_DES_192_CBC3_SHA,
-		.algorithm_mkey = SSL_kDHr,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_3DES,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 112,
-		.alg_bits = 168,
-	},
-
 	/* The Ephemeral DH ciphers */
-	/* Cipher 11 */
-	{
-		.valid = 0,	/* Weakened 40-bit export cipher. */
-		.name = SSL3_TXT_EDH_DSS_DES_40_CBC_SHA,
-		.id = SSL3_CK_EDH_DSS_DES_40_CBC_SHA,
-		.algorithm_mkey = SSL_kDHE,
-		.algorithm_auth = SSL_aDSS,
-		.algorithm_enc = SSL_DES,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = 0,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 40,
-		.alg_bits = 56,
-	},
 
 	/* Cipher 12 */
 	{
@@ -474,22 +314,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
 		.strength_bits = 112,
 		.alg_bits = 168,
-	},
-
-	/* Cipher 14 */
-	{
-		.valid = 0,	/* Weakened 40-bit export cipher. */
-		.name = SSL3_TXT_EDH_RSA_DES_40_CBC_SHA,
-		.id = SSL3_CK_EDH_RSA_DES_40_CBC_SHA,
-		.algorithm_mkey = SSL_kDHE,
-		.algorithm_auth = SSL_aRSA,
-		.algorithm_enc = SSL_DES,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = 0,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 40,
-		.alg_bits = 56,
 	},
 
 	/* Cipher 15 */
@@ -524,22 +348,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 168,
 	},
 
-	/* Cipher 17 */
-	{
-		.valid = 0,	/* Weakened 40-bit export cipher. */
-		.name = SSL3_TXT_ADH_RC4_40_MD5,
-		.id = SSL3_CK_ADH_RC4_40_MD5,
-		.algorithm_mkey = SSL_kDHE,
-		.algorithm_auth = SSL_aNULL,
-		.algorithm_enc = SSL_RC4,
-		.algorithm_mac = SSL_MD5,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = 0,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 40,
-		.alg_bits = 128,
-	},
-
 	/* Cipher 18 */
 	{
 		.valid = 1,
@@ -553,22 +361,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algo_strength = SSL_MEDIUM,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
 		.strength_bits = 128,
-		.alg_bits = 128,
-	},
-
-	/* Cipher 19 */
-	{
-		.valid = 0,	/* Weakened 40-bit export cipher. */
-		.name = SSL3_TXT_ADH_DES_40_CBC_SHA,
-		.id = SSL3_CK_ADH_DES_40_CBC_SHA,
-		.algorithm_mkey = SSL_kDHE,
-		.algorithm_auth = SSL_aNULL,
-		.algorithm_enc = SSL_DES,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = 0,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 40,
 		.alg_bits = 128,
 	},
 
@@ -605,6 +397,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 	},
 
 	/* New AES ciphersuites */
+
 	/* Cipher 2F */
 	{
 		.valid = 1,
@@ -620,36 +413,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-	/* Cipher 30 */
-	{
-		.valid = 0,
-		.name = TLS1_TXT_DH_DSS_WITH_AES_128_SHA,
-		.id = TLS1_CK_DH_DSS_WITH_AES_128_SHA,
-		.algorithm_mkey = SSL_kDHd,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_AES128,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 128,
-		.alg_bits = 128,
-	},
-	/* Cipher 31 */
-	{
-		.valid = 0,
-		.name = TLS1_TXT_DH_RSA_WITH_AES_128_SHA,
-		.id = TLS1_CK_DH_RSA_WITH_AES_128_SHA,
-		.algorithm_mkey = SSL_kDHr,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_AES128,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 128,
-		.alg_bits = 128,
-	},
+
 	/* Cipher 32 */
 	{
 		.valid = 1,
@@ -665,6 +429,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
+
 	/* Cipher 33 */
 	{
 		.valid = 1,
@@ -680,6 +445,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
+
 	/* Cipher 34 */
 	{
 		.valid = 1,
@@ -703,37 +469,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.id = TLS1_CK_RSA_WITH_AES_256_SHA,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
-		.algorithm_enc = SSL_AES256,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 256,
-		.alg_bits = 256,
-	},
-	/* Cipher 36 */
-	{
-		.valid = 0,
-		.name = TLS1_TXT_DH_DSS_WITH_AES_256_SHA,
-		.id = TLS1_CK_DH_DSS_WITH_AES_256_SHA,
-		.algorithm_mkey = SSL_kDHd,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_AES256,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 256,
-		.alg_bits = 256,
-	},
-
-	/* Cipher 37 */
-	{
-		.valid = 0, /* not implemented (non-ephemeral DH) */
-		.name = TLS1_TXT_DH_RSA_WITH_AES_256_SHA,
-		.id = TLS1_CK_DH_RSA_WITH_AES_256_SHA,
-		.algorithm_mkey = SSL_kDHr,
-		.algorithm_auth = SSL_aDH,
 		.algorithm_enc = SSL_AES256,
 		.algorithm_mac = SSL_SHA1,
 		.algorithm_ssl = SSL_TLSV1,
@@ -840,38 +575,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 256,
 	},
 
-	/* Cipher 3E */
-	{
-		.valid = 0, /* not implemented (non-ephemeral DH) */
-		.name = TLS1_TXT_DH_DSS_WITH_AES_128_SHA256,
-		.id = TLS1_CK_DH_DSS_WITH_AES_128_SHA256,
-		.algorithm_mkey = SSL_kDHd,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_AES128,
-		.algorithm_mac = SSL_SHA256,
-		.algorithm_ssl = SSL_TLSV1_2,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 128,
-		.alg_bits = 128,
-	},
-
-	/* Cipher 3F */
-	{
-		.valid = 0, /* not implemented (non-ephemeral DH) */
-		.name = TLS1_TXT_DH_RSA_WITH_AES_128_SHA256,
-		.id = TLS1_CK_DH_RSA_WITH_AES_128_SHA256,
-		.algorithm_mkey = SSL_kDHr,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_AES128,
-		.algorithm_mac = SSL_SHA256,
-		.algorithm_ssl = SSL_TLSV1_2,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 128,
-		.alg_bits = 128,
-	},
-
 	/* Cipher 40 */
 	{
 		.valid = 1,
@@ -898,38 +601,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.id = TLS1_CK_RSA_WITH_CAMELLIA_128_CBC_SHA,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
-		.algorithm_enc = SSL_CAMELLIA128,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 128,
-		.alg_bits = 128,
-	},
-
-	/* Cipher 42 */
-	{
-		.valid = 0, /* not implemented (non-ephemeral DH) */
-		.name = TLS1_TXT_DH_DSS_WITH_CAMELLIA_128_CBC_SHA,
-		.id = TLS1_CK_DH_DSS_WITH_CAMELLIA_128_CBC_SHA,
-		.algorithm_mkey = SSL_kDHd,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_CAMELLIA128,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 128,
-		.alg_bits = 128,
-	},
-
-	/* Cipher 43 */
-	{
-		.valid = 0, /* not implemented (non-ephemeral DH) */
-		.name = TLS1_TXT_DH_RSA_WITH_CAMELLIA_128_CBC_SHA,
-		.id = TLS1_CK_DH_RSA_WITH_CAMELLIA_128_CBC_SHA,
-		.algorithm_mkey = SSL_kDHr,
-		.algorithm_auth = SSL_aDH,
 		.algorithm_enc = SSL_CAMELLIA128,
 		.algorithm_mac = SSL_SHA1,
 		.algorithm_ssl = SSL_TLSV1,
@@ -1003,38 +674,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
 		.strength_bits = 128,
 		.alg_bits = 128,
-	},
-
-	/* Cipher 68 */
-	{
-		.valid = 0, /* not implemented (non-ephemeral DH) */
-		.name = TLS1_TXT_DH_DSS_WITH_AES_256_SHA256,
-		.id = TLS1_CK_DH_DSS_WITH_AES_256_SHA256,
-		.algorithm_mkey = SSL_kDHd,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_AES256,
-		.algorithm_mac = SSL_SHA256,
-		.algorithm_ssl = SSL_TLSV1_2,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 256,
-		.alg_bits = 256,
-	},
-
-	/* Cipher 69 */
-	{
-		.valid = 0, /* not implemented (non-ephemeral DH) */
-		.name = TLS1_TXT_DH_RSA_WITH_AES_256_SHA256,
-		.id = TLS1_CK_DH_RSA_WITH_AES_256_SHA256,
-		.algorithm_mkey = SSL_kDHr,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_AES256,
-		.algorithm_mac = SSL_SHA256,
-		.algorithm_ssl = SSL_TLSV1_2,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 256,
-		.alg_bits = 256,
 	},
 
 	/* Cipher 6A */
@@ -1181,38 +820,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 256,
 	},
 
-	/* Cipher 85 */
-	{
-		.valid = 0, /* not implemented (non-ephemeral DH) */
-		.name = TLS1_TXT_DH_DSS_WITH_CAMELLIA_256_CBC_SHA,
-		.id = TLS1_CK_DH_DSS_WITH_CAMELLIA_256_CBC_SHA,
-		.algorithm_mkey = SSL_kDHd,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_CAMELLIA256,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 256,
-		.alg_bits = 256,
-	},
-
-	/* Cipher 86 */
-	{
-		.valid = 0, /* not implemented (non-ephemeral DH) */
-		.name = TLS1_TXT_DH_RSA_WITH_CAMELLIA_256_CBC_SHA,
-		.id = TLS1_CK_DH_RSA_WITH_CAMELLIA_256_CBC_SHA,
-		.algorithm_mkey = SSL_kDHr,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_CAMELLIA256,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 256,
-		.alg_bits = 256,
-	},
-
 	/* Cipher 87 */
 	{
 		.valid = 1,
@@ -1337,42 +944,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 256,
 	},
 
-	/* Cipher A0 */
-	{
-		.valid = 0,
-		.name = TLS1_TXT_DH_RSA_WITH_AES_128_GCM_SHA256,
-		.id = TLS1_CK_DH_RSA_WITH_AES_128_GCM_SHA256,
-		.algorithm_mkey = SSL_kDHr,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_AES128GCM,
-		.algorithm_mac = SSL_AEAD,
-		.algorithm_ssl = SSL_TLSV1_2,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(4)|
-		    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD,
-		.strength_bits = 128,
-		.alg_bits = 128,
-	},
-
-	/* Cipher A1 */
-	{
-		.valid = 0,
-		.name = TLS1_TXT_DH_RSA_WITH_AES_256_GCM_SHA384,
-		.id = TLS1_CK_DH_RSA_WITH_AES_256_GCM_SHA384,
-		.algorithm_mkey = SSL_kDHr,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_AES256GCM,
-		.algorithm_mac = SSL_AEAD,
-		.algorithm_ssl = SSL_TLSV1_2,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_SHA384|TLS1_PRF_SHA384|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(4)|
-		    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD,
-		.strength_bits = 256,
-		.alg_bits = 256,
-	},
-
 	/* Cipher A2 */
 	{
 		.valid = 1,
@@ -1398,42 +969,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.id = TLS1_CK_DHE_DSS_WITH_AES_256_GCM_SHA384,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aDSS,
-		.algorithm_enc = SSL_AES256GCM,
-		.algorithm_mac = SSL_AEAD,
-		.algorithm_ssl = SSL_TLSV1_2,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_SHA384|TLS1_PRF_SHA384|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(4)|
-		    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD,
-		.strength_bits = 256,
-		.alg_bits = 256,
-	},
-
-	/* Cipher A4 */
-	{
-		.valid = 0,
-		.name = TLS1_TXT_DH_DSS_WITH_AES_128_GCM_SHA256,
-		.id = TLS1_CK_DH_DSS_WITH_AES_128_GCM_SHA256,
-		.algorithm_mkey = SSL_kDHd,
-		.algorithm_auth = SSL_aDH,
-		.algorithm_enc = SSL_AES128GCM,
-		.algorithm_mac = SSL_AEAD,
-		.algorithm_ssl = SSL_TLSV1_2,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(4)|
-		    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD,
-		.strength_bits = 128,
-		.alg_bits = 128,
-	},
-
-	/* Cipher A5 */
-	{
-		.valid = 0,
-		.name = TLS1_TXT_DH_DSS_WITH_AES_256_GCM_SHA384,
-		.id = TLS1_CK_DH_DSS_WITH_AES_256_GCM_SHA384,
-		.algorithm_mkey = SSL_kDHd,
-		.algorithm_auth = SSL_aDH,
 		.algorithm_enc = SSL_AES256GCM,
 		.algorithm_mac = SSL_AEAD,
 		.algorithm_ssl = SSL_TLSV1_2,
