@@ -33,7 +33,7 @@
 #include <sys/wait.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
-#include <inttypes.h>
+#include <stdint.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
