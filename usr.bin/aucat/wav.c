@@ -913,7 +913,7 @@ wav_new_out(struct fileops *ops, struct dev *dev,
 	}
 	f->mode = mode;
 	f->pstate = WAV_CFG;
-	f->endpos = f->startpos = 0;
+	f->mmcpos = f->endpos = f->startpos = 0;
 	f->next = wav_list;
 	wav_list = f;
 	if (hdr == HDR_WAV) {
