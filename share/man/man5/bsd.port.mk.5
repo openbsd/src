@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.403 2014/08/10 10:10:21 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.404 2014/08/10 11:23:02 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2752,7 +2752,7 @@ will substitute the value of
 .Ev FULLPKGNAME-foo
 for
 .Li ${FULLPKGNAME} .
-.It Ev SUBST_DATA , SUBST_MAN, SUBST_PROGRAM
+.It Ev SUBST_DATA , SUBST_MAN , SUBST_PROGRAM
 Specialized versions of
 .Ev SUBST_CMD
 that use
@@ -3822,7 +3822,7 @@ instead.
 Likewise, use
 .Ev EXTRACT_CASES
 instead.
-.It Ev FETCH_BEFORE_ARGS , Ev FETCH_AFTER_ARGS
+.It Ev FETCH_BEFORE_ARGS , FETCH_AFTER_ARGS
 Set
 .Ev FETCH_CMD
 to point to a script that does any required special treatment instead.
