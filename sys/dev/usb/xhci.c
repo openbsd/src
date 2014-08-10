@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.23 2014/08/10 11:18:57 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.24 2014/08/10 11:21:49 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -80,7 +80,6 @@ void	xhci_event_xfer(struct xhci_softc *, uint64_t, uint32_t, uint32_t);
 void	xhci_event_command(struct xhci_softc *, uint64_t);
 void	xhci_event_port_change(struct xhci_softc *, uint64_t, uint32_t);
 int	xhci_pipe_init(struct xhci_softc *, struct usbd_pipe *, uint32_t);
-int	xhci_device_setup(struct xhci_softc *, struct usbd_device *, uint8_t);
 int	xhci_scratchpad_alloc(struct xhci_softc *, int);
 void	xhci_scratchpad_free(struct xhci_softc *);
 int	xhci_softdev_alloc(struct xhci_softc *, uint8_t);
@@ -977,35 +976,6 @@ xhci_get_txinfo(struct xhci_softc *sc, struct usbd_pipe *pipe)
 }
 
 int
-xhci_device_setup(struct xhci_softc *sc, struct usbd_device *dev, uint8_t slot)
-{
-	struct xhci_soft_dev *sdev = &sc->sc_sdevs[slot];
-	struct xhci_sctx *sctx;
-	uint8_t addr;
-	int error;
-
-	/*
-	 * Issue only one Set address to set up the slot context and
-	 * assign an address.
-	 */
-	error = xhci_cmd_address_device(sc, slot, DMAADDR(&sdev->ictx_dma, 0));
-	if (error)
-		return (error);
-
-	usb_syncmem(&sdev->octx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_POSTREAD);
-
-	/* Get output slot context. */
-	sctx = KERNADDR(&sdev->octx_dma, 0);
-	addr = XHCI_SCTX_DEV_ADDR(letoh32(sctx->state));
-	if (addr == 0)
-		return (EINVAL);
-
-	DPRINTF(("%s: dev %d internal addr %d\n", DEVNAME(sc), slot, addr));
-
-	return (0);
-}
-
-int
 xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
 {
 	struct xhci_pipe *xp = (struct xhci_pipe *)pipe;
@@ -1105,13 +1075,33 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
 
 	usb_syncmem(&sdev->ictx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
 
-	if (xp->dci == 1)
-		error = xhci_device_setup(sc, pipe->device, xp->slot);
-	else
+	/*
+	 * Issue only one Set address to set up the slot context and
+	 * assign an address.
+	 */
+	if (xp->dci == 1) {
+		error = xhci_cmd_address_device(sc, xp->slot,
+		    DMAADDR(&sdev->ictx_dma, 0));
+	} else {
 		error = xhci_cmd_configure_ep(sc, xp->slot,
 		    DMAADDR(&sdev->ictx_dma, 0));
+	}
 
 	usb_syncmem(&sdev->octx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_POSTREAD);
+
+#ifdef XHCI_DEBUG
+	if (xp->dci == 1 && !error) {
+		struct xhci_sctx *sctx;
+		uint8_t addr;
+
+		/* Get output slot context. */
+		sctx = KERNADDR(&sdev->octx_dma, 0);
+		addr = XHCI_SCTX_DEV_ADDR(letoh32(sctx->state));
+		error = (addr != 0);
+
+		printf("%s: dev %d addr %d\n", DEVNAME(sc), xp->slot, addr);
+	}
+#endif
 
 	if (error) {
 		xhci_ring_free(sc, &xp->ring);
