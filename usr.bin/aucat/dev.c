@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.84 2013/11/18 17:37:45 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.85 2014/08/10 10:25:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1524,7 +1524,7 @@ dev_try(struct dev *d, int slot)
 #ifdef DEBUG
 		if (debug_level >= 3) {
 			dev_slotdbg(d, slot);
-			dbg_puts(": server not started, delayd\n");
+			dbg_puts(": server not started, delayed\n");
 		}
 #endif
 		return 0;
