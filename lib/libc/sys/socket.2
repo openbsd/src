@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.36 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: socket.2,v 1.37 2014/08/10 07:19:08 guenther Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: August 10 2014 $
 .Dt SOCKET 2
 .Os
 .Sh NAME
@@ -53,17 +53,13 @@ These families are defined in the include file
 .In sys/socket.h .
 The currently understood formats are:
 .Pp
-.Bl -tag -width "AF_IMPLINKXXX" -offset indent -compact
+.Bl -tag -width "AF_INET6XXX" -offset indent -compact
 .It AF_UNIX
 UNIX internal protocols
 .It AF_INET
 ARPA Internet protocols
 .It AF_INET6
 IPv6 (Internet Protocol version 6) protocols
-.It AF_IMPLINK
-IMP host at IMP link layer
-.It AF_BLUETOOTH
-Bluetooth protocols
 .El
 .Pp
 The socket has the indicated
@@ -95,8 +91,6 @@ two-way connection-based data transmission path for datagrams
 of fixed maximum length; a consumer may be required to read
 an entire packet with each read system call.
 This facility is protocol specific, and presently implemented for
-.Dv AF_BLUETOOTH
-and
 .Dv AF_UNIX .
 .Dv SOCK_RAW
 sockets provide access to internal network protocols and interfaces,
