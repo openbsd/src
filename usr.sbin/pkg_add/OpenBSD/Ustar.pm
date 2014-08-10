@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.81 2014/08/10 10:01:03 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.82 2014/08/10 10:03:46 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -313,7 +313,7 @@ sub pack_header
 		    sprintf("%07o", $entry->{uid}),
 		    sprintf("%07o", $entry->{gid}),
 		    sprintf("%011o", $size),
-		    sprintf("%011o", $entry->{mtime}),
+		    sprintf("%011o", $entry->{mtime} // 0),
 		    $cksum,
 		    $type,
 		    $linkname,
@@ -488,8 +488,10 @@ package OpenBSD::Ustar::Object;
 sub recheck_owner
 {
 	my $entry = shift;
-	$entry->{uid} //= $OpenBSD: Ustar.pm,v 1.81 2014/08/10 10:01:03 espie Exp $entry->{uname});
-	$entry->{gid} //= $OpenBSD: Ustar.pm,v 1.81 2014/08/10 10:01:03 espie Exp $entry->{gname});
+	$entry->{uid} //= $OpenBSD::Ustar::uidcache
+	    ->lookup($entry->{uname});
+	$entry->{gid} //= $OpenBSD::Ustar::gidcache
+	    ->lookup($entry->{gname});
 }
 
 sub fatal
