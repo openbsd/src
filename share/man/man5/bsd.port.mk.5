@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.402 2014/07/23 10:19:51 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.403 2014/08/10 10:10:21 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 23 2014 $
+.Dd $Mdocdate: August 10 2014 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2752,6 +2752,12 @@ will substitute the value of
 .Ev FULLPKGNAME-foo
 for
 .Li ${FULLPKGNAME} .
+.It Ev SUBST_DATA , SUBST_MAN, SUBST_PROGRAM
+Specialized versions of
+.Ev SUBST_CMD
+that use
+.Fl c
+and appropriate owner/group/mode for data, manpages and programs respectively.
 .It Ev SUBST_VARS
 Make variables whose values get substituted to create the actual package
 information.
