@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.80 2014/07/23 14:35:17 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.81 2014/08/10 10:01:03 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -49,10 +49,10 @@ use File::Basename ();
 use OpenBSD::IdCache;
 use OpenBSD::Paths;
 
-my $uidcache = new OpenBSD::UidCache;
-my $gidcache = new OpenBSD::GidCache;
-my $unamecache = new OpenBSD::UnameCache;
-my $gnamecache = new OpenBSD::GnameCache;
+our $uidcache = new OpenBSD::UidCache;
+our $gidcache = new OpenBSD::GidCache;
+our $unamecache = new OpenBSD::UnameCache;
+our $gnamecache = new OpenBSD::GnameCache;
 
 # This is a multiple of st_blksize everywhere....
 my $buffsize = 2 * 1024 * 1024;
@@ -484,6 +484,13 @@ sub fh
 }
 
 package OpenBSD::Ustar::Object;
+
+sub recheck_owner
+{
+	my $entry = shift;
+	$entry->{uid} //= $OpenBSD: Ustar.pm,v 1.81 2014/08/10 10:01:03 espie Exp $entry->{uname});
+	$entry->{gid} //= $OpenBSD: Ustar.pm,v 1.81 2014/08/10 10:01:03 espie Exp $entry->{gname});
+}
 
 sub fatal
 {

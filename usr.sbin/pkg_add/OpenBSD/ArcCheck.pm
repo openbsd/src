@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.25 2014/04/22 18:22:20 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.26 2014/08/10 10:01:03 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -98,6 +98,15 @@ sub prepare_long
 	} else {
 		$entry = $self->prepare($item->name);
 	}
+	if ($< && $entry->{uid} == $<) {
+		$entry->{uname} = $item->{owner} // "root";
+		delete $entry->{uid};
+	}
+	if ($( && $entry->{gid} == $() {
+		$entry->{gname} = $item->{group} // "bin";
+		delete $entry->{gid};
+	}
+	$entry->recheck_owner;
 	if (!defined $entry->{uname}) {
 		$self->fatal("No user name for #1 (uid #2)",
 		    $item->name, $entry->{uid});
@@ -105,6 +114,10 @@ sub prepare_long
 	if (!defined $entry->{gname}) {
 		$self->fatal("No group name for #1 (uid #2)",
 		    $item->name, $entry->{gid});
+	}
+	# disallow writable files/dirs without explicit annotation
+	if (!defined $item->{mode}) {
+		$entry->{mode} &= ~(S_IWUSR|S_IWGRP|S_IWOTH);
 	}
 	# if we're going to set the group or owner, sguid bits won't
 	# survive the extraction
