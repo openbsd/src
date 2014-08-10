@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.21 2014/08/09 10:32:36 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.22 2014/08/10 11:00:36 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -1168,29 +1168,13 @@ xhci_pipe_close(struct usbd_pipe *pipe)
 struct usbd_xfer *
 xhci_allocx(struct usbd_bus *bus)
 {
-	struct xhci_xfer *xx;
-
-	xx = pool_get(xhcixfer, PR_NOWAIT | PR_ZERO);
-#ifdef DIAGNOSTIC
-	if (xx != NULL)
-		xx->xfer.busy_free = XFER_BUSY;
-#endif
-	return ((struct usbd_xfer *)xx);
+	return (pool_get(xhcixfer, PR_NOWAIT | PR_ZERO));
 }
 
 void
 xhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
-	struct xhci_xfer *xx = (struct xhci_xfer*)xfer;
-
-#ifdef DIAGNOSTIC
-	if (xfer->busy_free != XFER_BUSY) {
-		printf("%s: xfer=%p not busy, 0x%08x\n", __func__, xfer,
-		    xfer->busy_free);
-		return;
-	}
-#endif
-	pool_put(xhcixfer, xx);
+	pool_put(xhcixfer, xfer);
 }
 
 int

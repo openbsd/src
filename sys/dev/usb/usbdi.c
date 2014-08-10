@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.71 2014/07/12 18:48:53 tedu Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.72 2014/08/10 11:00:36 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -395,6 +395,9 @@ usbd_alloc_xfer(struct usbd_device *dev)
 	xfer = dev->bus->methods->allocx(dev->bus);
 	if (xfer == NULL)
 		return (NULL);
+#ifdef DIAGNOSTIC
+	xfer->busy_free = XFER_BUSY;
+#endif
 	xfer->device = dev;
 	timeout_set(&xfer->timeout_handle, NULL, NULL);
 	DPRINTFN(5,("usbd_alloc_xfer() = %p\n", xfer));
@@ -407,8 +410,14 @@ usbd_free_xfer(struct usbd_xfer *xfer)
 	DPRINTFN(5,("usbd_free_xfer: %p\n", xfer));
 	if (xfer->rqflags & (URQ_DEV_DMABUF | URQ_AUTO_DMABUF))
 		usbd_free_buffer(xfer);
+#ifdef DIAGNOSTIC
+	if (xfer->busy_free != XFER_BUSY) {
+		printf("%s: xfer=%p not busy, 0x%08x\n", __func__, xfer,
+		    xfer->busy_free);
+		return;
+	}
+#endif
 	xfer->device->bus->methods->freex(xfer->device->bus, xfer);
-	return;
 }
 
 void

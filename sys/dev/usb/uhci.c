@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.129 2014/08/05 20:26:15 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.130 2014/08/10 11:00:36 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -586,10 +586,8 @@ uhci_allocx(struct usbd_bus *bus)
 
 	ux = pool_get(uhcixfer, PR_NOWAIT | PR_ZERO);
 #ifdef DIAGNOSTIC
-	if (ux != NULL) {
+	if (ux != NULL)
 		ux->isdone = 1;
-		ux->xfer.busy_free = XFER_BUSY;
-	}
 #endif
 	return ((struct usbd_xfer *)ux);
 }
@@ -600,11 +598,6 @@ uhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	struct uhci_xfer *ux = (struct uhci_xfer*)xfer;
 
 #ifdef DIAGNOSTIC
-	if (xfer->busy_free != XFER_BUSY) {
-		printf("%s: xfer=%p not busy, 0x%08x\n", __func__, xfer,
-		    xfer->busy_free);
-		return;
-	}
 	if (!ux->isdone) {
 		printf("%s: !isdone\n", __func__);
 		return;

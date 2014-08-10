@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.137 2014/08/05 20:26:15 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.138 2014/08/10 11:00:36 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -938,30 +938,13 @@ ohci_init(struct ohci_softc *sc)
 struct usbd_xfer *
 ohci_allocx(struct usbd_bus *bus)
 {
-	struct ohci_xfer *ox;
-
-	ox = pool_get(ohcixfer, PR_NOWAIT | PR_ZERO);
-#ifdef DIAGNOSTIC
-	if (ox != NULL) {
-		ox->xfer.busy_free = XFER_BUSY;
-	}
-#endif
-	return ((struct usbd_xfer *)ox);
+	return (pool_get(ohcixfer, PR_NOWAIT | PR_ZERO));
 }
 
 void
 ohci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
-	struct ohci_xfer *ox = (struct ohci_xfer*)xfer;
-
-#ifdef DIAGNOSTIC
-	if (xfer->busy_free != XFER_BUSY) {
-		printf("%s: xfer=%p not busy, 0x%08x\n", __func__, xfer,
-		    xfer->busy_free);
-		return;
-	}
-#endif
-	pool_put(ohcixfer, ox);
+	pool_put(ohcixfer, xfer);
 }
 
 #ifdef OHCI_DEBUG

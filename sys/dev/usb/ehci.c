@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.164 2014/08/05 20:26:15 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.165 2014/08/10 11:00:35 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1172,10 +1172,8 @@ ehci_allocx(struct usbd_bus *bus)
 
 	ex = pool_get(ehcixfer, PR_NOWAIT | PR_ZERO);
 #ifdef DIAGNOSTIC
-	if (ex != NULL) {
+	if (ex != NULL)
 		ex->isdone = 1;
-		ex->xfer.busy_free = XFER_BUSY;
-	}
 #endif
 	return ((struct usbd_xfer *)ex);
 }
@@ -1186,11 +1184,6 @@ ehci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	struct ehci_xfer *ex = (struct ehci_xfer*)xfer;
 
 #ifdef DIAGNOSTIC
-	if (xfer->busy_free != XFER_BUSY) {
-		printf("%s: xfer=%p not busy, 0x%08x\n", __func__, xfer,
-		    xfer->busy_free);
-		return;
-	}
 	if (!ex->isdone) {
 		printf("%s: !isdone\n", __func__);
 		return;
