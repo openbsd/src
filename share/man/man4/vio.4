@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vio.4,v 1.13 2014/08/10 09:15:39 matthieu Exp $
+.\"     $OpenBSD: vio.4,v 1.14 2014/08/10 12:28:09 sf Exp $
 .\"
 .\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
 .\"
@@ -36,7 +36,7 @@ at the cost of slightly reduced performance.
 .Pp
 Setting the bit 0x100 in the flags forces the interface to be always in
 promiscous mode.
-This can be used as a workaround for a bug in QEMU before version 2.0 that
+This can be used as a workaround for a bug in QEMU before version 1.7.2 that
 prevents packets with a VLAN tag from being sent to the guest.
 .Sh SEE ALSO
 .Xr intro 4 ,
