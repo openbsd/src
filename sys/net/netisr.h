@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.39 2013/10/24 18:50:16 deraadt Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.40 2014/08/10 07:28:32 guenther Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -61,7 +61,6 @@
 #define	NETISR_PPP	28		/* for PPP processing */
 #define	NETISR_BRIDGE	29		/* for bridge processing */
 #define	NETISR_PPPOE	30		/* for pppoe processing */
-#define	NETISR_BT	31		/* same as AF_BLUETOOTH */
 
 #ifndef _LOCORE
 #ifdef _KERNEL
@@ -71,12 +70,9 @@ void	nettxintr(void);
 void	arpintr(void);
 void	ipintr(void);
 void	ip6intr(void);
-void	atintr(void);
-void	clnlintr(void);
 void	pppintr(void);
 void	bridgeintr(void);
 void	pppoeintr(void);
-void	btintr(void);
 void	mplsintr(void);
 void	pfsyncintr(void);
 
