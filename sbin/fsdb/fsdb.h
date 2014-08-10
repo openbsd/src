@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.h,v 1.10 2014/05/13 22:06:06 krw Exp $	*/
+/*	$OpenBSD: fsdb.h,v 1.11 2014/08/10 02:38:24 guenther Exp $	*/
 /*	$NetBSD: fsdb.h,v 1.4 1996/09/28 19:30:36 christos Exp $	*/
 
 /*-
@@ -34,10 +34,6 @@ extern int bread(int fd, char *buf, daddr_t blk, long size);
 extern void bwrite(int fd, char *buf, daddr_t blk, long size);
 extern void rwerror(char *mesg, daddr_t blk);
 extern int reply(char *question);
-
-extern long secsize;
-extern int fsmodified;
-extern int fsfd;
 
 struct cmdtable {
 	const char *cmd;
