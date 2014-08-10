@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.9 2006/03/14 22:08:01 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.10 2014/08/10 02:44:26 guenther Exp $	*/
 
 #include "sh.h"
 #include <sys/stat.h>
@@ -38,14 +38,9 @@ tty_init(int init_ttystate)
 			return;
 		}
 	}
-	if ((tty_fd = fcntl(tfd, F_DUPFD, FDBASE)) < 0) {
+	if ((tty_fd = fcntl(tfd, F_DUPFD_CLOEXEC, FDBASE)) < 0) {
 		warningf(false, "j_ttyinit: dup of tty fd failed: %s",
 		    strerror(errno));
-	} else if (fcntl(tty_fd, F_SETFD, FD_CLOEXEC) < 0) {
-		warningf(false, "j_ttyinit: can't set close-on-exec flag: %s",
-		    strerror(errno));
-		close(tty_fd);
-		tty_fd = -1;
 	} else if (init_ttystate)
 		tcgetattr(tty_fd, &tty_state);
 	if (do_close)

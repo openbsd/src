@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.23 2013/12/17 16:37:06 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.24 2014/08/10 02:44:26 guenther Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -237,7 +237,7 @@ savefd(int fd)
 	int nfd;
 
 	if (fd < FDBASE) {
-		nfd = fcntl(fd, F_DUPFD, FDBASE);
+		nfd = fcntl(fd, F_DUPFD_CLOEXEC, FDBASE);
 		if (nfd < 0) {
 			if (errno == EBADF)
 				return -1;
@@ -246,7 +246,6 @@ savefd(int fd)
 		}
 	} else
 		nfd = fd;
-	fcntl(nfd, F_SETFD, FD_CLOEXEC);
 	return nfd;
 }
 
