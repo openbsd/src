@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.27 2014/07/22 11:06:10 mpi Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.28 2014/08/10 03:24:51 lteo Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -84,7 +84,7 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	struct sockaddr_in *sin;
 	struct socket *so;
 	struct ifaddr *ifa;
-	int s, error = 0, p_hdrlen = 0, dir;
+	int s, error = 0, min_hdrlen = 0, dir;
 	struct ip *ip;
 	u_int16_t off;
 
@@ -118,22 +118,22 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 
 	switch (ip->ip_p) {
 	case IPPROTO_TCP:
-		p_hdrlen = sizeof(struct tcphdr);
+		min_hdrlen = sizeof(struct tcphdr);
 		m->m_pkthdr.csum_flags |= M_TCP_CSUM_OUT;
 		break;
 	case IPPROTO_UDP:
-		p_hdrlen = sizeof(struct udphdr);
+		min_hdrlen = sizeof(struct udphdr);
 		m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 		break;
 	case IPPROTO_ICMP:
-		p_hdrlen = sizeof(struct icmp);
+		min_hdrlen = sizeof(struct icmp);
 		m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 		break;
 	default:
 		/* nothing */
 		break;
 	}
-	if (p_hdrlen && m->m_pkthdr.len < off + p_hdrlen)
+	if (min_hdrlen && m->m_pkthdr.len < off + min_hdrlen)
 		goto fail;
 
 	m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED_PACKET;
