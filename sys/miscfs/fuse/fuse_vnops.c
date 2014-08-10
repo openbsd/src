@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.19 2014/07/12 18:43:52 tedu Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.20 2014/08/10 09:23:06 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -19,6 +19,7 @@
 #include <sys/systm.h>
 #include <sys/dirent.h>
 #include <sys/fcntl.h>
+#include <sys/file.h>
 #include <sys/lockf.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
@@ -65,7 +66,8 @@ int	fusefs_islocked(void *);
 int	fusefs_advlock(void *);
 
 /* Prototypes for fusefs kqfilter */
-int	filt_fusefsreadwrite(struct knote *, long);
+int	filt_fusefsread(struct knote *, long);
+int	filt_fusefswrite(struct knote *, long);
 int	filt_fusefsvnode(struct knote *, long);
 void	filt_fusefsdetach(struct knote *);
 
@@ -105,8 +107,10 @@ struct vops fusefs_vops = {
 	.vop_advlock	= fusefs_advlock,
 };
 
-struct filterops fusefsreadwrite_filtops =
-	{ 1, NULL, filt_fusefsdetach, filt_fusefsreadwrite };
+struct filterops fusefsread_filtops =
+	{ 1, NULL, filt_fusefsdetach, filt_fusefsread };
+struct filterops fusefswrite_filtops =
+	{ 1, NULL, filt_fusefsdetach, filt_fusefswrite };
 struct filterops fusefsvnode_filtops =
 	{ 1, NULL, filt_fusefsdetach, filt_fusefsvnode };
 
@@ -119,10 +123,10 @@ fusefs_kqfilter(void *v)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		kn->kn_fop = &fusefsreadwrite_filtops;
+		kn->kn_fop = &fusefsread_filtops;
 		break;
 	case EVFILT_WRITE:
-		kn->kn_fop = &fusefsreadwrite_filtops;
+		kn->kn_fop = &fusefswrite_filtops;
 		break;
 	case EVFILT_VNODE:
 		kn->kn_fop = &fusefsvnode_filtops;
@@ -147,7 +151,31 @@ filt_fusefsdetach(struct knote *kn)
 }
 
 int
-filt_fusefsreadwrite(struct knote *kn, long hint)
+filt_fusefsread(struct knote *kn, long hint)
+{
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+	struct fusefs_node *ip = VTOI(vp);
+
+	/*
+	 * filesystem is gone, so set the EOF flag and schedule
+	 * the knote for deletion
+	 */
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		return (1);
+	}
+
+	kn->kn_data = ip->filesize - kn->kn_fp->f_offset;
+	if (kn->kn_data == 0 && kn->kn_sfflags & NOTE_EOF) {
+		kn->kn_fflags |= NOTE_EOF;
+		return (1);
+	}
+
+	return (kn->kn_data != 0);
+}
+
+int
+filt_fusefswrite(struct knote *kn, long hint)
 {
 	/*
 	 * filesystem is gone, so set the EOF flag and schedule
@@ -158,7 +186,8 @@ filt_fusefsreadwrite(struct knote *kn, long hint)
 		return (1);
 	}
 
-	return (kn->kn_data != 0);
+	kn->kn_data = 0;
+	return (1);
 }
 
 int

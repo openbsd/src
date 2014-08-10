@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.94 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.95 2014/08/10 09:23:06 jsg Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -77,7 +77,8 @@
 static uint32_t fileidhash(uint64_t);
 
 int msdosfs_kqfilter(void *);
-int filt_msdosfsreadwrite(struct knote *, long);
+int filt_msdosfsread(struct knote *, long);
+int filt_msdosfswrite(struct knote *, long);
 int filt_msdosfsvnode(struct knote *, long);
 void filt_msdosfsdetach(struct knote *);
 
@@ -1939,8 +1940,10 @@ struct vops msdosfs_vops = {
 	.vop_revoke	= vop_generic_revoke,
 };
 
-struct filterops msdosfsreadwrite_filtops =
-	{ 1, NULL, filt_msdosfsdetach, filt_msdosfsreadwrite };
+struct filterops msdosfsread_filtops =
+	{ 1, NULL, filt_msdosfsdetach, filt_msdosfsread };
+struct filterops msdosfswrite_filtops =
+	{ 1, NULL, filt_msdosfsdetach, filt_msdosfswrite };
 struct filterops msdosfsvnode_filtops =
 	{ 1, NULL, filt_msdosfsdetach, filt_msdosfsvnode };
 
@@ -1953,10 +1956,10 @@ msdosfs_kqfilter(void *v)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		kn->kn_fop = &msdosfsreadwrite_filtops;
+		kn->kn_fop = &msdosfsread_filtops;
 		break;
 	case EVFILT_WRITE:
-		kn->kn_fop = &msdosfsreadwrite_filtops;
+		kn->kn_fop = &msdosfswrite_filtops;
 		break;
 	case EVFILT_VNODE:
 		kn->kn_fop = &msdosfsvnode_filtops;
@@ -1981,7 +1984,30 @@ filt_msdosfsdetach(struct knote *kn)
 }
 
 int
-filt_msdosfsreadwrite(struct knote *kn, long hint)
+filt_msdosfsread(struct knote *kn, long hint)
+{
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+	struct denode *dep = VTODE(vp);
+
+	/*
+	 * filesystem is gone, so set the EOF flag and schedule
+	 * the knote for deletion.
+	 */
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		return (1);
+	}
+
+	kn->kn_data = dep->de_FileSize - kn->kn_fp->f_offset;
+	if (kn->kn_data == 0 && kn->kn_sfflags & NOTE_EOF) {
+		kn->kn_fflags |= NOTE_EOF;
+		return (1);
+	}
+	return (kn->kn_data != 0);
+}
+
+int
+filt_msdosfswrite(struct knote *kn, long hint)
 {
 	/*
 	 * filesystem is gone, so set the EOF flag and schedule
@@ -1992,7 +2018,8 @@ filt_msdosfsreadwrite(struct knote *kn, long hint)
 		return (1);
 	}
 
-	return (kn->kn_data != 0);
+	kn->kn_data = 0;
+	return (1);
 }
 
 int
