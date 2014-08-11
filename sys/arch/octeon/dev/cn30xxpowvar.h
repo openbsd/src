@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpowvar.h,v 1.1 2011/06/16 11:22:30 syuu Exp $	*/
+/*	$OpenBSD: cn30xxpowvar.h,v 1.2 2014/08/11 18:29:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -53,25 +53,6 @@ struct cn30xxpow_softc {
 	bus_space_handle_t	sc_regh;
 	int			sc_port;
 	int			sc_int_pc_base;
-#ifdef OCTEON_ETH_DEBUG
-	struct evcnt		sc_ev_powecciopcsrpend;
-	struct evcnt		sc_ev_powecciopdbgpend;
-	struct evcnt		sc_ev_powecciopaddwork;
-	struct evcnt		sc_ev_powecciopillop;
-	struct evcnt		sc_ev_poweccioppend24;
-	struct evcnt		sc_ev_poweccioppend23;
-	struct evcnt		sc_ev_poweccioppend22;
-	struct evcnt		sc_ev_poweccioppend21;
-	struct evcnt		sc_ev_poweccioptagnull;
-	struct evcnt		sc_ev_poweccioptagnullnull;
-	struct evcnt		sc_ev_powecciopordatom;
-	struct evcnt		sc_ev_powecciopnull;
-	struct evcnt		sc_ev_powecciopnullnull;
-	struct evcnt		sc_ev_poweccrpe;
-	struct evcnt		sc_ev_poweccsyn;
-	struct evcnt		sc_ev_poweccdbe;
-	struct evcnt		sc_ev_poweccsbe;
-#endif
 };
 
 /* XXX */

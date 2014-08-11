@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpow.c,v 1.5 2014/08/11 18:08:17 miod Exp $	*/
+/*	$OpenBSD: cn30xxpow.c,v 1.6 2014/08/11 18:29:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -31,8 +31,6 @@
 #include <sys/types.h>
 #include <sys/kernel.h>				/* hz */
 #include <sys/malloc.h>
-#include <sys/device.h>				/* evcnt */
-#include <sys/syslog.h>				/* evcnt */
 
 #include <machine/bus.h>
 #include <machine/octeonvar.h>
@@ -41,11 +39,6 @@
 #include <octeon/dev/cn30xxciureg.h>	/* XXX */
 #include <octeon/dev/cn30xxpowreg.h>
 #include <octeon/dev/cn30xxpowvar.h>
-
-/* XXX ensure assertion */
-#if !defined(DIAGNOSTIC)
-#define DIAGNOSTIC
-#endif
 
 extern int ipflow_fastforward_disable_flags;
 
@@ -61,25 +54,17 @@ struct cn30xxpow_intr_handle {
 #define	_EV_IVAL_N	32	/* XXX */
 	int				pi_first;
 	struct timeval			pi_last;
-	struct evcnt			pi_ev_per[_EV_PER_N];
-	struct evcnt			pi_ev_ival[_EV_IVAL_N];
-	struct evcnt			pi_ev_stray_tc;
-	struct evcnt			pi_ev_stray_ds;
-	struct evcnt			pi_ev_stray_iq;
 #endif
 };
 
 void	cn30xxpow_bootstrap(struct octeon_config *);
 
 #ifdef OCTEON_ETH_DEBUG
-void	cn30xxpow_intr_evcnt_attach(struct cn30xxpow_softc *);
 void	cn30xxpow_intr_rml(void *);
 
 void	cn30xxpow_intr_debug_init(struct cn30xxpow_intr_handle *, int);
 void	cn30xxpow_intr_work_debug_ival(struct cn30xxpow_softc *,
 	    struct cn30xxpow_intr_handle *);
-void	cn30xxpow_intr_work_debug_per(struct cn30xxpow_softc *,
-	    struct cn30xxpow_intr_handle *, int);
 #endif
 void	cn30xxpow_init(struct cn30xxpow_softc *);
 void	cn30xxpow_init_regs(struct cn30xxpow_softc *);
@@ -347,7 +332,7 @@ cn30xxpow_intr_establish(int group, int level,
 	KASSERT(group < 16);
 
 	pow_ih = malloc(sizeof(*pow_ih), M_DEVBUF, M_NOWAIT);
-	KASSERT(pow_ih != NULL);
+	KASSERT(pow_ih != NULL);	/* XXX handle failure */
 
 	pow_ih->pi_ih = octeon_intr_establish(
 	    ffs64(CIU_INTX_SUM0_WORKQ_0) - 1 + group,
@@ -367,68 +352,12 @@ cn30xxpow_intr_establish(int group, int level,
 }
 
 #ifdef OCTEON_ETH_DEBUG
-#define	_NAMELEN	8
-#define	_DESCRLEN	40
 
 void
 cn30xxpow_intr_debug_init(struct cn30xxpow_intr_handle *pow_ih, int group)
 {
 	pow_ih->pi_first = 1;
-	char *name, *descr;
-	int i;
 
-	name = malloc(_NAMELEN +
-	    _DESCRLEN * nitems(pow_ih->pi_ev_per) +
-	    _DESCRLEN * nitems(pow_ih->pi_ev_ival),
-	    M_DEVBUF, M_NOWAIT);
-	descr = name + _NAMELEN;
-	snprintf(name, _NAMELEN, "pow%d", group);
-	for (i = 0; i < (int)nitems(pow_ih->pi_ev_per); i++) {
-		int n = 1 << (i - 1);
-
-		(void)snprintf(descr, _DESCRLEN,
-		    "# of works per intr (%d-%d)",
-		    (i == 0) ? 0 : n,
-		    (i == 0) ? 0 : ((n << 1) - 1));
-		evcnt_attach_dynamic(&pow_ih->pi_ev_per[i],
-		    EVCNT_TYPE_MISC, NULL, name, descr);
-		descr += _DESCRLEN;
-	}
-	for (i = 0; i < (int)nitems(pow_ih->pi_ev_ival); i++) {
-		int n = 1 << (i - 1);
-		int p, q;
-		char unit;
-
-		p = n;
-		q = (n << 1) - 1;
-		unit = 'u';
-		/*
-		 * 0 is exceptional
-		 */
-		if (i == 0)
-			p = q = 0;
-		/*
-		 * count 1024usec as 1msec
-		 *
-		 * XXX this is not exact
-		 */
-		if ((i - 1) >= 10) {
-			p /= 1000;
-			q /= 1000;
-			unit = 'm';
-		}
-		(void)snprintf(descr, _DESCRLEN, "intr interval (%d-%d%csec)",
-		    p, q, unit);
-		evcnt_attach_dynamic(&pow_ih->pi_ev_ival[i],
-		    EVCNT_TYPE_MISC, NULL, name, descr);
-		descr += _DESCRLEN;
-	}
-	evcnt_attach_dynamic(&pow_ih->pi_ev_stray_tc,
-	    EVCNT_TYPE_MISC, NULL, name, "stray intr (TC)");
-	evcnt_attach_dynamic(&pow_ih->pi_ev_stray_ds,
-	    EVCNT_TYPE_MISC, NULL, name, "stray intr (DS)");
-	evcnt_attach_dynamic(&pow_ih->pi_ev_stray_iq,
-	    EVCNT_TYPE_MISC, NULL, name, "stray intr (IQ)");
 }
 #endif
 
@@ -473,7 +402,6 @@ cn30xxpow_intr_work_debug_ival(struct cn30xxpow_softc *sc,
 {
 	struct timeval now;
 	struct timeval ival;
-	int n;
 
 	microtime(&now);
 	if (__predict_false(pow_ih->pi_first == 1)) {
@@ -483,50 +411,17 @@ cn30xxpow_intr_work_debug_ival(struct cn30xxpow_softc *sc,
 	timersub(&now, &pow_ih->pi_last, &ival);
 	if (ival.tv_sec != 0)
 		goto stat_done;	/* XXX */
-	n = ffs64((uint64_t)ival.tv_usec);
-	if (n > (int)nitems(pow_ih->pi_ev_ival) - 1)
-		n = (int)nitems(pow_ih->pi_ev_ival) - 1;
-	pow_ih->pi_ev_ival[n].ev_count++;
 
 stat_done:
 	pow_ih->pi_last = now;	/* struct copy */
-}
-
-void
-cn30xxpow_intr_work_debug_per(struct cn30xxpow_softc *sc,
-    struct cn30xxpow_intr_handle *pow_ih, int count)
-{
-	int n;
-
-	n = ffs64(count);
-	if (n > (int)nitems(pow_ih->pi_ev_per) - 1)
-		n = (int)nitems(pow_ih->pi_ev_per) - 1;
-	pow_ih->pi_ev_per[n].ev_count++;
-#if 1
-	if (count == 0) {
-		uint64_t wq_int_cnt;
-
-		wq_int_cnt = _POW_GROUP_RD8(sc, pow_ih, POW_WQ_INT_CNT0_OFFSET);
-		if (wq_int_cnt & POW_WQ_INT_CNTX_TC_CNT)
-			pow_ih->pi_ev_stray_tc.ev_count++;
-		if (wq_int_cnt & POW_WQ_INT_CNTX_DS_CNT)
-			pow_ih->pi_ev_stray_ds.ev_count++;
-		if (wq_int_cnt & POW_WQ_INT_CNTX_IQ_CNT)
-			pow_ih->pi_ev_stray_iq.ev_count++;
-	}
-#endif
 }
 #endif
 
 #ifdef OCTEON_ETH_DEBUG
 #define _POW_INTR_WORK_DEBUG_IVAL(sc, ih) \
 	    cn30xxpow_intr_work_debug_ival((sc), (ih))
-#define _POW_INTR_WORK_DEBUG_PER(sc, ih, count) \
-	    cn30xxpow_intr_work_debug_per((sc), (ih), (count))
 #else
 #define _POW_INTR_WORK_DEBUG_IVAL(sc, ih) \
-	    do {} while (0)
-#define _POW_INTR_WORK_DEBUG_PER(sc, ih, count) \
 	    do {} while (0)
 #endif
 
@@ -582,8 +477,7 @@ cn30xxpow_intr_work(struct cn30xxpow_softc *sc,
 	count++;
 
 done:
-	_POW_INTR_WORK_DEBUG_PER(sc, pow_ih, count);
-
+	;
 	/* KASSERT(work == NULL); */
 	/* KASSERT(count > 0); */
 
@@ -648,37 +542,7 @@ cn30xxpow_error_int_summary(void *data)
 /* ---- debug counter */
 
 #ifdef OCTEON_ETH_DEBUG
-int			cn30xxpow_intr_rml_verbose;
-struct evcnt		cn30xxpow_intr_evcnt;
-
-static const struct octeon_evcnt_entry cn30xxpow_intr_evcnt_entries[] = {
-#define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct cn30xxpow_softc, name, type, parent, descr)
-	_ENTRY(powecciopcsrpend,	MISC, NULL, "pow csr load"),
-	_ENTRY(powecciopdbgpend,	MISC, NULL, "pow dbg load"),
-	_ENTRY(powecciopaddwork,	MISC, NULL, "pow addwork"),
-	_ENTRY(powecciopillop,		MISC, NULL, "pow ill op"),
-	_ENTRY(poweccioppend24,		MISC, NULL, "pow pend24"),
-	_ENTRY(poweccioppend23,		MISC, NULL, "pow pend23"),
-	_ENTRY(poweccioppend22,		MISC, NULL, "pow pend22"),
-	_ENTRY(poweccioppend21,		MISC, NULL, "pow pend21"),
-	_ENTRY(poweccioptagnull,	MISC, NULL, "pow tag null"),
-	_ENTRY(poweccioptagnullnull,	MISC, NULL, "pow tag nullnull"),
-	_ENTRY(powecciopordatom,	MISC, NULL, "pow ordered atomic"),
-	_ENTRY(powecciopnull,		MISC, NULL, "pow core null"),
-	_ENTRY(powecciopnullnull,	MISC, NULL, "pow core nullnull"),
-	_ENTRY(poweccrpe,		MISC, NULL, "pow remote-pointer error"),
-	_ENTRY(poweccsyn,		MISC, NULL, "pow syndrome value"),
-	_ENTRY(poweccdbe,		MISC, NULL, "pow double bit"),
-	_ENTRY(poweccsbe,		MISC, NULL, "pow single bit"),
-#undef	_ENTRY
-};
-
-void
-cn30xxpow_intr_evcnt_attach(struct cn30xxpow_softc *sc)
-{
-	OCTEON_EVCNT_ATTACH_EVCNTS(sc, cn30xxpow_intr_evcnt_entries, "pow0");
-}
+int	cn30xxpow_intr_rml_verbose;
 
 void
 cn30xxpow_intr_rml(void *arg)
@@ -686,63 +550,11 @@ cn30xxpow_intr_rml(void *arg)
 	struct cn30xxpow_softc *sc;
 	uint64_t reg;
 
-	cn30xxpow_intr_evcnt.ev_count++;
 	sc = __cn30xxpow_softc;
 	KASSERT(sc != NULL);
 	reg = cn30xxpow_error_int_summary(sc);
 	if (cn30xxpow_intr_rml_verbose)
-		printf("%s: POW_ECC_ERR=0x%016" PRIx64 "\n", __func__, reg);
-	switch (reg & POW_ECC_ERR_IOP) {
-	case POW_ECC_ERR_IOP_CSRPEND:
-		OCTEON_EVCNT_INC(sc, powecciopcsrpend);
-		break;
-	case POW_ECC_ERR_IOP_DBGPEND:
-		OCTEON_EVCNT_INC(sc, powecciopdbgpend);
-		break;
-	case POW_ECC_ERR_IOP_ADDWORK:
-		OCTEON_EVCNT_INC(sc, powecciopaddwork);
-		break;
-	case POW_ECC_ERR_IOP_ILLOP:
-		OCTEON_EVCNT_INC(sc, powecciopillop);
-		break;
-	case POW_ECC_ERR_IOP_PEND24:
-		OCTEON_EVCNT_INC(sc, poweccioppend24);
-		break;
-	case POW_ECC_ERR_IOP_PEND23:
-		OCTEON_EVCNT_INC(sc, poweccioppend23);
-		break;
-	case POW_ECC_ERR_IOP_PEND22:
-		OCTEON_EVCNT_INC(sc, poweccioppend22);
-		break;
-	case POW_ECC_ERR_IOP_PEND21:
-		OCTEON_EVCNT_INC(sc, poweccioppend21);
-		break;
-	case POW_ECC_ERR_IOP_TAGNULL:
-		OCTEON_EVCNT_INC(sc, poweccioptagnull);
-		break;
-	case POW_ECC_ERR_IOP_TAGNULLNULL:
-		OCTEON_EVCNT_INC(sc, poweccioptagnullnull);
-		break;
-	case POW_ECC_ERR_IOP_ORDATOM:
-		OCTEON_EVCNT_INC(sc, powecciopordatom);
-		break;
-	case POW_ECC_ERR_IOP_NULL:
-		OCTEON_EVCNT_INC(sc, powecciopnull);
-		break;
-	case POW_ECC_ERR_IOP_NULLNULL:
-		OCTEON_EVCNT_INC(sc, powecciopnullnull);
-		break;
-	default:
-		break;
-	}
-	if (reg & POW_ECC_ERR_RPE)
-		OCTEON_EVCNT_INC(sc, poweccrpe);
-	if (reg & POW_ECC_ERR_SYN)
-		OCTEON_EVCNT_INC(sc, poweccsyn);
-	if (reg & POW_ECC_ERR_DBE)
-		OCTEON_EVCNT_INC(sc, poweccdbe);
-	if (reg & POW_ECC_ERR_SBE)
-		OCTEON_EVCNT_INC(sc, poweccsbe);
+		printf("%s: POW_ECC_ERR=0x%016llx\n", __func__, reg);
 }
 #endif
 
@@ -752,8 +564,8 @@ cn30xxpow_intr_rml(void *arg)
 
 #ifdef OCTEON_ETH_DEBUG
 
-void			cn30xxpow_dump_reg(void);
-void			cn30xxpow_dump_ops(void);
+void	cn30xxpow_dump_reg(void);
+void	cn30xxpow_dump_ops(void);
 
 void
 cn30xxpow_dump(void)
@@ -766,11 +578,10 @@ cn30xxpow_dump(void)
 
 struct cn30xxpow_dump_reg_entry {
 	const char *name;
-	const char *format;
 	size_t offset;
 };
 
-#define	_ENTRY(x)	{ #x, x##_BITS, x##_OFFSET }
+#define	_ENTRY(x)	{ #x, x##_OFFSET }
 #define	_ENTRY_0_7(x) \
 	_ENTRY(x## 0), _ENTRY(x## 1), _ENTRY(x## 2), _ENTRY(x## 3), \
 	_ENTRY(x## 4), _ENTRY(x## 5), _ENTRY(x## 6), _ENTRY(x## 7)
@@ -780,7 +591,7 @@ struct cn30xxpow_dump_reg_entry {
 	_ENTRY(x## 8), _ENTRY(x## 9), _ENTRY(x##10), _ENTRY(x##11), \
 	_ENTRY(x##12), _ENTRY(x##13), _ENTRY(x##14), _ENTRY(x##15)
 
-static const struct cn30xxpow_dump_reg_entry cn30xxpow_dump_reg_entries[] = {
+const struct cn30xxpow_dump_reg_entry cn30xxpow_dump_reg_entries[] = {
 	_ENTRY		(POW_PP_GRP_MSK0),
 	_ENTRY		(POW_PP_GRP_MSK1),
 	_ENTRY_0_15	(POW_WQ_INT_THR),
@@ -810,17 +621,12 @@ cn30xxpow_dump_reg(void)
 	struct cn30xxpow_softc *sc = __cn30xxpow_softc;
 	const struct cn30xxpow_dump_reg_entry *entry;
 	uint64_t tmp;
-	char buf[512];
 	int i;
 
 	for (i = 0; i < (int)nitems(cn30xxpow_dump_reg_entries); i++) {
 		entry = &cn30xxpow_dump_reg_entries[i];
 		tmp = _POW_RD8(sc, entry->offset);
-		if (entry->format == NULL)
-			snprintf(buf, sizeof(buf), "%16" PRIx64, tmp);
-		else
-			bitmask_snprintf(tmp, entry->format, buf, sizeof(buf));
-		printf("\t%-24s: %s\n", entry->name, buf);
+		printf("\t%-24s: %16llx\n", entry->name, tmp);
 	}
 }
 
@@ -828,21 +634,19 @@ cn30xxpow_dump_reg(void)
 
 struct cn30xxpow_dump_ops_entry {
 	const char *name;
-	const char *format;
 	uint64_t (*func)(int);
 };
 
-void			cn30xxpow_dump_ops_coreid(int);
-void			cn30xxpow_dump_ops_index(int);
-void			cn30xxpow_dump_ops_qos(int);
-void			cn30xxpow_dump_ops_grp(int);
-void			cn30xxpow_dump_ops_queue(int);
-void                    cn30xxpow_dump_ops_common(const struct
-			    cn30xxpow_dump_ops_entry *, size_t, const char *,
-			    int);
+void	cn30xxpow_dump_ops_coreid(int);
+void	cn30xxpow_dump_ops_index(int);
+void	cn30xxpow_dump_ops_qos(int);
+void	cn30xxpow_dump_ops_grp(int);
+void	cn30xxpow_dump_ops_queue(int);
+void	cn30xxpow_dump_ops_common(const struct cn30xxpow_dump_ops_entry *,
+	    size_t, const char *, int);
 
 #define	_ENTRY_COMMON(name, prefix, x, y) \
-	{ #name "_" #x, prefix##_##y##_BITS, cn30xxpow_status_by_##name##_##x }
+	{ #name "_" #x, cn30xxpow_status_by_##name##_##x }
 
 const struct cn30xxpow_dump_ops_entry cn30xxpow_dump_ops_coreid_entries[] = {
 #define	_ENTRY(x, y)	_ENTRY_COMMON(coreid, POW_STATUS_LOAD_RESULT, x, y)
@@ -945,18 +749,13 @@ cn30xxpow_dump_ops_common(const struct cn30xxpow_dump_ops_entry *entries,
 {
 	const struct cn30xxpow_dump_ops_entry *entry;
 	uint64_t tmp;
-	char buf[512];
 	int i;
 
 	printf("%s=%d\n", by_what, arg);
 	for (i = 0; i < (int)nentries; i++) {
 		entry = &entries[i];
 		tmp = (*entry->func)(arg);
-		if (entry->format == NULL)
-			snprintf(buf, sizeof(buf), "%16" PRIx64, tmp);
-		else
-			bitmask_snprintf(tmp, entry->format, buf, sizeof(buf));
-		printf("\t%-24s: %s\n", entry->name, buf);
+		printf("\t%-24s: %16llx\n", entry->name, tmp);
 	}
 }
 
@@ -971,10 +770,10 @@ cn30xxpow_dump_ops_common(const struct cn30xxpow_dump_ops_entry *entries,
  * Standalone test entries; meant to be called from ddb.
  */
 
-void			cn30xxpow_test(void);
-void			cn30xxpow_test_dump_wqe(paddr_t);
+void		cn30xxpow_test(void);
+void		cn30xxpow_test_dump_wqe(paddr_t);
 
-static void		cn30xxpow_test_1(void);
+void		cn30xxpow_test_1(void);
 
 struct test_wqe {
 	uint64_t word0;
@@ -990,7 +789,7 @@ cn30xxpow_test(void)
 	cn30xxpow_test_1();
 }
 
-static void
+void
 cn30xxpow_test_1(void)
 {
 	struct test_wqe *wqe = &test_wqe;
@@ -1061,16 +860,13 @@ void
 cn30xxpow_test_dump_wqe(paddr_t ptr)
 {
 	uint64_t word0, word1;
-	char buf[128];
 
 	printf("wqe\n");
 
 	word0 = *(uint64_t *)PHYS_TO_CKSEG0(ptr);
-	bitmask_snprintf(word0, POW_WQE_WORD0_BITS, buf, sizeof(buf));
-	printf("\t%-24s: %s\n", "word0", buf);
+	printf("\t%-24s: %16llx\n", "word0", word0);
 
 	word1 = *(uint64_t *)PHYS_TO_CKSEG0(ptr + 8);
-	bitmask_snprintf(word1, POW_WQE_WORD1_BITS, buf, sizeof(buf));
-	printf("\t%-24s: %s\n", "word1", buf);
+	printf("\t%-24s: %16llx\n", "word1", word1);
 }
 #endif

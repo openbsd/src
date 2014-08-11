@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpipvar.h,v 1.1 2011/06/16 11:22:30 syuu Exp $	*/
+/*	$OpenBSD: cn30xxpipvar.h,v 1.2 2014/08/11 18:29:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -37,14 +37,6 @@ struct cn30xxpip_softc {
 	int			sc_tag_type;
 	int			sc_receive_group;
 	size_t			sc_ip_offset;
-#ifdef OCTEON_ETH_DEBUG
-	struct evcnt		sc_ev_pipbeperr;
-	struct evcnt		sc_ev_pipfeperr;
-	struct evcnt		sc_ev_pipskprunt;
-	struct evcnt		sc_ev_pipbadtag;
-	struct evcnt		sc_ev_pipprtnxa;
-	struct evcnt		sc_ev_pippktdrp;
-#endif
 };
 
 /* XXX */
@@ -65,15 +57,13 @@ void			cn30xxpip_prt_cfg_enable(struct cn30xxpip_softc *,
 void			cn30xxpip_stats(struct cn30xxpip_softc *,
 			    struct ifnet *, int);
 #ifdef OCTEON_ETH_DEBUG
-void			cn30xxpip_int_enable(struct cn30xxpip_softc *, int);
-void			cn30xxpip_dump(void);
-void			cn30xxpip_dump_regs(void);
-void			cn30xxpip_dump_stats(void);
-#endif /* OCTEON_ETH_DEBUG */
+void	cn30xxpip_int_enable(struct cn30xxpip_softc *, int);
+void	cn30xxpip_dump(void);
+void	cn30xxpip_dump_regs(void);
+void	cn30xxpip_dump_stats(void);
 
-#ifdef OCTEON_ETH_DEBUG
-void			cn30xxpip_int_enable(struct cn30xxpip_softc *, int);
-uint64_t		cn30xxpip_int_summary(struct cn30xxpip_softc *);
+void	cn30xxpip_int_enable(struct cn30xxpip_softc *, int);
+uint64_t cn30xxpip_int_summary(struct cn30xxpip_softc *);
 #endif /* OCTEON_ETH_DEBUG */
 
 

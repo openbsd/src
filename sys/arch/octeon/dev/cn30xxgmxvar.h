@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmxvar.h,v 1.2 2013/09/16 20:52:14 jmatthew Exp $	*/
+/*	$OpenBSD: cn30xxgmxvar.h,v 1.3 2014/08/11 18:29:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -60,7 +60,6 @@
 	};
 #endif
 
-#if 1
 struct cn30xxgmx_softc;
 struct cn30xxgmx_port_softc;
 
@@ -79,32 +78,6 @@ struct cn30xxgmx_port_softc {
 	struct cn30xxasx_softc	*sc_port_asx;
 	struct cn30xxipd_softc	*sc_ipd;
 	int			sc_port_flowflags;
-
-#if defined(OCTEON_DEBUG) || defined(OCTEON_ETH_DEBUG)
-#if 0
-	/* XXX */
-	struct evcnt		sc_ev_pausedrp;
-	struct evcnt		sc_ev_phydupx;
-	struct evcnt		sc_ev_physpd;
-	struct evcnt		sc_ev_phylink;
-#endif
-	struct evcnt		sc_ev_ifgerr;
-	struct evcnt		sc_ev_coldet;
-	struct evcnt		sc_ev_falerr;
-	struct evcnt		sc_ev_rcverr;
-	struct evcnt		sc_ev_rsverr;
-	struct evcnt		sc_ev_pckterr;
-	struct evcnt		sc_ev_ovrerr;
-	struct evcnt		sc_ev_niberr;
-	struct evcnt		sc_ev_skperr;
-	struct evcnt		sc_ev_lenerr;
-	struct evcnt		sc_ev_alnerr;
-	struct evcnt		sc_ev_fcserr;
-	struct evcnt		sc_ev_jabber;
-	struct evcnt		sc_ev_maxerr;
-	struct evcnt		sc_ev_carext;
-	struct evcnt		sc_ev_minerr;
-#endif
 };
 
 struct cn30xxgmx_softc {
@@ -118,16 +91,8 @@ struct cn30xxgmx_softc {
 
 	struct cn30xxgmx_port_softc
 				*sc_ports;
-
-#if defined(OCTEON_DEBUG) || defined(OCTEON_ETH_DEBUG)
-	struct evcnt		sc_ev_latecol;
-	struct evcnt		sc_ev_xsdef;
-	struct evcnt		sc_ev_xscol;
-	struct evcnt		sc_ev_undflw;
-	struct evcnt		sc_ev_pkonxa;
-#endif
 };
-#endif
+
 
 struct cn30xxgmx_attach_args {
         bus_space_tag_t         ga_regt;

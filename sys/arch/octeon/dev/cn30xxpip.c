@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpip.c,v 1.2 2011/06/24 02:13:23 yasuoka Exp $	*/
+/*	$OpenBSD: cn30xxpip.c,v 1.3 2014/08/11 18:29:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -42,17 +42,16 @@
 #ifdef OCTEON_ETH_DEBUG
 struct cn30xxpip_softc *__cn30xxpip_softc;
 
-void			cn30xxpip_intr_evcnt_attach(struct cn30xxpip_softc *);
-void			cn30xxpip_intr_rml(void *);
+void	cn30xxpip_intr_rml(void *);
 
-void			cn30xxpip_dump(void);
-void			cn30xxpip_int_enable(struct cn30xxpip_softc *, int);
+void	cn30xxpip_dump(void);
+void	cn30xxpip_int_enable(struct cn30xxpip_softc *, int);
 #endif
 
 /*
- * register definitions (for debug and statics)
+ * register definitions
  */
-#define	_ENTRY(x)	{ #x, x##_BITS, x##_OFFSET }
+#define	_ENTRY(x)	{ #x, x##_OFFSET }
 #define	_ENTRY_0_3(x) \
 	_ENTRY(x## 0), _ENTRY(x## 1), _ENTRY(x## 2), _ENTRY(x## 3)
 #define	_ENTRY_0_7(x) \
@@ -63,11 +62,10 @@ void			cn30xxpip_int_enable(struct cn30xxpip_softc *, int);
 
 struct cn30xxpip_dump_reg_ {
 	const char *name;
-	const char *format;
 	size_t	offset;
 };
 
-static const struct cn30xxpip_dump_reg_ cn30xxpip_dump_stats_[] = {
+const struct cn30xxpip_dump_reg_ cn30xxpip_dump_stats_[] = {
 /* PIP_QOS_DIFF[0-63] */
 	_ENTRY_0_1_2_32	(PIP_STAT0_PRT),
 	_ENTRY_0_1_2_32	(PIP_STAT1_PRT),
@@ -85,7 +83,7 @@ static const struct cn30xxpip_dump_reg_ cn30xxpip_dump_stats_[] = {
 	_ENTRY_0_1_2_32	(PIP_STAT_INB_ERRS),
 };
 
-static const struct cn30xxpip_dump_reg_ cn30xxpip_dump_regs_[] = {
+const struct cn30xxpip_dump_reg_ cn30xxpip_dump_regs_[] = {
 	_ENTRY		(PIP_BIST_STATUS),
 	_ENTRY		(PIP_INT_REG),
 	_ENTRY		(PIP_INT_EN),
@@ -135,7 +133,6 @@ cn30xxpip_init(struct cn30xxpip_attach_args *aa,
 
 #ifdef OCTEON_ETH_DEBUG
 	cn30xxpip_int_enable(sc, 1);
-	cn30xxpip_intr_evcnt_attach(sc);
 	__cn30xxpip_softc = sc;
 	printf("PIP Code initialized.\n");
 #endif
@@ -243,26 +240,7 @@ cn30xxpip_stats(struct cn30xxpip_softc *sc, struct ifnet *ifp, int gmx_port)
 
 
 #ifdef OCTEON_ETH_DEBUG
-int			cn30xxpip_intr_rml_verbose;
-struct evcnt		cn30xxpip_intr_evcnt;
-
-static const struct octeon_evcnt_entry cn30xxpip_intr_evcnt_entries[] = {
-#define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct cn30xxpip_softc, name, type, parent, descr)
-	_ENTRY(pipbeperr,	MISC, NULL, "pip parity error backend"),
-	_ENTRY(pipfeperr,	MISC, NULL, "pip parity error frontend"),
-	_ENTRY(pipskprunt,	MISC, NULL, "pip skiper"),
-	_ENTRY(pipbadtag,	MISC, NULL, "pip bad tag"),
-	_ENTRY(pipprtnxa,	MISC, NULL, "pip nonexistent port"),
-	_ENTRY(pippktdrp,	MISC, NULL, "pip qos drop"),
-#undef	_ENTRY
-};
-
-void
-cn30xxpip_intr_evcnt_attach(struct cn30xxpip_softc *sc)
-{
-	OCTEON_EVCNT_ATTACH_EVCNTS(sc, cn30xxpip_intr_evcnt_entries, "pip0");
-}
+int	cn30xxpip_intr_rml_verbose;
 
 void
 cn30xxpip_intr_rml(void *arg)
@@ -270,28 +248,15 @@ cn30xxpip_intr_rml(void *arg)
 	struct cn30xxpip_softc *sc;
 	uint64_t reg;
 
-	cn30xxpip_intr_evcnt.ev_count++;
 	sc = __cn30xxpip_softc;
 	KASSERT(sc != NULL);
 	reg = cn30xxpip_int_summary(sc);
 	if (cn30xxpip_intr_rml_verbose)
 		printf("%s: PIP_INT_REG=0x%016llx\n", __func__, reg);
-	if (reg & PIP_INT_REG_BEPERR)
-		OCTEON_EVCNT_INC(sc, pipbeperr);
-	if (reg & PIP_INT_REG_FEPERR)
-		OCTEON_EVCNT_INC(sc, pipfeperr);
-	if (reg & PIP_INT_REG_SKPRUNT)
-		OCTEON_EVCNT_INC(sc, pipskprunt);
-	if (reg & PIP_INT_REG_BADTAG)
-		OCTEON_EVCNT_INC(sc, pipbadtag);
-	if (reg & PIP_INT_REG_PRTNXA)
-		OCTEON_EVCNT_INC(sc, pipprtnxa);
-	if (reg & PIP_INT_REG_PKTDRP)
-		OCTEON_EVCNT_INC(sc, pippktdrp);
 }
 
-void		cn30xxpip_dump_regs(void);
-void		cn30xxpip_dump_stats(void);
+void	cn30xxpip_dump_regs(void);
+void	cn30xxpip_dump_stats(void);
 
 void
 cn30xxpip_dump(void)
@@ -306,14 +271,12 @@ cn30xxpip_dump_regs(void)
 	struct cn30xxpip_softc *sc = __cn30xxpip_softc;
 	const struct cn30xxpip_dump_reg_ *reg;
 	uint64_t tmp;
-	char buf[512];
 	int i;
 
 	for (i = 0; i < (int)nitems(cn30xxpip_dump_regs_); i++) {
 		reg = &cn30xxpip_dump_regs_[i];
 		tmp = _PIP_RD8(sc, reg->offset);
-		snprintf(buf, sizeof(buf), "%16llx", tmp);
-		printf("\t%-24s: %s\n", reg->name, buf);
+		printf("\t%-24s: %16llx\n", reg->name, tmp);
 	}
 }
 
@@ -323,7 +286,6 @@ cn30xxpip_dump_stats(void)
 	struct cn30xxpip_softc *sc = __cn30xxpip_softc;
 	const struct cn30xxpip_dump_reg_ *reg;
 	uint64_t tmp;
-	char buf[512];
 	int i;
 	uint64_t pip_stat_ctl;
 
@@ -332,27 +294,22 @@ cn30xxpip_dump_stats(void)
 	for (i = 0; i < (int)nitems(cn30xxpip_dump_stats_); i++) {
 		reg = &cn30xxpip_dump_stats_[i];
 		tmp = _PIP_RD8(sc, reg->offset);
-		if (reg->format == NULL) {
-			snprintf(buf, sizeof(buf), "%16llx", tmp);
-		}
-		printf("\t%-24s: %s\n", reg->name, buf);
+		printf("\t%-24s: %16llx\n", reg->name, tmp);
 	}
 	printf("\t%-24s:\n", "PIP_QOS_DIFF[0-63]");
 	for (i = 0; i < 64; i++) {
 		tmp = _PIP_RD8(sc, PIP_QOS_DIFF0_OFFSET + sizeof(uint64_t) * i);
-		snprintf(buf, sizeof(buf), "%16" PRIx64, tmp);
-		printf("%s\t%s%s",
+		printf("%s\t%16llx%s",
 		    ((i % 4) == 0) ? "\t" : "",
-		    buf,
+		    tmp,
 		    ((i % 4) == 3) ? "\n" : "");
 	}
 	printf("\t%-24s:\n", "PIP_TAG_INC[0-63]");
 	for (i = 0; i < 64; i++) {
 		tmp = _PIP_RD8(sc, PIP_TAG_INC0_OFFSET + sizeof(uint64_t) * i);
-		snprintf(buf, sizeof(buf), "%16" PRIx64, tmp);
-		printf("%s\t%s%s",
+		printf("%s\t%16llx%s",
 		    ((i % 4) == 0) ? "\t" : "",
-		    buf,
+		    tmp,
 		    ((i % 4) == 3) ? "\n" : "");
 	}
 	_PIP_WR8(sc, PIP_STAT_CTL_OFFSET, pip_stat_ctl);

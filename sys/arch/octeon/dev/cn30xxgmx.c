@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.13 2014/08/11 18:08:17 miod Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.14 2014/08/11 18:29:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -89,6 +89,7 @@ int	cn30xxgmx_match(struct device *, void *, void *);
 void	cn30xxgmx_attach(struct device *, struct device *, void *);
 int	cn30xxgmx_print(void *, const char *);
 int	cn30xxgmx_submatch(struct device *, void *, void *);
+int	cn30xxgmx_port_phy_addr(int);
 int	cn30xxgmx_init(struct cn30xxgmx_softc *);
 int	cn30xxgmx_rx_frm_ctl_xable(struct cn30xxgmx_port_softc *,
 	    uint64_t, int);
@@ -101,9 +102,10 @@ int	cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *);
 int	cn30xxgmx_rgmii_set_mac_addr(struct cn30xxgmx_port_softc *,
 	    uint8_t *, uint64_t);
 int	cn30xxgmx_rgmii_set_filter(struct cn30xxgmx_port_softc *);
+int	cn30xxgmx_tx_ovr_bp_enable(struct cn30xxgmx_port_softc *, int);
+int	cn30xxgmx_rx_pause_enable(struct cn30xxgmx_port_softc *, int);
 
 #ifdef OCTEON_ETH_DEBUG
-void	cn30xxgmx_intr_evcnt_attach(struct cn30xxgmx_softc *);
 void	cn30xxgmx_dump(void);
 void	cn30xxgmx_debug_reset(void);
 int	cn30xxgmx_intr_drop(void *);
@@ -147,25 +149,8 @@ struct cn30xxgmx_port_ops *cn30xxgmx_port_ops[] = {
 	[GMX_SPI42_PORT] = &cn30xxgmx_port_ops_spi42
 };
 
-int octeon_eth_phy_table[] = {
-#if defined __seil5__
-	0x04, 0x01, 0x02
-#else
-	/* portwell cam-0100 */
-	0x02, 0x03, 0x22
-#endif
-};
-
 #ifdef OCTEON_ETH_DEBUG
-static void		*cn30xxgmx_intr_drop_ih;
-struct evcnt		cn30xxgmx_intr_drop_evcnt =
-			    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "octeon",
-			    "gmx drop intr");
-struct evcnt		cn30xxgmx_intr_evcnt =
-			    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "octeon",
-			    "gmx intr");
-EVCNT_ATTACH_STATIC(cn30xxgmx_intr_drop_evcnt);
-EVCNT_ATTACH_STATIC(cn30xxgmx_intr_evcnt);
+void	*cn30xxgmx_intr_drop_ih;
 
 struct cn30xxgmx_port_softc *__cn30xxgmx_port_softc[3/* XXX */];
 #endif
@@ -191,10 +176,13 @@ cn30xxgmx_match(struct device *parent, void *match, void *aux)
 int
 cn30xxgmx_port_phy_addr(int port)
 {
-	extern struct boot_info *octeon_boot_info;
+	static const int octeon_eth_phy_table[] = {
+		/* portwell cam-0100 */
+		0x02, 0x03, 0x22
+	};
 
 	switch (octeon_boot_info->board_type) {
-	case BOARD_TYPE_UBIQUITI_E100:
+	case BOARD_TYPE_UBIQUITI_E100:	/* port 0: 7, port 1: 6 */
 		if (port > 2)
 			return -1;
 		return 7 - port;
@@ -264,11 +252,10 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #ifdef OCTEON_ETH_DEBUG
-	cn30xxgmx_intr_evcnt_attach(sc);
 	if (cn30xxgmx_intr_drop_ih == NULL)
 		cn30xxgmx_intr_drop_ih = octeon_intr_establish(
-		   ffs64(CIU_INTX_SUM0_GMX_DRP) - 1, 0, IPL_NET,
-		   cn30xxgmx_intr_drop, NULL);
+		   ffs64(CIU_INTX_SUM0_GMX_DRP) - 1, IPL_NET,
+		   cn30xxgmx_intr_drop, NULL, "cn30xxgmx");
 #endif
 }
 
@@ -1299,64 +1286,12 @@ void	cn30xxgmx_intr_rml_gmx0(void);
 
 int	cn30xxgmx_intr_rml_verbose;
 
-/* tx - per unit (gmx0, gmx1, ...) */
-static const struct octeon_evcnt_entry cn30xxgmx_intr_evcnt_tx_entries[] = {
-#define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct cn30xxgmx_softc, name, type, parent, descr)
-	_ENTRY(latecol,		MISC, NULL, "tx late collision"),
-	_ENTRY(xsdef,		MISC, NULL, "tx excessive deferral"),
-	_ENTRY(xscol,		MISC, NULL, "tx excessive collision"),
-	_ENTRY(undflw,		MISC, NULL, "tx underflow"),
-	_ENTRY(pkonxa,		MISC, NULL, "tx port addr out-of-range")
-#undef	_ENTRY
-};
-
-/* rx - per port (gmx0:0, gmx0:1, ...) */
-static const struct octeon_evcnt_entry cn30xxgmx_intr_evcnt_rx_entries[] = {
-#define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct cn30xxgmx_port_softc, name, type, parent, descr)
-	_ENTRY(minerr,		MISC, NULL, "rx min error"),
-	_ENTRY(carext,		MISC, NULL, "rx carrier error"),
-	_ENTRY(maxerr,		MISC, NULL, "rx max error"),
-	_ENTRY(jabber,		MISC, NULL, "rx jabber error"),
-	_ENTRY(fcserr,		MISC, NULL, "rx fcs error"),
-	_ENTRY(alnerr,		MISC, NULL, "rx align error"),
-	_ENTRY(lenerr,		MISC, NULL, "rx length error"),
-	_ENTRY(rcverr,		MISC, NULL, "rx receive error"),
-	_ENTRY(skperr,		MISC, NULL, "rx skip error"),
-	_ENTRY(niberr,		MISC, NULL, "rx nibble error"),
-	_ENTRY(ovrerr,		MISC, NULL, "rx overflow error"),
-	_ENTRY(pckterr,		MISC, NULL, "rx packet error"),
-	_ENTRY(rsverr,		MISC, NULL, "rx reserved opcode error"),
-	_ENTRY(falerr,		MISC, NULL, "rx false carrier error"),
-	_ENTRY(coldet,		MISC, NULL, "rx collision detect"),
-	_ENTRY(ifgerr,		MISC, NULL, "rx ifg error")
-#undef	_ENTRY
-};
-
-void
-cn30xxgmx_intr_evcnt_attach(struct cn30xxgmx_softc *sc)
-{
-	struct cn30xxgmx_port_softc *port_sc;
-	int i;
-
-	OCTEON_EVCNT_ATTACH_EVCNTS(sc, cn30xxgmx_intr_evcnt_tx_entries,
-	    sc->sc_dev.dv_xname);
-	for (i = 0; i < sc->sc_nports; i++) {
-		port_sc = &sc->sc_ports[i];
-		OCTEON_EVCNT_ATTACH_EVCNTS(port_sc, cn30xxgmx_intr_evcnt_rx_entries,
-		    sc->sc_dev.dv_xname);
-	}
-}
-
 void
 cn30xxgmx_intr_rml_gmx0(void)
 {
-	struct cn30xxgmx_port_softc *sc = NULL/* XXX gcc */;
+	struct cn30xxgmx_port_softc *sc;
 	int i;
-	uint64_t reg = 0/* XXX gcc */;
-
-	cn30xxgmx_intr_evcnt.ev_count++;
+	uint64_t reg;
 
 	sc = __cn30xxgmx_port_softc[0];
 	if (sc == NULL)
@@ -1365,17 +1300,7 @@ cn30xxgmx_intr_rml_gmx0(void)
 	/* GMX0_RXn_INT_REG or GMX0_TXn_INT_REG */
 	reg = cn30xxgmx_get_tx_int_reg(sc);
 	if (cn30xxgmx_intr_rml_verbose && reg != 0)
-		printf("%s: GMX_TX_INT_REG=0x%016" PRIx64 "\n", __func__, reg);
-	if (reg & TX_INT_REG_LATE_COL)
-		OCTEON_EVCNT_INC(sc->sc_port_gmx, latecol);
-	if (reg & TX_INT_REG_XSDEF)
-		OCTEON_EVCNT_INC(sc->sc_port_gmx, xsdef);
-	if (reg & TX_INT_REG_XSCOL)
-		OCTEON_EVCNT_INC(sc->sc_port_gmx, xscol);
-	if (reg & TX_INT_REG_UNDFLW)
-		OCTEON_EVCNT_INC(sc->sc_port_gmx, undflw);
-	if (reg & TX_INT_REG_PKO_NXA)
-		OCTEON_EVCNT_INC(sc->sc_port_gmx, pkonxa);
+		printf("%s: GMX_TX_INT_REG=0x%016llx\n", __func__, reg);
 
 	for (i = 0; i < GMX_PORT_NUNITS; i++) {
 		sc = __cn30xxgmx_port_softc[i];
@@ -1383,55 +1308,14 @@ cn30xxgmx_intr_rml_gmx0(void)
 			continue;
 		reg = cn30xxgmx_get_rx_int_reg(sc);
 		if (cn30xxgmx_intr_rml_verbose)
-			printf("%s: GMX_RX_INT_REG=0x%016" PRIx64 "\n", __func__, reg);
-		if (reg & RXN_INT_REG_MINERR)
-			OCTEON_EVCNT_INC(sc, minerr);
-		if (reg & RXN_INT_REG_CAREXT)
-			OCTEON_EVCNT_INC(sc, carext);
-		if (reg & RXN_INT_REG_JABBER)
-			OCTEON_EVCNT_INC(sc, jabber);
-		if (reg & RXN_INT_REG_FCSERR)
-			OCTEON_EVCNT_INC(sc, fcserr);
-		if (reg & RXN_INT_REG_ALNERR)
-			OCTEON_EVCNT_INC(sc, alnerr);
-		if (reg & RXN_INT_REG_LENERR)
-			OCTEON_EVCNT_INC(sc, lenerr);
-		if (reg & RXN_INT_REG_RCVERR)
-			OCTEON_EVCNT_INC(sc, rcverr);
-		if (reg & RXN_INT_REG_SKPERR)
-			OCTEON_EVCNT_INC(sc, skperr);
-		if (reg & RXN_INT_REG_NIBERR)
-			OCTEON_EVCNT_INC(sc, niberr);
-		if (reg & RXN_INT_REG_OVRERR)
-			OCTEON_EVCNT_INC(sc, ovrerr);
-		if (reg & RXN_INT_REG_PCTERR)
-			OCTEON_EVCNT_INC(sc, pckterr);
-		if (reg & RXN_INT_REG_RSVERR)
-			OCTEON_EVCNT_INC(sc, rsverr);
-		if (reg & RXN_INT_REG_FALERR)
-			OCTEON_EVCNT_INC(sc, falerr);
-		if (reg & RXN_INT_REG_COLDET)
-			OCTEON_EVCNT_INC(sc, coldet);
-		if (reg & RXN_INT_REG_IFGERR)
-			OCTEON_EVCNT_INC(sc, ifgerr);
+			printf("%s: GMX_RX_INT_REG=0x%016llx\n", __func__, reg);
 	}
 }
-
-#ifdef notyet
-void
-cn30xxgmx_intr_rml_gmx1(void)
-{
-	uint64_t reg = 0/* XXX gcc */;
-
-		/* GMX1_RXn_INT_REG or GMX1_TXn_INT_REG */
-}
-#endif
 
 int
 cn30xxgmx_intr_drop(void *arg)
 {
 	octeon_xkphys_write_8(CIU_INT0_SUM0, CIU_INTX_SUM0_GMX_DRP);
-	cn30xxgmx_intr_drop_evcnt.ev_count++;
 	return (1);
 }
 
@@ -1491,15 +1375,14 @@ cn30xxgmx_get_tx_int_reg(struct cn30xxgmx_port_softc *sc)
 /* ---- debug */
 
 #ifdef OCTEON_ETH_DEBUG
-#define	_ENTRY(x)	{ #x, x##_BITS, x }
+#define	_ENTRY(x)	{ #x, x }
 
 struct cn30xxgmx_dump_reg_ {
 	const char *name;
-	const char *format;
 	size_t	offset;
 };
 
-static const struct cn30xxgmx_dump_reg_ cn30xxgmx_dump_regs_[] = {
+const struct cn30xxgmx_dump_reg_ cn30xxgmx_dump_regs_[] = {
 	_ENTRY(GMX0_SMAC0),
 	_ENTRY(GMX0_BIST0),
 	_ENTRY(GMX0_RX_PRTS),
@@ -1534,7 +1417,7 @@ static const struct cn30xxgmx_dump_reg_ cn30xxgmx_dump_regs_[] = {
 	_ENTRY(GMX0_INF_MODE),
 };
 
-static const struct cn30xxgmx_dump_reg_ cn30xxgmx_dump_port_regs_[] = {
+const struct cn30xxgmx_dump_reg_ cn30xxgmx_dump_port_regs_[] = {
 	_ENTRY(GMX0_RX0_INT_REG),
 	_ENTRY(GMX0_RX0_INT_EN),
 	_ENTRY(GMX0_PRT0_CFG),
@@ -1571,7 +1454,7 @@ static const struct cn30xxgmx_dump_reg_ cn30xxgmx_dump_port_regs_[] = {
 	_ENTRY(GMX0_TX0_CTL),
 };
 
-static const struct cn30xxgmx_dump_reg_ cn30xxgmx_dump_port_stats_[] = {
+const struct cn30xxgmx_dump_reg_ cn30xxgmx_dump_port_stats_[] = {
 	_ENTRY(GMX0_RX0_STATS_PKTS),
 	_ENTRY(GMX0_RX0_STATS_OCTS),
 	_ENTRY(GMX0_RX0_STATS_PKTS_CTL),
@@ -1593,22 +1476,22 @@ static const struct cn30xxgmx_dump_reg_ cn30xxgmx_dump_port_stats_[] = {
 	_ENTRY(GMX0_TX0_STAT9),
 };
 
-void		cn30xxgmx_dump_common(void);
-void		cn30xxgmx_dump_port0(void);
-void		cn30xxgmx_dump_port1(void);
-void		cn30xxgmx_dump_port2(void);
-void		cn30xxgmx_dump_port0_regs(void);
-void		cn30xxgmx_dump_port1_regs(void);
-void		cn30xxgmx_dump_port2_regs(void);
-void		cn30xxgmx_dump_port0_stats(void);
-void		cn30xxgmx_dump_port1_stats(void);
-void		cn30xxgmx_dump_port2_stats(void);
-void		cn30xxgmx_dump_port_regs(int);
-void		cn30xxgmx_dump_port_stats(int);
-void		cn30xxgmx_dump_common_x(int, const struct cn30xxgmx_dump_reg_ *, size_t);
-void		cn30xxgmx_dump_port_x(int, const struct cn30xxgmx_dump_reg_ *, size_t);
-void		cn30xxgmx_dump_x(int, const struct cn30xxgmx_dump_reg_ *, size_t, size_t, int);
-void		cn30xxgmx_dump_x_index(char *, size_t, int);
+void	cn30xxgmx_dump_common(void);
+void	cn30xxgmx_dump_port0(void);
+void	cn30xxgmx_dump_port1(void);
+void	cn30xxgmx_dump_port2(void);
+void	cn30xxgmx_dump_port0_regs(void);
+void	cn30xxgmx_dump_port1_regs(void);
+void	cn30xxgmx_dump_port2_regs(void);
+void	cn30xxgmx_dump_port0_stats(void);
+void	cn30xxgmx_dump_port1_stats(void);
+void	cn30xxgmx_dump_port2_stats(void);
+void	cn30xxgmx_dump_port_regs(int);
+void	cn30xxgmx_dump_port_stats(int);
+void	cn30xxgmx_dump_common_x(int, const struct cn30xxgmx_dump_reg_ *, size_t);
+void	cn30xxgmx_dump_port_x(int, const struct cn30xxgmx_dump_reg_ *, size_t);
+void	cn30xxgmx_dump_x(int, const struct cn30xxgmx_dump_reg_ *, size_t, size_t, int);
+void	cn30xxgmx_dump_x_index(char *, size_t, int);
 
 void
 cn30xxgmx_dump(void)
@@ -1692,24 +1575,39 @@ cn30xxgmx_dump_x(int portno, const struct cn30xxgmx_dump_reg_ *regs, size_t size
 	const struct cn30xxgmx_dump_reg_ *reg;
 	uint64_t tmp;
 	char name[64];
-	char buf[512];
 	int i;
 
 	for (i = 0; i < (int)size; i++) {
 		reg = &regs[i];
 		tmp = _GMX_RD8(sc, base + reg->offset);
 
-		if (reg->format == NULL)
-			snprintf(buf, sizeof(buf), "%016" PRIx64, tmp);
-		else
-			bitmask_snprintf(tmp, reg->format, buf, sizeof(buf));
-
 		snprintf(name, sizeof(name), "%s", reg->name);
 		if (index > 0)
 			cn30xxgmx_dump_x_index(name, sizeof(name), portno);
 
-		printf("\t%-24s: %s\n", name, buf);
+		printf("\t%-24s: %016llx\n", name, tmp);
 	}
+}
+
+/* not in libkern */
+static char *strstr(const char *, const char *);
+static char *
+strstr(const char *s, const char *find)
+{
+        char c, sc;
+        size_t len;
+
+        if ((c = *find++) != 0) {
+                len = strlen(find);
+                do {
+                        do {
+                                if ((sc = *s++) == 0)
+                                        return (NULL);
+                        } while (sc != c);
+                } while (strncmp(s, find, len) != 0);
+                s--;
+        }
+        return (char *)s;
 }
 
 void

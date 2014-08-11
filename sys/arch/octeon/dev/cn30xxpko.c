@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpko.c,v 1.3 2013/06/01 22:20:35 jasper Exp $	*/
+/*	$OpenBSD: cn30xxpko.c,v 1.4 2014/08/11 18:29:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -40,8 +40,7 @@
 static inline void	cn30xxpko_op_store(uint64_t, uint64_t);
 
 #ifdef OCTEON_ETH_DEBUG
-void			cn30xxpko_intr_evcnt_attach(struct cn30xxpko_softc *);
-void			cn30xxpko_intr_rml(void *);
+void	cn30xxpko_intr_rml(void *);
 #endif
 
 #define	_PKO_RD8(sc, off) \
@@ -81,7 +80,6 @@ cn30xxpko_init(struct cn30xxpko_attach_args *aa,
 	*rsc = sc;
 
 #ifdef OCTEON_ETH_DEBUG
-	cn30xxpko_intr_evcnt_attach(sc);
 	__cn30xxpko_softc = sc;
 #endif
 }
@@ -152,7 +150,7 @@ cn30xxpko_port_enable(struct cn30xxpko_softc *sc, int enable)
 	return 0;
 }
 
-static int pko_queue_map_init[32];
+int pko_queue_map_init[32];
 
 int
 cn30xxpko_port_config(struct cn30xxpko_softc *sc)
@@ -192,22 +190,7 @@ cn30xxpko_port_config(struct cn30xxpko_softc *sc)
 }
 
 #ifdef OCTEON_ETH_DEBUG
-int			cn30xxpko_intr_rml_verbose;
-struct evcnt		cn30xxpko_intr_evcnt;
-
-static const struct octeon_evcnt_entry cn30xxpko_intr_evcnt_entries[] = {
-#define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct cn30xxpko_softc, name, type, parent, descr)
-	_ENTRY(pkoerrdbell,		MISC, NULL, "pko doorbell overflow"),
-	_ENTRY(pkoerrparity,		MISC, NULL, "pko parity error")
-#undef	_ENTRY
-};
-
-void
-cn30xxpko_intr_evcnt_attach(struct cn30xxpko_softc *sc)
-{
-	OCTEON_EVCNT_ATTACH_EVCNTS(sc, cn30xxpko_intr_evcnt_entries, "pko0");
-}
+int	cn30xxpko_intr_rml_verbose;
 
 void
 cn30xxpko_intr_rml(void *arg)
@@ -215,16 +198,11 @@ cn30xxpko_intr_rml(void *arg)
 	struct cn30xxpko_softc *sc;
 	uint64_t reg;
 
-	cn30xxpko_intr_evcnt.ev_count++;
 	sc = __cn30xxpko_softc;
 	KASSERT(sc != NULL);
 	reg = cn30xxpko_int_summary(sc);
 	if (cn30xxpko_intr_rml_verbose)
-		printf("%s: PKO_REG_ERROR=0x%016" PRIx64 "\n", __func__, reg);
-	if (reg & PKO_REG_ERROR_DOORBELL)
-		OCTEON_EVCNT_INC(sc, pkoerrdbell);
-	if (reg & PKO_REG_ERROR_PARITY)
-		OCTEON_EVCNT_INC(sc, pkoerrparity);
+		printf("%s: PKO_REG_ERROR=0x%016llx\n", __func__, reg);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfpa.c,v 1.3 2014/08/11 18:08:17 miod Exp $	*/
+/*	$OpenBSD: cn30xxfpa.c,v 1.4 2014/08/11 18:29:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -65,17 +65,6 @@ struct cn30xxfpa_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	struct cn30xxfpa_desc	sc_descs[8];
-
-#ifdef OCTEON_ETH_DEBUG
-	struct evcnt		sc_ev_fpaq7perr;
-	struct evcnt		sc_ev_fpaq7coff;
-	struct evcnt		sc_ev_fpaq7und;
-	struct evcnt		sc_ev_fpaq6perr;
-	struct evcnt		sc_ev_fpaq6coff;
-	struct evcnt		sc_ev_fpaq6und;
-	struct evcnt		sc_ev_fpaq5perr;
-	struct evcnt		sc_ev_fpaq5coff;
-#endif
 };
 
 void		cn30xxfpa_bootstrap(struct octeon_config *);
@@ -89,7 +78,6 @@ uint64_t	cn30xxfpa_iobdma(struct cn30xxfpa_softc *, int, int);
 #endif
 
 #ifdef OCTEON_ETH_DEBUG
-void		cn30xxfpa_intr_evcnt_attach(struct cn30xxfpa_softc *);
 void		cn30xxfpa_intr_rml(void *);
 #endif
 
@@ -116,28 +104,7 @@ cn30xxfpa_reset(void)
 }
 
 #ifdef OCTEON_ETH_DEBUG
-int			cn30xxfpa_intr_rml_verbose;
-struct evcnt		cn30xxfpa_intr_evcnt;
-
-static const struct octeon_evcnt_entry cn30xxfpa_intr_evcnt_entries[] = {
-#define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct cn30xxfpa_softc, name, type, parent, descr)
-	_ENTRY(fpaq7perr,          MISC, NULL, "fpa q7 pointer"),
-	_ENTRY(fpaq7coff,          MISC, NULL, "fpa q7 counter offset"),
-	_ENTRY(fpaq7und,           MISC, NULL, "fpa q7 underflow"),
-	_ENTRY(fpaq6perr,          MISC, NULL, "fpa q6 pointer"),
-	_ENTRY(fpaq6coff,          MISC, NULL, "fpa q6 counter offset"),
-	_ENTRY(fpaq6und,           MISC, NULL, "fpa q6 underflow"),
-	_ENTRY(fpaq5perr,          MISC, NULL, "fpa q5 pointer"),
-	_ENTRY(fpaq5coff,          MISC, NULL, "fpa q5 counter offset"),
-#undef	_ENTRY
-};
-
-void
-cn30xxfpa_intr_evcnt_attach(struct cn30xxfpa_softc *sc)
-{
-	OCTEON_EVCNT_ATTACH_EVCNTS(sc, cn30xxfpa_intr_evcnt_entries, "fpa0");
-}
+int	cn30xxfpa_intr_rml_verbose;
 
 void
 cn30xxfpa_intr_rml(void *arg)
@@ -145,28 +112,11 @@ cn30xxfpa_intr_rml(void *arg)
 	struct cn30xxfpa_softc *sc;
 	uint64_t reg;
 
-	cn30xxfpa_intr_evcnt.ev_count++;
 	sc = &cn30xxfpa_softc;
 	KASSERT(sc != NULL);
 	reg = cn30xxfpa_int_summary();
 	if (cn30xxfpa_intr_rml_verbose)
-		printf("%s: FPA_INT_SUM=0x%016" PRIx64 "\n", __func__, reg);
-	if (reg & FPA_INT_SUM_Q7_PERR)
-		OCTEON_EVCNT_INC(sc, fpaq7perr);
-	if (reg & FPA_INT_SUM_Q7_COFF)
-		OCTEON_EVCNT_INC(sc, fpaq7coff);
-	if (reg & FPA_INT_SUM_Q7_UND)
-		OCTEON_EVCNT_INC(sc, fpaq7und);
-	if (reg & FPA_INT_SUM_Q6_PERR)
-		OCTEON_EVCNT_INC(sc, fpaq6perr);
-	if (reg & FPA_INT_SUM_Q6_COFF)
-		OCTEON_EVCNT_INC(sc, fpaq6coff);
-	if (reg & FPA_INT_SUM_Q6_UND)
-		OCTEON_EVCNT_INC(sc, fpaq6und);
-	if (reg & FPA_INT_SUM_Q5_PERR)
-		OCTEON_EVCNT_INC(sc, fpaq5perr);
-	if (reg & FPA_INT_SUM_Q5_COFF)
-		OCTEON_EVCNT_INC(sc, fpaq5coff);
+		printf("%s: FPA_INT_SUM=0x%016llx\n", __func__, reg);
 }
 
 void
@@ -311,7 +261,6 @@ cn30xxfpa_init(struct cn30xxfpa_softc *sc)
 	cn30xxfpa_init_regs(sc);
 #ifdef OCTEON_ETH_DEBUG
 	cn30xxfpa_int_enable(sc, 1);
-	cn30xxfpa_intr_evcnt_attach(sc);
 #endif
 }
 
@@ -361,19 +310,18 @@ cn30xxfpa_init_regs(struct cn30xxfpa_softc *sc)
 }
 
 #ifdef OCTEON_ETH_DEBUG
-void		cn30xxfpa_dump_regs(void);
-void		cn30xxfpa_dump_bufs(void);
-void		cn30xxfpa_dump_buf(int);
+void	cn30xxfpa_dump_regs(void);
+void	cn30xxfpa_dump_bufs(void);
+void	cn30xxfpa_dump_buf(int);
 
-#define	_ENTRY(x)	{ #x, x##_BITS, x##_OFFSET }
+#define	_ENTRY(x)	{ #x, x##_OFFSET }
 
 struct cn30xxfpa_dump_reg_ {
 	const char *name;
-	const char *format;
 	size_t	offset;
 };
 
-static const struct cn30xxfpa_dump_reg_ cn30xxfpa_dump_regs_[] = {
+const struct cn30xxfpa_dump_reg_ cn30xxfpa_dump_regs_[] = {
 	_ENTRY(FPA_INT_SUM),
 	_ENTRY(FPA_INT_ENB),
 	_ENTRY(FPA_CTL_STATUS),
@@ -400,7 +348,7 @@ static const struct cn30xxfpa_dump_reg_ cn30xxfpa_dump_regs_[] = {
 	_ENTRY(FPA_QUE_ACT),
 };
 
-static const char *cn30xxfpa_dump_bufs_[8] = {
+const char *cn30xxfpa_dump_bufs_[8] = {
 	[0] = "recv",
 	[1] = "wq",
 	[2] = "cmdbuf",
@@ -420,18 +368,12 @@ cn30xxfpa_dump_regs(void)
 	struct cn30xxfpa_softc *sc = &cn30xxfpa_softc;
 	const struct cn30xxfpa_dump_reg_ *reg;
 	uint64_t tmp;
-	char buf[512];
 	int i;
 
 	for (i = 0; i < (int)nitems(cn30xxfpa_dump_regs_); i++) {
 		reg = &cn30xxfpa_dump_regs_[i];
 		tmp = bus_space_read_8(sc->sc_regt, sc->sc_regh, reg->offset);
-		if (reg->format == NULL) {
-			snprintf(buf, sizeof(buf), "%16" PRIx64, tmp);
-		} else {
-			bitmask_snprintf(tmp, reg->format, buf, sizeof(buf));
-		}
-		printf("\t%-24s: %s\n", reg->name, buf);
+		printf("\t%-24s: %16llx\n", reg->name, tmp);
 	}
 }
 
@@ -459,7 +401,7 @@ cn30xxfpa_dump_buf(int pool)
 		return;
 	printf("%s pool:\n", name);
 	for (i = 0; (ptr = cn30xxfpa_load(pool)) != 0; i++) {
-		printf("\t%016" PRIx64 "%s", ptr, ((i % 4) == 3) ? "\n" : "");
+		printf("\t%016llx%s", ptr, ((i % 4) == 3) ? "\n" : "");
 		cn30xxfpa_store(ptr, OCTEON_POOL_NO_DUMP, 0);
 	}
 	if (i % 4 != 3)

@@ -3,7 +3,7 @@
  * DONT EDIT THIS FILE
  */
 
-/*	$OpenBSD: cn30xxbootbusreg.h,v 1.1 2011/06/16 11:22:30 syuu Exp $	*/
+/*	$OpenBSD: cn30xxbootbusreg.h,v 1.2 2014/08/11 18:29:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -122,115 +122,6 @@
 #define	MIO_BOOT_BIST_STAT_NCBO_0		0x0000000000000004ULL
 #define	MIO_BOOT_BIST_STAT_LOC			0x0000000000000002ULL
 #define	MIO_BOOT_BIST_STAT_NCBI			0x0000000000000001ULL
-
-/* ---- bitmask_snprintf */
-
-#define	MIO_BOOT_REG_CFGN_BITS \
-	"\177"		/* new format */ \
-	"\177"		/* seil ext */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x24"		"SAM\0" \
-	"f\x22\x02"	"WE_EXT\0" \
-	"f\x20\x02"	"OE_EXT\0" \
-	"b\x1f"		"EN\0" \
-	"b\x1e"		"OR\0" \
-	"b\x1d"		"ALE\0" \
-	"b\x1c"		"WIDTH\0" \
-	"f\x10\x0c"	"SIZE\0" \
-	"f\x00\x10"	"BASE\0"
-#define	MIO_BOOT_REG_CFG0_BITS			MIO_BOOT_REG_CFGN_BITS
-#define	MIO_BOOT_REG_CFG1_BITS			MIO_BOOT_REG_CFGN_BITS
-#define	MIO_BOOT_REG_CFG2_BITS			MIO_BOOT_REG_CFGN_BITS
-#define	MIO_BOOT_REG_CFG3_BITS			MIO_BOOT_REG_CFGN_BITS
-#define	MIO_BOOT_REG_CFG4_BITS			MIO_BOOT_REG_CFGN_BITS
-#define	MIO_BOOT_REG_CFG5_BITS			MIO_BOOT_REG_CFGN_BITS
-#define	MIO_BOOT_REG_CFG6_BITS			MIO_BOOT_REG_CFGN_BITS
-#define	MIO_BOOT_REG_CFG7_BITS			MIO_BOOT_REG_CFGN_BITS
-
-#define	MIO_BOOT_REG_TIMN_BITS \
-	"\177"		/* new format */ \
-	"\177"		/* seil ext */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x3f"		"PAGEM\0" \
-	"b\x3e"		"WAITM\0" \
-	"f\x3c\x02"	"PAGES\0" \
-	"f\x36\x06"	"ALE\0" \
-	"f\x30\x06"	"PAGE\0" \
-	"f\x2a\x06"	"WAIT\0" \
-	"f\x24\x06"	"PAUSE\0" \
-	"f\x1e\x06"	"WR_HLD\0" \
-	"f\x18\x06"	"RD_HLD\0" \
-	"f\x12\x06"	"WE\0" \
-	"f\x0c\x06"	"OE\0" \
-	"f\x06\x06"	"CE\0" \
-	"f\x00\x06"	"ADR\0"
-#define	MIO_BOOT_REG_TIM0_BITS			MIO_BOOT_REG_TIMN_BITS
-#define	MIO_BOOT_REG_TIM1_BITS			MIO_BOOT_REG_TIMN_BITS
-#define	MIO_BOOT_REG_TIM2_BITS			MIO_BOOT_REG_TIMN_BITS
-#define	MIO_BOOT_REG_TIM3_BITS			MIO_BOOT_REG_TIMN_BITS
-#define	MIO_BOOT_REG_TIM4_BITS			MIO_BOOT_REG_TIMN_BITS
-#define	MIO_BOOT_REG_TIM5_BITS			MIO_BOOT_REG_TIMN_BITS
-#define	MIO_BOOT_REG_TIM6_BITS			MIO_BOOT_REG_TIMN_BITS
-#define	MIO_BOOT_REG_TIM7_BITS			MIO_BOOT_REG_TIMN_BITS
-
-#define	MIO_BOOT_LOC_CFGN_BITS \
-	"\177"		/* new format */ \
-	"\177"		/* seil ext */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x1f"		"EN\0" \
-	"f\x03\x19"	"BASE\0"
-#define	MIO_BOOT_LOC_CFG0_BITS			MIO_BOOT_LOC_CFGN_BITS
-#define	MIO_BOOT_LOC_CFG1_BITS			MIO_BOOT_LOC_CFGN_BITS
-#define	MIO_BOOT_LOC_CFG2_BITS			MIO_BOOT_LOC_CFGN_BITS
-#define	MIO_BOOT_LOC_CFG3_BITS			MIO_BOOT_LOC_CFGN_BITS
-#define	MIO_BOOT_LOC_CFG4_BITS			MIO_BOOT_LOC_CFGN_BITS
-#define	MIO_BOOT_LOC_CFG5_BITS			MIO_BOOT_LOC_CFGN_BITS
-#define	MIO_BOOT_LOC_CFG6_BITS			MIO_BOOT_LOC_CFGN_BITS
-#define	MIO_BOOT_LOC_CFG7_BITS			MIO_BOOT_LOC_CFGN_BITS
-
-#define	MIO_BOOT_LOC_ADR_BITS \
-	"\177"		/* new format */ \
-	"\177"		/* seil ext */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x03\x05"	"ADR\0"
-
-#define	MIO_BOOT_ERR_BITS \
-	"\177"		/* new format */ \
-	"\177"		/* seil ext */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x01"		"WAIT_ERR\0" \
-	"b\x00"		"ADR_ERR\0"
-
-#define	MIO_BOOT_INT_BITS \
-	"\177"		/* new format */ \
-	"\177"		/* seil ext */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x01"		"WAIT_INT\0" \
-	"b\x00"		"ADR_INT\0"
-
-#define	MIO_BOOT_THR_BITS \
-	"\177"		/* new format */ \
-	"\177"		/* seil ext */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x08\x06"	"FIF_CNT\0" \
-	"f\x00\x06"	"FIF_THR\0"
-
-#define	MIO_BOOT_BIST_STAT_BITS \
-	"\177"		/* new format */ \
-	"\177"		/* seil ext */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x03"		"NCBO_1\0" \
-	"b\x02"		"NCBO_0\0" \
-	"b\x01"		"LOC\0" \
-	"b\x00"		"NCBI\0"
 
 /* ---- bus_space */
 

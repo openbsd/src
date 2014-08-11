@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipd.c,v 1.4 2014/07/22 10:35:35 mpi Exp $	*/
+/*	$OpenBSD: cn30xxipd.c,v 1.5 2014/08/11 18:29:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -45,17 +45,12 @@
 	((caddr_t)(data) + ((word2 & PIP_WQE_WORD2_IP_OFFSET) >> PIP_WQE_WORD2_IP_OFFSET_SHIFT))
 
 #ifdef OCTEON_ETH_DEBUG
-void			cn30xxipd_intr_evcnt_attach(struct cn30xxipd_softc *);
-void			cn30xxipd_intr_rml(void *);
-int			cn30xxipd_intr_drop(void *);
+void	cn30xxipd_intr_rml(void *);
+int	cn30xxipd_intr_drop(void *);
 
-void			cn30xxipd_dump(void);
+void	cn30xxipd_dump(void);
 
-static void		*cn30xxipd_intr_drop_ih;
-struct evcnt		cn30xxipd_intr_drop_evcnt =
-			    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "octeon",
-			    "ipd drop intr");
-EVCNT_ATTACH_STATIC(cn30xxipd_intr_drop_evcnt);
+void	*cn30xxipd_intr_drop_ih;
 
 struct cn30xxipd_softc	*__cn30xxipd_softc[3/* XXX */];
 #endif
@@ -86,11 +81,10 @@ cn30xxipd_init(struct cn30xxipd_attach_args *aa,
 
 #ifdef OCTEON_ETH_DEBUG
 	cn30xxipd_int_enable(sc, 1);
-	cn30xxipd_intr_evcnt_attach(sc);
 	if (cn30xxipd_intr_drop_ih == NULL)
 		cn30xxipd_intr_drop_ih = octeon_intr_establish(
-		   ffs64(CIU_INTX_SUM0_IPD_DRP) - 1, 0, IPL_NET,
-		   cn30xxipd_intr_drop, NULL);
+		   ffs64(CIU_INTX_SUM0_IPD_DRP) - 1, IPL_NET,
+		   cn30xxipd_intr_drop, NULL, "cn30xxipd");
 	__cn30xxipd_softc[sc->sc_port] = sc;
 #endif /* OCTEON_ETH_DEBUG */
 }
@@ -234,32 +228,13 @@ cn30xxipd_sub_port_fcs(struct cn30xxipd_softc *sc, int enable)
 }
 
 #ifdef OCTEON_ETH_DEBUG
-int			cn30xxipd_intr_rml_verbose;
-struct evcnt		cn30xxipd_intr_evcnt;
-
-static const struct octeon_evcnt_entry cn30xxipd_intr_evcnt_entries[] = {
-#define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct cn30xxipd_softc, name, type, parent, descr)
-	_ENTRY(ipdbpsub,	MISC, NULL, "ipd backpressure subtract"),
-	_ENTRY(ipdprcpar3,	MISC, NULL, "ipd parity error 127:96"),
-	_ENTRY(ipdprcpar2,	MISC, NULL, "ipd parity error 95:64"),
-	_ENTRY(ipdprcpar1,	MISC, NULL, "ipd parity error 63:32"),
-	_ENTRY(ipdprcpar0,	MISC, NULL, "ipd parity error 31:0"),
-#undef	_ENTRY
-};
-
-void
-cn30xxipd_intr_evcnt_attach(struct cn30xxipd_softc *sc)
-{
-	OCTEON_EVCNT_ATTACH_EVCNTS(sc, cn30xxipd_intr_evcnt_entries, "ipd0");
-}
+int	cn30xxipd_intr_rml_verbose;
 
 void
 cn30xxipd_intr_rml(void *arg)
 {
 	int i;
 
-	cn30xxipd_intr_evcnt.ev_count++;
 	for (i = 0; i < 3/* XXX */; i++) {
 		struct cn30xxipd_softc *sc;
 		uint64_t reg;
@@ -268,17 +243,7 @@ cn30xxipd_intr_rml(void *arg)
 		KASSERT(sc != NULL);
 		reg = cn30xxipd_int_summary(sc);
 		if (cn30xxipd_intr_rml_verbose)
-			printf("%s: IPD_INT_SUM=0x%016" PRIx64 "\n", __func__, reg);
-		if (reg & IPD_INT_SUM_BP_SUB)
-			OCTEON_EVCNT_INC(sc, ipdbpsub);
-		if (reg & IPD_INT_SUM_PRC_PAR3)
-			OCTEON_EVCNT_INC(sc, ipdprcpar3);
-		if (reg & IPD_INT_SUM_PRC_PAR2)
-			OCTEON_EVCNT_INC(sc, ipdprcpar2);
-		if (reg & IPD_INT_SUM_PRC_PAR1)
-			OCTEON_EVCNT_INC(sc, ipdprcpar1);
-		if (reg & IPD_INT_SUM_PRC_PAR0)
-			OCTEON_EVCNT_INC(sc, ipdprcpar0);
+			printf("%s: IPD_INT_SUM=0x%016llx\n", __func__, reg);
 	}
 }
 
@@ -311,19 +276,17 @@ int
 cn30xxipd_intr_drop(void *arg)
 {
 	octeon_xkphys_write_8(CIU_INT0_SUM0, CIU_INTX_SUM0_IPD_DRP);
-	cn30xxipd_intr_drop_evcnt.ev_count++;
 	return (1);
 }
 
-#define	_ENTRY(x)	{ #x, x##_BITS, x##_OFFSET }
+#define	_ENTRY(x)	{ #x, x##_OFFSET }
 
 struct cn30xxipd_dump_reg {
 	const char *name;
-	const char *format;
 	size_t	offset;
 };
 
-static const struct cn30xxipd_dump_reg cn30xxipd_dump_regs[] = {
+const struct cn30xxipd_dump_reg cn30xxipd_dump_regs[] = {
 	_ENTRY(IPD_1ST_MBUFF_SKIP),
 	_ENTRY(IPD_NOT_1ST_MBUFF_SKIP),
 	_ENTRY(IPD_PACKET_MBUFF_SIZE),
@@ -378,19 +341,13 @@ cn30xxipd_dump(void)
 	struct cn30xxipd_softc *sc;
 	const struct cn30xxipd_dump_reg *reg;
 	uint64_t tmp;
-	char buf[512];
 	int i;
 
 	sc = __cn30xxipd_softc[0];
 	for (i = 0; i < (int)nitems(cn30xxipd_dump_regs); i++) {
 		reg = &cn30xxipd_dump_regs[i];
 		tmp = _IPD_RD8(sc, reg->offset);
-		if (reg->format == NULL) {
-			snprintf(buf, sizeof(buf), "%16" PRIx64, tmp);
-		} else {
-			bitmask_snprintf(tmp, reg->format, buf, sizeof(buf));
-		}
-		printf("%-32s: %s\n", reg->name, buf);
+		printf("%-32s: %16llx\n", reg->name, tmp);
 	}
 }
 #endif /* OCTEON_ETH_DEBUG */

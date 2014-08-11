@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxasx.c,v 1.5 2014/08/11 18:08:17 miod Exp $	*/
+/*	$OpenBSD: cn30xxasx.c,v 1.6 2014/08/11 18:29:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -36,11 +36,7 @@
 #include <octeon/dev/cn30xxasxvar.h>
 
 #ifdef OCTEON_ETH_DEBUG
-void			cn30xxasx_intr_evcnt_attach(struct cn30xxasx_softc *);
-void			cn30xxasx_intr_rml(void *);
-#endif
-
-#ifdef OCTEON_ETH_DEBUG
+void	cn30xxasx_intr_rml(void *);
 struct cn30xxasx_softc *__cn30xxasx_softc;
 #endif
 
@@ -67,7 +63,6 @@ cn30xxasx_init(struct cn30xxasx_attach_args *aa,
 	*rsc = sc;
 
 #ifdef OCTEON_ETH_DEBUG
-	cn30xxasx_intr_evcnt_attach(sc);
 	if (__cn30xxasx_softc == NULL)
 		__cn30xxasx_softc = sc;
 #endif
@@ -125,38 +120,17 @@ cn30xxasx_enable_rx(struct cn30xxasx_softc *sc, int enable)
 }
 
 #if defined(OCTEON_ETH_DEBUG)
-int			cn30xxasx_intr_rml_verbose;
-
-static const struct octeon_evcnt_entry cn30xxasx_intr_evcnt_entries[] = {
-#define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct cn30xxasx_softc, name, type, parent, descr)
-	_ENTRY(asxrxpsh,	MISC, NULL, "asx tx fifo overflow"),
-	_ENTRY(asxtxpop,	MISC, NULL, "asx tx fifo underflow"),
-	_ENTRY(asxovrflw,	MISC, NULL, "asx rx fifo overflow"),
-#undef	_ENTRY
-};
-
-void
-cn30xxasx_intr_evcnt_attach(struct cn30xxasx_softc *sc)
-{
-	OCTEON_EVCNT_ATTACH_EVCNTS(sc, cn30xxasx_intr_evcnt_entries, "asx0");
-}
+int	cn30xxasx_intr_rml_verbose;
 
 void
 cn30xxasx_intr_rml(void *arg)
 {
 	struct cn30xxasx_softc *sc = __cn30xxasx_softc;
-	uint64_t reg = 0;
+	uint64_t reg;
 
 	reg = cn30xxasx_int_summary(sc);
 	if (cn30xxasx_intr_rml_verbose)
-		printf("%s: ASX_INT_REG=0x%016" PRIx64 "\n", __func__, reg);
-	if (reg & ASX0_INT_REG_TXPSH)
-		OCTEON_EVCNT_INC(sc, asxrxpsh);
-	if (reg & ASX0_INT_REG_TXPOP)
-		OCTEON_EVCNT_INC(sc, asxtxpop);
-	if (reg & ASX0_INT_REG_OVRFLW)
-		OCTEON_EVCNT_INC(sc, asxovrflw);
+		printf("%s: ASX_INT_REG=0x%016llx\n", __func__, reg);
 }
 
 int
@@ -193,17 +167,16 @@ cn30xxasx_int_summary(struct cn30xxasx_softc *sc)
 	return summary;
 }
 
-#define	_ENTRY(x)	{ #x, x##_BITS, x##_OFFSET }
+#define	_ENTRY(x)	{ #x, x##_OFFSET }
 
 struct cn30xxasx_dump_reg_ {
 	const char *name;
-	const char *format;
 	size_t	offset;
 };
 
 void		cn30xxasx_dump(void);
 
-static const struct cn30xxasx_dump_reg_ cn30xxasx_dump_regs_[] = {
+const struct cn30xxasx_dump_reg_ cn30xxasx_dump_regs_[] = {
 	_ENTRY(ASX0_RX_PRT_EN),
 	_ENTRY(ASX0_TX_PRT_EN),
 	_ENTRY(ASX0_INT_REG),
@@ -230,17 +203,12 @@ cn30xxasx_dump(void)
 	struct cn30xxasx_softc *sc = __cn30xxasx_softc;
 	const struct cn30xxasx_dump_reg_ *reg;
 	uint64_t tmp;
-	char buf[512];
 	int i;
 
 	for (i = 0; i < (int)nitems(cn30xxasx_dump_regs_); i++) {
 		reg = &cn30xxasx_dump_regs_[i];
 		tmp = _ASX_RD8(sc, reg->offset);
-		if (reg->format == NULL)
-			snprintf(buf, sizeof(buf), "%016" PRIx64, tmp);
-		else
-			bitmask_snprintf(tmp, reg->format, buf, sizeof(buf));
-		printf("\t%-24s: %s\n", reg->name, buf);
+		printf("\t%-24s: %016llx\n", reg->name, tmp);
 	}
 }
 #endif

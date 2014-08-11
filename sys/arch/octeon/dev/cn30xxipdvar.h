@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipdvar.h,v 1.2 2011/06/24 02:13:23 yasuoka Exp $	*/
+/*	$OpenBSD: cn30xxipdvar.h,v 1.3 2014/08/11 18:29:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -36,13 +36,6 @@ struct cn30xxipd_softc {
 	bus_space_handle_t	sc_regh;
 	size_t			sc_first_mbuff_skip;
 	size_t			sc_not_first_mbuff_skip;
-#ifdef OCTEON_ETH_DEBUG
-	struct evcnt		sc_ev_ipdbpsub;
-	struct evcnt		sc_ev_ipdprcpar3;
-	struct evcnt		sc_ev_ipdprcpar2;
-	struct evcnt		sc_ev_ipdprcpar1;
-	struct evcnt		sc_ev_ipdprcpar0;
-#endif
 };
 
 /* XXX */
@@ -61,11 +54,9 @@ void			cn30xxipd_sub_port_fcs(struct cn30xxipd_softc *, int);
 void			cn30xxipd_offload(uint64_t, caddr_t, uint16_t *);
 
 #ifdef OCTEON_ETH_DEBUG
-void			cn30xxipd_int_enable(struct cn30xxipd_softc *, int);
-uint64_t		cn30xxipd_int_summary(struct cn30xxipd_softc *);
-#endif /* OCTEON_ETH_DEBUG */
-#ifdef OCTEON_ETH_DEBUG
-void			cn30xxipd_int_enable(struct cn30xxipd_softc *, int);
+void	cn30xxipd_int_enable(struct cn30xxipd_softc *, int);
+uint64_t cn30xxipd_int_summary(struct cn30xxipd_softc *);
+void	cn30xxipd_int_enable(struct cn30xxipd_softc *, int);
 #endif /* OCTEON_ETH_DEBUG */
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.20 2014/07/14 10:23:58 jasper Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.21 2014/08/11 18:29:56 miod Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -420,48 +420,5 @@ octeon_get_cycles(void)
 		: [tmp]"=&r"(tmp));
 	return tmp;
 }
-
-/* -------------------------------------------------------------------------- */
-
-/* ---- event counter */
-
-#if defined(OCTEON_ETH_DEBUG)
-#define	OCTEON_EVCNT_INC(sc, name) \
-	do { (sc)->sc_ev_##name.ev_count++; } while (0)
-#define	OCTEON_EVCNT_ADD(sc, name, n) \
-	do { (sc)->sc_ev_##name.ev_count += (n); } while (0)
-#define	OCTEON_EVCNT_ATTACH_EVCNTS(sc, entries, devname) \
-do {								\
-	int i;							\
-	const struct octeon_evcnt_entry *ee;			\
-								\
-	for (i = 0; i < (int)nitems(entries); i++) {	\
-		ee = &(entries)[i];				\
-		evcnt_attach_dynamic(				\
-		    (struct evcnt *)((uintptr_t)(sc) + ee->ee_offset), \
-		    ee->ee_type, ee->ee_parent, devname,	\
-		    ee->ee_name);				\
-	}							\
-} while (0)
-#else
-#define	OCTEON_EVCNT_INC(sc, name)
-#define	OCTEON_EVCNT_ADD(sc, name, n)
-#define	OCTEON_EVCNT_ATTACH_EVCNTS(sc, entries, devname)
-#endif
-
-struct octeon_evcnt_entry {
-	size_t		ee_offset;
-	int		ee_type;
-	struct evcnt	*ee_parent;
-	const char	*ee_name;
-};
-
-#define	OCTEON_EVCNT_ENTRY(_sc_type, _var, _ev_type, _parent, _name) \
-	{							\
-		.ee_offset = offsetof(_sc_type, sc_ev_##_var),	\
-		.ee_type = EVCNT_TYPE_##_ev_type,		\
-		.ee_parent = _parent,				\
-		.ee_name = _name				\
-	}
 
 #endif	/* _MIPS_OCTEON_OCTEONVAR_H_ */
