@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmxvar.h,v 1.3 2014/08/11 18:29:56 miod Exp $	*/
+/*	$OpenBSD: cn30xxgmxvar.h,v 1.4 2014/08/11 18:52:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -47,18 +47,6 @@
 /* Disable 802.3x flow-control when AutoNego is enabled */
 #define GMX_802_3X_DISABLE_AUTONEG
 
-#if 1
-	/* XXX */
-	enum OCTEON_ETH_QUIRKS {
-		OCTEON_ETH_QUIRKS_SEILX = 1 << 1,
-		OCTEON_ETH_QUIRKS_SEILX1 = 1 << 2,
-		OCTEON_ETH_QUIRKS_SEILX2 = 1 << 3,
-		OCTEON_ETH_QUIRKS_SEILX2PORT0 = 1 << 4,
-		OCTEON_ETH_QUIRKS_L2SWPORT = 1 << 5,
-		OCTEON_ETH_QUIRKS_FCS = 1 << 6,
-		OCTEON_ETH_QUIRKS_SEILX1_REVB = 1 << 7,
-	};
-#endif
 
 struct cn30xxgmx_softc;
 struct cn30xxgmx_port_softc;
@@ -69,7 +57,6 @@ struct cn30xxgmx_port_softc {
 	int			sc_port_no;	/* GMX0:0, GMX0:1, ... */
 	int			sc_port_type;
 	uint64_t		sc_mac;
-	int			sc_quirks;
 	uint64_t		sc_link;
 	struct mii_data		*sc_port_mii;
 	struct arpcom		*sc_port_ac;

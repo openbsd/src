@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.14 2014/08/11 18:29:56 miod Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.15 2014/08/11 18:52:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -717,51 +717,10 @@ int
 cn30xxgmx_rgmii_speed_newlink(struct cn30xxgmx_port_softc *sc,
     uint64_t *rnewlink)
 {
-	uint64_t newlink = 0;
+	uint64_t newlink;
 
-	switch (sc->sc_quirks &
-	    (OCTEON_ETH_QUIRKS_SEILX | OCTEON_ETH_QUIRKS_SEILX2PORT0 |
-	     OCTEON_ETH_QUIRKS_L2SWPORT)) {
-	default:
-		/* Inband status does not seem to work */
-		newlink = _GMX_PORT_RD8(sc, GMX0_RX0_RX_INBND);
-		break;
-	case OCTEON_ETH_QUIRKS_SEILX | OCTEON_ETH_QUIRKS_SEILX2PORT0:
-		SET(newlink, RXN_RX_INBND_SPEED_125);
-		SET(newlink, RXN_RX_INBND_DUPLEX);
-		SET(newlink, RXN_RX_INBND_STATUS);
-		break;
-	case OCTEON_ETH_QUIRKS_L2SWPORT:
-		SET(newlink, RXN_RX_INBND_SPEED_125);
-		SET(newlink, RXN_RX_INBND_DUPLEX);
-		SET(newlink, RXN_RX_INBND_STATUS);
-		break;
-	case OCTEON_ETH_QUIRKS_SEILX:
-		newlink = 0;
-		switch (IFM_SUBTYPE(sc->sc_port_mii->mii_media_active)) {
-		default:
-			SET(newlink, RXN_RX_INBND_SPEED_125);
-			break;
-		case IFM_100_TX:
-			SET(newlink, RXN_RX_INBND_SPEED_25);
-			break;
-		case IFM_10_T:
-			/* XXX how can this happen? */
-			SET(newlink, RXN_RX_INBND_SPEED_2_5);
-			break;
-		}
-		SET(newlink,
-		    ISSET(sc->sc_port_mii->mii_media_active, IFM_FDX) ?
-		    RXN_RX_INBND_DUPLEX : 0);
-		SET(newlink,
-		    ISSET(sc->sc_port_mii->mii_media_status, IFM_ACTIVE) ?
-		    RXN_RX_INBND_STATUS : 0);
-		break;
-	case OCTEON_ETH_QUIRKS_SEILX2PORT0:
-		/* NOTREACHED */
-		OCTEON_ETH_KASSERT(0);
-		break;
-	}
+	/* Inband status does not seem to work */
+	newlink = _GMX_PORT_RD8(sc, GMX0_RX0_RX_INBND);
 
 	*rnewlink = newlink;
 	return 0;
@@ -1004,8 +963,6 @@ cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *sc)
 	    RXN_FRM_CTL_CTL_DRP |
 	    RXN_FRM_CTL_PRE_STRP |
 	    RXN_FRM_CTL_PRE_CHK;
-	if (sc->sc_quirks & OCTEON_ETH_QUIRKS_SEILX1_REVB)
-		rx_frm_ctl |= RXN_FRM_CTL_PRE_ALIGN;
 	cn30xxgmx_rx_frm_ctl_enable(sc, rx_frm_ctl);
 
 	/* XXX PHY-dependent parameter */
@@ -1020,23 +977,13 @@ cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *sc)
 	 * > Delay setting to place n TXC (RGMII transmit clock) delay line.
 	 * > ...
 	 */
-	switch (sc->sc_quirks & OCTEON_ETH_QUIRKS_SEILX) {
-	case OCTEON_ETH_QUIRKS_SEILX:
-		/*
-		 * Table.4-6, Summary of ASX Registers, SEIL_HS_v03;
-		 */
-		clk_tx_setting = 0;
-		clk_rx_setting = 0;
-		break;
+
+	switch (octeon_boot_info->board_type) {
 	default:
 		/* Default parameter of CN30XX */
 		clk_tx_setting = 24;
 		clk_rx_setting = 24;
 		break;
-	}
-
-	/* board specific overrides */
-	switch (octeon_boot_info->board_type) {
 	case BOARD_TYPE_UBIQUITI_E100:
 		clk_tx_setting = 16;
 		clk_rx_setting = 0;
