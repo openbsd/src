@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.64 2014/08/10 14:42:56 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.65 2014/08/11 01:06:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -614,6 +614,7 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
 int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen);
 int ssl3_num_ciphers(void);
 const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
+const SSL_CIPHER *ssl3_get_cipher_by_id(unsigned int id);
 int ssl3_renegotiate(SSL *ssl);
 
 int ssl3_renegotiate_check(SSL *ssl);

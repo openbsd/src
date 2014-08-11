@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.39 2014/08/10 14:42:56 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.40 2014/08/11 01:06:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -558,18 +558,7 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 	}
 
 	if (ret->cipher == NULL) {
-		unsigned char buf[5], *p;
-		unsigned long l;
-
-		p = buf;
-		l = ret->cipher_id;
-		l2n(l, p);
-
-		if ((ret->ssl_version >> 8) >= SSL3_VERSION_MAJOR)
-			ret->cipher = ssl3_get_cipher_by_char(&buf[2]);
-		else
-			ret->cipher = ssl3_get_cipher_by_char(&buf[1]);
-
+		ret->cipher = ssl3_get_cipher_by_id(ret->cipher_id);
 		if (ret->cipher == NULL)
 			goto err;
 	}

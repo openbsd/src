@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.75 2014/08/10 15:06:15 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.76 2014/08/11 01:06:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1871,6 +1871,19 @@ ssl3_get_cipher(unsigned int u)
 		return (&(ssl3_ciphers[SSL3_NUM_CIPHERS - 1 - u]));
 	else
 		return (NULL);
+}
+
+const SSL_CIPHER *
+ssl3_get_cipher_by_id(unsigned int id)
+{
+	const SSL_CIPHER *cp;
+	SSL_CIPHER c;
+
+	c.id = id;
+	cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
+	if (cp != NULL && cp->valid == 1)
+		return (cp);
+	return (NULL);
 }
 
 int
