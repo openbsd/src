@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.54 2014/04/22 12:48:17 sobrado Exp $
+.\" $OpenBSD: login.conf.5,v 1.55 2014/08/11 12:57:14 jmc Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: April 22 2014 $
+.Dd $Mdocdate: August 11 2014 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -306,6 +306,13 @@ Session shell to execute rather than the shell specified in the password file.
 The
 .Ev SHELL
 environment variable will contain the shell specified in the password file.
+.\"
+.Pp
+.It tc Ta string Ta "" Ta
+Interpolate/expands records from corresponding
+.Pa login.conf .
+See
+.Xr getcap 3 .
 .\"
 .Pp
 .It term Ta string Ta Dv su Ta
