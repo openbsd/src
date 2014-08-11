@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.8,v 1.11 2013/08/14 08:39:31 jmc Exp $
+.\"	$OpenBSD: ldapd.8,v 1.12 2014/08/11 08:21:55 jmc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: August 11 2014 $
 .Dt LDAPD 8
 .Os
 .Sh NAME
@@ -157,3 +157,6 @@ program first appeared in
 .Sh CAVEATS
 .Nm
 is not yet fully LDAPv3 compliant.
+.Pp
+Database files are not expected to work across architectures and may
+not work across versions.
