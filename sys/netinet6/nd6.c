@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.120 2014/07/12 18:44:23 tedu Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.121 2014/08/11 13:51:07 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1010,7 +1010,7 @@ nd6_rtrequest(int req, struct rtentry *rt)
 		 *	   rt->rt_flags |= RTF_CLONING;
 		 */
 		if ((rt->rt_flags & RTF_CLONING) ||
-		    ((rt->rt_flags & RTF_LLINFO) && !ln)) {
+		    ((rt->rt_flags & (RTF_LLINFO | RTF_LOCAL)) && !ln)) {
 			/*
 			 * Case 1: This route should come from a route to
 			 * interface (RTF_CLONING case) or the route should be

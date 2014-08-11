@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.297 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: if.c,v 1.298 2014/08/11 13:51:07 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1001,12 +1001,7 @@ p2p_rtrequest(int req, struct rtentry *rt)
 
 	switch (req) {
 	case RTM_ADD:
-		/*
-		 * XXX Here we abuse RTF_LLINFO to add a route to
-		 * loopback.  We do that to always have a route
-		 * pointing to our address.
-		 */
-		if ((rt->rt_flags & RTF_LLINFO) == 0)
+		if ((rt->rt_flags & RTF_LOCAL) == 0)
 			break;
 
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
