@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 2014/07/21 17:25:47 uebayasi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.61 2014/08/11 18:56:49 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -258,8 +258,8 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	extern void xtlb_miss;
 
 	boot_desc = (struct boot_desc *)a3;
-	boot_info = 
-		(struct boot_info *)PHYS_TO_CKSEG0(boot_desc->boot_info_addr);
+	boot_info = (struct boot_info *)
+	    PHYS_TO_XKPHYS(boot_desc->boot_info_addr, CCA_CACHED);
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -613,15 +613,14 @@ process_bootargs(void)
 	 * explicitly pass the rootdevice.
 	 */
 	for (i = 1; i < octeon_boot_desc->argc; i++ ) {
-		const char *arg =
-		    (const char*)PHYS_TO_CKSEG0(octeon_boot_desc->argv[i]);
+		const char *arg = (const char*)
+		    PHYS_TO_XKPHYS(octeon_boot_desc->argv[i], CCA_CACHED);
 
-		if (arg == NULL)
+		if (octeon_boot_desc->argv[i] == 0)
 			continue;
 
 #ifdef DEBUG
-		printf("boot_desc->argv[%d] = %s\n",
-		       i, (const char *)PHYS_TO_CKSEG0(octeon_boot_desc->argv[i]));
+		printf("boot_desc->argv[%d] = %s\n", i, arg);
 #endif
 
 		/*

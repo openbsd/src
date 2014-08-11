@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.17 2014/08/11 18:29:56 miod Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.18 2014/08/11 18:56:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -599,7 +599,7 @@ octeon_eth_send_queue_flush(struct octeon_eth_softc *sc)
 
 		octeon_eth_send_queue_del(sc, &m, &gbuf);
 
-		cn30xxfpa_buf_put_paddr(octeon_eth_fb_sg, CKSEG0_TO_PHYS(gbuf));
+		cn30xxfpa_buf_put_paddr(octeon_eth_fb_sg, XKPHYS_TO_PHYS(gbuf));
 
 		m_freem(m);
 	}
@@ -707,13 +707,13 @@ octeon_eth_buf_free_work(struct octeon_eth_softc *sc, uint64_t *work,
 		paddr_t addr;
 		paddr_t start_buffer;
 
-		addr = CKSEG0_TO_PHYS(work[3] & PIP_WQE_WORD3_ADDR);
+		addr = XKPHYS_TO_PHYS(work[3] & PIP_WQE_WORD3_ADDR);
 		start_buffer = addr & ~(2048 - 1);
 
 		cn30xxfpa_buf_put_paddr(octeon_eth_fb_pkt, start_buffer);
 	}
 
-	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, CKSEG0_TO_PHYS(work));
+	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, XKPHYS_TO_PHYS(work));
 
 	return 0;
 }
@@ -724,7 +724,7 @@ octeon_eth_buf_ext_free_m(caddr_t buf, u_int size, void *arg)
 	uint64_t *work = (void *)arg;
 	int s = splnet();
 
-	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, CKSEG0_TO_PHYS(work));
+	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, XKPHYS_TO_PHYS(work));
 
 	splx(s);
 }
@@ -736,8 +736,8 @@ octeon_eth_buf_ext_free_ext(caddr_t buf, u_int size,
 	uint64_t *work = (void *)arg;
 	int s = splnet();
 
-	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, CKSEG0_TO_PHYS(work));
-	cn30xxfpa_buf_put_paddr(octeon_eth_fb_pkt, CKSEG0_TO_PHYS(buf));
+	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, XKPHYS_TO_PHYS(work));
+	cn30xxfpa_buf_put_paddr(octeon_eth_fb_pkt, XKPHYS_TO_PHYS(buf));
 
 	splx(s);
 }
@@ -939,7 +939,7 @@ octeon_eth_send_makecmd(struct octeon_eth_softc *sc, struct mbuf *m,
 	    (segs == 1) ? m->m_pkthdr.len : segs,
 	    (segs == 1) ? 
 		KVTOPHYS(m->m_data) :
-		CKSEG0_TO_PHYS(gbuf));
+		XKPHYS_TO_PHYS(gbuf));
 
 	*rpko_cmd_w0 = pko_cmd_w0;
 	*rpko_cmd_w1 = pko_cmd_w1;
@@ -955,7 +955,7 @@ octeon_eth_send_cmd(struct octeon_eth_softc *sc, uint64_t pko_cmd_w0,
 	uint64_t *cmdptr;
 	int result = 0;
 
-	cmdptr = (uint64_t *)PHYS_TO_CKSEG0(sc->sc_cmdptr.cmdptr);
+	cmdptr = (uint64_t *)PHYS_TO_XKPHYS(sc->sc_cmdptr.cmdptr, CCA_CACHED);
 	cmdptr += sc->sc_cmdptr.cmdptr_idx;
 
 	OCTEON_ETH_KASSERT(cmdptr != NULL);
@@ -1028,8 +1028,8 @@ octeon_eth_send(struct octeon_eth_softc *sc, struct mbuf *m)
 		result = 1;
 		goto done;
 	}
-	gbuf = (uint64_t *)(uintptr_t)PHYS_TO_CKSEG0(gaddr);
 
+	gbuf = (uint64_t *)(uintptr_t)PHYS_TO_XKPHYS(gaddr, CCA_CACHED);
 
 	error = octeon_eth_send_buf(sc, m, gbuf);
 	if (error != 0) {
@@ -1299,7 +1299,7 @@ octeon_eth_recv_mbuf(struct octeon_eth_softc *sc, uint64_t *work,
 		vaddr_t addr;
 		vaddr_t start_buffer;
 
-		addr = PHYS_TO_CKSEG0(word3 & PIP_WQE_WORD3_ADDR);
+		addr = PHYS_TO_XKPHYS(word3 & PIP_WQE_WORD3_ADDR, CCA_CACHED);
 		start_buffer = addr & ~(2048 - 1);
 
 		ext_free = octeon_eth_buf_ext_free_ext;

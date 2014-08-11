@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpow.c,v 1.6 2014/08/11 18:29:56 miod Exp $	*/
+/*	$OpenBSD: cn30xxpow.c,v 1.7 2014/08/11 18:56:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -140,8 +140,8 @@ cn30xxpow_work_response_async(uint64_t scraddr)
 
 	return (result & POW_IOBDMA_GET_WORK_RESULT_NO_WORK) ?
 	    NULL :
-	    (uint64_t *)PHYS_TO_CKSEG0(
-		result & POW_IOBDMA_GET_WORK_RESULT_ADDR);
+	    (uint64_t *)PHYS_TO_XKPHYS(
+		result & POW_IOBDMA_GET_WORK_RESULT_ADDR, CCA_CACHED);
 }
 
 /* ---- status by coreid */
@@ -863,10 +863,10 @@ cn30xxpow_test_dump_wqe(paddr_t ptr)
 
 	printf("wqe\n");
 
-	word0 = *(uint64_t *)PHYS_TO_CKSEG0(ptr);
+	word0 = *(uint64_t *)PHYS_TO_XKPHYS(ptr, CCA_CACHED);
 	printf("\t%-24s: %16llx\n", "word0", word0);
 
-	word1 = *(uint64_t *)PHYS_TO_CKSEG0(ptr + 8);
+	word1 = *(uint64_t *)PHYS_TO_XKPHYS(ptr + 8, CCA_CACHED);
 	printf("\t%-24s: %16llx\n", "word1", word1);
 }
 #endif
