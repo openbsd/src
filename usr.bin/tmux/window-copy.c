@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.112 2014/08/11 22:18:16 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.113 2014/08/11 22:39:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -429,7 +429,7 @@ window_copy_key(struct window_pane *wp, struct session *sess, int key)
 		window_pane_reset_mode(wp);
 		return;
 	case MODEKEYCOPY_OTHEREND:
-		for (; np != 0; np--)
+		if (np % 2)
 			window_copy_other_end(wp);
 		break;
 	case MODEKEYCOPY_LEFT:
