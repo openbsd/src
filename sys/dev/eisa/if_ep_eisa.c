@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_eisa.c,v 1.23 2013/08/07 01:06:27 bluhm Exp $	*/
+/*	$OpenBSD: if_ep_eisa.c,v 1.24 2014/08/11 12:45:45 mpi Exp $	*/
 /*	$NetBSD: if_ep_eisa.c,v 1.13 1997/04/18 00:50:33 cgd Exp $	*/
 
 /*
@@ -51,12 +51,8 @@
 #include <net/netisr.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#include <netinet/if_ether.h>   
-#endif
+#include <netinet/if_ether.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.24 2013/08/07 01:06:39 bluhm Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.25 2014/08/11 12:45:45 mpi Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -68,12 +68,8 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

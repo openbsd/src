@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_isa.c,v 1.11 2013/08/07 01:06:33 bluhm Exp $	*/
+/*	$OpenBSD: if_sm_isa.c,v 1.12 2014/08/11 12:45:45 mpi Exp $	*/
 /*	$NetBSD: if_sm_isa.c,v 1.4 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -48,12 +48,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

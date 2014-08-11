@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.26 2013/11/26 09:50:33 mpi Exp $	*/
+/*	$OpenBSD: be.c,v 1.27 2014/08/11 12:45:45 mpi Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -75,12 +75,8 @@
 #include <net/netisr.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
