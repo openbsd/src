@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.38 2014/07/11 16:48:29 yasuoka Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.39 2014/08/11 18:39:41 tobias Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -187,7 +187,7 @@ dhcprequest(struct packet *packet)
 	int ours = 0;
 
 	cip.len = 4;
-	if (packet->options[DHO_DHCP_REQUESTED_ADDRESS].len)
+	if (packet->options[DHO_DHCP_REQUESTED_ADDRESS].len == 4)
 		memcpy(cip.iabuf,
 		    packet->options[DHO_DHCP_REQUESTED_ADDRESS].data, 4);
 	else
@@ -251,7 +251,7 @@ dhcprequest(struct packet *packet)
 	 */
 	if (!packet->shared_network ||
 	    (packet->raw->ciaddr.s_addr && packet->raw->giaddr.s_addr) ||
-	    (packet->options[DHO_DHCP_REQUESTED_ADDRESS].len &&
+	    (packet->options[DHO_DHCP_REQUESTED_ADDRESS].len == 4 &&
 	    !packet->raw->ciaddr.s_addr)) {
 
 		/*
@@ -471,7 +471,7 @@ dhcpdecline(struct packet *packet)
 	struct iaddr cip;
 
 	/* DHCPDECLINE must specify address. */
-	if (!packet->options[DHO_DHCP_REQUESTED_ADDRESS].len)
+	if (packet->options[DHO_DHCP_REQUESTED_ADDRESS].len != 4)
 		return;
 
 	cip.len = 4;
@@ -913,7 +913,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 
 	/* Set a flag if this client is a lame Microsoft client that NUL
 	   terminates string options and expects us to do likewise. */
-	if (packet->options[DHO_HOST_NAME].data &&
+	if (packet->options[DHO_HOST_NAME].len &&
 	    packet->options[DHO_HOST_NAME].data[
 	    packet->options[DHO_HOST_NAME].len - 1] == '\0')
 		lease->flags |= MS_NULL_TERMINATION;
@@ -1394,8 +1394,7 @@ find_lease(struct packet *packet, struct shared_network *share,
 	struct lease *fixed_lease;
 
 	/* Figure out what IP address the client is requesting, if any. */
-	if (packet->options[DHO_DHCP_REQUESTED_ADDRESS].len &&
-	    packet->options[DHO_DHCP_REQUESTED_ADDRESS].len == 4) {
+	if (packet->options[DHO_DHCP_REQUESTED_ADDRESS].len == 4) {
 		packet->got_requested_address = 1;
 		cip.len = 4;
 		memcpy(cip.iabuf,
