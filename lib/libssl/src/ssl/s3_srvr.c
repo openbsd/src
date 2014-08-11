@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.80 2014/08/10 14:42:56 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.81 2014/08/11 04:46:42 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2444,17 +2444,24 @@ ssl3_get_cert_verify(SSL *s)
 	    pkey->type == NID_id_GostR3410_2001) {
 		unsigned char signature[64];
 		int idx;
-		EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pkey, NULL);
-		EVP_PKEY_verify_init(pctx);
+		EVP_PKEY_CTX *pctx;
+	       
 		if (i != 64) {
 			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
 			    SSL_R_WRONG_SIGNATURE_SIZE);
 			al = SSL_AD_DECODE_ERROR;
 			goto f_err;
 		}
-		for (idx = 0; idx < 64; idx++) {
-			signature[63 - idx] = p[idx];
+		pctx = EVP_PKEY_CTX_new(pkey, NULL);
+		if (pctx == NULL) {
+			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
+			    ERR_R_INTERNAL_ERROR);
+			al = SSL_AD_DECODE_ERROR;
+			goto f_err;
 		}
+		EVP_PKEY_verify_init(pctx);
+		for (idx = 0; idx < 64; idx++)
+			signature[63 - idx] = p[idx];
 		j = EVP_PKEY_verify(pctx, signature, 64,
 		    s->s3->tmp.cert_verify_md, 32);
 		EVP_PKEY_CTX_free(pctx);
