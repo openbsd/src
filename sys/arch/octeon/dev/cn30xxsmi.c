@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxsmi.c,v 1.2 2012/12/05 23:20:14 deraadt Exp $	*/
+/*	$OpenBSD: cn30xxsmi.c,v 1.3 2014/08/11 18:08:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -38,7 +38,7 @@
 #include <octeon/dev/cn30xxsmireg.h>
 #include <octeon/dev/cn30xxsmivar.h>
 
-static void		cn30xxsmi_enable(struct cn30xxsmi_softc *);
+void	cn30xxsmi_enable(struct cn30xxsmi_softc *);
 
 /* XXX */
 void
@@ -123,7 +123,7 @@ cn30xxsmi_write(struct cn30xxsmi_softc *sc, int phy_addr, int reg, int value)
 	}
 }
 
-static void
+void
 cn30xxsmi_enable(struct cn30xxsmi_softc *sc)
 {
 	_SMI_WR8(sc, SMI_EN_OFFSET, SMI_EN_EN);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.12 2014/05/07 14:44:54 pirofti Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.13 2014/08/11 18:08:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -85,30 +85,30 @@ struct cn30xxgmx_port_ops {
 	int	(*port_ops_set_filter)(struct cn30xxgmx_port_softc *);
 };
 
-static int	cn30xxgmx_match(struct device *, void *, void *);
-static void	cn30xxgmx_attach(struct device *, struct device *, void *);
-static int	cn30xxgmx_print(void *, const char *);
-static int	cn30xxgmx_submatch(struct device *, void *, void *);
-static int	cn30xxgmx_init(struct cn30xxgmx_softc *);
-static int	cn30xxgmx_rx_frm_ctl_xable(struct cn30xxgmx_port_softc *,
-		    uint64_t, int);
-static int	cn30xxgmx_rgmii_enable(struct cn30xxgmx_port_softc *, int);
-static int	cn30xxgmx_rgmii_speed(struct cn30xxgmx_port_softc *);
-static int	cn30xxgmx_rgmii_speed_newlink(struct cn30xxgmx_port_softc *,
-		    uint64_t *);
-static int	cn30xxgmx_rgmii_speed_speed(struct cn30xxgmx_port_softc *);
-static int	cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *);
-static int	cn30xxgmx_rgmii_set_mac_addr(struct cn30xxgmx_port_softc *,
-		    uint8_t *, uint64_t);
-static int	cn30xxgmx_rgmii_set_filter(struct cn30xxgmx_port_softc *);
+int	cn30xxgmx_match(struct device *, void *, void *);
+void	cn30xxgmx_attach(struct device *, struct device *, void *);
+int	cn30xxgmx_print(void *, const char *);
+int	cn30xxgmx_submatch(struct device *, void *, void *);
+int	cn30xxgmx_init(struct cn30xxgmx_softc *);
+int	cn30xxgmx_rx_frm_ctl_xable(struct cn30xxgmx_port_softc *,
+	    uint64_t, int);
+int	cn30xxgmx_rgmii_enable(struct cn30xxgmx_port_softc *, int);
+int	cn30xxgmx_rgmii_speed(struct cn30xxgmx_port_softc *);
+int	cn30xxgmx_rgmii_speed_newlink(struct cn30xxgmx_port_softc *,
+	    uint64_t *);
+int	cn30xxgmx_rgmii_speed_speed(struct cn30xxgmx_port_softc *);
+int	cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *);
+int	cn30xxgmx_rgmii_set_mac_addr(struct cn30xxgmx_port_softc *,
+	    uint8_t *, uint64_t);
+int	cn30xxgmx_rgmii_set_filter(struct cn30xxgmx_port_softc *);
 
 #ifdef OCTEON_ETH_DEBUG
-void		cn30xxgmx_intr_evcnt_attach(struct cn30xxgmx_softc *);
-void		cn30xxgmx_dump(void);
-void		cn30xxgmx_debug_reset(void);
-int		cn30xxgmx_intr_drop(void *);
-static int	cn30xxgmx_rgmii_speed_newlink_log(
-		    struct cn30xxgmx_port_softc *, uint64_t);
+void	cn30xxgmx_intr_evcnt_attach(struct cn30xxgmx_softc *);
+void	cn30xxgmx_dump(void);
+void	cn30xxgmx_debug_reset(void);
+int	cn30xxgmx_intr_drop(void *);
+int	cn30xxgmx_rgmii_speed_newlink_log(struct cn30xxgmx_port_softc *,
+	    uint64_t);
 #endif
 
 static const int	cn30xxgmx_rx_adr_cam_regs[] = {
@@ -175,7 +175,7 @@ struct cfattach cn30xxgmx_ca = {sizeof(struct cn30xxgmx_softc),
 
 struct cfdriver cn30xxgmx_cd = {NULL, "cn30xxgmx", DV_DULL};
 
-static int
+int
 cn30xxgmx_match(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = (struct cfdata *)match;
@@ -188,7 +188,7 @@ cn30xxgmx_match(struct device *parent, void *match, void *aux)
 	return 1;
 }
 
-static int
+int
 cn30xxgmx_port_phy_addr(int port)
 {
 	extern struct boot_info *octeon_boot_info;
@@ -206,7 +206,7 @@ cn30xxgmx_port_phy_addr(int port)
 	}
 }
 
-static void
+void
 cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cn30xxgmx_softc *sc = (void *)self;
@@ -272,7 +272,7 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
-static int
+int
 cn30xxgmx_print(void *aux, const char *pnp)
 {
 	struct cn30xxgmx_attach_args *ga = aux;
@@ -292,7 +292,7 @@ cn30xxgmx_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
-static int
+int
 cn30xxgmx_submatch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
@@ -300,7 +300,7 @@ cn30xxgmx_submatch(struct device *parent, void *vcf, void *aux)
 	return (*cf->cf_attach->ca_match)(parent, vcf, aux);
 }
 
-static int
+int
 cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 {
 	int result = 0;
@@ -445,7 +445,7 @@ cn30xxgmx_rx_stats_dec_bad(struct cn30xxgmx_port_softc *sc)
 	_GMX_PORT_WR8(sc, GMX0_RX0_STATS_PKTS_BAD, tmp - 1);
 }
 
-static int
+int
 cn30xxgmx_tx_ovr_bp_enable(struct cn30xxgmx_port_softc *sc, int enable)
 {
 	uint64_t ovr_bp;
@@ -466,7 +466,7 @@ cn30xxgmx_tx_ovr_bp_enable(struct cn30xxgmx_port_softc *sc, int enable)
 	return 0;
 }
 
-static int
+int
 cn30xxgmx_rx_pause_enable(struct cn30xxgmx_port_softc *sc, int enable)
 {
 	if (enable) {
@@ -544,7 +544,7 @@ cn30xxgmx_rx_frm_ctl_disable(struct cn30xxgmx_port_softc *sc,
 	return cn30xxgmx_rx_frm_ctl_xable(sc, rx_frm_ctl, 0);
 }
 
-static int
+int
 cn30xxgmx_rx_frm_ctl_xable(struct cn30xxgmx_port_softc *sc,
     uint64_t rx_frm_ctl, int enable)
 {
@@ -660,7 +660,7 @@ cn30xxgmx_reset_flowctl(struct cn30xxgmx_port_softc *sc)
 	return 0;
 }
 
-static int
+int
 cn30xxgmx_rgmii_enable(struct cn30xxgmx_port_softc *sc, int enable)
 {
 	uint64_t mode;
@@ -674,7 +674,7 @@ cn30xxgmx_rgmii_enable(struct cn30xxgmx_port_softc *sc, int enable)
 	return 0;
 }
 
-static int
+int
 cn30xxgmx_rgmii_speed(struct cn30xxgmx_port_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_port_ac->ac_if;
@@ -726,7 +726,7 @@ cn30xxgmx_rgmii_speed(struct cn30xxgmx_port_softc *sc)
 	return 0;
 }
 
-static int
+int
 cn30xxgmx_rgmii_speed_newlink(struct cn30xxgmx_port_softc *sc,
     uint64_t *rnewlink)
 {
@@ -781,7 +781,7 @@ cn30xxgmx_rgmii_speed_newlink(struct cn30xxgmx_port_softc *sc,
 }
 
 #ifdef OCTEON_ETH_DEBUG
-static int
+int
 cn30xxgmx_rgmii_speed_newlink_log(struct cn30xxgmx_port_softc *sc,
     uint64_t newlink)
 {
@@ -854,7 +854,7 @@ cn30xxgmx_rgmii_speed_newlink_log(struct cn30xxgmx_port_softc *sc,
 }
 #endif
 
-static int
+int
 cn30xxgmx_rgmii_speed_speed(struct cn30xxgmx_port_softc *sc)
 {
 	uint64_t prt_cfg;
@@ -988,7 +988,7 @@ cn30xxgmx_rgmii_speed_speed(struct cn30xxgmx_port_softc *sc)
 	return 0;
 }
 
-static int
+int
 cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *sc)
 {
 	extern struct boot_info *octeon_boot_info;
@@ -1061,7 +1061,7 @@ cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *sc)
 	return 0;
 }
 
-static int
+int
 cn30xxgmx_rgmii_set_mac_addr(struct cn30xxgmx_port_softc *sc, uint8_t *addr,
     uint64_t mac)
 {
@@ -1081,7 +1081,7 @@ cn30xxgmx_rgmii_set_mac_addr(struct cn30xxgmx_port_softc *sc, uint8_t *addr,
 
 #define	OCTEON_ETH_USE_GMX_CAM
 
-static int
+int
 cn30xxgmx_rgmii_set_filter(struct cn30xxgmx_port_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_port_ac->ac_if;
@@ -1220,8 +1220,8 @@ cn30xxgmx_stats(struct cn30xxgmx_port_softc *sc)
 #define	_POLICY_REJECT		CN30XXGMX_FILTER_POLICY_REJECT
 #define	_POLICY_REJECT_ALL	CN30XXGMX_FILTER_POLICY_REJECT_ALL
 
-static int	cn30xxgmx_setfilt_addrs(struct cn30xxgmx_port_softc *,
-		    size_t, uint8_t **);
+int	cn30xxgmx_setfilt_addrs(struct cn30xxgmx_port_softc *,
+	    size_t, uint8_t **);
 
 int
 cn30xxgmx_setfilt(struct cn30xxgmx_port_softc *sc, enum _POLICY policy,
@@ -1262,7 +1262,7 @@ cn30xxgmx_setfilt(struct cn30xxgmx_port_softc *sc, enum _POLICY policy,
 	return 0;
 }
 
-static int
+int
 cn30xxgmx_setfilt_addrs(struct cn30xxgmx_port_softc *sc, size_t naddrs,
     uint8_t **addrs)
 {
@@ -1295,9 +1295,9 @@ cn30xxgmx_setfilt_addrs(struct cn30xxgmx_port_softc *sc, size_t naddrs,
 /* ---- interrupt */
 
 #ifdef OCTEON_ETH_DEBUG
-void			cn30xxgmx_intr_rml_gmx0(void);
+void	cn30xxgmx_intr_rml_gmx0(void);
 
-int			cn30xxgmx_intr_rml_verbose;
+int	cn30xxgmx_intr_rml_verbose;
 
 /* tx - per unit (gmx0, gmx1, ...) */
 static const struct octeon_evcnt_entry cn30xxgmx_intr_evcnt_tx_entries[] = {

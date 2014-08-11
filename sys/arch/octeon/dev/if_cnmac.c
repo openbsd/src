@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.15 2014/07/22 10:35:35 mpi Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.16 2014/08/11 18:08:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -121,85 +121,78 @@
 #define	OCTEON_ETH_TAP(ifp, m, dir)
 #endif /* NBPFILTER > 0 */
 
-static void		octeon_eth_buf_init(struct octeon_eth_softc *);
+void	octeon_eth_buf_init(struct octeon_eth_softc *);
 
-static int	octeon_eth_match(struct device *, void *, void *);
-static void	octeon_eth_attach(struct device *, struct device *, void *);
-static void	octeon_eth_pip_init(struct octeon_eth_softc *);
-static void	octeon_eth_ipd_init(struct octeon_eth_softc *);
-static void	octeon_eth_pko_init(struct octeon_eth_softc *);
-static void	octeon_eth_asx_init(struct octeon_eth_softc *);
-static void	octeon_eth_smi_init(struct octeon_eth_softc *);
+int	octeon_eth_match(struct device *, void *, void *);
+void	octeon_eth_attach(struct device *, struct device *, void *);
+void	octeon_eth_pip_init(struct octeon_eth_softc *);
+void	octeon_eth_ipd_init(struct octeon_eth_softc *);
+void	octeon_eth_pko_init(struct octeon_eth_softc *);
+void	octeon_eth_asx_init(struct octeon_eth_softc *);
+void	octeon_eth_smi_init(struct octeon_eth_softc *);
 
-static void	octeon_eth_board_mac_addr(uint8_t *);
+void	octeon_eth_board_mac_addr(uint8_t *);
 
-static int	octeon_eth_mii_readreg(struct device *, int, int);
-static void	octeon_eth_mii_writereg(struct device *, int, int, int);
-static void	octeon_eth_mii_statchg(struct device *);
+int	octeon_eth_mii_readreg(struct device *, int, int);
+void	octeon_eth_mii_writereg(struct device *, int, int, int);
+void	octeon_eth_mii_statchg(struct device *);
 
-static int	octeon_eth_mediainit(struct octeon_eth_softc *);
-static void	octeon_eth_mediastatus(struct ifnet *, struct ifmediareq *);
-static int	octeon_eth_mediachange(struct ifnet *);
+int	octeon_eth_mediainit(struct octeon_eth_softc *);
+void	octeon_eth_mediastatus(struct ifnet *, struct ifmediareq *);
+int	octeon_eth_mediachange(struct ifnet *);
 
-static void	octeon_eth_send_queue_flush_prefetch(struct octeon_eth_softc *);
-static void	octeon_eth_send_queue_flush_fetch(struct octeon_eth_softc *);
-static void	octeon_eth_send_queue_flush(struct octeon_eth_softc *);
-static void	octeon_eth_send_queue_flush_sync(struct octeon_eth_softc *);
-static int	octeon_eth_send_queue_is_full(struct octeon_eth_softc *);
-static void	octeon_eth_send_queue_add(struct octeon_eth_softc *,
-			    struct mbuf *, uint64_t *);
-static void	octeon_eth_send_queue_del(struct octeon_eth_softc *,
-			    struct mbuf **, uint64_t **);
-static int	octeon_eth_buf_free_work(struct octeon_eth_softc *,
-			    uint64_t *, uint64_t);
-static void	octeon_eth_buf_ext_free_m(caddr_t, u_int, void *);
-static void	octeon_eth_buf_ext_free_ext(caddr_t, u_int, void *);
+void	octeon_eth_send_queue_flush_prefetch(struct octeon_eth_softc *);
+void	octeon_eth_send_queue_flush_fetch(struct octeon_eth_softc *);
+void	octeon_eth_send_queue_flush(struct octeon_eth_softc *);
+void	octeon_eth_send_queue_flush_sync(struct octeon_eth_softc *);
+int	octeon_eth_send_queue_is_full(struct octeon_eth_softc *);
+void	octeon_eth_send_queue_add(struct octeon_eth_softc *,
+	    struct mbuf *, uint64_t *);
+void	octeon_eth_send_queue_del(struct octeon_eth_softc *,
+	    struct mbuf **, uint64_t **);
+int	octeon_eth_buf_free_work(struct octeon_eth_softc *,
+	    uint64_t *, uint64_t);
+void	octeon_eth_buf_ext_free_m(caddr_t, u_int, void *);
+void	octeon_eth_buf_ext_free_ext(caddr_t, u_int, void *);
 
-static int	octeon_eth_ioctl(struct ifnet *, u_long, caddr_t);
-static void	octeon_eth_watchdog(struct ifnet *);
-static int	octeon_eth_init(struct ifnet *);
-static int	octeon_eth_stop(struct ifnet *, int);
-static void	octeon_eth_start(struct ifnet *);
+int	octeon_eth_ioctl(struct ifnet *, u_long, caddr_t);
+void	octeon_eth_watchdog(struct ifnet *);
+int	octeon_eth_init(struct ifnet *);
+int	octeon_eth_stop(struct ifnet *, int);
+void	octeon_eth_start(struct ifnet *);
 
-static int	octeon_eth_send_cmd(struct octeon_eth_softc *, uint64_t,
-			    uint64_t);
-static uint64_t	octeon_eth_send_makecmd_w1(int, paddr_t);
-static uint64_t octeon_eth_send_makecmd_w0(uint64_t, uint64_t, size_t,
-			    int);
-static int	octeon_eth_send_makecmd_gbuf(struct octeon_eth_softc *,
-			    struct mbuf *, uint64_t *, int *);
-static int	octeon_eth_send_makecmd(struct octeon_eth_softc *,
-			    struct mbuf *, uint64_t *, uint64_t *, uint64_t *);
-static int	octeon_eth_send_buf(struct octeon_eth_softc *,
-			    struct mbuf *, uint64_t *);
-static int	octeon_eth_send(struct octeon_eth_softc *,
-			    struct mbuf *);
+int	octeon_eth_send_cmd(struct octeon_eth_softc *, uint64_t, uint64_t);
+uint64_t octeon_eth_send_makecmd_w1(int, paddr_t);
+uint64_t octeon_eth_send_makecmd_w0(uint64_t, uint64_t, size_t, int);
+int	octeon_eth_send_makecmd_gbuf(struct octeon_eth_softc *,
+	    struct mbuf *, uint64_t *, int *);
+int	octeon_eth_send_makecmd(struct octeon_eth_softc *,
+	    struct mbuf *, uint64_t *, uint64_t *, uint64_t *);
+int	octeon_eth_send_buf(struct octeon_eth_softc *,
+	    struct mbuf *, uint64_t *);
+int	octeon_eth_send(struct octeon_eth_softc *, struct mbuf *);
 
-static int	octeon_eth_reset(struct octeon_eth_softc *);
-static int	octeon_eth_configure(struct octeon_eth_softc *);
-static int	octeon_eth_configure_common(struct octeon_eth_softc *);
+int	octeon_eth_reset(struct octeon_eth_softc *);
+int	octeon_eth_configure(struct octeon_eth_softc *);
+int	octeon_eth_configure_common(struct octeon_eth_softc *);
 
-static void	octeon_eth_tick_free(void *arg);
-static void	octeon_eth_tick_misc(void *);
+void	octeon_eth_tick_free(void *arg);
+void	octeon_eth_tick_misc(void *);
 
-static int	octeon_eth_recv_mbuf(struct octeon_eth_softc *,
-			    uint64_t *, struct mbuf **);
-static int	octeon_eth_recv_check_code(struct octeon_eth_softc *,
-			    uint64_t);
+int	octeon_eth_recv_mbuf(struct octeon_eth_softc *,
+	    uint64_t *, struct mbuf **);
+int	octeon_eth_recv_check_code(struct octeon_eth_softc *, uint64_t);
 #if 0 /* not used */
-static int      octeon_eth_recv_check_jumbo(struct octeon_eth_softc *,
-			    uint64_t);
+int      octeon_eth_recv_check_jumbo(struct octeon_eth_softc *, uint64_t);
 #endif
-static int	octeon_eth_recv_check_link(struct octeon_eth_softc *,
-			    uint64_t);
-static int	octeon_eth_recv_check(struct octeon_eth_softc *,
-			    uint64_t);
-static int	octeon_eth_recv(struct octeon_eth_softc *, uint64_t *);
-static void		octeon_eth_recv_intr(void *, uint64_t *);
+int	octeon_eth_recv_check_link(struct octeon_eth_softc *, uint64_t);
+int	octeon_eth_recv_check(struct octeon_eth_softc *, uint64_t);
+int	octeon_eth_recv(struct octeon_eth_softc *, uint64_t *);
+void	octeon_eth_recv_intr(void *, uint64_t *);
 
 /* device driver context */
-static struct	octeon_eth_softc *octeon_eth_gsc[GMX_PORT_NUNITS];
-static void	*octeon_eth_pow_recv_ih;
+struct	octeon_eth_softc *octeon_eth_gsc[GMX_PORT_NUNITS];
+void	*octeon_eth_pow_recv_ih;
 
 /* sysctl'able parameters */
 int		octeon_eth_param_pko_cmd_w0_n2 = 1;
@@ -256,7 +249,7 @@ static const struct octeon_evcnt_entry octeon_evcnt_entries[] = {
 
 /* ---- buffer management */
 
-static const struct octeon_eth_pool_param {
+const struct octeon_eth_pool_param {
 	int			poolno;
 	size_t			size;
 	size_t			nelems;
@@ -277,7 +270,7 @@ struct cn30xxfpa_buf	*octeon_eth_pools[8/* XXX */];
 uint64_t octeon_eth_mac_addr = 0;
 uint32_t octeon_eth_mac_addr_offset = 0;
 
-static void
+void
 octeon_eth_buf_init(struct octeon_eth_softc *sc)
 {
 	static int once;
@@ -298,7 +291,7 @@ octeon_eth_buf_init(struct octeon_eth_softc *sc)
 
 /* ---- autoconf */
 
-static int
+int
 octeon_eth_match(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = (struct cfdata *)match;
@@ -310,7 +303,7 @@ octeon_eth_match(struct device *parent, void *match, void *aux)
 	return 1;
 }
 
-static void
+void
 octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct octeon_eth_softc *sc = (void *)self;
@@ -408,7 +401,7 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 /* ---- submodules */
 
 /* XXX */
-static void
+void
 octeon_eth_pip_init(struct octeon_eth_softc *sc)
 {
 	struct cn30xxpip_attach_args pip_aa;
@@ -422,7 +415,7 @@ octeon_eth_pip_init(struct octeon_eth_softc *sc)
 }
 
 /* XXX */
-static void
+void
 octeon_eth_ipd_init(struct octeon_eth_softc *sc)
 {
 	struct cn30xxipd_attach_args ipd_aa;
@@ -435,7 +428,7 @@ octeon_eth_ipd_init(struct octeon_eth_softc *sc)
 }
 
 /* XXX */
-static void
+void
 octeon_eth_pko_init(struct octeon_eth_softc *sc)
 {
 	struct cn30xxpko_attach_args pko_aa;
@@ -449,7 +442,7 @@ octeon_eth_pko_init(struct octeon_eth_softc *sc)
 }
 
 /* XXX */
-static void
+void
 octeon_eth_asx_init(struct octeon_eth_softc *sc)
 {
 	struct cn30xxasx_attach_args asx_aa;
@@ -459,7 +452,7 @@ octeon_eth_asx_init(struct octeon_eth_softc *sc)
 	cn30xxasx_init(&asx_aa, &sc->sc_asx);
 }
 
-static void
+void
 octeon_eth_smi_init(struct octeon_eth_softc *sc)
 {
 	struct cn30xxsmi_attach_args smi_aa;
@@ -472,7 +465,7 @@ octeon_eth_smi_init(struct octeon_eth_softc *sc)
 
 /* ---- XXX */
 
-static void
+void
 octeon_eth_board_mac_addr(uint8_t *enaddr)
 {
 	extern struct boot_info *octeon_boot_info;
@@ -527,21 +520,21 @@ octeon_eth_board_mac_addr(uint8_t *enaddr)
 
 /* ---- media */
 
-static int
+int
 octeon_eth_mii_readreg(struct device *self, int phy_no, int reg)
 {
 	struct octeon_eth_softc *sc = (struct octeon_eth_softc *)self;
 	return cn30xxsmi_read(sc->sc_smi, phy_no, reg);
 }
 
-static void
+void
 octeon_eth_mii_writereg(struct device *self, int phy_no, int reg, int value)
 {
 	struct octeon_eth_softc *sc = (struct octeon_eth_softc *)self;
 	cn30xxsmi_write(sc->sc_smi, phy_no, reg, value);
 }
 
-static void
+void
 octeon_eth_mii_statchg(struct device *self)
 {
 	struct octeon_eth_softc *sc = (struct octeon_eth_softc *)self;
@@ -559,7 +552,7 @@ octeon_eth_mii_statchg(struct device *self)
 	cn30xxgmx_port_enable(sc->sc_gmx_port, 1);
 }
 
-static int
+int
 octeon_eth_mediainit(struct octeon_eth_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -588,7 +581,7 @@ octeon_eth_mediainit(struct octeon_eth_softc *sc)
 	return 0;
 }
 
-static void
+void
 octeon_eth_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct octeon_eth_softc *sc = ifp->if_softc;
@@ -600,7 +593,7 @@ octeon_eth_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	    sc->sc_gmx_port->sc_port_flowflags;
 }
 
-static int
+int
 octeon_eth_mediachange(struct ifnet *ifp)
 {
 	struct octeon_eth_softc *sc = ifp->if_softc;
@@ -613,7 +606,7 @@ octeon_eth_mediachange(struct ifnet *ifp)
 
 /* ---- send buffer garbage collection */
 
-static void
+void
 octeon_eth_send_queue_flush_prefetch(struct octeon_eth_softc *sc)
 {
 	OCTEON_ETH_KASSERT(sc->sc_prefetch == 0);
@@ -621,7 +614,7 @@ octeon_eth_send_queue_flush_prefetch(struct octeon_eth_softc *sc)
 	sc->sc_prefetch = 1;
 }
 
-static void
+void
 octeon_eth_send_queue_flush_fetch(struct octeon_eth_softc *sc)
 {
 #ifndef  OCTEON_ETH_DEBUG
@@ -634,7 +627,7 @@ octeon_eth_send_queue_flush_fetch(struct octeon_eth_softc *sc)
 	sc->sc_prefetch = 0;
 }
 
-static void
+void
 octeon_eth_send_queue_flush(struct octeon_eth_softc *sc)
 {
 	const int64_t sent_count = sc->sc_hard_done_cnt;
@@ -659,7 +652,7 @@ octeon_eth_send_queue_flush(struct octeon_eth_softc *sc)
 	sc->sc_flush = i;
 }
 
-static void
+void
 octeon_eth_send_queue_flush_sync(struct octeon_eth_softc *sc)
 {
 	if (sc->sc_flush == 0)
@@ -676,7 +669,7 @@ octeon_eth_send_queue_flush_sync(struct octeon_eth_softc *sc)
 	sc->sc_flush = 0;
 }
 
-static int
+int
 octeon_eth_send_queue_is_full(struct octeon_eth_softc *sc)
 {
 #ifdef OCTEON_ETH_SEND_QUEUE_CHECK
@@ -716,7 +709,7 @@ struct _send_queue_entry {
 #define	_sqe_gbuf	_sqe_u._sqe_s_gbuf._sqe_s_gbuf_gbuf
 };
 
-static void
+void
 octeon_eth_send_queue_add(struct octeon_eth_softc *sc, struct mbuf *m,
     uint64_t *gbuf)
 {
@@ -733,7 +726,7 @@ octeon_eth_send_queue_add(struct octeon_eth_softc *sc, struct mbuf *m,
 	OCTEON_EVCNT_INC(sc, txadd);
 }
 
-static void
+void
 octeon_eth_send_queue_del(struct octeon_eth_softc *sc, struct mbuf **rm,
     uint64_t **rgbuf)
 {
@@ -754,7 +747,7 @@ octeon_eth_send_queue_del(struct octeon_eth_softc *sc, struct mbuf **rm,
 	OCTEON_EVCNT_INC(sc, txdel);
 }
 
-static int
+int
 octeon_eth_buf_free_work(struct octeon_eth_softc *sc, uint64_t *work,
     uint64_t word2)
 {
@@ -776,7 +769,7 @@ octeon_eth_buf_free_work(struct octeon_eth_softc *sc, uint64_t *work,
 	return 0;
 }
 
-static void
+void
 octeon_eth_buf_ext_free_m(caddr_t buf, u_int size, void *arg)
 {
 	uint64_t *work = (void *)arg;
@@ -793,7 +786,7 @@ octeon_eth_buf_ext_free_m(caddr_t buf, u_int size, void *arg)
 	splx(s);
 }
 
-static void
+void
 octeon_eth_buf_ext_free_ext(caddr_t buf, u_int size,
     void *arg)
 {
@@ -814,7 +807,7 @@ octeon_eth_buf_ext_free_ext(caddr_t buf, u_int size,
 
 /* ---- ifnet interfaces */
 
-static int
+int
 octeon_eth_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct octeon_eth_softc *sc = ifp->if_softc;
@@ -884,7 +877,7 @@ octeon_eth_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 /* ---- send (output) */
 
-static uint64_t
+uint64_t
 octeon_eth_send_makecmd_w0(uint64_t fau0, uint64_t fau1, size_t len, int segs)
 {
 	return cn30xxpko_cmd_word0(
@@ -899,7 +892,7 @@ octeon_eth_send_makecmd_w0(uint64_t fau0, uint64_t fau1, size_t len, int segs)
 		segs, (int)len);		/* segs, totalbytes */
 }
 
-static uint64_t 
+uint64_t 
 octeon_eth_send_makecmd_w1(int size, paddr_t addr)
 {
 	return cn30xxpko_cmd_word1(
@@ -927,7 +920,7 @@ if_cnmac_kvtophys(vaddr_t kva)
 	panic("if_cnmac_kvtophys");
 }
 
-static int
+int
 octeon_eth_send_makecmd_gbuf(struct octeon_eth_softc *sc, struct mbuf *m0,
     uint64_t *gbuf, int *rsegs)
 {
@@ -981,7 +974,7 @@ octeon_eth_send_makecmd_gbuf(struct octeon_eth_softc *sc, struct mbuf *m0,
 	return 0;
 }
 
-static int
+int
 octeon_eth_send_makecmd(struct octeon_eth_softc *sc, struct mbuf *m,
     uint64_t *gbuf, uint64_t *rpko_cmd_w0, uint64_t *rpko_cmd_w1)
 {
@@ -1018,7 +1011,7 @@ done:
 	return result;
 }
 
-static int
+int
 octeon_eth_send_cmd(struct octeon_eth_softc *sc, uint64_t pko_cmd_w0,
     uint64_t pko_cmd_w1)
 {
@@ -1060,7 +1053,7 @@ done:
 	return result;
 }
 
-static int
+int
 octeon_eth_send_buf(struct octeon_eth_softc *sc, struct mbuf *m,
     uint64_t *gbuf)
 {
@@ -1086,7 +1079,7 @@ done:
 	return result;
 }
 
-static int
+int
 octeon_eth_send(struct octeon_eth_softc *sc, struct mbuf *m)
 {
 	paddr_t gaddr = 0;
@@ -1125,7 +1118,7 @@ done:
 	return result;
 }
 
-static void
+void
 octeon_eth_start(struct ifnet *ifp)
 {
 	struct octeon_eth_softc *sc = ifp->if_softc;
@@ -1226,7 +1219,7 @@ last:
 	octeon_eth_send_queue_flush_fetch(sc);
 }
 
-static void
+void
 octeon_eth_watchdog(struct ifnet *ifp)
 {
 	struct octeon_eth_softc *sc = ifp->if_softc;
@@ -1242,7 +1235,7 @@ octeon_eth_watchdog(struct ifnet *ifp)
 	octeon_eth_start(ifp);
 }
 
-static int
+int
 octeon_eth_init(struct ifnet *ifp)
 {
 	struct octeon_eth_softc *sc = ifp->if_softc;
@@ -1275,7 +1268,7 @@ octeon_eth_init(struct ifnet *ifp)
 	return 0;
 }
 
-static int
+int
 octeon_eth_stop(struct ifnet *ifp, int disable)
 {
 	struct octeon_eth_softc *sc = ifp->if_softc;
@@ -1299,7 +1292,7 @@ octeon_eth_stop(struct ifnet *ifp, int disable)
 
 #define PKO_INDEX_MASK	((1ULL << 12/* XXX */) - 1)
 
-static int
+int
 octeon_eth_reset(struct octeon_eth_softc *sc)
 {
 	cn30xxgmx_reset_speed(sc->sc_gmx_port);
@@ -1310,7 +1303,7 @@ octeon_eth_reset(struct octeon_eth_softc *sc)
 	return 0;
 }
 
-static int
+int
 octeon_eth_configure(struct octeon_eth_softc *sc)
 {
 	cn30xxgmx_port_enable(sc->sc_gmx_port, 0);
@@ -1331,7 +1324,7 @@ octeon_eth_configure(struct octeon_eth_softc *sc)
 	return 0;
 }
 
-static int
+int
 octeon_eth_configure_common(struct octeon_eth_softc *sc)
 {
 	static int once;
@@ -1352,7 +1345,7 @@ octeon_eth_configure_common(struct octeon_eth_softc *sc)
 	return 0;
 }
 
-static int
+int
 octeon_eth_recv_mbuf(struct octeon_eth_softc *sc, uint64_t *work,
     struct mbuf **rm)
 {
@@ -1414,7 +1407,7 @@ octeon_eth_recv_mbuf(struct octeon_eth_softc *sc, uint64_t *work,
 	return 0;
 }
 
-static int
+int
 octeon_eth_recv_check_code(struct octeon_eth_softc *sc, uint64_t word2)
 {
 	uint64_t opecode = word2 & PIP_WQE_WORD2_NOIP_OPECODE;
@@ -1430,7 +1423,7 @@ octeon_eth_recv_check_code(struct octeon_eth_softc *sc, uint64_t word2)
 }
 
 #if 0 /* not used */
-static int
+int
 octeon_eth_recv_check_jumbo(struct octeon_eth_softc *sc, uint64_t word2)
 {
 	if (__predict_false((word2 & PIP_WQE_WORD2_IP_BUFS) > (1ULL << 56)))
@@ -1439,7 +1432,7 @@ octeon_eth_recv_check_jumbo(struct octeon_eth_softc *sc, uint64_t word2)
 }
 #endif
 
-static int
+int
 octeon_eth_recv_check_link(struct octeon_eth_softc *sc, uint64_t word2)
 {
 	if (__predict_false(!cn30xxgmx_link_status(sc->sc_gmx_port)))
@@ -1447,7 +1440,7 @@ octeon_eth_recv_check_link(struct octeon_eth_softc *sc, uint64_t word2)
 	return 0;
 }
 
-static int
+int
 octeon_eth_recv_check(struct octeon_eth_softc *sc, uint64_t word2)
 {
 	if (__predict_false(octeon_eth_recv_check_link(sc, word2)) != 0) {
@@ -1495,7 +1488,7 @@ octeon_eth_recv_check(struct octeon_eth_softc *sc, uint64_t word2)
 	return 0;
 }
 
-static int
+int
 octeon_eth_recv(struct octeon_eth_softc *sc, uint64_t *work)
 {
 	int result = 0;
@@ -1571,7 +1564,7 @@ drop:
 	return result;
 }
 
-static void
+void
 octeon_eth_recv_intr(void *data, uint64_t *work)
 {
 	struct octeon_eth_softc *sc;
@@ -1601,7 +1594,7 @@ octeon_eth_recv_intr(void *data, uint64_t *work)
  * => garbage collect send gather buffer / mbuf
  * => called at softclock
  */
-static void
+void
 octeon_eth_tick_free(void *arg)
 {
 	struct octeon_eth_softc *sc = arg;
@@ -1634,7 +1627,7 @@ octeon_eth_tick_free(void *arg)
  * => check link status
  * => called at softclock
  */
-static void
+void
 octeon_eth_tick_misc(void *arg)
 {
 	struct octeon_eth_softc *sc = arg;

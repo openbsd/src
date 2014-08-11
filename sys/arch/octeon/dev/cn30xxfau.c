@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfau.c,v 1.4 2013/06/01 22:20:35 jasper Exp $	*/
+/*	$OpenBSD: cn30xxfau.c,v 1.5 2014/08/11 18:08:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -34,17 +34,17 @@
 #include <octeon/dev/cn30xxfaureg.h>
 #include <octeon/dev/cn30xxfauvar.h>
 
-static int64_t	cn30xxfau_op_load(uint64_t);
-static void	cn30xxfau_op_iobdma(int, uint64_t);
-static void	cn30xxfau_op_store(uint64_t, int64_t);
-static int64_t	cn30xxfau_op_load_paddr(int, int, int) __unused;
-static void	cn30xxfau_op_iobdma_store_data(int, int, int, int, int);
-static void	cn30xxfau_op_store_paddr(int, int, int64_t);
+int64_t	cn30xxfau_op_load(uint64_t);
+void	cn30xxfau_op_iobdma(int, uint64_t);
+void	cn30xxfau_op_store(uint64_t, int64_t);
+int64_t	cn30xxfau_op_load_paddr(int, int, int) __unused;
+void	cn30xxfau_op_iobdma_store_data(int, int, int, int, int);
+void	cn30xxfau_op_store_paddr(int, int, int64_t);
 
 
 /* ---- utilities */
 
-static int64_t
+int64_t
 cn30xxfau_op_load(uint64_t args)
 {
 	paddr_t addr;
@@ -57,7 +57,7 @@ cn30xxfau_op_load(uint64_t args)
 	return octeon_xkphys_read_8(addr);
 }
 
-static void
+void
 cn30xxfau_op_store(uint64_t args, int64_t value)
 {
 	paddr_t addr;
@@ -80,7 +80,7 @@ cn30xxfau_op_store(uint64_t args, int64_t value)
 
 /* Load Physical Address for FAU Operations */
 
-static int64_t
+int64_t
 cn30xxfau_op_load_paddr(int incval, int tagwait, int reg)
 {
 	uint64_t args;
@@ -96,7 +96,7 @@ cn30xxfau_op_load_paddr(int incval, int tagwait, int reg)
 
 /* Store Physical Address for FAU Operations */
 
-static void
+void
 cn30xxfau_op_store_paddr(int noadd, int reg, int64_t value)
 {
 	uint64_t args;

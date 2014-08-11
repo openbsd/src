@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpow.c,v 1.4 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: cn30xxpow.c,v 1.5 2014/08/11 18:08:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -69,32 +69,31 @@ struct cn30xxpow_intr_handle {
 #endif
 };
 
-void			cn30xxpow_bootstrap(struct octeon_config *);
+void	cn30xxpow_bootstrap(struct octeon_config *);
 
 #ifdef OCTEON_ETH_DEBUG
-void			cn30xxpow_intr_evcnt_attach(struct cn30xxpow_softc *);
-void			cn30xxpow_intr_rml(void *);
+void	cn30xxpow_intr_evcnt_attach(struct cn30xxpow_softc *);
+void	cn30xxpow_intr_rml(void *);
 
-static void             cn30xxpow_intr_debug_init(
-			    struct cn30xxpow_intr_handle *, int);
-static void      cn30xxpow_intr_work_debug_ival(struct cn30xxpow_softc *,
-			    struct cn30xxpow_intr_handle *);
-static void	cn30xxpow_intr_work_debug_per(struct cn30xxpow_softc *,
-			    struct cn30xxpow_intr_handle *, int);
+void	cn30xxpow_intr_debug_init(struct cn30xxpow_intr_handle *, int);
+void	cn30xxpow_intr_work_debug_ival(struct cn30xxpow_softc *,
+	    struct cn30xxpow_intr_handle *);
+void	cn30xxpow_intr_work_debug_per(struct cn30xxpow_softc *,
+	    struct cn30xxpow_intr_handle *, int);
 #endif
-static void		cn30xxpow_init(struct cn30xxpow_softc *);
-static void		cn30xxpow_init_regs(struct cn30xxpow_softc *);
-static int	cn30xxpow_tag_sw_poll(void);
-static void	cn30xxpow_tag_sw_wait(void);
-static void	cn30xxpow_config_int_pc(struct cn30xxpow_softc *, int);
-static void      cn30xxpow_config_int(struct cn30xxpow_softc *, int,
-			    uint64_t, uint64_t, uint64_t);
-static void	cn30xxpow_intr_work(struct cn30xxpow_softc *,
-			    struct cn30xxpow_intr_handle *, int);
-static int		cn30xxpow_intr(void *);
+void	cn30xxpow_init(struct cn30xxpow_softc *);
+void	cn30xxpow_init_regs(struct cn30xxpow_softc *);
+int	cn30xxpow_tag_sw_poll(void);
+void	cn30xxpow_tag_sw_wait(void);
+void	cn30xxpow_config_int_pc(struct cn30xxpow_softc *, int);
+void	cn30xxpow_config_int(struct cn30xxpow_softc *, int,
+	    uint64_t, uint64_t, uint64_t);
+void	cn30xxpow_intr_work(struct cn30xxpow_softc *,
+	    struct cn30xxpow_intr_handle *, int);
+int	cn30xxpow_intr(void *);
 
 #ifdef OCTEON_ETH_DEBUG
-void			cn30xxpow_dump(void);
+void	cn30xxpow_dump(void);
 #endif
 
 /* XXX */
@@ -257,7 +256,7 @@ cn30xxpow_status_by_queue_remote_tail(int queue)
  */
 
 /* return 1 if pending bit is clear (ready) */
-static int
+int
 cn30xxpow_tag_sw_poll(void)
 {
 	uint64_t result;
@@ -273,7 +272,7 @@ cn30xxpow_tag_sw_poll(void)
 	return (int)result;
 }
 
-static void
+void
 cn30xxpow_tag_sw_wait(void)
 {
 
@@ -301,7 +300,7 @@ cn30xxpow_bootstrap(struct octeon_config *mcp)
 
 }
 
-static void
+void
 cn30xxpow_config_int(struct cn30xxpow_softc *sc, int group,
    uint64_t tc_thr, uint64_t ds_thr, uint64_t iq_thr)
 {
@@ -371,7 +370,7 @@ cn30xxpow_intr_establish(int group, int level,
 #define	_NAMELEN	8
 #define	_DESCRLEN	40
 
-static void
+void
 cn30xxpow_intr_debug_init(struct cn30xxpow_intr_handle *pow_ih, int group)
 {
 	pow_ih->pi_first = 1;
@@ -468,7 +467,7 @@ cn30xxpow_init_regs(struct cn30xxpow_softc *sc)
 /* ---- interrupt handling */
 
 #ifdef OCTEON_ETH_DEBUG
-static void
+void
 cn30xxpow_intr_work_debug_ival(struct cn30xxpow_softc *sc,
     struct cn30xxpow_intr_handle *pow_ih)
 {
@@ -493,7 +492,7 @@ stat_done:
 	pow_ih->pi_last = now;	/* struct copy */
 }
 
-static void
+void
 cn30xxpow_intr_work_debug_per(struct cn30xxpow_softc *sc,
     struct cn30xxpow_intr_handle *pow_ih, int count)
 {
@@ -543,7 +542,7 @@ cn30xxpow_intr_work_debug_per(struct cn30xxpow_softc *sc,
  */
 #define MAX_RX_CNT 0x7fffffff 
 
-static void
+void
 cn30xxpow_intr_work(struct cn30xxpow_softc *sc,
     struct cn30xxpow_intr_handle *pow_ih, int max_recv_cnt)
 {
@@ -592,7 +591,7 @@ done:
 	/* splx(s); */
 }
 
-static int
+int
 cn30xxpow_intr(void *data)
 {
 	struct cn30xxpow_intr_handle *pow_ih = data;

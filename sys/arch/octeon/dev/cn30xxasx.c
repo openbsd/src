@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxasx.c,v 1.4 2013/09/19 00:15:59 jmatthew Exp $	*/
+/*	$OpenBSD: cn30xxasx.c,v 1.5 2014/08/11 18:08:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -78,10 +78,10 @@ cn30xxasx_init(struct cn30xxasx_attach_args *aa,
 #define	_ASX_WR8(sc, off, v) \
 	bus_space_write_8((sc)->sc_regt, (sc)->sc_regh, (off), (v))
 
-static int	cn30xxasx_enable_tx(struct cn30xxasx_softc *, int);
-static int	cn30xxasx_enable_rx(struct cn30xxasx_softc *, int);
+int	cn30xxasx_enable_tx(struct cn30xxasx_softc *, int);
+int	cn30xxasx_enable_rx(struct cn30xxasx_softc *, int);
 #ifdef OCTEON_ETH_DEBUG
-static int	cn30xxasx_enable_intr(struct cn30xxasx_softc *, int);
+int	cn30xxasx_enable_intr(struct cn30xxasx_softc *, int);
 #endif
 
 int
@@ -96,7 +96,7 @@ cn30xxasx_enable(struct cn30xxasx_softc *sc, int enable)
 	return 0;
 }
 
-static int
+int
 cn30xxasx_enable_tx(struct cn30xxasx_softc *sc, int enable)
 {
 	uint64_t asx_tx_port;
@@ -110,7 +110,7 @@ cn30xxasx_enable_tx(struct cn30xxasx_softc *sc, int enable)
 	return 0;
 }
 
-static int
+int
 cn30xxasx_enable_rx(struct cn30xxasx_softc *sc, int enable)
 {
 	uint64_t asx_rx_port;
@@ -159,7 +159,7 @@ cn30xxasx_intr_rml(void *arg)
 		OCTEON_EVCNT_INC(sc, asxovrflw);
 }
 
-static int
+int
 cn30xxasx_enable_intr(struct cn30xxasx_softc *sc, int enable)
 {
 	uint64_t asx_int_xxx = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfpa.c,v 1.2 2012/12/05 23:20:14 deraadt Exp $	*/
+/*	$OpenBSD: cn30xxfpa.c,v 1.3 2014/08/11 18:08:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -78,19 +78,19 @@ struct cn30xxfpa_softc {
 #endif
 };
 
-void			cn30xxfpa_bootstrap(struct octeon_config *);
-void			cn30xxfpa_reset(void);
-void			cn30xxfpa_int_enable(struct cn30xxfpa_softc *, int);
-void			cn30xxfpa_buf_dma_alloc(struct cn30xxfpa_buf *);
+void		cn30xxfpa_bootstrap(struct octeon_config *);
+void		cn30xxfpa_reset(void);
+void		cn30xxfpa_int_enable(struct cn30xxfpa_softc *, int);
+void		cn30xxfpa_buf_dma_alloc(struct cn30xxfpa_buf *);
 
-static void		cn30xxfpa_init(struct cn30xxfpa_softc *);
+void		cn30xxfpa_init(struct cn30xxfpa_softc *);
 #ifdef notyet
-static uint64_t		cn30xxfpa_iobdma(struct cn30xxfpa_softc *, int, int);
+uint64_t	cn30xxfpa_iobdma(struct cn30xxfpa_softc *, int, int);
 #endif
 
 #ifdef OCTEON_ETH_DEBUG
-void			cn30xxfpa_intr_evcnt_attach(struct cn30xxfpa_softc *);
-void			cn30xxfpa_intr_rml(void *);
+void		cn30xxfpa_intr_evcnt_attach(struct cn30xxfpa_softc *);
+void		cn30xxfpa_intr_rml(void *);
 #endif
 
 static struct cn30xxfpa_softc	cn30xxfpa_softc;
@@ -296,9 +296,9 @@ cn30xxfpa_query(int poolno)
 
 /* ---- local functions */
 
-static void	cn30xxfpa_init_bus(struct cn30xxfpa_softc *);
-static void	cn30xxfpa_init_bus_space(struct cn30xxfpa_softc *);
-static void	cn30xxfpa_init_regs(struct cn30xxfpa_softc *);
+void	cn30xxfpa_init_bus(struct cn30xxfpa_softc *);
+void	cn30xxfpa_init_bus_space(struct cn30xxfpa_softc *);
+void	cn30xxfpa_init_regs(struct cn30xxfpa_softc *);
 
 void
 cn30xxfpa_init(struct cn30xxfpa_softc *sc)
@@ -315,13 +315,13 @@ cn30xxfpa_init(struct cn30xxfpa_softc *sc)
 #endif
 }
 
-static void
+void
 cn30xxfpa_init_bus(struct cn30xxfpa_softc *sc)
 {
 	cn30xxfpa_init_bus_space(sc);
 }
 
-static void
+void
 cn30xxfpa_init_bus_space(struct cn30xxfpa_softc *sc)
 {
 	int status;
@@ -337,7 +337,7 @@ cn30xxfpa_init_bus_space(struct cn30xxfpa_softc *sc)
 		panic("can't map %s space", "operations");
 }
 
-static void
+void
 cn30xxfpa_init_regs(struct cn30xxfpa_softc *sc)
 {
 
