@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.30 2014/08/08 18:29:42 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.31 2014/08/11 15:26:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -95,21 +95,20 @@ int
 server_fcgi(struct httpd *env, struct client *clt)
 {
 	struct server_fcgi_param	 param;
-	char				 hbuf[MAXHOSTNAMELEN];
 	struct server_config		*srv_conf = clt->clt_srv_conf;
-	struct http_descriptor		*desc	= clt->clt_desc;
-	struct sockaddr_un		 sun;
+	struct http_descriptor		*desc = clt->clt_desc;
 	struct fcgi_record_header	*h;
 	struct fcgi_begin_request_body	*begin;
-	size_t				 len;
+	char				 hbuf[MAXHOSTNAMELEN];
 	ssize_t				 scriptlen;
 	int				 fd = -1, ret;
 	const char			*errstr = NULL;
 	char				*str, *p, *script = NULL;
-	in_port_t			 port;
-	struct sockaddr_storage		 ss;
 
 	if (srv_conf->socket[0] == ':') {
+		struct sockaddr_storage	 ss;
+		in_port_t		 port;
+
 		p = srv_conf->socket + 1;
 
 		port = strtonum(p, 0, 0xffff, &errstr);
@@ -126,6 +125,9 @@ server_fcgi(struct httpd *env, struct client *clt)
 		if ((fd = server_socket_connect(&ss, port, srv_conf)) == -1)
 			goto fail;
 	} else {
+		struct sockaddr_un	 sun;
+		size_t			 len;
+	
 		if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 			goto fail;
 
