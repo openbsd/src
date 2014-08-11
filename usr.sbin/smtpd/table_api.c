@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_api.c,v 1.5 2014/07/08 13:49:09 eric Exp $	*/
+/*	$OpenBSD: table_api.c,v 1.6 2014/08/11 09:50:51 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -138,6 +138,7 @@ table_msg_dispatch(void)
 	char		 res[4096];
 	int		 type, r;
 
+	memset(res, 0, sizeof res);
 	switch (imsg.hdr.type) {
 	case PROC_TABLE_OPEN:
 		table_msg_get(&op, sizeof op);
