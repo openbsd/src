@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.77 2014/08/01 04:57:01 rpe Exp $
+#	$OpenBSD: rc.subr,v 1.78 2014/08/11 13:25:23 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -115,15 +115,13 @@ _rc_quirks() {
 _rc_parse_conf() {
 	typeset -l _key
 	local _conf _i _l _val
-	local _rcconf="/etc/rc.conf"
-	local _rcconf_local="/etc/rc.conf.local"
 	set -A _allowed_keys -- \
 		spamd_black pf ipsec check_quotas accounting \
 		multicast_host multicast_router amd_master \
 		pf_rules ipsec_rules shlib_dirs pkg_scripts \
 		nfs_server
 
-	for _rcfile in $_rcconf $_rcconf_local; do
+	for _rcfile in $@; do
 		[[ -f $_rcfile ]] || continue
 		while IFS=' 	' read -r _l; do
 			[[ $_l == [!#=]*=* ]] || continue
@@ -265,7 +263,7 @@ _RC_RUNDIR=/var/run/rc.d
 _RC_RUNFILE=${_RC_RUNDIR}/${_name}
 
 # parse /etc/rc.conf{.local} for the daemon_flags
-_rc_do _rc_parse_conf
+_rc_do _rc_parse_conf /etc/rc.conf /etc/rc.conf.local
 
 eval _rcflags=\${${_name}_flags}
 eval _rcuser=\${${_name}_user}
