@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.131 2014/07/12 18:44:23 tedu Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.132 2014/08/11 11:50:41 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -50,6 +50,8 @@
 #include <sys/timeout.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/queue.h>
+#include <sys/pool.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -87,6 +89,7 @@ struct llinfo_arp *arplookup(u_int32_t, int, int, u_int);
 void in_arpinput(struct mbuf *);
 
 LIST_HEAD(, llinfo_arp) llinfo_arp;
+struct	pool arp_pool;		/* pool for llinfo_arp structures */
 struct	ifqueue arpintrq;
 int	arp_inuse, arp_allocated;
 int	arp_maxtries = 5;
@@ -147,6 +150,8 @@ arp_rtrequest(int req, struct rtentry *rt)
 		static struct timeout arptimer_to;
 
 		arpinit_done = 1;
+		pool_init(&arp_pool, sizeof(struct llinfo_arp), 0, 0, 0, "arp",
+		    NULL);
 		IFQ_SET_MAXLEN(&arpintrq, 50);	/* XXX hate magic numbers */
 		/*
 		 * We generate expiration times from time.tv_sec
@@ -215,7 +220,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 		 * Case 2:  This route may come from cloning, or a manual route
 		 * add with a LL address.
 		 */
-		la = malloc(sizeof(*la), M_RTABLE, M_NOWAIT | M_ZERO);
+		la = pool_get(&arp_pool, PR_NOWAIT | PR_ZERO);
 		rt->rt_llinfo = (caddr_t)la;
 		if (la == NULL) {
 			log(LOG_DEBUG, "%s: malloc failed\n", __func__);
@@ -271,7 +276,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 			la_hold_total--;
 			m_freem(m);
 		}
-		free(la, M_RTABLE, 0);
+		pool_put(&arp_pool, la);
 	}
 }
 
