@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.318 2014/07/13 14:50:03 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.319 2014/08/11 18:41:13 tobias Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2512,17 +2512,17 @@ set_lease_times(struct client_lease *lease)
 	 * Take the server-provided times if available.  Otherwise
 	 * figure them out according to the spec.
 	 */
-	if (lease->options[DHO_DHCP_LEASE_TIME].data)
+	if (lease->options[DHO_DHCP_LEASE_TIME].len == 4)
 		lease->expiry =
 		    getULong(lease->options[DHO_DHCP_LEASE_TIME].data);
 	else
 		lease->expiry = DEFAULT_LEASE_TIME;
-	if (lease->options[DHO_DHCP_RENEWAL_TIME].len)
+	if (lease->options[DHO_DHCP_RENEWAL_TIME].len == 4)
 		lease->renewal =
 		    getULong(lease->options[DHO_DHCP_RENEWAL_TIME].data);
 	else
 		lease->renewal = lease->expiry / 2;
-	if (lease->options[DHO_DHCP_REBINDING_TIME].len)
+	if (lease->options[DHO_DHCP_REBINDING_TIME].len == 4)
 		lease->rebind =
 		    getULong(lease->options[DHO_DHCP_REBINDING_TIME].data);
 	else
