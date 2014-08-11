@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.24 2014/08/10 02:44:26 guenther Exp $	*/
+/*	$OpenBSD: io.c,v 1.25 2014/08/11 20:28:47 guenther Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -244,8 +244,10 @@ savefd(int fd)
 			else
 				errorf("too many files open in shell");
 		}
-	} else
+	} else {
 		nfd = fd;
+		fcntl(nfd, F_SETFD, FD_CLOEXEC);
+	}
 	return nfd;
 }
 
