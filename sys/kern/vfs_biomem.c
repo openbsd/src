@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.29 2014/03/28 17:57:11 mpi Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.30 2014/08/11 19:16:56 miod Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -139,8 +139,8 @@ buf_map(struct buf *bp)
 
 			pmap_kenter_pa(va + ptoa(i), VM_PAGE_TO_PHYS(pg),
 			    VM_PROT_READ|VM_PROT_WRITE);
-			pmap_update(pmap_kernel());
 		}
+		pmap_update(pmap_kernel());
 		bp->b_data = (caddr_t)va;
 	} else {
 		TAILQ_REMOVE(&buf_valist, bp, b_valist);
