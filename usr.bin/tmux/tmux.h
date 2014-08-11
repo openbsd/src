@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.468 2014/08/11 22:14:30 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.469 2014/08/11 22:18:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -794,6 +794,7 @@ LIST_HEAD(joblist, job);
 struct screen_sel {
 	int		 flag;
 	int		 rectflag;
+	int		 modekeys;
 
 	u_int		 sx;
 	u_int		 sy;

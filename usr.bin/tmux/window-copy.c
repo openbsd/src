@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.111 2014/06/19 07:37:59 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.112 2014/08/11 22:18:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -199,6 +199,7 @@ window_copy_init(struct window_pane *wp)
 		mode_key_init(&data->mdata, &mode_key_tree_emacs_copy);
 	else
 		mode_key_init(&data->mdata, &mode_key_tree_vi_copy);
+	s->sel.modekeys = keys;
 
 	data->backing = NULL;
 
