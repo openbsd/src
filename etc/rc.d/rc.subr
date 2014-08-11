@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.78 2014/08/11 13:25:23 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.79 2014/08/11 20:16:04 kili Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -121,7 +121,8 @@ _rc_parse_conf() {
 		pf_rules ipsec_rules shlib_dirs pkg_scripts \
 		nfs_server
 
-	for _rcfile in $@; do
+	[ $# -gt 0 ] || set -- /etc/rc.conf /etc.rc.conf.local
+	for _rcfile; do
 		[[ -f $_rcfile ]] || continue
 		while IFS=' 	' read -r _l; do
 			[[ $_l == [!#=]*=* ]] || continue
@@ -263,7 +264,7 @@ _RC_RUNDIR=/var/run/rc.d
 _RC_RUNFILE=${_RC_RUNDIR}/${_name}
 
 # parse /etc/rc.conf{.local} for the daemon_flags
-_rc_do _rc_parse_conf /etc/rc.conf /etc/rc.conf.local
+_rc_do _rc_parse_conf
 
 eval _rcflags=\${${_name}_flags}
 eval _rcuser=\${${_name}_user}
