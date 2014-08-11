@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.79 2014/08/11 20:16:04 kili Exp $
+#	$OpenBSD: rc.subr,v 1.80 2014/08/11 20:24:57 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -121,7 +121,7 @@ _rc_parse_conf() {
 		pf_rules ipsec_rules shlib_dirs pkg_scripts \
 		nfs_server
 
-	[ $# -gt 0 ] || set -- /etc/rc.conf /etc.rc.conf.local
+	[ $# -gt 0 ] || set -- /etc/rc.conf /etc/rc.conf.local
 	for _rcfile; do
 		[[ -f $_rcfile ]] || continue
 		while IFS=' 	' read -r _l; do
