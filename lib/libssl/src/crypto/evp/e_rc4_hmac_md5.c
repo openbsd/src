@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc4_hmac_md5.c,v 1.4 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: e_rc4_hmac_md5.c,v 1.5 2014/08/11 13:29:43 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -99,7 +99,7 @@ rc4_hmac_md5_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *inkey,
 	return 1;
 }
 
-#if	!defined(OPENSSL_NO_ASM) &&	( \
+#if	!defined(OPENSSL_NO_ASM) && defined(RC4_MD5_ASM) &&	( \
 	defined(__x86_64)	|| defined(__x86_64__)	|| \
 	defined(_M_AMD64)	|| defined(_M_X64)	|| \
 	defined(__INTEL__)		) && \

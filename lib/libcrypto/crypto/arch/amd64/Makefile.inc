@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.2 2014/05/06 19:55:06 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.3 2014/08/11 13:29:43 bcook Exp $
 
 # amd64-specific libcrypto build rules
 
@@ -15,6 +15,7 @@ SSLASM+= aes aesni-sha1-x86_64
 SRCS+= bf_enc.c
 # bn
 CFLAGS+= -DOPENSSL_IA32_SSE2
+CFLAGS+= -DRSA_ASM
 SSLASM+= bn modexp512-x86_64
 CFLAGS+= -DOPENSSL_BN_ASM_MONT
 SSLASM+= bn x86_64-mont
@@ -31,6 +32,7 @@ SSLASM+= md5 md5-x86_64
 CFLAGS+= -DGHASH_ASM
 SSLASM+= modes ghash-x86_64
 # rc4
+CFLAGS+= -DRC4_MD5_ASM
 SSLASM+= rc4 rc4-x86_64
 SSLASM+= rc4 rc4-md5-x86_64
 # ripemd
