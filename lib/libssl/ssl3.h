@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.25 2014/07/10 09:26:08 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.26 2014/08/11 01:10:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -232,6 +232,7 @@ extern "C" {
 #define SSL3_SEQUENCE_SIZE			8
 #define SSL3_SESSION_ID_SIZE			32
 #define SSL3_RT_HEADER_LENGTH			5
+#define SSL3_CIPHER_VALUE_SIZE			2
 
 #ifndef SSL3_ALIGN_PAYLOAD
  /* Some will argue that this increases memory footprint, but it's

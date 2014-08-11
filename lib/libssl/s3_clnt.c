@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.86 2014/08/10 14:42:56 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.87 2014/08/11 01:10:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -904,7 +904,7 @@ ssl3_get_server_hello(SSL *s)
 		    SSL_R_WRONG_CIPHER_RETURNED);
 		goto f_err;
 	}
-	p += ssl3_put_cipher_by_char(NULL, NULL);
+	p += SSL3_CIPHER_VALUE_SIZE;
 
 	sk = ssl_get_ciphers_by_id(s);
 	i = sk_SSL_CIPHER_find(sk, c);
