@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1735 2014/08/08 16:02:03 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1736 2014/08/11 20:30:22 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4274,6 +4274,16 @@
 #define	PCI_PRODUCT_INTEL_C224_LPC	0x8c54		/* C224 LPC */
 #define	PCI_PRODUCT_INTEL_C226_LPC	0x8c56		/* C226 LPC */
 #define	PCI_PRODUCT_INTEL_H81_LPC	0x8c5c		/* H81 LPC */
+#define	PCI_PRODUCT_INTEL_9SERIES_LP_AHCI	0x8c82		/* 9 Series AHCI */
+#define	PCI_PRODUCT_INTEL_9SERIES_LP_PCIE_1	0x8c90		/* 9 Series PCIE */
+#define	PCI_PRODUCT_INTEL_9SERIES_LP_PCIE_2	0x8c9a		/* 9 Series PCIE */
+#define	PCI_PRODUCT_INTEL_9SERIES_LP_HDA	0x8ca0		/* 9 Series HD Audio */
+#define	PCI_PRODUCT_INTEL_9SERIES_LP_SMB	0x8ca2		/* 9 Series SMBus */
+#define	PCI_PRODUCT_INTEL_9SERIES_EHCI_1	0x8ca6		/* 9 Series EHCI */
+#define	PCI_PRODUCT_INTEL_9SERIES_EHCI_2	0x8cad		/* 9 Series EHCI */
+#define	PCI_PRODUCT_INTEL_9SERIES_XHCI	0x8cb1		/* 9 Series xHCI */
+#define	PCI_PRODUCT_INTEL_9SERIES_MEI_1	0x8cba		/* 9 Series MEI */
+#define	PCI_PRODUCT_INTEL_Z97_LPC	0x8cc4		/* Z97 LPC */
 #define	PCI_PRODUCT_INTEL_I2OPCIB	0x9620		/* I2O RAID */
 #define	PCI_PRODUCT_INTEL_RCU21	0x9621		/* RCU21 I2O RAID */
 #define	PCI_PRODUCT_INTEL_RCUxx	0x9622		/* RCUxx I2O RAID */
