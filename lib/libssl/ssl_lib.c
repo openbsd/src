@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.80 2014/08/11 01:10:42 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.81 2014/08/11 10:46:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1417,10 +1417,12 @@ ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num,
 		    SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
 		return (NULL);
 	}
-	if ((skp == NULL) || (*skp == NULL))
-		sk=sk_SSL_CIPHER_new_null(); /* change perhaps later */
-	else {
-		sk= *skp;
+	if (skp == NULL || *skp == NULL) {
+		sk = sk_SSL_CIPHER_new_null(); /* change perhaps later */
+		if (sk == NULL)
+			goto err;
+	} else {
+		sk = *skp;
 		sk_SSL_CIPHER_zero(sk);
 	}
 
