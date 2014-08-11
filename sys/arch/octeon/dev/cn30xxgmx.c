@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.15 2014/08/11 18:52:54 miod Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.16 2014/08/11 19:00:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -937,7 +937,6 @@ cn30xxgmx_rgmii_speed_speed(struct cn30xxgmx_port_softc *sc)
 int
 cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *sc)
 {
-	extern struct boot_info *octeon_boot_info;
 	int clk_tx_setting;
 	int clk_rx_setting;
 	uint64_t rx_frm_ctl;

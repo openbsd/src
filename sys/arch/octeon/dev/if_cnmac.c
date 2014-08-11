@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.18 2014/08/11 18:56:49 miod Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.19 2014/08/11 19:00:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -425,13 +425,12 @@ octeon_eth_smi_init(struct octeon_eth_softc *sc)
 void
 octeon_eth_board_mac_addr(uint8_t *enaddr)
 {
-	extern struct boot_info *octeon_boot_info;
 	int id;
 
 	/* Initialize MAC addresses from the global address base. */
 	if (octeon_eth_mac_addr == 0) {
 		memcpy((uint8_t *)&octeon_eth_mac_addr + 2,
-		       octeon_boot_info->mac_addr_base, 6);
+		    octeon_boot_info->mac_addr_base, 6);
 
 		/*
 		 * Should be allowed to fail hard if couldn't read the

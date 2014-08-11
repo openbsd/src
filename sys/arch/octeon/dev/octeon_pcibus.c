@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.15 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.16 2014/08/11 19:00:50 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -188,7 +188,6 @@ int
 octeon_pcibus_match(struct device *parent, void *vcf, void *aux)
 {
 	struct iobus_attach_args *aa = aux;
-	extern struct boot_info *octeon_boot_info;
 
 	if ((octeon_boot_info->config_flags & BOOTINFO_CFG_FLAG_PCI_HOST) == 0) {
 		OCTEON_PCIDEBUG(("%s, no PCI host function detected.\n", __func__));

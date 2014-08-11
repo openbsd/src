@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.24 2014/07/23 10:06:18 jasper Exp $ */
+/*	$OpenBSD: octcf.c,v 1.25 2014/08/11 19:00:50 miod Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -160,8 +160,6 @@ int 	octcf_get_params(struct octcf_softc *, struct ataparams *);
 int
 octcfprobe(struct device *parent, void *match, void *aux)
 {
-	extern struct boot_info *octeon_boot_info;
-
 	if (octeon_boot_info->cf_common_addr == 0) {
 		OCTCFDEBUG_PRINT(("%s: No cf bus found\n", __func__), DEBUG_FUNCS | DEBUG_PROBE);
 		return 0;

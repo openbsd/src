@@ -1,4 +1,4 @@
-/*	$OpenBSD: octrtc.c,v 1.2 2014/05/07 14:44:54 pirofti Exp $	*/
+/*	$OpenBSD: octrtc.c,v 1.3 2014/08/11 19:00:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2013, 2014 Paul Irofti.
@@ -80,8 +80,6 @@ octrtc_match(struct device *parent, void *match, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 	struct cfdata *cf = match;
-
-	extern struct boot_info *octeon_boot_info;
 
 	if (strcmp(maa->maa_name, cf->cf_driver->cd_name) != 0)
 		return 0;
