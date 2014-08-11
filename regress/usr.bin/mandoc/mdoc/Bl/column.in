@@ -62,3 +62,15 @@
 .It a 	b
 .It a  	b
 .El
+.\" Wrong number of columns.
+.Bl -column "a" "b"
+.It "a"
+.It "a" Ta "b"
+.It "a" Ta "b" Ta "c"
+.It "a" Ta "b" Ta "c" Ta "d"
+.It "a" Ta "b" Ta "c" Ta "d" Ta "e"
+.El
+.\" Interrupted column list
+.Bl -column "aa" -width 6n -compact "bb" "cc"
+.It aa Ta bb Ta cc Ta dd
+.El

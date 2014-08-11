@@ -1,1 +1,1 @@
-mandoc: eof.in: WARNING: line scope broken: at end of file
+mandoc: eof.in:6:2: WARNING: line scope broken: EOF breaks TP

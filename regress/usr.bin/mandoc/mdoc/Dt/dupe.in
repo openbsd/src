@@ -1,9 +1,11 @@
-.Dd June 13, 2014
-.Dt DT-DUPE 1
-.Dt DT-DUPE 1
+.Dd August 5, 2014
+.Dt DT-FIRST 2 first_arch
 .Os OpenBSD
+.Dt DT-DUPE 1
 .Sh NAME
 .Nm Dt-order
 .Nd duplicate prologue macro
 .Sh DESCRIPTION
-some text
+inital text
+.Dt DT-LAST 3 last_arch
+final text

@@ -1,5 +1,5 @@
-mandoc: name.in:10:5: ERROR: escaped character not allowed in a name
-mandoc: name.in:12:5: ERROR: escaped character not allowed in a name
+mandoc: name.in:10:5: ERROR: escaped character not allowed in a name: bs\e
+mandoc: name.in:12:5: ERROR: escaped character not allowed in a name: bl\ 
 mandoc: name.in:15:29: WARNING: invalid escape sequence: \*[norm
 mandoc: name.in:15:29: WARNING: undefined string, using "": norm
 mandoc: name.in:15:28: WARNING: whitespace at end of input line

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.12 2014/07/02 06:35:26 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.13 2014/08/11 04:18:18 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -57,31 +57,31 @@ lint: lint-clean ${_LINTDIFFS}
 		.out_ascii .out_lint .out_utf8
 
 .in.mandoc_ascii:
-	@echo "${MANDOC} -Tascii ${.IMPSRC:T} > ${.TARGET}"
-	@${MANDOC} -Tascii ${.IMPSRC} > ${.TARGET}
+	@echo "${MANDOC} ${MOPTS} -Tascii ${.IMPSRC:T} > ${.TARGET}"
+	@${MANDOC} ${MOPTS} -Tascii ${.IMPSRC} > ${.TARGET}
 
 .mandoc_ascii.diff_ascii:
 	@echo "${DIFF} ${.IMPSRC:S/mandoc_ascii$/out_ascii/} ${.IMPSRC}"
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_ascii$/out_ascii/} ${.IMPSRC}
 
 .in.mandoc_utf8:
-	@echo "${MANDOC} -Tutf8 ${.IMPSRC:T} > ${.TARGET}"
-	@${MANDOC} -Tutf8 ${.IMPSRC} > ${.TARGET}
+	@echo "${MANDOC} ${MOPTS} -Tutf8 ${.IMPSRC:T} > ${.TARGET}"
+	@${MANDOC} ${MOPTS} -Tutf8 ${.IMPSRC} > ${.TARGET}
 
 .mandoc_utf8.diff_utf8:
 	@echo "${DIFF} ${.IMPSRC:S/mandoc_utf8$/out_utf8/} ${.IMPSRC}"
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_utf8$/out_utf8/} ${.IMPSRC}
 
 .in.in_man:
-	@echo "${MANDOC} -Tman ${.IMPSRC:T} > ${.TARGET}"
-	@${MANDOC} -Tman ${.IMPSRC} > ${.TARGET}
+	@echo "${MANDOC} ${MOPTS} -Tman ${.IMPSRC:T} > ${.TARGET}"
+	@${MANDOC} ${MOPTS} -Tman ${.IMPSRC} > ${.TARGET}
 
 .in_man.mandoc_man:
-	${MANDOC} -Tascii -Omdoc ${.IMPSRC} > ${.TARGET}
+	${MANDOC} -man -Tascii -Omdoc ${.IMPSRC} > ${.TARGET}
 
 .in.mandoc_lint:
-	@echo "${MANDOC} -Tlint ${.IMPSRC:T} > ${.TARGET} 2>&1"
-	@-${MANDOC} -Tlint ${.IMPSRC} 2>&1 | \
+	@echo "${MANDOC} ${MOPTS} -Tlint ${.IMPSRC:T} > ${.TARGET} 2>&1"
+	@-${MANDOC} ${MOPTS} -Tlint ${.IMPSRC} 2>&1 | \
 		sed -E 's/^mandoc: \/[^:]+\//mandoc: /' > ${.TARGET}
 
 .mandoc_lint.diff_lint:
@@ -150,7 +150,13 @@ lint-clean:
 
 # --- the groff program ---
 
-NROFF = /usr/local/bin/nroff -c -mandoc
+NROFF	 = /usr/local/bin/nroff -c
+
+.ifdef MOPTS
+NOPTS	?= ${MOPTS}
+.else
+NOPTS	?= -mandoc
+.endif
 
 # --- the list of targets ---
 
@@ -187,7 +193,7 @@ lint-out: obj-check ${_LINTOUTFILES}
 .  if empty(SKIP_ASCII:M${t}) && empty(SKIP_ASCII:MALL)
 .    if empty(SKIP_GROFF:M${t})
 ${t}.out_ascii: ${t}.in
-	${NROFF} -Tascii ${.ALLSRC} > ${.TARGET}
+	${NROFF} ${NOPTS} -Tascii ${.ALLSRC} > ${.TARGET}
 .    else
 .PHONY: ${t}.out_ascii
 ${t}.out_ascii:
@@ -199,7 +205,7 @@ ${t}.out_ascii:
 .for t in ${UTF8_TARGETS}
 .  if empty(SKIP_GROFF:M${t})
 ${t}.out_utf8: ${t}.in
-	${NROFF} -Tutf8 ${.ALLSRC} > ${.TARGET}
+	${NROFF} ${NOPTS} -Tutf8 ${.ALLSRC} > ${.TARGET}
 .  else
 .PHONY: ${t}.out_utf8
 ${t}.out_utf8:
@@ -209,7 +215,7 @@ ${t}.out_utf8:
 
 .for t in ${LINT_TARGETS}
 ${t}.out_lint: ${t}.in
-	-${MANDOC} -Tlint ${.ALLSRC} > ${.TARGET} 2>&1
+	-${MANDOC} ${MOPTS} -Tlint ${.ALLSRC} > ${.TARGET} 2>&1
 .endfor
 
 # --- phony targets ---

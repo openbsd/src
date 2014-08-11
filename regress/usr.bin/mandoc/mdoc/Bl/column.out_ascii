@@ -41,4 +41,11 @@ DDEESSCCRRIIPPTTIIOONN
      a       b
      a       b
 
+     a
+     a    b
+     a    b    c
+     a    b    cd
+     a    b    cde
+     aa    bb    cc    dd
+
 OpenBSD                        December 24, 2009                       OpenBSD
