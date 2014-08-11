@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.149 2014/08/10 17:15:18 jmc Exp $
+# $OpenBSD: sysmerge.sh,v 1.150 2014/08/11 09:03:27 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -73,6 +73,20 @@ warn() {
 
 report() {
 	echo "$@" >> ${REPORT}
+}
+
+# from OpenBSD's /etc/rc,v 1.438
+stripcom() {
+	local _file="$1"
+	local _line
+
+	{
+		while read _line ; do
+			_line=${_line%%#*}		# strip comments
+			test -z "$_line" && continue
+			echo $_line
+		done
+	} < $_file
 }
 
 # remove newly created work directory and exit with status 1
@@ -323,13 +337,11 @@ sm_populate() {
 		CF_DIFF=$(diff -q -I "##### " ${TEMPROOT}/${cf} ${DESTDIR}/${cf} 2>/dev/null)
 		[[ -z ${CF_DIFF} ]] && IGNORE_FILES="${IGNORE_FILES} ${cf}"
 	done
-	if [ -r /etc/sysmerge.ignore ]; then
-		while read i; do \
-			IGNORE_FILES="${IGNORE_FILES} $(echo ${i} | sed -e 's,\.\.,,g' -e 's,#.*,,g')"
-		done < /etc/sysmerge.ignore
+	if [ -f /etc/sysmerge.ignore ]; then
+		IGNORE_FILES="${IGNORE_FILES} $(stripcom /etc/sysmerge.ignore)"
 	fi
 	for i in ${IGNORE_FILES}; do
-		rm -rf ${TEMPROOT}/${i};
+		rm -f ${TEMPROOT}/${i}
 	done
 }
 

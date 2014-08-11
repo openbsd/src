@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.56 2014/08/11 06:30:39 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.57 2014/08/11 09:03:27 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -161,10 +161,8 @@ to
 .Xr ftp 1 .
 .El
 .Pp
-Files and directories can be excluded from comparison
-by listing them in the file
-.Pa /etc/sysmerge.ignore ,
-each entry separated by white space or a new line.
+Files can be excluded from comparison by listing them in
+.Pa /etc/sysmerge.ignore .
 The following files will always be skipped from comparison:
 .Pa /etc/*.db ,
 .Pa /etc/localtime ,
