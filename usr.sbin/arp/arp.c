@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.56 2014/03/18 14:18:22 mikeb Exp $ */
+/*	$OpenBSD: arp.c,v 1.57 2014/08/11 09:47:56 mpi Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -406,19 +406,22 @@ tryagain:
 	}
 	sin = (struct sockaddr_inarp *)((char *)rtm + rtm->rtm_hdrlen);
 	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin_len) + (char *)sin);
-	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr)
-		if (sdl->sdl_family == AF_LINK &&
-		    (rtm->rtm_flags & RTF_LLINFO) &&
-		    !(rtm->rtm_flags & RTF_GATEWAY))
-			switch (sdl->sdl_type) {
-			case IFT_ETHER:
-			case IFT_FDDI:
-			case IFT_ISO88023:
-			case IFT_ISO88024:
-			case IFT_ISO88025:
-			case IFT_CARP:
-				goto delete;
-			}
+	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
+		if (sdl->sdl_family == AF_LINK && rtm->rtm_flags & RTF_LLINFO) {
+			if (rtm->rtm_flags & RTF_LOCAL)
+				return (0);
+		    	if (!(rtm->rtm_flags & RTF_GATEWAY))
+				switch (sdl->sdl_type) {
+				case IFT_ETHER:
+				case IFT_FDDI:
+				case IFT_ISO88023:
+				case IFT_ISO88024:
+				case IFT_ISO88025:
+				case IFT_CARP:
+					goto delete;
+				}
+		}
+	}
 
 	if (sin_m.sin_other & SIN_PROXY) {
 		warnx("delete: can't locate %s", host);

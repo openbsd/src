@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.53 2013/10/21 12:41:52 jmc Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.54 2014/08/11 09:47:56 mpi Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -506,10 +506,11 @@ delete(char *host)
 	sin = (struct sockaddr_in6 *)((char *)rtm + rtm->rtm_hdrlen);
 	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin6_len) + (char *)sin);
 	if (IN6_ARE_ADDR_EQUAL(&sin->sin6_addr, &sin_m.sin6_addr)) {
-		if (sdl->sdl_family == AF_LINK &&
-		    (rtm->rtm_flags & RTF_LLINFO) &&
-		    !(rtm->rtm_flags & RTF_GATEWAY)) {
-			goto delete;
+		if (sdl->sdl_family == AF_LINK && rtm->rtm_flags & RTF_LLINFO) {
+			if (rtm->rtm_flags & RTF_LOCAL)
+				return (0);
+			if (!(rtm->rtm_flags & RTF_GATEWAY))
+				goto delete;
 		}
 		/*
 		 * IPv4 arp command retries with sin_other = SIN_PROXY here.
