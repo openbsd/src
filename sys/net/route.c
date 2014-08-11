@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.175 2014/07/29 12:18:41 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.176 2014/08/11 11:59:05 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -786,6 +786,14 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 				senderr(ESRCH);
 		}
 #endif
+
+		/*
+		 * Since RTP_LOCAL cannot be set by userland, make
+		 * sure that local routes are only modified by the
+		 * kernel.
+		 */
+		if (rt->rt_flags & RTF_LOCAL && prio != RTP_LOCAL)
+			senderr(EINVAL);
 
 		if ((rn = rnh->rnh_deladdr(info->rti_info[RTAX_DST],
 		    info->rti_info[RTAX_NETMASK], rnh, rn)) == NULL)
