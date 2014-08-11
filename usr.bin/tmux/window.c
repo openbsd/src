@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.112 2014/06/23 10:27:05 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.113 2014/08/11 22:14:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1057,8 +1057,9 @@ window_pane_key(struct window_pane *wp, struct session *sess, int key)
 		return;
 	}
 
-	if (wp->fd == -1)
+	if (wp->fd == -1 || wp->flags & PANE_INPUTOFF)
 		return;
+
 	input_key(wp, key);
 	if (options_get_number(&wp->window->options, "synchronize-panes")) {
 		TAILQ_FOREACH(wp2, &wp->window->panes, entry) {
@@ -1071,8 +1072,8 @@ window_pane_key(struct window_pane *wp, struct session *sess, int key)
 }
 
 void
-window_pane_mouse(
-    struct window_pane *wp, struct session *sess, struct mouse_event *m)
+window_pane_mouse(struct window_pane *wp, struct session *sess,
+    struct mouse_event *m)
 {
 	if (!window_pane_visible(wp))
 		return;
