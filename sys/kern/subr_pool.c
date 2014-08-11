@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.139 2014/08/11 12:37:36 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.140 2014/08/11 13:31:42 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -97,6 +97,7 @@ int	pool_debug = 0;
  * wraps, we're screwed, but we shouldn't create so many pools anyway.
  */
 unsigned int pool_serial;
+unsigned int pool_count;
 
 int	 pool_catchup(struct pool *);
 void	 pool_prime_page(struct pool *, caddr_t, struct pool_item_header *);
@@ -403,6 +404,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 
 	/* Insert this into the list of all pools. */
 	SIMPLEQ_INSERT_HEAD(&pool_head, pp, pr_poollist);
+	pool_count++;
 }
 
 void
@@ -422,6 +424,7 @@ pool_destroy(struct pool *pp)
 	struct pool *prev, *iter;
 
 	/* Remove from global pool list */
+	pool_count--;
 	if (pp == SIMPLEQ_FIRST(&pool_head))
 		SIMPLEQ_REMOVE_HEAD(&pool_head, pr_poollist);
 	else {
