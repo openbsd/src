@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.141 2014/08/12 00:59:27 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.142 2014/08/12 01:01:11 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -140,7 +140,7 @@ void	 pool_print1(struct pool *, const char *, int (*)(const char *, ...)
 
 #define pool_sleep(pl) msleep(pl, &pl->pr_mtx, PSWP, pl->pr_wchan, 0)
 
-static __inline int
+static inline int
 phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
 {
 	long diff = (vaddr_t)a->ph_page - (vaddr_t)b->ph_page;
@@ -158,7 +158,7 @@ RB_GENERATE(phtree, pool_item_header, ph_node, phtree_compare);
 /*
  * Return the pool page header based on page address.
  */
-static __inline struct pool_item_header *
+static inline struct pool_item_header *
 pr_find_pagehead(struct pool *pp, void *v)
 {
 	struct pool_item_header *ph, tmp;
