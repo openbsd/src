@@ -1,4 +1,4 @@
-/* $OpenBSD: md32_common.h,v 1.16 2014/07/10 22:45:56 jsing Exp $ */
+/* $OpenBSD: md32_common.h,v 1.17 2014/08/12 15:02:52 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -109,6 +109,8 @@
  *					<appro@fy.chalmers.se>
  */
 
+#include <stdint.h>
+
 #include <openssl/opensslconf.h>
 
 #if !defined(DATA_ORDER_IS_BIG_ENDIAN) && !defined(DATA_ORDER_IS_LITTLE_ENDIAN)
@@ -140,47 +142,14 @@
 #endif
 
 /*
- * Engage compiler specific rotate intrinsic function if available.
+ * This common idiom is recognized by the compiler and turned into a
+ * CPU-specific intrinsic as appropriate. 
+ * e.g. GCC optimizes to roll on amd64 at -O0
  */
-#undef ROTATE
-#if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
-  /*
-   * Some GNU C inline assembler templates. Note that these are
-   * rotates by *constant* number of bits! But that's exactly
-   * what we need here...
-   * 					<appro@fy.chalmers.se>
-   */
-# if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
-#  define ROTATE(a,n)	({ register unsigned int ret;	\
-				asm (			\
-				"roll %1,%0"		\
-				: "=r"(ret)		\
-				: "I"(n), "0"((unsigned int)(a))	\
-				: "cc");		\
-			   ret;				\
-			})
-# elif defined(_ARCH_PPC) || defined(_ARCH_PPC64) || \
-	defined(__powerpc) || defined(__ppc__) || defined(__powerpc64__)
-#  define ROTATE(a,n)	({ register unsigned int ret;	\
-				asm (			\
-				"rlwinm %0,%1,%2,0,31"	\
-				: "=r"(ret)		\
-				: "r"(a), "I"(n));	\
-			   ret;				\
-			})
-# elif defined(__s390x__)
-#  define ROTATE(a,n) ({ register unsigned int ret;	\
-				asm ("rll %0,%1,%2"	\
-				: "=r"(ret)		\
-				: "r"(a), "I"(n));	\
-			  ret;				\
-			})
-# endif
-#endif
-
-#ifndef ROTATE
-#define ROTATE(a,n)     (((a)<<(n))|(((a)&0xffffffff)>>(32-(n))))
-#endif
+static inline uint32_t ROTATE(uint32_t a, uint32_t n)
+{
+	return (a<<n)|(a>>(32-n));
+}
 
 #if defined(DATA_ORDER_IS_BIG_ENDIAN)
 
