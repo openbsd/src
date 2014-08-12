@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.884 2014/08/12 14:38:27 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.885 2014/08/12 14:42:06 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2668,7 +2668,7 @@ pf_step_into_anchor(int *depth, struct pf_ruleset **rs,
 		log(LOG_ERR, "pf_step_into_anchor: stack overflow\n");
 		*r = TAILQ_NEXT(*r, entries);
 		return;
-	} else if (*depth == 0 && a != NULL)
+	} else if (a != NULL)
 		*a = *r;
 	f = pf_anchor_stack + (*depth)++;
 	f->rs = *rs;
@@ -2713,6 +2713,8 @@ pf_step_out_of_anchor(int *depth, struct pf_ruleset **rs,
 		(*depth)--;
 		if (*depth == 0 && a != NULL)
 			*a = NULL;
+		else if (a != NULL)
+			*a = f->r;
 		*rs = f->rs;
 		if (*match > *depth) {
 			*match = *depth;
