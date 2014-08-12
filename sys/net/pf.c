@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.883 2014/07/22 11:06:09 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.884 2014/08/12 14:38:27 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3165,6 +3165,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 #endif /* INET6 */
 	}
 
+	ruleset = &pf_main_ruleset;
 	r = TAILQ_FIRST(pf_main_ruleset.rules.active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
