@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.142 2014/08/12 01:01:11 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.143 2014/08/12 01:05:46 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1464,6 +1464,7 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 		pi.pr_size = pp->pr_size;
 		pi.pr_pgsize = pp->pr_alloc->pa_pagesz;
 		pi.pr_itemsperpage = pp->pr_itemsperpage;
+		pi.pr_npages = pp->pr_npages;
 		pi.pr_minpages = pp->pr_minpages;
 		pi.pr_maxpages = pp->pr_maxpages;
 		pi.pr_hardlimit = pp->pr_hardlimit;
