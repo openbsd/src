@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.43 2014/04/09 21:10:35 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.44 2014/08/12 19:33:59 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -397,7 +397,7 @@ LEAF(tlb_flush, 0)
 
 #ifdef CPU_OCTEON
 	PTR_SLL	ta2, ta1, PAGE_SHIFT + 1
-	addu	v0, v0, ta2
+	PTR_ADDU v0, v0, ta2
 #else
 	dmtc0	v0, COP_0_TLB_HI	# Mark entry high as invalid
 #endif
@@ -411,7 +411,7 @@ LEAF(tlb_flush, 0)
 	mtc0	ta1, COP_0_TLB_INDEX	# Set the index register.
 #ifdef CPU_OCTEON
 	dmtc0	v0, COP_0_TLB_HI	# Mark entry high as invalid
-	addu	v0, v0, 2 * PAGE_SIZE
+	PTR_ADDU v0, v0, 2 * PAGE_SIZE
 #endif
 	addu	ta1, ta1, 1		# Increment index.
 	TLB_HAZARD
@@ -456,7 +456,7 @@ LEAF(tlb_flush_addr, 0)
 	nop
 #ifdef CPU_OCTEON
 	PTR_SLL	ta2, v0, PAGE_SHIFT + 1
-	addu	ta1, ta1, ta2
+	PTR_ADDU ta1, ta1, ta2
 #endif
 	dmtc0	ta1, COP_0_TLB_HI	# Mark entry high as invalid
 
