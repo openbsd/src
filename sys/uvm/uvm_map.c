@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.173 2014/07/13 15:33:28 pirofti Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.174 2014/08/12 04:29:05 miod Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3541,7 +3541,7 @@ uvm_map_hint(struct vmspace *vm, vm_prot_t prot)
 	}
 #endif
 
-#if defined (__LP64__) && !defined (__mips64__)
+#if defined (__LP64__)
 	spacing = (MIN((4UL * 1024 * 1024 * 1024), BRKSIZ) - 1);
 #else
 	spacing = (MIN((256 * 1024 * 1024), BRKSIZ) - 1);
