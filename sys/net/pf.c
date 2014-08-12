@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.885 2014/08/12 14:42:06 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.886 2014/08/12 15:29:33 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3102,6 +3102,8 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	struct pf_rule		*r;
 	struct pf_rule		*nr = NULL;
 	struct pf_rule		*a = NULL;
+	struct pf_ruleset	*arsm = NULL;
+	struct pf_ruleset	*aruleset = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_rule_slist	 rules;
 	struct pf_rule_item	*ri;
@@ -3297,6 +3299,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 				*rm = r;
 				*am = a;
 				*rsm = ruleset;
+				arsm = aruleset;
 				if (act.log & PF_LOG_MATCHES) {
 					REASON_SET(&reason, PFRES_MATCH);
 					PFLOG_PACKET(pd, reason, r, a, ruleset);
@@ -3306,17 +3309,20 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 			if (r->quick)
 				break;
 			r = TAILQ_NEXT(r, entries);
-		} else
+		} else {
+			aruleset = ruleset;
 			pf_step_into_anchor(&asd, &ruleset, &r, &a);
+		}
 
  nextrule:
 		if (r == NULL && pf_step_out_of_anchor(&asd, &ruleset,
 		    &r, &a, &match))
 			break;
 	}
-	r = *rm;
-	a = *am;
-	ruleset = *rsm;
+	r = *rm;	/* matching rule */
+	a = *am;	/* rule that defines an anchor containing 'r' */
+	ruleset = *rsm;	/* ruleset of the anchor defined by the rule 'a' */
+	aruleset = arsm;/* ruleset of the 'a' rule itself */
 
 	/* apply actions for last matching pass/block rule */
 	pf_rule_to_actions(r, &act);
@@ -3449,7 +3455,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 #endif
 
 	if (r->rule_flag & PFRULE_ONCE)
-		pf_purge_rule(ruleset, r);
+		pf_purge_rule(ruleset, r, aruleset, a);
 
 #if INET && INET6
 	if (rewrite && skw->af != sks->af)

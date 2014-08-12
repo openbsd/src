@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.401 2014/07/02 13:02:08 mikeb Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.402 2014/08/12 15:29:33 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1786,6 +1786,7 @@ extern void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
 void				 pf_rm_rule(struct pf_rulequeue *,
 				    struct pf_rule *);
 void				 pf_purge_rule(struct pf_ruleset *,
+				    struct pf_rule *, struct pf_ruleset *,
 				    struct pf_rule *);
 struct pf_divert		*pf_find_divert(struct mbuf *);
 int				 pf_setup_pdesc(struct pf_pdesc *, void *,
