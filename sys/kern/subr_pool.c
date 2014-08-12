@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.144 2014/08/12 01:25:21 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.145 2014/08/12 01:31:43 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1485,9 +1485,9 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 		rv = sysctl_rdstruct(oldp, oldlenp, NULL, &pi, sizeof(pi));
 	}
 
+done:
 	splx(s);
 
-done:
 	return (rv);
 }
 
