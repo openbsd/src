@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_octeon.c,v 1.8 2014/03/31 20:21:19 miod Exp $	*/
+/*	$OpenBSD: cache_octeon.c,v 1.9 2014/08/12 04:30:21 miod Exp $	*/
 /*
  * Copyright (c) 2010 Takuya ASADA.
  *
@@ -60,20 +60,59 @@
 void 
 Octeon_ConfigCache(struct cpu_info *ci)
 {
-	ci->ci_l1inst.size = 32 * 1024;
-	ci->ci_l1inst.linesize = 128;
-	ci->ci_l1inst.setsize = 4;
-	ci->ci_l1inst.sets = ci->ci_l1inst.size / ci->ci_l1inst.setsize;
+	uint32_t cfg;
+	uint32_t s, l, a;
 
-	ci->ci_l1data.size = 16 * 1024;
+	/* minimalist default values */
+	ci->ci_l1inst.size = 16 * 1024;
+	ci->ci_l1inst.linesize = 128;
+	ci->ci_l1inst.sets = 2;
+	ci->ci_l1inst.setsize = ci->ci_l1inst.size / ci->ci_l1inst.sets;
+
+	ci->ci_l1data.size = 8 * 1024;
 	ci->ci_l1data.linesize = 128;
-	ci->ci_l1data.setsize = 4;
-	ci->ci_l1data.sets = ci->ci_l1data.size / ci->ci_l1data.setsize;
+	ci->ci_l1data.sets = 64;
+	ci->ci_l1data.setsize = ci->ci_l1data.size / ci->ci_l1data.sets;
 
 	ci->ci_l2.size = 128 * 1024;
 	ci->ci_l2.linesize = 128;
-	ci->ci_l2.setsize = 4;
-	ci->ci_l2.sets = ci->ci_l2.size / ci->ci_l2.setsize;
+	ci->ci_l2.sets = 4;
+	ci->ci_l2.setsize = ci->ci_l2.size / ci->ci_l2.sets;
+
+	cfg = cp0_get_config();
+	if ((cfg & 0x80000000) != 0) {
+		cfg = cp0_get_config_1();
+
+		/*
+		 * Octeon L1 cache information does not follow the mips64
+		 * standard encoding.
+		 */
+
+	        a = (cfg >> 16) & 0x07;
+		l = (cfg >> 19) & 0x07;
+		s = (cfg >> 22) & 0x07;
+		ci->ci_l1inst.linesize = 2 << l;
+		ci->ci_l1inst.setsize = (64 << s) * ci->ci_l1inst.linesize;
+		if (a >= 1)
+	        	ci->ci_l1inst.sets = 1 << (a - 1);
+		else
+			ci->ci_l1inst.sets = 1;
+		ci->ci_l1inst.size = ci->ci_l1inst.sets * ci->ci_l1inst.setsize;
+
+		if ((cfg & 0x80000000) != 0) {
+			cfg = cp0_get_config_2();
+			
+			a = 1 + ((cfg >> 0) & 0x0f);
+			l = (cfg >> 4) & 0x0f;
+			s = (cfg >> 8) & 0x0f;
+
+			ci->ci_l2.linesize = 2 << l;
+			ci->ci_l2.sets = a;
+			ci->ci_l2.setsize = (64 << s) * ci->ci_l2.linesize;
+			ci->ci_l2.size = ci->ci_l2.sets * ci->ci_l2.setsize;
+
+		}
+	}
 
 	memset(&ci->ci_l3, 0, sizeof(struct cache_info));
 
