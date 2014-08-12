@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.95 2014/07/29 12:18:41 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.96 2014/08/12 13:52:08 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -343,14 +343,6 @@ void		 rtlabel_unref(u_int16_t);
 #define	RT_REPORT	0x1
 #define	RT_NOCLONING	0x2
 
-struct route_cb {
-	int	ip_count;
-	int	ip6_count;
-	int     mpls_count;
-	int	any_count;
-};
-
-extern struct route_cb route_cb;
 extern struct rtstat rtstat;
 extern const struct sockaddr_rtin rt_defmask4;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.151 2014/08/11 11:59:05 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.152 2014/08/12 13:52:08 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -108,6 +108,15 @@ struct routecb {
 	u_int		rtableid;
 };
 #define	sotoroutecb(so)	((struct routecb *)(so)->so_pcb)
+
+struct route_cb {
+	int		ip_count;
+	int		ip6_count;
+	int		mpls_count;
+	int		any_count;
+};
+
+struct route_cb route_cb;
 
 /*
  * These flags and timeout are used for indicating to userland (via a 
