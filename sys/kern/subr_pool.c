@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.143 2014/08/12 01:05:46 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.144 2014/08/12 01:25:21 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1427,7 +1427,7 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 {
 	struct kinfo_pool pi;
 	struct pool *pp;
-	int rv;
+	int rv = ENOENT;
 	int s;
 
 	switch (name[0]) {
@@ -1452,6 +1452,9 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 		if (name[1] == pp->pr_serial)
 			break;
 	}
+
+	if (pp == NULL)
+		goto done;
 
 	switch (name[0]) {
 	case KERN_POOL_NAME:
@@ -1484,6 +1487,7 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 
 	splx(s);
 
+done:
 	return (rv);
 }
 
