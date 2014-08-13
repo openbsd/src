@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1736 2014/08/11 20:30:22 millert Exp 
+ *	OpenBSD: pcidevs,v 1.1737 2014/08/13 07:36:21 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -14628,32 +14628,76 @@ static const struct pci_known_product pci_known_products[] = {
 	    "H81 LPC",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_AHCI,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_SATA_1,
+	    "9 Series SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_AHCI,
 	    "9 Series AHCI",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_PCIE_1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_RAID_1,
+	    "9 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_RAID_2,
+	    "9 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_SATA_2,
+	    "9 Series SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_RAID_3,
+	    "9 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_PCIE_1,
 	    "9 Series PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_PCIE_2,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_PCIE_2,
 	    "9 Series PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_HDA,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_PCIE_3,
+	    "9 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_PCIE_4,
+	    "9 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_PCIE_5,
+	    "9 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_PCIE_6,
+	    "9 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_PCIE_7,
+	    "9 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_PCIE_8,
+	    "9 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_HDA,
 	    "9 Series HD Audio",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_SMB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_SMB,
 	    "9 Series SMBus",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_EHCI_1,
-	    "9 Series EHCI",
+	    "9 Series USB",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_EHCI_2,
-	    "9 Series EHCI",
+	    "9 Series USB",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_XHCI,
@@ -14664,8 +14708,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "9 Series MEI",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_MEI_2,
+	    "9 Series MEI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_IDER,
+	    "9 Series IDER",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_KT,
+	    "9 Series KT",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_Z97_LPC,
 	    "Z97 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_H97_LPC,
+	    "H97 LPC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I2OPCIB,
@@ -14764,6 +14824,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "8 Series MEI",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_LP_IDER,
+	    "8 Series IDER",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_LP_KT,
+	    "8 Series KT",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_LP_LPC_1,
 	    "8 Series LPC",
 	},
@@ -14774,6 +14842,78 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_LP_LPC_3,
 	    "8 Series LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_AHCI,
+	    "9 Series AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_RAID_1,
+	    "9 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_RAID_2,
+	    "9 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_RAID_3,
+	    "9 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_PCIE_1,
+	    "9 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_PCIE_2,
+	    "9 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_PCIE_3,
+	    "9 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_PCIE_4,
+	    "9 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_PCIE_5,
+	    "9 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_PCIE_6,
+	    "9 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_MEI_1,
+	    "9 Series MEI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_MEI_2,
+	    "9 Series MEI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_IDER,
+	    "9 Series IDER",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_KT,
+	    "9 Series KT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_HDA,
+	    "9 Series HD Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_SMB,
+	    "9 Series SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_EHCI,
+	    "9 Series USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_XHCI,
+	    "9 Series xHCI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PINEVIEW_DMI,
