@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.17 2014/08/05 15:36:59 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.18 2014/08/13 08:08:55 chrisz Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -593,7 +593,7 @@ path_info(char *name)
 	start = path;
 	end = start + strlen(path);
 
-	for (p = end; p > start; p--) {
+	for (p = end; p >= start; p--) {
 		if (*p != '/')
 			continue;
 		if (stat(path, &st) == 0)
