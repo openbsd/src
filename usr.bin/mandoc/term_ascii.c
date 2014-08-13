@@ -1,4 +1,4 @@
-/*	$Id: term_ascii.c,v 1.16 2014/08/08 16:00:23 schwarze Exp $ */
+/*	$Id: term_ascii.c,v 1.17 2014/08/13 22:09:28 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -209,31 +209,41 @@ ascii_hspan(const struct termp *p, const struct roffsu *su)
 	double		 r;
 
 	/*
-	 * Approximate based on character width.  These are generated
-	 * entirely by eyeballing the screen, but appear to be correct.
+	 * Approximate based on character width.
+	 * None of these will be actually correct given that an inch on
+	 * the screen depends on character size, terminal, etc., etc.
 	 */
-
 	switch (su->unit) {
+	case SCALE_BU:
+		r = su->scale * 10.0 / 240.0;
+		break;
 	case SCALE_CM:
-		r = su->scale * 4.0;
+		r = su->scale * 10.0 / 2.54;
+		break;
+	case SCALE_FS:
+		r = su->scale * 2730.666;
 		break;
 	case SCALE_IN:
 		r = su->scale * 10.0;
 		break;
+	case SCALE_MM:
+		r = su->scale / 100.0;
+		break;
 	case SCALE_PC:
-		r = (su->scale * 10.0) / 6.0;
+		r = su->scale * 10.0 / 6.0;
 		break;
 	case SCALE_PT:
-		r = (su->scale * 10.0) / 72.0;
-		break;
-	case SCALE_MM:
-		r = su->scale / 1000.0;
+		r = su->scale * 10.0 / 72.0;
 		break;
 	case SCALE_VS:
 		r = su->scale * 2.0 - 1.0;
 		break;
-	default:
+	case SCALE_EN:
+	case SCALE_EM:
 		r = su->scale;
+		break;
+	case SCALE_MAX:
+		abort();
 		break;
 	}
 
