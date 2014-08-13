@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.32 2014/08/13 16:04:28 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.33 2014/08/13 18:00:54 chrisz Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -100,7 +100,8 @@ server_fcgi(struct httpd *env, struct client *clt)
 	struct fcgi_record_header	*h;
 	struct fcgi_begin_request_body	*begin;
 	char				 hbuf[MAXHOSTNAMELEN];
-	ssize_t				 scriptlen, pathlen;
+	size_t				 scriptlen;
+	int				 pathlen;
 	int				 fd = -1, ret;
 	const char			*errstr = NULL;
 	char				*str, *p, *script = NULL;
@@ -191,14 +192,21 @@ server_fcgi(struct httpd *env, struct client *clt)
 	h->type = FCGI_PARAMS;
 	h->content_len = param.total_len = 0;
 
-	if ((pathlen = (ssize_t)asprintf(&script, "%s%s", srv_conf->root,
+	if ((pathlen = asprintf(&script, "%s%s", srv_conf->root,
 	    desc->http_path_alias != NULL ?
 	    desc->http_path_alias : desc->http_path)) == -1) {
 		errstr = "failed to get script name";
 		goto fail;
 	}
 
-	if ((scriptlen = path_info(script)) < pathlen) {
+	scriptlen = path_info(script);
+	/*
+	 * no part of root should show up in PATH_INFO.
+	 * therefore scriptlen should be >= strlen(root)
+	 */
+	if (scriptlen < strlen(srv_conf->root))
+		scriptlen = strlen(srv_conf->root);
+	if ((int)scriptlen < pathlen) {
 		if (fcgi_add_param(&param, "PATH_INFO",
 		    script + scriptlen, clt) == -1) {
 			errstr = "failed to encode param";
