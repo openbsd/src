@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.45 2014/07/22 11:06:09 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.46 2014/08/13 09:46:23 blambert Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -987,6 +987,7 @@ pflow_sendout_ipfix(struct pflow_softc *sc, sa_family_t af)
 	struct pflow_v10_header		*h10;
 	struct pflow_set_header		*set_hdr;
 	struct ifnet			*ifp = &sc->sc_if;
+	u_int32_t			 count;
 	int				 set_length;
 
 	switch (af) {
@@ -996,6 +997,7 @@ pflow_sendout_ipfix(struct pflow_softc *sc, sa_family_t af)
 		if (m == NULL)
 			return (0);
 		sc->sc_mbuf = NULL;
+		count = sc->sc_count4;
 		set_length = sizeof(struct pflow_set_header)
 		    + sc->sc_count4 * sizeof(struct pflow_ipfix_flow4);
 		break;
@@ -1005,6 +1007,7 @@ pflow_sendout_ipfix(struct pflow_softc *sc, sa_family_t af)
 		if (m == NULL)
 			return (0);
 		sc->sc_mbuf6 = NULL;
+		count = sc->sc_count6;
 		set_length = sizeof(struct pflow_set_header)
 		    + sc->sc_count6 * sizeof(struct pflow_ipfix_flow6);
 		break;
@@ -1031,7 +1034,8 @@ pflow_sendout_ipfix(struct pflow_softc *sc, sa_family_t af)
 	h10->version = htons(PFLOW_PROTO_10);
 	h10->length = htons(PFLOW_IPFIX_HDRLEN + set_length);
 	h10->time_sec = htonl(time_second);		/* XXX 2038 */
-	h10->flow_sequence = htonl(sc->sc_gcounter);
+	h10->flow_sequence = htonl(sc->sc_sequence);
+	sc->sc_sequence += count;
 	h10->observation_dom = htonl(PFLOW_ENGINE_TYPE);
 	return (pflow_sendout_mbuf(sc, m));
 }
@@ -1070,7 +1074,7 @@ pflow_sendout_ipfix_tmpl(struct pflow_softc *sc)
 	h10->length = htons(PFLOW_IPFIX_HDRLEN + sizeof(struct
 	    pflow_ipfix_tmpl));
 	h10->time_sec = htonl(time_second);		/* XXX 2038 */
-	h10->flow_sequence = htonl(sc->sc_gcounter);
+	h10->flow_sequence = htonl(sc->sc_sequence);
 	h10->observation_dom = htonl(PFLOW_ENGINE_TYPE);
 
 	timeout_add_sec(&sc->sc_tmo_tmpl, PFLOW_TMPL_TIMEOUT);
