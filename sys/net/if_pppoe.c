@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.40 2014/07/12 18:44:22 tedu Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.41 2014/08/13 12:03:40 mpi Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -1398,6 +1398,9 @@ pppoe_send_padt(struct ifnet *outgoing_if, u_int session, const u_int8_t *dest)
 	memcpy(&eh->ether_dhost, dest, ETHER_ADDR_LEN);
 
 	m0->m_flags &= ~(M_BCAST|M_MCAST);
+	/* encapsulated packet is forced into rdomain of physical interface */
+	m0->m_pkthdr.ph_rtableid = outgoing_if->if_rdomain;
+
 	return (outgoing_if->if_output(outgoing_if, m0, &dst, NULL));
 }
 
