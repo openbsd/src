@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.92 2014/02/02 19:25:41 miod Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.93 2014/08/13 07:45:37 jsg Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -55,8 +55,36 @@ const struct puc_device_description puc_devs[] = {
 		{ PUC_COM_POW2(0), 0x10, 0x0000 },
 	    },
 	},
-	{	/* Series KT */
+	{	/* 7 Series KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_KT, 0x0000, 0x0000 },
+	    {	0xffff, 0xffff,					0x0000, 0x0000 },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
+	{	/* 8 Series KT */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_KT, 0x0000, 0x0000 },
+	    {	0xffff, 0xffff,					0x0000, 0x0000 },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
+	{	/* 8 Series LP KT */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_LP_KT, 0x0000, 0x0000 },
+	    {	0xffff, 0xffff,					0x0000, 0x0000 },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
+	{	/* 9 Series KT */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_KT, 0x0000, 0x0000 },
+	    {	0xffff, 0xffff,					0x0000, 0x0000 },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
+	{	/* 9 Series LP KT */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
 		{ PUC_COM_POW2(0), 0x10, 0x0000 },
@@ -141,13 +169,6 @@ const struct puc_device_description puc_devs[] = {
 	},
 	{	/* 3400 KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_KT, 0x0000, 0x0000 },
-	    {	0xffff, 0xffff,					0x0000, 0x0000 },
-	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-	    },
-	},
-	{	/* 8 Series KT */
-	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
 		{ PUC_COM_POW2(0), 0x10, 0x0000 },
