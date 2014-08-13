@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random_solaris.h,v 1.7 2014/07/20 20:51:13 bcook Exp $	*/
+/*	$OpenBSD: arc4random_solaris.h,v 1.8 2014/08/13 06:04:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -70,7 +70,7 @@ _rs_allocate(struct _rs **rsp, struct _rsx **rsxp)
 
 	if ((*rsxp = mmap(NULL, sizeof(**rsxp), PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED) {
-		munmap(*rsxp, sizeof(**rsxp));
+		munmap(*rsp, sizeof(**rsp));
 		return (-1);
 	}
 
