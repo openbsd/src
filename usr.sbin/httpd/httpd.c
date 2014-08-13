@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.18 2014/08/13 08:08:55 chrisz Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.19 2014/08/13 16:04:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -580,28 +580,33 @@ canonicalize_path(const char *input, char *path, size_t len)
 	return (path);
 }
 
-ssize_t
-path_info(char *name)
+size_t
+path_info(char *path)
 {
-	char		*p, *start, *end;
-	char		 path[MAXPATHLEN];
+	char		*p, *start, *end, ch;
 	struct stat	 st;
-
-	if (strlcpy(path, name, sizeof(path)) >= sizeof(path))
-		return (-1);
+	int		 ret;
 
 	start = path;
 	end = start + strlen(path);
 
-	for (p = end; p >= start; p--) {
-		if (*p != '/')
+	for (p = end; p > start; p--) {
+		/* Scan every path component from the end and at each '/' */
+		if (p < end && *p != '/')
 			continue;
-		if (stat(path, &st) == 0)
-			break;
+
+		/* Temporarily cut the path component out */
+		ch = *p;
 		*p = '\0';
+		ret = stat(path, &st);
+		*p = ch;
+
+		/* Break if the initial path component was found */
+		if (ret == 0)
+			break;
 	}
 
-	return (strlen(path));
+	return (p - start);
 }
 
 void
