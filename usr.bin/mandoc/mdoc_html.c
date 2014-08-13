@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.78 2014/08/08 16:17:09 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.79 2014/08/13 15:19:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1081,10 +1081,8 @@ mdoc_ex_pre(MDOC_ARGS)
 static int
 mdoc_em_pre(MDOC_ARGS)
 {
-	struct htmlpair	tag;
 
-	PAIR_CLASS_INIT(&tag, "emph");
-	print_otag(h, TAG_SPAN, 1, &tag);
+	print_otag(h, TAG_EM, 0, NULL);
 	return(1);
 }
 
@@ -1820,9 +1818,7 @@ mdoc_bf_pre(MDOC_ARGS)
 	else if (MDOC_BODY != n->type)
 		return(1);
 
-	if (FONT_Em == n->norm->Bf.font)
-		PAIR_CLASS_INIT(&tag[0], "emph");
-	else if (FONT_Sy == n->norm->Bf.font)
+	if (FONT_Sy == n->norm->Bf.font)
 		PAIR_CLASS_INIT(&tag[0], "symb");
 	else if (FONT_Li == n->norm->Bf.font)
 		PAIR_CLASS_INIT(&tag[0], "lit");
@@ -1840,6 +1836,8 @@ mdoc_bf_pre(MDOC_ARGS)
 	bufcat_su(h, "margin-left", &su);
 	PAIR_STYLE_INIT(&tag[1], h);
 	print_otag(h, TAG_DIV, 2, tag);
+	if (FONT_Em == n->norm->Bf.font)
+		print_otag(h, TAG_EM, 0, NULL);
 	return(1);
 }
 
