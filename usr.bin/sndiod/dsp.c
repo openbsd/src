@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.6 2014/03/17 17:16:32 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.7 2014/08/13 08:42:46 nicm Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -136,7 +136,7 @@ aparams_strtoenc(struct aparams *par, char *istr)
 		p++;
 
 		/*
-		 * get (optional) alignement
+		 * get (optional) alignment
 		 */
 		if (p[0] == 'm' && p[1] == 's' && p[2] == 'b') {
 			msb = 1;
