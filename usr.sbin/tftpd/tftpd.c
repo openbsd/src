@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.19 2014/04/21 04:02:52 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.20 2014/08/13 01:00:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -530,12 +530,12 @@ tftpd_listen(const char *addr, const char *port, int family)
 		case AF_INET:
 			if (setsockopt(s, IPPROTO_IP, IP_RECVDSTADDR,
 			    &on, sizeof(on)) == -1)
-				errx(1, "setsockopt(IP_RECVDSTADDR)");
+				err(1, "setsockopt(IP_RECVDSTADDR)");
 			break;
 		case AF_INET6:
 			if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO,
 			    &on, sizeof(on)) == -1)
-				errx(1, "setsockopt(IPV6_RECVPKTINFO)");
+				err(1, "setsockopt(IPV6_RECVPKTINFO)");
 			break;
 		}
 
