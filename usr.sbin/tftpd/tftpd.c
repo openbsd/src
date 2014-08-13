@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.20 2014/08/13 01:00:16 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.21 2014/08/13 01:03:56 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -490,8 +490,8 @@ tftpd_listen(const char *addr, const char *port, int family)
 	int error;
 	int s;
 
-	int saved_errno;
-	const char *cause = NULL;
+	int cerrno = EADDRNOTAVAIL;
+	const char *cause = "getaddrinfo";
 
 	int on = 1;
 
@@ -512,14 +512,14 @@ tftpd_listen(const char *addr, const char *port, int family)
 		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		if (s == -1) {
 			cause = "socket";
+			cerrno = errno;
 			continue;
 		}
 
 		if (bind(s, res->ai_addr, res->ai_addrlen) == -1) {
 			cause = "bind";
-			saved_errno = errno;
+			cerrno = errno;
 			close(s);
-			errno = saved_errno;
 			continue;
 		}
 
@@ -548,7 +548,7 @@ tftpd_listen(const char *addr, const char *port, int family)
 	}
 
 	if (TAILQ_EMPTY(&tftp_servers))
-		err(1, "%s", cause);
+		errc(1, cerrno, "%s", cause);
 
 	return (0);
 }
