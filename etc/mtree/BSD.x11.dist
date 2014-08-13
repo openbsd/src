@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.35 2014/07/16 16:11:51 ajacoutot Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.36 2014/08/13 21:19:56 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -160,6 +160,8 @@
             ..
             share
                 X11
+		    app-defaults
+		    ..
                     locale
                         C
                         ..
