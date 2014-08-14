@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.32 2014/08/08 18:29:42 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.33 2014/08/14 07:50:35 chrisz Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -46,8 +46,7 @@
 #include "httpd.h"
 #include "http.h"
 
-int	 server_file_access(struct httpd *, struct client *, char *,
-	    size_t, struct stat *);
+int	 server_file_access(struct httpd *, struct client *, char *, size_t);
 int	 server_file_request(struct httpd *, struct client *, char *,
 	    struct stat *);
 int	 server_file_index(struct httpd *, struct client *);
@@ -55,11 +54,11 @@ int	 server_file_method(struct client *);
 
 int
 server_file_access(struct httpd *env, struct client *clt,
-    char *path, size_t len, struct stat *st)
+    char *path, size_t len)
 {
 	struct http_descriptor	*desc = clt->clt_desc;
 	struct server_config	*srv_conf = clt->clt_srv_conf;
-	struct stat		 stb;
+	struct stat		 st;
 	char			*newpath;
 	int			 ret;
 
@@ -67,9 +66,9 @@ server_file_access(struct httpd *env, struct client *clt,
 
 	if (access(path, R_OK) == -1) {
 		goto fail;
-	} else if (stat(path, st) == -1) {
+	} else if (stat(path, &st) == -1) {
 		goto fail;
-	} else if (S_ISDIR(st->st_mode)) {
+	} else if (S_ISDIR(st.st_mode)) {
 		/* Deny access if directory indexing is disabled */
 		if (srv_conf->flags & SRVFLAG_NO_INDEX) {
 			errno = EACCES;
@@ -111,7 +110,7 @@ server_file_access(struct httpd *env, struct client *clt,
 			goto fail;
 		}
 
-		ret = server_file_access(env, clt, path, len, &stb);
+		ret = server_file_access(env, clt, path, len);
 		if (ret == 404) {
 			/*
 			 * Index file not found; fail if auto-indexing is
@@ -127,13 +126,13 @@ server_file_access(struct httpd *env, struct client *clt,
 			return (server_file_index(env, clt));
 		}
 		return (ret);
-	} else if (!S_ISREG(st->st_mode)) {
+	} else if (!S_ISREG(st.st_mode)) {
 		/* Don't follow symlinks and ignore special files */
 		errno = EACCES;
 		goto fail;
 	}
 
-	return (server_file_request(env, clt, path, st));
+	return (server_file_request(env, clt, path, &st));
 
  fail:
 	switch (errno) {
@@ -156,7 +155,6 @@ server_file(struct httpd *env, struct client *clt)
 	char			 path[MAXPATHLEN];
 	const char		*errstr = NULL;
 	int			 ret = 500;
-	struct stat		 st;
 
 	if (srv_conf->flags & SRVFLAG_FCGI)
 		return (server_fcgi(env, clt));
@@ -171,8 +169,7 @@ server_file(struct httpd *env, struct client *clt)
 	}
 
 	/* Returns HTTP status code on error */
-	if ((ret = server_file_access(env, clt, path, sizeof(path),
-	    &st)) > 0) {
+	if ((ret = server_file_access(env, clt, path, sizeof(path))) > 0) {
 		errstr = desc->http_path_alias != NULL ?
 		    desc->http_path_alias : desc->http_path;
 		goto abort;
