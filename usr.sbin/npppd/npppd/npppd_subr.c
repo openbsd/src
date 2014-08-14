@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_subr.c,v 1.12 2014/06/13 06:35:58 yasuoka Exp $ */
+/*	$OpenBSD: npppd_subr.c,v 1.13 2014/08/14 08:08:00 mpi Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -175,8 +175,6 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 		rtm->rtm_flags |= RTF_GATEWAY;
 	if (mask == NULL)
 		rtm->rtm_flags |= RTF_HOST;
-	else
-		rtm->rtm_flags |= RTF_MASK;
 
 	if (type == RTM_ADD && mtu > 0) {
 		rtm->rtm_inits = RTV_MTU;
