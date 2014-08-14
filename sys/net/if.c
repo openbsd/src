@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.298 2014/08/11 13:51:07 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.299 2014/08/14 11:38:14 mikeb Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2412,7 +2412,7 @@ if_rxr_adjust_cwm(struct if_rxring *rxr)
 			rxr->rxr_cwm--;
 		else
 			return;
-	} else if (rxr->rxr_alive > 4)
+	} else if (rxr->rxr_alive >= rxr->rxr_lwm)
 		return;
 	else if (rxr->rxr_cwm < rxr->rxr_hwm)
 		rxr->rxr_cwm++;
