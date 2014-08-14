@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.6 2014/08/08 18:29:42 reyk Exp $	*/
+/*	$OpenBSD: http.h,v 1.7 2014/08/14 09:12:26 doug Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -25,7 +25,7 @@
 enum httpmethod {
 	HTTP_METHOD_NONE	= 0,
 
-	/* HTTP/1.1, RFC 2616 */
+	/* HTTP/1.1, RFC 7231 */
 	HTTP_METHOD_GET,
 	HTTP_METHOD_HEAD,
 	HTTP_METHOD_POST,
@@ -79,22 +79,39 @@ struct http_error {
 	int			 error_code;
 	const char		*error_name;
 };
+
+/*
+ * HTTP status codes based on IANA assignments (2014-06-11 version):
+ * https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
+ * plus legacy (306) and non-standard (420).
+ */
 #define HTTP_ERRORS		{			\
 	{ 100,	"Continue" },				\
 	{ 101,	"Switching Protocols" },		\
+	{ 102,	"Processing" },				\
+	/* 103-199 unassigned */			\
 	{ 200,	"OK" },					\
 	{ 201,	"Created" },				\
 	{ 202,	"Accepted" },				\
-	{ 203,	"Non-Authorative Information" },	\
+	{ 203,	"Non-Authoritative Information" },	\
 	{ 204,	"No Content" },				\
 	{ 205,	"Reset Content" },			\
 	{ 206,	"Partial Content" },			\
+	{ 207,	"Multi-Status" },			\
+	{ 208,	"Already Reported" },			\
+	/* 209-225 unassigned */			\
+	{ 226,	"IM Used" },				\
+	/* 227-299 unassigned */			\
 	{ 300,	"Multiple Choices" },			\
 	{ 301,	"Moved Permanently" },			\
-	{ 302,	"Moved Temporarily" },			\
+	{ 302,	"Found" },				\
 	{ 303,	"See Other" },				\
 	{ 304,	"Not Modified" },			\
+	{ 305,	"Use Proxy" },				\
+	{ 306,	"Switch Proxy" },			\
 	{ 307,	"Temporary Redirect" },			\
+	{ 308,	"Permanent Redirect" },			\
+	/* 309-399 unassigned */			\
 	{ 400,	"Bad Request" },			\
 	{ 401,	"Unauthorized" },			\
 	{ 402,	"Payment Required" },			\
@@ -108,17 +125,37 @@ struct http_error {
 	{ 410,	"Gone" },				\
 	{ 411,	"Length Required" },			\
 	{ 412,	"Precondition Failed" },		\
-	{ 413,	"Request Entity Too Large" },		\
-	{ 414,	"Request-URL Too Long" },		\
+	{ 413,	"Payload Too Large" },			\
+	{ 414,	"URI Too Long" },			\
 	{ 415,	"Unsupported Media Type" },		\
-	{ 416,	"Requested Range Not Satisfiable" },	\
+	{ 416,	"Range Not Satisfiable" },		\
 	{ 417,	"Expectation Failed" },			\
+	/* 418-421 unassigned */			\
+	{ 420,	"Enhance Your Calm" },			\
+	{ 422,	"Unprocessable Entity" },		\
+	{ 423,	"Locked" },				\
+	{ 424,	"Failed Dependency" },			\
+	/* 425 unassigned */				\
+	{ 426,	"Upgrade Required" },			\
+	/* 427 unassigned */				\
+	{ 428,	"Precondition Required" },		\
+	{ 429,	"Too Many Requests" },			\
+	/* 430 unassigned */				\
+	{ 431,	"Request Header Fields Too Large" },	\
+	/* 432-499 unassigned */			\
 	{ 500,	"Internal Server Error" },		\
 	{ 501,	"Not Implemented" },			\
 	{ 502,	"Bad Gateway" },			\
 	{ 503,	"Service Unavailable" },		\
 	{ 504,	"Gateway Timeout" },			\
 	{ 505,	"HTTP Version Not Supported" },		\
+	{ 506,	"Variant Also Negotiates" },		\
+	{ 507,	"Insufficient Storage" },		\
+	{ 508,	"Loop Detected" },			\
+	/* 509 unassigned */				\
+	{ 510,	"Not Extended" },			\
+	{ 511,	"Network Authentication Required" },	\
+	/* 512-599 unassigned */			\
 	{ 0,	NULL }					\
 }
 
@@ -127,7 +164,10 @@ struct http_mediatype {
 	char		*media_type;
 	char		*media_subtype;
 };
-/* Some default media types */
+/*
+ * Some default media types based on (2014-08-04 version):
+ * https://www.iana.org/assignments/media-types/media-types.xhtml
+ */
 #define MEDIA_TYPES		{			\
 	{ "css",	"text",		"css" },	\
 	{ "html",	"text",		"html" },	\
