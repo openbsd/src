@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2014/07/06 19:08:57 schwarze Exp $
+# $OpenBSD: Makefile,v 1.6 2014/08/14 01:58:51 schwarze Exp $
 
 REGRESS_TARGETS = one two multi B c f h w z ignore
 LINT_TARGETS	= B h w
@@ -9,7 +9,7 @@ LINT_TARGETS	= B h w
 # Cannot use /g because matches progress backwards.
 
 z.out_ascii: z.in
-	${NROFF} ${.ALLSRC} | \
+	${NROFF} ${NOPTS} -Tascii ${.ALLSRC} | \
 		perl -pe 'while (s/(.)\010(?!\1)//) {}' \
 		> ${.TARGET}
 
