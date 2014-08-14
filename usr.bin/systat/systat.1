@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.97 2013/11/01 10:40:15 henning Exp $
+.\"	$OpenBSD: systat.1,v 1.98 2014/08/14 08:10:30 mpi Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: November 1 2013 $
+.Dd $Mdocdate: August 14 2014 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -375,6 +375,10 @@ Available orderings are:
 .Ic size ,
 and
 .Ic number of pages .
+.Pp
+By default only the statistics of active pools are displayed but pressing
+.Ic A
+changes the view to show all of them.
 .It Ic queues
 Display statistics about the active queues,
 similar to the output of

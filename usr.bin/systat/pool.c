@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.7 2014/07/02 00:12:34 dlg Exp $	*/
+/*	$OpenBSD: pool.c,v 1.8 2014/08/14 08:10:30 mpi Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -30,6 +30,7 @@ int  read_pool(void);
 void  sort_pool(void);
 int  select_pool(void);
 void showpool(int k);
+int pool_keyboard_callback(int);
 
 /* qsort callbacks */
 int sort_name_callback(const void *s1, const void *s2);
@@ -43,6 +44,7 @@ struct pool_info {
 };
 
 
+int print_all = 0;
 int num_pools = 0;
 struct pool_info *pools = NULL;
 
@@ -94,7 +96,7 @@ order_type pool_order_list[] = {
 /* Define view managers */
 struct view_manager pool_mgr = {
 	"Pool", select_pool, read_pool, sort_pool, print_header,
-	print_pool, keyboard_callback, pool_order_list, pool_order_list
+	print_pool, pool_keyboard_callback, pool_order_list, pool_order_list
 };
 
 field_view views_pool[] = {
@@ -257,14 +259,21 @@ read_pool(void)
 void
 print_pool(void)
 {
+	struct pool_info *p;
 	int i, n, count = 0;
 
 	if (pools == NULL)
 		return;
 
 	for (n = i = 0; i < num_pools; i++) {
-		if (pools[i].name[0] == 0)
+		p = &pools[i];
+		if (p->name[0] == 0)
 			continue;
+
+		if (!print_all &&
+		   (p->pool.pr_nget == 0 && p->pool.pr_npagealloc == 0))
+			continue;
+
 		if (n++ < dispstart)
 			continue;
 		showpool(i);
@@ -316,4 +325,18 @@ showpool(int k)
 	print_fld_size(FLD_POOL_IDLE, p->pool.pr_nidle);
 
 	end_line();
+}
+
+int
+pool_keyboard_callback(int ch)
+{
+	switch (ch) {
+	case 'A':
+		print_all ^= 1;
+		gotsig_alarm = 1;
+	default:
+		return keyboard_callback(ch);
+	};
+
+	return (1);
 }
