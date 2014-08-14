@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.177 2014/08/12 13:52:08 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.178 2014/08/14 09:01:47 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -117,7 +117,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
-#include <net/raw_cb.h>
 
 #include <netinet/in.h>
 

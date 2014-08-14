@@ -98,7 +98,6 @@
 
 #include <net/if.h>
 #include <net/route.h>
-#include <net/raw_cb.h>
 
 #include <netinet/in.h>
 #include <netinet/icmp6.h>
