@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.21 2014/06/23 03:46:17 guenther Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.22 2014/08/14 12:34:04 mpi Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -62,8 +62,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "netstat.h"
-
-static void print_bw_meter(struct bw_meter *bw_meter, int *banner_printed);
 
 static char *
 pktscale(u_long n)
@@ -186,26 +184,6 @@ mroutepr(u_long mfchashtbladdr, u_long mfchashaddr, u_long vifaddr)
 
 				printf("\n");
 
-				/* Print the bw meter information */
-				{
-					struct bw_meter bw_meter, *bwm;
-					int banner_printed2 = 0;
-
-					bwm = mfc.mfc_bw_meter;
-					while (bwm) {
-						kread((u_long)bwm,
-						    &bw_meter,
-						    sizeof bw_meter);
-						print_bw_meter(&bw_meter,
-						    &banner_printed2);
-						bwm = bw_meter.bm_mfc_next;
-					}
-#if 0	/* Don't ever print it? */
-					if (! banner_printed2)
-						printf("\n  No Bandwidth Meters\n");
-#endif
-				}
-
 				nmfc++;
 			}
 		}
@@ -216,83 +194,6 @@ mroutepr(u_long mfchashtbladdr, u_long mfchashaddr, u_long vifaddr)
 
 	printf("\n");
 	nflag = saved_nflag;
-}
-
-static void
-print_bw_meter(struct bw_meter *bw_meter, int *banner_printed)
-{
-	char s0[256], s1[256], s2[256], s3[256];
-	struct timeval now, end, delta;
-
-	gettimeofday(&now, NULL);
-
-	if (! *banner_printed) {
-		printf(" Bandwidth Meters\n");
-		printf("  %-30s", "Measured(Start|Packets|Bytes)");
-		printf(" %s", "Type");
-		printf("  %-30s", "Thresh(Interval|Packets|Bytes)");
-		printf(" Remain");
-		printf("\n");
-		*banner_printed = 1;
-	}
-
-	/* The measured values */
-	if (bw_meter->bm_flags & BW_METER_UNIT_PACKETS)
-		snprintf(s1, sizeof s1, "%llu",
-			 bw_meter->bm_measured.b_packets);
-	else
-		snprintf(s1, sizeof s1, "?");
-	if (bw_meter->bm_flags & BW_METER_UNIT_BYTES)
-		snprintf(s2, sizeof s2, "%llu", bw_meter->bm_measured.b_bytes);
-	else
-		snprintf(s2, sizeof s2, "?");
-	snprintf(s0, sizeof s0, "%lld.%ld|%s|%s",
-		 (long long)bw_meter->bm_start_time.tv_sec,
-		 bw_meter->bm_start_time.tv_usec,
-		 s1, s2);
-	printf("  %-30s", s0);
-
-	/* The type of entry */
-	snprintf(s0, sizeof s0, "%s", "?");
-	if (bw_meter->bm_flags & BW_METER_GEQ)
-		snprintf(s0, sizeof s0, "%s", ">=");
-	else if (bw_meter->bm_flags & BW_METER_LEQ)
-		snprintf(s0, sizeof s0, "%s", "<=");
-	printf("  %-3s", s0);
-
-	/* The threshold values */
-	if (bw_meter->bm_flags & BW_METER_UNIT_PACKETS)
-		snprintf(s1, sizeof s1, "%llu",
-			 bw_meter->bm_threshold.b_packets);
-	else
-		snprintf(s1, sizeof s1, "?");
-	if (bw_meter->bm_flags & BW_METER_UNIT_BYTES)
-		snprintf(s2, sizeof s2, "%llu",
-			 bw_meter->bm_threshold.b_bytes);
-	else
-		snprintf(s2, sizeof s2, "?");
-	snprintf(s0, sizeof s0, "%lld.%ld|%s|%s",
-		 (long long)bw_meter->bm_threshold.b_time.tv_sec,
-		 bw_meter->bm_threshold.b_time.tv_usec,
-		 s1, s2);
-	printf("  %-30s", s0);
-
-	/* Remaining time */
-	timeradd(&bw_meter->bm_start_time,
-		 &bw_meter->bm_threshold.b_time, &end);
-	if (timercmp(&now, &end, <=)) {
-		timersub(&end, &now, &delta);
-		snprintf(s3, sizeof s3, "%lld.%ld",
-			 (long long)delta.tv_sec, delta.tv_usec);
-	} else {
-		/* Negative time */
-		timersub(&now, &end, &delta);
-		snprintf(s3, sizeof s3, "-%lld.%ld",
-			 (long long)delta.tv_sec, delta.tv_usec);
-	}
-	printf(" %s", s3);
-
-	printf("\n");
 }
 
 void
