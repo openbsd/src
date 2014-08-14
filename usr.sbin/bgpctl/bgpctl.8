@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.63 2013/10/09 13:23:17 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.64 2014/08/14 19:08:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 9 2013 $
+.Dd $Mdocdate: August 14 2014 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -250,12 +250,6 @@ instead of using stdin.
 .El
 .Pp
 Multiple options and filters can be used at the same time.
-.It Cm show summary
-Show a list of all neighbors, including information about the session state
-and message counters.
-.It Cm show summary terse
-Show a list of all neighbors, including information about the session state,
-in a terse format.
 .It Cm show neighbor Ar peer modifier
 Show detailed information about the neighbor identified by
 .Ar peer ,
