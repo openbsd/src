@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pim.c,v 1.5 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-pim.c,v 1.6 2014/08/14 12:44:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -26,13 +26,11 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/* 	$OpenBSD: print-slow.c,v 1.1 2008/10/16 12:57:01 mpf Exp $ 	*/
+/* 	$OpenBSD: print-slow.c,v 1.2 2014/08/14 12:44:44 mpi Exp $ 	*/
 
 /*
  * Copyright (c) 1998-2005 The TCPDUMP project
@@ -28,7 +28,6 @@
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #include <stdio.h>

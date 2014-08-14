@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.14 2014/07/20 17:52:34 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.15 2014/08/14 12:44:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -25,7 +25,6 @@
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211.h>

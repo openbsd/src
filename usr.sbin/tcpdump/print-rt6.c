@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-rt6.c,v 1.3 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-rt6.c,v 1.4 2014/08/14 12:44:44 mpi Exp $	*/
 
 
 /*
@@ -33,7 +33,6 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_var.h>

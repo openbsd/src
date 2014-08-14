@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.36 2014/06/20 04:04:52 lteo Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.37 2014/08/14 12:44:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -26,7 +26,6 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>

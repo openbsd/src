@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.24 2011/10/13 18:32:30 claudio Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.25 2014/08/14 12:44:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -39,7 +39,6 @@ struct rtentry;
 #include <net/if_pflog.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 
 #include <net/pfvar.h>

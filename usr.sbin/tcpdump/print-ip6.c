@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.15 2011/09/17 16:45:42 naddy Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.16 2014/08/14 12:44:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -29,7 +29,6 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-stp.c,v 1.7 2007/06/04 15:10:12 henning Exp $	*/
+/*	$OpenBSD: print-stp.c,v 1.8 2014/08/14 12:44:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -41,7 +41,6 @@ struct rtentry;
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 
 #include <ctype.h>

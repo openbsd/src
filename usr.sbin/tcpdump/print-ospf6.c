@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf6.c,v 1.6 2014/07/04 08:42:38 bluhm Exp $	*/
+/*	$OpenBSD: print-ospf6.c,v 1.7 2014/08/14 12:44:44 mpi Exp $	*/
 
 
 /*
@@ -31,7 +31,6 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 

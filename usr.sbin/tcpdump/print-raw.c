@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-raw.c,v 1.6 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-raw.c,v 1.7 2014/08/14 12:44:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -32,7 +32,6 @@ struct rtentry;
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_var.h>

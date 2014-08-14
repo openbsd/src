@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.13 2014/06/20 04:04:52 lteo Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.14 2014/08/14 12:44:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -34,7 +34,6 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_var.h>

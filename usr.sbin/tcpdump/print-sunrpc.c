@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sunrpc.c,v 1.17 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-sunrpc.c,v 1.18 2014/08/14 12:44:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -31,7 +31,6 @@ struct rtentry;
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 
