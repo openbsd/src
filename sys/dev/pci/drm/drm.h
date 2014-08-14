@@ -1,4 +1,4 @@
-/* $OpenBSD: drm.h,v 1.15 2014/03/30 00:37:11 jsg Exp $ */
+/* $OpenBSD: drm.h,v 1.16 2014/08/14 03:57:44 jsg Exp $ */
 /**
  * \file drm.h
  * Header for the Direct Rendering Manager
@@ -622,6 +622,14 @@ struct drm_get_cap {
  * drm_mode_modeinfo.
  */
 #define DRM_CLIENT_CAP_STEREO_3D	1
+
+/**
+ * DRM_CLIENT_CAP_UNIVERSAL_PLANES
+ *
+ * if set to 1, the DRM core will expose the full universal plane list
+ * (including primary and cursor planes).
+ */
+#define DRM_CLIENT_CAP_UNIVERSAL_PLANES 2
 
 /** DRM_IOCTL_SET_CLIENT_CAP ioctl argument type */
 struct drm_set_client_cap {
