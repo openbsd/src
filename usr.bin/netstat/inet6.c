@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.45 2014/06/23 03:46:17 guenther Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.46 2014/08/14 12:55:50 mpi Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -41,7 +41,6 @@
 #include <netinet/in.h>
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet6/ip6_var.h>

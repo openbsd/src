@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.5 2012/12/04 02:24:47 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.6 2014/08/14 12:55:50 mpi Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -20,7 +20,6 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <net/pfvar.h>
 

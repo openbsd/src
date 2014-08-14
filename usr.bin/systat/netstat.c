@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.39 2013/12/25 01:46:00 tedu Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.40 2014/08/14 12:55:50 mpi Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -41,20 +41,17 @@
 
 #include <netinet/in.h>
 #include <net/route.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_seq.h>
 #define TCPSTATES
 #include <netinet/tcp_fsm.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <netinet/tcp_debug.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <arpa/inet.h>
