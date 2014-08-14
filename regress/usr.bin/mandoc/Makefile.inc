@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.13 2014/08/11 04:18:18 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.14 2014/08/14 00:07:55 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -37,6 +37,8 @@ _LINTFILES += ${t}.mandoc_lint
 _LINTDIFFS += ${t}.diff_lint
 .endfor
 
+_HTMLVALS = ${REGRESS_TARGETS:C/$/.validate_html/}
+
 # --- convenience targets ---
 
 # Note that bsd.regress.mk automatically adds REGRESS_TARGETS to all.
@@ -49,6 +51,8 @@ utf8: utf8-clean ${_UTF8DIFFS}
 tman: tman-clean ${_MANDIFFS}
 
 lint: lint-clean ${_LINTDIFFS}
+
+html: ${_HTMLVALS}
 
 # --- suffix rules ---
 
@@ -107,6 +111,9 @@ ${t}: ${t}.diff_ascii ${t}.diff_man
 ${t}:
 	@echo "TODO: -Tascii disabled for: ${.TARGET}"
 .  endif
+${t}.validate_html: ${t}.in
+	@echo "${MANDOC} ${MOPTS} -Thtml ${t}.in | validate"
+	@-${MANDOC} ${MOPTS} -Thtml ${.ALLSRC} | validate
 .endfor
 
 .for t in ${UTF8_TARGETS}
@@ -141,7 +148,7 @@ lint-clean:
 	rm -f ${_LINTFILES}
 .endif
 
-.PHONY: ${_ASCIIDIFFS} ${_LINTDIFFS} ${_MANDIFFS} ${_UTF8DIFFS}
+.PHONY: ${_ASCIIDIFFS} ${_HTMLVALS} ${_LINTDIFFS} ${_MANDIFFS} ${_UTF8DIFFS}
 
 
 # ----------------------------------------------------------------------
