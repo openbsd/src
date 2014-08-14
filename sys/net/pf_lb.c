@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.32 2014/07/22 11:06:10 mpi Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.33 2014/08/14 07:55:17 blambert Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -828,8 +828,8 @@ pf_postprocess_addr(struct pf_state *cur)
 		lookup_addr = sks->addr[1];
 	else {
 		if (pf_status.debug >= LOG_DEBUG) {
-			log(LOG_DEBUG, "pf: pf_unlink_state: "
-			    "unable to optain address");
+			log(LOG_DEBUG, "pf: %s: unable to obtain address",
+			    __func__);
 		}
 		return (1);
 	}
@@ -850,8 +850,8 @@ pf_postprocess_addr(struct pf_state *cur)
 		    rpool.addr.p.tbl,
 		    &lookup_addr, sks->af)) == -1) {
 			if (pf_status.debug >= LOG_DEBUG) {
-				log(LOG_DEBUG, "pf: pf_unlink_state: "
-				    "selected address ");
+				log(LOG_DEBUG, "pf: %s: selected address ",
+				    __func__);
 				pf_print_host(&lookup_addr,
 				    sks->port[0], sks->af);
 				addlog(". Failed to "
@@ -864,9 +864,8 @@ pf_postprocess_addr(struct pf_state *cur)
 		    rpool.addr.p.dyn->pfid_kt,
 		    &lookup_addr, sks->af)) == -1) {
 			if (pf_status.debug >= LOG_DEBUG) {
-				log(LOG_DEBUG,
-				    "pf: pf_unlink_state: "
-				    "selected address ");
+				log(LOG_DEBUG, "pf: %s: selected address ",
+				    __func__);
 				pf_print_host(&lookup_addr,
 				    sks->port[0], sks->af);
 				addlog(". Failed to "
@@ -877,8 +876,7 @@ pf_postprocess_addr(struct pf_state *cur)
 	}
 	if (slbcount > -1) {
 		if (pf_status.debug >= LOG_NOTICE) {
-			log(LOG_NOTICE,
-			    "pf: pf_unlink_state: selected address ");
+			log(LOG_NOTICE, "pf: %s: selected address ", __func__);
 			pf_print_host(&lookup_addr, sks->port[0],
 			    sks->af);
 			addlog(" decreased state count to %u\n",
