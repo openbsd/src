@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.77 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.78 2014/08/14 09:52:03 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -376,6 +376,7 @@ int 	oce_pci_alloc(struct oce_softc *, struct pci_attach_args *);
 void	oce_attachhook(void *);
 void	oce_attach_ifp(struct oce_softc *);
 int 	oce_ioctl(struct ifnet *, u_long, caddr_t);
+int	oce_rxrinfo(struct oce_softc *, struct if_rxrinfo *);
 void	oce_iff(struct oce_softc *);
 void	oce_link_status(struct oce_softc *);
 void	oce_media_status(struct ifnet *, struct ifmediareq *);
@@ -890,6 +891,9 @@ oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
 		break;
+	case SIOCGIFRXR:
+		error = oce_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
+		break;
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ac, command, data);
 		break;
@@ -905,6 +909,36 @@ oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	return (error);
 }
+
+int
+oce_rxrinfo(struct oce_softc *sc, struct if_rxrinfo *ifri)
+{
+	struct if_rxring_info *ifr, ifr1;
+	struct oce_rq *rq;
+	int error, i;
+	u_int n = 0;
+
+	if (sc->sc_nrq > 1) {
+		if ((ifr = malloc(sc->sc_nrq * sizeof(*ifr), M_DEVBUF,
+		    M_WAITOK | M_ZERO)) == NULL)
+			return (ENOMEM);
+	} else
+		ifr = &ifr1;
+
+	OCE_RQ_FOREACH(sc, rq, i) {
+		ifr[n].ifr_size = MCLBYTES;
+		snprintf(ifr[n].ifr_name, sizeof(ifr[n].ifr_name), "/%d", i);
+		ifr[n].ifr_info = rq->rxring;
+		n++;
+	}
+
+	error = if_rxr_info_ioctl(ifri, sc->sc_nrq, ifr);
+
+	if (sc->sc_nrq > 1)
+		free(ifr, M_DEVBUF, sc->sc_nrq * sizeof(*ifr));
+	return (error);
+}
+
 
 void
 oce_iff(struct oce_softc *sc)
