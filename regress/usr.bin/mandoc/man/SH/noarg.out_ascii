@@ -1,0 +1,17 @@
+SH-NOARG(1)                OpenBSD Reference Manual                SH-NOARG(1)
+
+
+
+NNAAMMEE
+       SH-noarg - empty header lines
+
+DDEESSCCRRIIPPTTIIOONN
+       initial text
+
+       text in section with empty name
+
+       text in subsection with empty name
+
+
+
+OpenBSD                          July 30, 2014                     SH-NOARG(1)

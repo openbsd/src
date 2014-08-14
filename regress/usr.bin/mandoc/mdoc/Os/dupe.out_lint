@@ -1,0 +1,3 @@
+mandoc: dupe.in:3:2: WARNING: prologue macros out of order: Dt after Os
+mandoc: dupe.in:4:2: WARNING: duplicate prologue macro: Os
+mandoc: dupe.in:10:2: WARNING: duplicate prologue macro: Os

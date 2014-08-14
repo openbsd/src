@@ -1,0 +1,22 @@
+RV-ARGS(3)                OpenBSD Programmer's Manual               RV-ARGS(3)
+
+NNAAMMEE
+     RRvv--aarrggss - arguments to the return value macro
+
+RREETTUURRNN VVAALLUUEESS
+     no arguments:
+     Upon successful completion, the value 0 is returned; otherwise the
+     value -1 is returned and the global variable _e_r_r_n_o is set to indicate the
+     error.
+
+     one argument:
+     The oonnee() function returns the value 0 if successful; otherwise the
+     value -1 is returned and the global variable _e_r_r_n_o is set to indicate the
+     error.
+
+     two arguments:
+     The oonnee() and ttwwoo() functions return the value 0 if successful; otherwise
+     the value -1 is returned and the global variable _e_r_r_n_o is set to indicate
+     the error.
+
+OpenBSD                          July 29, 2014                         OpenBSD

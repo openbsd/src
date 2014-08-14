@@ -1,0 +1,14 @@
+.Dd July 30, 2014
+.Dt SH-SUBBEFORE 1
+.Os OpenBSD
+.Ss Subsection
+Can
+.Xr mandoc 1
+on
+.Ox
+handle this?
+.Sh NAME
+.Nm Sh-subbefore
+.Nd subsection before the first section header
+.Sh DESCRIPTION
+some text

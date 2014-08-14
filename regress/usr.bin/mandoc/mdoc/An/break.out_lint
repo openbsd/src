@@ -1,0 +1,2 @@
+mandoc: break.in:14:20: WARNING: skipping duplicate argument: An -nosplit
+mandoc: break.in:25:20: WARNING: skipping duplicate argument: An -split

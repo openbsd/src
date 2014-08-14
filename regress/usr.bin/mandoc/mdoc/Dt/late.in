@@ -1,0 +1,9 @@
+.Dd August 5, 2014
+.Os OpenBSD
+.Sh NAME
+.Nm Dt-late
+.Nd late title macro
+.Sh DESCRIPTION
+inital text
+.Dt DT-LATE 1
+final text

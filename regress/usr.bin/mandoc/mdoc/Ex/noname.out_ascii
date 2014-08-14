@@ -1,0 +1,16 @@
+EX-NONAME(1)               OpenBSD Reference Manual               EX-NONAME(1)
+
+NNAAMMEE
+     - exit value macro without an available name
+
+EEXXIITT SSTTAATTUUSS
+     no arguments:
+     The utility exits 0 on success, and >0 if an error occurs.
+
+     one argument:
+     The oonnee utility exits 0 on success, and >0 if an error occurs.
+
+     two arguments:
+     The oonnee and ttwwoo utilities exit 0 on success, and >0 if an error occurs.
+
+OpenBSD                          July 29, 2014                         OpenBSD

@@ -1,0 +1,8 @@
+.Dd August 5, 2014
+.Dt
+.Os OpenBSD
+.Sh NAME
+.Nm Dt-noarg
+.Nd title macro without arguments
+.Sh DESCRIPTION
+some text

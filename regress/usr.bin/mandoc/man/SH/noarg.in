@@ -1,0 +1,11 @@
+.TH SH-NOARG 1 "July 30, 2014" OpenBSD
+.SH NAME
+SH-noarg \- empty header lines
+.SH DESCRIPTION
+initial text
+.SH
+.PP
+text in section with empty name
+.SS
+.PP
+text in subsection with empty name

@@ -1,0 +1,17 @@
+.Dd $Mdocdate: August 14 2014 $
+.Dt IT-BADARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm it-badarg
+.Nd input line traps without numeric arguments
+.Sh DESCRIPTION
+.de mytrap
+traptext
+..
+line 1
+.it mytrap
+line 2
+line 3
+.it
+line 4
+line 5

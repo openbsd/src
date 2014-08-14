@@ -1,0 +1,2 @@
+mandoc: badarg.in:12:1: ERROR: skipping request without numeric argument: it mytrap
+mandoc: badarg.in:15:1: ERROR: skipping request without numeric argument: it

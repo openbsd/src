@@ -1,5 +1,6 @@
-# $OpenBSD: Makefile,v 1.1 2013/07/13 12:51:38 schwarze Exp $
+# $OpenBSD: Makefile,v 1.2 2014/08/14 02:00:53 schwarze Exp $
 
-REGRESS_TARGETS = text double
+REGRESS_TARGETS	= badarg double text
+LINT_TARGETS	= badarg
 
 .include <bsd.regress.mk>

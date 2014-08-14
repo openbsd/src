@@ -1,0 +1,15 @@
+.Dd July 29, 2014
+.Dt RV-NOSTD 3
+.Os OpenBSD
+.Sh NAME
+.Nm Rv-nostd
+.Nd return value macros without -std arguments
+.Sh RETURN VALUES
+no arguments:
+.Rv
+.Pp
+one argument:
+.Rv one
+.Pp
+two arguments:
+.Rv one two

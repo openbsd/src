@@ -1,0 +1,10 @@
+.Dd July 30, 2014
+.Dt BL-BAREIT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bl-bareIt
+.Nd item macro outside list
+.Sh DESCRIPTION
+initial text
+.It argument
+final text

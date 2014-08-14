@@ -1,0 +1,2 @@
+mandoc: noarg.in:6:2: WARNING: line scope broken: PP breaks SH
+mandoc: noarg.in:9:2: WARNING: line scope broken: PP breaks SS

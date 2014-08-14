@@ -1,0 +1,12 @@
+SH-SUBBEFORE(1)            OpenBSD Reference Manual            SH-SUBBEFORE(1)
+
+   SSuubbsseeccttiioonn
+     Can mandoc(1) on OpenBSD handle this?
+
+NNAAMMEE
+     SShh--ssuubbbbeeffoorree - subsection before the first section header
+
+DDEESSCCRRIIPPTTIIOONN
+     some text
+
+OpenBSD                          July 30, 2014                         OpenBSD

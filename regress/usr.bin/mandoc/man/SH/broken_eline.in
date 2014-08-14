@@ -1,0 +1,7 @@
+.TH SH-BROKEN_ELINE 1 "July 30, 2014" OpenBSD
+.SH NAME
+SH-broken_eline \- section and element line scope broken by eof
+.SH DESCRIPTION
+some text
+.SH
+.B

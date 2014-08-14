@@ -1,0 +1,13 @@
+.TH B-ARGS 1 "July 30, 2014" OpenBSD
+.SH NAME
+B-args \- arguments to font macros
+.SH DESCRIPTION
+This is
+.B bold
+text.
+It also works with
+.B
+next line
+scope.
+It has no effect at the end of the file:
+.B

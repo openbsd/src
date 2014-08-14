@@ -1,0 +1,13 @@
+BD-CENTERED(1)             OpenBSD Reference Manual             BD-CENTERED(1)
+
+NNAAMMEE
+     BBdd--cceenntteerreedd - centered display blocks
+
+DDEESSCCRRIIPPTTIIOONN
+     preceding text
+
+                                 first line of the block
+                                       second line
+     following text
+
+OpenBSD                          July 28, 2014                         OpenBSD

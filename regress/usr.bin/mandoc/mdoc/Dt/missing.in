@@ -1,0 +1,7 @@
+.Dd August 5, 2014
+.Os OpenBSD
+.Sh NAME
+.Nm Dt-missing
+.Nd no title macro at all
+.Sh DESCRIPTION
+some text

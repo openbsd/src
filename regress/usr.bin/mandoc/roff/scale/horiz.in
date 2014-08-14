@@ -1,0 +1,25 @@
+.TH HORIZ 1 "August 12, 2014" OpenBSD
+.SH NAME
+horiz \- horizontal distances
+.SH DESCRIPTION
+initial text
+.in 240u
+240u
+.in 3.6c
+3.6c
+.in 0.003f
+0.003f
+.in 2i
+2i
+.in 500M
+500M
+.in 6P
+6P
+.in 36p
+36p
+.in 10n
+10n
+.in 5m
+5m
+.PP
+final text

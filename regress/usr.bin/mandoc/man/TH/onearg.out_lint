@@ -1,0 +1,2 @@
+mandoc: onearg.in:1:2: WARNING: missing manual section, using "": TH TH-ONEARG
+mandoc: onearg.in:1:2: WARNING: missing date, using today's date: TH

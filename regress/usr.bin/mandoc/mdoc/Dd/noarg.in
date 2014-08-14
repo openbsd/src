@@ -1,0 +1,8 @@
+.Dd
+.Dt DD-NOARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm Dd-noarg
+.Nd date macro without an argument
+.Sh DESCRIPTION
+some text

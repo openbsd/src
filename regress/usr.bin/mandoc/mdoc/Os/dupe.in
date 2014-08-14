@@ -1,0 +1,11 @@
+.Dd June 18, 2014
+.Os NetBSD
+.Dt OS-DUPE 1
+.Os FreeBSD
+.Sh NAME
+.Nm Os-dupe
+.Nd repeated operating system macros
+.Sh DESCRIPTION
+initial text
+.Os OpenBSD
+final text

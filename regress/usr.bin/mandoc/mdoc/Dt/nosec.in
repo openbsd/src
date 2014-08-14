@@ -1,0 +1,8 @@
+.Dd August 5, 2014
+.Dt DT-NOSEC
+.Os OpenBSD
+.Sh NAME
+.Nm Dt-nosec
+.Nd title macro without manual section
+.Sh DESCRIPTION
+some text

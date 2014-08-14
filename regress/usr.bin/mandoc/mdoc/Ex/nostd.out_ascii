@@ -1,0 +1,16 @@
+EX-NOSTD(1)                OpenBSD Reference Manual                EX-NOSTD(1)
+
+NNAAMMEE
+     EExx--nnoossttdd - exit value macros without -std arguments
+
+EEXXIITT SSTTAATTUUSS
+     no arguments:
+     The EExx--nnoossttdd utility exits 0 on success, and >0 if an error occurs.
+
+     one argument:
+     The oonnee utility exits 0 on success, and >0 if an error occurs.
+
+     two arguments:
+     The oonnee and ttwwoo utilities exit 0 on success, and >0 if an error occurs.
+
+OpenBSD                          July 29, 2014                         OpenBSD

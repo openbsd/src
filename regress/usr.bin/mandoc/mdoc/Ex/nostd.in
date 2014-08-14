@@ -1,0 +1,15 @@
+.Dd July 29, 2014
+.Dt EX-NOSTD 1
+.Os OpenBSD
+.Sh NAME
+.Nm Ex-nostd
+.Nd exit value macros without -std arguments
+.Sh EXIT STATUS
+no arguments:
+.Ex
+.Pp
+one argument:
+.Ex one
+.Pp
+two arguments:
+.Ex one two

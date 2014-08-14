@@ -1,0 +1,15 @@
+.Dd July 29, 2014
+.Dt RV-ARGS 3
+.Os OpenBSD
+.Sh NAME
+.Nm Rv-args
+.Nd arguments to the return value macro
+.Sh RETURN VALUES
+no arguments:
+.Rv -std
+.Pp
+one argument:
+.Rv -std one
+.Pp
+two arguments:
+.Rv -std one two

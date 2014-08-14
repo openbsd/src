@@ -1,8 +1,8 @@
-.Dd foo
-.Dt DT-BADDATE 1
+.Dd "bad date"
+.Dt DD-BADARG 1
 .Os OpenBSD
 .Sh NAME
-.Nm Dt-baddate
+.Nm Dd-badarg
 .Nd date cannot be parsed
 .Sh DESCRIPTION
 some text

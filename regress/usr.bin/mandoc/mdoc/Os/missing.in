@@ -1,7 +1,7 @@
-.Dd June 18, 2014
-.Dt DT-NOOS 1
+.Dd August 5, 2014
+.Dt OS-MISSING 1
 .Sh NAME
-.Nm Dt-noos
+.Nm Os-missing
 .Nd operating system macro missing in prologue
 .Sh DESCRIPTION
 some text

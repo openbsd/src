@@ -1,0 +1,15 @@
+.Dd July 29, 2014
+.Dt EX-NONAME 1
+.Os OpenBSD
+.Sh NAME
+.Nm
+.Nd exit value macro without an available name
+.Sh EXIT STATUS
+no arguments:
+.Ex -std
+.Pp
+one argument:
+.Ex -std one
+.Pp
+two arguments:
+.Ex -std one two

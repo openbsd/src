@@ -1,0 +1,15 @@
+.Dd July 29, 2014
+.Dt RV-NONAME 3
+.Os OpenBSD
+.Sh NAME
+.Nm
+.Nd return value macro without an available name
+.Sh RETURN VALUES
+no arguments:
+.Rv -std
+.Pp
+one argument:
+.Rv -std one
+.Pp
+two arguments:
+.Rv -std one two

@@ -1,0 +1,1 @@
+mandoc: order.in:2:2: WARNING: prologue macros out of order: Dd after Dt

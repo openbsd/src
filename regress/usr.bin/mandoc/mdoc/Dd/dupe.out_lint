@@ -1,0 +1,2 @@
+mandoc: dupe.in:4:2: WARNING: duplicate prologue macro: Dd
+mandoc: dupe.in:10:2: WARNING: duplicate prologue macro: Dd

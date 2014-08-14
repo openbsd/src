@@ -1,0 +1,2 @@
+mandoc: noname.in:5:2: ERROR: missing manual name, using "": Nm
+mandoc: noname.in:9:2: WARNING: missing utility name, using "": Ex
