@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.119 2014/07/12 02:28:56 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.120 2014/08/14 17:55:28 tobias Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -22,7 +22,7 @@ SRCS+=	ftruncate.c lseek.c mquery.c mmap.c ptrace.c semctl.c truncate.c \
 # stack protector helper functions
 SRCS+=	stack_protector.c
 
-# modules with default implementations on all architectures, unless overriden
+# modules with default implementations on all architectures, unless overridden
 # below:
 ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	__sysctl.o __threxit.o __thrsigdivert.o __thrsleep.o \

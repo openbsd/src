@@ -1,4 +1,4 @@
-/* $OpenBSD: dso.h,v 1.9 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: dso.h,v 1.10 2014/08/14 17:55:28 tobias Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -74,7 +74,7 @@ extern "C" {
  * typical for the platform (more specifically the DSO_METHOD) using the
  * dso_name_converter function of the method. Eg. win32 will transform "blah"
  * into "blah.dll", and dlfcn will transform it into "libblah.so". The
- * behaviour can be overriden by setting the name_converter callback in the DSO
+ * behaviour can be overridden by setting the name_converter callback in the DSO
  * object (using DSO_set_name_converter()). This callback could even utilise
  * the DSO_METHOD's converter too if it only wants to override behaviour for
  * one or two possible DSO methods. However, the following flag can be set in a

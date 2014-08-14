@@ -7,7 +7,7 @@ CERTFQDN		= nohost.nodomain
 
 # This section should be referenced when building an x509v3 CA
 # Certificate.
-# The default path length and the key usage can be overriden
+# The default path length and the key usage can be overridden
 # modified by setting the CERTPATHLEN and CERTUSAGE environment 
 # variables.
 [x509v3_CA]

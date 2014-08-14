@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.102 2014/07/11 10:53:07 uebayasi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.103 2014/08/14 17:55:28 tobias Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -477,7 +477,7 @@ void	cp0_set_trapbase(register_t);
 u_int	cp1_get_prid(void);
 
 /*
- * Cache routines (may be overriden)
+ * Cache routines (may be overridden)
  */
 
 #ifndef	Mips_SyncCache
