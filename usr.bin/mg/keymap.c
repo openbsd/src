@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.51 2013/05/22 19:23:45 lum Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.52 2014/08/14 12:22:58 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -388,16 +388,16 @@ static PF fund_del[] = {
 };
 
 static PF fund_cb[] = {
-	showmatch		/* )  */
+	showmatch		/* ) ] }  */
 };
 
 #ifndef	FUND_XMAPS
 #define NFUND_XMAPS	0	/* extra map sections after normal ones */
 #endif
 
-static struct KEYMAPE (6 + NFUND_XMAPS + IMAPEXT) fundmap = {
-	6 + NFUND_XMAPS,
-	6 + NFUND_XMAPS + IMAPEXT,
+static struct KEYMAPE (8 + NFUND_XMAPS + IMAPEXT) fundmap = {
+	8 + NFUND_XMAPS,
+	8 + NFUND_XMAPS + IMAPEXT,
 	selfinsert,
 	{
 		{
@@ -414,6 +414,12 @@ static struct KEYMAPE (6 + NFUND_XMAPS + IMAPEXT) fundmap = {
 		},
 		{
 			')', ')', fund_cb, NULL
+		},
+		{
+			']', ']', fund_cb, NULL
+		},
+		{
+			'}', '}', fund_cb, NULL
 		},
 		{
 			CCHR('?'), CCHR('?'), fund_del, NULL
