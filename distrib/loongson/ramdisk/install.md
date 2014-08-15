@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.13 2013/11/16 18:37:27 rpe Exp $
+#	$OpenBSD: install.md,v 1.14 2014/08/15 09:45:54 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -115,9 +115,9 @@ $(fdisk ${_disk})
 __EOT
 			fdisk -e $_disk
 			fdisk $_disk | grep -q '^..: 83 ' || \
-				{ echo "\nNo Linux files (id 83) partition!\n" ; continue ; }
+				{ echo "\nNo Linux files (id 83) partition!\n"; continue; }
 			fdisk $_disk | grep -q "^..: A6 " || \
-				{ echo "\nNo OpenBSD (id A6) partition!\n" ; continue ; }
+				{ echo "\nNo OpenBSD (id A6) partition!\n"; continue; }
 			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
 			break ;;
 		o*|O*)	break ;;

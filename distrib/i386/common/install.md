@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.58 2014/07/20 20:12:41 deraadt Exp $
+#	$OpenBSD: install.md,v 1.59 2014/08/15 09:45:54 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@ MDXDM=y
 MDLID=y
 NCPU=$(sysctl -n hw.ncpufound)
 
-((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp" ; SANESETS="bsd bsd.mp" ; }
+((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp"; SANESETS="bsd bsd.mp"; }
 
 md_installboot() {
-	if ! installboot -r /mnt ${1} ; then
+	if ! installboot -r /mnt ${1}; then
 		echo "\nFailed to install bootblocks."
 		echo "You will not be able to boot OpenBSD from ${1}."
 		exit
