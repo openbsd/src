@@ -1,4 +1,4 @@
-/*      $OpenBSD: aestest.c,v 1.1 2008/06/12 19:42:48 djm Exp $  */
+/*      $OpenBSD: aestest.c,v 1.2 2014/08/15 14:36:20 mikeb Exp $  */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -26,17 +26,13 @@
  */
 
 /*
- * Test crypto(4) AES with test vectors provided by Dr Brian Gladman:
- * http://fp.gladman.plus.com/AES/
+ * Test kernel AES implementation with test vectors provided by
+ * Dr Brian Gladman:  http://fp.gladman.plus.com/AES/
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/ioctl.h>
-#include <sys/sysctl.h>
-#include <crypto/cryptodev.h>
+#include <crypto/rijndael.h>
 #include <err.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,95 +40,21 @@
 #include <ctype.h>
 
 static int
-syscrypt(const unsigned char *key, size_t klen, const unsigned char *in,
+docrypt(const unsigned char *key, size_t klen, const unsigned char *in,
     unsigned char *out, size_t len, int do_encrypt)
 {
-	struct session_op session;
-	struct crypt_op cryp;
-	int cryptodev_fd = -1, fd = -1;
-	u_char iv[32];
+	rijndael_ctx ctx;
+	int error = 0;
 
-	/*
-	 * Kludge; the kernel doesn't support ECB encryption so we
-	 * use a all-zero IV and encrypt a single block only, so the
-	 * result should be the same.
-	 */
-	bzero(iv, sizeof(iv));
-
-	if ((cryptodev_fd = open("/dev/crypto", O_RDWR, 0)) < 0) {
-		warn("/dev/crypto");
-		goto err;
-	}
-	if (ioctl(cryptodev_fd, CRIOGET, &fd) == -1) {
-		warn("CRIOGET failed");
-		goto err;
-	}
-	memset(&session, 0, sizeof(session));
-	session.cipher = CRYPTO_AES_CBC;
-	session.key = (caddr_t) key;
-	session.keylen = klen;
-	if (ioctl(fd, CIOCGSESSION, &session) == -1) {
-		warn("CIOCGSESSION");
-		goto err;
-	}
-	memset(&cryp, 0, sizeof(cryp));
-	cryp.ses = session.ses;
-	cryp.op = do_encrypt ? COP_ENCRYPT : COP_DECRYPT;
-	cryp.flags = 0;
-	cryp.len = len;
-	cryp.src = (caddr_t) in;
-	cryp.dst = (caddr_t) out;
-	cryp.iv = (caddr_t) iv;
-	cryp.mac = 0;
-	if (ioctl(fd, CIOCCRYPT, &cryp) == -1) {
-		warn("CIOCCRYPT");
-		goto err;
-	}
-	if (ioctl(fd, CIOCFSESSION, &session.ses) == -1) {
-		warn("CIOCFSESSION");
-		goto err;
-	}
-	close(fd);
-	close(cryptodev_fd);
-	return (0);
-
-err:
-	if (fd != -1)
-		close(fd);
-	if (cryptodev_fd != -1)
-		close(cryptodev_fd);
-	return (-1);
-}
-
-static int
-getallowsoft(void)
-{
-	int mib[2], old;
-	size_t olen;
-
-	olen = sizeof(old);
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_CRYPTODEVALLOWSOFT;
-	if (sysctl(mib, 2, &old, &olen, NULL, 0) < 0)
-		err(1, "sysctl failed");
-
-	return old;
-}
-
-static void
-setallowsoft(int new)
-{
-	int mib[2], old;
-	size_t olen, nlen;
-
-	olen = nlen = sizeof(new);
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_CRYPTODEVALLOWSOFT;
-
-	if (sysctl(mib, 2, &old, &olen, &new, nlen) < 0)
-		err(1, "sysctl failed");
+	memset(&ctx, 0, sizeof(ctx));
+	error = rijndael_set_key(&ctx, key, klen * 8);
+	if (error)
+		return -1;
+	if (do_encrypt)
+		rijndael_encrypt(&ctx, in, out);
+	else
+		rijndael_decrypt(&ctx, in, out);
+	return 0;
 }
 
 static int
@@ -223,8 +145,8 @@ do_tests(const char *filename, int test_num, u_char *key, u_int keylen,
 	int fail = 0;
 
 	/* Encrypt test */
-	if (syscrypt(key, keylen, plaintext, result, textlen, 1) < 0) {
-		warnx("encrypt with /dev/crypto failed");
+	if (docrypt(key, keylen, plaintext, result, textlen, 1) < 0) {
+		warnx("encryption failed");
 		fail++;
 	} else if (!match(result, ciphertext, textlen)) {
 		fail++;
@@ -232,8 +154,8 @@ do_tests(const char *filename, int test_num, u_char *key, u_int keylen,
 		printf("OK encrypt test vector %s %u\n", filename, test_num);
 
 	/* Decrypt test */
-	if (syscrypt(key, keylen, ciphertext, result, textlen, 0) < 0) {
-		warnx("decrypt with /dev/crypto failed");
+	if (docrypt(key, keylen, ciphertext, result, textlen, 0) < 0) {
+		warnx("decryption failed");
 		fail++;
 	} else if (!match(result, plaintext, textlen)) {
 		fail++;
@@ -350,22 +272,13 @@ run_file(const char *filename)
 int
 main(int argc, char **argv)
 {
-	int allowed = 0, fail = 0, i;
+	int fail = 0, i;
 
 	if (argc < 2)
 		errx(1, "usage: aestest [test-vector-file]");
 
-	if (geteuid() == 0) {
-		allowed = getallowsoft();
-		if (allowed == 0)
-			setallowsoft(1);
-	}
-
 	for (i = 1; i < argc; i++)
 		fail += run_file(argv[1]);
-
-	if (geteuid() == 0 && allowed == 0)
-		setallowsoft(0);
 
 	return fail > 0 ? 1 : 0;
 }
