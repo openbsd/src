@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.39 2010/12/15 23:34:23 mikeb Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.40 2014/08/15 15:37:51 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -76,36 +76,6 @@ struct ubsec_q2_rng {
 	int				rng_used;
 };
 
-/* C = (M ^ E) mod N */
-#define	UBS_MODEXP_PAR_M	0
-#define	UBS_MODEXP_PAR_E	1
-#define	UBS_MODEXP_PAR_N	2
-struct ubsec_q2_modexp {
-	struct ubsec_q2			me_q;
-	struct cryptkop *		me_krp;
-	struct ubsec_dma_alloc		me_M;
-	struct ubsec_dma_alloc		me_E;
-	struct ubsec_dma_alloc		me_C;
-	struct ubsec_dma_alloc		me_epb;
-	int				me_modbits;
-	int				me_shiftbits;
-	int				me_normbits;
-};
-
-#define	UBS_RSAPRIV_PAR_P	0
-#define	UBS_RSAPRIV_PAR_Q	1
-#define	UBS_RSAPRIV_PAR_DP	2
-#define	UBS_RSAPRIV_PAR_DQ	3
-#define	UBS_RSAPRIV_PAR_PINV	4
-#define	UBS_RSAPRIV_PAR_MSGIN	5
-#define	UBS_RSAPRIV_PAR_MSGOUT	6
-struct ubsec_q2_rsapriv {
-	struct ubsec_q2			rpr_q;
-	struct cryptkop *		rpr_krp;
-	struct ubsec_dma_alloc		rpr_msgin;
-	struct ubsec_dma_alloc		rpr_msgout;
-};
-
 #define	UBSEC_RNG_BUFSIZ	16		/* measured in 32bit words */
 
 struct ubsec_dmachunk {
@@ -181,7 +151,6 @@ struct ubsec_softc {
 	struct ubsec_q2_rng	sc_rng;
 	struct ubsec_dma	sc_dmaa[UBS_MAX_NQUEUE];
 	struct ubsec_q		*sc_queuea[UBS_MAX_NQUEUE];
-	SIMPLEQ_HEAD(,ubsec_q2)	sc_q2free;	/* free list */
 };
 
 struct ubsec_session {
