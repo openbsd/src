@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.52 2013/08/17 06:54:21 guenther Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.53 2014/08/15 03:51:40 guenther Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -93,7 +93,6 @@ pw_lock(int retries)
 {
 	int i, fd;
 	mode_t old_mode;
-	int save_errno;
 
 	if (!pw_lck) {
 		errno = EINVAL;
@@ -101,18 +100,12 @@ pw_lock(int retries)
 	}
 	/* Acquire the lock file.  */
 	old_mode = umask(0);
-	fd = open(pw_lck, O_WRONLY|O_CREAT|O_EXCL, 0600);
+	fd = open(pw_lck, O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC, 0600);
 	for (i = 0; i < retries && fd < 0 && errno == EEXIST; i++) {
 		sleep(1);
-		fd = open(pw_lck, O_WRONLY|O_CREAT|O_EXCL, 0600);
-	}
-	save_errno = errno;
-	if (fd != -1 && fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
-		close(fd);
-		fd = -1;
+		fd = open(pw_lck, O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC, 0600);
 	}
 	(void) umask(old_mode);
-	errno = save_errno;
 	return (fd);
 }
 

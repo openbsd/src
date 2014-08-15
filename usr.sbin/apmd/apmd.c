@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.65 2014/07/26 10:48:59 mpi Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.66 2014/08/15 03:51:40 guenther Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -596,11 +596,10 @@ main(int argc, char *argv[])
 	(void) signal(SIGHUP, sigexit);
 	(void) signal(SIGINT, sigexit);
 
-	if ((ctl_fd = open(fname, O_RDWR)) == -1) {
+	if ((ctl_fd = open(fname, O_RDWR | O_CLOEXEC)) == -1) {
 		if (errno != ENXIO && errno != ENOENT)
 			error("cannot open device file `%s'", fname);
-	} else if (fcntl(ctl_fd, F_SETFD, FD_CLOEXEC) == -1)
-		error("cannot set close-on-exec for `%s'", fname);
+	}
 
 	sock_fd = bind_socket(sockname);
 

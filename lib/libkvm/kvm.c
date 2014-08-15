@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.52 2013/11/16 00:41:44 guenther Exp $ */
+/*	$OpenBSD: kvm.c,v 1.53 2014/08/15 03:51:40 guenther Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -64,11 +64,11 @@
 extern int __fdnlist(int, struct nlist *);
 
 static int	kvm_dbopen(kvm_t *, const char *);
+static int	kvm_opennamelist(kvm_t *, const char *);
 static int	_kvm_get_header(kvm_t *);
 static kvm_t	*_kvm_open(kvm_t *, const char *, const char *, const char *,
 		     int, char *);
 static int	clear_gap(kvm_t *, FILE *, int);
-static int	kvm_setfd(kvm_t *);
 
 char *
 kvm_geterr(kvm_t *kd)
@@ -202,10 +202,12 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 		_kvm_err(kd, kd->program, "bad flags arg");
 		goto failed;
 	}
+	flag |= O_CLOEXEC;
+
 	if (mf == 0)
 		mf = _PATH_MEM;
 
-	if ((kd->pmfd = open(mf, flag, 0)) < 0) {
+	if ((kd->pmfd = open(mf, flag)) < 0) {
 		_kvm_syserr(kd, kd->program, "%s", mf);
 		goto failed;
 	}
@@ -225,12 +227,12 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 				 "%s: not physical memory device", mf);
 			goto failed;
 		}
-		if ((kd->vmfd = open(_PATH_KMEM, flag, 0)) < 0) {
+		if ((kd->vmfd = open(_PATH_KMEM, flag)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", _PATH_KMEM);
 			goto failed;
 		}
 		kd->alive = 1;
-		if (sf != NULL && (kd->swfd = open(sf, flag, 0)) < 0) {
+		if (sf != NULL && (kd->swfd = open(sf, flag)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", sf);
 			goto failed;
 		}
@@ -244,12 +246,8 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 		 * fall back to _PATH_UNIX.
 		 */
 		if (kvm_dbopen(kd, uf ? uf : _PATH_UNIX) == -1 &&
-		    ((uf && (kd->nlfd = open(uf, O_RDONLY, 0)) == -1) || (!uf &&
-		    (kd->nlfd = open((uf = _PATH_KSYMS), O_RDONLY, 0)) == -1 &&
-		    (kd->nlfd = open((uf = _PATH_UNIX), O_RDONLY, 0)) == -1))) {
-			_kvm_syserr(kd, kd->program, "%s", uf);
+		    kvm_opennamelist(kd, uf))
 			goto failed;
-		}
 	} else {
 		/*
 		 * This is a crash dump.
@@ -258,12 +256,8 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 		 * If no file is specified, try opening _PATH_KSYMS and
 		 * fall back to _PATH_UNIX.
 		 */
-		if ((uf && (kd->nlfd = open(uf, O_RDONLY, 0)) == -1) || (!uf &&
-		    (kd->nlfd = open((uf = _PATH_KSYMS), O_RDONLY, 0)) == -1 &&
-		    (kd->nlfd = open((uf = _PATH_UNIX), O_RDONLY, 0)) == -1)) {
-			_kvm_syserr(kd, kd->program, "%s", uf);
+		if (kvm_opennamelist(kd, uf))
 			goto failed;
-		}
 
 		/*
 		 * If there is no valid core header, fail silently here.
@@ -276,10 +270,7 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 				goto failed;
 		}
 	}
-	if (kvm_setfd(kd) == 0)
-		return (kd);
-	else
-		_kvm_syserr(kd, kd->program, "can't set close on exec flag");
+	return (kd);
 failed:
 	/*
 	 * Copy out the error if doing sane error semantics.
@@ -287,6 +278,28 @@ failed:
 	if (errout != 0)
 		(void)strlcpy(errout, kd->errbuf, _POSIX2_LINE_MAX);
 	(void)kvm_close(kd);
+	return (0);
+}
+
+static int
+kvm_opennamelist(kvm_t *kd, const char *uf)
+{
+	int fd;
+
+	if (uf != NULL)
+		fd = open(uf, O_RDONLY | O_CLOEXEC);
+	else {
+		fd = open(_PATH_KSYMS, O_RDONLY | O_CLOEXEC);
+		uf = _PATH_UNIX;
+		if (fd == -1)
+			fd = open(uf, O_RDONLY | O_CLOEXEC);
+	}
+	if (fd == -1) {
+		_kvm_syserr(kd, kd->program, "%s", uf);
+		return (-1);
+	}
+
+	kd->nlfd = fd;
 	return (0);
 }
 
@@ -901,19 +914,4 @@ kvm_write(kvm_t *kd, u_long kva, const void *buf, size_t len)
 		return (-1);
 	}
 	/* NOTREACHED */
-}
-
-static int
-kvm_setfd(kvm_t *kd)
-{
-	if (kd->pmfd >= 0 && fcntl(kd->pmfd, F_SETFD, FD_CLOEXEC) < 0)
-		return (-1);
-	if (kd->vmfd >= 0 && fcntl(kd->vmfd, F_SETFD, FD_CLOEXEC) < 0)
-		return (-1);
-	if (kd->nlfd >= 0 && fcntl(kd->nlfd, F_SETFD, FD_CLOEXEC) < 0)
-		return (-1);
-	if (kd->swfd >= 0 && fcntl(kd->swfd, F_SETFD, FD_CLOEXEC) < 0)
-		return (-1);
-
-	return (0);
 }

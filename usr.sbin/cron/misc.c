@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.46 2013/04/21 00:14:51 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.47 2014/08/15 03:51:40 guenther Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -460,13 +460,12 @@ log_it(const char *username, PID_T xpid, const char *event, const char *detail) 
 		return;
 
 	if (LogFD < OK) {
-		LogFD = open(LOG_FILE, O_WRONLY|O_APPEND|O_CREAT, 0600);
+		LogFD = open(LOG_FILE, O_WRONLY|O_APPEND|O_CREAT|O_CLOEXEC,
+		    0600);
 		if (LogFD < OK) {
 			fprintf(stderr, "%s: can't open log file\n",
 				ProgramName);
 			perror(LOG_FILE);
-		} else {
-			(void) fcntl(LogFD, F_SETFD, FD_CLOEXEC);
 		}
 	}
 

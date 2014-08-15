@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.11 2014/03/05 20:40:49 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.12 2014/08/15 03:51:40 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -363,15 +363,11 @@ _sio_sun_open(const char *str, unsigned int mode, int nbio)
 	else
 		flags = (mode & SIO_PLAY) ? O_WRONLY : O_RDONLY;
 
-	while ((fd = open(path, flags | O_NONBLOCK)) < 0) {
+	while ((fd = open(path, flags | O_NONBLOCK | O_CLOEXEC)) < 0) {
 		if (errno == EINTR)
 			continue;
 		DPERROR(path);
 		goto bad_free;
-	}
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) {
-		DPERROR("FD_CLOEXEC");
-		goto bad_close;
 	}
 
 	/*
