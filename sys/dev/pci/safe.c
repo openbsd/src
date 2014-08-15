@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.37 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: safe.c,v 1.38 2014/08/15 15:43:27 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -80,14 +80,6 @@ int safe_intr(void *);
 int safe_newsession(u_int32_t *, struct cryptoini *);
 int safe_freesession(u_int64_t);
 int safe_process(struct cryptop *);
-int safe_kprocess(struct cryptkop *);
-int safe_kstart(struct safe_softc *);
-void safe_kload_reg(struct safe_softc *, u_int32_t, u_int32_t,
-    struct crparam *);
-struct safe_softc *safe_kfind(struct cryptkop *);
-void safe_kpoll(void *);
-void safe_kfeed(struct safe_softc *);
-int safe_ksigbits(struct crparam *cr);
 void safe_callback(struct safe_softc *, struct safe_ringentry *);
 void safe_feed(struct safe_softc *, struct safe_ringentry *);
 void safe_mcopy(struct mbuf *, struct mbuf *, u_int);
@@ -161,7 +153,6 @@ safe_attach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX handle power management */
 
-	SIMPLEQ_INIT(&sc->sc_pkq);
 	sc->sc_dmat = pa->pa_dmat;
 
 	/* 
@@ -258,14 +249,6 @@ safe_attach(struct device *parent, struct device *self, void *aux)
 	devinfo = READ_REG(sc, SAFE_DEVINFO);
 	if (devinfo & SAFE_DEVINFO_RNG)
 		printf(" RNG");
-
-	bzero(algs, sizeof(algs));
-	if (devinfo & SAFE_DEVINFO_PKEY) {
-		printf(" PK");
-		algs[CRK_MOD_EXP] = CRYPTO_ALG_FLAG_SUPPORTED;
-		crypto_kregister(sc->sc_cid, algs, safe_kprocess);
-		timeout_set(&sc->sc_pkto, safe_kpoll, sc);
-	}
 
 	bzero(algs, sizeof(algs));
 	if (devinfo & SAFE_DEVINFO_DES) {
@@ -1754,265 +1737,6 @@ safe_intr(void *arg)
 	}
 
 	return (1);
-}
-
-struct safe_softc *
-safe_kfind(struct cryptkop *krp)
-{
-	struct safe_softc *sc;
-	int i;
-
-	for (i = 0; i < safe_cd.cd_ndevs; i++) {
-		sc = safe_cd.cd_devs[i];
-		if (sc == NULL)
-			continue;
-		if (sc->sc_cid == krp->krp_hid)
-			return (sc);
-	}
-	return (NULL);
-}
-
-int
-safe_kprocess(struct cryptkop *krp)
-{
-	struct safe_softc *sc;
-	struct safe_pkq *q;
-	int s;
-
-	if ((sc = safe_kfind(krp)) == NULL) {
-		krp->krp_status = EINVAL;
-		goto err;
-	}
-
-	if (krp->krp_op != CRK_MOD_EXP) {
-		krp->krp_status = EOPNOTSUPP;
-		goto err;
-	}
-
-	q = (struct safe_pkq *)malloc(sizeof(*q), M_DEVBUF, M_NOWAIT);
-	if (q == NULL) {
-		krp->krp_status = ENOMEM;
-		goto err;
-	}
-	q->pkq_krp = krp;
-
-	s = splnet();
-	SIMPLEQ_INSERT_TAIL(&sc->sc_pkq, q, pkq_next);
-	safe_kfeed(sc);
-	splx(s);
-	return (0);
-
-err:
-	crypto_kdone(krp);
-	return (0);
-}
-
-#define	SAFE_CRK_PARAM_BASE	0
-#define	SAFE_CRK_PARAM_EXP	1
-#define	SAFE_CRK_PARAM_MOD	2
-
-int
-safe_kstart(struct safe_softc *sc)
-{
-	struct cryptkop *krp = sc->sc_pkq_cur->pkq_krp;
-	int exp_bits, mod_bits, base_bits;
-	u_int32_t op, a_off, b_off, c_off, d_off;
-
-	if (krp->krp_iparams < 3 || krp->krp_oparams != 1) {
-		krp->krp_status = EINVAL;
-		return (1);
-	}
-
-	base_bits = safe_ksigbits(&krp->krp_param[SAFE_CRK_PARAM_BASE]);
-	if (base_bits > 2048)
-		goto too_big;
-	if (base_bits <= 0)		/* 5. base not zero */
-		goto too_small;
-
-	exp_bits = safe_ksigbits(&krp->krp_param[SAFE_CRK_PARAM_EXP]);
-	if (exp_bits > 2048)
-		goto too_big;
-	if (exp_bits <= 0)		/* 1. exponent word length > 0 */
-		goto too_small;		/* 4. exponent not zero */
-
-	mod_bits = safe_ksigbits(&krp->krp_param[SAFE_CRK_PARAM_MOD]);
-	if (mod_bits > 2048)
-		goto too_big;
-	if (mod_bits <= 32)		/* 2. modulus word length > 1 */
-		goto too_small;		/* 8. MSW of modulus != zero */
-	if (mod_bits < exp_bits)	/* 3 modulus len >= exponent len */
-		goto too_small;
-	if ((krp->krp_param[SAFE_CRK_PARAM_MOD].crp_p[0] & 1) == 0)
-		goto bad_domain;	/* 6. modulus is odd */
-	if (mod_bits > krp->krp_param[krp->krp_iparams].crp_nbits)
-		goto too_small;		/* make sure result will fit */
-
-	/* 7. modulus > base */
-	if (mod_bits < base_bits)
-		goto too_small;
-	if (mod_bits == base_bits) {
-		u_int8_t *basep, *modp;
-		int i;
-
-		basep = krp->krp_param[SAFE_CRK_PARAM_BASE].crp_p +
-		    ((base_bits + 7) / 8) - 1;
-		modp = krp->krp_param[SAFE_CRK_PARAM_MOD].crp_p +
-		    ((mod_bits + 7) / 8) - 1;
-		
-		for (i = 0; i < (mod_bits + 7) / 8; i++, basep--, modp--) {
-			if (*modp < *basep)
-				goto too_small;
-			if (*modp > *basep)
-				break;
-		}
-	}
-
-	/* And on the 9th step, he rested. */
-
-	WRITE_REG(sc, SAFE_PK_A_LEN, (exp_bits + 31) / 32);
-	WRITE_REG(sc, SAFE_PK_B_LEN, (mod_bits + 31) / 32);
-	if (mod_bits > 1024) {
-		op = SAFE_PK_FUNC_EXP4;
-		a_off = 0x000;
-		b_off = 0x100;
-		c_off = 0x200;
-		d_off = 0x300;
-	} else {
-		op = SAFE_PK_FUNC_EXP16;
-		a_off = 0x000;
-		b_off = 0x080;
-		c_off = 0x100;
-		d_off = 0x180;
-	}
-	sc->sc_pk_reslen = b_off - a_off;
-	sc->sc_pk_resoff = d_off;
-
-	/* A is exponent, B is modulus, C is base, D is result */
-	safe_kload_reg(sc, a_off, b_off - a_off,
-	    &krp->krp_param[SAFE_CRK_PARAM_EXP]);
-	WRITE_REG(sc, SAFE_PK_A_ADDR, a_off >> 2);
-	safe_kload_reg(sc, b_off, b_off - a_off,
-	    &krp->krp_param[SAFE_CRK_PARAM_MOD]);
-	WRITE_REG(sc, SAFE_PK_B_ADDR, b_off >> 2);
-	safe_kload_reg(sc, c_off, b_off - a_off,
-	    &krp->krp_param[SAFE_CRK_PARAM_BASE]);
-	WRITE_REG(sc, SAFE_PK_C_ADDR, c_off >> 2);
-	WRITE_REG(sc, SAFE_PK_D_ADDR, d_off >> 2);
-
-	WRITE_REG(sc, SAFE_PK_FUNC, op | SAFE_PK_FUNC_RUN);
-
-	return (0);
-
-too_big:
-	krp->krp_status = E2BIG;
-	return (1);
-too_small:
-	krp->krp_status = ERANGE;
-	return (1);
-bad_domain:
-	krp->krp_status = EDOM;
-	return (1);
-}
-
-int
-safe_ksigbits(struct crparam *cr)
-{
-	u_int plen = (cr->crp_nbits + 7) / 8;
-	int i, sig = plen * 8;
-	u_int8_t c, *p = cr->crp_p;
-
-	for (i = plen - 1; i >= 0; i--) {
-		c = p[i];
-		if (c != 0) {
-			while ((c & 0x80) == 0) {
-				sig--;
-				c <<= 1;
-			}
-			break;
-		}
-		sig -= 8;
-	}
-	return (sig);
-}
-
-void
-safe_kfeed(struct safe_softc *sc)
-{
-	if (SIMPLEQ_EMPTY(&sc->sc_pkq) && sc->sc_pkq_cur == NULL)
-		return;
-	if (sc->sc_pkq_cur != NULL)
-		return;
-	while (!SIMPLEQ_EMPTY(&sc->sc_pkq)) {
-		struct safe_pkq *q = SIMPLEQ_FIRST(&sc->sc_pkq);
-
-		sc->sc_pkq_cur = q;
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_pkq, pkq_next);
-		if (safe_kstart(sc) != 0) {
-			crypto_kdone(q->pkq_krp);
-			free(q, M_DEVBUF, 0);
-			sc->sc_pkq_cur = NULL;
-		} else {
-			/* op started, start polling */
-			timeout_add(&sc->sc_pkto, 1);
-			break;
-		}
-	}
-}
-
-void
-safe_kpoll(void *vsc)
-{
-	struct safe_softc *sc = vsc;
-	struct safe_pkq *q;
-	struct crparam *res;
-	int s, i;
-	u_int32_t buf[64];
-
-	s = splnet();
-	if (sc->sc_pkq_cur == NULL)
-		goto out;
-	if (READ_REG(sc, SAFE_PK_FUNC) & SAFE_PK_FUNC_RUN) {
-		/* still running, check back later */
-		timeout_add(&sc->sc_pkto, 1);
-		goto out;
-	}
-
-	q = sc->sc_pkq_cur;
-	res = &q->pkq_krp->krp_param[q->pkq_krp->krp_iparams];
-	bzero(buf, sizeof(buf));
-	bzero(res->crp_p, (res->crp_nbits + 7) / 8);
-	for (i = 0; i < sc->sc_pk_reslen >> 2; i++)
-		buf[i] = letoh32(READ_REG(sc, SAFE_PK_RAM_START +
-		    sc->sc_pk_resoff + (i << 2)));
-	bcopy(buf, res->crp_p, (res->crp_nbits + 7) / 8);
-	res->crp_nbits = sc->sc_pk_reslen * 8;
-	res->crp_nbits = safe_ksigbits(res);
-
-	for (i = SAFE_PK_RAM_START; i < SAFE_PK_RAM_END; i += 4)
-		WRITE_REG(sc, i, 0);
-
-	explicit_bzero(&buf, sizeof(buf));
-	crypto_kdone(q->pkq_krp);
-	free(q, M_DEVBUF, 0);
-	sc->sc_pkq_cur = NULL;
-
-	safe_kfeed(sc);
-out:
-	splx(s);
-}
-
-void
-safe_kload_reg(struct safe_softc *sc, u_int32_t off, u_int32_t len,
-    struct crparam *n)
-{
-	u_int32_t buf[64], i;
-
-	bzero(buf, sizeof(buf));
-	bcopy(n->crp_p, buf, (n->crp_nbits + 7) / 8);
-
-	for (i = 0; i < len >> 2; i++)
-		WRITE_REG(sc, SAFE_PK_RAM_START + off + (i << 2),
-		    htole32(buf[i]));
 }
 
 #ifdef SAFE_DEBUG

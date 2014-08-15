@@ -1,4 +1,4 @@
-/*	$OpenBSD: safevar.h,v 1.8 2010/12/15 23:34:23 mikeb Exp $	*/
+/*	$OpenBSD: safevar.h,v 1.9 2014/08/15 15:43:27 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -140,11 +140,6 @@ struct safe_session {
 	u_int32_t	ses_hmouter[5];		/* hmac outer state */
 };
 
-struct safe_pkq {
-	SIMPLEQ_ENTRY(safe_pkq)	pkq_next;
-	struct cryptkop *pkq_krp;
-};
-
 struct safe_softc {
 	struct device		sc_dev;		/* device backpointer */
 	void			*sc_ih;		/* interrupt handler cookie */
@@ -173,10 +168,6 @@ struct safe_softc {
 	struct safe_session	*sc_sessions;	/* sessions */
 
 	struct timeout		sc_rngto;	/* rng timeout */
-	struct timeout		sc_pkto;	/* pk timeout */
-	SIMPLEQ_HEAD(, safe_pkq)	sc_pkq;
-	struct safe_pkq		*sc_pkq_cur;
-	u_int32_t		sc_pk_reslen, sc_pk_resoff;
 };
 #endif /* _KERNEL */
 
