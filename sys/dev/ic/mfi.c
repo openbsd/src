@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.154 2014/07/13 23:10:23 deraadt Exp $ */
+/* $OpenBSD: mfi.c,v 1.155 2014/08/15 02:27:02 yasuoka Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -93,6 +93,7 @@ void		mfi_poll(struct mfi_softc *, struct mfi_ccb *);
 void		mfi_exec(struct mfi_softc *, struct mfi_ccb *);
 void		mfi_exec_done(struct mfi_softc *, struct mfi_ccb *);
 int		mfi_create_sgl(struct mfi_softc *, struct mfi_ccb *, int);
+u_int		mfi_default_sgd_load(struct mfi_softc *, struct mfi_ccb *);
 int		mfi_syspd(struct mfi_softc *);
 
 /* commands */
@@ -136,6 +137,7 @@ static const struct mfi_iop_ops mfi_iop_xscale = {
 	mfi_xscale_intr_ena,
 	mfi_xscale_intr,
 	mfi_xscale_post,
+	mfi_default_sgd_load,
 	0,
 };
 
@@ -149,6 +151,7 @@ static const struct mfi_iop_ops mfi_iop_ppc = {
 	mfi_ppc_intr_ena,
 	mfi_ppc_intr,
 	mfi_ppc_post,
+	mfi_default_sgd_load,
 	MFI_IDB,
 	0
 };
@@ -163,6 +166,7 @@ static const struct mfi_iop_ops mfi_iop_gen2 = {
 	mfi_gen2_intr_ena,
 	mfi_gen2_intr,
 	mfi_gen2_post,
+	mfi_default_sgd_load,
 	MFI_IDB,
 	0
 };
@@ -171,12 +175,14 @@ u_int32_t	mfi_skinny_fw_state(struct mfi_softc *);
 void		mfi_skinny_intr_ena(struct mfi_softc *);
 int		mfi_skinny_intr(struct mfi_softc *);
 void		mfi_skinny_post(struct mfi_softc *, struct mfi_ccb *);
+u_int		mfi_skinny_sgd_load(struct mfi_softc *, struct mfi_ccb *);
 
 static const struct mfi_iop_ops mfi_iop_skinny = {
 	mfi_skinny_fw_state,
 	mfi_skinny_intr_ena,
 	mfi_skinny_intr,
 	mfi_skinny_post,
+	mfi_skinny_sgd_load,
 	MFI_SKINNY_IDB,
 	MFI_IOP_F_SYSPD
 };
@@ -185,6 +191,7 @@ static const struct mfi_iop_ops mfi_iop_skinny = {
 #define mfi_intr_enable(_s)	((_s)->sc_iop->mio_intr_ena(_s))
 #define mfi_my_intr(_s)		((_s)->sc_iop->mio_intr(_s))
 #define mfi_post(_s, _c)	((_s)->sc_iop->mio_post((_s), (_c)))
+#define mfi_sgd_load(_s, _c)	((_s)->sc_iop->mio_sgd_load((_s), (_c)))
 
 void *
 mfi_get_ccb(void *cookie)
@@ -709,6 +716,8 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 		sc->sc_sgl_size = sizeof(struct mfi_sg32);
 		sc->sc_sgl_flags = MFI_FRAME_SGL32;
 	}
+	if (iop == MFI_IOP_SKINNY)
+		sc->sc_sgl_size = sizeof(struct mfi_sg_skinny);
 	DNPRINTF(MFI_D_MISC, "%s: 64bit: %d max commands: %u, max sgl: %u\n",
 	    DEVNAME(sc), sc->sc_64bit_dma, sc->sc_max_cmds, sc->sc_max_sgl);
 
@@ -1235,13 +1244,36 @@ complete:
 	scsi_done(xs);
 }
 
+u_int
+mfi_default_sgd_load(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	union mfi_sgl		*sgl = ccb->ccb_sgl;
+	bus_dma_segment_t	*sgd = ccb->ccb_dmamap->dm_segs;
+	int			 i;
+
+	for (i = 0; i < ccb->ccb_dmamap->dm_nsegs; i++) {
+		if (sc->sc_64bit_dma) {
+			sgl->sg64[i].addr = htole64(sgd[i].ds_addr);
+			sgl->sg64[i].len = htole32(sgd[i].ds_len);
+			DNPRINTF(MFI_D_DMA, "%s: addr: %#x  len: %#x\n",
+			    DEVNAME(sc), sgl->sg64[i].addr, sgl->sg64[i].len);
+		} else {
+			sgl->sg32[i].addr = htole32(sgd[i].ds_addr);
+			sgl->sg32[i].len = htole32(sgd[i].ds_len);
+			DNPRINTF(MFI_D_DMA, "%s: addr: %#x  len: %#x\n",
+			    DEVNAME(sc), sgl->sg32[i].addr, sgl->sg32[i].len);
+		}
+	}
+
+	return (ccb->ccb_dmamap->dm_nsegs *
+	    (sc->sc_64bit_dma ? sizeof(sgl->sg64) : sizeof(sgl->sg32)));
+}
+
 int
 mfi_create_sgl(struct mfi_softc *sc, struct mfi_ccb *ccb, int flags)
 {
 	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
-	bus_dma_segment_t	*sgd;
-	union mfi_sgl		*sgl;
-	int			error, i;
+	int			error;
 
 	DNPRINTF(MFI_D_DMA, "%s: mfi_create_sgl %#x\n", DEVNAME(sc),
 	    ccb->ccb_data);
@@ -1262,21 +1294,7 @@ mfi_create_sgl(struct mfi_softc *sc, struct mfi_ccb *ccb, int flags)
 		return (1);
 	}
 
-	sgl = ccb->ccb_sgl;
-	sgd = ccb->ccb_dmamap->dm_segs;
-	for (i = 0; i < ccb->ccb_dmamap->dm_nsegs; i++) {
-		if (sc->sc_64bit_dma) {
-			sgl->sg64[i].addr = htole64(sgd[i].ds_addr);
-			sgl->sg64[i].len = htole32(sgd[i].ds_len);
-			DNPRINTF(MFI_D_DMA, "%s: addr: %#x  len: %#x\n",
-			    DEVNAME(sc), sgl->sg64[i].addr, sgl->sg64[i].len);
-		} else {
-			sgl->sg32[i].addr = htole32(sgd[i].ds_addr);
-			sgl->sg32[i].len = htole32(sgd[i].ds_len);
-			DNPRINTF(MFI_D_DMA, "%s: addr: %#x  len: %#x\n",
-			    DEVNAME(sc), sgl->sg32[i].addr, sgl->sg32[i].len);
-		}
-	}
+	ccb->ccb_frame_size += mfi_sgd_load(sc, ccb);
 
 	if (ccb->ccb_direction == MFI_DATA_IN) {
 		hdr->mfh_flags |= MFI_FRAME_DIR_READ;
@@ -1290,7 +1308,6 @@ mfi_create_sgl(struct mfi_softc *sc, struct mfi_ccb *ccb, int flags)
 
 	hdr->mfh_flags |= sc->sc_sgl_flags;
 	hdr->mfh_sg_count = ccb->ccb_dmamap->dm_nsegs;
-	ccb->ccb_frame_size += sc->sc_sgl_size * ccb->ccb_dmamap->dm_nsegs;
 	ccb->ccb_extra_frames = (ccb->ccb_frame_size - 1) / MFI_FRAME_SIZE;
 
 	DNPRINTF(MFI_D_DMA, "%s: sg_count: %d  frame_size: %d  frames_size: %d"
@@ -2412,6 +2429,32 @@ mfi_skinny_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
 	mfi_write(sc, MFI_IQPL, 0x1 | ccb->ccb_pframe |
 	    (ccb->ccb_extra_frames << 1));
 	mfi_write(sc, MFI_IQPH, 0x00000000);
+}
+
+u_int
+mfi_skinny_sgd_load(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
+	union mfi_sgl		*sgl = ccb->ccb_sgl;
+	bus_dma_segment_t	*sgd = ccb->ccb_dmamap->dm_segs;
+	int			 i;
+
+	switch (hdr->mfh_cmd) {
+	case MFI_CMD_LD_READ:
+	case MFI_CMD_LD_WRITE:
+	case MFI_CMD_PD_SCSI_IO:
+		/* Use MF_FRAME_IEEE for some IO commands on skinny adapters */
+		for (i = 0; i < ccb->ccb_dmamap->dm_nsegs; i++) {
+			sgl->sg_skinny[i].addr = htole64(sgd[i].ds_addr);
+			sgl->sg_skinny[i].len = htole32(sgd[i].ds_len);
+			sgl->sg_skinny[i].flag = 0;
+		}
+		hdr->mfh_flags |= MFI_FRAME_IEEE;
+
+		return (ccb->ccb_dmamap->dm_nsegs * sizeof(sgl->sg_skinny));
+	default:
+		return (mfi_default_sgd_load(sc, ccb));
+	}
 }
 
 int

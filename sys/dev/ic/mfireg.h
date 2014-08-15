@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.40 2013/05/03 02:46:28 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.41 2014/08/15 02:27:02 yasuoka Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -86,6 +86,7 @@
 #define MFI_FRAME_DIR_WRITE			0x0008
 #define MFI_FRAME_DIR_READ			0x0010
 #define MFI_FRAME_DIR_BOTH			0x0018
+#define MFI_FRAME_IEEE				0x0020
 
 /* mfi command opcodes */
 #define MFI_CMD_INIT				0x00
@@ -275,9 +276,16 @@ struct mfi_sg64 {
 	uint32_t		len;
 } __packed;
 
+struct mfi_sg_skinny {
+	uint64_t		addr;
+	uint32_t		len;
+	uint32_t		flag;
+} __packed;
+
 union mfi_sgl {
 	struct mfi_sg32		sg32[1];
 	struct mfi_sg64		sg64[1];
+	struct mfi_sg_skinny	sg_skinny[1];
 } __packed;
 
 /* message frame */

@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.53 2013/05/03 02:46:28 dlg Exp $ */
+/* $OpenBSD: mfivar.h,v 1.54 2014/08/15 02:27:02 yasuoka Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -105,6 +105,7 @@ struct mfi_iop_ops {
 	void		(*mio_intr_ena)(struct mfi_softc *);
 	int		(*mio_intr)(struct mfi_softc *);
 	void		(*mio_post)(struct mfi_softc *, struct mfi_ccb *);
+	u_int		(*mio_sgd_load)(struct mfi_softc *, struct mfi_ccb *);
 	u_int32_t	mio_idb;
 	u_int32_t	mio_flags;
 #define MFI_IOP_F_SYSPD		(1 << 0)
