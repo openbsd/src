@@ -1,4 +1,4 @@
-/*	$OpenBSD: insque.c,v 1.2 2005/08/08 08:05:36 espie Exp $	*/
+/*	$OpenBSD: insque.c,v 1.3 2014/08/15 04:14:36 guenther Exp $	*/
 
 /*
  *  Copyright (c) 1993 John Brezak
@@ -28,6 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdlib.h>
 #include <search.h>
 
 struct qelem {
@@ -38,11 +39,16 @@ struct qelem {
 void
 insque(void *entry, void *pred)
 {
-	struct qelem *e = (struct qelem *) entry;
-	struct qelem *p = (struct qelem *) pred;
+	struct qelem *e = entry;
+	struct qelem *p = pred;
 
-	e->q_forw = p->q_forw;
-	e->q_back = p;
-	p->q_forw->q_back = e;
-	p->q_forw = e;
+	if (p == NULL)
+		e->q_forw = e->q_back = NULL;
+	else {
+		e->q_forw = p->q_forw;
+		e->q_back = p;
+		if (p->q_forw != NULL)
+			p->q_forw->q_back = e;
+		p->q_forw = e;
+	}
 }

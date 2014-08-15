@@ -1,4 +1,4 @@
-/*	$OpenBSD: remque.c,v 1.2 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: remque.c,v 1.3 2014/08/15 04:14:36 guenther Exp $	*/
 
 /*
  *  Copyright (c) 1993 John Brezak
@@ -28,6 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdlib.h>
 #include <search.h>
 
 struct qelem {
@@ -38,7 +39,10 @@ struct qelem {
 void
 remque(void *element)
 {
-	struct qelem *e = (struct qelem *) element;
-	e->q_forw->q_back = e->q_back;
-	e->q_back->q_forw = e->q_forw;
+	struct qelem *e = element;
+
+	if (e->q_forw != NULL)
+		e->q_forw->q_back = e->q_back;
+	if (e->q_back != NULL)
+		e->q_back->q_forw = e->q_forw;
 }
