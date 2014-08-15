@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ubsec.4,v 1.32 2009/03/27 13:31:30 reyk Exp $
+.\"	$OpenBSD: ubsec.4,v 1.33 2014/08/15 15:46:24 mikeb Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2009 $
+.Dd $Mdocdate: August 15 2014 $
 .Dt UBSEC 4
 .Os
 .Sh NAME
@@ -77,11 +77,6 @@ and SHA1-HMAC operations for
 and
 .Xr crypto 4 .
 The driver also supports acceleration of AES-CBC with the BCM5823 or newer.
-.Pp
-On those models which contain a public key engine (almost all of the
-more recent ones), this feature is registered with the
-.Xr crypto 4
-subsystem.
 .Pp
 On all models except the Bluesteel 5501 and Broadcom 5801, the driver
 registers itself to provide random data to the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: safe.4,v 1.8 2013/06/02 20:23:34 tedu Exp $
+.\"	$OpenBSD: safe.4,v 1.9 2014/08/15 15:46:24 mikeb Exp $
 .\"
 .\" Copyright (c) 2003	Sam Leffler, Errno Consulting
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/safe.4,v 1.1 2003/07/21 21:52:14 sam Exp $
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: August 15 2014 $
 .Dt SAFE 4
 .Os
 .Sh NAME
@@ -55,10 +55,7 @@ and SHA1-HMAC operations for
 and
 .Xr crypto 4 .
 .Pp
-Additionally, the driver registers with
-.Xr crypto 4
-to accelerate modular exponentiation of up to 2048-bit operands and provides
-input to the
+Additionally, the driver provides input to the
 .Xr random 4
 subsystem.
 .Sh DIAGNOSTICS
