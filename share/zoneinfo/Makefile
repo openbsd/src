@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2006/02/11 16:16:34 espie Exp $
+#	$OpenBSD: Makefile,v 1.9 2014/08/15 16:48:58 millert Exp $
 #	$NetBSD: Makefile,v 1.14 1995/04/22 12:10:17 cgd Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
@@ -48,7 +48,7 @@ YDATA=		africa antarctica asia australasia \
 NDATA=		systemv
 SDATA=		solar87 solar88 solar89
 TDATA=		$(YDATA) $(NDATA) $(SDATA)
-TABDATA=	iso3166.tab zone.tab
+TABDATA=	iso3166.tab zone.tab zone1970.tab
 DATA=		$(YDATA) $(NDATA) $(SDATA) $(TABDATA) leapseconds # yearistype.sh
 USNO=		usno1988 usno1989 usno1989a usno1995 usno1997
 
@@ -86,6 +86,8 @@ realinstall: ${DATA} ${REDO} ${YEARISTYPECOPY}
 	${INSTALL} -c -o root -g bin -m 644 ${.CURDIR}/datfiles/iso3166.tab \
 	    ${DESTDIR}/usr/share/misc
 	${INSTALL} -c -o root -g bin -m 644 ${.CURDIR}/datfiles/zone.tab \
+	    ${DESTDIR}/usr/share/zoneinfo
+	${INSTALL} -c -o root -g bin -m 644 ${.CURDIR}/datfiles/zone1970.tab \
 	    ${DESTDIR}/usr/share/zoneinfo
 
 
