@@ -1,4 +1,4 @@
-/*      $OpenBSD: aesctr.c,v 1.1 2005/05/25 05:47:53 markus Exp $  */
+/*      $OpenBSD: aesctr.c,v 1.2 2014/08/15 14:39:04 mikeb Exp $  */
 
 /*
  * Copyright (c) 2005 Markus Friedl <markus@openbsd.org>
@@ -16,13 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/ioctl.h>
-#include <sys/sysctl.h>
-#include <crypto/cryptodev.h>
+#include <crypto/rijndael.h>
 #include <err.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -130,88 +126,63 @@ struct {
 	},
 };
 
+/* Stubs */
+
+u_int32_t deflate_global(u_int8_t *, u_int32_t, int, u_int8_t **);
+
+u_int32_t
+deflate_global(u_int8_t *data, u_int32_t size, int comp, u_int8_t **out)
+{
+	return 0;
+}
+
+void	explicit_bzero(void *, size_t);
+
+void
+explicit_bzero(void *b, size_t len)
+{
+	bzero(b, len);
+}
+
+/* Definitions from /sys/crypto/xform.c */
+
+#define AESCTR_NONCESIZE	4
+#define AESCTR_IVSIZE		8
+#define AESCTR_BLOCKSIZE	16
+
+struct aes_ctr_ctx {
+	u_int32_t	ac_ek[4*(AES_MAXROUNDS + 1)];
+	u_int8_t	ac_block[AESCTR_BLOCKSIZE];
+	int		ac_nr;
+};
+
+int  aes_ctr_setkey(void *, u_int8_t *, int);
+void aes_ctr_encrypt(caddr_t, u_int8_t *);
+void aes_ctr_decrypt(caddr_t, u_int8_t *);
+void aes_ctr_reinit(caddr_t, u_int8_t *);
+
 static int
-syscrypt(const unsigned char *key, size_t klen, const unsigned char *iv,
+docrypt(const unsigned char *key, size_t klen, const unsigned char *iv,
     const unsigned char *in, unsigned char *out, size_t len, int encrypt)
 {
-	struct session_op session;
-	struct crypt_op cryp;
-	int cryptodev_fd = -1, fd = -1;
+	u_int8_t block[AESCTR_BLOCKSIZE];
+	struct aes_ctr_ctx ctx;
+	int error = 0;
+	size_t i;
 
-	if ((cryptodev_fd = open("/dev/crypto", O_RDWR, 0)) < 0) {
-		warn("/dev/crypto");
-		goto err;
+	error = aes_ctr_setkey(&ctx, (u_int8_t *)key, klen);
+	if (error)
+		return -1;
+	aes_ctr_reinit((caddr_t)&ctx, (u_int8_t *)iv);
+	for (i = 0; i < len / AESCTR_BLOCKSIZE; i++) {
+		bcopy(in, block, AESCTR_BLOCKSIZE);
+		in += AESCTR_BLOCKSIZE;
+		aes_ctr_crypt(&ctx, block);
+		bcopy(block, out, AESCTR_BLOCKSIZE);
+		out += AESCTR_BLOCKSIZE;
 	}
-	if (ioctl(cryptodev_fd, CRIOGET, &fd) == -1) {
-		warn("CRIOGET failed");
-		goto err;
-	}
-	memset(&session, 0, sizeof(session));
-	session.cipher = CRYPTO_AES_CTR;
-	session.key = (caddr_t) key;
-	session.keylen = klen;
-	if (ioctl(fd, CIOCGSESSION, &session) == -1) {
-		warn("CIOCGSESSION");
-		goto err;
-	}
-	memset(&cryp, 0, sizeof(cryp));
-	cryp.ses = session.ses;
-	cryp.op = encrypt ? COP_ENCRYPT : COP_DECRYPT;
-	cryp.flags = 0;
-	cryp.len = len;
-	cryp.src = (caddr_t) in;
-	cryp.dst = (caddr_t) out;
-	cryp.iv = (caddr_t) iv;
-	cryp.mac = 0;
-	if (ioctl(fd, CIOCCRYPT, &cryp) == -1) {
-		warn("CIOCCRYPT");
-		goto err;
-	}
-	if (ioctl(fd, CIOCFSESSION, &session.ses) == -1) {
-		warn("CIOCFSESSION");
-		goto err;
-	}
-	close(fd);
-	close(cryptodev_fd);
-	return (0);
+	return 0;
 
-err:
-	if (fd != -1)
-		close(fd);
-	if (cryptodev_fd != -1)
-		close(cryptodev_fd);
-	return (-1);
-}
-
-static int
-getallowsoft(void)
-{
-	int mib[2], old;
-	size_t olen;
-
-	olen = sizeof(old);
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_CRYPTODEVALLOWSOFT;
-	if (sysctl(mib, 2, &old, &olen, NULL, 0) < 0)
-		err(1, "sysctl failed");
-
-	return old;
-}
-
-static void
-setallowsoft(int new)
-{
-	int mib[2], old;
-	size_t olen, nlen;
-
-	olen = nlen = sizeof(new);
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_CRYPTODEVALLOWSOFT;
-
-	if (sysctl(mib, 2, &old, &olen, &new, nlen) < 0)
-		err(1, "sysctl failed");
 }
 
 static int
@@ -268,7 +239,7 @@ run(int num)
 		warn("malloc");
 		return (1);
 	}
-	if (syscrypt(data[TST_KEY], length[TST_KEY],
+	if (docrypt(data[TST_KEY], length[TST_KEY],
 	    data[TST_IV], data[TST_PLAIN], p,
 	    length[TST_PLAIN], 0) < 0) {
 		warnx("crypt with /dev/crypto failed");
@@ -285,16 +256,9 @@ done:
 int
 main(int argc, char **argv)
 {
-	int allowed = 0, fail = 0, i;
+	int fail = 0, i;
 
-	if (geteuid() == 0) {
-		allowed = getallowsoft();
-		if (allowed == 0)
-			setallowsoft(1);
-	}
 	for (i = 0; i < (sizeof(tests) / sizeof(tests[0])); i++)
 		fail += run(i);
-	if (geteuid() == 0 && allowed == 0)
-		setallowsoft(0);
 	exit((fail > 0) ? 1 : 0);
 }
