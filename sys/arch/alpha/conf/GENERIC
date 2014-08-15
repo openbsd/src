@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.245 2014/07/12 21:56:56 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.246 2014/08/15 14:06:47 mikeb Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -414,8 +414,6 @@ wsmouse*	at	pms? mux 0
 
 # crypto support
 hifn*	at pci?				# Hi/fn 7751 crypto card
-lofn*	at pci?				# Hi/fn 6500 crypto card
-nofn*	at pci?				# Hi/fn 7814/7851/7854 crypto card
 ubsec*	at pci?				# Bluesteel Networks 5xxx crypto card
 safe*	at pci?				# SafeNet SafeXcel 1141/1741
 

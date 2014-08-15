@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.238 2014/08/03 17:52:10 stsp Exp $g
+#	$OpenBSD: GENERIC,v 1.239 2014/08/15 14:06:48 mikeb Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -133,7 +133,6 @@ ipgphy*		at mii?		# IC Plus IP1000A PHYs
 ukphy*		at mii?		# generic unknown PHYs
 
 # crypto
-lofn*		at pci?		# Hifn6500
 hifn*		at pci?		# Hifn7751/7811/7951
 ubsec*		at pci?		# Broadcom 58xx
 safe*		at pci?		# SafeNet SafeXcel 1141/1741

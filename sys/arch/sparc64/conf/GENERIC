@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.288 2014/07/12 21:56:56 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.289 2014/08/15 14:06:48 mikeb Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -128,8 +128,6 @@ sili*	at pci?			# Silicon Image 3124/3132/3531 SATA controllers
 
 # PCI crypto
 hifn*	at pci?			# Hifn 7751/7811/7951
-#nofn*	at pci?			# Hifn 7814/7851/7854
-lofn*	at pci?			# Hifn 6500
 ubsec*	at pci?			# Broadcom 580[125]/582[012]
 
 # PCI sound

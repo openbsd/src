@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.373 2014/07/13 22:28:04 miod Exp $
+#	$OpenBSD: GENERIC,v 1.374 2014/08/15 14:06:48 mikeb Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -584,8 +584,6 @@ radio*	at bktr?
 
 # crypto support
 hifn*	at pci?			# Hi/fn 7751 crypto card
-lofn*	at pci?			# Hi/fn 6500 crypto card
-nofn*	at pci?			# Hi/fn 7814/7851/7854 crypto card
 ubsec*	at pci?			# Bluesteel Networks 5xxx crypto card
 safe*	at pci?			# SafeNet SafeXcel 1141/1741
 

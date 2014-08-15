@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP32,v 1.37 2014/04/07 08:27:24 brad Exp $
+#	$OpenBSD: GENERIC-IP32,v 1.38 2014/08/15 14:06:48 mikeb Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 #
@@ -253,7 +253,6 @@ ses*		at scsibus?
 uk*		at scsibus?
 
 #### Crypto devices
-lofn*		at pci?		# Hifn6500
 hifn*		at pci?		# Hifn7751/7811/7951
 ubsec*		at pci?		# Broadcom 58xx
 
