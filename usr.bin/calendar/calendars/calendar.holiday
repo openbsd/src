@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.25 2013/11/26 15:25:56 sobrado Exp $
+ * $OpenBSD: calendar.holiday,v 1.26 2014/08/15 06:05:18 jmc Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -298,7 +298,7 @@
 08/15	Independence Day in India
 08/15	Liberation Day in South Korea
 08/15	National Day in Congo
-08/FriThird	Admission Day in Hawaii, 1984 (3rd Friday)
+08/FriThird	Admission Day in Hawaii, 1959 (3rd Friday)
 08/16	Bennington Battle Day in Vermont
 08/16	Independence Days (3 days) in Gabon
 08/16	Restoration Day in Dominican Republic
