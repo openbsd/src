@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.h,v 1.11 2014/08/06 01:54:01 jsing Exp $ */
+/* $OpenBSD: ressl.h,v 1.12 2014/08/15 16:55:32 tedu Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -57,8 +57,8 @@ int ressl_accept_socket(struct ressl *ctx, struct ressl **cctx, int socket);
 int ressl_connect(struct ressl *ctx, const char *host, const char *port);
 int ressl_connect_socket(struct ressl *ctx, int s, const char *hostname);
 int ressl_listen(struct ressl *ctx, const char *host, const char *port, int af);
-int ressl_read(struct ressl *ctx, char *buf, size_t buflen, size_t *outlen);
-int ressl_write(struct ressl *ctx, const char *buf, size_t buflen,
+int ressl_read(struct ressl *ctx, void *buf, size_t buflen, size_t *outlen);
+int ressl_write(struct ressl *ctx, const void *buf, size_t buflen,
     size_t *outlen);
 int ressl_close(struct ressl *ctx);
 

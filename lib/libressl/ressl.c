@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.c,v 1.11 2014/08/06 01:54:01 jsing Exp $ */
+/* $OpenBSD: ressl.c,v 1.12 2014/08/15 16:55:32 tedu Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -202,7 +202,7 @@ ressl_reset(struct ressl *ctx)
 }
 
 int
-ressl_read(struct ressl *ctx, char *buf, size_t buflen, size_t *outlen)
+ressl_read(struct ressl *ctx, void *buf, size_t buflen, size_t *outlen)
 {
 	int ret, ssl_err;
 
@@ -225,7 +225,7 @@ ressl_read(struct ressl *ctx, char *buf, size_t buflen, size_t *outlen)
 }
 
 int
-ressl_write(struct ressl *ctx, const char *buf, size_t buflen, size_t *outlen)
+ressl_write(struct ressl *ctx, const void *buf, size_t buflen, size_t *outlen)
 {
 	int ret, ssl_err;
 
