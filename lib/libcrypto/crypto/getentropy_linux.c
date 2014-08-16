@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.32 2014/07/22 01:15:58 bcook Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.33 2014/08/16 17:21:56 bcook Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -98,6 +98,8 @@ getentropy(void *buf, size_t len)
 	ret = getentropy_getrandom(buf, len);
 	if (ret != -1)
 		return (ret);
+	if (errno != ENOSYS)
+		return (-1);
 
 	/*
 	 * Try to get entropy with /dev/urandom
@@ -187,23 +189,18 @@ gotdata(char *buf, size_t len)
 static int
 getentropy_getrandom(void *buf, size_t len)
 {
-#if 0
-
-/* Hand-definitions until the API becomes commonplace */
-#ifndef SYS__getrandom
-#ifdef __LP64__
-#define SYS__getrandom 317
-#else
-#define SYS__getrandom 354
-#endif
-#endif
+#ifdef SYS_getrandom
+	int ret;
 	if (len > 256)
 		return (-1);
-	ret = syscall(SYS__getrandom, buf, len, 0);
+	do {
+		ret = syscall(SYS_getrandom, buf, len, 0);
+	} while (ret == -1 && errno == EINTR);
+
 	if (ret == len)
 		return (0);
 #endif
-	return -1;
+	return (-1);
 }
 
 static int
