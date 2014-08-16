@@ -78,15 +78,15 @@ struct gcm128_test {
 struct gcm128_test gcm128_tests[] = {
 	{
 		/* Test Case 1. */
-		.K = {},
+		.K = {0},
 		.K_len = 16,
-		.IV = {},
+		.IV = {0},
 		.IV_len = 12,
-		.P = {},
+		.P = {0},
 		.P_len = 0,
-		.A = {},
+		.A = {0},
 		.A_len = 0,
-		.C = {},
+		.C = {0},
 		.C_len = 0,
 		.T = {
 			0x58, 0xe2, 0xfc, 0xce, 0xfa, 0x7e, 0x30, 0x61,
@@ -95,13 +95,13 @@ struct gcm128_test gcm128_tests[] = {
 	},
 	{
 		/* Test Case 2. */
-		.K = {},
+		.K = {0},
 		.K_len = 16,
-		.IV = {},
+		.IV = {0},
 		.IV_len = 12,
-		.P = {},
+		.P = {0},
 		.P_len = 16,
-		.A = {},
+		.A = {0},
 		.A_len = 0,
 		.C = {
 			0x03, 0x88, 0xda, 0xce, 0x60, 0xb6, 0xa3, 0x92,
@@ -136,7 +136,7 @@ struct gcm128_test gcm128_tests[] = {
 			0xba, 0x63, 0x7b, 0x39, 0x1a, 0xaf, 0xd2, 0x55,
 		},
 		.P_len = 64,
-		.A = {},
+		.A = {0},
 		.A_len = 0,
 		.C = {
 			0x42, 0x83, 0x1e, 0xc2, 0x21, 0x77, 0x74, 0x24,
@@ -298,15 +298,15 @@ struct gcm128_test gcm128_tests[] = {
 	},
 	{
 		/* Test Case 7. */
-		.K = {},
+		.K = {0},
 		.K_len = 24,
-		.IV = {},
+		.IV = {0},
 		.IV_len = 12,
-		.P = {},
+		.P = {0},
 		.P_len = 0,
-		.A = {},
+		.A = {0},
 		.A_len = 0,
-		.C = {},
+		.C = {0},
 		.C_len = 0,
 		.T = {
 			0xcd, 0x33, 0xb2, 0x8a, 0xc7, 0x73, 0xf7, 0x4b,
@@ -315,13 +315,13 @@ struct gcm128_test gcm128_tests[] = {
 	},
 	{
 		/* Test Case 8. */
-		.K = {},
+		.K = {0},
 		.K_len = 24,
-		.IV = {},
+		.IV = {0},
 		.IV_len = 12,
-		.P = {},
+		.P = {0},
 		.P_len = 16,
-		.A = {},
+		.A = {0},
 		.A_len = 0,
 		.C = {
 			0x98, 0xe7, 0x24, 0x7c, 0x07, 0xf0, 0xfe, 0x41,
@@ -357,7 +357,7 @@ struct gcm128_test gcm128_tests[] = {
 			0xba, 0x63, 0x7b, 0x39, 0x1a, 0xaf, 0xd2, 0x55,
 		},
 		.P_len = 64,
-		.A = {},
+		.A = {0},
 		.A_len = 0,
 		.C = {
 			0x39, 0x80, 0xca, 0x0b, 0x3c, 0x00, 0xe8, 0x41,
@@ -523,15 +523,15 @@ struct gcm128_test gcm128_tests[] = {
 	},
 	{
 		/* Test Case 13. */
-		.K = {},
+		.K = {0},
 		.K_len = 32,
-		.IV = {},
+		.IV = {0},
 		.IV_len = 12,
-		.P = {},
+		.P = {0},
 		.P_len = 0,
-		.A = {},
+		.A = {0},
 		.A_len = 0,
-		.C = {},
+		.C = {0},
 		.C_len = 0,
 		.T = {
 			0x53, 0x0f, 0x8a, 0xfb, 0xc7, 0x45, 0x36, 0xb9,
@@ -540,13 +540,13 @@ struct gcm128_test gcm128_tests[] = {
 	},
 	{
 		/* Test Case 14. */
-		.K = {},
+		.K = {0},
 		.K_len = 32,
-		.IV = {},
+		.IV = {0},
 		.IV_len = 12,
-		.P = {},
+		.P = {0},
 		.P_len = 16,
-		.A = {},
+		.A = {0},
 		.A_len = 0,
 		.C = {
 			0xce, 0xa7, 0x40, 0x3d, 0x4d, 0x60, 0x6b, 0x6e,
@@ -583,7 +583,7 @@ struct gcm128_test gcm128_tests[] = {
 			0xba, 0x63, 0x7b, 0x39, 0x1a, 0xaf, 0xd2, 0x55,
 		},
 		.P_len = 64,
-		.A = {},
+		.A = {0},
 		.A_len = 0,
 		.C = {
 			0x52, 0x2d, 0xc1, 0xf0, 0x99, 0x56, 0x7d, 0x07,
@@ -752,11 +752,11 @@ struct gcm128_test gcm128_tests[] = {
 	},
 	{
 		/* Test Case 19. */
-		.K = {},
+		.K = {0},
 		.K_len = 16,
-		.IV = {},
+		.IV = {0},
 		.IV_len = 12,
-		.P = {},
+		.P = {0},
 		.P_len = 0,
 		.A = {
 			0xd9, 0x31, 0x32, 0x25, 0xf8, 0x84, 0x06, 0xe5,
@@ -777,7 +777,7 @@ struct gcm128_test gcm128_tests[] = {
 			0xbc, 0xc9, 0xf6, 0x62, 0x89, 0x80, 0x15, 0xad,
 		},
 		.A_len = 128,
-		.C = {},
+		.C = {0},
 		.C_len = 0,
 		.T = {
 			0x5f, 0xea, 0x79, 0x3a, 0x2d, 0x6f, 0x97, 0x4d,
@@ -786,7 +786,7 @@ struct gcm128_test gcm128_tests[] = {
 	},
 	{
 		/* Test Case 20. */
-		.K = {},
+		.K = {0},
 		.K_len = 16,
 		.IV = {
 			/* This results in 0xff in counter LSB. */
@@ -800,9 +800,9 @@ struct gcm128_test gcm128_tests[] = {
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		},
 		.IV_len = 64,
-		.P = {},
+		.P = {0},
 		.P_len = 288,
-		.A = {},
+		.A = {0},
 		.A_len = 0,
 		.C = {
 			0x56, 0xb3, 0x37, 0x3c, 0xa9, 0xef, 0x6e, 0x4a,
