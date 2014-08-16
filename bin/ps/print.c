@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.57 2014/07/04 05:58:31 guenther Exp $	*/
+/*	$OpenBSD: print.c,v 1.58 2014/08/16 16:38:38 tedu Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -410,7 +410,7 @@ started(const struct kinfo_proc *kp, VARENT *ve)
 	tp = localtime(&startt);
 	if (!now)
 		(void)time(&now);
-	if (now - kp->p_ustart_sec < 24 * SECSPERHOUR) {
+	if (now - kp->p_ustart_sec < 12 * SECSPERHOUR) {
 		(void)strftime(buf, sizeof(buf) - 1, "%l:%M%p", tp);
 	} else if (now - kp->p_ustart_sec < 7 * SECSPERDAY) {
 		(void)strftime(buf, sizeof(buf) - 1, "%a%I%p", tp);
