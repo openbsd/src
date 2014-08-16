@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.33 2014/08/16 17:21:56 bcook Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.34 2014/08/16 18:42:41 bcook Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -74,7 +74,9 @@
 int	getentropy(void *buf, size_t len);
 
 static int gotdata(char *buf, size_t len);
+#ifdef SYS_getrandom
 static int getentropy_getrandom(void *buf, size_t len);
+#endif
 static int getentropy_urandom(void *buf, size_t len);
 #ifdef SYS__sysctl
 static int getentropy_sysctl(void *buf, size_t len);
@@ -92,6 +94,7 @@ getentropy(void *buf, size_t len)
 		return -1;
 	}
 
+#ifdef SYS_getrandom
 	/*
 	 * Try descriptor-less getrandom()
 	 */
@@ -100,6 +103,7 @@ getentropy(void *buf, size_t len)
 		return (ret);
 	if (errno != ENOSYS)
 		return (-1);
+#endif
 
 	/*
 	 * Try to get entropy with /dev/urandom
@@ -186,10 +190,10 @@ gotdata(char *buf, size_t len)
 	return 0;
 }
 
+#ifdef SYS_getrandom
 static int
 getentropy_getrandom(void *buf, size_t len)
 {
-#ifdef SYS_getrandom
 	int ret;
 	if (len > 256)
 		return (-1);
@@ -199,9 +203,9 @@ getentropy_getrandom(void *buf, size_t len)
 
 	if (ret == len)
 		return (0);
-#endif
 	return (-1);
 }
+#endif
 
 static int
 getentropy_urandom(void *buf, size_t len)
