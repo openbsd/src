@@ -1547,7 +1547,6 @@
 ./usr/share/man/man4/lmn.4
 ./usr/share/man/man4/lmtemp.4
 ./usr/share/man/man4/lo.4
-./usr/share/man/man4/lofn.4
 ./usr/share/man/man4/loongson
 ./usr/share/man/man4/loongson/apm.4
 ./usr/share/man/man4/loongson/autoconf.4
@@ -1650,7 +1649,6 @@
 ./usr/share/man/man4/nfe.4
 ./usr/share/man/man4/nge.4
 ./usr/share/man/man4/nmea.4
-./usr/share/man/man4/nofn.4
 ./usr/share/man/man4/nsclpcsio.4
 ./usr/share/man/man4/nsgphy.4
 ./usr/share/man/man4/nsphy.4

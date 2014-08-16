@@ -639,14 +639,10 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/ixgb_ids.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/ixgbe.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/ixgbe_type.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/lofnreg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/lofnvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/mpiireg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/musyccreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/musyccvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/neoreg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/nofnreg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/nofnvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pccbbreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pccbbvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pcidevs.ph

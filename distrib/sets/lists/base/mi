@@ -47,6 +47,7 @@
 ./etc
 ./etc/amd
 ./etc/authpf
+./etc/daily
 ./etc/disktab
 ./etc/examples
 ./etc/examples/bgpd.conf
@@ -115,6 +116,7 @@
 ./etc/mail
 ./etc/mail/README
 ./etc/moduli
+./etc/monthly
 ./etc/mtree
 ./etc/mtree/4.4BSD.dist
 ./etc/mtree/BSD.x11.dist
@@ -225,6 +227,7 @@
 ./etc/ssl/private
 ./etc/systrace
 ./etc/termcap
+./etc/weekly
 ./home
 ./mnt
 ./root
@@ -3624,6 +3627,7 @@
 ./usr/share/zoneinfo/Asia/Bishkek
 ./usr/share/zoneinfo/Asia/Brunei
 ./usr/share/zoneinfo/Asia/Calcutta
+./usr/share/zoneinfo/Asia/Chita
 ./usr/share/zoneinfo/Asia/Choibalsan
 ./usr/share/zoneinfo/Asia/Chongqing
 ./usr/share/zoneinfo/Asia/Chungking
@@ -3684,6 +3688,7 @@
 ./usr/share/zoneinfo/Asia/Seoul
 ./usr/share/zoneinfo/Asia/Shanghai
 ./usr/share/zoneinfo/Asia/Singapore
+./usr/share/zoneinfo/Asia/Srednekolymsk
 ./usr/share/zoneinfo/Asia/Taipei
 ./usr/share/zoneinfo/Asia/Tashkent
 ./usr/share/zoneinfo/Asia/Tbilisi
@@ -4232,6 +4237,7 @@
 ./usr/share/zoneinfo/posix/Asia/Bishkek
 ./usr/share/zoneinfo/posix/Asia/Brunei
 ./usr/share/zoneinfo/posix/Asia/Calcutta
+./usr/share/zoneinfo/posix/Asia/Chita
 ./usr/share/zoneinfo/posix/Asia/Choibalsan
 ./usr/share/zoneinfo/posix/Asia/Chongqing
 ./usr/share/zoneinfo/posix/Asia/Chungking
@@ -4292,6 +4298,7 @@
 ./usr/share/zoneinfo/posix/Asia/Seoul
 ./usr/share/zoneinfo/posix/Asia/Shanghai
 ./usr/share/zoneinfo/posix/Asia/Singapore
+./usr/share/zoneinfo/posix/Asia/Srednekolymsk
 ./usr/share/zoneinfo/posix/Asia/Taipei
 ./usr/share/zoneinfo/posix/Asia/Tashkent
 ./usr/share/zoneinfo/posix/Asia/Tbilisi
@@ -4841,6 +4848,7 @@
 ./usr/share/zoneinfo/right/Asia/Bishkek
 ./usr/share/zoneinfo/right/Asia/Brunei
 ./usr/share/zoneinfo/right/Asia/Calcutta
+./usr/share/zoneinfo/right/Asia/Chita
 ./usr/share/zoneinfo/right/Asia/Choibalsan
 ./usr/share/zoneinfo/right/Asia/Chongqing
 ./usr/share/zoneinfo/right/Asia/Chungking
@@ -4901,6 +4909,7 @@
 ./usr/share/zoneinfo/right/Asia/Seoul
 ./usr/share/zoneinfo/right/Asia/Shanghai
 ./usr/share/zoneinfo/right/Asia/Singapore
+./usr/share/zoneinfo/right/Asia/Srednekolymsk
 ./usr/share/zoneinfo/right/Asia/Taipei
 ./usr/share/zoneinfo/right/Asia/Tashkent
 ./usr/share/zoneinfo/right/Asia/Tbilisi
@@ -5193,6 +5202,7 @@
 ./usr/share/zoneinfo/right/WET
 ./usr/share/zoneinfo/right/Zulu
 ./usr/share/zoneinfo/zone.tab
+./usr/share/zoneinfo/zone1970.tab
 ./usr/src
 ./usr/xobj
 ./var

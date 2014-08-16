@@ -5,7 +5,6 @@
 ./etc/csh.cshrc
 ./etc/csh.login
 ./etc/csh.logout
-./etc/daily
 ./etc/dhclient.conf
 ./etc/dumpdates
 ./etc/fbtab
@@ -41,7 +40,6 @@
 ./etc/mailer.conf
 ./etc/man.conf
 ./etc/master.passwd
-./etc/monthly
 ./etc/motd
 ./etc/myname
 ./etc/newsyslog.conf
@@ -78,7 +76,6 @@
 ./etc/systrace/usr_sbin_lpd
 ./etc/systrace/usr_sbin_named
 ./etc/ttys
-./etc/weekly
 ./root/.Xdefaults
 ./root/.cshrc
 ./root/.cvsrc
