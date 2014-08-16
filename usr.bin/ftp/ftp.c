@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.86 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.87 2014/08/16 07:49:27 deraadt Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -317,11 +317,13 @@ bad:
 void
 cmdabort(int signo)
 {
+	int save_errno = errno;
 
 	alarmtimer(0);
-	putc('\n', ttyout);
-	(void)fflush(ttyout);
+	(void) write(fileno(ttyout), "\n\r", 2);
 	abrtflag++;
+
+	errno = save_errno;
 	if (ptflag)
 		longjmp(ptabort, 1);
 }
@@ -575,12 +577,15 @@ jmp_buf	sendabort;
 void
 abortsend(int signo)
 {
-
+	int save_errno = errno;
 	alarmtimer(0);
 	mflag = 0;
 	abrtflag = 0;
-	fputs("\nsend aborted\nwaiting for remote to finish abort.\n", ttyout);
-	(void)fflush(ttyout);
+#define MSG "\nsend aborted\nwaiting for remote to finish abort.\n"
+	(void) write(fileno(ttyout), MSG, strlen(MSG));
+#undef MSG
+
+	errno = save_errno;
 	longjmp(sendabort, 1);
 }
 
@@ -2040,14 +2045,13 @@ jmp_buf forceabort;
 static void
 abortforce(int signo)
 {
-	fputs("Forced abort.  The connection will be closed.\n", ttyout);
-	(void)fflush(ttyout);
+	int save_errno = errno;
 
-	if (cout) {
-		(void)fclose(cout);
-	}
-	cout = NULL;
+#define MSG	"Forced abort.  The connection will be closed.\n"
+	(void) write(fileno(ttyout), MSG, strlen(MSG));
+#undef MSG
 
+	errno = save_errno;
 	longjmp(forceabort, 1);
 }
 
@@ -2061,6 +2065,8 @@ abort_remote(FILE *din)
 	sig_t oldintr;
 
 	if (cout == NULL || setjmp(forceabort)) {
+		if (cout)
+			fclose(cout);
 		warnx("Lost control connection for abort.");
 		if (ptabflg)
 			code = -1;

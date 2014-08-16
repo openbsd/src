@@ -1,4 +1,4 @@
-/*	$OpenBSD: small.c,v 1.1 2009/05/05 19:35:30 martynas Exp $	*/
+/*	$OpenBSD: small.c,v 1.2 2014/08/16 07:49:27 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -77,6 +77,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "ftp_var.h"
 #include "pathnames.h"
@@ -301,15 +302,21 @@ freegetit:
 void
 mabort(int signo)
 {
+	int save_errno = errno;
+
 	alarmtimer(0);
-	putc('\n', ttyout);
-	(void)fflush(ttyout);
+	(void) write(fileno(ttyout), "\n\r", 2);
 #ifndef SMALL
-	if (mflag && fromatty)
-		if (confirm(mname, NULL))
+	if (mflag && fromatty) {
+		/* XXX signal race, crazy unbelievable stdio misuse */
+		if (confirm(mname, NULL)) {
+			errno = save_errno;
 			longjmp(jabort, 1);
+		}
+	}
 #endif /* !SMALL */
 	mflag = 0;
+	errno = save_errno;
 	longjmp(jabort, 1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.66 2014/01/29 16:58:21 dcoppa Exp $	*/
+/*	$OpenBSD: util.c,v 1.67 2014/08/16 07:49:27 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -944,17 +944,21 @@ ptransfer(int siginfo)
 	meg = 0;
 	if (bs > (1024 * 1024))
 		meg = 1;
+
+	/* XXX floating point printf in signal handler */
 	(void)snprintf(buf, sizeof(buf),
 	    "%lld byte%s %s in %.2f seconds (%.2f %sB/s)\n",
 	    (long long)bytes, bytes == 1 ? "" : "s", direction, elapsed,
 	    bs / (1024.0 * (meg ? 1024.0 : 1.0)), meg ? "M" : "K");
-	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0
-	    && bytes + restart_point <= filesize) {
+
+	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0 &&
+	    bytes + restart_point <= filesize) {
 		remaining = (int)((filesize - restart_point) /
-				  (bytes / elapsed) - elapsed);
+		    (bytes / elapsed) - elapsed);
 		hh = remaining / 3600;
 		remaining %= 3600;
-			/* "buf+len(buf) -1" to overwrite \n */
+
+		/* "buf+len(buf) -1" to overwrite \n */
 		snprintf(buf + strlen(buf) - 1, sizeof(buf) - strlen(buf),
 		    "  ETA: %02d:%02d:%02d\n", hh, remaining / 60,
 		    remaining % 60);
@@ -1028,12 +1032,14 @@ setttywidth(int signo)
 void
 alarmtimer(int wait)
 {
+	int save_errno = errno;
 	struct itimerval itv;
 
 	itv.it_value.tv_sec = wait;
 	itv.it_value.tv_usec = 0;
 	itv.it_interval = itv.it_value;
 	setitimer(ITIMER_REAL, &itv, NULL);
+	errno = save_errno;
 }
 
 /*

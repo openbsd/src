@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.71 2012/10/15 21:20:05 bluhm Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.72 2014/08/16 07:49:27 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "ftp_var.h"
 #include "pathnames.h"
@@ -1326,6 +1327,7 @@ jmp_buf abortprox;
 void
 proxabort(int signo)
 {
+	int save_errno = errno;
 
 	alarmtimer(0);
 	if (!proxy) {
@@ -1338,6 +1340,7 @@ proxabort(int signo)
 		proxflag = 0;
 	}
 	pswitch(0);
+	errno = save_errno;
 	longjmp(abortprox, 1);
 }
 
