@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.202 2014/05/07 01:49:36 tedu Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.203 2014/08/16 21:39:16 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -179,6 +179,7 @@ int	Aflag, aflag, nflag, qflag;
 #define	LONGARRAY	0x00000800
 #define	KMEMSTATS	0x00001000
 #define	SENSORS		0x00002000
+#define	SMALLBUF	0x00004000
 
 /* prototypes */
 void debuginit(void);
@@ -410,6 +411,7 @@ parse(char *string, int flags)
 		case KERN_HOSTID:
 		case KERN_ARND:
 			special |= UNSIGNED;
+			special |= SMALLBUF;
 			break;
 		case KERN_CPTIME:
 			special |= LONGARRAY;
@@ -728,7 +730,7 @@ parse(char *string, int flags)
 			break;
 		}
 	}
-	size = SYSCTL_BUFSIZ;
+	size = (special & SMALLBUF) ? 512 : SYSCTL_BUFSIZ;
 	if (sysctl(mib, len, buf, &size, newval, newsize) == -1) {
 		if (flags == 0)
 			return;
