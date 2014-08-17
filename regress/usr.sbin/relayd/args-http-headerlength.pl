@@ -8,14 +8,14 @@ our %args = (
 	header => \%header,
 	httpnok => 1,
 	nocheck => 1,
-	loggrep => qr/HTTP\/1\.0 413 Request Entity Too Large/,
+	loggrep => qr/HTTP\/1\.0 413 Payload Too Large/,
     },
     relayd => {
 	protocol => [ "http",
 	    'return error',
 	    'pass',
 	],
-	loggrep => qr/413 Request Entity Too Large/,
+	loggrep => qr/413 Payload Too Large/,
     },
     server => {
 	noserver => 1,
