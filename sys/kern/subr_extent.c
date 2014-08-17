@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.51 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.52 2014/08/17 09:48:55 dlg Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -49,23 +49,30 @@
  * user-land definitions, so it can fit into a testing harness.
  */
 #include <sys/param.h>
-#include <sys/pool.h>
 #include <sys/extent.h>
 #include <sys/queue.h>
 #include <errno.h>
+#include <err.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #define	malloc(s, t, flags)		malloc(s)
-#define	free(p, t)			free(p)
+#define	free(p, t, s)			free(p)
+
 #define	tsleep(chan, pri, str, timo)	(EWOULDBLOCK)
 #define	wakeup(chan)			((void)0)
-#define	pool_get(pool, flags)		malloc((pool)->pr_size, 0, 0)
-#define	pool_init(a, b, c, d, e, f, g)	(a)->pr_size = (b)
-#define	pool_setipl(pool, ipl)		/* nothing */
-#define	pool_put(pool, rp)		free((rp), 0)
-#define	panic				printf
+
+struct pool {
+	size_t pr_size;
+};
+
+#define	pool_init(a, b, c, d, e, f, g)	do { (a)->pr_size = (b); } while (0)
+#define	pool_setipl(pp, ipl)		/* nothing */
+#define pool_get(pp, flags)		malloc((pp)->pr_size, 0, 0)
+#define	pool_put(pp, rp)		free((rp), 0, 0)
+
+#define	panic(...)		do { warnx(__VA_ARGS__); abort(); } while (0)
 #endif
 
 #if defined(DIAGNOSTIC) || defined(DDB)
