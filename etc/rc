@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.438 2014/08/04 20:17:09 naddy Exp $
+#	$OpenBSD: rc,v 1.439 2014/08/17 14:43:34 ajacoutot Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -371,7 +371,7 @@ if [ -f /etc/resolv.conf.save ]; then
 	mv -f /etc/resolv.conf.save /etc/resolv.conf
 	touch /etc/resolv.conf
 fi
-. /etc/netstart
+sh /etc/netstart
 dmesg > /dev/random	# any write triggers an RC4 rekey
 
 if [ X"${pf}" != X"NO" ]; then
