@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.98 2014/06/12 20:52:15 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.99 2014/08/17 11:11:34 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -783,6 +783,33 @@ fault_common_no_miss:
 			return;
 		}
 		goto err;
+
+#ifdef CPU_R10000
+	case T_BUS_ERR_IFETCH:
+		/*
+		 * At least R16000 processor have been found triggering
+		 * reproduceable bus error on instruction fetch in the
+		 * kernel code, which are trivially recoverable (and
+		 * look like an obscure errata to me).
+		 *
+		 * Thus, ignore these exceptions if the faulting address
+		 * is in the kernel and at the beginning of an I$ cache
+		 * line.
+		 */
+	    {
+		extern void *kernel_text;
+		extern void *etext;
+		vaddr_t va;
+
+		va = (vaddr_t)trapframe->pc;
+		if (trapframe->cause & CR_BR_DELAY)
+			va += 4;
+		if ((va & (/* R10K_L1I_LINE - 1 */ 64UL - 1)) == 0 &&
+		    va > (vaddr_t)&kernel_text && va < (vaddr_t)&etext)
+			return;
+	    }
+		goto err;
+#endif
 
 	default:
 	err:
