@@ -1,0 +1,12 @@
+.Dd August 17, 2014
+.Dt NM-BREAK 1
+.Os OpenBSD
+.Sh NAME
+.Nm Nm-break
+.Nd name block head breaking another block
+.Sh SYNOPSIS
+.Nm before Bo within
+.Sh DESCRIPTION
+initial text
+.Nm
+final text

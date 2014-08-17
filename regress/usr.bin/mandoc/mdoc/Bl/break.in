@@ -24,3 +24,8 @@ inside both
 after display
 .Ed
 after both
+.Sh CAVEATS
+.Bl -hang
+.It before broken block Bo inside both
+.El
+after list

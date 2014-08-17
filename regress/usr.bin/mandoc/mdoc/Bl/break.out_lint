@@ -1,2 +1,5 @@
 mandoc: break.in:13:2: WARNING: blocks badly nested: El breaks Bo
 mandoc: break.in:23:2: WARNING: blocks badly nested: El breaks Bd
+mandoc: break.in:30:2: WARNING: blocks badly nested: El breaks It
+mandoc: break.in:29:25: ERROR: appending missing end of block: Bo
+mandoc: break.in:28:2: ERROR: appending missing end of block: Bl

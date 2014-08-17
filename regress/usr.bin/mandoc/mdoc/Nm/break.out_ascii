@@ -1,0 +1,12 @@
+NM-BREAK(1)                OpenBSD Reference Manual                NM-BREAK(1)
+
+NNAAMMEE
+     NNmm--bbrreeaakk - name block head breaking another block
+
+SSYYNNOOPPSSIISS
+     bbeeffoorree [[wwiitthhiinn]]
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text NNmm--bbrreeaakk final text
+
+OpenBSD                         August 17, 2014                        OpenBSD
