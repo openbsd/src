@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.80 2014/08/11 20:24:57 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.81 2014/08/17 14:41:03 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -191,7 +191,9 @@ rc_cmd() {
 
 	case "$1" in
 	check)
-		_rc_do rc_check
+		echo $_n "${INRC:+ }${_name}"
+		_rc_do rc_check && _rc_exit ok
+		_rc_exit failed
 		;;
 	start)
 		if [ X"${daemon_flags}" = X"NO" ]; then
