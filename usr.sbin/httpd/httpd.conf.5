@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.31 2014/08/09 09:07:14 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.32 2014/08/17 18:46:29 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 9 2014 $
+.Dd $Mdocdate: August 17 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -164,7 +164,7 @@ and defaults to
 .Pa /run/slowcgi.sock .
 .It Ic listen on Ar address Oo Ic ssl Oc Ic port Ar number
 Set the listen address and port.
-.It Ic location Ar path { ... }
+.It Ic location Ar path Brq ...
 Specify server configuration rules for a specific location.
 The
 .Ar path
