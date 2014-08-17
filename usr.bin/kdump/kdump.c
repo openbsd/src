@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.86 2013/12/21 07:32:35 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.87 2014/08/17 22:25:53 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -591,7 +591,13 @@ ktrsyscall(struct ktr_syscall *ktr)
 		break;
 	case SYS_chmod:
 	case SYS_fchmod: 
+	case SYS_mkdir:
+	case SYS_mkfifo:
+	case SYS_mknod:
 		pn(NULL);
+		pn(modename);
+		break;
+	case SYS_umask:
 		pn(modename);
 		break;
 	case SYS_fcntl: {
