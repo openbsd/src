@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.20 2014/07/02 06:32:07 otto Exp $
+# $OpenBSD: mksubr,v 1.21 2014/08/17 22:43:07 guenther Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -57,6 +57,7 @@ auto_or_type () {
 	name=$1
 	grep=$2
 	file=$3
+	format=${4-%#x}
 
 	cat <<_EOF_
 /* AUTO */
@@ -64,7 +65,7 @@ void
 $name (int arg)
 {
 	int	or = 0;
-	printf("%#x<", arg);
+	printf("$format<", arg);
 _EOF_
 	egrep "^#[[:space:]]*define[[:space:]]+"${grep}"[[:space:]]*" \
 		$include_dir/$file | \
@@ -90,6 +91,7 @@ auto_orz_type () {
 	name=$1
 	grep=$2
 	file=$3
+	format=${4-%#x}
 
 	cat <<_EOF_
 /* AUTO */
@@ -101,7 +103,7 @@ $name (int arg)
 		printf("0<>");
 		return;
 	}
-	printf("%#x<", arg);
+	printf("$format<", arg);
 _EOF_
 	egrep "^#[[:space:]]*define[[:space:]]+"${grep}"[[:space:]]*" \
 		$include_dir/$file | \
@@ -284,7 +286,7 @@ cat <<_EOF_
 
 _EOF_
 
-auto_orz_type "modename" "S_[A-Z]+[[:space:]]+[0-6]{7}" "sys/stat.h"
+auto_orz_type "modename" "S_[A-Z]+[[:space:]]+[0-6]{7}" "sys/stat.h" "%#o"
 auto_fflags_type "flagsname" "O_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/fcntl.h"
 auto_orz_type "atflagsname" "AT_[A-Z_]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/fcntl.h"
 auto_or_type "accessmodename" "[A-Z]_OK[[:space:]]+0?x?[0-9A-Fa-f]+" "sys/unistd.h"
