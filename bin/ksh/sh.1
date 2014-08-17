@@ -1,8 +1,8 @@
-.\"	$OpenBSD: sh.1,v 1.96 2014/02/12 16:28:13 schwarze Exp $
+.\"	$OpenBSD: sh.1,v 1.97 2014/08/17 07:15:41 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: February 12 2014 $
+.Dd $Mdocdate: August 17 2014 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -2199,16 +2199,16 @@ POSIX special commands
 .Ic \&. , \&: , break , continue ,
 .Ic eval , exec , exit , export ,
 .Ic readonly , return , set , shift ,
-.Ic trap , unset
+.Ic times , trap , unset
 .Pp
 Additional
 .Nm
 special commands
 .Pp
-.Ic builtin , times , typeset
+.Ic builtin , typeset
 .Pp
 Very special commands
-.Pq non-POSIX
+.Pq when POSIX mode is off
 .Pp
 .Ic alias , readonly , set , typeset
 .Pp
@@ -2216,8 +2216,8 @@ POSIX regular commands
 .Pp
 .Ic alias , bg , cd , command ,
 .Ic false , fc , fg , getopts ,
-.Ic jobs , kill , read , true ,
-.Ic umask , unalias , wait
+.Ic jobs , kill , pwd , read ,
+.Ic true , umask , unalias , wait
 .Pp
 Additional
 .Nm
