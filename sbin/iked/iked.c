@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.21 2014/05/08 13:11:16 blambert Exp $	*/
+/*	$OpenBSD: iked.c,v 1.22 2014/08/18 09:43:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -160,12 +160,14 @@ main(int argc, char *argv[])
 	signal_set(&ps->ps_evsigchld, SIGCHLD, parent_sig_handler, ps);
 	signal_set(&ps->ps_evsighup, SIGHUP, parent_sig_handler, ps);
 	signal_set(&ps->ps_evsigpipe, SIGPIPE, parent_sig_handler, ps);
+	signal_set(&ps->ps_evsigusr1, SIGUSR1, parent_sig_handler, ps);
 
 	signal_add(&ps->ps_evsigint, NULL);
 	signal_add(&ps->ps_evsigterm, NULL);
 	signal_add(&ps->ps_evsigchld, NULL);
 	signal_add(&ps->ps_evsighup, NULL);
 	signal_add(&ps->ps_evsigpipe, NULL);
+	signal_add(&ps->ps_evsigusr1, NULL);
 
 	proc_listen(ps, procs, nitems(procs));
 
@@ -278,6 +280,9 @@ parent_sig_handler(int sig, short event, void *arg)
 		break;
 	case SIGPIPE:
 		log_info("%s: ignoring SIGPIPE", __func__);
+		break;
+	case SIGUSR1:
+		log_info("%s: ignoring SIGUSR1", __func__);
 		break;
 	case SIGTERM:
 	case SIGINT:
