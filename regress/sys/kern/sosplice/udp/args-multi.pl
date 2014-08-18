@@ -9,14 +9,14 @@ my @lengths = (251, 16384, 0, 1, 2, 3, 4, 5);
 our %args = (
     client => {
 	lengths => \@lengths,
-	sndbuf => 20000,
+	sndbuf => 30000,
     },
     relay => {
-	rcvbuf => 20000,
-	sndbuf => 20000,
+	rcvbuf => 30000,
+	sndbuf => 30000,
     },
     server => {
-	rcvbuf => 20000,
+	rcvbuf => 30000,
     },
     len => sum(@lengths),
     lengths => "@lengths",
