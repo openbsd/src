@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.87 2014/08/17 22:25:53 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.88 2014/08/18 03:29:53 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -163,6 +163,7 @@ static void semgetname(int);
 static void flagsandmodename(int, int);
 static void clockname(int);
 static void sockoptlevelname(int);
+static void ktraceopname(int);
 
 int
 main(int argc, char *argv[])
@@ -659,6 +660,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 		pn(mlockallname);
 		break;
 	case SYS_mmap:
+	case SYS_mquery:
 		pn(NULL);
 		pn(NULL);
 		pn(mmapprotname);
@@ -673,17 +675,6 @@ ktrsyscall(struct ktr_syscall *ktr)
 		pn(NULL);
 		pn(NULL);
 		pn(mmapprotname);
-		break;
-	case SYS_mquery:
-		pn(NULL);
-		pn(NULL);
-		pn(mmapprotname);
-		pn(mmapflagsname);
-		pn(NULL);
-		/* skip padding */
-		ap++;
-		narg--;
-		plln();
 		break;
 	case SYS_msync:
 		pn(NULL);
@@ -898,7 +889,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 		break;
 	case SYS_ktrace:
 		pn(NULL);
-		pn(NULL);
+		pn(ktraceopname);
 		pn(ktracefacname);
 		pn(pgid);
 		break;
@@ -933,8 +924,7 @@ static struct ctlname debugname[CTL_DEBUG_MAXID];
 static struct ctlname kernmallocname[] = CTL_KERN_MALLOC_NAMES;
 static struct ctlname forkstatname[] = CTL_KERN_FORKSTAT_NAMES;
 static struct ctlname nchstatsname[] = CTL_KERN_NCHSTATS_NAMES;
-static struct ctlname kernprocname[] =
-{
+static struct ctlname kernprocname[] = {
 	{ NULL },
 	{ "all" },
 	{ "pid" },
@@ -1445,7 +1435,8 @@ semctlname(int cmd)
 }
 
 static void
-shmctlname(int cmd) {
+shmctlname(int cmd)
+{
 	switch (cmd) {
 	case IPC_RMID:
 		(void)printf("IPC_RMID");
@@ -1463,7 +1454,8 @@ shmctlname(int cmd) {
 
 
 static void
-semgetname(int flag) {
+semgetname(int flag)
+{
 	int	or = 0;
 	if_print_or(flag, IPC_CREAT, or);
 	if_print_or(flag, IPC_EXCL, or);
@@ -1481,7 +1473,8 @@ semgetname(int flag) {
  * mode argument is unused (and often bogus and misleading).
  */
 static void
-flagsandmodename(int flags, int mode) {
+flagsandmodename(int flags, int mode)
+{
 	flagsname (flags);
 	if ((flags & O_CREAT) == O_CREAT) {
 		(void)putchar(',');
@@ -1523,3 +1516,29 @@ sockoptlevelname(int level)
 	}
 }
 
+static void
+ktraceopname(int ops)
+{
+	int invalid = 0;
+
+	printf("%#x<", ops);
+	switch (KTROP(ops)) {
+	case KTROP_SET:
+		printf("KTROP_SET");
+		break;
+	case KTROP_CLEAR:
+		printf("KTROP_CLEAR");
+		break;
+	case KTROP_CLEARFILE:
+		printf("KTROP_CLEARFILE");
+		break;
+	default:
+		printf("KTROP(%d)", KTROP(ops));
+		invalid = 1;
+		break;
+	}
+	if (ops & KTRFLAG_DESCEND) printf ("|%s", "KTRFLAG_DESCEND");
+	printf(">");
+	if (invalid || (ops & ~(KTROP((unsigned)-1) | KTRFLAG_DESCEND)))
+		(void)printf("<invalid>%ld", (long)ops);
+}
