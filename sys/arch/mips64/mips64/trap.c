@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.99 2014/08/17 11:11:34 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.100 2014/08/18 17:23:06 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -793,8 +793,7 @@ fault_common_no_miss:
 		 * look like an obscure errata to me).
 		 *
 		 * Thus, ignore these exceptions if the faulting address
-		 * is in the kernel and at the beginning of an I$ cache
-		 * line.
+		 * is in the kernel.
 		 */
 	    {
 		extern void *kernel_text;
@@ -804,8 +803,7 @@ fault_common_no_miss:
 		va = (vaddr_t)trapframe->pc;
 		if (trapframe->cause & CR_BR_DELAY)
 			va += 4;
-		if ((va & (/* R10K_L1I_LINE - 1 */ 64UL - 1)) == 0 &&
-		    va > (vaddr_t)&kernel_text && va < (vaddr_t)&etext)
+		if (va > (vaddr_t)&kernel_text && va < (vaddr_t)&etext)
 			return;
 	    }
 		goto err;
