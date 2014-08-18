@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: ospfd.pl,v 1.2 2014/07/11 22:28:51 bluhm Exp $
+#	$OpenBSD: ospfd.pl,v 1.3 2014/08/18 22:58:19 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -28,12 +28,12 @@ sub usage {
     die "usage: ospf.pl [test-args.pl]\n";
 }
 
-my $test;
+my $testfile;
 our %tst_args;
 if (@ARGV and -f $ARGV[-1]) {
-    $test = pop;
-    do $test
-	or die "Do test file $test failed: ", $@ || $!;
+    $testfile = pop;
+    do $testfile
+	or die "Do test file $testfile failed: ", $@ || $!;
 }
 @ARGV == 0 or usage();
 my $args = merge(\%tst_args, \%default_args);

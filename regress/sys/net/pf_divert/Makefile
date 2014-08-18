@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2014/07/12 21:00:46 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.11 2014/08/18 22:58:19 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -41,10 +41,10 @@ REMOTE_SSH ?=
     empty (LOCAL_ADDR6) || empty (REMOTE_ADDR6) || empty (FAKE_ADDR6) || \
     empty (REMOTE_SSH)
 regress:
-	@echo this tests needs a remote machine to operate on
+	@echo This tests needs a remote machine to operate on.
 	@echo LOCAL_ADDR REMOTE_ADDR FAKE_ADDR LOCAL_ADDR6
-	@echo REMOTE_ADDR6 FAKE_ADDR6 REMOTE_SSH are empty
-	@echo fill out these variables for additional tests
+	@echo REMOTE_ADDR6 FAKE_ADDR6 REMOTE_SSH are empty.
+	@echo Fill out these variables for additional tests.
 .endif
 
 # Automatically generate regress targets from test cases in directory.
@@ -158,6 +158,6 @@ check-setup:
 	route -n get -inet6 ${FAKE_ADDR6} | grep 'gateway: ${REMOTE_ADDR6}$$'
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
-	ssh ${REMOTE_SSH} perl -MIO::Socket::INET6 -MIO::Socket::INET6 -e 1
+	ssh ${REMOTE_SSH} perl -MIO::Socket::INET6 -MSocket6 -e 1
 
 .include <bsd.regress.mk>

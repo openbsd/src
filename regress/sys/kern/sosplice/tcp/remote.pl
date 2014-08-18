@@ -1,7 +1,7 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.1.1.1 2013/01/03 17:36:39 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.2 2014/08/18 22:58:19 bluhm Exp $
 
-# Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -43,12 +43,12 @@ usage:
 EOF
 }
 
-my $test;
+my $testfile;
 our %args;
 if (@ARGV and -f $ARGV[-1]) {
-	$test = pop;
-	do $test
-	    or die "Do test file $test failed: ", $@ || $!;
+	$testfile = pop;
+	do $testfile
+	    or die "Do test file $testfile failed: ", $@ || $!;
 }
 my $mode =
 	@ARGV == 3 && $ARGV[0] =~ /^\d+$/ && $ARGV[2] =~ /^\d+$/ ? "manual" :
@@ -100,7 +100,7 @@ if ($mode eq "auto") {
 	$r = Remote->new(
 	    forward		=> $ARGV[0],
 	    logfile		=> "relay.log",
-	    testfile		=> $test,
+	    testfile		=> $testfile,
 	    %{$args{relay}},
 	    remotessh		=> $ARGV[3],
 	    listenaddr		=> $ARGV[2],

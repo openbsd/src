@@ -1,7 +1,7 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.6 2014/07/11 15:38:44 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.7 2014/08/18 22:58:19 bluhm Exp $
 
-# Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -43,12 +43,12 @@ usage:
 EOF
 }
 
-my $test;
+my $testfile;
 our %args;
 if (@ARGV and -f $ARGV[-1]) {
-	$test = pop;
-	do $test
-	    or die "Do test file $test failed: ", $@ || $!;
+	$testfile = pop;
+	do $testfile
+	    or die "Do test file $testfile failed: ", $@ || $!;
 }
 my $mode =
 	@ARGV == 3 && $ARGV[0] =~ /^\d+$/ && $ARGV[2] =~ /^\d+$/ ? "manual" :
@@ -70,7 +70,7 @@ if ($mode eq "relay") {
 	    connectport         => $ARGV[3],
 	    logfile             => dirname($0)."/remote.log",
 	    conffile            => dirname($0)."/relayd.conf",
-	    testfile            => $test,
+	    testfile            => $testfile,
 	);
 	open(my $log, '<', $r->{logfile})
 	    or die "Remote log file open failed: $!";
@@ -106,7 +106,7 @@ my $s = Server->new(
     listendomain        => AF_INET,
     listenaddr          => ($mode eq "auto" ? $ARGV[1] : undef),
     listenport          => ($mode eq "manual" ? $ARGV[0] : undef),
-    testfile            => $test,
+    testfile            => $testfile,
 ) unless $args{server}{noserver};
 if ($mode eq "auto") {
 	$r = Remote->new(
@@ -117,7 +117,7 @@ if ($mode eq "auto") {
 	    listenaddr          => $ARGV[2],
 	    connectaddr         => $ARGV[1],
 	    connectport         => $s ? $s->{listenport} : 1,
-	    testfile            => $test,
+	    testfile            => $testfile,
 	);
 	$r->run->up;
 }
@@ -128,7 +128,7 @@ my $c = Client->new(
     connectdomain       => AF_INET,
     connectaddr         => ($mode eq "manual" ? $ARGV[1] : $r->{listenaddr}),
     connectport         => ($mode eq "manual" ? $ARGV[2] : $r->{listenport}),
-    testfile            => $test,
+    testfile            => $testfile,
 ) unless $args{client}{noclient};
 
 $s->run unless $args{server}{noserver};

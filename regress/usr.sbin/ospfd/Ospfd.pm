@@ -1,4 +1,4 @@
-#	$OpenBSD: Ospfd.pm,v 1.2 2014/07/11 22:28:51 bluhm Exp $
+#	$OpenBSD: Ospfd.pm,v 1.3 2014/08/18 22:58:19 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -27,7 +27,7 @@ sub new {
 	my $class = shift;
 	my %args = @_;
 	$args{logfile} ||= "ospfd.log";
-	$args{up} ||= "Started";
+	$args{up} ||= "startup";
 	$args{down} ||= "terminating";
 	$args{func} = sub { Carp::confess "$class func may not be called" };
 	$args{conffile} ||= "ospfd.conf";
@@ -59,31 +59,20 @@ sub new {
 	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
 	my @cmd = (@sudo, "/sbin/chown", "0:0", $self->{conffile});
 	system(@cmd)
-	    and die "System '@cmd' failed: $?";
+	    and die ref($self), " system '@cmd' failed: $?";
 
-	return $self;
-}
-
-sub up {
-	my $self = Proc::up(shift, @_);
-	my $timeout = shift || 10;
-	my $regex = "startup";
-	$self->loggrep(qr/$regex/, $timeout)
-	    or croak ref($self), " no $regex in $self->{logfile} ".
-		"after $timeout seconds";
 	return $self;
 }
 
 sub child {
 	my $self = shift;
-	print STDERR $self->{up}, "\n";
 	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
 	my @ktrace = $ENV{KTRACE} ? ($ENV{KTRACE}, "-i") : ();
 	my $ospfd = $ENV{OSPFD} ? $ENV{OSPFD} : "ospfd";
-	my @cmd = (@sudo, @ktrace, $ospfd, '-d', '-v', '-f', $self->{conffile});
+	my @cmd = (@sudo, @ktrace, $ospfd, "-dv", "-f", $self->{conffile});
 	print STDERR "execute: @cmd\n";
 	exec @cmd;
-	die "Exec @cmd failed: $!";
+	die ref($self), " exec '@cmd' failed: $!";
 }
 
 1;

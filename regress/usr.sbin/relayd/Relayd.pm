@@ -1,6 +1,6 @@
-#	$OpenBSD: Relayd.pm,v 1.11 2014/07/10 22:33:44 bluhm Exp $
+#	$OpenBSD: Relayd.pm,v 1.12 2014/08/18 22:58:19 bluhm Exp $
 
-# Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -26,7 +26,7 @@ sub new {
 	my $class = shift;
 	my %args = @_;
 	$args{logfile} ||= "relayd.log";
-	$args{up} ||= "Started";
+	$args{up} ||= $args{dryrun} || "relay_launch: ";
 	$args{down} ||= $args{dryrun} ? "relayd.conf:" : "parent terminating";
 	$args{func} = sub { Carp::confess "$class func may not be called" };
 	$args{conffile} ||= "relayd.conf";
@@ -98,26 +98,15 @@ sub new {
 	return $self;
 }
 
-sub up {
-	my $self = Proc::up(shift, @_);
-	my $timeout = shift || 10;
-	my $regex = $self->{dryrun} || "relay_launch: ";
-	$self->loggrep(qr/$regex/, $timeout)
-	    or croak ref($self), " no $regex in $self->{logfile} ".
-		"after $timeout seconds";
-	return $self;
-}
-
 sub child {
 	my $self = shift;
-	print STDERR $self->{up}, "\n";
 	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
 	my @ktrace = $ENV{KTRACE} ? ($ENV{KTRACE}, "-i") : ();
 	my $relayd = $ENV{RELAYD} ? $ENV{RELAYD} : "relayd";
-	my @cmd = (@sudo, @ktrace, $relayd, '-dvv', '-f', $self->{conffile});
+	my @cmd = (@sudo, @ktrace, $relayd, "-dvv", "-f", $self->{conffile});
 	print STDERR "execute: @cmd\n";
 	exec @cmd;
-	die "Exec @cmd failed: $!";
+	die ref($self), " exec '@cmd' failed: $!";
 }
 
 1;

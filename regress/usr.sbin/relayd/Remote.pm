@@ -1,6 +1,6 @@
-#	$OpenBSD: Remote.pm,v 1.4 2014/07/11 16:13:11 bluhm Exp $
+#	$OpenBSD: Remote.pm,v 1.5 2014/08/18 22:58:19 bluhm Exp $
 
-# Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -47,7 +47,7 @@ sub new {
 	my $class = shift;
 	my %args = @_;
 	$args{logfile} ||= "remote.log";
-	$args{up} ||= "Started";
+	$args{up} ||= "listen sock: ";
 	$args{down} ||= $args{dryrun} ? "relayd.conf" : "parent terminating";
 	$args{func} = sub { Carp::confess "$class func may not be called" };
 	$args{remotessh}
@@ -72,10 +72,8 @@ sub run {
 
 sub up {
 	my $self = Proc::up(shift, @_);
-	my $timeout = shift || 10;
-	my $lsock = $self->loggrep(qr/^listen sock: /, $timeout)
-	    or croak ref($self), " no listen sock in $self->{logfile} ".
-		"after $timeout seconds";
+	my $lsock = $self->loggrep(qr/^listen sock: /)
+	    or croak ref($self), " no 'listen sock: ' in $self->{logfile}";
 	my($addr, $port) = $lsock =~ /: (\S+) (\S+)$/
 	    or croak ref($self), " no listen addr and port in $self->{logfile}";
 	$self->{listenaddr} = $addr;
@@ -85,22 +83,20 @@ sub up {
 
 sub child {
 	my $self = shift;
-
-	print STDERR $self->{up}, "\n";
 	my @opts = split(' ', $ENV{SSH_OPTIONS}) if $ENV{SSH_OPTIONS};
 	my @sudo = $ENV{SUDO} ? "SUDO=$ENV{SUDO}" : ();
 	my @ktrace = $ENV{KTRACE} ? "KTRACE=$ENV{KTRACE}" : ();
 	my @relayd = $ENV{RELAYD} ? "RELAYD=$ENV{RELAYD}" : ();
 	my $curdir = dirname($0) || ".";
-	$curdir = getcwd() if $curdir eq '.';
-	my @cmd = ('ssh', @opts, $self->{remotessh},
-	    @sudo, @ktrace, @relayd, 'perl',
-	    '-I', $curdir, "$curdir/".basename($0), $self->{forward},
+	$curdir = getcwd() if $curdir eq ".";
+	my @cmd = ("ssh", @opts, $self->{remotessh},
+	    @sudo, @ktrace, @relayd, "perl",
+	    "-I", $curdir, "$curdir/".basename($0), $self->{forward},
 	    $self->{listenaddr}, $self->{connectaddr}, $self->{connectport},
 	    ($self->{testfile} ? "$curdir/".basename($self->{testfile}) : ()));
 	print STDERR "execute: @cmd\n";
 	exec @cmd;
-	die "Exec @cmd failed: $!";
+	die ref($self), " exec '@cmd' failed: $!";
 }
 
 sub close_child {

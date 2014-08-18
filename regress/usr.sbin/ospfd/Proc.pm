@@ -1,4 +1,4 @@
-#	$OpenBSD: Proc.pm,v 1.2 2014/07/11 22:28:51 bluhm Exp $
+#	$OpenBSD: Proc.pm,v 1.3 2014/08/18 22:58:19 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -77,9 +77,9 @@ sub run {
 	my $self = shift;
 
 	pipe(my $reader, my $writer)
-	    or die ref($self), " pipe to child failed";
+	    or die ref($self), " pipe to child failed: $!";
 	defined(my $pid = fork())
-	    or die ref($self), " fork child failed";
+	    or die ref($self), " fork child failed: $!";
 	if ($pid) {
 		$CHILDREN{$pid} = 1;
 		$self->{pid} = $pid;
@@ -108,9 +108,9 @@ sub run {
 	print STDERR $self->{up}, "\n";
 	$self->{func}->($self);
 	print STDERR "Shutdown", "\n";
+
 	IO::Handle::flush(\*STDOUT);
 	IO::Handle::flush(\*STDERR);
-
 	POSIX::_exit(0);
 }
 
@@ -167,7 +167,7 @@ sub up {
 	my $self = shift;
 	my $timeout = shift || 10;
 	$self->loggrep(qr/$self->{up}/, $timeout)
-	    or croak ref($self), " no $self->{up} in $self->{logfile} ".
+	    or croak ref($self), " no '$self->{up}' in $self->{logfile} ".
 		"after $timeout seconds";
 	return $self;
 }
@@ -176,7 +176,7 @@ sub down {
 	my $self = shift;
 	my $timeout = shift || 30;
 	$self->loggrep(qr/$self->{down}/, $timeout)
-	    or croak ref($self), " no $self->{down} in $self->{logfile} ".
+	    or croak ref($self), " no '$self->{down}' in $self->{logfile} ".
 		"after $timeout seconds";
 	return $self;
 }
