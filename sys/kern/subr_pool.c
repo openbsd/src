@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.145 2014/08/12 01:31:43 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.146 2014/08/18 01:28:44 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -143,13 +143,16 @@ void	 pool_print1(struct pool *, const char *, int (*)(const char *, ...)
 static inline int
 phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
 {
-	long diff = (vaddr_t)a->ph_page - (vaddr_t)b->ph_page;
-	if (diff < 0)
-		return -(-diff >= a->ph_pagesize);
-	else if (diff > 0)
-		return (diff >= b->ph_pagesize);
-	else
-		return (0);
+	vaddr_t va = (vaddr_t)a->ph_page;
+	vaddr_t vb = (vaddr_t)b->ph_page;
+
+	/* the compares in this order are important for the NFIND to work */
+	if (vb < va)
+		return (-1);
+	if (vb > va)
+		return (1);
+
+	return (0);
 }
 
 RB_PROTOTYPE(phtree, pool_item_header, ph_node, phtree_compare);
@@ -161,7 +164,7 @@ RB_GENERATE(phtree, pool_item_header, ph_node, phtree_compare);
 static inline struct pool_item_header *
 pr_find_pagehead(struct pool *pp, void *v)
 {
-	struct pool_item_header *ph, tmp;
+	struct pool_item_header *ph, key;
 
 	if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
 		caddr_t page;
@@ -171,26 +174,20 @@ pr_find_pagehead(struct pool *pp, void *v)
 		return ((struct pool_item_header *)(page + pp->pr_phoffset));
 	}
 
-	/*
-	 * The trick we're using in the tree compare function is to compare
-	 * two elements equal when they overlap. We want to return the
-	 * page header that belongs to the element just before this address.
-	 * We don't want this element to compare equal to the next element,
-	 * so the compare function takes the pagesize from the lower element.
-	 * If this header is the lower, its pagesize is zero, so it can't
-	 * overlap with the next header. But if the header we're looking for
-	 * is lower, we'll use its pagesize and it will overlap and return
-	 * equal.
-	 */
-	tmp.ph_page = v;
-	tmp.ph_pagesize = 0;
-	ph = RB_FIND(phtree, &pp->pr_phtree, &tmp);
-
-	if (ph) {
-		KASSERT(ph->ph_page <= (caddr_t)v);
-		KASSERT(ph->ph_page + ph->ph_pagesize > (caddr_t)v);
+	key.ph_page = v;
+	ph = RB_NFIND(phtree, &pp->pr_phtree, &key);
+	if (ph == NULL) {
+		panic("pr_find_pagehead: %s: page header missing",
+		    pp->pr_wchan);
 	}
-	return ph;
+
+	KASSERT(ph->ph_page <= (caddr_t)v);
+	if (ph->ph_page + ph->ph_pagesize <= (caddr_t)v) {
+		panic("pr_find_pagehead: %s: incorrect page",
+		    pp->pr_wchan);
+	}
+
+	return (ph);
 }
 
 /*
@@ -763,9 +760,7 @@ pool_do_put(struct pool *pp, void *v)
 	}
 #endif
 
-	if ((ph = pr_find_pagehead(pp, v)) == NULL) {
-		panic("pool_do_put: %s: page header missing", pp->pr_wchan);
-	}
+	ph = pr_find_pagehead(pp, v);
 
 	/*
 	 * Return to item list.
