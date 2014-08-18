@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.50 2014/08/08 15:35:31 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.51 2014/08/18 16:26:13 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,6 +16,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/types.h>
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -96,7 +99,6 @@ man_unscope(struct man *man, const struct man_node *to)
 {
 	struct man_node	*n;
 
-	man->next = MAN_NEXT_SIBLING;
 	to = to->parent;
 	n = man->last;
 	while (n != to) {
@@ -135,11 +137,23 @@ man_unscope(struct man *man, const struct man_node *to)
 		 * Save a pointer to the parent such that
 		 * we know where to continue the iteration.
 		 */
+
 		man->last = n;
 		n = n->parent;
 		if ( ! man_valid_post(man))
 			return(0);
 	}
+
+	/*
+	 * If we ended up at the parent of the node we were
+	 * supposed to rewind to, that means the target node
+	 * got deleted, so add the next node we parse as a child
+	 * of the parent instead of as a sibling of the target.
+	 */
+
+	man->next = (man->last == to) ?
+	    MAN_NEXT_CHILD : MAN_NEXT_SIBLING;
+
 	return(1);
 }
 

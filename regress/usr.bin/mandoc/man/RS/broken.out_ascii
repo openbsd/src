@@ -1,0 +1,18 @@
+RS-BROKEN(1)               OpenBSD Reference Manual               RS-BROKEN(1)
+
+
+
+NNAAMMEE
+       RS-broken - indented blocks broken by other blocks
+
+DDEESSCCRRIIPPTTIIOONN
+       initial text
+         indented
+
+         still indented
+       back to normal
+       final text
+
+
+
+OpenBSD                         August 28, 2014                   RS-BROKEN(1)

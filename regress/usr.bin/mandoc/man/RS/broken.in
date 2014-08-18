@@ -1,0 +1,15 @@
+.TH RS-BROKEN 1 "August 28, 2014" OpenBSD
+.SH NAME
+RS-broken \- indented blocks broken by other blocks
+.SH DESCRIPTION
+initial text
+.RS 2n
+indented
+.PP
+still indented
+.RE
+back to normal
+.RS
+.P
+.RE
+final text
