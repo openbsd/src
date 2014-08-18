@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exec.3,v 1.26 2014/08/16 21:09:36 guenther Exp $
+.\"	$OpenBSD: exec.3,v 1.27 2014/08/18 04:48:22 guenther Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 16 2014 $
+.Dd $Mdocdate: August 18 2014 $
 .Dt EXEC 3
 .Os
 .Sh NAME
@@ -177,8 +177,9 @@ default shell program
 .Fn execl ,
 .Fn execle ,
 .Fn execlp ,
+.Fn execvp ,
 and
-.Fn execvp
+.Fn execvpe
 may fail and set
 .Va errno
 for any of the errors specified for the library functions
