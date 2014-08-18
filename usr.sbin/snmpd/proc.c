@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.10 2014/07/12 14:15:04 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.11 2014/08/18 13:13:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -37,8 +37,6 @@
 #include <signal.h>
 #include <pwd.h>
 #include <event.h>
-
-#include <openssl/ssl.h>
 
 #include "snmpd.h"
 
@@ -163,7 +161,7 @@ proc_open(struct privsep *ps, struct privsep_proc *p,
 
 	/*
 	 * Open socket pairs for our peers
-	 */	
+	 */
 	for (proc = 0; proc < nproc; proc++) {
 		procs[proc].p_ps = ps;
 		procs[proc].p_env = ps->ps_env;
@@ -323,6 +321,7 @@ proc_sig_handler(int sig, short event, void *arg)
 	case SIGCHLD:
 	case SIGHUP:
 	case SIGPIPE:
+	case SIGUSR1:
 		/* ignore */
 		break;
 	default:
@@ -409,12 +408,14 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	signal_set(&ps->ps_evsigchld, SIGCHLD, proc_sig_handler, p);
 	signal_set(&ps->ps_evsighup, SIGHUP, proc_sig_handler, p);
 	signal_set(&ps->ps_evsigpipe, SIGPIPE, proc_sig_handler, p);
+	signal_set(&ps->ps_evsigusr1, SIGUSR1, proc_sig_handler, p);
 
 	signal_add(&ps->ps_evsigint, NULL);
 	signal_add(&ps->ps_evsigterm, NULL);
 	signal_add(&ps->ps_evsigchld, NULL);
 	signal_add(&ps->ps_evsighup, NULL);
 	signal_add(&ps->ps_evsigpipe, NULL);
+	signal_add(&ps->ps_evsigusr1, NULL);
 
 	proc_listen(ps, procs, nproc);
 

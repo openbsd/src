@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.55 2014/05/14 09:42:22 mikeb Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.56 2014/08/18 13:13:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -149,6 +149,7 @@ struct privsep {
 	struct event		 ps_evsigchld;
 	struct event		 ps_evsighup;
 	struct event		 ps_evsigpipe;
+	struct event		 ps_evsigusr1;
 
 	void			*ps_env;
 };

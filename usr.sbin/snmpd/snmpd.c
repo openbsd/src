@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.23 2014/05/23 18:37:20 benno Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.24 2014/08/18 13:13:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -110,6 +110,9 @@ snmpd_sig_handler(int sig, short event, void *arg)
 	case SIGHUP:
 		/* reconfigure */
 		break;
+	case SIGUSR1:
+		/* ignore */
+		break;
 	default:
 		fatalx("unexpected signal");
 	}
@@ -215,12 +218,14 @@ main(int argc, char *argv[])
 	signal_set(&ps->ps_evsigchld, SIGCHLD, snmpd_sig_handler, ps);
 	signal_set(&ps->ps_evsighup, SIGHUP, snmpd_sig_handler, ps);
 	signal_set(&ps->ps_evsigpipe, SIGPIPE, snmpd_sig_handler, ps);
+	signal_set(&ps->ps_evsigusr1, SIGUSR1, snmpd_sig_handler, ps);
 
 	signal_add(&ps->ps_evsigint, NULL);
 	signal_add(&ps->ps_evsigterm, NULL);
 	signal_add(&ps->ps_evsigchld, NULL);
 	signal_add(&ps->ps_evsighup, NULL);
 	signal_add(&ps->ps_evsigpipe, NULL);
+	signal_add(&ps->ps_evsigusr1, NULL);
 
 	proc_listen(ps, procs, nitems(procs));
 
