@@ -1,4 +1,4 @@
-/* $OpenBSD: rmd_locl.h,v 1.10 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: rmd_locl.h,v 1.11 2014/08/18 19:11:48 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,11 +88,11 @@ void ripemd160_block_data_order (RIPEMD160_CTX *c, const void *p,size_t num);
 #define HASH_FINAL              RIPEMD160_Final
 #define	HASH_MAKE_STRING(c,s)	do {	\
 	unsigned long ll;		\
-	ll=(c)->A; (void)HOST_l2c(ll,(s));	\
-	ll=(c)->B; (void)HOST_l2c(ll,(s));	\
-	ll=(c)->C; (void)HOST_l2c(ll,(s));	\
-	ll=(c)->D; (void)HOST_l2c(ll,(s));	\
-	ll=(c)->E; (void)HOST_l2c(ll,(s));	\
+	ll=(c)->A; HOST_l2c(ll,(s));	\
+	ll=(c)->B; HOST_l2c(ll,(s));	\
+	ll=(c)->C; HOST_l2c(ll,(s));	\
+	ll=(c)->D; HOST_l2c(ll,(s));	\
+	ll=(c)->E; HOST_l2c(ll,(s));	\
 	} while (0)
 #define HASH_BLOCK_DATA_ORDER   ripemd160_block_data_order
 
