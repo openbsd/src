@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.189 2014/07/14 00:11:12 bluhm Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.190 2014/08/18 12:59:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -976,6 +976,7 @@ struct privsep {
 	struct event			 ps_evsigchld;
 	struct event			 ps_evsighup;
 	struct event			 ps_evsigpipe;
+	struct event			 ps_evsigusr1;
 
 	int				 ps_noaction;
 	struct passwd			*ps_pw;

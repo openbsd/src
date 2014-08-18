@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.130 2014/07/13 00:32:08 benno Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.131 2014/08/18 12:59:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -130,6 +130,7 @@ parent_sig_handler(int sig, short event, void *arg)
 		parent_reload(ps->ps_env, CONFIG_RELOAD, NULL);
 		break;
 	case SIGPIPE:
+	case SIGUSR1:
 		/* ignore */
 		break;
 	default:
@@ -241,12 +242,14 @@ main(int argc, char *argv[])
 	signal_set(&ps->ps_evsigchld, SIGCHLD, parent_sig_handler, ps);
 	signal_set(&ps->ps_evsighup, SIGHUP, parent_sig_handler, ps);
 	signal_set(&ps->ps_evsigpipe, SIGPIPE, parent_sig_handler, ps);
+	signal_set(&ps->ps_evsigusr1, SIGUSR1, parent_sig_handler, ps);
 
 	signal_add(&ps->ps_evsigint, NULL);
 	signal_add(&ps->ps_evsigterm, NULL);
 	signal_add(&ps->ps_evsigchld, NULL);
 	signal_add(&ps->ps_evsighup, NULL);
 	signal_add(&ps->ps_evsigpipe, NULL);
+	signal_add(&ps->ps_evsigusr1, NULL);
 
 	proc_listen(ps, procs, nitems(procs));
 
