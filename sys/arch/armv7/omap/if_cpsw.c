@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.22 2014/05/06 14:44:08 jasper Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.23 2014/08/18 17:56:45 miod Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
+#include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
