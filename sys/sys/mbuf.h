@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.180 2014/07/13 09:52:48 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.181 2014/08/18 04:06:16 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -479,6 +479,57 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
  * has payload larger than the value below.
  */
 #define PACKET_TAG_MAXSIZE		52
+
+/*
+ * mbuf lists
+ */
+
+#include <sys/mutex.h>
+
+struct mbuf_list {
+	struct mbuf		*ml_head;
+	struct mbuf		*ml_tail;
+	u_int			ml_len;
+};
+
+#define MBUF_LIST_INITIALIZER() { NULL, NULL, 0 }
+
+void			ml_init(struct mbuf_list *);
+void			ml_enqueue(struct mbuf_list *, struct mbuf *);
+struct mbuf *		ml_dequeue(struct mbuf_list *);
+struct mbuf *		ml_dechain(struct mbuf_list *);
+
+#define	ml_len(_ml)		((_ml)->ml_len)
+#define	ml_empty(_ml)		((_ml)->ml_len == 0)
+
+#define MBUF_LIST_FOREACH(_ml, _m) \
+	for ((_m) = (_ml)->ml_head; (_m) != NULL; (_m) = (_m)->m_nextpkt)
+
+/*
+ * mbuf queues
+ */
+
+struct mbuf_queue {
+	struct mutex		mq_mtx;
+	struct mbuf_list	mq_list;
+	u_int			mq_maxlen;
+	u_int			mq_drops;
+};
+
+#define MBUF_QUEUE_INITIALIZER(_maxlen, _ipl) \
+    { MUTEX_INITIALIZER(_ipl), MBUF_LIST_INITIALIZER(), (_maxlen), 0 }
+
+void			mq_init(struct mbuf_queue *, u_int, int);
+int			mq_enqueue(struct mbuf_queue *, struct mbuf *);
+struct mbuf *		mq_dequeue(struct mbuf_queue *);
+int			mq_enlist(struct mbuf_queue *, struct mbuf_list *);
+void			mq_delist(struct mbuf_queue *, struct mbuf_list *);
+struct mbuf *		mq_dechain(struct mbuf_queue *);
+
+#define	mq_len(_mq)		ml_len(&(_mq)->mq_list)
+#define	mq_empty(_mq)		ml_empty(&(_mq)->mq_list)
+#define	mq_drops(_mq)		((_mq)->mq_drops)
+#define	mq_set_maxlen(_mq, _l)	((_mq)->mq_maxlen = (_l))
 
 #endif /* _KERNEL */
 #endif /* _SYS_MBUF_H_ */

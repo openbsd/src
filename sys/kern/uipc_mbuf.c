@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.192 2014/07/13 15:52:38 tedu Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.193 2014/08/18 04:06:16 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1241,6 +1241,156 @@ m_print(void *v,
 		    m->m_ext.ext_free, m->m_ext.ext_arg);
 		(*pr)("m_ext.ext_nextref: %p\tm_ext.ext_prevref: %p\n",
 		    m->m_ext.ext_nextref, m->m_ext.ext_prevref);
+
 	}
 }
 #endif
+
+/*
+ * mbuf lists
+ */
+
+void ml_join(struct mbuf_list *, struct mbuf_list *);
+
+void
+ml_init(struct mbuf_list *ml)
+{
+	ml->ml_head = ml->ml_tail = NULL;
+	ml->ml_len = 0;
+}
+
+void
+ml_enqueue(struct mbuf_list *ml, struct mbuf *m)
+{
+	if (ml->ml_tail == NULL)
+		ml->ml_head = ml->ml_tail = m;
+	else {
+		ml->ml_tail->m_nextpkt = m;
+		ml->ml_tail = m;
+	}
+
+	m->m_nextpkt = NULL;
+	ml->ml_len++;
+}
+
+void
+ml_join(struct mbuf_list *mla, struct mbuf_list *mlb)
+{
+	if (mla->ml_tail == NULL)
+		*mla = *mlb;
+	else if (mlb->ml_tail != NULL) {
+		mla->ml_tail->m_nextpkt = mlb->ml_head;
+		mla->ml_tail = mlb->ml_tail;
+		mla->ml_len += mlb->ml_len;
+
+		ml_init(mlb);
+	}
+}
+
+struct mbuf *
+ml_dequeue(struct mbuf_list *ml)
+{
+	struct mbuf *m;
+
+	m = ml->ml_head;
+	if (m != NULL) {
+		ml->ml_head = m->m_nextpkt;
+		if (ml->ml_head == NULL)
+			ml->ml_tail = NULL;
+
+		m->m_nextpkt = NULL;
+		ml->ml_len--;
+	}
+
+	return (m);
+}
+
+struct mbuf *
+ml_dechain(struct mbuf_list *ml)
+{
+	struct mbuf *m0;
+
+	m0 = ml->ml_head;
+
+	ml_init(ml);
+
+	return (m0);
+}
+
+/*
+ * mbuf queues
+ */
+
+void
+mq_init(struct mbuf_queue *mq, u_int maxlen, int ipl)
+{
+	mtx_init(&mq->mq_mtx, ipl);
+	ml_init(&mq->mq_list);
+	mq->mq_maxlen = maxlen;
+}
+
+int
+mq_enqueue(struct mbuf_queue *mq, struct mbuf *m)
+{
+	int dropped = 0;
+
+	mtx_enter(&mq->mq_mtx);
+	if (mq_len(mq) < mq->mq_maxlen)
+		ml_enqueue(&mq->mq_list, m);
+	else {
+		mq->mq_drops++;
+		dropped = 1;
+	}
+	mtx_leave(&mq->mq_mtx);
+
+	if (dropped)
+		m_freem(m);
+
+	return (dropped);
+}
+
+struct mbuf *
+mq_dequeue(struct mbuf_queue *mq)
+{
+	struct mbuf *m;
+
+	mtx_enter(&mq->mq_mtx);
+	m = ml_dequeue(&mq->mq_list);
+	mtx_leave(&mq->mq_mtx);
+
+	return (m);
+}
+
+int
+mq_enlist(struct mbuf_queue *mq, struct mbuf_list *ml)
+{
+	int full;
+
+	mtx_enter(&mq->mq_mtx);
+	ml_join(&mq->mq_list, ml);
+	full = mq_len(mq) >= mq->mq_maxlen;
+	mtx_leave(&mq->mq_mtx);
+
+	return (full);
+}
+
+void
+mq_delist(struct mbuf_queue *mq, struct mbuf_list *ml)
+{
+	mtx_enter(&mq->mq_mtx);
+	*ml = mq->mq_list;
+	ml_init(&mq->mq_list);
+	mtx_leave(&mq->mq_mtx);
+}
+
+struct mbuf *
+mq_dechain(struct mbuf_queue *mq)
+{
+	struct mbuf *m0;
+
+	mtx_enter(&mq->mq_mtx);
+	m0 = ml_dechain(&mq->mq_list);
+	mtx_leave(&mq->mq_mtx);
+
+	return (m0);
+}
