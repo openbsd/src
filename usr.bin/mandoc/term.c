@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.87 2014/08/08 16:02:55 schwarze Exp $ */
+/*	$Id: term.c,v 1.88 2014/08/18 22:21:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -218,7 +218,7 @@ term_flushln(struct termp *p)
 				break;
 			if (' ' == p->buf[i]) {
 				j = i;
-				while (' ' == p->buf[i])
+				while (i < p->col && ' ' == p->buf[i])
 					i++;
 				dv = (i - j) * (*p->width)(p, ' ');
 				vbl += dv;
