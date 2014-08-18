@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.61 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.62 2014/08/18 05:11:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -29,6 +29,7 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/timeout.h>
 #include <sys/proc.h>
 #include <sys/device.h>

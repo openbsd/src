@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.37 2013/06/11 01:01:15 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.38 2014/08/18 05:11:03 dlg Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -66,6 +66,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/mbuf.h>
 
 extern struct pool mtagpool;

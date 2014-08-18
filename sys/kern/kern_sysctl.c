@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.260 2014/07/22 11:06:09 mpi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.261 2014/08/18 05:11:03 dlg Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -43,6 +43,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>

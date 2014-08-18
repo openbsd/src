@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.233 2014/07/22 01:04:04 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.234 2014/08/18 05:11:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -38,7 +38,7 @@
 #include <sys/file.h>
 #include <sys/timeout.h>
 #include <sys/malloc.h>
-#include <sys/mbuf.h>
+#include <sys/pool.h>
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>

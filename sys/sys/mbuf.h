@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.181 2014/08/18 04:06:16 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.182 2014/08/18 05:11:03 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 #define _SYS_MBUF_H_
 
 #include <sys/malloc.h>
-#include <sys/pool.h>
 #include <sys/queue.h>
 
 /*
