@@ -4,12 +4,18 @@ NNAAMMEE
      BBll--nnoottyyppee - lists with late or missing types
 
 DDEESSCCRRIIPPTTIIOONN
-     initial text
+     late type:
 
            oo   Some text.
-     middle text
+
+     no type:
 
            Some text.
+
+     no argument at all:
+
+     Some text.
+
      final text
 
 OpenBSD                          July 4, 2014                          OpenBSD

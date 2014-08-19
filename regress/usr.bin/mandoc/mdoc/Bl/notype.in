@@ -5,14 +5,22 @@
 .Nm Bl-notype
 .Nd lists with late or missing types
 .Sh DESCRIPTION
-initial text
+late type:
 .Bl -offset indent -bullet
 .It
 Some text.
 .El tail argument
-middle text
+.Pp
+no type:
 .Bl -offset indent
 .It
 Some text.
 .El
+.Pp
+no argument at all:
+.Bl
+.It
+Some text.
+.El
+.Pp
 final text
