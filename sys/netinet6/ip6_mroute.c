@@ -1578,6 +1578,8 @@ register_send(struct ip6_hdr *ip6, struct mif6 *mif, struct mbuf *m)
 	return 0;
 }
 
+#ifdef PIM
+
 /*
  * PIM sparse mode hook
  * Receives the pim control messages, and passes them up to the listening
@@ -1835,3 +1837,4 @@ pim6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	}
 	/* NOTREACHED */
 }
+#endif /* PIM */
