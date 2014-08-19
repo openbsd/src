@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.54 2014/08/11 09:47:56 mpi Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.55 2014/08/19 12:39:36 mpi Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -507,7 +507,7 @@ delete(char *host)
 	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin6_len) + (char *)sin);
 	if (IN6_ARE_ADDR_EQUAL(&sin->sin6_addr, &sin_m.sin6_addr)) {
 		if (sdl->sdl_family == AF_LINK && rtm->rtm_flags & RTF_LLINFO) {
-			if (rtm->rtm_flags & RTF_LOCAL)
+			if (rtm->rtm_flags & (RTF_LOCAL|RTF_BROADCAST))
 				return (0);
 			if (!(rtm->rtm_flags & RTF_GATEWAY))
 				goto delete;

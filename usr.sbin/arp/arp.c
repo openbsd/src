@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.57 2014/08/11 09:47:56 mpi Exp $ */
+/*	$OpenBSD: arp.c,v 1.58 2014/08/19 12:39:36 mpi Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -408,7 +408,7 @@ tryagain:
 	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin_len) + (char *)sin);
 	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
 		if (sdl->sdl_family == AF_LINK && rtm->rtm_flags & RTF_LLINFO) {
-			if (rtm->rtm_flags & RTF_LOCAL)
+			if (rtm->rtm_flags & (RTF_LOCAL|RTF_BROADCAST))
 				return (0);
 		    	if (!(rtm->rtm_flags & RTF_GATEWAY))
 				switch (sdl->sdl_type) {
