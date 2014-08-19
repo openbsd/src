@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.35 2014/08/19 00:28:48 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.36 2014/08/19 00:53:01 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -210,7 +210,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			/* Expecting: length, path */
 			must_read(socks[0], &path_len, sizeof(size_t));
 			if (path_len == 0 || path_len > sizeof(path))
-				_exit(0);
+				_exit(1);
 			must_read(socks[0], &path, path_len);
 			path[path_len - 1] = '\0';
 			check_tty_name(path, path_len);
@@ -229,7 +229,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			/* Expecting: length, path */
 			must_read(socks[0], &path_len, sizeof(size_t));
 			if (path_len == 0 || path_len > sizeof(path))
-				_exit(0);
+				_exit(1);
 			must_read(socks[0], &path, path_len);
 			path[path_len - 1] = '\0';
 			check_log_name(path, path_len);
@@ -294,13 +294,13 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			/* Expecting: len, hostname, len, servname */
 			must_read(socks[0], &hostname_len, sizeof(size_t));
 			if (hostname_len == 0 || hostname_len > sizeof(hostname))
-				_exit(0);
+				_exit(1);
 			must_read(socks[0], &hostname, hostname_len);
 			hostname[hostname_len - 1] = '\0';
 
 			must_read(socks[0], &servname_len, sizeof(size_t));
 			if (servname_len == 0 || servname_len > sizeof(servname))
-				_exit(0);
+				_exit(1);
 			must_read(socks[0], &servname, servname_len);
 			servname[servname_len - 1] = '\0';
 
@@ -327,7 +327,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			/* Expecting: length, address, address family */
 			must_read(socks[0], &addr_len, sizeof(int));
 			if (addr_len <= 0 || addr_len > sizeof(hostname))
-				_exit(0);
+				_exit(1);
 			must_read(socks[0], hostname, addr_len);
 			must_read(socks[0], &addr_af, sizeof(int));
 			hp = gethostbyaddr(hostname, addr_len, addr_af);
@@ -362,7 +362,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 		execvp(argv[0], argv);
 	}
 	unlink(_PATH_LOGPID);
-	_exit(1);
+	_exit(0);
 }
 
 static int
@@ -795,7 +795,7 @@ must_read(int fd, void *buf, size_t n)
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
 		case 0:
-			_exit(0);
+			_exit(1);
 		default:
 			pos += res;
 		}
@@ -817,7 +817,7 @@ must_write(int fd, void *buf, size_t n)
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
 		case 0:
-			_exit(0);
+			_exit(1);
 		default:
 			pos += res;
 		}
