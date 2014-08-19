@@ -180,10 +180,10 @@ usage(void)
 {
 	fprintf(stderr,
 	    "usage: tcpbench -l\n"
-	    "       tcpbench [-uv] [-B buf] [-b addr] [-k kvars] [-n connections]\n"
+	    "       tcpbench [-46uv] [-B buf] [-b addr] [-k kvars] [-n connections]\n"
 	    "                [-p port] [-r interval] [-S space] [-T toskeyword]\n"
 	    "                [-t secs] [-V rtable] hostname\n"
-	    "       tcpbench -s [-uv] [-B buf] [-k kvars] [-p port]\n"
+	    "       tcpbench -s [-46uv] [-B buf] [-k kvars] [-p port]\n"
 	    "                [-r interval] [-S space] [-T toskeyword] [-V rtable]\n");
 	exit(1);
 }
@@ -997,6 +997,7 @@ main(int argc, char **argv)
 	const char *errstr;
 	struct rlimit rl;
 	int ch, herr, nconn;
+	int family = PF_UNSPEC;
 	struct nlist nl[] = { { "_tcbtable" }, { "" } };
 	const char *host = NULL, *port = DEFAULT_PORT, *srcbind = NULL;
 	struct event ev_sigint, ev_sigterm, ev_sighup, ev_progtimer;
@@ -1015,8 +1016,14 @@ main(int argc, char **argv)
 	aib = NULL;
 	secs = 0;
 
-	while ((ch = getopt(argc, argv, "b:B:hlk:n:p:r:sS:t:T:uvV:")) != -1) {
+	while ((ch = getopt(argc, argv, "46b:B:hlk:n:p:r:sS:t:T:uvV:")) != -1) {
 		switch (ch) {
+		case '4':
+			family = PF_INET;
+			break;
+		case '6':
+			family = PF_INET6;
+			break;
 		case 'b':
 			srcbind = optarg;
 			break;
@@ -1124,6 +1131,7 @@ main(int argc, char **argv)
 	}
 
 	bzero(&hints, sizeof(hints));
+	hints.ai_family = family;
 	if (UDP_MODE) {
 		hints.ai_socktype = SOCK_DGRAM;
 		hints.ai_protocol = IPPROTO_UDP;
