@@ -20,7 +20,7 @@ FUNCS_ONLY=1
 _rc_parse_conf
 
 usage() {
-	_rc_err "usage: ${0##*/} enable|disable|status|action [service [flags [...]]]"
+	_rc_err "usage: ${0##*/} enable|disable|status|action [service | daemon [flags [...]]]"
 }
 
 needs_root()
