@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx_pci.c,v 1.6 2014/05/18 10:52:17 stsp Exp $	*/
+/*	$OpenBSD: rtsx_pci.c,v 1.7 2014/08/19 17:55:03 phessler Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -112,10 +112,20 @@ rtsx_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5209)
-		flags = RTSX_F_5209;
-	else
-		flags = RTSX_F_5229;
+	switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_REALTEK_RTS5209:
+			flags = RTSX_F_5209;
+			break;
+		case PCI_PRODUCT_REALTEK_RTS5227:
+			flags = RTSX_F_5227;
+			break;
+		case PCI_PRODUCT_REALTEK_RTS5229:
+			flags = RTSX_F_5229;
+			break;
+		default:
+			flags = 0;
+			break;
+	}
 
 	if (rtsx_attach(&sc->sc, iot, ioh, size, pa->pa_dmat, flags) != 0)
 		printf("%s: can't initialize chip\n", sc->sc.sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx.c,v 1.9 2014/05/18 10:52:16 stsp Exp $	*/
+/*	$OpenBSD: rtsx.c,v 1.10 2014/08/19 17:55:03 phessler Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -482,10 +482,10 @@ rtsx_bus_power_on(struct rtsx_softc *sc)
 
 	/* Partial power. */
 	RTSX_SET(sc, RTSX_CARD_PWR_CTL, RTSX_SD_PARTIAL_PWR_ON);
-	if (sc->flags & RTSX_F_5229)
-		RTSX_SET(sc, RTSX_PWR_GATE_CTRL, RTSX_LDO3318_VCC1);
-	else
+	if (sc->flags & RTSX_F_5209)
 		RTSX_SET(sc, RTSX_PWR_GATE_CTRL, RTSX_LDO3318_SUSPEND);
+	else
+		RTSX_SET(sc, RTSX_PWR_GATE_CTRL, RTSX_LDO3318_VCC1);
 
 	delay(200);
 

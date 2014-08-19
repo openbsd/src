@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsxvar.h,v 1.2 2013/11/06 13:51:02 stsp Exp $	*/
+/*	$OpenBSD: rtsxvar.h,v 1.3 2014/08/19 17:55:03 phessler Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -49,7 +49,8 @@ int	rtsx_intr(void *);
 #define	RTSX_F_CARD_PRESENT	0x01
 #define	RTSX_F_SDIO_SUPPORT	0x02
 #define	RTSX_F_5209		0x04
-#define	RTSX_F_5229		0x08
-#define	RTSX_F_5229_TYPE_C	0x10
+#define	RTSX_F_5227		0x08
+#define	RTSX_F_5229		0x10
+#define	RTSX_F_5229_TYPE_C	0x20
 
 #endif
