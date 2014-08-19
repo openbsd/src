@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.139 2014/05/08 15:48:41 tedu Exp $	*/
+/*	$OpenBSD: theo.c,v 1.140 2014/08/19 23:35:28 schwarze Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -182,6 +182,7 @@ static const char *talk[] = {
 	"I'm just trying to improve the code...",
 	"It's a pleasure to work on code you can't make worse.",
 	"It's largely bad style to do (int)sizeof",
+	"When I see Makefile.in, I know that \"in\" is short for \"insane\".",
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
