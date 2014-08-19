@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.62 2014/08/18 05:11:03 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.63 2014/08/19 11:13:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1511,27 +1511,23 @@ myx_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		if (sc->sc_tx_free <= sc->sc_tx_nsegs) {
-			SET(ifp->if_flags, IFF_OACTIVE);
-			break;
-		}
-
-		IFQ_POLL(&ifp->if_snd, m);
-		if (m == NULL)
-			break;
-
-		mb = myx_buf_get(&sc->sc_tx_buf_free);
-		if (mb == NULL) {
+		if (sc->sc_tx_free <= sc->sc_tx_nsegs ||
+		    (mb = myx_buf_get(&sc->sc_tx_buf_free)) == NULL) {
 			SET(ifp->if_flags, IFF_OACTIVE);
 			break;
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL) {
+			myx_buf_put(&sc->sc_tx_buf_free, mb);
+			break;
+		}
+
 		if (myx_load_buf(sc, mb, m) != 0) {
 			m_freem(m);
 			myx_buf_put(&sc->sc_tx_buf_free, mb);
 			ifp->if_oerrors++;
-			break;
+			continue;
 		}
 
 #if NBPFILTER > 0
