@@ -206,12 +206,6 @@ add_flags()
 	local _svc=$2
 	[ -n "${_svc}" ] || return
 
-	# svc is already enabled and we did not (re)set the flags
-	#if svc_is_enabled "${_svc}" && test -z "$3"; then
-	#	return
-	#fi
-
-	#if [ -n "$3" -a "$3" = "flags" -a -n "$4" ]; then
 	if [ -n "$3" -a "$3" = "flags" ]; then
 		if [ -n "$4" ]; then
 			while [ "${_numargs}" -ge 4 ]
