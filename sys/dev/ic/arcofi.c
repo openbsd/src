@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.8 2014/08/19 16:13:24 miod Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.9 2014/08/19 18:02:48 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -56,7 +56,7 @@
  */
 
 /* CMDR */
-#define	CMDR_AD		0x80	/* SP1/PS2 address convention */
+#define	CMDR_AD		0x80	/* SP1/SP2 address convention */
 #define	CMDR_READ	0x40
 #define	CMDR_WRITE	0x00
 #define	CMDR_PU		0x20	/* Power Up */
