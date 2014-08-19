@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.178 2014/08/14 09:01:47 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.179 2014/08/19 12:49:41 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -790,7 +790,8 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		 * sure that local routes are only modified by the
 		 * kernel.
 		 */
-		if (rt->rt_flags & RTF_LOCAL && prio != RTP_LOCAL)
+		if ((rt->rt_flags & (RTF_LOCAL | RTF_BROADCAST)) &&
+		    prio != RTP_LOCAL)
 			senderr(EINVAL);
 
 		if ((rn = rnh->rnh_deladdr(info->rti_info[RTAX_DST],
@@ -1109,7 +1110,7 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	if ((flags & RTF_HOST) == 0)
 		info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 
-	if (flags & RTF_LOCAL)
+	if (flags & (RTF_LOCAL|RTF_BROADCAST))
 		prio = RTP_LOCAL;
 
 	error = rtrequest1(RTM_ADD, &info, prio, &nrt, rtableid);
@@ -1127,6 +1128,12 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 			if (ifa->ifa_rtrequest)
 				ifa->ifa_rtrequest(RTM_ADD, rt);
 		}
+
+		/*
+		 * A local route is created for every address configured
+		 * on an interface, so use this information to notify
+		 * userland that a new address has been added.
+		 */
 		if (flags & RTF_LOCAL)
 			rt_newaddrmsg(RTM_ADD, ifa, error, nrt);
 	}
@@ -1177,7 +1184,7 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	if ((flags & RTF_HOST) == 0)
 		info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 
-	if (flags & RTF_LOCAL)
+	if (flags & (RTF_LOCAL|RTF_BROADCAST))
 		prio = RTP_LOCAL;
 
 	error = rtrequest1(RTM_DELETE, &info, prio, &nrt, rtableid);
@@ -1228,9 +1235,16 @@ rt_ifa_addloop(struct ifaddr *ifa)
 	/* If there is no loopback entry, allocate one. */
 	rt = rtalloc1(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
 	if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0 ||
-	    (rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
+	    (rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0) {
 		rt_ifa_add(ifa, RTF_UP| RTF_HOST | RTF_LLINFO | RTF_LOCAL,
 		    ifa->ifa_addr);
+
+		if ((ifa->ifa_ifp->if_flags & IFF_BROADCAST) &&
+		    ifa->ifa_broadaddr)
+			rt_ifa_add(ifa, RTF_UP | RTF_HOST | RTF_LLINFO |
+			    RTF_BROADCAST, ifa->ifa_broadaddr);
+
+	}
 	if (rt)
 		rt->rt_refcnt--;
 }
@@ -1273,9 +1287,15 @@ rt_ifa_delloop(struct ifaddr *ifa)
 	 */
 	rt = rtalloc1(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
 	if (rt != NULL && (rt->rt_flags & RTF_HOST) != 0 &&
-	    (rt->rt_ifp->if_flags & IFF_LOOPBACK) != 0)
+	    (rt->rt_ifp->if_flags & IFF_LOOPBACK) != 0) {
 		rt_ifa_del(ifa,  RTF_HOST | RTF_LLINFO | RTF_LOCAL,
 		    ifa->ifa_addr);
+
+		if ((ifa->ifa_ifp->if_flags & IFF_BROADCAST) &&
+		    ifa->ifa_broadaddr)
+			rt_ifa_del(ifa, RTF_HOST | RTF_LLINFO | RTF_BROADCAST,
+			    ifa->ifa_broadaddr);
+	}
 	if (rt)
 		rt->rt_refcnt--;
 }
