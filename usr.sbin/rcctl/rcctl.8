@@ -1,0 +1,146 @@
+.\"	$OpenBSD: rcctl.8,v 1.1 2014/08/19 14:08:20 ajacoutot Exp $
+.\"
+.\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: August 19 2014 $
+.Dt RCCTL 8
+.Os
+.Sh NAME
+.Nm rcctl
+.Nd configure and control services
+.Sh SYNOPSIS
+.Nm rcctl
+.Sm off
+.Cm enable | disable | status | Ar action
+.Sm on
+.Op Ar service Op Cm flags Op Ar arguments
+.Sh DESCRIPTION
+.Nm
+is a simple utility for maintaining
+.Xr rc.conf.local 8 .
+It can enable or disable
+.Xr rc 8
+services and get/set their status and flags.
+It can also be used to interact with
+.Xr rc.d 8
+scripts.
+.Pp
+The following
+.Ar actions
+are available.
+.Pp
+.Bl -tag -width disable
+.It Cm enable
+Enable
+.Ar service
+in
+.Xr rc.conf.local 8 .
+Optionally set
+.Ar service Ns _flags
+to the specified
+.Cm flags
+.Ar arguments .
+If
+.Cm flags
+is appended without any
+.Ar arguments ,
+.Ar service Ns _flags
+is reset to its default value.
+.It Cm disable
+Disable
+.Ar service
+in
+.Xr rc.conf.local 8 .
+.It Cm status
+Display the value of
+.Ar service Ns _flags
+or
+.Ar service .
+If none is provided, list all services with their current status and
+flags.
+.It Ar action
+Run the
+.Xr rc.d 8
+.Ar service
+script with the
+.Ar action
+argument.
+.El
+.Pp                 
+These services have no corresponding
+.Xr rc.d 8
+script and have no
+.Cm flags :
+accounting, check_quotas, ipsec, multicast_host, multicast_router,
+pf, spamd_black.
+.Sh EXIT STATUS
+.Nm Ar action
+returns with the exit status of the
+.Xr rc.d 8
+.Ar service
+script.
+.Nm Cm status
+exits with 0 if the service is enabled and 1 if it is not.
+Otherwise, the
+.Nm
+utility exits 0 on success, and >0 if an error occurs.
+.Sh EXAMPLES
+Disable
+.Xr ntpd 8
+and check its status:
+.Pp
+.Bd -literal -offset indent
+# rcctl disable ntpd
+# rcctl status ntpd
+NO
+# echo $?
+1
+.Ed
+.Pp
+Enable and set
+.Xr ntpd 8
+flags:
+.Pp
+.Bd -literal -offset indent
+# rcctl enable ntpd flags -s
+# rcctl status ntpd
+-s
+# echo $?
+0
+.Ed
+.Pp
+Start
+.Xr ntpd 8
+and check that it is running:
+.Pp
+.Bd -literal -offset indent
+# rcctl start ntpd
+ntpd(ok)
+# rcctl check ntpd
+ntpd(ok)
+# echo $?
+0
+.Ed
+.Sh SEE ALSO
+.Xr rc.conf.local 8 ,
+.Xr rc.d 8
+.Sh HISTORY
+.Nm
+first appeared in
+.Ox 5.7 .
+.Sh AUTHORS
+.Nm
+was written by
+.An Antoine Jacoutot Aq Mt ajacoutot@openbsd.org .
