@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.2 2014/08/19 16:05:02 schwarze Exp $
+.\"	$OpenBSD: rcctl.8,v 1.3 2014/08/19 17:45:43 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -19,13 +19,13 @@
 .Os
 .Sh NAME
 .Nm rcctl
-.Nd configure and control services
+.Nd configure and control daemons and services
 .Sh SYNOPSIS
 .Nm rcctl
 .Sm off
 .Cm enable | disable | status | Ar action
 .Sm on
-.Op Ar service Op Cm flags Op Ar arguments
+.Op Ar service | daemon Op Cm flags Op Ar arguments
 .Sh DESCRIPTION
 .Nm
 is a simple utility for maintaining
@@ -40,39 +40,34 @@ scripts.
 The following
 .Ar actions
 are available.
-.Bl -tag -width disable
-.It Cm enable
-Enable
-.Ar service
-in
+.Bl -tag -width Ds
+.It Cm enable Ar service | daemon Op Cm flags Op Ar arguments
+Enable the service or daemon in
 .Xr rc.conf.local 8 .
-Optionally set
-.Ar service Ns _flags
+For a daemon, optionally set the variable
+.Ar daemon Ns _flags
 to the specified
-.Cm flags
 .Ar arguments .
 If
 .Cm flags
 is appended without any
 .Ar arguments ,
-.Ar service Ns _flags
+.Ar daemon Ns _flags
 is reset to its default value.
-.It Cm disable
-Disable
-.Ar service
-in
+.It Cm disable Ar service | daemon
+Disable the service or daemon in
 .Xr rc.conf.local 8 .
-.It Cm status
+.It Cm status Op Ar service | daemon
 Display the value of
-.Ar service Ns _flags
+.Ar service
 or
-.Ar service .
-If none is provided, list all services with their current status and
-flags.
-.It Ar action
+.Ar daemon Ns _flags .
+Without an argument, list all services and daemons
+with their current status and flags.
+.It Ar action daemon
 Run the
 .Xr rc.d 8
-.Ar service
+.Ar daemon
 script with the
 .Ar action
 argument.
@@ -88,10 +83,10 @@ pf, spamd_black.
 .Nm Ar action
 returns with the exit status of the
 .Xr rc.d 8
-.Ar service
+.Ar daemon
 script.
 .Nm Cm status
-exits with 0 if the service is enabled and 1 if it is not.
+exits with 0 if the daemon or service is enabled and 1 if it is not.
 Otherwise, the
 .Nm
 utility exits 0 on success, and >0 if an error occurs.
