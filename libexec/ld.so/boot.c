@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.2 2014/07/06 17:33:10 otto Exp $ */
+/*	$OpenBSD: boot.c,v 1.3 2014/08/19 10:01:50 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -115,6 +115,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 #else
 	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
 #endif
+	_dl_memset(dynld.Dyn.info, 0, sizeof(dynld.Dyn.info));
 	while (dynp != NULL && dynp->d_tag != DT_NULL) {
 		if (dynp->d_tag < DT_NUM)
 			dynld.Dyn.info[dynp->d_tag] = dynp->d_un.d_val;
