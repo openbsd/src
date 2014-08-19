@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.32 2014/07/22 11:06:09 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.33 2014/08/19 08:04:51 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -133,8 +133,8 @@ struct rwlock			pppx_devs_lk = RWLOCK_INITIALIZER("pppxdevs");
 LIST_HEAD(, pppx_dev)		pppx_devs = LIST_HEAD_INITIALIZER(pppx_devs);
 struct pool			*pppx_if_pl;
 
-struct pppx_dev			*pppx_dev_lookup(int);
-struct pppx_dev			*pppx_dev2pxd(int);
+struct pppx_dev			*pppx_dev_lookup(dev_t);
+struct pppx_dev			*pppx_dev2pxd(dev_t);
 
 struct pppx_if_key {
 	int			pxik_session_id;
