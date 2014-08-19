@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.111 2014/07/14 04:02:33 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.112 2014/08/19 00:24:00 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1014,7 +1014,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 	case F_MEMBUF:
 		dprintf("\n");
 		snprintf(line, sizeof(line), "%.15s %s %s",
-		    (char *)iov[0].iov_base, (char *)iov[2].iov_base, 
+		    (char *)iov[0].iov_base, (char *)iov[2].iov_base,
 		    (char *)iov[4].iov_base);
 		if (ringbuf_append_line(f->f_un.f_mb.f_rb, line) == 1)
 			f->f_un.f_mb.f_overflow = 1;
@@ -1538,9 +1538,9 @@ cfline(char *line, char *prog)
 			logerror(ebuf);
 			break;
 		}
-		addr_len = priv_gethostserv(f->f_un.f_forw.f_hname, 
-		    cp == NULL ? "syslog" : cp, 
-		    (struct sockaddr*)&f->f_un.f_forw.f_addr, 
+		addr_len = priv_gethostserv(f->f_un.f_forw.f_hname,
+		    cp == NULL ? "syslog" : cp,
+		    (struct sockaddr*)&f->f_un.f_forw.f_addr,
 		    sizeof(f->f_un.f_forw.f_addr));
 		if (addr_len < 1) {
 			snprintf(ebuf, sizeof(ebuf), "bad hostname \"%s\"", p);
