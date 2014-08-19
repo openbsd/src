@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.7 2014/05/08 21:32:45 miod Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.8 2014/08/19 16:13:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -744,7 +744,7 @@ arcofi_mi_to_gain(int lvl)
  * - the `line out' connector is the `H out' (heaphones) output.
  * - the internal `speaker' is the `LS out' (loudspeaker) output.
  *
- * Each of these can be enabled or disabled indepently, except for
+ * Each of these can be enabled or disabled independently, except for
  * MIC enabled with H out and LS out disabled, which is not allowed
  * by the chip (and makes no sense for a chip which was intended to
  * be used in phones, not voice recorders); we cheat by keeping one

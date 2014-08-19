@@ -502,7 +502,7 @@ my $_ror=sub { &ror(@_) };
 	&jmp	(&label("loop"));
 
 ######################################################################
-# SSE instruction sequence is first broken to groups of indepentent
+# SSE instruction sequence is first broken to groups of independent
 # instructions, independent in respect to their inputs and shifter
 # (not all architectures have more than one). Then IALU instructions
 # are "knitted in" between the SSE groups. Distance is maintained for
