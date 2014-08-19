@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.90 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.91 2014/08/19 19:04:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -1147,7 +1147,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 		else
 			int_addr = ((xbow_intr_address >> 30) &
 			    0x0003ff00) | intrsrc;
-		xb->xb_ier |= 1 << intrbit;
+		xb->xb_ier |= 1L << intrbit;
 
 		xbridge_write_reg(xb, BRIDGE_INT_ADDR(intrbit), int_addr);
 		xbridge_write_reg(xb, BRIDGE_IER, xb->xb_ier);
@@ -1230,6 +1230,18 @@ xbridge_pci_intr_handler(void *v)
 	int rc;
 	uint64_t isr;
 
+	/*
+	 * Revision 1 of PIC is supposed to need the interrupt enable bit
+	 * to be toggled to prevent loss of interrupt.
+	 */
+	if (ISSET(xb->xb_flags, XF_PIC) && xb->xb_revision <= 1) {
+		xbridge_write_reg(xb, BRIDGE_IER,
+		    xb->xb_ier & ~(1L << xi->xi_intrbit));
+		(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
+		xbridge_write_reg(xb, BRIDGE_IER, xb->xb_ier);
+		(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
+	}
+
 	/* XXX shouldn't happen, and assumes interrupt is not shared */
 	if (LIST_EMPTY(&xi->xi_handlers)) {
 		printf("%s: spurious irq %d\n", DEVNAME(xb), xi->xi_intrbit);
@@ -1300,9 +1312,10 @@ xbridge_pci_intr_handler(void *v)
 	 * do not even have to check if our interrupt is pending.
 	 */
 
-	if (ISSET(xb->xb_flags, XF_XBRIDGE))
+	if (ISSET(xb->xb_flags, XF_XBRIDGE)) {
 		xbridge_write_reg(xb, BRIDGE_INT_FORCE_PIN(xi->xi_intrbit), 1);
-	else {
+		(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
+	} else {
 		if (xbridge_read_reg(xb, BRIDGE_ISR) & (1 << xi->xi_intrbit))
 			xbow_intr_set(xi->xi_intrsrc);
 	}
@@ -1798,6 +1811,15 @@ xbridge_setup(struct xbpci_softc *xb)
 	xbridge_rrb_setup(xb, 1);
 
 	/*
+	 * Enable(?) snooping and disable relaxed order on PIC.
+	 */
+
+	if (ISSET(xb->xb_flags, XF_PIC)) {
+		ctrl &= ~PIC_WIDGET_CONTROL_NO_SNOOP;
+		ctrl &= ~PIC_WIDGET_CONTROL_RELAX_ORDER;
+	}
+
+	/*
 	 * Disable byteswapping on PIO accesses through the large window
 	 * (we handle this at the bus_space level). It should not have
 	 * been enabled by ARCS, since IOC serial console relies on this,
@@ -1865,7 +1887,7 @@ xbridge_setup(struct xbpci_softc *xb)
 #ifdef TGT_OCTANE
 	if (sys_config.system_type == SGI_OCTANE &&
 	    xb->xb_widget == IP30_BRIDGE_WIDGET)
-		xb->xb_ier = 1 << 6;
+		xb->xb_ier = 1L << 6;
 	else
 #endif
 		xb->xb_ier = 0;
