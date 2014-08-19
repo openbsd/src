@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.52 2014/07/12 18:48:52 tedu Exp $ */
+/* $OpenBSD: pms.c,v 1.53 2014/08/19 12:24:04 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -26,6 +26,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/rwlock.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
@@ -147,6 +148,8 @@ struct pms_softc {		/* driver status information */
 #define PMS_STATE_DISABLED	0
 #define PMS_STATE_ENABLED	1
 #define PMS_STATE_SUSPENDED	2
+
+	struct rwlock sc_state_lock;
 
 	int sc_dev_enable;
 #define PMS_DEV_IGNORE		0x00
@@ -662,6 +665,8 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &pms_accessops;
 	a.accesscookie = sc;
 
+	rw_init(&sc->sc_state_lock, "pmsst");
+
 	/*
 	 * Attach the wsmouse, saving a handle to it.
 	 * Note that we don't need to check this pointer against NULL
@@ -762,8 +767,13 @@ int
 pms_enable(void *v)
 {
 	struct pms_softc *sc = v;
+	int rv;
 
-	return pms_change_state(sc, PMS_STATE_ENABLED, PMS_DEV_PRIMARY);
+	rw_enter_write(&sc->sc_state_lock);
+	rv = pms_change_state(sc, PMS_STATE_ENABLED, PMS_DEV_PRIMARY);
+	rw_exit_write(&sc->sc_state_lock);
+
+	return (rv);
 }
 
 void
@@ -771,7 +781,9 @@ pms_disable(void *v)
 {
 	struct pms_softc *sc = v;
 
+	rw_enter_write(&sc->sc_state_lock);
 	pms_change_state(sc, PMS_STATE_DISABLED, PMS_DEV_PRIMARY);
+	rw_exit_write(&sc->sc_state_lock);
 }
 
 int
@@ -789,8 +801,13 @@ int
 pms_sec_enable(void *v)
 {
 	struct pms_softc *sc = v;
+	int rv;
 
-	return (pms_change_state(sc, PMS_STATE_ENABLED, PMS_DEV_SECONDARY));
+	rw_enter_write(&sc->sc_state_lock);
+	rv = pms_change_state(sc, PMS_STATE_ENABLED, PMS_DEV_SECONDARY);
+	rw_exit_write(&sc->sc_state_lock);
+
+	return (rv);
 }
 
 void
@@ -798,7 +815,9 @@ pms_sec_disable(void *v)
 {
 	struct pms_softc *sc = v;
 
+	rw_enter_write(&sc->sc_state_lock);
 	pms_change_state(sc, PMS_STATE_DISABLED, PMS_DEV_SECONDARY);
+	rw_exit_write(&sc->sc_state_lock);
 }
 
 int
