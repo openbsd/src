@@ -206,7 +206,9 @@ add_flags()
 	local _svc=$2
 	[ -n "${_svc}" ] || return
 
-	if [ -n "$3" -a "$3" = "flags" ]; then
+	if [ -n "$3" ]; then
+		# there is an early check for this; but this function is fed with $*
+		[ "$3" = "flags" ] || return
 		if [ -n "$4" ]; then
 			while [ "${_numargs}" -ge 4 ]
 			do
@@ -215,9 +217,9 @@ add_flags()
 			done
 			set -A _flags -- ${_flags}
 		fi
-	elif svc_is_base ${_svc}; then
-		# base svc: save current flags because they are reset below
-		set -A _flags --  $(eval echo \${${_svc}_flags})
+	elif svc_is_enabled ${_svc}; then
+		# svc is already enabled and we did not (re)set the flags
+		return
 	fi
 
 	# special var
@@ -243,14 +245,12 @@ add_flags()
 	fi
 
 	# pkg script
-	if [ -n "$3" -a "$3" = "flags" ]; then
-		rcconf_edit_begin
-		grep -v "^${_svc}_flags.*=" /etc/rc.conf.local >${_TMP_RCCONF}
-		if [ "${#_flags[*]}" -gt 0 ]; then
-			echo ${_svc}_flags=${_flags[@]} >>${_TMP_RCCONF}
-		fi
-		rcconf_edit_end
+	rcconf_edit_begin
+	grep -v "^${_svc}_flags.*=" /etc/rc.conf.local >${_TMP_RCCONF}
+	if [ "${#_flags[*]}" -gt 0 ]; then
+		echo ${_svc}_flags=${_flags[@]} >>${_TMP_RCCONF}
 	fi
+	rcconf_edit_end
 }
 
 rm_flags()
