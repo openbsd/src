@@ -1,4 +1,4 @@
-$OpenBSD: giodevs,v 1.4 2012/07/18 20:10:12 miod Exp $
+$OpenBSD: giodevs,v 1.5 2014/08/19 19:01:15 miod Exp $
 /*	$NetBSD: giodevs,v 1.8 2007/02/19 04:46:33 rumble Exp $	*/
 
 /* devices with 8-bit identification registers */
@@ -12,7 +12,6 @@ product XPI_M0		0x0a	XPI mez. FDDI device 0
 product XPI_M1		0x0b	XPI mez. FDDI device 1
 product EP		0x0e	E-Plex 8-port Ethernet
 product IVAS		0x30	Lyon Lamb IVAS
-product SETENG_GFE	0x38	Set Engineering GFE 10/100 Ethernet
 product	FORE_ATM	0x5c	FORE Systems GIA-200 ATM
 product	GIOCLC		0x7f	Cyclone Colorbus
 
@@ -25,3 +24,4 @@ product	IMPACT		0x10	Impact
 product PHOBOS_G160	0x35	Phobos G160 10/100 Ethernet
 product PHOBOS_G130	0x36	Phobos G130 10/100 Ethernet
 product PHOBOS_G100	0x37	Phobos G100 100baseTX Fast Ethernet
+product SETENG_GFE	0x38	Set Engineering GFE 10/100 Ethernet
