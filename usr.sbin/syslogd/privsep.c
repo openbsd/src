@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.34 2008/11/23 04:29:42 brad Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.35 2014/08/19 00:28:48 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -531,7 +531,7 @@ priv_open_tty(const char *tty)
 	size_t path_len;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion", "priv_open_tty");
+		errx(1, "%s: called from privileged portion", __func__);
 
 	if (strlcpy(path, tty, sizeof path) >= sizeof(path))
 		return -1;
@@ -554,7 +554,7 @@ priv_open_log(const char *lognam)
 	size_t path_len;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged child", "priv_open_log");
+		errx(1, "%s: called from privileged child", __func__);
 
 	if (strlcpy(path, lognam, sizeof path) >= sizeof(path))
 		return -1;
@@ -579,7 +579,7 @@ priv_open_utmp(void)
 	FILE *fp;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion", "priv_open_utmp");
+		errx(1, "%s: called from privileged portion", __func__);
 
 	cmd = PRIV_OPEN_UTMP;
 	must_write(priv_fd, &cmd, sizeof(int));
@@ -605,7 +605,7 @@ priv_open_config(void)
 	FILE *fp;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion", "priv_open_config");
+		errx(1, "%s: called from privileged portion", __func__);
 
 	cmd = PRIV_OPEN_CONFIG;
 	must_write(priv_fd, &cmd, sizeof(int));
@@ -630,8 +630,7 @@ priv_config_modified(void)
 	int cmd, res;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion",
-		    "priv_config_modified");
+		errx(1, "%s: called from privileged portion", __func__);
 
 	cmd = PRIV_CONFIG_MODIFIED;
 	must_write(priv_fd, &cmd, sizeof(int));
@@ -649,8 +648,7 @@ priv_config_parse_done(void)
 	int cmd;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion",
-		    "priv_config_parse_done");
+		errx(1, "%s: called from privileged portion", __func__);
 
 	cmd = PRIV_DONE_CONFIG_PARSE;
 	must_write(priv_fd, &cmd, sizeof(int));
@@ -667,13 +665,13 @@ priv_gethostserv(char *host, char *serv, struct sockaddr *addr,
 	size_t hostname_len, servname_len;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion", "priv_gethostserv");
+		errx(1, "%s: called from privileged portion", __func__);
 
 	if (strlcpy(hostcpy, host, sizeof hostcpy) >= sizeof(hostcpy))
-		errx(1, "%s: overflow attempt in hostname", "priv_gethostserv");
+		errx(1, "%s: overflow attempt in hostname", __func__);
 	hostname_len = strlen(hostcpy) + 1;
 	if (strlcpy(servcpy, serv, sizeof servcpy) >= sizeof(servcpy))
-		errx(1, "%s: overflow attempt in servname", "priv_gethostserv");
+		errx(1, "%s: overflow attempt in servname", __func__);
 	servname_len = strlen(servcpy) + 1;
 
 	cmd = PRIV_GETHOSTSERV;
@@ -692,7 +690,7 @@ priv_gethostserv(char *host, char *serv, struct sockaddr *addr,
 
 	/* Make sure we aren't overflowing the passed in buffer */
 	if (addr_len < ret_len)
-		errx(1, "%s: overflow attempt in return", "priv_gethostserv");
+		errx(1, "%s: overflow attempt in return", __func__);
 
 	/* Read the resolved address and make sure we got all of it */
 	memset(addr, '\0', addr_len);
@@ -709,7 +707,7 @@ priv_gethostbyaddr(char *addr, int addr_len, int af, char *res, size_t res_len)
 	int cmd, ret_len;
 
 	if (priv_fd < 0)
-		errx(1, "%s called from privileged portion", "priv_gethostbyaddr");
+		errx(1, "%s called from privileged portion", __func__);
 
 	cmd = PRIV_GETHOSTBYADDR;
 	must_write(priv_fd, &cmd, sizeof(int));
@@ -726,7 +724,7 @@ priv_gethostbyaddr(char *addr, int addr_len, int af, char *res, size_t res_len)
 
 	/* Check we don't overflow the passed in buffer */
 	if (res_len < ret_len)
-		errx(1, "%s: overflow attempt in return", "priv_gethostbyaddr");
+		errx(1, "%s: overflow attempt in return", __func__);
 
 	/* Read the resolved hostname */
 	must_read(priv_fd, res, ret_len);
