@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.170 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.171 2014/08/20 00:50:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -153,12 +153,10 @@ void sk_watchdog(struct ifnet *);
 int sk_ifmedia_upd(struct ifnet *);
 void sk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 void skc_reset(struct sk_softc *);
-int sk_newbuf(struct sk_if_softc *, int, struct mbuf *, bus_dmamap_t);
-int sk_alloc_jumbo_mem(struct sk_if_softc *);
-void *sk_jalloc(struct sk_if_softc *);
-void sk_jfree(caddr_t, u_int, void *);
+int sk_newbuf(struct sk_if_softc *);
 int sk_reset(struct sk_if_softc *);
 int sk_init_rx_ring(struct sk_if_softc *);
+void sk_fill_rx_ring(struct sk_if_softc *);
 int sk_init_tx_ring(struct sk_if_softc *);
 
 int sk_xmac_miibus_readreg(struct device *, int, int);
@@ -547,19 +545,27 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 		rd->sk_rx_ring[i].sk_next = htole32(SK_RX_RING_ADDR(sc_if, nexti));
 	}
 
-	for (i = 0; i < SK_RX_RING_CNT; i++) {
-		if (sk_newbuf(sc_if, i, NULL,
-		    sc_if->sk_cdata.sk_rx_jumbo_map) == ENOBUFS) {
-			printf("%s: failed alloc of %dth mbuf\n",
-			    sc_if->sk_dev.dv_xname, i);
-			return (ENOBUFS);
-		}
-	}
-
 	sc_if->sk_cdata.sk_rx_prod = 0;
 	sc_if->sk_cdata.sk_rx_cons = 0;
 
+	if_rxr_init(&sc_if->sk_cdata.sk_rx_ring, 2, SK_RX_RING_CNT);
+
+	sk_fill_rx_ring(sc_if);
+
 	return (0);
+}
+
+void
+sk_fill_rx_ring(struct sk_if_softc *sc_if)
+{
+	struct if_rxring *rxr = &sc_if->sk_cdata.sk_rx_ring;
+	u_int slots;
+
+	for (slots = if_rxr_get(rxr, SK_RX_RING_CNT); slots > 0; slots--) {
+		if (sk_newbuf(sc_if) == ENOBUFS)
+			break;
+	}
+	if_rxr_put(rxr, slots);
 }
 
 int
@@ -609,199 +615,49 @@ sk_init_tx_ring(struct sk_if_softc *sc_if)
 }
 
 int
-sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
-	  bus_dmamap_t dmamap)
+sk_newbuf(struct sk_if_softc *sc_if)
 {
-	struct mbuf		*m_new = NULL;
+	struct mbuf		*m;
 	struct sk_chain		*c;
 	struct sk_rx_desc	*r;
+	bus_dmamap_t		dmamap;
+	u_int			prod;
+	int			error;
 
-	if (m == NULL) {
-		caddr_t buf = NULL;
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, SK_JLEN);
+	if (m == NULL)
+		return (ENOBUFS);
 
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL)
-			return (ENOBUFS);
+        m->m_len = m->m_pkthdr.len = SK_JLEN;
+	m_adj(m, ETHER_ALIGN);
 
-		/* Allocate the jumbo buffer */
-		buf = sk_jalloc(sc_if);
-		if (buf == NULL) {
-			m_freem(m_new);
-			DPRINTFN(1, ("%s jumbo allocation failed -- packet "
-			    "dropped!\n", sc_if->arpcom.ac_if.if_xname));
-			return (ENOBUFS);
-		}
+	prod = sc_if->sk_cdata.sk_rx_prod;
+	dmamap = sc_if->sk_cdata.sk_rx_map[prod];
 
-		/* Attach the buffer to the mbuf */
-		m_new->m_len = m_new->m_pkthdr.len = SK_JLEN;
-		MEXTADD(m_new, buf, SK_JLEN, 0, sk_jfree, sc_if);
-	} else {
-		/*
-	 	 * We're re-using a previously allocated mbuf;
-		 * be sure to re-init pointers and lengths to
-		 * default values.
-		 */
-		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = SK_JLEN;
-		m_new->m_data = m_new->m_ext.ext_buf;
-	}
-	m_adj(m_new, ETHER_ALIGN);
-
-	c = &sc_if->sk_cdata.sk_rx_chain[i];
-	r = c->sk_desc;
-	c->sk_mbuf = m_new;
-	r->sk_data_lo = htole32(dmamap->dm_segs[0].ds_addr +
-	    (((vaddr_t)m_new->m_data
-             - (vaddr_t)sc_if->sk_cdata.sk_jumbo_buf)));
-	r->sk_ctl = htole32(SK_JLEN | SK_RXSTAT);
-
-	SK_CDRXSYNC(sc_if, i, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
-
-	return (0);
-}
-
-/*
- * Memory management for jumbo frames.
- */
-
-int
-sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
-{
-	struct sk_softc		*sc = sc_if->sk_softc;
-	caddr_t			ptr, kva;
-	bus_dma_segment_t	seg;
-	int		i, rseg, state, error;
-	struct sk_jpool_entry   *entry;
-
-	state = error = 0;
-
-	/* Grab a big chunk o' storage. */
-	if (bus_dmamem_alloc(sc->sc_dmatag, SK_JMEM, PAGE_SIZE, 0,
-			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf(": can't alloc rx buffers");
+	error = bus_dmamap_load_mbuf(sc_if->sk_softc->sc_dmatag, dmamap, m,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	if (error) {
+		m_freem(m);
 		return (ENOBUFS);
 	}
 
-	state = 1;
-	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, SK_JMEM, &kva,
-			   BUS_DMA_NOWAIT)) {
-		printf(": can't map dma buffers (%d bytes)", SK_JMEM);
-		error = ENOBUFS;
-		goto out;
-	}
+	bus_dmamap_sync(sc_if->sk_softc->sc_dmatag, dmamap, 0,
+	    dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
-	state = 2;
-	if (bus_dmamap_create(sc->sc_dmatag, SK_JMEM, 1, SK_JMEM, 0,
-	    BUS_DMA_NOWAIT, &sc_if->sk_cdata.sk_rx_jumbo_map)) {
-		printf(": can't create dma map");
-		error = ENOBUFS;
-		goto out;
-	}
+	c = &sc_if->sk_cdata.sk_rx_chain[prod];
+	c->sk_mbuf = m;
 
-	state = 3;
-	if (bus_dmamap_load(sc->sc_dmatag, sc_if->sk_cdata.sk_rx_jumbo_map,
-			    kva, SK_JMEM, NULL, BUS_DMA_NOWAIT)) {
-		printf(": can't load dma map");
-		error = ENOBUFS;
-		goto out;
-	}
+	r = c->sk_desc;
+	r->sk_data_lo = htole32(dmamap->dm_segs[0].ds_addr);
+	r->sk_data_hi = htole32(((u_int64_t)dmamap->dm_segs[0].ds_addr) >> 32);
+	r->sk_ctl = htole32(dmamap->dm_segs[0].ds_len | SK_RXSTAT);
 
-	state = 4;
-	sc_if->sk_cdata.sk_jumbo_buf = (caddr_t)kva;
-	DPRINTFN(1,("sk_jumbo_buf = 0x%08X\n", sc_if->sk_cdata.sk_jumbo_buf));
+	SK_CDRXSYNC(sc_if, prod, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
-	LIST_INIT(&sc_if->sk_jfree_listhead);
-	LIST_INIT(&sc_if->sk_jinuse_listhead);
+	SK_INC(prod, SK_RX_RING_CNT);
+	sc_if->sk_cdata.sk_rx_prod = prod;
 
-	/*
-	 * Now divide it up into 9K pieces and save the addresses
-	 * in an array.
-	 */
-	ptr = sc_if->sk_cdata.sk_jumbo_buf;
-	for (i = 0; i < SK_JSLOTS; i++) {
-		sc_if->sk_cdata.sk_jslots[i] = ptr;
-		ptr += SK_JLEN;
-		entry = malloc(sizeof(struct sk_jpool_entry),
-		    M_DEVBUF, M_NOWAIT);
-		if (entry == NULL) {
-			sc_if->sk_cdata.sk_jumbo_buf = NULL;
-			printf(": no memory for jumbo buffer queue!");
-			error = ENOBUFS;
-			goto out;
-		}
-		entry->slot = i;
-		LIST_INSERT_HEAD(&sc_if->sk_jfree_listhead,
-				 entry, jpool_entries);
-	}
-out:
-	if (error != 0) {
-		switch (state) {
-		case 4:
-			bus_dmamap_unload(sc->sc_dmatag,
-			    sc_if->sk_cdata.sk_rx_jumbo_map);
-		case 3:
-			bus_dmamap_destroy(sc->sc_dmatag,
-			    sc_if->sk_cdata.sk_rx_jumbo_map);
-		case 2:
-			bus_dmamem_unmap(sc->sc_dmatag, kva, SK_JMEM);
-		case 1:
-			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-			break;
-		default:
-			break;
-		}
-	}
-
-	return (error);
-}
-
-/*
- * Allocate a jumbo buffer.
- */
-void *
-sk_jalloc(struct sk_if_softc *sc_if)
-{
-	struct sk_jpool_entry   *entry;
-
-	entry = LIST_FIRST(&sc_if->sk_jfree_listhead);
-
-	if (entry == NULL)
-		return (NULL);
-
-	LIST_REMOVE(entry, jpool_entries);
-	LIST_INSERT_HEAD(&sc_if->sk_jinuse_listhead, entry, jpool_entries);
-	return (sc_if->sk_cdata.sk_jslots[entry->slot]);
-}
-
-/*
- * Release a jumbo buffer.
- */
-void
-sk_jfree(caddr_t buf, u_int size, void	*arg)
-{
-	struct sk_jpool_entry *entry;
-	struct sk_if_softc *sc;
-	int i;
-
-	/* Extract the softc struct pointer. */
-	sc = (struct sk_if_softc *)arg;
-
-	if (sc == NULL)
-		panic("sk_jfree: can't find softc pointer!");
-
-	/* calculate the slot this buffer belongs to */
-	i = ((vaddr_t)buf
-	     - (vaddr_t)sc->sk_cdata.sk_jumbo_buf) / SK_JLEN;
-
-	if ((i < 0) || (i >= SK_JSLOTS))
-		panic("sk_jfree: asked to free buffer that we don't manage!");
-
-	entry = LIST_FIRST(&sc->sk_jinuse_listhead);
-	if (entry == NULL)
-		panic("sk_jfree: buffer not in use!");
-	entry->slot = i;
-	LIST_REMOVE(entry, jpool_entries);
-	LIST_INSERT_HEAD(&sc->sk_jfree_listhead, entry, jpool_entries);
+	return (0);
 }
 
 /*
@@ -867,6 +723,12 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFMEDIA:
 		mii = &sc_if->sk_mii;
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
+		break;
+
+	case SIOCGIFRXR:
+		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
+		    NULL, SK_JLEN, &sc_if->sk_cdata.sk_rx_ring);
+
 		break;
 
 	default:
@@ -997,7 +859,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	struct skc_attach_args *sa = aux;
 	struct ifnet *ifp;
 	caddr_t kva;
-	int i;
+	int i, error;
 
 	sc_if->sk_port = sa->skc_port;
 	sc_if->sk_softc = sc;
@@ -1124,10 +986,14 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	}
         sc_if->sk_rdata = (struct sk_ring_data *)kva;
 
-	/* Try to allocate memory for jumbo buffers. */
-	if (sk_alloc_jumbo_mem(sc_if)) {
-		printf(": jumbo buffer allocation failed\n");
-		goto fail_3;
+	for (i = 0; i < SK_RX_RING_CNT; i++) {
+		error = bus_dmamap_create(sc->sc_dmatag, SK_JLEN, 1,
+		    SK_JLEN, 0, 0, &sc_if->sk_cdata.sk_rx_map[i]);
+		if (error != 0) {
+			printf(": unable to create rx DMA map %d, "
+			    "error = %d\n", i, error);
+			goto fail_4;
+		}
 	}
 
 	ifp = &sc_if->arpcom.ac_if;
@@ -1193,12 +1059,18 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 
 	DPRINTFN(2, ("sk_attach: end\n"));
 	return;
+fail_4:
+	for (i = 0; i < SK_RX_RING_CNT; i++) {
+		if (sc_if->sk_cdata.sk_rx_map[i] == NULL)
+			continue;
 
-fail_2:
-	bus_dmamem_unmap(sc->sc_dmatag, kva, sizeof(struct sk_ring_data));
-fail_1:
-	bus_dmamem_free(sc->sc_dmatag, &sc_if->sk_ring_seg, sc_if->sk_ring_nseg);
+		bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_cdata.sk_rx_map[i]);
+	}
 fail_3:
+	bus_dmamem_unmap(sc->sc_dmatag, kva, sizeof(struct sk_ring_data));
+fail_2:
+	bus_dmamem_free(sc->sc_dmatag, &sc_if->sk_ring_seg, sc_if->sk_ring_nseg);
+fail_1:
 	bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
 fail:
 	sc->sk_if[sa->skc_port] = NULL;
@@ -1718,45 +1590,44 @@ sk_rxeof(struct sk_if_softc *sc_if)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct ifnet		*ifp = &sc_if->arpcom.ac_if;
+	struct if_rxring	*rxr = &sc_if->sk_cdata.sk_rx_ring;
 	struct mbuf		*m;
 	struct sk_chain		*cur_rx;
 	struct sk_rx_desc	*cur_desc;
-	int			i, cur, total_len = 0;
+	int			cur, total_len = 0;
 	u_int32_t		rxstat, sk_ctl;
 	bus_dmamap_t		dmamap;
 
 	DPRINTFN(2, ("sk_rxeof\n"));
 
-	i = sc_if->sk_cdata.sk_rx_prod;
-
-	for (;;) {
-		cur = i;
-
+	cur = sc_if->sk_cdata.sk_rx_cons;
+	while (if_rxr_inuse(rxr) > 0) {
 		/* Sync the descriptor */
 		SK_CDRXSYNC(sc_if, cur,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		sk_ctl = letoh32(sc_if->sk_rdata->sk_rx_ring[i].sk_ctl);
-		if ((sk_ctl & SK_RXCTL_OWN) != 0) {
-			/* Invalidate the descriptor -- it's not ready yet */
-			SK_CDRXSYNC(sc_if, cur, BUS_DMASYNC_PREREAD);
-			sc_if->sk_cdata.sk_rx_prod = i;
-			break;
-		}
-
 		cur_rx = &sc_if->sk_cdata.sk_rx_chain[cur];
+		if (cur_rx->sk_mbuf == NULL)
+			break;
+
+		sk_ctl = letoh32(sc_if->sk_rdata->sk_rx_ring[cur].sk_ctl);
+		if ((sk_ctl & SK_RXCTL_OWN) != 0)
+			break;
+
 		cur_desc = &sc_if->sk_rdata->sk_rx_ring[cur];
-		dmamap = sc_if->sk_cdata.sk_rx_jumbo_map;
+		dmamap = sc_if->sk_cdata.sk_rx_map[cur];
 
 		bus_dmamap_sync(sc_if->sk_softc->sc_dmatag, dmamap, 0,
 		    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc_if->sk_softc->sc_dmatag, dmamap);
 
-		rxstat = letoh32(cur_desc->sk_xmac_rxstat);
 		m = cur_rx->sk_mbuf;
 		cur_rx->sk_mbuf = NULL;
-		total_len = SK_RXBYTES(letoh32(cur_desc->sk_ctl));
+		if_rxr_put(rxr, 1);
+		SK_INC(cur, SK_RX_RING_CNT);
 
-		SK_INC(i, SK_RX_RING_CNT);
+		total_len = SK_RXBYTES(letoh32(cur_desc->sk_ctl));
+		rxstat = letoh32(cur_desc->sk_xmac_rxstat);
 
 		if ((sk_ctl & (SK_RXCTL_STATUS_VALID | SK_RXCTL_FIRSTFRAG |
 		    SK_RXCTL_LASTFRAG)) != (SK_RXCTL_STATUS_VALID |
@@ -1765,31 +1636,12 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		    total_len > SK_JUMBO_FRAMELEN ||
 		    sk_rxvalid(sc, rxstat, total_len) == 0) {
 			ifp->if_ierrors++;
-			sk_newbuf(sc_if, cur, m, dmamap);
+			m_freem(m);
 			continue;
 		}
 
-		/*
-		 * Try to allocate a new jumbo buffer. If that
-		 * fails, copy the packet to mbufs and put the
-		 * jumbo buffer back in the ring so it can be
-		 * re-used. If allocating mbufs fails, then we
-		 * have to drop the packet.
-		 */
-		if (sk_newbuf(sc_if, cur, NULL, dmamap) == ENOBUFS) {
-			struct mbuf		*m0;
-			m0 = m_devget(mtod(m, char *), total_len, ETHER_ALIGN,
-			    ifp);
-			sk_newbuf(sc_if, cur, m, dmamap);
-			if (m0 == NULL) {
-				ifp->if_ierrors++;
-				continue;
-			}
-			m = m0;
-		} else {
-			m->m_pkthdr.rcvif = ifp;
-			m->m_pkthdr.len = m->m_len = total_len;
-		}
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = m->m_len = total_len;
 
 		ifp->if_ipackets++;
 
@@ -1801,6 +1653,9 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		/* pass it on. */
 		ether_input_mbuf(ifp, m);
 	}
+	sc_if->sk_cdata.sk_rx_cons = cur;
+
+	sk_fill_rx_ring(sc_if);
 }
 
 void
@@ -2570,6 +2425,7 @@ sk_stop(struct sk_if_softc *sc_if, int softonly)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct ifnet		*ifp = &sc_if->arpcom.ac_if;
+	bus_dmamap_t		dmamap;
 	struct sk_txmap_entry	*dma;
 	int			i;
 	u_int32_t		val;
@@ -2660,6 +2516,10 @@ sk_stop(struct sk_if_softc *sc_if, int softonly)
 	/* Free RX and TX mbufs still in the queues. */
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
 		if (sc_if->sk_cdata.sk_rx_chain[i].sk_mbuf != NULL) {
+			dmamap = sc_if->sk_cdata.sk_rx_map[i];
+			bus_dmamap_sync(sc_if->sk_softc->sc_dmatag, dmamap, 0,
+			    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc_if->sk_softc->sc_dmatag, dmamap);
 			m_freem(sc_if->sk_cdata.sk_rx_chain[i].sk_mbuf);
 			sc_if->sk_cdata.sk_rx_chain[i].sk_mbuf = NULL;
 		}
