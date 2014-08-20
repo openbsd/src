@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.106 2014/08/20 01:02:50 dlg Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.107 2014/08/20 23:56:57 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -717,6 +717,7 @@ nfe_rxeof(struct nfe_softc *sc)
 			ifp->if_ierrors++;
 			goto skip;
 		}
+		mnew->m_pkthdr.len = mnew->m_len = MCLBYTES;
 
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
 		    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
@@ -1236,6 +1237,7 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 			error = ENOMEM;
 			goto fail;
 		}
+		data->m->m_pkthdr.len = data->m->m_len = MCLBYTES;
 
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT, &data->map);
