@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.148 2014/07/13 16:41:22 claudio Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.149 2014/08/20 06:23:03 mikeb Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -152,15 +152,15 @@ struct ctlname {
 #define	KERN_POOL		49	/* struct: pool information */
 #define	KERN_STACKGAPRANDOM	50	/* int: stackgap_random */
 #define	KERN_SYSVIPC_INFO	51	/* struct: SysV sem/shm/msg info */
-#define KERN_USERCRYPTO		52	/* int: usercrypto */
-#define KERN_CRYPTODEVALLOWSOFT	53	/* int: cryptodevallowsoft */
+/* was define KERN_USERCRYPTO	52	*/
+/* was define KERN_CRYPTODEVALLOWSOFT	53	*/
 #define KERN_SPLASSERT		54	/* int: splassert */
 #define KERN_PROC_ARGS		55	/* node: proc args and env */
 #define	KERN_NFILES		56	/* int: number of open files */
 #define	KERN_TTYCOUNT		57	/* int: number of tty devices */
 #define KERN_NUMVNODES		58	/* int: number of vnodes in use */
 #define	KERN_MBSTAT		59	/* struct: mbuf statistics */
-#define KERN_USERASYMCRYPTO	60	/* int: usercrypto */
+/* was define KERN_USERASYMCRYPTO	60	*/
 #define	KERN_SEMINFO		61	/* struct: SysV struct seminfo */
 #define	KERN_SHMINFO		62	/* struct: SysV struct shminfo */
 #define KERN_INTRCNT		63	/* node: interrupt counters */
@@ -235,15 +235,15 @@ struct ctlname {
 	{ "pool", CTLTYPE_NODE }, \
 	{ "stackgap_random", CTLTYPE_INT }, \
 	{ "sysvipc_info", CTLTYPE_INT }, \
-	{ "usercrypto", CTLTYPE_INT }, \
-	{ "cryptodevallowsoft", CTLTYPE_INT }, \
+	{ "gap", 0 }, \
+	{ "gap", 0 }, \
 	{ "splassert", CTLTYPE_INT }, \
 	{ "procargs", CTLTYPE_NODE }, \
 	{ "nfiles", CTLTYPE_INT }, \
 	{ "ttycount", CTLTYPE_INT }, \
 	{ "numvnodes", CTLTYPE_INT }, \
 	{ "mbstat", CTLTYPE_STRUCT }, \
-	{ "userasymcrypto", CTLTYPE_INT }, \
+	{ "gap", 0 }, \
 	{ "seminfo", CTLTYPE_STRUCT }, \
 	{ "shminfo", CTLTYPE_STRUCT }, \
 	{ "intrcnt", CTLTYPE_NODE }, \

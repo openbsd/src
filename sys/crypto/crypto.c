@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.65 2014/07/13 23:24:47 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.66 2014/08/20 06:23:03 mikeb Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -282,35 +282,6 @@ crypto_get_driverid(u_int8_t flags)
  * supported by the driver.
  */
 int
-crypto_kregister(u_int32_t driverid, int *kalg,
-    int (*kprocess)(struct cryptkop *))
-{
-	int s, i;
-
-	if (driverid >= crypto_drivers_num || kalg  == NULL ||
-	    crypto_drivers == NULL)
-		return EINVAL;
-
-	s = splvm();
-
-	for (i = 0; i <= CRK_ALGORITHM_MAX; i++) {
-		/*
-		 * XXX Do some performance testing to determine
-		 * placing.  We probably need an auxiliary data
-		 * structure that describes relative performances.
-		 */
-
-		crypto_drivers[driverid].cc_kalg[i] = kalg[i];
-	}
-
-	crypto_drivers[driverid].cc_kprocess = kprocess;
-
-	splx(s);
-	return 0;
-}
-
-/* Register a crypto driver. */
-int
 crypto_register(u_int32_t driverid, int *alg,
     int (*newses)(u_int32_t *, struct cryptoini *),
     int (*freeses)(u_int64_t), int (*process)(struct cryptop *))
@@ -410,67 +381,6 @@ crypto_dispatch(struct cryptop *crp)
 	}
 
 	return 0;
-}
-
-int
-crypto_kdispatch(struct cryptkop *krp)
-{
-	if (crypto_taskq) {
-		task_set(&krp->krp_task, (void (*))crypto_kinvoke, krp, NULL);
-		task_add(crypto_taskq, &krp->krp_task);
-	} else {
-		crypto_kinvoke(krp);
-	}
-
-	return 0;
-}
-
-/*
- * Dispatch an asymmetric crypto request to the appropriate crypto devices.
- */
-int
-crypto_kinvoke(struct cryptkop *krp)
-{
-	extern int cryptodevallowsoft;
-	u_int32_t hid;
-	int error;
-	int s;
-
-	/* Sanity checks. */
-	if (krp == NULL || krp->krp_callback == NULL)
-		return (EINVAL);
-
-	s = splvm();
-	for (hid = 0; hid < crypto_drivers_num; hid++) {
-		if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE) &&
-		    cryptodevallowsoft == 0)
-			continue;
-		if (crypto_drivers[hid].cc_kprocess == NULL)
-			continue;
-		if ((crypto_drivers[hid].cc_kalg[krp->krp_op] &
-		    CRYPTO_ALG_FLAG_SUPPORTED) == 0)
-			continue;
-		break;
-	}
-
-	if (hid == crypto_drivers_num) {
-		krp->krp_status = ENODEV;
-		crypto_kdone(krp);
-		splx(s);
-		return (0);
-	}
-
-	krp->krp_hid = hid;
-
-	crypto_drivers[hid].cc_koperations++;
-
-	error = crypto_drivers[hid].cc_kprocess(krp);
-	if (error) {
-		krp->krp_status = error;
-		crypto_kdone(krp);
-	}
-	splx(s);
-	return (0);
 }
 
 /*
@@ -625,39 +535,4 @@ crypto_done(struct cryptop *crp)
 		    crp, NULL);
 		task_add(crypto_taskq, &crp->crp_task);
 	}
-}
-
-/*
- * Invoke the callback on behalf of the driver.
- */
-void
-crypto_kdone(struct cryptkop *krp)
-{
-	task_set(&krp->krp_task, (void (*))krp->krp_callback, krp, NULL);
-	task_add(crypto_taskq, &krp->krp_task);
-}
-
-int
-crypto_getfeat(int *featp)
-{
-	extern int cryptodevallowsoft, userasymcrypto;
-	int hid, kalg, feat = 0;
-
-	if (userasymcrypto == 0)
-		goto out;	  
-	for (hid = 0; hid < crypto_drivers_num; hid++) {
-		if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE) &&
-		    cryptodevallowsoft == 0) {
-			continue;
-		}
-		if (crypto_drivers[hid].cc_kprocess == NULL)
-			continue;
-		for (kalg = 0; kalg <= CRK_ALGORITHM_MAX; kalg++)
-			if ((crypto_drivers[hid].cc_kalg[kalg] &
-			    CRYPTO_ALG_FLAG_SUPPORTED) != 0)
-				feat |=  1 << kalg;
-	}
-out:
-	*featp = feat;
-	return (0);
 }

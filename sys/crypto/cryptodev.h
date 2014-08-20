@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.58 2013/10/31 10:32:38 mikeb Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.59 2014/08/20 06:23:03 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -200,47 +200,6 @@ struct cryptop {
 #define CRYPTO_OP_DECRYPT	0x0
 #define CRYPTO_OP_ENCRYPT	0x1
 
-/* bignum parameter, in packed bytes, ... */
-struct crparam {
-	caddr_t		crp_p;
-	u_int		crp_nbits;
-};
-
-#define CRK_MAXPARAM	8
-
-struct crypt_kop {
-	u_int		crk_op;		/* ie. CRK_MOD_EXP or other */
-	u_int		crk_status;	/* return status */
-	u_short		crk_iparams;	/* # of input parameters */
-	u_short		crk_oparams;	/* # of output parameters */
-	u_int		crk_pad1;
-	struct crparam	crk_param[CRK_MAXPARAM];
-};
-#define CRK_MOD_EXP		0
-#define CRK_MOD_EXP_CRT		1
-#define CRK_DSA_SIGN		2
-#define CRK_DSA_VERIFY		3
-#define CRK_DH_COMPUTE_KEY	4
-#define CRK_ALGORITHM_MAX	4 /* Keep updated */
-
-#define CRF_MOD_EXP		(1 << CRK_MOD_EXP)
-#define CRF_MOD_EXP_CRT		(1 << CRK_MOD_EXP_CRT)
-#define CRF_DSA_SIGN		(1 << CRK_DSA_SIGN)
-#define CRF_DSA_VERIFY		(1 << CRK_DSA_VERIFY)
-#define CRF_DH_COMPUTE_KEY	(1 << CRK_DH_COMPUTE_KEY)
-
-struct cryptkop {
-	struct task	krp_task;
-
-	u_int		krp_op;		/* ie. CRK_MOD_EXP or other */
-	u_int		krp_status;	/* return status */
-	u_short		krp_iparams;	/* # of input parameters */
-	u_short		krp_oparams;	/* # of output parameters */
-	u_int32_t	krp_hid;
-	struct crparam	krp_param[CRK_MAXPARAM];	/* kvm */
-	int		(*krp_callback)(struct cryptkop *);
-};
-
 /* Crypto capabilities structure */
 struct cryptocap {
 	u_int64_t	cc_operations;	/* Counter of how many ops done */
@@ -251,9 +210,6 @@ struct cryptocap {
 
 	/* Symmetric/hash algorithms supported */
 	int		cc_alg[CRYPTO_ALGORITHM_MAX + 1];
-
-	/* Asymmetric algorithms supported */
-	int		cc_kalg[CRK_ALGORITHM_MAX + 1];
 
 	int		cc_queued;	/* Operations queued */
 
@@ -266,7 +222,6 @@ struct cryptocap {
 	int		(*cc_newsession) (u_int32_t *, struct cryptoini *);
 	int		(*cc_process) (struct cryptop *);
 	int		(*cc_freesession) (u_int64_t);
-	int		(*cc_kprocess) (struct cryptkop *);
 };
 
 /*
@@ -302,36 +257,17 @@ struct crypt_op {
 
 #define CRYPTO_MAX_MAC_LEN	20
 
-/*
- * done against open of /dev/crypto, to get a cloned descriptor.
- * Please use F_SETFD against the cloned descriptor.
- */
-#define	CRIOGET		_IOWR('c', 100, u_int32_t)
-
-/* the following are done against the cloned descriptor */
-#define	CIOCGSESSION	_IOWR('c', 101, struct session_op)
-#define	CIOCFSESSION	_IOW('c', 102, u_int32_t)
-#define CIOCCRYPT	_IOWR('c', 103, struct crypt_op)
-#define CIOCKEY		_IOWR('c', 104, struct crypt_kop)
-
-#define CIOCASYMFEAT	_IOR('c', 105, u_int32_t)
-
 #ifdef _KERNEL
 int	crypto_newsession(u_int64_t *, struct cryptoini *, int);
 int	crypto_freesession(u_int64_t);
 int	crypto_dispatch(struct cryptop *);
-int	crypto_kdispatch(struct cryptkop *);
 int	crypto_register(u_int32_t, int *,
 	    int (*)(u_int32_t *, struct cryptoini *), int (*)(u_int64_t),
 	    int (*)(struct cryptop *));
-int	crypto_kregister(u_int32_t, int *, int (*)(struct cryptkop *));
 int	crypto_unregister(u_int32_t, int);
 int32_t	crypto_get_driverid(u_int8_t);
 int	crypto_invoke(struct cryptop *);
-int	crypto_kinvoke(struct cryptkop *);
 void	crypto_done(struct cryptop *);
-void	crypto_kdone(struct cryptkop *);
-int	crypto_getfeat(int *);
 
 void	cuio_copydata(struct uio *, int, int, caddr_t);
 void	cuio_copyback(struct uio *, int, int, const void *);

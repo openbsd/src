@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.261 2014/08/18 05:11:03 dlg Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.262 2014/08/20 06:23:03 mikeb Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -268,11 +268,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	extern int usermount, nosuidcoredump;
 	extern long cp_time[CPUSTATES];
 	extern int stackgap_random;
-#ifdef CRYPTO
-	extern int usercrypto;
-	extern int userasymcrypto;
-	extern int cryptodevallowsoft;
-#endif
 	extern int maxlocksperuid;
 	extern int pool_debug;
 
@@ -518,16 +513,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 	case KERN_SYSVIPC_INFO:
 		return (sysctl_sysvipc(name + 1, namelen - 1, oldp, oldlenp));
-#endif
-#ifdef CRYPTO
-	case KERN_USERCRYPTO:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &usercrypto));
-	case KERN_USERASYMCRYPTO:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-			    &userasymcrypto));
-	case KERN_CRYPTODEVALLOWSOFT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-			    &cryptodevallowsoft));
 #endif
 	case KERN_SPLASSERT:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
