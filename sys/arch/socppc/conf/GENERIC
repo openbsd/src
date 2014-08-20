@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 2014/04/07 22:20:43 andre Exp $
+#	$OpenBSD: GENERIC,v 1.28 2014/08/20 06:14:42 mikeb Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -109,6 +109,5 @@ ukphy*		at mii?		# Generic unknown PHY
 athn*		at pci?		# Atheros AR9k (802.11a/g/n)
 hifn*		at pci?		# Hi/fn 7751 crypto card
 
-pseudo-device	crypto		1	# hardware crypto access
 pseudo-device	hotplug		1	# devices hot plugging
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.74 2013/11/04 17:14:26 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.75 2014/08/20 06:14:42 mikeb Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -39,8 +39,6 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-
-#include "inet.h"
 
 #include "wd.h"
 bdev_decl(wd);
@@ -192,7 +190,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),
 	cdev_ptm_init(NPTY,ptm),	/* 55: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 56: devices hot plugging */
-	cdev_crypto_init(NCRYPTO,crypto), /* 57: /dev/crypto */
+	cdev_notdef(),			/* 57: was: /dev/crypto */
 	cdev_bktr_init(NBKTR,bktr),	/* 58: Bt848 video capture device */
 	cdev_radio_init(NRADIO,radio), /* 59: generic radio I/O */
 	cdev_mouse_init(NWSMUX, wsmux),	/* 60: ws multiplexor */

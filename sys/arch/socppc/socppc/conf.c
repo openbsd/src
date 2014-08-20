@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 2013/11/04 14:11:29 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.20 2014/08/20 06:14:43 mikeb Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -87,8 +87,6 @@ cdev_decl(com);
 
 #include "tun.h"
 
-#include "inet.h"
-
 #include "wsmux.h"
 
 #ifdef USER_PCICONF
@@ -167,7 +165,7 @@ struct cdevsw cdevsw[] = {
 	cdev_video_init(NVIDEO,video),	/* 44: generic video I/O */
 	cdev_notdef(),			/* 45 */
 	cdev_notdef(),			/* 46 */
-	cdev_crypto_init(NCRYPTO,crypto), /* 47: /dev/crypto */
+	cdev_notdef(),			/* 47: was: /dev/crypto */
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */

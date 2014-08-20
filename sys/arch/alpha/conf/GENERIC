@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.246 2014/08/15 14:06:47 mikeb Exp $
+#	$OpenBSD: GENERIC,v 1.247 2014/08/20 06:14:42 mikeb Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -424,6 +424,5 @@ owsbm*	at onewire?			# Smart Battery Monitor
 owtemp* at onewire?			# Temperature
 owctr*	at onewire?			# Counter device
 
-pseudo-device	crypto		1
 pseudo-device	hotplug		1	# devices hot plugging
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor

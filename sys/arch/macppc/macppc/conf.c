@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.58 2014/03/16 17:46:22 kettenis Exp $ */
+/*	$OpenBSD: conf.c,v 1.59 2014/08/20 06:14:42 mikeb Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -107,8 +107,6 @@ cdev_decl(com);
 #include "urio.h"
 #include "ucom.h"
 
-#include "inet.h"
-
 #include "apm.h"
 #include "drm.h"
 cdev_decl(drm);
@@ -185,7 +183,7 @@ struct cdevsw cdevsw[] = {
 	cdev_audio_init(NAUDIO,audio),	/* 44: generic audio I/O */
 	cdev_video_init(NVIDEO,video),	/* 45: generic video I/O */
 	cdev_notdef(),			/* 46 */
-	cdev_crypto_init(NCRYPTO,crypto), /* 47: /dev/crypto */
+	cdev_notdef(),			/* 47: was: /dev/crypto */
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */

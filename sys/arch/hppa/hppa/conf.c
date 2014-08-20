@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.58 2013/11/04 14:11:29 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.59 2014/08/20 06:14:42 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -87,7 +87,6 @@ int	nblkdev = nitems(bdevsw);
 #include "wsmouse.h"
 #include "wsmux.h"
 
-#include "inet.h"
 #include "bpfilter.h"
 #include "tun.h"
 
@@ -163,7 +162,7 @@ struct cdevsw   cdevsw[] =
 	cdev_video_init(NVIDEO,video),	/* 33: generic video I/O */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 34: system call tracing */
 	cdev_audio_init(NAUDIO,audio),	/* 35: /dev/audio */
-	cdev_crypto_init(NCRYPTO,crypto), /* 36: /dev/crypto */
+	cdev_notdef(),			/* 36: was: /dev/crypto */
 	cdev_bio_init(NBIO,bio),	/* 37: ioctl tunnel */
 	cdev_ptm_init(NPTY,ptm),	/* 38: pseudo-tty ptm device */
 	cdev_disk_init(NWD,wd),		/* 39: ST506 disk */

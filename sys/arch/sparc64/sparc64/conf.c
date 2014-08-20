@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.70 2013/11/04 14:11:29 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.71 2014/08/20 06:14:43 mikeb Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -111,7 +111,6 @@ cdev_decl(pci);
 #include "pf.h"
 
 #include "ksyms.h"
-#include "inet.h"
 
 #include "systrace.h"
 #include "hotplug.h"
@@ -231,7 +230,7 @@ struct cdevsw	cdevsw[] =
 	cdev_gen_init(NMBPP,mbpp),	/* 72: magma parallel ports */
 	cdev_pf_init(NPF,pf),		/* 73: packet filter */
 	cdev_notdef(),			/* 74: ALTQ (deprecated) */
-	cdev_crypto_init(NCRYPTO,crypto), /* 75: /dev/crypto */
+	cdev_notdef(),			/* 75: was: /dev/crypto */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 76 *: Kernel symbols device */
 	cdev_tty_init(NSABTTY,sabtty),	/* 77: sab82532 serial ports */
 	cdev_wsdisplay_init(NWSDISPLAY,	/* 78: frame buffers, etc. */

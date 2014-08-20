@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.37 2013/11/04 14:11:29 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.38 2014/08/20 06:14:42 mikeb Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -54,8 +54,6 @@
 #include <sys/vnode.h>
 
 #include <machine/conf.h>
-
-#include "inet.h"
 
 /*
  * From this point, these need to be MI foo.h files.
@@ -323,7 +321,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),			/* 44: reserved */
 	cdev_lkm_dummy(),			/* 45: reserved */
 	cdev_pf_init(NPF,pf),           	/* 46: packet filter */
-	cdev_crypto_init(NCRYPTO,crypto), 	/* 47: /dev/crypto */
+	cdev_notdef(),				/* 47: was: /dev/crypto */
 	cdev_lkm_dummy(),			/* 48: reserved */
 	cdev_lkm_dummy(),			/* 49: reserved */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50: system call tracing */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.45 2014/03/14 23:42:40 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.46 2014/08/20 06:14:42 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -39,8 +39,6 @@
 #include <sys/vnode.h>
 
 #include <machine/conf.h>
-
-#include "inet.h"
 
 #include "wd.h"
 bdev_decl(wd);
@@ -256,7 +254,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMOUSE,	/* 68: mice */
 	    wsmouse),
 	cdev_mouse_init(NWSMUX, wsmux),	/* 69: ws multiplexor */
-	cdev_crypto_init(NCRYPTO,crypto), /* 70: /dev/crypto */
+	cdev_notdef(),			/* 70: was: /dev/crypto */
 	cdev_tty_init(NCZ,cztty),	/* 71: Cyclades-Z serial port */
 #ifdef USER_PCICONF
 	cdev_pci_init(NPCI,pci),        /* 72: PCI user */

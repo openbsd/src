@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2013/11/04 14:11:29 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.18 2014/08/20 06:14:42 mikeb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,8 +114,6 @@ cdev_decl(wd);
 #include "pci.h"
 cdev_decl(pci);
 
-#include "inet.h"
-
 #include "pf.h"
 #include "systrace.h"
 
@@ -183,7 +181,7 @@ struct cdevsw	cdevsw[] =
 	cdev_audio_init(NAUDIO,audio),	/* 44: /dev/audio */
 	cdev_video_init(NVIDEO,video),	/* 45: generic video I/O */
 	cdev_notdef(),			/* 46: */
-	cdev_crypto_init(NCRYPTO,crypto),	/* 47: /dev/crypto */
+	cdev_notdef(),			/* 47: was: /dev/crypto */
 	cdev_notdef(),			/* 48: */
 	cdev_bio_init(NBIO,bio),	/* 49: ioctl tunnel */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50: system call tracing */
