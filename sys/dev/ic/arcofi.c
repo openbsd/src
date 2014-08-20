@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.9 2014/08/19 18:02:48 miod Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.10 2014/08/20 07:19:42 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -1150,7 +1150,6 @@ arcofi_swintr(void *v)
 		action |= AUMODE_RECORD;
 	if (sc->sc_xmit.buf != NULL && sc->sc_xmit.buf == sc->sc_xmit.past)
 		action |= AUMODE_PLAY;
-	mtx_leave(&audio_lock);
 
 	if (action & AUMODE_RECORD) {
 		if (sc->sc_recv.cb)
@@ -1160,6 +1159,7 @@ arcofi_swintr(void *v)
 		if (sc->sc_xmit.cb)
 			sc->sc_xmit.cb(sc->sc_xmit.cbarg);
 	}
+	mtx_leave(&audio_lock);
 }
 
 int
