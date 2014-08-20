@@ -1,4 +1,4 @@
-/*	$OpenBSD: tireg.h,v 1.3 2009/12/13 13:21:54 kettenis Exp $	*/
+/*	$OpenBSD: tireg.h,v 1.4 2014/08/20 01:02:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1072,17 +1072,13 @@ struct ti_chain_data {
 
 	struct ti_txmap_entry	*ti_tx_map[TI_TX_RING_CNT];
 	bus_dmamap_t		ti_rx_std_map[TI_STD_RX_RING_CNT];
-	bus_dmamap_t		ti_rx_jumbo_map;
+	bus_dmamap_t		ti_rx_jumbo_map[TI_JUMBO_RX_RING_CNT];
 	bus_dmamap_t		ti_rx_mini_map[TI_MINI_RX_RING_CNT];
 
 	/* Stick the jumbo mem management stuff here too. */
 	struct ti_jslot		ti_jslots[TI_JSLOTS];
 	void			*ti_jumbo_buf;
 };
-
-#define TI_JUMBO_DMA_ADDR(sc, m) \
-	((sc)->ti_cdata.ti_rx_jumbo_map->dm_segs[0].ds_addr + \
-	 (mtod((m), char *) - (char *)(sc)->ti_cdata.ti_jumbo_buf))
 
 struct ti_type {
 	u_int16_t		ti_vid;
@@ -1098,11 +1094,6 @@ struct ti_type {
 struct ti_mc_entry {
 	struct ether_addr		mc_addr;
 	SLIST_ENTRY(ti_mc_entry)	mc_entries;
-};
-
-struct ti_jpool_entry {
-	int                             slot;
-	SLIST_ENTRY(ti_jpool_entry)	jpool_entries;
 };
 
 struct ti_softc {
@@ -1133,8 +1124,6 @@ struct ti_softc {
 	u_int16_t		ti_mini;	/* current mini ring head */
 	u_int16_t		ti_jumbo;	/* current jumo ring head */
 	SLIST_HEAD(__ti_mchead, ti_mc_entry)	ti_mc_listhead;
-	SLIST_HEAD(__ti_jfreehead, ti_jpool_entry)	ti_jfree_listhead;
-	SLIST_HEAD(__ti_jinusehead, ti_jpool_entry)	ti_jinuse_listhead;
 	SLIST_HEAD(__ti_txmaphead, ti_txmap_entry)	ti_tx_map_listhead;
 	u_int32_t		ti_stat_ticks;
 	u_int32_t		ti_rx_coal_ticks;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.9 2014/07/22 13:12:12 mpi Exp $	*/
+/*	$OpenBSD: ti.c,v 1.10 2014/08/20 01:02:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -148,12 +148,9 @@ void ti_cmd(struct ti_softc *, struct ti_cmd_desc *);
 void ti_cmd_ext(struct ti_softc *, struct ti_cmd_desc *,
     caddr_t, int);
 void ti_handle_events(struct ti_softc *);
-int ti_alloc_jumbo_mem(struct ti_softc *);
-void *ti_jalloc(struct ti_softc *);
-void ti_jfree(caddr_t, u_int, void *);
 int ti_newbuf_std(struct ti_softc *, int, struct mbuf *, bus_dmamap_t);
 int ti_newbuf_mini(struct ti_softc *, int, struct mbuf *, bus_dmamap_t);
-int ti_newbuf_jumbo(struct ti_softc *, int, struct mbuf *);
+int ti_newbuf_jumbo(struct ti_softc *, int, struct mbuf *, bus_dmamap_t);
 int ti_init_rx_ring_std(struct ti_softc *);
 void ti_free_rx_ring_std(struct ti_softc *);
 int ti_init_rx_ring_jumbo(struct ti_softc *);
@@ -567,175 +564,6 @@ ti_handle_events(struct ti_softc *sc)
 }
 
 /*
- * Memory management for the jumbo receive ring is a pain in the
- * butt. We need to allocate at least 9018 bytes of space per frame,
- * _and_ it has to be contiguous (unless you use the extended
- * jumbo descriptor format). Using malloc() all the time won't
- * work: malloc() allocates memory in powers of two, which means we
- * would end up wasting a considerable amount of space by allocating
- * 9K chunks. We don't have a jumbo mbuf cluster pool. Thus, we have
- * to do our own memory management.
- *
- * The driver needs to allocate a contiguous chunk of memory at boot
- * time. We then chop this up ourselves into 9K pieces and use them
- * as external mbuf storage.
- *
- * One issue here is how much memory to allocate. The jumbo ring has
- * 256 slots in it, but at 9K per slot than can consume over 2MB of
- * RAM. This is a bit much, especially considering we also need
- * RAM for the standard ring and mini ring (on the Tigon 2). To
- * save space, we only actually allocate enough memory for 64 slots
- * by default, which works out to between 500 and 600K. This can
- * be tuned by changing a #define in if_tireg.h.
- */
-
-int
-ti_alloc_jumbo_mem(struct ti_softc *sc)
-{
-	caddr_t ptr, kva;
-	bus_dma_segment_t seg;
-	int i, rseg, state, error;
-	struct ti_jpool_entry *entry;
-
-	state = error = 0;
-
-	/* Grab a big chunk o' storage. */
-	if (bus_dmamem_alloc(sc->sc_dmatag, TI_JMEM, PAGE_SIZE, 0,
-	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
-		return (ENOBUFS);
-	}
-
-	state = 1;
-	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, TI_JMEM, &kva,
-	    BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%zu bytes)\n",
-		    sc->sc_dv.dv_xname, TI_JMEM);
-		error = ENOBUFS;
-		goto out;
-	}
-
-	state = 2;
-	if (bus_dmamap_create(sc->sc_dmatag, TI_JMEM, 1, TI_JMEM, 0,
-	    BUS_DMA_NOWAIT, &sc->ti_cdata.ti_rx_jumbo_map)) {
-		printf("%s: can't create dma map\n", sc->sc_dv.dv_xname);
-		error = ENOBUFS;
-		goto out;
-	}
-
-	state = 3;
-	if (bus_dmamap_load(sc->sc_dmatag, sc->ti_cdata.ti_rx_jumbo_map, kva,
-	    TI_JMEM, NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load dma map\n", sc->sc_dv.dv_xname);
-		error = ENOBUFS;
-		goto out;
-	}
-
-	state = 4;
-	sc->ti_cdata.ti_jumbo_buf = (caddr_t)kva;
-
-	SLIST_INIT(&sc->ti_jfree_listhead);
-	SLIST_INIT(&sc->ti_jinuse_listhead);
-
-	/*
-	 * Now divide it up into 9K pieces and save the addresses
-	 * in an array.
-	 */
-	ptr = sc->ti_cdata.ti_jumbo_buf;
-	for (i = 0; i < TI_JSLOTS; i++) {
-		sc->ti_cdata.ti_jslots[i].ti_buf = ptr;
-		sc->ti_cdata.ti_jslots[i].ti_inuse = 0;
-		ptr += TI_JLEN;
-		entry = malloc(sizeof(struct ti_jpool_entry),
-			       M_DEVBUF, M_NOWAIT);
-		if (entry == NULL) {
-			sc->ti_cdata.ti_jumbo_buf = NULL;
-			printf("%s: no memory for jumbo buffer queue\n",
-			    sc->sc_dv.dv_xname);
-			error = ENOBUFS;
-			goto out;
-		}
-		entry->slot = i;
-		SLIST_INSERT_HEAD(&sc->ti_jfree_listhead, entry, jpool_entries);
-	}
-out:
-	if (error != 0) {
-		switch (state) {
-		case 4:
-			bus_dmamap_unload(sc->sc_dmatag,
-			    sc->ti_cdata.ti_rx_jumbo_map);
-		case 3:
-			bus_dmamap_destroy(sc->sc_dmatag,
-			    sc->ti_cdata.ti_rx_jumbo_map);
-		case 2:
-			bus_dmamem_unmap(sc->sc_dmatag, kva, TI_JMEM);
-		case 1:
-			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-			break;
-		default:
-			break;
-		}
-	}
-
-	return (error);
-}
-
-/*
- * Allocate a jumbo buffer.
- */
-void *
-ti_jalloc(struct ti_softc *sc)
-{
-	struct ti_jpool_entry   *entry;
-
-	entry = SLIST_FIRST(&sc->ti_jfree_listhead);
-
-	if (entry == NULL)
-		return (NULL);
-
-	SLIST_REMOVE_HEAD(&sc->ti_jfree_listhead, jpool_entries);
-	SLIST_INSERT_HEAD(&sc->ti_jinuse_listhead, entry, jpool_entries);
-	sc->ti_cdata.ti_jslots[entry->slot].ti_inuse = 1;
-	return (sc->ti_cdata.ti_jslots[entry->slot].ti_buf);
-}
-
-/*
- * Release a jumbo buffer.
- */
-void
-ti_jfree(caddr_t buf, u_int size, void *arg)
-{
-	struct ti_softc		*sc;
-	int			i;
-	struct ti_jpool_entry	*entry;
-
-	/* Extract the softc struct pointer. */
-	sc = (struct ti_softc *)arg;
-
-	if (sc == NULL)
-		panic("ti_jfree: can't find softc pointer!");
-
-	/* calculate the slot this buffer belongs to */
-	i = ((vaddr_t)buf - (vaddr_t)sc->ti_cdata.ti_jumbo_buf) / TI_JLEN;
-
-	if ((i < 0) || (i >= TI_JSLOTS))
-		panic("ti_jfree: asked to free buffer that we don't manage!");
-	else if (sc->ti_cdata.ti_jslots[i].ti_inuse == 0)
-		panic("ti_jfree: buffer already free!");
-
-	sc->ti_cdata.ti_jslots[i].ti_inuse--;
-	if(sc->ti_cdata.ti_jslots[i].ti_inuse == 0) {
-		entry = SLIST_FIRST(&sc->ti_jinuse_listhead);
-		if (entry == NULL)
-			panic("ti_jfree: buffer not in use!");
-		entry->slot = i;
-		SLIST_REMOVE_HEAD(&sc->ti_jinuse_listhead, jpool_entries);
-		SLIST_INSERT_HEAD(&sc->ti_jfree_listhead,
-				  entry, jpool_entries);
-	}
-}
-
-/*
  * Intialize a standard receive ring descriptor.
  */
 int
@@ -760,23 +588,18 @@ ti_newbuf_std(struct ti_softc *sc, int i, struct mbuf *m,
 	sc->ti_cdata.ti_rx_std_map[i] = dmamap;
 
 	if (m == NULL) {
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
+		m_new = MCLGETI(NULL, MCLBYTES, NULL, M_DONTWAIT);
 		if (m_new == NULL)
 			return (ENOBUFS);
 
-		MCLGET(m_new, M_DONTWAIT);
-		if (!(m_new->m_flags & M_EXT)) {
-			m_freem(m_new);
-			return (ENOBUFS);
-		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-
 		m_adj(m_new, ETHER_ALIGN);
 
 		if (bus_dmamap_load_mbuf(sc->sc_dmatag, dmamap, m_new,
-					 BUS_DMA_NOWAIT))
+		    BUS_DMA_NOWAIT)) {
+			m_freem(m_new);
 			return (ENOBUFS);
-
+		}
 	} else {
 		/*
 		 * We're re-using a previously allocated mbuf;
@@ -784,8 +607,8 @@ ti_newbuf_std(struct ti_softc *sc, int i, struct mbuf *m,
 		 * default values.
 		 */
 		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
+		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 		m_adj(m_new, ETHER_ALIGN);
 	}
 
@@ -796,11 +619,6 @@ ti_newbuf_std(struct ti_softc *sc, int i, struct mbuf *m,
 	r->ti_flags = TI_BDFLAG_IP_CKSUM;
 	r->ti_len = dmamap->dm_segs[0].ds_len;
 	r->ti_idx = i;
-
-	if ((dmamap->dm_segs[0].ds_addr & ~(MCLBYTES - 1)) !=
-	    ((dmamap->dm_segs[0].ds_addr + dmamap->dm_segs[0].ds_len - 1) & 
-	     ~(MCLBYTES - 1)))
-	    panic("%s: overwritten!!!", sc->sc_dv.dv_xname);
 
 	return (0);
 }
@@ -834,13 +652,15 @@ ti_newbuf_mini(struct ti_softc *sc, int i, struct mbuf *m,
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL)
 			return (ENOBUFS);
+
 		m_new->m_len = m_new->m_pkthdr.len = MHLEN;
 		m_adj(m_new, ETHER_ALIGN);
 
 		if (bus_dmamap_load_mbuf(sc->sc_dmatag, dmamap, m_new,
-					 BUS_DMA_NOWAIT))
-		return (ENOBUFS);
-
+		    BUS_DMA_NOWAIT)) {
+			m_freem(m);
+			return (ENOBUFS);
+		}
 	} else {
 		/*
 		 * We're re-using a previously allocated mbuf;
@@ -868,29 +688,37 @@ ti_newbuf_mini(struct ti_softc *sc, int i, struct mbuf *m,
  * a jumbo buffer from the pool managed internally by the driver.
  */
 int
-ti_newbuf_jumbo(struct ti_softc *sc, int i, struct mbuf *m)
+ti_newbuf_jumbo(struct ti_softc *sc, int i, struct mbuf *m,
+    bus_dmamap_t dmamap)
 {
 	struct mbuf		*m_new = NULL;
 	struct ti_rx_desc	*r;
 
-	if (m == NULL) {
-		caddr_t			buf = NULL;
+	if (dmamap == NULL) {
+		/* if (m) panic() */
 
-		/* Allocate the mbuf. */
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
+		if (bus_dmamap_create(sc->sc_dmatag, TI_JUMBO_FRAMELEN, 1,
+		    TI_JUMBO_FRAMELEN, 0, BUS_DMA_NOWAIT, &dmamap)) {
+			printf("%s: can't create recv map\n",
+			       sc->sc_dv.dv_xname);
+			return (ENOMEM);
+		}
+	} else if (m == NULL)
+		bus_dmamap_unload(sc->sc_dmatag, dmamap);
+
+	if (m == NULL) {
+		m_new = MCLGETI(NULL, TI_JUMBO_FRAMELEN, NULL, M_DONTWAIT);
 		if (m_new == NULL)
 			return (ENOBUFS);
 
-		/* Allocate the jumbo buffer */
-		buf = ti_jalloc(sc);
-		if (buf == NULL) {
-			m_freem(m_new);
+		m_new->m_len = m_new->m_pkthdr.len = TI_JUMBO_FRAMELEN;
+		m_adj(m_new, ETHER_ALIGN);
+
+		if (bus_dmamap_load_mbuf(sc->sc_dmatag, dmamap, m_new,
+		    BUS_DMA_NOWAIT)) {
+			m_freem(m);
 			return (ENOBUFS);
 		}
-
-		/* Attach the buffer to the mbuf. */
-		m_new->m_len = m_new->m_pkthdr.len = TI_JUMBO_FRAMELEN;
-		MEXTADD(m_new, buf, TI_JUMBO_FRAMELEN, 0, ti_jfree, sc);
 	} else {
 		/*
 		 * We're re-using a previously allocated mbuf;
@@ -899,14 +727,14 @@ ti_newbuf_jumbo(struct ti_softc *sc, int i, struct mbuf *m)
 		 */
 		m_new = m;
 		m_new->m_data = m_new->m_ext.ext_buf;
-		m_new->m_ext.ext_size = TI_JUMBO_FRAMELEN;
+		m_new->m_len = m_new->m_pkthdr.len = TI_JUMBO_FRAMELEN;
+		m_adj(m_new, ETHER_ALIGN);
 	}
 
-	m_adj(m_new, ETHER_ALIGN);
 	/* Set up the descriptor. */
 	r = &sc->ti_rdata->ti_rx_jumbo_ring[i];
 	sc->ti_cdata.ti_rx_jumbo_chain[i] = m_new;
-	TI_HOSTADDR(r->ti_addr) = TI_JUMBO_DMA_ADDR(sc, m_new);
+	TI_HOSTADDR(r->ti_addr) = dmamap->dm_segs[0].ds_addr;
 	r->ti_type = TI_BDTYPE_RECV_JUMBO_BD;
 	r->ti_flags = TI_BDFLAG_JUMBO_RING | TI_BDFLAG_IP_CKSUM;
 	r->ti_len = m_new->m_len;
@@ -963,7 +791,7 @@ ti_init_rx_ring_jumbo(struct ti_softc *sc)
 	struct ti_cmd_desc	cmd;
 
 	for (i = 0; i < TI_JUMBO_RX_RING_CNT; i++) {
-		if (ti_newbuf_jumbo(sc, i, NULL) == ENOBUFS)
+		if (ti_newbuf_jumbo(sc, i, NULL, 0) == ENOBUFS)
 			return (ENOBUFS);
 	};
 
@@ -1614,13 +1442,6 @@ ti_attach(struct ti_softc *sc)
 	sc->ti_rdata = (struct ti_ring_data *)kva;
 	bzero(sc->ti_rdata, sizeof(struct ti_ring_data));
 
-	/* Try to allocate memory for jumbo buffers. */
-	if (ti_alloc_jumbo_mem(sc)) {
-		printf("%s: jumbo buffer allocation failed\n",
-		    sc->sc_dv.dv_xname);
-		goto fail_3;
-	}
-
 	/* Set default tuneable values. */
 	sc->ti_stat_ticks = 2 * TI_TICKS_PER_SEC;
 	sc->ti_rx_coal_ticks = TI_TICKS_PER_SEC / 5000;
@@ -1731,22 +1552,18 @@ ti_rxeof(struct ti_softc *sc)
 			TI_INC(sc->ti_jumbo, TI_JUMBO_RX_RING_CNT);
 			m = sc->ti_cdata.ti_rx_jumbo_chain[rxidx];
 			sc->ti_cdata.ti_rx_jumbo_chain[rxidx] = NULL;
+			dmamap = sc->ti_cdata.ti_rx_jumbo_map[rxidx];
+			sc->ti_cdata.ti_rx_jumbo_map[rxidx] = 0;
 			if (cur_rx->ti_flags & TI_BDFLAG_ERROR) {
 				ifp->if_ierrors++;
-				ti_newbuf_jumbo(sc, sc->ti_jumbo, m);
+				ti_newbuf_jumbo(sc, sc->ti_jumbo, m, dmamap);
 				continue;
 			}
-			if (ti_newbuf_jumbo(sc, sc->ti_jumbo, NULL)
+			if (ti_newbuf_jumbo(sc, sc->ti_jumbo, NULL, dmamap)
 			    == ENOBUFS) {
-				struct mbuf             *m0;
-				m0 = m_devget(mtod(m, char *), cur_rx->ti_len,
-				    ETHER_ALIGN, ifp);
-				ti_newbuf_jumbo(sc, sc->ti_jumbo, m);
-				if (m0 == NULL) {
-					ifp->if_ierrors++;
-					continue;
-				}
-				m = m0;
+				ifp->if_ierrors++;
+				ti_newbuf_jumbo(sc, sc->ti_jumbo, m, dmamap);
+				continue;
 			}
 		} else if (cur_rx->ti_flags & TI_BDFLAG_MINI_RING) {
 			TI_INC(sc->ti_mini, TI_MINI_RX_RING_CNT);
