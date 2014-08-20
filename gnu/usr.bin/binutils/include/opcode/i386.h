@@ -1379,6 +1379,7 @@ static const template i386_optab[] = {
 {"syscall",  0, 0x0f05,    X, CpuK6,	NoSuf,			{ 0, 0, 0} },
 {"sysret",   0, 0x0f07,    X, CpuK6,	lq_Suf|DefaultSize,	{ 0, 0, 0} },
 {"swapgs",   0, 0x0f01, 0xf8, Cpu64,	NoSuf|ImmExt,		{ 0, 0, 0} },
+{"rdtscp",   0, 0x0f01, 0xf9, CpuSledgehammer,NoSuf|ImmExt,	{ 0, 0, 0} },
 
 /* VIA PadLock extensions. */
 {"xstorerng", 0, 0x0fa7c0, X, Cpu686|CpuPadLock, NoSuf|IsString, { 0, 0, 0} },
