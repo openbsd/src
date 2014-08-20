@@ -61,9 +61,29 @@ svc_default_enabled()
 	svc_is_enabled ${_svc} && _ret=0
 
 	# reparse _all_ values
-	svc_is_base ${_svc} && _rc_parse_conf
+	_rc_parse_conf
 
 	return ${_ret}
+}
+
+svc_default_flags()
+{
+	local daemon_flags
+	local _svc=$1
+	[ -n "${_svc}" ] || return
+
+	# get _defaults_ values only
+	_rc_parse_conf /etc/rc.conf
+
+	if svc_is_base ${_svc} || svc_is_special ${_svc}; then
+		svc_get_flags ${_svc}
+	else
+		eval $(grep '^daemon_flags=' /etc/rc.d/${_svc})
+		echo ${daemon_flags}
+	fi
+
+	# reparse _all_ values
+	_rc_parse_conf
 }
 
 svc_get_all()
@@ -224,8 +244,10 @@ add_flags()
 			set -A _flags -- ${_flags}
 		fi
 	elif svc_is_enabled ${_svc}; then
-		# svc is already enabled and we did not (re)set the flags
-		return
+		# we did not (re)set the flags: stop here if svc is already
+		# enabled and our current flags do not match the default ones;
+		# if they do, we drop the default "svc_flags=" further down
+		[[ "$(svc_default_flags ${_svc})" != "$(svc_get_flags ${_svc})" ]] && return
 	fi
 
 	# special var
@@ -254,7 +276,8 @@ add_flags()
 	rcconf_edit_begin
 	grep -v "^${_svc}_flags.*=" /etc/rc.conf.local >${_TMP_RCCONF}
 	if [ "${#_flags[*]}" -gt 0 ]; then
-		echo ${_svc}_flags=${_flags[@]} >>${_TMP_RCCONF}
+		[[ "${_flags[@]}" != "$(svc_default_flags ${_svc})" ]] && \
+			echo ${_svc}_flags=${_flags[@]} >>${_TMP_RCCONF}
 	fi
 	rcconf_edit_end
 }
