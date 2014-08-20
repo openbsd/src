@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.105 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.106 2014/08/20 01:02:50 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -85,10 +85,6 @@ void	nfe_start(struct ifnet *);
 void	nfe_watchdog(struct ifnet *);
 int	nfe_init(struct ifnet *);
 void	nfe_stop(struct ifnet *, int);
-struct	nfe_jbuf *nfe_jalloc(struct nfe_softc *);
-void	nfe_jfree(caddr_t, u_int, void *);
-int	nfe_jpool_alloc(struct nfe_softc *);
-void	nfe_jpool_free(struct nfe_softc *);
 int	nfe_alloc_rx_ring(struct nfe_softc *, struct nfe_rx_ring *);
 void	nfe_reset_rx_ring(struct nfe_softc *, struct nfe_rx_ring *);
 void	nfe_free_rx_ring(struct nfe_softc *, struct nfe_rx_ring *);
@@ -309,12 +305,6 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 		    NFE_READ(sc, NFE_PWR2_CTL) & ~NFE_PWR2_WAKEUP_MASK);
 	}
 
-#ifdef notyet
-	/* enable jumbo frames for adapters that support it */
-	if (sc->sc_flags & NFE_JUMBO_SUP)
-		sc->sc_flags |= NFE_USE_JUMBO;
-#endif
-
 	nfe_get_macaddr(sc, sc->sc_arpcom.ac_enaddr);
 	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
@@ -351,9 +341,6 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_wol = nfe_wol;
 	nfe_wol(ifp, 0);
 #endif
-
-	if (sc->sc_flags & NFE_USE_JUMBO)
-		ifp->if_hardmtu = NFE_JUMBO_MTU;
 
 #if NVLAN > 0
 	if (sc->sc_flags & NFE_HW_VLAN)
@@ -664,7 +651,6 @@ nfe_rxeof(struct nfe_softc *sc)
 	struct nfe_desc32 *desc32;
 	struct nfe_desc64 *desc64;
 	struct nfe_rx_data *data;
-	struct nfe_jbuf *jbuf;
 	struct mbuf *m, *mnew;
 	bus_addr_t physaddr;
 #if NVLAN > 0
@@ -726,57 +712,33 @@ nfe_rxeof(struct nfe_softc *sc)
 		 * old mbuf. In the unlikely case that the old mbuf can't be
 		 * reloaded either, explicitly panic.
 		 */
-		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
+		mnew = MCLGETI(NULL, MCLBYTES, NULL, M_DONTWAIT);
 		if (mnew == NULL) {
 			ifp->if_ierrors++;
 			goto skip;
 		}
 
-		if (sc->sc_flags & NFE_USE_JUMBO) {
-			if ((jbuf = nfe_jalloc(sc)) == NULL) {
-				m_freem(mnew);
-				ifp->if_ierrors++;
-				goto skip;
-			}
-			MEXTADD(mnew, jbuf->buf, NFE_JBYTES, 0, nfe_jfree, sc);
+		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+		    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, data->map);
 
-			bus_dmamap_sync(sc->sc_dmat, sc->rxq.jmap,
-			    mtod(data->m, caddr_t) - sc->rxq.jpool, NFE_JBYTES,
-			    BUS_DMASYNC_POSTREAD);
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, mnew,
+		    BUS_DMA_READ | BUS_DMA_NOWAIT);
+		if (error != 0) {
+			m_freem(mnew);
 
-			physaddr = jbuf->physaddr;
-		} else {
-			MCLGET(mnew, M_DONTWAIT);
-			if (!(mnew->m_flags & M_EXT)) {
-				m_freem(mnew);
-				ifp->if_ierrors++;
-				goto skip;
-			}
-
-			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-			    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-			bus_dmamap_unload(sc->sc_dmat, data->map);
-
-			error = bus_dmamap_load(sc->sc_dmat, data->map,
-			    mtod(mnew, void *), MCLBYTES, NULL,
-			    BUS_DMA_READ | BUS_DMA_NOWAIT);
+			/* try to reload the old mbuf */
+			error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map,
+			    m, BUS_DMA_READ | BUS_DMA_NOWAIT);
 			if (error != 0) {
-				m_freem(mnew);
-
-				/* try to reload the old mbuf */
-				error = bus_dmamap_load(sc->sc_dmat, data->map,
-				    mtod(data->m, void *), MCLBYTES, NULL,
-				    BUS_DMA_READ | BUS_DMA_NOWAIT);
-				if (error != 0) {
-					/* very unlikely that it will fail.. */
-					panic("%s: could not load old rx mbuf",
-					    sc->sc_dev.dv_xname);
-				}
-				ifp->if_ierrors++;
-				goto skip;
+				/* very unlikely that it will fail.. */
+				panic("%s: could not load old rx mbuf",
+				    sc->sc_dev.dv_xname);
 			}
-			physaddr = data->map->dm_segs[0].ds_addr;
+			ifp->if_ierrors++;
+			goto skip;
 		}
+		physaddr = data->map->dm_segs[0].ds_addr;
 
 		/*
 		 * New mbuf successfully loaded, update Rx ring and continue
@@ -1213,7 +1175,6 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 	struct nfe_desc32 *desc32;
 	struct nfe_desc64 *desc64;
 	struct nfe_rx_data *data;
-	struct nfe_jbuf *jbuf;
 	void **desc;
 	bus_addr_t physaddr;
 	int i, nsegs, error, descsize;
@@ -1262,22 +1223,13 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 	}
 	ring->physaddr = ring->map->dm_segs[0].ds_addr;
 
-	if (sc->sc_flags & NFE_USE_JUMBO) {
-		ring->bufsz = NFE_JBYTES;
-		if ((error = nfe_jpool_alloc(sc)) != 0) {
-			printf("%s: could not allocate jumbo frames\n",
-			    sc->sc_dev.dv_xname);
-			goto fail;
-		}
-	}
-
 	/*
 	 * Pre-allocate Rx buffers and populate Rx ring.
 	 */
 	for (i = 0; i < NFE_RX_RING_COUNT; i++) {
 		data = &sc->rxq.data[i];
 
-		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
+		data->m = MCLGETI(NULL, MCLBYTES, NULL, M_DONTWAIT);
 		if (data->m == NULL) {
 			printf("%s: could not allocate rx mbuf\n",
 			    sc->sc_dev.dv_xname);
@@ -1285,42 +1237,22 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 			goto fail;
 		}
 
-		if (sc->sc_flags & NFE_USE_JUMBO) {
-			if ((jbuf = nfe_jalloc(sc)) == NULL) {
-				printf("%s: could not allocate jumbo buffer\n",
-				    sc->sc_dev.dv_xname);
-				goto fail;
-			}
-			MEXTADD(data->m, jbuf->buf, NFE_JBYTES, 0, nfe_jfree,
-			    sc);
-
-			physaddr = jbuf->physaddr;
-		} else {
-			error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
-			    MCLBYTES, 0, BUS_DMA_NOWAIT, &data->map);
-			if (error != 0) {
-				printf("%s: could not create DMA map\n",
-				    sc->sc_dev.dv_xname);
-				goto fail;
-			}
-			MCLGET(data->m, M_DONTWAIT);
-			if (!(data->m->m_flags & M_EXT)) {
-				printf("%s: could not allocate mbuf cluster\n",
-				    sc->sc_dev.dv_xname);
-				error = ENOMEM;
-				goto fail;
-			}
-
-			error = bus_dmamap_load(sc->sc_dmat, data->map,
-			    mtod(data->m, void *), MCLBYTES, NULL,
-			    BUS_DMA_READ | BUS_DMA_NOWAIT);
-			if (error != 0) {
-				printf("%s: could not load rx buf DMA map",
-				    sc->sc_dev.dv_xname);
-				goto fail;
-			}
-			physaddr = data->map->dm_segs[0].ds_addr;
+		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT, &data->map);
+		if (error != 0) {
+			printf("%s: could not create DMA map\n",
+			    sc->sc_dev.dv_xname);
+			goto fail;
 		}
+
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, data->m,
+		    BUS_DMA_READ | BUS_DMA_NOWAIT);
+		if (error != 0) {
+			printf("%s: could not load rx buf DMA map",
+			    sc->sc_dev.dv_xname);
+			goto fail;
+		}
+		physaddr = data->map->dm_segs[0].ds_addr;
 
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
 			desc64 = &sc->rxq.desc64[i];
@@ -1403,127 +1335,6 @@ nfe_free_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 		}
 		if (data->m != NULL)
 			m_freem(data->m);
-	}
-}
-
-struct nfe_jbuf *
-nfe_jalloc(struct nfe_softc *sc)
-{
-	struct nfe_jbuf *jbuf;
-
-	jbuf = SLIST_FIRST(&sc->rxq.jfreelist);
-	if (jbuf == NULL)
-		return NULL;
-	SLIST_REMOVE_HEAD(&sc->rxq.jfreelist, jnext);
-	return jbuf;
-}
-
-/*
- * This is called automatically by the network stack when the mbuf is freed.
- * Caution must be taken that the NIC might be reset by the time the mbuf is
- * freed.
- */
-void
-nfe_jfree(caddr_t buf, u_int size, void *arg)
-{
-	struct nfe_softc *sc = arg;
-	struct nfe_jbuf *jbuf;
-	int i;
-
-	/* find the jbuf from the base pointer */
-	i = (buf - sc->rxq.jpool) / NFE_JBYTES;
-	if (i < 0 || i >= NFE_JPOOL_COUNT) {
-		printf("%s: request to free a buffer (%p) not managed by us\n",
-		    sc->sc_dev.dv_xname, buf);
-		return;
-	}
-	jbuf = &sc->rxq.jbuf[i];
-
-	/* ..and put it back in the free list */
-	SLIST_INSERT_HEAD(&sc->rxq.jfreelist, jbuf, jnext);
-}
-
-int
-nfe_jpool_alloc(struct nfe_softc *sc)
-{
-	struct nfe_rx_ring *ring = &sc->rxq;
-	struct nfe_jbuf *jbuf;
-	bus_addr_t physaddr;
-	caddr_t buf;
-	int i, nsegs, error;
-
-	/*
-	 * Allocate a big chunk of DMA'able memory.
-	 */
-	error = bus_dmamap_create(sc->sc_dmat, NFE_JPOOL_SIZE, 1,
-	    NFE_JPOOL_SIZE, 0, BUS_DMA_NOWAIT, &ring->jmap);
-	if (error != 0) {
-		printf("%s: could not create jumbo DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	error = bus_dmamem_alloc(sc->sc_dmat, NFE_JPOOL_SIZE, PAGE_SIZE, 0,
-	    &ring->jseg, 1, &nsegs, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s could not allocate jumbo DMA memory\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	error = bus_dmamem_map(sc->sc_dmat, &ring->jseg, nsegs, NFE_JPOOL_SIZE,
-	    &ring->jpool, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: can't map jumbo DMA memory\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	error = bus_dmamap_load(sc->sc_dmat, ring->jmap, ring->jpool,
-	    NFE_JPOOL_SIZE, NULL, BUS_DMA_READ | BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not load jumbo DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	/* ..and split it into 9KB chunks */
-	SLIST_INIT(&ring->jfreelist);
-
-	buf = ring->jpool;
-	physaddr = ring->jmap->dm_segs[0].ds_addr;
-	for (i = 0; i < NFE_JPOOL_COUNT; i++) {
-		jbuf = &ring->jbuf[i];
-
-		jbuf->buf = buf;
-		jbuf->physaddr = physaddr;
-
-		SLIST_INSERT_HEAD(&ring->jfreelist, jbuf, jnext);
-
-		buf += NFE_JBYTES;
-		physaddr += NFE_JBYTES;
-	}
-
-	return 0;
-
-fail:	nfe_jpool_free(sc);
-	return error;
-}
-
-void
-nfe_jpool_free(struct nfe_softc *sc)
-{
-	struct nfe_rx_ring *ring = &sc->rxq;
-
-	if (ring->jmap != NULL) {
-		bus_dmamap_sync(sc->sc_dmat, ring->jmap, 0,
-		    ring->jmap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, ring->jmap);
-		bus_dmamap_destroy(sc->sc_dmat, ring->jmap);
-	}
-	if (ring->jpool != NULL) {
-		bus_dmamem_unmap(sc->sc_dmat, ring->jpool, NFE_JPOOL_SIZE);
-		bus_dmamem_free(sc->sc_dmat, &ring->jseg, 1);
 	}
 }
 
