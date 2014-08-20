@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ngereg.h,v 1.9 2012/10/18 21:44:21 deraadt Exp $	*/
+/*	$OpenBSD: if_ngereg.h,v 1.10 2014/08/20 00:59:56 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -625,24 +625,11 @@ struct nge_mii_frame {
 #define NGE_RESID (NGE_JPAGESZ - (NGE_JLEN * NGE_JSLOTS) % NGE_JPAGESZ)
 #define NGE_JMEM ((NGE_JLEN * NGE_JSLOTS) + NGE_RESID)
 
-struct nge_jslot {
-	caddr_t			nge_buf;
-	int			nge_inuse;
-};
-
-struct nge_jpool_entry {
-	int				slot;
-	LIST_ENTRY(nge_jpool_entry)	jpool_entries;
-};
-
 struct nge_ring_data {
 	int			nge_rx_prod;
 	int			nge_tx_prod;
 	int			nge_tx_cons;
 	int			nge_tx_cnt;
-	/* Stick the jumbo mem management stuff here too. */
-	struct nge_jslot	nge_jslots[NGE_JSLOTS];
-	void			*nge_jumbo_buf;
 };
 
 struct nge_softc {
@@ -662,8 +649,6 @@ struct nge_softc {
 	struct nge_list_data	*nge_ldata;
 	struct nge_ring_data	nge_cdata;
 	struct timeout		nge_timeout;
-	LIST_HEAD(__nge_jfreehead, nge_jpool_entry)	nge_jfree_listhead;
-	LIST_HEAD(__nge_jinusehead, nge_jpool_entry)	nge_jinuse_listhead;
 	u_int8_t		nge_tbi;
 	struct ifmedia		nge_ifmedia;
 };

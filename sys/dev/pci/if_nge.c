@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.79 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.80 2014/08/20 00:59:56 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -134,10 +134,6 @@
 
 int nge_probe(struct device *, void *, void *);
 void nge_attach(struct device *, struct device *, void *);
-
-int nge_alloc_jumbo_mem(struct nge_softc *);
-void *nge_jalloc(struct nge_softc *);
-void nge_jfree(caddr_t, u_int, void *);
 
 int nge_newbuf(struct nge_softc *, struct nge_desc *,
 			     struct mbuf *);
@@ -797,14 +793,6 @@ nge_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(5, ("%s: bzero\n", sc->sc_dv.dv_xname));
 	sc->nge_ldata = (struct nge_list_data *)kva;
 
-	/* Try to allocate memory for jumbo buffers. */
-	DPRINTFN(5, ("%s: nge_alloc_jumbo_mem\n", sc->sc_dv.dv_xname));
-	if (nge_alloc_jumbo_mem(sc)) {
-		printf("%s: jumbo buffer allocation failed\n",
-		       sc->sc_dv.dv_xname);
-		goto fail_5;
-	}
-
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -983,22 +971,9 @@ nge_newbuf(struct nge_softc *sc, struct nge_desc *c, struct mbuf *m)
 	struct mbuf		*m_new = NULL;
 
 	if (m == NULL) {
-		caddr_t buf = NULL;
-
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
+		m_new = MCLGETI(NULL, NGE_MCLBYTES, NULL, M_DONTWAIT);
 		if (m_new == NULL)
 			return (ENOBUFS);
-
-		/* Allocate the jumbo buffer */
-		buf = nge_jalloc(sc);
-		if (buf == NULL) {
-			m_freem(m_new);
-			return (ENOBUFS);
-		}
-
-		/* Attach the buffer to the mbuf */
-		m_new->m_len = m_new->m_pkthdr.len = NGE_MCLBYTES;
-		MEXTADD(m_new, buf, NGE_MCLBYTES, 0, nge_jfree, sc);
 	} else {
 		/*
 		 * We're re-using a previously allocated mbuf;
@@ -1006,10 +981,10 @@ nge_newbuf(struct nge_softc *sc, struct nge_desc *c, struct mbuf *m)
 		 * default values.
 		 */
 		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = NGE_MCLBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
 
+	m_new->m_len = m_new->m_pkthdr.len = NGE_MCLBYTES;
 	m_adj(m_new, sizeof(u_int64_t));
 
 	c->nge_mbuf = m_new;
@@ -1020,161 +995,6 @@ nge_newbuf(struct nge_softc *sc, struct nge_desc *c, struct mbuf *m)
 	c->nge_extsts = 0;
 
 	return(0);
-}
-
-int
-nge_alloc_jumbo_mem(struct nge_softc *sc)
-{
-	caddr_t			ptr, kva;
-	bus_dma_segment_t	seg;
-	bus_dmamap_t		dmamap;
-	int			i, rseg, state, error;
-	struct nge_jpool_entry	*entry;
-
-	state = error = 0;
-
-	if (bus_dmamem_alloc(sc->sc_dmatag, NGE_JMEM, PAGE_SIZE, 0,
-			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
-		return (ENOBUFS);
-	}
-
-	state = 1;
-	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, NGE_JMEM, &kva,
-			   BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%zd bytes)\n",
-		       sc->sc_dv.dv_xname, NGE_JMEM);
-		error = ENOBUFS;
-		goto out;
-	}
-
-	state = 2;
-	if (bus_dmamap_create(sc->sc_dmatag, NGE_JMEM, 1,
-			      NGE_JMEM, 0, BUS_DMA_NOWAIT, &dmamap)) {
-		printf("%s: can't create dma map\n", sc->sc_dv.dv_xname);
-		error = ENOBUFS;
-		goto out;
-	}
-
-	state = 3;
-	if (bus_dmamap_load(sc->sc_dmatag, dmamap, kva, NGE_JMEM,
-			    NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load dma map\n", sc->sc_dv.dv_xname);
-		error = ENOBUFS;
-		goto out;
-        }
-
-	state = 4;
-	sc->nge_cdata.nge_jumbo_buf = (caddr_t)kva;
-	DPRINTFN(1,("%s: nge_jumbo_buf=%#x, NGE_MCLBYTES=%#x\n",
-		    sc->sc_dv.dv_xname , sc->nge_cdata.nge_jumbo_buf,
-		    NGE_MCLBYTES));
-
-	LIST_INIT(&sc->nge_jfree_listhead);
-	LIST_INIT(&sc->nge_jinuse_listhead);
-
-	/*
-	 * Now divide it up into 9K pieces and save the addresses
-	 * in an array. Note that we play an evil trick here by using
-	 * the first few bytes in the buffer to hold the address
-	 * of the softc structure for this interface. This is because
-	 * nge_jfree() needs it, but it is called by the mbuf management
-	 * code which will not pass it to us explicitly.
-	 */
-	ptr = sc->nge_cdata.nge_jumbo_buf;
-	for (i = 0; i < NGE_JSLOTS; i++) {
-		sc->nge_cdata.nge_jslots[i].nge_buf = ptr;
-		sc->nge_cdata.nge_jslots[i].nge_inuse = 0;
-		ptr += NGE_MCLBYTES;
-		entry = malloc(sizeof(struct nge_jpool_entry),
-			       M_DEVBUF, M_NOWAIT);
-		if (entry == NULL) {
-			sc->nge_cdata.nge_jumbo_buf = NULL;
-			printf("%s: no memory for jumbo buffer queue!\n",
-			       sc->sc_dv.dv_xname);
-			error = ENOBUFS;
-			goto out;
-		}
-		entry->slot = i;
-		LIST_INSERT_HEAD(&sc->nge_jfree_listhead, entry,
-				 jpool_entries);
-	}
-out:
-	if (error != 0) {
-		switch (state) {
-		case 4:
-			bus_dmamap_unload(sc->sc_dmatag, dmamap);
-		case 3:
-			bus_dmamap_destroy(sc->sc_dmatag, dmamap);
-		case 2:
-			bus_dmamem_unmap(sc->sc_dmatag, kva, NGE_JMEM);
-		case 1:
-			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-			break;
-		default:
-			break;
-		}
-	}
- 
-	return (error);
-}
-
-/*
- * Allocate a jumbo buffer.
- */
-void *
-nge_jalloc(struct nge_softc *sc)
-{
-	struct nge_jpool_entry   *entry;
-
-	entry = LIST_FIRST(&sc->nge_jfree_listhead);
-
-	if (entry == NULL)
-		return (NULL);
-
-	LIST_REMOVE(entry, jpool_entries);
-	LIST_INSERT_HEAD(&sc->nge_jinuse_listhead, entry, jpool_entries);
-	sc->nge_cdata.nge_jslots[entry->slot].nge_inuse = 1;
-	return(sc->nge_cdata.nge_jslots[entry->slot].nge_buf);
-}
-
-/*
- * Release a jumbo buffer.
- */
-void
-nge_jfree(caddr_t buf, u_int size, void *arg)
-{
-	struct nge_softc	*sc;
-	int		        i;
-	struct nge_jpool_entry *entry;
-
-	/* Extract the softc struct pointer. */
-	sc = (struct nge_softc *)arg;
-
-	if (sc == NULL)
-		panic("nge_jfree: can't find softc pointer!");
-
-	/* calculate the slot this buffer belongs to */
-
-	i = ((vaddr_t)buf - (vaddr_t)sc->nge_cdata.nge_jumbo_buf)
-	  / NGE_MCLBYTES;
-
-	if ((i < 0) || (i >= NGE_JSLOTS))
-		panic("nge_jfree: asked to free buffer that we don't manage!");
-	else if (sc->nge_cdata.nge_jslots[i].nge_inuse == 0)
-		panic("nge_jfree: buffer already free!");
-	else {
-		sc->nge_cdata.nge_jslots[i].nge_inuse--;
-		if(sc->nge_cdata.nge_jslots[i].nge_inuse == 0) {
-			entry = LIST_FIRST(&sc->nge_jinuse_listhead);
-			if (entry == NULL)
-				panic("nge_jfree: buffer not in use!");
-			entry->slot = i;
-			LIST_REMOVE(entry, jpool_entries);
-			LIST_INSERT_HEAD(&sc->nge_jfree_listhead,
-					 entry, jpool_entries);
-		}
-	}
 }
 
 /*
