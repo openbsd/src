@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.112 2014/08/19 00:24:00 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.113 2014/08/20 19:16:27 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1427,7 +1427,7 @@ find_dup(struct filed *f)
 struct filed *
 cfline(char *line, char *prog)
 {
-	int i, pri, addr_len;
+	int i, pri;
 	size_t rb_len;
 	char *bp, *p, *q, *cp;
 	char buf[MAXLINE], ebuf[100];
@@ -1538,11 +1538,10 @@ cfline(char *line, char *prog)
 			logerror(ebuf);
 			break;
 		}
-		addr_len = priv_gethostserv(f->f_un.f_forw.f_hname,
+		if (priv_getaddrinfo(f->f_un.f_forw.f_hname,
 		    cp == NULL ? "syslog" : cp,
-		    (struct sockaddr*)&f->f_un.f_forw.f_addr,
-		    sizeof(f->f_un.f_forw.f_addr));
-		if (addr_len < 1) {
+		    (struct sockaddr *)&f->f_un.f_forw.f_addr,
+		    sizeof(f->f_un.f_forw.f_addr)) != 0) {
 			snprintf(ebuf, sizeof(ebuf), "bad hostname \"%s\"", p);
 			logerror(ebuf);
 			break;
