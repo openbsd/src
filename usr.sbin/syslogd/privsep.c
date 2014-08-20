@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.37 2014/08/20 19:16:27 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.38 2014/08/20 20:10:17 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -68,7 +68,7 @@ enum cmd_types {
 	PRIV_OPEN_CONFIG,	/* open config file for reading only */
 	PRIV_CONFIG_MODIFIED,	/* check if config file has been modified */
 	PRIV_GETADDRINFO,	/* resolve host/service names */
-	PRIV_GETHOSTBYADDR,	/* resolve numeric address into hostname */
+	PRIV_GETNAMEINFO,	/* resolve numeric address into hostname */
 	PRIV_DONE_CONFIG_PARSE	/* signal that the initial config parse is done */
 };
 
@@ -76,7 +76,7 @@ static int priv_fd = -1;
 static volatile pid_t child_pid = -1;
 static char config_file[MAXPATHLEN];
 static struct stat cf_info;
-static int allow_gethostbyaddr = 0;
+static int allow_getnameinfo = 0;
 static volatile sig_atomic_t cur_state = STATE_INIT;
 
 /* Queue for the allowed logfiles */
@@ -100,12 +100,12 @@ static int  may_read(int, void *, size_t);
 int
 priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 {
-	int i, fd, socks[2], cmd, addr_len, addr_af, result, restart;
+	int i, fd, socks[2], cmd, addr_len, result, restart;
 	size_t path_len, hostname_len, servname_len;
 	char path[MAXPATHLEN], hostname[MAXHOSTNAMELEN];
 	char servname[MAXHOSTNAMELEN];
+	struct sockaddr_storage addr;
 	struct stat cf_stat;
-	struct hostent *hp;
 	struct passwd *pw;
 	struct addrinfo hints, *res0;
 	struct sigaction sa;
@@ -191,11 +191,11 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 	if (stat(config_file, &cf_info) < 0)
 		err(1, "stat config file failed");
 
-	/* Save whether or not the child can have access to gethostbyaddr(3) */
+	/* Save whether or not the child can have access to getnameinfo(3) */
 	if (numeric > 0)
-		allow_gethostbyaddr = 0;
+		allow_getnameinfo = 0;
 	else
-		allow_gethostbyaddr = 1;
+		allow_getnameinfo = 1;
 
 	TAILQ_INIT(&lognames);
 	increase_state(STATE_CONFIG);
@@ -322,24 +322,24 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			}
 			break;
 
-		case PRIV_GETHOSTBYADDR:
-			dprintf("[priv]: msg PRIV_GETHOSTBYADDR received\n");
-			if (!allow_gethostbyaddr)
-				errx(1, "rejected attempt to gethostbyaddr");
-			/* Expecting: length, address, address family */
+		case PRIV_GETNAMEINFO:
+			dprintf("[priv]: msg PRIV_GETNAMEINFO received\n");
+			if (!allow_getnameinfo)
+				errx(1, "rejected attempt to getnameinfo");
+			/* Expecting: length, sockaddr */
 			must_read(socks[0], &addr_len, sizeof(int));
-			if (addr_len <= 0 || addr_len > sizeof(hostname))
+			if (addr_len <= 0 || addr_len > sizeof(addr))
 				_exit(1);
-			must_read(socks[0], hostname, addr_len);
-			must_read(socks[0], &addr_af, sizeof(int));
-			hp = gethostbyaddr(hostname, addr_len, addr_af);
-			if (hp == NULL) {
+			must_read(socks[0], &addr, addr_len);
+			if (getnameinfo((struct sockaddr *)&addr, addr_len,
+			    hostname, sizeof(hostname), NULL, 0,
+			    NI_NOFQDN|NI_NAMEREQD|NI_DGRAM) != 0) {
 				addr_len = 0;
 				must_write(socks[0], &addr_len, sizeof(int));
 			} else {
-				addr_len = strlen(hp->h_name) + 1;
+				addr_len = strlen(hostname) + 1;
 				must_write(socks[0], &addr_len, sizeof(int));
-				must_write(socks[0], hp->h_name, addr_len);
+				must_write(socks[0], hostname, addr_len);
 			}
 			break;
 		default:
@@ -656,8 +656,8 @@ priv_config_parse_done(void)
 	must_write(priv_fd, &cmd, sizeof(int));
 }
 
-/* Name/service to address translation.  Response is placed into addr, and
- * the length is returned (zero on error) */
+/* Name/service to address translation.  Response is placed into addr.
+ * Return 0 for success or < 0 for error like getaddrinfo(3) */
 int
 priv_getaddrinfo(char *host, char *serv, struct sockaddr *addr,
     size_t addr_len)
@@ -701,36 +701,36 @@ priv_getaddrinfo(char *host, char *serv, struct sockaddr *addr,
 	return (0);
 }
 
-/* Reverse address resolution; response is placed into res, and length of
- * response is returned (zero on error) */
+/* Reverse address resolution; response is placed into host.
+ * Return 0 for success or < 0 for error like getnameinfo(3) */
 int
-priv_gethostbyaddr(char *addr, int addr_len, int af, char *res, size_t res_len)
+priv_getnameinfo(struct sockaddr *sa, socklen_t salen, char *host,
+    size_t hostlen)
 {
 	int cmd, ret_len;
 
 	if (priv_fd < 0)
 		errx(1, "%s called from privileged portion", __func__);
 
-	cmd = PRIV_GETHOSTBYADDR;
+	cmd = PRIV_GETNAMEINFO;
 	must_write(priv_fd, &cmd, sizeof(int));
-	must_write(priv_fd, &addr_len, sizeof(int));
-	must_write(priv_fd, addr, addr_len);
-	must_write(priv_fd, &af, sizeof(int));
+	must_write(priv_fd, &salen, sizeof(int));
+	must_write(priv_fd, sa, salen);
 
 	/* Expect back an integer size, and then a string of that length */
 	must_read(priv_fd, &ret_len, sizeof(int));
 
 	/* Check there was no error (indicated by a return of 0) */
 	if (!ret_len)
-		return 0;
+		return (-1);
 
 	/* Check we don't overflow the passed in buffer */
-	if (res_len < ret_len)
+	if (hostlen < ret_len)
 		errx(1, "%s: overflow attempt in return", __func__);
 
 	/* Read the resolved hostname */
-	must_read(priv_fd, res, ret_len);
-	return ret_len;
+	must_read(priv_fd, host, ret_len);
+	return (0);
 }
 
 /* Pass the signal through to child */

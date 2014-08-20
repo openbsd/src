@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.h,v 1.10 2014/08/20 19:33:43 bluhm Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.11 2014/08/20 20:10:17 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -29,7 +29,7 @@ FILE *priv_open_config(void);
 void  priv_config_parse_done(void);
 int   priv_config_modified(void);
 int   priv_getaddrinfo(char *, char *, struct sockaddr *, size_t);
-int   priv_gethostbyaddr(char *, int, int, char *, size_t);
+int   priv_getnameinfo(struct sockaddr *, socklen_t, char *, size_t);
 
 /* Terminal message */
 char *ttymsg(struct iovec *, int, char *, int);

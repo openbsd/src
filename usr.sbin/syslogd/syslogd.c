@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.113 2014/08/20 19:16:27 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.114 2014/08/20 20:10:17 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -250,7 +250,7 @@ volatile sig_atomic_t WantDie;
 volatile sig_atomic_t DoInit;
 
 struct filed *cfline(char *, char *);
-void    cvthname(struct sockaddr_in *, char *, size_t);
+void	cvthname(struct sockaddr *, char *, size_t);
 int	decode(const char *, const CODE *);
 void	dodie(int);
 void	doinit(int);
@@ -587,7 +587,7 @@ main(int argc, char *argv[])
 			    (struct sockaddr *)&frominet, &len);
 			if (i > 0) {
 				line[i] = '\0';
-				cvthname(&frominet, resolve,
+				cvthname((struct sockaddr *)&frominet, resolve,
 				    sizeof resolve);
 				dprintf("cvthname res: %s\n", resolve);
 				printline(resolve, line);
@@ -1096,38 +1096,20 @@ reapchild(int signo)
  * Return a printable representation of a host address.
  */
 void
-cvthname(struct sockaddr_in *f, char *result, size_t res_len)
+cvthname(struct sockaddr *f, char *result, size_t res_len)
 {
-	sigset_t omask, nmask;
-	char *p, *ip;
-	int ret_len;
-
-	if (f->sin_family != AF_INET) {
+	if (getnameinfo(f, f->sa_len, result, res_len, NULL, 0,
+	    NI_NUMERICHOST|NI_NUMERICSERV|NI_DGRAM) != 0) {
 		dprintf("Malformed from address\n");
 		strlcpy(result, "???", res_len);
 		return;
 	}
-
-	ip = inet_ntoa(f->sin_addr);
-	dprintf("cvthname(%s)\n", ip);
-	if (NoDNS) {
-		strlcpy(result, ip, res_len);
+	dprintf("cvthname(%s)\n", result);
+	if (NoDNS)
 		return;
-	}
 
-	sigemptyset(&nmask);
-	sigaddset(&nmask, SIGHUP);
-	sigprocmask(SIG_BLOCK, &nmask, &omask);
-
-	ret_len = priv_gethostbyaddr((char *)&f->sin_addr,
-		sizeof(struct in_addr), f->sin_family, result, res_len);
-
-	sigprocmask(SIG_SETMASK, &omask, NULL);
-	if (ret_len == 0) {
-		dprintf("Host name for your address (%s) unknown\n", ip);
-		strlcpy(result, ip, res_len);
-	} else if ((p = strchr(result, '.')) && strcmp(p + 1, LocalDomain) == 0)
-		*p = '\0';
+	if (priv_getnameinfo(f, f->sa_len, result, res_len) != 0)
+		dprintf("Host name for your address (%s) unknown\n", result);
 }
 
 void
