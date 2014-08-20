@@ -1,3 +1,5 @@
+/*	$OpenBSD: syslogd.h,v 1.10 2014/08/20 19:33:43 bluhm Exp $ */
+
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
  *
