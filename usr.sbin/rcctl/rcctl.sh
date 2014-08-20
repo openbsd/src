@@ -19,7 +19,8 @@ FUNCS_ONLY=1
 . /etc/rc.d/rc.subr
 _rc_parse_conf
 
-usage() {
+usage()
+{
 	_rc_err "usage: ${0##*/} enable|disable|status|action [service | daemon [flags [...]]]"
 }
 
@@ -30,7 +31,8 @@ needs_root()
 	fi
 }
 
-rcconf_edit_begin() {
+rcconf_edit_begin()
+{
 	_TMP_RCCONF=$(mktemp -p /etc -t rc.conf.local.XXXXXXXXXX) || exit 1
 	if [ -f /etc/rc.conf.local ]; then
 		cp -p /etc/rc.conf.local ${_TMP_RCCONF} || exit 1
@@ -39,14 +41,16 @@ rcconf_edit_begin() {
 	fi
 }
 
-rcconf_edit_end() {
+rcconf_edit_end()
+{
 	mv ${_TMP_RCCONF} /etc/rc.conf.local || exit 1
 	if [ ! -s /etc/rc.conf.local ]; then
 		rm /etc/rc.conf.local || exit 1
 	fi
 }
 
-svc_default_enabled() {
+svc_default_enabled()
+{
 	local _ret=1
 	local _svc=$1
 	[ -n "${_svc}" ] || return
@@ -74,7 +78,8 @@ svc_get_all()
 	) | sort
 }
 
-svc_get_flags() {
+svc_get_flags()
+{
 	local daemon_flags
 	local _svc=$1
 	[ -n "${_svc}" ] || return
@@ -92,7 +97,8 @@ svc_get_flags() {
 	fi
 }
 
-svc_get_status() {
+svc_get_status()
+{
 	local _svc=$1
 
 	if [ -n "${_svc}" ]; then
