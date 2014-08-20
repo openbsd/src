@@ -275,49 +275,54 @@ rm_flags()
 	rcconf_edit_end
 }
 
+action=$1
+svc=$2
+flag=$3
+flags=$*
+
 if [ $# -gt 0 ]; then
-	if [ -n "$2" ]; then
-		if ! svc_is_avail $2; then
-			_rc_err "service $2 does not exist"
+	if [ -n "$svc" ]; then
+		if ! svc_is_avail $svc; then
+			_rc_err "service $svc does not exist"
 		fi
-	elif [ "$1" != "status" ]; then
+	elif [ "$action" != "status" ]; then
 		usage
 	fi
-	if [ -n "$3" ]; then
-		if [ "$3" = "flags" ]; then
-			if [ "$1" != "enable" ]; then
+	if [ -n "$flag" ]; then
+		if [ "$flag" = "flags" ]; then
+			if [ "$action" != "enable" ]; then
 				_rc_err "\"flags\" can only be set with \"enable\""
 			fi
-			if svc_is_special $2; then
-				_rc_err "\"$2\" is a special variable, cannot set \"flags\""
+			if svc_is_special $svc; then
+				_rc_err "\"$svc\" is a special variable, cannot set \"flags\""
 			fi
 		else
 			usage
 		fi
 	fi
-	case $1 in
+	case $action in
 		disable)
-			needs_root $1
-			if ! svc_is_base $2 && ! svc_is_special $2; then
-				rm_from_pkg_scripts $2
+			needs_root $svc
+			if ! svc_is_base $svc && ! svc_is_special $svc; then
+				rm_from_pkg_scripts $svc
 			fi
-			rm_flags $2
+			rm_flags $svc
 			;;
 		enable)
-			needs_root $1
-			add_flags $*
-			if ! svc_is_base $2 && ! svc_is_special $2; then
-				append_to_pkg_scripts $2
+			needs_root $action
+			add_flags $flags
+			if ! svc_is_base $svc && ! svc_is_special $svc; then
+				append_to_pkg_scripts $svc
 			fi
 			;;
 		status)
-			svc_get_status $2
+			svc_get_status $svc
 			;;
 		start|stop|restart|reload|check)
-			if svc_is_special $2; then
-				_rc_err "\"$2\" is a special variable, no rc.d(8) script"
+			if svc_is_special $svc; then
+				_rc_err "\"$svc\" is a special variable, no rc.d(8) script"
 			fi
-			/etc/rc.d/$2 $1
+			/etc/rc.d/$svc $action
 			;;
 		*)
 			usage
