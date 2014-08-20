@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lgereg.h,v 1.7 2012/10/18 21:44:21 deraadt Exp $	*/
+/*	$OpenBSD: if_lgereg.h,v 1.8 2014/08/20 01:00:15 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -497,19 +497,11 @@ struct lge_mii_frame {
 #define LGE_RESID (LGE_JPAGESZ - (LGE_JLEN * LGE_JSLOTS) % LGE_JPAGESZ)
 #define LGE_JMEM ((LGE_JLEN * LGE_JSLOTS) + LGE_RESID)
 
-struct lge_jpool_entry {
-	int				slot;
-	LIST_ENTRY(lge_jpool_entry)	jpool_entries;
-};
-
 struct lge_ring_data {
 	int			lge_rx_prod;
 	int			lge_rx_cons;
 	int			lge_tx_prod;
 	int			lge_tx_cons;
-	/* Stick the jumbo mem management stuff here too. */
-	caddr_t			lge_jslots[LGE_JSLOTS];
-	void			*lge_jumbo_buf;
 };
 
 struct lge_softc {
@@ -527,8 +519,6 @@ struct lge_softc {
 	struct lge_list_data	*lge_ldata;
 	struct lge_ring_data	lge_cdata;
 	struct timeout		lge_timeout;
-	LIST_HEAD(__lge_jfreehead, lge_jpool_entry)	lge_jfree_listhead;
-	LIST_HEAD(__lge_jinusehead, lge_jpool_entry)	lge_jinuse_listhead;
 };
 
 /*

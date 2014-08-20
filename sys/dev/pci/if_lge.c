@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.62 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.63 2014/08/20 01:00:15 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -122,10 +122,6 @@ struct cfattach lge_ca = {
 struct cfdriver lge_cd = {
 	NULL, "lge", DV_IFNET
 };
-
-int lge_alloc_jumbo_mem(struct lge_softc *);
-void *lge_jalloc(struct lge_softc *);
-void lge_jfree(caddr_t, u_int, void *);
 
 int lge_newbuf(struct lge_softc *, struct lge_rx_desc *,
 			     struct mbuf *);
@@ -499,14 +495,6 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(5, ("bzero\n"));
 	sc->lge_ldata = (struct lge_list_data *)kva;
 
-	/* Try to allocate memory for jumbo buffers. */
-	DPRINTFN(5, ("lge_alloc_jumbo_mem\n"));
-	if (lge_alloc_jumbo_mem(sc)) {
-		printf("%s: jumbo buffer allocation failed\n",
-		       sc->sc_dv.dv_xname);
-		goto fail_5;
-	}
-
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -642,22 +630,9 @@ lge_newbuf(struct lge_softc *sc, struct lge_rx_desc *c, struct mbuf *m)
 	struct mbuf		*m_new = NULL;
 
 	if (m == NULL) {
-		caddr_t buf = NULL;
-
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
+		m_new = MCLGETI(NULL, LGE_JLEN, NULL, M_DONTWAIT);
 		if (m_new == NULL)
 			return (ENOBUFS);
-
-		/* Allocate the jumbo buffer */
-		buf = lge_jalloc(sc);
-		if (buf == NULL) {
-			m_freem(m_new);
-			return (ENOBUFS);
-		}
-
-		/* Attach the buffer to the mbuf */
-		m_new->m_len = m_new->m_pkthdr.len = LGE_JLEN;
-		MEXTADD(m_new, buf, LGE_JLEN, 0, lge_jfree, sc);
 	} else {
 		/*
 		 * We're re-using a previously allocated mbuf;
@@ -665,9 +640,9 @@ lge_newbuf(struct lge_softc *sc, struct lge_rx_desc *c, struct mbuf *m)
 		 * default values.
 		 */
 		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = LGE_JLEN;
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
+	m_new->m_len = m_new->m_pkthdr.len = LGE_JLEN;
 
 	/*
 	 * Adjust alignment so packet payload begins on a
@@ -698,146 +673,6 @@ lge_newbuf(struct lge_softc *sc, struct lge_rx_desc *c, struct mbuf *m)
 	LGE_INC(sc->lge_cdata.lge_rx_prod, LGE_RX_LIST_CNT);
 
 	return (0);
-}
-
-int
-lge_alloc_jumbo_mem(struct lge_softc *sc)
-{
-	caddr_t			ptr, kva;
-	bus_dma_segment_t	seg;
-	bus_dmamap_t		dmamap;
-	int			i, rseg, state, error;
-	struct lge_jpool_entry   *entry;
-
-	state = error = 0;
-
-	/* Grab a big chunk o' storage. */
-	if (bus_dmamem_alloc(sc->sc_dmatag, LGE_JMEM, PAGE_SIZE, 0,
-			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
-		return (ENOBUFS);
-	}
-
-	state = 1;
-	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, LGE_JMEM, &kva,
-			   BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%zd bytes)\n",
-		       sc->sc_dv.dv_xname, LGE_JMEM);
-		error = ENOBUFS;
-		goto out;
-	}
-
-	state = 2;
-	if (bus_dmamap_create(sc->sc_dmatag, LGE_JMEM, 1,
-			      LGE_JMEM, 0, BUS_DMA_NOWAIT, &dmamap)) {
-		printf("%s: can't create dma map\n", sc->sc_dv.dv_xname);
-		error = ENOBUFS;
-		goto out;
-	}
-
-	state = 3;
-	if (bus_dmamap_load(sc->sc_dmatag, dmamap, kva, LGE_JMEM,
-			    NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load dma map\n", sc->sc_dv.dv_xname);
-		error = ENOBUFS;
-		goto out;
-        }
-
-	state = 4;
-	sc->lge_cdata.lge_jumbo_buf = (caddr_t)kva;
-	DPRINTFN(1,("lge_jumbo_buf = 0x%08X\n", sc->lge_cdata.lge_jumbo_buf));
-	DPRINTFN(1,("LGE_JLEN = 0x%08X\n", LGE_JLEN));
-
-	LIST_INIT(&sc->lge_jfree_listhead);
-	LIST_INIT(&sc->lge_jinuse_listhead);
-
-	/*
-	 * Now divide it up into 9K pieces and save the addresses
-	 * in an array.
-	 */
-	ptr = sc->lge_cdata.lge_jumbo_buf;
-	for (i = 0; i < LGE_JSLOTS; i++) {
-		sc->lge_cdata.lge_jslots[i] = ptr;
-		ptr += LGE_JLEN;
-		entry = malloc(sizeof(struct lge_jpool_entry), 
-		    M_DEVBUF, M_NOWAIT);
-		if (entry == NULL) {
-			sc->lge_cdata.lge_jumbo_buf = NULL;
-			printf("%s: no memory for jumbo buffer queue!\n",
-			       sc->sc_dv.dv_xname);
-			error = ENOBUFS;
-			goto out;
-		}
-		entry->slot = i;
-		LIST_INSERT_HEAD(&sc->lge_jfree_listhead,
-				 entry, jpool_entries);
-	}
-out:
-	if (error != 0) {
-		switch (state) {
-		case 4:
-			bus_dmamap_unload(sc->sc_dmatag, dmamap);
-		case 3:
-			bus_dmamap_destroy(sc->sc_dmatag, dmamap);
-		case 2:
-			bus_dmamem_unmap(sc->sc_dmatag, kva, LGE_JMEM);
-		case 1:
-			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-			break;
-		default:
-			break;
-		}
-	}
-
-	return (error);
-}
-
-/*
- * Allocate a jumbo buffer.
- */
-void *
-lge_jalloc(struct lge_softc *sc)
-{
-	struct lge_jpool_entry   *entry;
-
-	entry = LIST_FIRST(&sc->lge_jfree_listhead);
-
-	if (entry == NULL)
-		return (NULL);
-
-	LIST_REMOVE(entry, jpool_entries);
-	LIST_INSERT_HEAD(&sc->lge_jinuse_listhead, entry, jpool_entries);
-	return (sc->lge_cdata.lge_jslots[entry->slot]);
-}
-
-/*
- * Release a jumbo buffer.
- */
-void
-lge_jfree(caddr_t buf, u_int size, void *arg)
-{
-	struct lge_softc	*sc;
-	int		        i;
-	struct lge_jpool_entry   *entry;
-
-	/* Extract the softc struct pointer. */
-	sc = (struct lge_softc *)arg;
-
-	if (sc == NULL)
-		panic("lge_jfree: can't find softc pointer!");
-
-	/* calculate the slot this buffer belongs to */
-	i = ((vaddr_t)buf - (vaddr_t)sc->lge_cdata.lge_jumbo_buf) / LGE_JLEN;
-
-	if ((i < 0) || (i >= LGE_JSLOTS))
-		panic("lge_jfree: asked to free buffer that we don't manage!");
-
-	entry = LIST_FIRST(&sc->lge_jinuse_listhead);
-	if (entry == NULL)
-		panic("lge_jfree: buffer not in use!");
-	entry->slot = i;
-	LIST_REMOVE(entry, jpool_entries);
-	LIST_INSERT_HEAD(&sc->lge_jfree_listhead, entry, jpool_entries);
 }
 
 /*
