@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.49 2012/01/07 08:30:37 jmc Exp $
+.\"	$OpenBSD: fstat.1,v 1.50 2014/08/20 11:23:42 mikeb Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
 .\"
-.Dd $Mdocdate: January 7 2012 $
+.Dd $Mdocdate: August 20 2014 $
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -267,10 +267,6 @@ the pipe and a state that is built of the letters
 W \- The pipe blocks waiting for the reader to read data.
 R \- The pipe blocks waiting for the writer to write data.
 E \- The pipe is in EOF state.
-.Sh CRYPTO
-Each
-.Xr crypto 4
-device is printed with only the kernel address of the device private data.
 .Sh KQUEUE
 Each
 .Xr kqueue 2

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.78 2014/08/10 07:29:45 guenther Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.79 2014/08/20 11:23:42 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -107,7 +107,6 @@ void fstat_header(void);
 void getinetproto(int);
 void usage(void);
 int getfname(char *);
-void cryptotrans(struct kinfo_file *);
 void kqueuetrans(struct kinfo_file *);
 void pipetrans(struct kinfo_file *);
 struct kinfo_file *splice_find(char, u_int64_t);
@@ -360,10 +359,6 @@ fstat_dofile(struct kinfo_file *kf)
 		if (checkfile == 0)
 			kqueuetrans(kf);
 		break;
-	case DTYPE_CRYPTO:
-		if (checkfile == 0)
-			cryptotrans(kf);
-		break;
 	case DTYPE_SYSTRACE:
 		if (checkfile == 0)
 			systracetrans(kf);
@@ -515,18 +510,6 @@ kqueuetrans(struct kinfo_file *kf)
 	    (kf->kq_state & KQ_SEL) ? "S" : "",
 	    (kf->kq_state & KQ_SLEEP) ? "W" : "");
 	return;
-}
-
-void
-cryptotrans(struct kinfo_file *kf)
-{
-	PREFIX(kf->fd_fd);
-
-	printf(" ");
-
-	printf("crypto ");
-	hide((void *)(uintptr_t)kf->f_data);
-	printf("\n");
 }
 
 void

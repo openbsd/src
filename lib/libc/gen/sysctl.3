@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.240 2014/07/13 17:47:03 claudio Exp $
+.\"	$OpenBSD: sysctl.3,v 1.241 2014/08/20 11:23:41 mikeb Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 13 2014 $
+.Dd $Mdocdate: August 20 2014 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -394,7 +394,7 @@ The types of data currently available are process information,
 system vnodes, the open file entries, routing table entries,
 virtual memory statistics, load average history, and clock rate
 information.
-.Bl -column "KERN_CRYPTODEVALLOWSOFT" "u_int64_t[CPUSTATES]" "no" -offset indent
+.Bl -column "KERN_PROC_NOBROADKILL" "u_int64_t[CPUSTATES]" "no" -offset indent
 .It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
 .It Dv KERN_ARGMAX Ta "integer" Ta "no"
 .It Dv KERN_ARND Ta "char[]" Ta "no"
@@ -405,7 +405,6 @@ information.
 .It Dv KERN_CONSDEV Ta "dev_t" Ta "no"
 .It Dv KERN_CPTIME Ta "long[CPUSTATES]" Ta "no"
 .It Dv KERN_CPTIME2 Ta "u_int64_t[CPUSTATES]" Ta "no"
-.It Dv KERN_CRYPTODEVALLOWSOFT Ta "integer" Ta "yes"
 .It Dv KERN_DOMAINNAME Ta "string" Ta "yes"
 .It Dv KERN_EMUL Ta "node" Ta "not applicable"
 .It Dv KERN_FILE Ta "struct kinfo_file" Ta "no"
@@ -462,8 +461,6 @@ information.
 .It Dv KERN_TIMECOUNTER Ta "node" Ta "not applicable"
 .It Dv KERN_TTY Ta "node" Ta "not applicable"
 .It Dv KERN_TTYCOUNT Ta "integer" Ta "no"
-.It Dv KERN_USERASYMCRYPTO Ta "integer" Ta "yes"
-.It Dv KERN_USERCRYPTO Ta "integer" Ta "yes"
 .It Dv KERN_USERMOUNT Ta "integer" Ta "yes"
 .It Dv KERN_VERSION Ta "string" Ta "no"
 .It Dv KERN_VNODE Ta "struct e_vnode" Ta "no"
@@ -514,10 +511,6 @@ Similar to
 .Dv KERN_CPTIME ,
 but obtains information from only the single CPU specified by the
 third level name given.
-.It Dv KERN_CRYPTODEVALLOWSOFT
-Permits userland to use
-.Pa /dev/crypto
-even if there is no hardware crypto accelerator in the system.
 .It Dv KERN_DOMAINNAME
 Get or set the YP domain name.
 .It Dv KERN_EMUL
@@ -1033,17 +1026,6 @@ Returns the number of input characters in raw mode.
 Number of available
 .Xr tty 4
 devices.
-.It Dv KERN_USERASYMCRYPTO
-Permits userland to use
-.Pa /dev/crypto
-for cryptographic support for asymmetric (public) key operations via hardware
-cryptographic devices.
-.Dv KERN_USERCRYPTO
-(see below) must also be set.
-.It Dv KERN_USERCRYPTO
-Permits userland to use
-.Pa /dev/crypto
-for cryptographic support via hardware cryptographic devices.
 .It Dv KERN_USERMOUNT
 Return non-zero if regular users can issue
 .Xr mount 2

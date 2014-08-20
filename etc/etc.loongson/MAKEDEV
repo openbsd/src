@@ -64,7 +64,6 @@
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
-#	crypto	Hardware crypto access driver
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
@@ -278,10 +277,6 @@ diskmap)
 	M diskmap c 70 0 640 operator
 	;;
 
-crypto)
-	M crypto c 47 0
-	;;
-
 bpf*)
 	M bpf$U c 12 $U 600
 	;;
@@ -457,7 +452,7 @@ all)
 	R audio0 audio1 audio2 fuse pppx hotplug ptm local wscons pci0
 	R pci1 pci2 pci3 uall video0 video1 uk0 random tty00 tty01
 	R tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b
-	R apm crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
+	R apm pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)

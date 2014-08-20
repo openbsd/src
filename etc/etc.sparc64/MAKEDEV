@@ -77,7 +77,6 @@
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
-#	crypto	Hardware crypto access driver
 #	diskmap	Disk mapper
 #	drm*	Direct Rendering Manager
 #	fd	fd/* nodes
@@ -341,10 +340,6 @@ drm*)
 
 diskmap)
 	M diskmap c 130 0 640 operator
-	;;
-
-crypto)
-	M crypto c 75 0
 	;;
 
 bpf*)
@@ -642,7 +637,7 @@ all)
 	R pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5
 	R rmidi6 rmidi7 video0 video1 uk0 random lpa0 lpa1 lpa2 lpt0
 	R lpt1 lpt2 lkm tty00 tty01 tty02 tty03 tty04 tty05 tty06
-	R tty07 tty08 tty09 tty0a tty0b ttyh0 ttyh1 crypto pf systrace
+	R tty07 tty08 tty09 tty0a tty0b ttyh0 ttyh1 pf systrace
 	R wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 

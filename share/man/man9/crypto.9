@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.36 2013/07/17 20:21:52 schwarze Exp $
+.\"	$OpenBSD: crypto.9,v 1.37 2014/08/20 11:23:42 mikeb Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: August 20 2014 $
 .Dt CRYPTO 9
 .Os
 .Sh NAME
@@ -577,7 +577,3 @@ at some software
 .Xr spl 9
 level, to avoid overall system latency issues, and potential kernel
 stack exhaustion while processing a callback.
-.Pp
-When SMP time comes, we will support use of a second processor (or
-more) as a crypto device (this is actually AMP, but we need the same
-basic support).
