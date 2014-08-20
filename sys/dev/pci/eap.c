@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.48 2014/07/12 18:48:51 tedu Exp $ */
+/*      $OpenBSD: eap.c,v 1.49 2014/08/20 06:03:20 doug Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -1096,6 +1096,7 @@ eap_trigger_output(
 	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
 		;
 	if (!p) {
+		mtx_leave(&audio_lock);
 		printf("eap_trigger_output: bad addr %p\n", start);
 		return (EINVAL);
 	}
@@ -1164,6 +1165,7 @@ eap_trigger_input(
 	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
 		;
 	if (!p) {
+		mtx_leave(&audio_lock);
 		printf("eap_trigger_input: bad addr %p\n", start);
 		return (EINVAL);
 	}
