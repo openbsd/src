@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.96 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.97 2014/08/20 10:06:31 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -84,6 +84,7 @@ void	ixgbe_attach(struct device *, struct device *, void *);
 int	ixgbe_detach(struct device *, int);
 void	ixgbe_start(struct ifnet *);
 int	ixgbe_ioctl(struct ifnet *, u_long, caddr_t);
+int	ixgbe_rxrinfo(struct ix_softc *, struct if_rxrinfo *);
 void	ixgbe_watchdog(struct ifnet *);
 void	ixgbe_init(void *);
 void	ixgbe_stop(void *);
@@ -471,6 +472,10 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->media, command);
 		break;
 
+	case SIOCGIFRXR:
+		error = ixgbe_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
+		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->arpcom, command, data);
 	}
@@ -485,6 +490,36 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, caddr_t data)
 	}
 
 	splx(s);
+	return (error);
+}
+
+int
+ixgbe_rxrinfo(struct ix_softc *sc, struct if_rxrinfo *ifri)
+{
+	struct if_rxring_info *ifr, ifr1;
+	struct rx_ring *rxr;
+	int error, i;
+	u_int n = 0;
+
+	if (sc->num_queues > 1) {
+		if ((ifr = malloc(sc->num_queues * sizeof(*ifr), M_DEVBUF,
+		    M_WAITOK | M_ZERO)) == NULL)
+			return (ENOMEM);
+	} else
+		ifr = &ifr1;
+
+	for (i = 0; i < sc->num_queues; i++) {
+		rxr = &sc->rx_rings[i];
+		ifr[n].ifr_size = MCLBYTES;
+		snprintf(ifr[n].ifr_name, sizeof(ifr[n].ifr_name), "/%d", i);
+		ifr[n].ifr_info = rxr->rx_ring;
+		n++;
+	}
+
+	error = if_rxr_info_ioctl(ifri, sc->num_queues, ifr);
+
+	if (sc->num_queues > 1)
+		free(ifr, M_DEVBUF, sc->num_queues * sizeof(*ifr));
 	return (error);
 }
 
