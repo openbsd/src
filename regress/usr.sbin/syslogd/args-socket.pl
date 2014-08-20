@@ -1,0 +1,27 @@
+# Test with default values, that is:
+# The client writes a message to a localhost IPv4 UDP socket.
+# The syslogd writes it into a file and through a pipe.
+# The syslogd passes it via UDP to the loghost.
+# The server receives the message on its UDP socket.
+# Find the message in client, file, pipe, syslogd, server log.
+# Check that the syslogd has one IPv4 socket in fstat output.
+
+use strict;
+use warnings;
+
+our %args = (
+    client => {
+	connect => { domain => AF_INET, addr => "127.0.0.1", port => 514 },
+    },
+    syslogd => {
+	fstat => 1,
+	options => ["-nu"],
+    },
+    fstat => {
+	loggrep => {
+	    qr/ internet dgram udp \*:514$/ => 1,
+	},
+    },
+);
+
+1;
