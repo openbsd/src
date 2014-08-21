@@ -1,4 +1,4 @@
-.Dd April 7, 2010
+.Dd August 21, 2014
 .Dt FL-PUNCT 1
 .Os OpenBSD
 .Sh NAME
@@ -13,6 +13,8 @@ only more than one
 .Fl ) )
 middle
 .Fl a ) z
+start
+.Fl ) z
 dot
 .Fl . z
 comma

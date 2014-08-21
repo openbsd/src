@@ -1,0 +1,39 @@
+.Dd August 21, 2014
+.Dt NM-PUNCT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Nm-punct
+.Nd punctuation handling by the Nm macro
+.Sh DESCRIPTION
+closing punctuation
+.Nm a )
+only one
+.Nm )
+only more than one
+.Nm ) )
+middle
+.Nm a ) z
+start
+.Nm ) z
+dot
+.Nm . z
+comma
+.Nm , z
+semicolon
+.Nm ; z
+colon
+.Nm : z
+quest
+.Nm ? z
+excl
+.Nm ! z
+paren
+.Nm ) z
+bracket
+.Nm ] z
+bar
+.Nm | m
+op paren
+.Nm ( a
+op bracket
+.Nm [ a

@@ -1,4 +1,4 @@
-.Dd April 7, 2010
+.Dd August 21, 2014
 .Dt FL-NOARG 1
 .Os OpenBSD
 .Sh NAME
@@ -9,7 +9,9 @@ Without an argument, it yields
 .Fl
 a dash.
 .Pp
-This is true even before punctuation
+This is true even before middle
+.Fl | and
+trailing punctuation
 .Fl .
 .Pp
 Following macros

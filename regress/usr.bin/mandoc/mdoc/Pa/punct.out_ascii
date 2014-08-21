@@ -1,0 +1,11 @@
+PA-PUNCT(1)                OpenBSD Reference Manual                PA-PUNCT(1)
+
+NNAAMMEE
+     PPaa--ppuunncctt - punctuation handling by the Pa macro
+
+DDEESSCCRRIIPPTTIIOONN
+     closing punctuation _a) only one _~) only more than one _~)) middle _a) _z
+     start _~) _z dot _~. _z comma _~, _z semicolon _~; _z colon _~: _z quest _~? _z excl
+     _~! _z paren _~) _z bracket _~] _z bar | _m op paren (_a op bracket [_a
+
+OpenBSD                         August 21, 2014                        OpenBSD

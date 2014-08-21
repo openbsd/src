@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.3 2012/07/09 17:52:09 schwarze Exp $
+# $OpenBSD: Makefile,v 1.4 2014/08/21 12:56:24 schwarze Exp $
 
-REGRESS_TARGETS = font
+REGRESS_TARGETS	= font punct
 
 # XXX The FILES target doesn't currently work.
 

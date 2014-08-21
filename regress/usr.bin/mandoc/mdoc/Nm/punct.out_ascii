@@ -1,0 +1,12 @@
+NM-PUNCT(1)                OpenBSD Reference Manual                NM-PUNCT(1)
+
+NNAAMMEE
+     NNmm--ppuunncctt - punctuation handling by the Nm macro
+
+DDEESSCCRRIIPPTTIIOONN
+     closing punctuation aa) only one NNmm--ppuunncctt) only more than one NNmm--ppuunncctt))
+     middle aa) zz start NNmm--ppuunncctt) z dot NNmm--ppuunncctt. z comma NNmm--ppuunncctt, z semicolon
+     NNmm--ppuunncctt; z colon NNmm--ppuunncctt: z quest NNmm--ppuunncctt? z excl NNmm--ppuunncctt! z paren
+     NNmm--ppuunncctt) z bracket NNmm--ppuunncctt] z bar | mm op paren (aa op bracket [aa
+
+OpenBSD                         August 21, 2014                        OpenBSD

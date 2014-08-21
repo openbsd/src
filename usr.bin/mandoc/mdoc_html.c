@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.80 2014/08/14 00:29:12 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.81 2014/08/21 12:56:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -638,9 +638,10 @@ mdoc_fl_pre(MDOC_ARGS)
 
 	print_text(h, "\\-");
 
-	if (n->child)
-		h->flags |= HTML_NOSPACE;
-	else if (n->next && n->next->line == n->line)
+	if ( ! (n->nchild == 0 &&
+	    (n->next == NULL ||
+	     n->next->type == MDOC_TEXT ||
+	     n->next->flags & MDOC_LINE)))
 		h->flags |= HTML_NOSPACE;
 
 	return(1);

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.67 2014/08/08 16:17:09 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.68 2014/08/21 12:56:24 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1162,7 +1162,8 @@ pre_fl(DECL_ARGS)
 
 	font_push('B');
 	print_word("\\-");
-	outflags &= ~MMAN_spc;
+	if (n->nchild)
+		outflags &= ~MMAN_spc;
 	return(1);
 }
 
@@ -1171,8 +1172,10 @@ post_fl(DECL_ARGS)
 {
 
 	font_pop();
-	if (0 == n->nchild && NULL != n->next &&
-			n->next->line == n->line)
+	if ( ! (n->nchild ||
+	    n->next == NULL ||
+	    n->next->type == MDOC_TEXT ||
+	    n->next->flags & MDOC_LINE))
 		outflags &= ~MMAN_spc;
 }
 

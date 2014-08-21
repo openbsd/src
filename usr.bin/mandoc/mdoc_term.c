@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.178 2014/08/17 18:42:07 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.179 2014/08/21 12:56:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1073,9 +1073,10 @@ termp_fl_pre(DECL_ARGS)
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, "\\-");
 
-	if (n->child)
-		p->flags |= TERMP_NOSPACE;
-	else if (n->next && n->next->line == n->line)
+	if ( ! (n->nchild == 0 &&
+	    (n->next == NULL ||
+	     n->next->type == MDOC_TEXT ||
+	     n->next->flags & MDOC_LINE)))
 		p->flags |= TERMP_NOSPACE;
 
 	return(1);

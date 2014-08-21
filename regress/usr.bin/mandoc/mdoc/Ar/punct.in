@@ -1,4 +1,4 @@
-.Dd April 7, 2010
+.Dd August 21, 2014
 .Dt AR-PUNCT 1
 .Os OpenBSD
 .Sh NAME
@@ -15,3 +15,25 @@ middle
 .Ar a ) z
 start
 .Ar ) z
+dot
+.Ar . z
+comma
+.Ar , z
+semicolon
+.Ar ; z
+colon
+.Ar : z
+quest
+.Ar ? z
+excl
+.Ar ! z
+paren
+.Ar ) z
+bracket
+.Ar ] z
+bar
+.Ar | m
+op paren
+.Ar ( a
+op bracket
+.Ar [ a

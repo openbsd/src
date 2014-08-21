@@ -1,0 +1,39 @@
+.Dd August 21, 2014
+.Dt PA-PUNCT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Pa-punct
+.Nd punctuation handling by the Pa macro
+.Sh DESCRIPTION
+closing punctuation
+.Pa a )
+only one
+.Pa )
+only more than one
+.Pa ) )
+middle
+.Pa a ) z
+start
+.Pa ) z
+dot
+.Pa . z
+comma
+.Pa , z
+semicolon
+.Pa ; z
+colon
+.Pa : z
+quest
+.Pa ? z
+excl
+.Pa ! z
+paren
+.Pa ) z
+bracket
+.Pa ] z
+bar
+.Pa | m
+op paren
+.Pa ( a
+op bracket
+.Pa [ a
