@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.126 2014/07/14 09:26:27 jsing Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.127 2014/08/21 16:46:48 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -975,7 +975,6 @@ cleanup_url_get:
 		ressl_free(ssl);
 	}
 	free(full_host);
-	free(credentials);
 #endif /* !SMALL */
 	if (fin != NULL)
 		fclose(fin);
