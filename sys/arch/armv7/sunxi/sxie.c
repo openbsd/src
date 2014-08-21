@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.5 2013/11/06 19:03:07 syl Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.6 2014/08/21 14:24:08 mpi Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -40,12 +40,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

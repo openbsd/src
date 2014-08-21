@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.3 2002/06/11 09:36:23 hugh Exp $ */
+/*	$OpenBSD: if_qe.c,v 1.4 2014/08/21 14:24:08 mpi Exp $ */
 /*	$NetBSD: if_qe.c,v 1.3 2000/05/20 13:30:03 ragge Exp $ */
 
 /*
@@ -36,7 +36,6 @@
 #include <sys/types.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 
 #include <lib/libsa/netif.h>
 #include <lib/libsa/stand.h>

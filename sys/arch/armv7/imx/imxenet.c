@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.6 2014/07/12 20:07:34 brad Exp $ */
+/* $OpenBSD: imxenet.c,v 1.7 2014/08/21 14:24:08 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -37,12 +37,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

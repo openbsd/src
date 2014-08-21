@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe.c,v 1.5 2007/07/27 17:48:01 tom Exp $ */
+/*	$OpenBSD: pxe.c,v 1.6 2014/08/21 14:24:08 mpi Exp $ */
 /*	$NetBSD: pxe.c,v 1.5 2003/03/11 18:29:00 drochner Exp $	*/
 
 /*
@@ -87,11 +87,8 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
 #include <netinet/udp.h>
-#include <netinet/udp_var.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>

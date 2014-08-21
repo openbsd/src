@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.5 2009/09/03 16:49:13 jsing Exp $	*/
+/*	$OpenBSD: net.c,v 1.6 2014/08/21 14:24:08 mpi Exp $	*/
 /*	$NetBSD: net.c,v 1.1 2000/08/20 14:58:38 mrg Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>

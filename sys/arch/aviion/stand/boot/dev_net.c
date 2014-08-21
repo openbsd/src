@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.1 2013/10/17 16:30:07 miod Exp $ */
+/*	$OpenBSD: dev_net.c,v 1.2 2014/08/21 14:24:08 mpi Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -53,7 +53,6 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/in_systm.h>
 
 #include <machine/prom.h>
 

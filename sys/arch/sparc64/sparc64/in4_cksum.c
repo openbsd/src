@@ -1,4 +1,4 @@
-/*	$OpenBSD: in4_cksum.c,v 1.4 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: in4_cksum.c,v 1.5 2014/08/21 14:24:08 mpi Exp $	*/
 /*	$NetBSD: in4_cksum.c,v 1.5 2003/10/13 14:22:20 agc Exp $ */
 
 /*
@@ -82,9 +82,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/socketvar.h>
+
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 

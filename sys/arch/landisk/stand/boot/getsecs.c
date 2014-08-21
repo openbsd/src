@@ -3,7 +3,6 @@
 #include <sys/param.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netif_of.c,v 1.6 2009/11/04 12:03:57 jsing Exp $	*/
+/*	$OpenBSD: netif_of.c,v 1.7 2014/08/21 14:24:08 mpi Exp $	*/
 /*	$NetBSD: netif_of.c,v 1.1 2000/08/20 14:58:39 mrg Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/if_ether.h>
 
 #include <lib/libsa/stand.h>

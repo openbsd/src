@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.3 2011/04/14 18:27:49 miod Exp $	*/
+/*	$OpenBSD: net.c,v 1.4 2014/08/21 14:24:08 mpi Exp $	*/
 /*	$NetBSD: net.c,v 1.2 1997/07/22 17:41:07 drochner Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/nfs.h>

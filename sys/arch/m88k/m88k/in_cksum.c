@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.3 2008/02/16 23:02:39 miod Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.4 2014/08/21 14:24:08 mpi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,7 +36,6 @@
 #include <sys/mbuf.h>
 #include <sys/socketvar.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 

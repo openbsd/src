@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.8 2013/09/30 04:30:03 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.9 2014/08/21 14:24:08 mpi Exp $ */
 /*	$NetBSD: if_le.c,v 1.6 2000/05/20 13:30:03 ragge Exp $ */
 /*
  * Copyright (c) 1997, 1999 Ludd, University of Lule}, Sweden.
@@ -43,7 +43,6 @@
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/if_ether.h>
 
 #include <machine/sid.h>
