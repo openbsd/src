@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.3 2014/08/19 17:45:43 schwarze Exp $
+.\"	$OpenBSD: rcctl.8,v 1.4 2014/08/21 10:15:11 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 19 2014 $
+.Dd $Mdocdate: August 21 2014 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -27,19 +27,21 @@
 .Sm on
 .Op Ar service | daemon Op Cm flags Op Ar arguments
 .Sh DESCRIPTION
+The
 .Nm
-is a simple utility for maintaining
-.Xr rc.conf.local 8 .
-It can enable or disable
-.Xr rc 8
-services and get/set their status and flags.
-It can also be used to interact with
+utility can enable or disable a base system
+.Ar service
+or a base system or package
+.Ar daemon
+in
+.Xr rc.conf.local 8
+or display its status.
+For a daemon, it can also change the command line arguments or call its
 .Xr rc.d 8
-scripts.
+.Ar daemon
+control script.
 .Pp
-The following
-.Ar actions
-are available.
+The following commands are available:
 .Bl -tag -width Ds
 .It Cm enable Ar service | daemon Op Cm flags Op Ar arguments
 Enable the service or daemon in
@@ -72,13 +74,6 @@ script with the
 .Ar action
 argument.
 .El
-.Pp
-These services have no corresponding
-.Xr rc.d 8
-script and have no
-.Cm flags :
-accounting, check_quotas, ipsec, multicast_host, multicast_router,
-pf, spamd_black.
 .Sh EXIT STATUS
 .Nm Ar action
 returns with the exit status of the
