@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.8,v 1.33 2014/05/09 06:37:38 jmc Exp $
+.\"	$OpenBSD: arp.8,v 1.34 2014/08/21 10:23:47 mpi Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)arp.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 9 2014 $
+.Dd $Mdocdate: August 21 2014 $
 .Dt ARP 8
 .Os
 .Sh NAME
@@ -79,6 +79,31 @@ Display all of the current ARP entries.
 See also the
 .Fl d
 option below.
+The following information will be printed:
+.Bl -tag -width Ds -offset 3n
+.It Host
+The network address of the host.
+.It Ethernet Address
+The Ethernet address of the host.
+If the address is not available,
+it will be displayed as
+.Dq (incomplete) .
+.It Netif
+The network interface associated with the ARP entry.
+.It Expire
+The time until expiry of the entry.
+If the entry is marked
+.Dq permanent
+or
+.Dq static ,
+it will never expire.
+.It Flags
+Flags on the ARP entry, in a single letter.
+They are: proxy
+.Pq Sq P
+and published
+.Pq Sq p .
+.El
 .It Fl d
 Delete an entry for the host called
 .Ar hostname .

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.58 2014/08/19 12:39:36 mpi Exp $ */
+/*	$OpenBSD: arp.c,v 1.59 2014/08/21 10:23:47 mpi Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -61,6 +61,7 @@
 #include <unistd.h>
 #include <ifaddrs.h>
 
+void dump(void);
 int delete(const char *, const char *);
 void search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 	struct sockaddr_inarp *sin, struct rt_msghdr *rtm));
@@ -68,8 +69,8 @@ void print_entry(struct sockaddr_dl *sdl,
 	struct sockaddr_inarp *sin, struct rt_msghdr *rtm);
 void nuke_entry(struct sockaddr_dl *sdl,
 	struct sockaddr_inarp *sin, struct rt_msghdr *rtm);
+static char *ether_str(struct sockaddr_dl *);
 int wake(const char *ether_addr, const char *iface);
-void ether_print(const char *);
 int file(char *);
 int get(const char *);
 int getinetaddr(const char *, struct in_addr *);
@@ -77,6 +78,7 @@ void getsocket(void);
 int rtmsg(int);
 int set(int, char **);
 void usage(void);
+static char *sec2str(time_t);
 
 static pid_t pid;
 static int replace;	/* replace entries when adding */
@@ -160,7 +162,7 @@ main(int argc, char *argv[])
 	switch (func) {
 	case F_GET:
 		if (aflag && argc == 0)
-			search(0, print_entry);
+			dump();
 		else if (!aflag && argc == 1)
 			rtn = get(argv[0]);
 		else
@@ -360,6 +362,10 @@ overwrite:
 	return (rtmsg(RTM_ADD));
 }
 
+#define W_ADDR	36
+#define W_LL	17
+#define W_IF	6
+
 /*
  * Display an individual arp entry
  */
@@ -372,9 +378,15 @@ get(const char *host)
 	sin_m = blank_sin;		/* struct copy */
 	if (getinetaddr(host, &sin->sin_addr) == -1)
 		exit(1);
+
+	printf("%-*.*s %-*.*s %*.*s %-10.10s %5s\n",
+	    W_ADDR, W_ADDR, "Host", W_LL, W_LL, "Ethernet Address",
+	    W_IF, W_IF, "Netif", "Expire", "Flags");
+
 	search(sin->sin_addr.s_addr, print_entry);
 	if (found_entry == 0) {
-		printf("%s (%s) -- no entry\n", host, inet_ntoa(sin->sin_addr));
+		printf("%-*.*s no entry\n", W_ADDR, W_ADDR,
+		    inet_ntoa(sin->sin_addr));
 		return (1);
 	}
 	return (0);
@@ -494,49 +506,72 @@ search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 }
 
 /*
+ * Dump the entire ARP table
+ */
+void
+dump(void)
+{
+	printf("%-*.*s %-*.*s %*.*s %-10.10s %5s\n",
+	    W_ADDR, W_ADDR, "Host", W_LL, W_LL, "Ethernet Address",
+	    W_IF, W_IF, "Netif", "Expire", "Flags");
+
+	search(0, print_entry);
+}
+
+/*
  * Display an arp entry
  */
 void
 print_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
     struct rt_msghdr *rtm)
 {
-	char ifname[IFNAMSIZ], *host;
-	struct hostent *hp;
+	char ifix_buf[IFNAMSIZ], *ifname, *host;
+	struct hostent *hp = NULL;
+	int addrwidth, llwidth, ifwidth ;
+	struct timeval now;
+	char flgbuf[8];
+
+	gettimeofday(&now, 0);
 
 	if (nflag == 0)
 		hp = gethostbyaddr((caddr_t)&(sin->sin_addr),
 		    sizeof(sin->sin_addr), AF_INET);
-	else
-		hp = 0;
 	if (hp)
 		host = hp->h_name;
-	else {
-		host = "?";
-		if (h_errno == TRY_AGAIN)
-			nflag = 1;
-	}
-	printf("%s (%s) at ", host, inet_ntoa(sin->sin_addr));
-	if (sdl->sdl_alen)
-		ether_print(LLADDR(sdl));
 	else
-		printf("(incomplete)");
-	if (if_indextoname(sdl->sdl_index, ifname) != NULL)
-		printf(" on %s", ifname);
+		host = inet_ntoa(sin->sin_addr);
+
+	addrwidth = strlen(host);
+	if (addrwidth < W_ADDR)
+		addrwidth = W_ADDR;
+	llwidth = strlen(ether_str(sdl));
+	if (W_ADDR + W_LL - addrwidth > llwidth)
+		llwidth = W_ADDR + W_LL - addrwidth;
+	ifname = if_indextoname(sdl->sdl_index, ifix_buf);
+	if (!ifname)
+		ifname = "?";
+	ifwidth = strlen(ifname);
+	if (W_ADDR + W_LL + W_IF - addrwidth - llwidth > ifwidth)
+		ifwidth = W_ADDR + W_LL + W_IF - addrwidth - llwidth;
+
+	printf("%-*.*s %-*.*s %*.*s", addrwidth, addrwidth, host,
+	    llwidth, llwidth, ether_str(sdl), ifwidth, ifwidth, ifname);
+
 	if (rtm->rtm_flags & RTF_PERMANENT_ARP)
-		printf(" permanent");
-	if (rtm->rtm_rmx.rmx_expire == 0)
-		printf(" static");
-	if (sin->sin_other & SIN_PROXY)
-		printf(" published (proxy only)");
-	if (rtm->rtm_addrs & RTA_NETMASK) {
-		sin = (struct sockaddr_inarp *)
-		    (ROUNDUP(sdl->sdl_len) + (char *)sdl);
-		if (sin->sin_addr.s_addr == 0xffffffff)
-			printf(" published");
-		if (sin->sin_len != 8)
-			printf("(weird %d)", sin->sin_len);
-	}
-	printf("\n");
+		printf(" %-10.10s", "permanent");
+	else if (rtm->rtm_rmx.rmx_expire == 0)
+		printf(" %-10.10s", "static");
+	else if (rtm->rtm_rmx.rmx_expire > now.tv_sec)
+		printf(" %-10.10s",
+		    sec2str(rtm->rtm_rmx.rmx_expire - now.tv_sec));
+	else
+		printf(" %-10.10s", "expired");
+
+	snprintf(flgbuf, sizeof(flgbuf), "%s%s",
+	    (sin->sin_other & SIN_PROXY) ? "P" : "",
+	    (rtm->rtm_flags & RTF_ANNOUNCE) ? "p" : "");
+
+	printf(" %s\n", flgbuf);
 }
 
 /*
@@ -552,13 +587,20 @@ nuke_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
 	delete(ip, NULL);
 }
 
-void
-ether_print(const char *scp)
+static char *
+ether_str(struct sockaddr_dl *sdl)
 {
-	const u_char *cp = (u_char *)scp;
+	static char hbuf[NI_MAXHOST];
+	u_char *cp;
 
-	printf("%02x:%02x:%02x:%02x:%02x:%02x",
-	    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
+	if (sdl->sdl_alen) {
+		cp = (u_char *)LLADDR(sdl);
+		snprintf(hbuf, sizeof(hbuf), "%x:%x:%x:%x:%x:%x",
+		    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
+	} else
+		snprintf(hbuf, sizeof(hbuf), "(incomplete)");
+
+	return(hbuf);
 }
 
 void
@@ -659,6 +701,47 @@ getinetaddr(const char *host, struct in_addr *inap)
 	}
 	memcpy(inap, hp->h_addr, sizeof(*inap));
 	return (0);
+}
+
+static char *
+sec2str(time_t total)
+{
+	static char result[256];
+	int days, hours, mins, secs;
+	int first = 1;
+	char *p = result;
+	char *ep = &result[sizeof(result)];
+	int n;
+
+	days = total / 3600 / 24;
+	hours = (total / 3600) % 24;
+	mins = (total / 60) % 60;
+	secs = total % 60;
+
+	if (days) {
+		first = 0;
+		n = snprintf(p, ep - p, "%dd", days);
+		if (n < 0 || n >= ep - p)
+			return "?";
+		p += n;
+	}
+	if (!first || hours) {
+		first = 0;
+		n = snprintf(p, ep - p, "%dh", hours);
+		if (n < 0 || n >= ep - p)
+			return "?";
+		p += n;
+	}
+	if (!first || mins) {
+		first = 0;
+		n = snprintf(p, ep - p, "%dm", mins);
+		if (n < 0 || n >= ep - p)
+			return "?";
+		p += n;
+	}
+	snprintf(p, ep - p, "%ds", secs);
+
+	return(result);
 }
 
 /*
