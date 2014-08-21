@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.33 2014/08/14 07:50:35 chrisz Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.34 2014/08/21 19:23:10 chrisz Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -49,7 +49,7 @@
 int	 server_file_access(struct httpd *, struct client *, char *, size_t);
 int	 server_file_request(struct httpd *, struct client *, char *,
 	    struct stat *);
-int	 server_file_index(struct httpd *, struct client *);
+int	 server_file_index(struct httpd *, struct client *, struct stat *);
 int	 server_file_method(struct client *);
 
 int
@@ -123,7 +123,7 @@ server_file_access(struct httpd *env, struct client *clt,
 				goto fail;
 			}
 
-			return (server_file_index(env, clt));
+			return (server_file_index(env, clt, &st));
 		}
 		return (ret);
 	} else if (!S_ISREG(st.st_mode)) {
@@ -220,7 +220,8 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 		goto abort;
 
 	media = media_find(env->sc_mediatypes, path);
-	ret = server_response_http(clt, 200, media, st->st_size);
+	ret = server_response_http(clt, 200, media, st->st_size,
+	    MIN(time(NULL), st->st_mtim.tv_sec));
 	switch (ret) {
 	case -1:
 		goto fail;
@@ -267,7 +268,7 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 }
 
 int
-server_file_index(struct httpd *env, struct client *clt)
+server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 {
 	char			  path[MAXPATHLEN];
 	char			  tmstr[21];
@@ -279,9 +280,8 @@ server_file_index(struct httpd *env, struct client *clt)
 	struct evbuffer		 *evb = NULL;
 	struct media_type	 *media;
 	const char		 *style;
-	struct stat		  st;
 	struct tm		  tm;
-	time_t			  t;
+	time_t			  t, dir_mtime;
 
 	if ((ret = server_file_method(clt)) != 0) {
 		code = ret;
@@ -296,6 +296,9 @@ server_file_index(struct httpd *env, struct client *clt)
 	/* Now open the file, should be readable or we have another problem */
 	if ((fd = open(path, O_RDONLY)) == -1)
 		goto abort;
+
+	/* Save last modification time */
+	dir_mtime = MIN(time(NULL), st->st_mtim.tv_sec);
 
 	if ((evb = evbuffer_new()) == NULL)
 		goto abort;
@@ -328,12 +331,12 @@ server_file_index(struct httpd *env, struct client *clt)
 		dp = namelist[i];
 
 		if (skip ||
-		    fstatat(fd, dp->d_name, &st, 0) == -1) {
+		    fstatat(fd, dp->d_name, st, 0) == -1) {
 			free(dp);
 			continue;
 		}
 
-		t = st.st_mtime;
+		t = st->st_mtime;
 		localtime_r(&t, &tm);
 		strftime(tmstr, sizeof(tmstr), "%d-%h-%Y %R", &tm);
 		namewidth = 51 - strlen(dp->d_name);
@@ -341,18 +344,18 @@ server_file_index(struct httpd *env, struct client *clt)
 		if (dp->d_name[0] == '.' &&
 		    !(dp->d_name[1] == '.' && dp->d_name[2] == '\0')) {
 			/* ignore hidden files starting with a dot */
-		} else if (S_ISDIR(st.st_mode)) {
+		} else if (S_ISDIR(st->st_mode)) {
 			namewidth -= 1; /* trailing slash */
 			if (evbuffer_add_printf(evb,
 			    "<a href=\"%s\">%s/</a>%*s%s%20s\n",
 			    dp->d_name, dp->d_name,
 			    MAX(namewidth, 0), " ", tmstr, "-") == -1)
 				skip = 1;
-		} else if (S_ISREG(st.st_mode)) {
+		} else if (S_ISREG(st->st_mode)) {
 			if (evbuffer_add_printf(evb,
 			    "<a href=\"%s\">%s</a>%*s%s%20llu\n",
 			    dp->d_name, dp->d_name,
-			    MAX(namewidth, 0), " ", tmstr, st.st_size) == -1)
+			    MAX(namewidth, 0), " ", tmstr, st->st_size) == -1)
 				skip = 1;
 		}
 		free(dp);
@@ -368,7 +371,8 @@ server_file_index(struct httpd *env, struct client *clt)
 	fd = -1;
 
 	media = media_find(env->sc_mediatypes, "index.html");
-	ret = server_response_http(clt, 200, media, EVBUFFER_LENGTH(evb));
+	ret = server_response_http(clt, 200, media, EVBUFFER_LENGTH(evb),
+	    dir_mtime);
 	switch (ret) {
 	case -1:
 		goto fail;

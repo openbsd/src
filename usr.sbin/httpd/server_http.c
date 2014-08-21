@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.44 2014/08/08 18:29:42 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.45 2014/08/21 19:23:10 chrisz Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -534,16 +534,16 @@ server_reset_http(struct client *clt)
 	server_log(clt, NULL);
 }
 
-void
-server_http_date(char *tmbuf, size_t len)
+ssize_t
+server_http_time(time_t t, char *tmbuf, size_t len)
 {
-	time_t			 t;
 	struct tm		 tm;
 
 	/* New HTTP/1.1 RFC 7231 prefers IMF-fixdate from RFC 5322 */
-	time(&t);
-	gmtime_r(&t, &tm);
-	strftime(tmbuf, len, "%a, %d %h %Y %T %Z", &tm);
+	if (t == -1 || gmtime_r(&t, &tm) == NULL)
+		return (-1);
+	else
+		return (strftime(tmbuf, len, "%a, %d %h %Y %T %Z", &tm));
 }
 
 const char *
@@ -602,7 +602,8 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	if (print_host(&srv_conf->ss, hbuf, sizeof(hbuf)) == NULL)
 		goto done;
 
-	server_http_date(tmbuf, sizeof(tmbuf));
+	if (server_http_time(time(NULL), tmbuf, sizeof(tmbuf)) <= 0)
+		goto done;
 
 	/* Do not send details of the Internal Server Error */
 	switch (code) {
@@ -790,7 +791,7 @@ server_getlocation(struct client *clt, const char *path)
 
 int
 server_response_http(struct client *clt, u_int code,
-    struct media_type *media, size_t size)
+    struct media_type *media, size_t size, time_t mtime)
 {
 	struct http_descriptor	*desc = clt->clt_desc;
 	const char		*error;
@@ -835,9 +836,14 @@ server_response_http(struct client *clt, u_int code,
 	    kv_set(cl, "%ld", size) == -1)
 		return (-1);
 
-	/* Date header is mandatory and should be added last */
-	server_http_date(tmbuf, sizeof(tmbuf));
-	if (kv_add(&desc->http_headers, "Date", tmbuf) == NULL)
+	/* Set last modification time */
+	if (server_http_time(mtime, tmbuf, sizeof(tmbuf)) <= 0 ||
+	    kv_add(&desc->http_headers, "Last-Modified", tmbuf) == NULL)
+		return (-1);
+
+	/* Date header is mandatory and should be added as late as possible */
+	if (server_http_time(time(NULL), tmbuf, sizeof(tmbuf)) <= 0 ||
+	    kv_add(&desc->http_headers, "Date", tmbuf) == NULL)
 		return (-1);
 
 	/* Write completed header */

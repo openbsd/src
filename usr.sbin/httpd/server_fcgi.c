@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.33 2014/08/13 18:00:54 chrisz Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.34 2014/08/21 19:23:10 chrisz Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -562,9 +562,9 @@ server_fcgi_header(struct client *clt, u_int code)
 	} else if (kv_add(&desc->http_headers, "Connection", "close") == NULL)
 		return (-1);
 
-	/* Date header is mandatory and should be added last */
-	server_http_date(tmbuf, sizeof(tmbuf));
-	if (kv_add(&desc->http_headers, "Date", tmbuf) == NULL)
+	/* Date header is mandatory and should be added as late as possible */
+	if (server_http_time(time(NULL), tmbuf, sizeof(tmbuf)) <= 0 ||
+	    kv_add(&desc->http_headers, "Date", tmbuf) == NULL)
 		return (-1);
 
 	/* Write initial header (fcgi might append more) */

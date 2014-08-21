@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.53 2014/08/13 16:04:28 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.54 2014/08/21 19:23:10 chrisz Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -512,7 +512,7 @@ int	 server_headers(struct client *,
 	    int (*)(struct client *, struct kv *, void *), void *);
 int	 server_writeresponse_http(struct client *);
 int	 server_response_http(struct client *, u_int, struct media_type *,
-	    size_t);
+	    size_t, time_t);
 void	 server_reset_http(struct client *);
 void	 server_close_http(struct client *);
 int	 server_response(struct httpd *, struct client *);
@@ -520,7 +520,7 @@ struct server_config *
 	 server_getlocation(struct client *, const char *);
 const char *
 	 server_http_host(struct sockaddr_storage *, char *, size_t);
-void	 server_http_date(char *, size_t);
+ssize_t	 server_http_time(time_t, char *, size_t);
 int	 server_log_http(struct client *, u_int, size_t);
 
 /* server_file.c */
