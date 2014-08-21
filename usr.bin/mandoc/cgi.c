@@ -1,4 +1,4 @@
-/*	$Id: cgi.c,v 1.32 2014/08/08 17:17:42 schwarze Exp $ */
+/*	$Id: cgi.c,v 1.33 2014/08/21 16:03:50 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -15,6 +15,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/types.h>
+#include <sys/time.h>
+
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -1025,9 +1029,22 @@ int
 main(void)
 {
 	struct req	 req;
+	struct itimerval itimer;
 	const char	*path;
 	const char	*querystring;
 	int		 i;
+
+	/* Poor man's ReDoS mitigation. */
+
+	itimer.it_value.tv_sec = 1;
+	itimer.it_value.tv_usec = 0;
+	itimer.it_interval.tv_sec = 1;
+	itimer.it_interval.tv_usec = 0;
+	if (setitimer(ITIMER_VIRTUAL, &itimer, NULL) == -1) {
+		fprintf(stderr, "setitimer: %s\n", strerror(errno));
+		pg_error_internal();
+		return(EXIT_FAILURE);
+	}
 
 	/* Scan our run-time environment. */
 
