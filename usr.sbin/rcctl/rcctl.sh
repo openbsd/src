@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+# $OpenBSD: rcctl.sh,v 1.11 2014/08/21 14:26:16 jsg Exp $
+#
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
