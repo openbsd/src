@@ -111,7 +111,6 @@ svc_get_status()
 	else
 		for _i in $(svc_get_all); do
 			printf "%18s" ${_i}
-			svc_is_enabled ${_i} && echo -n "(enabled)" || echo -n "(disabled)"
 			echo -n "\tflags="
 			svc_get_flags ${_i}
 		done
