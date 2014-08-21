@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.114 2014/08/20 20:10:17 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.115 2014/08/21 00:04:58 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -127,7 +127,8 @@ struct filed {
 	union {
 		char	f_uname[MAXUNAMES][UT_NAMESIZE+1];
 		struct {
-			char	f_hname[MAXHOSTNAMELEN];
+			char	f_loghost[1+1+MAXHOSTNAMELEN+1+NI_MAXSERV];
+				/* @[hostname]:servname\0 */
 			struct sockaddr_storage	f_addr;
 		} f_forw;		/* forwarding address */
 		char	f_fname[MAXPATHLEN];
@@ -268,6 +269,7 @@ void	reapchild(int);
 char   *ttymsg(struct iovec *, int, char *, int);
 void	usage(void);
 void	wallmsg(struct filed *, struct iovec *);
+int	loghost(char *, char **, char **);
 int	getmsgbufsize(void);
 int	unix_socket(char *, int, mode_t);
 void	double_rbuf(int);
@@ -905,7 +907,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		break;
 
 	case F_FORW:
-		dprintf(" %s\n", f->f_un.f_forw.f_hname);
+		dprintf(" %s\n", f->f_un.f_forw.f_loghost);
 		if ((l = snprintf(line, sizeof(line), "<%d>%.15s %s%s%s",
 		    f->f_prevpri, (char *)iov[0].iov_base,
 		    IncludeHostname ? LocalHostName : "",
@@ -1349,7 +1351,7 @@ init(void)
 				break;
 
 			case F_FORW:
-				printf("%s", f->f_un.f_forw.f_hname);
+				printf("%s", f->f_un.f_forw.f_loghost);
 				break;
 
 			case F_USERS:
@@ -1411,7 +1413,7 @@ cfline(char *line, char *prog)
 {
 	int i, pri;
 	size_t rb_len;
-	char *bp, *p, *q, *cp;
+	char *bp, *p, *q, *host, *port;
 	char buf[MAXLINE], ebuf[100];
 	struct filed *xf, *f, *d;
 
@@ -1510,21 +1512,26 @@ cfline(char *line, char *prog)
 	case '@':
 		if (!InetInuse)
 			break;
-		if ((cp = strrchr(++p, ':')) != NULL)
-			*cp++ = '\0';
-		if ((strlcpy(f->f_un.f_forw.f_hname, p,
-		    sizeof(f->f_un.f_forw.f_hname)) >=
-		    sizeof(f->f_un.f_forw.f_hname))) {
-			snprintf(ebuf, sizeof(ebuf), "hostname too long \"%s\"",
+		if ((strlcpy(f->f_un.f_forw.f_loghost, p,
+		    sizeof(f->f_un.f_forw.f_loghost)) >=
+		    sizeof(f->f_un.f_forw.f_loghost))) {
+			snprintf(ebuf, sizeof(ebuf), "loghost too long \"%s\"",
 			    p);
 			logerror(ebuf);
 			break;
 		}
-		if (priv_getaddrinfo(f->f_un.f_forw.f_hname,
-		    cp == NULL ? "syslog" : cp,
-		    (struct sockaddr *)&f->f_un.f_forw.f_addr,
+		if (loghost(++p, &host, &port) == -1) {
+			snprintf(ebuf, sizeof(ebuf), "bad loghost \"%s\"",
+			    f->f_un.f_forw.f_loghost);
+			logerror(ebuf);
+			break;
+		}
+		if (priv_getaddrinfo(host,
+		    port == NULL ? "syslog" : port,
+		    (struct sockaddr*)&f->f_un.f_forw.f_addr,
 		    sizeof(f->f_un.f_forw.f_addr)) != 0) {
-			snprintf(ebuf, sizeof(ebuf), "bad hostname \"%s\"", p);
+			snprintf(ebuf, sizeof(ebuf), "bad hostname \"%s\"",
+			    f->f_un.f_forw.f_loghost);
 			logerror(ebuf);
 			break;
 		}
@@ -1633,6 +1640,26 @@ cfline(char *line, char *prog)
 	return (f);
 }
 
+/*
+ * Parse the host and port parts from a loghost string.
+ */
+int
+loghost(char *str, char **host, char **port)
+{
+	*host = str;
+	if (**host == '[') {
+		(*host)++;
+		str = strchr(*host, ']');
+		if (str == NULL)
+			return (-1);
+		*str++ = '\0';
+	}
+	*port = strrchr(str, ':');
+	if (*port != NULL)
+		*(*port)++ = '\0';
+
+	return (0);
+}
 
 /*
  * Retrieve the size of the kernel message buffer, via sysctl.
