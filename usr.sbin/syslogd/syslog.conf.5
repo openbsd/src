@@ -26,10 +26,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.24 2014/01/20 05:07:48 schwarze Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.25 2014/08/21 17:16:37 bluhm Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: August 21 2014 $
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -220,6 +220,13 @@ program on the named host.
 A port number may be optionally specified using the
 .Ar host:port
 syntax.
+IPv6 addresses can be used by surrounding the address portion with
+square brackets
+.Po
+.Ql [\&
+and
+.Ql ]\&
+.Pc .
 .It
 A comma separated list of users.
 Selected messages are written to those users
