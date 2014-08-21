@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.636 2014/07/02 13:03:41 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.637 2014/08/21 15:09:27 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1490,8 +1490,14 @@ pfrule		: action dir logquick interface af proto fromto
 				r.set_prio[1] = $8.set_prio[1];
 				r.scrub_flags |= PFSTATE_SETPRIO;
 			}
-			if ($8.marker & FOM_ONCE)
+			if ($8.marker & FOM_ONCE) {
+				if (r.action == PF_MATCH) {
+					yyerror("can't specify once for "
+					    "match rules");
+					YYERROR;
+				}
 				r.rule_flag |= PFRULE_ONCE;
+			}
 			if ($8.marker & FOM_AFTO)
 				r.rule_flag |= PFRULE_AFTO;
 			r.af = $5;
