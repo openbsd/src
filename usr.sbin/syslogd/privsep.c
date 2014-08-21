@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.39 2014/08/21 00:04:58 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.40 2014/08/21 17:00:34 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -177,6 +177,8 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			close(pfd[PFD_UNIX_0 + i].fd);
 	if (pfd[PFD_INET].fd != -1)
 		close(pfd[PFD_INET].fd);
+	if (pfd[PFD_INET6].fd != -1)
+		close(pfd[PFD_INET6].fd);
 	if (pfd[PFD_CTLSOCK].fd != -1)
 		close(pfd[PFD_CTLSOCK].fd);
 	if (pfd[PFD_CTLCONN].fd != -1)
@@ -306,8 +308,8 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			must_read(socks[0], &servname, servname_len);
 			servname[servname_len - 1] = '\0';
 
-			memset(&hints, '\0', sizeof(hints));
-			hints.ai_family = AF_INET;
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = AF_UNSPEC;
 			hints.ai_socktype = SOCK_DGRAM;
 			i = getaddrinfo(hostname, servname, &hints, &res0);
 			if (i != 0 || res0 == NULL) {
