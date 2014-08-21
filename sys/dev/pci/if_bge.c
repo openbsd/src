@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.358 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.359 2014/08/21 14:30:21 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1255,7 +1255,7 @@ bge_init_rx_ring_std(struct bge_softc *sc)
 	sc->bge_std = BGE_STD_RX_RING_CNT - 1;
 
 	/* lwm must be greater than the replenish threshold */
-	if_rxr_init(&sc->bge_std_ring, 17, BGE_JUMBO_RX_RING_CNT);
+	if_rxr_init(&sc->bge_std_ring, 17, BGE_STD_RX_RING_CNT);
 	bge_fill_rx_ring_std(sc);
 
 	SET(sc->bge_flags, BGE_RXRING_VALID);
