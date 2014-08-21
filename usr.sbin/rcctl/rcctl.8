@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.4 2014/08/21 10:15:11 schwarze Exp $
+.\"	$OpenBSD: rcctl.8,v 1.5 2014/08/21 12:47:22 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -64,8 +64,10 @@ Display the value of
 .Ar service
 or
 .Ar daemon Ns _flags .
-Without an argument, list all services and daemons
-with their current status and flags.
+Without an argument, display all services and
+.Ar daemon Ns _flags
+with their values in a format compatible with
+.Xr rc.conf 8 .
 .It Ar action daemon
 Run the
 .Xr rc.d 8

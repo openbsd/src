@@ -103,16 +103,15 @@ svc_get_flags()
 
 svc_get_status()
 {
-	local _svc=$1
+	local _affix _svc=$1
 
 	if [ -n "${_svc}" ]; then
 		svc_get_flags ${_svc} | sed '/^$/d'
 		svc_is_enabled ${_svc}
 	else
 		for _i in $(svc_get_all); do
-			printf "%18s" ${_i}
-			echo -n "\tflags="
-			svc_get_flags ${_i}
+			svc_is_special ${_i} && unset _affix || _affix="_flags"
+			echo "${_i}${_affix}=$(svc_get_flags ${_i})"
 		done
 	fi
 }
