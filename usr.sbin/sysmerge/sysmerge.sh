@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.150 2014/08/11 09:03:27 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.151 2014/08/21 16:50:11 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -853,7 +853,7 @@ while getopts bdpSs:x: arg; do
 				usage
 				error_rm_wrkdir "conflicting options"
 			fi
-			SRCDIR="${OPTARG}"
+			SRCDIR="$(readlink -f ${OPTARG})"
 			[[ -f ${SRCDIR}/etc/Makefile ]] || \
 				error_rm_wrkdir "${SRCDIR}: invalid \"src\" tree, missing ${SRCDIR}/etc/Makefile"
 			continue
