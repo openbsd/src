@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.179 2014/08/19 12:49:41 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.180 2014/08/21 10:07:07 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -680,7 +680,8 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 		if ((rt->rt_flags & RTF_GATEWAY) &&
 		    rt_key(rt)->sa_family == dst->sa_family)
 			return (NULL);
-		if ((ifa = rt->rt_ifa) == NULL)
+		ifa = rt->rt_ifa;
+		if (ifa == NULL || ifa->ifa_ifp == NULL)
 			return (NULL);
 	}
 	if (ifa->ifa_addr->sa_family != dst->sa_family) {
