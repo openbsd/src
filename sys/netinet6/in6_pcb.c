@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.64 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.65 2014/08/21 11:54:00 mpi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -382,8 +382,6 @@ in6_pcbsetport(struct in6_addr *laddr, struct inpcb *inp, struct proc *p)
  *
  * If don't have a local address for this socket yet,
  * then pick one.
- *
- * I believe this has to be called at splnet().
  */
 int
 in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
@@ -472,8 +470,6 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
  *
  * Also perform input-side security policy check
  *    once PCB to be notified has been located.
- *
- * Must be called at splnet.
  */
 int
 in6_pcbnotify(struct inpcbtable *head, struct sockaddr_in6 *dst, 
