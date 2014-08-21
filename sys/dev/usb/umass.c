@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.66 2014/07/12 18:48:52 tedu Exp $ */
+/*	$OpenBSD: umass.c,v 1.67 2014/08/21 14:52:56 mpi Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -180,19 +180,15 @@ char *states[TSTATE_STATES+1] = {
 int umass_match(struct device *, void *, void *); 
 void umass_attach(struct device *, struct device *, void *); 
 int umass_detach(struct device *, int); 
-int umass_activate(struct device *, int); 
 
 struct cfdriver umass_cd = { 
 	NULL, "umass", DV_DULL 
 }; 
 
-const struct cfattach umass_ca = { 
-	sizeof(struct umass_softc), 
-	umass_match, 
-	umass_attach, 
-	umass_detach, 
-	umass_activate, 
+const struct cfattach umass_ca = {
+	sizeof(struct umass_softc), umass_match, umass_attach, umass_detach
 };
+
 void umass_disco(struct umass_softc *sc);
 
 /* generic transfer functions */
@@ -665,32 +661,6 @@ umass_detach(struct device *self, int flags)
 
 	umass_disco(sc);
 
-	return (rv);
-}
-
-int
-umass_activate(struct device *dev, int act)
-{
-	struct umass_softc *sc = (struct umass_softc *)dev;
-	struct umassbus_softc *scbus = sc->bus;
-	int rv = 0;
-
-	DPRINTF(UDMASS_USB, ("%s: umass_activate: %d\n",
-	    sc->sc_dev.dv_xname, act));
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		if (scbus == NULL || scbus->sc_child == NULL)
-			break;
-		rv = config_deactivate(scbus->sc_child);
-		DPRINTF(UDMASS_USB, ("%s: umass_activate: child "
-		    "returned %d\n", sc->sc_dev.dv_xname, rv));
-		break;
-	default:
-		rv = config_activate_children(dev, act);
-		break;
-	}
 	return (rv);
 }
 

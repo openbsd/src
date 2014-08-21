@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.67 2014/05/12 09:50:44 mpi Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.68 2014/08/21 14:52:55 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -162,18 +162,13 @@ const struct wskbd_accessops ukbd_accessops = {
 int ukbd_match(struct device *, void *, void *); 
 void ukbd_attach(struct device *, struct device *, void *); 
 int ukbd_detach(struct device *, int); 
-int ukbd_activate(struct device *, int); 
 
 struct cfdriver ukbd_cd = { 
 	NULL, "ukbd", DV_DULL 
 }; 
 
-const struct cfattach ukbd_ca = { 
-	sizeof(struct ukbd_softc), 
-	ukbd_match, 
-	ukbd_attach, 
-	ukbd_detach, 
-	ukbd_activate, 
+const struct cfattach ukbd_ca = {
+	sizeof(struct ukbd_softc), ukbd_match, ukbd_attach, ukbd_detach
 };
 
 struct ukbd_translation {
@@ -305,22 +300,6 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	ukbd_set_leds(sc, 0);
 
 	hidkbd_attach_wskbd(kbd, layout, &ukbd_accessops);
-}
-
-int
-ukbd_activate(struct device *self, int act)
-{
-	struct ukbd_softc *sc = (struct ukbd_softc *)self;
-	struct hidkbd *kbd = &sc->sc_kbd;
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		if (kbd->sc_wskbddev != NULL)
-			rv = config_deactivate(kbd->sc_wskbddev);
-		break;
-	}
-	return (rv);
 }
 
 int

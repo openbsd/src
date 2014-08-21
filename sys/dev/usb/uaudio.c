@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.104 2014/07/12 18:48:52 tedu Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.105 2014/08/21 14:52:55 mpi Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -250,7 +250,6 @@ struct uaudio_softc {
 	int		 sc_nencs;
 	struct mixerctl *sc_ctls;	/* mixer controls */
 	int		 sc_nctls;	/* # of mixer controls */
-	struct device	*sc_audiodev;
 	int		 sc_quirks;
 };
 
@@ -439,18 +438,13 @@ struct audio_device uaudio_device = {
 int uaudio_match(struct device *, void *, void *); 
 void uaudio_attach(struct device *, struct device *, void *); 
 int uaudio_detach(struct device *, int); 
-int uaudio_activate(struct device *, int); 
 
 struct cfdriver uaudio_cd = { 
 	NULL, "uaudio", DV_DULL 
 }; 
 
-const struct cfattach uaudio_ca = { 
-	sizeof(struct uaudio_softc), 
-	uaudio_match, 
-	uaudio_attach, 
-	uaudio_detach, 
-	uaudio_activate, 
+const struct cfattach uaudio_ca = {
+	sizeof(struct uaudio_softc), uaudio_match, uaudio_attach, uaudio_detach
 };
 
 int
@@ -581,23 +575,7 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 	uaudio_create_encodings(sc);
 
 	DPRINTF(("uaudio_attach: doing audio_attach_mi\n"));
-	sc->sc_audiodev = audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
-}
-
-int
-uaudio_activate(struct device *self, int act)
-{
-	struct uaudio_softc *sc = (struct uaudio_softc *)self;
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		if (sc->sc_audiodev != NULL)
-			rv = config_deactivate(sc->sc_audiodev);
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-	return (rv);
+	audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
 }
 
 int
@@ -617,8 +595,7 @@ uaudio_detach(struct device *self, int flags)
 	/* Wait for outstanding requests to complete. */
 	uaudio_drain(sc);
 
-	if (sc->sc_audiodev != NULL)
-		rv = config_detach(sc->sc_audiodev, flags);
+	rv = config_detach_children(self, flags);
 
 	return (rv);
 }
