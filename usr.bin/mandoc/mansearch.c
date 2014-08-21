@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.31 2014/08/09 14:24:49 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.32 2014/08/21 20:27:03 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -769,6 +769,7 @@ exprterm(const struct mansearch *search, char *buf, int cs)
 	if (MANSEARCH_WHATIS & search->flags) {
 		e->substr = NULL;
 		mandoc_asprintf(&val, "[[:<:]]%s[[:>:]]", buf);
+		cs = 0;
 	}
 
 	if (NULL == e->substr) {
