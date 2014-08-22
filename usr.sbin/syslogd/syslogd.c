@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.116 2014/08/21 17:00:34 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.117 2014/08/22 16:14:11 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1547,8 +1547,21 @@ cfline(char *line, char *prog)
 			logerror(ebuf);
 			break;
 		}
-		if (priv_getaddrinfo(host,
-		    port == NULL ? "syslog" : port,
+		if (strlen(host) >= MAXHOSTNAMELEN) {
+			snprintf(ebuf, sizeof(ebuf), "host too long \"%s\"",
+			    f->f_un.f_forw.f_loghost);
+			logerror(ebuf);
+			break;
+		}
+		if (port == NULL)
+			port = "syslog";
+		if (strlen(port) >= NI_MAXSERV) {
+			snprintf(ebuf, sizeof(ebuf), "port too long \"%s\"",
+			    f->f_un.f_forw.f_loghost);
+			logerror(ebuf);
+			break;
+		}
+		if (priv_getaddrinfo(host, port,
 		    (struct sockaddr*)&f->f_un.f_forw.f_addr,
 		    sizeof(f->f_un.f_forw.f_addr)) != 0) {
 			snprintf(ebuf, sizeof(ebuf), "bad hostname \"%s\"",
