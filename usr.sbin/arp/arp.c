@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.59 2014/08/21 10:23:47 mpi Exp $ */
+/*	$OpenBSD: arp.c,v 1.60 2014/08/22 22:14:53 sthen Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -595,7 +595,7 @@ ether_str(struct sockaddr_dl *sdl)
 
 	if (sdl->sdl_alen) {
 		cp = (u_char *)LLADDR(sdl);
-		snprintf(hbuf, sizeof(hbuf), "%x:%x:%x:%x:%x:%x",
+		snprintf(hbuf, sizeof(hbuf), "%02x:%02x:%02x:%02x:%02x:%02x",
 		    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
 	} else
 		snprintf(hbuf, sizeof(hbuf), "(incomplete)");
