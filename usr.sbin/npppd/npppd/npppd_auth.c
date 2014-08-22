@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.c,v 1.14 2014/05/30 05:06:00 yasuoka Exp $ */
+/*	$OpenBSD: npppd_auth.c,v 1.15 2014/08/22 04:36:16 jsg Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.14 2014/05/30 05:06:00 yasuoka Exp $ */
+/* $Id: npppd_auth.c,v 1.15 2014/08/22 04:36:16 jsg Exp $ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -188,15 +188,12 @@ npppd_auth_reload(npppd_auth_base *base)
 		return 1;
 
 	base->pppsuffix[0] = '\0';
-	if (auth != NULL) {
-		if (auth->username_suffix != NULL)
-			strlcpy(base->pppsuffix, auth->username_suffix,
-			    sizeof(base->pppsuffix));
-		base->eap_capable = auth->eap_capable;
-		base->strip_nt_domain = auth->strip_nt_domain;
-		base->strip_atmark_realm = auth->strip_atmark_realm;
-	}
-
+	if (auth->username_suffix != NULL)
+		strlcpy(base->pppsuffix, auth->username_suffix,
+		    sizeof(base->pppsuffix));
+	base->eap_capable = auth->eap_capable;
+	base->strip_nt_domain = auth->strip_nt_domain;
+	base->strip_atmark_realm = auth->strip_atmark_realm;
 	base->has_users_file = 0;
 	base->radius_ready = 0;
 
