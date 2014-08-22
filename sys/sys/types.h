@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.41 2014/07/12 16:25:08 guenther Exp $	*/
+/*	$OpenBSD: types.h,v 1.42 2014/08/22 23:05:15 krw Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -130,6 +130,8 @@ typedef __psize_t	psize_t;
 #endif /* __BSD_VISIBLE */
 
 /* Standard system types */
+typedef __blkcnt_t	blkcnt_t;	/* blocks allocated for file */
+typedef __blksize_t	blksize_t;	/* optimal blocksize for I/O */
 typedef	char *		caddr_t;	/* core address */
 typedef	__int32_t	daddr32_t;	/* 32-bit disk address */
 typedef	__int64_t	daddr_t;	/* 64-bit disk address */

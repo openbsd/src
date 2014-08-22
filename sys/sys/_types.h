@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.8 2013/10/24 07:34:56 guenther Exp $	*/
+/*	$OpenBSD: _types.h,v 1.9 2014/08/22 23:05:15 krw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,6 +36,8 @@
 
 #include <machine/_types.h>
 
+typedef __int64_t	__blkcnt_t;	/* blocks allocated for file */
+typedef __int32_t	__blksize_t;	/* optimal blocksize for I/O */
 typedef	__int64_t	__clock_t;	/* ticks in CLOCKS_PER_SEC */
 typedef	__int32_t	__clockid_t;	/* CLOCK_* identifiers */
 typedef	unsigned long	__cpuid_t;	/* CPU id */
