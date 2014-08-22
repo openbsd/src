@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.72 2010/06/29 19:50:16 reyk Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.73 2014/08/22 07:59:52 doug Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -717,6 +717,7 @@ ike_phase_1_post_exchange_KE_NONCE(struct message *msg)
 		key = malloc(keylen);
 		if (!key) {
 			/* XXX - Notify peer.  */
+			prf_free(prf);
 			log_error("ike_phase_1_post_exchange_KE_NONCE: "
 			    "malloc (%d) failed", keylen);
 			return -1;
