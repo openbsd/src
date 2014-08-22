@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.13 2014/07/16 01:23:39 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.14 2014/08/22 19:28:25 brad Exp $
 
 .include <bsd.own.mk>
 
@@ -10,31 +10,13 @@ CONFIGURE_OPTS=	--prefix=/usr \
 		--disable-threads \
 		--disable-openssl-version-check
 
-PROG=	bin/check/named-checkconf \
-	bin/check/named-checkzone \
-	bin/dnssec/dnssec-keygen \
-	bin/dnssec/dnssec-signzone \
-	bin/dig/dig \
+PROG=	bin/dig/dig \
 	bin/dig/host \
-	bin/dig/nslookup \
-	bin/named/named \
-	bin/nsupdate/nsupdate \
-	bin/rndc/rndc-confgen \
-	bin/rndc/rndc
+	bin/dig/nslookup
 
-MAN=	bin/check/named-checkconf.8 \
-	bin/check/named-checkzone.8 \
-	bin/dnssec/dnssec-keygen.8 \
-	bin/dnssec/dnssec-signzone.8 \
-	bin/dig/dig.1 \
+MAN=	bin/dig/dig.1 \
 	bin/dig/host.1 \
-	bin/dig/nslookup.1 \
-	bin/named/named.8 \
-	bin/named/named.conf.5 \
-	bin/nsupdate/nsupdate.8 \
-	bin/rndc/rndc-confgen.8 \
-	bin/rndc/rndc.8 \
-	bin/rndc/rndc.conf.5
+	bin/dig/nslookup.1
 
 BINDIR=		/usr/sbin
 

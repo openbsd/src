@@ -18,7 +18,7 @@ AC_DIVERT_PUSH(1)dnl
 esyscmd([sed "s/^/# /" COPYRIGHT])dnl
 AC_DIVERT_POP()dnl
 
-AC_REVISION($Revision: 1.16 $)
+AC_REVISION($Revision: 1.17 $)
 
 AC_INIT(lib/dns/name.c)
 AC_PREREQ(2.59)
@@ -2472,23 +2472,8 @@ AC_CONFIG_FILES([
 	lib/lwres/unix/include/Makefile
 	lib/lwres/unix/include/lwres/Makefile
 	bin/Makefile
-	bin/check/Makefile
-	bin/named/Makefile
-	bin/named/unix/Makefile
-	bin/rndc/Makefile
-	bin/rndc/unix/Makefile
 	bin/dig/Makefile
-	bin/nsupdate/Makefile
-	bin/dnssec/Makefile
-	doc/Makefile
-	doc/arm/Makefile
-	doc/misc/Makefile
 	isc-config.sh
-	doc/xsl/Makefile
-	doc/xsl/isc-docbook-chunk.xsl
-	doc/xsl/isc-docbook-html.xsl
-	doc/xsl/isc-docbook-latex.xsl
-	doc/xsl/isc-manpage.xsl
 ])
 
 #

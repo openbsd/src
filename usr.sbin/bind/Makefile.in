@@ -21,7 +21,7 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_VERSION@
 
-SUBDIRS =	make lib bin doc @LIBBIND@
+SUBDIRS =	make lib bin
 TARGETS =
 
 @BIND9_MAKE_RULES@
