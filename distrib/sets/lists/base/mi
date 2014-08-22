@@ -2860,6 +2860,7 @@
 ./usr/sbin/quotaon
 ./usr/sbin/rarpd
 ./usr/sbin/rbootd
+./usr/sbin/rcctl
 ./usr/sbin/rdate
 ./usr/sbin/relayctl
 ./usr/sbin/relayd
