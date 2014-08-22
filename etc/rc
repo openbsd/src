@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.439 2014/08/17 14:43:34 ajacoutot Exp $
+#	$OpenBSD: rc,v 1.440 2014/08/22 19:19:25 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -144,19 +144,6 @@ start_daemon()
 
 make_keys()
 {
-	if [ X"${named_flags}" != X"NO" ]; then
-		if ! cmp -s /etc/rndc.key /var/named/etc/rndc.key ; then
-			echo -n "rndc-confgen: generating shared secret... "
-			if rndc-confgen -a -t /var/named >/dev/null 2>&1; then
-				chmod 0640 /var/named/etc/rndc.key \
-				    >/dev/null 2>&1
-				echo done.
-			else
-				echo failed.
-			fi
-		fi
-	fi
-
 	if [ ! -f /etc/isakmpd/private/local.key ]; then
 		echo -n "openssl: generating isakmpd/iked RSA key... "
 		if openssl genrsa -out /etc/isakmpd/private/local.key 2048 \
@@ -400,7 +387,7 @@ dmesg >/var/run/dmesg.boot
 make_keys
 
 echo -n 'starting early daemons:'
-start_daemon syslogd ldattach pflogd named nsd unbound ntpd
+start_daemon syslogd ldattach pflogd nsd unbound ntpd
 start_daemon iscsid isakmpd iked sasyncd ldapd npppd
 echo '.'
 

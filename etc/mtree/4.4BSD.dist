@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.261 2014/07/18 18:20:42 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.262 2014/08/22 19:19:25 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -767,20 +767,6 @@ var
 
     # ./var/mail
     mail
-    ..
-
-    # ./var/named
-    named
-        etc			uname=root gname=named mode=0750
-        ..
-        master
-        ..
-        slave			uname=root gname=named mode=0775
-        ..
-        standard
-        ..
-        tmp			uname=root gname=named mode=0775
-        ..
     ..
 
     # ./var/nsd

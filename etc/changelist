@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.98 2014/07/22 21:01:58 ajacoutot Exp $
+#	$OpenBSD: changelist,v 1.99 2014/08/22 19:19:25 deraadt Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -163,12 +163,6 @@
 /var/cron/cron.allow
 /var/cron/cron.deny
 /var/cron/tabs/root
-/var/named/etc/named.conf
-+/var/named/etc/rndc.key
-/var/named/etc/root.hint
-/var/named/standard/localhost
-/var/named/standard/loopback
-/var/named/standard/loopback6.arpa
 /var/nsd/etc/nsd.conf
 /var/unbound/etc/root.key
 /var/unbound/etc/unbound.conf

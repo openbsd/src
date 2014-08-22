@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.388 2014/07/23 11:49:06 reyk Exp $
+#	$OpenBSD: Makefile,v 1.389 2014/08/22 19:19:25 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -54,7 +54,7 @@ EXAMPLES_600=bgpd.conf dvmrpd.conf hostapd.conf iked.conf ipsec.conf \
 RCDAEMONS=	amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd \
 		ftpd ftpproxy hostapd hotplugd httpd identd ifstated iked \
 		inetd isakmpd ldapd npppd ldattach ldpd lpd mopd mrouted \
-		named nginx nsd ntpd ospfd ospf6d portmap pflogd rarpd rbootd \
+		nginx nsd ntpd ospfd ospf6d portmap pflogd rarpd rbootd \
 		relayd ripd route6d rtadvd rtsold sasyncd sendmail \
 		sensorsd slowcgi smtpd snmpd spamd sshd syslogd watchdogd \
 		wsmoused xdm ypbind ypldap yppasswdd ypserv nfsd mountd lockd \
@@ -158,21 +158,6 @@ distribution-etc-root-var: distrib-dirs
 	cd systrace; \
 		${INSTALL} -c -o root -g wheel -m 600 usr_sbin_lpd \
 		    ${DESTDIR}/etc/systrace; \
-		${INSTALL} -c -o root -g wheel -m 600 usr_sbin_named \
-		    ${DESTDIR}/etc/systrace
-	cd bind; \
-		${INSTALL} -c -o root -g named -m 640 named-simple.conf \
-		    ${DESTDIR}/var/named/etc/named.conf; \
-		${INSTALL} -c -o root -g named -m 640 named-*.conf \
-		    ${DESTDIR}/var/named/etc; \
-		${INSTALL} -c -o root -g wheel -m 644 root.hint \
-		    ${DESTDIR}/var/named/etc; \
-		${INSTALL} -c -o root -g wheel -m 644 db.localhost \
-		    ${DESTDIR}/var/named/standard/localhost; \
-		${INSTALL} -c -o root -g wheel -m 644 db.loopback \
-		    ${DESTDIR}/var/named/standard/loopback; \
-		${INSTALL} -c -o root -g wheel -m 644 db.loopback6.arpa \
-		    ${DESTDIR}/var/named/standard/loopback6.arpa
 	ln -fs ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	ln -fs /usr/sbin/rmt ${DESTDIR}/etc/rmt
 	${INSTALL} -c -o root -g wheel -m 644 minfree \
