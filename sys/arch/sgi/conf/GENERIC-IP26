@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP26,v 1.1 2012/09/29 21:46:02 miod Exp $
+#	$OpenBSD: GENERIC-IP26,v 1.2 2014/08/22 20:03:56 deraadt Exp $
 #
 # THIS KERNEL IS FOR POWER INDIGO2 R8000 (IP26) SYSTEMS ONLY.
 #
@@ -85,6 +85,5 @@ safte*		at scsibus?
 ses*		at scsibus?
 uk*		at scsibus?
 
-pseudo-device	crypto	1
 #pseudo-device	hotplug	1	# devices hot plugging
 pseudo-device	wsmux	2       # Mouse and keyboard multiplexor

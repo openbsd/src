@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK-IMX,v 1.10 2014/07/12 21:56:56 tedu Exp $
+# $OpenBSD: RAMDISK-IMX,v 1.11 2014/08/22 20:03:56 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -154,7 +154,6 @@ iic*		at imxiic?
 
 # Pseudo-Devices
 #pseudo-device	wsmux		2	# mouse & keyboard multiplexor
-#pseudo-device	crypto		1
 pseudo-device	loop		1	# network loopback
 pseudo-device	bpfilter	1	# packet filter
 pseudo-device	rd		1	# ram disk

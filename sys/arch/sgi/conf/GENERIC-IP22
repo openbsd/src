@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP22,v 1.15 2012/07/18 19:56:02 miod Exp $
+#	$OpenBSD: GENERIC-IP22,v 1.16 2014/08/22 20:03:56 deraadt Exp $
 #
 # THIS KERNEL IS FOR INDIGO (IP20), INDY (IP22) AND INDIGO2 (IP24) SYSTEMS ONLY.
 #
@@ -103,6 +103,5 @@ safte*		at scsibus?
 ses*		at scsibus?
 uk*		at scsibus?
 
-pseudo-device	crypto	1
 #pseudo-device	hotplug	1	# devices hot plugging
 pseudo-device	wsmux	2       # Mouse and keyboard multiplexor

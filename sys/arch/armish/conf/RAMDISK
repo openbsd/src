@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.29 2014/07/12 21:56:56 tedu Exp $ 
+# $OpenBSD: RAMDISK,v 1.30 2014/08/22 20:03:54 deraadt Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -173,7 +173,6 @@ ukphy*		at mii?		# generic unknown PHYs
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
-pseudo-device	crypto		1
 pseudo-device	bio		1	# ioctl multiplexing device
 pseudo-device	hotplug		1	# devices hot plugging
 

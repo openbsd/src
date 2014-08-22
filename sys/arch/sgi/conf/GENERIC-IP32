@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP32,v 1.38 2014/08/15 14:06:48 mikeb Exp $
+#	$OpenBSD: GENERIC-IP32,v 1.39 2014/08/22 20:03:56 deraadt Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 #
@@ -264,6 +264,5 @@ com*		at puc?
 com*		at pcmcia?
 com*		at cardbus?
 
-pseudo-device	crypto	1
 pseudo-device	hotplug	1	# devices hot plugging
 pseudo-device	wsmux	2       # Mouse and keyboard multiplexor

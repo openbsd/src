@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.21 2014/07/12 21:56:56 tedu Exp $
+# $OpenBSD: RAMDISK,v 1.22 2014/08/22 20:03:56 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -120,7 +120,6 @@ cd*	at scsibus?			# SCSI CD-ROM drives
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
-#pseudo-device	crypto		1
 #pseudo-device	bio		1       # ioctl multiplexing device
 #pseudo-device	hotplug		1       # devices hot plugging
 
