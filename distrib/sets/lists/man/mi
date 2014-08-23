@@ -2239,7 +2239,6 @@
 ./usr/share/man/man5/motd.5
 ./usr/share/man/man5/mygate.5
 ./usr/share/man/man5/myname.5
-./usr/share/man/man5/named.conf.5
 ./usr/share/man/man5/netgroup.5
 ./usr/share/man/man5/netid.5
 ./usr/share/man/man5/networks.5
@@ -2266,7 +2265,6 @@
 ./usr/share/man/man5/resolv.conf.tail.5
 ./usr/share/man/man5/resolver.5
 ./usr/share/man/man5/ripd.conf.5
-./usr/share/man/man5/rndc.conf.5
 ./usr/share/man/man5/rpc.5
 ./usr/share/man/man5/rtadvd.conf.5
 ./usr/share/man/man5/ruby-module.5
@@ -2409,8 +2407,6 @@
 ./usr/share/man/man8/disklabel.8
 ./usr/share/man/man8/diskless.8
 ./usr/share/man/man8/dmesg.8
-./usr/share/man/man8/dnssec-keygen.8
-./usr/share/man/man8/dnssec-signzone.8
 ./usr/share/man/man8/dump.8
 ./usr/share/man/man8/dumpfs.8
 ./usr/share/man/man8/dvmrpctl.8
@@ -2564,9 +2560,6 @@
 ./usr/share/man/man8/mrouted.8
 ./usr/share/man/man8/mtrace.8
 ./usr/share/man/man8/mtree.8
-./usr/share/man/man8/named-checkconf.8
-./usr/share/man/man8/named-checkzone.8
-./usr/share/man/man8/named.8
 ./usr/share/man/man8/ncheck.8
 ./usr/share/man/man8/ncheck_ffs.8
 ./usr/share/man/man8/ndp.8
@@ -2585,7 +2578,6 @@
 ./usr/share/man/man8/nsd-checkconf.8
 ./usr/share/man/man8/nsd-control.8
 ./usr/share/man/man8/nsd.8
-./usr/share/man/man8/nsupdate.8
 ./usr/share/man/man8/ntalkd.8
 ./usr/share/man/man8/ntpctl.8
 ./usr/share/man/man8/ntpd.8
@@ -2639,8 +2631,6 @@
 ./usr/share/man/man8/rmgroup.8
 ./usr/share/man/man8/rmt.8
 ./usr/share/man/man8/rmuser.8
-./usr/share/man/man8/rndc-confgen.8
-./usr/share/man/man8/rndc.8
 ./usr/share/man/man8/route.8
 ./usr/share/man/man8/route6d.8
 ./usr/share/man/man8/rpc.bootparamd.8

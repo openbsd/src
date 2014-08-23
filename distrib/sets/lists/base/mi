@@ -164,7 +164,6 @@
 ./etc/rc.d/mopd
 ./etc/rc.d/mountd
 ./etc/rc.d/mrouted
-./etc/rc.d/named
 ./etc/rc.d/nfsd
 ./etc/rc.d/nginx
 ./etc/rc.d/npppd
@@ -2769,8 +2768,6 @@
 ./usr/sbin/dhcpd
 ./usr/sbin/dhcrelay
 ./usr/sbin/dig
-./usr/sbin/dnssec-keygen
-./usr/sbin/dnssec-signzone
 ./usr/sbin/dvmrpctl
 ./usr/sbin/dvmrpd
 ./usr/sbin/editmap
@@ -2819,9 +2816,6 @@
 ./usr/sbin/mrouted
 ./usr/sbin/mtrace
 ./usr/sbin/mtree
-./usr/sbin/named
-./usr/sbin/named-checkconf
-./usr/sbin/named-checkzone
 ./usr/sbin/ndp
 ./usr/sbin/netgroup_mkdb
 ./usr/sbin/nginx
@@ -2832,7 +2826,6 @@
 ./usr/sbin/nsd-control
 ./usr/sbin/nsd-control-setup
 ./usr/sbin/nslookup
-./usr/sbin/nsupdate
 ./usr/sbin/ntpctl
 ./usr/sbin/ntpd
 ./usr/sbin/openssl
@@ -2872,8 +2865,6 @@
 ./usr/sbin/rmgroup
 ./usr/sbin/rmt
 ./usr/sbin/rmuser
-./usr/sbin/rndc
-./usr/sbin/rndc-confgen
 ./usr/sbin/route6d
 ./usr/sbin/rpc.bootparamd
 ./usr/sbin/rpc.lockd
@@ -5225,12 +5216,6 @@
 ./var/log
 ./var/log/rdist
 ./var/mail
-./var/named
-./var/named/etc
-./var/named/master
-./var/named/slave
-./var/named/standard
-./var/named/tmp
 ./var/nsd
 ./var/nsd/db
 ./var/nsd/etc

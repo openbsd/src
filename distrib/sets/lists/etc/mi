@@ -74,7 +74,6 @@
 ./etc/sudoers
 ./etc/syslog.conf
 ./etc/systrace/usr_sbin_lpd
-./etc/systrace/usr_sbin_named
 ./etc/ttys
 ./root/.Xdefaults
 ./root/.cshrc
@@ -102,13 +101,6 @@
 ./var/log/wtmp
 ./var/log/xferlog
 ./var/mail/root
-./var/named/etc/named-dual.conf
-./var/named/etc/named-simple.conf
-./var/named/etc/named.conf
-./var/named/etc/root.hint
-./var/named/standard/localhost
-./var/named/standard/loopback
-./var/named/standard/loopback6.arpa
 ./var/nsd/etc/nsd.conf
 ./var/unbound/etc/unbound.conf
 ./var/www/conf/bgplg.css
