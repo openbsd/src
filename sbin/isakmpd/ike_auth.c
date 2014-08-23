@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.110 2007/04/16 13:01:39 moritz Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.111 2014/08/23 00:48:57 doug Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -281,6 +281,8 @@ ignorekeynote:
 				log_print("ike_auth_get_key: failed opening "
 				    "\"%s\"", keyfile);
 				free(privkeyfile);
+				privkeyfile = NULL;
+				keyfile = NULL;
 			}
 		}
 
