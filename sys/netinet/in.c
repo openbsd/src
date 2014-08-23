@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.101 2014/07/12 18:44:23 tedu Exp $	*/
+/*	$OpenBSD: in.c,v 1.102 2014/08/23 18:32:55 bluhm Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -610,7 +610,9 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 {
 	u_int32_t i = sin->sin_addr.s_addr;
 	struct sockaddr_in oldaddr;
-	int s = splnet(), error = 0;
+	int s, error = 0;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (newaddr)
 		TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
@@ -623,6 +625,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 		rt_ifa_delloop(&ia->ia_ifa);
 		ifa_del(ifp, &ia->ia_ifa);
 	}
+	s = splnet();
 	oldaddr = ia->ia_addr;
 	ia->ia_addr = *sin;
 
@@ -638,14 +641,6 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 		goto out;
 	}
 	splx(s);
-
-	/*
-	 * How should a packet be routed during
-	 * an address change--and is it safe?
-	 * Is the "ifp" even in a consistent state?
-	 * Be safe for now.
-	 */
-	splsoftassert(IPL_SOFTNET);
 
 	if (ia->ia_netmask == 0) {
 		if (IN_CLASSA(i))
