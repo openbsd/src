@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.113 2014/08/08 17:36:21 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.114 2014/08/23 01:00:20 doug Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1321,6 +1321,8 @@ parse_cat(struct mpage *mpage, int fd)
 	    fopen(mpage->mlinks->file, "r") :
 	    fdopen(fd, "r");
 	if (NULL == stream) {
+		if (-1 != fd)
+			close(fd);
 		if (warnings)
 			say(mpage->mlinks->file, "&fopen");
 		return;
