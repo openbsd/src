@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.637 2014/08/21 15:09:27 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.638 2014/08/23 00:11:03 pelikan Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3454,14 +3454,36 @@ label		: STRING			{
 		;
 
 qname		: STRING				{
+			struct pfctl_qsitem *qsi;
+
+			if ((qsi = pfctl_find_queue($1, &qspecs)) == NULL) {
+				yyerror("queue %s is not defined", $1);
+				YYERROR;
+			}
 			$$.qname = $1;
 			$$.pqname = NULL;
 		}
 		| '(' STRING ')'			{
+			struct pfctl_qsitem *qsi;
+
+			if ((qsi = pfctl_find_queue($2, &qspecs)) == NULL) {
+				yyerror("queue %s is not defined", $2);
+				YYERROR;
+			}
 			$$.qname = $2;
 			$$.pqname = NULL;
 		}
 		| '(' STRING comma STRING ')'	{
+			struct pfctl_qsitem *qsi, *pqsi;
+
+			if ((qsi = pfctl_find_queue($2, &qspecs)) == NULL) {
+				yyerror("queue %s is not defined", $2);
+				YYERROR;
+			}
+			if ((pqsi = pfctl_find_queue($4, &qspecs)) == NULL) {
+				yyerror("queue %s is not defined", $4);
+				YYERROR;
+			}
 			$$.qname = $2;
 			$$.pqname = $4;
 		}

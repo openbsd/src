@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.325 2014/04/19 14:22:32 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.326 2014/08/23 00:11:03 pelikan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -226,6 +226,10 @@ static const char *debugopt_list[] = {
 static const char *optiopt_list[] = {
 	"none", "basic", "profile", NULL
 };
+
+struct pf_qihead qspecs = TAILQ_HEAD_INITIALIZER(qspecs);
+struct pf_qihead rootqs = TAILQ_HEAD_INITIALIZER(rootqs);
+
 
 void
 usage(void)
@@ -1104,9 +1108,6 @@ pfctl_ruleset_trans(struct pfctl *pf, char *path, struct pf_anchor *a)
 	return (0);
 }
 
-TAILQ_HEAD(qspecs, pfctl_qsitem) qspecs = TAILQ_HEAD_INITIALIZER(qspecs);
-TAILQ_HEAD(rootqs, pfctl_qsitem) rootqs = TAILQ_HEAD_INITIALIZER(rootqs);
-
 int
 pfctl_add_queue(struct pfctl *pf, struct pf_queuespec *q)
 {
@@ -1130,6 +1131,18 @@ pfctl_add_queue(struct pfctl *pf, struct pf_queuespec *q)
 	return (0);
 }
 
+struct pfctl_qsitem *
+pfctl_find_queue(char *what, struct pf_qihead *where)
+{
+	struct pfctl_qsitem *q;
+
+	TAILQ_FOREACH(q, where, entries)
+		if (strcmp(q->qs.qname, what) == 0)
+			return (q);
+
+	return (NULL);
+}
+
 u_int
 pfctl_find_childqs(struct pfctl_qsitem *qi)
 {
@@ -1144,11 +1157,7 @@ pfctl_find_childqs(struct pfctl_qsitem *qi)
 		if (++p->matches > 10000)
 			errx(1, "pfctl_find_childqs: excessive matches, loop?");
 
-		/* check wether a children with that name is already there */
-		TAILQ_FOREACH(q, &qi->children, entries)
-			if (!strcmp(q->qs.qname, p->qs.qname))
-				break;
-		if (q == NULL) {
+		if ((q = pfctl_find_queue(p->qs.qname, &qi->children)) == NULL) {
 			/* insert */
 			if ((n = calloc(1, sizeof(*n))) == NULL)
 				err(1, "calloc");

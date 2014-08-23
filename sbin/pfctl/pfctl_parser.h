@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.102 2014/04/19 14:22:32 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.103 2014/08/23 00:11:03 pelikan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -192,6 +192,15 @@ struct pf_opt_rule {
 
 TAILQ_HEAD(pf_opt_queue, pf_opt_rule);
 
+extern TAILQ_HEAD(pf_qihead, pfctl_qsitem) qspecs, rootqs;
+struct pfctl_qsitem {
+	TAILQ_ENTRY(pfctl_qsitem)	 entries;
+	struct pf_queuespec		 qs;
+	struct pf_qihead		 children;
+	int				 matches;
+};
+
+
 int	pfctl_rules(int, char *, int, int, char *, struct pfr_buffer *);
 int	pfctl_optimize_ruleset(struct pfctl *, struct pf_ruleset *);
 int     pf_opt_create_table(struct pfctl *, struct pf_opt_tbl *);
@@ -218,6 +227,7 @@ int	pfctl_load_anchors(int, struct pfctl *, struct pfr_buffer *);
 
 int	pfctl_load_queues(struct pfctl *);
 int	pfctl_add_queue(struct pfctl *, struct pf_queuespec *);
+struct pfctl_qsitem *	pfctl_find_queue(char *, struct pf_qihead *);
 
 void	print_pool(struct pf_pool *, u_int16_t, u_int16_t, sa_family_t, int, int);
 void	print_src_node(struct pf_src_node *, int);
@@ -275,13 +285,5 @@ struct node_host	*host(const char *);
 int			 append_addr(struct pfr_buffer *, char *, int);
 int			 append_addr_host(struct pfr_buffer *,
 			    struct node_host *, int, int);
-
-TAILQ_HEAD(pf_qihead, pfctl_qsitem);
-struct pfctl_qsitem {
-	TAILQ_ENTRY(pfctl_qsitem)	 entries;
-	struct pf_queuespec		 qs;
-	struct pf_qihead		 children;
-	int				 matches;
-};
 
 #endif /* _PFCTL_PARSER_H_ */
