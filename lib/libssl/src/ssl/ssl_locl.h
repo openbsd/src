@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.65 2014/08/11 01:06:22 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.66 2014/08/23 14:52:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -325,6 +325,8 @@
  * make sure to update this constant too */
 #define SSL_MAX_DIGEST 6
 
+#define SSL3_CK_ID		0x03000000
+
 #define TLS1_PRF_DGST_MASK	(0xff << TLS1_PRF_DGST_SHIFT)
 
 #define TLS1_PRF_DGST_SHIFT 10
@@ -594,7 +596,6 @@ STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 int ssl_verify_alarm_type(long type);
 void ssl_load_ciphers(void);
 
-const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
 void ssl3_init_finished_mac(SSL *s);
 int ssl3_send_server_certificate(SSL *s);

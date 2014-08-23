@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.87 2014/08/11 01:10:42 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.88 2014/08/23 14:52:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -775,9 +775,10 @@ ssl3_get_server_hello(SSL *s)
 {
 	STACK_OF(SSL_CIPHER)	*sk;
 	const SSL_CIPHER	*c;
-	unsigned char		*p, *d;
+	unsigned char		*p, *q, *d;
 	int			 i, al, ok;
-	unsigned int		 j;
+	unsigned int		 j, cipher_id;
+	uint16_t		 cipher_value;
 	long			 n;
 
 	n = s->method->ssl_get_message(s, SSL3_ST_CR_SRVR_HELLO_A,
@@ -830,7 +831,7 @@ ssl3_get_server_hello(SSL *s)
 	p += SSL3_RANDOM_SIZE;
 
 	/* get the session-id */
-	j= *(p++);
+	j = *(p++);
 
 	if ((j > sizeof s->session->session_id) ||
 	    (j > SSL3_SESSION_ID_SIZE)) {
@@ -843,6 +844,11 @@ ssl3_get_server_hello(SSL *s)
 	if (p + j + 2 - d > n)
 		goto truncated;
 
+	/* Get the cipher value. */
+	q = p + j;
+	n2s(q, cipher_value);
+	cipher_id = SSL3_CK_ID | cipher_value;
+
 	/*
 	 * Check if we want to resume the session based on external
 	 * pre-shared secret
@@ -854,7 +860,7 @@ ssl3_get_server_hello(SSL *s)
 		    &s->session->master_key_length, NULL, &pref_cipher,
 		    s->tls_session_secret_cb_arg)) {
 			s->session->cipher = pref_cipher ?
-			    pref_cipher : ssl3_get_cipher_by_char(p + j);
+			    pref_cipher : ssl3_get_cipher_by_id(cipher_id);
 			s->s3->flags |= SSL3_FLAGS_CCS_OK;
 		}
 	}
@@ -885,10 +891,11 @@ ssl3_get_server_hello(SSL *s)
 			}
 		}
 		s->session->session_id_length = j;
-		memcpy(s->session->session_id,p,j); /* j could be 0 */
+		memcpy(s->session->session_id, p, j); /* j could be 0 */
 	}
 	p += j;
-	c = ssl3_get_cipher_by_char(p);
+
+	c = ssl3_get_cipher_by_id(cipher_id);
 	if (c == NULL) {
 		/* unknown cipher */
 		al = SSL_AD_ILLEGAL_PARAMETER;
@@ -896,6 +903,7 @@ ssl3_get_server_hello(SSL *s)
 		    SSL_R_UNKNOWN_CIPHER_RETURNED);
 		goto f_err;
 	}
+
 	/* TLS v1.2 only ciphersuites require v1.2 or later */
 	if ((c->algorithm_ssl & SSL_TLSV1_2) &&
 	    (TLS1_get_version(s) < TLS1_2_VERSION)) {

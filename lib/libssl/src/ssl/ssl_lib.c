@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.81 2014/08/11 10:46:19 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.82 2014/08/23 14:52:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1408,6 +1408,8 @@ ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num,
 	const SSL_CIPHER	*c;
 	STACK_OF(SSL_CIPHER)	*sk;
 	int			 i;
+	unsigned int		 cipher_id;
+	uint16_t		 cipher_value;
 
 	if (s->s3)
 		s->s3->send_connection_binding = 0;
@@ -1427,10 +1429,12 @@ ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num,
 	}
 
 	for (i = 0; i < num; i += SSL3_CIPHER_VALUE_SIZE) {
+		n2s(p, cipher_value);
+		cipher_id = SSL3_CK_ID | cipher_value;
+
 		/* Check for SCSV */
-		if (s->s3 && (p[0] == ((SSL3_CK_SCSV >> 8) & 0xff)) &&
-		    (p[1] == (SSL3_CK_SCSV & 0xff))) {
-			/* SCSV fatal if renegotiating */
+		if (s->s3 && cipher_id == SSL3_CK_SCSV) {
+			/* SCSV is fatal if renegotiating. */
 			if (s->renegotiate) {
 				SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,
 				    SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING);
@@ -1440,12 +1444,10 @@ ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num,
 				goto err;
 			}
 			s->s3->send_connection_binding = 1;
-			p += SSL3_CIPHER_VALUE_SIZE;
 			continue;
 		}
 
-		c = ssl3_get_cipher_by_char(p);
-		p += SSL3_CIPHER_VALUE_SIZE;
+		c = ssl3_get_cipher_by_id(cipher_id);
 		if (c != NULL) {
 			if (!sk_SSL_CIPHER_push(sk, c)) {
 				SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,
@@ -1458,8 +1460,9 @@ ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num,
 	if (skp != NULL)
 		*skp = sk;
 	return (sk);
+
 err:
-	if ((skp == NULL) || (*skp == NULL))
+	if (skp == NULL || *skp == NULL)
 		sk_SSL_CIPHER_free(sk);
 	return (NULL);
 }
