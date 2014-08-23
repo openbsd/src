@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.77 2014/08/23 14:52:41 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.78 2014/08/23 15:37:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1704,73 +1704,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-#ifdef TEMP_GOST_TLS
-	/* Cipher FF00 */
-	{
-		.valid = 1,
-		.name = "GOST-MD5",
-		.id = 0x0300ff00,
-		.algorithm_mkey = SSL_kRSA,
-		.algorithm_auth = SSL_aRSA,
-		.algorithm_enc = SSL_eGOST2814789CNT,
-		.algorithm_mac = SSL_MD5,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 256,
-		.alg_bits = 256,
-	},
-
-	/* Cipher FF01 */
-	{
-		.valid = 1,
-		.name = "GOST-GOST94",
-		.id = 0x0300ff01,
-		.algorithm_mkey = SSL_kRSA,
-		.algorithm_auth = SSL_aRSA,
-		.algorithm_enc = SSL_eGOST2814789CNT,
-		.algorithm_mac = SSL_GOST94,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 256,
-		.alg_bits = 256
-	},
-
-	/* Cipher FF02 */
-	{
-		.valid = 1,
-		.name = "GOST-GOST89MAC",
-		.id = 0x0300ff02,
-		.algorithm_mkey = SSL_kRSA,
-		.algorithm_auth = SSL_aRSA,
-		.algorithm_enc = SSL_eGOST2814789CNT,
-		.algorithm_mac = SSL_GOST89MAC,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 256,
-		.alg_bits = 256
-	},
-
-	/* Cipher FF03 */
-	{
-		.valid = 1,
-		.name = "GOST-GOST89STREAM",
-		.id = 0x0300ff03,
-		.algorithm_mkey = SSL_kRSA,
-		.algorithm_auth = SSL_aRSA,
-		.algorithm_enc = SSL_eGOST2814789CNT,
-		.algorithm_mac = SSL_GOST89MAC,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF|
-		    TLS1_STREAM_MAC,
-		.strength_bits = 256,
-		.alg_bits = 256
-	},
-#endif
 
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 	/* Cipher CC13 */
