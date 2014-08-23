@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.44 2013/07/14 19:44:39 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.45 2014/08/23 07:25:54 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: July 14 2013 $
+.Dd $Mdocdate: August 23 2014 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -348,7 +348,8 @@ file.
 .Xr hosts 5 ,
 .Xr hostname 7 ,
 .Xr dhclient 8 ,
-.Xr named 8
+.Xr nsd 8 ,
+.Xr unbound 8
 .Sh HISTORY
 The
 .Nm

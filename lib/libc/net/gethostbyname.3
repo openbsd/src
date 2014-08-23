@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostbyname.3,v 1.26 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: gethostbyname.3,v 1.27 2014/08/23 07:25:54 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: August 23 2014 $
 .Dt GETHOSTBYNAME 3
 .Os
 .Sh NAME
@@ -67,10 +67,7 @@ and
 .Fn gethostbyaddr
 functions each return a pointer to an object with the following structure
 describing an Internet host referenced by name or by address, respectively.
-This structure contains either information obtained from the name server (i.e.,
-.Xr resolver 3
-and
-.Xr named 8 ) ,
+This structure contains either information obtained from a name server,
 broken-out fields from a line in
 .Pa /etc/hosts ,
 or database entries supplied by the
@@ -241,8 +238,7 @@ The function completed successfully.
 .Xr resolver 3 ,
 .Xr hosts 5 ,
 .Xr resolv.conf 5 ,
-.Xr hostname 7 ,
-.Xr named 8
+.Xr hostname 7
 .Sh HISTORY
 The
 .Fn herror

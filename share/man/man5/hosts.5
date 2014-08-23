@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts.5,v 1.21 2014/05/09 06:37:38 jmc Exp $
+.\"	$OpenBSD: hosts.5,v 1.22 2014/08/23 07:25:54 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 9 2014 $
+.Dd $Mdocdate: August 23 2014 $
 .Dt HOSTS 5
 .Os
 .Sh NAME
@@ -64,8 +64,7 @@ and the
 .Nm hosts
 database.
 .Pp
-When using the name server
-.Xr named 8 ,
+When using a name server
 this file provides a backup when the name server is not running.
 For the name server, it is suggested that only a few addresses
 be included in this file.
@@ -91,10 +90,8 @@ newline, or comment character.
 .Xr inet_addr 3 ,
 .Xr resolv.conf 5 ,
 .Xr ifconfig 8 ,
-.Xr named 8
-.Rs
-.%T "Name Server Operations Guide for BIND"
-.Re
+.Xr nsd 8 ,
+.Xr unbound 8
 .Sh HISTORY
 The
 .Nm
