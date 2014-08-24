@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.12 2014/08/24 07:33:26 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.13 2014/08/24 07:46:54 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -45,6 +45,7 @@ rcconf_edit_begin()
 
 rcconf_edit_end()
 {
+	sort -u -o ${_TMP_RCCONF} ${_TMP_RCCONF} || exit 1
 	mv ${_TMP_RCCONF} /etc/rc.conf.local || exit 1
 	if [ ! -s /etc/rc.conf.local ]; then
 		rm /etc/rc.conf.local || exit 1
