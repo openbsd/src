@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.81 2014/08/11 04:46:42 miod Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.82 2014/08/24 14:36:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1250,8 +1250,8 @@ ssl3_send_server_hello(SSL *s)
 {
 	unsigned char *buf;
 	unsigned char *p, *d;
-	int i, sl;
 	unsigned long l;
+	int sl;
 
 	if (s->state == SSL3_ST_SW_SRVR_HELLO_A) {
 		buf = (unsigned char *)s->init_buf->data;
@@ -1298,8 +1298,7 @@ ssl3_send_server_hello(SSL *s)
 		p += sl;
 
 		/* put the cipher */
-		i = ssl3_put_cipher_by_char(s->s3->tmp.new_cipher, p);
-		p += i;
+		s2n(ssl3_cipher_get_value(s->s3->tmp.new_cipher), p);
 
 		/* put the compression method */
 		*(p++) = 0;

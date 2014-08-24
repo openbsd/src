@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.66 2014/08/23 14:52:41 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.67 2014/08/24 14:36:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -326,6 +326,7 @@
 #define SSL_MAX_DIGEST 6
 
 #define SSL3_CK_ID		0x03000000
+#define SSL3_CK_VALUE_MASK	0x0000ffff
 
 #define TLS1_PRF_DGST_MASK	(0xff << TLS1_PRF_DGST_SHIFT)
 
@@ -596,7 +597,6 @@ STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 int ssl_verify_alarm_type(long type);
 void ssl_load_ciphers(void);
 
-int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
 void ssl3_init_finished_mac(SSL *s);
 int ssl3_send_server_certificate(SSL *s);
 int ssl3_send_newsession_ticket(SSL *s);
@@ -616,6 +616,7 @@ int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen);
 int ssl3_num_ciphers(void);
 const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
 const SSL_CIPHER *ssl3_get_cipher_by_id(unsigned int id);
+uint16_t ssl3_cipher_get_value(const SSL_CIPHER *c);
 int ssl3_renegotiate(SSL *ssl);
 
 int ssl3_renegotiate_check(SSL *ssl);

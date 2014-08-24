@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.82 2014/08/23 14:52:41 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.83 2014/08/24 14:36:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1384,7 +1384,8 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p)
 		if ((c->algorithm_ssl & SSL_TLSV1_2) &&
 		    (TLS1_get_client_version(s) < TLS1_2_VERSION))
 			continue;
-		p += ssl3_put_cipher_by_char(c, p);
+
+		s2n(ssl3_cipher_get_value(c), p);
 	}
 
 	/*
@@ -1395,7 +1396,7 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p)
 		static SSL_CIPHER scsv = {
 			0, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
 		};
-		p += ssl3_put_cipher_by_char(&scsv, p);
+		s2n(ssl3_cipher_get_value(&scsv), p);
 	}
 
 	return (p - q);

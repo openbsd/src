@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.78 2014/08/23 15:37:38 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.79 2014/08/24 14:36:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1819,6 +1819,12 @@ ssl3_get_cipher_by_id(unsigned int id)
 	return (NULL);
 }
 
+uint16_t
+ssl3_cipher_get_value(const SSL_CIPHER *c)
+{
+	return (c->id & SSL3_CK_VALUE_MASK);
+}
+
 int
 ssl3_pending(const SSL *s)
 {
@@ -2383,21 +2389,6 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 		return (0);
 	}
 	return (1);
-}
-
-int
-ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
-{
-	long	l;
-
-	if (p != NULL) {
-		l = c->id;
-		if ((l & 0xff000000) != 0x03000000)
-			return (0);
-		p[0] = ((unsigned char)(l >> 8L)) & 0xFF;
-		p[1] = ((unsigned char)(l)) & 0xFF;
-	}
-	return (2);
 }
 
 SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
