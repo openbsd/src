@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.26 2014/07/14 00:35:10 deraadt Exp $ */
+/* $OpenBSD: ciphers.c,v 1.27 2014/08/24 14:55:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,8 +89,8 @@ ciphers_main(int argc, char **argv)
 	char *ciphers = NULL;
 	const SSL_METHOD *meth = NULL;
 	STACK_OF(SSL_CIPHER) * sk;
-	char buf[512];
 	BIO *STDout = NULL;
+	char *desc;
 
 	meth = SSLv3_server_method();
 
@@ -169,8 +169,10 @@ ciphers_main(int argc, char **argv)
 				else
 					BIO_printf(STDout, "0x%02X,0x%02X,0x%02X,0x%02X - ", id0, id1, id2, id3);	/* whatever */
 			}
-			BIO_puts(STDout,
-			    SSL_CIPHER_description(c, buf, sizeof buf));
+			desc = SSL_CIPHER_description(c, NULL, 0);
+			BIO_puts(STDout, desc);
+			if (strcmp(desc, "OPENSSL_malloc Error") != 0)
+				free(desc);
 		}
 	}
 
