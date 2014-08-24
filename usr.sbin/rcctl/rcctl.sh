@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.19 2014/08/24 19:00:46 schwarze Exp $
+# $OpenBSD: rcctl.sh,v 1.20 2014/08/24 19:44:02 schwarze Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -69,18 +69,6 @@ svc_default_enabled()
 	return ${_ret}
 }
 
-svc_get_all()
-{
-	local _i
-
-	(
-		ls -A /etc/rc.d | grep -v rc.subr
-		for _i in ${_special_services}; do
-			echo ${_i}
-		done
-	) | sort
-}
-
 svc_get_flags()
 {
 	local daemon_flags
@@ -112,23 +100,23 @@ svc_get_status()
 		svc_get_flags ${_svc} | sed '/^$/d'
 		svc_is_enabled ${_svc}
 	else
-		for _i in $(svc_get_all); do
-			svc_is_special ${_i} && unset _affix || _affix="_flags"
-			echo "${_i}${_affix}=$(svc_get_flags ${_i})"
+		for _i in $(ls -A /etc/rc.d | grep -v rc.subr); do
+			echo "${_i}_flags=$(svc_get_flags ${_i})"
+		done
+		for _i in ${_special_services}; do
+			echo "${_i}=$(svc_get_flags ${_i})"
 		done
 	fi
 }
 
 svc_is_avail()
 {
-	local _i
+	local _svc=$1
+	[ -n "${_svc}" ] || return 1
 
-	for _i in $(svc_get_all); do
-		if [ ${_i} = "$1" ]; then
-			return 0
-		fi
-	done
-	return 1
+	[ "${_svc}" == "rc.subr" ] && return 1
+	[ -x "/etc/rc.d/${_svc}" ] && return 0
+	svc_is_special ${_svc}
 }
 
 svc_is_base()
