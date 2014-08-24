@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.17 2014/08/24 17:52:38 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.18 2014/08/24 18:10:26 schwarze Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -29,7 +29,7 @@ usage()
 needs_root()
 {
 	if [ "$(id -u)" -ne 0 ]; then
-		_rc_err "${0##*/} ${1:+$1: }need root privileges"
+		_rc_err "${0##*/} $1: need root privileges"
 	fi
 }
 
@@ -292,7 +292,7 @@ flags=$*
 
 if [ -n "$svc" ]; then
 	if ! svc_is_avail $svc; then
-		_rc_err "service $svc does not exist"
+		_rc_err "${0##*/}: service $svc does not exist"
 	fi
 elif [ "$action" != "status" ]; then
 	usage
@@ -301,10 +301,10 @@ fi
 if [ -n "$flag" ]; then
 	if [ "$flag" = "flags" ]; then
 		if [ "$action" != "enable" ]; then
-			_rc_err "\"flags\" can only be set with \"enable\""
+			_rc_err "${0##*/}: \"flags\" can only be set with \"enable\""
 		fi
 		if svc_is_special $svc; then
-			_rc_err "\"$svc\" is a special variable, cannot set \"flags\""
+			_rc_err "${0##*/}: \"$svc\" is a special variable, cannot set \"flags\""
 		fi
 	else
 		usage
@@ -331,7 +331,7 @@ case $action in
 		;;
 	start|stop|restart|reload|check)
 		if svc_is_special $svc; then
-			_rc_err "\"$svc\" is a special variable, no rc.d(8) script"
+			_rc_err "${0##*/}: \"$svc\" is a special variable, no rc.d(8) script"
 		fi
 		/etc/rc.d/$svc ${_RC_DEBUG} ${_RC_FORCE} $action
 		;;
