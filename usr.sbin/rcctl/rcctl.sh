@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.13 2014/08/24 07:46:54 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.14 2014/08/24 08:13:15 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -313,7 +313,7 @@ if [ $# -gt 0 ]; then
 	fi
 	case $action in
 		disable)
-			needs_root $svc
+			needs_root $action
 			if ! svc_is_base $svc && ! svc_is_special $svc; then
 				rm_from_pkg_scripts $svc
 			fi
