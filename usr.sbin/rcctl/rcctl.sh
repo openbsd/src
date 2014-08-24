@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.14 2014/08/24 08:13:15 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.15 2014/08/24 13:46:57 schwarze Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -286,59 +286,59 @@ while getopts "df" c; do
 done
 shift $((OPTIND-1))
 
+[ $# -gt 0 ] || usage
+
 action=$1
 svc=$2
 flag=$3
 flags=$*
 
-if [ $# -gt 0 ]; then
-	if [ -n "$svc" ]; then
-		if ! svc_is_avail $svc; then
-			_rc_err "service $svc does not exist"
-		fi
-	elif [ "$action" != "status" ]; then
-		usage
+if [ -n "$svc" ]; then
+	if ! svc_is_avail $svc; then
+		_rc_err "service $svc does not exist"
 	fi
-	if [ -n "$flag" ]; then
-		if [ "$flag" = "flags" ]; then
-			if [ "$action" != "enable" ]; then
-				_rc_err "\"flags\" can only be set with \"enable\""
-			fi
-			if svc_is_special $svc; then
-				_rc_err "\"$svc\" is a special variable, cannot set \"flags\""
-			fi
-		else
-			usage
-		fi
-	fi
-	case $action in
-		disable)
-			needs_root $action
-			if ! svc_is_base $svc && ! svc_is_special $svc; then
-				rm_from_pkg_scripts $svc
-			fi
-			rm_flags $svc
-			;;
-		enable)
-			needs_root $action
-			add_flags $flags
-			if ! svc_is_base $svc && ! svc_is_special $svc; then
-				append_to_pkg_scripts $svc
-			fi
-			;;
-		status)
-			svc_get_status $svc
-			;;
-		start|stop|restart|reload|check)
-			if svc_is_special $svc; then
-				_rc_err "\"$svc\" is a special variable, no rc.d(8) script"
-			fi
-			/etc/rc.d/$svc ${_RC_DEBUG} ${_RC_FORCE} $action
-			;;
-		*)
-			usage
-			;;
-	esac
-else
+elif [ "$action" != "status" ]; then
 	usage
 fi
+
+if [ -n "$flag" ]; then
+	if [ "$flag" = "flags" ]; then
+		if [ "$action" != "enable" ]; then
+			_rc_err "\"flags\" can only be set with \"enable\""
+		fi
+		if svc_is_special $svc; then
+			_rc_err "\"$svc\" is a special variable, cannot set \"flags\""
+		fi
+	else
+		usage
+	fi
+fi
+
+case $action in
+	disable)
+		needs_root $action
+		if ! svc_is_base $svc && ! svc_is_special $svc; then
+			rm_from_pkg_scripts $svc
+		fi
+		rm_flags $svc
+		;;
+	enable)
+		needs_root $action
+		add_flags $flags
+		if ! svc_is_base $svc && ! svc_is_special $svc; then
+			append_to_pkg_scripts $svc
+		fi
+		;;
+	status)
+		svc_get_status $svc
+		;;
+	start|stop|restart|reload|check)
+		if svc_is_special $svc; then
+			_rc_err "\"$svc\" is a special variable, no rc.d(8) script"
+		fi
+		/etc/rc.d/$svc ${_RC_DEBUG} ${_RC_FORCE} $action
+		;;
+	*)
+		usage
+		;;
+esac
