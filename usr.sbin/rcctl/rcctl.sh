@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.16 2014/08/24 17:01:44 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.17 2014/08/24 17:52:38 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -37,6 +37,7 @@ rcconf_edit_begin()
 {
 	_TMP_RCCONF=$(mktemp -p /etc -t rc.conf.local.XXXXXXXXXX) || exit 1
 	if [ -f /etc/rc.conf.local ]; then
+		# only to keep permissions (file content is not needed)
 		cp -p /etc/rc.conf.local ${_TMP_RCCONF} || exit 1
 	else
 		touch /etc/rc.conf.local || exit 1
