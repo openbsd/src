@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.71 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.72 2014/08/24 17:55:14 sf Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -209,10 +209,10 @@ pd_entry_t *alternate_pdes[] = APDES_INITIALIZER;
 
 #define PMAP_MAP_TO_HEAD_LOCK()		/* null */
 #define PMAP_MAP_TO_HEAD_UNLOCK()	/* null */
-  
+
 #define PMAP_HEAD_TO_MAP_LOCK()		/* null */
 #define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
- 
+
 #define COUNT(x)	/* nothing */
 
 /*
@@ -727,8 +727,8 @@ pmap_init(void)
  *
  * => caller should adjust ptp's wire_count before calling
  *
- * pve: preallocated pve for us to use 
- * ptp: PTP in pmap that maps this VA 
+ * pve: preallocated pve for us to use
+ * ptp: PTP in pmap that maps this VA
  */
 
 void
@@ -1109,7 +1109,7 @@ pmap_deactivate(struct proc *p)
 	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
 
 	/*
-	 * mark the pmap no longer in use by this processor. 
+	 * mark the pmap no longer in use by this processor.
 	 */
 	x86_atomic_clearbits_u64(&pmap->pm_cpus, (1ULL << cpu_number()));
 }
@@ -2082,7 +2082,7 @@ enter_now:
 	if (pg != NULL) {
 		npte |= PG_PVLIST;
 		/*
-		 * make sure that if the page is write combined all 
+		 * make sure that if the page is write combined all
 		 * instances of pmap_enter make it so.
 		 */
 		if (pg->pg_flags & PG_PMAP_WC) {
@@ -2253,7 +2253,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		}
 
 		/* Invalidate the PDP cache. */
-#if 0  
+#if 0
 		pool_cache_invalidate(&pmap_pdp_cache);
 #endif
 	}
@@ -2551,7 +2551,7 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 	vaddr_t va;
 
 	for (va = sva; va < eva; va += PAGE_SIZE)
-		pmap_update_pg(va);	
+		pmap_update_pg(va);
 
 }
 
