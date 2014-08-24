@@ -1,4 +1,4 @@
-/*	$Id: term_ps.c,v 1.28 2014/08/13 22:09:28 schwarze Exp $ */
+/*	$OpenBSD: term_ps.c,v 1.29 2014/08/24 23:40:41 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -65,6 +65,7 @@ struct	termp_ps {
 	size_t		  psmargcur;	/* cur index in margin buf */
 	char		  last;		/* character buffer */
 	enum termfont	  lastf;	/* last set font */
+	enum termfont	  nextf;	/* building next font here */
 	size_t		  scale;	/* font scaling factor */
 	size_t		  pages;	/* number of pages shown */
 	size_t		  lineheight;	/* line height (AFM units) */
@@ -400,6 +401,103 @@ static	const struct font fonts[TERMFONT__MAX] = {
 		{  275 },
 		{  400 },
 		{  541 },
+	} },
+	{ "Times-BoldItalic", {
+		{  250 },
+		{  389 },
+		{  555 },
+		{  500 },
+		{  500 },
+		{  833 },
+		{  778 },
+		{  333 },
+		{  333 },
+		{  333 },
+		{  500 },
+		{  570 },
+		{  250 },
+		{  333 },
+		{  250 },
+		{  278 },
+		{  500 },
+		{  500 },
+		{  500 },
+		{  500 },
+		{  500 },
+		{  500 },
+		{  500 },
+		{  500 },
+		{  500 },
+		{  500 },
+		{  333 },
+		{  333 },
+		{  570 },
+		{  570 },
+		{  570 },
+		{  500 },
+		{  832 },
+		{  667 },
+		{  667 },
+		{  667 },
+		{  722 },
+		{  667 },
+		{  667 },
+		{  722 },
+		{  778 },
+		{  389 },
+		{  500 },
+		{  667 },
+		{  611 },
+		{  889 },
+		{  722 },
+		{  722 },
+		{  611 },
+		{  722 },
+		{  667 },
+		{  556 },
+		{  611 },
+		{  722 },
+		{  667 },
+		{  889 },
+		{  667 },
+		{  611 },
+		{  611 },
+		{  333 },
+		{  278 },
+		{  333 },
+		{  570 },
+		{  500 },
+		{  333 },
+		{  500 },
+		{  500 },
+		{  444 },
+		{  500 },
+		{  444 },
+		{  333 },
+		{  500 },
+		{  556 },
+		{  278 },
+		{  278 },
+		{  500 },
+		{  278 },
+		{  778 },
+		{  556 },
+		{  500 },
+		{  500 },
+		{  500 },
+		{  389 },
+		{  389 },
+		{  278 },
+		{  556 },
+		{  444 },
+		{  667 },
+		{  500 },
+		{  444 },
+		{  389 },
+		{  348 },
+		{  220 },
+		{  348 },
+		{  570 },
 	} },
 };
 
@@ -948,11 +1046,13 @@ ps_fclose(struct termp *p)
 	 * Following this, close out any scope that's open.
 	 */
 
-	if ('\0' != p->ps->last) {
-		if (p->ps->lastf != TERMFONT_NONE) {
+	if (p->ps->last != '\0') {
+		assert(p->ps->last != 8);
+		if (p->ps->nextf != p->ps->lastf) {
 			ps_pclose(p);
-			ps_setfont(p, TERMFONT_NONE);
+			ps_setfont(p, p->ps->nextf);
 		}
+		p->ps->nextf = TERMFONT_NONE;
 		ps_pletter(p, p->ps->last);
 		p->ps->last = '\0';
 	}
@@ -971,45 +1071,49 @@ ps_letter(struct termp *p, int arg)
 	c = arg >= 128 || arg <= 0 ? '?' : arg;
 
 	/*
-	 * State machine dictates whether to buffer the last character
-	 * or not.  Basically, encoded words are detected by checking if
-	 * we're an "8" and switching on the buffer.  Then we put "8" in
-	 * our buffer, and on the next charater, flush both character
-	 * and buffer.  Thus, "regular" words are detected by having a
-	 * regular character and a regular buffer character.
+	 * When receiving an initial character, merely buffer it,
+	 * because a backspace might follow to specify formatting.
+	 * When receiving a backspace, use the buffered character
+	 * to build the font instruction and clear the buffer.
+	 * Only when there are two non-backspace characters in a row,
+	 * activate the font built so far and print the first of them;
+	 * the second, again, merely gets buffered.
+	 * The final character will get printed from ps_fclose().
 	 */
 
-	if ('\0' == p->ps->last) {
-		assert(8 != c);
-		p->ps->last = c;
-		return;
-	} else if (8 == p->ps->last) {
-		assert(8 != c);
-		p->ps->last = '\0';
-	} else if (8 == c) {
-		assert(8 != p->ps->last);
+	if (c == 8) {
+		assert(p->ps->last != '\0');
+		assert(p->ps->last != 8);
 		if ('_' == p->ps->last) {
-			if (p->ps->lastf != TERMFONT_UNDER) {
-				ps_pclose(p);
-				ps_setfont(p, TERMFONT_UNDER);
+			switch (p->ps->nextf) {
+			case TERMFONT_BI:
+				break;
+			case TERMFONT_BOLD:
+				p->ps->nextf = TERMFONT_BI;
+				break;
+			default:
+				p->ps->nextf = TERMFONT_UNDER;
 			}
-		} else if (p->ps->lastf != TERMFONT_BOLD) {
-			ps_pclose(p);
-			ps_setfont(p, TERMFONT_BOLD);
+		} else {
+			switch (p->ps->nextf) {
+			case TERMFONT_BI:
+				break;
+			case TERMFONT_UNDER:
+				p->ps->nextf = TERMFONT_BI;
+				break;
+			default:
+				p->ps->nextf = TERMFONT_BOLD;
+			}
 		}
-		p->ps->last = c;
-		return;
-	} else {
-		if (p->ps->lastf != TERMFONT_NONE) {
+	} else if (p->ps->last != '\0' && p->ps->last != 8) {
+		if (p->ps->nextf != p->ps->lastf) {
 			ps_pclose(p);
-			ps_setfont(p, TERMFONT_NONE);
+			ps_setfont(p, p->ps->nextf);
 		}
-		cc = p->ps->last;
-		p->ps->last = c;
-		c = cc;
+		p->ps->nextf = TERMFONT_NONE;
+		ps_pletter(p, p->ps->last);
 	}
-
-	ps_pletter(p, c);
+	p->ps->last = c;
 }
 
 static void
