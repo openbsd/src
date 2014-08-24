@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.85 2014/08/24 13:30:27 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.86 2014/08/24 13:32:53 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -35,7 +35,7 @@ _rc_usage() {
 	for _a in start stop restart reload check; do
 		_rc_is_supported ${_a} && _allsup="${_allsup:+$_allsup|}${_a}"
 	done
-	_rc_err "usage: $0 [-df] (${_allsup})"
+	_rc_err "usage: $0 [-df] ${_allsup}"
 }
 
 _rc_write_runfile() {
