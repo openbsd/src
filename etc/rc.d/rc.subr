@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.82 2014/08/21 10:06:14 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.83 2014/08/24 07:55:20 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -144,9 +144,7 @@ _rc_parse_conf() {
 	_rc_do _rc_quirks
 
 	if [ -n "${_RC_DEBUG}" ]; then
-		for _i in ${_conf}; do
-			printf "%18s\t>$(eval echo '$'${_i})<\n" ${_i}
-		done | sort -uk 1b
+		echo "${_name}_flags >$(eval echo \${${_name}_flags})<"
 	fi
 }
 
