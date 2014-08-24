@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.83 2014/08/24 07:55:20 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.84 2014/08/24 13:29:16 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -142,10 +142,6 @@ _rc_parse_conf() {
 	done
 
 	_rc_do _rc_quirks
-
-	if [ -n "${_RC_DEBUG}" ]; then
-		echo "${_name}_flags >$(eval echo \${${_name}_flags})<"
-	fi
 }
 
 [ -n "${FUNCS_ONLY}" ] && return
@@ -281,6 +277,12 @@ getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
 [ -n "${_rcflags}" ] && daemon_flags=${_rcflags}
 [ -n "${_rcuser}" ] && daemon_user=${_rcuser}
 [ -n "${_rctimeout}" ] && daemon_timeout=${_rctimeout}
+
+if [ -n "${_RC_DEBUG}" ]; then
+	echo -n "${_name}_flags "
+	[ -n "${_rcflags}" ] && echo -n "empty, using default "
+	echo ">${daemon_flags}<"
+fi
 
 readonly daemon_class
 unset _rcflags _rcuser _rctimeout
