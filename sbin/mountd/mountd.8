@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mountd.8,v 1.17 2014/01/19 10:39:00 schwarze Exp $
+.\"	$OpenBSD: mountd.8,v 1.18 2014/08/24 14:45:00 doug Exp $
 .\"	$NetBSD: mountd.8,v 1.11 1996/02/18 11:57:51 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mountd.8	8.4 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: January 19 2014 $
+.Dd $Mdocdate: August 24 2014 $
 .Dt MOUNTD 8
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd service remote NFS mount requests
 .Sh SYNOPSIS
 .Nm mountd
-.Op Fl dn
+.Op Fl d
 .Op Ar exportsfile
 .Sh DESCRIPTION
 .Nm
@@ -58,14 +58,6 @@ Enable debugging mode.
 .Nm
 will not detach from the controlling terminal and will print
 debugging messages to stderr.
-.It Fl n
-Do not require that clients make mount requests from reserved ports.
-(Normally, only mount requests from reserved ports are accepted.)
-This option should only be specified if there are clients, such as PCs,
-that need it.
-The use of
-.Fl n
-is STRONGLY discouraged, as it opens up a wide range of security problems.
 .It Ar exportsfile
 The
 .Ar exportsfile
@@ -111,3 +103,12 @@ The
 .Nm
 utility first appeared in
 .Bx 4.4 .
+.Pp
+The
+.Fl n
+flag historically allowed clients to use non-reserved ports
+when communicating with
+.Nm .
+In
+.Ox ,
+a reserved port is always used.

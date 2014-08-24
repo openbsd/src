@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.75 2014/05/16 17:30:28 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.76 2014/08/24 14:45:00 doug Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -184,7 +184,6 @@ struct xucred def_anon = {
 	.cr_ngroups	= 0,
 	.cr_groups	= { 0, }
 };
-int resvport_only = 1;
 int opt_flags;
 /* Bits for above */
 #define	OP_MAPROOT	0x01
@@ -204,7 +203,6 @@ volatile sig_atomic_t gotterm;
  * The optional arguments are the exports file name
  * default: _PATH_EXPORTS
  * "-d" to enable debugging
- * and "-n" to allow nonroot mount.
  */
 int
 main(int argc, char *argv[])
@@ -219,13 +217,11 @@ main(int argc, char *argv[])
 			debug = 1;
 			break;
 		case 'n':
-			resvport_only = 0;
-			break;
 		case 'r':
 			/* Compatibility */
 			break;
 		default:
-			fprintf(stderr, "usage: mountd [-dn] [exportsfile]\n");
+			fprintf(stderr, "usage: mountd [-d] [exportsfile]\n");
 			exit(1);
 		}
 	argc -= optind;
@@ -373,7 +369,7 @@ mntsrv(struct svc_req *rqstp, SVCXPRT *transp)
 		if (debug)
 			fprintf(stderr, "Got mount request from %s\n",
 			    inet_ntoa(transp->xp_raddr.sin_addr));
-		if (sport >= IPPORT_RESERVED && resvport_only) {
+		if (sport >= IPPORT_RESERVED) {
 			syslog(LOG_NOTICE,
 			    "Refused mount RPC from host %s port %d",
 			    inet_ntoa(transp->xp_raddr.sin_addr), sport);
@@ -471,7 +467,7 @@ mntsrv(struct svc_req *rqstp, SVCXPRT *transp)
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 	case RPCMNT_UMOUNT:
-		if (sport >= IPPORT_RESERVED && resvport_only) {
+		if (sport >= IPPORT_RESERVED) {
 			svcerr_weakauth(transp);
 			return;
 		}
@@ -487,7 +483,7 @@ mntsrv(struct svc_req *rqstp, SVCXPRT *transp)
 		del_mlist(inet_ntoa(transp->xp_raddr.sin_addr), dirpath);
 		return;
 	case RPCMNT_UMNTALL:
-		if (sport >= IPPORT_RESERVED && resvport_only) {
+		if (sport >= IPPORT_RESERVED) {
 			svcerr_weakauth(transp);
 			return;
 		}
