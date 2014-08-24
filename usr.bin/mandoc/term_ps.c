@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ps.c,v 1.29 2014/08/24 23:40:41 schwarze Exp $ */
+/*	$OpenBSD: term_ps.c,v 1.30 2014/08/24 23:44:50 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1066,7 +1066,7 @@ ps_fclose(struct termp *p)
 static void
 ps_letter(struct termp *p, int arg)
 {
-	char		cc, c;
+	char		c;
 
 	c = arg >= 128 || arg <= 0 ? '?' : arg;
 
