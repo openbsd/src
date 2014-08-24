@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.86 2014/08/24 13:32:53 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.87 2014/08/24 17:15:24 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -279,7 +279,7 @@ getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
 
 if [ -n "${_RC_DEBUG}" ]; then
 	echo -n "${_name}_flags "
-	[ -n "${_rcflags}" ] && echo -n "empty, using default "
+	[ -n "${_rcflags}" ] || echo -n "empty, using default "
 	echo ">${daemon_flags}<"
 fi
 
