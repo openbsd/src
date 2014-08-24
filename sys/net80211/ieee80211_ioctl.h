@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.19 2014/07/10 14:32:28 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.20 2014/08/24 18:01:27 zhuk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -348,7 +348,7 @@ struct ieee80211_nodereq_all {
 	u_int8_t			na_flags;	/* IEEE80211_NODEREQ_* */
 };
 
-#define SIOCG80211ALLNODES	_IOWR('i', 214, struct ieee80211_nodereq)
+#define SIOCG80211ALLNODES	_IOWR('i', 214, struct ieee80211_nodereq_all)
 
 /* net80211 specific interface flags */
 #define IEEE80211_F_HIDENWID	0x10000000	/* CONF: hidden ssid mode */
