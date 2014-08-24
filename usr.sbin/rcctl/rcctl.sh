@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.18 2014/08/24 18:10:26 schwarze Exp $
+# $OpenBSD: rcctl.sh,v 1.19 2014/08/24 19:00:46 schwarze Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -15,6 +15,9 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+_special_services="accounting check_quotas ipsec multicast_host multicast_router pf spamd_black"
+readonly _special_services
 
 # get local functions from rc.subr(8)
 FUNCS_ONLY=1
@@ -72,9 +75,9 @@ svc_get_all()
 
 	(
 		ls -A /etc/rc.d | grep -v rc.subr
-		for _i in ${_allowed_keys[@]}; do
+		for _i in ${_special_services}; do
 			echo ${_i}
-		done | grep -Ev '(nfs_server|savecore_flag|amd_master|pf_rules|ipsec_rules|shlib_dirs|pkg_scripts)'
+		done
 	) | sort
 }
 
@@ -150,7 +153,7 @@ svc_is_special()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	echo ${_allowed_keys[@]} | grep -qw ${_svc}
+	echo ${_special_services} | grep -qw ${_svc}
 }
 
 append_to_pkg_scripts()
