@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.38 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: err.c,v 1.39 2014/08/24 16:11:39 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -596,7 +596,7 @@ build_SYS_str_reasons(void)
 		if (str->string == NULL) {
 			char (*dest)[LEN_SYS_STR_REASON] =
 			    &(strerror_tab[i - 1]);
-			char *src = strerror(i);
+			const char *src = strerror(i);
 			if (src != NULL) {
 				strlcpy(*dest, src, sizeof *dest);
 				str->string = *dest;
