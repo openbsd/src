@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.34 2014/07/14 00:35:10 deraadt Exp $ */
+/* $OpenBSD: s_time.c,v 1.35 2014/08/24 16:07:29 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,6 +63,7 @@
    Written and donated by Larry Streepy <streepy@healthcare.com>
   -----------------------------------------*/
 
+#include <sys/select.h>
 #include <sys/socket.h>
 
 #include <stdio.h>
