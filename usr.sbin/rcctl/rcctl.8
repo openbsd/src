@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.5 2014/08/21 12:47:22 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.6 2014/08/24 07:33:26 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 21 2014 $
+.Dd $Mdocdate: August 24 2014 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nd configure and control daemons and services
 .Sh SYNOPSIS
 .Nm rcctl
+.Op Fl df
 .Sm off
 .Cm enable | disable | status | Ar action
 .Sm on
@@ -68,13 +69,13 @@ Without an argument, display all services and
 .Ar daemon Ns _flags
 with their values in a format compatible with
 .Xr rc.conf 8 .
-.It Ar action daemon
+.It Oo Fl df Oc Ar action daemon
 Run the
 .Xr rc.d 8
 .Ar daemon
 script with the
 .Ar action
-argument.
+argument, passing through the specified options, if any.
 .El
 .Sh EXIT STATUS
 .Nm Ar action

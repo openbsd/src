@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.11 2014/08/21 14:26:16 jsg Exp $
+# $OpenBSD: rcctl.sh,v 1.12 2014/08/24 07:33:26 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -23,7 +23,7 @@ _rc_parse_conf
 
 usage()
 {
-	_rc_err "usage: ${0##*/} enable|disable|status|action [service | daemon [flags [...]]]"
+	_rc_err "usage: ${0##*/} [-df] enable|disable|status|action [service | daemon [flags [...]]]"
 }
 
 needs_root()
@@ -275,6 +275,16 @@ rm_flags()
 	rcconf_edit_end
 }
 
+unset _RC_DEBUG _RC_FORCE
+while getopts "df" c; do
+	case "$c" in
+		d) _RC_DEBUG=-d;;
+		f) _RC_FORCE=-f;;
+		*) usage;;
+	esac
+done
+shift $((OPTIND-1))
+
 action=$1
 svc=$2
 flag=$3
@@ -322,7 +332,7 @@ if [ $# -gt 0 ]; then
 			if svc_is_special $svc; then
 				_rc_err "\"$svc\" is a special variable, no rc.d(8) script"
 			fi
-			/etc/rc.d/$svc $action
+			/etc/rc.d/$svc ${_RC_DEBUG} ${_RC_FORCE} $action
 			;;
 		*)
 			usage
