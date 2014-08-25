@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.21 2014/06/20 11:00:19 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.22 2014/08/25 13:13:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -297,6 +297,9 @@ paste_send_pane(struct paste_buffer *pb, struct window_pane *wp,
 {
 	const char	*data = pb->data, *end = data + pb->size, *lf;
 	size_t		 seplen;
+
+	if (wp->flags & PANE_INPUTOFF)
+		return;
 
 	if (bracket)
 		bufferevent_write(wp->event, "\033[200~", 6);
