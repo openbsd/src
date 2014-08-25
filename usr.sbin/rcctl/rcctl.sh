@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.26 2014/08/25 21:34:34 schwarze Exp $
+# $OpenBSD: rcctl.sh,v 1.27 2014/08/25 23:15:37 schwarze Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -198,6 +198,17 @@ add_flags()
 {
 	local _svc=$2
 	[ -n "${_svc}" ] || return
+
+	if svc_is_special ${_svc}; then
+		rcconf_edit_begin
+		grep -v "^${_svc}.*=" /etc/rc.conf.local >${_TMP_RCCONF}
+		if ! svc_default_enabled ${_svc}; then
+			echo "${_svc}=YES" >>${_TMP_RCCONF}
+		fi
+		rcconf_edit_end
+		return
+	fi
+
 	local _deflags _flags _numargs=$#
 
 	_deflags="$(svc_default_enabled_flags ${_svc})"
@@ -226,14 +237,7 @@ add_flags()
 		unset _flags
 	fi
 
-	if svc_is_special ${_svc}; then
-		rcconf_edit_begin
-		grep -v "^${_svc}.*=" /etc/rc.conf.local >${_TMP_RCCONF}
-		if ! svc_default_enabled ${_svc}; then
-			echo "${_svc}=YES" >>${_TMP_RCCONF}
-		fi
-		rcconf_edit_end
-	elif svc_is_base ${_svc}; then
+	if svc_is_base ${_svc}; then
 		rcconf_edit_begin
 		grep -v "^${_svc}_flags.*=" /etc/rc.conf.local >${_TMP_RCCONF}
 		if ! svc_default_enabled ${_svc} || test "${#_flags[*]}" -gt 0; then
