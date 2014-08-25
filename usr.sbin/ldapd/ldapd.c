@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.10 2013/11/02 13:31:51 deraadt Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.11 2014/08/25 07:50:26 doug Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -298,7 +298,7 @@ ldapd_auth_classful(char *name, char *password)
 		auth_setitem(as, AUTHV_SERVICE, "response");
 		auth_setdata(as, "", 1);
 		auth_setdata(as, password, strlen(password) + 1);
-		memset(password, 0, strlen(password));
+		explicit_bzero(password, strlen(password));
 	} else
 		as = NULL;
 

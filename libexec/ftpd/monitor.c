@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.20 2009/06/04 01:12:39 sthen Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.21 2014/08/25 07:50:25 doug Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -292,7 +292,7 @@ handle_cmds(void)
 			preauth_slave_pid = slave_pid;
 
 			auth = pass(pw);
-			bzero(pw, len);
+			explicit_bzero(pw, len);
 			free(pw);
 
 			switch (auth) {

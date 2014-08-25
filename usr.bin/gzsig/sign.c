@@ -1,4 +1,4 @@
-/* $OpenBSD: sign.c,v 1.13 2013/03/10 10:36:57 tobias Exp $ */
+/* $OpenBSD: sign.c,v 1.14 2014/08/25 07:50:26 doug Exp $ */
 
 /*
  * sign.c
@@ -206,7 +206,7 @@ sign_passwd_cb(char *buf, int size, int rwflag, void *u)
 		p = getpass("Enter passphrase: ");
 		if (strlcpy(buf, p, size) >= size)
 			errx(1, "Passphrase too long");
-		memset(p, 0, strlen(p));
+		explicit_bzero(p, strlen(p));
 	}
 
 	return (strlen(buf));

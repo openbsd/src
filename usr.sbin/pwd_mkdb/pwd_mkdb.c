@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.44 2014/05/20 01:25:24 guenther Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.45 2014/08/25 07:50:26 doug Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -591,7 +591,7 @@ db_store(FILE *fp, FILE *oldfp, DB *edp, DB *dp, struct passwd *pw,
 		/* Star out password to make insecure record. */
 		p = buf + strlen(pw->pw_name) + 1;	/* skip pw_name */
 		len = strlen(pw->pw_passwd);
-		memset(p, 0, len);			/* zero pw_passwd */
+		explicit_bzero(p, len);			/* zero pw_passwd */
 		t = p + len + 1;			/* skip pw_passwd */
 		if (len != 0)
 			*p++ = '*';

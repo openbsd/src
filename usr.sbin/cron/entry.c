@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.33 2011/05/19 15:00:17 phessler Exp $	*/
+/*	$OpenBSD: entry.c,v 1.34 2014/08/25 07:50:26 doug Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -271,7 +271,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		ecode = e_memory;
 		goto eof;
 	}
-	bzero(e->pwd->pw_passwd, strlen(e->pwd->pw_passwd));
+	explicit_bzero(e->pwd->pw_passwd, strlen(e->pwd->pw_passwd));
 
 	/* copy and fix up environment.  some variables are just defaults and
 	 * others are overrides.

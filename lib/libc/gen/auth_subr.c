@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.40 2014/05/25 17:47:04 tedu Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.41 2014/08/25 07:50:25 doug Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -202,7 +202,7 @@ auth_clean(auth_session_t *as)
 	 */
 	while ((data = as->data) != NULL) {
 		if (as->data->len)
-			memset(as->data->ptr, 0, as->data->len);
+			explicit_bzero(as->data->ptr, as->data->len);
 		as->data = data->next;
 		free(data);
 	}
@@ -210,7 +210,7 @@ auth_clean(auth_session_t *as)
 	auth_setitem(as, AUTHV_ALL, NULL);
 
 	if (as->pwd != NULL) {
-		memset(as->pwd->pw_passwd, 0, strlen(as->pwd->pw_passwd));
+		explicit_bzero(as->pwd->pw_passwd, strlen(as->pwd->pw_passwd));
 		free(as->pwd);
 		as->pwd = NULL;
 	}
@@ -268,13 +268,13 @@ auth_close(auth_session_t *as)
 	 */
 	while ((data = as->data) != NULL) {
 		if (as->data->len)
-			memset(as->data->ptr, 0, as->data->len);
+			explicit_bzero(as->data->ptr, as->data->len);
 		as->data = data->next;
 		free(data);
 	}
 
 	if (as->pwd != NULL) {
-		memset(as->pwd->pw_passwd, 0, strlen(as->pwd->pw_passwd));
+		explicit_bzero(as->pwd->pw_passwd, strlen(as->pwd->pw_passwd));
 		free(as->pwd);
 		as->pwd = NULL;
 	}
@@ -644,7 +644,7 @@ auth_setpwd(auth_session_t *as, struct passwd *pwd)
 	if ((pwd = pw_dup(pwd)) == NULL)
 		return (-1);		/* true failure */
 	if (as->pwd) {
-		memset(as->pwd->pw_passwd, 0, strlen(as->pwd->pw_passwd));
+		explicit_bzero(as->pwd->pw_passwd, strlen(as->pwd->pw_passwd));
 		free(as->pwd);
 	}
 	as->pwd = pwd;
@@ -828,11 +828,11 @@ auth_call(auth_session_t *as, char *path, ...)
 	if (argc >= Nargc - 1 && _auth_next_arg(as)) {
 		if (memcmp(&nilap, &(as->ap0), sizeof(nilap)) != 0) {
 			va_end(as->ap0);
-			memset(&(as->ap0), 0, sizeof(as->ap0));
+			explicit_bzero(&(as->ap0), sizeof(as->ap0));
 		}
 		if (memcmp(&nilap, &(as->ap), sizeof(nilap)) != 0) {
 			va_end(as->ap);
-			memset(&(as->ap), 0, sizeof(as->ap));
+			explicit_bzero(&(as->ap), sizeof(as->ap));
 		}
 		syslog(LOG_ERR, "too many arguments");
 		goto fail;
@@ -883,7 +883,7 @@ auth_call(auth_session_t *as, char *path, ...)
 			as->data = data->next;
 			if (data->len > 0) {
 				write(pfd[0], data->ptr, data->len);
-				memset(data->ptr, 0, data->len);
+				explicit_bzero(data->ptr, data->len);
 			}
 			free(data);
 		}
@@ -977,12 +977,12 @@ fail:
 
 	if (memcmp(&nilap, &(as->ap0), sizeof(nilap)) != 0) {
 		va_end(as->ap0);
-		memset(&(as->ap0), 0, sizeof(as->ap0));
+		explicit_bzero(&(as->ap0), sizeof(as->ap0));
 	}
 
 	if (memcmp(&nilap, &(as->ap), sizeof(nilap)) != 0) {
 		va_end(as->ap);
-		memset(&(as->ap), 0, sizeof(as->ap));
+		explicit_bzero(&(as->ap), sizeof(as->ap));
 	}
 	return (okay);
 }
@@ -1088,13 +1088,13 @@ _auth_next_arg(auth_session_t *as)
 		if ((arg = va_arg(as->ap0, char *)) != NULL)
 			return (arg);
 		va_end(as->ap0);
-		memset(&(as->ap0), 0, sizeof(as->ap0));
+		explicit_bzero(&(as->ap0), sizeof(as->ap0));
 	}
 	if (memcmp(&nilap, &(as->ap), sizeof(nilap)) != 0) {
 		if ((arg = va_arg(as->ap, char *)) != NULL)
 			return (arg);
 		va_end(as->ap);
-		memset(&(as->ap), 0, sizeof(as->ap));
+		explicit_bzero(&(as->ap), sizeof(as->ap));
 	}
 	return (NULL);
 }

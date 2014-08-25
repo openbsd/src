@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.35 2014/05/07 13:04:01 markus Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.36 2014/08/25 07:50:25 doug Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -408,7 +408,7 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 
 	if ((ptr = ibuf_advance(dst, integrlen)) == NULL)
 		goto done;
-	bzero(ptr, integrlen);
+	explicit_bzero(ptr, integrlen);
 
 	log_debug("%s: length %zu, padding %d, output length %zu",
 	    __func__, len + sizeof(pad), pad, ibuf_size(dst));

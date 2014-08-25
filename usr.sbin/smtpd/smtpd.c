@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.234 2014/07/10 15:54:55 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.235 2014/08/25 07:50:26 doug Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -589,7 +589,7 @@ main(int argc, char *argv[])
 				err(1, "getpass");
 
 			env->sc_queue_key = strdup(password);
-			memset(password, 0, strlen(password));
+			explicit_bzero(password, strlen(password));
 			if (env->sc_queue_key == NULL)
 				err(1, "strdup");
 		}
