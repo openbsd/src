@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.1.1.1 2014/08/20 20:52:14 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.2 2014/08/25 17:55:27 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -34,7 +34,7 @@ my $downlog = "syslogd regress client shutdown";
 sub write_log {
 	my $self = shift;
 
-	if ($self->{connectdomain}) {
+	if (defined($self->{connectdomain})) {
 		print $testlog;
 		print STDERR $testlog, "\n";
 	} else {

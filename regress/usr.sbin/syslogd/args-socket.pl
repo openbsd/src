@@ -20,6 +20,7 @@ our %args = (
     fstat => {
 	loggrep => {
 	    qr/ internet dgram udp \*:514$/ => 1,
+	    qr/ internet6 dgram udp \*:514$/ => 1,
 	},
     },
 );

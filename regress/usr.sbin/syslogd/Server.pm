@@ -1,4 +1,4 @@
-#	$OpenBSD: Server.pm,v 1.1.1.1 2014/08/20 20:52:14 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.2 2014/08/25 17:55:27 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -34,7 +34,7 @@ sub new {
 	$args{up} ||= "Accepted";
 	my $self = Proc::new($class, %args);
 	$self->{listenprotocol} ||= "udp";
-	$self->{listendomain}
+	defined($self->{listendomain})
 	    or croak "$class listen domain not given";
 	$SSL_ERROR = "";
 	my $iosocket = $self->{listenprotocol} eq "tls" ?

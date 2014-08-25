@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.1.1.1 2014/08/20 20:52:14 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.2 2014/08/25 17:55:27 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -36,7 +36,7 @@ sub new {
 sub child {
 	my $self = shift;
 
-	if ($self->{connectdomain}) {
+	if (defined($self->{connectdomain})) {
 		my $cs = IO::Socket::INET6->new(
 		    Proto               => "udp",
 		    Domain              => $self->{connectdomain},
