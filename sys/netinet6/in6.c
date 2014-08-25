@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.138 2014/07/12 18:44:23 tedu Exp $	*/
+/*	$OpenBSD: in6.c,v 1.139 2014/08/25 14:00:34 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -2087,6 +2087,9 @@ in6_if_up(struct ifnet *ifp)
 		if (ia6->ia6_flags & IN6_IFF_TENTATIVE)
 			nd6_dad_start(ifa, &dad_delay);
 	}
+
+	if (ifp->if_xflags & IFXF_AUTOCONF6)
+		nd6_rs_output_set_timo(ND6_RS_OUTPUT_QUICK_INTERVAL);
 }
 
 int

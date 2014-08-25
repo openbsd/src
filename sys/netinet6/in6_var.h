@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.49 2014/04/03 08:22:10 mpi Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.50 2014/08/25 14:00:34 florian Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -92,6 +92,7 @@ struct in6_ifextra {
 	struct in6_ifstat *in6_ifstat;
 	struct icmp6_ifstat *icmp6_ifstat;
 	struct nd_ifinfo *nd_ifinfo;
+	void *rs_lhcookie;
 	int nprefixes;
 	int ndefrouters;
 };

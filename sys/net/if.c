@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.299 2014/08/14 11:38:14 mikeb Exp $	*/
+/*	$OpenBSD: if.c,v 1.300 2014/08/25 14:00:34 florian Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1338,6 +1338,26 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 				in6_if_up(ifp);
 				splx(s);
 			}
+		}
+
+		if (ifr->ifr_flags & IFXF_AUTOCONF6)
+			nd6_rs_output_set_timo(ND6_RS_OUTPUT_QUICK_INTERVAL);
+
+		if ((ifr->ifr_flags & IFXF_AUTOCONF6) &&
+		    !(ifp->if_xflags & IFXF_AUTOCONF6)) {
+			nd6_rs_timeout_count++;
+			RS_LHCOOKIE(ifp) = hook_establish(
+			    ifp->if_linkstatehooks, 1, nd6_rs_dev_state, ifp);
+			if (!timeout_pending(&nd6_rs_output_timer))
+				nd6_rs_output_set_timo(nd6_rs_output_timeout);
+		}
+		if ((ifp->if_xflags & IFXF_AUTOCONF6) &&
+		    !(ifr->ifr_flags & IFXF_AUTOCONF6)) {
+			hook_disestablish(ifp->if_linkstatehooks,
+			    RS_LHCOOKIE(ifp));
+			nd6_rs_timeout_count--;
+			if (nd6_rs_timeout_count == 0)
+				timeout_del(&nd6_rs_output_timer);
 		}
 #endif
 

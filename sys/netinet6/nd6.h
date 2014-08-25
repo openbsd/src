@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.38 2014/07/11 15:03:17 blambert Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.39 2014/08/25 14:00:34 florian Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -134,6 +134,9 @@ struct	in6_ndifreq {
 #define ND_IFINFO(ifp) \
 	(((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->nd_ifinfo)
 
+#define RS_LHCOOKIE(ifp) \
+	((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->rs_lhcookie
+
 #define IN6_LINKMTU(ifp) \
 	((ND_IFINFO(ifp)->linkmtu && ND_IFINFO(ifp)->linkmtu < (ifp)->if_mtu) \
 	    ? ND_IFINFO(ifp)->linkmtu \
@@ -230,6 +233,12 @@ extern int nd6_debug;
 
 extern struct timeout nd6_timer_ch;
 
+#define ND6_RS_OUTPUT_INTERVAL 60
+#define ND6_RS_OUTPUT_QUICK_INTERVAL 1
+extern struct timeout nd6_rs_output_timer;
+extern int nd6_rs_output_timeout;
+extern int nd6_rs_timeout_count;
+
 union nd_opts {
 	struct nd_opt_hdr *nd_opt_array[9];
 	struct {
@@ -294,6 +303,9 @@ void nd6_dad_duplicated(struct ifaddr *);
 
 void nd6_rs_input(struct mbuf *, int, int);
 void nd6_ra_input(struct mbuf *, int, int);
+void nd6_rs_output_set_timo(int);
+void nd6_rs_output(struct ifnet *, struct in6_ifaddr *);
+void nd6_rs_dev_state(void *);
 void prelist_del(struct nd_prefix *);
 void defrouter_addreq(struct nd_defrouter *);
 void defrouter_reset(void);

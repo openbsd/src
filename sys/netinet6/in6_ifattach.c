@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.72 2014/07/01 19:37:07 benno Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.73 2014/08/25 14:00:34 florian Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -688,5 +688,14 @@ in6_ifdetach(struct ifnet *ifp)
 		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL,
 		    ifp->if_rdomain);
 		rtfree(rt);
+	}
+
+	if (ifp->if_xflags & IFXF_AUTOCONF6) {
+		nd6_rs_timeout_count--;
+		if (nd6_rs_timeout_count == 0)
+			timeout_del(&nd6_rs_output_timer);
+		if (RS_LHCOOKIE(ifp) != NULL)
+			hook_disestablish(ifp->if_linkstatehooks,
+			    RS_LHCOOKIE(ifp));
 	}
 }
