@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.29 2014/07/23 05:57:36 deraadt Exp $
+.\"	$OpenBSD: syslogd.8,v 1.30 2014/08/25 20:25:46 bluhm Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"	$NetBSD: syslogd.8,v 1.3 1996/01/02 17:41:48 perry Exp $
 .\"
-.Dd $Mdocdate: July 23 2014 $
+.Dd $Mdocdate: August 25 2014 $
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm syslogd
 .Bk -words
-.Op Fl dhnu
+.Op Fl 46dhnu
 .Op Fl a Ar path
 .Op Fl f Ar config_file
 .Op Fl m Ar mark_interval
@@ -54,6 +54,14 @@ configuration file.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl 4
+Forces
+.Nm
+to use IPv4 addresses only.
+.It Fl 6
+Forces
+.Nm
+to use IPv6 addresses only.
 .It Fl a Ar path
 Specify a location where
 .Nm
