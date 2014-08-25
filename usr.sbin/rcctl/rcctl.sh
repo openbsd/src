@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.25 2014/08/25 21:06:46 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.26 2014/08/25 21:34:34 schwarze Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -74,12 +74,10 @@ svc_default_enabled_flags()
 {
 	local _svc=$1
 	[ -n "${_svc}" ] || return
-	local _tmp=$(mktemp -t rcctl-deflags.XXXXXXXXXX) || exit 1
 
-	echo "pkg_scripts=${_svc}" >${_tmp}
-	echo "${_svc}_flags=" >>${_tmp}
-	_rc_parse_conf /etc/rc.conf ${_tmp}
-	rm ${_tmp}
+	_rc_parse_conf /etc/rc.conf
+	pkg_scripts=${_svc}
+	unset ${_svc}_flags
 	echo $(svc_get_flags ${_svc})
 	_rc_parse_conf
 }
