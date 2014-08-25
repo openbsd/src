@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.21 2014/08/25 07:35:37 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.22 2014/08/25 14:29:18 schwarze Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -164,25 +164,15 @@ append_to_pkg_scripts()
 
 rm_from_pkg_scripts()
 {
-	local _i _pkg_scripts
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
 	[ -z "${pkg_scripts}" ] && return
 
-	for _i in ${pkg_scripts}; do
-		if [ ${_i} != ${_svc} ]; then
-			_pkg_scripts="${_pkg_scripts} ${_i}"
-		fi
-	done
-	pkg_scripts=$(printf ' %s' ${_pkg_scripts})
-	pkg_scripts=${_pkg_scripts## }
-
 	rcconf_edit_begin
-	grep -v "^pkg_scripts.*=" /etc/rc.conf.local >${_TMP_RCCONF}
-	if [ -n "${pkg_scripts}" ]; then
-		echo pkg_scripts="${pkg_scripts}" >>${_TMP_RCCONF}
-	fi
+	sed "/^pkg_scripts[[:>:]]/{s/[[:<:]]${_svc}[[:>:]]//g
+	    s/['\"]//g;s/ *= */=/;s/   */ /g;s/ $//;/=$/d;}" \
+	    /etc/rc.conf.local >${_TMP_RCCONF}
 	rcconf_edit_end
 }
 
