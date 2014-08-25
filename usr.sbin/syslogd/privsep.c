@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.42 2014/08/25 18:19:18 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.43 2014/08/25 20:19:14 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -215,7 +215,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 				_exit(1);
 			must_read(socks[0], &path, path_len);
 			path[path_len - 1] = '\0';
-			check_tty_name(path, path_len);
+			check_tty_name(path, sizeof(path));
 			fd = open(path, O_WRONLY|O_NONBLOCK, 0);
 			send_fd(socks[0], fd);
 			if (fd < 0)
@@ -234,7 +234,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 				_exit(1);
 			must_read(socks[0], &path, path_len);
 			path[path_len - 1] = '\0';
-			check_log_name(path, path_len);
+			check_log_name(path, sizeof(path));
 
 			if (cmd == PRIV_OPEN_LOG)
 				fd = open_file(path);
@@ -469,13 +469,13 @@ open_pipe(char *cmd)
  * Either /dev/console or /dev/tty* are allowed.
  */
 static void
-check_tty_name(char *tty, size_t ttylen)
+check_tty_name(char *tty, size_t ttysize)
 {
 	const char ttypre[] = "/dev/tty";
 	char *p;
 
 	/* Any path containing '..' is invalid.  */
-	for (p = tty; *p && p < tty + ttylen; p++)
+	for (p = tty; p + 1 < tty + ttysize && *p; p++)
 		if (*p == '.' && *(p + 1) == '.')
 			goto bad_path;
 
@@ -486,7 +486,7 @@ check_tty_name(char *tty, size_t ttylen)
 bad_path:
 	warnx ("%s: invalid attempt to open %s: rewriting to /dev/null",
 	    "check_tty_name", tty);
-	strlcpy(tty, "/dev/null", ttylen);
+	strlcpy(tty, "/dev/null", ttysize);
 }
 
 /* If we are in the initial configuration state, accept a logname and add
@@ -494,13 +494,13 @@ bad_path:
  * and rewrite to /dev/null if it's a bad path.
  */
 static void
-check_log_name(char *lognam, size_t loglen)
+check_log_name(char *lognam, size_t logsize)
 {
 	struct logname *lg;
 	char *p;
 
 	/* Any path containing '..' is invalid.  */
-	for (p = lognam; *p && p < lognam + loglen; p++)
+	for (p = lognam; p + 1 < lognam + logsize && *p; p++)
 		if (*p == '.' && *(p + 1) == '.')
 			goto bad_path;
 
@@ -528,7 +528,7 @@ check_log_name(char *lognam, size_t loglen)
 bad_path:
 	warnx("%s: invalid attempt to open %s: rewriting to /dev/null",
 	    "check_log_name", lognam);
-	strlcpy(lognam, "/dev/null", loglen);
+	strlcpy(lognam, "/dev/null", logsize);
 }
 
 /* Crank our state into less permissive modes */
