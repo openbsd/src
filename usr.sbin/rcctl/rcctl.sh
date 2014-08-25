@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.24 2014/08/25 19:01:26 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.25 2014/08/25 21:06:46 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -101,8 +101,15 @@ svc_get_flags()
 		fi
 		[ -z "${daemon_flags}" ] && \
 			daemon_flags="$(eval echo \${${_svc}_flags})"
+		# rc.d shell script: no other way to get "${daemon_flags}"
 		[ -z "${daemon_flags}" ] && \
-			eval $(grep '^daemon_flags=' /etc/rc.d/${_svc})
+			daemon_flags=$(
+				FUNCS_ONLY=1
+				rc_cmd() { }
+				. /etc/rc.d/${_svc} >/dev/null 2>&1
+				echo ${daemon_flags}
+			)
+
 		echo ${daemon_flags} | sed '/^$/d'
 	fi
 }
