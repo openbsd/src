@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.19 2013/08/05 19:58:06 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.20 2014/08/25 14:26:25 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3004,7 +3004,6 @@ struct ixgbe_mac_operations {
 	int32_t (*get_mac_addr)(struct ixgbe_hw *, uint8_t *);
 	int32_t (*get_san_mac_addr)(struct ixgbe_hw *, uint8_t *);
 	int32_t (*set_san_mac_addr)(struct ixgbe_hw *, uint8_t *);
-	int32_t (*get_device_caps)(struct ixgbe_hw *, uint16_t *);
 	int32_t (*get_wwn_prefix)(struct ixgbe_hw *, uint16_t *, uint16_t *);
 	int32_t (*get_fcoe_boot_status)(struct ixgbe_hw *, uint16_t *);
 	int32_t (*stop_adapter)(struct ixgbe_hw *);

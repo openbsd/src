@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_x540.c,v 1.2 2013/08/05 19:58:06 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_x540.c,v 1.3 2014/08/25 14:26:25 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -105,7 +105,6 @@ int32_t ixgbe_init_ops_X540(struct ixgbe_hw *hw)
 	mac->ops.read_analog_reg8 = NULL;
 	mac->ops.write_analog_reg8 = NULL;
 	mac->ops.start_hw = &ixgbe_start_hw_X540;
-	mac->ops.get_device_caps = &ixgbe_get_device_caps_generic;
 	mac->ops.acquire_swfw_sync = &ixgbe_acquire_swfw_sync_X540;
 	mac->ops.release_swfw_sync = &ixgbe_release_swfw_sync_X540;
 	mac->ops.disable_sec_rx_path = &ixgbe_disable_sec_rx_path_generic;

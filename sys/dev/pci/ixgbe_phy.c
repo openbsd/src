@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_phy.c,v 1.11 2013/08/05 19:58:06 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_phy.c,v 1.12 2014/08/25 14:26:25 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -995,7 +995,6 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 	uint8_t oui_bytes[3] = {0, 0, 0};
 	uint8_t cable_tech = 0;
 	uint8_t cable_spec = 0;
-	uint16_t enforce_sfp = 0;
 
 	DEBUGFUNC("ixgbe_identify_sfp_module_generic");
 
@@ -1207,30 +1206,11 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 			goto out;
 		}
 
-		/* Anything else 82598-based is supported */
-		if (hw->mac.type == ixgbe_mac_82598EB) {
-			status = IXGBE_SUCCESS;
-			goto out;
-		}
-
-		if (hw->mac.type != ixgbe_mac_82598EB)
-			ixgbe_get_device_caps_generic(hw, &enforce_sfp);
-		if (!(enforce_sfp & IXGBE_DEVICE_CAPS_ALLOW_ANY_SFP) &&
-		    !(hw->phy.sfp_type == ixgbe_sfp_type_1g_cu_core0 ||
-		      hw->phy.sfp_type == ixgbe_sfp_type_1g_cu_core1 ||
-		      hw->phy.sfp_type == ixgbe_sfp_type_1g_sx_core0 ||
-		      hw->phy.sfp_type == ixgbe_sfp_type_1g_sx_core1)) {
-			/* Make sure we're a supported PHY type */
-			if (hw->phy.type == ixgbe_phy_sfp_intel) {
-				status = IXGBE_SUCCESS;
-			} else {
-				DEBUGOUT("SFP+ module not supported\n");
-				hw->phy.type = ixgbe_phy_sfp_unsupported;
-				status = IXGBE_ERR_SFP_NOT_SUPPORTED;
-			}
-		} else {
-			status = IXGBE_SUCCESS;
-		}
+		/*
+		 * We do not limit the definition of "supported SPF modules"
+		 * to the vendor/make whitelist.
+		 */
+		status = IXGBE_SUCCESS;
 	}
 
 out:
