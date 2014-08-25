@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.32 2014/08/17 18:46:29 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.33 2014/08/25 14:27:54 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 17 2014 $
+.Dd $Mdocdate: August 25 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -324,7 +324,7 @@ The
 .Ic types
 section must include one or more lines of the following syntax:
 .Bl -tag -width Ds
-.It Ar type/subtype Ar name Op Ar name ... ;
+.It Ar type/subtype Ar name Op Ar name ...
 Set the media
 .Ar type
 and
@@ -332,6 +332,10 @@ and
 to the specified extension
 .Ar name .
 One or more names can be specified per line.
+Each line may end with an optional semicolon.
+.It Ic include Ar file
+Include types definitions from an external file, for example
+.Pa /usr/share/misc/mime.types .
 .El
 .Sh EXAMPLES
 The following example will start one server that is pre-forked two
@@ -348,14 +352,14 @@ server "default" {
 }
 
 types {
-	text/css			css;
-	text/html			htm html;
-	text/txt			txt;
-	image/gif			gif;
-	image/jpeg			jpg jpeg;
-	image/png			png;
-	application/javascript		js;
-	application/xml			xml;
+	text/css			css
+	text/html			htm html
+	text/txt			txt
+	image/gif			gif
+	image/jpeg			jpg jpeg
+	image/png			png
+	application/javascript		js
+	application/xml			xml
 }
 .Ed
 .Pp
@@ -381,7 +385,7 @@ server "intranet.example.com" {
 }
 .Ed
 .Pp
-The syntax of the types section is compatible with the format used by
+The syntax of the types section is also compatible with the format used by
 .Xr nginx 8 ,
 so it is possible to include its
 .Pa mime.types

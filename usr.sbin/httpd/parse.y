@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.35 2014/08/09 07:35:45 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.36 2014/08/25 14:27:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -135,6 +135,7 @@ typedef struct {
 %type	<v.port>	port
 %type	<v.number>	optssl
 %type	<v.tv>		timeout
+%type	<v.string>	numberstring
 
 %%
 
@@ -660,7 +661,7 @@ types		: TYPES	'{' optnl mediaopts_l '}'
 		;
 
 mediaopts_l	: mediaopts_l mediaoptsl nl
-		| mediaoptsl optnl
+		| mediaoptsl nl
 		;
 
 mediaoptsl	: STRING '/' STRING	{
@@ -677,14 +678,15 @@ mediaoptsl	: STRING '/' STRING	{
 			}
 			free($1);
 			free($3);
-		} medianames_l ';'
+		} medianames_l optsemicolon
+		| include
 		;
 
 medianames_l	: medianames_l medianamesl
 		| medianamesl
 		;
 
-medianamesl	: STRING				{
+medianamesl	: numberstring				{
 			if (strlcpy(media.media_name, $1,
 			    sizeof(media.media_name)) >=
 			    sizeof(media.media_name)) {
@@ -751,9 +753,24 @@ timeout		: NUMBER
 		}
 		;
 
+numberstring	: NUMBER		{
+			char *s;
+			if (asprintf(&s, "%lld", $1) == -1) {
+				yyerror("asprintf: number");
+				YYERROR;
+			}
+			$$ = s;
+		}
+		| STRING
+		;
+
 comma		: ','
 		| nl
 		| /* empty */
+		;
+
+optsemicolon	: ';'
+		|
 		;
 
 optnl		: '\n' optnl
