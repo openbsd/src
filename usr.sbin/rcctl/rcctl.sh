@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.22 2014/08/25 14:29:18 schwarze Exp $
+# $OpenBSD: rcctl.sh,v 1.23 2014/08/25 18:50:22 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -70,6 +70,20 @@ svc_default_enabled()
 	return ${_ret}
 }
 
+svc_default_enabled_flags()
+{
+	local _tmp=$(mktemp -t rcctl-deflags.XXXXXXXXXX) || exit 1
+	local _svc=$1
+	[ -n "${_svc}" ] || return
+
+	echo "pkg_scripts=${_svc}" >${_tmp}
+	echo "${_svc}_flags=" >>${_tmp}
+	_rc_parse_conf /etc/rc.conf ${_tmp}
+	rm ${_tmp}
+	echo $(svc_get_flags ${_svc})
+	_rc_parse_conf
+}
+
 svc_get_flags()
 {
 	local daemon_flags
@@ -79,17 +93,17 @@ svc_get_flags()
 	if svc_is_special ${_svc}; then
 		echo "$(eval echo \${${_svc}})"
 	else
-		daemon_flags="$(eval echo \${${_svc}_flags})"
-		# reset flags for pkg daemon to match the output of base/special svc
+		# set pkg daemon_flags to "NO" to match base svc
 		if ! svc_is_base ${_svc}; then
 			if ! echo ${pkg_scripts} | grep -qw ${_svc}; then
-				daemon_flags="NO"
+				echo "NO" && return
 			fi
 		fi
-		if [ -z "${daemon_flags}" ]; then
+		[ -z "${daemon_flags}" ] && \
+			daemon_flags="$(eval echo \${${_svc}_flags})"
+		[ -z "${daemon_flags}" ] && \
 			eval $(grep '^daemon_flags=' /etc/rc.d/${_svc})
-		fi
-		echo ${daemon_flags}
+		echo ${daemon_flags} | sed '/^$/d'
 	fi
 }
 
@@ -98,7 +112,7 @@ svc_get_status()
 	local _affix _svc=$1
 
 	if [ -n "${_svc}" ]; then
-		svc_get_flags ${_svc} | sed '/^$/d'
+		svc_get_flags ${_svc}
 		svc_is_enabled ${_svc}
 	else
 		for _i in $(ls -A /etc/rc.d | grep -v rc.subr); do
@@ -178,9 +192,11 @@ rm_from_pkg_scripts()
 
 add_flags()
 {
-	local _flags _numargs=$#
+	local _deflags _flags _numargs=$#
 	local _svc=$2
 	[ -n "${_svc}" ] || return
+
+	_deflags="$(svc_default_enabled_flags ${_svc})"
 
 	if [ -n "$3" ]; then
 		# there is an early check for this; but this function is fed with $*
@@ -193,18 +209,19 @@ add_flags()
 			done
 			set -A _flags -- ${_flags}
 		fi
-	elif svc_is_enabled ${_svc}; then
-		# svc is already enabled and flags are not (re)set: return unless
-		# svc is enabled by default and our current flags are not empty
-		# (if they are, we drop the default "svc_flags=" further down)
-		if ! svc_default_enabled ${_svc}; then
-			return
-		elif [ -n "$(svc_get_flags ${_svc})" ]; then
-			return
+	else
+		# set our flags since none was given
+		set -A _flags -- $(svc_get_flags ${_svc})
+		if [[ "${_flags[@]}" = "NO" ]]; then
+			set -A _flags -- ${_deflags}
 		fi
 	fi
 
-	# special var
+	# unset flags if they match the default enabled ones
+	if [[ "${_deflags}" = "${_flags[@]}" ]]; then
+		unset _flags
+	fi
+
 	if svc_is_special ${_svc}; then
 		rcconf_edit_begin
 		grep -v "^${_svc}.*=" /etc/rc.conf.local >${_TMP_RCCONF}
@@ -212,27 +229,26 @@ add_flags()
 			echo "${_svc}=YES" >>${_TMP_RCCONF}
 		fi
 		rcconf_edit_end
-		return
-	fi
-
-	# base-system script
-	if svc_is_base ${_svc}; then
+	elif svc_is_base ${_svc}; then
 		rcconf_edit_begin
 		grep -v "^${_svc}_flags.*=" /etc/rc.conf.local >${_TMP_RCCONF}
 		if ! svc_default_enabled ${_svc} || test "${#_flags[*]}" -gt 0; then
 			echo ${_svc}_flags=${_flags[@]} >>${_TMP_RCCONF}
 		fi
 		rcconf_edit_end
-		return
+	else
+		rcconf_edit_begin
+		grep -v "^${_svc}_flags.*=" /etc/rc.conf.local >${_TMP_RCCONF}
+		if [ "${#_flags[*]}" -gt 0 ]; then
+			echo ${_svc}_flags=${_flags[@]} >>${_TMP_RCCONF}
+		fi
+		rcconf_edit_end
 	fi
 
-	# pkg script
-	rcconf_edit_begin
-	grep -v "^${_svc}_flags.*=" /etc/rc.conf.local >${_TMP_RCCONF}
-	if [ "${#_flags[*]}" -gt 0 ]; then
-		echo ${_svc}_flags=${_flags[@]} >>${_TMP_RCCONF}
-	fi
-	rcconf_edit_end
+	# update daemon_flags
+	unset ${_svc}_flags
+	_rc_parse_conf
+	eval ${_svc}_flags=\"$(svc_get_flags ${_svc})\"
 }
 
 rm_flags()
