@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.23 2014/08/25 18:50:22 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.24 2014/08/25 19:01:26 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -59,9 +59,9 @@ rcconf_edit_end()
 
 svc_default_enabled()
 {
-	local _ret=1
 	local _svc=$1
 	[ -n "${_svc}" ] || return
+	local _ret=1
 
 	_rc_parse_conf /etc/rc.conf
 	svc_is_enabled ${_svc} && _ret=0
@@ -72,9 +72,9 @@ svc_default_enabled()
 
 svc_default_enabled_flags()
 {
-	local _tmp=$(mktemp -t rcctl-deflags.XXXXXXXXXX) || exit 1
 	local _svc=$1
 	[ -n "${_svc}" ] || return
+	local _tmp=$(mktemp -t rcctl-deflags.XXXXXXXXXX) || exit 1
 
 	echo "pkg_scripts=${_svc}" >${_tmp}
 	echo "${_svc}_flags=" >>${_tmp}
@@ -86,9 +86,9 @@ svc_default_enabled_flags()
 
 svc_get_flags()
 {
-	local daemon_flags
 	local _svc=$1
 	[ -n "${_svc}" ] || return
+	local daemon_flags
 
 	if svc_is_special ${_svc}; then
 		echo "$(eval echo \${${_svc}})"
@@ -109,7 +109,7 @@ svc_get_flags()
 
 svc_get_status()
 {
-	local _affix _svc=$1
+	local _i _svc=$1
 
 	if [ -n "${_svc}" ]; then
 		svc_get_flags ${_svc}
@@ -144,7 +144,6 @@ svc_is_base()
 
 svc_is_enabled()
 {
-	local _flags _i
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
@@ -192,9 +191,9 @@ rm_from_pkg_scripts()
 
 add_flags()
 {
-	local _deflags _flags _numargs=$#
 	local _svc=$2
 	[ -n "${_svc}" ] || return
+	local _deflags _flags _numargs=$#
 
 	_deflags="$(svc_default_enabled_flags ${_svc})"
 
