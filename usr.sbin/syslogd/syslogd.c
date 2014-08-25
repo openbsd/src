@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.118 2014/08/25 18:05:30 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.119 2014/08/25 18:19:18 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -127,8 +127,8 @@ struct filed {
 	union {
 		char	f_uname[MAXUNAMES][UT_NAMESIZE+1];
 		struct {
-			char	f_loghost[1+1+MAXHOSTNAMELEN+1+NI_MAXSERV];
-				/* @[hostname]:servname\0 */
+			char	f_loghost[1+4+3+1+MAXHOSTNAMELEN+1+NI_MAXSERV];
+				/* @proto46://[hostname]:servname\0 */
 			struct sockaddr_storage	f_addr;
 		} f_forw;		/* forwarding address */
 		char	f_fname[MAXPATHLEN];
@@ -195,6 +195,8 @@ int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
 int	SecureMode = 1;		/* when true, speak only unix domain socks */
 int	NoDNS = 0;		/* when true, will refrain from doing DNS lookups */
+int	IPv4Only = 0;		/* when true, disable IPv6 */
+int	IPv6Only = 0;		/* when true, disable IPv4 */
 int	IncludeHostname = 0;	/* include RFC 3164 style hostnames when forwarding */
 
 char	*ctlsock_path = NULL;	/* Path to control socket */
@@ -268,7 +270,7 @@ void	reapchild(int);
 char   *ttymsg(struct iovec *, int, char *, int);
 void	usage(void);
 void	wallmsg(struct filed *, struct iovec *);
-int	loghost(char *, char **, char **);
+int	loghost(char *, char **, char **, char **);
 int	getmsgbufsize(void);
 int	unix_socket(char *, int, mode_t);
 void	double_rbuf(int);
@@ -291,8 +293,16 @@ main(int argc, char *argv[])
 	struct addrinfo hints, *res, *res0;
 	FILE *fp;
 
-	while ((ch = getopt(argc, argv, "dhnuf:m:p:a:s:")) != -1)
+	while ((ch = getopt(argc, argv, "46dhnuf:m:p:a:s:")) != -1)
 		switch (ch) {
+		case '4':		/* disable IPv6 */
+			IPv4Only = 1;
+			IPv6Only = 0;
+			break;
+		case '6':		/* disable IPv4 */
+			IPv6Only = 1;
+			IPv4Only = 0;
+			break;
 		case 'd':		/* debug */
 			Debug++;
 			break;
@@ -387,9 +397,13 @@ main(int argc, char *argv[])
 
 		switch (res->ai_family) {
 		case AF_INET:
+			if (IPv6Only)
+				continue;
 			pfdp = &pfd[PFD_INET];
 			break;
 		case AF_INET6:
+			if (IPv4Only)
+				continue;
 			pfdp = &pfd[PFD_INET6];
 			break;
 		default:
@@ -641,7 +655,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: syslogd [-dhnu] [-a path] [-f config_file] [-m mark_interval]\n"
+	    "usage: syslogd [-46dhnu] [-a path] [-f config_file] [-m mark_interval]\n"
 	    "               [-p log_socket] [-s reporting_socket]\n");
 	exit(1);
 }
@@ -1437,7 +1451,7 @@ cfline(char *line, char *prog)
 {
 	int i, pri;
 	size_t rb_len;
-	char *bp, *p, *q, *host, *port;
+	char *bp, *p, *q, *proto, *host, *port;
 	char buf[MAXLINE], ebuf[100];
 	struct filed *xf, *f, *d;
 
@@ -1542,8 +1556,35 @@ cfline(char *line, char *prog)
 			logerror(ebuf);
 			break;
 		}
-		if (loghost(++p, &host, &port) == -1) {
+		if (loghost(++p, &proto, &host, &port) == -1) {
 			snprintf(ebuf, sizeof(ebuf), "bad loghost \"%s\"",
+			    f->f_un.f_forw.f_loghost);
+			logerror(ebuf);
+			break;
+		}
+		if (proto == NULL)
+			proto = "udp";
+		if (strcmp(proto, "udp") == 0) {
+			if (pfd[PFD_INET].fd == -1)
+				proto = "udp6";
+			if (pfd[PFD_INET6].fd == -1)
+				proto = "udp4";
+		} else if (strcmp(proto, "udp4") == 0) {
+			if (pfd[PFD_INET].fd == -1) {
+				snprintf(ebuf, sizeof(ebuf), "no udp4 \"%s\"",
+				    f->f_un.f_forw.f_loghost);
+				logerror(ebuf);
+				break;
+			}
+		} else if (strcmp(proto, "udp6") == 0) {
+			if (pfd[PFD_INET6].fd == -1) {
+				snprintf(ebuf, sizeof(ebuf), "no udp6 \"%s\"",
+				    f->f_un.f_forw.f_loghost);
+				logerror(ebuf);
+				break;
+			}
+		} else {
+			snprintf(ebuf, sizeof(ebuf), "bad protocol \"%s\"",
 			    f->f_un.f_forw.f_loghost);
 			logerror(ebuf);
 			break;
@@ -1562,7 +1603,7 @@ cfline(char *line, char *prog)
 			logerror(ebuf);
 			break;
 		}
-		if (priv_getaddrinfo(host, port,
+		if (priv_getaddrinfo(proto, host, port,
 		    (struct sockaddr*)&f->f_un.f_forw.f_addr,
 		    sizeof(f->f_un.f_forw.f_addr)) != 0) {
 			snprintf(ebuf, sizeof(ebuf), "bad hostname \"%s\"",
@@ -1679,8 +1720,15 @@ cfline(char *line, char *prog)
  * Parse the host and port parts from a loghost string.
  */
 int
-loghost(char *str, char **host, char **port)
+loghost(char *str, char **proto, char **host, char **port)
 {
+	*proto = NULL;
+	if ((*host = strchr(str, ':')) &&
+	    (*host)[1] == '/' && (*host)[2] == '/') {
+		*proto = str;
+		**host = '\0';
+		str = *host + 3;
+	}
 	*host = str;
 	if (**host == '[') {
 		(*host)++;

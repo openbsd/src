@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.41 2014/08/25 18:05:30 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.42 2014/08/25 18:19:18 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -101,8 +101,8 @@ int
 priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 {
 	int i, fd, socks[2], cmd, addr_len, result, restart;
-	size_t path_len, hostname_len, servname_len;
-	char path[MAXPATHLEN], hostname[MAXHOSTNAMELEN];
+	size_t path_len, protoname_len, hostname_len, servname_len;
+	char path[MAXPATHLEN], protoname[5], hostname[MAXHOSTNAMELEN];
 	char servname[NI_MAXSERV];
 	struct sockaddr_storage addr;
 	struct stat cf_stat;
@@ -293,7 +293,14 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 
 		case PRIV_GETADDRINFO:
 			dprintf("[priv]: msg PRIV_GETADDRINFO received\n");
-			/* Expecting: len, hostname, len, servname */
+			/* Expecting: len, proto, len, host, len, serv */
+			must_read(socks[0], &protoname_len, sizeof(size_t));
+			if (protoname_len == 0 ||
+			    protoname_len > sizeof(protoname))
+				_exit(1);
+			must_read(socks[0], &protoname, protoname_len);
+			protoname[protoname_len - 1] = '\0';
+
 			must_read(socks[0], &hostname_len, sizeof(size_t));
 			if (hostname_len == 0 ||
 			    hostname_len > sizeof(hostname))
@@ -309,8 +316,17 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			servname[servname_len - 1] = '\0';
 
 			memset(&hints, 0, sizeof(hints));
-			hints.ai_family = AF_UNSPEC;
+			if (strcmp(protoname, "udp") == 0) {
+				hints.ai_family = AF_UNSPEC;
+			} else if (strcmp(protoname, "udp4") == 0) {
+				hints.ai_family = AF_INET;
+			} else if (strcmp(protoname, "udp6") == 0) {
+				hints.ai_family = AF_INET6;
+			} else {
+				errx(1, "unknown protocol %s", protoname);
+			}
 			hints.ai_socktype = SOCK_DGRAM;
+			hints.ai_protocol = IPPROTO_UDP;
 			i = getaddrinfo(hostname, servname, &hints, &res0);
 			if (i != 0 || res0 == NULL) {
 				addr_len = 0;
@@ -661,25 +677,30 @@ priv_config_parse_done(void)
 /* Name/service to address translation.  Response is placed into addr.
  * Return 0 for success or < 0 for error like getaddrinfo(3) */
 int
-priv_getaddrinfo(char *host, char *serv, struct sockaddr *addr,
+priv_getaddrinfo(char *proto, char *host, char *serv, struct sockaddr *addr,
     size_t addr_len)
 {
-	char hostcpy[MAXHOSTNAMELEN], servcpy[NI_MAXSERV];
+	char protocpy[5], hostcpy[MAXHOSTNAMELEN], servcpy[NI_MAXSERV];
 	int cmd, ret_len;
-	size_t hostname_len, servname_len;
+	size_t protoname_len, hostname_len, servname_len;
 
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged portion", __func__);
 
-	if (strlcpy(hostcpy, host, sizeof hostcpy) >= sizeof(hostcpy))
+	if (strlcpy(protocpy, proto, sizeof(protocpy)) >= sizeof(protocpy))
+		errx(1, "%s: overflow attempt in protoname", __func__);
+	protoname_len = strlen(protocpy) + 1;
+	if (strlcpy(hostcpy, host, sizeof(hostcpy)) >= sizeof(hostcpy))
 		errx(1, "%s: overflow attempt in hostname", __func__);
 	hostname_len = strlen(hostcpy) + 1;
-	if (strlcpy(servcpy, serv, sizeof servcpy) >= sizeof(servcpy))
+	if (strlcpy(servcpy, serv, sizeof(servcpy)) >= sizeof(servcpy))
 		errx(1, "%s: overflow attempt in servname", __func__);
 	servname_len = strlen(servcpy) + 1;
 
 	cmd = PRIV_GETADDRINFO;
 	must_write(priv_fd, &cmd, sizeof(int));
+	must_write(priv_fd, &protoname_len, sizeof(size_t));
+	must_write(priv_fd, protocpy, protoname_len);
 	must_write(priv_fd, &hostname_len, sizeof(size_t));
 	must_write(priv_fd, hostcpy, hostname_len);
 	must_write(priv_fd, &servname_len, sizeof(size_t));
