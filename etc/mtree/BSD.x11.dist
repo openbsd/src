@@ -1,12 +1,10 @@
-#       $OpenBSD: BSD.x11.dist,v 1.36 2014/08/13 21:19:56 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.37 2014/08/25 19:15:42 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
     etc
         X11
             app-defaults
-            ..
-            fs
             ..
             twm
             ..
