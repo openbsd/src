@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.20 2014/08/24 19:44:02 schwarze Exp $
+# $OpenBSD: rcctl.sh,v 1.21 2014/08/25 07:35:37 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -26,7 +26,8 @@ _rc_parse_conf
 
 usage()
 {
-	_rc_err "usage: ${0##*/} [-df] enable|disable|status|action [service | daemon [flags [...]]]"
+	_rc_err "usage: ${0##*/} [-df] enable|disable|status|action
+             [service | daemon [flags [arguments]]]"
 }
 
 needs_root()
