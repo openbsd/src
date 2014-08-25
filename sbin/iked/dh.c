@@ -1,7 +1,7 @@
-/*	$OpenBSD: dh.c,v 1.12 2014/07/10 12:50:05 jsg Exp $	*/
+/*	$OpenBSD: dh.c,v 1.13 2014/08/25 14:36:10 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -278,7 +278,11 @@ struct group_id ike_groups[] = {
 	    "5E2327CFEF98C582664B4C0F6CC41659"
 	},
 	{ GROUP_ECP, 25, 192, NULL, NULL, NID_X9_62_prime192v1 },
-	{ GROUP_ECP, 26, 224, NULL, NULL, NID_secp224r1 }
+	{ GROUP_ECP, 26, 224, NULL, NULL, NID_secp224r1 },
+	{ GROUP_ECP, 27, 224, NULL, NULL, NID_brainpoolP224r1 },
+	{ GROUP_ECP, 28, 256, NULL, NULL, NID_brainpoolP256r1 },
+	{ GROUP_ECP, 29, 384, NULL, NULL, NID_brainpoolP384r1 },
+	{ GROUP_ECP, 30, 512, NULL, NULL, NID_brainpoolP512r1 }
 };
 
 void
