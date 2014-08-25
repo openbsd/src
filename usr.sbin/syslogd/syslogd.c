@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.117 2014/08/22 16:14:11 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.118 2014/08/25 18:05:30 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -868,10 +868,10 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 	v = iov;
 	if (f->f_type == F_WALL) {
-		if ((l = snprintf(greetings, sizeof(greetings),
+		l = snprintf(greetings, sizeof(greetings),
 		    "\r\n\7Message from syslogd@%s at %.24s ...\r\n",
-		    f->f_prevhost, ctime(&now))) >= sizeof(greetings) ||
-		    l == -1)
+		    f->f_prevhost, ctime(&now));
+		if (l < 0 || (size_t)l >= sizeof(greetings))
 			l = strlen(greetings);
 		v->iov_base = greetings;
 		v->iov_len = l;
@@ -898,9 +898,9 @@ fprintlog(struct filed *f, int flags, char *msg)
 		v->iov_base = msg;
 		v->iov_len = strlen(msg);
 	} else if (f->f_prevcount > 1) {
-		if ((l = snprintf(repbuf, sizeof(repbuf),
-		    "last message repeated %d times", f->f_prevcount)) >=
-		    sizeof(repbuf) || l == -1)
+		l = snprintf(repbuf, sizeof(repbuf),
+		    "last message repeated %d times", f->f_prevcount);
+		if (l < 0 || (size_t)l >= sizeof(repbuf))
 			l = strlen(repbuf);
 		v->iov_base = repbuf;
 		v->iov_len = l;
@@ -931,11 +931,12 @@ fprintlog(struct filed *f, int flags, char *msg)
 			fd = -1;
 			break;
 		}
-		if ((l = snprintf(line, sizeof(line), "<%d>%.15s %s%s%s",
+		l = snprintf(line, sizeof(line), "<%d>%.15s %s%s%s",
 		    f->f_prevpri, (char *)iov[0].iov_base,
 		    IncludeHostname ? LocalHostName : "",
 		    IncludeHostname ? " " : "",
-		    (char *)iov[4].iov_base)) >= sizeof(line) || l == -1)
+		    (char *)iov[4].iov_base);
+		if (l < 0 || (size_t)l >= sizeof(line))
 			l = strlen(line);
 		if (sendto(fd, line, l, 0,
 		    (struct sockaddr *)&f->f_un.f_forw.f_addr,
@@ -1632,7 +1633,7 @@ cfline(char *line, char *prog)
 		rb_len *= 1024;
 
 		/* Copy buffer name */
-		for(i = 0; i < sizeof(f->f_un.f_mb.f_mname) - 1; i++) {
+		for(i = 0; (size_t)i < sizeof(f->f_un.f_mb.f_mname) - 1; i++) {
 			if (!isalnum((unsigned char)q[i]))
 				break;
 			f->f_un.f_mb.f_mname[i] = q[i];

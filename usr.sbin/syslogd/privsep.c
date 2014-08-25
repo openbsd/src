@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.40 2014/08/21 17:00:34 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.41 2014/08/25 18:05:30 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -330,7 +330,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 				errx(1, "rejected attempt to getnameinfo");
 			/* Expecting: length, sockaddr */
 			must_read(socks[0], &addr_len, sizeof(int));
-			if (addr_len <= 0 || addr_len > sizeof(addr))
+			if (addr_len <= 0 || (size_t)addr_len > sizeof(addr))
 				_exit(1);
 			must_read(socks[0], &addr, addr_len);
 			if (getnameinfo((struct sockaddr *)&addr, addr_len,
@@ -459,7 +459,7 @@ check_tty_name(char *tty, size_t ttylen)
 	char *p;
 
 	/* Any path containing '..' is invalid.  */
-	for (p = tty; *p && (p - tty) < ttylen; p++)
+	for (p = tty; *p && p < tty + ttylen; p++)
 		if (*p == '.' && *(p + 1) == '.')
 			goto bad_path;
 
@@ -484,7 +484,7 @@ check_log_name(char *lognam, size_t loglen)
 	char *p;
 
 	/* Any path containing '..' is invalid.  */
-	for (p = lognam; *p && (p - lognam) < loglen; p++)
+	for (p = lognam; *p && p < lognam + loglen; p++)
 		if (*p == '.' && *(p + 1) == '.')
 			goto bad_path;
 
@@ -693,7 +693,7 @@ priv_getaddrinfo(char *host, char *serv, struct sockaddr *addr,
 		return (-1);
 
 	/* Make sure we aren't overflowing the passed in buffer */
-	if (addr_len < ret_len)
+	if (ret_len < 0 || (size_t)ret_len > addr_len)
 		errx(1, "%s: overflow attempt in return", __func__);
 
 	/* Read the resolved address and make sure we got all of it */
@@ -727,7 +727,7 @@ priv_getnameinfo(struct sockaddr *sa, socklen_t salen, char *host,
 		return (-1);
 
 	/* Check we don't overflow the passed in buffer */
-	if (hostlen < ret_len)
+	if (ret_len < 0 || (size_t)ret_len > hostlen)
 		errx(1, "%s: overflow attempt in return", __func__);
 
 	/* Read the resolved hostname */
@@ -767,7 +767,8 @@ static int
 may_read(int fd, void *buf, size_t n)
 {
 	char *s = buf;
-	ssize_t res, pos = 0;
+	ssize_t res;
+	size_t pos = 0;
 
 	while (n > pos) {
 		res = read(fd, s + pos, n - pos);
@@ -790,7 +791,8 @@ static void
 must_read(int fd, void *buf, size_t n)
 {
 	char *s = buf;
-	ssize_t res, pos = 0;
+	ssize_t res;
+	size_t pos = 0;
 
 	while (n > pos) {
 		res = read(fd, s + pos, n - pos);
@@ -812,7 +814,8 @@ static void
 must_write(int fd, void *buf, size_t n)
 {
 	char *s = buf;
-	ssize_t res, pos = 0;
+	ssize_t res;
+	size_t pos = 0;
 
 	while (n > pos) {
 		res = write(fd, s + pos, n - pos);

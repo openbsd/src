@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.4 2009/10/27 23:59:54 deraadt Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.5 2014/08/25 18:05:30 bluhm Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -30,8 +30,11 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+
 #include <signal.h>
 #include <fcntl.h>
 #include <dirent.h>
@@ -41,7 +44,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/stat.h>
 
 #include "syslogd.h"
 
@@ -57,12 +59,13 @@ ttymsg(struct iovec *iov, int iovcnt, char *line, int tmout)
 {
 	static char device[MAXNAMLEN] = _PATH_DEV;
 	static char errbuf[1024];
-	int cnt, fd, left, wret;
+	int cnt, fd, left;
+	ssize_t wret;
 	struct iovec localiov[6];
 	int forked = 0;
 	sigset_t mask;
 
-	if (iovcnt > sizeof(localiov) / sizeof(localiov[0]))
+	if (iovcnt < 0 || (size_t)iovcnt > nitems(localiov))
 		return ("too many iov's (change code in syslogd/ttymsg.c)");
 
 	/*
@@ -107,7 +110,7 @@ ttymsg(struct iovec *iov, int iovcnt, char *line, int tmout)
 				    iovcnt * sizeof(struct iovec));
 				iov = localiov;
 			}
-			for (cnt = 0; wret >= iov->iov_len; ++cnt) {
+			for (cnt = 0; (size_t)wret >= iov->iov_len; ++cnt) {
 				wret -= iov->iov_len;
 				++iov;
 				--iovcnt;
