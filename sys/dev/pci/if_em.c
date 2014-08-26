@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.287 2014/07/13 23:10:23 deraadt Exp $ */
+/* $OpenBSD: if_em.c,v 1.288 2014/08/26 11:01:21 mikeb Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2817,17 +2817,17 @@ em_rxfill(struct em_softc *sc)
 	i = sc->last_rx_desc_filled;
 
 	for (slots = if_rxr_get(&sc->rx_ring, sc->num_rx_desc);
-	    slots > 0; slots--) { 
+	    slots > 0; slots--) {
 		if (++i == sc->num_rx_desc)
 			i = 0;
 
 		if (em_get_buf(sc, i) != 0)
 			break;
 
+		sc->last_rx_desc_filled = i;
 		post = 1;
 	}
 
-	sc->last_rx_desc_filled = i;
 	if_rxr_put(&sc->rx_ring, slots);
 
 	return (post);

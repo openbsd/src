@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.359 2014/08/21 14:30:21 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.360 2014/08/26 11:01:21 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1301,11 +1301,10 @@ bge_fill_rx_ring_std(struct bge_softc *sc)
 		if (bge_newbuf(sc, i) != 0)
 			break;
 
+		sc->bge_std = i;
 		post = 1;
 	}
 	if_rxr_put(&sc->bge_std_ring, slots);
-
-	sc->bge_std = i;
 
 	if (post)
 		bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, sc->bge_std);
@@ -1406,11 +1405,10 @@ bge_fill_rx_ring_jumbo(struct bge_softc *sc)
 		if (bge_newbuf_jumbo(sc, i) != 0)
 			break;
 
+		sc->bge_jumbo = i;
 		post = 1;
 	}
 	if_rxr_put(&sc->bge_jumbo_ring, slots);
-
-	sc->bge_jumbo = i;
 
 	if (post)
 		bge_writembx(sc, BGE_MBX_RX_JUMBO_PROD_LO, sc->bge_jumbo);
