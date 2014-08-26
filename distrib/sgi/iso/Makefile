@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2014/03/02 05:46:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.23 2014/08/26 21:36:44 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -11,8 +11,7 @@ RELDIR?=	/home/rel-${MACHINE}
 ALLIP=		22 27 28 30 32
 
 BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
-		${RELDIR}/etc${OSrev}.tgz ${RELDIR}/game${OSrev}.tgz \
-		${RELDIR}/man${OSrev}.tgz \
+		${RELDIR}/game${OSrev}.tgz ${RELDIR}/man${OSrev}.tgz \
 		${RELDIR}/INSTALL.${MACHINE}
 .for IP in ${ALLIP}
 BASE+=		${RELDIR}/bsd.IP${IP} ${RELDIR}/bsd.rd.IP${IP}
