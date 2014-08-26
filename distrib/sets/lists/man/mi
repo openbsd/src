@@ -2243,7 +2243,6 @@
 ./usr/share/man/man5/netid.5
 ./usr/share/man/man5/networks.5
 ./usr/share/man/man5/newsyslog.conf.5
-./usr/share/man/man5/nginx.conf.5
 ./usr/share/man/man5/npppd-users.5
 ./usr/share/man/man5/npppd.conf.5
 ./usr/share/man/man5/nsd.conf.5
@@ -2571,7 +2570,6 @@
 ./usr/share/man/man8/newfs_msdos.8
 ./usr/share/man/man8/newsyslog.8
 ./usr/share/man/man8/nfsd.8
-./usr/share/man/man8/nginx.8
 ./usr/share/man/man8/nologin.8
 ./usr/share/man/man8/npppctl.8
 ./usr/share/man/man8/npppd.8

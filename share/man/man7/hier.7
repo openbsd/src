@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.130 2014/08/23 07:25:54 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.131 2014/08/26 19:33:48 robert Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: August 23 2014 $
+.Dd $Mdocdate: August 26 2014 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -116,9 +116,6 @@ Certificates and schema definition files for
 System mail configuration files.
 .It mtree/
 .Xr mtree 8
-configuration files.
-.It nginx/
-.Xr nginx 8
 configuration files.
 .It npppd/
 .Xr npppd 8
@@ -643,8 +640,8 @@ Periodically cleaned by
 Configuration files for
 .Xr unbound 8 .
 .It www/
-ServerRoot point for
-.Xr nginx 8 .
+Configuration files for
+.Xr httpd 8 .
 .It yp/
 Files for the
 .Xr yp 8

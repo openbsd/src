@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.389 2014/08/22 19:19:25 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.390 2014/08/26 19:33:48 robert Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -54,7 +54,7 @@ EXAMPLES_600=bgpd.conf dvmrpd.conf hostapd.conf iked.conf ipsec.conf \
 RCDAEMONS=	amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd \
 		ftpd ftpproxy hostapd hotplugd httpd identd ifstated iked \
 		inetd isakmpd ldapd npppd ldattach ldpd lpd mopd mrouted \
-		nginx nsd ntpd ospfd ospf6d portmap pflogd rarpd rbootd \
+		nsd ntpd ospfd ospf6d portmap pflogd rarpd rbootd \
 		relayd ripd route6d rtadvd rtsold sasyncd sendmail \
 		sensorsd slowcgi smtpd snmpd spamd sshd syslogd watchdogd \
 		wsmoused xdm ypbind ypldap yppasswdd ypserv nfsd mountd lockd \
@@ -204,7 +204,6 @@ distribution-etc-root-var: distrib-dirs
 	cd ../usr.bin/mail && exec ${MAKE} distribution
 	cd ../usr.sbin/sliplogin && exec ${MAKE} distribution
 	cd ../usr.sbin/ldapd && exec ${MAKE} distribution
-	cd ../usr.sbin/nginx && exec ${MAKE} -f Makefile.bsd-wrapper distribution
 	cd ../usr.sbin/npppd && exec ${MAKE} distribution
 	cd mail && exec ${MAKE} distribution
 	${INSTALL} -c -o root -g wheel -m 600 root/root.mail \

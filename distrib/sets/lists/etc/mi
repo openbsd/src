@@ -43,10 +43,6 @@
 ./etc/motd
 ./etc/myname
 ./etc/newsyslog.conf
-./etc/nginx/fastcgi_params
-./etc/nginx/nginx.conf
-./etc/nginx/scgi_params
-./etc/nginx/uwsgi_params
 ./etc/npppd/npppd-users
 ./etc/npppd/npppd.conf
 ./etc/passwd

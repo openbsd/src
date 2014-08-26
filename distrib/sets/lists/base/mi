@@ -123,11 +123,6 @@
 ./etc/mtree/special
 ./etc/netstart
 ./etc/networks
-./etc/nginx
-./etc/nginx/koi-utf
-./etc/nginx/koi-win
-./etc/nginx/mime.types
-./etc/nginx/win-utf
 ./etc/npppd
 ./etc/pf.os
 ./etc/ppp
@@ -165,7 +160,6 @@
 ./etc/rc.d/mountd
 ./etc/rc.d/mrouted
 ./etc/rc.d/nfsd
-./etc/rc.d/nginx
 ./etc/rc.d/npppd
 ./etc/rc.d/nsd
 ./etc/rc.d/ntpd
@@ -2818,7 +2812,6 @@
 ./usr/sbin/mtree
 ./usr/sbin/ndp
 ./usr/sbin/netgroup_mkdb
-./usr/sbin/nginx
 ./usr/sbin/npppctl
 ./usr/sbin/npppd
 ./usr/sbin/nsd
