@@ -1,4 +1,4 @@
-.\"     $OpenBSD: man.cgi.8,v 1.8 2014/08/22 15:49:44 schwarze Exp $
+.\"     $OpenBSD: man.cgi.8,v 1.9 2014/08/26 20:03:31 robert Exp $
 .\"
 .\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 22 2014 $
+.Dd $Mdocdate: August 26 2014 $
 .Dt MAN.CGI 8
 .Os
 .Sh NAME
@@ -154,11 +154,6 @@ database inside each manpath.
 .Pp
 Configure your web server to execute CGI programs located in
 .Pa /cgi-bin .
-When using
-.Xr nginx 8 ,
-the
-.Xr slowcgi 8
-proxy daemon is needed to translate FastCGI requests to plain old CGI.
 .Pp
 To compile
 .Nm ,
