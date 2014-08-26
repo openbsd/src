@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.84 2014/08/25 14:00:34 florian Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.85 2014/08/26 21:44:29 florian Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -221,10 +221,8 @@ nd6_rs_output(struct ifnet* ifp, struct in6_ifaddr *ia6)
 	/* ip6->ip6_plen will be set later */
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
 	ip6->ip6_hlim = 255;
-	bzero(&ip6->ip6_dst, sizeof(struct in6_addr));
-
-	ip6->ip6_dst.s6_addr16[0] = htons(0xff02);
-	ip6->ip6_dst.s6_addr8[15] = 0x02;
+	
+	ip6->ip6_dst = in6addr_linklocal_allrouters;
 
 	ip6->ip6_src = ia6->ia_addr.sin6_addr;
 
