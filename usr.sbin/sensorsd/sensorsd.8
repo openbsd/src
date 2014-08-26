@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.8,v 1.20 2008/03/16 22:26:43 jmc Exp $
+.\"	$OpenBSD: sensorsd.8,v 1.21 2014/08/26 12:34:24 millert Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 16 2008 $
+.Dd $Mdocdate: August 26 2014 $
 .Dt SENSORSD 8
 .Os
 .Sh NAME
@@ -30,9 +30,7 @@
 The
 .Nm
 utility retrieves sensor monitoring data like fan speed,
-temperature, voltage and
-.Xr ami 4
-logical disk status via
+temperature, voltage and RAID logical disk status via
 .Xr sysctl 3 .
 When the state of any monitored sensor changes, an alert is sent using
 .Xr syslog 3
