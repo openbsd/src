@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.19 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.20 2014/08/26 23:55:28 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -132,7 +132,7 @@ struct {
 };
 #endif
 
-#define JUMBO_LEN (1024 * 9 - ETHER_ALIGN)
+#define JUMBO_LEN (1024 * 9)
 #define DMAADDR(map) ((map)->dm_segs[0].ds_addr)
 
 #define READ_BAR0(sc, reg) bus_space_read_4((sc)->sc_iot0, (sc)->sc_ioh0, reg)
@@ -167,7 +167,6 @@ void vmxnet3_stop(struct ifnet *);
 void vmxnet3_reset(struct ifnet *);
 int vmxnet3_init(struct vmxnet3_softc *);
 int vmxnet3_ioctl(struct ifnet *, u_long, caddr_t);
-int vmxnet3_change_mtu(struct vmxnet3_softc *, int);
 void vmxnet3_start(struct ifnet *);
 int vmxnet3_load_mbuf(struct vmxnet3_softc *, struct mbuf *);
 void vmxnet3_watchdog(struct ifnet *);
@@ -358,7 +357,7 @@ vmxnet3_dma_init(struct vmxnet3_softc *sc)
 	ds->driver_data_len = sizeof(struct vmxnet3_softc);
 	ds->queue_shared = qs_pa;
 	ds->queue_shared_len = qs_len;
-	ds->mtu = ETHERMTU;
+	ds->mtu = VMXNET3_MAX_MTU;
 	ds->ntxqueue = NTXQUEUE;
 	ds->nrxqueue = NRXQUEUE;
 	ds->mcast_table = mcast_pa;
@@ -964,21 +963,6 @@ vmxnet3_init(struct vmxnet3_softc *sc)
 }
 
 int
-vmxnet3_change_mtu(struct vmxnet3_softc *sc, int mtu)
-{
-	struct vmxnet3_driver_shared *ds = sc->sc_ds;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int error;
-
-	if (mtu < VMXNET3_MIN_MTU || mtu > VMXNET3_MAX_MTU)
-		return EINVAL;
-	vmxnet3_stop(ifp);
-	ifp->if_mtu = ds->mtu = mtu;
-	error = vmxnet3_init(sc);
-	return error;
-}
-
-int
 vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct vmxnet3_softc *sc = ifp->if_softc;
@@ -1009,12 +993,13 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				vmxnet3_stop(ifp);
 		}
 		break;
-	case SIOCSIFMTU:
-		error = vmxnet3_change_mtu(sc, ifr->ifr_mtu);
-		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		break;
+	case SIOCGIFRXR:
+		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
+		    NULL, JUMBO_LEN, &sc->sc_rxq[0].cmd_ring[0].rxr);
 		break;
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
