@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.27 2014/08/25 23:15:37 schwarze Exp $
+# $OpenBSD: rcctl.sh,v 1.28 2014/08/26 22:39:09 schwarze Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -209,54 +209,33 @@ add_flags()
 		return
 	fi
 
-	local _deflags _flags _numargs=$#
-
-	_deflags="$(svc_default_enabled_flags ${_svc})"
+	local _flags
 
 	if [ -n "$3" ]; then
-		# there is an early check for this; but this function is fed with $*
-		[ "$3" = "flags" ] || return
-		if [ -n "$4" ]; then
-			while [ "${_numargs}" -ge 4 ]
-			do
-				eval _flags=\"\$${_numargs} ${_flags}\"
-				let _numargs--
-			done
-			set -A _flags -- ${_flags}
-		fi
+		shift 3
+		_flags=$*
 	else
-		# set our flags since none was given
-		set -A _flags -- $(svc_get_flags ${_svc})
-		if [[ "${_flags[@]}" = "NO" ]]; then
-			set -A _flags -- ${_deflags}
-		fi
+		# keep our flags since none were given
+		eval "_flags=\${${_svc}_flags}"
+		[[ "${_flags}" = "NO" ]] && unset _flags
 	fi
 
 	# unset flags if they match the default enabled ones
-	if [[ "${_deflags}" = "${_flags[@]}" ]]; then
-		unset _flags
+	if [ -n "${_flags}" ]; then
+		[[ "${_flags}" = "$(svc_default_enabled_flags ${_svc})" ]] && \
+			unset _flags
 	fi
 
-	if svc_is_base ${_svc}; then
-		rcconf_edit_begin
-		grep -v "^${_svc}_flags.*=" /etc/rc.conf.local >${_TMP_RCCONF}
-		if ! svc_default_enabled ${_svc} || test "${#_flags[*]}" -gt 0; then
-			echo ${_svc}_flags=${_flags[@]} >>${_TMP_RCCONF}
-		fi
-		rcconf_edit_end
-	else
-		rcconf_edit_begin
-		grep -v "^${_svc}_flags.*=" /etc/rc.conf.local >${_TMP_RCCONF}
-		if [ "${#_flags[*]}" -gt 0 ]; then
-			echo ${_svc}_flags=${_flags[@]} >>${_TMP_RCCONF}
-		fi
-		rcconf_edit_end
+	rcconf_edit_begin
+	grep -v "^${_svc}_flags.*=" /etc/rc.conf.local >${_TMP_RCCONF}
+	if [ -n "${_flags}" ] || \
+	   ( svc_is_base ${_svc} && ! svc_default_enabled ${_svc} ); then
+		echo ${_svc}_flags=${_flags} >>${_TMP_RCCONF}
 	fi
+	rcconf_edit_end
 
 	# update daemon_flags
-	unset ${_svc}_flags
-	_rc_parse_conf
-	eval ${_svc}_flags=\"$(svc_get_flags ${_svc})\"
+	eval "${_svc}_flags=\${_flags}"
 }
 
 rm_flags()
