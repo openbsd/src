@@ -3065,6 +3065,7 @@
 ./usr/share/misc/mail.help
 ./usr/share/misc/mail.tildehelp
 ./usr/share/misc/mdoc.template
+./usr/share/misc/mime.types
 ./usr/share/misc/more.help
 ./usr/share/misc/na.phone
 ./usr/share/misc/scsi_modes
