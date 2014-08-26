@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.57 2014/08/11 09:03:27 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.58 2014/08/26 21:29:56 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 11 2014 $
+.Dd $Mdocdate: August 26 2014 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Nm
 .Bk -words
 .Op Fl bdS
-.Op Fl p | Oo Fl s Ar src \*(Ba etcXX.tgz Oc Op Fl x Ar xetcXX.tgz
+.Op Fl p | Op Fl x Ar xetcXX.tgz
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -36,11 +36,10 @@ after upgrading to a new release or snapshot.
 .Nm
 works by comparing a temporary reference root directory
 against currently installed files.
-The reference files are created from a
-.Xr cvs 1
-source tree or a
-.Dq .tgz
-release or snapshot file.
+The reference files are created from
+.Pa /usr/share/sysmerge/etc.tgz
+and
+.Pa xetcXX.tgz .
 All work is done under
 .Pa ${TMPDIR}/sysmerge.XXXXXXXXXX
 (known as the
@@ -52,28 +51,19 @@ Each modified and/or replaced file is saved under the
 .Pa backup
 directory inside the work directory.
 .Pp
-If no source is specified on the command line,
+If no path to
+.Pa xetcXX.tgz
+is specified on the command line,
 .Nm
 uses
 .Xr ftp 1
-to fetch the required sets from the URL pointed to by the
+to fetch and cryptographically verify the set from the URL pointed
+to by the
 .Ev SM_PATH
-environment variable, and falls back to
-.Pa /usr/src
-if this variable is unset.
-.Pp
-To make sure configuration files are in sync with the actual binaries,
-use the same source as was used to upgrade the system:
-.Pa /usr/src
-when upgrading from source;
-.Pa etcXX.tgz
-and
+environment variable.
+If no such variable is set,
 .Pa xetcXX.tgz
-when upgrading from tgz sets.
-When using sets,
-.Nm
-will cryptographically verify their integrity,
-stopping immediately should signatures not match.
+is skipped.
 .Pp
 .Nm
 will work through the fileset,
@@ -140,19 +130,7 @@ compares the default configuration files of installed
 .Xr packages 7
 against their target on the system (@sample).
 This option is mutually exclusive with
-.Fl s
-and
 .Fl x .
-.It Fl S
-Do not verify signatures for tgz sets.
-This option has no effect when sets aren't used.
-.It Fl s Ar src \*(Ba etcXX.tgz
-Specify a path to an
-.Ox
-top src directory or an etcXX.tgz tarball.
-A tarball path specified as a URL will be passed
-to
-.Xr ftp 1 .
 .It Fl x Ar xetcXX.tgz
 Specify a path to an
 xetcXX.tgz tarball.
@@ -237,8 +215,10 @@ updating.
 Defaults to
 .Pa ${WRKDIR}/sysmerge.log .
 .It Ev SM_PATH
-A URL, specifying the directory to search for sets matching the
-currently running release if none are specified on the command line.
+A URL, specifying the directory to search for
+.Pa xetcXX.tgx
+matching the
+currently running release if none is specified on the command line.
 .It Ev TMPDIR
 Directory in which the work directory is created.
 If unset, this defaults to
@@ -257,12 +237,14 @@ directories are created relative to this.
 Default log file.
 .It /etc/sysmerge.ignore
 Files and directories to ignore from comparison.
+.It /usr/share/sysmerge/etc.tgz
+Base system
+.Em etc
+set corresponding to the currently installed release.
 .El
 .Sh SEE ALSO
 .Xr more 1 ,
 .Xr sdiff 1
-.Pp
-.Pa /usr/src/etc/Makefile
 .Pp
 .Lk http://www.openbsd.org/faq/current.html
 .Lk http://www.openbsd.org/faq/upgradeXX.html

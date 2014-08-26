@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.151 2014/08/21 16:50:11 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.152 2014/08/26 21:29:56 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -22,7 +22,7 @@ umask 0022
 
 unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE EGSUM ETCSUM
 unset NEED_NEWALIASES NEWGRP NEWUSR NEED_REBOOT NOSIGCHECK PKGMODE
-unset PKGSUM SRCDIR SRCSUM TGZ XETCSUM XTGZ
+unset PKGSUM TGZ XETCSUM XTGZ
 
 # forced variables
 WRKDIR=$(mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX) || exit 1
@@ -42,17 +42,11 @@ DBDIR="${DBDIR:=/usr/share/sysmerge}"
 # system-wide variables (overridable)
 PAGER="${PAGER:=/usr/bin/more}"
 
-# clean leftovers created by make in src
-clean_src() {
-	[[ -n ${SRCDIR} ]] && \
-		cd ${SRCDIR}/gnu/usr.sbin/sendmail/cf/cf && make cleandir >/dev/null
-}
-
 # restore sum files from backups or remove the newly generated ones if
 # they did not exist
 restore_sum() {
 	local i _i
-	for i in ${DESTDIR}/${DBDIR}/.{${SRCSUM},${ETCSUM},${XETCSUM},${EGSUM},${PKGSUM}}.bak; do
+	for i in ${DESTDIR}/${DBDIR}/.{${ETCSUM},${XETCSUM},${EGSUM},${PKGSUM}}.bak; do
 		_i=$(basename ${i} .bak)
 		if [ -f "${i}" ]; then
 			mv ${i} ${DESTDIR}/${DBDIR}/${_i#.}
@@ -64,7 +58,7 @@ restore_sum() {
 }
 
 usage() {
-	echo "usage: ${0##*/} [-bdS] [-p | [-s src | etcXX.tgz] [-x xetcXX.tgz]]" >&2
+	echo "usage: ${0##*/} [-bdS] [-p | [-x xetcXX.tgz]]" >&2
 }
 
 warn() {
@@ -93,7 +87,6 @@ stripcom() {
 error_rm_wrkdir() {
 	(($#)) && echo "!!!! ERROR: $@"
 	restore_sum
-	clean_src
 	# do not remove the entire WRKDIR in case sysmerge stopped half
 	# way since it contains our backup files
 	rm -rf ${TEMPROOT}
@@ -113,7 +106,6 @@ fi
 # extract (x)etcXX.tgz and create cksum file(s);
 # stores sum filename in ETCSUM or XETCSUM (see eval);
 extract_sets() {
-	[[ -n ${SRCDIR} ]] && return
 	[[ -n ${PKGMODE} ]] && return
 	local _e _x _set _tgz
 
@@ -138,9 +130,8 @@ extract_sets() {
 
 # fetch and verify sets, abort on failure
 sm_fetch_and_verify() {
-	[[ -n ${SRCDIR} ]] && return
 	[[ -n ${PKGMODE} ]] && return
-	local _file _sigdone _url;
+	local _file _url;
 	local _key="/etc/signify/openbsd-${RELINT}-base.pub"
 
 	for _url in ${TGZ} ${XTGZ}; do
@@ -151,31 +142,17 @@ sm_fetch_and_verify() {
 		echo "===> Fetching ${_url}"
 		/usr/bin/ftp -Vm -k "${FTP_KEEPALIVE-0}" -o "${_file}" "${_url}" >/dev/null || \
 			error_rm_wrkdir "could not retrieve ${_url##*/}"
-		if [ -z "${NOSIGCHECK}" ]; then
-			if [ -z ${_sigdone} ]; then
-				echo "===> Fetching ${_url%/*}/SHA256.sig"
-				/usr/bin/ftp -Vm -k "${FTP_KEEPALIVE-0}" -o "${WRKDIR}/SHA256.sig" "${_url%/*}/SHA256.sig" >/dev/null || \
-					error_rm_wrkdir "could not retrieve SHA256.sig"
-				[[ ${TGZ%/*} == ${XTGZ%/*} ]] && _sigdone=1
-			fi
-			echo "===> Verifying ${_url##*/} against ${_key}"
-			(cd ${WRKDIR} && /usr/bin/signify -qC -p ${_key} -x SHA256.sig ${_url##*/}) || \
-				error_rm_wrkdir "${_url##*/}: signature/checksum failed"
-		fi
 	done
+	if [ -z "${NOSIGCHECK}" -a -n "${XTGZ}" ]; then
+		echo "===> Fetching ${XTGZ%/*}/SHA256.sig"
+		/usr/bin/ftp -Vm -k "${FTP_KEEPALIVE-0}" -o "${WRKDIR}/SHA256.sig" "${XTGZ%/*}/SHA256.sig" >/dev/null || \
+			error_rm_wrkdir "could not retrieve SHA256.sig"
+		echo "===> Verifying ${XTGZ##*/} against ${_key}"
+		(cd ${WRKDIR} && /usr/bin/signify -qC -p ${_key} -x SHA256.sig ${XTGZ##*/}) || \
+			error_rm_wrkdir "${XTGZ##*/}: signature/checksum failed"
+	fi
 
 	[[ -z ${NOSIGCHECK} ]] && rm ${WRKDIR}/SHA256.sig
-}
-
-# prepare TEMPROOT content from a src dir and create cksum file 
-prepare_src() {
-	[[ -z ${SRCDIR} ]] && return
-	SRCSUM=srcsum
-	# 2>/dev/null: distribution-etc-root-var complains /var/tmp is world writable
-	(cd ${SRCDIR}/etc && \
-	 make DESTDIR=${TEMPROOT} distribution-etc-root-var >/dev/null 2>&1 && \
-	 cd ${TEMPROOT} && find . -type f | xargs sha256 -h ${WRKDIR}/${SRCSUM}) || \
-		error_rm_wrkdir "failed to populate from ${SRCDIR} and create checksum file"
 }
 
 # get pkg @sample information
@@ -281,16 +258,14 @@ sm_populate() {
 	fi
 
 	# automatically install missing user(s) and group(s) from the
-	# new master.passwd and group files:
-	# - after extracting the sets (so we have the new files)
-	# - before running distribution-etc-root-var (using files from SRCDIR)
+	# new master.passwd and group files after extracting the sets
+	# (so we have the new files)
 	extract_sets
 	copy_pkg_samples
 	install_user_group
-	prepare_src
 
 	# EGSUM is used differently, see sm_check_an_eg()
-	for i in ${SRCSUM} ${ETCSUM} ${XETCSUM} ${PKGSUM}; do
+	for i in ${ETCSUM} ${XETCSUM} ${PKGSUM}; do
 		if [ -f ${DESTDIR}/${DBDIR}/${i} ]; then
 			# delete file in temproot if it has not changed since last release
 			# and is present in current installation
@@ -418,13 +393,8 @@ install_link() {
 
 install_user_group() {
 	local _g _gid _u
-	if [ -n "${SRCDIR}" ]; then
-		local _pw="${SRCDIR}/etc/master.passwd"
-		local _gr="${SRCDIR}/etc/group"
-	else
-		local _pw="${TEMPROOT}/etc/master.passwd"
-		local _gr="${TEMPROOT}/etc/group"
-	fi
+	local _pw="${TEMPROOT}/etc/master.passwd"
+	local _gr="${TEMPROOT}/etc/group"
 
 	# when running with '-x' only or in PKGMODE
 	[ ! -f ${_pw} -o ! -f ${_gr} ] && return
@@ -831,7 +801,6 @@ sm_post() {
 
 	unset NEED_NEWALIASES NEED_REBOOT
 
-	clean_src
 	rm -f ${DESTDIR}/${DBDIR}/.*.bak
 }
 
@@ -846,19 +815,6 @@ while getopts bdpSs:x: arg; do
 		;;
 	p)
 		PKGMODE=1
-		;;
-	s)
-		if [ -d "${OPTARG}" ]; then
-			if [ -n "${PKGMODE}" ]; then
-				usage
-				error_rm_wrkdir "conflicting options"
-			fi
-			SRCDIR="$(readlink -f ${OPTARG})"
-			[[ -f ${SRCDIR}/etc/Makefile ]] || \
-				error_rm_wrkdir "${SRCDIR}: invalid \"src\" tree, missing ${SRCDIR}/etc/Makefile"
-			continue
-		fi
-		TGZ="${OPTARG}"
 		;;
 	S)	
 		NOSIGCHECK=1
@@ -879,22 +835,15 @@ if (($# != 0)); then
 	error_rm_wrkdir
 fi
 
-if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
-	if [ -z "${PKGMODE}" ]; then
-		if [ -n "${SM_PATH}" ]; then
-			TGZ="${SM_PATH}/etc${RELINT}.tgz"
-			if [ -d ${DESTDIR}/etc/X11 ]; then
-				XTGZ="${SM_PATH}/xetc${RELINT}.tgz"
-			fi
-		elif [ -f "/usr/src/etc/Makefile" ]; then
-			SRCDIR=/usr/src
-		else
-			usage
-			error_rm_wrkdir "please specify a valid path to src or (x)etcXX.tgz"
-		fi
-	fi
-else
-	if [ -n "${PKGMODE}" ]; then
+TGZ=/usr/share/sysmerge/etc.tgz
+
+if [ -z "${XTGZ}" -a -n "${SM_PATH}" -a -d ${DESTDIR}/etc/X11 ]; then
+	XTGZ="${SM_PATH}/xetc${RELINT}.tgz"
+fi
+
+if [ -n "${PKGMODE}" ]; then
+	unset TGZ
+	if [ -n "${XTGZ}" ]; then
 		usage
 		error_rm_wrkdir "conflicting options"
 	fi
