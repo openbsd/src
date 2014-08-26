@@ -1,4 +1,4 @@
-LB-BREAK(3)               OpenBSD Programmer's Manual              LB-BREAK(3)
+LB-BREAK(3)                Library Functions Manual                LB-BREAK(3)
 
 NNAAMMEE
      LLbb--bbrreeaakk - output line breaks after the library macro

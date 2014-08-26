@@ -1,4 +1,4 @@
-RV-NOSTD(3)               OpenBSD Programmer's Manual              RV-NOSTD(3)
+RV-NOSTD(3)                Library Functions Manual                RV-NOSTD(3)
 
 NNAAMMEE
      RRvv--nnoossttdd - return value macros without -std arguments

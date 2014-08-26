@@ -1,4 +1,4 @@
-FD-FONT(2)                OpenBSD Programmer's Manual               FD-FONT(2)
+FD-FONT(2)                    System Calls Manual                   FD-FONT(2)
 
 NNAAMMEE
      FFdd--ffoonntt - changing the font inside the old-style include macro

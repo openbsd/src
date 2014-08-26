@@ -1,4 +1,4 @@
-RV-ARGS(3)                OpenBSD Programmer's Manual               RV-ARGS(3)
+RV-ARGS(3)                 Library Functions Manual                 RV-ARGS(3)
 
 NNAAMMEE
      RRvv--aarrggss - arguments to the return value macro

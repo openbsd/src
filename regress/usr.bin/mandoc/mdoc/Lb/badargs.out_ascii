@@ -1,4 +1,4 @@
-LB-BADARGS(3)             OpenBSD Programmer's Manual            LB-BADARGS(3)
+LB-BADARGS(3)              Library Functions Manual              LB-BADARGS(3)
 
 NNAAMMEE
      LLbb--bbaaddaarrggss - bad arguments to the library macro

@@ -1,4 +1,4 @@
-FD-BREAK(2)               OpenBSD Programmer's Manual              FD-BREAK(2)
+FD-BREAK(2)                   System Calls Manual                  FD-BREAK(2)
 
 NNAAMMEE
      FFdd--bbrreeaakk - line break before old-style header include file

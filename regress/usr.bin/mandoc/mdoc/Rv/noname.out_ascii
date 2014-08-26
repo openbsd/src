@@ -1,4 +1,4 @@
-RV-NONAME(3)              OpenBSD Programmer's Manual             RV-NONAME(3)
+RV-NONAME(3)               Library Functions Manual               RV-NONAME(3)
 
 NNAAMMEE
      - return value macro without an available name
