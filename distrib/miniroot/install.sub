@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.791 2014/08/10 20:54:17 rpe Exp $
+#	$OpenBSD: install.sub,v 1.792 2014/08/26 20:19:26 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1287,7 +1287,12 @@ install_files() {
 		_fsrc="$_src/$_f"
 		[[ -f $_tmpsrc/$_f ]] && _fsrc="file://$_tmpsrc/$_f"
 		case $_fsrc in
-		*.tgz)	ftp -D Installing -Vmo - "$_fsrc" | tar -zxphf - -C /mnt;;
+		*.tgz)	ftp -D Installing -Vmo - "$_fsrc" | tar -zxphf - -C /mnt
+			if [[ $_f == base*.tgz && $MODE == install ]]; then
+				ftp -D Extracting -Vmo - \
+				file:///mnt/usr/share/sysmerge/etc.tgz |
+				tar -zxphf - -C /mnt
+			fi;;
 		*)	ftp -D Installing -Vmo "/mnt/$_f" "$_fsrc";;
 		esac
 		if (($?)); then
@@ -2036,15 +2041,13 @@ md_consoleinfo
 # the contents of the other sets, not the other way around.
 THESETS="bsd bsd.rd bsd.mp $MDSETS"
 : ${DEFAULTSETS:="bsd bsd.rd"}
-for _set in base etc comp man game xbase xetc xshare xfont xserv site; do
-	[[ $MODE == upgrade && $_set == @(etc|xetc) ]] && continue
+for _set in base comp man game xbase xetc xshare xfont xserv site; do
+	[[ $MODE == upgrade && $_set == xetc ]] && continue
 	THESETS="$THESETS ${_set}${VERSION}.tgz"
 	isin $_set site && continue
 	DEFAULTSETS="$DEFAULTSETS ${_set}${VERSION}.tgz"
 done
-# Since etc${VERSION}.tgz is not in DEFAULTSETS for upgrades, it can always be
-# in SANESETS.
-SANESETS="${SANESETS:-bsd} base${VERSION}.tgz etc${VERSION}.tgz"
+SANESETS="${SANESETS:-bsd} base${VERSION}.tgz"
 
 # prepare COLUMNS sanely
 COLUMNS=$(stty -a </dev/console | sed -n '/columns/{s/^.* \([0-9]*\) columns.*$/\1/;p;}')

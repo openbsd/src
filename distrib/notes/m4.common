@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.110 2014/08/06 02:34:23 doug Exp $
+dnl	$OpenBSD: m4.common,v 1.111 2014/08/26 20:19:26 rpe Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -121,20 +121,6 @@ define({:-OpenBSDcomp-:},
 		 This set also includes the manual pages for all of the
 		 utilities it contains, as well as the system call and library
 		 manual pages.showsize($1,$2)-:})dnl
-dnl
-dnl
-dnl OpenBSDetc( compressed size, uncompressed size [, noupgrade])
-dnl Describes etcXX.tgz.
-dnl
-define({:-OpenBSDetc-:},
-{:-	etc{:--:}OSrev	 This distribution set contains the system configuration
-		 files that reside in /etc and in several other places.
-		 This set MUST be installed{:--:}ifelse(X$3,X,{:- if you are installing the
-		 system from scratch, but should NOT be used if you are
-		 upgrading.  (If you are upgrading, it's recommended that
-		 you get a copy of this set and CAREFULLY upgrade your
-		 configuration files by hand; see the section named
-		 "Upgrading a previously-installed OpenBSD System" below.)-:},.)showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDgame( compressed size, uncompressed size )
@@ -720,13 +706,12 @@ define({:-OpenBSDInstallWrapup-:},
 ifelse(MDTZ,,dnl
 {:-	The last thing you'll need to configure is the time zone your system
 	will be using.  For this to work properly, it is expected that you
-	have installed at least the "base{:--:}OSrev", "etc{:--:}OSrev",
-	and "bsd" distribution sets.
+	have installed at least the "base{:--:}OSrev" and "bsd" distribution sets.
 -:},dnl
 {:-	The last thing you might need to configure, if you did not get
 	the chance to earlier, is the time zone your system will be using.
 	For this work properly, it is expected that you have installed at
-	least the "base{:--:}OSrev", "etc{:--:}OSrev", and "bsd" distribution sets.
+	least the "base{:--:}OSrev" and "bsd" distribution sets.
 -:})dnl
 dnl install.sh finish_up()
 
@@ -865,15 +850,15 @@ new system in.  It will also use your existing network parameters.
 
 From then, the upgrade procedure is very close to the installation
 procedure described earlier in this document.  Note that the upgrade
-procedure will not let you pick neither the ``etc{:--:}OSrev.tgz'' nor the
-``xetc{:--:}OSrev.tgz'' sets, so as to preserve your files in `/etc' which
-you are likely to have customized since a previous installation.
+procedure will not let you pick the ``xetc{:--:}OSrev.tgz'' set, so as to
+preserve your files in `/etc' which you are likely to have customized
+since a previous installation.
 
-However, it is strongly advised that you unpack the etc{:--:}OSrev.tgz and
-xetc{:--:}OSrev.tgz sets in a temporary directory and merge changes by hand, or
-with the help of the sysmerge(8) helper script, since all components of
-your system may not function correctly until your files in `/etc' are
-updated.-:})dnl
+However, it is strongly advised that you unpack the etc{:--:}.tgz file
+found in /usr/share/sysmerge and the xetc{:--:}OSrev.tgz in a temporary
+directory and merge changes by hand, or with the help of the sysmerge(8)
+helper script, since all components of your system may not function
+correctly until your files in `/etc' are updated.-:})dnl
 dnl
 dnl
 dnl ========== Installation media preparation

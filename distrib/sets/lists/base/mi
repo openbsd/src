@@ -115,6 +115,7 @@
 ./etc/magic
 ./etc/mail
 ./etc/mail/README
+./etc/mail/helpfile
 ./etc/moduli
 ./etc/monthly
 ./etc/mtree
@@ -3336,6 +3337,7 @@
 ./usr/share/snmp/mibs/OPENBSD-SENSORS-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-SNMPD-CONF.txt
 ./usr/share/sysmerge
+./usr/share/sysmerge/etc.tgz
 ./usr/share/tabset
 ./usr/share/tabset/std
 ./usr/share/tabset/stdcrt

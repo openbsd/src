@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.390 2014/08/26 19:33:48 robert Exp $
+#	$OpenBSD: Makefile,v 1.391 2014/08/26 20:19:26 rpe Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -60,8 +60,7 @@ RCDAEMONS=	amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd \
 		wsmoused xdm ypbind ypldap yppasswdd ypserv nfsd mountd lockd \
 		statd spamlogd sndiod tftpd tftpproxy ldomd unbound iscsid
 
-MISETS=	base${OSrev}.tgz comp${OSrev}.tgz \
-	man${OSrev}.tgz game${OSrev}.tgz etc${OSrev}.tgz
+MISETS=	base${OSrev}.tgz comp${OSrev}.tgz man${OSrev}.tgz game${OSrev}.tgz
 
 all clean cleandir depend etc install lint:
 
@@ -215,14 +214,10 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/rc.d && \
 		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 ${RCDAEMONS} \
 		    ${DESTDIR}/etc/rc.d
-
-distribution:
-	exec ${SUDO} ${MAKE} distribution-etc-root-var
-	cd .. && exec ${SUDO} ${MAKE} install
 	touch ${DESTDIR}/usr/share/sysmerge/etcsum
 	touch ${DESTDIR}/usr/share/sysmerge/examplessum
 	ETCLIST=`mktemp /tmp/_etclist.XXXXXXXXXX` || exit 1; \
-	sort ../distrib/sets/lists/etc/{mi,md.${MACHINE}} > $${ETCLIST}; \
+	sort ${.CURDIR}/../distrib/sets/lists/etc/{mi,md.${MACHINE}} > $${ETCLIST}; \
 	cd ${DESTDIR} && \
 		xargs sha256 -h ${DESTDIR}/usr/share/sysmerge/etcsum < $${ETCLIST} || true; \
 	rm -f $${ETCLIST}
@@ -231,6 +226,13 @@ distribution:
 	cd ${DESTDIR} && \
 		xargs sha256 -h ${DESTDIR}/usr/share/sysmerge/examplessum < $${EGLIST} || true; \
 	rm -f $${EGLIST}
+	cd ${DESTDIR} && \
+	sort ${.CURDIR}/../distrib/sets/lists/etc/{mi,md.${MACHINE}} | \
+	    pax -w -d | gzip -9 > ${DESTDIR}/usr/share/sysmerge/etc.tgz
+
+distribution:
+	exec ${SUDO} ${MAKE} distribution-etc-root-var
+	cd .. && exec ${SUDO} ${MAKE} install
 
 distrib-dirs:
 	if [ ! -d ${DESTDIR}/. ]; then \
