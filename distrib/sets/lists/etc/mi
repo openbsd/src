@@ -102,6 +102,5 @@
 ./var/www/conf/bgplg.css
 ./var/www/conf/bgplg.foot
 ./var/www/conf/bgplg.head
-./var/www/htdocs/50x.html
 ./var/www/htdocs/bgplg/index.html
 ./var/www/htdocs/bgplg/openbgpd.gif
