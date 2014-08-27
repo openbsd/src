@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.105 2014/07/22 13:12:12 mpi Exp $	*/
+/*	$OpenBSD: gem.c,v 1.106 2014/08/27 05:54:15 dlg Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1533,6 +1533,11 @@ gem_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		break;
+
+	case SIOCGIFRXR:
+		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
+		    NULL, MCLBYTES, &sc->sc_rx_ring);
 		break;
 
 	default:
