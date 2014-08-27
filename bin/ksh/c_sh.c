@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.44 2013/09/04 15:49:18 millert Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.45 2014/08/27 08:26:04 jmc Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -920,7 +920,7 @@ const struct builtin shbuiltins [] = {
 	{"*=return", c_exitreturn},
 	{"*=set", c_set},
 	{"*=shift", c_shift},
-	{"=times", c_times},
+	{"*=times", c_times},
 	{"*=trap", c_trap},
 	{"+=wait", c_wait},
 	{"+read", c_read},
