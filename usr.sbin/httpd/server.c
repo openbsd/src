@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.39 2014/08/06 18:38:11 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.40 2014/08/27 09:51:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -750,20 +750,29 @@ void
 server_error(struct bufferevent *bev, short error, void *arg)
 {
 	struct client		*clt = arg;
+	struct evbuffer		*dst;
 
 	if (error & EVBUFFER_TIMEOUT) {
 		server_close(clt, "buffer event timeout");
-		return;
-	}
-	if (error & EVBUFFER_ERROR && errno == EFBIG) {
-		bufferevent_enable(bev, EV_READ);
 		return;
 	}
 	if (error & (EVBUFFER_READ|EVBUFFER_WRITE|EVBUFFER_EOF)) {
 		bufferevent_disable(bev, EV_READ|EV_WRITE);
 
 		clt->clt_done = 1;
+
+		dst = EVBUFFER_OUTPUT(clt->clt_bev);
+		if (EVBUFFER_LENGTH(dst)) {
+			/* Finish writing all data first */
+			bufferevent_enable(clt->clt_bev, EV_WRITE);
+			return;
+		}
+
 		server_close(clt, "done");
+		return;
+	}
+	if (error & EVBUFFER_ERROR && errno == EFBIG) {
+		bufferevent_enable(bev, EV_READ);
 		return;
 	}
 	server_close(clt, "buffer event error");
