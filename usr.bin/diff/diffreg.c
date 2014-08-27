@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.82 2012/07/08 15:48:56 stsp Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.83 2014/08/27 15:22:40 kspillner Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -778,10 +778,14 @@ check(FILE *f1, FILE *f2, int flags)
 				 * GNU diff ignores a missing newline
 				 * in one file for -b or -w.
 				 */
-				if ((flags & (D_FOLDBLANKS|D_IGNOREBLANKS)) &&
-				    ((c == EOF && d == '\n') ||
-				    (c == '\n' && d == EOF))) {
-					break;
+				if (flags & (D_FOLDBLANKS|D_IGNOREBLANKS)) {
+					if (c == EOF && d == '\n') {
+						ctnew++;
+						break;
+					} else if (c == '\n' && d == EOF) {
+						ctold++;
+						break;
+					}
 				}
 				ctold++;
 				ctnew++;
