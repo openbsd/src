@@ -1,4 +1,4 @@
-/* $OpenBSD: prime.c,v 1.1 2014/08/26 17:47:25 jsing Exp $ */
+/* $OpenBSD: prime.c,v 1.2 2014/08/27 15:55:23 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  *
@@ -55,93 +55,114 @@
 
 #include <openssl/bn.h>
 
+struct {
+	int bits;
+	int checks;
+	int generate;
+	int hex;
+	int safe;
+} prime_config;
+
+struct option prime_options[] = {
+	{
+		.name = "bits",
+		.argname = "n",
+		.desc = "Number of bits in the generated prime number",
+		.type = OPTION_ARG_INT,
+		.opt.value = &prime_config.bits,
+	},
+	{
+		.name = "checks",
+		.argname = "n",
+		.desc = "Miller-Rabin probablistic primality test iterations",
+		.type = OPTION_ARG_INT,
+		.opt.value = &prime_config.checks,
+	},
+	{
+		.name = "generate",
+		.desc = "Generate a pseudo-random prime number",
+		.type = OPTION_FLAG,
+		.opt.flag = &prime_config.generate,
+	},
+	{
+		.name = "hex",
+		.desc = "Hexadecimal prime numbers",
+		.type = OPTION_FLAG,
+		.opt.flag = &prime_config.hex,
+	},
+	{
+		.name = "safe",
+		.desc = "Generate only \"safe\" prime numbers",
+		.type = OPTION_FLAG,
+		.opt.flag = &prime_config.safe,
+	},
+	{},
+};
+
+static void
+prime_usage()
+{
+	fprintf(stderr,
+	    "usage: prime [-bits n] [-checks n] [-generate] [-hex] [-safe] "
+	    "p\n");
+	options_usage(prime_options);
+}
+
 int prime_main(int, char **);
 
 int
 prime_main(int argc, char **argv)
 {
-	int hex = 0;
-	int checks = 20;
-	int generate = 0;
-	int bits = 0;
-	int safe = 0;
 	BIGNUM *bn = NULL;
-	const char *errstr = NULL;
+	char *prime = NULL;
 	BIO *bio_out;
+	char *s;
 
-	--argc;
-	++argv;
-	while (argc >= 1 && **argv == '-') {
-		if (!strcmp(*argv, "-hex"))
-			hex = 1;
-		else if (!strcmp(*argv, "-generate"))
-			generate = 1;
-		else if (!strcmp(*argv, "-bits")) {
-			if (--argc < 1)
-				goto bad;
-			else
-				bits = strtonum(*(++argv), 0, INT_MAX, &errstr);
-			if (errstr)
-				goto bad;
-		} else if (!strcmp(*argv, "-safe"))
-			safe = 1;
-		else if (!strcmp(*argv, "-checks")) {
-			if (--argc < 1)
-				goto bad;
-			else
-				checks = strtonum(*(++argv), 0, INT_MAX, &errstr);
-			if (errstr)
-				goto bad;
-		} else {
-			BIO_printf(bio_err, "Unknown option '%s'\n", *argv);
-			goto bad;
-		}
-		--argc;
-		++argv;
+	memset(&prime_config, 0, sizeof(prime_config));
+
+	/* Default iterations for Miller-Rabin probabilistic primality test. */
+	prime_config.checks = 20;
+
+	if (options_parse(argc, argv, prime_options, &prime) != 0) {
+		prime_usage();
+		return (1);
 	}
 
-	if (argv[0] == NULL && !generate) {
-		BIO_printf(bio_err, "No prime specified\n");
-		goto bad;
+	if (prime == NULL && prime_config.generate == 0) {
+		BIO_printf(bio_err, "No prime specified.\n");
+		prime_usage();
+		return (1);
 	}
+
 	if ((bio_out = BIO_new(BIO_s_file())) != NULL) {
 		BIO_set_fp(bio_out, stdout, BIO_NOCLOSE);
 	}
-	if (generate) {
-		char *s;
 
-		if (!bits) {
-			BIO_printf(bio_err, "Specifiy the number of bits.\n");
+	if (prime_config.generate != 0) {
+		if (prime_config.bits == 0) {
+			BIO_printf(bio_err, "Specify the number of bits.\n");
 			return 1;
 		}
-		bn = BN_new();
-		BN_generate_prime_ex(bn, bits, safe, NULL, NULL, NULL);
-		s = hex ? BN_bn2hex(bn) : BN_bn2dec(bn);
+		bn = BN_new();	/* XXX - unchecked malloc. */
+		BN_generate_prime_ex(bn, prime_config.bits, prime_config.safe,
+		    NULL, NULL, NULL);
+		s = prime_config.hex ? BN_bn2hex(bn) : BN_bn2dec(bn);
 		BIO_printf(bio_out, "%s\n", s);
 		free(s);
 	} else {
-		if (hex)
-			BN_hex2bn(&bn, argv[0]);
+		if (prime_config.hex)
+			BN_hex2bn(&bn, prime);
 		else
-			BN_dec2bn(&bn, argv[0]);
+			BN_dec2bn(&bn, prime);
 
 		BN_print(bio_out, bn);
 		BIO_printf(bio_out, " is %sprime\n",
-		    BN_is_prime_ex(bn, checks, NULL, NULL) ? "" : "not ");
+		    BN_is_prime_ex(bn, prime_config.checks,
+			NULL, NULL) ? "" : "not ");
 	}
 
 	BN_free(bn);
 	BIO_free_all(bio_out);
 
 	return 0;
-
-bad:
-	if (errstr)
-		BIO_printf(bio_err, "invalid argument %s: %s\n", *argv, errstr);
-	else {
-		BIO_printf(bio_err, "options are\n");
-		BIO_printf(bio_err, "%-14s hex\n", "-hex");
-		BIO_printf(bio_err, "%-14s number of checks\n", "-checks <n>");
-	}
-	return 1;
 }
