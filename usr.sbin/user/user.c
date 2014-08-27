@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.99 2014/07/20 01:38:40 guenther Exp $ */
+/* $OpenBSD: user.c,v 1.100 2014/08/27 06:51:35 sebastia Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -876,11 +876,13 @@ typedef struct passwd_type_t {
 	int		length;		/* length of password */
 } passwd_type_t;
 
-#define BLF "$2a"
-#define MD5 "$1"
-#define DES ""
+#define NBLF "$2b"
+#define BLF  "$2a"
+#define MD5  "$1"
+#define DES  ""
 
 static passwd_type_t	passwd_types[] = {
+	{ NBLF,	3,	54	},	/* Blowfish bcrypt version 2b */
 	{ BLF,	3,	54	},	/* Blowfish */
 	{ MD5,	2,	34	},	/* MD5 */
 	{ DES,	0,	DES_Len	},	/* standard DES */
@@ -897,7 +899,8 @@ valid_password_length(char *newpasswd)
 		if (strncmp(newpasswd, pwtp->type, pwtp->desc_length) == 0) {
 			char *p;
 
-			if (strcmp(pwtp->type, BLF) != 0) {
+			if (strcmp(pwtp->type, BLF) != 0 &&
+			    strcmp(pwtp->type, NBLF) != 0) {
 				return strlen(newpasswd) == pwtp->length;
 			}
 			/* Skip first three `$'. */
