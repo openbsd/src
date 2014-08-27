@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.152 2014/08/26 21:29:56 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.153 2014/08/27 14:13:17 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -20,7 +20,7 @@
 
 umask 0022
 
-unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE EGSUM ETCSUM
+unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE EGMODS EGSUM ETCSUM
 unset NEED_NEWALIASES NEWGRP NEWUSR NEED_REBOOT NOSIGCHECK PKGMODE
 unset PKGSUM TGZ XETCSUM XTGZ
 
@@ -122,8 +122,8 @@ extract_sets() {
 			error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks .${DBDIR}/${_set}sum"
 
 		(cd ${TEMPROOT} && tar -xzphf "${_tgz}" && \
-			find . -type f | xargs sha256 -h ${WRKDIR}/${_set}sum) || \
-			error_rm_wrkdir "failed to extract ${_tgz} and create checksum file"
+			find . -type f | sort | xargs sha256 -h ${WRKDIR}/${_set}sum) || \
+				error_rm_wrkdir "failed to extract ${_tgz} and create checksum file"
 		rm "${_tgz}"
 	done
 }
@@ -711,33 +711,37 @@ sm_compare() {
 
 sm_check_an_eg() {
 	EGSUM=examplessum
-	local _egmods _i _managed
+	local _egmods _i _j _managed
 	if [ -f "${DESTDIR}/${DBDIR}/${EGSUM}" ]; then
-		EGMODS="$(cd ${DESTDIR:=/} && sha256 -c ${DESTDIR}/${DBDIR}/${EGSUM} 2>/dev/null | grep 'FAILED$' | awk '{ print $2 }' | sed -e "s,:,,")"
+		_egmods="$(cd ${DESTDIR:=/} && \
+			 sha256 -c ${DESTDIR}/${DBDIR}/${EGSUM} 2>/dev/null | \
+			 grep 'FAILED$' | \
+			 awk '{ print $2 }' | \
+			 sed -e "s,:,,")"
 		mv ${DESTDIR}/${DBDIR}/${EGSUM} ${DESTDIR}/${DBDIR}/.${EGSUM}.bak
 	fi
-	for _i in ${EGMODS}; do
-		_managed=$(echo ${_i} | sed -e "s,etc/examples,etc,")
-		if [ -f "${DESTDIR}/${_managed}" ]; then
-			_egmods="${_egmods} ${_managed##*/}"
+	for _i in ${_egmods}; do
+		if [ -f "${DESTDIR}/etc/${_i##*/}" ]; then
+			EGMODS="${EGMODS:+${EGMODS} }${_i#.}"
 		fi
 	done
-	if [ -n "${_egmods}" ]; then
-		warn "example(s) changed for:${_egmods}"
-	else
-		# example changed but we have no corresponding file under /etc
-		unset EGMODS
+	# only warn for files we care about
+	if [ -n "${EGMODS}" ]; then
+		for _j in ${EGMODS}; do
+			_managed="${_managed:+${_managed} }${_j##*/}"
+		done
+		warn "example(s) changed for: ${_managed}"
 	fi
 	cd ${DESTDIR:=/} && \
-		find ./etc/examples -type f | xargs sha256 -h ${DESTDIR}/${DBDIR}/${EGSUM} || \
-		error_rm_wrkdir "failed to create ${EGSUM} checksum file"
+		find ./etc/examples -type f | sort | xargs sha256 -h ${DESTDIR}/${DBDIR}/${EGSUM} || \
+			error_rm_wrkdir "failed to create ${EGSUM} checksum file"
 	if [ -f "${DESTDIR}/${DBDIR}/.${EGSUM}.bak" ]; then
 		rm ${DESTDIR}/${DBDIR}/.${EGSUM}.bak
 	fi
 }
 
 sm_post() {
-	local FILES_IN_TEMPROOT FILES_IN_BKPDIR
+	local _i FILES_IN_TEMPROOT FILES_IN_BKPDIR
 
 	FILES_IN_TEMPROOT=$(find ${TEMPROOT} -type f ! -name \*.merged -size +0)
 	[[ -d ${BKPDIR} ]] && FILES_IN_BKPDIR=$(find ${BKPDIR} -type f -size +0)
@@ -768,7 +772,9 @@ sm_post() {
 	fi
 	if [ -n "${EGMODS}" ]; then
 		report "===> Matching example(s) modified since last run"
-		report "${EGMODS}"
+		for _i in ${EGMODS}; do
+			report "${_i}"
+		done
 		report ""
 	fi
 	if [ -n "${FILES_IN_TEMPROOT}" ]; then
