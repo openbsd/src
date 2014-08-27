@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Persistant.pm,v 1.4 2014/03/18 18:53:29 espie Exp $
+# $OpenBSD: Persistent.pm,v 1.1 2014/08/27 18:40:03 kspillner Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -18,7 +18,7 @@
 use strict;
 use warnings;
 
-package OpenBSD::PackageRepository::Persistant;
+package OpenBSD::PackageRepository::Persistent;
 our @ISA=qw(OpenBSD::PackageRepository::Distant);
 
 our %distant = ();

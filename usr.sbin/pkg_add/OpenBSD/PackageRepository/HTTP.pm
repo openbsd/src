@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: HTTP.pm,v 1.11 2014/03/18 18:53:29 espie Exp $
+# $OpenBSD: HTTP.pm,v 1.12 2014/08/27 18:40:03 kspillner Exp $
 #
 # Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
@@ -19,10 +19,10 @@
 use strict;
 use warnings;
 
-use OpenBSD::PackageRepository::Persistant;
+use OpenBSD::PackageRepository::Persistent;
 
 package OpenBSD::PackageRepository::HTTP1;
-our @ISA = qw(OpenBSD::PackageRepository::Persistant);
+our @ISA = qw(OpenBSD::PackageRepository::Persistent);
 sub urlscheme
 {
 	return 'http';
