@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhtest.c,v 1.1 2014/08/25 19:22:20 reyk Exp $	*/
+/*	$OpenBSD: dhtest.c,v 1.2 2014/08/27 10:28:57 reyk Exp $	*/
 /*	$EOM: dhtest.c,v 1.1 1998/07/18 21:14:20 provos Exp $	*/
 
 /*
@@ -47,20 +47,20 @@ main(void)
 	char buf[DH_MAXSZ], buf2[DH_MAXSZ];
 	char sec[DH_MAXSZ], sec2[DH_MAXSZ];
 	struct group *group, *group2;
-	const char *name[] = { "MODP", "EC2N", "ECP" };
+	const char *name[] = { "MODP", "EC2N", "ECP", "CURVE25519" };
 
 	group_init();
 
-	for (id = 0; id < 0xff; id++) {
+	for (id = 0; id < 0xffff; id++) {
 		if ((group = group_get(id)) == NULL ||
 		    (group2 = group_get(id)) == NULL)
 			continue;
 
-		printf ("Testing group %d (%s%d): ", id,
-		    name[group->spec->type],
-		    group->spec->bits);
-
 		len = dh_getlen(group);
+
+		printf ("Testing group %d (%s-%d, length %d): ", id,
+		    name[group->spec->type],
+		    group->spec->bits, len * 8);
 
 		dh_create_exchange(group, buf);
 		dh_create_exchange(group2, buf2);

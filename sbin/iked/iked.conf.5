@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.34 2014/08/25 14:36:10 reyk Exp $
+.\" $OpenBSD: iked.conf.5,v 1.35 2014/08/27 10:28:57 reyk Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 25 2014 $
+.Dd $Mdocdate: August 27 2014 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -820,13 +820,14 @@ keyword:
 .It Li brainpool256 Ta grp28 Ta 256 Ta "ECP, brainpoolP256r1"
 .It Li brainpool384 Ta grp29 Ta 384 Ta "ECP, brainpoolP384r1"
 .It Li brainpool512 Ta grp30 Ta 512 Ta "ECP, brainpoolP512r1"
+.It Li curve25519 Ta - Ta 256 Ta "Curve25519"
 .El
 .Pp
 The currently supported group types are either
 MODP (exponentiation groups modulo a prime),
 EC2N (elliptic curve groups over GF[2^N]),
-or
-ECP (elliptic curve groups modulo a prime).
+ECP (elliptic curve groups modulo a prime),
+or the non-standard Curve25519.
 Please note that the EC2N groups are considered as insecure and only
 provided for backwards compatibility.
 .Sh EXAMPLES

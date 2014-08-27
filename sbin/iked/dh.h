@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.h,v 1.5 2013/01/08 10:38:19 reyk Exp $	*/
+/*	$OpenBSD: dh.h,v 1.6 2014/08/27 10:28:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -20,9 +20,10 @@
 #define _DH_H_
 
 enum group_type {
-	GROUP_MODP	= 0,
-	GROUP_EC2N	= 1,
-	GROUP_ECP	= 2
+	GROUP_MODP		= 0,
+	GROUP_EC2N		= 1,
+	GROUP_ECP		= 2,
+	GROUP_CURVE25519	= 3
 };
 
 struct group_id {
@@ -40,6 +41,7 @@ struct group {
 
 	void		*dh;
 	void		*ec;
+	void		*curve25519;
 
 	int		(*init)(struct group *);
 	int		(*getlen)(struct group *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.13 2014/08/25 14:36:10 reyk Exp $	*/
+/*	$OpenBSD: dh.c,v 1.14 2014/08/27 10:28:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -29,11 +29,13 @@
 
 int	dh_init(struct group *);
 
+/* MODP */
 int	modp_init(struct group *);
 int	modp_getlen(struct group *);
 int	modp_create_exchange(struct group *, u_int8_t *);
 int	modp_create_shared(struct group *, u_int8_t *, u_int8_t *);
 
+/* EC2N/ECP */
 int	ec_init(struct group *);
 int	ec_getlen(struct group *);
 int	ec_create_exchange(struct group *, u_int8_t *);
@@ -42,6 +44,23 @@ int	ec_create_shared(struct group *, u_int8_t *, u_int8_t *);
 int	ec_point2raw(struct group *, const EC_POINT *, u_int8_t *, size_t);
 EC_POINT *
 	ec_raw2point(struct group *, u_int8_t *, size_t);
+
+/* curve25519 */
+int	ec25519_init(struct group *);
+int	ec25519_getlen(struct group *);
+int	ec25519_create_exchange(struct group *, u_int8_t *);
+int	ec25519_create_shared(struct group *, u_int8_t *, u_int8_t *);
+
+#define CURVE25519_SIZE 32	/* 256 bits */
+struct curve25519_key {
+	u_int8_t	 secret[CURVE25519_SIZE];
+	u_int8_t	 public[CURVE25519_SIZE];
+};
+extern int crypto_scalarmult_curve25519(u_char a[CURVE25519_SIZE],
+    const u_char b[CURVE25519_SIZE], const u_char c[CURVE25519_SIZE])
+	__attribute__((__bounded__(__minbytes__, 1, CURVE25519_SIZE)))
+	__attribute__((__bounded__(__minbytes__, 2, CURVE25519_SIZE)))
+	__attribute__((__bounded__(__minbytes__, 3, CURVE25519_SIZE)));
 
 struct group_id ike_groups[] = {
 	{ GROUP_MODP, 1, 768,
@@ -282,7 +301,10 @@ struct group_id ike_groups[] = {
 	{ GROUP_ECP, 27, 224, NULL, NULL, NID_brainpoolP224r1 },
 	{ GROUP_ECP, 28, 256, NULL, NULL, NID_brainpoolP256r1 },
 	{ GROUP_ECP, 29, 384, NULL, NULL, NID_brainpoolP384r1 },
-	{ GROUP_ECP, 30, 512, NULL, NULL, NID_brainpoolP512r1 }
+	{ GROUP_ECP, 30, 512, NULL, NULL, NID_brainpoolP512r1 },
+
+	/* "Private use" extensions */
+	{ GROUP_CURVE25519, 1034, CURVE25519_SIZE * 8 }
 };
 
 void
@@ -301,6 +323,11 @@ group_free(struct group *group)
 		DH_free(group->dh);
 	if (group->ec != NULL)
 		EC_KEY_free(group->ec);
+	if (group->curve25519 != NULL) {
+		explicit_bzero(group->curve25519,
+		    sizeof(struct curve25519_key));
+		free(group->curve25519);
+	}
 	group->spec = NULL;
 	free(group);
 }
@@ -341,6 +368,12 @@ group_get(u_int32_t id)
 		group->getlen = ec_getlen;
 		group->exchange = ec_create_exchange;
 		group->shared = ec_create_shared;
+		break;
+	case GROUP_CURVE25519:
+		group->init = ec25519_init;
+		group->getlen = ec25519_getlen;
+		group->exchange = ec25519_create_exchange;
+		group->shared = ec25519_create_shared;
 		break;
 	default:
 		group_free(group);
@@ -649,4 +682,48 @@ ec_raw2point(struct group *group, u_int8_t *buf, size_t len)
 	BN_CTX_free(bnctx);
 
 	return (point);
+}
+
+int
+ec25519_init(struct group *group)
+{
+	static const u_int8_t	 basepoint[CURVE25519_SIZE] = { 9 };
+	struct curve25519_key	*curve25519;
+
+	if ((curve25519 = calloc(1, sizeof(*curve25519))) == NULL)
+		return (-1);
+
+	group->curve25519 = curve25519;
+
+	arc4random_buf(curve25519->secret, CURVE25519_SIZE);
+	crypto_scalarmult_curve25519(curve25519->public,
+	    curve25519->secret, basepoint);
+
+	return (0);
+}
+
+int
+ec25519_getlen(struct group *group)
+{
+	if (group->spec == NULL)
+		return (0);
+	return (CURVE25519_SIZE);
+}
+
+int
+ec25519_create_exchange(struct group *group, u_int8_t *buf)
+{
+	struct curve25519_key	*curve25519 = group->curve25519;
+
+	memcpy(buf, curve25519->public, ec25519_getlen(group));
+	return (0);
+}
+
+int
+ec25519_create_shared(struct group *group, u_int8_t *shared, u_int8_t *public)
+{
+	struct curve25519_key	*curve25519 = group->curve25519;
+
+	crypto_scalarmult_curve25519(shared, curve25519->secret, public);
+	return (0);
 }
