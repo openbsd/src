@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.153 2014/08/27 14:13:17 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.154 2014/08/27 14:44:42 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -811,7 +811,7 @@ sm_post() {
 }
 
 
-while getopts bdpSs:x: arg; do
+while getopts bdpS:x: arg; do
 	case ${arg} in
 	b)
 		BATCHMODE=1
