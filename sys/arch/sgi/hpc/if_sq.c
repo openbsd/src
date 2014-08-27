@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.10 2014/07/22 10:35:35 mpi Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.11 2014/08/27 02:10:24 brad Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -364,7 +364,6 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_start = sq_start;
 	ifp->if_ioctl = sq_ioctl;
 	ifp->if_watchdog = sq_watchdog;
