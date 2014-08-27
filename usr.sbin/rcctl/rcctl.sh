@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.28 2014/08/26 22:39:09 schwarze Exp $
+# $OpenBSD: rcctl.sh,v 1.29 2014/08/27 23:50:45 schwarze Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -70,16 +70,18 @@ svc_default_enabled()
 	return ${_ret}
 }
 
+# For security reasons, only call this if the service is enabled.
+# To avoid namespace pollution, only call it in a subshell.
 svc_default_enabled_flags()
 {
 	local _svc=$1
 	[ -n "${_svc}" ] || return
+	svc_is_special ${_svc} && return
 
-	_rc_parse_conf /etc/rc.conf
-	pkg_scripts=${_svc}
-	unset ${_svc}_flags
-	echo $(svc_get_flags ${_svc})
-	_rc_parse_conf
+	FUNCS_ONLY=1
+	rc_cmd() { }
+	. /etc/rc.d/${_svc} >/dev/null 2>&1
+	[ -n "${daemon_flags}" ] && echo ${daemon_flags}
 }
 
 svc_get_flags()
@@ -99,14 +101,8 @@ svc_get_flags()
 		fi
 		[ -z "${daemon_flags}" ] && \
 			daemon_flags="$(eval echo \${${_svc}_flags})"
-		# rc.d shell script: no other way to get "${daemon_flags}"
 		[ -z "${daemon_flags}" ] && \
-			daemon_flags=$(
-				FUNCS_ONLY=1
-				rc_cmd() { }
-				. /etc/rc.d/${_svc} >/dev/null 2>&1
-				echo ${daemon_flags}
-			)
+			deamon_flags="$(svc_default_enabled_flags ${_svc})"
 
 		echo ${daemon_flags} | sed '/^$/d'
 	fi
