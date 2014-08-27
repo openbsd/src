@@ -1,4 +1,4 @@
-/* $OpenBSD: rand.c,v 1.2 2014/08/27 14:59:44 jsing Exp $ */
+/* $OpenBSD: rand.c,v 1.3 2014/08/27 15:54:02 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -121,6 +121,8 @@ rand_main(int argc, char **argv)
 	int num = -1;
 	int i, r;
 	BIO *out = NULL;
+
+	memset(&rand_config, 0, sizeof(rand_config));
 
 	if (options_parse(argc, argv, rand_options, &num_bytes) != 0) {
 		rand_usage();
