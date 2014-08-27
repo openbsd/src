@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.47 2014/07/02 00:23:36 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.48 2014/08/27 00:22:26 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -98,7 +98,6 @@ struct pool {
 			pr_curpage;
 	unsigned int	pr_size;	/* Size of item */
 	unsigned int	pr_align;	/* Requested alignment, must be 2^n */
-	unsigned int	pr_itemoffset;	/* Align this offset in item */
 	unsigned int	pr_minitems;	/* minimum # of items to keep */
 	unsigned int	pr_minpages;	/* same in page units */
 	unsigned int	pr_maxpages;	/* maximum # of idle pages to keep */

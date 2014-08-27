@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.147 2014/08/20 00:00:46 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.148 2014/08/27 00:22:26 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -249,10 +249,11 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	int off, slack;
 #ifdef DIAGNOSTIC
 	struct pool *iter;
+	KASSERT(ioff == 0);
 #endif
 
 #ifdef MALLOC_DEBUG
-	if ((flags & PR_DEBUG) && (ioff != 0 || align != 0))
+	if ((flags & PR_DEBUG) && align != 0)
 		flags &= ~PR_DEBUG;
 #endif
 	/*
@@ -356,15 +357,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		RB_INIT(&pp->pr_phtree);
 	}
 
-	/*
-	 * Alignment is to take place at `ioff' within the item. This means
-	 * we must reserve up to `align - 1' bytes on the page to allow
-	 * appropriate positioning of each item.
-	 *
-	 * Silently enforce `0 <= ioff < align'.
-	 */
-	pp->pr_itemoffset = ioff = ioff % align;
-	pp->pr_itemsperpage = (off - ((align - ioff) % align)) / pp->pr_size;
+	pp->pr_itemsperpage = off / pp->pr_size;
 	KASSERT(pp->pr_itemsperpage != 0);
 
 	/*
@@ -881,7 +874,6 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	struct pool_item *pi;
 	caddr_t cp = storage;
 	unsigned int align = pp->pr_align;
-	unsigned int ioff = pp->pr_itemoffset;
 	int n;
 
 	/*
@@ -904,11 +896,6 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	if ((pp->pr_curcolor += align) > pp->pr_maxcolor)
 		pp->pr_curcolor = 0;
 
-	/*
-	 * Adjust storage to apply alignment to `pr_itemoffset' in each item.
-	 */
-	if (ioff != 0)
-		cp = (caddr_t)(cp + (align - ioff));
 	ph->ph_colored = cp;
 
 	/*
@@ -919,8 +906,6 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 
 	while (n--) {
 		pi = (struct pool_item *)cp;
-
-		KASSERT(((((vaddr_t)pi) + ioff) & (align - 1)) == 0);
 
 		/* Insert on page list */
 		XSIMPLEQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);
@@ -1180,8 +1165,8 @@ pool_print1(struct pool *pp, const char *modif,
 		modif++;
 	}
 
-	(*pr)("POOL %s: size %u, align %u, ioff %u, roflags 0x%08x\n",
-	    pp->pr_wchan, pp->pr_size, pp->pr_align, pp->pr_itemoffset,
+	(*pr)("POOL %s: size %u, align %u, roflags 0x%08x\n",
+	    pp->pr_wchan, pp->pr_size, pp->pr_align,
 	    pp->pr_roflags);
 	(*pr)("\talloc %p\n", pp->pr_alloc);
 	(*pr)("\tminitems %u, minpages %u, maxpages %u, npages %u\n",
