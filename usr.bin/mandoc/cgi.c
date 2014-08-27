@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.34 2014/08/26 11:13:58 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.35 2014/08/27 00:06:08 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -973,8 +973,8 @@ pg_search(const struct req *req)
 
 	search.arch = req->q.arch;
 	search.sec = req->q.sec;
-	search.deftype = req->q.equal ? TYPE_Nm : (TYPE_Nm | TYPE_Nd);
-	search.flags = req->q.equal ? MANSEARCH_MAN : 0;
+	search.outkey = "Nd";
+	search.argmode = req->q.equal ? ARG_NAME : ARG_EXPR;
 
 	paths.sz = 1;
 	paths.paths = mandoc_malloc(sizeof(char *));
@@ -1003,7 +1003,7 @@ pg_search(const struct req *req)
 			ep++;
 	}
 
-	if (0 == mansearch(&search, &paths, sz, cp, "Nd", &res, &ressz))
+	if (0 == mansearch(&search, &paths, sz, cp, &res, &ressz))
 		pg_noresult(req, "You entered an invalid query.");
 	else if (0 == ressz)
 		pg_noresult(req, "No results found.");

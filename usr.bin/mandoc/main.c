@@ -1,6 +1,6 @@
-/*	$Id: main.c,v 1.94 2014/06/21 22:23:44 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.95 2014/08/27 00:06:08 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
  *
@@ -17,7 +17,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+
 #include <assert.h>
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -29,6 +34,17 @@
 #include "main.h"
 #include "mdoc.h"
 #include "man.h"
+#include "manpath.h"
+#include "mansearch.h"
+
+enum	outmode {
+	OUTMODE_DEF = 0,
+	OUTMODE_FLN,
+	OUTMODE_LST,
+	OUTMODE_ALL,
+	OUTMODE_INT,
+	OUTMODE_ONE
+};
 
 typedef	void		(*out_mdoc)(void *, const struct mdoc *);
 typedef	void		(*out_man)(void *, const struct man *);
@@ -59,30 +75,41 @@ struct	curparse {
 	char		  outopts[BUFSIZ]; /* buf of output opts */
 };
 
-int			  apropos(int, char**);
 int			  mandocdb(int, char**);
-
 static	int		  moptions(int *, char *);
 static	void		  mmsg(enum mandocerr, enum mandoclevel,
 				const char *, int, int, const char *);
 static	void		  parse(struct curparse *, int,
 				const char *, enum mandoclevel *);
+static	enum mandoclevel  passthrough(const char *);
+static	void		  spawn_pager(void);
 static	int		  toptions(struct curparse *, char *);
-static	void		  usage(void) __attribute__((noreturn));
+static	void		  usage(enum argmode) __attribute__((noreturn));
 static	void		  version(void) __attribute__((noreturn));
 static	int		  woptions(struct curparse *, char *);
 
+static	const int sec_prios[] = {1, 4, 5, 8, 6, 3, 7, 2, 9};
 static	const char	 *progname;
 
 
 int
 main(int argc, char *argv[])
 {
-	int		 c;
 	struct curparse	 curp;
-	int		 options;
-	enum mandoclevel rc;
+	struct mansearch search;
+	struct manpaths	 paths;
+	char		*conf_file, *defpaths, *auxpaths;
 	char		*defos;
+	struct manpage	*res, *resp;
+	size_t		 isec, i, sz;
+	int		 prio, best_prio;
+	char		 sec;
+	enum mandoclevel rc;
+	enum outmode	 outmode;
+	int		 show_usage;
+	int		 use_pager;
+	int		 options;
+	int		 c;
 
 	progname = strrchr(argv[0], '/');
 	if (progname == NULL)
@@ -90,22 +117,53 @@ main(int argc, char *argv[])
 	else
 		++progname;
 
-	if (0 == strncmp(progname, "apropos", 7) ||
-	    0 == strncmp(progname, "whatis", 6))
-		return(apropos(argc, argv));
 	if (0 == strncmp(progname, "mandocdb", 8) ||
 	    0 == strncmp(progname, "makewhatis", 10))
 		return(mandocdb(argc, argv));
 
-	memset(&curp, 0, sizeof(struct curparse));
+	/* Search options. */
 
-	options = MPARSE_SO;
+	memset(&paths, 0, sizeof(struct manpaths));
+	conf_file = defpaths = auxpaths = NULL;
+
+	memset(&search, 0, sizeof(struct mansearch));
+	search.outkey = "Nd";
+
+	if (strcmp(progname, "man") == 0)
+		search.argmode = ARG_NAME;
+	else if (strncmp(progname, "apropos", 7) == 0)
+		search.argmode = ARG_EXPR;
+	else if (strncmp(progname, "whatis", 6) == 0)
+		search.argmode = ARG_WORD;
+	else
+		search.argmode = ARG_FILE;
+
+	/* Parser and formatter options. */
+
+	memset(&curp, 0, sizeof(struct curparse));
 	curp.outtype = OUTT_ASCII;
 	curp.wlevel  = MANDOCLEVEL_FATAL;
+	options = MPARSE_SO;
 	defos = NULL;
 
-	while (-1 != (c = getopt(argc, argv, "I:m:O:T:VW:")))
+	use_pager = 1;
+	show_usage = 0;
+	outmode = OUTMODE_DEF;
+
+	while (-1 != (c = getopt(argc, argv, "aC:cfI:ikM:m:O:S:s:T:VW:w"))) {
 		switch (c) {
+		case 'a':
+			outmode = OUTMODE_ALL;
+			break;
+		case 'C':
+			conf_file = optarg;
+			break;
+		case 'c':
+			use_pager = 0;
+			break;
+		case 'f':
+			search.argmode = ARG_WORD;
+			break;
 		case 'I':
 			if (strncmp(optarg, "os=", 3)) {
 				fprintf(stderr,
@@ -121,13 +179,28 @@ main(int argc, char *argv[])
 			}
 			defos = mandoc_strdup(optarg + 3);
 			break;
+		case 'i':
+			outmode = OUTMODE_INT;
+			break;
+		case 'k':
+			search.argmode = ARG_EXPR;
+			break;
+		case 'M':
+			defpaths = optarg;
+			break;
 		case 'm':
-			if ( ! moptions(&options, optarg))
-				return((int)MANDOCLEVEL_BADARG);
+			auxpaths = optarg;
 			break;
 		case 'O':
+			search.outkey = optarg;
 			(void)strlcat(curp.outopts, optarg, BUFSIZ);
 			(void)strlcat(curp.outopts, ",", BUFSIZ);
+			break;
+		case 'S':
+			search.arch = optarg;
+			break;
+		case 's':
+			search.sec = optarg;
 			break;
 		case 'T':
 			if ( ! toptions(&curp, optarg))
@@ -137,13 +210,132 @@ main(int argc, char *argv[])
 			if ( ! woptions(&curp, optarg))
 				return((int)MANDOCLEVEL_BADARG);
 			break;
+		case 'w':
+			outmode = OUTMODE_FLN;
+			break;
 		case 'V':
 			version();
 			/* NOTREACHED */
 		default:
-			usage();
-			/* NOTREACHED */
+			show_usage = 1;
+			break;
 		}
+	}
+
+	if (show_usage)
+		usage(search.argmode);
+
+	/* Postprocess options. */
+
+	if (outmode == OUTMODE_DEF) {
+		switch (search.argmode) {
+		case ARG_FILE:
+			outmode = OUTMODE_ALL;
+			use_pager = 0;
+			break;
+		case ARG_NAME:
+			outmode = OUTMODE_ONE;
+			break;
+		default:
+			outmode = OUTMODE_LST;
+			break;
+		}
+	}
+
+	/* Parse arguments. */
+
+	argc -= optind;
+	argv += optind;
+	resp = NULL;
+
+	/* Quirk for a man(1) section argument without -s. */
+
+	if (search.argmode == ARG_NAME &&
+	    argv[0] != NULL &&
+	    isdigit((unsigned char)argv[0][0]) &&
+	    (argv[0][1] == '\0' || !strcmp(argv[0], "3p"))) {
+		search.sec = argv[0];
+		argv++;
+		argc--;
+	}
+
+	rc = MANDOCLEVEL_OK;
+
+	/* man(1), whatis(1), apropos(1) */
+
+	if (search.argmode != ARG_FILE) {
+		if (argc == 0)
+			usage(search.argmode);
+
+		/* Access the mandoc database. */
+
+		manpath_parse(&paths, conf_file, defpaths, auxpaths);
+		mansearch_setup(1);
+		if( ! mansearch(&search, &paths, argc, argv, &res, &sz))
+			usage(search.argmode);
+		manpath_free(&paths);
+		resp = res;
+
+		if (sz == 0) {
+			if (search.argmode == ARG_NAME)
+				fprintf(stderr, "%s: No entry for %s "
+				    "in the manual.\n", progname, argv[0]);
+			rc = MANDOCLEVEL_BADARG;
+			goto out;
+		}
+
+		/*
+		 * For standard man(1) and -a output mode,
+		 * prepare for copying filename pointers
+		 * into the program parameter array.
+		 */
+
+		if (outmode == OUTMODE_ONE) {
+			argc = 1;
+			best_prio = 10;
+		} else if (outmode == OUTMODE_ALL)
+			argc = (int)sz;
+
+		/* Iterate all matching manuals. */
+
+		for (i = 0; i < sz; i++) {
+			if (outmode == OUTMODE_FLN)
+				puts(res[i].file);
+			else if (outmode == OUTMODE_LST)
+				printf("%s - %s\n", res[i].names,
+				    res[i].output == NULL ? "" :
+				    res[i].output);
+			else if (outmode == OUTMODE_ONE) {
+				/* Search for the best section. */
+				isec = strcspn(res[i].file, "123456789");
+				sec = res[i].file[isec];
+				if ('\0' == sec)
+					continue;
+				prio = sec_prios[sec - '1'];
+				if (prio >= best_prio)
+					continue;
+				best_prio = prio;
+				resp = res + i;
+			}
+		}
+
+		/*
+		 * For man(1), -a and -i output mode, fall through
+		 * to the main mandoc(1) code iterating files
+		 * and running the parsers on each of them.
+		 */
+
+		if (outmode == OUTMODE_FLN || outmode == OUTMODE_LST)
+			goto out;
+	}
+
+	/* mandoc(1) */
+
+	if ( ! moptions(&options, auxpaths))
+		return((int)MANDOCLEVEL_BADARG);
+
+	if (use_pager && isatty(STDOUT_FILENO))
+		spawn_pager();
 
 	curp.mp = mparse_alloc(options, curp.wlevel, mmsg, defos);
 
@@ -153,25 +345,34 @@ main(int argc, char *argv[])
 	if (OUTT_MAN == curp.outtype)
 		mparse_keep(curp.mp);
 
-	argc -= optind;
-	argv += optind;
-
-	rc = MANDOCLEVEL_OK;
-
-	if (NULL == *argv)
+	if (argc == 0)
 		parse(&curp, STDIN_FILENO, "<stdin>", &rc);
 
-	while (*argv) {
-		parse(&curp, -1, *argv, &rc);
+	while (argc) {
+		if (resp != NULL) {
+			if (resp->form)
+				parse(&curp, -1, resp->file, &rc);
+			else
+				rc = passthrough(resp->file);
+			resp++;
+		} else
+			parse(&curp, -1, *argv++, &rc);
 		if (MANDOCLEVEL_OK != rc && curp.wstop)
 			break;
-		++argv;
+		argc--;
 	}
 
 	if (curp.outfree)
 		(*curp.outfree)(curp.outdata);
 	if (curp.mp)
 		mparse_free(curp.mp);
+
+out:
+	if (search.argmode != ARG_FILE) {
+		mansearch_free(res, sz);
+		mansearch_setup(0);
+	}
+
 	free(defos);
 
 	return((int)rc);
@@ -181,24 +382,35 @@ static void
 version(void)
 {
 
-	printf("%s %s\n", progname, VERSION);
+	printf("mandoc %s\n", VERSION);
 	exit((int)MANDOCLEVEL_OK);
 }
 
 static void
-usage(void)
+usage(enum argmode argmode)
 {
 
-	fprintf(stderr, "usage: %s "
-			"[-V] "
-			"[-Ios=name] "
-			"[-mformat] "
-			"[-Ooption] "
-			"[-Toutput] "
-			"[-Wlevel]\n"
-			"\t      [file ...]\n",
-			progname);
-
+	switch (argmode) {
+	case ARG_FILE:
+		fputs("usage: mandoc [-V] [-Ios=name] [-mformat]"
+		    " [-Ooption] [-Toutput] [-Wlevel]\n"
+		    "\t      [file ...]\n", stderr);
+		break;
+	case ARG_NAME:
+		fputs("usage: man [-acfhkVw] [-C file] "
+		    "[-M path] [-m path] [-S arch] [-s section]\n"
+		    "\t   [section] name ...\n", stderr);
+		break;
+	case ARG_WORD:
+		fputs("usage: whatis [-V] [-C file] [-M path] [-m path] "
+		    "[-S arch] [-s section] name ...\n", stderr);
+		break;
+	case ARG_EXPR:
+		fputs("usage: apropos [-V] [-C file] [-M path] [-m path] "
+		    "[-O outkey] [-S arch]\n"
+		    "\t       [-s section] expression ...\n", stderr);
+		break;
+	}
 	exit((int)MANDOCLEVEL_BADARG);
 }
 
@@ -315,11 +527,47 @@ parse(struct curparse *curp, int fd, const char *file,
 		*level = rc;
 }
 
+static enum mandoclevel
+passthrough(const char *file)
+{
+	char		 buf[BUFSIZ];
+	const char	*syscall;
+	ssize_t		 nr, nw, off;
+	int		 fd;
+
+	fd = open(file, O_RDONLY);
+	if (fd == -1) {
+		syscall = "open";
+		goto fail;
+	}
+
+	while ((nr = read(fd, buf, BUFSIZ)) != -1 && nr != 0)
+		for (off = 0; off < nr; off += nw)
+			if ((nw = write(STDOUT_FILENO, buf + off,
+			    (size_t)(nr - off))) == -1 || nw == 0) {
+				syscall = "write";
+				goto fail;
+			}
+
+        if (nr == 0) {
+		close(fd);
+		return(MANDOCLEVEL_OK);
+        }
+
+	syscall = "read";
+fail:
+	fprintf(stderr, "%s: %s: SYSERR: %s: %s",
+	    progname, file, syscall, strerror(errno));
+	return(MANDOCLEVEL_SYSERR);
+}
+
 static int
 moptions(int *options, char *arg)
 {
 
-	if (0 == strcmp(arg, "doc"))
+	if (arg == NULL)
+		/* nothing to do */;
+	else if (0 == strcmp(arg, "doc"))
 		*options |= MPARSE_MDOC;
 	else if (0 == strcmp(arg, "andoc"))
 		/* nothing to do */;
@@ -428,4 +676,80 @@ mmsg(enum mandocerr t, enum mandoclevel lvl,
 		fprintf(stderr, ": %s", msg);
 
 	fputc('\n', stderr);
+}
+
+static void
+spawn_pager(void)
+{
+#define MAX_PAGER_ARGS 16
+	char		*argv[MAX_PAGER_ARGS];
+	const char	*pager;
+	char		*cp;
+	int		 fildes[2];
+	int		 argc;
+
+	if (pipe(fildes) == -1) {
+		fprintf(stderr, "%s: pipe: %s\n",
+		    progname, strerror(errno));
+		return;
+	}
+
+	switch (fork()) {
+	case -1:
+		fprintf(stderr, "%s: fork: %s\n",
+		    progname, strerror(errno));
+		exit((int)MANDOCLEVEL_SYSERR);
+	case 0:
+		close(fildes[0]);
+		if (dup2(fildes[1], STDOUT_FILENO) == -1) {
+			fprintf(stderr, "%s: dup output: %s\n",
+			    progname, strerror(errno));
+			exit((int)MANDOCLEVEL_SYSERR);
+		}
+		return;
+	default:
+		break;
+	}
+
+	/* The original process becomes the pager. */
+
+	close(fildes[1]);
+	if (dup2(fildes[0], STDIN_FILENO) == -1) {
+		fprintf(stderr, "%s: dup input: %s\n",
+		    progname, strerror(errno));
+		exit((int)MANDOCLEVEL_SYSERR);
+	}
+
+	pager = getenv("MANPAGER");
+	if (pager == NULL || *pager == '\0')
+		pager = getenv("PAGER");
+	if (pager == NULL || *pager == '\0')
+		pager = "/usr/bin/more -s";
+	cp = mandoc_strdup(pager);
+
+	/*
+	 * Parse the pager command into words.
+	 * Intentionally do not do anything fancy here.
+	 */
+
+	argc = 0;
+	while (argc + 1 < MAX_PAGER_ARGS) {
+		argv[argc++] = cp;
+		cp = strchr(cp, ' ');
+		if (cp == NULL)
+			break;
+		*cp++ = '\0';
+		while (*cp == ' ')
+			cp++;
+		if (*cp == '\0')
+			break;
+	}
+	argv[argc] = NULL;
+
+	/* Hand over to the pager. */
+
+	execvp(argv[0], argv);
+	fprintf(stderr, "%s: exec: %s\n",
+	    progname, strerror(errno));
+	exit((int)MANDOCLEVEL_SYSERR);
 }

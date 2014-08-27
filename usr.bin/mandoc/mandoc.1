@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.59 2014/08/08 16:25:15 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.60 2014/08/27 00:06:08 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2014 $
+.Dd $Mdocdate: August 27 2014 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nd format and display UNIX manuals
 .Sh SYNOPSIS
 .Nm mandoc
-.Op Fl V
+.Op Fl acV
 .Sm off
 .Op Fl I Cm os Li = Ar name
 .Sm on
@@ -53,6 +53,21 @@ output.
 .Pp
 The arguments are as follows:
 .Bl -tag -width Ds
+.It Fl a
+If the standard output is a terminal device and
+.Fl c
+is not specified, use
+.Xr more 1
+to paginate the output, just like
+.Xr man 1
+would.
+.It Fl c
+Copy the formatted manual pages to the standard output without using
+.Xr more 1
+to paginate them.
+This is the default.
+It can be specified to override
+.Fl a .
 .Sm off
 .It Fl I Cm os Li = Ar name
 .Sm on
@@ -425,6 +440,21 @@ See
 .Sx HTML Output
 for details; beyond generating XHTML tags instead of HTML tags, these
 output modes are identical.
+.Sh ENVIRONMENT
+.Bl -tag -width MANPAGER
+.It Ev MANPAGER
+Any non-empty value of the environment variable
+.Ev MANPAGER
+will be used instead of the standard pagination program,
+.Xr more 1 .
+.It Ev PAGER
+Specifies the pagination program to use when
+.Ev MANPAGER
+is not defined.
+If neither PAGER nor MANPAGER is defined,
+.Pa /usr/bin/more Fl s
+will be used.
+.El
 .Sh EXIT STATUS
 The
 .Nm

@@ -1,4 +1,4 @@
-/*	$Id: mansearch.h,v 1.11 2014/07/24 20:30:38 schwarze Exp $ */
+/*	$OpenBSD: mansearch.h,v 1.12 2014/08/27 00:06:08 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -68,7 +68,12 @@
 #define	NAME_HEAD	 0x0000004000000010ULL
 #define	NAME_MASK	 0x000000000000001fULL
 
-__BEGIN_DECLS
+enum	argmode {
+	ARG_FILE = 0,
+	ARG_NAME,
+	ARG_WORD,
+	ARG_EXPR
+};
 
 struct	manpage {
 	char		*file; /* to be prefixed by manpath */
@@ -81,21 +86,21 @@ struct	manpage {
 struct	mansearch {
 	const char	*arch; /* architecture/NULL */
 	const char	*sec; /* mansection/NULL */
-	uint64_t	 deftype; /* type if no key  */
-	int		 flags;
-#define	MANSEARCH_WHATIS 0x01 /* whatis(1) mode: whole words, no keys */
-#define	MANSEARCH_MAN    0x02 /* man(1) mode: string equality, no keys */
+	const char	*outkey; /* show content of this macro */
+	enum argmode	 argmode; /* interpretation of arguments */
 };
+
+__BEGIN_DECLS
 
 int	mansearch_setup(int);
 int	mansearch(const struct mansearch *cfg, /* options */
 		const struct manpaths *paths, /* manpaths */
 		int argc, /* size of argv */
 		char *argv[],  /* search terms */
-		const char *outkey, /* name of additional output key */
 		struct manpage **res, /* results */
 		size_t *ressz); /* results returned */
+void	mansearch_free(struct manpage *, size_t);
 
 __END_DECLS
 
-#endif /*!MANSEARCH_H*/
+#endif /* MANSEARCH_H */
