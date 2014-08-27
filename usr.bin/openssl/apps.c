@@ -1,4 +1,19 @@
-/* $OpenBSD: apps.c,v 1.1 2014/08/26 17:47:24 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.2 2014/08/27 14:59:44 jsing Exp $ */
+/*
+ * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2217,4 +2232,84 @@ app_isdir(const char *name)
 	if (stat(name, &st) == 0)
 		return S_ISDIR(st.st_mode);
 	return -1;
+}
+
+void
+options_usage(struct option *opts)
+{
+	const char *argname;
+	char buf[32];
+	int i;
+
+	for (i = 0; opts[i].name != NULL; i++) {
+		if (opts[i].desc == NULL)
+			continue;
+		argname = (opts[i].argname != NULL) ? opts[i].argname : "";
+		snprintf(buf, sizeof(buf), "-%s %s", opts[i].name, argname);
+		fprintf(stderr, " %-*s %s\n", 14, buf, opts[i].desc);
+	}
+}
+
+int
+options_parse(int argc, char **argv, struct option *opts, char **unnamed)
+{
+	struct option *opt;
+	char *arg, *p;
+	int i, j;
+
+	for (i = 1; i < argc; i++) {
+		p = arg = argv[i];
+
+		if (*p++ != '-') {
+			if (unnamed == NULL)
+				goto unknown;
+			*unnamed = arg;
+			continue;
+		}
+		if (*p == '\0')
+			goto unknown;
+
+		for (j = 0; opts[j].name != NULL; j++) {
+			opt = &opts[j];
+			if (strcmp(p, opt->name) != 0)
+				continue;
+
+			switch (opt->type) {
+			case OPTION_ARG:
+				if (++i >= argc) {
+					fprintf(stderr,
+					    "missing %s argument for -%s\n",
+					    opt->argname, opt->name);
+					return (1);
+				}
+				*opt->opt.arg = argv[i];
+				break;
+
+			case OPTION_FLAG:
+				*opt->opt.flag = 1;
+				break;
+
+			case OPTION_VALUE:
+				*opt->opt.value = opt->value;
+				break;
+
+			default:
+				fprintf(stderr,
+				    "option %s - unknown type %i\n",
+				    opt->name, opt->type);
+				return (1);
+			}
+
+			break;
+		}
+
+		if (opts[j].name == NULL)
+			goto unknown;
+	}
+
+	return (0);
+
+unknown:
+	fprintf(stderr, "unknown option '%s'\n", arg);
+	return (1);
 }
