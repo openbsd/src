@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.74 2014/08/19 12:28:03 mpi Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.75 2014/08/27 14:04:16 florian Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -303,7 +303,6 @@ u_long	rip6_sendspace = RIPV6SNDQ;
 u_long	rip6_recvspace = RIPV6RCVQ;
 
 /* ICMPV6 parameters */
-int	icmp6_rediraccept = 0;		/* don't process redirects by default */
 int	icmp6_redirtimeout = 10 * 60;	/* 10 minutes */
 int	icmp6errppslim = 100;		/* 100pps */
 int	ip6_mtudisc_timeout = IPMTUDISCTIMEOUT;

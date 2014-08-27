@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.52 2014/07/11 16:44:13 henning Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.53 2014/08/27 14:04:16 florian Exp $	*/
 /*	$KAME: rtsold.c,v 1.75 2004/01/03 00:00:07 itojun Exp $	*/
 
 /*
@@ -184,13 +184,9 @@ main(int argc, char *argv[])
 	}
 #endif
 
-	if (Fflag) {
-		setinet6sysctl(IPPROTO_ICMPV6, ICMPV6CTL_REDIRACCEPT, 1);
+	if (Fflag)
 		setinet6sysctl(IPPROTO_IPV6, IPV6CTL_FORWARDING, 0);
-	} else {
-		/* warn if accepting redirects is off */
-		if (!getinet6sysctl(IPPROTO_ICMPV6, ICMPV6CTL_REDIRACCEPT))
-			warnx("kernel is configured not to accept redirects");
+	else {
 		/* warn if forwarding is up */
 		if (getinet6sysctl(IPPROTO_IPV6, IPV6CTL_FORWARDING))
 			warnx("kernel is configured as a router, not a host");

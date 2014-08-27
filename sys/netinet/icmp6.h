@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.40 2014/07/11 12:20:26 benno Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.41 2014/08/27 14:04:15 florian Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -542,7 +542,7 @@ struct icmp6stat {
 #define ICMPV6CTL_NAMES { \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
-	{ "rediraccept", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "redirtimeout", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
@@ -566,7 +566,7 @@ struct icmp6stat {
 #define ICMPV6CTL_VARS { \
 	NULL, \
 	NULL, \
-	&icmp6_rediraccept, \
+	NULL, \
 	&icmp6_redirtimeout, \
 	NULL, \
 	NULL, \
@@ -668,7 +668,6 @@ do { \
 		} \
 } while (0)
 
-extern int	icmp6_rediraccept;	/* accept/process redirects */
 extern int	icmp6_redirtimeout;	/* cache time for redirect routes */
 
 #endif /* _KERNEL */
