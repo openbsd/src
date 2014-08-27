@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_config.c,v 1.7 2014/08/06 01:54:01 jsing Exp $ */
+/* $OpenBSD: ressl_config.c,v 1.8 2014/08/27 10:46:53 reyk Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -28,6 +28,7 @@ struct ressl_config ressl_config_default = {
 	.ca_file = _PATH_SSL_CA_FILE,
 	.ca_path = NULL,
 	.ciphers = NULL,
+	.ecdhcurve = NID_X9_62_prime256v1,
 	.verify = 1,
 	.verify_depth = 6,
 };
@@ -80,6 +81,18 @@ void
 ressl_config_set_ciphers(struct ressl_config *config, char *ciphers)
 {
 	config->ciphers = ciphers;
+}
+
+int
+ressl_config_set_ecdhcurve(struct ressl_config *config, const char *name)
+{
+	int nid = NID_undef;
+
+	if (name != NULL && (nid = OBJ_txt2nid(name)) == NID_undef)
+		return (-1);
+
+	config->ecdhcurve = nid;
+	return (0);
 }
 
 void

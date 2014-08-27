@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_internal.h,v 1.9 2014/08/06 01:54:01 jsing Exp $ */
+/* $OpenBSD: ressl_internal.h,v 1.10 2014/08/27 10:46:53 reyk Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -32,6 +32,7 @@ struct ressl_config {
 	char *cert_mem;
 	size_t cert_len;
 	const char *ciphers;
+	int ecdhcurve;
 	const char *key_file;
 	char *key_mem;
 	size_t key_len;

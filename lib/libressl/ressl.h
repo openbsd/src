@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.h,v 1.12 2014/08/15 16:55:32 tedu Exp $ */
+/* $OpenBSD: ressl.h,v 1.13 2014/08/27 10:46:53 reyk Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -37,6 +37,7 @@ void ressl_config_set_cert_file(struct ressl_config *config, char *cert_file);
 void ressl_config_set_cert_mem(struct ressl_config *config, char *cert,
     size_t len);
 void ressl_config_set_ciphers(struct ressl_config *config, char *ciphers);
+int ressl_config_set_ecdhcurve(struct ressl_config *config, const char *);
 void ressl_config_set_key_file(struct ressl_config *config, char *key_file);
 void ressl_config_set_key_mem(struct ressl_config *config, char *key,
     size_t len);
