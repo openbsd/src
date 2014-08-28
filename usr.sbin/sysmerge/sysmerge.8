@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.60 2014/08/28 20:55:28 jmc Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.61 2014/08/28 22:09:00 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -56,6 +56,12 @@ with at a later date.
 Should any problems occur,
 such as a failure to upgrade a file,
 the user will be notified and will have to deal with the issue by hand.
+.Nm
+will also compare the checksum of each file stored under
+.Pa /etc/examples
+against the previous one then warn if it does not match and the
+corresponding file exists under
+.Pa /etc .
 .Pp
 By default (if
 .Fl d
@@ -82,13 +88,6 @@ files will
 .Sy always
 be automatically (re)created.
 .Pp
-Each time
-.Nm
-is run it will compare the checksum of each file stored under
-.Pa /etc/examples
-against the previous one, then warn if it does not match and the
-corresponding file exists under
-.Pa /etc .
 .Pp
 .Nm
 will finish by running
@@ -109,7 +108,7 @@ does not take any automatic action, allowing for a full diff comparison.
 .It Fl p
 Package mode.
 .Nm
-compares the default configuration files of installed
+only compares the default configuration files of installed
 .Xr packages 7
 against their target on the system (@sample).
 .El
