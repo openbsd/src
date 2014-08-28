@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.5 2014/08/28 13:39:07 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.6 2014/08/28 13:51:38 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2259,6 +2259,7 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed)
 	char *arg, *p;
 	int ord = 0;
 	int i, j;
+	int fmt;
 
 	for (i = 1; i < argc; i++) {
 		p = arg = argv[i];
@@ -2294,7 +2295,14 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed)
 				break;
 
 			case OPTION_ARG_FORMAT:
-				*opt->opt.value = str2fmt(argv[i]);
+				fmt = str2fmt(argv[i]);
+				if (fmt == FORMAT_UNDEF) {
+					fprintf(stderr,
+					    "unknown %s '%s' for -%s\n",
+					    opt->argname, argv[i], opt->name);
+					return (1);
+				}
+				*opt->opt.value = fmt;
 				break;
 
 			case OPTION_ARG_INT:
