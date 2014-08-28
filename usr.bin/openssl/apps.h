@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.5 2014/08/28 13:39:07 jsing Exp $ */
+/* $OpenBSD: apps.h,v 1.6 2014/08/28 14:15:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -289,6 +289,7 @@ struct option {
 	enum {
 		OPTION_ARG,
 		OPTION_ARG_FORMAT,
+		OPTION_ARG_FUNC,
 		OPTION_ARG_INT,
 		OPTION_FLAG,
 		OPTION_FLAG_ORD,
@@ -297,6 +298,7 @@ struct option {
 	union {
 		char **arg;
 		int *flag;
+		int (*func)(struct option *opt, char *arg);
 		int *value;
 	} opt;
 	const int value;
