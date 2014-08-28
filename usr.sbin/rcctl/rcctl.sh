@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.31 2014/08/28 07:53:07 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.32 2014/08/28 14:51:16 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -68,13 +68,12 @@ svc_default_enabled()
 	return ${_ret}
 }
 
-# For security reasons, only call this if the service is enabled.
-# To avoid namespace pollution, only call it in a subshell.
+# for security reason and to prevent namespace pollution, only call in a
+# subshell against base system daemons or disabled package scripts
 svc_default_enabled_flags()
 {
 	local _svc=$1
 	[ -n "${_svc}" ] || return
-	svc_is_special ${_svc} && return
 
 	FUNCS_ONLY=1
 	rc_cmd() { }
