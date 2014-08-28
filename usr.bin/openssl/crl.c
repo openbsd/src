@@ -1,4 +1,4 @@
-/* $OpenBSD: crl.c,v 1.1 2014/08/26 17:47:24 jsing Exp $ */
+/* $OpenBSD: crl.c,v 1.2 2014/08/28 14:01:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,29 +70,149 @@
 
 #define	POSTFIX	".rvk"
 
-static const char *crl_usage[] = {
-	"usage: crl args\n",
-	"\n",
-	" -inform arg     - input format - default PEM (DER or PEM)\n",
-	" -outform arg    - output format - default PEM\n",
-	" -text           - print out a text format version\n",
-	" -in arg         - input file - default stdin\n",
-	" -out arg        - output file - default stdout\n",
-	" -hash           - print hash value\n",
-#ifndef OPENSSL_NO_MD5
-	" -hash_old       - print old-style (MD5) hash value\n",
-#endif
-	" -fingerprint    - print the crl fingerprint\n",
-	" -issuer         - print issuer DN\n",
-	" -lastupdate     - lastUpdate field\n",
-	" -nextupdate     - nextUpdate field\n",
-	" -crlnumber      - print CRL number\n",
-	" -noout          - no CRL output\n",
-	" -CAfile  name   - verify CRL using certificates in file \"name\"\n",
-	" -CApath  dir    - verify CRL using certificates in \"dir\"\n",
-	" -nameopt arg    - various certificate name options\n",
-	NULL
+static struct {
+	char *cafile;
+	char *capath;
+	int crlnumber;
+	int fingerprint;
+	int hash;
+	int hash_old;
+	char *infile;
+	int informat;
+	int issuer;
+	int lastupdate;
+	char *nameopt;
+	int nextupdate;
+	int noout;
+	char *outfile;
+	int outformat;
+	int text;
+	int verify;
+} crl_config;
+
+static struct option crl_options[] = {
+	{
+		.name = "CAfile",
+		.argname = "file",
+		.desc = "Verify the CRL using certificates in the given file",
+		.type = OPTION_ARG,
+		.opt.arg = &crl_config.cafile,
+	},
+	{
+		.name = "CApath",
+		.argname = "path",
+		.desc = "Verify the CRL using certificates in the given path",
+		.type = OPTION_ARG,
+		.opt.arg = &crl_config.capath,
+	},
+	{
+		.name = "crlnumber",
+		.desc = "Print the CRL number",
+		.type = OPTION_FLAG_ORD,
+		.opt.flag = &crl_config.crlnumber,
+	},
+	{
+		.name = "fingerprint",
+		.desc = "Print the CRL fingerprint",
+		.type = OPTION_FLAG_ORD,
+		.opt.flag = &crl_config.fingerprint,
+	},
+	{
+		.name = "hash",
+		.desc = "Print the hash of the issuer name",
+		.type = OPTION_FLAG_ORD,
+		.opt.flag = &crl_config.hash,
+	},
+	{
+		.name = "hash_old",
+		.desc = "Print an old-style (MD5) hash of the issuer name",
+		.type = OPTION_FLAG_ORD,
+		.opt.flag = &crl_config.hash_old,
+	},
+	{
+		.name = "in",
+		.argname = "file",
+		.desc = "Input file to read from (stdin if unspecified)",
+		.type = OPTION_ARG,
+		.opt.arg = &crl_config.infile,
+	},
+	{
+		.name = "inform",
+		.argname = "format",
+		.desc = "Input format (DER or PEM)",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &crl_config.informat,
+	},
+	{
+		.name = "issuer",
+		.desc = "Print the issuer name",
+		.type = OPTION_FLAG_ORD,
+		.opt.flag = &crl_config.issuer,
+	},
+	{
+		.name = "lastupdate",
+		.desc = "Print the lastUpdate field",
+		.type = OPTION_FLAG_ORD,
+		.opt.flag = &crl_config.lastupdate,
+	},
+	{
+		.name = "nameopt",
+		.argname = "options",
+		.desc = "Specify certificate name options",
+		.type = OPTION_ARG,
+		.opt.arg = &crl_config.nameopt,
+	},
+	{
+		.name = "nextupdate",
+		.desc = "Print the nextUpdate field",
+		.type = OPTION_FLAG_ORD,
+		.opt.flag = &crl_config.nextupdate,
+	},
+	{
+		.name = "noout",
+		.desc = "Do not output the encoded version of the CRL",
+		.type = OPTION_FLAG,
+		.opt.flag = &crl_config.noout,
+	},
+	{
+		.name = "out",
+		.argname = "file",
+		.desc = "Output file to write to (stdout if unspecified)",
+		.type = OPTION_ARG,
+		.opt.arg = &crl_config.outfile,
+	},
+	{
+		.name = "outform",
+		.argname = "format",
+		.desc = "Output format (DER or PEM)",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &crl_config.outformat,
+	},
+	{
+		.name = "text",
+		.desc = "Print out the CRL in text form",
+		.type = OPTION_FLAG,
+		.opt.flag = &crl_config.text,
+	},
+	{
+		.name = "verify",
+		.desc = "Verify the signature on the CRL",
+		.type = OPTION_FLAG,
+		.opt.flag = &crl_config.verify,
+	},
+	{},
 };
+
+static void
+crl_usage(void)
+{
+	fprintf(stderr,
+	    "usage: crl [-CAfile file] [-CApath dir] [-fingerprint] [-hash]\n"
+	    "    [-in file] [-inform DER | PEM] [-issuer] [-lastupdate]\n"
+	    "    [-nextupdate] [-noout] [-out file] [-outform DER | PEM]\n"
+	    "    [-text]\n\n");
+	options_usage(crl_options);
+}
 
 static X509_CRL *load_crl(char *file, int format);
 static BIO *bio_out = NULL;
@@ -104,135 +224,74 @@ crl_main(int argc, char **argv)
 {
 	unsigned long nmflag = 0;
 	X509_CRL *x = NULL;
-	char *CAfile = NULL, *CApath = NULL;
-	int ret = 1, i, num, badops = 0;
+	int ret = 1, i;
 	BIO *out = NULL;
-	int informat, outformat;
-	char *infile = NULL, *outfile = NULL;
-	int hash = 0, issuer = 0, lastupdate = 0, nextupdate = 0, noout = 0,
-	    text = 0;
-#ifndef OPENSSL_NO_MD5
-	int hash_old = 0;
-#endif
-	int fingerprint = 0, crlnumber = 0;
-	const char **pp;
 	X509_STORE *store = NULL;
 	X509_STORE_CTX ctx;
 	X509_LOOKUP *lookup = NULL;
 	X509_OBJECT xobj;
 	EVP_PKEY *pkey;
-	int do_ver = 0;
-	const EVP_MD *md_alg, *digest = EVP_sha1();
+	const EVP_MD *digest;
+	char *digest_name = NULL;
 
-	if (bio_out == NULL)
+	if (bio_out == NULL) {
 		if ((bio_out = BIO_new(BIO_s_file())) != NULL) {
 			BIO_set_fp(bio_out, stdout, BIO_NOCLOSE);
 		}
-	informat = FORMAT_PEM;
-	outformat = FORMAT_PEM;
-
-	argc--;
-	argv++;
-	num = 0;
-	while (argc >= 1) {
-#ifdef undef
-		if (strcmp(*argv, "-p") == 0) {
-			if (--argc < 1)
-				goto bad;
-			if (!args_from_file(++argv, Nargc, Nargv)) {
-				goto end;
-			}
-		}
-#endif
-		if (strcmp(*argv, "-inform") == 0) {
-			if (--argc < 1)
-				goto bad;
-			informat = str2fmt(*(++argv));
-		} else if (strcmp(*argv, "-outform") == 0) {
-			if (--argc < 1)
-				goto bad;
-			outformat = str2fmt(*(++argv));
-		} else if (strcmp(*argv, "-in") == 0) {
-			if (--argc < 1)
-				goto bad;
-			infile = *(++argv);
-		} else if (strcmp(*argv, "-out") == 0) {
-			if (--argc < 1)
-				goto bad;
-			outfile = *(++argv);
-		} else if (strcmp(*argv, "-CApath") == 0) {
-			if (--argc < 1)
-				goto bad;
-			CApath = *(++argv);
-			do_ver = 1;
-		} else if (strcmp(*argv, "-CAfile") == 0) {
-			if (--argc < 1)
-				goto bad;
-			CAfile = *(++argv);
-			do_ver = 1;
-		} else if (strcmp(*argv, "-verify") == 0)
-			do_ver = 1;
-		else if (strcmp(*argv, "-text") == 0)
-			text = 1;
-		else if (strcmp(*argv, "-hash") == 0)
-			hash = ++num;
-#ifndef OPENSSL_NO_MD5
-		else if (strcmp(*argv, "-hash_old") == 0)
-			hash_old = ++num;
-#endif
-		else if (strcmp(*argv, "-nameopt") == 0) {
-			if (--argc < 1)
-				goto bad;
-			if (!set_name_ex(&nmflag, *(++argv)))
-				goto bad;
-		} else if (strcmp(*argv, "-issuer") == 0)
-			issuer = ++num;
-		else if (strcmp(*argv, "-lastupdate") == 0)
-			lastupdate = ++num;
-		else if (strcmp(*argv, "-nextupdate") == 0)
-			nextupdate = ++num;
-		else if (strcmp(*argv, "-noout") == 0)
-			noout = ++num;
-		else if (strcmp(*argv, "-fingerprint") == 0)
-			fingerprint = ++num;
-		else if (strcmp(*argv, "-crlnumber") == 0)
-			crlnumber = ++num;
-		else if ((md_alg = EVP_get_digestbyname(*argv + 1))) {
-			/* ok */
-			digest = md_alg;
-		} else {
-			BIO_printf(bio_err, "unknown option %s\n", *argv);
-			badops = 1;
-			break;
-		}
-		argc--;
-		argv++;
 	}
 
-	if (badops) {
-bad:
-		for (pp = crl_usage; (*pp != NULL); pp++)
-			BIO_printf(bio_err, "%s", *pp);
+	digest = EVP_sha1();
+
+	memset(&crl_config, 0, sizeof(crl_config));
+	crl_config.informat = FORMAT_PEM;
+	crl_config.outformat = FORMAT_PEM;
+
+	if (options_parse(argc, argv, crl_options, &digest_name) != 0) {
+		crl_usage();
 		goto end;
 	}
+
+	if (crl_config.cafile != NULL || crl_config.capath != NULL)
+		crl_config.verify = 1;
+
+	if (crl_config.nameopt != NULL) {
+		if (set_name_ex(&nmflag, crl_config.nameopt) != 1) {
+			fprintf(stderr,
+			    "Invalid -nameopt argument '%s'\n",
+			    crl_config.nameopt);
+			goto end;
+		}
+	}
+
+	if (digest_name != NULL) {
+		if ((digest = EVP_get_digestbyname(digest_name)) == NULL) {
+			fprintf(stderr,
+			    "Unknown message digest algorithm '%s'\n",
+			    digest_name);
+			goto end;
+		}
+	}
+
 	ERR_load_crypto_strings();
-	x = load_crl(infile, informat);
-	if (x == NULL) {
+	x = load_crl(crl_config.infile, crl_config.informat);
+	if (x == NULL)
 		goto end;
-	}
-	if (do_ver) {
+
+	if (crl_config.verify) {
 		store = X509_STORE_new();
 		lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
 		if (lookup == NULL)
 			goto end;
-		if (!X509_LOOKUP_load_file(lookup, CAfile, X509_FILETYPE_PEM))
+		if (!X509_LOOKUP_load_file(lookup, crl_config.cafile,
+		    X509_FILETYPE_PEM))
 			X509_LOOKUP_load_file(lookup, NULL,
 			    X509_FILETYPE_DEFAULT);
 
 		lookup = X509_STORE_add_lookup(store, X509_LOOKUP_hash_dir());
 		if (lookup == NULL)
 			goto end;
-		if (!X509_LOOKUP_add_dir(lookup, CApath, X509_FILETYPE_PEM))
+		if (!X509_LOOKUP_add_dir(lookup, crl_config.capath,
+		    X509_FILETYPE_PEM))
 			X509_LOOKUP_add_dir(lookup, NULL,
 			    X509_FILETYPE_DEFAULT);
 		ERR_clear_error();
@@ -265,91 +324,92 @@ bad:
 		else
 			BIO_printf(bio_err, "verify OK\n");
 	}
-	if (num) {
-		for (i = 1; i <= num; i++) {
-			if (issuer == i) {
-				print_name(bio_out, "issuer=",
-				    X509_CRL_get_issuer(x), nmflag);
-			}
-			if (crlnumber == i) {
-				ASN1_INTEGER *crlnum;
-				crlnum = X509_CRL_get_ext_d2i(x,
-				    NID_crl_number, NULL, NULL);
-				BIO_printf(bio_out, "crlNumber=");
-				if (crlnum) {
-					i2a_ASN1_INTEGER(bio_out, crlnum);
-					ASN1_INTEGER_free(crlnum);
-				} else
-					BIO_puts(bio_out, "<NONE>");
-				BIO_printf(bio_out, "\n");
-			}
-			if (hash == i) {
-				BIO_printf(bio_out, "%08lx\n",
-				    X509_NAME_hash(X509_CRL_get_issuer(x)));
-			}
-#ifndef OPENSSL_NO_MD5
-			if (hash_old == i) {
-				BIO_printf(bio_out, "%08lx\n",
-				    X509_NAME_hash_old(X509_CRL_get_issuer(x)));
-			}
-#endif
-			if (lastupdate == i) {
-				BIO_printf(bio_out, "lastUpdate=");
-				ASN1_TIME_print(bio_out,
-				    X509_CRL_get_lastUpdate(x));
-				BIO_printf(bio_out, "\n");
-			}
-			if (nextupdate == i) {
-				BIO_printf(bio_out, "nextUpdate=");
-				if (X509_CRL_get_nextUpdate(x))
-					ASN1_TIME_print(bio_out,
-					    X509_CRL_get_nextUpdate(x));
-				else
-					BIO_printf(bio_out, "NONE");
-				BIO_printf(bio_out, "\n");
-			}
-			if (fingerprint == i) {
-				int j;
-				unsigned int n;
-				unsigned char md[EVP_MAX_MD_SIZE];
 
-				if (!X509_CRL_digest(x, digest, md, &n)) {
-					BIO_printf(bio_err, "out of memory\n");
-					goto end;
-				}
-				BIO_printf(bio_out, "%s Fingerprint=",
-				    OBJ_nid2sn(EVP_MD_type(digest)));
-				for (j = 0; j < (int) n; j++) {
-					BIO_printf(bio_out, "%02X%c", md[j],
-					    (j + 1 == (int)n) ? '\n' : ':');
-				}
+	/* Print requested information the order that the flags were given. */
+	for (i = 1; i <= argc; i++) {
+		if (crl_config.issuer == i) {
+			print_name(bio_out, "issuer=",
+			    X509_CRL_get_issuer(x), nmflag);
+		}
+		if (crl_config.crlnumber == i) {
+			ASN1_INTEGER *crlnum;
+			crlnum = X509_CRL_get_ext_d2i(x,
+			    NID_crl_number, NULL, NULL);
+			BIO_printf(bio_out, "crlNumber=");
+			if (crlnum) {
+				i2a_ASN1_INTEGER(bio_out, crlnum);
+				ASN1_INTEGER_free(crlnum);
+			} else
+				BIO_puts(bio_out, "<NONE>");
+			BIO_printf(bio_out, "\n");
+		}
+		if (crl_config.hash == i) {
+			BIO_printf(bio_out, "%08lx\n",
+			    X509_NAME_hash(X509_CRL_get_issuer(x)));
+		}
+#ifndef OPENSSL_NO_MD5
+		if (crl_config.hash_old == i) {
+			BIO_printf(bio_out, "%08lx\n",
+			    X509_NAME_hash_old(X509_CRL_get_issuer(x)));
+		}
+#endif
+		if (crl_config.lastupdate == i) {
+			BIO_printf(bio_out, "lastUpdate=");
+			ASN1_TIME_print(bio_out,
+			    X509_CRL_get_lastUpdate(x));
+			BIO_printf(bio_out, "\n");
+		}
+		if (crl_config.nextupdate == i) {
+			BIO_printf(bio_out, "nextUpdate=");
+			if (X509_CRL_get_nextUpdate(x))
+				ASN1_TIME_print(bio_out,
+				    X509_CRL_get_nextUpdate(x));
+			else
+				BIO_printf(bio_out, "NONE");
+			BIO_printf(bio_out, "\n");
+		}
+		if (crl_config.fingerprint == i) {
+			int j;
+			unsigned int n;
+			unsigned char md[EVP_MAX_MD_SIZE];
+
+			if (!X509_CRL_digest(x, digest, md, &n)) {
+				BIO_printf(bio_err, "out of memory\n");
+				goto end;
+			}
+			BIO_printf(bio_out, "%s Fingerprint=",
+			    OBJ_nid2sn(EVP_MD_type(digest)));
+			for (j = 0; j < (int) n; j++) {
+				BIO_printf(bio_out, "%02X%c", md[j],
+				    (j + 1 == (int)n) ? '\n' : ':');
 			}
 		}
 	}
+
 	out = BIO_new(BIO_s_file());
 	if (out == NULL) {
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (outfile == NULL) {
+	if (crl_config.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, outfile) <= 0) {
-			perror(outfile);
+		if (BIO_write_filename(out, crl_config.outfile) <= 0) {
+			perror(crl_config.outfile);
 			goto end;
 		}
 	}
 
-	if (text)
+	if (crl_config.text)
 		X509_CRL_print(out, x);
 
-	if (noout) {
+	if (crl_config.noout) {
 		ret = 0;
 		goto end;
 	}
-	if (outformat == FORMAT_ASN1)
+	if (crl_config.outformat == FORMAT_ASN1)
 		i = (int) i2d_X509_CRL_bio(out, x);
-	else if (outformat == FORMAT_PEM)
+	else if (crl_config.outformat == FORMAT_PEM)
 		i = PEM_write_bio_X509_CRL(out, x);
 	else {
 		BIO_printf(bio_err,
