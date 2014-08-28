@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.29 2014/08/27 23:50:45 schwarze Exp $
+# $OpenBSD: rcctl.sh,v 1.30 2014/08/28 06:52:57 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -130,7 +130,7 @@ svc_is_avail()
 	local _svc=$1
 	[ -n "${_svc}" ] || return 1
 
-	[ "${_svc}" == "rc.subr" ] && return 1
+	[ "${_svc}" = "rc.subr" ] && return 1
 	[ -x "/etc/rc.d/${_svc}" ] && return 0
 	svc_is_special ${_svc}
 }
@@ -148,7 +148,7 @@ svc_is_enabled()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	[[ "$(svc_get_flags ${_svc})" != "NO" ]]
+	[ "$(svc_get_flags ${_svc})" != "NO" ]
 }
 
 svc_is_special()
@@ -213,12 +213,12 @@ add_flags()
 	else
 		# keep our flags since none were given
 		eval "_flags=\${${_svc}_flags}"
-		[[ "${_flags}" = "NO" ]] && unset _flags
+		[ "${_flags}" = "NO" ] && unset _flags
 	fi
 
 	# unset flags if they match the default enabled ones
 	if [ -n "${_flags}" ]; then
-		[[ "${_flags}" = "$(svc_default_enabled_flags ${_svc})" ]] && \
+		[ "${_flags}" = "$(svc_default_enabled_flags ${_svc})" ] && \
 			unset _flags
 	fi
 
