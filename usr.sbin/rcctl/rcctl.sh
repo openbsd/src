@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.30 2014/08/28 06:52:57 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.31 2014/08/28 07:53:07 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -32,9 +32,7 @@ usage()
 
 needs_root()
 {
-	if [ "$(id -u)" -ne 0 ]; then
-		_rc_err "${0##*/} $1: need root privileges"
-	fi
+	[ "$(id -u)" -ne 0 ] && _rc_err "${0##*/} $1: need root privileges"
 }
 
 rcconf_edit_begin()
@@ -263,7 +261,6 @@ while getopts "df" c; do
 	esac
 done
 shift $((OPTIND-1))
-
 [ $# -gt 0 ] || usage
 
 action=$1
