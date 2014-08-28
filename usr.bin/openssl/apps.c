@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.6 2014/08/28 13:51:38 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.7 2014/08/28 13:55:19 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2246,7 +2246,7 @@ options_usage(struct option *opts)
 			continue;
 		argname = (opts[i].argname != NULL) ? opts[i].argname : "";
 		snprintf(buf, sizeof(buf), "-%s %s", opts[i].name, argname);
-		fprintf(stderr, " %-*s %s\n", 14, buf, opts[i].desc);
+		fprintf(stderr, " %-*s %s\n", 16, buf, opts[i].desc);
 	}
 }
 
