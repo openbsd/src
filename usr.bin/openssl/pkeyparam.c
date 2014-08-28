@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyparam.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
+/* $OpenBSD: pkeyparam.c,v 1.3 2014/08/28 14:25:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -80,7 +80,6 @@ pkeyparam_main(int argc, char **argv)
 #endif
 	int ret = 1;
 
-	OpenSSL_add_all_algorithms();
 	args = argv + 1;
 	while (!badarg && *args && *args[0] == '-') {
 		if (!strcmp(*args, "-in")) {
