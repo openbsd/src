@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.34 2014/08/16 18:42:41 bcook Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.35 2014/08/28 01:00:57 bcook Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -194,6 +194,7 @@ gotdata(char *buf, size_t len)
 static int
 getentropy_getrandom(void *buf, size_t len)
 {
+	int pre_errno = errno;
 	int ret;
 	if (len > 256)
 		return (-1);
@@ -201,9 +202,10 @@ getentropy_getrandom(void *buf, size_t len)
 		ret = syscall(SYS_getrandom, buf, len, 0);
 	} while (ret == -1 && errno == EINTR);
 
-	if (ret == len)
-		return (0);
-	return (-1);
+	if (ret != len)
+		return (-1);
+	errno = pre_errno;
+	return (0);
 }
 #endif
 
