@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.1 2014/08/26 17:47:25 jsing Exp $ */
+/* $OpenBSD: req.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -399,7 +399,7 @@ bad:
 		BIO_printf(bio_err, " -reqopt arg    - various request text options\n\n");
 		goto end;
 	}
-	ERR_load_crypto_strings();
+
 	if (!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");
 		goto end;

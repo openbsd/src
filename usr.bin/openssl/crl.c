@@ -1,4 +1,4 @@
-/* $OpenBSD: crl.c,v 1.2 2014/08/28 14:01:32 jsing Exp $ */
+/* $OpenBSD: crl.c,v 1.3 2014/08/28 14:23:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -272,7 +272,6 @@ crl_main(int argc, char **argv)
 		}
 	}
 
-	ERR_load_crypto_strings();
 	x = load_crl(crl_config.infile, crl_config.informat);
 	if (x == NULL)
 		goto end;

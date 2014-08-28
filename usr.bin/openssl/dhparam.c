@@ -1,4 +1,4 @@
-/* $OpenBSD: dhparam.c,v 1.1 2014/08/26 17:47:24 jsing Exp $ */
+/* $OpenBSD: dhparam.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -234,7 +234,6 @@ bad:
 		BIO_printf(bio_err, " -noout        no output\n");
 		goto end;
 	}
-	ERR_load_crypto_strings();
 
 #ifndef OPENSSL_NO_ENGINE
 	setup_engine(bio_err, engine, 0);

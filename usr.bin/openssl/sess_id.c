@@ -1,4 +1,4 @@
-/* $OpenBSD: sess_id.c,v 1.1 2014/08/26 17:47:25 jsing Exp $ */
+/* $OpenBSD: sess_id.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -146,7 +146,7 @@ bad:
 			BIO_printf(bio_err, "%s", *pp);
 		goto end;
 	}
-	ERR_load_crypto_strings();
+
 	x = load_sess_id(infile, informat);
 	if (x == NULL) {
 		goto end;

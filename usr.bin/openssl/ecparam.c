@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.1 2014/08/26 17:47:24 jsing Exp $ */
+/* $OpenBSD: ecparam.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -262,7 +262,6 @@ bad:
 		    "possibly a hardware device\n");
 		goto end;
 	}
-	ERR_load_crypto_strings();
 
 	in = BIO_new(BIO_s_file());
 	out = BIO_new(BIO_s_file());
