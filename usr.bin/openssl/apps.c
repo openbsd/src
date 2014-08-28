@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.3 2014/08/27 15:51:41 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.4 2014/08/28 13:37:41 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2277,6 +2277,7 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed)
 				continue;
 
 			if (opt->type == OPTION_ARG ||
+			    opt->type == OPTION_ARG_FORMAT ||
 			    opt->type == OPTION_ARG_INT) {
 				if (++i >= argc) {
 					fprintf(stderr,
@@ -2289,6 +2290,10 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed)
 			switch (opt->type) {
 			case OPTION_ARG:
 				*opt->opt.arg = argv[i];
+				break;
+
+			case OPTION_ARG_FORMAT:
+				*opt->opt.value = str2fmt(argv[i]);
 				break;
 
 			case OPTION_ARG_INT:
