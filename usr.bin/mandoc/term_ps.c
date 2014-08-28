@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ps.c,v 1.30 2014/08/24 23:44:50 schwarze Exp $ */
+/*	$OpenBSD: term_ps.c,v 1.31 2014/08/28 01:36:10 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "mandoc.h"
@@ -847,7 +846,6 @@ ps_end(struct termp *p)
 static void
 ps_begin(struct termp *p)
 {
-	time_t		 t;
 	int		 i;
 
 	/*
@@ -888,11 +886,8 @@ ps_begin(struct termp *p)
 	 * stuff gets printed to the screen, so make sure we're sane.
 	 */
 
-	t = time(NULL);
-
 	if (TERMTYPE_PS == p->type) {
 		ps_printf(p, "%%!PS-Adobe-3.0\n");
-		ps_printf(p, "%%%%CreationDate: %s", ctime(&t));
 		ps_printf(p, "%%%%DocumentData: Clean7Bit\n");
 		ps_printf(p, "%%%%Orientation: Portrait\n");
 		ps_printf(p, "%%%%Pages: (atend)\n");
