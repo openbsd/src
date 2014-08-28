@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.117 2014/08/14 20:55:41 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.118 2014/08/28 03:49:59 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2014 $
+.Dd $Mdocdate: August 28 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -2525,10 +2525,12 @@ Based on POSIX.1 and POSIX.2, published in 1992.
 .It Single UNIX Specification version 1 and related standards
 .Pp
 .Bl -tag -width "-p1003.1g-2000" -compact
+.It \-susv1
+.St -susv1
 .It \-xpg4.2
 .St -xpg4.2
 .br
-This standard was published in 1994 and is also called SUSv1.
+This standard was published in 1994.
 It was used as the basis for UNIX 95 certification.
 The following three refer to parts of it.
 .Pp
@@ -2621,8 +2623,10 @@ The second and last Technical Corrigendum.
 .Bl -tag -width "-p1003.1g-2000" -compact
 .It \-p1003.1-2008
 .St -p1003.1-2008
+.It \-susv4
+.St -susv4
 .br
-This standard is also called SUSv4 and
+This standard is also called
 X/Open Portability Guide version 7.
 .Pp
 .It \-p1003.1-2013
