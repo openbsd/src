@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.6 2014/08/24 07:33:26 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.7 2014/08/29 17:17:22 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 24 2014 $
+.Dd $Mdocdate: August 29 2014 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -57,6 +57,12 @@ is appended without any
 .Ar arguments ,
 .Ar daemon Ns _flags
 is reset to its default value.
+If
+.Ar daemon
+is already enabled,
+.Ar daemon Ns _flags
+is reset to the optionally provided
+.Cm flags .
 .It Cm disable Ar service | daemon
 Disable the service or daemon in
 .Xr rc.conf.local 8 .
