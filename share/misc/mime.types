@@ -1,4 +1,4 @@
-#	$OpenBSD: mime.types,v 1.1 2014/08/25 14:27:54 reyk Exp $
+#	$OpenBSD: mime.types,v 1.2 2014/08/29 08:06:30 reyk Exp $
 
 application/atom+xml					atom
 application/font-woff					woff
@@ -75,7 +75,7 @@ image/vnd.wap.wbmp					wbmp
 image/webp						webp
 image/x-icon						ico
 image/x-jng						jng
-image/x-ms-bmp						mp
+image/x-ms-bmp						bmp
 
 text/css						css
 text/html						html htm shtml
