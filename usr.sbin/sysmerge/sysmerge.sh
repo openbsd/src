@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.155 2014/08/28 17:43:21 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.156 2014/08/29 06:52:20 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -57,10 +57,9 @@ sm_error() {
 		rm ${_WRKDIR}/${_j}
 	done
 
-	# do not remove the entire _WRKDIR in case sysmerge stopped half
-	# way since it contains our backup files
-	rm -rf "${_TMPROOT}"
-	rmdir "${_WRKDIR}" 2>/dev/null
+	# do not empty _WRKDIR, it may still contain our backup files
+	rm -rf ${_TMPROOT}
+	rmdir ${_WRKDIR} 2>/dev/null
 	exit 1
 }
 
@@ -70,7 +69,6 @@ sm_warn() {
 	(($#)) && sm_echo "**** WARNING: $@"
 }
 
-# extract set(s) and create cksum file(s)
 sm_extract_mksum() {
 	[[ -n ${PKGMODE} ]] && return
 	local _e _x _set
@@ -86,10 +84,10 @@ sm_extract_mksum() {
 		tar -tzf /usr/share/sysmerge/${_set}.tgz \
 			./usr/share/sysmerge/${_set}sum >/dev/null ||
 			sm_error "${_set}.tgz: badly formed set, lacks ./usr/share/sysmerge/${_set}sum"
-		(cd "${_TMPROOT}" && tar -xzphf \
+		(cd ${_TMPROOT} && tar -xzphf \
 			/usr/share/sysmerge/${_set}.tgz && \
 			find . -type f | sort | \
-			xargs sha256 -h "${_WRKDIR}/${_set}sum") || \
+			xargs sha256 -h ${_WRKDIR}/${_set}sum) || \
 			sm_error "failed to extract ${_set}.tgz and create sum file"
 	done
 }
@@ -146,8 +144,7 @@ EOF
 
 sm_cp_pkg_samples() {
 	[[ -z ${PKGMODE} ]] && return
-
-	local _install_args _l _ret=0 _sample
+	local _install_args _i _ret=0 _sample
 
 	[[ -f /usr/share/sysmerge/pkgsum ]] && \
 		cp /usr/share/sysmerge/pkgsum ${_WRKDIR}/pkgsum.bak
@@ -157,8 +154,8 @@ sm_cp_pkg_samples() {
 	mtree -qdef /etc/mtree/BSD.x11.dist -p ${_TMPROOT} -U >/dev/null
 
 	# @sample directories are processed first
-	exec_espie | sort -u | while read _l; do
-		set -A _sample -- ${_l}
+	exec_espie | sort -u | while read _i; do
+		set -A _sample -- ${_i}
 		_install_args="-o ${_sample[1]} -g ${_sample[2]} -m ${_sample[3]}"
 		if [[ ${_sample[0]} == "0-DIR" ]]; then
 			install -d ${_install_args} ${_sample[4]} || _ret=1
@@ -171,8 +168,6 @@ sm_cp_pkg_samples() {
 			#   group and mode of the directory hierarchy
 			#   because the dir is not a @sample
 			#   (e.g. mail/femail,-chroot)
-			# - it's not the job of sysmerge to repair
-			#   broken pkg installations
 			#_pkghier=$(dirname ${_sample[5]})
 			#if [ ! -d "${_pkghier}" ]; then
 			#	install -d -o root -g wheel -m 0755 ${_pkghier}
@@ -185,8 +180,8 @@ sm_cp_pkg_samples() {
 	done
 
 	if [[ ${_ret} -eq 0 ]]; then
-		cd "${_TMPROOT}" && find . -type f | sort | \
-			xargs sha256 -h "${_WRKDIR}/pkgsum" || \
+		cd ${_TMPROOT} && find . -type f | sort | \
+			xargs sha256 -h ${_WRKDIR}/pkgsum || \
 			_ret=1
 	fi
 	[[ ${_ret} -ne 0 ]] && \
@@ -194,56 +189,54 @@ sm_cp_pkg_samples() {
 }
 
 sm_populate() {
-	local cf i _array _d _r _D _R CF_DIFF CF_FILES CURSUM IGNORE_FILES
+	local _auto_upg _c _cursum _i _k _j _cfdiff _cffiles _ignorefiles _matchsum _mismatch
+
 	echo "===> Populating ${_TMPROOT}"
 	mkdir -p ${_TMPROOT} || \
 		sm_error "cannot create ${_TMPROOT}"
 
-	# automatically install missing user(s) and group(s) from the
-	# new master.passwd and group files right after extracting the sets
 	sm_extract_mksum
 	sm_install_user_grp
-
 	sm_cp_pkg_samples
 
 	# examplessum is used differently, see sm_check_an_eg()
-	for i in etcsum xetcsum pkgsum; do
-		if [[ -f /usr/share/sysmerge/${i} && -f ${_WRKDIR}/${i} ]]; then
+	for _i in etcsum xetcsum pkgsum; do
+		if [[ -f /usr/share/sysmerge/${_i} && -f ${_WRKDIR}/${_i} ]]; then
 			# delete file in temproot if it has not changed since
 			# last release and is present in current installation
 			if [[ -z ${DIFFMODE} ]]; then
-				# 2>/dev/null: if file got removed manually
-				# but is still in the sum file
-				_R=$(cd ${_TMPROOT} && \
-					sha256 -c ${DESTDIR}/${DBDIR}/${i} 2>/dev/null | \
+				# redirect stderr in case file got removed
+				# manually but is still in the sum file
+				_matchsum=$(cd ${_TMPROOT} && \
+					sha256 -c ${DESTDIR}/${DBDIR}/${_i} 2>/dev/null | \
 					awk '/OK/ { print $2 }' | \
 					sed 's/[:]//')
-				for _r in ${_R}; do
-					_r=${_r#.}
-					[[ -f ${_r} && -f ${_TMPROOT}/${_r} ]] && \
-						rm -f ${_TMPROOT}/${_r}
+				for _j in ${_matchsum}; do
+					_j=${_j#.}
+					[[ -f ${_j} && -f ${_TMPROOT}/${_j} ]] && \
+						rm -f ${_TMPROOT}/${_j}
 				done
 			fi
 
 			# set auto-upgradable files
-			_D=$(diff -u ${_WRKDIR}/${i} /usr/share/sysmerge/${i} | \
+			_mismatch=$(diff -u ${_WRKDIR}/${_i} /usr/share/sysmerge/${_i} | \
 				sed -n 's/^+SHA256 (\(.*\)).*/\1/p')
-			for _d in ${_D}; do
-				# 2>/dev/null: if file got removed manually
-				# but is still in the sum file
-				CURSUM=$(cd / && sha256 ${_d} 2>/dev/null)
-				[[ -n $(grep "${CURSUM}" /usr/share/sysmerge/${i}) && \
-					-z $(grep "${CURSUM}" ${_WRKDIR}/${i}) ]] && \
-					_array="${_array} ${_d}"
+			for _k in ${_mismatch}; do
+				# redirect stderr in case file got removed
+				# manually but is still in the sum file
+				_cursum=$(cd / && sha256 ${_k} 2>/dev/null)
+				[[ -n $(grep "${_cursum}" /usr/share/sysmerge/${_i}) && \
+					-z $(grep "${_cursum}" ${_WRKDIR}/${_i}) ]] && \
+					_auto_upg="${_auto_upg} ${_k}"
 			done
-			[[ -n ${_array} ]] && set -A AUTO_UPG -- ${_array}
+			[[ -n ${_auto_upg} ]] && set -A AUTO_UPG -- ${_auto_upg}
 		fi
-		[[ -f ${_WRKDIR}/${i} ]] && \
-			mv ${_WRKDIR}/${i} /usr/share/sysmerge/${i}
+		[[ -f ${_WRKDIR}/${_i} ]] && \
+			mv ${_WRKDIR}/${_i} /usr/share/sysmerge/${_i}
 	done
 
 	# files we don't want/need to deal with
-	IGNORE_FILES="/etc/*.db
+	_ignorefiles="/etc/*.db
 		      /etc/group
 		      /etc/localtime
 		      /etc/mail/*.db
@@ -254,15 +247,15 @@ sm_populate() {
 		      /usr/share/sysmerge/{etc,examples,xetc}sum
 		      /var/db/locate.database
 		      /var/mail/root"
-	CF_FILES="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
-	for cf in ${CF_FILES}; do
-		CF_DIFF=$(diff -q -I "##### " ${_TMPROOT}/${cf} ${cf} 2>/dev/null)
-		[[ -z ${CF_DIFF} ]] && IGNORE_FILES="${IGNORE_FILES} ${cf}"
+	_cffiles="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
+	for _i in ${_cffiles}; do
+		_cfdiff=$(diff -q -I "##### " ${_TMPROOT}/${_i} ${_i} 2>/dev/null)
+		[[ -z ${_cfdiff} ]] && _ignorefiles="${_ignorefiles} ${_i}"
 	done
 	[[ -f /etc/sysmerge.ignore ]] && \
-		IGNORE_FILES="${IGNORE_FILES} $(stripcom /etc/sysmerge.ignore)"
-	for i in ${IGNORE_FILES}; do
-		rm -f ${_TMPROOT}/${i}
+		_ignorefiles="${_ignorefiles} $(stripcom /etc/sysmerge.ignore)"
+	for _i in ${_ignorefiles}; do
+		rm -f ${_TMPROOT}/${_i}
 	done
 }
 
@@ -318,17 +311,17 @@ sm_install() {
 }
 
 sm_ln() {
-	local _LINKF _LINKT DIR_MODE 
-	_LINKT=$(readlink ${COMPFILE})
-	_LINKF=$(dirname ${COMPFILE#.})
+	local _dirmode _linkf _linkt
+	_linkt=$(readlink ${COMPFILE})
+	_linkf=$(dirname ${COMPFILE#.})
 
-	DIR_MODE=$(stat -f "%OMp%OLp" ${_TMPROOT}/${_LINKF})
-	[ ! -d "${_LINKF}" ] && \
-		install -d -o root -g wheel -m ${DIR_MODE} ${_LINKF}
+	_dirmode=$(stat -f "%OMp%OLp" ${_TMPROOT}/${_linkf})
+	[ ! -d "${_linkf}" ] && \
+		install -d -o root -g wheel -m ${_dirmode} ${_linkf}
 
 	rm ${COMPFILE}
 	sm_echo "===> Linking ${COMPFILE#.}"
-	(cd ${_LINKF} && ln -sf ${_LINKT} .)
+	(cd ${_linkf} && ln -sf ${_linkt} .)
 	return
 }
 
@@ -578,8 +571,7 @@ sm_compare() {
 	for COMPFILE in ${_c1} ${_c2}; do
 		unset IS_BINFILE IS_LINK
 		# treat empty files the same as IS_BINFILE to avoid comparing them;
-		# only process them (i.e. install) if they don't exist on
-		# the target system
+		# only process them if they don't exist on the target system
 		if [[ ! -s ${COMPFILE} ]]; then
 			if [[ -f ${COMPFILE#.} ]]; then
 				rm ${COMPFILE}
@@ -608,9 +600,9 @@ sm_compare() {
 		fi
 
 		# compare CVS $Id's first so if the file hasn't been modified,
-		# it will be deleted from temproot and ignored from comparison.
+		# it will be deleted from temproot and ignored from comparison;
 		# several files are generated from scripts so CVS ID is not a
-		# reliable way of detecting changes; leave for a full diff.
+		# reliable way of detecting changes: leave for a full diff
 		if [[ -z ${DIFFMODE} && \
 			-z ${PKGMODE} && \
 			${COMPFILE} != ./etc/@(fbtab|ttys) && \
@@ -625,8 +617,7 @@ sm_compare() {
 			# the one in temproot
 			if diff -q ${COMPFILE#.} ${COMPFILE} >/dev/null; then
 				rm ${COMPFILE}
-			# xetc.tgz contains binary files; set IS_BINFILE
-			# to disable sdiff
+			# if file is a binary; set IS_BINFILE to disable sdiff
 			elif diff -q ${COMPFILE#.} ${COMPFILE} | grep -q Binary; then
 				IS_BINFILE=1 && sm_diff_loop
 			else
@@ -712,10 +703,7 @@ _SWIDTH=$(stty size | awk '{w=$2} END {if (w==0) {w=80} print w}')
 _RELINT=$(uname -r | tr -d '.')
 readonly _WRKDIR _BKPDIR _TMPROOT _SWIDTH _RELINT
 
-# sysmerge specific variables (overridable)
 SM_MERGE=${SM_MERGE:=sdiff -as -w ${_SWIDTH} -o}
-
-# system-wide variables (overridable)
 [[ -z ${VISUAL} ]] && EDITOR=${EDITOR:=/usr/bin/vi} || EDITOR=${VISUAL}
 PAGER=${PAGER:=/usr/bin/more}
 
