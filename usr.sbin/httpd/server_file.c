@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.34 2014/08/21 19:23:10 chrisz Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.35 2014/08/29 13:01:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -56,7 +56,7 @@ int
 server_file_access(struct httpd *env, struct client *clt,
     char *path, size_t len)
 {
-	struct http_descriptor	*desc = clt->clt_desc;
+	struct http_descriptor	*desc = clt->clt_descreq;
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct stat		 st;
 	char			*newpath;
@@ -150,7 +150,7 @@ server_file_access(struct httpd *env, struct client *clt,
 int
 server_file(struct httpd *env, struct client *clt)
 {
-	struct http_descriptor	*desc = clt->clt_desc;
+	struct http_descriptor	*desc = clt->clt_descreq;
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	char			 path[MAXPATHLEN];
 	const char		*errstr = NULL;
@@ -187,7 +187,7 @@ server_file(struct httpd *env, struct client *clt)
 int
 server_file_method(struct client *clt)
 {
-	struct http_descriptor	*desc = clt->clt_desc;
+	struct http_descriptor	*desc = clt->clt_descreq;
 
 	switch (desc->http_method) {
 	case HTTP_METHOD_GET:
@@ -272,7 +272,7 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 {
 	char			  path[MAXPATHLEN];
 	char			  tmstr[21];
-	struct http_descriptor	 *desc = clt->clt_desc;
+	struct http_descriptor	 *desc = clt->clt_descreq;
 	struct server_config	 *srv_conf = clt->clt_srv_conf;
 	struct dirent		**namelist, *dp;
 	int			  namesize, i, ret, fd = -1, namewidth, skip;

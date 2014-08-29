@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.54 2014/08/21 19:23:10 chrisz Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.55 2014/08/29 13:01:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -276,7 +276,8 @@ struct client {
 	size_t			 clt_buflen;
 	struct evbuffer		*clt_output;
 	struct event		 clt_ev;
-	void			*clt_desc;
+	void			*clt_descreq;
+	void			*clt_descresp;
 	int			 clt_sndbufsiz;
 
 	int			 clt_fd;
@@ -508,7 +509,7 @@ const char
 void	 server_read_httpcontent(struct bufferevent *, void *);
 void	 server_read_httpchunks(struct bufferevent *, void *);
 int	 server_writeheader_http(struct client *clt, struct kv *, void *);
-int	 server_headers(struct client *,
+int	 server_headers(struct client *, void *,
 	    int (*)(struct client *, struct kv *, void *), void *);
 int	 server_writeresponse_http(struct client *);
 int	 server_response_http(struct client *, u_int, struct media_type *,

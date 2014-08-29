@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.34 2014/08/21 19:23:10 chrisz Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.35 2014/08/29 13:01:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -96,7 +96,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 {
 	struct server_fcgi_param	 param;
 	struct server_config		*srv_conf = clt->clt_srv_conf;
-	struct http_descriptor		*desc = clt->clt_desc;
+	struct http_descriptor		*desc = clt->clt_descreq;
 	struct fcgi_record_header	*h;
 	struct fcgi_begin_request_body	*begin;
 	char				 hbuf[MAXHOSTNAMELEN];
@@ -249,7 +249,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 	}
 
 	/* Add HTTP_* headers */
-	if (server_headers(clt, server_fcgi_writeheader, &param) == -1) {
+	if (server_headers(clt, desc, server_fcgi_writeheader, &param) == -1) {
 		errstr = "failed to encode param";
 		goto fail;
 	}
@@ -533,7 +533,8 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 int
 server_fcgi_header(struct client *clt, u_int code)
 {
-	struct http_descriptor	*desc = clt->clt_desc;
+	struct http_descriptor	*desc = clt->clt_descreq;
+	struct http_descriptor	*resp = clt->clt_descresp;
 	const char		*error;
 	char			 tmbuf[32];
 
@@ -543,34 +544,32 @@ server_fcgi_header(struct client *clt, u_int code)
 	if (server_log_http(clt, code, 0) == -1)
 		return (-1);
 
-	kv_purge(&desc->http_headers);
-
 	/* Add error codes */
-	if (kv_setkey(&desc->http_pathquery, "%lu", code) == -1 ||
-	    kv_set(&desc->http_pathquery, "%s", error) == -1)
+	if (kv_setkey(&resp->http_pathquery, "%lu", code) == -1 ||
+	    kv_set(&resp->http_pathquery, "%s", error) == -1)
 		return (-1);
 
 	/* Add headers */
-	if (kv_add(&desc->http_headers, "Server", HTTPD_SERVERNAME) == NULL)
+	if (kv_add(&resp->http_headers, "Server", HTTPD_SERVERNAME) == NULL)
 		return (-1);
 
 	/* Is it a persistent connection? */
 	if (clt->clt_persist) {
-		if (kv_add(&desc->http_headers,
+		if (kv_add(&resp->http_headers,
 		    "Connection", "keep-alive") == NULL)
 			return (-1);
-	} else if (kv_add(&desc->http_headers, "Connection", "close") == NULL)
+	} else if (kv_add(&resp->http_headers, "Connection", "close") == NULL)
 		return (-1);
 
 	/* Date header is mandatory and should be added as late as possible */
 	if (server_http_time(time(NULL), tmbuf, sizeof(tmbuf)) <= 0 ||
-	    kv_add(&desc->http_headers, "Date", tmbuf) == NULL)
+	    kv_add(&resp->http_headers, "Date", tmbuf) == NULL)
 		return (-1);
 
 	/* Write initial header (fcgi might append more) */
 	if (server_writeresponse_http(clt) == -1 ||
 	    server_bufferevent_print(clt, "\r\n") == -1 ||
-	    server_headers(clt, server_writeheader_http, NULL) == -1)
+	    server_headers(clt, resp, server_writeheader_http, NULL) == -1)
 		return (-1);
 
 	return (0);
