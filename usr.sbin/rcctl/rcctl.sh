@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.32 2014/08/28 14:51:16 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.33 2014/08/29 20:21:13 schwarze Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -161,14 +161,12 @@ append_to_pkg_scripts()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	svc_is_enabled ${_svc} && return
-
 	rcconf_edit_begin
-	if [ -n "${pkg_scripts}" ]; then
+	if [ -z "${pkg_scripts}" ]; then
+		echo pkg_scripts="${_svc}" >>${_TMP_RCCONF}
+	elif ! echo ${pkg_scripts} | grep -qw ${_svc}; then
 		grep -v "^pkg_scripts.*=" /etc/rc.conf.local >${_TMP_RCCONF}
 		echo pkg_scripts="${pkg_scripts} ${_svc}" >>${_TMP_RCCONF}
-	else
-		echo pkg_scripts="${_svc}" >>${_TMP_RCCONF}
 	fi
 	rcconf_edit_end
 }
