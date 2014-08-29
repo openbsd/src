@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.53 2014/08/19 12:24:04 mpi Exp $ */
+/* $OpenBSD: pms.c,v 1.54 2014/08/29 20:09:09 shadchin Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -77,6 +77,12 @@ struct synaptics_softc {
 	int resolution, dimension;
 
 	int mode;
+
+	int mask;
+#define SYNAPTICS_MASK_NEWABS_STRICT	0xc8
+#define SYNAPTICS_MASK_NEWABS_RELAXED	0xc0
+#define SYNAPTICS_VALID_NEWABS_FIRST	0x80
+#define SYNAPTICS_VALID_NEWABS_NEXT	0xc0
 
 	int res_x, res_y;
 	int min_x, min_y;
@@ -935,6 +941,12 @@ synaptics_get_hwinfo(struct pms_softc *sc)
 		return (-1);
 	}
 
+	if ((SYNAPTICS_ID_MAJOR(syn->identify) == 5) &&
+	    (SYNAPTICS_ID_MINOR(syn->identify) == 9))
+		syn->mask = SYNAPTICS_MASK_NEWABS_RELAXED;
+	else
+		syn->mask = SYNAPTICS_MASK_NEWABS_STRICT;
+
 	return (0);
 }
 
@@ -983,7 +995,7 @@ pms_enable_synaptics(struct pms_softc *sc)
 	if (synaptics_knock(sc)) {
 		if (sc->synaptics == NULL)
 			goto err;
-		/* 
+		/*
 		 * Some synaptics touchpads don't resume quickly.
 		 * Retry a few times.
 		 */
@@ -1091,13 +1103,15 @@ pms_ioctl_synaptics(struct pms_softc *sc, u_long cmd, caddr_t data, int flag,
 int
 pms_sync_synaptics(struct pms_softc *sc, int data)
 {
+	struct synaptics_softc *syn = sc->synaptics;
+
 	switch (sc->inputstate) {
 	case 0:
-		if ((data & 0xc8) != 0x80)
+		if ((data & syn->mask) != SYNAPTICS_VALID_NEWABS_FIRST)
 			return (-1);
 		break;
 	case 3:
-		if ((data & 0xc8) != 0xc0)
+		if ((data & syn->mask) != SYNAPTICS_VALID_NEWABS_NEXT)
 			return (-1);
 		break;
 	}
