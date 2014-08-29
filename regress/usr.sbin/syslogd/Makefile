@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2014/08/20 20:52:14 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/08/29 21:55:55 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -73,7 +73,7 @@ ${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: 127.0.0.1.crt
 
 # make perl syntax check for all args files
 
-.PHONY: syntax
+.PHONY: syntax libevent
 
 syntax: stamp-syntax
 
@@ -82,5 +82,11 @@ stamp-syntax: ${ARGS}
 	@perl -c ${PERLPATH}$a
 .endfor
 	@date >$@
+
+# run the tests with all variants of libevent backend
+libevent:
+	cd ${.CURDIR} && EVENT_NOKQUEUE=1 EVENT_NOPOLL=1 ${MAKE} regress
+	cd ${.CURDIR} && EVENT_NOKQUEUE=1 EVENT_NOSELECT=1 ${MAKE} regress
+	cd ${.CURDIR} && EVENT_NOPOLL=1 EVENT_NOSELECT=1 ${MAKE} regress
 
 .include <bsd.regress.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.1.1.1 2014/08/20 20:52:14 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.2 2014/08/29 21:55:55 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -89,9 +89,15 @@ sub child {
 	}
 	print STDERR "syslogd not running\n";
 
+	my @libevent;
+	foreach (qw(EVENT_NOKQUEUE EVENT_NOPOLL EVENT_NOSELECT)) {
+		push @libevent, "$_=$ENV{$_}" if $ENV{$_};
+	}
+	push @libevent, "EVENT_SHOW_METHOD=1" if @libevent;
 	my @ktrace = $ENV{KTRACE} ? ($ENV{KTRACE}, "-i") : ();
 	my $syslogd = $ENV{SYSLOGD} ? $ENV{SYSLOGD} : "syslogd";
-	my @cmd = (@sudo, @ktrace, $syslogd, "-d", "-f", $self->{conffile});
+	my @cmd = (@sudo, @libevent, @ktrace, $syslogd, "-d",
+	    "-f", $self->{conffile});
 	push @cmd, @{$self->{options}} if $self->{options};
 	print STDERR "execute: @cmd\n";
 	exec @cmd;
