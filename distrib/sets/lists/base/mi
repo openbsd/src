@@ -1145,7 +1145,7 @@
 ./usr/libdata/perl5/OpenBSD/PackageRepository.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository/HTTP.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository/Installed.pm
-./usr/libdata/perl5/OpenBSD/PackageRepository/Persistant.pm
+./usr/libdata/perl5/OpenBSD/PackageRepository/Persistent.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository/SCP.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepositoryList.pm
 ./usr/libdata/perl5/OpenBSD/PackingElement.pm
