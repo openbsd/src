@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.33 2014/08/29 20:21:13 schwarze Exp $
+# $OpenBSD: rcctl.sh,v 1.34 2014/08/29 21:04:37 schwarze Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -280,6 +280,9 @@ if [ -n "$flag" ]; then
 		fi
 		if svc_is_special $svc; then
 			_rc_err "${0##*/}: \"$svc\" is a special variable, cannot set \"flags\""
+		fi
+		if [ "$4" = "NO" ]; then
+			_rc_err "${0##*/}: \"flags NO\" contradicts \"enable\""
 		fi
 	else
 		usage
