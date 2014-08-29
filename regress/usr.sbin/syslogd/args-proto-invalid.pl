@@ -11,7 +11,7 @@ our %args = (
     syslogd => {
 	loghost => '@invalid://127.0.0.1',
 	loggrep => {
-	    qr/syslogd: bad protocol "\@invalid:\/\/127.0.0.1"/ => 2,  # XXX 2?
+	    qr/syslogd: bad protocol "\@invalid:\/\/127.0.0.1"/ => 2,
 	    get_log() => 1,
 	},
     },

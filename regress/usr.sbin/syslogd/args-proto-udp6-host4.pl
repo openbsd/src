@@ -11,7 +11,7 @@ our %args = (
     syslogd => {
 	loghost => '@udp6://127.0.0.1',
 	loggrep => {
-	    qr/syslogd: bad hostname "\@udp6:\/\/127.0.0.1"/ => 2,  # XXX 2?
+	    qr/syslogd: bad hostname "\@udp6:\/\/127.0.0.1"/ => 2,
 	    get_log() => 1,
 	},
     },

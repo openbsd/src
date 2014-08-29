@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.2 2014/08/25 17:55:27 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.3 2014/08/29 21:57:17 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -86,6 +86,22 @@ sub check_logs {
 	check_kdump($c, $s, %args);
 }
 
+sub compare($$) {
+	local $_ = $_[1];
+	if (/^\d+/) {
+		return $_[0] == $_;
+	} elsif (/^==(\d+)/) {
+		return $_[0] == $1;
+	} elsif (/^!=(\d+)/) {
+		return $_[0] != $1;
+	} elsif (/^>=(\d+)/) {
+		return $_[0] >= $1;
+	} elsif (/^<=(\d+)/) {
+		return $_[0] <= $1;
+	}
+	die "bad compare operator: $_";
+}
+
 sub check_pattern {
 	my ($name, $proc, $pattern, $func) = @_;
 
@@ -94,7 +110,7 @@ sub check_pattern {
 		if (ref($pat) eq 'HASH') {
 			while (my($re, $num) = each %$pat) {
 				my @matches = $func->($proc, $re);
-				@matches == $num
+				compare(@matches, $num)
 				    or die "$name matches '@matches': ",
 				    "'$re' => $num";
 			}

@@ -12,7 +12,7 @@ our %args = (
     syslogd => {
 	loghost => '@udp://127.0.0.1:$connectport',
 	loggrep => {
-	    qr/Logging to FORW \@udp:\/\/127.0.0.1:\d+/ => 5,
+	    qr/Logging to FORW \@udp:\/\/127.0.0.1:\d+/ => '>=5',
 	    get_log() => 1,
 	},
     },

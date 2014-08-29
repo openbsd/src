@@ -11,7 +11,7 @@ our %args = (
     syslogd => {
 	loghost => '@127.0.0.1:'.('X'x32),
 	loggrep => {
-	    qr/syslogd: port too long "\@127.0.0.1:X+/ => 2,  # XXX 2?
+	    qr/syslogd: port too long "\@127.0.0.1:X+/ => 2,
 	    get_log() => 1,
 	},
     },
