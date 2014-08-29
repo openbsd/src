@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.391 2014/08/26 20:19:26 rpe Exp $
+#	$OpenBSD: Makefile,v 1.392 2014/08/29 18:05:39 ajacoutot Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -30,16 +30,16 @@ kernels: bootblocks ${ALL_KERNELS}
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-MUTABLE=changelist csh.cshrc csh.login csh.logout daily dhclient.conf \
+MUTABLE=changelist csh.cshrc csh.login csh.logout daily \
 	etc.${MACHINE}/disktab etc.${MACHINE}/login.conf ftpusers \
 	gettytab group hosts ksh.kshrc locate.rc mailer.conf man.conf \
 	moduli monthly myname netstart networks newsyslog.conf \
 	pf.os protocols rc rc.conf rpc services shells syslog.conf weekly
 
 # -rw-r--r--
-EXAMPLES=chio.conf dhcpd.conf exports ftpchroot hosts.lpd httpd.conf \
-	ifstated.conf inetd.conf mixerctl.conf mrouted.conf ntpd.conf \
-	printcap rbootd.conf remote sensorsd.conf
+EXAMPLES=chio.conf dhclient.conf dhcpd.conf exports ftpchroot hosts.lpd \
+	httpd.conf ifstated.conf inetd.conf mixerctl.conf mrouted.conf \
+	ntpd.conf printcap rbootd.conf remote sensorsd.conf
 .if ${MACHINE} != "aviion" 
 EXAMPLES+= wsconsctl.conf
 .endif

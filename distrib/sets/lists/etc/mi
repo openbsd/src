@@ -5,7 +5,6 @@
 ./etc/csh.cshrc
 ./etc/csh.login
 ./etc/csh.logout
-./etc/dhclient.conf
 ./etc/dumpdates
 ./etc/fbtab
 ./etc/ftpusers
