@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.24 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: smu.c,v 1.25 2014/08/30 09:37:15 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -37,7 +37,7 @@
 int     smu_match(struct device *, void *, void *);
 void    smu_attach(struct device *, struct device *, void *);
 
-#define SMU_MAXFANS	3
+#define SMU_MAXFANS	8
 
 struct smu_fan {
 	u_int8_t	reg;
