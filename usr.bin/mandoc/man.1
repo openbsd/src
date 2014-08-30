@@ -1,5 +1,5 @@
-.\"	$Id: man.1,v 1.1 2014/08/27 00:06:08 schwarze Exp $
-.\"	$OpenBSD: man.1,v 1.1 2014/08/27 00:06:08 schwarze Exp $
+.\"	$Id: man.1,v 1.2 2014/08/30 18:04:52 schwarze Exp $
+.\"	$OpenBSD: man.1,v 1.2 2014/08/30 18:04:52 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)man.1	8.2 (Berkeley) 1/2/94
 .\"
-.Dd $Mdocdate: August 27 2014 $
+.Dd $Mdocdate: August 30 2014 $
 .Dt MAN 1
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd display manual pages
 .Sh SYNOPSIS
 .Nm man
-.Op Fl acfhkw
+.Op Fl acfhklVw
 .Op Fl C Ar file
 .Op Fl M Ar path
 .Op Fl m Ar path
@@ -91,6 +91,11 @@ It searches for
 .Ar name
 in manual page names and displays the header lines from all matching pages.
 The search is case insensitive and matches whole words only.
+This overrides any earlier
+.Fl k
+and
+.Fl l
+options.
 .It Fl h
 Display only the
 .Dq SYNOPSIS
@@ -104,6 +109,31 @@ an expression can be provided using the syntax described in the
 .Xr apropos 1
 manual.
 By default, it displays the header lines of all matching pages.
+This overrides any earlier
+.Fl f
+and
+.Fl l
+options.
+.It Fl l
+A synonym for
+.Xr mandoc 1
+.Fl a .
+The
+.Ar name
+arguments are interpreted as filenames.
+No search is done and
+.Ar file ,
+.Ar path ,
+.Ar section ,
+and
+.Ar subsection
+are ignored.
+This overrides any earlier
+.Fl f ,
+.Fl k ,
+and
+.Fl w
+options.
 .It Fl M Ar path
 Override the list of standard directories which
 .Nm
@@ -211,6 +241,8 @@ specifies the possible
 .Ar section
 values, and their search order.
 Additional sections may be specified.
+.It Fl V
+Print version and exit.
 .It Fl w
 List the pathnames of the manual pages which
 .Nm

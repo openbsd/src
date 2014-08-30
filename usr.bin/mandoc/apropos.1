@@ -1,4 +1,4 @@
-.\"	$Id: apropos.1,v 1.25 2014/08/27 00:06:08 schwarze Exp $
+.\"	$Id: apropos.1,v 1.26 2014/08/30 18:04:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 27 2014 $
+.Dd $Mdocdate: August 30 2014 $
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Nd search manual page databases
 .Sh SYNOPSIS
 .Nm
-.Op Fl acfkw
+.Op Fl acfklVw
 .Op Fl C Ar file
 .Op Fl M Ar path
 .Op Fl m Ar path
@@ -104,16 +104,30 @@ In this mode, macro keys, comparison operators, and logical operators
 are not available.
 This overrides any earlier
 .Fl k
-option.
+and
+.Fl l
+options.
 .It Fl k
 Support the full
 .Ar expression
 syntax.
 This overrides any earlier
 .Fl f
-option.
+and
+.Fl l
+options.
 It is the default for
 .Nm .
+.It Fl l
+An alias for
+.Xr mandoc 1
+.Fl a .
+This overrides any earlier
+.Fl f ,
+.Fl k ,
+and
+.Fl w
+options.
 .It Fl M Ar path
 Use the colon-separated path instead of the default list of paths
 searched for
@@ -143,6 +157,8 @@ By default, pages from all sections are shown.
 See
 .Xr man 1
 for a listing of sections.
+.It Fl V
+Print version and exit.
 .It Fl w
 Instead of showing title lines, show the pathnames of the matching
 manual pages, just like

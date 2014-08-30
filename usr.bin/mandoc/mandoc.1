@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.60 2014/08/27 00:06:08 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.61 2014/08/30 18:04:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 27 2014 $
+.Dd $Mdocdate: August 30 2014 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nd format and display UNIX manuals
 .Sh SYNOPSIS
 .Nm mandoc
-.Op Fl acV
+.Op Fl acfklV
 .Sm off
 .Op Fl I Cm os Li = Ar name
 .Sm on
@@ -51,7 +51,7 @@ and produces
 .Fl T Ns Cm ascii
 output.
 .Pp
-The arguments are as follows:
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 If the standard output is a terminal device and
@@ -68,6 +68,14 @@ to paginate them.
 This is the default.
 It can be specified to override
 .Fl a .
+.It Fl f
+A synonym for
+.Xr whatis 1 .
+This overrides any earlier
+.Fl k
+and
+.Fl l
+options.
 .Sm off
 .It Fl I Cm os Li = Ar name
 .Sm on
@@ -77,6 +85,22 @@ for the
 .Xr mdoc 7
 .Sq \&Os
 macro.
+.It Fl k
+A synonym for
+.Xr apropos 1 .
+This overrides any earlier
+.Fl f
+and
+.Fl l
+options.
+.It Fl l
+A synonym for
+.Fl a .
+Also reverts any earlier
+.Fl f
+and
+.Fl k
+options.
 .It Fl m Ns Ar format
 Input format.
 See
@@ -137,6 +161,18 @@ If multiple files are specified,
 .Nm
 will halt with the first failed parse.
 .El
+.Pp
+In
+.Fl f
+and
+.Fl k
+mode,
+.Nm
+also supports the options
+.Fl CMmOSsw
+described in the
+.Xr apropos 1
+manual.
 .Ss Input Formats
 The
 .Nm
