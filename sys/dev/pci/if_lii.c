@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.32 2013/12/28 03:34:54 deraadt Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.33 2014/08/30 09:52:13 brad Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -674,8 +674,7 @@ lii_init(struct ifnet *ifp)
 	/* 500000 means 100ms */
 	LII_WRITE_2(sc, LII_IALTIV, 50000);
 
-	LII_WRITE_4(sc, LII_MTU, ifp->if_mtu + ETHER_HDR_LEN
-	    + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN);
+	LII_WRITE_4(sc, LII_MTU, ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
 
 	/* unit unknown for TX cur-through threshold */
 	LII_WRITE_4(sc, LII_TX_CUT_THRESH, 0x177);
