@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.168 2014/07/13 15:32:28 miod Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.169 2014/08/30 10:44:01 miod Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -393,7 +393,8 @@ donot:
 			struct partition *pp;
 			u_int8_t fstype;
 
-			if (dp2->dp_typ == DOSPTYP_OPENBSD)
+			if (dp2->dp_typ == DOSPTYP_OPENBSD ||
+			    dp2->dp_typ == DOSPTYP_EFI)
 				continue;
 			if (letoh32(dp2->dp_size) > DL_GETDSIZE(lp))
 				continue;
@@ -415,6 +416,7 @@ donot:
 				fstype = FS_NTFS;
 				break;
 
+			case DOSPTYP_EFISYS:
 			case DOSPTYP_FAT12:
 			case DOSPTYP_FAT16S:
 			case DOSPTYP_FAT16B:
