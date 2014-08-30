@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.32 2014/05/16 18:17:03 mpi Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.33 2014/08/30 09:33:11 mpi Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
@@ -79,6 +79,7 @@ struct ehci_soft_itd {
 struct ehci_xfer {
 	struct usbd_xfer xfer;
 	TAILQ_ENTRY(ehci_xfer) inext; /* list of active xfers */
+	struct ehci_soft_qh *sqh;
 	struct ehci_soft_qtd *sqtdstart;
 	struct ehci_soft_qtd *sqtdend;
 	struct ehci_soft_itd *itdstart;
