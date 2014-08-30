@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.78 2014/08/14 09:52:03 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.79 2014/08/30 09:48:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -879,14 +879,6 @@ oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				oce_stop(sc);
 		}
 		break;
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < OCE_MIN_MTU || ifr->ifr_mtu > OCE_MAX_MTU)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu) {
-			ifp->if_mtu = ifr->ifr_mtu;
-			oce_init(sc);
-		}
-		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
@@ -1084,7 +1076,7 @@ oce_init(void *arg)
 		goto error;
 
 	OCE_RQ_FOREACH(sc, rq, i) {
-		rq->mtu = ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
+		rq->mtu = ifp->if_hardmtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
 		    ETHER_VLAN_ENCAP_LEN;
 		if (oce_new_rq(sc, rq)) {
 			printf("%s: failed to create rq\n",
