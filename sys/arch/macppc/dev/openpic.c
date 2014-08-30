@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.72 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.73 2014/08/30 09:42:20 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -307,14 +307,16 @@ openpic_intr_establish(void *lcv, int irq, int type, int level,
 	struct intrq *iq;
 	int s;
 
+	if (!LEGAL_IRQ(irq) || type == IST_NONE) {
+		printf("%s: bogus irq %d or type %d", __func__, irq, type);
+		return (NULL);
+	}
+
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL)
-		panic("intr_establish: can't malloc handler info");
+		panic("%s: can't malloc handler info", __func__);
 	iq = &openpic_handler[irq];
-
-	if (!LEGAL_IRQ(irq) || type == IST_NONE)
-		panic("intr_establish: bogus irq or type");
 
 	switch (iq->iq_ist) {
 	case IST_NONE:
@@ -365,8 +367,10 @@ openpic_intr_disestablish(void *lcp, void *arg)
 	struct intrq *iq = &openpic_handler[irq];
 	int s;
 
-	if (!LEGAL_IRQ(irq))
-		panic("intr_disestablish: bogus irq");
+	if (!LEGAL_IRQ(irq)) {
+		printf("%s: bogus irq %d", __func__, irq);
+		return;
+	}
 
 	/*
 	 * Remove the handler from the chain.
