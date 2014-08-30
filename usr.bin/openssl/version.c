@@ -1,4 +1,4 @@
-/* $OpenBSD: version.c,v 1.1 2014/08/26 17:47:25 jsing Exp $ */
+/* $OpenBSD: version.c,v 1.2 2014/08/30 15:59:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -135,40 +135,97 @@
 #include <openssl/rc4.h>
 #endif
 
+static struct {
+	int cflags;
+	int date;
+	int dir;
+	int options;
+	int platform;
+	int version;
+} version_config;
+
+static int
+version_all_opts(struct option *opt, char *arg)
+{
+	version_config.cflags = 1;
+	version_config.date = 1;
+	version_config.dir= 1;
+	version_config.options = 1;
+	version_config.platform = 1;
+	version_config.version = 1;
+
+	return (0);
+}
+
+static struct option version_options[] = {
+	{
+		.name = "a",
+		.desc = "All information (same as setting all other flags)",
+		.type = OPTION_FUNC,
+		.func = version_all_opts,
+	},
+	{
+		.name = "b",
+		.desc = "Date the current version of OpenSSL was built",
+		.type = OPTION_FLAG,
+		.opt.flag = &version_config.date,
+	},
+	{
+		.name = "d",
+		.desc = "OPENSSLDIR value",
+		.type = OPTION_FLAG,
+		.opt.flag = &version_config.dir,
+	},
+	{
+		.name = "f",
+		.desc = "Compilation flags",
+		.type = OPTION_FLAG,
+		.opt.flag = &version_config.cflags,
+	},
+	{
+		.name = "o",
+		.desc = "Option information",
+		.type = OPTION_FLAG,
+		.opt.flag = &version_config.options,
+	},
+	{
+		.name = "p",
+		.desc = "Platform settings",
+		.type = OPTION_FLAG,
+		.opt.flag = &version_config.platform,
+	},
+	{
+		.name = "v",
+		.desc = "Current OpenSSL version",
+		.type = OPTION_FLAG,
+		.opt.flag = &version_config.version,
+	},
+	{},
+};
+
+static void
+version_usage(void)
+{
+	fprintf(stderr, "usage: version [-abdfopv]\n");
+	options_usage(version_options);
+}
+
 int version_main(int, char **);
 
 int
 version_main(int argc, char **argv)
 {
-	int i, ret = 0;
-	int cflags = 0, version = 0, date = 0, options = 0, platform = 0,
-	    dir = 0;
+	memset(&version_config, 0, sizeof(version_config));
 
-	if (argc == 1)
-		version = 1;
-	for (i = 1; i < argc; i++) {
-		if (strcmp(argv[i], "-v") == 0)
-			version = 1;
-		else if (strcmp(argv[i], "-b") == 0)
-			date = 1;
-		else if (strcmp(argv[i], "-f") == 0)
-			cflags = 1;
-		else if (strcmp(argv[i], "-o") == 0)
-			options = 1;
-		else if (strcmp(argv[i], "-p") == 0)
-			platform = 1;
-		else if (strcmp(argv[i], "-d") == 0)
-			dir = 1;
-		else if (strcmp(argv[i], "-a") == 0)
-			date = version = cflags = options = platform = dir = 1;
-		else {
-			BIO_printf(bio_err, "usage:version -[avbofpd]\n");
-			ret = 1;
-			goto end;
-		}
+	if (options_parse(argc, argv, version_options, NULL) != 0) {
+		version_usage();
+		return (1);
 	}
 
-	if (version) {
+	if (argc == 1)
+		version_config.version = 1;
+
+	if (version_config.version) {
 		if (SSLeay() == SSLEAY_VERSION_NUMBER) {
 			printf("%s\n", SSLeay_version(SSLEAY_VERSION));
 		} else {
@@ -177,11 +234,11 @@ version_main(int argc, char **argv)
 			    SSLeay_version(SSLEAY_VERSION));
 		}
 	}
-	if (date)
+	if (version_config.date)
 		printf("%s\n", SSLeay_version(SSLEAY_BUILT_ON));
-	if (platform)
+	if (version_config.platform)
 		printf("%s\n", SSLeay_version(SSLEAY_PLATFORM));
-	if (options) {
+	if (version_config.options) {
 		printf("options:  ");
 		printf("%s ", BN_options());
 #ifndef OPENSSL_NO_RC4
@@ -198,11 +255,10 @@ version_main(int argc, char **argv)
 #endif
 		printf("\n");
 	}
-	if (cflags)
+	if (version_config.cflags)
 		printf("%s\n", SSLeay_version(SSLEAY_CFLAGS));
-	if (dir)
+	if (version_config.dir)
 		printf("%s\n", SSLeay_version(SSLEAY_DIR));
-end:
 
-	return (ret);
+	return (0);
 }
