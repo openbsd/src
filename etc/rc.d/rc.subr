@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.88 2014/08/25 07:34:12 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.89 2014/08/30 20:33:27 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -21,7 +21,7 @@
 
 _rc_err() {
 	echo "$1" 1>&2
-	exit 1
+	[ -n "${2}" ] && exit "${2}" || exit 1
 }
 
 _rc_is_supported() {
