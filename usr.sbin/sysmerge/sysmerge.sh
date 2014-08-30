@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.158 2014/08/30 16:37:12 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.159 2014/08/30 20:31:03 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -46,15 +46,13 @@ sm_error() {
 	(($#)) && sm_echo "!!!! ERROR: $@"
 
 	# restore sum files from backups or remove the newly created ones
-	for _i in ${_WRKDIR}/{etcsum,xetcsum,examplessum,pkgsum}.bak; do
-		_j=$(basename ${_i} .bak)
-		[[ -f ${_WRKDIR}/${_j} ]] || continue
+	for _i in ${_WRKDIR}/{etcsum,xetcsum,examplessum,pkgsum}; do
+		_j=$(basename ${_i})
 		if [[ -f ${_i} ]]; then
 			mv ${_i} /usr/share/sysmerge/${_j}
 		elif [[ -f /usr/share/sysmerge/${_j} ]]; then
 			rm /usr/share/sysmerge/${_j}
 		fi
-		rm ${_WRKDIR}/${_j}
 	done
 
 	# do not empty _WRKDIR, it may still contain our backup files
@@ -69,7 +67,7 @@ sm_warn() {
 	(($#)) && sm_echo "**** WARNING: $@" || true
 }
 
-sm_extract_mksum() {
+sm_extract_sets() {
 	[[ -n ${PKGMODE} ]] && return
 	local _e _x _set
 
@@ -79,16 +77,10 @@ sm_extract_mksum() {
 	for _set in ${_e} ${_x}; do
 		[ -f /usr/share/sysmerge/${_set}sum ] && \
 			cp /usr/share/sysmerge/${_set}sum \
-			${_WRKDIR}/${_set}sum.bak
-		# XXX do we still want this check?
-		tar -tzf /usr/share/sysmerge/${_set}.tgz \
-			./usr/share/sysmerge/${_set}sum >/dev/null ||
-			sm_error "${_set}.tgz: badly formed set, lacks ./usr/share/sysmerge/${_set}sum"
-		(cd ${_TMPROOT} && tar -xzphf \
-			/usr/share/sysmerge/${_set}.tgz && \
-			find . -type f | sort | \
-			xargs sha256 -h ${_WRKDIR}/${_set}sum) || \
-			sm_error "failed to extract ${_set}.tgz and create sum file"
+			${_WRKDIR}/${_set}sum
+		cd ${_TMPROOT} && tar -xzphf \
+			/usr/share/sysmerge/${_set}.tgz || \
+			sm_error "failed to extract ${_set}.tgz"
 	done
 }
 
@@ -147,7 +139,7 @@ sm_cp_pkg_samples() {
 	local _install_args _i _ret=0 _sample
 
 	[[ -f /usr/share/sysmerge/pkgsum ]] && \
-		cp /usr/share/sysmerge/pkgsum ${_WRKDIR}/pkgsum.bak
+		cp /usr/share/sysmerge/pkgsum ${_WRKDIR}/pkgsum
 
 	# access to full base system hierarchy is implied in packages
 	mtree -qdef /etc/mtree/4.4BSD.dist -p ${_TMPROOT} -U >/dev/null
@@ -181,7 +173,7 @@ sm_cp_pkg_samples() {
 
 	if [[ ${_ret} -eq 0 ]]; then
 		cd ${_TMPROOT} && find . -type f | sort | \
-			xargs sha256 -h ${_WRKDIR}/pkgsum || \
+			xargs sha256 -h ${_TMPROOT}/usr/share/sysmerge/pkgsum || \
 			_ret=1
 	fi
 	[[ ${_ret} -ne 0 ]] && \
@@ -195,18 +187,18 @@ sm_populate() {
 	mkdir -p ${_TMPROOT} || \
 		sm_error "cannot create ${_TMPROOT}"
 
-	sm_extract_mksum
+	sm_extract_sets
 	sm_install_user_grp
+	sm_check_an_eg
 	sm_cp_pkg_samples
 
 	# examplessum is used differently, see sm_check_an_eg()
 	for _i in etcsum xetcsum pkgsum; do
-		if [[ -f /usr/share/sysmerge/${_i} && -f ${_WRKDIR}/${_i} ]]; then
+		if [[ -f /usr/share/sysmerge/${_i} ]]; then
 			# delete file in temproot if it has not changed since
 			# last release and is present in current installation
 			if [[ -z ${DIFFMODE} ]]; then
-				# redirect stderr in case file got removed
-				# manually but is still in the sum file
+				# redirect stderr; file may not exist
 				_matchsum=$(cd ${_TMPROOT} && \
 					sha256 -c /usr/share/sysmerge/${_i} 2>/dev/null | \
 					awk '/OK/ { print $2 }' | \
@@ -219,20 +211,21 @@ sm_populate() {
 			fi
 
 			# set auto-upgradable files
-			_mismatch=$(diff -u ${_WRKDIR}/${_i} /usr/share/sysmerge/${_i} | \
+			_mismatch=$(diff -u ${_TMPROOT}/usr/share/sysmerge/${_i} /usr/share/sysmerge/${_i} | \
 				sed -n 's/^+SHA256 (\(.*\)).*/\1/p')
 			for _k in ${_mismatch}; do
-				# redirect stderr in case file got removed
-				# manually but is still in the sum file
+				# skip sum files (!auto-install)
+				[[ $_k == ./usr/share/sysmerge/${_i} ]] && continue
+				# redirect stderr; file may not exist
 				_cursum=$(cd / && sha256 ${_k} 2>/dev/null)
 				[[ -n $(grep "${_cursum}" /usr/share/sysmerge/${_i}) && \
-					-z $(grep "${_cursum}" ${_WRKDIR}/${_i}) ]] && \
+					-z $(grep "${_cursum}" ${_TMPROOT}/usr/share/sysmerge/${_i}) ]] && \
 					_auto_upg="${_auto_upg} ${_k}"
 			done
 			[[ -n ${_auto_upg} ]] && set -A AUTO_UPG -- ${_auto_upg}
 		fi
-		[[ -f ${_WRKDIR}/${_i} ]] && \
-			mv ${_WRKDIR}/${_i} /usr/share/sysmerge/${_i}
+		[[ -f ${_TMPROOT}/usr/share/sysmerge/${_i} ]] && \
+			mv ${_TMPROOT}/usr/share/sysmerge/${_i} /usr/share/sysmerge/${_i}
 	done
 
 	# files we don't want/need to deal with
@@ -244,7 +237,6 @@ sm_populate() {
 		      /etc/passwd
 		      /etc/motd
 		      /etc/myname
-		      /usr/share/sysmerge/{etc,examples,xetc}sum
 		      /var/db/locate.database
 		      /var/mail/root"
 	_cffiles="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
@@ -628,10 +620,12 @@ sm_compare() {
 }
 
 sm_check_an_eg() {
+	[[ -n ${PKGMODE} ]] && return
 	local _egmods _i _j _managed EGMODS
 
-	if [ -f /usr/share/sysmerge/examplessum ]; then
-		cp /usr/share/sysmerge/examplessum ${_WRKDIR}/examplessum.bak
+	if [[ -f /usr/share/sysmerge/examplessum ]]; then
+		cp /usr/share/sysmerge/examplessum \
+			${_TMPROOT}/usr/share/sysmerge/examplessum
 		_egmods=$(cd / && \
 			 sha256 -c /usr/share/sysmerge/examplessum 2>/dev/null | \
 			 grep 'FAILED$' | \
@@ -648,9 +642,9 @@ sm_check_an_eg() {
 		done
 		sm_warn "example(s) changed for: ${_managed}"
 	fi
-	cd / && find ./etc/examples -type f | sort | \
-		xargs sha256 -h /usr/share/sysmerge/examplessum || \
-		sm_error "failed to create examplessum checksum file"
+	[[ -f ${_TMPROOT}/usr/share/sysmerge/examplessum ]] && \
+		mv ${_TMPROOT}/usr/share/sysmerge/examplessum \
+		/usr/share/sysmerge/examplessum
 }
 
 sm_post() {
@@ -671,7 +665,7 @@ sm_post() {
 	if [[ -e ${_WRKDIR}/sysmerge.log ]]; then
 		find "${_TMPROOT}" -type f -empty | xargs -r rm
 		find "${_TMPROOT}" -type d | sort -r | xargs -r rmdir 2>/dev/null
-		rm ${_WRKDIR}/*sum.bak
+		rm ${_WRKDIR}/*sum
 		sed '/^$/d' ${_WRKDIR}/sysmerge.log >${_WRKDIR}/sysmerge.log.bak
 		mv ${_WRKDIR}/sysmerge.log.bak ${_WRKDIR}/sysmerge.log
 		echo "===> Run log available at ${_WRKDIR}/sysmerge.log"
@@ -709,5 +703,4 @@ PAGER=${PAGER:=/usr/bin/more}
 
 sm_populate
 sm_compare
-sm_check_an_eg
 sm_post
