@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.8 2014/08/30 14:42:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Miodrag Vallat.
@@ -175,7 +175,7 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 
 #ifdef STIDEBUG
 		sti_pci_disable_rom(sc);
-		printf("ROM offset %08x size %08x type %08x",
+		printf("ROM offset %08lx size %08lx type %08x",
 		    offs, subsize, tmp);
 		sti_pci_enable_rom(sc);
 #endif
