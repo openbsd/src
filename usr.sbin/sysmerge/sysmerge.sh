@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.157 2014/08/30 14:40:09 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.158 2014/08/30 16:37:12 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -66,7 +66,7 @@ sm_error() {
 trap "sm_error; exit 1" 1 2 3 13 15
 
 sm_warn() {
-	(($#)) && sm_echo "**** WARNING: $@"
+	(($#)) && sm_echo "**** WARNING: $@" || true
 }
 
 sm_extract_mksum() {
