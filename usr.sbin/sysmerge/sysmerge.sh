@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.156 2014/08/29 06:52:20 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.157 2014/08/30 14:40:09 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -208,7 +208,7 @@ sm_populate() {
 				# redirect stderr in case file got removed
 				# manually but is still in the sum file
 				_matchsum=$(cd ${_TMPROOT} && \
-					sha256 -c ${DESTDIR}/${DBDIR}/${_i} 2>/dev/null | \
+					sha256 -c /usr/share/sysmerge/${_i} 2>/dev/null | \
 					awk '/OK/ { print $2 }' | \
 					sed 's/[:]//')
 				for _j in ${_matchsum}; do
