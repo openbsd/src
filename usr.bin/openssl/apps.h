@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.6 2014/08/28 14:15:28 jsing Exp $ */
+/* $OpenBSD: apps.h,v 1.7 2014/08/30 15:14:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -291,6 +291,7 @@ struct option {
 		OPTION_ARG_FORMAT,
 		OPTION_ARG_FUNC,
 		OPTION_ARG_INT,
+		OPTION_FUNC,
 		OPTION_FLAG,
 		OPTION_FLAG_ORD,
 		OPTION_VALUE,
@@ -298,9 +299,9 @@ struct option {
 	union {
 		char **arg;
 		int *flag;
-		int (*func)(struct option *opt, char *arg);
 		int *value;
 	} opt;
+	int (*func)(struct option *opt, char *arg);
 	const int value;
 };
 
