@@ -1,6 +1,5 @@
 ./.cshrc
 ./.profile
-./etc/amd/master.sample
 ./etc/changelist
 ./etc/csh.cshrc
 ./etc/csh.login

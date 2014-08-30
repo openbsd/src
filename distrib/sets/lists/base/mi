@@ -46,6 +46,7 @@
 ./dev/MAKEDEV
 ./etc
 ./etc/amd
+./etc/amd/master.sample
 ./etc/authpf
 ./etc/daily
 ./etc/disktab
