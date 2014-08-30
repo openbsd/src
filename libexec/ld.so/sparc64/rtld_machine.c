@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.52 2014/04/16 10:52:59 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.53 2014/08/30 21:30:23 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -378,7 +378,8 @@ resolve_failed:
 /*
  * Instruction templates:
  */
-#define	BAA	0x10400000	/*	ba,a	%xcc, 0 */
+
+#define	BAA	0x30680000	/*	ba,a	%xcc, 0 */
 #define	SETHI	0x03000000	/*	sethi	%hi(0), %g1 */
 #define	JMP	0x81c06000	/*	jmpl	%g1+%lo(0), %g0 */
 #define	NOP	0x01000000	/*	sethi	%hi(0), %g0 */
@@ -440,7 +441,7 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		 * the top of the PLT section.  Update it to point to
 		 * the target function.
 		 */
-		ptr[0] += value - object->Dyn.info[DT_PLTGOT];
+		ptr[0] = value + rela->r_addend - object->obj_base;
 
 	} else if ((int64_t)(offset-4) <= (1L<<20) &&
 	    (int64_t)(offset-4) >= -(1L<<20)) {
@@ -459,7 +460,7 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		 *	nop
 		 *
 		 */
-		where[1] = BAA | (((offset-4) >> 2) &0x3fffff);
+		where[1] = BAA | (((offset-4) >> 2) &0x7ffff);
 		__asm volatile("iflush %0+4" : : "r" (where));
 	} else if (value < (1UL<<32)) {
 		/*
