@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.24 2014/08/10 11:21:49 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.25 2014/08/30 09:32:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -1097,7 +1097,7 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
 		/* Get output slot context. */
 		sctx = KERNADDR(&sdev->octx_dma, 0);
 		addr = XHCI_SCTX_DEV_ADDR(letoh32(sctx->state));
-		error = (addr != 0);
+		error = (addr == 0);
 
 		printf("%s: dev %d addr %d\n", DEVNAME(sc), xp->slot, addr);
 	}
