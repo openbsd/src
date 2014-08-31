@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_cancel.c,v 1.8 2013/10/04 03:31:16 guenther Exp $ */
+/* $OpenBSD: rthread_cancel.c,v 1.9 2014/08/31 20:23:10 guenther Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -27,7 +27,13 @@
 
 #include "rthread.h"
 
+/*
+ * If you add anything here, make sure to add it to the list in the
+ * pthread_testcancel(3) manpage too.
+ */
+
 int	_thread_sys_accept(int, struct sockaddr *, socklen_t *);
+int	_thread_sys_accept4(int, struct sockaddr *, socklen_t *, int);
 int	_thread_sys_close(int);
 int	_thread_sys_closefrom(int);
 int	_thread_sys_connect(int, const struct sockaddr *, socklen_t);
@@ -114,6 +120,18 @@ accept(int fd, struct sockaddr *addr, socklen_t *addrlen)
 
 	_enter_cancel(self);
 	rv = _thread_sys_accept(fd, addr, addrlen);
+	_leave_cancel(self);
+	return (rv);
+}
+
+int
+accept4(int fd, struct sockaddr *addr, socklen_t *addrlen, int flags)
+{
+	pthread_t self = pthread_self();
+	int rv;
+
+	_enter_cancel(self);
+	rv = _thread_sys_accept4(fd, addr, addrlen, flags);
 	_leave_cancel(self);
 	return (rv);
 }

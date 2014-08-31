@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_testcancel.3,v 1.15 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_testcancel.3,v 1.16 2014/08/31 20:23:10 guenther Exp $
 .\"
 .\"
 .\"  David Leonard, 1999. Public Domain.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: August 31 2014 $
 .Dt PTHREAD_TESTCANCEL 3
 .Os
 .Sh NAME
@@ -105,6 +105,7 @@ base interfaces:
 .Fn connect ,
 .Fn creat ,
 .Fn fcntl "F_SETLKW" ,
+.Fn fdatasync ,
 .Fn fsync ,
 .Fn lockf ,
 .Fn msgrcv ,
@@ -120,6 +121,7 @@ base interfaces:
 .Fn pthread_cond_wait ,
 .Fn pthread_join ,
 .Fn pthread_testcancel ,
+.Fn pwrite ,
 .Fn read ,
 .Fn readv ,
 .Fn recv ,
@@ -144,9 +146,12 @@ base interfaces:
 In addition,
 cancellation points will occur when a thread is executing the following
 extension interfaces:
+.Fn accept4 ,
 .Fn closefrom ,
+.Fn ppoll ,
 .Fn preadv ,
 .Fn pwritev ,
+.Fn wait3 ,
 .Fn wait4 .
 .Sh RETURN VALUES
 If successful, the
