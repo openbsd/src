@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.160 2014/07/13 15:48:41 tedu Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.161 2014/08/31 21:08:48 tedu Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -65,6 +65,10 @@
 int nobuffers;
 int needbuffer;
 struct bio_ops bioops;
+
+/* private bufcache functions */
+void bufcache_init(void);
+void bufcache_adjust(void);
 
 /*
  * Buffer pool for I/O buffers.
@@ -248,6 +252,7 @@ bufadjust(int newbufpages)
 		}
 		buf_put(bp);
 	}
+	bufcache_adjust();
 
 	/*
 	 * Wake up the cleaner if we have lots of dirty pages,
@@ -1171,26 +1176,113 @@ bcstats_print(
 #endif
 
 /* bufcache freelist code below */
+/*
+ * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
 /*
- * simple LRU queues, one clean and one dirty
+ * The code below implements a variant of the 2Q buffer cache algorithm by
+ * Johnson and Shasha.
+ *
+ * General Outline
+ * We divide the buffer cache into three working sets: current, previous,
+ * and long term. Each list is itself LRU and buffers get promoted and moved
+ * around between them. A buffer starts its life in the current working set.
+ * As time passes and newer buffers push it out, it will turn into the previous
+ * working set and is subject to recycling. But if it's accessed again from
+ * the previous working set, that's an indication that it's actually in the
+ * long term working set, so we promote it there. The separation of current
+ * and previous working sets prevents us from promoting a buffer that's only
+ * temporarily hot to the long term cache.
+ *
+ * The objective is to provide scan resistance by making the long term
+ * working set ineligible for immediate recycling, even as the current 
+ * working set is rapidly turned over.
+ *
+ * Implementation
+ * The code below identifies the current, previous, and long term sets as
+ * hotqueue, coldqueue, and warmqueue. The hot and warm queues are capped at
+ * 1/3 of the total clean pages, after which point they start pushing their
+ * oldest buffers into coldqueue.
+ * A buf always starts out with neither WARM or COLD flags set (implying HOT).
+ * When released, it will be returned to the tail of the hotqueue list.
+ * When the hotqueue gets too large, the oldest hot buf will be moved to the
+ * coldqueue, with the B_COLD flag set. When a cold buf is released, we set
+ * the B_WARM flag and put it onto the warmqueue. Warm bufs are also
+ * directly returned to the end of the warmqueue. As with the hotqueue, when
+ * the warmqueue grows too large, bufs are moved onto the coldqueue.
+ *
+ * Note that this design does still support large working sets, greater
+ * than the cap of hotqueue or warmqueue would imply. The coldqueue is still
+ * cached and has no maximum length. The hot and warm queues form a Y feeding
+ * into the coldqueue. Moving bufs between queues is constant time, so this
+ * design decays to one long warm->cold queue.
+ *
+ * In the 2Q paper, hotqueue and coldqueue are A1in and A1out. The warmqueue
+ * is Am. We always cache pages, as opposed to pointers to pages for A1.
+ * 
+ */
+
+/*
+ * 
  */
 TAILQ_HEAD(bufqueue, buf);
-struct bufqueue cleanqueue;
+struct bufqueue hotqueue;
+int64_t hotbufpages;
+struct bufqueue coldqueue;
+struct bufqueue warmqueue;
+int64_t warmbufpages;
 struct bufqueue dirtyqueue;
+
+/*
+ * this function is called when a hot or warm queue may have exceeded its
+ * size limit. it will move a buf to the coldqueue.
+ */
+int chillbufs(struct bufqueue *queue, int64_t *queuepages);
 
 void
 bufcache_init(void)
 {
 
-	TAILQ_INIT(&cleanqueue);
+	TAILQ_INIT(&hotqueue);
+	TAILQ_INIT(&coldqueue);
+	TAILQ_INIT(&warmqueue);
 	TAILQ_INIT(&dirtyqueue);
+}
+
+/*
+ * if the buffer cache shrunk, we may need to rebalance our queues.
+ */
+void
+bufcache_adjust(void)
+{
+	while (chillbufs(&warmqueue, &warmbufpages) ||
+	    chillbufs(&hotqueue, &hotbufpages))
+		;
 }
 
 struct buf *
 bufcache_getcleanbuf(void)
 {
-	return TAILQ_FIRST(&cleanqueue);
+	struct buf *bp;
+
+	if ((bp = TAILQ_FIRST(&coldqueue)))
+		return bp;
+	if ((bp = TAILQ_FIRST(&warmqueue)))
+		return bp;
+	return TAILQ_FIRST(&hotqueue);
 }
 
 struct buf *
@@ -1203,31 +1295,79 @@ void
 bufcache_take(struct buf *bp)
 {
 	struct bufqueue *queue;
+	int64_t pages;
 
 	splassert(IPL_BIO);
 
+	pages = atop(bp->b_bufsize);
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
-		queue = &cleanqueue;
-		bcstats.numcleanpages -= atop(bp->b_bufsize);
+		if (ISSET(bp->b_flags, B_WARM)) {
+			queue = &warmqueue;
+			warmbufpages -= pages;
+		} else if (ISSET(bp->b_flags, B_COLD)) {
+			queue = &coldqueue;
+		} else {
+			queue = &hotqueue;
+			hotbufpages -= pages;
+		}
+		bcstats.numcleanpages -= pages;
 	} else {
 		queue = &dirtyqueue;
-		bcstats.numdirtypages -= atop(bp->b_bufsize);
+		bcstats.numdirtypages -= pages;
 		bcstats.delwribufs--;
 	}
 	TAILQ_REMOVE(queue, bp, b_freelist);
+}
+
+int
+chillbufs(struct bufqueue *queue, int64_t *queuepages)
+{
+	struct buf *bp;
+	int64_t limit, pages;
+
+	/*
+	 * The warm and hot queues are allowed to be up to one third each.
+	 * We impose a minimum size of 96 to prevent too much "wobbling".
+	 */
+	limit = bcstats.numcleanpages / 3;
+	if (*queuepages > 96 && *queuepages > limit) {
+		bp = TAILQ_FIRST(queue);
+		if (!bp)
+			panic("inconsistent bufpage counts");
+		pages = atop(bp->b_bufsize);
+		*queuepages -= pages;
+		TAILQ_REMOVE(queue, bp, b_freelist);
+		CLR(bp->b_flags, B_WARM);
+		SET(bp->b_flags, B_COLD);
+		TAILQ_INSERT_TAIL(&coldqueue, bp, b_freelist);
+		return 1;
+	}
+	return 0;
 }
 
 void
 bufcache_release(struct buf *bp)
 {
 	struct bufqueue *queue;
+	int64_t pages;
 	
+	pages = atop(bp->b_bufsize);
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
-		queue = &cleanqueue;
-		bcstats.numcleanpages += atop(bp->b_bufsize);
+		int64_t *queuepages;
+		if (ISSET(bp->b_flags, B_WARM | B_COLD)) {
+			SET(bp->b_flags, B_WARM);
+			queue = &warmqueue;
+			queuepages = &warmbufpages;
+		} else {
+			queue = &hotqueue;
+			queuepages = &hotbufpages;
+		}
+		*queuepages += pages;
+		bcstats.numcleanpages += pages;
+		chillbufs(queue, queuepages);
 	} else {
 		queue = &dirtyqueue;
-		bcstats.numdirtypages += atop(bp->b_bufsize);
+		bcstats.numdirtypages += pages;
 		bcstats.delwribufs++;
 	}
 	TAILQ_INSERT_TAIL(queue, bp, b_freelist);

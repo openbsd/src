@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.94 2014/04/10 13:48:24 tedu Exp $	*/
+/*	$OpenBSD: buf.h,v 1.95 2014/08/31 21:08:48 tedu Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -216,6 +216,8 @@ struct buf {
 #define	B_SCANNED	0x00100000	/* Block already pushed during sync */
 #define	B_PDAEMON	0x00200000	/* I/O started by pagedaemon */
 #define	B_RELEASED	0x00400000	/* free this buffer after its kvm */
+#define	B_WARM		0x00800000	/* keep this buffer on warmqueue */
+#define	B_COLD		0x01000000	/* keep this buffer on coldqueue */
 
 #define	B_BITS	"\20\001AGE\002NEEDCOMMIT\003ASYNC\004BAD\005BUSY" \
     "\006CACHE\007CALL\010DELWRI\011DONE\012EINTR\013ERROR" \
@@ -295,8 +297,6 @@ struct buf *incore(struct vnode *, daddr_t);
 /*
  * bufcache functions
  */
-void bufcache_init(void);
-
 void bufcache_take(struct buf *);
 void bufcache_release(struct buf *);
 
