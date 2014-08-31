@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.163 2014/08/31 07:59:58 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.164 2014/08/31 08:32:41 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -152,18 +152,15 @@ sm_cp_pkg_samples() {
 		if [[ ${_sample[0]} == "0-DIR" ]]; then
 			install -d ${_install_args} ${_sample[4]} || _ret=1
 		else
-			# the directory we want to copy the @sample file
-			# into does not exist, ignore @sample and move on:
-			# - if the directory was a @sample, it would have
-			#   been created at this point
-			# - we have no knowledge of the required owner,
-			#   group and mode of the directory hierarchy
-			#   because the dir is not a @sample
-			#   (e.g. mail/femail,-chroot)
-			#_pkghier=$(dirname ${_sample[5]})
-			#if [ ! -d "${_pkghier}" ]; then
-			#	install -d -o root -g wheel -m 0755 ${_pkghier}
-			#fi
+			# directory we want to copy the @sample file into
+			# does not exist and is not a @sample so we have no
+			# knowledge of the required owner/group/mode
+			# (e.g. /var/www/usr/sbin in mail/femail,-chroot)
+			_pkghier=$(dirname ${_sample[5]})
+			if [[ ! -d ${_pkghier} ]]; then
+				sm_warn "skipping ${_sample[5]#${_TMPROOT}}: ${_pkghier#${_TMPROOT}} does not exist"
+				continue
+			fi
 			if [[ -d $(dirname ${_sample[5]}) ]]; then
 				install ${_install_args} \
 					${_sample[4]} ${_sample[5]} || _ret=1
