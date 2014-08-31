@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.7 2014/08/29 17:17:22 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.8 2014/08/31 06:52:46 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 29 2014 $
+.Dd $Mdocdate: August 31 2014 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -93,7 +93,10 @@ script.
 exits with 0 if the daemon or service is enabled and 1 if it is not.
 Otherwise, the
 .Nm
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success, and >0 if an error occurs
+.Po 2 indicates a non-existent
+.Ar service
+.Pc .
 .Sh EXAMPLES
 Disable
 .Xr ntpd 8
