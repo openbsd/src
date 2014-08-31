@@ -1,8 +1,8 @@
-/*	$OpenBSD: uuid_compare.c,v 1.1 2014/08/31 09:36:39 miod Exp $	*/
+/*	$OpenBSD: uuid_compare.c,v 1.2 2014/08/31 19:59:18 miod Exp $	*/
 /*	$NetBSD: uuid_compare.c,v 1.2 2008/04/23 07:52:32 plunky Exp $	*/
 
-/*
- * Copyright (c) 2002 Marcel Moolenaar
+/*-
+ * Copyright (c) 2002,2005 Marcel Moolenaar
  * Copyright (c) 2002 Hiten Mahesh Pandya
  * All rights reserved.
  *
@@ -27,13 +27,19 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libc/uuid/uuid_compare.c,v 1.3 2003/08/08 19:18:43 marcel Exp $
+ * $FreeBSD: src/lib/libc/uuid/uuid_compare.c,v 1.6 2007/04/05 02:07:33 delphij Exp $
  */
 
 #include "namespace.h"
 
 #include <string.h>
 #include <uuid.h>
+
+/* A macro used to improve the readability of uuid_compare(). */
+#define DIFF_RETURN(a, b, field)	do {			\
+	if ((a)->field != (b)->field)				\
+		return (((a)->field < (b)->field) ? -1 : 1);	\
+} while (0)
 
 /*
  * uuid_compare() - compare two UUIDs.
@@ -60,24 +66,16 @@ uuid_compare(const uuid_t *a, const uuid_t *b, uint32_t *status)
 		return ((uuid_is_nil(a, NULL)) ? 0 : 1);
 
 	/* We have to compare the hard way. */
-	res = (int)((int64_t)a->time_low - (int64_t)b->time_low);
-	if (res)
-		return ((res < 0) ? -1 : 1);
-	res = (int)a->time_mid - (int)b->time_mid;
-	if (res)
-		return ((res < 0) ? -1 : 1);
-	res = (int)a->time_hi_and_version - (int)b->time_hi_and_version;
-	if (res)
-		return ((res < 0) ? -1 : 1);
-	res = (int)a->clock_seq_hi_and_reserved -
-	    (int)b->clock_seq_hi_and_reserved;
-	if (res)
-		return ((res < 0) ? -1 : 1);
-	res = (int)a->clock_seq_low - (int)b->clock_seq_low;
-	if (res)
-		return ((res < 0) ? -1 : 1);
+	DIFF_RETURN(a, b, time_low);
+	DIFF_RETURN(a, b, time_mid);
+	DIFF_RETURN(a, b, time_hi_and_version);
+	DIFF_RETURN(a, b, clock_seq_hi_and_reserved);
+	DIFF_RETURN(a, b, clock_seq_low);
+
 	res = memcmp(a->node, b->node, sizeof(a->node));
 	if (res)
 		return ((res < 0) ? -1 : 1);
 	return (0);
 }
+
+#undef DIFF_RETURN
