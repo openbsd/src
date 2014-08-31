@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.193 2014/07/14 01:01:27 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.194 2014/08/31 09:36:36 miod Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -19,7 +19,7 @@ FILES=	a.out.h ar.h asr.h assert.h bitstring.h blf.h bsd_auth.h \
 	resolv.h rmd160.h search.h setjmp.h sha1.h sha2.h signal.h sndio.h \
 	spawn.h stdbool.h stddef.h stdio.h stdlib.h string.h strings.h struct.h \
 	sysexits.h tar.h tgmath.h time.h ttyent.h tzfile.h unistd.h utime.h \
-	utmp.h vis.h wchar.h wctype.h
+	utmp.h uuid.h vis.h wchar.h wctype.h
 
 FILES+=	link.h link_elf.h
 

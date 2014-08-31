@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.21 2014/07/10 12:55:14 tedu Exp $
+#	$OpenBSD: Makefile.inc,v 1.22 2014/08/31 09:36:39 miod Exp $
 #
 # This file contains make rules used to build libc
 #
@@ -52,6 +52,7 @@ AINC+=  -nostdinc -idirafter ${DESTDIR}/usr/include
 .include "${LIBCSRCDIR}/termios/Makefile.inc"
 .include "${LIBCSRCDIR}/thread/Makefile.inc"
 .include "${LIBCSRCDIR}/time/Makefile.inc"
+.include "${LIBCSRCDIR}/uuid/Makefile.inc"
 .include "${LIBCSRCDIR}/sys/Makefile.inc"
 .if (${YP:L} == "yes")
 .include "${LIBCSRCDIR}/yp/Makefile.inc"
