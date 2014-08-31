@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.792 2014/08/26 20:19:26 rpe Exp $
+#	$OpenBSD: install.sub,v 1.793 2014/08/31 20:10:36 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1161,7 +1161,7 @@ install_files() {
 		_sets=$(addel $_f $_sets)
 		# No displays and X isn't installed ==> skip X sets
 		[[ -z $DISPLAY && ! -d /mnt/etc/X11 ]] &&
-			isin ${_f%${VERSION}.tgz} xbase xetc xshare xfont xserv &&
+			isin ${_f%${VERSION}.tgz} xbase xshare xfont xserv &&
 			continue
 		isin $_f $DEFAULTSETS "site$VERSION-$(hostname -s).tgz" &&
 			_get_sets=$(addel $_f $_get_sets)
@@ -1288,9 +1288,9 @@ install_files() {
 		[[ -f $_tmpsrc/$_f ]] && _fsrc="file://$_tmpsrc/$_f"
 		case $_fsrc in
 		*.tgz)	ftp -D Installing -Vmo - "$_fsrc" | tar -zxphf - -C /mnt
-			if [[ $_f == base*.tgz && $MODE == install ]]; then
+			if [[ $_f == ?(x)base*.tgz && $MODE == install ]]; then
 				ftp -D Extracting -Vmo - \
-				file:///mnt/usr/share/sysmerge/etc.tgz |
+				file:///mnt/usr/share/sysmerge/${_f%%base*}etc.tgz |
 				tar -zxphf - -C /mnt
 			fi;;
 		*)	ftp -D Installing -Vmo "/mnt/$_f" "$_fsrc";;
@@ -2041,8 +2041,7 @@ md_consoleinfo
 # the contents of the other sets, not the other way around.
 THESETS="bsd bsd.rd bsd.mp $MDSETS"
 : ${DEFAULTSETS:="bsd bsd.rd"}
-for _set in base comp man game xbase xetc xshare xfont xserv site; do
-	[[ $MODE == upgrade && $_set == xetc ]] && continue
+for _set in base comp man game xbase xshare xfont xserv site; do
 	THESETS="$THESETS ${_set}${VERSION}.tgz"
 	isin $_set site && continue
 	DEFAULTSETS="$DEFAULTSETS ${_set}${VERSION}.tgz"
