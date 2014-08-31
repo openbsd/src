@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getthrid.2,v 1.1 2014/08/31 04:02:08 guenther Exp $
+.\"	$OpenBSD: getthrid.2,v 1.2 2014/08/31 06:41:23 jmc Exp $
 .\"	$NetBSD: getpid.2,v 1.5 1995/02/27 12:33:12 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -46,27 +46,27 @@ returns the thread ID of the calling thread.
 This is used in the implementation of the thread library
 .Pq Fl lpthread
 and can appear in the output of system utilities such as
-.Xr ps
+.Xr ps 1
 and
-.Xr kdump .
+.Xr kdump 1 .
 .Pp
 Thread IDs are not a stable interface and should not be used directly
 by applications except for correlation with system utility output.
 Applications should use the
 .Vt pthread_t
 values from
-.Xr pthread_self
+.Xr pthread_self 3
 and
-.Xr pthread_create
+.Xr pthread_create 3
 to identify threads within the process itself.
 .Sh RETURN VALUES
 This function is always successful, and no return value is
 reserved to indicate an error.
 .Sh SEE ALSO
-.Xr getpid 2 ,
 .Xr __tfork 2 ,
-.Xr pthread_self 3 ,
-.Xr pthread_create 3
+.Xr getpid 2 ,
+.Xr pthread_create 3 ,
+.Xr pthread_self 3
 .Sh STANDARDS
 The
 .Nm
