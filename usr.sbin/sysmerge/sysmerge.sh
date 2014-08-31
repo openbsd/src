@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.162 2014/08/31 07:35:52 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.163 2014/08/31 07:59:58 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -621,7 +621,7 @@ sm_compare() {
 
 sm_check_an_eg() {
 	[[ -n ${PKGMODE} ]] && return
-	local _egmods _i _j _managed EGMODS
+	local _egmods _i _managed
 
 	if [[ -f /usr/share/sysmerge/examplessum ]]; then
 		cp /usr/share/sysmerge/examplessum ${_WRKDIR}/examplessum
@@ -632,15 +632,12 @@ sm_check_an_eg() {
 			 sed -e "s,:,,")
 	fi
 	for _i in ${_egmods}; do
-		[[ -f /etc/${_i##*/} ]] && EGMODS="${EGMODS:+${EGMODS} }${_i#.}"
+		_i=${_i##*/}
+		[[ -f /etc/${_i} ]] && \
+			_managed="${_managed:+${_managed} }${_i}"
 	done
 	# only warn for files we care about
-	if [[ -n ${EGMODS} ]]; then
-		for _j in ${EGMODS}; do
-			_managed="${_managed:+${_managed} }${_j##*/}"
-		done
-		sm_warn "example(s) changed for: ${_managed}"
-	fi
+	[[ -n ${_managed} ]] && sm_warn "example(s) changed for: ${_managed}"
 	mv ${_TMPROOT}/usr/share/sysmerge/examplessum \
 		/usr/share/sysmerge/examplessum
 }
