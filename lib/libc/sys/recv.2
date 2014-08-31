@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.40 2014/02/13 07:30:39 guenther Exp $
+.\"	$OpenBSD: recv.2,v 1.41 2014/08/31 01:42:36 guenther Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: February 13 2014 $
+.Dd $Mdocdate: August 31 2014 $
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -39,8 +39,7 @@
 .Nm recvmsg
 .Nd receive a message from a socket
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/socket.h>
+.In sys/socket.h
 .Ft ssize_t
 .Fn recv "int s" "void *buf" "size_t len" "int flags"
 .Ft ssize_t
@@ -116,7 +115,7 @@ The
 .Fa flags
 argument is the bitwise OR of zero or more of the following values:
 .Pp
-.Bl -tag -width "MSG_DONTWAITXX" -offset indent -compact
+.Bl -tag -width "MSG_CMSG_CLOEXECXX" -offset indent -compact
 .It Dv MSG_OOB
 process out-of-band data
 .It Dv MSG_PEEK
@@ -125,6 +124,8 @@ peek at incoming message
 wait for full request or error
 .It Dv MSG_DONTWAIT
 don't block
+.It Dv MSG_CMSG_CLOEXEC
+set the close-on-exec flag on received file descriptors
 .El
 .Pp
 The
@@ -154,6 +155,12 @@ If no data is available,
 is set to
 .Er EAGAIN .
 This flag is not available in strict ANSI or C99 compilation mode.
+The
+.Dv MSG_CMSG_CLOEXEC
+requests that any file descriptors received as ancillary data with
+.Fn recvmsg
+(see below)
+have their close-on-exec flag set.
 .Pp
 The
 .Fn recvmsg

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.89 2014/07/08 21:35:39 tedu Exp $ */
+/*	$OpenBSD: unistd.h,v 1.90 2014/08/31 01:42:36 guenther Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -482,6 +482,11 @@ ssize_t	readlinkat(int, const char *, char *, size_t)
 		__attribute__ ((__bounded__(__string__,3,4)));
 int	symlinkat(const char *, int, const char *);
 int	unlinkat(int, const char *, int);
+#endif
+
+#if __BSD_VISIBLE
+int	dup3(int, int, int);
+int	pipe2(int [2], int);
 #endif
 
 #if __BSD_VISIBLE

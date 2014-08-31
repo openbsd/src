@@ -1,4 +1,4 @@
-.\"	$OpenBSD: accept.2,v 1.26 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: accept.2,v 1.27 2014/08/31 01:42:36 guenther Exp $
 .\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,16 +30,19 @@
 .\"
 .\"     @(#)accept.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: August 31 2014 $
 .Dt ACCEPT 2
 .Os
 .Sh NAME
-.Nm accept
+.Nm accept ,
+.Nm accept4
 .Nd accept a connection on a socket
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
+.In sys/socket.h
 .Ft int
 .Fn accept "int s" "struct sockaddr *addr" "socklen_t *addrlen"
+.Ft int
+.Fn accept4 "int s" "struct sockaddr *addr" "socklen_t *addrlen" "int flags"
 .Sh DESCRIPTION
 The argument
 .Fa s
@@ -52,9 +55,25 @@ and is listening for connections after a
 The
 .Fn accept
 call extracts the first connection request on the queue of pending
-connections, creates a new socket with the same properties of
+connections, creates a new socket with the same non-blocking I/O mode as
 .Fa s ,
-and allocates a new file descriptor for the socket.
+and allocates a new file descriptor for the socket with the
+close-on-exec flag clear.
+.Pp
+The
+.Fn accept4
+system call is similar, however the non-blocking I/O mode of the
+new socket is determined by the
+.Dv SOCK_NONBLOCK
+flag in the
+.Fa flags
+argument and the close-on-exec flag on the new file descriptor is
+determined by the
+.Dv SOCK_CLOEXEC
+flag in the
+.Fa flags
+argument.
+.Pp
 If no pending connections are present on the queue,
 and the socket is not marked as non-blocking,
 .Fn accept
@@ -151,6 +170,8 @@ if (retcode == -1)
 .Ed
 .Sh ERRORS
 .Fn accept
+and
+.Fn accept4
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
@@ -182,6 +203,15 @@ The system file table is full.
 .It Bq Er ECONNABORTED
 A connection has been aborted.
 .El
+.Pp
+In addition,
+.Fn accept4
+will fail if
+.Bl -tag -width Er
+.It Bq Er EINVAL
+.Fa flags
+is invalid.
+.El
 .Sh SEE ALSO
 .Xr bind 2 ,
 .Xr connect 2 ,
@@ -194,11 +224,18 @@ The
 .Fn accept
 function conforms to
 .St -p1003.1-2008 .
+The
+.Fn accept4
+function is expected to conform to a future revision of that standard.
 .Sh HISTORY
 The
 .Fn accept
 system call first appeared in
-.Bx 4.1c .
+.Bx 4.1c
+and
+.Fn accept4
+in
+.Ox 5.7 .
 .Sh CAVEATS
 When
 .Er EMFILE

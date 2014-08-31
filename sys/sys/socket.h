@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.83 2013/04/02 03:38:24 guenther Exp $	*/
+/*	$OpenBSD: socket.h,v 1.84 2014/08/31 01:42:36 guenther Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -79,6 +79,17 @@ typedef	__ssize_t	ssize_t;
 #define	SOCK_RAW	3		/* raw-protocol interface */
 #define	SOCK_RDM	4		/* reliably-delivered message */
 #define	SOCK_SEQPACKET	5		/* sequenced packet stream */
+
+/*
+ * Socket creation flags
+ */
+#if __BSD_VISIBLE
+#define	SOCK_CLOEXEC		0x8000	/* set FD_CLOEXEC */
+#define	SOCK_NONBLOCK		0x4000	/* set O_NONBLOCK */
+#endif
+#ifdef _KERNEL
+#define	SOCK_NONBLOCK_INHERIT	0x2000	/* inherit O_NONBLOCK from listener */
+#endif
 
 /*
  * Option flags per-socket.
@@ -414,17 +425,18 @@ struct msghdr {
 	int		msg_flags;	/* flags on received message */
 };
 
-#define	MSG_OOB		0x1		/* process out-of-band data */
-#define	MSG_PEEK	0x2		/* peek at incoming message */
-#define	MSG_DONTROUTE	0x4		/* send without using routing tables */
-#define	MSG_EOR		0x8		/* data completes record */
-#define	MSG_TRUNC	0x10		/* data discarded before delivery */
-#define	MSG_CTRUNC	0x20		/* control data lost before delivery */
-#define	MSG_WAITALL	0x40		/* wait for full request or error */
-#define	MSG_DONTWAIT	0x80		/* this message should be nonblocking */
-#define	MSG_BCAST	0x100		/* this message rec'd as broadcast */
-#define	MSG_MCAST	0x200		/* this message rec'd as multicast */
-#define	MSG_NOSIGNAL	0x400		/* do not send SIGPIPE */
+#define	MSG_OOB			0x1	/* process out-of-band data */
+#define	MSG_PEEK		0x2	/* peek at incoming message */
+#define	MSG_DONTROUTE		0x4	/* send without using routing tables */
+#define	MSG_EOR			0x8	/* data completes record */
+#define	MSG_TRUNC		0x10	/* data discarded before delivery */
+#define	MSG_CTRUNC		0x20	/* control data lost before delivery */
+#define	MSG_WAITALL		0x40	/* wait for full request or error */
+#define	MSG_DONTWAIT		0x80	/* this message should be nonblocking */
+#define	MSG_BCAST		0x100	/* this message rec'd as broadcast */
+#define	MSG_MCAST		0x200	/* this message rec'd as multicast */
+#define	MSG_NOSIGNAL		0x400	/* do not send SIGPIPE */
+#define	MSG_CMSG_CLOEXEC	0x800	/* set FD_CLOEXEC on received fds */
 
 /*
  * Header for ancillary data objects in msg_control buffer.
@@ -507,6 +519,10 @@ int	setsockopt(int, int, int, const void *, socklen_t);
 int	shutdown(int, int);
 int	socket(int, int, int);
 int	socketpair(int, int, int, int *);
+
+#if __BSD_VISIBLE
+int	accept4(int, struct sockaddr *__restrict, socklen_t *__restrict, int);
+#endif
 
 #if __BSD_VISIBLE
 int	getpeereid(int, uid_t *, gid_t *);

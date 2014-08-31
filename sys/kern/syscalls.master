@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.143 2014/07/10 08:55:35 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.144 2014/08/31 01:42:36 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -203,7 +203,8 @@
 91	STD		{ int sys_nanosleep(const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
 92	STD		{ int sys_fcntl(int fd, int cmd, ... void *arg); }
-93	OBSOL		t32_select
+93	STD		{ int sys_accept4(int s, struct sockaddr *name, \
+			    socklen_t *anamelen, int flags); }
 94	STD		{ int sys___thrsleep(const volatile void *ident, \
 			    clockid_t clock_id, const struct timespec *tp, \
 			    void *lock, const int *abort); }
@@ -214,8 +215,8 @@
 			    socklen_t namelen); }
 99	STD		{ int sys_getdents(int fd, void *buf, size_t buflen); }
 100	STD		{ int sys_getpriority(int which, id_t who); }
-101	OBSOL		osend
-102	OBSOL		orecv
+101	STD		{ int sys_pipe2(int *fdp, int flags); }
+102	STD		{ int sys_dup3(int from, int to, int flags); }
 103	STD		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
 104	STD		{ int sys_bind(int s, const struct sockaddr *name, \
 			    socklen_t namelen); }

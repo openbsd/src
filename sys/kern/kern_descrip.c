@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.112 2014/07/13 15:29:04 tedu Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.113 2014/08/31 01:42:36 guenther Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -74,6 +74,7 @@ static __inline void fd_unused(struct filedesc *, int);
 static __inline int find_next_zero(u_int *, int, u_int);
 int finishdup(struct proc *, struct file *, int, int, register_t *, int);
 int find_last_set(struct filedesc *, int);
+int dodup3(struct proc *, int, int, int, register_t *);
 
 struct pool file_pool;
 struct pool fdesc_pool;
@@ -235,7 +236,6 @@ out:
 /*
  * Duplicate a file descriptor to a particular value.
  */
-/* ARGSUSED */
 int
 sys_dup2(struct proc *p, void *v, register_t *retval)
 {
@@ -243,7 +243,30 @@ sys_dup2(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) from;
 		syscallarg(int) to;
 	} */ *uap = v;
-	int old = SCARG(uap, from), new = SCARG(uap, to);
+
+	return (dodup3(p, SCARG(uap, from), SCARG(uap, to), 0, retval));
+}
+
+int
+sys_dup3(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_dup3_args /* {
+		syscallarg(int) from;
+		syscallarg(int) to;
+		syscallarg(int) flags;
+	} */ *uap = v;
+
+	if (SCARG(uap, from) == SCARG(uap, to))
+		return (EINVAL);
+	if (SCARG(uap, flags) & ~O_CLOEXEC)
+		return (EINVAL);
+	return (dodup3(p, SCARG(uap, from), SCARG(uap, to),
+	    SCARG(uap, flags), retval));
+}
+
+int
+dodup3(struct proc *p, int old, int new, int flags, register_t *retval)
+{
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	int i, error;
@@ -281,6 +304,8 @@ restart:
 	}
 	/* finishdup() does FRELE */
 	error = finishdup(p, fp, old, new, retval, 1);
+	if (!error && flags & O_CLOEXEC)
+		fdp->fd_ofileflags[new] |= UF_EXCLOSE;
 
 out:
 	fdpunlock(fdp);

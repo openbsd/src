@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.65 2014/01/24 06:00:01 guenther Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.66 2014/08/31 01:42:36 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -87,6 +87,7 @@ static int amountpipekva;
 
 struct pool pipe_pool;
 
+int	dopipe(struct proc *, int *, int);
 void	pipeclose(struct pipe *);
 void	pipe_free_kmem(struct pipe *);
 int	pipe_create(struct pipe *);
@@ -99,13 +100,33 @@ int	pipespace(struct pipe *, u_int);
  * The pipe system call for the DTYPE_PIPE type of pipes
  */
 
-/* ARGSUSED */
 int
 sys_pipe(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_pipe_args /* {
 		syscallarg(int *) fdp;
 	} */ *uap = v;
+
+	return (dopipe(p, SCARG(uap, fdp), 0));
+}
+
+int
+sys_pipe2(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_pipe2_args /* {
+		syscallarg(int *) fdp;
+		syscallarg(int) flags;
+	} */ *uap = v;
+
+	if (SCARG(uap, flags) & ~(O_CLOEXEC | FNONBLOCK))
+		return (EINVAL);
+
+	return (dopipe(p, SCARG(uap, fdp), SCARG(uap, flags)));
+}
+
+int
+dopipe(struct proc *p, int *ufds, int flags)
+{
 	struct filedesc *fdp = p->p_fd;
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe = NULL;
@@ -125,7 +146,7 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
 	error = falloc(p, &rf, &fds[0]);
 	if (error != 0)
 		goto free2;
-	rf->f_flag = FREAD | FWRITE;
+	rf->f_flag = FREAD | FWRITE | (flags & FNONBLOCK);
 	rf->f_type = DTYPE_PIPE;
 	rf->f_data = rpipe;
 	rf->f_ops = &pipeops;
@@ -133,10 +154,15 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
 	error = falloc(p, &wf, &fds[1]);
 	if (error != 0)
 		goto free3;
-	wf->f_flag = FREAD | FWRITE;
+	wf->f_flag = FREAD | FWRITE | (flags & FNONBLOCK);
 	wf->f_type = DTYPE_PIPE;
 	wf->f_data = wpipe;
 	wf->f_ops = &pipeops;
+
+	if (flags & O_CLOEXEC) {
+		fdp->fd_ofileflags[fds[0]] |= UF_EXCLOSE;
+		fdp->fd_ofileflags[fds[1]] |= UF_EXCLOSE;
+	}
 
 	rpipe->pipe_peer = wpipe;
 	wpipe->pipe_peer = rpipe;
@@ -144,7 +170,7 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
 	FILE_SET_MATURE(rf, p);
 	FILE_SET_MATURE(wf, p);
 
-	error = copyout(fds, SCARG(uap, fdp), sizeof(fds));
+	error = copyout(fds, ufds, sizeof(fds));
 	if (error != 0) {
 		fdrelease(p, fds[0]);
 		fdrelease(p, fds[1]);

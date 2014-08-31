@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.76 2014/07/13 15:52:38 tedu Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.77 2014/08/31 01:42:36 guenther Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -648,7 +648,7 @@ unp_drain(void)
 #endif
 
 int
-unp_externalize(struct mbuf *rights, socklen_t controllen)
+unp_externalize(struct mbuf *rights, socklen_t controllen, int flags)
 {
 	struct proc *p = curproc;		/* XXX */
 	struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
@@ -744,6 +744,9 @@ restart:
 		 * in the loop below.
 		 */
 		p->p_fd->fd_ofiles[fdp[i]] = *rp++;
+
+		if (flags & MSG_CMSG_CLOEXEC)
+			p->p_fd->fd_ofileflags[fdp[i]] |= UF_EXCLOSE;
 	}
 
 	/*

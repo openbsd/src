@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.37 2014/08/10 07:19:08 guenther Exp $
+.\"	$OpenBSD: socket.2,v 1.38 2014/08/31 01:42:36 guenther Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,14 +30,14 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 10 2014 $
+.Dd $Mdocdate: August 31 2014 $
 .Dt SOCKET 2
 .Os
 .Sh NAME
 .Nm socket
 .Nd create an endpoint for communication
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
+.In sys/socket.h
 .Ft int
 .Fn socket "int domain" "int type" "int protocol"
 .Sh DESCRIPTION
@@ -90,11 +90,22 @@ socket may provide a sequenced, reliable,
 two-way connection-based data transmission path for datagrams
 of fixed maximum length; a consumer may be required to read
 an entire packet with each read system call.
-This facility is protocol specific, and presently implemented for
+This facility is protocol specific, and presently implemented only for
 .Dv AF_UNIX .
 .Dv SOCK_RAW
 sockets provide access to internal network protocols and interfaces,
 and are available only to the superuser.
+.Pp
+Any combination of the following flags may additionally be used in the
+.Fa type
+argument:
+.Pp
+.Bl -tag -width "SOCK_NONBLOCKX" -offset indent -compact
+.It SOCK_CLOEXEC
+Set close-on-exec flag on the new descriptor.
+.It SOCK_NONBLOCK
+Set non-blocking I/O mode on the new socket.
+.El
 .Pp
 The
 .Fa protocol
