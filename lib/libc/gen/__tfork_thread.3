@@ -1,4 +1,4 @@
-.\" $OpenBSD: __tfork_thread.3,v 1.1 2014/07/10 13:46:31 guenther Exp $
+.\" $OpenBSD: __tfork_thread.3,v 1.2 2014/08/31 04:06:37 guenther Exp $
 .\"
 .\" Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 10 2014 $
+.Dd $Mdocdate: August 31 2014 $
 .Dt __TFORK_THREAD 3
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@
 .Bd -literal
 struct __tfork {
         void    *tf_tcb;            /* TCB address for new thread */
-        pid_t   *tf_tid;            /* where to write child's TID */
+        pid_t   *tf_tid;            /* where to write child's thread ID */
         void    *tf_stack;          /* stack address for new thread */
 };
 .Ed
@@ -55,9 +55,9 @@ The new thread's thread control block (TCB) address is set to
 .Em tf_tcb .
 If
 .Em tf_tid
-is not NULL, the new thread's PID is returned to the user at that
+is not NULL, the new thread's thread ID is returned to the user at that
 address, with the guarantee that this is done before returning to
-userspace in either the current thread or the new thread.
+userspace in either the calling thread or the new thread.
 If
 .Em tf_stack
 is not NULL, the new thread's stack is initialized to start at that address.
@@ -83,11 +83,11 @@ However, the syscall may show up in the output of
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn __tfork_thread
-returns in the current thread the PID of new thread.
+returns in the calling thread the thread ID of new thread.
 The
 .Fn __tfork
 syscall itself, on success, returns a value of 0 in the new thread
-and returns the PID of the new thread to the current thread.
+and returns the thread ID of the new thread to the calling thread.
 Otherwise, a value of -1 is returned, no thread is created, and the
 global variable
 .Va errno
