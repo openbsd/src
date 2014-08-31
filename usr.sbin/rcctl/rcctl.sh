@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.35 2014/08/30 20:37:46 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.36 2014/08/31 07:08:25 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -224,9 +224,6 @@ add_flags()
 		echo ${_svc}_flags=${_flags} >>${_TMP_RCCONF}
 	fi
 	rcconf_edit_end
-
-	# update daemon_flags
-	eval "${_svc}_flags=\${_flags}"
 }
 
 rm_flags()
