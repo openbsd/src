@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.59 2014/07/09 16:57:49 beck Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.60 2014/08/31 02:21:18 guenther Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -256,6 +256,13 @@ char	*mkdtemp(char *);
 int     getsubopt(char **, char * const *, char **);
 #endif
 
+/*
+ * The Open Group Base Specifications, post-Issue 7
+ */
+#if __BSD_VISIBLE
+int	mkostemp(char *, int);
+#endif
+
 #if __BSD_VISIBLE
 void	*alloca(size_t); 
 
@@ -285,6 +292,7 @@ void	setprogname(const char *);
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
 
 int	 mkstemps(char *, int);
+int	 mkostemps(char *, int, int);
 
 int	 heapsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 mergesort(void *, size_t, size_t, int (*)(const void *, const void *));

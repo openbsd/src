@@ -1,4 +1,4 @@
-/*	$OpenBSD: flags.c,v 1.7 2013/11/12 07:04:35 deraadt Exp $ */
+/*	$OpenBSD: flags.c,v 1.8 2014/08/31 02:21:18 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -72,11 +72,34 @@ __sflags(const char *mode, int *optr)
 		return (0);
 	}
 
-	/* [rwa]\+ or [rwa]b\+ means read and write */
-	if (*mode == '+' || (*mode == 'b' && mode[1] == '+')) {
-		ret = __SRW;
-		m = O_RDWR;
-	}
+	while (*mode != '\0') 
+		switch (*mode++) {
+		case 'b':
+			break;
+		case '+':
+			ret = __SRW;
+			m = O_RDWR;
+			break;
+		case 'e':
+			o |= O_CLOEXEC;
+			break;
+		case 'x':
+			if (o & O_CREAT)
+				o |= O_EXCL;
+			break;
+		default:
+			/*
+			 * Lots of software passes other extension mode
+			 * letters, like Window's 't'
+			 */
+#if 0
+			errno = EINVAL;
+			return (0);
+#else
+			break;
+#endif
+		}
+
 	*optr = m | o;
 	return (ret);
 }

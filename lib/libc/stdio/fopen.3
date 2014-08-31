@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fopen.3,v 1.27 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: fopen.3,v 1.28 2014/08/31 02:21:18 guenther Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: August 31 2014 $
 .Dt FOPEN 3
 .Os
 .Sh NAME
@@ -59,32 +59,58 @@ The argument
 points to a string beginning with one of the following
 sequences (additional characters may follow these sequences):
 .Bl -tag -width indent
-.It Dq Li r
+.It Do Li r Dc or Do Li rb Dc
 Open file for reading.
-.It Dq Li r+
+.It Do Li r+ Dc or Do Li rb+ Dc or Do Li r+b Dc
 Open for reading and writing.
-.It Dq Li w
+.It Do Li w Dc or Do Li wb Dc
 Open for writing.
 The file is created if it does not exist, otherwise it is truncated.
-.It Dq Li w+
+.It Do Li w+ Dc or Do Li wb+ Dc or Do Li w+b Dc
 Open for reading and writing.
 The file is created if it does not exist, otherwise it is truncated.
-.It Dq Li a
+.It Do Li a Dc or Do Li ab Dc
 Open for writing.
 The file is created if it does not exist.
-.It Dq Li a+
+.It Do Li a+ Dc or Do Li ab+ Dc or Do Li a+b Dc
 Open for reading and writing.
 The file is created if it does not exist.
 .El
 .Pp
-The
+The letter ``b'' in the
 .Fa mode
-string can also include the letter ``b'' either as the last character or
-as a character between the characters in any of the two-character strings
-described above.
-This is strictly for compatibility with
+strings above is strictly for compatibility with
 .St -ansiC
 and has no effect; the ``b'' is ignored.
+.Pp
+After any of the above prefixes, the
+.Fa mode
+string can also include zero or more of the following:
+.Bl -tag -width indent
+.It Dq Li e
+The close-on-exec flag is set on the underlying file descriptor of the new
+.Vt FILE .
+.It Dq Li x
+If the
+.Fa mode
+string starts with
+.Dq w
+or
+.Dq a
+then the function shall fail if file
+.Fa path
+already exist, as if the
+.Dv O_EXCL
+flag was passed to the
+.Xr open
+function.
+It has no effect if used with
+.Fn fdopen
+or the
+.Fa mode
+string begins with
+.Dq r .
+.El
 .Pp
 The
 .Fn fopen
@@ -242,6 +268,13 @@ functions first appeared in
 .Pp
 Opening a file for both reading and writing has been possible since
 .Bx 2 .
+.Pp
+Support for the
+.Dq e
+and
+.Dq x
+mode letters appeared in
+.Ox 5.7 .
 .Sh AUTHORS
 .An Dennis Ritchie
 originally implemented

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdopen.c,v 1.6 2008/04/21 12:28:35 otto Exp $ */
+/*	$OpenBSD: fdopen.c,v 1.7 2014/08/31 02:21:18 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -66,6 +66,7 @@ fdopen(int fd, const char *mode)
 	if ((fp = __sfp()) == NULL)
 		return (NULL);
 	fp->_flags = flags;
+
 	/*
 	 * If opened for appending, but underlying descriptor does not have
 	 * O_APPEND bit set, assert __SAPP so that __swrite() will lseek to
@@ -73,6 +74,13 @@ fdopen(int fd, const char *mode)
 	 */
 	if ((oflags & O_APPEND) && !(fdflags & O_APPEND))
 		fp->_flags |= __SAPP;
+
+	/*
+	 * If close-on-exec was requested, then turn it on if not already
+	 */
+	if ((oflags & O_CLOEXEC) && !((tmp = fcntl(fd, F_GETFD)) & FD_CLOEXEC))
+		fcntl(fd, F_SETFD, tmp | FD_CLOEXEC);
+
 	fp->_file = fd;
 	fp->_cookie = fp;
 	fp->_read = __sread;

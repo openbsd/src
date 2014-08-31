@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.33 2014/05/06 22:55:27 millert Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.34 2014/08/31 02:21:18 guenther Exp $ */
 /*
  * Copyright (c) 1996-1998, 2008 Theo de Raadt
  * Copyright (c) 1997, 2008-2009 Todd C. Miller
@@ -35,12 +35,14 @@
 #define NUM_CHARS	(sizeof(TEMPCHARS) - 1)
 #define MIN_X		6
 
+#define MKOTEMP_FLAGS	(O_APPEND | O_CLOEXEC | O_DSYNC | O_RSYNC | O_SYNC)
+
 #ifndef nitems
 #define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
 static int
-mktemp_internal(char *path, int slen, int mode)
+mktemp_internal(char *path, int slen, int mode, int flags)
 {
 	char *start, *cp, *ep;
 	const char *tempchars = TEMPCHARS;
@@ -62,6 +64,12 @@ mktemp_internal(char *path, int slen, int mode)
 		errno = EINVAL;
 		return(-1);
 	}
+
+	if (flags & ~MKOTEMP_FLAGS) {
+		errno = EINVAL;
+		return(-1);
+	}
+	flags |= O_CREAT | O_EXCL | O_RDWR;
 
 	tries = INT_MAX;
 	do {
@@ -85,7 +93,7 @@ mktemp_internal(char *path, int slen, int mode)
 				return(errno == ENOENT ? 0 : -1);
 			break;
 		case MKTEMP_FILE:
-			fd = open(path, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
+			fd = open(path, flags, S_IRUSR|S_IWUSR);
 			if (fd != -1 || errno != EEXIST)
 				return(fd);
 			break;
@@ -107,7 +115,7 @@ char *_mktemp(char *);
 char *
 _mktemp(char *path)
 {
-	if (mktemp_internal(path, 0, MKTEMP_NAME) == -1)
+	if (mktemp_internal(path, 0, MKTEMP_NAME, 0) == -1)
 		return(NULL);
 	return(path);
 }
@@ -122,15 +130,27 @@ mktemp(char *path)
 }
 
 int
+mkostemps(char *path, int slen, int flags)
+{
+	return(mktemp_internal(path, slen, MKTEMP_FILE, flags));
+}
+
+int
 mkstemp(char *path)
 {
-	return(mktemp_internal(path, 0, MKTEMP_FILE));
+	return(mktemp_internal(path, 0, MKTEMP_FILE, 0));
+}
+
+int
+mkostemp(char *path, int flags)
+{
+	return(mktemp_internal(path, 0, MKTEMP_FILE, flags));
 }
 
 int
 mkstemps(char *path, int slen)
 {
-	return(mktemp_internal(path, slen, MKTEMP_FILE));
+	return(mktemp_internal(path, slen, MKTEMP_FILE, 0));
 }
 
 char *
@@ -138,6 +158,6 @@ mkdtemp(char *path)
 {
 	int error;
 
-	error = mktemp_internal(path, 0, MKTEMP_DIR);
+	error = mktemp_internal(path, 0, MKTEMP_DIR, 0);
 	return(error ? NULL : path);
 }

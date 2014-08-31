@@ -1,4 +1,4 @@
-/*	$OpenBSD: freopen.c,v 1.13 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: freopen.c,v 1.14 2014/08/31 02:21:18 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -134,7 +134,7 @@ freopen(const char *file, const char *mode, FILE *fp)
 	 * assume stderr is always fd STDERR_FILENO, even if being freopen'd.
 	 */
 	if (wantfd >= 0 && f != wantfd) {
-		if (dup2(f, wantfd) >= 0) {
+		if (dup3(f, wantfd, oflags & O_CLOEXEC) >= 0) {
 			(void) close(f);
 			f = wantfd;
 		}

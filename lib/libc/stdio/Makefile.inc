@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.25 2014/03/23 23:15:58 tedu Exp $
+#	$OpenBSD: Makefile.inc,v 1.26 2014/08/31 02:21:18 guenther Exp $
 
 # stdio sources
 .PATH: ${LIBCSRCDIR}/stdio
@@ -40,6 +40,8 @@ MLINKS+=getdelim.3 getline.3
 MLINKS+=mktemp.3 mkstemp.3
 MLINKS+=mktemp.3 mkdtemp.3
 MLINKS+=mktemp.3 mkstemps.3
+MLINKS+=mktemp.3 mkostemp.3
+MLINKS+=mktemp.3 mkostemps.3
 MLINKS+=open_memstream.3 open_wmemstream.3
 MLINKS+=printf.3 fprintf.3 printf.3 snprintf.3 printf.3 sprintf.3 \
 	printf.3 vfprintf.3 printf.3 vprintf.3 printf.3 vsnprintf.3 \

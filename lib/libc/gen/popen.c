@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.18 2007/11/26 19:26:46 kurt Exp $ */
+/*	$OpenBSD: popen.c,v 1.19 2014/08/31 02:21:18 guenther Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,11 +36,13 @@
 
 #include <signal.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
+#include <wchar.h>
 #include "thread_private.h"
 
 static struct pid {
@@ -57,9 +59,11 @@ popen(const char *program, const char *type)
 	struct pid * volatile cur;
 	FILE *iop;
 	int pdes[2];
+	int target;
 	pid_t pid;
 
-	if ((*type != 'r' && *type != 'w') || type[1] != '\0') {
+	if ((*type != 'r' && *type != 'w') ||
+	    (type[1] != '\0' && (type[1] != 'e' || type[2] != '\0'))) {
 		errno = EINVAL;
 		return (NULL);
 	}
@@ -67,7 +71,7 @@ popen(const char *program, const char *type)
 	if ((cur = malloc(sizeof(struct pid))) == NULL)
 		return (NULL);
 
-	if (pipe(pdes) < 0) {
+	if (pipe2(pdes, O_CLOEXEC) < 0) {
 		free(cur);
 		return (NULL);
 	}
@@ -84,6 +88,7 @@ popen(const char *program, const char *type)
 	case 0:				/* Child. */
 	    {
 		struct pid *pcur;
+
 		/*
 		 * because vfork() instead of fork(), must leak FILE *,
 		 * but luckily we are terminally headed for an execl()
@@ -91,26 +96,18 @@ popen(const char *program, const char *type)
 		for (pcur = pidlist; pcur; pcur = pcur->next)
 			close(fileno(pcur->fp));
 
-		if (*type == 'r') {
-			int tpdes1 = pdes[1];
-
-			(void) close(pdes[0]);
-			/*
-			 * We must NOT modify pdes, due to the
-			 * semantics of vfork.
-			 */
-			if (tpdes1 != STDOUT_FILENO) {
-				(void)dup2(tpdes1, STDOUT_FILENO);
-				(void)close(tpdes1);
-				tpdes1 = STDOUT_FILENO;
-			}
+		target = *type == 'r';
+		if (pdes[target] != target) {
+			if (dup2(pdes[target], target) == -1)
+				_exit(127);
 		} else {
-			(void)close(pdes[1]);
-			if (pdes[0] != STDIN_FILENO) {
-				(void)dup2(pdes[0], STDIN_FILENO);
-				(void)close(pdes[0]);
-			}
+			int flags = fcntl(pdes[target], F_GETFD);
+			if (flags == -1 || ((flags & FD_CLOEXEC) &&
+			    fcntl(pdes[target], F_SETFD, flags & ~FD_CLOEXEC)
+			    == -1))
+				_exit(127);
 		}
+
 		execl(_PATH_BSHELL, "sh", "-c", program, (char *)NULL);
 		_exit(127);
 		/* NOTREACHED */
@@ -119,13 +116,10 @@ popen(const char *program, const char *type)
 	_MUTEX_UNLOCK(&pidlist_lock);
 
 	/* Parent; assume fdopen can't fail. */
-	if (*type == 'r') {
-		iop = fdopen(pdes[0], type);
-		(void)close(pdes[1]);
-	} else {
-		iop = fdopen(pdes[1], type);
-		(void)close(pdes[0]);
-	}
+	target = *type == 'w';
+	iop = fdopen(pdes[target], type);
+	fwide(iop, -1);
+	(void)close(pdes[!target]);
 
 	/* Link into list of file descriptors. */
 	cur->fp = iop;
@@ -134,6 +128,13 @@ popen(const char *program, const char *type)
 	cur->next = pidlist;
 	pidlist = cur;
 	_MUTEX_UNLOCK(&pidlist_lock);
+
+	/* now that it's in the list, clear FD_CLOEXEC if unwanted */
+	if (type[1] != 'e') {
+		int flags = fcntl(pdes[target], F_GETFD);
+		if (flags != -1)
+			fcntl(pdes[target], F_SETFD, flags & ~FD_CLOEXEC);
+	}
 
 	return (iop);
 }
