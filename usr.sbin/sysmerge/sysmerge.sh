@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.164 2014/08/31 08:32:41 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.165 2014/08/31 09:20:06 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -180,7 +180,6 @@ sm_cp_pkg_samples() {
 sm_populate() {
 	local _auto_upg _c _cursum _i _k _j _cfdiff _cffiles _ignorefiles _matchsum _mismatch
 
-	echo "===> Populating ${_TMPROOT}"
 	mkdir -p ${_TMPROOT} || \
 		sm_error "cannot create ${_TMPROOT}"
 
@@ -550,7 +549,6 @@ sm_diff_loop() {
 
 sm_compare() {
 	local _c1 _c2 COMPFILE CVSID1 CVSID2
-	echo "===> Starting comparison"
 
 	cd ${_TMPROOT} || sm_error "cannot enter ${_TMPROOT}"
 
@@ -649,7 +647,6 @@ sm_post() {
 	[[ -n ${FILES_IN__TMPROOT} ]] && \
 		sm_warn "some files are still left for comparison"
 
-	echo "===> Checking directories permissions (running mtree(8))"
 	mtree -qdef /etc/mtree/4.4BSD.dist -p / -U >/dev/null
 	[[ -d /etc/X11 ]] && \
 		mtree -qdef /etc/mtree/BSD.x11.dist -p / -U >/dev/null
@@ -660,9 +657,8 @@ sm_post() {
 		rm ${_WRKDIR}/*sum
 		sed '/^$/d' ${_WRKDIR}/sysmerge.log >${_WRKDIR}/sysmerge.log.bak
 		mv ${_WRKDIR}/sysmerge.log.bak ${_WRKDIR}/sysmerge.log
-		echo "===> Run log available at ${_WRKDIR}/sysmerge.log"
+		echo "===> Log available at ${_WRKDIR}/sysmerge.log"
 	else
-		echo "===> Removing ${_WRKDIR}"
 		rm -rf ${_WRKDIR}
 	fi
 }
