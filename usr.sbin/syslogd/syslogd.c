@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.120 2014/08/31 20:51:31 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.121 2014/08/31 22:11:43 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -266,7 +266,6 @@ void	logmsg(int, char *, char *, int);
 struct filed *find_dup(struct filed *);
 void	printline(char *, char *);
 void	printsys(char *);
-void	reapchild(int);
 char   *ttymsg(struct iovec *, int, char *, int);
 void	usage(void);
 void	wallmsg(struct filed *, struct iovec *);
@@ -553,7 +552,7 @@ main(int argc, char *argv[])
 	(void)signal(SIGTERM, dodie);
 	(void)signal(SIGINT, Debug ? dodie : SIG_IGN);
 	(void)signal(SIGQUIT, Debug ? dodie : SIG_IGN);
-	(void)signal(SIGCHLD, reapchild);
+	(void)signal(SIGCHLD, SIG_IGN);
 	(void)signal(SIGALRM, domark);
 	(void)signal(SIGPIPE, SIG_IGN);
 	(void)alarm(TIMERINTVL);
@@ -1117,18 +1116,6 @@ wallmsg(struct filed *f, struct iovec *iov)
 	}
 	(void)fclose(uf);
 	reenter = 0;
-}
-
-/* ARGSUSED */
-void
-reapchild(int signo)
-{
-	int save_errno = errno;
-	int status;
-
-	while (waitpid(-1, &status, WNOHANG) > 0)
-		;
-	errno = save_errno;
 }
 
 /*
