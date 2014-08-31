@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.74 2014/08/26 21:44:29 florian Exp $	*/
+/*	$OpenBSD: in6.h,v 1.75 2014/08/31 19:20:44 bluhm Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -134,7 +134,6 @@ extern const struct in6_addr in6mask32;
 extern const struct in6_addr in6mask64;
 extern const struct in6_addr in6mask96;
 extern const struct in6_addr in6mask128;
-extern const struct in6_addr in6addr_linklocal_allrouters;
 #endif /* _KERNEL */
 
 /* Both kernel and libc define these for use */
@@ -142,6 +141,7 @@ extern const struct in6_addr in6addr_any;
 extern const struct in6_addr in6addr_loopback;
 extern const struct in6_addr in6addr_intfacelocal_allnodes;
 extern const struct in6_addr in6addr_linklocal_allnodes;
+extern const struct in6_addr in6addr_linklocal_allrouters;
 
 #if __BSD_VISIBLE
 /*
