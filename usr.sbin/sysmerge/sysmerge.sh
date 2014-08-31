@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.161 2014/08/31 07:31:26 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.162 2014/08/31 07:35:52 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -192,9 +192,9 @@ sm_populate() {
 	sm_check_an_eg
 	sm_cp_pkg_samples
 
-	# examplessum is used differently, see sm_check_an_eg()
 	for _i in etcsum xetcsum pkgsum; do
-		if [[ -f /usr/share/sysmerge/${_i} ]]; then
+		if [[ -f /usr/share/sysmerge/${_i} && \
+			 -f ${_TMPROOT}/usr/share/sysmerge/${_i} ]]; then
 			# delete file in temproot if it has not changed since
 			# last release and is present in current installation
 			if [[ -z ${DIFFMODE} ]]; then
