@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.90 2014/08/31 01:42:36 guenther Exp $ */
+/*	$OpenBSD: unistd.h,v 1.91 2014/08/31 04:02:08 guenther Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -504,6 +504,7 @@ int	 getgrouplist(const char *, gid_t, gid_t *, int *);
 mode_t	 getmode(const void *, mode_t);
 int	 getresgid(gid_t *, gid_t *, gid_t *);
 int	 getresuid(uid_t *, uid_t *, uid_t *);
+pid_t	 getthrid(void);
 char	*getusershell(void);
 int	 initgroups(const char *, gid_t);
 int	 iruserok(u_int32_t, int, const char *, const char *);
