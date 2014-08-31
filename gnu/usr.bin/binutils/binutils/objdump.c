@@ -2719,6 +2719,8 @@ main (int argc, char **argv)
 
   START_PROGRESS (program_name, 0);
 
+  expandargv (&argc, &argv);
+
   bfd_init ();
   set_default_bfd_target ();
 

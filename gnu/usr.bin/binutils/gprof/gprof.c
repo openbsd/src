@@ -202,6 +202,8 @@ main (argc, argv)
   whoami = argv[0];
   xmalloc_set_program_name (whoami);
 
+  expandargv (&argc, &argv);
+
   while ((ch = getopt_long (argc, argv,
 	"aA::bBcCd::De:E:f:F:hiI:J::k:lLm:n::N::O:p::P::q::Q::st:Tvw:xyzZ::",
 			    long_options, 0))

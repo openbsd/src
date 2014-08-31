@@ -171,6 +171,8 @@ main (int argc, char **argv)
   program_name = argv[0];
   xmalloc_set_program_name (program_name);
 
+  expandargv (&argc, &argv);
+
   strip_underscore = TARGET_PREPENDS_UNDERSCORE;
 
   while ((c = getopt_long (argc, argv, "_nps:", long_options, (int *) 0)) != EOF)

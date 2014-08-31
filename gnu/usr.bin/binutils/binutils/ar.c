@@ -367,6 +367,8 @@ main (int argc, char **argv)
   program_name = argv[0];
   xmalloc_set_program_name (program_name);
 
+  expandargv (&argc, &argv);
+
   if (is_ranlib < 0)
     {
       char *temp;

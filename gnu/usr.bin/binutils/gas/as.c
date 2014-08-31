@@ -1014,6 +1014,8 @@ main (int argc, char ** argv)
   myname = argv[0];
   xmalloc_set_program_name (myname);
 
+  expandargv (&argc, &argv);
+
   START_PROGRESS (myname, 0);
 
 #ifndef OBJ_DEFAULT_OUTPUT_FILE_NAME

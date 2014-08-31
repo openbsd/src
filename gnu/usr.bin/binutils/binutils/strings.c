@@ -168,6 +168,9 @@ main (int argc, char **argv)
 
   program_name = argv[0];
   xmalloc_set_program_name (program_name);
+
+  expandargv (&argc, &argv);
+
   string_min = -1;
   print_addresses = FALSE;
   print_filenames = FALSE;

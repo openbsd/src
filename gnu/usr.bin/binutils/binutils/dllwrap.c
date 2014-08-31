@@ -639,6 +639,8 @@ main (int argc, char **argv)
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
+  expandargv (&argc, &argv);
+
   saved_argv = (char **) xmalloc (argc * sizeof (char*));
   dlltool_arg_indices = (int *) xmalloc (argc * sizeof (int));
   driver_arg_indices = (int *) xmalloc (argc * sizeof (int));

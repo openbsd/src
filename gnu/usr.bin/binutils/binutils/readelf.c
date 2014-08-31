@@ -10634,6 +10634,8 @@ main (int argc, char **argv)
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
+  expandargv (&argc, &argv);
+
   parse_args (argc, argv);
 
   if (optind < (argc - 1))

@@ -1896,6 +1896,8 @@ main (int ac, char **av)
   program_name = av[0];
   xmalloc_set_program_name (program_name);
 
+  expandargv (&ac, &av);
+
   while ((opt = getopt_long (ac, av, "dHhVvqn", long_options,
 			     (int *) NULL))
 	 != EOF)
