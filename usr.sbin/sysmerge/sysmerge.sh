@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.159 2014/08/30 20:31:03 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.160 2014/08/31 06:40:46 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -624,8 +624,7 @@ sm_check_an_eg() {
 	local _egmods _i _j _managed EGMODS
 
 	if [[ -f /usr/share/sysmerge/examplessum ]]; then
-		cp /usr/share/sysmerge/examplessum \
-			${_TMPROOT}/usr/share/sysmerge/examplessum
+		cp /usr/share/sysmerge/examplessum ${_WRKDIR}/examplessum
 		_egmods=$(cd / && \
 			 sha256 -c /usr/share/sysmerge/examplessum 2>/dev/null | \
 			 grep 'FAILED$' | \
