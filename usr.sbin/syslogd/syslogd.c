@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.119 2014/08/25 18:19:18 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.120 2014/08/31 20:51:31 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -646,7 +646,6 @@ main(int argc, char *argv[])
 		}
 	}
 	/* NOTREACHED */
-	free(pfd);
 	return (0);
 }
 
