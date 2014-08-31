@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.h,v 1.16 2014/07/12 16:25:08 guenther Exp $	*/
+/*	$OpenBSD: inet.h,v 1.17 2014/08/31 04:04:01 guenther Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -116,8 +116,6 @@ char		*inet_net_ntop(int, const void *, int, char *, size_t)
 			__attribute__((__bounded__(__string__,4,5)));
 int		 inet_net_pton(int, const char *, void *, size_t)
 			__attribute__((__bounded__(__string__,3,4)));
-unsigned int	 inet_nsap_addr(const char *, unsigned char *, int);
-char		*inet_nsap_ntoa(int, const unsigned char *, char *);
 #endif /* __BSD_VISIBLE */
 __END_DECLS
 
