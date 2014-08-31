@@ -199,66 +199,6 @@ extern hashval_t iterative_hash (const void *, size_t, hashval_t);
 /* Shorthand for hashing something with an intrinsic size.  */
 #define iterative_hash_object(OB,INIT) iterative_hash (&OB, sizeof (OB), INIT)
 
-/* XXX Old hash table functions, kept for compatibility */
-
-/* The hash table element is represented by the following type. */
-
-typedef const void *hash_table_entry_t;
-
-/* Hash tables are of the following type.  The structure
-   (implementation) of this type is not needed for using the hash
-   tables.  All work with hash table should be executed only through
-   functions mentioned below. */
-
-typedef struct
-{
-  /* Current size (in entries) of the hash table */
-  size_t size;
-  /* Current number of elements including also deleted elements */
-  size_t number_of_elements;
-  /* Current number of deleted elements in the table */
-  size_t number_of_deleted_elements;
-  /* The following member is used for debugging. Its value is number
-     of all calls of `find_hash_table_entry' for the hash table. */
-  int searches;
-  /* The following member is used for debugging.  Its value is number
-     of collisions fixed for time of work with the hash table. */
-  int collisions;
-  /* Pointer to function for evaluation of hash value (any unsigned value).
-     This function has one parameter of type hash_table_entry_t. */
-  unsigned (*hash_function) (hash_table_entry_t);
-  /* Pointer to function for test on equality of hash table elements (two
-     parameter of type hash_table_entry_t. */
-  int (*eq_function) (hash_table_entry_t, hash_table_entry_t);
-  /* Table itself */
-  hash_table_entry_t *entries;
-} *hash_table_t;
-
-
-/* The prototypes of the package functions. */
-
-extern hash_table_t create_hash_table
-  (size_t, unsigned (*) (hash_table_entry_t),
-	   int (*) (hash_table_entry_t, hash_table_entry_t));
-
-extern void delete_hash_table (hash_table_t);
-
-extern void empty_hash_table (hash_table_t);
-
-extern hash_table_entry_t *find_hash_table_entry
-  (hash_table_t, hash_table_entry_t, int);
-
-extern void remove_element_from_hash_table_entry (hash_table_t,
-							  hash_table_entry_t);
-
-extern size_t hash_table_size (hash_table_t);
-
-extern size_t hash_table_elements_number (hash_table_t);
-
-extern int hash_table_collisions (hash_table_t);
-
-extern int all_hash_table_collisions (void);
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
