@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.52 2014/08/31 02:21:18 guenther Exp $
+.\"	$OpenBSD: mktemp.3,v 1.53 2014/08/31 06:36:30 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -108,7 +108,7 @@ function acts the same as
 except that the
 .Fa flags
 argument may contain zero or more of the following flags for the underlying
-.Xr open
+.Xr open 2
 system call:
 .Pp
 .Bl -tag -width "O_CLOEXECXX" -offset indent -compact
