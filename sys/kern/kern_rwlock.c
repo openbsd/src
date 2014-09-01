@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.22 2014/07/09 13:32:00 guenther Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.23 2014/09/01 03:37:10 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/limits.h>
+#include <sys/atomic.h>
 
 #include <machine/lock.h>
 
@@ -85,6 +86,8 @@ rw_enter_read(struct rwlock *rwl)
 	if (__predict_false((owner & RWLOCK_WRLOCK) ||
 	    rw_cas(&rwl->rwl_owner, owner, owner + RWLOCK_READ_INCR)))
 		rw_enter(rwl, RW_READ);
+	else
+		membar_enter();
 }
 
 void
@@ -95,6 +98,8 @@ rw_enter_write(struct rwlock *rwl)
 	if (__predict_false(rw_cas(&rwl->rwl_owner, 0,
 	    RW_PROC(p) | RWLOCK_WRLOCK)))
 		rw_enter(rwl, RW_WRITE);
+	else
+		membar_enter();
 }
 
 void
@@ -104,6 +109,7 @@ rw_exit_read(struct rwlock *rwl)
 
 	rw_assert_rdlock(rwl);
 
+	membar_exit();
 	if (__predict_false((owner & RWLOCK_WAIT) ||
 	    rw_cas(&rwl->rwl_owner, owner, owner - RWLOCK_READ_INCR)))
 		rw_exit(rwl);
@@ -116,6 +122,7 @@ rw_exit_write(struct rwlock *rwl)
 
 	rw_assert_wrlock(rwl);
 
+	membar_exit();
 	if (__predict_false((owner & RWLOCK_WAIT) ||
 	    rw_cas(&rwl->rwl_owner, owner, 0)))
 		rw_exit(rwl);
@@ -215,6 +222,7 @@ retry:
 
 	if (__predict_false(rw_cas(&rwl->rwl_owner, o, o + inc)))
 		goto retry;
+	membar_enter();
 
 	/*
 	 * If old lock had RWLOCK_WAIT and RWLOCK_WRLOCK set, it means we
@@ -240,6 +248,7 @@ rw_exit(struct rwlock *rwl)
 	else
 		rw_assert_rdlock(rwl);
 
+	membar_exit();
 	do {
 		owner = rwl->rwl_owner;
 		if (wrlock)
