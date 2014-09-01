@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.28 2014/04/03 11:27:02 eric Exp $	*/
+/*	$OpenBSD: event.c,v 1.29 2014/09/01 13:26:29 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -206,8 +206,7 @@ event_base_new(void)
 		event_errx(1, "%s: no event mechanism available", __func__);
 
 	if (evutil_getenv("EVENT_SHOW_METHOD")) 
-		event_msgx("libevent using: %s\n",
-			   base->evsel->name);
+		event_msgx("libevent using: %s", base->evsel->name);
 
 	/* allocate a single active event queue */
 	event_base_priority_init(base, 1);
