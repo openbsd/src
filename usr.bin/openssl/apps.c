@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.9 2014/08/30 15:14:03 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.10 2014/09/01 14:21:06 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2234,19 +2234,32 @@ app_isdir(const char *name)
 	return -1;
 }
 
+#define OPTION_WIDTH 18
+
 void
 options_usage(struct option *opts)
 {
-	const char *argname;
-	char buf[32];
+	const char *p, *q;
+	char optstr[32];
 	int i;
 
 	for (i = 0; opts[i].name != NULL; i++) {
 		if (opts[i].desc == NULL)
 			continue;
-		argname = (opts[i].argname != NULL) ? opts[i].argname : "";
-		snprintf(buf, sizeof(buf), "-%s %s", opts[i].name, argname);
-		fprintf(stderr, " %-*s %s\n", 16, buf, opts[i].desc);
+
+		snprintf(optstr, sizeof(optstr), "-%s %s", opts[i].name,
+		    (opts[i].argname != NULL) ? opts[i].argname : "");
+		fprintf(stderr, " %-*s", OPTION_WIDTH, optstr);
+		if (strlen(optstr) > OPTION_WIDTH)
+			fprintf(stderr, "\n %-*s", OPTION_WIDTH, "");
+
+		p = opts[i].desc;
+		while ((q = strchr(p, '\n')) != NULL) {
+			fprintf(stderr, " %.*s", (int)(q - p), p);
+			fprintf(stderr, "\n %-*s", OPTION_WIDTH, "");
+			p = q + 1;
+		}
+		fprintf(stderr, " %s\n", p);
 	}
 }
 
@@ -2270,7 +2283,7 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed)
 			*unnamed = arg;
 			continue;
 		}
-		if (*p == '\0')
+		if (*p == '\0') /* XXX - end of named options. */
 			goto unknown;
 
 		for (j = 0; opts[j].name != NULL; j++) {
