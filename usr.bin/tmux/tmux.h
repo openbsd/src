@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.469 2014/08/11 22:18:16 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.470 2014/09/01 21:50:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -2325,7 +2325,7 @@ void	set_signals(void(*)(int, short, void *));
 void	clear_signals(int);
 
 /* control.c */
-void	control_callback(struct client *, int, void*);
+void	control_callback(struct client *, int, void *);
 void printflike2 control_write(struct client *, const char *, ...);
 void	control_write_buffer(struct client *, struct evbuffer *);
 

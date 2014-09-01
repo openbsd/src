@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-wait-for.c,v 1.4 2013/10/10 12:02:55 nicm Exp $ */
+/* $OpenBSD: cmd-wait-for.c,v 1.5 2014/09/01 21:50:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -108,7 +108,7 @@ cmd_wait_for_signal(struct cmd_q *cmdq, const char *name,
 
 	if (!wc->locked) {
 		RB_REMOVE(wait_channels, &wait_channels, wc);
-		free((void*) wc->name);
+		free((void *)wc->name);
 		free(wc);
 	}
 
@@ -186,7 +186,7 @@ cmd_wait_for_unlock(struct cmd_q *cmdq, const char *name,
 		wc->locked = 0;
 		if (TAILQ_EMPTY(&wc->waiters)) {
 			RB_REMOVE(wait_channels, &wait_channels, wc);
-			free((void*) wc->name);
+			free((void *)wc->name);
 			free(wc);
 		}
 	}

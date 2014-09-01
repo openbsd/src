@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.123 2014/08/09 07:33:37 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.124 2014/09/01 21:50:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -914,7 +914,7 @@ server_client_msg_command(struct client *c, struct imsg *imsg)
 		fatalx("bad MSG_COMMAND size");
 	memcpy(&data, imsg->data, sizeof data);
 
-	buf = (char*)imsg->data + sizeof data;
+	buf = (char *)imsg->data + sizeof data;
 	len = imsg->hdr.len  - IMSG_HEADER_SIZE - sizeof data;
 	if (len > 0 && buf[len - 1] != '\0')
 		fatalx("bad MSG_COMMAND string");

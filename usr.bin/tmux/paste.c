@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.22 2014/08/25 13:13:19 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.23 2014/09/01 21:50:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -102,7 +102,7 @@ paste_get_name(const char *name)
 	if (name == NULL || *name == '\0')
 		return (NULL);
 
-	pbfind.name = (char*)name;
+	pbfind.name = (char *)name;
 	return (RB_FIND(paste_name_tree, &paste_by_name, &pbfind));
 }
 
@@ -115,7 +115,7 @@ paste_free_name(const char *name)
 	if (name == NULL || *name == '\0')
 		return (-1);
 
-	pbfind.name = (char*)name;
+	pbfind.name = (char *)name;
 	pb = RB_FIND(paste_name_tree, &paste_by_name, &pbfind);
 	if (pb == NULL)
 		return (-1);

@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.113 2014/08/11 22:39:57 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.114 2014/09/01 21:50:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1498,8 +1498,8 @@ window_copy_copy_pipe(struct window_pane *wp, struct session *sess,
 void
 window_copy_copy_selection(struct window_pane *wp, const char *bufname)
 {
-	void*	buf;
-	size_t	len;
+	void	*buf;
+	size_t	 len;
 
 	buf = window_copy_get_selection(wp, &len);
 	if (buf == NULL)

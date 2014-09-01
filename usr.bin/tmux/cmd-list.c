@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list.c,v 1.13 2014/04/11 19:35:54 nicm Exp $ */
+/* $OpenBSD: cmd-list.c,v 1.14 2014/09/01 21:50:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,7 +24,7 @@
 #include "tmux.h"
 
 struct cmd_list *
-cmd_list_parse(int argc, char **argv, const char* file, u_int line,
+cmd_list_parse(int argc, char **argv, const char *file, u_int line,
     char **cause)
 {
 	struct cmd_list	*cmdlist;

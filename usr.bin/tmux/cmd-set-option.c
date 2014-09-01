@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.69 2014/04/17 14:45:49 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.70 2014/09/01 21:50:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -201,7 +201,7 @@ cmd_set_option_exec(struct cmd *self, struct cmd_q *cmdq)
 
 /* Set user option. */
 enum cmd_retval
-cmd_set_option_user(struct cmd *self, struct cmd_q *cmdq, const char* optstr,
+cmd_set_option_user(struct cmd *self, struct cmd_q *cmdq, const char *optstr,
     const char *valstr)
 {
 	struct args	*args = self->args;
@@ -254,7 +254,7 @@ cmd_set_option_user(struct cmd *self, struct cmd_q *cmdq, const char* optstr,
 		if (args_has(args, 'o') && options_find1(oo, optstr) != NULL) {
 			if (!args_has(args, 'q')) {
 				cmdq_error(cmdq, "already set: %s", optstr);
-				return CMD_RETURN_ERROR;
+				return (CMD_RETURN_ERROR);
 			}
 			return (CMD_RETURN_NORMAL);
 		}

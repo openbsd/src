@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.28 2014/08/11 22:18:16 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.29 2014/09/01 21:50:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -327,7 +327,7 @@ screen_check_selection(struct screen *s, u_int px, u_int py)
 				return (0);
 
 			if (py == sel->sy && px < sel->sx)
-				return 0;
+				return (0);
 
 			if (py == sel->ey && px > sel->ex)
 				return (0);
