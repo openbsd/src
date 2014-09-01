@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.96 2014/08/30 18:04:52 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.97 2014/09/01 22:45:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -277,7 +277,6 @@ main(int argc, char *argv[])
 		mansearch_setup(1);
 		if( ! mansearch(&search, &paths, argc, argv, &res, &sz))
 			usage(search.argmode);
-		manpath_free(&paths);
 		resp = res;
 
 		if (sz == 0) {
@@ -354,9 +353,11 @@ main(int argc, char *argv[])
 
 	while (argc) {
 		if (resp != NULL) {
-			if (resp->form)
+			if (resp->form) {
+				/* For .so only; ignore failure. */
+				chdir(paths.paths[resp->ipath]);
 				parse(&curp, -1, resp->file, &rc);
-			else
+			} else
 				rc = passthrough(resp->file);
 			resp++;
 		} else
@@ -373,6 +374,7 @@ main(int argc, char *argv[])
 
 out:
 	if (search.argmode != ARG_FILE) {
+		manpath_free(&paths);
 		mansearch_free(res, sz);
 		mansearch_setup(0);
 	}

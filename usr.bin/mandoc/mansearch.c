@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.33 2014/08/27 00:06:08 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.34 2014/09/01 22:45:11 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -327,6 +327,7 @@ mansearch(const struct mansearch *search,
 				    maxres, sizeof(struct manpage));
 			}
 			mpage = *res + cur;
+			mpage->ipath = i;
 			mpage->sec = 10;
 			mpage->form = mp->form;
 			buildnames(mpage, db, s, mp->pageid,
