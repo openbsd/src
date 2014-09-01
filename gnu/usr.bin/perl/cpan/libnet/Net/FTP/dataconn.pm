@@ -52,7 +52,8 @@ sub _close {
   $data->SUPER::close();
 
   delete ${*$ftp}{'net_ftp_dataconn'}
-    if exists ${*$ftp}{'net_ftp_dataconn'}
+    if defined $ftp
+    && exists ${*$ftp}{'net_ftp_dataconn'}
     && $data == ${*$ftp}{'net_ftp_dataconn'};
 }
 
@@ -68,6 +69,8 @@ sub close {
   }
 
   $data->_close;
+
+  return unless defined $ftp;
 
   $ftp->response() == CMD_OK
     && $ftp->message =~ /unique file name:\s*(\S*)\s*\)/
