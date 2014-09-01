@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.26 2014/08/10 10:01:03 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.27 2014/09/01 10:41:55 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -81,6 +81,17 @@ sub verify_modes
 			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)));
 	    		$result = 0;
 	    }
+	}
+	if ($o->isFile) {
+		if (!defined $item->{size}) {
+			$o->errsay("Error: file #1 does not have recorded size",
+			    $item->fullname);
+			$result = 0;
+		} elsif ($item->{size} != $o->{size}) {
+			$o->errsay("Error: size does not match for #1",
+			    $item->fullname);
+			$result = 0;
+		}
 	}
 	return $result;
 }
