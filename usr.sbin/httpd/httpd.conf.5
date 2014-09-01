@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.33 2014/08/25 14:27:54 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.34 2014/09/01 12:22:38 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 25 2014 $
+.Dd $Mdocdate: September 1 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -385,8 +385,7 @@ server "intranet.example.com" {
 }
 .Ed
 .Pp
-The syntax of the types section is also compatible with the format used by
-.Xr nginx 8 ,
+The syntax of the types section is also compatible with the format used by nginx,
 so it is possible to include its
 .Pa mime.types
 file directly:
