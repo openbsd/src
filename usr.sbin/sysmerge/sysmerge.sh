@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.165 2014/08/31 09:20:06 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.166 2014/09/01 06:55:37 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -200,9 +200,10 @@ sm_populate() {
 					awk '/OK/ { print $2 }' | \
 					sed 's/[:]//')
 				for _j in ${_matchsum}; do
-					_j=${_j#.}
-					[[ -f ${_j} && -f ${_TMPROOT}/${_j} ]] && \
-						rm -f ${_TMPROOT}/${_j}
+				# skip sum files
+					[[ ${_j} == ./usr/share/sysmerge/${_i} ]] && continue
+					[[ -f ${_j#.} && -f ${_TMPROOT}/${_j#.} ]] && \
+						rm -f ${_TMPROOT}/${_j#.}
 				done
 			fi
 
@@ -210,7 +211,7 @@ sm_populate() {
 			_mismatch=$(diff -u ${_TMPROOT}/usr/share/sysmerge/${_i} /usr/share/sysmerge/${_i} | \
 				sed -n 's/^+SHA256 (\(.*\)).*/\1/p')
 			for _k in ${_mismatch}; do
-				# skip sum files (!auto-install)
+				# skip sum files
 				[[ ${_k} == ./usr/share/sysmerge/${_i} ]] && continue
 				# redirect stderr; file may not exist
 				_cursum=$(cd / && sha256 ${_k} 2>/dev/null)
