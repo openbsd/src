@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.470 2014/09/01 21:50:18 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.471 2014/09/01 21:58:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1923,6 +1923,9 @@ void		 cmdq_flush(struct cmd_q *);
 /* cmd-string.c */
 int	cmd_string_parse(const char *, struct cmd_list **, const char *,
 	    u_int, char **);
+
+/* cmd-wait-for.c */
+void	cmd_wait_for_flush(void);
 
 /* client.c */
 int	client_main(int, char **, int);
