@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.1 2014/08/26 17:47:24 jsing Exp $ */
+/* $OpenBSD: enc.c,v 1.2 2014/09/01 20:54:37 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -374,12 +374,12 @@ enc_main(int argc, char **argv)
 	if ((str == NULL) && (cipher != NULL) && (hkey == NULL)) {
 		for (;;) {
 			char buf[200];
-			int ret;
+			int retval;
 
-			ret = snprintf(buf, sizeof buf, "enter %s %s password:",
+			retval = snprintf(buf, sizeof buf, "enter %s %s password:",
 			    OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
 			    (enc) ? "encryption" : "decryption");
-			if (ret == -1 || ret >= sizeof buf) {
+			if ((size_t)retval >= sizeof buf) {
 				BIO_printf(bio_err, "Password prompt too long\n");
 				goto end;
 			}

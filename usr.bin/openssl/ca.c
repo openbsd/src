@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
+/* $OpenBSD: ca.c,v 1.3 2014/09/01 20:54:37 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1125,7 +1125,7 @@ bad:
 			BIO_printf(bio_err, "writing new certificates\n");
 		for (i = 0; i < sk_X509_num(cert_sk); i++) {
 			int k;
-			char *serial;
+			char *serialstr;
 			unsigned char *data;
 
 			x = sk_X509_value(cert_sk, i);
@@ -1133,13 +1133,13 @@ bad:
 			j = x->cert_info->serialNumber->length;
 			data = (unsigned char *)x->cert_info->serialNumber->data;
 			if (j > 0)
-				serial = bin2hex(data, j);
+				serialstr = bin2hex(data, j);
 			else
-				serial = strdup("00");
-			if (serial) {
+				serialstr = strdup("00");
+			if (serialstr) {
 				k = snprintf(buf[2], sizeof(buf[2]),
-				    "%s/%s.pem", outdir, serial);
-				free(serial);
+				    "%s/%s.pem", outdir, serialstr);
+				free(serialstr);
 				if (k == -1 || k >= sizeof(buf[2])) {
 					BIO_printf(bio_err,
 					    "certificate file name too long\n");

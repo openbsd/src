@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.1 2014/08/26 17:47:25 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.2 2014/09/01 20:54:37 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -632,8 +632,6 @@ s_client_main(int argc, char **argv)
 				goto bad;
 			keymatexportlabel = *(++argv);
 		} else if (strcmp(*argv, "-keymatexportlen") == 0) {
-			const char *errstr;
-
 			if (--argc < 1)
 				goto bad;
 			keymatexportlen = strtonum(*(++argv), 1, INT_MAX, &errstr);
