@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.55 2014/08/29 13:01:46 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.56 2014/09/01 09:32:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -543,6 +543,7 @@ void		 imsg_event_add(struct imsgev *);
 int		 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 		    pid_t, int, void *, u_int16_t);
 void		 socket_rlimit(int);
+char		*evbuffer_getline(struct evbuffer *);
 char		*get_string(u_int8_t *, size_t);
 void		*get_data(u_int8_t *, size_t);
 int		 sockaddr_cmp(struct sockaddr *, struct sockaddr *, int);

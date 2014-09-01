@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.35 2014/08/29 13:01:46 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.36 2014/09/01 09:32:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -87,9 +87,9 @@ struct server_fcgi_param {
 int	server_fcgi_header(struct client *, u_int);
 void	server_fcgi_read(struct bufferevent *, void *);
 int	server_fcgi_writeheader(struct client *, struct kv *, void *);
+int	server_fcgi_getheaders(struct client *);
 int	fcgi_add_param(struct server_fcgi_param *, const char *, const char *,
 	    struct client *);
-int	get_status(struct evbuffer *);
 
 int
 server_fcgi(struct httpd *env, struct client *clt)
@@ -503,7 +503,7 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 			    EVBUFFER_LENGTH(clt->clt_srvevb) > 0) {
 				if (++clt->clt_chunk == 1)
 					server_fcgi_header(clt,
-					    get_status(clt->clt_srvevb));
+					    server_fcgi_getheaders(clt));
 				server_bufferevent_write_buffer(clt,
 				    clt->clt_srvevb);
 			}
@@ -569,7 +569,8 @@ server_fcgi_header(struct client *clt, u_int code)
 	/* Write initial header (fcgi might append more) */
 	if (server_writeresponse_http(clt) == -1 ||
 	    server_bufferevent_print(clt, "\r\n") == -1 ||
-	    server_headers(clt, resp, server_writeheader_http, NULL) == -1)
+	    server_headers(clt, resp, server_writeheader_http, NULL) == -1 ||
+	    server_bufferevent_print(clt, "\r\n") == -1)
 		return (-1);
 
 	return (0);
@@ -617,26 +618,39 @@ server_fcgi_writeheader(struct client *clt, struct kv *hdr, void *arg)
 }
 
 int
-get_status(struct evbuffer *bev)
+server_fcgi_getheaders(struct client *clt)
 {
-	int code;
-	char *statusline, *tok;
-	const char *errstr;
+	struct http_descriptor	*resp = clt->clt_descresp;
+	struct evbuffer		*evb = clt->clt_srvevb;
+	int			 code = 200;
+	char			*line, *key, *value;
+	const char		*errstr;
 
-	/* XXX This is a hack. We need to parse the response header. */
-	code = 200;
-	if (strncmp(EVBUFFER_DATA(bev), "Status: ", strlen("Status: ")) == 0) {
-		statusline = get_string(EVBUFFER_DATA(bev),
-		    EVBUFFER_LENGTH(bev));
-		if (strtok(statusline, " ") != NULL) {
-			if ((tok = strtok(NULL, " ")) != NULL) {
-				code = (int) strtonum(tok, 100, 600, &errstr);
-				if (errstr != NULL || server_httperror_byid(
-				   code) == NULL)
-					code = 200;
-			}
+	while ((line = evbuffer_getline(evb)) != NULL && *line != '\0') {
+		key = line;
+
+		if ((value = strchr(key, ':')) == NULL)
+			break;
+		if (*value == ':') {
+			*value++ = '\0';
+			value += strspn(value, " \t");
+		} else {
+			*value++ = '\0';
 		}
-		free(statusline);
+
+		DPRINTF("%s: %s: %s", __func__, key, value);
+
+		if (strcasecmp("Status", key) == 0) {
+			value[strcspn(value, " \t")] = '\0';
+			code = (int)strtonum(value, 100, 600, &errstr);
+			if (errstr != NULL || server_httperror_byid(
+			    code) == NULL)
+				code = 200;
+		} else {
+			(void)kv_add(&resp->http_headers, key, value);
+		}
+		free(line);
 	}
-	return code;
+
+	return (code);
 }
