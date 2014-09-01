@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.114 2014/08/23 01:00:20 doug Exp $ */
+/*	$Id: mandocdb.c,v 1.115 2014/09/01 23:47:56 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1973,6 +1973,13 @@ dbadd_mlink(const struct mlink *mlink)
 	SQL_BIND_INT64(stmts[STMT_INSERT_LINK], i, mlink->mpage->pageid);
 	SQL_STEP(stmts[STMT_INSERT_LINK]);
 	sqlite3_reset(stmts[STMT_INSERT_LINK]);
+
+	i = 1;
+	SQL_BIND_INT64(stmts[STMT_INSERT_NAME], i, NAME_FILE);
+	SQL_BIND_TEXT(stmts[STMT_INSERT_NAME], i, mlink->name);
+	SQL_BIND_INT64(stmts[STMT_INSERT_NAME], i, mlink->mpage->pageid);
+	SQL_STEP(stmts[STMT_INSERT_NAME]);
+	sqlite3_reset(stmts[STMT_INSERT_NAME]);
 }
 
 /*
