@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.193 2014/07/13 23:10:23 deraadt Exp $ */
+/*	$OpenBSD: mpi.c,v 1.194 2014/09/01 07:52:30 blambert Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -31,6 +31,7 @@
 #include <sys/rwlock.h>
 #include <sys/sensors.h>
 #include <sys/dkio.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 
@@ -224,6 +225,8 @@ mpi_attach(struct mpi_softc *sc)
 
 	rw_init(&sc->sc_lock, "mpi_lock");
 	mtx_init(&sc->sc_evt_rescan_mtx, IPL_BIO);
+
+	task_set(&sc->sc_evt_rescan, mpi_fc_rescan, sc, NULL);
 
 	/* disable interrupts */
 	mpi_write(sc, MPI_INTR_MASK,
@@ -2474,8 +2477,7 @@ mpi_evt_fc_rescan(struct mpi_softc *sc)
 	mtx_leave(&sc->sc_evt_rescan_mtx);
 
 	if (queue) {
-		workq_queue_task(NULL, &sc->sc_evt_rescan, 0,
-		    mpi_fc_rescan, sc, NULL);
+		task_add(systq, &sc->sc_evt_rescan);
 	}
 }
 
