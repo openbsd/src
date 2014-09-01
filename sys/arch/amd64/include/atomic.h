@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.13 2014/07/18 10:40:14 dlg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.14 2014/09/01 03:39:15 guenther Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -60,8 +60,7 @@ _atomic_cas_uint(volatile unsigned int *p, unsigned int e, unsigned int n)
 {
 	__asm volatile(LOCK " cmpxchgl %2, %1"
 	    : "=a" (n), "=m" (*p)
-	    : "r" (n), "a" (e), "m" (*p)
-	    : "memory");
+	    : "r" (n), "a" (e), "m" (*p));
 
 	return (n);
 }
@@ -72,8 +71,7 @@ _atomic_cas_ulong(volatile unsigned long *p, unsigned long e, unsigned long n)
 {
 	__asm volatile(LOCK " cmpxchgq %2, %1"
 	    : "=a" (n), "=m" (*p)
-	    : "r" (n), "a" (e), "m" (*p)
-	    : "memory");
+	    : "r" (n), "a" (e), "m" (*p));
 
 	return (n);
 }
@@ -84,12 +82,128 @@ _atomic_cas_ptr(volatile void *p, void *e, void *n)
 {
 	__asm volatile(LOCK " cmpxchgq %2, %1"
 	    : "=a" (n), "=m" (*(unsigned long *)p)
-	    : "r" (n), "a" (e), "m" (*(unsigned long *)p)
-	    : "memory");
+	    : "r" (n), "a" (e), "m" (*(unsigned long *)p));
 
 	return (n);
 }
 #define atomic_cas_ptr(_p, _e, _n) _atomic_cas_ptr((_p), (_e), (_n))
+
+static inline void
+_atomic_inc_int(volatile unsigned int *p)
+{
+	__asm volatile(LOCK " incl %0"
+	    : "+m" (*p));
+}
+#define atomic_inc_int(_p) _atomic_inc_int(_p)
+
+static inline void
+_atomic_inc_long(volatile unsigned long *p)
+{
+	__asm volatile(LOCK " incq %0"
+	    : "+m" (*p));
+}
+#define atomic_inc_long(_p) _atomic_inc_long(_p)
+
+static inline void
+_atomic_dec_int(volatile unsigned int *p)
+{
+	__asm volatile(LOCK " decl %0"
+	    : "+m" (*p));
+}
+#define atomic_dec_int(_p) _atomic_dec_int(_p)
+
+static inline void
+_atomic_dec_long(volatile unsigned long *p)
+{
+	__asm volatile(LOCK " decq %0"
+	    : "+m" (*p));
+}
+#define atomic_dec_long(_p) _atomic_dec_long(_p)
+
+static inline void
+_atomic_add_int(volatile unsigned int *p, unsigned int v)
+{
+	__asm volatile(LOCK " addl %1,%0"
+	    : "+m" (*p)
+	    : "a" (v));
+}
+#define atomic_add_int(_p, _v) _atomic_add_int(_p, _v)
+
+static inline void
+_atomic_add_long(volatile unsigned long *p, unsigned long v)
+{
+	__asm volatile(LOCK " addq %1,%0"
+	    : "+m" (*p)
+	    : "a" (v));
+}
+#define atomic_add_long(_p, _v) _atomic_add_long(_p, _v)
+
+static inline void
+_atomic_sub_int(volatile unsigned int *p, unsigned int v)
+{
+	__asm volatile(LOCK " subl %1,%0"
+	    : "+m" (*p)
+	    : "a" (v));
+}
+#define atomic_sub_int(_p, _v) _atomic_sub_int(_p, _v)
+
+static inline void
+_atomic_sub_long(volatile unsigned long *p, unsigned long v)
+{
+	__asm volatile(LOCK " subq %1,%0"
+	    : "+m" (*p)
+	    : "a" (v));
+}
+#define atomic_sub_long(_p, _v) _atomic_sub_long(_p, _v)
+
+
+static inline unsigned long
+_atomic_add_int_nv(volatile unsigned int *p, unsigned int v)
+{
+	unsigned int rv = v;
+
+	__asm volatile(LOCK " xaddl %0,%1"
+	    : "+a" (rv), "+m" (*p));
+
+	return (rv + v);
+}
+#define atomic_add_int_nv(_p, _v) _atomic_add_int_nv(_p, _v)
+
+static inline unsigned long
+_atomic_add_long_nv(volatile unsigned long *p, unsigned long v)
+{
+	unsigned long rv = v;
+
+	__asm volatile(LOCK " xaddq %0,%1"
+	    : "+a" (rv), "+m" (*p));
+
+	return (rv + v);
+}
+#define atomic_add_long_nv(_p, _v) _atomic_add_long_nv(_p, _v)
+
+static inline unsigned long
+_atomic_sub_int_nv(volatile unsigned int *p, unsigned int v)
+{
+	unsigned int rv = 0 - v;
+
+	__asm volatile(LOCK " xaddl %0,%1"
+	    : "+a" (rv), "+m" (*p));
+
+	return (rv - v);
+}
+#define atomic_sub_int_nv(_p, _v) _atomic_sub_int_nv(_p, _v)
+
+static inline unsigned long
+_atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
+{
+	unsigned long rv = 0 - v;
+
+	__asm volatile(LOCK " xaddq %0,%1"
+	    : "+a" (rv), "+m" (*p));
+
+	return (rv - v);
+}
+#define atomic_sub_long_nv(_p, _v) _atomic_sub_long_nv(_p, _v)
 
 static __inline u_int64_t
 x86_atomic_testset_u64(volatile u_int64_t *ptr, u_int64_t val)
