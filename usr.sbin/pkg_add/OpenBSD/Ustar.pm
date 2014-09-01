@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.83 2014/08/10 10:04:39 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.84 2014/09/01 11:29:15 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -310,8 +310,8 @@ sub pack_header
 		$header = pack(USTAR_HEADER,
 		    $name,
 		    sprintf("%07o", $entry->{mode}),
-		    sprintf("%07o", $entry->{uid}),
-		    sprintf("%07o", $entry->{gid}),
+		    sprintf("%07o", $entry->{uid} // 0),
+		    sprintf("%07o", $entry->{gid} // 0),
 		    sprintf("%011o", $size),
 		    sprintf("%011o", $entry->{mtime} // 0),
 		    $cksum,
