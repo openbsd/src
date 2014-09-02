@@ -1,4 +1,4 @@
-/*	$OpenBSD: posix_spawn.c,v 1.4 2014/08/31 02:21:18 guenther Exp $	*/
+/*	$OpenBSD: posix_spawn.c,v 1.5 2014/09/02 00:21:00 guenther Exp $	*/
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
  * All rights reserved.
@@ -158,14 +158,15 @@ process_file_actions_entry(posix_spawn_file_actions_entry_t *fae)
 		/*
 		 * Perform a dup2(), making sure the FD_CLOEXEC flag is clear
 		 */
-		if (fae->fae_fildes == fae->fae_newfildes) {
+		fd = fae->fae_fildes;
+		if (fd == fae->fae_newfildes) {
 			int flags = fcntl(fd, F_GETFD);
 
 			if (flags == -1 ||
 			    ((flags & FD_CLOEXEC) &&
 			    fcntl(fd, F_SETFD, flags & ~FD_CLOEXEC) == -1))
 				return (errno);
-		} else if (dup2(fae->fae_fildes, fae->fae_newfildes) == -1)
+		} else if (dup2(fd, fae->fae_newfildes) == -1)
 			return (errno);
 		break;
 	case FAE_CLOSE:
