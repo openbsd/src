@@ -20,6 +20,11 @@ our %args = (
 	loggrep => { get_between2loggrep() },
     },
     syslogd => {
+	ktrace => 1,
+	kdump => {
+	    qr/syslogd  PSIG  SIGHUP caught handler/ => 1,
+	    qr/syslogd  RET   execve 0/ => 1,
+	},
 	loggrep => {
 	    qr/config file changed: dying/ => 0,
 	    qr/config file modified: restarting/ => 0,

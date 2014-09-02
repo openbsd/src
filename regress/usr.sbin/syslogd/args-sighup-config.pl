@@ -20,6 +20,11 @@ our %args = (
 	loggrep => { get_between2loggrep() },
     },
     syslogd => {
+	ktrace => 1,
+	kdump => {
+	    qr/syslogd  PSIG  SIGHUP caught handler/ => 1,
+	    qr/syslogd  RET   execve 0/ => 2,
+	},
 	loggrep => {
 	    qr/config file modified: restarting/ => 1,
 	    qr/config file changed: dying/ => 1,
@@ -43,15 +48,6 @@ our %args = (
 	    });
 	},
 	loggrep => { get_between2loggrep() },
-    },
-    check => sub {
-	my $self = shift;
-	my $r = $self->{syslogd};
-	foreach my $name (qw(file pipe)) {
-		my $file = $r->{"out$name"}.".0";
-		my $pattern = (get_between2loggrep())[0];
-		check_pattern($name, $file, $pattern, \&filegrep);
-	}
     },
 );
 

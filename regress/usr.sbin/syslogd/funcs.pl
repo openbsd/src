@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.4 2014/09/02 00:26:30 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.5 2014/09/02 17:43:29 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -126,7 +126,7 @@ sub check_logs {
 	check_log($c, $r, $s, %args);
 	check_out($r, %args);
 	check_stat($r, %args);
-	check_kdump($c, $s, %args);
+	check_kdump($c, $r, $s, %args);
 }
 
 sub compare($$) {
@@ -214,10 +214,10 @@ sub filegrep {
 }
 
 sub check_kdump {
-	my ($c, $s, %args) = @_;
+	my ($c, $r, $s, %args) = @_;
 
-	my %name2proc = (client => $c, server => $s);
-	foreach my $name (qw(client server)) {
+	my %name2proc = (client => $c, syslogd => $r, server => $s);
+	foreach my $name (qw(client syslogd server)) {
 		next unless $args{$name}{ktrace};
 		my $p = $name2proc{$name} or next;
 		my $file = $p->{ktracefile} or next;
@@ -229,7 +229,8 @@ sub check_kdump {
 sub kdumpgrep {
 	my ($file, $pattern) = @_;
 
-	my @cmd = ("kdump", "-f", $file);
+	my @sudo = ! -r $file && $ENV{SUDO} ? $ENV{SUDO} : ();
+	my @cmd = (@sudo, "kdump", "-f", $file);
 	open(my $fh, '-|', @cmd)
 	    or die "Open pipe from '@cmd' failed: $!";
 	my @matches = grep { /$pattern/ } <$fh>;

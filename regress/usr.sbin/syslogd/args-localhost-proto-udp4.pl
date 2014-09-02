@@ -11,7 +11,7 @@ use Socket;
 
 our %args = (
     syslogd => {
-	loghost => '@udp4://localhost.:$connectport',
+	loghost => '@udp4://localhost:$connectport',
     },
     server => {
 	listen => { domain => AF_INET, addr => "127.0.0.1" },

@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.3 2014/09/02 00:26:30 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.4 2014/09/02 17:43:29 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -27,6 +27,7 @@ use File::Basename;
 sub new {
 	my $class = shift;
 	my %args = @_;
+	$args{ktracefile} ||= "syslogd.ktrace";
 	$args{fstatfile} ||= "syslogd.fstat";
 	$args{logfile} ||= "syslogd.log";
 	$args{up} ||= "syslogd: started";
@@ -101,6 +102,10 @@ sub child {
 	}
 	push @libevent, "EVENT_SHOW_METHOD=1" if @libevent;
 	my @ktrace = $ENV{KTRACE} ? ($ENV{KTRACE}, "-i") : ();
+	if ($self->{ktrace}) {
+		@ktrace = $ENV{KTRACE} || "ktrace";
+		push @ktrace, "-i", "-f", $self->{ktracefile};
+	}
 	my $syslogd = $ENV{SYSLOGD} ? $ENV{SYSLOGD} : "syslogd";
 	my @cmd = (@sudo, @libevent, @ktrace, $syslogd, "-d",
 	    "-f", $self->{conffile});

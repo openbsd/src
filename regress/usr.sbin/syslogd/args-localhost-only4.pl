@@ -10,7 +10,7 @@ use Socket;
 
 our %args = (
     syslogd => {
-	loghost => '@localhost.:$connectport',
+	loghost => '@localhost:$connectport',
 	options => ["-4"],
     },
     server => {

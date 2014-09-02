@@ -13,7 +13,7 @@ our %args = (
     syslogd => {
 	loghost => '@[::1]:$connectport',
 	loggrep => {
-	    qr/Logging to FORW \@\[::1\]:\d+/ => '>=5',
+	    qr/Logging to FORW \@\[::1\]:\d+/ => '>=4',
 	    get_log() => 1,
 	},
     },
