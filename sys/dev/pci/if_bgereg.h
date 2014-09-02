@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.125 2014/08/24 05:01:42 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.126 2014/09/02 10:14:55 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2880,6 +2880,9 @@ struct bge_softc {
 #define	BGE_TAGGED_STATUS	0x00200000
 #define	BGE_MSI			0x00400000
 #define	BGE_RDMA_BUG		0x00800000
+#define	BGE_JUMBO_RING		0x01000000
+#define	BGE_JUMBO_STD		0x02000000
+#define	BGE_JUMBO_FRAME		0x04000000
 
 	u_int32_t		bge_phy_flags;
 #define	BGE_PHY_NO_3LED		0x00000001
@@ -2911,6 +2914,7 @@ struct bge_softc {
 	u_int32_t		bge_tx_prodidx;
 	struct if_rxring	bge_std_ring;
 	u_int16_t		bge_std;	/* current std ring head */
+	int			bge_rx_std_len;
 	struct if_rxring	bge_jumbo_ring;
 	u_int16_t		bge_jumbo;	/* current jumo ring head */
 	u_int32_t		bge_stat_ticks;
