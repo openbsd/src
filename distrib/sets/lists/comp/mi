@@ -1487,6 +1487,7 @@
 ./usr/include/util.h
 ./usr/include/utime.h
 ./usr/include/utmp.h
+./usr/include/uuid.h
 ./usr/include/uvm
 ./usr/include/uvm/uvm.h
 ./usr/include/uvm/uvm_addr.h
@@ -1671,6 +1672,7 @@
 ./usr/share/man/man2/__thrwakeup.2
 ./usr/share/man/man2/_exit.2
 ./usr/share/man/man2/accept.2
+./usr/share/man/man2/accept4.2
 ./usr/share/man/man2/access.2
 ./usr/share/man/man2/acct.2
 ./usr/share/man/man2/adjfreq.2
@@ -1714,6 +1716,7 @@
 ./usr/share/man/man2/connect.2
 ./usr/share/man/man2/dup.2
 ./usr/share/man/man2/dup2.2
+./usr/share/man/man2/dup3.2
 ./usr/share/man/man2/errno.2
 ./usr/share/man/man2/exect.2
 ./usr/share/man/man2/execve.2
@@ -1765,6 +1768,7 @@
 ./usr/share/man/man2/getsid.2
 ./usr/share/man/man2/getsockname.2
 ./usr/share/man/man2/getsockopt.2
+./usr/share/man/man2/getthrid.2
 ./usr/share/man/man2/gettimeofday.2
 ./usr/share/man/man2/getuid.2
 ./usr/share/man/man2/i386
@@ -1820,6 +1824,7 @@
 ./usr/share/man/man2/openat.2
 ./usr/share/man/man2/pathconf.2
 ./usr/share/man/man2/pipe.2
+./usr/share/man/man2/pipe2.2
 ./usr/share/man/man2/poll.2
 ./usr/share/man/man2/posix_madvise.2
 ./usr/share/man/man2/ppoll.2
@@ -4737,6 +4742,8 @@
 ./usr/share/man/man3/mitem_value.3
 ./usr/share/man/man3/mitem_visible.3
 ./usr/share/man/man3/mkdtemp.3
+./usr/share/man/man3/mkostemp.3
+./usr/share/man/man3/mkostemps.3
 ./usr/share/man/man3/mkstemp.3
 ./usr/share/man/man3/mkstemps.3
 ./usr/share/man/man3/mktemp.3
@@ -5445,6 +5452,7 @@
 ./usr/share/man/man3/slk_set.3
 ./usr/share/man/man3/slk_touch.3
 ./usr/share/man/man3/snprintf.3
+./usr/share/man/man3/sockatmark.3
 ./usr/share/man/man3/sprintf.3
 ./usr/share/man/man3/sqr.3
 ./usr/share/man/man3/sqrt.3
@@ -5678,6 +5686,19 @@
 ./usr/share/man/man3/uu_lockerr.3
 ./usr/share/man/man3/uu_unlock.3
 ./usr/share/man/man3/uucplock.3
+./usr/share/man/man3/uuid.3
+./usr/share/man/man3/uuid_compare.3
+./usr/share/man/man3/uuid_create.3
+./usr/share/man/man3/uuid_create_nil.3
+./usr/share/man/man3/uuid_dec_be.3
+./usr/share/man/man3/uuid_dec_le.3
+./usr/share/man/man3/uuid_enc_be.3
+./usr/share/man/man3/uuid_enc_le.3
+./usr/share/man/man3/uuid_equal.3
+./usr/share/man/man3/uuid_from_string.3
+./usr/share/man/man3/uuid_hash.3
+./usr/share/man/man3/uuid_is_nil.3
+./usr/share/man/man3/uuid_to_string.3
 ./usr/share/man/man3/va_arg.3
 ./usr/share/man/man3/va_copy.3
 ./usr/share/man/man3/va_end.3

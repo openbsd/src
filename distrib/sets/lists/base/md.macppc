@@ -69,7 +69,7 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd5.6/4.2.1/cc1
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd5.6/4.2.1/collect2
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd5.6/4.2.1/specs
-./usr/lib/libc.so.77.0
+./usr/lib/libc.so.77.1
 ./usr/lib/libcrypto.so.30.0
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.1
@@ -78,7 +78,7 @@
 ./usr/lib/libform.so.6.0
 ./usr/lib/libformw.so.6.0
 ./usr/lib/libfuse.so.1.1
-./usr/lib/libiberty.so.11.0
+./usr/lib/libiberty.so.12.0
 ./usr/lib/libkvm.so.16.0
 ./usr/lib/libm.so.9.0
 ./usr/lib/libmenu.so.6.0
@@ -94,7 +94,7 @@
 ./usr/lib/libpanelw.so.6.0
 ./usr/lib/libpcap.so.8.0
 ./usr/lib/libperl.so.15.0
-./usr/lib/libpthread.so.18.0
+./usr/lib/libpthread.so.18.1
 ./usr/lib/libreadline.so.4.0
 ./usr/lib/libressl.so.1.0
 ./usr/lib/librpcsvc.so.2.0
@@ -2266,6 +2266,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/util.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/utime.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/utmp.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/uuid.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_addr.ph
