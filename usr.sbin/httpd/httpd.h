@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.56 2014/09/01 09:32:43 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.57 2014/09/02 16:20:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -295,6 +295,8 @@ struct client {
 	int			 clt_fcgi_toread;
 	int			 clt_fcgi_padding_len;
 	int			 clt_fcgi_type;
+	int			 clt_fcgi_chunked;
+	int			 clt_fcgi_end;
 	struct evbuffer		*clt_srvevb;
 
 	struct evbuffer		*clt_log;
@@ -478,6 +480,8 @@ void	 server_sendlog(struct server_config *, int, const char *, ...)
 void	 server_close(struct client *, const char *);
 void	 server_dump(struct client *, const void *, size_t);
 int	 server_client_cmp(struct client *, struct client *);
+int	 server_bufferevent_printf(struct client *, const char *, ...)
+	    __attribute__((__format__ (printf, 2, 3)));
 int	 server_bufferevent_print(struct client *, const char *);
 int	 server_bufferevent_write_buffer(struct client *,
 	    struct evbuffer *);

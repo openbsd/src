@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.40 2014/08/27 09:51:53 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.41 2014/09/02 16:20:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1118,6 +1118,26 @@ server_bufferevent_add(struct event *ev, int timeout)
 	}
 
 	return (event_add(ev, ptv));
+}
+
+int
+server_bufferevent_printf(struct client *clt, const char *fmt, ...)
+{
+	int	 ret;
+	va_list	 ap;
+	char	*str;
+
+	va_start(ap, fmt);
+	ret = vasprintf(&str, fmt, ap);
+	va_end(ap);
+
+	if (ret == -1)
+		return (ret);
+
+	ret = server_bufferevent_print(clt, str);
+	free(str);
+
+	return (ret);
 }
 
 int
