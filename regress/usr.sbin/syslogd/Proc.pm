@@ -1,4 +1,4 @@
-#	$OpenBSD: Proc.pm,v 1.1.1.1 2014/08/20 20:52:14 bluhm Exp $
+#	$OpenBSD: Proc.pm,v 1.2 2014/09/02 00:26:30 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -72,6 +72,7 @@ sub new {
 	    or die "$class log file $self->{logfile} create failed: $!";
 	$fh->autoflush;
 	$self->{log} = $fh;
+	$self->{ppid} = $$;
 	return bless $self, $class;
 }
 
@@ -124,6 +125,9 @@ sub run {
 sub wait {
 	my $self = shift;
 	my $flags = shift;
+
+	# if we a not the parent process, assume the child is still running
+	return 0 unless $self->{ppid} == $$;
 
 	my $pid = $self->{pid}
 	    or croak ref($self), " no child pid";
@@ -191,6 +195,22 @@ sub down {
 sub kill_child {
 	my $self = shift;
 	kill_children($self->{pid});
+	return $self;
+}
+
+sub kill {
+	my $self = shift;
+	my $sig = shift // 'TERM';
+	my $pid = shift // $self->{pid};
+
+	if (kill($sig => $pid) != 1) {
+		my $sudo = $ENV{SUDO};
+		$sudo && $!{EPERM}
+		    or die ref($self), " kill $pid failed: $!";
+		my @cmd = ($sudo, '/bin/kill', "-$sig", $pid);
+		system(@cmd)
+		    and die ref($self), " sudo kill $pid failed: $?";
+	}
 	return $self;
 }
 

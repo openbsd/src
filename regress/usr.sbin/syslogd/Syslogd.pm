@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.2 2014/08/29 21:55:55 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.3 2014/09/02 00:26:30 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -61,7 +61,13 @@ sub new {
 	print $fh "*.*\t$loghost\n";
 	close $fh;
 
-	open($fh, '>', $self->{outfile})
+	return $self->create_out();
+}
+
+sub create_out {
+	my $self = shift;
+
+	open(my $fh, '>', $self->{outfile})
 	    or die ref($self), " create log file $self->{outfile} failed: $!";
 	close $fh;
 
@@ -120,6 +126,7 @@ sub up {
 		close($fh)
 		    or die ref($self), " close $self->{fstatfile} failed: $!";
 	}
+	return $self;
 }
 
 sub _make_abspath {
@@ -130,5 +137,57 @@ sub _make_abspath {
 	}
 	return $file;
 }
+
+sub kill_privsep {
+	return Proc::kill(@_);
+}
+
+sub kill_syslogd {
+	my $self = shift;
+	my $sig = shift // 'TERM';
+	my $ppid = shift // $self->{pid};
+
+	# find syslogd child of privsep parent
+	my @cmd = ("ps", "-ww", "-p", $ppid, "-U", "_syslogd",
+	    "-o", "pid,ppid,comm", );
+	open(my $ps, '-|', @cmd)
+	    or die ref($self), " open pipe from '@cmd' failed: $!";
+	my @pslist;
+	my @pshead = split(' ', scalar <$ps>);
+	while (<$ps>) {
+		s/\s+$//;
+		my %h;
+		@h{@pshead} = split(' ', $_, scalar @pshead);
+		push @pslist, \%h;
+	}
+	close($ps) or die ref($self), $! ?
+	    " close pipe from '@cmd' failed: $!" :
+	    " command '@cmd' failed: $?";
+	my @pschild =
+	    grep { $_->{PPID} == $ppid && $_->{COMMAND} eq "syslogd" } @pslist;
+	@pschild == 1
+	    or die ref($self), " not one privsep child: ",
+	    join(" ", map { $_->{PID} } @pschild);
+
+	return Proc::kill($self, $sig, $pschild[0]{PID});
+}
+
+my $rotate_num = 0;
+sub rotate {
+	my $self = shift;
+
+	foreach my $name (qw(file pipe)) {
+		my $file = $self->{"out$name"};
+		for (my $i = $rotate_num; $i >= 0; $i--) {
+			my $new = $file. ".$i";
+			my $old = $file. ($i > 0 ? ".".($i-1) : "");
+
+			rename($old, $new) or die ref($self),
+			    " rename from '$old' to '$new' failed: $!";
+		}
+	}
+	$rotate_num++;
+	return $self->create_out();
+};
 
 1;

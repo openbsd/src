@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: syslogd.pl,v 1.1.1.1 2014/08/20 20:52:14 bluhm Exp $
+#	$OpenBSD: syslogd.pl,v 1.2 2014/09/02 00:26:30 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -46,30 +46,36 @@ foreach my $name (qw(client syslogd server)) {
 		}
 	}
 }
-my $s = Server->new(
+my($s, $c, $r);
+$s = Server->new(
     func                => \&read_log,
     listendomain        => AF_INET,
     listenaddr          => "127.0.0.1",
     %{$args{server}},
     testfile            => $testfile,
+    client              => \$c,
+    syslogd             => \$r,
 ) unless $args{server}{noserver};
-my $r = Syslogd->new(
+$r = Syslogd->new(
     connectaddr         => "127.0.0.1",
     connectport         => $s && $s->{listenport},
     %{$args{syslogd}},
     testfile            => $testfile,
+    client              => \$c,
+    server              => \$s,
 );
-my $c = Client->new(
+$c = Client->new(
     func                => \&write_log,
     %{$args{client}},
     testfile            => $testfile,
+    syslogd             => \$r,
+    server              => \$s,
 ) unless $args{client}{noclient};
 
-$s->run unless $args{server}{noserver};
 $r->run;
+$s->run->up unless $args{server}{noserver};
 $r->up;
 $c->run->up unless $args{client}{noclient};
-$s->up unless $args{server}{noserver};
 
 $c->down unless $args{client}{noclient};
 $s->down unless $args{server}{noserver};
@@ -77,3 +83,4 @@ $r->kill_child;
 $r->down;
 
 check_logs($c, $r, $s, %args);
+$args{check}->({client => $c, syslogd => $r, server => $s}) if $args{check};

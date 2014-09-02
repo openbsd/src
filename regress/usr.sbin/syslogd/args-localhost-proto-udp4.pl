@@ -5,9 +5,9 @@
 # Find the message in client, file, pipe, syslogd, server log.
 # Check that localhost gets resolved to the 127.0.0.1 address.
 
-
 use strict;
 use warnings;
+use Socket;
 
 our %args = (
     syslogd => {
