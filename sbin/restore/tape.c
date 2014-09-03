@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.42 2014/07/21 01:51:11 guenther Exp $	*/
+/*	$OpenBSD: tape.c,v 1.43 2014/09/03 02:37:24 guenther Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -915,7 +915,7 @@ getmore:
 			return;
 		}
 		if (rd % TP_BSIZE != 0)
-			panic("partial block read: %d should be %d\n",
+			panic("partial block read: %ld should be %ld\n",
 				rd, ntrec * TP_BSIZE);
 		terminateinput();
 		memcpy(&tapebuf[rd], &endoftapemark, TP_BSIZE);

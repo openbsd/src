@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.10 2005/06/14 19:46:05 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.11 2014/09/03 02:37:24 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1995/03/18 14:59:43 cgd Exp $	*/
 
 /*-
@@ -65,13 +65,15 @@ long		 listfile(char *, ino_t, int);
 ino_t		 lowerbnd(ino_t);
 void		 mktempname(struct entry *);
 void		 moveentry(struct entry *, char *);
-void		 msg(const char *, ...);
+void		 msg(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
 char		*myname(struct entry *);
 void		 newnode(struct entry *);
 void		 newtapebuf(long);
 long		 nodeupdates(char *, ino_t, int);
 void	 	 onintr(int);
-void		 panic(const char *, ...);
+void		 panic(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
 void		 pathcheck(char *);
 struct direct	*pathsearch(const char *);
 void		 printdumpinfo(void);
