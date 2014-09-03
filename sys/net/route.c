@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.181 2014/08/26 15:09:26 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.182 2014/09/03 08:51:01 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -791,7 +791,8 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		 * sure that local routes are only modified by the
 		 * kernel.
 		 */
-		if (rt->rt_flags & RTF_LOCAL && prio != RTP_LOCAL)
+		if ((rt->rt_flags & (RTF_LOCAL|RTF_BROADCAST)) &&
+		    prio != RTP_LOCAL)
 			senderr(EINVAL);
 
 		if ((rn = rnh->rnh_deladdr(info->rti_info[RTAX_DST],
@@ -1110,7 +1111,7 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	if ((flags & RTF_HOST) == 0)
 		info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 
-	if (flags & RTF_LOCAL)
+	if (flags & (RTF_LOCAL|RTF_BROADCAST))
 		prio = RTP_LOCAL;
 
 	error = rtrequest1(RTM_ADD, &info, prio, &nrt, rtableid);
@@ -1128,6 +1129,12 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 			if (ifa->ifa_rtrequest)
 				ifa->ifa_rtrequest(RTM_ADD, rt);
 		}
+
+		/*
+		 * A local route is created for every address configured
+		 * on an interface, so use this information to notify
+		 * userland that a new address has been added.
+		 */
 		if (flags & RTF_LOCAL)
 			rt_newaddrmsg(RTM_ADD, ifa, error, nrt);
 	}
@@ -1178,7 +1185,7 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	if ((flags & RTF_HOST) == 0)
 		info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 
-	if (flags & RTF_LOCAL)
+	if (flags & (RTF_LOCAL|RTF_BROADCAST))
 		prio = RTP_LOCAL;
 
 	error = rtrequest1(RTM_DELETE, &info, prio, &nrt, rtableid);
