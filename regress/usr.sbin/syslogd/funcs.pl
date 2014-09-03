@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.5 2014/09/02 17:43:29 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.6 2014/09/03 15:56:07 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -66,6 +66,19 @@ sub write_shutdown {
 	setlogsock("native")
 	    or die ref($self), " setlogsock native failed: $!";
 	syslog(LOG_NOTICE, $downlog);
+}
+
+sub write_unix {
+	my $self = shift;
+	my $path = shift || "/dev/log";
+
+	my $u = IO::Socket::UNIX->new(
+	    Type  => SOCK_DGRAM,
+	    Peer => $path,
+	) or die ref($self), " connect to $path unix socket failed: $!";
+	my $msg = get_log(). " $path unix socket";
+	print $u $msg;
+	print STDERR $msg, "\n";
 }
 
 ########################################################################
