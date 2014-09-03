@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.102 2014/08/23 18:32:55 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.103 2014/09/03 08:59:06 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -98,6 +98,8 @@ int in_addprefix(struct in_ifaddr *);
 int in_scrubprefix(struct in_ifaddr *);
 int in_addhost(struct in_ifaddr *);
 int in_scrubhost(struct in_ifaddr *);
+int in_insert_prefix(struct in_ifaddr *);
+void in_remove_prefix(struct in_ifaddr *);
 
 /*
  * Determine whether an IP address is in a reserved set of addresses
@@ -808,6 +810,43 @@ in_scrubhost(struct in_ifaddr *ia0)
 }
 
 /*
+ * Insert the cloning and broadcast routes for this subnet.
+ */
+int
+in_insert_prefix(struct in_ifaddr *ia)
+{
+	struct ifaddr *ifa = &ia->ia_ifa;
+	int error;
+
+	error = rt_ifa_add(ifa, RTF_UP | RTF_CLONING, ifa->ifa_addr);
+	if (error)
+		return (error);
+
+	if (ia->ia_broadaddr.sin_addr.s_addr != 0)
+		error = rt_ifa_add(ifa, RTF_UP | RTF_HOST |
+		    RTF_LLINFO | RTF_BROADCAST, ifa->ifa_broadaddr);
+
+	if (!error)
+		ia->ia_flags |= IFA_ROUTE;
+
+	return (error);
+}
+
+void
+in_remove_prefix(struct in_ifaddr *ia)
+{
+	struct ifaddr *ifa = &ia->ia_ifa;
+
+	rt_ifa_del(ifa, 0, ifa->ifa_addr);
+
+	if (ia->ia_broadaddr.sin_addr.s_addr != 0)
+		rt_ifa_del(ifa, RTF_HOST | RTF_LLINFO | RTF_BROADCAST,
+		    ifa->ifa_broadaddr);
+
+	ia->ia_flags &= ~IFA_ROUTE;
+}
+
+/*
  * add a route to prefix ("connected route" in cisco terminology).
  * does nothing if there's some interface address with the same prefix already.
  */
@@ -816,7 +855,6 @@ in_addprefix(struct in_ifaddr *ia0)
 {
 	struct in_ifaddr *ia;
 	struct in_addr prefix, mask, p, m;
-	int error;
 
 	prefix = ia0->ia_addr.sin_addr;
 	mask = ia0->ia_sockmask.sin_addr;
@@ -843,8 +881,7 @@ in_addprefix(struct in_ifaddr *ia0)
 		/* move to a real interface instead of carp interface */
 		if (ia->ia_ifp->if_type == IFT_CARP &&
 		    ia0->ia_ifp->if_type != IFT_CARP) {
-			rt_ifa_del(&ia->ia_ifa, 0, ia->ia_ifa.ifa_addr);
-			ia->ia_flags &= ~IFA_ROUTE;
+		    	in_remove_prefix(ia);
 			break;
 		}
 #endif
@@ -858,11 +895,7 @@ in_addprefix(struct in_ifaddr *ia0)
 	/*
 	 * noone seem to have prefix route.  insert it.
 	 */
-	error = rt_ifa_add(&ia0->ia_ifa, RTF_UP | RTF_CLONING,
-	    ia0->ia_ifa.ifa_addr);
-	if (!error)
-		ia0->ia_flags |= IFA_ROUTE;
-	return error;
+	return in_insert_prefix(ia0);
 }
 
 /*
@@ -875,7 +908,6 @@ in_scrubprefix(struct in_ifaddr *ia0)
 {
 	struct in_ifaddr *ia;
 	struct in_addr prefix, mask, p, m;
-	int error;
 
 	if ((ia0->ia_flags & IFA_ROUTE) == 0)
 		return 0;
@@ -904,20 +936,14 @@ in_scrubprefix(struct in_ifaddr *ia0)
 		/*
 		 * if we got a matching prefix route, move IFA_ROUTE to him
 		 */
-		rt_ifa_del(&ia0->ia_ifa, 0, ia0->ia_ifa.ifa_addr);
-		ia0->ia_flags &= ~IFA_ROUTE;
-		error = rt_ifa_add(&ia->ia_ifa, RTF_UP | RTF_CLONING,
-		    ia->ia_ifa.ifa_addr);
-		if (error == 0)
-			ia->ia_flags |= IFA_ROUTE;
-		return error;
+		in_remove_prefix(ia0);
+		return in_insert_prefix(ia);
 	}
 
 	/*
 	 * noone seem to have prefix route.  remove it.
 	 */
-	rt_ifa_del(&ia0->ia_ifa, 0, ia0->ia_ifa.ifa_addr);
-	ia0->ia_flags &= ~IFA_ROUTE;
+	in_remove_prefix(ia0);
 	return 0;
 }
 
