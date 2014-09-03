@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.21 2014/07/11 16:01:41 halex Exp $	*/
+/*	$OpenBSD: dump.h,v 1.22 2014/09/03 02:34:34 guenther Exp $	*/
 /*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
@@ -88,11 +88,12 @@ void	broadcast(char *message);
 time_t	do_stats(void);
 void	lastdump(int arg);	/* int should be char */
 void	msg(const char *fmt, ...)
-    __attribute__((__format__ (printf, 1, 2)));
+	    __attribute__((__format__ (printf, 1, 2)));
 void	msgtail(const char *fmt, ...)
-    __attribute__((__format__ (printf, 1, 2)));
+	    __attribute__((__format__ (printf, 1, 2)));
 int	query(char *question);
-void	quit(const char *fmt, ...);
+__dead void quit(const char *fmt, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
 void	statussig(int);
 void	timeest(void);
 
@@ -121,7 +122,7 @@ void	trewind(void);
 void	writerec(char *dp, int isspcl);
 
 __dead void Exit(int status);
-void	dumpabort(int signo);
+__dead void dumpabort(int signo);
 void	getfstab(void);
 
 char	*rawname(char *cp);
@@ -149,10 +150,6 @@ void	interrupt(int signo);	/* in case operator bangs on console */
 
 struct	fstab *fstabsearch(char *key);	/* search fs_file and fs_spec */
 
-#ifndef NAME_MAX
-#define NAME_MAX 255
-#endif
-
 /*
  *	The contents of the file _PATH_DUMPDATES is maintained both on
  *	a linked list, and then (eventually) arrayified.
@@ -178,21 +175,3 @@ void	putdumptime(void);
 
 void	sig(int signo);
 
-/*
- * Compatibility with old systems.
- */
-#ifdef COMPAT
-#include <sys/file.h>
-#define	strchr(a,b)	index(a,b)
-#define	strrchr(a,b)	rindex(a,b)
-extern char *strdup(), *ctime();
-extern int read(), write();
-extern int errno;
-#endif
-
-#ifndef	_PATH_UTMP
-#define	_PATH_UTMP	"/etc/utmp"
-#endif
-#ifndef	_PATH_FSTAB
-#define	_PATH_FSTAB	"/etc/fstab"
-#endif
