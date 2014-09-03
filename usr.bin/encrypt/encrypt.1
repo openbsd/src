@@ -1,4 +1,4 @@
-.\"	$OpenBSD: encrypt.1,v 1.23 2013/05/23 01:33:08 tedu Exp $
+.\"	$OpenBSD: encrypt.1,v 1.24 2014/09/03 07:47:50 giovanni Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 23 2013 $
+.Dd $Mdocdate: September 3 2014 $
 .Dt ENCRYPT 1
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@
 .Nd encrypt passwords from the command line or standard input
 .Sh SYNOPSIS
 .Nm encrypt
-.Op Fl km
+.Op Fl k
 .Op Fl b Ar rounds
 .Op Fl c Ar class
 .Op Fl p | Ar string
@@ -66,8 +66,6 @@ for more information.
 Run in
 .Nm makekey
 compatible mode.
-.It Fl m
-Encrypt the string using MD5.
 .It Fl p
 Prompt for a single string with echo turned off.
 .It Fl s Ar salt
@@ -86,7 +84,7 @@ as a command line option, the algorithm specified in the default class in
 .Pa /etc/login.conf
 will be used.
 .Pp
-For MD5 and Blowfish, a new random salt is automatically generated for each
+For Blowfish, a new random salt is automatically generated for each
 password.
 .Pp
 Specifying the

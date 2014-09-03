@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.30 2013/11/12 13:54:51 deraadt Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.31 2014/09/03 07:47:50 giovanni Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -44,8 +44,7 @@
 
 #define DO_MAKEKEY 0
 #define DO_DES     1
-#define DO_MD5     2
-#define DO_BLF     3
+#define DO_BLF     2
 
 extern char *__progname;
 char buffer[_PASSWORD_LEN];
@@ -119,14 +118,6 @@ print_passwd(char *string, int operation, void *extra)
 		salt = msalt;
 		break;
 
-	case DO_MD5:
-		strlcpy(buffer, "$1$", sizeof buffer);
-		to64(&buffer[3], arc4random(), 4);
-		to64(&buffer[7], arc4random(), 4);
-		strlcpy(buffer + 11, "$", sizeof buffer - 11);
-		salt = buffer;
-		break;
-
 	case DO_BLF:
 		strlcpy(buffer, bcrypt_gensalt(*(int *)extra), _PASSWORD_LEN);
 		salt = buffer;
@@ -164,18 +155,12 @@ main(int argc, char **argv)
 	if (strcmp(__progname, "makekey") == 0)
 		operation = DO_MAKEKEY;
 
-	while ((opt = getopt(argc, argv, "kmps:b:c:")) != -1) {
+	while ((opt = getopt(argc, argv, "kps:b:c:")) != -1) {
 		switch (opt) {
 		case 'k':                       /* Stdin/Stdout Unix crypt */
 			if (operation != -1 || prompt)
 				usage();
 			operation = DO_MAKEKEY;
-			break;
-
-		case 'm':                       /* MD5 password hash */
-			if (operation != -1)
-				usage();
-			operation = DO_MD5;
 			break;
 
 		case 'p':
