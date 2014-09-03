@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.100 2014/08/26 19:33:48 robert Exp $
+#	$OpenBSD: changelist,v 1.101 2014/09/03 21:19:34 matthieu Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -115,7 +115,6 @@
 /etc/resolv.conf
 /etc/resolv.conf.tail
 /etc/ripd.conf
-+/etc/rndc.key
 /etc/rpc
 /etc/rtadvd.conf
 /etc/sasyncd.conf
