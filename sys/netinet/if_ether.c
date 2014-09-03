@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.135 2014/08/26 15:09:26 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.136 2014/09/03 08:53:54 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -231,6 +231,18 @@ arp_rtrequest(int req, struct rtentry *rt)
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
 		LIST_INSERT_HEAD(&llinfo_arp, la, la_list);
+
+		/*
+		 * Routes to broadcast addresses must be incomplete
+		 * arp entries so that they won't be picked up, but
+		 * since we expect them to always be present in the
+		 * routing table, make sure arptimer() won't free
+		 * them.
+		 */
+		if (rt->rt_flags & RTF_BROADCAST) {
+			rt->rt_expire = 0;
+			break;
+		}
 
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if ((ifa->ifa_addr->sa_family == AF_INET) &&
@@ -629,7 +641,8 @@ in_arpinput(struct mbuf *m)
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
 		if (sdl->sdl_alen) {
 		    if (memcmp(ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
-			if (rt->rt_flags & RTF_PERMANENT_ARP) {
+			if (rt->rt_flags &
+			    (RTF_PERMANENT_ARP|RTF_LOCAL|RTF_BROADCAST)) {
 				inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
 				log(LOG_WARNING,
 				   "arp: attempt to overwrite permanent "
