@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.96 2014/08/08 16:17:09 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.97 2014/09/03 23:20:33 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -171,9 +171,16 @@ enum	mandocerr {
 
 	/* ===== system errors ===== */
 
+	MANDOCERR_SYSDUP, /* cannot dup file descriptor */
+	MANDOCERR_SYSEXEC, /* cannot exec */
+	MANDOCERR_SYSEXIT, /* gunzip failed with code */
+	MANDOCERR_SYSFORK, /* cannot fork */
 	MANDOCERR_SYSOPEN, /* cannot open file */
-	MANDOCERR_SYSSTAT, /* cannot stat file */
+	MANDOCERR_SYSPIPE, /* cannot open pipe */
 	MANDOCERR_SYSREAD, /* cannot read file */
+	MANDOCERR_SYSSIG, /* gunzip died from signal */
+	MANDOCERR_SYSSTAT, /* cannot stat file */
+	MANDOCERR_SYSWAIT, /* wait failed */
 
 	MANDOCERR_MAX
 };
@@ -423,6 +430,8 @@ struct mparse	 *mparse_alloc(int, enum mandoclevel, mandocmsg,
 			const char *);
 void		  mparse_free(struct mparse *);
 void		  mparse_keep(struct mparse *);
+enum mandoclevel  mparse_open(struct mparse *, int *, const char *,
+			pid_t *);
 enum mandoclevel  mparse_readfd(struct mparse *, int, const char *);
 void		  mparse_reset(struct mparse *);
 void		  mparse_result(struct mparse *,
@@ -430,6 +439,7 @@ void		  mparse_result(struct mparse *,
 const char	 *mparse_getkeep(const struct mparse *);
 const char	 *mparse_strerror(enum mandocerr);
 const char	 *mparse_strlevel(enum mandoclevel);
+enum mandoclevel  mparse_wait(struct mparse *, pid_t);
 
 __END_DECLS
 

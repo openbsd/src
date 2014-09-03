@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.116 2014/09/03 18:08:26 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.117 2014/09/03 23:20:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,6 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
@@ -1065,7 +1066,6 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 {
 	char			 any[] = "any";
 	struct ohash_info	 str_info;
-	int			 fd[2];
 	struct mpage		*mpage, *mpage_dest;
 	struct mlink		*mlink, *mlink_dest;
 	struct mdoc		*mdoc;
@@ -1073,7 +1073,7 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 	char			*sodest;
 	char			*cp;
 	pid_t			 child_pid;
-	int			 status;
+	int			 fd;
 	unsigned int		 pslot;
 	enum mandoclevel	 lvl;
 
@@ -1101,38 +1101,11 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 		man = NULL;
 		sodest = NULL;
 		child_pid = 0;
-		fd[0] = -1;
-		fd[1] = -1;
 
-		if (mpage->mlinks->gzip) {
-			if (-1 == pipe(fd)) {
-				exitcode = (int)MANDOCLEVEL_SYSERR;
-				say(mpage->mlinks->file, "&pipe gunzip");
-				goto nextpage;
-			}
-			switch (child_pid = fork()) {
-			case -1:
-				exitcode = (int)MANDOCLEVEL_SYSERR;
-				say(mpage->mlinks->file, "&fork gunzip");
-				child_pid = 0;
-				close(fd[1]);
-				close(fd[0]);
-				goto nextpage;
-			case 0:
-				close(fd[0]);
-				if (-1 == dup2(fd[1], STDOUT_FILENO)) {
-					say(mpage->mlinks->file,
-					    "&dup gunzip");
-					exit(1);
-				}
-				execlp("gunzip", "gunzip", "-c",
-				    mpage->mlinks->file, NULL);
-				say(mpage->mlinks->file, "&exec gunzip");
-				exit(1);
-			default:
-				close(fd[1]);
-				break;
-			}
+		mparse_open(mp, &fd, mpage->mlinks->file, &child_pid);
+		if (fd == -1) {
+			say(mpage->mlinks->file, "&open");
+			goto nextpage;
 		}
 
 		/*
@@ -1142,7 +1115,7 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 		 */
 		if (FORM_CAT != mpage->mlinks->dform ||
 		    FORM_CAT != mpage->mlinks->fform) {
-			lvl = mparse_readfd(mp, fd[0], mpage->mlinks->file);
+			lvl = mparse_readfd(mp, fd, mpage->mlinks->file);
 			if (lvl < MANDOCLEVEL_FATAL)
 				mparse_result(mp, &mdoc, &man, &sodest);
 		}
@@ -1234,7 +1207,7 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 		} else if (NULL != man)
 			parse_man(mpage, man_node(man));
 		else
-			parse_cat(mpage, fd[0]);
+			parse_cat(mpage, fd);
 		if (NULL == mpage->desc)
 			mpage->desc = mandoc_strdup(mpage->mlinks->name);
 
@@ -1246,21 +1219,10 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 		dbadd(mpage, mc);
 
 nextpage:
-		if (child_pid) {
-			if (-1 == waitpid(child_pid, &status, 0)) {
-				exitcode = (int)MANDOCLEVEL_SYSERR;
-				say(mpage->mlinks->file, "&wait gunzip");
-			} else if (WIFSIGNALED(status)) {
-				exitcode = (int)MANDOCLEVEL_SYSERR;
-				say(mpage->mlinks->file,
-				    "gunzip died from signal %d",
-				    WTERMSIG(status));
-			} else if (WEXITSTATUS(status)) {
-				exitcode = (int)MANDOCLEVEL_SYSERR;
-				say(mpage->mlinks->file,
-				    "gunzip failed with code %d",
-				    WEXITSTATUS(status));
-			}
+		if (child_pid &&
+		    mparse_wait(mp, child_pid) != MANDOCLEVEL_OK) {
+			exitcode = (int)MANDOCLEVEL_SYSERR;
+			say(mpage->mlinks->file, "&wait gunzip");
 		}
 		ohash_delete(&strings);
 		ohash_delete(&names);

@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.57 2014/08/08 16:17:09 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.58 2014/09/03 23:20:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,8 +16,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -206,9 +208,16 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	".so request failed",
 
 	/* system errors */
+	"cannot dup file descriptor",
+	"cannot exec",
+	"gunzip failed with code",
+	"cannot fork",
 	NULL,
-	"cannot stat file",
+	"cannot open pipe",
 	"cannot read file",
+	"gunzip died from signal",
+	"cannot stat file",
+	"wait failed",
 };
 
 static	const char * const	mandoclevels[MANDOCLEVEL_MAX] = {
@@ -750,6 +759,91 @@ mparse_readfd(struct mparse *curp, int fd, const char *file)
 		perror(file);
 out:
 	return(curp->file_status);
+}
+
+enum mandoclevel
+mparse_open(struct mparse *curp, int *fd, const char *file,
+	pid_t *child_pid)
+{
+	int		  pfd[2];
+	char		 *cp;
+	enum mandocerr	  err;
+
+	pfd[1] = -1;
+	curp->file = file;
+	if ((cp = strrchr(file, '.')) == NULL ||
+	    strcmp(cp + 1, "gz")) {
+		*child_pid = 0;
+		if ((*fd = open(file, O_RDONLY)) == -1) {
+			err = MANDOCERR_SYSOPEN;
+			goto out;
+		}
+		return(MANDOCLEVEL_OK);
+	}
+
+	if (pipe(pfd) == -1) {
+		err = MANDOCERR_SYSPIPE;
+		goto out;
+	}
+
+	switch (*child_pid = fork()) {
+	case -1:
+		err = MANDOCERR_SYSFORK;
+		close(pfd[0]);
+		close(pfd[1]);
+		pfd[1] = -1;
+		break;
+	case 0:
+		close(pfd[0]);
+		if (dup2(pfd[1], STDOUT_FILENO) == -1) {
+			err = MANDOCERR_SYSDUP;
+			break;
+		}
+		execlp("gunzip", "gunzip", "-c", file, NULL);
+		err = MANDOCERR_SYSEXEC;
+		break;
+	default:
+		close(pfd[1]);
+		*fd = pfd[0];
+		return(MANDOCLEVEL_OK);
+	}
+
+out:
+	*fd = -1;
+	*child_pid = 0;
+	curp->file_status = MANDOCLEVEL_SYSERR;
+	if (curp->mmsg)
+		(*curp->mmsg)(err, curp->file_status, file,
+		    0, 0, strerror(errno));
+	if (pfd[1] != -1)
+		exit(1);
+	return(curp->file_status);
+}
+
+enum mandoclevel
+mparse_wait(struct mparse *curp, pid_t child_pid)
+{
+	int	  status;
+
+	if (waitpid(child_pid, &status, 0) == -1) {
+		mandoc_msg(MANDOCERR_SYSWAIT, curp, 0, 0,
+		    strerror(errno));
+		curp->file_status = MANDOCLEVEL_SYSERR;
+		return(curp->file_status);
+	}
+	if (WIFSIGNALED(status)) {
+		mandoc_vmsg(MANDOCERR_SYSSIG, curp, 0, 0,
+		    "%d", WTERMSIG(status));
+		curp->file_status = MANDOCLEVEL_SYSERR;
+		return(curp->file_status);
+	}
+	if (WEXITSTATUS(status)) {
+		mandoc_vmsg(MANDOCERR_SYSEXIT, curp, 0, 0,
+		    "%d", WEXITSTATUS(status));
+		curp->file_status = MANDOCLEVEL_SYSERR;
+		return(curp->file_status);
+	}
+	return(MANDOCLEVEL_OK);
 }
 
 struct mparse *

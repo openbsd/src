@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.99 2014/09/03 18:08:26 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.100 2014/09/03 23:20:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -81,7 +81,7 @@ static	void		  mmsg(enum mandocerr, enum mandoclevel,
 				const char *, int, int, const char *);
 static	void		  parse(struct curparse *, int,
 				const char *, enum mandoclevel *);
-static	enum mandoclevel  passthrough(const char *);
+static	enum mandoclevel  passthrough(const char *, int);
 static	void		  spawn_pager(void);
 static	int		  toptions(struct curparse *, char *);
 static	void		  usage(enum argmode) __attribute__((noreturn));
@@ -106,6 +106,8 @@ main(int argc, char *argv[])
 	char		 sec;
 	enum mandoclevel rc;
 	enum outmode	 outmode;
+	pid_t		 child_pid;
+	int		 fd;
 	int		 show_usage;
 	int		 use_pager;
 	int		 options;
@@ -357,15 +359,28 @@ main(int argc, char *argv[])
 
 	while (argc) {
 		if (resp != NULL) {
-			if (resp->form & FORM_SRC) {
+			rc = mparse_open(curp.mp, &fd, resp->file,
+			    &child_pid);
+			if (fd == -1)
+				/* nothing */;
+			else if (resp->form & FORM_SRC) {
 				/* For .so only; ignore failure. */
 				chdir(paths.paths[resp->ipath]);
-				parse(&curp, -1, resp->file, &rc);
+				parse(&curp, fd, resp->file, &rc);
 			} else
-				rc = passthrough(resp->file);
+				rc = passthrough(resp->file, fd);
 			resp++;
-		} else
-			parse(&curp, -1, *argv++, &rc);
+		} else {
+			rc = mparse_open(curp.mp, &fd, *argv++,
+			    &child_pid);
+			if (fd != -1)
+				parse(&curp, fd, argv[-1], &rc);
+		}
+
+		if (child_pid &&
+		    mparse_wait(curp.mp, child_pid) != MANDOCLEVEL_OK)
+			rc = MANDOCLEVEL_SYSERR;
+
 		if (MANDOCLEVEL_OK != rc && curp.wstop)
 			break;
 		argc--;
@@ -539,18 +554,11 @@ parse(struct curparse *curp, int fd, const char *file,
 }
 
 static enum mandoclevel
-passthrough(const char *file)
+passthrough(const char *file, int fd)
 {
 	char		 buf[BUFSIZ];
 	const char	*syscall;
 	ssize_t		 nr, nw, off;
-	int		 fd;
-
-	fd = open(file, O_RDONLY);
-	if (fd == -1) {
-		syscall = "open";
-		goto fail;
-	}
 
 	while ((nr = read(fd, buf, BUFSIZ)) != -1 && nr != 0)
 		for (off = 0; off < nr; off += nw)
