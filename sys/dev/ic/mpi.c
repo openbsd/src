@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.194 2014/09/01 07:52:30 blambert Exp $ */
+/*	$OpenBSD: mpi.c,v 1.195 2014/09/03 00:46:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -147,7 +147,6 @@ void			mpi_eventack_done(struct mpi_ccb *);
 int			mpi_evt_sas(struct mpi_softc *, struct mpi_rcb *);
 void			mpi_evt_sas_detach(void *, void *);
 void			mpi_evt_sas_detach_done(struct mpi_ccb *);
-void			mpi_evt_fc_rescan(struct mpi_softc *);
 void			mpi_fc_rescan(void *, void *);
 
 int			mpi_req_cfg_header(struct mpi_softc *, u_int8_t,
@@ -224,8 +223,6 @@ mpi_attach(struct mpi_softc *sc)
 	printf("\n");
 
 	rw_init(&sc->sc_lock, "mpi_lock");
-	mtx_init(&sc->sc_evt_rescan_mtx, IPL_BIO);
-
 	task_set(&sc->sc_evt_rescan, mpi_fc_rescan, sc, NULL);
 
 	/* disable interrupts */
@@ -2331,7 +2328,7 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 	case MPI_EVENT_RESCAN:
 		if (sc->sc_scsibus != NULL &&
 		    sc->sc_porttype == MPI_PORTFACTS_PORTTYPE_FC)
-			mpi_evt_fc_rescan(sc);
+			task_add(systq, &sc->sc_evt_rescan);
 		break;
 
 	default:
@@ -2465,24 +2462,7 @@ mpi_evt_sas_detach_done(struct mpi_ccb *ccb)
 }
 
 void
-mpi_evt_fc_rescan(struct mpi_softc *sc)
-{
-	int					queue = 1;
-
-	mtx_enter(&sc->sc_evt_rescan_mtx);
-	if (sc->sc_evt_rescan_sem)
-		queue = 0;
-	else
-		sc->sc_evt_rescan_sem = 1;
-	mtx_leave(&sc->sc_evt_rescan_mtx);
-
-	if (queue) {
-		task_add(systq, &sc->sc_evt_rescan);
-	}
-}
-
-void
-mpi_fc_rescan(void *xsc, void *xarg)
+mpi_fc_rescan(void *xsc, void *null)
 {
 	struct mpi_softc			*sc = xsc;
 	struct mpi_cfg_hdr			hdr;
@@ -2491,10 +2471,6 @@ mpi_fc_rescan(void *xsc, void *xarg)
 	u_int8_t				devmap[256 / NBBY];
 	u_int32_t				id = 0xffffff;
 	int					i;
-
-	mtx_enter(&sc->sc_evt_rescan_mtx);
-	sc->sc_evt_rescan_sem = 0;
-	mtx_leave(&sc->sc_evt_rescan_mtx);
 
 	memset(devmap, 0, sizeof(devmap));
 
