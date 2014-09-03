@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.97 2014/09/01 22:45:11 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.98 2014/09/03 05:17:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -150,7 +150,7 @@ main(int argc, char *argv[])
 	show_usage = 0;
 	outmode = OUTMODE_DEF;
 
-	while (-1 != (c = getopt(argc, argv, "aC:cfI:iklM:m:O:S:s:T:VW:w"))) {
+	while (-1 != (c = getopt(argc, argv, "aC:cfhI:iklM:m:O:S:s:T:VW:w"))) {
 		switch (c) {
 		case 'a':
 			outmode = OUTMODE_ALL;
@@ -163,6 +163,10 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			search.argmode = ARG_WORD;
+			break;
+		case 'h':
+			(void)strlcat(curp.outopts, "synopsis,", BUFSIZ);
+			outmode = OUTMODE_ALL;
 			break;
 		case 'I':
 			if (strncmp(optarg, "os=", 3)) {
@@ -398,7 +402,7 @@ usage(enum argmode argmode)
 
 	switch (argmode) {
 	case ARG_FILE:
-		fputs("usage: mandoc [-acfklV] [-Ios=name] "
+		fputs("usage: mandoc [-acfhklV] [-Ios=name] "
 		    "[-mformat] [-Ooption] [-Toutput] [-Wlevel]\n"
 		    "\t      [file ...]\n", stderr);
 		break;
@@ -408,12 +412,12 @@ usage(enum argmode argmode)
 		    "\t   [section] name ...\n", stderr);
 		break;
 	case ARG_WORD:
-		fputs("usage: whatis [-acfklVw] [-C file] "
+		fputs("usage: whatis [-acfhklVw] [-C file] "
 		    "[-M path] [-m path] [-O outkey] [-S arch]\n"
 		    "\t      [-s section] name ...\n", stderr);
 		break;
 	case ARG_EXPR:
-		fputs("usage: apropos [-acfklVw] [-C file] "
+		fputs("usage: apropos [-acfhklVw] [-C file] "
 		    "[-M path] [-m path] [-O outkey] [-S arch]\n"
 		    "\t       [-s section] expression ...\n", stderr);
 		break;

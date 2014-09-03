@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.179 2014/08/21 12:56:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.180 2014/09/03 05:17:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -250,34 +250,44 @@ static	const struct termact termacts[MDOC_MAX] = {
 void
 terminal_mdoc(void *arg, const struct mdoc *mdoc)
 {
-	const struct mdoc_node	*n;
 	const struct mdoc_meta	*meta;
+	struct mdoc_node	*n;
 	struct termp		*p;
 
 	p = (struct termp *)arg;
 
-	if (0 == p->defindent)
-		p->defindent = 5;
-
 	p->overstep = 0;
-	p->maxrmargin = p->defrmargin;
+	p->rmargin = p->maxrmargin = p->defrmargin;
 	p->tabwidth = term_len(p, 5);
 
 	if (NULL == p->symtab)
 		p->symtab = mchars_alloc();
 
-	n = mdoc_node(mdoc);
+	n = mdoc_node(mdoc)->child;
 	meta = mdoc_meta(mdoc);
 
-	term_begin(p, print_mdoc_head, print_mdoc_foot, meta);
-
-	if (n->child) {
-		if (MDOC_Sh != n->child->tok)
-			term_vspace(p);
-		print_mdoc_nodelist(p, NULL, meta, n->child);
+	if (p->synopsisonly) {
+		while (n != NULL) {
+			if (n->tok == MDOC_Sh && n->sec == SEC_SYNOPSIS) {
+				if (n->child->next->child != NULL)
+					print_mdoc_nodelist(p, NULL,
+					    meta, n->child->next->child);
+				term_newln(p);
+				break;
+			}
+			n = n->next;
+		}
+	} else {
+		if (p->defindent == 0)
+			p->defindent = 5;
+		term_begin(p, print_mdoc_head, print_mdoc_foot, meta);
+		if (n != NULL) {
+			if (n->tok != MDOC_Sh)
+				term_vspace(p);
+			print_mdoc_nodelist(p, NULL, meta, n);
+		}
+		term_end(p);
 	}
-
-	term_end(p);
 }
 
 static void
@@ -460,9 +470,6 @@ print_mdoc_head(struct termp *p, const void *arg)
 	 * string depending on the manual volume.  If not specified, it
 	 * switches on the manual section.
 	 */
-
-	p->offset = 0;
-	p->rmargin = p->maxrmargin;
 
 	assert(meta->vol);
 	if (NULL == meta->arch)

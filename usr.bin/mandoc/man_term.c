@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.103 2014/06/20 22:58:41 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.104 2014/09/03 05:17:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -139,27 +139,21 @@ void
 terminal_man(void *arg, const struct man *man)
 {
 	struct termp		*p;
-	const struct man_node	*n;
 	const struct man_meta	*meta;
+	struct man_node		*n;
 	struct mtermp		 mt;
 
 	p = (struct termp *)arg;
 
-	if (0 == p->defindent)
-		p->defindent = 7;
-
 	p->overstep = 0;
-	p->maxrmargin = p->defrmargin;
+	p->rmargin = p->maxrmargin = p->defrmargin;
 	p->tabwidth = term_len(p, 5);
 
 	if (NULL == p->symtab)
 		p->symtab = mchars_alloc();
 
-	n = man_node(man);
+	n = man_node(man)->child;
 	meta = man_meta(man);
-
-	term_begin(p, print_man_head, print_man_foot, meta);
-	p->flags |= TERMP_NOSPACE;
 
 	memset(&mt, 0, sizeof(struct mtermp));
 
@@ -167,10 +161,28 @@ terminal_man(void *arg, const struct man *man)
 	mt.offset = term_len(p, p->defindent);
 	mt.pardist = 1;
 
-	if (n->child)
-		print_man_nodelist(p, &mt, n->child, meta);
-
-	term_end(p);
+	if (p->synopsisonly) {
+		while (n != NULL) {
+			if (n->tok == MAN_SH &&
+			    n->child->child->type == MAN_TEXT &&
+			    !strcmp(n->child->child->string, "SYNOPSIS")) {
+				if (n->child->next->child != NULL)
+					print_man_nodelist(p, &mt,
+					    n->child->next->child, meta);
+				term_newln(p);
+				break;
+			}
+			n = n->next;
+		}
+	} else {
+		if (p->defindent == 0)
+			p->defindent = 7;
+		term_begin(p, print_man_head, print_man_foot, meta);
+		p->flags |= TERMP_NOSPACE;
+		if (n != NULL)
+			print_man_nodelist(p, &mt, n, meta);
+		term_end(p);
+	}
 }
 
 
