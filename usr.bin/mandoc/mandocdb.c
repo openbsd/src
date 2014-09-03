@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.115 2014/09/01 23:47:56 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.116 2014/09/03 18:08:26 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -72,12 +72,6 @@ enum	op {
 	OP_TEST /* change no databases, report potential problems */
 };
 
-enum	form {
-	FORM_NONE,  /* format is unknown */
-	FORM_SRC,   /* format is -man or -mdoc */
-	FORM_CAT    /* format is cat */
-};
-
 struct	str {
 	char		*rendered; /* key in UTF-8 or ASCII form */
 	const struct mpage *mpage; /* if set, the owning parse */
@@ -93,24 +87,24 @@ struct	inodev {
 struct	mpage {
 	struct inodev	 inodev;  /* used for hashing routine */
 	int64_t		 pageid;  /* pageid in mpages SQL table */
-	enum form	 form;    /* format from file content */
 	char		*sec;     /* section from file content */
 	char		*arch;    /* architecture from file content */
 	char		*title;   /* title from file content */
 	char		*desc;    /* description from file content */
 	struct mlink	*mlinks;  /* singly linked list */
+	int		 form;    /* format from file content */
 };
 
 struct	mlink {
 	char		 file[PATH_MAX]; /* filename rel. to manpath */
-	enum form	 dform;   /* format from directory */
-	enum form	 fform;   /* format from file name suffix */
 	char		*dsec;    /* section from directory */
 	char		*arch;    /* architecture from directory */
 	char		*name;    /* name from file name (not empty) */
 	char		*fsec;    /* section from file name suffix */
 	struct mlink	*next;    /* singly linked list */
 	struct mpage	*mpage;   /* parent */
+	int		 dform;   /* format from directory */
+	int		 fform;   /* format from file name suffix */
 	int		 gzip;	  /* filename has a .gz suffix */
 };
 
@@ -827,6 +821,7 @@ filescan(const char *file)
 	}
 
 	mlink = mandoc_calloc(1, sizeof(struct mlink));
+	mlink->dform = FORM_NONE;
 	if (strlcpy(mlink->file, start, sizeof(mlink->file)) >=
 	    sizeof(mlink->file)) {
 		say(start, "Filename too long");
@@ -1215,6 +1210,8 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 			mpage->title =
 			    mandoc_strdup(mpage->mlinks->name);
 		}
+		if (mpage->mlinks->gzip)
+			mpage->form |= FORM_GZ;
 		putkey(mpage, mpage->sec, TYPE_sec);
 		putkey(mpage, '\0' == *mpage->arch ?
 		    any : mpage->arch, TYPE_arch);
@@ -2046,7 +2043,7 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 
 	i = 1;
 	SQL_BIND_TEXT(stmts[STMT_INSERT_PAGE], i, key->rendered);
-	SQL_BIND_INT(stmts[STMT_INSERT_PAGE], i, FORM_SRC == mpage->form);
+	SQL_BIND_INT(stmts[STMT_INSERT_PAGE], i, mpage->form);
 	SQL_STEP(stmts[STMT_INSERT_PAGE]);
 	mpage->pageid = sqlite3_last_insert_rowid(db);
 	sqlite3_reset(stmts[STMT_INSERT_PAGE]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.h,v 1.13 2014/09/01 22:45:11 schwarze Exp $ */
+/*	$OpenBSD: mansearch.h,v 1.14 2014/09/03 18:08:26 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -67,6 +67,11 @@
 #define	NAME_FIRST	 0x0000004000000008ULL
 #define	NAME_HEAD	 0x0000004000000010ULL
 #define	NAME_MASK	 0x000000000000001fULL
+
+#define	FORM_CAT	 0  /* manual page is preformatted */
+#define	FORM_SRC	 1  /* format is mdoc(7) or man(7) */
+#define	FORM_GZ		 2  /* compressed with gzip(1) */
+#define	FORM_NONE	 4  /* format is unknown */
 
 enum	argmode {
 	ARG_FILE = 0,

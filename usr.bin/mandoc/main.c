@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.98 2014/09/03 05:17:08 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.99 2014/09/03 18:08:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -357,7 +357,7 @@ main(int argc, char *argv[])
 
 	while (argc) {
 		if (resp != NULL) {
-			if (resp->form) {
+			if (resp->form & FORM_SRC) {
 				/* For .so only; ignore failure. */
 				chdir(paths.paths[resp->ipath]);
 				parse(&curp, -1, resp->file, &rc);
