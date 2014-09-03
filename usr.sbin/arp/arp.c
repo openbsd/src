@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.60 2014/08/22 22:14:53 sthen Exp $ */
+/*	$OpenBSD: arp.c,v 1.61 2014/09/03 10:39:41 mpi Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -493,6 +493,8 @@ search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 		rtm = (struct rt_msghdr *)next;
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
+		if (rtm->rtm_flags & RTF_BROADCAST)
+			continue;
 		sin = (struct sockaddr_inarp *)(next + rtm->rtm_hdrlen);
 		sdl = (struct sockaddr_dl *)(sin + 1);
 		if (addr) {
@@ -557,7 +559,7 @@ print_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
 	printf("%-*.*s %-*.*s %*.*s", addrwidth, addrwidth, host,
 	    llwidth, llwidth, ether_str(sdl), ifwidth, ifwidth, ifname);
 
-	if (rtm->rtm_flags & RTF_PERMANENT_ARP)
+	if (rtm->rtm_flags & (RTF_PERMANENT_ARP|RTF_LOCAL|RTF_BROADCAST))
 		printf(" %-10.10s", "permanent");
 	else if (rtm->rtm_rmx.rmx_expire == 0)
 		printf(" %-10.10s", "static");
@@ -567,7 +569,8 @@ print_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
 	else
 		printf(" %-10.10s", "expired");
 
-	snprintf(flgbuf, sizeof(flgbuf), "%s%s",
+	snprintf(flgbuf, sizeof(flgbuf), "%s%s%s",
+	    (rtm->rtm_flags & RTF_LOCAL) ? "l" : "",
 	    (sin->sin_other & SIN_PROXY) ? "P" : "",
 	    (rtm->rtm_flags & RTF_ANNOUNCE) ? "p" : "");
 
