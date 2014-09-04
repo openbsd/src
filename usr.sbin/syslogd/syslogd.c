@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.121 2014/08/31 22:11:43 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.122 2014/09/04 15:19:05 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -245,6 +245,13 @@ char	*reply_text;		/* Start of reply text in buffer */
 size_t	ctl_reply_size = 0;	/* Number of bytes used in reply */
 size_t	ctl_reply_offset = 0;	/* Number of bytes of reply written so far */
 
+char	*linebuf;
+int	 linesize;
+
+void	 klog_read_handler(int);
+void	 udp_read_handler(int);
+void	 unix_read_handler(int);
+
 struct pollfd pfd[N_PFD];
 
 volatile sig_atomic_t MarkSet;
@@ -282,12 +289,8 @@ void	logto_ctlconn(char *);
 int
 main(int argc, char *argv[])
 {
-	int ch, i, linesize, fd;
-	struct sockaddr_un fromunix;
-	struct sockaddr_storage from;
-	socklen_t len;
-	char *p, *line;
-	char resolve[MAXHOSTNAMELEN];
+	int ch, i, fd;
+	char *p;
 	int lockpipe[2] = { -1, -1}, pair[2], nullfd;
 	struct addrinfo hints, *res, *res0;
 	FILE *fp;
@@ -367,7 +370,7 @@ main(int argc, char *argv[])
 	if (linesize < MAXLINE)
 		linesize = MAXLINE;
 	linesize++;
-	if ((line = malloc(linesize)) == NULL) {
+	if ((linebuf = malloc(linesize)) == NULL) {
 		logerror("Couldn't allocate line buffer");
 		die(0);
 	}
@@ -585,41 +588,13 @@ main(int argc, char *argv[])
 		}
 
 		if ((pfd[PFD_KLOG].revents & POLLIN) != 0) {
-			i = read(pfd[PFD_KLOG].fd, line, linesize - 1);
-			if (i > 0) {
-				line[i] = '\0';
-				printsys(line);
-			} else if (i < 0 && errno != EINTR) {
-				logerror("klog");
-				pfd[PFD_KLOG].fd = -1;
-				pfd[PFD_KLOG].events = 0;
-			}
+			klog_read_handler(pfd[PFD_KLOG].fd);
 		}
 		if ((pfd[PFD_INET].revents & POLLIN) != 0) {
-			len = sizeof(from);
-			i = recvfrom(pfd[PFD_INET].fd, line, MAXLINE, 0,
-			    (struct sockaddr *)&from, &len);
-			if (i > 0) {
-				line[i] = '\0';
-				cvthname((struct sockaddr *)&from, resolve,
-				    sizeof(resolve));
-				dprintf("cvthname res: %s\n", resolve);
-				printline(resolve, line);
-			} else if (i < 0 && errno != EINTR)
-				logerror("recvfrom inet");
+			udp_read_handler(pfd[PFD_INET].fd);
 		}
 		if ((pfd[PFD_INET6].revents & POLLIN) != 0) {
-			len = sizeof(from);
-			i = recvfrom(pfd[PFD_INET6].fd, line, MAXLINE, 0,
-			    (struct sockaddr *)&from, &len);
-			if (i > 0) {
-				line[i] = '\0';
-				cvthname((struct sockaddr *)&from, resolve,
-				    sizeof(resolve));
-				dprintf("cvthname res: %s\n", resolve);
-				printline(resolve, line);
-			} else if (i < 0 && errno != EINTR)
-				logerror("recvfrom inet6");
+			udp_read_handler(pfd[PFD_INET6].fd);
 		}
 		if ((pfd[PFD_CTLSOCK].revents & POLLIN) != 0)
 			ctlsock_accept_handler();
@@ -630,22 +605,64 @@ main(int argc, char *argv[])
 
 		for (i = 0; i < nfunix; i++) {
 			if ((pfd[PFD_UNIX_0 + i].revents & POLLIN) != 0) {
-				ssize_t rlen;
-
-				len = sizeof(fromunix);
-				rlen = recvfrom(pfd[PFD_UNIX_0 + i].fd, line,
-				    MAXLINE, 0, (struct sockaddr *)&fromunix,
-				    &len);
-				if (rlen > 0) {
-					line[rlen] = '\0';
-					printline(LocalHostName, line);
-				} else if (rlen == -1 && errno != EINTR)
-					logerror("recvfrom unix");
+				unix_read_handler(pfd[PFD_UNIX_0 + i].fd);
 			}
 		}
 	}
 	/* NOTREACHED */
 	return (0);
+}
+
+void
+klog_read_handler(int fd)
+{
+	ssize_t	 n;
+
+	n = read(fd, linebuf, linesize - 1);
+	if (n > 0) {
+		linebuf[n] = '\0';
+		printsys(linebuf);
+	} else if (n < 0 && errno != EINTR) {
+		logerror("klog");
+		pfd[PFD_KLOG].fd = -1;
+		pfd[PFD_KLOG].events = 0;
+	}
+}
+
+void
+udp_read_handler(int fd)
+{
+	struct sockaddr_storage	 sa;
+	socklen_t		 salen;
+	ssize_t			 n;
+
+	salen = sizeof(sa);
+	n = recvfrom(fd, linebuf, MAXLINE, 0, (struct sockaddr *)&sa, &salen);
+	if (n > 0) {
+		char	 resolve[MAXHOSTNAMELEN];
+
+		linebuf[n] = '\0';
+		cvthname((struct sockaddr *)&sa, resolve, sizeof(resolve));
+		dprintf("cvthname res: %s\n", resolve);
+		printline(resolve, linebuf);
+	} else if (n < 0 && errno != EINTR)
+		logerror("recvfrom udp");
+}
+
+void
+unix_read_handler(int fd)
+{
+	struct sockaddr_un	 sa;
+	socklen_t		 salen;
+	ssize_t			 n;
+
+	salen = sizeof(sa);
+	n = recvfrom(fd, linebuf, MAXLINE, 0, (struct sockaddr *)&sa, &salen);
+	if (n > 0) {
+		linebuf[n] = '\0';
+		printline(LocalHostName, linebuf);
+	} else if (n == -1 && errno != EINTR)
+		logerror("recvfrom unix");
 }
 
 void
