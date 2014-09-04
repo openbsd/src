@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.262 2014/08/20 06:23:03 mikeb Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.263 2014/09/04 19:14:47 miod Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -266,7 +266,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	dev_t dev;
 	extern int somaxconn, sominconn;
 	extern int usermount, nosuidcoredump;
-	extern long cp_time[CPUSTATES];
 	extern int stackgap_random;
 	extern int maxlocksperuid;
 	extern int pool_debug;
@@ -465,6 +464,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	{
 		CPU_INFO_ITERATOR cii;
 		struct cpu_info *ci;
+		long cp_time[CPUSTATES];
 		int i;
 
 		memset(cp_time, 0, sizeof(cp_time));

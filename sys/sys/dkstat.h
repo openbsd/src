@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstat.h,v 1.8 2010/11/18 21:12:48 miod Exp $	*/
+/*	$OpenBSD: dkstat.h,v 1.9 2014/09/04 19:14:47 miod Exp $	*/
 /*	$NetBSD: dkstat.h,v 1.8 1995/12/28 19:16:31 thorpej Exp $	*/
 
 /*-
@@ -45,7 +45,5 @@
 #define	CPUSTATES	5
 
 #ifdef _KERNEL
-extern long cp_time[CPUSTATES];
-
 extern int64_t tk_cancc, tk_nin, tk_nout, tk_rawcc;
 #endif
