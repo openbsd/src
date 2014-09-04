@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.48 2014/08/27 00:22:26 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.49 2014/09/04 00:36:00 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -78,8 +78,6 @@ struct pool_allocator {
 	void *(*pa_alloc)(struct pool *, int, int *);
 	void (*pa_free)(struct pool *, void *);
 	int pa_pagesz;
-	int pa_pagemask;
-	int pa_pageshift;
 };
 
 LIST_HEAD(pool_pagelist, pool_item_header);
@@ -109,6 +107,8 @@ struct pool {
 	unsigned int	pr_hardlimit;	/* hard limit to number of allocated
 					   items */
 	unsigned int	pr_serial;	/* unique serial number of the pool */
+	unsigned int	pr_pgsize;	/* Size of a "page" */
+	vaddr_t		pr_pgmask;	/* Mask with an item to get a page */
 	struct pool_allocator *
 			pr_alloc;	/* backend allocator */
 	const char *	pr_wchan;	/* tsleep(9) identifier */
