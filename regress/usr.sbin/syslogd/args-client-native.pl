@@ -1,4 +1,4 @@
-# The client writes a message to Sys::Syslog unix method.
+# The client writes a message to Sys::Syslog native method.
 # The syslogd writes it into a file and through a pipe.
 # The syslogd passes it via UDP to the loghost.
 # The server receives the message on its UDP socket.
@@ -13,7 +13,7 @@ use Sys::Hostname;
 
 our %args = (
     client => {
-	logsock => { type => "unix" },
+	logsock => { type => "native" },
     },
     file => {
 	loggrep => qr/ $host syslogd-regress\[\d+\]: /. get_log(),
