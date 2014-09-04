@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.19 2014/08/29 21:21:39 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.20 2014/09/04 19:01:02 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -148,16 +148,24 @@ diskconf(void)
 void
 heartbeat(void *v)
 {
-	static u_int hbcnt = 0;
-	int toggle, cp_mask;
+	static u_int hbcnt = 0, ocp_total, ocp_idle;
+	int toggle, cp_mask, cp_total, cp_idle;
+	struct schedstate_percpu *spc = &(curcpu()->ci_schedstate);
 
 	timeout_add(&heartbeat_tmo, hz / 16);
 
-	/* display the load average in the upper leds if any */
-	cp_mask = averunnable.ldavg[0] >> FSHIFT;
-	if (cp_mask > 0x0f)
-		cp_mask = 0x0f;
-	cp_mask <<= 4;
+	cp_idle = spc->spc_cp_time[CP_IDLE];
+	cp_total = spc->spc_cp_time[CP_USER] + spc->spc_cp_time[CP_NICE] +
+	    spc->spc_cp_time[CP_SYS] + spc->spc_cp_time[CP_INTR] +
+	    spc->spc_cp_time[CP_IDLE];
+	if (cp_total == ocp_total)
+		cp_total = ocp_total + 1;
+	if (cp_idle == ocp_idle)
+		cp_idle = ocp_idle + 1;
+	cp_mask = 0xf0 >> (cp_idle - ocp_idle) * 4 / (cp_total - ocp_total);
+	cp_mask &= 0xf0;
+	ocp_total = cp_total;
+	ocp_idle = cp_idle;
 	/*
 	 * do this:
 	 *
