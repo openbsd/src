@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.36 2014/08/25 14:27:54 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.37 2014/09/04 13:45:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -423,6 +423,7 @@ serveroptsl	: LISTEN ON STRING optssl port {
 			srv_conf = &parentsrv->srv_conf;
 			parentsrv = NULL;
 		}
+		| include
 		;
 
 fastcgi		: NO FCGI		{
