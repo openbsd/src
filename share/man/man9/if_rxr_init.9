@@ -1,4 +1,4 @@
-.\"	$OpenBSD: if_rxr_init.9,v 1.2 2014/07/08 05:52:17 jmc Exp $
+.\"	$OpenBSD: if_rxr_init.9,v 1.3 2014/09/05 01:06:36 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 8 2014 $
+.Dd $Mdocdate: September 5 2014 $
 .Dt IF_RXR_INIT 9
 .Os
 .Sh NAME
@@ -111,9 +111,9 @@ with the number of elements in the array passed via
 .Pp
 For the heuristic to work correctly, a driver using this API should
 return all possible descriptor slots with
-.Fa if_rxr_put
+.Fn if_rxr_put
 before calling
-.Fa if_rxr_get
+.Fn if_rxr_get
 to fill them again.
 .Sh CONTEXT
 .Fn if_rxr_init ,
@@ -123,9 +123,9 @@ and
 .Fn if_rxr_inuse
 can be called during autoconf, from process context, or from interrupt context.
 .Pp
-.Fa if_rxr_ioctl
+.Fn if_rxr_ioctl
 and
-.Fa if_rxr_info_ioctl
+.Fn if_rxr_info_ioctl
 can be called from process context, and only from the context of
 the process generating an ioctl call.
 .Pp
