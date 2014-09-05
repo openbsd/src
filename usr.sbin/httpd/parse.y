@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.37 2014/09/04 13:45:17 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.38 2014/09/05 10:04:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -199,15 +199,6 @@ server		: SERVER STRING		{
 				YYACCEPT;
 			}
 
-			TAILQ_FOREACH(s, conf->sc_servers, srv_entry)
-				if (!strcmp(s->srv_conf.name, $2))
-					break;
-			if (s != NULL) {
-				yyerror("server %s defined twice", $2);
-				free($2);
-				YYERROR;
-			}
-
 			if ((s = calloc(1, sizeof (*s))) == NULL)
 				fatal("out of memory");
 
@@ -253,18 +244,49 @@ server		: SERVER STRING		{
 			srv_conf = &srv->srv_conf;
 
 			SPLAY_INIT(&srv->srv_clients);
-			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
 		} '{' optnl serveropts_l '}'	{
+			struct server	*s = NULL;
+
+			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
+				if ((s->srv_conf.flags &
+				    SRVFLAG_LOCATION) == 0 &&
+				    strcmp(s->srv_conf.name,
+				    srv->srv_conf.name) == 0 &&
+				    s->srv_conf.port == srv->srv_conf.port &&
+				    sockaddr_cmp(
+				    (struct sockaddr *)&s->srv_conf.ss,
+				    (struct sockaddr *)&srv->srv_conf.ss,
+				    s->srv_conf.prefixlen) == 0)
+					break;
+			}
+			if (s != NULL) {
+				yyerror("server \"%s\" defined twice",
+				    srv->srv_conf.name);
+				serverconfig_free(srv_conf);
+				free(srv);
+				YYABORT;
+			}
+
 			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
 				yyerror("listen address not specified");
-				free($2);
+				serverconfig_free(srv_conf);
+				free(srv);
 				YYERROR;
 			}
+
 			if (server_ssl_load_keypair(srv) == -1) {
 				yyerror("failed to load public/private keys "
 				    "for server %s", srv->srv_conf.name);
+				serverconfig_free(srv_conf);
+				free(srv);
 				YYERROR;
 			}
+
+			DPRINTF("adding server \"%s[%u]\"",
+			    srv->srv_conf.name, srv->srv_conf.id);
+
+			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
+
 			srv = NULL;
 			srv_conf = NULL;
 		}
@@ -368,17 +390,6 @@ serveroptsl	: LISTEN ON STRING optssl port {
 				YYACCEPT;
 			}
 
-			TAILQ_FOREACH(s, conf->sc_servers, srv_entry)
-				if (strcmp(s->srv_conf.name,
-				    srv->srv_conf.name) == 0 &&
-				    strcmp(s->srv_conf.location, $2) == 0)
-					break;
-			if (s != NULL) {
-				yyerror("location %s defined twice", $2);
-				free($2);
-				YYERROR;
-			}
-
 			if ((s = calloc(1, sizeof (*s))) == NULL)
 				fatal("out of memory");
 
@@ -417,8 +428,30 @@ serveroptsl	: LISTEN ON STRING optssl port {
 			srv = s;
 			srv_conf = &srv->srv_conf;
 			SPLAY_INIT(&srv->srv_clients);
-			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
 		} '{' optnl serveropts_l '}'	{
+			struct server	*s = NULL;
+
+			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
+				if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&
+				    s->srv_conf.id == srv_conf->id &&
+				    strcmp(s->srv_conf.location,
+				    srv_conf->location) == 0)
+					break;
+			}
+			if (s != NULL) {
+				yyerror("location \"%s\" defined twice",
+				    srv->srv_conf.location);
+				serverconfig_free(srv_conf);
+				free(srv);
+				YYABORT;
+			}
+
+			DPRINTF("adding location \"%s\" for \"%s[%u]\"",
+			    srv->srv_conf.location,
+			    srv->srv_conf.name, srv->srv_conf.id);
+
+			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
+
 			srv = parentsrv;
 			srv_conf = &parentsrv->srv_conf;
 			parentsrv = NULL;

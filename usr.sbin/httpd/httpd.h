@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.57 2014/09/02 16:20:41 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.58 2014/09/05 10:04:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -466,6 +466,8 @@ pid_t	 server(struct privsep *, struct privsep_proc *);
 int	 server_ssl_load_keypair(struct server *);
 int	 server_privinit(struct server *);
 void	 server_purge(struct server *);
+void	 serverconfig_free(struct server_config *);
+void	 serverconfig_reset(struct server_config *);
 int	 server_socket_af(struct sockaddr_storage *, in_port_t);
 in_port_t
 	 server_socket_getport(struct sockaddr_storage *);

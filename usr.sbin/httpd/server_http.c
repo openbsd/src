@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.46 2014/08/29 13:01:46 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.47 2014/09/05 10:04:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -747,6 +747,12 @@ server_response(struct httpd *httpd, struct client *clt)
 	if (host != NULL) {
 		/* XXX maybe better to turn srv_hosts into a tree */
 		TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
+#ifdef DEBUG
+			if ((srv_conf->flags & SRVFLAG_LOCATION) == 0) {
+				DPRINTF("%s: virtual host \"%s\" host \"%s\"",
+				    __func__, srv_conf->name, host->kv_value);
+			}
+#endif
 			if ((srv_conf->flags & SRVFLAG_LOCATION) == 0 &&
 			    fnmatch(srv_conf->name, host->kv_value,
 			    FNM_CASEFOLD) == 0) {
@@ -796,6 +802,12 @@ server_getlocation(struct client *clt, const char *path)
 
 	/* Now search for the location */
 	TAILQ_FOREACH(location, &srv->srv_hosts, entry) {
+#ifdef DEBUG
+		if (location->flags & SRVFLAG_LOCATION) {
+			DPRINTF("%s: location \"%s\" path \"%s\"",
+			    __func__, location->location, path);
+		}
+#endif
 		if ((location->flags & SRVFLAG_LOCATION) &&
 		    location->id == srv_conf->id &&
 		    fnmatch(location->location, path, FNM_CASEFOLD) == 0) {

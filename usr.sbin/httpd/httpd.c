@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.20 2014/09/01 09:32:43 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.21 2014/09/05 10:04:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -289,9 +289,19 @@ parent_configure(struct httpd *env)
 			fatal("send media");
 	}
 
+	/* First send the servers... */
 	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
+		if (srv->srv_conf.flags & SRVFLAG_LOCATION)
+			continue;
 		if (config_setserver(env, srv) == -1)
 			fatal("send server");
+	}
+	/* ...and now send the locations */
+	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
+		if ((srv->srv_conf.flags & SRVFLAG_LOCATION) == 0)
+			continue;
+		if (config_setserver(env, srv) == -1)
+			fatal("send location");
 	}
 
 	/* The servers need to reload their config. */

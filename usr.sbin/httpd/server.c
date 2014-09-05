@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.41 2014/09/02 16:20:41 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.42 2014/09/05 10:04:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -285,8 +285,7 @@ server_purge(struct server *srv)
 
 		/* It might point to our own "default" entry */
 		if (srv_conf != &srv->srv_conf) {
-			free(srv_conf->ssl_cert);
-			free(srv_conf->ssl_key);
+			serverconfig_free(srv_conf);
 			free(srv_conf);
 		}
 	}
@@ -295,6 +294,22 @@ server_purge(struct server *srv)
 	ressl_free(srv->srv_ressl_ctx);
 
 	free(srv);
+}
+
+void
+serverconfig_free(struct server_config *srv_conf)
+{
+	free(srv_conf->ssl_cert_file);
+	free(srv_conf->ssl_cert);
+	free(srv_conf->ssl_key_file);
+	free(srv_conf->ssl_key);
+}
+
+void
+serverconfig_reset(struct server_config *srv_conf)
+{
+	srv_conf->ssl_cert_file = srv_conf->ssl_cert =
+	    srv_conf->ssl_key_file = srv_conf->ssl_key = NULL;
 }
 
 struct server *
