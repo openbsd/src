@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.22 2014/04/27 18:08:35 zhuk Exp $
+# $OpenBSD: LaFile.pm,v 1.23 2014/09/05 10:36:39 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -149,7 +149,7 @@ sub install
 
 	my @opts = @$instopts;
 	my @stripopts = ('--strip-debug');
-	if ($$instprog[-1] =~ m/install([.-](sh|check))?$/) {
+	if ($$instprog[-1] =~ m/install([.-](sh|check|wrapper))?$/) {
 		push @opts, '-m', '644';
 	}
 
