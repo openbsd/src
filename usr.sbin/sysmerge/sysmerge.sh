@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.168 2014/09/05 08:28:12 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.169 2014/09/05 16:59:46 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -78,7 +78,7 @@ sm_extract_sets() {
 		[[ -f /usr/share/sysmerge/${_set}sum ]] && \
 			cp /usr/share/sysmerge/${_set}sum \
 			${_WRKDIR}/${_set}sum
-		cd ${_TMPROOT} && tar -xzphf \
+		tar -xzphf \
 			/usr/share/sysmerge/${_set}.tgz || \
 			sm_error "failed to extract ${_set}.tgz"
 	done
@@ -142,8 +142,8 @@ sm_cp_pkg_samples() {
 		cp /usr/share/sysmerge/pkgsum ${_WRKDIR}/pkgsum
 
 	# access to full base system hierarchy is implied in packages
-	mtree -qdef /etc/mtree/4.4BSD.dist -p ${_TMPROOT} -U >/dev/null
-	mtree -qdef /etc/mtree/BSD.x11.dist -p ${_TMPROOT} -U >/dev/null
+	mtree -qdef /etc/mtree/4.4BSD.dist -U >/dev/null
+	mtree -qdef /etc/mtree/BSD.x11.dist -U >/dev/null
 
 	# @sample directories are processed first
 	exec_espie | sort -u | while read _i; do
@@ -156,9 +156,9 @@ sm_cp_pkg_samples() {
 			# does not exist and is not a @sample so we have no
 			# knowledge of the required owner/group/mode
 			# (e.g. /var/www/usr/sbin in mail/femail,-chroot)
-			_pkghier=$(dirname ${_sample[5]})
+			_pkghier=$(dirname ${_sample[5]#${_TMPROOT}})
 			if [[ ! -d ${_pkghier} ]]; then
-				sm_warn "skipping ${_sample[5]#${_TMPROOT}}: ${_pkghier#${_TMPROOT}} does not exist"
+				sm_warn "skipping ${_sample[5]#${_TMPROOT}}: ${_pkghier} does not exist"
 				continue
 			fi
 			if [[ -d $(dirname ${_sample[5]}) ]]; then
@@ -169,19 +169,17 @@ sm_cp_pkg_samples() {
 	done
 
 	if [[ ${_ret} -eq 0 ]]; then
-		cd ${_TMPROOT} && find . -type f | sort | \
-			xargs sha256 -h ${_TMPROOT}/usr/share/sysmerge/pkgsum || \
+		find . -type f | sort | \
+			xargs sha256 -h ./usr/share/sysmerge/pkgsum || \
 			_ret=1
 	fi
 	[[ ${_ret} -ne 0 ]] && \
-		sm_error "failed to populate packages @samples and create checksum file"
+		sm_error "failed to populate packages @samples and create sum file"
 }
 
-sm_populate() {
-	local _auto_upg _c _cursum _i _k _j _cfdiff _cffiles _ignorefiles _matchsum _mismatch
-
-	mkdir -p ${_TMPROOT} || \
-		sm_error "cannot create ${_TMPROOT}"
+sm_init() {
+	local _auto_upg _c _c1 _c2 _cursum _i _k _j _cfdiff _cffiles
+	local _ignorefile _cvsid1 _cvsid2 _matchsum _mismatch
 
 	sm_extract_sets
 	sm_add_user_grp
@@ -190,39 +188,52 @@ sm_populate() {
 
 	for _i in etcsum xetcsum pkgsum; do
 		if [[ -f /usr/share/sysmerge/${_i} && \
-			 -f ${_TMPROOT}/usr/share/sysmerge/${_i} ]]; then
+			-f ./usr/share/sysmerge/${_i} && \
+			-z ${DIFFMODE} ]]; then
+			# redirect stderr; file may not exist
+			_matchsum=$(sha256 -c /usr/share/sysmerge/${_i} 2>/dev/null | \
+				awk '/OK/ { print $2 }' | \
+				sed 's/[:]//')
 			# delete file in temproot if it has not changed since
 			# last release and is present in current installation
-			if [[ -z ${DIFFMODE} ]]; then
-				# redirect stderr; file may not exist
-				_matchsum=$(cd ${_TMPROOT} && \
-					sha256 -c /usr/share/sysmerge/${_i} 2>/dev/null | \
-					awk '/OK/ { print $2 }' | \
-					sed 's/[:]//')
-				for _j in ${_matchsum}; do
+			for _j in ${_matchsum}; do
 				# skip sum files
-					[[ ${_j} == ./usr/share/sysmerge/${_i} ]] && continue
-					[[ -f ${_j#.} && -f ${_TMPROOT}/${_j#.} ]] && \
-						rm -f ${_TMPROOT}/${_j#.}
-				done
-			fi
+				[[ ${_j} == ./usr/share/sysmerge/${_i} ]] && continue
+				[[ -f ${_j#.} && -f ${_j} ]] && \
+					rm ${_j}
+			done
 
 			# set auto-upgradable files
-			_mismatch=$(diff -u ${_TMPROOT}/usr/share/sysmerge/${_i} /usr/share/sysmerge/${_i} | \
+			_mismatch=$(diff -u ./usr/share/sysmerge/${_i} /usr/share/sysmerge/${_i} | \
 				sed -n 's/^+SHA256 (\(.*\)).*/\1/p')
 			for _k in ${_mismatch}; do
 				# skip sum files
 				[[ ${_k} == ./usr/share/sysmerge/${_i} ]] && continue
+
+
+				# compare CVS $Id's first so if the file hasn't been modified,
+				# it will be deleted from temproot and ignored from comparison;
+				# several files are generated from scripts so CVS ID is not a
+				# reliable way of detecting changes: leave for a full diff
+				if [[ -z ${PKGMODE} && \
+					${_k} != ./etc/@(fbtab|ttys) && \
+					! -h ${_k} ]]; then
+					_cvsid1=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${_k#.} 2>/dev/null)
+					_cvsid2=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${_k} 2>/dev/null)
+					[[ ${_cvsid2} == ${_cvsid1} ]] && rm ${_k} && continue
+				fi
+
+
 				# redirect stderr; file may not exist
 				_cursum=$(cd / && sha256 ${_k} 2>/dev/null)
 				[[ -n $(grep "${_cursum}" /usr/share/sysmerge/${_i}) && \
-					-z $(grep "${_cursum}" ${_TMPROOT}/usr/share/sysmerge/${_i}) ]] && \
+					-z $(grep "${_cursum}" ./usr/share/sysmerge/${_i}) ]] && \
 					_auto_upg="${_auto_upg} ${_k}"
 			done
 			[[ -n ${_auto_upg} ]] && set -A AUTO_UPG -- ${_auto_upg}
 		fi
-		[[ -f ${_TMPROOT}/usr/share/sysmerge/${_i} ]] && \
-			mv ${_TMPROOT}/usr/share/sysmerge/${_i} /usr/share/sysmerge/${_i}
+		[[ -f ./usr/share/sysmerge/${_i} ]] && \
+			mv ./usr/share/sysmerge/${_i} /usr/share/sysmerge/${_i}
 	done
 
 	# files we don't want/need to deal with
@@ -237,45 +248,80 @@ sm_populate() {
 		      /var/mail/root"
 	_cffiles="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
 	for _i in ${_cffiles}; do
-		_cfdiff=$(diff -q -I "##### " ${_TMPROOT}/${_i} ${_i} 2>/dev/null)
+		_cfdiff=$(diff -q -I "##### " ./${_i} ${_i} 2>/dev/null)
 		[[ -z ${_cfdiff} ]] && _ignorefiles="${_ignorefiles} ${_i}"
 	done
 	[[ -f /etc/sysmerge.ignore ]] && \
 		_ignorefiles="${_ignorefiles} $(stripcom /etc/sysmerge.ignore)"
 	for _i in ${_ignorefiles}; do
-		rm -f ${_TMPROOT}/${_i}
+		rm -f ./${_i}
+	done
+
+	# aliases(5) needs to be handled last in case syntax changes
+	_c1=$(find . -type f -or -type l | grep -vE '^./etc/mail/aliases$')
+	_c2=$(find . -type f -name aliases)
+	for COMPFILE in ${_c1} ${_c2}; do
+		unset IS_BINFILE IS_LINK
+		TARGET=${COMPFILE#.}
+
+		# links need to be treated in a different way
+		if [[ -h ${COMPFILE} ]]; then
+			IS_LINK=1
+			[[ -h ${TARGET} && \
+				$(readlink ${COMPFILE}) == $(readlink ${TARGET}) ]] && \
+				rm ${COMPFILE} && continue
+		else
+			# disable sdiff for binaries
+			diff -q /dev/null ${COMPFILE} | grep -q Binary && \
+				IS_BINFILE=1
+
+			# empty files = binaries (to avoid comparison);
+			# only process them if they don't exist on the system
+			if [[ ! -s ${COMPFILE} ]]; then
+				if [[ -f ${TARGET} ]]; then
+					[[ -f ${COMPFILE} ]] && rm ${COMPFILE}
+					continue
+				else
+					IS_BINFILE=1
+				fi
+			fi
+
+			# make sure files are different; if not: delete
+			diff -q ${TARGET} ${COMPFILE} >/dev/null && \
+				rm ${COMPFILE} && continue
+		fi
+
+		sm_diff_loop
 	done
 }
 
-sm_install_rm() {
-	if [[ -f ${5}/${4##*/} ]]; then
-		mkdir -p ${_BKPDIR}/${4%/*}
-		cp ${5}/${4##*/} ${_BKPDIR}/${4%/*}
-	fi
-
-	if ! install -m ${1} -o ${2} -g ${3} ${4} ${5}; then
-		rm -f ${_BKPDIR}/${4%/*}/${4##*/} && return 1
-	fi
-	rm ${4}
-}
-
 sm_install() {
-	local DIR_MODE FILE_MODE FILE_OWN FILE_GRP INSTDIR
-	INSTDIR=${1#.}
-	INSTDIR=${INSTDIR%/*}
+	local _dmode _fgrp _fmode _fown _instdir
+	_instdir=$(dirname ${TARGET})
 
-	[[ -z ${INSTDIR} ]] && INSTDIR=/
+	_dmode=$(stat -f "%OMp%OLp" ./${_instdir}) || return
+	eval $(stat -f "_fmode=%OMp%OLp _fown=%Su _fgrp=%Sg" ${COMPFILE}) || return
 
-	DIR_MODE=$(stat -f "%OMp%OLp" "${_TMPROOT}/${INSTDIR}")
-	eval $(stat -f "FILE_MODE=%OMp%OLp FILE_OWN=%Su FILE_GRP=%Sg" ${1})
+	[[ -d ${_instdir} ]] && \
+		install -d -o root -g wheel -m ${_dmode} "${_instdir}" || return
 
-	[[ -n ${INSTDIR} && ! -d ${INSTDIR} ]] && \
-		install -d -o root -g wheel -m "${DIR_MODE}" "${INSTDIR}"
-
-	sm_install_rm ${FILE_MODE} ${FILE_OWN} ${FILE_GRP} ${1} ${INSTDIR} || \
+	if [[ -n ${IS_LINK} ]]; then
+		_linkt=$(readlink ${COMPFILE})
+		(cd ${_instdir} && ln -sf ${_linkt} . && rm ${_TMPROOT}/${COMPFILE})
 		return
+	fi
 
-	case "${1#.}" in
+	if [[ -f ${TARGET} ]]; then
+		mkdir -p ${_BKPDIR}/${_instdir} || return
+		cp -p ${TARGET} ${_BKPDIR}/${_instdir} || return
+	fi
+
+	if ! install -m ${_fmode} -o ${_fown} -g ${_fgrp} ${COMPFILE} ${_instdir}; then
+		rm ${_BKPDIR}/${COMPFILE%/*}/${COMPFILE##*/}; return 1
+	fi
+	rm ${COMPFILE}
+
+	case "${TARGET}" in
 	/etc/login.conf)
 		if [[ -f /etc/login.conf.db ]]; then
 			sm_echo " (running cap_mkdb(1), needs a relog)"
@@ -286,7 +332,7 @@ sm_install() {
 		;;
 	/etc/mail/@(access|genericstable|mailertable|virtusertable))
 		sm_echo " (running makemap(8))"
-		sm_warn $(/usr/libexec/sendmail/makemap hash ${1#.} 2>&1 <${1#.})
+		sm_warn $(/usr/libexec/sendmail/makemap hash ${TARGET} 2>&1 <${TARGET})
 		;;
 	/etc/mail/aliases)
 		sm_echo " (running newaliases(8))"
@@ -298,25 +344,10 @@ sm_install() {
 	esac
 }
 
-sm_ln() {
-	local _dirmode _linkf _linkt
-	_linkt=$(readlink ${COMPFILE})
-	_linkf=$(dirname ${COMPFILE#.})
-
-	_dirmode=$(stat -f "%OMp%OLp" ${_TMPROOT}/${_linkf})
-	[[ ! -d ${_linkf} ]] && \
-		install -d -o root -g wheel -m ${_dirmode} ${_linkf}
-
-	rm ${COMPFILE}
-	sm_echo "===> Linking ${COMPFILE#.}"
-	(cd ${_linkf} && ln -sf ${_linkt} .)
-	return
-}
-
 sm_add_user_grp() {
 	local _g _gid _l _u NEWGRP NEWUSR
-	local _pw="${_TMPROOT}/etc/master.passwd"
-	local _gr="${_TMPROOT}/etc/group"
+	local _pw="./etc/master.passwd"
+	local _gr="./etc/group"
 
 	[[ -n ${PKGMODE} ]] && return
 
@@ -350,7 +381,7 @@ sm_merge_loop() {
 	while [[ -n ${MERGE_AGAIN} ]]; do
 		cp -p ${COMPFILE} ${COMPFILE}.merged
 		${SM_MERGE} ${COMPFILE}.merged \
-			${COMPFILE#.} ${COMPFILE}
+			${TARGET} ${COMPFILE}
 		INSTALL_MERGED=v
 		while [[ ${INSTALL_MERGED} == "v" ]]; do
 			echo
@@ -373,9 +404,9 @@ sm_merge_loop() {
 				;;
 			[iI])
 				mv ${COMPFILE}.merged ${COMPFILE}
-				sm_echo -n "\n===> Merging ${COMPFILE#.}"
-				sm_install ${COMPFILE} || \
-					sm_warn "problem merging ${COMPFILE#.}"
+				sm_echo -n "\n===> Merging ${TARGET}"
+				sm_install || \
+					sm_warn "problem merging ${TARGET}"
 				unset MERGE_AGAIN
 				;;
 			[nN])
@@ -388,7 +419,7 @@ sm_merge_loop() {
 			[oO])
 				(
 					echo "comparison between old and merged files:\n"
-					diff -u ${COMPFILE#.} ${COMPFILE}.merged
+					diff -u ${TARGET} ${COMPFILE}.merged
 				) | ${PAGER}
 				INSTALL_MERGED=v
 				;;
@@ -422,21 +453,21 @@ sm_diff_loop() {
 
 	unset NO_INSTALLED FORCE_UPG
 	while [[ ${HANDLE_COMPFILE} == @(v|todo) ]]; do
-		if [[ -f ${COMPFILE#.} && -f ${COMPFILE} && -z ${IS_LINK} ]]; then
+		if [[ -f ${TARGET} && -f ${COMPFILE} && -z ${IS_LINK} ]]; then
 			if [[ -z ${DIFFMODE} ]]; then
 				# automatically install files if current != new
 				# and current = old
-				for i in ${AUTO_UPG[@]}; do
+				for i in ${AUTO_UPG[@]}; do \
 					[[ ${i} == ${COMPFILE} ]] && FORCE_UPG=1
 				done
 				# automatically install files which differ
 				# only by CVS Id or that are binaries
-				if [[ -z $(diff -q -I'[$]OpenBSD:.*$' ${COMPFILE#.} ${COMPFILE}) || \
+				if [[ -z $(diff -q -I'[$]OpenBSD:.*$' ${TARGET} ${COMPFILE}) || \
 					-n ${FORCE_UPG} || -n ${IS_BINFILE} ]]; then
-					sm_echo -n "===> Updating ${COMPFILE#.}"
-					sm_install ${COMPFILE} && \
-						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${COMPFILE#.}\n" || \
-						sm_warn "problem updating ${COMPFILE#.}"
+					sm_echo -n "===> Updating ${TARGET}"
+					sm_install && \
+						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${TARGET}\n" || \
+						sm_warn "problem updating ${TARGET}"
 					return
 				fi
 			fi
@@ -445,7 +476,7 @@ sm_diff_loop() {
 					echo "\n========================================================================\n"
 					echo "===> Displaying differences between ${COMPFILE} and installed version:"
 					echo
-					diff -u ${COMPFILE#.} ${COMPFILE}
+					diff -u ${TARGET} ${COMPFILE}
 				) | ${PAGER}
 				echo
 			fi
@@ -453,22 +484,22 @@ sm_diff_loop() {
 			# file does not exist on the target system
 			if [[ -n ${IS_LINK} ]]; then
 				if [[ -n ${DIFFMODE} ]]; then
-					sm_echo
-					NO_INSTALLED=1
+					sm_echo && NO_INSTALLED=1
 				else
-					sm_ln && \
-						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${COMPFILE#.}\n" || \
-						sm_warn "problem creating ${COMPFILE#.} link"
+					sm_echo "===> Linking ${TARGET}"
+					sm_install && \
+						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${TARGET}\n" || \
+						sm_warn "problem creating ${TARGET} link"
 					return
 				fi
 			fi
 			if [[ -n ${DIFFMODE} ]]; then
 				sm_echo && NO_INSTALLED=1
 			else
-				sm_echo -n "===> Installing ${COMPFILE#.}"
-				sm_install ${COMPFILE} && \
-					AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${COMPFILE#.}\n" || \
-					sm_warn "problem installing ${COMPFILE#.}"
+				sm_echo -n "===> Installing ${TARGET}"
+				sm_install && \
+					AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${TARGET}\n" || \
+					sm_warn "problem installing ${TARGET}"
 				return
 			fi
 		fi
@@ -498,20 +529,21 @@ sm_diff_loop() {
 		[iI])
 			sm_echo
 			if [[ -n ${IS_LINK} ]]; then
-				sm_ln && \
-					MERGED_FILES="${MERGED_FILES}${COMPFILE#.}\n" || \
-					sm_warn "problem creating ${COMPFILE#.} link"
+				sm_echo "===> Linking ${TARGET}"
+				sm_install && \
+					MERGED_FILES="${MERGED_FILES}${TARGET}\n" || \
+					sm_warn "problem creating ${TARGET} link"
 			else
-				sm_echo -n "===> Updating ${COMPFILE#.}"
-				sm_install "${COMPFILE}" && \
-					MERGED_FILES="${MERGED_FILES}${COMPFILE#.}\n" || \
-					sm_warn "problem updating ${COMPFILE#.}"
+				sm_echo -n "===> Updating ${TARGET}"
+				sm_install && \
+					MERGED_FILES="${MERGED_FILES}${TARGET}\n" || \
+					sm_warn "problem updating ${TARGET}"
 			fi
 			;;
 		[mM])
 			if [[ -z ${NO_INSTALLED} && -z ${IS_BINFILE} && -z ${IS_LINK} ]]; then
 				sm_merge_loop && \
-					MERGED_FILES="${MERGED_FILES}${COMPFILE#.}\n" || \
+					MERGED_FILES="${MERGED_FILES}${TARGET}\n" || \
 						HANDLE_COMPFILE="todo"
 			else
 				echo "invalid choice: ${HANDLE_COMPFILE}\n"
@@ -538,72 +570,6 @@ sm_diff_loop() {
 	done
 }
 
-sm_compare() {
-	local _c1 _c2 COMPFILE CVSID1 CVSID2
-
-	cd ${_TMPROOT} || sm_error "cannot enter ${_TMPROOT}"
-
-	# aliases(5) needs to be handled last in case syntax changes
-	_c1=$(find . -type f -or -type l | grep -vE '^./etc/mail/aliases$')
-	_c2=$(find . -type f -name aliases)
-	for COMPFILE in ${_c1} ${_c2}; do
-		unset IS_BINFILE IS_LINK
-		# treat empty files the same as IS_BINFILE to avoid comparing them;
-		# only process them if they don't exist on the target system
-		if [[ ! -s ${COMPFILE} ]]; then
-			if [[ -f ${COMPFILE#.} ]]; then
-				rm ${COMPFILE}
-			else
-				IS_BINFILE=1
-			fi
-		fi
-
-		# links need to be treated in a different way
-		[[ -h ${COMPFILE} ]] && IS_LINK=1
-		if [[ -n ${IS_LINK} && -h ${COMPFILE#.} ]]; then
-			IS_LINK=1
-			# if links target are the same, remove from temproot
-			if [[ $(readlink ${COMPFILE}) == $(readlink ${COMPFILE#.}) ]]; then
-				rm ${COMPFILE}
-			else
-				sm_diff_loop
-			fi
-			continue
-		fi
-
-		# file not present on the system
-		if [[ ! -e ${COMPFILE#.} ]]; then
-			sm_diff_loop
-			continue
-		fi
-
-		# compare CVS $Id's first so if the file hasn't been modified,
-		# it will be deleted from temproot and ignored from comparison;
-		# several files are generated from scripts so CVS ID is not a
-		# reliable way of detecting changes: leave for a full diff
-		if [[ -z ${DIFFMODE} && \
-			-z ${PKGMODE} && \
-			${COMPFILE} != ./etc/@(fbtab|ttys) && \
-			-z ${IS_LINK} ]]; then
-			CVSID1=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${COMPFILE#.} 2>/dev/null)
-			CVSID2=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${COMPFILE} 2>/dev/null) || CVSID2=none
-			[[ ${CVSID2} == ${CVSID1} ]] && rm ${COMPFILE}
-		fi
-
-		if [[ -f ${COMPFILE} && -z ${IS_LINK} ]]; then
-			# make sure files are different; if not, delete
-			# the one in temproot
-			if diff -q ${COMPFILE#.} ${COMPFILE} >/dev/null; then
-				rm ${COMPFILE}
-			# if file is a binary; set IS_BINFILE to disable sdiff
-			elif diff -q ${COMPFILE#.} ${COMPFILE} | grep -q Binary; then
-				IS_BINFILE=1 && sm_diff_loop
-			else
-				sm_diff_loop
-			fi
-		fi
-	done
-}
 
 sm_check_an_eg() {
 	[[ -n ${PKGMODE} ]] && return
@@ -624,16 +590,16 @@ sm_check_an_eg() {
 	done
 	# only warn for files we care about
 	[[ -n ${_managed} ]] && sm_warn "example(s) changed for: ${_managed}"
-	mv ${_TMPROOT}/usr/share/sysmerge/examplessum \
+	mv ./usr/share/sysmerge/examplessum \
 		/usr/share/sysmerge/examplessum
 }
 
 sm_post() {
 	local _i FILES_IN__TMPROOT FILES_IN__BKPDIR
 
-	FILES_IN__TMPROOT=$(find "${_TMPROOT}" -type f ! -name \*.merged -size +0)
+	FILES_IN__TMPROOT=$(find . -type f ! -name \*.merged -size +0)
 	[[ -d ${_BKPDIR} ]] && \
-		FILES_IN__BKPDIR=$(find "${_BKPDIR}" -type f -size +0)
+		FILES_IN__BKPDIR=$(find ${_BKPDIR} -type f -size +0)
 
 	[[ -n ${FILES_IN__TMPROOT} ]] && \
 		sm_warn "some files are still left for comparison"
@@ -643,9 +609,8 @@ sm_post() {
 		mtree -qdef /etc/mtree/BSD.x11.dist -p / -U >/dev/null
 
 	if [[ -e ${_WRKDIR}/sysmerge.log ]]; then
-		find "${_TMPROOT}" -type f -empty | xargs -r rm
-		find "${_TMPROOT}" -type d | sort -r | xargs -r rmdir 2>/dev/null
-		rm ${_WRKDIR}/*sum
+		find . -type f -empty | xargs -r rm
+		find . -type d | sort -r | xargs -r rmdir 2>/dev/null
 		sed '/^$/d' ${_WRKDIR}/sysmerge.log >${_WRKDIR}/sysmerge.log.bak
 		mv ${_WRKDIR}/sysmerge.log.bak ${_WRKDIR}/sysmerge.log
 		echo "===> Log available at ${_WRKDIR}/sysmerge.log"
@@ -680,6 +645,8 @@ SM_MERGE=${SM_MERGE:=sdiff -as -w ${_SWIDTH} -o}
 [[ -z ${VISUAL} ]] && EDITOR=${EDITOR:=/usr/bin/vi} || EDITOR=${VISUAL}
 PAGER=${PAGER:=/usr/bin/more}
 
-sm_populate
-sm_compare
+mkdir -p ${_TMPROOT} || sm_error "cannot create ${_TMPROOT}"
+cd ${_TMPROOT} || sm_error "cannot enter ${_TMPROOT}"
+
+sm_init
 sm_post
