@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.170 2014/09/05 17:19:48 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.171 2014/09/05 17:22:10 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -237,13 +237,17 @@ sm_init() {
 	done
 
 	# files we don't want/need to deal with
-	_ignorefiles="/etc/*.db
-		      /etc/group
+	_ignorefiles="/etc/group
 		      /etc/localtime
 		      /etc/mail/aliases.db
 		      /etc/master.passwd
-		      /etc/passwd
 		      /etc/motd
+		      /etc/passwd
+		      /etc/pwd.db
+		      /etc/spwd.db
+		      /usr/share/sysmerge/etcsum
+		      /usr/share/sysmerge/examplessum
+		      /usr/share/sysmerge/xetcsum
 		      /var/db/locate.database
 		      /var/mail/root"
 	[[ -f /etc/sysmerge.ignore ]] && \
