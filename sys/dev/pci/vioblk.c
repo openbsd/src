@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.4 2013/05/12 19:33:01 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.5 2014/09/05 20:01:49 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -65,6 +65,12 @@
 
 #define VIOBLK_DONE	-1
 
+#define MAX_XFER	MAX(MAXPHYS,MAXBSIZE)
+/* Number of DMA segments for buffers that the device must support */
+#define SEG_MAX		(MAX_XFER/PAGE_SIZE)
+/* In the virtqueue, we need space for header and footer, too */
+#define ALLOC_SEGS	(SEG_MAX + 2)
+
 struct virtio_feature_name vioblk_feature_names[] = {
 	{ VIRTIO_BLK_F_BARRIER,		"Barrier" },
 	{ VIRTIO_BLK_F_SIZE_MAX,	"SizeMax" },
@@ -102,10 +108,7 @@ struct vioblk_softc {
 
 	uint32_t		 sc_queued;
 
-	/* device configuration */
 	uint64_t		 sc_capacity;
-	uint32_t		 sc_xfer_max;
-	uint32_t		 sc_seg_max;
 };
 
 int	vioblk_match(struct device *, void *, void *);
@@ -114,7 +117,6 @@ int	vioblk_alloc_reqs(struct vioblk_softc *, int);
 int	vioblk_vq_done(struct virtqueue *);
 void	vioblk_vq_done1(struct vioblk_softc *, struct virtio_softc *,
 			struct virtqueue *, int);
-void	vioblk_minphys(struct buf *, struct scsi_link *);
 
 void	vioblk_scsi_cmd(struct scsi_xfer *);
 int	vioblk_dev_probe(struct scsi_link *);
@@ -152,14 +154,6 @@ int vioblk_match(struct device *parent, void *match, void *aux)
 #endif
 
 void
-vioblk_minphys(struct buf *bp, struct scsi_link *sl)
-{
-	struct vioblk_softc *sc = sl->adapter_softc;
-	if (bp->b_bcount > sc->sc_xfer_max)
-		bp->b_bcount = sc->sc_xfer_max;
-}
-
-void
 vioblk_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vioblk_softc *sc = (struct vioblk_softc *)self;
@@ -188,26 +182,27 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	if (features & VIRTIO_BLK_F_SIZE_MAX) {
 		uint32_t size_max = virtio_read_device_config_4(vsc,
 		    VIRTIO_BLK_CONFIG_SIZE_MAX);
-		if (size_max < NBPG) {
+		if (size_max < PAGE_SIZE) {
 			printf("\nMax segment size %u too low\n", size_max);
 			goto err;
 		}
 	}
 
 	if (features & VIRTIO_BLK_F_SEG_MAX) {
-		sc->sc_seg_max = virtio_read_device_config_4(vsc,
+		uint32_t seg_max = virtio_read_device_config_4(vsc,
 		    VIRTIO_BLK_CONFIG_SEG_MAX);
-		sc->sc_seg_max = MIN(sc->sc_seg_max, MAXPHYS/NBPG + 2);
-	} else {
-		sc->sc_seg_max = MAXPHYS/NBPG + 2;
+		if (seg_max < SEG_MAX) {
+			printf("\nMax number of segments %d too small\n",
+			    seg_max);
+			goto err;
+		}
 	}
-	sc->sc_xfer_max = (sc->sc_seg_max - 2) * NBPG;
 
 	sc->sc_capacity = virtio_read_device_config_8(vsc,
 	    VIRTIO_BLK_CONFIG_CAPACITY);
 
-	if (virtio_alloc_vq(vsc, &sc->sc_vq[0], 0, sc->sc_xfer_max,
-	    sc->sc_seg_max, "I/O request") != 0) {
+	if (virtio_alloc_vq(vsc, &sc->sc_vq[0], 0, MAX_XFER, ALLOC_SEGS,
+	    "I/O request") != 0) {
 		printf("\nCan't alloc virtqueue\n");
 		goto err;
 	}
@@ -229,7 +224,7 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_queued = 0;
 
 	sc->sc_switch.scsi_cmd = vioblk_scsi_cmd;
-	sc->sc_switch.scsi_minphys = vioblk_minphys;
+	sc->sc_switch.scsi_minphys = scsi_minphys;
 	sc->sc_switch.dev_probe = vioblk_dev_probe;
 	sc->sc_switch.dev_free = vioblk_dev_free;
 
@@ -239,7 +234,7 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.luns = 1;
 	sc->sc_link.adapter_target = 2;
 	sc->sc_link.openings = qsize;
-	DBGPRINT("; qsize: %d seg_max: %d", qsize, sc->sc_seg_max);
+	DBGPRINT("; qsize: %d", qsize);
 	if (features & VIRTIO_BLK_F_RO)
 		sc->sc_link.flags |= SDEV_READONLY;
 
@@ -398,6 +393,7 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 	int len, s;
 	int timeout;
 	int slot, ret, nsegs;
+	int error = XS_NO_CCB;
 
 	s = splbio();
 	ret = virtio_enqueue_prep(vq, &slot);
@@ -416,7 +412,8 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 		    ((isread ? BUS_DMA_READ : BUS_DMA_WRITE) |
 		     BUS_DMA_NOWAIT));
 		if (ret) {
-			DBGPRINT("bus_dmamap_load: %d", ret);
+			printf("%s: bus_dmamap_load: %d", __func__, ret);
+			error = XS_DRIVER_STUFFUP;
 			goto out_enq_abort;
 		}
 		nsegs = vr->vr_payload->dm_nsegs + 2;
@@ -477,7 +474,7 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 out_enq_abort:
 	virtio_enqueue_abort(vq, slot);
 out_done:
-	vioblk_scsi_done(xs, XS_NO_CCB);
+	vioblk_scsi_done(xs, error);
 	vr->vr_len = VIOBLK_DONE;
 	splx(s);
 }
@@ -605,9 +602,9 @@ vioblk_alloc_reqs(struct vioblk_softc *sc, int qsize)
 			printf("command dmamap load failed, err %d\n", r);
 			goto err_reqs;
 		}
-		r = bus_dmamap_create(sc->sc_virtio->sc_dmat, MAXPHYS,
-		    sc->sc_seg_max, MAXPHYS, 0,
-		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_payload);
+		r = bus_dmamap_create(sc->sc_virtio->sc_dmat, MAX_XFER,
+		    SEG_MAX, MAX_XFER, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
+		    &vr->vr_payload);
 		if (r != 0) {
 			printf("payload dmamap creation failed, err %d\n", r);
 			goto err_reqs;
