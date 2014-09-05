@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.167 2014/09/05 07:16:38 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.168 2014/09/05 08:28:12 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -75,7 +75,7 @@ sm_extract_sets() {
 	[[ -f /usr/share/sysmerge/xetc.tgz ]] && _x=xetc
 
 	for _set in ${_e} ${_x}; do
-		[ -f /usr/share/sysmerge/${_set}sum ] && \
+		[[ -f /usr/share/sysmerge/${_set}sum ]] && \
 			cp /usr/share/sysmerge/${_set}sum \
 			${_WRKDIR}/${_set}sum
 		cd ${_TMPROOT} && tar -xzphf \
@@ -184,7 +184,7 @@ sm_populate() {
 		sm_error "cannot create ${_TMPROOT}"
 
 	sm_extract_sets
-	sm_install_user_grp
+	sm_add_user_grp
 	sm_check_an_eg
 	sm_cp_pkg_samples
 
@@ -277,7 +277,7 @@ sm_install() {
 
 	case "${1#.}" in
 	/etc/login.conf)
-		if [ -f /etc/login.conf.db ]; then
+		if [[ -f /etc/login.conf.db ]]; then
 			sm_echo " (running cap_mkdb(1), needs a relog)"
 			sm_warn $(cap_mkdb /etc/login.conf 2>&1)
 		else
@@ -304,7 +304,7 @@ sm_ln() {
 	_linkf=$(dirname ${COMPFILE#.})
 
 	_dirmode=$(stat -f "%OMp%OLp" ${_TMPROOT}/${_linkf})
-	[ ! -d "${_linkf}" ] && \
+	[[ ! -d ${_linkf} ]] && \
 		install -d -o root -g wheel -m ${_dirmode} ${_linkf}
 
 	rm ${COMPFILE}
@@ -313,7 +313,7 @@ sm_ln() {
 	return
 }
 
-sm_install_user_grp() {
+sm_add_user_grp() {
 	local _g _gid _l _u NEWGRP NEWUSR
 	local _pw="${_TMPROOT}/etc/master.passwd"
 	local _gr="${_TMPROOT}/etc/group"
