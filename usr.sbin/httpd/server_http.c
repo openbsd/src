@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.47 2014/09/05 10:04:20 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.48 2014/09/05 15:06:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -314,11 +314,36 @@ server_read_http(struct bufferevent *bev, void *arg)
 		case HTTP_METHOD_GET:
 		case HTTP_METHOD_HEAD:
 		case HTTP_METHOD_OPTIONS:
+		/* WebDAV methods */
+		case HTTP_METHOD_COPY:
 			clt->clt_toread = 0;
 			break;
 		case HTTP_METHOD_POST:
 		case HTTP_METHOD_PUT:
 		case HTTP_METHOD_RESPONSE:
+		/* WebDAV methods */
+		case HTTP_METHOD_PROPFIND:
+		case HTTP_METHOD_PROPPATCH:
+		case HTTP_METHOD_MKCOL:
+		case HTTP_METHOD_LOCK:
+		case HTTP_METHOD_UNLOCK:
+		case HTTP_METHOD_VERSION_CONTROL:
+		case HTTP_METHOD_REPORT:
+		case HTTP_METHOD_CHECKOUT:
+		case HTTP_METHOD_CHECKIN:
+		case HTTP_METHOD_UNCHECKOUT:
+		case HTTP_METHOD_MKWORKSPACE:
+		case HTTP_METHOD_UPDATE:
+		case HTTP_METHOD_LABEL:
+		case HTTP_METHOD_MERGE:
+		case HTTP_METHOD_BASELINE_CONTROL:
+		case HTTP_METHOD_MKACTIVITY:
+ 		case HTTP_METHOD_ORDERPATCH:
+		case HTTP_METHOD_ACL:
+		case HTTP_METHOD_MKREDIRECTREF:
+		case HTTP_METHOD_UPDATEREDIRECTREF:
+		case HTTP_METHOD_SEARCH:
+		case HTTP_METHOD_PATCH:
 			/* HTTP request payload */
 			if (clt->clt_toread > 0)
 				bev->readcb = server_read_httpcontent;
@@ -330,10 +355,8 @@ server_read_http(struct bufferevent *bev, void *arg)
 			}
 			break;
 		default:
-			/* HTTP handler */
-			clt->clt_toread = TOREAD_HTTP_HEADER;
-			bev->readcb = server_read_http;
-			break;
+			server_abort_http(clt, 405, "method not allowed");
+			return;
 		}
 		if (desc->http_chunked) {
 			/* Chunked transfer encoding */
@@ -981,7 +1004,7 @@ server_httpmethod_byname(const char *name)
 const char *
 server_httpmethod_byid(u_int id)
 {
-	const char	*name = NULL;
+	const char	*name = "<UNKNOWN>";
 	int		 i;
 
 	for (i = 0; http_methods[i].method_name != NULL; i++) {
