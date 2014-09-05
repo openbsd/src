@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.166 2014/09/01 06:55:37 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.167 2014/09/05 07:16:38 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -233,7 +233,6 @@ sm_populate() {
 		      /etc/master.passwd
 		      /etc/passwd
 		      /etc/motd
-		      /etc/myname
 		      /var/db/locate.database
 		      /var/mail/root"
 	_cffiles="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
@@ -417,11 +416,11 @@ sm_merge_loop() {
 }
 
 sm_diff_loop() {
-	local i CAN_INSTALL HANDLE_COMPFILE NO_INSTALLED AUTO_INSTALLED_FILES
+	local i HANDLE_COMPFILE NO_INSTALLED AUTO_INSTALLED_FILES
 
 	[[ -n ${BATCHMODE} ]] && HANDLE_COMPFILE=todo || HANDLE_COMPFILE=v
 
-	unset NO_INSTALLED CAN_INSTALL FORCE_UPG
+	unset NO_INSTALLED FORCE_UPG
 	while [[ ${HANDLE_COMPFILE} == @(v|todo) ]]; do
 		if [[ -f ${COMPFILE#.} && -f ${COMPFILE} && -z ${IS_LINK} ]]; then
 			if [[ -z ${DIFFMODE} ]]; then
@@ -476,10 +475,7 @@ sm_diff_loop() {
 
 		if [[ -z ${BATCHMODE} ]]; then
 			echo "  Use 'd' to delete the temporary ${COMPFILE}"
-			if [[ ${COMPFILE} != "./etc/hosts" ]]; then
-				CAN_INSTALL=1
-				echo "  Use 'i' to install the temporary ${COMPFILE}"
-			fi
+			echo "  Use 'i' to install the temporary ${COMPFILE}"
 			if [[ -z ${NO_INSTALLED} && -z ${IS_BINFILE} && \
 				-z ${IS_LINK} ]]; then
 				echo "  Use 'm' to merge the temporary and installed versions"
@@ -500,23 +496,17 @@ sm_diff_loop() {
 			echo "\n===> Deleting ${COMPFILE}"
 			;;
 		[iI])
-			if [[ -n ${CAN_INSTALL} ]]; then
-				sm_echo
-				if [[ -n ${IS_LINK} ]]; then
-					sm_ln && \
-						MERGED_FILES="${MERGED_FILES}${COMPFILE#.}\n" || \
-						sm_warn "problem creating ${COMPFILE#.} link"
-				else
-					sm_echo -n "===> Updating ${COMPFILE#.}"
-					sm_install "${COMPFILE}" && \
-						MERGED_FILES="${MERGED_FILES}${COMPFILE#.}\n" || \
-						sm_warn "problem updating ${COMPFILE#.}"
-				fi
+			sm_echo
+			if [[ -n ${IS_LINK} ]]; then
+				sm_ln && \
+					MERGED_FILES="${MERGED_FILES}${COMPFILE#.}\n" || \
+					sm_warn "problem creating ${COMPFILE#.} link"
 			else
-				echo "invalid choice: ${HANDLE_COMPFILE}\n"
-				HANDLE_COMPFILE="todo"
+				sm_echo -n "===> Updating ${COMPFILE#.}"
+				sm_install "${COMPFILE}" && \
+					MERGED_FILES="${MERGED_FILES}${COMPFILE#.}\n" || \
+					sm_warn "problem updating ${COMPFILE#.}"
 			fi
-				
 			;;
 		[mM])
 			if [[ -z ${NO_INSTALLED} && -z ${IS_BINFILE} && -z ${IS_LINK} ]]; then
