@@ -37,7 +37,7 @@ BEGIN {
   }
 }
 
-$VERSION = "2.29";
+$VERSION = "2.30";
 @ISA     = qw(Exporter);
 @EXPORT  = qw(CMD_INFO CMD_OK CMD_MORE CMD_REJECT CMD_ERROR CMD_PENDING);
 
@@ -353,6 +353,7 @@ sub response {
     ($code, $more) = $cmd->parse_response($str);
     unless (defined $code) {
       $cmd->ungetline($str);
+      $@ = $str;   # $@ used as tunneling hack
       last;
     }
 
@@ -363,6 +364,7 @@ sub response {
     last unless ($more);
   }
 
+  return undef unless defined $code;
   substr($code, 0, 1);
 }
 
@@ -406,6 +408,8 @@ sub datasend {
   return 0 unless defined(fileno($cmd));
 
   my $last_ch = ${*$cmd}{'net_cmd_last_ch'};
+
+  # We have not send anything yet, so last_ch = "\012" means we are at the start of a line
   $last_ch = ${*$cmd}{'net_cmd_last_ch'} = "\012" unless defined $last_ch;
 
   return 1 unless length $line;
@@ -421,9 +425,13 @@ sub datasend {
   my $first_ch = '';
 
   if ($last_ch eq "\015") {
-    $first_ch = "\012" if $line =~ s/^\012//;
+    # Remove \012 so it does not get prefixed with another \015 below
+    # and escape the . if there is one following it because the fixup
+    # below will not find it
+    $first_ch = "\012" if $line =~ s/^\012(\.?)/$1$1/;
   }
   elsif ($last_ch eq "\012") {
+    # Fixup below will not find the . as the first character of the buffer
     $first_ch = "." if $line =~ /^\./;
   }
 
@@ -649,7 +657,9 @@ debug level for a given class.
 
 =item message ()
 
-Returns the text message returned from the last command
+Returns the text message returned from the last command. In a scalar
+context it returns a single string, in a list context it will return
+each line as a separate element
 
 =item code ()
 

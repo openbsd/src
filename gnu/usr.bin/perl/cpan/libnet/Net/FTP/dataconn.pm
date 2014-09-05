@@ -9,7 +9,7 @@ use vars qw(@ISA $timeout $VERSION);
 use Net::Cmd;
 use Errno;
 
-$VERSION = '0.11';
+$VERSION = '0.12';
 @ISA     = qw(IO::Socket::INET);
 
 
@@ -27,7 +27,7 @@ sub abort {
   return $data->close
     if ${*$data}{'net_ftp_eof'};
 
-  # for some reason if we continously open RETR connections and not
+  # for some reason if we continuously open RETR connections and not
   # read a single byte, then abort them after a while the server will
   # close our connection, this prevents the unexpected EOF on the
   # command channel -- GMB
@@ -64,7 +64,7 @@ sub close {
 
   if (exists ${*$data}{'net_ftp_bytesread'} && !${*$data}{'net_ftp_eof'}) {
     my $junk;
-    $data->read($junk, 1, 0);
+    eval { local($SIG{__DIE__}); $data->read($junk, 1, 0) };
     return $data->abort unless ${*$data}{'net_ftp_eof'};
   }
 

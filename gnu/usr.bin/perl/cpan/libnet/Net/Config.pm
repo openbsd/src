@@ -13,7 +13,7 @@ use strict;
 
 @EXPORT  = qw(%NetConfig);
 @ISA     = qw(Net::LocalCfg Exporter);
-$VERSION = "1.11";
+$VERSION = "1.14";
 
 eval { local $SIG{__DIE__}; require Net::LocalCfg };
 
@@ -49,9 +49,9 @@ my %nc = (
     ftp_ext_passive => \$InternetConfig{"646F676F\xA5UsePassiveMode"} || 0,
     ftp_int_passive => \$InternetConfig{"646F676F\xA5UsePassiveMode"} || 0,
     socks_hosts     => 
-    	\$InternetConfig{ kICUseSocks() }    ? [ \$InternetConfig{ kICSocksHost() }    ] : [],
+        \$InternetConfig{ kICUseSocks() }    ? [ \$InternetConfig{ kICSocksHost() }    ] : [],
     ftp_firewall    => 
-    	\$InternetConfig{ kICUseFTPProxy() } ? [ \$InternetConfig{ kICFTPProxyHost() } ] : [],
+        \$InternetConfig{ kICUseFTPProxy() } ? [ \$InternetConfig{ kICFTPProxyHost() } ] : [],
 );
 \@NetConfig{keys %nc} = values %nc;
 }
@@ -141,7 +141,7 @@ For example
     # .libnetrc
     {
         nntp_hosts => [ "my_preferred_host" ],
-	ph_hosts   => [ "my_ph_server" ],
+        ph_hosts   => [ "my_ph_server" ],
     }
     __END__
 
@@ -213,23 +213,23 @@ sequence of commands that Net::FTP will use
 
 =over 4
 
-=item 0
+=item 0Z<>
 
 There is no firewall
 
-=item 1
+=item 1Z<>
 
      USER user@remote.host
      PASS pass
 
-=item 2
+=item 2Z<>
 
      USER fwuser
      PASS fwpass
      USER user@remote.host
      PASS pass
 
-=item 3
+=item 3Z<>
 
      USER fwuser
      PASS fwpass
@@ -237,7 +237,7 @@ There is no firewall
      USER user
      PASS pass
 
-=item 4
+=item 4Z<>
 
      USER fwuser
      PASS fwpass
@@ -245,19 +245,19 @@ There is no firewall
      USER user
      PASS pass
 
-=item 5
+=item 5Z<>
 
      USER user@fwuser@remote.site
      PASS pass@fwpass
 
-=item 6
+=item 6Z<>
 
      USER fwuser@remote.site
      PASS fwpass
      USER user
      PASS pass
 
-=item 7
+=item 7Z<>
 
      USER user@remote.host
      PASS pass
@@ -274,7 +274,7 @@ FTP servers can work in passive or active mode. Active mode is when
 you want to transfer data you have to tell the server the address and
 port to connect to.  Passive mode is when the server provide the
 address and port and you establish the connection.
- 
+
 With some firewalls active mode does not work as the server cannot
 connect to your machine (because you are behind a firewall) and the firewall
 does not re-write the command. In this case you should set C<ftp_ext_passive>

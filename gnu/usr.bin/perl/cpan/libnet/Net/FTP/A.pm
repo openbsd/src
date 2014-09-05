@@ -10,7 +10,7 @@ use Carp;
 require Net::FTP::dataconn;
 
 @ISA     = qw(Net::FTP::dataconn);
-$VERSION = "1.18";
+$VERSION = "1.19";
 
 
 sub read {
@@ -77,8 +77,8 @@ sub write {
   my $timeout = @_ ? shift: $data->timeout;
 
   my $nr = (my $tmp = substr($buf, 0, $size)) =~ tr/\r\n/\015\012/;
-  $tmp =~ s/([^\015])\012/$1\015\012/sg if $nr;
-  $tmp =~ s/^\012/\015\012/ unless ${*$data}{'net_ftp_outcr'};
+  $tmp =~ s/(?<!\015)\012/\015\012/sg if $nr;
+  $tmp =~ s/^\015// if ${*$data}{'net_ftp_outcr'};
   ${*$data}{'net_ftp_outcr'} = substr($tmp, -1) eq "\015";
 
   # If the remote server has closed the connection we will be signal'd

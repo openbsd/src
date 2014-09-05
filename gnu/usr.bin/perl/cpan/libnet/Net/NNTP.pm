@@ -14,7 +14,7 @@ use Carp;
 use Time::Local;
 use Net::Config;
 
-$VERSION = "2.24";
+$VERSION = "2.26";
 @ISA     = qw(Net::Cmd IO::Socket::INET);
 
 
@@ -39,23 +39,24 @@ sub new {
   @{$hosts} = qw(news)
     unless @{$hosts};
 
+  my %connect = ( Proto => 'tcp');
+  my $o;
+  foreach $o (qw(LocalAddr Timeout)) {
+    $connect{$o} = $arg{$o} if exists $arg{$o};
+  }
+  $connect{Timeout} = 120 unless defined $connect{Timeout};
+  $connect{PeerPort} = $arg{Port} || 'nntp(119)';
   my $h;
   foreach $h (@{$hosts}) {
-    $obj = $type->SUPER::new(
-      PeerAddr => ($host = $h),
-      PeerPort => $arg{Port} || 'nntp(119)',
-      Proto => 'tcp',
-      Timeout => defined $arg{Timeout}
-      ? $arg{Timeout}
-      : 120
-      )
+    $connect{PeerAddr} = $h;
+    $obj = $type->SUPER::new(%connect)
       and last;
   }
 
   return undef
     unless defined $obj;
 
-  ${*$obj}{'net_nntp_host'} = $host;
+  ${*$obj}{'net_nntp_host'} = $connect{PeerAddr};
 
   $obj->autoflush(1);
   $obj->debug(exists $arg{Debug} ? $arg{Debug} : undef);
@@ -74,7 +75,7 @@ sub new {
     # talking to innd not nnrpd
     if ($obj->reader) {
 
-      # If reader suceeds the we need to consider this code to determine postok
+      # If reader succeeds the we need to consider this code to determine postok
       $c = $obj->code;
     }
     else {
@@ -213,16 +214,18 @@ sub nntpstat {
 sub group {
   @_ == 1 || @_ == 2 or croak 'usage: $nntp->group( [ GROUP ] )';
   my $nntp = shift;
-  my $grp  = ${*$nntp}{'net_nntp_group'} || undef;
+  my $grp  = ${*$nntp}{'net_nntp_group'};
 
   return $grp
     unless (@_ || wantarray);
 
   my $newgrp = shift;
 
-  return wantarray ? () : undef
-    unless $nntp->_GROUP($newgrp || $grp || "")
-    && $nntp->message =~ /(\d+)\s+(\d+)\s+(\d+)\s+(\S+)/;
+  $newgrp = (defined($grp) and length($grp)) ? $grp : ""
+    unless defined($newgrp) and length($newgrp);
+
+  return 
+    unless $nntp->_GROUP($newgrp) and $nntp->message =~ /(\d+)\s+(\d+)\s+(\d+)\s+(\S+)/;
 
   my ($count, $first, $last, $group) = ($1, $2, $3, $4);
 
@@ -712,7 +715,9 @@ Net::NNTP - NNTP Client class
 =head1 DESCRIPTION
 
 C<Net::NNTP> is a class implementing a simple NNTP client in Perl as described
-in RFC977. C<Net::NNTP> inherits its communication methods from C<Net::Cmd>
+in RFC977.
+
+The Net::NNTP class is a subclass of Net::Cmd and IO::Socket::INET.
 
 =head1 CONSTRUCTOR
 
@@ -747,6 +752,11 @@ so that the remote server becomes innd. If the C<Reader> option is given
 with a value of zero, then this command will not be sent and the
 connection will be left talking to nnrpd.
 
+B<LocalAddr> - If multiple IP addresses are present on the client host
+with a valid route to the destination, you can specify the address your
+C<Net::NNTP> connects from and this way override the operating system's
+pick.
+
 =back
 
 =head1 METHODS
@@ -755,6 +765,10 @@ Unless otherwise stated all methods return either a I<true> or I<false>
 value, with I<true> meaning that the operation was a success. When a method
 states that it returns a value, failure will be returned as I<undef> or an
 empty list.
+
+C<Net::NNTP> inherits from C<Net::Cmd> so methods defined in C<Net::Cmd> may
+be used to send commands to the remote NNTP server in addition to the methods
+documented here.
 
 =over 4
 

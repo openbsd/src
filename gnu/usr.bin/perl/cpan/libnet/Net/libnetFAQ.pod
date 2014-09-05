@@ -9,18 +9,22 @@ libnetFAQ - libnet Frequently Asked Questions
 This document is distributed with the libnet distribution, and is also
 available on the libnet web page at
 
-    http://search.cpan.org/~gbarr/libnet/
+    http://search.cpan.org/dist/libnet/
 
 =head2 How to contribute to this document
 
-You may mail corrections, additions, and suggestions to me
-gbarr@pobox.com.
+You may report corrections, additions, and suggestions on the
+CPAN request tracker at
+
+    http://rt.cpan.org/Dist/Display.html?Name=libnet
 
 =head1 Author and Copyright Information
 
 Copyright (c) 1997-1998 Graham Barr. All rights reserved.
 This document is free; you can redistribute it and/or modify it
 under the terms of the Artistic License.
+
+Currently maintained by Steve Hay <shay@cpan.org>.
 
 =head2 Disclaimer
 
@@ -65,12 +69,7 @@ should not be the case with perl version 5.004 or later.
 The latest libnet release is always on CPAN, you will find it
 in 
 
- http://www.cpan.org/modules/by-module/Net/
-
-The latest release and information is also available on the libnet web page
-at
-
- http://search.cpan.org/~gbarr/libnet/
+ http://search.cpan.org/dist/libnet/
 
 =head1 Using Net::FTP
 
@@ -188,7 +187,7 @@ Net::FTP uses IO::Socket to open the connection and IO::Socket allows
 the port number to be specified as part of the hostname. So this problem
 can be resolved by either passing a Firewall option like C<"hostname:1234">
 or by setting the C<ftp_firewall> option in Net::Config to be a string
-in in the same form.
+in the same form.
 
 =head2 Is it possible to change the file permissions of a file on an FTP server ?
 

@@ -16,7 +16,7 @@ use IO::Socket;
 use Net::Cmd;
 use Net::Config;
 
-$VERSION = "2.31";
+$VERSION = "2.34";
 
 @ISA = qw(Net::Cmd IO::Socket::INET);
 
@@ -59,7 +59,9 @@ sub new {
   $obj->debug(exists $arg{Debug} ? $arg{Debug} : undef);
 
   unless ($obj->response() == CMD_OK) {
+    my $err = ref($obj) . ": " . $obj->code . " " . $obj->message;
     $obj->close();
+    $@ = $err;
     return undef;
   }
 
@@ -70,7 +72,9 @@ sub new {
   (${*$obj}{'net_smtp_domain'}) = $obj->message =~ /\A\s*(\S+)/;
 
   unless ($obj->hello($arg{Hello} || "")) {
+    my $err = ref($obj) . ": " . $obj->code . " " . $obj->message;
     $obj->close();
+    $@ = $err;
     return undef;
   }
 
@@ -143,9 +147,9 @@ sub auth {
   my $client = $sasl->client_new('smtp', ${*$self}{'net_smtp_host'}, 0);
   my $str    = $client->client_start;
 
-  # We dont support sasl mechanisms that encrypt the socket traffic.
+  # We don't support sasl mechanisms that encrypt the socket traffic.
   # todo that we would really need to change the ISA hierarchy
-  # so we dont inherit from IO::Socket, but instead hold it in an attribute
+  # so we don't inherit from IO::Socket, but instead hold it in an attribute
 
   my @cmd = ("AUTH", $client->mechanism);
   my $code;
@@ -176,7 +180,7 @@ sub hello {
     my $ln;
     foreach $ln (@msg) {
       $h->{uc $1} = $2
-        if $ln =~ /(\w+)\b[= \t]*([^\n]*)/;
+        if $ln =~ /([-\w]+)\b[= \t]*([^\n]*)/;
     }
   }
   elsif ($me->status == CMD_ERROR) {
@@ -286,7 +290,7 @@ sub mail {
 
       if (defined($v = delete $opt{Envelope})) {
         if (exists $esmtp->{DSN}) {
-          $v =~ s/([^\041-\176]|=|\+)/sprintf "+%02x", ord($1)/sge;
+          $v =~ s/([^\041-\176]|=|\+)/sprintf "+%02X", ord($1)/sge;
           $opts .= " ENVID=$v";
         }
         else {
@@ -575,16 +579,18 @@ known as mailhost:
 
     use Net::SMTP;
 
-    $smtp = Net::SMTP->new('mailhost');
+    my $smtp = Net::SMTP->new('mailhost');
 
     $smtp->mail($ENV{USER});
-    $smtp->to('postmaster');
-
-    $smtp->data();
-    $smtp->datasend("To: postmaster\n");
-    $smtp->datasend("\n");
-    $smtp->datasend("A simple test message\n");
-    $smtp->dataend();
+    if ($smtp->to('postmaster')) {
+     $smtp->data();
+     $smtp->datasend("To: postmaster\n");
+     $smtp->datasend("\n");
+     $smtp->datasend("A simple test message\n");
+     $smtp->dataend();
+    } else {
+     print "Error: ", $smtp->message();
+    }
 
     $smtp->quit;
 
@@ -597,6 +603,9 @@ known as mailhost:
 This is the constructor for a new Net::SMTP object. C<HOST> is the
 name of the remote host to which an SMTP connection is required.
 
+On failure C<undef> will be returned and C<$@> will contain the reason
+for the failure.
+
 C<HOST> is optional. If C<HOST> is not given then it may instead be
 passed as the C<Host> option described below. If neither is given then
 the C<SMTP_Hosts> specified in C<Net::Config> will be used.
@@ -608,10 +617,13 @@ B<Hello> - SMTP requires that you identify yourself. This option
 specifies a string to pass as your mail domain. If not given localhost.localdomain
 will be used.
 
-B<Host> - SMTP host to connect to. It may be a single scalar, as defined for
-the C<PeerAddr> option in L<IO::Socket::INET>, or a reference to
+B<Host> - SMTP host to connect to. It may be a single scalar (hostname[:port]),
+as defined for the C<PeerAddr> option in L<IO::Socket::INET>, or a reference to
 an array with hosts to try in turn. The L</host> method will return the value
 which was used to connect to the host.
+
+B<Port> - port to connect to. Format - C<PeerHost> from L<IO::Socket::INET> new method.
+Default - 25.
 
 B<LocalAddr> and B<LocalPort> - These parameters are passed directly
 to IO::Socket to allow binding the socket to a local port.
@@ -630,24 +642,24 @@ Example:
 
 
     $smtp = Net::SMTP->new('mailhost',
-			   Hello => 'my.mail.domain',
-			   Timeout => 30,
+                           Hello => 'my.mail.domain',
+                           Timeout => 30,
                            Debug   => 1,
-			  );
+                          );
 
     # the same
     $smtp = Net::SMTP->new(
-			   Host => 'mailhost',
-			   Hello => 'my.mail.domain',
-			   Timeout => 30,
+                           Host => 'mailhost',
+                           Hello => 'my.mail.domain',
+                           Timeout => 30,
                            Debug   => 1,
-			  );
+                          );
 
     # Connect to the default server from Net::config
     $smtp = Net::SMTP->new(
-			   Hello => 'my.mail.domain',
-			   Timeout => 30,
-			  );
+                           Hello => 'my.mail.domain',
+                           Timeout => 30,
+                          );
 
 =back
 
@@ -657,6 +669,10 @@ Unless otherwise stated all methods return either a I<true> or I<false>
 value, with I<true> meaning that the operation was a success. When a method
 states that it returns a value, failure will be returned as I<undef> or an
 empty list.
+
+C<Net::SMTP> inherits from C<Net::Cmd> so methods defined in C<Net::Cmd> may
+be used to send commands to the remote SMTP server in addition to the methods
+documented here.
 
 =over 4
 
@@ -688,7 +704,7 @@ Request a queue run for the DOMAIN given.
 
 =item auth ( USERNAME, PASSWORD )
 
-Attempt SASL authentication.
+Attempt SASL authentication. Requires Authen::SASL module.
 
 =item mail ( ADDRESS [, OPTIONS] )
 
@@ -768,7 +784,7 @@ that a DSN not be returned to the sender under any conditions."
   $smtp->recipient(@recipients, { Notify => ['NEVER'], SkipBad => 1 });  # Good
 
 You may use any combination of these three values 'SUCCESS','FAILURE','DELAY' in
-the anonymous array reference as defined by RFC3461 (see http://rfc.net/rfc3461.html
+the anonymous array reference as defined by RFC3461 (see http://www.ietf.org/rfc/rfc3461.txt
 for more information.  Note: quotations in this topic from same.).
 
 A Notify parameter of 'SUCCESS' or 'FAILURE' "requests that a DSN be issued on
@@ -844,7 +860,7 @@ to extract the mail address and pass that.
 
 If C<ExactAddresses> is passed to the constructor, then addresses
 should be a valid rfc2821-quoted address, although Net::SMTP will
-accept accept the address surrounded by angle brackets.
+accept the address surrounded by angle brackets.
 
  funny user@domain      WRONG
  "funny user"@domain    RIGHT, recommended

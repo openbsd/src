@@ -16,7 +16,7 @@ use Net::Config;
 @ISA       = qw(Exporter);
 @EXPORT_OK = qw(hostname hostdomain hostfqdn domainname);
 
-$VERSION = "2.20";
+$VERSION = "2.23";
 
 my ($host, $domain, $fqdn) = (undef, undef, undef);
 
@@ -169,7 +169,7 @@ sub _hostdomain {
     }
 
     chop($dom = `domainname 2>/dev/null`)
-      unless (defined $dom || $^O =~ /^(?:cygwin|MSWin32)/);
+      unless (defined $dom || $^O =~ /^(?:cygwin|MSWin32|android)/);
 
     if (defined $dom) {
       my @h = ();
@@ -222,12 +222,19 @@ sub domainname {
     if (defined $fqdn);
 
   _hostname();
+
+  # *.local names are special on darwin. If we call gethostbyname below, it
+  # may hang while waiting for another, non-existent computer to respond.
+  if($^O eq 'darwin' && $host =~ /\.local$/) {
+    return $host;
+  }
+
   _hostdomain();
 
   # Assumption: If the host name does not contain a period
   # and the domain name does, then assume that they are correct
   # this helps to eliminate calls to gethostbyname, and therefore
-  # eleminate DNS lookups
+  # eliminate DNS lookups
 
   return $fqdn = $host . "." . $domain
     if (defined $host

@@ -13,7 +13,7 @@ use Net::Cmd;
 use Carp;
 use Net::Config;
 
-$VERSION = "2.29";
+$VERSION = "2.31";
 
 @ISA = qw(Net::Cmd IO::Socket::INET);
 
@@ -307,26 +307,22 @@ sub _get_mailbox_count {
 }
 
 
-sub _STAT { shift->command('STAT')->response() == CMD_OK }
-sub _LIST { shift->command('LIST', @_)->response() == CMD_OK }
+sub _STAT { shift->command('STAT'       )->response() == CMD_OK }
+sub _LIST { shift->command('LIST',    @_)->response() == CMD_OK }
 sub _RETR { shift->command('RETR', $_[0])->response() == CMD_OK }
 sub _DELE { shift->command('DELE', $_[0])->response() == CMD_OK }
-sub _NOOP { shift->command('NOOP')->response() == CMD_OK }
-sub _RSET { shift->command('RSET')->response() == CMD_OK }
-sub _QUIT { shift->command('QUIT')->response() == CMD_OK }
-sub _TOP  { shift->command('TOP', @_)->response() == CMD_OK }
-sub _UIDL { shift->command('UIDL', @_)->response() == CMD_OK }
+sub _NOOP { shift->command('NOOP'       )->response() == CMD_OK }
+sub _RSET { shift->command('RSET'       )->response() == CMD_OK }
+sub _QUIT { shift->command('QUIT'       )->response() == CMD_OK }
+sub _TOP  { shift->command( 'TOP',    @_)->response() == CMD_OK }
+sub _UIDL { shift->command('UIDL',    @_)->response() == CMD_OK }
 sub _USER { shift->command('USER', $_[0])->response() == CMD_OK }
 sub _PASS { shift->command('PASS', $_[0])->response() == CMD_OK }
-sub _APOP { shift->command('APOP', @_)->response() == CMD_OK }
+sub _APOP { shift->command('APOP',    @_)->response() == CMD_OK }
 sub _PING { shift->command('PING', $_[0])->response() == CMD_OK }
-
-
 sub _RPOP { shift->command('RPOP', $_[0])->response() == CMD_OK }
-sub _LAST { shift->command('LAST')->response() == CMD_OK }
-
-
-sub _CAPA { shift->command('CAPA')->response() == CMD_OK }
+sub _LAST { shift->command('LAST'       )->response() == CMD_OK }
+sub _CAPA { shift->command('CAPA'       )->response() == CMD_OK }
 
 
 sub quit {
@@ -488,9 +484,9 @@ sub auth {
     return 0;
     };
 
-  # We dont support sasl mechanisms that encrypt the socket traffic.
+  # We don't support sasl mechanisms that encrypt the socket traffic.
   # todo that we would really need to change the ISA hierarchy
-  # so we dont inherit from IO::Socket, but instead hold it in an attribute
+  # so we don't inherit from IO::Socket, but instead hold it in an attribute
 
   my @cmd = ("AUTH", $client->mechanism);
   my $code;
@@ -561,11 +557,13 @@ A new Net::POP3 object must be created with the I<new> method. Once
 this has been done, all POP3 commands are accessed via method calls
 on the object.
 
+The Net::POP3 class is a subclass of Net::Cmd and IO::Socket::INET.
+
 =head1 CONSTRUCTOR
 
 =over 4
 
-=item new ( [ HOST ] [, OPTIONS ] 0
+=item new ( [ HOST ] [, OPTIONS ] )
 
 This is the constructor for a new Net::POP3 object. C<HOST> is the
 name of the remote host to which an POP3 connection is required.
@@ -599,6 +597,10 @@ Unless otherwise stated all methods return either a I<true> or I<false>
 value, with I<true> meaning that the operation was a success. When a method
 states that it returns a value, failure will be returned as I<undef> or an
 empty list.
+
+C<Net::POP3> inherits from C<Net::Cmd> so methods defined in C<Net::Cmd> may
+be used to send commands to the remote POP3 server in addition to the methods
+documented here.
 
 =over 4
 

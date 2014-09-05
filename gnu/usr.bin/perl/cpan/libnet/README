@@ -10,27 +10,27 @@ point look at:
 
 The RFC implemented in this distribution are
 
-Net::FTP 	RFC959		File Transfer Protocol
-Net::SMTP	RFC821		Simple Mail Transfer Protocol
-Net::Time	RFC867		Daytime Protocol
-Net::Time	RFC868		Time Protocol
-Net::NNTP	RFC977		Network News Transfer Protocol
-Net::POP3	RFC1939		Post Office Protocol 3
+Net::FTP        RFC959          File Transfer Protocol
+Net::SMTP       RFC821          Simple Mail Transfer Protocol
+Net::Time       RFC867          Daytime Protocol
+Net::Time       RFC868          Time Protocol
+Net::NNTP       RFC977          Network News Transfer Protocol
+Net::POP3       RFC1939         Post Office Protocol 3
 
 AVAILABILITY
 
 The latest version of libnet is available from the Comprehensive Perl
 Archive Network (CPAN). To find a CPAN site near you see:
 
-    http://search.cpan.org/~gbarr/libnet/
+    http://search.cpan.org/dist/libnet/
 
-The subversion source repository can be browsed at
+The GitHub source repository can be browsed at
 
-    http://svn.goingon.net/viewvc/libnet/
+    http://github.com/steve-m-hay/perl-libnet
 
-If you have a subversion client, then you can checkout the latest code with
+If you have a Git client, then you can checkout the latest code with
 
-  svn co http://svn.goingon.net/repos/libnet/trunk libnet
+    git clone http://github.com/steve-m-hay/perl-libnet.git
 
 INSTALLATION
 
@@ -93,7 +93,9 @@ SUPPORT
 
 Questions about how to use this library should be directed to the
 comp.lang.perl.modules USENET Newsgroup.  Bug reports and suggestions
-for improvements can be sent to me at <gbarr@pobox.com>. 
+for improvements can be reported on the CPAN request tracker at
+
+    http://rt.cpan.org/Dist/Display.html?Name=libnet
 
 Most of the modules in this library have an option to output a debug
 transcript to STDERR. When reporting bugs/problems please, if possible,
@@ -105,5 +107,7 @@ COPYRIGHT
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
+
+Currently maintained by Steve Hay <shay@cpan.org>.
 
 Share and Enjoy!

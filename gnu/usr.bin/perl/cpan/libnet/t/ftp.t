@@ -2,22 +2,27 @@
 
 BEGIN {
     unless (-d 'blib') {
-	chdir 't' if -d 't';
-	@INC = '../lib';
+        chdir 't' if -d 't';
+        @INC = '../lib';
     }
     if (!eval "require Socket") {
-	print "1..0 # no Socket\n"; exit 0;
+        print "1..0 # Skip: no Socket module\n"; exit 0;
     }
     if (ord('A') == 193 && !eval "require Convert::EBCDIC") {
-        print "1..0 # EBCDIC but no Convert::EBCDIC\n"; exit 0;
+        print "1..0 # Skip: EBCDIC but no Convert::EBCDIC\n"; exit 0;
     }
 }
 
 use Net::Config;
 use Net::FTP;
 
-unless(defined($NetConfig{ftp_testhost}) && $NetConfig{test_hosts}) {
-    print "1..0\n";
+unless(defined($NetConfig{ftp_testhost})) {
+    print "1..0 # Skip: no ftp_testhost defined in config\n";
+    exit 0;
+}
+
+unless($NetConfig{test_hosts}) {
+    print "1..0 # Skip: test_hosts not enabled in config\n";
     exit 0;
 }
 
@@ -25,7 +30,7 @@ my $t = 1;
 print "1..7\n";
 
 $ftp = Net::FTP->new($NetConfig{ftp_testhost})
-	or (print("not ok 1\n"), exit);
+        or (print("not ok 1\n"), exit);
 
 printf "ok %d\n",$t++;
 

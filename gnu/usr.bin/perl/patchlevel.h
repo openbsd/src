@@ -133,7 +133,7 @@ hunk.
 #  endif
 static const char * const local_patches[] = {
 	NULL
-	,"Fix for RT 37700"
+	,"Update libnet to 1.27"
 #ifdef PERL_GIT_UNCOMMITTED_CHANGES
 	,"uncommitted-changes"
 #endif

@@ -21,11 +21,11 @@ use Net::Cmd;
 use Net::Config;
 use Fcntl qw(O_WRONLY O_RDONLY O_APPEND O_CREAT O_TRUNC);
 
-$VERSION = '2.77';
+$VERSION = '2.79';
 @ISA     = qw(Exporter Net::Cmd IO::Socket::INET);
 
 # Someday I will "use constant", when I am not bothered to much about
-# compatability with older releases of perl
+# compatibility with older releases of perl
 
 use vars qw($TELNET_IAC $TELNET_IP $TELNET_DM);
 ($TELNET_IAC, $TELNET_IP, $TELNET_DM) = (255, 244, 242);
@@ -107,7 +107,8 @@ sub new {
 
   unless ($ftp->response() == CMD_OK) {
     $ftp->close();
-    $@ = $ftp->message;
+    # keep @$ if no message. Happens, when response did not start with a code.
+    $@ = $ftp->message || $@;
     undef $ftp;
   }
 
@@ -122,6 +123,12 @@ sub new {
 sub host {
   my $me = shift;
   ${*$me}{'net_ftp_host'};
+}
+
+sub passive {
+  my $ftp = shift;
+  return ${*$ftp}{'net_ftp_passive'} unless @_;
+  ${*$ftp}{'net_ftp_passive'} = shift;
 }
 
 
@@ -583,6 +590,9 @@ sub rmdir {
   return undef
     unless @filelist;    # failed, it is probably not a directory
 
+  return $ftp->delete($dir)
+    if @filelist == 1 and $dir eq $filelist[0];
+
   # Go thru and delete each file or the directory
   my $file;
   foreach $file (map { m,/, ? $_ : "$dir/$_" } @filelist) {
@@ -688,7 +698,7 @@ sub _store_cmd {
 
   my $localfd = ref($local) || ref(\$local) eq "GLOB";
 
-  unless (defined $remote) {
+  if (!defined($remote) and 'STOU' ne uc($cmd)) {
     croak 'Must specify remote filename with stream input'
       if $localfd;
 
@@ -705,10 +715,10 @@ sub _store_cmd {
     # a pipe, or device) and if so get the file size from stat, and send
     # an ALLO command before sending the STOR, STOU, or APPE command.
     my $size = do { local $^W; -f $local && -s _ };    # no ALLO if sending data from a pipe
-    $ftp->_ALLO($size) if $size;
+    ${*$ftp}{'net_ftp_allo'} = $size if $size;
   }
   croak("Bad remote filename '$remote'\n")
-    if $remote =~ /[\r\n]/s;
+    if defined($remote) and $remote =~ /[\r\n]/s;
 
   if ($localfd) {
     $loc = $local;
@@ -730,10 +740,10 @@ sub _store_cmd {
   delete ${*$ftp}{'net_ftp_port'};
   delete ${*$ftp}{'net_ftp_pasv'};
 
-  $sock = $ftp->_data_cmd($cmd, $remote)
+  $sock = $ftp->_data_cmd($cmd, grep { defined } $remote)
     or return undef;
 
-  $remote = ($ftp->message =~ /FILE:\s*(.*)/)[0]
+  $remote = ($ftp->message =~ /\w+\s*:\s*(.*)/)[0]
     if 'STOU' eq uc $cmd;
 
   my $blksize = ${*$ftp}{'net_ftp_blksize'};
@@ -852,6 +862,9 @@ sub supported {
   return $hash->{$cmd}
     if exists $hash->{$cmd};
 
+  return $hash->{$cmd} = 1
+    if $ftp->feature($cmd);
+
   return $hash->{$cmd} = 0
     unless $ftp->_HELP($cmd);
 
@@ -930,7 +943,8 @@ sub _dataconn {
       PeerAddr  => join(".", @port[0 .. 3]),
       PeerPort  => $port[4] * 256 + $port[5],
       LocalAddr => ${*$ftp}{'net_ftp_localaddr'},
-      Proto     => 'tcp'
+      Proto     => 'tcp',
+      Timeout   => $ftp->timeout
     );
   }
   elsif (defined ${*$ftp}{'net_ftp_listen'}) {
@@ -1005,22 +1019,24 @@ sub _data_cmd {
   {
     my $data = undef;
 
-    $ok = defined $ftp->pasv;
-    $ok = $ftp->_REST($where)
-      if $ok && $where;
+    return undef unless defined $ftp->pasv;
+    $data = $ftp->_dataconn() or return undef;
 
-    if ($ok) {
-      $ftp->command($cmd, @_);
-      $data = $ftp->_dataconn();
-      $ok   = CMD_INFO == $ftp->response();
-      if ($ok) {
-        $data->reading
-          if $data && $cmd =~ /RETR|LIST|NLST/;
-        return $data;
-      }
-      $data->_close
-        if $data;
+    if ($where and !$ftp->_REST($where)) {
+      my ($status, $message) = ($ftp->status, $ftp->message);
+      $ftp->abort;
+      $ftp->set_status($status, $message);
+      return undef;
     }
+
+    $ftp->command($cmd, @_);
+    if (CMD_INFO == $ftp->response()) {
+      $data->reading
+        if $cmd =~ /RETR|LIST|NLST/;
+      return $data;
+    }
+    $data->_close;
+
     return undef;
   }
 
@@ -1033,6 +1049,11 @@ sub _data_cmd {
 
   return undef
     unless $ok;
+
+  if ($cmd =~ /(STOR|APPE|STOU)/ and exists ${*$ftp}{net_ftp_allo}) {
+    $ftp->_ALLO(delete ${*$ftp}{net_ftp_allo})
+      or return undef;
+  }
 
   $ftp->command($cmd, @_);
 
@@ -1077,7 +1098,7 @@ sub command {
 
 sub response {
   my $ftp  = shift;
-  my $code = $ftp->SUPER::response();
+  my $code = $ftp->SUPER::response() || 5;    # assume 500 if undef
 
   delete ${*$ftp}{'net_ftp_pasv'}
     if ($code != CMD_MORE && $code != CMD_INFO);
@@ -1093,8 +1114,9 @@ sub parse_response {
   my $ftp = shift;
 
   # Darn MS FTP server is a load of CRAP !!!!
+  # Expect to see undef here.
   return ()
-    unless ${*$ftp}{'net_cmd_code'} + 0;
+    unless 0 + (${*$ftp}{'net_cmd_code'} || 0);
 
   (${*$ftp}{'net_cmd_code'}, 1);
 }
@@ -1145,8 +1167,11 @@ sub pasv_wait {
   vec($rin = '', fileno($ftp), 1) = 1;
   select($rout = $rin, undef, undef, undef);
 
-  $ftp->response();
-  $non_pasv->response();
+  my $dres = $ftp->response();
+  my $sres = $non_pasv->response();
+
+  return undef
+    unless $dres == CMD_OK && $sres == CMD_OK;
 
   return undef
     unless $ftp->ok() && $non_pasv->ok();
@@ -1276,6 +1301,8 @@ C<Net::FTP> is a class implementing a simple FTP client in Perl as
 described in RFC959.  It provides wrappers for a subset of the RFC959
 commands.
 
+The Net::FTP class is a subclass of Net::Cmd and IO::Socket::INET.
+
 =head1 OVERVIEW
 
 FTP stands for File Transfer Protocol.  It is a way of transferring
@@ -1344,7 +1371,7 @@ transfers. (defaults to 10240)
 B<Port> - The port number to connect to on the remote machine for the
 FTP connection
 
-B<Timeout> - Set a timeout value (defaults to 120)
+B<Timeout> - Set a timeout value in seconds (defaults to 120)
 
 B<Debug> - debug level (see the debug method in L<Net::Cmd>)
 
@@ -1381,6 +1408,10 @@ Unless otherwise stated all methods return either a I<true> or I<false>
 value, with I<true> meaning that the operation was a success. When a method
 states that it returns a value, failure will be returned as I<undef> or an
 empty list.
+
+C<Net::FTP> inherits from C<Net::Cmd> so methods defined in C<Net::Cmd> may
+be used to send commands to the remote FTP server in addition to the methods
+documented here.
 
 =over 4
 
@@ -1438,6 +1469,10 @@ to change the directory to the root directory.
 =item cdup ()
 
 Change directory to the parent of the current directory.
+
+=item passive ( [ PASSIVE ] )
+
+Set or get if data connections will be initiated in passive mode.
 
 =item pwd ()
 
@@ -1676,9 +1711,6 @@ Send the QUIT command to the remote FTP server and close the socket connection.
 
 =head2 Methods for the adventurous
 
-C<Net::FTP> inherits from C<Net::Cmd> so methods defined in C<Net::Cmd> may
-be used to send commands to the remote FTP server.
-
 =over 4
 
 =item quot (CMD [,ARGS])
@@ -1796,7 +1828,7 @@ L<Net::Netrc>
 L<Net::Cmd>
 
 ftp(1), ftpd(8), RFC 959
-http://www.cis.ohio-state.edu/htbin/rfc/rfc959.html
+http://www.ietf.org/rfc/rfc959.txt
 
 =head1 USE EXAMPLES
 
