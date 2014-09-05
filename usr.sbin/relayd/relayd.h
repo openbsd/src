@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.191 2014/08/29 09:03:36 blambert Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.192 2014/09/05 10:19:26 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -395,16 +395,10 @@ struct host {
 	u_long			 up_cnt;
 	int			 retry_cnt;
 	int			 idx;
-	u_int32_t		 ringkey;
 	u_int16_t		 he;
 	struct ctl_tcp_event	 cte;
 };
 TAILQ_HEAD(hostlist, host);
-
-struct host_ring {
-	struct host		*host;
-	u_int32_t		 ringkey;
-};
 
 enum host_error {
 	HCE_NONE		= 0,
@@ -468,7 +462,6 @@ struct table_config {
 	char			 digest[41]; /* length of sha1 digest * 2 */
 	u_int8_t		 digest_type;
 	enum forwardmode	 fwdmode;
-	u_int32_t		 hash_seed;
 };
 
 struct table {
@@ -477,9 +470,6 @@ struct table {
 	int			 up;
 	int			 skipped;
 	struct hostlist		 hosts;
-	struct host_ring	 host_ring[RELAY_MAXHOSTS];
-	int			 nhosts;
-	int			 lastup;
 	SSL_CTX			*ssl_ctx;
 	char			*sendbuf;
 };

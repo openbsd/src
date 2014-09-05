@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.176 2014/08/29 09:03:36 blambert Exp $	*/
+/*	$OpenBSD: relay.c,v 1.177 2014/09/05 10:19:26 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -72,11 +72,6 @@ void		 relay_accept(int, short, void *);
 void		 relay_input(struct rsession *);
 
 u_int32_t	 relay_hash_addr(struct sockaddr_storage *, u_int32_t);
-int		 relay_host_ring_lookup(u_int32_t, struct table *);
-void		 relay_host_ring_update(struct table *);
-u_int32_t	 relay_host_ring_hash(u_int32_t);
-static int	 relay_host_ring_cmp(const void *, const void *);
-
 
 DH *		 relay_ssl_get_dhparams(int);
 void		 relay_ssl_callback_info(const SSL *, int, int);
@@ -436,8 +431,7 @@ relay_launch(void)
 			case RELAY_DSTMODE_HASH:
 			case RELAY_DSTMODE_SRCHASH:
 				rlt->rlt_key =
-				    hash32_str(rlay->rl_conf.name,
-				    rlt->rlt_key);
+				    hash32_str(rlay->rl_conf.name, HASHINIT);
 				rlt->rlt_key =
 				    hash32_str(rlt->rlt_table->conf.name,
 				    rlt->rlt_key);
@@ -448,8 +442,6 @@ relay_launch(void)
 				if (rlt->rlt_nhosts >= RELAY_MAXHOSTS)
 					fatal("relay_init: "
 					    "too many hosts in table");
-				host->ringkey = relay_hash_addr(&host->conf.ss,
-				    HASHINIT);
 				host->idx = rlt->rlt_nhosts;
 				rlt->rlt_host[rlt->rlt_nhosts++] = host;
 			}
@@ -1240,25 +1232,23 @@ relay_from_table(struct rsession *con)
 		idx = (int)arc4random_uniform(rlt->rlt_nhosts);
 		break;
 	case RELAY_DSTMODE_SRCHASH:
-		/* Source IP address without port */
-		p = relay_hash_addr(&con->se_in.ss, p);
-		idx = relay_host_ring_lookup(p, table);
-		break;
 	case RELAY_DSTMODE_LOADBALANCE:
-	case RELAY_DSTMODE_HASH:
 		/* Source IP address without port */
 		p = relay_hash_addr(&con->se_in.ss, p);
+		if (rlt->rlt_mode == RELAY_DSTMODE_SRCHASH)
+			break;
+		/* FALLTHROUGH */
+	case RELAY_DSTMODE_HASH:
 		/* Local "destination" IP address and port */
 		p = relay_hash_addr(&rlay->rl_conf.ss, p);
 		p = hash32_buf(&rlay->rl_conf.port,
 		    sizeof(rlay->rl_conf.port), p);
-		idx = relay_host_ring_lookup(p, table);
 		break;
 	default:
 		fatalx("relay_from_table: unsupported mode");
 		/* NOTREACHED */
 	}
-	if (idx == -1)
+	if (idx == -1 && (idx = p % rlt->rlt_nhosts) >= RELAY_MAXHOSTS)
 		return (-1);
 	host = rlt->rlt_host[idx];
 	DPRINTF("%s: session %d: table %s host %s, p 0x%08x, idx %d",
@@ -2657,67 +2647,6 @@ relay_load_certfiles(struct relay *rlay)
 	log_debug("%s: using private key %s", __func__, certfile);
 
 	return (0);
-}
-
-static int
-relay_host_ring_cmp(const void *aa, const void *bb)
-{
-	const struct host_ring *a = aa;
-	const struct host_ring *b = bb;
-
-	if (a->ringkey < b->ringkey)
-		return (-1);
-	else if (a->ringkey > b->ringkey)
-		return (1);
-	else
-		return (0);
-}
-
-int
-relay_host_ring_lookup(u_int32_t dstkey, struct table *table)
-{
-	struct host_ring	*r;
-	int			 n = table->nhosts;
-
-	if (!table->up)
-		return (-1);
-
-	do {
-		r = &table->host_ring[--n];
-		if (dstkey > r->ringkey)
-			break;
-	} while (n);
-	if (n == 0 && dstkey < r->ringkey)
-		r = &table->host_ring[table->nhosts - 1];
-	return (r->host->idx);
-}
-
-void
-relay_host_ring_update(struct table *table)
-{
-	struct host	*host;
-	int		 nhosts = 0;
-
-	if (table->up == table->lastup)
-		return;
-
-	table->lastup = table->up;
-	bzero(&table->host_ring, sizeof(table->host_ring));
-	if (!table->up)
-		return;
-
-	TAILQ_FOREACH(host, &table->hosts, entry) {
-		if (host->up  != HOST_UP)
-			continue;
-		table->host_ring[nhosts].ringkey = host->ringkey;
-		table->host_ring[nhosts].host = host;
-		nhosts++;
-	}
-
-	if (nhosts)
-		qsort(table->host_ring, nhosts, sizeof(struct host_ring),
-		    relay_host_ring_cmp);
-	table->nhosts = nhosts;
 }
 
 int

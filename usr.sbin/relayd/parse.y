@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.188 2014/08/29 09:03:36 blambert Exp $	*/
+/*	$OpenBSD: parse.y,v 1.189 2014/09/05 10:19:26 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -119,8 +119,6 @@ static enum key_type	 keytype = KEY_TYPE_NONE;
 static enum direction	 dir = RELAY_DIR_ANY;
 static char		*rulefile = NULL;
 
-static u_int32_t	 hashseed = 0;
-
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
 int		 host_dns(const char *, struct addresslist *,
@@ -170,7 +168,7 @@ typedef struct {
 %token	SOCKET SPLICE SSL STICKYADDR STYLE TABLE TAG TAGGED TCP TIMEOUT TO
 %token	ROUTER RTLABEL TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE
 %token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDH
-%token	EDH CURVE SEED
+%token	EDH CURVE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table value optstring
@@ -179,7 +177,7 @@ typedef struct {
 %type	<v.number>	optssl optsslclient sslcache
 %type	<v.number>	redirect_proto relay_proto match
 %type	<v.number>	action ruleaf key_option
-%type	<v.number>	ssldhparams sslecdhcurve hashseed
+%type	<v.number>	ssldhparams sslecdhcurve
 %type	<v.port>	port
 %type	<v.host>	host
 %type	<v.addr>	address
@@ -730,7 +728,7 @@ tableopts	: CHECK tablecheck
 			table->conf.skip_cnt =
 			    ($2 / conf->sc_interval.tv_sec) - 1;
 		}
-		| MODE dstmode hashseed	{
+		| MODE dstmode		{
 			switch ($2) {
 			case RELAY_DSTMODE_LOADBALANCE:
 			case RELAY_DSTMODE_HASH:
@@ -741,7 +739,6 @@ tableopts	: CHECK tablecheck
 					    "for redirections");
 					YYERROR;
 				}
-				table->conf.hash_seed = $3;
 				/* FALLTHROUGH */
 			case RELAY_DSTMODE_ROUNDROBIN:
 				dstmode = $2;
@@ -757,9 +754,6 @@ tableopts	: CHECK tablecheck
 			}
 		}
 		;
-
-hashseed	: /* nothing */		{ $$ = hashseed; }
-		| SEED STRING		{ $$ = hash32_str($2, HASHINIT); }
 
 tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 		| TCP			{ table->conf.check = CHECK_TCP; }
@@ -1733,7 +1727,6 @@ forwardspec	: STRING port retry	{
 			rlt->rlt_table->conf.flags |= F_USED;
 			rlt->rlt_mode = dstmode;
 			rlt->rlt_flags = F_USED;
-			rlt->rlt_key = rlt->rlt_table->conf.hash_seed;
 			if (!TAILQ_EMPTY(&rlay->rl_tables))
 				rlt->rlt_flags |= F_BACKUP;
 
@@ -2157,7 +2150,6 @@ lookup(char *s)
 		{ "rtlabel",		RTLABEL },
 		{ "sack",		SACK },
 		{ "script",		SCRIPT },
-		{ "seed",		SEED },
 		{ "send",		SEND },
 		{ "session",		SESSION },
 		{ "set",		SET },
@@ -2551,9 +2543,6 @@ load_config(const char *filename, struct relayd *x_conf)
 
 	conf = x_conf;
 	conf->sc_flags = 0;
-
-	while (hashseed == 0)
-		hashseed = arc4random();
 
 	loadcfg = 1;
 	errors = 0;
