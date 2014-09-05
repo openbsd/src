@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.171 2014/09/05 17:22:10 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.172 2014/09/05 17:26:08 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -370,12 +370,11 @@ sm_add_user_grp() {
 
 sm_merge_loop() {
 	local INSTALL_MERGED MERGE_AGAIN
-	[[ ${SM_MERGE} == sdiff* ]] && \
-		echo "===> Type h at the sdiff prompt (%) to get usage help\n"
+	echo "===> Type h at the sdiff prompt (%) to get usage help\n"
 	MERGE_AGAIN=1
 	while [[ -n ${MERGE_AGAIN} ]]; do
 		cp -p ${COMPFILE} ${COMPFILE}.merged
-		${SM_MERGE} ${COMPFILE}.merged \
+		sdiff -as -w ${_SWIDTH} -o ${COMPFILE}.merged \
 			${TARGET} ${COMPFILE}
 		INSTALL_MERGED=v
 		while [[ ${INSTALL_MERGED} == "v" ]]; do
@@ -636,7 +635,6 @@ _SWIDTH=$(stty size | awk '{w=$2} END {if (w==0) {w=80} print w}')
 _RELINT=$(uname -r | tr -d '.')
 readonly _WRKDIR _BKPDIR _TMPROOT _SWIDTH _RELINT
 
-SM_MERGE=${SM_MERGE:=sdiff -as -w ${_SWIDTH} -o}
 [[ -z ${VISUAL} ]] && EDITOR=${EDITOR:=/usr/bin/vi} || EDITOR=${VISUAL}
 PAGER=${PAGER:=/usr/bin/more}
 
