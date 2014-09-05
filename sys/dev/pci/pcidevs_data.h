@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1737 2014/08/13 07:36:21 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1738 2014/09/05 19:32:25 chris Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -10373,6 +10373,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_SFP_SF2,
+	    "82599",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599EN_SFP,
 	    "82599",
 	},
 	{

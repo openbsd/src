@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1737 2014/08/13 07:36:21 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1738 2014/09/05 19:32:25 chris Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3211,6 +3211,7 @@
 #define	PCI_PRODUCT_INTEL_I217_LM	0x153a		/* I217-LM */
 #define	PCI_PRODUCT_INTEL_I217_V	0x153b		/* I217-V */
 #define	PCI_PRODUCT_INTEL_82599_SFP_SF2	0x154d		/* 82599 */
+#define	PCI_PRODUCT_INTEL_82599EN_SFP	0x1557		/* 82599 */
 #define	PCI_PRODUCT_INTEL_I218_LM	0x155a		/* I218-LM */
 #define	PCI_PRODUCT_INTEL_I218_V	0x1559		/* I218-V */
 #define	PCI_PRODUCT_INTEL_I210_COPPER_NF	0x157b		/* I210 */
