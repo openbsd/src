@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.65 2014/09/05 10:35:31 jmc Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.66 2014/09/05 17:19:48 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -115,29 +115,19 @@ against their target on the system (@sample).
 Files can be excluded from comparison by listing them in
 .Pa /etc/sysmerge.ignore .
 The following files will always be skipped from direct comparison:
-.Pa /etc/*.db ,
 .Pa /etc/group ,
 .Pa /etc/localtime ,
-.Pa /etc/mail/*.db ,
+.Pa /etc/mail/aliases.db ,
 .Pa /etc/master.passwd ,
-.Pa /etc/passwd ,
 .Pa /etc/motd ,
-.Pa /var/db/locate.database ,
+.Pa /etc/passwd ,
+.Pa /etc/pwd.db ,
+.Pa /etc/spwd.db ,
 .Pa /usr/share/sysmerge/etcsum ,
 .Pa /usr/share/sysmerge/examplessum ,
 .Pa /usr/share/sysmerge/xetcsum ,
+.Pa /var/db/locate.database ,
 .Pa /var/mail/root .
-.Pp
-The
-.Xr sendmail 8
-configuration files
-.Pa /etc/mail/localhost.cf ,
-.Pa /etc/mail/sendmail.cf
-and
-.Pa /etc/mail/submit.cf
-will always differ because they include their build date and directories.
-A special test was added to handle this
-and they are offered for comparison only if they really differ.
 .Sh ENVIRONMENT
 .Bl -tag -width "EDITORXXVISUAL"
 .It Ev EDITOR , VISUAL

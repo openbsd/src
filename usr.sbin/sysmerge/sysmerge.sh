@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.169 2014/09/05 16:59:46 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.170 2014/09/05 17:19:48 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -240,24 +240,19 @@ sm_init() {
 	_ignorefiles="/etc/*.db
 		      /etc/group
 		      /etc/localtime
-		      /etc/mail/*.db
+		      /etc/mail/aliases.db
 		      /etc/master.passwd
 		      /etc/passwd
 		      /etc/motd
 		      /var/db/locate.database
 		      /var/mail/root"
-	_cffiles="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
-	for _i in ${_cffiles}; do
-		_cfdiff=$(diff -q -I "##### " ./${_i} ${_i} 2>/dev/null)
-		[[ -z ${_cfdiff} ]] && _ignorefiles="${_ignorefiles} ${_i}"
-	done
 	[[ -f /etc/sysmerge.ignore ]] && \
 		_ignorefiles="${_ignorefiles} $(stripcom /etc/sysmerge.ignore)"
 	for _i in ${_ignorefiles}; do
 		rm -f ./${_i}
 	done
 
-	# aliases(5) needs to be handled last in case syntax changes
+	# aliases(5) needs to be handled last in case mailer.conf(5) changes
 	_c1=$(find . -type f -or -type l | grep -vE '^./etc/mail/aliases$')
 	_c2=$(find . -type f -name aliases)
 	for COMPFILE in ${_c1} ${_c2}; do
@@ -317,7 +312,7 @@ sm_install() {
 	fi
 
 	if ! install -m ${_fmode} -o ${_fown} -g ${_fgrp} ${COMPFILE} ${_instdir}; then
-		rm ${_BKPDIR}/${COMPFILE%/*}/${COMPFILE##*/}; return 1
+		rm ${_BKPDIR}/${COMPFILE}; return 1
 	fi
 	rm ${COMPFILE}
 
@@ -329,10 +324,6 @@ sm_install() {
 		else
 			sm_echo
 		fi
-		;;
-	/etc/mail/@(access|genericstable|mailertable|virtusertable))
-		sm_echo " (running makemap(8))"
-		sm_warn $(/usr/libexec/sendmail/makemap hash ${TARGET} 2>&1 <${TARGET})
 		;;
 	/etc/mail/aliases)
 		sm_echo " (running newaliases(8))"
