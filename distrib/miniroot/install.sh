@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.257 2014/08/27 14:04:15 florian Exp $
+#	$OpenBSD: install.sh,v 1.258 2014/09/05 07:22:29 ajacoutot Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -244,7 +244,11 @@ hostname >/tmp/myname
 # Append entries to installed hosts file, changing '1.2.3.4 hostname'
 # to '1.2.3.4 hostname.$FQDN hostname'. Leave untouched lines containing
 # domain information or aliases. These are lines the user added/changed
-# manually. Note we may have no hosts file if no interfaces were configured.
+# manually.
+# Add common entries.
+echo "127.0.0.1\tlocalhost" >/mnt/etc/hosts
+echo "::1\t\tlocalhost" >>/mnt/etc/hosts
+# Note we may have no hosts file if no interfaces were configured.
 if [[ -f /tmp/hosts ]]; then
 	_dn=$(get_fqdn)
 	while read _addr _hn _aliases; do
@@ -267,6 +271,8 @@ _f=dhclient.conf
 (cd /tmp; for _f in fstab hostname* kbdtype my* ttys *.conf *.tail; do
 	[[ -f $_f && -s $_f ]] && mv $_f /mnt/etc/.
 done)
+
+echo "done."
 
 apply
 
