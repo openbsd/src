@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.41 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.42 2014/09/06 04:46:58 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -196,6 +196,8 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		}
 		CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
 	}
+
+	sc->sc_product = PCI_PRODUCT(pa->pa_id);
 
 	/* Call bus-independent attach routine */
 	if (re_attach(sc, intrstr)) {

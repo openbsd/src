@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.155 2014/07/22 13:12:12 mpi Exp $	*/
+/*	$OpenBSD: re.c,v 1.156 2014/09/06 04:46:58 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -121,6 +121,8 @@
 #include <sys/timeout.h>
 #include <sys/socket.h>
 
+#include <machine/bus.h>
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -142,8 +144,7 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/ic/rtl81x9reg.h>
 #include <dev/ic/revar.h>
@@ -578,7 +579,7 @@ re_iff(struct rl_softc *sc)
 	 * parts. This means we have to write the hash pattern in reverse
 	 * order for those devices.
 	 */
-	if (sc->rl_flags & RL_FLAG_INVMAR) {
+	if (sc->rl_flags & RL_FLAG_PCIE) {
 		CSR_WRITE_4(sc, RL_MAR0, swap32(hashes[1]));
 		CSR_WRITE_4(sc, RL_MAR4, swap32(hashes[0]));
 	} else {
@@ -604,7 +605,7 @@ re_reset(struct rl_softc *sc)
 	if (i == RL_TIMEOUT)
 		printf("%s: reset never completed!\n", sc->sc_dev.dv_xname);
 
-	if (sc->rl_flags & RL_FLAG_MACLDPS)
+	if (sc->rl_flags & RL_FLAG_MACRESET)
 		CSR_WRITE_1(sc, RL_LDPS, 1);
 }
 
@@ -639,13 +640,14 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 
 	switch (sc->sc_hwrev) {
 	case RL_HWREV_8139CPLUS:
-		sc->rl_flags |= RL_FLAG_NOJUMBO | RL_FLAG_AUTOPAD;
+		sc->rl_flags |= RL_FLAG_FASTETHER | RL_FLAG_AUTOPAD;
+		sc->rl_max_mtu = RL_MTU;
 		break;
 	case RL_HWREV_8100E:
 	case RL_HWREV_8100E_SPIN2:
 	case RL_HWREV_8101E:
-		sc->rl_flags |= RL_FLAG_NOJUMBO | RL_FLAG_INVMAR |
-		    RL_FLAG_PHYWAKE;
+		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_FASTETHER;
+		sc->rl_max_mtu = RL_MTU;
 		break;
 	case RL_HWREV_8103E:
 		sc->rl_flags |= RL_FLAG_MACSLEEP;
@@ -653,70 +655,103 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	case RL_HWREV_8102E:
 	case RL_HWREV_8102EL:
 	case RL_HWREV_8102EL_SPIN1:
-		sc->rl_flags |= RL_FLAG_NOJUMBO | RL_FLAG_INVMAR |
-		    RL_FLAG_PHYWAKE | RL_FLAG_PAR | RL_FLAG_DESCV2 |
-		    RL_FLAG_MACSTAT | RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD;
+		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_PAR |
+		    RL_FLAG_DESCV2 | RL_FLAG_MACSTAT | RL_FLAG_FASTETHER |
+		    RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD;
+		sc->rl_max_mtu = RL_MTU;
 		break;
 	case RL_HWREV_8401E:
-	case RL_HWREV_8402:
 	case RL_HWREV_8105E:
 	case RL_HWREV_8105E_SPIN1:
 	case RL_HWREV_8106E:
-		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
-		    RL_FLAG_PHYWAKE_PM | RL_FLAG_PAR | RL_FLAG_DESCV2 |
-		    RL_FLAG_MACSTAT | RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD |
-		    RL_FLAG_NOJUMBO;
+		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_PHYWAKE_PM |
+		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
+		    RL_FLAG_FASTETHER | RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD;
+		sc->rl_max_mtu = RL_MTU;
+		break;
+	case RL_HWREV_8402:
+		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_PHYWAKE_PM |
+		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
+		    RL_FLAG_FASTETHER | RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD |
+		    RL_FLAG_CMDSTOP_WAIT_TXQ;
+		sc->rl_max_mtu = RL_MTU;
 		break;
 	case RL_HWREV_8168B_SPIN1:
 	case RL_HWREV_8168B_SPIN2:
+		sc->rl_flags |= RL_FLAG_WOLRXENB;
+		/* FALLTHROUGH */
 	case RL_HWREV_8168B_SPIN3:
-		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
-		    RL_FLAG_MACSTAT | RL_FLAG_HWIM;
+		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_MACSTAT;
+		sc->rl_max_mtu = RL_MTU;
 		break;
 	case RL_HWREV_8168C_SPIN2:
 		sc->rl_flags |= RL_FLAG_MACSLEEP;
 		/* FALLTHROUGH */
 	case RL_HWREV_8168C:
 	case RL_HWREV_8168CP:
-	case RL_HWREV_8168DP:
-		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
-		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
-		    RL_FLAG_HWIM | RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD;
-		/*
-		 * These controllers support jumbo frame but it seems
-		 * that enabling it requires touching additional magic
-		 * registers. Depending on MAC revisions some
-		 * controllers need to disable checksum offload. So
-		 * disable jumbo frame until I have better idea what
-		 * it really requires to make it support.
-		 * RTL8168C/CP : supports up to 6KB jumbo frame.
-		 * RTL8111C/CP : supports up to 9KB jumbo frame.
-		 */
-		sc->rl_flags |= RL_FLAG_NOJUMBO;
+		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_PAR |
+		    RL_FLAG_DESCV2 | RL_FLAG_MACSTAT | RL_FLAG_CMDSTOP |
+		    RL_FLAG_AUTOPAD | RL_FLAG_JUMBOV2 | RL_FLAG_WOL_MANLINK;
+		sc->rl_max_mtu = RL_JUMBO_MTU_6K;
 		break;
 	case RL_HWREV_8168D:
+		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_PHYWAKE_PM |
+		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
+		    RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD | RL_FLAG_JUMBOV2 |
+		    RL_FLAG_WOL_MANLINK;
+		sc->rl_max_mtu = RL_JUMBO_MTU_9K;
+		break;
+	case RL_HWREV_8168DP:
+		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_PAR |
+		    RL_FLAG_DESCV2 | RL_FLAG_MACSTAT | RL_FLAG_AUTOPAD |
+		    RL_FLAG_JUMBOV2 | RL_FLAG_WAIT_TXPOLL | RL_FLAG_WOL_MANLINK;
+		sc->rl_max_mtu = RL_JUMBO_MTU_9K;
+		break;
 	case RL_HWREV_8168E:
-		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
-		    RL_FLAG_PHYWAKE_PM | RL_FLAG_PAR | RL_FLAG_DESCV2 |
-		    RL_FLAG_MACSTAT | RL_FLAG_HWIM | RL_FLAG_CMDSTOP |
-		    RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO;
+		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_PHYWAKE_PM |
+		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
+		    RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD | RL_FLAG_JUMBOV2 |
+		    RL_FLAG_WOL_MANLINK;
+		sc->rl_max_mtu = RL_JUMBO_MTU_9K;
 		break;
 	case RL_HWREV_8168E_VL:
+		sc->rl_flags |= RL_FLAG_EARLYOFF | RL_FLAG_PHYWAKE | RL_FLAG_PAR |
+		    RL_FLAG_DESCV2 | RL_FLAG_MACSTAT | RL_FLAG_CMDSTOP |
+		    RL_FLAG_AUTOPAD | RL_FLAG_JUMBOV2 | RL_FLAG_CMDSTOP_WAIT_TXQ |
+		    RL_FLAG_WOL_MANLINK;
+		sc->rl_max_mtu = RL_JUMBO_MTU_6K;
 	case RL_HWREV_8168F:
 		sc->rl_flags |= RL_FLAG_EARLYOFF;
 		/* FALLTHROUGH */
 	case RL_HWREV_8411:
-		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
-		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
-		    RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO;
+		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_PAR |
+		    RL_FLAG_DESCV2 | RL_FLAG_MACSTAT | RL_FLAG_CMDSTOP |
+		    RL_FLAG_AUTOPAD | RL_FLAG_JUMBOV2 | RL_FLAG_CMDSTOP_WAIT_TXQ |
+		    RL_FLAG_WOL_MANLINK;
+		sc->rl_max_mtu = RL_JUMBO_MTU_9K;
 		break;
 	case RL_HWREV_8168EP:
 	case RL_HWREV_8168G:
 	case RL_HWREV_8411B:
+		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_PAR |
+		    RL_FLAG_DESCV2 | RL_FLAG_MACSTAT | RL_FLAG_CMDSTOP |
+		    RL_FLAG_AUTOPAD | RL_FLAG_JUMBOV2 | RL_FLAG_CMDSTOP_WAIT_TXQ |
+		    RL_FLAG_WOL_MANLINK | RL_FLAG_EARLYOFFV2 | RL_FLAG_RXDV_GATED;
+		sc->rl_max_mtu = RL_JUMBO_MTU_9K;
+		break;
 	case RL_HWREV_8168GU:
-		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
-		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
-		    RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO |
+		if (sc->sc_product == PCI_PRODUCT_REALTEK_RT8101E) {
+			/* RTL8106EUS */
+			sc->rl_flags |= RL_FLAG_FASTETHER;
+			sc->rl_max_mtu = RL_MTU;
+		} else {
+			sc->rl_flags |= RL_FLAG_JUMBOV2 | RL_FLAG_WOL_MANLINK;
+			sc->rl_max_mtu = RL_JUMBO_MTU_9K;
+		}
+
+		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_PAR |
+		    RL_FLAG_DESCV2 | RL_FLAG_MACSTAT | RL_FLAG_CMDSTOP |
+		    RL_FLAG_AUTOPAD | RL_FLAG_CMDSTOP_WAIT_TXQ |
 		    RL_FLAG_EARLYOFFV2 | RL_FLAG_RXDV_GATED;
 		break;
 	case RL_HWREV_8169_8110SB:
@@ -728,7 +763,8 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	case RL_HWREV_8169:
 	case RL_HWREV_8169S:
 	case RL_HWREV_8110S:
-		sc->rl_flags |= RL_FLAG_MACLDPS;
+		sc->rl_flags |= RL_FLAG_MACRESET;
+		sc->rl_max_mtu = RL_JUMBO_MTU_7K;
 		break;
 	default:
 		break;
@@ -957,8 +993,8 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	ifp->if_ioctl = re_ioctl;
 	ifp->if_start = re_start;
 	ifp->if_watchdog = re_watchdog;
-	if ((sc->rl_flags & RL_FLAG_NOJUMBO) == 0)
-		ifp->if_hardmtu = RL_JUMBO_MTU;
+	if ((sc->rl_flags & RL_FLAG_JUMBOV2) == 0)
+		ifp->if_hardmtu = sc->rl_max_mtu;
 	IFQ_SET_MAXLEN(&ifp->if_snd, RL_TX_QLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 

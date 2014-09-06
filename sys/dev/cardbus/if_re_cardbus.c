@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.24 2014/08/11 12:45:45 mpi Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.25 2014/09/06 04:46:58 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -151,6 +151,8 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	snprintf(intrstr, sizeof(intrstr), "irq %d", ca->ca_intrline);
+
+	sc->sc_product = PCI_PRODUCT(ca->ca_id);
 
 	/* Call bus-independent (common) attach routine */
 	if (re_attach(sc, intrstr)) {
