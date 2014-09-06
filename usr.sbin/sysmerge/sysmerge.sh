@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.175 2014/09/06 20:47:44 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.176 2014/09/06 21:46:15 rpe Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -192,8 +192,7 @@ sm_init() {
 			! ${DIFFMODE}; then
 			# redirect stderr; file may not exist
 			_matchsum=$(sha256 -c /usr/share/sysmerge/${_i} 2>/dev/null | \
-				awk '/OK/ { print $2 }' | \
-				sed 's/[:]//')
+				sed -n '/OK$/s/^(SHA256) \(.*\): OK$/\1/p')
 			# delete file in temproot if it has not changed since
 			# last release and is present in current installation
 			for _j in ${_matchsum}; do
@@ -339,14 +338,14 @@ sm_install() {
 }
 
 sm_add_user_grp() {
-	local _g _gid _l _u NEWGRP NEWUSR
+	local _g _p _gid _l _u _rest NEWGRP NEWUSR
 	local _pw="./etc/master.passwd"
 	local _gr="./etc/group"
 
 	${PKGMODE} && return
 
 	while read _l; do
-		_u=$(echo ${_l} | awk -F ':' '{ print $1 }')
+		_u=${_l%%:*}
 		if [[ ${_u} != "root" ]]; then
 			if [[ -z $(grep -E "^${_u}:" /etc/master.passwd) ]]; then
 				sm_echo "===> Adding the ${_u} user"
@@ -356,9 +355,7 @@ sm_add_user_grp() {
 		fi
 	done <${_pw}
 
-	while read _l; do
-		_g=$(echo ${_l} | awk -F ':' '{ print $1 }')
-		_gid=$(echo ${_l} | awk -F ':' '{ print $3 }')
+	while IFS=: read -r -- _g _p _gid _rest; do
 		if [[ -z $(grep -E "^${_g}:" /etc/group) ]]; then
 			sm_echo "===> Adding the ${_g} group"
 			groupadd -g ${_gid} ${_g} && \
@@ -573,9 +570,7 @@ sm_check_an_eg() {
 		cp /usr/share/sysmerge/examplessum ${_WRKDIR}/examplessum
 		_egmods=$(cd / && \
 			 sha256 -c /usr/share/sysmerge/examplessum 2>/dev/null | \
-			 grep 'FAILED$' | \
-			 awk '{ print $2 }' | \
-			 sed -e "s,:,,")
+			 sed -n '/FAILED$/s/^(SHA256) \(.*\): FAILED$/\1/p')
 	fi
 	for _i in ${_egmods}; do
 		_i=${_i##*/}
