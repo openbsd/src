@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.172 2014/09/05 17:26:08 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.173 2014/09/06 10:38:01 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -220,7 +220,9 @@ sm_init() {
 					! -h ${_k} ]]; then
 					_cvsid1=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${_k#.} 2>/dev/null)
 					_cvsid2=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${_k} 2>/dev/null)
-					[[ ${_cvsid2} == ${_cvsid1} ]] && rm ${_k} && continue
+					[[ ${_cvsid2} == ${_cvsid1} ]] && \
+						[[ -f ${_k} ]] && rm ${_k} && \
+						continue
 				fi
 
 
