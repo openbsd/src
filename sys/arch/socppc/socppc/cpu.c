@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.7 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.8 2014/09/06 10:15:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -25,8 +25,6 @@
 #include <powerpc/hid.h>
 
 #include <dev/ofw/openfirm.h>
-
-extern u_int32_t	hid0_idle;
 
 
 struct cpu_info cpu_info[PPC_MAXPROCS] = { { NULL } }; /* XXX */
@@ -92,9 +90,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	/* Select DOZE mode. */
 	hid0 = ppc_mfhid0();
 	hid0 &= ~(HID0_NAP | HID0_DOZE | HID0_SLEEP);
-	hid0_idle = HID0_DOZE;
-	hid0 |= HID0_DPM;
+	hid0 |= HID0_DOZE | HID0_DPM;
 	ppc_mthid0(hid0);
+	ppc_cpuidle = 1;
 }
 
 int ppc_proc_is_64b;

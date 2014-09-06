@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_subr.c,v 1.4 2014/09/06 09:22:40 mpi Exp $	*/
+/*	$OpenBSD: cpu_subr.c,v 1.5 2014/09/06 10:15:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Martin Pieuchot
@@ -20,6 +20,9 @@
 #include <sys/param.h>
 
 #include <machine/cpu.h>
+
+int		ppc_cpuidle;	/* Support DOZE, NAP or DEEP NAP? */
+int		ppc_altivec;
 
 void
 ppc_mtscomc(u_int32_t val)

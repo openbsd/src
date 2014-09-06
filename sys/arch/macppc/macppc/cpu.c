@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.75 2014/01/19 12:45:35 deraadt Exp $ */
+/*	$OpenBSD: cpu.c,v 1.76 2014/09/06 10:15:52 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -49,8 +49,6 @@
 #include <machine/cpu.h>
 #include <machine/trap.h>
 #include <powerpc/hid.h>
-
-extern u_int32_t	hid0_idle;
 
 /* SCOM addresses (24-bit) */
 #define SCOM_PCR	0x0aa001 /* Power Control Register */
@@ -108,8 +106,6 @@ cpumatch(struct device *parent, void *cfdata, void *aux)
 
 u_int32_t ppc_curfreq;
 u_int32_t ppc_maxfreq;
-int ppc_altivec;
-
 
 int
 ppc_cpuspeed(int *freq)
@@ -385,9 +381,9 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	case PPC_CPU_IBM750FX:
 	case PPC_CPU_MPC7410:
 		/* select DOZE mode */
-		hid0 &= ~(HID0_NAP | HID0_DOZE | HID0_SLEEP);
-		hid0_idle = HID0_DOZE;
-		hid0 |= HID0_DPM;
+		hid0 &= ~(HID0_NAP | HID0_SLEEP);
+		hid0 |= HID0_DOZE | HID0_DPM;
+		ppc_cpuidle = 1;
 		break;
 	case PPC_CPU_MPC7447A:
 	case PPC_CPU_MPC7448:
@@ -395,15 +391,15 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	case PPC_CPU_MPC7455:
 	case PPC_CPU_MPC7457:
 		/* select NAP mode */
-		hid0 &= ~(HID0_NAP | HID0_DOZE | HID0_SLEEP);
-		hid0_idle = HID0_NAP;
-		hid0 |= HID0_DPM;
+		hid0 &= ~(HID0_DOZE | HID0_SLEEP);
+		hid0 |= HID0_NAP | HID0_DPM;
 		/* try some other flags */
 		hid0 |= HID0_SGE | HID0_BTIC;
 		hid0 |= HID0_LRSTK | HID0_FOLD | HID0_BHT;
 		/* Disable BTIC on 7450 Rev 2.0 or earlier */
 		if (cpu == PPC_CPU_MPC7450 && (pvr & 0xffff) < 0x0200)
 			hid0 &= ~HID0_BTIC;
+		ppc_cpuidle = 1;
 		break;
 	case PPC_CPU_IBM970:
 	case PPC_CPU_IBM970FX:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.54 2014/09/06 09:22:40 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.55 2014/09/06 10:15:52 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ struct cpu_info {
 	volatile int ci_cpl;
 	volatile int ci_iactive;
 #define		CI_IACTIVE_PROCESSING_SOFT	1
-#define		CI_IACTIVE_PROCESSING_HARD	2
+#define		CI_IACTIVE_SLEEPING		2
 	volatile int ci_ipending;
 
 	int ci_intrdepth;
@@ -151,6 +151,7 @@ extern struct cpu_info cpu_info[PPC_MAXPROCS];
 #define	CLKF_PC(frame)		((frame)->srr0)
 #define	CLKF_INTR(frame)	((frame)->depth != 0)
 
+extern	int ppc_cpuidle;
 /*
  * This is used during profiling to integrate system time.
  */
