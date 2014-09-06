@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.87 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.88 2014/09/06 06:00:54 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -174,6 +174,8 @@ agp_i810_get_chiptype(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82G33_IGD_2:
 	case PCI_PRODUCT_INTEL_82Q35_IGD_1:
 	case PCI_PRODUCT_INTEL_82Q35_IGD_2:
+	case PCI_PRODUCT_INTEL_82Q33_IGD_1:
+	case PCI_PRODUCT_INTEL_82Q33_IGD_2:
 		return (CHIP_G33);
 		break;
 	case PCI_PRODUCT_INTEL_82GM45_IGD_1:
