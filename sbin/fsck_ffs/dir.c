@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.29 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.30 2014/09/06 04:05:40 guenther Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -552,7 +552,7 @@ bad:
 /*
  * allocate a new directory
  */
-int
+ino_t
 allocdir(ino_t parent, ino_t request, int mode)
 {
 	ino_t ino;

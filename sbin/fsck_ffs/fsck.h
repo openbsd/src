@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.29 2014/05/09 13:19:34 krw Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.30 2014/09/06 04:05:40 guenther Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -161,16 +161,16 @@ enum fixstate {DONTKNOW, NOFIX, FIX, IGNORE};
 struct inodesc {
 	daddr_t id_blkno;	/* current block number being examined */
 	quad_t id_filesize;	/* for DATA nodes, the size of the directory */
+	u_int64_t id_entryno;	/* for DATA nodes, current entry number */
+	ino_t id_number;	/* inode number described */
+	ino_t id_parent;	/* for DATA nodes, their parent */
 	int (*id_func)		/* function to be applied to blocks of inode */
 (struct inodesc *);
 	struct direct *id_dirp;	/* for DATA nodes, ptr to current entry */
 	char *id_name;		/* for DATA nodes, name to find or enter */
-	ino_t id_number;	/* inode number described */
-	ino_t id_parent;	/* for DATA nodes, their parent */
-	enum fixstate id_fix;	/* policy on fixing errors */
 	int id_numfrags;	/* number of frags contained in block */
 	int id_loc;		/* for DATA nodes, current location in dir */
-	int id_entryno;		/* for DATA nodes, current entry number */
+	enum fixstate id_fix;	/* policy on fixing errors */
 	char id_type;		/* type of descriptor, DATA or ADDR */
 };
 /* file types */

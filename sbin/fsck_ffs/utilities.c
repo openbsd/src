@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.46 2014/05/24 14:54:49 krw Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.47 2014/09/06 04:05:40 guenther Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -395,10 +395,11 @@ bwrite(int fd, char *buf, daddr_t blk, long size)
 /*
  * allocate a data block with the specified number of fragments
  */
-int
-allocblk(long frags)
+daddr_t
+allocblk(int frags)
 {
-	int i, j, k, cg, baseblk;
+	daddr_t i, baseblk;
+	int j, k, cg;
 	struct cg *cgp = &cgrp;
 
 	if (frags <= 0 || frags > sblock.fs_frag)
@@ -439,7 +440,7 @@ allocblk(long frags)
  * Free a previously allocated block
  */
 void
-freeblk(daddr_t blkno, long frags)
+freeblk(daddr_t blkno, int frags)
 {
 	struct inodesc idesc;
 

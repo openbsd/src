@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.42 2014/05/21 18:53:05 krw Exp $	*/
+/*	$OpenBSD: inode.c,v 1.43 2014/09/06 04:05:40 guenther Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -602,7 +602,7 @@ allocino(ino_t request, int type)
 			MAX(2 * inostathead[cg].il_numalloced, 10));
 		info = calloc(newalloced, sizeof(struct inostat));
 		if (info == NULL) {
-			pwarn("cannot alloc %lu bytes to extend inoinfo\n",
+			pwarn("cannot alloc %zu bytes to extend inoinfo\n",
 				sizeof(struct inostat) * newalloced);
 			return 0;
 		}

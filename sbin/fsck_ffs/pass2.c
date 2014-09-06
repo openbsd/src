@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.34 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.35 2014/09/06 04:05:40 guenther Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -162,12 +162,12 @@ pass2(void)
 			getpathname(pathbuf, sizeof pathbuf,
 			    inp->i_number, inp->i_number);
 			if (usedsoftdep)
-			        pfatal("%s %s: LENGTH %ld NOT MULTIPLE of %d",
-				       "DIRECTORY", pathbuf, (long)inp->i_isize,
+			        pfatal("%s %s: LENGTH %zu NOT MULTIPLE of %d",
+				       "DIRECTORY", pathbuf, inp->i_isize,
 				       DIRBLKSIZ);
 			else
-				pwarn("%s %s: LENGTH %ld NOT MULTIPLE OF %d",
-				      "DIRECTORY", pathbuf, (long)inp->i_isize,
+				pwarn("%s %s: LENGTH %zu NOT MULTIPLE OF %d",
+				      "DIRECTORY", pathbuf, inp->i_isize,
 				      DIRBLKSIZ);
 			if (preen)
 				printf(" (ADJUSTED)\n");
