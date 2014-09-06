@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.101 2014/07/09 08:32:57 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.102 2014/09/06 09:42:23 mpi Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -65,21 +65,6 @@ void trap(struct trapframe *frame);
 #define	FIRSTARG	3		/* first argument is in reg 3 */
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((caddr_t)((int)(sp) + 8)) /* more args go here */
-
-#ifdef DDB
-void ppc_dumpbt(struct trapframe *frame);
-
-void
-ppc_dumpbt(struct trapframe *frame)
-{
-	u_int32_t addr;
-	/* dumpframe is defined in db_trace.c */
-	addr=frame->fixreg[1];
-	while (addr != 0)
-		addr = db_dumpframe(addr, db_printf);
-	return;
-}
-#endif
 
 #ifdef ALTIVEC
 /*

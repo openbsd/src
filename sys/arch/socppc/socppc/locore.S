@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.9 2013/12/29 21:06:37 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.10 2014/09/06 09:42:23 mpi Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -906,6 +906,7 @@ realtrap:
 /*
  * Now the common trap catching code.
  */
+	.globl	s_trap
 s_trap:
 	FRAME_SETUP(CI_TEMPSAVE)
 /* Now we can recover interrupts again: */
@@ -920,6 +921,8 @@ s_trap:
 trapagain:
 	addi	%r3,%r1,8
 	bl	_C_LABEL(trap)
+
+	.globl	trapexit
 trapexit:
 /* Disable interrupts: */
 	mfmsr	%r3
@@ -1199,6 +1202,7 @@ rfi3:	rfi
 /*
  * Decrementer interrupt second level handler
  */
+	.globl	decrintr
 decrintr:
 	INTRENTER
 	addi	%r3,%r1,8			/* intr frame */

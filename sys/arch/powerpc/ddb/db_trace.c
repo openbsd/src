@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.5 2014/07/13 12:11:01 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.6 2014/09/06 09:42:23 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -30,18 +30,20 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/user.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 #include <machine/signal.h>
 #include <machine/pcb.h>
+#include <machine/pmap.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
-
-int db_read32(u_int32_t paddr, u_int32_t *value);
 
 db_regs_t ddb_regs;
 
@@ -88,8 +90,6 @@ struct db_variable db_regs[] = {
 
 struct db_variable *db_eregs = db_regs + nitems(db_regs);
 
-extern label_t	*db_recover;
-
 /*
  * this is probably hackery.
  */
@@ -99,46 +99,16 @@ db_save_regs(struct trapframe *frame)
 	bcopy(frame, &(ddb_regs.tf), sizeof (struct trapframe));
 }
 
-int
-db_read32(u_int32_t paddr, u_int32_t *value)
-{
-	faultbuf env;
-	faultbuf *old_onfault = curpcb->pcb_onfault;
-	if (setfault(&env)) {
-		curpcb->pcb_onfault = old_onfault;
-		return EFAULT;
-	}
-	*value = *(u_int32_t *)paddr;
-	curpcb->pcb_onfault = old_onfault;
-	return 0;
-}
+/* from locore.S */
+extern db_addr_t trapexit;
+extern db_addr_t esym;
+#define	INTSTK		(8*1024)	/* 8K interrupt stack */
 
-db_expr_t
-db_dumpframe(u_int32_t pframe, int (*pr)(const char *, ...))
-{
-	u_int32_t nextframe;
-	u_int32_t lr;
-	char *name;
-	db_expr_t offset;
+#define	INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS &&	\
+			((vaddr_t)(va)) < VM_MAX_KERNEL_ADDRESS)
 
-	if (db_read32(pframe, &nextframe) == EFAULT) {
-		return 0;
-	}
-
-	if (db_read32(pframe+4, &lr) == EFAULT) {
-		return 0;
-	}
-
-	db_find_sym_and_offset(lr-4, &name, &offset);
-	if (!name) {
-		name = "0";
-		offset = lr-4;
-	}
-	(*pr)("%08x: %s+0x%x fp %x nfp %x\n",
-		lr-4, name, offset, pframe, nextframe);
-
-	return nextframe;
-}
+#define	ININTSTK(va)	(((vaddr_t)(va)) >= round_page(esym) &&		\
+			((vaddr_t)(va)) < (round_page(esym) + INTSTK))
 
 /*
  *	Frame tracing.
@@ -147,14 +117,92 @@ void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
+	db_addr_t	 lr, sp, lastsp;
+	db_expr_t	 offset;
+	db_sym_t	 sym;
+	char		*name;
+	char		 c, *cp = modif;
+	int		 trace_proc = 0;
 
-	if (count == 0 || count == -1)
-		count = INT_MAX;
-	if (have_addr == 0){
-		addr = ddb_regs.tf.fixreg[1];
+	while ((c = *cp++) != 0) {
+		if (c == 'p')
+			trace_proc = 1;
 	}
-	while (addr != 0 && count > 0) {
-		addr = db_dumpframe(addr, pr);
-		count --;
+
+	if (!have_addr) {
+		sp = ddb_regs.tf.fixreg[1];
+		lr = ddb_regs.tf.srr0;
+	} else {
+		if (trace_proc) {
+			struct proc *p = pfind((pid_t)addr);
+			if (p == NULL) {
+				(*pr) ("db_trace.c: process not found\n");
+				return;
+			}
+			addr = p->p_addr->u_pcb.pcb_sp;
+		}
+		sp = addr;
+		db_read_bytes(sp + 4, sizeof(db_addr_t), (char *)&lr);
 	}
+
+	while (count && sp != 0) {
+		/*
+		 * lr contains the return address, so adjust its value
+		 * to display the offset of the calling address.
+		 */
+		sym = db_search_symbol(lr - 4, DB_STGY_ANY, &offset);
+		db_symbol_values(sym, &name, NULL);
+
+		if (name == NULL || strcmp(name, "end") == 0) {
+			(*pr)("at 0x%lx", lr - 4);
+		} else {
+			(*pr)("%s() at ", name);
+			db_printsym(lr - 4, DB_STGY_PROC, pr);
+		}
+		(*pr)("\n");
+
+		lastsp = sp;
+
+		/*
+		 * Abuse the fact that the return address of the trap()
+		 * function is always 'trapexit'.
+		 */
+		if (lr == (db_addr_t)&trapexit) {
+			struct trapframe *tf = (struct trapframe *)(sp + 8);
+			uint32_t code = tf->fixreg[0];
+			uint32_t type = tf->exc;
+
+			if (tf->srr1 & PSL_PR)
+				type |= EXC_USER;
+
+			if (type == (EXC_SC|EXC_USER))
+				(*pr)("--- syscall (number %d) ---\n", code);
+			else
+				(*pr)("--- trap (type 0x%x) ---\n", type);
+		}
+
+		db_read_bytes(sp, sizeof(db_addr_t), (char *)&sp);
+		if (sp == 0)
+			break;
+
+		db_read_bytes(sp + 4, sizeof(db_addr_t), (char *)&lr);
+
+		if (INKERNEL(sp)) {
+			if (sp <= lastsp) {
+				(*pr)("Bad frame pointer: 0x%lx\n", sp);
+				break;
+			}
+
+			if (ININTSTK(lastsp))
+				(*pr)("--- interrupt ---\n");
+
+		} else  {
+			if (!ININTSTK(sp)) {
+				(*pr)("End of kernel: 0x%lx\n", sp);
+				break;
+			}
+		}
+		--count;
+	}
+	(*pr)("end trace frame: 0x%lx, count: %d\n", sp, count);
 }
