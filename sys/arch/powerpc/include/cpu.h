@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.53 2014/07/11 10:53:07 uebayasi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.54 2014/09/06 09:22:40 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -255,6 +255,7 @@ FUNC_SPR(275, sprg3)
 FUNC_SPR(280, asr)
 FUNC_SPR(282, ear)
 FUNC_SPR(287, pvr)
+FUNC_SPR(311, hior)
 FUNC_SPR(528, ibat0u)
 FUNC_SPR(529, ibat0l)
 FUNC_SPR(530, ibat1u)
@@ -287,7 +288,6 @@ FUNC_SPR(572, dbat6u)
 FUNC_SPR(573, dbat6l)
 FUNC_SPR(574, dbat7u)
 FUNC_SPR(575, dbat7l)
-FUNC_SPR(1008, hid0)
 FUNC_SPR(1009, hid1)
 FUNC_SPR(1010, iabr)
 FUNC_SPR(1017, l2cr)
@@ -339,6 +339,14 @@ void ppc_mtscomc(u_int32_t);
 void ppc64_mtscomc(u_int64_t);
 u_int64_t ppc64_mfscomd(void);
 void ppc_mtscomd(u_int32_t);
+u_int32_t ppc_mfhid0(void);
+void ppc_mthid0(u_int32_t);
+u_int64_t ppc64_mfhid1(void);
+void ppc64_mthid1(u_int64_t);
+u_int64_t ppc64_mfhid4(void);
+void ppc64_mthid4(u_int64_t);
+u_int64_t ppc64_mfhid5(void);
+void ppc64_mthid5(u_int64_t);
 
 #include <machine/psl.h>
 
