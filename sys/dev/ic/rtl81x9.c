@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.82 2014/07/22 13:12:12 mpi Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.83 2014/09/06 05:41:35 jsg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -114,9 +114,6 @@
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 
 #include <dev/ic/rtl81x9reg.h>
 

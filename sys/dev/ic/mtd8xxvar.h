@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xxvar.h,v 1.3 2004/09/28 04:37:32 brad Exp $	*/
+/*	$OpenBSD: mtd8xxvar.h,v 1.4 2014/09/06 05:41:35 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -129,7 +129,7 @@ struct mtd_softc {
 	struct device		sc_dev;
 	struct arpcom		sc_arpcom;
 	struct mii_data		sc_mii;
-	pci_product_id_t	sc_devid;
+	uint16_t		sc_devid;
 
 	bus_space_handle_t	sc_bush;
 	bus_space_tag_t		sc_bust;
