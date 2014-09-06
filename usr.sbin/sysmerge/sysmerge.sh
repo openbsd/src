@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.174 2014/09/06 10:43:24 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.175 2014/09/06 20:47:44 rpe Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -68,7 +68,7 @@ sm_warn() {
 }
 
 sm_extract_sets() {
-	[[ -n ${PKGMODE} ]] && return
+	${PKGMODE} && return
 	local _e _x _set
 
 	[[ -f /usr/share/sysmerge/etc.tgz ]] && _e=etc
@@ -135,7 +135,7 @@ EOF
 }
 
 sm_cp_pkg_samples() {
-	[[ -z ${PKGMODE} ]] && return
+	! ${PKGMODE} && return
 	local _install_args _i _ret=0 _sample
 
 	[[ -f /usr/share/sysmerge/pkgsum ]] && \
@@ -188,8 +188,8 @@ sm_init() {
 
 	for _i in etcsum xetcsum pkgsum; do
 		if [[ -f /usr/share/sysmerge/${_i} && \
-			-f ./usr/share/sysmerge/${_i} && \
-			-z ${DIFFMODE} ]]; then
+			-f ./usr/share/sysmerge/${_i} ]] && \
+			! ${DIFFMODE}; then
 			# redirect stderr; file may not exist
 			_matchsum=$(sha256 -c /usr/share/sysmerge/${_i} 2>/dev/null | \
 				awk '/OK/ { print $2 }' | \
@@ -213,8 +213,8 @@ sm_init() {
 				# it will be deleted from temproot and ignored from comparison;
 				# several files are generated from scripts so CVS ID is not a
 				# reliable way of detecting changes: leave for a full diff
-				if [[ -z ${PKGMODE} && \
-					${_k} != ./etc/@(fbtab|ttys) && \
+				if ! ${PKGMODE} && \
+					[[ ${_k} != ./etc/@(fbtab|ttys) && \
 					! -h ${_k} ]]; then
 					_cvsid1=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${_k#.} 2>/dev/null)
 					_cvsid2=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${_k} 2>/dev/null)
@@ -258,19 +258,20 @@ sm_init() {
 	_c1=$(find . -type f -or -type l | grep -vE '^./etc/mail/aliases$')
 	_c2=$(find . -type f -name aliases)
 	for COMPFILE in ${_c1} ${_c2}; do
-		unset IS_BINFILE IS_LINK
+		IS_BINFILE=false
+		IS_LINK=false
 		TARGET=${COMPFILE#.}
 
 		# links need to be treated in a different way
 		if [[ -h ${COMPFILE} ]]; then
-			IS_LINK=1
+			IS_LINK=true
 			[[ -h ${TARGET} && \
 				$(readlink ${COMPFILE}) == $(readlink ${TARGET}) ]] && \
 				rm ${COMPFILE} && continue
 		else
 			# disable sdiff for binaries
 			diff -q /dev/null ${COMPFILE} | grep -q Binary && \
-				IS_BINFILE=1
+				IS_BINFILE=true
 
 			# empty files = binaries (to avoid comparison);
 			# only process them if they don't exist on the system
@@ -279,7 +280,7 @@ sm_init() {
 					[[ -f ${COMPFILE} ]] && rm ${COMPFILE}
 					continue
 				else
-					IS_BINFILE=1
+					IS_BINFILE=true
 				fi
 			fi
 
@@ -302,7 +303,7 @@ sm_install() {
 	[[ -d ${_instdir} ]] && \
 		install -d -o root -g wheel -m ${_dmode} "${_instdir}" || return
 
-	if [[ -n ${IS_LINK} ]]; then
+	if ${IS_LINK}; then
 		_linkt=$(readlink ${COMPFILE})
 		(cd ${_instdir} && ln -sf ${_linkt} . && rm ${_TMPROOT}/${COMPFILE})
 		return
@@ -342,7 +343,7 @@ sm_add_user_grp() {
 	local _pw="./etc/master.passwd"
 	local _gr="./etc/group"
 
-	[[ -n ${PKGMODE} ]] && return
+	${PKGMODE} && return
 
 	while read _l; do
 		_u=$(echo ${_l} | awk -F ':' '{ print $1 }')
@@ -369,8 +370,8 @@ sm_add_user_grp() {
 sm_merge_loop() {
 	local INSTALL_MERGED MERGE_AGAIN
 	echo "===> Type h at the sdiff prompt (%) to get usage help\n"
-	MERGE_AGAIN=1
-	while [[ -n ${MERGE_AGAIN} ]]; do
+	MERGE_AGAIN=true
+	while ${MERGE_AGAIN}; do
 		cp -p ${COMPFILE} ${COMPFILE}.merged
 		sdiff -as -w ${_SWIDTH} -o ${COMPFILE}.merged \
 			${TARGET} ${COMPFILE}
@@ -399,7 +400,7 @@ sm_merge_loop() {
 				sm_echo -n "\n===> Merging ${TARGET}"
 				sm_install || \
 					sm_warn "problem merging ${TARGET}"
-				unset MERGE_AGAIN
+				MERGE_AGAIN=false
 				;;
 			[nN])
 				(
@@ -427,7 +428,7 @@ sm_merge_loop() {
 				;;
 			'')
 				sm_echo "===> ${COMPFILE} will remain for your consideration"
-				unset MERGE_AGAIN
+				MERGE_AGAIN=false
 				;;
 			*)
 				echo "invalid choice: ${INSTALL_MERGED}"
@@ -441,21 +442,22 @@ sm_merge_loop() {
 sm_diff_loop() {
 	local i HANDLE_COMPFILE NO_INSTALLED AUTO_INSTALLED_FILES
 
-	[[ -n ${BATCHMODE} ]] && HANDLE_COMPFILE=todo || HANDLE_COMPFILE=v
+	${BATCHMODE} && HANDLE_COMPFILE=todo || HANDLE_COMPFILE=v
 
-	unset NO_INSTALLED FORCE_UPG
+	FORCE_UPG=false
+	NO_INSTALLED=false
 	while [[ ${HANDLE_COMPFILE} == @(v|todo) ]]; do
-		if [[ -f ${TARGET} && -f ${COMPFILE} && -z ${IS_LINK} ]]; then
-			if [[ -z ${DIFFMODE} ]]; then
+		if [[ -f ${TARGET} && -f ${COMPFILE} ]] && ! ${IS_LINK}; then
+			if ! ${DIFFMODE}; then
 				# automatically install files if current != new
 				# and current = old
 				for i in ${AUTO_UPG[@]}; do \
-					[[ ${i} == ${COMPFILE} ]] && FORCE_UPG=1
+					[[ ${i} == ${COMPFILE} ]] && FORCE_UPG=true
 				done
 				# automatically install files which differ
 				# only by CVS Id or that are binaries
-				if [[ -z $(diff -q -I'[$]OpenBSD:.*$' ${TARGET} ${COMPFILE}) || \
-					-n ${FORCE_UPG} || -n ${IS_BINFILE} ]]; then
+				if [[ -z $(diff -q -I'[$]OpenBSD:.*$' ${TARGET} ${COMPFILE}) ]] || \
+					${FORCE_UPG} || ${IS_BINFILE}; then
 					sm_echo -n "===> Updating ${TARGET}"
 					sm_install && \
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${TARGET}\n" || \
@@ -474,9 +476,9 @@ sm_diff_loop() {
 			fi
 		else
 			# file does not exist on the target system
-			if [[ -n ${IS_LINK} ]]; then
-				if [[ -n ${DIFFMODE} ]]; then
-					sm_echo && NO_INSTALLED=1
+			if ${IS_LINK}; then
+				if ${DIFFMODE}; then
+					sm_echo && NO_INSTALLED=true
 				else
 					sm_echo "===> Linking ${TARGET}"
 					sm_install && \
@@ -485,8 +487,8 @@ sm_diff_loop() {
 					return
 				fi
 			fi
-			if [[ -n ${DIFFMODE} ]]; then
-				sm_echo && NO_INSTALLED=1
+			if ${DIFFMODE}; then
+				sm_echo && NO_INSTALLED=true
 			else
 				sm_echo -n "===> Installing ${TARGET}"
 				sm_install && \
@@ -496,11 +498,11 @@ sm_diff_loop() {
 			fi
 		fi
 
-		if [[ -z ${BATCHMODE} ]]; then
+		if ! ${BATCHMODE}; then
 			echo "  Use 'd' to delete the temporary ${COMPFILE}"
 			echo "  Use 'i' to install the temporary ${COMPFILE}"
-			if [[ -z ${NO_INSTALLED} && -z ${IS_BINFILE} && \
-				-z ${IS_LINK} ]]; then
+			if ! ${NO_INSTALLED} && ! ${IS_BINFILE} && \
+				! ${IS_LINK}; then
 				echo "  Use 'm' to merge the temporary and installed versions"
 				echo "  Use 'v' to view the diff results again"
 			fi
@@ -520,7 +522,7 @@ sm_diff_loop() {
 			;;
 		[iI])
 			sm_echo
-			if [[ -n ${IS_LINK} ]]; then
+			if ${IS_LINK}; then
 				sm_echo "===> Linking ${TARGET}"
 				sm_install && \
 					MERGED_FILES="${MERGED_FILES}${TARGET}\n" || \
@@ -533,7 +535,7 @@ sm_diff_loop() {
 			fi
 			;;
 		[mM])
-			if [[ -z ${NO_INSTALLED} && -z ${IS_BINFILE} && -z ${IS_LINK} ]]; then
+			if ! ${NO_INSTALLED} && ! ${IS_BINFILE} && ! ${IS_LINK}; then
 				sm_merge_loop && \
 					MERGED_FILES="${MERGED_FILES}${TARGET}\n" || \
 						HANDLE_COMPFILE="todo"
@@ -543,7 +545,7 @@ sm_diff_loop() {
 			fi
 			;;
 		[vV])
-			if [[ -z ${NO_INSTALLED} && -z ${IS_BINFILE} && -z ${IS_LINK} ]]; then
+			if ! ${NO_INSTALLED} && ! ${IS_BINFILE} && ! ${IS_LINK}; then
 				HANDLE_COMPFILE="v"
 			else
 				echo "invalid choice: ${HANDLE_COMPFILE}\n"
@@ -564,7 +566,7 @@ sm_diff_loop() {
 
 
 sm_check_an_eg() {
-	[[ -n ${PKGMODE} ]] && return
+	${PKGMODE} && return
 	local _egmods _i _managed
 
 	if [[ -f /usr/share/sysmerge/examplessum ]]; then
@@ -612,12 +614,15 @@ sm_post() {
 	fi
 }
 
-unset BATCHMODE DIFFMODE PKGMODE
+BATCHMODE=false
+DIFFMODE=false
+PKGMODE=false
+
 while getopts bdp arg; do
 	case ${arg} in
-	b)	BATCHMODE=1;;
-	d)	DIFFMODE=1;;
-	p)	PKGMODE=1;;
+	b)	BATCHMODE=true;;
+	d)	DIFFMODE=true;;
+	p)	PKGMODE=true;;
 	*)	usage;;
 	esac
 done
