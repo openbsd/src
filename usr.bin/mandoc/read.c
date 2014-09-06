@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.59 2014/09/06 22:38:35 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.60 2014/09/06 23:24:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -63,9 +63,9 @@ struct	mparse {
 	int		  line; /* line number in the file */
 };
 
+static	void	  choose_parser(struct mparse *);
 static	void	  resize_buf(struct buf *, size_t);
 static	void	  mparse_buf_r(struct mparse *, struct buf, int);
-static	void	  pset(const char *, int, struct mparse *);
 static	int	  read_whole_file(struct mparse *, const char *, int,
 				struct buf *, int *);
 static	void	  mparse_end(struct mparse *);
@@ -241,19 +241,10 @@ resize_buf(struct buf *buf, size_t initial)
 }
 
 static void
-pset(const char *buf, int pos, struct mparse *curp)
+choose_parser(struct mparse *curp)
 {
 	char		*cp, *ep;
 	int		 format;
-	int		 i;
-
-	if ('.' == buf[0] || '\'' == buf[0]) {
-		for (i = 1; buf[i]; i++)
-			if (' ' != buf[i] && '\t' != buf[i])
-				break;
-		if ('\0' == buf[i])
-			return;
-	}
 
 	/*
 	 * If neither command line arguments -mdoc or -man select
@@ -544,12 +535,10 @@ rerun:
 		 */
 
 		if ( ! (curp->man || curp->mdoc))
-			pset(ln.buf + of, pos - of, curp);
+			choose_parser(curp);
 
 		/*
-		 * Lastly, push down into the parsers themselves.  One
-		 * of these will have already been set in the pset()
-		 * routine.
+		 * Lastly, push down into the parsers themselves.
 		 * If libroff returns ROFF_TBL, then add it to the
 		 * currently open parse.  Since we only get here if
 		 * there does exist data (see tbl_data.c), we're

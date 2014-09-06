@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.86 2014/08/08 16:05:42 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.87 2014/09/06 23:24:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -468,13 +468,6 @@ man_pmacro(struct man *man, int ln, char *buf, int offs)
 	enum mant	 tok;
 	int		 i, ppos;
 	int		 bline;
-
-	if ('"' == buf[offs]) {
-		mandoc_msg(MANDOCERR_COMMENT_BAD, man->parse,
-		    ln, offs, NULL);
-		return(1);
-	} else if ('\0' == buf[offs])
-		return(1);
 
 	ppos = offs;
 

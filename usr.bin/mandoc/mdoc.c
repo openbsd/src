@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.113 2014/08/08 16:17:09 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.114 2014/09/06 23:24:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -790,15 +790,6 @@ mdoc_pmacro(struct mdoc *mdoc, int ln, char *buf, int offs)
 	int		  i, sv;
 	char		  mac[5];
 	struct mdoc_node *n;
-
-	/* Empty post-control lines are ignored. */
-
-	if ('"' == buf[offs]) {
-		mandoc_msg(MANDOCERR_COMMENT_BAD, mdoc->parse,
-		    ln, offs, NULL);
-		return(1);
-	} else if ('\0' == buf[offs])
-		return(1);
 
 	sv = offs;
 
