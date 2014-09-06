@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.48 2014/08/30 09:42:20 mpi Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.49 2014/09/06 10:45:29 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -202,7 +202,7 @@ macintr_attach(struct device *parent, struct device *self, void *aux)
 	ppc_intr_func.lower = macintr_spllower;
 	ppc_intr_func.x = macintr_splx;
 
-	ci->ci_iactive = 0;
+	ci->ci_flags = 0;
 
 	macintr_collect_preconf_intr();
 
@@ -480,11 +480,11 @@ macintr_do_pending_int()
 	int pcpl = ci->ci_cpl; /* XXX */
 	int s;
 	s = ppc_intr_disable();
-	if (ci->ci_iactive & CI_IACTIVE_PROCESSING_SOFT) {
+	if (ci->ci_flags & CI_FLAGS_PROCESSING_SOFT) {
 		ppc_intr_enable(s);
 		return;
 	}
-	atomic_setbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
+	atomic_setbits_int(&ci->ci_flags, CI_FLAGS_PROCESSING_SOFT);
 
 	do {
 		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTCLOCK)) &&
@@ -507,7 +507,7 @@ macintr_do_pending_int()
 	macintr_setipl(pcpl);
 	ppc_intr_enable(s);
 
-	atomic_clearbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
+	atomic_clearbits_int(&ci->ci_flags, CI_FLAGS_PROCESSING_SOFT);
 }
 
 void

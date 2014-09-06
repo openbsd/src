@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.44 2014/09/06 10:15:52 mpi Exp $	*/
+/*	$OpenBSD: locore.S,v 1.45 2014/09/06 10:45:29 mpi Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -238,9 +238,9 @@ _ENTRY(_C_LABEL(cpu_idle_cycle))
 	 * are entering sleep mode.
 	 */
 	GET_CPUINFO(%r4)
-	lwz	%r6,CI_IACTIVE(%r4)
-	ori	%r6,%r6,CI_IACTIVE_SLEEPING@l
-	stw	%r6,CI_IACTIVE(%r4)
+	lwz	%r6,CI_FLAGS(%r4)
+	ori	%r6,%r6,CI_FLAGS_SLEEPING@l
+	stw	%r6,CI_FLAGS(%r4)
 
 	/* enable interrupts, required before setting POW */
 	mfmsr	%r3
@@ -254,15 +254,15 @@ _ENTRY(_C_LABEL(cpu_idle_cycle))
 	isync
 
 	/*
-	 * restore interrupts to disabled, so CI_IACTIVE is only modified
+	 * restore interrupts to disabled, so CI_FLAGS is only modified
 	 * with interrupts disabled.
 	 */
 	mtmsr %r3
 	isync
 
-	/* clear CI_IACTIVE_SLEEPING since sleeping is over */
-	andi.	%r6,%r6,~CI_IACTIVE_SLEEPING@l
-	stw	%r6,CI_IACTIVE(%r4)
+	/* clear CI_FLAGS_SLEEPING since sleeping is over */
+	andi.	%r6,%r6,~CI_FLAGS_SLEEPING@l
+	stw	%r6,CI_FLAGS(%r4)
 idledone:
 	blr
 
@@ -730,11 +730,11 @@ _C_LABEL(ddbsize) =	.-_C_LABEL(ddblow)
  */
 #define CPU_IDLE_CHECK(sr1,sr2,sr3,rSRR0)				\
 	GET_CPUINFO(sr1);						\
-	lwz	sr2,CI_IACTIVE(sr1);					\
-	andi.	sr3,sr2,CI_IACTIVE_SLEEPING@l;				\
+	lwz	sr2,CI_FLAGS(sr1);					\
+	andi.	sr3,sr2,CI_FLAGS_SLEEPING@l;				\
 	beq	1f;							\
-	andi.	sr2,sr2,~CI_IACTIVE_SLEEPING@l;				\
-	stw	sr2,CI_IACTIVE(sr1);					\
+	andi.	sr2,sr2,~CI_FLAGS_SLEEPING@l;				\
+	stw	sr2,CI_FLAGS(sr1);					\
 	lis	rSRR0,_C_LABEL(idledone)@ha;				\
 	addi	rSRR0,rSRR0,_C_LABEL(idledone)@l;			\
 1:
@@ -1293,9 +1293,9 @@ _C_LABEL(ddb_trap):
 	 * about to enter to ddb(8), do not let FRAME_SETUP() below
 	 * change the return address of, and corrupt, this frame.
 	 */
-	lwz	%r28,CI_IACTIVE(%r3)
-	andi.	%r28,%r28,~CI_IACTIVE_SLEEPING@l
-	stw	%r28,CI_IACTIVE(%r3)
+	lwz	%r28,CI_FLAGS(%r3)
+	andi.	%r28,%r28,~CI_FLAGS_SLEEPING@l
+	stw	%r28,CI_FLAGS(%r3)
 
 	mflr	%r28
 	li	%r29,EXC_BPT

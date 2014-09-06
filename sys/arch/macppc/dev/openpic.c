@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.73 2014/08/30 09:42:20 mpi Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.74 2014/09/06 10:45:29 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -462,14 +462,14 @@ openpic_do_pending_int_dis(int pcpl, int s)
 	struct cpu_info *ci = curcpu();
 
 	(void)ppc_intr_disable();
-	if (ci->ci_iactive & CI_IACTIVE_PROCESSING_SOFT) {
+	if (ci->ci_flags & CI_FLAGS_PROCESSING_SOFT) {
 		/* soft interrupts are being processed, just set ipl/return */
 		openpic_setipl(pcpl);
 		ppc_intr_enable(s);
 		return;
 	}
 
-	atomic_setbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
+	atomic_setbits_int(&ci->ci_flags, CI_FLAGS_PROCESSING_SOFT);
 
 	do {
 		if ((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTCLOCK)) &&
@@ -502,7 +502,7 @@ openpic_do_pending_int_dis(int pcpl, int s)
 	} while (ci->ci_ipending & ppc_smask[pcpl]);
 	openpic_setipl(pcpl);	/* Don't use splx... we are here already! */
 
-	atomic_clearbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
+	atomic_clearbits_int(&ci->ci_flags, CI_FLAGS_PROCESSING_SOFT);
 	ppc_intr_enable(s);
 }
 

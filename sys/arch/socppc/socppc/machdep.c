@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.55 2014/07/21 17:25:47 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.56 2014/09/06 10:45:29 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1098,11 +1098,11 @@ do_pending_int(void)
 	int pcpl = ci->ci_cpl; /* XXX */
 	int s;
 	s = ppc_intr_disable();
-	if (ci->ci_iactive & CI_IACTIVE_PROCESSING_SOFT) {
+	if (ci->ci_flags & CI_FLAGS_PROCESSING_SOFT) {
 		ppc_intr_enable(s);
 		return;
 	}
-	atomic_setbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
+	atomic_setbits_int(&ci->ci_flags, CI_FLAGS_PROCESSING_SOFT);
 
 	do {
 		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTCLOCK)) &&
@@ -1125,7 +1125,7 @@ do_pending_int(void)
 	splx(pcpl);
 	ppc_intr_enable(s);
 
-	atomic_clearbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
+	atomic_clearbits_int(&ci->ci_flags, CI_FLAGS_PROCESSING_SOFT);
 }
 
 /*
