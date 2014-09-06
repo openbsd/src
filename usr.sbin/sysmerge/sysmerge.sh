@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.173 2014/09/06 10:38:01 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.174 2014/09/06 10:43:24 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -209,8 +209,6 @@ sm_init() {
 			for _k in ${_mismatch}; do
 				# skip sum files
 				[[ ${_k} == ./usr/share/sysmerge/${_i} ]] && continue
-
-
 				# compare CVS $Id's first so if the file hasn't been modified,
 				# it will be deleted from temproot and ignored from comparison;
 				# several files are generated from scripts so CVS ID is not a
@@ -224,8 +222,6 @@ sm_init() {
 						[[ -f ${_k} ]] && rm ${_k} && \
 						continue
 				fi
-
-
 				# redirect stderr; file may not exist
 				_cursum=$(cd / && sha256 ${_k} 2>/dev/null)
 				[[ -n $(grep "${_cursum}" /usr/share/sysmerge/${_i}) && \
@@ -607,6 +603,7 @@ sm_post() {
 	if [[ -e ${_WRKDIR}/sysmerge.log ]]; then
 		find . -type f -empty | xargs -r rm
 		find . -type d | sort -r | xargs -r rmdir 2>/dev/null
+		rm ${_WRKDIR}/*sum
 		sed '/^$/d' ${_WRKDIR}/sysmerge.log >${_WRKDIR}/sysmerge.log.bak
 		mv ${_WRKDIR}/sysmerge.log.bak ${_WRKDIR}/sysmerge.log
 		echo "===> Log available at ${_WRKDIR}/sysmerge.log"
