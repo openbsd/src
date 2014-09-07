@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.14 2014/09/01 03:39:15 guenther Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.15 2014/09/07 22:19:32 kettenis Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -204,6 +204,32 @@ _atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
 	return (rv - v);
 }
 #define atomic_sub_long_nv(_p, _v) _atomic_sub_long_nv(_p, _v)
+
+/*
+ * The AMD64 architecture is rather strongly ordered.  When accessing
+ * normal write-back cachable memory, only reads may be reordered with
+ * older writes to different locations.  There are a few instructions
+ * (clfush, non-temporal move instructions) that obey weaker ordering
+ * rules, but those instructions will only be used in (inline)
+ * assembly code where we can add the necessary fence instructions
+ * ourselves.
+ */
+
+#define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
+
+#ifdef MULTIPROCESSOR
+#define membar_enter()		__membar("mfence")
+#define membar_exit()		__membar("")
+#define membar_producer()	__membar("")
+#define membar_consumer()	__membar("")
+#define membar_sync()		__membar("mfence")
+#else
+#define membar_enter()		__membar("")
+#define membar_exit()		__membar("")
+#define membar_producer()	__membar("")
+#define membar_consumer()	__membar("")
+#define membar_sync()		__membar("")
+#endif
 
 static __inline u_int64_t
 x86_atomic_testset_u64(volatile u_int64_t *ptr, u_int64_t val)
