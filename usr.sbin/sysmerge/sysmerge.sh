@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.177 2014/09/07 06:40:01 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.178 2014/09/07 07:46:26 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -156,15 +156,13 @@ sm_cp_pkg_samples() {
 			# does not exist and is not a @sample so we have no
 			# knowledge of the required owner/group/mode
 			# (e.g. /var/www/usr/sbin in mail/femail,-chroot)
-			_pkghier=$(dirname ${_sample[5]#${_TMPROOT}})
+			_pkghier=${_sample[5]%/*}
 			if [[ ! -d ${_pkghier} ]]; then
-				sm_warn "skipping ${_sample[5]#${_TMPROOT}}: ${_pkghier} does not exist"
+				sm_warn "skipping ${_sample[5]#${_TMPROOT}}: ${_pkghier#${_TMPROOT}} does not exist"
 				continue
 			fi
-			if [[ -d $(dirname ${_sample[5]}) ]]; then
-				install ${_install_args} \
-					${_sample[4]} ${_sample[5]} || _ret=1
-			fi
+			install ${_install_args} \
+				${_sample[4]} ${_sample[5]} || _ret=1
 		fi
 	done
 
@@ -178,7 +176,7 @@ sm_cp_pkg_samples() {
 }
 
 sm_init() {
-	local _auto_upg _c _c1 _c2 _cursum _i _k _j _cfdiff _cffiles
+	local _auto_upg _c _c1 _c2 _cursum _diff _i _k _j _cfdiff _cffiles
 	local _ignorefile _cvsid1 _cvsid2 _matchsum _mismatch
 
 	sm_extract_sets
@@ -290,13 +288,14 @@ sm_init() {
 
 sm_install() {
 	local _dmode _fgrp _fmode _fown _instdir
-	_instdir=$(dirname ${TARGET})
+	_instdir=${TARGET%/*}
 
 	_dmode=$(stat -f "%OMp%OLp" ./${_instdir}) || return
 	eval $(stat -f "_fmode=%OMp%OLp _fown=%Su _fgrp=%Sg" ${COMPFILE}) || return
 
-	[[ -d ${_instdir} ]] && \
+	if [[ ! -d ${_instdir} ]]; then
 		install -d -o root -g wheel -m ${_dmode} "${_instdir}" || return
+	fi
 
 	if ${IS_LINK}; then
 		_linkt=$(readlink ${COMPFILE})
@@ -310,7 +309,7 @@ sm_install() {
 	fi
 
 	if ! install -m ${_fmode} -o ${_fown} -g ${_fgrp} ${COMPFILE} ${_instdir}; then
-		rm ${_BKPDIR}/${COMPFILE}; return 1
+		rm ${_BKPDIR}/${COMPFILE} && return 1
 	fi
 	rm ${COMPFILE}
 
@@ -392,7 +391,7 @@ sm_merge_loop() {
 				mv ${COMPFILE}.merged ${COMPFILE}
 				sm_echo -n "\n===> Merging ${TARGET}"
 				sm_install || \
-					sm_warn "problem merging ${TARGET}"
+					(echo && sm_warn "problem merging ${TARGET}")
 				MERGE_AGAIN=false
 				;;
 			[nN])
@@ -454,7 +453,7 @@ sm_diff_loop() {
 					sm_echo -n "===> Updating ${TARGET}"
 					sm_install && \
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${TARGET}\n" || \
-						sm_warn "problem updating ${TARGET}"
+						(echo && sm_warn "problem updating ${TARGET}")
 					return
 				fi
 			fi
@@ -486,7 +485,7 @@ sm_diff_loop() {
 				sm_echo -n "===> Installing ${TARGET}"
 				sm_install && \
 					AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${TARGET}\n" || \
-					sm_warn "problem installing ${TARGET}"
+					(echo && sm_warn "problem installing ${TARGET}")
 				return
 			fi
 		fi
@@ -524,7 +523,7 @@ sm_diff_loop() {
 				sm_echo -n "===> Updating ${TARGET}"
 				sm_install && \
 					MERGED_FILES="${MERGED_FILES}${TARGET}\n" || \
-					sm_warn "problem updating ${TARGET}"
+					(echo && sm_warn "problem updating ${TARGET}")
 			fi
 			;;
 		[mM])
