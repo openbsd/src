@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.180 2014/09/07 08:39:04 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.181 2014/09/07 09:21:42 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -594,11 +594,11 @@ sm_post() {
 		mtree -qdef /etc/mtree/BSD.x11.dist -p / -U >/dev/null
 
 	if [[ -e ${_WRKDIR}/sysmerge.log ]]; then
-		find . -type f -empty | xargs -r rm
-		find . -type d | sort -r | xargs -r rmdir 2>/dev/null
 		rm ${_WRKDIR}/*sum
 		sed '/^$/d' ${_WRKDIR}/sysmerge.log >${_WRKDIR}/sysmerge.log.bak
 		mv ${_WRKDIR}/sysmerge.log.bak ${_WRKDIR}/sysmerge.log
+		cd ${_WRKDIR} && \
+			find . -type d -depth -empty -exec rmdir -p '{}' + 2>/dev/null
 		echo "===> Log available at ${_WRKDIR}/sysmerge.log"
 	else
 		rm -rf ${_WRKDIR}
