@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.179 2014/09/07 08:15:42 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.180 2014/09/07 08:39:04 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -255,7 +255,7 @@ sm_init() {
 	_c1=$(find . -type f -or -type l | grep -vE '^./etc/mail/aliases$')
 	_c2=$(find . -type f -name aliases)
 	for COMPFILE in ${_c1} ${_c2}; do
-		IS_BINFILE=false
+		IS_BIN=false
 		IS_LINK=false
 		TARGET=${COMPFILE#.}
 
@@ -277,10 +277,10 @@ sm_init() {
 			[[ $? -eq 0 ]] && rm ${COMPFILE} && continue
 			# disable sdiff for binaries
 			echo "${_diff}" | head -1 | grep -q "Binary files" && \
-				IS_BINFILE=true
+				IS_BIN=true
 		else
 			# missing files = binaries (to avoid comparison)
-			IS_BINFILE=true
+			IS_BIN=true
 		fi
 
 		sm_diff_loop
@@ -334,7 +334,7 @@ sm_install() {
 }
 
 sm_add_user_grp() {
-	local _g _p _gid _l _u _rest NEWGRP NEWUSR
+	local _g _p _gid _l _u _rest _newgrp _newusr
 	local _pw="./etc/master.passwd"
 	local _gr="./etc/group"
 
@@ -346,7 +346,7 @@ sm_add_user_grp() {
 			if [[ -z $(grep -E "^${_u}:" /etc/master.passwd) ]]; then
 				sm_echo "===> Adding the ${_u} user"
 				chpass -la ${_l} && \
-					set -A NEWUSR -- ${NEWUSR[@]} ${_u}
+					set -A _newusr -- ${_newusr[@]} ${_u}
 			fi
 		fi
 	done <${_pw}
@@ -355,21 +355,21 @@ sm_add_user_grp() {
 		if [[ -z $(grep -E "^${_g}:" /etc/group) ]]; then
 			sm_echo "===> Adding the ${_g} group"
 			groupadd -g ${_gid} ${_g} && \
-				set -A NEWGRP -- ${NEWGRP[@]} ${_g}
+				set -A _newgrp -- ${_newgrp[@]} ${_g}
 		fi
 	done <${_gr}
 }
 
 sm_merge_loop() {
-	local INSTALL_MERGED MERGE_AGAIN
+	local _instmerged _tomerge
 	echo "===> Type h at the sdiff prompt (%) to get usage help\n"
-	MERGE_AGAIN=true
-	while ${MERGE_AGAIN}; do
+	_tomerge=true
+	while ${_tomerge}; do
 		cp -p ${COMPFILE} ${COMPFILE}.merged
 		sdiff -as -w ${_SWIDTH} -o ${COMPFILE}.merged \
 			${TARGET} ${COMPFILE}
-		INSTALL_MERGED=v
-		while [[ ${INSTALL_MERGED} == "v" ]]; do
+		_instmerged=v
+		while [[ ${_instmerged} == "v" ]]; do
 			echo
 			echo "  Use 'e' to edit the merged file"
 			echo "  Use 'i' to install the merged file"
@@ -381,33 +381,33 @@ sm_merge_loop() {
 			echo "  Default is to leave the temporary file to deal with by hand"
 			echo
 			echo -n "===> How should I deal with the merged file? [Leave it for later] "
-			read INSTALL_MERGED
-			case ${INSTALL_MERGED} in
+			read _instmerged
+			case ${_instmerged} in
 			[eE])
 				echo "editing merged file...\n"
 				${EDITOR} ${COMPFILE}.merged
-				INSTALL_MERGED=v
+				_instmerged=v
 				;;
 			[iI])
 				mv ${COMPFILE}.merged ${COMPFILE}
 				sm_echo -n "\n===> Merging ${TARGET}"
 				sm_install || \
 					(echo && sm_warn "problem merging ${TARGET}")
-				MERGE_AGAIN=false
+				_tomerge=false
 				;;
 			[nN])
 				(
 					echo "comparison between merged and new files:\n"
 					diff -u ${COMPFILE}.merged ${COMPFILE}
 				) | ${PAGER}
-				INSTALL_MERGED=v
+				_instmerged=v
 				;;
 			[oO])
 				(
 					echo "comparison between old and merged files:\n"
 					diff -u ${TARGET} ${COMPFILE}.merged
 				) | ${PAGER}
-				INSTALL_MERGED=v
+				_instmerged=v
 				;;
 			[rR])
 				rm ${COMPFILE}.merged
@@ -421,11 +421,11 @@ sm_merge_loop() {
 				;;
 			'')
 				sm_echo "===> ${COMPFILE} will remain for your consideration"
-				MERGE_AGAIN=false
+				_tomerge=false
 				;;
 			*)
-				echo "invalid choice: ${INSTALL_MERGED}"
-				INSTALL_MERGED=v
+				echo "invalid choice: ${_instmerged}"
+				_instmerged=v
 				;;
 			esac
 		done
@@ -433,13 +433,13 @@ sm_merge_loop() {
 }
 
 sm_diff_loop() {
-	local i HANDLE_COMPFILE NO_INSTALLED AUTO_INSTALLED_FILES
+	local i _handle _nonexistent _autoinst
 
-	${BATCHMODE} && HANDLE_COMPFILE=todo || HANDLE_COMPFILE=v
+	${BATCHMODE} && _handle=todo || _handle=v
 
 	FORCE_UPG=false
-	NO_INSTALLED=false
-	while [[ ${HANDLE_COMPFILE} == @(v|todo) ]]; do
+	_nonexistent=false
+	while [[ ${_handle} == @(v|todo) ]]; do
 		if [[ -f ${TARGET} && -f ${COMPFILE} ]] && ! ${IS_LINK}; then
 			if ! ${DIFFMODE}; then
 				# automatically install files if current != new
@@ -450,15 +450,15 @@ sm_diff_loop() {
 				# automatically install files which differ
 				# only by CVS Id or that are binaries
 				if [[ -z $(diff -q -I'[$]OpenBSD:.*$' ${TARGET} ${COMPFILE}) ]] || \
-					${FORCE_UPG} || ${IS_BINFILE}; then
+					${FORCE_UPG} || ${IS_BIN}; then
 					sm_echo -n "===> Updating ${TARGET}"
 					sm_install && \
-						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${TARGET}\n" || \
+						_autoinst="${_autoinst}${TARGET}\n" || \
 						(echo && sm_warn "problem updating ${TARGET}")
 					return
 				fi
 			fi
-			if [[ ${HANDLE_COMPFILE} == "v" ]]; then
+			if [[ ${_handle} == "v" ]]; then
 				(
 					echo "\n========================================================================\n"
 					echo "===> Displaying differences between ${COMPFILE} and installed version:"
@@ -471,21 +471,21 @@ sm_diff_loop() {
 			# file does not exist on the target system
 			if ${IS_LINK}; then
 				if ${DIFFMODE}; then
-					sm_echo && NO_INSTALLED=true
+					sm_echo && _nonexistent=true
 				else
 					sm_echo "===> Linking ${TARGET}"
 					sm_install && \
-						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${TARGET}\n" || \
+						_autoinst="${_autoinst}${TARGET}\n" || \
 						sm_warn "problem creating ${TARGET} link"
 					return
 				fi
 			fi
 			if ${DIFFMODE}; then
-				sm_echo && NO_INSTALLED=true
+				sm_echo && _nonexistent=true
 			else
 				sm_echo -n "===> Installing ${TARGET}"
 				sm_install && \
-					AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${TARGET}\n" || \
+					_autoinst="${_autoinst}${TARGET}\n" || \
 					(echo && sm_warn "problem installing ${TARGET}")
 				return
 			fi
@@ -494,7 +494,7 @@ sm_diff_loop() {
 		if ! ${BATCHMODE}; then
 			echo "  Use 'd' to delete the temporary ${COMPFILE}"
 			echo "  Use 'i' to install the temporary ${COMPFILE}"
-			if ! ${NO_INSTALLED} && ! ${IS_BINFILE} && \
+			if ! ${_nonexistent} && ! ${IS_BIN} && \
 				! ${IS_LINK}; then
 				echo "  Use 'm' to merge the temporary and installed versions"
 				echo "  Use 'v' to view the diff results again"
@@ -503,12 +503,12 @@ sm_diff_loop() {
 			echo "  Default is to leave the temporary file to deal with by hand"
 			echo
 			echo -n "How should I deal with this? [Leave it for later] "
-			read HANDLE_COMPFILE
+			read _handle
 		else
-			unset HANDLE_COMPFILE
+			unset _handle
 		fi
 
-		case ${HANDLE_COMPFILE} in
+		case ${_handle} in
 		[dD])
 			rm ${COMPFILE}
 			echo "\n===> Deleting ${COMPFILE}"
@@ -528,29 +528,29 @@ sm_diff_loop() {
 			fi
 			;;
 		[mM])
-			if ! ${NO_INSTALLED} && ! ${IS_BINFILE} && ! ${IS_LINK}; then
+			if ! ${_nonexistent} && ! ${IS_BIN} && ! ${IS_LINK}; then
 				sm_merge_loop && \
 					MERGED_FILES="${MERGED_FILES}${TARGET}\n" || \
-						HANDLE_COMPFILE="todo"
+						_handle="todo"
 			else
-				echo "invalid choice: ${HANDLE_COMPFILE}\n"
-				HANDLE_COMPFILE="todo"
+				echo "invalid choice: ${_handle}\n"
+				_handle="todo"
 			fi
 			;;
 		[vV])
-			if ! ${NO_INSTALLED} && ! ${IS_BINFILE} && ! ${IS_LINK}; then
-				HANDLE_COMPFILE="v"
+			if ! ${_nonexistent} && ! ${IS_BIN} && ! ${IS_LINK}; then
+				_handle="v"
 			else
-				echo "invalid choice: ${HANDLE_COMPFILE}\n"
-				HANDLE_COMPFILE="todo"
+				echo "invalid choice: ${_handle}\n"
+				_handle="todo"
 			fi
 			;;
 		'')
 			sm_echo "===> ${COMPFILE} will remain for your consideration"
 			;;
 		*)
-			echo "invalid choice: ${HANDLE_COMPFILE}\n"
-			HANDLE_COMPFILE="todo"
+			echo "invalid choice: ${_handle}\n"
+			_handle="todo"
 			continue
 			;;
 		esac
@@ -580,13 +580,13 @@ sm_check_an_eg() {
 }
 
 sm_post() {
-	local _i FILES_IN__TMPROOT FILES_IN__BKPDIR
+	local _i _files_in_tmproot _files_in_bkpdir
 
-	FILES_IN__TMPROOT=$(find . -type f ! -name \*.merged -size +0)
+	_files_in_tmproot=$(find . -type f ! -name \*.merged -size +0)
 	[[ -d ${_BKPDIR} ]] && \
-		FILES_IN__BKPDIR=$(find ${_BKPDIR} -type f -size +0)
+		_files_in_bkpdir=$(find ${_BKPDIR} -type f -size +0)
 
-	[[ -n ${FILES_IN__TMPROOT} ]] && \
+	[[ -n ${_files_in_tmproot} ]] && \
 		sm_warn "some files are still left for comparison"
 
 	mtree -qdef /etc/mtree/4.4BSD.dist -p / -U >/dev/null
@@ -618,7 +618,7 @@ while getopts bdp arg; do
 	esac
 done
 shift $(( OPTIND -1 ))
-[ $# -ne 0 ] && usage
+[[ $# -ne 0 ]] && usage
 
 [[ $(id -u) -ne 0 ]] && echo "${0##*/}: need root privileges" && usage
 
