@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.176 2014/09/06 21:46:15 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.177 2014/09/07 06:40:01 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -267,25 +267,21 @@ sm_init() {
 			[[ -h ${TARGET} && \
 				$(readlink ${COMPFILE}) == $(readlink ${TARGET}) ]] && \
 				rm ${COMPFILE} && continue
-		else
-			# disable sdiff for binaries
-			diff -q /dev/null ${COMPFILE} | grep -q Binary && \
-				IS_BINFILE=true
-
+		elif [[ -f ${TARGET} ]]; then
 			# empty files = binaries (to avoid comparison);
 			# only process them if they don't exist on the system
 			if [[ ! -s ${COMPFILE} ]]; then
-				if [[ -f ${TARGET} ]]; then
-					[[ -f ${COMPFILE} ]] && rm ${COMPFILE}
-					continue
-				else
-					IS_BINFILE=true
-				fi
+				rm ${COMPFILE} && continue
 			fi
 
-			# make sure files are different; if not: delete
-			diff -q ${TARGET} ${COMPFILE} >/dev/null && \
-				rm ${COMPFILE} && continue
+			_diff=$(diff -q ${TARGET} ${COMPFILE} 2>&1 | head -1)
+			# files are the same: delete
+			[[ $? -eq 0 ]] && rm ${COMPFILE} && continue
+			# disable sdiff for binaries
+			grep -q "Binary files" "${_diff}" && IS_BINFILE=true
+		else
+			# missing files = binaries (to avoid comparison)
+			IS_BINFILE=true
 		fi
 
 		sm_diff_loop
