@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.76 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.77 2014/09/07 08:17:44 guenther Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -805,7 +805,7 @@ ReFault:
 
 				/*
 				 * Since this page isn't the page that's
-				 * actually fauling, ignore pmap_enter()
+				 * actually faulting, ignore pmap_enter()
 				 * failures; it's not critical that we
 				 * enter these right now.
 				 */
