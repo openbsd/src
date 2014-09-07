@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.117 2014/09/03 23:20:33 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.118 2014/09/07 03:00:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1725,7 +1725,7 @@ putkeys(const struct mpage *mpage,
 		htab = &strings;
 		if (debug > 1)
 		    for (i = 0; i < mansearch_keymax; i++)
-			if (1 << i & v)
+			if ((uint64_t)1 << i & v)
 			    say(mpage->mlinks->file,
 				"Adding key %s=%*s",
 				mansearch_keynames[i], sz, cp);
