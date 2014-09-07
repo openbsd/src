@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.60 2014/09/06 23:24:27 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.61 2014/09/07 02:17:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -256,7 +256,7 @@ choose_parser(struct mparse *curp)
 		cp = curp->primary->buf;
 		ep = cp + curp->primary->sz;
 		while (cp < ep) {
-			if (*cp == '.' || *cp != '\'') {
+			if (*cp == '.' || *cp == '\'') {
 				cp++;
 				if (cp[0] == 'D' && cp[1] == 'd') {
 					format = MPARSE_MDOC;
@@ -704,6 +704,7 @@ mparse_end(struct mparse *curp)
 static void
 mparse_parse_buffer(struct mparse *curp, struct buf blk, const char *file)
 {
+	struct buf	*svprimary;
 	const char	*svfile;
 	static int	 recursion_depth;
 
@@ -715,6 +716,7 @@ mparse_parse_buffer(struct mparse *curp, struct buf blk, const char *file)
 	/* Line number is per-file. */
 	svfile = curp->file;
 	curp->file = file;
+	svprimary = curp->primary;
 	curp->primary = &blk;
 	curp->line = 1;
 	recursion_depth++;
@@ -724,6 +726,7 @@ mparse_parse_buffer(struct mparse *curp, struct buf blk, const char *file)
 	if (0 == --recursion_depth && MANDOCLEVEL_FATAL > curp->file_status)
 		mparse_end(curp);
 
+	curp->primary = svprimary;
 	curp->file = svfile;
 }
 
