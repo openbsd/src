@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.14 2013/04/05 13:01:17 kurt Exp $
+#	$OpenBSD: Makefile,v 1.15 2014/09/07 04:14:25 guenther Exp $
 
 SUBDIR+= elf hidden weak dlsym dlopen dlclose lazy
 #SUBDIR+= constructor 
 SUBDIR+= link-order edgecases initfirst
-SUBDIR+= df_1_noopen randomdata subst
+SUBDIR+= df_1_noopen randomdata subst dependencies
 
 install:
 
