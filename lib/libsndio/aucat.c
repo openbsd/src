@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.61 2013/12/20 08:51:28 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.62 2014/09/07 10:12:17 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -300,7 +300,8 @@ aucat_connect_tcp(struct aucat *hdl, char *host, unsigned int unit)
 	}
 	s = -1;
 	for (ai = ailist; ai != NULL; ai = ai->ai_next) {
-		s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+		s = socket(ai->ai_family, ai->ai_socktype | SOCK_CLOEXEC,
+		    ai->ai_protocol);
 		if (s < 0) {
 			DPERROR("socket");
 			continue;
@@ -341,7 +342,7 @@ aucat_connect_un(struct aucat *hdl, unsigned int unit)
 	snprintf(ca.sun_path, sizeof(ca.sun_path),
 	    "/tmp/aucat-%u/%s%u", uid, AUCAT_PATH, unit);
 	ca.sun_family = AF_UNIX;
-	s = socket(AF_UNIX, SOCK_STREAM, 0);
+	s = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
 	if (s < 0)
 		return 0;
 	while (connect(s, (struct sockaddr *)&ca, len) < 0) {
@@ -454,10 +455,6 @@ _aucat_open(struct aucat *hdl, const char *str, unsigned int mode,
 	} else {
 		if (!aucat_connect_un(hdl, unit))
 			return 0;
-	}
-	if (fcntl(hdl->fd, F_SETFD, FD_CLOEXEC) < 0) {
-		DPERROR("FD_CLOEXEC");
-		goto bad_connect;
 	}
 	hdl->rstate = RSTATE_MSG;
 	hdl->rtodo = sizeof(struct amsg);
