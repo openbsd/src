@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.82 2014/08/24 14:36:45 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.83 2014/09/07 12:16:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -420,8 +420,7 @@ ssl3_accept(SSL *s)
 			 * public key for key exchange.
 			 */
 			if (s->s3->tmp.use_rsa_tmp ||
-			    (alg_k & (SSL_kDHr|SSL_kDHd|SSL_kDHE)) ||
-			    (alg_k & SSL_kECDHE) ||
+			    (alg_k & (SSL_kDHE|SSL_kECDHE)) ||
 			    ((alg_k & SSL_kRSA) &&
 			     (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey ==
 			     NULL))) {
@@ -1967,8 +1966,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		    s->session->master_key,
 		    p, i);
 		OPENSSL_cleanse(p, i);
-	} else
-	if (alg_k & (SSL_kDHE|SSL_kDHr|SSL_kDHd)) {
+	} else if (alg_k & SSL_kDHE) {
 		if (2 > n)
 			goto truncated;
 		n2s(p, i);

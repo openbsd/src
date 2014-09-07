@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.83 2014/08/24 14:36:45 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.84 2014/09/07 12:16:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1929,7 +1929,7 @@ void
 ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 {
 	CERT_PKEY	*cpk;
-	int		 rsa_enc, rsa_tmp, rsa_sign, dh_tmp, dh_rsa, dh_dsa, dsa_sign;
+	int		 rsa_enc, rsa_tmp, rsa_sign, dh_tmp, dsa_sign;
 	unsigned long	 mask_k, mask_a;
 	int		 have_ecc_cert, ecdh_ok, ecdsa_ok;
 	int		 have_ecdh_tmp;
@@ -1950,11 +1950,7 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	rsa_sign = (cpk->x509 != NULL && cpk->privatekey != NULL);
 	cpk = &(c->pkeys[SSL_PKEY_DSA_SIGN]);
 	dsa_sign = (cpk->x509 != NULL && cpk->privatekey != NULL);
-	cpk = &(c->pkeys[SSL_PKEY_DH_RSA]);
-	dh_rsa = (cpk->x509 != NULL && cpk->privatekey != NULL);
-	cpk = &(c->pkeys[SSL_PKEY_DH_DSA]);
 /* FIX THIS EAY EAY EAY */
-	dh_dsa = (cpk->x509 != NULL && cpk->privatekey != NULL);
 	cpk = &(c->pkeys[SSL_PKEY_ECC]);
 	have_ecc_cert = (cpk->x509 != NULL && cpk->privatekey != NULL);
 	mask_k = 0;
@@ -1976,12 +1972,6 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 
 	if (dh_tmp)
 		mask_k|=SSL_kDHE;
-
-	if (dh_rsa)
-		mask_k|=SSL_kDHr;
-
-	if (dh_dsa)
-		mask_k|=SSL_kDHd;
 
 	if (rsa_enc || rsa_sign)
 		mask_a|=SSL_aRSA;
@@ -2124,10 +2114,6 @@ ssl_get_server_send_pkey(const SSL *s)
 		i = SSL_PKEY_ECC;
 	} else if (alg_a & SSL_aECDSA) {
 		i = SSL_PKEY_ECC;
-	} else if (alg_k & SSL_kDHr) {
-		i = SSL_PKEY_DH_RSA;
-	} else if (alg_k & SSL_kDHd) {
-		i = SSL_PKEY_DH_DSA;
 	} else if (alg_a & SSL_aDSS) {
 		i = SSL_PKEY_DSA_SIGN;
 	} else if (alg_a & SSL_aRSA) {

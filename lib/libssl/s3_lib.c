@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.79 2014/08/24 14:36:45 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.80 2014/09/07 12:16:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2610,12 +2610,11 @@ ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 	}
 #endif
 
-	if (alg_k & (SSL_kDHr|SSL_kDHE)) {
+	if (alg_k & SSL_kDHE) {
 		p[ret++] = SSL3_CT_RSA_FIXED_DH;
 		p[ret++] = SSL3_CT_DSS_FIXED_DH;
 	}
-	if ((s->version == SSL3_VERSION) &&
-		(alg_k & (SSL_kDHE|SSL_kDHd|SSL_kDHr))) {
+	if (s->version == SSL3_VERSION && (alg_k & SSL_kDHE)) {
 		p[ret++] = SSL3_CT_RSA_EPHEMERAL_DH;
 		p[ret++] = SSL3_CT_DSS_EPHEMERAL_DH;
 	}

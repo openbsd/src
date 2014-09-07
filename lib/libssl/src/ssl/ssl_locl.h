@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.67 2014/08/24 14:36:46 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.68 2014/09/07 12:16:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -254,8 +254,6 @@
 
 /* Bits for algorithm_mkey (key exchange algorithm) */
 #define SSL_kRSA		0x00000001L /* RSA key exchange */
-#define SSL_kDHr		0x00000002L /* DH cert, RSA CA cert */ /* no such ciphersuites supported! */
-#define SSL_kDHd		0x00000004L /* DH cert, DSA CA cert */ /* no such ciphersuite supported! */
 #define SSL_kDHE		0x00000008L /* tmp DH key no DH cert */
 #define SSL_kECDHr		0x00000020L /* ECDH cert, RSA CA cert */
 #define SSL_kECDHe		0x00000040L /* ECDH cert, ECDSA CA cert */
@@ -266,11 +264,10 @@
 #define SSL_aRSA		0x00000001L /* RSA auth */
 #define SSL_aDSS 		0x00000002L /* DSS auth */
 #define SSL_aNULL 		0x00000004L /* no auth (i.e. use ADH or AECDH) */
-#define SSL_aDH 		0x00000008L /* Fixed DH auth (kDHd or kDHr) */ /* no such ciphersuites supported! */
 #define SSL_aECDH 		0x00000010L /* Fixed ECDH auth (kECDHe or kECDHr) */
 #define SSL_aECDSA              0x00000040L /* ECDSA auth*/
-#define SSL_aGOST94				0x00000100L /* GOST R 34.10-94 signature auth */
-#define SSL_aGOST01 			0x00000200L /* GOST R 34.10-2001 signature auth */
+#define SSL_aGOST94		0x00000100L /* GOST R 34.10-94 signature auth */
+#define SSL_aGOST01 		0x00000200L /* GOST R 34.10-2001 signature auth */
 
 
 /* Bits for algorithm_enc (symmetric encryption) */

@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.37 2014/08/24 14:36:45 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.38 2014/09/07 12:16:23 jsing Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -462,8 +462,7 @@ dtls1_accept(SSL *s)
 			/* only send if a DH key exchange or
 			 * RSA but we have a sign only certificate */
 			if (s->s3->tmp.use_rsa_tmp
-			|| (alg_k & (SSL_kDHE|SSL_kDHr|SSL_kDHd))
-			|| (alg_k & SSL_kECDHE)
+			|| (alg_k & (SSL_kDHE|SSL_kECDHE))
 			|| ((alg_k & SSL_kRSA)
 			&& (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
 			)

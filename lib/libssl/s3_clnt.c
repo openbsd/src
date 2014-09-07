@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.88 2014/08/23 14:52:41 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.89 2014/09/07 12:16:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1329,11 +1329,6 @@ ssl3_get_key_exchange(SSL *s)
 
 		s->session->sess_cert->peer_dh_tmp = dh;
 		dh = NULL;
-	} else if ((alg_k & SSL_kDHr) || (alg_k & SSL_kDHd)) {
-		al = SSL_AD_ILLEGAL_PARAMETER;
-		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-		    SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER);
-		goto f_err;
 	} else if (alg_k & SSL_kECDHE) {
 		EC_GROUP *ngroup;
 		const EC_GROUP *group;
@@ -2006,7 +2001,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			    s->method->ssl3_enc->generate_master_secret(
 			    s, s->session->master_key, tmp_buf, sizeof tmp_buf);
 			OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
-		} else if (alg_k & (SSL_kDHE|SSL_kDHr|SSL_kDHd)) {
+		} else if (alg_k & SSL_kDHE) {
 			DH *dh_srvr, *dh_clnt;
 
 			if (s->session->sess_cert == NULL) {
@@ -2611,7 +2606,7 @@ ssl3_check_cert_and_algorithm(SSL *s)
 	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 
 	/* We don't have a certificate. */
-	if (alg_a & (SSL_aDH|SSL_aNULL))
+	if (alg_a & SSL_aNULL)
 		return (1);
 
 	sc = s->session->sess_cert;
@@ -2663,14 +2658,6 @@ ssl3_check_cert_and_algorithm(SSL *s)
 	    !(has_bits(i, EVP_PK_DH|EVP_PKT_EXCH) || (dh != NULL))) {
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
 		    SSL_R_MISSING_DH_KEY);
-		goto f_err;
-	} else if ((alg_k & SSL_kDHr) && !has_bits(i, EVP_PK_DH|EVP_PKS_RSA)) {
-		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-		    SSL_R_MISSING_DH_RSA_CERT);
-		goto f_err;
-	} else if ((alg_k & SSL_kDHd) && !has_bits(i, EVP_PK_DH|EVP_PKS_DSA)) {
-		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-		    SSL_R_MISSING_DH_DSA_CERT);
 		goto f_err;
 	}
 
