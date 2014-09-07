@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.181 2014/09/07 09:21:42 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.182 2014/09/07 09:46:32 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -206,7 +206,7 @@ sm_init() {
 			for _k in ${_mismatch}; do
 				# skip sum files
 				[[ ${_k} == ./usr/share/sysmerge/${_i} ]] && continue
-				# compare CVS $Id's first so if the file hasn't been modified,
+				# compare CVS Id first so if the file hasn't been modified,
 				# it will be deleted from temproot and ignored from comparison;
 				# several files are generated from scripts so CVS ID is not a
 				# reliable way of detecting changes: leave for a full diff
@@ -215,7 +215,8 @@ sm_init() {
 					! -h ${_k} ]]; then
 					_cvsid1=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${_k#.} 2>/dev/null)
 					_cvsid2=$(sed -n "/[$]OpenBSD:.*Exp [$]/{p;q;}" ${_k} 2>/dev/null)
-					[[ ${_cvsid2} == ${_cvsid1} ]] && \
+					[[ -n ${_cvsid1} ]] && \
+						[[ ${_cvsid1} == ${_cvsid2} ]] && \
 						[[ -f ${_k} ]] && rm ${_k} && \
 						continue
 				fi
