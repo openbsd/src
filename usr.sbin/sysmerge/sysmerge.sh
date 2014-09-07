@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.178 2014/09/07 07:46:26 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.179 2014/09/07 08:15:42 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -272,11 +272,12 @@ sm_init() {
 				rm ${COMPFILE} && continue
 			fi
 
-			_diff=$(diff -q ${TARGET} ${COMPFILE} 2>&1 | head -1)
+			_diff=$(diff -q ${TARGET} ${COMPFILE} 2>&1)
 			# files are the same: delete
 			[[ $? -eq 0 ]] && rm ${COMPFILE} && continue
 			# disable sdiff for binaries
-			grep -q "Binary files" "${_diff}" && IS_BINFILE=true
+			echo "${_diff}" | head -1 | grep -q "Binary files" && \
+				IS_BINFILE=true
 		else
 			# missing files = binaries (to avoid comparison)
 			IS_BINFILE=true
