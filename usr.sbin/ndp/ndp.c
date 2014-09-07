@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.57 2014/09/03 10:39:41 mpi Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.58 2014/09/07 22:40:30 bluhm Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -564,7 +564,6 @@ dump(struct in6_addr *addr, int cflag)
 	int addrwidth;
 	int llwidth;
 	int ifwidth;
-	char flgbuf[8];
 	char *ifname;
 
 	/* Print header */
@@ -710,23 +709,10 @@ again:;
 			printf("  ");
 		}
 
-		/*
-		 * other flags. R: router, P: proxy, W: ??
-		 */
-		if ((rtm->rtm_addrs & RTA_NETMASK) == 0) {
-			snprintf(flgbuf, sizeof(flgbuf), "%s%s%s",
-			    (rtm->rtm_flags & RTF_LOCAL) ? "l" : "",
-			    isrouter ? "R" : "",
-			    (rtm->rtm_flags & RTF_ANNOUNCE) ? "p" : "");
-		} else {
-			sin = (struct sockaddr_in6 *)
-			    (sdl->sdl_len + (char *)sdl);
-			snprintf(flgbuf, sizeof(flgbuf), "%s%s%s",
-			    (rtm->rtm_flags & RTF_LOCAL) ? "l" : "",
-			    isrouter ? "R" : "",
-			    (rtm->rtm_flags & RTF_ANNOUNCE) ? "p" : "");
-		}
-		printf(" %s", flgbuf);
+		printf(" %s%s%s",
+		    (rtm->rtm_flags & RTF_LOCAL) ? "l" : "",
+		    isrouter ? "R" : "",
+		    (rtm->rtm_flags & RTF_ANNOUNCE) ? "p" : "");
 
 		if (prbs)
 			printf(" %d", prbs);
