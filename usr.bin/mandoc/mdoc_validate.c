@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.162 2014/08/19 17:28:57 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.163 2014/09/07 00:04:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1642,18 +1642,17 @@ post_root(POST_ARGS)
 		mdoc->meta.os = mandoc_strdup("");
 	}
 
-	n = mdoc->first;
-	assert(n);
-
 	/* Check that we begin with a proper `Sh'. */
 
-	if (NULL == n->child)
-		mandoc_msg(MANDOCERR_DOC_EMPTY, mdoc->parse,
-		    n->line, n->pos, NULL);
-	else if (MDOC_Sh != n->child->tok)
+	n = mdoc->first->child;
+	while (n != NULL && mdoc_macros[n->tok].flags & MDOC_PROLOGUE)
+		n = n->next;
+
+	if (n == NULL)
+		mandoc_msg(MANDOCERR_DOC_EMPTY, mdoc->parse, 0, 0, NULL);
+	else if (n->tok != MDOC_Sh)
 		mandoc_msg(MANDOCERR_SEC_BEFORE, mdoc->parse,
-		    n->child->line, n->child->pos,
-		    mdoc_macronames[n->child->tok]);
+		    n->line, n->pos, mdoc_macronames[n->tok]);
 
 	return(1);
 }

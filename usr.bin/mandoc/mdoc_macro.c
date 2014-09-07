@@ -1,7 +1,7 @@
-/*	$Id: mdoc_macro.c,v 1.98 2014/08/21 12:56:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.99 2014/09/07 00:04:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -206,7 +206,7 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line_eoln, 0 }, /* sp */
 	{ in_line_eoln, 0 }, /* %U */
 	{ phrase_ta, MDOC_CALLABLE | MDOC_PARSED | MDOC_JOIN }, /* Ta */
-	{ in_line_eoln, 0 }, /* ll */
+	{ in_line_eoln, MDOC_PROLOGUE }, /* ll */
 };
 
 const	struct mdoc_macro * const mdoc_macros = __mdoc_macros;
