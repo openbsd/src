@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.97 2014/09/03 23:20:33 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.98 2014/09/07 23:24:33 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -72,6 +72,7 @@ enum	mandocerr {
 	MANDOCERR_SEC_ORDER, /* sections out of conventional order: Sh title */
 	MANDOCERR_SEC_REP, /* duplicate section title: Sh title */
 	MANDOCERR_SEC_MSEC, /* unexpected section: Sh title for ... only */
+	MANDOCERR_AN_MISSING, /* AUTHORS section without An macro */
 
 	/* related to macros and nesting */
 	MANDOCERR_MACRO_OBS, /* obsolete macro: macro */

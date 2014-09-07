@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.163 2014/09/07 00:04:47 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.164 2014/09/07 23:24:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -66,6 +66,7 @@ static	void	 check_text(struct mdoc *, int, int, char *);
 static	void	 check_argv(struct mdoc *,
 			struct mdoc_node *, struct mdoc_argv *);
 static	void	 check_args(struct mdoc *, struct mdoc_node *);
+static	int	 child_an(const struct mdoc_node *);
 static	enum mdoc_sec	a2sec(const char *);
 static	size_t		macro2len(enum mdoct);
 
@@ -113,8 +114,9 @@ static	int	 post_par(POST_ARGS);
 static	int	 post_root(POST_ARGS);
 static	int	 post_rs(POST_ARGS);
 static	int	 post_sh(POST_ARGS);
-static	int	 post_sh_body(POST_ARGS);
 static	int	 post_sh_head(POST_ARGS);
+static	int	 post_sh_name(POST_ARGS);
+static	int	 post_sh_authors(POST_ARGS);
 static	int	 post_st(POST_ARGS);
 static	int	 post_vt(POST_ARGS);
 static	int	 pre_an(PRE_ARGS);
@@ -1846,21 +1848,30 @@ post_sh(POST_ARGS)
 
 	post_ignpar(mdoc);
 
-	if (MDOC_HEAD == mdoc->last->type)
+	switch (mdoc->last->type) {
+	case MDOC_HEAD:
 		return(post_sh_head(mdoc));
-	if (MDOC_BODY == mdoc->last->type)
-		return(post_sh_body(mdoc));
+	case MDOC_BODY:
+		switch (mdoc->lastsec)  {
+		case SEC_NAME:
+			return(post_sh_name(mdoc));
+		case SEC_AUTHORS:
+			return(post_sh_authors(mdoc));
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
 
 	return(1);
 }
 
 static int
-post_sh_body(POST_ARGS)
+post_sh_name(POST_ARGS)
 {
 	struct mdoc_node *n;
-
-	if (SEC_NAME != mdoc->lastsec)
-		return(1);
 
 	/*
 	 * Warn if the NAME section doesn't contain the `Nm' and `Nd'
@@ -1889,6 +1900,26 @@ post_sh_body(POST_ARGS)
 
 	mandoc_msg(MANDOCERR_NAMESEC_BAD, mdoc->parse,
 	    n->line, n->pos, mdoc_macronames[n->tok]);
+	return(1);
+}
+
+static int
+child_an(const struct mdoc_node *n)
+{
+
+	for (n = n->child; n != NULL; n = n->next)
+		if ((n->tok == MDOC_An && n->nchild) || child_an(n))
+			return(1);
+	return(0);
+}
+
+static int
+post_sh_authors(POST_ARGS)
+{
+
+	if ( ! child_an(mdoc->last))
+		mandoc_msg(MANDOCERR_AN_MISSING, mdoc->parse,
+		    mdoc->last->line, mdoc->last->pos, NULL);
 	return(1);
 }
 
