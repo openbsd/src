@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.182 2014/09/07 09:46:32 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.183 2014/09/07 11:41:49 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -167,9 +167,8 @@ sm_cp_pkg_samples() {
 	done
 
 	if [[ ${_ret} -eq 0 ]]; then
-		find . -type f | sort | \
-			xargs sha256 -h ./usr/share/sysmerge/pkgsum || \
-			_ret=1
+		find . -type f -exec sha256 '{}' + | sort \
+			>./usr/share/sysmerge/pkgsum || _ret=1
 	fi
 	[[ ${_ret} -ne 0 ]] && \
 		sm_error "failed to populate packages @samples and create sum file"
