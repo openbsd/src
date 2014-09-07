@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.36 2014/08/14 20:06:41 jmc Exp $
+.\"	$OpenBSD: roff.7,v 1.37 2014/09/07 00:21:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2014 $
+.Dd $Mdocdate: September 7 2014 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -931,6 +931,11 @@ macro will reset this register.
 .Ss \&ns
 Turn on no-space mode.
 This line-scoped request is intended to take no arguments.
+Currently, it is ignored including its arguments,
+and the number of arguments is not checked.
+.Ss \&pl
+Change page length.
+This line-scoped request is intended to take one height argument.
 Currently, it is ignored including its arguments,
 and the number of arguments is not checked.
 .Ss \&ps
