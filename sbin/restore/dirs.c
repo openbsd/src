@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.37 2014/07/21 01:51:11 guenther Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.38 2014/09/07 19:43:35 guenther Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -423,7 +423,7 @@ static void
 flushent(void)
 {
 	((struct direct *)(dirbuf + prev))->d_reclen = DIRBLKSIZ - prev;
-	(void)fwrite(dirbuf, (int)dirloc, 1, df);
+	(void)fwrite(dirbuf, dirloc, 1, df);
 	seekpt = ftell(df);
 	dirloc = 0;
 }
@@ -651,17 +651,10 @@ genliteraldir(char *name, ino_t ino)
 	dp = dup(dirp->dd_fd);
 	for (i = itp->t_size; i > 0; i -= BUFSIZ) {
 		size = i < BUFSIZ ? i : BUFSIZ;
-		if (read(dp, buf, (int) size) == -1) {
-			warnx("write error extracting inode %llu, name %s",
+		if (read(dp, buf, size) == -1)
+			err(1, "read error extracting inode %llu, name %s",
 			    (unsigned long long)curfile.ino, curfile.name);
-			err(1, "read");
-		}
-		if (!Nflag && write(ofile, buf, (int) size) == -1) {
-			fprintf(stderr,
-			    "write error extracting inode %llu, name %s\n",
-			    (unsigned long long)curfile.ino, curfile.name);
-			err(1, "write");
-		}
+		xtrfile(buf, size);
 	}
 	(void)close(dp);
 	(void)close(ofile);

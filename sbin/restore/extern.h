@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.11 2014/09/03 02:37:24 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.12 2014/09/07 19:43:35 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1995/03/18 14:59:43 cgd Exp $	*/
 
 /*-
@@ -98,6 +98,7 @@ void	 	 treescan(char *, ino_t, long (*)(char *, ino_t, int));
 ino_t		 upperbnd(ino_t);
 long		 verifyfile(char *, ino_t, int);
 void		 xtrnull(char *, size_t);
+void		 xtrfile(char *, size_t);
 
 /* From ../dump/dumprmt.c */
 void		rmtclose(void);
