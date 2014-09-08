@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.120 2014/06/04 07:58:14 claudio Exp $	*/
+/*	$OpenBSD: mount.h,v 1.121 2014/09/08 01:47:06 guenther Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -262,20 +262,6 @@ struct tmpfs_args {
 };
 
 /*
- * Arguments to mount procfs filesystems
- */
-struct procfs_args {
-	int version;
-	int flags;
-};
-
-/*
- * procfs mount options:
- */
-#define PROCFS_ARGSVERSION      1
-#define PROCFSMNT_LINUXCOMPAT   0x01
-
-/*
  * Arguments to mount fusefs filesystems
  */
 struct fusefs_args {
@@ -297,7 +283,6 @@ union mount_info {
 	struct mfs_args mfs_args;
 	struct nfs_args nfs_args;
 	struct iso_args iso_args;
-	struct procfs_args procfs_args;
 	struct msdosfs_args msdosfs_args;
 	struct ntfs_args ntfs_args;
 	struct tmpfs_args tmpfs_args;
@@ -345,7 +330,6 @@ struct statfs {
 #define	MOUNT_NFS	"nfs"		/* Network Filesystem */
 #define	MOUNT_MFS	"mfs"		/* Memory Filesystem */
 #define	MOUNT_MSDOS	"msdos"		/* MSDOS Filesystem */
-#define	MOUNT_PROCFS	"procfs"	/* /proc Filesystem */
 #define	MOUNT_AFS	"afs"		/* Andrew Filesystem */
 #define	MOUNT_CD9660	"cd9660"	/* ISO9660 (aka CDROM) Filesystem */
 #define	MOUNT_EXT2FS	"ext2fs"	/* Second Extended Filesystem */

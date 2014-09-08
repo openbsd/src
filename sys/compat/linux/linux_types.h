@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_types.h,v 1.13 2013/10/25 04:51:39 guenther Exp $	*/
+/*	$OpenBSD: linux_types.h,v 1.14 2014/09/08 01:47:06 guenther Exp $	*/
 /*	$NetBSD: linux_types.h,v 1.5 1996/05/20 01:59:28 fvdl Exp $	*/
 
 /*
@@ -60,7 +60,6 @@ typedef int linux_pid_t;
 #define LINUX_FSTYPE_FFS	0x11954
 #define LINUX_FSTYPE_NFS	0x6969
 #define LINUX_FSTYPE_MSDOS	0x4d44
-#define LINUX_FSTYPE_PROCFS	0x9fa0
 #define LINUX_FSTYPE_EXT2FS	0xef53
 #define LINUX_FSTYPE_CD9660	0x9660
 #define LINUX_FSTYPE_NCPFS	0x6969

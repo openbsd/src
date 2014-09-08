@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 2014/03/18 22:36:37 miod Exp $
+#	$OpenBSD: Makefile,v 1.38 2014/09/08 01:47:06 guenther Exp $
 
 # Makefile for kernel tags files, init_sysent, etc.
 
@@ -38,7 +38,7 @@ DGEN=	compat compat/common \
 	kern \
 	lib/libkern lib/libkern/arch/${MACHINE} \
 	lib/libkern/arch/${MACHINE_ARCH} \
-	miscfs miscfs/deadfs miscfs/fifofs miscfs/procfs \
+	miscfs miscfs/deadfs miscfs/fifofs \
 	msdosfs \
 	net netinet netmpls \
 	nfs \

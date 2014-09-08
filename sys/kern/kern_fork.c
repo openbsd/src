@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.173 2014/07/13 15:46:21 uebayasi Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.174 2014/09/08 01:47:06 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ process_new(struct proc *p, struct process *parent, int flags)
 	KASSERT(p->p_ucred->cr_ref >= 3); /* fork thr, new thr, new process */
 	pr->ps_limit->p_refcnt++;
 
-	/* bump references to the text vnode (for procfs) */
+	/* bump references to the text vnode (for sysctl) */
 	pr->ps_textvp = parent->ps_textvp;
 	if (pr->ps_textvp)
 		vref(pr->ps_textvp);

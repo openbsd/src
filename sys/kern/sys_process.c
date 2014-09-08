@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.64 2014/07/13 15:00:40 tedu Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.65 2014/09/08 01:47:06 guenther Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -528,7 +528,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 
 	case  PT_ATTACH:
 		/*
-		 * As done in procfs:
+		 * As was done in procfs:
 		 * Go ahead and set the trace flag.
 		 * Save the old parent (it's reset in
 		 *   _DETACH, and also in kern_exit.c:wait4()

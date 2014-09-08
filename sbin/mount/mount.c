@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.58 2014/07/17 06:25:12 guenther Exp $	*/
+/*	$OpenBSD: mount.c,v 1.59 2014/09/08 01:47:05 guenther Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -595,13 +595,6 @@ prmount(struct statfs *sf)
 			(void)printf("%s%s", !f++ ? " (" : ", ", "gens");
 		if (iso_args->flags & ISOFSMNT_EXTATT)
 			(void)printf("%s%s", !f++ ? " (" : ", ", "extatt");
-	} else if (strcmp(sf->f_fstypename, MOUNT_PROCFS) == 0) {
-		struct procfs_args *procfs_args = &sf->mount_info.procfs_args;
-
-		if (verbose)
-			(void)printf("version %d", procfs_args->version);
-		if (procfs_args->flags & PROCFSMNT_LINUXCOMPAT)
-			(void)printf("%s%s", !f++ ? " (" : ", ", "linux");
 	}
 	(void)printf(f ? ")\n" : "\n");
 }
