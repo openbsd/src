@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.85 2014/08/26 21:44:29 florian Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.86 2014/09/08 09:32:04 stsp Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1401,13 +1401,51 @@ void
 nd6_addr_add(void *prptr, void *arg2)
 {
 	struct nd_prefix *pr = (struct nd_prefix *)prptr;
-	struct in6_ifaddr *ia6 = NULL;
-	int autoconf, privacy, s;
+	struct in6_ifaddr *ia6;
+	struct ifaddr *ifa;
+	int ifa_plen, autoconf, privacy, s;
 
 	s = splsoftnet();
 
 	autoconf = 1;
 	privacy = (pr->ndpr_ifp->if_xflags & IFXF_INET6_NOPRIVACY) == 0;
+
+	/* 
+	 * Check again if a non-deprecated address has already
+	 * been autoconfigured for this prefix.
+	 */
+	TAILQ_FOREACH(ifa, &pr->ndpr_ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+
+		ia6 = ifatoia6(ifa);
+
+		/*
+		 * Spec is not clear here, but I believe we should concentrate
+		 * on unicast (i.e. not anycast) addresses.
+		 * XXX: other ia6_flags? detached or duplicated?
+		 */
+		if ((ia6->ia6_flags & IN6_IFF_ANYCAST) != 0)
+			continue;
+
+		if ((ia6->ia6_flags & IN6_IFF_AUTOCONF) == 0)
+			continue;
+
+		if ((ia6->ia6_flags & IN6_IFF_DEPRECATED) != 0)
+			continue;
+
+		ifa_plen = in6_mask2len(&ia6->ia_prefixmask.sin6_addr, NULL);
+		if (ifa_plen == pr->ndpr_plen &&
+		    in6_are_prefix_equal(&ia6->ia_addr.sin6_addr,
+		    &pr->ndpr_prefix.sin6_addr, ifa_plen)) {
+			if ((ia6->ia6_flags & IN6_IFF_PRIVACY) == 0)
+				autoconf = 0;
+			else
+				privacy = 0;
+			if (!autoconf && !privacy)
+				break;
+		}
+	}
 
 	if (autoconf && (ia6 = in6_ifadd(pr, 0)) != NULL) {
 		ia6->ia6_ndpr = pr;
