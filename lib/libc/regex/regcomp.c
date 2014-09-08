@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.24 2014/05/06 15:48:38 tedu Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.25 2014/09/08 15:45:20 tedu Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -81,6 +81,7 @@ static char p_b_coll_elem(struct parse *, int);
 static char othercase(int);
 static void bothcases(struct parse *, int);
 static void ordinary(struct parse *, int);
+static void backslash(struct parse *, int);
 static void nonnewline(struct parse *);
 static void repeat(struct parse *, sopno, int, int);
 static int seterr(struct parse *, int);
@@ -349,7 +350,7 @@ p_ere_exp(struct parse *p)
 	case '\\':
 		REQUIRE(MORE(), REG_EESCAPE);
 		c = GETNEXT();
-		ordinary(p, c);
+		backslash(p, c);
 		break;
 	case '{':		/* okay as ordinary except if digit follows */
 		REQUIRE(!MORE() || !isdigit((uch)PEEK()), REG_BADRPT);
@@ -500,6 +501,12 @@ p_simp_re(struct parse *p,
 		break;
 	case '[':
 		p_bracket(p);
+		break;
+	case BACKSL|'<':
+		EMIT(OBOW, 0);
+		break;
+	case BACKSL|'>':
+		EMIT(OEOW, 0);
 		break;
 	case BACKSL|'{':
 		SETERROR(REG_BADRPT);
@@ -892,6 +899,25 @@ ordinary(struct parse *p, int ch)
 		EMIT(OCHAR, (uch)ch);
 		if (cap[ch] == 0)
 			cap[ch] = p->g->ncategories++;
+	}
+}
+
+/*
+ * do something magic with this character, but only if it's extra magic
+ */
+static void
+backslash(struct parse *p, int ch)
+{
+	switch (ch) {
+	case '<':
+		EMIT(OBOW, 0);
+		break;
+	case '>':
+		EMIT(OEOW, 0);
+		break;
+	default:
+		ordinary(p, ch);
+		break;
 	}
 }
 
