@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.49 2014/09/04 00:36:00 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.50 2014/09/08 00:00:05 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -119,7 +119,6 @@ struct pool {
 #define PR_LIMITFAIL	0x0004 /* M_CANFAIL */
 #define PR_ZERO		0x0008 /* M_ZERO */
 #define PR_WANTED	0x0100
-#define PR_PHINPAGE	0x0200
 #define PR_LOGGING	0x0400
 #define PR_DEBUG	0x0800
 #define PR_DEBUGCHK	0x1000
