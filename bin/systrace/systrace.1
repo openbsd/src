@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.44 2007/05/31 19:19:15 jmc Exp $
+.\"	$OpenBSD: systrace.1,v 1.45 2014/09/08 01:27:54 schwarze Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 8 2014 $
 .Dt SYSTRACE 1
 .Os
 .Sh NAME
@@ -350,7 +350,8 @@ Policy: /bin/ls, Emulation: native
 .Sh AUTHORS
 The
 .Nm
-utility was developed by Niels Provos.
+utility was developed by
+.An Niels Provos .
 .Sh BUGS
 Applications that use clone()-like system calls to share the complete
 address space between processes may be able to replace system call

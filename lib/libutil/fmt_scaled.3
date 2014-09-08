@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fmt_scaled.3,v 1.6 2013/06/05 03:40:26 tedu Exp $
+.\"	$OpenBSD: fmt_scaled.3,v 1.7 2014/09/08 01:27:54 schwarze Exp $
 .\" Copyright (c) 2001, 2003 Ian Darwin.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: September 8 2014 $
 .Dt FMT_SCALED 3
 .Os
 .Sh NAME
@@ -108,13 +108,18 @@ and
 first appeared in
 .Ox 3.4 .
 .Sh AUTHORS
-Ken Stailey wrote the first version of the code that became
+.An -nosplit
+.An Ken Stailey
+wrote the first version of the code that became
 .Fn fmt_scaled ,
 originally inside
 .Ox
 .Xr df 1 .
-Ian Darwin excerpted this and made it into a library routine
-(with significant help from Paul Janzen), and wrote
+.An Ian Darwin
+excerpted this and made it into a library routine
+(with significant help from
+.An Paul Janzen ) ,
+and wrote
 .Fn scan_scaled .
 .Sh BUGS
 Some of the scale factors have misleading meanings in lower case

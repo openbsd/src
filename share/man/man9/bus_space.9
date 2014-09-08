@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_space.9,v 1.29 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: bus_space.9,v 1.30 2014/09/08 01:27:55 schwarze Exp $
 .\" $NetBSD: bus_space.9,v 1.15 2000/08/09 03:11:00 tv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: September 8 2014 $
 .Dt BUS_SPACE 9
 .Os
 .Sh NAME
@@ -1496,18 +1496,25 @@ The
 development team added the *_raw_* API, and discarded the *_stream_*
 API.
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 interfaces were designed and implemented by the
 .Nx
 developer community.
-Primary contributors and implementors were Chris Demetriou, Jason
-Thorpe, and Charles Hannum, but the rest of the
+Primary contributors and implementors were
+.An Chris Demetriou ,
+.An Jason Thorpe ,
+and
+.An Charles Hannum ,
+but the rest of the
 .Nx
 developers and the user community played a significant role in
 development.
 .Pp
-Chris Demetriou wrote this manual page.
+.An Chris Demetriou
+wrote this manual page.
 .Pp
-Niklas Hallqvist did the *_raw_* API for
+.An Niklas Hallqvist
+did the *_raw_* API for
 .Ox .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtrace.8,v 1.17 2010/09/19 21:59:23 jmc Exp $
+.\"	$OpenBSD: mtrace.8,v 1.18 2014/09/08 01:27:55 schwarze Exp $
 .\"	$NetBSD: mtrace.8,v 1.4 1995/12/10 10:57:11 mycroft Exp $
 .\"
 .\" Copyright (c) 1993, 1998-2001.
@@ -66,7 +66,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: September 8 2014 $
 .Dt MTRACE 8
 .Os
 .Sh NAME
@@ -487,18 +487,31 @@ Round trip time 95 ms
 .Xr mrouted 8 ,
 .Xr traceroute 8
 .Sh AUTHORS
-Implemented by Steve Casner based on an initial prototype written by
-Ajit Thyagarajan.
+.An -nosplit
+Implemented by
+.An Steve Casner
+based on an initial prototype written by
+.An Ajit Thyagarajan .
 The multicast traceroute mechanism was designed by
-Van Jacobson with help from Steve Casner, Steve Deering, Dino
-Farinacci, and Deb Agrawal; it was implemented in
+.An Van Jacobson
+with help from
+.An Steve Casner ,
+.An Steve Deering ,
+.An Dino Farinacci ,
+and
+.An Deb Agrawal ;
+it was implemented in
 .Nm mrouted
-by Ajit Thyagarajan and Bill Fenner.
+by
+.An Ajit Thyagarajan
+and
+.An Bill Fenner .
 The option syntax and the output format of
 .Nm
 are modeled after the unicast
-.Nm traceroute
-program written by Van Jacobson.
+.Xr traceroute 8
+program written by
+.An Van Jacobson .
 .Sh BUGS
 Versions 3.3 and 3.5 of
 .Nm mrouted
