@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.180 2014/08/10 21:09:26 zhuk Exp $
+.\"	$OpenBSD: port-modules.5,v 1.181 2014/09/08 05:04:40 chrisz Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 10 2014 $
+.Dd $Mdocdate: September 8 2014 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -843,8 +843,6 @@ implementations via
 and
 .Ev MODNODE_INSTALL_TARGET .
 .It lang/ocaml
-Sets
-.Ev OCAML_VERSION .
 Appends to
 .Ev BUILD_DEPENDS
 and
@@ -857,6 +855,9 @@ If dynamic linking is supported on the native architecture,
 the %%dynlink%% plist fragment and
 .Ev ocaml_native_dynlink
 property is set.
+When
+.Ev CONFIGURE_STYLE is set to `oasis',
+overrides for the do\-build, do\-install and do\-test targets are added.
 .It lang/php/pecl
 Used for ports for PHP PECL extensions.
 Sets default
