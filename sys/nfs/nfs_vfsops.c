@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.100 2014/07/12 18:43:52 tedu Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.101 2014/09/08 06:24:13 jsg Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 #include <sys/queue.h>
 
 #include <net/if.h>
-#include <net/route.h>
 #include <netinet/in.h>
 
 #include <nfs/rpcv2.h>

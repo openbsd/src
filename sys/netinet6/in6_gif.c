@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.32 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.33 2014/09/08 06:24:13 jsg Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <sys/protosw.h>
 
 #include <net/if.h>
-#include <net/route.h>
 
 #if NPF > 0
 #include <net/pfvar.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.43 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.44 2014/09/08 06:24:13 jsg Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -85,7 +85,6 @@
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>

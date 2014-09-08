@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_proto.c,v 1.7 2013/04/24 10:20:15 mpi Exp $	*/
+/*	$OpenBSD: mpls_proto.c,v 1.8 2014/09/08 06:24:13 jsg Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -37,7 +37,8 @@
 #include <sys/mbuf.h>
 
 #include <net/if.h>
-#include <net/route.h>
+#include <net/radix.h>
+#include <net/radix_mpath.h>
 
 #include <netmpls/mpls.h>
 

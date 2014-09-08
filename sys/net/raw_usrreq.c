@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.16 2012/12/12 17:23:53 mikeb Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.17 2014/09/08 06:24:13 jsg Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <sys/systm.h>
 
 #include <net/if.h>
-#include <net/route.h>
 #include <net/netisr.h>
 #include <net/raw_cb.h>
 

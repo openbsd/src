@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.62 2014/07/22 11:06:09 mpi Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.63 2014/09/08 06:24:13 jsg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -46,7 +46,6 @@
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/route.h>
 #include <net/bpf.h>
 
 #ifdef	INET

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.53 2014/07/22 11:06:10 mpi Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.54 2014/09/08 06:24:13 jsg Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -30,7 +30,6 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
-#include <net/route.h>
 
 #if NPF > 0
 #include <net/pfvar.h>

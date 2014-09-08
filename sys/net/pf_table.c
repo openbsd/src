@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.102 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.103 2014/09/08 06:24:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -39,7 +39,6 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
-#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/ip_ipsp.h>
 #include <net/pfvar.h>

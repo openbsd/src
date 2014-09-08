@@ -1,4 +1,4 @@
-/*	$OpenBSD: dest6.c,v 1.13 2014/06/03 13:32:24 mpi Exp $	*/
+/*	$OpenBSD: dest6.c,v 1.14 2014/09/08 06:24:13 jsg Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/kernel.h>
 
 #include <net/if.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/ip6.h>

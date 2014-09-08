@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.127 2014/07/22 11:06:09 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.128 2014/09/08 06:24:13 jsg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -60,7 +60,6 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
-#include <net/route.h>
 
 #ifdef INET
 #include <netinet/in.h>

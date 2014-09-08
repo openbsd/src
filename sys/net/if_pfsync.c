@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.208 2014/07/22 11:06:09 mpi Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.209 2014/09/08 06:24:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -57,7 +57,6 @@
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/route.h>
 #include <net/bpf.h>
 #include <net/netisr.h>
 #include <netinet/in.h>
@@ -74,7 +73,7 @@
 #ifdef INET6
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
-#include <netinet/in_pcb.h>
+#include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
 #include <netinet6/ip6_divert.h>

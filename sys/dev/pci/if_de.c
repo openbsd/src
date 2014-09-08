@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.115 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.116 2014/09/08 06:24:13 jsg Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -54,7 +54,6 @@
 #include <net/if_media.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
-#include <net/route.h>
 #include <net/netisr.h>
 
 #include "bpfilter.h"

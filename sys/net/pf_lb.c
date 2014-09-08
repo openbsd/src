@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.33 2014/08/14 07:55:17 blambert Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.34 2014/09/08 06:24:13 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,8 +58,6 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/bpf.h>
-#include <net/route.h>
-#include <net/radix_mpath.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -68,9 +66,7 @@
 #include <netinet/tcp_seq.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/in_pcb.h>
 #include <netinet/tcp_timer.h>
-#include <netinet/tcp_var.h>
 #include <netinet/udp_var.h>
 #include <netinet/icmp_var.h>
 #include <netinet/if_ether.h>

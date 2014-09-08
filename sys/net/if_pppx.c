@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.33 2014/08/19 08:04:51 uebayasi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.34 2014/09/08 06:24:13 jsg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -63,7 +63,7 @@
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/route.h>
+#include <net/radix.h>
 #include <net/netisr.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
