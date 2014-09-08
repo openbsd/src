@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.h,v 1.12 2014/08/25 18:19:18 bluhm Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.13 2014/09/08 00:43:42 doug Exp $ */
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -54,7 +54,8 @@ extern int Startup;
 #define PFD_CTLSOCK	2		/* Offset of control socket entry */
 #define PFD_CTLCONN	3		/* Offset of control connection entry */
 #define PFD_INET6	4		/* Offset of inet6 socket entry */
-#define PFD_UNIX_0	5		/* Start of Unix socket entries */
+#define PFD_SENDSYS	5		/* Offset of sendsyslog(2) entry */
+#define PFD_UNIX_0	6		/* Start of Unix socket entries */
 #define N_PFD		(PFD_UNIX_0 + MAXFUNIX)	/* # of pollfd entries */
 extern struct pollfd pfd[N_PFD];
 

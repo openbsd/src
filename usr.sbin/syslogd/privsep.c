@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.43 2014/08/25 20:19:14 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.44 2014/09/08 00:43:42 doug Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -183,8 +183,10 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 		close(pfd[PFD_CTLSOCK].fd);
 	if (pfd[PFD_CTLCONN].fd != -1)
 		close(pfd[PFD_CTLCONN].fd);
-	if (pfd[PFD_KLOG].fd)
+	if (pfd[PFD_KLOG].fd != -1)
 		close(pfd[PFD_KLOG].fd);
+	if (pfd[PFD_SENDSYS].fd != -1)
+		close(pfd[PFD_SENDSYS].fd);
 
 	/* Save the config file specified by the child process */
 	if (strlcpy(config_file, conf, sizeof config_file) >= sizeof(config_file))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.122 2014/09/04 15:19:05 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.123 2014/09/08 00:43:42 doug Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -453,13 +453,12 @@ main(int argc, char *argv[])
 		pfd[PFD_UNIX_0 + i].events = POLLIN;
 	}
 
-	nfunix++;
 	if (socketpair(AF_UNIX, SOCK_DGRAM, PF_UNSPEC, pair) == -1)
 		die(0);
 	fd = pair[0];
 	double_rbuf(fd);
-	pfd[PFD_UNIX_0 + i].fd = fd;
-	pfd[PFD_UNIX_0 + i].events = POLLIN;
+	pfd[PFD_SENDSYS].fd = fd;
+	pfd[PFD_SENDSYS].events = POLLIN;
 
 	if (ctlsock_path != NULL) {
 		fd = unix_socket(ctlsock_path, SOCK_STREAM, 0600);
@@ -608,6 +607,8 @@ main(int argc, char *argv[])
 				unix_read_handler(pfd[PFD_UNIX_0 + i].fd);
 			}
 		}
+		if ((pfd[PFD_SENDSYS].revents & POLLIN) != 0)
+			unix_read_handler(pfd[PFD_SENDSYS].fd);
 	}
 	/* NOTREACHED */
 	return (0);
