@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.151 2014/09/08 00:00:05 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.152 2014/09/08 23:50:45 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1469,7 +1469,7 @@ done:
 void *
 pool_allocator_alloc(struct pool *pp, int flags, int *slowdown)
 {
-	int waitok = flags & PR_WAITOK;
+	int waitok = ISSET(flags, PR_WAITOK);
 	void *v;
 
 	if (waitok)
@@ -1504,7 +1504,7 @@ pool_page_alloc(struct pool *pp, int flags, int *slowdown)
 {
 	struct kmem_dyn_mode kd = KMEM_DYN_INITIALIZER;
 
-	kd.kd_waitok = (flags & PR_WAITOK);
+	kd.kd_waitok = ISSET(flags, PR_WAITOK);
 	kd.kd_slowdown = slowdown;
 
 	return (km_alloc(pp->pr_pgsize, &kv_page, pp->pr_crange, &kd));
@@ -1527,7 +1527,7 @@ pool_large_alloc(struct pool *pp, int flags, int *slowdown)
 	if (POOL_INPGHDR(pp))
 		kv.kv_align = pp->pr_pgsize;
 
-	kd.kd_waitok = (flags & PR_WAITOK);
+	kd.kd_waitok = ISSET(flags, PR_WAITOK);
 	kd.kd_slowdown = slowdown;
 
 	s = splvm();
@@ -1560,7 +1560,7 @@ pool_large_alloc_ni(struct pool *pp, int flags, int *slowdown)
 	if (POOL_INPGHDR(pp))
 		kv.kv_align = pp->pr_pgsize;
 
-	kd.kd_waitok = (flags & PR_WAITOK);
+	kd.kd_waitok = ISSET(flags, PR_WAITOK);
 	kd.kd_slowdown = slowdown;
 
 	return (km_alloc(pp->pr_pgsize, &kv, pp->pr_crange, &kd));
