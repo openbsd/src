@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.267 2014/07/20 18:05:21 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.268 2014/09/08 20:25:03 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -74,6 +74,7 @@ int	acpi_hasprocfvs;
 void 	acpi_pci_match(struct device *, struct pci_attach_args *);
 pcireg_t acpi_pci_min_powerstate(pci_chipset_tag_t, pcitag_t);
 void	 acpi_pci_set_powerstate(pci_chipset_tag_t, pcitag_t, int, int);
+int	acpi_pci_notify(struct aml_node *, int, void *);
 
 int	acpi_match(struct device *, void *, void *);
 void	acpi_attach(struct device *, struct device *, void *);
@@ -567,6 +568,8 @@ acpi_pci_match(struct device *dev, struct pci_attach_args *pa)
 		state = pci_get_powerstate(pa->pa_pc, pa->pa_tag);
 		acpi_pci_set_powerstate(pa->pa_pc, pa->pa_tag, state, 1);
 		acpi_pci_set_powerstate(pa->pa_pc, pa->pa_tag, state, 0);
+
+		aml_register_notify(pdev->node, NULL, acpi_pci_notify, pdev, 0);
 	}
 }
 
@@ -660,6 +663,29 @@ acpi_pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int state, int pre)
 
 	}
 #endif /* NACPIPWRRES > 0 */
+}
+
+int
+acpi_pci_notify(struct aml_node *node, int ntype, void *arg)
+{
+	struct acpi_pci *pdev = arg;
+	pci_chipset_tag_t pc = NULL;
+	pcitag_t tag;
+	pcireg_t reg;
+	int offset;
+
+	/* We're only interested in Device Wake notifications. */
+	if (ntype != 2)
+		return (0);
+
+	tag = pci_make_tag(pc, pdev->bus, pdev->dev, pdev->fun);
+	if (pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, 0)) {
+		/* Clear the PME Status bit if it is set. */
+		reg = pci_conf_read(pc, tag, offset + PCI_PMCSR);
+		pci_conf_write(pc, tag, offset + PCI_PMCSR, reg);
+	}
+
+	return (0);
 }
 
 void
