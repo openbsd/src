@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.402 2014/08/12 15:29:33 mikeb Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.403 2014/09/08 18:10:01 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1397,10 +1397,11 @@ struct pf_pdesc {
 
 #define REASON_SET(a, x) \
 	do { \
-		if ((void *)(a) != NULL) \
+		if ((void *)(a) != NULL) { \
 			*(a) = (x); \
-		if (x < PFRES_MAX) \
-			pf_status.counters[x]++; \
+			if (x < PFRES_MAX) \
+				pf_status.counters[x]++; \
+		} \
 	} while (0)
 
 struct pf_status {

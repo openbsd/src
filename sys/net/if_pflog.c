@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.63 2014/09/08 06:24:13 jsg Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.64 2014/09/08 18:10:01 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -311,7 +311,6 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	struct pfloghdr		*pfloghdr;
 	u_int			 count;
 	u_char			*dst, *mdst;
-	u_short			 reason;
 	int			 afto, hlen, mlen, off;
 	union pf_headers {
 		struct tcphdr		tcp;
@@ -424,9 +423,12 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 		mhdr->m_pkthdr.len += m->m_pkthdr.len - hlen;
 	}
 
-	/* rewrite addresses if needed */
+	/*
+	 * Rewrite addresses if needed. Reason pointer must be NULL to avoid
+	 * counting the packet here again.
+	 */
 	if (pf_setup_pdesc(&pd, &pdhdrs, pfloghdr->af, pfloghdr->dir, NULL,
-	    mhdr, &reason) != PF_PASS)
+	    mhdr, NULL) != PF_PASS)
 		goto copy;
 	pd.naf = pfloghdr->naf;
 
