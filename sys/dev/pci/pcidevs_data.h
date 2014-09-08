@@ -10377,7 +10377,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599EN_SFP,
-	    "82599",
+	    "82599EN",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_LM,
