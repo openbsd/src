@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.183 2014/09/07 11:41:49 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.184 2014/09/08 11:27:49 halex Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -189,7 +189,7 @@ sm_init() {
 			! ${DIFFMODE}; then
 			# redirect stderr; file may not exist
 			_matchsum=$(sha256 -c /usr/share/sysmerge/${_i} 2>/dev/null | \
-				sed -n '/OK$/s/^(SHA256) \(.*\): OK$/\1/p')
+				sed -n 's/^(SHA256) \(.*\): OK$/\1/p')
 			# delete file in temproot if it has not changed since
 			# last release and is present in current installation
 			for _j in ${_matchsum}; do
@@ -566,7 +566,7 @@ sm_check_an_eg() {
 		cp /usr/share/sysmerge/examplessum ${_WRKDIR}/examplessum
 		_egmods=$(cd / && \
 			 sha256 -c /usr/share/sysmerge/examplessum 2>/dev/null | \
-			 sed -n '/FAILED$/s/^(SHA256) \(.*\): FAILED$/\1/p')
+			 sed -n 's/^(SHA256) \(.*\): FAILED$/\1/p')
 	fi
 	for _i in ${_egmods}; do
 		_i=${_i##*/}
