@@ -1,4 +1,4 @@
-.\"	$OpenBSD: send.2,v 1.30 2014/04/07 10:04:17 mpi Exp $
+.\"	$OpenBSD: send.2,v 1.31 2014/09/09 06:32:37 guenther Exp $
 .\"	$NetBSD: send.2,v 1.6 1996/01/15 01:17:18 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)send.2	8.2 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: April 7 2014 $
+.Dd $Mdocdate: September 9 2014 $
 .Dt SEND 2
 .Os
 .Sh NAME
@@ -39,8 +39,7 @@
 .Nm sendmsg
 .Nd send a message from a socket
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/socket.h>
+.In sys/socket.h
 .Ft ssize_t
 .Fn send "int s" "const void *msg" "size_t len" "int flags"
 .Ft ssize_t
@@ -96,15 +95,17 @@ The
 parameter may include one or more of the following:
 .Pp
 .Bl -tag -width "MSG_DONTROUTEXX" -offset indent -compact
-.It Dv MSG_OOB
-process out-of-band data
 .It Dv MSG_DONTROUTE
 bypass routing tables, silently ignored
+.It Dv MSG_DONTWAIT
+don't block
+.It Dv MSG_EOR
+terminate the record (SOCK_SEQPACKET only)
 .It Dv MSG_NOSIGNAL
 don't send
 .Dv SIGPIPE
-.It Dv MSG_DONTWAIT
-don't block
+.It Dv MSG_OOB
+process out-of-band data
 .El
 .Pp
 The flag
@@ -149,7 +150,9 @@ An invalid user space address was specified for a parameter.
 The socket requires that message be sent atomically,
 and the size of the message to be sent made this impossible.
 .It Bq Er EAGAIN
-The socket is marked non-blocking and the requested operation
+The socket is marked non-blocking or the
+.Dv MSG_DONTWAIT
+flag is set and the requested operation
 would block.
 .It Bq Er ENOBUFS
 The system was unable to allocate an internal buffer.
@@ -181,8 +184,6 @@ There was a problem sending the message.
 This error can only be returned by connected sockets.
 .It Bq Er EDESTADDRREQ
 The socket is not connected, and no destination address was specified.
-.It Bq Er EISCONN
-The socket is already connected, and a destination address was specified.
 .It Bq Er EPIPE
 The socket is shut down for writing or not longer connected and the
 .Dv MSG_NOSIGNAL
@@ -201,7 +202,17 @@ was larger than
 .Dv SSIZE_MAX .
 .El
 .Pp
-Also,
+.Fn sendto
+and
+.Fn sendmsg
+may return the following errors:
+.Bl -tag -width Er
+.It Bq Er EAFNOSUPPORT
+Addresses in the specified address family cannot be used with this socket.
+.It Bq Er EISCONN
+The socket is already connected, and a destination address was specified.
+.El
+.Pp
 .Fn sendmsg
 may return the following errors:
 .Bl -tag -width Er
@@ -219,8 +230,6 @@ member of
 .Fa msg
 was less than 0 or larger than
 .Dv IOV_MAX .
-.It Bq Er EAFNOSUPPORT
-Addresses in the specified address family cannot be used with this socket.
 .It Bq Er EMFILE
 The message contains control information utilizing
 .Xr CMSG_DATA 3
@@ -236,6 +245,19 @@ are already in-flight.
 .Xr socket 2 ,
 .Xr write 2 ,
 .Xr CMSG_DATA 3
+.Sh STANDARDS
+The
+.Fn send ,
+.Fn sendto ,
+and
+.Fn sendmsg
+functions conform to
+.St -p1003.1-2008 .
+The
+.Dv MSG_DONTWAIT
+and
+.Dv MSG_NOSIGNAL
+flags are extensions to that specification.
 .Sh HISTORY
 The
 .Fn send

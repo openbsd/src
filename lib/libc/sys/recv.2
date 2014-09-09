@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.41 2014/08/31 01:42:36 guenther Exp $
+.\"	$OpenBSD: recv.2,v 1.42 2014/09/09 06:32:37 guenther Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: August 31 2014 $
+.Dd $Mdocdate: September 9 2014 $
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -291,6 +291,10 @@ A socket operation failed
 because the destination host was down.
 .It Bq Er ENETDOWN
 A socket operation encountered a dead network.
+.It Bq Er ECONNREFUSED
+The socket is associated with a connection-oriented protocol
+and the connection was forcefully rejected (see
+.Xr connect 2 ) .
 .El
 .Pp
 In addition,
@@ -303,16 +307,6 @@ may return the following error:
 .Fa len
 was larger than
 .Dv SSIZE_MAX .
-.El
-.Pp
-Also,
-.Fn recv
-may return the following error:
-.Bl -tag -width "[ECONNREFUSED]"
-.It Bq Er ECONNREFUSED
-The socket is associated with a connection-oriented protocol
-and the connection was forcefully rejected (see
-.Xr connect 2 ) .
 .El
 .Pp
 And
@@ -350,7 +344,22 @@ by another call to
 .Xr select 2 ,
 .Xr socket 2 ,
 .Xr socketpair 2 ,
-.Xr CMSG_DATA 3
+.Xr CMSG_DATA 3 ,
+.Xr sockatmark 3
+.Sh STANDARDS
+The
+.Fn recv ,
+.Fn recvfrom ,
+and
+.Fn recvmsg
+functions conform to
+.St -p1003.1-2008 .
+The
+.Dv MSG_DONTWAIT ,
+.Dv MSG_BCAST ,
+and
+.Dv MSG_MCAST
+flags are extensions to that specification.
 .Sh HISTORY
 The
 .Fn recv

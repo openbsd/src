@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setuid.2,v 1.21 2011/11/07 11:24:30 schwarze Exp $
+.\"	$OpenBSD: setuid.2,v 1.22 2014/09/09 06:32:37 guenther Exp $
 .\"	$NetBSD: setuid.2,v 1.3 1995/02/27 12:37:06 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)setuid.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 7 2011 $
+.Dd $Mdocdate: September 9 2014 $
 .Dt SETUID 2
 .Os
 .Sh NAME
@@ -40,8 +40,7 @@
 .Nm setegid
 .Nd set user and group ID
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft int
 .Fn setuid "uid_t uid"
 .Ft int
@@ -92,12 +91,33 @@ by reverting to the set-user-ID value.
 Similarly, the effective group ID may be set to the value
 of the real group ID or the saved set-group-ID.
 .Sh RETURN VALUES
-Upon success, these functions return 0;
-otherwise \-1 is returned.
+.Rv -std setuid seteuid setgid setegid
+.Sh ERRORS
+.Fn setuid
+and
+.Fn seteuid ,
+will succeed unless:
+.Bl -tag -width Er
+.It Bq Er EPERM
+The user is not the superuser and the requested
+.Fa uid
+or
+.Fa euid
+is not the process's real, effective, or saved UID.
+.El
 .Pp
-If the user is not the superuser, or the UID
-specified is not the real, effective, or saved ID,
-these functions return \-1.
+.Fn setgid
+and
+.Fn setegid
+will succeed unless:
+.Bl -tag -width Er
+.It Bq Er EPERM
+The user is not the superuser and the requested
+.Fa gid
+or
+.Fa egid
+is not the process's real, effective, or saved GID.
+.El
 .Sh SEE ALSO
 .Xr getgid 2 ,
 .Xr getuid 2 ,
@@ -109,23 +129,13 @@ these functions return \-1.
 .Xr setreuid 2
 .Sh STANDARDS
 The
-.Fn setuid
-and
-.Fn setgid
-functions are compliant with the
-.St -p1003.1-90
-specification with
-.Li _POSIX_SAVED_IDS
-defined, with the extensions allowed in section B.4.2.2.
-The
-.Fn seteuid
+.Fn setuid ,
+.Fn seteuid ,
+.Fn setgid ,
 and
 .Fn setegid
-functions are extensions based on the
-.Tn POSIX
-concept of
-.Li _POSIX_SAVED_IDS ,
-and have been proposed for a future revision of the standard.
+functions conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn setuid
