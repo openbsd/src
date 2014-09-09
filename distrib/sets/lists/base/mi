@@ -266,7 +266,6 @@
 ./sbin/mount_mfs
 ./sbin/mount_msdos
 ./sbin/mount_nfs
-./sbin/mount_procfs
 ./sbin/mount_tmpfs
 ./sbin/mount_udf
 ./sbin/mount_vnd

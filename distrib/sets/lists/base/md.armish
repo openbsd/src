@@ -39,7 +39,7 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd5.6/4.2.1/cc1
 ./usr/lib/gcc-lib/arm-unknown-openbsd5.6/4.2.1/collect2
 ./usr/lib/gcc-lib/arm-unknown-openbsd5.6/4.2.1/specs
-./usr/lib/libc.so.77.1
+./usr/lib/libc.so.77.2
 ./usr/lib/libcrypto.so.30.0
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.1
@@ -1725,8 +1725,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fuse
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fuse/fusefs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fuse/fusefs_node.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/procfs
-./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/procfs/procfs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/mmintrin.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/msdosfs

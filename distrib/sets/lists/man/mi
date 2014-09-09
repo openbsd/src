@@ -2550,7 +2550,6 @@
 ./usr/share/man/man8/mount_msdos.8
 ./usr/share/man/man8/mount_nfs.8
 ./usr/share/man/man8/mount_ntfs.8
-./usr/share/man/man8/mount_procfs.8
 ./usr/share/man/man8/mount_tmpfs.8
 ./usr/share/man/man8/mount_udf.8
 ./usr/share/man/man8/mount_vnd.8

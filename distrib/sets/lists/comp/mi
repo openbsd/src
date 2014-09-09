@@ -967,8 +967,6 @@
 ./usr/include/miscfs/fuse
 ./usr/include/miscfs/fuse/fusefs.h
 ./usr/include/miscfs/fuse/fusefs_node.h
-./usr/include/miscfs/procfs
-./usr/include/miscfs/procfs/procfs.h
 ./usr/include/mpool.h
 ./usr/include/msdosfs
 ./usr/include/msdosfs/bootsect.h

@@ -7,7 +7,7 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd5.6/3.3.6/collect2
 ./usr/lib/gcc-lib/m88k-unknown-openbsd5.6/3.3.6/include
 ./usr/lib/gcc-lib/m88k-unknown-openbsd5.6/3.3.6/specs
-./usr/lib/libc.so.77.1
+./usr/lib/libc.so.77.2
 ./usr/lib/libcrypto.so.30.0
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.1
@@ -1627,8 +1627,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/fuse
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/fuse/fusefs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/fuse/fusefs_node.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/procfs
-./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/procfs/procfs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs
 ./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs/bootsect.ph
