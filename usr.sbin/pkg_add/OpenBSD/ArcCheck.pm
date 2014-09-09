@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.27 2014/09/01 10:41:55 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.28 2014/09/09 09:40:23 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -109,12 +109,26 @@ sub prepare_long
 	} else {
 		$entry = $self->prepare($item->name);
 	}
-	if ($< && $entry->{uid} == $<) {
-		$entry->{uname} = $item->{owner} // "root";
+	if (defined $item->{owner}) {
+		$entry->{uname} = $item->{owner};
+		if (defined $item->{uid}) {
+			$entry->{uid} = $item->{uid};
+		} else {
+			delete $entry->{uid};
+		}
+	} elsif ($< && $entry->{uid} == $<) {
+		$entry->{uname} = "root";
 		delete $entry->{uid};
 	}
-	if ($( && $entry->{gid} == $() {
-		$entry->{gname} = $item->{group} // "bin";
+	if (defined $item->{group}) {
+		$entry->{gname} = $item->{group};
+		if (defined $item->{gid}) {
+			$entry->{gid} = $item->{gid};
+		} else {
+			delete $entry->{gid};
+		}
+	} elsif ($< && $( =~ m/\b$entry->{gid}\b/) {
+		$entry->{gname} = "bin";
 		delete $entry->{gid};
 	}
 	$entry->recheck_owner;
@@ -123,7 +137,7 @@ sub prepare_long
 		    $item->name, $entry->{uid});
 	}
 	if (!defined $entry->{gname}) {
-		$self->fatal("No group name for #1 (uid #2)",
+		$self->fatal("No group name for #1 (gid #2)",
 		    $item->name, $entry->{gid});
 	}
 	# disallow writable files/dirs without explicit annotation
