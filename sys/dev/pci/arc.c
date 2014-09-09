@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.103 2014/07/13 23:10:23 deraadt Exp $ */
+/*	$OpenBSD: arc.c,v 1.104 2014/09/09 20:27:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -29,6 +29,7 @@
 #include <sys/mutex.h>
 #include <sys/device.h>
 #include <sys/rwlock.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 
@@ -824,9 +825,13 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	 * interface relies on being able to sleep, so we need to use a thread
 	 * to do the work.
 	 */
-	if (scsi_task(arc_create_sensors, sc, NULL, 1) != 0)
-		printf("%s: unable to schedule arc_create_sensors as a "
-		    "scsi task", DEVNAME(sc));
+	{
+		struct task *t;
+		t = malloc(sizeof(*t), M_TEMP, M_WAITOK);
+
+		task_set(t, arc_create_sensors, sc, t);
+		task_add(systq, t);
+	}
 #endif
 #endif
 
@@ -2596,12 +2601,15 @@ arc_wait(struct arc_softc *sc)
 
 #ifndef SMALL_KERNEL
 void
-arc_create_sensors(void *xsc, void *arg)
+arc_create_sensors(void *xsc, void *xt)
 {
 	struct arc_softc	*sc = xsc;
+	struct task		*t = xt;
 	struct bioc_inq		bi;
 	struct bioc_vol		bv;
 	int			i;
+
+	free(t, M_TEMP, sizeof(*t));
 
 	DPRINTF("%s: arc_create_sensors\n", DEVNAME(sc));
 	/*
