@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.56 2013/04/05 08:25:30 tedu Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.57 2014/09/09 02:07:17 guenther Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ soisconnected(struct socket *so)
 {
 	struct socket *head = so->so_head;
 
-	so->so_state &= ~(SS_ISCONNECTING|SS_ISDISCONNECTING|SS_ISCONFIRMING);
+	so->so_state &= ~(SS_ISCONNECTING|SS_ISDISCONNECTING);
 	so->so_state |= SS_ISCONNECTED;
 	if (head && soqremque(so, 0)) {
 		soqinsque(head, so, 1);
@@ -139,7 +139,7 @@ soisdisconnected(struct socket *so)
  * connection is possible (subject to space constraints, etc.)
  * then we allocate a new structure, properly linked into the
  * data structure of the original socket, and return this.
- * Connstatus may be 0, or SS_ISCONFIRMING, or SS_ISCONNECTED.
+ * Connstatus may be 0 or SS_ISCONNECTED.
  *
  * Must be called at splsoftnet()
  */

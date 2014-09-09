@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.132 2014/09/08 06:24:13 jsg Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.133 2014/09/09 02:07:17 guenther Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -435,8 +435,7 @@ restart:
 		}
 		if ((so->so_state & SS_ISCONNECTED) == 0) {
 			if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
-				if ((so->so_state & SS_ISCONFIRMING) == 0 &&
-				    !(resid == 0 && clen != 0))
+				if (!(resid == 0 && clen != 0))
 					snderr(ENOTCONN);
 			} else if (addr == 0)
 				snderr(EDESTADDRREQ);
@@ -640,8 +639,6 @@ bad:
 	}
 	if (mp)
 		*mp = NULL;
-	if (so->so_state & SS_ISCONFIRMING && uio->uio_resid)
-		(*pr->pr_usrreq)(so, PRU_RCVD, NULL, NULL, NULL, curproc);
 
 restart:
 	if ((error = sblock(&so->so_rcv, SBLOCKWAIT(flags))) != 0)
@@ -1063,10 +1060,6 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	if ((error = getsock(curproc->p_fd, fd, &fp)) != 0)
 		return (error);
 	sosp = fp->f_data;
-
-	if (so->so_state & SS_ISCONFIRMING)
-		(*so->so_proto->pr_usrreq)(so, PRU_RCVD, NULL, NULL, NULL,
-		    curproc);
 
 	/* Lock both receive and send buffer. */
 	if ((error = sblock(&so->so_rcv,

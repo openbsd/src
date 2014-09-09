@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.55 2013/01/15 11:12:57 bluhm Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.56 2014/09/09 02:07:17 guenther Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -140,7 +140,6 @@ struct socket {
 #define	SS_PRIV			0x080	/* privileged for broadcast, raw... */
 #define	SS_NBIO			0x100	/* non-blocking ops */
 #define	SS_ASYNC		0x200	/* async i/o notify */
-#define	SS_ISCONFIRMING		0x400	/* deciding to accept connection req */
 #define	SS_CONNECTOUT		0x1000	/* connect, not accept, at this end */
 #define	SS_ISSENDING		0x2000	/* hint for lower layer */
 
