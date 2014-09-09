@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.18 2013/11/25 23:27:11 krw Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.19 2014/09/09 14:10:35 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1004,16 +1004,16 @@ re_compile(sp, ptrn, plen, ptrnp, lenp, rep, flags)
  *	Convert vi's regular expressions into something that the
  *	the POSIX 1003.2 RE functions can handle.
  *
- * There are three conversions we make to make vi's RE's (specifically
+ * There are two conversions we make to make vi's RE's (specifically
  * the global, search, and substitute patterns) work with POSIX RE's.
+ * We assume that \<ptrn\> does "word" searches, which is non-standard
+ * but supported by most regexp libraries..
  *
  * 1: If O_MAGIC is not set, strip backslashes from the magic character
  *    set (.[*~) that have them, and add them to the ones that don't.
  * 2: If O_MAGIC is not set, the string "\~" is replaced with the text
  *    from the last substitute command's replacement string.  If O_MAGIC
  *    is set, it's the string "~".
- * 3: The pattern \<ptrn\> does "word" searches, convert it to use the
- *    new RE escapes.
  *
  * !!!/XXX
  * This doesn't exactly match the historic behavior of vi because we do
@@ -1045,14 +1045,6 @@ re_conv(sp, ptrnp, plenp, replacedp)
 			if (len > 1) {
 				--len;
 				switch (*++p) {
-				case '<':
-					magic = 1;
-					needlen += sizeof(RE_WSTART);
-					break;
-				case '>':
-					magic = 1;
-					needlen += sizeof(RE_WSTOP);
-					break;
 				case '~':
 					if (!O_ISSET(sp, O_MAGIC)) {
 						magic = 1;
@@ -1107,16 +1099,6 @@ re_conv(sp, ptrnp, plenp, replacedp)
 			if (len > 1) {
 				--len;
 				switch (*++p) {
-				case '<':
-					memcpy(t,
-					    RE_WSTART, sizeof(RE_WSTART) - 1);
-					t += sizeof(RE_WSTART) - 1;
-					break;
-				case '>':
-					memcpy(t,
-					    RE_WSTOP, sizeof(RE_WSTOP) - 1);
-					t += sizeof(RE_WSTOP) - 1;
-					break;
 				case '~':
 					if (O_ISSET(sp, O_MAGIC))
 						*t++ = '~';
