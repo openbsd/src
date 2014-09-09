@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.71 2014/07/12 09:02:24 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.72 2014/09/09 07:07:39 blambert Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -273,6 +273,8 @@ uvm_pageout(void *arg)
 
 		/* scan done. unlock page queues (only lock we are holding) */
 		uvm_unlock_pageq();
+
+		sched_pause();
 	}
 	/*NOTREACHED*/
 }
@@ -313,6 +315,8 @@ uvm_aiodone_daemon(void *arg)
 			(*bp->b_iodone)(bp);
 			splx(s);
 			bp = nbp;
+
+			sched_pause();
 		}
 		uvm_lock_fpageq();
 		wakeup(free <= uvmexp.reserve_kernel ? &uvm.pagedaemon :
