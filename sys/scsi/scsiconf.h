@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.161 2014/04/22 07:29:11 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.162 2014/09/09 20:30:08 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 
 #include <sys/queue.h>
 #include <sys/timeout.h>
-#include <sys/workq.h>
 #include <sys/mutex.h>
 #include <scsi/scsi_debug.h>
 
@@ -468,9 +467,6 @@ SIMPLEQ_HEAD(scsi_xfer_list, scsi_xfer);
 
 const void *scsi_inqmatch(struct scsi_inquiry_data *, const void *, int,
 	    int, int *);
-
-#define scsi_task(_f, _a1, _a2, _fl) \
-    workq_add_task(NULL, (_fl), (_f), (_a1), (_a2))
 
 void	scsi_init(void);
 int	scsi_test_unit_ready(struct scsi_link *, int, int);
