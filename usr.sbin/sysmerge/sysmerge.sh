@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.187 2014/09/09 07:47:04 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.188 2014/09/09 08:53:51 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -594,7 +594,8 @@ sm_post() {
 		mtree -qdef /etc/mtree/BSD.x11.dist -p / -U >/dev/null
 
 	if [[ -e ${_WRKDIR}/sysmerge.log ]]; then
-		rm ${_WRKDIR}/*sum
+		# XXX drop -f after OPENBSD_5_7
+		rm -f ${_WRKDIR}/*sum
 		sed '/^$/d' ${_WRKDIR}/sysmerge.log >${_WRKDIR}/sysmerge.log.bak
 		mv ${_WRKDIR}/sysmerge.log.bak ${_WRKDIR}/sysmerge.log
 		cd ${_WRKDIR} && \
