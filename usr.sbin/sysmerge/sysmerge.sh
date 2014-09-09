@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.186 2014/09/09 06:37:57 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.187 2014/09/09 07:47:04 rpe Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -221,8 +221,8 @@ sm_init() {
 				fi
 				# redirect stderr; file may not exist
 				_cursum=$(cd / && sha256 ${_k} 2>/dev/null)
-				[[ -n $(grep "${_cursum}" /usr/share/sysmerge/${_i}) && \
-					-z $(grep "${_cursum}" ./usr/share/sysmerge/${_i}) ]] && \
+				grep -q "${_cursum}" /usr/share/sysmerge/${_i} && \
+					! grep -q "${_cursum}" ./usr/share/sysmerge/${_i} && \
 					_auto_upg="${_auto_upg} ${_k}"
 			done
 			[[ -n ${_auto_upg} ]] && set -A AUTO_UPG -- ${_auto_upg}
@@ -343,7 +343,7 @@ sm_add_user_grp() {
 	while read _l; do
 		_u=${_l%%:*}
 		if [[ ${_u} != "root" ]]; then
-			if [[ -z $(grep -E "^${_u}:" /etc/master.passwd) ]]; then
+			if ! grep -Eq "^${_u}:" /etc/master.passwd; then
 				sm_echo "===> Adding the ${_u} user"
 				chpass -la "${_l}" && \
 					set -A _newusr -- ${_newusr[@]} ${_u}
@@ -352,7 +352,7 @@ sm_add_user_grp() {
 	done <${_pw}
 
 	while IFS=: read -r -- _g _p _gid _rest; do
-		if [[ -z $(grep -E "^${_g}:" /etc/group) ]]; then
+		if ! grep -Eq "^${_g}:" /etc/group; then
 			sm_echo "===> Adding the ${_g} group"
 			groupadd -g ${_gid} ${_g} && \
 				set -A _newgrp -- ${_newgrp[@]} ${_g}
