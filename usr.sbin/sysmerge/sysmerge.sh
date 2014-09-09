@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.185 2014/09/08 16:47:58 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.186 2014/09/09 06:37:57 rpe Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -366,7 +366,7 @@ sm_merge_loop() {
 	_tomerge=true
 	while ${_tomerge}; do
 		cp -p ${COMPFILE} ${COMPFILE}.merged
-		sdiff -as -w ${_SWIDTH} -o ${COMPFILE}.merged \
+		sdiff -as -w ${_STTYSIZE} -o ${COMPFILE}.merged \
 			${TARGET} ${COMPFILE}
 		_instmerged=v
 		while [[ ${_instmerged} == "v" ]]; do
@@ -626,9 +626,9 @@ shift $(( OPTIND -1 ))
 _WRKDIR=$(mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX) || exit 1
 _BKPDIR=${_WRKDIR}/backups
 _TMPROOT=${_WRKDIR}/temproot
-_SWIDTH=$(stty size | awk '{w=$2} END {if (w==0) {w=80} print w}')
-_RELINT=$(uname -r | tr -d '.')
-readonly _WRKDIR _BKPDIR _TMPROOT _SWIDTH _RELINT
+_RELINT=$(uname -r | tr -d '.') || exit 1
+_STTYSIZE=$(stty size | ( read r c; ((c==0)) && c=80; echo $c )) || exit 1
+readonly _WRKDIR _BKPDIR _TMPROOT _RELINT _STTYSIZE
 
 [[ -z ${VISUAL} ]] && EDITOR=${EDITOR:=/usr/bin/vi} || EDITOR=${VISUAL}
 PAGER=${PAGER:=/usr/bin/more}
