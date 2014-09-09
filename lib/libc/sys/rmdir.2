@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmdir.2,v 1.10 2008/10/24 14:34:39 jmc Exp $
+.\"	$OpenBSD: rmdir.2,v 1.11 2014/09/09 07:23:19 guenther Exp $
 .\"	$NetBSD: rmdir.2,v 1.7 1995/02/27 12:36:30 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,14 +30,14 @@
 .\"
 .\"     @(#)rmdir.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: October 24 2008 $
+.Dd $Mdocdate: September 9 2014 $
 .Dt RMDIR 2
 .Os
 .Sh NAME
 .Nm rmdir
 .Nd remove a directory file
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft int
 .Fn rmdir "const char *path"
 .Sh DESCRIPTION
@@ -50,10 +50,18 @@ than
 .Ql \&.
 and
 .Ql \&.. .
+.Pp
+There is no
+.Fn rmdirat
+function;
+to remove a directory with a path relative to the directory associated
+with a file descriptor use the
+.Xr unlinkat 2
+function with the
+.Dv AT_REMOVEDIR
+flag.
 .Sh RETURN VALUES
-A 0 is returned if the remove succeeds; otherwise a \-1 is
-returned and an error code is stored in the global location
-.Va errno .
+.Rv -std rmdir
 .Sh ERRORS
 The named file is removed unless:
 .Bl -tag -width Er
@@ -78,12 +86,16 @@ in it.
 .It Bq Er EACCES
 Search permission is denied for a component of the path prefix.
 .It Bq Er EACCES
-Write permission is denied on the directory containing the link
+Write permission is denied on the directory containing the directory
 to be removed.
 .It Bq Er EPERM
 The directory containing the directory to be removed is marked sticky,
 and neither the containing directory nor the directory to be removed
 are owned by the effective user ID.
+.It Bq Er EPERM
+The directory to be removed or the directory containing it has its
+immutable or append-only flag set (see
+.Xr chflags 2 ) .
 .It Bq Er EBUSY
 The directory to be removed is the mount point
 for a mounted file system or the current directory.
@@ -98,8 +110,13 @@ points outside the process's allocated address space.
 .El
 .Sh SEE ALSO
 .Xr rmdir 1 ,
+.Xr chflags 2 ,
 .Xr mkdir 2 ,
 .Xr unlink 2
+.Sh STANDARDS
+.Fn rmdir
+function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn rmdir

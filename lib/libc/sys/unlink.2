@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unlink.2,v 1.23 2014/02/13 07:30:39 guenther Exp $
+.\"	$OpenBSD: unlink.2,v 1.24 2014/09/09 07:23:19 guenther Exp $
 .\"	$NetBSD: unlink.2,v 1.7 1995/02/27 12:39:13 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)unlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: February 13 2014 $
+.Dd $Mdocdate: September 9 2014 $
 .Dt UNLINK 2
 .Os
 .Sh NAME
@@ -38,11 +38,11 @@
 .Nm unlinkat
 .Nd remove directory entry
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft int
 .Fn unlink "const char *path"
-.Fd #include <fcntl.h>
-.Fd #include <unistd.h>
+.In fcntl.h
+.In unistd.h
 .Ft int
 .Fn unlinkat "int fd" "const char *path" "int flag"
 .Sh DESCRIPTION
@@ -105,10 +105,7 @@ Remove the directory entry specified by
 as a directory, not a normal file.
 .El
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std unlink unlinkat
 .Sh ERRORS
 The
 .Fn unlink
@@ -144,7 +141,8 @@ The directory containing the file is marked sticky,
 and neither the containing directory nor the file to be removed
 are owned by the effective user ID.
 .It Bq Er EPERM
-The named file has its immutable or append-only flag set (see
+The named file or the directory containing it has its immutable or
+append-only flag set (see
 .Xr chflags 2 ) .
 .It Bq Er EBUSY
 The entry to be unlinked is the mount point for a
@@ -206,6 +204,7 @@ file descriptor references.
 .El
 .Sh SEE ALSO
 .Xr rm 1 ,
+.Xr chflags 2 ,
 .Xr close 2 ,
 .Xr link 2 ,
 .Xr rmdir 2 ,
