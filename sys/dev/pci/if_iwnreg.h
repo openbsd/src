@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.48 2014/09/09 18:55:08 sthen Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.49 2014/09/09 18:56:24 sthen Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -244,7 +244,7 @@
 #define IWN_ANA_PLL_INIT	0x00880300
 
 /* Possible flags for register IWN_FH_RX_STATUS. */
-#define	IWN_FH_RX_STATUS_IDLE	(1 << 24)
+#define IWN_FH_RX_STATUS_IDLE	(1 << 24)
 
 /* Possible flags for register IWN_BSM_WR_CTRL. */
 #define IWN_BSM_WR_CTRL_START_EN	(1U << 30)
@@ -904,15 +904,15 @@ struct iwn_bluetooth {
 
 struct iwn6000_btcoex_config {
 	uint8_t		flags;
-#define	IWN_BT_COEX6000_CHAN_INHIBITION	1
-#define	IWN_BT_COEX6000_MODE_MASK	((1 << 3) | (1 << 4) | (1 << 5))
-#define	IWN_BT_COEX6000_MODE_SHIFT	3
-#define	IWN_BT_COEX6000_MODE_DISABLED	0
-#define	IWN_BT_COEX6000_MODE_LEGACY_2W	1
-#define	IWN_BT_COEX6000_MODE_3W		2
-#define	IWN_BT_COEX6000_MODE_4W		3
-#define	IWN_BT_UCODE_DEFAULT		(1<<6)
-#define	IWN_BT_SYNC_2_BT_DISABLE	(1<<7)
+#define IWN_BT_COEX6000_CHAN_INHIBITION	1
+#define IWN_BT_COEX6000_MODE_MASK	((1 << 3) | (1 << 4) | (1 << 5))
+#define IWN_BT_COEX6000_MODE_SHIFT	3
+#define IWN_BT_COEX6000_MODE_DISABLED	0
+#define IWN_BT_COEX6000_MODE_LEGACY_2W	1
+#define IWN_BT_COEX6000_MODE_3W		2
+#define IWN_BT_COEX6000_MODE_4W		3
+#define IWN_BT_UCODE_DEFAULT		(1<<6)
+#define IWN_BT_SYNC_2_BT_DISABLE	(1<<7)
 
 	uint8_t		lead_time;
 	uint8_t		max_kill;
