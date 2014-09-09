@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.27 2014/02/10 19:08:58 kettenis Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.28 2014/09/09 18:55:08 sthen Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -283,6 +283,8 @@ struct iwn_softc {
 
 	uint8_t			reset_noise_gain;
 	uint8_t			noise_gain;
+
+	uint32_t		tlv_feature_flags;
 
 	int32_t			temp_off;
 	uint32_t		int_mask;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.47 2014/02/11 19:30:10 kettenis Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.48 2014/09/09 18:55:08 sthen Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -799,6 +799,7 @@ struct iwn_scan_hdr {
 
 struct iwn_scan_chan {
 	uint32_t	flags;
+#define IWN_CHAN_PASSIVE	(0 << 0)
 #define IWN_CHAN_ACTIVE		(1 << 0)
 #define IWN_CHAN_NPBREQS(x)	(((1 << (x)) - 1) << 1)
 
@@ -811,6 +812,51 @@ struct iwn_scan_chan {
 
 /* Maximum size of a scan command. */
 #define IWN_SCAN_MAXSZ	(MCLBYTES - 4)
+
+/*
+ * For active scan, listen ACTIVE_DWELL_TIME (msec) on each channel after
+ * sending probe req.  This should be set long enough to hear probe responses
+ * from more than one AP.
+ */
+#define IWN_ACTIVE_DWELL_TIME_2GHZ	(30)	/* all times in msec */
+#define IWN_ACTIVE_DWELL_TIME_5GHZ	(20)
+#define IWN_ACTIVE_DWELL_FACTOR_2GHZ	(3)
+#define IWN_ACTIVE_DWELL_FACTOR_5GHZ	(2)
+
+/*
+ * For passive scan, listen PASSIVE_DWELL_TIME (msec) on each channel.
+ * Must be set longer than active dwell time.
+ * For the most reliable scan, set > AP beacon interval (typically 100msec).
+ */
+#define IWN_PASSIVE_DWELL_TIME_2GHZ	(20)	/* all times in msec */
+#define IWN_PASSIVE_DWELL_TIME_5GHZ	(10)
+#define IWN_PASSIVE_DWELL_BASE		(100)
+#define IWN_CHANNEL_TUNE_TIME		(5)
+
+/*
+ * If active scanning is requested but a certain channel is
+ * marked passive, we can do active scanning if we detect
+ * transmissions.
+ *
+ * There is an issue with some firmware versions that triggers
+ * a sysassert on a "good CRC threshold" of zero (== disabled),
+ * on a radar channel even though this means that we should NOT
+ * send probes.
+ *
+ * The "good CRC threshold" is the number of frames that we
+ * need to receive during our dwell time on a channel before
+ * sending out probes -- setting this to a huge value will
+ * mean we never reach it, but at the same time work around
+ * the aforementioned issue. Thus use IWN_GOOD_CRC_TH_NEVER
+ * here instead of IWN_GOOD_CRC_TH_DISABLED.
+ *
+ * This was fixed in later versions along with some other
+ * scan changes, and the threshold behaves as a flag in those
+ * versions.
+ */
+#define IWN_GOOD_CRC_TH_DISABLED	0
+#define IWN_GOOD_CRC_TH_DEFAULT		htole16(1)
+#define IWN_GOOD_CRC_TH_NEVER		htole16(0xffff)
 
 /* Structure for command IWN_CMD_TXPOWER (4965AGN only.) */
 #define IWN_RIDX_MAX	32
@@ -1407,6 +1453,7 @@ struct iwn_fw_tlv {
 #define IWN_FW_TLV_PBREQ_MAXLEN		6
 #define IWN_FW_TLV_ENH_SENS		14
 #define IWN_FW_TLV_PHY_CALIB		15
+#define IWN_FW_TLV_FLAGS		18
 
 	uint16_t	alt;
 	uint32_t	len;
@@ -1419,6 +1466,60 @@ struct iwn_fw_tlv {
 #define IWN_FW_BOOT_TEXT_MAXSZ	1024
 #define IWN4965_FWSZ		(IWN4965_FW_TEXT_MAXSZ + IWN4965_FW_DATA_MAXSZ)
 #define IWN5000_FWSZ		IWN5000_FW_TEXT_MAXSZ
+
+/*
+ * Microcode flags TLV (18.)
+ */
+
+/**
+ * enum iwn_ucode_tlv_flag - ucode API flags
+ * @IWN_UCODE_TLV_FLAGS_PAN: This is PAN capable microcode; this previously
+ *      was a separate TLV but moved here to save space.
+ * @IWN_UCODE_TLV_FLAGS_NEWSCAN: new uCode scan behaviour on hidden SSID,
+ *      treats good CRC threshold as a boolean
+ * @IWN_UCODE_TLV_FLAGS_MFP: This uCode image supports MFP (802.11w).
+ * @IWN_UCODE_TLV_FLAGS_P2P: This uCode image supports P2P.
+ * @IWN_UCODE_TLV_FLAGS_DW_BC_TABLE: The SCD byte count table is in DWORDS
+ * @IWN_UCODE_TLV_FLAGS_UAPSD: This uCode image supports uAPSD
+ * @IWN_UCODE_TLV_FLAGS_SHORT_BL: 16 entries of black list instead of 64 in scan
+ *      offload profile config command.
+ * @IWN_UCODE_TLV_FLAGS_RX_ENERGY_API: supports rx signal strength api
+ * @IWN_UCODE_TLV_FLAGS_TIME_EVENT_API_V2: using the new time event API.
+ * @IWN_UCODE_TLV_FLAGS_D3_6_IPV6_ADDRS: D3 image supports up to six
+ *      (rather than two) IPv6 addresses
+ * @IWN_UCODE_TLV_FLAGS_BF_UPDATED: new beacon filtering API
+ * @IWN_UCODE_TLV_FLAGS_NO_BASIC_SSID: not sending a probe with the SSID element
+ *      from the probe request template.
+ * @IWN_UCODE_TLV_FLAGS_D3_CONTINUITY_API: modified D3 API to allow keeping
+ *      connection when going back to D0
+ * @IWN_UCODE_TLV_FLAGS_NEW_NSOFFL_SMALL: new NS offload (small version)
+ * @IWN_UCODE_TLV_FLAGS_NEW_NSOFFL_LARGE: new NS offload (large version)
+ * @IWN_UCODE_TLV_FLAGS_SCHED_SCAN: this uCode image supports scheduled scan.
+ * @IWN_UCODE_TLV_FLAGS_STA_KEY_CMD: new ADD_STA and ADD_STA_KEY command API
+ * @IWN_UCODE_TLV_FLAGS_DEVICE_PS_CMD: support device wide power command
+ *      containing CAM (Continuous Active Mode) indication.
+ */
+enum iwn_ucode_tlv_flag {
+	IWN_UCODE_TLV_FLAGS_PAN			= (1 << 0),
+	IWN_UCODE_TLV_FLAGS_NEWSCAN		= (1 << 1),
+	IWN_UCODE_TLV_FLAGS_MFP			= (1 << 2),
+	IWN_UCODE_TLV_FLAGS_P2P			= (1 << 3),
+	IWN_UCODE_TLV_FLAGS_DW_BC_TABLE		= (1 << 4),
+	IWN_UCODE_TLV_FLAGS_NEWBT_COEX		= (1 << 5),
+	IWN_UCODE_TLV_FLAGS_UAPSD		= (1 << 6),
+	IWN_UCODE_TLV_FLAGS_SHORT_BL		= (1 << 7),
+	IWN_UCODE_TLV_FLAGS_RX_ENERGY_API	= (1 << 8),
+	IWN_UCODE_TLV_FLAGS_TIME_EVENT_API_V2	= (1 << 9),
+	IWN_UCODE_TLV_FLAGS_D3_6_IPV6_ADDRS	= (1 << 10),
+	IWN_UCODE_TLV_FLAGS_BF_UPDATED		= (1 << 11),
+	IWN_UCODE_TLV_FLAGS_NO_BASIC_SSID	= (1 << 12),
+	IWN_UCODE_TLV_FLAGS_D3_CONTINUITY_API	= (1 << 14),
+	IWN_UCODE_TLV_FLAGS_NEW_NSOFFL_SMALL	= (1 << 15),
+	IWN_UCODE_TLV_FLAGS_NEW_NSOFFL_LARGE	= (1 << 16),
+	IWN_UCODE_TLV_FLAGS_SCHED_SCAN		= (1 << 17),
+	IWN_UCODE_TLV_FLAGS_STA_KEY_CMD		= (1 << 19),
+	IWN_UCODE_TLV_FLAGS_DEVICE_PS_CMD	= (1 << 20),
+};
 
 /*
  * Offsets into EEPROM.
