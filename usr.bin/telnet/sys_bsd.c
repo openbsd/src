@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.27 2014/07/22 07:30:24 jsg Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.28 2014/09/09 03:41:08 guenther Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -417,8 +417,8 @@ TerminalNewMode(int f)
     if (tcsetattr(tin, TCSADRAIN, &tmp_tc) < 0)
 	tcsetattr(tin, TCSANOW, &tmp_tc);
 
-    ioctl(tin, FIONBIO, (char *)&onoff);
-    ioctl(tout, FIONBIO, (char *)&onoff);
+    ioctl(tin, FIONBIO, &onoff);
+    ioctl(tout, FIONBIO, &onoff);
 }
 
 /*
@@ -521,7 +521,7 @@ TerminalWindowSize(long *rows, long *cols)
 #ifdef	TIOCGWINSZ
     struct winsize ws;
 
-    if (ioctl(fileno(stdin), TIOCGWINSZ, (char *)&ws) >= 0) {
+    if (ioctl(fileno(stdin), TIOCGWINSZ, &ws) >= 0) {
 	*rows = ws.ws_row;
 	*cols = ws.ws_col;
 	return 1;
@@ -694,7 +694,7 @@ process_rings(int netin, int netout, int netex, int ttyin, int ttyout,
 	int canread;
 
 	canread = ring_empty_consecutive(&netiring);
-	c = recv(net, (char *)netiring.supply, canread, 0);
+	c = recv(net, netiring.supply, canread, 0);
 	if (c < 0 && errno == EWOULDBLOCK) {
 	    c = 0;
 	} else if (c <= 0) {

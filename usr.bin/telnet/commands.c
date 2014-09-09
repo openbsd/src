@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.69 2014/07/22 07:30:24 jsg Exp $	*/
+/*	$OpenBSD: commands.c,v 1.70 2014/09/09 03:41:08 guenther Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -772,7 +772,7 @@ struct termios new_tc = { 0 };
 struct setlist {
     char *name;				/* name */
     char *help;				/* help information */
-    void (*handler)(char *);
+    void (*handler)(const char *);
     cc_t *charp;			/* where it is located at */
 };
 
@@ -1420,12 +1420,12 @@ struct envlist {
 };
 
 static void	env_help(void);
-static void	env_undefine(unsigned char *);
-static void	env_export(unsigned char *);
-static void	env_unexport(unsigned char *);
-static void	env_send(unsigned char *);
+static void	env_undefine(const char *);
+static void	env_export(const char *);
+static void	env_unexport(const char *);
+static void	env_send(const char *);
 static void	env_list(void);
-static struct env_lst *env_find(unsigned char *var);
+static struct env_lst *env_find(const char *var);
 
 struct envlist EnvList[] = {
     { "define",	"Define an environment variable",
@@ -1501,8 +1501,8 @@ env_cmd(int argc, char *argv[])
 struct env_lst {
 	struct env_lst *next;	/* pointer to next structure */
 	struct env_lst *prev;	/* pointer to previous structure */
-	unsigned char *var;	/* pointer to variable name */
-	unsigned char *value;	/* pointer to variable value */
+	char *var;		/* pointer to variable name */
+	char *value;		/* pointer to variable value */
 	int export;		/* 1 -> export with default list of variables */
 	int welldefined;	/* A well defined variable */
 };
@@ -1510,12 +1510,12 @@ struct env_lst {
 struct env_lst envlisthead;
 
 static struct env_lst *
-env_find(unsigned char *var)
+env_find(const char *var)
 {
 	struct env_lst *ep;
 
 	for (ep = envlisthead.next; ep; ep = ep->next) {
-		if (strcmp((char *)ep->var, (char *)var) == 0)
+		if (strcmp(ep->var, var) == 0)
 			return(ep);
 	}
 	return(NULL);
@@ -1531,8 +1531,7 @@ env_init(void)
 	for (epp = environ; *epp; epp++) {
 		if ((cp = strchr(*epp, '='))) {
 			*cp = '\0';
-			ep = env_define((unsigned char *)*epp,
-					(unsigned char *)cp+1);
+			ep = env_define(*epp, cp+1);
 			ep->export = 0;
 			*cp = '=';
 		}
@@ -1544,9 +1543,9 @@ env_init(void)
 	 */
 	if ((ep = env_find("DISPLAY"))
 	    && ((*ep->value == ':')
-		|| (strncmp((char *)ep->value, "unix:", 5) == 0))) {
+		|| (strncmp(ep->value, "unix:", 5) == 0))) {
 		char hbuf[MAXHOSTNAMELEN];
-		char *cp2 = strchr((char *)ep->value, ':');
+		char *cp2 = strchr(ep->value, ':');
 
 		gethostname(hbuf, sizeof hbuf);
 
@@ -1562,7 +1561,7 @@ env_init(void)
 			err(1, "asprintf");
 
 		free(ep->value);
-		ep->value = (unsigned char *)cp;
+		ep->value = cp;
 	}
 	/*
 	 * If USER is not defined, but LOGNAME is, then add
@@ -1570,16 +1569,16 @@ env_init(void)
 	 * don't export the USER variable.
 	 */
 	if ((env_find("USER") == NULL) && (ep = env_find("LOGNAME"))) {
-		env_define((unsigned char *)"USER", ep->value);
-		env_unexport((unsigned char *)"USER");
+		env_define("USER", ep->value);
+		env_unexport("USER");
 	}
-	env_export((unsigned char *)"DISPLAY");
-	env_export((unsigned char *)"PRINTER");
-	env_export((unsigned char *)"XAUTHORITY");
+	env_export("DISPLAY");
+	env_export("PRINTER");
+	env_export("XAUTHORITY");
 }
 
 struct env_lst *
-env_define(unsigned char *var, unsigned char *value)
+env_define(const char *var, const char *value)
 {
 	struct env_lst *ep;
 
@@ -1597,17 +1596,17 @@ env_define(unsigned char *var, unsigned char *value)
 		if (ep->next)
 			ep->next->prev = ep;
 	}
-	ep->welldefined = opt_welldefined((char *)var);
+	ep->welldefined = opt_welldefined(var);
 	ep->export = 1;
-	if ((ep->var = strdup((char *)var)) == NULL)
+	if ((ep->var = strdup(var)) == NULL)
 		err(1, "strdup");
-	if ((ep->value = strdup((char *)value)) == NULL)
+	if ((ep->value = strdup(value)) == NULL)
 		err(1, "strdup");
 	return(ep);
 }
 
 static void
-env_undefine(unsigned char *var)
+env_undefine(const char *var)
 {
 	struct env_lst *ep;
 
@@ -1624,7 +1623,7 @@ env_undefine(unsigned char *var)
 }
 
 static void
-env_export(unsigned char *var)
+env_export(const char *var)
 {
 	struct env_lst *ep;
 
@@ -1633,7 +1632,7 @@ env_export(unsigned char *var)
 }
 
 static void
-env_unexport(unsigned char *var)
+env_unexport(const char *var)
 {
 	struct env_lst *ep;
 
@@ -1642,7 +1641,7 @@ env_unexport(unsigned char *var)
 }
 
 static void
-env_send(unsigned char *var)
+env_send(const char *var)
 {
 	struct env_lst *ep;
 
@@ -1675,7 +1674,7 @@ env_list(void)
 	}
 }
 
-unsigned char *
+char *
 env_default(int init, int welldefined)
 {
 	static struct env_lst *nep = NULL;
@@ -1693,8 +1692,8 @@ env_default(int init, int welldefined)
 	return(NULL);
 }
 
-unsigned char *
-env_getvalue(unsigned char *var, int exported_only)
+char *
+env_getvalue(const char *var, int exported_only)
 {
 	struct env_lst *ep;
 
@@ -1860,7 +1859,7 @@ tn(int argc, char *argv[])
     const int niflags = NI_NUMERICHOST;
 
     /* clear the socket address prior to use */
-    memset((char *)&sin, 0, sizeof(sin));
+    memset(&sin, 0, sizeof(sin));
 
     if (connected) {
 	printf("?Already connected to %s\r\n", hostname);
@@ -2061,8 +2060,8 @@ tn(int argc, char *argv[])
 	}
     }
     if (user) {
-	env_define((unsigned char *)"USER", (unsigned char *)user);
-	env_export((unsigned char *)"USER");
+	env_define("USER", user);
+	env_export("USER");
     }
     connection_status(1);
     if (setjmp(peerdied) == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.20 2014/07/22 07:30:24 jsg Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.21 2014/09/09 03:41:08 guenther Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -66,23 +66,23 @@ upcase(char *argument)
  * The following are routines used to print out debugging information.
  */
 
-unsigned char NetTraceFile[PATH_MAX] = "(standard output)";
+char NetTraceFile[PATH_MAX] = "(standard output)";
 
 void
-SetNetTrace(char *file)
+SetNetTrace(const char *file)
 {
     if (NetTrace && NetTrace != stdout)
 	fclose(NetTrace);
-    if (file  && (strcmp(file, "-") != 0)) {
-	NetTrace = fopen(file, "w");
+    if (file && (strcmp(file, "-") != 0)) {
+	NetTrace = fopen(file, "we");
 	if (NetTrace) {
-	    strlcpy((char *)NetTraceFile, file, sizeof(NetTraceFile));
+	    strlcpy(NetTraceFile, file, sizeof(NetTraceFile));
 	    return;
 	}
 	fprintf(stderr, "Cannot open %s.\n", file);
     }
     NetTrace = stdout;
-    strlcpy((char *)NetTraceFile, "(standard output)", sizeof(NetTraceFile));
+    strlcpy(NetTraceFile, "(standard output)", sizeof(NetTraceFile));
 }
 
 void
@@ -356,15 +356,13 @@ printsub(char direction,	/* '<' or '>' */
 		break;
 	    }
 	    fprintf(NetTrace, " %d %d (%d)",
-		pointer[1], pointer[2],
-		(int)((((unsigned int)pointer[1])<<8)|((unsigned int)pointer[2])));
+		pointer[1], pointer[2], (pointer[1]<<8) | pointer[2]);
 	    if (length == 4) {
 		fprintf(NetTrace, " ?%d?", pointer[3]);
 		break;
 	    }
 	    fprintf(NetTrace, " %d %d (%d)",
-		pointer[3], pointer[4],
-		(int)((((unsigned int)pointer[3])<<8)|((unsigned int)pointer[4])));
+		pointer[3], pointer[4], (pointer[3]<<8) | pointer[4]);
 	    for (i = 5; i < length; i++)
 		fprintf(NetTrace, " ?%d?", pointer[i]);
 	    break;
@@ -499,7 +497,7 @@ printsub(char direction,	/* '<' or '>' */
 		    case WONT:	cp = "WONT"; goto common2;
 		    common2:
 			i++;
-			if (TELOPT_OK((int)pointer[i]))
+			if (TELOPT_OK(pointer[i]))
 			    fprintf(NetTrace, " %s %s", cp, TELOPT(pointer[i]));
 			else
 			    fprintf(NetTrace, " %s %d", cp, pointer[i]);

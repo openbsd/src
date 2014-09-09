@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.29 2014/07/22 07:30:24 jsg Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.30 2014/09/09 03:41:08 guenther Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ static void	slc_end_reply(void);
 static void	slc(unsigned char *, int);
 static int	slc_update(void);
 
-static void	env_opt(unsigned char *, int);
+static void	env_opt(char *, int);
 static void	env_opt_start(void);
 
 char	options[256];		/* The combined options */
@@ -155,7 +155,7 @@ init_telnet(void)
     env_init();
 
     SB_CLEAR();
-    memset((char *)options, 0, sizeof options);
+    memset(options, 0, sizeof options);
 
     connected = ISend = localflow = donebinarytoggle = 0;
     restartany = -1;
@@ -382,7 +382,7 @@ dooption(int option)
 		break;
 
 	    case TELOPT_XDISPLOC:	/* X Display location */
-		if (env_getvalue((unsigned char *)"DISPLAY", 0))
+		if (env_getvalue("DISPLAY", 0))
 		    new_state_ok = 1;
 		break;
 
@@ -474,7 +474,7 @@ mklist(char *buf, char *name)
 	char c, *cp, **argvp, *cp2, **argv, **avt;
 
 	if (name) {
-		if ((int)strlen(name) > 40) {
+		if (strlen(name) > 40) {
 			name = NULL;
 			unknown[0] = name_unknown;
 		} else {
@@ -493,7 +493,7 @@ mklist(char *buf, char *name)
 	/*
 	 * Allocate an array to put the name pointers into
 	 */
-	argv = (char **)malloc((n+3)*sizeof(char *));
+	argv = reallocarray(NULL, n+3, sizeof(char *));
 	if (argv == NULL)
 		return(unknown);
 
@@ -605,11 +605,11 @@ gettermname(void)
 		resettermname = 0;
 		if (tnamep && tnamep != unknown)
 			free(tnamep);
-		if ((tname = (char *)env_getvalue((unsigned char *)"TERM", 0)) &&
-				(setupterm(tname, 1, &errret) == OK)) {
+		if ((tname = env_getvalue("TERM", 0)) &&
+		    (setupterm(tname, 1, &errret) == OK)) {
 			tnamep = mklist(ttytype, tname);
 		} else {
-			if (tname && ((int)strlen(tname) <= 40)) {
+			if (tname && (strlen(tname) <= 40)) {
 				unknown[0] = tname;
 				upcase(tname);
 			} else
@@ -773,7 +773,7 @@ suboption(void)
 	    unsigned char temp[50], *dp;
 	    int len;
 
-	    if ((dp = env_getvalue((unsigned char *)"DISPLAY", 0)) == NULL) {
+	    if ((dp = env_getvalue("DISPLAY", 0)) == NULL) {
 		/*
 		 * Something happened, we no longer have a DISPLAY
 		 * variable.  So, turn off the option.
@@ -1206,9 +1206,9 @@ slc_update(void)
 }
 
 static void
-env_opt(unsigned char *buf, int len)
+env_opt(char *buf, int len)
 {
-	unsigned char *ep = 0, *epc = 0;
+	char *ep = 0, *epc = 0;
 	int i;
 
 	switch(buf[0]&0xff) {
@@ -1270,7 +1270,7 @@ env_opt_start(void)
 {
 	unsigned char *p;
 
-	p = (unsigned char *)realloc(opt_reply, OPT_REPLY_SIZE);
+	p = realloc(opt_reply, OPT_REPLY_SIZE);
 	if (p == NULL)
 		free(opt_reply);
 	opt_reply = p;
@@ -1296,9 +1296,9 @@ env_opt_start_info(void)
 }
 
 void
-env_opt_add(unsigned char *ep)
+env_opt_add(char *ep)
 {
-	unsigned char *vp, c;
+	char *vp, c;
 
 	if (opt_reply == NULL)		/*XXX*/
 		return;			/*XXX*/
@@ -1316,8 +1316,8 @@ env_opt_add(unsigned char *ep)
 		return;
 	}
 	vp = env_getvalue(ep, 1);
-	if (opt_replyp + 2 * (vp ? strlen((char *)vp) : 0) +
-				2 * strlen((char *)ep) + 6 > opt_replyend)
+	if (2 * (vp ? strlen(vp) : 0) + 2 * strlen(ep) + 6 >
+	    opt_replyend - opt_replyp)
 	{
 		size_t len;
 		unsigned char *p;
@@ -1326,7 +1326,7 @@ env_opt_add(unsigned char *ep)
 		len += OPT_REPLY_SIZE + 2 * strlen(ep);
 		if (vp)
 			len += 2 * strlen(vp);
-		p = (unsigned char *)realloc(opt_reply, len);
+		p = realloc(opt_reply, len);
 		if (p == NULL) {
 			free(opt_reply);
 /*@*/			printf("env_opt_add: realloc() failed!!!\n");
@@ -1337,8 +1337,8 @@ env_opt_add(unsigned char *ep)
 		opt_replyend = p + len;
 		opt_reply = p;
 	}
-	if (opt_welldefined((char *)ep))
-			opt_add(NEW_ENV_VAR);
+	if (opt_welldefined(ep))
+		opt_add(NEW_ENV_VAR);
 	else
 		opt_add(ENV_USERVAR);
 
@@ -1366,7 +1366,7 @@ env_opt_add(unsigned char *ep)
 }
 
 int
-opt_welldefined(char *ep)
+opt_welldefined(const char *ep)
 {
 	if ((strcmp(ep, "USER") == 0) ||
 	    (strcmp(ep, "DISPLAY") == 0) ||
@@ -1848,7 +1848,7 @@ telnet(char *user)
 	send_will(TELOPT_LINEMODE, 1);
 	send_will(TELOPT_NEW_ENVIRON, 1);
 	send_do(TELOPT_STATUS, 1);
-	if (env_getvalue((unsigned char *)"DISPLAY", 0))
+	if (env_getvalue("DISPLAY", 0))
 	    send_will(TELOPT_XDISPLOC, 1);
 	if (binary)
 	    tel_enter_binary(binary);

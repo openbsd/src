@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.28 2014/07/22 07:30:24 jsg Exp $	*/
+/*	$OpenBSD: externs.h,v 1.29 2014/09/09 03:41:08 guenther Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -152,21 +152,16 @@ extern int	rtableid;	/* routing table to use */
 #define	set_his_want_state_wont		set_my_want_state_dont
 
 
-extern unsigned char
-    NetTraceFile[];	/* Name of file where debugging output goes */
-extern void
-    SetNetTrace (char *);	/* Function to change where debugging goes */
-
 extern jmp_buf
     peerdied,
     toplevel;		/* For error conditions. */
 
 /* commands.c */
 
-struct env_lst *env_define (unsigned char *, unsigned char *);
-void env_init (void);
-unsigned char * env_default(int init, int welldefined);
-unsigned char * env_getvalue(unsigned char *var, int exported_only);
+struct	env_lst *env_define (const char *, const char *);
+void	env_init (void);
+char	*env_default(int init, int welldefined);
+char	*env_getvalue(const char *var, int exported_only);
 
 void set_escape_char(char *s);
 
@@ -207,7 +202,7 @@ void init_telnet(void);
 
 void tel_leave_binary(int rw);
 void tel_enter_binary(int rw);
-int opt_welldefined(char *ep);
+int opt_welldefined(const char *ep);
 void telnet(char *);
 int telrcv(void);
 int rlogin_susp(void);
@@ -236,11 +231,8 @@ void     slc_mode_import (int);
 void     slc_check (void);
 
 void     env_opt_start_info (void);
-void     env_opt_add (unsigned char *);
+void     env_opt_add (char *);
 void     env_opt_end (int);
-
-unsigned char     *env_default (int, int);
-unsigned char     *env_getvalue (unsigned char *, int);
 
 int get_status (void);
 int dosynch (void);
@@ -265,7 +257,8 @@ void setcommandmode(void);
 
 /* utilities.c */
 
-void SetNetTrace(char *file);
+extern char NetTraceFile[];
+void SetNetTrace(const char *file);
 void Dump(char direction, unsigned char *buffer, int length);
 void printoption(char *direction, int cmd, int option);
 void optionstatus(void);
