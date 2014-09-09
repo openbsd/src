@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.2,v 1.14 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: shutdown.2,v 1.15 2014/09/09 09:00:17 guenther Exp $
 .\"	$NetBSD: shutdown.2,v 1.5 1995/02/27 12:37:11 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,14 +30,14 @@
 .\"
 .\"     @(#)shutdown.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: September 9 2014 $
 .Dt SHUTDOWN 2
 .Os
 .Sh NAME
 .Nm shutdown
 .Nd disable sends or receives on a socket
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
+.In sys/socket.h
 .Ft int
 .Fn shutdown "int s" "int how"
 .Sh DESCRIPTION
@@ -71,28 +71,28 @@ The following protocol specific actions apply to the use of
 .Dv SHUT_WR
 based on the properties of the socket associated with the file descriptor
 .Fa s :
-.Bl -column "PF_INET6" "SOCK_STREAM" "IPPROTO_UDP" -offset indent
+.Bl -column "AF_INET6" "SOCK_STREAM" "IPPROTO_UDP" -offset indent
 .It DOMAIN Ta TYPE Ta PROTOCOL Ta "RETURN VALUE AND ACTION"
 .Pp
-.It Dv PF_INET Ta Dv SOCK_DGRAM Ta Dv IPPROTO_UDP Ta
+.It Dv AF_INET Ta Dv SOCK_DGRAM Ta Dv IPPROTO_UDP Ta
 Return 0.
 ICMP messages will
 .Em not
 be generated.
-.It Dv PF_INET Ta Dv SOCK_STREAM Ta Dv IPPROTO_TCP Ta
+.It Dv AF_INET Ta Dv SOCK_STREAM Ta Dv IPPROTO_TCP Ta
 Return 0.
 Send queued data, wait for ACK, then send FIN.
-.It Dv PF_INET6 Ta Dv SOCK_DGRAM Ta Dv IPPROTO_UDP Ta
+.It Dv AF_INET6 Ta Dv SOCK_DGRAM Ta Dv IPPROTO_UDP Ta
 Return 0.
 ICMP messages will
 .Em not
 be generated.
-.It Dv PF_INET6 Ta Dv SOCK_STREAM Ta Dv IPPROTO_TCP Ta
+.It Dv AF_INET6 Ta Dv SOCK_STREAM Ta Dv IPPROTO_TCP Ta
 Return 0.
 Send queued data, wait for ACK, then send FIN.
 .El
 .Sh RETURN VALUES
-.Rv -std shutdown
+.Rv -std
 .Sh ERRORS
 The
 .Fn shutdown
