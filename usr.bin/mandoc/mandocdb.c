@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.119 2014/09/07 03:08:42 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.120 2014/09/09 19:33:55 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -159,7 +159,7 @@ static	void	 putmdockey(const struct mpage *,
 			const struct mdoc_node *, uint64_t);
 static	void	 render_key(struct mchars *, struct str *);
 static	void	 say(const char *, const char *, ...);
-static	int	 set_basedir(const char *);
+static	int	 set_basedir(const char *, int);
 static	int	 treescan(void);
 static	size_t	 utf8(unsigned int, char [7]);
 
@@ -426,7 +426,7 @@ mandocdb(int argc, char *argv[])
 		 * Most of these deal with a specific directory.
 		 * Jump into that directory first.
 		 */
-		if (OP_TEST != op && 0 == set_basedir(path_arg))
+		if (OP_TEST != op && 0 == set_basedir(path_arg, 1))
 			goto out;
 
 		if (dbopen(1)) {
@@ -492,12 +492,12 @@ mandocdb(int argc, char *argv[])
 				ohash_init(&mlinks, 6, &mlinks_info);
 			}
 
-			if (0 == set_basedir(dirs.paths[j]))
-				goto out;
+			if (0 == set_basedir(dirs.paths[j], argc > 0))
+				continue;
 			if (0 == treescan())
-				goto out;
+				continue;
 			if (0 == dbopen(0))
-				goto out;
+				continue;
 
 			mpages_merge(mc, mp);
 			if (warnings && !nodb &&
@@ -2331,7 +2331,7 @@ hash_free(void *p, void *arg)
 }
 
 static int
-set_basedir(const char *targetdir)
+set_basedir(const char *targetdir, int report_baddir)
 {
 	static char	 startdir[PATH_MAX];
 	static int	 getcwd_status;  /* 1 = ok, 2 = failure */
@@ -2384,12 +2384,16 @@ set_basedir(const char *targetdir)
 	 * we can reliably check whether files are inside.
 	 */
 	if (NULL == realpath(targetdir, basedir)) {
-		exitcode = (int)MANDOCLEVEL_BADARG;
-		say("", "&%s: realpath", targetdir);
+		if (report_baddir || errno != ENOENT) {
+			exitcode = (int)MANDOCLEVEL_BADARG;
+			say("", "&%s: realpath", targetdir);
+		}
 		return(0);
 	} else if (-1 == chdir(basedir)) {
-		exitcode = (int)MANDOCLEVEL_BADARG;
-		say("", "&chdir");
+		if (report_baddir || errno != ENOENT) {
+			exitcode = (int)MANDOCLEVEL_BADARG;
+			say("", "&chdir");
+		}
 		return(0);
 	}
 	chdir_status = 1;
