@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.28 2012/08/14 04:10:14 dlg Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.29 2014/09/09 03:08:30 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -133,8 +133,8 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s\n", pci_intr_string(pa->pa_pc, ih));
 
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, mfi_intr, sc,
-	    sc->sc_dev.dv_xname);
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO | IPL_MPSAFE,
+	    mfi_intr, sc, sc->sc_dev.dv_xname);
 	if (!sc->sc_ih) {
 		printf("%s: can't establish interrupt\n", DEVNAME(sc));
 		goto unmap;
