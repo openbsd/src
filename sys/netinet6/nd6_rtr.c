@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.86 2014/09/08 09:32:04 stsp Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.87 2014/09/09 20:33:24 dlg Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
-#include <sys/workq.h>
 #include <dev/rndvar.h>
 
 #include <net/if.h>
