@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigpending.2,v 1.5 2007/05/31 19:19:34 jmc Exp $
+.\"	$OpenBSD: sigpending.2,v 1.6 2014/09/09 08:17:59 guenther Exp $
 .\"	$NetBSD: sigpending.2,v 1.2 1995/02/27 12:37:26 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -33,14 +33,14 @@
 .\"
 .\"	@(#)sigpending.2	8.3 (Berkeley) 1/12/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 9 2014 $
 .Dt SIGPENDING 2
 .Os
 .Sh NAME
 .Nm sigpending
 .Nd get pending signals
 .Sh SYNOPSIS
-.Fd #include <signal.h>
+.In signal.h
 .Ft int
 .Fn sigpending "sigset_t *set"
 .Sh DESCRIPTION
@@ -53,19 +53,17 @@ Signals may be pending because they are currently masked,
 or transiently before delivery (although the latter case is not
 normally detectable).
 .Sh RETURN VALUES
-A 0 value indicated that the call succeeded.
-A \-1 return value indicates an error occurred and
-.Va errno
-is set to indicated the reason.
+.Rv -std
 .Sh ERRORS
 The
 .Nm sigpending
 function does not currently detect any errors.
 .Sh SEE ALSO
 .Xr sigaction 2 ,
-.Xr sigprocmask 2
+.Xr sigprocmask 2 ,
+.Xr sigsetops 3
 .Sh STANDARDS
 The
 .Nm sigpending
 function is defined by
-.St -p1003.1-88 .
+.St -p1003.1-2008 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigsuspend.2,v 1.11 2007/05/31 19:19:34 jmc Exp $
+.\"	$OpenBSD: sigsuspend.2,v 1.12 2014/09/09 08:17:59 guenther Exp $
 .\"	$NetBSD: sigsuspend.2,v 1.4 1995/02/27 12:37:46 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,14 +30,14 @@
 .\"
 .\"	@(#)sigsuspend.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 9 2014 $
 .Dt SIGSUSPEND 2
 .Os
 .Sh NAME
 .Nm sigsuspend
-.Nd atomically release blocked signals and wait for interrupt
+.Nd atomically change the signal mask and wait for interrupt
 .Sh SYNOPSIS
-.Fd #include <signal.h>
+.In signal.h
 .Ft int
 .Fn sigsuspend "const sigset_t *sigmask"
 .Sh DESCRIPTION
@@ -75,4 +75,4 @@ The
 .Nm sigsuspend
 function call
 conforms to
-.St -p1003.1-88 .
+.St -p1003.1-2008 .

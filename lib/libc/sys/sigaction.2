@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.61 2014/08/31 01:42:36 guenther Exp $
+.\"	$OpenBSD: sigaction.2,v 1.62 2014/09/09 08:17:59 guenther Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,14 +30,14 @@
 .\"
 .\"	@(#)sigaction.2	8.2 (Berkeley) 4/3/94
 .\"
-.Dd $Mdocdate: August 31 2014 $
+.Dd $Mdocdate: September 9 2014 $
 .Dt SIGACTION 2
 .Os
 .Sh NAME
 .Nm sigaction
 .Nd software signal facilities
 .Sh SYNOPSIS
-.Fd #include <signal.h>
+.In signal.h
 .Bd -literal
 struct sigaction {
 	union {		/* signal handler */
@@ -343,10 +343,7 @@ with names as in the include file
 .It Dv SIGTHR Ta "discard signal" Ta "thread AST"
 .El
 .Sh RETURN VALUES
-A 0 value indicates that the call succeeded.
-A \-1 return value indicates an error occurred and
-.Va errno
-is set to indicate the reason.
+.Rv -std
 .Sh EXAMPLES
 The handler routine can be declared:
 .Bd -literal -offset indent
