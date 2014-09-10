@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.123 2014/09/08 00:43:42 doug Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.124 2014/09/10 13:16:20 doug Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -183,8 +183,8 @@ char	*TypeNames[9] = {
 struct	filed *Files;
 struct	filed consfile;
 
-int	nfunix = 1;		/* Number of Unix domain sockets requested */
-char	*funixn[MAXFUNIX] = { _PATH_LOG }; /* Paths to Unix domain sockets */
+int	nunix = 1;		/* Number of Unix domain sockets requested */
+char	*path_unix[MAXUNIX] = { _PATH_LOG }; /* Paths to Unix domain sockets */
 int	Debug;			/* debug flag */
 int	Startup = 1;		/* startup flag */
 char	LocalHostName[MAXHOSTNAMELEN];	/* our hostname */
@@ -321,18 +321,18 @@ main(int argc, char *argv[])
 			NoDNS = 1;
 			break;
 		case 'p':		/* path */
-			funixn[0] = optarg;
+			path_unix[0] = optarg;
 			break;
 		case 'u':		/* allow udp input port */
 			SecureMode = 0;
 			break;
 		case 'a':
-			if (nfunix >= MAXFUNIX)
+			if (nunix >= MAXUNIX)
 				fprintf(stderr, "syslogd: "
 				    "out of descriptors, ignoring %s\n",
 				    optarg);
 			else
-				funixn[nfunix++] = optarg;
+				path_unix[nunix++] = optarg;
 			break;
 		case 's':
 			ctlsock_path = optarg;
@@ -442,8 +442,8 @@ main(int argc, char *argv[])
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
-	for (i = 0; i < nfunix; i++) {
-		if ((fd = unix_socket(funixn[i], SOCK_DGRAM, 0666)) == -1) {
+	for (i = 0; i < nunix; i++) {
+		if ((fd = unix_socket(path_unix[i], SOCK_DGRAM, 0666)) == -1) {
 			if (i == 0 && !Debug)
 				die(0);
 			continue;
@@ -577,7 +577,7 @@ main(int argc, char *argv[])
 			dprintf("syslogd: restarted\n");
 		}
 
-		switch (poll(pfd, PFD_UNIX_0 + nfunix, -1)) {
+		switch (poll(pfd, PFD_UNIX_0 + nunix, -1)) {
 		case 0:
 			continue;
 		case -1:
@@ -602,7 +602,7 @@ main(int argc, char *argv[])
 		if ((pfd[PFD_CTLCONN].revents & POLLOUT) != 0)
 			ctlconn_write_handler();
 
-		for (i = 0; i < nfunix; i++) {
+		for (i = 0; i < nunix; i++) {
 			if ((pfd[PFD_UNIX_0 + i].revents & POLLIN) != 0) {
 				unix_read_handler(pfd[PFD_UNIX_0 + i].fd);
 			}

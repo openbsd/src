@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.44 2014/09/08 00:43:42 doug Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.45 2014/09/10 13:16:20 doug Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -172,7 +172,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 	close(socks[1]);
 
 	/* Close descriptors that only the unpriv child needs */
-	for (i = 0; i < nfunix; i++)
+	for (i = 0; i < nunix; i++)
 		if (pfd[PFD_UNIX_0 + i].fd != -1)
 			close(pfd[PFD_UNIX_0 + i].fd);
 	if (pfd[PFD_INET].fd != -1)
@@ -371,9 +371,9 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 	close(socks[0]);
 
 	/* Unlink any domain sockets that have been opened */
-	for (i = 0; i < nfunix; i++)
-		if (funixn[i] != NULL && pfd[PFD_UNIX_0 + i].fd != -1)
-			(void)unlink(funixn[i]);
+	for (i = 0; i < nunix; i++)
+		if (pfd[PFD_UNIX_0 + i].fd != -1)
+			(void)unlink(path_unix[i]);
 	if (ctlsock_path != NULL && pfd[PFD_CTLSOCK].fd != -1)
 		(void)unlink(ctlsock_path);
 
