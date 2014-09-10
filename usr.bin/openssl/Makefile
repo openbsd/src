@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2014/09/01 20:54:37 doug Exp $
+#	$OpenBSD: Makefile,v 1.3 2014/09/10 16:51:42 jsing Exp $
 
 PROG=	openssl
 LDADD=	-lssl -lcrypto
@@ -10,7 +10,7 @@ CFLAGS+= -Wformat
 CFLAGS+= -Wformat-security
 CFLAGS+= -Wimplicit
 CFLAGS+= -Wreturn-type
-CFLAGS+= -Wshadow
+#CFLAGS+= -Wshadow
 CFLAGS+= -Wtrigraphs
 CFLAGS+= -Wuninitialized
 CFLAGS+= -Wunused
