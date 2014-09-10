@@ -1,4 +1,4 @@
-.\"	$OpenBSD: signal.3,v 1.49 2014/08/31 01:42:36 guenther Exp $
+.\"	$OpenBSD: signal.3,v 1.50 2014/09/10 07:04:23 guenther Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 31 2014 $
+.Dd $Mdocdate: September 10 2014 $
 .Dt SIGNAL 3
 .Os
 .Sh NAME
@@ -342,6 +342,7 @@ Base Interfaces:
 .Fn sigprocmask ,
 .Fn sigsuspend ,
 .Fn sleep ,
+.Fn sockatmark ,
 .Fn socket ,
 .Fn socketpair ,
 .Fn stat ,
@@ -370,9 +371,6 @@ Base Interfaces:
 .Fn write .
 .Pp
 .\" unimplemented functions that should be async-sig-safe, if we had them
-.\" POSIX Issue 6 additions
-.\" .Fn sockatmark .
-.\"
 .\" POSIX Issue 7 additions
 .\" .Pp
 .\" .Fn fexecve .
