@@ -35,6 +35,7 @@
 ./usr/include/bsd_auth.h
 ./usr/include/complex.h
 ./usr/include/cpio.h
+./usr/include/cpuid.h
 ./usr/include/crypto
 ./usr/include/crypto/arc4.h
 ./usr/include/crypto/blf.h

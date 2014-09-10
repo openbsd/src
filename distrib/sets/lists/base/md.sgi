@@ -583,6 +583,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/complex.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/cpio.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/cpuid.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/crypto
 ./usr/libdata/perl5/site_perl/mips64-openbsd/crypto/arc4.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/crypto/blf.ph

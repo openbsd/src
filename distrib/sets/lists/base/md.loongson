@@ -554,6 +554,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/complex.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/cpio.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/cpuid.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/arc4.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/blf.ph
