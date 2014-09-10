@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/include/Makefile,v 1.9.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.9 2010/05/17 18:17:55 naddy Exp $
+# $OpenBSD: Makefile,v 1.10 2014/09/10 04:40:02 jsg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@
 
 INCS?=
 .if ${TARGET_ARCH} == "i386" || ${TARGET_ARCH} == "amd64"
-INCS=	emmintrin.h mmintrin.h pmmintrin.h xmmintrin.h mm_malloc.h
+INCS=	cpuid.h emmintrin.h mmintrin.h pmmintrin.h xmmintrin.h mm_malloc.h
 .elif ${TARGET_ARCH} == "arm"
 INCS=	mmintrin.h
 .elif ${TARGET_ARCH} == "powerpc"
