@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.134 2014/09/09 18:55:08 sthen Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -4609,8 +4609,8 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	 * need to receive during our dwell time on a channel before
 	 * sending out probes -- setting this to a huge value will
 	 * mean we never reach it, but at the same time work around
-	 * the aforementioned issue. Thus use IWL_GOOD_CRC_TH_NEVER
-	 * here instead of IWL_GOOD_CRC_TH_DISABLED.
+	 * the aforementioned issue. Thus use IWN_GOOD_CRC_TH_NEVER
+	 * here instead of IWN_GOOD_CRC_TH_DISABLED.
 	 *
 	 * This was fixed in later versions along with some other
 	 * scan changes, and the threshold behaves as a flag in those
