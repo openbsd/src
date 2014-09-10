@@ -1,4 +1,4 @@
-.\"	$OpenBSD: re_format.7,v 1.16 2013/06/05 22:05:29 jmc Exp $
+.\"	$OpenBSD: re_format.7,v 1.17 2014/09/10 11:25:32 jsg Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)re_format.7	8.3 (Berkeley) 3/20/94
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: September 10 2014 $
 .Dt RE_FORMAT 7
 .Os
 .Sh NAME
@@ -304,6 +304,12 @@ This is an extension,
 compatible with but not specified by POSIX,
 and should be used with
 caution in software intended to be portable to other systems.
+The additional word delimiters  
+.Ql \e<
+and
+.Ql \e> 
+are provided to ease compatibility with traditional SVR4
+systems but are not portable and should be avoided.
 .Pp
 In the event that an RE could match more than one substring of a given
 string,
