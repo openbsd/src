@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.58 2014/09/05 10:04:20 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.59 2014/09/10 15:39:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -527,6 +527,7 @@ struct server_config *
 	 server_getlocation(struct client *, const char *);
 const char *
 	 server_http_host(struct sockaddr_storage *, char *, size_t);
+char	*server_http_parsehost(char *, char *, size_t, int *);
 ssize_t	 server_http_time(time_t, char *, size_t);
 int	 server_log_http(struct client *, u_int, size_t);
 
