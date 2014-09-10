@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.53 2014/07/12 18:50:00 tedu Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.54 2014/09/10 04:39:50 mlarkin Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -1212,7 +1212,7 @@ linux_sendmsg(p, v, retval)
 	struct msghdr msg, *nmsg = NULL;
 	int error;
 	caddr_t control;
-	int level;
+	int level = -1;
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lla, sizeof lla)))
 		return error;
