@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.111 2014/08/26 20:19:26 rpe Exp $
+dnl	$OpenBSD: m4.common,v 1.112 2014/09/11 07:08:37 rpe Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -146,14 +146,6 @@ dnl
 define({:-OpenBSDxbase-:},
 {:-	xbase{:--:}OSrev  This set includes the base X distribution.  This includes
 		 programs, headers and libraries.showsize($1,$2)-:})dnl
-dnl
-dnl
-dnl OpenBSDxetc( compressed size, uncompressed size )
-dnl Describes xetcXX.tgz.
-dnl
-define({:-OpenBSDxetc-:},
-{:-	xetc{:--:}OSrev	 This set includes the X window system configuration files
-		 that reside in /etc.  It's the equivalent of etc{:--:}OSrev for X.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDxshare( compressed size, uncompressed size )
@@ -849,13 +841,10 @@ will use the existing filesystems defined in /etc/fstab to install the
 new system in.  It will also use your existing network parameters.
 
 From then, the upgrade procedure is very close to the installation
-procedure described earlier in this document.  Note that the upgrade
-procedure will not let you pick the ``xetc{:--:}OSrev.tgz'' set, so as to
-preserve your files in `/etc' which you are likely to have customized
-since a previous installation.
+procedure described earlier in this document.
 
-However, it is strongly advised that you unpack the etc{:--:}.tgz file
-found in /usr/share/sysmerge and the xetc{:--:}OSrev.tgz in a temporary
+However, it is strongly advised that you unpack the etc{:--:}.tgz and the
+xetc{:--:}.tgz files found in /usr/share/sysmerge in a temporary
 directory and merge changes by hand, or with the help of the sysmerge(8)
 helper script, since all components of your system may not function
 correctly until your files in `/etc' are updated.-:})dnl
