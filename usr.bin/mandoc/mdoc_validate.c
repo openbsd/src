@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.164 2014/09/07 23:24:33 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.165 2014/09/11 23:52:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -116,6 +116,7 @@ static	int	 post_rs(POST_ARGS);
 static	int	 post_sh(POST_ARGS);
 static	int	 post_sh_head(POST_ARGS);
 static	int	 post_sh_name(POST_ARGS);
+static	int	 post_sh_see_also(POST_ARGS);
 static	int	 post_sh_authors(POST_ARGS);
 static	int	 post_st(POST_ARGS);
 static	int	 post_vt(POST_ARGS);
@@ -1855,6 +1856,8 @@ post_sh(POST_ARGS)
 		switch (mdoc->lastsec)  {
 		case SEC_NAME:
 			return(post_sh_name(mdoc));
+		case SEC_SEE_ALSO:
+			return(post_sh_see_also(mdoc));
 		case SEC_AUTHORS:
 			return(post_sh_authors(mdoc));
 		default:
@@ -1900,6 +1903,69 @@ post_sh_name(POST_ARGS)
 
 	mandoc_msg(MANDOCERR_NAMESEC_BAD, mdoc->parse,
 	    n->line, n->pos, mdoc_macronames[n->tok]);
+	return(1);
+}
+
+static int
+post_sh_see_also(POST_ARGS)
+{
+	const struct mdoc_node	*n;
+	const char 		*name, *sec;
+	const char		*lastname, *lastsec, *lastpunct;
+	int			 cmp;
+
+	n = mdoc->last->child;
+	lastname = lastsec = lastpunct = NULL;
+	while (n != NULL) {
+		if (n->tok != MDOC_Xr || n->nchild < 2)
+			break;
+
+		/* Process one .Xr node. */
+
+		name = n->child->string;
+		sec = n->child->next->string;
+		if (lastsec != NULL) {
+			if (lastpunct[0] != ',' || lastpunct[1] != '\0')
+				mandoc_vmsg(MANDOCERR_XR_PUNCT,
+				    mdoc->parse, n->line, n->pos,
+				    "%s before %s(%s)", lastpunct,
+				    name, sec);
+			cmp = strcmp(lastsec, sec);
+			if (cmp > 0)
+				mandoc_vmsg(MANDOCERR_XR_ORDER,
+				    mdoc->parse, n->line, n->pos,
+				    "%s(%s) after %s(%s)", name,
+				    sec, lastname, lastsec);
+			else if (cmp == 0 &&
+			    strcasecmp(lastname, name) > 0)
+				mandoc_vmsg(MANDOCERR_XR_ORDER,
+				    mdoc->parse, n->line, n->pos,
+				    "%s after %s", name, lastname);
+		}
+		lastname = name;
+		lastsec = sec;
+
+		/* Process the following node. */
+
+		n = n->next;
+		if (n == NULL)
+			break;
+		if (n->tok == MDOC_Xr) {
+			lastpunct = "none";
+			continue;
+		}
+		if (n->type != MDOC_TEXT)
+			break;
+		for (name = n->string; *name != '\0'; name++)
+			if (isalpha((const unsigned char)*name))
+				return(1);
+		lastpunct = n->string;
+		if (n->next == NULL)
+			mandoc_vmsg(MANDOCERR_XR_PUNCT, mdoc->parse,
+			    n->line, n->pos, "%s after %s(%s)",
+			    lastpunct, lastname, lastsec);
+		n = n->next;
+	}
 	return(1);
 }
 
