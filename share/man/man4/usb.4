@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.156 2014/07/12 21:58:36 tedu Exp $
+.\"	$OpenBSD: usb.4,v 1.157 2014/09/11 11:14:36 mpi Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 12 2014 $
+.Dd $Mdocdate: September 11 2014 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -528,7 +528,7 @@ struct usb_device_ddesc {
 .Ed
 .Pp
 The
-.Va udc_bus
+.Va udd_bus
 field contains the device unit number.
 .Pp
 The
@@ -538,7 +538,7 @@ field contains the device descriptor structure.
 This command can be used to retrieve the configuration descriptor for the
 given configuration of a device on the bus.
 The
-.Va udi_addr
+.Va udc_addr
 field needs to be filled with the bus device address.
 The
 .Va udc_config_index
