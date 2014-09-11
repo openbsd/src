@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.12 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.13 2014/09/11 20:32:16 kettenis Exp $	*/
 /* $NetBSD: atomic.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -109,6 +109,32 @@ i386_atomic_cas_int32(volatile int32_t *ptr, int32_t expect, int32_t set)
 
 	return (res);
 }
+
+/*
+ * The IA-32 architecture is rather strongly ordered.  When accessing
+ * normal write-back cachable memory, only reads may be reordered with
+ * older writes to different locations.  There are a few instructions
+ * (clfush, non-temporal move instructions) that obey weaker ordering
+ * rules, but those instructions will only be used in (inline)
+ * assembly code where we can add the necessary fence instructions
+ * ourselves.
+ */
+
+#define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
+
+#ifdef MULTIPROCESSOR
+#define membar_enter()		__membar("lock; addl $0,0(%%esp)")
+#define membar_exit()		__membar("")
+#define membar_producer()	__membar("")
+#define membar_consumer()	__membar("")
+#define membar_sync()		__membar("lock; addl $0,0(%%esp)")
+#else
+#define membar_enter()		__membar("")
+#define membar_exit()		__membar("")
+#define membar_producer()	__membar("")
+#define membar_consumer()	__membar("")
+#define membar_sync()		__membar("")
+#endif
 
 int ucas_32(volatile int32_t *, int32_t, int32_t);
 #define futex_atomic_ucas_int32 ucas_32
