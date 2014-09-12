@@ -1,4 +1,4 @@
-/* $OpenBSD: mp_setperf.c,v 1.4 2014/06/29 01:01:20 deraadt Exp $ */
+/* $OpenBSD: mp_setperf.c,v 1.5 2014/09/12 09:52:45 kettenis Exp $ */
 /*
  * Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd.org>
  *
@@ -17,13 +17,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/mutex.h>
 
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
-
 #include <machine/intr.h>
 
 struct mutex setperf_mp_mutex = MUTEX_INITIALIZER(IPL_HIGH);
@@ -31,14 +28,7 @@ struct mutex setperf_mp_mutex = MUTEX_INITIALIZER(IPL_HIGH);
 /* underlying setperf mechanism e.g. k8_powernow_setperf() */
 void (*ul_setperf)(int);
 
-#define MP_SETPERF_STEADY 	0	/* steady state - normal operation */
-#define MP_SETPERF_INTRANSIT 	1	/* in transition */
-#define MP_SETPERF_PROCEED 	2	/* proceed with transition */
-#define MP_SETPERF_FINISH 	3	/* return from IPI */
-
-
 /* protected by setperf_mp_mutex */
-volatile int mp_setperf_state = MP_SETPERF_STEADY;
 volatile int mp_perflevel;
 
 void mp_setperf(int);
@@ -46,101 +36,28 @@ void mp_setperf(int);
 void
 mp_setperf(int level)
 {
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-	int notready, s;
+	mtx_enter(&setperf_mp_mutex);
+	mp_perflevel = level;
 
-	if (mp_setperf_state == MP_SETPERF_STEADY) {
-		mtx_enter(&setperf_mp_mutex);
-		disable_intr();
-		mp_perflevel = level;
+	ul_setperf(mp_perflevel);
+	x86_broadcast_ipi(X86_IPI_SETPERF);
 
-		curcpu()->ci_setperf_state = CI_SETPERF_INTRANSIT;
-		/* ask all other processors to drop what they are doing */
-		CPU_INFO_FOREACH(cii, ci) {
-			if (ci->ci_setperf_state != CI_SETPERF_INTRANSIT) {
-				ci->ci_setperf_state =
-				    CI_SETPERF_SHOULDSTOP;
-				x86_send_ipi(ci, X86_IPI_SETPERF);
-			}
-		}
-
-
-		/* Loop until all processors report ready */
-		do {
-			CPU_INFO_FOREACH(cii, ci) {
-				if ((notready = (ci->ci_setperf_state
-				    != CI_SETPERF_INTRANSIT)))
-					break;
-			}
-		} while (notready);
-
-		mp_setperf_state = MP_SETPERF_PROCEED; /* release the hounds */
-
-		s = splipi();
-
-		ul_setperf(mp_perflevel);
-
-		splx(s);
-
-		curcpu()->ci_setperf_state = CI_SETPERF_DONE;
-		/* Loop until all processors report done */
-		do {
-			CPU_INFO_FOREACH(cii, ci) {
-				if ((notready = (ci->ci_setperf_state
-				    != CI_SETPERF_DONE)))
-					break;
-			}
-		} while (notready);
-
-		mp_setperf_state = MP_SETPERF_FINISH;
-		/* delay a little for potential straglers */
-		DELAY(2);
-		curcpu()->ci_setperf_state = CI_SETPERF_READY;
-		mp_setperf_state = MP_SETPERF_STEADY; /* restore normallity */
-		enable_intr();
-		mtx_leave(&setperf_mp_mutex);
-	}
-
+	mtx_leave(&setperf_mp_mutex);
 }
 
 void
 x86_setperf_ipi(struct cpu_info *ci)
 {
-
-	disable_intr();
-
-	if (ci->ci_setperf_state == CI_SETPERF_SHOULDSTOP)
-		ci->ci_setperf_state = CI_SETPERF_INTRANSIT;
-
-	while (mp_setperf_state != MP_SETPERF_PROCEED)
-		;
-
 	ul_setperf(mp_perflevel);
-
-	ci->ci_setperf_state = CI_SETPERF_DONE;
-
-	while (mp_setperf_state != MP_SETPERF_FINISH)
-		;
-	ci->ci_setperf_state = CI_SETPERF_READY;
-
-	enable_intr();
 }
 
 void
-mp_setperf_init()
+mp_setperf_init(void)
 {
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-
 	if (!cpu_setperf)
 		return;
+
 	ul_setperf = cpu_setperf;
-
 	cpu_setperf = mp_setperf;
-
-	CPU_INFO_FOREACH(cii, ci) {
-		ci->ci_setperf_state = CI_SETPERF_READY;
-	}
 	mtx_init(&setperf_mp_mutex, IPL_HIGH);
 }
