@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.6 2014/07/13 23:10:23 deraadt Exp $ */
+/*	$OpenBSD: nvme.c,v 1.7 2014/09/12 06:34:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -150,16 +150,16 @@ nvme_dumpregs(struct nvme_softc *sc)
 	    (u_int)NVME_CAP_MPSMIN(r8), (1 << NVME_CAP_MPSMIN(r8)));
 	printf("%s:  css %llu\n", DEVNAME(sc), NVME_CAP_CSS(r8));
 	printf("%s:  nssrs %llu\n", DEVNAME(sc), NVME_CAP_NSSRS(r8));
-	printf("%s:  dstrd %llu\n", DEVNAME(sc), NVME_CAP_DSTRD(r8));
+	printf("%s:  dstrd %u\n", DEVNAME(sc), NVME_CAP_DSTRD(r8));
 	printf("%s:  to %llu msec\n", DEVNAME(sc), NVME_CAP_TO(r8));
 	printf("%s:  ams %llu\n", DEVNAME(sc), NVME_CAP_AMS(r8));
 	printf("%s:  cqr %llu\n", DEVNAME(sc), NVME_CAP_CQR(r8));
 	printf("%s:  mqes %llu\n", DEVNAME(sc), NVME_CAP_MQES(r8));
 
-	printf("%s: vs   0x%08lx\n", DEVNAME(sc), nvme_read4(sc, NVME_VS));
+	printf("%s: vs   0x%04x\n", DEVNAME(sc), nvme_read4(sc, NVME_VS));
 
 	r4 = nvme_read4(sc, NVME_CC);
-	printf("%s: cc   0x%08lx\n", DEVNAME(sc), r4);
+	printf("%s: cc   0x%04x\n", DEVNAME(sc), r4);
 	printf("%s:  iocqes %u\n", DEVNAME(sc), NVME_CC_IOCQES_R(r4));
 	printf("%s:  iosqes %u\n", DEVNAME(sc), NVME_CC_IOSQES_R(r4));
 	printf("%s:  shn %u\n", DEVNAME(sc), NVME_CC_SHN_R(r4));
@@ -168,8 +168,8 @@ nvme_dumpregs(struct nvme_softc *sc)
 	printf("%s:  css %u\n", DEVNAME(sc), NVME_CC_CSS_R(r4));
 	printf("%s:  en %u\n", DEVNAME(sc), ISSET(r4, NVME_CC_EN));
 	
-	printf("%s: csts 0x%08lx\n", DEVNAME(sc), nvme_read4(sc, NVME_CSTS));
-	printf("%s: aqa  0x%08lx\n", DEVNAME(sc), nvme_read4(sc, NVME_AQA));
+	printf("%s: csts 0x%08x\n", DEVNAME(sc), nvme_read4(sc, NVME_CSTS));
+	printf("%s: aqa  0x%08x\n", DEVNAME(sc), nvme_read4(sc, NVME_AQA));
 	printf("%s: asq  0x%016llx\n", DEVNAME(sc), nvme_read8(sc, NVME_ASQ));
 	printf("%s: acq  0x%016llx\n", DEVNAME(sc), nvme_read8(sc, NVME_ACQ));
 }
