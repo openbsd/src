@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1739 2014/09/08 21:36:39 chris Exp $
+$OpenBSD: pcidevs,v 1.1740 2014/09/12 06:48:24 dlg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2865,6 +2865,7 @@ product INTEL WL_7265_2		0x095b	Dual Band Wireless AC 7265
 product INTEL 80960RP		0x0960	i960 RP
 product INTEL 80960RM		0x0962	i960 RM
 product INTEL 80960RN		0x0964	i960 RN
+product INTEL SSDDCP3x00	0x0953	SSD DC P3700/P3600/P3500
 product INTEL CORE4G_D_ULT_GT1	0x0a02	HD Graphics
 product INTEL CORE4G_HB_1	0x0a04	Core 4G Host
 product INTEL CORE4G_M_ULT_GT1	0x0a06	HD Graphics
