@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.106 2014/03/18 22:36:30 miod Exp $
+#  $OpenBSD: Makefile,v 1.107 2014/09/12 22:07:24 kettenis Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -67,6 +67,7 @@ ARCH_SRCS = e_sqrt.c e_sqrtf.c s_fabsf.c
 .PATH:	${.CURDIR}/arch/sparc
 .elif (${MACHINE_ARCH} == "sparc64")
 .PATH:	${.CURDIR}/arch/sparc64
+ARCH_SRCS = e_sqrtl.c
 .elif (${MACHINE_ARCH} == "vax")
 .PATH:	${.CURDIR}/arch/vax
 NOIEEE_ARCH = n_argred.S n_infnan.S n_sqrt.S
