@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.63 2014/09/11 23:52:47 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.64 2014/09/12 00:53:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -152,6 +152,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"skipping duplicate list type",
 	"skipping -width argument",
 	"unknown AT&T UNIX version",
+	"comma in function argument",
 	"invalid content in Rs block",
 	"invalid Boolean argument",
 	"unknown font, skipping request",
