@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_sqrt.c,v 1.3 2013/11/26 20:33:07 deraadt Exp $	*/
+/*	$OpenBSD: fpu_sqrt.c,v 1.4 2014/09/12 22:04:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -372,12 +372,12 @@ __fpu_sqrt(fe)
 	FPU_SUBCS(d2, x2, t2);
 	FPU_SUBCS(d1, x1, t1);
 	FPU_SUBC(d0, x0, t0);
-	ODD_DOUBLE;
 	if ((int)d0 >= 0) {
-		x0 = d0, x1 = d1, x2 = d2;
+		x0 = d0, x1 = d1, x2 = d2, x3 = d3;
 		q |= bit;
 		y2 |= 1;
 	}
+	ODD_DOUBLE;
 	while ((bit >>= 1) != 0) {
 		EVEN_DOUBLE;
 		t3 = y3 | bit;
@@ -386,7 +386,7 @@ __fpu_sqrt(fe)
 		FPU_SUBCS(d1, x1, t1);
 		FPU_SUBC(d0, x0, t0);
 		if ((int)d0 >= 0) {
-			x0 = d0, x1 = d1, x2 = d2;
+			x0 = d0, x1 = d1, x2 = d2, x3 = d3;
 			q |= bit;
 			y3 |= bit << 1;
 		}
