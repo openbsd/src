@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.45 2014/03/20 13:19:06 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.46 2014/09/12 16:02:40 sthen Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -325,6 +325,7 @@ extern	void ieee80211_free_allnodes(struct ieee80211com *);
 typedef void ieee80211_iter_func(void *, struct ieee80211_node *);
 extern	void ieee80211_iterate_nodes(struct ieee80211com *ic,
 		ieee80211_iter_func *, void *);
+extern	void ieee80211_clean_cached(struct ieee80211com *ic);
 extern	void ieee80211_clean_nodes(struct ieee80211com *, int);
 extern	int ieee80211_setup_rates(struct ieee80211com *,
 	    struct ieee80211_node *, const u_int8_t *, const u_int8_t *, int);

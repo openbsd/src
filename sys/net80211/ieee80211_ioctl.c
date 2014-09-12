@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.35 2014/07/10 14:32:28 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.36 2014/09/12 16:02:40 sthen Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -649,8 +649,10 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ic->ic_scan_lock & IEEE80211_SCAN_LOCKED)
 				ic->ic_scan_lock |= IEEE80211_SCAN_RESUME;
 			ic->ic_scan_lock |= IEEE80211_SCAN_REQUEST;
-			if (ic->ic_state != IEEE80211_S_SCAN)
+			if (ic->ic_state != IEEE80211_S_SCAN) {
+				ieee80211_clean_cached(ic);
 				ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+			}
 		}
 		/* Let the userspace process wait for completion */
 		error = tsleep(&ic->ic_scan_lock, PCATCH, "80211scan",

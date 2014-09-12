@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.82 2014/08/08 15:16:39 jasper Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.83 2014/09/12 16:02:40 sthen Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1134,6 +1134,21 @@ ieee80211_free_allnodes(struct ieee80211com *ic)
 		ieee80211_node_cleanup(ic, ic->ic_bss);	/* for station mode */
 }
 
+void
+ieee80211_clean_cached(struct ieee80211com *ic)
+{
+	struct ieee80211_node *ni, *next_ni;
+	int s;
+
+	s = splnet();
+	for (ni = RB_MIN(ieee80211_tree, &ic->ic_tree);
+	    ni != NULL; ni = next_ni) {
+		next_ni = RB_NEXT(ieee80211_tree, &ic->ic_tree, ni);
+		if (ni->ni_state == IEEE80211_STA_CACHE)
+			ieee80211_free_node(ic, ni);
+	}
+	splx(s);
+}
 /*
  * Timeout inactive nodes.
  *
