@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.59 2013/08/14 06:32:31 jmc Exp $
+.\"	$OpenBSD: queue.3,v 1.60 2014/09/13 01:09:31 guenther Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: September 13 2014 $
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -39,7 +39,6 @@
 .Nm SLIST_HEAD_INITIALIZER ,
 .Nm SLIST_FIRST ,
 .Nm SLIST_NEXT ,
-.Nm SLIST_END ,
 .Nm SLIST_EMPTY ,
 .Nm SLIST_FOREACH ,
 .Nm SLIST_FOREACH_SAFE ,
@@ -54,7 +53,6 @@
 .Nm LIST_HEAD_INITIALIZER ,
 .Nm LIST_FIRST ,
 .Nm LIST_NEXT ,
-.Nm LIST_END ,
 .Nm LIST_EMPTY ,
 .Nm LIST_FOREACH ,
 .Nm LIST_FOREACH_SAFE ,
@@ -69,7 +67,6 @@
 .Nm SIMPLEQ_HEAD_INITIALIZER ,
 .Nm SIMPLEQ_FIRST ,
 .Nm SIMPLEQ_NEXT ,
-.Nm SIMPLEQ_END ,
 .Nm SIMPLEQ_EMPTY ,
 .Nm SIMPLEQ_FOREACH ,
 .Nm SIMPLEQ_FOREACH_SAFE ,
@@ -84,7 +81,6 @@
 .Nm TAILQ_HEAD_INITIALIZER ,
 .Nm TAILQ_FIRST ,
 .Nm TAILQ_NEXT ,
-.Nm TAILQ_END ,
 .Nm TAILQ_LAST ,
 .Nm TAILQ_PREV ,
 .Nm TAILQ_EMPTY ,
@@ -98,27 +94,8 @@
 .Nm TAILQ_INSERT_HEAD ,
 .Nm TAILQ_INSERT_TAIL ,
 .Nm TAILQ_REMOVE ,
-.Nm TAILQ_REPLACE ,
-.Nm CIRCLEQ_ENTRY ,
-.Nm CIRCLEQ_HEAD ,
-.Nm CIRCLEQ_HEAD_INITIALIZER ,
-.Nm CIRCLEQ_FIRST ,
-.Nm CIRCLEQ_LAST ,
-.Nm CIRCLEQ_END ,
-.Nm CIRCLEQ_NEXT ,
-.Nm CIRCLEQ_PREV ,
-.Nm CIRCLEQ_EMPTY ,
-.Nm CIRCLEQ_FOREACH ,
-.Nm CIRCLEQ_FOREACH_SAFE ,
-.Nm CIRCLEQ_FOREACH_REVERSE_SAFE ,
-.Nm CIRCLEQ_INIT ,
-.Nm CIRCLEQ_INSERT_AFTER ,
-.Nm CIRCLEQ_INSERT_BEFORE ,
-.Nm CIRCLEQ_INSERT_HEAD ,
-.Nm CIRCLEQ_INSERT_TAIL ,
-.Nm CIRCLEQ_REMOVE ,
-.Nm CIRCLEQ_REPLACE
-.Nd implementations of singly-linked lists, doubly-linked lists, simple queues, tail queues, and circular queues
+.Nm TAILQ_REPLACE
+.Nd implementations of singly-linked lists, doubly-linked lists, simple queues, and tail queues
 .Sh SYNOPSIS
 .In sys/queue.h
 .Pp
@@ -129,8 +106,6 @@
 .Fn SLIST_FIRST "SLIST_HEAD *head"
 .Ft "struct TYPE *"
 .Fn SLIST_NEXT "struct TYPE *listelm" "FIELDNAME"
-.Ft "struct TYPE *"
-.Fn SLIST_END "SLIST_HEAD *head"
 .Ft int
 .Fn SLIST_EMPTY "SLIST_HEAD *head"
 .Fn SLIST_FOREACH "VARNAME" "SLIST_HEAD *head" "FIELDNAME"
@@ -155,8 +130,6 @@
 .Fn LIST_FIRST "LIST_HEAD *head"
 .Ft "struct TYPE *"
 .Fn LIST_NEXT "struct TYPE *listelm" "FIELDNAME"
-.Ft "struct TYPE *"
-.Fn LIST_END "LIST_HEAD *head"
 .Ft int
 .Fn LIST_EMPTY "LIST_HEAD *head"
 .Fn LIST_FOREACH "VARNAME" "LIST_HEAD *head" "FIELDNAME"
@@ -181,8 +154,6 @@
 .Fn SIMPLEQ_FIRST "SIMPLEQ_HEAD *head"
 .Ft "struct TYPE *"
 .Fn SIMPLEQ_NEXT "struct TYPE *listelm" "FIELDNAME"
-.Ft "struct TYPE *"
-.Fn SIMPLEQ_END "SIMPLEQ_HEAD *head"
 .Ft int
 .Fn SIMPLEQ_EMPTY "SIMPLEQ_HEAD *head"
 .Fn SIMPLEQ_FOREACH "VARNAME" "SIMPLEQ_HEAD *head" "FIELDNAME"
@@ -208,8 +179,6 @@
 .Ft "struct TYPE *"
 .Fn TAILQ_NEXT "struct TYPE *listelm" "FIELDNAME"
 .Ft "struct TYPE *"
-.Fn TAILQ_END "TAILQ_HEAD *head"
-.Ft "struct TYPE *"
 .Fn TAILQ_LAST "TAILQ_HEAD *head" "HEADNAME"
 .Ft "struct TYPE *"
 .Fn TAILQ_PREV "struct TYPE *listelm" "HEADNAME" "FIELDNAME"
@@ -233,44 +202,10 @@
 .Fn TAILQ_REMOVE "TAILQ_HEAD *head" "struct TYPE *elm" "FIELDNAME"
 .Ft void
 .Fn TAILQ_REPLACE "TAILQ_HEAD *head" "struct TYPE *elm" "struct TYPE *elm2" "FIELDNAME"
-.Pp
-.Fn CIRCLEQ_ENTRY "TYPE"
-.Fn CIRCLEQ_HEAD "HEADNAME" "TYPE"
-.Fn CIRCLEQ_HEAD_INITIALIZER "CIRCLEQ_HEAD head"
-.Ft "struct TYPE *"
-.Fn CIRCLEQ_FIRST "CIRCLEQ_HEAD *head"
-.Ft "struct TYPE *"
-.Fn CIRCLEQ_LAST "CIRCLEQ_HEAD *head"
-.Ft "struct TYPE *"
-.Fn CIRCLEQ_END "CIRCLEQ_HEAD *head"
-.Ft "struct TYPE *"
-.Fn CIRCLEQ_NEXT "struct TYPE *listelm" "FIELDNAME"
-.Ft "struct TYPE *"
-.Fn CIRCLEQ_PREV "struct TYPE *listelm" "FIELDNAME"
-.Ft int
-.Fn CIRCLEQ_EMPTY "CIRCLEQ_HEAD *head"
-.Fn CIRCLEQ_FOREACH "VARNAME" "CIRCLEQ_HEAD *head" "FIELDNAME"
-.Fn CIRCLEQ_FOREACH_SAFE "VARNAME" "CIRCLEQ_HEAD *head" "FIELDNAME" "TEMP_VARNAME"
-.Fn CIRCLEQ_FOREACH_REVERSE "VARNAME" "CIRCLEQ_HEAD *head" "FIELDNAME"
-.Fn CIRCLEQ_FOREACH_REVERSE_SAFE "VARNAME" "CIRCLEQ_HEAD *head" "FIELDNAME" "TEMP_VARNAME"
-.Ft void
-.Fn CIRCLEQ_INIT "CIRCLEQ_HEAD *head"
-.Ft void
-.Fn CIRCLEQ_INSERT_AFTER "CIRCLEQ_HEAD *head" "struct TYPE *listelm" "struct TYPE *elm" "FIELDNAME"
-.Ft void
-.Fn CIRCLEQ_INSERT_BEFORE "CIRCLEQ_HEAD *head" "struct TYPE *listelm" "struct TYPE *elm" "FIELDNAME"
-.Ft void
-.Fn CIRCLEQ_INSERT_HEAD "CIRCLEQ_HEAD *head" "struct TYPE *elm" "FIELDNAME"
-.Ft void
-.Fn CIRCLEQ_INSERT_TAIL "CIRCLEQ_HEAD *head" "struct TYPE *elm" "FIELDNAME"
-.Ft void
-.Fn CIRCLEQ_REMOVE "CIRCLEQ_HEAD *head" "struct TYPE *elm" "FIELDNAME"
-.Ft void
-.Fn CIRCLEQ_REPLACE "CIRCLEQ_HEAD *head" "struct TYPE *elm" "struct TYPE *elm2" "FIELDNAME"
 .Sh DESCRIPTION
-These macros define and operate on five types of data structures:
-singly-linked lists, simple queues, lists, tail queues, and circular queues.
-All five structures support the following functionality:
+These macros define and operate on four types of data structures:
+singly-linked lists, simple queues, lists, and tail queues.
+All four structures support the following functionality:
 .Pp
 .Bl -enum -compact -offset indent
 .It
@@ -283,7 +218,7 @@ Removal of an entry from the head of the list.
 Forward traversal through the list.
 .El
 .Pp
-Singly-linked lists are the simplest of the five data structures
+Singly-linked lists are the simplest of the four data structures
 and support only the above functionality.
 Singly-linked lists are ideal for applications with large datasets
 and few or no removals, or for implementing a LIFO queue.
@@ -310,8 +245,8 @@ than singly-linked lists.
 Simple queues are ideal for applications with large datasets and
 few or no removals, or for implementing a FIFO queue.
 .Pp
-All doubly linked types of data structures (lists, tail queues, and circle
-queues) additionally allow:
+All doubly linked types of data structures (lists and tail queues)
+additionally allow:
 .Pp
 .Bl -enum -compact -offset indent
 .It
@@ -354,27 +289,10 @@ Code size is about 15% greater and operations run about 20% slower
 than singly-linked lists.
 .El
 .Pp
-Circular queues add the following functionality:
-.Pp
-.Bl -enum -compact -offset indent
-.It
-Entries can be added at the end of a list.
-.It
-They may be traversed backwards, from tail to head.
-.El
-.Pp
-However:
-.Pp
-.Bl -enum -compact -offset indent
-.It
-All list insertions and removals must specify the head of the list.
-.It
-Each head entry requires two pointers rather than one.
-.It
-The termination condition for traversal is more complex.
-.It
-Code size is about 40% greater and operations run about 45% slower than lists.
-.El
+An additional type of data structure, circular queues, violated the C
+language aliasing rules and were miscompiled as a result.
+All code using them should be converted to another structure;
+tail queues are usually the easiest to convert to.
 .Pp
 In the macro definitions,
 .Fa TYPE
@@ -382,9 +300,8 @@ is the name tag of a user defined structure that must contain a field of type
 .Li SLIST_ENTRY ,
 .Li LIST_ENTRY ,
 .Li SIMPLEQ_ENTRY ,
-.Li TAILQ_ENTRY ,
 or
-.Li CIRCLEQ_ENTRY ,
+.Li TAILQ_ENTRY ,
 named
 .Fa FIELDNAME .
 The argument
@@ -394,9 +311,8 @@ using the macros
 .Fn SLIST_HEAD ,
 .Fn LIST_HEAD ,
 .Fn SIMPLEQ_HEAD ,
-.Fn TAILQ_HEAD ,
 or
-.Fn CIRCLEQ_HEAD .
+.Fn TAILQ_HEAD .
 See the examples below for further explanation of how these macros are used.
 .Sh SINGLY-LINKED LISTS
 A singly-linked list is headed by a structure defined by the
@@ -972,164 +888,6 @@ while ((np = TAILQ_FIRST(&head))) {
 }
 
 .Ed
-.Sh CIRCULAR QUEUES
-A circular queue is headed by a structure defined by the
-.Fn CIRCLEQ_HEAD
-macro.
-This structure contains a pair of pointers,
-one to the first element in the circular queue and the other to the
-last element in the circular queue.
-The elements are doubly linked so that an arbitrary element can be
-removed without traversing the queue.
-New elements can be added to the queue after an existing element,
-before an existing element, at the head of the queue, or at the end
-of the queue.
-A
-.Fa CIRCLEQ_HEAD
-structure is declared as follows:
-.Bd -literal -offset indent
-CIRCLEQ_HEAD(HEADNAME, TYPE) head;
-.Ed
-.Pp
-where
-.Fa HEADNAME
-is the name of the structure to be defined, and struct
-.Fa TYPE
-is the type of the elements to be linked into the circular queue.
-A pointer to the head of the circular queue can later be declared as:
-.Bd -literal -offset indent
-struct HEADNAME *headp;
-.Ed
-.Pp
-(The names
-.Li head
-and
-.Li headp
-are user selectable.)
-.Pp
-The
-.Fn CIRCLEQ_ENTRY
-macro declares a structure that connects the elements in the circular queue.
-.Pp
-The
-.Fn CIRCLEQ_INIT
-macro initializes the circular queue referenced by
-.Fa head .
-.Pp
-The circular queue can also be initialized statically by using the
-.Fn CIRCLEQ_HEAD_INITIALIZER
-macro.
-.Pp
-The
-.Fn CIRCLEQ_INSERT_HEAD
-macro inserts the new element
-.Fa elm
-at the head of the circular queue.
-.Pp
-The
-.Fn CIRCLEQ_INSERT_TAIL
-macro inserts the new element
-.Fa elm
-at the end of the circular queue.
-.Pp
-The
-.Fn CIRCLEQ_INSERT_AFTER
-macro inserts the new element
-.Fa elm
-after the element
-.Fa listelm .
-.Pp
-The
-.Fn CIRCLEQ_INSERT_BEFORE
-macro inserts the new element
-.Fa elm
-before the element
-.Fa listelm .
-.Pp
-The
-.Fn CIRCLEQ_REMOVE
-macro removes the element
-.Fa elm
-from the circular queue.
-.Pp
-The
-.Fn CIRCLEQ_REPLACE
-macro replaces the list element
-.Fa elm
-with the new element
-.Fa elm2 .
-.Pp
-The
-.Fn CIRCLEQ_FIRST ,
-.Fn CIRCLEQ_LAST ,
-.Fn CIRCLEQ_END ,
-.Fn CIRCLEQ_NEXT
-and
-.Fn CIRCLEQ_PREV
-macros can be used to traverse a circular queue.
-The
-.Fn CIRCLEQ_FOREACH
-is used for circular queue forward traversal:
-.Bd -literal -offset indent
-CIRCLEQ_FOREACH(np, head, FIELDNAME)
-.Ed
-.Pp
-The
-.Fn CIRCLEQ_FOREACH_REVERSE
-macro acts like
-.Fn CIRCLEQ_FOREACH
-but traverses the circular queue backwards.
-.Pp
-The macros
-.Fn CIRCLEQ_FOREACH_SAFE
-and
-.Fn CIRCLEQ_FOREACH_REVERSE_SAFE
-traverse the list referenced by head
-in a forward or reverse direction respectively,
-assigning each element in turn to var.
-However, unlike their unsafe counterparts,
-they permit both the removal of var
-as well as freeing it from within the loop safely
-without interfering with the traversal.
-.Pp
-The
-.Fn CIRCLEQ_EMPTY
-macro should be used to check whether a circular queue is empty.
-.Sh CIRCULAR QUEUE EXAMPLE
-.Bd -literal
-CIRCLEQ_HEAD(circleq, entry) head;
-struct entry {
-	...
-	CIRCLEQ_ENTRY(entry) entries;	/* Circular queue. */
-	...
-} *n1, *n2, *np;
-
-CIRCLEQ_INIT(&head);			/* Initialize circular queue. */
-
-n1 = malloc(sizeof(struct entry));	/* Insert at the head. */
-CIRCLEQ_INSERT_HEAD(&head, n1, entries);
-
-n1 = malloc(sizeof(struct entry));	/* Insert at the tail. */
-CIRCLEQ_INSERT_TAIL(&head, n1, entries);
-
-n2 = malloc(sizeof(struct entry));	/* Insert after. */
-CIRCLEQ_INSERT_AFTER(&head, n1, n2, entries);
-
-n2 = malloc(sizeof(struct entry));	/* Insert before. */
-CIRCLEQ_INSERT_BEFORE(&head, n1, n2, entries);
-					/* Forward traversal. */
-CIRCLEQ_FOREACH(np, &head, entries)
-	np-> ...
-					/* Reverse traversal. */
-CIRCLEQ_FOREACH_REVERSE(np, &head, entries)
-	np-> ...
-					/* Delete. */
-while (!CIRCLEQ_EMPTY(&head)) {
-	n1 = CIRCLEQ_FIRST(&head);
-	CIRCLEQ_REMOVE(&head, n1, entries);
-	free(n1);
-}
-.Ed
 .Sh NOTES
 It is an error to assume the next and previous fields are preserved
 after an element has been removed from a list or queue.
@@ -1143,11 +901,10 @@ The
 .Fn SIMPLEQ_END
 and
 .Fn TAILQ_END
-macros are provided for symmetry with
-.Fn CIRCLEQ_END .
-They expand to
-.Dv NULL
-and don't serve any useful purpose.
+macros are deprecated; they provided symmetry with the historical
+.Fn CIRCLEQ_END
+and just expand to
+.Dv NULL .
 .Pp
 Trying to free a list in the following way is a common error:
 .Bd -literal -offset indent
@@ -1169,3 +926,5 @@ The
 .Nm queue
 functions first appeared in
 .Bx 4.4 .
+The historical circle queue macros were deprecated in
+.Ox 5.5 .
