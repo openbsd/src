@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.188 2014/09/09 08:53:51 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.189 2014/09/13 12:00:52 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -157,9 +157,12 @@ sm_cp_pkg_samples() {
 			# knowledge of the required owner/group/mode
 			# (e.g. /var/www/usr/sbin in mail/femail,-chroot)
 			_pkghier=${_sample[5]%/*}
-			if [[ ! -d ${_pkghier} ]]; then
+			if [[ ! -d ${_pkghier#${_TMPROOT}} ]]; then
 				sm_warn "skipping ${_sample[5]#${_TMPROOT}}: ${_pkghier#${_TMPROOT}} does not exist"
 				continue
+			else
+				# non-default prefix (e.g. mail/roundcubemail)
+				install -d ${_pkghier}
 			fi
 			install ${_install_args} \
 				${_sample[4]} ${_sample[5]} || _ret=1
