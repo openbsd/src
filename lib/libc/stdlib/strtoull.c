@@ -1,5 +1,5 @@
-/*	$OpenBSD: strtoull.c,v 1.6 2013/03/28 18:09:38 martynas Exp $ */
-/*-
+/*	$OpenBSD: strtoull.c,v 1.7 2014/09/13 20:10:12 schwarze Exp $ */
+/*
  * Copyright (c) 1992 The Regents of the University of California.
  * All rights reserved.
  *
@@ -50,8 +50,15 @@ strtoull(const char *nptr, char **endptr, int base)
 	int neg, any, cutlim;
 
 	/*
-	 * See strtoq for comments as to the logic used.
+	 * See strtoll for comments as to the logic used.
 	 */
+	if (base < 0 || base == 1 || base > 36) {
+		if (endptr != 0)
+			*endptr = (char *)nptr;
+		errno = EINVAL;
+		return 0;
+	}
+
 	s = nptr;
 	do {
 		c = (unsigned char) *s++;
@@ -59,7 +66,7 @@ strtoull(const char *nptr, char **endptr, int base)
 	if (c == '-') {
 		neg = 1;
 		c = *s++;
-	} else { 
+	} else {
 		neg = 0;
 		if (c == '+')
 			c = *s++;

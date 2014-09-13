@@ -1,6 +1,5 @@
-/*	$OpenBSD: strtoumax.c,v 1.1 2006/01/13 17:58:09 millert Exp $	*/
-
-/*-
+/*	$OpenBSD: strtoumax.c,v 1.2 2014/09/13 20:10:12 schwarze Exp $	*/
+/*
  * Copyright (c) 1992 The Regents of the University of California.
  * All rights reserved.
  *
@@ -48,8 +47,15 @@ strtoumax(const char *nptr, char **endptr, int base)
 	int neg, any, cutlim;
 
 	/*
-	 * See strtoq for comments as to the logic used.
+	 * See strtoimax for comments as to the logic used.
 	 */
+	if (base < 0 || base == 1 || base > 36) {
+		if (endptr != 0)
+			*endptr = (char *)nptr;
+		errno = EINVAL;
+		return 0;
+	}
+
 	s = nptr;
 	do {
 		c = (unsigned char) *s++;
@@ -57,7 +63,7 @@ strtoumax(const char *nptr, char **endptr, int base)
 	if (c == '-') {
 		neg = 1;
 		c = *s++;
-	} else { 
+	} else {
 		neg = 0;
 		if (c == '+')
 			c = *s++;

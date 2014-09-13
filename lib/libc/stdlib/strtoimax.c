@@ -1,6 +1,5 @@
-/*	$OpenBSD: strtoimax.c,v 1.1 2006/01/13 17:58:09 millert Exp $	*/
-
-/*-
+/*	$OpenBSD: strtoimax.c,v 1.2 2014/09/13 20:10:12 schwarze Exp $	*/
+/*
  * Copyright (c) 1992 The Regents of the University of California.
  * All rights reserved.
  *
@@ -46,6 +45,17 @@ strtoimax(const char *nptr, char **endptr, int base)
 	intmax_t acc, cutoff;
 	int c;
 	int neg, any, cutlim;
+
+	/*
+	 * Ensure that base is between 2 and 36 inclusive, or the special
+	 * value of 0.
+	 */
+	if (base < 0 || base == 1 || base > 36) {
+		if (endptr != 0)
+			*endptr = (char *)nptr;
+		errno = EINVAL;
+		return 0;
+	}
 
 	/*
 	 * Skip white space and pick up leading +/- sign if any.

@@ -1,5 +1,5 @@
-/* $OpenBSD: strtoll.c,v 1.7 2013/03/28 18:09:38 martynas Exp $ */
-/*-
+/*	$OpenBSD: strtoll.c,v 1.8 2014/09/13 20:10:12 schwarze Exp $ */
+/*
  * Copyright (c) 1992 The Regents of the University of California.
  * All rights reserved.
  *
@@ -48,6 +48,17 @@ strtoll(const char *nptr, char **endptr, int base)
 	long long acc, cutoff;
 	int c;
 	int neg, any, cutlim;
+
+	/*
+	 * Ensure that base is between 2 and 36 inclusive, or the special
+	 * value of 0.
+	 */
+	if (base < 0 || base == 1 || base > 36) {
+		if (endptr != 0)
+			*endptr = (char *)nptr;
+		errno = EINVAL;
+		return 0;
+	}
 
 	/*
 	 * Skip white space and pick up leading +/- sign if any.
