@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1740 2014/09/12 06:48:24 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1741 2014/09/13 05:11:27 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5128,6 +5128,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 3200",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_3100,
+	    "Radeon 3100",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3300,
 	    "Radeon HD 3300",
 	},
@@ -8124,6 +8128,66 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Smart Array P531",
 	},
 	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP224BR,
+	    "Smart Array P244br",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP741M,
+	    "Smart Array P741m",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAH240AR,
+	    "Smart HBA H240ar",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP440AR,
+	    "Smart Array P440ar",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP440,
+	    "Smart Array P440",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP441,
+	    "Smart Array P441",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP841,
+	    "Smart Array P841",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAH244BR,
+	    "Smart HBA H244br",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAH240,
+	    "Smart HBA H240",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAH241,
+	    "Smart HBA H241",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP246BR,
+	    "Smart Array P246br",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP840,
+	    "Smart Array P840",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP542T,
+	    "Smart Array P542t",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP240TR,
+	    "Smart Array P240tr",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAH240TR,
+	    "Smart HBA H240tr",
+	},
+	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAV100,
 	    "Smart Array V100",
 	},
@@ -8602,6 +8666,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ARRANDALE_IGD,
 	    "HD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_HB_2,
+	    "Core Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_PCIE_6,
+	    "Core PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_6005_1,
@@ -9088,6 +9160,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Atom D2000/N2000 Video",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_D2000_HB_2,
+	    "Atom D2000/N2000 Host",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_D2000_HB,
 	    "Atom D2000/N2000 Host",
 	},
@@ -9176,6 +9252,70 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HD Graphics",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_PCIE_1,
+	    "Atom S1200 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_PCIE_2,
+	    "Atom S1200 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_PCIE_3,
+	    "Atom S1200 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_PCIE_4,
+	    "Atom S1200 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_MEI,
+	    "Atom S1200 MEI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_SMB_1,
+	    "Atom S1200 SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_SMB_2,
+	    "Atom S1200 SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_SMB_3,
+	    "Atom S1200 SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_SMB_4,
+	    "Atom S1200 SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_SMB_5,
+	    "Atom S1200 SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_SMB_6,
+	    "Atom S1200 SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_UART,
+	    "Atom S1200 UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_ISA,
+	    "Atom S1200 ISA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1240_HB,
+	    "Atom S1240 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1220_HB,
+	    "Atom S1220 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1260_HB,
+	    "Atom S1260 Host",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_D_CRW_GT1,
 	    "HD Graphics",
 	},
@@ -9244,10 +9384,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E5 v2 Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_PCIE_5,
-	    "E5 v2 PCIE",
-	},
-	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_PCIE_1,
 	    "E5 v2 PCIE",
 	},
@@ -9261,6 +9397,34 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_PCIE_4,
+	    "E5 v2 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_PCIE_5,
+	    "E5 v2 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_PCIE_6,
+	    "E5 v2 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_PCIE_7,
+	    "E5 v2 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_PCIE_8,
+	    "E5 v2 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_PCIE_9,
+	    "E5 v2 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_PCIE_10,
+	    "E5 v2 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_PCIE_11,
 	    "E5 v2 PCIE",
 	},
 	{
@@ -9304,8 +9468,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E5 v2 I/OAT",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_ADDRMAP,
+	    "E5 v2 Address Map",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_IIO_RAS,
 	    "E5 v2 IIO RAS",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_IOAPIC,
+	    "E5 v2 I/O APIC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_HA_2,
@@ -10540,6 +10712,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "6 Series USB",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_UHCI_1,
+	    "6 Series USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_UHCI_2,
+	    "6 Series USB",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_EHCI_2,
 	    "6 Series USB",
 	},
@@ -10864,7 +11044,15 @@ static const struct pci_known_product pci_known_products[] = {
 	    "NM70 LPC",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_HB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_HB_1,
+	    "Atom C2000 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_HB_2,
+	    "Atom C2000 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_HB_3,
 	    "Atom C2000 Host",
 	},
 	{
@@ -15792,6 +15980,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "88SE9172 SATA",
 	},
 	{
+	    PCI_VENDOR_MARVELL2, PCI_PRODUCT_MARVELL2_88SE9230,
+	    "88SE9230 AHCI",
+	},
+	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_ATLAS,
 	    "MGA PX2085",
 	},
@@ -16394,6 +16586,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_TSI381,
 	    "Tsi381 PCIE-PCI",
+	},
+	{
+	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_PEB383,
+	    "PEB383 PCIE-PCI",
 	},
 	{
 	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1000,
