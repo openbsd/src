@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.338 2014/08/01 01:32:09 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.339 2014/09/13 16:06:37 doug Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1170,7 +1170,7 @@ sr_boot_assembly(struct sr_softc *sc)
 	SLIST_INIT(&kdh);
 
 	dk = TAILQ_FIRST(&disklist);
-	while (dk != TAILQ_END(&disklist)) {
+	while (dk != NULL) {
 
 		/* See if this disk has been checked. */
 		SLIST_FOREACH(sdk, &sdklist, sdk_link)
@@ -1212,7 +1212,7 @@ sr_boot_assembly(struct sr_softc *sc)
 	/*
 	 * Create a list of volumes and associate chunks with each volume.
 	 */
-	for (bc = SLIST_FIRST(&bch); bc != SLIST_END(&bch); bc = bcnext) {
+	for (bc = SLIST_FIRST(&bch); bc != NULL; bc = bcnext) {
 
 		bcnext = SLIST_NEXT(bc, sbc_link);
 		SLIST_REMOVE(&bch, bc, sr_boot_chunk, sbc_link);
@@ -1467,10 +1467,10 @@ sr_boot_assembly(struct sr_softc *sc)
 	/* done with metadata */
 unwind:
 	/* Free boot volumes and associated chunks. */
-	for (bv1 = SLIST_FIRST(&bvh); bv1 != SLIST_END(&bvh); bv1 = bv2) {
+	for (bv1 = SLIST_FIRST(&bvh); bv1 != NULL; bv1 = bv2) {
 		bv2 = SLIST_NEXT(bv1, sbv_link);
-		for (bc1 = SLIST_FIRST(&bv1->sbv_chunks);
-		    bc1 != SLIST_END(&bv1->sbv_chunks); bc1 = bc2) {
+		for (bc1 = SLIST_FIRST(&bv1->sbv_chunks); bc1 != NULL;
+		    bc1 = bc2) {
 			bc2 = SLIST_NEXT(bc1, sbc_link);
 			if (bc1->sbc_metadata)
 				free(bc1->sbc_metadata, M_DEVBUF, 0);
@@ -1479,14 +1479,14 @@ unwind:
 		free(bv1, M_DEVBUF, 0);
 	}
 	/* Free keydisks chunks. */
-	for (bc1 = SLIST_FIRST(&kdh); bc1 != SLIST_END(&kdh); bc1 = bc2) {
+	for (bc1 = SLIST_FIRST(&kdh); bc1 != NULL; bc1 = bc2) {
 		bc2 = SLIST_NEXT(bc1, sbc_link);
 		if (bc1->sbc_metadata)
 			free(bc1->sbc_metadata, M_DEVBUF, 0);
 		free(bc1, M_DEVBUF, 0);
 	}
 	/* Free unallocated chunks. */
-	for (bc1 = SLIST_FIRST(&bch); bc1 != SLIST_END(&bch); bc1 = bc2) {
+	for (bc1 = SLIST_FIRST(&bch); bc1 != NULL; bc1 = bc2) {
 		bc2 = SLIST_NEXT(bc1, sbc_link);
 		if (bc1->sbc_metadata)
 			free(bc1->sbc_metadata, M_DEVBUF, 0);
@@ -1675,7 +1675,7 @@ sr_meta_native_attach(struct sr_discipline *sd, int force)
 	/* mixed metadata versions; mark bad disks offline */
 	if (old_meta) {
 		d = 0;
-		for (ch_entry = SLIST_FIRST(cl); ch_entry != SLIST_END(cl);
+		for (ch_entry = SLIST_FIRST(cl); ch_entry != NULL;
 		    ch_entry = ch_next, d++) {
 			ch_next = SLIST_NEXT(ch_entry, src_link);
 
@@ -3782,8 +3782,7 @@ sr_chunks_unwind(struct sr_softc *sc, struct sr_chunk_head *cl)
 	if (!cl)
 		return;
 
-	for (ch_entry = SLIST_FIRST(cl);
-	    ch_entry != SLIST_END(cl); ch_entry = ch_next) {
+	for (ch_entry = SLIST_FIRST(cl); ch_entry != NULL; ch_entry = ch_next) {
 		ch_next = SLIST_NEXT(ch_entry, src_link);
 
 		DNPRINTF(SR_D_IOCTL, "%s: sr_chunks_unwind closing: %s\n",
@@ -3831,7 +3830,7 @@ sr_discipline_free(struct sr_discipline *sd)
 		free(sd->sd_meta_foreign, M_DEVBUF, 0);
 
 	som = &sd->sd_meta_opt;
-	for (omi = SLIST_FIRST(som); omi != SLIST_END(som); omi = omi_next) {
+	for (omi = SLIST_FIRST(som); omi != NULL; omi = omi_next) {
 		omi_next = SLIST_NEXT(omi, omi_link);
 		if (omi->omi_som)
 			free(omi->omi_som, M_DEVBUF, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.19 2013/05/08 00:15:03 gsoares Exp $	*/
+/*	$OpenBSD: config.c,v 1.20 2014/09/13 16:06:37 doug Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -433,7 +433,7 @@ hvmd_alloc_frag(uint64_t base)
 		}
 	}
 
-	if (frag == TAILQ_END(&free_frags))
+	if (frag == NULL)
 		return -1;
 
 	TAILQ_REMOVE(&free_frags, frag, link);

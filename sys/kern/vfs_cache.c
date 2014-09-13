@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.36 2013/11/27 15:48:43 jsing Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.37 2014/09/13 16:06:37 doug Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -458,8 +458,7 @@ cache_purgevfs(struct mount *mp)
 	struct namecache *ncp, *nxtcp;
 
 	/* whack the regular entries */
-	for (ncp = TAILQ_FIRST(&nclruhead); ncp != TAILQ_END(&nclruhead);
-	    ncp = nxtcp) {
+	for (ncp = TAILQ_FIRST(&nclruhead); ncp != NULL; ncp = nxtcp) {
 		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp) {
 			nxtcp = TAILQ_NEXT(ncp, nc_lru);
 			continue;
@@ -470,8 +469,7 @@ cache_purgevfs(struct mount *mp)
 		nxtcp = TAILQ_FIRST(&nclruhead);
 	}
 	/* whack the negative entries */
-	for (ncp = TAILQ_FIRST(&nclruneghead); ncp != TAILQ_END(&nclruneghead);
-	    ncp = nxtcp) {
+	for (ncp = TAILQ_FIRST(&nclruneghead); ncp != NULL; ncp = nxtcp) {
 		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp) {
 			nxtcp = TAILQ_NEXT(ncp, nc_neg);
 			continue;

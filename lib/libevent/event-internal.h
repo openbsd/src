@@ -1,4 +1,4 @@
-/*	$OpenBSD: event-internal.h,v 1.6 2010/04/21 20:02:40 nicm Exp $	*/
+/*	$OpenBSD: event-internal.h,v 1.7 2014/09/13 16:06:36 doug Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -74,11 +74,10 @@ struct event_base {
 /* Internal use only: Functions that might be missing from <sys/queue.h> */
 #ifndef HAVE_TAILQFOREACH
 #define	TAILQ_FIRST(head)		((head)->tqh_first)
-#define	TAILQ_END(head)			NULL
 #define	TAILQ_NEXT(elm, field)		((elm)->field.tqe_next)
 #define TAILQ_FOREACH(var, head, field)					\
 	for((var) = TAILQ_FIRST(head);					\
-	    (var) != TAILQ_END(head);					\
+	    (var) != NULL;						\
 	    (var) = TAILQ_NEXT(var, field))
 #define	TAILQ_INSERT_BEFORE(listelm, elm, field) do {			\
 	(elm)->field.tqe_prev = (listelm)->field.tqe_prev;		\

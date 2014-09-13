@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.12 2012/06/16 00:08:32 jmatthew Exp $ */
+/*	$OpenBSD: namespace.c,v 1.13 2014/09/13 16:06:37 doug Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -526,8 +526,8 @@ namespace_cancel_conn(struct conn *conn)
 	struct request		*req, *next;
 
 	TAILQ_FOREACH(ns, &conf->namespaces, next) {
-		for (req = TAILQ_FIRST(&ns->request_queue);
-		    req != TAILQ_END(&ns->request_queue); req = next) {
+		for (req = TAILQ_FIRST(&ns->request_queue); req != NULL;
+		    req = next) {
 			next = TAILQ_NEXT(req, next);
 
 			if (req->conn == conn) {

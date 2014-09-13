@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.49 2014/07/13 15:29:04 tedu Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.50 2014/09/13 16:06:37 doug Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -184,11 +184,11 @@ void
 semundo_clear(int semid, int semnum)
 {
 	struct sem_undo *suptr = SLIST_FIRST(&semu_list);
-	struct sem_undo *suprev = SLIST_END(&semu_list);
+	struct sem_undo *suprev = NULL;
 	struct undo *sunptr;
 	int i;
 
-	while (suptr != SLIST_END(&semu_list)) {
+	while (suptr != NULL) {
 		sunptr = &suptr->un_ent[0];
 		for (i = 0; i < suptr->un_cnt; i++, sunptr++) {
 			if (sunptr->un_id == semid) {

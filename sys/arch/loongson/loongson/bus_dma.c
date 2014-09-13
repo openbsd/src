@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.15 2014/07/12 18:44:42 tedu Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.16 2014/09/13 16:06:36 doug Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -680,7 +680,7 @@ _dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	segs[curseg].ds_len = PAGE_SIZE;
 	m = TAILQ_NEXT(m, pageq);
 
-	for (; m != TAILQ_END(&mlist); m = TAILQ_NEXT(m, pageq)) {
+	for (; m != NULL; m = TAILQ_NEXT(m, pageq)) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {

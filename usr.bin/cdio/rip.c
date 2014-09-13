@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip.c,v 1.14 2013/11/20 20:54:34 deraadt Exp $	*/
+/*	$OpenBSD: rip.c,v 1.15 2014/09/13 16:06:37 doug Exp $	*/
 
 /*
  * Copyright (c) 2007 Alexey Vatchenko <av@bsdua.org>
@@ -244,7 +244,7 @@ parse_tracks_final(struct track_pair_head *head)
 {
 	struct track_pair *tp;
 
-	while ((tp = TAILQ_FIRST(head)) != TAILQ_END(head)) {
+	while ((tp = TAILQ_FIRST(head)) != NULL) {
 		TAILQ_REMOVE(head, tp, list);
 		free(tp);
 	}

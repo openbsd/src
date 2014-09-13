@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.218 2014/07/13 15:00:40 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.219 2014/09/13 16:06:37 doug Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1887,8 +1887,7 @@ vflushbuf(struct vnode *vp, int sync)
 
 loop:
 	s = splbio();
-	for (bp = LIST_FIRST(&vp->v_dirtyblkhd);
-	    bp != LIST_END(&vp->v_dirtyblkhd); bp = nbp) {
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp != NULL; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if ((bp->b_flags & B_BUSY))
 			continue;

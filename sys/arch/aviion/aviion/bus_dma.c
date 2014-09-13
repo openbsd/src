@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.7 2014/07/12 18:44:41 tedu Exp $	*/
+/*      $OpenBSD: bus_dma.c,v 1.8 2014/09/13 16:06:36 doug Exp $	*/
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -659,7 +659,7 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
         segs[curseg].ds_len = PAGE_SIZE;
 	m = TAILQ_NEXT(m, pageq);
 
-	for (; m != TAILQ_END(&mlist); m = TAILQ_NEXT(m, pageq)) {
+	for (; m != NULL; m = TAILQ_NEXT(m, pageq)) {
                 curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
                 if (curaddr < low || curaddr >= high) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.52 2014/08/17 09:48:55 dlg Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.53 2014/09/13 16:06:37 doug Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -272,8 +272,7 @@ extent_destroy(struct extent *ex)
 #endif
 
 	/* Free all region descriptors in extent. */
-	for (rp = LIST_FIRST(&ex->ex_regions);
-	    rp != LIST_END(&ex->ex_regions); ) {
+	for (rp = LIST_FIRST(&ex->ex_regions); rp != NULL; ) {
 		orp = rp;
 		rp = LIST_NEXT(rp, er_link);
 		LIST_REMOVE(orp, er_link);
@@ -697,7 +696,7 @@ extent_do_alloc(struct extent *ex, u_long substart, u_long subend,
 	if (last != NULL && last->er_end >= newstart)
 		newstart = extent_align((last->er_end + 1), alignment, skew);
 
-	for (; rp != LIST_END(&ex->ex_regions); rp = LIST_NEXT(rp, er_link)) {
+	for (; rp != NULL; rp = LIST_NEXT(rp, er_link)) {
 		/*
 		 * If the region pasts the subend, bail out and see
 		 * if we fit against the subend.

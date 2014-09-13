@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.129 2014/07/12 18:48:52 tedu Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.130 2014/09/13 16:06:37 doug Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -540,8 +540,7 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 
 	mtx_enter(&dev->event_lock);
 	struct drmevlist *list = &dev->vbl_events;
-	for (ev = TAILQ_FIRST(list); ev != TAILQ_END(list);
-	    ev = evtmp) {
+	for (ev = TAILQ_FIRST(list); ev != NULL; ev = evtmp) {
 		evtmp = TAILQ_NEXT(ev, link);
 		vev = (struct drm_pending_vblank_event *)ev;
 		if (ev->file_priv == file_priv) {

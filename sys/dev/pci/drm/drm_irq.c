@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.54 2014/03/09 11:07:18 jsg Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.55 2014/09/13 16:06:37 doug Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -1041,7 +1041,7 @@ void drm_vblank_off(struct drm_device *dev, int crtc)
 	seq = drm_vblank_count_and_time(dev, crtc, &now);
 
 	mtx_enter(&dev->event_lock);
-	for (ev = TAILQ_FIRST(list); ev != TAILQ_END(list); ev = tmp) {
+	for (ev = TAILQ_FIRST(list); ev != NULL; ev = tmp) {
 		tmp = TAILQ_NEXT(ev, link);
 
 		vev = (struct drm_pending_vblank_event *)ev;
@@ -1336,7 +1336,7 @@ static void drm_handle_vblank_events(struct drm_device *dev, int crtc)
 
 	mtx_enter(&dev->event_lock);
 
-	for (ev = TAILQ_FIRST(list); ev != TAILQ_END(list); ev = tmp) {
+	for (ev = TAILQ_FIRST(list); ev != NULL; ev = tmp) {
 		tmp = TAILQ_NEXT(ev, link);
 
 		vev = (struct drm_pending_vblank_event *)ev;

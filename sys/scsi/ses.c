@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.52 2014/07/12 18:50:25 tedu Exp $ */
+/*	$OpenBSD: ses.c,v 1.53 2014/09/13 16:06:37 doug Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -647,7 +647,7 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 			break;
 	}
 
-	if (slot == TAILQ_END(&sc->sc_slots)) {
+	if (slot == NULL) {
 		rw_exit_write(&sc->sc_lock);
 		return (EINVAL);
 	}

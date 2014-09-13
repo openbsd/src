@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdstore.c,v 1.6 2012/11/24 23:02:43 kettenis Exp $	*/
+/*	$OpenBSD: mdstore.c,v 1.7 2014/09/13 16:06:37 doug Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -269,7 +269,7 @@ mdstore_select(struct ds_conn *dc, const char *name)
 	TAILQ_FOREACH(dcs, &dc->services, link)
 		if (strcmp(dcs->service->ds_svc_id, "mdstore") == 0)
 			break;
-	assert(dcs != TAILQ_END(&dc->services));
+	assert(dcs != NULL);
 
 	mr = xzalloc(len);
 	mr->msg_type = DS_DATA;
@@ -297,7 +297,7 @@ mdstore_delete(struct ds_conn *dc, const char *name)
 	TAILQ_FOREACH(dcs, &dc->services, link)
 		if (strcmp(dcs->service->ds_svc_id, "mdstore") == 0)
 			break;
-	assert(dcs != TAILQ_END(&dc->services));
+	assert(dcs != NULL);
 
 	mr = xzalloc(len);
 	mr->msg_type = DS_DATA;
@@ -335,7 +335,7 @@ mdstore_download(struct ds_conn *dc, const char *name)
 	TAILQ_FOREACH(dcs, &dc->services, link)
 		if (strcmp(dcs->service->ds_svc_id, "mdstore") == 0)
 			break;
-	assert(dcs != TAILQ_END(&dc->services));
+	assert(dcs != NULL);
 
 	if (asprintf(&path, "%s/hv.md", name) == -1)
 		err(1, "asprintf");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.31 2014/07/13 23:10:23 deraadt Exp $ */
+/*	$OpenBSD: qle.c,v 1.32 2014/09/13 16:06:37 doug Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -2313,7 +2313,7 @@ qle_do_update(void *xsc, void *x)
 				}
 			}
 
-			if (port == TAILQ_END(&sc->sc_ports))
+			if (port == NULL)
 				qle_update_done(sc,
 				    QLE_UPDATE_TASK_FABRIC_RELOGIN);
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.78 2013/10/30 03:16:49 guenther Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.79 2014/09/13 16:06:37 doug Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -423,8 +423,7 @@ spec_fsync(void *v)
 	 */
 loop:
 	s = splbio();
-	for (bp = LIST_FIRST(&vp->v_dirtyblkhd);
-	    bp != LIST_END(&vp->v_dirtyblkhd); bp = nbp) {
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp != NULL; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if ((bp->b_flags & B_BUSY))
 			continue;

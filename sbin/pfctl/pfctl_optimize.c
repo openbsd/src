@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.33 2013/11/22 04:12:48 deraadt Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.34 2014/09/13 16:06:36 doug Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -844,7 +844,7 @@ block_feedback(struct pfctl *pf, struct superblock *block)
 				break;
 			}
 		}
-		if (por2 == TAILQ_END(&block->sb_rules))
+		if (por2 == NULL)
 			TAILQ_INSERT_TAIL(&block->sb_rules, por1, por_entry);
 	}
 

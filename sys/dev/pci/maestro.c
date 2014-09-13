@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.37 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.38 2014/09/13 16:06:37 doug Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -1819,7 +1819,7 @@ salloc_alloc(salloc_t pool, size_t size)
 	SLIST_FOREACH(zone, &pool->free, link) 
 		if (zone->size >= size)
 			break;
-	if (zone == SLIST_END(&pool->free))
+	if (zone == NULL)
 		return NULL;
 	if (zone->size == size) {
 		SLIST_REMOVE(&pool->free, zone, salloc_zone, link);
@@ -1847,7 +1847,7 @@ salloc_free(salloc_t pool, caddr_t addr)
 		if (zone->addr == addr)
 			break;
 #ifdef DIAGNOSTIC
-	if (zone == SLIST_END(&pool->used))
+	if (zone == NULL)
 		panic("salloc_free: freeing unallocated memory");
 #endif
 	SLIST_REMOVE(&pool->used, zone, salloc_zone, link);
