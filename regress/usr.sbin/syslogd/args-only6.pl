@@ -22,7 +22,7 @@ our %args = (
 	listen => { domain => AF_INET6, addr => "::1" },
     },
     file => {
-	loggrep => qr/ ::1 /. get_log(),
+	loggrep => qr/ ::1 /. get_testlog(),
     },
     fstat => {
 	loggrep => {

@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.4 2014/09/02 17:43:29 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.5 2014/09/13 23:38:24 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -36,6 +36,11 @@ sub new {
 	$args{conffile} ||= "syslogd.conf";
 	$args{outfile} ||= "file.log";
 	$args{outpipe} ||= "pipe.log";
+	if ($args{memory}) {
+		$args{memory} = {} unless ref $args{memory};
+		$args{memory}{name} ||= "memory";
+		$args{memory}{size} //= 1;
+	}
 	my $self = Proc::new($class, %args);
 	$self->{connectaddr}
 	    or croak "$class connect addr not given";
@@ -52,6 +57,8 @@ sub new {
 	    or die ref($self), " create conf file $self->{conffile} failed: $!";
 	print $fh "*.*\t$self->{outfile}\n";
 	print $fh "*.*\t|dd of=$self->{outpipe} status=none\n";
+	my $memory = $self->{memory};
+	print $fh "*.*\t:$memory->{size}:$memory->{name}\n" if $memory;
 	my $loghost = $self->{loghost};
 	if ($loghost) {
 		$loghost =~ s/(\$[a-z]+)/$1/eeg;
@@ -101,14 +108,13 @@ sub child {
 		push @libevent, "$_=$ENV{$_}" if $ENV{$_};
 	}
 	push @libevent, "EVENT_SHOW_METHOD=1" if @libevent;
-	my @ktrace = $ENV{KTRACE} ? ($ENV{KTRACE}, "-i") : ();
-	if ($self->{ktrace}) {
-		@ktrace = $ENV{KTRACE} || "ktrace";
-		push @ktrace, "-i", "-f", $self->{ktracefile};
-	}
+	my @ktrace = $ENV{KTRACE} || ();
+	@ktrace = "ktrace" if $self->{ktrace} && !@ktrace;
+	push @ktrace, "-i", "-f", $self->{ktracefile} if @ktrace;
 	my $syslogd = $ENV{SYSLOGD} ? $ENV{SYSLOGD} : "syslogd";
 	my @cmd = (@sudo, @libevent, @ktrace, $syslogd, "-d",
 	    "-f", $self->{conffile});
+	push @cmd, "-s", $self->{ctlsock} if $self->{ctlsock};
 	push @cmd, @{$self->{options}} if $self->{options};
 	print STDERR "execute: @cmd\n";
 	exec @cmd;

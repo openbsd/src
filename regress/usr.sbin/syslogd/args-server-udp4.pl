@@ -14,14 +14,14 @@ our %args = (
 	loghost => '@127.0.0.1:$connectport',
 	loggrep => {
 	    qr/Logging to FORW \@127.0.0.1:\d+/ => '>=4',
-	    get_log() => 1,
+	    get_testlog() => 1,
 	},
     },
     server => {
 	listen => { domain => AF_INET, addr => "127.0.0.1" },
 	loggrep => {
 	    qr/listen sock: 127.0.0.1 \d+/ => 1,
-	    get_log() => 1,
+	    get_testlog() => 1,
 	},
     },
 );

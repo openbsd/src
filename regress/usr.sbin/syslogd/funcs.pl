@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.6 2014/09/03 15:56:07 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.7 2014/09/13 23:38:24 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -76,7 +76,7 @@ sub write_unix {
 	    Type  => SOCK_DGRAM,
 	    Peer => $path,
 	) or die ref($self), " connect to $path unix socket failed: $!";
-	my $msg = get_log(). " $path unix socket";
+	my $msg = get_testlog(). " $path unix socket";
 	print $u $msg;
 	print STDERR $msg, "\n";
 }
@@ -120,7 +120,7 @@ sub read_message {
 # Script funcs
 ########################################################################
 
-sub get_log {
+sub get_testlog {
 	return $testlog;
 }
 
@@ -131,15 +131,19 @@ sub get_between2loggrep {
 	);
 }
 
+sub get_downlog {
+	return $downlog;
+}
+
 sub check_logs {
-	my ($c, $r, $s, %args) = @_;
+	my ($c, $r, $s, $m, %args) = @_;
 
 	return if $args{nocheck};
 
-	check_log($c, $r, $s, %args);
+	check_log($c, $r, $s, @$m);
 	check_out($r, %args);
 	check_stat($r, %args);
-	check_kdump($c, $r, $s, %args);
+	check_kdump($c, $r, $s);
 }
 
 sub compare($$) {
@@ -178,14 +182,10 @@ sub check_pattern {
 }
 
 sub check_log {
-	my ($c, $r, $s, %args) = @_;
-
-	my %name2proc = (client => $c, syslogd => $r, server => $s);
-	foreach my $name (qw(client syslogd server)) {
-		next if $args{$name}{nocheck};
-		my $p = $name2proc{$name} or next;
-		my $pattern = $args{$name}{loggrep} || $testlog;
-		check_pattern($name, $p, $pattern, \&loggrep);
+	foreach my $proc (@_) {
+		next unless $proc && !$proc->{nocheck};
+		my $pattern = $proc->{loggrep} || $testlog;
+		check_pattern(ref $proc, $proc, $pattern, \&loggrep);
 	}
 }
 
@@ -200,7 +200,7 @@ sub check_out {
 
 	foreach my $name (qw(file pipe)) {
 		next if $args{$name}{nocheck};
-		my $file = $r->{"out$name"} or next;
+		my $file = $r->{"out$name"} or die;
 		my $pattern = $args{$name}{loggrep} || $testlog;
 		check_pattern($name, $file, $pattern, \&filegrep);
 	}
@@ -210,9 +210,9 @@ sub check_stat {
 	my ($r, %args) = @_;
 
 	foreach my $name (qw(fstat)) {
-		next if $args{$name}{nocheck};
-		my $file = $r->{$name} && $r->{"${name}file"} or next;
-		my $pattern = $args{$name}{loggrep} or next;
+		next unless $r && $r->{$name};
+		my $file = $r->{"${name}file"} or die;
+		my $pattern = $args{$name}{loggrep} or die;
 		check_pattern($name, $file, $pattern, \&filegrep);
 	}
 }
@@ -227,15 +227,11 @@ sub filegrep {
 }
 
 sub check_kdump {
-	my ($c, $r, $s, %args) = @_;
-
-	my %name2proc = (client => $c, syslogd => $r, server => $s);
-	foreach my $name (qw(client syslogd server)) {
-		next unless $args{$name}{ktrace};
-		my $p = $name2proc{$name} or next;
-		my $file = $p->{ktracefile} or next;
-		my $pattern = $args{$name}{kdump} or next;
-		check_pattern($name, $file, $pattern, \&kdumpgrep);
+	foreach my $proc (@_) {
+		next unless $proc && $proc->{ktrace};
+		my $file = $proc->{ktracefile} or die;
+		my $pattern = $proc->{kdump} or die;
+		check_pattern(ref $proc, $file, $pattern, \&kdumpgrep);
 	}
 }
 

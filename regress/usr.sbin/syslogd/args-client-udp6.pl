@@ -17,7 +17,7 @@ our %args = (
 	options => ["-u"],
     },
     file => {
-	loggrep => qr/ localhost /. get_log(),
+	loggrep => qr/ localhost /. get_testlog(),
     },
 );
 

@@ -17,25 +17,25 @@ our %args = (
 	    my $self = shift;
 	    write_unix($self);
 	    foreach (1..(MAXUNIX-1)) {
-		write_unix($self, "unix.$_");
+		write_unix($self, "unix-$_.sock");
 	    }
 	    write_shutdown($self, @_);
 	},
     },
     syslogd => {
-	options => [ map { ("-a" => "unix.$_") } (1..MAXUNIX) ],
+	options => [ map { ("-a" => "unix-$_.sock") } (1..MAXUNIX) ],
 	loggrep => {
-	    qr/syslogd: out of descriptors, ignoring unix.20/ => 0,
-	    qr/syslogd: out of descriptors, ignoring unix.21/ => 1,
-	    qr/syslogd: out of descriptors, ignoring unix.22/ => 0,
+	    qr/syslogd: out of descriptors, ignoring unix-20.sock/ => 0,
+	    qr/syslogd: out of descriptors, ignoring unix-21.sock/ => 1,
+	    qr/syslogd: out of descriptors, ignoring unix-22.sock/ => 0,
 	},
     },
     file => {
 	loggrep => {
-	    get_log()." /dev/log unix socket" => 1,
-	    (map { (get_log()." unix.$_ unix socket" => 1) } (1..(MAXUNIX-1))),
-
-	    get_log()." unix.".MAXUNIX." unix socket" => 0,
+	    get_testlog()." /dev/log unix socket" => 1,
+	    (map { (get_testlog()." unix-$_.sock unix socket" => 1) }
+		(1..(MAXUNIX-1))),
+	    get_testlog()." unix-".MAXUNIX.".sock unix socket" => 0,
 	}
     },
 );

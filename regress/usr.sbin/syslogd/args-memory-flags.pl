@@ -2,21 +2,28 @@
 # The syslogd writes it into a file and through a pipe.
 # The syslogd passes it via UDP to the loghost.
 # The server receives the message on its UDP socket.
+# Syslogc lists the memory logs.
 # Find the message in client, file, pipe, syslogd, server log.
-# Check that the file log contains the hostname and message.
+# Check that syslogc -o does not report overflow.
 
 use strict;
 use warnings;
-use Sys::Hostname;
-
-(my $host = hostname()) =~ s/\..*//;  # short name
 
 our %args = (
-    client => {
-	logsock => { type => "native" },
+    syslogd => {
+	memory => 1,
+	loggrep => {
+	    qr/Accepting control connection/ => 1,
+	    qr/ctlcmd 5/ => 1,
+	    get_testlog() => 1,
+	},
     },
-    file => {
-	loggrep => qr/ $host syslogd-regress\[\d+\]: /. get_testlog(),
+    syslogc => {
+	options => ["-o", "memory"],
+	loggrep => {
+	    qr/^memory/ => 0,
+	    qr/overflowed/ => 0,
+	},
     },
 );
 

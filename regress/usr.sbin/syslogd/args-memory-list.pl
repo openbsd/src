@@ -1,23 +1,25 @@
-# The client writes a message to a localhost IPv4 UDP socket.
+# The client writes a message to Sys::Syslog native method.
 # The syslogd writes it into a file and through a pipe.
 # The syslogd passes it via UDP to the loghost.
 # The server receives the message on its UDP socket.
+# Syslogc lists the memory logs.
 # Find the message in client, file, pipe, syslogd, server log.
-# Check that the file log contains the localhost name.
 
 use strict;
 use warnings;
-use Socket;
 
 our %args = (
-    client => {
-	connect => { domain => AF_INET, addr => "127.0.0.1", port => 514 },
-    },
     syslogd => {
-	options => ["-u"],
+	memory => 1,
+	loggrep => {
+	    qr/Accepting control connection/ => 1,
+	    qr/ctlcmd 4/ => 1,
+	    get_testlog() => 1,
+	},
     },
-    file => {
-	loggrep => qr/ localhost /. get_testlog(),
+    syslogc => {
+	options => ["-q"],
+	loggrep => qr/^memory /,
     },
 );
 

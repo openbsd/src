@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: syslogd.pl,v 1.2 2014/09/02 00:26:30 bluhm Exp $
+#	$OpenBSD: syslogd.pl,v 1.3 2014/09/13 23:38:24 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -23,6 +23,7 @@ use Socket6;
 use Client;
 use Syslogd;
 use Server;
+use Syslogc;
 require 'funcs.pl';
 
 sub usage {
@@ -46,7 +47,7 @@ foreach my $name (qw(client syslogd server)) {
 		}
 	}
 }
-my($s, $c, $r);
+my($s, $c, $r, @m);
 $s = Server->new(
     func                => \&read_log,
     listendomain        => AF_INET,
@@ -56,9 +57,18 @@ $s = Server->new(
     client              => \$c,
     syslogd             => \$r,
 ) unless $args{server}{noserver};
+$args{syslogc} = [ $args{syslogc} ] if ref $args{syslogc} eq 'HASH';
+my $i = 0;
+@m = map { Syslogc->new(
+    %{$_},
+    testfile            => $testfile,
+    ktracefile          => "syslogc-$i.ktrace",
+    logfile             => "syslogc-".$i++.".log",
+) } @{$args{syslogc}};
 $r = Syslogd->new(
     connectaddr         => "127.0.0.1",
     connectport         => $s && $s->{listenport},
+    ctlsock		=> @m && $m[0]->{ctlsock},
     %{$args{syslogd}},
     testfile            => $testfile,
     client              => \$c,
@@ -75,12 +85,35 @@ $c = Client->new(
 $r->run;
 $s->run->up unless $args{server}{noserver};
 $r->up;
+my $control = 0;
+foreach (@m) {
+	if ($_->{early} || $_->{stop}) {
+		$_->run->up;
+		$control++;
+	}
+}
+$r->loggrep("Accepting control connection") if $control;
+foreach (@m) {
+	if ($_->{stop}) {
+		$_->kill('STOP');
+	}
+}
 $c->run->up unless $args{client}{noclient};
 
 $c->down unless $args{client}{noclient};
 $s->down unless $args{server}{noserver};
+foreach (@m) {
+	if ($_->{stop}) {
+		$_->kill('CONT');
+		$_->down;
+	} elsif ($_->{early}) {
+		$_->down;
+	} else {
+		$_->run->up->down;
+	}
+}
 $r->kill_child;
 $r->down;
 
-check_logs($c, $r, $s, %args);
+check_logs($c, $r, $s, \@m, %args);
 $args{check}->({client => $c, syslogd => $r, server => $s}) if $args{check};
