@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.51 2013/12/31 21:09:34 brad Exp $
+.\" $OpenBSD: re.4,v 1.52 2014/09/13 17:33:21 brad Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/re.4,v 1.4 2004/03/04 06:42:46 sanpei Exp $
 .\"
-.Dd $Mdocdate: December 31 2013 $
+.Dd $Mdocdate: September 13 2014 $
 .Dt RE 4
 .Os
 .Sh NAME
@@ -109,12 +109,7 @@ Standalone 10/100/1000 cards are available in both 32-bit PCI and 64-bit
 PCI models.
 The 8110S and 8111B are designed for embedded LAN-on-motherboard applications.
 .Pp
-The 8169, 8169S and 8110S also support Jumbo frames,
-which can be configured via the interface MTU setting.
-The MTU is limited to 7422, since the chip cannot transmit larger frames.
-Selecting an MTU larger than 1500 bytes with the
-.Xr ifconfig 8
-utility configures the adapter to transmit Jumbo frames.
+The 8169, 8169S and 8110S also support Jumbo frames up to 7422 bytes.
 .Pp
 The
 .Nm

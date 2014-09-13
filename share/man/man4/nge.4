@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nge.4,v 1.37 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: nge.4,v 1.38 2014/09/13 17:33:21 brad Exp $
 .\" Copyright (c) 2001 Wind River Systems
 .\" Copyright (c) 1997, 1998, 1999, 2000, 2001
 .\"	Bill Paul <wpaul@bsdi.com>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: nge.4,v 1.11 2002/08/08 18:30:39 ambrisko Exp $
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: September 13 2014 $
 .Dt NGE 4
 .Os
 .Sh NAME
@@ -79,11 +79,7 @@ and up to 4 pattern match buffers.
 .Pp
 The
 .Nm
-driver also supports Jumbo frames, which can be configured via the
-interface MTU setting.
-Selecting an MTU larger than 1500 bytes with the
-.Xr ifconfig 8
-utility configures the adapter to receive and transmit Jumbo frames.
+driver also supports Jumbo frames.
 .Pp
 The
 .Nm

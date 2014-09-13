@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ti.4,v 1.42 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: ti.4,v 1.43 2014/09/13 17:33:21 brad Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man4/ti.4,v 1.11 2000/08/10 19:47:32 billf Exp $
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: September 13 2014 $
 .Dt TI 4
 .Os
 .Sh NAME
@@ -89,11 +89,6 @@ While the Tigon chipset supports 10, 100 and 1000Mbps speeds, support for
 transceivers.
 Most adapters are only designed to work at 1000Mbps, however the driver
 should support those NICs that work at lower speeds as well.
-.Pp
-Support for Jumbo frames is provided via the interface MTU setting.
-Selecting an MTU larger than 1500 bytes with the
-.Xr ifconfig 8
-utility configures the adapter to receive and transmit Jumbo frames.
 .Pp
 The
 .Nm
