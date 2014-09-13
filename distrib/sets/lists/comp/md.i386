@@ -1,6 +1,7 @@
 ./usr/bin/addr2line
 ./usr/bin/objcopy
 ./usr/bin/readelf
+./usr/include/cpuid.h
 ./usr/include/emmintrin.h
 ./usr/include/g++/backward
 ./usr/include/g++/backward/algo.h
