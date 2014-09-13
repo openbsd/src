@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.406 2014/09/05 14:39:16 jasper Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.407 2014/09/13 15:13:44 naddy Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 5 2014 $
+.Dd $Mdocdate: September 13 2014 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1540,13 +1540,13 @@ cd ${WRKDIR}
 for archive in ${EXTRACT_ONLY}
 do
     case $$archive in
-	*.tar.xz)
+	*.tar.xz|*.tar.lzma)
 	  xzcat ${FULLDISTDIR}/$$archive| tar xf -;;
 	*.tar.lz)
 	  lunzip -c ${FULLDISTDIR}/$$archive| tar xf -;;
 	*.zip)
 	  unzip -q ${FULLDISTDIR}/$$archive -d ${WRKDIR};;
-	*.tar.bz2)
+	*.tar.bz2|*.tbz2|*.tbz)
 	  bzip2 -dc ${FULLDISTDIR}/$$archive| tar xf -;;
 	*.shar.gz|*.shar.Z|*.sh.Z|*.sh.gz)
 	  gzcat ${FULLDISTDIR}/$$archive | /bin/sh;;
