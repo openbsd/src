@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.112 2014/04/07 08:27:24 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.113 2014/09/14 19:02:43 brad Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -107,6 +107,7 @@ pcn*	at pci?			# AMD PCnet-PCI Ethernet
 de*	at pci?			# DC21X4X-based ethernet
 dc*	at pci?			# 21143, "tulip" clone ethernet
 dc*	at cardbus?		# 21143, "tulip" clone ethernet
+ne*	at pci?			# NE2000-compat ethernet cards
 epic*	at pci?			# SMC EPIC/100 ethernet
 em*	at pci?			# Intel Pro/1000 ethernet
 #ixgb*	at pci?			# Intel Pro/10Gb ethernet
