@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP32,v 1.39 2014/08/22 20:03:56 deraadt Exp $
+#	$OpenBSD: GENERIC-IP32,v 1.40 2014/09/14 18:59:18 brad Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 #
@@ -60,7 +60,6 @@ pci*		at macepcibr?
 
 #### SCSI
 ahc*		at pci?
-isp*		at pci?
 qlw*		at pci?
 qla*		at pci?
 qle*		at pci?

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP30,v 1.28 2014/04/07 08:27:24 brad Exp $
+#	$OpenBSD: RAMDISK-IP30,v 1.29 2014/09/14 18:59:18 brad Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 
@@ -77,7 +77,6 @@ owserial*	at onewire?
 
 #### SCSI controllers
 ahc*		at pci?
-isp*		at pci?
 qlw*		at pci?
 qla*		at pci?
 qle*		at pci?

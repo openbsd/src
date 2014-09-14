@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP32,v 1.24 2014/04/07 08:27:24 brad Exp $
+#	$OpenBSD: RAMDISK-IP32,v 1.25 2014/09/14 18:59:18 brad Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 
@@ -67,7 +67,6 @@ pci*		at macepcibr?	# PCI is on pci bridge
 
 #### SCSI controllers
 ahc*		at pci?
-isp*		at pci?
 qlw*		at pci?
 qla*		at pci?
 qle*		at pci?
