@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.25 2014/05/21 06:23:02 guenther Exp $	*/
+/*	$OpenBSD: args.c,v 1.26 2014/09/14 22:44:47 schwarze Exp $	*/
 /*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
@@ -323,8 +323,12 @@ get_bsz(char *val)
 	size_t num, t;
 	char *expr;
 
+	if (strchr(val, '-'))
+		errx(1, "%s: illegal numeric value", oper);
+
+	errno = 0;
 	num = strtoul(val, &expr, 0);
-	if (num == SIZE_T_MAX)			/* Overflow. */
+	if (num == ULONG_MAX && errno == ERANGE)	/* Overflow. */
 		err(1, "%s", oper);
 	if (expr == val)			/* No digits. */
 		errx(1, "%s: illegal numeric value", oper);
