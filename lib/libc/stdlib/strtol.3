@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtol.3,v 1.24 2013/08/14 06:32:28 jmc Exp $
+.\"	$OpenBSD: strtol.3,v 1.25 2014/09/14 14:32:44 schwarze Exp $
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: September 14 2014 $
 .Dt STRTOL 3
 .Os
 .Sh NAME
@@ -45,14 +45,11 @@
 .In stdlib.h
 .Ft long
 .Fn strtol "const char *nptr" "char **endptr" "int base"
-.Pp
 .Ft long long
 .Fn strtoll "const char *nptr" "char **endptr" "int base"
-.Pp
 .In inttypes.h
 .Ft intmax_t
 .Fn strtoimax "const char *nptr" "char **endptr" "int base"
-.Pp
 .In sys/types.h
 .In limits.h
 .In stdlib.h
@@ -64,21 +61,21 @@ The
 function converts the string in
 .Fa nptr
 to a
-.Li long
+.Vt long
 value.
 The
 .Fn strtoll
 function converts the string in
 .Fa nptr
 to a
-.Li long long
+.Vt long long
 value.
 The
 .Fn strtoimax
 function converts the string in
 .Fa nptr
 to an
-.Li intmax_t
+.Vt intmax_t
 value.
 The
 .Fn strtoq
@@ -108,10 +105,10 @@ is taken as 10 (decimal) unless the next character is
 in which case it is taken as 8 (octal).
 .Pp
 The remainder of the string is converted to a
-.Li long ,
-.Li long long ,
+.Vt long ,
+.Vt long long ,
 or
-.Li intmax_t ,
+.Vt intmax_t
 value in the obvious manner,
 stopping at the first character which is not a valid digit
 in the given base.
@@ -151,14 +148,7 @@ The
 .Fn strtoimax ,
 and
 .Fn strtoq
-functions return the result of the conversion,
-unless the value would underflow or overflow.
-If no conversion could be performed, 0 is returned;
-the global variable
-.Va errno
-is also set to
-.Er EINVAL ,
-though this is not portable across all platforms.
+functions return the result of the conversion.
 If overflow or underflow occurs,
 .Va errno
 is set to
@@ -171,6 +161,14 @@ and the function return value is as follows:
 .It Fn strtoimax Ta Dv INTMAX_MIN Ta Dv INTMAX_MAX
 .It Fn strtoq Ta Dv LLONG_MIN Ta Dv LLONG_MAX
 .El
+.Pp
+If there is no valid digit, 0 is returned.
+If
+.Ar base
+is invalid, 0 is returned and the global variable
+.Va errno
+is set to
+.Er EINVAL .
 .Sh EXAMPLES
 Ensuring that a string is a valid number (i.e., in range and containing no
 trailing characters) requires clearing
@@ -212,9 +210,9 @@ If
 is being used instead of
 .Xr atoi 3 ,
 error checking is further complicated because the desired return value is an
-.Li int
+.Vt int
 rather than a
-.Li long ;
+.Vt long ;
 however, on some architectures integers and long integers are the same size.
 Thus the following is necessary:
 .Bd -literal -offset indent
@@ -235,6 +233,10 @@ ival = lval;
 .Ed
 .Sh ERRORS
 .Bl -tag -width Er
+.It Bq Er EINVAL
+The value of
+.Ar base
+was neither between 2 and 36 inclusive nor the special value 0.
 .It Bq Er ERANGE
 The given string was out of range; the value converted has been clamped.
 .El
@@ -255,6 +257,13 @@ and
 .Fn strtoimax
 functions conform to
 .St -ansiC-99 .
+Setting
+.Va errno
+to
+.Dv EINVAL
+is an extension to that standard required by
+.St -p1003.1-2008 .
+.Pp
 The
 .Fn strtoq
 function is a

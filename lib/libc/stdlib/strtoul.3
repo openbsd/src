@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtoul.3,v 1.22 2013/08/14 06:32:28 jmc Exp $
+.\"	$OpenBSD: strtoul.3,v 1.23 2014/09/14 14:32:44 schwarze Exp $
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: September 14 2014 $
 .Dt STRTOUL 3
 .Os
 .Sh NAME
@@ -61,21 +61,21 @@ The
 function converts the string in
 .Fa nptr
 to an
-.Li unsigned long
+.Vt unsigned long
 value.
 The
 .Fn strtoull
 function converts the string in
 .Fa nptr
 to an
-.Li unsigned long long
+.Vt unsigned long long
 value.
 The
 .Fn strtoumax
 function converts the string in
 .Fa nptr
 to a
-.Li umaxint_t
+.Vt umaxint_t
 value.
 The
 .Fn strtouq
@@ -84,8 +84,7 @@ function is a deprecated equivalent of
 and is provided for backwards compatibility with legacy programs.
 The conversion is done according to the given
 .Fa base ,
-which must be a number between 2 and 36 inclusive
-or the special value 0.
+which must be a number between 2 and 36 inclusive or the special value 0.
 If the string in
 .Fa nptr
 represents a negative number, it will be converted to its unsigned equivalent.
@@ -111,9 +110,12 @@ is taken as 10 (decimal) unless the next character is
 in which case it is taken as 8 (octal).
 .Pp
 The remainder of the string is converted to an
-.Li unsigned long
-value in the obvious manner, stopping at the end of the string
-or at the first character that does not produce a valid digit
+.Vt unsigned long ,
+.Vt unsigned long long ,
+or
+.Vt uintmax_t
+value in the obvious manner,
+stopping at the first character which is not a valid digit
 in the given base.
 (In bases above 10, the letter
 .Ql A
@@ -172,12 +174,6 @@ and the global variable
 .Va errno
 is set to
 .Er ERANGE .
-If no conversion could be performed, 0 is returned;
-the global variable
-.Va errno
-is also set to
-.Er EINVAL ,
-though this is not portable across all platforms.
 .Pp
 There is no way to determine if
 .Fn strtoul
@@ -185,6 +181,14 @@ has processed a negative number (and returned an unsigned value) short of
 examining the string in
 .Fa nptr
 directly.
+.Pp
+If there is no valid digit, 0 is returned.
+If
+.Ar base
+is invalid, 0 is returned and the global variable
+.Va errno
+is set to
+.Er EINVAL .
 .Sh EXAMPLES
 Ensuring that a string is a valid number (i.e., in range and containing no
 trailing characters) requires clearing
@@ -222,6 +226,10 @@ alternately, use
 .Xr sscanf 3 .
 .Sh ERRORS
 .Bl -tag -width Er
+.It Bq Er EINVAL
+The value of
+.Ar base
+was neither between 2 and 36 inclusive nor the special value 0.
 .It Bq Er ERANGE
 The given string was out of range; the value converted has been clamped.
 .El
@@ -236,6 +244,13 @@ and
 .Fn strtoumax
 functions conform to
 .St -ansiC-99 .
+Setting
+.Va errno
+to
+.Dv EINVAL
+is an extension to that standard required by
+.St -p1003.1-2008 .
+.Pp
 The
 .Fn strtouq
 function is a
