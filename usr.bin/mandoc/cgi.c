@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.35 2014/08/27 00:06:08 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.36 2014/09/14 19:44:20 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -953,10 +953,10 @@ pg_search(const struct req *req)
 	struct mansearch	  search;
 	struct manpaths		  paths;
 	struct manpage		 *res;
-	char			**cp;
-	const char		 *ep, *start;
+	char			**argv;
+	char			 *query, *rp, *wp;
 	size_t			  ressz;
-	int			  i, sz;
+	int			  argc;
 
 	/*
 	 * Begin by chdir()ing into the root of the manpath.
@@ -981,46 +981,45 @@ pg_search(const struct req *req)
 	paths.paths[0] = mandoc_strdup(".");
 
 	/*
-	 * Poor man's tokenisation: just break apart by spaces.
-	 * Yes, this is half-ass.  But it works for now.
+	 * Break apart at spaces with backslash-escaping.
 	 */
 
-	ep = req->q.query;
-	while (ep && isspace((unsigned char)*ep))
-		ep++;
-
-	sz = 0;
-	cp = NULL;
-	while (ep && '\0' != *ep) {
-		cp = mandoc_reallocarray(cp, sz + 1, sizeof(char *));
-		start = ep;
-		while ('\0' != *ep && ! isspace((unsigned char)*ep))
-			ep++;
-		cp[sz] = mandoc_malloc((ep - start) + 1);
-		memcpy(cp[sz], start, ep - start);
-		cp[sz++][ep - start] = '\0';
-		while (isspace((unsigned char)*ep))
-			ep++;
+	argc = 0;
+	argv = NULL;
+	rp = query = mandoc_strdup(req->q.query);
+	for (;;) {
+		while (isspace((unsigned char)*rp))
+			rp++;
+		if (*rp == '\0')
+			break;
+		argv = mandoc_reallocarray(argv, argc + 1, sizeof(char *));
+		argv[argc++] = wp = rp;
+		for (;;) {
+			if (isspace((unsigned char)*rp)) {
+				*wp = '\0';
+				rp++;
+				break;
+			}
+			if (rp[0] == '\\' && rp[1] != '\0')
+				rp++;
+			if (wp != rp)
+				*wp = *rp;
+			if (*rp == '\0')
+				break;
+			wp++;
+			rp++;
+		}
 	}
 
-	if (0 == mansearch(&search, &paths, sz, cp, &res, &ressz))
+	if (0 == mansearch(&search, &paths, argc, argv, &res, &ressz))
 		pg_noresult(req, "You entered an invalid query.");
 	else if (0 == ressz)
 		pg_noresult(req, "No results found.");
 	else
 		pg_searchres(req, res, ressz);
 
-	for (i = 0; i < sz; i++)
-		free(cp[i]);
-	free(cp);
-
-	for (i = 0; i < (int)ressz; i++) {
-		free(res[i].file);
-		free(res[i].names);
-		free(res[i].output);
-	}
-	free(res);
-
+	free(query);
+	mansearch_free(res, ressz);
 	free(paths.paths[0]);
 	free(paths.paths);
 }

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: man.cgi.8,v 1.9 2014/08/26 20:03:31 robert Exp $
+.\"     $OpenBSD: man.cgi.8,v 1.10 2014/09/14 19:44:20 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 26 2014 $
+.Dd $Mdocdate: September 14 2014 $
 .Dt MAN.CGI 8
 .Os
 .Sh NAME
@@ -43,6 +43,12 @@ either a name of a manual page or an
 using the syntax described in the
 .Xr apropos 1
 manual; filling this in is required for each search.
+.Pp
+The expression is broken into words at whitespace.
+Whitespace characters and backslashes can be escaped
+by prepending a backslash.
+The effect of prepending a backslash to another character is undefined;
+in the current implementation, it has no effect.
 .It
 A
 .Dq Submit
