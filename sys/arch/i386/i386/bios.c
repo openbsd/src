@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.104 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: bios.c,v 1.105 2014/09/14 14:17:23 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -33,7 +33,6 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-#include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/reboot.h>
 #include <sys/extent.h>

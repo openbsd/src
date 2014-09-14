@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.45 2014/09/13 16:06:37 doug Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.46 2014/09/14 14:17:24 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -46,7 +46,6 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/timeout.h>
-#include <sys/proc.h>
 #include <sys/ucred.h>
 #include <sys/socket.h>
 #include <sys/queue.h>

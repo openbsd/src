@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.27 2013/05/30 16:15:01 deraadt Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.28 2014/09/14 14:17:23 jsg Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -25,7 +25,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/timetc.h>
 

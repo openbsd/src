@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_balloc.c,v 1.23 2014/07/14 08:54:13 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_balloc.c,v 1.24 2014/09/14 14:17:26 jsg Exp $	*/
 /*	$NetBSD: ext2fs_balloc.c,v 1.10 2001/07/04 21:16:01 chs Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/vnode.h>
 

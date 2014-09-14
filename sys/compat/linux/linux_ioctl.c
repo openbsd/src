@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_ioctl.c,v 1.10 2003/07/23 20:18:10 tedu Exp $	*/
+/*	$OpenBSD: linux_ioctl.c,v 1.11 2014/09/14 14:17:23 jsg Exp $	*/
 /*	$NetBSD: linux_ioctl.c,v 1.14 1996/04/05 00:01:28 christos Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>

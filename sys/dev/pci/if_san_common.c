@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.c,v 1.19 2014/09/08 06:24:13 jsg Exp $	*/
+/*	$OpenBSD: if_san_common.c,v 1.20 2014/09/14 14:17:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -43,7 +43,6 @@
 # include <sys/errno.h>
 # include <sys/exec.h>
 # include <sys/mbuf.h>
-# include <sys/proc.h>
 # include <sys/socket.h>
 # include <sys/kernel.h>
 # include <sys/time.h>

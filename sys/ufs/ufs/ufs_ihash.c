@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.18 2014/04/14 22:25:40 beck Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.19 2014/09/14 14:17:27 jsg Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>

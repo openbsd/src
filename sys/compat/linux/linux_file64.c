@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file64.c,v 1.9 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: linux_file64.c,v 1.10 2014/09/14 14:17:23 jsg Exp $	*/
 /*	$NetBSD: linux_file64.c,v 1.2 2000/12/12 22:24:56 jdolecek Exp $	*/
 
 /*-
@@ -37,7 +37,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>

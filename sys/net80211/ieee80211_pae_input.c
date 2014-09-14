@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.20 2014/07/24 08:23:12 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.21 2014/09/14 14:17:26 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -29,7 +29,6 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/errno.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

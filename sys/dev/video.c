@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.31 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: video.c,v 1.32 2014/09/14 14:17:24 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -19,7 +19,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.16 2014/07/12 18:48:18 tedu Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.17 2014/09/14 14:17:25 jsg Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/uio.h>
-#include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/file.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.156 2014/09/09 03:08:30 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.157 2014/09/14 14:17:24 jsg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -25,7 +25,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/sensors.h>
 #include <sys/pool.h>

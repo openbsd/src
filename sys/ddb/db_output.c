@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.27 2014/07/08 13:02:57 deraadt Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.28 2014/09/14 14:17:24 jsg Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  * Printf and character output for debugger.
  */
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/stdarg.h>
 #include <sys/systm.h>
 

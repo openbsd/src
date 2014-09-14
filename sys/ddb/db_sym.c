@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.34 2014/03/16 20:31:46 guenther Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.35 2014/09/14 14:17:24 jsg Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /* 
@@ -28,7 +28,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
 
 #include <machine/db_machdep.h>

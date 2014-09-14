@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.19 2014/05/16 18:17:03 mpi Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.20 2014/09/14 14:17:24 jsg Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
 #include <machine/bus.h>
 

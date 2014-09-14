@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.26 2013/05/24 07:58:46 ratchov Exp $	*/
+/*	$OpenBSD: pas.c,v 1.27 2014/09/14 14:17:25 jsg Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>

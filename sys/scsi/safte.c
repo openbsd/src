@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.50 2014/07/13 17:34:25 deraadt Exp $ */
+/*	$OpenBSD: safte.c,v 1.51 2014/09/14 14:17:26 jsg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/scsiio.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/queue.h>
 #include <sys/sensors.h>

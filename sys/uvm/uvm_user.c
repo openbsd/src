@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_user.c,v 1.13 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_user.c,v 1.14 2014/09/14 14:17:27 jsg Exp $	*/
 /*	$NetBSD: uvm_user.c,v 1.8 2000/06/27 17:29:37 mrg Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 

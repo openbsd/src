@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.33 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.34 2014/09/14 14:17:27 jsg Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 #include <sys/filedesc.h>
 #include <sys/resourcevar.h>
 #include <sys/mman.h>
-#include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/pool.h>

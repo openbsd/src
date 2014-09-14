@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu_isa.c,v 1.4 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: mpu_isa.c,v 1.5 2014/09/14 14:17:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Sergey Smitienko. All rights reserved.
@@ -33,7 +33,6 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
 #include <machine/bus.h>
 

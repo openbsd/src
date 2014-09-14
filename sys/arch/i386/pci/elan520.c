@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520.c,v 1.19 2014/06/29 01:01:20 deraadt Exp $	*/
+/*	$OpenBSD: elan520.c,v 1.20 2014/09/14 14:17:23 jsg Exp $	*/
 /*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/gpio.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/timetc.h>

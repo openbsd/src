@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss.c,v 1.26 2013/05/24 07:58:46 ratchov Exp $	*/
+/*	$OpenBSD: wss.c,v 1.27 2014/09/14 14:17:25 jsg Exp $	*/
 /*	$NetBSD: wss.c,v 1.42 1998/01/19 22:18:23 augustss Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
 
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.24 2014/07/12 18:50:00 tedu Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.25 2014/09/14 14:17:25 jsg Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
-#include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>

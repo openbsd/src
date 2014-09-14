@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.42 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.43 2014/09/14 14:17:26 jsg Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>

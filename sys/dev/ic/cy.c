@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.33 2010/11/18 21:15:15 miod Exp $	*/
+/*	$OpenBSD: cy.c,v 1.34 2014/09/14 14:17:24 jsg Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -56,7 +56,6 @@
 #include <sys/syslog.h>
 #include <sys/fcntl.h>
 #include <sys/tty.h>
-#include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/selinfo.h>
 #include <sys/device.h>

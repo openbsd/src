@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.10 2014/03/16 20:31:46 guenther Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.11 2014/09/14 14:17:24 jsg Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>  
-#include <sys/proc.h>
 #include <sys/exec.h>
 
 #include <machine/db_machdep.h>

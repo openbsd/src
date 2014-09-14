@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.c,v 1.15 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_san_obsd.c,v 1.16 2014/09/14 14:17:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -35,7 +35,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/ioccom.h>
 #include <sys/conf.h>

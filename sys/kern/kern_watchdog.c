@@ -1,4 +1,4 @@
-/*      $OpenBSD: kern_watchdog.c,v 1.9 2012/10/17 22:32:01 deraadt Exp $        */
+/*      $OpenBSD: kern_watchdog.c,v 1.10 2014/09/14 14:17:25 jsg Exp $        */
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
+#include <sys/timeout.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
 

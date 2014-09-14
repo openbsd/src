@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.35 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.36 2014/09/14 14:17:23 jsg Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -33,7 +33,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.44 2014/09/13 16:06:37 doug Exp $ */
+/*	$OpenBSD: qla.c,v 1.45 2014/09/14 14:17:24 jsg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/mutex.h>
@@ -30,6 +29,7 @@
 #include <sys/sensors.h>
 #include <sys/queue.h>
 
+#include <machine/atomic.h>
 #include <machine/bus.h>
 
 #include <scsi/scsi_all.h>

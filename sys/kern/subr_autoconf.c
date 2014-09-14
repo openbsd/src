@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.78 2014/07/13 15:29:04 tedu Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.79 2014/09/14 14:17:25 jsg Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/queue.h>
-#include <sys/proc.h>
 #include <sys/mutex.h>
 
 #include "hotplug.h"

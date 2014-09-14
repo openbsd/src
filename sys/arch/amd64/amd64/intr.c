@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.37 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: intr.c,v 1.38 2014/09/14 14:17:23 jsg Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/errno.h>
 
 #include <machine/atomic.h>

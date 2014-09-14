@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.52 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: cac.c,v 1.53 2014/09/14 14:17:24 jsg Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -72,7 +72,6 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/endian.h>
 #include <sys/malloc.h>

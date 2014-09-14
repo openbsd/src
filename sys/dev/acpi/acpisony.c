@@ -1,4 +1,4 @@
-/* $OpenBSD: acpisony.c,v 1.5 2014/02/21 18:49:06 deraadt Exp $ */
+/* $OpenBSD: acpisony.c,v 1.6 2014/09/14 14:17:24 jsg Exp $ */
 /*
  * Copyright (c) 2010 Paul Irofti <pirofti@openbsd.org>
  *
@@ -17,7 +17,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>

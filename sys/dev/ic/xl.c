@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.115 2014/07/22 13:12:12 mpi Exp $	*/
+/*	$OpenBSD: xl.c,v 1.116 2014/09/14 14:17:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -111,7 +111,6 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>   /* only for declaration of wakeup() used by vm.h */
 #include <sys/device.h>
 
 #include <net/if.h>

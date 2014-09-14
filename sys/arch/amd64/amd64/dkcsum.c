@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.20 2013/11/21 00:13:33 dlg Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.21 2014/09/14 14:17:23 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -35,7 +35,6 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
-#include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/stat.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* 	$OpenBSD: compat_dir.c,v 1.9 2014/07/12 18:50:00 tedu Exp $	*/
+/* 	$OpenBSD: compat_dir.c,v 1.10 2014/09/14 14:17:23 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000 Constantine Sapuntzakis
@@ -28,7 +28,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.26 2011/04/03 12:42:36 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.27 2014/09/14 14:17:24 jsg Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -130,7 +130,6 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
 #include <sys/queue.h>
 
 #include <machine/bus.h>

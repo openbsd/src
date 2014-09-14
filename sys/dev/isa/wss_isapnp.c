@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss_isapnp.c,v 1.8 2009/06/21 00:38:22 martynas Exp $	*/
+/*	$OpenBSD: wss_isapnp.c,v 1.9 2014/09/14 14:17:25 jsg Exp $	*/
 /*	$NetBSD: wss_isapnp.c,v 1.5 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
 #include <machine/bus.h>
 

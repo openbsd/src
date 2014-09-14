@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.39 2014/03/19 04:17:33 guenther Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.40 2014/09/14 14:17:27 jsg Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>

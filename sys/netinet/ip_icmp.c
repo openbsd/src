@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.123 2014/07/13 13:57:56 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.124 2014/09/14 14:17:26 jsg Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -76,7 +76,6 @@
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>

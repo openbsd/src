@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.32 2014/07/13 13:28:26 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.33 2014/09/14 14:17:26 jsg Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>

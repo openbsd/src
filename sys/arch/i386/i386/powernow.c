@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow.c,v 1.5 2014/07/08 13:06:58 deraadt Exp $	*/
+/*	$OpenBSD: powernow.c,v 1.6 2014/09/14 14:17:23 jsg Exp $	*/
 /*
  * Copyright (c) 2004 Ted Unangst
  * All rights reserved.
@@ -23,7 +23,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
 
 #include <machine/cpu.h>

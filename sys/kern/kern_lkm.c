@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.48 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.49 2014/09/14 14:17:25 jsg Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/file.h>
-#include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>

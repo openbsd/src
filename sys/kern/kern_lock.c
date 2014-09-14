@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.45 2014/07/13 15:46:21 uebayasi Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.46 2014/09/14 14:17:25 jsg Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -36,7 +36,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/systm.h>
 #include <sys/sched.h>

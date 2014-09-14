@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_tuner.c,v 1.6 2007/06/11 08:10:22 robert Exp $	*/
+/*	$OpenBSD: bktr_tuner.c,v 1.7 2014/09/14 14:17:25 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.9 2000/10/19 07:33:28 roger Exp $ */
 
 /*
@@ -50,7 +50,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
-#include <sys/proc.h>
 
 #include <dev/ic/bt8xx.h>	/* OpenBSD .h file location */
 #include <dev/pci/bktr/bktr_reg.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.23 2012/02/12 14:30:51 deraadt Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.24 2014/09/14 14:17:24 jsg Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
 #include <sys/queue.h>
 
 #include <dev/pci/pcireg.h>

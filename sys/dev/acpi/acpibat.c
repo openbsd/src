@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.60 2014/05/23 19:17:39 landry Exp $ */
+/* $OpenBSD: acpibat.c,v 1.61 2014/09/14 14:17:24 jsg Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -16,7 +16,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>

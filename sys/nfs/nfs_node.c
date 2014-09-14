@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.56 2014/07/12 18:43:52 tedu Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.57 2014/09/14 14:17:26 jsg Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
+#include <sys/timeout.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>

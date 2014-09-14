@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus_isapnp.c,v 1.6 2012/02/26 11:36:45 miod Exp $	*/
+/*	$OpenBSD: gus_isapnp.c,v 1.7 2014/09/14 14:17:25 jsg Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -94,7 +94,6 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>

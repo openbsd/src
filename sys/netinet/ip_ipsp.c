@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.198 2014/09/08 06:24:13 jsg Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.199 2014/09/14 14:17:26 jsg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -45,7 +45,6 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/timeout.h>
 
 #include <net/if.h>

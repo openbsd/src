@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_isa.c,v 1.6 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: aic_isa.c,v 1.7 2014/09/14 14:17:25 jsg Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 /*
@@ -59,7 +59,6 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
 #include <sys/queue.h>
 
 #include <machine/bus.h>

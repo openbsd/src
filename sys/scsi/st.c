@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.126 2013/11/01 17:36:19 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.127 2014/09/14 14:17:26 jsg Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -64,7 +64,6 @@
 #include <sys/stat.h>
 #include <sys/pool.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
 #include <sys/mtio.h>
 #include <sys/device.h>
 #include <sys/conf.h>

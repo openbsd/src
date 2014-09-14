@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.126 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.127 2014/09/14 14:17:26 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -40,7 +40,6 @@
 #include <sys/sockio.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/task.h>
 

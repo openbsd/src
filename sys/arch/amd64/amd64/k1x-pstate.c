@@ -1,4 +1,4 @@
-/*	$OpenBSD: k1x-pstate.c,v 1.6 2014/07/12 18:44:41 tedu Exp $ */
+/*	$OpenBSD: k1x-pstate.c,v 1.7 2014/09/14 14:17:23 jsg Exp $ */
 /*
  * Copyright (c) 2011 Bryan Steele <brynet@gmail.com>
  *
@@ -28,7 +28,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
 
 #include <machine/cpu.h>

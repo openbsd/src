@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.24 2014/07/13 23:10:23 deraadt Exp $ */
+/*	$OpenBSD: qlw.c,v 1.25 2014/09/14 14:17:24 jsg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/mutex.h>
@@ -31,6 +30,7 @@
 #include <sys/sensors.h>
 #include <sys/queue.h>
 
+#include <machine/atomic.h>
 #include <machine/bus.h>
 
 #include <scsi/scsi_all.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: owtemp.c,v 1.15 2010/07/08 07:19:54 jasper Exp $	*/
+/*	$OpenBSD: owtemp.c,v 1.16 2014/09/14 14:17:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/sensors.h>
 

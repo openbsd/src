@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.39 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.40 2014/09/14 14:17:27 jsg Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/kernel.h>

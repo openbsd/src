@@ -1,4 +1,4 @@
-/*	$OpenBSD: owctr.c,v 1.5 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: owctr.c,v 1.6 2014/09/14 14:17:25 jsg Exp $	*/
 /*
  * Copyright (c) 2010 John L. Scarfone <john@scarfone.net>
  *
@@ -27,7 +27,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/sensors.h>
 

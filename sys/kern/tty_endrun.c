@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_endrun.c,v 1.4 2014/07/12 18:43:32 tedu Exp $ */
+/*	$OpenBSD: tty_endrun.c,v 1.5 2014/09/14 14:17:26 jsg Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -51,7 +51,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/sensors.h>
 #include <sys/tty.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.119 2014/07/12 18:48:17 tedu Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.120 2014/09/14 14:17:24 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/pool.h>
 

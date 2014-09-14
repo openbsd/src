@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc.c,v 1.25 2011/07/07 20:42:56 henning Exp $ */
+/*	$OpenBSD: if_lmc.c,v 1.26 2014/09/14 14:17:25 jsg Exp $ */
 /*	$NetBSD: if_lmc.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -89,7 +89,6 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcidevs.h>

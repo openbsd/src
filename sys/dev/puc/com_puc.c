@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.21 2013/12/09 19:52:01 deraadt Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.22 2014/09/14 14:17:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -33,7 +33,6 @@
 #include <sys/ioctl.h>
 #include <sys/selinfo.h>
 #include <sys/tty.h>
-#include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>

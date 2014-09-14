@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.68 2014/07/22 11:06:10 mpi Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.69 2014/09/14 14:17:26 jsg Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -33,7 +33,6 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
 
 #include <net/bpf.h>

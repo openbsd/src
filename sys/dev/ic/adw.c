@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.50 2012/01/11 16:22:32 dhill Exp $ */
+/*	$OpenBSD: adw.c,v 1.51 2014/09/14 14:17:24 jsg Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
 #include <sys/timeout.h>
 
 #include <machine/bus.h>

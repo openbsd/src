@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.213 2014/07/20 12:20:38 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.214 2014/09/14 14:17:24 jsg Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -20,7 +20,6 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 
 #include <machine/bus.h>
 

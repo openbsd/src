@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.76 2014/03/28 17:57:11 mpi Exp $	*/
+/*	$OpenBSD: aha.c,v 1.77 2014/09/14 14:17:25 jsg Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -56,7 +56,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
 #include <sys/timeout.h>
 
 #include <uvm/uvm_extern.h>

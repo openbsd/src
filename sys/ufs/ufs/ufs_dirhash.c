@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.29 2014/07/14 08:11:34 beck Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.30 2014/09/14 14:17:27 jsg Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -38,7 +38,6 @@ __FBSDID("$FreeBSD: src/sys/ufs/ufs/ufs_dirhash.c,v 1.18 2004/02/15 21:39:35 dwm
 #include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: radio.c,v 1.9 2011/07/03 15:47:16 matthew Exp $ */
+/* $OpenBSD: radio.c,v 1.10 2014/09/14 14:17:24 jsg Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
 /*
@@ -30,7 +30,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>

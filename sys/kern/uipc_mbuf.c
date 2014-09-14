@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.193 2014/08/18 04:06:16 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.194 2014/09/14 14:17:26 jsg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -74,7 +74,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>

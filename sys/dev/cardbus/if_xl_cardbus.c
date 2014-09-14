@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.29 2014/08/11 12:45:45 mpi Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.30 2014/09/14 14:17:24 jsg Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 
 #include <net/if.h>

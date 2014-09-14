@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.26 2011/04/05 14:14:07 thib Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.27 2014/09/14 14:17:26 jsg Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/errno.h>
 #include <sys/namei.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
 #include <sys/poll.h>
 
 /*

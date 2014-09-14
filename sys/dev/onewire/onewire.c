@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.15 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.16 2014/09/14 14:17:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -26,7 +26,6 @@
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
 

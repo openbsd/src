@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.38 2014/07/12 18:43:52 tedu Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.39 2014/09/14 14:17:26 jsg Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -32,7 +32,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>

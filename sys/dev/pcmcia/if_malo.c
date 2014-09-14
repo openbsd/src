@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.79 2014/08/11 12:45:45 mpi Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.80 2014/09/14 14:17:25 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -19,7 +19,6 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>

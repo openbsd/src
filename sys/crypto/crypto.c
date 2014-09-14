@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.66 2014/08/20 06:23:03 mikeb Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.67 2014/09/14 14:17:23 jsg Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -23,7 +23,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/pool.h>
 
 #include <crypto/cryptodev.h>

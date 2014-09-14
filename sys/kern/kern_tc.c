@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.25 2014/07/12 18:43:32 tedu Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.26 2014/09/14 14:17:25 jsg Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -23,7 +23,7 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
+#include <sys/timeout.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>

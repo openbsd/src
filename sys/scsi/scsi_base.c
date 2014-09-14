@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.215 2014/09/09 05:43:25 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.216 2014/09/14 14:17:26 jsg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/uio.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/task.h>
 

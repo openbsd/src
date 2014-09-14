@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.19 2014/04/01 09:05:03 mpi Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.20 2014/09/14 14:17:23 jsg Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -37,7 +37,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/mutex.h>
 
 #include <uvm/uvm_extern.h>

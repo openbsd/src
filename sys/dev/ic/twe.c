@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.43 2013/11/18 23:32:23 deraadt Exp $	*/
+/*	$OpenBSD: twe.c,v 1.44 2014/09/14 14:17:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -36,7 +36,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/kthread.h>
 
 #include <machine/bus.h>

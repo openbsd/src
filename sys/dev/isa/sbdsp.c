@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.33 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.34 2014/09/14 14:17:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -52,7 +52,6 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
 
 #include <machine/cpu.h>

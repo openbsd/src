@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.125 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.126 2014/09/14 14:17:25 jsg Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -61,7 +61,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
-#include <sys/proc.h>
 #include <sys/disk.h>
 #include <sys/pool.h>
 

@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.39 2014/07/12 18:44:41 tedu Exp $ */
+/*	$OpenBSD: mem.c,v 1.40 2014/09/14 14:17:23 jsg Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -47,7 +47,6 @@
 #include <sys/ioccom.h>
 #include <sys/malloc.h>
 #include <sys/memrange.h>
-#include <sys/proc.h>
 #include <sys/fcntl.h>
 
 #include <machine/cpu.h>

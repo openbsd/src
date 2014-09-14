@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.19 2013/11/15 16:46:27 brad Exp $	*/
+/*	$OpenBSD: ess.c,v 1.20 2014/09/14 14:17:25 jsg Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -72,7 +72,6 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/timeout.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.17 2013/05/12 20:47:44 kettenis Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.18 2014/09/14 14:17:23 jsg Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
 

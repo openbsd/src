@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.40 2014/07/12 18:43:52 tedu Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.41 2014/09/14 14:17:26 jsg Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/namei.h>

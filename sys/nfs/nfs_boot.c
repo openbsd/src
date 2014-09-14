@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.33 2014/09/08 06:24:13 jsg Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.34 2014/09/14 14:17:26 jsg Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
-#include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/mbuf.h>
 #include <sys/reboot.h>

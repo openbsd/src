@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.255 2014/07/12 18:50:25 tedu Exp $	*/
+/*	$OpenBSD: sd.c,v 1.256 2014/09/14 14:17:26 jsg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -65,7 +65,6 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/scsiio.h>
 #include <sys/dkio.h>

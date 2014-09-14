@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.24 2014/07/12 18:43:52 tedu Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.25 2014/09/14 14:17:26 jsg Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>

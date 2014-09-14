@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.63 2014/08/19 11:13:16 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.64 2014/09/14 14:17:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -31,7 +31,6 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/timeout.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/queue.h>
 

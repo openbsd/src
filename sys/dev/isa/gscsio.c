@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscsio.c,v 1.12 2010/02/16 00:05:23 mk Exp $	*/
+/*	$OpenBSD: gscsio.c,v 1.13 2014/09/14 14:17:25 jsg Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -25,7 +25,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/rwlock.h>
-#include <sys/proc.h>
 
 #include <machine/bus.h>
 

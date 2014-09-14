@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.27 2014/07/12 18:44:41 tedu Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.28 2014/09/14 14:17:23 jsg Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -31,7 +31,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
 
 #include <dev/isa/isareg.h>

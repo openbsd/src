@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.70 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.71 2014/09/14 14:17:24 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -28,7 +28,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 
 #include <machine/bus.h>
 

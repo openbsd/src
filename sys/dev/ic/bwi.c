@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.109 2014/09/06 05:41:35 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.110 2014/09/14 14:17:24 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -45,7 +45,6 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>

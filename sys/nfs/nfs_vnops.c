@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.152 2014/07/12 18:43:52 tedu Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.153 2014/09/14 14:17:26 jsg Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>

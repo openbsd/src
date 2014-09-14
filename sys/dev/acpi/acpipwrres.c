@@ -1,4 +1,4 @@
-/* $OpenBSD: acpipwrres.c,v 1.6 2013/12/17 15:18:28 deraadt Exp $ */
+/* $OpenBSD: acpipwrres.c,v 1.7 2014/09/14 14:17:24 jsg Exp $ */
 
 /*
  * Copyright (c) 2013 Martin Pieuchot <mpi@openbsd.org>
@@ -18,7 +18,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.39 2011/07/04 20:35:35 deraadt Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.40 2014/09/14 14:17:26 jsg Exp $  */
 
 /*
  * Portions of this code are:
@@ -38,7 +38,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.32 2014/07/12 18:48:18 tedu Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.33 2014/09/14 14:17:25 jsg Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -37,7 +37,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
