@@ -1,4 +1,4 @@
-.\" $OpenBSD: em.4,v 1.52 2014/02/22 04:48:04 chris Exp $
+.\" $OpenBSD: em.4,v 1.53 2014/09/14 00:17:09 brad Exp $
 .\" Copyright (c) 2002 Intel Corporation
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms of the Software, with or without
@@ -28,7 +28,7 @@
 .\" * Other names and brands may be claimed as the property of others.
 .\"
 .\" $FreeBSD: em.4,v 1.18 2005/01/30 12:29:06 yar Exp $
-.Dd $Mdocdate: February 22 2014 $
+.Dd $Mdocdate: September 14 2014 $
 .Dt EM 4
 .Os
 .Sh NAME
@@ -166,7 +166,7 @@ The
 .Nm
 driver supports IPv4 receive IP/TCP/UDP checksum offload and transmit TCP/UDP
 checksum offload on all but 82542-based adapters, VLAN tag insertion and
-stripping, and Jumbo frames on all but 82562V, 82566DC/82566DM and
+stripping, and jumbo frames on all but 82562V, 82566DC/82566DM and
 82573E/82573L/82573V-based adapters.
 The 82562V Ethernet controller chip only supports 10/100 media types.
 .Pp
@@ -214,7 +214,7 @@ driver was written by
 .An Intel Corporation .
 .Sh BUGS
 There are known performance issues with this driver when running UDP traffic
-with Jumbo frames.
+with jumbo frames.
 .Pp
 There is a known compatibility issue where time to link is slow or link is not
 established between 82541/82547 controllers and some switches.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ti.4,v 1.43 2014/09/13 17:33:21 brad Exp $
+.\"	$OpenBSD: ti.4,v 1.44 2014/09/14 00:17:09 brad Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man4/ti.4,v 1.11 2000/08/10 19:47:32 billf Exp $
 .\"
-.Dd $Mdocdate: September 13 2014 $
+.Dd $Mdocdate: September 14 2014 $
 .Dt TI 4
 .Os
 .Sh NAME
@@ -81,8 +81,7 @@ Communication with the chip is achieved via PCI shared memory and
 bus master DMA.
 SBus cards are also available and use a special bridge chip.
 The Tigon I and II support hardware multicast address filtering,
-VLAN tag insertion and stripping, and Jumbo frame sizes up to
-9000 bytes.
+VLAN tag insertion and stripping, and jumbo frames.
 .Pp
 While the Tigon chipset supports 10, 100 and 1000Mbps speeds, support for
 10 and 100Mbps speeds is only available on boards with the proper
@@ -161,7 +160,7 @@ during initialization.
 The driver failed to initialize PCI shared memory mapping.
 This might happen if the card is not in a bus-master slot.
 .It "ti0: no memory for jumbo buffers!"
-The driver failed to allocate memory for Jumbo frames during
+The driver failed to allocate memory for jumbo frames during
 initialization.
 .It "ti0: bios thinks we're in a 64 bit slot, but we aren't"
 The BIOS has programmed the NIC as though it had been installed in
