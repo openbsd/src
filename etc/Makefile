@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.393 2014/09/05 07:22:29 ajacoutot Exp $
+#	$OpenBSD: Makefile,v 1.394 2014/09/15 20:26:32 rpe Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -150,7 +150,8 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 644 ${EXAMPLES} \
 		    ${DESTDIR}/etc/examples; \
 		${INSTALL} -c -o root -g wheel -m 600 ${EXAMPLES_600} \
-		    ${DESTDIR}/etc/examples
+		    ${DESTDIR}/etc/examples; \
+		chgrp operator ${DESTDIR}/etc/examples/chio.conf
 	cd signify; \
 		${INSTALL} -c -o root -g wheel -m 644 *.pub \
 		    ${DESTDIR}/etc/signify
