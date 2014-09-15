@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.7 2002/06/01 00:14:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2014/09/15 22:25:57 matthieu Exp $
 
-SUBDIR+=	mkhybrid sendmail
+SUBDIR+=	mkhybrid
 
 .include <bsd.subdir.mk>
