@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.101 2014/09/03 21:19:34 matthieu Exp $
+#	$OpenBSD: changelist,v 1.102 2014/09/15 22:28:58 matthieu Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -55,22 +55,9 @@
 /etc/locate.rc
 /etc/login.conf
 /etc/mail.rc
-/etc/mail/access
 /etc/mail/aliases
-/etc/mail/genericstable
-/etc/mail/helpfile
-/etc/mail/local-host-names
-/etc/mail/localhost.cf
-/etc/mail/mailertable
-/etc/mail/relay-domains
-+/etc/mail/secrets
-/etc/mail/sendmail.cf
 /etc/mail/smtpd.conf
 /etc/mail/spamd.conf
-/etc/mail/submit.cf
-/etc/mail/trusted-users
-/etc/mail/virtual
-/etc/mail/virtusertable
 /etc/mailer.conf
 /etc/man.conf
 /etc/master.passwd

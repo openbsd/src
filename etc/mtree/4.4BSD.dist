@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.263 2014/08/26 19:33:48 robert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.264 2014/09/15 22:28:58 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -147,10 +147,6 @@ usr
             std			gname=bin uname=root mode=0755
             ..
         ..
-
-        # ./usr/include/libmilter
-        libmilter		gname=bin uname=root mode=0755
-        ..
         objc			gname=bin uname=root mode=0755
         ..
         openssl			gname=bin uname=root mode=0755
@@ -190,8 +186,6 @@ usr
         sm.bin
         ..
         lpr
-        ..
-        sendmail		type=dir uname=root gname=wheel mode=0755
         ..
         smtpd			type=dir uname=root gname=wheel mode=0755
         ..
@@ -636,28 +630,6 @@ usr
         nls
         ..
 
-        # ./usr/share/sendmail
-        sendmail
-            cf
-            ..
-            domain
-            ..
-            feature
-            ..
-            hack
-            ..
-            m4
-            ..
-            mailer
-            ..
-            ostype
-            ..
-            sh
-            ..
-            siteconfig
-            ..
-        ..
-
         # ./usr/share/snmp
         snmp
             mibs
@@ -795,8 +767,6 @@ var
 
     # ./var/spool
     spool
-        clientmqueue		mode=0770 uname=smmsp gname=smmsp
-        ..
 
         # ./var/spool/ftp
         ftp			mode=0555
@@ -812,8 +782,6 @@ var
 
         # ./var/spool/lock
         lock			uname=uucp gname=dialer mode=1775
-        ..
-        mqueue			mode=0700
         ..
         output			gname=daemon mode=0775
         ..

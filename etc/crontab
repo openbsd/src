@@ -1,4 +1,4 @@
-#	$OpenBSD: crontab,v 1.20 2014/03/12 18:21:34 tedu Exp $
+#	$OpenBSD: crontab,v 1.21 2014/09/15 22:28:58 matthieu Exp $
 #
 # /var/cron/tabs/root - root's crontab
 #
@@ -7,9 +7,6 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin
 HOME=/var/log
 #
 #minute	hour	mday	month	wday	command
-#
-# sendmail clientmqueue runner
-#*/30	*	*	*	*	/usr/sbin/sendmail -L sm-msp-queue -Ac -q
 #
 # rotate log files every hour, if necessary
 0	*	*	*	*	/usr/bin/newsyslog

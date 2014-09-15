@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.394 2014/09/15 20:26:32 rpe Exp $
+#	$OpenBSD: Makefile,v 1.395 2014/09/15 22:28:58 matthieu Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -55,7 +55,7 @@ RCDAEMONS=	amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd \
 		ftpd ftpproxy hostapd hotplugd httpd identd ifstated iked \
 		inetd isakmpd ldapd npppd ldattach ldpd lpd mopd mrouted \
 		nsd ntpd ospfd ospf6d portmap pflogd rarpd rbootd \
-		relayd ripd route6d rtadvd rtsold sasyncd sendmail \
+		relayd ripd route6d rtadvd rtsold sasyncd \
 		sensorsd slowcgi smtpd snmpd spamd sshd syslogd watchdogd \
 		wsmoused xdm ypbind ypldap yppasswdd ypserv nfsd mountd lockd \
 		statd spamlogd sndiod tftpd tftpproxy ldomd unbound iscsid
@@ -190,13 +190,10 @@ distribution-etc-root-var: distrib-dirs
 	    ${DESTDIR}/var/log/messages
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 600 /dev/null \
 	    ${DESTDIR}/var/log/secure
-	${INSTALL} -c -o ${BINOWN} -g wheel -m 664 /dev/null \
-	    ${DESTDIR}/var/log/sendmail.st
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 644 /dev/null \
 	    ${DESTDIR}/var/log/wtmp
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 640 /dev/null \
 	    ${DESTDIR}/var/log/xferlog
-	cd ../gnu/usr.sbin/sendmail/cf/cf && exec ${MAKE} distribution
 	cd ../usr.sbin/ypserv/ypinit && exec ${MAKE} distribution
 	cd ../usr.bin/ssh && exec ${MAKE} distribution
 	cd ../lib/libcrypto && exec ${MAKE} distribution
