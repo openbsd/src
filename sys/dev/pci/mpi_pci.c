@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi_pci.c,v 1.24 2011/06/09 04:55:44 deraadt Exp $ */
+/*	$OpenBSD: mpi_pci.c,v 1.25 2014/09/15 12:00:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -142,7 +142,7 @@ mpi_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 	intrstr = pci_intr_string(psc->psc_pc, ih);
-	psc->psc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_BIO,
+	psc->psc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_BIO | IPL_MPSAFE,
 	    mpi_intr, sc, sc->sc_dev.dv_xname);
 	if (psc->psc_ih == NULL) {
 		printf(": unable to map interrupt%s%s\n",

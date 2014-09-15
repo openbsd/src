@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.196 2014/09/14 14:17:24 jsg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.197 2014/09/15 12:00:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1310,6 +1310,8 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 
 	DNPRINTF(MPI_D_CMD, "%s: mpi_scsi_cmd\n", DEVNAME(sc));
 
+	KERNEL_UNLOCK();
+
 	if (xs->cmdlen > MPI_CDB_LEN) {
 		DNPRINTF(MPI_D_CMD, "%s: CBD too big %d\n",
 		    DEVNAME(sc), xs->cmdlen);
@@ -1318,8 +1320,7 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20;
 		xs->error = XS_SENSE;
-		scsi_done(xs);
-		return;
+		goto done;
 	}
 
 	ccb = xs->io;
@@ -1371,23 +1372,25 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	htolem32(&io->sense_buf_low_addr, ccb->ccb_cmd_dva +
 	    ((u_int8_t *)&mcb->mcb_sense - (u_int8_t *)mcb));
 
-	if (mpi_load_xs(ccb) != 0) {
-		xs->error = XS_DRIVER_STUFFUP;
-		scsi_done(xs);
-		return;
-	}
+	if (mpi_load_xs(ccb) != 0)
+		goto stuffup;
 
 	timeout_set(&xs->stimeout, mpi_timeout_xs, ccb);
 
 	if (xs->flags & SCSI_POLL) {
-		if (mpi_poll(sc, ccb, xs->timeout) != 0) {
-			xs->error = XS_DRIVER_STUFFUP;
-			scsi_done(xs);
-		}
-		return;
-	}
+		if (mpi_poll(sc, ccb, xs->timeout) != 0)
+			goto stuffup;
+	} else
+		mpi_start(sc, ccb);
 
-	mpi_start(sc, ccb);
+	KERNEL_LOCK();
+	return;
+
+stuffup:
+	xs->error = XS_DRIVER_STUFFUP;
+done:
+	KERNEL_LOCK();
+	scsi_done(xs);
 }
 
 void
@@ -1414,7 +1417,9 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	if (ccb->ccb_rcb == NULL) {
 		/* no scsi error, we're ok so drop out early */
 		xs->status = SCSI_OK;
+		KERNEL_LOCK();
 		scsi_done(xs);
+		KERNEL_UNLOCK();
 		return;
 	}
 
@@ -2369,14 +2374,18 @@ mpi_evt_sas(struct mpi_softc *sc, struct mpi_rcb *rcb)
 	switch (ch->reason) {
 	case MPI_EVT_SASCH_REASON_ADDED:
 	case MPI_EVT_SASCH_REASON_NO_PERSIST_ADDED:
+		KERNEL_LOCK();
 		if (scsi_req_probe(sc->sc_scsibus, ch->target, -1) != 0) {
 			printf("%s: unable to request attach of %d\n",
 			    DEVNAME(sc), ch->target);
 		}
+		KERNEL_UNLOCK();
 		break;
 
 	case MPI_EVT_SASCH_REASON_NOT_RESPONDING:
+		KERNEL_LOCK();
 		scsi_activate(sc->sc_scsibus, ch->target, -1, DVACT_DEACTIVATE);
+		KERNEL_UNLOCK();
 
 		mtx_enter(&sc->sc_evt_scan_mtx);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_evt_scan_queue, rcb, rcb_link);
@@ -2450,11 +2459,13 @@ mpi_evt_sas_detach_done(struct mpi_ccb *ccb)
 	struct mpi_softc			*sc = ccb->ccb_sc;
 	struct mpi_msg_scsi_task_reply		*r = ccb->ccb_rcb->rcb_reply;
 
+	KERNEL_LOCK();
 	if (scsi_req_detach(sc->sc_scsibus, r->target_id, -1,
 	    DETACH_FORCE) != 0) {
 		printf("%s: unable to request detach of %d\n",
 		    DEVNAME(sc), r->target_id);
 	}
+	KERNEL_UNLOCK();
 
 	mpi_push_reply(sc, ccb->ccb_rcb);
 	scsi_io_put(&sc->sc_iopool, ccb);
