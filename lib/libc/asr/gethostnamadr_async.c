@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.30 2014/07/23 21:26:25 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.31 2014/09/15 06:15:48 guenther Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -247,7 +247,7 @@ gethostnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 
 			/* Try to find a match in the host file */
 
-			if ((f = fopen(as->as_ctx->ac_hostfile, "r")) == NULL)
+			if ((f = fopen(as->as_ctx->ac_hostfile, "re")) == NULL)
 				break;
 
 			if (as->as_type == ASR_GETHOSTBYNAME) {

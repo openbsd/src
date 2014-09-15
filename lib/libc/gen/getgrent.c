@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.40 2014/03/12 10:54:36 schwarze Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.41 2014/09/15 06:15:48 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -207,7 +207,7 @@ start_gr(void)
 #endif
 		return(1);
 	}
-	return((_gr_fp = fopen(_PATH_GROUP, "r")) ? 1 : 0);
+	return((_gr_fp = fopen(_PATH_GROUP, "re")) ? 1 : 0);
 }
 
 void

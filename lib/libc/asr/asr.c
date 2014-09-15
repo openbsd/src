@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.33 2014/03/26 18:13:15 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.34 2014/09/15 06:15:48 guenther Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -695,7 +695,7 @@ asr_ctx_from_file(struct asr_ctx *ac, const char *path)
 	char	 buf[4096];
 	ssize_t	 r;
 
-	cf = fopen(path, "r");
+	cf = fopen(path, "re");
 	if (cf == NULL)
 		return (-1);
 
@@ -920,7 +920,7 @@ asr_hostalias(struct asr_ctx *ac, const char *name, char *abuf, size_t abufsz)
 	    asr_ndots(name) != 0 ||
 	    issetugid() ||
 	    (file = getenv("HOSTALIASES")) == NULL ||
-	    (fp = fopen(file, "r")) == NULL)
+	    (fp = fopen(file, "re")) == NULL)
 		return (NULL);
 
 	DPRINT("asr: looking up aliases in \"%s\"\n", file);

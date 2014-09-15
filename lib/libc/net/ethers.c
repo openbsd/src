@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.21 2013/11/24 23:51:28 deraadt Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.22 2014/09/15 06:15:48 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -112,7 +112,7 @@ ether_ntohost(char *hostname, struct ether_addr *e)
 	trylen = strlen(trybuf);
 #endif
 
-	f = fopen(_PATH_ETHERS, "r");
+	f = fopen(_PATH_ETHERS, "re");
 	if (f == NULL)
 		return (-1);
 	while ((p = fgetln(f, &len)) != NULL) {
@@ -165,7 +165,7 @@ ether_hostton(const char *hostname, struct ether_addr *e)
 	int hostlen = strlen(hostname);
 #endif
 
-	f = fopen(_PATH_ETHERS, "r");
+	f = fopen(_PATH_ETHERS, "re");
 	if (f==NULL)
 		return (-1);
 

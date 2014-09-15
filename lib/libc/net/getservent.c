@@ -1,4 +1,4 @@
-/*	$OpenBSD: getservent.c,v 1.12 2007/09/02 15:19:17 deraadt Exp $ */
+/*	$OpenBSD: getservent.c,v 1.13 2014/09/15 06:15:48 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@ void
 setservent_r(int f, struct servent_data *sd)
 {
 	if (sd->fp == NULL)
-		sd->fp = fopen(_PATH_SERVICES, "r" );
+		sd->fp = fopen(_PATH_SERVICES, "re" );
 	else
 		rewind(sd->fp);
 	sd->stayopen |= f;
@@ -71,7 +71,7 @@ getservent_r(struct servent *se, struct servent_data *sd)
 	long l;
 	int serrno;
 
-	if (sd->fp == NULL && (sd->fp = fopen(_PATH_SERVICES, "r" )) == NULL)
+	if (sd->fp == NULL && (sd->fp = fopen(_PATH_SERVICES, "re" )) == NULL)
 		return (-1);
 again:
 	if ((p = fgetln(sd->fp, &len)) == NULL)

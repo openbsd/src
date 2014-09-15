@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.30 2011/10/14 16:33:53 millert Exp $	*/
+/*	$OpenBSD: getcap.c,v 1.31 2014/09/15 06:15:48 guenther Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -272,7 +272,7 @@ getent(char **cap, u_int *len, char **db_array, FILE *fp,
 				*cap = cbuf;
 				return (retval);
 			} else {
-				fp = fopen(*db_p, "r");
+				fp = fopen(*db_p, "re");
 				if (fp == NULL) {
 					/* No error on unfound file. */
 					continue;
@@ -670,7 +670,7 @@ cgetnext(char **cap, char **db_array)
 	if (dbp == NULL)
 		dbp = db_array;
 
-	if (pfp == NULL && (pfp = fopen(*dbp, "r")) == NULL)
+	if (pfp == NULL && (pfp = fopen(*dbp, "re")) == NULL)
 		goto done;
 
 	/*
@@ -722,7 +722,7 @@ cgetnext(char **cap, char **db_array)
 						status = 0;
 						goto done;
 					} else if ((pfp =
-					    fopen(*dbp, "r")) == NULL) {
+					    fopen(*dbp, "re")) == NULL) {
 						goto done;
 					} else
 						continue;

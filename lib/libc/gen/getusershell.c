@@ -1,4 +1,4 @@
-/*	$OpenBSD: getusershell.c,v 1.13 2014/01/19 21:01:06 tobias Exp $ */
+/*	$OpenBSD: getusershell.c,v 1.14 2014/09/15 06:15:48 guenther Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -95,7 +95,7 @@ initshells(void)
 	if (strings != NULL)
 		free(strings);
 	strings = NULL;
-	if ((fp = fopen(_PATH_SHELLS, "r")) == NULL)
+	if ((fp = fopen(_PATH_SHELLS, "re")) == NULL)
 		return (okshells);
 	if (fstat(fileno(fp), &statb) == -1) {
 		(void)fclose(fp);

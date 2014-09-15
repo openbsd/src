@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetent.c,v 1.13 2012/04/10 16:41:10 eric Exp $ */
+/*	$OpenBSD: getnetent.c,v 1.14 2014/09/15 06:15:48 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@ void
 setnetent(int f)
 {
 	if (netf == NULL)
-		netf = fopen(_PATH_NETWORKS, "r" );
+		netf = fopen(_PATH_NETWORKS, "re" );
 	else
 		rewind(netf);
 	_net_stayopen |= f;
@@ -70,7 +70,7 @@ getnetent(void)
 	char *p, *cp, **q;
 	size_t len;
 
-	if (netf == NULL && (netf = fopen(_PATH_NETWORKS, "r" )) == NULL)
+	if (netf == NULL && (netf = fopen(_PATH_NETWORKS, "re" )) == NULL)
 		return (NULL);
 again:
 	if ((p = fgetln(netf, &len)) == NULL)
