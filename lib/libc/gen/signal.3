@@ -1,4 +1,4 @@
-.\"	$OpenBSD: signal.3,v 1.50 2014/09/10 07:04:23 guenther Exp $
+.\"	$OpenBSD: signal.3,v 1.51 2014/09/15 06:18:36 guenther Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 10 2014 $
+.Dd $Mdocdate: September 15 2014 $
 .Dt SIGNAL 3
 .Os
 .Sh NAME
@@ -235,7 +235,7 @@ function;
 ignored signals remain ignored.
 .Pp
 The following functions are either reentrant or not interruptible
-by signals and are async-signal safe.
+by signals and are async-signal-safe.
 Therefore applications may
 invoke them, without restriction, from signal-catching functions:
 .Pp
