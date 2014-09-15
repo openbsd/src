@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.35 2010/09/24 00:11:15 deraadt Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.36 2014/09/15 19:08:22 miod Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -34,9 +34,9 @@
  */
 
 #include <sys/param.h>
-#include <sys/dkstat.h>
 #include <sys/time.h>
 #include <sys/disk.h>
+#include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/tty.h>
 

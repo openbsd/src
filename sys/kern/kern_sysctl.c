@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.263 2014/09/04 19:14:47 miod Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.264 2014/09/15 19:08:21 miod Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -58,7 +58,6 @@
 #include <sys/disk.h>
 #include <sys/sysctl.h>
 #include <sys/msgbuf.h>
-#include <sys/dkstat.h>
 #include <sys/vmmeter.h>
 #include <sys/namei.h>
 #include <sys/exec.h>
@@ -74,7 +73,7 @@
 #include <sys/evcount.h>
 #include <sys/un.h>
 #include <sys/unpcb.h>
-
+#include <sys/sched.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 

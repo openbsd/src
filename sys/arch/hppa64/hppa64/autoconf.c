@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.20 2014/09/04 19:01:02 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.21 2014/09/15 19:08:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -77,7 +77,6 @@ void (*cold_hook)(int); /* see below */
  * LED blinking thing
  */
 #ifdef USELEDS
-#include <sys/dkstat.h>
 #include <sys/kernel.h>
 
 struct timeout heartbeat_tmo;

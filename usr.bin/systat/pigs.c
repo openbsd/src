@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.26 2013/06/02 06:23:17 guenther Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.27 2014/09/15 19:08:21 miod Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -35,11 +35,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/dkstat.h>
-#include <sys/resource.h>
-#include <sys/time.h>
 #include <sys/proc.h>
+#include <sys/resource.h>
+#include <sys/sched.h>
 #include <sys/sysctl.h>
+#include <sys/time.h>
 
 #include <curses.h>
 #include <math.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.28 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.29 2014/09/15 19:08:21 miod Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -101,7 +101,6 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
-#include <sys/dkstat.h>
 #include <sys/socket.h>
 #include <sys/timeout.h>
 #include <sys/ioctl.h>

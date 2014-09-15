@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.66 2014/08/15 03:51:40 guenther Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.67 2014/09/15 19:08:22 miod Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -37,7 +37,7 @@
 #include <sys/wait.h>
 #include <sys/event.h>
 #include <sys/time.h>
-#include <sys/dkstat.h>
+#include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <stdio.h>
 #include <syslog.h>

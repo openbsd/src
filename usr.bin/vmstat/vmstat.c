@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.132 2014/07/13 21:13:51 kettenis Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.133 2014/09/15 19:08:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -33,7 +33,6 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
@@ -42,6 +41,7 @@
 #include <sys/sysctl.h>
 #include <sys/device.h>
 #include <sys/pool.h>
+#include <sys/sched.h>
 #include <sys/vmmeter.h>
 
 #include <time.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.113 2014/07/13 15:29:04 tedu Exp $	*/
+/*	$OpenBSD: tty.c,v 1.114 2014/09/15 19:08:21 miod Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -46,7 +46,6 @@
 #undef	TTYDEFCHARS
 #include <sys/file.h>
 #include <sys/conf.h>
-#include <sys/dkstat.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>

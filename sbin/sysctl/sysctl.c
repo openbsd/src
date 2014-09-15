@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.203 2014/08/16 21:39:16 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.204 2014/09/15 19:08:21 miod Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -38,10 +38,10 @@
 #include <sys/sysctl.h>
 #include <sys/socket.h>
 #include <sys/malloc.h>
-#include <sys/dkstat.h>
 #include <sys/uio.h>
 #include <sys/tty.h>
 #include <sys/namei.h>
+#include <sys/sched.h>
 #include <sys/sensors.h>
 #include <sys/vmmeter.h>
 #include <net/route.h>
