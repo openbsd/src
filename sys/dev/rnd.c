@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.159 2014/07/17 13:38:22 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.160 2014/09/15 22:00:24 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -76,17 +76,18 @@
  * If this estimate goes to zero, the MD5 hash will continue to generate
  * output since there is no true risk because the MD5 output is not
  * exported outside this subsystem.  It is next used as input to seed a
- * RC4 stream cipher.  Attempts are made to follow best practice
- * regarding this stream cipher - the first chunk of output is discarded
- * and the cipher is re-seeded from time to time.  This design provides
- * very high amounts of output data from a potentially small entropy
- * base, at high enough speeds to encourage use of random numbers in
- * nearly any situation.
+ * ChaCha20 stream cipher, which is re-seeded from time to time.  This
+ * design provides very high amounts of output data from a potentially
+ * small entropy base, at high enough speeds to encourage use of random
+ * numbers in nearly any situation.  Before OpenBSD 5.5, the RC4 stream
+ * cipher (also known as ARC4) was used instead of ChaCha20.
  *
- * The output of this single RC4 engine is then shared amongst many
+ * The output of this single ChaCha20 engine is then shared amongst many
  * consumers in the kernel and userland via a few interfaces:
  * arc4random_buf(), arc4random(), arc4random_uniform(), randomread()
- * for the set of /dev/random nodes, and the sysctl kern.arandom.
+ * for the set of /dev/random nodes, the sysctl kern.arandom, and the
+ * system call getentropy(), which provides seeds for process-context
+ * pseudorandom generators.
  *
  * Acknowledgements:
  * =================
@@ -666,7 +667,7 @@ _rs_random_u32(u_int32_t *val)
 	return;
 }
 
-/* Return one word of randomness from an RC4 generator */
+/* Return one word of randomness from a ChaCha20 generator */
 u_int32_t
 arc4random(void)
 {
@@ -680,7 +681,7 @@ arc4random(void)
 }
 
 /*
- * Fill a buffer of arbitrary length with RC4-derived randomness.
+ * Fill a buffer of arbitrary length with ChaCha20-derived randomness.
  */
 void
 arc4random_buf(void *buf, size_t n)
