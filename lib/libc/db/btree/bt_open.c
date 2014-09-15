@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_open.c,v 1.17 2014/05/25 17:43:03 tedu Exp $	*/
+/*	$OpenBSD: bt_open.c,v 1.18 2014/09/15 06:12:19 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -190,7 +190,7 @@ __bt_open(const char *fname, int flags, int mode, const BTREEINFO *openinfo,
 			goto einval;
 		}
 		
-		if ((t->bt_fd = open(fname, flags, mode)) < 0)
+		if ((t->bt_fd = open(fname, flags | O_CLOEXEC, mode)) < 0)
 			goto err;
 
 	} else {
@@ -200,9 +200,6 @@ __bt_open(const char *fname, int flags, int mode, const BTREEINFO *openinfo,
 			goto err;
 		F_SET(t, B_INMEM);
 	}
-
-	if (fcntl(t->bt_fd, F_SETFD, FD_CLOEXEC) == -1)
-		goto err;
 
 	if (fstat(t->bt_fd, &sb))
 		goto err;
@@ -399,7 +396,7 @@ tmp(void)
 
 	(void)sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
-	if ((fd = mkstemp(path)) != -1)
+	if ((fd = mkostemp(path, O_CLOEXEC)) != -1)
 		(void)unlink(path);
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	return(fd);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_page.c,v 1.21 2013/09/30 12:02:31 millert Exp $	*/
+/*	$OpenBSD: hash_page.c,v 1.22 2014/09/15 06:12:19 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -855,9 +855,8 @@ open_temp(HTAB *hashp)
 	/* Block signals; make sure file goes away at process exit. */
 	(void)sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
-	if ((hashp->fp = mkstemp(path)) != -1) {
+	if ((hashp->fp = mkostemp(path, O_CLOEXEC)) != -1) {
 		(void)unlink(path);
-		(void)fcntl(hashp->fp, F_SETFD, FD_CLOEXEC);
 	}
 	(void)sigprocmask(SIG_SETMASK, &oset, (sigset_t *)NULL);
 	return (hashp->fp != -1 ? 0 : -1);
