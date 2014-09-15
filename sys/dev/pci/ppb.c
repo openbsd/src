@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.58 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.59 2014/09/15 14:22:07 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -146,6 +146,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct pcibus_attach_args pba;
+	pci_interface_t interface;
 	pci_intr_handle_t ih;
 	pcireg_t busdata, reg, blr;
 	char *name;
@@ -206,9 +207,18 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
-	    (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_82801BA_HPB &&
-	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_82801BAM_HPB))
+	interface = PCI_INTERFACE(pa->pa_class);
+
+	/*
+	 * The Intel 82801BAM Hub-to-PCI can decode subtractively but
+	 * doesn't advertise itself as such.
+	 */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801BA_HPB ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801BAM_HPB))
+		interface = PPB_INTERFACE_SUBTRACTIVE;
+
+	if (interface != PPB_INTERFACE_SUBTRACTIVE)
 		ppb_alloc_resources(sc, pa);
 
 	for (pin = PCI_INTERRUPT_PIN_A; pin <= PCI_INTERRUPT_PIN_D; pin++) {
@@ -281,14 +291,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	/*
-	 * The Intel 82801BAM Hub-to-PCI can decode subtractively.
-	 * XXX We probably should handle subtractive decode bridges
-	 * in general.
-	 */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801BA_HPB ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801BAM_HPB)) {
+	if (interface == PPB_INTERFACE_SUBTRACTIVE) {
 		if (sc->sc_ioex == NULL)
 			sc->sc_ioex = pa->pa_ioex;
 		if (sc->sc_memex == NULL)

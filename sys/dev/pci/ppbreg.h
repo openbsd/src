@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppbreg.h,v 1.4 2009/11/19 20:43:32 kettenis Exp $	*/
+/*	$OpenBSD: ppbreg.h,v 1.5 2014/09/15 14:22:07 kettenis Exp $	*/
 /*	$NetBSD: ppbreg.h,v 1.3 2001/07/06 18:07:16 mcr Exp $	*/
 
 /*
@@ -38,6 +38,11 @@
  *
  * XXX much is missing.
  */
+
+/*
+ * PCI Programming Interface register.
+ */
+#define	PPB_INTERFACE_SUBTRACTIVE	0x01
 
 /*
  * Register offsets
