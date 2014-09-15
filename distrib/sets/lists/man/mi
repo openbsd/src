@@ -137,7 +137,6 @@
 ./usr/share/man/man1/hexdump.1
 ./usr/share/man/man1/host.1
 ./usr/share/man/man1/hostname.1
-./usr/share/man/man1/hoststat.1
 ./usr/share/man/man1/htpasswd.1
 ./usr/share/man/man1/i386
 ./usr/share/man/man1/i386/fdformat.1
@@ -396,7 +395,6 @@
 ./usr/share/man/man1/podchecker.1
 ./usr/share/man/man1/podselect.1
 ./usr/share/man/man1/pr.1
-./usr/share/man/man1/praliases.1
 ./usr/share/man/man1/printenv.1
 ./usr/share/man/man1/printf.1
 ./usr/share/man/man1/procmap.1
@@ -404,7 +402,6 @@
 ./usr/share/man/man1/ps.1
 ./usr/share/man/man1/psed.1
 ./usr/share/man/man1/pstruct.1
-./usr/share/man/man1/purgestat.1
 ./usr/share/man/man1/pwd.1
 ./usr/share/man/man1/quota.1
 ./usr/share/man/man1/radioctl.1
@@ -2410,7 +2407,6 @@
 ./usr/share/man/man8/dumpfs.8
 ./usr/share/man/man8/dvmrpctl.8
 ./usr/share/man/man8/dvmrpd.8
-./usr/share/man/man8/editmap.8
 ./usr/share/man/man8/edquota.8
 ./usr/share/man/man8/fdisk.8
 ./usr/share/man/man8/fingerd.8
@@ -2523,8 +2519,6 @@
 ./usr/share/man/man8/macppc/pdisk.8
 ./usr/share/man/man8/macppc/zzz.8
 ./usr/share/man/man8/mail.local.8
-./usr/share/man/man8/mailq.8
-./usr/share/man/man8/mailstats.8
 ./usr/share/man/man8/mailwrapper.8
 ./usr/share/man/man8/makedbm.8
 ./usr/share/man/man8/makekey.8
@@ -2651,7 +2645,6 @@
 ./usr/share/man/man8/scan_ffs.8
 ./usr/share/man/man8/scsi.8
 ./usr/share/man/man8/security.8
-./usr/share/man/man8/sendmail.8
 ./usr/share/man/man8/sensorsd.8
 ./usr/share/man/man8/sftp-server.8
 ./usr/share/man/man8/sgi
@@ -2665,7 +2658,6 @@
 ./usr/share/man/man8/sliplogin.8
 ./usr/share/man/man8/slowcgi.8
 ./usr/share/man/man8/slstats.8
-./usr/share/man/man8/smrsh.8
 ./usr/share/man/man8/smtpctl.8
 ./usr/share/man/man8/smtpd.8
 ./usr/share/man/man8/snkadm.8

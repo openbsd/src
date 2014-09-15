@@ -88,7 +88,6 @@
 ./usr/lib/libm.so.9.0
 ./usr/lib/libmenu.so.6.0
 ./usr/lib/libmenuw.so.6.0
-./usr/lib/libmilter.so.3.0
 ./usr/lib/libncurses.so.14.0
 ./usr/lib/libncursesw.so.14.0
 ./usr/lib/libobjc.so.6.0
@@ -1724,10 +1723,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/langinfo.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/libgen.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/libmilter
-./usr/libdata/perl5/site_perl/i386-openbsd/libmilter/mfapi.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/libmilter/mfdef.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/link.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/link_elf.ph

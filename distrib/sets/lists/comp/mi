@@ -946,10 +946,6 @@
 ./usr/include/kvm.h
 ./usr/include/langinfo.h
 ./usr/include/libgen.h
-./usr/include/libmilter
-./usr/include/libmilter/mfapi.h
-./usr/include/libmilter/mfdef.h
-./usr/include/libmilter/milter.h
 ./usr/include/limits.h
 ./usr/include/link.h
 ./usr/include/link_elf.h
@@ -1552,8 +1548,6 @@
 ./usr/lib/libmenu_p.a
 ./usr/lib/libmenuw.a
 ./usr/lib/libmenuw_p.a
-./usr/lib/libmilter.a
-./usr/lib/libmilter_p.a
 ./usr/lib/libncurses.a
 ./usr/lib/libncurses_p.a
 ./usr/lib/libncursesw.a
