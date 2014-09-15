@@ -36,7 +36,6 @@ distclean::
 distclean::
 	rm -f config.cache config.h config.log config.status TAGS
 	rm -f libtool isc-config.sh configure.lineno
-	rm -f util/conf.sh docutil/docbook2man-wrapper.sh
 
 # XXX we should clean libtool stuff too.  Only do this after we add rules
 # to make it.
