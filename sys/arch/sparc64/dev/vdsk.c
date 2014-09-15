@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.39 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.40 2014/09/15 08:16:21 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -760,28 +760,11 @@ void
 vdsk_sendmsg(struct vdsk_softc *sc, void *msg, size_t len)
 {
 	struct ldc_conn *lc = &sc->sc_lc;
-	struct ldc_pkt *lp;
-	uint64_t tx_head, tx_tail, tx_state;
 	int err;
 
-	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
-	if (err != H_EOK)
-		return;
-
-	lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
-	bzero(lp, sizeof(struct ldc_pkt));
-	lp->type = LDC_DATA;
-	lp->stype = LDC_INFO;
-	KASSERT((len & ~LDC_LEN_MASK) == 0);
-	lp->env = len | LDC_FRAG_STOP | LDC_FRAG_START;
-	lp->seqid = lc->lc_tx_seqid++;
-	bcopy(msg, &lp->major, len);
-
-	tx_tail += sizeof(*lp);
-	tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(*lp)) - 1);
-	err = hv_ldc_tx_set_qtail(lc->lc_id, tx_tail);
-	if (err != H_EOK)
-		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
+	err = ldc_send_unreliable(lc, msg, len);
+	if (err)
+		printf("%s: ldc_send_unreliable: %d\n", __func__, err);
 }
 
 void
