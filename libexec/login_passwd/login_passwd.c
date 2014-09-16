@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_passwd.c,v 1.9 2006/03/09 19:14:10 millert Exp $	*/
+/*	$OpenBSD: login_passwd.c,v 1.10 2014/09/16 22:07:02 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -33,9 +33,9 @@ pwd_login(char *username, char *password, char *wheel, int lastchance,
     char *class)
 {
 	struct passwd *pwd;
-	login_cap_t *lc;
 	size_t plen;
-	char *salt, saltbuf[_PASSWORD_LEN + 1];
+	char *goodhash = NULL;
+	int passok = 0;
 
 	if (wheel != NULL && strcmp(wheel, "yes") != 0) {
 		fprintf(back, BI_VALUE " errormsg %s\n",
@@ -48,30 +48,15 @@ pwd_login(char *username, char *password, char *wheel, int lastchance,
 
 	pwd = getpwnam(username);
 	if (pwd)
-		salt = pwd->pw_passwd;
-	else {
-		/* no such user, get appropriate salt */
-		if ((lc = login_getclass(NULL)) == NULL ||
-		    pwd_gensalt(saltbuf, sizeof(saltbuf), lc, 'l') == 0)
-			salt = "xx";
-		else
-			salt = saltbuf;
-	}
+		goodhash = pwd->pw_passwd;
 
 	setpriority(PRIO_PROCESS, 0, -4);
-
-	salt = crypt(password, salt);
+	if (crypt_checkpass(password, goodhash) == 0)
+		passok = 1;
 	plen = strlen(password);
 	memset(password, 0, plen);
 
-	/*
-	 * Authentication fails if the user does not exist in the password
-	 * database, the given password does not match the entry in the
-	 * password database, or if the user's password field is empty
-	 * and the given password is not the empty string.
-	 */
-	if (!pwd || strcmp(salt, pwd->pw_passwd) != 0 ||
-	    (*pwd->pw_passwd == '\0' && plen > 0))
+	if (!passok)
 		return (AUTH_FAILED);
 
 	if (login_check_expire(back, pwd, class, lastchance) == 0)
