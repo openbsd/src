@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.28 2014/09/09 09:40:23 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.29 2014/09/16 08:51:38 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -148,6 +148,9 @@ sub prepare_long
 	# survive the extraction
 	if (defined $item->{group} || defined $item->{owner}) {
 		$entry->{mode} &= ~(S_ISUID|S_ISGID);
+	}
+	if (defined $item->{ts}) {
+		delete $entry->{mtime};
 	}
 	# likewise, we skip links on extractions, so hey, don't even care
 	# about modes and stuff.
