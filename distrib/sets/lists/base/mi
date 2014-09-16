@@ -5016,13 +5016,11 @@
 ./var/run
 ./var/rwho
 ./var/spool
-./var/spool/clientmqueue
 ./var/spool/ftp
 ./var/spool/ftp/bin
 ./var/spool/ftp/etc
 ./var/spool/ftp/hidden
 ./var/spool/lock
-./var/spool/mqueue
 ./var/spool/output
 ./var/spool/smtpd
 ./var/spool/uucp
