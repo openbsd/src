@@ -189,6 +189,12 @@ xfrd_read_state(struct xfrd_state* xfrd)
 		xfrd_soa_t incoming_soa;
 		time_t incoming_acquired;
 
+		if(nsd.signal_hint_shutdown) {
+			fclose(in);
+			region_destroy(tempregion);
+			return;
+		}
+
 		memset(&soa_nsd_read, 0, sizeof(soa_nsd_read));
 		memset(&soa_disk_read, 0, sizeof(soa_disk_read));
 		memset(&soa_notified_read, 0, sizeof(soa_notified_read));
@@ -275,6 +281,19 @@ xfrd_read_state(struct xfrd_state* xfrd)
 		{
 			zone->state = xfrd_zone_expired;
 			xfrd_set_refresh_now(zone);
+		} 
+
+		/* there is a zone read and it matches what we had before */
+		if(zone->soa_nsd_acquired && zone->state != xfrd_zone_expired
+			&& zone->soa_nsd.serial == soa_nsd_read.serial) {
+			xfrd_deactivate_zone(zone);
+			zone->state = state;
+			xfrd_set_timer(zone, timeout);
+		}	
+		if(zone->soa_nsd_acquired == 0 && soa_nsd_acquired_read == 0 &&
+			soa_disk_acquired_read == 0) {
+			/* continue expon backoff where we were + check now */
+			zone->fresh_xfr_timeout = timeout;
 		}
 
 		/* handle as an incoming SOA. */

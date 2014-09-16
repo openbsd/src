@@ -796,6 +796,85 @@ rrtype_from_string(const char *name)
         long rrtype;
 	rrtype_descriptor_type *entry;
 
+	/* Because this routine is called during zone parse for every record,
+	 * we optimise for frequently occuring records.
+	 * Also, we optimise for 'IN' and numbers are not rr types, because
+	 * during parse this routine is called for every rr class and TTL
+	 * to determine that it is not an RR type */
+	switch(name[0]) {
+	case 'r':
+	case 'R':
+		if(strcasecmp(name+1, "RSIG") == 0) return TYPE_RRSIG;
+		break;
+	case 'n':
+	case 'N':
+		switch(name[1]) {
+		case 's':
+		case 'S':
+			switch(name[2]) {
+			case 0: return TYPE_NS;
+			case 'e':
+			case 'E':
+				if(strcasecmp(name+2, "EC") == 0) return TYPE_NSEC;
+				if(strcasecmp(name+2, "EC3") == 0) return TYPE_NSEC3;
+				if(strcasecmp(name+2, "EC3PARAM") == 0) return TYPE_NSEC3PARAM;
+				break;
+			}
+			break;
+		}
+		break;
+	case 'd':
+	case 'D':
+		switch(name[1]) {
+		case 's':
+		case 'S':
+			if(name[2]==0) return TYPE_DS;
+			break;
+		case 'n':
+		case 'N':
+			if(strcasecmp(name+2, "SKEY") == 0) return TYPE_DNSKEY;
+			break;
+		}
+		break;
+	case 'a':
+	case 'A':
+		switch(name[1]) {
+		case 0:	return TYPE_A;
+		case 'a':
+		case 'A':
+			if(strcasecmp(name+2, "AA") == 0) return TYPE_AAAA;
+			break;
+		}
+		break;
+	case 's':
+	case 'S':
+		if(strcasecmp(name+1, "OA") == 0) return TYPE_SOA;
+		break;
+	case 't':
+	case 'T':
+		if(strcasecmp(name+1, "XT") == 0) return TYPE_TXT;
+		break;
+	case '0':
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
+	case '8':
+	case '9':
+		return 0; /* no RR types start with 0-9 */
+	case 'i':
+	case 'I':
+		switch(name[1]) {
+		case 'n':
+		case 'N':
+			return 0; /* 'IN' is a class not a type */
+		}
+		break;
+	}
+
 	entry = rrtype_descriptor_by_name(name);
 	if (entry) {
 		return entry->type;

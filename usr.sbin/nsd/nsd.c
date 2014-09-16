@@ -46,7 +46,7 @@
 #include "remote.h"
 
 /* The server handler... */
-static struct nsd nsd;
+struct nsd nsd;
 static char hostname[MAXHOSTNAMELEN];
 extern config_parser_state_t* cfg_parser;
 

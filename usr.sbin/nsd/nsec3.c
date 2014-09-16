@@ -227,6 +227,7 @@ udb_zone_find_nsec3param(udb_base* udb, udb_ptr* uz, struct zone* z)
 	for(i=0; i<rrset->rr_count; i++) {
 		/* if this RR matches the udb RR then we are done */
 		rdata_atom_type* rd = rrset->rrs[i].rdatas;
+		if(rrset->rrs[i].rdata_count < 4) continue;
 		if(RR(&urr)->wire[0] == rdata_atom_data(rd[0])[0] && /*alg*/
 		   RR(&urr)->wire[1] == rdata_atom_data(rd[1])[0] && /*flg*/
 		   RR(&urr)->wire[2] == rdata_atom_data(rd[2])[0] && /*iter*/
@@ -243,11 +244,55 @@ udb_zone_find_nsec3param(udb_base* udb, udb_ptr* uz, struct zone* z)
 	return NULL;
 }
 
+static struct rr*
+db_find_nsec3param(struct zone* z, struct rr* avoid_rr)
+{
+	unsigned i;
+	rrset_type* rrset = domain_find_rrset(z->apex, z, TYPE_NSEC3PARAM);
+	if(!rrset) /* no NSEC3PARAM in mem */
+		return NULL;
+	/* find first nsec3param we can support (SHA1, no flags) */
+	for(i=0; i<rrset->rr_count; i++) {
+		rdata_atom_type* rd = rrset->rrs[i].rdatas;
+		/* do not use the RR that is going to be deleted (in IXFR) */
+		if(&rrset->rrs[i] == avoid_rr) continue;
+		if(rrset->rrs[i].rdata_count < 4) continue;
+		if(rdata_atom_data(rd[0])[0] == NSEC3_SHA1_HASH &&
+			rdata_atom_data(rd[1])[0] == 0) {
+			if(2 <= verbosity) {
+				char str[MAX_RDLENGTH*2+16];
+				char* p;
+				p = str+snprintf(str, sizeof(str), "%u %u %u ",
+					(unsigned)rdata_atom_data(rd[0])[0],
+					(unsigned)rdata_atom_data(rd[1])[0],
+					(unsigned)read_uint16(rdata_atom_data(rd[2])));
+				if(rdata_atom_data(rd[3])[0] == 0)
+					*p++ = '-';
+				else {
+					p += hex_ntop(rdata_atom_data(rd[3])+1,
+						rdata_atom_data(rd[3])[0], p,
+						sizeof(str)-strlen(str)-1);
+				}
+				*p = 0;
+				VERBOSITY(2, (LOG_INFO, "rehash of zone %s with parameters %s",
+					domain_to_string(z->apex), str));
+			}
+			return &rrset->rrs[i];
+		}
+	}
+	return NULL;
+}
+
 void
-nsec3_find_zone_param(struct namedb* db, struct zone* zone, udb_ptr* z)
+nsec3_find_zone_param(struct namedb* db, struct zone* zone, udb_ptr* z,
+	struct rr* avoid_rr)
 {
 	/* get nsec3param RR from udb */
-	zone->nsec3_param = udb_zone_find_nsec3param(db->udb, z, zone);
+	if(db->udb)
+		zone->nsec3_param = udb_zone_find_nsec3param(db->udb, z, zone);
+	/* no db, get from memory, avoid using the rr that is going to be
+	 * deleted, avoid_rr */
+	else	zone->nsec3_param = db_find_nsec3param(zone, avoid_rr);
 }
 
 /* check params ok for one RR */
@@ -529,7 +574,7 @@ nsec3_precompile_newparam(namedb_type* db, zone_type* zone)
 	region_type* tmpregion = region_create(xalloc, free);
 	domain_type* walk;
 	time_t s = time(NULL);
-	unsigned n = 0, c = 0;
+	unsigned long n = 0, c = 0;
 
 	/* add nsec3s of chain to nsec3tree */
 	for(walk=zone->apex; walk && domain_is_subdomain(walk, zone->apex);
@@ -551,7 +596,8 @@ nsec3_precompile_newparam(namedb_type* db, zone_type* zone)
 		if(++c % ZONEC_PCT_COUNT == 0 && time(NULL) > s + ZONEC_PCT_TIME) {
 			s = time(NULL);
 			VERBOSITY(1, (LOG_INFO, "nsec3 %s %d %%",
-				zone->opts->name, c*100/n));
+				zone->opts->name,
+				(int)(c*((unsigned long)100)/n)));
 		}
 	}
 	region_destroy(tmpregion);
@@ -567,18 +613,22 @@ prehash_zone_complete(struct namedb* db, struct zone* zone)
 	/* find zone settings */
 
 	assert(db && zone);
-	if(!udb_zone_search(db->udb, &udbz, dname_name(domain_dname(
-		zone->apex)), domain_dname(zone->apex)->name_size)) {
-		udb_ptr_init(&udbz, db->udb); /* zero the ptr */
+	if(db->udb) {
+		if(!udb_zone_search(db->udb, &udbz, dname_name(domain_dname(
+			zone->apex)), domain_dname(zone->apex)->name_size)) {
+			udb_ptr_init(&udbz, db->udb); /* zero the ptr */
+		}
 	}
-	nsec3_find_zone_param(db, zone, &udbz);
+	nsec3_find_zone_param(db, zone, &udbz, NULL);
 	if(!zone->nsec3_param || !check_apex_soa(db, zone)) {
 		zone->nsec3_param = NULL;
 		zone->nsec3_last = NULL;
-		udb_ptr_unlink(&udbz, db->udb);
+		if(db->udb)
+			udb_ptr_unlink(&udbz, db->udb);
 		return;
 	}
-	udb_ptr_unlink(&udbz, db->udb);
+	if(db->udb)
+		udb_ptr_unlink(&udbz, db->udb);
 	nsec3_precompile_newparam(db, zone);
 }
 

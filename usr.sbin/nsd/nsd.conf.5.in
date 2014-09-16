@@ -1,12 +1,10 @@
-.TH "nsd.conf" "5" "Mar 14, 2014" "NLnet Labs" "nsd 4.0.3"
+.TH "nsd.conf" "5" "Sep  4, 2014" "NLnet Labs" "nsd 4.1.0"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
-.LP
 .B nsd.conf
 \- NSD configuration file
 .SH "SYNOPSIS"
-.LP
 .B nsd.conf
 .SH "DESCRIPTION"
 .B Nsd.conf
@@ -15,13 +13,13 @@ values. Some attributes have attributes inside them. The notation
 is: attribute: value. 
 .PP
 Comments start with # and last to the end of line. Empty lines are
-ignored as is whitespace at the beginning of a line.
+ignored as is whitespace at the beginning of a line. Quotes can be used,
+for names with spaces, eg. "file name.zone".
 .PP
 .B Nsd.conf
 specifies options for the nsd server, zone files, primaries and 
 secondaries.
 .SH "EXAMPLE"
-.LP
 An example of a short nsd.conf file is below.
 .LP
 # Example.com nsd.conf file
@@ -31,7 +29,10 @@ An example of a short nsd.conf file is below.
 .TP
 server:
 .RS 5
-database: "@dbfile@"
+server-count: 1 # use this number of cpu cores
+.RE
+.RS 5
+database: ""  # or use "@dbfile@"
 .RE
 .RS 5
 zonelistfile: "@zonelistfile@"
@@ -54,11 +55,45 @@ zone:
 name: example.com
 .RE
 .RS 5
-# note that quotes are optional on the value
-.RE
-.RS 5
 zonefile: @configdir@/example.com.zone 
 .RE
+.TP
+zone:
+.RS 5
+# this server is master, 192.0.2.1 is the secondary.
+.RE
+.RS 5
+name: masterzone.com
+.RE
+.RS 5
+zonefile: @configdir@/masterzone.com.zone 
+.RE
+.RS 5
+notify: 192.0.2.1 NOKEY
+.RE
+.RS 5
+provide-xfr: 192.0.2.1 NOKEY
+.RE
+.TP
+zone:
+.RS 5
+# this server is secondary, 192.0.2.2 is master.
+.RE
+.RS 5
+name: secondzone.com
+.RE
+.RS 5
+zonefile: @configdir@/secondzone.com.zone 
+.RE
+.RS 5
+allow-notify: 192.0.2.2 NOKEY
+.RE
+.RS 5
+request-xfr: 192.0.2.2 NOKEY
+.RE
+.LP
+Then, use kill \-HUP to reload changes from master zone files.
+And use kill \-TERM to stop the server.
 .SH "FILE FORMAT"
 There must be whitespace between keywords. Attribute keywords end 
 with a colon ':'. An attribute is followed by its containing 
@@ -100,7 +135,10 @@ argument. Processing continues as if the text from the included file
 was copied into the config file at that point.  If a chroot is used
 an absolute filename is needed (with the chroot prepended), so that
 the include can be parsed before and after application of the chroot (and
-the knowledge of what that chroot is).
+the knowledge of what that chroot is).  You can use '*' to include a
+wildcard match of files, eg. "foo/nsd.d/*.conf".  Also '?', '{}', '[]',
+and '~' work, see \fBglob\fR(7).  If no files match the pattern, this
+is not an error.
 .SS "Server Options"
 .LP
 The global options (if not overridden from the NSD commandline) are 
@@ -120,7 +158,9 @@ If none are given NSD listens to the wildcard interface. Same as commandline opt
 Same as ip\-address (for easy of compatibility with unbound.conf).
 .TP
 .B ip\-transparent:\fR <yes or no>
-Allows NSD to bind to non local addresses. Default is no.
+Allows NSD to bind to non local addresses. This is useful to have NSD
+listen to IP addresses that are not (yet) added to the network interface, so
+that it can answer immediately when the address is added. Default is no.
 .TP
 .B debug\-mode:\fR <yes or no>
 Turns on debugging mode for nsd, does not fork a daemon process. 
@@ -139,6 +179,8 @@ By default
 is used. The specified file is used to store the compiled 
 zone information. Same as commandline option 
 .BR \-f.
+If set to "" then no database is used.  This uses less memory but
+zone updates are not (immediately) spooled to disk.
 .TP
 .B zonelistfile:\fR <filename>
 By default 
@@ -233,11 +275,12 @@ is used.
 Ignored, for compatibility with NSD3 config files. 
 .TP
 .B xfrdfile:\fR <filename>
-The soa timeout and zone transfer daemon in NSD will save its state 
-to this file. State is read back after a restart. The state file can 
-be deleted without too much harm, but timestamps of zones will be 
-gone. For more details see the section on zone expiry behavior of 
-NSD. Default is
+The soa timeout and zone transfer daemon in NSD will save its state to
+this file. State is read back after a restart. The state file can be
+deleted without too much harm, but timestamps of zones will be gone.
+If it is configured as "", the state file is not used, all slave zones
+are checked for updates upon startup.  For more details see the section
+on zone expiry behavior of NSD. Default is
 .IR @xfrdfile@ .
 .TP
 .B xfrdir:\fR <directory>
@@ -261,11 +304,30 @@ zone transfers. 2 lists soft warnings that are encountered.
 Prevent NSD from replying with the version string on CHAOS class 
 queries.
 .TP
-.B zonefiles\-check\fR <yes or no>
+.B log\-time\-ascii:\fR <yes or no>
+Log time in ascii, if "no" then in seconds epoch.  Default is yes.
+This chooses the format when logging to file.  The printout via syslog
+has a timestamp formatted by syslog.
+.TP
+.B round\-robin:\fR <yes or no>
+Enable round robin rotation of records in the answer.  This changes the
+order of records in the answer and this may balance load across them.
+The default is off.
+.TP
+.B zonefiles\-check:\fR <yes or no>
 Make NSD check the mtime of zone files on start and sighup.  If you
 disable it it starts faster (less disk activity in case of a lot of zones).
 The default is enabled.  The nsd\-control reload command reloads zone files
 regardless of this option.
+.TP
+.B zonefiles\-write:\fR <seconds>
+Write changed secondary zones to their zonefile every N seconds.  If the
+zone (pattern) configuration has "" zonefile, it is not written.  Zones that
+have received zone transfer updates are written to their zonefile.
+Default is 0 (disabled) when there is a database, and 3600 (1 hour) when
+database is "".  The database also commits zone transfer contents.
+You can configure it away from the default by putting the config statement
+for zonefiles\-write: after the database: statement in the config file.
 .\" rrlstart
 .TP
 .B rrl\-size:\fR <numbuckets>
@@ -396,6 +458,25 @@ each zone.
 The file containing the zone information. If this attribute is present
 it is used to read and write the zone contents. If the attribute is
 absent it prevents writing out of the zone.
+.IP
+The string is processed so that one string can be used (in a pattern)
+for a lot of different zones.  If the label or character does not exist the
+percent-character is replaced with a period for output (i.e. for the
+third character in a two letter domain name).
+.IP
+.B %s\fR is replaced with the zone name.
+.IP
+.B %1\fR is replaced with the first character of the zone name.
+.IP
+.B %2\fR is replaced with the second character of the zone name.
+.IP
+.B %3\fR is replaced with the third character of the zone name.
+.IP
+.B %z\fR is replaced with the toplevel domain name of the zone.
+.IP
+.B %y\fR is replaced with the next label under the toplevel domain.
+.IP
+.B %x\fR is replaced with the next-next label under the toplevel domain.
 .TP
 .B allow\-notify:\fR <ip\-spec> <key\-name | NOKEY | BLOCKED>
 Access control list. The listed (primary) address is allowed to 
@@ -457,6 +538,8 @@ address. The specified key is used during AXFR. For unlisted or
 BLOCKED addresses no data is provided, requests are discarded.
 BLOCKED supersedes other entries, other entries are scanned for a match
 in the order of the statements.
+NSD provides AXFR for its secondaries, but IXFR is not implemented (IXFR
+is implemented for request\-xfr, but not for provide\-xfr).
 .P
 .RS
 The ip\-spec is either a plain IP address (IPv4 or IPv6), or can be 
@@ -672,15 +755,12 @@ default
 .B NSD
 configuration file
 .SH "SEE ALSO" 
-.LP
 \fInsd\fR(8), \fInsd\-checkconf\fR(8), \fInsd\-control\fR(8)
 .SH "AUTHORS"
-.LP
 .B NSD
 was written by NLnet Labs and RIPE NCC joint team. Please see 
 CREDITS file in the distribution for further details.
 .SH "BUGS"
-.LP
 .B nsd.conf
 is parsed by a primitive parser, error messages may not be to the 
 point.

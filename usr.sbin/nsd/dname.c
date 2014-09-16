@@ -530,7 +530,7 @@ char* wiredname2str(const uint8_t* dname)
 	while(lablen) {
 		while(lablen--) {
 			uint8_t ch = *dname++;
-			if (isalnum(ch) || ch == '-' || ch == '_') {
+			if (isalnum(ch) || ch == '-' || ch == '_' || ch == '*') {
 				*p++ = ch;
 			} else if (ch == '.' || ch == '\\') {
 				*p++ = '\\';

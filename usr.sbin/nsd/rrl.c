@@ -161,6 +161,8 @@ static const char* rrlsource2str(uint64_t s, uint16_t c2)
 		}
 		return buf;
 	}
+#else
+	(void)c2;
 #endif
 	/* ipv4 */
 	a4.s_addr = (uint32_t)s;
@@ -327,7 +329,7 @@ rrl_msg(query_type* query, const char* str)
 	size_t d_len;
 	uint64_t s;
 	char address[128];
-	if(verbosity < 2) return;
+	if(verbosity < 1) return;
 	addr2str(&query->addr, address, sizeof(address));
 	s = rrl_get_source(query, &c2);
 	c = rrl_classify(query, &d, &d_len) | c2;
@@ -360,7 +362,7 @@ uint32_t rrl_update(query_type* query, uint32_t hash, uint64_t source,
 	if(b->source != source || b->flags != flags || b->hash != hash) {
 		/* initialise */
 		/* potentially the wrong limit here, used lower nonwhitelim */
-		if(verbosity >=2 &&
+		if(verbosity >= 1 &&
 			used_to_block(b->rate, b->counter, rrl_ratelimit)) {
 			char address[128];
 			addr2str(&query->addr, address, sizeof(address));

@@ -67,14 +67,15 @@ EDIT		= sed \
 			-e 's,@shell\@,$(SHELL),g' \
 			-e 's,@user\@,$(user),g'
 
-TARGETS=nsd nsd-checkconf nsd-control nsd.conf.sample nsd-control-setup.sh
-MANUALS=nsd.8 nsd-checkconf.8 nsd-control.8 nsd.conf.5
+TARGETS=nsd nsd-checkconf nsd-checkzone nsd-control nsd.conf.sample nsd-control-setup.sh
+MANUALS=nsd.8 nsd-checkconf.8 nsd-checkzone.8 nsd-control.8 nsd.conf.5
 
 COMMON_OBJ=answer.o axfr.o buffer.o configlexer.o configparser.o dname.o dns.o edns.o iterated_hash.o lookup3.o namedb.o nsec3.o options.o packet.o query.o rbtree.o radtree.o rdata.o region-allocator.o rrl.o tsig.o tsig-openssl.o udb.o udbradtree.o udbzone.o util.o
 XFRD_OBJ=xfrd-disk.o xfrd-notify.o xfrd-tcp.o xfrd.o remote.o
 NSD_OBJ=$(COMMON_OBJ) $(XFRD_OBJ) difffile.o ipc.o mini_event.o netio.o nsd.o server.o dbaccess.o dbcreate.o zlexer.o zonec.o zparser.o
-ALL_OBJ=$(NSD_OBJ) nsd-checkconf.o nsd-control.o nsd-mem.o
+ALL_OBJ=$(NSD_OBJ) nsd-checkconf.o nsd-checkzone.o nsd-control.o nsd-mem.o
 NSD_CHECKCONF_OBJ=$(COMMON_OBJ) nsd-checkconf.o
+NSD_CHECKZONE_OBJ=$(COMMON_OBJ) $(XFRD_OBJ) dbaccess.o dbcreate.o difffile.o ipc.o mini_event.o netio.o server.o zonec.o zparser.o zlexer.o nsd-checkzone.o
 NSD_CONTROL_OBJ=$(COMMON_OBJ) nsd-control.o
 CUTEST_OBJ=$(COMMON_OBJ) $(XFRD_OBJ) dbaccess.o dbcreate.o difffile.o ipc.o mini_event.o netio.o server.o zonec.o zparser.o zlexer.o cutest_dname.o cutest_dns.o cutest_iterated_hash.o cutest_run.o cutest_radtree.o cutest_rbtree.o cutest_namedb.o cutest_options.o cutest_region.o cutest_rrl.o cutest_udb.o cutest_udbrad.o cutest_util.o cutest.o qtest.o
 NSD_MEM_OBJ=$(COMMON_OBJ) $(XFRD_OBJ) dbaccess.o dbcreate.o difffile.o ipc.o mini_event.o netio.o server.o zonec.o zparser.o zlexer.o nsd-mem.o
@@ -104,6 +105,10 @@ nsd-checkconf.8:	$(srcdir)/nsd-checkconf.8.in config.h
 	rm -f nsd-checkconf.8
 	$(EDIT) $(srcdir)/nsd-checkconf.8.in > nsd-checkconf.8
 
+nsd-checkzone.8:	$(srcdir)/nsd-checkzone.8.in config.h
+	rm -f nsd-checkzone.8
+	$(EDIT) $(srcdir)/nsd-checkzone.8.in > nsd-checkzone.8
+
 nsd-control.8:	$(srcdir)/nsd-control.8.in config.h
 	rm -f nsd-control.8
 	$(EDIT) $(srcdir)/nsd-control.8.in > nsd-control.8
@@ -122,18 +127,20 @@ orig-install: all
 	$(INSTALL) nsd $(DESTDIR)$(sbindir)/nsd
 	$(INSTALL) nsd-control-setup.sh $(DESTDIR)$(sbindir)/nsd-control-setup
 	$(INSTALL) nsd-checkconf $(DESTDIR)$(sbindir)/nsd-checkconf
+	$(INSTALL) nsd-checkzone $(DESTDIR)$(sbindir)/nsd-checkzone
 	$(INSTALL) nsd-control $(DESTDIR)$(sbindir)/nsd-control
-	$(INSTALL_DATA) $(srcdir)/nsd.8 $(DESTDIR)$(mandir)/man8
-	$(INSTALL_DATA) $(srcdir)/nsd-checkconf.8 $(DESTDIR)$(mandir)/man8/nsd-checkconf.8
-	$(INSTALL_DATA) $(srcdir)/nsd-control.8 $(DESTDIR)$(mandir)/man8/nsd-control.8
-	$(INSTALL_DATA) $(srcdir)/nsd.conf.5 $(DESTDIR)$(mandir)/man5/nsd.conf.5
+	$(INSTALL_DATA) nsd.8 $(DESTDIR)$(mandir)/man8
+	$(INSTALL_DATA) nsd-checkconf.8 $(DESTDIR)$(mandir)/man8/nsd-checkconf.8
+	$(INSTALL_DATA) nsd-checkzone.8 $(DESTDIR)$(mandir)/man8/nsd-checkzone.8
+	$(INSTALL_DATA) nsd-control.8 $(DESTDIR)$(mandir)/man8/nsd-control.8
+	$(INSTALL_DATA) nsd.conf.5 $(DESTDIR)$(mandir)/man5/nsd.conf.5
 	$(INSTALL_DATA) nsd.conf.sample $(DESTDIR)$(nsdconfigfile).sample
 
 uninstall:
 	@echo
-	rm -f -- $(DESTDIR)$(sbindir)/nsd $(DESTDIR)$(sbindir)/nsd-control-setup $(DESTDIR)$(sbindir)/nsd-checkconf $(DESTDIR)$(sbindir)/nsd-control
+	rm -f -- $(DESTDIR)$(sbindir)/nsd $(DESTDIR)$(sbindir)/nsd-control-setup $(DESTDIR)$(sbindir)/nsd-checkconf $(DESTDIR)$(sbindir)/nsd-checkzone $(DESTDIR)$(sbindir)/nsd-control
 	rm -f -- $(DESTDIR)$(mandir)/man8/nsd.8 $(DESTDIR)$(mandir)/man5/nsd.conf.5
-	rm -f -- $(DESTDIR)$(mandir)/man8/nsd-checkconf.8 $(DESTDIR)$(mandir)/man8/nsd-control.8
+	rm -f -- $(DESTDIR)$(mandir)/man8/nsd-checkconf.8 $(DESTDIR)$(mandir)/man8/nsd-checkzone.8 $(DESTDIR)$(mandir)/man8/nsd-control.8
 	rm -f -- $(DESTDIR)$(pidfile)
 	@echo
 	@echo "You still need to remove $(DESTDIR)$(configdir), $(DESTDIR)$(piddir), $(DESTDIR)$(dbfile) directory by hand."
@@ -145,6 +152,9 @@ nsd:	$(NSD_OBJ) $(LIBOBJS)
 
 nsd-checkconf:	$(NSD_CHECKCONF_OBJ) $(LIBOBJS)
 	$(LINK) -o $@ $(NSD_CHECKCONF_OBJ) $(LIBOBJS) $(LIBS)
+
+nsd-checkzone:	$(NSD_CHECKZONE_OBJ) $(LIBOBJS)
+	$(LINK) -o $@ $(NSD_CHECKZONE_OBJ) $(LIBOBJS) $(SSL_LIBS) $(LIBS)
 
 nsd-control:	$(NSD_CONTROL_OBJ) $(LIBOBJS)
 	$(LINK) -o $@ $(NSD_CONTROL_OBJ) $(LIBOBJS) $(SSL_LIBS) $(LIBS)
@@ -367,6 +377,9 @@ nsd.o: $(srcdir)/nsd.c config.h $(srcdir)/nsd.h $(srcdir)/dns.h $(srcdir)/edns.h
 nsd-checkconf.o: $(srcdir)/nsd-checkconf.c config.h $(srcdir)/tsig.h $(srcdir)/buffer.h \
  $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/dname.h $(srcdir)/options.h $(srcdir)/rbtree.h $(srcdir)/rrl.h $(srcdir)/query.h \
  $(srcdir)/namedb.h $(srcdir)/dns.h $(srcdir)/radtree.h $(srcdir)/nsd.h $(srcdir)/edns.h $(srcdir)/packet.h
+nsd-checkzone.o: $(srcdir)/nsd-checkzone.c config.h $(srcdir)/nsd.h $(srcdir)/dns.h $(srcdir)/edns.h $(srcdir)/buffer.h \
+ $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/options.h $(srcdir)/rbtree.h $(srcdir)/zonec.h $(srcdir)/namedb.h $(srcdir)/dname.h \
+ $(srcdir)/radtree.h
 nsd-control.o: $(srcdir)/nsd-control.c config.h $(srcdir)/util.h $(srcdir)/tsig.h $(srcdir)/buffer.h \
  $(srcdir)/region-allocator.h $(srcdir)/dname.h $(srcdir)/options.h $(srcdir)/rbtree.h
 nsd-mem.o: $(srcdir)/nsd-mem.c config.h $(srcdir)/nsd.h $(srcdir)/dns.h $(srcdir)/edns.h $(srcdir)/buffer.h \
@@ -475,7 +488,8 @@ cutest_rrl.o: $(srcdir)/tpkg/cutest/cutest_rrl.c config.h $(srcdir)/tpkg/cutest/
  $(srcdir)/rrl.h $(srcdir)/query.h $(srcdir)/namedb.h $(srcdir)/dname.h $(srcdir)/buffer.h $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/dns.h \
  $(srcdir)/radtree.h $(srcdir)/rbtree.h $(srcdir)/nsd.h $(srcdir)/edns.h $(srcdir)/packet.h $(srcdir)/tsig.h
 cutest_run.o: $(srcdir)/tpkg/cutest/cutest_run.c config.h $(srcdir)/tpkg/cutest/cutest.h \
- $(srcdir)/tpkg/cutest/qtest.h $(srcdir)/buffer.h $(srcdir)/region-allocator.h $(srcdir)/util.h
+ $(srcdir)/tpkg/cutest/qtest.h $(srcdir)/buffer.h $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/nsd.h $(srcdir)/dns.h \
+ $(srcdir)/edns.h $(srcdir)/buffer.h
 cutest_udb.o: $(srcdir)/tpkg/cutest/cutest_udb.c config.h $(srcdir)/tpkg/cutest/cutest.h \
  $(srcdir)/udb.h
 cutest_udbrad.o: $(srcdir)/tpkg/cutest/cutest_udbrad.c config.h \

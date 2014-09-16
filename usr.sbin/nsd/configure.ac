@@ -4,9 +4,10 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,4.0.3,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.1.0,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
+CFLAGS="$CFLAGS"
 AC_AIX
 if test "$ac_cv_header_minix_config_h" = "yes"; then
 	AC_DEFINE(_NETBSD_SOURCE,1, [Enable for compile on Minix])
@@ -258,17 +259,13 @@ fi
 ])dnl
 
 # Checks for typedefs, structures, and compiler characteristics.
-# if cflags not set by user, check O3, then O2, else elide O2 flag
-if test "x$ac_cv_env_CFLAGS_set" = "x"; then
-  CHECK_COMPILER_FLAG(O3, [
-    CFLAGS=`echo $CFLAGS | sed -e "s/-O2//g"`" -O3"
-    dnl remove double spaces
-    CFLAGS=`echo $CFLAGS`
-  ], [
-    CHECK_COMPILER_FLAG(O2, [], [ CFLAGS=`echo $CFLAGS | sed -e "s/-O2//g"` ])
-  ])
+# allow user to override the -g -O2 flags.
+if test "x$CFLAGS" = "x" ; then
+	ACX_CHECK_COMPILER_FLAG(g, [CFLAGS="$CFLAGS -g"])
+	# we do not use O3 because it causes miscompilations.
+	ACX_CHECK_COMPILER_FLAG(O2, [CFLAGS="$CFLAGS -O2"])
+	ACX_CHECK_FLTO
 fi
-ACX_CHECK_FLTO
 AC_C_CONST
 AC_C_INLINE
 AC_TYPE_UID_T
@@ -401,7 +398,7 @@ fi
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h stddef.h sys/param.h sys/socket.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h grp.h])
+AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h stddef.h sys/param.h sys/socket.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h])
 
 AC_DEFUN([CHECK_VALIST_DEF],
 [
@@ -465,7 +462,7 @@ AC_DEFUN([AC_CHECK_STRPTIME_WORKS],
 AC_MSG_CHECKING(whether strptime works)
 if test c${cross_compiling} = cno; then
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE 600
 #include <time.h>
 int main(void) { struct tm tm; char *res; 
 res = strptime("20070207111842", "%Y%m%d%H%M%S", &tm);
@@ -582,7 +579,7 @@ AC_SYS_LARGEFILE
 AC_CHECK_SIZEOF(void*)
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_FUNCS([arc4random arc4random_uniform])
-AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime setusercontext initgroups setresuid setreuid setresgid setregid getpwnam mmap])
+AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap])
 
 AC_ARG_ENABLE(recvmmsg, AC_HELP_STRING([--enable-recvmmsg], [Enable recvmmsg and sendmmsg compilation, faster but some kernel versions may have implementation problems]))
 case "$enable_recvmmsg" in
@@ -691,7 +688,7 @@ AC_DEFINE_UNQUOTED([FACILITY], $facility, [Define to the default facility for sy
 dnl
 dnl Determine the maximum number of ip-addresses that are allowed
 dnl
-max_ips=8
+max_ips=16
 AC_ARG_WITH([max_ips],
 	AC_HELP_STRING([--with-max-ips=number], [Limit on the number of ip-addresses that may be specified]),
 	[max_ips=$withval])
@@ -960,6 +957,7 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 #endif
 #ifndef STRPTIME_WORKS
 #define STRPTIME_WORKS 1
+char *nsd_strptime(const char *s, const char *format, struct tm *tm); 
 #define strptime(a,b,c) nsd_strptime((a),(b),(c))
 #endif
 ])

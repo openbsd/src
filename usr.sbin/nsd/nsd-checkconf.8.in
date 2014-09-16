@@ -1,12 +1,10 @@
-.TH "nsd\-checkconf" "8" "Mar 14, 2014" "NLnet Labs" "nsd 4.0.3"
+.TH "nsd\-checkconf" "8" "Sep  4, 2014" "NLnet Labs" "nsd 4.1.0"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
-.LP
 .B nsd\-checkconf
 \- NSD configuration file checker.
 .SH "SYNOPSIS"
-.LP
 .B nsd\-checkconf
 .RB [ \-v ]
 .RB [ \-h ]
@@ -20,7 +18,6 @@
 .IR keyname ]
 .I configfile
 .SH "DESCRIPTION"
-.LP
 .B nsd\-checkconf
 reads a configuration file. It prints parse errors to standard 
 error, and performs additional checks on the contents. The 
@@ -91,10 +88,8 @@ default
 .B NSD
 configuration file
 .SH "SEE ALSO"
-.LP
 \fInsd\fR(8), \fInsd.conf\fR(5), \fInsd\-control\fR(8)
 .SH "AUTHORS"
-.LP
 .B NSD
 was written by NLnet Labs and RIPE NCC joint team. Please see
 CREDITS file in the distribution for further details.

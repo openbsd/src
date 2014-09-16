@@ -336,13 +336,11 @@ wire_rel_dname:	wire_label
     }
     ;
 
-
-
-str_seq:	STR
+str_seq:	dotted_str
     {
 	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $1.str, $1.len), 1);
     }
-    |	str_seq sp STR
+    |	str_seq sp dotted_str
     {
 	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $3.str, $3.len), 0);
     }

@@ -1,12 +1,10 @@
-.TH "NSD" "8" "Mar 14, 2014" "NLnet Labs" "NSD 4.0.3"
+.TH "NSD" "8" "Sep  4, 2014" "NLnet Labs" "NSD 4.1.0"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
-.LP
 .B nsd
-\- Name Server Daemon (NSD) version 4.0.3.
+\- Name Server Daemon (NSD) version 4.1.0.
 .SH "SYNOPSIS"
-.LP
 .B nsd
 .RB [ \-4 ] 
 .RB [ \-6 ] 
@@ -42,7 +40,6 @@
 .IR level ]
 .RB [ \-v ]
 .SH "DESCRIPTION"
-.LP
 .B NSD
 is a complete implementation of an authoritative DNS nameserver. 
 Upon startup,
@@ -70,7 +67,6 @@ separately. If IPv6 is enabled when
 is compiled an IPv6 address can also be specified.
 .P
 .SH "OPTIONS"
-.LP
 All the options can be specified in the configfile (
 .B \-c 
 argument), except for the 
@@ -240,17 +236,14 @@ default
 .B NSD
 configuration file
 .SH "DIAGNOSTICS"
-.LP
 will log all the problems via the standard syslog(8)
 .I daemon
 facility, unless the
 .B \-d
 option is specified.
 .SH "SEE ALSO"
-.LP
 \fInsd.conf\fR(5), \fInsd\-checkconf\fR(8), \fInsd\-control\fR(8)
 .SH "AUTHORS"
-.LP
 .B NSD
 was written by NLnet Labs and RIPE NCC joint team. Please see
 CREDITS file in the distribution for further details.

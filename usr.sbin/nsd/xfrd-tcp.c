@@ -894,7 +894,11 @@ xfrd_tcp_release(xfrd_tcp_set_t* set, xfrd_zone_t* zone)
 	/* if pipe was full, but no more, then see if waiting element is
 	 * for the same master, and can fill the unused ID */
 	if(tp->num_unused == 1 && set->tcp_waiting_first) {
+#ifdef INET6
 		struct sockaddr_storage to;
+#else
+		struct sockaddr_in to;
+#endif
 		socklen_t to_len = xfrd_acl_sockaddr_to(
 			set->tcp_waiting_first->master, &to);
 		if(to_len == tp->ip_len && memcmp(&to, &tp->ip, to_len) == 0) {

@@ -15,6 +15,8 @@
 #include <stdio.h>
 #include <time.h>
 struct rr;
+struct buffer;
+struct region;
 
 #ifdef HAVE_SYSLOG_H
 #  include <syslog.h>
@@ -247,6 +249,8 @@ extern int nsd_debug_level;
 	} while (0)
 #endif
 
+/* set to true to log time prettyprinted, or false to print epoch */
+extern int log_time_asc;
 
 /*
  * Timespec functions.
@@ -353,7 +357,8 @@ struct state_pretty_rr {
 };
 struct state_pretty_rr* create_pretty_rr(struct region* region);
 /* print rr to file, returns 0 on failure(nothing is written) */
-int print_rr(FILE *out, struct state_pretty_rr* state, struct rr *record);
+int print_rr(FILE *out, struct state_pretty_rr* state, struct rr *record,
+	struct region* tmp_region, struct buffer* tmp_buffer); 
 
 /*
  * Convert a numeric rcode value to a human readable string

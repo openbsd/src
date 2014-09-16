@@ -66,7 +66,8 @@ extern config_parser_state_t* cfg_parser;
 %token VAR_RRL_SIZE VAR_RRL_RATELIMIT VAR_RRL_SLIP 
 %token VAR_RRL_IPV4_PREFIX_LENGTH VAR_RRL_IPV6_PREFIX_LENGTH
 %token VAR_RRL_WHITELIST_RATELIMIT VAR_RRL_WHITELIST
-%token VAR_ZONEFILES_CHECK
+%token VAR_ZONEFILES_CHECK VAR_ZONEFILES_WRITE VAR_LOG_TIME_ASCII
+%token VAR_ROUND_ROBIN
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -94,7 +95,8 @@ content_server: server_ip_address | server_ip_transparent | server_debug_mode | 
 	server_zonelistfile | server_xfrdir |
 	server_rrl_size | server_rrl_ratelimit | server_rrl_slip | 
 	server_rrl_ipv4_prefix_length | server_rrl_ipv6_prefix_length | server_rrl_whitelist_ratelimit |
-	server_zonefiles_check | server_do_ip4 | server_do_ip6 ;
+	server_zonefiles_check | server_do_ip4 | server_do_ip6 |
+	server_zonefiles_write | server_log_time_ascii | server_round_robin;
 server_ip_address: VAR_IP_ADDRESS STRING 
 	{ 
 		OUTYY(("P(server_ip_address:%s)\n", $2)); 
@@ -193,6 +195,9 @@ server_database: VAR_DATABASE STRING
 	{ 
 		OUTYY(("P(server_database:%s)\n", $2)); 
 		cfg_parser->opt->database = region_strdup(cfg_parser->opt->region, $2);
+		if(cfg_parser->opt->database[0] == 0 &&
+			cfg_parser->opt->zonefiles_write == 0)
+			cfg_parser->opt->zonefiles_write = ZONEFILES_WRITE_INTERVAL;
 	}
 	;
 server_identity: VAR_IDENTITY STRING
@@ -229,6 +234,28 @@ server_logfile: VAR_LOGFILE STRING
 	{ 
 		OUTYY(("P(server_logfile:%s)\n", $2)); 
 		cfg_parser->opt->logfile = region_strdup(cfg_parser->opt->region, $2);
+	}
+	;
+server_log_time_ascii: VAR_LOG_TIME_ASCII STRING 
+	{ 
+		OUTYY(("P(server_log_time_ascii:%s)\n", $2)); 
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else {
+			cfg_parser->opt->log_time_ascii = (strcmp($2, "yes")==0);
+			log_time_asc = cfg_parser->opt->log_time_ascii;
+		}
+	}
+	;
+server_round_robin: VAR_ROUND_ROBIN STRING 
+	{ 
+		OUTYY(("P(server_round_robin:%s)\n", $2)); 
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else {
+			cfg_parser->opt->round_robin = (strcmp($2, "yes")==0);
+			round_robin = cfg_parser->opt->round_robin;
+		}
 	}
 	;
 server_server_count: VAR_SERVER_COUNT STRING
@@ -411,6 +438,14 @@ server_zonefiles_check: VAR_ZONEFILES_CHECK STRING
 		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
 			yyerror("expected yes or no.");
 		else cfg_parser->opt->zonefiles_check = (strcmp($2, "yes")==0);
+	}
+	;
+server_zonefiles_write: VAR_ZONEFILES_WRITE STRING 
+	{ 
+		OUTYY(("P(server_zonefiles_write:%s)\n", $2)); 
+		if(atoi($2) == 0 && strcmp($2, "0") != 0)
+			yyerror("number expected");
+		else cfg_parser->opt->zonefiles_write = atoi($2);
 	}
 	;
 
