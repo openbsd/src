@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2013/11/26 12:53:57 sthen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2014/09/16 17:09:24 brad Exp $
 
 .include <bsd.own.mk>
 
@@ -23,9 +23,9 @@ CONFIGURE_OPTS=	--prefix=/usr \
 		--enable-ratelimit \
 		--enable-root-server
 
-PROG=	nsd nsd-checkconf nsd-control
+PROG=	nsd nsd-checkconf nsd-checkzone nsd-control
 
-MAN=	nsd.8 nsd-checkconf.8 nsd-control.8 nsd.conf.5
+MAN=	nsd.8 nsd-checkconf.8 nsd-checkzone.8 nsd-control.8 nsd.conf.5
 
 all:	gnu
 
