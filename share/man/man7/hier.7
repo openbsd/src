@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.132 2014/08/29 06:09:35 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.133 2014/09/16 16:58:13 ajacoutot Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: August 29 2014 $
+.Dd $Mdocdate: September 16 2014 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -228,10 +228,6 @@ Device-specific C include files.
 Include files for the GNU C++ compiler.
 .It isofs/
 C include files for the ISO standard file systems (currently only cd9660).
-.It libmilter/
-C include files for the
-.Xr sendmail 8
-mail filter API.
 .It machine/
 Machine specific C include files.
 .It miscfs/
@@ -311,13 +307,6 @@ scripts.
 .It lpr/
 Contains the lpf filter for
 .Xr lpd 8 .
-.It sendmail/
-Contains the
-.Xr sendmail 8
-binary.
-.It sm.bin/
-Binaries to be run by
-.Xr smrsh 8 .
 .It smtpd/
 Binaries related to
 .Xr smtpd 8 .
@@ -439,9 +428,6 @@ Templates for
 .Xr make 1 .
 .It nls/
 National Language Support (NLS) catalogs.
-.It sendmail/
-Example files for
-.Xr sendmail 8 .
 .It snmp/
 Data files for
 .Xr snmpd 8 .
@@ -608,19 +594,12 @@ Timestamps for
 .It spool/
 Miscellaneous printer and mail system spooling directories.
 .Pp
-.Bl -tag -width "clientmqueue/" -compact
-.It clientmqueue/
-Mail messages waiting to be processed by the sendmail clientmqueue helper
-task (see
-.Xr sendmail 8 ) .
+.Bl -tag -width "uucppublic/" -compact
 .It ftp/
 Commonly ~ftp; the anonymous ftp root directory.
 .It lock/
 Lock files for utilities such as
 .Xr tip 1 .
-.It mqueue/
-Undelivered mail queue (see
-.Xr sendmail 8 ) .
 .It output/
 Line printer spooling directories.
 .It smtpd/
