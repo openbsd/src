@@ -2608,7 +2608,6 @@
 ./usr/libexec/rpc.rwalld
 ./usr/libexec/security
 ./usr/libexec/sftp-server
-./usr/libexec/sm.bin
 ./usr/libexec/smtpd
 ./usr/libexec/smtpd/makemap
 ./usr/libexec/smtpd/table-ldap
