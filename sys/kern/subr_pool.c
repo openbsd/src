@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.154 2014/09/16 03:26:08 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.155 2014/09/16 21:45:12 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -194,16 +194,12 @@ pr_find_pagehead(struct pool *pp, void *v)
 
 	key.ph_page = v;
 	ph = RB_NFIND(phtree, &pp->pr_phtree, &key);
-	if (ph == NULL) {
-		panic("pr_find_pagehead: %s: page header missing",
-		    pp->pr_wchan);
-	}
+	if (ph == NULL)
+		panic("%s: %s: page header missing", __func__, pp->pr_wchan);
 
 	KASSERT(ph->ph_page <= (caddr_t)v);
-	if (ph->ph_page + pp->pr_pgsize <= (caddr_t)v) {
-		panic("pr_find_pagehead: %s: incorrect page",
-		    pp->pr_wchan);
-	}
+	if (ph->ph_page + pp->pr_pgsize <= (caddr_t)v)
+		panic("%s: %s: incorrect page", __func__, pp->pr_wchan);
 
 	return (ph);
 }
@@ -222,9 +218,9 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 	if (ph->ph_nmissing == 0) {
 #ifdef DIAGNOSTIC
 		if (pp->pr_nidle == 0)
-			panic("pr_rmpage: nidle inconsistent");
+			panic("%s: nidle inconsistent", __func__);
 		if (pp->pr_nitems < pp->pr_itemsperpage)
-			panic("pr_rmpage: nitems inconsistent");
+			panic("%s: nitems inconsistent", __func__);
 #endif
 		pp->pr_nidle--;
 	}
@@ -373,13 +369,13 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 #ifdef DIAGNOSTIC
 	SIMPLEQ_FOREACH(iter, &pool_head, pr_poollist) {
 		if (iter == pp)
-			panic("init pool already on list");
+			panic("%s: pool %s already on list", __func__, wchan);
 	}
 #endif
 
 	pp->pr_serial = ++pool_serial;
 	if (pool_serial == 0)
-		panic("pool_init: too much uptime");
+		panic("%s: too much uptime", __func__);
 
 	SIMPLEQ_INSERT_HEAD(&pool_head, pp, pr_poollist);
 	pool_count++;
@@ -418,14 +414,14 @@ pool_destroy(struct pool *pp)
 			prev = iter;
 		}
 #ifdef DIAGNOSTIC
-		panic("destroyed pool not on list");
+		panic("%s: pool not on list", __func__);
 #endif
 	}
 removed:
 	rw_exit_write(&pool_lock);
 #ifdef DIAGNOSTIC
 	if (pp->pr_nout != 0)
-		panic("pool_destroy: pool busy: still out: %u", pp->pr_nout);
+		panic("%s: pool busy: still out: %u", __func__, pp->pr_nout);
 #endif
 
 	/* Remove all pages */
@@ -479,14 +475,14 @@ pool_get(struct pool *pp, int flags)
 #ifdef POOL_DEBUG
 	if (pp->pr_roflags & PR_DEBUGCHK) {
 		if (pool_chk(pp))
-			panic("before pool_get");
+			panic("%s: before", __func__);
 	}
 #endif
 	v = pool_do_get(pp, flags);
 #ifdef POOL_DEBUG
 	if (pp->pr_roflags & PR_DEBUGCHK) {
 		if (pool_chk(pp))
-			panic("after pool_get");
+			panic("%s: after", __func__);
 	}
 #endif
 	if (v != NULL)
@@ -517,7 +513,7 @@ startover:
 	 */
 #ifdef DIAGNOSTIC
 	if (pp->pr_nout > pp->pr_hardlimit)
-		panic("pool_do_get: %s: crossed hard limit", pp->pr_wchan);
+		panic("%s: %s: crossed hard limit", __func__, pp->pr_wchan);
 #endif
 	if (pp->pr_nout == pp->pr_hardlimit) {
 		if ((flags & PR_WAITOK) && !(flags & PR_LIMITFAIL)) {
@@ -552,7 +548,7 @@ startover:
 		if (pp->pr_nitems != 0) {
 			printf("pool_do_get: %s: curpage NULL, nitems %u\n",
 			    pp->pr_wchan, pp->pr_nitems);
-			panic("pool_do_get: nitems inconsistent");
+			panic("%s: nitems inconsistent", __func__);
 		}
 #endif
 
@@ -596,21 +592,21 @@ startover:
 		/* Start the allocation process over. */
 		goto startover;
 	}
-	if ((v = pi = XSIMPLEQ_FIRST(&ph->ph_itemlist)) == NULL) {
-		panic("pool_do_get: %s: page empty", pp->pr_wchan);
-	}
+	if ((v = pi = XSIMPLEQ_FIRST(&ph->ph_itemlist)) == NULL)
+		panic("%s: %s: page empty", __func__, pp->pr_wchan);
+
 #ifdef DIAGNOSTIC
 	if (pp->pr_nitems == 0) {
-		printf("pool_do_get: %s: items on itemlist, nitems %u\n",
+		printf("%s: %s: items on itemlist, nitems %u\n", __func__,
 		    pp->pr_wchan, pp->pr_nitems);
-		panic("pool_do_get: nitems inconsistent");
+		panic("%s: nitems inconsistent", __func__);
 	}
 #endif
 
 #ifdef DIAGNOSTIC
 	if (pi->pi_magic != poison_value(pi))
-		panic("pool_do_get(%s): free list modified: "
-		    "page %p; item addr %p; offset 0x%x=0x%x",
+		panic("%s(%s): free list modified: "
+		    "page %p; item addr %p; offset 0x%x=0x%x", __func__,
 		    pp->pr_wchan, ph->ph_page, pi, 0, pi->pi_magic);
 	if (pool_debug && ph->ph_magic) {
 		size_t pidx;
@@ -618,9 +614,9 @@ startover:
 		if (poison_check(pi + 1, pp->pr_size - sizeof(*pi),
 		    &pidx, &pval)) {
 			int *ip = (int *)(pi + 1);
-			panic("pool_do_get(%s): free list modified: "
+			panic("%s(%s): free list modified: "
 			    "page %p; item addr %p; offset 0x%zx=0x%x",
-			    pp->pr_wchan, ph->ph_page, pi,
+			    __func__, pp->pr_wchan, ph->ph_page, pi,
 			    pidx * sizeof(int), ip[pidx]);
 		}
 	}
@@ -635,7 +631,7 @@ startover:
 	if (ph->ph_nmissing == 0) {
 #ifdef DIAGNOSTIC
 		if (pp->pr_nidle == 0)
-			panic("pool_do_get: nidle inconsistent");
+			panic("%s: nidle inconsistent", __func__);
 #endif
 		pp->pr_nidle--;
 
@@ -650,7 +646,7 @@ startover:
 	if (XSIMPLEQ_EMPTY(&ph->ph_itemlist)) {
 #ifdef DIAGNOSTIC
 		if (ph->ph_nmissing != pp->pr_itemsperpage) {
-			panic("pool_do_get: %s: nmissing inconsistent",
+			panic("%s: %s: nmissing inconsistent", __func__,
 			    pp->pr_wchan);
 		}
 #endif
@@ -687,14 +683,14 @@ pool_put(struct pool *pp, void *v)
 #ifdef POOL_DEBUG
 	if (pp->pr_roflags & PR_DEBUGCHK) {
 		if (pool_chk(pp))
-			panic("before pool_put");
+			panic("%s: before", __func__);
 	}
 #endif
 	pool_do_put(pp, v);
 #ifdef POOL_DEBUG
 	if (pp->pr_roflags & PR_DEBUGCHK) {
 		if (pool_chk(pp))
-			panic("after pool_put");
+			panic("%s: after", __func__);
 	}
 #endif
 	pp->pr_nput++;
@@ -711,17 +707,14 @@ pool_do_put(struct pool *pp, void *v)
 	struct pool_item_header *ph;
 
 	if (v == NULL)
-		panic("pool_put of NULL");
+		panic("%s: NULL item", __func__);
 
 #ifdef DIAGNOSTIC
 	if (pp->pr_ipl != -1)
 		splassert(pp->pr_ipl);
 
-	if (pp->pr_nout == 0) {
-		printf("pool %s: putting with none out\n",
-		    pp->pr_wchan);
-		panic("pool_do_put");
-	}
+	if (pp->pr_nout == 0)
+		panic("%s: %s: putting with none out", __func__, pp->pr_wchan);
 #endif
 
 	ph = pr_find_pagehead(pp, v);
@@ -732,9 +725,12 @@ pool_do_put(struct pool *pp, void *v)
 #ifdef DIAGNOSTIC
 	if (pool_debug) {
 		struct pool_item *qi;
-		XSIMPLEQ_FOREACH(qi, &ph->ph_itemlist, pi_list)
-			if (pi == qi)
-				panic("double pool_put: %p", pi);
+		XSIMPLEQ_FOREACH(qi, &ph->ph_itemlist, pi_list) {
+			if (pi == qi) {
+				panic("%s: %s: double pool_put: %p", __func__,
+				    pp->pr_wchan, pi);
+			}
+		}
 	}
 	pi->pi_magic = poison_value(pi);
 	if (ph->ph_magic) {
