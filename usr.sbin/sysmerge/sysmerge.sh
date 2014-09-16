@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.189 2014/09/13 12:00:52 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.190 2014/09/16 21:56:42 rpe Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -26,7 +26,7 @@ usage() {
 
 # OpenBSD /etc/rc v1.438
 stripcom() {
-	local _file="$1"
+	local _file=$1
 	local _line
 
 	{
@@ -317,7 +317,7 @@ sm_install() {
 	fi
 	rm ${COMPFILE}
 
-	case "${TARGET}" in
+	case ${TARGET} in
 	/etc/login.conf)
 		if [[ -f /etc/login.conf.db ]]; then
 			sm_echo " (running cap_mkdb(1), needs a relog)"
@@ -338,14 +338,14 @@ sm_install() {
 
 sm_add_user_grp() {
 	local _g _p _gid _l _u _rest _newgrp _newusr
-	local _pw="./etc/master.passwd"
-	local _gr="./etc/group"
+	local _pw=./etc/master.passwd
+	local _gr=./etc/group
 
 	${PKGMODE} && return
 
 	while read _l; do
 		_u=${_l%%:*}
-		if [[ ${_u} != "root" ]]; then
+		if [[ ${_u} != root ]]; then
 			if ! grep -Eq "^${_u}:" /etc/master.passwd; then
 				sm_echo "===> Adding the ${_u} user"
 				chpass -la "${_l}" && \
@@ -372,7 +372,7 @@ sm_merge_loop() {
 		sdiff -as -w ${_STTYSIZE} -o ${COMPFILE}.merged \
 			${TARGET} ${COMPFILE}
 		_instmerged=v
-		while [[ ${_instmerged} == "v" ]]; do
+		while [[ ${_instmerged} == v ]]; do
 			echo
 			echo "  Use 'e' to edit the merged file"
 			echo "  Use 'i' to install the merged file"
@@ -461,7 +461,7 @@ sm_diff_loop() {
 					return
 				fi
 			fi
-			if [[ ${_handle} == "v" ]]; then
+			if [[ ${_handle} == v ]]; then
 				(
 					echo "\n========================================================================\n"
 					echo "===> Displaying differences between ${COMPFILE} and installed version:"
@@ -534,18 +534,18 @@ sm_diff_loop() {
 			if ! ${_nonexistent} && ! ${IS_BIN} && ! ${IS_LINK}; then
 				sm_merge_loop && \
 					MERGED_FILES="${MERGED_FILES}${TARGET}\n" || \
-						_handle="todo"
+						_handle=todo
 			else
 				echo "invalid choice: ${_handle}\n"
-				_handle="todo"
+				_handle=todo
 			fi
 			;;
 		[vV])
 			if ! ${_nonexistent} && ! ${IS_BIN} && ! ${IS_LINK}; then
-				_handle="v"
+				_handle=v
 			else
 				echo "invalid choice: ${_handle}\n"
-				_handle="todo"
+				_handle=todo
 			fi
 			;;
 		'')
@@ -553,7 +553,7 @@ sm_diff_loop() {
 			;;
 		*)
 			echo "invalid choice: ${_handle}\n"
-			_handle="todo"
+			_handle=todo
 			continue
 			;;
 		esac
