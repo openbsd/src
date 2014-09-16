@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.51 2014/09/08 01:27:55 schwarze Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.52 2014/09/16 16:27:23 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -41,7 +41,7 @@
 .\" the suitability of this software for any purpose.  It is
 .\" provided "as is" without express or implied warranty.
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: September 16 2014 $
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
@@ -386,8 +386,7 @@ flag specifies that symbolic links should be followed.
 Specify the username (or email address) that should receive notification
 messages if this is a monitored log file.
 Notification messages are sent as email; the operator
-deserves what they get if they mark the
-.Xr sendmail 8
+deserves what they get if they mark the mail
 log file as monitored.
 This field is only valid when the
 .Sq M
