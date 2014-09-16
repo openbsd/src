@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.96 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.97 2014/09/16 05:12:04 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -578,7 +578,7 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO | IPL_MPSAFE,
 	    mpii_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL)
 		goto free_devs;
@@ -1826,7 +1826,9 @@ mpii_event_process(struct mpii_softc *sc, struct mpii_rcb *rcb)
 
 		if (cold)
 			break;
+		KERNEL_LOCK();
 		dev = mpii_find_dev(sc, lemtoh16(&evd->vol_dev_handle));
+		KERNEL_UNLOCK();
 		if (dev == NULL)
 			break;
 #if NBIO > 0
@@ -1853,7 +1855,9 @@ mpii_event_process(struct mpii_softc *sc, struct mpii_rcb *rcb)
 		    (struct mpii_evt_ir_status *)(enp + 1);
 		struct mpii_device		*dev;
 
+		KERNEL_LOCK();
 		dev = mpii_find_dev(sc, lemtoh16(&evs->vol_dev_handle));
+		KERNEL_UNLOCK();
 		if (dev != NULL &&
 		    evs->operation == MPII_EVENT_IR_RAIDOP_RESYNC)
 			dev->percent = evs->percent;
@@ -2442,9 +2446,11 @@ mpii_put_ccb(void *cookie, void *io)
 	ccb->ccb_rcb = NULL;
 	memset(ccb->ccb_cmd, 0, sc->sc_request_size);
 
+	KERNEL_UNLOCK();
 	mtx_enter(&sc->sc_ccb_free_mtx);
 	SIMPLEQ_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_link);
 	mtx_leave(&sc->sc_ccb_free_mtx);
+	KERNEL_LOCK();
 }
 
 void *
@@ -2453,6 +2459,8 @@ mpii_get_ccb(void *cookie)
 	struct mpii_softc	*sc = cookie;
 	struct mpii_ccb		*ccb;
 
+	KERNEL_UNLOCK();
+
 	mtx_enter(&sc->sc_ccb_free_mtx);
 	ccb = SIMPLEQ_FIRST(&sc->sc_ccb_free);
 	if (ccb != NULL) {
@@ -2460,6 +2468,8 @@ mpii_get_ccb(void *cookie)
 		ccb->ccb_state = MPII_CCB_READY;
 	}
 	mtx_leave(&sc->sc_ccb_free_mtx);
+
+	KERNEL_LOCK();
 
 	DNPRINTF(MPII_D_CCB, "%s: mpii_get_ccb %#x\n", DEVNAME(sc), ccb);
 
@@ -2717,6 +2727,8 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
+	KERNEL_UNLOCK();
+
 	DNPRINTF(MPII_D_CMD, "%s: ccb_smid: %d xs->flags: 0x%x\n",
 	    DEVNAME(sc), ccb->ccb_smid, xs->flags);
 
@@ -2757,21 +2769,26 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 
 	if (mpii_load_xs(ccb) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
-		scsi_done(xs);
-		return;
+		goto done;
 	}
 
 	timeout_set(&xs->stimeout, mpii_scsi_cmd_tmo, ccb);
 	if (xs->flags & SCSI_POLL) {
 		if (mpii_poll(sc, ccb) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
-			scsi_done(xs);
+			goto done;
 		}
-		return;
+	} else {
+		timeout_add_msec(&xs->stimeout, xs->timeout);
+		mpii_start(sc, ccb);
 	}
 
-	timeout_add_msec(&xs->stimeout, xs->timeout);
-	mpii_start(sc, ccb);
+	KERNEL_LOCK();
+	return;
+
+done:
+	KERNEL_LOCK();
+	scsi_done(xs);
 }
 
 void
@@ -2873,8 +2890,7 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	if (ccb->ccb_rcb == NULL) {
 		/* no scsi error, we're ok so drop out early */
 		xs->status = SCSI_OK;
-		scsi_done(xs);
-		return;
+		goto done;
 	}
 
 	sie = ccb->ccb_rcb->rcb_reply;
@@ -2967,7 +2983,10 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	    xs->error, xs->status);
 
 	mpii_push_reply(sc, ccb->ccb_rcb);
+done:
+KERNEL_LOCK();
 	scsi_done(xs);
+KERNEL_UNLOCK();
 }
 
 int
