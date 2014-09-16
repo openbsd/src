@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.109 2014/09/16 08:50:26 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.110 2014/09/16 10:01:51 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -136,14 +136,14 @@ sub create_package
 
 	$self->archive($state);
 	if ($state->verbose) {
-		$self->comment_create_package;
+		$self->comment_create_package($state);
 	}
 }
 
 sub pretend_to_archive
 {
 	my ($self, $state) = @_;
-	$self->comment_create_package;
+	$self->comment_create_package($state);
 }
 
 sub record_digest {}
@@ -304,6 +304,26 @@ sub find_every_library
 {
 }
 
+package OpenBSD::PackingElement::StreamMarker;
+our @ISA = qw(OpenBSD::PackingElement::Meta);
+sub new
+{
+	my $class = shift;
+	bless {}, $class;
+}
+
+sub comment_create_package
+{
+	my ($self, $state) = @_;
+	$state->say("Gzip: next chunk");
+}
+
+sub archive
+{
+	my ($self, $state) = @_;
+	$state->new_gstream;
+}
+
 package OpenBSD::PackingElement::Meta;
 sub record_digest
 {
@@ -348,8 +368,8 @@ sub may_add
 
 sub comment_create_package
 {
-	my ($self) = @_;
-	print "Adding ", $self->name, "\n";
+	my ($self, $state) = @_;
+	$state->say("Adding #1", $self->name);
 }
 
 sub makesum_plist
@@ -405,13 +425,13 @@ sub archive
 sub pretend_to_archive
 {
 	my ($self, $state) = @_;
-	$self->comment_create_package;
+	$self->comment_create_package($state);
 }
 
 sub comment_create_package
 {
-	my ($self) = @_;
-	print "Cwd: ", $self->name, "\n";
+	my ($self, $state) = @_;
+	$state->say("Cwd: #1", $self->name);
 }
 
 package OpenBSD::PackingElement::FileBase;
@@ -451,13 +471,13 @@ sub pretend_to_archive
 
 	$self->set_destdir($state);
 	$self->prepare_for_archival($state);
-	$self->comment_create_package;
+	$self->comment_create_package($state);
 }
 
 sub comment_create_package
 {
-	my ($self) = @_;
-	print "Adding ", $self->name, "\n";
+	my ($self, $state) = @_;
+	$state->say("Adding #1", $self->name);
 }
 
 sub print_file
@@ -1402,8 +1422,18 @@ sub save_history
 		close($f);
 		rename("$fname.new", $fname);
 	}
-	push(@$list, @$tail);
-	return $list;
+	# create a new list with check points.
+	my $l = [@$tail];
+	my $i = 0;
+	my $end_marker = OpenBSD::PackingElement::StreamMarker->new;
+	while (@$list > 0) {
+#		if ($i++ % 16 == 0) {
+#			unshift @$l, $end_marker;
+#		}
+		my $e = pop @$list;
+		unshift @$l, $e;
+	}
+	return $l;
 }
 
 sub parse_and_run
