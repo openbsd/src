@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.45 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.46 2014/09/16 18:57:51 sf Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -217,8 +217,6 @@
 #define NKL1_START_ENTRIES	0	/* XXX */
 
 #define NTOPLEVEL_PDES		(PAGE_SIZE / (sizeof (pd_entry_t)))
-
-#define KERNSPACE		(NKL4_ENTRIES * NBPD_L4)
 
 #define NPDPG			(PAGE_SIZE / sizeof (pd_entry_t))
 
