@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2014/07/12 20:56:21 miod Exp $
+# $OpenBSD: Makefile,v 1.13 2014/09/16 18:15:21 miod Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -666,12 +666,18 @@ MLINKS+=\
 	EVP_EncryptInit.3 EVP_CIPHER_param_to_asn1.3 \
 	EVP_EncryptInit.3 EVP_CIPHER_type.3 \
 	EVP_EncryptInit.3 EVP_CipherFinal.3 \
+	EVP_EncryptInit.3 EVP_CipherFinal_ex.3 \
 	EVP_EncryptInit.3 EVP_CipherInit.3 \
+	EVP_EncryptInit.3 EVP_CipherInit_ex.3 \
 	EVP_EncryptInit.3 EVP_CipherUpdate.3 \
 	EVP_EncryptInit.3 EVP_DecryptFinal.3 \
+	EVP_EncryptInit.3 EVP_DecryptFinal_ex.3 \
 	EVP_EncryptInit.3 EVP_DecryptInit.3 \
+	EVP_EncryptInit.3 EVP_DecryptInit_ex.3 \
 	EVP_EncryptInit.3 EVP_DecryptUpdate.3 \
 	EVP_EncryptInit.3 EVP_EncryptFinal.3 \
+	EVP_EncryptInit.3 EVP_EncryptFinal_ex.3 \
+	EVP_EncryptInit.3 EVP_EncryptInit_ex.3 \
 	EVP_EncryptInit.3 EVP_EncryptUpdate.3 \
 	EVP_EncryptInit.3 EVP_aes_128_ccm.3 \
 	EVP_EncryptInit.3 EVP_aes_128_gcm.3 \

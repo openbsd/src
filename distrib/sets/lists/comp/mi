@@ -2464,10 +2464,14 @@
 ./usr/share/man/man3/EVP_CIPHER_param_to_asn1.3
 ./usr/share/man/man3/EVP_CIPHER_type.3
 ./usr/share/man/man3/EVP_CipherFinal.3
+./usr/share/man/man3/EVP_CipherFinal_ex.3
 ./usr/share/man/man3/EVP_CipherInit.3
+./usr/share/man/man3/EVP_CipherInit_ex.3
 ./usr/share/man/man3/EVP_CipherUpdate.3
 ./usr/share/man/man3/EVP_DecryptFinal.3
+./usr/share/man/man3/EVP_DecryptFinal_ex.3
 ./usr/share/man/man3/EVP_DecryptInit.3
+./usr/share/man/man3/EVP_DecryptInit_ex.3
 ./usr/share/man/man3/EVP_DecryptUpdate.3
 ./usr/share/man/man3/EVP_DigestFinal.3
 ./usr/share/man/man3/EVP_DigestInit.3
@@ -2479,7 +2483,9 @@
 ./usr/share/man/man3/EVP_DigestVerifyInit.3
 ./usr/share/man/man3/EVP_DigestVerifyUpdate.3
 ./usr/share/man/man3/EVP_EncryptFinal.3
+./usr/share/man/man3/EVP_EncryptFinal_ex.3
 ./usr/share/man/man3/EVP_EncryptInit.3
+./usr/share/man/man3/EVP_EncryptInit_ex.3
 ./usr/share/man/man3/EVP_EncryptUpdate.3
 ./usr/share/man/man3/EVP_MD_CTX_block_size.3
 ./usr/share/man/man3/EVP_MD_CTX_copy.3
