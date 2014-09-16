@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.264 2014/09/15 22:28:58 matthieu Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.265 2014/09/16 17:08:45 ajacoutot Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -182,8 +182,6 @@ usr
     # ./usr/libexec
     libexec
         auth			type=dir uname=root gname=auth mode=0750
-        ..
-        sm.bin
         ..
         lpr
         ..

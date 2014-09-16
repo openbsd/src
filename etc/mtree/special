@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.109 2014/07/23 11:44:35 ajacoutot Exp $
+#	$OpenBSD: special,v 1.110 2014/09/16 17:08:45 ajacoutot Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -56,10 +56,8 @@ aliases		type=file mode=0644 uname=root gname=wheel optional
 aliases.db	type=file mode=0644 uname=root gname=wheel optional
 secrets		type=file mode=0640 uname=root gname=_smtpd optional
 secrets.db	type=file mode=0640 uname=root gname=_smtpd optional
-sendmail.cf	type=file mode=0644 uname=root gname=wheel optional
 smtpd.conf	type=file mode=0644 uname=root gname=wheel
 spamd.conf	type=file mode=0644 uname=root gname=wheel optional
-submit.cf	type=file mode=0644 uname=root gname=wheel optional
 ..	#mail
 mtree		type=dir mode=0755 uname=root gname=wheel
 special		type=file mode=0600 uname=root gname=wheel
