@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.41 2014/09/15 20:34:15 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.42 2014/09/16 15:59:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -200,10 +200,11 @@ void	vdsk_send_attr_info(struct vdsk_softc *);
 void	vdsk_send_dring_reg(struct vdsk_softc *);
 void	vdsk_send_rdx(struct vdsk_softc *);
 
-void *	vdsk_io_get(void *);
+void	*vdsk_io_get(void *);
 void	vdsk_io_put(void *, void *);
 
 void	vdsk_scsi_cmd(struct scsi_xfer *);
+int	vdsk_submit_cmd(struct scsi_xfer *);
 int	vdsk_dev_probe(struct scsi_link *);
 void	vdsk_dev_free(struct scsi_link *);
 
@@ -656,7 +657,7 @@ vdsk_rx_vio_rdx(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 		sc->sc_lm->lm_next = 1;
 		sc->sc_lm->lm_count = 1;
 		while (sc->sc_tx_prod != prod)
-			vdsk_scsi_cmd(sc->sc_vsd[sc->sc_tx_prod].vsd_xs);
+			vdsk_submit_cmd(sc->sc_vsd[sc->sc_tx_prod].vsd_xs);
 
 		scsi_iopool_run(&sc->sc_iopool);
 		break;
@@ -943,30 +944,20 @@ vdsk_io_put(void *xsc, void *io)
 void
 vdsk_scsi_cmd(struct scsi_xfer *xs)
 {
-	struct scsi_rw *rw;
-	struct scsi_rw_big *rwb;
-	struct scsi_rw_12 *rw12;
-	struct scsi_rw_16 *rw16;
-	u_int64_t lba;
-	u_int32_t sector_count;
-	uint8_t operation;
+	struct vdsk_softc *sc = xs->sc_link->adapter_softc;
+	int timeout, s;
+	int desc;
 
 	switch (xs->cmd->opcode) {
 	case READ_BIG:
 	case READ_COMMAND:
 	case READ_12:
 	case READ_16:
-		operation = VD_OP_BREAD;
-		break;
 	case WRITE_BIG:
 	case WRITE_COMMAND:
 	case WRITE_12:
 	case WRITE_16:
-		operation = VD_OP_BWRITE;
-		break;
-
 	case SYNCHRONIZE_CACHE:
-		operation = VD_OP_FLUSH;
 		break;
 
 	case INQUIRY:
@@ -995,6 +986,64 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
+	s = splbio();
+	desc = vdsk_submit_cmd(xs);
+
+	if (!ISSET(xs->flags, SCSI_POLL)) {
+		splx(s);
+		return;
+	}
+
+	timeout = 1000;
+	do {
+		if (vdsk_rx_intr(sc) &&
+		    sc->sc_vd->vd_desc[desc].status == VIO_DESC_FREE)
+			break;
+
+		delay(1000);
+	} while(--timeout > 0);
+	splx(s);
+}
+
+int
+vdsk_submit_cmd(struct scsi_xfer *xs)
+{
+	struct vdsk_softc *sc = xs->sc_link->adapter_softc;
+	struct ldc_map *map = sc->sc_lm;
+	struct vio_dring_msg dm;
+	struct scsi_rw *rw;
+	struct scsi_rw_big *rwb;
+	struct scsi_rw_12 *rw12;
+	struct scsi_rw_16 *rw16;
+	u_int64_t lba;
+	u_int32_t sector_count;
+	uint8_t operation;
+	vaddr_t va;
+	paddr_t pa;
+	psize_t nbytes;
+	int len, ncookies;
+	int desc;
+
+	switch (xs->cmd->opcode) {
+	case READ_BIG:
+	case READ_COMMAND:
+	case READ_12:
+	case READ_16:
+		operation = VD_OP_BREAD;
+		break;
+
+	case WRITE_BIG:
+	case WRITE_COMMAND:
+	case WRITE_12:
+	case WRITE_16:
+		operation = VD_OP_BWRITE;
+		break;
+
+	case SYNCHRONIZE_CACHE:
+		operation = VD_OP_FLUSH;
+		break;
+	}
+
 	/*
 	 * READ/WRITE/SYNCHRONIZE commands. SYNCHRONIZE CACHE has same
 	 * layout as 10-byte READ/WRITE commands.
@@ -1017,18 +1066,6 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 		sector_count = _4btol(rw16->length);
 	}
 
-{
-	struct vdsk_softc *sc = xs->sc_link->adapter_softc;
-	struct ldc_map *map = sc->sc_lm;
-	struct vio_dring_msg dm;
-	vaddr_t va;
-	paddr_t pa;
-	psize_t nbytes;
-	int len, ncookies;
-	int desc, s;
-	int timeout;
-
-	s = splbio();
 	desc = sc->sc_tx_prod;
 
 	ncookies = 0;
@@ -1085,21 +1122,7 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	dm.start_idx = dm.end_idx = desc;
 	vdsk_sendmsg(sc, &dm, sizeof(dm));
 
-	if (!ISSET(xs->flags, SCSI_POLL)) {
-		splx(s);
-		return;
-	}
-
-	timeout = 1000;
-	do {
-		if (vdsk_rx_intr(sc) &&
-		    sc->sc_vd->vd_desc[desc].status == VIO_DESC_FREE)
-			break;
-
-		delay(1000);
-	} while(--timeout > 0);
-	splx(s);
-}
+	return desc;
 }
 
 void
