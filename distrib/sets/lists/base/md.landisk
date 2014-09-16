@@ -2070,7 +2070,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/disklabel.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/dkbad.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/dkio.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/sys/dkstat.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/errno.ph

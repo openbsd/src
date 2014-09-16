@@ -2076,7 +2076,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/disklabel.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/dkbad.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/dkio.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/dkstat.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/errno.ph

@@ -2029,7 +2029,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/disklabel.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/dkbad.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/dkio.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/sys/dkstat.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/errno.ph

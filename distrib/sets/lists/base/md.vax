@@ -1377,7 +1377,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/disklabel.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/dkbad.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/dkio.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sys/dkstat.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/errno.ph

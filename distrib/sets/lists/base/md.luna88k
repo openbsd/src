@@ -1974,7 +1974,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/disklabel.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/dkbad.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/dkio.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/sys/dkstat.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/errno.ph

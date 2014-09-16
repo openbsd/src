@@ -1330,7 +1330,6 @@
 ./usr/include/sys/disklabel.h
 ./usr/include/sys/dkbad.h
 ./usr/include/sys/dkio.h
-./usr/include/sys/dkstat.h
 ./usr/include/sys/domain.h
 ./usr/include/sys/endian.h
 ./usr/include/sys/errno.h

@@ -2107,7 +2107,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/disklabel.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/dkbad.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/dkio.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/dkstat.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/errno.ph
