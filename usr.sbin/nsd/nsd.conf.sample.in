@@ -8,7 +8,7 @@
 
 # This is a comment.
 # Sample configuration file
-# include: "file" # include that file's text over here.
+# include: "file" # include that file's text over here.  Globbed, "*.conf"
 
 # options for the nsd server
 server:
@@ -55,6 +55,7 @@ server:
 	# zonelistfile: "@zonelistfile@"
 
 	# the database to use
+	# if set to "" then no disk-database is used, less memory usage.
 	# database: "@dbfile@"
 
 	# log messages to file. Default to stderr and syslog (with
@@ -66,7 +67,7 @@ server:
 
 	# The file where secondary zone refresh and expire timeouts are kept.
 	# If you delete this file, all secondary zones are forced to be 
-	# 'refreshing' (as if nsd got a notify).
+	# 'refreshing' (as if nsd got a notify).  Set to "" to disable.
 	# xfrdfile: "@xfrdfile@"
 
 	# The directory where zone transfers are stored, in a subdir of it.
@@ -98,13 +99,24 @@ server:
 	# ipv6-edns-size: 4096
 
 	# statistics are produced every number of seconds. Prints to log.
+	# Default is 0, meaning no statistics are produced.
 	# statistics: 3600
 
 	# Number of seconds between reloads triggered by xfrd.
 	# xfrd-reload-timeout: 1
+	
+	# log timestamp in ascii (y-m-d h:m:s.msec), yes is default.
+	# log-time-ascii: yes
+
+	# round robin rotation of records in the answer.
+	# round-robin: no
 
 	# check mtime of all zone files on start and sighup
 	# zonefiles-check: yes
+	
+	# write changed zonefiles to disk, every N seconds.
+	# default is 0(disabled) or 3600(if database is "").
+	# zonefiles-write: 3600
 
 	# RRLconfig
 	# Response Rate Limiting, size of the hashtable. Default 1000000.

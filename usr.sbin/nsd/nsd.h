@@ -158,6 +158,8 @@ struct	nsd
 
 	size_t            child_count;
 	struct nsd_child *children;
+	int	restart_children;
+	int	reload_failed;
 
 	/* NULL if this is the parent process. */
 	struct nsd_child *this_child;
@@ -223,6 +225,8 @@ struct	nsd
 
 	struct nsd_options* options;
 };
+
+extern struct nsd nsd;
 
 /* nsd.c */
 pid_t readpid(const char *file);

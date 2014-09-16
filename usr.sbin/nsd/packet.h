@@ -143,6 +143,9 @@ struct query;
 #define IPV4_MINIMAL_RESPONSE_SIZE 1480	 /* Recommended minimal edns size for IPv4 */
 #define IPV6_MINIMAL_RESPONSE_SIZE 1220	 /* Recommended minimal edns size for IPv6 */
 
+/* use round robin rotation */
+extern int round_robin;
+
 /*
  * Encode RR with OWNER as owner name into QUERY.  Returns the number
  * of RRs successfully encoded.

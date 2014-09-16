@@ -512,7 +512,11 @@ static void
 remote_accept_callback(int fd, short event, void* arg)
 {
 	struct daemon_remote *rc = (struct daemon_remote*)arg;
+#ifdef INET6
 	struct sockaddr_storage addr;
+#else
+	struct sockaddr_in addr;
+#endif
 	socklen_t addrlen;
 	int newfd;
 	struct rc_state* n;
@@ -869,6 +873,7 @@ force_transfer_zone(xfrd_zone_t* zone)
 	/* pretend we not longer have it and force any
 	 * zone to be downloaded (even same serial, w AXFR) */
 	zone->soa_disk_acquired = 0;
+	zone->soa_nsd_acquired = 0;
 	xfrd_handle_notify_and_start_xfr(zone, NULL);
 }
 
@@ -1080,6 +1085,7 @@ do_stats(struct daemon_remote* rc, int peek, struct rc_state* rs)
 static void
 do_addzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 {
+	const dname_type* dname;
 	zone_options_t* zopt;
 	char* arg2 = NULL;
 	if(!find_arg2(ssl, arg, &arg2))
@@ -1095,9 +1101,27 @@ do_addzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 
 	/* check that the pattern exists */
 	if(!rbtree_search(xfrd->nsd->options->patterns, arg2)) {
-		(void)ssl_printf(ssl, "error pattern does not exist\n");
+		(void)ssl_printf(ssl, "error pattern %s does not exist\n",
+			arg2);
 		return;
 	}
+
+	dname = dname_parse(xfrd->region, arg);
+	if(!dname) {
+		(void)ssl_printf(ssl, "error cannot parse zone name\n");
+		return;
+	}
+
+	/* see if zone is a duplicate */
+	if( (zopt=zone_options_find(xfrd->nsd->options, dname)) ) {
+		region_recycle(xfrd->region, (void*)dname,
+			dname_total_size(dname));
+		(void)ssl_printf(ssl, "zone %s already exists\n", arg);
+		send_ok(ssl); /* a nop operation */
+		return;
+	}
+	region_recycle(xfrd->region, (void*)dname, dname_total_size(dname));
+	dname = NULL;
 
 	/* add to zonelist and adds to config in memory */
 	zopt = zone_list_add(xfrd->nsd->options, arg, arg2);

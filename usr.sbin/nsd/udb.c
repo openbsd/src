@@ -168,11 +168,15 @@ udb_base_create_fd(const char* fname, int fd, udb_walk_relptr_func walkfunc,
 		goto fail;
 	}
 	udb->base_size = (size_t)g.fsize;
+#ifdef HAVE_MMAP
 	/* note the size_t casts must be there for portability, on some
 	 * systems the layout of memory is otherwise broken. */
 	udb->base = mmap(NULL, (size_t)udb->base_size,
 		(int)PROT_READ|PROT_WRITE, (int)MAP_SHARED,
 		(int)udb->fd, (off_t)0);
+#else
+	udb->base = MAP_FAILED; errno = ENOSYS;
+#endif
 	if(udb->base == MAP_FAILED) {
 		udb->base = NULL;
 		log_msg(LOG_ERR, "mmap(size %u) error: %s",
@@ -297,7 +301,9 @@ udb_base_shrink(udb_base* udb, uint64_t nsize)
 	udb->glob_data->fsize = nsize;
 	/* sync, does not *seem* to be required on Linux, but it is
 	   certainly required on OpenBSD.  Otherwise changed data is lost. */
+#ifdef HAVE_MMAP
 	msync(udb->base, udb->base_size, MS_ASYNC);
+#endif
 	if(ftruncate(udb->fd, (off_t)nsize) != 0) {
 		log_msg(LOG_ERR, "%s: ftruncate(%u) %s", udb->fname,
 			(unsigned)nsize, strerror(errno));
@@ -320,9 +326,11 @@ void udb_base_close(udb_base* udb)
 		udb->fd = -1;
 	}
 	if(udb->base) {
+#ifdef HAVE_MMAP
 		if(munmap(udb->base, udb->base_size) == -1) {
 			log_msg(LOG_ERR, "munmap: %s", strerror(errno));
 		}
+#endif
 		udb->base = NULL;
 	}
 }
@@ -354,10 +362,15 @@ void udb_base_free_keep_mmap(udb_base* udb)
 
 void udb_base_sync(udb_base* udb, int wait)
 {
+	if(!udb) return;
+#ifdef HAVE_MMAP
 	if(msync(udb->base, udb->base_size, wait?MS_SYNC:MS_ASYNC) != 0) {
 		log_msg(LOG_ERR, "msync(%s) error %s",
 			udb->fname, strerror(errno));
 	}
+#else
+	(void)wait;
+#endif
 }
 
 /** hash a chunk pointer */
@@ -499,6 +512,7 @@ uint8_t udb_base_get_userflags(udb_base* udb)
 static void*
 udb_base_remap(udb_base* udb, udb_alloc* alloc, uint64_t nsize)
 {
+#ifdef HAVE_MMAP
 	void* nb;
 	/* for use with valgrind, do not use mremap, but the other version */
 #ifdef MREMAP_MAYMOVE
@@ -545,6 +559,10 @@ udb_base_remap(udb_base* udb, udb_alloc* alloc, uint64_t nsize)
 	}
 	udb->base_size = nsize;
 	return nb;
+#else /* HAVE_MMAP */
+	(void)udb; (void)alloc; (void)nsize;
+	return NULL;
+#endif /* HAVE_MMAP */
 }
 
 void
@@ -1531,7 +1549,7 @@ coagulate_and_push(void* base, udb_alloc* alloc, udb_void last, int exp,
 }
 
 /** attempt to compact the data and move free space to the end */
-static int
+int
 udb_alloc_compact(void* base, udb_alloc* alloc)
 {
 	udb_void last;
@@ -1540,6 +1558,9 @@ udb_alloc_compact(void* base, udb_alloc* alloc)
 	uint64_t at = alloc->disk->nextgrow;
 	udb_void xl_start = 0;
 	uint64_t xl_sz = 0;
+	if(alloc->udb->inhibit_compact)
+		return 1;
+	alloc->udb->useful_compact = 0;
 	while(at > alloc->udb->glob_data->hsize) {
 		/* grab last entry */
 		exp = (int)*((uint8_t*)UDB_REL(base, at-1));
@@ -1657,6 +1678,21 @@ udb_alloc_compact(void* base, udb_alloc* alloc)
 	return 1;
 }
 
+int
+udb_compact(udb_base* udb)
+{
+	if(!udb) return 1;
+	if(!udb->useful_compact) return 1;
+	DEBUG(DEBUG_DBACCESS, 1, (LOG_INFO, "Compacting database..."));
+	return udb_alloc_compact(udb->base, udb->alloc);
+}
+
+void udb_compact_inhibited(udb_base* udb, int inhibit)
+{
+	if(!udb) return;
+	udb->inhibit_compact = inhibit;
+}
+
 #ifdef UDB_CHECK
 /** check that rptrs are really zero before free */
 void udb_check_rptr_zero(void* base, udb_rel_ptr* p, void* arg)
@@ -1733,6 +1769,10 @@ int udb_alloc_free(udb_alloc* alloc, udb_void r, size_t sz)
 	if(fp->exp == UDB_EXP_XL) {
 		udb_free_xl(base, alloc, f, (udb_xl_chunk_d*)fp, sz);
 		/* compact */
+		if(alloc->udb->inhibit_compact) {
+			alloc->udb->useful_compact = 1;
+			return 1;
+		}
 		return udb_alloc_compact(base, alloc);
 	}
 	/* it is a regular chunk of 2**exp size */
@@ -1776,6 +1816,10 @@ int udb_alloc_free(udb_alloc* alloc, udb_void r, size_t sz)
 	}
 	alloc->udb->glob_data->dirty_alloc = udb_dirty_clean;
 	/* compact */
+	if(alloc->udb->inhibit_compact) {
+		alloc->udb->useful_compact = 1;
+		return 1;
+	}
 	return udb_alloc_compact(base, alloc);
 }
 

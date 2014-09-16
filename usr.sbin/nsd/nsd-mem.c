@@ -26,6 +26,7 @@
 #include "util.h"
 
 static void error(const char *format, ...) ATTR_FORMAT(printf, 1, 2);
+struct nsd nsd;
 
 /*
  * Print the help text.
@@ -104,9 +105,11 @@ account_zone(struct namedb* db, struct zone_mem* zmem)
 {
 	zmem->data = region_get_mem(db->region);
 	zmem->data_unused = region_get_mem_unused(db->region);
-	zmem->udb_data = (size_t)db->udb->alloc->disk->stat_data;
-	zmem->udb_overhead = (size_t)(db->udb->alloc->disk->stat_alloc -
-		db->udb->alloc->disk->stat_data);
+	if(db->udb) {
+		zmem->udb_data = (size_t)db->udb->alloc->disk->stat_data;
+		zmem->udb_overhead = (size_t)(db->udb->alloc->disk->stat_alloc -
+			db->udb->alloc->disk->stat_data);
+	}
 	zmem->domaincount = db->domains->nametree->count;
 }
 
@@ -239,7 +242,9 @@ check_mem(nsd_options_t* opt)
 	char df[512];
 	memset(&totmem, 0, sizeof(totmem));
 	snprintf(tf, sizeof(tf), "./nsd-mem-task-%u.db", (unsigned)getpid());
-	snprintf(df, sizeof(df), "./nsd-mem-db-%u.db", (unsigned)getpid());
+	if(opt->database == NULL || opt->database[0] == 0)
+		df[0] = 0;
+	else snprintf(df, sizeof(df), "./nsd-mem-db-%u.db", (unsigned)getpid());
 
 	/* read all zones and account memory */
 	RBTREE_FOR(zo, zone_options_t*, opt->zone_options) {
@@ -252,10 +257,12 @@ check_mem(nsd_options_t* opt)
 	print_tot_mem(&totmem);
 
 	/* final advice */
-	printf("\nFinal advice estimate:\n");
-	printf("(The partial mmap causes reload&AXFR to take longer(disk access))\n");
-	pretty_mem(totmem.ram + totmem.disk, "data and big mmap");
-	pretty_mem(totmem.ram + totmem.disk/6, "data and partial mmap");
+	if(opt->database != NULL && opt->database[0] != 0) {
+		printf("\nFinal advice estimate:\n");
+		printf("(The partial mmap causes reload&AXFR to take longer(disk access))\n");
+		pretty_mem(totmem.ram + totmem.disk, "data and big mmap");
+		pretty_mem(totmem.ram + totmem.disk/6, "data and partial mmap");
+	}
 }
 
 /* dummy functions to link */

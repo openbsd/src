@@ -235,6 +235,28 @@ has_data_below(domain_type* top)
 	return 0;
 }
 
+/** check if domain with 0 rrsets has become empty (nonexist) */
+static void
+rrset_zero_nonexist_check(domain_type* domain)
+{
+	/* is the node now an empty node (completely deleted) */
+	if(domain->rrsets == 0) {
+		/* if there is no data below it, it becomes non existing.
+		   also empty nonterminals above it become nonexisting */
+		/* check for data below this node. */
+		if(!has_data_below(domain)) {
+			/* nonexist this domain and all parent empty nonterminals */
+			domain_type* p = domain;
+			while(p != NULL && p->rrsets == 0) {
+				if(has_data_below(p))
+					break;
+				p->is_existing = 0;
+				p = p->parent;
+			}
+		}
+	}
+}
+
 /** remove rrset.  Adjusts zone params.  Does not remove domain */
 static void
 rrset_delete(namedb_type* db, domain_type* domain, rrset_type* rrset)
@@ -277,23 +299,6 @@ rrset_delete(namedb_type* db, domain_type* domain, rrset_type* rrset)
 		sizeof(rr_type) * rrset->rr_count);
 	rrset->rr_count = 0;
 	region_recycle(db->region, rrset, sizeof(rrset_type));
-
-	/* is the node now an empty node (completely deleted) */
-	if(domain->rrsets == 0) {
-		/* if there is no data below it, it becomes non existing.
-		   also empty nonterminals above it become nonexisting */
-		/* check for data below this node. */
-		if(!has_data_below(domain)) {
-			/* nonexist this domain and all parent empty nonterminals */
-			domain_type* p = domain;
-			while(p != NULL && p->rrsets == 0) {
-				if(has_data_below(p))
-					break;
-				p->is_existing = 0;
-				p = p->parent;
-			}
-		}
-	}
 }
 
 static int
@@ -303,9 +308,13 @@ rdatas_equal(rdata_atom_type *a, rdata_atom_type *b, int num, uint16_t type,
 	int k, start, end;
 	start = 0;
 	end = num;
+	/**
+	 * SOA RDATA comparisons in XFR are more lenient,
+	 * only serial rdata is checked.
+	 **/
 	if (type == TYPE_SOA) {
 		start = 2;
-		end = 2;
+		end = 3;
 	}
 	for(k = start; k < end; k++)
 	{
@@ -447,8 +456,8 @@ nsec3_delete_rr_trigger(namedb_type* db, rr_type* rr, zone_type* zone,
 	else if(rr->type == TYPE_NSEC3PARAM && rr == zone->nsec3_param) {
 		/* clear trees, wipe hashes, wipe precompile */
 		nsec3_clear_precompile(db, zone);
-		/* pick up new nsec3param from udb */
-		nsec3_find_zone_param(db, zone, udbz);
+		/* pick up new nsec3param (from udb, or avoid deleted rr) */
+		nsec3_find_zone_param(db, zone, udbz, rr);
 		/* if no more NSEC3, done */
 		if(!zone->nsec3_param)
 			return;
@@ -550,7 +559,7 @@ nsec3_add_rr_trigger(namedb_type* db, rr_type* rr, zone_type* zone,
 		prehash_add(db->domains, rr->owner);
 	} else if(!zone->nsec3_param && rr->type == TYPE_NSEC3PARAM) {
 		/* see if this means NSEC3 chain can be used */
-		nsec3_find_zone_param(db, zone, udbz);
+		nsec3_find_zone_param(db, zone, udbz, NULL);
 		if(!zone->nsec3_param)
 			return;
 		nsec3_zone_trees_create(db->region, zone);
@@ -660,7 +669,8 @@ delete_RR(namedb_type* db, const dname_type* dname,
 			return 1; /* not fatal error */
 		}
 		/* delete the normalized RR from the udb */
-		udb_del_rr(db->udb, udbz, &rrset->rrs[rrnum]);
+		if(db->udb)
+			udb_del_rr(db->udb, udbz, &rrset->rrs[rrnum]);
 #ifdef NSEC3
 		/* process triggers for RR deletions */
 		nsec3_delete_rr_trigger(db, &rrset->rrs[rrnum], zone, udbz);
@@ -671,6 +681,8 @@ delete_RR(namedb_type* db, const dname_type* dname,
 		if(rrset->rr_count == 1) {
 			/* delete entire rrset */
 			rrset_delete(db, domain, rrset);
+			/* check if domain is now nonexisting (or parents) */
+			rrset_zero_nonexist_check(domain);
 #ifdef NSEC3
 			/* cleanup nsec3 */
 			nsec3_delete_rrset_trigger(db, domain, zone, type);
@@ -812,9 +824,11 @@ add_RR(namedb_type* db, const dname_type* dname,
 	}
 
 	/* write the just-normalized RR to the udb */
-	if(!udb_write_rr(db->udb, udbz, &rrset->rrs[rrset->rr_count - 1])) {
-		log_msg(LOG_ERR, "could not add RR to nsd.db, disk-space?");
-		return 0;
+	if(db->udb) {
+		if(!udb_write_rr(db->udb, udbz, &rrset->rrs[rrset->rr_count - 1])) {
+			log_msg(LOG_ERR, "could not add RR to nsd.db, disk-space?");
+			return 0;
+		}
 	}
 #ifdef NSEC3
 	if(rrset_added) {
@@ -876,6 +890,7 @@ delete_zone_rrs(namedb_type* db, zone_type* zone)
 {
 	rrset_type *rrset;
 	domain_type *domain = zone->apex, *next;
+	int nonexist_check = 0;
 	/* go through entire tree below the zone apex (incl subzones) */
 	while(domain && domain_is_subdomain(domain, zone->apex))
 	{
@@ -887,6 +902,9 @@ delete_zone_rrs(namedb_type* db, zone_type* zone)
 			rrset_lower_usage(db, rrset);
 			/* rrset del does not delete our domain(yet) */
 			rrset_delete(db, domain, rrset);
+			/* no rrset_zero_nonexist_check, do that later */
+			if(domain->rrsets == 0)
+				nonexist_check = 1;
 		}
 		/* the delete upcoming could delete parents, but nothing next
 		 * or after the domain so store next ptr */
@@ -896,10 +914,27 @@ delete_zone_rrs(namedb_type* db, zone_type* zone)
 		domain = next;
 	}
 
+	/* check if data deleteions have created nonexisting domain entries,
+	 * but after deleting domains so the checks are faster */
+	if(nonexist_check) {
+		DEBUG(DEBUG_XFRD, 1, (LOG_INFO, "axfrdel: zero rrset check"));
+		domain = zone->apex;
+		while(domain && domain_is_subdomain(domain, zone->apex))
+		{
+			/* the interesting domains should be existing==1
+			 * and rrsets==0, speeding up out processing of
+			 * sub-zones, since we only spuriously check empty
+			 * nonterminals */
+			if(domain->is_existing)
+				rrset_zero_nonexist_check(domain);
+			domain = domain_next(domain);
+		}
+	}
+
 	DEBUG(DEBUG_XFRD, 1, (LOG_INFO, "axfrdel: recyclebin holds %lu bytes",
 		(unsigned long) region_get_recycle_size(db->region)));
 #ifndef NDEBUG
-	if(nsd_debug_level >= 1)
+	if(nsd_debug_level >= 2)
 		region_log_stats(db->region);
 #endif
 
@@ -1087,7 +1122,8 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 			nsec3_hash_tree_clear(zone_db);
 #endif
 			delete_zone_rrs(db, zone_db);
-			udb_zone_clear(db->udb, udbz);
+			if(db->udb)
+				udb_zone_clear(db->udb, udbz);
 #ifdef NSEC3
 			nsec3_clear_precompile(db, zone_db);
 			zone_db->nsec3_param = NULL;
@@ -1117,7 +1153,8 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 				nsec3_hash_tree_clear(zone_db);
 #endif
 				delete_zone_rrs(db, zone_db);
-				udb_zone_clear(db->udb, udbz);
+				if(db->udb)
+					udb_zone_clear(db->udb, udbz);
 #ifdef NSEC3
 				nsec3_clear_precompile(db, zone_db);
 				zone_db->nsec3_param = NULL;
@@ -1277,33 +1314,35 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 		udb_ptr z;
 
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "processing xfr: %s", zone_buf));
-		if(udb_base_get_userflags(nsd->db->udb) != 0) {
-			log_msg(LOG_ERR, "database corrupted, cannot update");
-			xfrd_unlink_xfrfile(nsd, xfrfilenr);
-			exit(1);
-		}
-		/* all parts were checked by xfrd before commit */
-		if(!udb_zone_search(nsd->db->udb, &z, dname_name(apex),
-			apex->name_size)) {
-			/* create it */
-			if(!udb_zone_create(nsd->db->udb, &z, dname_name(apex),
-				apex->name_size)) {
-				/* out of disk space perhaps */
-				log_msg(LOG_ERR, "could not udb_create_zone "
-					"%s, disk space full?", log_buf);
-				return 0;
+		if(nsd->db->udb) {
+			if(udb_base_get_userflags(nsd->db->udb) != 0) {
+				log_msg(LOG_ERR, "database corrupted, cannot update");
+				xfrd_unlink_xfrfile(nsd, xfrfilenr);
+				exit(1);
 			}
+			/* all parts were checked by xfrd before commit */
+			if(!udb_zone_search(nsd->db->udb, &z, dname_name(apex),
+				apex->name_size)) {
+				/* create it */
+				if(!udb_zone_create(nsd->db->udb, &z, dname_name(apex),
+					apex->name_size)) {
+					/* out of disk space perhaps */
+					log_msg(LOG_ERR, "could not udb_create_zone "
+						"%s, disk space full?", log_buf);
+					return 0;
+				}
+			}
+			/* set the udb dirty until we are finished applying changes */
+			udb_base_set_userflags(nsd->db->udb, 1);
 		}
-		/* set the udb dirty until we are finished applying changes */
-		udb_base_set_userflags(nsd->db->udb, 1);
 		/* read and apply all of the parts */
 		for(i=0; i<num_parts; i++) {
 			int ret;
 			DEBUG(DEBUG_XFRD,2, (LOG_INFO, "processing xfr: apply part %d", (int)i));
 			ret = apply_ixfr(nsd->db, in, zone_buf, new_serial, opt,
 				i, num_parts, &is_axfr, &delete_mode,
-				&rr_count, &z, &zonedb, patname_buf, &num_bytes,
-				&softfail);
+				&rr_count, (nsd->db->udb?&z:NULL), &zonedb,
+				patname_buf, &num_bytes, &softfail);
 			if(ret == 0) {
 				log_msg(LOG_ERR, "bad ixfr packet part %d in diff file for %s", (int)i, zone_buf);
 				xfrd_unlink_xfrfile(nsd, xfrfilenr);
@@ -1313,7 +1352,8 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 				break;
 			}
 		}
-		udb_base_set_userflags(nsd->db->udb, 0);
+		if(nsd->db->udb)
+			udb_base_set_userflags(nsd->db->udb, 0);
 		/* read the final log_str: but do not fail on it */
 		if(!diff_read_str(in, log_buf, sizeof(log_buf))) {
 			log_msg(LOG_ERR, "could not read log for transfer %s",
@@ -1324,11 +1364,23 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 		if(zonedb) prehash_zone(nsd->db, zonedb);
 #endif /* NSEC3 */
 		zonedb->is_changed = 1;
-		ZONE(&z)->is_changed = 1;
-		ZONE(&z)->mtime = time_end_0;
-		udb_zone_set_log_str(nsd->db->udb, &z, log_buf);
-		udb_zone_set_file_str(nsd->db->udb, &z, NULL);
-		udb_ptr_unlink(&z, nsd->db->udb);
+		if(nsd->db->udb) {
+			ZONE(&z)->is_changed = 1;
+			ZONE(&z)->mtime = time_end_0;
+			udb_zone_set_log_str(nsd->db->udb, &z, log_buf);
+			udb_zone_set_file_str(nsd->db->udb, &z, NULL);
+			udb_ptr_unlink(&z, nsd->db->udb);
+		} else {
+			zonedb->mtime = time_end_0;
+			if(zonedb->logstr)
+				region_recycle(nsd->db->region, zonedb->logstr,
+					strlen(zonedb->logstr)+1);
+			zonedb->logstr = region_strdup(nsd->db->region, log_buf);
+			if(zonedb->filename)
+				region_recycle(nsd->db->region, zonedb->filename,
+					strlen(zonedb->filename)+1);
+			zonedb->filename = NULL;
+		}
 		if(softfail && taskudb && !is_axfr) {
 			log_msg(LOG_ERR, "Failed to apply IXFR cleanly "
 				"(deletes nonexistent RRs, adds existing RRs). "
@@ -1809,7 +1861,6 @@ task_process_add_zone(struct nsd* nsd, udb_base* udb, udb_ptr* last_task,
 static void
 task_process_del_zone(struct nsd* nsd, struct task_list_d* task)
 {
-	udb_ptr udbz;
 	zone_type* zone;
 	zone_options_t* zopt;
 	DEBUG(DEBUG_IPC,1, (LOG_INFO, "delzone task %s", dname_to_string(
@@ -1822,10 +1873,13 @@ task_process_del_zone(struct nsd* nsd, struct task_list_d* task)
 	nsec3_hash_tree_clear(zone);
 #endif
 	delete_zone_rrs(nsd->db, zone);
-	if(udb_zone_search(nsd->db->udb, &udbz, dname_name(task->zname),
-		task->zname->name_size)) {
-		udb_zone_delete(nsd->db->udb, &udbz);
-		udb_ptr_unlink(&udbz, nsd->db->udb);
+	if(nsd->db->udb) {
+		udb_ptr udbz;
+		if(udb_zone_search(nsd->db->udb, &udbz, dname_name(task->zname),
+			task->zname->name_size)) {
+			udb_zone_delete(nsd->db->udb, &udbz);
+			udb_ptr_unlink(&udbz, nsd->db->udb);
+		}
 	}
 #ifdef NSEC3
 	nsec3_clear_precompile(nsd->db, zone);
@@ -1910,6 +1964,7 @@ task_process_apply_xfr(struct nsd* nsd, udb_base* udb, udb_ptr *last_task,
 	if(!zone) {
 		/* assume the zone has been deleted and a zone transfer was
 		 * still waiting to be processed */
+		xfrd_unlink_xfrfile(nsd, TASKLIST(task)->yesno);
 		return;
 	}
 	/* apply the XFR */
@@ -1919,6 +1974,7 @@ task_process_apply_xfr(struct nsd* nsd, udb_base* udb, udb_ptr *last_task,
 		/* could not open file to update */
 		/* there is no reply to xfrd failed-update,
 		 * because xfrd has a scan for apply-failures. */
+		xfrd_unlink_xfrfile(nsd, TASKLIST(task)->yesno);
 		return;
 	}
 	/* read and apply zone transfer */

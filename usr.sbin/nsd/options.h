@@ -80,6 +80,9 @@ struct nsd_options {
 	const char* nsid;
 	int xfrd_reload_timeout;
 	int zonefiles_check;
+	int zonefiles_write;
+	int log_time_ascii;
+	int round_robin;
 
         /** remote control section. enable toggle. */
 	int control_enable;
@@ -226,11 +229,14 @@ struct zonelist_bucket {
 	struct zonelist_free* list;
 };
 
+/* default zonefile write interval if database is "", in seconds */
+#define ZONEFILES_WRITE_INTERVAL 3600
+
 /*
  * Used during options parsing
  */
 struct config_parser_state {
-	const char* filename;
+	char* filename;
 	const char* chroot;
 	int line;
 	int errors;

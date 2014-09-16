@@ -73,6 +73,14 @@ struct xfrd_state {
 	time_t reload_cmd_last_sent;
 	uint8_t can_send_reload;
 	pid_t reload_pid;
+	/* timeout for lost sigchild and reaping children */
+	struct event child_timer;
+	int child_timer_added;
+
+	/* timeout event for zonefiles_write events */
+	struct event write_timer;
+	/* set to 1 if zones have received xfrs since the last write_timer */
+	int write_zonefile_needed;
 
 	/* communication channel with server_main */
 	struct event ipc_handler;
@@ -230,7 +238,8 @@ enum xfrd_packet_result {
 extern xfrd_state_t* xfrd;
 
 /* start xfrd, new start. Pass socket to server_main. */
-void xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active);
+void xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active,
+	pid_t nsd_pid);
 
 /* add new slave zone, dname(from zone_opt) and given options */
 void xfrd_init_slave_zone(xfrd_state_t* xfrd, zone_options_t* zone_opt);

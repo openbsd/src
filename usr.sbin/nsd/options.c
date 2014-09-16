@@ -53,6 +53,8 @@ nsd_options_create(region_type* region)
 	opt->identity = 0;
 	opt->nsid = 0;
 	opt->logfile = 0;
+	opt->log_time_ascii = 1;
+	opt->round_robin = 0; /* also packet.h::round_robin */
 	opt->server_count = 1;
 	opt->tcp_count = 100;
 	opt->tcp_query_count = 0;
@@ -78,6 +80,9 @@ nsd_options_create(region_type* region)
 	opt->rrl_whitelist_ratelimit = RRL_WLIST_LIMIT/2;
 #endif
 	opt->zonefiles_check = 1;
+	if(opt->database == NULL || opt->database[0] == 0)
+		opt->zonefiles_write = ZONEFILES_WRITE_INTERVAL;
+	else	opt->zonefiles_write = 0;
 	opt->xfrd_reload_timeout = 1;
 	opt->control_enable = 0;
 	opt->control_interface = NULL;
@@ -128,7 +133,7 @@ parse_options_file(nsd_options_t* opt, const char* file,
 	}
 	cfg_parser->err = err;
 	cfg_parser->err_arg = err_arg;
-	cfg_parser->filename = file;
+	cfg_parser->filename = (char*)file;
 	cfg_parser->line = 1;
 	cfg_parser->errors = 0;
 	cfg_parser->server_settings_seen = 0;
@@ -238,12 +243,12 @@ parse_options_file(nsd_options_t* opt, const char* file,
 		if(err) {
 			char m[MAXSYSLOGMSGLEN];
 			snprintf(m, sizeof(m), "read %s failed: %d errors in "
-				"configuration file\n", cfg_parser->filename,
+				"configuration file\n", file,
 				cfg_parser->errors);
 			err(err_arg, m);
 		} else {
 			fprintf(stderr, "read %s failed: %d errors in "
-				"configuration file\n", cfg_parser->filename,
+				"configuration file\n", file,
 				cfg_parser->errors);
 		}
 		return 0;

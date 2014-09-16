@@ -204,6 +204,11 @@ struct udb_base {
 	udb_walk_relptr_func* walkfunc;
 	/** user data for walkfunc */
 	void* walkarg;
+
+	/** compaction is inhibited */
+	int inhibit_compact;
+	/** compaction is useful; deletions performed. */
+	int useful_compact;
 };
 
 typedef enum udb_chunk_type udb_chunk_type;
@@ -548,6 +553,22 @@ udb_void udb_alloc_realloc(udb_alloc* alloc, udb_void r, size_t osz,
  * @return false on failure to grow or re-mmap.
  */
 int udb_alloc_grow(udb_alloc* alloc, size_t sz, size_t num);
+
+/** 
+ * attempt to compact the data and move free space to the end
+ * can shrink the db, which calls sync on the db (for portability).
+ * @param udb: the udb base.
+ * @return 0 on failure (to remap the (possibly) changed udb base).
+ */
+int udb_compact(udb_base* udb);
+
+/** 
+ * set the udb to inhibit or uninhibit compaction.  Does not perform
+ * the compaction itself if enabled, for that call udb_compact.
+ * @param udb: the udb base
+ * @param inhibit: 0 or 1.
+ */
+void udb_compact_inhibited(udb_base* udb, int inhibit);
 
 /**
  * Set the alloc type for a newly alloced piece of data

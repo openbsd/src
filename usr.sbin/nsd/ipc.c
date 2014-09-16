@@ -224,10 +224,23 @@ child_is_done(struct nsd* nsd, int fd)
 	for(i=0; i<nsd->child_count; ++i)
 		if(nsd->children[i].child_fd == fd) {
 			nsd->children[i].child_fd = -1;
-			nsd->children[i].has_exited = 1;
 			nsd->children[i].handler->fd = -1;
-			DEBUG(DEBUG_IPC,1, (LOG_INFO, "server %d is done",
-				(int)nsd->children[i].pid));
+			if(nsd->children[i].need_to_exit) {
+				DEBUG(DEBUG_IPC,1, (LOG_INFO, "server %d is done",
+					(int)nsd->children[i].pid));
+				nsd->children[i].has_exited = 1;
+			} else {
+				log_msg(LOG_WARNING,
+				       "server %d died unexpectedly, restarting",
+				       (int)nsd->children[i].pid);
+				/* this child is now going to be re-forked as
+				 * a subprocess of this server-main, and if a
+				 * reload is in progress the other children
+				 * are subprocesses of reload.  Until the
+				 * reload is done and they are all reforked. */
+				nsd->children[i].pid = -1;
+				nsd->restart_children = 1;
+			}
 		}
 	parent_check_all_children_exited(nsd);
 }
@@ -480,6 +493,7 @@ parent_handle_reload_command(netio_type *ATTR_UNUSED(netio),
 			handler->fd = -1;
 		}
 		log_msg(LOG_ERR, "handle_reload_cmd: reload closed cmd channel");
+		nsd->reload_failed = 1;
 		return;
 	}
 	switch (mode) {

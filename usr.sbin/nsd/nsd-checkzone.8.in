@@ -1,0 +1,33 @@
+.TH "nsd\-checkzone" "8" "@date@" "NLnet Labs" "nsd @version@"
+.\" Copyright (c) 2014, NLnet Labs. All rights reserved.
+.\" See LICENSE for the license.
+.SH "NAME"
+.B nsd\-checkzone
+\- NSD zone file syntax checker.
+.SH "SYNOPSIS"
+.B nsd\-checkzone
+.RB [ \-h ]
+.I zonename
+.I zonefile
+.SH "DESCRIPTION"
+.B nsd\-checkzone
+reads a DNS zone file and checks it for errors.  It prints errors to
+stderr.  On failure it exits with nonzero exit status.
+.P
+This is used to check files before feeding them to the nsd(8) daemon.
+.SH "OPTIONS"
+.TP
+.B \-h
+Print usage help information and exit.
+.TP
+.I zonename
+The name of the zone to check, eg. "example.com".
+.TP
+.I zonefile
+The file to read, eg. "zones/example.com.zone.signed".
+.SH "SEE ALSO"
+\fInsd\fR(8), \fInsd-checkconf\fR(8)
+.SH "AUTHORS"
+.B NSD
+was written by NLnet Labs and RIPE NCC joint team. Please see
+CREDITS file in the distribution for further details.
