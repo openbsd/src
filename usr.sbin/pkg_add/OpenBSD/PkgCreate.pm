@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.108 2014/07/10 10:33:10 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.109 2014/09/16 08:50:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -234,7 +234,7 @@ sub compute_checksum
 		}
 		$result->make_symlink($value);
 	} elsif (-f _) {
-		my ($dev, $ino, $size) = (stat _)[0,1,7];
+		my ($dev, $ino, $size, $mtime) = (stat _)[0,1,7, 9];
 		if (defined $state->stash("$dev/$ino")) {
 			$result->make_hardlink($state->stash("$dev/$ino"));
 		} else {
@@ -242,6 +242,7 @@ sub compute_checksum
 			$result->add_digest($self->compute_digest($fname))
 			    unless $state->{bad};
 			$result->add_size($size);
+			$result->add_timestamp($mtime);
 		}
 	} elsif (-d _) {
 		$state->error("#1 should be a file and not a directory", $fname);
