@@ -2645,6 +2645,7 @@
 ./usr/share/man/man8/scan_ffs.8
 ./usr/share/man/man8/scsi.8
 ./usr/share/man/man8/security.8
+./usr/share/man/man8/sendmail.8
 ./usr/share/man/man8/sensorsd.8
 ./usr/share/man/man8/sftp-server.8
 ./usr/share/man/man8/sgi
