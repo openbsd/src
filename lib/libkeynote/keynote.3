@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.46 2013/07/16 15:21:11 schwarze Exp $
+.\" $OpenBSD: keynote.3,v 1.47 2014/09/17 06:21:46 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: September 17 2014 $
 .Dt KEYNOTE 3
 .\" .TH KeyNote 3 local
 .Os
@@ -602,8 +602,6 @@ is returned.
 should be long enough to also contain the trailing
 string terminator.
 If
-.Fa srclen
-is not a multiple of 4, or
 .Fa dst
 is not long enough to contain the encoded data, this function returns
 \-1 and sets
