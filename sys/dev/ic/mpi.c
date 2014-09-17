@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.197 2014/09/15 12:00:04 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.198 2014/09/17 10:11:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1527,7 +1527,8 @@ mpi_load_xs(struct mpi_ccb *ccb)
 	struct scsi_xfer		*xs = ccb->ccb_cookie;
 	struct mpi_ccb_bundle		*mcb = ccb->ccb_cmd;
 	struct mpi_msg_scsi_io		*io = &mcb->mcb_io;
-	struct mpi_sge			*sge, *nsge = &mcb->mcb_sgl[0];
+	struct mpi_sge			*sge = NULL;
+	struct mpi_sge			*nsge = &mcb->mcb_sgl[0];
 	struct mpi_sge			*ce = NULL, *nce;
 	bus_dmamap_t			dmap = ccb->ccb_dmamap;
 	u_int32_t			addr, flags;
