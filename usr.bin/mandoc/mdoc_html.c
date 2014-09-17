@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.81 2014/08/21 12:56:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.82 2014/09/17 19:53:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -568,12 +568,18 @@ mdoc_sh_pre(MDOC_ARGS)
 {
 	struct htmlpair	 tag;
 
-	if (MDOC_BLOCK == n->type) {
+	switch (n->type) {
+	case MDOC_BLOCK:
 		PAIR_CLASS_INIT(&tag, "section");
 		print_otag(h, TAG_DIV, 1, &tag);
 		return(1);
-	} else if (MDOC_BODY == n->type)
+	case MDOC_BODY:
+		if (n->sec == SEC_AUTHORS)
+			h->flags &= ~(HTML_SPLIT|HTML_NOSPLIT);
 		return(1);
+	default:
+		break;
+	}
 
 	bufinit(h);
 	bufcat(h, "x");
@@ -1256,7 +1262,25 @@ mdoc_an_pre(MDOC_ARGS)
 {
 	struct htmlpair	tag;
 
-	/* TODO: -split and -nosplit (see termp_an_pre()). */
+	if (n->norm->An.auth == AUTH_split) {
+		h->flags &= ~HTML_NOSPLIT;
+		h->flags |= HTML_SPLIT;
+		return(0);
+	}
+	if (n->norm->An.auth == AUTH_nosplit) {
+		h->flags &= ~HTML_SPLIT;
+		h->flags |= HTML_NOSPLIT;
+		return(0);
+	}
+
+	if (n->child == NULL)
+		return(0);
+
+	if (h->flags & HTML_SPLIT)
+		print_otag(h, TAG_BR, 0, NULL);
+
+	if (n->sec == SEC_AUTHORS && ! (h->flags & HTML_NOSPLIT))
+		h->flags |= HTML_SPLIT;
 
 	PAIR_CLASS_INIT(&tag, "author");
 	print_otag(h, TAG_SPAN, 1, &tag);
