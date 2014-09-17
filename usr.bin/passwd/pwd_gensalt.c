@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_gensalt.c,v 1.27 2010/07/11 15:53:12 dhill Exp $ */
+/*	$OpenBSD: pwd_gensalt.c,v 1.28 2014/09/17 17:58:41 kspillner Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -44,7 +44,7 @@ void	to64(char *, u_int32_t, int n);
 int	pwd_gensalt(char *, int, login_cap_t *, char);
 
 #define	YPCIPHER_DEF		"old"
-#define	LOCALCIPHER_DEF		"blowfish,6"
+#define	LOCALCIPHER_DEF		"blowfish,8"
 
 int
 pwd_gensalt(char *salt, int saltlen, login_cap_t *lc, char type)
@@ -109,7 +109,7 @@ pwd_gensalt(char *salt, int saltlen, login_cap_t *lc, char type)
 		to64(&salt[7], arc4random(), 4);
 		strlcpy(&salt[11], "$", saltlen - 11);
 	} else if (!strcmp(now, "blowfish")) {
-		int rounds = 6;
+		int rounds = 8;
 
 		if (next)
 			rounds = atoi(next);

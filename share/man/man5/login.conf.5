@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.55 2014/08/11 12:57:14 jmc Exp $
+.\" $OpenBSD: login.conf.5,v 1.56 2014/09/17 17:58:35 kspillner Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: August 11 2014 $
+.Dd $Mdocdate: September 17 2014 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -92,7 +92,7 @@ file are either boolean or use a
 .Ql =
 to separate the capability from the value.
 The types are described after the capability table.
-.Bl -column "approve-service" "program" "blowfish,6" "Description"
+.Bl -column "approve-service" "program" "blowfish,8" "Description"
 .It Sy Name Ta Sy Type Ta Sy Default Ta Sy Description
 .\"
 .It approve Ta program Ta "" Ta
@@ -159,7 +159,7 @@ See
 .Xr login 1 .
 .\"
 .Pp
-.It localcipher Ta string Ta blowfish,6 Ta
+.It localcipher Ta string Ta blowfish,8 Ta
 The cipher to use for local passwords.
 Possible values are:
 .Dq old ,
