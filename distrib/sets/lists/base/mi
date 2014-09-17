@@ -2809,6 +2809,7 @@
 ./usr/sbin/npppd
 ./usr/sbin/nsd
 ./usr/sbin/nsd-checkconf
+./usr/sbin/nsd-checkzone
 ./usr/sbin/nsd-control
 ./usr/sbin/nsd-control-setup
 ./usr/sbin/nslookup

@@ -2567,6 +2567,7 @@
 ./usr/share/man/man8/npppctl.8
 ./usr/share/man/man8/npppd.8
 ./usr/share/man/man8/nsd-checkconf.8
+./usr/share/man/man8/nsd-checkzone.8
 ./usr/share/man/man8/nsd-control.8
 ./usr/share/man/man8/nsd.8
 ./usr/share/man/man8/ntalkd.8
