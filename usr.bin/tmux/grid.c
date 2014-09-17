@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.38 2014/09/01 21:50:18 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.39 2014/09/17 15:31:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -514,20 +514,18 @@ grid_string_cells_code(const struct grid_cell *lastgc,
 			s[n++] = attrs[i].code;
 	}
 
-	/* If the foreground c changed, append its parameters. */
+	/* If the foreground colour changed, append its parameters. */
 	nnewc = grid_string_cells_fg(gc, newc);
 	noldc = grid_string_cells_fg(lastgc, oldc);
-	if (nnewc != noldc ||
-	    memcmp(newc,oldc, nnewc * sizeof newc[0]) != 0) {
+	if (nnewc != noldc || memcmp(newc, oldc, nnewc * sizeof newc[0]) != 0) {
 		for (i = 0; i < nnewc; i++)
 			s[n++] = newc[i];
 	}
 
-	/* If the background c changed, append its parameters. */
+	/* If the background colour changed, append its parameters. */
 	nnewc = grid_string_cells_bg(gc, newc);
 	noldc = grid_string_cells_bg(lastgc, oldc);
-	if (nnewc != noldc ||
-	    memcmp(newc, oldc, nnewc * sizeof newc[0]) != 0) {
+	if (nnewc != noldc || memcmp(newc, oldc, nnewc * sizeof newc[0]) != 0) {
 		for (i = 0; i < nnewc; i++)
 			s[n++] = newc[i];
 	}
