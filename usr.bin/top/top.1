@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.63 2014/09/17 02:10:27 dlg Exp $
+.\"	$OpenBSD: top.1,v 1.64 2014/09/17 02:20:07 dlg Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -77,6 +77,8 @@ The options are as follows:
 .It Fl 1
 Display combined CPU statistics for all processors on a single line
 instead of one line per CPU.
+If there are more than 8 CPUs detected in the system this option
+is automatically enabled.
 .It Fl b
 Use
 .Em batch
