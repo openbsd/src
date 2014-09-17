@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2014/09/15 22:28:58 matthieu Exp $
+# $OpenBSD: Makefile,v 1.10 2014/09/17 16:39:45 ajacoutot Exp $
 #
 # Generate the various .db versions from their source files.
 
@@ -11,8 +11,6 @@ clean:
 	rm -f ${DB_FILES}
 
 distribution:
-	${INSTALL} -c -o root -g wheel -m 644 Makefile \
-	    ${DESTDIR}/etc/mail/Makefile
 	${INSTALL} -c -o root -g wheel -m 644 aliases \
 	    ${DESTDIR}/etc/mail/aliases
 	${MAKEMAP} -t aliases -o ${DESTDIR}/etc/mail/aliases.db \

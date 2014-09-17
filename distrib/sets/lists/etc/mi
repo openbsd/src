@@ -14,7 +14,6 @@
 ./etc/locate.rc
 ./etc/login.conf
 ./etc/mail.rc
-./etc/mail/Makefile
 ./etc/mail/aliases
 ./etc/mail/aliases.db
 ./etc/mail/smtpd.conf
