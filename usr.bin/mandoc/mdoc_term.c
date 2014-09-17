@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.180 2014/09/03 05:17:08 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.181 2014/09/17 20:17:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -63,7 +63,6 @@ static	void	  synopsis_pre(struct termp *,
 
 static	void	  termp____post(DECL_ARGS);
 static	void	  termp__t_post(DECL_ARGS);
-static	void	  termp_an_post(DECL_ARGS);
 static	void	  termp_bd_post(DECL_ARGS);
 static	void	  termp_bk_post(DECL_ARGS);
 static	void	  termp_bl_post(DECL_ARGS);
@@ -136,7 +135,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* El */
 	{ termp_it_pre, termp_it_post }, /* It */
 	{ termp_under_pre, NULL }, /* Ad */
-	{ termp_an_pre, termp_an_post }, /* An */
+	{ termp_an_pre, NULL }, /* An */
 	{ termp_under_pre, NULL }, /* Ar */
 	{ termp_cd_pre, NULL }, /* Cd */
 	{ termp_bold_pre, NULL }, /* Cm */
@@ -1104,54 +1103,27 @@ static int
 termp_an_pre(DECL_ARGS)
 {
 
-	if (NULL == n->child)
-		return(1);
-
-	/*
-	 * If not in the AUTHORS section, `An -split' will cause
-	 * newlines to occur before the author name.  If in the AUTHORS
-	 * section, by default, the first `An' invocation is nosplit,
-	 * then all subsequent ones, regardless of whether interspersed
-	 * with other macros/text, are split.  -split, in this case,
-	 * will override the condition of the implied first -nosplit.
-	 */
-
-	if (n->sec == SEC_AUTHORS) {
-		if ( ! (TERMP_ANPREC & p->flags)) {
-			if (TERMP_SPLIT & p->flags)
-				term_newln(p);
-			return(1);
-		}
-		if (TERMP_NOSPLIT & p->flags)
-			return(1);
-		term_newln(p);
-		return(1);
-	}
-
-	if (TERMP_SPLIT & p->flags)
-		term_newln(p);
-
-	return(1);
-}
-
-static void
-termp_an_post(DECL_ARGS)
-{
-
-	if (n->child) {
-		if (SEC_AUTHORS == n->sec)
-			p->flags |= TERMP_ANPREC;
-		return;
-	}
-
-	if (AUTH_split == n->norm->An.auth) {
+	if (n->norm->An.auth == AUTH_split) {
 		p->flags &= ~TERMP_NOSPLIT;
 		p->flags |= TERMP_SPLIT;
-	} else if (AUTH_nosplit == n->norm->An.auth) {
+		return(0);
+	}
+	if (n->norm->An.auth == AUTH_nosplit) {
 		p->flags &= ~TERMP_SPLIT;
 		p->flags |= TERMP_NOSPLIT;
+		return(0);
 	}
 
+	if (n->child == NULL)
+		return(0);
+
+	if (p->flags & TERMP_SPLIT)
+		term_newln(p);
+
+	if (n->sec == SEC_AUTHORS && ! (p->flags & TERMP_NOSPLIT))
+		p->flags |= TERMP_SPLIT;
+
+	return(1);
 }
 
 static int
