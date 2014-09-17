@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump_subr.h,v 1.12 2013/12/21 07:32:35 guenther Exp $	*/
+/*	$OpenBSD: kdump_subr.h,v 1.13 2014/09/17 19:12:55 guenther Exp $	*/
 /*
  * Copyright(c) 2006 2006 David Kirchner <dpk@dpk.net>
  *
@@ -37,6 +37,7 @@
 void fcntlcmdname(int, int);
 void rtprioname(int);
 void modename(int);
+void doflagsname(int, int);
 void flagsname(int);
 void atflagsname(int);
 void accessmodename(int);
@@ -52,6 +53,7 @@ void sockoptname(int);
 void sockdomainname(int);
 void sockipprotoname(int);
 void socktypename(int);
+void sockflagsname(int);
 void sockfamilyname(int);
 void thrcreateflagsname(int);
 void mlockallname(int);

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.21 2014/08/17 22:43:07 guenther Exp $
+# $OpenBSD: mksubr,v 1.22 2014/09/17 19:12:55 guenther Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -138,22 +138,27 @@ auto_fflags_type () {
 	cat <<_EOF_
 /* AUTO */
 void
-$name (int arg)
+$name (int arg, int show_accmode)
 {
+	int	or = 0;
+
 	printf("%#x<", arg);
-	switch (arg & O_ACCMODE) {
-	case O_RDONLY:
-		printf("O_RDONLY");
-		break;
-	case O_WRONLY:
-		printf("O_WRONLY");
-		break;
-	case O_RDWR:
-		printf("O_RDWR");
-		break;
-	default:
-		printf("<invalid>O_ACCMODE");
-		break;
+	if (show_accmode || (arg & O_ACCMODE)) {
+		or = 1;
+		switch (arg & O_ACCMODE) {
+		case O_RDONLY:
+			printf("O_RDONLY");
+			break;
+		case O_WRONLY:
+			printf("O_WRONLY");
+			break;
+		case O_RDWR:
+			printf("O_RDWR");
+			break;
+		default:
+			printf("<invalid>O_ACCMODE");
+			break;
+		}
 	}
 _EOF_
 	egrep "^#[[:space:]]*define[[:space:]]+"${grep}"[[:space:]]*" \
@@ -163,10 +168,20 @@ _EOF_
 		if ($i ~ /define/) \
 			break; \
 		++i; \
-		printf "\tif (arg & %s) printf (\"|%%s\", \"%s\");\n", $i, $i }'
+		printf "\tif_print_or(arg, %s, or);\n", $i }'
 cat <<_EOF_
 	printf(">");
 }
+
+/*
+ * A wrapper of the above to use with pn()
+ */
+void
+flagsname(int flags)
+{
+	doflagsname(flags, 0);
+}
+
 
 _EOF_
 }
@@ -287,7 +302,7 @@ cat <<_EOF_
 _EOF_
 
 auto_orz_type "modename" "S_[A-Z]+[[:space:]]+[0-6]{7}" "sys/stat.h" "%#o"
-auto_fflags_type "flagsname" "O_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/fcntl.h"
+auto_fflags_type "doflagsname" "O_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/fcntl.h"
 auto_orz_type "atflagsname" "AT_[A-Z_]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/fcntl.h"
 auto_or_type "accessmodename" "[A-Z]_OK[[:space:]]+0?x?[0-9A-Fa-f]+" "sys/unistd.h"
 auto_or_type "mmapprotname" "PROT_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/mman.h"
@@ -334,7 +349,6 @@ auto_if_type "sockdomainname" "PF_[[:alnum:]]+[[:space:]]+" "sys/socket.h"
 auto_if_type "sockfamilyname" "AF_[[:alnum:]]+[[:space:]]+" "sys/socket.h"
 auto_if_type "sockipprotoname" "IPPROTO_[[:alnum:]]+[[:space:]]+" "netinet/in.h"
 auto_switch_type "sockoptname" "SO_[A-Z]+[[:space:]]+0x[0-9]+" "sys/socket.h"
-auto_switch_type "socktypename" "SOCK_[A-Z]+[[:space:]]+[1-9]+[0-9]*" "sys/socket.h"
 #auto_switch_type "ptraceopname" "PT_[[:alnum:]_]+[[:space:]]+[0-9]+" "sys/ptrace.h"
 auto_orz_type "ktracefacname" "KTRFAC_[^M][[:alnum:]_]+" "sys/ktrace.h"
 auto_switch_type "itimername" "ITIMER_[[:alnum:]_]+" "sys/time.h"
@@ -409,7 +423,7 @@ sendrecvflagsname (int flags)
 
 	printf("%#x<", flags);
 _EOF_
-egrep "^#[[:space:]]*define[[:space:]]+MSG_[A-Z]+[[:space:]]+0x[0-9]+[[:space:]]*" $include_dir/sys/socket.h | \
+egrep "^#[[:space:]]*define[[:space:]]+MSG_[_A-Z]+[[:space:]]+0x[0-9]+[[:space:]]*" $include_dir/sys/socket.h | \
 	awk '{ for (i = 1; i <= NF; i++) \
 		if ($i ~ /define/) \
 			break; \
@@ -417,6 +431,59 @@ egrep "^#[[:space:]]*define[[:space:]]+MSG_[A-Z]+[[:space:]]+0x[0-9]+[[:space:]]
 		printf "\tif(!((flags>0)^((%s)>0)))\n\t\tif_print_or(flags, %s, or);\n", $i, $i }'
 cat <<_EOF_
 	printf(">");
+}
+
+/*
+ * AUTO - Special
+ *
+ * SOCK_NONBLOCK and SOCK_CLOEXEC are or'ed into the type
+ */
+static void
+dosocktypename (int arg, int show_type)
+{
+	int	type = arg & 0xff;		/* XXX */
+	int	or = 0;
+	
+	printf("%#x<", arg);
+	if (show_type || type) {
+		or = 1;
+		switch (type) {
+_EOF_
+	egrep "^#[[:space:]]*define[[:space:]]+SOCK_[A-Z]+[[:space:]]+[1-9]+[0-9]*[[:space:]]*" \
+		$include_dir/sys/socket.h | \
+	awk '{ for (i = 1; i <= NF; i++) \
+		if ($i ~ /define/) \
+			break; \
+		++i; \
+		printf "\tcase %s:\n\t\t(void)printf(\"%s\");\n\t\tbreak;\n", $i, $i }'
+cat <<_EOF_
+		default: /* Should not reach */
+			(void)printf("<invalid=%d>", arg);
+		}
+	}
+
+_EOF_
+	egrep "^#[[:space:]]*define[[:space:]]+SOCK_[A-Z]+[[:space:]]+0x[0-9]+[[:space:]]*" \
+		$include_dir/sys/socket.h | \
+	awk '{ for (i = 1; i <= NF; i++) \
+		if ($i ~ /define/) \
+			break; \
+		++i; \
+		printf "\tif_print_or(arg, %s, or);\n", $i }'
+cat <<_EOF_
+	printf(">");
+}
+
+void
+socktypename (int arg)
+{
+	dosocktypename(arg, 1);
+}
+
+void
+sockflagsname (int arg)
+{
+	dosocktypename(arg, 0);
 }
 
 _EOF_
