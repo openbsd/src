@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.81 2014/04/07 15:49:22 millert Exp $	*/
+/*	$OpenBSD: top.c,v 1.82 2014/09/17 01:56:54 dlg Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -249,6 +249,13 @@ parseargs(int ac, char **av)
 			exit(1);
 		}
 	}
+
+	i = getncpu();
+	if (i == -1)
+		err(1, NULL);
+
+	if (i > 8)
+		combine_cpus = 1;
 
 	/* get count of top processes to display (if any) */
 	if (optind < ac) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.79 2014/09/15 19:08:21 miod Exp $	 */
+/* $OpenBSD: machine.c,v 1.80 2014/09/17 01:56:54 dlg Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -141,14 +141,26 @@ int		ncpu;
 unsigned int	maxslp;
 
 int
+getncpu(void)
+{
+	int mib[] = { CTL_HW, HW_NCPU };
+	int ncpu;
+	size_t size = sizeof(ncpu);
+
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &ncpu, &size, NULL, 0) == -1)
+		return (-1);
+
+	return (ncpu);
+}
+
+int
 machine_init(struct statics *statics)
 {
-	size_t size = sizeof(ncpu);
-	int mib[2], pagesize, cpu;
+	int pagesize, cpu;
 
-	mib[0] = CTL_HW;
-	mib[1] = HW_NCPU;
-	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) == -1)
+	ncpu = getncpu();
+	if (ncpu == -1)
 		return (-1);
 	cpu_states = calloc(ncpu, CPUSTATES * sizeof(int64_t));
 	if (cpu_states == NULL)

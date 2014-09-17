@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.h,v 1.17 2012/06/05 18:52:53 brynet Exp $	 */
+/* $OpenBSD: machine.h,v 1.18 2014/09/17 01:56:54 dlg Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -93,3 +93,5 @@ extern char    *format_next_process(caddr_t, char *(*)(uid_t), pid_t *);
 extern uid_t    proc_owner(pid_t);
 
 extern struct kinfo_proc	*getprocs(int, int, int *);
+
+int		getncpu(void);
