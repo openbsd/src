@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.145 2014/09/01 05:09:53 doug Exp $
+;	$OpenBSD: syscalls.master,v 1.146 2014/09/17 19:26:06 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -186,7 +186,7 @@
 80	STD		{ int sys_setgroups(int gidsetsize, \
 			    const gid_t *gidset); }
 81	STD		{ int sys_getpgrp(void); }
-82	STD		{ int sys_setpgid(pid_t pid, int pgid); }
+82	STD		{ int sys_setpgid(pid_t pid, pid_t pgid); }
 83	STD		{ int sys_sendsyslog(const void *buf, size_t nbyte); }
 84	STD		{ int sys_utimensat(int fd, const char *path, \
 			    const struct timespec *times, int flag); }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.60 2014/04/18 11:51:17 guenther Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.61 2014/09/17 19:26:06 millert Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -256,13 +256,13 @@ sys_setpgid(struct proc *curp, void *v, register_t *retval)
 {
 	struct sys_setpgid_args /* {
 		syscallarg(pid_t) pid;
-		syscallarg(int) pgid;
+		syscallarg(pid_t) pgid;
 	} */ *uap = v;
 	struct process *curpr = curp->p_p;
 	struct process *targpr;		/* target process */
 	struct pgrp *pgrp, *newpgrp;	/* target pgrp */
-	pid_t pid;
-	int pgid, error;
+	pid_t pid, pgid;
+	int error;
 
 	pid = SCARG(uap, pid);
 	pgid = SCARG(uap, pgid);
