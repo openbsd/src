@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.256 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.257 2014/09/18 18:47:29 kettenis Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -292,7 +292,8 @@ sdactivate(struct device *self, int act)
 			sd_flush(sc, SCSI_AUTOCONF);
 		if (boothowto & RB_POWERDOWN)
 			scsi_start(sc->sc_link, SSS_STOP,
-			    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_AUTOCONF);
+			    SCSI_IGNORE_ILLEGAL_REQUEST |
+			    SCSI_IGNORE_NOT_READY | SCSI_AUTOCONF);
 		break;
 	case DVACT_RESUME:
 		scsi_start(sc->sc_link, SSS_START,
@@ -1136,6 +1137,9 @@ sd_interpret_sense(struct scsi_xfer *xs)
 	    ((sense->flags & SSD_KEY) != SKEY_NOT_READY) ||
 	    (sense->extra_len < 6))
 		return (scsi_interpret_sense(xs));
+
+	if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
+		return (0);
 
 	switch (ASC_ASCQ(sense)) {
 	case SENSE_NOT_READY_BECOMING_READY:
