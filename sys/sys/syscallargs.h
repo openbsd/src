@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallargs.h,v 1.160 2014/09/17 19:27:59 millert Exp $	*/
+/*	$OpenBSD: syscallargs.h,v 1.161 2014/09/18 02:16:32 uebayasi Exp $	*/
 
 /*
  * System call argument lists.
@@ -173,7 +173,7 @@ struct sys_getsockname_args {
 
 struct sys_access_args {
 	syscallarg(const char *) path;
-	syscallarg(int) flags;
+	syscallarg(int) amode;
 };
 
 struct sys_chflags_args {
