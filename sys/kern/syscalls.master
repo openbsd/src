@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.146 2014/09/17 19:26:06 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.147 2014/09/18 02:15:04 uebayasi Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -101,7 +101,7 @@
 			    socklen_t *alen); }
 32	STD		{ int sys_getsockname(int fdes, struct sockaddr *asa, \
 			    socklen_t *alen); }
-33	STD		{ int sys_access(const char *path, int flags); }
+33	STD		{ int sys_access(const char *path, int amode); }
 34	STD		{ int sys_chflags(const char *path, u_int flags); }
 35	STD		{ int sys_fchflags(int fd, u_int flags); }
 36	STD		{ void sys_sync(void); }

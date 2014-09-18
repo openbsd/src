@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.208 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.209 2014/09/18 02:15:04 uebayasi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1600,11 +1600,11 @@ sys_access(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_access_args /* {
 		syscallarg(const char *) path;
-		syscallarg(int) flags;
+		syscallarg(int) amode;
 	} */ *uap = v;
 
 	return (dofaccessat(p, AT_FDCWD, SCARG(uap, path),
-	    SCARG(uap, flags), 0));
+	    SCARG(uap, amode), 0));
 }
 
 int
