@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.92 2014/09/01 05:09:52 doug Exp $ */
+/*	$OpenBSD: unistd.h,v 1.93 2014/09/18 04:37:56 guenther Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -404,15 +404,14 @@ int	 fsync(int);
 int	 ftruncate(int, off_t);
 int	 getlogin_r(char *, size_t)
 		__attribute__((__bounded__(__string__,1,2)));
+ssize_t	 readlink(const char * __restrict, char * __restrict, size_t)
+		__attribute__ ((__bounded__(__string__,2,3)));
 #endif
 #if __POSIX_VISIBLE >= 199506
 int	 fdatasync(int);
 #endif
 
 #if __XPG_VISIBLE || __BSD_VISIBLE
-#if __BSD_VISIBLE
-int	crypt_checkpass(const char *, const char *);
-#endif
 char	*crypt(const char *, const char *);
 int	 encrypt(char *, int);
 int	 fchdir(int);
@@ -424,10 +423,7 @@ int	 lchown(const char *, uid_t, gid_t);
 int	 mkstemp(char *);
 char	*mktemp(char *);
 int	 nice(int);
-ssize_t readlink(const char * __restrict, char * __restrict, size_t)
-		__attribute__ ((__bounded__(__string__,2,3)));
 int	 setkey(const char *);
-int	 setpgrp(pid_t pid, pid_t pgrp);	/* obsoleted by setpgid() */
 int	 setregid(gid_t, gid_t);
 int	 setreuid(uid_t, uid_t);
 void	 swab(const void *, void *, size_t);
@@ -492,6 +488,7 @@ int	pipe2(int [2], int);
 #if __BSD_VISIBLE
 int	 acct(const char *);
 int	 closefrom(int);
+int	 crypt_checkpass(const char *, const char *);
 int	 des_cipher(const char *, char *, int32_t, int);
 int	 des_setkey(const char *);
 void	 endusershell(void);
@@ -538,6 +535,7 @@ int	 sethostid(long);
 int	 sethostname(const char *, size_t);
 int	 setlogin(const char *);
 void	*setmode(const char *);
+int	 setpgrp(pid_t _pid, pid_t _pgrp);	/* BSD compat version */
 int	 setresgid(gid_t, gid_t, gid_t);
 int	 setresuid(uid_t, uid_t, uid_t);
 void	 setusershell(void);
