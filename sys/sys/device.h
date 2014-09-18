@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.49 2014/03/29 18:09:31 guenther Exp $	*/
+/*	$OpenBSD: device.h,v 1.50 2014/09/18 18:54:29 kettenis Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -181,6 +181,7 @@ int config_detach(struct device *, int);
 int config_detach_children(struct device *, int);
 int config_deactivate(struct device *);
 int config_suspend(struct device *, int);
+int config_suspend_all(int);
 int config_activate_children(struct device *, int);
 struct device *config_make_softc(struct device *parent,
     struct cfdata *cf);
@@ -189,6 +190,7 @@ void config_pending_incr(void);
 void config_pending_decr(void);
 
 struct device *device_mainbus(void);
+struct device *device_mpath(void);
 struct device *device_lookup(struct cfdriver *, int unit);
 void device_ref(struct device *);
 void device_unref(struct device *);
