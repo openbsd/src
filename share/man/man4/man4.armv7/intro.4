@@ -1,0 +1,98 @@
+.\" $OpenBSD: intro.4,v 1.1 2014/09/18 13:46:54 syl Exp $
+.\" Copyright (c) 2014 Sylvestre Gallon <syl@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: September 18 2014 $
+.Dt INTRO 4 armv7
+.Os
+.Sh NAME
+.Nm intro
+.Nd introduction to special files and hardware support
+.Sh DESCRIPTION
+The manual pages in section 4 describe the special files,
+related driver functions, and networking support
+available in the system.
+In this part of the manual, the SYNOPSIS section of
+each configurable device gives a sample specification
+for use in constructing a system description for the
+.Xr config 8
+program.
+The DIAGNOSTICS section lists messages which may appear on the console
+and/or in the system error log
+.Pa /var/log/messages
+due to errors in device operation;
+see
+.Xr syslogd 8
+for more information.
+.Pp
+This section contains both devices
+which may be configured into the system
+and network related information.
+The networking support is introduced in
+.Xr netintro 4 .
+.Sh DEVICE SUPPORT
+This section describes the hardware supported on the armv7
+platform.
+Software support for these devices comes in two forms.
+A hardware device may be supported with a character or block
+.Em device driver ,
+or it may be used within the networking subsystem and have a
+.Em network interface driver .
+Block and character devices are accessed through files in the file
+system of a special type; see
+.Xr mknod 8 .
+Network interfaces are indirectly accessed through the interprocess
+communication facilities provided by the system; see
+.Xr socket 2 .
+.Pp
+A hardware device is identified to the system at configuration time
+and the appropriate device or network interface driver is then compiled
+into the system.
+When the resultant system is booted, the autoconfiguration facilities
+in the system probe for the device and, if found, enable the software
+support for it.
+If a device does not respond at autoconfiguration
+time it is not accessible at any time afterwards.
+To enable a device which did not autoconfigure,
+the system will have to be rebooted.
+.Pp
+The configuration system is described in
+.Xr autoconf 4 .
+.Sh LIST OF DEVICES
+A complete list of available devices is contained within the pages
+describing the system buses and controllers.
+For example, a PCI device would be listed in the
+.Xr pci 4
+man page.
+The following buses and controllers list these devices:
+.Pp
+.Bl -tag -width 8n -offset 3n -compact
+.It Xr iic 4
+Inter IC (I2C) bus
+.It Xr imx 4
+i.MX6 SoC device bus
+.It Xr omap 4
+omap3, omap4, am335x SoCs device bus
+.It Xr usb 4
+introduction to Universal Serial Bus support
+.El
+.Sh SEE ALSO
+.Xr autoconf 4 ,
+.Xr config 8
+.Sh HISTORY
+The
+armv7
+.Nm
+first appeared in
+.Ox 5.7 .

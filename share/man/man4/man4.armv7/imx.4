@@ -1,0 +1,51 @@
+.\" $OpenBSD: imx.4,v 1.1 2014/09/18 13:46:54 syl Exp $
+.\" Copyright (c) 2014 Sylvestre Gallon <syl@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: September 18 2014 $
+.Dt IMX 4 armv7
+.Os
+.Sh NAME
+.Nm imx
+.Nd i.MX6 SoC onboard I/O bus device
+.Sh SYNOPSIS
+.Cd "imx0 at mainbus?"
+.Sh DESCRIPTION
+The
+.Nm
+interface serves as an abstraction used by the autoconfiguration
+system to help find and attach devices integrated on Freescale i.MX6
+SoC processors.
+.Pp
+.Nm
+provides support for the following devices:
+.Pp
+.Bl -tag -width 12n -offset indent -compact
+.It Xr ehci 4
+USB Enhanced Host Controller Interface
+.It Xr imxenet 4
+Freescale i.MX6 Ethernet device
+.It Xr imxesdhc 4
+SD Host Controller
+.It Xr imxiic 4
+i.MX6 onboard I2C controller
+.El
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr mainbus 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 5.5 .
