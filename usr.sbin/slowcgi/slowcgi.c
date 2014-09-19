@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.34 2014/07/13 21:46:25 claudio Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.35 2014/09/19 21:28:32 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -358,9 +358,9 @@ slowcgi_listen(char *path, struct passwd *pw)
 	mode_t			 old_umask, mode;
 	int			 fd;
 
-	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
+	    0)) == -1)
 		lerr(1, "slowcgi_listen: socket");
-	fcntl(fd, F_SETFD, FD_CLOEXEC);
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
@@ -383,9 +383,6 @@ slowcgi_listen(char *path, struct passwd *pw)
 
 	if (chown(path, pw->pw_uid, pw->pw_gid) == -1)
 		lerr(1, "slowcgi_listen: chown: %s", path);
-
-	if (ioctl(fd, FIONBIO, &on) == -1)
-		lerr(1, "listener ioctl(FIONBIO)");
 
 	if (listen(fd, 5) == -1)
 		lerr(1, "listen");
@@ -420,7 +417,8 @@ accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
 		return -1;
 	}
 
-	if ((ret = accept(sockfd, addr, addrlen)) > -1) {
+	if ((ret = accept4(sockfd, addr, addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC))
+	    > -1) {
 		(*counter)++;
 		ldebug("inflight incremented, now %d", *counter);
 	}
@@ -460,10 +458,6 @@ slowcgi_accept(int fd, short events, void *arg)
 			lerr(1, "accept");
 		}
 	}
-
-	fcntl(s, F_SETFD, FD_CLOEXEC);
-	if (ioctl(s, FIONBIO, &on) == -1)
-		lerr(1, "request ioctl(FIONBIO)");
 
 	c = calloc(1, sizeof(*c));
 	if (c == NULL) {
