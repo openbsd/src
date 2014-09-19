@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.3 2013/11/26 20:33:11 deraadt Exp $ */
+/* $OpenBSD: imxccm.c,v 1.4 2014/09/19 16:43:19 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -421,14 +421,18 @@ imxccm_get_fecclk()
 
 	switch (HREAD4(sc, CCM_ANALOG_PLL_ENET) & 0x3)
 	{
-		case 0:
-			div = 20;
-		case 1:
-			div = 10;
-		case 2:
-			div = 5;
-		case 3:
-			div = 4;
+	case 0:
+		div = 20;
+		break;
+	case 1:
+		div = 10;
+		break;
+	case 2:
+		div = 5;
+		break;
+	case 3:
+		div = 4;
+		break;
 	}
 
 	return 500000 / div ;
