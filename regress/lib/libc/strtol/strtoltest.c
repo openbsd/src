@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtoltest.c,v 1.1 2012/11/18 04:11:09 jsing Exp $	*/
+/*	$OpenBSD: strtoltest.c,v 1.2 2014/09/19 12:32:08 schwarze Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,16 +32,17 @@ struct strtol_test {
 struct strtol_test strtol_tests[] = {
 	{"1234567890",	1234567890L,	'\0',	0,	0},
 	{"0755",	493L,		'\0',	0,	0},
-	{"0xdeadbeef",	3735928559L,	'\0',	0,	0},
+	{"0x7fFFffFf",	2147483647L,	'\0',	0,	0},
 	{"1234567890",	0L,		'1',	1,	EINVAL},
 	{"10101010",	170L,		'\0',	2,	0},
 	{"755",		493L,		'\0',	8,	0},
 	{"1234567890",	1234567890L,	'\0',	10,	0},
 	{"abc",		0L,		'a',	10,	0},
 	{"123xyz",	123L,		'x',	10,	0},
-	{"deadbeef",	3735928559L,	'\0',	16,	0},
-	{"DEADBEEF",	3735928559L,	'\0',	16,	0},
+	{"-080000000",	-2147483648L,	'\0',	16,	0},
+	{"deadbeefdeadbeef", LONG_MAX,	'\0',	16,	ERANGE},
 	{"deadzbeef",	57005L,		'z',	16,	0},
+	{"-quitebig",	LONG_MIN,	'\0',	32,	ERANGE},
 	{"zzz",		46655L,		'\0',	36,	0},
 	{"1234567890",	0L,		'1',	37, 	EINVAL},
 	{"1234567890",	0L,		'1',	123,	EINVAL},
