@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.25 2014/09/18 10:44:37 dlg Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.26 2014/09/19 11:43:31 otto Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 
 		case BPF_LD|BPF_W|BPF_ABS:
 			k = pc->k;
-			if (k + sizeof(int32_t) > buflen) {
+			if (k > buflen || sizeof(int32_t) > buflen - k) {
 #ifdef _KERNEL
 				int merr;
 
@@ -200,7 +200,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 
 		case BPF_LD|BPF_H|BPF_ABS:
 			k = pc->k;
-			if (k + sizeof(int16_t) > buflen) {
+			if (k > buflen || sizeof(int16_t) > buflen - k) {
 #ifdef _KERNEL
 				int merr;
 
@@ -247,7 +247,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 
 		case BPF_LD|BPF_W|BPF_IND:
 			k = X + pc->k;
-			if (k + sizeof(int32_t) > buflen) {
+			if (k > buflen || sizeof(int32_t) > buflen - k) {
 #ifdef _KERNEL
 				int merr;
 
@@ -266,7 +266,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 
 		case BPF_LD|BPF_H|BPF_IND:
 			k = X + pc->k;
-			if (k + sizeof(int16_t) > buflen) {
+			if (k > buflen || sizeof(int16_t) > buflen - k) {
 #ifdef _KERNEL
 				int merr;
 
