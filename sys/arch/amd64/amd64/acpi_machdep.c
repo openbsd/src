@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.62 2014/07/16 07:42:50 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.63 2014/09/19 20:02:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -317,7 +317,7 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 		 * when we get to DVACT_POWERDOWN.
 		 */
 		boothowto |= RB_POWERDOWN;
-		config_suspend(device_mainbus(), DVACT_POWERDOWN);
+		config_suspend_all(DVACT_POWERDOWN);
 		boothowto &= ~RB_POWERDOWN;
 
 		acpi_sleep_pm(sc, state);

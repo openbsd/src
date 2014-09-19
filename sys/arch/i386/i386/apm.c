@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.106 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: apm.c,v 1.107 2014/09/19 20:02:25 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -241,26 +241,25 @@ apm_perror(const char *str, struct apmregs *regs)
 void
 apm_suspend(int state)
 {
-	struct device *mainbus = device_mainbus();
 	extern int perflevel;
 	int s;
 
 #if NWSDISPLAY > 0
 	wsdisplay_suspend();
 #endif /* NWSDISPLAY > 0 */
-	config_suspend(mainbus, DVACT_QUIESCE);
+	config_suspend_all(DVACT_QUIESCE);
 	bufq_quiesce();
 
 	s = splhigh();
 	disable_intr();
-	config_suspend(mainbus, DVACT_SUSPEND);
+	config_suspend_all(DVACT_SUSPEND);
 
 	/* XXX
 	 * Flag to disk drivers that they should "power down" the disk
 	 * when we get to DVACT_POWERDOWN.
 	 */
 	boothowto |= RB_POWERDOWN;
-	config_suspend(mainbus, DVACT_POWERDOWN);
+	config_suspend_all(DVACT_POWERDOWN);
 	boothowto &= ~RB_POWERDOWN;
 
 	/* Send machine to sleep */
@@ -273,7 +272,7 @@ apm_suspend(int state)
 		rtcstart();		/* in i8254 mode, rtc is profclock */
 	inittodr(time_second);
 
-	config_suspend(mainbus, DVACT_RESUME);
+	config_suspend_all(DVACT_RESUME);
 	enable_intr();
 	splx(s);
 
@@ -282,7 +281,7 @@ apm_suspend(int state)
 		cpu_setperf(perflevel);
 	bufq_restart();
 
-	config_suspend(mainbus, DVACT_WAKEUP);
+	config_suspend_all(DVACT_WAKEUP);
 
 #if NWSDISPLAY > 0
 	wsdisplay_resume();

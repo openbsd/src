@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.99 2014/07/21 01:57:55 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.100 2014/09/19 20:02:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1243,7 +1243,7 @@ hibernate_resume(void)
 		goto fail;
 
 	DPRINTF("hibernate: quiescing devices\n");
-	if (config_suspend(device_mainbus(), DVACT_QUIESCE) != 0)
+	if (config_suspend_all(DVACT_QUIESCE) != 0)
 		goto fail;
 
 	(void) splhigh();
@@ -1251,7 +1251,7 @@ hibernate_resume(void)
 	cold = 1;
 
 	DPRINTF("hibernate: suspending devices\n");
-	if (config_suspend(device_mainbus(), DVACT_SUSPEND) != 0) {
+	if (config_suspend_all(DVACT_SUSPEND) != 0) {
 		cold = 0;
 		hibernate_enable_intr_machdep();
 		goto fail;

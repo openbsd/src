@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.268 2014/09/08 20:25:03 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.269 2014/09/19 20:02:25 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2110,7 +2110,6 @@ acpi_indicator(struct acpi_softc *sc, int led_state)
 int
 acpi_sleep_state(struct acpi_softc *sc, int state)
 {
-	struct device *mainbus = device_mainbus();
 	int error = ENXIO;
 	int s;
 
@@ -2139,7 +2138,7 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	wsdisplay_suspend();
 #endif /* NWSDISPLAY > 0 */
 
-	if (config_suspend(mainbus, DVACT_QUIESCE))
+	if (config_suspend_all(DVACT_QUIESCE))
 		goto fail_quiesce;
 
 #ifdef HIBERNATE
@@ -2161,7 +2160,7 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	disable_intr();	/* PSL_I for resume; PIC/APIC broken until repair */
 	cold = 1;	/* Force other code to delay() instead of tsleep() */
 
-	if (config_suspend(mainbus, DVACT_SUSPEND) != 0)
+	if (config_suspend_all(DVACT_SUSPEND) != 0)
 		goto fail_suspend;
 	acpi_sleep_clocks(sc, state);
 
@@ -2200,7 +2199,7 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	acpi_resume_cpu(sc);
 
 fail_pts:
-	config_suspend(mainbus, DVACT_RESUME);
+	config_suspend_all(DVACT_RESUME);
 
 fail_suspend:
 	cold = 0;
@@ -2220,7 +2219,7 @@ fail_suspend:
 	bufq_restart();
 
 fail_quiesce:
-	config_suspend(mainbus, DVACT_WAKEUP);
+	config_suspend_all(DVACT_WAKEUP);
 
 #if NWSDISPLAY > 0
 	wsdisplay_resume();
