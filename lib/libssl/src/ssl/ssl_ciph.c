@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.67 2014/09/07 12:16:23 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.68 2014/09/19 16:02:35 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -412,6 +412,10 @@ static const SSL_CIPHER cipher_aliases[] = {
 	{
 		.name = SSL_TXT_CAMELLIA,
 		.algorithm_enc = SSL_CAMELLIA128|SSL_CAMELLIA256,
+	},
+	{
+		.name = SSL_TXT_CHACHA20,
+		.algorithm_enc = SSL_CHACHA20POLY1305,
 	},
 	
 	/* MAC aliases */
