@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.103 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.104 2014/09/19 02:52:55 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -224,9 +224,7 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 	/*
 	 * Prepend the data link type as a mbuf tag
 	 */
-	mtag = m_tag_get(PACKET_TAG_DLT, sizeof(u_int), M_NOWAIT);
-	if (mtag == NULL)
-		return (ENOMEM);
+	mtag = m_tag_get(PACKET_TAG_DLT, sizeof(u_int), M_WAIT);
 	*(u_int *)(mtag + 1) = linktype;
 	m_tag_prepend(m, mtag);
 
