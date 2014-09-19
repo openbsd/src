@@ -131,6 +131,7 @@
 ./etc/ppp/options.sample
 ./etc/protocols
 ./etc/rc
+./etc/rc.conf
 ./etc/rc.d
 ./etc/rc.d/amd
 ./etc/rc.d/apmd
