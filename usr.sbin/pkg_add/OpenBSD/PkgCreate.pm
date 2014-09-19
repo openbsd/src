@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.110 2014/09/16 10:01:51 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.111 2014/09/19 16:05:13 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1406,7 +1406,7 @@ sub save_history
 	# split list
 	# - first, unknown stuff
 	for my $h (@new) {
-		if ($known{$h} && $entries->{$h}[0]->{name} !~ /\.py$/) {
+		if ($known{$h}) {
 			$found{$h} = $known{$h};
 		} else {
 			print $f "$h\n" if defined $f;
