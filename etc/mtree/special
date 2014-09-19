@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.110 2014/09/16 17:08:45 ajacoutot Exp $
+#	$OpenBSD: special,v 1.111 2014/09/19 06:18:45 ajacoutot Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -191,8 +191,6 @@ run		type=dir mode=0755 uname=root gname=wheel
 utmp		type=file mode=0664 uname=root gname=utmp
 ..	#var/run
 spool		type=dir mode=0755 uname=root gname=wheel
-clientmqueue	type=dir mode=0770 uname=smmsp gname=smmsp ignore
-..	#var/spool/clientmqueue
 ftp		type=dir mode=0555 uname=root gname=wheel optional
 bin		type=dir mode=0511 uname=root gname=wheel optional
 ..	#var/spool/ftp/bin
@@ -210,8 +208,6 @@ hidden		type=dir mode=0111 uname=root gname=wheel optional ignore
 pub		type=dir mode=0555 uname=root gname=wheel optional ignore
 ..	#var/spool/ftp/pub
 ..	#var/spool/ftp
-mqueue		type=dir mode=0700 uname=root gname=wheel ignore
-..	#var/spool/mqueue
 output		type=dir mode=0775 uname=root gname=daemon ignore
 ..	#var/spool/output
 uucp		type=dir mode=0755 uname=uucp gname=daemon ignore
