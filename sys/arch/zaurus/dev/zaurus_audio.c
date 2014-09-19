@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_audio.c,v 1.17 2013/08/30 14:18:38 ratchov Exp $	*/
+/*	$OpenBSD: zaurus_audio.c,v 1.18 2014/09/19 16:45:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -633,9 +633,11 @@ zaudio_set_params(void *hdl, int setmode, int usemode,
 			case 1:
 				play->factor = 4;
 				play->sw_code = alaw_to_slinear16_le_mts;
+				break;
 			case 2:
 				play->factor = 2;
 				play->sw_code = alaw_to_slinear16_le;
+				break;
 			default:
 				return (EINVAL);
 			}
