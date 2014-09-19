@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.161 2014/08/18 17:56:45 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.162 2014/09/19 17:34:05 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -804,7 +804,6 @@ lcsplx(int ipl)
 __dead void
 boot(int howto)
 {
-	struct device *mainbus;
 	static int syncing;
 
 	if (cold) {
@@ -835,9 +834,7 @@ boot(int howto)
 
 haltsys:
 	doshutdownhooks();
-	mainbus = device_mainbus();
-	if (mainbus != NULL)
-		config_suspend(mainbus, DVACT_POWERDOWN);
+	config_suspend_all(DVACT_POWERDOWN);
 
 	if ((howto & RB_HALT) != 0) {
 		if ((howto & RB_POWERDOWN) != 0) {

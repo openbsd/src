@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.56 2014/09/06 10:45:29 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.57 2014/09/19 17:34:05 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1032,7 +1032,6 @@ __dead void
 boot(int howto)
 {
 	static int syncing;
-	struct device *mainbus;
 
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
@@ -1062,9 +1061,7 @@ boot(int howto)
 
 haltsys:
 	doshutdownhooks();
-	mainbus = device_mainbus();
-	if (mainbus != NULL)
-		config_suspend(mainbus, DVACT_POWERDOWN);
+	config_suspend_all(DVACT_POWERDOWN);
 
 	if ((howto & RB_HALT) != 0) {
 		if ((howto & RB_POWERDOWN) != 0) {
