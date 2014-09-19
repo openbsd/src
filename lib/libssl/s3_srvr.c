@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.83 2014/09/07 12:16:23 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.84 2014/09/19 14:32:24 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1605,7 +1605,7 @@ ssl3_send_server_key_exchange(SSL *s)
 			goto err;
 		}
 		d = (unsigned char *)s->init_buf->data;
-		p = &(d[4]);
+		p = &d[4];
 
 		for (i = 0; i < 4 && r[i] != NULL; i++) {
 			s2n(nr[i], p);
@@ -1652,12 +1652,12 @@ ssl3_send_server_key_exchange(SSL *s)
 					    (num == 2) ? s->ctx->md5 :
 					    s->ctx->sha1, NULL);
 					EVP_DigestUpdate(&md_ctx,
-					    &(s->s3->client_random[0]),
+					    s->s3->client_random,
 					    SSL3_RANDOM_SIZE);
 					EVP_DigestUpdate(&md_ctx,
-					    &(s->s3->server_random[0]),
+					    s->s3->server_random,
 					    SSL3_RANDOM_SIZE);
-					EVP_DigestUpdate(&md_ctx, &(d[4]), n);
+					EVP_DigestUpdate(&md_ctx, &d[4], n);
 					EVP_DigestFinal_ex(&md_ctx, q,
 					    (unsigned int *)&i);
 					q += i;
@@ -1687,13 +1687,13 @@ ssl3_send_server_key_exchange(SSL *s)
 				}
 				EVP_SignInit_ex(&md_ctx, md, NULL);
 				EVP_SignUpdate(&md_ctx,
-				    &(s->s3->client_random[0]),
+				    s->s3->client_random,
 				    SSL3_RANDOM_SIZE);
 				EVP_SignUpdate(&md_ctx,
-				    &(s->s3->server_random[0]),
+				    s->s3->server_random,
 				    SSL3_RANDOM_SIZE);
-				EVP_SignUpdate(&md_ctx, &(d[4]), n);
-				if (!EVP_SignFinal(&md_ctx, &(p[2]),
+				EVP_SignUpdate(&md_ctx, &d[4], n);
+				if (!EVP_SignFinal(&md_ctx, &p[2],
 					(unsigned int *)&i, pkey)) {
 					SSLerr(
 					    SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,

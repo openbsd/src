@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.89 2014/09/07 12:16:23 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.90 2014/09/19 14:32:23 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -661,7 +661,7 @@ ssl3_client_hello(SSL *s)
 		RAND_pseudo_bytes(p, SSL3_RANDOM_SIZE);
 
 		/* Do the message type and length last */
-		d = p = &(buf[4]);
+		d = p = &buf[4];
 
 		/*
 		 * Version indicates the negotiated version: for example from
@@ -1489,10 +1489,10 @@ ssl3_get_key_exchange(SSL *s)
 				    (num == 2) ?  s->ctx->md5 : s->ctx->sha1,
 				    NULL);
 				EVP_DigestUpdate(&md_ctx,
-				    &(s->s3->client_random[0]),
+				    s->s3->client_random,
 				    SSL3_RANDOM_SIZE);
 				EVP_DigestUpdate(&md_ctx,
-				    &(s->s3->server_random[0]),
+				    s->s3->server_random,
 				    SSL3_RANDOM_SIZE);
 				EVP_DigestUpdate(&md_ctx, param, param_len);
 				EVP_DigestFinal_ex(&md_ctx, q,
@@ -1517,9 +1517,9 @@ ssl3_get_key_exchange(SSL *s)
 			}
 		} else {
 			EVP_VerifyInit_ex(&md_ctx, md, NULL);
-			EVP_VerifyUpdate(&md_ctx, &(s->s3->client_random[0]),
+			EVP_VerifyUpdate(&md_ctx, s->s3->client_random,
 			    SSL3_RANDOM_SIZE);
-			EVP_VerifyUpdate(&md_ctx, &(s->s3->server_random[0]),
+			EVP_VerifyUpdate(&md_ctx, s->s3->server_random,
 			    SSL3_RANDOM_SIZE);
 			EVP_VerifyUpdate(&md_ctx, param, param_len);
 			if (EVP_VerifyFinal(&md_ctx, p,(int)n, pkey) <= 0) {
