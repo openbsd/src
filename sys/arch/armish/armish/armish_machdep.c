@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_machdep.c,v 1.31 2014/07/21 17:25:47 uebayasi Exp $ */
+/*	$OpenBSD: armish_machdep.c,v 1.32 2014/09/20 09:28:24 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -249,8 +249,6 @@ void	board_powerdown(void);
 __dead void
 boot(int howto)
 {
-	struct device *mainbus;
-
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
 			howto |=  RB_HALT;
@@ -278,9 +276,7 @@ boot(int howto)
 	
 haltsys:
 	doshutdownhooks();
-	mainbus = device_mainbus();
-	if (mainbus != NULL)
-		config_suspend(mainbus, DVACT_POWERDOWN);
+	config_suspend_all(DVACT_POWERDOWN);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;

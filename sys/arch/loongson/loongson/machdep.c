@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.58 2014/07/21 17:25:47 uebayasi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.59 2014/09/20 09:28:24 kettenis Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -902,8 +902,6 @@ int	waittime = -1;
 __dead void
 boot(int howto)
 {
-	struct device *mainbus;
-
 	if (curproc)
 		savectx(curproc->p_addr, 0);
 
@@ -935,11 +933,8 @@ boot(int howto)
 
 haltsys:
 	doshutdownhooks();
-	mainbus = device_mainbus();
-	if (mainbus != NULL) {
-		pci_dopm = 0;
-		config_suspend(mainbus, DVACT_POWERDOWN);
-	}
+	pci_dopm = 0;
+	config_suspend_all(DVACT_POWERDOWN);
 
 	if ((howto & RB_HALT) != 0) {
 		if ((howto & RB_POWERDOWN) != 0) {

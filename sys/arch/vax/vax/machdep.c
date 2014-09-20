@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.143 2014/07/21 17:25:47 uebayasi Exp $ */
+/* $OpenBSD: machdep.c,v 1.144 2014/09/20 09:28:24 kettenis Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -511,8 +511,6 @@ static	volatile int showto; /* Must be volatile to survive MM on -> MM off */
 __dead void
 boot(int howto)
 {
-	struct device *mainbus;
-
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
@@ -540,9 +538,7 @@ boot(int howto)
 
 haltsys:
 	doshutdownhooks();
-	mainbus = device_mainbus();
-	if (mainbus != NULL)
-		config_suspend(mainbus, DVACT_POWERDOWN);
+	config_suspend_all(DVACT_POWERDOWN);
 
 	if ((howto & RB_HALT) != 0) {
 		if (dep_call->cpu_halt)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.42 2014/07/21 17:25:47 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.43 2014/09/20 09:28:24 kettenis Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -518,7 +518,6 @@ boot(int howto)
 {
 	int i;
 	static char str[4];	/* room for "-sd\0" */
-	struct device *mainbus;
 
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
@@ -549,9 +548,7 @@ boot(int howto)
 
 haltsys:
 	doshutdownhooks();
-	mainbus = device_mainbus();
-	if (mainbus != NULL)
-		config_suspend(mainbus, DVACT_POWERDOWN);
+	config_suspend_all(DVACT_POWERDOWN);
 
 	if ((howto & RB_HALT) != 0 || (howto & RB_POWERDOWN) != 0) {
 		printf("halted\n\n");

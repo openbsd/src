@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.51 2014/07/21 17:25:47 uebayasi Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.52 2014/09/20 09:28:25 kettenis Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -292,7 +292,6 @@ int comcnmode = CONMODE;
 __dead void
 boot(int howto)
 {
-	struct device *mainbus;
 	extern int lid_suspend;
 
 	if ((howto & RB_POWERDOWN) != 0)
@@ -325,9 +324,7 @@ boot(int howto)
 	
 haltsys:
 	doshutdownhooks();
-	mainbus = device_mainbus();
-	if (mainbus != NULL)
-		config_suspend(mainbus, DVACT_POWERDOWN);
+	config_suspend_all(DVACT_POWERDOWN);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;

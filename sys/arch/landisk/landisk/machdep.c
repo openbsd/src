@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.40 2014/07/21 17:25:47 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.41 2014/09/20 09:28:24 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -193,8 +193,6 @@ landisk_startup(int howto, char *_esym)
 __dead void
 boot(int howto)
 {
-	struct device *mainbus;
-
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
@@ -222,9 +220,7 @@ boot(int howto)
 
 haltsys:
 	doshutdownhooks();
-	mainbus = device_mainbus();
-	if (mainbus != NULL)
-		config_suspend(mainbus, DVACT_POWERDOWN);
+	config_suspend_all(DVACT_POWERDOWN);
 
 	if ((howto & RB_POWERDOWN) != 0) {
 		_reg_write_1(LANDISK_PWRMNG, PWRMNG_POWEROFF);
