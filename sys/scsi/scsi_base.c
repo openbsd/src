@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.216 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.217 2014/09/20 16:18:23 kettenis Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ scsi_plug_probe(void *xp, void *null)
 }
 
 void
-scsi_plug_detach(void *xsc, void *xp)
+scsi_plug_detach(void *xp, void *null)
 {
 	struct scsi_plug *p = xp;
 	struct scsibus_softc *sc = p->sc;
