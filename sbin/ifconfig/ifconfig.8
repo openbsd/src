@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.245 2014/07/12 12:46:28 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.246 2014/09/20 20:30:18 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: July 12 2014 $
+.Dd $Mdocdate: September 20 2014 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -382,8 +382,14 @@ Disable MPLS on the interface.
 .It Cm mtu Ar value
 Set the MTU for this device to the given
 .Ar value .
-Cloned routes will inherit this value as a default.
-Currently, not all devices support setting the MTU.
+Cloned routes inherit this value as a default.
+For Ethernet devices which support setting the MTU,
+a value greater than 1500 enables jumbo frames.
+The
+.Sy hardmtu
+output from
+.Cm hwfeatures
+shows the maximum supported MTU.
 .It Cm netmask Ar mask
 (inet and inet6)
 Specify how much of the address to reserve for subdividing
