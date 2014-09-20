@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.29 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.30 2014/09/20 16:15:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -233,16 +233,10 @@ i915_gem_execbuffer_relocate_entry(struct drm_i915_gem_object *obj,
 
 		/* Map the page containing the relocation we're going to perform.  */
 		reloc->offset += obj->gtt_offset;
-		if ((ret = agp_map_subregion(dev_priv->agph,
-		    trunc_page(reloc->offset), PAGE_SIZE, &bsh)) != 0) {
-			DRM_ERROR("map failed...\n");
-			return -ret;
-		}
-
+		agp_map_atomic(dev_priv->agph, trunc_page(reloc->offset), &bsh);
 		bus_space_write_4(dev_priv->bst, bsh, reloc->offset & PAGE_MASK,	
 		    reloc->delta);
-
-		agp_unmap_subregion(dev_priv->agph, bsh, PAGE_SIZE);
+		agp_unmap_atomic(dev_priv->agph, bsh);
 	}
 
 	/* and update the user's relocation entry */

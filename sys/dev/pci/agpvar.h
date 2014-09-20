@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.30 2014/03/26 14:41:41 mpi Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.31 2014/09/20 16:15:16 kettenis Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -177,6 +177,8 @@ int	agp_map_subregion(struct agp_map *, bus_size_t, bus_size_t,
 	    bus_space_handle_t *);
 void	agp_unmap_subregion(struct agp_map *, bus_space_handle_t,
 	    bus_size_t);
+void	agp_map_atomic(struct agp_map *, bus_size_t, bus_space_handle_t *);
+void	agp_unmap_atomic(struct agp_map *, bus_space_handle_t);
 
 int	agp_alloc_dmamem(bus_dma_tag_t, size_t, bus_dmamap_t *,
 	    bus_addr_t *, bus_dma_segment_t *);

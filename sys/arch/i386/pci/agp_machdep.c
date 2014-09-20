@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.18 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.19 2014/09/20 16:15:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -74,38 +74,25 @@ struct agp_map {
 	bus_addr_t	addr;
 	bus_size_t	size;
 	int		flags;
+	vaddr_t		va;
 };
 
-extern struct extent	*ioport_ex;
 extern struct extent	*iomem_ex;
 
 int
 agp_init_map(bus_space_tag_t tag, bus_addr_t address, bus_size_t size,
     int flags, struct agp_map **mapp)
 {
-	struct extent	*ex;
-	struct agp_map	*map;
-	int		 error;
+	struct agp_map *map;
+	int error;
 
-	switch (tag) {
-	case I386_BUS_SPACE_IO:
-		ex = ioport_ex;
-		if (flags & BUS_SPACE_MAP_LINEAR)
-			return (EINVAL);
-		break;
+	KASSERT(tag == I386_BUS_SPACE_MEM);
 
-	case I386_BUS_SPACE_MEM:
-		ex = iomem_ex;
-		break;
-
-	default:
-		panic("agp_init_map: bad bus space tag");
-	}
 	/*
 	 * We grab the extent out of the bus region ourselves
 	 * so we don't need to do these allocations every time.
 	 */
-	error = extent_alloc_region(ex, address, size,
+	error = extent_alloc_region(iomem_ex, address, size,
 	    EX_NOWAIT | EX_MALLOCOK);
 	if (error)
 		return (error);
@@ -119,6 +106,12 @@ agp_init_map(bus_space_tag_t tag, bus_addr_t address, bus_size_t size,
 	map->size = size;
 	map->flags = flags;
 
+	map->va = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_waitok);
+	if (map->va == 0) {
+		free(map, M_AGP, sizeof(*map));
+		return (ENOMEM);
+	}
+
 	*mapp = map;
 	return (0);
 }
@@ -126,25 +119,11 @@ agp_init_map(bus_space_tag_t tag, bus_addr_t address, bus_size_t size,
 void
 agp_destroy_map(struct agp_map *map)
 {
-	struct extent	*ex;
-
-	switch (map->bst) {
-	case I386_BUS_SPACE_IO:
-		ex = ioport_ex;
-		break;
-
-	case I386_BUS_SPACE_MEM:
-		ex = iomem_ex;
-		break;
-
-	default:
-		panic("agp_destroy_map: bad bus space tag");
-	}
-
-	if (extent_free(ex, map->addr, map->size,
+	if (extent_free(iomem_ex, map->addr, map->size,
 	    EX_NOWAIT | EX_MALLOCOK ))
-		printf("agp_destroy_map: can't free region\n");
-	free(map, M_AGP, 0);
+		printf("%s: can't free region\n",__func__);
+	km_free((void *)map->va, PAGE_SIZE, &kv_any, &kp_none);
+	free(map, M_AGP, sizeof(*map));
 }
 
 
@@ -161,4 +140,34 @@ agp_unmap_subregion(struct agp_map *map, bus_space_handle_t bsh,
     bus_size_t size)
 {
 	return (_bus_space_unmap(map->bst, bsh, size, NULL));
+}
+
+void
+agp_map_atomic(struct agp_map *map, bus_size_t offset,
+    bus_space_handle_t *bshp)
+{
+	int pmap_flags = PMAP_NOCACHE;
+	paddr_t pa;
+
+	KASSERT((offset & PGOFSET) == 0);
+
+	if (map->flags & BUS_SPACE_MAP_CACHEABLE)
+		pmap_flags = 0;
+	else if (map->flags & BUS_SPACE_MAP_PREFETCHABLE)
+		pmap_flags = PMAP_WC;
+
+	pa = bus_space_mmap(map->bst, map->addr, offset, 0, 0);
+	pmap_kenter_pa(map->va, pa | pmap_flags, VM_PROT_READ | VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
+
+	*bshp = (bus_space_handle_t)map->va;
+}
+
+void
+agp_unmap_atomic(struct agp_map *map, bus_space_handle_t bsh)
+{
+	KASSERT(bsh == (bus_space_handle_t)map->va);
+
+	pmap_kremove(map->va, PAGE_SIZE);
+	pmap_update(pmap_kernel());
 }

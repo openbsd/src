@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.12 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.13 2014/09/20 16:15:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -90,7 +90,7 @@ agp_init_map(bus_space_tag_t tag, bus_addr_t address, bus_size_t size,
 	map->size = size;
 	
 	if ((err = bus_space_map(tag, address, size, flags, &map->bsh)) != 0) {
-		free(map, M_AGP, 0);
+		free(map, M_AGP, sizeof(*map));
 		return (err);
 	}
 	*mapp = map;
@@ -101,7 +101,7 @@ void
 agp_destroy_map(struct agp_map *map)
 {
 	bus_space_unmap(map->bst, map->bsh, map->size);
-	free(map, M_AGP, 0);
+	free(map, M_AGP, sizeof(*map));
 }
 
 
@@ -109,15 +109,25 @@ int
 agp_map_subregion(struct agp_map *map, bus_size_t offset, bus_size_t size,
     bus_space_handle_t *bshp)
 {
-	if (offset > map->size || size > map->size || offset + size > map->size)
-		return (EINVAL);
 	return (bus_space_subregion(map->bst, map->bsh, offset, size, bshp));
-	
 }
 
 void
 agp_unmap_subregion(struct agp_map *map, bus_space_handle_t bsh,
     bus_size_t size)
+{
+	/* subregion doesn't need unmapping, do nothing */
+}
+
+void
+agp_map_atomic(struct agp_map *map, bus_size_t offset,
+    bus_space_handle_t *bshp)
+{
+	agp_map_subregion(map, offset, PAGE_SIZE, bshp);
+}
+
+void
+agp_unmap_atomic(struct agp_map *map, bus_space_handle_t bsh)
 {
 	/* subregion doesn't need unmapping, do nothing */
 }
