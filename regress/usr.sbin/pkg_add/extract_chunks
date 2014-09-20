@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: extract_chunks,v 1.1 2014/09/20 08:01:31 espie Exp $
+# $OpenBSD: extract_chunks,v 1.2 2014/09/20 09:35:54 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -41,7 +41,7 @@ for my $f (@ARGV) {
 	while (1) {
 		$i++;
 		# build chunk name in the current directory
-		my $out ="$stem.tar.".sprintf("%03d", $i);
+		my $out ="$stem.tar.".sprintf("%04d", $i);
 		open my $fh, ">", $out or die "Can't open chunk $out: $!";
 		while (1) {
 			my $r = $z->read($buffer, $length);
