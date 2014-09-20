@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.111 2014/09/19 16:05:13 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.112 2014/09/20 07:41:14 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -148,6 +148,7 @@ sub pretend_to_archive
 
 sub record_digest {}
 sub archive {}
+sub really_archived { 0 }
 sub comment_create_package {}
 sub grab_manpages {}
 
@@ -315,6 +316,7 @@ sub new
 sub comment_create_package
 {
 	my ($self, $state) = @_;
+	$self->SUPER::comment_create_package($state);
 	$state->say("Gzip: next chunk");
 }
 
@@ -416,6 +418,13 @@ sub archive
 	$state->new_gstream;
 }
 
+sub comment_create_package
+{
+	my ($self, $state) = @_;
+	$self->SUPER::comment_create_package($state);
+	$state->say("GZIP: END OF SIGNATURE CHUNK");
+}
+
 package OpenBSD::PackingElement::Cwd;
 sub archive
 {
@@ -465,6 +474,7 @@ sub archive
 	$o->write unless $state->{bad};
 }
 
+sub really_archived { 1 }
 sub pretend_to_archive
 {
 	my ($self, $state) = @_;
@@ -1427,11 +1437,15 @@ sub save_history
 	my $i = 0;
 	my $end_marker = OpenBSD::PackingElement::StreamMarker->new;
 	while (@$list > 0) {
-#		if ($i++ % 16 == 0) {
+		my $e = pop @$list;
+#		if ($e->really_archived && $i++ % 16 == 0) {
 #			unshift @$l, $end_marker;
 #		}
-		my $e = pop @$list;
 		unshift @$l, $e;
+	}
+	# remove extraneous marker if @$tail is empty.
+	if ($l->[-1] eq $end_marker) {
+		pop @$l;
 	}
 	return $l;
 }
