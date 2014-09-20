@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.74 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.75 2014/09/20 21:17:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -696,6 +696,31 @@ fast_user_write(struct io_mapping *mapping,
 	io_mapping_unmap_atomic(vaddr_atomic);
 	return unwritten;
 }
+#else
+/* This is the fast write path which cannot handle
+ * page faults in the source data
+ */
+
+static inline int
+fast_user_write(struct drm_i915_private *dev_priv,
+		bus_size_t page_base, int page_offset,
+		char __user *user_data,
+		int length)
+{
+	bus_space_handle_t bsh;
+	void __iomem *vaddr_atomic;
+	void *vaddr;
+	unsigned long unwritten;
+
+	agp_map_atomic(dev_priv->agph, page_base, &bsh);
+	vaddr_atomic = bus_space_vaddr(dev_priv->bst, bsh);
+	/* We can use the cpu mem copy function because this is X86. */
+	vaddr = (void __force*)vaddr_atomic + page_offset;
+	unwritten = __copy_from_user_inatomic_nocache(vaddr,
+						      user_data, length);
+	agp_unmap_atomic(dev_priv->agph, bsh);
+	return unwritten;
+}
 #endif
 
 /**
@@ -709,11 +734,10 @@ i915_gem_gtt_pwrite_fast(struct drm_device *dev,
 			 struct drm_file *file)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
-	bus_space_handle_t bsh;
-	bus_addr_t offset;
-	bus_size_t size;
-	char *vaddr;
-	int ret;
+	ssize_t remain;
+	bus_size_t offset, page_base;
+	char __user *user_data;
+	int page_offset, page_length, ret;
 
 	ret = i915_gem_object_pin(obj, 0, true, true);
 	if (ret)
@@ -727,23 +751,38 @@ i915_gem_gtt_pwrite_fast(struct drm_device *dev,
 	if (ret)
 		goto out_unpin;
 
+	user_data = (char __user *) (uintptr_t) args->data_ptr;
+	remain = args->size;
+
 	offset = obj->gtt_offset + args->offset;
-	size = round_page(offset + args->size) - trunc_page(offset);
 
-	if ((ret = agp_map_subregion(dev_priv->agph,
-	    trunc_page(offset), size, &bsh)) != 0)
-		goto out_unpin;
-	vaddr = bus_space_vaddr(dev_priv->bst, bsh);
-	if (vaddr == NULL) {
-		ret = -EFAULT;
-		goto out_unmap;
+	while (remain > 0) {
+		/* Operation in this page
+		 *
+		 * page_base = page offset within aperture
+		 * page_offset = offset within page
+		 * page_length = bytes to copy for this page
+		 */
+		page_base = offset & ~PAGE_MASK;
+		page_offset = offset_in_page(offset);
+		page_length = remain;
+		if ((page_offset + remain) > PAGE_SIZE)
+			page_length = PAGE_SIZE - page_offset;
+
+		/* If we get a fault while copying data, then (presumably) our
+		 * source page isn't available.  Return the error and we'll
+		 * retry in the slow path.
+		 */
+		if (fast_user_write(dev_priv, page_base,
+				    page_offset, user_data, page_length)) {
+			ret = -EFAULT;
+			goto out_unpin;
+		}
+
+		remain -= page_length;
+		user_data += page_length;
+		offset += page_length;
 	}
-
-	ret = -copyin((char *)(uintptr_t)args->data_ptr,
-	    vaddr + (offset & PAGE_MASK), args->size);
-
-out_unmap:
-	agp_unmap_subregion(dev_priv->agph, bsh, size);
 
 out_unpin:
 	i915_gem_object_unpin(obj);

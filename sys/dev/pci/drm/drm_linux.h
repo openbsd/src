@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.1 2014/04/01 20:16:50 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.2 2014/09/20 21:17:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#define __force
 
 #if defined(__i386__) || defined(__amd64__)
 
