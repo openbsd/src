@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: Signer.pm,v 1.4 2014/03/24 11:58:15 espie Exp $
+# $OpenBSD: Signer.pm,v 1.5 2014/09/20 09:04:31 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -129,7 +129,8 @@ sub create_archive
 	my ($state, $filename, $dir) = @_;
 	require IO::Compress::Gzip;
 	my $level = $state->{subst}->value('COMPRESSION_LEVEL') // 6;
-	my $fh = IO::Compress::Gzip->new($filename, -Level => $level) or
+	my $fh = IO::Compress::Gzip->new($filename, 
+	    -Level => $level, -Time => 0) or
 		$state->fatal("Can't create archive #1: #2", $filename, $!);
 	$state->{archive_filename} = $filename;
 	return OpenBSD::Ustar->new($fh, $state, $dir);
@@ -141,7 +142,10 @@ sub new_gstream
 	close($state->{archive}{fh});
 	my $level = $state->{subst}->value('COMPRESSION_LEVEL') // 6;
 	$state->{archive}{fh} =IO::Compress::Gzip->new(
-	    $state->{archive_filename}, -Level => $level, -Append => 1);
+	    $state->{archive_filename}, 
+	    -Level => $level, -Time => 0, -Append => 1) or
+		$state->fatal("Can't append to archive #1: #2", 
+		    $state->{archive_filename}, $!);
 }
 
 sub add_signature
