@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.44 2014/09/21 14:15:01 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.45 2014/09/21 14:52:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -1087,7 +1087,10 @@ vdsk_submit_cmd(struct scsi_xfer *xs)
 		ncookies++;
 	}
 
-	sc->sc_vd->vd_desc[desc].hdr.ack = 1;
+	if (ISSET(xs->flags, SCSI_POLL) == 0)
+		sc->sc_vd->vd_desc[desc].hdr.ack = 1;
+	else
+		sc->sc_vd->vd_desc[desc].hdr.ack = 0;
 	sc->sc_vd->vd_desc[desc].operation = operation;
 	sc->sc_vd->vd_desc[desc].slice = VD_SLICE_NONE;
 	sc->sc_vd->vd_desc[desc].status = 0xffffffff;
