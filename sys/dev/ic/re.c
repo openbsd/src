@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.156 2014/09/06 04:46:58 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.157 2014/09/21 16:52:11 jsg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -720,6 +720,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		    RL_FLAG_AUTOPAD | RL_FLAG_JUMBOV2 | RL_FLAG_CMDSTOP_WAIT_TXQ |
 		    RL_FLAG_WOL_MANLINK;
 		sc->rl_max_mtu = RL_JUMBO_MTU_6K;
+		break;
 	case RL_HWREV_8168F:
 		sc->rl_flags |= RL_FLAG_EARLYOFF;
 		/* FALLTHROUGH */
