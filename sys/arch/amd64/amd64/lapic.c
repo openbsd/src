@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.32 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.33 2014/09/21 16:14:52 sf Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -498,13 +498,13 @@ x86_ipi_init(int target)
 
 	i82489_icr_wait();
 
-	return (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) ? EBUSY : 0;
+	return 0;
 }
 
 int
 x86_ipi(int vec, int target, int dl)
 {
-	int result, s;
+	int s;
 
 	s = splhigh();
 
@@ -518,11 +518,9 @@ x86_ipi(int vec, int target, int dl)
 
 	i82489_icr_wait();
 
-	result = (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) ? EBUSY : 0;
-
 	splx(s);
 
-	return result;
+	return 0;
 }
 #endif /* MULTIPROCESSOR */
 
