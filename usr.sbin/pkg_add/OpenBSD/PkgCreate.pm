@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.112 2014/09/20 07:41:14 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.113 2014/09/21 07:53:19 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1438,9 +1438,9 @@ sub save_history
 	my $end_marker = OpenBSD::PackingElement::StreamMarker->new;
 	while (@$list > 0) {
 		my $e = pop @$list;
-#		if ($e->really_archived && $i++ % 16 == 0) {
-#			unshift @$l, $end_marker;
-#		}
+		if ($e->really_archived && $i++ % 16 == 0) {
+			unshift @$l, $end_marker;
+		}
 		unshift @$l, $e;
 	}
 	# remove extraneous marker if @$tail is empty.
