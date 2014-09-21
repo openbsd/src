@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.14 2010/07/28 10:06:19 martinh Exp $ */
+/*	$OpenBSD: modify.c,v 1.15 2014/09/21 05:33:49 daniel Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -169,7 +169,7 @@ ldap_add(struct request *req)
 	 */
 	if ((set = ber_add_set(NULL)) == NULL)
 		goto fail;
-	if (ber_add_string(set, req->conn->binddn ?: "") == NULL)
+	if (ber_add_string(set, req->conn->binddn ? req->conn->binddn : "") == NULL)
 		goto fail;
 	if (ldap_add_attribute(attrs, "creatorsName", set) == NULL)
 		goto fail;
@@ -325,7 +325,7 @@ ldap_modify(struct request *req)
 		goto done;
 
 	set = ber_add_set(NULL);
-	ber_add_string(set, req->conn->binddn ?: "");
+	ber_add_string(set, req->conn->binddn ? req->conn->binddn : "");
 	if ((a = ldap_get_attribute(entry, "modifiersName")) != NULL)
 		ldap_set_values(a, set);
 	else

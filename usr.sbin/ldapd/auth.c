@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.9 2010/12/17 07:17:38 martinh Exp $ */
+/*	$OpenBSD: auth.c,v 1.10 2014/09/21 05:33:49 daniel Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -125,8 +125,8 @@ authorized(struct conn *conn, struct namespace *ns, int rights, char *dn,
 
 	log_debug("requesting %02X access to %s by %s, in namespace %s",
 	    rights,
-	    dn ?: "any",
-	    conn->binddn ?: "any",
+	    dn ? dn : "any",
+	    conn->binddn ? conn->binddn : "any",
 	    ns ? ns->suffix : "global");
 
 	SIMPLEQ_FOREACH(aci, &conf->acl, entry) {
@@ -136,8 +136,8 @@ authorized(struct conn *conn, struct namespace *ns, int rights, char *dn,
 			    type == ACI_ALLOW ? "allowed" : "denied",
 			    aci->type == ACI_ALLOW ? "allow" : "deny",
 			    aci->rights,
-			    aci->target ?: "any",
-			    aci->subject ?: "any");
+			    aci->target ? aci->target : "any",
+			    aci->subject ? aci->subject : "any");
 		}
 	}
 
@@ -149,8 +149,8 @@ authorized(struct conn *conn, struct namespace *ns, int rights, char *dn,
 				    type == ACI_ALLOW ? "allowed" : "denied",
 				    aci->type == ACI_ALLOW ? "allow" : "deny",
 				    aci->rights,
-				    aci->target ?: "any",
-				    aci->subject ?: "any");
+				    aci->target ? aci->target : "any",
+				    aci->subject ? aci->subject : "any");
 			}
 		}
 	}

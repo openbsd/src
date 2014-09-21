@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.2 2010/11/03 10:33:17 martinh Exp $ */
+/*	$OpenBSD: filter.c,v 1.3 2014/09/21 05:33:49 daniel Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -41,7 +41,7 @@ ldap_filt_eq(struct ber_element *root, struct plan *plan)
 	else
 		a = ldap_find_attribute(root, plan->at);
 	if (a == NULL) {
-		log_debug("no attribute [%s] found", plan->adesc ?: ATTR_NAME(plan->at));
+		log_debug("no attribute [%s] found", plan->adesc ? plan->adesc : ATTR_NAME(plan->at));
 		return -1;
 	}
 
@@ -119,7 +119,7 @@ ldap_filt_subs(struct ber_element *root, struct plan *plan)
 	else
 		a = ldap_find_attribute(root, plan->at);
 	if (a == NULL) {
-		log_debug("no attribute [%s] found", plan->adesc ?: ATTR_NAME(plan->at));
+		log_debug("no attribute [%s] found", plan->adesc ? plan->adesc : ATTR_NAME(plan->at));
 		return -1;
 	}
 
@@ -190,7 +190,7 @@ ldap_filt_presence(struct ber_element *root, struct plan *plan)
 	else
 		a = ldap_find_attribute(root, plan->at);
 	if (a == NULL) {
-		log_debug("no attribute [%s] found", plan->adesc ?: ATTR_NAME(plan->at));
+		log_debug("no attribute [%s] found", plan->adesc ? plan->adesc : ATTR_NAME(plan->at));
 		return -1;
 	}
 

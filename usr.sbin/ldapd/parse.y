@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2014/01/22 00:21:16 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.13 2014/09/21 05:33:49 daniel Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -1131,9 +1131,9 @@ mk_aci(int type, int rights, enum scope scope, char *target, char *subject)
 	log_debug("%s %02X access to %s scope %d by %s",
 	    aci->type == ACI_DENY ? "deny" : "allow",
 	    aci->rights,
-	    aci->target ?: "any",
+	    aci->target ? aci->target : "any",
 	    aci->scope,
-	    aci->subject ?: "any");
+	    aci->subject ? aci->subject : "any");
 
 	return aci;
 }
