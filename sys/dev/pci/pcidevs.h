@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1741 2014/09/13 05:11:27 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1742 2014/09/21 11:07:27 sasano Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -332,6 +332,7 @@
 #define	PCI_VENDOR_MARVELL2	0x1b4b		/* Marvell */
 #define	PCI_VENDOR_ETRON	0x1b6f		/* Etron */
 #define	PCI_VENDOR_FRESCO	0x1b73		/* Fresco Logic */
+#define	PCI_VENDOR_WCH2	0x1c00		/* Nanjing QinHeng Electronics */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
 #define	PCI_VENDOR_TEHUTI	0x1fc9		/* Tehuti Networks */
@@ -4770,6 +4771,8 @@
 
 /* Nanjing QinHeng Electronics products */
 #define	PCI_PRODUCT_WCH_CH352	0x3253		/* CH352 */
+#define	PCI_PRODUCT_WCH2_CH382_1	0x3253		/* CH382 */
+#define	PCI_PRODUCT_WCH2_CH382_2	0x3250		/* CH382 */
 
 /* National Datacomm Corp products */
 #define	PCI_PRODUCT_NDC_NCP130	0x0130		/* NCP130 */
