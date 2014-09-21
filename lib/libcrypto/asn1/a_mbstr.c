@@ -1,4 +1,4 @@
-/* $OpenBSD: a_mbstr.c,v 1.19 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: a_mbstr.c,v 1.20 2014/09/21 12:14:34 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -212,7 +212,7 @@ ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 		if (!ASN1_STRING_set(dest, in, len)) {
 			ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY,
 			    ERR_R_MALLOC_FAILURE);
-			return -1;
+			goto err;
 		}
 		return str_type;
 	}
@@ -239,22 +239,27 @@ ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 		if (traverse_string(in, len, inform, out_utf8, &outlen) < 0) {
 			ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY,
 			    ASN1_R_ILLEGAL_CHARACTERS);
-			return -1;
+			goto err;
 		}
 		cpyfunc = cpy_utf8;
 		break;
 	}
 	if (!(p = malloc(outlen + 1))) {
-		if (free_out)
-			ASN1_STRING_free(dest);
 		ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY, ERR_R_MALLOC_FAILURE);
-		return -1;
+		goto err;
 	}
 	dest->length = outlen;
 	dest->data = p;
 	p[outlen] = 0;
 	traverse_string(in, len, inform, cpyfunc, &p);
 	return str_type;
+
+err:
+	if (free_out) {
+		ASN1_STRING_free(dest);
+		*out = NULL;
+	}
+	return -1;
 }
 
 /* This function traverses a string and passes the value of each character
@@ -269,30 +274,35 @@ traverse_string(const unsigned char *p, int len, int inform,
 	int ret;
 
 	while (len) {
-		if (inform == MBSTRING_ASC) {
+		switch (inform) {
+		case MBSTRING_ASC:
 			value = *p++;
 			len--;
-		} else if (inform == MBSTRING_BMP) {
+			break;
+		case MBSTRING_BMP:
 			value = *p++ << 8;
 			value |= *p++;
 			/* BMP is explictly defined to not support surrogates */
 			if (UNICODE_IS_SURROGATE(value))
 				return -1;
 			len -= 2;
-		} else if (inform == MBSTRING_UNIV) {
-			value = ((unsigned long)*p++) << 24;
-			value |= ((unsigned long)*p++) << 16;
+			break;
+		case MBSTRING_UNIV:
+			value = *p++ << 24;
+			value |= *p++ << 16;
 			value |= *p++ << 8;
 			value |= *p++;
 			if (value > UNICODE_MAX || UNICODE_IS_SURROGATE(value))
 				return -1;
 			len -= 4;
-		} else {
+			break;
+		default:
 			ret = UTF8_getc(p, len, &value);
 			if (ret < 0)
 				return -1;
 			len -= ret;
 			p += ret;
+			break;
 		}
 		if (rfunc) {
 			ret = rfunc(value, arg);
@@ -366,7 +376,7 @@ cpy_asc(unsigned long value, void *arg)
 
 	p = arg;
 	q = *p;
-	*q = (unsigned char) value;
+	*q = value;
 	(*p)++;
 	return 1;
 }
@@ -380,8 +390,8 @@ cpy_bmp(unsigned long value, void *arg)
 
 	p = arg;
 	q = *p;
-	*q++ = (unsigned char) ((value >> 8) & 0xff);
-	*q = (unsigned char) (value & 0xff);
+	*q++ = (value >> 8) & 0xff;
+	*q = value & 0xff;
 	*p += 2;
 	return 1;
 }
@@ -395,10 +405,10 @@ cpy_univ(unsigned long value, void *arg)
 
 	p = arg;
 	q = *p;
-	*q++ = (unsigned char) ((value >> 24) & 0xff);
-	*q++ = (unsigned char) ((value >> 16) & 0xff);
-	*q++ = (unsigned char) ((value >> 8) & 0xff);
-	*q = (unsigned char) (value & 0xff);
+	*q++ = (value >> 24) & 0xff;
+	*q++ = (value >> 16) & 0xff;
+	*q++ = (value >> 8) & 0xff;
+	*q = value & 0xff;
 	*p += 4;
 	return 1;
 }
