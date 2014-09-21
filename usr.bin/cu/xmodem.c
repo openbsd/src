@@ -1,4 +1,4 @@
-/* $OpenBSD: xmodem.c,v 1.6 2013/11/12 13:54:51 deraadt Exp $ */
+/* $OpenBSD: xmodem.c,v 1.7 2014/09/21 05:29:47 daniel Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -146,7 +146,7 @@ xmodem_send(const char *file)
 	else if (c == XMODEM_NAK)
 		crc_mode = 0;
 	else {
-		cu_warnx("%s: unexpected response \%03hho", file, c);
+		cu_warnx("%s: unexpected response \\%03hho", file, c);
 		goto fail;
 	}
 
@@ -188,7 +188,7 @@ xmodem_send(const char *file)
 			if (c == XMODEM_ACK)
 				break;
 			if (c != XMODEM_NAK) {
-				cu_warnx("%s: unexpected response \%03hho",
+				cu_warnx("%s: unexpected response \\%03hho",
 				    file, c);
 			}
 		}
