@@ -1,4 +1,4 @@
-/* $OpenBSD: a_enum.c,v 1.15 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: a_enum.c,v 1.16 2014/09/21 12:17:42 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,7 +97,7 @@ ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v)
 		d >>= 8;
 	}
 	j = 0;
-	for (k = i - 1; k >=0; k--)
+	for (k = i - 1; k >= 0; k--)
 		a->data[j++] = buf[k];
 	a->length = j;
 	return (1);
@@ -119,7 +119,7 @@ ASN1_ENUMERATED_get(ASN1_ENUMERATED *a)
 
 	if (a->length > (int)sizeof(long)) {
 		/* hmm... a bit ugly */
-		return (0xffffffffL);
+		return -1;
 	}
 	if (a->data == NULL)
 		return 0;
@@ -161,8 +161,13 @@ BN_to_ASN1_ENUMERATED(BIGNUM *bn, ASN1_ENUMERATED *ai)
 		}
 		ret->data = new_data;
 	}
-
 	ret->length = BN_bn2bin(bn, ret->data);
+
+	/* Correct zero case */
+	if (!ret->length) {
+		ret->data[0] = 0;
+		ret->length = 1;
+	}
 	return (ret);
 
 err:
