@@ -1,4 +1,4 @@
-/*	$OpenBSD: eh.S,v 1.8 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: eh.S,v 1.9 2014/09/21 16:20:16 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2010 Miodrag Vallat
  *
@@ -71,13 +71,18 @@ ENTRY(pfsr_double)
 ENTRY(pfsr_straight)
 	/*
 	 * We have the simple 2 CMMUs per CPU mapping. Pick our couple;
-	 * no need to reset fault status registers in this case.
+	 * note that, at least on AV530 family systems, unlike other
+	 * MVME188-derived designs, we *do* need to reset fault status
+	 * registers after reading them.
 	 */
 	ld	TMP2, TMP,  CI_PFSR_I0
 	ld	TMP3, TMP2, %r0
+	st	%r0,  TMP2, %r0
 	st	TMP3, %r31, EF_IPFSR
+
 	ld	TMP2, TMP,  CI_PFSR_D0
 	ld	TMP3, TMP2, %r0
+	st	%r0,  TMP2, %r0
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP3, %r31, EF_DPFSR
 
