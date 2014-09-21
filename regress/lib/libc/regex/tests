@@ -1,4 +1,4 @@
-#	$OpenBSD: tests,v 1.5 2004/11/29 16:50:31 otto Exp $
+#	$OpenBSD: tests,v 1.6 2014/09/21 05:06:23 doug Exp $
 #	$NetBSD: tests,v 1.5 1995/04/20 22:40:00 cgd Exp $
 
 # regular expression test set
@@ -479,17 +479,29 @@ a.*		&#	(aZb)c	aZb
 
 # word boundaries (ick)
 [[:<:]]a	&	a	a
+\<a		&	a	a
 [[:<:]]a	&	ba
+\<a		&	ba
 [[:<:]]a	&	-a	a
+\<a		&	-a	a
 a[[:>:]]	&	a	a
+a\>		&	a	a
 a[[:>:]]	&	ab
+a\>		&	ab
 a[[:>:]]	&	a-	a
+a\>		&	a-	a
 [[:<:]]a.c[[:>:]]	&	axcd-dayc-dazce-abc	abc
+\<a.c\>			&	axcd-dayc-dazce-abc	abc
 [[:<:]]a.c[[:>:]]	&	axcd-dayc-dazce-abc-q	abc
+\<a.c\>			&	axcd-dayc-dazce-abc-q	abc
 [[:<:]]a.c[[:>:]]	&	axc-dayc-dazce-abc	axc
+\<a.c\>			&	axc-dayc-dazce-abc	axc
 [[:<:]]b.c[[:>:]]	&	a_bxc-byc_d-bzc-q	bzc
+\<b.c\>			&	a_bxc-byc_d-bzc-q	bzc
 [[:<:]].x..[[:>:]]	&	y_xa_-_xb_y-_xc_-axdc	_xc_
+\<.x..\>		&	y_xa_-_xb_y-_xc_-axdc	_xc_
 [[:<:]]a_b[[:>:]]	&	x_a_b
+\<a_b\>			&	x_a_b
 
 # past problems, and suspected problems
 (A[1])|(A[2])|(A[3])|(A[4])|(A[5])|(A[6])|(A[7])|(A[8])|(A[9])|(A[A])	-	A1	A1
