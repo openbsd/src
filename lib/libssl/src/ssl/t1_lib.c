@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.54 2014/08/07 22:27:28 guenther Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.55 2014/09/21 17:11:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -635,18 +635,24 @@ skip_ext:
 	}
 #endif
 
-#ifdef TLSEXT_TYPE_padding
-	/* Add padding to workaround bugs in F5 terminators.
+	/*
+	 * Add padding to workaround bugs in F5 terminators.
 	 * See https://tools.ietf.org/html/draft-agl-tls-padding-03
+	 *
+	 * Note that this seems to trigger issues with IronPort SMTP
+	 * appliances.
 	 *
 	 * NB: because this code works out the length of all existing
 	 * extensions it MUST always appear last.
 	 */
-	{
+	if (s->options & SSL_OP_TLSEXT_PADDING) {
 		int hlen = ret - (unsigned char *)s->init_buf->data;
-	/* The code in s23_clnt.c to build ClientHello messages includes the
-	 * 5-byte record header in the buffer, while the code in s3_clnt.c does
-	 * not. */
+
+		/*
+		 * The code in s23_clnt.c to build ClientHello messages
+		 * includes the 5-byte record header in the buffer, while the
+		 * code in s3_clnt.c does not.
+		 */
 		if (s->state == SSL23_ST_CW_CLNT_HELLO_A)
 			hlen -= 5;
 		if (hlen > 0xff && hlen < 0x200) {
@@ -662,7 +668,6 @@ skip_ext:
 			ret += hlen;
 		}
 	}
-#endif
 
 	if ((extdatalen = ret - p - 2) == 0)
 		return p;
