@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.43 2014/09/16 20:23:42 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.44 2014/09/21 14:15:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -205,6 +205,7 @@ void	vdsk_io_put(void *, void *);
 
 void	vdsk_scsi_cmd(struct scsi_xfer *);
 int	vdsk_submit_cmd(struct scsi_xfer *);
+void	vdsk_complete_cmd(struct scsi_xfer *, int);
 int	vdsk_dev_probe(struct scsi_link *);
 void	vdsk_dev_free(struct scsi_link *);
 
@@ -702,29 +703,14 @@ vdsk_rx_vio_dring_data(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 	case VIO_SUBTYPE_ACK:
 	{
 		struct scsi_xfer *xs;
-		struct ldc_map *map = sc->sc_lm;
-		int cons, error;
-		int cookie, idx;
+		int cons;
 
 		cons = sc->sc_tx_cons;
 		while (sc->sc_vd->vd_desc[cons].hdr.dstate == VIO_DESC_DONE) {
 			xs = sc->sc_vsd[cons].vsd_xs;
-
-			cookie = 0;
-			while (cookie < sc->sc_vsd[cons].vsd_ncookies) {
-				idx = sc->sc_vsd[cons].vsd_map_idx[cookie++];
-				map->lm_slot[idx].entry = 0;
-				map->lm_count--;
-			}
-
-			error = XS_NOERROR;
-			if (sc->sc_vd->vd_desc[cons].status != 0)
-				error = XS_DRIVER_STUFFUP;
-			xs->resid = xs->datalen -
-			    sc->sc_vd->vd_desc[cons].size;
-			vdsk_scsi_done(xs, error);
-
-			sc->sc_vd->vd_desc[cons++].hdr.dstate = VIO_DESC_FREE;
+			if (ISSET(xs->flags, SCSI_POLL) == 0)
+				vdsk_complete_cmd(xs, cons);
+			cons++;
 			cons &= (sc->sc_vd->vd_nentries - 1);
 		}
 		sc->sc_tx_cons = cons;
@@ -996,12 +982,17 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 
 	timeout = 1000;
 	do {
-		if (vdsk_rx_intr(sc) &&
-		    sc->sc_vd->vd_desc[desc].hdr.dstate == VIO_DESC_FREE)
+		if (sc->sc_vd->vd_desc[desc].hdr.dstate == VIO_DESC_DONE)
 			break;
 
 		delay(1000);
 	} while(--timeout > 0);
+	if (sc->sc_vd->vd_desc[desc].hdr.dstate == VIO_DESC_DONE) {
+		vdsk_complete_cmd(xs, desc);
+	} else {
+		ldc_reset(&sc->sc_lc);
+		vdsk_scsi_done(xs, XS_TIMEOUT);
+	}
 	splx(s);
 }
 
@@ -1123,6 +1114,31 @@ vdsk_submit_cmd(struct scsi_xfer *xs)
 	vdsk_sendmsg(sc, &dm, sizeof(dm));
 
 	return desc;
+}
+
+void
+vdsk_complete_cmd(struct scsi_xfer *xs, int desc)
+{
+	struct vdsk_softc *sc = xs->sc_link->adapter_softc;
+	struct ldc_map *map = sc->sc_lm;
+	int cookie, idx;
+	int error;
+
+	cookie = 0;
+	while (cookie < sc->sc_vsd[desc].vsd_ncookies) {
+		idx = sc->sc_vsd[desc].vsd_map_idx[cookie++];
+		map->lm_slot[idx].entry = 0;
+		map->lm_count--;
+	}
+
+	error = XS_NOERROR;
+	if (sc->sc_vd->vd_desc[desc].status != 0)
+		error = XS_DRIVER_STUFFUP;
+	xs->resid = xs->datalen -
+		sc->sc_vd->vd_desc[desc].size;
+	vdsk_scsi_done(xs, error);
+
+	sc->sc_vd->vd_desc[desc].hdr.dstate = VIO_DESC_FREE;
 }
 
 void
