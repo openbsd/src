@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.38 2014/05/18 08:08:50 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.39 2014/09/21 13:43:25 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -1113,8 +1113,10 @@ check_quote(const char **p, SymTable *ctxt UNUSED, bool b UNUSED, int endc)
 	if ((*p)[1] == endc || (*p)[1] == ':') {
 		(*p)++;
 		return qargs;
-	} else
+	} else  {
+		free(qargs);
 		return NULL;
+	}
 }
 
 static void *
