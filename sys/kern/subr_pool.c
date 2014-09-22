@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.157 2014/09/17 03:16:00 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.158 2014/09/22 01:04:58 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -103,17 +103,18 @@ int	pool_debug = 0;
 
 #define POOL_INPGHDR(pp) ((pp)->pr_phoffset != 0)
 
-int	 pool_catchup(struct pool *);
-void	 pool_prime_page(struct pool *, caddr_t, struct pool_item_header *);
+struct pool_item_header *
+	 pool_p_alloc(struct pool *, int);
+void	 pool_p_insert(struct pool *, struct pool_item_header *);
+void	 pool_p_remove(struct pool *, struct pool_item_header *);
+void	 pool_p_free(struct pool *, struct pool_item_header *);
+
 void	 pool_update_curpage(struct pool *);
-void	 pool_swizzle_curpage(struct pool *);
 void	*pool_do_get(struct pool *, int);
-void	 pool_do_put(struct pool *, void *);
-void	 pr_rmpage(struct pool *, struct pool_item_header *,
-	    struct pool_pagelist *);
 int	 pool_chk_page(struct pool *, struct pool_item_header *, int);
 int	 pool_chk(struct pool *);
-struct pool_item_header *pool_alloc_item_header(struct pool *, caddr_t , int);
+void	 pool_get_done(void *, void *);
+void	 pool_runqueue(struct pool *, int);
 
 void	*pool_allocator_alloc(struct pool *, int, int *);
 void	 pool_allocator_free(struct pool *, void *);
@@ -202,48 +203,6 @@ pr_find_pagehead(struct pool *pp, void *v)
 		panic("%s: %s: incorrect page", __func__, pp->pr_wchan);
 
 	return (ph);
-}
-
-/*
- * Remove a page from the pool.
- */
-void
-pr_rmpage(struct pool *pp, struct pool_item_header *ph,
-    struct pool_pagelist *pq)
-{
-
-	/*
-	 * If the page was idle, decrement the idle page count.
-	 */
-	if (ph->ph_nmissing == 0) {
-#ifdef DIAGNOSTIC
-		if (pp->pr_nidle == 0)
-			panic("%s: nidle inconsistent", __func__);
-		if (pp->pr_nitems < pp->pr_itemsperpage)
-			panic("%s: nitems inconsistent", __func__);
-#endif
-		pp->pr_nidle--;
-	}
-
-	pp->pr_nitems -= pp->pr_itemsperpage;
-
-	/*
-	 * Unlink a page from the pool and release it (or queue it for release).
-	 */
-	LIST_REMOVE(ph, ph_pagelist);
-	if (!POOL_INPGHDR(pp))
-		RB_REMOVE(phtree, &pp->pr_phtree, ph);
-	pp->pr_npages--;
-	pp->pr_npagefree++;
-	pool_update_curpage(pp);
-
-	if (pq) {
-		LIST_INSERT_HEAD(pq, ph, ph_pagelist);
-	} else {
-		pool_allocator_free(pp, ph->ph_page);
-		if (!POOL_INPGHDR(pp))
-			pool_put(&phpool, ph);
-	}
 }
 
 /*
@@ -351,6 +310,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 
 	pp->pr_ipl = -1;
 	mtx_init(&pp->pr_mtx, IPL_NONE);
+	mtx_init(&pp->pr_requests_mtx, IPL_NONE);
+	TAILQ_INIT(&pp->pr_requests);
 
 	if (phpool.pr_size == 0) {
 		pool_init(&phpool, sizeof(struct pool_item_header), 0, 0,
@@ -387,6 +348,7 @@ pool_setipl(struct pool *pp, int ipl)
 {
 	pp->pr_ipl = ipl;
 	mtx_init(&pp->pr_mtx, ipl);
+	mtx_init(&pp->pr_requests_mtx, ipl);
 }
 
 /*
@@ -397,6 +359,11 @@ pool_destroy(struct pool *pp)
 {
 	struct pool_item_header *ph;
 	struct pool *prev, *iter;
+
+#ifdef DIAGNOSTIC
+	if (pp->pr_nout != 0)
+		panic("%s: pool busy: still out: %u", __func__, pp->pr_nout);
+#endif
 
 	/* Remove from global pool list */
 	rw_enter_write(&pool_lock);
@@ -409,92 +376,158 @@ pool_destroy(struct pool *pp)
 			if (iter == pp) {
 				SIMPLEQ_REMOVE_AFTER(&pool_head, prev,
 				    pr_poollist);
-				goto removed;
+				break;
 			}
 			prev = iter;
 		}
-#ifdef DIAGNOSTIC
-		panic("%s: pool not on list", __func__);
-#endif
 	}
-removed:
 	rw_exit_write(&pool_lock);
-#ifdef DIAGNOSTIC
-	if (pp->pr_nout != 0)
-		panic("%s: pool busy: still out: %u", __func__, pp->pr_nout);
-#endif
 
 	/* Remove all pages */
-	while ((ph = LIST_FIRST(&pp->pr_emptypages)) != NULL)
-		pr_rmpage(pp, ph, NULL);
+	while ((ph = LIST_FIRST(&pp->pr_emptypages)) != NULL) {
+		pool_p_remove(pp, ph);
+		pool_p_free(pp, ph);
+	}
 	KASSERT(LIST_EMPTY(&pp->pr_fullpages));
 	KASSERT(LIST_EMPTY(&pp->pr_partpages));
-
 }
 
-struct pool_item_header *
-pool_alloc_item_header(struct pool *pp, caddr_t storage, int flags)
+void
+pool_request_init(struct pool_request *pr,
+    void (*handler)(void *, void *), void *cookie)
 {
-	struct pool_item_header *ph;
-
-	if (POOL_INPGHDR(pp))
-		ph = (struct pool_item_header *)(storage + pp->pr_phoffset);
-	else
-		ph = pool_get(&phpool, (flags & ~(PR_WAITOK | PR_ZERO)) |
-		    PR_NOWAIT);
-#ifdef DIAGNOSTIC
-	if (pool_debug && ph != NULL)
-		ph->ph_magic = poison_value(ph);
-#endif
-	return (ph);
+	pr->pr_handler = handler;
+	pr->pr_cookie = cookie;
+	pr->pr_item = NULL;
 }
+
+void
+pool_request(struct pool *pp, struct pool_request *pr)
+{
+	mtx_enter(&pp->pr_requests_mtx);
+	TAILQ_INSERT_TAIL(&pp->pr_requests, pr, pr_entry);
+	pool_runqueue(pp, PR_NOWAIT);
+	mtx_leave(&pp->pr_requests_mtx);
+}
+
+struct pool_get_memory {
+	struct mutex mtx;
+	void * volatile v;
+};
 
 /*
- * Grab an item from the pool; must be called at appropriate spl level
+ * Grab an item from the pool.
  */
 void *
 pool_get(struct pool *pp, int flags)
 {
-	void *v;
+	void *v = NULL;
 
 	KASSERT(flags & (PR_WAITOK | PR_NOWAIT));
 
-	if ((flags & PR_WAITOK) != 0) {
-#ifdef DIAGNOSTIC
-		assertwaitok();
-		if (pool_debug == 2)
-			yield();
-#endif
-		if (!cold && pool_debug) {
-			KERNEL_UNLOCK();
-			KERNEL_LOCK();
-		}
-	}
 
 	mtx_enter(&pp->pr_mtx);
-#ifdef POOL_DEBUG
-	if (pp->pr_roflags & PR_DEBUGCHK) {
-		if (pool_chk(pp))
-			panic("%s: before", __func__);
+	if (pp->pr_nout >= pp->pr_hardlimit) {
+		if (ISSET(flags, PR_NOWAIT|PR_LIMITFAIL))
+			goto fail;
+	} else if ((v = pool_do_get(pp, flags)) == NULL) {
+		if (ISSET(flags, PR_NOWAIT))
+			goto fail;
 	}
-#endif
-	v = pool_do_get(pp, flags);
-#ifdef POOL_DEBUG
-	if (pp->pr_roflags & PR_DEBUGCHK) {
-		if (pool_chk(pp))
-			panic("%s: after", __func__);
-	}
-#endif
-	if (v != NULL)
-		pp->pr_nget++;
 	mtx_leave(&pp->pr_mtx);
-	if (v == NULL)
-		return (v);
 
-	if (flags & PR_ZERO)
+	if (v == NULL) {
+		struct pool_get_memory mem =
+		    { MUTEX_INITIALIZER(pp->pr_ipl), NULL };
+		struct pool_request pr;
+
+		pool_request_init(&pr, pool_get_done, &mem);
+		pool_request(pp, &pr);
+
+		mtx_enter(&mem.mtx);
+		while (mem.v == NULL)
+			msleep(&mem, &mem.mtx, PSWP, pp->pr_wchan, 0);
+		mtx_leave(&mem.mtx);
+
+		v = mem.v;
+	}
+
+	if (ISSET(flags, PR_ZERO))
 		memset(v, 0, pp->pr_size);
 
 	return (v);
+
+fail:
+	pp->pr_nfail++;
+	mtx_leave(&pp->pr_mtx);
+	return (NULL);
+}
+
+void
+pool_get_done(void *xmem, void *v)
+{
+	struct pool_get_memory *mem = xmem;
+
+	mtx_enter(&mem->mtx);
+	mem->v = v;
+	mtx_leave(&mem->mtx);
+
+	wakeup_one(mem);
+}
+
+void
+pool_runqueue(struct pool *pp, int flags)
+{
+	struct pool_requests prl = TAILQ_HEAD_INITIALIZER(prl);
+	struct pool_request *pr;
+
+	MUTEX_ASSERT_UNLOCKED(&pp->pr_mtx);
+	MUTEX_ASSERT_LOCKED(&pp->pr_requests_mtx);
+
+	if (pp->pr_requesting++)
+		return;
+
+	do {
+		pp->pr_requesting = 1;
+
+		/* no TAILQ_JOIN? :( */
+		while ((pr = TAILQ_FIRST(&pp->pr_requests)) != NULL) {
+			TAILQ_REMOVE(&pp->pr_requests, pr, pr_entry);
+			TAILQ_INSERT_TAIL(&prl, pr, pr_entry);
+		}
+		if (TAILQ_EMPTY(&prl))
+			continue;
+
+		mtx_leave(&pp->pr_requests_mtx);
+
+		mtx_enter(&pp->pr_mtx);
+		pr = TAILQ_FIRST(&prl);
+		while (pr != NULL) {
+			if (pp->pr_nout >= pp->pr_hardlimit)
+				break;
+
+			pr->pr_item = pool_do_get(pp, flags);
+			if (pr->pr_item == NULL)
+				break;
+
+			pr = TAILQ_NEXT(pr, pr_entry);
+		}
+		mtx_leave(&pp->pr_mtx);
+
+		while ((pr = TAILQ_FIRST(&prl)) != NULL &&
+		    pr->pr_item != NULL) {
+			TAILQ_REMOVE(&prl, pr, pr_entry);
+			(*pr->pr_handler)(pr->pr_cookie, pr->pr_item);
+		}
+
+		mtx_enter(&pp->pr_requests_mtx);
+	} while (--pp->pr_requesting);
+
+	/* no TAILQ_JOIN :( */
+	while ((pr = TAILQ_FIRST(&prl)) != NULL) {
+		TAILQ_REMOVE(&prl, pr, pr_entry);
+		TAILQ_INSERT_TAIL(&pp->pr_requests, pr, pr_entry);
+	}
 }
 
 void *
@@ -502,119 +535,50 @@ pool_do_get(struct pool *pp, int flags)
 {
 	struct pool_item *pi;
 	struct pool_item_header *ph;
-	void *v;
-	int slowdown = 0;
 
-startover:
+	MUTEX_ASSERT_LOCKED(&pp->pr_mtx);
+
 	/*
-	 * Check to see if we've reached the hard limit.  If we have,
-	 * and we can wait, then wait until an item has been returned to
-	 * the pool.
+	 * Account for this item now to avoid races if we need to give up
+	 * pr_mtx to allocate a page.
 	 */
-#ifdef DIAGNOSTIC
-	if (pp->pr_nout > pp->pr_hardlimit)
-		panic("%s: %s: crossed hard limit", __func__, pp->pr_wchan);
-#endif
-	if (pp->pr_nout == pp->pr_hardlimit) {
-		if ((flags & PR_WAITOK) && !(flags & PR_LIMITFAIL)) {
-			/*
-			 * XXX: A warning isn't logged in this case.  Should
-			 * it be?
-			 */
-			pp->pr_flags |= PR_WANTED;
-			pool_sleep(pp);
-			goto startover;
+	pp->pr_nout++;
+
+	if (pp->pr_curpage == NULL) {
+		mtx_leave(&pp->pr_mtx);
+		ph = pool_p_alloc(pp, flags);
+		mtx_enter(&pp->pr_mtx);
+
+		if (ph == NULL) {
+			pp->pr_nout--;
+			return (NULL);
 		}
 
-		/*
-		 * Log a message that the hard limit has been hit.
-		 */
-		if (pp->pr_hardlimit_warning != NULL &&
-		    ratecheck(&pp->pr_hardlimit_warning_last,
-		    &pp->pr_hardlimit_ratecap))
-			log(LOG_ERR, "%s\n", pp->pr_hardlimit_warning);
-
-		pp->pr_nfail++;
-		return (NULL);
+		pool_p_insert(pp, ph);
 	}
 
-	pool_swizzle_curpage(pp);
-	/*
-	 * The convention we use is that if `curpage' is not NULL, then
-	 * it points at a non-empty bucket.
-	 */
-	if ((ph = pp->pr_curpage) == NULL) {
-#ifdef DIAGNOSTIC
-		if (pp->pr_nitems != 0) {
-			printf("pool_do_get: %s: curpage NULL, nitems %u\n",
-			    pp->pr_wchan, pp->pr_nitems);
-			panic("%s: nitems inconsistent", __func__);
-		}
-#endif
-
-		/*
-		 * Call the back-end page allocator for more memory.
-		 */
-		v = pool_allocator_alloc(pp, flags, &slowdown);
-		if (v != NULL)
-			ph = pool_alloc_item_header(pp, v, flags);
-
-		if (v == NULL || ph == NULL) {
-			if (v != NULL)
-				pool_allocator_free(pp, v);
-
-			if ((flags & PR_WAITOK) == 0) {
-				pp->pr_nfail++;
-				return (NULL);
-			}
-
-			/*
-			 * Wait for items to be returned to this pool.
-			 *
-			 * XXX: maybe we should wake up once a second and
-			 * try again?
-			 */
-			pp->pr_flags |= PR_WANTED;
-			pool_sleep(pp);
-			goto startover;
-		}
-
-		/* We have more memory; add it to the pool */
-		pool_prime_page(pp, v, ph);
-		pp->pr_npagealloc++;
-
-		if (slowdown && (flags & PR_WAITOK)) {
-			mtx_leave(&pp->pr_mtx);
-			yield();
-			mtx_enter(&pp->pr_mtx);
-		}
-
-		/* Start the allocation process over. */
-		goto startover;
-	}
-	if ((v = pi = XSIMPLEQ_FIRST(&ph->ph_itemlist)) == NULL)
+	ph = pp->pr_curpage;
+	pi = XSIMPLEQ_FIRST(&ph->ph_itemlist);
+	if (pi == NULL)
 		panic("%s: %s: page empty", __func__, pp->pr_wchan);
+	XSIMPLEQ_REMOVE_HEAD(&ph->ph_itemlist, pi_list);
 
-#ifdef DIAGNOSTIC
-	if (pp->pr_nitems == 0) {
-		printf("%s: %s: items on itemlist, nitems %u\n", __func__,
-		    pp->pr_wchan, pp->pr_nitems);
-		panic("%s: nitems inconsistent", __func__);
-	}
-#endif
-
-#ifdef DIAGNOSTIC
-	if (pi->pi_magic != poison_value(pi))
-		panic("%s(%s): free list modified: "
+#ifndef SMALL_KERNEL
+	if (pi->pi_magic != poison_value(pi)) {
+		panic("%s: %s free list modified: "
 		    "page %p; item addr %p; offset 0x%x=0x%x", __func__,
 		    pp->pr_wchan, ph->ph_page, pi, 0, pi->pi_magic);
+	}
+#endif
+
+#ifdef DIAGNOSTIC
 	if (pool_debug && ph->ph_magic) {
 		size_t pidx;
 		uint32_t pval;
 		if (poison_check(pi + 1, pp->pr_size - sizeof(*pi),
 		    &pidx, &pval)) {
 			int *ip = (int *)(pi + 1);
-			panic("%s(%s): free list modified: "
+			panic("%s: %s free list modified: "
 			    "page %p; item addr %p; offset 0x%zx=0x%x",
 			    __func__, pp->pr_wchan, ph->ph_page, pi,
 			    pidx * sizeof(int), ip[pidx]);
@@ -622,34 +586,18 @@ startover:
 	}
 #endif /* DIAGNOSTIC */
 
-	/*
-	 * Remove from item list.
-	 */
-	XSIMPLEQ_REMOVE_HEAD(&ph->ph_itemlist, pi_list);
-	pp->pr_nitems--;
-	pp->pr_nout++;
-	if (ph->ph_nmissing == 0) {
-#ifdef DIAGNOSTIC
-		if (pp->pr_nidle == 0)
-			panic("%s: nidle inconsistent", __func__);
-#endif
-		pp->pr_nidle--;
-
+	if (ph->ph_nmissing++ == 0) {
 		/*
 		 * This page was previously empty.  Move it to the list of
 		 * partially-full pages.  This page is already curpage.
 		 */
 		LIST_REMOVE(ph, ph_pagelist);
 		LIST_INSERT_HEAD(&pp->pr_partpages, ph, ph_pagelist);
+
+		pp->pr_nidle--;
 	}
-	ph->ph_nmissing++;
-	if (XSIMPLEQ_EMPTY(&ph->ph_itemlist)) {
-#ifdef DIAGNOSTIC
-		if (ph->ph_nmissing != pp->pr_itemsperpage) {
-			panic("%s: %s: nmissing inconsistent", __func__,
-			    pp->pr_wchan);
-		}
-#endif
+
+	if (ph->ph_nmissing == pp->pr_itemsperpage) {
 		/*
 		 * This page is now full.  Move it to the full list
 		 * and select a new current page.
@@ -659,69 +607,33 @@ startover:
 		pool_update_curpage(pp);
 	}
 
-	/*
-	 * If we have a low water mark and we are now below that low
-	 * water mark, add more items to the pool.
-	 */
-	if (POOL_NEEDS_CATCHUP(pp) && pool_catchup(pp) != 0) {
-		/*
-		 * XXX: Should we log a warning?  Should we set up a timeout
-		 * to try again in a second or so?  The latter could break
-		 * a caller's assumptions about interrupt protection, etc.
-		 */
-	}
-	return (v);
+	pp->pr_nget++;
+
+	return (pi);
 }
 
 /*
- * Return resource to the pool; must be called at appropriate spl level
+ * Return resource to the pool.
  */
 void
 pool_put(struct pool *pp, void *v)
 {
-	mtx_enter(&pp->pr_mtx);
-#ifdef POOL_DEBUG
-	if (pp->pr_roflags & PR_DEBUGCHK) {
-		if (pool_chk(pp))
-			panic("%s: before", __func__);
-	}
-#endif
-	pool_do_put(pp, v);
-#ifdef POOL_DEBUG
-	if (pp->pr_roflags & PR_DEBUGCHK) {
-		if (pool_chk(pp))
-			panic("%s: after", __func__);
-	}
-#endif
-	pp->pr_nput++;
-	mtx_leave(&pp->pr_mtx);
-}
-
-/*
- * Internal version of pool_put().
- */
-void
-pool_do_put(struct pool *pp, void *v)
-{
 	struct pool_item *pi = v;
-	struct pool_item_header *ph;
-
-	if (v == NULL)
-		panic("%s: NULL item", __func__);
+	struct pool_item_header *ph, *freeph = NULL;
 
 #ifdef DIAGNOSTIC
-	if (pp->pr_ipl != -1)
-		splassert(pp->pr_ipl);
-
-	if (pp->pr_nout == 0)
-		panic("%s: %s: putting with none out", __func__, pp->pr_wchan);
+	if (v == NULL)
+		panic("%s: NULL item", __func__);
 #endif
+
+	mtx_enter(&pp->pr_mtx);
 
 	ph = pr_find_pagehead(pp, v);
 
-	/*
-	 * Return to item list.
-	 */
+#ifndef SMALL_KERNEL
+	pi->pi_magic = poison_value(pi);
+#endif
+
 #ifdef DIAGNOSTIC
 	if (pool_debug) {
 		struct pool_item *qi;
@@ -731,56 +643,49 @@ pool_do_put(struct pool *pp, void *v)
 				    pp->pr_wchan, pi);
 			}
 		}
-	}
-	pi->pi_magic = poison_value(pi);
-	if (ph->ph_magic) {
-		poison_mem(pi + 1, pp->pr_size - sizeof(*pi));
+
+		if (ph->ph_magic)
+			poison_mem(pi + 1, pp->pr_size - sizeof(*pi));
 	}
 #endif /* DIAGNOSTIC */
 
 	XSIMPLEQ_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
-	ph->ph_nmissing--;
-	pp->pr_nitems++;
-	pp->pr_nout--;
 
-	/* Cancel "pool empty" condition if it exists */
-	if (pp->pr_curpage == NULL)
-		pp->pr_curpage = ph;
-
-	if (pp->pr_flags & PR_WANTED) {
-		pp->pr_flags &= ~PR_WANTED;
-		wakeup(pp);
-	}
-
-	/*
-	 * If this page is now empty, do one of two things:
-	 *
-	 *	(1) If we have more pages than the page high water mark,
-	 *	    free the page back to the system.
-	 *
-	 *	(2) Otherwise, move the page to the empty page list.
-	 *
-	 * Either way, select a new current page (so we use a partially-full
-	 * page if one is available).
-	 */
-	if (ph->ph_nmissing == 0) {
-		pp->pr_nidle++;
-		if (pp->pr_nidle > pp->pr_maxpages) {
-			pr_rmpage(pp, ph, NULL);
-		} else {
-			LIST_REMOVE(ph, ph_pagelist);
-			LIST_INSERT_HEAD(&pp->pr_emptypages, ph, ph_pagelist);
-			pool_update_curpage(pp);
-		}
-	}
-	/*
-	 * If the page was previously completely full, move it to the
-	 * partially-full list.
-	 */
-	else if (ph->ph_nmissing == (pp->pr_itemsperpage - 1)) {
+	if (ph->ph_nmissing-- == pp->pr_itemsperpage) {
+		/*
+		 * The page was previously completely full, move it to the
+		 * partially-full list.
+		 */
 		LIST_REMOVE(ph, ph_pagelist);
 		LIST_INSERT_HEAD(&pp->pr_partpages, ph, ph_pagelist);
 	}
+
+	if (ph->ph_nmissing == 0) {
+		/*
+		 * The page is now empty, so move it to the empty page list.
+	 	 */
+		pp->pr_nidle++;
+
+		LIST_REMOVE(ph, ph_pagelist);
+		LIST_INSERT_HEAD(&pp->pr_emptypages, ph, ph_pagelist);
+		pool_update_curpage(pp);
+	}
+
+	pp->pr_nout--;
+	pp->pr_nput++;
+
+	/* is it time to free a page? */
+	if (pp->pr_nidle > pp->pr_maxpages &&
+	    (freeph = LIST_FIRST(&pp->pr_emptypages)) != NULL)
+		pool_p_remove(pp, freeph);
+	mtx_leave(&pp->pr_mtx);
+
+	if (freeph != NULL)
+		pool_p_free(pp, freeph);
+
+	mtx_enter(&pp->pr_requests_mtx);
+	pool_runqueue(pp, PR_NOWAIT);
+	mtx_leave(&pp->pr_requests_mtx);
 }
 
 /*
@@ -789,139 +694,154 @@ pool_do_put(struct pool *pp, void *v)
 int
 pool_prime(struct pool *pp, int n)
 {
+	struct pool_pagelist pl = LIST_HEAD_INITIALIZER(pl);
 	struct pool_item_header *ph;
-	caddr_t cp;
 	int newpages;
-	int slowdown;
 
-	mtx_enter(&pp->pr_mtx);
 	newpages = roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
 	while (newpages-- > 0) {
-		cp = pool_allocator_alloc(pp, PR_NOWAIT, &slowdown);
-		if (cp != NULL)
-			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
-		if (cp == NULL || ph == NULL) {
-			if (cp != NULL)
-				pool_allocator_free(pp, cp);
+		ph = pool_p_alloc(pp, PR_NOWAIT);
+		if (ph == NULL)
 			break;
-		}
 
-		pool_prime_page(pp, cp, ph);
-		pp->pr_npagealloc++;
-		pp->pr_minpages++;
+		LIST_INSERT_HEAD(&pl, ph, ph_pagelist);
 	}
 
-	if (pp->pr_minpages >= pp->pr_maxpages)
-		pp->pr_maxpages = pp->pr_minpages + 1;	/* XXX */
-
+	mtx_enter(&pp->pr_mtx);
+	while ((ph = LIST_FIRST(&pl)) != NULL) {
+		LIST_REMOVE(ph, ph_pagelist);
+		pool_p_insert(pp, ph);
+	}
 	mtx_leave(&pp->pr_mtx);
+
 	return (0);
 }
 
-/*
- * Add a page worth of items to the pool.
- *
- * Note, we must be called with the pool descriptor LOCKED.
- */
-void
-pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
+struct pool_item_header *
+pool_p_alloc(struct pool *pp, int flags)
 {
+	struct pool_item_header *ph;
 	struct pool_item *pi;
-	caddr_t cp = storage;
-	unsigned int align = pp->pr_align;
-	int n;
+	caddr_t addr;
+	int n, slowdown = 0;
 
-	/*
-	 * Insert page header.
-	 */
-	LIST_INSERT_HEAD(&pp->pr_emptypages, ph, ph_pagelist);
+	MUTEX_ASSERT_UNLOCKED(&pp->pr_mtx);
+	KASSERT(pp->pr_size >= sizeof(*pi));
+
+	addr = pool_allocator_alloc(pp, flags, &slowdown);
+	if (addr == NULL)
+		return (NULL);
+
+	if (slowdown && ISSET(flags, PR_WAITOK))
+		yield();
+
+	if (POOL_INPGHDR(pp))
+		ph = (struct pool_item_header *)(addr + pp->pr_phoffset);
+	else {
+		ph = pool_get(&phpool, flags);
+		if (ph == NULL) {
+			pool_allocator_free(pp, addr);
+			return (NULL);
+		}
+	}
+
 	XSIMPLEQ_INIT(&ph->ph_itemlist);
-	ph->ph_page = storage;
+	ph->ph_page = addr;
 	ph->ph_nmissing = 0;
-	if (!POOL_INPGHDR(pp))
-		RB_INSERT(phtree, &pp->pr_phtree, ph);
+	if (pool_debug) {
+		do {
+			arc4random_buf(&ph->ph_magic, sizeof(ph->ph_magic));
+		} while (ph->ph_magic == 0);
+	} else
+		ph->ph_magic = 0;
 
-	pp->pr_nidle++;
-
-	/*
-	 * Color this page.
-	 */
-	cp = (caddr_t)(cp + pp->pr_curcolor);
-	if ((pp->pr_curcolor += align) > pp->pr_maxcolor)
-		pp->pr_curcolor = 0;
-
-	ph->ph_colored = cp;
-
-	/*
-	 * Insert remaining chunks on the bucket list.
-	 */
 	n = pp->pr_itemsperpage;
-	pp->pr_nitems += n;
-
 	while (n--) {
-		pi = (struct pool_item *)cp;
-
-		/* Insert on page list */
+		pi = (struct pool_item *)addr;
+#ifndef SMALL_KERNEL
+		pi->pi_magic = poison_value(pi);
+#endif
 		XSIMPLEQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);
 
 #ifdef DIAGNOSTIC
-		pi->pi_magic = poison_value(pi);
-		if (ph->ph_magic) {
+		if (pool_debug && ph->ph_magic)
 			poison_mem(pi + 1, pp->pr_size - sizeof(*pi));
-		}
 #endif /* DIAGNOSTIC */
-		cp = (caddr_t)(cp + pp->pr_size);
+
+		addr += pp->pr_size;
 	}
 
-	/*
-	 * If the pool was depleted, point at the new page.
-	 */
+	return (ph);
+}
+
+void
+pool_p_free(struct pool *pp, struct pool_item_header *ph)
+{
+#ifndef SMALL_KERNEL
+	struct pool_item *pi;
+#endif
+
+        MUTEX_ASSERT_UNLOCKED(&pp->pr_mtx);
+        KASSERT(ph->ph_nmissing == 0);
+
+#ifndef SMALL_KERNEL
+	XSIMPLEQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
+		if (pi->pi_magic != poison_value(pi)) {
+			panic("%s: %s free list modified: "
+			    "page %p; item addr %p; offset 0x%x=0x%x", __func__,
+			    pp->pr_wchan, ph->ph_page, pi, 0, pi->pi_magic);
+		}
+        }
+#endif
+
+        pool_allocator_free(pp, ph->ph_page);
+
+	if (!POOL_INPGHDR(pp))
+		pool_put(&phpool, ph);
+}
+
+void
+pool_p_insert(struct pool *pp, struct pool_item_header *ph)
+{
+        MUTEX_ASSERT_LOCKED(&pp->pr_mtx);
+
+	/* If the pool was depleted, point at the new page */
 	if (pp->pr_curpage == NULL)
 		pp->pr_curpage = ph;
 
+	LIST_INSERT_HEAD(&pp->pr_emptypages, ph, ph_pagelist);
+	if (!POOL_INPGHDR(pp))
+		RB_INSERT(phtree, &pp->pr_phtree, ph);
+
+	pp->pr_nitems += pp->pr_itemsperpage;
+	pp->pr_nidle++;
+
+	pp->pr_npagealloc++;
 	if (++pp->pr_npages > pp->pr_hiwat)
 		pp->pr_hiwat = pp->pr_npages;
 }
 
-/*
- * Used by pool_get() when nitems drops below the low water mark.  This
- * is used to catch up pr_nitems with the low water mark.
- *
- * Note we never wait for memory here, we let the caller decide what to do.
- */
-int
-pool_catchup(struct pool *pp)
+void
+pool_p_remove(struct pool *pp, struct pool_item_header *ph)
 {
-	struct pool_item_header *ph;
-	caddr_t cp;
-	int error = 0;
-	int slowdown;
+	MUTEX_ASSERT_LOCKED(&pp->pr_mtx);
 
-	while (POOL_NEEDS_CATCHUP(pp)) {
-		/*
-		 * Call the page back-end allocator for more memory.
-		 */
-		cp = pool_allocator_alloc(pp, PR_NOWAIT, &slowdown);
-		if (cp != NULL)
-			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
-		if (cp == NULL || ph == NULL) {
-			if (cp != NULL)
-				pool_allocator_free(pp, cp);
-			error = ENOMEM;
-			break;
-		}
-		pool_prime_page(pp, cp, ph);
-		pp->pr_npagealloc++;
-	}
+	pp->pr_npagefree++;
+	pp->pr_npages--;
+	pp->pr_nidle--;
+	pp->pr_nitems -= pp->pr_itemsperpage;
 
-	return (error);
+	if (!POOL_INPGHDR(pp))
+		RB_REMOVE(phtree, &pp->pr_phtree, ph);
+	LIST_REMOVE(ph, ph_pagelist);
+
+	pool_update_curpage(pp);
 }
 
 void
 pool_update_curpage(struct pool *pp)
 {
-
 	pp->pr_curpage = LIST_FIRST(&pp->pr_partpages);
 	if (pp->pr_curpage == NULL) {
 		pp->pr_curpage = LIST_FIRST(&pp->pr_emptypages);
@@ -929,51 +849,26 @@ pool_update_curpage(struct pool *pp)
 }
 
 void
-pool_swizzle_curpage(struct pool *pp)
-{
-	struct pool_item_header *ph, *next;
-
-	if ((ph = pp->pr_curpage) == NULL)
-		return;
-	if (arc4random_uniform(16) != 0)
-		return;
-	next = LIST_FIRST(&pp->pr_partpages);
-	if (next == ph)
-		next = LIST_NEXT(next, ph_pagelist);
-	if (next == NULL) {
-		next = LIST_FIRST(&pp->pr_emptypages);
-		if (next == ph)
-			next = LIST_NEXT(next, ph_pagelist);
-	}
-	if (next != NULL)
-		pp->pr_curpage = next;
-}
-
-void
 pool_setlowat(struct pool *pp, int n)
 {
+	int prime;
 
+	mtx_enter(&pp->pr_mtx);
 	pp->pr_minitems = n;
 	pp->pr_minpages = (n == 0)
 		? 0
 		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
-	mtx_enter(&pp->pr_mtx);
-	/* Make sure we're caught up with the newly-set low water mark. */
-	if (POOL_NEEDS_CATCHUP(pp) && pool_catchup(pp) != 0) {
-		/*
-		 * XXX: Should we log a warning?  Should we set up a timeout
-		 * to try again in a second or so?  The latter could break
-		 * a caller's assumptions about interrupt protection, etc.
-		 */
-	}
+	prime = pp->pr_nitems - n;
 	mtx_leave(&pp->pr_mtx);
+
+	if (prime > 0)
+		pool_prime(pp, prime);
 }
 
 void
 pool_sethiwat(struct pool *pp, int n)
 {
-
 	pp->pr_maxpages = (n == 0)
 		? 0
 		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
@@ -1014,9 +909,7 @@ int
 pool_reclaim(struct pool *pp)
 {
 	struct pool_item_header *ph, *phnext;
-	struct pool_pagelist pq;
-
-	LIST_INIT(&pq);
+	struct pool_pagelist pl = LIST_HEAD_INITIALIZER(pl);
 
 	mtx_enter(&pp->pr_mtx);
 	for (ph = LIST_FIRST(&pp->pr_emptypages); ph != NULL; ph = phnext) {
@@ -1026,8 +919,6 @@ pool_reclaim(struct pool *pp)
 		if (pp->pr_npages <= pp->pr_minpages)
 			break;
 
-		KASSERT(ph->ph_nmissing == 0);
-
 		/*
 		 * If freeing this page would put us below
 		 * the low water mark, stop now.
@@ -1036,18 +927,17 @@ pool_reclaim(struct pool *pp)
 		    pp->pr_minitems)
 			break;
 
-		pr_rmpage(pp, ph, &pq);
+		pool_p_remove(pp, ph);
+		LIST_INSERT_HEAD(&pl, ph, ph_pagelist);
 	}
 	mtx_leave(&pp->pr_mtx);
 
-	if (LIST_EMPTY(&pq))
+	if (LIST_EMPTY(&pl))
 		return (0);
-	while ((ph = LIST_FIRST(&pq)) != NULL) {
+
+	while ((ph = LIST_FIRST(&pl)) != NULL) {
 		LIST_REMOVE(ph, ph_pagelist);
-		pool_allocator_free(pp, ph->ph_page);
-		if (POOL_INPGHDR(pp))
-			continue;
-		pool_put(&phpool, ph);
+		pool_p_free(pp, ph);
 	}
 
 	return (1);
@@ -1249,16 +1139,16 @@ pool_chk_page(struct pool *pp, struct pool_item_header *ph, int expected)
 	for (pi = XSIMPLEQ_FIRST(&ph->ph_itemlist), n = 0;
 	     pi != NULL;
 	     pi = XSIMPLEQ_NEXT(&ph->ph_itemlist, pi, pi_list), n++) {
-
-#ifdef DIAGNOSTIC
 		if (pi->pi_magic != poison_value(pi)) {
 			printf("%s: ", label);
-			printf("pool(%s): free list modified: "
+			printf("pool(%p:%s): free list modified: "
 			    "page %p; item ordinal %d; addr %p "
 			    "(p %p); offset 0x%x=0x%x\n",
-			    pp->pr_wchan, ph->ph_page, n, pi, page,
+			    pp, pp->pr_wchan, ph->ph_page, n, pi, page,
 			    0, pi->pi_magic);
 		}
+
+#ifdef DIAGNOSTIC
 		if (pool_debug && ph->ph_magic) {
 			size_t pidx;
 			uint32_t pval;
@@ -1273,6 +1163,7 @@ pool_chk_page(struct pool *pp, struct pool_item_header *ph, int expected)
 			}
 		}
 #endif /* DIAGNOSTIC */
+
 		page = (caddr_t)((u_long)pi & pp->pr_pgmask);
 		if (page == ph->ph_page)
 			continue;
@@ -1442,14 +1333,11 @@ done:
 void *
 pool_allocator_alloc(struct pool *pp, int flags, int *slowdown)
 {
-	int waitok = ISSET(flags, PR_WAITOK);
 	void *v;
 
-	if (waitok)
-		mtx_leave(&pp->pr_mtx);
-	v = pp->pr_alloc->pa_alloc(pp, flags, slowdown);
-	if (waitok)
-		mtx_enter(&pp->pr_mtx);
+	KERNEL_LOCK();
+	v = (*pp->pr_alloc->pa_alloc)(pp, flags, slowdown);
+	KERNEL_UNLOCK();
 
 #ifdef DIAGNOSTIC
 	if (v != NULL && POOL_INPGHDR(pp)) {
@@ -1469,7 +1357,9 @@ pool_allocator_free(struct pool *pp, void *v)
 {
 	struct pool_allocator *pa = pp->pr_alloc;
 
+	KERNEL_LOCK();
 	(*pa->pa_free)(pp, v);
+	KERNEL_UNLOCK();
 }
 
 void *

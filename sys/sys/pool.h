@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.52 2014/09/16 03:26:08 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.53 2014/09/22 01:04:58 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -73,6 +73,8 @@ struct kinfo_pool {
 #include <sys/mutex.h>
 
 struct pool;
+struct pool_request;
+TAILQ_HEAD(pool_requests, pool_request);
 
 struct pool_allocator {
 	void *(*pa_alloc)(struct pool *, int, int *);
@@ -139,6 +141,14 @@ struct pool {
 	struct timeval	pr_hardlimit_warning_last;
 
 	/*
+	 * pool item requests queue
+	 */
+	struct mutex	pr_requests_mtx;
+	struct pool_requests
+			pr_requests;
+	unsigned int	pr_requesting;
+
+	/*
 	 * Instrumentation
 	 */
 	unsigned long	pr_nget;	/* # of successful requests */
@@ -160,7 +170,13 @@ struct pool {
 
 extern struct pool_allocator pool_allocator_nointr;
 
-/* these functions are not locked */
+struct pool_request {
+	TAILQ_ENTRY(pool_request) pr_entry;
+	void (*pr_handler)(void *, void *);
+	void *pr_cookie;
+	void *pr_item;
+};
+
 void		pool_init(struct pool *, size_t, u_int, u_int, int,
 		    const char *, struct pool_allocator *);
 void		pool_destroy(struct pool *);
@@ -172,8 +188,10 @@ struct uvm_constraint_range; /* XXX */
 void		pool_set_constraints(struct pool *,
 		    const struct kmem_pa_mode *mode);
 
-/* these functions are locked */
 void		*pool_get(struct pool *, int) __malloc;
+void		pool_request_init(struct pool_request *,
+		    void (*)(void *, void *), void *);
+void		pool_request(struct pool *, struct pool_request *);
 void		pool_put(struct pool *, void *);
 int		pool_reclaim(struct pool *);
 void		pool_reclaim_all(void);
