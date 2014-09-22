@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.26 2014/09/22 16:17:32 schwarze Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.27 2014/09/22 16:27:03 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -312,6 +312,7 @@ Global defaults are provided by
 .Bd -literal -offset indent
 daemon_class=daemon
 daemon_flags=""
+daemon_timeout=30
 daemon_user=root
 .Ed
 .It
@@ -328,7 +329,8 @@ As noted in
 site-specific values provided in
 .Xr rc.conf.local 8
 for
-.Va daemon_flags
+.Va daemon_flags ,
+.Va daemon_timeout ,
 and
 .Va daemon_user
 will override those defaults.
