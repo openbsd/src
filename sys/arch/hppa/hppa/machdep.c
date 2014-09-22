@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.235 2014/09/19 18:21:14 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.236 2014/09/22 12:12:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -130,7 +130,7 @@ dev_t	bootdev;
 int	physmem, resvmem, resvphysmem, esym;
 
 #ifdef MULTIPROCESSOR
-struct mutex mtx_atomic = MUTEX_INITIALIZER(IPL_NONE);
+__cpu_simple_lock_t atomic_lock = __SIMPLELOCK_UNLOCKED;
 #endif
 
 /*

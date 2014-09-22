@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.6 2014/06/17 00:00:48 tobiasu Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.7 2014/09/22 12:12:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -203,32 +203,4 @@ int
 __mp_lock_held(struct __mp_lock *mpl)
 {
 	return mpl->mpl_cpu == curcpu();
-}
-
-/*
- * Emulate a compare-and-swap instruction for rwlocks, by using a
- * __cpu_simple_lock as a critical section.
- *
- * Since we are only competing against other processors for rwlocks,
- * it is not necessary in this case to disable interrupts to prevent
- * reentrancy on the same processor.
- */
-
-__cpu_simple_lock_t rw_cas_spinlock = __SIMPLELOCK_UNLOCKED;
-
-int
-rw_cas_hppa(volatile unsigned long *p, unsigned long o, unsigned long n)
-{
-	int rc = 0;
-
-	__cpu_simple_lock(&rw_cas_spinlock);
-
-	if (*p != o)
-		rc = 1;
-	else
-		*p = n;
-
-	__cpu_simple_unlock(&rw_cas_spinlock);
-
-	return (rc);
 }
