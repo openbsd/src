@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.31 2014/09/14 14:17:24 jsg Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.32 2014/09/22 01:09:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -577,7 +577,7 @@ vscsikqfilter(dev_t dev, struct knote *kn)
 		return (EINVAL);
 	}
 
-	kn->kn_hook = (caddr_t)sc;
+	kn->kn_hook = sc;
 
 	mtx_enter(&sc->sc_sel_mtx);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
@@ -590,7 +590,7 @@ vscsikqfilter(dev_t dev, struct knote *kn)
 void
 filt_vscsidetach(struct knote *kn)
 {
-	struct vscsi_softc *sc = (struct vscsi_softc *)kn->kn_hook;
+	struct vscsi_softc *sc = kn->kn_hook;
 	struct klist *klist = &sc->sc_sel.si_note;
  
 	mtx_enter(&sc->sc_sel_mtx);
@@ -601,7 +601,7 @@ filt_vscsidetach(struct knote *kn)
 int
 filt_vscsiread(struct knote *kn, long hint)
 {
-	struct vscsi_softc *sc = (struct vscsi_softc *)kn->kn_hook;
+	struct vscsi_softc *sc = kn->kn_hook;
 	int event = 0;
 
 	mtx_enter(&sc->sc_state_mtx);
