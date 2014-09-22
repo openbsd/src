@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.395 2014/09/15 22:28:58 matthieu Exp $
+#	$OpenBSD: Makefile,v 1.396 2014/09/22 00:03:48 rpe Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -214,19 +214,17 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/rc.d
 	touch ${DESTDIR}/usr/share/sysmerge/etcsum
 	touch ${DESTDIR}/usr/share/sysmerge/examplessum
-	ETCLIST=`mktemp /tmp/_etclist.XXXXXXXXXX` || exit 1; \
-	sort ${.CURDIR}/../distrib/sets/lists/etc/{mi,md.${MACHINE}} > $${ETCLIST}; \
-	cd ${DESTDIR} && \
-		xargs sha256 -h ${DESTDIR}/usr/share/sysmerge/etcsum < $${ETCLIST} || true; \
-	rm -f $${ETCLIST}
-	EGLIST=`mktemp /tmp/_eglist.XXXXXXXXXX` || exit 1; \
-	grep -h '/etc/examples/' ../distrib/sets/lists/base/{mi,md.${MACHINE}} | sort > $${EGLIST}; \
-	cd ${DESTDIR} && \
-		xargs sha256 -h ${DESTDIR}/usr/share/sysmerge/examplessum < $${EGLIST} || true; \
-	rm -f $${EGLIST}
-	cd ${DESTDIR} && \
-	sort ${.CURDIR}/../distrib/sets/lists/etc/{mi,md.${MACHINE}} | \
-	    pax -w -d | gzip -9 > ${DESTDIR}/usr/share/sysmerge/etc.tgz
+	cd ${DESTDIR}/ && \
+		sort ${.CURDIR}/../distrib/sets/lists/etc/{mi,md.${MACHINE}} | \
+		xargs sha256 -h ${DESTDIR}/usr/share/sysmerge/etcsum || true
+	cd ${DESTDIR}/ && \
+		grep -h '/etc/examples/' \
+		    ${.CURDIR}/../distrib/sets/lists/base/{mi,md.${MACHINE}} | \
+		sort | \
+		xargs sha256 -h ${DESTDIR}/usr/share/sysmerge/examplessum || true
+	cd ${DESTDIR}/ && \
+		sort ${.CURDIR}/../distrib/sets/lists/etc/{mi,md.${MACHINE}} | \
+	    	pax -w -d | gzip -9 > ${DESTDIR}/usr/share/sysmerge/etc.tgz
 
 distribution:
 	exec ${SUDO} ${MAKE} distribution-etc-root-var
