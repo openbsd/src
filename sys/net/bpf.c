@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.106 2014/09/22 23:19:59 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.107 2014/09/22 23:40:46 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1062,7 +1062,7 @@ bpfkqfilter(dev_t dev, struct knote *kn)
 		return (EINVAL);
 	}
 
-	kn->kn_hook = (caddr_t)((u_long)dev);
+	kn->kn_hook = d;
 
 	s = splnet();
 	D_GET(d);
@@ -1077,11 +1077,9 @@ bpfkqfilter(dev_t dev, struct knote *kn)
 void
 filt_bpfrdetach(struct knote *kn)
 {
-	dev_t dev = (dev_t)((u_long)kn->kn_hook);
-	struct bpf_d *d;
+	struct bpf_d *d = kn->kn_hook;
 	int s;
 
-	d = bpfilter_lookup(minor(dev));
 	s = splnet();
 	SLIST_REMOVE(&d->bd_sel.si_note, kn, knote, kn_selnext);
 	D_PUT(d);
@@ -1091,10 +1089,8 @@ filt_bpfrdetach(struct knote *kn)
 int
 filt_bpfread(struct knote *kn, long hint)
 {
-	dev_t dev = (dev_t)((u_long)kn->kn_hook);
-	struct bpf_d *d;
+	struct bpf_d *d = kn->kn_hook;
 
-	d = bpfilter_lookup(minor(dev));
 	kn->kn_data = d->bd_hlen;
 	if (d->bd_immediate)
 		kn->kn_data += d->bd_slen;
