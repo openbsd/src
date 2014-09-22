@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.28 2014/08/07 20:02:23 miod Exp $ */
+/* $OpenBSD: s3_both.c,v 1.29 2014/09/22 12:36:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -223,7 +223,7 @@ ssl3_take_mac(SSL *s)
 int
 ssl3_get_finished(SSL *s, int a, int b)
 {
-	int al, i, ok;
+	int al, ok, md_len;
 	long n;
 	unsigned char *p;
 
@@ -247,33 +247,31 @@ ssl3_get_finished(SSL *s, int a, int b)
 	}
 	s->s3->change_cipher_spec = 0;
 
+	md_len = s->method->ssl3_enc->finish_mac_length;
 	p = (unsigned char *)s->init_msg;
-	i = s->s3->tmp.peer_finish_md_len;
 
-	if (i != n) {
+	if (s->s3->tmp.peer_finish_md_len != md_len || n != md_len) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_FINISHED, SSL_R_BAD_DIGEST_LENGTH);
 		goto f_err;
 	}
 
-	if (timingsafe_memcmp(p, s->s3->tmp.peer_finish_md, i) != 0) {
+	if (timingsafe_memcmp(p, s->s3->tmp.peer_finish_md, md_len) != 0) {
 		al = SSL_AD_DECRYPT_ERROR;
 		SSLerr(SSL_F_SSL3_GET_FINISHED, SSL_R_DIGEST_CHECK_FAILED);
 		goto f_err;
 	}
 
-        /* Copy the finished so we can use it for
-           renegotiation checks */
+	/* Copy finished so we can use it for renegotiation checks. */
+	OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
 	if (s->type == SSL_ST_ACCEPT) {
-		OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
 		memcpy(s->s3->previous_client_finished,
-		s->s3->tmp.peer_finish_md, i);
-		s->s3->previous_client_finished_len = i;
+		    s->s3->tmp.peer_finish_md, md_len);
+		s->s3->previous_client_finished_len = md_len;
 	} else {
-		OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
 		memcpy(s->s3->previous_server_finished,
-		s->s3->tmp.peer_finish_md, i);
-		s->s3->previous_server_finished_len = i;
+		    s->s3->tmp.peer_finish_md, md_len);
+		s->s3->previous_server_finished_len = md_len;
 	}
 
 	return (1);
