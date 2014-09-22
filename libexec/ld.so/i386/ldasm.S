@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.19 2014/07/14 03:54:51 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.20 2014/09/22 16:13:02 brad Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -90,7 +90,7 @@ _dl_start:
 	.section	".text"					;\
 	.align		4					;\
 	.global		__CONCAT(_dl_,n)			;\
-	.type		__CONCAT(_dl_,n)%function		;\
+	.type		__CONCAT(_dl_,n),@function		;\
 __CONCAT(_dl_,n):						;\
 	__DO_SYSCALL(c)						;\
 	jb	.L_cerr						;\
