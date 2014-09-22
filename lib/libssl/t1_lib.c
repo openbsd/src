@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.55 2014/09/21 17:11:04 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.56 2014/09/22 14:26:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -239,35 +239,38 @@ static int nid_list[] = {
 	NID_brainpoolP512r1	/* brainpoolP512r1 (28) */
 };
 
-static int pref_list[] = {
-	NID_sect571r1,		/* sect571r1 (14) */
-	NID_sect571k1,		/* sect571k1 (13) */
-	NID_secp521r1,		/* secp521r1 (25) */
-	NID_brainpoolP512r1,	/* brainpoolP512r1 (28) */
-	NID_sect409k1,		/* sect409k1 (11) */
-	NID_sect409r1,		/* sect409r1 (12) */
-	NID_brainpoolP384r1,	/* brainpoolP384r1 (27) */
-	NID_secp384r1,		/* secp384r1 (24) */
-	NID_sect283k1,		/* sect283k1 (9) */
-	NID_sect283r1,		/* sect283r1 (10) */
-	NID_brainpoolP256r1,	/* brainpoolP256r1 (26) */
-	NID_secp256k1,		/* secp256k1 (22) */
-	NID_X9_62_prime256v1,	/* secp256r1 (23) */
-	NID_sect239k1,		/* sect239k1 (8) */
-	NID_sect233k1,		/* sect233k1 (6) */
-	NID_sect233r1,		/* sect233r1 (7) */
-	NID_secp224k1,		/* secp224k1 (20) */
-	NID_secp224r1,		/* secp224r1 (21) */
-	NID_sect193r1,		/* sect193r1 (4) */
-	NID_sect193r2,		/* sect193r2 (5) */
-	NID_secp192k1,		/* secp192k1 (18) */
-	NID_X9_62_prime192v1,	/* secp192r1 (19) */
-	NID_sect163k1,		/* sect163k1 (1) */
-	NID_sect163r1,		/* sect163r1 (2) */
-	NID_sect163r2,		/* sect163r2 (3) */
-	NID_secp160k1,		/* secp160k1 (15) */
-	NID_secp160r1,		/* secp160r1 (16) */
-	NID_secp160r2,		/* secp160r2 (17) */
+static const unsigned char ecformats_default[] = {
+	TLSEXT_ECPOINTFORMAT_uncompressed,
+	TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime,
+	TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
+};
+
+static const unsigned char eccurves_default[] = {
+	0,14,			/* sect571r1 (14) */
+	0,13,			/* sect571k1 (13) */
+	0,25,			/* secp521r1 (25) */	
+	0,11,			/* sect409k1 (11) */
+	0,12,			/* sect409r1 (12) */
+	0,24,			/* secp384r1 (24) */
+	0,9,			/* sect283k1 (9) */
+	0,10,			/* sect283r1 (10) */
+	0,22,			/* secp256k1 (22) */
+	0,23,			/* secp256r1 (23) */
+	0,8,			/* sect239k1 (8) */
+	0,6,			/* sect233k1 (6) */
+	0,7,			/* sect233r1 (7) */
+	0,20,			/* secp224k1 (20) */
+	0,21,			/* secp224r1 (21) */
+	0,4,			/* sect193r1 (4) */
+	0,5,			/* sect193r2 (5) */
+	0,18,			/* secp192k1 (18) */
+	0,19,			/* secp192r1 (19) */
+	0,1,			/* sect163k1 (1) */
+	0,2,			/* sect163r1 (2) */
+	0,3,			/* sect163r2 (3) */
+	0,15,			/* secp160k1 (15) */
+	0,16,			/* secp160r1 (16) */
+	0,17,			/* secp160r2 (17) */
 };
 
 int
@@ -388,6 +391,27 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 {
 	int extdatalen = 0;
 	unsigned char *ret = p;
+	int using_ecc = 0;
+
+	/* See if we support any ECC ciphersuites. */
+	if (s->version != DTLS1_VERSION && s->version >= TLS1_VERSION) {
+		STACK_OF(SSL_CIPHER) *cipher_stack = SSL_get_ciphers(s);
+		unsigned long alg_k, alg_a;
+		int i;
+
+		for (i = 0; i < sk_SSL_CIPHER_num(cipher_stack); i++) {
+			SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
+
+			alg_k = c->algorithm_mkey;
+			alg_a = c->algorithm_auth;
+
+			if ((alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe) ||
+			    (alg_a & SSL_aECDSA))) {
+				using_ecc = 1;
+				break;
+			}
+		}
+	}
 
 	/* don't add extensions for SSLv3 unless doing secure renegotiation */
 	if (s->client_version == SSL3_VERSION &&
@@ -458,60 +482,80 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		ret += el;
 	}
 
-
-	if (s->tlsext_ecpointformatlist != NULL &&
-	    s->version != DTLS1_VERSION) {
-		/* Add TLS extension ECPointFormats to the ClientHello message */
+	if (using_ecc) {
+		/*
+		 * Add TLS extension ECPointFormats to the ClientHello message.
+		 */
 		size_t lenmax;
+		const unsigned char *plist;
+		size_t plistlen;
+
+		/*
+		 * If we have a custom point format list use it otherwise
+		 * use default.
+		 */
+		plist = s->tlsext_ecpointformatlist;
+		plistlen = s->tlsext_ecpointformatlist_length;
+		if (plist == NULL) {
+			plist = ecformats_default;
+			plistlen = sizeof(ecformats_default);
+		}
 
 		if ((size_t)(limit - ret) < 5)
 			return NULL;
 
 		lenmax = limit - ret - 5;
-		if (s->tlsext_ecpointformatlist_length > lenmax)
+		if (plistlen > lenmax)
 			return NULL;
-		if (s->tlsext_ecpointformatlist_length > 255) {
+		if (plistlen > 255) {
 			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
 			    ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
 
 		s2n(TLSEXT_TYPE_ec_point_formats, ret);
-		s2n(s->tlsext_ecpointformatlist_length + 1, ret);
-		*(ret++) = (unsigned char) s->tlsext_ecpointformatlist_length;
-		memcpy(ret, s->tlsext_ecpointformatlist,
-		    s->tlsext_ecpointformatlist_length);
-		ret += s->tlsext_ecpointformatlist_length;
-	}
-	if (s->tlsext_ellipticcurvelist != NULL &&
-	    s->version != DTLS1_VERSION) {
-		/* Add TLS extension EllipticCurves to the ClientHello message */
-		size_t lenmax;
+		s2n(plistlen + 1, ret);
+		*(ret++) = (unsigned char)plistlen;
+		memcpy(ret, plist, plistlen);
+		ret += plistlen;
+
+		/*
+		 * Add TLS extension EllipticCurves to the ClientHello message.
+		 */
+		plist = s->tlsext_ellipticcurvelist;
+		plistlen = s->tlsext_ellipticcurvelist_length;
+
+		/*
+		 * If we have a custom curve list use it otherwise use default.
+		 */
+		if (plist == NULL) {
+			plist = eccurves_default;
+			plistlen = sizeof(eccurves_default);
+		}
 
 		if ((size_t)(limit - ret) < 6)
 			return NULL;
 
 		lenmax = limit - ret - 6;
-		if (s->tlsext_ellipticcurvelist_length > lenmax)
+		if (plistlen > lenmax)
 			return NULL;
-		if (s->tlsext_ellipticcurvelist_length > 65532) {
+		if (plistlen > 65532) {
 			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
 			    ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
 
 		s2n(TLSEXT_TYPE_elliptic_curves, ret);
-		s2n(s->tlsext_ellipticcurvelist_length + 2, ret);
+		s2n(plistlen + 2, ret);
 
 		/* NB: draft-ietf-tls-ecc-12.txt uses a one-byte prefix for
 		 * elliptic_curve_list, but the examples use two bytes.
 		 * http://www1.ietf.org/mail-archive/web/tls/current/msg00538.html
 		 * resolves this to two bytes.
 		 */
-		s2n(s->tlsext_ellipticcurvelist_length, ret);
-		memcpy(ret, s->tlsext_ellipticcurvelist,
-		    s->tlsext_ellipticcurvelist_length);
-		ret += s->tlsext_ellipticcurvelist_length;
+		s2n(plistlen, ret);
+		memcpy(ret, plist, plistlen);
+		ret += plistlen;
 	}
 
 	if (!(SSL_get_options(s) & SSL_OP_NO_TICKET)) {
@@ -1476,54 +1520,6 @@ ri_check:
 int
 ssl_prepare_clienthello_tlsext(SSL *s)
 {
-	/* If we are client and using an elliptic curve cryptography cipher suite, send the point formats
-	 * and elliptic curves we support.
-	 */
-	int using_ecc = 0;
-	int i;
-	unsigned char *j;
-	unsigned long alg_k, alg_a;
-	STACK_OF(SSL_CIPHER) *cipher_stack = SSL_get_ciphers(s);
-
-	for (i = 0; i < sk_SSL_CIPHER_num(cipher_stack); i++) {
-		SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
-
-		alg_k = c->algorithm_mkey;
-		alg_a = c->algorithm_auth;
-		if ((alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe) ||
-		    (alg_a & SSL_aECDSA))) {
-			using_ecc = 1;
-			break;
-		}
-	}
-	using_ecc = using_ecc && (s->version >= TLS1_VERSION);
-	if (using_ecc) {
-		free(s->tlsext_ecpointformatlist);
-		if ((s->tlsext_ecpointformatlist = malloc(3)) == NULL) {
-			SSLerr(SSL_F_SSL_PREPARE_CLIENTHELLO_TLSEXT,
-			    ERR_R_MALLOC_FAILURE);
-			return -1;
-		}
-		s->tlsext_ecpointformatlist_length = 3;
-		s->tlsext_ecpointformatlist[0] = TLSEXT_ECPOINTFORMAT_uncompressed;
-		s->tlsext_ecpointformatlist[1] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
-		s->tlsext_ecpointformatlist[2] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
-
-		/* we support all named elliptic curves in draft-ietf-tls-ecc-12 */
-		free(s->tlsext_ellipticcurvelist);
-		s->tlsext_ellipticcurvelist_length = sizeof(pref_list) / sizeof(pref_list[0]) * 2;
-		if ((s->tlsext_ellipticcurvelist = malloc(s->tlsext_ellipticcurvelist_length)) == NULL) {
-			s->tlsext_ellipticcurvelist_length = 0;
-			SSLerr(SSL_F_SSL_PREPARE_CLIENTHELLO_TLSEXT,
-			    ERR_R_MALLOC_FAILURE);
-			return -1;
-		}
-		for (i = 0, j = s->tlsext_ellipticcurvelist; (unsigned int)i < sizeof(pref_list) / sizeof(pref_list[0]); i++) {
-			int id = tls1_ec_nid2curve_id(pref_list[i]);
-			s2n(id, j);
-		}
-	}
-
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.40 2014/08/11 01:06:22 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.41 2014/09/22 14:26:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -374,26 +374,6 @@ sess_id_done:
 				SSL_SESSION_free(ss);
 				return 0;
 			}
-		}
-		if (s->tlsext_ecpointformatlist) {
-			free(ss->tlsext_ecpointformatlist);
-			if ((ss->tlsext_ecpointformatlist = malloc(s->tlsext_ecpointformatlist_length)) == NULL) {
-				SSLerr(SSL_F_SSL_GET_NEW_SESSION, ERR_R_MALLOC_FAILURE);
-				SSL_SESSION_free(ss);
-				return 0;
-			}
-			ss->tlsext_ecpointformatlist_length = s->tlsext_ecpointformatlist_length;
-			memcpy(ss->tlsext_ecpointformatlist, s->tlsext_ecpointformatlist, s->tlsext_ecpointformatlist_length);
-		}
-		if (s->tlsext_ellipticcurvelist) {
-			free(ss->tlsext_ellipticcurvelist);
-			if ((ss->tlsext_ellipticcurvelist = malloc(s->tlsext_ellipticcurvelist_length)) == NULL) {
-				SSLerr(SSL_F_SSL_GET_NEW_SESSION, ERR_R_MALLOC_FAILURE);
-				SSL_SESSION_free(ss);
-				return 0;
-			}
-			ss->tlsext_ellipticcurvelist_length = s->tlsext_ellipticcurvelist_length;
-			memcpy(ss->tlsext_ellipticcurvelist, s->tlsext_ellipticcurvelist, s->tlsext_ellipticcurvelist_length);
 		}
 	} else {
 		ss->session_id_length = 0;
