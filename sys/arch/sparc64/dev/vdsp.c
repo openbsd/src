@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.27 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.28 2014/09/22 08:26:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -1118,6 +1118,7 @@ vdsp_read_desc(struct vdsp_softc *sc, struct vdsk_desc_msg *dm)
 	dm->status = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
 	VOP_UNLOCK(sc->sc_vp, 0, p);
 
+	KERNEL_UNLOCK();
 	if (dm->status == 0) {
 		i = 0;
 		va = (vaddr_t)buf;
@@ -1132,6 +1133,7 @@ vdsp_read_desc(struct vdsp_softc *sc, struct vdsk_desc_msg *dm)
 			if (err != H_EOK) {
 				printf("%s: hv_ldc_copy: %d\n", __func__, err);
 				dm->status = EIO;
+				KERNEL_LOCK();
 				goto fail;
 			}
 			va += nbytes;
@@ -1143,6 +1145,7 @@ vdsp_read_desc(struct vdsp_softc *sc, struct vdsk_desc_msg *dm)
 			}
 		}
 	}
+	KERNEL_LOCK();
 
 fail:
 	free(buf, M_DEVBUF, 0);
@@ -1189,6 +1192,7 @@ vdsp_read_dring(void *arg1, void *arg2)
 	vd->status = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
 	VOP_UNLOCK(sc->sc_vp, 0, p);
 
+	KERNEL_UNLOCK();
 	if (vd->status == 0) {
 		i = 0;
 		va = (vaddr_t)buf;
@@ -1203,6 +1207,7 @@ vdsp_read_dring(void *arg1, void *arg2)
 			if (err != H_EOK) {
 				printf("%s: hv_ldc_copy: %d\n", __func__, err);
 				vd->status = EIO;
+				KERNEL_LOCK();
 				goto fail;
 			}
 			va += nbytes;
@@ -1214,6 +1219,7 @@ vdsp_read_dring(void *arg1, void *arg2)
 			}
 		}
 	}
+	KERNEL_LOCK();
 
 fail:
 	free(buf, M_DEVBUF, 0);
@@ -1244,6 +1250,7 @@ vdsp_write_dring(void *arg1, void *arg2)
 
 	buf = malloc(vd->size, M_DEVBUF, M_WAITOK);
 
+	KERNEL_UNLOCK();
 	i = 0;
 	va = (vaddr_t)buf;
 	size = vd->size;
@@ -1257,6 +1264,7 @@ vdsp_write_dring(void *arg1, void *arg2)
 		if (err != H_EOK) {
 			printf("%s: hv_ldc_copy: %d\n", __func__, err);
 			vd->status = EIO;
+			KERNEL_LOCK();
 			goto fail;
 		}
 		va += nbytes;
@@ -1267,6 +1275,7 @@ vdsp_write_dring(void *arg1, void *arg2)
 			i++;
 		}
 	}
+	KERNEL_LOCK();
 
 	iov.iov_base = buf;
 	iov.iov_len = vd->size;
