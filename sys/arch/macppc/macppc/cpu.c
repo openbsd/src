@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.76 2014/09/06 10:15:52 mpi Exp $ */
+/*	$OpenBSD: cpu.c,v 1.77 2014/09/22 10:45:06 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -371,8 +371,8 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	}
 
 	/* power savings mode */
-	if (ppc_proc_is_64b == 0)
-		hid0 = ppc_mfhid0();
+	hid0 = ppc_mfhid0();
+
 	switch (cpu) {
 	case PPC_CPU_MPC603:
 	case PPC_CPU_MPC603e:
@@ -403,14 +403,19 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		break;
 	case PPC_CPU_IBM970:
 	case PPC_CPU_IBM970FX:
-	case PPC_CPU_IBM970MP:
 		/* select NAP mode */
-		hid0 &= ~(HID0_NAP | HID0_DOZE | HID0_SLEEP);
-		hid0 |= HID0_DPM;
+		hid0 &= ~(HID0_DOZE | HID0_DEEPNAP);
+		hid0 |= HID0_NAP | HID0_DPM;
+		ppc_cpuidle = 1;
+		break;
+	case PPC_CPU_IBM970MP:
+		/* select DEEPNAP mode, which requires NAP */
+		hid0 &= ~HID0_DOZE;
+		hid0 |= HID0_DEEPNAP | HID0_NAP | HID0_DPM;
+		ppc_cpuidle = 1;
 		break;
 	}
-	if (ppc_proc_is_64b == 0)
-		ppc_mthid0(hid0);
+	ppc_mthid0(hid0);
 
 	/* if processor is G3 or G4, configure L2 cache */
 	switch (cpu) {
