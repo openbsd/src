@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.107 2014/09/22 23:40:46 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.108 2014/09/22 23:48:58 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -302,10 +302,6 @@ bpf_detachd(struct bpf_d *d)
 #define D_GET(d) ((d)->bd_ref++)
 #define D_PUT(d) bpf_freed(d)
 
-/*
- * bpfilterattach() is called at boot time in new systems.  We do
- * nothing here since old systems will not call this.
- */
 /* ARGSUSED */
 void
 bpfilterattach(int n)
