@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.104 2014/09/19 02:52:55 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.105 2014/09/22 23:16:30 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1067,6 +1067,8 @@ bpfkqfilter(dev_t dev, struct knote *kn)
 	s = splnet();
 	D_GET(d);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	if (d->bd_rtout != -1 && d->bd_rdStart == 0)
+		d->bd_rdStart = ticks;
 	splx(s);
 
 	return (0);
