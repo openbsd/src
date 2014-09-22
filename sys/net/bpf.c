@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.105 2014/09/22 23:16:30 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.106 2014/09/22 23:19:59 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 		return (EIO);
 	}
 
-	if (uio->uio_resid > MCLBYTES)
+	if (uio->uio_resid > MAXMCLBYTES)
 		return (EIO);
 	len = uio->uio_resid;
 
@@ -181,7 +181,7 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 	m->m_pkthdr.len = len - hlen;
 
 	if (len > MHLEN) {
-		MCLGET(m, M_WAIT);
+		MCLGETI(m, M_WAIT, NULL, len);
 		if ((m->m_flags & M_EXT) == 0) {
 			error = ENOBUFS;
 			goto bad;
