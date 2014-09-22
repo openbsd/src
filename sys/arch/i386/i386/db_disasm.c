@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.18 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.19 2014/09/22 04:33:45 brad Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /*
@@ -1015,7 +1015,7 @@ db_disasm_esc(db_addr_t loc, int inst, int short_addr, int size, char *seg)
 		 * Normal address modes.
 		 */
 		loc = db_read_address(loc, short_addr, regmodrm, &address);
-		db_printf(fp->f_name);
+		db_printf("%s", fp->f_name);
 		switch(fp->f_size) {
 		    case SNGL:
 			db_printf("s");
