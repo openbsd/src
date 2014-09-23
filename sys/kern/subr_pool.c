@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.158 2014/09/22 01:04:58 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.159 2014/09/23 19:54:47 miod Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -563,15 +563,13 @@ pool_do_get(struct pool *pp, int flags)
 		panic("%s: %s: page empty", __func__, pp->pr_wchan);
 	XSIMPLEQ_REMOVE_HEAD(&ph->ph_itemlist, pi_list);
 
-#ifndef SMALL_KERNEL
+#ifdef DIAGNOSTIC
 	if (pi->pi_magic != poison_value(pi)) {
 		panic("%s: %s free list modified: "
 		    "page %p; item addr %p; offset 0x%x=0x%x", __func__,
 		    pp->pr_wchan, ph->ph_page, pi, 0, pi->pi_magic);
 	}
-#endif
 
-#ifdef DIAGNOSTIC
 	if (pool_debug && ph->ph_magic) {
 		size_t pidx;
 		uint32_t pval;
@@ -630,11 +628,9 @@ pool_put(struct pool *pp, void *v)
 
 	ph = pr_find_pagehead(pp, v);
 
-#ifndef SMALL_KERNEL
-	pi->pi_magic = poison_value(pi);
-#endif
-
 #ifdef DIAGNOSTIC
+	pi->pi_magic = poison_value(pi);
+
 	if (pool_debug) {
 		struct pool_item *qi;
 		XSIMPLEQ_FOREACH(qi, &ph->ph_itemlist, pi_list) {
@@ -759,7 +755,7 @@ pool_p_alloc(struct pool *pp, int flags)
 	n = pp->pr_itemsperpage;
 	while (n--) {
 		pi = (struct pool_item *)addr;
-#ifndef SMALL_KERNEL
+#ifdef DIAGNOSTIC
 		pi->pi_magic = poison_value(pi);
 #endif
 		XSIMPLEQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);
@@ -778,14 +774,14 @@ pool_p_alloc(struct pool *pp, int flags)
 void
 pool_p_free(struct pool *pp, struct pool_item_header *ph)
 {
-#ifndef SMALL_KERNEL
+#ifdef DIAGNOSTIC
 	struct pool_item *pi;
 #endif
 
         MUTEX_ASSERT_UNLOCKED(&pp->pr_mtx);
         KASSERT(ph->ph_nmissing == 0);
 
-#ifndef SMALL_KERNEL
+#ifdef DIAGNOSTIC
 	XSIMPLEQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
 		if (pi->pi_magic != poison_value(pi)) {
 			panic("%s: %s free list modified: "
@@ -1139,6 +1135,7 @@ pool_chk_page(struct pool *pp, struct pool_item_header *ph, int expected)
 	for (pi = XSIMPLEQ_FIRST(&ph->ph_itemlist), n = 0;
 	     pi != NULL;
 	     pi = XSIMPLEQ_NEXT(&ph->ph_itemlist, pi, pi_list), n++) {
+#ifdef DIAGNOSTIC
 		if (pi->pi_magic != poison_value(pi)) {
 			printf("%s: ", label);
 			printf("pool(%p:%s): free list modified: "
@@ -1148,7 +1145,6 @@ pool_chk_page(struct pool *pp, struct pool_item_header *ph, int expected)
 			    0, pi->pi_magic);
 		}
 
-#ifdef DIAGNOSTIC
 		if (pool_debug && ph->ph_magic) {
 			size_t pidx;
 			uint32_t pval;
