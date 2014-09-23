@@ -1,4 +1,4 @@
-/* $OpenBSD: by_dir.c,v 1.32 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: by_dir.c,v 1.33 2014/09/23 20:01:11 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -208,8 +208,9 @@ free_dir(X509_LOOKUP *lu)
 static int
 add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 {
-	int j, len;
+	int j;
 	const char *s, *ss, *p;
+	ptrdiff_t len;
 
 	if (dir == NULL || !*dir) {
 		X509err(X509_F_ADD_CERT_DIR, X509_R_INVALID_DIRECTORY);
@@ -223,14 +224,13 @@ add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 			BY_DIR_ENTRY *ent;
 			ss = s;
 			s = p + 1;
-			len = (int)(p - ss);
+			len = p - ss;
 			if (len == 0)
 				continue;
 			for (j = 0; j < sk_BY_DIR_ENTRY_num(ctx->dirs); j++) {
 				ent = sk_BY_DIR_ENTRY_value(ctx->dirs, j);
 				if (strlen(ent->dir) == (size_t)len &&
-				    strncmp(ent->dir, ss,
-				    (unsigned int)len) == 0)
+				    strncmp(ent->dir, ss, (size_t)len) == 0)
 					break;
 			}
 			if (j < sk_BY_DIR_ENTRY_num(ctx->dirs))
@@ -249,7 +249,7 @@ add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 			}
 			ent->dir_type = type;
 			ent->hashes = sk_BY_DIR_HASH_new(by_dir_hash_cmp);
-			ent->dir = strdup(ss);
+			ent->dir = strndup(ss, (size_t)len);
 			if (!ent->dir || !ent->hashes) {
 				X509err(X509_F_ADD_CERT_DIR, ERR_R_MALLOC_FAILURE);
 				by_dir_entry_free(ent);
