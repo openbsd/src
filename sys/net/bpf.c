@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.108 2014/09/22 23:48:58 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.109 2014/09/23 00:26:11 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/poll.h>
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
+#include <sys/rwlock.h>
 
 #include <net/if.h>
 #include <net/bpf.h>
@@ -108,6 +109,8 @@ int	bpf_setdlt(struct bpf_d *, u_int);
 
 void	filt_bpfrdetach(struct knote *);
 int	filt_bpfread(struct knote *, long);
+
+int	bpf_sysctl_locked(int *, u_int, void *, size_t *, void *, size_t);
 
 struct bpf_d *bpfilter_lookup(int);
 struct bpf_d *bpfilter_create(int);
@@ -1528,14 +1531,11 @@ bpfdetach(struct ifnet *ifp)
 }
 
 int
-bpf_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-    size_t newlen)
+bpf_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
 {
 	int newval;
 	int error;
-
-	if (namelen != 1)
-		return (ENOTDIR);
 
 	switch (name[0]) {
 	case NET_BPF_BUFSIZE:
@@ -1560,6 +1560,30 @@ bpf_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (EOPNOTSUPP);
 	}
 	return (0);
+}
+
+int
+bpf_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen)
+{
+	static struct rwlock bpf_sysctl_lk = RWLOCK_INITIALIZER("bpfsz");
+	int flags = RW_INTR;
+	int error;
+
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	flags |= (newp == NULL) ? RW_READ : RW_WRITE;
+
+	error = rw_enter(&bpf_sysctl_lk, flags);
+	if (error != 0)
+		return (error);
+
+	error = bpf_sysctl_locked(name, namelen, oldp, oldlenp, newp, newlen);
+
+	rw_exit(&bpf_sysctl_lk);
+
+	return (error);
 }
 
 struct bpf_d *
