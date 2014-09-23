@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.269 2014/09/19 20:02:25 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.270 2014/09/23 18:33:34 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2135,7 +2135,13 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	acpi_indicator(sc, ACPI_SST_WAKING);	/* blink */
 
 #if NWSDISPLAY > 0
+	/*
+	 * Temporarily release the lock to prevent the X server from
+	 * blocking on setting the display brightness.
+	 */
+	rw_exit_write(&sc->sc_lck);
 	wsdisplay_suspend();
+	rw_enter_write(&sc->sc_lck);
 #endif /* NWSDISPLAY > 0 */
 
 	if (config_suspend_all(DVACT_QUIESCE))
@@ -2222,7 +2228,9 @@ fail_quiesce:
 	config_suspend_all(DVACT_WAKEUP);
 
 #if NWSDISPLAY > 0
+	rw_exit_write(&sc->sc_lck);
 	wsdisplay_resume();
+	rw_enter_write(&sc->sc_lck);
 #endif /* NWSDISPLAY > 0 */
 
 	acpi_record_event(sc, APM_NORMAL_RESUME);
