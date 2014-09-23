@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_vm.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_vm.c,v 1.2 2014/09/23 05:57:14 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -69,13 +69,16 @@ ttm_bo_vm_lookup_rb(struct ttm_bo_device *bdev,
 	struct ttm_buffer_object *bo;
 	struct ttm_buffer_object *best_bo = NULL;
 
-	RB_FOREACH(bo, ttm_bo_device_buffer_objects, &bdev->addr_space_rb) {
+	bo = RB_ROOT(&bdev->addr_space_rb);
+	while (bo != NULL) {
 		cur_offset = bo->vm_node->start;
 		if (page_start >= cur_offset) {
 			best_bo = bo;
 			if (page_start == cur_offset)
 				break;
-		}
+			bo = RB_RIGHT(bo, vm_rb);
+		} else
+			bo = RB_LEFT(bo, vm_rb);
 	}
 
 	if (unlikely(best_bo == NULL))
