@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcreg.h,v 1.5 2013/09/12 11:54:04 rapha Exp $	*/
+/*	$OpenBSD: sdmmcreg.h,v 1.6 2014/09/23 12:08:13 rapha Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -95,6 +95,7 @@
 #define EXT_CSD_REV			192	/* RO */
 #define EXT_CSD_STRUCTURE		194	/* RO */
 #define EXT_CSD_CARD_TYPE		196	/* RO */
+#define EXT_CSD_SEC_COUNT		212	/* RO */
 
 /* EXT_CSD field definitions */
 #define EXT_CSD_CMD_SET_NORMAL		(1U << 0)

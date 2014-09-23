@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.19 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.20 2014/09/23 12:08:13 rapha Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -428,6 +428,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	u_int8_t ext_csd[512];
 	int speed = 0;
 	int hs_timing = 0;
+	u_int32_t sectors = 0;
 
 	if (sf->csd.mmcver >= MMC_CSD_MMCVER_4_0) {
 		/* read EXT_CSD */
@@ -439,18 +440,12 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			return error;
 		}
 
-		switch (ext_csd[EXT_CSD_CARD_TYPE]) {
-		case EXT_CSD_CARD_TYPE_26M:
-			speed = 26000;
-			break;
-		case EXT_CSD_CARD_TYPE_52M:
-		case EXT_CSD_CARD_TYPE_52M_V18:
-		case EXT_CSD_CARD_TYPE_52M_V12:
-		case EXT_CSD_CARD_TYPE_52M_V12_18:
+		if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_52M) {
 			speed = 52000;
 			hs_timing = 1;
-			break;
-		default:
+		} else if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_26M) {
+			speed = 26000;
+		} else {
 			printf("%s: unknown CARD_TYPE 0x%x\n", DEVNAME(sc),
 			    ext_csd[EXT_CSD_CARD_TYPE]);
 		}
@@ -487,6 +482,16 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 				printf("%s, HS_TIMING set failed\n", DEVNAME(sc));
 				return EINVAL;
 			}
+		}
+
+		sectors = ext_csd[EXT_CSD_SEC_COUNT + 0] << 0 |
+		    ext_csd[EXT_CSD_SEC_COUNT + 1] << 8  |
+		    ext_csd[EXT_CSD_SEC_COUNT + 2] << 16 |
+		    ext_csd[EXT_CSD_SEC_COUNT + 3] << 24;
+
+		if (sectors > (2u * 1024 * 1024 * 1024) / 512) {
+			sf->flags |= SFF_SDHC;
+			sf->csd.capacity = sectors;
 		}
 	}
 
