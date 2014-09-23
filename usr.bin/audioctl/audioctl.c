@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.23 2013/11/13 18:50:05 deraadt Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.24 2014/09/23 06:47:37 ratchov Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -80,17 +80,10 @@ struct field {
 	u_int oldval;
 } fields[] = {
 	{ "name", 		&adev.name, 		STRING, READONLY },
-	{ "version",		&adev.version,		STRING, READONLY },
-	{ "config",		&adev.config,		STRING, READONLY },
 	{ "encodings",		encbuf,			STRING, READONLY },
 	{ "properties",		&properties,		PROPS,	READONLY },
-	{ "full_duplex",	&fullduplex,		UINT,	0 },
-	{ "fullduplex",		&fullduplex,		UINT,	0 },
-	{ "blocksize",		&info.blocksize,	UINT,	0 },
 	{ "hiwat",		&info.hiwat,		UINT,	0 },
 	{ "lowat",		&info.lowat,		UINT,	0 },
-	{ "output_muted",	&info.output_muted,	UCHAR,	0 },
-	{ "monitor_gain",	&info.monitor_gain,	UINT,	0 },
 	{ "mode",		&info.mode,		P_R,	READONLY },
 	{ "play.rate",		&info.play.sample_rate,	UINT,	0 },
 	{ "play.sample_rate",	&info.play.sample_rate,	UINT,	ALIAS },
@@ -99,19 +92,9 @@ struct field {
 	{ "play.bps",		&info.play.bps,		UINT,	0 },
 	{ "play.msb",		&info.play.msb,		UINT,	0 },
 	{ "play.encoding",	&info.play.encoding,	ENC,	0 },
-	{ "play.gain",		&info.play.gain,	UINT,	0 },
-	{ "play.balance",	&info.play.balance,	UCHAR,	0 },
-	{ "play.port",		&info.play.port,	XINT,	0 },
-	{ "play.avail_ports",	&info.play.avail_ports,	XINT,	0 },
-	{ "play.seek",		&info.play.seek,	UINT,	READONLY },
 	{ "play.samples",	&info.play.samples,	UINT,	READONLY },
-	{ "play.eof",		&info.play.eof,		UINT,	READONLY },
 	{ "play.pause",		&info.play.pause,	UCHAR,	0 },
-	{ "play.error",		&info.play.error,	UCHAR,	READONLY },
-	{ "play.waiting",	&info.play.waiting,	UCHAR,	READONLY },
-	{ "play.open",		&info.play.open,	UCHAR,	READONLY },
 	{ "play.active",	&info.play.active,	UCHAR,	READONLY },
-	{ "play.buffer_size",	&info.play.buffer_size,	UINT,	0 },
 	{ "play.block_size",	&info.play.block_size,	UINT,	0 },
 	{ "play.errors",	&perrors,		INT,	READONLY },
 	{ "record.rate",	&info.record.sample_rate,UINT,	0 },
@@ -121,19 +104,9 @@ struct field {
 	{ "record.bps",		&info.record.bps,	UINT,	0 },
 	{ "record.msb",		&info.record.msb,	UINT,	0 },
 	{ "record.encoding",	&info.record.encoding,	ENC,	0 },
-	{ "record.gain",	&info.record.gain,	UINT,	0 },
-	{ "record.balance",	&info.record.balance,	UCHAR,	0 },
-	{ "record.port",	&info.record.port,	XINT,	0 },
-	{ "record.avail_ports",	&info.record.avail_ports,XINT,	0 },
-	{ "record.seek",	&info.record.seek,	UINT,	READONLY },
 	{ "record.samples",	&info.record.samples,	UINT,	READONLY },
-	{ "record.eof",		&info.record.eof,	UINT,	READONLY },
 	{ "record.pause",	&info.record.pause,	UCHAR,	0 },
-	{ "record.error",	&info.record.error,	UCHAR,	READONLY },
-	{ "record.waiting",	&info.record.waiting,	UCHAR,	READONLY },
-	{ "record.open",	&info.record.open,	UCHAR,	READONLY },
 	{ "record.active",	&info.record.active,	UCHAR,	READONLY },
-	{ "record.buffer_size",	&info.record.buffer_size,UINT,	0 },
 	{ "record.block_size",	&info.record.block_size,UINT,	0 },
 	{ "record.errors",	&rerrors,		INT,	READONLY },
 	{ 0 }
