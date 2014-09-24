@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.216 2014/08/13 07:45:37 jsg Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.217 2014/09/24 08:35:12 mpi Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -145,7 +145,6 @@ typedef struct {
 
 typedef struct azalia_t {
 	struct device dev;
-	struct device *audiodev;
 
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
@@ -551,7 +550,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (azalia_init_streams(sc))
 		goto err_exit;
 
-	sc->audiodev = audio_attach_mi(&azalia_hw_if, sc, &sc->dev);
+	audio_attach_mi(&azalia_hw_if, sc, &sc->dev);
 
 	return;
 
@@ -577,10 +576,6 @@ azalia_pci_activate(struct device *self, int act)
 		azalia_resume(sc);
 		rv = config_activate_children(self, act);
 		break;
-	case DVACT_DEACTIVATE:
-		if (sc->audiodev != NULL)
-			rv = config_deactivate(sc->audiodev);
-		break;
 	default:
 		rv = config_activate_children(self, act);
 		break;
@@ -605,10 +600,7 @@ azalia_pci_detach(struct device *self, int flags)
 	if (az->detached > 1)
 		return 0;
 
-	if (az->audiodev != NULL) {
-		config_detach(az->audiodev, flags);
-		az->audiodev = NULL;
-	}
+	config_detach_children(self, flags);
 
 	/* disable unsolicited responses if soft detaching */
 	if (az->detached == 1) {

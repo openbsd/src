@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.101 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: auich.c,v 1.102 2014/09/24 08:35:12 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -174,7 +174,6 @@ struct auich_softc {
 	void *sc_ih;
 
 	audio_device_t sc_audev;
-	struct device *audiodev;
 
 	pcireg_t pci_id;
 	bus_space_tag_t iot;
@@ -543,7 +542,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->codec_if->vtbl->unlock(sc->codec_if);
 
-	sc->audiodev = audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
 
 	/* Watch for power changes */
 	sc->suspend = DVACT_RESUME;
@@ -561,10 +560,6 @@ auich_activate(struct device *self, int act)
 	case DVACT_RESUME:
 		auich_resume(sc);
 		rv = config_activate_children(self, act);
-		break;
-	case DVACT_DEACTIVATE:
-		if (sc->audiodev != NULL)
-			rv = config_deactivate(sc->audiodev);
 		break;
 	default:
 		rv = config_activate_children(self, act);
