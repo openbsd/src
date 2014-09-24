@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.130 2014/09/13 16:06:37 doug Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.131 2014/09/24 10:35:39 jsg Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -603,7 +603,7 @@ drm_do_ioctl(struct drm_device *dev, int minor, u_long cmd, caddr_t data)
 	++file_priv->ioctl_count;
 
 	DRM_DEBUG("pid=%d, cmd=0x%02lx, nr=0x%02x, dev 0x%lx, auth=%d\n",
-	    DRM_CURRENTPID, cmd, DRM_IOCTL_NR(cmd), (long)&dev->device,
+	    DRM_CURRENTPID, cmd, (u_int)DRM_IOCTL_NR(cmd), (long)&dev->device,
 	    file_priv->authenticated);
 
 	switch (cmd) {
