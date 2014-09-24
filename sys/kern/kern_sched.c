@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.34 2014/07/26 16:07:39 kettenis Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.35 2014/09/24 09:13:20 mpi Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -165,6 +165,7 @@ sched_idle(void *v)
 		cpuset_add(&sched_idle_cpus, ci);
 		cpu_idle_enter();
 		while (spc->spc_whichqs == 0) {
+#ifdef MULTIPROCESSOR
 			if (spc->spc_schedflags & SPCF_SHOULDHALT &&
 			    (spc->spc_schedflags & SPCF_HALTED) == 0) {
 				cpuset_del(&sched_idle_cpus, ci);
@@ -174,6 +175,7 @@ sched_idle(void *v)
 				SCHED_UNLOCK(s);
 				wakeup(spc);
 			}
+#endif
 			cpu_idle_cycle();
 		}
 		cpu_idle_leave();
@@ -269,6 +271,7 @@ sched_chooseproc(void)
 
 	SCHED_ASSERT_LOCKED();
 
+#ifdef MULTIPROCESSOR
 	if (spc->spc_schedflags & SPCF_SHOULDHALT) {
 		if (spc->spc_whichqs) {
 			for (queue = 0; queue < SCHED_NQS; queue++) {
@@ -286,6 +289,7 @@ sched_chooseproc(void)
 		p->p_stat = SRUN;
 		return (p);
 	}
+#endif
 
 again:
 	if (spc->spc_whichqs) {
