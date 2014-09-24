@@ -1,4 +1,4 @@
-/*	$OpenBSD: extract.c,v 1.3 2014/07/12 19:01:49 tedu Exp $ */
+/*	$OpenBSD: extract.c,v 1.4 2014/09/24 00:13:13 doug Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -53,7 +53,7 @@ main(int argc, char *argv[])
 	nfiles = ntohl(nfiles);
 
 	/* allocate space for header struct */
-	if ((h = malloc(nfiles * sizeof(*h))) == NULL)
+	if ((h = reallocarray(NULL, nfiles, sizeof(*h))) == NULL)
 		err(1, "malloc");
 	for (i = 0; i < nfiles; i++) {
 		if ((h[i] = malloc(sizeof(struct header))) == NULL)
