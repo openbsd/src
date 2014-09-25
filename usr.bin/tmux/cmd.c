@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.95 2014/07/13 20:57:46 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.96 2014/09/25 12:45:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1192,7 +1192,13 @@ cmd_find_pane(struct cmd_q *cmdq,
 		*wpp = wl->window->active;
 	else if (paneptr[0] == '+' || paneptr[0] == '-')
 		*wpp = cmd_find_pane_offset(paneptr, wl);
-	else {
+	else if (paneptr[0] == '!' && paneptr[1] == '\0') {
+		if (wl->window->last == NULL) {
+			cmdq_error(cmdq, "no last pane");
+			goto error;
+		}
+		*wpp = wl->window->last;
+	} else {
 		idx = strtonum(paneptr, 0, INT_MAX, &errstr);
 		if (errstr != NULL)
 			goto lookup_string;

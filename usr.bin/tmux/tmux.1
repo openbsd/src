@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.400 2014/09/08 14:29:05 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.401 2014/09/25 12:45:35 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: September 25 2014 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -435,10 +435,11 @@ first attempts to use the argument as a pane index; if that fails, it is looked
 up as for
 .Ar target-window .
 A
-.Ql +
-or
+.Ql + ,
 .Ql -
-indicate the next or previous pane index, respectively.
+or
+.Ql \&!
+indicate the next, previous or last pane.
 One of the strings
 .Em top ,
 .Em bottom ,
