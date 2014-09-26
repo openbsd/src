@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.72 2014/08/10 11:00:36 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.73 2014/09/26 09:31:08 guenther Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -739,7 +739,7 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	    usbd_xfer_isread(xfer)) {
 #ifdef DIAGNOSTIC
 		if (xfer->actlen > xfer->length) {
-			printf("usb_transfer_complete: actlen > len %d > %d\n",
+			printf("usb_transfer_complete: actlen > len %u > %u\n",
 			    xfer->actlen, xfer->length);
 			xfer->actlen = xfer->length;
 		}
