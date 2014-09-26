@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.15 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.16 2014/09/26 13:00:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -48,17 +48,23 @@
 
 struct sdhc_pci_softc {
 	struct sdhc_softc sc;
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_tag;
+	pcireg_t sc_id;
 	void *sc_ih;
 };
 
 int	sdhc_pci_match(struct device *, void *, void *);
 void	sdhc_pci_attach(struct device *, struct device *, void *);
+int	sdhc_pci_activate(struct device *, int);
+
+void	sdhc_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, uint8_t);
 void	sdhc_takecontroller(struct pci_attach_args *);
-void	sdhc_pci_conf_write(struct pci_attach_args *, int, uint8_t);
+void	sdhc_ricohfix(struct sdhc_pci_softc *);
 
 struct cfattach sdhc_pci_ca = {
 	sizeof(struct sdhc_pci_softc), sdhc_pci_match, sdhc_pci_attach,
-	NULL, sdhc_activate
+	NULL, sdhc_pci_activate
 };
 
 int
@@ -105,6 +111,10 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t size;
 	u_int32_t caps = 0;
 
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_tag = pa->pa_tag;
+	sc->sc_id = pa->pa_id;
+
 	/* Some TI controllers needs special treatment. */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TI &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TI_PCI7XX1_SD &&
@@ -118,20 +128,8 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Some RICOH controllers need to be bumped into the right mode. */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RICOH &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_R5U823) {
-		/* Enable SD2.0 mode. */
-		sdhc_pci_conf_write(pa, SDHC_PCI_MODE_KEY, 0xfc);
-		sdhc_pci_conf_write(pa, SDHC_PCI_MODE, SDHC_PCI_MODE_SD20);
-		sdhc_pci_conf_write(pa, SDHC_PCI_MODE_KEY, 0x00);
-
-		/*
-		 * Some SD/MMC cards don't work with the default base
-		 * clock frequency of 200MHz.  Lower it to 50Hz.
-		 */
-		sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ_KEY, 0x01);
-		sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ, 50);
-		sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ_KEY, 0x00);
-	}
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_R5U823)
+		sdhc_ricohfix(sc);
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
@@ -185,6 +183,30 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
+int
+sdhc_pci_activate(struct device *self, int act)
+{
+	struct sdhc_pci_softc *sc = (struct sdhc_pci_softc *)self;
+	int rv;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		rv = sdhc_activate(self, act);
+		break;
+	case DVACT_RESUME:
+		/* Some RICOH controllers need to be bumped into the right mode. */
+		if (PCI_VENDOR(sc->sc_id) == PCI_VENDOR_RICOH &&
+		    PCI_PRODUCT(sc->sc_id) == PCI_PRODUCT_RICOH_R5U823)
+			sdhc_ricohfix(sc);
+		rv = sdhc_activate(self, act);
+		break;
+	default:
+		rv = sdhc_activate(self, act);
+		break;
+	}
+	return (rv);
+}
+
 void
 sdhc_takecontroller(struct pci_attach_args *pa)
 {
@@ -207,12 +229,29 @@ sdhc_takecontroller(struct pci_attach_args *pa)
 }
 
 void
-sdhc_pci_conf_write(struct pci_attach_args *pa, int reg, uint8_t val)
+sdhc_ricohfix(struct sdhc_pci_softc *sc)
+{
+	/* Enable SD2.0 mode. */
+	sdhc_pci_conf_write(sc->sc_pc, sc->sc_tag, SDHC_PCI_MODE_KEY, 0xfc);
+	sdhc_pci_conf_write(sc->sc_pc, sc->sc_tag, SDHC_PCI_MODE, SDHC_PCI_MODE_SD20);
+	sdhc_pci_conf_write(sc->sc_pc, sc->sc_tag, SDHC_PCI_MODE_KEY, 0x00);
+
+	/*
+	 * Some SD/MMC cards don't work with the default base
+	 * clock frequency of 200MHz.  Lower it to 50Hz.
+	 */
+	sdhc_pci_conf_write(sc->sc_pc, sc->sc_tag, SDHC_PCI_BASE_FREQ_KEY, 0x01);
+	sdhc_pci_conf_write(sc->sc_pc, sc->sc_tag, SDHC_PCI_BASE_FREQ, 50);
+	sdhc_pci_conf_write(sc->sc_pc, sc->sc_tag, SDHC_PCI_BASE_FREQ_KEY, 0x00);
+}
+
+void
+sdhc_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, uint8_t val)
 {
 	pcireg_t tmp;
 
-	tmp = pci_conf_read(pa->pa_pc, pa->pa_tag, reg & ~0x3);
+	tmp = pci_conf_read(pc, tag, reg & ~0x3);
 	tmp &= ~(0xff << ((reg & 0x3) * 8));
 	tmp |= (val << ((reg & 0x3) * 8));
-	pci_conf_write(pa->pa_pc, pa->pa_tag, reg & ~0x3, tmp);
+	pci_conf_write(pc, tag, reg & ~0x3, tmp);
 }
