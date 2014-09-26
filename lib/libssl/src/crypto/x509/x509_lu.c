@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.17 2014/07/11 12:52:41 miod Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.18 2014/09/26 19:32:15 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -203,11 +203,8 @@ X509_STORE_new(void)
 	ret->verify = 0;
 	ret->verify_cb = 0;
 
-	if ((ret->param = X509_VERIFY_PARAM_new()) == NULL) {
-		sk_X509_OBJECT_free(ret->objs);
-		free(ret);
-		return NULL;
-	}
+	if ((ret->param = X509_VERIFY_PARAM_new()) == NULL)
+		goto err;
 
 	ret->get_issuer = 0;
 	ret->check_issued = 0;
@@ -219,15 +216,18 @@ X509_STORE_new(void)
 	ret->lookup_crls = 0;
 	ret->cleanup = 0;
 
-	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE,
-	    ret, &ret->ex_data)) {
-		sk_X509_OBJECT_free(ret->objs);
-		free(ret);
-		return NULL;
-	}
+	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data))
+		goto err;
 
 	ret->references = 1;
 	return ret;
+
+err:
+	X509_VERIFY_PARAM_free(ret->param);
+	sk_X509_LOOKUP_free(ret->get_cert_methods);
+	sk_X509_OBJECT_free(ret->objs);
+	free(ret);
+	return NULL;
 }
 
 static void
@@ -264,8 +264,7 @@ X509_STORE_free(X509_STORE *vfy)
 	sk_X509_OBJECT_pop_free(vfy->objs, cleanup);
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, vfy, &vfy->ex_data);
-	if (vfy->param)
-		X509_VERIFY_PARAM_free(vfy->param);
+	X509_VERIFY_PARAM_free(vfy->param);
 	free(vfy);
 }
 
@@ -505,6 +504,8 @@ X509_STORE_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
 	X509_OBJECT *obj;
 
 	sk = sk_X509_new_null();
+	if (sk == NULL)
+		return NULL;
 	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
 	idx = x509_object_idx_cnt(ctx->ctx->objs, X509_LU_X509, nm, &cnt);
 	if (idx < 0) {
@@ -552,6 +553,8 @@ X509_STORE_get1_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
 	X509_OBJECT *obj, xobj;
 
 	sk = sk_X509_CRL_new_null();
+	if (sk == NULL)
+		return NULL;
 	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
 	/* Check cache first */
 	idx = x509_object_idx_cnt(ctx->ctx->objs, X509_LU_CRL, nm, &cnt);
