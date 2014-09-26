@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.141 2014/07/12 14:39:31 stsp Exp $
+#	$OpenBSD: netstart,v 1.142 2014/09/26 15:18:01 halex Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -63,7 +63,7 @@ ifstart() {
 			[ "$name" = "NONE" ] && name=
 			[ "$mask" = "NONE" ] && mask=
 			[ "$bcaddr" = "NONE" ] && bcaddr=
-			cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 down"
+			cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2"
 			cmd="$cmd;dhclient $if"
 			dhcpif="$dhcpif $if"
 			;;
