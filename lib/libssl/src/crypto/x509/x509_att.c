@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_att.c,v 1.11 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: x509_att.c,v 1.12 2014/09/26 19:30:38 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,7 +140,7 @@ X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x, X509_ATTRIBUTE *attr)
 		if ((sk = sk_X509_ATTRIBUTE_new_null()) == NULL)
 			goto err;
 	} else
-		sk= *x;
+		sk = *x;
 
 	if ((new_attr = X509_ATTRIBUTE_dup(attr)) == NULL)
 		goto err2;
@@ -155,7 +155,7 @@ err:
 err2:
 	if (new_attr != NULL)
 		X509_ATTRIBUTE_free(new_attr);
-	if (sk != NULL)
+	if (sk != NULL && sk != *x)
 		sk_X509_ATTRIBUTE_free(sk);
 	return (NULL);
 }
