@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.271 2014/09/25 21:45:54 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.272 2014/09/26 09:25:38 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2146,15 +2146,17 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	rw_enter_write(&sc->sc_lck);
 #endif /* NWSDISPLAY > 0 */
 
-	if (config_suspend_all(DVACT_QUIESCE))
-		goto fail_quiesce;
-
 #ifdef HIBERNATE
 	if (state == ACPI_STATE_S4) {
 		uvmpd_hibernate();
 		hibernate_suspend_bufcache();
+		if (hibernate_alloc())
+			goto fail_alloc;
 	}
 #endif /* HIBERNATE */
+
+	if (config_suspend_all(DVACT_QUIESCE))
+		goto fail_quiesce;
 
 	bufq_quiesce();
 
@@ -2229,6 +2231,14 @@ fail_suspend:
 fail_quiesce:
 	config_suspend_all(DVACT_WAKEUP);
 
+#ifdef HIBERNATE
+fail_alloc:
+	if (state == ACPI_STATE_S4) {
+		hibernate_free();
+		hibernate_resume_bufcache();
+	}
+#endif /* HIBERNATE */
+
 #if NWSDISPLAY > 0
 	rw_exit_write(&sc->sc_lck);
 	wsdisplay_resume();
@@ -2241,13 +2251,6 @@ fail_quiesce:
 
 	acpi_record_event(sc, APM_NORMAL_RESUME);
 	acpi_indicator(sc, ACPI_SST_WORKING);
-
-#ifdef HIBERNATE
-	if (state == ACPI_STATE_S4) {
-		hibernate_free();
-		hibernate_resume_bufcache();
-	}
-#endif /* HIBERNATE */
 
 fail_tts:
 	return (error);

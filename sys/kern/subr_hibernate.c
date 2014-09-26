@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.100 2014/09/19 20:02:25 kettenis Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.101 2014/09/26 09:25:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -68,6 +68,7 @@ vaddr_t hibernate_rle_page;
 union hibernate_info disk_hib;
 paddr_t global_pig_start;
 vaddr_t global_piglet_va;
+paddr_t global_piglet_pa;
 
 /* #define HIB_DEBUG */
 #ifdef HIB_DEBUG
@@ -392,85 +393,42 @@ uvm_pmr_dirty_everything(void)
 }
 
 /*
- * Allocate the highest address that can hold sz.
- *
- * sz in bytes.
+ * Allocate an area that can hold sz bytes and doesn't overlap with
+ * the piglet at piglet_pa.
  */
 int
-uvm_pmr_alloc_pig(paddr_t *addr, psize_t sz)
+uvm_pmr_alloc_pig(paddr_t *pa, psize_t sz, paddr_t piglet_pa)
 {
-	struct uvm_pmemrange	*pmr;
-	struct vm_page		*pig_pg, *pg;
+	struct uvm_constraint_range pig_constraint;
+	struct kmem_pa_mode kp_pig = {
+		.kp_constraint = &pig_constraint,
+		.kp_maxseg = 1
+	};
+	vaddr_t va;
 
-	/*
-	 * Convert sz to pages, since that is what pmemrange uses internally.
-	 */
-	sz = atop(round_page(sz));
+	sz = round_page(sz);
 
-	uvm_lock_fpageq();
+	pig_constraint.ucr_low = piglet_pa + 4 * HIBERNATE_CHUNK_SIZE;
+	pig_constraint.ucr_high = -1;
 
-	TAILQ_FOREACH(pmr, &uvm.pmr_control.use, pmr_use) {
-		RB_FOREACH_REVERSE(pig_pg, uvm_pmr_addr, &pmr->addr) {
-			if (pig_pg->fpgsz >= sz) {
-				goto found;
-			}
-		}
+	va = (vaddr_t)km_alloc(sz, &kv_any, &kp_pig, &kd_nowait);
+	if (va == 0) {
+		pig_constraint.ucr_low = 0;
+		pig_constraint.ucr_high = piglet_pa - 1;
+
+		va = (vaddr_t)km_alloc(sz, &kv_any, &kp_pig, &kd_nowait);
+		if (va == 0)
+			return ENOMEM;
 	}
 
-	/*
-	 * Allocation failure.
-	 */
-	uvm_unlock_fpageq();
-	return ENOMEM;
-
-found:
-	/* Remove page from freelist. */
-	uvm_pmr_remove_size(pmr, pig_pg);
-	pig_pg->fpgsz -= sz;
-	pg = pig_pg + pig_pg->fpgsz;
-	if (pig_pg->fpgsz == 0)
-		uvm_pmr_remove_addr(pmr, pig_pg);
-	else
-		uvm_pmr_insert_size(pmr, pig_pg);
-
-	uvmexp.free -= sz;
-	*addr = VM_PAGE_TO_PHYS(pg);
-
-	/*
-	 * Update pg flags.
-	 *
-	 * Note that we trash the sz argument now.
-	 */
-	while (sz > 0) {
-		KASSERT(pg->pg_flags & PQ_FREE);
-
-		atomic_clearbits_int(&pg->pg_flags, PG_PMAPMASK);
-
-		if (pg->pg_flags & PG_ZERO)
-			uvmexp.zeropages -= sz;
-		atomic_clearbits_int(&pg->pg_flags,
-		    PG_ZERO|PQ_FREE);
-
-		pg->uobject = NULL;
-		pg->uanon = NULL;
-		pg->pg_version++;
-
-		/*
-		 * Next.
-		 */
-		pg++;
-		sz--;
-	}
-
-	/* Return. */
-	uvm_unlock_fpageq();
+	pmap_extract(pmap_kernel(), va, pa);
 	return 0;
 }
 
 /*
  * Allocate a piglet area.
  *
- * This is as low as possible.
+ * This needs to be in DMA-safe memory.
  * Piglets are aligned.
  *
  * sz and align in bytes.
@@ -482,17 +440,14 @@ found:
 int
 uvm_pmr_alloc_piglet(vaddr_t *va, paddr_t *pa, vsize_t sz, paddr_t align)
 {
-	paddr_t			 pg_addr, piglet_addr;
-	struct uvm_pmemrange	*pmr;
-	struct vm_page		*pig_pg, *pg;
-	struct pglist		 pageq;
-	int			 pdaemon_woken;
-	vaddr_t			 piglet_va;
+	struct kmem_pa_mode kp_piglet = {
+		.kp_constraint = &dma_constraint,
+		.kp_align = align,
+		.kp_maxseg = 1
+	};
 
 	/* Ensure align is a power of 2 */
 	KASSERT((align & (align - 1)) == 0);
-
-	pdaemon_woken = 0; /* Didn't wake the pagedaemon. */
 
 	/*
 	 * Fixup arguments: align must be at least PAGE_SIZE,
@@ -503,97 +458,11 @@ uvm_pmr_alloc_piglet(vaddr_t *va, paddr_t *pa, vsize_t sz, paddr_t align)
 		align = PAGE_SIZE;
 	sz = round_page(sz);
 
-	uvm_lock_fpageq();
-
-	TAILQ_FOREACH_REVERSE(pmr, &uvm.pmr_control.use, uvm_pmemrange_use,
-	    pmr_use) {
-retry:
-		/*
-		 * Search for a range with enough space.
-		 * Use the address tree, to ensure the range is as low as
-		 * possible.
-		 */
-		RB_FOREACH(pig_pg, uvm_pmr_addr, &pmr->addr) {
-			pg_addr = VM_PAGE_TO_PHYS(pig_pg);
-			piglet_addr = (pg_addr + (align - 1)) & ~(align - 1);
-
-			if (atop(pg_addr) + pig_pg->fpgsz >=
-			    atop(piglet_addr) + atop(sz))
-				goto found;
-		}
-	}
-
-	/*
-	 * Try to coerce the pagedaemon into freeing memory
-	 * for the piglet.
-	 *
-	 * pdaemon_woken is set to prevent the code from
-	 * falling into an endless loop.
-	 */
-	if (!pdaemon_woken) {
-		pdaemon_woken = 1;
-		if (uvm_wait_pla(ptoa(pmr->low), ptoa(pmr->high) - 1,
-		    sz, UVM_PLA_FAILOK) == 0)
-			goto retry;
-	}
-
-	/* Return failure. */
-	uvm_unlock_fpageq();
-	return ENOMEM;
-
-found:
-	/*
-	 * Extract piglet from pigpen.
-	 */
-	TAILQ_INIT(&pageq);
-	uvm_pmr_extract_range(pmr, pig_pg,
-	    atop(piglet_addr), atop(piglet_addr) + atop(sz), &pageq);
-
-	*pa = piglet_addr;
-	uvmexp.free -= atop(sz);
-
-	/*
-	 * Update pg flags.
-	 *
-	 * Note that we trash the sz argument now.
-	 */
-	TAILQ_FOREACH(pg, &pageq, pageq) {
-		KASSERT(pg->pg_flags & PQ_FREE);
-
-		atomic_clearbits_int(&pg->pg_flags, PG_PMAPMASK);
-
-		if (pg->pg_flags & PG_ZERO)
-			uvmexp.zeropages--;
-		atomic_clearbits_int(&pg->pg_flags,
-		    PG_ZERO|PQ_FREE);
-
-		pg->uobject = NULL;
-		pg->uanon = NULL;
-		pg->pg_version++;
-	}
-
-	uvm_unlock_fpageq();
-
-	/*
-	 * Now allocate a va.
-	 * Use direct mappings for the pages.
-	 */
-
-	piglet_va = *va = (vaddr_t)km_alloc(sz, &kv_any, &kp_none, &kd_waitok);
-	if (!piglet_va) {
-		uvm_pglistfree(&pageq);
+	*va = (vaddr_t)km_alloc(sz, &kv_any, &kp_piglet, &kd_nowait);
+	if (*va == 0)
 		return ENOMEM;
-	}
 
-	/*
-	 * Map piglet to va.
-	 */
-	TAILQ_FOREACH(pg, &pageq, pageq) {
-		pmap_kenter_pa(piglet_va, VM_PAGE_TO_PHYS(pg), UVM_PROT_RW);
-		piglet_va += PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
-
+	pmap_extract(pmap_kernel(), *va, pa);
 	return 0;
 }
 
@@ -603,35 +472,15 @@ found:
 void
 uvm_pmr_free_piglet(vaddr_t va, vsize_t sz)
 {
-	paddr_t			 pa;
-	struct vm_page		*pg;
-
 	/*
 	 * Fix parameters.
 	 */
 	sz = round_page(sz);
 
 	/*
-	 * Find the first page in piglet.
-	 * Since piglets are contiguous, the first pg is all we need.
-	 */
-	if (!pmap_extract(pmap_kernel(), va, &pa))
-		panic("uvm_pmr_free_piglet: piglet 0x%lx has no pages", va);
-	pg = PHYS_TO_VM_PAGE(pa);
-	if (pg == NULL)
-		panic("uvm_pmr_free_piglet: unmanaged page 0x%lx", pa);
-
-	/*
-	 * Unmap.
-	 */
-	pmap_kremove(va, sz);
-	pmap_update(pmap_kernel());
-
-	/*
 	 * Free the physical and virtual memory.
 	 */
-	uvm_pmr_freepages(pg, atop(sz));
-	km_free((void *)va, sz, &kv_any, &kp_none);
+	km_free((void *)va, sz, &kv_any, &kp_dma_contig);
 }
 
 /*
@@ -725,13 +574,8 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 	    min(strlen(version), sizeof(hib->kernel_version)-1));
 
 	if (suspend) {
-		/* Allocate piglet region */
-		if (uvm_pmr_alloc_piglet(&hib->piglet_va,
-		    &hib->piglet_pa, HIBERNATE_CHUNK_SIZE * 4,
-		    HIBERNATE_CHUNK_SIZE)) {
-			printf("Hibernate failed to allocate the piglet\n");
-			return (1);
-		}
+		hib->piglet_va = global_piglet_va;
+		hib->piglet_pa = global_piglet_pa;
 		hib->io_page = (void *)hib->piglet_va;
 
 		/*
@@ -763,11 +607,8 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 		goto fail;
 
 	return (0);
-fail:
-	if (suspend)
-		uvm_pmr_free_piglet(hib->piglet_va,
-		    HIBERNATE_CHUNK_SIZE * 4);
 
+fail:
 	return (1);
 }
 
@@ -1507,33 +1348,6 @@ hibernate_write_chunks(union hibernate_info *hib)
 	hib->chunk_ctr = 0;
 
 	/*
-	 * Allocate VA for the temp and copy page.
-	 * 
-	 * These will become part of the suspended kernel and will
-	 * be freed in hibernate_free, upon resume.
-	 */
-	hibernate_temp_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
-	    &kp_none, &kd_nowait);
-	if (!hibernate_temp_page) {
-		DPRINTF("out of memory allocating hibernate_temp_page\n");
-		return (ENOMEM);
-	}
-
-	hibernate_copy_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
-	    &kp_none, &kd_nowait);
-	if (!hibernate_copy_page) {
-		DPRINTF("out of memory allocating hibernate_copy_page\n");
-		return (ENOMEM);
-	}
-
-	hibernate_rle_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
-	    &kp_none, &kd_nowait);
-	if (!hibernate_rle_page) {
-		DPRINTF("out of memory allocating hibernate_rle_page\n");
-		return (ENOMEM);
-	}
-
-	/*
 	 * Map the utility VAs to the piglet. See the piglet map at the
 	 * top of this file for piglet layout information.
 	 */
@@ -1816,7 +1630,7 @@ hibernate_read_image(union hibernate_info *hib)
 
 	/* Allocate the pig area */
 	pig_sz = compressed_size + HIBERNATE_CHUNK_SIZE;
-	if (uvm_pmr_alloc_pig(&pig_start, pig_sz) == ENOMEM) {
+	if (uvm_pmr_alloc_pig(&pig_start, pig_sz, hib->piglet_pa) == ENOMEM) {
 		status = 1;
 		goto unmap;
 	}
@@ -2020,9 +1834,6 @@ hibernate_suspend(void)
 		VM_PROT_ALL);
 	pmap_activate(curproc);
 
-	/* Stash the piglet VA so we can free it in the resuming kernel */
-	global_piglet_va = hib.piglet_va;
-
 	DPRINTF("hibernate: writing chunks\n");
 	if (hibernate_write_chunks(&hib)) {
 		DPRINTF("hibernate_write_chunks failed\n");
@@ -2053,8 +1864,50 @@ hibernate_suspend(void)
 	return (0);
 }
 
+int
+hibernate_alloc(void)
+{
+	KASSERT(global_piglet_va == 0);
+	KASSERT(hibernate_temp_page == 0);
+	KASSERT(hibernate_copy_page == 0);
+	KASSERT(hibernate_rle_page == 0);
+
+	if (uvm_pmr_alloc_piglet(&global_piglet_va, &global_piglet_pa,
+	    HIBERNATE_CHUNK_SIZE * 4, HIBERNATE_CHUNK_SIZE))
+		return (ENOMEM);
+
+	/*
+	 * Allocate VA for the temp and copy page.
+	 * 
+	 * These will become part of the suspended kernel and will
+	 * be freed in hibernate_free, upon resume.
+	 */
+	hibernate_temp_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
+	    &kp_none, &kd_nowait);
+	if (!hibernate_temp_page) {
+		DPRINTF("out of memory allocating hibernate_temp_page\n");
+		return (ENOMEM);
+	}
+
+	hibernate_copy_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
+	    &kp_none, &kd_nowait);
+	if (!hibernate_copy_page) {
+		DPRINTF("out of memory allocating hibernate_copy_page\n");
+		return (ENOMEM);
+	}
+
+	hibernate_rle_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
+	    &kp_none, &kd_nowait);
+	if (!hibernate_rle_page) {
+		DPRINTF("out of memory allocating hibernate_rle_page\n");
+		return (ENOMEM);
+	}
+
+	return (0);
+}
+
 /*
- * Free items allocated by hibernate_suspend()
+ * Free items allocated by hibernate_alloc()
  */
 void
 hibernate_free(void)

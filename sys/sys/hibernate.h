@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.36 2014/07/20 18:05:21 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.37 2014/09/26 09:25:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -109,7 +109,7 @@ void	 hib_free(struct hiballoc_arena*, void*);
 int	 hiballoc_init(struct hiballoc_arena*, void*, size_t len);
 void	 uvm_pmr_zero_everything(void);
 void	 uvm_pmr_dirty_everything(void);
-int	 uvm_pmr_alloc_pig(paddr_t*, psize_t);
+int	 uvm_pmr_alloc_pig(paddr_t*, psize_t, paddr_t);
 int	 uvm_pmr_alloc_piglet(vaddr_t*, paddr_t*, vsize_t, paddr_t);
 void	 uvm_pmr_free_piglet(vaddr_t, vsize_t);
 int	 uvm_page_rle(paddr_t);
@@ -142,6 +142,7 @@ int	hibernate_read_chunks(union hibernate_info *, paddr_t, paddr_t, size_t,
 	    struct hibernate_disk_chunk *);
 void	hibernate_unpack_image(union hibernate_info *);
 void	hibernate_populate_resume_pt(union hibernate_info *, paddr_t, paddr_t);
+int	hibernate_alloc(void);
 void	hibernate_free(void);
 
 int	hibernate_check_overlap(paddr_t, paddr_t, paddr_t, paddr_t);
