@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.140 2011/10/07 06:29:43 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.141 2014/09/26 15:24:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -878,7 +878,7 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 	    (iicprobew(0x07) & 0xfffc) == 0xa200) {
 		name = "se97";		/* or se97b */
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x1131 &&
-	    (iicprobew(0x07) & 0xfffc) == 0xa101 &&
+	    (iicprobew(0x07) & 0xfffc) == 0xa100 &&
 	    (iicprobew(0x00) & 0xfff0) == 0x0010) {
 		name = "se98";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x004d &&
@@ -910,7 +910,7 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 	    (iicprobew(0x00) == 0x006f)) {
 		name = "stts2002";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x104a &&
-	    (iicprobew(0x07) & 0xfffe) == 0x0101 &&
+	    (iicprobew(0x07) & 0xffff) == 0x0101 &&
 	    (iicprobew(0x00) == 0x002d || iicprobew(0x00) == 0x002f)) {
 		name = "stts424";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x1b09 &&
