@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.loongson,v 1.40 2014/06/27 17:28:10 miod Exp $
+#	$OpenBSD: Makefile.loongson,v 1.41 2014/09/26 14:39:43 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -31,7 +31,7 @@ _archdir?=	$S/arch/${_arch}
 INCLUDES=	-nostdinc -I$S -I. -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__ -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-main -Wno-uninitialized -Wno-format \
+		-Wno-main -Wno-uninitialized \
 		-Wstack-larger-than-2047
 
 CMACHFLAGS=	-mno-abicalls ${ABI} -msoft-float -Wa,-mfix-loongson2f-btb -G 0
