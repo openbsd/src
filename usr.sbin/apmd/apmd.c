@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.67 2014/09/15 19:08:22 miod Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.68 2014/09/26 08:55:59 tedu Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -65,8 +65,8 @@ int doperf = PERF_NONE;
 #define PERFDEC 20
 #define PERFMIN 0
 #define PERFMAX 100
-#define PERFINCTHRES 10
-#define PERFDECTHRES 30
+#define PERFINCTHRES 50
+#define PERFDECTHRES 60
 
 extern char *__progname;
 
@@ -339,9 +339,7 @@ perf_status(struct apm_power_info *pinfo, int ncpu)
 		syslog(LOG_INFO, "cannot read hw.setperf");
 
 	if (forcehi || (avg_idle < PERFINCTHRES && perf < PERFMAX)) {
-		perf += PERFINC;
-		if (perf > PERFMAX)
-			perf = PERFMAX;
+		perf = PERFMAX;
 		setperf(perf);
 	} else if (avg_idle > PERFDECTHRES && perf > PERFMIN) {
 		perf -= PERFDEC;
@@ -642,11 +640,12 @@ main(int argc, char *argv[])
 		sts = ts;
 
 		if (doperf == PERF_AUTO || doperf == PERF_COOL) {
-			sts.tv_sec = 1;
+			sts.tv_sec = 0;
+			sts.tv_nsec = 200000000;
 			perf_status(&pinfo, ncpu);
 		}
 
-		apmtimeout += sts.tv_sec;
+		apmtimeout += 1;
 		if ((rv = kevent(kq, NULL, 0, ev, 1, &sts)) < 0)
 			break;
 
