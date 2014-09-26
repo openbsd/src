@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.59 2014/09/20 09:28:24 kettenis Exp $ */
+/*	$OpenBSD: machdep.c,v 1.60 2014/09/26 14:32:07 jsing Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -840,7 +840,7 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
-	printf("real mem = %u (%uMB)\n", ptoa((psize_t)physmem),
+	printf("real mem = %lu (%luMB)\n", ptoa((psize_t)physmem),
 	    ptoa((psize_t)physmem)/1024/1024);
 
 	/*
@@ -854,7 +854,7 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
-	printf("avail mem = %u (%uMB)\n", ptoa(uvmexp.free),
+	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free)/1024/1024);
 
 	/*
