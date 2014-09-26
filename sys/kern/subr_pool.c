@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.159 2014/09/23 19:54:47 miod Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.160 2014/09/26 05:43:14 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -855,7 +855,8 @@ pool_setlowat(struct pool *pp, int n)
 		? 0
 		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
-	prime = pp->pr_nitems - n;
+	if (pp->pr_nitems < n)
+		prime = n - pp->pr_nitems;
 	mtx_leave(&pp->pr_mtx);
 
 	if (prime > 0)
