@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.793 2014/08/31 20:10:36 rpe Exp $
+#	$OpenBSD: install.sub,v 1.794 2014/09/26 15:44:21 benno Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1836,7 +1836,7 @@ apply()
 }
 
 questions() {
-	local _d
+	local _d _cdef=no
 
 	ask_yn "Start sshd(8) by default?" yes
 	sshd=$resp
@@ -1868,7 +1868,8 @@ questions() {
 
 	if [[ -n $CDEV ]]; then
 		_d=${CPROM:-$CDEV}
-		ask_yn "Change the default console to $_d?"
+		[[ -n $CONSOLE ]] && _cdef=yes
+		ask_yn "Change the default console to $_d?" $_cdef
 		defcons=$resp
 		if [[ $resp == y ]]; then
 			ask_which "speed" "should $_d use" \
