@@ -1,5 +1,5 @@
 .\"	$NetBSD: hunt.6,v 1.3 1997/10/10 16:32:30 lukem Exp $
-.\"	$OpenBSD: hunt.6,v 1.20 2013/01/17 21:58:08 jmc Exp $
+.\"	$OpenBSD: hunt.6,v 1.21 2014/09/26 21:41:56 schwarze Exp $
 .\"
 .\" Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
 .\" San Francisco, California
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 17 2013 $
+.Dd $Mdocdate: September 26 2014 $
 .Dt HUNT 6
 .Os
 .Sh NAME
@@ -157,7 +157,7 @@ in front of the name
 and other players' scores.
 The rest of the screen is taken up by your map of the maze.
 The 24th line
-is used for longer messages that don't fit in the status area.
+is used for longer messages that do not fit in the status area.
 .Pp
 .Nm
 uses the same keys to move as
@@ -169,13 +169,13 @@ does, i.e.,
 and
 .Ic l
 for left, down, up, right, respectively.
-To change which direction you're facing in the maze,
+To change which direction you are facing in the maze,
 use the upper case version of the movement key
 .Po
 i.e.,
 .Ic HJKL
 .Pc .
-You can only fire or throw things in the direction you're facing.
+You can only fire or throw things in the direction you are facing.
 .Pp
 Other commands are:
 .Bl -tag -width Ic -compact
@@ -379,7 +379,7 @@ configuration variable in
 The environment variable
 .Ev HUNT
 is checked to get the player name.
-If you don't have this variable set,
+If you do not have this variable set,
 .Nm
 will ask you what name you want to play under.
 If you wish to set other options than just your name,
@@ -410,7 +410,7 @@ and
 String options cannot contain commas since commas
 are used to separate options.
 .It
-It's a boring game if you're the only one playing.
+It is a boring game if you are the only one playing.
 .El
 .Pp
 Your score is the decayed average of the ratio of number of kills to number
@@ -482,7 +482,11 @@ game coordinator
 .Sh SEE ALSO
 .Xr huntd 6
 .Sh AUTHORS
-Conrad Huang, Ken Arnold, and Greg Couch;
+.An -nosplit
+.An Conrad Huang ,
+.An Ken Arnold ,
+and
+.An Greg Couch ;
 .br
 University of California, San Francisco, Computer Graphics Lab
 .Sh BUGS
@@ -499,4 +503,4 @@ John Thomason, Eric Pettersen, Mark Day,
 and Scott Weiner for providing
 endless hours of play-testing to improve the character of the game.
 We hope their significant others will forgive them;
-we certainly don't.
+we certainly do not.
