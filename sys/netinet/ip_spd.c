@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.72 2014/07/22 11:06:10 mpi Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.73 2014/09/27 12:26:16 mpi Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -244,7 +244,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	re->re_tableid = rdomain;
 
 	/* Actual SPD lookup. */
-	rtalloc((struct route *) re);
+	re->re_rt = rtalloc1((struct sockaddr *)&re->re_dst, RT_REPORT,
+	    re->re_tableid);
 	if (re->re_rt == NULL) {
 		/*
 		 * Return whatever the socket requirements are, there are no

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.158 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.159 2014/09/27 12:26:16 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -612,6 +612,7 @@ in_losing(struct inpcb *inp)
 
 	if ((rt = inp->inp_route.ro_rt)) {
 		inp->inp_route.ro_rt = 0;
+
 		bzero((caddr_t)&info, sizeof(info));
 		info.rti_flags = rt->rt_flags;
 		info.rti_info[RTAX_DST] = &inp->inp_route.ro_dst;
@@ -764,7 +765,8 @@ in_pcbrtentry(struct inpcb *inp)
 			ro->ro_dst.sa_len = sizeof(struct sockaddr_in6);
 			satosin6(&ro->ro_dst)->sin6_addr = inp->inp_faddr6;
 			ro->ro_tableid = inp->inp_rtableid;
-			rtalloc_mpath(ro, &inp->inp_laddr6.s6_addr32[0]);
+			ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
+			    &inp->inp_laddr6.s6_addr32[0], ro->ro_tableid);
 			break;
 #endif /* INET6 */
 		case PF_INET:
@@ -774,7 +776,8 @@ in_pcbrtentry(struct inpcb *inp)
 			ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
 			satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
 			ro->ro_tableid = inp->inp_rtableid;
-			rtalloc_mpath(ro, &inp->inp_laddr.s_addr);
+			ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
+			    &inp->inp_laddr.s_addr, ro->ro_tableid);
 			break;
 		}
 	}
@@ -838,7 +841,7 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 		ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
 		satosin(&ro->ro_dst)->sin_addr = sin->sin_addr;
 		ro->ro_tableid = rtableid;
-		rtalloc_mpath(ro, NULL);
+		ro->ro_rt = rtalloc_mpath(&ro->ro_dst, NULL, ro->ro_tableid);
 
 		/*
 		 * It is important to bzero out the rest of the

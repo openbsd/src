@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.158 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.159 2014/09/27 12:26:16 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1229,7 +1229,8 @@ ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro,
 			sa6_dst->sin6_len = sizeof(struct sockaddr_in6);
 			sa6_dst->sin6_addr = *dst;
 
-			rtalloc((struct route *)ro_pmtu);
+			ro_pmtu->ro_rt = rtalloc1(sin6tosa(&ro_pmtu->ro_dst),
+			    RT_REPORT, ro_pmtu->ro_tableid);
 		}
 	}
 	if (ro_pmtu->ro_rt) {
@@ -2482,7 +2483,8 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			dst->sin6_len = sizeof(struct sockaddr_in6);
 			dst->sin6_family = AF_INET6;
 			dst->sin6_addr = mreq->ipv6mr_multiaddr;
-			rtalloc((struct route *)&ro);
+			ro.ro_rt = rtalloc1(sin6tosa(&ro.ro_dst),
+			    RT_REPORT, ro.ro_tableid);
 			if (ro.ro_rt == NULL) {
 				error = EADDRNOTAVAIL;
 				break;

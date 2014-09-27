@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.23 2014/05/27 19:38:15 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.24 2014/09/27 12:26:16 mpi Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 #include <netinet6/ip6_var.h>
 #endif
 
-u_int32_t rn_mpath_hash(struct route *, u_int32_t *);
+u_int32_t rn_mpath_hash(struct sockaddr *, u_int32_t *);
 
 /*
  * give some jitter to hash, to avoid synchronization between routers
@@ -383,42 +383,37 @@ rn_mpath_reprio(struct radix_node *rn, int newprio)
 /*
  * allocate a route, potentially using multipath to select the peer.
  */
-void
-rtalloc_mpath(struct route *ro, u_int32_t *srcaddrp)
+struct rtentry *
+rtalloc_mpath(struct sockaddr *dst, u_int32_t *srcaddrp, u_int rtableid)
 {
+	struct rtentry *rt;
 #if defined(INET) || defined(INET6)
 	struct radix_node *rn;
 	int hash, npaths, threshold;
 #endif
 
-	/*
-	 * return a cached entry if it is still valid, otherwise we increase
-	 * the risk of disrupting local flows.
-	 */
-	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
-		return;
-	ro->ro_rt = rtalloc1(&ro->ro_dst, RT_REPORT, ro->ro_tableid);
+	rt = rtalloc1(dst, RT_REPORT, rtableid);
 
 	/* if the route does not exist or it is not multipath, don't care */
-	if (!ro->ro_rt || !(ro->ro_rt->rt_flags & RTF_MPATH))
-		return;
+	if (rt == NULL || !ISSET(rt->rt_flags, RTF_MPATH))
+		return (rt);
 
 	/* check if multipath routing is enabled for the specified protocol */
 	if (!(0
 #ifdef INET
-	    || (ipmultipath && ro->ro_dst.sa_family == AF_INET)
+	    || (ipmultipath && dst->sa_family == AF_INET)
 #endif
 #ifdef INET6
-	    || (ip6_multipath && ro->ro_dst.sa_family == AF_INET6)
+	    || (ip6_multipath && dst->sa_family == AF_INET6)
 #endif
 	    ))
-		return;
+		return (rt);
 
 #if defined(INET) || defined(INET6)
 	/* gw selection by Hash-Threshold (RFC 2992) */
-	rn = (struct radix_node *)ro->ro_rt;
+	rn = (struct radix_node *)rt;
 	npaths = rn_mpath_active_count(rn);
-	hash = rn_mpath_hash(ro, srcaddrp) & 0xffff;
+	hash = rn_mpath_hash(dst, srcaddrp) & 0xffff;
 	threshold = 1 + (0xffff / npaths);
 	while (hash > threshold && rn) {
 		/* stay within the multipath routes */
@@ -427,13 +422,14 @@ rtalloc_mpath(struct route *ro, u_int32_t *srcaddrp)
 	}
 
 	/* if gw selection fails, use the first match (default) */
-	if (!rn)
-		return;
-
-	rtfree(ro->ro_rt);
-	ro->ro_rt = (struct rtentry *)rn;
-	ro->ro_rt->rt_refcnt++;
+	if (rn != NULL) {
+		rtfree(rt);
+		rt = (struct rtentry *)rn;
+		rt->rt_refcnt++;
+	}
 #endif
+
+	return (rt);
 }
 
 int
@@ -468,20 +464,20 @@ rn_mpath_inithead(void **head, int off)
 	} while (0)
 
 u_int32_t
-rn_mpath_hash(struct route *ro, u_int32_t *srcaddrp)
+rn_mpath_hash(struct sockaddr *dst, u_int32_t *srcaddrp)
 {
 	u_int32_t a, b, c;
 
 	a = b = 0x9e3779b9;
 	c = hashjitter;
 
-	switch (ro->ro_dst.sa_family) {
+	switch (dst->sa_family) {
 #ifdef INET
 	case AF_INET:
 	    {
 		struct sockaddr_in *sin_dst;
 
-		sin_dst = (struct sockaddr_in *)&ro->ro_dst;
+		sin_dst = (struct sockaddr_in *)dst;
 		a += sin_dst->sin_addr.s_addr;
 		b += srcaddrp ? srcaddrp[0] : 0;
 		mix(a, b, c);
@@ -493,7 +489,7 @@ rn_mpath_hash(struct route *ro, u_int32_t *srcaddrp)
 	    {
 		struct sockaddr_in6 *sin6_dst;
 
-		sin6_dst = (struct sockaddr_in6 *)&ro->ro_dst;
+		sin6_dst = (struct sockaddr_in6 *)dst;
 		a += sin6_dst->sin6_addr.s6_addr32[0];
 		b += sin6_dst->sin6_addr.s6_addr32[2];
 		c += srcaddrp ? srcaddrp[0] : 0;

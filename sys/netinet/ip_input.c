@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.235 2014/07/13 13:57:56 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.236 2014/09/27 12:26:16 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1424,7 +1424,8 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 		sin->sin_addr = ip->ip_dst;
 		ipforward_rt.ro_tableid = rtableid;
 
-		rtalloc_mpath(&ipforward_rt, &ip->ip_src.s_addr);
+		ipforward_rt.ro_rt = rtalloc_mpath(&ipforward_rt.ro_dst,
+		    &ip->ip_src.s_addr, ipforward_rt.ro_tableid);
 		if (ipforward_rt.ro_rt == 0) {
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, dest, 0);
 			return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.886 2014/08/12 15:29:33 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.887 2014/09/27 12:26:16 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5567,7 +5567,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	ro->ro_tableid = m0->m_pkthdr.ph_rtableid;
 
 	if (!r->rt) {
-		rtalloc(ro);
+		ro->ro_rt = rtalloc1(&ro->ro_dst, RT_REPORT, ro->ro_tableid);
 		if (ro->ro_rt == 0) {
 			ipstat.ips_noroute++;
 			goto bad;

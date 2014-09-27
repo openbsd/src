@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.266 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.267 2014/09/27 12:26:16 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -196,7 +196,8 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			IFP_TO_IA(ifp, ia);
 		} else {
 			if (ro->ro_rt == 0)
-				rtalloc_mpath(ro, NULL);
+				ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
+				    NULL, ro->ro_tableid);
 
 			if (ro->ro_rt == 0) {
 				ipstat.ips_noroute++;
@@ -346,7 +347,8 @@ reroute:
 			IFP_TO_IA(ifp, ia);
 		} else {
 			if (ro->ro_rt == 0)
-				rtalloc_mpath(ro, &ip->ip_src.s_addr);
+				ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
+				    &ip->ip_src.s_addr, ro->ro_tableid);
 
 			if (ro->ro_rt == 0) {
 				ipstat.ips_noroute++;

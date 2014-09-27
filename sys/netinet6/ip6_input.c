@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.128 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.129 2014/09/27 12:26:16 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -449,8 +449,10 @@ ip6_input(struct mbuf *m)
 		ip6_forward_rt.ro_dst.sin6_addr = ip6->ip6_dst;
 		ip6_forward_rt.ro_tableid = rtableid;
 
-		rtalloc_mpath((struct route *)&ip6_forward_rt,
-		    &ip6->ip6_src.s6_addr32[0]);
+		ip6_forward_rt.ro_rt = rtalloc_mpath(
+		    sin6tosa(&ip6_forward_rt.ro_dst),
+		    &ip6->ip6_src.s6_addr32[0],
+		    ip6_forward_rt.ro_tableid);
 	}
 
 	/*

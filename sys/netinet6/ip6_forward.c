@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.67 2014/06/03 13:32:24 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.68 2014/09/27 12:26:16 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -250,8 +250,10 @@ reroute:
 			}
 			/* this probably fails but give it a try again */
 			ip6_forward_rt.ro_tableid = rtableid;
-			rtalloc_mpath((struct route *)&ip6_forward_rt,
-			    &ip6->ip6_src.s6_addr32[0]);
+			ip6_forward_rt.ro_rt = rtalloc_mpath(
+			    sin6tosa(&ip6_forward_rt.ro_dst),
+			    &ip6->ip6_src.s6_addr32[0],
+			    ip6_forward_rt.ro_tableid);
 		}
 
 		if (ip6_forward_rt.ro_rt == 0) {
@@ -277,9 +279,10 @@ reroute:
 		dst->sin6_family = AF_INET6;
 		dst->sin6_addr = ip6->ip6_dst;
 		ip6_forward_rt.ro_tableid = rtableid;
-
-		rtalloc_mpath((struct route *)&ip6_forward_rt,
-		    &ip6->ip6_src.s6_addr32[0]);
+		ip6_forward_rt.ro_rt = rtalloc_mpath(
+		    sin6tosa(&ip6_forward_rt.ro_dst),
+		    &ip6->ip6_src.s6_addr32[0],
+		    ip6_forward_rt.ro_tableid);
 
 		if (ip6_forward_rt.ro_rt == 0) {
 			ip6stat.ip6s_noroute++;
