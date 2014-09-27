@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.375 2014/08/20 06:14:42 mikeb Exp $
+#	$OpenBSD: GENERIC,v 1.376 2014/09/27 08:28:12 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -443,8 +443,6 @@ stge*	at pci?				# Sundance TC9021 GigE
 hme*	at pci?				# Sun Happy Meal
 vge*	at pci?				# VIA VT612x
 nfe*	at pci?				# NVIDIA nForce Ethernet
-musycc*	at pci?				# Conexant HDLC controller
-art*	at musycc?			# Accoom Artery E1/T1 cards
 xge*	at pci?				# Neterion Xframe-I/II 10Gb ethernet
 thtc*	at pci?				# Tehuti Networks 10Gb ethernet
 tht*	at thtc?

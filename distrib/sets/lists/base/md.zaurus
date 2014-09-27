@@ -1178,8 +1178,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ixgbe.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ixgbe_type.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/mpiireg.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/musyccreg.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/musyccvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/neoreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pccbbreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pccbbvar.ph

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.581 2014/08/20 11:23:41 mikeb Exp $
+#	$OpenBSD: Makefile,v 1.582 2014/09/27 08:28:12 deraadt Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -9,7 +9,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	admtm.4 admtmp.4 admtt.4 adt.4 adtfsm.4 adv.4 age.4 alc.4 ale.4 agp.4 \
 	aha.4 ahb.4 ahc.4 ahci.4 ahd.4 aibs.4 aic.4 \
 	akbd.4 alipm.4 amas.4 amdiic.4 amdpm.4 ami.4 amphy.4 \
-	ams.4 an.4 andl.4 aps.4 arc.4 arcofi.4 art.4 \
+	ams.4 an.4 andl.4 aps.4 arc.4 arcofi.4 \
 	asbtm.4 ast.4 atapiscsi.4 atphy.4 ath.4 athn.4 atu.4 atw.4 \
 	auacer.4 audio.4 \
 	aue.4 auglx.4 auich.4 auixp.4 autri.4 auvia.4 axe.4 axen.4 az.4 azalia.4 \
@@ -75,7 +75,6 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	xe.4 xf86.4 xge.4 xhci.4 xl.4 xmphy.4 yds.4 ym.4 zero.4 zyd.4
 
 MLINKS+=adv.4 advansys.4 adv.4 adw.4
-MLINKS+=art.4 musycc.4
 MLINKS+=audio.4 mixer.4
 MLINKS+=cardbus.4 cbb.4
 MLINKS+=drm.4 inteldrm.4 drm.4 radeondrm.4

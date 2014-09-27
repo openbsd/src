@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.308 2014/08/15 14:07:39 mikeb Exp $
+#	$OpenBSD: files.pci,v 1.309 2014/09/27 08:28:12 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -732,18 +732,6 @@ file	dev/pci/piixpm.c		piixpm
 device	ichwdt {}
 attach	ichwdt at pci
 file	dev/pci/ichwdt.c		ichwdt
-
-# Mindspeed/Conexant MUSYCC HDLC controller
-device	musycc {} : ifnet
-attach	musycc at pci
-file	dev/pci/musycc.c		musycc
-file	dev/pci/musycc_obsd.c		musycc
-
-# Accoom Artery PCI card
-device	art: musycc, ifnet, ifmedia, sppp
-attach	art at musycc
-file	dev/pci/if_art.c		art
-file	dev/pci/bt8370.c		art
 
 # VMware VMXnet virtual interface
 device	vic: ether, ifnet, ifmedia

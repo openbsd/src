@@ -607,8 +607,6 @@
 ./usr/include/dev/pci/ixgbe.h
 ./usr/include/dev/pci/ixgbe_type.h
 ./usr/include/dev/pci/mpiireg.h
-./usr/include/dev/pci/musyccreg.h
-./usr/include/dev/pci/musyccvar.h
 ./usr/include/dev/pci/neoreg.h
 ./usr/include/dev/pci/pccbbreg.h
 ./usr/include/dev/pci/pccbbvar.h

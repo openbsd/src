@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.240 2014/09/14 18:59:18 brad Exp $g
+#	$OpenBSD: GENERIC,v 1.241 2014/09/27 08:28:12 deraadt Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -96,8 +96,6 @@ ral*		at pci?		# Ralink RT2500/RT2501/RT2600
 rtw*		at pci?		# Realtek 8180
 vr*		at pci?		# VIA Rhine ethernet
 pcn*		at pci?		# AMD PCnet-PCI Ethernet
-musycc*		at pci?		# Conexant HDLC controller
-art*		at musycc?	# Accoom Artery E1/T1 cards
 xge*		at pci?		# Neterion Xframe-I/II 10Gb ethernet
 mbg*		at pci?		# Meinberg Funkuhren radio clocks
 malo*		at pci?		# Marvell Libertas

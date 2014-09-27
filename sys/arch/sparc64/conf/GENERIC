@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.290 2014/09/14 19:02:43 brad Exp $
+#	$OpenBSD: GENERIC,v 1.291 2014/09/27 08:28:12 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -91,8 +91,6 @@ rl*	at pci?			# RealTek 81[23]9 ethernet
 vr*	at pci?			# VIA Rhine ethernet
 re*	at pci?			# RealTek 8169/8169S/8110S
 re*	at cardbus?		# RealTek 8169/8169S/8110S
-musycc* at pci?			# Conexant HDLC controller
-art*	at musycc?		# Accoom Artery E1/T1 cards
 thtc*	at pci?			# Tehuti Networks 10Gb ethernet
 tht*	at thtc?
 jme*	at pci?			# JMicron JMC250/JMC260 Ethernet

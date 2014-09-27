@@ -1304,7 +1304,6 @@
 ./usr/share/man/man4/armv7/prcm.4
 ./usr/share/man/man4/armv7/sitaracm.4
 ./usr/share/man/man4/arp.4
-./usr/share/man/man4/art.4
 ./usr/share/man/man4/asbtm.4
 ./usr/share/man/man4/ast.4
 ./usr/share/man/man4/atapiscsi.4
@@ -1649,7 +1648,6 @@
 ./usr/share/man/man4/mtdphy.4
 ./usr/share/man/man4/mtio.4
 ./usr/share/man/man4/multicast.4
-./usr/share/man/man4/musycc.4
 ./usr/share/man/man4/myx.4
 ./usr/share/man/man4/ne.4
 ./usr/share/man/man4/neo.4
