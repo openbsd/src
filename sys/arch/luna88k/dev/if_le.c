@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.6 2013/09/24 20:10:45 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.7 2014/09/27 06:23:30 aoyama Exp $	*/
 /*	$NetBSD: if_le.c,v 1.33 1996/11/20 18:56:52 gwr Exp $	*/
 
 /*-
@@ -113,12 +113,12 @@ lerdcsr(struct lance_softc *sc, uint16_t port)
 int
 le_match(struct device *parent, void *cf, void *aux)
 {
-        struct mainbus_attach_args *ma = aux;
+	struct mainbus_attach_args *ma = aux;
 
-        if (strcmp(ma->ma_name, le_cd.cd_name))
-                return (0);
+	if (strcmp(ma->ma_name, le_cd.cd_name))
+		return (0);
 
-        return (1);
+	return (1);
 }
 
 void
@@ -171,7 +171,7 @@ extern char fuse_rom_data[];
 void
 myetheraddr(uint8_t *ether)
 {
-        unsigned i, loc;
+	unsigned i, loc;
 	volatile struct { uint32_t ctl; } *ds1220;
 
 	switch (machtype) {
@@ -187,7 +187,7 @@ myetheraddr(uint8_t *ether)
 			u = (u < 'A') ? u & 0xf : u - 'A' + 10;
 			l = fuse_rom_data[loc + 1];
 			l = (l < 'A') ? l & 0xf : l - 'A' + 10;
-		
+
 			ether[i] = l | (u << 4);
 			loc += 2;
 		}
