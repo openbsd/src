@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.9 2012/11/13 19:21:19 miod Exp $ */
+/* $OpenBSD: clock.c,v 1.10 2014/09/27 19:50:10 aoyama Exp $ */
 /* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/evcount.h>
 #include <sys/timetc.h>
 
+#include <machine/board.h>
 #include <machine/cpu.h>
 
 #include <dev/clock_subr.h>
@@ -215,12 +216,22 @@ resettodr()
 }
 
 /*
+ * *clock_reg[CPU]
+ * Points to the clock register for each CPU.
+ */
+volatile u_int32_t *clock_reg[] = {
+	(u_int32_t *)OBIO_CLOCK0,
+	(u_int32_t *)OBIO_CLOCK1,
+	(u_int32_t *)OBIO_CLOCK2,
+	(u_int32_t *)OBIO_CLOCK3
+};
+
+/*
  * Clock interrupt routine
  */
 int
 clockintr(void *eframe)
 {
-	extern unsigned int *clock_reg[];
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
 	u_int cpu = ci->ci_cpuid;

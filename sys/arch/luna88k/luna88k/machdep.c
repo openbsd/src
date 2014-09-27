@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.109 2014/09/20 09:28:24 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.110 2014/09/27 19:50:10 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -164,17 +164,6 @@ volatile u_int32_t *swi_reg[] = {
 	(u_int32_t *)SOFT_INT1,
 	(u_int32_t *)SOFT_INT2,
 	(u_int32_t *)SOFT_INT3
-};
-
-/*
- * *clock_reg[CPU]
- * Points to the clock register for each CPU.
- */
-volatile u_int32_t *clock_reg[] = {
-	(u_int32_t *)OBIO_CLOCK0,
-	(u_int32_t *)OBIO_CLOCK1,
-	(u_int32_t *)OBIO_CLOCK2,
-	(u_int32_t *)OBIO_CLOCK3
 };
 
 /*
