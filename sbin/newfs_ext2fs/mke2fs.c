@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.11 2014/07/31 19:49:25 pelikan Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.12 2014/09/27 06:28:45 doug Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -532,7 +532,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	iobufsize = (NBLOCK_SUPERBLOCK + sblock.e2fs_ngdb) * sblock.e2fs_bsize;
 	iobuf = mmap(0, iobufsize, PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_PRIVATE, -1, 0);
-	if (iobuf == NULL)
+	if (iobuf == MAP_FAILED)
 		errx(EXIT_FAILURE, "Cannot allocate I/O buffer\n");
 	memset(iobuf, 0, iobufsize);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bltone.c,v 1.5 2013/10/28 08:47:43 jsg Exp $	*/
+/*	$OpenBSD: bltone.c,v 1.6 2014/09/27 06:28:45 doug Exp $	*/
 /*
  *	Written by Mark Kettenis <kettenis@openbsd.org> 2004 Public Domain
  */
@@ -31,10 +31,10 @@ main (void)
 	pagesize = getpagesize();
 
 	src = mmap(NULL, 2 * pagesize, PROT_READ|PROT_WRITE, MAP_ANON, -1, 0);
-	assert(src);
+	assert(src != MAP_FAILED);
 
 	dst = mmap(NULL, 2 * pagesize, PROT_READ|PROT_WRITE, MAP_ANON, -1, 0);
-	assert(dst);
+	assert(dst != MAP_FAILED);
 
 	mprotect((char *)src + pagesize, pagesize, PROT_NONE);
 	src = (FbStip *)((char *)src + (pagesize - sizeof mask));

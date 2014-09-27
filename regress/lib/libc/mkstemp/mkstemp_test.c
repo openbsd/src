@@ -122,7 +122,7 @@ main(void)
 	cwd[clen++] = '/';
 	cwd[clen] = '\0';
 	p = mmap(NULL, pg * 3, PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
-	if (p == NULL)
+	if (p == MAP_FAILED)
 		err(1, "mmap");
 	if (mprotect(p, pg, PROT_NONE) || mprotect(p + pg * 2, pg, PROT_NONE))
 		err(1, "mprotect");

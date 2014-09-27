@@ -1,4 +1,4 @@
-/* $OpenBSD: mmaptest.c,v 1.6 2006/02/20 17:03:27 mickey Exp $ */
+/* $OpenBSD: mmaptest.c,v 1.7 2014/09/27 06:28:45 doug Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -58,7 +58,7 @@ main(int argc, char *argv[])
 	if (fd == -1)
 		err(1, "open(test.out) 2");
 	a2 = mmap(NULL, AREA, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-	if (!a2)
+	if (a2 == MAP_FAILED)
 		err(1, "mmap");
 	a2[10] = 3;
 	msync(a2, AREA, MS_SYNC|MS_INVALIDATE);
