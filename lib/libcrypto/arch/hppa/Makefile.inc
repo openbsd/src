@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.5 2014/09/27 12:29:31 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.6 2014/09/27 20:42:38 miod Exp $
 
 # hppa-specific libcrypto build rules
 
@@ -15,8 +15,8 @@ CFLAGS+= -DOPENSSL_BN_ASM_MONT -DBN_DIV2W
 # des
 SRCS+= des_enc.c fcrypt_b.c
 # modes
-#CFLAGS+= -DGHASH_ASM
-#SSLASM+= modes ghash-parisc ghash-parisc
+CFLAGS+= -DGHASH_ASM
+SSLASM+= modes ghash-parisc ghash-parisc
 # rc4
 .if 0	# about 35% slower than C code
 SSLASM+= rc4 rc4-parisc rc4-parisc
