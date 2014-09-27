@@ -372,6 +372,7 @@ L\$pic_ghash
 	ldi	0xf0,$mask0xf0
 ___
 $code.=<<___ if ($SIZE_T==4);
+#ifndef __OpenBSD__
 	ldi	31,$rem
 	mtctl	$rem,%cr11
 	extrd,u,*= $rem,%sar,1,$rem	; executes on PA-RISC 1.0
@@ -481,6 +482,7 @@ $code.=<<___ if ($SIZE_T==4);
 	nop
 
 L\$parisc1_ghash
+#endif
 	ldb	15($Xi),$nlo
 	ldo	12($Htbl),$Hll
 	ldo	8($Htbl),$Hlh
