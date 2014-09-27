@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.191 2014/09/27 07:56:18 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.192 2014/09/27 08:27:17 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1162,8 +1162,6 @@ void cpu_init_idt(void)
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region); 
 }
-
-#define	KBTOB(x)	((size_t)(x) * 1024UL)
 
 void
 cpu_init_extents(void)
