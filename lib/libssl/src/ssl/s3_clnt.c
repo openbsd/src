@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.90 2014/09/19 14:32:23 tedu Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.91 2014/09/27 11:01:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1330,8 +1330,8 @@ ssl3_get_key_exchange(SSL *s)
 		s->session->sess_cert->peer_dh_tmp = dh;
 		dh = NULL;
 	} else if (alg_k & SSL_kECDHE) {
-		EC_GROUP *ngroup;
 		const EC_GROUP *group;
+		EC_GROUP *ngroup;
 
 		if ((ecdh = EC_KEY_new()) == NULL) {
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
@@ -1351,8 +1351,24 @@ ssl3_get_key_exchange(SSL *s)
 		 * and the ECParameters in this case is just three bytes.
 		 */
 		param_len = 3;
-		if ((param_len > n) || (*p != NAMED_CURVE_TYPE) ||
-		    ((curve_nid = tls1_ec_curve_id2nid(*(p + 2))) == 0)) {
+		if (param_len > n) {
+			al = SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    SSL_R_LENGTH_TOO_SHORT);
+			goto f_err;
+		}
+
+		/*
+		 * Check curve is one of our preferences, if not server has
+		 * sent an invalid curve.
+		 */
+		if (tls1_check_curve(s, p, param_len) != 1) {
+			al = SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_WRONG_CURVE);
+			goto f_err;
+		}
+
+		if ((curve_nid = tls1_ec_curve_id2nid(*(p + 2))) == 0) {
 			al = SSL_AD_INTERNAL_ERROR;
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
 			    SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);

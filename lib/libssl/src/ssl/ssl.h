@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.64 2014/09/21 17:11:04 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.65 2014/09/27 11:01:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2318,6 +2318,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_USE_SRTP_NOT_NEGOTIATED			 369
 #define SSL_R_WRITE_BIO_NOT_SET				 260
 #define SSL_R_WRONG_CIPHER_RETURNED			 261
+#define SSL_R_WRONG_CURVE				 378
 #define SSL_R_WRONG_MESSAGE_TYPE			 262
 #define SSL_R_WRONG_NUMBER_OF_KEY_BITS			 263
 #define SSL_R_WRONG_SIGNATURE_LENGTH			 264

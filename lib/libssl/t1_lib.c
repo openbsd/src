@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.57 2014/09/26 14:58:42 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.58 2014/09/27 11:01:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -361,6 +361,49 @@ tls1_get_formatlist(SSL *s, const unsigned char **pformats, size_t *pformatslen)
 		*pformats = ecformats_default;
 		*pformatslen = sizeof(ecformats_default);
 	}
+}
+
+/*
+ * Return the appropriate curve list. If client_curves is non-zero, return
+ * the client/session curves. Otherwise return the custom curve list if one
+ * exists, or the default curves if a custom list has not been specified.
+ */
+static void
+tls1_get_curvelist(SSL *s, int client_curves, const unsigned char **pcurves,
+    size_t *pcurveslen)
+{
+	if (client_curves != 0) {
+		*pcurves = s->session->tlsext_ellipticcurvelist;
+		*pcurveslen = s->session->tlsext_ellipticcurvelist_length;
+		return;
+	}
+
+	*pcurves = s->tlsext_ellipticcurvelist;
+	*pcurveslen = s->tlsext_ellipticcurvelist_length;
+	if (*pcurves == NULL) {
+		*pcurves = eccurves_default;
+		*pcurveslen = sizeof(eccurves_default);
+	}
+}
+
+/* Check that a curve is one of our preferences. */
+int
+tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
+{
+	const unsigned char *curves;
+	size_t curveslen, i;
+
+	/* Only named curves are supported. */
+	if (len != 3 || p[0] != NAMED_CURVE_TYPE)
+		return (0);
+
+	tls1_get_curvelist(s, 0, &curves, &curveslen);
+
+	for (i = 0; i < curveslen; i += 2, curves += 2) {
+		if (p[1] == curves[0] && p[2] == curves[1])
+			return (1);
+	}
+	return (0);
 }
 
 /*

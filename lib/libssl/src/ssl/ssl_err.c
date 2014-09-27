@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.25 2014/06/13 11:52:03 jsing Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.26 2014/09/27 11:01:06 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -584,6 +584,7 @@ static ERR_STRING_DATA SSL_str_reasons[]= {
 	{ERR_REASON(SSL_R_USE_SRTP_NOT_NEGOTIATED), "use srtp not negotiated"},
 	{ERR_REASON(SSL_R_WRITE_BIO_NOT_SET)     , "write bio not set"},
 	{ERR_REASON(SSL_R_WRONG_CIPHER_RETURNED) , "wrong cipher returned"},
+	{ERR_REASON(SSL_R_WRONG_CURVE)           , "wrong curve"},
 	{ERR_REASON(SSL_R_WRONG_MESSAGE_TYPE)    , "wrong message type"},
 	{ERR_REASON(SSL_R_WRONG_NUMBER_OF_KEY_BITS), "wrong number of key bits"},
 	{ERR_REASON(SSL_R_WRONG_SIGNATURE_LENGTH), "wrong signature length"},

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.68 2014/09/07 12:16:23 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.69 2014/09/27 11:01:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -798,6 +798,7 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
 int tls1_ec_curve_id2nid(int curve_id);
 int tls1_ec_nid2curve_id(int nid);
+int tls1_check_curve(SSL *s, const unsigned char *p, size_t len);
 
 unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p,
     unsigned char *limit);
