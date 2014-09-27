@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdtemp.c,v 1.13 2011/10/07 06:29:43 deraadt Exp $	*/
+/*	$OpenBSD: sdtemp.c,v 1.14 2014/09/27 06:07:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Theo de Raadt
@@ -59,15 +59,27 @@ sdtemp_match(struct device *parent, void *match, void *aux)
 	if (strcmp(ia->ia_name, "se97") == 0 ||
 	    strcmp(ia->ia_name, "se98") == 0 ||
 	    strcmp(ia->ia_name, "max6604") == 0 ||
+	    strcmp(ia->ia_name, "mcp9804") == 0 ||
 	    strcmp(ia->ia_name, "mcp9805") == 0 ||
 	    strcmp(ia->ia_name, "mcp98242") == 0 ||
 	    strcmp(ia->ia_name, "mcp98243") == 0 ||
+	    strcmp(ia->ia_name, "mcp98244") == 0 ||
 	    strcmp(ia->ia_name, "adt7408") == 0 ||
 	    strcmp(ia->ia_name, "stts424e02") == 0 ||
 	    strcmp(ia->ia_name, "stts424") == 0 ||
 	    strcmp(ia->ia_name, "stts2002") == 0 ||
+	    strcmp(ia->ia_name, "stts2004") == 0 ||
+	    strcmp(ia->ia_name, "stts3000") == 0 ||
 	    strcmp(ia->ia_name, "ts3000b3") == 0 ||
-	    strcmp(ia->ia_name, "cat34ts02") == 0)
+	    strcmp(ia->ia_name, "ts3000gb0") == 0 ||
+	    strcmp(ia->ia_name, "ts3000gb2") == 0 ||
+	    strcmp(ia->ia_name, "ts3001gb2") == 0 ||
+	    strcmp(ia->ia_name, "at30ts00") == 0 ||
+	    strcmp(ia->ia_name, "at30tse004") == 0 ||
+	    strcmp(ia->ia_name, "cat34ts02") == 0 ||
+	    strcmp(ia->ia_name, "cat34ts02c") == 0 ||
+	    strcmp(ia->ia_name, "gt30ts00") == 0 ||
+	    strcmp(ia->ia_name, "gt34ts02") == 0)
 		return (1);
 	return (0);
 }

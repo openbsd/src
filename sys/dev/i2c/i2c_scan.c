@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.141 2014/09/26 15:24:56 jsg Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.142 2014/09/27 06:07:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -886,6 +886,10 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 	    (iicprobew(0x00) & 0xffe0) == 0x0000) {
 		name = "max6604";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x0054 &&
+	    (iicprobew(0x07) & 0xfffc) == 0x0200 &&
+	    (iicprobew(0x00) & 0xffe0) == 0x0000) {
+		name = "mcp9804";
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x0054 &&
 	    (iicprobew(0x07) & 0xff00) == 0x0000 &&
 	    (iicprobew(0x00) & 0xffe0) == 0x0000) {
 		name = "mcp9805";		/* or mcp9843 */
@@ -897,6 +901,10 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 	    (iicprobew(0x07) & 0xff00) == 0x2100 &&
 	    (iicprobew(0x00) & 0xff00) == 0x0000) {
 		name = "mcp98243";
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x0054 &&
+	    (iicprobew(0x07) & 0xfffc) == 0x2200 &&
+	    (iicprobew(0x00) & 0xff00) == 0x0000) {
+		name = "mcp98244";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x11d4 &&
 	    iicprobew(0x07) == 0x0800 &&
 	    iicprobew(0x00) == 0x001d) {
@@ -910,6 +918,14 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 	    (iicprobew(0x00) == 0x006f)) {
 		name = "stts2002";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x104a &&
+	    (iicprobew(0x07) & 0xffff) == 0x2201 &&
+	    (iicprobew(0x00) == 0x00ef)) {
+		name = "stts2004";
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x104a &&
+	    (iicprobew(0x07) & 0xffff) == 0x0200 &&
+	    (iicprobew(0x00) == 0x006f)) {
+		name = "stts3000";
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x104a &&
 	    (iicprobew(0x07) & 0xffff) == 0x0101 &&
 	    (iicprobew(0x00) == 0x002d || iicprobew(0x00) == 0x002f)) {
 		name = "stts424";
@@ -917,10 +933,42 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 	    (iicprobew(0x07) & 0xffe0) == 0x0800 &&
 	    (iicprobew(0x00) & 0x001f) == 0x001f) {
 		name = "cat34ts02";		/* or cat6095, prod 0x0813 */
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x1b09 &&
+	    (iicprobew(0x07) & 0xffff) == 0x0a00 &&
+	    (iicprobew(0x00) & 0x001f) == 0x001f) {
+		name = "cat34ts02c";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x00b3 &&
 	    (iicprobew(0x07) & 0xffff) == 0x2903 &&
 	    (iicprobew(0x00) == 0x004f)) {
 		name = "ts3000b3";		/* or tse2002b3 */
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x00b3 &&
+	    (iicprobew(0x07) & 0xffff) == 0x2912 &&
+	    (iicprobew(0x00) == 0x006f)) {
+		name = "ts3000gb2";		/* or tse2002gb2 */
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x00b3 &&
+	    (iicprobew(0x07) & 0xffff) == 0x2913 &&
+	    (iicprobew(0x00) == 0x0077)) {
+		name = "ts3000gb0";
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x00b3 &&
+	    (iicprobew(0x07) & 0xffff) == 0x3001 &&
+	    (iicprobew(0x00) == 0x006f)) {
+		name = "ts3001gb2";
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x001f &&
+	    (iicprobew(0x07) & 0xffff) == 0x8201 &&
+	    (iicprobew(0x00) & 0xff00) == 0x0000) {
+		name = "at30ts00";		/* or at30tse002 */
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x1114 &&
+	    (iicprobew(0x07) & 0xffff) == 0x2200 &&
+	    (iicprobew(0x00) & 0xff00) == 0x0000) {
+		name = "at30tse004";
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x1c68 &&
+	    (iicprobew(0x07) & 0xffff) == 0x2201 &&
+	    (iicprobew(0x00) & 0xff00) == 0x0000) {
+		name = "gt30ts00";
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x132d &&
+	    (iicprobew(0x07) & 0xffff) == 0x3300 &&
+	    (iicprobew(0x00) & 0x001f) == 0x001f) {
+		name = "gt34ts02";
 	} else if ((addr & 0x7e) == 0x1c && iicprobe(0x0f) == 0x3b &&
 	    (iicprobe(0x21) & 0x60) == 0x00 &&
 	    iicprobe(0x0f) == iicprobe(0x8f) &&	/* registers address is 7 bits */
