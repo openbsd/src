@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.35 2014/08/29 13:01:46 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.36 2014/09/27 12:49:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -423,7 +423,7 @@ server_file_error(struct bufferevent *bev, short error, void *arg)
 		return;
 	}
 	if (error & (EVBUFFER_READ|EVBUFFER_WRITE|EVBUFFER_EOF)) {
-		bufferevent_disable(bev, EV_READ);
+		bufferevent_disable(bev, EV_READ|EV_WRITE);
 
 		clt->clt_done = 1;
 
