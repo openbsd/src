@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.124 2014/09/10 13:16:20 doug Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.125 2014/09/27 11:28:37 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -539,10 +539,10 @@ main(int argc, char *argv[])
 		dup2(nullfd, STDIN_FILENO);
 		dup2(nullfd, STDOUT_FILENO);
 		dup2(nullfd, STDERR_FILENO);
-		if (nullfd > 2)
-			close(nullfd);
 		close(lockpipe[1]);
 	}
+	if (nullfd > 2)
+		close(nullfd);
 
 	/*
 	 * Signal to the priv process that the initial config parsing is done
