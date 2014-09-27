@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.84 2014/09/19 14:32:24 tedu Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.85 2014/09/27 11:03:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1436,8 +1436,8 @@ ssl3_send_server_key_exchange(SSL *s)
 				    ERR_R_DH_LIB);
 				goto err;
 			}
-
 			s->s3->tmp.dh = dh;
+
 			if ((dhp->pub_key == NULL || dhp->priv_key == NULL ||
 			    (s->options & SSL_OP_SINGLE_DH_USE))) {
 				if (!DH_generate_key(dh)) {
@@ -1482,18 +1482,13 @@ ssl3_send_server_key_exchange(SSL *s)
 			}
 
 			/* Duplicate the ECDH structure. */
-			if (ecdhp == NULL) {
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-				    ERR_R_ECDH_LIB);
-				goto err;
-			}
 			if ((ecdh = EC_KEY_dup(ecdhp)) == NULL) {
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
 				    ERR_R_ECDH_LIB);
 				goto err;
 			}
-
 			s->s3->tmp.ecdh = ecdh;
+
 			if ((EC_KEY_get0_public_key(ecdh) == NULL) ||
 			    (EC_KEY_get0_private_key(ecdh) == NULL) ||
 			    (s->options & SSL_OP_SINGLE_ECDH_USE)) {
