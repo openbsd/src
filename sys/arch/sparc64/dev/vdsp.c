@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.28 2014/09/22 08:26:16 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.29 2014/09/28 19:14:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -846,19 +846,6 @@ vdsp_ldc_reset(struct ldc_conn *lc)
 	sc->sc_desc_head = sc->sc_desc_tail = 0;
 
 	sc->sc_vio_state = 0;
-	sc->sc_seq_no = 0;
-	if (sc->sc_vd) {
-		free(sc->sc_vd, M_DEVBUF, 0);
-		sc->sc_vd = NULL;
-	}
-	if (sc->sc_vd_task) {
-		free(sc->sc_vd_task, M_DEVBUF, 0);
-		sc->sc_vd_task = NULL;
-	}
-	if (sc->sc_label) {
-		free(sc->sc_label, M_DEVBUF, 0);
-		sc->sc_label = NULL;
-	}
 
 	task_add(systq, &sc->sc_close_task);
 }
@@ -951,6 +938,20 @@ vdsp_close(void *arg1, void *arg2)
 	struct vdsp_softc *sc = arg1;
 	struct proc *p = curproc;
 
+	sc->sc_seq_no = 0;
+
+	if (sc->sc_vd) {
+		free(sc->sc_vd, M_DEVBUF, 0);
+		sc->sc_vd = NULL;
+	}
+	if (sc->sc_vd_task) {
+		free(sc->sc_vd_task, M_DEVBUF, 0);
+		sc->sc_vd_task = NULL;
+	}
+	if (sc->sc_label) {
+		free(sc->sc_label, M_DEVBUF, 0);
+		sc->sc_label = NULL;
+	}
 	if (sc->sc_vp) {
 		vn_close(sc->sc_vp, FREAD | FWRITE, p->p_ucred, p);
 		sc->sc_vp = NULL;
@@ -1700,11 +1701,7 @@ vdspclose(dev_t dev, int flag, int mode, struct proc *p)
 	hv_ldc_tx_qconf(sc->sc_lc.lc_id, 0, 0);
 	hv_ldc_rx_qconf(sc->sc_lc.lc_id, 0, 0);
 
-	if (sc->sc_vp) {
-		vn_close(sc->sc_vp, FREAD | FWRITE, p->p_ucred, p);
-		sc->sc_vp = NULL;
-	}
-
+	task_add(systq, &sc->sc_close_task);
 	return (0);
 }
 
