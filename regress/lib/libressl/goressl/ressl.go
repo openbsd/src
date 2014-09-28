@@ -126,7 +126,7 @@ func (r *Ressl) Connect(host, port string) error {
 // Read reads data the SSL connection into the given buffer.
 func (r *Ressl) Read(buf []byte) (int, error) {
 	var inlen C.size_t
-	if C.ressl_read(r.ctx, (*C.char)(unsafe.Pointer(&buf[0])), C.size_t(len(buf)), (*C.size_t)(unsafe.Pointer(&inlen))) != 0 {
+	if C.ressl_read(r.ctx, unsafe.Pointer(&buf[0]), C.size_t(len(buf)), (*C.size_t)(unsafe.Pointer(&inlen))) != 0 {
 		return -1, fmt.Errorf("read failed: %v", r.Error())
 	}
 	return int(inlen), nil
@@ -137,7 +137,7 @@ func (r *Ressl) Write(buf []byte) (int, error) {
 	var outlen C.size_t
 	p := C.CString(string(buf))
 	defer C.free(unsafe.Pointer(p))
-	if C.ressl_write(r.ctx, p, C.size_t(len(buf)), (*C.size_t)(unsafe.Pointer(&outlen))) != 0 {
+	if C.ressl_write(r.ctx, unsafe.Pointer(p), C.size_t(len(buf)), (*C.size_t)(unsafe.Pointer(&outlen))) != 0 {
 		return -1, fmt.Errorf("write failed: %v", r.Error())
 	}
 	return int(outlen), nil
