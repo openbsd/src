@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.h,v 1.14 2014/09/28 06:24:00 tedu Exp $ */
+/* $OpenBSD: ressl.h,v 1.15 2014/09/28 14:46:09 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -44,6 +44,7 @@ int ressl_config_set_key_mem(struct ressl_config *config, const uint8_t *key,
 void ressl_config_set_verify_depth(struct ressl_config *config,
     int verify_depth);
 
+void ressl_config_clear_keys(struct ressl_config *config);
 void ressl_config_insecure_no_verify(struct ressl_config *config);
 void ressl_config_verify(struct ressl_config *config);
 

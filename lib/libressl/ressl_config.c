@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_config.c,v 1.9 2014/09/28 06:24:00 tedu Exp $ */
+/* $OpenBSD: ressl_config.c,v 1.10 2014/09/28 14:46:09 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -95,6 +95,13 @@ ressl_config_free(struct ressl_config *config)
 		free(config->key_mem);
 	}
 	free(config);
+}
+
+void
+ressl_config_clear_keys(struct ressl_config *config)
+{
+	ressl_config_set_cert_mem(config, NULL, 0);
+	ressl_config_set_key_mem(config, NULL, 0);
 }
 
 int
