@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.h,v 1.15 2014/09/28 14:46:09 jsing Exp $ */
+/* $OpenBSD: ressl.h,v 1.16 2014/09/28 15:08:01 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -33,12 +33,14 @@ void ressl_config_free(struct ressl_config *config);
 
 int ressl_config_set_ca_file(struct ressl_config *config, const char *ca_file);
 int ressl_config_set_ca_path(struct ressl_config *config, const char *ca_path);
-int ressl_config_set_cert_file(struct ressl_config *config, const char *cert_file);
+int ressl_config_set_cert_file(struct ressl_config *config,
+    const char *cert_file);
 int ressl_config_set_cert_mem(struct ressl_config *config, const uint8_t *cert,
     size_t len);
 int ressl_config_set_ciphers(struct ressl_config *config, const char *ciphers);
-int ressl_config_set_ecdhcurve(struct ressl_config *config, const char *);
-int ressl_config_set_key_file(struct ressl_config *config, const char *key_file);
+int ressl_config_set_ecdhcurve(struct ressl_config *config, const char *name);
+int ressl_config_set_key_file(struct ressl_config *config,
+    const char *key_file);
 int ressl_config_set_key_mem(struct ressl_config *config, const uint8_t *key,
     size_t len);
 void ressl_config_set_verify_depth(struct ressl_config *config,
