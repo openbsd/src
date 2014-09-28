@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.20 2014/09/13 16:06:37 doug Exp $	*/
+/*	$OpenBSD: config.c,v 1.21 2014/09/28 18:42:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -2190,7 +2190,7 @@ guest_finalize(struct guest *guest)
 {
 	struct md *md = guest->md;
 	struct md_node *node, *node2;
-	struct md_prop *prop;
+	struct md_prop *prop, *prop2;
 	struct mblock *mblock;
 	struct md_node *parent;
 	struct md_node *child;
@@ -2201,7 +2201,7 @@ guest_finalize(struct guest *guest)
 	char *path;
 
 	node = md_find_node(md, "cpus");
-	TAILQ_FOREACH(prop, &node->prop_list, link) {
+	TAILQ_FOREACH_SAFE(prop, &node->prop_list, link, prop2) {
 		if (prop->tag == MD_PROP_ARC &&
 		    strcmp(prop->name->str, "fwd") == 0) {
 			node2 = prop->d.arc.node;
@@ -2223,7 +2223,7 @@ guest_finalize(struct guest *guest)
 	 * able to configure crypto work queues.
 	 */
 	node = md_find_node(md, "virtual-devices");
-	TAILQ_FOREACH(prop, &node->prop_list, link) {
+	TAILQ_FOREACH_SAFE(prop, &node->prop_list, link, prop2) {
 		if (prop->tag == MD_PROP_ARC &&
 		    strcmp(prop->name->str, "fwd") == 0) {
 			node2 = prop->d.arc.node;
