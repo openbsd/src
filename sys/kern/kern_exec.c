@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.145 2014/09/08 01:47:06 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.146 2014/09/28 18:52:04 kettenis Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -72,6 +72,11 @@
 #if NSYSTRACE > 0
 #include <dev/systrace.h>
 #endif
+
+const struct kmem_va_mode kv_exec = {
+	.kv_wait = 1,
+	.kv_map = &exec_map
+};
 
 /*
  * Map the shared signal code.
@@ -317,7 +322,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
 
 	/* allocate an argument buffer */
-	argp = (char *) uvm_km_valloc_wait(exec_map, NCARGS);
+	argp = km_alloc(NCARGS, &kv_exec, &kp_pageable, &kd_waitok);
 #ifdef DIAGNOSTIC
 	if (argp == NULL)
 		panic("execve: argp == NULL");
@@ -617,7 +622,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	timespecclear(&p->p_tu.tu_runtime);
 	p->p_tu.tu_uticks = p->p_tu.tu_sticks = p->p_tu.tu_iticks = 0;
 
-	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+	km_free(argp, NCARGS, &kv_exec, &kp_pageable);
 
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
 	vn_close(pack.ep_vp, FREAD, cred, p);
@@ -717,7 +722,7 @@ bad:
 	/* close and put the exec'd file */
 	vn_close(pack.ep_vp, FREAD, cred, p);
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
-	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+	km_free(argp, NCARGS, &kv_exec, &kp_pageable);
 
  freehdr:
 	free(pack.ep_hdr, M_EXEC, 0);
@@ -746,7 +751,7 @@ exec_abort:
 		free(pack.ep_emul_arg, M_TEMP, 0);
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
 	vn_close(pack.ep_vp, FREAD, cred, p);
-	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+	km_free(argp, NCARGS, &kv_exec, &kp_pageable);
 
 free_pack_abort:
 	free(pack.ep_hdr, M_EXEC, 0);

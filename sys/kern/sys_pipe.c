@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.66 2014/08/31 01:42:36 guenther Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.67 2014/09/28 18:52:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -201,7 +201,7 @@ pipespace(struct pipe *cpipe, u_int size)
 {
 	caddr_t buffer;
 
-	buffer = (caddr_t)uvm_km_valloc(kernel_map, size);
+	buffer = km_alloc(size, &kv_any, &kp_pageable, &kd_waitok);
 	if (buffer == NULL) {
 		return (ENOMEM);
 	}
@@ -748,8 +748,8 @@ pipe_free_kmem(struct pipe *cpipe)
 		if (cpipe->pipe_buffer.size > PIPE_SIZE)
 			--nbigpipe;
 		amountpipekva -= cpipe->pipe_buffer.size;
-		uvm_km_free(kernel_map, (vaddr_t)cpipe->pipe_buffer.buffer,
-		    cpipe->pipe_buffer.size);
+		km_free(cpipe->pipe_buffer.buffer, cpipe->pipe_buffer.size,
+		    &kv_any, &kp_pageable);
 		cpipe->pipe_buffer.buffer = NULL;
 	}
 }
