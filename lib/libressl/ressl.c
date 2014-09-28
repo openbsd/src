@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.c,v 1.13 2014/09/28 06:24:00 tedu Exp $ */
+/* $OpenBSD: ressl.c,v 1.14 2014/09/28 14:45:48 reyk Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -110,22 +110,11 @@ ressl_configure_keypair(struct ressl *ctx)
 	BIO *bio = NULL;
 
 	if (ctx->config->cert_mem != NULL) {
-		if ((bio = BIO_new_mem_buf(ctx->config->cert_mem,
-		    ctx->config->cert_len)) == NULL) {
-			ressl_set_error(ctx, "failed to create buffer");
-			goto err;
-		}
-		if ((cert = PEM_read_bio_X509(bio, NULL, NULL, NULL)) == NULL) {
-			ressl_set_error(ctx, "failed to read certificate");
-			goto err;
-		}
-		if (SSL_CTX_use_certificate(ctx->ssl_ctx, cert) != 1) {
+		if (SSL_CTX_use_certificate_chain(ctx->ssl_ctx,
+		    ctx->config->cert_mem, ctx->config->cert_len) != 1) {
 			ressl_set_error(ctx, "failed to load certificate");
 			goto err;
 		}
-		BIO_free(bio);
-		bio = NULL;
-		X509_free(cert);
 		cert = NULL;
 	}
 	if (ctx->config->key_mem != NULL) {
@@ -150,8 +139,8 @@ ressl_configure_keypair(struct ressl *ctx)
 	}
 
 	if (ctx->config->cert_file != NULL) {
-		if (SSL_CTX_use_certificate_file(ctx->ssl_ctx,
-		    ctx->config->cert_file, SSL_FILETYPE_PEM) != 1) {
+		if (SSL_CTX_use_certificate_chain_file(ctx->ssl_ctx,
+		    ctx->config->cert_file) != 1) {
 			ressl_set_error(ctx, "failed to load certificate file");
 			goto err;
 		}

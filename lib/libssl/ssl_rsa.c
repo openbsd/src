@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.16 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.17 2014/09/28 14:45:48 reyk Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,6 +66,8 @@
 
 static int ssl_set_cert(CERT *c, X509 *x509);
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);
+static int ssl_ctx_use_certificate_chain_bio(SSL_CTX *, BIO *);
+
 int
 SSL_use_certificate(SSL *ssl, X509 *x)
 {
@@ -637,29 +639,17 @@ SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx, const unsigned char *d,
 
 
 /*
- * Read a file that contains our certificate in "PEM" format,
+ * Read a bio that contains our certificate in "PEM" format,
  * possibly followed by a sequence of CA certificates that should be
  * sent to the peer in the Certificate message.
  */
-int
-SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
+static int
+ssl_ctx_use_certificate_chain_bio(SSL_CTX *ctx, BIO *in)
 {
-	BIO *in;
 	int ret = 0;
 	X509 *x = NULL;
 
 	ERR_clear_error(); /* clear error stack for SSL_CTX_use_certificate() */
-
-	in = BIO_new(BIO_s_file_internal());
-	if (in == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE, ERR_R_BUF_LIB);
-		goto end;
-	}
-
-	if (BIO_read_filename(in, file) <= 0) {
-		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE, ERR_R_SYS_LIB);
-		goto end;
-	}
 
 	x = PEM_read_bio_X509_AUX(in, NULL, ctx->default_passwd_callback,
 	    ctx->default_passwd_callback_userdata);
@@ -716,6 +706,48 @@ SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
 end:
 	if (x != NULL)
 		X509_free(x);
+	return (ret);
+}
+
+int
+SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
+{
+	BIO *in;
+	int ret = 0;
+
+	in = BIO_new(BIO_s_file_internal());
+	if (in == NULL) {
+		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE, ERR_R_BUF_LIB);
+		goto end;
+	}
+
+	if (BIO_read_filename(in, file) <= 0) {
+		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE, ERR_R_SYS_LIB);
+		goto end;
+	}
+
+	ret = ssl_ctx_use_certificate_chain_bio(ctx, in);
+
+end:
+	BIO_free(in);
+	return (ret);
+}
+
+int
+SSL_CTX_use_certificate_chain(SSL_CTX *ctx, void *buf, int len)
+{
+	BIO *in;
+	int ret = 0;
+
+	in = BIO_new_mem_buf(buf, len);
+	if (in == NULL) {
+		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE, ERR_R_BUF_LIB);
+		goto end;
+	}
+
+	ret = ssl_ctx_use_certificate_chain_bio(ctx, in);
+
+end:
 	BIO_free(in);
 	return (ret);
 }

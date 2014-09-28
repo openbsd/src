@@ -3,8 +3,9 @@
 =head1 NAME
 
 SSL_CTX_use_certificate, SSL_CTX_use_certificate_ASN1,
-SSL_CTX_use_certificate_file, SSL_use_certificate, SSL_use_certificate_ASN1,
-SSL_use_certificate_file, SSL_CTX_use_certificate_chain_file,
+SSL_CTX_use_certificate_file, SSL_use_certificate,
+SSL_use_certificate_ASN1, SSL_use_certificate_file,
+SSL_CTX_use_certificate_chain, SSL_CTX_use_certificate_chain_file,
 SSL_CTX_use_PrivateKey, SSL_CTX_use_PrivateKey_ASN1,
 SSL_CTX_use_PrivateKey_file, SSL_CTX_use_RSAPrivateKey,
 SSL_CTX_use_RSAPrivateKey_ASN1, SSL_CTX_use_RSAPrivateKey_file,
@@ -24,6 +25,7 @@ data
  int SSL_use_certificate_ASN1(SSL *ssl, unsigned char *d, int len);
  int SSL_use_certificate_file(SSL *ssl, const char *file, int type);
 
+ int SSL_CTX_use_certificate_chain(SSL_CTX *ctx, void *buf, int len);
  int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file);
 
  int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey);
@@ -75,8 +77,8 @@ SSL_use_certificate_file() loads the certificate from B<file> into B<ssl>.
 See the NOTES section on why SSL_CTX_use_certificate_chain_file()
 should be preferred.
 
-SSL_CTX_use_certificate_chain_file() loads a certificate chain from
-B<file> into B<ctx>. The certificates must be in PEM format and must
+The SSL_CTX_use_certificate_chain*() functions load a certificate chain
+into B<ctx>. The certificates must be in PEM format and must
 be sorted starting with the subject's certificate (actual client or server
 certificate), followed by intermediate CA certificates if applicable, and
 ending at the highest level (root) CA.
