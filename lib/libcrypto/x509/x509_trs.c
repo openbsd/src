@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.15 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.16 2014/09/28 10:52:59 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -190,17 +190,20 @@ X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 			return 0;
 		}
 		trtmp->flags = X509_TRUST_DYNAMIC;
-	} else
+	} else {
 		trtmp = X509_TRUST_get0(idx);
+		if (trtmp == NULL) {
+			X509err(X509_F_X509_TRUST_ADD, X509_R_INVALID_TRUST);
+			return 0;
+		}
+	}
 
 	/* free existing name if dynamic */
 	if (trtmp->flags & X509_TRUST_DYNAMIC_NAME)
 		free(trtmp->name);
 	/* dup supplied name */
-	if (!(trtmp->name = BUF_strdup(name))) {
-		X509err(X509_F_X509_TRUST_ADD, ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
+	if ((trtmp->name = BUF_strdup(name)) == NULL)
+		goto err;
 	/* Keep the dynamic flag of existing entry */
 	trtmp->flags &= X509_TRUST_DYNAMIC;
 	/* Set all other flags */
@@ -211,18 +214,23 @@ X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 	trtmp->arg1 = arg1;
 	trtmp->arg2 = arg2;
 
-	/* If its a new entry manage the dynamic table */
+	/* If it's a new entry, manage the dynamic table */
 	if (idx == -1) {
-		if (!trtable && !(trtable = sk_X509_TRUST_new(tr_cmp))) {
-			X509err(X509_F_X509_TRUST_ADD, ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		if (!sk_X509_TRUST_push(trtable, trtmp)) {
-			X509err(X509_F_X509_TRUST_ADD, ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
+		if (trtable == NULL &&
+		    (trtable = sk_X509_TRUST_new(tr_cmp)) == NULL)
+			goto err;
+		if (sk_X509_TRUST_push(trtable, trtmp) == 0)
+			goto err;
 	}
 	return 1;
+
+err:
+	if (idx == -1) {
+		free(trtmp->name);
+		free(trtmp);
+	}
+	X509err(X509_F_X509_TRUST_ADD, ERR_R_MALLOC_FAILURE);
+	return 0;
 }
 
 static void
