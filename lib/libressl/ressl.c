@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.c,v 1.12 2014/08/15 16:55:32 tedu Exp $ */
+/* $OpenBSD: ressl.c,v 1.13 2014/09/28 06:24:00 tedu Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -29,7 +29,7 @@
 #include <ressl.h>
 #include "ressl_internal.h"
 
-extern struct ressl_config ressl_config_default;
+static struct ressl_config *ressl_config_default;
 
 int
 ressl_init(void)
@@ -41,6 +41,9 @@ ressl_init(void)
 
 	SSL_load_error_strings();
 	SSL_library_init();
+
+	if ((ressl_config_default = ressl_config_new()) == NULL)
+		return (-1);
 
 	ressl_initialised = 1;
 
@@ -78,7 +81,7 @@ ressl_new(void)
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
 		return (NULL);
 
-	ctx->config = &ressl_config_default;
+	ctx->config = ressl_config_default;
 
 	ressl_reset(ctx);
 
@@ -89,7 +92,7 @@ int
 ressl_configure(struct ressl *ctx, struct ressl_config *config)
 {
 	if (config == NULL)
-		config = &ressl_config_default;
+		config = ressl_config_default;
 
 	ctx->config = config;
 

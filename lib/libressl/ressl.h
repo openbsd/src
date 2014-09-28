@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.h,v 1.13 2014/08/27 10:46:53 reyk Exp $ */
+/* $OpenBSD: ressl.h,v 1.14 2014/09/28 06:24:00 tedu Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -31,15 +31,15 @@ const char *ressl_error(struct ressl *ctx);
 struct ressl_config *ressl_config_new(void);
 void ressl_config_free(struct ressl_config *config);
 
-void ressl_config_set_ca_file(struct ressl_config *config, char *ca_file);
-void ressl_config_set_ca_path(struct ressl_config *config, char *ca_path);
-void ressl_config_set_cert_file(struct ressl_config *config, char *cert_file);
-void ressl_config_set_cert_mem(struct ressl_config *config, char *cert,
+int ressl_config_set_ca_file(struct ressl_config *config, const char *ca_file);
+int ressl_config_set_ca_path(struct ressl_config *config, const char *ca_path);
+int ressl_config_set_cert_file(struct ressl_config *config, const char *cert_file);
+int ressl_config_set_cert_mem(struct ressl_config *config, const uint8_t *cert,
     size_t len);
-void ressl_config_set_ciphers(struct ressl_config *config, char *ciphers);
+int ressl_config_set_ciphers(struct ressl_config *config, const char *ciphers);
 int ressl_config_set_ecdhcurve(struct ressl_config *config, const char *);
-void ressl_config_set_key_file(struct ressl_config *config, char *key_file);
-void ressl_config_set_key_mem(struct ressl_config *config, char *key,
+int ressl_config_set_key_file(struct ressl_config *config, const char *key_file);
+int ressl_config_set_key_mem(struct ressl_config *config, const uint8_t *key,
     size_t len);
 void ressl_config_set_verify_depth(struct ressl_config *config,
     int verify_depth);

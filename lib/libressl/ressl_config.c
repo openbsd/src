@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_config.c,v 1.8 2014/08/27 10:46:53 reyk Exp $ */
+/* $OpenBSD: ressl_config.c,v 1.9 2014/09/28 06:24:00 tedu Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -21,27 +21,60 @@
 #include <ressl.h>
 #include "ressl_internal.h"
 
-/*
- * Default configuration.
- */
-struct ressl_config ressl_config_default = {
-	.ca_file = _PATH_SSL_CA_FILE,
-	.ca_path = NULL,
-	.ciphers = NULL,
-	.ecdhcurve = NID_X9_62_prime256v1,
-	.verify = 1,
-	.verify_depth = 6,
-};
+static int
+set_string(const char **dest, const char *src)
+{
+	free((char *)*dest);
+	*dest = NULL;
+	if (src != NULL)
+		if ((*dest = strdup(src)) == NULL)
+			return -1;
+	return 0;
+}
+
+static void *
+memdup(const void *in, size_t len)
+{
+	void *out;
+
+	if ((out = malloc(len)) == NULL)
+		return NULL;
+	memcpy(out, in, len);
+	return out;
+}
+
+static int
+set_mem(char **dest, size_t *destlen, const void *src, size_t srclen)
+{
+	free(*dest);
+	*dest = NULL;
+	*destlen = 0;
+	if (src != NULL)
+		if ((*dest = memdup(src, srclen)) == NULL)
+			return -1;
+	*destlen = srclen;
+	return 0;
+}
 
 struct ressl_config *
 ressl_config_new(void)
 {
 	struct ressl_config *config;
 
-	if ((config = malloc(sizeof(*config))) == NULL)
+	if ((config = calloc(1, sizeof(*config))) == NULL)
 		return (NULL);
 
-	memcpy(config, &ressl_config_default, sizeof(*config));
+	/*
+	 * Default configuration.
+	 */
+	if (ressl_config_set_ca_file(config, _PATH_SSL_CA_FILE) != 0) {
+		ressl_config_free(config);
+		return (NULL);
+	}
+	ressl_config_verify(config);
+	ressl_config_set_verify_depth(config, 6);
+	/* ? use function ? */
+	config->ecdhcurve = NID_X9_62_prime256v1;
 	
 	return (config);
 }
@@ -49,38 +82,50 @@ ressl_config_new(void)
 void
 ressl_config_free(struct ressl_config *config)
 {
+	if (config == NULL)
+		return;
+	free((char *)config->ca_file);
+	free((char *)config->ca_path);
+	free((char *)config->cert_file);
+	free(config->cert_mem);
+	free((char *)config->ciphers);
+	free((char *)config->key_file);
+	if (config->key_mem != NULL) {
+		explicit_bzero(config->key_mem, config->key_len);
+		free(config->key_mem);
+	}
 	free(config);
 }
 
-void
-ressl_config_set_ca_file(struct ressl_config *config, char *ca_file)
+int
+ressl_config_set_ca_file(struct ressl_config *config, const char *ca_file)
 {
-	config->ca_file = ca_file;
+	return set_string(&config->ca_file, ca_file);
 }
 
-void
-ressl_config_set_ca_path(struct ressl_config *config, char *ca_path)
+int
+ressl_config_set_ca_path(struct ressl_config *config, const char *ca_path)
 {
-	config->ca_path = ca_path;
+	return set_string(&config->ca_path, ca_path);
 }
 
-void
-ressl_config_set_cert_file(struct ressl_config *config, char *cert_file)
+int
+ressl_config_set_cert_file(struct ressl_config *config, const char *cert_file)
 {
-	config->cert_file = cert_file;
+	return set_string(&config->cert_file, cert_file);
 }
 
-void
-ressl_config_set_cert_mem(struct ressl_config *config, char *cert, size_t len)
+int
+ressl_config_set_cert_mem(struct ressl_config *config, const uint8_t *cert,
+    size_t len)
 {
-	config->cert_mem = cert;
-	config->cert_len = len;
+	return set_mem(&config->cert_mem, &config->cert_len, cert, len);
 }
 
-void
-ressl_config_set_ciphers(struct ressl_config *config, char *ciphers)
+int
+ressl_config_set_ciphers(struct ressl_config *config, const char *ciphers)
 {
-	config->ciphers = ciphers;
+	return set_string(&config->ciphers, ciphers);
 }
 
 int
@@ -95,17 +140,19 @@ ressl_config_set_ecdhcurve(struct ressl_config *config, const char *name)
 	return (0);
 }
 
-void
-ressl_config_set_key_file(struct ressl_config *config, char *key_file)
+int
+ressl_config_set_key_file(struct ressl_config *config, const char *key_file)
 {
-	config->key_file = key_file;
+	return set_string(&config->key_file, key_file);
 }
 
-void
-ressl_config_set_key_mem(struct ressl_config *config, char *key, size_t len)
+int
+ressl_config_set_key_mem(struct ressl_config *config, const uint8_t *key,
+    size_t len)
 {
-	config->key_mem = key;
-	config->key_len = len;
+	if (config->key_mem)
+		explicit_bzero(config->key_mem, config->key_len);
+	return set_mem(&config->key_mem, &config->key_len, key, len);
 }
 
 void
