@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.31 2014/09/29 17:48:51 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.32 2014/09/29 19:34:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -347,9 +347,11 @@ vdsp_attach(struct device *parent, struct device *self, void *aux)
 	hv_ldc_rx_qconf(ca->ca_id, 0, 0);
 
 	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_tx_sysino,
-	    IPL_BIO, 0, vdsp_tx_intr, sc, sc->sc_dv.dv_xname);
+	    IPL_BIO, BUS_INTR_ESTABLISH_MPSAFE, vdsp_tx_intr, sc,
+	    sc->sc_dv.dv_xname);
 	sc->sc_rx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_rx_sysino,
-	    IPL_BIO, 0, vdsp_rx_intr, sc, sc->sc_dv.dv_xname);
+	    IPL_BIO, BUS_INTR_ESTABLISH_MPSAFE, vdsp_rx_intr, sc,
+	    sc->sc_dv.dv_xname);
 	if (sc->sc_tx_ih == NULL || sc->sc_rx_ih == NULL) {
 		printf(", can't establish interrupt\n");
 		return;
