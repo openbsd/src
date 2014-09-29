@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.62 2013/11/25 18:02:50 deraadt Exp $	*/
+/*	$OpenBSD: at.c,v 1.63 2014/09/29 18:44:49 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -319,6 +319,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 		}
 
 		if (export) {
+			(void)fputs("export ", fp);
 			(void)fwrite(*atenv, sizeof(char), eqp - *atenv, fp);
 			for (ap = eqp; *ap != '\0'; ap++) {
 				if (*ap == '\n')
@@ -340,8 +341,6 @@ writefile(const char *cwd, time_t runtimer, char queue)
 					(void)fputc(*ap, fp);
 				}
 			}
-			(void)fputs("; export ", fp);
-			(void)fwrite(*atenv, sizeof(char), eqp - *atenv - 1, fp);
 			(void)fputc('\n', fp);
 		}
 	}
