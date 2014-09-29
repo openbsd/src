@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldc.c,v 1.10 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: ldc.c,v 1.11 2014/09/29 17:43:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -245,9 +245,12 @@ ldc_send_vers(struct ldc_conn *lc)
 	uint64_t tx_head, tx_tail, tx_state;
 	int err;
 
+	mtx_enter(&lc->lc_txq->lq_mtx);
 	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
-	if (err != H_EOK || tx_state != LDC_CHANNEL_UP)
+	if (err != H_EOK || tx_state != LDC_CHANNEL_UP) {
+		mtx_leave(&lc->lc_txq->lq_mtx);
 		return;
+	}
 
 	lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
 	bzero(lp, sizeof(struct ldc_pkt));
@@ -262,10 +265,12 @@ ldc_send_vers(struct ldc_conn *lc)
 	err = hv_ldc_tx_set_qtail(lc->lc_id, tx_tail);
 	if (err != H_EOK) {
 		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
+		mtx_leave(&lc->lc_txq->lq_mtx);
 		return;
 	}
 
 	lc->lc_state = LDC_SND_VERS;
+	mtx_leave(&lc->lc_txq->lq_mtx);
 }
 
 void
@@ -275,9 +280,12 @@ ldc_send_ack(struct ldc_conn *lc)
 	uint64_t tx_head, tx_tail, tx_state;
 	int err;
 
+	mtx_enter(&lc->lc_txq->lq_mtx);
 	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
-	if (err != H_EOK || tx_state != LDC_CHANNEL_UP)
+	if (err != H_EOK || tx_state != LDC_CHANNEL_UP) {
+		mtx_leave(&lc->lc_txq->lq_mtx);
 		return;
+	}
 
 	lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
 	bzero(lp, sizeof(struct ldc_pkt));
@@ -292,10 +300,12 @@ ldc_send_ack(struct ldc_conn *lc)
 	err = hv_ldc_tx_set_qtail(lc->lc_id, tx_tail);
 	if (err != H_EOK) {
 		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
+		mtx_leave(&lc->lc_txq->lq_mtx);
 		return;
 	}
 
 	lc->lc_state = LDC_RCV_VERS;
+	mtx_leave(&lc->lc_txq->lq_mtx);
 }
 
 void
@@ -305,9 +315,12 @@ ldc_send_rts(struct ldc_conn *lc)
 	uint64_t tx_head, tx_tail, tx_state;
 	int err;
 
+	mtx_enter(&lc->lc_txq->lq_mtx);
 	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
-	if (err != H_EOK || tx_state != LDC_CHANNEL_UP)
+	if (err != H_EOK || tx_state != LDC_CHANNEL_UP) {
+		mtx_leave(&lc->lc_txq->lq_mtx);
 		return;
+	}
 
 	lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
 	bzero(lp, sizeof(struct ldc_pkt));
@@ -322,10 +335,12 @@ ldc_send_rts(struct ldc_conn *lc)
 	err = hv_ldc_tx_set_qtail(lc->lc_id, tx_tail);
 	if (err != H_EOK) {
 		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
+		mtx_leave(&lc->lc_txq->lq_mtx);
 		return;
 	}
 
 	lc->lc_state = LDC_SND_RTS;
+	mtx_leave(&lc->lc_txq->lq_mtx);
 }
 
 void
@@ -335,9 +350,12 @@ ldc_send_rtr(struct ldc_conn *lc)
 	uint64_t tx_head, tx_tail, tx_state;
 	int err;
 
+	mtx_enter(&lc->lc_txq->lq_mtx);
 	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
-	if (err != H_EOK || tx_state != LDC_CHANNEL_UP)
+	if (err != H_EOK || tx_state != LDC_CHANNEL_UP) {
+		mtx_leave(&lc->lc_txq->lq_mtx);
 		return;
+	}
 
 	lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
 	bzero(lp, sizeof(struct ldc_pkt));
@@ -350,10 +368,14 @@ ldc_send_rtr(struct ldc_conn *lc)
 	tx_tail += sizeof(*lp);
 	tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(*lp)) - 1);
 	err = hv_ldc_tx_set_qtail(lc->lc_id, tx_tail);
-	if (err != H_EOK)
+	if (err != H_EOK) {
 		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
+		mtx_leave(&lc->lc_txq->lq_mtx);
+		return;
+	}
 
 	lc->lc_state = LDC_SND_RTR;
+	mtx_leave(&lc->lc_txq->lq_mtx);
 }
 
 void
@@ -363,9 +385,12 @@ ldc_send_rdx(struct ldc_conn *lc)
 	uint64_t tx_head, tx_tail, tx_state;
 	int err;
 
+	mtx_enter(&lc->lc_txq->lq_mtx);
 	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
-	if (err != H_EOK || tx_state != LDC_CHANNEL_UP)
+	if (err != H_EOK || tx_state != LDC_CHANNEL_UP) {
+		mtx_leave(&lc->lc_txq->lq_mtx);
 		return;
+	}
 
 	lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
 	bzero(lp, sizeof(struct ldc_pkt));
@@ -378,10 +403,14 @@ ldc_send_rdx(struct ldc_conn *lc)
 	tx_tail += sizeof(*lp);
 	tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(*lp)) - 1);
 	err = hv_ldc_tx_set_qtail(lc->lc_id, tx_tail);
-	if (err != H_EOK)
+	if (err != H_EOK) {
 		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
+		mtx_leave(&lc->lc_txq->lq_mtx);
+		return;
+	}
 
 	lc->lc_state = LDC_SND_RDX;
+	mtx_leave(&lc->lc_txq->lq_mtx);
 }
 
 int
@@ -393,15 +422,20 @@ ldc_send_unreliable(struct ldc_conn *lc, void *msg, size_t len)
 	uint8_t *p = msg;
 	int err;
 
+	mtx_enter(&lc->lc_txq->lq_mtx);
 	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
-	if (err != H_EOK)
+	if (err != H_EOK || tx_state != LDC_CHANNEL_UP) {
+		mtx_leave(&lc->lc_txq->lq_mtx);
 		return (EIO);
+	}
 
 	tx_avail = (tx_head - tx_tail) / sizeof(*lp) +
 	    lc->lc_txq->lq_nentries - 1;
 	tx_avail %= lc->lc_txq->lq_nentries;
-	if (len > tx_avail * LDC_PKT_PAYLOAD)
+	if (len > tx_avail * LDC_PKT_PAYLOAD) {
+		mtx_leave(&lc->lc_txq->lq_mtx);
 		return (EWOULDBLOCK);
+	}
 
 	while (len > 0) {
 		lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
@@ -419,12 +453,16 @@ ldc_send_unreliable(struct ldc_conn *lc, void *msg, size_t len)
 		tx_tail += sizeof(*lp);
 		tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(*lp)) - 1);
 		err = hv_ldc_tx_set_qtail(lc->lc_id, tx_tail);
-		if (err != H_EOK)
+		if (err != H_EOK) {
 			printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
+			mtx_leave(&lc->lc_txq->lq_mtx);
+			return (EIO);
+		}
 		p += min(len, LDC_PKT_PAYLOAD);
 		len -= min(len, LDC_PKT_PAYLOAD);
 	}
 
+	mtx_leave(&lc->lc_txq->lq_mtx);
 	return (0);
 }
 
@@ -434,6 +472,8 @@ ldc_reset(struct ldc_conn *lc)
 	int err;
 
 	DPRINTF(("Resetting connection\n"));
+
+	mtx_enter(&lc->lc_txq->lq_mtx);
 	hv_ldc_tx_qconf(lc->lc_id, 0, 0);
 	hv_ldc_rx_qconf(lc->lc_id, 0, 0);
 	lc->lc_tx_state = lc->lc_rx_state = LDC_CHANNEL_DOWN;
@@ -450,6 +490,8 @@ ldc_reset(struct ldc_conn *lc)
 
 	lc->lc_tx_seqid = 0;
 	lc->lc_state = 0;
+	mtx_leave(&lc->lc_txq->lq_mtx);
+
 	lc->lc_reset(lc);
 }
 
@@ -464,6 +506,8 @@ ldc_queue_alloc(bus_dma_tag_t t, int nentries)
 	lq = malloc(sizeof(struct ldc_queue), M_DEVBUF, M_NOWAIT);
 	if (lq == NULL)
 		return NULL;
+
+	mtx_init(&lq->lq_mtx, IPL_TTY);
 
 	size = roundup(nentries * sizeof(struct ldc_pkt), PAGE_SIZE);
 
