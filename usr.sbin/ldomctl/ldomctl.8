@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.7 2014/08/23 10:34:18 stsp Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.8 2014/09/29 10:53:53 stsp Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 23 2014 $
+.Dd $Mdocdate: September 29 2014 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -73,9 +73,10 @@ Declares the amount of memory assigned to a domain, in bytes.
 Optionally, the units 'K', 'M', or 'G', for kilo-, mega-, and gigabytes
 can be used.
 .It Ic vdisk Ar file
-The specified disk image file is used to back a virtual disk of the guest
+The specified file is used to back a virtual disk of the guest
 domain.
-A disk image file is created with
+.Ar file
+can be a block device node or a disk image file created with
 .Xr dd 1 .
 This keyword can be used multiple times.
 .It Ic vnet Op Ic \&{ Ar keyword value ... Ic \&}
