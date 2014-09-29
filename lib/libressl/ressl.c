@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.c,v 1.15 2014/09/29 15:11:29 jsing Exp $ */
+/* $OpenBSD: ressl.c,v 1.16 2014/09/29 15:31:38 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -182,7 +182,18 @@ ressl_configure_ssl(struct ressl *ctx)
 	if ((ctx->config->protocols & RESSL_PROTOCOL_TLSv1_2) == 0)
 		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1_2);
 
+	if (ctx->config->ciphers != NULL) {
+		if (SSL_CTX_set_cipher_list(ctx->ssl_ctx,
+		    ctx->config->ciphers) != 1) {
+			ressl_set_error(ctx, "failed to set ciphers");
+			goto err;
+		}
+	}
+
 	return (0);
+
+err:
+	return (-1);
 }
 
 void

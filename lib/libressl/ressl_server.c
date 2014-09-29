@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_server.c,v 1.8 2014/09/29 15:11:29 jsing Exp $ */
+/* $OpenBSD: ressl_server.c,v 1.9 2014/09/29 15:31:38 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -61,14 +61,6 @@ ressl_configure_server(struct ressl *ctx)
 		goto err;
 	if (ressl_configure_keypair(ctx) != 0)
 		goto err;
-
-	if (ctx->config->ciphers != NULL) {
-		if (SSL_CTX_set_cipher_list(ctx->ssl_ctx,
-		    ctx->config->ciphers) != 1) {
-			ressl_set_error(ctx, "failed to set ciphers");
-			goto err;
-		}
-	}
 
 	if (ctx->config->ecdhcurve != NID_undef) {
 		if ((ecdh_key = EC_KEY_new_by_curve_name(
