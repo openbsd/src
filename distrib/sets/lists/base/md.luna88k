@@ -38,7 +38,7 @@
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.6.0
 ./usr/lib/libsqlite3.so.27.0
-./usr/lib/libssl.so.27.0
+./usr/lib/libssl.so.27.1
 ./usr/lib/libstdc++.so.57.0
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
@@ -1034,7 +1034,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_agereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_alcreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_alereg.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_art.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_bcereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_bgereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_bnxreg.ph

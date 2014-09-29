@@ -544,7 +544,6 @@
 ./usr/include/dev/pci/if_agereg.h
 ./usr/include/dev/pci/if_alcreg.h
 ./usr/include/dev/pci/if_alereg.h
-./usr/include/dev/pci/if_art.h
 ./usr/include/dev/pci/if_bcereg.h
 ./usr/include/dev/pci/if_bgereg.h
 ./usr/include/dev/pci/if_bnxreg.h
