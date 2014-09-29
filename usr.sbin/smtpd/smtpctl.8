@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.48 2014/07/08 07:58:01 sobrado Exp $
+.\" $OpenBSD: smtpctl.8,v 1.49 2014/09/29 20:56:46 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -15,16 +15,18 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 8 2014 $
+.Dd $Mdocdate: September 29 2014 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
-.Nm smtpctl
+.Nm smtpctl ,
+.Nm mailq
 .Nd control the Simple Mail Transfer Protocol daemon
 .Sh SYNOPSIS
 .Nm
 .Ar command
 .Op Ar argument ...
+.Nm mailq
 .Sh DESCRIPTION
 The
 .Nm
@@ -34,6 +36,12 @@ Commands may be abbreviated to the minimum unambiguous prefix; for example,
 .Cm sh s
 for
 .Cm show stats .
+.Pp
+The
+.Nm mailq
+command is provided for compatibility with other MTAs
+and is simply a shortcut for
+.Cm show queue .
 .Pp
 The following commands are available:
 .Bl -tag -width Ds

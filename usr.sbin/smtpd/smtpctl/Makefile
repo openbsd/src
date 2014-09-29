@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2014/04/01 23:14:25 fgsch Exp $
+#	$OpenBSD: Makefile,v 1.37 2014/09/29 20:56:47 jmc Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -9,6 +9,7 @@ BINMODE?=555
 
 BINDIR=	/usr/sbin
 MAN=	smtpctl.8
+MLINKS=	smtpctl.8 mailq.8
 
 CFLAGS+=	-I${.CURDIR}/..
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
