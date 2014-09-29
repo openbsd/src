@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.30 2014/09/29 10:27:43 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.31 2014/09/29 17:48:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -23,6 +23,7 @@
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 #include <sys/namei.h>
 #include <sys/systm.h>
 #include <sys/task.h>
@@ -237,6 +238,7 @@ struct vdsp_softc {
 	struct task	sc_alloc_task;
 	struct task	sc_close_task;
 
+	struct mutex	sc_desc_mtx;
 	struct vdsk_desc_msg *sc_desc_msg[VDSK_RX_ENTRIES];
 	int		sc_desc_head;
 	int		sc_desc_tail;
@@ -334,6 +336,8 @@ vdsp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	printf(": ivec 0x%llx, 0x%llx", sc->sc_tx_sysino, sc->sc_rx_sysino);
+
+	mtx_init(&sc->sc_desc_mtx, IPL_BIO);
 
 	/*
 	 * Un-configure queues before registering interrupt handlers,
@@ -814,9 +818,11 @@ vdsp_rx_vio_desc_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 
 		switch (dm->operation) {
 		case VD_OP_BREAD:
+			mtx_enter(&sc->sc_desc_mtx);
 			sc->sc_desc_msg[sc->sc_desc_head++] = dm;
 			sc->sc_desc_head &= (VDSK_RX_ENTRIES - 1);
 			KASSERT(sc->sc_desc_head != sc->sc_desc_tail);
+			mtx_leave(&sc->sc_desc_mtx);
 			task_add(systq, &sc->sc_read_task);
 			break;
 		default:
@@ -845,10 +851,7 @@ vdsp_ldc_reset(struct ldc_conn *lc)
 {
 	struct vdsp_softc *sc = lc->lc_sc;
 
-	sc->sc_desc_head = sc->sc_desc_tail = 0;
-
 	sc->sc_vio_state = 0;
-
 	task_add(systq, &sc->sc_close_task);
 }
 
@@ -1094,10 +1097,15 @@ vdsp_read(void *arg1, void *arg2)
 {
 	struct vdsp_softc *sc = arg1;
 
+	mtx_enter(&sc->sc_desc_mtx);
 	while (sc->sc_desc_tail != sc->sc_desc_head) {
-		vdsp_read_desc(sc, sc->sc_desc_msg[sc->sc_desc_tail++]);
+		mtx_leave(&sc->sc_desc_mtx);
+		vdsp_read_desc(sc, sc->sc_desc_msg[sc->sc_desc_tail]);
+		mtx_enter(&sc->sc_desc_mtx);
+		sc->sc_desc_tail++;
 		sc->sc_desc_tail &= (VDSK_RX_ENTRIES - 1);
 	}
+	mtx_leave(&sc->sc_desc_mtx);
 }
 
 void
