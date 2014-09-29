@@ -1,3 +1,3 @@
-# $OpenBSD: shlib_version,v 1.11 2014/03/24 01:42:47 jturner Exp $
-major=27
+# $OpenBSD: shlib_version,v 1.12 2014/09/29 23:00:50 jturner Exp $
+major=28
 minor=0
