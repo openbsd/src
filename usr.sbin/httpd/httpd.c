@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.21 2014/09/05 10:04:20 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.22 2014/09/29 19:30:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -661,7 +661,7 @@ evbuffer_getline(struct evbuffer *evb)
 		free(str);
 		return (NULL);
 	}
-	
+
 	str[i] = '\0';
 
 	if ((i + 1) < len) {

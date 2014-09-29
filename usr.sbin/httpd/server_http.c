@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.50 2014/09/15 08:00:27 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.51 2014/09/29 19:30:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -340,7 +340,7 @@ server_read_http(struct bufferevent *bev, void *arg)
 		case HTTP_METHOD_MERGE:
 		case HTTP_METHOD_BASELINE_CONTROL:
 		case HTTP_METHOD_MKACTIVITY:
- 		case HTTP_METHOD_ORDERPATCH:
+		case HTTP_METHOD_ORDERPATCH:
 		case HTTP_METHOD_ACL:
 		case HTTP_METHOD_MKREDIRECTREF:
 		case HTTP_METHOD_UPDATEREDIRECTREF:
@@ -554,7 +554,7 @@ void
 server_reset_http(struct client *clt)
 {
 	struct server		*srv = clt->clt_srv;
-	
+
 	server_httpdesc_free(clt->clt_descreq);
 	server_httpdesc_free(clt->clt_descresp);
 	clt->clt_headerlen = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.8 2014/09/05 15:06:05 reyk Exp $	*/
+/*	$OpenBSD: http.h,v 1.9 2014/09/29 19:30:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -66,7 +66,7 @@ enum httpmethod {
 	/* WebDAV Redirect Reference Resources, RFC 4437 */
 	HTTP_METHOD_MKREDIRECTREF,
 	HTTP_METHOD_UPDATEREDIRECTREF,
- 
+
 	/* WebDAV Search, RFC 5323 */
 	HTTP_METHOD_SEARCH,
 
@@ -108,7 +108,7 @@ struct http_method {
 	{ HTTP_METHOD_MERGE,		"MERGE" },	\
 	{ HTTP_METHOD_BASELINE_CONTROL,	"BASELINE-CONTROL" }, \
 	{ HTTP_METHOD_MKACTIVITY,	"MKACTIVITY" },	\
- 	{ HTTP_METHOD_ORDERPATCH,	"ORDERPATCH" },	\
+	{ HTTP_METHOD_ORDERPATCH,	"ORDERPATCH" },	\
 	{ HTTP_METHOD_ACL,		"ACL" },	\
 	{ HTTP_METHOD_MKREDIRECTREF,	"MKREDIRECTREF" }, \
 	{ HTTP_METHOD_UPDATEREDIRECTREF, "UPDATEREDIRECTREF" }, \

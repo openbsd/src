@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.38 2014/09/02 16:20:41 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.39 2014/09/29 19:30:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -129,7 +129,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 	} else {
 		struct sockaddr_un	 sun;
 		size_t			 len;
-	
+
 		if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 			goto fail;
 
@@ -476,8 +476,8 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 			    EVBUFFER_DATA(clt->clt_srvevb);
 			DPRINTF("%s: record header: version %d type %d id %d "
 			    "content len %d padding %d", __func__,
-			     h->version, h->type, ntohs(h->id),
-			     ntohs(h->content_len), h->padding_len);
+			    h->version, h->type, ntohs(h->id),
+			    ntohs(h->content_len), h->padding_len);
 			clt->clt_fcgi_type = h->type;
 			clt->clt_fcgi_toread = ntohs(h->content_len);
 			clt->clt_fcgi_padding_len = h->padding_len;
