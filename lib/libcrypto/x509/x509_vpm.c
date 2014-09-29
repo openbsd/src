@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.10 2014/07/22 02:21:20 beck Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.11 2014/09/29 04:16:49 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -213,6 +213,7 @@ int
 X509_VERIFY_PARAM_set1_name(X509_VERIFY_PARAM *param, const char *name)
 {
 	free(param->name);
+	param->name = NULL;
 	if (name == NULL)
 		return 1;
 	param->name = strdup(name);
