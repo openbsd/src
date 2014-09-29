@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.12 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: x509name.c,v 1.13 2014/09/29 04:17:24 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,8 +91,10 @@ X509_NAME_get_text_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, char *buf,
 	i = (data->length > (len - 1)) ? (len - 1) : data->length;
 	if (buf == NULL)
 		return (data->length);
-	memcpy(buf, data->data, i);
-	buf[i] = '\0';
+	if (i >= 0) {
+		memcpy(buf, data->data, i);
+		buf[i] = '\0';
+	}
 	return (i);
 }
 
