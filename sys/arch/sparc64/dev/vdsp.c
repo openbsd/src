@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.29 2014/09/28 19:14:36 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.30 2014/09/29 10:27:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -27,6 +27,8 @@
 #include <sys/systm.h>
 #include <sys/task.h>
 #include <sys/vnode.h>
+#include <sys/dkio.h>
+#include <sys/specdev.h>
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
@@ -886,7 +888,9 @@ vdsp_open(void *arg1, void *arg2)
 	if (sc->sc_vp == NULL) {
 		struct nameidata nd;
 		struct vattr va;
+		struct partinfo pi;
 		const char *name;
+		dev_t dev;
 		int error;
 
 		name = mdesc_get_prop_str(sc->sc_idx, "vds-block-device");
@@ -900,11 +904,21 @@ vdsp_open(void *arg1, void *arg2)
 			return;
 		}
 
-		error = VOP_GETATTR(nd.ni_vp, &va, p->p_ucred, p);
-		if (error)
-			printf("VOP_GETATTR: %s, %d\n", name, error);
-		sc->sc_vdisk_block_size = DEV_BSIZE;
-		sc->sc_vdisk_size = va.va_size / DEV_BSIZE;
+		if (nd.ni_vp->v_type == VBLK) {
+			dev = nd.ni_vp->v_rdev;
+			error = (*bdevsw[major(dev)].d_ioctl)(dev,
+			    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
+			if (error)
+				printf("DIOCGPART: %s, %d\n", name, error);
+			sc->sc_vdisk_block_size = pi.disklab->d_secsize;
+			sc->sc_vdisk_size = DL_GETPSIZE(pi.part);
+		} else {
+			error = VOP_GETATTR(nd.ni_vp, &va, p->p_ucred, p);
+			if (error)
+				printf("VOP_GETATTR: %s, %d\n", name, error);
+			sc->sc_vdisk_block_size = DEV_BSIZE;
+			sc->sc_vdisk_size = va.va_size / DEV_BSIZE;
+		}
 
 		VOP_UNLOCK(nd.ni_vp, 0, p);
 		sc->sc_vp = nd.ni_vp;
