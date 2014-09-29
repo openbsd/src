@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_passwd.c,v 1.7 2014/07/08 13:49:09 eric Exp $	*/
+/*	$OpenBSD: table_passwd.c,v 1.8 2014/09/29 08:41:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -33,7 +33,7 @@ static int table_passwd_update(void);
 static int table_passwd_check(int, struct dict *, const char *);
 static int table_passwd_lookup(int, struct dict *, const char *, char *, size_t);
 static int table_passwd_fetch(int, struct dict *, char *, size_t);
-static int parse_passwd_entry(struct passwd *, const char *);
+static int parse_passwd_entry(struct passwd *, char *);
 
 static char	       *config;
 static struct dict     *passwd;
@@ -82,6 +82,7 @@ table_passwd_update(void)
 {
 	FILE	       *fp;
 	char	       *buf, *lbuf = NULL;
+	char		tmp[LINE_MAX];
 	size_t		len;
 	char	       *line;
 	struct passwd	pw;
@@ -109,7 +110,12 @@ table_passwd_update(void)
 			lbuf[len] = '\0';
 			buf = lbuf;
 		}
-		if (! parse_passwd_entry(&pw, buf)) {
+
+		if (strlcpy(tmp, buf, sizeof tmp) >= sizeof tmp) {
+			log_warnx("warn: table-passwd: line too long");
+			goto err;
+		}
+		if (! parse_passwd_entry(&pw, tmp)) {
 			log_warnx("warn: table-passwd: invalid entry");
 			goto err;
 		}
@@ -154,12 +160,14 @@ table_passwd_lookup(int service, struct dict *params, const char *key, char *dst
 	int		r;
 	struct passwd	pw;
 	char	       *line;
+	char		tmp[LINE_MAX];
 
 	line = dict_get(passwd, key);
 	if (line == NULL)
 		return 0;
 
-	if (! parse_passwd_entry(&pw, line)) {
+	(void)strlcpy(tmp, line, sizeof tmp);
+	if (! parse_passwd_entry(&pw, tmp)) {
 		log_warnx("warn: table-passwd: invalid entry");
 		return -1;
 	}
@@ -197,14 +205,11 @@ table_passwd_fetch(int service, struct dict *params, char *dst, size_t sz)
 }
 
 static int
-parse_passwd_entry(struct passwd *pw, const char *line)
+parse_passwd_entry(struct passwd *pw, char *buf)
 {
 	const char     *errstr;
 	char	       *p, *q;
-	char		buf[LINE_MAX];
 
-	if (strlcpy(buf, line, sizeof buf) >= sizeof buf)
-		return 0;
 	p = buf;
 
 	/* username */
