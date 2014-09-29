@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.h,v 1.16 2014/09/28 15:08:01 jsing Exp $ */
+/* $OpenBSD: ressl.h,v 1.17 2014/09/29 15:11:29 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -17,6 +17,15 @@
 
 #ifndef HEADER_RESSL_H
 #define HEADER_RESSL_H
+
+#define RESSL_PROTOCOL_SSLv3	(1 << 0)
+#define RESSL_PROTOCOL_TLSv1_0	(1 << 1)
+#define RESSL_PROTOCOL_TLSv1_1	(1 << 2)
+#define RESSL_PROTOCOL_TLSv1_2	(1 << 3)
+#define RESSL_PROTOCOL_TLSv1 \
+	(RESSL_PROTOCOL_TLSv1_0|RESSL_PROTOCOL_TLSv1_1|RESSL_PROTOCOL_TLSv1_2)
+#define RESSL_PROTOCOLS_DEFAULT \
+	(RESSL_PROTOCOL_SSLv3|RESSL_PROTOCOL_TLSv1)
 
 #define RESSL_READ_AGAIN	-2
 #define RESSL_WRITE_AGAIN	-3
@@ -43,6 +52,8 @@ int ressl_config_set_key_file(struct ressl_config *config,
     const char *key_file);
 int ressl_config_set_key_mem(struct ressl_config *config, const uint8_t *key,
     size_t len);
+void ressl_config_set_protocols(struct ressl_config *config,
+    uint32_t protocols);
 void ressl_config_set_verify_depth(struct ressl_config *config,
     int verify_depth);
 

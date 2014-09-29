@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.c,v 1.14 2014/09/28 14:45:48 reyk Exp $ */
+/* $OpenBSD: ressl.c,v 1.15 2014/09/29 15:11:29 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -166,6 +166,23 @@ err:
 	BIO_free(bio);
 
 	return (1);
+}
+
+int
+ressl_configure_ssl(struct ressl *ctx)
+{
+	SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_SSLv2);
+
+	if ((ctx->config->protocols & RESSL_PROTOCOL_SSLv3) == 0)
+		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_SSLv3);
+	if ((ctx->config->protocols & RESSL_PROTOCOL_TLSv1_0) == 0)
+		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1);
+	if ((ctx->config->protocols & RESSL_PROTOCOL_TLSv1_1) == 0)
+		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1_1);
+	if ((ctx->config->protocols & RESSL_PROTOCOL_TLSv1_2) == 0)
+		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1_2);
+
+	return (0);
 }
 
 void

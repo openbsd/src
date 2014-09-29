@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_internal.h,v 1.10 2014/08/27 10:46:53 reyk Exp $ */
+/* $OpenBSD: ressl_internal.h,v 1.11 2014/09/29 15:11:29 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -36,6 +36,7 @@ struct ressl_config {
 	const char *key_file;
 	char *key_mem;
 	size_t key_len;
+	uint32_t protocols;
 	int verify;
 	int verify_depth;
 };
@@ -63,6 +64,7 @@ struct ressl *ressl_server_conn(struct ressl *ctx);
 int ressl_check_hostname(X509 *cert, const char *host);
 int ressl_configure_keypair(struct ressl *ctx);
 int ressl_configure_server(struct ressl *ctx);
+int ressl_configure_ssl(struct ressl *ctx);
 int ressl_host_port(const char *hostport, char **host, char **port);
 int ressl_set_error(struct ressl *ctx, char *fmt, ...);
 

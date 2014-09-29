@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_config.c,v 1.11 2014/09/29 09:30:31 jsing Exp $ */
+/* $OpenBSD: ressl_config.c,v 1.12 2014/09/29 15:11:29 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -71,11 +71,13 @@ ressl_config_new(void)
 		ressl_config_free(config);
 		return (NULL);
 	}
-	ressl_config_verify(config);
+	ressl_config_set_protocols(config, RESSL_PROTOCOLS_DEFAULT);
 	ressl_config_set_verify_depth(config, 6);
 	/* ? use function ? */
 	config->ecdhcurve = NID_X9_62_prime256v1;
 	
+	ressl_config_verify(config);
+
 	return (config);
 }
 
@@ -161,6 +163,12 @@ ressl_config_set_key_mem(struct ressl_config *config, const uint8_t *key,
 	if (config->key_mem)
 		explicit_bzero(config->key_mem, config->key_len);
 	return set_mem(&config->key_mem, &config->key_len, key, len);
+}
+
+void
+ressl_config_set_protocols(struct ressl_config *config, uint32_t protocols)
+{
+	config->protocols = protocols;
 }
 
 void

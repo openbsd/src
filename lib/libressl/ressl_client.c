@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_client.c,v 1.3 2014/08/05 12:46:16 jsing Exp $ */
+/* $OpenBSD: ressl_client.c,v 1.4 2014/09/29 15:11:29 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -134,11 +134,14 @@ ressl_connect_socket(struct ressl *ctx, int socket, const char *hostname)
 
 	ctx->socket = socket;
 
-	/* XXX - add a configuration option to control versions. */
 	if ((ctx->ssl_ctx = SSL_CTX_new(SSLv23_client_method())) == NULL) {
 		ressl_set_error(ctx, "ssl context failure");
 		goto err;
 	}
+
+	if (ressl_configure_ssl(ctx) != 0)
+		goto err;
+
 	if (ctx->config->verify) {
 		if (hostname == NULL) {
 			ressl_set_error(ctx, "server name not specified");
