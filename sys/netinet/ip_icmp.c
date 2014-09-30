@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.124 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.125 2014/09/30 08:26:15 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -686,9 +686,11 @@ int
 icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 {
 	struct ip *ip = mtod(m, struct ip *);
-	struct in_addr t;
 	struct mbuf *opts = 0;
+	struct sockaddr_in sin;
+	struct rtentry *rt;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
+	u_int rtableid;
 
 	if (!in_canforward(ip->ip_src) &&
 	    ((ip->ip_src.s_addr & IN_CLASSA_NET) !=
@@ -700,58 +702,53 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
-	t = ip->ip_dst;
-	ip->ip_dst = ip->ip_src;
+	rtableid = m->m_pkthdr.ph_rtableid;
+
 	/*
 	 * If the incoming packet was addressed directly to us,
 	 * use dst as the src for the reply.  For broadcast, use
 	 * the address which corresponds to the incoming interface.
 	 */
 	if (ia == NULL) {
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-			if (ia->ia_ifp->if_rdomain !=
-			    rtable_l2(m->m_pkthdr.ph_rtableid))
-				continue;
-			if (t.s_addr == ia->ia_addr.sin_addr.s_addr)
-				break;
-			if ((ia->ia_ifp->if_flags & IFF_BROADCAST) &&
-			    ia->ia_broadaddr.sin_addr.s_addr != 0 &&
-			    t.s_addr == ia->ia_broadaddr.sin_addr.s_addr)
-				break;
+		memset(&sin, 0, sizeof(sin));
+		sin.sin_len = sizeof(sin);
+		sin.sin_family = AF_INET;
+		sin.sin_addr = ip->ip_dst;
+
+		rt = rtalloc1(sintosa(&sin), 0, rtableid);
+		if (rt != NULL) {
+			if (rt->rt_flags & (RTF_LOCAL|RTF_BROADCAST))
+				ia = ifatoia(rt->rt_ifa);
+			rtfree(rt);
 		}
 	}
+
 	/*
 	 * The following happens if the packet was not addressed to us.
 	 * Use the new source address and do a route lookup. If it fails
 	 * drop the packet as there is no path to the host.
 	 */
 	if (ia == NULL) {
-		struct sockaddr_in *dst;
-		struct route ro;
-
-		memset(&ro, 0, sizeof(ro));
-		ro.ro_tableid = m->m_pkthdr.ph_rtableid;
-		dst = satosin(&ro.ro_dst);
-		dst->sin_family = AF_INET;
-		dst->sin_len = sizeof(*dst);
-		dst->sin_addr = ip->ip_src;
+		memset(&sin, 0, sizeof(sin));
+		sin.sin_len = sizeof(sin);
+		sin.sin_family = AF_INET;
+		sin.sin_addr = ip->ip_src;
 
 		/* keep packet in the original virtual instance */
-		ro.ro_rt = rtalloc1(&ro.ro_dst, RT_REPORT,
-		     m->m_pkthdr.ph_rtableid);
-		if (ro.ro_rt == 0) {
+		rt = rtalloc1(sintosa(&sin), RT_REPORT, rtableid);
+		if (rt == NULL) {
 			ipstat.ips_noroute++;
 			m_freem(m);
 			return (EHOSTUNREACH);
 		}
 
-		ia = ifatoia(ro.ro_rt->rt_ifa);
-		ro.ro_rt->rt_use++;
-		RTFREE(ro.ro_rt);
+		ia = ifatoia(rt->rt_ifa);
+		rt->rt_use++;
+		rtfree(rt);
 	}
 
-	t = ia->ia_addr.sin_addr;
-	ip->ip_src = t;
+	ip->ip_dst = ip->ip_src;
+	ip->ip_src = ia->ia_addr.sin_addr;
 	ip->ip_ttl = MAXTTL;
 
 	if (optlen > 0) {
