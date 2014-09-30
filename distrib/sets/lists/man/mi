@@ -2537,6 +2537,7 @@
 ./usr/share/man/man8/macppc/pdisk.8
 ./usr/share/man/man8/macppc/zzz.8
 ./usr/share/man/man8/mail.local.8
+./usr/share/man/man8/mailq.8
 ./usr/share/man/man8/mailwrapper.8
 ./usr/share/man/man8/makedbm.8
 ./usr/share/man/man8/makekey.8
