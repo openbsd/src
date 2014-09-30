@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.13 2014/01/30 18:16:41 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.14 2014/09/30 01:34:34 tobiasu Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2003/05/21 18:04:44 thorpej Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
  * Note that MAXTSIZ can't be larger than 32M, otherwise the compiler
  * would have to be changed to not generate "bl" instructions.
  */
-#define	MAXTSIZ		(16*1024*1024)		/* max text size */
+#define	MAXTSIZ		(32*1024*1024)		/* max text size */
 #ifndef	DFLDSIZ
 #define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
 #endif
