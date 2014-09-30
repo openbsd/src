@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.236 2014/09/27 12:26:16 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.237 2014/09/30 08:21:21 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -643,7 +643,8 @@ bad:
 int
 in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
 {
-	struct in_ifaddr	*ia;
+	struct in_ifaddr	*ia = NULL;
+	struct rtentry		*rt;
 	struct sockaddr_in	 sin;
 #if NPF > 0
 	struct pf_state_key	*key;
@@ -666,7 +667,12 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr = ina;
-	ia = ifatoia(ifa_ifwithaddr(sintosa(&sin), m->m_pkthdr.ph_rtableid));
+	rt = rtalloc1(sintosa(&sin), 0, m->m_pkthdr.ph_rtableid);
+	if (rt != NULL) {
+		if (rt->rt_flags & (RTF_LOCAL|RTF_BROADCAST))
+			ia = ifatoia(rt->rt_ifa);
+		rtfree(rt);
+	}
 
 	if (ia == NULL) {
 		struct ifaddr *ifa;
