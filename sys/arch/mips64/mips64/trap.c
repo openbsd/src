@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.100 2014/08/18 17:23:06 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.101 2014/09/30 06:51:58 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,6 +54,7 @@
 #include <sys/syscall_mi.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/atomic.h>
 #ifdef PTRACE
 #include <sys/ptrace.h>
 #endif
@@ -150,7 +151,7 @@ ast()
 
 	p->p_md.md_astpending = 0;
 
-	atomic_add_int(&uvmexp.softs, 1);
+	atomic_inc_int(&uvmexp.softs);
 	mi_ast(p, ci->ci_want_resched);
 	userret(p);
 }
@@ -179,7 +180,7 @@ trap(struct trap_frame *trapframe)
 #else
 	if (type != T_SYSCALL)
 #endif
-		atomic_add_int(&uvmexp.traps, 1);
+		atomic_inc_int(&uvmexp.traps);
 	if (USERMODE(trapframe->sr)) {
 		type |= T_USER;
 		refreshcreds(p);
@@ -475,7 +476,7 @@ fault_common_no_miss:
 		} args;
 		register_t rval[2];
 
-		atomic_add_int(&uvmexp.syscalls, 1);
+		atomic_inc_int(&uvmexp.syscalls);
 
 		/* compute next PC after syscall instruction */
 		tpc = trapframe->pc; /* Remember if restart */

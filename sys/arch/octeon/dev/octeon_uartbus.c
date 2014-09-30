@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_uartbus.c,v 1.4 2014/05/10 22:25:16 jasper Exp $ */
+/*	$OpenBSD: octeon_uartbus.c,v 1.5 2014/09/30 06:51:58 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -37,10 +37,10 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/atomic.h>
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
-#include <machine/atomic.h>
 #include <machine/octeonreg.h>
 
 #include <octeon/dev/uartbusvar.h>

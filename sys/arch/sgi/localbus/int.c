@@ -1,4 +1,4 @@
-/*	$OpenBSD: int.c,v 1.10 2014/05/19 21:18:42 miod Exp $	*/
+/*	$OpenBSD: int.c,v 1.11 2014/09/30 06:51:58 jmatthew Exp $	*/
 /*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/atomic.h>
 
 #include <mips64/archtype.h>
 
@@ -297,8 +298,8 @@ int2_mappable_intr(void *arg)
 				ret = (*ih->ih.ih_fun)(ih->ih.ih_arg);
 				if (ret != 0) {
 					rc = 1;
-					atomic_add_uint64(&ih->ih.ih_count.ec_count,
-					    1);
+					atomic_inc_long((unsigned long *)
+					    &ih->ih.ih_count.ec_count);
 				}
 				if (ret == 1)
 					break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.63 2014/07/13 20:29:05 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.64 2014/09/30 06:51:58 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -28,6 +28,7 @@
 #include <sys/malloc.h>
 #include <sys/reboot.h>
 #include <sys/tty.h>
+#include <sys/atomic.h>
 
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
@@ -38,7 +39,6 @@
 #include <mips64/mips_cpu.h>
 #include <machine/memconf.h>
 #include <machine/mnode.h>
-#include <machine/atomic.h>
 
 #include <uvm/uvm_extern.h>
 

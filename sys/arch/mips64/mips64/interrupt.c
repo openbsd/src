@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.63 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.64 2014/09/30 06:51:58 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -31,6 +31,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -118,14 +119,14 @@ interrupt(struct trap_frame *trapframe)
 #ifdef DEBUG_INTERRUPT
 	trapdebug_enter(ci, trapframe, T_INT);
 #endif
-	atomic_add_int(&uvmexp.intrs, 1);
+	atomic_inc_int(&uvmexp.intrs);
 
 	/* Mask out interrupts from cause that are unmasked */
 	pending = trapframe->cause & CR_INT_MASK & trapframe->sr;
 
 	if (pending & SOFT_INT_MASK_0) {
 		clearsoftintr0();
-		atomic_add_uint64(&soft_count.ec_count, 1);
+		atomic_inc_long((unsigned long *)&soft_count.ec_count);
 	}
 
 #ifdef RM7K_PERFCNTR

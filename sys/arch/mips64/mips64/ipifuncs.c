@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.8 2011/05/10 07:58:47 syuu Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.9 2014/09/30 06:51:58 jmatthew Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -35,12 +35,12 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/atomic.h>
 
 static int	mips64_ipi_intr(void *);
 static void	mips64_ipi_nop(void);

@@ -35,11 +35,11 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/atomic.h>
 
 #include <mips64/mips_cpu.h>
 
 #include <machine/autoconf.h>
-#include <machine/atomic.h>
 #include <machine/intr.h>
 #include <machine/octeonreg.h>
 
@@ -284,7 +284,8 @@ octeon_iointr(uint32_t hwpend, struct trap_frame *frame)
 #endif
 					if ((*ih->ih_fun)(ih->ih_arg) != 0) {
 						rc = 1;
-						atomic_add_uint64(&ih->ih_count.ec_count, 1);
+						atomic_inc_long((unsigned long *)
+						    &ih->ih_count.ec_count);
 					}
 #ifdef MULTIPROCESSOR
 					if (ih->ih_level < IPL_IPI) {

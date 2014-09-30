@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr_template.c,v 1.13 2012/09/29 19:24:31 miod Exp $	*/
+/*	$OpenBSD: intr_template.c,v 1.14 2014/09/30 06:51:58 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -170,7 +170,8 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 					ret = (*ih->ih_fun)(ih->ih_arg);
 					if (ret != 0) {
 						rc = 1;
-						atomic_add_uint64(&ih->ih_count.ec_count, 1);
+						atomic_inc_long((unsigned long *)
+						    &ih->ih_count.ec_count);
 					}
 #ifdef MULTIPROCESSOR
 					if (ih->ih_level < IPL_IPI) {

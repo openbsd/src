@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.8 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.9 2014/09/30 06:51:58 jmatthew Exp $	*/
 
 /* Public Domain */
 
@@ -55,33 +55,158 @@ atomic_clearbits_int(volatile unsigned int *uip, unsigned int v)
 		"r"(uip), "r"(~v) : "memory");
 }
 
-static __inline void
-atomic_add_int(volatile unsigned int *uip, unsigned int v)
+
+static inline unsigned int
+_atomic_cas_uint(volatile unsigned int *p, unsigned int o, unsigned int n)
 {
-	unsigned int tmp;
+	unsigned int rv, wv;
 
 	__asm__ volatile (
-	"1:	ll	%0,	0(%1)\n"
-	"	addu	%0,	%2,	%0\n"
-	"	sc	%0,	0(%1)\n"
-	"	beqz	%0,	1b\n"
-	"	 nop\n" :
-		"=&r"(tmp) :
-		"r"(uip), "r"(v) : "memory");
+	"1:	ll	%0,	%1\n"
+	"	bne	%0,	%4,	2f\n"
+	"	move	%2,	%3\n"
+	"	sc	%2,	%1\n"
+	"	beqz	%2,	1b\n"
+	"2:	nop\n"
+	    : "=&r" (rv), "+m" (*p), "=&r" (wv)
+	    : "r" (n), "Ir" (o));
+
+	return (rv);
 }
-static __inline void
-atomic_add_uint64(volatile uint64_t *uip, uint64_t v)
+#define atomic_cas_uint(_p, _o, _n) _atomic_cas_uint((_p), (_o), (_n))
+
+static inline unsigned long
+_atomic_cas_ulong(volatile unsigned long *p, unsigned long o, unsigned long n)
 {
-	uint64_t tmp;
+	unsigned long rv, wv;
 
 	__asm__ volatile (
-	"1:	lld	%0,	0(%1)\n"
-	"	daddu	%0,	%2,	%0\n"
-	"	scd	%0,	0(%1)\n"
-	"	beqz	%0,	1b\n"
-	"	 nop\n" :
-		"=&r"(tmp) :
-		"r"(uip), "r"(v) : "memory");
+	"1:	lld	%0,	%1\n"
+	"	bne	%0,	%4,	2f\n"
+	"	move	%2,	%3\n"
+	"	scd	%2,	%1\n"
+	"	beqz	%2,	1b\n"
+	"2:	nop\n"
+	    : "=&r" (rv), "+m" (*p), "=&r" (wv)
+	    : "r" (n), "Ir" (o));
+
+	return (rv);
 }
+#define atomic_cas_ulong(_p, _o, _n) _atomic_cas_ulong((_p), (_o), (_n))
+
+static inline void *
+_atomic_cas_ptr(volatile void **p, void *o, void *n)
+{
+	void *rv, *wv;
+
+	__asm__ volatile (
+	"1:	lld	%0,	%1\n"
+	"	bne	%0,	%4,	2f\n"
+	"	move	%2,	%3\n"
+	"	scd	%2,	%1\n"
+	"	beqz	%2,	1b\n"
+	"2:	nop\n"
+	    : "=&r" (rv), "+m" (*p), "=&r" (wv)
+	    : "r" (n), "Ir" (o));
+
+	return (rv);
+}
+#define atomic_cas_ptr(_p, _o, _n) _atomic_cas_ptr((_p), (_o), (_n))
+
+
+
+static inline unsigned int
+_atomic_swap_uint(volatile unsigned int *uip, unsigned int v)
+{
+	unsigned int o, t;
+
+	__asm__ volatile (
+	"1:	ll	%0,	%1\n"
+	"	move	%2,	%3\n"
+	"	sc	%2,	%1\n"
+	"	beqz	%2,	1b\n"
+	"	nop\n" 
+	    : "=&r" (o), "+m" (*uip), "=&r" (t)
+	    : "r" (v));
+
+	return (o);
+}
+#define atomic_swap_uint(_p, _v) _atomic_swap_uint((_p), (_v))
+
+static inline unsigned long
+_atomic_swap_ulong(volatile unsigned long *uip, unsigned long v)
+{
+	unsigned long o, t;
+
+	__asm__ volatile (
+	"1:	lld	%0,	%1\n"
+	"	move	%2,	%3\n"
+	"	scd	%2,	%1\n"
+	"	beqz	%2,	1b\n"
+	"	nop\n" 
+	    : "=&r" (o), "+m" (*uip), "=&r" (t)
+	    : "r" (v));
+
+	return (o);
+}
+#define atomic_swap_ulong(_p, _v) _atomic_swap_ulong((_p), (_v))
+
+
+static inline void *
+_atomic_swap_ptr(volatile void **uip, void *n)
+{
+	void *o, *t;
+
+	__asm__ volatile (
+	"1:	lld	%0,	%1\n"
+	"	move	%2,	%3\n"
+	"	scd	%2,	%1\n"
+	"	beqz	%2,	1b\n"
+	"	nop\n"
+	    : "=&r" (o), "+m" (*uip), "=&r" (t)
+	    : "r" (n));
+
+	return (o);
+}
+#define atomic_swap_ptr(_p, _n) _atomic_swap_ptr((_p), (_n))
+
+static inline unsigned int
+_atomic_add_int_nv(volatile unsigned int *uip, unsigned int v)
+{
+	unsigned int rv, nv;
+
+	__asm__ volatile (
+	"1:	ll	%0,	%1\n"
+	"	addu	%2,	%0,	%3\n"
+	"	sc	%2,	%1\n"
+	"	beqz	%2,	1b\n"
+	"	nop\n"
+	    : "=&r" (rv), "+m" (*uip), "=&r" (nv)
+	    : "Ir" (v));
+
+	return (rv + v);
+}
+#define atomic_add_int_nv(_uip, _v) _atomic_add_int_nv((_uip), (_v))
+#define atomic_sub_int_nv(_uip, _v) _atomic_add_int_nv((_uip), 0 - (_v))
+
+static inline unsigned long
+_atomic_add_long_nv(volatile unsigned long *uip, unsigned long v)
+{
+	unsigned long rv, nv;
+
+	__asm__ volatile (
+	"1:	lld	%0,	%1\n"
+	"	daddu	%2,	%0,	%3\n"
+	"	scd	%2,	%1\n"
+	"	beqz	%2,	1b\n"
+	"	nop\n"
+	    : "=&r" (rv), "+m" (*uip), "=&r" (nv)
+	    : "Ir" (v));
+
+	return (rv + v);
+}
+#define atomic_add_long_nv(_uip, _v) _atomic_add_long_nv((_uip), (_v))
+#define atomic_sub_long_nv(_uip, _v) _atomic_add_long_nv((_uip), 0 - (_v))
+
 #endif /* defined(_KERNEL) */
 #endif /* _MIPS64_ATOMIC_H_ */

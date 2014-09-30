@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.7 2014/07/09 23:03:22 pirofti Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.8 2014/09/30 06:51:58 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -38,9 +38,9 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/atomic.h>
 
 #include <machine/autoconf.h>
-#include <machine/atomic.h>
 #include <machine/intr.h>
 #include <machine/octeonvar.h>
 #include <machine/octeonreg.h>

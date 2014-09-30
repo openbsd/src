@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.62 2014/05/19 21:18:42 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.63 2014/09/30 06:51:58 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -38,13 +38,13 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/atomic.h>
 
 #include <mips64/archtype.h>
 #include <mips64/mips_cpu.h>
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
-#include <machine/atomic.h>
 
 #include <sgi/localbus/crimebus.h>
 #include <sgi/localbus/macebus.h>
