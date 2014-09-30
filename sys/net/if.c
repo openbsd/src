@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.300 2014/08/25 14:00:34 florian Exp $	*/
+/*	$OpenBSD: if.c,v 1.301 2014/09/30 08:27:57 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -837,28 +837,42 @@ if_congestion_clear(void *arg)
 	free(to, M_TEMP, 0);
 }
 
-/*
- * Locate an interface based on a complete address.
- */
-/*ARGSUSED*/
-struct ifaddr *
-ifa_ifwithaddr(struct sockaddr *addr, u_int rtableid)
-{
-	struct ifaddr_item *ifai, key;
-
-	bzero(&key, sizeof(key));
-	key.ifai_addr = addr;
-	key.ifai_rdomain = rtable_l2(rtableid);
-
-	ifai = RB_FIND(ifaddr_items, &ifaddr_items, &key);
-	if (ifai)
-		return (ifai->ifai_ifa);
-	return (NULL);
-}
-
 #define	equal(a1, a2)	\
 	(bcmp((caddr_t)(a1), (caddr_t)(a2),	\
 	((struct sockaddr *)(a1))->sa_len) == 0)
+
+/*
+ * Locate an interface based on a complete address.
+ */
+struct ifaddr *
+ifa_ifwithaddr(struct sockaddr *addr, u_int rtableid)
+{
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
+	u_int rdomain;
+
+	rdomain = rtable_l2(rtableid);
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		if (ifp->if_rdomain != rdomain)
+			continue;
+
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+			if (ifa->ifa_addr->sa_family != addr->sa_family)
+				continue;
+
+			if (equal(addr, ifa->ifa_addr))
+				return (ifa);
+
+			/* IPv6 doesn't have broadcast */
+			if ((ifp->if_flags & IFF_BROADCAST) &&
+			    ifa->ifa_broadaddr &&
+			    ifa->ifa_broadaddr->sa_len != 0 &&
+			    equal(ifa->ifa_broadaddr, addr))
+				return (ifa);
+		}
+	}
+	return (NULL);
+}
 
 /*
  * Locate the point to point interface with a given destination address.
