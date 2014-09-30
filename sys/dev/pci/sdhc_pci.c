@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.16 2014/09/26 13:00:39 deraadt Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.17 2014/09/30 18:09:23 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -128,7 +128,8 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Some RICOH controllers need to be bumped into the right mode. */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RICOH &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_R5U823)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_R5U822 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_R5U823))
 		sdhc_ricohfix(sc);
 
 	if (pci_intr_map(pa, &ih)) {
@@ -196,7 +197,8 @@ sdhc_pci_activate(struct device *self, int act)
 	case DVACT_RESUME:
 		/* Some RICOH controllers need to be bumped into the right mode. */
 		if (PCI_VENDOR(sc->sc_id) == PCI_VENDOR_RICOH &&
-		    PCI_PRODUCT(sc->sc_id) == PCI_PRODUCT_RICOH_R5U823)
+		    (PCI_PRODUCT(sc->sc_id) == PCI_PRODUCT_RICOH_R5U822 ||
+		    PCI_PRODUCT(sc->sc_id) == PCI_PRODUCT_RICOH_R5U823))
 			sdhc_ricohfix(sc);
 		rv = sdhc_activate(self, act);
 		break;
