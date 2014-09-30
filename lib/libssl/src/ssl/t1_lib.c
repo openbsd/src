@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.58 2014/09/27 11:01:06 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.59 2014/09/30 15:40:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,11 +110,13 @@
  */
 
 #include <stdio.h>
-#include <openssl/objects.h>
+
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/objects.h>
 #include <openssl/ocsp.h>
 #include <openssl/rand.h>
+
 #include "ssl_locl.h"
 
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
@@ -404,6 +406,134 @@ tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
 			return (1);
 	}
 	return (0);
+}
+
+/* For an EC key set TLS ID and required compression based on parameters. */
+static int
+tls1_set_ec_id(unsigned char *curve_id, unsigned char *comp_id, EC_KEY *ec)
+{
+	const EC_GROUP *grp;
+	const EC_METHOD *meth;
+	int is_prime = 0;
+	int nid, id;
+
+	if (ec == NULL)
+		return (0);
+
+	if (EC_KEY_get0_public_key(ec) == NULL)
+		return (0);
+
+	/* Determine if it is a prime field. */
+	if ((grp = EC_KEY_get0_group(ec)) == NULL)
+		return (0);
+	if ((meth = EC_GROUP_method_of(grp)) == NULL)
+		return (0);
+	if (EC_METHOD_get_field_type(meth) == NID_X9_62_prime_field)
+		is_prime = 1;
+
+	/* Determine curve ID. */
+	nid = EC_GROUP_get_curve_name(grp);
+	id = tls1_ec_nid2curve_id(nid);
+
+	/* If we have an ID set it, otherwise set arbitrary explicit curve. */
+	if (id != 0) {
+		curve_id[0] = 0;
+		curve_id[1] = (unsigned char)id;
+	} else {
+		curve_id[0] = 0xff;
+		curve_id[1] = is_prime ? 0x01 : 0x02;
+	}
+
+	/* Specify the compression identifier. */
+	if (comp_id != NULL) {
+		if (EC_KEY_get_conv_form(ec) == POINT_CONVERSION_COMPRESSED) {
+			*comp_id = is_prime ?
+			    TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime :
+			    TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
+		} else {
+			*comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
+		}
+	}
+	return (1);
+}
+
+/* Check that an EC key is compatible with extensions. */
+static int
+tls1_check_ec_key(SSL *s, unsigned char *curve_id, unsigned char *comp_id)
+{
+	const unsigned char *p;
+	size_t plen, i;
+
+	/*
+	 * Check point formats extension if present, otherwise everything
+	 * is supported (see RFC4492).
+	 */
+	if (comp_id != NULL && s->session->tlsext_ecpointformatlist != NULL) {
+		p = s->session->tlsext_ecpointformatlist;
+		plen = s->session->tlsext_ecpointformatlist_length;
+		for (i = 0; i < plen; i++, p++) {
+			if (*comp_id == *p)
+				break;
+		}
+		if (i == plen)
+			return (0);
+	}
+
+	/*
+	 * Check curve list if present, otherwise everything is supported.
+	 */
+	if (s->session->tlsext_ellipticcurvelist != NULL) {
+		p = s->session->tlsext_ellipticcurvelist;
+		plen = s->session->tlsext_ellipticcurvelist_length;
+		for (i = 0; i < plen; i += 2, p += 2) {
+			if (p[0] == curve_id[0] && p[1] == curve_id[1])
+				break;
+		}
+		if (i == plen)
+			return (0);
+	}
+
+	return (1);
+}
+
+/* Check EC server key is compatible with client extensions. */
+int
+tls1_check_ec_server_key(SSL *s)
+{
+	CERT_PKEY *cpk = s->cert->pkeys + SSL_PKEY_ECC;
+	unsigned char comp_id, curve_id[2];
+	EVP_PKEY *pkey;
+	int rv;
+
+	if (cpk->x509 == NULL || cpk->privatekey == NULL)
+		return (0);
+	if ((pkey = X509_get_pubkey(cpk->x509)) == NULL)
+		return (0);
+	rv = tls1_set_ec_id(curve_id, &comp_id, pkey->pkey.ec);
+	EVP_PKEY_free(pkey);
+	if (rv != 1)
+		return (0);
+
+	return tls1_check_ec_key(s, curve_id, &comp_id);
+}
+
+/* Check EC temporary key is compatible with client extensions. */
+int
+tls1_check_ec_tmp_key(SSL *s)
+{
+	EC_KEY *ec = s->cert->ecdh_tmp;
+	unsigned char curve_id[2];
+
+	if (ec == NULL) {
+		if (s->cert->ecdh_tmp_cb != NULL)
+			return (1);
+		else
+			return (0);
+	}
+	if (tls1_set_ec_id(curve_id, NULL, ec) != 1)
+		return (0);
+
+	return tls1_check_ec_key(s, curve_id, NULL);
 }
 
 /*
@@ -2132,4 +2262,3 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 		c->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
 	return 1;
 }
-
