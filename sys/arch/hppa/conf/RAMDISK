@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.102 2014/07/12 21:56:56 tedu Exp $
+#	$OpenBSD: RAMDISK,v 1.103 2014/09/30 22:14:23 brad Exp $
 #
 # Diskless kernel config
 #
@@ -228,6 +228,10 @@ mpi*	at pci?			# LSI Logic Fusion MPT Message Passing Interface
 #option	BHADEBUG
 #bha*	at eisa?
 #bha*	at pci?
+qlw*	at pci?			# QLogic ISP SCSI
+qla*	at pci?			# QLogic ISP 2[123]xx FibreChannel
+option QLE_NOFIRMWARE
+qle*	at pci?			# QLogic ISP 2[45]xx FibreChannel
 
 siop*	at mainbus? irq 3	# NCR 53C720 (Fast/Wide HVD)
 siop*	at phantomas? irq 3
