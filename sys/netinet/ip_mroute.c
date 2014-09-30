@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.70 2014/08/14 09:01:47 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.71 2014/09/30 12:54:22 jsg Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/sysctl.h>
 #include <sys/timeout.h>
 
 #include <net/if.h>
