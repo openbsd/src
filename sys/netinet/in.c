@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.103 2014/09/03 08:59:06 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.104 2014/10/01 16:35:45 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -674,10 +674,10 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 			goto out;
 	}
 
-	if ((ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) == 0)
-		error = in_addprefix(ia);
-	else
+	if (ISSET(ifp->if_flags, IFF_POINTOPOINT))
 		error = in_addhost(ia);
+	else if (!ISSET(ifp->if_flags, IFF_LOOPBACK))
+		error = in_addprefix(ia);
 
 	/*
 	 * If the interface supports multicast, join the "all hosts"
