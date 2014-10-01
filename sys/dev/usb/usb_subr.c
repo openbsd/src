@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.108 2014/08/10 12:58:49 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.109 2014/10/01 08:29:01 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1052,17 +1052,6 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 
 	up->device = dev;
 
-	if (up->parent && speed > up->parent->speed) {
-		DPRINTF(("%s: maximum speed of attached device, "
-		    "%d, is higher than speed of parent hub, %d\n",
-		    __func__, speed, up->parent->speed));
-		/*
-		 * Reduce the speed, otherwise we won't setup the
-		 * proper transfer methods.
-		 */
-		speed = up->parent->speed;
-	}
-	
 	/* Locate port on upstream high speed hub */
 	for (adev = dev, hub = up->parent;
 	    hub != NULL && hub->speed != USB_SPEED_HIGH;

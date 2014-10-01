@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.73 2014/08/10 13:32:14 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.74 2014/10/01 08:29:01 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -470,6 +470,13 @@ uhub_explore(struct usbd_device *dev)
 			else
 				speed = sc->sc_hub->speed;
 		}
+
+		/*
+		 * Reduce the speed, otherwise we won't setup the proper
+		 * transfer methods.
+		 */
+		if (speed > sc->sc_hub->speed)
+			speed = sc->sc_hub->speed;
 
 		/* Get device info and set its address. */
 		err = usbd_new_device(&sc->sc_dev, dev->bus,
