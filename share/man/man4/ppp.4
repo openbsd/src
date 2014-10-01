@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ppp.4,v 1.14 2013/06/02 20:23:33 tedu Exp $
+.\"	$OpenBSD: ppp.4,v 1.15 2014/10/01 10:05:17 mpi Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     From:	@(#)lo.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: October 1 2014 $
 .Dt PPP 4
 .Os
 .Sh NAME
@@ -52,13 +52,6 @@ command or by setting up a
 .Xr hostname.if 5
 configuration file for
 .Xr netstart 8 .
-.Pp
-The
-.Nm
-interface can use various types of compression and has many advantages
-over the SLIP protocol used by the
-.Xr sl 4
-interface.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It ppp0: afX not supported
@@ -68,7 +61,6 @@ family; the packet was dropped.
 .El
 .Sh SEE ALSO
 .Xr inet 4 ,
-.Xr sl 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr netstart 8 ,
