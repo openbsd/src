@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.183 2014/09/27 12:26:16 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.184 2014/10/01 08:38:29 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1227,8 +1227,7 @@ rt_ifa_addloop(struct ifaddr *ifa)
 
 	/* If there is no loopback entry, allocate one. */
 	rt = rtalloc1(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
-	if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0 ||
-	    (rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
+	if (rt == NULL || (rt->rt_flags & (RTF_HOST|RTF_LLINFO|RTF_LOCAL)) == 0)
 		rt_ifa_add(ifa, RTF_UP| RTF_HOST | RTF_LLINFO | RTF_LOCAL,
 		    ifa->ifa_addr);
 	if (rt)
@@ -1264,7 +1263,7 @@ rt_ifa_delloop(struct ifaddr *ifa)
 	}
 
 	/*
-	 * Before deleting, check if a corresponding loopbacked host
+	 * Before deleting, check if a corresponding local host
 	 * route surely exists.  With this check, we can avoid to
 	 * delete an interface direct route whose destination is same
 	 * as the address being removed.  This can happen when removing
@@ -1272,8 +1271,7 @@ rt_ifa_delloop(struct ifaddr *ifa)
 	 * to a shared medium.
 	 */
 	rt = rtalloc1(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
-	if (rt != NULL && (rt->rt_flags & RTF_HOST) != 0 &&
-	    (rt->rt_ifp->if_flags & IFF_LOOPBACK) != 0)
+	if (rt != NULL && (rt->rt_flags & (RTF_HOST|RTF_LLINFO|RTF_LOCAL)) != 0)
 		rt_ifa_del(ifa,  RTF_HOST | RTF_LLINFO | RTF_LOCAL,
 		    ifa->ifa_addr);
 	if (rt)
