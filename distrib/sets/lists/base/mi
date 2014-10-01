@@ -213,7 +213,6 @@
 ./etc/signify/openbsd-57-pkg.pub
 ./etc/skel
 ./etc/skel/.ssh
-./etc/sliphome
 ./etc/ssh
 ./etc/ssl
 ./etc/ssl/cert.pem
@@ -290,7 +289,6 @@
 ./sbin/scan_ffs
 ./sbin/scsi
 ./sbin/shutdown
-./sbin/slattach
 ./sbin/swapctl
 ./sbin/swapon
 ./sbin/sysctl
@@ -2862,9 +2860,7 @@
 ./usr/sbin/sasyncd
 ./usr/sbin/sendmail
 ./usr/sbin/sensorsd
-./usr/sbin/sliplogin
 ./usr/sbin/slowcgi
-./usr/sbin/slstats
 ./usr/sbin/smtpctl
 ./usr/sbin/smtpd
 ./usr/sbin/snkadm

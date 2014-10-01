@@ -991,7 +991,6 @@
 ./usr/include/net/if_ppp.h
 ./usr/include/net/if_pppoe.h
 ./usr/include/net/if_pppvar.h
-./usr/include/net/if_slvar.h
 ./usr/include/net/if_sppp.h
 ./usr/include/net/if_trunk.h
 ./usr/include/net/if_tun.h

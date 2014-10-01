@@ -1163,7 +1163,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_ppp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_pppoe.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_pppvar.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_slvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_sppp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_trunk.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_tun.ph
