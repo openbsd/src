@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.211 2014/08/18 14:35:37 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.212 2014/10/01 10:08:29 mpi Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -103,7 +103,6 @@ pseudo-device	mpe		# MPLS PE interface
 pseudo-device	ppp		# PPP
 pseudo-device	pppoe		# PPP over Ethernet (RFC 2516)
 pseudo-device	pppx		# PPP multiplexer
-pseudo-device	sl		# CSLIP
 pseudo-device	sppp	1	# Sync PPP/HDLC
 pseudo-device	trunk		# Trunking support
 pseudo-device	tun		# network tunneling over tty

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_conf.c,v 1.19 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: tty_conf.c,v 1.20 2014/10/01 10:08:30 mpi Exp $	*/
 /*	$NetBSD: tty_conf.c,v 1.18 1996/05/19 17:17:55 jonathan Exp $	*/
 
 /*-
@@ -51,16 +51,6 @@
 
 int	nullioctl(struct tty *, u_long, caddr_t, int, struct proc *);
 
-#include "sl.h"
-#if NSL > 0
-int	slopen(dev_t dev, struct tty *tp, struct proc *);
-int	slclose(struct tty *tp, int flags, struct proc *);
-int	sltioctl(struct tty *tp, u_long cmd, caddr_t data,
-			int flag, struct proc *p);
-int	slinput(int c, struct tty *tp);
-int	slstart(struct tty *tp);
-#endif
-
 #include "ppp.h"
 #if NPPP > 0
 int	pppopen(dev_t dev, struct tty *tp, struct proc *);
@@ -110,13 +100,9 @@ struct	linesw linesw[] =
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },
 
-#if NSL > 0
-	{ slopen, slclose, ttyerrio, ttyerrio, sltioctl,
-	  slinput, slstart, nullmodem },		/* 4- SLIPDISC */
-#else
+	/* 4- SLIPDISC (defunct) */
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },
-#endif
 
 #if NPPP > 0
 	{ pppopen, pppclose, pppread, pppwrite, ppptioctl,
