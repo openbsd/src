@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.10 2014/04/21 11:58:48 guenther Exp $	*/
+/*	$OpenBSD: pte.h,v 1.11 2014/10/01 19:41:06 mlarkin Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*
@@ -96,6 +96,8 @@ typedef u_int64_t pt_entry_t;		/* PTE */
 #define L3_FRAME	(L4_FRAME|L3_MASK)
 #define L2_FRAME	(L3_FRAME|L2_MASK)
 #define L1_FRAME	(L2_FRAME|L1_MASK)
+
+#define PAGE_MASK_L2 	(NBPD_L2 - 1)
 
 #define	x86_round_pdr(x) \
 	((((unsigned long)(x)) + (NBPD_L2 - 1)) & ~(NBPD_L2 - 1))

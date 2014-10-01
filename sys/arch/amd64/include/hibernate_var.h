@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_var.h,v 1.8 2014/01/05 23:06:54 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_var.h,v 1.9 2014/10/01 19:41:06 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -16,13 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* amd64 hibernate support definitions */
-
-#define PAGE_MASK_2M (NBPD_L2 - 1)
-#define PAGE_MASK_1G (NBPD_L3 - 1)
-#define PAGE_MASK_512G (NBPD_L4 - 1)
-
-#define PIGLET_PAGE_MASK ~((paddr_t)PAGE_MASK_2M)
+#define PIGLET_PAGE_MASK (L2_FRAME)
 
 /*
  * PML4 table for resume

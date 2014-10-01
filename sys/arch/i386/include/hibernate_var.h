@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_var.h,v 1.9 2014/01/05 20:23:57 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_var.h,v 1.10 2014/10/01 19:41:06 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -16,13 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* i386 hibernate support definitions */
-
-#define PAGE_SHIFT_4M 22
-#define PAGE_MASK_4M (NBPD - 1)
-#define PMAP_PA_MASK_4M ~((paddr_t)PAGE_MASK_4M)
-
-#define PIGLET_PAGE_MASK ~((paddr_t)PAGE_MASK_4M)
+#define PIGLET_PAGE_MASK (PD_MASK)
 
 #define HIBERNATE_PD_PAGE	(PAGE_SIZE * 18)
 #define HIBERNATE_PT_PAGE	(PAGE_SIZE * 19)
@@ -39,7 +33,7 @@
 
 #define HIBERNATE_STACK_OFFSET	0x0F00
 
-#define atop_4m(x) ((x) >> PAGE_SHIFT_4M)
+#define atop_4m(x) ((x) >> PDSHIFT)
 #define atop_4k(x) ((x) >> PAGE_SHIFT)
 #define s4pde_4m(va) ((pt_entry_t *)HIBERNATE_PD_PAGE + atop_4m(va))
 #define s4pde_4k(va) ((pt_entry_t *)HIBERNATE_PD_PAGE + atop_4k(va))

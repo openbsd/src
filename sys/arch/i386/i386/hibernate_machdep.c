@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.38 2014/07/20 19:47:53 deraadt Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.39 2014/10/01 19:41:06 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -193,7 +193,7 @@ hibernate_enter_resume_4m_pde(vaddr_t va, paddr_t pa)
 	pt_entry_t *pde, npde;
 
 	pde = s4pde_4m(va);
-	npde = (pa & PMAP_PA_MASK_4M) | PG_RW | PG_V | PG_M | PG_PS;
+	npde = (pa & PD_MASK) | PG_RW | PG_V | PG_M | PG_PS;
 	*pde = npde;
 }
 
@@ -261,8 +261,8 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	/*
 	 * Map current kernel VA range using 4M pages
 	 */
-	kern_start_4m_va = (paddr_t)&start & ~(PAGE_MASK_4M);
-	kern_end_4m_va = (paddr_t)&end & ~(PAGE_MASK_4M);
+	kern_start_4m_va = (paddr_t)&start & ~(PAGE_MASK_L2);
+	kern_end_4m_va = (paddr_t)&end & ~(PAGE_MASK_L2);
 
 	/* i386 kernels load at 2MB phys (on the 0th 4mb page) */
 	phys_page_number = 0;
@@ -277,8 +277,8 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	 * Identity map the image (pig) area
 	 */
 	phys_page_number = image_start / NBPD;
-	image_start &= ~(PAGE_MASK_4M);
-	image_end &= ~(PAGE_MASK_4M);
+	image_start &= ~(PAGE_MASK_L2);
+	image_end &= ~(PAGE_MASK_L2);
 	for (page = image_start; page <= image_end ;
 	    page += NBPD, phys_page_number++) {
 		pa = (paddr_t)(phys_page_number * NBPD);
