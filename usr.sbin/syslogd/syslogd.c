@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.125 2014/09/27 11:28:37 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.126 2014/10/01 15:47:33 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -796,8 +796,11 @@ logmsg(int pri, char *msg, char *from, int flags)
 	/* extract facility and priority level */
 	if (flags & MARK)
 		fac = LOG_NFACILITIES;
-	else
+	else {
 		fac = LOG_FAC(pri);
+		if (fac >= LOG_NFACILITIES || fac < 0)
+			fac = LOG_USER;
+	}
 	prilev = LOG_PRI(pri);
 
 	/* extract program name */
