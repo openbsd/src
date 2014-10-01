@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.3 2014/09/16 16:05:44 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.4 2014/10/01 13:15:40 sthen Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: September 16 2014 $
+.Dd $Mdocdate: October 1 2014 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -5583,7 +5583,7 @@ This gives the
 to write the newly created private key to.
 If this option is not specified, the filename present in the
 configuration file is used.
-.It Fl md4 | md5 | sha1
+.It Fl md5 | sha1 | sha256
 This specifies the message digest to sign the request with.
 This overrides the digest algorithm specified in the configuration file.
 .Pp
@@ -5774,7 +5774,7 @@ They are currently ignored by
 request signing utilities, but some CAs might want them.
 .It Ar default_bits
 This specifies the default key size in bits.
-If not specified, 512 is used.
+If not specified, 2048 is used.
 It is used if the
 .Fl new
 option is used.
@@ -5790,10 +5790,11 @@ option.
 .It Ar default_md
 This option specifies the digest algorithm to use.
 Possible values include
-.Ar md5
+.Ar md5 ,
+.Ar sha1
 and
-.Ar sha1 .
-If not present, MD5 is used.
+.Ar sha256 .
+If not present, SHA256 is used.
 This option can be overridden on the command line.
 .It Ar distinguished_name
 This specifies the section containing the distinguished name fields to
