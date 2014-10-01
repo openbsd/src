@@ -1,10 +1,13 @@
-#	$OpenBSD: RAMDISK,v 1.103 2014/09/30 22:14:23 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.104 2014/10/01 18:15:36 deraadt Exp $
 #
 # Diskless kernel config
 #
 
 # Machine architecture; required by config(8)
 machine		hppa
+
+option		SMALL_KERNEL
+option		NO_PROPOLICE
 
 option		SCSITERSE
 
