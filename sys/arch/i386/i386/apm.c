@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.107 2014/09/19 20:02:25 kettenis Exp $	*/
+/*	$OpenBSD: apm.c,v 1.108 2014/10/01 20:49:50 mlarkin Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -800,8 +800,8 @@ apmattach(struct device *parent, struct device *self, void *aux)
 		    SDT_MEMERA, SEL_KPL, 0, 0);
 		setgdt(GAPMDATA_SEL, (void *)dh, ap->apm_data_len, SDT_MEMRWA,
 		    SEL_KPL, 1, 0);
-		DPRINTF((": flags %x code 32:%x/%x[%x] 16:%x/%x[%x] "
-		    "data %x/%x/%x ep %x (%x:%x)\n%s", apm_flags,
+		DPRINTF((": flags %x code 32:%x/%lx[%x] 16:%x/%lx[%x] "
+		    "data %x/%lx/%x ep %x (%x:%lx)\n%s", apm_flags,
 		    ap->apm_code32_base, ch32, ap->apm_code_len,
 		    ap->apm_code16_base, ch16, ap->apm_code16_len,
 		    ap->apm_data_base, dh, ap->apm_data_len,
