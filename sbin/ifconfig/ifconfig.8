@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.246 2014/09/20 20:30:18 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.247 2014/10/01 10:02:16 mpi Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: September 20 2014 $
+.Dd $Mdocdate: October 1 2014 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -181,7 +181,6 @@ At least the following devices can be created on demand:
 .Xr pfsync 4 ,
 .Xr ppp 4 ,
 .Xr pppoe 4 ,
-.Xr sl 4 ,
 .Xr trunk 4 ,
 .Xr tun 4 ,
 .Xr vether 4 ,
@@ -309,8 +308,7 @@ Enable special processing of the link level of the interface.
 These three options are interface specific in actual effect; however,
 they are in general used to select special modes of operation.
 An example
-of this is to enable SLIP compression, or to select the connector type
-for some Ethernet cards.
+of this is to select the connector type for some Ethernet cards.
 Refer to the man page for the specific driver for more information.
 .It Fl link[0-2]
 Disable special processing at the link level with the specified interface.
