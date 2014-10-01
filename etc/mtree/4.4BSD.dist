@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.265 2014/09/16 17:08:45 ajacoutot Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.266 2014/10/01 10:11:03 mpi Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -97,9 +97,7 @@ etc
         ..
     ..
 
-    # ./etc/sliphome
-    sliphome
-    ..
+    # ./etc/signify
     signify
     ..
     ssh
