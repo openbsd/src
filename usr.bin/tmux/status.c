@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.114 2014/04/24 09:14:43 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.115 2014/10/02 10:39:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -121,12 +121,17 @@ status_set_window_at(struct client *c, u_int x)
 {
 	struct session	*s = c->session;
 	struct winlink	*wl;
+	struct options	*oo;
+	size_t		 len;
 
 	x += c->wlmouse;
 	RB_FOREACH(wl, winlinks, &s->windows) {
+		oo = &wl->window->options;
+
+		len = strlen(options_get_string(oo, "window-status-separator"));
 		if (x < wl->status_width && session_select(s, wl->idx) == 0)
 			server_redraw_session(s);
-		x -= wl->status_width + 1;
+		x -= wl->status_width + len;
 	}
 }
 
