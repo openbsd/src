@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.8 2014/05/04 16:38:19 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.9 2014/10/02 19:16:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -455,8 +455,6 @@ ca_engine_init(struct relayd *x_env)
 	if (rsa_default->flags & RSA_FLAG_SIGN_VER)
 		fatalx("unsupported RSA engine");
 
-	if (rsa_default->rsa_mod_exp == NULL)
-		rsae_method.rsa_mod_exp = NULL;
 	if (rsa_default->rsa_mod_exp == NULL)
 		rsae_method.rsa_mod_exp = NULL;
 	if (rsa_default->bn_mod_exp == NULL)
