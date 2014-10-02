@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.102 2014/09/15 22:28:58 matthieu Exp $
+#	$OpenBSD: changelist,v 1.103 2014/10/02 09:02:48 mpi Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -108,8 +108,6 @@
 /etc/sensorsd.conf
 /etc/services
 /etc/shells
-/etc/slip.hosts
-/etc/slip.login
 /etc/snmpd.conf
 +/etc/spwd.db
 /etc/ssh/ssh_config
