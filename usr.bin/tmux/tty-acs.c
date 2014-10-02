@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-acs.c,v 1.2 2013/11/24 19:38:32 nicm Exp $ */
+/* $OpenBSD: tty-acs.c,v 1.3 2014/10/02 08:36:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -81,7 +81,7 @@ tty_acs_get(struct tty *tty, u_char ch)
 	struct tty_acs_entry *entry;
 
 	/* If not a UTF-8 terminal, use the ACS set. */
-	if (!(tty->flags & TTY_UTF8)) {
+	if (tty != NULL && !(tty->flags & TTY_UTF8)) {
 		if (tty->term->acs[ch][0] == '\0')
 			return (NULL);
 		return (&tty->term->acs[ch][0]);

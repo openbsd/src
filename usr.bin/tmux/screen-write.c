@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.69 2014/04/17 14:45:49 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.70 2014/10/02 08:36:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -990,6 +990,8 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 		memcpy(&tmp_gc, &s->sel.cell, sizeof tmp_gc);
 		grid_cell_get(gc, &ud);
 		grid_cell_set(&tmp_gc, &ud);
+		tmp_gc.attr = tmp_gc.attr & ~GRID_ATTR_CHARSET;
+		tmp_gc.attr |= gc->attr & GRID_ATTR_CHARSET;
 		tmp_gc.flags = gc->flags & ~(GRID_FLAG_FG256|GRID_FLAG_BG256);
 		tmp_gc.flags |= s->sel.cell.flags &
 		    (GRID_FLAG_FG256|GRID_FLAG_BG256);
