@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.319 2014/08/11 18:41:13 tobias Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.320 2014/10/02 18:04:49 matthew Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -108,9 +108,10 @@ struct client_lease *clone_lease(struct client_lease *);
 void		 socket_nonblockmode(int);
 void		 apply_ignore_list(char *);
 
+void add_direct_route(int, struct in_addr, struct in_addr, struct in_addr);
 void add_default_route(int, struct in_addr, struct in_addr);
 void add_static_routes(int, struct option_data *);
-void add_classless_static_routes(int, struct option_data *);
+void add_classless_static_routes(int, struct option_data *, struct in_addr);
 
 int compare_lease(struct client_lease *, struct client_lease *);
 void set_lease_times(struct client_lease *);
@@ -872,10 +873,12 @@ bind_lease(void)
 	add_address(ifi->name, ifi->rdomain, client->active->address, mask);
 	if (options[DHO_CLASSLESS_STATIC_ROUTES].len) {
 		add_classless_static_routes(ifi->rdomain,
-		    &options[DHO_CLASSLESS_STATIC_ROUTES]);
+		    &options[DHO_CLASSLESS_STATIC_ROUTES],
+		    client->active->address);
 	} else if (options[DHO_CLASSLESS_MS_STATIC_ROUTES].len) {
 		add_classless_static_routes(ifi->rdomain,
-		    &options[DHO_CLASSLESS_MS_STATIC_ROUTES]);
+		    &options[DHO_CLASSLESS_MS_STATIC_ROUTES],
+		    client->active->address);
 	} else {
 		opt = &options[DHO_ROUTERS];
 		if (opt->len >= sizeof(gateway)) {
@@ -883,17 +886,13 @@ bind_lease(void)
 			gateway.s_addr = ((struct in_addr *)opt->data)->s_addr;
 
 			/*
-			 * If we were given a /32 IP assignment, then make sure
-			 * the gateway address is routable with equivalent of
-			 *
-			 *     route add -net $gw -netmask 255.255.255.255 \
-			 *         -cloning -iface $addr
+			 * To be compatible with ISC DHCP behavior on Linux, if
+			 * we were given a /32 IP assignment, then add a /32
+			 * direct route for the gateway to make it routable.
 			 */
 			if (mask.s_addr == INADDR_BROADCAST) {
-				add_route(ifi->rdomain, gateway, mask,
-				    client->active->address,
-				    RTA_DST | RTA_NETMASK | RTA_GATEWAY,
-				    RTF_CLONING | RTF_STATIC);
+				add_direct_route(ifi->rdomain, gateway, mask,
+				    client->active->address);
 			}
 
 			add_default_route(ifi->rdomain, client->active->address,
@@ -2368,6 +2367,18 @@ priv_write_file(struct imsg_write_file *imsg)
 }
 
 /*
+ * add_direct_route is the equivalent of
+ *
+ *     route add -net $dest -netmask $mask -cloning -iface $iface
+ */
+void
+add_direct_route(int rdomain, struct in_addr dest, struct in_addr mask, struct in_addr iface)
+{
+	add_route(rdomain, dest, mask, iface,
+	    RTA_DST | RTA_NETMASK | RTA_GATEWAY, RTF_CLONING | RTF_STATIC);
+}
+
+/*
  * add_default_route is the equivalent of
  *
  *	route -q $rdomain add default -iface $router
@@ -2424,7 +2435,9 @@ add_static_routes(int rdomain, struct option_data *static_routes)
 	}
 }
 
-void add_classless_static_routes(int rdomain, struct option_data *opt)
+void
+add_classless_static_routes(int rdomain, struct option_data *opt,
+    struct in_addr iface)
 {
 	struct in_addr	 dest, netmask, gateway;
 	int		 bits, bytes, i;
@@ -2454,11 +2467,11 @@ void add_classless_static_routes(int rdomain, struct option_data *opt)
 		i += sizeof(gateway);
 
 		if (gateway.s_addr == INADDR_ANY)
-			continue; /* OBSD TCP/IP doesn't support this. */
-
-		add_route(rdomain, dest, netmask, gateway,
-		    RTA_DST | RTA_GATEWAY | RTA_NETMASK,
-		    RTF_GATEWAY | RTF_STATIC);
+			add_direct_route(rdomain, dest, netmask, iface);
+		else
+			add_route(rdomain, dest, netmask, gateway,
+			    RTA_DST | RTA_GATEWAY | RTA_NETMASK,
+			    RTF_GATEWAY | RTF_STATIC);
 	}
 }
 
