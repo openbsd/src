@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.16 2014/02/13 23:16:03 millert Exp $ */
+/*	$OpenBSD: strptime.c,v 1.17 2014/10/02 23:50:11 doug Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 
 /*-
@@ -413,15 +413,16 @@ literal:
 				ep = _find_string(bp, &i,
 					       	 (const char * const *)tzname,
 					       	  NULL, 2);
-				if (ep != NULL) {
-					tm->tm_isdst = i;
+				if (ep == NULL)
+					return (NULL);
+
+				tm->tm_isdst = i;
 #ifdef TM_GMTOFF
-					tm->TM_GMTOFF = -(timezone);
+				tm->TM_GMTOFF = -(timezone);
 #endif
 #ifdef TM_ZONE
-					tm->TM_ZONE = tzname[i];
+				tm->TM_ZONE = tzname[i];
 #endif
-				}
 				bp = ep;
 			}
 			continue;
