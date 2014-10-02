@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_gio.c,v 1.2 2014/05/19 21:18:42 miod Exp $	*/
+/*	$OpenBSD: pci_gio.c,v 1.3 2014/10/02 18:55:49 miod Exp $	*/
 /*	$NetBSD: pci_gio.c,v 1.9 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ giopci_attach(struct device *parent, struct device *self, void *aux)
 	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = pba.pba_memt = ga->ga_iot;
-	if (sc->sc_dma_boundary != 0)
+	if (sc->sc_dma_boundary == 0)
 		pba.pba_dmat = ga->ga_dmat;
 	else
 		pba.pba_dmat = &sc->sc_dmat_store;
