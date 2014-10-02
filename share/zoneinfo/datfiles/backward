@@ -1,10 +1,11 @@
-# $OpenBSD: backward,v 1.27 2014/08/15 16:48:58 millert Exp $
+# $OpenBSD: backward,v 1.28 2014/10/02 21:04:03 millert Exp $
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
 # This file provides links between current names for time zones
 # and their old names.  Many names changed in late 1993.
 
+# Link	TARGET			LINK-NAME
 Link	Africa/Asmara		Africa/Asmera
 Link	Africa/Abidjan		Africa/Timbuktu
 Link	America/Argentina/Catamarca	America/Argentina/ComodRivadavia
