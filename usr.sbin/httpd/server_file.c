@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.36 2014/09/27 12:49:45 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.37 2014/10/02 19:22:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -422,6 +422,14 @@ server_file_error(struct bufferevent *bev, short error, void *arg)
 		server_close(clt, "buffer event timeout");
 		return;
 	}
+	if (error & EVBUFFER_ERROR) {
+		if (errno == EFBIG) {
+			bufferevent_enable(bev, EV_READ);
+			return;
+		}
+		server_close(clt, "buffer event error");
+		return;
+	}
 	if (error & (EVBUFFER_READ|EVBUFFER_WRITE|EVBUFFER_EOF)) {
 		bufferevent_disable(bev, EV_READ|EV_WRITE);
 
@@ -448,10 +456,6 @@ server_file_error(struct bufferevent *bev, short error, void *arg)
 		server_close(clt, "done");
 		return;
 	}
-	if (error & EVBUFFER_ERROR && errno == EFBIG) {
-		bufferevent_enable(bev, EV_READ);
-		return;
-	}
-	server_close(clt, "buffer event error");
+	server_close(clt, "unknown event error");
 	return;
 }
