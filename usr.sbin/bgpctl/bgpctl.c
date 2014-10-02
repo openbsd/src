@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.174 2014/03/18 13:47:14 florian Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.175 2014/10/02 16:37:50 benno Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -517,16 +517,26 @@ show_summary_msg(struct imsg *imsg, int nodescr)
 {
 	struct peer		*p;
 	char			*s;
+	const char		*a;
+	size_t			alen;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
 		s = fmt_peer(p->conf.descr, &p->conf.remote_addr,
 		    p->conf.remote_masklen, nodescr);
-		if (strlen(s) >= 20)
-			s[20] = 0;
-		printf("%-20s %8s %10llu %10llu %5u %-8s ",
-		    s, log_as(p->conf.remote_as),
+
+		a = log_as(p->conf.remote_as);
+		alen = strlen(a);
+		/* max displayed lenght of the peers name is 28 */
+		if (alen < 28) {
+			if (strlen(s) > 28 - alen)
+				s[28 - alen] = 0;
+		} else
+			alen = 0;
+
+		printf("%-*s %s %10llu %10llu %5u %-8s ",
+		    (28 - (int)alen), s, a,
 		    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
 		    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive +
 		    p->stats.msg_rcvd_rrefresh,
