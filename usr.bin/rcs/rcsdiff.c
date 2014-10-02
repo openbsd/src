@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.79 2013/04/16 20:24:45 deraadt Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.80 2014/10/02 06:23:15 otto Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -117,7 +117,6 @@ rcsdiff_main(int argc, char **argv)
 			if (RCS_KWEXP_INVAL(kflag)) {
 				warnx("invalid RCS keyword substitution mode");
 				(usage)();
-				exit(D_ERROR);
 			}
 			break;
 		case 'n':
@@ -184,7 +183,6 @@ rcsdiff_main(int argc, char **argv)
 			break;
 		default:
 			(usage)();
-			exit(D_ERROR);
 		}
 	}
 
@@ -194,7 +192,6 @@ rcsdiff_main(int argc, char **argv)
 	if (argc == 0) {
 		warnx("no input file");
 		(usage)();
-		exit(D_ERROR);
 	}
 
 	if (diff_ignore_pats != NULL) {
@@ -267,12 +264,14 @@ rcsdiff_main(int argc, char **argv)
 	return (status);
 }
 
-void
+__dead void
 rcsdiff_usage(void)
 {
 	fprintf(stderr,
 	    "usage: rcsdiff [-cnquV] [-kmode] [-rrev] [-xsuffixes] [-ztz]\n"
 	    "               [diff_options] file ...\n");
+
+	exit(D_ERROR);
 }
 
 static int

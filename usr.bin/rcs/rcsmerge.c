@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.52 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.53 2014/10/02 06:23:15 otto Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -68,7 +68,6 @@ rcsmerge_main(int argc, char **argv)
 			if (RCS_KWEXP_INVAL(kflag)) {
 				warnx("invalid RCS keyword substitution mode");
 				(usage)();
-				exit(D_ERROR);
 			}
 			break;
 		case 'p':
@@ -100,7 +99,6 @@ rcsmerge_main(int argc, char **argv)
 			break;
 		default:
 			(usage)();
-			exit(D_ERROR);
 		}
 	}
 
@@ -110,13 +108,11 @@ rcsmerge_main(int argc, char **argv)
 	if (rev_str1 == NULL) {
 		warnx("no base revision number given");
 		(usage)();
-		exit(D_ERROR);
 	}
 
 	if (argc < 1) {
 		warnx("no input file");
 		(usage)();
-		exit(D_ERROR);
 	}
 
 	if (argc > 2 || (argc == 2 && argv[1] != NULL))
@@ -187,10 +183,12 @@ out:
 	return (status);
 }
 
-void
+__dead void
 rcsmerge_usage(void)
 {
 	fprintf(stderr,
 	    "usage: rcsmerge [-EV] [-kmode] [-p[rev]] [-q[rev]]\n"
 	    "                [-xsuffixes] [-ztz] -rrev file ...\n");
+
+	exit(D_ERROR);
 }

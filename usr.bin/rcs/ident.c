@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.29 2011/04/20 19:34:16 nicm Exp $	*/
+/*	$OpenBSD: ident.c,v 1.30 2014/10/02 06:23:15 otto Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -59,7 +59,6 @@ ident_main(int argc, char **argv)
 			exit(0);
 		default:
 			(usage)();
-			exit(1);
 		}
 	}
 
@@ -161,8 +160,10 @@ out:
 		buf_free(bp);
 }
 
-void
+__dead void
 ident_usage(void)
 {
 	fprintf(stderr, "usage: ident [-qV] [file ...]\n");
+	
+	exit(1);
 }

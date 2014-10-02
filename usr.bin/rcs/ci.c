@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.217 2014/05/19 19:42:24 jca Exp $	*/
+/*	$OpenBSD: ci.c,v 1.218 2014/10/02 06:23:15 otto Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -89,7 +89,7 @@ static void	 checkin_parsekeyword(char *, RCSNUM **, time_t *, char **,
 static int	 checkin_update(struct checkin_params *);
 static int	 checkin_revert(struct checkin_params *);
 
-void
+__dead void
 checkin_usage(void)
 {
 	fprintf(stderr,
@@ -97,6 +97,8 @@ checkin_usage(void)
 	    "          [-j[rev]] [-k[rev]] [-l[rev]] [-M[rev]] [-mmsg]\n"
 	    "          [-Nsymbol] [-nsymbol] [-r[rev]] [-sstate] [-t[str]]\n"
 	    "          [-u[rev]] [-wusername] [-xsuffixes] [-ztz] file ...\n");
+
+	exit(1);
 }
 
 /*
@@ -221,7 +223,6 @@ checkin_main(int argc, char **argv)
 			break;
 		default:
 			(usage)();
-			exit(1);
 		}
 	}
 
@@ -231,7 +232,6 @@ checkin_main(int argc, char **argv)
 	if (argc == 0) {
 		warnx("no input file");
 		(usage)();
-		exit(1);
 	}
 
 	if ((pb.username = getlogin()) == NULL)

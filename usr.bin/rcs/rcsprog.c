@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.151 2011/07/12 21:00:32 sobrado Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.152 2014/10/02 06:23:15 otto Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -158,13 +158,15 @@ main(int argc, char **argv)
 }
 
 
-void
+__dead void
 rcs_usage(void)
 {
 	fprintf(stderr,
 	    "usage: rcs [-IiLqTUV] [-Aoldfile] [-ausers] [-b[rev]]\n"
 	    "           [-cstring] [-e[users]] [-kmode] [-l[rev]] [-mrev:msg]\n"
 	    "           [-orev] [-t[str]] [-u[rev]] [-xsuffixes] file ...\n");
+
+	exit(1);
 }
 
 /*
@@ -225,7 +227,6 @@ rcs_main(int argc, char **argv)
 			if (RCS_KWEXP_INVAL(kflag)) {
 				warnx("invalid RCS keyword substitution mode");
 				(usage)();
-				exit(1);
 			}
 			break;
 		case 'L':
@@ -290,7 +291,6 @@ rcs_main(int argc, char **argv)
 			break;
 		default:
 			(usage)();
-			exit(1);
 		}
 	}
 
@@ -300,7 +300,6 @@ rcs_main(int argc, char **argv)
 	if (argc == 0) {
 		warnx("no input file");
 		(usage)();
-		exit(1);
 	}
 
 	for (i = 0; i < argc; i++) {

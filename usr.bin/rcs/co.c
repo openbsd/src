@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.117 2013/04/16 20:24:45 deraadt Exp $	*/
+/*	$OpenBSD: co.c,v 1.118 2014/10/02 06:23:15 otto Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -79,7 +79,6 @@ checkout_main(int argc, char **argv)
 			if (RCS_KWEXP_INVAL(kflag)) {
 				warnx("invalid RCS keyword substitution mode");
 				(usage)();
-				exit(1);
 			}
 			break;
 		case 'l':
@@ -141,7 +140,6 @@ checkout_main(int argc, char **argv)
 			break;
 		default:
 			(usage)();
-			exit(1);
 		}
 	}
 
@@ -151,7 +149,6 @@ checkout_main(int argc, char **argv)
 	if (argc == 0) {
 		warnx("no input file");
 		(usage)();
-		exit (1);
 	}
 
 	if ((username = getlogin()) == NULL)
@@ -222,13 +219,15 @@ checkout_main(int argc, char **argv)
 	return (ret);
 }
 
-void
+__dead void
 checkout_usage(void)
 {
 	fprintf(stderr,
 	    "usage: co [-TV] [-ddate] [-f[rev]] [-I[rev]] [-kmode] [-l[rev]]\n"
 	    "          [-M[rev]] [-p[rev]] [-q[rev]] [-r[rev]] [-sstate]\n"
 	    "          [-u[rev]] [-w[user]] [-xsuffixes] [-ztz] file ...\n");
+	
+	exit(1);
 }
 
 /*

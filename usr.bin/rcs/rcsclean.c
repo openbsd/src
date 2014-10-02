@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.52 2010/07/28 09:07:11 ray Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.53 2014/10/02 06:23:15 otto Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -60,7 +60,6 @@ rcsclean_main(int argc, char **argv)
 			if (RCS_KWEXP_INVAL(kflag)) {
 				warnx("invalid RCS keyword substitution mode");
 				(usage)();
-				exit(1);
 			}
 			break;
 		case 'n':
@@ -90,7 +89,6 @@ rcsclean_main(int argc, char **argv)
 			break;
 		default:
 			(usage)();
-			exit(1);
 		}
 	}
 
@@ -104,7 +102,6 @@ rcsclean_main(int argc, char **argv)
 		if ((dirp = opendir(".")) == NULL) {
 			warn("opendir");
 			(usage)();
-			exit(1);
 		}
 
 		while ((dp = readdir(dirp)) != NULL) {
@@ -121,12 +118,14 @@ rcsclean_main(int argc, char **argv)
 	return (0);
 }
 
-void
+__dead void
 rcsclean_usage(void)
 {
 	fprintf(stderr,
 	    "usage: rcsclean [-TV] [-kmode] [-n[rev]] [-q[rev]] [-r[rev]]\n"
 	    "                [-u[rev]] [-xsuffixes] [-ztz] [file ...]\n");
+
+	exit(1);
 }
 
 static void

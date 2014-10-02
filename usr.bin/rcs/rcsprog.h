@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.63 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.64 2014/10/02 06:23:15 otto Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -86,44 +86,44 @@ extern struct wklhead temp_files;
 time_t  date_parse(const char *);
 
 /* ci.c */
-int	checkin_main(int, char **);
-void	checkin_usage(void);
+int		checkin_main(int, char **);
+__dead void	checkin_usage(void);
 
 /* co.c */
-int	checkout_main(int, char **);
-int	checkout_rev(RCSFILE *, RCSNUM *, const char *, int, const char *,
-	    const char *, const char *, const char *);
-void	checkout_usage(void);
+int		checkout_main(int, char **);
+int		checkout_rev(RCSFILE *, RCSNUM *, const char *,
+		int, const char *, const char *, const char *, const char *);
+__dead void	checkout_usage(void);
 
 /* ident.c */
-int	ident_main(int, char **);
-void	ident_usage(void);
+int		ident_main(int, char **);
+__dead void	ident_usage(void);
 
 /* merge.c */
-int	merge_main(int, char **);
-void	merge_usage(void);
+int		merge_main(int, char **);
+__dead void	merge_usage(void);
 
 /* rcsclean.c */
-int	rcsclean_main(int, char **);
-void	rcsclean_usage(void);
+int		rcsclean_main(int, char **);
+__dead void	rcsclean_usage(void);
 
 /* rcsdiff.c */
-int	rcsdiff_main(int, char **);
-void	rcsdiff_usage(void);
+int		rcsdiff_main(int, char **);
+__dead void	rcsdiff_usage(void);
 
 /* rcsmerge.c */
-int	rcsmerge_main(int, char **);
-void	rcsmerge_usage(void);
+int		rcsmerge_main(int, char **);
+__dead void	rcsmerge_usage(void);
 
 /* rcsprog.c */
-int	build_cmd(char ***, char **, int);
-int	rcs_getopt(int, char **, const char *);
-int	rcs_main(int, char **);
-void	rcs_usage(void);
-void	(*usage)(void);
+int		build_cmd(char ***, char **, int);
+int		rcs_getopt(int, char **, const char *);
+int		rcs_main(int, char **);
+__dead void	rcs_usage(void);
+void		(*usage)(void);
 
 /* rlog.c */
-int	rlog_main(int, char **);
-void	rlog_usage(void);
+int		rlog_main(int, char **);
+__dead void	rlog_usage(void);
 
 #endif	/* RCSPROG_H */

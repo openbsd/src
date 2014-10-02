@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.67 2014/01/07 14:08:16 deraadt Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.68 2014/10/02 06:23:15 otto Exp $	*/
 /*
  * Copyright (c) 2005, 2009 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -58,13 +58,15 @@ static char *wlist = NULL;
 static char *revisions = NULL;
 static char *rlog_dates = NULL;
 
-void
+__dead void
 rlog_usage(void)
 {
 	fprintf(stderr,
 	    "usage: rlog [-bhLNRtV] [-ddates] [-l[lockers]] [-r[revs]]\n"
 	    "            [-sstates] [-w[logins]] [-xsuffixes]\n"
 	    "            [-ztz] file ...\n");
+
+	exit(1);
 }
 
 int
@@ -135,7 +137,6 @@ rlog_main(int argc, char **argv)
 			break;
 		default:
 			(usage());
-			exit(1);
 		}
 	}
 
@@ -145,7 +146,6 @@ rlog_main(int argc, char **argv)
 	if (argc == 0) {
 		warnx("no input file");
 		(usage)();
-		exit(1);
 	}
 
 	if (hflag == 1 && tflag == 1) {
