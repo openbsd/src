@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.182 2014/08/18 05:11:03 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.183 2014/10/03 01:02:47 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -245,8 +245,6 @@ struct mbuf {
 
 /*
  * Macros for tracking external storage associated with an mbuf.
- *
- * Note: add and delete reference must be called at splnet().
  */
 #ifdef DEBUG
 #define MCLREFDEBUGN(m, file, line) do {				\
@@ -264,16 +262,7 @@ struct mbuf {
 
 #define	MCLISREFERENCED(m)	((m)->m_ext.ext_nextref != (m))
 
-#define	MCLADDREFERENCE(o, n)	do {					\
-		int ms = splnet();					\
-		(n)->m_flags |= ((o)->m_flags & (M_EXT|M_EXTWR));	\
-		(n)->m_ext.ext_nextref = (o)->m_ext.ext_nextref;	\
-		(n)->m_ext.ext_prevref = (o);				\
-		(o)->m_ext.ext_nextref = (n);				\
-		(n)->m_ext.ext_nextref->m_ext.ext_prevref = (n);	\
-		splx(ms);						\
-		MCLREFDEBUGN((n), __FILE__, __LINE__);			\
-	} while (/* CONSTCOND */ 0)
+#define	MCLADDREFERENCE(o, n)	m_extref((o), (n))
 
 #define	MCLINITREFERENCE(m)	do {					\
 		(m)->m_ext.ext_prevref = (m);				\
@@ -411,7 +400,6 @@ void	mbinit(void);
 struct	mbuf *m_copym2(struct mbuf *, int, int, int);
 struct	mbuf *m_copym(struct mbuf *, int, int, int);
 struct	mbuf *m_free(struct mbuf *);
-struct	mbuf *m_free_unlocked(struct mbuf *);
 struct	mbuf *m_get(int, int);
 struct	mbuf *m_getclr(int, int);
 struct	mbuf *m_gethdr(int, int);
@@ -426,6 +414,7 @@ struct  mbuf *m_getptr(struct mbuf *, int, int *);
 int	m_leadingspace(struct mbuf *);
 int	m_trailingspace(struct mbuf *);
 struct mbuf *m_clget(struct mbuf *, int, struct ifnet *, u_int);
+void	m_extref(struct mbuf *, struct mbuf *);
 void	m_extfree_pool(caddr_t, u_int, void *);
 void	m_adj(struct mbuf *, int);
 int	m_copyback(struct mbuf *, int, int, const void *, int);
