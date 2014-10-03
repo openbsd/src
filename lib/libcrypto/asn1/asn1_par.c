@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_par.c,v 1.20 2014/07/12 16:03:36 miod Exp $ */
+/* $OpenBSD: asn1_par.c,v 1.21 2014/10/03 06:02:38 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,7 +71,6 @@ static int
 asn1_print_info(BIO *bp, int tag, int xclass, int constructed,
     int indent)
 {
-	static const char fmt[] = "%-18s";
 	char str[128];
 	const char *p;
 
@@ -95,7 +94,7 @@ asn1_print_info(BIO *bp, int tag, int xclass, int constructed,
 	else
 		p = ASN1_tag2str(tag);
 
-	if (BIO_printf(bp, fmt, p) <= 0)
+	if (BIO_printf(bp, "%-18s", p) <= 0)
 		goto err;
 	return (1);
 err:

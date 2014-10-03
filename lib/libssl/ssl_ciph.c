@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.68 2014/09/19 16:02:35 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.69 2014/10/03 06:02:38 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1559,7 +1559,6 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 char *
 SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 {
-	static const char *fmt="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s\n";
 	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, alg2;
 	const char *ver, *kx, *au, *enc, *mac;
 	char *ret;
@@ -1692,7 +1691,8 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	}
 
-	if (asprintf(&ret, fmt, cipher->name, ver, kx, au, enc, mac) == -1)
+	if (asprintf(&ret, "%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s\n",
+	    cipher->name, ver, kx, au, enc, mac) == -1)
 		return "OPENSSL_malloc Error";
 
 	if (buf != NULL) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ht.c,v 1.21 2014/07/25 06:05:32 doug Exp $ */
+/* $OpenBSD: ocsp_ht.c,v 1.22 2014/10/03 06:02:38 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -119,11 +119,8 @@ OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx)
 int
 OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, OCSP_REQUEST *req)
 {
-	static const char req_hdr[] =
-	    "Content-Type: application/ocsp-request\r\n"
-	    "Content-Length: %d\r\n\r\n";
-
-	if (BIO_printf(rctx->mem, req_hdr, i2d_OCSP_REQUEST(req, NULL)) <= 0)
+	if (BIO_printf(rctx->mem, "Content-Type: application/ocsp-request\r\n"
+	    "Content-Length: %d\r\n\r\n", i2d_OCSP_REQUEST(req, NULL)) <= 0)
 		return 0;
 	if (i2d_OCSP_REQUEST_bio(rctx->mem, req) <= 0)
 		return 0;
@@ -154,7 +151,6 @@ OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx, const char *name,
 OCSP_REQ_CTX *
 OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req, int maxline)
 {
-	static const char post_hdr[] = "POST %s HTTP/1.0\r\n";
 	OCSP_REQ_CTX *rctx;
 
 	rctx = malloc(sizeof(OCSP_REQ_CTX));
@@ -177,7 +173,7 @@ OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req, int maxline)
 	if (!path)
 		path = "/";
 
-	if (BIO_printf(rctx->mem, post_hdr, path) <= 0) {
+	if (BIO_printf(rctx->mem, "POST %s HTTP/1.0\r\n", path) <= 0) {
 		free(rctx->iobuf);
 		BIO_free(rctx->mem);
 		free(rctx);
