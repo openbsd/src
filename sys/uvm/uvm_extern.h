@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.120 2014/10/03 17:41:00 kettenis Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.121 2014/10/03 18:06:47 kettenis Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -520,6 +520,7 @@ void			uvm_vnp_sync(struct mount *);
 void 			uvm_vnp_terminate(struct vnode *);
 boolean_t		uvm_vnp_uncache(struct vnode *);
 struct uvm_object	*uvn_attach(struct vnode *, vm_prot_t);
+void			uvm_pagezero_thread(void *);
 void			kmeminit_nkmempages(void);
 void			kmeminit(void);
 extern u_int		nkmempages;

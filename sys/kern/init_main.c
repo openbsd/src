@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.217 2014/08/14 09:01:47 mpi Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.218 2014/10/03 18:06:46 kettenis Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -525,6 +525,10 @@ main(void *framep)
 	/* Create the aiodone daemon kernel thread. */ 
 	if (kthread_create(uvm_aiodone_daemon, NULL, NULL, "aiodoned"))
 		panic("fork aiodoned");
+
+	/* Create the page zeroing kernel thread. */
+	if (kthread_create(uvm_pagezero_thread, NULL, NULL, "zerothread"))
+		panic("fork zerothread");
 
 #if defined(MULTIPROCESSOR)
 	/* Boot the secondary processors. */
