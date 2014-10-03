@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.65 2014/10/03 06:36:10 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.66 2014/10/03 09:25:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1779,10 +1779,10 @@ myx_txeof(struct myx_softc *sc, u_int32_t done_count)
 
 		KERNEL_LOCK();
 		bus_dmamap_unload(sc->sc_dmat, map);
-		m_freem(m);
 		ifp->if_opackets++;
 		KERNEL_UNLOCK();
 
+		m_freem(m);
 		myx_buf_put(&sc->sc_tx_buf_free, mb);
 	} while (++sc->sc_tx_count != done_count);
 
@@ -1951,9 +1951,7 @@ myx_buf_fill(struct myx_softc *sc, int ring)
 	struct mbuf *m;
 	int rv;
 
-	KERNEL_LOCK();
 	m = MCLGETI(NULL, M_DONTWAIT, NULL, sizes[ring]);
-	KERNEL_UNLOCK();
 	if (m == NULL)
 		return (NULL);
 	m->m_len = m->m_pkthdr.len = sizes[ring];
@@ -1977,9 +1975,7 @@ myx_buf_fill(struct myx_softc *sc, int ring)
 put:
 	myx_buf_put(&sc->sc_rx_buf_free[ring], mb);
 mfree:
-	KERNEL_LOCK();
 	m_freem(m);
-	KERNEL_UNLOCK();
 
 	return (NULL);
 }
