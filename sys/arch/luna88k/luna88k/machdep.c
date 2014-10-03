@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.110 2014/09/27 19:50:10 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.111 2014/10/03 20:47:41 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -398,22 +398,6 @@ cpu_startup()
 		hwplanebits = 0;
 		break;
 	}
-
-#if 0 /* just for test */
-	/*
-	 * Get boot arguments
-	 */
-	{
-		char buf[256];
-		char **p = (volatile char **)0x00001120;
-
-		strncpy(buf, *p, 256);
-		if (buf[255] != '\0')
-			buf[255] = '\0';
-
-		printf("boot arg: (0x%x) %s\n", *p, buf);
-	}
-#endif
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -1107,10 +1091,6 @@ romttycnputc(dev, c)
 {
 	int s;
 
-#if 0
-	if ((char)c == '\n')
-		ROMPUTC('\r');
-#endif
 	s = splhigh();
 	ROMPUTC(c);
 	splx(s);
