@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.126 2014/10/01 15:47:33 guenther Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.127 2014/10/03 21:55:22 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -199,7 +199,7 @@ int	IPv4Only = 0;		/* when true, disable IPv6 */
 int	IPv6Only = 0;		/* when true, disable IPv4 */
 int	IncludeHostname = 0;	/* include RFC 3164 style hostnames when forwarding */
 
-char	*ctlsock_path = NULL;	/* Path to control socket */
+char	*path_ctlsock = NULL;	/* Path to control socket */
 
 #define CTL_READING_CMD		1
 #define CTL_WRITING_REPLY	2
@@ -284,7 +284,7 @@ void	ctlsock_accept_handler(void);
 void	ctlconn_read_handler(void);
 void	ctlconn_write_handler(void);
 void	tailify_replytext(char *, int);
-void	logto_ctlconn(char *);
+void	ctlconn_logto(char *);
 
 int
 main(int argc, char *argv[])
@@ -335,7 +335,7 @@ main(int argc, char *argv[])
 				path_unix[nunix++] = optarg;
 			break;
 		case 's':
-			ctlsock_path = optarg;
+			path_ctlsock = optarg;
 			break;
 		default:
 			usage();
@@ -460,8 +460,8 @@ main(int argc, char *argv[])
 	pfd[PFD_SENDSYS].fd = fd;
 	pfd[PFD_SENDSYS].events = POLLIN;
 
-	if (ctlsock_path != NULL) {
-		fd = unix_socket(ctlsock_path, SOCK_STREAM, 0600);
+	if (path_ctlsock != NULL) {
+		fd = unix_socket(path_ctlsock, SOCK_STREAM, 0600);
 		if (fd != -1) {
 			if (listen(fd, 16) == -1) {
 				logerror("ctlsock listen");
@@ -1078,7 +1078,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		if (ringbuf_append_line(f->f_un.f_mb.f_rb, line) == 1)
 			f->f_un.f_mb.f_overflow = 1;
 		if (f->f_un.f_mb.f_attached)
-			logto_ctlconn(line);
+			ctlconn_logto(line);
 		break;
 	}
 	f->f_prevcount = 0;
@@ -1896,8 +1896,8 @@ ctlconn_cleanup(void)
 {
 	struct filed *f;
 
-	if (pfd[PFD_CTLCONN].fd != -1)
-		close(pfd[PFD_CTLCONN].fd);
+	if (close(pfd[PFD_CTLCONN].fd) == -1)
+		logerror("close ctlconn");
 
 	pfd[PFD_CTLCONN].fd = -1;
 	pfd[PFD_CTLCONN].events = pfd[PFD_CTLCONN].revents = 0;
@@ -1926,7 +1926,8 @@ ctlsock_accept_handler(void)
 		return;
 	}
 
-	ctlconn_cleanup();
+	if (pfd[PFD_CTLCONN].fd != -1)
+		ctlconn_cleanup();
 
 	/* Only one connection at a time */
 	pfd[PFD_CTLSOCK].events = pfd[PFD_CTLSOCK].revents = 0;
@@ -1987,7 +1988,6 @@ ctlconn_read_handler(void)
 	default:
 		ctl_cmd_bytes += n;
 	}
-
 	if (ctl_cmd_bytes < sizeof(ctl_cmd))
 		return;
 
@@ -2089,7 +2089,6 @@ ctlconn_read_handler(void)
 	/* another syslogc can kick us out */
 	if (ctl_state == CTL_WRITING_CONT_REPLY)
 		pfd[PFD_CTLSOCK].events = POLLIN;
-
 }
 
 void
@@ -2104,6 +2103,7 @@ ctlconn_write_handler(void)
 		ctlconn_cleanup();
 		return;
 	}
+
  retry:
 	n = write(pfd[PFD_CTLCONN].fd, ctl_reply + ctl_reply_offset,
 	    ctl_reply_size - ctl_reply_offset);
@@ -2120,26 +2120,29 @@ ctlconn_write_handler(void)
 	default:
 		ctl_reply_offset += n;
 	}
-	if (ctl_reply_offset >= ctl_reply_size) {
-		/*
-		 * Make space in the buffer for continous writes.
-		 * Set offset behind reply header to skip it
-		 */
-		if (ctl_state == CTL_WRITING_CONT_REPLY) {
-			*reply_text = '\0';
-			ctl_reply_offset = ctl_reply_size = CTL_REPLY_SIZE;
+	if (ctl_reply_offset < ctl_reply_size)
+		return;
 
-			/* Now is a good time to report dropped lines */
-			if (membuf_drop) {
-				strlcat(reply_text, "<ENOBUFS>\n", MAX_MEMBUF);
-				ctl_reply_size = CTL_REPLY_SIZE;
-				membuf_drop = 0;
-			} else {
-				/* Nothing left to write */
-				pfd[PFD_CTLCONN].events = POLLIN;
-			}
-		} else
-			ctlconn_cleanup();
+	if (ctl_state != CTL_WRITING_CONT_REPLY) {
+		ctlconn_cleanup();
+		return;
+	}
+
+	/*
+	 * Make space in the buffer for continous writes.
+	 * Set offset behind reply header to skip it
+	 */
+	*reply_text = '\0';
+	ctl_reply_offset = ctl_reply_size = CTL_REPLY_SIZE;
+
+	/* Now is a good time to report dropped lines */
+	if (membuf_drop) {
+		strlcat(reply_text, "<ENOBUFS>\n", MAX_MEMBUF);
+		ctl_reply_size = CTL_REPLY_SIZE;
+		membuf_drop = 0;
+	} else {
+		/* Nothing left to write */
+		pfd[PFD_CTLCONN].events = POLLIN;
 	}
 }
 
@@ -2166,7 +2169,7 @@ tailify_replytext(char *replytext, int lines)
 }
 
 void
-logto_ctlconn(char *line)
+ctlconn_logto(char *line)
 {
 	size_t l;
 
