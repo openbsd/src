@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.196 2014/10/03 01:11:17 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.197 2014/10/03 02:16:21 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -344,14 +344,18 @@ m_free(struct mbuf *m)
 void
 m_extref(struct mbuf *o, struct mbuf *n)
 {
+	int refs = MCLISREFERENCED(o);
+
 	n->m_flags |= o->m_flags & (M_EXT|M_EXTWR);
 
-	mtx_enter(&m_extref_mtx);
+	if (refs)
+		mtx_enter(&m_extref_mtx);
 	n->m_ext.ext_nextref = o->m_ext.ext_nextref;
 	n->m_ext.ext_prevref = o;
 	o->m_ext.ext_nextref = n;
 	n->m_ext.ext_nextref->m_ext.ext_prevref = n;
-	mtx_leave(&m_extref_mtx);
+	if (refs)
+		mtx_leave(&m_extref_mtx);
 
 	MCLREFDEBUGN((n), __FILE__, __LINE__);
 }
