@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.66 2014/10/03 09:25:21 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.67 2014/10/03 09:52:01 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1777,10 +1777,8 @@ myx_txeof(struct myx_softc *sc, u_int32_t done_count)
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
-		KERNEL_LOCK();
 		bus_dmamap_unload(sc->sc_dmat, map);
 		ifp->if_opackets++;
-		KERNEL_UNLOCK();
 
 		m_freem(m);
 		myx_buf_put(&sc->sc_tx_buf_free, mb);
@@ -1825,6 +1823,7 @@ myx_rxeof(struct myx_softc *sc)
 
 		bus_dmamap_sync(sc->sc_dmat, mb->mb_map, 0,
 		    mb->mb_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, mb->mb_map);
 
 		m = mb->mb_m;
 		m->m_data += ETHER_ALIGN;
@@ -1832,15 +1831,14 @@ myx_rxeof(struct myx_softc *sc)
 		m->m_pkthdr.len = m->m_len = len;
 
 		KERNEL_LOCK();
-		bus_dmamap_unload(sc->sc_dmat, mb->mb_map);
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		ether_input_mbuf(ifp, m);
-		ifp->if_ipackets++;
 		KERNEL_UNLOCK();
+		ifp->if_ipackets++;
 
 		myx_buf_put(&sc->sc_rx_buf_free[ring], mb);
 
@@ -1960,9 +1958,7 @@ myx_buf_fill(struct myx_softc *sc, int ring)
 	if (mb == NULL)
 		goto mfree;
 
-	KERNEL_LOCK();
 	rv = bus_dmamap_load_mbuf(sc->sc_dmat, mb->mb_map, m, BUS_DMA_NOWAIT);
-	KERNEL_UNLOCK();
 	if (rv != 0)
 		goto put;
 
