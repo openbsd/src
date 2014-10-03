@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.64 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.65 2014/10/03 06:36:10 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1716,15 +1716,18 @@ myx_intr(void *arg)
 		return (1);
 	}
 
-	KERNEL_LOCK();
-	if (link != 0xffffffff)
+	if (link != 0xffffffff) {
+		KERNEL_LOCK();
 		myx_link_state(sc, link);
+		KERNEL_UNLOCK();
+	}
 
 	if (ISSET(ifp->if_flags, IFF_OACTIVE)) {
+		KERNEL_LOCK();
 		CLR(ifp->if_flags, IFF_OACTIVE);
 		myx_start(ifp);
+		KERNEL_UNLOCK();
 	}
-	KERNEL_UNLOCK();
 
 	for (i = 0; i < 2; i++) {
 		if (ISSET(refill, 1 << i)) {
