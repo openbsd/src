@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.67 2014/10/03 09:52:01 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.68 2014/10/03 13:10:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1796,6 +1796,7 @@ myx_rxeof(struct myx_softc *sc)
 {
 	static const struct myx_intrq_desc zerodesc = { 0, 0 };
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct myx_buf *mb;
 	struct mbuf *m;
 	int ring;
@@ -1830,15 +1831,7 @@ myx_rxeof(struct myx_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
-		KERNEL_LOCK();
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		ether_input_mbuf(ifp, m);
-		KERNEL_UNLOCK();
-		ifp->if_ipackets++;
+		ml_enqueue(&ml, m);
 
 		myx_buf_put(&sc->sc_rx_buf_free[ring], mb);
 
@@ -1858,6 +1851,20 @@ myx_rxeof(struct myx_softc *sc)
 
 		SET(rings, 1 << ring);
 	}
+
+	ifp->if_ipackets += ml_len(&ml);
+
+	KERNEL_LOCK();
+#if NBPFILTER > 0
+	if (ifp->if_bpf) {
+		MBUF_LIST_FOREACH(&ml, m)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+	}
+#endif
+
+	while ((m = ml_dequeue(&ml)) != NULL)
+		ether_input_mbuf(ifp, m);
+	KERNEL_UNLOCK();
 
 	return (rings);
 }
