@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.41 2014/07/10 08:25:00 guenther Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.42 2014/10/03 13:58:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -244,6 +244,7 @@ ssl_cert_dup(CERT *cert)
 		}
 	}
 	ret->ecdh_tmp_cb = cert->ecdh_tmp_cb;
+	ret->ecdh_tmp_auto = cert->ecdh_tmp_auto;
 
 	for (i = 0; i < SSL_PKEY_NUM; i++) {
 		if (cert->pkeys[i].x509 != NULL) {

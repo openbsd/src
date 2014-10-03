@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.70 2014/09/30 15:40:09 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.71 2014/10/03 13:58:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -439,13 +439,16 @@ typedef struct cert_st {
 	int valid;
 	unsigned long mask_k;
 	unsigned long mask_a;
+
 	RSA *rsa_tmp;
 	RSA *(*rsa_tmp_cb)(SSL *ssl, int is_export, int keysize);
+
 	DH *dh_tmp;
 	DH *(*dh_tmp_cb)(SSL *ssl, int is_export, int keysize);
+
 	EC_KEY *ecdh_tmp;
-	/* Callback for generating ephemeral ECDH keys */
 	EC_KEY *(*ecdh_tmp_cb)(SSL *ssl, int is_export, int keysize);
+	int ecdh_tmp_auto;
 
 	CERT_PKEY pkeys[SSL_PKEY_NUM];
 
@@ -799,6 +802,7 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 int tls1_ec_curve_id2nid(int curve_id);
 int tls1_ec_nid2curve_id(int nid);
 int tls1_check_curve(SSL *s, const unsigned char *p, size_t len);
+int tls1_get_shared_curve(SSL *s);
 
 unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p,
     unsigned char *limit);

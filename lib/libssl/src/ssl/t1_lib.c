@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.59 2014/09/30 15:40:09 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.60 2014/10/03 13:58:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -408,6 +408,35 @@ tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
 	return (0);
 }
 
+int
+tls1_get_shared_curve(SSL *s)
+{
+	const unsigned char *pref, *supp, *tsupp;
+	size_t preflen, supplen, i, j;
+	unsigned long server_pref;
+	int id;
+
+	/* Cannot do anything on the client side. */
+	if (s->server == 0)
+		return (NID_undef);
+
+	/* Return first preference shared curve. */
+	server_pref = (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE);
+	tls1_get_curvelist(s, (server_pref == 0), &pref, &preflen);
+	tls1_get_curvelist(s, (server_pref != 0), &supp, &supplen);
+
+	for (i = 0; i < preflen; i += 2, pref += 2) {
+		tsupp = supp;
+		for (j = 0; j < supplen; j += 2, tsupp += 2) {
+			if (pref[0] == tsupp[0] && pref[1] == tsupp[1]) {
+				id = (pref[0] << 8) | pref[1];
+				return (tls1_ec_curve_id2nid(id));
+			}
+		}
+	}
+	return (NID_undef);
+}
+
 /* For an EC key set TLS ID and required compression based on parameters. */
 static int
 tls1_set_ec_id(unsigned char *curve_id, unsigned char *comp_id, EC_KEY *ec)
@@ -524,11 +553,17 @@ tls1_check_ec_tmp_key(SSL *s)
 	EC_KEY *ec = s->cert->ecdh_tmp;
 	unsigned char curve_id[2];
 
+	if (s->cert->ecdh_tmp_auto != 0) {
+		/* Need a shared curve. */
+		if (tls1_get_shared_curve(s) != NID_undef)
+			return (1);
+		return (0);
+	}
+
 	if (ec == NULL) {
 		if (s->cert->ecdh_tmp_cb != NULL)
 			return (1);
-		else
-			return (0);
+		return (0);
 	}
 	if (tls1_set_ec_id(curve_id, NULL, ec) != 1)
 		return (0);

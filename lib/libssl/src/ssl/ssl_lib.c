@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.84 2014/09/07 12:16:23 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.85 2014/10/03 13:58:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1943,7 +1943,8 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	rsa_tmp = (c->rsa_tmp != NULL || c->rsa_tmp_cb != NULL);
 	dh_tmp = (c->dh_tmp != NULL || c->dh_tmp_cb != NULL);
 
-	have_ecdh_tmp = (c->ecdh_tmp != NULL || c->ecdh_tmp_cb != NULL);
+	have_ecdh_tmp = (c->ecdh_tmp != NULL || c->ecdh_tmp_cb != NULL ||
+	    c->ecdh_tmp_auto != 0);
 	cpk = &(c->pkeys[SSL_PKEY_RSA_ENC]);
 	rsa_enc = (cpk->x509 != NULL && cpk->privatekey != NULL);
 	cpk = &(c->pkeys[SSL_PKEY_RSA_SIGN]);
