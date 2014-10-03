@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.43 2014/10/02 19:22:43 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.44 2014/10/03 13:41:03 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -188,12 +188,21 @@ server_ssl_init(struct server *srv)
 		return (-1);
 	}
 
-	ressl_config_set_ciphers(srv->srv_ressl_config,
-	    srv->srv_conf.ssl_ciphers);
-	ressl_config_set_cert_mem(srv->srv_ressl_config,
-	    srv->srv_conf.ssl_cert, srv->srv_conf.ssl_cert_len);
-	ressl_config_set_key_mem(srv->srv_ressl_config,
-	    srv->srv_conf.ssl_key, srv->srv_conf.ssl_key_len);
+	if (ressl_config_set_ciphers(srv->srv_ressl_config,
+	    srv->srv_conf.ssl_ciphers) != 0) {
+		log_warn("%s: failed to set ressl ciphers", __func__);
+		return (-1);
+	}
+	if (ressl_config_set_cert_mem(srv->srv_ressl_config,
+	    srv->srv_conf.ssl_cert, srv->srv_conf.ssl_cert_len) != 0) {
+		log_warn("%s: failed to set ressl cert", __func__);
+		return (-1);
+	}
+	if (ressl_config_set_key_mem(srv->srv_ressl_config,
+	    srv->srv_conf.ssl_key, srv->srv_conf.ssl_key_len) != 0) {
+		log_warn("%s: failed to set ressl key", __func__);
+		return (-1);
+	}
 
 	if (ressl_configure(srv->srv_ressl_ctx, srv->srv_ressl_config) != 0) {
 		log_warn("%s: failed to configure SSL - %s", __func__,
@@ -202,6 +211,7 @@ server_ssl_init(struct server *srv)
 	}
 
 	/* We're now done with the public/private key... */
+	ressl_config_clear_keys(srv->srv_ressl_config);
 	explicit_bzero(srv->srv_conf.ssl_cert, srv->srv_conf.ssl_cert_len);
 	explicit_bzero(srv->srv_conf.ssl_key, srv->srv_conf.ssl_key_len);
 	free(srv->srv_conf.ssl_cert);
