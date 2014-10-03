@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_internal.h,v 1.11 2014/09/29 15:11:29 jsing Exp $ */
+/* $OpenBSD: ressl_internal.h,v 1.12 2014/10/03 14:14:40 tedu Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -37,7 +37,8 @@ struct ressl_config {
 	char *key_mem;
 	size_t key_len;
 	uint32_t protocols;
-	int verify;
+	int verify_cert;
+	int verify_host;
 	int verify_depth;
 };
 

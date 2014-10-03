@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_config.c,v 1.13 2014/10/03 14:09:09 jsing Exp $ */
+/* $OpenBSD: ressl_config.c,v 1.14 2014/10/03 14:14:40 tedu Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -182,13 +182,20 @@ ressl_config_set_verify_depth(struct ressl_config *config, int verify_depth)
 }
 
 void
-ressl_config_insecure_no_verify(struct ressl_config *config)
+ressl_config_insecure_noverifyhost(struct ressl_config *config)
 {
-	config->verify = 0;
+	config->verify_host = 0;
+}
+
+void
+ressl_config_insecure_noverifycert(struct ressl_config *config)
+{
+	config->verify_cert = 0;
 }
 
 void
 ressl_config_verify(struct ressl_config *config)
 {
-	config->verify = 1;
+	config->verify_host = 1;
+	config->verify_cert = 1;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_client.c,v 1.4 2014/09/29 15:11:29 jsing Exp $ */
+/* $OpenBSD: ressl_client.c,v 1.5 2014/10/03 14:14:40 tedu Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -142,12 +142,14 @@ ressl_connect_socket(struct ressl *ctx, int socket, const char *hostname)
 	if (ressl_configure_ssl(ctx) != 0)
 		goto err;
 
-	if (ctx->config->verify) {
+	if (ctx->config->verify_host) {
 		if (hostname == NULL) {
 			ressl_set_error(ctx, "server name not specified");
 			goto err;
 		}
+	}
 
+	if (ctx->config->verify_cert) {
 		SSL_CTX_set_verify(ctx->ssl_ctx, SSL_VERIFY_PEER, NULL);
 
 		if (SSL_CTX_load_verify_locations(ctx->ssl_ctx,
@@ -188,7 +190,7 @@ ressl_connect_socket(struct ressl *ctx, int socket, const char *hostname)
 		goto err;
 	}
 
-	if (ctx->config->verify) {
+	if (ctx->config->verify_host) {
 		cert = SSL_get_peer_certificate(ctx->ssl_conn);
 		if (cert == NULL) {
 			ressl_set_error(ctx, "no server certificate");
