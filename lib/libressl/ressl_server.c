@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_server.c,v 1.9 2014/09/29 15:31:38 jsing Exp $ */
+/* $OpenBSD: ressl_server.c,v 1.10 2014/10/03 14:09:09 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -62,7 +62,9 @@ ressl_configure_server(struct ressl *ctx)
 	if (ressl_configure_keypair(ctx) != 0)
 		goto err;
 
-	if (ctx->config->ecdhcurve != NID_undef) {
+	if (ctx->config->ecdhcurve == -1) {
+		SSL_CTX_set_ecdh_auto(ctx->ssl_ctx, 1);
+	} else if (ctx->config->ecdhcurve != NID_undef) {
 		if ((ecdh_key = EC_KEY_new_by_curve_name(
 		    ctx->config->ecdhcurve)) == NULL) {
 			ressl_set_error(ctx, "failed to set ECDH curve");

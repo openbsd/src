@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_config.c,v 1.12 2014/09/29 15:11:29 jsing Exp $ */
+/* $OpenBSD: ressl_config.c,v 1.13 2014/10/03 14:09:09 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -71,10 +71,9 @@ ressl_config_new(void)
 		ressl_config_free(config);
 		return (NULL);
 	}
+	ressl_config_set_ecdhcurve(config, "auto");
 	ressl_config_set_protocols(config, RESSL_PROTOCOLS_DEFAULT);
 	ressl_config_set_verify_depth(config, 6);
-	/* ? use function ? */
-	config->ecdhcurve = NID_X9_62_prime256v1;
 	
 	ressl_config_verify(config);
 
@@ -141,12 +140,17 @@ ressl_config_set_ciphers(struct ressl_config *config, const char *ciphers)
 int
 ressl_config_set_ecdhcurve(struct ressl_config *config, const char *name)
 {
-	int nid = NID_undef;
+	int nid;
 
-	if (name != NULL && (nid = OBJ_txt2nid(name)) == NID_undef)
+	if (name == NULL)
+		nid = NID_undef;
+	else if (strcasecmp(name, "auto") == 0)
+		nid = -1;
+	else if ((nid = OBJ_txt2nid(name)) == NID_undef)
 		return (-1);
 
 	config->ecdhcurve = nid;
+
 	return (0);
 }
 
