@@ -96,7 +96,7 @@
 ./usr/lib/libperl.so.15.0
 ./usr/lib/libpthread.so.18.1
 ./usr/lib/libreadline.so.4.0
-./usr/lib/libressl.so.1.1
+./usr/lib/libressl.so.2.0
 ./usr/lib/librpcsvc.so.2.0
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.6.0
