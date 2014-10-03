@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.42 2014/10/03 18:06:47 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.43 2014/10/03 22:25:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1965,6 +1965,7 @@ uvm_pagezero_thread(void *arg)
 
 	KERNEL_UNLOCK();
 
+	TAILQ_INIT(&pgl);
 	for (;;) {
 		uvm_lock_fpageq();
 		while (uvmexp.zeropages >= UVM_PAGEZERO_TARGET ||
