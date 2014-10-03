@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.77 2014/09/07 08:17:44 guenther Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.78 2014/10/03 17:41:00 kettenis Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1114,7 +1114,11 @@ Case2:
 				goto ReFault;
 			}
 
-			return (EACCES); /* XXX i/o error */
+			if (!UVM_ET_ISNOFAULT(ufi.entry))
+				return (EACCES); /* XXX i/o error */
+
+			uobjpage = PGO_DONTCARE;	
+			promote = TRUE;
 		}
 
 		/* re-verify the state of the world.  */
@@ -1132,7 +1136,7 @@ Case2:
 		}
 
 		/* didn't get the lock?   release the page and retry. */
-		if (locked == FALSE) {
+		if (locked == FALSE && uobjpage != PGO_DONTCARE) {
 			uvm_lock_pageq();
 			/* make sure it is in queues */
 			uvm_pageactivate(uobjpage);

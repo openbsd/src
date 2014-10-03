@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.56 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.57 2014/10/03 17:41:00 kettenis Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -90,7 +90,8 @@ struct uvm {
 #define UVM_ET_SUBMAP		0x02	/* it is a vm_map submap */
 #define UVM_ET_COPYONWRITE 	0x04	/* copy_on_write */
 #define UVM_ET_NEEDSCOPY	0x08	/* needs_copy */
-#define	UVM_ET_HOLE		0x10	/* no backend */
+#define UVM_ET_HOLE		0x10	/* no backend */
+#define UVM_ET_NOFAULT		0x20	/* don't fault */
 #define UVM_ET_FREEMAPPED	0x80	/* map entry is on free list (DEBUG) */
 
 #define UVM_ET_ISOBJ(E)		(((E)->etype & UVM_ET_OBJ) != 0)
@@ -98,6 +99,7 @@ struct uvm {
 #define UVM_ET_ISCOPYONWRITE(E)	(((E)->etype & UVM_ET_COPYONWRITE) != 0)
 #define UVM_ET_ISNEEDSCOPY(E)	(((E)->etype & UVM_ET_NEEDSCOPY) != 0)
 #define UVM_ET_ISHOLE(E)	(((E)->etype & UVM_ET_HOLE) != 0)
+#define UVM_ET_ISNOFAULT(E)	(((E)->etype & UVM_ET_NOFAULT) != 0)
 
 #ifdef _KERNEL
 

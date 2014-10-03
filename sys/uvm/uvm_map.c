@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.175 2014/08/14 17:21:38 miod Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.176 2014/10/03 17:41:00 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1142,6 +1142,8 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 		entry->etype |= UVM_ET_OBJ;
 	else if (flags & UVM_FLAG_HOLE)
 		entry->etype |= UVM_ET_HOLE;
+	if (flags & UVM_FLAG_NOFAULT)
+		entry->etype |= UVM_ET_NOFAULT;
 	if (flags & UVM_FLAG_COPYONW) {
 		entry->etype |= UVM_ET_COPYONWRITE;
 		if ((flags & UVM_FLAG_OVERLAY) == 0)

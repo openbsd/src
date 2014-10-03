@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.98 2014/07/12 18:44:01 tedu Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.99 2014/10/03 17:41:00 kettenis Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1004,6 +1004,8 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 
 		if ((flags & MAP_SHARED) == 0)
 			uvmflag |= UVM_FLAG_COPYONW;
+		if (flags & __MAP_NOFAULT)
+			uvmflag |= (UVM_FLAG_NOFAULT | UVM_FLAG_OVERLAY);
 	}
 
 	/* set up mapping flags */

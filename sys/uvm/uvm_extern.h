@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.119 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.120 2014/10/03 17:41:00 kettenis Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -148,14 +148,15 @@ typedef int		vm_prot_t;
 #define UVM_ADV_MASK	0x7	/* mask */
 
 /* mapping flags */
-#define UVM_FLAG_FIXED   0x010000 /* find space */
-#define UVM_FLAG_OVERLAY 0x020000 /* establish overlay */
-#define UVM_FLAG_NOMERGE 0x040000 /* don't merge map entries */
-#define UVM_FLAG_COPYONW 0x080000 /* set copy_on_write flag */
-#define UVM_FLAG_AMAPPAD 0x100000 /* for bss: pad amap to reduce malloc() */
-#define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
-#define	UVM_FLAG_HOLE    0x400000 /* no backend */
-#define UVM_FLAG_QUERY   0x800000 /* do everything, except actual execution */
+#define UVM_FLAG_FIXED   0x0010000 /* find space */
+#define UVM_FLAG_OVERLAY 0x0020000 /* establish overlay */
+#define UVM_FLAG_NOMERGE 0x0040000 /* don't merge map entries */
+#define UVM_FLAG_COPYONW 0x0080000 /* set copy_on_write flag */
+#define UVM_FLAG_AMAPPAD 0x0100000 /* for bss: pad amap to reduce malloc() */
+#define UVM_FLAG_TRYLOCK 0x0200000 /* fail if we can not lock map */
+#define UVM_FLAG_HOLE    0x0400000 /* no backend */
+#define UVM_FLAG_QUERY   0x0800000 /* do everything, except actual execution */
+#define UVM_FLAG_NOFAULT 0x1000000 /* don't fault */
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & UVM_PROT_MASK)
