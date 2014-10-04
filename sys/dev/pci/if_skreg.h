@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.58 2013/03/17 10:56:23 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.59 2014/10/04 18:20:50 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -354,6 +354,8 @@
 #define SK_YUKON_SUPR		0xB9
 #define SK_YUKON_ULTRA2		0xBA
 #define SK_YUKON_OPTIMA		0xBC
+#define SK_YUKON_PRM		0xBD
+#define SK_YUKON_OPTIMA2	0xBE
 
 #define SK_IS_GENESIS(sc) \
     ((sc)->sk_type == SK_GENESIS)
@@ -379,6 +381,7 @@
 #define SK_YUKON_EC_U_REV_A0	0x1
 #define SK_YUKON_EC_U_REV_A1	0x2
 #define SK_YUKON_EC_U_REV_B0	0x3
+#define SK_YUKON_EC_U_REV_B1	0x5
 
 #define SK_YUKON_FE_REV_A1	0x1
 #define SK_YUKON_FE_REV_A2	0x2
@@ -389,6 +392,11 @@
 #define SK_YUKON_EX_REV_B0	0x2
 
 #define SK_YUKON_SUPR_REV_A0	0x0
+#define SK_YUKON_SUPR_REV_B0	0x1
+#define SK_YUKON_SUPR_REV_B1	0x3
+
+#define SK_YUKON_PRM_REV_Z1	0x1
+#define SK_YUKON_PRM_REV_A0	0x2
 
 #define SK_IMCTL_IRQ_CLEAR	0x01
 #define SK_IMCTL_STOP		0x02

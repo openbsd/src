@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.107 2014/09/23 21:16:42 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.108 2014/10/04 18:20:50 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -211,6 +211,7 @@ const struct pci_matchid mskc_devices[] = {
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8071 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8072 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8075 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8079 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C032 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C033 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C034 },
@@ -764,6 +765,8 @@ mskc_reset(struct sk_softc *sc)
 	case SK_YUKON_SUPR:
 	case SK_YUKON_ULTRA2:
 	case SK_YUKON_OPTIMA:
+	case SK_YUKON_PRM:
+	case SK_YUKON_OPTIMA2:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
 		break;
 	case SK_YUKON_FE:
@@ -830,6 +833,8 @@ msk_probe(struct device *parent, void *match, void *aux)
 	case SK_YUKON_SUPR:
 	case SK_YUKON_ULTRA2:
 	case SK_YUKON_OPTIMA:
+	case SK_YUKON_PRM:
+	case SK_YUKON_OPTIMA2:
 		return (1);
 	}
 
@@ -1213,10 +1218,16 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sk_name = "Yukon-2 Supreme";
 		break;
 	case SK_YUKON_ULTRA2:
-		sc->sk_name = "Yukon-2 Ultra2";
+		sc->sk_name = "Yukon-2 Ultra 2";
 		break;
 	case SK_YUKON_OPTIMA:
 		sc->sk_name = "Yukon-2 Optima";
+		break;
+	case SK_YUKON_PRM:
+		sc->sk_name = "Yukon-2 Optima Prime";
+		break;
+	case SK_YUKON_OPTIMA2:
+		sc->sk_name = "Yukon-2 Optima 2";
 		break;
 	default:
 		sc->sk_name = "Yukon (Unknown)";
@@ -1268,6 +1279,9 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		case SK_YUKON_EC_U_REV_B0:
 			revstr = "B0";
 			break;
+		case SK_YUKON_EC_U_REV_B1:
+			revstr = "B1";
+			break;
 		default:
 			;
 		}
@@ -1302,9 +1316,34 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	if (sc->sk_type == SK_YUKON_SUPR && sc->sk_rev == SK_YUKON_SUPR_REV_A0)
-		revstr = "A0";
+	if (sc->sk_type == SK_YUKON_SUPR) {
+		switch (sc->sk_rev) {
+		case SK_YUKON_SUPR_REV_A0:
+			revstr = "A0";
+			break;
+		case SK_YUKON_SUPR_REV_B0:
+			revstr = "B0";
+			break;
+		case SK_YUKON_SUPR_REV_B1:
+			revstr = "B1";
+			break;
+		default:
+			;
+		}
+	}
 
+	if (sc->sk_type == SK_YUKON_PRM) {
+		switch (sc->sk_rev) {
+		case SK_YUKON_PRM_REV_Z1:
+			revstr = "Z1";
+			break;
+		case SK_YUKON_PRM_REV_A0:
+			revstr = "A0";
+			break;
+		default:
+			;
+		}
+	}
 
 	/* Announce the product name. */
 	printf(", %s", sc->sk_name);
