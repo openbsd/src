@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.111 2014/10/03 20:47:41 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.112 2014/10/04 13:02:13 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -134,6 +134,16 @@ extern void	get_autoboot_device(void);	/* in autoconf.c */
 /*
  * *int_mask_reg[CPU]
  * Points to the hardware interrupt status register for each CPU.
+ *
+ * When write:
+ * Bits 31 to 26 are used to enable ('1') or disable ('0') each
+ * interrupt level.  Bit 31 is for level 6, bit 26 is for level 1.
+ * 
+ * When read:
+ * Bits 31 to 29 shows the highest level of current (or most recent?)
+ * interrupt in 3 bits binary value (0 to 7).
+ * Bits 23 to 18 shows the current mask, which is the most recent
+ * written value in bits 31 to 26 as described above.
  */
 volatile u_int32_t *int_mask_reg[] = {
 	(u_int32_t *)INT_ST_MASK0,
@@ -793,13 +803,14 @@ luna88k_ext_int(struct trapframe *eframe)
 
 	cur_int_level = cur_isr >> 29;
 
-	if (cur_int_level == 0) {
-		/*
-		 * ignore level 0 interrupt, as CMU Mach do.
-		 */
-		flush_pipeline();	/* need this? */
+	/*
+	 * Ignore level 0 interrupt and 'hardware lied' interrupt,
+	 * as same as CMU Mach do.  The 'hardware lied' means that
+	 * the received interrupt level is what we have masked before.
+	 */
+	if (cur_int_level == 0 ||
+	    !(cur_isr & (1 << (cur_int_level + 17))))
 		goto out;
-	}
 
 	uvmexp.intrs++;
 
@@ -818,10 +829,8 @@ luna88k_ext_int(struct trapframe *eframe)
 		cur_isr = *int_mask_reg[cpu];
 		cur_int_level = cur_isr >> 29;
 	}
-	if (cur_int_level == 0) {
-		flush_pipeline();	/* need this? */
+	if (cur_int_level == 0)
 		goto out;
-	}
 #endif
 
 #ifdef MULTIPROCESSOR
