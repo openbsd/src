@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.69 2014/10/03 13:41:55 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.70 2014/10/04 11:42:27 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -33,6 +33,7 @@
 #include <sys/timeout.h>
 #include <sys/device.h>
 #include <sys/queue.h>
+#include <sys/atomic.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -2049,27 +2050,16 @@ myx_ring_lock_init(struct myx_ring_lock *mrl)
 int
 myx_ring_enter(struct myx_ring_lock *mrl)
 {
-	int rv = 1;
-
-	mtx_enter(&mrl->mrl_mtx);
-	if (++mrl->mrl_running > 1)
-		rv = 0;
-	mtx_leave(&mrl->mrl_mtx);
-
-	return (rv);
+	return (atomic_inc_int_nv(&mrl->mrl_running) == 1);
 }
 
 int
 myx_ring_leave(struct myx_ring_lock *mrl)
 {
-	int rv = 1;
+	if (atomic_cas_uint(&mrl->mrl_running, 1, 0) == 1)
+		return (1);
 
-	mtx_enter(&mrl->mrl_mtx);
-	if (--mrl->mrl_running > 0) {
-		mrl->mrl_running = 1;
-		rv = 0;
-	}
-	mtx_leave(&mrl->mrl_mtx);
+	mrl->mrl_running = 1;
 
-	return (rv);
+	return (0);
 }
