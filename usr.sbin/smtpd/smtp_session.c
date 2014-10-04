@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.216 2014/10/02 21:27:54 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.217 2014/10/04 08:43:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -146,6 +146,7 @@ struct smtp_session {
 	int			 hdrdone;
 	int			 rcvcount;
 
+	int			 skiphdr;
 	struct event		 pause;
 };
 
@@ -853,6 +854,18 @@ smtp_io(struct io *io, int evt)
 			if (line[0] == '.') {
 				line += 1;
 				len -= 1;
+			}
+
+			if (isspace(line[0]) && s->skiphdr)
+				goto nextline;
+			s->skiphdr = 0;
+
+			/* BCC should be stripped from headers */
+			if (! s->hdrdone) {
+				if (strncasecmp("bcc:", line, 4) == 0) {
+					s->skiphdr = 1;
+					goto nextline;
+				}
 			}
 
 			if (!(s->flags & SF_8BITMIME))
