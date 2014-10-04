@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.129 2014/08/25 15:36:00 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.130 2014/10/04 15:48:24 miod Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -610,7 +610,7 @@ again:
 			    ressl_error(ssl));
 			goto cleanup_url_get;
 		}
-		if (ressl_connect_socket(ssl, s, sslhost) != 0) {
+		if (ressl_connect_socket(ssl, s, host) != 0) {
 			fprintf(ttyout, "SSL failure: %s\n", ressl_error(ssl));
 			goto cleanup_url_get;
 		}
