@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.68 2014/05/09 18:16:15 miod Exp $
+#	$OpenBSD: Makefile.macppc,v 1.69 2014/10/04 18:10:14 brad Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -25,7 +25,7 @@ INCLUDES=	-nostdinc -I$S -I. -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__ -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-main -Wno-uninitialized \
-		-Wstack-larger-than-2047
+		-Wframe-larger-than=2047
 
 CMACHFLAGS=	-msoft-float -Wa,-many
 CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \

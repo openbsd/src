@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.solbourne,v 1.43 2014/09/26 14:39:43 jsg Exp $
+#	$OpenBSD: Makefile.solbourne,v 1.44 2014/10/04 18:10:14 brad Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -25,7 +25,7 @@ INCLUDES=	-nostdinc -I$S -I. -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__ -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-main -Wno-uninitialized \
-		-Wstack-larger-than-2047
+		-Wframe-larger-than=2047
 
 CMACHFLAGS=	-mno-fpu
 CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
