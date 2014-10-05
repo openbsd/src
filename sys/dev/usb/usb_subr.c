@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.109 2014/10/01 08:29:01 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.110 2014/10/05 08:40:29 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -901,8 +901,8 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 				 "error=%s\n", parent->dv_xname, port,
 				 addr, usbd_errstr(err)));
 #else
-			printf("%s: port %d, set config at addr %d failed\n",
-			    parent->dv_xname, port, addr);
+			printf("%s: port %d, set config %d at addr %d failed\n",
+			    parent->dv_xname, port, confi, addr);
 #endif
 
  			goto fail;
@@ -1160,23 +1160,6 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 
 	USETW(dev->def_ep_desc.wMaxPacketSize, dd->bMaxPacketSize);
 
-	/* Re-establish the default pipe with the new max packet size. */
-	usbd_close_pipe(dev->default_pipe);
-	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
-	    &dev->default_pipe);
-	if (err) {
-		usb_free_device(dev);
-		up->device = NULL;
-		return (err);
-	}
-
-	err = usbd_reload_device_desc(dev);
-	if (err) {
-		usb_free_device(dev);
-		up->device = NULL;
-		return (err);
-	}
-
 	/* Set the address if the HC didn't do it already. */
 	if (bus->methods->dev_setaddr != NULL &&
 	    bus->methods->dev_setaddr(dev, addr)) {
@@ -1192,10 +1175,7 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	dev->address = addr;
 	bus->devices[addr] = dev;
 
-	/* Re-establish the default pipe with the new address. */
-	usbd_close_pipe(dev->default_pipe);
-	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
-	    &dev->default_pipe);
+	err = usbd_reload_device_desc(dev);
 	if (err) {
 		usb_free_device(dev);
 		up->device = NULL;

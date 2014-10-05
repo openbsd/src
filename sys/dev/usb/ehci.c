@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.168 2014/09/01 08:13:02 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.169 2014/10/05 08:40:29 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -99,6 +99,7 @@ struct ehci_pipe {
 u_int8_t		ehci_reverse_bits(u_int8_t, int);
 
 usbd_status	ehci_open(struct usbd_pipe *);
+int		ehci_setaddr(struct usbd_device *, int);
 void		ehci_poll(struct usbd_bus *);
 void		ehci_softintr(void *);
 int		ehci_intr1(struct ehci_softc *);
@@ -215,7 +216,7 @@ void		ehci_dump_exfer(struct ehci_xfer *);
 
 struct usbd_bus_methods ehci_bus_methods = {
 	.open_pipe = ehci_open,
-	.dev_setaddr = usbd_set_address,
+	.dev_setaddr = ehci_setaddr,
 	.soft_intr = ehci_softintr,
 	.do_poll = ehci_poll,
 	.allocx = ehci_allocx,
@@ -603,6 +604,40 @@ ehci_pcd(struct ehci_softc *sc, struct usbd_xfer *xfer)
 	xfer->status = USBD_NORMAL_COMPLETION;
 
 	usb_transfer_complete(xfer);
+}
+
+/*
+ * Work around the half configured control (default) pipe when setting
+ * the address of a device.
+ *
+ * Because a single QH is setup per endpoint in ehci_open(), and the
+ * control pipe is configured before we could have set the address
+ * of the device or read the wMaxPacketSize of the endpoint, we have
+ * to re-open the pipe twice here.
+ */
+int
+ehci_setaddr(struct usbd_device *dev, int addr)
+{
+	/* Root Hub */
+	if (dev->depth == 0)
+		return (0);
+
+	/* Re-establish the default pipe with the new max packet size. */
+	ehci_close_pipe(dev->default_pipe);
+	if (ehci_open(dev->default_pipe))
+		return (EINVAL);
+
+	if (usbd_set_address(dev, addr))
+		return (1);
+
+	dev->address = addr;
+
+	/* Re-establish the default pipe with the new address. */
+	ehci_close_pipe(dev->default_pipe);
+	if (ehci_open(dev->default_pipe))
+		return (EINVAL);
+
+	return (0);
 }
 
 void

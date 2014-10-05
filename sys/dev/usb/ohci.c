@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.139 2014/08/10 11:18:57 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.140 2014/10/05 08:40:29 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -88,6 +88,7 @@ usbd_status	ohci_alloc_std_chain(struct ohci_softc *, u_int,
 		    struct ohci_soft_td **);
 
 usbd_status	ohci_open(struct usbd_pipe *);
+int		ohci_setaddr(struct usbd_device *, int);
 void		ohci_poll(struct usbd_bus *);
 void		ohci_softintr(void *);
 void		ohci_waitintr(struct ohci_softc *, struct usbd_xfer *);
@@ -232,7 +233,7 @@ struct ohci_pipe {
 
 struct usbd_bus_methods ohci_bus_methods = {
 	.open_pipe = ohci_open,
-	.dev_setaddr = usbd_set_address,
+	.dev_setaddr = ohci_setaddr,
 	.soft_intr = ohci_softintr,
 	.do_poll = ohci_poll,
 	.allocx = ohci_allocx,
@@ -2003,6 +2004,40 @@ ohci_open(struct usbd_pipe *pipe)
  bad0:
 	return (USBD_NOMEM);
 
+}
+
+/*
+ * Work around the half configured control (default) pipe when setting
+ * the address of a device.
+ *
+ * Because a single ED is setup per endpoint in ohci_open(), and the
+ * control pipe is configured before we could have set the address
+ * of the device or read the wMaxPacketSize of the endpoint, we have
+ * to re-open the pipe twice here.
+ */
+int
+ohci_setaddr(struct usbd_device *dev, int addr)
+{
+	/* Root Hub */
+	if (dev->depth == 0)
+		return (0);
+
+	/* Re-establish the default pipe with the new max packet size. */
+	ohci_device_ctrl_close(dev->default_pipe);
+	if (ohci_open(dev->default_pipe))
+		return (EINVAL);
+
+	if (usbd_set_address(dev, addr))
+		return (1);
+
+	dev->address = addr;
+
+	/* Re-establish the default pipe with the new address. */
+	ohci_device_ctrl_close(dev->default_pipe);
+	if (ohci_open(dev->default_pipe))
+		return (EINVAL);
+
+	return (0);
 }
 
 /*
