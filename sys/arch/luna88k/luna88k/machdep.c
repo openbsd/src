@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.112 2014/10/04 13:02:13 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.113 2014/10/05 02:12:19 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -857,7 +857,7 @@ luna88k_ext_int(struct trapframe *eframe)
 		case 4:
 		case 3:
 #ifdef MULTIPROCESSOR
-			if (cpu == master_cpu) {
+			if (CPU_IS_PRIMARY(ci)) {
 #endif
 				isrdispatch_autovec(cur_int_level);
 #ifdef MULTIPROCESSOR
@@ -1222,7 +1222,7 @@ setlevel(u_int level)
 	set_value = int_set_val[level];
 
 #ifdef MULTIPROCESSOR
-	if (cpu != master_cpu)
+	if (!CPU_IS_PRIMARY(ci))
 		set_value &= INT_SLAVE_MASK;
 #endif
 
