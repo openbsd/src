@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.27 2014/10/05 12:46:58 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.28 2014/10/05 13:32:14 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -655,8 +655,10 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 
 	slot = XHCI_TRB_GET_SLOT(flags);
 	dci = XHCI_TRB_GET_EP(flags);
-	if (slot > sc->sc_noslot)
-		return; /* XXX */
+	if (slot > sc->sc_noslot) {
+		DPRINTF(("%s: incorrect slot (%u)\n", DEVNAME(sc), slot));
+		return;
+	}
 
 	xp = sc->sc_sdevs[slot].pipes[dci - 1];
 
@@ -713,8 +715,10 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 		xfer->status = USBD_IOERROR;
 		break;
 	case XHCI_CODE_STALL:
-		/* XXX We need to report this condition for umass(4). */
+		/* We need to report this condition for umass(4). */
 		xfer->status = USBD_STALLED;
+
+		/* FALLTHROUGH */
 	case XHCI_CODE_BABBLE:
 		/*
 		 * Since the stack might try to start a new transfer as
@@ -810,7 +814,7 @@ xhci_event_port_change(struct xhci_softc *sc, uint64_t paddr, uint32_t status)
 	uint8_t *p;
 
 	if (XHCI_TRB_GET_CODE(status) != XHCI_CODE_SUCCESS) {
-		DPRINTF(("failed port status event\n"));/* XXX can it happen? */
+		DPRINTF(("%s: failed port status event\n", DEVNAME(sc)));
 		return;
 	}
 
@@ -1670,7 +1674,7 @@ const usb_interface_descriptor_t xhci_ifcd = {
 	1,
 	UICLASS_HUB,
 	UISUBCLASS_HUB,
-	UIPROTO_HSHUBSTT,	/* XXX */
+	UIPROTO_HSHUBSTT,
 	0
 };
 
@@ -1688,7 +1692,7 @@ const usb_endpoint_ss_comp_descriptor_t xhci_endpcd = {
 	UDESC_ENDPOINT_SS_COMP,
 	0,
 	0,
-	{0, 0}			/* XXX */
+	{0, 0}
 };
 
 const usb_hub_descriptor_t xhci_hubd = {
@@ -2218,8 +2222,8 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	trb0->trb_flags |= htole32(toggle0);
 
-	usb_syncmem(&xp->ring.dma, 0, xp->ring.ntrb * sizeof(struct xhci_trb),
-	    BUS_DMASYNC_PREWRITE); /* XXX too big hammer? */
+	usb_syncmem(&xp->ring.dma, TRBOFF(xp->ring, trb0),
+	    3 * sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
 	XDWRITE4(sc, XHCI_DOORBELL(xp->slot), xp->dci);
 
 	xfer->status = USBD_IN_PROGRESS;
