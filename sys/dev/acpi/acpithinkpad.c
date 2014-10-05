@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.38 2014/09/30 08:41:19 phessler Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.39 2014/10/05 01:31:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -66,6 +66,8 @@
 #define	THINKPAD_BUTTON_MICROPHONE_MUTE	0x101b
 #define	THINKPAD_BUTTON_FN_F11		0x100b
 #define	THINKPAD_BUTTON_HIBERNATE	0x100c
+#define	THINKPAD_KEYLIGHT_CHANGED	0x101c
+#define	THINKPAD_BUTTON_CONFIG		0x101d
 #define	THINKPAD_BUTTON_CONFIG		0x101d
 #define	THINKPAD_BUTTON_FIND		0x101e
 #define	THINKPAD_BUTTON_ALL_ACTIVEPROGS	0x101f
@@ -92,6 +94,7 @@
 #define	THINKPAD_THERMAL_TABLE_CHANGED	0x6030
 #define	THINKPAD_POWER_CHANGED		0x6040
 #define	THINKPAD_BACKLIGHT_CHANGED	0x6050
+#define	THINKPAD_TABLET_SCREEN_CHANGED	0x60c0
 #define	THINKPAD_SWITCH_WIRELESS	0x7000
 
 #define THINKPAD_NSENSORS 9
@@ -362,6 +365,7 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 		case THINKPAD_ADAPTIVE_TAB:
 		case THINKPAD_ADAPTIVE_VOICE:
 		case THINKPAD_BACKLIGHT_CHANGED:
+		case THINKPAD_KEYLIGHT_CHANGED:
 		case THINKPAD_BRIGHTNESS_CHANGED:
 		case THINKPAD_BUTTON_BATTERY_INFO:
 		case THINKPAD_BUTTON_EJECT:
@@ -389,6 +393,7 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 		case THINKPAD_TABLET_PEN_REMOVED:
 		case THINKPAD_TABLET_SCREEN_NORMAL:
 		case THINKPAD_TABLET_SCREEN_ROTATED:
+		case THINKPAD_TABLET_SCREEN_CHANGED:
 		case THINKPAD_THERMAL_TABLE_CHANGED:
 			handled = 1;
 			break;
