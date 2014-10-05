@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.19 2014/06/07 11:55:35 aoyama Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.20 2014/10/05 11:46:18 aoyama Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -1532,6 +1532,14 @@ spc_intr(void *arg)
 	struct scsi_link *sc_link;
 	struct spc_tinfo *ti;
 	int n;
+
+	/*
+	 * On LUNA-88K2, 2 spc(4)'s share the level 3 interrupt.
+	 * So, first, check if this deivce needs to process this interrupt.
+	 */
+	ints = bus_space_read_1(iot, ioh, INTS);
+	if (ints == 0)		/* No interrupt event on this device */
+		return 0;
 
 	/*
 	 * Disable interrupt.
