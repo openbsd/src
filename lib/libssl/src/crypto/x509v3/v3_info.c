@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_info.c,v 1.18 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_info.c,v 1.19 2014/10/05 18:28:56 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -159,8 +159,13 @@ v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	}
 	for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
 		cnf = sk_CONF_VALUE_value(nval, i);
-		if (!(acc = ACCESS_DESCRIPTION_new()) ||
-		    !sk_ACCESS_DESCRIPTION_push(ainfo, acc)) {
+		if ((acc = ACCESS_DESCRIPTION_new()) == NULL) {
+			X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
+			    ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+		if (sk_ACCESS_DESCRIPTION_push(ainfo, acc) == 0) {
+			ACCESS_DESCRIPTION_free(acc);
 			X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
 			    ERR_R_MALLOC_FAILURE);
 			goto err;
