@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_akey.c,v 1.12 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_akey.c,v 1.13 2014/10/05 18:26:22 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -120,12 +120,12 @@ v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	CONF_VALUE *cnf;
 	ASN1_OCTET_STRING *ikeyid = NULL;
 	X509_NAME *isname = NULL;
-	GENERAL_NAMES * gens = NULL;
+	STACK_OF(GENERAL_NAME) *gens = NULL;
 	GENERAL_NAME *gen = NULL;
 	ASN1_INTEGER *serial = NULL;
 	X509_EXTENSION *ext;
 	X509 *cert;
-	AUTHORITY_KEYID *akeyid;
+	AUTHORITY_KEYID *akeyid = NULL;
 
 	for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
 		cnf = sk_CONF_VALUE_value(values, i);
@@ -199,6 +199,9 @@ v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	return akeyid;
 
 err:
+	AUTHORITY_KEYID_free(akeyid);
+	GENERAL_NAME_free(gen);
+	sk_GENERAL_NAME_free(gens);
 	X509_NAME_free(isname);
 	M_ASN1_INTEGER_free(serial);
 	M_ASN1_OCTET_STRING_free(ikeyid);
