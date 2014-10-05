@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_crld.c,v 1.12 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_crld.c,v 1.13 2014/10/05 18:27:58 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -134,6 +134,7 @@ set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx, CONF_VALUE *cnf)
 		if (!dnsect) {
 			X509V3err(X509V3_F_SET_DIST_POINT_NAME,
 			    X509V3_R_SECTION_NOT_FOUND);
+			X509_NAME_free(nm);
 			return -1;
 		}
 		ret = X509V3_NAME_from_section(nm, dnsect, MBSTRING_ASC);
