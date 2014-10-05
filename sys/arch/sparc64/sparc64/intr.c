@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.51 2014/10/05 11:32:43 dlg Exp $	*/
+/*	$OpenBSD: intr.c,v 1.52 2014/10/05 11:40:37 dlg Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -333,7 +333,9 @@ softintr_establish(int level, void (*fun)(void *), void *arg)
 void
 softintr_disestablish(void *cookie)
 {
-	free(cookie, M_DEVBUF, 0);
+	struct intrhand *ih = cookie;
+
+	free(ih, M_DEVBUF, sizeof(*ih));
 }
 
 void
