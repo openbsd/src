@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.22 2013/12/18 13:40:08 krw Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.23 2014/10/05 18:43:56 lteo Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ struct bpf_if {
 	struct bpf_if **bif_driverp;	/* pointer into softc */
 	u_int bif_dlt;			/* link layer type */
 	u_int bif_hdrlen;		/* length of header (with padding) */
-	struct ifnet *bif_ifp;		/* correspoding interface */
+	struct ifnet *bif_ifp;		/* corresponding interface */
 };
 
 int	 bpf_setf(struct bpf_d *, struct bpf_program *, int);
