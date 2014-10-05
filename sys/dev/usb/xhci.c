@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.26 2014/10/04 13:07:22 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.27 2014/10/05 12:46:58 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -707,6 +707,10 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 		xx = (struct xhci_xfer *)xfer;
 		if (xx->index != trb_idx)
 			return;
+		break;
+	case XHCI_CODE_TXERR:
+	case XHCI_CODE_SPLITERR:
+		xfer->status = USBD_IOERROR;
 		break;
 	case XHCI_CODE_STALL:
 		/* XXX We need to report this condition for umass(4). */

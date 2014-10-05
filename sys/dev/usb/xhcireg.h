@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.3 2014/08/08 14:28:02 mpi Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.4 2014/10/05 12:46:58 mpi Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -430,6 +430,6 @@ struct xhci_trb {
 #define XHCI_CODE_UNDEFINED	33 	/* Fatal error - impl. specific */
 #define XHCI_CODE_INVALID_SID	34 	/* Invalid stream ID received */
 #define XHCI_CODE_SEC_BW	35 	/* Cannot alloc secondary BW Domain */
-#define XHCI_CODE_SPLIT_XACT	36 	/* USB2 split transaction */
+#define XHCI_CODE_SPLITERR	36 	/* USB2 split transaction */
 
 #endif	/* _XHCIREG_H_ */
