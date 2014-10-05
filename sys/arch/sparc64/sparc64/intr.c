@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.50 2014/10/05 11:30:33 dlg Exp $	*/
+/*	$OpenBSD: intr.c,v 1.51 2014/10/05 11:32:43 dlg Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -327,7 +327,7 @@ softintr_establish(int level, void (*fun)(void *), void *arg)
 	ih->ih_pending = 0;
 	ih->ih_ack = NULL;
 	ih->ih_clr = NULL;
-	return (void *)ih;
+	return (ih);
 }
 
 void
@@ -339,7 +339,7 @@ softintr_disestablish(void *cookie)
 void
 softintr_schedule(void *cookie)
 {
-	struct intrhand *ih = (struct intrhand *)cookie;
+	struct intrhand *ih = cookie;
 
 	send_softint(-1, ih->ih_pil, ih);
 }
