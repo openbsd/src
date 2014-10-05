@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_conf.c,v 1.15 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_conf.c,v 1.16 2014/10/05 18:26:43 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -184,7 +184,7 @@ do_ext_i2d(const X509V3_EXT_METHOD *method, int ext_nid, int crit,
 {
 	unsigned char *ext_der;
 	int ext_len;
-	ASN1_OCTET_STRING *ext_oct;
+	ASN1_OCTET_STRING *ext_oct = NULL;
 	X509_EXTENSION *ext;
 
 	/* Convert internal representation to DER */
@@ -215,6 +215,7 @@ do_ext_i2d(const X509V3_EXT_METHOD *method, int ext_nid, int crit,
 	return ext;
 
 merr:
+	M_ASN1_OCTET_STRING_free(ext_oct);
 	X509V3err(X509V3_F_DO_EXT_I2D, ERR_R_MALLOC_FAILURE);
 	return NULL;
 
