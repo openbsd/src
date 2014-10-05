@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_purp.c,v 1.22 2014/07/13 16:03:10 beck Exp $ */
+/* $OpenBSD: v3_purp.c,v 1.23 2014/10/05 18:33:57 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -204,6 +204,12 @@ X509_PURPOSE_add(int id, int trust, int flags,
 	int idx;
 	X509_PURPOSE *ptmp;
 
+	if (name == NULL || sname == NULL) {
+		X509V3err(X509V3_F_X509_PURPOSE_ADD,
+		    X509V3_R_INVALID_NULL_ARGUMENT);
+		return 0;
+	}
+
 	/* This is set according to what we change: application can't set it */
 	flags &= ~X509_PURPOSE_DYNAMIC;
 	/* This will always be set for application modified trust entries */
@@ -212,7 +218,7 @@ X509_PURPOSE_add(int id, int trust, int flags,
 	idx = X509_PURPOSE_get_by_id(id);
 	/* Need a new entry */
 	if (idx == -1) {
-		if (!(ptmp = malloc(sizeof(X509_PURPOSE)))) {
+		if ((ptmp = malloc(sizeof(X509_PURPOSE))) == NULL) {
 			X509V3err(X509V3_F_X509_PURPOSE_ADD,
 			    ERR_R_MALLOC_FAILURE);
 			return 0;
@@ -227,15 +233,10 @@ X509_PURPOSE_add(int id, int trust, int flags,
 		free(ptmp->sname);
 	}
 	/* dup supplied name */
-	ptmp->name = name ? strdup(name) : NULL;
-	ptmp->sname = sname ? strdup(sname) : NULL;
-	if (!ptmp->name || !ptmp->sname) {
-		free(ptmp->name);
-		free(ptmp->sname);
-		free(ptmp);
-		X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
+	ptmp->name = strdup(name);
+	ptmp->sname = strdup(sname);
+	if (ptmp->name == NULL || ptmp->sname == NULL)
+		goto err;
 	/* Keep the dynamic flag of existing entry */
 	ptmp->flags &= X509_PURPOSE_DYNAMIC;
 	/* Set all other flags */
@@ -248,24 +249,25 @@ X509_PURPOSE_add(int id, int trust, int flags,
 
 	/* If its a new entry manage the dynamic table */
 	if (idx == -1) {
-		if (!xptable && !(xptable = sk_X509_PURPOSE_new(xp_cmp))) {
-			free(ptmp->name);
-			free(ptmp->sname);
-			free(ptmp);
-			X509V3err(X509V3_F_X509_PURPOSE_ADD,
-			    ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		if (!sk_X509_PURPOSE_push(xptable, ptmp)) {
-			free(ptmp->name);
-			free(ptmp->sname);
-			free(ptmp);
-			X509V3err(X509V3_F_X509_PURPOSE_ADD,
-			    ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
+		if (xptable == NULL &&
+		    (xptable = sk_X509_PURPOSE_new(xp_cmp)) == NULL)
+			goto err;
+		if (sk_X509_PURPOSE_push(xptable, ptmp) == 0)
+			goto err;
 	}
 	return 1;
+
+err:
+	free(ptmp->name);
+	free(ptmp->sname);
+	if (idx == -1)
+		free(ptmp);
+	else {
+		ptmp->name = NULL;
+		ptmp->sname = NULL;
+	}
+	X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
+	return 0;
 }
 
 static void
