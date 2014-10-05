@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.h,v 1.15 2014/10/03 21:55:22 bluhm Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.16 2014/10/05 18:14:01 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -43,21 +43,12 @@ int  receive_fd(int);
 extern int nunix;
 extern char *path_unix[MAXUNIX];
 extern char *path_ctlsock;
+extern int fd_ctlsock, fd_ctlconn, fd_klog, fd_sendsys;
+extern int fd_udp, fd_udp6, fd_unix[MAXUNIX];
 
 #define dprintf(_f...)	do { if (Debug) printf(_f); } while (0)
 extern int Debug;
 extern int Startup;
-
-/* fds to poll */
-#define PFD_KLOG	0		/* Offset of /dev/klog entry */
-#define PFD_INET	1		/* Offset of inet socket entry */
-#define PFD_CTLSOCK	2		/* Offset of control socket entry */
-#define PFD_CTLCONN	3		/* Offset of control connection entry */
-#define PFD_INET6	4		/* Offset of inet6 socket entry */
-#define PFD_SENDSYS	5		/* Offset of sendsyslog(2) entry */
-#define PFD_UNIX_0	6		/* Start of Unix socket entries */
-#define N_PFD		(PFD_UNIX_0 + MAXUNIX)	/* # of pollfd entries */
-extern struct pollfd pfd[N_PFD];
 
 struct ringbuf {
 	char *buf;

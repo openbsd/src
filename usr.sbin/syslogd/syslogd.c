@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.127 2014/10/03 21:55:22 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.128 2014/10/05 18:14:01 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -50,6 +50,7 @@
  * extensive changes by Ralph Campbell
  * more extensive changes by Eric Allman (again)
  * memory buffer logging by Damien Miller
+ * IPv6, libevent by Alexander Bluhm
  */
 
 #define	MAXLINE		1024		/* maximum line length */
@@ -81,6 +82,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <err.h>
+#include <event.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <poll.h>
@@ -248,23 +250,28 @@ size_t	ctl_reply_offset = 0;	/* Number of bytes of reply written so far */
 char	*linebuf;
 int	 linesize;
 
-void	 klog_read_handler(int);
-void	 udp_read_handler(int);
-void	 unix_read_handler(int);
+int		 fd_ctlsock, fd_ctlconn, fd_klog, fd_sendsys,
+		 fd_udp, fd_udp6, fd_unix[MAXUNIX];
+struct event	 ev_ctlaccept, ev_ctlread, ev_ctlwrite, ev_klog, ev_sendsys,
+		 ev_udp, ev_udp6, ev_unix[MAXUNIX],
+		 ev_hup, ev_int, ev_quit, ev_term, ev_mark;
 
-struct pollfd pfd[N_PFD];
-
-volatile sig_atomic_t MarkSet;
-volatile sig_atomic_t WantDie;
-volatile sig_atomic_t DoInit;
+void	 klog_readcb(int, short, void *);
+void	 udp_readcb(int, short, void *);
+void	 unix_readcb(int, short, void *);
+void	 die_signalcb(int, short, void *);
+void	 mark_timercb(int, short, void *);
+void	 init_signalcb(int, short, void *);
+void	 ctlsock_acceptcb(int, short, void *);
+void	 ctlconn_readcb(int, short, void *);
+void	 ctlconn_writecb(int, short, void *);
+void	 ctlconn_logto(char *);
+void	 ctlconn_cleanup(void);
 
 struct filed *cfline(char *, char *);
 void	cvthname(struct sockaddr *, char *, size_t);
 int	decode(const char *, const CODE *);
-void	dodie(int);
-void	doinit(int);
 void	die(int);
-void	domark(int);
 void	markit(void);
 void	fprintlog(struct filed *, int, char *);
 void	init(void);
@@ -280,20 +287,16 @@ int	loghost(char *, char **, char **, char **);
 int	getmsgbufsize(void);
 int	unix_socket(char *, int, mode_t);
 void	double_rbuf(int);
-void	ctlsock_accept_handler(void);
-void	ctlconn_read_handler(void);
-void	ctlconn_write_handler(void);
 void	tailify_replytext(char *, int);
-void	ctlconn_logto(char *);
 
 int
 main(int argc, char *argv[])
 {
-	int ch, i, fd;
-	char *p;
-	int lockpipe[2] = { -1, -1}, pair[2], nullfd;
-	struct addrinfo hints, *res, *res0;
-	FILE *fp;
+	struct addrinfo	 hints, *res, *res0;
+	struct timeval	 to;
+	char		*p;
+	int		 ch, i;
+	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
 
 	while ((ch = getopt(argc, argv, "46dhnuf:m:p:a:s:")) != -1)
 		switch (ch) {
@@ -375,12 +378,6 @@ main(int argc, char *argv[])
 		die(0);
 	}
 
-	/* Clear poll array, set all fds to ignore */
-	for (i = 0; i < N_PFD; i++) {
-		pfd[i].fd = -1;
-		pfd[i].events = 0;
-	}
-
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
@@ -394,47 +391,46 @@ main(int argc, char *argv[])
 		die(0);
 	}
 
+	fd_udp = fd_udp6 = -1;
 	for (res = res0; res; res = res->ai_next) {
-		struct pollfd *pfdp;
+		int *fdp;
 
 		switch (res->ai_family) {
 		case AF_INET:
 			if (IPv6Only)
 				continue;
-			pfdp = &pfd[PFD_INET];
+			fdp = &fd_udp;
 			break;
 		case AF_INET6:
 			if (IPv4Only)
 				continue;
-			pfdp = &pfd[PFD_INET6];
+			fdp = &fd_udp6;
 			break;
 		default:
 			continue;
 		}
 
-		if (pfdp->fd >= 0)
+		if (*fdp >= 0)
 			continue;
 
-		fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-		if (fd < 0)
+		*fdp = socket(res->ai_family, res->ai_socktype,
+		    res->ai_protocol);
+		if (*fdp == -1)
 			continue;
 
-		if (bind(fd, res->ai_addr, res->ai_addrlen) < 0) {
+		if (bind(*fdp, res->ai_addr, res->ai_addrlen) < 0) {
 			logerror("bind");
-			close(fd);
+			close(*fdp);
+			*fdp = -1;
 			if (!Debug)
 				die(0);
-			fd = -1;
 			continue;
 		}
 
-		pfdp->fd = fd;
 		if (SecureMode)
-			shutdown(pfdp->fd, SHUT_RD);
-		else {
-			double_rbuf(pfdp->fd);
-			pfdp->events = POLLIN;
-		}
+			shutdown(*fdp, SHUT_RD);
+		else
+			double_rbuf(*fdp);
 	}
 
 	freeaddrinfo(res0);
@@ -443,45 +439,42 @@ main(int argc, char *argv[])
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
 	for (i = 0; i < nunix; i++) {
-		if ((fd = unix_socket(path_unix[i], SOCK_DGRAM, 0666)) == -1) {
+		fd_unix[i] = unix_socket(path_unix[i], SOCK_DGRAM, 0666);
+		if (fd_unix[i] == -1) {
 			if (i == 0 && !Debug)
 				die(0);
 			continue;
 		}
-		double_rbuf(fd);
-		pfd[PFD_UNIX_0 + i].fd = fd;
-		pfd[PFD_UNIX_0 + i].events = POLLIN;
+		double_rbuf(fd_unix[i]);
 	}
 
 	if (socketpair(AF_UNIX, SOCK_DGRAM, PF_UNSPEC, pair) == -1)
 		die(0);
-	fd = pair[0];
-	double_rbuf(fd);
-	pfd[PFD_SENDSYS].fd = fd;
-	pfd[PFD_SENDSYS].events = POLLIN;
+	fd_sendsys = pair[0];
+	double_rbuf(fd_sendsys);
 
+	fd_ctlsock = fd_ctlconn = -1;
 	if (path_ctlsock != NULL) {
-		fd = unix_socket(path_ctlsock, SOCK_STREAM, 0600);
-		if (fd != -1) {
-			if (listen(fd, 16) == -1) {
+		fd_ctlsock = unix_socket(path_ctlsock, SOCK_STREAM, 0600);
+		if (fd_ctlsock == -1) {
+			dprintf("can't open %s (%d)\n", path_ctlsock, errno);
+			if (!Debug)
+				die(0);
+		} else {
+			if (listen(fd_ctlsock, 16) == -1) {
 				logerror("ctlsock listen");
 				die(0);
 			}
-			pfd[PFD_CTLSOCK].fd = fd;
-			pfd[PFD_CTLSOCK].events = POLLIN;
-		} else if (!Debug)
-			die(0);
+		}
 	}
 
-	if ((fd = open(_PATH_KLOG, O_RDONLY, 0)) == -1) {
+	fd_klog = open(_PATH_KLOG, O_RDONLY, 0);
+	if (fd_klog == -1) {
 		dprintf("can't open %s (%d)\n", _PATH_KLOG, errno);
 	} else {
-		pfd[PFD_KLOG].fd = fd;
-		pfd[PFD_KLOG].events = POLLIN;
+		if (ioctl(fd_klog, LIOCSFD, &pair[1]) == -1)
+			dprintf("LIOCSFD errno %d\n", errno);
 	}
-
-	if (ioctl(fd, LIOCSFD, &pair[1]) == -1)
-		dprintf("LIOCSFD errno %d\n", errno);
 	close(pair[1]);
 
 	dprintf("off & running....\n");
@@ -511,6 +504,8 @@ main(int argc, char *argv[])
 
 	/* tuck my process id away */
 	if (!Debug) {
+		FILE *fp;
+
 		fp = fopen(_PATH_LOGPID, "w");
 		if (fp != NULL) {
 			fprintf(fp, "%ld\n", (long)getpid());
@@ -523,12 +518,36 @@ main(int argc, char *argv[])
 		errx(1, "unable to privsep");
 
 	/* Process is now unprivileged and inside a chroot */
+	event_init();
+
+	event_set(&ev_ctlaccept, fd_ctlsock, EV_READ|EV_PERSIST,
+	    ctlsock_acceptcb, &ev_ctlaccept);
+	event_set(&ev_ctlread, fd_ctlconn, EV_READ|EV_PERSIST,
+	    ctlconn_readcb, &ev_ctlread);
+	event_set(&ev_ctlwrite, fd_ctlconn, EV_WRITE|EV_PERSIST,
+	    ctlconn_writecb, &ev_ctlwrite);
+	event_set(&ev_klog, fd_klog, EV_READ|EV_PERSIST, klog_readcb, &ev_klog);
+	event_set(&ev_sendsys, fd_sendsys, EV_READ|EV_PERSIST, unix_readcb,
+	    &ev_sendsys);
+	event_set(&ev_udp, fd_udp, EV_READ|EV_PERSIST, udp_readcb, &ev_udp);
+	event_set(&ev_udp6, fd_udp6, EV_READ|EV_PERSIST, udp_readcb, &ev_udp6);
+	for (i = 0; i < nunix; i++)
+		event_set(&ev_unix[i], fd_unix[i], EV_READ|EV_PERSIST,
+		    unix_readcb, &ev_unix[i]);
+
+	signal_set(&ev_hup, SIGHUP, init_signalcb, &ev_hup);
+	signal_set(&ev_int, SIGINT, die_signalcb, &ev_int);
+	signal_set(&ev_quit, SIGQUIT, die_signalcb, &ev_quit);
+	signal_set(&ev_term, SIGTERM, die_signalcb, &ev_term);
+
+	evtimer_set(&ev_mark, mark_timercb, &ev_mark);
+
 	init();
 
 	Startup = 0;
 
 	/* Allocate ctl socket reply buffer if we have a ctl socket */
-	if (pfd[PFD_CTLSOCK].fd != -1 &&
+	if (fd_ctlsock != -1 &&
 	    (ctl_reply = malloc(CTL_REPLY_MAXSIZE)) == NULL) {
 		logerror("Couldn't allocate ctlsock reply buffer");
 		die(0);
@@ -550,74 +569,51 @@ main(int argc, char *argv[])
 	 */
 	priv_config_parse_done();
 
-	(void)signal(SIGHUP, doinit);
-	(void)signal(SIGTERM, dodie);
-	(void)signal(SIGINT, Debug ? dodie : SIG_IGN);
-	(void)signal(SIGQUIT, Debug ? dodie : SIG_IGN);
+	if (fd_ctlsock != -1)
+		event_add(&ev_ctlaccept, NULL);
+	if (fd_klog != -1)
+		event_add(&ev_klog, NULL);
+	if (fd_sendsys != -1)
+		event_add(&ev_sendsys, NULL);
+	if (!SecureMode) {
+		if (fd_udp != -1)
+			event_add(&ev_udp, NULL);
+		if (fd_udp6 != -1)
+			event_add(&ev_udp6, NULL);
+	}
+	for (i = 0; i < nunix; i++)
+		if (fd_unix[i] != -1)
+			event_add(&ev_unix[i], NULL);
+
+	signal_add(&ev_hup, NULL);
+	signal_add(&ev_term, NULL);
+	if (Debug) {
+		signal_add(&ev_int, NULL);
+		signal_add(&ev_quit, NULL);
+	} else {
+		(void)signal(SIGINT, SIG_IGN);
+		(void)signal(SIGQUIT, SIG_IGN);
+	}
 	(void)signal(SIGCHLD, SIG_IGN);
-	(void)signal(SIGALRM, domark);
 	(void)signal(SIGPIPE, SIG_IGN);
-	(void)alarm(TIMERINTVL);
+
+	to.tv_sec = TIMERINTVL;
+	to.tv_usec = 0;
+	evtimer_add(&ev_mark, &to);
 
 	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: start", LocalHostName, ADDDATE);
 	dprintf("syslogd: started\n");
 
-	for (;;) {
-		if (MarkSet)
-			markit();
-		if (WantDie)
-			die(WantDie);
-
-		if (DoInit) {
-			init();
-			DoInit = 0;
-
-			logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: restart",
-			    LocalHostName, ADDDATE);
-			dprintf("syslogd: restarted\n");
-		}
-
-		switch (poll(pfd, PFD_UNIX_0 + nunix, -1)) {
-		case 0:
-			continue;
-		case -1:
-			if (errno != EINTR)
-				logerror("poll");
-			continue;
-		}
-
-		if ((pfd[PFD_KLOG].revents & POLLIN) != 0) {
-			klog_read_handler(pfd[PFD_KLOG].fd);
-		}
-		if ((pfd[PFD_INET].revents & POLLIN) != 0) {
-			udp_read_handler(pfd[PFD_INET].fd);
-		}
-		if ((pfd[PFD_INET6].revents & POLLIN) != 0) {
-			udp_read_handler(pfd[PFD_INET6].fd);
-		}
-		if ((pfd[PFD_CTLSOCK].revents & POLLIN) != 0)
-			ctlsock_accept_handler();
-		if ((pfd[PFD_CTLCONN].revents & POLLIN) != 0)
-			ctlconn_read_handler();
-		if ((pfd[PFD_CTLCONN].revents & POLLOUT) != 0)
-			ctlconn_write_handler();
-
-		for (i = 0; i < nunix; i++) {
-			if ((pfd[PFD_UNIX_0 + i].revents & POLLIN) != 0) {
-				unix_read_handler(pfd[PFD_UNIX_0 + i].fd);
-			}
-		}
-		if ((pfd[PFD_SENDSYS].revents & POLLIN) != 0)
-			unix_read_handler(pfd[PFD_SENDSYS].fd);
-	}
+	event_dispatch();
 	/* NOTREACHED */
 	return (0);
 }
 
 void
-klog_read_handler(int fd)
+klog_readcb(int fd, short event, void *arg)
 {
-	ssize_t	 n;
+	struct event		*ev = arg;
+	ssize_t			 n;
 
 	n = read(fd, linebuf, linesize - 1);
 	if (n > 0) {
@@ -625,13 +621,12 @@ klog_read_handler(int fd)
 		printsys(linebuf);
 	} else if (n < 0 && errno != EINTR) {
 		logerror("klog");
-		pfd[PFD_KLOG].fd = -1;
-		pfd[PFD_KLOG].events = 0;
+		event_del(ev);
 	}
 }
 
 void
-udp_read_handler(int fd)
+udp_readcb(int fd, short event, void *arg)
 {
 	struct sockaddr_storage	 sa;
 	socklen_t		 salen;
@@ -651,7 +646,7 @@ udp_read_handler(int fd)
 }
 
 void
-unix_read_handler(int fd)
+unix_readcb(int fd, short event, void *arg)
 {
 	struct sockaddr_un	 sa;
 	socklen_t		 salen;
@@ -955,10 +950,10 @@ fprintlog(struct filed *f, int flags, char *msg)
 		dprintf(" %s\n", f->f_un.f_forw.f_loghost);
 		switch (f->f_un.f_forw.f_addr.ss_family) {
 		case AF_INET:
-			fd = pfd[PFD_INET].fd;
+			fd = fd_udp;
 			break;
 		case AF_INET6:
-			fd = pfd[PFD_INET6].fd;
+			fd = fd_udp6;
 			break;
 		default:
 			fd = -1;
@@ -1160,23 +1155,25 @@ cvthname(struct sockaddr *f, char *result, size_t res_len)
 }
 
 void
-dodie(int signo)
+die_signalcb(int signum, short event, void *arg)
 {
-	WantDie = signo;
+	die(signum);
 }
 
-/* ARGSUSED */
 void
-domark(int signo)
+mark_timercb(int unused, short event, void *arg)
 {
-	MarkSet = 1;
+	markit();
 }
 
-/* ARGSUSED */
 void
-doinit(int signo)
+init_signalcb(int signum, short event, void *arg)
 {
-	DoInit = 1;
+	init();
+
+	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: restart",
+	    LocalHostName, ADDDATE);
+	dprintf("syslogd: restarted\n");
 }
 
 /*
@@ -1208,7 +1205,6 @@ die(int signo)
 	char buf[100];
 
 	Initialized = 0;		/* Don't log SIGCHLDs */
-	alarm(0);
 	for (f = Files; f != NULL; f = f->f_next) {
 		/* flush any pending output */
 		if (f->f_prevcount)
@@ -1572,19 +1568,19 @@ cfline(char *line, char *prog)
 		if (proto == NULL)
 			proto = "udp";
 		if (strcmp(proto, "udp") == 0) {
-			if (pfd[PFD_INET].fd == -1)
+			if (fd_udp == -1)
 				proto = "udp6";
-			if (pfd[PFD_INET6].fd == -1)
+			if (fd_udp6 == -1)
 				proto = "udp4";
 		} else if (strcmp(proto, "udp4") == 0) {
-			if (pfd[PFD_INET].fd == -1) {
+			if (fd_udp == -1) {
 				snprintf(ebuf, sizeof(ebuf), "no udp4 \"%s\"",
 				    f->f_un.f_forw.f_loghost);
 				logerror(ebuf);
 				break;
 			}
 		} else if (strcmp(proto, "udp6") == 0) {
-			if (pfd[PFD_INET6].fd == -1) {
+			if (fd_udp6 == -1) {
 				snprintf(ebuf, sizeof(ebuf), "no udp6 \"%s\"",
 				    f->f_un.f_forw.f_loghost);
 				logerror(ebuf);
@@ -1818,8 +1814,6 @@ markit(void)
 			BACKOFF(f);
 		}
 	}
-	MarkSet = 0;
-	(void)alarm(TIMERINTVL);
 }
 
 int
@@ -1891,18 +1885,17 @@ double_rbuf(int fd)
 	}
 }
 
-static void
+void
 ctlconn_cleanup(void)
 {
 	struct filed *f;
 
-	if (close(pfd[PFD_CTLCONN].fd) == -1)
+	if (close(fd_ctlconn) == -1)
 		logerror("close ctlconn");
-
-	pfd[PFD_CTLCONN].fd = -1;
-	pfd[PFD_CTLCONN].events = pfd[PFD_CTLCONN].revents = 0;
-
-	pfd[PFD_CTLSOCK].events = POLLIN;
+	fd_ctlconn = -1;
+	event_del(&ev_ctlread);
+	event_del(&ev_ctlwrite);
+	event_add(&ev_ctlaccept, NULL);
 
 	if (ctl_state == CTL_WRITING_CONT_REPLY)
 		for (f = Files; f != NULL; f = f->f_next)
@@ -1913,12 +1906,13 @@ ctlconn_cleanup(void)
 }
 
 void
-ctlsock_accept_handler(void)
+ctlsock_acceptcb(int fd, short event, void *arg)
 {
-	int fd, flags;
+	struct event		*ev = arg;
+	int			 flags;
 
 	dprintf("Accepting control connection\n");
-	fd = accept(pfd[PFD_CTLSOCK].fd, NULL, NULL);
+	fd = accept(fd, NULL, NULL);
 	if (fd == -1) {
 		if (errno != EINTR && errno != EWOULDBLOCK &&
 		    errno != ECONNABORTED)
@@ -1926,11 +1920,11 @@ ctlsock_accept_handler(void)
 		return;
 	}
 
-	if (pfd[PFD_CTLCONN].fd != -1)
+	if (fd_ctlconn != -1)
 		ctlconn_cleanup();
 
 	/* Only one connection at a time */
-	pfd[PFD_CTLSOCK].events = pfd[PFD_CTLSOCK].revents = 0;
+	event_del(ev);
 
 	if ((flags = fcntl(fd, F_GETFL)) == -1 ||
 	    fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) {
@@ -1939,8 +1933,13 @@ ctlsock_accept_handler(void)
 		return;
 	}
 
-	pfd[PFD_CTLCONN].fd = fd;
-	pfd[PFD_CTLCONN].events = POLLIN;
+	fd_ctlconn = fd;
+	/* file descriptor has changed, reset event */
+	event_set(&ev_ctlread, fd_ctlconn, EV_READ|EV_PERSIST,
+	    ctlconn_readcb, &ev_ctlread);
+	event_set(&ev_ctlwrite, fd_ctlconn, EV_WRITE|EV_PERSIST,
+	    ctlconn_writecb, &ev_ctlwrite);
+	event_add(&ev_ctlread, NULL);
 	ctl_state = CTL_READING_CMD;
 	ctl_cmd_bytes = 0;
 }
@@ -1959,12 +1958,12 @@ static struct filed
 }
 
 void
-ctlconn_read_handler(void)
+ctlconn_readcb(int fd, short event, void *arg)
 {
-	ssize_t n;
-	struct filed *f;
-	u_int32_t flags = 0;
-	struct ctl_reply_hdr *reply_hdr = (struct ctl_reply_hdr *)ctl_reply;
+	struct filed		*f;
+	struct ctl_reply_hdr	*reply_hdr = (struct ctl_reply_hdr *)ctl_reply;
+	ssize_t			 n;
+	u_int32_t		 flags = 0;
 
 	if (ctl_state == CTL_WRITING_REPLY ||
 	    ctl_state == CTL_WRITING_CONT_REPLY) {
@@ -1974,7 +1973,7 @@ ctlconn_read_handler(void)
 	}
 
  retry:
-	n = read(pfd[PFD_CTLCONN].fd, (char*)&ctl_cmd + ctl_cmd_bytes,
+	n = read(fd, (char*)&ctl_cmd + ctl_cmd_bytes,
 	    sizeof(ctl_cmd) - ctl_cmd_bytes);
 	switch (n) {
 	case -1:
@@ -2081,20 +2080,18 @@ ctlconn_read_handler(void)
 	ctl_state = (ctl_cmd.cmd == CMD_READ_CONT) ?
 	    CTL_WRITING_CONT_REPLY : CTL_WRITING_REPLY;
 
-	pfd[PFD_CTLCONN].events = POLLOUT;
-
-	/* monitor terminating syslogc */
-	pfd[PFD_CTLCONN].events |= POLLIN;
+	event_add(&ev_ctlwrite, NULL);
 
 	/* another syslogc can kick us out */
 	if (ctl_state == CTL_WRITING_CONT_REPLY)
-		pfd[PFD_CTLSOCK].events = POLLIN;
+		event_add(&ev_ctlaccept, NULL);
 }
 
 void
-ctlconn_write_handler(void)
+ctlconn_writecb(int fd, short event, void *arg)
 {
-	ssize_t n;
+	struct event		*ev = arg;
+	ssize_t			 n;
 
 	if (!(ctl_state == CTL_WRITING_REPLY ||
 	    ctl_state == CTL_WRITING_CONT_REPLY)) {
@@ -2105,7 +2102,7 @@ ctlconn_write_handler(void)
 	}
 
  retry:
-	n = write(pfd[PFD_CTLCONN].fd, ctl_reply + ctl_reply_offset,
+	n = write(fd, ctl_reply + ctl_reply_offset,
 	    ctl_reply_size - ctl_reply_offset);
 	switch (n) {
 	case -1:
@@ -2142,7 +2139,7 @@ ctlconn_write_handler(void)
 		membuf_drop = 0;
 	} else {
 		/* Nothing left to write */
-		pfd[PFD_CTLCONN].events = POLLIN;
+		event_del(ev);
 	}
 }
 
@@ -2185,5 +2182,5 @@ ctlconn_logto(char *line)
 	memcpy(ctl_reply + ctl_reply_size, line, l);
 	memcpy(ctl_reply + ctl_reply_size + l, "\n", 2);
 	ctl_reply_size += l + 1;
-	pfd[PFD_CTLCONN].events |= POLLOUT;
+	event_add(&ev_ctlwrite, NULL);
 }

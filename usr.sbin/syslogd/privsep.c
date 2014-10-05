@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.47 2014/10/03 21:55:22 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.48 2014/10/05 18:14:01 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -171,21 +171,21 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 	close(socks[1]);
 
 	/* Close descriptors that only the unpriv child needs */
+	if (fd_ctlconn != -1)
+		close(fd_ctlconn);
+	if (fd_ctlsock != -1)
+		close(fd_ctlsock);
+	if (fd_klog != -1)
+		close(fd_klog);
+	if (fd_sendsys != -1)
+		close(fd_sendsys);
+	if (fd_udp != -1)
+		close(fd_udp);
+	if (fd_udp6 != -1)
+		close(fd_udp6);
 	for (i = 0; i < nunix; i++)
-		if (pfd[PFD_UNIX_0 + i].fd != -1)
-			close(pfd[PFD_UNIX_0 + i].fd);
-	if (pfd[PFD_INET].fd != -1)
-		close(pfd[PFD_INET].fd);
-	if (pfd[PFD_INET6].fd != -1)
-		close(pfd[PFD_INET6].fd);
-	if (pfd[PFD_CTLSOCK].fd != -1)
-		close(pfd[PFD_CTLSOCK].fd);
-	if (pfd[PFD_CTLCONN].fd != -1)
-		close(pfd[PFD_CTLCONN].fd);
-	if (pfd[PFD_KLOG].fd != -1)
-		close(pfd[PFD_KLOG].fd);
-	if (pfd[PFD_SENDSYS].fd != -1)
-		close(pfd[PFD_SENDSYS].fd);
+		if (fd_unix[i] != -1)
+			close(fd_unix[i]);
 
 	/* Save the config file specified by the child process */
 	if (strlcpy(config_file, conf, sizeof config_file) >= sizeof(config_file))
@@ -371,9 +371,9 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 
 	/* Unlink any domain sockets that have been opened */
 	for (i = 0; i < nunix; i++)
-		if (pfd[PFD_UNIX_0 + i].fd != -1)
+		if (fd_unix[i] != -1)
 			(void)unlink(path_unix[i]);
-	if (path_ctlsock != NULL && pfd[PFD_CTLSOCK].fd != -1)
+	if (path_ctlsock != NULL && fd_ctlsock != -1)
 		(void)unlink(path_ctlsock);
 
 	if (restart) {
