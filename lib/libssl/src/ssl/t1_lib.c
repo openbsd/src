@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.61 2014/10/05 14:47:30 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.62 2014/10/05 14:53:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -743,16 +743,7 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		/*
 		 * Add TLS extension EllipticCurves to the ClientHello message.
 		 */
-		plist = s->tlsext_ellipticcurvelist;
-		plistlen = s->tlsext_ellipticcurvelist_length;
-
-		/*
-		 * If we have a custom curve list use it otherwise use default.
-		 */
-		if (plist == NULL) {
-			plist = eccurves_default;
-			plistlen = sizeof(eccurves_default);
-		}
+		tls1_get_curvelist(s, 0, &plist, &plistlen);
 
 		if ((size_t)(limit - ret) < 6)
 			return NULL;
