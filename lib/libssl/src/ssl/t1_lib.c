@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.60 2014/10/03 13:58:18 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.61 2014/10/05 14:47:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -351,12 +351,21 @@ tls1_ec_nid2curve_id(int nid)
 	}
 }
 
+/*
+ * Return the appropriate format list. If client_formats is non-zero, return
+ * the client/session formats. Otherwise return the custom format list if one
+ * exists, or the default formats if a custom list has not been specified.
+ */
 static void
-tls1_get_formatlist(SSL *s, const unsigned char **pformats, size_t *pformatslen)
+tls1_get_formatlist(SSL *s, int client_formats, const unsigned char **pformats,
+    size_t *pformatslen)
 {
-	/*
-	 * If we have a custom point format list use it, otherwise use default.
-	 */
+	if (client_formats != 0) {
+		*pformats = s->session->tlsext_ecpointformatlist;
+		*pformatslen = s->session->tlsext_ecpointformatlist_length;
+		return;
+	}
+
 	*pformats = s->tlsext_ecpointformatlist;
 	*pformatslen = s->tlsext_ecpointformatlist_length;
 	if (*pformats == NULL) {
@@ -490,35 +499,34 @@ tls1_set_ec_id(unsigned char *curve_id, unsigned char *comp_id, EC_KEY *ec)
 static int
 tls1_check_ec_key(SSL *s, unsigned char *curve_id, unsigned char *comp_id)
 {
-	const unsigned char *p;
-	size_t plen, i;
+	const unsigned char *curves, *formats;
+	size_t curveslen, formatslen, i;
 
 	/*
 	 * Check point formats extension if present, otherwise everything
 	 * is supported (see RFC4492).
 	 */
-	if (comp_id != NULL && s->session->tlsext_ecpointformatlist != NULL) {
-		p = s->session->tlsext_ecpointformatlist;
-		plen = s->session->tlsext_ecpointformatlist_length;
-		for (i = 0; i < plen; i++, p++) {
-			if (*comp_id == *p)
+	tls1_get_formatlist(s, 1, &formats, &formatslen);
+	if (comp_id != NULL && formats != NULL) {
+		for (i = 0; i < formatslen; i++, formats++) {
+			if (*comp_id == *formats)
 				break;
 		}
-		if (i == plen)
+		if (i == formatslen)
 			return (0);
 	}
 
 	/*
 	 * Check curve list if present, otherwise everything is supported.
 	 */
-	if (s->session->tlsext_ellipticcurvelist != NULL) {
-		p = s->session->tlsext_ellipticcurvelist;
-		plen = s->session->tlsext_ellipticcurvelist_length;
-		for (i = 0; i < plen; i += 2, p += 2) {
-			if (p[0] == curve_id[0] && p[1] == curve_id[1])
+	tls1_get_curvelist(s, 1, &curves, &curveslen);
+	if (curves != NULL) {
+		for (i = 0; i < curveslen; i += 2, curves += 2) {
+			if (curves[0] == curve_id[0] &&
+			    curves[1] == curve_id[1])
 				break;
 		}
-		if (i == plen)
+		if (i == curveslen)
 			return (0);
 	}
 
@@ -712,7 +720,7 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		size_t plistlen;
 		size_t lenmax;
 
-		tls1_get_formatlist(s, &plist, &plistlen);
+		tls1_get_formatlist(s, 0, &plist, &plistlen);
 
 		if ((size_t)(limit - ret) < 5)
 			return NULL;
@@ -998,7 +1006,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		size_t plistlen;
 		size_t lenmax;
 
-		tls1_get_formatlist(s, &plist, &plistlen);
+		tls1_get_formatlist(s, 0, &plist, &plistlen);
 
 		if ((size_t)(limit - ret) < 5)
 			return NULL;
