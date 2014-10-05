@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.62 2014/10/05 14:53:06 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.63 2014/10/05 14:56:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -713,61 +713,60 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	}
 
 	if (using_ecc) {
+		const unsigned char *curves, *formats;
+		size_t curveslen, formatslen, lenmax;
+
 		/*
 		 * Add TLS extension ECPointFormats to the ClientHello message.
 		 */
-		const unsigned char *plist;
-		size_t plistlen;
-		size_t lenmax;
-
-		tls1_get_formatlist(s, 0, &plist, &plistlen);
+		tls1_get_formatlist(s, 0, &formats, &formatslen);
 
 		if ((size_t)(limit - ret) < 5)
 			return NULL;
 
 		lenmax = limit - ret - 5;
-		if (plistlen > lenmax)
+		if (formatslen > lenmax)
 			return NULL;
-		if (plistlen > 255) {
+		if (formatslen > 255) {
 			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
 			    ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
 
 		s2n(TLSEXT_TYPE_ec_point_formats, ret);
-		s2n(plistlen + 1, ret);
-		*(ret++) = (unsigned char)plistlen;
-		memcpy(ret, plist, plistlen);
-		ret += plistlen;
+		s2n(formatslen + 1, ret);
+		*(ret++) = (unsigned char)formatslen;
+		memcpy(ret, formats, formatslen);
+		ret += formatslen;
 
 		/*
 		 * Add TLS extension EllipticCurves to the ClientHello message.
 		 */
-		tls1_get_curvelist(s, 0, &plist, &plistlen);
+		tls1_get_curvelist(s, 0, &curves, &curveslen);
 
 		if ((size_t)(limit - ret) < 6)
 			return NULL;
 
 		lenmax = limit - ret - 6;
-		if (plistlen > lenmax)
+		if (curveslen > lenmax)
 			return NULL;
-		if (plistlen > 65532) {
+		if (curveslen > 65532) {
 			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
 			    ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
 
 		s2n(TLSEXT_TYPE_elliptic_curves, ret);
-		s2n(plistlen + 2, ret);
+		s2n(curveslen + 2, ret);
 
 		/* NB: draft-ietf-tls-ecc-12.txt uses a one-byte prefix for
 		 * elliptic_curve_list, but the examples use two bytes.
 		 * http://www1.ietf.org/mail-archive/web/tls/current/msg00538.html
 		 * resolves this to two bytes.
 		 */
-		s2n(plistlen, ret);
-		memcpy(ret, plist, plistlen);
-		ret += plistlen;
+		s2n(curveslen, ret);
+		memcpy(ret, curves, curveslen);
+		ret += curveslen;
 	}
 
 	if (!(SSL_get_options(s) & SSL_OP_NO_TICKET)) {
@@ -990,32 +989,31 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	}
 
 	if (using_ecc && s->version != DTLS1_VERSION) {
+		const unsigned char *formats;
+		size_t formatslen, lenmax;
+
 		/*
 		 * Add TLS extension ECPointFormats to the ServerHello message.
 		 */
-		const unsigned char *plist;
-		size_t plistlen;
-		size_t lenmax;
-
-		tls1_get_formatlist(s, 0, &plist, &plistlen);
+		tls1_get_formatlist(s, 0, &formats, &formatslen);
 
 		if ((size_t)(limit - ret) < 5)
 			return NULL;
 
 		lenmax = limit - ret - 5;
-		if (plistlen > lenmax)
+		if (formatslen > lenmax)
 			return NULL;
-		if (plistlen > 255) {
+		if (formatslen > 255) {
 			SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT,
 			    ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
 
 		s2n(TLSEXT_TYPE_ec_point_formats, ret);
-		s2n(plistlen + 1, ret);
-		*(ret++) = (unsigned char)plistlen;
-		memcpy(ret, plist, plistlen);
-		ret += plistlen;
+		s2n(formatslen + 1, ret);
+		*(ret++) = (unsigned char)formatslen;
+		memcpy(ret, formats, formatslen);
+		ret += formatslen;
 	}
 
 	/*
