@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.636 2014/08/14 20:29:08 millert Exp $
+$OpenBSD: usbdevs,v 1.637 2014/10/05 08:32:39 mpi Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -274,6 +274,7 @@ vendor SMC		0x0707	Standard Microsystems
 vendor PUTERCOM		0x0708	Putercom
 vendor MCT		0x0711	MCT
 vendor IMATION		0x0718	Imation
+vendor DOMAIN		0x071b	Domain Technologies, Inc.
 vendor SUSTEEN		0x0731	Susteen
 vendor EICON		0x0734	Eicon Networks
 vendor STOLLMANN	0x0742	Stollmann
@@ -1570,6 +1571,9 @@ product DISPLAYLINK POLARIS2	0x0117	Polaris2 USB dock
 
 /* DMI products */
 product DMI SA2_0		0xb001	Storage Adapter
+
+/* Domain Technologies products */
+product DOMAIN ROCKCHIP		0x3203	RockChip Media Player
 
 /* DrayTek products */
 product DRAYTEK VIGOR550	0x0550	Vigor550
