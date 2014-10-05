@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pmaps.c,v 1.4 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_pmaps.c,v 1.5 2014/10/05 18:30:13 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -119,7 +119,7 @@ v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	POLICY_MAPPING *pmap;
 	ASN1_OBJECT *obj1, *obj2;
 	CONF_VALUE *val;
-	int i;
+	int i, rc;
 
 	if (!(pmaps = sk_POLICY_MAPPING_new_null())) {
 		X509V3err(X509V3_F_V2I_POLICY_MAPPINGS, ERR_R_MALLOC_FAILURE);
@@ -129,31 +129,33 @@ v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
 		val = sk_CONF_VALUE_value(nval, i);
 		if (!val->value || !val->name) {
-			sk_POLICY_MAPPING_pop_free(pmaps, POLICY_MAPPING_free);
-			X509V3err(X509V3_F_V2I_POLICY_MAPPINGS,
-			    X509V3_R_INVALID_OBJECT_IDENTIFIER);
-			X509V3_conf_err(val);
-			return NULL;
+			rc = X509V3_R_INVALID_OBJECT_IDENTIFIER;
+			goto err;
 		}
 		obj1 = OBJ_txt2obj(val->name, 0);
 		obj2 = OBJ_txt2obj(val->value, 0);
 		if (!obj1 || !obj2) {
-			sk_POLICY_MAPPING_pop_free(pmaps, POLICY_MAPPING_free);
-			X509V3err(X509V3_F_V2I_POLICY_MAPPINGS,
-			    X509V3_R_INVALID_OBJECT_IDENTIFIER);
-			X509V3_conf_err(val);
-			return NULL;
+			rc = X509V3_R_INVALID_OBJECT_IDENTIFIER;
+			goto err;
 		}
 		pmap = POLICY_MAPPING_new();
 		if (!pmap) {
-			sk_POLICY_MAPPING_pop_free(pmaps, POLICY_MAPPING_free);
-			X509V3err(X509V3_F_V2I_POLICY_MAPPINGS,
-			    ERR_R_MALLOC_FAILURE);
-			return NULL;
+	    		rc = ERR_R_MALLOC_FAILURE;
+			goto err;
 		}
 		pmap->issuerDomainPolicy = obj1;
 		pmap->subjectDomainPolicy = obj2;
-		sk_POLICY_MAPPING_push(pmaps, pmap);
+		if (sk_POLICY_MAPPING_push(pmaps, pmap) == 0) {
+	    		rc = ERR_R_MALLOC_FAILURE;
+			goto err;
+		}
 	}
 	return pmaps;
+
+err:
+	sk_POLICY_MAPPING_pop_free(pmaps, POLICY_MAPPING_free);
+	X509V3err(X509V3_F_V2I_POLICY_MAPPINGS, rc);
+	if (rc == X509V3_R_INVALID_OBJECT_IDENTIFIER)
+		X509V3_conf_err(val);
+	return NULL;
 }
