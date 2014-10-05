@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.49 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: intr.c,v 1.50 2014/10/05 11:30:33 dlg Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -79,9 +79,7 @@ int ignore_stray = 1;
 int straycnt[16];
 
 void
-strayintr(fp, vectored)
-	const struct trapframe64 *fp;
-	int vectored;
+strayintr(const struct trapframe64 *fp, int vectored)
 {
 	static int straytime, nstray;
 	int timesince;
@@ -315,10 +313,7 @@ intr_establish(int level, struct intrhand *ih)
 }
 
 void *
-softintr_establish(level, fun, arg)
-	int level; 
-	void (*fun)(void *);
-	void *arg;
+softintr_establish(int level, void (*fun)(void *), void *arg)
 {
 	struct intrhand *ih;
 
@@ -336,15 +331,13 @@ softintr_establish(level, fun, arg)
 }
 
 void
-softintr_disestablish(cookie)
-	void *cookie;
+softintr_disestablish(void *cookie)
 {
 	free(cookie, M_DEVBUF, 0);
 }
 
 void
-softintr_schedule(cookie)
-	void *cookie;
+softintr_schedule(void *cookie)
 {
 	struct intrhand *ih = (struct intrhand *)cookie;
 
