@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_cpols.c,v 1.15 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_cpols.c,v 1.16 2014/10/05 18:27:33 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -160,7 +160,7 @@ STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	ia5org = 0;
 	for (i = 0; i < sk_CONF_VALUE_num(vals); i++) {
 		cnf = sk_CONF_VALUE_value(vals, i);
-		if (cnf->value || !cnf->name ) {
+		if (cnf->value || !cnf->name) {
 			X509V3err(X509V3_F_R2I_CERTPOL,
 			    X509V3_R_INVALID_POLICY_IDENTIFIER);
 			X509V3_conf_err(cnf);
@@ -304,7 +304,11 @@ notice_section(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *unot, int ia5org)
 	for (i = 0; i < sk_CONF_VALUE_num(unot); i++) {
 		cnf = sk_CONF_VALUE_value(unot, i);
 		if (!strcmp(cnf->name, "explicitText")) {
-			not->exptext = M_ASN1_VISIBLESTRING_new();
+			if (not->exptext == NULL) {
+				not->exptext = M_ASN1_VISIBLESTRING_new();
+				if (not->exptext == NULL)
+					goto merr;
+			}
 			if (!ASN1_STRING_set(not->exptext, cnf->value,
 			    strlen(cnf->value)))
 				goto merr;
@@ -330,8 +334,9 @@ notice_section(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *unot, int ia5org)
 				if (!(nref = NOTICEREF_new()))
 					goto merr;
 				not->noticeref = nref;
-			} else nref = not->noticeref;
-				nos = X509V3_parse_list(cnf->value);
+			} else
+				nref = not->noticeref;
+			nos = X509V3_parse_list(cnf->value);
 			if (!nos || !sk_CONF_VALUE_num(nos)) {
 				X509V3err(X509V3_F_NOTICE_SECTION,
 				    X509V3_R_INVALID_NUMBERS);
