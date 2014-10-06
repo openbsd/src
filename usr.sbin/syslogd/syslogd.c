@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.128 2014/10/05 18:14:01 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.129 2014/10/06 19:36:34 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -759,17 +759,11 @@ logmsg(int pri, char *msg, char *from, int flags)
 {
 	struct filed *f;
 	int fac, msglen, prilev, i;
-	sigset_t mask, omask;
 	char *timestamp;
 	char prog[NAME_MAX+1];
 
 	dprintf("logmsg: pri 0%o, flags 0x%x, from %s, msg %s\n",
 	    pri, flags, from, msg);
-
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGALRM);
-	sigaddset(&mask, SIGHUP);
-	sigprocmask(SIG_BLOCK, &mask, &omask);
 
 	/*
 	 * Check to see if msg looks non-standard.
@@ -818,7 +812,6 @@ logmsg(int pri, char *msg, char *from, int flags)
 			(void)close(f->f_file);
 			f->f_file = -1;
 		}
-		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 		return;
 	}
 	for (f = Files; f; f = f->f_next) {
@@ -883,7 +876,6 @@ logmsg(int pri, char *msg, char *from, int flags)
 		if (f->f_quick)
 			break;
 	}
-	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 }
 
 void
