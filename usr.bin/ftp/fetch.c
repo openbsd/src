@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.130 2014/10/04 15:48:24 miod Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.131 2014/10/06 11:47:25 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -343,12 +343,6 @@ noslash:
 		}
 
 		path = newline;
-#ifndef SMALL
-	} else if (ishttpsurl) {
-		sslhost = strdup(host);
-		if (sslhost == NULL)
-			errx(1, "Can't allocate memory for https path/host.");
-#endif /* !SMALL */
 	}
 
 	if (isfileurl) {
@@ -597,6 +591,11 @@ again:
 			proxyurl = NULL;
 			path = sslpath;
 		}
+		if (sslhost == NULL) {
+			sslhost = strdup(host);
+			if (sslhost == NULL)
+				errx(1, "Can't allocate memory for https host.");
+		}
 		if (ressl_init() != 0) {
 			fprintf(ttyout, "SSL initialisation failed\n");
 			goto cleanup_url_get;
@@ -610,7 +609,7 @@ again:
 			    ressl_error(ssl));
 			goto cleanup_url_get;
 		}
-		if (ressl_connect_socket(ssl, s, host) != 0) {
+		if (ressl_connect_socket(ssl, s, sslhost) != 0) {
 			fprintf(ttyout, "SSL failure: %s\n", ressl_error(ssl));
 			goto cleanup_url_get;
 		}
