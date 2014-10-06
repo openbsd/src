@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.46 2014/09/16 18:57:51 sf Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.47 2014/10/06 20:34:58 sf Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -79,17 +79,14 @@
 
 /*
  * The x86_64 pmap module closely resembles the i386 one. It uses
- * the same recursive entry scheme, and the same alternate area
- * trick for accessing non-current pmaps. See the i386 pmap.h
- * for a description. The first obvious difference is that 2 extra
- * levels of page table need to be dealt with. The level 1 page
- * table pages are at:
+ * the same recursive entry scheme. See the i386 pmap.h for a
+ * description. The alternate area trick for accessing non-current
+ * pmaps has been removed, though, because it performs badly on SMP
+ * systems.
+ * The most obvious difference to i386 is that 2 extra levels of page
+ * table need to be dealt with. The level 1 page table pages are at:
  *
  * l1: 0x00007f8000000000 - 0x00007fffffffffff     (39 bits, needs PML4 entry)
- *
- * The alternate space is at:
- *
- * l1: 0xffffff0000000000 - 0xffffff7fffffffff     (39 bits, needs PML4 entry)
  *
  * The other levels are kept as physical pages in 3 UVM objects and are
  * temporarily mapped for virtual access when needed.
@@ -97,17 +94,17 @@
  * The other obvious difference from i386 is that it has a direct map of all
  * physical memory in the VA range:
  *
- *     0xfffffe8000000000 - 0xfffffeffffffffff
+ *     0xffffff0000000000 - 0xffffff7fffffffff
+ *
+ * The direct map is used in some cases to access PTEs of non-current pmaps.
  *
  * Note that address space is signed, so the layout for 48 bits is:
  *
  *  +---------------------------------+ 0xffffffffffffffff
  *  |         Kernel Image            |
  *  +---------------------------------+ 0xffffff8000000000
- *  |    alt.L1 table (PTE pages)     |
- *  +---------------------------------+ 0xffffff0000000000
  *  |         Direct Map              |
- *  +---------------------------------+ 0xfffffe8000000000
+ *  +---------------------------------+ 0xffffff0000000000
  *  ~                                 ~
  *  |                                 |
  *  |         Kernel Space            |
@@ -155,44 +152,34 @@
 #define L4_SLOT_PTE		255
 #define L4_SLOT_KERN		256
 #define L4_SLOT_KERNBASE	511
-#define L4_SLOT_APTE		510
-#define L4_SLOT_DIRECT		509
+#define L4_SLOT_DIRECT		510
 
 #define PDIR_SLOT_KERN		L4_SLOT_KERN
 #define PDIR_SLOT_PTE		L4_SLOT_PTE
-#define PDIR_SLOT_APTE		L4_SLOT_APTE
 #define PDIR_SLOT_DIRECT	L4_SLOT_DIRECT
 
 /*
  * the following defines give the virtual addresses of various MMU
  * data structures:
- * PTE_BASE and APTE_BASE: the base VA of the linear PTE mappings
- * PTD_BASE and APTD_BASE: the base VA of the recursive mapping of the PTD
- * PDP_PDE and APDP_PDE: the VA of the PDE that points back to the PDP/APDP
+ * PTE_BASE: the base VA of the linear PTE mappings
+ * PTD_BASE: the base VA of the recursive mapping of the PTD
+ * PDP_PDE: the VA of the PDE that points back to the PDP
  *
  */
 
 #define PTE_BASE  ((pt_entry_t *) (L4_SLOT_PTE * NBPD_L4))
-#define APTE_BASE ((pt_entry_t *) (VA_SIGN_NEG((L4_SLOT_APTE * NBPD_L4))))
 #define PMAP_DIRECT_BASE	(VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)))
 #define PMAP_DIRECT_END		(VA_SIGN_NEG(((L4_SLOT_DIRECT + 1) * NBPD_L4)))
 
 #define L1_BASE		PTE_BASE
-#define AL1_BASE	APTE_BASE
 
 #define L2_BASE ((pd_entry_t *)((char *)L1_BASE + L4_SLOT_PTE * NBPD_L3))
 #define L3_BASE ((pd_entry_t *)((char *)L2_BASE + L4_SLOT_PTE * NBPD_L2))
 #define L4_BASE ((pd_entry_t *)((char *)L3_BASE + L4_SLOT_PTE * NBPD_L1))
 
-#define AL2_BASE ((pd_entry_t *)((char *)AL1_BASE + L4_SLOT_PTE * NBPD_L3))
-#define AL3_BASE ((pd_entry_t *)((char *)AL2_BASE + L4_SLOT_PTE * NBPD_L2))
-#define AL4_BASE ((pd_entry_t *)((char *)AL3_BASE + L4_SLOT_PTE * NBPD_L1))
-
 #define PDP_PDE		(L4_BASE + PDIR_SLOT_PTE)
-#define APDP_PDE	(L4_BASE + PDIR_SLOT_APTE)
 
 #define PDP_BASE	L4_BASE
-#define APDP_BASE	AL4_BASE
 
 #define NKL4_MAX_ENTRIES	(unsigned long)1
 #define NKL3_MAX_ENTRIES	(unsigned long)(NKL4_MAX_ENTRIES * 512)
@@ -247,7 +234,6 @@
 				  NKL3_MAX_ENTRIES, NKL4_MAX_ENTRIES }
 #define NBPD_INITIALIZER	{ NBPD_L1, NBPD_L2, NBPD_L3, NBPD_L4 }
 #define PDES_INITIALIZER	{ L2_BASE, L3_BASE, L4_BASE }
-#define APDES_INITIALIZER	{ AL2_BASE, AL3_BASE, AL4_BASE }
 
 /*
  * PTP macros:
@@ -409,15 +395,6 @@ void		pmap_write_protect(struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
-
-void	pmap_tlb_shootpage(struct pmap *, vaddr_t);
-void	pmap_tlb_shootrange(struct pmap *, vaddr_t, vaddr_t);
-void	pmap_tlb_shoottlb(void);
-#ifdef MULTIPROCESSOR
-void	pmap_tlb_shootwait(void);
-#else
-#define	pmap_tlb_shootwait()
-#endif
 
 paddr_t	pmap_prealloc_lowmem_ptps(paddr_t);
 
