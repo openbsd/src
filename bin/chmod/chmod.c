@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.30 2014/05/21 06:23:01 guenther Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.31 2014/10/06 17:37:34 schwarze Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -107,19 +107,23 @@ main(int argc, char *argv[])
 			hflag = 1;
 			break;
 		/*
-		 * XXX
-		 * "-[rwx]" are valid mode commands.  If they are the entire
-		 * argument, getopt has moved past them, so decrement optind.
-		 * Regardless, we're done argument processing.
+		 * If this is a symbolic mode argument rather than
+		 * an option, we are done with option processing.
 		 */
 		case 'g': case 'o': case 'r': case 's':
 		case 't': case 'u': case 'w': case 'X': case 'x':
 			if (!ischmod)
 				usage();
-			if (argv[optind - 1][0] == '-' &&
-			    argv[optind - 1][1] == ch &&
-			    argv[optind - 1][2] == '\0')
-				--optind;
+			/*
+			 * If getopt() moved past the argument, back up.
+			 * If the argument contains option letters before
+			 * mode letters, setmode() will catch them.
+			 */
+			if (optind > 1) {
+				cp = argv[optind - 1];
+				if (cp[strlen(cp) - 1] == ch)
+					--optind;
+			}
 			goto done;
 		default:
 			usage();
