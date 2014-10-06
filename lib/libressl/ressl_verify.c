@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_verify.c,v 1.4 2014/10/06 11:53:18 jca Exp $ */
+/* $OpenBSD: ressl_verify.c,v 1.5 2014/10/06 11:55:48 jca Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -166,6 +166,7 @@ ressl_check_common_name(X509 *cert, const char *host)
 	char *common_name = NULL;
 	int common_name_len;
 	int rv = -1;
+	union { struct in_addr ip4; struct in6_addr ip6; } addrbuf;
 
 	name = X509_get_subject_name(cert);
 	if (name == NULL)
@@ -188,6 +189,19 @@ ressl_check_common_name(X509 *cert, const char *host)
 		fprintf(stdout, "%s: NUL byte in Common Name field, "
 		    "probably a malicious certificate.\n", getprogname());
 		rv = -2;
+		goto out;
+	}
+
+	if (inet_pton(AF_INET,  host, &addrbuf) == 1 ||
+	    inet_pton(AF_INET6, host, &addrbuf) == 1) {
+		/*
+		 * We don't want to attempt wildcard matching against IP
+		 * addresses, so perform a simple comparison here.
+		 */
+		if (strcmp(common_name, host) == 0)
+			rv = 0;
+		else
+			rv = -1;
 		goto out;
 	}
 
