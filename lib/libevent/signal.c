@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.16 2013/04/29 00:28:23 okan Exp $	*/
+/*	$OpenBSD: signal.c,v 1.17 2014/10/06 21:16:03 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -140,11 +140,7 @@ int
 _evsignal_set_handler(struct event_base *base,
 		      int evsignal, void (*handler)(int))
 {
-#ifdef HAVE_SIGACTION
 	struct sigaction sa;
-#else
-	ev_sighandler_t sh;
-#endif
 	struct evsignal_info *sig = &base->sig;
 	void *p;
 
@@ -177,7 +173,6 @@ _evsignal_set_handler(struct event_base *base,
 	}
 
 	/* save previous handler and setup new handler */
-#ifdef HAVE_SIGACTION
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = handler;
 	sa.sa_flags |= SA_RESTART;
@@ -189,15 +184,6 @@ _evsignal_set_handler(struct event_base *base,
 		sig->sh_old[evsignal] = NULL;
 		return (-1);
 	}
-#else
-	if ((sh = signal(evsignal, handler)) == SIG_ERR) {
-		event_warn("signal");
-		free(sig->sh_old[evsignal]);
-		sig->sh_old[evsignal] = NULL;
-		return (-1);
-	}
-	*sig->sh_old[evsignal] = sh;
-#endif
 
 	return (0);
 }
@@ -240,26 +226,15 @@ _evsignal_restore_handler(struct event_base *base, int evsignal)
 {
 	int ret = 0;
 	struct evsignal_info *sig = &base->sig;
-#ifdef HAVE_SIGACTION
 	struct sigaction *sh;
-#else
-	ev_sighandler_t *sh;
-#endif
 
 	/* restore previous handler */
 	sh = sig->sh_old[evsignal];
 	sig->sh_old[evsignal] = NULL;
-#ifdef HAVE_SIGACTION
 	if (sigaction(evsignal, sh, NULL) == -1) {
 		event_warn("sigaction");
 		ret = -1;
 	}
-#else
-	if (signal(evsignal, *sh) == SIG_ERR) {
-		event_warn("signal");
-		ret = -1;
-	}
-#endif
 	free(sh);
 
 	return ret;
@@ -299,10 +274,6 @@ evsignal_handler(int sig)
 
 	evsignal_base->sig.evsigcaught[sig]++;
 	evsignal_base->sig.evsignal_caught = 1;
-
-#ifndef HAVE_SIGACTION
-	signal(sig, evsignal_handler);
-#endif
 
 	/* Wake up our notification mechanism */
 	send(evsignal_base->sig.ev_signal_pair[0], "a", 1, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: evsignal.h,v 1.4 2010/04/21 20:02:40 nicm Exp $	*/
+/*	$OpenBSD: evsignal.h,v 1.5 2014/10/06 21:16:03 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -29,8 +29,6 @@
 #ifndef _EVSIGNAL_H_
 #define _EVSIGNAL_H_
 
-typedef void (*ev_sighandler_t)(int);
-
 struct evsignal_info {
 	struct event ev_signal;
 	int ev_signal_pair[2];
@@ -38,11 +36,7 @@ struct evsignal_info {
 	volatile sig_atomic_t evsignal_caught;
 	struct event_list evsigevents[NSIG];
 	sig_atomic_t evsigcaught[NSIG];
-#ifdef HAVE_SIGACTION
 	struct sigaction **sh_old;
-#else
-	ev_sighandler_t **sh_old;
-#endif
 	int sh_old_max;
 };
 int evsignal_init(struct event_base *);
