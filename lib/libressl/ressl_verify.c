@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_verify.c,v 1.3 2014/08/05 12:46:16 jsing Exp $ */
+/* $OpenBSD: ressl_verify.c,v 1.4 2014/10/06 11:53:18 jca Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -33,17 +33,37 @@ int ressl_check_common_name(X509 *cert, const char *host);
 int
 ressl_match_hostname(const char *cert_hostname, const char *hostname)
 {
-	const char *cert_domain, *domain;
+	const char *cert_domain, *domain, *next_dot;
 
 	if (strcasecmp(cert_hostname, hostname) == 0)
 		return 0;
 
 	/* Wildcard match? */
 	if (cert_hostname[0] == '*') {
+		/*
+		 * Valid wildcards:
+		 * - "*.domain.tld"
+		 * - "*.sub.domain.tld"
+		 * - etc.
+		 * Reject "*.tld".
+		 * No attempt to prevent the use of eg. "*.co.uk".
+		 */
 		cert_domain = &cert_hostname[1];
+		/* Disallow "*"  */
+		if (cert_domain[0] == '\0')
+			return -1;
+		/* Disallow "*foo" */
 		if (cert_domain[0] != '.')
 			return -1;
-		if (strlen(cert_domain) == 1)
+		/* Disallow "*.." */
+		if (cert_domain[1] == '.')
+			return -1;
+		next_dot = strchr(&cert_domain[1], '.');
+		/* Disallow "*.bar" */
+		if (next_dot == NULL)
+			return -1;
+		/* Disallow "*.bar.." */
+		if (next_dot[1] == '.')
 			return -1;
 
 		domain = strchr(hostname, '.');
