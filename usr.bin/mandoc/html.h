@@ -1,6 +1,6 @@
-/*	$OpenBSD: html.h,v 1.24 2014/09/17 19:53:35 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.25 2014/10/07 18:17:05 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -44,18 +44,16 @@ enum	htmltag {
 	TAG_DT,
 	TAG_DD,
 	TAG_BLOCKQUOTE,
-	TAG_P,
 	TAG_PRE,
 	TAG_B,
 	TAG_I,
 	TAG_CODE,
 	TAG_SMALL,
+	TAG_STYLE,
 	TAG_MAX
 };
 
 enum	htmlattr {
-	ATTR_HTTPEQUIV,
-	ATTR_CONTENT,
 	ATTR_NAME,
 	ATTR_REL,
 	ATTR_HREF,
@@ -63,11 +61,9 @@ enum	htmlattr {
 	ATTR_MEDIA,
 	ATTR_CLASS,
 	ATTR_STYLE,
-	ATTR_WIDTH,
 	ATTR_ID,
-	ATTR_SUMMARY,
-	ATTR_ALIGN,
 	ATTR_COLSPAN,
+	ATTR_CHARSET,
 	ATTR_MAX
 };
 
@@ -103,12 +99,6 @@ struct	htmlpair {
 #define	PAIR_CLASS_INIT(p, v)	PAIR_INIT(p, ATTR_CLASS, v)
 #define	PAIR_HREF_INIT(p, v)	PAIR_INIT(p, ATTR_HREF, v)
 #define	PAIR_STYLE_INIT(p, h)	PAIR_INIT(p, ATTR_STYLE, (h)->buf)
-#define	PAIR_SUMMARY_INIT(p, v)	PAIR_INIT(p, ATTR_SUMMARY, v)
-
-enum	htmltype {
-	HTML_HTML_4_01_STRICT,
-	HTML_XHTML_1_0_STRICT
-};
 
 struct	html {
 	int		  flags;
@@ -133,7 +123,6 @@ struct	html {
 	struct tag	 *metaf; /* current open font scope */
 	enum htmlfont	  metal; /* last used font */
 	enum htmlfont	  metac; /* current font mode */
-	enum htmltype	  type; /* output media type */
 	int		  oflags; /* output options */
 #define	HTML_FRAGMENT	 (1 << 0) /* don't emit HTML/HEAD/BODY */
 };
@@ -148,6 +137,7 @@ void		  print_text(struct html *, const char *);
 void		  print_tblclose(struct html *);
 void		  print_tbl(struct html *, const struct tbl_span *);
 void		  print_eqn(struct html *, const struct eqn *);
+void		  print_paragraph(struct html *);
 
 void		  bufcat_fmt(struct html *, const char *, ...);
 void		  bufcat(struct html *, const char *);

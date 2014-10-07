@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.62 2014/09/03 05:17:08 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.63 2014/10/07 18:17:05 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 3 2014 $
+.Dd $Mdocdate: October 7 2014 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -233,7 +233,7 @@ This is the default.
 See
 .Sx ASCII Output .
 .It Fl T Ns Cm html
-Produce strict CSS1/HTML-4.01 output.
+Produce CSS1/HTML5 output.
 See
 .Sx HTML Output .
 .It Fl T Ns Cm lint
@@ -265,9 +265,8 @@ Encode output in the UTF\-8 multi-byte format.
 See
 .Sx UTF\-8 Output .
 .It Fl T Ns Cm xhtml
-Produce strict CSS1/XHTML-1.0 output.
-See
-.Sx XHTML Output .
+This is a synonym for
+.Fl T Ns Cm html .
 .El
 .Pp
 If multiple input files are specified, these will be processed by the
@@ -320,7 +319,7 @@ which will normalise to \(>=60.
 .Ss HTML Output
 Output produced by
 .Fl T Ns Cm html
-conforms to HTML-4.01 strict.
+conforms to HTML5 using optional self-closing tags.
 .Pp
 The
 .Pa example.style.css
@@ -328,7 +327,8 @@ file documents style-sheet classes available for customising output.
 If a style-sheet is not specified with
 .Fl O Ns Ar style ,
 .Fl T Ns Cm html
-defaults to simple output readable in any graphical or text-based web
+defaults to simple output (via an embedded style-sheet)
+readable in any graphical or text-based web
 browser.
 .Pp
 Special characters are rendered in decimal-encoded UTF\-8.
@@ -471,15 +471,6 @@ to force a UTF\-8 locale.
 See
 .Sx Locale Output
 for details and options.
-.Ss XHTML Output
-Output produced by
-.Fl T Ns Cm xhtml
-conforms to XHTML-1.0 strict.
-.Pp
-See
-.Sx HTML Output
-for details; beyond generating XHTML tags instead of HTML tags, these
-output modes are identical.
 .Sh ENVIRONMENT
 .Bl -tag -width MANPAGER
 .It Ev MANPAGER
@@ -670,7 +661,7 @@ has no effect.
 .It
 Words aren't hyphenated.
 .El
-.Ss HTML/XHTML Compatibility
+.Ss HTML Compatibility
 .Bl -bullet -compact
 .It
 The

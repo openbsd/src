@@ -1,6 +1,6 @@
-/*	$Id: html.c,v 1.41 2014/08/14 00:29:12 schwarze Exp $ */
+/*	$Id: html.c,v 1.42 2014/10/07 18:17:05 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -66,17 +66,15 @@ static	const struct htmldata htmltags[TAG_MAX] = {
 	{"dt",		HTML_CLRLINE}, /* TAG_DT */
 	{"dd",		HTML_CLRLINE}, /* TAG_DD */
 	{"blockquote",	HTML_CLRLINE}, /* TAG_BLOCKQUOTE */
-	{"p",		HTML_CLRLINE | HTML_NOSTACK | HTML_AUTOCLOSE}, /* TAG_P */
 	{"pre",		HTML_CLRLINE }, /* TAG_PRE */
 	{"b",		0 }, /* TAG_B */
 	{"i",		0 }, /* TAG_I */
 	{"code",	0 }, /* TAG_CODE */
 	{"small",	0 }, /* TAG_SMALL */
+	{"style",	HTML_CLRLINE}, /* TAG_STYLE */
 };
 
 static	const char	*const htmlattrs[ATTR_MAX] = {
-	"http-equiv", /* ATTR_HTTPEQUIV */
-	"content", /* ATTR_CONTENT */
 	"name", /* ATTR_NAME */
 	"rel", /* ATTR_REL */
 	"href", /* ATTR_HREF */
@@ -84,11 +82,9 @@ static	const char	*const htmlattrs[ATTR_MAX] = {
 	"media", /* ATTR_MEDIA */
 	"class", /* ATTR_CLASS */
 	"style", /* ATTR_STYLE */
-	"width", /* ATTR_WIDTH */
 	"id", /* ATTR_ID */
-	"summary", /* ATTR_SUMMARY */
-	"align", /* ATTR_ALIGN */
 	"colspan", /* ATTR_COLSPAN */
+	"charset", /* ATTR_CHARSET */
 };
 
 static	const char	*const roffscales[SCALE_MAX] = {
@@ -110,11 +106,11 @@ static	int	 print_escape(char);
 static	int	 print_encode(struct html *, const char *, int);
 static	void	 print_metaf(struct html *, enum mandoc_esc);
 static	void	 print_attr(struct html *, const char *, const char *);
-static	void	 *ml_alloc(char *, enum htmltype);
+static	void	 *ml_alloc(char *);
 
 
 static void *
-ml_alloc(char *outopts, enum htmltype type)
+ml_alloc(char *outopts)
 {
 	struct html	*h;
 	const char	*toks[5];
@@ -128,7 +124,6 @@ ml_alloc(char *outopts, enum htmltype type)
 
 	h = mandoc_calloc(1, sizeof(struct html));
 
-	h->type = type;
 	h->tags.head = NULL;
 	h->symtab = mchars_alloc();
 
@@ -157,14 +152,14 @@ void *
 html_alloc(char *outopts)
 {
 
-	return(ml_alloc(outopts, HTML_HTML_4_01_STRICT));
+	return(ml_alloc(outopts));
 }
 
 void *
 xhtml_alloc(char *outopts)
 {
 
-	return(ml_alloc(outopts, HTML_XHTML_1_0_STRICT));
+	return(ml_alloc(outopts));
 }
 
 void
@@ -190,18 +185,23 @@ void
 print_gen_head(struct html *h)
 {
 	struct htmlpair	 tag[4];
+	struct tag	*t;
 
-	tag[0].key = ATTR_HTTPEQUIV;
-	tag[0].val = "Content-Type";
-	tag[1].key = ATTR_CONTENT;
-	tag[1].val = "text/html; charset=utf-8";
-	print_otag(h, TAG_META, 2, tag);
+	tag[0].key = ATTR_CHARSET;
+	tag[0].val = "utf-8";
+	print_otag(h, TAG_META, 1, tag);
 
-	tag[0].key = ATTR_NAME;
-	tag[0].val = "resource-type";
-	tag[1].key = ATTR_CONTENT;
-	tag[1].val = "document";
-	print_otag(h, TAG_META, 2, tag);
+	/*
+	 * Print a default style-sheet.
+	 */
+	t = print_otag(h, TAG_STYLE, 0, NULL);
+	print_text(h, "table.head, table.foot { width: 100%; }\n"
+	      "td.head-rtitle, td.foot-os { text-align: right; }\n"
+	      "td.head-vol { text-align: center; }\n"
+	      "table.foot td { width: 50%; }\n"
+	      "table.head td { width: 33%; }\n"
+	      "div.spacer { margin: 1em 0; }\n");
+	print_tagq(h, t);
 
 	if (h->style) {
 		tag[0].key = ATTR_REL;
@@ -491,24 +491,10 @@ print_otag(struct html *h, enum htmltag tag,
 	for (i = 0; i < sz; i++)
 		print_attr(h, htmlattrs[p[i].key], p[i].val);
 
-	/* Add non-overridable attributes. */
-
-	if (TAG_HTML == tag && HTML_XHTML_1_0_STRICT == h->type) {
-		print_attr(h, "xmlns", "http://www.w3.org/1999/xhtml");
-		print_attr(h, "xml:lang", "en");
-		print_attr(h, "lang", "en");
-	}
-
-	/* Accommodate for XML "well-formed" singleton escaping. */
+	/* Accommodate for "well-formed" singleton escaping. */
 
 	if (HTML_AUTOCLOSE & htmltags[tag].flags)
-		switch (h->type) {
-		case HTML_XHTML_1_0_STRICT:
-			putchar('/');
-			break;
-		default:
-			break;
-		}
+		putchar('/');
 
 	putchar('>');
 
@@ -534,26 +520,8 @@ print_ctag(struct html *h, enum htmltag tag)
 void
 print_gen_decls(struct html *h)
 {
-	const char	*doctype;
-	const char	*dtd;
-	const char	*name;
 
-	switch (h->type) {
-	case HTML_HTML_4_01_STRICT:
-		name = "HTML";
-		doctype = "-//W3C//DTD HTML 4.01//EN";
-		dtd = "http://www.w3.org/TR/html4/strict.dtd";
-		break;
-	default:
-		puts("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-		name = "html";
-		doctype = "-//W3C//DTD XHTML 1.0 Strict//EN";
-		dtd = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd";
-		break;
-	}
-
-	printf("<!DOCTYPE %s PUBLIC \"%s\" \"%s\">\n",
-	    name, doctype, dtd);
+	puts("<!DOCTYPE html>");
 }
 
 void
@@ -644,6 +612,18 @@ print_stagq(struct html *h, const struct tag *suntil)
 		free(tag);
 	}
 }
+
+void
+print_paragraph(struct html *h)
+{
+	struct tag	*t;
+	struct htmlpair	 tag;
+
+	PAIR_CLASS_INIT(&tag, "spacer");
+	t = print_otag(h, TAG_DIV, 1, &tag);
+	print_tagq(h, t);
+}
+
 
 void
 bufinit(struct html *h)

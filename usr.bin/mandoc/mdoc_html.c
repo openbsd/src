@@ -1,6 +1,6 @@
-/*	$OpenBSD: mdoc_html.c,v 1.82 2014/09/17 19:53:35 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.83 2014/10/07 18:17:05 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -312,11 +312,11 @@ synopsis_pre(struct html *h, const struct mdoc_node *n)
 	case MDOC_In:
 		/* FALLTHROUGH */
 	case MDOC_Vt:
-		print_otag(h, TAG_P, 0, NULL);
+		print_paragraph(h);
 		break;
 	case MDOC_Ft:
 		if (MDOC_Fn != n->tok && MDOC_Fo != n->tok) {
-			print_otag(h, TAG_P, 0, NULL);
+			print_paragraph(h);
 			break;
 		}
 		/* FALLTHROUGH */
@@ -482,29 +482,23 @@ print_mdoc_node(MDOC_ARGS)
 static void
 mdoc_root_post(MDOC_ARGS)
 {
-	struct htmlpair	 tag[3];
+	struct htmlpair	 tag;
 	struct tag	*t, *tt;
 
-	PAIR_SUMMARY_INIT(&tag[0], "Document Footer");
-	PAIR_CLASS_INIT(&tag[1], "foot");
-	PAIR_INIT(&tag[2], ATTR_WIDTH, "100%");
-	t = print_otag(h, TAG_TABLE, 3, tag);
-	PAIR_INIT(&tag[0], ATTR_WIDTH, "50%");
-	print_otag(h, TAG_COL, 1, tag);
-	print_otag(h, TAG_COL, 1, tag);
+	PAIR_CLASS_INIT(&tag, "foot");
+	t = print_otag(h, TAG_TABLE, 1, &tag);
 
 	print_otag(h, TAG_TBODY, 0, NULL);
 
 	tt = print_otag(h, TAG_TR, 0, NULL);
 
-	PAIR_CLASS_INIT(&tag[0], "foot-date");
-	print_otag(h, TAG_TD, 1, tag);
+	PAIR_CLASS_INIT(&tag, "foot-date");
+	print_otag(h, TAG_TD, 1, &tag);
 	print_text(h, meta->date);
 	print_stagq(h, tt);
 
-	PAIR_CLASS_INIT(&tag[0], "foot-os");
-	PAIR_INIT(&tag[1], ATTR_ALIGN, "right");
-	print_otag(h, TAG_TD, 2, tag);
+	PAIR_CLASS_INIT(&tag, "foot-os");
+	print_otag(h, TAG_TD, 1, &tag);
 	print_text(h, meta->os);
 	print_tagq(h, t);
 }
@@ -512,7 +506,7 @@ mdoc_root_post(MDOC_ARGS)
 static int
 mdoc_root_pre(MDOC_ARGS)
 {
-	struct htmlpair	 tag[3];
+	struct htmlpair	 tag;
 	struct tag	*t, *tt;
 	char		*volume, *title;
 
@@ -528,33 +522,25 @@ mdoc_root_pre(MDOC_ARGS)
 		mandoc_asprintf(&title, "%s(%s)",
 		    meta->title, meta->msec);
 
-	PAIR_SUMMARY_INIT(&tag[0], "Document Header");
-	PAIR_CLASS_INIT(&tag[1], "head");
-	PAIR_INIT(&tag[2], ATTR_WIDTH, "100%");
-	t = print_otag(h, TAG_TABLE, 3, tag);
-	PAIR_INIT(&tag[0], ATTR_WIDTH, "30%");
-	print_otag(h, TAG_COL, 1, tag);
-	print_otag(h, TAG_COL, 1, tag);
-	print_otag(h, TAG_COL, 1, tag);
+	PAIR_CLASS_INIT(&tag, "head");
+	t = print_otag(h, TAG_TABLE, 1, &tag);
 
 	print_otag(h, TAG_TBODY, 0, NULL);
 
 	tt = print_otag(h, TAG_TR, 0, NULL);
 
-	PAIR_CLASS_INIT(&tag[0], "head-ltitle");
-	print_otag(h, TAG_TD, 1, tag);
+	PAIR_CLASS_INIT(&tag, "head-ltitle");
+	print_otag(h, TAG_TD, 1, &tag);
 	print_text(h, title);
 	print_stagq(h, tt);
 
-	PAIR_CLASS_INIT(&tag[0], "head-vol");
-	PAIR_INIT(&tag[1], ATTR_ALIGN, "center");
-	print_otag(h, TAG_TD, 2, tag);
+	PAIR_CLASS_INIT(&tag, "head-vol");
+	print_otag(h, TAG_TD, 1, &tag);
 	print_text(h, volume);
 	print_stagq(h, tt);
 
-	PAIR_CLASS_INIT(&tag[0], "head-rtitle");
-	PAIR_INIT(&tag[1], ATTR_ALIGN, "right");
-	print_otag(h, TAG_TD, 2, tag);
+	PAIR_CLASS_INIT(&tag, "head-rtitle");
+	print_otag(h, TAG_TD, 1, &tag);
 	print_text(h, title);
 	print_tagq(h, t);
 
@@ -1168,7 +1154,7 @@ mdoc_bd_pre(MDOC_ARGS)
 				break;
 		}
 		if ( ! comp)
-			print_otag(h, TAG_P, 0, NULL);
+			print_paragraph(h);
 		return(1);
 	}
 
@@ -1574,7 +1560,7 @@ static int
 mdoc_pp_pre(MDOC_ARGS)
 {
 
-	print_otag(h, TAG_P, 0, NULL);
+	print_paragraph(h);
 	return(0);
 }
 
@@ -1902,7 +1888,7 @@ mdoc_rs_pre(MDOC_ARGS)
 		return(1);
 
 	if (n->prev && SEC_SEE_ALSO == n->sec)
-		print_otag(h, TAG_P, 0, NULL);
+		print_paragraph(h);
 
 	PAIR_CLASS_INIT(&tag, "ref");
 	print_otag(h, TAG_SPAN, 1, &tag);
