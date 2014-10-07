@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.39 2014/10/05 01:31:12 deraadt Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.40 2014/10/07 11:28:59 sthen Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -67,7 +67,6 @@
 #define	THINKPAD_BUTTON_FN_F11		0x100b
 #define	THINKPAD_BUTTON_HIBERNATE	0x100c
 #define	THINKPAD_KEYLIGHT_CHANGED	0x101c
-#define	THINKPAD_BUTTON_CONFIG		0x101d
 #define	THINKPAD_BUTTON_CONFIG		0x101d
 #define	THINKPAD_BUTTON_FIND		0x101e
 #define	THINKPAD_BUTTON_ALL_ACTIVEPROGS	0x101f
