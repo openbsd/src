@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.13 2014/07/13 15:47:51 logan Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.14 2014/10/07 04:58:50 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -393,13 +393,7 @@ ec_missing_parameters(const EVP_PKEY * pkey)
 static int 
 ec_copy_parameters(EVP_PKEY * to, const EVP_PKEY * from)
 {
-	EC_GROUP *group = EC_GROUP_dup(EC_KEY_get0_group(from->pkey.ec));
-	if (group == NULL)
-		return 0;
-	if (EC_KEY_set_group(to->pkey.ec, group) == 0)
-		return 0;
-	EC_GROUP_free(group);
-	return 1;
+	return EC_KEY_set_group(to->pkey.ec, EC_KEY_get0_group(from->pkey.ec));
 }
 
 static int 
