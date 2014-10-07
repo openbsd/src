@@ -1,4 +1,4 @@
-/*	$Id: tbl_layout.c,v 1.14 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: tbl_layout.c,v 1.15 2014/10/07 14:06:14 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -196,6 +196,11 @@ mod:
 		goto mod;
 	default:
 		break;
+	}
+	if (isalnum((unsigned char)p[*pos - 1])) {
+		mandoc_vmsg(MANDOCERR_FT_BAD, tbl->parse,
+		    ln, *pos - 1, "TS f%c", p[*pos - 1]);
+		goto mod;
 	}
 
 	mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
