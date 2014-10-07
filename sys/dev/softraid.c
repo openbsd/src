@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.340 2014/09/14 14:17:24 jsg Exp $ */
+/* $OpenBSD: softraid.c,v 1.341 2014/10/07 20:23:32 tedu Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -41,11 +41,6 @@
 #include <sys/task.h>
 #include <sys/kthread.h>
 #include <sys/dkio.h>
-
-#ifdef AOE
-#include <sys/mbuf.h>
-#include <net/if_aoe.h>
-#endif /* AOE */
 
 #include <crypto/cryptodev.h>
 
@@ -3948,16 +3943,6 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 	case 6:
 		sr_raid6_discipline_init(sd);
 		break;
-#ifdef AOE
-	/* AOE target. */
-	case 'A':
-		sr_aoe_server_discipline_init(sd);
-		break;
-	/* AOE initiator. */
-	case 'a':
-		sr_aoe_discipline_init(sd);
-		break;
-#endif
 #ifdef CRYPTO
 	case 'C':
 		sr_crypto_discipline_init(sd);

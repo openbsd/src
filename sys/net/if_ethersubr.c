@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.174 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.175 2014/10/07 20:23:32 tedu Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -130,10 +130,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #if NTRUNK > 0
 #include <net/if_trunk.h>
 #endif
-
-#ifdef AOE
-#include <net/if_aoe.h>
-#endif /* AOE */
 
 #ifdef INET6
 #ifndef INET
@@ -692,11 +688,6 @@ decapsulate:
 		schednetisr(NETISR_PPPOE);
 		break;
 #endif
-#ifdef AOE
-	case ETHERTYPE_AOE:
-		aoe_input(ifp, m);
-		goto done;
-#endif /* AOE */
 #ifdef MPLS
 	case ETHERTYPE_MPLS:
 	case ETHERTYPE_MPLS_MCAST:

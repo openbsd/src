@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.157 2014/07/20 18:05:21 mlarkin Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.158 2014/10/07 20:23:32 tedu Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -457,17 +457,6 @@ struct sr_crypto {
 	u_int64_t		scr_sid[SR_CRYPTO_MAXKEYS];
 };
 
-#ifdef AOE
-/* ata over ethernet */
-#define SR_RAIDAOE_NOWU		2
-struct sr_aoe {
-	struct aoe_handler	*sra_ah;
-	int			sra_tag;
-	struct ifnet		*sra_ifp;
-	struct ether_addr	sra_eaddr;
-};
-#endif /* AOE */
-
 #define SR_CONCAT_NOWU		16
 struct sr_concat {
 };
@@ -510,8 +499,7 @@ struct sr_discipline {
 #define	SR_MD_RAID5		2
 #define	SR_MD_CACHE		3
 #define	SR_MD_CRYPTO		4
-#define	SR_MD_AOE_INIT		5
-#define	SR_MD_AOE_TARG		6
+	/* AOE was 5 and 6. */
 	/* SR_MD_RAID4 was 7. */
 #define	SR_MD_RAID6		8
 #define	SR_MD_CONCAT		9
@@ -534,9 +522,6 @@ struct sr_discipline {
 #ifdef CRYPTO
 	    struct sr_crypto	mdd_crypto;
 #endif /* CRYPTO */
-#ifdef AOE
-	    struct sr_aoe	mdd_aoe;
-#endif /* AOE */
 	}			sd_dis_specific;/* dis specific members */
 #define mds			sd_dis_specific
 
@@ -720,8 +705,6 @@ void			sr_raid5_discipline_init(struct sr_discipline *);
 void			sr_raid6_discipline_init(struct sr_discipline *);
 void			sr_crypto_discipline_init(struct sr_discipline *);
 void			sr_concat_discipline_init(struct sr_discipline *);
-void			sr_aoe_discipline_init(struct sr_discipline *);
-void			sr_aoe_server_discipline_init(struct sr_discipline *);
 
 /* Crypto discipline hooks. */
 int			sr_crypto_get_kdf(struct bioc_createraid *,

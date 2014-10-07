@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.578 2014/10/01 10:08:29 mpi Exp $
+#	$OpenBSD: files,v 1.579 2014/10/07 20:23:31 tedu Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -519,7 +519,6 @@ file	scsi/mpath.c			mpath	needs-flag
 device	softraid: scsi
 attach	softraid at root
 file	dev/softraid.c			softraid	needs-flag
-file	dev/softraid_aoe.c		softraid & ether & aoe
 file	dev/softraid_concat.c		softraid
 file	dev/softraid_crypto.c		softraid & crypto
 file	dev/softraid_raid0.c		softraid
@@ -803,7 +802,6 @@ file net/trunklacp.c			trunk
 file net/if_mpe.c			mpe			needs-count
 file net/if_vether.c			vether			needs-count
 file net/if_pppx.c			pppx			needs-count
-file net/if_aoe.c			ether & aoe
 file net/if_vxlan.c			vxlan			needs-count
 file net80211/ieee80211.c		wlan
 file net80211/ieee80211_amrr.c		wlan
