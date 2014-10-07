@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.35 2014/07/22 11:06:09 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.36 2014/10/07 08:59:50 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -84,7 +84,6 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet 		*ifp;
 	struct mpe_softc	*mpeif;
-	int 			 s;
 
 	if ((mpeif = malloc(sizeof(*mpeif),
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
@@ -110,9 +109,7 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
 
-	s = splnet();
 	LIST_INSERT_HEAD(&mpeif_list, mpeif, sc_list);
-	splx(s);
 
 	return (0);
 }
@@ -121,11 +118,8 @@ int
 mpe_clone_destroy(struct ifnet *ifp)
 {
 	struct mpe_softc	*mpeif = ifp->if_softc;
-	int			 s;
 
-	s = splnet();
 	LIST_REMOVE(mpeif, sc_list);
-	splx(s);
 
 	if_detach(ifp);
 	free(mpeif, M_DEVBUF, 0);
