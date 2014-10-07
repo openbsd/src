@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.235 2014/09/28 14:26:42 reyk Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.236 2014/10/07 08:47:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2058,10 +2058,11 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	struct ifaddr *ifa = (struct ifaddr *)addr;
 	struct ifreq *ifr = (struct ifreq *)addr;
 	struct ifnet *cdev = NULL;
-	int i, error = 0;
+	int s, i, error = 0;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
+		s = splnet();
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
@@ -2086,6 +2087,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			break;
 		}
 		break;
+		splx(s);
 
 	case SIOCSIFFLAGS:
 		vhe = LIST_FIRST(&sc->carp_vhosts);

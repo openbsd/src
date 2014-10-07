@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.140 2014/08/26 21:44:29 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.141 2014/10/07 08:47:28 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 	struct	in6_ifaddr *ia6 = NULL;
 	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
 	struct sockaddr_in6 *sa6;
-	int privileged;
+	int s, privileged;
 
 	privileged = 0;
 	if ((so->so_state & SS_PRIV) != 0)
@@ -463,7 +463,6 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 	{
 		int i, error = 0;
 		struct nd_prefix pr0, *pr;
-		int s;
 
 		/* reject read-only flags */
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
@@ -561,8 +560,10 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 	}
 
 	case SIOCDIFADDR_IN6:
+		s = splsoftnet();
 		in6_purgeaddr(&ia6->ia_ifa);
 		dohooks(ifp->if_addrhooks, 0);
+		splx(s);
 		break;
 
 	default:
@@ -1078,7 +1079,7 @@ in6_purgeaddr(struct ifaddr *ifa)
 void
 in6_unlink_ifa(struct in6_ifaddr *ia6, struct ifnet *ifp)
 {
-	int	s = splnet();
+	splsoftassert(IPL_SOFTNET);
 
 	ifa_del(ifp, &ia6->ia_ifa);
 
@@ -1107,8 +1108,6 @@ in6_unlink_ifa(struct in6_ifaddr *ia6, struct ifnet *ifp)
 	 * Note that we should decrement the refcnt at least once for all *BSD.
 	 */
 	ifafree(&ia6->ia_ifa);
-
-	splx(s);
 }
 
 /*
@@ -1355,8 +1354,9 @@ int
 in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia6, int newhost)
 {
 	int	error = 0, plen, ifacount = 0;
-	int	s = splnet();
 	struct ifaddr *ifa;
+
+	splsoftassert(IPL_SOFTNET);
 
 	/*
 	 * Give the interface a chance to initialize
@@ -1374,10 +1374,8 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia6, int newhost)
 	if ((ifacount <= 1 || ifp->if_type == IFT_CARP ||
 	    (ifp->if_flags & IFF_POINTOPOINT)) && ifp->if_ioctl &&
 	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia6))) {
-		splx(s);
 		return (error);
 	}
-	splx(s);
 
 	ia6->ia_ifa.ifa_metric = ifp->if_metric;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.87 2014/09/09 20:33:24 dlg Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.88 2014/10/07 08:47:28 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -990,6 +990,8 @@ purge_detached(struct ifnet *ifp)
 	struct in6_ifaddr *ia6;
 	struct ifaddr *ifa, *ifa_next;
 
+	splsoftassert(IPL_SOFTNET);
+
 	LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, pr_next) {
 		/*
 		 * This function is called when we need to make more room for
@@ -1025,8 +1027,11 @@ nd6_prelist_add(struct nd_prefix *pr, struct nd_defrouter *dr,
 	struct in6_ifextra *ext = pr->ndpr_ifp->if_afdata[AF_INET6];
 
 	if (ip6_maxifprefixes >= 0) {
-		if (ext->nprefixes >= ip6_maxifprefixes / 2)
+		if (ext->nprefixes >= ip6_maxifprefixes / 2) {
+			s = splsoftnet();
 			purge_detached(pr->ndpr_ifp);
+			splx(s);
+		}
 		if (ext->nprefixes >= ip6_maxifprefixes)
 			return(ENOMEM);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.105 2014/10/02 12:12:51 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.106 2014/10/07 08:47:28 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -612,7 +612,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 {
 	u_int32_t i = sin->sin_addr.s_addr;
 	struct sockaddr_in oldaddr;
-	int s, error = 0;
+	int error = 0;
 
 	splsoftassert(IPL_SOFTNET);
 
@@ -627,7 +627,6 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 		rt_ifa_delloop(&ia->ia_ifa);
 		ifa_del(ifp, &ia->ia_ifa);
 	}
-	s = splnet();
 	oldaddr = ia->ia_addr;
 	ia->ia_addr = *sin;
 
@@ -639,10 +638,8 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 	if (ifp->if_ioctl &&
 	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia))) {
 		ia->ia_addr = oldaddr;
-		splx(s);
 		goto out;
 	}
-	splx(s);
 
 	if (ia->ia_netmask == 0) {
 		if (IN_CLASSA(i))
