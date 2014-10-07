@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.37 2014/10/07 18:17:05 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.38 2014/10/07 18:20:42 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -1032,9 +1032,9 @@ main(void)
 
 	/* Poor man's ReDoS mitigation. */
 
-	itimer.it_value.tv_sec = 1;
+	itimer.it_value.tv_sec = 2;
 	itimer.it_value.tv_usec = 0;
-	itimer.it_interval.tv_sec = 1;
+	itimer.it_interval.tv_sec = 2;
 	itimer.it_interval.tv_usec = 0;
 	if (setitimer(ITIMER_VIRTUAL, &itimer, NULL) == -1) {
 		fprintf(stderr, "setitimer: %s\n", strerror(errno));
