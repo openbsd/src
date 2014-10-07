@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.26 2014/10/07 07:14:55 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.27 2014/10/07 10:10:58 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -488,11 +488,11 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L1_S_PROT_KW_xscale	(L1_S_AP(AP_W))
 #define	L1_S_PROT_MASK_xscale	(L1_S_AP(0x03))
 
-#define	L1_S_PROT_UR_v7		(L1_S_AP(AP_KRWUR))
-#define	L1_S_PROT_UW_v7		(L1_S_AP(AP_KRWURW))
-#define	L1_S_PROT_KR_v7		(L1_S_AP(AP_V7_KR))
-#define	L1_S_PROT_KW_v7		(L1_S_AP(AP_KRW))
-#define	L1_S_PROT_MASK_v7	(L1_S_AP(0x07))
+#define	L1_S_PROT_UR_v7		(L1_S_V7_AP(AP_KRWUR))
+#define	L1_S_PROT_UW_v7		(L1_S_V7_AP(AP_KRWURW))
+#define	L1_S_PROT_KR_v7		(L1_S_V7_AP(AP_V7_KR))
+#define	L1_S_PROT_KW_v7		(L1_S_V7_AP(AP_KRW))
+#define	L1_S_PROT_MASK_v7	(L1_S_V7_AP(0x07))
 
 #define	L1_S_CACHE_MASK_generic	(L1_S_B|L1_S_C)
 #define	L1_S_CACHE_MASK_xscale	(L1_S_B|L1_S_C|L1_S_XSCALE_TEX(TEX_XSCALE_X))
