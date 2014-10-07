@@ -77,7 +77,7 @@ int	readprivs(struct quotause *, int);
 int	writetimes(struct quotause *, int, int);
 int	readtimes(struct quotause *, int);
 char *	cvtstoa(time_t);
-int	cvtatos(time_t, char *, time_t *);
+int	cvtatos(long long, char *, time_t *);
 void	freeprivs(struct quotause *);
 int	alldigits(char *s);
 int	hasquota(struct fstab *, int, char **);
@@ -569,7 +569,8 @@ readtimes(struct quotause *quplist, int infd)
 	FILE *fp;
 	int cnt;
 	char *cp;
-	time_t itime, btime, iseconds, bseconds;
+	long long itime, btime;
+	time_t iseconds, bseconds;
 	char *fsp, bunits[10], iunits[10], line1[BUFSIZ];
 
 	lseek(infd, 0, SEEK_SET);
@@ -594,8 +595,8 @@ readtimes(struct quotause *quplist, int infd)
 			return(0);
 		}
 		cnt = sscanf(cp,
-		    " block grace period: %d %9s file grace period: %d %9s",
-		    (int *)&btime, bunits, (int *)&itime, iunits);
+		    " block grace period: %lld %9s file grace period: %lld %9s",
+		    &btime, bunits, &itime, iunits);
 		if (cnt != 4) {
 			warnx("%s:%s: bad format", fsp, cp);
 			return(0);
@@ -639,19 +640,19 @@ cvtstoa(time_t time)
 
 	if (time % (24 * 60 * 60) == 0) {
 		time /= 24 * 60 * 60;
-		(void)snprintf(buf, sizeof buf, "%d day%s", (int)time,
+		(void)snprintf(buf, sizeof buf, "%lld day%s", (long long)time,
 		    time == 1 ? "" : "s");
 	} else if (time % (60 * 60) == 0) {
 		time /= 60 * 60;
-		(void)snprintf(buf, sizeof buf, "%d hour%s", (int)time,
+		(void)snprintf(buf, sizeof buf, "%lld hour%s", (long long)time,
 		    time == 1 ? "" : "s");
 	} else if (time % 60 == 0) {
 		time /= 60;
-		(void)snprintf(buf, sizeof buf, "%d minute%s", (int)time,
-		    time == 1 ? "" : "s");
+		(void)snprintf(buf, sizeof buf, "%lld minute%s",
+		    (long long)time, time == 1 ? "" : "s");
 	} else
-		(void)snprintf(buf, sizeof buf, "%d second%s", (int)time,
-		    time == 1 ? "" : "s");
+		(void)snprintf(buf, sizeof buf, "%lld second%s",
+		    (long long)time, time == 1 ? "" : "s");
 	return(buf);
 }
 
@@ -659,7 +660,7 @@ cvtstoa(time_t time)
  * Convert ASCII input times to seconds.
  */
 int
-cvtatos(time_t time, char *units, time_t *seconds)
+cvtatos(long long time, char *units, time_t *seconds)
 {
 
 	if (bcmp(units, "second", 6) == 0)
