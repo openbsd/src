@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_lib.c,v 1.12 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: obj_lib.c,v 1.13 2014/10/07 04:59:25 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,7 +68,6 @@ ASN1_OBJECT *
 OBJ_dup(const ASN1_OBJECT *o)
 {
 	ASN1_OBJECT *r;
-	int i;
 	char *ln = NULL, *sn = NULL;
 	unsigned char *data = NULL;
 
@@ -94,20 +93,16 @@ OBJ_dup(const ASN1_OBJECT *o)
 	r->nid = o->nid;
 	r->ln = r->sn = NULL;
 	if (o->ln != NULL) {
-		i = strlen(o->ln) + 1;
-		ln = malloc(i);
+		ln = strdup(o->ln);
 		if (ln == NULL)
 			goto err;
-		memcpy(ln, o->ln, i);
 		r->ln = ln;
 	}
 
 	if (o->sn != NULL) {
-		i = strlen(o->sn) + 1;
-		sn = malloc(i);
+		sn = strdup(o->sn);
 		if (sn == NULL)
 			goto err;
-		memcpy(sn, o->sn, i);
 		r->sn = sn;
 	}
 	r->flags = o->flags | (ASN1_OBJECT_FLAG_DYNAMIC |
