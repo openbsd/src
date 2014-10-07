@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.108 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.109 2014/10/07 11:16:23 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -212,9 +212,42 @@ vlan_start(struct ifnet *ifp)
 		}
 
 #if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_stripvlan(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-#endif
+		if (ifp->if_bpf) {
+			if ((p->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
+			    (ifv->ifv_type == ETHERTYPE_VLAN))
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+			else {
+				struct mbuf *m0;
+				u_int off;
+				struct m_hdr mh;
+				struct {
+					uint8_t dst[ETHER_ADDR_LEN];
+					uint8_t src[ETHER_ADDR_LEN];
+				} hdr;
+
+				/* copy the ether addresses off the front */
+				m_copydata(m, 0, sizeof(hdr), (caddr_t)&hdr);
+
+				/* find the ethertype after the vlan subhdr*/
+				m0 = m_getptr(m,
+				    offsetof(struct ether_vlan_header,
+				    evl_proto), &off);
+				KASSERT(m0 != NULL);
+
+				/* pretend the vlan subhdr isnt there */
+				mh.mh_flags = 0;
+				mh.mh_data = mtod(m0, caddr_t) + off;
+				mh.mh_len = m0->m_len - off;
+				mh.mh_next = m0->m_next;
+
+				/* dst+src + ethertype == ethernet header */
+				bpf_mtap_hdr(ifp->if_bpf,
+				    (caddr_t)&hdr, sizeof(hdr),
+				    (struct mbuf *)&mh, BPF_DIRECTION_OUT,
+				    NULL);
+			}
+		}
+#endif /* NBPFILTER > 0 */
 
 		/*
 		 * Send it, precisely as ether_output() would have.
