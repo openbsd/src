@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.146 2014/08/26 17:47:24 jsing Exp $
+#	$OpenBSD: Makefile,v 1.147 2014/10/07 19:37:04 tedu Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SUBDIR= apply arch at aucat audioctl awk banner \
 	column comm compress cpp crontab csplit ctags cu cut \
 	dc deroff diff diff3 dirname du encrypt env expand false file \
 	find fgen finger fmt fold from fstat ftp gencat getcap \
-	getconf getent getopt gprof grep gzsig head hexdump htpasswd id indent \
+	getconf getent getopt gprof grep head hexdump htpasswd id indent \
 	infocmp ipcrm ipcs \
 	join jot kdump keynote ktrace lam last lastcomm leave less lex \
 	libtool lndir \
