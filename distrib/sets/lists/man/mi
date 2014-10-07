@@ -130,7 +130,6 @@
 ./usr/share/man/man1/gzcat.1
 ./usr/share/man/man1/gzexe.1
 ./usr/share/man/man1/gzip.1
-./usr/share/man/man1/gzsig.1
 ./usr/share/man/man1/h2ph.1
 ./usr/share/man/man1/h2xs.1
 ./usr/share/man/man1/head.1
