@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.15 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.16 2014/10/07 07:14:55 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -3418,6 +3418,12 @@ pt_entry_t	pte_l1_s_coherent;
 pt_entry_t	pte_l2_l_coherent;
 pt_entry_t	pte_l2_s_coherent;
 
+pt_entry_t	pte_l1_s_prot_ur;
+pt_entry_t	pte_l1_s_prot_uw;
+pt_entry_t	pte_l1_s_prot_kr;
+pt_entry_t	pte_l1_s_prot_kw;
+pt_entry_t	pte_l1_s_prot_mask;
+
 pt_entry_t	pte_l2_s_prot_ur;
 pt_entry_t	pte_l2_s_prot_uw;
 pt_entry_t	pte_l2_s_prot_kr;
@@ -3463,6 +3469,12 @@ pmap_pte_init_generic(void)
 	pte_l2_l_coherent = L2_L_COHERENT_generic;
 	pte_l2_s_coherent = L2_S_COHERENT_generic;
 
+	pte_l1_s_prot_ur = L1_S_PROT_UR_generic;
+	pte_l1_s_prot_uw = L1_S_PROT_UW_generic;
+	pte_l1_s_prot_kr = L1_S_PROT_KR_generic;
+	pte_l1_s_prot_kw = L1_S_PROT_KW_generic;
+	pte_l1_s_prot_mask = L1_S_PROT_MASK_generic;
+
 	pte_l2_s_prot_ur = L2_S_PROT_UR_generic;
 	pte_l2_s_prot_uw = L2_S_PROT_UW_generic;
 	pte_l2_s_prot_kr = L2_S_PROT_KR_generic;
@@ -3505,6 +3517,12 @@ pmap_pte_init_armv7(void)
 	pte_l1_s_coherent = L1_S_COHERENT_v7;
 	pte_l2_l_coherent = L2_L_COHERENT_v7;
 	pte_l2_s_coherent = L2_S_COHERENT_v7;
+
+	pte_l1_s_prot_ur = L1_S_PROT_UR_v7;
+	pte_l1_s_prot_uw = L1_S_PROT_UW_v7;
+	pte_l1_s_prot_kr = L1_S_PROT_KR_v7;
+	pte_l1_s_prot_kw = L1_S_PROT_KW_v7;
+	pte_l1_s_prot_mask = L1_S_PROT_MASK_v7;
 
 	pte_l2_s_prot_ur = L2_S_PROT_UR_v7;
 	pte_l2_s_prot_uw = L2_S_PROT_UW_v7;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.25 2014/01/30 18:16:41 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.26 2014/10/07 07:14:55 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -440,6 +440,12 @@ extern pt_entry_t		pte_l1_s_coherent;
 extern pt_entry_t		pte_l2_l_coherent;
 extern pt_entry_t		pte_l2_s_coherent;
 
+extern pt_entry_t		pte_l1_s_prot_ur;
+extern pt_entry_t		pte_l1_s_prot_uw;
+extern pt_entry_t		pte_l1_s_prot_kr;
+extern pt_entry_t		pte_l1_s_prot_kw;
+extern pt_entry_t		pte_l1_s_prot_mask;
+
 extern pt_entry_t		pte_l2_s_prot_ur;
 extern pt_entry_t		pte_l2_s_prot_uw;
 extern pt_entry_t		pte_l2_s_prot_kr;
@@ -470,9 +476,23 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
  * We use these macros since we use different bits on different processor
  * models.
  */
-#define	L1_S_PROT_U		(L1_S_AP(AP_U))
-#define	L1_S_PROT_W		(L1_S_AP(AP_W))
-#define	L1_S_PROT_MASK		(L1_S_PROT_U|L1_S_PROT_W)
+#define	L1_S_PROT_UR_generic	(L1_S_AP(AP_U))
+#define	L1_S_PROT_UW_generic	(L1_S_AP(AP_U|AP_W))
+#define	L1_S_PROT_KR_generic	(L1_S_AP(0))
+#define	L1_S_PROT_KW_generic	(L1_S_AP(AP_W))
+#define	L1_S_PROT_MASK_generic	(L1_S_AP(0x03))
+
+#define	L1_S_PROT_UR_xscale	(L1_S_AP(AP_U))
+#define	L1_S_PROT_UW_xscale	(L1_S_AP(AP_U|AP_W))
+#define	L1_S_PROT_KR_xscale	(L1_S_AP(0))
+#define	L1_S_PROT_KW_xscale	(L1_S_AP(AP_W))
+#define	L1_S_PROT_MASK_xscale	(L1_S_AP(0x03))
+
+#define	L1_S_PROT_UR_v7		(L1_S_AP(AP_KRWUR))
+#define	L1_S_PROT_UW_v7		(L1_S_AP(AP_KRWURW))
+#define	L1_S_PROT_KR_v7		(L1_S_AP(AP_V7_KR))
+#define	L1_S_PROT_KW_v7		(L1_S_AP(AP_KRW))
+#define	L1_S_PROT_MASK_v7	(L1_S_AP(0x07))
 
 #define	L1_S_CACHE_MASK_generic	(L1_S_B|L1_S_C)
 #define	L1_S_CACHE_MASK_xscale	(L1_S_B|L1_S_C|L1_S_XSCALE_TEX(TEX_XSCALE_X))
@@ -542,6 +562,12 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 
 #if ARM_NMMUS > 1
 /* More than one MMU class configured; use variables. */
+#define	L1_S_PROT_UR		pte_l1_s_prot_ur
+#define	L1_S_PROT_UW		pte_l1_s_prot_uw
+#define	L1_S_PROT_KR		pte_l1_s_prot_kr
+#define	L1_S_PROT_KW		pte_l1_s_prot_kw
+#define	L1_S_PROT_MASK		pte_l1_s_prot_mask
+
 #define	L2_S_PROT_UR		pte_l2_s_prot_ur
 #define	L2_S_PROT_UW		pte_l2_s_prot_uw
 #define	L2_S_PROT_KR		pte_l2_s_prot_kr
@@ -563,6 +589,12 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	pmap_copy_page(s, d)	(*pmap_copy_page_func)((s), (d))
 #define	pmap_zero_page(d)	(*pmap_zero_page_func)((d))
 #elif (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
+#define	L1_S_PROT_UR		L1_S_PROT_UR_generic
+#define	L1_S_PROT_UW		L1_S_PROT_UW_generic
+#define	L1_S_PROT_KR		L1_S_PROT_KR_generic
+#define	L1_S_PROT_KW		L1_S_PROT_KW_generic
+#define	L1_S_PROT_MASK		L1_S_PROT_MASK_generic
+
 #define	L2_S_PROT_UR		L2_S_PROT_UR_generic
 #define	L2_S_PROT_UW		L2_S_PROT_UW_generic
 #define	L2_S_PROT_KR		L2_S_PROT_KR_generic
@@ -584,6 +616,12 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	pmap_copy_page(s, d)	pmap_copy_page_generic((s), (d))
 #define	pmap_zero_page(d)	pmap_zero_page_generic((d))
 #elif ARM_MMU_XSCALE == 1
+#define	L1_S_PROT_UR		L1_S_PROT_UR_xscale
+#define	L1_S_PROT_UW		L1_S_PROT_UW_xscale
+#define	L1_S_PROT_KR		L1_S_PROT_KR_xscale
+#define	L1_S_PROT_KW		L1_S_PROT_KW_xscale
+#define	L1_S_PROT_MASK		L1_S_PROT_MASK_xscale
+
 #define	L2_S_PROT_UR		L2_S_PROT_UR_xscale
 #define	L2_S_PROT_UW		L2_S_PROT_UW_xscale
 #define	L2_S_PROT_KR		L2_S_PROT_KR_xscale
@@ -605,6 +643,12 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	pmap_copy_page(s, d)	pmap_copy_page_xscale((s), (d))
 #define	pmap_zero_page(d)	pmap_zero_page_xscale((d))
 #elif ARM_MMU_V7 == 1
+#define	L1_S_PROT_UR		L1_S_PROT_UR_v7
+#define	L1_S_PROT_UW		L1_S_PROT_UW_v7
+#define	L1_S_PROT_KR		L1_S_PROT_KR_v7
+#define	L1_S_PROT_KW		L1_S_PROT_KW_v7
+#define	L1_S_PROT_MASK		L1_S_PROT_MASK_v7
+
 #define	L2_S_PROT_UR		L2_S_PROT_UR_v7
 #define	L2_S_PROT_UW		L2_S_PROT_UW_v7
 #define	L2_S_PROT_KR		L2_S_PROT_KR_v7
@@ -631,10 +675,27 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
  * These macros return various bits based on kernel/user and protection.
  * Note that the compiler will usually fold these at compile time.
  */
-#define	L1_S_PROT(ku, pr)	((((ku) == PTE_USER) ? L1_S_PROT_U : 0) | \
-				 (((pr) & VM_PROT_WRITE) ? L1_S_PROT_W : 0))
-
 #ifndef _LOCORE
+static __inline pt_entry_t
+L1_S_PROT(int ku, vm_prot_t pr)
+{
+	pt_entry_t pte;
+
+	if (ku == PTE_USER)
+		pte = (pr & VM_PROT_WRITE) ? L1_S_PROT_UW : L1_S_PROT_UR;
+	else
+		pte = (pr & VM_PROT_WRITE) ? L1_S_PROT_KW : L1_S_PROT_KR;
+	/*
+	 * If we set the XN bit, the abort handlers or the vector page
+	 * might be marked as such. Needs Debugging.
+	 */
+	/*
+	if ((pr & VM_PROT_EXECUTE) == 0)
+		pte |= L1_S_V7_XN;
+	*/
+
+	return pte;
+}
 static __inline pt_entry_t
 L2_L_PROT(int ku, vm_prot_t pr)
 {
