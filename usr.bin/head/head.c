@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.16 2013/11/26 13:21:17 deraadt Exp $	*/
+/*	$OpenBSD: head.c,v 1.17 2014/10/07 19:38:57 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
@@ -52,6 +52,7 @@ main(int argc, char *argv[])
 	int	ch, firsttime;
 	long	linecnt = 10;
 	char	*p = NULL;
+	int	status = 0;
 
 	/* handle obsolete -number syntax */
 	if (argc > 1 && argv[1][0] == '-' &&
@@ -84,10 +85,11 @@ main(int argc, char *argv[])
 	for (firsttime = 1; ; firsttime = 0) {
 		if (!*argv) {
 			if (!firsttime)
-				exit(0);
+				exit(status);
 		} else {
 			if (!freopen(*argv, "r", stdin)) {
 				warn("%s", *argv++);
+				status = 1;
 				continue;
 			}
 			if (argc > 1) {
