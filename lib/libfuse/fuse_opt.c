@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.10 2014/05/20 13:22:06 syl Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.11 2014/10/08 04:50:10 deraadt Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -343,7 +343,7 @@ fuse_opt_insert_arg(struct fuse_args *args, int p, const char *name)
 	if (p < 0 || p > args->argc)
 		return (-1);
 
-	av = realloc(args->argv, (args->argc + 1) * sizeof(*av));
+	av = reallocarray(args->argv, args->argc + 1, sizeof(*av));
 	if (av == NULL)
 		return (-1);
 
