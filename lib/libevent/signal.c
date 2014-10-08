@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.17 2014/10/06 21:16:03 bluhm Exp $	*/
+/*	$OpenBSD: signal.c,v 1.18 2014/10/08 05:41:42 deraadt Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -152,7 +152,7 @@ _evsignal_set_handler(struct event_base *base,
 		int new_max = evsignal + 1;
 		event_debug(("%s: evsignal (%d) >= sh_old_max (%d), resizing",
 			    __func__, evsignal, sig->sh_old_max));
-		p = realloc(sig->sh_old, new_max * sizeof(*sig->sh_old));
+		p = reallocarray(sig->sh_old, new_max, sizeof(*sig->sh_old));
 		if (p == NULL) {
 			event_warn("realloc");
 			return (-1);

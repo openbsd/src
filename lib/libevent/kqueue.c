@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.28 2012/02/08 09:01:00 nicm Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.29 2014/10/08 05:41:42 deraadt Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -175,16 +175,16 @@ kq_insert(struct kqop *kqop, struct kevent *kev)
 
 		nevents *= 2;
 
-		newchange = realloc(kqop->changes,
-				    nevents * sizeof(struct kevent));
+		newchange = reallocarray(kqop->changes,
+		    nevents, sizeof(struct kevent));
 		if (newchange == NULL) {
 			event_warn("%s: malloc", __func__);
 			return (-1);
 		}
 		kqop->changes = newchange;
 
-		newresult = realloc(kqop->events,
-				    nevents * sizeof(struct kevent));
+		newresult = reallocarray(kqop->events,
+		    nevents, sizeof(struct kevent));
 
 		/*
 		 * If we fail, we don't have to worry about freeing,
