@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.121 2014/07/20 01:38:40 guenther Exp $       */
+/* $OpenBSD: bioctl.c,v 1.122 2014/10/08 10:08:03 jsing Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -45,14 +45,6 @@
 #include <unistd.h>
 #include <vis.h>
 #include <readpassphrase.h>
-
-#ifdef AOE
-#include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/if_ether.h>
-
-struct sr_aoe_config 	*create_aoe(u_int16_t, char *);
-#endif /* AOE */
 
 struct locator {
 	int		channel;
@@ -765,61 +757,12 @@ bio_blink(char *enclosure, int target, int blinktype)
 	close(bioh);
 }
 
-#ifdef AOE
-struct sr_aoe_config *
-create_aoe(u_int16_t level, char *dev_list)
-{
-	static struct sr_aoe_config sac;
-	char *nic;
-	char *dsteaddr;
-	char *shelf;
-	char *slot;
-	struct ether_addr *eaddr;
-	const char *errstr;
-
-	nic = dsteaddr = slot = shelf = 0;
-
-	memset(&sac, 0, sizeof(sac));
-	nic = dev_list;
-	dsteaddr = strchr(nic, ',');
-	if (!dsteaddr)
-		goto invalid;
-	*dsteaddr++ = '\0';
-	shelf = strchr(dsteaddr, ',');
-	if (!shelf)
-		goto invalid;
-	*shelf++ = '\0';
-	slot = strchr(shelf, ',');
-	if (!slot)
-		goto invalid;
-	*slot++ = '\0';
-	strlcpy(sac.nic, nic, sizeof(sac.nic));
-	eaddr = ether_aton(dsteaddr);
-	if (!eaddr)
-		goto invalid;
-	sac.dsteaddr = *eaddr;
-	sac.shelf = htons(strtonum(shelf, 0, 0xfffe, &errstr));
-	if (errstr)
-		goto invalid;
-	sac.slot = strtonum(slot, 0, 0xfe, &errstr);
-	if (errstr)
-		goto invalid;
-
-	return &sac;
-invalid:
-	errx(1, "invalid AOE dev list: use nic,dsteaddr,shelf,slot");
-}
-#endif /* AOE */
-
 void
 bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 {
 	struct bioc_createraid	create;
 	struct sr_crypto_kdfinfo kdfinfo;
 	struct sr_crypto_kdf_pbkdf2 kdfhint;
-#ifdef AOE
-	struct sr_aoe_config	*sac;
-#endif /* AOE */
 	struct stat		sb;
 	int			rv, no_dev, fd;
 	dev_t			*dt;
@@ -828,20 +771,11 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 	if (!dev_list)
 		errx(1, "no devices specified");
 
-#ifdef AOE
-	if (level == 'a') {
-		sac = create_aoe(level, dev_list);
-		no_dev = 0;
-		dt = NULL;
-	} else
-#endif /* AOE */
-	{
-		dt = calloc(1, BIOC_CRMAXLEN);
-		if (!dt)
-			err(1, "not enough memory for dev_t list");
+	dt = calloc(1, BIOC_CRMAXLEN);
+	if (!dt)
+		err(1, "not enough memory for dev_t list");
 
-		no_dev = bio_parse_devlist(dev_list, dt);
-	}
+	no_dev = bio_parse_devlist(dev_list, dt);
 
 	switch (level) {
 	case 0:
@@ -861,10 +795,6 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 	case 'c':
 		min_disks = 2;
 		break;
-#ifdef AOE
-	case 'a':
-		break;
-#endif /* AOE */
 	default:
 		errx(1, "unsupported raid level");
 	}
@@ -884,13 +814,6 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 	create.bc_flags = BIOC_SCDEVT | cflags;
 	create.bc_key_disk = NODEV;
 
-#ifdef AOE
-	if (level == 'a') {
-		create.bc_opaque = sac;
-		create.bc_opaque_size = sizeof(*sac);
-		create.bc_opaque_flags = BIOC_SOIN;
-	} else
-#endif /* AOE */
 	if (level == 'C' && key_disk == NULL) {
 
 		memset(&kdfinfo, 0, sizeof(kdfinfo));
