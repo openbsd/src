@@ -1,0 +1,318 @@
+.\" $OpenBSD: ressl.3,v 1.1 2014/10/08 14:40:01 tedu Exp $
+.\"
+.\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: October 8 2014 $
+.Dt RESSL 3
+.Os
+.Sh NAME
+.Nm ressl_init ,
+.Nm ressl_error ,
+.Nm ressl_config_new ,
+.Nm ressl_config_free ,
+.Nm ressl_config_set_ca_file ,
+.Nm ressl_config_set_ca_path ,
+.Nm ressl_config_set_cert_file ,
+.Nm ressl_config_set_cert_mem ,
+.Nm ressl_config_set_ciphers ,
+.Nm ressl_config_set_ecdhcurve ,
+.Nm ressl_config_set_key_file ,
+.Nm ressl_config_set_key_mem ,
+.Nm ressl_config_set_protocols ,
+.Nm ressl_config_set_verify_depth ,
+.Nm ressl_config_clear_keys ,
+.Nm ressl_config_insecure_noverifyhost ,
+.Nm ressl_config_insecure_noverifycert ,
+.Nm ressl_config_verify ,
+.Nm ressl_client ,
+.Nm ressl_server ,
+.Nm ressl_configure ,
+.Nm ressl_reset ,
+.Nm ressl_free ,
+.Nm ressl_accept ,
+.Nm ressl_accept_socket ,
+.Nm ressl_connect ,
+.Nm ressl_connect_socket ,
+.Nm ressl_listen ,
+.Nm ressl_read ,
+.Nm ressl_write ,
+.Nm ressl_close
+.Nd Ressl TLS client and server
+.Sh SYNOPSIS
+.In ressl.h
+.Ft "int"
+.Fn ressl_init "void"
+.Ft "const char *"
+.Fn ressl_error "struct ressl *ctx"
+.Ft "struct ressl_config *"
+.Fn ressl_config_new "void"
+.Ft "void"
+.Fn ressl_config_free "struct ressl_config *config"
+.Ft "int"
+.Fn ressl_config_set_ca_file "struct ressl_config *config" "const char *ca_file"
+.Ft "int"
+.Fn ressl_config_set_ca_path "struct ressl_config *config" "const char *ca_path"
+.Ft "int"
+.Fn ressl_config_set_cert_file "struct ressl_config *config" "const char *cert_file"
+.Ft "int"
+.Fn ressl_config_set_cert_mem  "struct ressl_config *config" "const uint8_t *cert" "size_t len"
+.Ft "int"
+.Fn ressl_config_set_ciphers "struct ressl_config *config" "const char *ciphers"
+.Ft "int"
+.Fn ressl_config_set_ecdhcurve "struct ressl_config *config" "const char *name"
+.Ft "int"
+.Fn ressl_config_set_key_file "struct ressl_config *config" "const char *key_file"
+.Ft "int"
+.Fn ressl_config_set_key_mem "struct ressl_config *config" "const uint8_t *key" "size_t len"
+.Ft "int"
+.Fn ressl_config_set_protocols "struct ressl_config *config" "uint32_t protocols"
+.Ft "int"
+.Fn ressl_config_set_verify_depth "struct ressl_config *config" "int verify_depth"
+.Ft "void"
+.Fn ressl_config_clear_keys "struct ressl_config *config"
+.Ft "void"
+.Fn ressl_config_insecure_noverifyhost "struct ressl_config *config"
+.Ft "void"
+.Fn ressl_config_insecure_noverifycert "struct ressl_config *config"
+.Ft "void"
+.Fn ressl_config_verify "struct ressl_config *config"
+.Ft "struct ressl *"
+.Fn ressl_client void
+.Ft "struct ressl *"
+.Fn ressl_server void
+.Ft "int"
+.Fn ressl_configure "struct ressl *ctx" "struct ressl_config *config"
+.Ft "void"
+.Fn ressl_reset "struct ressl *ctx"
+.Ft "void"
+.Fn ressl_free "struct ressl *ctx"
+.Ft "int"
+.Fn ressl_accept "struct ressl *ctx" "struct ressl **cctx"
+.Ft "int"
+.Fn ressl_accept_socket "struct ressl *ctx" "struct ressl **cctx" "int socket"
+.Ft "int"
+.Fn ressl_connect "struct ressl *ctx" "const char *host" "const char *port"
+.Ft "int"
+.Fn ressl_connect_socket "struct ressl *ctx" "int s" "const char *hostname"
+.Ft "int"
+.Fn ressl_listen "struct ressl *ctx" "const char *host" "const char *port" "int af"
+.Ft "int"
+.Fn ressl_read "struct ressl *ctx" "void *buf" "size_t buflen" "size_t *outlen"
+.Ft "int"
+.Fn ressl_write "struct ressl *ctx" "const void *buf" "size_t buflen"
+.Ft "int"
+.Fn ressl_close "struct ressl *ctx"
+.Sh DESCRIPTION
+The
+.Lb ressl
+family of functions establishes a secure communications channel
+using the TLS socket protocol.
+Both clients and servers are supported.
+.Pp
+The
+.Fn ressl_init
+function should be called once before any function is used.
+.Pp
+Before a connection is created, a configuration must be created.
+The
+.Fn ressl_config_new
+function returns a new default configuration that can be used for future
+connections.
+Several functions exist to change the options of the configuration; see below.
+.Pp
+A
+.Em ressl
+connection is represented as a
+.Em context .
+A new
+.Em context
+is created by either the
+.Fn ressl_client
+or
+.Fn ressl_server
+functions.
+The context can then be configured with the function
+.Fn ressl_configure .
+The same
+.Em ressl_config
+object can be used to configure multiple contexts.
+.Pp
+A client connection is initiated after configuration by calling
+.Fn ressl_connect .
+This function will create a new socket, connect to the specified host and
+port, and then establish a secure connection.
+An already existing socket can be upgraded to a secure connection by calling
+the ressl_connect_socket function.
+.Pp
+Two functions are provided for input and output,
+.Fn ressl_read
+and
+.Fn ressl_write .
+.Pp
+After use, a ressl
+.Em context
+should be closed with
+.Fn ressl_close ,
+and then freed by calling
+.Fn ressl_free .
+When no more contexts are to be created, the
+.Em ressl_config
+object should be freed by calling
+.Fn ressl_config_free .
+.Sh FUNCTIONS
+The
+.Fn ressl_init
+function initializes global data structures.
+It should be called once before any other functions.
+.Pp
+The following functions create and free configuration objects.
+.Bl -bullet -offset four
+.It
+.Fn ressl_config_new
+allocates a new default configuration object.
+.It
+.Fn ressl_config_free
+frees a configuration object.
+.El
+.Pp
+The following functions modify a configuration by setting parameters.
+.Bl -bullet -offset four
+.It
+.Fn ressl_config_set_ca_file
+sets the filename used to load a file
+containing the root certificates.
+.Em (Client)
+.It
+.Fn ressl_config_set_ca_path
+sets the path (directory) which should be searched for root
+certificates.
+.Em (Client)
+.It
+.Fn ressl_config_set_cert_file
+sets file from which the public certificate will be read.
+.Em (Client and server)
+.It
+.Fn ressl_config_set_cert_mem
+sets the public certificate directly from memory.
+.Em (Client and server)
+.It
+.Fn ressl_config_set_ciphers
+sets the list of ciphers that may be used.
+.Em (Client and server)
+.It
+.Fn ressl_config_set_key_file
+sets the file from which the private key will be read.
+.Em (Server)
+.It
+.Fn ressl_config_set_key_mem
+directly sets the private key from memory.
+.Em (Server)
+.It
+.Fn ressl_config_set_protocols
+sets which versions of the protocol may be used.
+Possible values are the bitwise OR of:
+.Pp
+.Bl -tag -width "RESSL_PROTOCOL_TLSv1_2" -offset indent -compact
+.It Dv RESSL_PROTOCOL_SSLv3
+.It Dv RESSL_PROTOCOL_TLSv1_0
+.It Dv RESSL_PROTOCOL_TLSv1_1
+.It Dv RESSL_PROTOCOL_TLSv1_2
+.El
+.Pp
+Additionally, the values
+.Dv RESSL_PROTOCOL_TLSv1
+(all TLS versions) and
+.Dv RESSL_PROTOCOLS_DEFAULT
+(all versions) may be used.
+.Pp
+.It
+.Fn ressl_config_clear_keys
+clears any secert keys from memory.
+.Em (Server)
+.It
+.Fn ressl_config_insecure_noverifyhost
+disables hostname verification.
+Be careful when using this option.
+.Em (Client)
+.It
+.Fn ressl_config_insecure_noverifycert
+disables certificate verification.
+Be extremely careful when using this option.
+.Em (Client)
+.It
+.Fn ressl_config_verify
+reenables hostname and certificate verification.
+.El
+.Pp
+The following functions create, prepare, and free a connection context.
+.Pp
+.Bl -bullet -offset four
+.It
+.Fn ressl_client
+creates a new ressl context for client connections.
+.Pp
+.It
+.Fn ressl_server
+creates a new ressl context for server connections.
+.Pp
+.It
+.Fn ressl_configure
+readies a ressl context for use by applying the configuration
+options.
+.Pp
+.It
+.Fn ressl_free
+frees a ressl context after use.
+.El
+.Pp
+The following functions perform input and output operations.
+.Bl -bullet -offset four
+.It
+.Fn ressl_read
+reads
+.Fa buflen
+bytes of data from the socket into
+.Fa buf .
+The amount of data read is returned in
+.Fa outlen .
+.Pp
+.It
+.Fn ressl_write
+writes
+.Fa buflen
+bytes of data from
+.Fa buf
+to the socket.
+The amount of data written is returned in
+.Fa outlen .
+.El
+.Sh RETURN VALUES
+.\" XXX Is this always true?
+Functions that return
+.Vt int
+will return 0 on success and -1 on error.
+Functions that return a pointer will return NULL on error.
+.\" .Sh ERRORS
+.\" .Sh SEE ALSO
+.\" .Sh HISTORY
