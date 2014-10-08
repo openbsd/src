@@ -1,4 +1,4 @@
-.\" $OpenBSD: ressl.3,v 1.1 2014/10/08 14:40:01 tedu Exp $
+.\" $OpenBSD: ressl.3,v 1.2 2014/10/08 14:47:15 tedu Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" All rights reserved.
@@ -271,23 +271,35 @@ The following functions create, prepare, and free a connection context.
 .It
 .Fn ressl_client
 creates a new ressl context for client connections.
-.Pp
 .It
 .Fn ressl_server
 creates a new ressl context for server connections.
-.Pp
 .It
 .Fn ressl_configure
 readies a ressl context for use by applying the configuration
 options.
-.Pp
+.It
+.Fn ressl_close
+closes a connection after use.
 .It
 .Fn ressl_free
 frees a ressl context after use.
 .El
 .Pp
-The following functions perform input and output operations.
+The following functions initiate a connection and perform input and output
+operations.
 .Bl -bullet -offset four
+.It
+.Fn ressl_connect
+connects a client context to the server named by
+.Fa host.
+The
+.Fa port
+may be numeric or a service name.
+If it is NULL then a host of the format "hostname:port" is permitted.
+.It
+.Fn ressl_connect_socket
+connects a client context to an already established socket connection.
 .It
 .Fn ressl_read
 reads
