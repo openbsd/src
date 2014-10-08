@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.22 2014/07/13 16:08:53 pelikan Exp $	*/
+/*	$OpenBSD: inode.c,v 1.23 2014/10/08 16:28:12 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -450,8 +450,8 @@ cacheino(struct ext2fs_dinode *dp, ino_t inumber)
 	memcpy(&inp->i_blks[0], &dp->e2di_blocks[0], (size_t)inp->i_numblks);
 	if (inplast == listmax) {
 		listmax += 100;
-		inpsort = (struct inoinfo **)realloc((char *)inpsort,
-		    (unsigned)listmax * sizeof(struct inoinfo *));
+		inpsort = reallocarray(inpsort, listmax,
+		    sizeof(struct inoinfo *));
 		if (inpsort == NULL)
 			errexit("cannot increase directory list\n");
 	}
