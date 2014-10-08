@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.44 2013/11/20 21:33:54 deraadt Exp $	*/
+/*	$OpenBSD: bc.y,v 1.45 2014/10/08 04:13:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -1097,7 +1097,7 @@ main(int argc, char *argv[])
 	init();
 	setlinebuf(stdout);
 
-	sargv = malloc(argc * sizeof(char *));
+	sargv = reallocarray(NULL, argc, sizeof(char *));
 	if (sargv == NULL)
 		err(1, NULL);
 
