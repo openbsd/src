@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.22 2009/11/11 18:41:57 jsg Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.23 2014/10/08 04:37:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -107,7 +107,7 @@ _ng_sl_add(struct stringlist *sl, char *name)
 		char **slstr;
 
 		sl->sl_max += 20;
-		slstr = realloc(sl->sl_str, sl->sl_max * sizeof(char *));
+		slstr = reallocarray(sl->sl_str, sl->sl_max, sizeof(char *));
 		if (slstr == NULL) {
 			free(sl->sl_str);
 			sl->sl_str = NULL;
