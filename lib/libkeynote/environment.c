@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.21 2013/11/29 19:00:51 deraadt Exp $ */
+/* $OpenBSD: environment.c,v 1.22 2014/10/08 11:28:07 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -882,8 +882,8 @@ kn_read_asserts(char *buffer, int bufferlen, int *numassertions)
 		if (*numassertions > bufsize - 4)
 		{
 		    /* Allocate twice the space */
-		    tempbuf = (char **) realloc(buf, 2 * bufsize *
-						sizeof(char *));
+		    tempbuf = reallocarray(buf, bufsize,
+			2 * sizeof(char *));
 		    if (tempbuf == (char **) NULL)
 		    {
 			for (flag = 0; flag < *numassertions; flag++)
