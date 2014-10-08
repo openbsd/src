@@ -1,4 +1,4 @@
-/* $OpenBSD: yubikey.c,v 1.4 2013/06/04 18:49:12 mcbride Exp $ */
+/* $OpenBSD: yubikey.c,v 1.5 2014/10/08 04:47:20 deraadt Exp $ */
 
 /*
  * Written by Simon Josefsson <simon@josefsson.org>.
@@ -335,7 +335,7 @@ yubikey_parse(const uint8_t *password, const uint8_t key[YUBIKEY_KEY_SIZE],
 		return -1;
 
 	len = strlen(password);
-	pp = wpassword = malloc(sizeof(wchar_t) * (len + 1));
+	pp = wpassword = reallocarray(NULL, len + 1, sizeof(wchar_t));
 	if (pp == NULL)
 		return ENOMEM;
 	
