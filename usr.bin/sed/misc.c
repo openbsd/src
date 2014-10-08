@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.9 2009/10/27 23:59:43 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.10 2014/10/08 04:19:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -54,6 +54,16 @@ xmalloc(size_t size)
 	void *p;
 
 	if ((p = malloc(size)) == NULL)
+		err(FATAL, "%s", strerror(errno));
+	return (p);
+}
+
+void *
+xreallocarray(void *o, size_t nmemb, size_t size)
+{
+	void *p;
+
+	if ((p = reallocarray(o, nmemb, size)) == NULL)
 		err(FATAL, "%s", strerror(errno));
 	return (p);
 }
