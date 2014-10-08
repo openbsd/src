@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.18 2014/09/30 18:02:33 kettenis Exp $ */
+/* $OpenBSD: mfii.c,v 1.19 2014/10/08 14:44:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -326,7 +326,9 @@ int			mfii_pd_scsi_cmd_cdb(struct mfii_softc *,
 #define mfii_fw_state(_sc) mfii_read((_sc), MFI_OSP)
 
 static const struct pci_matchid mfii_devices[] = {
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_2208 }
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_2208 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3008 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3108 }
 };
 
 int
