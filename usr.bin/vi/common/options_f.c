@@ -1,4 +1,4 @@
-/*	$OpenBSD: options_f.c,v 1.7 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: options_f.c,v 1.8 2014/10/08 00:53:45 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -66,7 +66,7 @@ f_columns(sp, op, str, valp)
 	 * number of lines/columns for the screen, but at least we don't drop
 	 * core.
 	 */
-#define	MAXIMUM_SCREEN_COLS	500
+#define	MAXIMUM_SCREEN_COLS	768
 	if (*valp > MAXIMUM_SCREEN_COLS) {
 		msgq(sp, M_ERR, "041|Screen columns too large, greater than %d",
 		    MAXIMUM_SCREEN_COLS);
