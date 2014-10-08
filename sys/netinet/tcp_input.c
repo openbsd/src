@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.278 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.279 2014/10/08 20:19:58 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2061,11 +2061,8 @@ step6:
 		 * but if two URG's are pending at once, some out-of-band
 		 * data may creep in... ick.
 		 */
-		if (th->th_urp <= (u_int16_t) tlen
-#ifdef SO_OOBINLINE
-		     && (so->so_options & SO_OOBINLINE) == 0
-#endif
-		     )
+		if (th->th_urp <= (u_int16_t) tlen &&
+		    (so->so_options & SO_OOBINLINE) == 0)
 		        tcp_pulloutofband(so, th->th_urp, m, hdroptlen);
 	} else
 		/*
