@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.78 2014/04/19 12:26:15 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.79 2014/10/08 07:23:39 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -444,6 +444,7 @@ dns_lookup_host(struct dns_session *s, const char *host, int preference)
 	s->refcount++;
 
 	memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = AI_ADDRCONFIG;
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	as = getaddrinfo_async(host, NULL, &hints, NULL);
