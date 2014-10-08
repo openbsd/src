@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.53 2012/04/06 18:03:52 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.54 2014/10/08 04:58:18 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -606,7 +606,7 @@ lookup_addrs(char *ifname, struct if_info *p)
 				    eaddr[3], eaddr[4], eaddr[5]);
 			found = 1;
 		} else if (sdl->sdl_family == AF_INET) {
-			ia = malloc (sizeof (struct if_addr));
+			ia = malloc(sizeof (struct if_addr));
 			if (ia == NULL)
 				error(FATAL, "lookup_addrs: malloc: %s",
 				    strerror(errno));
