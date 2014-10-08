@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.23 2011/01/18 14:29:21 millert Exp $	*/
+/*	$OpenBSD: env.c,v 1.24 2014/10/08 04:20:57 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -99,8 +99,7 @@ env_set(char **envp, char *envstr) {
 	 */
 	if ((envtmp = strdup(envstr)) == NULL)
 		return (NULL);
-	p = (char **) realloc((void *) envp,
-			      (size_t) ((count+1) * sizeof(char **)));
+	p = reallocarray(envp, count+1, sizeof(char **));
 	if (p == NULL) {
 		free(envtmp);
 		return (NULL);
