@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.9 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.10 2014/10/08 19:59:53 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -657,6 +657,8 @@ publish_avail_idx(struct virtio_softc *sc, struct virtqueue *vq)
 {
 	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
 	vq_sync_uring(sc, vq, BUS_DMASYNC_PREREAD);
+
+	virtio_membar_producer();
 	vq->vq_avail->idx = vq->vq_avail_idx;
 	vq_sync_aring(sc, vq, BUS_DMASYNC_POSTWRITE);
 	vq->vq_queued = 1;
@@ -687,11 +689,15 @@ notify:
 			uint16_t n = vq->vq_avail_idx;
 			uint16_t t;
 			publish_avail_idx(sc, vq);
+
+			virtio_membar_sync();
 			t = VQ_AVAIL_EVENT(vq) + 1;
 			if ((uint16_t)(n - t) < (uint16_t)(n - o))
 				sc->sc_ops->kick(sc, vq->vq_index);
 		} else {
 			publish_avail_idx(sc, vq);
+
+			virtio_membar_sync();
 			if (!(vq->vq_used->flags & VRING_USED_F_NO_NOTIFY))
 				sc->sc_ops->kick(sc, vq->vq_index);
 		}
@@ -744,6 +750,8 @@ virtio_dequeue(struct virtio_softc *sc, struct virtqueue *vq,
 		return ENOENT;
 	usedidx = vq->vq_used_idx++;
 	usedidx &= vq->vq_mask;
+
+	virtio_membar_consumer();
 	slot = vq->vq_used->ring[usedidx].id;
 	qe = &vq->vq_entries[slot];
 
@@ -794,6 +802,7 @@ virtio_postpone_intr(struct virtqueue *vq, uint16_t nslots)
 
 	/* set the new event index: avail_ring->used_event = idx */
 	VQ_USED_EVENT(vq) = idx;
+	virtio_membar_sync();
 
 	vq_sync_aring(vq->vq_owner, vq, BUS_DMASYNC_PREWRITE);
 	vq->vq_queued++;
@@ -867,6 +876,8 @@ virtio_start_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 		VQ_USED_EVENT(vq) = vq->vq_used_idx;
 	else
 		vq->vq_avail->flags &= ~VRING_AVAIL_F_NO_INTERRUPT;
+
+	virtio_membar_sync();
 
 	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
 	vq->vq_queued++;
