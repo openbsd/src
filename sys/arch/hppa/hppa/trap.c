@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.136 2014/07/07 19:01:26 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.137 2014/10/08 22:23:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -255,7 +255,7 @@ trap(int type, struct trapframe *frame)
 		}
 #else
 		if (type == T_DATALIGN || type == T_DPROT)
-			panic ("trap: %s at 0x%x", tts, va);
+			panic ("trap: %s at 0x%lx", tts, va);
 		else
 			panic ("trap: no debugger for \"%s\" (%d)", tts, type);
 #endif
