@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.62 2014/03/24 10:48:29 mpi Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.63 2014/10/08 10:57:17 deraadt Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -3402,8 +3402,7 @@ setindex2ifc(int idx, struct ifc *ifcp)
 	while (nindex2ifc <= idx)
 		nindex2ifc *= 2;
 	if (n != nindex2ifc) {
-		p = (struct ifc **)realloc(index2ifc,
-		    sizeof(*index2ifc) * nindex2ifc);
+		p = reallocarray(index2ifc, nindex2ifc, sizeof(*index2ifc));
 		if (p == NULL) {
 			fatal("realloc");
 			/*NOTREACHED*/
