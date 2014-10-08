@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.25 2014/08/30 09:37:15 mpi Exp $	*/
+/*	$OpenBSD: smu.c,v 1.26 2014/10/08 16:07:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -179,7 +179,9 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 	int nseg, node;
 	char type[32], loc[32];
 	u_int32_t reg, intr, gpio, val;
+#ifndef SMALL_KERNEL
 	u_int8_t data[12];
+#endif
 
 	/* XXX */
 	sc->sc_mem_bus_space.bus_base = 0x80000000;
@@ -289,7 +291,9 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 		/* Start running fans at their "unmanaged" speed. */
 		smu_fan_set_rpm(sc, fan, fan->unmanaged_rpm);
 
+#ifndef SMALL_KERNEL
 		sensor_attach(&sc->sc_sensordev, &fan->sensor);
+#endif
 	}
 
 	/*
@@ -303,6 +307,7 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+#ifndef SMALL_KERNEL
 	/* Sensors */
 	node = OF_getnodebyname(ca->ca_node, "sensors");
 	for (node = OF_child(node); node; node = OF_peer(node)) {
@@ -361,6 +366,7 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_slots_pow_offset = (data[6] << 8) + data[7];
 
 	sensor_task_register(sc, smu_refresh_sensors, 5);
+#endif /* !SMALL_KERNEL */
 	printf("\n");
 
 	ppc64_slew_voltage = smu_slew_voltage;
