@@ -1,4 +1,4 @@
-/*	$OpenBSD: inp.c,v 1.37 2013/11/26 13:19:07 deraadt Exp $	*/
+/*	$OpenBSD: inp.c,v 1.38 2014/10/08 04:06:23 doug Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -111,7 +111,7 @@ reallocate_lines(size_t *lines_allocated)
 	size_t	new_size;
 
 	new_size = *lines_allocated * 3 / 2;
-	p = realloc(i_ptr, (new_size + 2) * sizeof(char *));
+	p = reallocarray(i_ptr, new_size + 2, sizeof(char *));
 	if (p == NULL) {	/* shucks, it was a near thing */
 		munmap(i_womp, i_size);
 		i_womp = NULL;
