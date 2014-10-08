@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.26 2013/11/17 20:19:36 okan Exp $	*/
+/*	$OpenBSD: rup.c,v 1.27 2014/10/08 04:08:13 doug Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -132,7 +132,8 @@ remember_rup_data(char *host, struct statstime *st)
 		struct rup_data *newrup;
 
 		newsize = rup_data_max + 16;
-		newrup = realloc(rup_data, newsize * sizeof(struct rup_data));
+		newrup = reallocarray(rup_data, newsize,
+		    sizeof(struct rup_data));
 		if (newrup == NULL) {
 			err(1, NULL);
 			/* NOTREACHED */
