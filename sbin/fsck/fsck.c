@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.30 2014/07/13 17:28:13 jmc Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.31 2014/10/08 16:27:53 deraadt Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -455,7 +455,7 @@ mangle(char *opts, int *argcp, const char ***argvp, int *maxargcp)
 		if (argc >= maxargc - 3) {
 			int newmaxargc = maxargc + 50;
 
-			argv = erealloc(argv, newmaxargc * sizeof(char *));
+			argv = ereallocarray(argv, newmaxargc, sizeof(char *));
 			maxargc = newmaxargc;
 		}
 		if (*p != '\0') {

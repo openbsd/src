@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.h,v 1.6 2010/08/12 15:26:34 jsing Exp $	*/
+/*	$OpenBSD: fsutil.h,v 1.7 2014/10/08 16:27:53 deraadt Exp $	*/
 /*	$NetBSD: fsutil.h,v 1.3 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ const char *cdevname(void);
 void setcdevname(const char *, const char *, int);
 int  hotroot(void);
 void *emalloc(size_t);
-void *erealloc(void *, size_t);
+void *ereallocarray(void *, size_t, size_t);
 char *estrdup(const char *);
 
 #define CHECK_PREEN	1

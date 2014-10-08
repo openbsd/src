@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.18 2010/08/12 15:26:34 jsing Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.19 2014/10/08 16:27:53 deraadt Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -248,13 +248,13 @@ emalloc(size_t s)
 
 
 void *
-erealloc(void *p, size_t s)
+ereallocarray(void *p, size_t n, size_t s)
 {
 	void *newp;
 
 	if (s == 0)
 		err(1, "realloc failed");
-	newp = realloc(p, s);
+	newp = reallocarray(p, n, s);
 	if (newp == NULL) {
 		if (p)
 			free(p);
