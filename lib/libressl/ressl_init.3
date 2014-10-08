@@ -1,4 +1,4 @@
-.\" $OpenBSD: ressl_init.3,v 1.1 2014/10/08 16:13:00 tedu Exp $
+.\" $OpenBSD: ressl_init.3,v 1.2 2014/10/08 16:17:01 tedu Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" All rights reserved.
@@ -58,7 +58,7 @@
 .Nm ressl_read ,
 .Nm ressl_write ,
 .Nm ressl_close
-.Nd Ressl TLS client and server
+.Nd ressl TLS client and server API
 .Sh SYNOPSIS
 .In ressl.h
 .Ft "int"
@@ -197,6 +197,7 @@ frees a configuration object.
 .El
 .Pp
 The following functions modify a configuration by setting parameters.
+Configuration options may apply to only clients or only servers or both.
 .Bl -bullet -offset four
 .It
 .Fn ressl_config_set_ca_file
@@ -245,9 +246,10 @@ Additionally, the values
 (all TLS versions) and
 .Dv RESSL_PROTOCOLS_DEFAULT
 (all versions) may be used.
+.Em (Client and server)
 .It
 .Fn ressl_config_clear_keys
-clears any secert keys from memory.
+clears any secret keys from memory.
 .Em (Server)
 .It
 .Fn ressl_config_insecure_noverifyhost
@@ -262,6 +264,7 @@ Be extremely careful when using this option.
 .It
 .Fn ressl_config_verify
 reenables hostname and certificate verification.
+.Em (Client)
 .El
 .Pp
 The following functions create, prepare, and free a connection context.
