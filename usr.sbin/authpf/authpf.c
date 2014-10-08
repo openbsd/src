@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.120 2014/04/02 02:12:24 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.121 2014/10/08 02:11:54 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -502,7 +502,7 @@ allowed_luser(struct passwd *pw)
 			if (buf[len - 1] == '\n')
 				buf[len - 1] = '\0';
 			else {
-				if ((lbuf = (char *)malloc(len + 1)) == NULL)
+				if ((lbuf = malloc(len + 1)) == NULL)
 					err(1, NULL);
 				memcpy(lbuf, buf, len);
 				lbuf[len] = '\0';
