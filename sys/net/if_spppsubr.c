@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.125 2014/07/22 11:06:09 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.126 2014/10/08 20:28:27 sthen Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -5187,6 +5187,7 @@ sppp_proto_name(u_short proto)
 	switch (proto) {
 	case PPP_LCP:	return "lcp";
 	case PPP_IPCP:	return "ipcp";
+	case PPP_IPV6CP: return "ipv6cp";
 	case PPP_PAP:	return "pap";
 	case PPP_CHAP:	return "chap";
 	}
