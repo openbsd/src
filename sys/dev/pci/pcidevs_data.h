@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1745 2014/10/04 04:53:54 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1746 2014/10/08 07:41:27 dlg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -16908,8 +16908,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SAS1064A",
 	},
 	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_3108,
+	    "MegaRAID SAS3108",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1066,
 	    "SAS1066",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_3008,
+	    "MegaRAID SAS3008",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1078,
