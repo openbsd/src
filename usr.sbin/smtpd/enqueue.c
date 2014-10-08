@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.84 2014/10/04 03:00:58 millert Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.85 2014/10/08 10:56:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -746,8 +746,8 @@ rcpt_add(char *addr)
 		p++;
 	}
 
-	if ((nrcpts = realloc(msg.rcpts,
-	    sizeof(char *) * (msg.rcpt_cnt + n))) == NULL)
+	if ((nrcpts = reallocarray(msg.rcpts,
+	    msg.rcpt_cnt + n, sizeof(char *))) == NULL)
 		err(1, "rcpt_add realloc");
 	msg.rcpts = nrcpts;
 
