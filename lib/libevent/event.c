@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.29 2014/09/01 13:26:29 bluhm Exp $	*/
+/*	$OpenBSD: event.c,v 1.30 2014/10/08 20:14:19 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -30,11 +30,6 @@
 #include "config.h"
 #endif
 
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-#endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #ifdef HAVE_SYS_TIME_H
@@ -45,9 +40,7 @@
 #include <sys/queue.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef WIN32
 #include <unistd.h>
-#endif
 #include <errno.h>
 #include <signal.h>
 #include <string.h>
@@ -79,9 +72,6 @@ extern const struct eventop kqops;
 #ifdef HAVE_DEVPOLL
 extern const struct eventop devpollops;
 #endif
-#ifdef WIN32
-extern const struct eventop win32ops;
-#endif
 
 /* In order of preference */
 static const struct eventop *eventops[] = {
@@ -102,9 +92,6 @@ static const struct eventop *eventops[] = {
 #endif
 #ifdef HAVE_SELECT
 	&selectops,
-#endif
-#ifdef WIN32
-	&win32ops,
 #endif
 	NULL
 };

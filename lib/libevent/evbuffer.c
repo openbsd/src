@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer.c,v 1.12 2010/04/21 20:02:40 nicm Exp $	*/
+/*	$OpenBSD: evbuffer.c,v 1.13 2014/10/08 20:14:19 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -43,10 +43,6 @@
 #include <string.h>
 #ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
-
-#ifdef WIN32
-#include <winsock2.h>
 #endif
 
 #include "evutil.h"
@@ -177,20 +173,12 @@ bufferevent_writecb(int fd, short event, void *arg)
 	if (EVBUFFER_LENGTH(bufev->output)) {
 	    res = evbuffer_write(bufev->output, fd);
 	    if (res == -1) {
-#ifndef WIN32
-/*todo. evbuffer uses WriteFile when WIN32 is set. WIN32 system calls do not
- *set errno. thus this error checking is not portable*/
 		    if (errno == EAGAIN ||
 			errno == EINTR ||
 			errno == EINPROGRESS)
 			    goto reschedule;
 		    /* error case */
 		    what |= EVBUFFER_ERROR;
-
-#else
-				goto reschedule;
-#endif
-
 	    } else if (res == 0) {
 		    /* eof case */
 		    what |= EVBUFFER_EOF;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.18 2014/10/08 05:41:42 deraadt Exp $	*/
+/*	$OpenBSD: signal.c,v 1.19 2014/10/08 20:14:19 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -30,12 +30,6 @@
 #include "config.h"
 #endif
 
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <winsock2.h>
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-#endif
 #include <sys/types.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -72,11 +66,7 @@ static void
 evsignal_cb(int fd, short what, void *arg)
 {
 	static char signals[1];
-#ifdef WIN32
-	SSIZE_T n;
-#else
 	ssize_t n;
-#endif
 
 	n = recv(fd, signals, sizeof(signals), 0);
 	if (n == -1)
@@ -104,13 +94,7 @@ evsignal_init(struct event_base *base)
 	 */
 	if (evutil_socketpair(
 		    AF_UNIX, SOCK_STREAM, 0, base->sig.ev_signal_pair) == -1) {
-#ifdef WIN32
-		/* Make this nonfatal on win32, where sometimes people
-		   have localhost firewalled. */
-		event_warn("%s: socketpair", __func__);
-#else
 		event_err(1, "%s: socketpair", __func__);
-#endif
 		return -1;
 	}
 

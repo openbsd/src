@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.6 2010/04/21 20:02:40 nicm Exp $	*/
+/*	$OpenBSD: log.c,v 1.7 2014/10/08 20:14:19 bluhm Exp $	*/
 
 /*
  * log.c
@@ -41,11 +41,6 @@
 #include "config.h"
 #endif
 
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-#endif
 #include <sys/types.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
