@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.91 2014/08/20 11:23:42 mikeb Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.92 2014/10/08 04:52:54 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -897,9 +897,9 @@ ttymode(void)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_TTY;
 		mib[2] = KERN_TTY_INFO;
-		nlen = ntty * sizeof(struct itty);
-		if ((itp = malloc(nlen)) == NULL)
+		if ((itp = reallocarray(NULL, ntty, sizeof(struct itty))) == NULL)
 			err(1, "malloc");
+		nlen = ntty * sizeof(struct itty);
 		if (sysctl(mib, 3, itp, &nlen, NULL, 0) < 0)
 			err(1, "sysctl(KERN_TTY_INFO) failed");
 		for (i = 0; i < ntty; i++)
