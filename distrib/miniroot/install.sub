@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.794 2014/09/26 15:44:21 benno Exp $
+#	$OpenBSD: install.sub,v 1.795 2014/10/08 00:26:38 krw Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -162,7 +162,7 @@ get_cddevs () {
 
 get_ifdevs() {
 	ifconfig "$@" 2>/dev/null |
-		egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun)[[:digit:]]+:' |
+		egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|tun)[[:digit:]]+:' |
 		sed -n 's/^\(.*\):.*/\1/p'
 }
 
