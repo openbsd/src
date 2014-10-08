@@ -1,4 +1,4 @@
-/*	$OpenBSD: stringlist.c,v 1.10 2009/05/05 19:35:30 martynas Exp $	*/
+/*	$OpenBSD: stringlist.c,v 1.11 2014/10/08 04:01:10 doug Exp $	*/
 /*	$NetBSD: stringlist.c,v 1.2 1997/01/17 07:26:20 lukem Exp $	*/
 
 /*
@@ -70,7 +70,8 @@ sl_add(StringList *sl, char *name)
 {
 	if (sl->sl_cur == sl->sl_max - 1) {
 		sl->sl_max += _SL_CHUNKSIZE;
-		sl->sl_str = realloc(sl->sl_str, sl->sl_max * sizeof(char *));
+		sl->sl_str = reallocarray(sl->sl_str, sl->sl_max,
+		    sizeof(char *));
 		if (sl->sl_str == NULL)
 			err(1, "stringlist");
 	}

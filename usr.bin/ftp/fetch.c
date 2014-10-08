@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.131 2014/10/06 11:47:25 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.132 2014/10/08 04:01:10 doug Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1512,7 +1512,7 @@ SSL_readline(struct ressl *ssl, size_t *lenp)
 		errx(1, "Can't allocate memory for transfer buffer");
 	for (i = 0; ; i++) {
 		if (i >= len - 1) {
-			if ((q = realloc(buf, 2 * len)) == NULL)
+			if ((q = reallocarray(buf, len, 2)) == NULL)
 				errx(1, "Can't expand transfer buffer");
 			buf = q;
 			len *= 2;
