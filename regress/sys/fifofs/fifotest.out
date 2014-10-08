@@ -122,3 +122,75 @@ Testing full FIFO:
 	select write
 		1 fd(s) ready, writeable
 	received 'test' from FIFO
+
+Opened fifo for reading fi.fo.fum (nonblocking)
+
+Testing EOF FIFO behavior (pass 0):
+	poll POLLIN|POLLOUT, timeout=-1
+		1 fd(s) ready, revents == POLLOUT
+	received EOF from FIFO
+
+Testing EOF FIFO behavior (pass 1):
+	poll POLLIN|POLLOUT, timeout=-1
+		1 fd(s) ready, revents == POLLOUT
+	received EOF from FIFO
+
+Opened fifo for reading fi.fo.fum (nonblocking)
+
+Testing EOF FIFO behavior (pass 2):
+	poll POLLIN, timeout=-1
+		1 fd(s) ready, revents == POLLIN
+	received EOF from FIFO
+
+Testing EOF FIFO behavior (pass 3):
+	poll POLLIN, timeout=-1
+		1 fd(s) ready, revents == POLLIN
+	received EOF from FIFO
+
+Opened fifo for reading fi.fo.fum (nonblocking)
+
+Testing EOF FIFO behavior (pass 4):
+	poll POLLOUT, timeout=-1
+		1 fd(s) ready, revents == POLLOUT
+	received EOF from FIFO
+
+Testing EOF FIFO behavior (pass 5):
+	poll POLLOUT, timeout=-1
+		1 fd(s) ready, revents == POLLOUT
+	received EOF from FIFO
+
+Opened fifo for reading fi.fo.fum (nonblocking)
+
+Testing EOF FIFO behavior (pass 6):
+	select read write
+		1 fd(s) ready, writeable
+	received EOF from FIFO
+
+Testing EOF FIFO behavior (pass 7):
+	select read write
+		1 fd(s) ready, writeable
+	received EOF from FIFO
+
+Opened fifo for reading fi.fo.fum (nonblocking)
+
+Testing EOF FIFO behavior (pass 8):
+	select read
+		0 fd(s) ready
+	received EOF from FIFO
+
+Testing EOF FIFO behavior (pass 9):
+	select read
+		0 fd(s) ready
+	received EOF from FIFO
+
+Opened fifo for reading fi.fo.fum (nonblocking)
+
+Testing EOF FIFO behavior (pass 10):
+	select write
+		1 fd(s) ready, writeable
+	received EOF from FIFO
+
+Testing EOF FIFO behavior (pass 11):
+	select write
+		1 fd(s) ready, writeable
+	received EOF from FIFO

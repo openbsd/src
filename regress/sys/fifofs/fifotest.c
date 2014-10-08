@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2004, 2014 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,9 +16,10 @@
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/poll.h>
+#include <sys/wait.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +35,7 @@ void sigalrm(int);
 void dopoll(int, int, char *, int);
 void doselect(int, int, int);
 void runtest(char *, int, int);
+void eoftest(char *, int, int);
 
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__) || \
     defined(__linux__)
@@ -48,6 +50,7 @@ char *__progname;
 int
 main(int argc, char **argv)
 {
+	struct sigaction sa;
 #if !defined(__OpenBSD__) && !defined(__FreeBSD__) && !defined(__NetBSD__) && \
     !defined(__linux__)
 	__progname = argv[0];
@@ -55,10 +58,17 @@ main(int argc, char **argv)
 	if (argc != 2)
 		usage();
 
+	/* Just warn EINTR from SIGALRM */
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	sa.sa_handler = sigalrm;
+	sigaction(SIGALRM, &sa, NULL);
+
 	runtest(argv[1], 0, 0);
 	runtest(argv[1], 0, INFTIM);
 	runtest(argv[1], O_NONBLOCK, 0);
 	runtest(argv[1], O_NONBLOCK, INFTIM);
+	eoftest(argv[1], O_NONBLOCK, INFTIM);
 
 	exit(0);
 }
@@ -66,7 +76,6 @@ main(int argc, char **argv)
 void
 runtest(char *fifo, int flags, int timeout)
 {
-	struct sigaction sa;
 	ssize_t nread;
 	int fd;
 	char buf[BUFSIZ];
@@ -76,11 +85,6 @@ runtest(char *fifo, int flags, int timeout)
 		printf("mkfifo %s: %s\n", fifo, strerror(errno));
 		exit(1);
 	}
-
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = 0;
-	sa.sa_handler = sigalrm;
-	sigaction(SIGALRM, &sa, NULL);
 
 	alarm(2);
 	if ((fd = open(fifo, O_RDWR | flags, 0644)) == -1) {
@@ -119,6 +123,131 @@ runtest(char *fifo, int flags, int timeout)
 	}
 	buf[nread] = '\0';
 	printf("\treceived '%s' from FIFO\n", buf);
+}
+
+int
+eof_writer(const char *fifo, int flags)
+{
+	int fd;
+
+	switch (fork()) {
+	case -1:
+		printf("fork: %s\n", strerror(errno));
+		return -1;
+	case 0:
+		/* child */
+		break;
+	default:
+		/* parent */
+		return 0;
+	}
+
+	/* Wait for the reader to connect. */
+	for (;;) {
+		alarm(2);
+		fd = open(fifo, O_WRONLY | flags, 0644);
+		alarm(0);
+		if (fd != -1)
+			break;
+		if (errno != ENOENT && errno != ENXIO) {
+			printf("open %s O_WRONLY: %s\n", fifo, strerror(errno));
+			return -1;
+		}
+		usleep(10000);
+	}
+
+	/*
+	 * We need to give the reader time to call select() before
+	 * we close the fd.  This is racey...
+	 */
+	usleep(100000);
+	close(fd);
+	_exit(0);
+}
+
+void
+eoftest(char *fifo, int flags, int timeout)
+{
+	ssize_t nread;
+	int fd = -1, rval, pass, status;
+	char buf[BUFSIZ];
+
+	/*
+	 * Test all combinations of select and poll.
+	 */
+	for (pass = 0; pass < 12; pass++) {
+		/*
+		 * We run each test twice, once with a fresh fifo,
+		 * and once with a reused one.
+		 */
+		if ((pass & 1) == 0) {
+			if (fd != -1)
+				close(fd);
+			(void)unlink(fifo);
+			if (mkfifo(fifo, 0644) != 0) {
+				printf("mkfifo %s: %s\n", fifo, strerror(errno));
+				exit(1);
+			}
+
+			/* XXX - also verify that we get alarm for O_RDWR */
+			alarm(2);
+			if ((fd = open(fifo, O_RDONLY | flags, 0644)) == -1) {
+				printf("open %s: %s\n", fifo, strerror(errno));
+				exit(1);
+			}
+			alarm(0);
+
+			printf("\nOpened fifo for reading %s%s\n", fifo,
+			    (flags & O_NONBLOCK) ? " (nonblocking)" : "");
+		}
+
+		printf("\nTesting EOF FIFO behavior (pass %d):\n", pass);
+
+		/*
+		 * The writer will sleep for a bit to give the reader time
+		 * to call select() before anything has been written.
+		 */
+		rval = eof_writer(fifo, flags);
+		if (rval == -1)
+			exit(1);
+
+		switch (pass) {
+		case 0:
+		case 1:
+		    dopoll(fd, POLLIN|POLLOUT, "POLLIN|POLLOUT", timeout);
+		    break;
+		case 2:
+		case 3:
+		    dopoll(fd, POLLIN, "POLLIN", timeout);
+		    break;
+		case 4:
+		case 5:
+		    dopoll(fd, POLLOUT, "POLLOUT", timeout);
+		    break;
+		case 6:
+		case 7:
+		    doselect(fd, fd, timeout);
+		    break;
+		case 8:
+		case 9:
+		    doselect(fd, -1, timeout);
+		    break;
+		case 10:
+		case 11:
+		    doselect(-1, fd, timeout);
+		    break;
+		}
+		wait(&status);
+		if ((nread = read(fd, buf, sizeof(buf))) < 0) {
+			printf("read error: %s\n", strerror(errno));
+			exit(1);
+		}
+		buf[nread] = '\0';
+		printf("\treceived %s%s%s from FIFO\n", nread ? "'" : "",
+		    nread ? buf : "EOF", nread ? "'" : "");
+	}
+	close(fd);
+	(void)unlink(fifo);
 }
 
 void
