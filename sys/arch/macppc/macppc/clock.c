@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.37 2014/05/09 18:16:15 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.38 2014/10/08 10:12:41 mpi Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -354,15 +354,11 @@ void
 delay(unsigned n)
 {
 	u_int64_t tb;
-	u_int32_t tbh, tbl, scratch;
 
 	tb = ppc_mftb();
 	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
-	tbh = tb >> 32;
-	tbl = (u_int32_t)tb;
-	asm ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
-	     " mftb %0; cmplw %0,%2; blt 1b; 2:"
-	     :: "r"(scratch), "r"(tbh), "r"(tbl));
+	while (tb > ppc_mftb())
+		;
 }
 
 /*

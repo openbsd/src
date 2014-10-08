@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.56 2014/09/06 10:45:29 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.57 2014/10/08 10:12:41 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -305,6 +305,7 @@ ppc_mftbl (void)
 	return ret;
 }
 
+
 static __inline u_int64_t
 ppc_mftb(void)
 {
@@ -314,6 +315,14 @@ ppc_mftb(void)
 	__asm volatile ("1: mftbu %0; mftb %0+1; mftbu %1;"
 	    " cmpw 0,%0,%1; bne 1b" : "=r"(tb), "=r"(scratch));
 	return tb;
+}
+
+static __inline void
+ppc_mttb(u_int64_t tb)
+{
+	__asm volatile ("mttbl %0" :: "r"(0));
+	__asm volatile ("mttbu %0" :: "r"((u_int32_t)(tb >> 32)));
+	__asm volatile ("mttbl %0" :: "r"((u_int32_t)(tb & 0xffffffff)));
 }
 
 static __inline u_int32_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.77 2014/09/22 10:45:06 mpi Exp $ */
+/*	$OpenBSD: cpu.c,v 1.78 2014/10/08 10:12:41 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -570,12 +570,12 @@ void cpu_hatch(void);
 void cpu_spinup_trampoline(void);
 
 struct cpu_hatch_data {
+	uint64_t tb;
 	struct cpu_info *ci;
 	int running;
 	int hid0;
 	int l2cr;
 	int sdr1;
-	int tbu, tbl;
 };
 
 volatile struct cpu_hatch_data *cpu_hatch_data;
@@ -628,7 +628,6 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 
 	/* XXX OpenPIC */
 	{
-		uint64_t tb;
 		int off;
 
 		*(u_int *)EXC_RST = 0x48000002 | (u_int)cpu_spinup_trampoline;
@@ -658,13 +657,9 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 		}
 
 		/* Sync timebase. */
-		tb = ppc_mftb();
-		tb += 100000;	/* 3ms @ 33MHz  */
+		h->tb = ppc_mftb() + 100000;	/* 3ms @ 33MHz  */
 
-		h->tbu = tb >> 32;
-		h->tbl = tb & 0xffffffff;
-
-		while (tb > ppc_mftb())
+		while (h->tb > ppc_mftb())
 			;
                 __asm volatile ("sync; isync");
                 h->running = 0;
@@ -714,7 +709,7 @@ cpu_hatch(void)
 	int scratch, i, s;
 
         /* Initialize timebase. */
-        __asm ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
+	ppc_mttb(0);
 
 	/* Initialize curcpu(). */
 	ppc_mtsprg0((u_int)h->ci);
@@ -779,14 +774,10 @@ cpu_hatch(void)
 	/* XXX OpenPIC */
 	{
 		/* Sync timebase. */
-		u_int tbu = h->tbu;
-		u_int tbl = h->tbl;
 		while (h->running == -1)
 			;
                 __asm volatile ("sync; isync");
-                __asm volatile ("mttbl %0" :: "r"(0));
-                __asm volatile ("mttbu %0" :: "r"(tbu));
-                __asm volatile ("mttbl %0" :: "r"(tbl));
+                ppc_mttb(h->tb);
 	}
 
 	ncpus++;
