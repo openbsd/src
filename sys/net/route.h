@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.97 2014/09/27 12:26:16 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.98 2014/10/08 07:37:02 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -380,7 +380,6 @@ void			 rt_timer_queue_destroy(struct rttimer_queue *);
 unsigned long		 rt_timer_queue_count(struct rttimer_queue *);
 void			 rt_timer_timer(void *);
 
-void	 rtalloc_noclone(struct route *);
 #ifdef SMALL_KERNEL
 #define	rtalloc_mpath(dst, s, rtableid)	rtalloc1((dst), RT_REPORT, (rtableid))
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.185 2014/10/02 12:21:20 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.186 2014/10/08 07:37:02 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -308,18 +308,6 @@ rtable_exists(u_int id)	/* verify table with that ID exists */
 		return (0);
 
 	return (1);
-}
-
-/*
- * Packet routing routines.
- */
-void
-rtalloc_noclone(struct route *ro)
-{
-	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
-		return;		/* cached route is still valid */
-	ro->ro_rt = rtalloc1(&ro->ro_dst, RT_REPORT | RT_NOCLONING,
-	    ro->ro_tableid);
 }
 
 struct rtentry *

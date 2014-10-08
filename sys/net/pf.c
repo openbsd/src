@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.887 2014/09/27 12:26:16 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.888 2014/10/08 07:37:01 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2968,7 +2968,8 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, u_int16_t offer)
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = addr->v4;
 		ro.ro_tableid = rtableid;
-		rtalloc_noclone(&ro);
+		ro.ro_rt = rtalloc1(&ro.ro_dst, RT_REPORT | RT_NOCLONING,
+		    ro.ro_tableid);
 		rt = ro.ro_rt;
 		break;
 #endif /* INET */
@@ -2981,7 +2982,8 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, u_int16_t offer)
 		dst6->sin6_len = sizeof(*dst6);
 		dst6->sin6_addr = addr->v6;
 		ro6.ro_tableid = rtableid;
-		rtalloc_noclone((struct route *)&ro6);
+		ro6.ro_rt = rtalloc1(sin6tosa(&ro6.ro_dst),
+		    RT_REPORT | RT_NOCLONING, ro6.ro_tableid);
 		rt = ro6.ro_rt;
 		break;
 #endif /* INET6 */
@@ -5435,7 +5437,8 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 	if (kif != NULL && kif->pfik_ifp->if_type == IFT_ENC)
 		goto out;
 
-	rtalloc_noclone((struct route *)&ro);
+	ro.ro_rt = rtalloc1((struct sockaddr *)&ro.ro_dst,
+	    RT_REPORT | RT_NOCLONING, ro.ro_tableid);
 
 	if (ro.ro_rt != NULL) {
 		/* No interface given, this is a no-route check */
@@ -5502,7 +5505,8 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
 #endif /* INET6 */
 	}
 
-	rtalloc_noclone((struct route *)&ro);
+	ro.ro_rt = rtalloc1((struct sockaddr *)&ro.ro_dst,
+	    RT_REPORT | RT_NOCLONING, ro.ro_tableid);
 
 	if (ro.ro_rt != NULL) {
 		if (ro.ro_rt->rt_labelid == aw->v.rtlabel)
