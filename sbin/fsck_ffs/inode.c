@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.43 2014/09/06 04:05:40 guenther Exp $	*/
+/*	$OpenBSD: inode.c,v 1.44 2014/10/08 16:28:38 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -420,8 +420,8 @@ cacheino(union dinode *dp, ino_t inumber)
 			inp->i_blks[NDADDR + i] = DIP(dp, di_ib[i]);
 	if (inplast == listmax) {
 		newlistmax = listmax + 100;
-		newinpsort = realloc(inpsort,
-		    (unsigned)newlistmax * sizeof(struct inoinfo *));
+		newinpsort = reallocarray(inpsort,
+		    (unsigned)newlistmax, sizeof(struct inoinfo *));
 		if (newinpsort == NULL)
 			errexit("cannot increase directory list");
 		inpsort = newinpsort;
