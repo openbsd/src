@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.74 2014/09/06 10:45:29 mpi Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.75 2014/10/08 22:24:26 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -744,5 +744,7 @@ openpic_ipi_ddb()
 #ifdef OPENPIC_NOISY
 	printf("ipi_ddb() called\n");
 #endif
+#ifdef DDB
 	Debugger();
+#endif
 }
