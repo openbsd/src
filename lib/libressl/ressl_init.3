@@ -1,4 +1,4 @@
-.\" $OpenBSD: ressl_init.3,v 1.4 2014/10/08 19:12:42 tedu Exp $
+.\" $OpenBSD: ressl_init.3,v 1.5 2014/10/08 19:17:55 tedu Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -107,7 +107,7 @@
 .Fn ressl_write "struct ressl *ctx" "const void *buf" "size_t buflen"
 .Sh DESCRIPTION
 The
-.Lb ressl
+.Nm ressl
 family of functions establishes a secure communications channel
 using the TLS socket protocol.
 Both clients and servers are supported.
@@ -302,11 +302,17 @@ The amount of data written is returned in
 .Fa outlen .
 .El
 .Sh RETURN VALUES
-.\" XXX Is this always true?
 Functions that return
 .Vt int
 will return 0 on success and -1 on error.
 Functions that return a pointer will return NULL on error.
 .\" .Sh ERRORS
 .\" .Sh SEE ALSO
-.\" .Sh HISTORY
+.Sh HISTORY
+The
+.Nm ressl
+API first appeared in
+.Ox 5.6
+as a response to the unnecessary challenges other APIs present in
+order to use them safely.
+
