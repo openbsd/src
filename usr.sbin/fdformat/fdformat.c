@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdformat.c,v 1.18 2007/11/26 09:28:34 martynas Exp $	*/
+/*	$OpenBSD: fdformat.c,v 1.19 2014/10/08 04:55:03 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
@@ -113,7 +113,7 @@ verify_track(int fd, int track, int tracksize)
 		buf = 0;
 	}
 	if (! buf)
-		buf = malloc (bufsz);
+		buf = malloc(bufsz);
 	if (! buf) {
 		fprintf (stderr, "\nfdformat: out of memory\n");
 		exit (2);
