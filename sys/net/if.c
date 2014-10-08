@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.301 2014/09/30 08:27:57 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.302 2014/10/08 12:37:57 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -71,11 +71,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/pool.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/timeout.h>
-#include <sys/tree.h>
 #include <sys/protosw.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
@@ -152,30 +150,13 @@ int	if_group_egress_build(void);
 
 void	if_link_state_change_task(void *, void *);
 
-struct ifaddr_item {
-	RB_ENTRY(ifaddr_item)	 ifai_entry;
-	struct sockaddr		*ifai_addr;
-	struct ifaddr		*ifai_ifa;
-	struct ifaddr_item	*ifai_next;
-	u_int			 ifai_rdomain;
-};
-
-int	ifai_cmp(struct ifaddr_item *,  struct ifaddr_item *);
-void	ifa_item_insert(struct sockaddr *, struct ifaddr *, struct ifnet *);
-void	ifa_item_remove(struct sockaddr *, struct ifaddr *, struct ifnet *);
-#ifndef SMALL_KERNEL
-void	ifa_print_rb(void);
+#ifdef DDB
+void	ifa_print_all(void);
 #endif
-
-RB_HEAD(ifaddr_items, ifaddr_item) ifaddr_items = RB_INITIALIZER(&ifaddr_items);
-RB_PROTOTYPE(ifaddr_items, ifaddr_item, ifai_entry, ifai_cmp);
-RB_GENERATE(ifaddr_items, ifaddr_item, ifai_entry, ifai_cmp);
 
 TAILQ_HEAD(, ifg_group) ifg_head = TAILQ_HEAD_INITIALIZER(ifg_head);
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
-
-struct pool ifaddr_item_pl;
 
 struct timeout net_tick_to;
 void	net_tick(void *);
@@ -191,9 +172,6 @@ void
 ifinit()
 {
 	static struct timeout if_slowtim;
-
-	pool_init(&ifaddr_item_pl, sizeof(struct ifaddr_item), 0, 0, 0,
-	    "ifaddritem", NULL);
 
 	timeout_set(&if_slowtim, if_slowtimo, &if_slowtim);
 	timeout_set(&net_tick_to, net_tick, &net_tick_to);
@@ -2232,116 +2210,53 @@ void
 ifa_add(struct ifnet *ifp, struct ifaddr *ifa)
 {
 	TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
-	ifa_item_insert(ifa->ifa_addr, ifa, ifp);
-	if (ifp->if_flags & IFF_BROADCAST && ifa->ifa_broadaddr)
-		ifa_item_insert(ifa->ifa_broadaddr, ifa, ifp);
 }
 
 void
 ifa_del(struct ifnet *ifp, struct ifaddr *ifa)
 {
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
-	ifa_item_remove(ifa->ifa_addr, ifa, ifp);
-	if (ifp->if_flags & IFF_BROADCAST && ifa->ifa_broadaddr)
-		ifa_item_remove(ifa->ifa_broadaddr, ifa, ifp);
 }
 
 void
 ifa_update_broadaddr(struct ifnet *ifp, struct ifaddr *ifa, struct sockaddr *sa)
 {
-	ifa_item_remove(ifa->ifa_broadaddr, ifa, ifp);
 	if (ifa->ifa_broadaddr->sa_len != sa->sa_len)
 		panic("ifa_update_broadaddr does not support dynamic length");
 	bcopy(sa, ifa->ifa_broadaddr, sa->sa_len);
-	ifa_item_insert(ifa->ifa_broadaddr, ifa, ifp);
 }
 
-int
-ifai_cmp(struct ifaddr_item *a, struct ifaddr_item *b)
-{
-	if (a->ifai_rdomain != b->ifai_rdomain)
-		return (a->ifai_rdomain - b->ifai_rdomain);
-	/* safe even with a's sa_len > b's because memcmp aborts early */
-	return (memcmp(a->ifai_addr, b->ifai_addr, a->ifai_addr->sa_len));
-}
-
-void
-ifa_item_insert(struct sockaddr *sa, struct ifaddr *ifa, struct ifnet *ifp)
-{
-	struct ifaddr_item	*ifai, *p;
-
-	ifai = pool_get(&ifaddr_item_pl, PR_WAITOK);
-	ifai->ifai_addr = sa;
-	ifai->ifai_ifa = ifa;
-	ifai->ifai_rdomain = ifp->if_rdomain;
-	ifai->ifai_next = NULL;
-	if ((p = RB_INSERT(ifaddr_items, &ifaddr_items, ifai)) != NULL) {
-		if (sa->sa_family == AF_LINK) {
-			RB_REMOVE(ifaddr_items, &ifaddr_items, p);
-			ifai->ifai_next = p;
-			RB_INSERT(ifaddr_items, &ifaddr_items, ifai);
-		} else {
-			while(p->ifai_next)
-				p = p->ifai_next;
-			p->ifai_next = ifai;
-		}
-	}
-}
-
-void
-ifa_item_remove(struct sockaddr *sa, struct ifaddr *ifa, struct ifnet *ifp)
-{
-	struct ifaddr_item	*ifai, *ifai_first, *ifai_last, key;
-
-	bzero(&key, sizeof(key));
-	key.ifai_addr = sa;
-	key.ifai_rdomain = ifp->if_rdomain;
-	ifai_first = RB_FIND(ifaddr_items, &ifaddr_items, &key);
-	for (ifai = ifai_first; ifai; ifai = ifai->ifai_next) {
-		if (ifai->ifai_ifa == ifa)
-			break;
-		ifai_last = ifai;
-	}
-	if (!ifai)
-		return;
-	if (ifai == ifai_first) {
-		RB_REMOVE(ifaddr_items, &ifaddr_items, ifai);
-		if (ifai->ifai_next)
-			RB_INSERT(ifaddr_items, &ifaddr_items, ifai->ifai_next);
-	} else
-		ifai_last->ifai_next = ifai->ifai_next;
-	pool_put(&ifaddr_item_pl, ifai);
-}
-
-#ifndef SMALL_KERNEL
+#ifdef DDB
 /* debug function, can be called from ddb> */
 void
-ifa_print_rb(void)
+ifa_print_all(void)
 {
-	struct ifaddr_item *ifai, *p;
-	RB_FOREACH(p, ifaddr_items, &ifaddr_items) {
-		for (ifai = p; ifai; ifai = ifai->ifai_next) {
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
+
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			char addr[INET6_ADDRSTRLEN];
 
-			switch (ifai->ifai_addr->sa_family) {
+			switch (ifa->ifa_addr->sa_family) {
 			case AF_INET:
 				printf("%s", inet_ntop(AF_INET,
-				    &satosin(ifai->ifai_addr)->sin_addr,
+				    &satosin(ifa->ifa_addr)->sin_addr,
 				    addr, sizeof(addr)));
 				break;
 #ifdef INET6
 			case AF_INET6:
 				printf("%s", inet_ntop(AF_INET6,
-				    &(satosin6(ifai->ifai_addr))->sin6_addr,
+				    &(satosin6(ifa->ifa_addr))->sin6_addr,
 				    addr, sizeof(addr)));
 				break;
 #endif
 			case AF_LINK:
 				printf("%s",
-				    ether_sprintf(ifai->ifai_addr->sa_data));
+				    ether_sprintf(ifa->ifa_addr->sa_data));
 				break;
 			}
-			printf(" on %s\n", ifai->ifai_ifa->ifa_ifp->if_xname);
+			printf(" on %s\n", ifa->ifa_ifp->if_xname);
 		}
 	}
 }
