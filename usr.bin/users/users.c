@@ -1,4 +1,4 @@
-/*	$OpenBSD: users.c,v 1.10 2013/11/15 22:20:04 millert Exp $	*/
+/*	$OpenBSD: users.c,v 1.11 2014/10/08 04:11:28 doug Exp $	*/
 /*	$NetBSD: users.c,v 1.5 1994/12/20 15:58:19 jtc Exp $	*/
 
 /*
@@ -74,8 +74,8 @@ main(int argc, char *argv[])
 				size_t newmax = nmax + 32;
 				namebuf *newnames;
 
-				newnames = realloc(names,
-				    sizeof(*names) * newmax);
+				newnames = reallocarray(names, newmax,
+				    sizeof(*names));
 
 				if (newnames == NULL) {
 					err(1, NULL);
