@@ -1,4 +1,4 @@
-/*	$OpenBSD: setenv.c,v 1.14 2012/09/23 16:08:04 jeremy Exp $ */
+/*	$OpenBSD: setenv.c,v 1.15 2014/10/08 05:33:31 deraadt Exp $ */
 /*
  * Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
@@ -71,7 +71,7 @@ putenv(char *str)
 	for (P = environ; *P != NULL; P++)
 		;
 	cnt = P - environ;
-	P = (char **)realloc(lastenv, sizeof(char *) * (cnt + 2));
+	P = reallocarray(lastenv, cnt + 2, sizeof(char *));
 	if (!P)
 		return (-1);
 	if (lastenv != environ)
@@ -129,7 +129,7 @@ setenv(const char *name, const char *value, int rewrite)
 		for (P = environ; *P != NULL; P++)
 			;
 		cnt = P - environ;
-		P = (char **)realloc(lastenv, sizeof(char *) * (cnt + 2));
+		P = reallocarray(lastenv, cnt + 2, sizeof(char *));
 		if (!P)
 			return (-1);
 		if (lastenv != environ)
