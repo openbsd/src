@@ -1,4 +1,4 @@
-/*	$OpenBSD: scandir.c,v 1.16 2013/04/17 17:40:35 tedu Exp $ */
+/*	$OpenBSD: scandir.c,v 1.17 2014/10/08 05:34:59 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -101,8 +101,8 @@ scandir(const char *dirname, struct dirent ***namelist,
 			arraysz *= 2;
 			if (SIZE_MAX / sizeof(struct dirent *) < arraysz)
 				goto fail;
-			nnames = (struct dirent **)realloc((char *)names,
-				arraysz * sizeof(struct dirent *));
+			nnames = reallocarray(names,
+			    arraysz, sizeof(struct dirent *));
 			if (nnames == NULL)
 				goto fail;
 
