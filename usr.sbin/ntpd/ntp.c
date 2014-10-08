@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.120 2013/11/13 20:44:39 benno Exp $ */
+/*	$OpenBSD: ntp.c,v 1.121 2014/10/08 04:57:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -199,8 +199,8 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 
 	while (ntp_quit == 0) {
 		if (peer_cnt > idx2peer_elms) {
-			if ((newp = realloc(idx2peer, sizeof(void *) *
-			    peer_cnt)) == NULL) {
+			if ((newp = reallocarray(idx2peer, peer_cnt,
+			    sizeof(void *))) == NULL) {
 				/* panic for now */
 				log_warn("could not resize idx2peer from %u -> "
 				    "%u entries", idx2peer_elms, peer_cnt);
@@ -212,8 +212,8 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 
 		new_cnt = PFD_MAX + peer_cnt + listener_cnt + ctl_cnt;
 		if (new_cnt > pfd_elms) {
-			if ((newp = realloc(pfd, sizeof(struct pollfd) *
-			    new_cnt)) == NULL) {
+			if ((newp = reallocarray(pfd, new_cnt,
+			    sizeof(struct pollfd))) == NULL) {
 				/* panic for now */
 				log_warn("could not resize pfd from %u -> "
 				    "%u entries", pfd_elms, new_cnt);
