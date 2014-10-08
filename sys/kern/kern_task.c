@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.10 2014/07/12 18:43:32 tedu Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.11 2014/10/08 15:28:39 blambert Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -261,8 +261,10 @@ taskq_thread(void *xtq)
 	if (tq->tq_unlocked)
 		KERNEL_UNLOCK();
 
-	while (taskq_next_work(tq, &work))
+	while (taskq_next_work(tq, &work)) {
 		(*work.t_func)(work.t_arg1, work.t_arg2);
+		sched_pause();
+	}
 
 	mtx_enter(&tq->tq_mtx);
 	last = (--tq->tq_running == 0);

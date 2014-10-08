@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_workq.c,v 1.15 2014/07/12 18:43:32 tedu Exp $ */
+/*	$OpenBSD: kern_workq.c,v 1.16 2014/10/08 15:28:39 blambert Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -236,6 +236,7 @@ workq_thread(void *arg)
 		wqt->wqt_func(wqt->wqt_arg1, wqt->wqt_arg2);
 		if (mypool)
 			pool_put(&workq_task_pool, wqt);
+		sched_pause();
 	}
 
 	kthread_exit(0);
