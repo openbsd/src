@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.91 2012/08/12 14:24:56 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.92 2014/10/08 16:15:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -176,8 +176,8 @@ attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
 		fatalx("attr_optadd: others_len overflow");
 
 	asp->others_len++;
-	if ((p = realloc(asp->others,
-	    asp->others_len * sizeof(struct attr *))) == NULL)
+	if ((p = reallocarray(asp->others,
+	    asp->others_len, sizeof(struct attr *))) == NULL)
 		fatal("attr_optadd");
 	asp->others = p;
 
@@ -1000,7 +1000,7 @@ community_set(struct rde_aspath *asp, int as, int type)
 	attr = attr_optget(asp, ATTR_COMMUNITIES);
 	if (attr != NULL) {
 		p = attr->data;
-		ncommunities = attr->len >> 2; /* divide by four */
+		ncommunities = attr->len / 4;
 	}
 
 	/* first check if the community is not already set */
@@ -1016,7 +1016,7 @@ community_set(struct rde_aspath *asp, int as, int type)
 		/* overflow */
 		return (0);
 
-	if ((p = malloc(ncommunities << 2)) == NULL)
+	if ((p = reallocarray(NULL, ncommunities, 4)) == NULL)
 		fatal("community_set");
 
 	p[0] = as >> 8;
@@ -1030,7 +1030,7 @@ community_set(struct rde_aspath *asp, int as, int type)
 		attr_free(asp, attr);
 	}
 
-	attr_optadd(asp, f, ATTR_COMMUNITIES, p, ncommunities << 2);
+	attr_optadd(asp, f, ATTR_COMMUNITIES, p, ncommunities * 4);
 
 	free(p);
 	return (1);
@@ -1156,7 +1156,7 @@ community_ext_set(struct rde_aspath *asp, struct filter_extcommunity *c,
 		/* overflow */
 		return (0);
 
-	if ((p = malloc(ncommunities * sizeof(community))) == NULL)
+	if ((p = reallocarray(NULL, ncommunities, sizeof(community))) == NULL)
 		fatal("community_ext_set");
 
 	memcpy(p, &community, sizeof(community));

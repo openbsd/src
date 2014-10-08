@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.198 2014/06/23 03:46:17 guenther Exp $ */
+/*	$OpenBSD: kroute.c,v 1.199 2014/10/08 16:15:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -245,19 +245,20 @@ ktable_new(u_int rtableid, u_int rdomid, char *name, char *ifname, int fs,
 {
 	struct ktable	**xkrt;
 	struct ktable	 *kt;
-	size_t		  newsize, oldsize;
+	size_t		  oldsize;
 
 	/* resize index table if needed */
 	if (rtableid >= krt_size) {
 		oldsize = sizeof(struct ktable *) * krt_size;
-		newsize = sizeof(struct ktable *) * (rtableid + 1);
-		if ((xkrt = realloc(krt, newsize)) == NULL) {
+		if ((xkrt = reallocarray(krt, rtableid + 1,
+		    sizeof(struct ktable *))) == NULL) {
 			log_warn("ktable_new");
 			return (-1);
 		}
 		krt = xkrt;
 		krt_size = rtableid + 1;
-		bzero((char *)krt + oldsize, newsize - oldsize);
+		bzero((char *)krt + oldsize,
+		    krt_size * sizeof(struct ktable *) - oldsize);
 	}
 
 	if (krt[rtableid])

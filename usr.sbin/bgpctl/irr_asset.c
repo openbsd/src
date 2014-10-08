@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_asset.c,v 1.9 2013/11/22 15:15:16 deraadt Exp $ */
+/*	$OpenBSD: irr_asset.c,v 1.10 2014/10/08 16:15:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -229,8 +229,8 @@ asset_addmember(char *s)
 	for (i = 0; i < strlen(s); i++)
 		as[i] = toupper((unsigned char)s[i]);
 
-	if ((p = realloc(curass->members,
-	    (curass->n_members + 1) * sizeof(char *))) == NULL)
+	if ((p = reallocarray(curass->members,
+	    curass->n_members + 1, sizeof(char *))) == NULL)
 		err(1, "asset_addmember strdup");
 	curass->members = p;
 	curass->n_members++;
@@ -244,8 +244,8 @@ asset_add_as(struct as_set *ass, char *s)
 {
 	void *p;
 
-	if ((p = realloc(ass->as,
-	    (ass->n_as + 1) * sizeof(char *))) == NULL)
+	if ((p = reallocarray(ass->as,
+	    ass->n_as + 1, sizeof(char *))) == NULL)
 		err(1, "asset_add_as strdup");
 	ass->as = p;
 	ass->n_as++;
@@ -262,8 +262,8 @@ asset_add_asset(struct as_set *ass, char *s)
 {
 	void *p;
 
-	if ((p = realloc(ass->as_set,
-	    (ass->n_as_set + 1) * sizeof(char *))) == NULL)
+	if ((p = reallocarray(ass->as_set,
+	    ass->n_as_set + 1, sizeof(char *))) == NULL)
 		err(1, "asset_add_asset strdup");
 	ass->as_set = p;
 	ass->n_as_set++;

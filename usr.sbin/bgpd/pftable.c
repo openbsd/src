@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftable.c,v 1.6 2009/12/01 14:28:05 claudio Exp $ */
+/*	$OpenBSD: pftable.c,v 1.7 2014/10/08 16:15:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller <djm@openbsd.org>
@@ -198,7 +198,7 @@ pftable_add_work(const char *table, struct bgpd_addr *addr,
 
 	if (pft->nalloc <= pft->naddrs)
 		pft->nalloc = pft->nalloc == 0 ? 1 : pft->nalloc * 2;
-	tmp = realloc(pft->worklist, sizeof(*tmp) * pft->nalloc);
+	tmp = reallocarray(pft->worklist, pft->nalloc, sizeof(*tmp));
 	if (tmp == NULL) {
 		if (pft->worklist != NULL) {
 			log_warn("pftable_add_work: malloc");

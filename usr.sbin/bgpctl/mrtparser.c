@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.4 2013/05/07 01:32:12 jsg Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.5 2014/10/08 16:15:37 deraadt Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -843,8 +843,8 @@ mrt_extract_attr(struct mrt_rib_entry *re, u_char *a, int alen, sa_family_t af,
 			re->nattrs++;
 			if (re->nattrs >= UCHAR_MAX)
 				err(1, "too many attributes");
-			ap = realloc(re->attrs,
-			    re->nattrs * sizeof(struct mrt_attr));
+			ap = reallocarray(re->attrs,
+			    re->nattrs, sizeof(struct mrt_attr));
 			if (ap == NULL)
 				err(1, "realloc");
 			re->attrs = ap;

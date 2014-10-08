@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.334 2014/01/22 04:08:08 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.335 2014/10/08 16:15:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -314,8 +314,8 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 		}
 
 		if (peer_cnt > peer_l_elms) {
-			if ((newp = realloc(peer_l, sizeof(struct peer *) *
-			    peer_cnt)) == NULL) {
+			if ((newp = reallocarray(peer_l, peer_cnt,
+			    sizeof(struct peer *))) == NULL) {
 				/* panic for now  */
 				log_warn("could not resize peer_l from %u -> %u"
 				    " entries", peer_l_elms, peer_cnt);
@@ -339,8 +339,8 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 		}
 
 		if (mrt_cnt > mrt_l_elms) {
-			if ((newp = realloc(mrt_l, sizeof(struct mrt *) *
-			    mrt_cnt)) == NULL) {
+			if ((newp = reallocarray(mrt_l, mrt_cnt,
+			    sizeof(struct mrt *))) == NULL) {
 				/* panic for now  */
 				log_warn("could not resize mrt_l from %u -> %u"
 				    " entries", mrt_l_elms, mrt_cnt);
@@ -353,8 +353,8 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 		new_cnt = PFD_LISTENERS_START + listener_cnt + peer_cnt +
 		    ctl_cnt + mrt_cnt;
 		if (new_cnt > pfd_elms) {
-			if ((newp = realloc(pfd, sizeof(struct pollfd) *
-			    new_cnt)) == NULL) {
+			if ((newp = reallocarray(pfd, new_cnt,
+			    sizeof(struct pollfd))) == NULL) {
 				/* panic for now  */
 				log_warn("could not resize pfd from %u -> %u"
 				    " entries", pfd_elms, new_cnt);

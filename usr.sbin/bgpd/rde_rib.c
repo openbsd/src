@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.138 2013/08/14 20:34:27 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.139 2014/10/08 16:15:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -53,7 +53,6 @@ u_int16_t
 rib_new(char *name, u_int rtableid, u_int16_t flags)
 {
 	struct rib	*xribs;
-	size_t		newsize;
 	u_int16_t	id;
 
 	for (id = 0; id < rib_size; id++) {
@@ -65,8 +64,8 @@ rib_new(char *name, u_int rtableid, u_int16_t flags)
 		fatalx("rib_new: trying to use reserved id");
 
 	if (id >= rib_size) {
-		newsize = sizeof(struct rib) * (id + 1);
-		if ((xribs = realloc(ribs, newsize)) == NULL) {
+		if ((xribs = reallocarray(ribs, id + 1,
+		    sizeof(struct rib))) == NULL) {
 			/* XXX this is not clever */
 			fatal("rib_add");
 		}
