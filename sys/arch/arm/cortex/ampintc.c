@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.3 2014/07/12 18:44:41 tedu Exp $ */
+/* $OpenBSD: ampintc.c,v 1.4 2014/10/08 14:53:36 rapha Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -35,6 +35,11 @@
 #define ICP_SIZE	0x100
 #define ICD_ADDR	0x1000
 #define ICD_SIZE	0x1000
+
+#define ICD_A7_A15_ADDR	0x1000
+#define ICD_A7_A15_SIZE	0x1000
+#define ICP_A7_A15_ADDR	0x2000
+#define ICP_A7_A15_SIZE	0x1000
 
 /* registers */
 #define	ICD_DCR			0x000
@@ -203,19 +208,30 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 	int i, nintr;
 	bus_space_tag_t		iot;
 	bus_space_handle_t	d_ioh, p_ioh;
+	uint32_t		icp, icpsize, icd, icdsize;
 
 	ampintc = sc;
 
 	arm_init_smask();
 
 	iot = ia->ca_iot;
+	icp = ia->ca_periphbase + ICP_ADDR;
+	icpsize = ICP_SIZE;
+	icd = ia->ca_periphbase + ICD_ADDR;
+	icdsize = ICD_SIZE;
 
-	if (bus_space_map(iot, ia->ca_periphbase + ICP_ADDR,
-	    ICP_SIZE, 0, &p_ioh))
+	if ((cputype & CPU_ID_CORTEX_A7_MASK) == CPU_ID_CORTEX_A7 ||
+	    (cputype & CPU_ID_CORTEX_A15_MASK) == CPU_ID_CORTEX_A15) {
+		icp = ia->ca_periphbase + ICP_A7_A15_ADDR;
+		icpsize = ICP_A7_A15_SIZE;
+		icd = ia->ca_periphbase + ICD_A7_A15_ADDR;
+		icdsize = ICD_A7_A15_SIZE;
+	}
+
+	if (bus_space_map(iot, icp, icpsize, 0, &p_ioh))
 		panic("ampintc_attach: ICP bus_space_map failed!");
 
-	if (bus_space_map(iot, ia->ca_periphbase + ICD_ADDR,
-	    ICD_SIZE, 0, &d_ioh))
+	if (bus_space_map(iot, icd, icdsize, 0, &d_ioh))
 		panic("ampintc_attach: ICD bus_space_map failed!");
 
 	sc->sc_iot = iot;
