@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcsdup.c,v 1.1 2011/07/04 04:37:34 nicm Exp $	*/
+/*	$OpenBSD: wcsdup.c,v 1.2 2014/10/08 05:27:17 deraadt Exp $	*/
 /*	$NetBSD: wcsdup.c,v 1.3 2008/05/26 13:17:48 haad Exp $	*/
 
 /*
@@ -22,7 +22,7 @@ wcsdup(const wchar_t *str)
 	size_t len;
 
 	len = wcslen(str) + 1;
-	copy = malloc(len * sizeof (wchar_t));
+	copy = reallocarray(NULL, len, sizeof(wchar_t));
 
 	if (!copy)
 		return (NULL);
