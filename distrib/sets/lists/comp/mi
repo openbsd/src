@@ -976,7 +976,6 @@
 ./usr/include/net/ethertypes.h
 ./usr/include/net/hfsc.h
 ./usr/include/net/if.h
-./usr/include/net/if_aoe.h
 ./usr/include/net/if_arp.h
 ./usr/include/net/if_bridge.h
 ./usr/include/net/if_dl.h
