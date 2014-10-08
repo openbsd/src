@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.4 2014/03/17 17:16:06 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.5 2014/10/08 16:44:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -132,6 +132,68 @@ dev_sio_open(struct dev *d)
 		goto bad_close;
 	if (!sio_getpar(d->sio.hdl, &par))
 		goto bad_close;
+
+#ifdef DEBUG
+	/*
+	 * We support any parameters combination exposed by the kernel,
+	 * and we have no other choice than trusting the kernel for
+	 * returning correct parameters. But let's check parameters
+	 * early and nicely report kernel bugs rather than crashing
+	 * later in memset(), malloc() or alike.
+	 */
+
+	if (par.bits > BITS_MAX) {
+		log_puts(d->path);
+		log_puts(": ");
+		log_putu(par.bits);
+		log_puts(": unsupported number of bits\n");
+		goto bad_close;
+	}
+	if (par.bps > SIO_BPS(BITS_MAX)) {
+		log_puts(d->path);
+		log_puts(": ");
+		log_putu(par.bits);
+		log_puts(": unsupported sample size\n");
+		goto bad_close;
+	}
+	if ((mode & SIO_PLAY) && par.pchan > NCHAN_MAX) {
+		log_puts(d->path);
+		log_puts(": ");
+		log_putu(par.pchan);
+		log_puts(": unsupported number of play channels\n");
+		goto bad_close;
+	}	
+	if ((mode & SIO_REC) && par.rchan > NCHAN_MAX) {
+		log_puts(d->path);
+		log_puts(": ");
+		log_putu(par.rchan);
+		log_puts(": unsupported number of rec channels\n");
+		goto bad_close;
+	}
+	if (par.bufsz == 0 || par.bufsz > RATE_MAX) {
+		log_puts(d->path);
+		log_puts(": ");
+		log_putu(par.bufsz);
+		log_puts(": unsupported buffer size\n");
+		goto bad_close;
+	}
+	if (par.round == 0 || par.round > par.bufsz ||
+	    par.bufsz % par.round != 0) {
+		log_puts(d->path);
+		log_puts(": ");
+		log_putu(par.round);
+		log_puts(": unsupported block size\n");
+		goto bad_close;
+	}
+	if (par.rate == 0 || par.rate > RATE_MAX) {
+		log_puts(d->path);
+		log_puts(": ");
+		log_putu(par.rate);
+		log_puts(": unsupported rate\n");
+		goto bad_close;
+	}
+#endif
+
 	d->par.bits = par.bits;
 	d->par.bps = par.bps;
 	d->par.sig = par.sig;
