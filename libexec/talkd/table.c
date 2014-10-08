@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.14 2009/10/27 23:59:31 deraadt Exp $	*/
+/*	$OpenBSD: table.c,v 1.15 2014/10/08 02:10:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -166,7 +166,7 @@ insert_table(CTL_MSG *request, CTL_RESPONSE *response)
 	request->id_num = new_id();
 	response->id_num = htonl(request->id_num);
 	/* insert a new entry into the top of the list */
-	ptr = (TABLE_ENTRY *)malloc(sizeof(TABLE_ENTRY));
+	ptr = malloc(sizeof(TABLE_ENTRY));
 	if (ptr == NULL) {
 		syslog(LOG_ERR, "insert_table: Out of memory");
 		_exit(1);
