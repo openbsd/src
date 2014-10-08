@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.89 2014/09/17 19:12:55 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.90 2014/10/08 04:02:46 doug Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -311,7 +311,7 @@ mappidtoemul(pid_t pid, struct emulation *emul)
 			return;
 		}
 	}
-	tmp = realloc(pe_table, (pe_size + 1) * sizeof(*pe_table));
+	tmp = reallocarray(pe_table, pe_size + 1, sizeof(*pe_table));
 	if (tmp == NULL)
 		err(1, NULL);
 	pe_table = tmp;
