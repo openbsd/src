@@ -1,4 +1,4 @@
-/*	$OpenBSD: rquotad.c,v 1.20 2004/09/14 23:49:49 deraadt Exp $	*/
+/*	$OpenBSD: rquotad.c,v 1.21 2014/10/08 04:29:16 deraadt Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -192,7 +192,7 @@ initfs(void)
 		if (!hasquota(fs, &qfpathname))
 			continue;
 
-		fs_current = (struct fs_stat *) malloc(sizeof(struct fs_stat));
+		fs_current = malloc(sizeof(struct fs_stat));
 		if (fs_current == NULL) {
 			syslog(LOG_ERR, "can't malloc: %m");
 			exit(1);
