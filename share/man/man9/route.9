@@ -1,4 +1,4 @@
-.\"     $OpenBSD: route.9,v 1.10 2014/04/02 13:10:48 mpi Exp $
+.\"     $OpenBSD: route.9,v 1.11 2014/10/08 07:39:46 mpi Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 2 2014 $
+.Dd $Mdocdate: October 8 2014 $
 .Dt ROUTE 9
 .Os
 .Sh NAME
@@ -25,10 +25,6 @@
 .In net/route.h
 .Ft struct rtentry *
 .Fn rt_lookup "struct sockaddr *dst" "struct sockaddr *mask" "u_int tableid"
-.Ft void
-.Fn rtalloc "struct route *ro"
-.Ft void
-.Fn rtalloc_noclone "struct route *ro"
 .Ft struct rtentry *
 .Fn rtalloc1 "struct sockaddr *dst" "int flags" "u_int tableid"
 .Ft void

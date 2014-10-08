@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.219 2014/08/18 04:06:16 dlg Exp $
+#	$OpenBSD: Makefile,v 1.220 2014/10/08 07:39:46 mpi Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -323,9 +323,8 @@ MLINKS+=rssadapt.9 ieee80211_rssadapt_choose.9 \
 	rssadapt.9 ieee80211_rssadapt_lower_rate.9 \
 	rssadapt.9 ieee80211_rssadapt_raise_rate.9 \
 	rssadapt.9 ieee80211_rssadapt_updatestats.9
-MLINKS+=route.9 rt_lookup.9 route.9 rtalloc.9 route.9 rtalloc_noclone.9 \
-	route.9 rtalloc1.9 route.9 rtfree.9 route.9 rt_setgate.9 \
-	route.9 rtredirect.9 route.9 rtdeletemsg.9
+MLINKS+=route.9 rt_lookup.9 route.9 rtalloc1.9 route.9 rtfree.9 \
+	route.9 rt_setgate.9 route.9 rtredirect.9 route.9 rtdeletemsg.9
 MLINKS+=rt_ifa_add.9 rt_ifa_del.9 rt_ifa_add.9 rt_ifa_addloop.9 \
 	rt_ifa_add.9 rt_ifa_delloop.9
 MLINKS+=rt_timer_add.9 rt_timer_queue_create.9 \
