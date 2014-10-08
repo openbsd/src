@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.39 2014/09/17 15:31:38 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.40 2014/10/08 17:14:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -724,7 +724,8 @@ grid_reflow_split(struct grid *dst, u_int *py, struct grid_line *src_gl,
 			to_copy = src_gl->cellsize;
 
 		/* Expand destination line. */
-		dst_gl->celldata = xmalloc(to_copy * sizeof *dst_gl->celldata);
+		dst_gl->celldata = xrealloc(NULL, to_copy,
+		    sizeof *dst_gl->celldata);
 		dst_gl->cellsize = to_copy;
 		dst_gl->flags |= GRID_LINE_WRAPPED;
 
