@@ -1,4 +1,4 @@
-.\" $OpenBSD: ressl.3,v 1.2 2014/10/08 14:47:15 tedu Exp $
+.\" $OpenBSD: ressl.3,v 1.3 2014/10/08 14:55:20 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" All rights reserved.
@@ -245,7 +245,6 @@ Additionally, the values
 (all TLS versions) and
 .Dv RESSL_PROTOCOLS_DEFAULT
 (all versions) may be used.
-.Pp
 .It
 .Fn ressl_config_clear_keys
 clears any secert keys from memory.
@@ -266,7 +265,6 @@ reenables hostname and certificate verification.
 .El
 .Pp
 The following functions create, prepare, and free a connection context.
-.Pp
 .Bl -bullet -offset four
 .It
 .Fn ressl_client
@@ -308,7 +306,6 @@ bytes of data from the socket into
 .Fa buf .
 The amount of data read is returned in
 .Fa outlen .
-.Pp
 .It
 .Fn ressl_write
 writes
