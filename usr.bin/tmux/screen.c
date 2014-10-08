@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.29 2014/09/01 21:50:18 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.30 2014/10/08 17:35:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -215,8 +215,8 @@ screen_resize_y(struct screen *s, u_int sy)
 	}
 
 	/* Resize line arrays. */
-	gd->linedata = xrealloc(
-	    gd->linedata, gd->hsize + sy, sizeof *gd->linedata);
+	gd->linedata = xreallocarray(gd->linedata, gd->hsize + sy,
+	    sizeof *gd->linedata);
 
 	/* Size increasing. */
 	if (sy > oldy) {

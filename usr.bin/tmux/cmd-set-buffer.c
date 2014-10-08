@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-buffer.c,v 1.18 2014/05/13 07:34:35 nicm Exp $ */
+/* $OpenBSD: cmd-set-buffer.c,v 1.19 2014/10/08 17:35:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -104,7 +104,7 @@ cmd_set_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 		memcpy(pdata, pb->data, psize);
 	}
 
-	pdata = xrealloc(pdata, 1, psize + newsize);
+	pdata = xrealloc(pdata, psize + newsize);
 	memcpy(pdata + psize, args->argv[0], newsize);
 	psize += newsize;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.24 2014/10/08 17:14:04 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.25 2014/10/08 17:35:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -279,7 +279,7 @@ paste_make_sample(struct paste_buffer *pb, int utf8flag)
 	len = pb->size;
 	if (len > width)
 		len = width;
-	buf = xrealloc(NULL, len, 4 + 4);
+	buf = xreallocarray(NULL, len, 4 + 4);
 
 	if (utf8flag)
 		used = utf8_strvis(buf, pb->data, len, flags);

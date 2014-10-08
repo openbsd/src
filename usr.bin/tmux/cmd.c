@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.97 2014/09/25 12:51:40 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.98 2014/10/08 17:35:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -222,7 +222,7 @@ cmd_stringify_argv(int argc, char **argv)
 
 	for (i = 0; i < argc; i++) {
 		len += strlen(argv[i]) + 1;
-		buf = xrealloc(buf, 1, len);
+		buf = xrealloc(buf, len);
 
 		if (i == 0)
 			*buf = '\0';
@@ -1302,11 +1302,11 @@ cmd_template_replace(const char *template, const char *s, int idx)
 			ptr++;
 
 			len += strlen(s);
-			buf = xrealloc(buf, 1, len + 1);
+			buf = xrealloc(buf, len + 1);
 			strlcat(buf, s, len + 1);
 			continue;
 		}
-		buf = xrealloc(buf, 1, len + 2);
+		buf = xrealloc(buf, len + 2);
 		buf[len++] = ch;
 		buf[len] = '\0';
 	}

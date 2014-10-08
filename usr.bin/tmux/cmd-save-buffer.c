@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.25 2014/05/13 07:34:35 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.26 2014/10/08 17:35:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -147,7 +147,7 @@ do_print:
 			size = pb->size - used;
 
 		msglen = size * 4 + 1;
-		msg = xrealloc(msg, 1, msglen);
+		msg = xrealloc(msg, msglen);
 
 		strvisx(msg, start, size, VIS_OCTAL|VIS_TAB);
 		cmdq_print(cmdq, "%s", msg);

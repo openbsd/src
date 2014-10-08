@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.471 2014/09/01 21:58:41 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.472 2014/10/08 17:35:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -2408,7 +2408,8 @@ __dead void printflike1 log_fatalx(const char *, ...);
 char		*xstrdup(const char *);
 void		*xcalloc(size_t, size_t);
 void		*xmalloc(size_t);
-void		*xrealloc(void *, size_t, size_t);
+void		*xrealloc(void *, size_t);
+void		*xreallocarray(void *, size_t, size_t);
 int printflike2	 xasprintf(char **, const char *, ...);
 int		 xvasprintf(char **, const char *, va_list);
 int printflike3	 xsnprintf(char *, size_t, const char *, ...);

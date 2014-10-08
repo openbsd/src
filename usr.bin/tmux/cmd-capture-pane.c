@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.28 2014/06/20 10:46:59 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.29 2014/10/08 17:35:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -48,7 +48,7 @@ const struct cmd_entry cmd_capture_pane_entry = {
 char *
 cmd_capture_pane_append(char *buf, size_t *len, char *line, size_t linelen)
 {
-	buf = xrealloc(buf, 1, *len + linelen + 1);
+	buf = xrealloc(buf, *len + linelen + 1);
 	memcpy(buf + *len, line, linelen);
 	*len += linelen;
 	return (buf);
