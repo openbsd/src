@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.31 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.32 2014/10/08 04:58:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -487,7 +487,7 @@ linkaddr_string(const u_char *ep, const int len)
 	if (tp->e_name)
 		return (tp->e_name);
 
-	tp->e_name = cp = (char *)malloc(len*3);
+	tp->e_name = cp = reallocarray(NULL, len, 3);
 	if (tp->e_name == NULL)
 		error("linkaddr_string: malloc");
 	if ((j = *ep >> 4) != 0)
