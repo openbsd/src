@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.17 2014/10/07 19:38:57 tedu Exp $	*/
+/*	$OpenBSD: head.c,v 1.18 2014/10/08 08:31:53 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
@@ -48,6 +48,7 @@ static void usage(void);
 int
 main(int argc, char *argv[])
 {
+	FILE	*fp;
 	long 	cnt;
 	int	ch, firsttime;
 	long	linecnt = 10;
@@ -81,13 +82,13 @@ main(int argc, char *argv[])
 			errx(1, "line count %s: %s", errstr, p);
 	}
 
-	/* setlinebuf(stdout); */
 	for (firsttime = 1; ; firsttime = 0) {
 		if (!*argv) {
 			if (!firsttime)
 				exit(status);
+			fp = stdin;
 		} else {
-			if (!freopen(*argv, "r", stdin)) {
+			if ((fp = fopen(*argv, "r")) == NULL) {
 				warn("%s", *argv++);
 				status = 1;
 				continue;
@@ -99,10 +100,11 @@ main(int argc, char *argv[])
 			}
 			++argv;
 		}
-		for (cnt = linecnt; cnt && !feof(stdin); --cnt)
-			while ((ch = getchar()) != EOF)
+		for (cnt = linecnt; cnt && !feof(fp); --cnt)
+			while ((ch = getc(fp)) != EOF)
 				if (putchar(ch) == '\n')
 					break;
+		fclose(fp);
 	}
 	/*NOTREACHED*/
 }
