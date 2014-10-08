@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.13 2014/09/11 20:32:16 kettenis Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.14 2014/10/08 19:40:28 sf Exp $	*/
 /* $NetBSD: atomic.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -135,6 +135,11 @@ i386_atomic_cas_int32(volatile int32_t *ptr, int32_t expect, int32_t set)
 #define membar_consumer()	__membar("")
 #define membar_sync()		__membar("")
 #endif
+
+/* virtio needs MP membars even on SP kernels */
+#define virtio_membar_producer()	__membar("")
+#define virtio_membar_consumer()	__membar("")
+#define virtio_membar_sync()		__membar("lock; addl $0,0(%%esp)")
 
 int ucas_32(volatile int32_t *, int32_t, int32_t);
 #define futex_atomic_ucas_int32 ucas_32

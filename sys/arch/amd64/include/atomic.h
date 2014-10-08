@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.15 2014/09/07 22:19:32 kettenis Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.16 2014/10/08 19:40:28 sf Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -230,6 +230,11 @@ _atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
 #define membar_consumer()	__membar("")
 #define membar_sync()		__membar("")
 #endif
+
+/* virtio needs MP membars even on SP kernels */
+#define virtio_membar_producer()	__membar("")
+#define virtio_membar_consumer()	__membar("")
+#define virtio_membar_sync()		__membar("mfence")
 
 static __inline u_int64_t
 x86_atomic_testset_u64(volatile u_int64_t *ptr, u_int64_t val)
