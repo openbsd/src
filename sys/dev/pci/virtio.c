@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.10 2014/10/08 19:59:53 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.11 2014/10/08 20:03:18 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -656,13 +656,11 @@ static void
 publish_avail_idx(struct virtio_softc *sc, struct virtqueue *vq)
 {
 	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
-	vq_sync_uring(sc, vq, BUS_DMASYNC_PREREAD);
 
 	virtio_membar_producer();
 	vq->vq_avail->idx = vq->vq_avail_idx;
 	vq_sync_aring(sc, vq, BUS_DMASYNC_POSTWRITE);
 	vq->vq_queued = 1;
-	vq_sync_uring(sc, vq, BUS_DMASYNC_POSTREAD);
 }
 
 /*
