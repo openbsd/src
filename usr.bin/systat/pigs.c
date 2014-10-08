@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.27 2014/09/15 19:08:21 miod Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.28 2014/10/08 04:10:04 doug Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -166,7 +166,7 @@ read_pg(void)
 
 	if (nproc > onproc) {
 		int *p;
-		p = realloc(pb_indices, (nproc + 1) * sizeof(int));
+		p = reallocarray(pb_indices, nproc + 1, sizeof(int));
 		if (p == NULL) {
 			error("Out of Memory!");
 			return 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.8 2014/08/14 08:10:30 mpi Exp $	*/
+/*	$OpenBSD: pool.c,v 1.9 2014/10/08 04:10:04 doug Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -218,7 +218,7 @@ read_pool(void)
 	}
 
 	if (np > num_pools || pools == NULL) {
-		struct pool_info *p = realloc(pools, sizeof(*pools) * np);
+		struct pool_info *p = reallocarray(pools, np, sizeof(*pools));
 		if (p == NULL) {
 			error("realloc: %s", strerror(errno));
 			return (-1);

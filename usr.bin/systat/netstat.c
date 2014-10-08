@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.40 2014/08/14 12:55:50 mpi Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.41 2014/10/08 04:10:04 doug Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -163,7 +163,7 @@ next_ns(void)
 		size_t a = num_alloc + ADD_ALLOC;
 		if (a < num_alloc)
 			return NULL;
-		ni = realloc(netinfos, a * sizeof(*ni));
+		ni = reallocarray(netinfos, a, sizeof(*ni));
 		if (ni == NULL)
 			return NULL;
 		netinfos = ni;

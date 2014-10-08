@@ -1,4 +1,4 @@
-/* $Id: cache.c,v 1.4 2011/11/29 10:17:52 dlg Exp $ */
+/* $Id: cache.c,v 1.5 2014/10/08 04:10:04 doug Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -68,7 +68,7 @@ cache_init(int max)
 	if (max == 0) {
 		sc_store = NULL;
 	} else {
-		sc_store = malloc(max * sizeof(struct sc_ent));
+		sc_store = reallocarray(NULL, max, sizeof(struct sc_ent));
 		if (sc_store == NULL)
 			return (1);
 	}
