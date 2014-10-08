@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.11 2009/10/27 23:59:36 deraadt Exp $	*/
+/*	$OpenBSD: col.c,v 1.12 2014/10/08 19:59:58 deraadt Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@ void	flush_lines(int);
 void	flush_blanks(void);
 void	free_line(LINE *);
 void	usage(void);
-void   *xmalloc(void *, size_t);
+void   *xreallocarray(void *, size_t, size_t);
 
 CSET	last_set;		/* char_set of last char printed */
 LINE   *lines;
@@ -263,10 +263,10 @@ main(int argc, char *argv[])
 		if (l->l_line_len + 1 >= l->l_lsize) {
 			int need;
 
-			need = l->l_lsize ? l->l_lsize * 2 : 90;
-			l->l_line = (CHAR *)xmalloc((void *) l->l_line,
-			    (unsigned) need * sizeof(CHAR));
-			l->l_lsize = need;
+			need = l->l_lsize ? l->l_lsize : 45;
+			l->l_line = xreallocarray(l->l_line,
+			    need, 2 * sizeof(CHAR));
+			l->l_lsize = need * 2;
 		}
 		c = &l->l_line[l->l_line_len++];
 		c->c_char = ch;
@@ -379,13 +379,13 @@ flush_line(LINE *l)
 		 */
 		if (l->l_lsize > sorted_size) {
 			sorted_size = l->l_lsize;
-			sorted = (CHAR *)xmalloc((void *)sorted,
-			    (unsigned)sizeof(CHAR) * sorted_size);
+			sorted = xreallocarray(sorted,
+			    sorted_size, sizeof(CHAR));
 		}
 		if (l->l_max_col >= count_size) {
 			count_size = l->l_max_col + 1;
-			count = (int *)xmalloc((void *)count,
-			    (unsigned)sizeof(int) * count_size);
+			count = xreallocarray(count,
+			    count_size, sizeof(int));
 		}
 		memset((char *)count, 0, sizeof(int) * l->l_max_col + 1);
 		for (i = nchars, c = l->l_line; --i >= 0; c++)
@@ -466,7 +466,7 @@ alloc_line(void)
 	int i;
 
 	if (!line_freelist) {
-		l = (LINE *)xmalloc(NULL, sizeof(LINE) * NALLOC);
+		l = xreallocarray(NULL, NALLOC, sizeof(LINE));
 		line_freelist = l;
 		for (i = 1; i < NALLOC; i++, l++)
 			l->l_next = l + 1;
@@ -488,10 +488,10 @@ free_line(LINE *l)
 }
 
 void *
-xmalloc(void *p, size_t size)
+xreallocarray(void *p, size_t n, size_t size)
 {
 
-	if (!(p = (void *)realloc(p, size)))
+	if (!(p = reallocarray(p, n, size)))
 		err(1, "realloc failed");
 	return (p);
 }
