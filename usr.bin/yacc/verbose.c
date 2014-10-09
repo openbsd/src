@@ -1,4 +1,4 @@
-/* $OpenBSD: verbose.c,v 1.12 2014/03/13 00:56:39 tedu Exp $	 */
+/* $OpenBSD: verbose.c,v 1.13 2014/10/09 03:02:18 deraadt Exp $	 */
 /* $NetBSD: verbose.c,v 1.4 1996/03/19 03:21:50 jtc Exp $	 */
 
 /*
@@ -56,7 +56,7 @@ verbose(void)
 	if (!vflag)
 		return;
 
-	null_rules = malloc(nrules * sizeof(short));
+	null_rules = reallocarray(NULL, nrules, sizeof(short));
 	if (null_rules == NULL)
 		no_space();
 	fprintf(verbose_file, "\f\n");

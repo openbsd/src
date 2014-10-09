@@ -1,4 +1,4 @@
-/* $OpenBSD: reader.c,v 1.28 2014/03/13 01:18:22 tedu Exp $	 */
+/* $OpenBSD: reader.c,v 1.29 2014/10/09 03:02:18 deraadt Exp $	 */
 /* $NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	 */
 
 /*
@@ -868,9 +868,7 @@ get_tag(void)
 
 	if (ntags >= tagmax) {
 		tagmax += 16;
-		tag_table = (tag_table ?
-		    realloc(tag_table, tagmax * sizeof(char *)) :
-		    malloc(tagmax * sizeof(char *)));
+		tag_table = reallocarray(tag_table, tagmax, sizeof(char *));
 		if (tag_table == NULL)
 			no_space();
 	}
@@ -1100,19 +1098,19 @@ initialize_grammar(void)
 
 	nrules = 3;
 	maxrules = 100;
-	plhs = malloc(maxrules * sizeof(bucket *));
+	plhs = reallocarray(NULL, maxrules, sizeof(bucket *));
 	if (plhs == NULL)
 		no_space();
 	plhs[0] = 0;
 	plhs[1] = 0;
 	plhs[2] = 0;
-	rprec = malloc(maxrules * sizeof(short));
+	rprec = reallocarray(NULL, maxrules, sizeof(short));
 	if (rprec == NULL)
 		no_space();
 	rprec[0] = 0;
 	rprec[1] = 0;
 	rprec[2] = 0;
-	rassoc = malloc(maxrules * sizeof(char));
+	rassoc = reallocarray(NULL, maxrules, sizeof(char));
 	if (rassoc == NULL)
 		no_space();
 	rassoc[0] = TOKEN;
@@ -1127,7 +1125,7 @@ expand_items(void)
 	int olditems = maxitems;
 
 	maxitems += 300;
-	pitem = realloc(pitem, maxitems * sizeof(bucket *));
+	pitem = reallocarray(pitem, maxitems, sizeof(bucket *));
 	if (pitem == NULL)
 		no_space();
 	memset(pitem + olditems, 0, (maxitems - olditems) * sizeof(bucket *));
@@ -1138,13 +1136,13 @@ void
 expand_rules(void)
 {
 	maxrules += 100;
-	plhs = realloc(plhs, maxrules * sizeof(bucket *));
+	plhs = reallocarray(plhs, maxrules, sizeof(bucket *));
 	if (plhs == NULL)
 		no_space();
-	rprec = realloc(rprec, maxrules * sizeof(short));
+	rprec = reallocarray(rprec, maxrules, sizeof(short));
 	if (rprec == NULL)
 		no_space();
-	rassoc = realloc(rassoc, maxrules * sizeof(char));
+	rassoc = reallocarray(rassoc, maxrules, sizeof(char));
 	if (rassoc == NULL)
 		no_space();
 }
@@ -1643,20 +1641,20 @@ pack_symbols(void)
 	start_symbol = ntokens;
 	nvars = nsyms - ntokens;
 
-	symbol_name = malloc(nsyms * sizeof(char *));
+	symbol_name = reallocarray(NULL, nsyms, sizeof(char *));
 	if (symbol_name == NULL)
 		no_space();
-	symbol_value = malloc(nsyms * sizeof(short));
+	symbol_value = reallocarray(NULL, nsyms, sizeof(short));
 	if (symbol_value == NULL)
 		no_space();
-	symbol_prec = malloc(nsyms * sizeof(short));
+	symbol_prec = reallocarray(NULL, nsyms, sizeof(short));
 	if (symbol_prec == NULL)
 		no_space();
 	symbol_assoc = malloc(nsyms);
 	if (symbol_assoc == NULL)
 		no_space();
 
-	v = malloc(nsyms * sizeof(bucket *));
+	v = reallocarray(NULL, nsyms, sizeof(bucket *));
 	if (v == NULL)
 		no_space();
 
@@ -1751,16 +1749,16 @@ pack_grammar(void)
 	int i, j;
 	int assoc, prec;
 
-	ritem = malloc(nitems * sizeof(short));
+	ritem = reallocarray(NULL, nitems, sizeof(short));
 	if (ritem == NULL)
 		no_space();
-	rlhs = malloc(nrules * sizeof(short));
+	rlhs = reallocarray(NULL, nrules, sizeof(short));
 	if (rlhs == NULL)
 		no_space();
-	rrhs = malloc((nrules + 1) * sizeof(short));
+	rrhs = reallocarray(NULL, nrules + 1, sizeof(short));
 	if (rrhs == NULL)
 		no_space();
-	rprec = realloc(rprec, nrules * sizeof(short));
+	rprec = reallocarray(rprec, nrules, sizeof(short));
 	if (rprec == NULL)
 		no_space();
 	rassoc = realloc(rassoc, nrules);
