@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.38 2012/12/04 02:24:47 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.39 2014/10/09 02:43:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -143,7 +143,8 @@ range2cidrlist(struct cidr *list, int *cli, int *cls, u_int32_t start,
 
 		maxsize = MAX(maxsize, diff);
 		if (*cls <= *cli + 1) {		/* one extra for terminator */
-			tmp = realloc(list, (*cls + 32) * sizeof(struct cidr));
+			tmp = reallocarray(list, *cls + 32,
+			    sizeof(struct cidr));
 			if (tmp == NULL)
 				errx(1, "malloc failed");
 			list = tmp;
@@ -481,7 +482,7 @@ add_blacklist(struct bl *bl, size_t *blc, size_t *bls, gzFile gzf, int white)
 	/* we assume that there is an IP for every 16 bytes */
 	if (*blc + bu / 8 >= *bls) {
 		*bls += bu / 8;
-		blt = realloc(bl, *bls * sizeof(struct bl));
+		blt = reallocarray(bl, *bls, sizeof(struct bl));
 		if (blt == NULL) {
 			*bls -= bu / 8;
 			serrno = errno;
@@ -492,7 +493,7 @@ add_blacklist(struct bl *bl, size_t *blc, size_t *bls, gzFile gzf, int white)
 	for (i = 0; i <= bu; i++) {
 		if (*blc + 1 >= *bls) {
 			*bls += 1024;
-			blt = realloc(bl, *bls * sizeof(struct bl));
+			blt = reallocarray(bl, *bls, sizeof(struct bl));
 			if (blt == NULL) {
 				*bls -= 1024;
 				serrno = errno;
@@ -837,8 +838,8 @@ main(int argc, char *argv[])
 				struct blacklist *tmp;
 
 				bls += 32;
-				tmp = realloc(blists,
-				    bls * sizeof(struct blacklist));
+				tmp = reallocarray(blists, bls,
+				    sizeof(struct blacklist));
 				if (tmp == NULL)
 					errx(1, "malloc failed");
 				blists = tmp;

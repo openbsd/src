@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.55 2013/11/27 21:25:25 deraadt Exp $	*/
+/*	$OpenBSD: grey.c,v 1.56 2014/10/09 02:43:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -413,8 +413,8 @@ addwhiteaddr(char *addr)
 		if (whitecount == whitealloc) {
 			char **tmp;
 
-			tmp = realloc(whitelist,
-			    (whitealloc + 1024) * sizeof(char *));
+			tmp = reallocarray(whitelist,
+			    whitealloc + 1024, sizeof(char *));
 			if (tmp == NULL) {
 				freeaddrinfo(res);
 				return(-1);
@@ -450,8 +450,8 @@ addtrapaddr(char *addr)
 		if (trapcount == trapalloc) {
 			char **tmp;
 
-			tmp = realloc(traplist,
-			    (trapalloc + 1024) * sizeof(char *));
+			tmp = reallocarray(traplist,
+			    trapalloc + 1024, sizeof(char *));
 			if (tmp == NULL) {
 				freeaddrinfo(res);
 				return(-1);
@@ -610,7 +610,7 @@ greyscan(char *dbname)
 		if (asiz < dbk.size + 1) {
 			char *tmp;
 
-			tmp = realloc(a, dbk.size * 2);
+			tmp = reallocarray(a, dbk.size, 2);
 			if (tmp == NULL)
 				goto bad;
 			a = tmp;
