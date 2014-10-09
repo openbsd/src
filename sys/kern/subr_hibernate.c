@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.101 2014/09/26 09:25:38 kettenis Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.102 2014/10/09 00:42:05 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -47,9 +47,7 @@
  * 1*PAGE_SIZE			I/O page used during hibernate suspend
  * 2*PAGE_SIZE			I/O page used during hibernate suspend
  * 3*PAGE_SIZE			copy page used during hibernate suspend
- * 4*PAGE_SIZE			final chunk ordering list (8 pages)
- * 12*PAGE_SIZE			piglet chunk ordering list (8 pages)
- * 20*PAGE_SIZE			temp chunk ordering list (8 pages)
+ * 4*PAGE_SIZE			final chunk ordering list (24 pages)
  * 28*PAGE_SIZE			RLE utility page
  * 29*PAGE_SIZE			start of hiballoc area
  * 109*PAGE_SIZE		end of hiballoc area (80 pages)
@@ -525,7 +523,6 @@ uvm_page_rle(paddr_t addr)
 int
 get_hibernate_info(union hibernate_info *hib, int suspend)
 {
-	int chunktable_size;
 	struct disklabel dl;
 	char err_string[128], *dl_ret;
 
@@ -565,8 +562,6 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 	/* Calculate signature block location */
 	hib->sig_offset = DL_GETPSIZE(&dl.d_partitions[1]) -
 	    sizeof(union hibernate_info)/DEV_BSIZE;
-
-	chunktable_size = HIBERNATE_CHUNK_TABLE_SIZE / DEV_BSIZE;
 
 	/* Stash kernel version information */
 	memset(&hib->kernel_version, 0, 128);
@@ -827,7 +822,6 @@ hibernate_write_signature(union hibernate_info *hib)
 int
 hibernate_write_chunktable(union hibernate_info *hib)
 {
-	struct hibernate_disk_chunk *chunks;
 	vaddr_t hibernate_chunk_table_start;
 	size_t hibernate_chunk_table_size;
 	int i, err;
@@ -836,9 +830,6 @@ hibernate_write_chunktable(union hibernate_info *hib)
 
 	hibernate_chunk_table_start = hib->piglet_va +
 	    HIBERNATE_CHUNK_SIZE;
-
-	chunks = (struct hibernate_disk_chunk *)(hib->piglet_va +
-	    HIBERNATE_CHUNK_SIZE);
 
 	/* Write chunk table */
 	for (i = 0; i < hibernate_chunk_table_size; i += MAXPHYS) {
@@ -878,34 +869,6 @@ hibernate_clear_signature(void)
 	    hib.sig_offset,
 	    DEV_BSIZE, (vaddr_t)&blank_hiber_info, 1))
 		printf("Warning: could not clear hibernate signature\n");
-
-	return (0);
-}
-
-/*
- * Check chunk range overlap when calculating whether or not to copy a
- * compressed chunk to the piglet area before decompressing.
- *
- * returns zero if the ranges do not overlap, non-zero otherwise.
- */
-int
-hibernate_check_overlap(paddr_t r1s, paddr_t r1e, paddr_t r2s, paddr_t r2e)
-{
-	/* case A : end of r1 overlaps start of r2 */
-	if (r1s < r2s && r1e > r2s)
-		return (1);
-
-	/* case B : r1 entirely inside r2 */
-	if (r1s >= r2s && r1e <= r2e)
-		return (1);
-
-	/* case C : r2 entirely inside r1 */
-	if (r2s >= r1s && r2e <= r1e)
-		return (1);
-
-	/* case D : end of r2 overlaps start of r1 */
-	if (r2s < r1s && r2e > r1s)
-		return (1);
 
 	return (0);
 }
