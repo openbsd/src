@@ -139,12 +139,12 @@ Opened fifo for reading fi.fo.fum (nonblocking)
 
 Testing EOF FIFO behavior (pass 2):
 	poll POLLIN, timeout=-1
-		1 fd(s) ready, revents == POLLIN
+		1 fd(s) ready, revents == POLLIN POLLHUP
 	received EOF from FIFO
 
 Testing EOF FIFO behavior (pass 3):
 	poll POLLIN, timeout=-1
-		1 fd(s) ready, revents == POLLIN
+		1 fd(s) ready, revents == POLLIN POLLHUP
 	received EOF from FIFO
 
 Opened fifo for reading fi.fo.fum (nonblocking)
