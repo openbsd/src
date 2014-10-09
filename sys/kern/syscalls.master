@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.147 2014/09/18 02:15:04 uebayasi Exp $
+;	$OpenBSD: syscalls.master,v 1.148 2014/10/09 03:35:06 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -360,20 +360,8 @@
 209	STD		{ int sys_utrace(const char *label, const void *addr, \
 			    size_t len); }
 ;
-; Syscalls 210-219 are reserved for dynamically loaded syscalls
+; Syscalls 210-219 were reserved for dynamically loaded syscalls
 ;
-#ifdef LKM
-210	NODEF		{ int sys_lkmnosys(void); }
-211	NODEF		{ int sys_lkmnosys(void); }
-212	NODEF		{ int sys_lkmnosys(void); }
-213	NODEF		{ int sys_lkmnosys(void); }
-214	NODEF		{ int sys_lkmnosys(void); }
-215	NODEF		{ int sys_lkmnosys(void); }
-216	NODEF		{ int sys_lkmnosys(void); }
-217	NODEF		{ int sys_lkmnosys(void); }
-218	NODEF		{ int sys_lkmnosys(void); }
-219	NODEF		{ int sys_lkmnosys(void); }
-#else	/* !LKM */
 210	UNIMPL
 211	UNIMPL
 212	UNIMPL
@@ -384,7 +372,6 @@
 217	UNIMPL
 218	UNIMPL
 219	UNIMPL
-#endif	/* !LKM */
 ; System calls 220-240 are reserved for use by OpenBSD
 #ifdef SYSVSEM
 220	UNIMPL
