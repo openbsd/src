@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.25 2013/08/13 05:52:26 guenther Exp $	*/
+/*	$OpenBSD: shm.h,v 1.26 2014/10/09 04:04:27 tedu Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -89,11 +89,11 @@
  * Segment low boundry address multiple
  * Use PAGE_SIZE for kernel but for userland query the kernel for the value.
  */
-#if defined(_KERNEL) || defined(_STANDALONE) || defined(_LKM)
+#if defined(_KERNEL) || defined(_STANDALONE)
 #define	SHMLBA		PAGE_SIZE
 #else
 #define	SHMLBA		(getpagesize())
-#endif /* _KERNEL || _STANDALONE || _LKM */
+#endif /* _KERNEL || _STANDALONE */
 
 typedef short		shmatt_t;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.101 2014/07/13 15:46:21 uebayasi Exp $	*/
+/*	$OpenBSD: systm.h,v 1.102 2014/10/09 04:04:27 tedu Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -149,8 +149,6 @@ int	enosys(void);
 int	enoioctl(void);
 int	enxio(void);
 int	eopnotsupp(void *);
-
-int	lkmenodev(void);
 
 struct vnodeopv_desc;
 void vfs_opv_init_explicit(struct vnodeopv_desc *);

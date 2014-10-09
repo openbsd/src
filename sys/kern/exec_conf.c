@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.31 2013/10/17 10:38:28 deraadt Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.32 2014/10/09 04:04:27 tedu Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -56,13 +56,6 @@ struct execsw execsw[] = {
 #ifdef COMPAT_LINUX
 	{ sizeof(Elf32_Ehdr), exec_linux_elf32_makecmds, &emul_linux_elf },
 #endif
-#ifdef LKM
-	{ 0, NULL, NULL },				/* entries for LKMs */
-	{ 0, NULL, NULL },
-	{ 0, NULL, NULL },
-	{ 0, NULL, NULL },
-	{ 0, NULL, NULL },
-#endif
 };
 int nexecs = (sizeof execsw / sizeof(*execsw));
 int exec_maxhdrsz;
@@ -76,8 +69,6 @@ init_exec(void)
 
 	/*
 	 * figure out the maximum size of an exec header.
-	 * XXX should be able to keep LKM code from modifying exec switch
-	 * when we're still using it, but...
 	 */
 	for (i = 0; i < nexecs; i++)
 		if (execsw[i].es_check != NULL &&

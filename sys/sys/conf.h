@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.128 2014/08/20 06:23:03 mikeb Exp $	*/
+/*	$OpenBSD: conf.h,v 1.129 2014/10/09 04:04:27 tedu Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -127,7 +127,7 @@ extern struct bdevsw bdevsw[];
 	(dev_type_dump((*))) enodev, 0 }
 
 #define	bdev_lkm_dummy() { \
-	(dev_type_open((*))) lkmenodev, (dev_type_close((*))) enodev, \
+	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
 	(dev_type_strategy((*))) enodev, (dev_type_ioctl((*))) enodev, \
 	(dev_type_dump((*))) enodev, 0 }
 
@@ -215,7 +215,7 @@ extern struct cdevsw cdevsw[];
 	(dev_type_mmap((*))) enodev }
 
 #define	cdev_lkm_dummy() { \
-	(dev_type_open((*))) lkmenodev, (dev_type_close((*))) enodev, \
+	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
 	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
 	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
@@ -539,14 +539,6 @@ dev_t	getnulldev(void);
 cdev_decl(filedesc);
 
 cdev_decl(log);
-
-#ifndef LKM
-# define	NLKM	0
-# define	lkmenodev	enodev
-#else
-# define	NLKM	1
-#endif
-cdev_decl(lkm);
 
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl
