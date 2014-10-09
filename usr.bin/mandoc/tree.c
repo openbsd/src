@@ -1,4 +1,4 @@
-/*	$Id: tree.c,v 1.22 2014/07/02 07:10:17 schwarze Exp $ */
+/*	$Id: tree.c,v 1.23 2014/10/09 15:32:22 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -286,9 +286,9 @@ print_box(const struct eqn_box *ep, int indent)
 	}
 
 	assert(t);
-	printf("%s(%d, %d, %d, %d, %d, \"%s\", \"%s\") %s\n",
+	printf("%s(size=%d, pos=%d, font=%d, mark=%d, pile=%d, l=\"%s\", r=\"%s\") %s\n",
 	    t, EQN_DEFSIZE == ep->size ? 0 : ep->size,
-	    ep->pos + 1, ep->font, ep->mark, ep->pile,
+	    ep->pos, ep->font, ep->mark, ep->pile,
 	    ep->left ? ep->left : "",
 	    ep->right ? ep->right : "",
 	    ep->text ? ep->text : "");
