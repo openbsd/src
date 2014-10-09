@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.45 2014/09/06 10:45:29 mpi Exp $	*/
+/*	$OpenBSD: locore.S,v 1.46 2014/10/09 09:44:20 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -1346,7 +1346,9 @@ _C_LABEL(rfi_start):
 	.long	rfi1, rfi1 + 4
 	.long	rfi2, rfi2 + 4
 	.long	rfi3, rfi3 + 4
+#ifdef DDB
 	.long	rfi4, rfi4 + 4
+#endif
 	.long	0, 0
 
 
@@ -1364,5 +1366,7 @@ _C_LABEL(nop32_start):
 	.long	nop32_4s, nop32_4e
 	.long	nop32_5s, nop32_5e
 	.long	nop32_6s, nop32_6e
+#ifdef DDB
 	.long	nop32_7s, nop32_7e
+#endif
 	.long	0, 0
