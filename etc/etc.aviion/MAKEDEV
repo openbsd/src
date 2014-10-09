@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.aviion/MAKEDEV.md,v 1.19 2014/03/18 22:36:29 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.74 2014/07/11 21:58:32 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.76 2014/08/20 11:23:40 mikeb Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -49,7 +49,6 @@
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
-#	lkm	Loadable kernel modules interface
 #	nvram0	On-board non-volatile memory
 #	pf*	Packet Filter
 #	pppx*	PPP Multiplexer
@@ -235,10 +234,6 @@ nvram0)
 	M nvram0 c 10 0 640 kmem
 	;;
 
-lkm)
-	M lkm c 24 0 640 _lkm
-	;;
-
 fuse)
 	M fuse$U c 45 $U 600
 	;;
@@ -342,7 +337,7 @@ all)
 	R ttya ttyb ttyc vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0
 	R cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 nvram0 fuse
-	R pppx ptm local uk0 random lkm pf systrace std st0 st1 fd
+	R pppx ptm local uk0 random pf systrace std st0 st1 fd
 	;;
 
 sd*)

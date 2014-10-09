@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.71 2014/07/11 22:04:09 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.74 2014/07/11 21:58:32 tedu Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.73 2014/10/09 04:37:43 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.77 2014/10/09 04:33:50 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -79,7 +79,6 @@
 #	gpr*	GPR400 smartcard reader
 #	hotplug	devices hot plugging
 #	joy*	Joystick driver
-#	lkm	Loadable kernel modules interface
 #	nvram	NVRAM access
 #	pci*	PCI bus devices
 #	pctr*	PC Performance Tuning Register access device
@@ -311,10 +310,6 @@ pci*)
 
 nvram)
 	M nvram c 84 0 440 kmem
-	;;
-
-lkm)
-	M lkm c 28 0 640 _lkm
 	;;
 
 joy*)
@@ -570,10 +565,9 @@ all)
 	R local wscons pci0 pci1 pci2 pci3 uall rmidi0 rmidi1 rmidi2
 	R rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 tuner0 radio0 speaker
 	R video0 video1 uk0 random joy0 joy1 lpa0 lpa1 lpa2 lpt0 lpt1
-	R lpt2 lkm tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07
-	R tty08 tty09 tty0a tty0b ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5
-	R ttyc6 ttyc7 apm pf pctr systrace wd0 wd1 wd2 wd3 std
-	R st0 st1 fd
+	R lpt2 tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08
+	R tty09 tty0a tty0b ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6
+	R ttyc7 apm pf pctr systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)

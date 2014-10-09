@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.60 2014/07/11 22:04:09 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.74 2014/07/11 21:58:32 tedu Exp 
+#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.62 2014/10/09 04:37:43 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.77 2014/10/09 04:33:50 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -73,7 +73,6 @@
 #	fuse	Userland Filesystem
 #	gpio*	General Purpose Input/Output
 #	hotplug	devices hot plugging
-#	lkm	Loadable kernel modules interface
 #	pci*	PCI bus devices
 #	pf*	Packet Filter
 #	pppx*	PPP Multiplexer
@@ -282,10 +281,6 @@ pf*)
 pci*)
 	M pci$U	c 71 $U 600
 	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"
-	;;
-
-lkm)
-	M lkm c 24 0 640 _lkm
 	;;
 
 hotplug)
@@ -513,10 +508,9 @@ all)
 	R bpf8 bpf9 pty0 diskmap vscsi0 ch0 cuaa cuab ttya ttyb audio0
 	R audio1 audio2 fuse pppx hotplug ptm local wscons pci0 pci1
 	R pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5
-	R rmidi6 rmidi7 tuner0 radio0 video0 video1 uk0 random lkm
-	R tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09
-	R tty0a tty0b apm pf systrace wd0 wd1 wd2 wd3 std st0
-	R st1 fd
+	R rmidi6 rmidi7 tuner0 radio0 video0 video1 uk0 random tty00
+	R tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a
+	R tty0b apm pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)

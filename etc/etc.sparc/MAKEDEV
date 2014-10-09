@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc/MAKEDEV.md,v 1.52 2014/01/05 01:16:52 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.74 2014/07/11 21:58:32 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.76 2014/08/20 11:23:40 mikeb Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -71,7 +71,6 @@
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
 #	hotplug	devices hot plugging
-#	lkm	Loadable kernel modules interface
 #	openprom	PROM settings
 #	pf*	Packet Filter
 #	pppx*	PPP Multiplexer
@@ -261,10 +260,6 @@ pf*)
 
 openprom)
 	M openprom c 70 0  
-	;;
-
-lkm)
-	M lkm c 112 0 640 _lkm
 	;;
 
 hotplug)
@@ -524,9 +519,9 @@ all)
 	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
 	R diskmap vscsi0 ch0 bio cuaa cuab cuac cuad ttya ttyb ttyc
 	R ttyd audio0 audio1 audio2 fuse pppx hotplug ptm local wscons
-	R uk0 random lkm tty00 tty01 tty02 tty03 tty04 tty05 tty06
-	R tty07 tty08 tty09 tty0a tty0b apm pf systrace xd0 xd1 xd2
-	R xd3 std st0 st1 fd
+	R uk0 random tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07
+	R tty08 tty09 tty0a tty0b apm pf systrace xd0 xd1 xd2 xd3 std
+	R st0 st1 fd
 	;;
 
 presto*|xd*|xy*|sd*)

@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.40 2014/01/05 01:16:52 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.74 2014/07/11 21:58:32 tedu Exp 
+#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.42 2014/10/09 04:37:43 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.77 2014/10/09 04:33:50 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -462,8 +462,7 @@ all)
 	R diskmap vscsi0 ch0 audio0 audio1 audio2 fuse pppx hotplug
 	R ptm local wscons pci0 pci1 pci2 pci3 uall video0 video1 uk0
 	R random tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08
-	R tty09 tty0a tty0b pf systrace wd0 wd1 wd2 wd3 std st0
-	R st1 fd
+	R tty09 tty0a tty0b pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)

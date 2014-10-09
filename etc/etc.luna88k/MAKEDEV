@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.22 2014/04/24 14:52:09 aoyama Exp 
-#	OpenBSD: MAKEDEV.common,v 1.74 2014/07/11 21:58:32 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.76 2014/08/20 11:23:40 mikeb Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -57,7 +57,6 @@
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
 #	lcd	front panel LCD display
-#	lkm	Loadable kernel modules interface
 #	pcex*	PC-9801 extension board slot
 #	pf*	Packet Filter
 #	pppx*	PPP Multiplexer
@@ -244,10 +243,6 @@ pcex)
 	M pcexio c 25 1 660 
 	;;
 
-lkm)
-	M lkm c 24 0 640 _lkm
-	;;
-
 lcd)
 		M lcd c 10 0 644 
 	;;
@@ -382,7 +377,7 @@ all)
 	R pcex lcd ttya vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0
 	R cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 fuse pppx
-	R ptm local wscons uk0 random lkm pf systrace std st0 st1 fd
+	R ptm local wscons uk0 random pf systrace std st0 st1 fd
 	;;
 
 sd*)

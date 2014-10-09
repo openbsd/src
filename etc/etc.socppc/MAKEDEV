@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.socppc/MAKEDEV.md,v 1.23 2014/07/11 22:04:09 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.74 2014/07/11 21:58:32 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.76 2014/08/20 11:23:40 mikeb Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -65,7 +65,6 @@
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
 #	hotplug	devices hot plugging
-#	lkm	Loadable kernel modules interface
 #	pci*	PCI bus devices
 #	pf*	Packet Filter
 #	pppx*	PPP Multiplexer
@@ -253,10 +252,6 @@ pci*)
 	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"
 	;;
 
-lkm)
-	M lkm c 24 0 640 _lkm
-	;;
-
 hotplug)
 	M hotplug c 84 $U 400
 	;;
@@ -428,7 +423,7 @@ all)
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 fuse pppx
 	R hotplug ptm local wscons pci0 pci1 pci2 pci3 uall video0
-	R video1 random lkm tty00 tty01 tty02 tty03 tty04 tty05 tty06
+	R video1 random tty00 tty01 tty02 tty03 tty04 tty05 tty06
 	R tty07 tty08 tty09 tty0a tty0b pf systrace wd0 wd1 wd2 wd3
 	R std st0 st1 fd
 	;;
