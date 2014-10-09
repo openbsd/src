@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.129 2014/10/09 04:04:27 tedu Exp $	*/
+/*	$OpenBSD: conf.h,v 1.130 2014/10/09 04:10:36 tedu Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -126,11 +126,6 @@ extern struct bdevsw bdevsw[];
 	dev_init(c,n,strategy), (dev_type_ioctl((*))) enodev, \
 	(dev_type_dump((*))) enodev, 0 }
 
-#define	bdev_lkm_dummy() { \
-	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
-	(dev_type_strategy((*))) enodev, (dev_type_ioctl((*))) enodev, \
-	(dev_type_dump((*))) enodev, 0 }
-
 #define	bdev_notdef() { \
 	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
 	(dev_type_strategy((*))) enodev, (dev_type_ioctl((*))) enodev, \
@@ -213,12 +208,6 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	(dev_type_mmap((*))) enodev }
-
-#define	cdev_lkm_dummy() { \
-	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
-	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
-	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
 
 #define	cdev_notdef() { \
 	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
@@ -308,13 +297,6 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, \
 	0, 0, dev_init(c,n,kqfilter) }
-
-/* open, close, ioctl */
-#define	cdev_lkm_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, selfalse, \
-	(dev_type_mmap((*))) enodev }
 
 /* open, close, ioctl */
 #define	cdev_ch_init(c,n) { \
