@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.41 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.42 2014/10/09 16:36:36 millert Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -147,8 +147,8 @@ fifo_open(void *v)
 			return (error);
 		}
 		fip->fi_readers = fip->fi_writers = 0;
+		wso->so_state |= SS_CANTSENDMORE;
 		wso->so_snd.sb_lowat = PIPE_BUF;
-		rso->so_state |= SS_CANTRCVMORE;
 	}
 	if (ap->a_mode & FREAD) {
 		fip->fi_readers++;
@@ -165,7 +165,7 @@ fifo_open(void *v)
 			goto bad;
 		}
 		if (fip->fi_writers == 1) {
-			fip->fi_readsock->so_state &= ~SS_CANTRCVMORE;
+			fip->fi_readsock->so_state &= ~(SS_CANTRCVMORE|SS_ISDISCONNECTED);
 			if (fip->fi_readers > 0)
 				wakeup(&fip->fi_readers);
 		}
@@ -224,6 +224,9 @@ fifo_read(void *v)
 		    ap->a_vp->v_fifoinfo->fi_writers == 0)
 			error = 0;
 	}
+	/* Clear EOF indicator so we have a clean slate for a new writer. */
+	if (error == 0)
+		rso->so_state &= ~(SS_CANTRCVMORE|SS_ISDISCONNECTED);
 	return (error);
 }
 
@@ -287,24 +290,12 @@ fifo_poll(void *v)
 {
 	struct vop_poll_args *ap = v;
 	struct file filetmp;
-	short ostate;
 	int revents = 0;
 
 	if (ap->a_events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
-		/*
-		 * Socket and FIFO poll(2) semantics differ wrt EOF on read.
-		 * Unlike a normal socket, FIFOs don't care whether or not
-		 * SS_CANTRCVMORE is set.  To get the correct semantics we
-		 * must clear SS_CANTRCVMORE from so_state temporarily.
-		 */
-		ostate = ap->a_vp->v_fifoinfo->fi_readsock->so_state;
-		if (ap->a_events & (POLLIN | POLLRDNORM))
-			ap->a_vp->v_fifoinfo->fi_readsock->so_state &=
-			    ~SS_CANTRCVMORE;
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_readsock;
 		if (filetmp.f_data)
 			revents |= soo_poll(&filetmp, ap->a_events, ap->a_p);
-		ap->a_vp->v_fifoinfo->fi_readsock->so_state = ostate;
 	}
 	if (ap->a_events & (POLLOUT | POLLWRNORM | POLLWRBAND)) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_writesock;
@@ -344,8 +335,11 @@ fifo_close(void *v)
 			socantsendmore(fip->fi_writesock);
 	}
 	if (ap->a_fflag & FWRITE) {
-		if (--fip->fi_writers == 0)
+		if (--fip->fi_writers == 0) {
+			/* SS_ISDISCONNECTED will result in POLLHUP */
+			fip->fi_readsock->so_state |= SS_ISDISCONNECTED;
 			socantrcvmore(fip->fi_readsock);
+		}
 	}
 	if (fip->fi_readers == 0 && fip->fi_writers == 0) {
 		error1 = soclose(fip->fi_readsock);
