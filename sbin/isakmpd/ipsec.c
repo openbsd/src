@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.140 2014/01/22 03:09:31 deraadt Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.141 2014/10/09 02:38:56 deraadt Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -2326,7 +2326,7 @@ ipsec_add_contact(struct message *msg)
 
 	if (contact_cnt == contact_limit) {
 		cnt = contact_limit ? 2 * contact_limit : 64;
-		new_contacts = realloc(contacts, cnt * sizeof contacts[0]);
+		new_contacts = reallocarray(contacts, cnt, sizeof contacts[0]);
 		if (!new_contacts) {
 			log_error("ipsec_add_contact: "
 			    "realloc (%p, %lu) failed", contacts,

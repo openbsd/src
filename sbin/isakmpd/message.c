@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.126 2007/06/02 01:29:11 pvalchev Exp $	 */
+/* $OpenBSD: message.c,v 1.127 2014/10/09 02:38:56 deraadt Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -1637,7 +1637,7 @@ message_add_payload(struct message *msg, u_int8_t payload, u_int8_t *buf,
 		    (unsigned long)sizeof *payload_node);
 		return -1;
 	}
-	new_iov = (struct iovec *) realloc(msg->iov, (msg->iovlen + 1) *
+	new_iov = reallocarray(msg->iov, msg->iovlen + 1,
 	    sizeof *msg->iov);
 	if (!new_iov) {
 		log_error("message_add_payload: realloc (%p, %lu) failed",

@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.107 2011/12/12 07:35:29 yasuoka Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.108 2014/10/09 02:38:56 deraadt Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -438,8 +438,8 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 				 * arbitrary.
 				 */
 				prop_cnt = 2 * prop_cnt + 10;
-				new_proposal = realloc(proposal,
-				    prop_cnt * sizeof *proposal);
+				new_proposal = reallocarray(proposal,
+				    prop_cnt, sizeof *proposal);
 				if (!new_proposal) {
 					log_error(
 					    "initiator_send_HASH_SA_NONCE: "
@@ -450,8 +450,8 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 				}
 				proposal = new_proposal;
 
-				new_transforms_len = realloc(transforms_len,
-				    prop_cnt * sizeof *transforms_len);
+				new_transforms_len = reallocarray(transforms_len,
+				    prop_cnt, sizeof *transforms_len);
 				if (!new_transforms_len) {
 					log_error(
 					    "initiator_send_HASH_SA_NONCE: "
@@ -462,8 +462,8 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 				}
 				transforms_len = new_transforms_len;
 
-				new_transform = realloc(transform,
-				    prop_cnt * sizeof *transform);
+				new_transform = reallocarray(transform,
+				    prop_cnt, sizeof *transform);
 				if (!new_transform) {
 					log_error(
 					    "initiator_send_HASH_SA_NONCE: "
@@ -474,8 +474,8 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 				}
 				transform = new_transform;
 
-				new_transform_cnt = realloc(transform_cnt,
-				    prop_cnt * sizeof *transform_cnt);
+				new_transform_cnt = reallocarray(transform_cnt,
+				    prop_cnt, sizeof *transform_cnt);
 				if (!new_transform_cnt) {
 					log_error(
 					    "initiator_send_HASH_SA_NONCE: "
@@ -486,8 +486,8 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 				}
 				transform_cnt = new_transform_cnt;
 
-				new_transform_len = realloc(transform_len,
-				    prop_cnt * sizeof *transform_len);
+				new_transform_len = reallocarray(transform_len,
+				    prop_cnt, sizeof *transform_len);
 				if (!new_transform_len) {
 					log_error(
 					    "initiator_send_HASH_SA_NONCE: "
