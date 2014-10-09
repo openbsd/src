@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.17 2013/11/28 05:09:45 guenther Exp $	*/
+/*	$OpenBSD: engine.c,v 1.18 2014/10/09 02:50:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -204,8 +204,8 @@ matcher(struct re_guts *g, char *string, size_t nmatch, regmatch_t pmatch[],
 
 		/* oh my, he wants the subexpressions... */
 		if (m->pmatch == NULL)
-			m->pmatch = (regmatch_t *)malloc((m->g->nsub + 1) *
-							sizeof(regmatch_t));
+			m->pmatch = reallocarray(NULL, m->g->nsub + 1,
+					sizeof(regmatch_t));
 		if (m->pmatch == NULL) {
 			STATETEARDOWN(m);
 			return(REG_ESPACE);
@@ -217,8 +217,8 @@ matcher(struct re_guts *g, char *string, size_t nmatch, regmatch_t pmatch[],
 			dp = dissect(m, m->coldp, endp, gf, gl);
 		} else {
 			if (g->nplus > 0 && m->lastpos == NULL)
-				m->lastpos = (char **)malloc((g->nplus+1) *
-							sizeof(char *));
+				m->lastpos = reallocarray(NULL,
+				    g->nplus+1, sizeof(char *));
 			if (g->nplus > 0 && m->lastpos == NULL) {
 				free(m->pmatch);
 				STATETEARDOWN(m);
