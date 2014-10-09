@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.56 2014/09/29 19:37:51 gsoares Exp $
+#	$OpenBSD: bsd.README,v 1.57 2014/10/09 04:44:09 tedu Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -8,7 +8,6 @@ convention, named with the suffix ".mk".
 
 bsd.dep.mk		- handle Makefile dependencies
 bsd.lib.mk		- support for building libraries
-bsd.lkm.mk		- building loadable kernel modules
 bsd.man.mk		- installing manual pages and their links
 bsd.nls.mk		- National Language Support
 bsd.obj.mk		- creating 'obj' directories and cleaning up
@@ -465,27 +464,3 @@ DIST_OBJS	The (sub)set of .o files to include in ${DIST_LIB}. [${OBJS}]
 DIST_CFLAGS	Additional flags for the C compiler and assembler.
 		[-Os]
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-The include file <bsd.lkm.mk> has support for building the LKM's. It has
-the same seven targets as <bsd.prog.mk>: all, clean, cleandir, depend,
-install, and tags. In addition two targets are made available
-that is specific to the LKM's: load, unload.
-
-It sets/uses the following variables (in addition to the <bsd.prog.mk>'s):
-
-LKM		LKM name to build.
-
-LKMGRP		Module group.
-
-LKMOWN		Module owner.
-
-LKMMODE		Module mode.
-
-POSTINSTALL	Program to pass with '-p' flag to the modload.
-		If not defined,
-			POSTINSTALL=${LKM}install
-		is assumed.
-
-The include file <bsd.lkm.mk> includes the file named "../Makefile.inc"
-if it exists, as well as the include file <bsd.man.mk>.
