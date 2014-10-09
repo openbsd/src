@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.18 2014/09/14 14:17:23 jsg Exp $ */
+/*	$OpenBSD: mem.c,v 1.19 2014/10/09 04:18:09 tedu Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -53,9 +53,6 @@
 #include <sys/malloc.h>
 #include <sys/memrange.h>
 #include <sys/fcntl.h>
-#ifdef LKM
-#include <sys/lkm.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/conf.h>
@@ -64,10 +61,6 @@
 
 caddr_t zeropage;
 extern int start, end, etext;
-
-#ifdef LKM
-extern vaddr_t lkm_start, lkm_end;
-#endif
 
 /* open counter for aperture */
 #ifdef APERTURE
@@ -159,13 +152,6 @@ mmrw(dev_t dev, struct uio *uio, int flags)
                                 if (v < (vaddr_t)&etext &&
                                     uio->uio_rw == UIO_WRITE)
                                         return EFAULT;
-#ifdef LKM
-			} else if (v >= lkm_start && v < lkm_end) {
-				if (!uvm_map_checkprot(lkm_map, v, v + c,
-				    uio->uio_rw == UIO_READ ?
-				    UVM_PROT_READ: UVM_PROT_WRITE))
-					return (EFAULT);
-#endif
                         } else if ((!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)) &&
 			    (v < PMAP_DIRECT_BASE && v > PMAP_DIRECT_END))

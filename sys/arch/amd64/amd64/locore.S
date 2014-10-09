@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.54 2012/11/10 09:45:05 mglocker Exp $	*/
+/*	$OpenBSD: locore.S,v 1.55 2014/10/09 04:18:09 tedu Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -392,7 +392,7 @@ bi_size_ok:
 
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
-#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
+#if (NKSYMS || defined(DDB)) && !defined(SYMTAB_SPACE)
 	/* Save the symbols (if loaded). */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax

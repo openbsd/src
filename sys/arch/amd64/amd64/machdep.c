@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.192 2014/09/27 08:27:17 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.193 2014/10/09 04:18:09 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -201,12 +201,6 @@ int lid_suspend;
  */
 int	safepri = 0;
 
-#ifdef LKM
-vaddr_t lkm_start, lkm_end;
-static struct vm_map lkm_map_store;
-extern struct vm_map *lkm_map;
-#endif
-
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -338,12 +332,6 @@ cpu_startup(void)
 	minaddr = vm_map_min(kernel_map);
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
-
-#ifdef LKM
-	uvm_map_setup(&lkm_map_store, lkm_start, lkm_end, VM_MAP_PAGEABLE);
-	lkm_map_store.pmap = pmap_kernel();
-	lkm_map = &lkm_map_store;
-#endif
 
 	printf("avail mem = %lu (%luMB)\n", ptoa((psize_t)uvmexp.free),
 	    ptoa((psize_t)uvmexp.free)/1024/1024);
@@ -1398,12 +1386,6 @@ init_x86_64(paddr_t first_avail)
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
 	kern_end = KERNBASE + first_avail;
-
-#ifdef LKM
-	lkm_start = KERNTEXTOFF + first_avail;
-	/* set it to the end of the jumpable region, should be safe enough */
-	lkm_end = 0xffffffffffffffff;
-#endif
 
 	/*
 	 * Now, load the memory clusters (which have already been
