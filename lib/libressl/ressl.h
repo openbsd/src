@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.h,v 1.18 2014/10/03 14:14:40 tedu Exp $ */
+/* $OpenBSD: ressl.h,v 1.19 2014/10/09 22:04:33 tedu Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -17,6 +17,8 @@
 
 #ifndef HEADER_RESSL_H
 #define HEADER_RESSL_H
+
+#define RESSL_API	20141008
 
 #define RESSL_PROTOCOL_SSLv3	(1 << 0)
 #define RESSL_PROTOCOL_TLSv1_0	(1 << 1)
