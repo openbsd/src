@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.25 2013/05/09 20:41:47 patrick Exp $
+#	$OpenBSD: files.arm,v 1.26 2014/10/09 04:20:18 deraadt Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -10,6 +10,7 @@ file	arch/arm/arm/db_interface.c		(ddb|kgdb)
 file	arch/arm/arm/db_trace.c			ddb
 file	arch/arm/arm/db_machdep.c		ddb
 file	arch/arm/arm/kgdb_machdep.c		kgdb
+file	arch/arm/arm/disassem.c			ddb
 
 # FIQ support
 file	arch/arm/arm/fiq.c			fiq
@@ -26,8 +27,6 @@ device	cpu {}
 attach	cpu at mainbus with cpu_mainbus
 file	arch/arm/mainbus/cpu_mainbus.c		cpu_mainbus
 
-# files related to debugging
-file	arch/arm/arm/disassem.c
 
 # bus_space(9)
 define	bus_space_generic
