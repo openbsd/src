@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.46 2014/07/09 11:21:48 krw Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.47 2014/10/09 02:41:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -615,7 +615,6 @@ format_entry(const char *path, struct direct *dp)
 {
 	static size_t size;
 	static char *buf;
-	size_t nsize;
 	char *src, *dst, *newbuf;
 	int len;
 
@@ -629,12 +628,10 @@ format_entry(const char *path, struct direct *dp)
 		/* Need room for at least one character in buf. */
 		if (size <= dst - buf) {
 		    expand_buf:
-			nsize = size << 1;
-
-			if ((newbuf = realloc(buf, nsize)) == NULL)
+			if ((newbuf = reallocarray(buf, size, 2)) == NULL)
 				err(1, "realloc");
 			buf = newbuf;
-			size = nsize;
+			size = size * 2;
 		}
 		if (src[0] =='\\') {
 			switch (src[1]) {
