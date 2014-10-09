@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.8 2014/02/25 21:40:39 miod Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.9 2014/10/09 08:21:48 matthew Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	int i;
 	size_t sz;
 	int first;
-	int havesyms;
+	int havesyms, havelines;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
 	paddr_t offset = marks[MARK_START], shpp, elfp;
 
@@ -199,6 +199,21 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		shpp = maxp;
 		maxp += roundup(sz, sizeof(Elf_Addr));
 
+		size_t shstrsz = shp[elf->e_shstrndx].sh_size;
+		char *shstr = ALLOC(shstrsz);
+		if (lseek(fd, (off_t)shp[elf->e_shstrndx].sh_offset, SEEK_SET) == -1) {
+			WARN(("lseek section header string table"));
+			FREE(shstr, shstrsz);
+			FREE(shp, sz);
+			return 1;
+		}
+		if (READ(fd, shstr, shstrsz) != shstrsz) {
+			WARN(("read section header string table"));
+			FREE(shstr, shstrsz);
+			FREE(shp, sz);
+			return 1;
+		}
+
 		/*
 		 * Now load the symbol sections themselves. Make sure the
 		 * sections are aligned. Don't bother with string tables if
@@ -206,25 +221,28 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		 */
 		off = roundup((sizeof(Elf_Ehdr) + sz), sizeof(Elf_Addr));
 
-		for (havesyms = i = 0; i < elf->e_shnum; i++)
+		for (havesyms = havelines = i = 0; i < elf->e_shnum; i++)
 			if (shp[i].sh_type == SHT_SYMTAB)
 				havesyms = 1;
 
 		for (first = 1, i = 0; i < elf->e_shnum; i++) {
 			if (shp[i].sh_type == SHT_SYMTAB ||
-			    shp[i].sh_type == SHT_STRTAB) {
+			    shp[i].sh_type == SHT_STRTAB ||
+			    !strcmp(shstr + shp[i].sh_name, ".debug_line")) {
 				if (havesyms && (flags & LOAD_SYM)) {
 					PROGRESS(("%s%ld", first ? " [" : "+",
 					    (u_long)shp[i].sh_size));
 					if (lseek(fd, (off_t)shp[i].sh_offset,
 					    SEEK_SET) == -1) {
 						WARN(("lseek symbols"));
+						FREE(shstr, shstrsz);
 						FREE(shp, sz);
 						return 1;
 					}
 					if (READ(fd, maxp, shp[i].sh_size) !=
 					    shp[i].sh_size) {
 						WARN(("read symbols"));
+						FREE(shstr, shstrsz);
 						FREE(shp, sz);
 						return 1;
 					}
@@ -232,6 +250,7 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 				maxp += roundup(shp[i].sh_size,
 				    sizeof(Elf_Addr));
 				shp[i].sh_offset = off;
+				shp[i].sh_flags |= SHF_ALLOC;
 				off += roundup(shp[i].sh_size, sizeof(Elf_Addr));
 				first = 0;
 			}
@@ -242,6 +261,7 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 			if (havesyms && first == 0)
 				PROGRESS(("]"));
 		}
+		FREE(shstr, shstrsz);
 		FREE(shp, sz);
 	}
 

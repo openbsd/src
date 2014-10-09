@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.580 2014/10/09 03:36:32 tedu Exp $
+#	$OpenBSD: files,v 1.581 2014/10/09 08:21:48 matthew Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -609,6 +609,7 @@ file 	net/if_pppoe.c			pppoe	needs-flag
 file ddb/db_access.c			ddb | kgdb
 file ddb/db_break.c			ddb
 file ddb/db_command.c			ddb
+file ddb/db_dwarf.c			ddb
 file ddb/db_elf.c			ddb
 file ddb/db_examine.c			ddb
 file ddb/db_expr.c			ddb

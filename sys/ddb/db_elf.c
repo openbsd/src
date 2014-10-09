@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.11 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.12 2014/10/09 08:21:48 matthew Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -32,12 +32,14 @@
  */
 
 #include <sys/types.h>
+#include <sys/stdint.h>
 #include <sys/param.h>
 #include <sys/systm.h>  
 #include <sys/exec.h>
 
 #include <machine/db_machdep.h>
 
+#include <ddb/db_dwarf.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 #include <ddb/db_extern.h>
@@ -45,6 +47,7 @@
 #include <sys/exec_elf.h>
 
 static char *db_elf_find_strtab(db_symtab_t *);
+static char *db_elf_find_linetab(db_symtab_t *, size_t *);
 
 #define	STAB_TO_SYMSTART(stab)	((Elf_Sym *)((stab)->start))
 #define	STAB_TO_SYMEND(stab)	((Elf_Sym *)((stab)->end))
@@ -110,10 +113,10 @@ db_elf_sym_init(int symsize, void *symtab, void *esymtab, const char *name)
 	 *	. . .
 	 *	. . .
 	 *	last section header
-	 *	first symbol or string table section
+	 *	first symbol, string, or line table section
 	 *	. . .
 	 *	. . .
-	 *	last symbol or string table section
+	 *	last symbol, string, or line table section
 	 */
 
 	/*
@@ -226,6 +229,30 @@ db_elf_find_strtab(db_symtab_t *stab)
 			return ((char *)elf + shp[shp[i].sh_link].sh_offset);
 		if (strcmp(".strtab", shstrtab+shp[i].sh_name) == 0)
 			return ((char *)elf + shp[i].sh_offset);
+	}
+
+	return (NULL);
+}
+
+/*
+ * Internal helper function - return a pointer to the line table
+ * for the current symbol table.
+ */
+static char *
+db_elf_find_linetab(db_symtab_t *stab, size_t *size)
+{
+	Elf_Ehdr *elf = STAB_TO_EHDR(stab);
+	Elf_Shdr *shp = STAB_TO_SHDR(stab, elf);
+	char *shstrtab;
+	int i;
+
+	shstrtab = (char *)elf + shp[elf->e_shstrndx].sh_offset;
+	for (i = 0; i < elf->e_shnum; i++) {
+		if ((shp[i].sh_flags & SHF_ALLOC) != 0 &&
+		    strcmp(".debug_line", shstrtab+shp[i].sh_name) == 0) {
+			*size = shp[i].sh_size;
+			return ((char *)elf + shp[i].sh_offset);
+		}
 	}
 
 	return (NULL);
@@ -350,11 +377,25 @@ boolean_t
 db_elf_line_at_pc(db_symtab_t *symtab, db_sym_t cursym, char **filename,
     int *linenum, db_expr_t off)
 {
+	const char *linetab;
+	size_t linetab_size;
 
-	/*
-	 * XXX We don't support this (yet).
-	 */
-	return (FALSE);
+	linetab = db_elf_find_linetab(symtab, &linetab_size);
+	if (linetab == NULL)
+		return (FALSE);
+
+	const char *dirname, *basename;
+	if (!db_dwarf_line_at_pc(linetab, linetab_size, off,
+	    &dirname, &basename, linenum))
+		return (FALSE);
+
+	static char path[PATH_MAX];
+	if (dirname == NULL)
+		strlcpy(path, basename, sizeof(path));
+	else
+		snprintf(path, sizeof(path), "%s/%s", dirname, basename);
+	*filename = path;
+	return (TRUE);
 }
 
 /*
