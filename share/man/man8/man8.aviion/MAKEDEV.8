@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.21 2013/06/21 21:35:44 syl Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.22 2014/10/09 04:40:07 tedu Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.aviion/MAKEDEV.md,v 1.16 2013/06/03 17:34:15 tedu Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.66 2013/06/21 21:30:38 syl Exp 
+.\"	OpenBSD: etc.aviion/MAKEDEV.md,v 1.19 2014/03/18 22:36:29 miod Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.76 2014/08/20 11:23:40 mikeb Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 21 2013 $
+.Dd $Mdocdate: October 9 2014 $
 .Dt MAKEDEV 8 aviion
 .Os
 .Sh NAME
@@ -137,9 +137,6 @@ fd/* nodes, see
 .It Ar fuse
 Userland Filesystem, see
 .Xr fuse 4 .
-.It Ar lkm
-Loadable kernel modules interface, see
-.Xr lkm 4 .
 .It Ar nvram0
 On-board non-volatile memory, see
 .Xr nvram 4 .
