@@ -1,4 +1,4 @@
-/*	$Id: eqn.c,v 1.11 2014/07/06 19:08:56 schwarze Exp $ */
+/*	$Id: eqn.c,v 1.12 2014/10/09 15:21:46 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -194,6 +194,7 @@ static	const struct eqnstr eqnposs[EQNPOS__MAX] = {
 	{ "", 0 }, /* EQNPOS_NONE */
 	{ "over", 4 }, /* EQNPOS_OVER */
 	{ "sup", 3 }, /* EQNPOS_SUP */
+	{ NULL, 0 }, /* EQNPOS_SUBSUP */
 	{ "sub", 3 }, /* EQNPOS_SUB */
 	{ "to", 2 }, /* EQNPOS_TO */
 	{ "from", 4 }, /* EQNPOS_FROM */
@@ -565,14 +566,30 @@ eqn_box(struct eqn_node *ep, struct eqn_box *last)
 		return(EQN_OK);
 	}
 
+	/*
+	 * Positional elements (e.g., over, sub, sup, ...).
+	 */
 	for (i = 0; i < (int)EQNPOS__MAX; i++) {
-		if ( ! EQNSTREQ(&eqnposs[i], start, sz))
+		/* Some elements don't have names (are virtual). */
+		if (NULL == eqnposs[i].name)
+			continue;
+		else if ( ! EQNSTREQ(&eqnposs[i], start, sz))
 			continue;
 		if (NULL == last->last) {
 			EQN_MSG(MANDOCERR_EQNSYNT, ep);
 			return(EQN_ERR);
 		}
-		last->last->pos = (enum eqn_post)i;
+		/*
+		 * If we encounter x sub y sup z, then according to the
+		 * eqn manual, we regard this as x subsup y z.
+		 */
+		if (EQNPOS_SUP == i &&
+			NULL != last->last->prev &&
+			EQNPOS_SUB == last->last->prev->pos)
+			last->last->prev->pos = EQNPOS_SUBSUP;
+		else
+			last->last->pos = (enum eqn_post)i;
+
 		if (EQN_EOF == (c = eqn_box(ep, last))) {
 			EQN_MSG(MANDOCERR_EQNEOF, ep);
 			return(EQN_ERR);
@@ -661,10 +678,11 @@ eqn_box_alloc(struct eqn_node *ep, struct eqn_box *parent)
 	bp->parent = parent;
 	bp->size = ep->gsize;
 
-	if (NULL == parent->first)
-		parent->first = bp;
-	else
+	if (NULL != parent->first) {
 		parent->last->next = bp;
+		bp->prev = parent->last;
+	} else
+		parent->first = bp;
 
 	parent->last = bp;
 	return(bp);
