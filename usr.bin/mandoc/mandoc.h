@@ -1,6 +1,6 @@
-/*	$OpenBSD: mandoc.h,v 1.101 2014/10/09 15:21:46 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.102 2014/10/09 15:59:08 schwarze Exp $ */
 /*
- * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -340,6 +340,7 @@ enum	eqn_post {
 	EQNPOS_SUB,
 	EQNPOS_TO,
 	EQNPOS_FROM,
+	EQNPOS_FROMTO,
 	EQNPOS__MAX
 };
 

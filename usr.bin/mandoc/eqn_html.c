@@ -1,4 +1,4 @@
-/*	$Id: eqn_html.c,v 1.3 2014/10/09 15:49:09 schwarze Exp $ */
+/*	$Id: eqn_html.c,v 1.4 2014/10/09 15:59:08 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -84,6 +84,11 @@ eqn_box(struct html *p, const struct eqn_box *bp, int next)
 		pilet = print_otag(p, TAG_MTR, 0, NULL);
 		print_otag(p, TAG_MTD, 0, NULL);
 	}
+	if (NULL != bp->parent && bp->parent->type == EQN_MATRIX) {
+		pilet = print_otag(p, TAG_MTABLE, 0, NULL);
+		print_otag(p, TAG_MTR, 0, NULL);
+		print_otag(p, TAG_MTD, 0, NULL);
+	}
 
 	/*
 	 * If we're establishing a pile, start the table mode now.
@@ -103,19 +108,26 @@ eqn_box(struct html *p, const struct eqn_box *bp, int next)
 	 * single or double following expression.
 	 */
 	switch (bp->pos) {
+	case (EQNPOS_TO):
+		post = print_otag(p, TAG_MOVER, 0, NULL);
+		break;
 	case (EQNPOS_SUP):
 		post = print_otag(p, TAG_MSUP, 0, NULL);
 		break;
 	case (EQNPOS_FROM):
-		/* FALLTHROUGH */
+		post = print_otag(p, TAG_MUNDER, 0, NULL);
+		break;
 	case (EQNPOS_SUB):
 		post = print_otag(p, TAG_MSUB, 0, NULL);
 		break;
 	case (EQNPOS_OVER):
 		post = print_otag(p, TAG_MFRAC, 0, NULL);
 		break;
+	case (EQNPOS_FROMTO):
+		post = print_otag(p, TAG_MUNDEROVER, 0, NULL);
+		skiptwo = 1;
+		break;
 	case (EQNPOS_SUBSUP):
-		/* This requires two elements. */
 		post = print_otag(p, TAG_MSUBSUP, 0, NULL);
 		skiptwo = 1;
 		break;

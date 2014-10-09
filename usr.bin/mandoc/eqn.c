@@ -1,6 +1,6 @@
-/*	$Id: eqn.c,v 1.12 2014/10/09 15:21:46 schwarze Exp $ */
+/*	$Id: eqn.c,v 1.13 2014/10/09 15:59:08 schwarze Exp $ */
 /*
- * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -587,6 +587,10 @@ eqn_box(struct eqn_node *ep, struct eqn_box *last)
 			NULL != last->last->prev &&
 			EQNPOS_SUB == last->last->prev->pos)
 			last->last->prev->pos = EQNPOS_SUBSUP;
+		else if (EQNPOS_TO == i &&
+			NULL != last->last->prev &&
+			EQNPOS_FROM == last->last->prev->pos)
+			last->last->prev->pos = EQNPOS_FROMTO;
 		else
 			last->last->pos = (enum eqn_post)i;
 
