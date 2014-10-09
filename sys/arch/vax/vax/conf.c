@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.69 2013/06/03 15:54:47 tedu Exp $ */
+/*	$OpenBSD: conf.c,v 1.70 2014/10/09 03:59:59 tedu Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -207,7 +207,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NGEN,gencn),	/* 25: Generic console (mtpr...) */
 	cdev_notdef(),			/* 26 */
 	cdev_notdef(),			/* 27 */
-	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
+	cdev_notdef(),			/* 28 was LKM */
 	cdev_notdef(),			/* 29 */
 	cdev_disk_init(NRX,rx),		/* 30: RX?? on MSCP */
 	cdev_notdef(),			/* 31 */

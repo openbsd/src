@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.65 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.66 2014/10/09 03:59:58 tedu Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -334,6 +334,8 @@ cpu_init_mwait(struct cpu_softc *sc)
 
 	if ((cpu_ecxfeature & CPUIDECX_MWAIT) == 0)
 		return;
+
+	return;
 
 	/* get the monitor granularity */
 	CPUID(0x5, smallest, largest, extensions, c_substates);

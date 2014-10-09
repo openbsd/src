@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.59 2014/08/20 06:14:42 mikeb Exp $	*/
+/*	$OpenBSD: conf.c,v 1.60 2014/10/09 03:59:58 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -140,7 +140,7 @@ struct cdevsw   cdevsw[] =
 	cdev_fd_init(1,filedesc),	/* 16: file descriptor pseudo-device */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 17: Berkeley packet filter */
 	cdev_tun_init(NTUN,tun),	/* 18: network tunnel */
-	cdev_lkm_init(NLKM,lkm),	/* 19: loadable module driver */
+	cdev_notdef(),			/* 19: was LKM */
 	cdev_random_init(1,random),	/* 20: random generator */
 	cdev_pf_init(NPF,pf),		/* 21: packet filter */
 	cdev_tty_init(1,pdc),		/* 22: PDC device */
@@ -202,7 +202,6 @@ int mem_no = 2;		/* major device number of memory special file */
 dev_t   swapdev = makedev(0, 0);
 
 int chrtoblktbl[] = {
-	/* XXXX This needs to be dynamic for LKMs. */
 	/*VCHR*/	/*VBLK*/
 	/*  0 */	NODEV,
 	/*  1 */	NODEV,

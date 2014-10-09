@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2013/06/03 17:33:58 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 2014/10/09 03:59:58 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -111,7 +111,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
 	cdev_tun_init(NTUN,tun),	/* 23: network tunnel */
-	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
+	cdev_notdef(),			/* 24 was LKM */
 	cdev_notdef(),			/* 25 */
 	cdev_notdef(),			/* 26: XD disk */
 	cdev_notdef(),			/* 27 */
@@ -188,7 +188,6 @@ getnulldev()
 }
 
 int chrtoblktbl[] = {
-	/* XXXX This needs to be dynamic for LKMs. */
 	/*VCHR*/	/*VBLK*/
 	/*  0 */	NODEV,
 	/*  1 */	NODEV,

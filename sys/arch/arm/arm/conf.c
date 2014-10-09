@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.38 2014/08/20 06:14:42 mikeb Exp $	*/
+/*	$OpenBSD: conf.c,v 1.39 2014/10/09 03:59:58 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),			/* 32: */
 	cdev_tun_init(NTUN,tun),		/* 33: network tunnel */
 	cdev_apm_init(NAPM,apm),		/* 34: APM interface */
-	cdev_lkm_init(NLKM,lkm),		/* 35: loadable module driver */
+	cdev_notdef(),				/* 35: was LKM */
 	cdev_audio_init(NAUDIO,audio),		/* 36: generic audio I/O */
 	cdev_hotplug_init(NHOTPLUG,hotplug),	/* 37: devices hot plugging*/
 	cdev_video_init(NVIDEO,video),		/* 38: generic video I/O */
@@ -422,7 +422,6 @@ iszerodev(dev)
 
 
 int chrtoblktbl[] = {
-/* XXXX This needs to be dynamic for LKMs. */
     /*VCHR*/        /*VBLK*/
     /*  0 */        NODEV,
     /*  1 */        NODEV,

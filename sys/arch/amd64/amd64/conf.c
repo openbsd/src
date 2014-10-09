@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.46 2014/08/20 06:14:42 mikeb Exp $	*/
+/*	$OpenBSD: conf.c,v 1.47 2014/10/09 03:59:58 tedu Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -209,7 +209,7 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_notdef(),			/* 26 */
 	cdev_spkr_init(NSPKR,spkr),	/* 27: PC speaker */
-	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
+	cdev_notdef(),			/* 28 was LKM */
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
 	cdev_lkm_dummy(),		/* 31 */
@@ -324,7 +324,6 @@ getnulldev(void)
 }
 
 int chrtoblktbl[] = {
-	/* XXXX This needs to be dynamic for LKMs. */
 	/*VCHR*/	/*VBLK*/
 	/*  0 */	NODEV,
 	/*  1 */	NODEV,

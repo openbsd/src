@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.20 2014/08/20 06:14:43 mikeb Exp $ */
+/*	$OpenBSD: conf.c,v 1.21 2014/10/09 03:59:59 tedu Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -98,12 +98,6 @@ cdev_decl(pci);
 
 #include "systrace.h"
 
-#ifdef LKM
-#define NLKM 1
-#else
-#define NLKM 0
-#endif
-
 #include "ksyms.h"
 #include "usb.h"
 #include "uhid.h"
@@ -142,7 +136,7 @@ struct cdevsw cdevsw[] = {
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
 	cdev_tun_init(NTUN,tun),	/* 23: network tunnel */
-	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
+	cdev_notdef(),			/* 24 was LKM */
 	cdev_notdef(),			/* 25 */
 	cdev_tty_init(NCOM,com),	/* 26: serial port */
 	cdev_notdef(),			/* 27 */
