@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcsendbreak.c,v 1.6 2005/08/05 13:03:00 espie Exp $ */
+/*	$OpenBSD: tcsendbreak.c,v 1.7 2014/10/09 06:20:01 dlg Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,13 +43,14 @@
 int
 tcsendbreak(int fd, int len)
 {
-	struct timeval sleepytime;
+	struct timespec sleepytime;
 
 	sleepytime.tv_sec = 0;
-	sleepytime.tv_usec = 400000;
+	sleepytime.tv_nsec = 400000000;
+
 	if (ioctl(fd, TIOCSBRK, 0) == -1)
 		return (-1);
-	(void)select(0, 0, 0, 0, &sleepytime);
+	(void)nanosleep(&sleepytime, NULL);
 	if (ioctl(fd, TIOCCBRK, 0) == -1)
 		return (-1);
 	return (0);
