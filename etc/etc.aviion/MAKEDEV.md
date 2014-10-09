@@ -1,6 +1,6 @@
 define(MACHINE,aviion)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.19 2014/03/18 22:36:29 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.20 2014/10/09 04:33:51 tedu Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -92,7 +92,6 @@ _DEV(bpf, 22)
 _DEV(diskmap, 54)
 _DEV(fdesc, 21)
 _DEV(fuse, 45)
-_DEV(lkm, 24)
 _DEV(nvram, 10)
 _DEV(pf, 39)
 _DEV(pppx, 55)

@@ -1,6 +1,6 @@
 define(MACHINE,amd64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.56 2014/07/11 22:04:09 tedu Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.57 2014/10/09 04:33:51 tedu Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -76,7 +76,6 @@ _DEV(gpio, 88)
 _DEV(gpr, 80)
 _DEV(hotplug, 82)
 dnl _DEV(joy, 26)
-_DEV(lkm, 28)
 _DEV(nvram, 85)
 _DEV(pci, 72)
 _DEV(pctr, 46)

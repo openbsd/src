@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.76 2014/08/20 11:23:40 mikeb Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.77 2014/10/09 04:33:50 tedu Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -144,7 +144,6 @@ twrget(all, tzs, tty, a, b, c, d)dnl
 twrget(all, czs, cua, a, b, c, d)dnl
 target(all, ttyc, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 twrget(all, com, tty0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
-target(all, lkm)dnl
 twrget(all, mmcl, mmclock)dnl
 target(all, lpt, 0, 1, 2)dnl
 twrget(all, lpt, lpa, 0, 1, 2)dnl
@@ -454,8 +453,6 @@ _mkdev(bpf, {-bpf*-}, {-M bpf$U c major_bpf_c $U 600-}, 600)dnl
 _mkdev(tun, {-tun*-}, {-M tun$U c major_tun_c $U 600-}, 600)dnl
 __devitem(speak, speaker, PC speaker,spkr)dnl
 _mkdev(speak, speaker, {-M speaker c major_speak_c 0 600-})dnl
-__devitem(lkm, lkm, Loadable kernel modules interface)dnl
-_cdev(lkm, lkm, {-major_lkm_c-}, 0, 640, _lkm)dnl
 __devitem(tun, tun*, Network tunnel driver)dnl
 __devitem(rnd, *random, In-kernel random data source,random)dnl
 _mkdev(rnd, *random, {-n=0
