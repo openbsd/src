@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.78 2014/10/08 10:12:41 mpi Exp $ */
+/*	$OpenBSD: cpu.c,v 1.79 2014/10/09 13:58:40 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -572,14 +572,24 @@ void cpu_spinup_trampoline(void);
 struct cpu_hatch_data {
 	uint64_t tb;
 	struct cpu_info *ci;
-	int running;
-	int hid0;
+	uint32_t hid0;
+	uint64_t hid1;
+	uint64_t hid4;
+	uint64_t hid5;
 	int l2cr;
 	int sdr1;
+	int running;
 };
 
 volatile struct cpu_hatch_data *cpu_hatch_data;
 volatile void *cpu_hatch_stack;
+
+/*
+ * XXX Due to a bug in our OpenFirmware interface/memory mapping,
+ * machines with 64bit CPUs hang in the OF_finddevice() call below
+ * if this array is stored on the stack.
+ */
+char cpuname[64];
 
 int
 cpu_spinup(struct device *self, struct cpu_info *ci)
@@ -592,7 +602,6 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 	int size = 0;
 	char *cp;
 	u_char *reset_cpu;
-	char cpuname[64];
 	u_int node;
 
         /*
@@ -620,8 +629,14 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 	h->ci = ci;
 	h->running = 0;
 	h->hid0 = ppc_mfhid0();
-	h->l2cr = ppc_mfl2cr();
 	h->sdr1 = ppc_mfsdr1();
+	if (ppc_proc_is_64b) {
+		h->hid1 = ppc64_mfhid1();
+		h->hid4 = ppc64_mfhid4();
+		h->hid5 = ppc64_mfhid5();
+	} else {
+		h->l2cr = ppc_mfl2cr();
+	}
 	cpu_hatch_data = h;
 
 	__asm volatile ("sync; isync");
@@ -747,9 +762,22 @@ cpu_hatch(void)
 	for (i = 0; i < 16; i++)
 		ppc_mtsrin(PPC_KERNEL_SEG0 + i, i << ADDR_SR_SHIFT);
 
-	ppc_mthid0(h->hid0);
-	if (h->l2cr != 0) {
+	if (ppc_proc_is_64b) {
+		/*
+		 * The Hardware Interrupt Offset Register should be
+		 * cleared after initialization.
+		 */
+		ppc_mthior(0);
+		__asm volatile ("sync");
+
+		ppc_mthid0(h->hid0);
+		ppc64_mthid1(h->hid1);
+		ppc64_mthid4(h->hid4);
+		ppc64_mthid5(h->hid5);
+	} else if (h->l2cr != 0) {
 		u_int x;
+
+		ppc_mthid0(h->hid0);
 		ppc_mtl2cr(h->l2cr & ~L2CR_L2E);
 
 		/* Wait for L2 clock to be stable (640 L2 clocks). */
@@ -760,7 +788,7 @@ cpu_hatch(void)
 		do {
 			x = ppc_mfl2cr();
 		} while (x & L2CR_L2IP);
-		
+
 		ppc_mtl2cr(h->l2cr);
 	}
 	ppc_mtsdr1(h->sdr1);
