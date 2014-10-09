@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.19 2012/12/09 20:24:53 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.20 2014/10/09 02:44:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -170,7 +170,7 @@ add_guest(struct md_node *node)
 	struct guest *guest;
 	struct md_prop *prop;
 
-	guest = xmalloc (sizeof(*guest));
+	guest = xmalloc(sizeof(*guest));
 
 	if (!md_get_prop_str(hvmd, node, "name", &guest->name))
 		goto free;
