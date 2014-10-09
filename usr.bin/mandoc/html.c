@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.42 2014/10/07 18:17:05 schwarze Exp $ */
+/*	$Id: html.c,v 1.43 2014/10/09 15:49:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -72,6 +72,19 @@ static	const struct htmldata htmltags[TAG_MAX] = {
 	{"code",	0 }, /* TAG_CODE */
 	{"small",	0 }, /* TAG_SMALL */
 	{"style",	HTML_CLRLINE}, /* TAG_STYLE */
+	{"math",	HTML_CLRLINE}, /* TAG_MATH */
+	{"mrow",	0}, /* TAG_MROW */
+	{"mi",		0}, /* TAG_MI */
+	{"mo",		0}, /* TAG_MO */
+	{"msup",	0}, /* TAG_MSUP */
+	{"msub",	0}, /* TAG_MSUB */
+	{"msubsup",	0}, /* TAG_MSUBSUP */
+	{"mfrac",	0}, /* TAG_MFRAC */
+	{"msqrt",	0}, /* TAG_MSQRT */
+	{"mfenced",	0}, /* TAG_MFENCED */
+	{"mtable",	0}, /* TAG_MTABLE */
+	{"mtr",		0}, /* TAG_MTR */
+	{"mtd",		0}, /* TAG_MTD */
 };
 
 static	const char	*const htmlattrs[ATTR_MAX] = {
@@ -85,6 +98,8 @@ static	const char	*const htmlattrs[ATTR_MAX] = {
 	"id", /* ATTR_ID */
 	"colspan", /* ATTR_COLSPAN */
 	"charset", /* ATTR_CHARSET */
+	"open", /* ATTR_OPEN */
+	"close", /* ATTR_CLOSE */
 };
 
 static	const char	*const roffscales[SCALE_MAX] = {
