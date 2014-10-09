@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.147 2014/10/07 19:37:04 tedu Exp $
+#	$OpenBSD: Makefile,v 1.148 2014/10/09 03:39:51 tedu Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ SUBDIR= apply arch at aucat audioctl awk banner \
 	libtool lndir \
 	locale locate lock logger login logname look lorder \
 	m4 mail make man mandoc mesg mg \
-	midiplay mixerctl mkdep mklocale mktemp modstat nc netstat \
+	midiplay mixerctl mkdep mklocale mktemp nc netstat \
 	newsyslog \
 	nfsstat nice nm nl nohup openssl pagesize passwd paste patch pctr \
 	pkg-config pkill \
