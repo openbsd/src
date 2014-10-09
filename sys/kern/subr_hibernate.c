@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.102 2014/10/09 00:42:05 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.103 2014/10/09 00:50:54 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -654,7 +654,7 @@ hibernate_inflate_page(int *rle)
 	    (struct hibernate_zlib_state *)HIBERNATE_HIBALLOC_PAGE;
 
 	/* Set up the stream for RLE code inflate */
-	hibernate_state->hib_stream.next_out = (char *)rle;
+	hibernate_state->hib_stream.next_out = (unsigned char *)rle;
 	hibernate_state->hib_stream.avail_out = sizeof(*rle);
 
 	/* Inflate RLE code */
@@ -692,8 +692,9 @@ hibernate_inflate_page(int *rle)
 	if (*rle != 0)
 		return (0);
 
-	/* Set up the stream for page inflate */	
-	hibernate_state->hib_stream.next_out = (char *)HIBERNATE_INFLATE_PAGE;
+	/* Set up the stream for page inflate */
+	hibernate_state->hib_stream.next_out =
+		(unsigned char *)HIBERNATE_INFLATE_PAGE;
 	hibernate_state->hib_stream.avail_out = PAGE_SIZE;
 
 	/* Process next block of data */
@@ -739,7 +740,7 @@ hibernate_inflate_region(union hibernate_info *hib, paddr_t dest,
 	hibernate_state =
 	    (struct hibernate_zlib_state *)HIBERNATE_HIBALLOC_PAGE;
 
-	hibernate_state->hib_stream.next_in = (char *)src;
+	hibernate_state->hib_stream.next_in = (unsigned char *)src;
 	hibernate_state->hib_stream.avail_in = size;
 
 	do {
@@ -784,10 +785,10 @@ hibernate_deflate(union hibernate_info *hib, paddr_t src,
 	    (struct hibernate_zlib_state *)HIBERNATE_HIBALLOC_PAGE;
 
 	/* Set up the stream for deflate */
-	hibernate_state->hib_stream.next_in = (caddr_t)src;
+	hibernate_state->hib_stream.next_in = (unsigned char *)src;
 	hibernate_state->hib_stream.avail_in = PAGE_SIZE - (src & PAGE_MASK);
-	hibernate_state->hib_stream.next_out = (caddr_t)hibernate_io_page +
-	    (PAGE_SIZE - *remaining);
+	hibernate_state->hib_stream.next_out =
+		(unsigned char *)hibernate_io_page + (PAGE_SIZE - *remaining);
 	hibernate_state->hib_stream.avail_out = *remaining;
 
 	/* Process next block of data */
@@ -1440,10 +1441,11 @@ hibernate_write_chunks(union hibernate_info *hib)
 			out_remaining = PAGE_SIZE;
 
 		/* Finish compress */
-		hibernate_state->hib_stream.next_in = (caddr_t)inaddr;
+		hibernate_state->hib_stream.next_in = (unsigned char *)inaddr;
 		hibernate_state->hib_stream.avail_in = 0;
 		hibernate_state->hib_stream.next_out =
-		    (caddr_t)hibernate_io_page + (PAGE_SIZE - out_remaining);
+		    (unsigned char *)hibernate_io_page +
+			(PAGE_SIZE - out_remaining);
 
 		/* We have an extra output page available for finalize */
 		hibernate_state->hib_stream.avail_out =
