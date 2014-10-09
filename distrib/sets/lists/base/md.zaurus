@@ -2054,7 +2054,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/ktrace.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/limits.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/sys/lkm.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/localedef.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/lock.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/lockf.ph

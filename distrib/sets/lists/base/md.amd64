@@ -2116,7 +2116,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/ktrace.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/limits.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/sys/lkm.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/localedef.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/lock.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/lockf.ph

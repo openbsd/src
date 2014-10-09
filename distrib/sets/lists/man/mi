@@ -1554,7 +1554,6 @@
 ./usr/share/man/man4/lge.4
 ./usr/share/man/man4/lii.4
 ./usr/share/man/man4/lisa.4
-./usr/share/man/man4/lkm.4
 ./usr/share/man/man4/lm.4
 ./usr/share/man/man4/lmc.4
 ./usr/share/man/man4/lmenv.4
@@ -2546,9 +2545,6 @@
 ./usr/share/man/man8/mknetid.8
 ./usr/share/man/man8/mknod.8
 ./usr/share/man/man8/mkuboot.8
-./usr/share/man/man8/modload.8
-./usr/share/man/man8/modstat.8
-./usr/share/man/man8/modunload.8
 ./usr/share/man/man8/monthly.8
 ./usr/share/man/man8/mopd.8
 ./usr/share/man/man8/mount.8

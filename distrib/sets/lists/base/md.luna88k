@@ -1999,7 +1999,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/ktrace.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/limits.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/sys/lkm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/localedef.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/lock.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/lockf.ph

@@ -254,8 +254,6 @@
 ./sbin/lmccontrol
 ./sbin/mkfifo
 ./sbin/mknod
-./sbin/modload
-./sbin/modunload
 ./sbin/mount
 ./sbin/mount_cd9660
 ./sbin/mount_ext2fs
@@ -448,7 +446,6 @@
 ./usr/bin/mkdep
 ./usr/bin/mklocale
 ./usr/bin/mktemp
-./usr/bin/modstat
 ./usr/bin/more
 ./usr/bin/nc
 ./usr/bin/netstat
@@ -2619,7 +2616,6 @@
 ./usr/libexec/ssh-pkcs11-helper
 ./usr/libexec/tradcpp
 ./usr/libexec/vi.recover
-./usr/lkm
 ./usr/local
 ./usr/local/bin
 ./usr/local/include
@@ -2976,13 +2972,6 @@
 ./usr/share/doc
 ./usr/share/games
 ./usr/share/info
-./usr/share/lkm
-./usr/share/lkm/misc
-./usr/share/lkm/misc/module
-./usr/share/lkm/misc/test
-./usr/share/lkm/syscall
-./usr/share/lkm/syscall/module
-./usr/share/lkm/syscall/test
 ./usr/share/locale
 ./usr/share/locale/ARMSCII-8
 ./usr/share/locale/ARMSCII-8/LC_CTYPE
@@ -3060,7 +3049,6 @@
 ./usr/share/mk/bsd.README
 ./usr/share/mk/bsd.dep.mk
 ./usr/share/mk/bsd.lib.mk
-./usr/share/mk/bsd.lkm.mk
 ./usr/share/mk/bsd.man.mk
 ./usr/share/mk/bsd.nls.mk
 ./usr/share/mk/bsd.obj.mk

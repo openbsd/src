@@ -2119,7 +2119,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ktrace.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/limits.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/lkm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/localedef.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/lock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/lockf.ph
