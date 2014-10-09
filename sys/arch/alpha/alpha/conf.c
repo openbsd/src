@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.76 2014/10/09 03:59:58 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.77 2014/10/09 04:10:03 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -65,12 +65,12 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 7: was: concatenated disk driver */
 	bdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	bdev_disk_init(NVND,vnd),	/* 9: vnode disk driver */
-	bdev_lkm_dummy(),		/* 10 */
-	bdev_lkm_dummy(),		/* 11 */
-	bdev_lkm_dummy(),		/* 12 */
-	bdev_lkm_dummy(),		/* 13 */
-	bdev_lkm_dummy(),		/* 14 */
-	bdev_lkm_dummy(),		/* 15 */
+	bdev_notdef(),			/* 10 */
+	bdev_notdef(),			/* 11 */
+	bdev_notdef(),			/* 12 */
+	bdev_notdef(),			/* 13 */
+	bdev_notdef(),			/* 14 */
+	bdev_notdef(),			/* 15 */
 	bdev_notdef(),			/* 16 was: RAIDframe disk driver */
 };
 int	nblkdev = nitems(bdevsw);
@@ -146,12 +146,12 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 14: SCSI autochanger */
 	cdev_tty_init(NSCC,scc),	/* 15: scc 8530 serial interface */
 	cdev_notdef(),			/* 16 was lkm */
-	cdev_lkm_dummy(),		/* 17 */
-	cdev_lkm_dummy(),		/* 18 */
-	cdev_lkm_dummy(),		/* 19 */
-	cdev_lkm_dummy(),		/* 20 */
-	cdev_lkm_dummy(),		/* 21 */
-	cdev_lkm_dummy(),		/* 22 */
+	cdev_notdef(),			/* 17 */
+	cdev_notdef(),			/* 18 */
+	cdev_notdef(),			/* 19 */
+	cdev_notdef(),			/* 20 */
+	cdev_notdef(),			/* 21 */
+	cdev_notdef(),			/* 22 */
 	cdev_tty_init(1,prom),          /* 23: XXX prom console */
 	cdev_audio_init(NAUDIO,audio),	/* 24: generic audio I/O */
 	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 25: workstation console */

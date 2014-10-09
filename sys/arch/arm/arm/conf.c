@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.39 2014/10/09 03:59:58 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.40 2014/10/09 04:10:03 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -149,103 +149,103 @@ cdev_decl(radio);
 /* Block devices */
 
 struct bdevsw bdevsw[] = {
-	bdev_lkm_dummy(),		/*  0: */
+	bdev_notdef(),			/*  0: */
 	bdev_swap_init(1, sw),		/*  1: swap pseudo-device */
-	bdev_lkm_dummy(),		/*  2: */
-	bdev_lkm_dummy(),		/*  3: */
-	bdev_lkm_dummy(),		/*  4: */
-	bdev_lkm_dummy(),		/*  5: */
-	bdev_lkm_dummy(),		/*  6: */
-	bdev_lkm_dummy(),		/*  7: */
-	bdev_lkm_dummy(),		/*  8: */
-	bdev_lkm_dummy(),		/*  9: */
-	bdev_lkm_dummy(),		/* 10: */
-	bdev_lkm_dummy(),		/* 11: */
-	bdev_lkm_dummy(),		/* 12: */
-	bdev_lkm_dummy(),		/* 13: */
-	bdev_lkm_dummy(),		/* 14: */
-	bdev_lkm_dummy(),		/* 15: */
+	bdev_notdef(),			/*  2: */
+	bdev_notdef(),			/*  3: */
+	bdev_notdef(),			/*  4: */
+	bdev_notdef(),			/*  5: */
+	bdev_notdef(),			/*  6: */
+	bdev_notdef(),			/*  7: */
+	bdev_notdef(),			/*  8: */
+	bdev_notdef(),			/*  9: */
+	bdev_notdef(),			/* 10: */
+	bdev_notdef(),			/* 11: */
+	bdev_notdef(),			/* 12: */
+	bdev_notdef(),			/* 13: */
+	bdev_notdef(),			/* 14: */
+	bdev_notdef(),			/* 15: */
 	bdev_disk_init(NWD,wd),		/* 16: Internal IDE disk */
-	bdev_lkm_dummy(),		/* 17: */
+	bdev_notdef(),			/* 17: */
 	bdev_disk_init(NRD,rd),		/* 18: memory disk */
 	bdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
-	bdev_lkm_dummy(),		/* 20: */
+	bdev_notdef(),			/* 20: */
  	bdev_notdef(),			/* 21: was: concatenated disk driver */
-	bdev_lkm_dummy(),		/* 22: */
-	bdev_lkm_dummy(),		/* 23: */
+	bdev_notdef(),			/* 22: */
+	bdev_notdef(),			/* 23: */
 	bdev_disk_init(NSD,sd),		/* 24: SCSI disk */
 	bdev_tape_init(NST,st),		/* 25: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 26: SCSI cdrom */
-	bdev_lkm_dummy(),		/* 27: */
-	bdev_lkm_dummy(),		/* 28: */
-	bdev_lkm_dummy(),		/* 29: */
-	bdev_lkm_dummy(),		/* 30: */
-	bdev_lkm_dummy(),		/* 31: */
-	bdev_lkm_dummy(),		/* 32: */
-	bdev_lkm_dummy(),		/* 33: */
-	bdev_lkm_dummy(),		/* 34: */
-	bdev_lkm_dummy(),		/* 35: */
-	bdev_lkm_dummy(),		/* 36: */
-	bdev_lkm_dummy(),		/* 37: */
-	bdev_lkm_dummy(),		/* 38: */
-	bdev_lkm_dummy(),		/* 39: */
-	bdev_lkm_dummy(),		/* 40: */
-	bdev_lkm_dummy(),		/* 41: */
-	bdev_lkm_dummy(),		/* 42: */
-	bdev_lkm_dummy(),		/* 43: */
-	bdev_lkm_dummy(),		/* 44: */
-	bdev_lkm_dummy(),		/* 45: */
-	bdev_lkm_dummy(),		/* 46: */
-	bdev_lkm_dummy(),		/* 47: */
-	bdev_lkm_dummy(),		/* 48: */
-	bdev_lkm_dummy(),		/* 49: */
-	bdev_lkm_dummy(),		/* 50: */
-	bdev_lkm_dummy(),		/* 51: */
-	bdev_lkm_dummy(),		/* 52: */
-	bdev_lkm_dummy(),		/* 53: */
-	bdev_lkm_dummy(),		/* 54: */
-	bdev_lkm_dummy(),		/* 55: */
-	bdev_lkm_dummy(),		/* 56: */
-	bdev_lkm_dummy(),		/* 57: */
-	bdev_lkm_dummy(),		/* 58: */
-	bdev_lkm_dummy(),		/* 59: */
-	bdev_lkm_dummy(),		/* 60: */
-	bdev_lkm_dummy(),		/* 61: */
-	bdev_lkm_dummy(),		/* 62: */
-	bdev_lkm_dummy(),		/* 63: */
-	bdev_lkm_dummy(),		/* 64: */
-	bdev_lkm_dummy(),		/* 65: */
-	bdev_lkm_dummy(),		/* 66: */
-	bdev_lkm_dummy(),		/* 67: */
-	bdev_lkm_dummy(),		/* 68: */
-	bdev_lkm_dummy(),		/* 69: */
-	bdev_lkm_dummy(),		/* 70: */
+	bdev_notdef(),			/* 27: */
+	bdev_notdef(),			/* 28: */
+	bdev_notdef(),			/* 29: */
+	bdev_notdef(),			/* 30: */
+	bdev_notdef(),			/* 31: */
+	bdev_notdef(),			/* 32: */
+	bdev_notdef(),			/* 33: */
+	bdev_notdef(),			/* 34: */
+	bdev_notdef(),			/* 35: */
+	bdev_notdef(),			/* 36: */
+	bdev_notdef(),			/* 37: */
+	bdev_notdef(),			/* 38: */
+	bdev_notdef(),			/* 39: */
+	bdev_notdef(),			/* 40: */
+	bdev_notdef(),			/* 41: */
+	bdev_notdef(),			/* 42: */
+	bdev_notdef(),			/* 43: */
+	bdev_notdef(),			/* 44: */
+	bdev_notdef(),			/* 45: */
+	bdev_notdef(),			/* 46: */
+	bdev_notdef(),			/* 47: */
+	bdev_notdef(),			/* 48: */
+	bdev_notdef(),			/* 49: */
+	bdev_notdef(),			/* 50: */
+	bdev_notdef(),			/* 51: */
+	bdev_notdef(),			/* 52: */
+	bdev_notdef(),			/* 53: */
+	bdev_notdef(),			/* 54: */
+	bdev_notdef(),			/* 55: */
+	bdev_notdef(),			/* 56: */
+	bdev_notdef(),			/* 57: */
+	bdev_notdef(),			/* 58: */
+	bdev_notdef(),			/* 59: */
+	bdev_notdef(),			/* 60: */
+	bdev_notdef(),			/* 61: */
+	bdev_notdef(),			/* 62: */
+	bdev_notdef(),			/* 63: */
+	bdev_notdef(),			/* 64: */
+	bdev_notdef(),			/* 65: */
+	bdev_notdef(),			/* 66: */
+	bdev_notdef(),			/* 67: */
+	bdev_notdef(),			/* 68: */
+	bdev_notdef(),			/* 69: */
+	bdev_notdef(),			/* 70: */
 	bdev_notdef(),			/* 71 was: RAIDframe disk driver */
-	bdev_lkm_dummy(),		/* 72: */
-	bdev_lkm_dummy(),		/* 73: */
-	bdev_lkm_dummy(),		/* 74: */
-	bdev_lkm_dummy(),		/* 75: */
-	bdev_lkm_dummy(),		/* 76: */
-	bdev_lkm_dummy(),		/* 77: */
-	bdev_lkm_dummy(),		/* 78: */
-	bdev_lkm_dummy(),		/* 79: */
-	bdev_lkm_dummy(),		/* 80: */
-	bdev_lkm_dummy(),		/* 81: */
-	bdev_lkm_dummy(),		/* 82: */
-	bdev_lkm_dummy(),		/* 83: */
-	bdev_lkm_dummy(),		/* 84: */
-	bdev_lkm_dummy(),		/* 85: */
-	bdev_lkm_dummy(),		/* 86: */
-	bdev_lkm_dummy(),		/* 87: */
-	bdev_lkm_dummy(),		/* 88: */
-	bdev_lkm_dummy(),		/* 89: */
-	bdev_lkm_dummy(),		/* 90: */
-	bdev_lkm_dummy(),		/* 91: */
-	bdev_lkm_dummy(),		/* 93: */
-	bdev_lkm_dummy(),		/* 94: */
-	bdev_lkm_dummy(),		/* 95: */
-	bdev_lkm_dummy(),		/* 96: */
-	bdev_lkm_dummy(),		/* 97: */
+	bdev_notdef(),			/* 72: */
+	bdev_notdef(),			/* 73: */
+	bdev_notdef(),			/* 74: */
+	bdev_notdef(),			/* 75: */
+	bdev_notdef(),			/* 76: */
+	bdev_notdef(),			/* 77: */
+	bdev_notdef(),			/* 78: */
+	bdev_notdef(),			/* 79: */
+	bdev_notdef(),			/* 80: */
+	bdev_notdef(),			/* 81: */
+	bdev_notdef(),			/* 82: */
+	bdev_notdef(),			/* 83: */
+	bdev_notdef(),			/* 84: */
+	bdev_notdef(),			/* 85: */
+	bdev_notdef(),			/* 86: */
+	bdev_notdef(),			/* 87: */
+	bdev_notdef(),			/* 88: */
+	bdev_notdef(),			/* 89: */
+	bdev_notdef(),			/* 90: */
+	bdev_notdef(),			/* 91: */
+	bdev_notdef(),			/* 93: */
+	bdev_notdef(),			/* 94: */
+	bdev_notdef(),			/* 95: */
+	bdev_notdef(),			/* 96: */
+	bdev_notdef(),			/* 97: */
 };
 
 /* Character devices */
@@ -284,52 +284,52 @@ struct cdevsw cdevsw[] = {
 	cdev_fd_init(1,filedesc),		/*  7: file descriptor pseudo-device */
 	cdev_ksyms_init(NKSYMS,ksyms),		/*  8: Kernel symbols device */
 	cdev_lpt_init(NLPT,lpt),		/*  9: parallel printer */
-	cdev_lkm_dummy(),			/* 10: */
-	cdev_lkm_dummy(),			/* 11: */
+	cdev_notdef(),				/* 10: */
+	cdev_notdef(),				/* 11: */
 	cdev_tty_init(NCOM,com),		/* 12: serial port */
 	cdev_gpio_init(NGPIO,gpio),     	/* 13: GPIO interface */
 	cdev_notdef(),				/* 14 was alternate serial port */
-	cdev_lkm_dummy(),			/* 15: */
+	cdev_notdef(),				/* 15: */
 	cdev_disk_init(NWD,wd),			/* 16: ST506/ESDI/IDE disk */
-	cdev_lkm_dummy(),			/* 17: */
+	cdev_notdef(),				/* 17: */
 	cdev_disk_init(NRD,rd),			/* 18: ram disk driver */
 	cdev_disk_init(NVND,vnd),		/* 19: vnode disk driver */
-	cdev_lkm_dummy(),			/* 20: */
+	cdev_notdef(),				/* 20: */
 	cdev_notdef(),				/* 21: was: concatenated disk driver */
 	cdev_bpf_init(NBPFILTER,bpf),		/* 22: Berkeley packet filter */
-	cdev_lkm_dummy(),			/* 23: */
+	cdev_notdef(),				/* 23: */
 	cdev_disk_init(NSD,sd),			/* 24: SCSI disk */
 	cdev_tape_init(NST,st),			/* 25: SCSI tape */
 	cdev_disk_init(NCD,cd),			/* 26: SCSI CD-ROM */
 	cdev_ch_init(NCH,ch),	 		/* 27: SCSI autochanger */
 	cdev_uk_init(NUK,uk),	 		/* 28: SCSI unknown */
 	cdev_notdef(),				/* 29: */
-	cdev_lkm_dummy(),			/* 30: */
-	cdev_lkm_dummy(),			/* 31: */
-	cdev_lkm_dummy(),			/* 32: */
+	cdev_notdef(),				/* 30: */
+	cdev_notdef(),				/* 31: */
+	cdev_notdef(),				/* 32: */
 	cdev_tun_init(NTUN,tun),		/* 33: network tunnel */
 	cdev_apm_init(NAPM,apm),		/* 34: APM interface */
 	cdev_notdef(),				/* 35: was LKM */
 	cdev_audio_init(NAUDIO,audio),		/* 36: generic audio I/O */
 	cdev_hotplug_init(NHOTPLUG,hotplug),	/* 37: devices hot plugging*/
 	cdev_video_init(NVIDEO,video),		/* 38: generic video I/O */
-	cdev_lkm_dummy(),			/* 39: reserved */
+	cdev_notdef(),				/* 39: reserved */
 	cdev_random_init(1,random),		/* 40: random generator */
-	cdev_lkm_dummy(),			/* 41: reserved */
-	cdev_lkm_dummy(),			/* 42: reserved */
-	cdev_lkm_dummy(),			/* 43: reserved */
-	cdev_lkm_dummy(),			/* 44: reserved */
-	cdev_lkm_dummy(),			/* 45: reserved */
+	cdev_notdef(),				/* 41: reserved */
+	cdev_notdef(),				/* 42: reserved */
+	cdev_notdef(),				/* 43: reserved */
+	cdev_notdef(),				/* 44: reserved */
+	cdev_notdef(),				/* 45: reserved */
 	cdev_pf_init(NPF,pf),           	/* 46: packet filter */
 	cdev_notdef(),				/* 47: was: /dev/crypto */
-	cdev_lkm_dummy(),			/* 48: reserved */
-	cdev_lkm_dummy(),			/* 49: reserved */
+	cdev_notdef(),				/* 48: reserved */
+	cdev_notdef(),				/* 49: reserved */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50: system call tracing */
 	cdev_notdef(),				/* 51: reserved */
  	cdev_bio_init(NBIO,bio),		/* 52: ioctl tunnel */
 	cdev_notdef(),				/* 53: reserved */
 	cdev_notdef(),				/* 54 was FOOTBRIDGE console */
-	cdev_lkm_dummy(),			/* 55: Reserved for bypass device */	
+	cdev_notdef(),				/* 55: Reserved for bypass device */	
 	cdev_notdef(),				/* 56: reserved */
 	cdev_midi_init(NMIDI,midi),		/* 57: MIDI I/O */
 	cdev_notdef(),				/* 58 was: sequencer I/O */
@@ -346,11 +346,11 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),				/* 69: was USB scanners */
 	cdev_usbdev_init(NUGEN,ugen),		/* 70: USB generic driver */
 	cdev_notdef(),    			/* 71 was: RAIDframe disk driver */
-	cdev_lkm_dummy(),			/* 72: reserved */
-	cdev_lkm_dummy(),			/* 73: reserved */
-	cdev_lkm_dummy(),			/* 74: reserved */
-	cdev_lkm_dummy(),			/* 75: reserved */
-	cdev_lkm_dummy(),			/* 76: reserved */
+	cdev_notdef(),				/* 72: reserved */
+	cdev_notdef(),				/* 73: reserved */
+	cdev_notdef(),				/* 74: reserved */
+	cdev_notdef(),				/* 75: reserved */
+	cdev_notdef(),				/* 76: reserved */
 	cdev_fuse_init(NFUSE,fuse),		/* 77: fuse */
 	cdev_notdef(),                          /* 78: removed device */
 	cdev_notdef(),                          /* 79: removed device */

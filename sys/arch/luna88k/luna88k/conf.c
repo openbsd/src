@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 2014/10/09 03:59:59 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.23 2014/10/09 04:10:03 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -84,12 +84,12 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 10 */
 	bdev_notdef(),			/* 11 */
 	bdev_notdef(),			/* 12 */
-	bdev_lkm_dummy(),		/* 13 */
-	bdev_lkm_dummy(),		/* 14 */
-	bdev_lkm_dummy(),		/* 15 */
-	bdev_lkm_dummy(),		/* 16 */
-	bdev_lkm_dummy(),		/* 17 */
-	bdev_lkm_dummy(),		/* 18 */
+	bdev_notdef(),			/* 13 */
+	bdev_notdef(),			/* 14 */
+	bdev_notdef(),			/* 15 */
+	bdev_notdef(),			/* 16 */
+	bdev_notdef(),			/* 17 */
+	bdev_notdef(),			/* 18 */
 };
 int	nblkdev = nitems(bdevsw);
 
@@ -130,12 +130,12 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 30 */
 	cdev_notdef(),			/* 31 */
 	cdev_notdef(),			/* 32 */
-	cdev_lkm_dummy(),		/* 33 */
-	cdev_lkm_dummy(),		/* 34 */
-	cdev_lkm_dummy(),		/* 35 */
-	cdev_lkm_dummy(),		/* 36 */
-	cdev_lkm_dummy(),		/* 37 */
-	cdev_lkm_dummy(),		/* 38 */
+	cdev_notdef(),			/* 33 */
+	cdev_notdef(),			/* 34 */
+	cdev_notdef(),			/* 35 */
+	cdev_notdef(),			/* 36 */
+	cdev_notdef(),			/* 37 */
+	cdev_notdef(),			/* 38 */
 	cdev_pf_init(NPF,pf),		/* 39: packet filter */
 	cdev_random_init(1,random),	/* 40: random data source */
 	cdev_uk_init(NUK,uk),		/* 41 */

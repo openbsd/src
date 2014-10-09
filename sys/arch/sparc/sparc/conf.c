@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.63 2014/10/09 03:59:59 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.64 2014/10/09 04:10:03 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -107,12 +107,12 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NFD,fd),		/* 16: floppy disk */
 	bdev_disk_init(NRD,rd),		/* 17: ram disk driver */
 	bdev_disk_init(NCD,cd),		/* 18: SCSI CD-ROM */
-	bdev_lkm_dummy(),		/* 19 */
-	bdev_lkm_dummy(),		/* 20 */
-	bdev_lkm_dummy(),		/* 21 */
-	bdev_lkm_dummy(),		/* 22 */
-	bdev_lkm_dummy(),		/* 23 */
-	bdev_lkm_dummy(),		/* 24 */
+	bdev_notdef(),			/* 19 */
+	bdev_notdef(),			/* 20 */
+	bdev_notdef(),			/* 21 */
+	bdev_notdef(),			/* 22 */
+	bdev_notdef(),			/* 23 */
+	bdev_notdef(),			/* 24 */
 	bdev_notdef(),			/* 25 was: RAIDframe disk driver */
 	bdev_disk_init(NPRESTO,presto),	/* 26: Prestoserve NVRAM */
 };
@@ -246,12 +246,12 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NVND,vnd),	/* 110: vnode disk driver */
 	cdev_tun_init(NTUN,tun),	/* 111: network tunnel */
 	cdev_notdef(),			/* 112: was LKM */
-	cdev_lkm_dummy(),		/* 113 */
-	cdev_lkm_dummy(),		/* 114 */
-	cdev_lkm_dummy(),		/* 115 */
-	cdev_lkm_dummy(),		/* 116 */
-	cdev_lkm_dummy(),		/* 117 */
-	cdev_lkm_dummy(),		/* 118 */
+	cdev_notdef(),			/* 113 */
+	cdev_notdef(),			/* 114 */
+	cdev_notdef(),			/* 115 */
+	cdev_notdef(),			/* 116 */
+	cdev_notdef(),			/* 117 */
+	cdev_notdef(),			/* 118 */
 	cdev_random_init(1,random),	/* 119: random generator */
 	cdev_uk_init(NUK,uk),		/* 120: unknown SCSI */
 	cdev_notdef(),			/* 121 */

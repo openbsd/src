@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.148 2014/10/09 03:59:59 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.149 2014/10/09 04:10:03 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -63,12 +63,12 @@ struct bdevsw	bdevsw[] =
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
 	bdev_notdef(),			/* 7 */
-	bdev_lkm_dummy(),		/* 8 */
-	bdev_lkm_dummy(),		/* 9 */
-	bdev_lkm_dummy(),		/* 10 */
-	bdev_lkm_dummy(),		/* 11 */
-	bdev_lkm_dummy(),		/* 12 */
-	bdev_lkm_dummy(),		/* 13 */
+	bdev_notdef(),			/* 8 */
+	bdev_notdef(),			/* 9 */
+	bdev_notdef(),			/* 10 */
+	bdev_notdef(),			/* 11 */
+	bdev_notdef(),			/* 12 */
+	bdev_notdef(),			/* 13 */
 	bdev_disk_init(NVND,vnd),	/* 14: vnode disk driver */
 	bdev_notdef(),			/* 15 */
 	bdev_notdef(),			/* 16: was: concatenated disk driver */
@@ -214,12 +214,12 @@ struct cdevsw	cdevsw[] =
 	cdev_joy_init(NJOY,joy),        /* 26: joystick */
 	cdev_spkr_init(NSPKR,spkr),	/* 27: PC speaker */
 	cdev_notdef(),			/* 28: was LKM */
-	cdev_lkm_dummy(),		/* 29 */
-	cdev_lkm_dummy(),		/* 30 */
-	cdev_lkm_dummy(),		/* 31 */
-	cdev_lkm_dummy(),		/* 32 */
-	cdev_lkm_dummy(),		/* 33 */
-	cdev_lkm_dummy(),		/* 34 */
+	cdev_notdef(),			/* 29 */
+	cdev_notdef(),			/* 30 */
+	cdev_notdef(),			/* 31 */
+	cdev_notdef(),			/* 32 */
+	cdev_notdef(),			/* 33 */
+	cdev_notdef(),			/* 34 */
 	cdev_notdef(),			/* 35: Microsoft mouse */
 	cdev_notdef(),			/* 36: Logitech mouse */
 	cdev_notdef(),			/* 37: Extended PS/2 mouse */

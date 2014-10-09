@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.27 2014/10/09 03:59:59 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.28 2014/10/09 04:10:03 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -69,12 +69,12 @@ struct bdevsw   bdevsw[] =
 	bdev_disk_init(NCD,cd),		/*  6: SCSI CD-ROM */
 	bdev_disk_init(NFD,fd),		/*  7: floppy drive */
 	bdev_disk_init(NWD,wd),		/*  8: ST506 drive */
-	bdev_lkm_dummy(),		/*  9: */
-	bdev_lkm_dummy(),		/* 10: */
-	bdev_lkm_dummy(),		/* 11: */
-	bdev_lkm_dummy(),		/* 12: */
-	bdev_lkm_dummy(),		/* 13: */
-	bdev_lkm_dummy(),		/* 14: */
+	bdev_notdef(),			/*  9: */
+	bdev_notdef(),			/* 10: */
+	bdev_notdef(),			/* 11: */
+	bdev_notdef(),			/* 12: */
+	bdev_notdef(),			/* 13: */
+	bdev_notdef(),			/* 14: */
 };
 int	nblkdev = nitems(bdevsw);
 
@@ -174,12 +174,12 @@ struct cdevsw   cdevsw[] =
 	cdev_tty_init(NUCOM,ucom),	/* 45: USB tty */
 	cdev_notdef(),			/* 46: was USB scanners */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 47: devices hot plugging */
-	cdev_lkm_dummy(),		/* 48: */
-	cdev_lkm_dummy(),		/* 49: */
-	cdev_lkm_dummy(),		/* 50: */
-	cdev_lkm_dummy(),		/* 51: */
-	cdev_lkm_dummy(),		/* 52: */
-	cdev_lkm_dummy(),		/* 53: */
+	cdev_notdef(),			/* 48: */
+	cdev_notdef(),			/* 49: */
+	cdev_notdef(),			/* 50: */
+	cdev_notdef(),			/* 51: */
+	cdev_notdef(),			/* 52: */
+	cdev_notdef(),			/* 53: */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 54: vscsi */
 	cdev_notdef(),
 	cdev_disk_init(1,diskmap),	/* 56: disk mapper */
