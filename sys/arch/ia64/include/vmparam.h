@@ -1,4 +1,4 @@
-/* $OpenBSD: vmparam.h,v 1.2 2014/10/09 03:59:59 tedu Exp $ */
+/* $OpenBSD: vmparam.h,v 1.3 2014/10/09 04:01:27 tedu Exp $ */
 /*	$NetBSD: vmparam.h,v 1.7 2010/11/14 13:33:22 uebayasi Exp $	*/
 
 /*-
@@ -94,7 +94,7 @@
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vaddr_t)PAGE_SIZE)
+#define VM_MIN_ADDRESS		((vaddr_t)0)
 #define	VM_MAX_ADDRESS		((vaddr_t) IA64_RR_BASE(5))
 #define	VM_GATEWAY_SIZE		PAGE_SIZE
 #define	VM_MAXUSER_ADDRESS	(VM_MAX_ADDRESS + VM_GATEWAY_SIZE)
