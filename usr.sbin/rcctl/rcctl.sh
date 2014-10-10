@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.38 2014/09/01 18:01:55 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.39 2014/10/10 07:27:44 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -276,7 +276,7 @@ if [ -n "$flag" ]; then
 		if [ "$action" != "enable" ]; then
 			_rc_err "${0##*/}: \"flags\" can only be set with \"enable\""
 		fi
-		if svc_is_special $svc; then
+		if svc_is_special $svc && [ -n "$4" ]; then
 			_rc_err "${0##*/}: \"$svc\" is a special variable, cannot set \"flags\""
 		fi
 		if [ "$4" = "NO" ]; then
