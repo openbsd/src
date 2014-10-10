@@ -1,4 +1,4 @@
-/*	$OpenBSD: merge.c,v 1.8 2014/10/02 06:23:15 otto Exp $	*/
+/*	$OpenBSD: merge.c,v 1.9 2014/10/10 08:15:25 otto Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -40,7 +40,6 @@ merge_main(int argc, char **argv)
 	BUF *bp;
 
 	flags = labels = 0;
-	status = D_ERROR;
 
 	/*
 	 * Using getopt(3) and not rcs_getopt() because merge(1)

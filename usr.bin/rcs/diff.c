@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.34 2013/05/16 12:44:48 stsp Exp $	*/
+/*	$OpenBSD: diff.c,v 1.35 2014/10/10 08:15:25 otto Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -1302,7 +1302,7 @@ dump_unified_vec(FILE *f1, FILE *f2, int flags)
 	if (context_vec_start > context_vec_ptr)
 		return;
 
-	b = d = 0;		/* gcc */
+	d = 0; /* gcc */
 	lowa = MAX(1, cvp->a - diff_context);
 	upb = MIN(len[0], context_vec_ptr->b + diff_context);
 	lowc = MAX(1, cvp->c - diff_context);

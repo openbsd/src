@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.40 2014/05/29 16:39:42 tedu Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.41 2014/10/10 08:15:25 otto Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -156,8 +156,6 @@ rcs_choosefile(const char *filename, char *out, size_t len)
 	struct stat sb;
 	char *p, *ext, name[MAXPATHLEN], *next, *ptr, rcsdir[MAXPATHLEN],
 	    *suffixes, rcspath[MAXPATHLEN];
-
-	fd = -1;
 
 	/*
 	 * If `filename' contains a directory, `rcspath' contains that

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.53 2014/10/02 06:23:15 otto Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.54 2014/10/10 08:15:25 otto Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -44,7 +44,6 @@ rcsmerge_main(int argc, char **argv)
 	BUF *bp;
 
 	flags = 0;
-	kflag = RCS_KWEXP_ERR;
 	status = D_ERROR;
 	rev1 = rev2 = NULL;
 	rev_str1 = rev_str2 = NULL;

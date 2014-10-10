@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.80 2014/01/07 14:08:16 deraadt Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.81 2014/10/10 08:15:25 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -214,7 +214,6 @@ rcs_write(RCSFILE *rfp)
 	int fd;
 
 	fn = NULL;
-	fd = -1;
 
 	if (rfp->rf_flags & RCS_SYNCED)
 		return;

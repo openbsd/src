@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.118 2014/10/02 06:23:15 otto Exp $	*/
+/*	$OpenBSD: co.c,v 1.119 2014/10/10 08:15:25 otto Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -56,7 +56,6 @@ checkout_main(int argc, char **argv)
 
 	flags = ret = 0;
 	kflag = RCS_KWEXP_ERR;
-	rev = RCS_HEAD_REV;
 	rev_str = NULL;
 	author = date = state = NULL;
 
@@ -256,7 +255,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	time_t rcsdate, givendate;
 	RCSNUM *rev;
 
-	rcsdate = givendate = -1;
+	givendate = -1;
 	if (date != NULL && (givendate = date_parse(date)) == -1) {
 		warnx("invalid date: %s", date);
 		return -1;

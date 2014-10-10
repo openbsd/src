@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsparse.c,v 1.9 2013/06/03 17:04:35 jcs Exp $	*/
+/*	$OpenBSD: rcsparse.c,v 1.10 2014/10/10 08:15:25 otto Exp $	*/
 /*
  * Copyright (c) 2010 Tobias Stoeckmann <tobias@openbsd.org>
  *
@@ -915,7 +915,6 @@ rcsparse_token(RCSFILE *rfp, int allowed)
 	} while (isspace(c));
 
 	pdp->rp_msglineno = pdp->rp_lineno;
-	type = 0;
 	switch (c) {
 	case '@':
 		ret = rcsparse_string(rfp, allowed);
@@ -1104,7 +1103,6 @@ rcsparse(RCSFILE *rfp, struct rcs_section *sec)
 	int i, token;
 
 	pdp = (struct rcs_pdata *)rfp->rf_pdata;
-	i = 0;
 
 	token = 0;
 	for (i = 0; sec[i].token != 0; i++) {
