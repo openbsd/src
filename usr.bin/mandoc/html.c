@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.44 2014/10/09 15:59:08 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.45 2014/10/10 15:25:06 schwarze Exp $
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -103,6 +103,7 @@ static	const char	*const htmlattrs[ATTR_MAX] = {
 	"charset", /* ATTR_CHARSET */
 	"open", /* ATTR_OPEN */
 	"close", /* ATTR_CLOSE */
+	"mathvariant", /* ATTR_MATHVARIANT */
 };
 
 static	const char	*const roffscales[SCALE_MAX] = {

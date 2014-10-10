@@ -1,6 +1,6 @@
-/*	$Id: tree.c,v 1.23 2014/10/09 15:32:22 schwarze Exp $ */
+/*	$OpenBSD: tree.c,v 1.24 2014/10/10 15:25:06 schwarze Exp $
 /*
- * Copyright (c) 2008, 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/types.h>
+
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
@@ -261,6 +263,11 @@ print_box(const struct eqn_box *ep, int indent)
 	int		 i;
 	const char	*t;
 
+	static const char *posnames[] = {
+	    NULL, "sup", "subsup", "sub",
+	    "to", "from", "fromto",
+	    "over", "sqrt", NULL };
+
 	if (NULL == ep)
 		return;
 	for (i = 0; i < indent; i++)
@@ -271,6 +278,7 @@ print_box(const struct eqn_box *ep, int indent)
 	case EQN_ROOT:
 		t = "eqn-root";
 		break;
+	case EQN_LISTONE:
 	case EQN_LIST:
 		t = "eqn-list";
 		break;
@@ -280,18 +288,36 @@ print_box(const struct eqn_box *ep, int indent)
 	case EQN_TEXT:
 		t = "eqn-text";
 		break;
+	case EQN_PILE:
+		t = "eqn-pile";
+		break;
 	case EQN_MATRIX:
 		t = "eqn-matrix";
 		break;
 	}
 
-	assert(t);
-	printf("%s(size=%d, pos=%d, font=%d, mark=%d, pile=%d, l=\"%s\", r=\"%s\") %s\n",
-	    t, EQN_DEFSIZE == ep->size ? 0 : ep->size,
-	    ep->pos, ep->font, ep->mark, ep->pile,
-	    ep->left ? ep->left : "",
-	    ep->right ? ep->right : "",
-	    ep->text ? ep->text : "");
+	fputs(t, stdout);
+	if (ep->pos)
+		printf(" pos=%s", posnames[ep->pos]);
+	if (ep->left)
+		printf(" left=\"%s\"", ep->left);
+	if (ep->right)
+		printf(" right=\"%s\"", ep->right);
+	if (ep->top)
+		printf(" top=\"%s\"", ep->top);
+	if (ep->bottom)
+		printf(" bottom=\"%s\"", ep->bottom);
+	if (ep->text)
+		printf(" text=\"%s\"", ep->text);
+	if (ep->font)
+		printf(" font=%d", ep->font);
+	if (ep->size != EQN_DEFSIZE)
+		printf(" size=%d", ep->size);
+	if (ep->expectargs != UINT_MAX && ep->expectargs != ep->args)
+		printf(" badargs=%zu(%zu)", ep->args, ep->expectargs);
+	else if (ep->args)
+		printf(" args=%zu", ep->args);
+	putchar('\n');
 
 	print_box(ep->first, indent + 1);
 	print_box(ep->next, indent);

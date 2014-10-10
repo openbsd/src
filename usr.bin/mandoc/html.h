@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.27 2014/10/09 15:59:08 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.28 2014/10/10 15:25:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -82,6 +82,7 @@ enum	htmlattr {
 	ATTR_CHARSET,
 	ATTR_OPEN,
 	ATTR_CLOSE,
+	ATTR_MATHVARIANT,
 	ATTR_MAX
 };
 

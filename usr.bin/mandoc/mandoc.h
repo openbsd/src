@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.102 2014/10/09 15:59:08 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.103 2014/10/10 15:25:06 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -306,21 +306,10 @@ enum	eqn_boxt {
 	EQN_ROOT, /* root of parse tree */
 	EQN_TEXT, /* text (number, variable, whatever) */
 	EQN_SUBEXPR, /* nested `eqn' subexpression */
-	EQN_LIST, /* subexpressions list */
-	EQN_MATRIX /* matrix subexpression */
-};
-
-enum	eqn_markt {
-	EQNMARK_NONE = 0,
-	EQNMARK_DOT,
-	EQNMARK_DOTDOT,
-	EQNMARK_HAT,
-	EQNMARK_TILDE,
-	EQNMARK_VEC,
-	EQNMARK_DYAD,
-	EQNMARK_BAR,
-	EQNMARK_UNDER,
-	EQNMARK__MAX
+	EQN_LIST, /* list (braces, etc.) */
+	EQN_LISTONE, /* singleton list */
+	EQN_PILE, /* vertical pile */
+	EQN_MATRIX /* pile of piles */
 };
 
 enum	eqn_fontt {
@@ -334,13 +323,14 @@ enum	eqn_fontt {
 
 enum	eqn_post {
 	EQNPOS_NONE = 0,
-	EQNPOS_OVER,
 	EQNPOS_SUP,
 	EQNPOS_SUBSUP,
 	EQNPOS_SUB,
 	EQNPOS_TO,
 	EQNPOS_FROM,
 	EQNPOS_FROMTO,
+	EQNPOS_OVER,
+	EQNPOS_SQRT,
 	EQNPOS__MAX
 };
 
@@ -371,10 +361,13 @@ struct	eqn_box {
 	struct eqn_box	 *prev; /* node sibling */
 	struct eqn_box	 *parent; /* node sibling */
 	char		 *text; /* text (or NULL) */
-	char		 *left;
-	char		 *right;
+	char		 *left; /* fence left-hand */
+	char		 *right; /* fence right-hand */
+	char		 *top; /* expression over-symbol */
+	char		 *bottom; /* expression under-symbol */
+	size_t		  args; /* arguments in parent */
+	size_t		  expectargs; /* max arguments in parent */
 	enum eqn_post	  pos; /* position of next box */
-	enum eqn_markt	  mark; /* a mark about the box */
 	enum eqn_fontt	  font; /* font of box */
 	enum eqn_pilet	  pile; /* equation piling */
 };
