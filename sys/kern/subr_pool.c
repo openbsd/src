@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.161 2014/09/28 10:03:05 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.162 2014/10/10 00:48:58 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -83,14 +83,16 @@ struct pool_item_header {
 	int			ph_nmissing;	/* # of chunks in use */
 	caddr_t			ph_page;	/* this page's address */
 	caddr_t			ph_colored;	/* page's colored address */
-	int			ph_magic;
+	u_long			ph_magic;
 };
+#define POOL_MAGICBIT (1 << 3) /* keep away from perturbed low bits */
+#define POOL_PHPOISON(ph) ISSET((ph)->ph_magic, POOL_MAGICBIT)
 
 struct pool_item {
-	u_int32_t pi_magic;
-	/* Other entries use only this list entry */
+	u_long				pi_magic;
 	XSIMPLEQ_ENTRY(pool_item)	pi_list;
 };
+#define POOL_IMAGIC(ph, pi) ((u_long)(pi) ^ (ph)->ph_magic)
 
 #ifdef POOL_DEBUG
 int	pool_debug = 1;
@@ -561,18 +563,22 @@ pool_do_get(struct pool *pp, int flags)
 
 	ph = pp->pr_curpage;
 	pi = XSIMPLEQ_FIRST(&ph->ph_itemlist);
-	if (pi == NULL)
+	if (__predict_false(pi == NULL))
 		panic("%s: %s: page empty", __func__, pp->pr_wchan);
+
+#ifdef DIAGNOSTIC
+	if (__predict_false(pi->pi_magic != POOL_IMAGIC(ph, pi))) {
+		panic("%s: %s free list modified: "
+		    "page %p; item addr %p; offset 0x%x=0x%lx != 0x%lx",
+		    __func__, pp->pr_wchan, ph->ph_page, pi,
+		    0, pi->pi_magic, POOL_IMAGIC(ph, pi));
+	}
+#endif /* DIAGNOSTIC */
+
 	XSIMPLEQ_REMOVE_HEAD(&ph->ph_itemlist, pi_list);
 
 #ifdef DIAGNOSTIC
-	if (pi->pi_magic != poison_value(pi)) {
-		panic("%s: %s free list modified: "
-		    "page %p; item addr %p; offset 0x%x=0x%x", __func__,
-		    pp->pr_wchan, ph->ph_page, pi, 0, pi->pi_magic);
-	}
-
-	if (pool_debug && ph->ph_magic) {
+	if (pool_debug && POOL_PHPOISON(ph)) {
 		size_t pidx;
 		uint32_t pval;
 		if (poison_check(pi + 1, pp->pr_size - sizeof(*pi),
@@ -631,8 +637,6 @@ pool_put(struct pool *pp, void *v)
 	ph = pr_find_pagehead(pp, v);
 
 #ifdef DIAGNOSTIC
-	pi->pi_magic = poison_value(pi);
-
 	if (pool_debug) {
 		struct pool_item *qi;
 		XSIMPLEQ_FOREACH(qi, &ph->ph_itemlist, pi_list) {
@@ -641,13 +645,17 @@ pool_put(struct pool *pp, void *v)
 				    pp->pr_wchan, pi);
 			}
 		}
-
-		if (ph->ph_magic)
-			poison_mem(pi + 1, pp->pr_size - sizeof(*pi));
 	}
 #endif /* DIAGNOSTIC */
 
+#ifdef DIAGNOSTIC
+	pi->pi_magic = POOL_IMAGIC(ph, pi);
+#endif /* DIAGNOSTIC */
 	XSIMPLEQ_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
+#ifdef DIAGNOSTIC
+	if (POOL_PHPOISON(ph))
+		poison_mem(pi + 1, pp->pr_size - sizeof(*pi));
+#endif /* DIAGNOSTIC */
 
 	if (ph->ph_nmissing-- == pp->pr_itemsperpage) {
 		/*
@@ -747,23 +755,25 @@ pool_p_alloc(struct pool *pp, int flags)
 	XSIMPLEQ_INIT(&ph->ph_itemlist);
 	ph->ph_page = addr;
 	ph->ph_nmissing = 0;
-	if (pool_debug) {
-		do {
-			arc4random_buf(&ph->ph_magic, sizeof(ph->ph_magic));
-		} while (ph->ph_magic == 0);
-	} else
-		ph->ph_magic = 0;
+	arc4random_buf(&ph->ph_magic, sizeof(ph->ph_magic));
+#ifdef DIAGNOSTIC
+	/* use a bit in ph_magic to record if we poison page items */
+	if (pool_debug)
+		SET(ph->ph_magic, POOL_MAGICBIT);
+	else
+		CLR(ph->ph_magic, POOL_MAGICBIT);
+#endif /* DIAGNOSTIC */
 
 	n = pp->pr_itemsperpage;
 	while (n--) {
 		pi = (struct pool_item *)addr;
 #ifdef DIAGNOSTIC
-		pi->pi_magic = poison_value(pi);
+		pi->pi_magic = POOL_IMAGIC(ph, pi);
 #endif
 		XSIMPLEQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);
 
 #ifdef DIAGNOSTIC
-		if (pool_debug && ph->ph_magic)
+		if (POOL_PHPOISON(ph))
 			poison_mem(pi + 1, pp->pr_size - sizeof(*pi));
 #endif /* DIAGNOSTIC */
 
@@ -785,10 +795,24 @@ pool_p_free(struct pool *pp, struct pool_item_header *ph)
 
 #ifdef DIAGNOSTIC
 	XSIMPLEQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
-		if (pi->pi_magic != poison_value(pi)) {
+		if (__predict_false(pi->pi_magic != POOL_IMAGIC(ph, pi))) {
 			panic("%s: %s free list modified: "
-			    "page %p; item addr %p; offset 0x%x=0x%x", __func__,
-			    pp->pr_wchan, ph->ph_page, pi, 0, pi->pi_magic);
+			    "page %p; item addr %p; offset 0x%x=0x%lx",
+			    __func__, pp->pr_wchan, ph->ph_page, pi,
+			    0, pi->pi_magic);
+		}
+
+		if (POOL_PHPOISON(ph)) {
+			size_t pidx;
+			uint32_t pval;
+			if (poison_check(pi + 1, pp->pr_size - sizeof(*pi),
+			    &pidx, &pval)) {
+				int *ip = (int *)(pi + 1);
+				panic("%s: %s free list modified: "
+				    "page %p; item addr %p; offset 0x%zx=0x%x",
+				    __func__, pp->pr_wchan, ph->ph_page, pi,
+				    pidx * sizeof(int), ip[pidx]);
+			}
 		}
         }
 #endif
@@ -986,8 +1010,8 @@ pool_print_pagelist(struct pool_pagelist *pl,
 		    ph->ph_page, ph->ph_nmissing);
 #ifdef DIAGNOSTIC
 		XSIMPLEQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
-			if (pi->pi_magic != poison_value(pi)) {
-				(*pr)("\t\t\titem %p, magic 0x%x\n",
+			if (pi->pi_magic != POOL_IMAGIC(ph, pi)) {
+				(*pr)("\t\t\titem %p, magic 0x%lx\n",
 				    pi, pi->pi_magic);
 			}
 		}
@@ -1139,16 +1163,16 @@ pool_chk_page(struct pool *pp, struct pool_item_header *ph, int expected)
 	     pi != NULL;
 	     pi = XSIMPLEQ_NEXT(&ph->ph_itemlist, pi, pi_list), n++) {
 #ifdef DIAGNOSTIC
-		if (pi->pi_magic != poison_value(pi)) {
+		if (pi->pi_magic != POOL_IMAGIC(ph, pi)) {
 			printf("%s: ", label);
 			printf("pool(%p:%s): free list modified: "
 			    "page %p; item ordinal %d; addr %p "
-			    "(p %p); offset 0x%x=0x%x\n",
+			    "(p %p); offset 0x%x=0x%lx\n",
 			    pp, pp->pr_wchan, ph->ph_page, n, pi, page,
 			    0, pi->pi_magic);
 		}
 
-		if (pool_debug && ph->ph_magic) {
+		if (POOL_PHPOISON(ph)) {
 			size_t pidx;
 			uint32_t pval;
 			if (poison_check(pi + 1, pp->pr_size - sizeof(*pi),
