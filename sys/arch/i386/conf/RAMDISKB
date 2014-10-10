@@ -1,36 +1,26 @@
-#	$OpenBSD: RAMDISKB,v 1.128 2014/07/15 22:12:10 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.129 2014/10/10 05:43:35 deraadt Exp $
 
-machine		i386		# architecture, used by config; REQUIRED
+machine		i386
+maxusers	4
 
-option		SCSITERSE
-
+option		TIMEZONE=0
+option		DST=0
 option		SMALL_KERNEL
 option		NO_PROPOLICE
-
-maxusers	4		# estimated number of users
-option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight saving time used by RTC
-
-#makeoptions	DEBUG="-g"	# compile full symbol table
-
-option		FFS		# UFS
-#option		EXT2FS		# Linux ext2fs
-
-#option		NFSCLIENT	# Network File System client
-
-#option		CD9660		# ISO 9660 + Rock Ridge file system
-#option		MSDOSFS		# MS-DOS file system
-
-option		INET		# IP + ICMP + TCP + UDP
-
-option		BOOT_CONFIG	# boot-time kernel config
+option		BOOT_CONFIG
 
 option		RAMDISK_HOOKS
 option		MINIROOTSIZE=3872
 
-config		bsd	root on rd0a swap on rd0b and wd0b and sd0b
+option		PCIVERBOSE
+option		SCSITERSE
 
-mainbus0 at root
+option		FFS
+option		INET
+
+config		bsd root on rd0a swap on rd0b and wd0b and sd0b
+
+mainbus0	at root
 
 acpi0		at bios?
 #acpitimer*	at acpi?
@@ -44,50 +34,26 @@ acpimadt0	at acpi?
 acpiprt*	at acpi?
 #acpitz*	at acpi?
 
-cpu0	at mainbus?
-bios0	at mainbus0
-ioapic*	at mainbus?
-apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
-#option	APMDEBUG
-pcibios0 at bios0 flags 0x0000
+cpu0		at mainbus?
+bios0		at mainbus0
+ioapic*		at mainbus?
+apm0		at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
+pcibios0	at bios0 flags 0x0000
 
-isa0	at mainbus0
-isa0	at pcib?
-#isa0	at ichpcib?
-#isa0	at amdpcib?
-#isa0	at gscpcib?
-#isa0	at glxpcib?
-#eisa0	at mainbus0
-pci*	at mainbus0
+isa0		at mainbus0
+isa0		at pcib?
+pci*		at mainbus0
 
-option		PCIVERBOSE
-#option		EISAVERBOSE
+pchb*		at pci?			# PCI-Host bridges
+ppb*		at pci?			# PCI-PCI bridges
+pci*		at ppb?
+pci*		at pchb?
+pcib*		at pci?			# PCI-ISA bridge
+geodesc*	at pci?			# Geode SC1100/SCx200 IAOC
 
-pchb*	at pci?			# PCI-Host bridges
-ppb*	at pci?			# PCI-PCI bridges
-pci*	at ppb?
-pci*	at pchb?
-pcib*	at pci?			# PCI-ISA bridge
-#ichpcib* at pci?		# Intel ICHx/ICHx-M LPC bridges
-#amdpcib* at pci?		# AMD 8111 LPC bridge
-#gscpcib* at pci?		# NS Geode SC1100 PCI-ISA bridge
-#glxpcib* at pci?		# AMD CS5536 PCI-ISA bridge
-geodesc* at pci?		# Geode SC1100/SCx200 IAOC
-
-# ISA PCMCIA controllers
-#pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
-#pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
-#pcic2	at isa? port 0x3e4 iomem 0xd4000 iosiz 0x4000
-
-# PCI PCMCIA controllers
-#pcic*	at pci?
-
-# PCMCIA bus support
-#pcmcia*	at pcic?
-
-npx0	at isa? port 0xf0 irq 13	# math coprocessor
-isadma0	at isa?
-isapnp0	at isa?
+npx0		at isa? port 0xf0 irq 13	# math coprocessor
+isadma0		at isa?
+isapnp0		at isa?
 
 pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
@@ -98,175 +64,59 @@ pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at vga?
 wsdisplay*	at pcdisplay?
 
-com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 5
-#com3	at isa? port 0x2e8 irq 9
-#ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
-#com*	at ast?
-#boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
-#com*	at boca?
-#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
-#com*	at rtfps?
-#com*	at pcmcia?			# PCMCIA modem cards
-#com*	at isapnp?
+com0		at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1		at isa? port 0x2f8 irq 3
+com2		at isa? port 0x3e8 irq 5
 
-# option for using CD1400 handshaking for incoming data
-# requires a special cable that exchanges the RTS and DTR lines
-# options CY_HW_RTS
-#cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
-#cy*	at pci?				# PCI cyclom card
+ahc0		at isa?			# Adaptec 284x SCSI controllers
+ahd*		at pci?			# Adaptec 79?? SCSI controllers
+mpi*		at pci?			# LSI Logic Fusion-MPT Message Passing Interface
+ami*		at pci?			# AMI MegaRAID controllers
+mfi*		at pci?			# LSI MegaRAID SAS controllers
 
-#lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
-#lpt1	at isa? port 0x278
-#lpt2	at isa? port 0x3bc
+scsibus*	at scsi?
+sd*		at scsibus?		# SCSI disk drives
 
-#bha0	at isa? port 0x330	# BusLogic [57]4X SCSI controllers
-#bha1	at isa? disable port 0x334 # BusLogic [57]4X SCSI controllers
-#bha2	at isa? disable
-#bha*	at pci?
-#bha*	at eisa?		# XXX eisa still runs in isa-compat
-#aha0	at isa? port 0x330	# Adaptec 154[02] SCSI controllers
-#aha1	at isa? port 0x334	# Adaptec 154[02] SCSI controllers
-#aha*	at isapnp?
-#ahb*	at eisa?		# Adaptec 174[024] SCSI controllers
-ahc0	at isa?			# Adaptec 284x SCSI controllers
-#ahc*	at eisa?		# Adaptec 274x, aic7770 SCSI controllers
-#ahc*	at pci?			# Adaptec 2940 SCSI controllers
-ahd*	at pci?			# Adaptec 79?? SCSI controllers
-mpi*	at pci?			# LSI Logic Fusion-MPT Message Passing Interface
-#gdt*	at pci?			# ICP Vortex GDT RAID controllers
-#aac*	at pci?			# Adaptec FSA RAID controllers
-ami*	at pci?			# AMI MegaRAID controllers
-mfi*	at pci?			# LSI MegaRAID SAS controllers
-#cac*	at pci?			# Compaq Smart ARRAY [234]* RAID controllers
-#cac*	at eisa?
-#ciss*	at pci?			# Compaq Smart ARRAY [56]* RAID controllers
-#twe*	at pci?			# 3ware Escalade RAID controllers
-#iha*	at pci?			# Initio Ultra/UltraWide SCSI controllers
-#aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
-#aic*	at isapnp?
-#siop*	at pci?			# NCR 538XX SCSI controllers(new)
-#adv*	at pci?			# AdvanSys 1200A/B and ULTRA SCSI
-#adw*	at pci?			# AdvanSys ULTRA WIDE SCSI
-#pcscp*	at pci?			# AMD 53c974 PCscsi-PCI SCSI
-#sea0	at isa? iomem 0xc8000 irq 5 # Seagate ST0[12] SCSI controllers
-#trm*	at pci?			# Tekram DC-3x5U SCSI Controllers
-#uha0	at isa? port 0x330	# UltraStor [13]4f SCSI controllers
-#uha1	at isa? port 0x334	# UltraStor [13]4f SCSI controllers
-#uha*	at eisa?		# UltraStor 24f SCSI controllers
-#wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
-#wds1	at isa? port 0x358 irq 11 drq 5
+fdc0		at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+fd*		at fdc?
 
-scsibus* at scsi?
-sd*	at scsibus?		# SCSI disk drives
-#st*	at scsibus?		# SCSI tape drives
-#cd*	at scsibus?		# SCSI CD-ROM drives
-#ch*	at scsibus?		# SCSI autochangers
-#uk*	at scsibus?		# SCSI unknown devices
+pciide*		at pci? flags 0x0000
+wdc0		at isa? port 0x1f0 irq 14 flags 0x00
+wdc1		at isa? port 0x170 irq 15 flags 0x00
+wd*		at wdc? flags 0x0000
+wd*		at pciide? flags 0x0000
+atapiscsi*	at wdc?
+atapiscsi*	at pciide?
 
-fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
-#fdc1	at isa? port 0x370
-fd*	at fdc?
+de*		at pci?			# DC21X4X-based ethernet cards
+fxp*		at pci?			# EtherExpress 10/100B ethernet cards
+ep*		at pci?			# 3C59x ethernet cards
+vr*		at pci?			# VIA Rhine ethernet
+dc*		at pci?			# 21143, "tulip" clone ethernet
+skc*		at pci?			# SysKonnect GEnesis 984x
+sk*		at skc?			#  each port of above
+em*		at pci?			# Intel Pro/1000 ethernet
+bge*		at pci?			# Broadcom BCM570x (aka Tigon3)
+re*		at pci?			# Realtek 8169/8169S/8110S
+vge*		at pci?			# VIA VT612x
+nfe*		at pci?			# NVIDIA nForce Ethernet
 
-# IDE controllers
-pciide* at pci? flags 0x0000
-
-wdc0	at isa? port 0x1f0 irq 14 flags 0x00
-wdc1	at isa? port 0x170 irq 15 flags 0x00
-#wdc*	at pcmcia?
-#wdc*	at isapnp?
-
-# IDE hard drives
-wd*	at wdc? flags 0x0000
-wd*	at pciide? flags 0x0000
-
-# I2O
-#iop*	at pci?			# I2O processor
-#ioprbs*	at iop?			# I2O arrays
-#iopsp*	at iop?			# I2O SCSI pass-through
-
-# ATAPI<->SCSI
-atapiscsi* at wdc?
-atapiscsi* at pciide?
-
-#we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
-#we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
-#we*	at isapnp?
-#ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet card
-#ne0	at isa? port 0x240 irq 9	# NE[12]000 ethernet card
-#ne1	at isa? port 0x300 irq 10	# NE[12]000 ethernet card
-#ne2	at isa? port 0x280 irq 9	# NE[12]000 ethernet
-#ne*	at isapnp?			# NE[12]000 PnP ethernet cards
-#eg0	at isa? port 0x310 irq 5	# 3C505/Etherlink+ ethernet cards
-#el0	at isa? port 0x300 irq 9	# 3C501 ethernet cards
-#ep0	at isa?				# 3C509 ethernet cards
-#ep*	at isa?				# 3C509 ethernet cards
-#ef*	at isapnp?			# 3C515 PnP ethernet
-#ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
-#ie1	at isa? port 0x300 irq 10	# EtherExpress
-#le0	at isa? port 0x360 irq 15 drq 6	# IsoLan, NE2100, and DEPCA
-#ex0	at isa? port 0x320 irq 5	# Intel EtherExpress PRO/10
-#ep*	at eisa?			# 3C579 ethernet cards
-#ep*	at isapnp?			# 3C509 PnP ethernet cards
-#le*	at isapnp?
-de*	at pci?				# DC21X4X-based ethernet cards
-fxp*	at pci?				# EtherExpress 10/100B ethernet cards
-ep*	at pci?				# 3C59x ethernet cards
-#ne*	at pci?				# NE2000-compat ethernet cards
-#ne*	at pcmcia?			# PCMCIA based NE2000 cards
-#ep*	at pcmcia?			# PCMCIA based 3c5xx cards
-#sm*	at pcmcia?			# PCMCIA based sm cards
-#xe*	at pcmcia?			# Xircom ethernet
-#xl*	at pci?				# 3C9xx ethernet cards
-#rl*	at pci?				# RealTek 81[23]9 ethernet
-#epic*	at pci?				# SMC EPIC/100 ethernet
-#tl*	at pci?				# Compaq Thunderlan ethernet cards
-vr*	at pci?				# VIA Rhine ethernet
-#wb*	at pci?				# Winbond W89C840F ethernet
-dc*	at pci?				# 21143, "tulip" clone ethernet
-#ti*	at pci?				# Alteon Tigon 1Gb ethernet
-skc*	at pci?				# SysKonnect GEnesis 984x
-sk*	at skc?				#  each port of above
-em*	at pci?				# Intel Pro/1000 ethernet
-#txp*	at pci?				# 3com 3CR990
-#nge*	at pci?				# NS DP83820/DP83821 GigE
-bge*	at pci?				# Broadcom BCM570x (aka Tigon3)
-#stge*	at pci?				# Sundance TC9021 GigE
-re*	at pci?				# Realtek 8169/8169S/8110S
-#lge*	at pci?				# Level1 LXT1001 GigE
-#hme*	at pci?				# Sun Happy Meal
-vge*	at pci?				# VIA VT612x
-nfe*	at pci?				# NVIDIA nForce Ethernet
-
-# Wireless network cards
-#wi*	at pci?				# WaveLAN IEEE 802.11DS
-#wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
-#an*	at pcmcia?			# Aironet IEEE 802.11DS
-#cnw*	at pcmcia?			# Xircom Netwave
-
-# Media Independent Interface (mii) drivers
-#exphy*	at mii?				# 3Com internal PHYs
-inphy*	at mii?				# Intel 82555 PHYs
-iophy*	at mii?				# Intel 82553 PHYs
-icsphy*	at mii?				# ICS 1890 PHYs
-#lxtphy*	at mii?			# Level1 LXT970 PHYs
-nsphy*	at mii?				# NS and compatible PHYs
+inphy*		at mii?			# Intel 82555 PHYs
+iophy*		at mii?			# Intel 82553 PHYs
+icsphy*		at mii?			# ICS 1890 PHYs
+nsphy*		at mii?			# NS and compatible PHYs
 nsphyter*	at mii?			# NS and compatible PHYs
-#qsphy*	at mii?				# Quality Semi QS6612 PHYs
-#sqphy*	at mii?				# Seeq 8x220 PHYs
-rlphy* at mii?				# RealTek 8139 internal PHYs
-mtdphy*	at mii?				# Myson MTD972 PHYs
-dcphy*	at mii?				# Digital Clone PHYs
-amphy*	at mii?				# AMD 79C873 PHYs
-tqphy*	at mii?				# TDK 78Q212x PHYs
-bmtphy* at mii?				# Broadcom 10/100 PHYs
-rgephy*	at mii?				# Realtek 8169S/8110S PHY
-ciphy*	at mii?				# Cicada CS8201 10/100/1000 copper PHY
-#ipgphy*	at mii?			# IC Plus IP1000A PHYs
-ukphy*	at mii?				# "unknown" PHYs
+rlphy*		at mii?			# RealTek 8139 internal PHYs
+mtdphy*		at mii?			# Myson MTD972 PHYs
+dcphy*		at mii?			# Digital Clone PHYs
+amphy*		at mii?			# AMD 79C873 PHYs
+tqphy*		at mii?			# TDK 78Q212x PHYs
+bmtphy*		at mii?			# Broadcom 10/100 PHYs
+rgephy*		at mii?			# Realtek 8169S/8110S PHY
+ciphy*		at mii?			# Cicada CS8201 10/100/1000 copper PHY
+ukphy*		at mii?			# "unknown" PHYs
 
-pseudo-device	loop	1		# network loopback
-pseudo-device	bpfilter 1		# packet filter
-pseudo-device	rd	1		# ramdisk
-pseudo-device	wsmux	2
+pseudo-device	loop 1
+pseudo-device	bpfilter 1
+pseudo-device	rd 1
+pseudo-device	wsmux 2

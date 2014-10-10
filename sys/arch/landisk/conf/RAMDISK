@@ -1,135 +1,98 @@
-# $OpenBSD: RAMDISK,v 1.22 2014/08/22 20:03:56 deraadt Exp $
-#
-# For further information on compiling OpenBSD kernels, see the config(8)
-# man page.
-#
-# For further information on hardware support for this architecture, see
-# the intro(4) man page.  For further information about kernel options
-# for this architecture, see the options(4) man page.  For an explanation
-# of each device driver in this file see the section 4 man page for the
-# device.
+#	$OpenBSD: RAMDISK,v 1.23 2014/10/10 05:43:35 deraadt Exp $
 
 machine		landisk	sh
-maxusers	32			# estimated number of users
+maxusers	4
 
-option	 	SH4			# processor family; MANDATORY
-option 		SH7751R			# processor type; MANDATORY
+option		TIMEZONE=0
+option		DST=0
+option		SMALL_KERNEL
+option		NO_PROPOLICE
+option		BOOT_CONFIG
 
-# CPU-related options.
-option	 	PCLOCK=33333333		# 33.33MHz clock
-option	 	DONT_INIT_BSC
-#option	 	DONT_INIT_PCIBSC
+option		MINIROOTSIZE=5120
+option		RAMDISK_HOOKS
 
 option		PCIVERBOSE
 option		USBVERBOSE
 
-option		DST=0			# daylight saving time used by RTC
-option		FFS			# UFS
-option		CD9660			# ISO 9660 + Rock Ridge file system
-option		MSDOSFS			# MS-DOS file system
-option		INET			# IP + ICMP + TCP + UDP
-option		INET6			# IPv6 (needs INET)
-option		DDB			# kernel debugger
-option		EXT2FS			# Second Extended Filesystem
+option		FFS
+option		CD9660
+option		MSDOSFS
+option		EXT2FS
+option		INET
+option		INET6
 
-config		bsd	root on rd0a swap on rd0b
+config		bsd root on rd0a swap on rd0b
 
-mainbus0 at root
-cpu0	at mainbus?
+option		SH4		# processor family; MANDATORY
+option		SH7751R		# processor type; MANDATORY
+option		PCLOCK=33333333	# 33.33MHz clock
+option		DONT_INIT_BSC
+#option		DONT_INIT_PCIBSC
 
-# PCI bus support
-shpcic*	at mainbus?			# SH7751 PCIC
-pci0	at shpcic?
+mainbus0	at root
+cpu0		at mainbus?
 
-# SH bus
-shb*	at mainbus?
+shpcic*		at mainbus?
+pci0		at shpcic?
+shb*		at mainbus?
+obio0		at mainbus?
 
-# on-board I/O bus
-obio0	at mainbus?
+option		SCIFCONSOLE
+option		SCIFCN_SPEED=9600
+scif0		at shb?
 
-# Serial Devices
-option	SCIFCONSOLE
-option	SCIFCN_SPEED=9600
-scif0	at shb?
+rsclock0	at shb?
 
-rsclock0 at shb?
+wdc0		at obio? port 0x14000000 irq 10
+wd*		at wdc? flags 0x0000
 
-wdc0	at obio? port 0x14000000 irq 10		# CF
-wd*	at wdc? flags 0x0000
+re*		at pci?			# Realtek 8139C+/8169/8169S/8110S
+rl*		at pci?			# Realtek 8129/8139
 
-# Network Interfaces
+acphy*		at mii?			# Altima AC101 PHYs
+amphy*		at mii?			# AMD 79C873 PHYs
+eephy*		at mii?			# Marvell 88E1000 series PHY
+rgephy*		at mii?			# Realtek 8169S/8110S PHY
+rlphy*		at mii?			# Realtek 8139/8201L PHYs
+urlphy*		at mii?			# Realtek RTL8150L internal PHYs
+ukphy*		at mii?			# generic unknown PHYs
 
-# PCI network interfaces
-re*	at pci? 			# Realtek 8139C+/8169/8169S/8110S
-rl*	at pci?				# Realtek 8129/8139
-
-# MII/PHY support
-acphy*	at mii?				# Altima AC101 PHYs
-amphy*	at mii?				# AMD 79C873 PHYs
-eephy*	at mii?				# Marvell 88E1000 series PHY
-rgephy*	at mii?				# Realtek 8169S/8110S PHY
-rlphy*	at mii?				# Realtek 8139/8201L PHYs
-urlphy*	at mii?				# Realtek RTL8150L internal PHYs
-ukphy*	at mii?				# generic unknown PHYs
-
-# PCIIDE 
 pciide*		at pci?
 wd*		at pciide?
 atapiscsi*	at pciide? flags 0x0000
 
-# USB Controller and Devices
+ehci*		at pci?
+ohci*		at pci?
+usb*		at ehci?
+usb*		at ohci?
 
-# PCI USB controllers
-ehci*	at pci?				# Enhanced Host Controller
-ohci*	at pci?				# Open Host Controller
+uhub*		at usb?
+uhub*		at uhub?
+umass*		at uhub?
+aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
+atu*		at uhub?		# Atmel AT76c50x based 802.11b
+axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
+axen*		at uhub?		# ASIX Electronics AX88179 USB Ethernet
+cue*		at uhub?		# CATC USB-EL1201A based Ethernet
+kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
+smsc*		at uhub?		# SMSC LAN95xx Ethernet
+cdce*		at uhub?		# CDC Ethernet
+upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
+ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host
+udav*		at uhub?		# Davicom DM9601 based Ethernet
+url*		at uhub?		# Realtek RTL8150L based adapters
+wi*		at uhub?		# WaveLAN IEEE 802.11DS
+ugen*		at uhub?		# USB Generic driver
+ural*		at uhub?		# Ralink RT2500USB
+rum*		at uhub?		# Ralink RT2501USB/RT2601USB
+zyd*		at uhub?		# Zydas ZD1211
 
-# USB bus support
-usb*	at ehci?
-usb*	at ohci?
+scsibus*	at scsi?
+sd*		at scsibus?
+cd*		at scsibus?
 
-# USB Hubs
-uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
-umass*	at uhub?		# USB Mass Storage devices
-aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
-atu*	at uhub?		# Atmel AT76c50x based 802.11b
-axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
-axen*	at uhub?		# ASIX Electronics AX88179 USB Ethernet
-cue*	at uhub?		# CATC USB-EL1201A based Ethernet
-kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
-smsc*	at uhub?		# SMSC LAN95xx Ethernet
-cdce*	at uhub?		# CDC Ethernet
-upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
-ugl*	at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
-udav*	at uhub?		# Davicom DM9601 based Ethernet
-url*	at uhub?		# Realtek RTL8150L based adapters
-wi*	at uhub?		# WaveLAN IEEE 802.11DS
-#urio*	at uhub?		# Diamond Multimedia Rio 500
-ugen*	at uhub?		# USB Generic driver
-#uath*	at uhub?		# Atheros AR5005UG/AR5005UX
-ural*	at uhub?		# Ralink RT2500USB
-rum*	at uhub?		# Ralink RT2501USB/RT2601USB
-zyd*	at uhub?		# Zydas ZD1211
-#udcf*	at uhub?		# Gude Expert mouseCLOCK
-#uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
-#onewire* at uow?
-
-scsibus* at scsi?
-sd*	at scsibus?			# SCSI disk drives
-cd*	at scsibus?			# SCSI CD-ROM drives
-
-# mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
-#pseudo-device	bio		1       # ioctl multiplexing device
-#pseudo-device	hotplug		1       # devices hot plugging
-
-option          BOOT_CONFIG             # boot-time kernel config
-
-pseudo-device   loop            1       # network loopback
-pseudo-device   bpfilter                1       # packet filter
-pseudo-device   rd              1       # ram disk
-
-# RAMDISK stuff
-option          MINIROOTSIZE=5120
-option          RAMDISK_HOOKS
-
+pseudo-device	wsmux 2
+pseudo-device	loop 1
+pseudo-device	bpfilter 1
+pseudo-device	rd 1

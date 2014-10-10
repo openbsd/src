@@ -1,88 +1,64 @@
-#	$OpenBSD: RAMDISKU1,v 1.21 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: RAMDISKU1,v 1.22 2014/10/10 05:43:36 deraadt Exp $
 
-# Machine architecture; required by config(8)
 machine		sparc64
+maxusers	4
 
-# maxusers means mostly "let's get small" in terms of kernel malloc's
-maxusers	2
+option		TIMEZONE=0
+option		DST=0
+option		SMALL_KERNEL
+option		NO_PROPOLICE
+option		BOOT_CONFIG
 
 option		RAMDISK_HOOKS
 option		MINIROOTSIZE=6144
 
-#option		DDB		# need this to see what's happening
-
-option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight saving time used by RTC
-
-option		SMALL_KERNEL
-option		NO_PROPOLICE
-option		FFS		# UFS
-#option		NFSCLIENT	# Network File System client
-#option		CD9660		# ISO 9660 + Rock Ridge file system
-option		INET		# IP + ICMP + TCP + UDP
-option		BOOT_CONFIG	# add support for boot -c
+option		FFS
+option		INET
 
 option		WSEMUL_SUN	# provide sun terminal emulation; required
 option		WSEMUL_NO_VT100	# do not provide vt100 terminal emulation
 
-# Generic swap; second partition of root disk or network.
-config		bsd	root on rd0a
+config		bsd root on rd0a
 
-# Main bus and CPU .. all systems.
-mainbus0 at root
-cpu0	at mainbus0
+mainbus0	at root
+cpu0		at mainbus0
 
-# Bus types found on SPARC systems.
-sbus*	at mainbus0				# Ultra 1
-
-clock*	at sbus?				# Mostek clock
-timer*	at mainbus0				# Timer chip
+sbus*		at mainbus0				# Ultra 1
+clock*		at sbus?				# Mostek clock
+timer*		at mainbus0				# Timer chip
 
 le*		at sbus?			# Lance Ethernet - AMD7990
 ledma*		at sbus?
 le*		at ledma?
 lebuffer*	at sbus?
 le*		at lebuffer?
-
-#qec*	at sbus?				# Quad-ethernet
-#qe*	at qec?
-#be*	at qec?
-
 hme*		at sbus?
 gem*		at sbus?
 
-#
-# Note the flags on the esp entries below, that work around
-# deficiencies in the current driver:
+# The flags on the esp entries below work around deficiencies in the driver:
 #	bits 0-7:  disable disconnect/reselect for the corresponding target
 #	bits 8-15: disable synch negotiation for target [bit-8]
 #	Note: targets 4-7 have disconnect/reselect enabled on the premise
 #	      that tape devices normally have one of these targets. Tape
 #	      devices should be allowed to disconnect for the SCSI bus
 #	      to operate acceptably.
-#
-dma*	at sbus?		# SBus
-esp*	at dma?			# SBus
-esp*	at sbus?
+dma*		at sbus?
+esp*		at dma?
+esp*		at sbus?
 
-# These entries find devices on all SCSI busses and assign
-# unit numers dynamically.
-scsibus* at scsi?
-sd*	at scsibus?		# SCSI disks
-#cd*	at scsibus?		# SCSI CD-ROMs
+scsibus*	at scsi?
+sd*		at scsibus?
+#cd*		at scsibus?
 
-# Media Independent Interface (mii) drivers)
-nsphy*	at mii?			# NS and compatible PHYs
-qsphy*	at mii?			# Quality Semi QS6612 PHYs
-ukphy*	at mii?			# Unknown PHYs
+nsphy*		at mii?			# NS and compatible PHYs
+qsphy*		at mii?			# Quality Semi QS6612 PHYs
+ukphy*		at mii?			# Unknown PHYs
 
-# Z8530 based serial ports
-zs*	at sbus?
-zstty*	at zs?
-zskbd*	at zs?
-wskbd*	at zskbd?
+zs*		at sbus?
+zstty*		at zs?
+zskbd*		at zs?
+wskbd*		at zskbd?
 
-# Framebuffers
 agten*		at sbus?		# Fujitsu AG-10e framebuffer
 wsdisplay*	at agten?
 bwtwo*		at sbus?		# bwtwo monochrome framebuffer
@@ -106,12 +82,10 @@ wsdisplay*	at vigra?
 zx*		at sbus?		# Sun Leo (ZX) framebuffer
 wsdisplay*	at zx?
 
-# ``XBox'' SBus Expansion
 xbox*		at sbus?
 sbus*		at xbox?
 
-## PROM console driver -- if all else fails
-pcons0	at mainbus0			# PROM console
+pcons0		at mainbus0		# PROM console
 
-pseudo-device	rd	2	# ramdisk
-pseudo-device	loop	1	# network loopback
+pseudo-device	rd 1
+pseudo-device	loop 1

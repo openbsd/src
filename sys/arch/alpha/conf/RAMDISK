@@ -1,10 +1,21 @@
-#	$OpenBSD: RAMDISK,v 1.76 2014/03/31 04:22:26 deraadt Exp $
-#	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
+#	$OpenBSD: RAMDISK,v 1.77 2014/10/10 05:43:33 deraadt Exp $
 
-machine	alpha			# architecture, used by config; REQUIRED
+machine		alpha
+maxusers	4
 
+option		TIMEZONE=0
+option		DST=0
 option		SMALL_KERNEL
 option		NO_PROPOLICE
+option		BOOT_CONFIG
+
+option		RAMDISK_HOOKS
+option		MINIROOTSIZE=5744
+
+option		SCSITERSE
+
+option		FFS
+option		INET
 
 # CPU Support; at least one is REQUIRED
 #option		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
@@ -21,140 +32,78 @@ option		DEC_1000	# Mikasa etc:	Digital AlphaServer 1000
 option		DEC_1000A	# Corelle etc:	Digital AlphaServer 800/1000A
 #option		DEC_6600	# EV6:		XP1000, 264DP OEM Board
 #option		API_UP1000	# EV6:		Alpha Processor UP1000
-
-# Enable the hooks used for initializing the ram-disk.
-option		RAMDISK_HOOKS
-option		MINIROOTSIZE=5744	# 4 Megabytes!
-
 option		NO_IEEE		# Disable IEEE math
 
-# Standard system options
-maxusers	8			# estimated number of users
-
-# File system options
-option		FFS		# Fast file system
-
-# Networking options
-option		INET		# Internet protocol suite
-
-# Misc. options
-#option		EISAVERBOSE		# recognize "unknown" EISA devices
-#option		PCIVERBOSE		# recognize "unknown" PCI devices
-#option		TCVERBOSE		# recognize "unknown" TC devices
-option		SCSITERSE		# less verbose scsi error messages
 option		WSKBD_NO_INTL_LAYOUTS	# no international keyboard layouts
 
-option		BOOT_CONFIG
+config		bsd root on rd0a swap on rd0b and wd0b and sd0b
 
-config	bsd	root on rd0a swap on rd0b and wd0b and sd0b
+mainbus0	at root
+cpu*		at mainbus0
 
-mainbus0 at root
-cpu*	at mainbus0
+mcbus*		at mainbus?
+mcmem*		at mcbus? mid?
 
-# MCBUS bus support
-mcbus*	at mainbus?
-mcmem*	at mcbus? mid?
+apecs*		at mainbus?
+cia*		at mainbus?
+lca*		at mainbus?
+mcpcia*		at mcbus? mid?
 
-# PCI host bus adapter support
-apecs*	at mainbus?
-cia*	at mainbus?
-lca*	at mainbus?
-#irongate* at mainbus?
-#tsc*	at mainbus0
-#tsp*	at tsc?
-mcpcia*	at mcbus? mid?
+pci*		at apecs?
+pci*		at cia?
+pci*		at lca?
+pci*		at ppb?
+pci*		at mcpcia?
 
-# PCI bus support
-pci*	at apecs?
-pci*	at cia?
-pci*	at lca?
-pci*	at ppb?
-#pci*	at irongate?
-#pci*	at tsp?
-pci*	at mcpcia?
+#ahc*		at pci?				# AHA-28xx SCSI (NOT 64-BIT)
+de*		at pci?				# 21x4[012]-based Ethernet
+dc*		at pci?				# 21143, "tulip" clone ethernet
+fxp*		at pci?				# EtherExpress 10/100B ethernet cards
+siop*		at pci?				# NCR 53c8xx SCSI
+pceb*		at pci?				# Intel PCI-EISA bridge
+vga*		at pci?				# PCI VGA graphics
+ppb*		at pci?				# PCI-PCI bridges
+sio*		at pci?				# Intel PCI-ISA bridge
+tga*		at pci?				# DEC ZLXp-E[123] graphics
+pcn*		at pci?				# AMD PCnet-PCI Ethernet
 
-# PCI devices
-#ahc*	at pci?				# AHA-28xx SCSI (NOT 64-BIT)
-de*	at pci?				# 21x4[012]-based Ethernet
-dc*	at pci?				# 21143, "tulip" clone ethernet
-fxp*	at pci?				# EtherExpress 10/100B ethernet cards
-#ne*	at pci?				# NE2000-compat ethernet cards
-#en*	at pci?				# ENI PCI ATM (untested)
-#ep*	at pci?				# 3COM 3c59x (untested)
-#xl*	at pci?				# 3COM 3c9xx (untested)
-siop*	at pci?				# NCR 53c8xx SCSI
-pceb*	at pci?				# Intel PCI-EISA bridge
-vga*	at pci?				# PCI VGA graphics
-ppb*	at pci?				# PCI-PCI bridges
-sio*	at pci?				# Intel PCI-ISA bridge
-tga*	at pci?				# DEC ZLXp-E[123] graphics
-pcn*	at pci?				# AMD PCnet-PCI Ethernet
+qlw*		at pci?				# QLogic ISP SCSI
+qla*		at pci?				# QLogic ISP 2[123]xx FibreChannel
+option		ISP_NOFIRMWARE
 
-qlw*	at pci?				# QLogic ISP SCSI
-qla*	at pci?				# QLogic ISP 2[123]xx FibreChannel
-option ISP_NOFIRMWARE
-#qle*	at pci?				# QLogic ISP 2[45]xx FibreChannel
-#option QLE_NOFIRMWARE
+amphy*		at mii?				# AMD 79C873 PHYs
+bmtphy*		at mii?				# Broadcom 10/100 PHYs
+dcphy*		at mii?				# Digital Clone PHYs
+lxtphy*		at mii?				# Level1 LXT970 PHYs
+mtdphy*		at mii?				# Myson MTD972 PHYs
+nsphy*		at mii?				# NS and compatible PHYs
+nsphyter*	at mii?			# NS and compatible PHYs
+sqphy*		at mii?				# Seeq 8x220 PHYs
+tqphy*		at mii?				# TDK 78Q212x PHYs
+ukphy*		at mii?				# "unknown" PHYs
 
-# Media Independent Interface (mii) drivers
-amphy*	at mii?				# AMD 79C873 PHYs
-bmtphy*	at mii?				# Broadcom 10/100 PHYs
-dcphy*	at mii?				# Digital Clone PHYs
-#exphy*	at mii?				# 3Com internal PHYs
-#inphy*	at mii?				# Intel 82555 PHYs
-#icsphy* at mii?			# ICS 1890 PHYs
-lxtphy* at mii?				# Level1 LXT970 PHYs
-mtdphy* at mii?				# Myson MTD972 PHYs
-nsphy*	at mii?				# NS and compatible PHYs
-nsphyter* at mii?			# NS and compatible PHYs
-#qsphy*	at mii?				# Quality Semi QS6612 PHYs
-sqphy*	at mii?				# Seeq 8x220 PHYs
-tqphy*	at mii?				# TDK 78Q212x PHYs
-ukphy*	at mii?				# "unknown" PHYs
+isa*		at pceb?
+isa*		at sio?
 
-# ISA/EISA bus support
-isa*	at pceb?
-isa*	at sio?
+mcclock*	at isa? port 0x70
+pckbc*		at isa?				# PC keyboard controller
+pckbd*		at pckbc?			# PC keyboard (kbd port)
+com*		at isa? port 0x3f8 irq 4	# standard serial ports
+com*		at isa? port 0x2f8 irq 3
+vga*		at isa?				# ISA (EISA: XXX) VGA
 
-# ISA devices
-mcclock* at isa? port 0x70
-pckbc*	at isa?				# PC keyboard controller
-pckbd*	at pckbc?			# PC keyboard (kbd port)
-com*	at isa? port 0x3f8 irq 4	# standard serial ports
-com*	at isa? port 0x2f8 irq 3
-vga*	at isa?				# ISA (EISA: XXX) VGA
-#we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
-#we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
-#ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
-#ne0	at isa? port 0x240 irq 9	# NE[12]000 ethernet cards
-#ne1	at isa? port 0x300 irq 10	# NE[12]000 ethernet cards
-#ne2	at isa? port 0x280 irq 9	# NE[12]000 ethernet cards
-#cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
+pciide*		at pci? flags 0x0000
+wd*		at pciide? flags 0x0000
 
-# IDE
-pciide* at pci? flags 0x0000
-#wdc0	at isa? port 0x1f0 irq 14 flags 0x00
-#wdc1	at isa? port 0x170 irq 15 flags 0x00
-#wd*	at wdc? flags 0x0000
-wd*	at pciide? flags 0x0000
+scsibus*	at scsi?
+sd*		at scsibus?			# SCSI disk drives
+cd*		at scsibus?			# SCSI CD-ROM drives
 
-#atapiscsi* at wdc?
-#atapiscsi* at pciide?
-
-# SCSI bus support
-
-# SCSI devices
-scsibus* at scsi?
-#cd*	at scsibus?			# SCSI CD-ROM drives
-sd*	at scsibus?			# SCSI disk drives
-#st*	at scsibus?			# SCSI tape drives
-
-# Workstation Console attachments
 wsdisplay*	at vga?
 wsdisplay*	at tga?
 wskbd*		at pckbd? mux 1
 
-#pseudo-device	bpfilter	1
-pseudo-device	loop
-pseudo-device	rd		1
-pseudo-device	wsmux		2	# mouse & keyboard multiplexor
+pseudo-device	bpfilter 1
+pseudo-device	loop 1
+pseudo-device	rd 1
+pseudo-device	wsmux 2

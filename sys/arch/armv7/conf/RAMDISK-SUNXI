@@ -1,75 +1,43 @@
-# $OpenBSD: RAMDISK-SUNXI,v 1.9 2014/08/22 20:03:56 deraadt Exp $
-#
-# GENERIC machine description file
-#
-# This machine description file is used to generate the default OpenBSD
-# kernel.  The generic kernel does not include all options, subsystems
-# and device drivers, but should be useful for most applications.
-#
-# The machine description file can be customised for your specific
-# machine to reduce the kernel size and improve its performance.
-#
-# For further information on compiling OpenBSD kernels, see the config(8)
-# man page.
-#
-# For further information on hardware support for this architecture, see
-# the intro(4) man page.  For further information about kernel options
-# for this architecture, see the options(4) man page.  For an explanation
-# of each device driver in this file see the section 4 man page for the
-# device.
+#	$OpenBSD: RAMDISK-SUNXI,v 1.10 2014/10/10 05:43:35 deraadt Exp $
 
-machine	armv7	arm
+machine		armv7 arm
+maxusers	4
 
-options	TIMEZONE=0	# time zone to adjust RTC time by
-options	DST=0		# daylight saving time used by RTC
-options	FFS		# UFS
-#options	CD9660		# ISO 9660 + Rock Ridge file system
-options	MSDOSFS		# MS-DOS file system
-options	INET		# IP + ICMP + TCP + UDP
-options	INET6		# IPv6 (needs INET)
-options	DDB		# kernel debugger
-options	DIAGNOSTIC
-options	FIFO		# FIFOs; RECOMMENDED
-#options	NFSCLIENT	# NFS 
+option		TIMEZONE=0
+option		DST=0
+option		SMALL_KERNEL
+option		NO_PROPOLICE
+option		BOOT_CONFIG
 
-makeoptions	KERNEL_BASE_PHYS="0x40800000"
-makeoptions	KERNEL_BASE_VIRT="0xc0800000"
-options	BUILD_STARTUP_PAGETABLE
-options	STARTUP_PAGETABLE_ADDR=0x40200000
-options	SDRAM_START="0x40000000"
-
-# estimated number of users
-
-maxusers	32
-
-# CPU options
-options	CPU_ARMv7	# Support the ARMv7
-
-#option WSDISPLAY_COMPAT_USL		# VT handling
-#option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-option WSDISPLAY_DEFAULTSCREENS=1
-#option WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+option		MINIROOTSIZE=10240
+option		RAMDISK_HOOKS
 
 option		USBVERBOSE
 
-config		bsd	root on rd0a swap on rd0b
+option		FFS
+option		MSDOSFS
+option		INET
+option		INET6
 
-# The main bus device
+makeoptions	KERNEL_BASE_PHYS="0x40800000"
+makeoptions	KERNEL_BASE_VIRT="0xc0800000"
+option		BUILD_STARTUP_PAGETABLE
+option		STARTUP_PAGETABLE_ADDR=0x40200000
+option		SDRAM_START="0x40000000"
+option		CPU_ARMv7	# Support the ARMv7
+
+config		bsd root on rd0a swap on rd0b
+
 mainbus0	at root
 cpu0		at mainbus?
 
-# Sunxi A1x/A20 SoC
-sunxi0	at mainbus?
+sunxi0		at mainbus?
+a1xintc*	at sunxi?		# A1x interrupt controller
 
-# A1x only
-a1xintc*	at sunxi?		# interrupt controller
-
-# A20 only
-cortex0		at mainbus?
+cortex0		at mainbus?		# A20
 ampintc*	at cortex?
 #agtimer*	at cortex?
 
-# Sunxi on-chip devices
 sxipio*		at sunxi?		# GPIO pins for leds & PHYs
 sxiccmu*	at sunxi?		# Clock Control Module/Unit
 sxitimer*	at sunxi?
@@ -78,81 +46,30 @@ sxirtc*		at sunxi?		# Real Time Clock
 sxiuart*	at sunxi?		# onboard uarts
 sxie*		at sunxi?
 ahci*		at sunxi?		# AHCI/SATA (shim)
-ehci*		at sunxi?		# EHCI (shim)
-#ohci*		at sunxi?		# OHCI (shim)
+ehci*		at sunxi?
+#ohci*		at sunxi?
 #usbotg0	at sunxi?
 
-# USB bus support
 usb*		at ehci?	#flags 0x1
 #usb*		at ohci?
 
-uhub*		at usb?			# USB Hubs
-uhub*		at uhub?		# USB Hubs
-# umodem*		at uhub?		# USB Modems/Serial
-# ucom*		at umodem?
-# uvisor*		at uhub?		# Handspring Visor
-# ucom*		at uvisor?
-# uvscom*		at uhub?		# SUNTAC Slipper U VS-10U serial
-# ucom*		at uvscom?
-# ubsa*		at uhub?		# Belkin serial adapter
-# ucom*		at ubsa?
-# uftdi*		at uhub?		# FTDI FT8U100AX serial adapter
-# ucom*		at uftdi?
-# uplcom* 	at uhub?		# I/O DATA USB-RSAQ2 serial adapter
-# ucom*		at uplcom?
-# umct*		at uhub?		# MCT USB-RS232 serial adapter
-# ucom*		at umct?
-# uaudio* 	at uhub?		# USB Audio
-# audio*		at uaudio?
-# umidi*		at uhub?		# USB MIDI
-# midi*		at umidi?
-# ulpt*		at uhub?		# USB Printers
-umass*		at uhub?		# USB Mass Storage devices
+uhub*		at usb?
+uhub*		at uhub?
+umass*		at uhub?
 scsibus*	at umass?
 uhidev*		at uhub?		# Human Interface Devices
-ums*		at uhidev?		# USB mouse
-wsmouse*	at ums? mux 0
 ukbd*		at uhidev?		# USB keyboard
 wskbd*		at ukbd? mux 1
 uhid*		at uhidev?		# USB generic HID support
-# aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
-# atu*		at uhub?		# Atmel AT76c50x based 802.11b
-# axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
-# axen*		at uhub?		# ASIX Electronics AX88179 USB Ethernet
-# cue*		at uhub?		# CATC USB-EL1201A based Ethernet
-# kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
-# smsc*		at uhub?		# SMSC LAN95xx Ethernet
-# cdce*		at uhub?		# CDC Ethernet
-# upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
-# ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
-# udav*		at uhub?		# Davicom DM9601 based Ethernet
-# url*		at uhub?		# Realtek RTL8150L based adapters
-# wi*		at uhub?		# WaveLAN IEEE 802.11DS
-# urio*		at uhub?		# Diamond Multimedia Rio 500
-# udsbr*		at uhub?		# D-Link DSB-R100 radio
-# radio*		at udsbr?		# USB radio
-# #ubt*		at uhub? disable	# USB Bluetooth
-ugen*		at uhub?		# USB Generic driver
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
-# XXX missing usable drivers, like run(4).
 
 ukphy*		at mii?			# "unknown" PHYs
 rlphy*		at mii?			# RealTek 8139 internal PHYs
 
 scsibus*	at scsi?
 sd*		at scsibus?
-st*		at scsibus?
 cd*		at scsibus?
-ch*		at scsibus?
-uk*		at scsibus?
 
-# Pseudo-Devices
-#pseudo-device	wsmux		2	# mouse & keyboard multiplexor
-pseudo-device	loop		1	# network loopback
-pseudo-device   bpfilter        1       # packet filter
-pseudo-device   rd              1       # ram disk
-pseudo-device	hotplug		1	# devices hot plugging
-
-# RAMDISK stuff
-options	MINIROOTSIZE=10240
-options	RAMDISK_HOOKS
+pseudo-device	loop 1
+pseudo-device	bpfilter 1
+pseudo-device	rd 1

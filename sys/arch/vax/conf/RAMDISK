@@ -1,44 +1,41 @@
-#	$OpenBSD: RAMDISK,v 1.36 2011/07/06 18:32:59 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.37 2014/10/10 05:43:36 deraadt Exp $
 
-machine		vax			# machine type
+machine		vax
+maxusers	4
+
+option		TIMEZONE=0
+option		DST=0
+
+option		SMALL_KERNEL
+option		NO_PROPOLICE
+option		BOOT_CONFIG
 
 option		RAMDISK_HOOKS
 option		MINIROOTSIZE=3072
 
+option		FFS
+option		NFSCLIENT
+option		CD9660
+option		INET
+option		INET6
+
 # Here are all different supported CPU types listed.
-# One of these is required.
-option		VAX630		# MV II
-option		VAX650		# MV III, 3300, 3600, 3800, 3900
-option		VAX660		# VAX 4000 200
-option		VAX670		# VAX 4000 300
-option		VAX680		# VAX 4000 {4,5,6,7}0{0,5}{,A}
-option		VAX410		# VS 2000, 3100/{30,}
-option		VAX43		# VS 3100/76
-option		VAX46		# VS 4000/60
-option		VAX48		# VS 4000 VLC
-option		VAX49		# VS 4000/90
-option		VAX53		# VAX 4000/10{0,5,6}
-option		VAX60		# VS 3[58][24]0
-option		VXT		# VXT2000 and VXT2000+
+option		VAX630			# MV II
+option		VAX650			# MV III, 3300, 3600, 3800, 3900
+option		VAX660			# VAX 4000 200
+option		VAX670			# VAX 4000 300
+option		VAX680			# VAX 4000 {4,5,6,7}0{0,5}{,A}
+option		VAX410			# VS 2000, 3100/{30,}
+option		VAX43			# VS 3100/76
+option		VAX46			# VS 4000/60
+option		VAX48			# VS 4000 VLC
+option		VAX49			# VS 4000/90
+option		VAX53			# VAX 4000/10{0,5,6}
+option		VAX60			# VS 3[58][24]0
+option		VXT			# VXT2000 and VXT2000+
+option		INSN_EMULATE		# CPU lacks some hardware instructions.
 
-maxusers	8		# estimated number of users
-option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight saving time used by RTC
-
-option		FFS		# UFS
-
-option		NFSCLIENT	# Network File System client
-option		CD9660		# ISO 9660 + Rock Ridge file system
-#option		MSDOSFS		# MS-DOS file system
-
-option		INET		# IP + ICMP + TCP + UDP
-option		INET6		# IPv6 (needs INET)
-
-option		BOOT_CONFIG	# boot-time kernel config
-
-config		bsd	root on rd0a swap on rd0b	# and sd0b
-
-option		INSN_EMULATE	# CPU lacks some hardware instructions.
+config		bsd root on rd0a swap on rd0b
 
 mainbus0	at root
 
@@ -64,13 +61,11 @@ lcg0		at vsbus0 csr 0x20100000 # VS4000/60 (or VLC) frame buffer
 lcspx0		at vsbus0 csr 0x39302000 # VS4000/90 frame buffer
 
 hd*		at hdc0 drive?		# RD5x disks
-#ry*		at hdc0 drive?		# RX floppies
 
 # Ibus, the internal bus on most Microvaxen
 uba0		at ibus0		# Qbus adapter
 ze0		at ibus0		# SGEC on-board ethernet
 le0		at ibus0		# LANCE ethernet
-#shac0		at ibus0		# DSSI controller
 
 # M-bus found on VS 3[58][24]0
 fwio*		at mbus0 mid ?		# I/O module
@@ -88,17 +83,12 @@ ze0		at vxtbus0		# SGEC on-board ethernet
 qsc0		at vxtbus0		# serial ports
 lcspx0		at vxtbus0		# color frame buffer
 
-# Devices on Unibus/Qbus adapters
 uda0		at uba?	csr 0172150	# UDA50/RQDX?
 uda1		at uba?	csr 0160334
 mtc0		at uba? csr 0174500	# Tape MSCP ctlr
-#de0		at uba? csr 0174510	# DELUA/DEUNA
 qe0		at uba? csr 0174440	# DEQNA/DELQA
-#dhu0		at uba? csr 0160440	# DHU-11
 dz0		at uba? csr 0160100	# DZ-11
-#dl0		at uba? csr 0176500	# DL-11
 
-# MSCP devices
 mscpbus*	at uda?
 mscpbus*	at mtc?
 
@@ -106,18 +96,11 @@ ra*		at mscpbus? drive?	# MSCP disk
 rx*		at mscpbus? drive?	# MSCP floppy
 mt*		at mscpbus? drive?	# MSCP tape
 
-# SCSI devices
-
 scsibus*	at scsi?
 sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?
-#ch*		at scsibus?
-#safte*		at scsibus?
-#ses*		at scsibus?
-#uk*		at scsibus?
 
-# Workstation console
 wsdisplay*	at gpx?
 wsdisplay*	at lcg?
 wsdisplay*	at lcspx?
@@ -127,11 +110,7 @@ wsdisplay*	at smg?
 lkkbd0		at dz0 line 0
 lkkbd0		at qsc0 line 2
 wskbd*		at lkkbd?
-#lkms0		at dz0 line 1
-#lkms0		at qsc0 line 3
-#wsmouse*	at lkms?
 
-pseudo-device	loop		1	# network loopback
-pseudo-device	bpfilter	1	# packet filter
-pseudo-device	rd		1	# ramdisk
-
+pseudo-device	loop 1
+pseudo-device	bpfilter 1
+pseudo-device	rd 1

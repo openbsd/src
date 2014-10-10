@@ -1,106 +1,83 @@
-#	$OpenBSD: RAMDISKU5,v 1.18 2014/04/05 16:33:14 deraadt Exp $
+#	$OpenBSD: RAMDISKU5,v 1.19 2014/10/10 05:43:36 deraadt Exp $
 
-# Machine architecture; required by config(8)
 machine		sparc64
+maxusers	4
 
-# maxusers means mostly "let's get small" in terms of kernel malloc's
-maxusers	2
+option		TIMEZONE=0
+option		DST=0
+
+option		SMALL_KERNEL
+option		NO_PROPOLICE
+option		BOOT_CONFIG
 
 option		RAMDISK_HOOKS
 option		MINIROOTSIZE=6144
 
-#option		DDB		# need this to see what's happening
-
-option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight saving time used by RTC
-
-option		SMALL_KERNEL
-option		NO_PROPOLICE
-option		FFS		# UFS
-#option		NFSCLIENT	# Network File System client
-#option		CD9660		# ISO 9660 + Rock Ridge file system
-option		INET		# IP + ICMP + TCP + UDP
-option		BOOT_CONFIG	# add support for boot -c
+option		FFS
+option		INET
 
 option		WSEMUL_SUN	# provide sun terminal emulation; required
 option		WSEMUL_NO_VT100	# do not provide vt100 terminal emulation
 
-# Generic swap; second partition of root disk or network.
-config		bsd	root on rd0a
+config		bsd root on rd0a
 
-# Main bus and CPU .. all systems.
-mainbus0 at root
-cpu0	at mainbus0
+mainbus0	at root
+cpu0		at mainbus0
 
-# Bus types found on SPARC systems.
-upa0	at mainbus0
-schizo*	at mainbus0
-pci*	at schizo?
-psycho*	at mainbus0
-pci*	at psycho?		# Ultra 5
-pci*	at ppb?
-ppb*	at pci?
-ebus*	at pci?
+upa0		at mainbus0
+schizo*		at mainbus0
+pci*		at schizo?
+psycho*		at mainbus0
+pci*		at psycho?		# Ultra 5
+pci*		at ppb?
+ppb*		at pci?
+ebus*		at pci?
 
-# PCI Ethernet
-hme*	at pci?
-gem*	at pci?
+hme*		at pci?
+gem*		at pci?
 
-auxio*	at ebus?
-clock*	at ebus?		# Mostek clock
+auxio*		at ebus?
+clock*		at ebus?
 
-## PROM console driver -- if all else fails
-pcons0	at mainbus0		# PROM console
+pcons0		at mainbus0		# PROM console 
 
-timer*	at mainbus0		# Timer chip (some systems)
+timer*		at mainbus0		# Timer chip (some systems)
 
-pciide*	at pci? flags 0x0000
-wd*	at pciide? flags 0x0a00
-atapiscsi* at pciide?
+pciide*		at pci? flags 0x0000
+wd*		at pciide? flags 0x0a00
+atapiscsi*	at pciide?
 
-siop*	at pci?
+siop*		at pci?
 
-# These entries find devices on all SCSI busses and assign
-# unit numers dynamically.
-scsibus* at scsi?
-sd*	at scsibus?		# SCSI disks
-#cd*	at scsibus?		# SCSI CD-ROMs
+scsibus*	at scsi?
+sd*		at scsibus?
+#cd*		at scsibus?
 
-# Media Independent Interface (mii) drivers)
-nsphy*	at mii?			# NS and compatible PHYs
-qsphy*	at mii?			# Quality Semi QS6612 PHYs
-ukphy*	at mii?			# Unknown PHYs
+nsphy*		at mii?			# NS and compatible PHYs
+qsphy*		at mii?			# Quality Semi QS6612 PHYs
+ukphy*		at mii?			# Unknown PHYs
 
-# PCI USB Controllers
-ohci*	at pci ?
-uhci*	at pci?
+ohci*		at pci ?
+uhci*		at pci?
+usb*		at ohci?
+usb*		at uhci?
 
-# USB bus support
-usb*	at ohci?
-usb*	at uhci?
+uhub*		at usb?
+uhub*		at uhub?
+uhidev*		at uhub?		# Human Interface Devices
+ukbd*		at uhidev?		# USB Keyboard
+wskbd*		at ukbd?
 
-# USB devices
-uhub*	at usb?			# USB Hubs
-uhub*	at uhub?		# USB Hubs
-uhidev*	at uhub?		# Human Interface Devices
-ukbd*	at uhidev?		# USB Keyboard
-wskbd*	at ukbd?
+sab*		at ebus?
+sabtty*		at sab?
+com*		at ebus?
+comkbd*		at ebus?
+wskbd*		at comkbd?
 
-# SAB82532 based serial ports
-sab*	at ebus?
-sabtty*	at sab?
+pckbc*		at ebus?		# controller
+pckbd*		at pckbc?		#  ps2 keyboard
+wskbd*		at pckbd?		#    generic keyboard layer
 
-# NS16550 based serial ports
-com*	at ebus?
-comkbd*	at ebus?
-wskbd*	at comkbd?
-
-# i8042 based serial ports (PS/2 ports)
-pckbc*	at ebus?		# controller
-pckbd*	at pckbc?		#  ps2 keyboard
-wskbd*	at pckbd?		#    generic keyboard layer
-
-# Framebuffers
 creator*	at upa0			# Creator3D/Elite3D framebuffers
 wsdisplay*	at creator?
 gfxp*		at pci?			# PGX32 framebuffer
@@ -112,5 +89,5 @@ wsdisplay*	at raptor?
 vgafb*		at pci?
 wsdisplay*	at vgafb?
 
-pseudo-device	rd	2	# ramdisk
-pseudo-device	loop	1	# network loopback
+pseudo-device	rd 1
+pseudo-device	loop 1

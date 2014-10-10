@@ -1,94 +1,59 @@
-#	$OpenBSD: RAMDISK,v 1.1 2013/10/15 13:28:09 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.2 2014/10/10 05:43:35 deraadt Exp $
 
 machine		aviion m88k
+maxusers	4
+
+option		TIMEZONE=0
+option		DST=0
+option		SMALL_KERNEL
+option		NO_PROPOLICE
+option		BOOT_CONFIG
 
 option		MINIROOTSIZE=4096
 option		RAMDISK_HOOKS
 
-option		FFS		# UFS
-#option		FFS2		# UFS2
-option		NFSCLIENT	# Network File System client
-option		CD9660		# ISO 9660 + Rock Ridge file system
+option		FFS
+option		NFSCLIENT
+option		CD9660
+option		INET
+option		INET6
 
-option		INET		# IP + ICMP + TCP + UDP
-option		INET6		# IPv6 (needs INET)
-
-option		BOOT_CONFIG	# add support for boot -c
-maxusers	32		# estimated number of users
-
-# Processor type
 option		M88100
 #option		M88110
-
-# Supported models
 option		AV400		# 100, 200, 300, 400, 3000, 4000, 4300
 option		AV530		# 4600, 530
 #option		AV5000		# 5000, 6000
 #option		AV6280		# 6280, 8000-8
+option		ERRATA__XXX_USR	# processor xxx.usr bug (mask C82N)
 
-# Define this if your 88100 processor has the xxx.usr bug (mask C82N)
-option		ERRATA__XXX_USR
+config		bsd root on rd0a swap on rd0b
 
-config		bsd		root on rd0a swap on rd0b
+mainbus0	at root
+syscon0		at mainbus0 addr 0xfff00000
+nvram0		at syscon? offset 0x80000
+dart0		at syscon? offset 0x82000		# serial ports
+vme0		at syscon? offset 0x85000		# VME bridge
 
-#
-# devices
-#
+dart1		at syscon? offset 0x82c00
+oaic0		at syscon? offset 0x8a000
+le0		at syscon? offset 0x8c000		# on-board ethernet
 
-mainbus0 at root
+dart1		at syscon? offset 0x82040
+oosiop0		at syscon? offset 0xb0000
+oosiop1		at syscon? offset 0xb0080
+le0		at syscon? offset 0xb0100
+le1		at syscon? offset 0xb0140
 
-#
-# Onboard devices for all 88100-based machines
-#
+le*		at vme? a32 0x00900000 a16 0x4000 ipl 3	# artwork X0A factory settings
+le*		at vme? a32 0x55540000 a16 0x8600 ipl 3	# artwork X0B factory settings
+le*		at vme? a32 0x55900000 a16 0x4000 ipl 3
+le*		at vme? a32 0x55980000 a16 0x5000 ipl 3
 
-syscon0 at mainbus0 addr 0xfff00000
-nvram0	at syscon? offset 0x80000
-dart0	at syscon? offset 0x82000		# serial ports
-#avkbc0	at syscon? offset 0x82800
-#pckbd*	at avkbc?
-#wskbd*	at avkbd?
-vme0	at syscon? offset 0x85000		# VME bridge
-#avfb0	at syscon? offset 0x89000
-#wsdisplay* at avfb?
+scsibus*	at scsi?
+sd*		at scsibus?
+st*		at scsibus?
+cd*		at scsibus?
 
-#
-# AV400 onboard devices
-#
-
-dart1	at syscon? offset 0x82c00
-oaic0	at syscon? offset 0x8a000
-le0	at syscon? offset 0x8c000		# on-board ethernet
-
-#
-# AV530 onboard devices
-#
-
-dart1	at syscon? offset 0x82040
-oosiop0	at syscon? offset 0xb0000
-oosiop1	at syscon? offset 0xb0080
-le0	at syscon? offset 0xb0100
-le1	at syscon? offset 0xb0140
-
-#
-# VME devices
-#
-
-# Interphase Hawk Ethernet
-le*	at vme? a32 0x00900000 a16 0x4000 ipl 3	# artwork X0A factory settings
-le*	at vme? a32 0x55540000 a16 0x8600 ipl 3	# artwork X0B factory settings
-le*	at vme? a32 0x55900000 a16 0x4000 ipl 3
-le*	at vme? a32 0x55980000 a16 0x5000 ipl 3
-
-#
-# SCSI devices
-#
-
-scsibus* at scsi?
-sd*	at scsibus?
-st*	at scsibus?
-cd*	at scsibus?
-
-pseudo-device	bpfilter	# packet filter
-pseudo-device	loop		# network loopback
-pseudo-device	rd	1
-
+pseudo-device	bpfilter 1
+pseudo-device	loop 1
+pseudo-device	rd 1

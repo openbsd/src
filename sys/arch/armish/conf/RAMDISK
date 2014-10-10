@@ -1,188 +1,144 @@
-# $OpenBSD: RAMDISK,v 1.30 2014/08/22 20:03:54 deraadt Exp $ 
-#
-# For further information on compiling OpenBSD kernels, see the config(8)
-# man page.
-#
-# For further information on hardware support for this architecture, see
-# the intro(4) man page.  For further information about kernel options
-# for this architecture, see the options(4) man page.  For an explanation
-# of each device driver in this file see the section 4 man page for the
-# device.
+#	$OpenBSD: RAMDISK,v 1.31 2014/10/10 05:43:35 deraadt Exp $
 
 machine		armish arm
-maxusers	32			# estimated number of users
+maxusers	4
 
-options		ARM32
+option		TIMEZONE=0
+option		DST=0
+option		SMALL_KERNEL
+option		NO_PROPOLICE
+option		BOOT_CONFIG
 
+option		MINIROOTSIZE=5120
+option		RAMDISK_HOOKS
+
+option		PCIVERBOSE
+
+option		FFS
+option		FFS2
+option		CD9660
+option		MSDOSFS
+option		EXT2FS
+option		INET
+option		INET6
+option		CRYPTO
+
+config		bsd root on rd0a swap on rd0b
+
+option		ARM32
 #makeoptions	KERNEL_BASE_PHYS="0xa0200000"
 makeoptions	KERNEL_BASE_PHYS="0x00200000"
 makeoptions	KERNEL_BASE_VIRT="0xc0200000"
-
 option		CPU_XSCALE_80321	# Support the XScale core
 option		XSCALE_CACHE_READ_WRITE_ALLOCATE
 #makeoptions	CPUFLAGS="-mcpu=xscale"
 
-#option		PERFCTRS		# performance counters
-
-option		PCIVERBOSE
-
-option		DST=0			# daylight saving time used by RTC
-option		FFS			# UFS
-option		FFS2			# UFS2
-option		CD9660			# ISO 9660 + Rock Ridge file system
-option		MSDOSFS			# MS-DOS file system
-option		INET			# IP + ICMP + TCP + UDP
-option		INET6			# IPv6 (needs INET)
-option		DDB			# kernel debugger
-option		EXT2FS			# Second Extended Filesystem
-option		CRYPTO			# Cryptographic framework
-
-config		bsd	root on rd0a swap on rd0b
-
-# The main bus device
 mainbus0	at root
 cpu0		at mainbus?
 obio0		at mainbus?
 
-# On-board 16550 UART
 com0		at obio? addr 0xfe800000 xint 3
 
-# i80321 I/O Processor peripheral support
 iopxs0		at mainbus?
 
-#iopaau*	at iopxs?		# Application Accelerator Unit
-iopiic*	at iopxs?		# I2C Controller Unit(s)
+iopiic*		at iopxs?		# I2C Controller Unit(s)
 iic0		at iopiic?
 iic1		at iopiic?
 pcaled0		at iic? addr 0x60	# led controller
-#gpio*		at pcaled0
 ricohrtc0	at iic? addr 0x32	# Ricoh RTC
 fintek0		at iic?	flags 0x0001	# temp/fan controller
 
-#iopwdog*	at iopxs?		# Watchdog timer
 pci0		at iopxs? bus ?		# PCI/PCI-X support
 
-
-siop*		at pci? 		# NCR 538XX SCSI controllers(new)
+siop*		at pci?			# NCR 538XX SCSI controllers(new)
 em*		at pci?
 re*		at pci?
 ral*		at pci?
 bwi*		at pci?
-# IDE controllers
+
 pciide*		at pci? flags 0x0000
 wd*		at pciide? flags 0x0000
 
-softraid0	at root		# Software RAID
+softraid0	at root
 
 scsibus*	at scsi?
 sd*		at scsibus?		# SCSI disk drives
-#st*		at scsibus?		# SCSI tape drives
 cd*		at scsibus?		# SCSI CD-ROM drives
-#ch*		at scsibus?		# SCSI autochangers
-#uk*		at scsibus?		# unknown SCSI
 
-# USB Controllers
-ohci*		at pci?		# Open Host Controller
-uhci*		at pci?		# Universal Host Controller
-ehci*		at pci?		# Enhanced Host Controller
-
-# USB bus support
+ohci*		at pci?
+uhci*		at pci?
+ehci*		at pci?
 usb*		at ohci?
 usb*		at uhci?
 usb*		at ehci?
 
-# USB devices
-uhub*	at usb?			# USB Hubs
-uhub*	at uhub?		# USB Hubs
-umodem*	at uhub?		# USB Modems/Serial
-ucom*	at umodem?
-uvisor*	at uhub?		# Handspring Visor
-ucom*	at uvisor?
-uvscom*	at uhub?		# SUNTAC Slipper U VS-10U serial
-ucom*	at uvscom?
-ubsa*	at uhub?		# Belkin serial adapter
-ucom*	at ubsa?
-uftdi*	at uhub?		# FTDI FT8U100AX serial adapter
-ucom*	at uftdi?
-uplcom* at uhub?		# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom?
-umct*	at uhub?		# MCT USB-RS232 serial adapter
-ucom*	at umct?
-uipaq*	at uhub?		# iPAQ serial adapter
-ucom*	at uipaq?
-umsm*	at uhub?		# Qualcomm MSM EVDO
-ucom*	at umsm?
-#uaudio* at uhub?		# USB Audio
-#audio*	at uaudio?
-#umidi*	at uhub?		# USB MIDI
-#midi*	at umidi?
-#ulpt*	at uhub?		# USB Printers
-umass*	at uhub?		# USB Mass Storage devices
-uhidev*	at uhub?		# Human Interface Devices
-ums*	at uhidev?		# USB mouse
-wsmouse* at ums? mux 0
-ukbd*	at uhidev?		# USB keyboard
-wskbd*	at ukbd? mux 1
-uhid*	at uhidev?		# USB generic HID support
-aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
-atu*	at uhub?		# Atmel AT76c50x based 802.11b
-axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
-axen*	at uhub?		# ASIX Electronics AX88179 USB Ethernet
-cue*	at uhub?		# CATC USB-EL1201A based Ethernet
-kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
-smsc*	at uhub?		# SMSC LAN95xx Ethernet
-cdce*	at uhub?		# CDC Ethernet
-upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
-ugl*	at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
-udav*	at uhub?		# Davicom DM9601 based Ethernet
-url*	at uhub?		# Realtek RTL8150L based adapters
-wi*	at uhub?		# WaveLAN IEEE 802.11DS
-#urio*	at uhub?		# Diamond Multimedia Rio 500
-#udsbr*	at uhub?		# D-Link DSB-R100 radio
-#radio*	at udsbr?		# USB radio
-#ubt*	at uhub? disable	# USB Bluetooth
-ugen*	at uhub?		# USB Generic driver
-ural*	at uhub?		# Ralink RT2500
-#udcf*	at uhub?		# Gude Expert mouseCLOCK
+uhub*		at usb?
+uhub*		at uhub?
+umodem*		at uhub?		# USB Modems/Serial
+ucom*		at umodem?
+uvisor*		at uhub?		# Handspring Visor
+ucom*		at uvisor?
+uvscom*		at uhub?		# SUNTAC Slipper U VS-10U serial
+ucom*		at uvscom?
+ubsa*		at uhub?		# Belkin serial adapter
+ucom*		at ubsa?
+uftdi*		at uhub?		# FTDI FT8U100AX serial adapter
+ucom*		at uftdi?
+uplcom*		at uhub?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*		at uplcom?
+umct*		at uhub?		# MCT USB-RS232 serial adapter
+ucom*		at umct?
+uipaq*		at uhub?		# iPAQ serial adapter
+ucom*		at uipaq?
+umsm*		at uhub?		# Qualcomm MSM EVDO
+ucom*		at umsm?
+umass*		at uhub?
+uhidev*		at uhub?		# Human Interface Devices
+ukbd*		at uhidev?		# USB keyboard
+wskbd*		at ukbd? mux 1
+uhid*		at uhidev?		# USB generic HID support
+aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
+atu*		at uhub?		# Atmel AT76c50x based 802.11b
+axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
+axen*		at uhub?		# ASIX Electronics AX88179 USB Ethernet
+cue*		at uhub?		# CATC USB-EL1201A based Ethernet
+kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
+smsc*		at uhub?		# SMSC LAN95xx Ethernet
+cdce*		at uhub?		# CDC Ethernet
+upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
+ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host
+udav*		at uhub?		# Davicom DM9601 based Ethernet
+url*		at uhub?		# Realtek RTL8150L based adapters
+wi*		at uhub?		# WaveLAN IEEE 802.11DS
+ugen*		at uhub?		# USB Generic driver
+ural*		at uhub?		# Ralink RT2500
 
-amphy*		at mii?		# AMD 79C873 PHYs
-dcphy*		at mii?		# Digital Clone PHYs
-exphy*		at mii?		# 3Com internal PHYs
-inphy*		at mii?		# Intel 82555 PHYs
-iophy*		at mii?		# Intel 82553 PHYs
-icsphy*		at mii?		# ICS1890 PHYs
-lxtphy*		at mii?		# Level One LXT-970 PHYs
-nsphy*		at mii?		# NS83840 PHYs
-#nsphyter*	at mii?		# NS83843 PHYs
-mtdphy*		at mii?		# Myson MTD972 PHYs
-acphy*		at mii?		# Altima AC101 PHYs
-qsphy*		at mii?		# Quality Semi QS6612 PHYs
-luphy*		at mii?		# Lucent LU6612 PHY
-sqphy*		at mii?		# Seeq 8022[013] PHYs
-rlphy*		at mii?		# RealTek 8139 internal PHYs
-#tlphy*		at mii?		# ThunderLAN PHYs
-tqphy*		at mii?		# TDK Semiconductor PHYs
-brgphy*		at mii?		# Broadcom 10/100/1000 PHYs
-bmtphy*		at mii?		# Broadcom 10/100 PHYs
-eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
-urlphy*		at mii?		# Realtek RTL8150L internal PHY
-rgephy*		at mii?		# Realtek 8169S/8110S PHY
-rlphy*		at mii?		# Realtek 8139 internal PHYs
-ciphy*		at mii?		# Cicada CS8201 10/100/1000 copper PHY
-ukphy*		at mii?		# generic unknown PHYs
+amphy*		at mii?			# AMD 79C873 PHYs
+dcphy*		at mii?			# Digital Clone PHYs
+exphy*		at mii?			# 3Com internal PHYs
+inphy*		at mii?			# Intel 82555 PHYs
+iophy*		at mii?			# Intel 82553 PHYs
+icsphy*		at mii?			# ICS1890 PHYs
+lxtphy*		at mii?			# Level One LXT-970 PHYs
+nsphy*		at mii?			# NS83840 PHYs
+mtdphy*		at mii?			# Myson MTD972 PHYs
+acphy*		at mii?			# Altima AC101 PHYs
+qsphy*		at mii?			# Quality Semi QS6612 PHYs
+luphy*		at mii?			# Lucent LU6612 PHY
+sqphy*		at mii?			# Seeq 8022[013] PHYs
+rlphy*		at mii?			# RealTek 8139 internal PHYs
+tqphy*		at mii?			# TDK Semiconductor PHYs
+brgphy*		at mii?			# Broadcom 10/100/1000 PHYs
+bmtphy*		at mii?			# Broadcom 10/100 PHYs
+eephy*		at mii?			# Marvell 88E1000 Gigabit PHYs
+urlphy*		at mii?			# Realtek RTL8150L internal PHY
+rgephy*		at mii?			# Realtek 8169S/8110S PHY
+rlphy*		at mii?			# Realtek 8139 internal PHYs
+ciphy*		at mii?			# Cicada CS8201 10/100/1000 copper PHY
+ukphy*		at mii?			# generic unknown PHYs
 
-# mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
-pseudo-device	bio		1	# ioctl multiplexing device
-pseudo-device	hotplug		1	# devices hot plugging
-
-#
-pseudo-device	loop		1	# network loopback
-pseudo-device	bpfilter		1	# packet filter
-pseudo-device	rd		1	# ram disk
-
-option		BOOT_CONFIG		# boot-time kernel config
-
-# RAMDISK stuff
-option		MINIROOTSIZE=5120
-option		RAMDISK_HOOKS
+pseudo-device	wsmux 2
+pseudo-device	bio 1
+pseudo-device	loop 1
+pseudo-device	bpfilter 1
+pseudo-device	rd 1

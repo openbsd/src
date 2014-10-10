@@ -1,76 +1,60 @@
-#	$OpenBSD: RAMDISK-IP26,v 1.1 2012/09/29 21:46:02 miod Exp $
+#	$OpenBSD: RAMDISK-IP26,v 1.2 2014/10/10 05:43:35 deraadt Exp $
 #
 # THIS KERNEL IS FOR POWER INDIGO2 R8000 (IP26) SYSTEMS ONLY.
 
 machine		sgi mips64
-
 maxusers	4
-option		TIMEZONE=0	# minutes west of GMT (for)
-option		DST=0		# use daylight savings rules
 
-# Make options
-makeoption	LINK_ADDRESS="0xa800000008010000"
+option		TIMEZONE=0
+option		DST=0
+option		SMALL_KERNEL
+option		NO_PROPOLICE
+option		BOOT_CONFIG
 
-option		DDB
+option		MINIROOTSIZE=10240
+option		RAMDISK_HOOKS
 
 option		EISAVERBOSE
 option		PCIVERBOSE
 
-# Filesystem options
-option		CD9660		# ISO 9660 + Rock Ridge file system
-option		FIFO		# POSIX fifo support (in all filesystems)
-option		FFS		# fast filesystem
-#option		MSDOSFS		# Ability to read write MS-Dos filesystem
-option		NFSCLIENT	# Sun NFS-compatible filesystem (client)
+option		FFS
+option		CD9660
+option		NFSCLIENT
+option		INET
+option		INET6
 
-# Networking options
-option		INET		# IP + ICMP + TCP + UDP
-option		INET6		# IPv6 (needs INET)
+makeoption	LINK_ADDRESS="0xa800000008010000"
+option		TGT_INDIGO2		# Indigo2
+option		ARCBIOS			# mandatory
+option		CPU_R8000		# R8000 support
 
-# RAMDISK stuff
-option		MINIROOTSIZE=10240
-option		RAMDISK_HOOKS
+config		bsd root on rd0a swap on rd0b
 
-# Define what targets to support
-option		TGT_INDIGO2	# Indigo2
-option		ARCBIOS		# mandatory
-option		CPU_R8000	# R8000 support
-
-# Specify storage configuration using ramdisk
-config		bsd	root on rd0a swap on rd0b
-
-#
-# Definition of system
-#
 mainbus0	at root
 cpu*		at mainbus0
 
-tcc0		at mainbus0	# Streaming Cache Controller
-int0		at mainbus0	# Interrupt Controller and scheduling clock
-imc0		at mainbus0	# Memory Controller
+tcc0		at mainbus0		# Streaming Cache Controller
+int0		at mainbus0		# Interrupt Controller and scheduling clock
+imc0		at mainbus0		# Memory Controller
 gio0		at imc0
 eisa0		at imc0
 
 hpc0		at gio? addr 0x1fb80000
 
-dsclock0	at hpc0	
-sq*		at hpc?		# On-board Ethernet
-wdsc*		at hpc?		# On-board SCSI
-pckbc*		at hpc0		# keyboard and mouse
+dsclock0	at hpc0
+sq*		at hpc?			# On-board Ethernet
+wdsc*		at hpc?			# On-board SCSI
+pckbc*		at hpc0			# keyboard and mouse
 
 zs0		at hpc0
-zstty*		at zs0		# Serial ports
+zstty*		at zs0			# Serial ports
 
 pckbd*		at pckbc?
 wskbd*		at pckbd? mux 1
-#pms*		at pckbc?
-#wsmouse*	at pms? mux 0
 
-grtwo*		at gio?		# Express (GR2/GR3) graphics
+grtwo*		at gio?			# Express (GR2/GR3) graphics
 wsdisplay*	at grtwo?
-#impact*		at gio?		# Impact graphics
-#wsdisplay*	at impact?
-newport*	at gio?		# XL graphics
+newport*	at gio?			# XL graphics
 wsdisplay*	at newport?
 
 giopci*		at gio?
@@ -80,14 +64,8 @@ scsibus*	at scsi?
 sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?
-#ch*		at scsibus?
-#uk*		at scsibus?
 
-#### PSEUDO Devices
-pseudo-device	loop		1	# network loopback
-pseudo-device	bpfilter	1	# packet filter ports
-
-pseudo-device	rd		1	# Ram disk.
-pseudo-device	bio		1	# ioctl multiplexing device
-
-option		BOOT_CONFIG	# add support for boot -c
+pseudo-device	loop 1
+pseudo-device	bpfilter 1
+pseudo-device	rd 1
+pseudo-device	bio 1

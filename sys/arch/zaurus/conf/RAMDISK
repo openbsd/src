@@ -1,82 +1,67 @@
-#	$OpenBSD: RAMDISK,v 1.50 2014/08/22 20:03:56 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.51 2014/10/10 05:43:36 deraadt Exp $
 
-machine	zaurus	arm
+machine		zaurus arm
+maxusers	4
 
-options	TIMEZONE=0	# time zone to adjust RTC time by
-options	DST=0		# daylight saving time used by RTC
-options	FFS		# UFS
-options	CD9660		# ISO 9660 + Rock Ridge file system
-options	MSDOSFS		# MS-DOS file system
-options	INET		# IP + ICMP + TCP + UDP
-options	INET6		# IPv6 (needs INET)
-options	DDB		# kernel debugger
-options	EXT2FS		# Second Extended Filesystem
-options	CRYPTO		# Cryptographic framework
+option		TIMEZONE=0
+option		DST=0
+option		SMALL_KERNEL
+option		NO_PROPOLICE
+option		BOOT_CONFIG
 
-options		ARM32
-options		PXAGPIO_HAS_GPION_INTRS
+option		MINIROOTSIZE=5120
+option		RAMDISK_HOOKS
+
+option		FFS
+option		CD9660
+option		MSDOSFS
+option		INET
+option		INET6
+option		EXT2FS
+option		CRYPTO
+
+option		ARM32
+option		PXAGPIO_HAS_GPION_INTRS
 
 makeoptions	KERNEL_BASE_PHYS="0xa0200000"
 makeoptions	KERNEL_BASE_VIRT="0xc0200000"
 
-# estimated number of users
-
-maxusers	32
-
-# CPU options
-options		CPU_XSCALE_PXA2X0	# Support the XScale core
-#options	XSCALE_CACHE_WRITE_THROUGH
-options		XSCALE_CACHE_WRITE_BACK
+option		CPU_XSCALE_PXA2X0
+#option		XSCALE_CACHE_WRITE_THROUGH
+option		XSCALE_CACHE_WRITE_BACK
 makeoptions	CPUFLAGS="-mcpu=xscale"
 
-#option	WSDISPLAY_COMPAT_USL		# VT handling
-#option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
-#option	WSDISPLAY_DEFAULTSCREENS=2	# initial number of text consoles
-#option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls; needed for X11
+config		bsd root on rd0a swap on rd0b
 
-config		bsd	root on rd0a swap on rd0b
-
-# The main bus device
 mainbus0	at root
 cpu0		at mainbus?
 pxaip0		at mainbus?
-
-pxaintc0	at pxaip?	# interrupt controller
-pxagpio0	at pxaip?	# GPIO
+pxaintc0	at pxaip?		# interrupt controller
+pxagpio0	at pxaip?
 scoop0		at pxaip?
 scoop1		at pxaip?
 pxaost0		at pxaip? addr 0x40a00000 size 0x20
 
-# touch screen
-zts0		at pxaip?
+lcd0		at pxaip?
+wsdisplay*	at lcd? console ?
+zssp0		at pxaip?		# ADC, touch screen, backlight
+zts0		at pxaip?		# touch screen
 wsmouse*	at zts? mux 0
-
-# keyboard
 zkbd0		at pxaip?
 wskbd*		at zkbd? mux 1
-
-# USB controllers
 pxaudc0		at pxaip?		# USB Device Controller
-ohci0		at pxaip?		# Open Host Controller
 
-# USB function support
+ohci0		at pxaip?
 usbf*		at pxaudc?		# USB logical device
 cdcef*		at usbf?		# CDC ethernet function
-
-# USB bus support
 usb*		at ohci?
-uhub*		at usb?			# USB Root Hub
-uhub*		at uhub?		# USB Hubs
 
-# USB devices
+uhub*		at usb?
+uhub*		at uhub?
 uhidev*		at uhub?
 uhid*		at uhidev?		# USB Generic HID devices
 ukbd*		at uhidev?		# USB HID Keyboard devices
 wskbd*		at ukbd? mux 1
-#ums*		at uhub?		# USB Mice
-#wsmouse*	at ums? mux 0
-#ulpt*		at uhub?		# USB Printer
-#atu*		at uhub?		# Atmel AT76C50x based 802.11b
 aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
 axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
 axen*		at uhub?		# ASIX Electronics AX88179 USB Ethernet
@@ -89,85 +74,54 @@ ural*		at uhub?		# Ralink RT2500
 url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
-ugl*		at uhub?		# Genesys Logic GL620A-USB host-to-host
-#ugen*		at uhub?		# USB Generic driver
-umass*		at uhub?		# USB Mass Storage devices
+ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host
+umass*		at uhub?
 
-# SD/MMC support
 pxammc0		at pxaip?		# MMC/SD/SDIO controller
 sdmmc*		at pxammc?		# SD/MMC bus
-softraid0	at root			# Software RAID
+softraid0	at root
 
 scsibus*	at scsi?
 sd*		at scsibus?
-#st*		at scsibus?
 cd*		at scsibus?
-#ch*		at scsibus?
-#uk*		at scsibus?
 
-# integrated 16550 UARTs
-options COM_PXA2X0
-com0	at pxaip? addr 0x40100000 intr 22	# Full Function UART
-com1	at pxaip? addr 0x40200000 intr 21	# BlueTooth UART
-com2	at pxaip? addr 0x40700000 intr 20	# Standard UART (for IrDA)
+option		COM_PXA2X0
+com0		at pxaip? addr 0x40100000 intr 22	# Full Function UART
+com1		at pxaip? addr 0x40200000 intr 21	# BlueTooth UART
+com2		at pxaip? addr 0x40700000 intr 20	# Standard UART (for IrDA)
 
-#aupxa0	at pxaip?		# AC97 interface
-
-# CF (pcmcia) support
 pxapcic0	at pxaip?
 pcmcia*		at pxapcic?
 wi*		at pcmcia?
 ne*		at pcmcia?
 wdc*		at pcmcia?
-
-# IDE hard drives
 wd*		at wdc? flags 0x0000
 
-# PHY
-exphy*	at mii?			# 3Com internal PHYs
-inphy*	at mii?			# Intel 82555 PHYs
-iophy*	at mii?			# Intel 82553 PHYs
-icsphy*	at mii?			# ICS 1890 PHYs
-lxtphy*	at mii?			# Level1 LXT970 PHYs
-nsphy*	at mii?			# NS and compatible PHYs
-nsphyter* at mii?		# NS and compatible PHYs
-qsphy*	at mii?			# Quality Semi QS6612 PHYs
-sqphy*	at mii?			# Seeq 8x220 PHYs
-rlphy* at mii?			# RealTek 8139 internal PHYs
-mtdphy* at mii?			# Myson MTD972 PHYs
-#dcphy*	at mii?			# Digital Clone PHYs
-acphy*	at mii?			# Altima AC101 PHYs
-amphy*	at mii?			# AMD 79C873 PHYs
-tqphy*	at mii?			# TDK 78Q212x PHYs
-bmtphy*	at mii?			# Broadcom 10/100 PHYs
-#brgphy* at mii?		# Broadcom Gigabit PHYs
-eephy* at mii?			# Marvell 88E1000 series PHY
-#xmphy*	at mii?			# XaQti XMAC-II PHYs
-nsgphy*	at mii?			# NS gigabit PHYs
-urlphy*	at mii?			# Realtek RTL8150L internal PHY
-rgephy* at mii?			# Realtek 8169S/8110S PHY
-#ciphy* at mii?			# Cicada CS8201 10/100/1000 copper PHY
-ukphy*	at mii?			# "unknown" PHYs
+exphy*		at mii?			# 3Com internal PHYs
+inphy*		at mii?			# Intel 82555 PHYs
+iophy*		at mii?			# Intel 82553 PHYs
+icsphy*		at mii?			# ICS 1890 PHYs
+lxtphy*		at mii?			# Level1 LXT970 PHYs
+nsphy*		at mii?			# NS and compatible PHYs
+nsphyter*	at mii?			# NS and compatible PHYs
+qsphy*		at mii?			# Quality Semi QS6612 PHYs
+sqphy*		at mii?			# Seeq 8x220 PHYs
+rlphy*		at mii?			# RealTek 8139 internal PHYs
+mtdphy*		at mii?			# Myson MTD972 PHYs
+acphy*		at mii?			# Altima AC101 PHYs
+amphy*		at mii?			# AMD 79C873 PHYs
+tqphy*		at mii?			# TDK 78Q212x PHYs
+bmtphy*		at mii?			# Broadcom 10/100 PHYs
+eephy*		at mii?			# Marvell 88E1000 series PHY
+nsgphy*		at mii?			# NS gigabit PHYs
+urlphy*		at mii?			# Realtek RTL8150L internal PHY
+rgephy*		at mii?			# Realtek 8169S/8110S PHY
+ukphy*		at mii?			# "unknown" PHYs
 
-# LCD
-lcd0		at pxaip?
-wsdisplay*	at lcd? console ?
+apm0		at pxaip?		# APM emulation
 
-# Dedicated SSP unit for ADC, touch screen, and backlight
-zssp0		at pxaip?
-
-# APM emulation
-apm0		at pxaip?
-
-# Pseudo-Devices
-pseudo-device	wsmux		2	# mouse & keyboard multiplexor
-pseudo-device	loop		1	# network loopback
-pseudo-device	bpfilter	1	# packet filter
-pseudo-device	rd		1	# ram disk
-pseudo-device	bio		1	# ioctl multiplexing device
-
-options	BOOT_CONFIG	# boot-time kernel config
-
-# RAMDISK stuff
-options	MINIROOTSIZE=5120
-options	RAMDISK_HOOKS
+pseudo-device	wsmux 2
+pseudo-device	loop 1
+pseudo-device	bpfilter 1
+pseudo-device	rd 1
+pseudo-device	bio 1
