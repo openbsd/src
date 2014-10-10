@@ -46,6 +46,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <stdlib.h>
+#include <poll.h>
 
 int
 rcmd(char **ahost, int rport, const char *locuser, const char *remuser,
@@ -63,7 +64,6 @@ rcmd_af(char **ahost, int porta, const char *locuser, const char *remuser,
 	struct addrinfo hints, *res, *r;
 	int error;
 	struct sockaddr_storage from;
-	fd_set *readsp = NULL;
 	sigset_t oldmask, mask;
 	pid_t pid;
 	int s, lport, timo;
@@ -188,18 +188,14 @@ rcmd_af(char **ahost, int porta, const char *locuser, const char *remuser,
 		write(s, "", 1);
 		lport = 0;
 	} else {
+		struct pollfd pfd[2];
 		char num[8];
 		int s2 = rresvport_af(&lport, af), s3;
 		socklen_t len = sizeof(from);
-		int fdssize = howmany(MAX(s, s2)+1, NFDBITS) * sizeof(fd_mask);
 
 		if (s2 < 0)
 			goto bad;
-		readsp = (fd_set *)malloc(fdssize);
-		if (readsp == NULL) {
-			close(s2);
-			goto bad;
-		}
+
 		listen(s2, 1);
 		(void)snprintf(num, sizeof(num), "%d", lport);
 		if (write(s, num, strlen(num)+1) != strlen(num)+1) {
@@ -210,19 +206,21 @@ rcmd_af(char **ahost, int porta, const char *locuser, const char *remuser,
 			goto bad;
 		}
 again:
-		bzero(readsp, fdssize);
-		FD_SET(s, readsp);
-		FD_SET(s2, readsp);
+		pfd[0].fd = s;
+		pfd[0].events = POLLIN;
+		pfd[1].fd = s2;
+		pfd[1].events = POLLIN;
+
 		errno = 0;
-		if (select(MAX(s, s2) + 1, readsp, 0, 0, 0) < 1 ||
-		    !FD_ISSET(s2, readsp)) {
+		if (poll(pfd, 2, INFTIM) < 1 ||
+		    (pfd[1].revents & (POLLIN|POLLHUP)) == 0) {
 			if (errno != 0)
 				(void)fprintf(stderr,
-				    "rcmd: select (setting up stderr): %s\n",
+				    "rcmd: poll (setting up stderr): %s\n",
 				    strerror(errno));
 			else
 				(void)fprintf(stderr,
-				"select: protocol failure in circuit setup\n");
+				"poll: protocol failure in circuit setup\n");
 			(void)close(s2);
 			goto bad;
 		}
@@ -288,14 +286,11 @@ again:
 		goto bad2;
 	}
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
-	free(readsp);
 	return (s);
 bad2:
 	if (lport)
 		(void)close(*fd2p);
 bad:
-	if (readsp)
-		free(readsp);
 	(void)close(s);
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 	return (-1);
