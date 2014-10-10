@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.152 2014/10/02 06:23:15 otto Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.153 2014/10/10 08:03:39 otto Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -235,8 +235,10 @@ rcs_main(int argc, char **argv)
 			lkmode = RCS_LOCK_STRICT;
 			break;
 		case 'l':
-			/* XXX - Check with -u flag. */
+			if (rcsflags & RCSPROG_UFLAG)
+				warnx("-u overridden by -l");
 			lrev = rcs_optarg;
+			rcsflags &= ~RCSPROG_UFLAG;
 			rcsflags |= RCSPROG_LFLAG;
 			break;
 		case 'm':
@@ -273,8 +275,10 @@ rcs_main(int argc, char **argv)
 			lkmode = RCS_LOCK_LOOSE;
 			break;
 		case 'u':
-			/* XXX - Check with -l flag. */
+			if (rcsflags & RCSPROG_LFLAG)
+				warnx("-l overridden by -u");
 			urev = rcs_optarg;
+			rcsflags &= ~RCSPROG_LFLAG;
 			rcsflags |= RCSPROG_UFLAG;
 			break;
 		case 'V':
