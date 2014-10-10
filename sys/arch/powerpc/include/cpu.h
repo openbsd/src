@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.57 2014/10/08 10:12:41 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.58 2014/10/10 04:08:11 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ void	cpu_boot_secondary_processors(void);
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
 #define CPU_INFO_ITERATOR		int
 #define CPU_INFO_FOREACH(cii, ci)					\
-	for (cii = 0, ci = &cpu_info[0]; cii < ncpus; cii++, ci++)
+	for (cii = 0, ci = &cpu_info[0]; cii < ncpusfound; cii++, ci++)
 
 void cpu_unidle(struct cpu_info *);
 
