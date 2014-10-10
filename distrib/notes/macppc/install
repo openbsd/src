@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.33 2014/03/19 01:59:49 tedu Exp $
+dnl	$OpenBSD: install,v 1.34 2014/10/10 13:25:08 krw Exp $
 OpenBSDInstallPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -100,6 +100,9 @@ OpenBSDInstallPart4
 		Partition number: 11
 		Existing partition type ``Unused''.
 		New type of partition: OpenBSD
+		Command (? for help): n
+		Partition number: 11
+		New name of partition: OpenBSD
 		Command (? for help): p
 		<output is in the after example above>
 		---
