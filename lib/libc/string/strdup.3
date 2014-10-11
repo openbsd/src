@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strdup.3,v 1.20 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: strdup.3,v 1.21 2014/10/11 14:40:42 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)strdup.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: October 11 2014 $
 .Dt STRDUP 3
 .Os
 .Sh NAME
@@ -100,9 +100,16 @@ and
 functions conform to
 .St -p1003.1-2008 .
 .Sh HISTORY
-The
+A
 .Fn strdup
-function first appeared in
+macro was first used in the
+.Bx 4.1c
+debugger,
+.Sy dbx .
+It was rewritten as a C function for the
+.Bx 4.3
+.Xr inetd 8
+and first appeared in the C library of
 .Bx 4.3 Reno .
 The
 .Fn strndup
