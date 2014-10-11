@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.5 2007/09/04 22:39:31 hshoexer Exp $	*/
+/*	$OpenBSD: list.c,v 1.6 2014/10/11 04:06:05 doug Exp $	*/
 /*
  * Copyright 2001, David Leonard. All rights reserved.
  * Redistribution and use in source and binary forms with or without
@@ -103,8 +103,9 @@ next_driver_fd(fd)
 
 	if (numdrivers >= maxdrivers) {
 		if (maxdrivers) {
+			drivers = reallocarray(drivers, maxdrivers,
+			    2 * sizeof(*driver));
 			maxdrivers *= 2;
-			drivers = realloc(drivers, sizeof *driver * maxdrivers);
 		} else {
 			maxdrivers = 16;
 			drivers = calloc(sizeof *driver, maxdrivers);
