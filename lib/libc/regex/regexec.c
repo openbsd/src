@@ -1,4 +1,4 @@
-/*	$OpenBSD: regexec.c,v 1.12 2013/04/17 17:39:29 tedu Exp $ */
+/*	$OpenBSD: regexec.c,v 1.13 2014/10/11 04:23:12 doug Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -109,7 +109,8 @@
 #define	ASSIGN(d, s)	memcpy(d, s, m->g->nstates)
 #define	EQ(a, b)	(memcmp(a, b, m->g->nstates) == 0)
 #define	STATEVARS	long vn; char *space
-#define	STATESETUP(m, nv)	{ (m)->space = malloc((nv)*(m)->g->nstates); \
+#define	STATESETUP(m, nv)	{ (m)->space = reallocarray(NULL, 	    \
+    				(m)->g->nstates, (nv));			    \
 				if ((m)->space == NULL) return(REG_ESPACE); \
 				(m)->vn = 0; }
 #define	STATETEARDOWN(m)	{ free((m)->space); }
