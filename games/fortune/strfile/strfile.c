@@ -1,4 +1,4 @@
-/*	$OpenBSD: strfile.c,v 1.19 2013/08/29 20:22:12 naddy Exp $	*/
+/*	$OpenBSD: strfile.c,v 1.20 2014/10/11 04:00:56 doug Exp $	*/
 /*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
 
 /*-
@@ -76,7 +76,9 @@
 			if (ptr == NULL) \
 				ptr = calloc(CHUNKSIZE, sizeof *ptr); \
 			else if (((sz) + 1) % CHUNKSIZE == 0) \
-				ptr = realloc((void *) ptr, ((sz) + CHUNKSIZE) * sizeof *ptr); \
+				ptr = reallocarray(ptr, \
+						   (sz) + CHUNKSIZE, \
+						   sizeof(*ptr)); \
 			if (ptr == NULL) \
 				err(1, NULL); \
 		} while (0)
