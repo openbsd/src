@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.21 2013/11/24 23:51:29 deraadt Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.22 2014/10/11 04:14:35 deraadt Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ common:			if (set->cmd2 & CMD2_CLR) {
 	if (set >= endset) {						\
 		BITCMD *newset;						\
 		setlen += SET_LEN_INCR;					\
-		newset = realloc(saveset, sizeof(BITCMD) * setlen);	\
+		newset = reallocarray(saveset, setlen, sizeof(BITCMD));	\
 		if (newset == NULL) {					\
 			free(saveset);					\
 			return (NULL);					\
