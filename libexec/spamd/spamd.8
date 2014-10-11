@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.121 2014/09/16 21:16:57 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.122 2014/10/11 20:06:31 landry Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 16 2014 $
+.Dd $Mdocdate: October 11 2014 $
 .Dt SPAMD 8
 .Os
 .Sh NAME
@@ -221,12 +221,7 @@ below.
 .It Fl y Ar synclisten
 Listen on
 .Ar synclisten
-for incoming synchronisation messages.
-The format for
-.Ar synclisten
-is the same as for
-.Ar synctarget ,
-above.
+network interface for incoming synchronisation messages.
 This option can be specified only once.
 See also
 .Sx SYNCHRONISATION
@@ -561,11 +556,11 @@ add the unicast targets
 .Ar foo.somewhere.org
 and
 .Ar bar.somewhere.org ,
-and accept incoming unicast messages sent to
-.Ar example.somewhere.org
+and accept incoming unicast messages received on
+.Ar bge0
 only.
 .Bd -literal -offset indent
-# /usr/libexec/spamd -y example.somewhere.org -Y em0:2 \e
+# /usr/libexec/spamd -y bge0 -Y em0:2 \e
 	-Y foo.somewhere.org -Y bar.somewhere.org
 .Ed
 .Pp
