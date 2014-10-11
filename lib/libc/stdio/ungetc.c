@@ -1,4 +1,4 @@
-/*	$OpenBSD: ungetc.c,v 1.12 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: ungetc.c,v 1.13 2014/10/11 04:05:10 deraadt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -64,14 +64,14 @@ __submore(FILE *fp)
 		return (0);
 	}
 	i = _UB(fp)._size;
-	p = realloc(_UB(fp)._base, i << 1);
+	p = reallocarray(_UB(fp)._base, i, 2);
 	if (p == NULL)
 		return (EOF);
 	/* no overlap (hence can use memcpy) because we doubled the size */
 	(void)memcpy((void *)(p + i), (void *)p, (size_t)i);
 	fp->_p = p + i;
 	_UB(fp)._base = p;
-	_UB(fp)._size = i << 1;
+	_UB(fp)._size = i * 2;
 	return (0);
 }
 
