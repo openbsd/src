@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.29 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.30 2014/10/11 03:48:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -97,14 +97,13 @@ fsirand(char *device)
 	struct ufs1_dinode *dp1 = NULL;
 	struct ufs2_dinode *dp2 = NULL;
 	static char *inodebuf;
-	static size_t oldibufsize;
-	size_t ibufsize;
+	size_t ibufsize, isize;
 	struct fs *sblock, *tmpsblock;
 	ino_t inumber;
 	daddr_t sblockloc, dblk;
 	char sbuf[SBSIZE], sbuftmp[SBSIZE];
 	int devfd, n, cg, i;
-	char *devpath;
+	char *devpath, *ib;
 	u_int32_t bsize = DEV_BSIZE;
 	struct disklabel label;
 
@@ -203,17 +202,14 @@ fsirand(char *device)
 
 	/* XXX - should really cap buffer at 512kb or so */
 	if (sblock->fs_magic == FS_UFS1_MAGIC)
-		ibufsize = sizeof(struct ufs1_dinode) * sblock->fs_ipg;
+		isize = sizeof(struct ufs1_dinode);
 	else
-		ibufsize = sizeof(struct ufs2_dinode) * sblock->fs_ipg;
-	if (oldibufsize < ibufsize) {
-		char *ib;
+		isize = sizeof(struct ufs2_dinode);
 
-		if ((ib = realloc(inodebuf, ibufsize)) == NULL)
-			errx(1, "Can't allocate memory for inode buffer");
-		inodebuf = ib;
-		oldibufsize = ibufsize;
-	}
+	if ((ib = reallocarray(inodebuf, sblock->fs_ipg, isize)) == NULL)
+		errx(1, "Can't allocate memory for inode buffer");
+	inodebuf = ib;
+	ibufsize = sblock->fs_ipg * isize;
 
 	if (printonly && (sblock->fs_id[0] || sblock->fs_id[1])) {
 		if (sblock->fs_inodefmt >= FS_44INODEFMT && sblock->fs_id[0]) {
