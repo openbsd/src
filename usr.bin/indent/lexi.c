@@ -1,4 +1,4 @@
-/*	$OpenBSD: lexi.c,v 1.16 2013/11/26 13:21:17 deraadt Exp $	*/
+/*	$OpenBSD: lexi.c,v 1.17 2014/10/11 03:05:48 doug Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -584,7 +584,7 @@ addkey(char *key, int val)
 	int newspecials = maxspecials + (maxspecials >> 2);
 	struct templ *specials2;
 
-	specials2 = realloc(specials, newspecials * sizeof specials[0]);
+	specials2 = reallocarray(specials, newspecials, sizeof(specials[0]));
 	if (specials2 == NULL)
 	    err(1, NULL);
 	specials = specials2;
