@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.22 2013/11/15 22:20:04 millert Exp $	*/
+/* $OpenBSD: join.c,v 1.23 2014/10/11 04:31:55 doug Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -312,8 +312,8 @@ slurpit(INPUT *F)
 			LINE *p;
 			u_long newsize = F->setalloc + 50;
 			cnt = F->setalloc;
-			if ((p = realloc(F->set,
-			    newsize * sizeof(LINE))) == NULL)
+			if ((p = reallocarray(F->set, newsize, sizeof(LINE)))
+			    == NULL)
 				err(1, NULL);
 			F->set = p;
 			F->setalloc = newsize;
@@ -371,8 +371,8 @@ slurpit(INPUT *F)
 			if (lp->fieldcnt == lp->fieldalloc) {
 				char **p;
 				u_long newsize = lp->fieldalloc + 50;
-				if ((p = realloc(lp->fields,
-				    newsize * sizeof(char *))) == NULL)
+				if ((p = reallocarray(lp->fields, newsize,
+				    sizeof(char *))) == NULL)
 					err(1, NULL);
 				lp->fields = p;
 				lp->fieldalloc = newsize;
@@ -538,8 +538,8 @@ fieldarg(char *option)
 		if (olistcnt == olistalloc) {
 			OLIST *p;
 			u_long newsize = olistalloc + 50;
-			if ((p = realloc(olist,
-			    newsize * sizeof(OLIST))) == NULL)
+			if ((p = reallocarray(olist, newsize, sizeof(OLIST)))
+			    == NULL)
 				err(1, NULL);
 			olist = p;
 			olistalloc = newsize;
