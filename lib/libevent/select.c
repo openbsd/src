@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.c,v 1.17 2013/08/24 10:46:48 dlg Exp $	*/
+/*	$OpenBSD: select.c,v 1.18 2014/10/11 04:07:39 doug Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -233,12 +233,12 @@ select_resize(struct selectop *sop, int fdsz)
 	if ((writeset_out = realloc(sop->event_writeset_out, fdsz)) == NULL)
 		goto error;
 	sop->event_writeset_out = writeset_out;
-	if ((r_by_fd = realloc(sop->event_r_by_fd,
-		 n_events*sizeof(struct event*))) == NULL)
+	if ((r_by_fd = reallocarray(sop->event_r_by_fd, n_events,
+	    sizeof(struct event *))) == NULL)
 		goto error;
 	sop->event_r_by_fd = r_by_fd;
-	if ((w_by_fd = realloc(sop->event_w_by_fd,
-		 n_events * sizeof(struct event*))) == NULL)
+	if ((w_by_fd = reallocarray(sop->event_w_by_fd, n_events,
+	    sizeof(struct event *))) == NULL)
 		goto error;
 	sop->event_w_by_fd = w_by_fd;
 
