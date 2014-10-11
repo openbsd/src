@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.10 2011/07/08 05:41:11 nicm Exp $	*/
+/*	$OpenBSD: readline.c,v 1.11 2014/10/11 04:24:06 doug Exp $	*/
 /*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
@@ -1091,12 +1091,13 @@ history_tokenize(const char *str)
 
 		if (idx + 2 >= size) {
 			char **nresult;
-			size <<= 1;
-			nresult = realloc(result, size * sizeof(char *));
+			nresult = reallocarray(result, size,
+			    2 * sizeof(char *));
 			if (nresult == NULL) {
 				free(result);
 				return NULL;
 			}
+			size *= 2;
 			result = nresult;
 		}
 		len = i - start;
