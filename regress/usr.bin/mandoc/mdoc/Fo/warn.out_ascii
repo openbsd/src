@@ -1,0 +1,13 @@
+FO-WARN(1)                  General Commands Manual                 FO-WARN(1)
+
+NNAAMMEE
+     FFoo--wwaarrnn - warnings related to function blocks
+
+SSYYNNOOPPSSIISS
+     _d_o_u_b_l_e
+     ssiinn(())(_d_o_u_b_l_e _x);
+
+     _d_o_u_b_l_e
+     aattaann22(_d_o_u_b_l_e _y_, _d_o_u_b_l_e _x);
+
+OpenBSD                        October 11, 2014                        OpenBSD

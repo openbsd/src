@@ -1,0 +1,2 @@
+mandoc: warn.in:9:8: WARNING: parenthesis in function name: sin()
+mandoc: warn.in:13:19: WARNING: comma in function argument: double y, double x

@@ -1,0 +1,13 @@
+.Dd October 11, 2014
+.Dt FO-WARN 1
+.Os OpenBSD
+.Sh NAME
+.Nm Fo-warn
+.Nd warnings related to function blocks
+.Sh SYNOPSIS
+.Ft double
+.Fo sin()
+.Fa "double x"
+.Fc
+.Ft double
+.Fn atan2 "double y, double x"
