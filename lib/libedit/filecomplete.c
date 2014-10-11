@@ -1,4 +1,4 @@
-/*	$OpenBSD: filecomplete.c,v 1.2 2011/07/07 05:40:42 okan Exp $	*/
+/*	$OpenBSD: filecomplete.c,v 1.3 2014/10/11 03:10:06 doug Exp $	*/
 /*	$NetBSD: filecomplete.c,v 1.22 2010/12/02 04:42:46 dholland Exp $	*/
 
 /*-
@@ -284,8 +284,8 @@ completion_matches(const char *text, char *(*genfunc)(const char *, int))
 			char **nmatch_list;
 			while (matches + 3 >= match_list_len)
 				match_list_len <<= 1;
-			nmatch_list = realloc(match_list,
-			    match_list_len * sizeof(char *));
+			nmatch_list = reallocarray(match_list,
+			    match_list_len, sizeof(char *));
 			if (nmatch_list == NULL) {
 				free(match_list);
 				return NULL;
