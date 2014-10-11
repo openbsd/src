@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSign.pm,v 1.6 2014/01/25 10:18:38 espie Exp $
+# $OpenBSD: PkgSign.pm,v 1.7 2014/10/11 08:41:06 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -39,7 +39,7 @@ sub handle_options
 			    $state->{source} = shift;
 		    },
 	};
-	$state->SUPER::handle_options('Cj:o:S:',
+	$state->SUPER::handle_options('Cij:o:S:',
 	    '[-Cv] [-D name[=value]] -s x509|signify [-s cert] -s priv',
 	    '[-o dir] [-S source] [pkg-name...]');
     	if (!defined $state->{signer}) {
@@ -86,6 +86,14 @@ sub sign_existing_package
 	my $output = $state->{output_dir};
 	my $dir = $pkg->info;
 	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
+	my $dest = $output.'/'.$plist->pkgname.".tgz";
+	# In incremental mode, don't bother signing known packages
+	if ($state->opt('i')) {
+		if (-f $dest) {
+			$pkg->wipe_info;
+			return;
+	    	}
+	}
 	$plist->set_infodir($dir);
 	$state->add_signature($plist);
 	$plist->save;
@@ -122,7 +130,7 @@ sub sign_existing_package
 
 	$pkg->wipe_info;
 	chmod((0666 & ~umask), $tmp);
-	rename($tmp, $output.'/'.$plist->pkgname.".tgz") or
+	rename($tmp, $dest) or
 	    $state->fatal("Can't create final signed package: #1", $!);
 	if ($state->opt('C')) {
 		$state->system(sub {

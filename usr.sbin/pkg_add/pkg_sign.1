@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_sign.1,v 1.6 2014/09/11 23:57:33 schwarze Exp $
+.\"	$OpenBSD: pkg_sign.1,v 1.7 2014/10/11 08:41:06 espie Exp $
 .\" Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 11 2014 $
+.Dd $Mdocdate: October 11 2014 $
 .Dt PKG_SIGN 1
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Sh SYNOPSIS
 .Nm pkg_sign
 .Bk -words
-.Op Fl Cv
+.Op Fl Cvi
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Op Fl j Ar maxjobs
 .Op Fl o Ar dir
@@ -59,6 +59,12 @@ and
 .Fl D Ar nosig
 also apply with the same semantics as
 .Xr pkg_add 1 .
+.It Fl i
+Incremental mode.
+Ignore packages that are already in the output repository.
+Note that, in verbose mode, they will still show up as
+.Sq Signed
+in the listing.
 .It Fl j Ar maxjobs
 Sign existing packages in parallel.
 .It Fl o Ar dir
