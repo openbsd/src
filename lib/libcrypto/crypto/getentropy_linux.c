@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.35 2014/08/28 01:00:57 bcook Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.36 2014/10/11 16:44:05 bcook Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -49,6 +49,7 @@
 #include <time.h>
 #include <openssl/sha.h>
 
+#include <linux/types.h>
 #include <linux/random.h>
 #include <linux/sysctl.h>
 #ifdef HAVE_GETAUXVAL
