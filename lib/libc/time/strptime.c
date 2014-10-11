@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.17 2014/10/02 23:50:11 doug Exp $ */
+/*	$OpenBSD: strptime.c,v 1.18 2014/10/11 02:21:27 doug Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 
 /*-
@@ -56,9 +56,7 @@
 #define FIELD_TM_YEAR	(1 << 4)
 
 static char gmt[] = { "GMT" };
-#ifdef TM_ZONE
 static char utc[] = { "UTC" };
-#endif
 /* RFC-822/RFC-2822 */
 static const char * const nast[5] = {
        "EST",    "CST",    "MST",    "PST",    "\0\0\0"
@@ -407,6 +405,15 @@ literal:
 #endif
 #ifdef TM_ZONE
 				tm->TM_ZONE = gmt;
+#endif
+				bp += 3;
+			} else if (strncmp((const char *)bp, utc, 3) == 0) {
+				tm->tm_isdst = 0;
+#ifdef TM_GMTOFF
+				tm->TM_GMTOFF = 0;
+#endif
+#ifdef TM_ZONE
+				tm->TM_ZONE = utc;
 #endif
 				bp += 3;
 			} else {
