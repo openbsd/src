@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.34 2013/09/29 15:42:25 deraadt Exp $	*/
+/*	$OpenBSD: run.c,v 1.35 2014/10/11 03:07:29 doug Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1738,7 +1738,7 @@ FILE *openfile(int a, const char *us)
 	if (i >= nfiles) {
 		struct files *nf;
 		int nnf = nfiles + FOPEN_MAX;
-		nf = realloc(files, nnf * sizeof(*nf));
+		nf = reallocarray(files, nnf, sizeof(*nf));
 		if (nf == NULL)
 			FATAL("cannot grow files for %s and %d files", s, nnf);
 		memset(&nf[nfiles], 0, FOPEN_MAX * sizeof(*nf));
