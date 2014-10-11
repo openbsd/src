@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.265 2014/10/11 16:28:06 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.266 2014/10/11 17:12:30 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -129,10 +129,6 @@ void fill_kproc(struct process *, struct kinfo_proc *, struct proc *, int);
 int (*cpu_cpuspeed)(int *);
 void (*cpu_setperf)(int);
 int perflevel = 100;
-#ifndef SMALL_KERNEL
-struct timeout setperf_to;
-void auto_setperf(void *);
-#endif
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory
@@ -257,65 +253,6 @@ int securelevel = -1;
 #else
 int securelevel;
 #endif
-
-#ifndef SMALL_KERNEL
-void
-auto_setperf(void *v)
-{
-	static uint64_t *idleticks, *totalticks;
-
-	int i, j;
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-
-	int speedup;
-	uint64_t idle, total, allidle, alltotal;
-
-	if (!auto_perfctl)
-		return;
-	if (!idleticks)
-		if (!(idleticks = malloc(sizeof(*idleticks) * ncpusfound,
-		    M_DEVBUF, M_NOWAIT | M_ZERO)))
-			return;
-	if (!totalticks)
-		if (!(totalticks = malloc(sizeof(*totalticks) * ncpusfound,
-		    M_DEVBUF, M_NOWAIT | M_ZERO))) {
-			free(idleticks, M_DEVBUF, 0);
-			return;
-		}
-	alltotal = allidle = 0;
-	j = 0;
-	speedup = 0;
-	CPU_INFO_FOREACH(cii, ci) {
-		total = 0;
-		for (i = 0; i < CPUSTATES; i++) {
-			total += ci->ci_schedstate.spc_cp_time[i];
-		}
-		total -= totalticks[j];
-		idle = ci->ci_schedstate.spc_cp_time[CP_IDLE] - idleticks[j];
-		if (idle < total / 3)
-			speedup = 1;
-		alltotal += total;
-		allidle += idle;
-		idleticks[j] += idle;
-		totalticks[j] += total;
-
-		j++;
-	}
-	if (allidle < alltotal / 2)
-		speedup = 1;
-
-	if (speedup && perflevel != 100) {
-		perflevel = 100;
-		cpu_setperf(perflevel);
-	} else if (!speedup && perflevel != 0) {
-		perflevel = 0;
-		cpu_setperf(perflevel);
-	}
-	
-	timeout_add_msec(&setperf_to, 100);
-}
-#endif /* !SMALL_KERNEL */
 
 /*
  * kernel related system variables.
@@ -671,7 +608,7 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
 	extern char machine[], cpu_model[];
-	int err, cpuspeed, newperf;
+	int err, cpuspeed;
 
 	/* all sysctl names at this level except sensors are terminal */
 	if (name[0] != HW_SENSORS && namelen != 1)
@@ -727,26 +664,15 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case HW_SETPERF:
 		if (!cpu_setperf)
 			return (EOPNOTSUPP);
-		newperf = perflevel;
-		err = sysctl_int(oldp, oldlenp, newp, newlen, &newperf);
+		err = sysctl_int(oldp, oldlenp, newp, newlen, &perflevel);
 		if (err)
 			return err;
-#ifndef SMALL_KERNEL
-		if (newp) {
-			if (newperf == -1) {
-				auto_perfctl = 1;
-				timeout_add_msec(&setperf_to, 200);
-			} else {
-				auto_perfctl = 0;
-				if (newperf > 100)
-					newperf = 100;
-				if (newperf < 0)
-					newperf = 0;
-				perflevel = newperf;
-				cpu_setperf(newperf);
-			}
-		}
-#endif /* !SMALL_KERNEL */
+		if (perflevel > 100)
+			perflevel = 100;
+		if (perflevel < 0)
+			perflevel = 0;
+		if (newp)
+			cpu_setperf(perflevel);
 		return (0);
 	case HW_VENDOR:
 		if (hw_vendor)

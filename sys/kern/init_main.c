@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.219 2014/10/11 16:28:06 tedu Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.220 2014/10/11 17:12:30 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -115,11 +115,6 @@ struct	vmspace vmspace0;
 struct	sigacts sigacts0;
 struct	process *initprocess;
 struct	proc *reaperproc;
-
-#ifndef SMALL_KERNEL
-extern struct timeout setperf_to;
-void auto_setperf(void *);
-#endif
 
 int	cmask = CMASK;
 extern	struct user *proc0paddr;
@@ -547,10 +542,6 @@ main(void *framep)
 	 */
 	start_init_exec = 1;
 	wakeup((void *)&start_init_exec);
-
-#ifndef SMALL_KERNEL
-	timeout_set(&setperf_to, auto_setperf, NULL);
-#endif
 
         /*
          * proc0: nothing to do, back to sleep
