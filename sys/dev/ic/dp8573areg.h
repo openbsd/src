@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8573areg.h,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: dp8573areg.h,v 1.2 2014/10/11 18:40:21 miod Exp $	*/
 /*	$NetBSD: dp8573areg.h,v 1.1 2009/02/12 06:33:57 rumble Exp $	*/
 
 /*
@@ -94,7 +94,7 @@
 #define DP8573A_YEAR		0x0b	/* Years */
 #define DP8573A_DOW		0x0e	/* Day of Week */
 
-/* Comparsion Registers */
+/* Comparison Registers */
 #define DP8573A_CMP_SEC		0x13	/* Seconds */ 
 #define DP8573A_CMP_MIN		0x14	/* Minutes */
 #define DP8573A_CMP_HOUR	0x15	/* Hours */
