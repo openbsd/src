@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.22 2013/08/18 16:32:24 guenther Exp $	*/
+/*	$OpenBSD: bog.c,v 1.23 2014/10/11 03:58:11 doug Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -327,8 +327,8 @@ playgame(void)
 
 				if (npwords == maxpwords - 1) {
 					maxpwords += MAXPWORDS;
-					pword = realloc(pword,
-					    maxpwords * sizeof(char *));
+					pword = reallocarray(pword, maxpwords,
+					    sizeof(char *));
 					if (pword == NULL) {
 						cleanup();
 						errx(1, "%s", strerror(ENOMEM));
@@ -555,7 +555,7 @@ checkdict(void)
 			continue;
 		if (nmwords == maxmwords - 1) {
 			maxmwords += MAXMWORDS;
-			mword = realloc(mword, maxmwords * sizeof(char *));
+			mword = reallocarray(mword, maxmwords, sizeof(char *));
 			if (mword == NULL) {
 				cleanup();
 				errx(1, "%s", strerror(ENOMEM));
