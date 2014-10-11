@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.41 2014/10/10 15:59:36 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.42 2014/10/11 13:42:49 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,7 +27,7 @@ _rc_parse_conf
 
 usage()
 {
-	_rc_err "usage: ${0##*/} [-df] enable|disable|status|action
+	_rc_err "usage: ${0##*/} [-df] enable|disable|status|default|action
              [service | daemon [flags [arguments]]]"
 }
 
@@ -69,17 +69,37 @@ svc_default_enabled()
 	return ${_ret}
 }
 
-# for security reason and to prevent namespace pollution, only call in a
-# subshell against base system daemons or disabled package scripts
+# to prevent namespace pollution, only call in a subshell
 svc_default_enabled_flags()
 {
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	FUNCS_ONLY=1
-	rc_cmd() { }
-	. /etc/rc.d/${_svc} >/dev/null 2>&1
-	[ -n "${daemon_flags}" ] && print -r -- ${daemon_flags}
+	if svc_is_special ${_svc}; then
+		svc_default_enabled ${_svc} && echo "YES" || echo "NO"
+	else
+		FUNCS_ONLY=1
+		rc_cmd() { }
+		. /etc/rc.d/${_svc} >/dev/null 2>&1
+		[ -n "${daemon_flags}" ] && print -r -- "${daemon_flags}"
+	fi
+}
+
+svc_get_defaults()
+{
+	local _i _svc=$1
+
+	if [ -n "${_svc}" ]; then
+		print -r -- "$(svc_default_enabled_flags ${_svc})"
+		svc_default_enabled ${_svc}
+	else
+		for _i in $(ls -A /etc/rc.d | grep -v rc.subr); do
+			echo "${_i}_flags=$(svc_default_enabled_flags ${_i})"
+		done
+		for _i in ${_special_services}; do
+			echo "${_i}=$(svc_default_enabled_flags ${_i})"
+		done
+	fi
 }
 
 svc_get_flags()
@@ -102,7 +122,7 @@ svc_get_flags()
 		[ -z "${daemon_flags}" ] && \
 			daemon_flags="$(svc_default_enabled_flags ${_svc})"
 
-		print -r -- ${daemon_flags} | sed '/^$/d'
+		print -r -- "${daemon_flags}" | sed '/^$/d'
 	fi
 }
 
@@ -267,7 +287,7 @@ if [ -n "$svc" ]; then
 	if ! svc_is_avail $svc; then
 		_rc_err "${0##*/}: service $svc does not exist" 2
 	fi
-elif [ "$action" != "status" ]; then
+elif [ "$action" != "default" -a "$action" != "status" ] ; then
 	usage
 fi
 
@@ -288,6 +308,9 @@ if [ -n "$flag" ]; then
 fi
 
 case $action in
+	default)
+		svc_get_defaults $svc
+		;;
 	disable)
 		needs_root $action
 		if ! svc_is_base $svc && ! svc_is_special $svc; then

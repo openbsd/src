@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.8 2014/08/31 06:52:46 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.9 2014/10/11 13:42:49 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 31 2014 $
+.Dd $Mdocdate: October 11 2014 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Nm rcctl
 .Op Fl df
 .Sm off
-.Cm enable | disable | status | Ar action
+.Cm enable | disable | status | default | Ar action
 .Sm on
 .Op Ar service | daemon Op Cm flags Op Ar arguments
 .Sh DESCRIPTION
@@ -75,6 +75,10 @@ Without an argument, display all services and
 .Ar daemon Ns _flags
 with their values in a format compatible with
 .Xr rc.conf 8 .
+.It Cm default Op Ar service | daemon
+Like
+.Cm status
+but return the default values instead of the configured ones.
 .It Oo Fl df Oc Ar action daemon
 Run the
 .Xr rc.d 8
