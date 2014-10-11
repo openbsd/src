@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpclock.c,v 1.2 2012/10/03 22:46:09 miod Exp $	*/
+/*	$OpenBSD: dpclock.c,v 1.3 2014/10/11 18:41:18 miod Exp $	*/
 /*	$NetBSD: dpclock.c,v 1.3 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ dpclock_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dpclock_softc *sc = (void *)self;
 	struct hpc_attach_args *haa = aux;
-	uint8_t st, r;
+	uint8_t st, mode, pflag;
 
 	sc->sc_iot = haa->ha_st;
 	if (bus_space_subregion(haa->ha_st, haa->ha_sh, haa->ha_devoff,
@@ -193,18 +193,34 @@ dpclock_attach(struct device *parent, struct device *self, void *aux)
 
 	st = dpclock_read(sc, DP8573A_STATUS);
 	dpclock_write(sc, DP8573A_STATUS, st | DP8573A_STATUS_REGSEL);
-	r = dpclock_read(sc, DP8573A_RT_MODE);
-	if ((r & DP8573A_RT_MODE_CLKSS) == 0) {
+	mode = dpclock_read(sc, DP8573A_RT_MODE);
+	if ((mode & DP8573A_RT_MODE_CLKSS) == 0) {
 		printf(": clock stopped");
-		dpclock_write(sc, DP8573A_RT_MODE, r | DP8573A_RT_MODE_CLKSS);
+		dpclock_write(sc, DP8573A_RT_MODE,
+		    mode | DP8573A_RT_MODE_CLKSS);
 		dpclock_write(sc, DP8573A_INT0_CTL, 0);
 		dpclock_write(sc, DP8573A_INT1_CTL, DP8573A_INT1_CTL_PWRINT);
 	}
 	dpclock_write(sc, DP8573A_STATUS, st & ~DP8573A_STATUS_REGSEL);
-	r = dpclock_read(sc, DP8573A_PFLAG);
-	if (r & DP8573A_PFLAG_TESTMODE) {
+	pflag = dpclock_read(sc, DP8573A_PFLAG);
+	if (pflag & DP8573A_PFLAG_OFSS) {
+		dpclock_write(sc, DP8573A_PFLAG, pflag);
+		pflag = dpclock_read(sc, DP8573A_PFLAG);
+		if (pflag & DP8573A_PFLAG_OFSS) {
+			/*
+			 * If the `oscillator failure' condition sticks,
+			 * the battery needs replacement and the clock
+			 * is not ticking. Do not claim sys_tod.
+			 */
+			printf("%s oscillator failure\n",
+			    (mode & DP8573A_RT_MODE_CLKSS) == 0 ?  "," : ":");
+			return;
+		}
+	}
+	if (pflag & DP8573A_PFLAG_TESTMODE) {
 		dpclock_write(sc, DP8573A_RAM_1F, 0);
-		dpclock_write(sc, DP8573A_PFLAG, r & ~DP8573A_PFLAG_TESTMODE);
+		dpclock_write(sc, DP8573A_PFLAG,
+		    pflag & ~DP8573A_PFLAG_TESTMODE);
 	}
 
 	printf("\n");
@@ -228,7 +244,7 @@ dpclock_gettime(void *cookie, time_t base, struct tod_time *ct)
 	dpclock_write(sc, DP8573A_TIMESAVE_CTL, i | DP8573A_TIMESAVE_CTL_EN);
 	dpclock_write(sc, DP8573A_TIMESAVE_CTL, i);
 
-	for (i = 0; i < DP8573A_NREG; i++)
+	for (i = 0; i < nitems(regs); i++)
 		regs[i] = dpclock_read(sc, i);
 
 	ct->sec = frombcd(regs[DP8573A_SAVE_SEC]);
@@ -271,7 +287,7 @@ dpclock_settime(void *cookie, struct tod_time *ct)
 	dpclock_write(sc, DP8573A_TIMESAVE_CTL, r | DP8573A_TIMESAVE_CTL_EN);
 	dpclock_write(sc, DP8573A_TIMESAVE_CTL, r);
 
-	for (i = 0; i < DP8573A_NREG; i++)
+	for (i = 0; i < nitems(regs); i++)
 		regs[i] = dpclock_read(sc, i);
 
 	regs[DP8573A_SUBSECOND] = 0;
