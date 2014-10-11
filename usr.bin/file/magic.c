@@ -1,4 +1,4 @@
-/* $OpenBSD: magic.c,v 1.8 2009/10/27 23:59:37 deraadt Exp $ */
+/* $OpenBSD: magic.c,v 1.9 2014/10/11 03:06:44 doug Exp $ */
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -106,7 +106,8 @@ magic_open(int flags)
 
 	ms->o.buf = ms->o.pbuf = NULL;
 
-	ms->c.li = malloc((ms->c.len = 10) * sizeof(*ms->c.li));
+	ms->c.len = 10;
+	ms->c.li = reallocarray(NULL, ms->c.len, sizeof(*ms->c.li));
 	if (ms->c.li == NULL)
 		goto free;
 	
