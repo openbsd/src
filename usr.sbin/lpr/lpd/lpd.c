@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.54 2014/07/12 02:56:01 deraadt Exp $ */
+/*	$OpenBSD: lpd.c,v 1.55 2014/10/11 03:01:58 doug Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -777,7 +777,7 @@ socksetup(int af, int options, const char *port)
 			if (socks)
 				*socks = 0; /* num of sockets ctr at start */
 		} else {
-			newsocks = realloc(socks, (maxs + 1) * sizeof(int));
+			newsocks = reallocarray(socks, maxs + 1, sizeof(int));
 			if (newsocks)
 				socks = newsocks;
 			else {
