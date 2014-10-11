@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.28 2013/12/04 02:18:05 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.29 2014/10/11 02:29:24 doug Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -75,7 +75,7 @@ my_svc_run(void)
 
 	for (;;) {
 		if (svc_max_pollfd > saved_max_pollfd) {
-			newp = realloc(pfd, sizeof(*pfd) * svc_max_pollfd);
+			newp = reallocarray(pfd, svc_max_pollfd, sizeof(*pfd));
 			if (newp == NULL) {
 				free(pfd);
 				perror("svc_run: - realloc failed");
