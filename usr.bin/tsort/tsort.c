@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.23 2014/05/12 19:11:20 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.24 2014/10/11 03:57:13 deraadt Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -149,7 +149,7 @@ static void enqueue(struct array *, struct node *);
 static void *hash_calloc(size_t, size_t, void *);
 static void hash_free(void *, void *);
 static void* entry_alloc(size_t, void *);
-static void *emalloc(size_t);
+static void *ereallocarray(void *, size_t, size_t);
 static void *emem(void *);
 #define DEBUG_TRAVERSE 0
 static struct ohash_info node_info = {
@@ -187,13 +187,13 @@ hash_free(void *p, void *u UNUSED)
 static void *
 entry_alloc(size_t s, void *u UNUSED)
 {
-	return emalloc(s);
+	return ereallocarray(NULL, 1, s);
 }
 
 static void *
-emalloc(size_t s)
+ereallocarray(void *p, size_t n, size_t s)
 {
-	return emem(malloc(s));
+	return emem(reallocarray(p, n, s));
 }
 
 
@@ -290,7 +290,7 @@ insert_arc(struct node *a, struct node *b)
 			return;
 	}
 	b->refs++;
-	l = emalloc(sizeof(struct link));
+	l = ereallocarray(NULL, 1, sizeof(struct link));
 	l->node = b;
 	l->next = a->arcs;
 	a->arcs = l;
@@ -529,8 +529,10 @@ split_nodes(struct ohash *hash, struct array *heap, struct array *remaining)
 	struct node *n;
 	unsigned int i;
 
-	heap->t = emalloc(sizeof(struct node *) * ohash_entries(hash));
-	remaining->t = emalloc(sizeof(struct node *) * ohash_entries(hash));
+	heap->t = ereallocarray(NULL, ohash_entries(hash),
+	    sizeof(struct node *));
+	remaining->t = ereallocarray(NULL, ohash_entries(hash),
+	    sizeof(struct node *));
 	heap->entries = 0;
 	remaining->entries = 0;
 
