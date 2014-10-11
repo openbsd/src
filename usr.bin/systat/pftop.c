@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.28 2014/05/09 21:03:43 sthen Exp $	 */
+/* $OpenBSD: pftop.c,v 1.29 2014/10/11 04:30:56 doug Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -636,10 +636,11 @@ alloc_buf(int ns)
 
 	if (len >= state_buf_len) {
 		len += NUM_STATE_INC;
-		state_buf = realloc(state_buf, len * sizeof(struct pfsync_state));
-		state_ord = realloc(state_ord, len * sizeof(u_int32_t));
-		state_cache = realloc(state_cache, 
-				      len * sizeof(struct sc_ent *));
+		state_buf = reallocarray(state_buf, len,
+		    sizeof(struct pfsync_state));
+		state_ord = reallocarray(state_ord, len, sizeof(u_int32_t));
+		state_cache = reallocarray(state_cache, len,
+		    sizeof(struct sc_ent *));
 		if (state_buf == NULL || state_ord == NULL ||
 		    state_cache == NULL)
 			err(1, "realloc");
@@ -941,12 +942,12 @@ add_rule_alloc(u_int32_t nr)
 	num_rules += nr;
 
 	if (rules == NULL) {
-		rules = malloc(num_rules * sizeof(struct pf_rule));
+		rules = reallocarray(NULL, num_rules, sizeof(struct pf_rule));
 		if (rules == NULL)
 			err(1, "malloc");
 		alloc_rules = num_rules;
 	} else if (num_rules > alloc_rules) {
-		rules = realloc(rules, num_rules * sizeof(struct pf_rule));
+		rules = reallocarray(rules, num_rules, sizeof(struct pf_rule));
 		if (rules == NULL)
 			err(1, "realloc");
 		alloc_rules = num_rules;
