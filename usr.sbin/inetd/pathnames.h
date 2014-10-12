@@ -27,10 +27,9 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	5.3 (Berkeley) 6/1/90
- *	$Id: pathnames.h,v 1.2 2003/06/02 23:36:53 millert Exp $
+ *	$Id: pathnames.h,v 1.3 2014/10/12 08:55:25 dlg Exp $
  */
 
 #include <paths.h>
 
 #define	_PATH_INETDCONF	"/etc/inetd.conf"
-#define _PATH_INETDPID	"/var/run/inetd.pid"

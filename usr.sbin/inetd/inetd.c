@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.138 2014/06/17 03:12:37 lteo Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.139 2014/10/12 08:55:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -271,7 +271,6 @@ void	retry(int);
 void	doretry(void);
 void	die(int);
 void	dodie(void);
-void	logpid(void);
 void	spawn(struct servtab *, int);
 int	gettcp(struct servtab *);
 int	setconfig(void);
@@ -385,7 +384,6 @@ main(int argc, char *argv[])
 	}
 
 	openlog("inetd", LOG_PID | LOG_NOWAIT, LOG_DAEMON);
-	logpid();
 
 	if (getrlimit(RLIMIT_NOFILE, &rlim_nofile) < 0) {
 		syslog(LOG_ERR, "getrlimit: %m");
@@ -947,7 +945,6 @@ dodie(void)
 		}
 		(void)close(sep->se_fd);
 	}
-	(void)unlink(_PATH_INETDPID);
 	exit(0);
 }
 
@@ -1554,17 +1551,6 @@ inetd_setproctitle(char *a, int s)
 			setproctitle("-%s [?]", a);
 	} else
 		setproctitle("-%s", a);
-}
-
-void
-logpid(void)
-{
-	FILE *fp;
-
-	if ((fp = fopen(_PATH_INETDPID, "w")) != NULL) {
-		fprintf(fp, "%ld\n", (long)getpid());
-		(void)fclose(fp);
-	}
 }
 
 int
