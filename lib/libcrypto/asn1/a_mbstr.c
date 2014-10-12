@@ -1,4 +1,4 @@
-/* $OpenBSD: a_mbstr.c,v 1.20 2014/09/21 12:14:34 miod Exp $ */
+/* $OpenBSD: a_mbstr.c,v 1.21 2014/10/12 20:47:12 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -104,7 +104,7 @@ ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 	int nchar;
 	int (*cpyfunc)(unsigned long, void *) = NULL;
 
-	if (len == -1)
+	if (len < 0)
 		len = strlen((const char *)in);
 	if (!mask)
 		mask = DIRSTRING_TYPE;
