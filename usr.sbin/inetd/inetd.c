@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.139 2014/10/12 08:55:25 dlg Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.140 2014/10/12 09:36:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -1745,9 +1745,7 @@ machtime(void)
 
 /* ARGSUSED */
 void
-machtime_stream(s, sep)
-	int s;
-	struct servtab *sep;
+machtime_stream(int s, struct servtab *sep)
 {
 	u_int32_t result;
 
