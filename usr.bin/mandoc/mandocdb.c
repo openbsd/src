@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.120 2014/09/09 19:33:55 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.121 2014/10/12 20:32:16 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -305,6 +305,7 @@ static	const struct mdoc_handler mdocs[MDOC_MAX] = {
 	{ NULL, 0 },  /* sp */
 	{ NULL, 0 },  /* %U */
 	{ NULL, 0 },  /* Ta */
+	{ NULL, 0 },  /* ll */
 };
 
 
