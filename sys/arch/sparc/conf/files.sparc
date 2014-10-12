@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.95 2014/05/30 13:59:20 kettenis Exp $
+#	$OpenBSD: files.sparc,v 1.96 2014/10/12 19:21:41 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -47,11 +47,11 @@ file	arch/sparc/sparc/clock.c		!solbourne
 
 device	power
 attach	power at obio
-file	arch/sparc/dev/power.c			power needs-count
+file	arch/sparc/dev/power.c			power needs-flag
 
 device	led
 attach	led at mainbus, obio
-file	arch/sparc/dev/led.c			led needs-count
+file	arch/sparc/dev/led.c			led needs-flag
 
 device	cpu
 attach	cpu at mainbus
