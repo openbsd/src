@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.21 2014/10/10 05:43:35 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.22 2014/10/12 20:39:46 miod Exp $
 
 machine		hppa64
 maxusers	4
@@ -26,11 +26,11 @@ mainbus0	at root
 
 mem*		at mainbus0 flags 0x00	# /dev/*mem and memory controller
 pdc0		at mainbus0		# PDC/IODC wrapper for boot console
-power0		at mainbus0		# power/fail manager (iv 30)
+#power0		at mainbus0		# power/fail manager (iv 30)
 cpu*		at mainbus0		# HP PA-RISC cpu
-plut0		at mainbus0		# Astro Runway-Ropes, MIOC and IOA
+astro0		at mainbus0		# Astro Runway-Ropes, MIOC and IOA
 
-elroy*		at plut0
+elroy*		at astro0
 pci*		at elroy?
 
 ppb*		at pci?

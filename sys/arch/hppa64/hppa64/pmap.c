@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 2012/06/03 13:28:40 jsing Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.24 2014/10/12 20:39:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -17,7 +17,9 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef SMALL_KERNEL
 #define	PMAPDEBUG
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +255,7 @@ static __inline void
 pmap_pte_set(volatile pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 {
 	DPRINTF(PDB_FOLLOW|PDB_VP,
-	    ("pmap_pte_set(%p, 0x%lx, 0x%lx)\n", pde, va, pte));
+	    ("pmap_pte_set(%p, 0x%lx, 0x%lx)\n", pde, va, (long)pte));
 
 	pde[(va & PTE_MASK) >> PTE_SHIFT] = pte;
 }
@@ -309,8 +311,8 @@ pmap_dump_table(pa_space_t space, vaddr_t sva)
 		if (!(pte = pmap_pte_get(pde, va)))
 			continue;
 
-		printf("0x%08lx-0x%08lx:%b\n",
-		    va, PTE_PAGE(pte), PTE_GETBITS(pte), PTE_BITS);
+		printf("0x%08lx-0x%08llx:%lb\n",
+		    va, PTE_PAGE(pte), (long)PTE_GETBITS(pte), PTE_BITS);
 	}
 }
 
@@ -460,7 +462,7 @@ printf("pa 0x%lx tpa 0x%lx\n", pa, tpa);
 		epde = pde + (PTE_MASK >> PTE_SHIFT) + 1;
 		if (pa + (PTE_MASK + (1 << PTE_SHIFT)) > tpa)
 			epde = pde + ((tpa & PTE_MASK) >> PTE_SHIFT);
-printf("pde %p epde %p pte 0x%lx\n", pde, epde, pte);
+printf("pde %p epde %p pte 0x%lx\n", pde, epde, (long)pte);
 		for (pde += (pa & PTE_MASK) >> PTE_SHIFT; pde < epde;)
 			*pde++ = pte;
 		pa += PTE_MASK + (1 << PTE_SHIFT);
@@ -480,6 +482,7 @@ pmap_bootstrap(vaddr_t vstart)
 
 	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_bootstrap(0x%lx)\n", vstart));
 
+	uvmexp.pagesize = PAGE_SIZE;
 	uvm_setpagesize();
 
 	hppa_prot[UVM_PROT_NONE]  = PTE_ORDER|PTE_ACC_NONE;
@@ -536,7 +539,7 @@ pmap_bootstrap(vaddr_t vstart)
 
 	eaddr = physmem - atop(round_page(MSGBUFSIZE));
 	resvphysmem = atop(addr);
-	DPRINTF(PDB_INIT, ("physmem: 0x%lx - 0x%lx\n", resvphysmem, eaddr));
+	DPRINTF(PDB_INIT, ("physmem: 0x%x - 0x%lx\n", resvphysmem, eaddr));
 	uvm_page_physload(0, physmem, resvphysmem, eaddr, 0);
 }
 
@@ -580,7 +583,7 @@ pmap_init(void)
 
 #ifdef PMAP_STEAL_MEMORY
 vaddr_t
-pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
+pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp, int zero)
 {
 	vaddr_t va;
 	int npg;
@@ -602,7 +605,8 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	vm_physmem[0].end -= npg;
 	vm_physmem[0].avail_end -= npg;
 	va = ptoa(vm_physmem[0].avail_end);
-	bzero((void *)va, size);
+	if (zero)
+		bzero((void *)va, size);
 
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_steal_memory: 0x%lx\n", va));
 
@@ -637,7 +641,7 @@ pmap_growkernel(vaddr_t kva)
 			} else {
 				paddr_t pa;
 
-				pa = pmap_steal_memory(PAGE_SIZE, NULL, NULL);
+				pa = pmap_steal_memory(PAGE_SIZE, NULL, NULL, 1);
 				if (pa)
 					panic("pmap_growkernel: out of memory");
 				pmap_pde_set(pmap_kernel(), va, pa);
@@ -739,7 +743,7 @@ pmap_destroy(struct pmap *pmap)
 				npv = pv->pv_next;
 				if (pv->pv_pmap == pmap) {
 #ifdef PMAPDEBUG
-					printf(" 0x%x", pv->pv_va);
+					printf(" 0x%lx", pv->pv_va);
 #endif
 					pmap_remove(pmap, pv->pv_va,
 					    pv->pv_va + PAGE_SIZE);
@@ -818,7 +822,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if ((pte = pmap_pte_get(pde, va))) {
 
 		DPRINTF(PDB_ENTER,
-		    ("pmap_enter: remapping 0x%lx -> 0x%lx\n", pte, pa));
+		    ("pmap_enter: remapping 0x%lx -> 0x%lx\n", (long)pte, pa));
 
 		pmap_pte_flush(pmap, va, pte);
 		if (wired && !(pte & PTE_WIRED))
@@ -979,7 +983,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 			DPRINTF(PDB_PMAP,
 			    ("pmap_write_protect: va=0x%lx pte=0x%lx\n",
-			    sva,  pte));
+			    sva,  (long)pte));
 			/*
 			 * Determine if mapping is changing.
 			 * If not, nothing to do.
@@ -1078,7 +1082,7 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t clear)
 	pt_entry_t res;
 
 	DPRINTF(PDB_FOLLOW|PDB_BITS,
-	    ("pmap_changebit(%p, %lx, %lx)\n", pg, set, clear));
+	    ("pmap_changebit(%p, %lx, %lx)\n", pg, (long)set, (long)clear));
 
 	simple_lock(&pg->mdpage.pvh_lock);
 	res = pg->mdpage.pvh_attrs = 0;
@@ -1121,7 +1125,7 @@ pmap_testbit(struct vm_page *pg, pt_entry_t bit)
 	struct pv_entry *pve;
 	pt_entry_t pte;
 
-	DPRINTF(PDB_FOLLOW|PDB_BITS, ("pmap_testbit(%p, %lx)\n", pg, bit));
+	DPRINTF(PDB_FOLLOW|PDB_BITS, ("pmap_testbit(%p, %lx)\n", pg, (long)bit));
 
 	simple_lock(&pg->mdpage.pvh_lock);
 	for(pve = pg->mdpage.pvh_list; !(pg->mdpage.pvh_attrs & bit) && pve;

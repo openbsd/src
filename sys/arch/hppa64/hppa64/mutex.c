@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.8 2012/06/05 11:43:41 jsing Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.9 2014/10/12 20:39:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -28,6 +28,7 @@
 #include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 
 #include <machine/intr.h>
 
@@ -36,11 +37,12 @@
 static inline int
 try_lock(struct mutex *mtx)
 {
-	volatile int *lock = &mtx->mtx_lock;
+	volatile int *lock = (int *)(((vaddr_t)mtx->mtx_lock + 0xf) & ~0xf);
 	volatile register_t ret = 0;
 
+	/* Note: lock must be 16-byte aligned. */
 	asm volatile (
-		"ldcw,co 0(%2), %0"
+		"ldcw,co	0(%2), %0"
 		: "=&r" (ret), "+m" (lock)
 		: "r" (lock)
 	);
@@ -49,9 +51,12 @@ try_lock(struct mutex *mtx)
 }
 
 void
-mtx_init(struct mutex *mtx, int wantipl)
+__mtx_init(struct mutex *mtx, int wantipl)
 {
-	mtx->mtx_lock = MUTEX_UNLOCKED;
+	mtx->mtx_lock[0] = 1;
+	mtx->mtx_lock[1] = 1;
+	mtx->mtx_lock[2] = 1;
+	mtx->mtx_lock[3] = 1;
 	mtx->mtx_wantipl = wantipl;
 	mtx->mtx_oldipl = IPL_NONE;
 }
@@ -65,6 +70,7 @@ mtx_enter(struct mutex *mtx)
 		if (mtx->mtx_wantipl != IPL_NONE)
 			s = splraise(mtx->mtx_wantipl);
 		if (try_lock(mtx)) {
+			membar_enter();
 			if (mtx->mtx_wantipl != IPL_NONE)
 				mtx->mtx_oldipl = s;
 			mtx->mtx_owner = curcpu();
@@ -86,6 +92,7 @@ mtx_enter_try(struct mutex *mtx)
  	if (mtx->mtx_wantipl != IPL_NONE)
 		s = splraise(mtx->mtx_wantipl);
 	if (try_lock(mtx)) {
+		membar_enter();
 		if (mtx->mtx_wantipl != IPL_NONE)
 			mtx->mtx_oldipl = s;
 		mtx->mtx_owner = curcpu();
@@ -112,8 +119,12 @@ mtx_leave(struct mutex *mtx)
 #endif
 	s = mtx->mtx_oldipl;
 	mtx->mtx_owner = NULL;
+	membar_exit();
 
-	mtx->mtx_lock = MUTEX_UNLOCKED;
+	mtx->mtx_lock[0] = 1;
+	mtx->mtx_lock[1] = 1;
+	mtx->mtx_lock[2] = 1;
+	mtx->mtx_lock[3] = 1;
 
 	if (mtx->mtx_wantipl != IPL_NONE)
 		splx(s);

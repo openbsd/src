@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.21 2014/09/15 19:08:21 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.22 2014/10/12 20:39:46 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -232,8 +232,9 @@ print_devpath(const char *label, struct pz_device *pz)
 	for (i = 1; i < 6 && pz->pz_layers[i]; i++)
 		printf(".%x", pz->pz_layers[i]);
 
-	printf(" class=%d flags=%b hpa=%p spa=%p io=%p\n", pz->pz_class,
-	    pz->pz_flags, PZF_BITS, pz->pz_hpa, pz->pz_spa, pz->pz_iodc_io);
+	printf(" class=%d flags=%b hpa=0x%08x spa=0x%08x io=0x%08x\n",
+	    pz->pz_class, pz->pz_flags, PZF_BITS, pz->pz_hpa, pz->pz_spa,
+	    pz->pz_iodc_io);
 }
 
 u_int32_t pdc_rt[16 / 4 * sizeof(struct pdc_pat_pci_rt)] PDC_ALIGNMENT;
@@ -374,7 +375,7 @@ pdc_getirt(int *pn)
 		return (NULL);
 	}
 
-printf("num %ld ", pdc_pat_io_num.num);
+printf("num %d ", pdc_pat_io_num.num);
 	*pn = num = pdc_pat_io_num.num;
 	if (num > sizeof(pdc_rt) / sizeof(*rt)) {
 		printf("\nPCI IRT is too big %d\n", num);

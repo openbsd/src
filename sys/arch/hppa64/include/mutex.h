@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.2 2012/06/05 11:43:41 jsing Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.3 2014/10/12 20:39:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -28,28 +28,46 @@
 #ifndef _MACHINE_MUTEX_H_
 #define _MACHINE_MUTEX_H_
 
-#define	MUTEX_LOCKED	0
-#define	MUTEX_UNLOCKED	1
+#define	MUTEX_LOCKED	{ 0, 0, 0, 0 }
+#define	MUTEX_UNLOCKED	{ 1, 1, 1, 1 }
 
+/* Note: mtx_lock must be 16-byte aligned. */
 struct mutex {
-	volatile int mtx_lock;
+	volatile int mtx_lock[4];
 	int mtx_wantipl;
 	int mtx_oldipl;
 	void *mtx_owner;
 };
 
-void mtx_init(struct mutex *, int);
+/*
+ * To prevent lock ordering problems with the kernel lock, we need to
+ * make sure we block all interrupts that can grab the kernel lock.
+ * The simplest way to achieve this is to make sure mutexes always
+ * raise the interrupt priority level to the highest level that has
+ * interrupts that grab the kernel lock.
+ */
+#ifdef MULTIPROCESSOR
+#define __MUTEX_IPL(ipl) \
+    (((ipl) > IPL_NONE && (ipl) < IPL_AUDIO) ? IPL_AUDIO : (ipl))
+#else
+#define __MUTEX_IPL(ipl) (ipl)
+#endif
 
-#define MUTEX_INITIALIZER(ipl) { MUTEX_UNLOCKED, (ipl), 0, NULL }
+#define MUTEX_INITIALIZER(ipl) { MUTEX_UNLOCKED, __MUTEX_IPL((ipl)), 0, NULL }
+
+void __mtx_init(struct mutex *, int);
+#define mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
 
 #ifdef DIAGNOSTIC
 #define MUTEX_ASSERT_LOCKED(mtx) do {					\
-	if ((mtx)->mtx_lock != MUTEX_LOCKED)				\
+	if ((mtx)->mtx_lock[0] == 1 && (mtx)->mtx_lock[1] == 1 &&	\
+	    (mtx)->mtx_lock[2] == 1 && (mtx)->mtx_lock[3] == 1)		\
 		panic("mutex %p not held in %s", (mtx), __func__);	\
 } while (0)
 
 #define MUTEX_ASSERT_UNLOCKED(mtx) do {					\
-	if ((mtx)->mtx_lock[0] != MUTEX_UNLOCKED)			\
+	if ((mtx)->mtx_lock[0] != 1 && (mtx)->mtx_lock[1] != 1 &&	\
+	    (mtx)->mtx_lock[2] != 1 && (mtx)->mtx_lock[3] != 1)		\
 		panic("mutex %p held in %s", (mtx), __func__);		\
 } while (0)
 #else

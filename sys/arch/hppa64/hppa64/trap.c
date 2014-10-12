@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.39 2014/05/11 00:12:44 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.40 2014/10/12 20:39:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -250,7 +250,7 @@ trap(int type, struct trapframe *frame)
 		}
 #else
 		if (type == T_DATALIGN)
-			panic ("trap: %s at 0x%x", tts, va);
+			panic ("trap: %s at 0x%lx", tts, va);
 		else
 			panic ("trap: no debugger for \"%s\" (%d)", tts, type);
 #endif
@@ -378,7 +378,7 @@ trap(int type, struct trapframe *frame)
 			sv.sival_int = va;
 			trapsignal(p, SIGILL, type & ~T_USER, ILL_ILLTRP, sv);
 		} else
-			panic("trap: %s @ 0x%x:0x%x for 0x%x:0x%x irr 0x%08x",
+			panic("trap: %s @ 0x%lx:0x%lx for 0x%x:0x%lx irr 0x%08x",
 			    tts, frame->tf_iisq[0], frame->tf_iioq[0],
 			    space, va, opcode);
 		break;
@@ -635,7 +635,7 @@ syscall(struct trapframe *frame)
 #ifdef DIAGNOSTIC
 	if (curcpu()->ci_cpl != oldcpl) {
 		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
-		    "syscall(0x%x, 0x%x, 0x%x, 0x%x...) EXIT, PID %d\n",
+		    "syscall(0x%x, 0x%lx, 0x%lx, 0x%lx...) EXIT, PID %d\n",
 		    curcpu()->ci_cpl, code, args[0], args[1], args[2],
 		    p->p_pid);
 		curcpu()->ci_cpl = oldcpl;
