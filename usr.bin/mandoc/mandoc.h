@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.104 2014/10/11 21:14:11 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.105 2014/10/12 19:10:56 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -104,6 +104,7 @@ enum	mandocerr {
 	MANDOCERR_BF_NOFONT, /* missing font type, using \fR: Bf */
 	MANDOCERR_BF_BADFONT, /* unknown font type, using \fR: Bf font */
 	MANDOCERR_ARG_STD, /* missing -std argument, adding it: macro */
+	MANDOCERR_EQN_NOBOX, /* missing eqn box, using "": op */
 
 	/* related to bad arguments */
 	MANDOCERR_ARG_QUOTE, /* unterminated quoted argument */
@@ -134,7 +135,6 @@ enum	mandocerr {
 	MANDOCERR_EQNSCOPE, /* equation scope open on exit */
 	MANDOCERR_EQNBADSCOPE, /* overlapping equation scopes */
 	MANDOCERR_EQNEOF, /* unexpected end of equation */
-	MANDOCERR_EQNSYNT, /* equation syntax error */
 
 	/* related to tables */
 	MANDOCERR_TBL, /* bad table syntax */

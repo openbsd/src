@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.14 2014/10/10 15:25:06 schwarze Exp $
+/*	$OpenBSD: eqn.c,v 1.15 2014/10/12 19:10:56 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -654,7 +654,7 @@ static int
 eqn_parse(struct eqn_node *ep, struct eqn_box *parent)
 {
 	char		*p;
-	enum eqn_tok	 tok;
+	enum eqn_tok	 tok, subtok;
 	enum eqn_post	 pos;
 	struct eqn_box	*cur;
 	int		 rc, size;
@@ -663,9 +663,12 @@ eqn_parse(struct eqn_node *ep, struct eqn_box *parent)
 	const char	*start;
 
 	assert(NULL != parent);
-again:
 
-	switch ((tok = eqn_tok_parse(ep, &p))) {
+next_tok:
+	tok = eqn_tok_parse(ep, &p);
+
+this_tok:
+	switch (tok) {
 	case (EQN_TOK_UNDEF):
 		if ((rc = eqn_undef(ep)) <= 0)
 			return(rc);
@@ -684,10 +687,9 @@ again:
 		break;
 	case (EQN_TOK_DELIM):
 	case (EQN_TOK_GFONT):
-		if (NULL == eqn_nextrawtok(ep, NULL)) {
-			EQN_MSG(MANDOCERR_EQNSYNT, ep);
-			return(-1);
-		}
+		if (eqn_nextrawtok(ep, NULL) == NULL)
+			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
+			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
 		break;
 	case (EQN_TOK_MARK):
 	case (EQN_TOK_LINEUP):
@@ -701,9 +703,12 @@ again:
 	case (EQN_TOK_HAT):
 	case (EQN_TOK_DOT):
 	case (EQN_TOK_DOTDOT):
-		if (NULL == parent->last) {
-			EQN_MSG(MANDOCERR_EQNSYNT, ep);
-			return(-1);
+		if (parent->last == NULL) {
+			mandoc_msg(MANDOCERR_EQN_NOBOX, ep->parse,
+			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			cur = eqn_box_alloc(ep, parent);
+			cur->type = EQN_TEXT;
+			cur->text = mandoc_strdup("");
 		}
 		parent = eqn_box_makebinary(ep, EQNPOS_NONE, parent);
 		parent->type = EQN_LISTONE;
@@ -759,10 +764,12 @@ again:
 	case (EQN_TOK_BACK):
 	case (EQN_TOK_DOWN):
 	case (EQN_TOK_UP):
-		tok = eqn_tok_parse(ep, NULL);
-		if (EQN_TOK__MAX != tok) {
-			EQN_MSG(MANDOCERR_EQNSYNT, ep);
-			return(-1);
+		subtok = eqn_tok_parse(ep, NULL);
+		if (subtok != EQN_TOK__MAX) {
+			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
+			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			tok = subtok;
+			goto this_tok;
 		}
 		break;
 	case (EQN_TOK_FAT):
@@ -770,10 +777,7 @@ again:
 	case (EQN_TOK_ITALIC):
 	case (EQN_TOK_BOLD):
 		while (parent->args == parent->expectargs)
-			if (NULL == (parent = parent->parent)) {
-				EQN_MSG(MANDOCERR_EQNSYNT, ep);
-				return(-1);
-			}
+			parent = parent->parent;
 		/*
 		 * These values apply to the next word or sequence of
 		 * words; thus, we mark that we'll have a child with
@@ -803,13 +807,15 @@ again:
 	case (EQN_TOK_GSIZE):
 		/* Accept two values: integral size and a single. */
 		if (NULL == (start = eqn_nexttok(ep, &sz))) {
-			EQN_MSG(MANDOCERR_EQNSYNT, ep);
-			return(-1);
+			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
+			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			break;
 		}
 		size = mandoc_strntoi(start, sz, 10);
 		if (-1 == size) {
-			EQN_MSG(MANDOCERR_EQNSYNT, ep);
-			return(-1);
+			mandoc_msg(MANDOCERR_IT_NONUM, ep->parse,
+			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			break;
 		}
 		if (EQN_TOK_GSIZE == tok) {
 			ep->gsize = size;
@@ -829,9 +835,12 @@ again:
 		 * Repivot under a positional node, open a child scope
 		 * and keep on reading.
 		 */
-		if (NULL == parent->last) {
-			EQN_MSG(MANDOCERR_EQNSYNT, ep);
-			return(-1);
+		if (parent->last == NULL) {
+			mandoc_msg(MANDOCERR_EQN_NOBOX, ep->parse,
+			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			cur = eqn_box_alloc(ep, parent);
+			cur->type = EQN_TEXT;
+			cur->text = mandoc_strdup("");
 		}
 		/* Handle the "subsup" and "fromto" positions. */
 		if (EQN_TOK_SUP == tok && parent->pos == EQNPOS_SUB) {
@@ -864,10 +873,7 @@ again:
 		break;
 	case (EQN_TOK_SQRT):
 		while (parent->args == parent->expectargs)
-			if (NULL == (parent = parent->parent)) {
-				EQN_MSG(MANDOCERR_EQNSYNT, ep);
-				return(-1);
-			}
+			parent = parent->parent;
 		/*
 		 * Accept a left-right-associative set of arguments just
 		 * like sub and sup and friends but without rebalancing
@@ -884,15 +890,15 @@ again:
 		 * Close out anything that's currently open, then
 		 * rebalance and continue reading.
 		 */
-		if (NULL == parent->last) {
-			EQN_MSG(MANDOCERR_EQNSYNT, ep);
-			return(-1);
+		if (parent->last == NULL) {
+			mandoc_msg(MANDOCERR_EQN_NOBOX, ep->parse,
+			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			cur = eqn_box_alloc(ep, parent);
+			cur->type = EQN_TEXT;
+			cur->text = mandoc_strdup("");
 		}
 		while (EQN_SUBEXPR == parent->type)
-			if (NULL == (parent = parent->parent)) {
-				EQN_MSG(MANDOCERR_EQNSYNT, ep);
-				return(-1);
-			}
+			parent = parent->parent;
 		parent = eqn_box_makebinary(ep, EQNPOS_OVER, parent);
 		break;
 	case (EQN_TOK_RIGHT):
@@ -902,19 +908,23 @@ again:
 		 * FIXME: this is a shitty sentinel: we should really
 		 * have a native EQN_BRACE type or whatnot.
 		 */
-		while (parent->type != EQN_LIST)
-			if (NULL == (parent = parent->parent)) {
-				EQN_MSG(MANDOCERR_EQNSYNT, ep);
-				return(-1);
-			}
+		for (cur = parent; cur != NULL; cur = cur->parent)
+			if (cur->type == EQN_LIST &&
+			    (tok == EQN_TOK_BRACE_CLOSE ||
+			     cur->left != NULL))
+				break;
+		if (cur == NULL) {
+			mandoc_msg(MANDOCERR_BLK_NOTOPEN, ep->parse,
+			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			break;
+		}
+		parent = cur;
 		if (EQN_TOK_RIGHT == tok) {
-			if (NULL == parent->left) {
-				EQN_MSG(MANDOCERR_EQNSYNT, ep);
-				return(-1);
-			}
 			if (NULL == (start = eqn_nexttok(ep, &sz))) {
-				EQN_MSG(MANDOCERR_EQNSYNT, ep);
-				return(-1);
+				mandoc_msg(MANDOCERR_REQ_EMPTY,
+				    ep->parse, ep->eqn.ln,
+				    ep->eqn.pos, eqn_toks[tok]);
+				break;
 			}
 			/* Handling depends on right/left. */
 			if (STRNEQ(start, sz, "ceiling", 7)) {
@@ -926,10 +936,7 @@ again:
 			} else
 				parent->right = mandoc_strndup(start, sz);
 		}
-		if (NULL == (parent = parent->parent)) {
-			EQN_MSG(MANDOCERR_EQNSYNT, ep);
-			return(-1);
-		}
+		parent = parent->parent;
 		if (EQN_TOK_BRACE_CLOSE == tok && parent &&
 		    (parent->type == EQN_PILE ||
 		     parent->type == EQN_MATRIX))
@@ -937,10 +944,7 @@ again:
 		/* Close out any "singleton" lists. */
 		while (parent->type == EQN_LISTONE &&
 		    parent->args == parent->expectargs)
-			if (NULL == (parent = parent->parent)) {
-				EQN_MSG(MANDOCERR_EQNSYNT, ep);
-				return(-1);
-			}
+			parent = parent->parent;
 		break;
 	case (EQN_TOK_BRACE_OPEN):
 	case (EQN_TOK_LEFT):
@@ -950,18 +954,16 @@ again:
 		 * (just like with the text node).
 		 */
 		while (parent->args == parent->expectargs)
-			if (NULL == (parent = parent->parent)) {
-				EQN_MSG(MANDOCERR_EQNSYNT, ep);
-				return(-1);
-			}
+			parent = parent->parent;
+		if (EQN_TOK_LEFT == tok &&
+		    (start = eqn_nexttok(ep, &sz)) == NULL) {
+			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
+			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			break;
+		}
 		parent = eqn_box_alloc(ep, parent);
 		parent->type = EQN_LIST;
 		if (EQN_TOK_LEFT == tok) {
-			if (NULL == (start = eqn_nexttok(ep, &sz))) {
-				EQN_MSG(MANDOCERR_EQNSYNT, ep);
-				return(-1);
-			}
-			/* Handling depends on right/left. */
 			if (STRNEQ(start, sz, "ceiling", 7)) {
 				strlcpy(sym, "\\[lc]", sizeof(sym));
 				parent->left = mandoc_strdup(sym);
@@ -980,42 +982,29 @@ again:
 	case (EQN_TOK_LCOL):
 	case (EQN_TOK_RCOL):
 		while (parent->args == parent->expectargs)
-			if (NULL == (parent = parent->parent)) {
-				EQN_MSG(MANDOCERR_EQNSYNT, ep);
-				return(-1);
-			}
-		if (EQN_TOK_BRACE_OPEN != eqn_tok_parse(ep, NULL)) {
-			EQN_MSG(MANDOCERR_EQNSYNT, ep);
-			return(-1);
-		}
+			parent = parent->parent;
 		parent = eqn_box_alloc(ep, parent);
 		parent->type = EQN_PILE;
-		parent = eqn_box_alloc(ep, parent);
-		parent->type = EQN_LIST;
+		parent->expectargs = 1;
 		break;
 	case (EQN_TOK_ABOVE):
-		while (parent->type != EQN_PILE)
-			if (NULL == (parent = parent->parent)) {
-				EQN_MSG(MANDOCERR_EQNSYNT, ep);
-				return(-1);
-			}
-		parent = eqn_box_alloc(ep, parent);
+		for (cur = parent; cur != NULL; cur = cur->parent)
+			if (cur->type == EQN_PILE)
+				break;
+		if (cur == NULL) {
+			mandoc_msg(MANDOCERR_IT_STRAY, ep->parse,
+			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			break;
+		}
+		parent = eqn_box_alloc(ep, cur);
 		parent->type = EQN_LIST;
 		break;
 	case (EQN_TOK_MATRIX):
 		while (parent->args == parent->expectargs)
-			if (NULL == (parent = parent->parent)) {
-				EQN_MSG(MANDOCERR_EQNSYNT, ep);
-				return(-1);
-			}
-		if (EQN_TOK_BRACE_OPEN != eqn_tok_parse(ep, NULL)) {
-			EQN_MSG(MANDOCERR_EQNSYNT, ep);
-			return(-1);
-		}
+			parent = parent->parent;
 		parent = eqn_box_alloc(ep, parent);
 		parent->type = EQN_MATRIX;
-		parent = eqn_box_alloc(ep, parent);
-		parent->type = EQN_LIST;
+		parent->expectargs = 1;
 		break;
 	case (EQN_TOK_EOF):
 		/*
@@ -1031,11 +1020,7 @@ again:
 		 * in an expression, then rewind til we're not any more.
 		 */
 		while (parent->args == parent->expectargs)
-			if (NULL == (parent = parent->parent)) {
-				EQN_MSG(MANDOCERR_EQNSYNT, ep);
-				free(p);
-				return(-1);
-			}
+			parent = parent->parent;
 		cur = eqn_box_alloc(ep, parent);
 		cur->type = EQN_TEXT;
 		for (i = 0; i < EQNSYM__MAX; i++)
@@ -1053,14 +1038,11 @@ again:
 		 * Post-process list status.
 		 */
 		while (parent->type == EQN_LISTONE &&
-			parent->args == parent->expectargs)
-			if (NULL == (parent = parent->parent)) {
-				EQN_MSG(MANDOCERR_EQNSYNT, ep);
-				return(-1);
-			}
+		    parent->args == parent->expectargs)
+			parent = parent->parent;
 		break;
 	}
-	goto again;
+	goto next_tok;
 }
 
 enum rofferr

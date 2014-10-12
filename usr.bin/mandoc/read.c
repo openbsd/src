@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.65 2014/10/11 21:14:11 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.66 2014/10/12 19:10:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -143,6 +143,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"missing font type, using \\fR",
 	"unknown font type, using \\fR",
 	"missing -std argument, adding it",
+	"missing eqn box, using \"\"",
 
 	/* related to bad macro arguments */
 	"unterminated quoted argument",
@@ -173,7 +174,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"equation scope open on exit",
 	"overlapping equation scopes",
 	"unexpected end of equation",
-	"equation syntax error",
 
 	/* related to tables */
 	"bad table syntax",
