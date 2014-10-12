@@ -4143,9 +4143,10 @@ decode_f_option (arg)
     flag_random_seed = option_value;
   else if (!strcmp (arg, "no-random-seed"))
     flag_random_seed = NULL;
-  else if (!strcmp (arg, "preprocessed"))
-    /* Recognize this switch but do nothing.  This prevents warnings
-       about an unrecognized switch if cpplib has not been linked in.  */
+  else if (!strcmp (arg, "preprocessed") || !strcmp (arg, "stack-shuffle"))
+    /* Recognize these switches but do nothing.  Allowing -fpreprocessed
+       prevents warnings about an unrecognized switch if cpplib has not been
+       linked in.  */
     ;
   else
     return 0;
