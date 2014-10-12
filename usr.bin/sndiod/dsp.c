@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.7 2014/08/13 08:42:46 nicm Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.8 2014/10/12 21:52:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -328,9 +328,9 @@ enc_do(struct conv *p, unsigned char *in, unsigned char *out, int todo)
 {
 	unsigned int f;
 	adata_t *idata;
-	int s;
+	unsigned int s;
 	unsigned int oshift;
-	int osigbit;
+	unsigned int obias;
 	unsigned int obps;
 	unsigned int i;
 	unsigned char *odata;
@@ -352,7 +352,7 @@ enc_do(struct conv *p, unsigned char *in, unsigned char *out, int todo)
 	idata = (adata_t *)in;
 	odata = out;
 	oshift = p->shift;
-	osigbit = p->sigbit;
+	obias = p->bias;
 	obps = p->bps;
 	obnext = p->bnext;
 	osnext = p->snext;
@@ -362,10 +362,14 @@ enc_do(struct conv *p, unsigned char *in, unsigned char *out, int todo)
 	 */
 	odata += p->bfirst;
 	for (f = todo * p->nch; f > 0; f--) {
-		s = *idata++;
+		/* convert adata to u32 */
+		s = (int)*idata++ + ADATA_UNIT;
 		s <<= 32 - ADATA_BITS;
+		/* convert u32 to uN */
 		s >>= oshift;
-		s ^= osigbit;
+		/* convert uN to sN */
+		s -= obias;
+		/* packetize sN */
 		for (i = obps; i > 0; i--) {
 			*odata = (unsigned char)s;
 			s >>= 8;
@@ -382,8 +386,9 @@ void
 enc_sil_do(struct conv *p, unsigned char *out, int todo)
 {
 	unsigned int f;
-	int s;
-	int osigbit;
+	unsigned int s;
+	unsigned int oshift;
+	int obias;
 	unsigned int obps;
 	unsigned int i;
 	unsigned char *odata;
@@ -403,7 +408,8 @@ enc_sil_do(struct conv *p, unsigned char *out, int todo)
 	 * order local variables more "cache-friendly".
 	 */
 	odata = out;
-	osigbit = p->sigbit;
+	oshift = p->shift;
+	obias = p->bias;
 	obps = p->bps;
 	obnext = p->bnext;
 	osnext = p->snext;
@@ -413,7 +419,7 @@ enc_sil_do(struct conv *p, unsigned char *out, int todo)
 	 */
 	odata += p->bfirst;
 	for (f = todo * p->nch; f > 0; f--) {
-		s = osigbit;
+		s = ((1U << 31) >> oshift) - obias;
 		for (i = obps; i > 0; i--) {
 			*odata = (unsigned char)s;
 			s >>= 8;
@@ -431,12 +437,16 @@ enc_init(struct conv *p, struct aparams *par, int nch)
 {
 	p->nch = nch;
 	p->bps = par->bps;
-	p->sigbit = par->sig ? 0 : 1 << (par->bits - 1);
 	if (par->msb) {
 		p->shift = 32 - par->bps * 8;
 	} else {
 		p->shift = 32 - par->bits;
 	}
+	if (par->sig) {
+		p->bias = (1U << 31) >> p->shift;
+	} else {
+		p->bias = 0;
+	}	
 	if (!par->le) {
 		p->bfirst = par->bps - 1;
 		p->bnext = -1;
@@ -466,11 +476,11 @@ dec_do(struct conv *p, unsigned char *in, unsigned char *out, int todo)
 	unsigned int f;
 	unsigned int ibps;
 	unsigned int i;
-	int s = 0xdeadbeef;
+	unsigned int s = 0xdeadbeef;
 	unsigned char *idata;
 	int ibnext;
 	int isnext;
-	int isigbit;
+	unsigned int ibias;
 	unsigned int ishift;
 	adata_t *odata;
 
@@ -490,7 +500,7 @@ dec_do(struct conv *p, unsigned char *in, unsigned char *out, int todo)
 	odata = (adata_t *)out;
 	ibps = p->bps;
 	ibnext = p->bnext;
-	isigbit = p->sigbit;
+	ibias = p->bias;
 	ishift = p->shift;
 	isnext = p->snext;
 
@@ -505,10 +515,10 @@ dec_do(struct conv *p, unsigned char *in, unsigned char *out, int todo)
 			idata += ibnext;
 		}
 		idata += isnext;
-		s ^= isigbit;
+		s += ibias;
 		s <<= ishift;
 		s >>= 32 - ADATA_BITS;
-		*odata++ = s;
+		*odata++ = s - ADATA_UNIT;
 	}
 }
 
@@ -519,13 +529,17 @@ void
 dec_init(struct conv *p, struct aparams *par, int nch)
 {
 	p->bps = par->bps;
-	p->sigbit = par->sig ? 0 : 1 << (par->bits - 1);
 	p->nch = nch;
 	if (par->msb) {
 		p->shift = 32 - par->bps * 8;
 	} else {
 		p->shift = 32 - par->bits;
 	}
+	if (par->sig) {
+		p->bias = (1U << 31) >> p->shift;
+	} else {
+		p->bias = 0;
+	}	
 	if (par->le) {
 		p->bfirst = par->bps - 1;
 		p->bnext = -1;
