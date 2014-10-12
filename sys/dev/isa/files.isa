@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.113 2013/09/24 20:10:59 miod Exp $
+#	$OpenBSD: files.isa,v 1.114 2014/10/12 19:33:32 miod Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -181,7 +181,7 @@ file	dev/isa/if_iy.c			iy
 # Intel EtherExpress PRO/10
 device	ex: ether, ifnet
 attach	ex at isa
-file	dev/isa/if_ex.c			ex needs-flag
+file	dev/isa/if_ex.c			ex
 
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)
@@ -213,22 +213,22 @@ file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
 device	sb: audio, isa_dma, sbdsp, mulaw, auconv, mpu, midibus
-file	dev/isa/sb.c			sb needs-flag
+file	dev/isa/sb.c			sb
 
 attach	sb at isa with sb_isa
-file	dev/isa/sb_isa.c		sb & (sb_isa | sb_isapnp) needs-flag
+file	dev/isa/sb_isa.c		sb & (sb_isa | sb_isapnp)
 
 # Soundcards based on Sierra's Aria chipset.
 # Such as the Prometheus Aria 16 or the Diamond
 # sonic sound.
 device	aria: audio, mulaw
 attach	aria at isa
-file	dev/isa/aria.c			aria needs-flag
+file	dev/isa/aria.c			aria
 
 # ProAudio Spectrum
 device	pas: audio, isa_dma, sbdsp, mulaw, auconv
 attach	pas at isa
-file	dev/isa/pas.c			pas needs-flag
+file	dev/isa/pas.c			pas
 
 # AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
 define	ad1848
@@ -241,24 +241,24 @@ file	dev/isa/ics2101.c		ics2101
 
 # Microsoft Windows Sound System
 device	wss: audio, isa_dma, ad1848, auconv
-file	dev/isa/wss.c			wss needs-flag
+file	dev/isa/wss.c			wss
 
 attach	wss at isa with wss_isa
-file	dev/isa/wss_isa.c		wss & (wss_isa | wss_isapnp) needs-flag
+file	dev/isa/wss_isa.c		wss & (wss_isa | wss_isapnp)
 
 # ESS Technology ES1887/ES888/ES1888
 device	ess {} : audio, isa_dma, mulaw, auconv, midibus
-file	dev/isa/ess.c			ess needs-flag
+file	dev/isa/ess.c			ess
 
 # Gravis UltraSound & UltraSound MAX.
 # Use the "flags" keyword in a config file to specify an extra DMA
 # channel for full-duplex operation.
 
 device	gus: audio, isa_dma, ics2101, ad1848, mulaw, auconv
-file	dev/isa/gus.c			gus needs-flag
+file	dev/isa/gus.c			gus
 
 attach	gus at isa with gus_isa
-file	dev/isa/gus_isa.c		gus & (gus_isa | gus_isapnp) needs-flag
+file	dev/isa/gus_isa.c		gus & (gus_isa | gus_isapnp)
 
 # Sound Forte RadioLink SF16-FMR FM Radio Card
 device sfr: radiobus, tc921x, pt2254a
@@ -290,7 +290,7 @@ file	dev/isa/radiotrack2.c		rtii
 # PC PPI + TIMER 1 (speaker interface)
 device	pcppi {}
 attach	pcppi at isa
-file	dev/isa/pcppi.c	pcppi	needs-flag
+file	dev/isa/pcppi.c			pcppi
 device	spkr
 attach	spkr at pcppi
 file	dev/isa/spkr.c			spkr	needs-flag

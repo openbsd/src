@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.581 2014/10/09 08:21:48 matthew Exp $
+#	$OpenBSD: files,v 1.582 2014/10/12 19:33:32 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -473,7 +473,7 @@ file	dev/usb/xhci.c			xhci	needs-flag
 
 # SDHC SD/MMC controller
 device	sdhc: sdmmcbus
-file	dev/sdmmc/sdhc.c		sdhc	needs-flag
+file	dev/sdmmc/sdhc.c		sdhc
 
 # Winbond Integrated Media Reader
 device wbsd: sdmmcbus
@@ -482,7 +482,7 @@ file	dev/ic/w83l518d_sdmmc.c		wbsd
 
 # Realtek RTS5209 Card Reader
 device	rtsx: sdmmcbus
-file	dev/ic/rtsx.c			rtsx	needs-flag
+file	dev/ic/rtsx.c			rtsx
 
 # AMD 7930 audio/ISDN codec
 define	am7930
