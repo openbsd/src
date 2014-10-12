@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc822.c,v 1.1 2014/10/12 18:54:31 gilles Exp $	*/
+/*	$OpenBSD: rfc822.c,v 1.2 2014/10/12 18:58:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -82,6 +82,10 @@ parse_addresses(struct rfc822_parser *rp, const char *buffer, size_t len)
 			rp->escape = 0;
 		*wptr++ = *s;
 	}
+
+	/* some flags still set, malformed header */
+	if (rp->escape || rp->comment || rp->quote || rp->bracket)
+		return 0;
 
 	/* no value, malformed header */
 	if (ra->name[0] == '\0' && ra->address[0] == '\0')
