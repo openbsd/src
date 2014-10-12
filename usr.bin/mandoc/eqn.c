@@ -1,6 +1,7 @@
-/*	$OpenBSD: eqn.c,v 1.15 2014/10/12 19:10:56 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.16 2014/10/12 20:08:43 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -484,12 +485,21 @@ eqn_tok_parse(struct eqn_node *ep, char **p)
 {
 	const char	*start;
 	size_t		 i, sz;
+	int		 quoted;
 
 	if (NULL != p)
 		*p = NULL;
 
+	quoted = ep->data[ep->cur] == '"';
+
 	if (NULL == (start = eqn_nexttok(ep, &sz)))
 		return(EQN_TOK_EOF);
+
+	if (quoted) {
+		if (p != NULL)
+			*p = mandoc_strndup(start, sz);
+		return(EQN_TOK__MAX);
+	}
 
 	for (i = 0; i < EQN_TOK__MAX; i++) {
 		if (NULL == eqn_toks[i])
