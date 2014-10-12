@@ -1,4 +1,4 @@
-/*	$OpenBSD: fintek.c,v 1.7 2007/10/31 20:46:17 cnst Exp $ */
+/*	$OpenBSD: fintek.c,v 1.8 2014/10/12 19:40:22 miod Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
  *
@@ -38,8 +38,10 @@ struct fintek_softc {
 	i2c_tag_t sc_tag;
 	i2c_addr_t sc_addr;
 
+#ifndef SMALL_KERNEL
 	struct ksensor sc_sensor[F_NUM_SENSORS];
 	struct ksensordev sc_sensordev;
+#endif
 };
 
 int	fintek_match(struct device *, void *, void *);
@@ -113,7 +115,9 @@ fintek_attach(struct device *parent, struct device *self, void *aux)
 	struct fintek_softc *sc = (struct fintek_softc *)self;
 	struct i2c_attach_args *ia = aux;
 	u_int8_t cmd, data;
+#ifndef SMALL_KERNEL
 	int i;
+#endif
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
@@ -138,6 +142,7 @@ fintek_attach(struct device *parent, struct device *self, void *aux)
 
 	iic_release_bus(sc->sc_tag, 0);
 
+#ifndef SMALL_KERNEL
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 
@@ -163,6 +168,7 @@ fintek_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < F_NUM_SENSORS; i++)
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
 	sensordev_install(&sc->sc_sensordev);
+#endif
 
 	printf("\n");
 	return;
@@ -174,6 +180,7 @@ failread:
 }
 
 
+#ifndef SMALL_KERNEL
 struct {
 	char		sensor;
 	u_int8_t	cmd;
@@ -245,6 +252,7 @@ fintek_refresh(void *arg)
 
 	iic_release_bus(sc->sc_tag, 0);
 }
+#endif
 
 void
 fintek_fullspeed(struct fintek_softc *sc)
