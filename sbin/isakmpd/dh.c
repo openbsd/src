@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.17 2014/08/25 14:42:23 reyk Exp $	*/
+/*	$OpenBSD: dh.c,v 1.18 2014/10/12 15:57:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -439,7 +439,7 @@ modp_create_shared(struct group *group, u_int8_t *secret, u_int8_t *exchange)
 
 	ret = DH_compute_key(secret, ex, group->dh);
 	BN_clear_free(ex);
-	if (!ret)
+	if (ret <= 0)
 		return (-1);
 
 	/* add zero padding */
