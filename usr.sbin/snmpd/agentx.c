@@ -1,4 +1,4 @@
-/*      $OpenBSD: agentx.c,v 1.5 2014/04/20 16:07:10 reyk Exp $    */
+/*      $OpenBSD: agentx.c,v 1.6 2014/10/12 13:08:47 blambert Exp $    */
 /*
  * Copyright (c) 2013,2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -479,14 +479,14 @@ int
 snmp_agentx_buffercheck(struct agentx_pdu *pdu, size_t len)
 {
 	uint8_t *newptr;
-	int newlen;
+	size_t newlen;
 
 	if (pdu->buflen - pdu->datalen >= len)
 		return (0);
 
-	newlen = pdu->buflen;
-	while (newlen - pdu->datalen < len)
-		newlen *= 2;
+	newlen = pdu->buflen + len;
+	if (newlen < pdu->buflen || newlen < len)
+		return (-1);
 
 	if ((newptr = realloc(pdu->buffer, newlen)) == NULL)
 		return (-1);
