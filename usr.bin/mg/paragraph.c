@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.31 2014/03/27 09:30:55 florian Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.32 2014/10/12 18:09:41 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -35,8 +35,6 @@ gotobop(int f, int n)
 	while (n-- > 0) {
 		nospace = 0;
 		while (lback(curwp->w_dotp) != curbp->b_headp) {
-			curwp->w_dotp = lback(curwp->w_dotp);
-			curwp->w_dotline--;
 			curwp->w_doto = 0;
 			col = 0;
 
@@ -49,6 +47,9 @@ gotobop(int f, int n)
 					break;
 			} else
 				nospace = 1;
+
+			curwp->w_dotline--;
+			curwp->w_dotp = lback(curwp->w_dotp);
 		}
 	}
 	/* force screen update */
