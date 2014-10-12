@@ -1,4 +1,4 @@
-/* $OpenBSD: set_key.c,v 1.17 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: set_key.c,v 1.18 2014/10/12 20:48:58 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -136,20 +136,16 @@ static const DES_cblock weak_keys[NUM_WEAK_KEY]={
 	{0xE0,0xFE,0xE0,0xFE,0xF1,0xFE,0xF1,0xFE},
 	{0xFE,0xE0,0xFE,0xE0,0xFE,0xF1,0xFE,0xF1}};
 
-int DES_is_weak_key(const_DES_cblock *key)
-	{
-	int i;
+int
+DES_is_weak_key(const_DES_cblock *key)
+{
+	unsigned int i;
 
-	for (i=0; i<NUM_WEAK_KEY; i++)
-		/* Added == 0 to comparison, I obviously don't run
-		 * this section very often :-(, thanks to
-		 * engineering@MorningStar.Com for the fix
-		 * eay 93/06/29
-		 * Another problem, I was comparing only the first 4
-		 * bytes, 97/03/18 */
-		if (memcmp(weak_keys[i],key,sizeof(DES_cblock)) == 0) return(1);
-	return(0);
-	}
+	for (i = 0; i < NUM_WEAK_KEY; i++)
+		if (memcmp(weak_keys[i], key, sizeof(DES_cblock)) == 0)
+			return 1;
+	return 0;
+}
 
 /* NOW DEFINED IN des_local.h
  * See ecb_encrypt.c for a pseudo description of these macros. 
