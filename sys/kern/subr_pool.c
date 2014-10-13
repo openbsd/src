@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.162 2014/10/10 00:48:58 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.163 2014/10/13 00:12:51 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -566,14 +566,12 @@ pool_do_get(struct pool *pp, int flags)
 	if (__predict_false(pi == NULL))
 		panic("%s: %s: page empty", __func__, pp->pr_wchan);
 
-#ifdef DIAGNOSTIC
 	if (__predict_false(pi->pi_magic != POOL_IMAGIC(ph, pi))) {
 		panic("%s: %s free list modified: "
 		    "page %p; item addr %p; offset 0x%x=0x%lx != 0x%lx",
 		    __func__, pp->pr_wchan, ph->ph_page, pi,
 		    0, pi->pi_magic, POOL_IMAGIC(ph, pi));
 	}
-#endif /* DIAGNOSTIC */
 
 	XSIMPLEQ_REMOVE_HEAD(&ph->ph_itemlist, pi_list);
 
@@ -648,9 +646,7 @@ pool_put(struct pool *pp, void *v)
 	}
 #endif /* DIAGNOSTIC */
 
-#ifdef DIAGNOSTIC
 	pi->pi_magic = POOL_IMAGIC(ph, pi);
-#endif /* DIAGNOSTIC */
 	XSIMPLEQ_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
 #ifdef DIAGNOSTIC
 	if (POOL_PHPOISON(ph))
@@ -767,9 +763,7 @@ pool_p_alloc(struct pool *pp, int flags)
 	n = pp->pr_itemsperpage;
 	while (n--) {
 		pi = (struct pool_item *)addr;
-#ifdef DIAGNOSTIC
 		pi->pi_magic = POOL_IMAGIC(ph, pi);
-#endif
 		XSIMPLEQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);
 
 #ifdef DIAGNOSTIC
@@ -786,14 +780,11 @@ pool_p_alloc(struct pool *pp, int flags)
 void
 pool_p_free(struct pool *pp, struct pool_item_header *ph)
 {
-#ifdef DIAGNOSTIC
 	struct pool_item *pi;
-#endif
 
         MUTEX_ASSERT_UNLOCKED(&pp->pr_mtx);
         KASSERT(ph->ph_nmissing == 0);
 
-#ifdef DIAGNOSTIC
 	XSIMPLEQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
 		if (__predict_false(pi->pi_magic != POOL_IMAGIC(ph, pi))) {
 			panic("%s: %s free list modified: "
@@ -802,6 +793,7 @@ pool_p_free(struct pool *pp, struct pool_item_header *ph)
 			    0, pi->pi_magic);
 		}
 
+#ifdef DIAGNOSTIC
 		if (POOL_PHPOISON(ph)) {
 			size_t pidx;
 			uint32_t pval;
@@ -814,8 +806,8 @@ pool_p_free(struct pool *pp, struct pool_item_header *ph)
 				    pidx * sizeof(int), ip[pidx]);
 			}
 		}
-        }
 #endif
+        }
 
         pool_allocator_free(pp, ph->ph_page);
 
@@ -1001,21 +993,17 @@ pool_print_pagelist(struct pool_pagelist *pl,
     int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
 {
 	struct pool_item_header *ph;
-#ifdef DIAGNOSTIC
 	struct pool_item *pi;
-#endif
 
 	LIST_FOREACH(ph, pl, ph_pagelist) {
 		(*pr)("\t\tpage %p, nmissing %d\n",
 		    ph->ph_page, ph->ph_nmissing);
-#ifdef DIAGNOSTIC
 		XSIMPLEQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
 			if (pi->pi_magic != POOL_IMAGIC(ph, pi)) {
 				(*pr)("\t\t\titem %p, magic 0x%lx\n",
 				    pi, pi->pi_magic);
 			}
 		}
-#endif
 	}
 }
 
@@ -1162,7 +1150,6 @@ pool_chk_page(struct pool *pp, struct pool_item_header *ph, int expected)
 	for (pi = XSIMPLEQ_FIRST(&ph->ph_itemlist), n = 0;
 	     pi != NULL;
 	     pi = XSIMPLEQ_NEXT(&ph->ph_itemlist, pi, pi_list), n++) {
-#ifdef DIAGNOSTIC
 		if (pi->pi_magic != POOL_IMAGIC(ph, pi)) {
 			printf("%s: ", label);
 			printf("pool(%p:%s): free list modified: "
@@ -1172,6 +1159,7 @@ pool_chk_page(struct pool *pp, struct pool_item_header *ph, int expected)
 			    0, pi->pi_magic);
 		}
 
+#ifdef DIAGNOSTIC
 		if (POOL_PHPOISON(ph)) {
 			size_t pidx;
 			uint32_t pval;
