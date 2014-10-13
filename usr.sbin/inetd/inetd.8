@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inetd.8,v 1.36 2014/04/18 22:04:54 jmc Exp $
+.\"	$OpenBSD: inetd.8,v 1.37 2014/10/13 01:56:44 dlg Exp $
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
 .\"
-.Dd $Mdocdate: April 18 2014 $
+.Dd $Mdocdate: October 13 2014 $
 .Dt INETD 8
 .Os
 .Sh NAME
@@ -330,10 +330,6 @@ rereads its configuration file when it receives a hangup signal,
 .Dv SIGHUP .
 Services may be added, deleted or modified when the configuration file
 is reread.
-.Nm inetd
-creates a file
-.Em /var/run/inetd.pid
-that contains its process identifier.
 .Ss IPv6 TCP/UDP behavior
 If you wish to run a server for IPv4 and IPv6 traffic,
 you'll need to run two separate processes for the same server program,
