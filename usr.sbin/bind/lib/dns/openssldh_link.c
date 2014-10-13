@@ -82,7 +82,7 @@ openssldh_computesecret(const dst_key_t *pub, const dst_key_t *priv,
 	if (r.length < len)
 		return (ISC_R_NOSPACE);
 	ret = DH_compute_key(r.base, dhpub->pub_key, dhpriv);
-	if (ret == 0)
+	if (ret <= 0)
 		return (dst__openssl_toresult(DST_R_COMPUTESECRETFAILURE));
 	isc_buffer_add(secret, len);
 	return (ISC_R_SUCCESS);
