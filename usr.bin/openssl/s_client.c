@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.2 2014/09/01 20:54:37 doug Exp $ */
+/* $OpenBSD: s_client.c,v 1.3 2014/10/13 02:39:09 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -829,9 +829,9 @@ re_start:
 	BIO_printf(bio_c_out, "CONNECTED(%08X)\n", s);
 
 	if (c_nbio) {
-		unsigned long l = 1;
-		BIO_printf(bio_c_out, "turning on non blocking io\n");
-		if (BIO_socket_ioctl(s, FIONBIO, &l) < 0) {
+		if (!c_quiet)
+			BIO_printf(bio_c_out, "turning on non blocking io\n");
+		if (!BIO_socket_nbio(s, 1)) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}

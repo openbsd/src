@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.56 2014/07/16 10:43:06 deraadt Exp $ */
+/* $OpenBSD: b_sock.c,v 1.57 2014/10/13 02:39:09 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,6 +65,7 @@
 #include <netinet/tcp.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -459,5 +460,10 @@ BIO_set_tcp_ndelay(int s, int on)
 int
 BIO_socket_nbio(int s, int mode)
 {
-	return (BIO_socket_ioctl(s, FIONBIO, &mode) == 0);
+	int flags = fcntl(s, F_GETFD);
+	if (mode && !(flags & O_NONBLOCK))
+		return (fcntl(s, F_SETFL, flags | O_NONBLOCK) == 0);
+	else if (!mode && (flags & O_NONBLOCK))
+		return (fcntl(s, F_SETFL, flags & ~O_NONBLOCK) == 0);
+	return (1);
 }
