@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.57 2014/10/09 04:44:09 tedu Exp $
+#	$OpenBSD: bsd.README,v 1.58 2014/10/13 14:31:01 schwarze Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -266,7 +266,7 @@ The include file <bsd.prog.mk> handles building programs from one or
 more source files, along with their manual pages.  It has a limited number
 of suffixes, consistent with the current needs of the BSD tree.
 
-It has eight targets:
+It has seven targets:
 
 	all:
 		build the program and its manual page
@@ -401,7 +401,7 @@ If foo has multiple source files, add the line:
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 The include file <bsd.subdir.mk> contains the default targets for building
-subdirectories.  It has the same eight targets as <bsd.prog.mk>: all, 
+subdirectories.  It has the same seven targets as <bsd.prog.mk>: all, 
 clean, cleandir, depend, includes, install, and tags.  For all of
 the directories listed in the variable SUBDIR, the specified directory 
 will be visited and the target made.  There is also a default target which
@@ -419,7 +419,7 @@ yacc that allow multiple lex and yacc targets to be built in parallel.
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 The include file <bsd.lib.mk> has support for building libraries.  It has
-the same eight targets as <bsd.prog.mk>: all, clean, cleandir, depend,
+the same seven targets as <bsd.prog.mk>: all, clean, cleandir, depend,
 includes, install, and tags.  It has a limited number of suffixes,
 consistent with the current needs of the BSD tree.
 
