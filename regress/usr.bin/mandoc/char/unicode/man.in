@@ -1,4 +1,4 @@
-.TH CHAR-UNICODE-MAN 1 "November 10, 2013" OpenBSD
+.TH CHAR-UNICODE-MAN 1 "October 13, 2014" OpenBSD
 .SH NAME
 char-unicode-mdoc \- unicode characters in man code
 .SH DESCRIPTION
@@ -7,3 +7,6 @@ Copyright symbol: \[u00A9] = \C'u00A9'
 m-dash: \[u2014] = \C'u2014'
 .PP
 nabla: \[u1D6C1] = \C'u1D6C1'
+.PP
+not really Unicode:
+up arrows: \(ua\(uA = \[ua]\[uA] = \C'ua'\C'uA'

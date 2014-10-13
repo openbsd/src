@@ -1,4 +1,4 @@
-.Dd November 10, 2013
+.Dd October 13, 2014
 .Dt CHAR-UNICODE-MDOC 1
 .Os OpenBSD
 .Sh NAME
@@ -10,3 +10,6 @@ Copyright symbol: \[u00A9] = \C'u00A9'
 m-dash: \[u2014] = \C'u2014'
 .Pp
 nabla: \[u1D6C1] = \C'u1D6C1'
+.Pp
+not really Unicode:
+up arrows: \(ua\(uA = \[ua]\[uA] = \C'ua'\C'uA'
