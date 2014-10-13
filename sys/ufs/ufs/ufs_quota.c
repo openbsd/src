@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.33 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.34 2014/10/13 03:40:42 guenther Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -501,18 +501,32 @@ quotaon(struct proc *p, struct mount *mp, int type, caddr_t fname)
 		(void) vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
 		return (EACCES);
 	}
-	if (*vpp != vp)
+
+	/*
+	 * Update the vnode and ucred for quota file updates
+	 */
+	if (*vpp != vp) {
 		quotaoff(p, mp, type);
+		*vpp = vp;
+		crhold(p->p_ucred);
+		ump->um_cred[type] = p->p_ucred;
+	} else {
+		struct ucred *ocred = ump->um_cred[type];
+
+		(void) vn_close(vp, FREAD|FWRITE, ocred, p);
+		if (ocred != p->p_ucred) {
+			crhold(p->p_ucred);
+			ump->um_cred[type] = p->p_ucred;
+			crfree(ocred);
+		}
+	}
+
 	ump->um_qflags[type] |= QTF_OPENING;
 	mp->mnt_flag |= MNT_QUOTA;
 	vp->v_flag |= VSYSTEM;
-	*vpp = vp;
 	/*
-	 * Save the credential of the process that turned on quotas.
 	 * Set up the time limits for this quota.
 	 */
-	crhold(p->p_ucred);
-	ump->um_cred[type] = p->p_ucred;
 	ump->um_btime[type] = MAX_DQ_TIME;
 	ump->um_itime[type] = MAX_IQ_TIME;
 	if (dqget(NULLVP, 0, ump, type, &dq) == 0) {
