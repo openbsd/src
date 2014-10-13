@@ -1,0 +1,14 @@
+.TH TBL-FONTS 1 2014-10-14 OpenBSD
+.SH NAME
+tbl-fonts \- font modifiers in table layouts
+.SH DESCRIPTION
+normal text
+.TS
+box tab(:);
+cb | c | ci
+cFI | c | cFB .
+bold:roman:italic
+_
+italic:roman:bold
+and:so:on
+.TE

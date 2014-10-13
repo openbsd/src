@@ -1,0 +1,19 @@
+TBL-FONTS(1)                General Commands Manual               TBL-FONTS(1)
+
+
+
+NNAAMMEE
+       tbl-fonts - font modifiers in table layouts
+
+DDEESSCCRRIIPPTTIIOONN
+       normal text
+
+       +-------+-------+--------+
+       | bboolldd  | roman | _i_t_a_l_i_c |
+       +-------+-------+--------+
+       |_i_t_a_l_i_c | roman |  bboolldd  |
+       | _a_n_d   |  so   |   oonn   |
+       +-------+-------+--------+
+
+
+OpenBSD                           2014-10-14                      TBL-FONTS(1)
