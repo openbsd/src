@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.23 2014/07/14 05:53:29 guenther Exp $	*/
+/*	$OpenBSD: proc.c,v 1.24 2014/10/13 20:55:16 chl Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -647,7 +647,6 @@ pprint(struct process *pp, bool flag)
     struct process *tp;
     int     jobflags, pstatus;
     bool hadnl = 1;	/* did we just have a newline */
-    char   *format;
 
     (void) fpurge(cshout);
 
