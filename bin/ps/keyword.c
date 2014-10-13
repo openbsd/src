@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.40 2014/03/20 03:38:33 lteo Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.41 2014/10/13 17:30:21 schwarze Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -250,7 +250,6 @@ findvar(char *p)
 {
 	VAR *v, key;
 	char *hp;
-	int vcmp(const void *, const void *);
 
 	key.name = p;
 
