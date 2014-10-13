@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.23 2014/07/13 14:21:14 tedu Exp $ */
+/*	$OpenBSD: random.c,v 1.24 2014/10/13 20:54:13 chl Exp $ */
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -254,8 +254,6 @@ __warn_references(srandom,
 void
 srandomdev(void)
 {
-	size_t len;
-
 	LOCK();
 	use_arc4random = 1;
 	UNLOCK();
