@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.140 2014/10/12 09:36:42 dlg Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.141 2014/10/13 01:53:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -162,7 +162,6 @@ int	 nsock, maxsock;
 fd_set	*allsockp;
 int	 allsockn;
 int	 toomany = TOOMANY;
-int	 options;
 int	 timingout;
 struct	 servent *sp;
 uid_t	 uid;
@@ -330,7 +329,6 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'd':
 			debug = 1;
-			options |= SO_DEBUG;
 			break;
 		case 'R': {	/* invocation rate */
 			char *p;
@@ -962,7 +960,7 @@ setup(struct servtab *sep)
 	}
 #define	turnon(fd, opt) \
 setsockopt(fd, SOL_SOCKET, opt, &on, sizeof (on))
-	if (strncmp(sep->se_proto, "tcp", 3) == 0 && (options & SO_DEBUG) &&
+	if (strncmp(sep->se_proto, "tcp", 3) == 0 && debug &&
 	    turnon(sep->se_fd, SO_DEBUG) < 0)
 		syslog(LOG_ERR, "setsockopt (SO_DEBUG): %m");
 	if (turnon(sep->se_fd, SO_REUSEADDR) < 0)
