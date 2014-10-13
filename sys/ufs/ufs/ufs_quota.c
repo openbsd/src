@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.34 2014/10/13 03:40:42 guenther Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.35 2014/10/13 03:46:33 guenther Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/ktrace.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -626,6 +627,14 @@ getquota(struct mount *mp, u_long id, int type, caddr_t addr)
 	if ((error = dqget(NULLVP, id, VFSTOUFS(mp), type, &dq)) != 0)
 		return (error);
 	error = copyout((caddr_t)&dq->dq_dqb, addr, sizeof (struct dqblk));
+#ifdef KTRACE
+	if (error == 0) {
+		struct proc *p = curproc;
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrquota(p, &dq->dq_dqb);
+	}
+#endif
+
 	dqrele(NULLVP, dq);
 	return (error);
 }
@@ -645,6 +654,14 @@ setquota(struct mount *mp, u_long id, int type, caddr_t addr)
 	error = copyin(addr, (caddr_t)&newlim, sizeof (struct dqblk));
 	if (error)
 		return (error);
+#ifdef KTRACE
+	{
+		struct proc *p = curproc;
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrquota(p, &newlim);
+	}
+#endif
+
 	if ((error = dqget(NULLVP, id, ump, type, &ndq)) != 0)
 		return (error);
 	dq = ndq;
@@ -701,6 +718,14 @@ setuse(struct mount *mp, u_long id, int type, caddr_t addr)
 	error = copyin(addr, (caddr_t)&usage, sizeof (struct dqblk));
 	if (error)
 		return (error);
+#ifdef KTRACE
+	{
+		struct proc *p = curproc;
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrquota(p, &usage);
+	}
+#endif
+
 	if ((error = dqget(NULLVP, id, ump, type, &ndq)) != 0)
 		return (error);
 	dq = ndq;

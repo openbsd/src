@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump_subr.h,v 1.13 2014/09/17 19:12:55 guenther Exp $	*/
+/*	$OpenBSD: kdump_subr.h,v 1.14 2014/10/13 03:46:33 guenther Exp $	*/
 /*
  * Copyright(c) 2006 2006 David Kirchner <dpk@dpk.net>
  *
@@ -80,6 +80,7 @@ void sigprocmaskhowname(int);
 void lio_listioname(int);
 void minheritname(int);
 void quotactlname(int);
+void quotactlcmdname(int);
 void ptraceopname(int);
 void sigill_name(int);
 void sigtrap_name(int);

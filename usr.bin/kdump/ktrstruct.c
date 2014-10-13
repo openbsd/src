@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.5 2014/07/11 21:49:13 tedu Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.6 2014/10/13 03:46:33 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -35,6 +35,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/un.h>
+#include <ufs/ufs/quota.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -327,6 +328,20 @@ ktrrusage(const struct rusage *rup)
 	    rup->ru_nvcsw, rup->ru_nivcsw);
 }
 
+static void
+ktrquota(const struct dqblk *quota)
+{
+	printf("struct dqblk { bhardlimit=%u, bsoftlimit=%u, curblocks=%u,"
+	    " ihardlimit=%u, isoftlimit=%u, curinodes=%u, btime=",
+	    quota->dqb_bhardlimit, quota->dqb_bsoftlimit,
+	    quota->dqb_curblocks, quota->dqb_ihardlimit,
+	    quota->dqb_isoftlimit, quota->dqb_curinodes);
+	print_time(quota->dqb_btime, 0);
+	printf(", itime=");
+	print_time(quota->dqb_itime, 0);
+	printf(" }\n");
+}
+
 void
 ktrstruct(char *buf, size_t buflen)
 {
@@ -417,6 +432,13 @@ ktrstruct(char *buf, size_t buflen)
 		memcpy(fds, data, datalen);
 		ktrfdset(fds, datalen);
 		free(fds);
+	} else if (strcmp(name, "quota") == 0) {
+		struct dqblk quota;
+
+		if (datalen != sizeof(quota))
+			goto invalid;
+		memcpy(&quota, data, datalen);
+		ktrquota(&quota);
 	} else {
 		printf("unknown structure %s\n", name);
 	}
