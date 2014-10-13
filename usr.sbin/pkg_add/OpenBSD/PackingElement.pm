@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.236 2014/09/09 09:40:23 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.237 2014/10/13 12:44:16 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -509,6 +509,20 @@ sub destate
 }
 
 sub dirclass() { "OpenBSD::PackingElement::Sampledir" }
+
+package OpenBSD::PackingElement::Ghost;
+our @ISA = qw(OpenBSD::PackingElement::FileObject);
+
+sub keyword() { "ghost" }
+sub absolute_okay() { 1 }
+__PACKAGE__->register_with_factory;
+
+sub destate
+{
+	my ($self, $state) = @_;
+	$self->compute_fullname($state);
+	$self->compute_modes($state);
+}
 
 package OpenBSD::PackingElement::Sampledir;
 our @ISA=qw(OpenBSD::PackingElement::DirBase OpenBSD::PackingElement::Sample);

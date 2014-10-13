@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.134 2014/09/09 09:40:23 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.135 2014/10/13 12:44:16 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -194,7 +194,7 @@ sub SharedItemsOnly
 {
 	my ($fh, $cont) = @_;
 	while (<$fh>) {
-		next unless m/^\@(?:cwd|dir|fontdir|mandir|newuser|newgroup|name)\b/o || m/^\@(?:sample|extra)\b.*\/$/o || m/^[^\@].*\/$/o;
+		next unless m/^\@(?:cwd|dir|fontdir|ghost|mandir|newuser|newgroup|name)\b/o || m/^\@(?:sample|extra)\b.*\/$/o || m/^[^\@].*\/$/o;
 		&$cont($_);
 	}
 }
