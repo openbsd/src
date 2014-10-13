@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.168 2014/10/11 21:33:58 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.169 2014/10/13 14:01:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1003,12 +1003,14 @@ post_eoln(POST_ARGS)
 static int
 post_fname(POST_ARGS)
 {
-	const struct mdoc_node *n;
-	size_t pos;
+	const struct mdoc_node	*n;
+	const char		*cp;
+	size_t			 pos;
 
 	n = mdoc->last->child;
 	pos = strcspn(n->string, "()");
-	if (n->string[pos] != '\0')
+	cp = n->string + pos;
+	if ( ! (cp[0] == '\0' || (cp[0] == '(' && cp[1] == '*')))
 		mandoc_msg(MANDOCERR_FN_PAREN, mdoc->parse,
 		    n->line, n->pos + pos, n->string);
 	return(1);
