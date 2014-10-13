@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kill.1,v 1.36 2014/03/23 07:44:37 jmc Exp $
+.\"	$OpenBSD: kill.1,v 1.37 2014/10/13 09:27:22 dlg Exp $
 .\"	$NetBSD: kill.1,v 1.8 1995/09/07 06:30:26 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)kill.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: March 23 2014 $
+.Dd $Mdocdate: October 13 2014 $
 .Dt KILL 1
 .Os
 .Sh NAME
@@ -138,11 +138,11 @@ Forcibly terminate process ID 1234:
 .Dl $ kill -9 1234
 .Pp
 Send the
-.Xr inetd 8
-daemon the hangup signal, instructing it to re-read its configuration from
-.Pa /etc/inetd.conf :
+.Xr init 8
+process the hangup signal, instructing it to re-read
+.Xr ttys 5 :
 .Pp
-.Dl # kill -HUP `cat /var/run/inetd.pid`
+.Dl # kill -HUP 1
 .Sh SEE ALSO
 .Xr csh 1 ,
 .Xr ksh 1 ,
