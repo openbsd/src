@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.92 2014/07/13 15:48:41 tedu Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.93 2014/10/13 03:21:18 dlg Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -941,11 +941,15 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 	if (nfds > min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles))
 		return (EINVAL);
 
-	sz = sizeof(struct pollfd) * nfds;
-
 	/* optimize for the default case, of a small nfds value */
-	if (sz > sizeof(pfds))
-		pl = malloc(sz, M_TEMP, M_WAITOK);
+	if (nfds > nitems(pfds)) {
+		pl = mallocarray(nfds, sizeof(*pl), M_TEMP,
+		    M_WAITOK | M_CANFAIL);
+		if (pl == NULL)
+			return (EINVAL);
+	}
+
+	sz = nfds * sizeof(*pl);
 
 	if ((error = copyin(fds, pl, sz)) != 0)
 		goto bad;
