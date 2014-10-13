@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.3 2014/09/01 14:26:01 jsing Exp $ */
+/* $OpenBSD: ecparam.c,v 1.4 2014/10/13 02:46:14 bcook Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -245,7 +245,7 @@ struct option ecparam_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &ecparam_config.text,
 	},
-	{},
+	{NULL},
 };
 
 static void

@@ -1,4 +1,4 @@
-/* $OpenBSD: prime.c,v 1.2 2014/08/27 15:55:23 jsing Exp $ */
+/* $OpenBSD: prime.c,v 1.3 2014/10/13 02:46:14 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  *
@@ -96,7 +96,7 @@ struct option prime_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &prime_config.safe,
 	},
-	{},
+	{NULL},
 };
 
 static void

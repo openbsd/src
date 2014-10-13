@@ -1,4 +1,4 @@
-/* $OpenBSD: crl.c,v 1.4 2014/09/17 02:20:45 lteo Exp $ */
+/* $OpenBSD: crl.c,v 1.5 2014/10/13 02:46:14 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -198,7 +198,7 @@ static struct option crl_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &crl_config.verify,
 	},
-	{},
+	{NULL},
 };
 
 static void

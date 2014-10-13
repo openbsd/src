@@ -1,4 +1,4 @@
-/* $OpenBSD: version.c,v 1.2 2014/08/30 15:59:43 jsing Exp $ */
+/* $OpenBSD: version.c,v 1.3 2014/10/13 02:46:14 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -200,7 +200,7 @@ static struct option version_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &version_config.version,
 	},
-	{},
+	{NULL},
 };
 
 static void
