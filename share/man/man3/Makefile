@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.26 2014/09/13 06:32:13 jmc Exp $
+#	$OpenBSD: Makefile,v 1.27 2014/10/13 17:27:00 millert Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	assert.3 bitstring.3 CMSG_DATA.3 dlfcn.3 dl_iterate_phdr.3 end.3 \
-	intro.3 offsetof.3 queue.3 stdarg.3 sysexits.3 tree.3
+	intro.3 makedev.3 offsetof.3 queue.3 stdarg.3 sysexits.3 tree.3
 MLINKS+=bitstring.3 bit_alloc.3 bitstring.3 bit_clear.3 \
 	bitstring.3 bit_decl.3 bitstring.3 bit_ffc.3 bitstring.3 bit_ffs.3 \
 	bitstring.3 bit_nclear.3 bitstring.3 bit_set.3 \
@@ -11,6 +11,7 @@ MLINKS+=bitstring.3 bit_alloc.3 bitstring.3 bit_clear.3 \
 MLINKS+=CMSG_DATA.3 CMSG_FIRSTHDR.3 CMSG_DATA.3 CMSG_LEN.3 \
 	CMSG_DATA.3 CMSG_NXTHDR.3 CMSG_DATA.3 CMSG_SPACE.3
 MLINKS+=end.3 edata.3 end.3 etext.3
+MLINKS+=makedev.3 major.3 makedev.3 minor.3
 MLINKS+=queue.3 SLIST_ENTRY.3 queue.3 SLIST_HEAD.3 \
 	queue.3 SLIST_HEAD_INITIALIZER.3 queue.3 SLIST_FIRST.3 \
 	queue.3 SLIST_NEXT.3 queue.3 SLIST_EMPTY.3 \
