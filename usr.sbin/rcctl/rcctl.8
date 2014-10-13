@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.9 2014/10/11 13:42:49 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.10 2014/10/13 14:12:57 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 11 2014 $
+.Dd $Mdocdate: October 13 2014 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -76,9 +76,11 @@ Without an argument, display all services and
 with their values in a format compatible with
 .Xr rc.conf 8 .
 .It Cm default Op Ar service | daemon
-Like
-.Cm status
-but return the default values instead of the configured ones.
+For a daemon, display the flags that will be used if
+.Dq Cm enable Ar daemon Cm flags
+is called without
+.Ar arguments .
+For a base system service, display whether it is enabled by default.
 .It Oo Fl df Oc Ar action daemon
 Run the
 .Xr rc.d 8
@@ -95,6 +97,9 @@ returns with the exit status of the
 script.
 .Nm Cm status
 exits with 0 if the daemon or service is enabled and 1 if it is not.
+.Nm Cm default
+exits with 0 if the daemon or service is enabled by default
+and 1 if it is not.
 Otherwise, the
 .Nm
 utility exits 0 on success, and >0 if an error occurs
