@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.43 2014/10/11 19:12:19 schwarze Exp $
+# $OpenBSD: rcctl.sh,v 1.44 2014/10/13 19:06:53 schwarze Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -225,10 +225,10 @@ add_flags()
 
 	if [ -n "$3" ]; then
 		shift 3
-		_flags=$*
+		_flags="$*"
 	else
 		# keep our flags since none were given
-		eval "_flags=\${${_svc}_flags}"
+		eval "_flags=\"\${${_svc}_flags}\""
 		[ "${_flags}" = "NO" ] && unset _flags
 	fi
 
@@ -238,11 +238,14 @@ add_flags()
 			unset _flags
 	fi
 
+	# protect leading whitespace
+	[ "${_flags}" = "${_flags# }" ] || _flags="\"${_flags}\""
+
 	rcconf_edit_begin
 	grep -v "^${_svc}_flags.*=" /etc/rc.conf.local >${_TMP_RCCONF}
 	if [ -n "${_flags}" ] || \
 	   ( svc_is_base ${_svc} && ! svc_default_enabled ${_svc} ); then
-		echo ${_svc}_flags=${_flags} >>${_TMP_RCCONF}
+		echo "${_svc}_flags=${_flags}" >>${_TMP_RCCONF}
 	fi
 	rcconf_edit_end
 }
@@ -281,7 +284,8 @@ shift $((OPTIND-1))
 action=$1
 svc=$2
 flag=$3
-flags=$*
+[ $# -ge 3 ] && shift 3 || shift $#
+flags="$*"
 
 if [ -n "$svc" ]; then
 	if ! svc_is_avail $svc; then
@@ -296,10 +300,10 @@ if [ -n "$flag" ]; then
 		if [ "$action" != "enable" ]; then
 			_rc_err "${0##*/}: \"flags\" can only be set with \"enable\""
 		fi
-		if svc_is_special $svc && [ -n "$4" ]; then
+		if svc_is_special $svc && [ -n "$flags" ]; then
 			_rc_err "${0##*/}: \"$svc\" is a special variable, cannot set \"flags\""
 		fi
-		if [ "$4" = "NO" ]; then
+		if [ "$flags" = "NO" ]; then
 			_rc_err "${0##*/}: \"flags NO\" contradicts \"enable\""
 		fi
 	else
@@ -320,7 +324,7 @@ case $action in
 		;;
 	enable)
 		needs_root $action
-		add_flags $flags
+		add_flags $action $svc "$flag" "$flags"
 		if ! svc_is_base $svc && ! svc_is_special $svc; then
 			append_to_pkg_scripts $svc
 		fi
