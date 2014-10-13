@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.57 2014/10/13 02:39:09 bcook Exp $ */
+/* $OpenBSD: b_sock.c,v 1.58 2014/10/13 02:49:53 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -462,8 +462,8 @@ BIO_socket_nbio(int s, int mode)
 {
 	int flags = fcntl(s, F_GETFD);
 	if (mode && !(flags & O_NONBLOCK))
-		return (fcntl(s, F_SETFL, flags | O_NONBLOCK) == 0);
+		return (fcntl(s, F_SETFL, flags | O_NONBLOCK) != -1);
 	else if (!mode && (flags & O_NONBLOCK))
-		return (fcntl(s, F_SETFL, flags & ~O_NONBLOCK) == 0);
+		return (fcntl(s, F_SETFL, flags & ~O_NONBLOCK) != -1);
 	return (1);
 }
