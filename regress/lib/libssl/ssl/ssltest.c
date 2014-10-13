@@ -178,15 +178,8 @@
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 
-#define _XOPEN_SOURCE_EXTENDED	1
-/* Or gethostname won't be declared properly
-   on Compaq platforms (at least with DEC C).
-   Do not try to put it earlier, or IPv6 includes
-   get screwed... */
-
-
-#  define TEST_SERVER_CERT "../apps/server.pem"
-#  define TEST_CLIENT_CERT "../apps/client.pem"
+#define TEST_SERVER_CERT "../apps/server.pem"
+#define TEST_CLIENT_CERT "../apps/client.pem"
 
 static int verify_callback(int ok, X509_STORE_CTX *ctx);
 static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength);
