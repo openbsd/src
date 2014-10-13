@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.45 2014/10/10 15:25:06 schwarze Exp $
+/*	$OpenBSD: html.c,v 1.46 2014/10/13 21:05:59 chl Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
