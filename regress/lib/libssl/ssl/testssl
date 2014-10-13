@@ -143,7 +143,7 @@ fi
 #fi
 
 #
-# DTLS
+# DTLS tests
 #
 
 echo test dtlsv1
@@ -171,3 +171,15 @@ for protocol in SSLv3; do
     fi
   done
 done
+
+#
+# Next Protocol Negotiation tests
+#
+echo "Testing NPN..."
+$ssltest -bio_pair -tls1 -npn_client || exit 1
+$ssltest -bio_pair -tls1 -npn_server || exit 1
+$ssltest -bio_pair -tls1 -npn_server_reject || exit 1
+$ssltest -bio_pair -tls1 -npn_client -npn_server_reject || exit 1
+$ssltest -bio_pair -tls1 -npn_client -npn_server || exit 1
+$ssltest -bio_pair -tls1 -npn_client -npn_server -num 2 || exit 1
+$ssltest -bio_pair -tls1 -npn_client -npn_server -num 2 -reuse || exit 1
