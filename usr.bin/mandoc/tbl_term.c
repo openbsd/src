@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.18 2014/10/14 02:16:02 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.19 2014/10/14 18:16:57 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -105,7 +105,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	/* Vertical frame at the start of each row. */
 
 	if ((TBL_OPT_BOX | TBL_OPT_DBOX) & sp->opts->opts ||
-	    sp->head->vert)
+	    (sp->head != NULL && sp->head->vert))
 		term_word(tp, TBL_SPAN_HORIZ == sp->pos ||
 		    TBL_SPAN_DHORIZ == sp->pos ? "+" : "|");
 

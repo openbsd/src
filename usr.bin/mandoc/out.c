@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.24 2014/10/14 02:16:02 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.25 2014/10/14 18:16:57 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -156,7 +156,7 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 	tbl->cols = mandoc_calloc((size_t)sp->opts->cols,
 	    sizeof(struct roffcol));
 
-	for (maxcol = 0; sp; sp = sp->next) {
+	for (maxcol = -1; sp; sp = sp->next) {
 		if (TBL_SPAN_DATA != sp->pos)
 			continue;
 		spans = 1;
