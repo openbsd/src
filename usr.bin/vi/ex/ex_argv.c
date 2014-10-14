@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_argv.c,v 1.13 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_argv.c,v 1.14 2014/10/14 22:23:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -429,7 +429,7 @@ argv_alloc(sp, len)
 	off = exp->argsoff;
 	if (exp->argscnt == 0 || off + 2 >= exp->argscnt - 1) {
 		cnt = exp->argscnt + INCREMENT;
-		REALLOC(sp, exp->args, ARGS **, cnt * sizeof(ARGS *));
+		REALLOCARRAY(sp, exp->args, ARGS **, cnt, sizeof(ARGS *));
 		if (exp->args == NULL) {
 			(void)argv_free(sp);
 			goto mem;
@@ -450,7 +450,7 @@ argv_alloc(sp, len)
 	ap->len = 0;
 	if (ap->blen < len + 1) {
 		ap->blen = len + 1;
-		REALLOC(sp, ap->bp, CHAR_T *, ap->blen * sizeof(CHAR_T));
+		REALLOCARRAY(sp, ap->bp, CHAR_T *, ap->blen, sizeof(CHAR_T));
 		if (ap->bp == NULL) {
 			ap->bp = NULL;
 			ap->blen = 0;

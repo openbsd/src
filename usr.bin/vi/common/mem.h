@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.h,v 1.5 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: mem.h,v 1.6 2014/10/14 22:23:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -154,13 +154,14 @@
 		return (1);						\
 	}								\
 }
-/*
- * XXX
- * Don't depend on realloc(NULL, size) working.
- */
+
 #define	REALLOC(sp, p, cast, size) {					\
-	if (((p) = (cast)((p) == NULL ?					\
-	    malloc(size) : realloc((p), (size)))) == NULL)		\
+	if (((p) = (cast)(realloc((p), (size)))) == NULL)		\
+		msgq((sp), M_SYSERR, NULL);				\
+}
+
+#define	REALLOCARRAY(sp, p, cast, nelem, size) {			\
+	if (((p) = (cast)(reallocarray((p), (nelem), (size)))) == NULL)	\
 		msgq((sp), M_SYSERR, NULL);				\
 }
 
