@@ -4630,6 +4630,8 @@
 ./usr/share/man/man3/lroundf.3
 ./usr/share/man/man3/lroundl.3
 ./usr/share/man/man3/lsearch.3
+./usr/share/man/man3/major.3
+./usr/share/man/man3/makedev.3
 ./usr/share/man/man3/malloc.3
 ./usr/share/man/man3/mblen.3
 ./usr/share/man/man3/mbrlen.3
@@ -4678,6 +4680,7 @@
 ./usr/share/man/man3/menu_win.3
 ./usr/share/man/man3/mergesort.3
 ./usr/share/man/man3/meta.3
+./usr/share/man/man3/minor.3
 ./usr/share/man/man3/mio_close.3
 ./usr/share/man/man3/mio_eof.3
 ./usr/share/man/man3/mio_nfds.3
