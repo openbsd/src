@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.58 2014/10/07 08:47:28 mpi Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.59 2014/10/14 13:04:04 mpi Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -154,7 +154,9 @@ struct if_clone loop_cloner =
 void
 loopattach(int n)
 {
-	(void) loop_clone_create(&loop_cloner, 0);
+	if (loop_clone_create(&loop_cloner, 0))
+		panic("unable to create lo0");
+
 	if_clone_attach(&loop_cloner);
 }
 
