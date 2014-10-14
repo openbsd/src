@@ -1,4 +1,4 @@
-.\" $OpenBSD: ressl_init.3,v 1.5 2014/10/08 19:17:55 tedu Exp $
+.\" $OpenBSD: ressl_init.3,v 1.6 2014/10/14 22:05:28 tedu Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 8 2014 $
+.Dd $Mdocdate: October 14 2014 $
 .Dt RESSL 3
 .Os
 .Sh NAME
@@ -227,7 +227,7 @@ Additionally, the values
 .Dv RESSL_PROTOCOL_TLSv1
 (all TLS versions) and
 .Dv RESSL_PROTOCOLS_DEFAULT
-(all versions) may be used.
+(currently all TLS versions) may be used.
 .Em (Client and server)
 .It
 .Fn ressl_config_clear_keys

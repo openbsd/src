@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.h,v 1.19 2014/10/09 22:04:33 tedu Exp $ */
+/* $OpenBSD: ressl.h,v 1.20 2014/10/14 22:05:28 tedu Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -26,8 +26,7 @@
 #define RESSL_PROTOCOL_TLSv1_2	(1 << 3)
 #define RESSL_PROTOCOL_TLSv1 \
 	(RESSL_PROTOCOL_TLSv1_0|RESSL_PROTOCOL_TLSv1_1|RESSL_PROTOCOL_TLSv1_2)
-#define RESSL_PROTOCOLS_DEFAULT \
-	(RESSL_PROTOCOL_SSLv3|RESSL_PROTOCOL_TLSv1)
+#define RESSL_PROTOCOLS_DEFAULT RESSL_PROTOCOL_TLSv1
 
 #define RESSL_READ_AGAIN	-2
 #define RESSL_WRITE_AGAIN	-3
