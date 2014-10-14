@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.39 2014/09/06 04:05:40 guenther Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.40 2014/10/14 15:01:51 deraadt Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -173,21 +173,17 @@ pass1(void)
 		}
 		if (ninosused != inosused) {
 			struct inostat *ninfo;
-			size_t ninospace = ninosused * sizeof(*ninfo);
+			size_t ninospace;
 
-			if (ninospace / sizeof(*info) != ninosused) {
-				pfatal("too many inodes %llu\n",
+			ninfo = reallocarray(info, ninosused, sizeof(*ninfo));
+			if (ninfo == NULL) {
+				pfatal("too many inodes %llu, or out of memory\n",
 				    (unsigned long long)ninosused);
 				exit(8);
 			}
-			ninfo = realloc(info, ninospace);
-			if (ninfo == NULL) {
-				pfatal("cannot realloc %zu bytes to %zu "
-				    "for inoinfo\n", inospace, ninospace);
-				exit(8);
-			}
+			ninospace = ninosused * sizeof(*ninfo);
 			if (ninosused > inosused)
-				(void)memset(&ninfo[inosused], 0, ninospace - inospace);
+				memset(&ninfo[inosused], 0, ninospace - inospace);
 			inostathead[c].il_stat = ninfo;
 		}
 	}
