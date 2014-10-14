@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.36 2014/10/07 08:59:50 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.37 2014/10/14 09:52:25 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -186,7 +186,7 @@ mpestart(struct ifnet *ifp)
 		sa->sa_family = AF_MPLS;
 
 		mpls_output(rt->rt_ifp, m, sa, rt);
-		RTFREE(rt);
+		rtfree(rt);
 	}
 }
 

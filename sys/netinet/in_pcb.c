@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.159 2014/09/27 12:26:16 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.160 2014/10/14 09:52:26 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -742,7 +742,7 @@ in_pcbrtentry(struct inpcb *inp)
 
 	/* check if route is still valid */
 	if (ro->ro_rt && (ro->ro_rt->rt_flags & RTF_UP) == 0) {
-		RTFREE(ro->ro_rt);
+		rtfree(ro->ro_rt);
 		ro->ro_rt = NULL;
 	}
 
@@ -832,7 +832,7 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 	 */
 	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
 	    (satosin(&ro->ro_dst)->sin_addr.s_addr != sin->sin_addr.s_addr))) {
-		RTFREE(ro->ro_rt);
+		rtfree(ro->ro_rt);
 		ro->ro_rt = NULL;
 	}
 	if ((ro->ro_rt == NULL || ro->ro_rt->rt_ifp == NULL)) {

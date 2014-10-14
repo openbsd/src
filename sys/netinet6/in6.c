@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.141 2014/10/07 08:47:28 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.142 2014/10/14 09:52:26 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -878,7 +878,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (memcmp(&mltaddr.sin6_addr,
 			    &satosin6(rt_key(rt))->sin6_addr,
 			    32 / 8)) {
-				RTFREE(rt);
+				rtfree(rt);
 				rt = NULL;
 			}
 		}
@@ -897,7 +897,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (error)
 				goto cleanup;
 		} else {
-			RTFREE(rt);
+			rtfree(rt);
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
 		if (!imm) {
@@ -947,7 +947,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (memcmp(&mltaddr.sin6_addr,
 			    &satosin6(rt_key(rt))->sin6_addr,
 			    32 / 8)) {
-				RTFREE(rt);
+				rtfree(rt);
 				rt = NULL;
 			}
 		}
@@ -965,7 +965,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (error)
 				goto cleanup;
 		} else {
-			RTFREE(rt);
+			rtfree(rt);
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
 		if (!imm) {
@@ -1620,11 +1620,11 @@ in6_ifpprefix(const struct ifnet *ifp, const struct in6_addr *addr)
 	    rt->rt_ifp->if_carpdev != ifp->if_carpdev) &&
 #endif
 	    1)) {
-		RTFREE(rt);
+		rtfree(rt);
 		return (0);
 	}
 
-	RTFREE(rt);
+	rtfree(rt);
 	return (1);
 }
 

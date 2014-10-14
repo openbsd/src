@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.46 2014/09/27 12:26:16 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.47 2014/10/14 09:52:26 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -248,8 +248,8 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 	if (ro) {
 		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
 		    !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst))) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)0;
+			rtfree(ro->ro_rt);
+			ro->ro_rt = NULL;
 		}
 		if (ro->ro_rt == (struct rtentry *)0 ||
 		    ro->ro_rt->rt_ifp == (struct ifnet *)0) {
@@ -375,7 +375,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		    !IN6_ARE_ADDR_EQUAL(&ron->ro_dst.sin6_addr,
 		    &sin6_next->sin6_addr)) {
 			if (ron->ro_rt) {
-				RTFREE(ron->ro_rt);
+				rtfree(ron->ro_rt);
 				ron->ro_rt = NULL;
 			}
 			ron->ro_dst = *sin6_next;
@@ -387,7 +387,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			if (ron->ro_rt == NULL ||
 			    (ron->ro_rt->rt_flags & RTF_GATEWAY)) {
 				if (ron->ro_rt) {
-					RTFREE(ron->ro_rt);
+					rtfree(ron->ro_rt);
 					ron->ro_rt = NULL;
 				}
 				error = EHOSTUNREACH;
@@ -395,7 +395,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			}
 		}
 		if (!nd6_is_addr_neighbor(sin6_next, ron->ro_rt->rt_ifp)) {
-			RTFREE(ron->ro_rt);
+			rtfree(ron->ro_rt);
 			ron->ro_rt = NULL;
 			error = EHOSTUNREACH;
 			goto done;
@@ -421,7 +421,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		    (!(ro->ro_rt->rt_flags & RTF_UP) ||
 		     sin6tosa(&ro->ro_dst)->sa_family != AF_INET6 ||
 		     !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst))) {
-			RTFREE(ro->ro_rt);
+			rtfree(ro->ro_rt);
 			ro->ro_rt = NULL;
 		}
 		if (ro->ro_rt == NULL) {
@@ -449,7 +449,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			ifp = ro->ro_rt->rt_ifp;
 
 			if (ifp == NULL) { /* can this really happen? */
-				RTFREE(ro->ro_rt);
+				rtfree(ro->ro_rt);
 				ro->ro_rt = NULL;
 			}
 		}

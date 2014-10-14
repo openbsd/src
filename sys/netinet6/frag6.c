@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.55 2014/09/27 12:26:16 mpi Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.56 2014/10/14 09:52:26 mpi Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	if (ro.ro_rt != NULL && ro.ro_rt->rt_ifa != NULL)
 		dstifp = ifatoia6(ro.ro_rt->rt_ifa)->ia_ifp;
 	if (ro.ro_rt != NULL) {
-		RTFREE(ro.ro_rt);
+		rtfree(ro.ro_rt);
 		ro.ro_rt = NULL;
 	}
 #else
@@ -673,8 +673,8 @@ frag6_slowtimo(void)
 	 * destination and the cache is never replaced.
 	 */
 	if (ip6_forward_rt.ro_rt) {
-		RTFREE(ip6_forward_rt.ro_rt);
-		ip6_forward_rt.ro_rt = 0;
+		rtfree(ip6_forward_rt.ro_rt);
+		ip6_forward_rt.ro_rt = NULL;
 	}
 
 	splx(s);

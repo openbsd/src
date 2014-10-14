@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.237 2014/09/30 08:21:21 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.238 2014/10/14 09:52:26 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -964,8 +964,8 @@ ip_slowtimo(void)
 		}
 	}
 	if (ipforward_rt.ro_rt) {
-		RTFREE(ipforward_rt.ro_rt);
-		ipforward_rt.ro_rt = 0;
+		rtfree(ipforward_rt.ro_rt);
+		ipforward_rt.ro_rt = NULL;
 	}
 	splx(s);
 }
@@ -1244,8 +1244,8 @@ ip_rtaddr(struct in_addr dst, u_int rtableid)
 
 	if (ipforward_rt.ro_rt == 0 || dst.s_addr != sin->sin_addr.s_addr) {
 		if (ipforward_rt.ro_rt) {
-			RTFREE(ipforward_rt.ro_rt);
-			ipforward_rt.ro_rt = 0;
+			rtfree(ipforward_rt.ro_rt);
+			ipforward_rt.ro_rt = NULL;
 		}
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(*sin);
@@ -1418,12 +1418,12 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 	rtableid = m->m_pkthdr.ph_rtableid;
 
 	sin = satosin(&ipforward_rt.ro_dst);
-	if ((rt = ipforward_rt.ro_rt) == 0 ||
+	if ((rt = ipforward_rt.ro_rt) == NULL ||
 	    ip->ip_dst.s_addr != sin->sin_addr.s_addr ||
 	    rtableid != ipforward_rt.ro_tableid) {
 		if (ipforward_rt.ro_rt) {
-			RTFREE(ipforward_rt.ro_rt);
-			ipforward_rt.ro_rt = 0;
+			rtfree(ipforward_rt.ro_rt);
+			ipforward_rt.ro_rt = NULL;
 		}
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(*sin);
@@ -1560,8 +1560,8 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 #ifndef SMALL_KERNEL
 	if (ipmultipath && ipforward_rt.ro_rt &&
 	    (ipforward_rt.ro_rt->rt_flags & RTF_MPATH)) {
-		RTFREE(ipforward_rt.ro_rt);
-		ipforward_rt.ro_rt = 0;
+		rtfree(ipforward_rt.ro_rt);
+		ipforward_rt.ro_rt = NULL;
 	}
 #endif
 	return;

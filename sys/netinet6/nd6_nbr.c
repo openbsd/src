@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.80 2014/07/12 18:44:23 tedu Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.81 2014/10/14 09:52:26 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -528,13 +528,13 @@ nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_SOLICIT]++;
 
 	if (ro.ro_rt) {		/* we don't cache this route. */
-		RTFREE(ro.ro_rt);
+		rtfree(ro.ro_rt);
 	}
 	return;
 
   bad:
 	if (ro.ro_rt) {
-		RTFREE(ro.ro_rt);
+		rtfree(ro.ro_rt);
 	}
 	m_freem(m);
 	return;
@@ -1044,13 +1044,13 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_ADVERT]++;
 
 	if (ro.ro_rt) {		/* we don't cache this route. */
-		RTFREE(ro.ro_rt);
+		rtfree(ro.ro_rt);
 	}
 	return;
 
   bad:
 	if (ro.ro_rt) {
-		RTFREE(ro.ro_rt);
+		rtfree(ro.ro_rt);
 	}
 	m_freem(m);
 	return;

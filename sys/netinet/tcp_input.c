@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.279 2014/10/08 20:19:58 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.280 2014/10/14 09:52:26 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3372,8 +3372,10 @@ syn_cache_put(struct syn_cache *sc)
 {
 	if (sc->sc_ipopts)
 		(void) m_free(sc->sc_ipopts);
-	if (sc->sc_route4.ro_rt != NULL)
-		RTFREE(sc->sc_route4.ro_rt);
+	if (sc->sc_route4.ro_rt != NULL) {
+		rtfree(sc->sc_route4.ro_rt);
+		sc->sc_route4.ro_rt = NULL;
+	}
 	timeout_set(&sc->sc_timer, syn_cache_reaper, sc);
 	timeout_add(&sc->sc_timer, 0);
 }

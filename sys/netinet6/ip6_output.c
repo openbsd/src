@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.159 2014/09/27 12:26:16 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.160 2014/10/14 09:52:26 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -958,10 +958,10 @@ reroute:
 		ip6stat.ip6s_fragmented++;
 
 done:
-	if (ro == &ip6route && ro->ro_rt) { /* brace necessary for RTFREE */
-		RTFREE(ro->ro_rt);
+	if (ro == &ip6route && ro->ro_rt) {
+		rtfree(ro->ro_rt);
 	} else if (ro_pmtu == &ip6route && ro_pmtu->ro_rt) {
-		RTFREE(ro_pmtu->ro_rt);
+		rtfree(ro_pmtu->ro_rt);
 	}
 
 	return (error);
@@ -1219,7 +1219,7 @@ ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro,
 		if (ro_pmtu->ro_rt &&
 		    ((ro_pmtu->ro_rt->rt_flags & RTF_UP) == 0 ||
 		     !IN6_ARE_ADDR_EQUAL(&sa6_dst->sin6_addr, dst))) {
-			RTFREE(ro_pmtu->ro_rt);
+			rtfree(ro_pmtu->ro_rt);
 			ro_pmtu->ro_rt = NULL;
 		}
 		if (ro_pmtu->ro_rt == 0) {
@@ -2256,7 +2256,7 @@ ip6_clearpktopts(struct ip6_pktopts *pktopt, int optname)
 		pktopt->ip6po_tclass = -1;
 	if (optname == -1 || optname == IPV6_NEXTHOP) {
 		if (pktopt->ip6po_nextroute.ro_rt) {
-			RTFREE(pktopt->ip6po_nextroute.ro_rt);
+			rtfree(pktopt->ip6po_nextroute.ro_rt);
 			pktopt->ip6po_nextroute.ro_rt = NULL;
 		}
 		if (pktopt->ip6po_nexthop)
@@ -2278,7 +2278,7 @@ ip6_clearpktopts(struct ip6_pktopts *pktopt, int optname)
 			free(pktopt->ip6po_rhinfo.ip6po_rhi_rthdr, M_IP6OPT, 0);
 		pktopt->ip6po_rhinfo.ip6po_rhi_rthdr = NULL;
 		if (pktopt->ip6po_route.ro_rt) {
-			RTFREE(pktopt->ip6po_route.ro_rt);
+			rtfree(pktopt->ip6po_route.ro_rt);
 			pktopt->ip6po_route.ro_rt = NULL;
 		}
 	}

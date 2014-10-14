@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.38 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.39 2014/10/14 09:52:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -325,7 +325,7 @@ do_v6:
 		if (ifp != NULL && rt_mpls->mpls_operation != MPLS_OP_LOCAL)
 			break;
 
-		RTFREE(rt);
+		rtfree(rt);
 		rt = NULL;
 	}
 
@@ -355,7 +355,7 @@ do_v6:
 	(*ifp->if_ll_output)(ifp, m, smplstosa(smpls), rt);
 done:
 	if (rt)
-		RTFREE(rt);
+		rtfree(rt);
 }
 
 int
@@ -468,12 +468,12 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 			 * less interface we need to find some other IP to
 			 * use as source.
 			 */
-			RTFREE(rt);
+			rtfree(rt);
 			m_freem(m);
 			return (NULL);
 		}
 		rt->rt_use++;
-		RTFREE(rt);
+		rtfree(rt);
 		if (icmp_reflect(m, NULL, ia))
 			return (NULL);
 

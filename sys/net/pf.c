@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.888 2014/10/08 07:37:01 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.889 2014/10/14 09:52:25 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2992,7 +2992,7 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, u_int16_t offer)
 	if (rt && rt->rt_ifp) {
 		mss = rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
 		mss = max(tcp_mssdflt, mss);
-		RTFREE(rt);
+		rtfree(rt);
 	}
 	mss = min(mss, offer);
 	mss = max(mss, 64);		/* sanity - at least max opt space */
@@ -5467,7 +5467,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 		ret = 0;
 out:
 	if (ro.ro_rt != NULL)
-		RTFREE(ro.ro_rt);
+		rtfree(ro.ro_rt);
 	return (ret);
 }
 
@@ -5511,7 +5511,7 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
 	if (ro.ro_rt != NULL) {
 		if (ro.ro_rt->rt_labelid == aw->v.rtlabel)
 			ret = 1;
-		RTFREE(ro.ro_rt);
+		rtfree(ro.ro_rt);
 	}
 
 	return (ret);
@@ -5688,7 +5688,7 @@ done:
 	if (r->rt != PF_DUPTO)
 		*m = NULL;
 	if (ro == &iproute && ro->ro_rt)
-		RTFREE(ro->ro_rt);
+		rtfree(ro->ro_rt);
 	return;
 
 bad:

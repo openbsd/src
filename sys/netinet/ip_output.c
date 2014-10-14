@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.268 2014/10/08 07:33:42 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.269 2014/10/14 09:52:26 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -177,8 +177,8 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
 		    dst->sin_addr.s_addr != ip->ip_dst.s_addr ||
 		    ro->ro_tableid != m->m_pkthdr.ph_rtableid)) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)0;
+			rtfree(ro->ro_rt);
+			ro->ro_rt = NULL;
 		}
 
 		if (ro->ro_rt == 0) {
@@ -328,8 +328,8 @@ reroute:
 		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
 		    dst->sin_addr.s_addr != ip->ip_dst.s_addr ||
 		    ro->ro_tableid != m->m_pkthdr.ph_rtableid)) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)0;
+			rtfree(ro->ro_rt);
+			ro->ro_rt = NULL;
 		}
 
 		if (ro->ro_rt == 0) {
@@ -582,7 +582,7 @@ sendit:
 			if (rt != NULL) {
 				rt->rt_rmx.rmx_mtu = icmp_mtu;
 				if (ro && ro->ro_rt != NULL) {
-					RTFREE(ro->ro_rt);
+					rtfree(ro->ro_rt);
 					ro->ro_rt = rtalloc1(&ro->ro_dst, RT_REPORT,
 					    m->m_pkthdr.ph_rtableid);
 				}
@@ -717,7 +717,7 @@ sendit:
 
 done:
 	if (ro == &iproute && ro->ro_rt)
-		RTFREE(ro->ro_rt);
+		rtfree(ro->ro_rt);
 	return (error);
 bad:
 #ifdef IPSEC

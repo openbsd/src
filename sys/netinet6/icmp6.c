@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.148 2014/08/27 14:04:16 florian Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.149 2014/10/14 09:52:26 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1046,9 +1046,8 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 			rt->rt_rmx.rmx_mtu = mtu;
 		}
 	}
-	if (rt) { /* XXX: need braces to avoid conflict with else in RTFREE. */
-		RTFREE(rt);
-	}
+	if (rt)
+		rtfree(rt);
 
 	/*
 	 * Notify protocols that the MTU for this destination
@@ -1281,9 +1280,8 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		bzero(&ro, sizeof(ro));
 		error = in6_selectsrc(&src, &sa6_src, NULL, NULL, &ro, NULL,
 		    m->m_pkthdr.ph_rtableid);
-		if (ro.ro_rt) { /* XXX: see comments in icmp6_mtudisc_update */
-			RTFREE(ro.ro_rt); /* XXX: we could use this */
-		}
+		if (ro.ro_rt)
+			rtfree(ro.ro_rt); /* XXX: we could use this */
 		if (error) {
 			nd6log((LOG_DEBUG,
 			    "icmp6_reflect: source can't be determined: "
@@ -1442,7 +1440,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 			    "ICMP6 redirect rejected; no route "
 			    "with inet6 gateway found for redirect dst: %s\n",
 			    icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
-			RTFREE(rt);
+			rtfree(rt);
 			goto bad;
 		}
 
@@ -1454,7 +1452,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 				"%s\n",
 				inet_ntop(AF_INET6, gw6, addr, sizeof(addr)),
 				icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
-			RTFREE(rt);
+			rtfree(rt);
 			goto bad;
 		}
 	} else {
@@ -1464,7 +1462,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 			icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
 		goto bad;
 	}
-	RTFREE(rt);
+	rtfree(rt);
 	rt = NULL;
     }
 

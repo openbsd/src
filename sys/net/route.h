@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.98 2014/10/08 07:37:02 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.99 2014/10/14 09:52:26 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -329,13 +329,6 @@ const char	*rtlabel_id2name(u_int16_t);
 u_int16_t	 rtlabel_name2id(char *);
 struct sockaddr	*rtlabel_id2sa(u_int16_t, struct sockaddr_rtlabel *);
 void		 rtlabel_unref(u_int16_t);
-
-#define	RTFREE(rt) do {							\
-	if ((rt)->rt_refcnt <= 1)					\
-		rtfree(rt);						\
-	else								\
-		(rt)->rt_refcnt--;					\
-} while (/* CONSTCOND */0)
 
 /*
  * Values for additional argument to rtalloc1()

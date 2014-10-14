@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.70 2014/07/22 11:06:09 mpi Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.71 2014/10/14 09:52:25 mpi Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -519,8 +519,10 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 recompute:
 		if ((sc->g_src.s_addr != INADDR_ANY) &&
 		    (sc->g_dst.s_addr != INADDR_ANY)) {
-			if (sc->route.ro_rt != 0)
-				RTFREE(sc->route.ro_rt);
+			if (sc->route.ro_rt != NULL) {
+				rtfree(sc->route.ro_rt);
+				sc->route.ro_rt = NULL;
+			}
 			/* ip_output() will do the lookup */
 			bzero(&sc->route, sizeof(sc->route));
 			ifp->if_flags |= IFF_UP;

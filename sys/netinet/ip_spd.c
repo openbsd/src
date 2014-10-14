@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.73 2014/09/27 12:26:16 mpi Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.74 2014/10/14 09:52:26 mpi Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -260,14 +260,14 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	if ((re->re_rt->rt_gateway == NULL) ||
 	    (((struct sockaddr_encap *) re->re_rt->rt_gateway)->sen_type !=
 		SENT_IPSP)) {
-		RTFREE(re->re_rt);
+		rtfree(re->re_rt);
 		*error = EHOSTUNREACH;
 		DPRINTF(("ip_spd_lookup: no gateway in SPD entry!"));
 		return NULL;
 	}
 
 	ipo = ((struct sockaddr_encap *) (re->re_rt->rt_gateway))->sen_ipsp;
-	RTFREE(re->re_rt);
+	rtfree(re->re_rt);
 	if (ipo == NULL) {
 		*error = EHOSTUNREACH;
 		DPRINTF(("ip_spd_lookup: no policy attached to SPD entry!"));

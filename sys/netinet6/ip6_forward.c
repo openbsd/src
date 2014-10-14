@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.68 2014/09/27 12:26:16 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.69 2014/10/14 09:52:26 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -245,8 +245,8 @@ reroute:
 		    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) == 0 ||
 		    ip6_forward_rt.ro_tableid != rtableid) {
 			if (ip6_forward_rt.ro_rt) {
-				RTFREE(ip6_forward_rt.ro_rt);
-				ip6_forward_rt.ro_rt = 0;
+				rtfree(ip6_forward_rt.ro_rt);
+				ip6_forward_rt.ro_rt = NULL;
 			}
 			/* this probably fails but give it a try again */
 			ip6_forward_rt.ro_tableid = rtableid;
@@ -271,8 +271,8 @@ reroute:
 	   !IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst->sin6_addr) ||
 	   ip6_forward_rt.ro_tableid != rtableid) {
 		if (ip6_forward_rt.ro_rt) {
-			RTFREE(ip6_forward_rt.ro_rt);
-			ip6_forward_rt.ro_rt = 0;
+			rtfree(ip6_forward_rt.ro_rt);
+			ip6_forward_rt.ro_rt = NULL;
 		}
 		bzero(dst, sizeof(*dst));
 		dst->sin6_len = sizeof(struct sockaddr_in6);
@@ -546,8 +546,8 @@ senderr:
 #ifndef SMALL_KERNEL
 	if (ip6_multipath && ip6_forward_rt.ro_rt &&
 	    (ip6_forward_rt.ro_rt->rt_flags & RTF_MPATH)) {
-		RTFREE(ip6_forward_rt.ro_rt);
-		ip6_forward_rt.ro_rt = 0;
+		rtfree(ip6_forward_rt.ro_rt);
+		ip6_forward_rt.ro_rt = NULL;
 	}
 #endif
 	return;

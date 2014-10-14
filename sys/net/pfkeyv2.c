@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.134 2014/09/27 12:26:16 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.135 2014/10/14 09:52:26 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1573,7 +1573,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    re.re_tableid);
 		if (re.re_rt != NULL) {
 			ipo = ((struct sockaddr_encap *) re.re_rt->rt_gateway)->sen_ipsp;
-			RTFREE(re.re_rt);
+			rtfree(re.re_rt);
 
 			/* Verify that the entry is identical */
 			if (bcmp(&ipo->ipo_addr, &encapdst,
