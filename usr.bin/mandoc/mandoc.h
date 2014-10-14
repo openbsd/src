@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.105 2014/10/12 19:10:56 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.106 2014/10/14 02:16:02 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -246,6 +246,7 @@ struct	tbl_cell {
 #define	TBL_CELL_EQUAL	 (1 << 4) /* e, E */
 #define	TBL_CELL_UP	 (1 << 5) /* u, U */
 #define	TBL_CELL_WIGN	 (1 << 6) /* z, Z */
+#define	TBL_CELL_WMAX	 (1 << 7) /* x, X */
 	struct tbl_head	 *head;
 };
 

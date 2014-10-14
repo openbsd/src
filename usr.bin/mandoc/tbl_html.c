@@ -1,4 +1,4 @@
-/*	$Id: tbl_html.c,v 1.7 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$OpenBSD: tbl_html.c,v 1.8 2014/10/14 02:16:02 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/types.h>
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,7 +55,7 @@ html_tblopen(struct html *h, const struct tbl_span *sp)
 	if (TBL_SPAN_FIRST & sp->flags) {
 		h->tbl.len = html_tbl_len;
 		h->tbl.slen = html_tbl_strlen;
-		tblcalc(&h->tbl, sp);
+		tblcalc(&h->tbl, sp, 0);
 	}
 
 	assert(NULL == h->tblt);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.17 2014/10/13 23:31:26 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.18 2014/10/14 02:16:02 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -89,7 +89,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		tp->tbl.slen = term_tbl_strlen;
 		tp->tbl.arg = tp;
 
-		tblcalc(&tp->tbl, sp);
+		tblcalc(&tp->tbl, sp, rmargin - tp->offset);
 	}
 
 	/* Horizontal frame at the start of boxed tables. */
