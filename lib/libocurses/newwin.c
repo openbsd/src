@@ -1,4 +1,4 @@
-/*	$OpenBSD: newwin.c,v 1.5 2009/11/11 18:22:05 deraadt Exp $ */
+/*	$OpenBSD: newwin.c,v 1.6 2014/10/14 05:38:20 deraadt Exp $ */
 /*
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -165,11 +165,11 @@ __makenew(nl, nc, by, bx, sub)
 	/* 
 	 * Set up line pointer array and line space.
 	 */
-	if ((win->lines = malloc (nl * sizeof(__LINE *))) == NULL) {
+	if ((win->lines = reallocarray(NULL, nl, sizeof(__LINE *))) == NULL) {
 		free(win);
 		return NULL;
 	}
-	if ((win->lspace = malloc (nl * sizeof(__LINE))) == NULL) {
+	if ((win->lspace = reallocarray(NULL, nl, sizeof(__LINE))) == NULL) {
 		free (win->lines);
 		free (win);
 		return NULL;
@@ -180,8 +180,8 @@ __makenew(nl, nc, by, bx, sub)
 		/*
 		 * Allocate window space in one chunk.
 		 */
-		if ((win->wspace = 
-		    malloc(nc * nl * sizeof(__LDATA))) == NULL) {
+		if ((win->wspace = reallocarray(NULL, nc,
+		    nl * sizeof(__LDATA))) == NULL) {
 			free(win->lines);
 			free(win->lspace);
 			free(win);
