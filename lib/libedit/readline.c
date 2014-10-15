@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.11 2014/10/11 04:24:06 doug Exp $	*/
+/*	$OpenBSD: readline.c,v 1.12 2014/10/15 10:55:11 deraadt Exp $	*/
 /*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
@@ -786,13 +786,14 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 						cmd++;
 					if (len >= size) {
 						char *nwhat;
-						nwhat = realloc(what,
-								(size <<= 1));
+						nwhat = reallocarray(what,
+						    size, 2);
 						if (nwhat == NULL) {
 							free(what);
 							free(tmp);
 							return 0;
 						}
+						size *= 2;
 						what = nwhat;
 					}
 					what[len++] = *cmd;
@@ -2109,7 +2110,7 @@ rl_completion_matches(const char *str, rl_compentry_func_t *fun)
 
 	len = 1;
 	max = 10;
-	if ((list = malloc(max * sizeof(*list))) == NULL)
+	if ((list = reallocarray(NULL, max, sizeof(*list))) == NULL)
 		return NULL;
 
 	while ((match = (*fun)(str, (int)(len - 1))) != NULL) {
@@ -2117,7 +2118,7 @@ rl_completion_matches(const char *str, rl_compentry_func_t *fun)
 		if (len == max) {
 			char **nl;
 			max += 10;
-			if ((nl = realloc(list, max * sizeof(*nl))) == NULL)
+			if ((nl = reallocarray(list, max, sizeof(*nl))) == NULL)
 				goto out;
 			list = nl;
 		}
