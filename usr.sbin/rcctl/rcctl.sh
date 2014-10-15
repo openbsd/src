@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.44 2014/10/13 19:06:53 schwarze Exp $
+# $OpenBSD: rcctl.sh,v 1.45 2014/10/15 07:38:24 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -34,6 +34,16 @@ usage()
 needs_root()
 {
 	[ "$(id -u)" -ne 0 ] && _rc_err "${0##*/} $1: need root privileges"
+}
+
+ls_rcscripts() {
+	local _s
+
+	cd /etc/rc.d && set -- *
+	for _s; do
+		[ "${_s}" = "rc.subr" ] && continue
+		[ ! -d "${_s}" ] && echo "${_s}"
+	done
 }
 
 rcconf_edit_begin()
@@ -93,7 +103,7 @@ svc_get_defaults()
 		print -r -- "$(svc_default_enabled_flags ${_svc})"
 		svc_default_enabled ${_svc}
 	else
-		for _i in $(ls -A /etc/rc.d | grep -v rc.subr); do
+		for _i in $(ls_rcscripts); do
 			echo "${_i}_flags=$(svc_default_enabled_flags ${_i})"
 		done
 		for _i in ${_special_services}; do
@@ -134,7 +144,7 @@ svc_get_status()
 		svc_get_flags ${_svc}
 		svc_is_enabled ${_svc}
 	else
-		for _i in $(ls -A /etc/rc.d | grep -v rc.subr); do
+		for _i in $(ls_rcscripts); do
 			echo "${_i}_flags=$(svc_get_flags ${_i})"
 		done
 		for _i in ${_special_services}; do
