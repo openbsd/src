@@ -1,9 +1,9 @@
-/*	$OpenBSD: db_disasm.c,v 1.3 2010/05/24 15:06:05 deraadt Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.4 2014/10/15 17:22:56 miod Exp $	*/
 
 /* TODO parse 64bit insns or rewrite */
 
 /*
- * Copyright (c) 2005 Michael Shalayeff
+ * Copyright (c) 1999,2005 Michael Shalayeff
  * All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -1237,7 +1237,7 @@ iExInit(void)
 	u_int	shft, mask;
 
 	if (unasm_initted)
-		return 0;
+		return 1;
 
 	/*
 	 * Determine maxsubop for each major opcode.
@@ -1248,15 +1248,17 @@ iExInit(void)
 	 */
 	for (i = &instrs[0]; *i->mnem; i++) {
 		m = &majopcs[i->majopc];
-		if (m->maxsubop < i->opcext)
-			panic("iExInit not enough space for opcode %d",
+		if (m->maxsubop < i->opcext) {
+			db_printf("iExInit not enough space for opcode %d",
 			    i->majopc);
+			return 0;
+		}
 		shft = 32 - i->extbs - i->extbl;
 		mask = (1 << i->extbl) - 1;
 		if (m->extshft || m->extmask) {
 			if (m->extshft != shft || m->extmask != mask) {
 				db_printf("%s - Bad instruction initialization!\n", i->mnem);
-				return (0);
+				return 0;
 			}
 		} else {
 			m->extshft = shft;
@@ -1276,7 +1278,7 @@ iExInit(void)
 	}
 
 	unasm_initted++;
-	return (1);
+	return 1;
 }
 
 
@@ -1448,7 +1450,7 @@ subDCond(cond)
 	case TR:	return(",tr");
 	case NEV:	return("");
 	default:
-		panic("subDCond: unknown condition");
+		return(",<unknown subDCond condition>");
 	}
 }
 
@@ -1480,7 +1482,7 @@ addDCond(cond)
 	case TR:	return(",tr");
 	case NEV:	return("");
 	default:
-		panic("addDCond: unknown condition");
+		return(",<unknown addDCond condition>");
 	}
 }
 
@@ -1502,7 +1504,7 @@ unitDCond(cond)
 	case TR:	return(",tr");
 	case NEV:	return("");
 	default:
-		panic("unitDCond: unknown condition");
+		return(",<unknown unitDCond condition>");
 	}
 }
 
@@ -1520,7 +1522,7 @@ edDCond(cond)
 	case XEV:	return(",ev");
 	case NEV:	return("");
 	default:
-		panic("edDCond: unknown condition");
+		return(",<unknown edDCond condition>");
 	}
 }
 
@@ -2315,9 +2317,8 @@ db_disasm(loc, flag)
 	register const struct majoropcode *m;
 	register u_int ext;
 	int ok, instruct;
-	OFS ofs = 0;
+	OFS ofs = loc;
 
-	iExInit();
 /* TODO	if (loc == PC_REGS(&ddb_regs) && ddb_regs.tf_iir)
 		instruct = ddb_regs.tf_iir;
 	else */ if (USERMODE(loc)) {
@@ -2328,22 +2329,26 @@ db_disasm(loc, flag)
 		instruct = *(int *)loc;
 
 	ok = 0;
-	m = &majopcs[Opcode(instruct)];
-	ext = OpExt(instruct, m);
-	if (ext <= m->maxsubop) {
-		/* special hack for majopcs table layout */
-		if (m->maxsubop == 1)
-			i = (const struct inst *)m->subops;
-		else
-			i = m->subops[ext];
+	if (iExInit() != 0) {
+		m = &majopcs[Opcode(instruct)];
+		ext = OpExt(instruct, m);
+		if (ext <= m->maxsubop) {
+			/* special hack for majopcs table layout */
+			if (m->maxsubop == 1)
+				i = (const struct inst *)m->subops;
+			else
+				i = m->subops[ext];
 
-		if (i && i->mnem[0] != '?') {
-			if (i->dasmfcn != coprDasm && i->dasmfcn != diagDasm &&
-			    i->dasmfcn != ariDasm && i->dasmfcn != scDasm &&
-			    i->dasmfcn != ldDasm)
-				db_printf(i->mnem);
-			if (i->dasmfcn)
-				ok = (*i->dasmfcn)(i, ofs, instruct);
+			if (i && i->mnem[0] != '?') {
+				if (i->dasmfcn != coprDasm &&
+				    i->dasmfcn != diagDasm &&
+				    i->dasmfcn != ariDasm &&
+				    i->dasmfcn != scDasm &&
+				    i->dasmfcn != ldDasm)
+					db_printf(i->mnem);
+				if (i->dasmfcn)
+					ok = (*i->dasmfcn)(i, ofs, instruct);
+			}
 		}
 	}
 
