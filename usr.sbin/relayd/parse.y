@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.189 2014/09/05 10:19:26 blambert Exp $	*/
+/*	$OpenBSD: parse.y,v 1.190 2014/10/15 11:06:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1065,6 +1065,12 @@ flag		: STRING			{
 				$$ = SSLFLAG_SSLV3;
 			else if (strcmp("tlsv1", $1) == 0)
 				$$ = SSLFLAG_TLSV1;
+			else if (strcmp("tlsv1.0", $1) == 0)
+				$$ = SSLFLAG_TLSV1_0;
+			else if (strcmp("tlsv1.1", $1) == 0)
+				$$ = SSLFLAG_TLSV1_1;
+			else if (strcmp("tlsv1.2", $1) == 0)
+				$$ = SSLFLAG_TLSV1_2;
 			else if (strcmp("cipher-server-preference", $1) == 0)
 				$$ = SSLFLAG_CIPHER_SERVER_PREF;
 			else if (strcmp("client-renegotiation", $1) == 0)

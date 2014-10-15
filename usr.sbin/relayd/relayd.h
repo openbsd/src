@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.192 2014/09/05 10:19:26 blambert Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.193 2014/10/15 11:06:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -637,16 +637,19 @@ TAILQ_HEAD(relay_rules, relay_rule);
 
 #define SSLFLAG_SSLV2				0x01
 #define SSLFLAG_SSLV3				0x02
-#define SSLFLAG_TLSV1				0x04
-#define SSLFLAG_VERSION				0x07
-#define SSLFLAG_CIPHER_SERVER_PREF		0x08
-#define SSLFLAG_CLIENT_RENEG			0x10
+#define SSLFLAG_TLSV1_0				0x04
+#define SSLFLAG_TLSV1_1				0x08
+#define SSLFLAG_TLSV1_2				0x10
+#define SSLFLAG_TLSV1				0x1c
+#define SSLFLAG_VERSION				0x1f
+#define SSLFLAG_CIPHER_SERVER_PREF		0x20
+#define SSLFLAG_CLIENT_RENEG			0x40
 #define SSLFLAG_DEFAULT				\
-	(SSLFLAG_SSLV3|SSLFLAG_TLSV1|SSLFLAG_CLIENT_RENEG)
+	(SSLFLAG_TLSV1|SSLFLAG_CLIENT_RENEG)
 
 #define SSLFLAG_BITS						\
-	"\10\01sslv2\02sslv3\03tlsv1"				\
-	"\04cipher-server-preference\05client-renegotiation"
+	"\10\01sslv2\02sslv3\03tlsv1.0\04tlsv1.1\05tlsv1.2"	\
+	"\06cipher-server-preference\07client-renegotiation"
 
 #define SSLCIPHERS_DEFAULT	"HIGH:!aNULL"
 #define SSLECDHCURVE_DEFAULT	NID_X9_62_prime256v1
