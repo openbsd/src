@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.39 2014/09/14 14:17:24 jsg Exp $ */
+/* $OpenBSD: pckbc.c,v 1.40 2014/10/15 13:36:45 uebayasi Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -37,6 +37,7 @@
 #include <sys/lock.h>
 
 #include <machine/bus.h>
+#include <machine/cpu.h>
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
@@ -151,6 +152,7 @@ pckbc_poll_data1(bus_space_tag_t iot, bus_space_handle_t ioh_d,
 			register u_char c;
 
 			KBD_DELAY;
+			CPU_BUSY_CYCLE();
 			c = bus_space_read_1(iot, ioh_d, 0);
 			if (checkaux && (stat & 0x20)) { /* aux data */
 				if (slot != PCKBC_AUX_SLOT) {
