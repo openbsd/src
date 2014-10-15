@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2012/11/24 10:42:46 kettenis Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 2014/10/15 21:37:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -44,6 +44,17 @@ xzalloc(size_t size)
 
 	p = xmalloc(size);
 	memset(p, 0, size);
+	return p;
+}
+
+void *
+xreallocarray(void *o, size_t nmemb, size_t size)
+{
+	void *p;
+
+	p = reallocarray(o, nmemb, size);
+	if (p == NULL)
+		err(1, NULL);
 	return p;
 }
 

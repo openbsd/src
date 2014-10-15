@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.c,v 1.4 2013/02/19 09:26:54 stsp Exp $	*/
+/*	$OpenBSD: ds.c,v 1.5 2014/10/15 21:37:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -704,7 +704,7 @@ ds_conn_serve(void)
 	struct pollfd *pfd;
 	int nfds;
 
-	pfd = xmalloc(num_ds_conns * sizeof(*pfd));
+	pfd = xreallocarray(NULL, num_ds_conns, sizeof(*pfd));
 	TAILQ_FOREACH(dc, &ds_conns, link) {
 		pfd[dc->id].fd = dc->fd;
 		pfd[dc->id].events = POLLIN;
