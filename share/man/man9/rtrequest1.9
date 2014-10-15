@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rtrequest1.9,v 1.2 2014/04/25 11:49:47 mpi Exp $
+.\"     $OpenBSD: rtrequest1.9,v 1.3 2014/10/15 11:58:13 mpi Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,13 +15,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2014 $
+.Dd $Mdocdate: October 15 2014 $
 .Dt RTREQUEST1 9
 .Os
 .Sh NAME
 .Nm rtrequest1
-.Nd add or remove routes from a routing table
+.Nd add or remove entries from a routing table
 .Sh SYNOPSIS
+.In sys/types.h
 .In net/route.h
 .Ft int
 .Fn rtrequest1 "int req" "struct rt_addrinfo *info" "u_int8_t prio" \
@@ -51,26 +52,26 @@ struct rt_addrinfo {
 .Sh DESCRIPTION
 The
 .Fn rtrequest1
-function is used to add or remove routes from a specific routing table.
+function is used to add or remove entries from a specific routing table.
 It takes the following arguments:
 .Bl -tag -width rtableid
 .It Fa req
 One of the following actions to perform:
 .Bl -tag -width RTM_RESOLVE -offset indent
 .It Dv RTM_ADD
-Add a route to a given routing table.
+Add an entry to a given routing table.
 .It Dv RTM_DELETE
-Remove a route from a given routing table.
-In case of a cloning route, all its children are deleted.
+Remove an entry from a given routing table.
+In case of a cloning entry, all its children are deleted.
 .It Dv RTM_RESOLVE
-Add a cloned route, based on the parent cloning route pointed by
+Add a cloned entry, based on the parent cloning entry pointed by
 .Fa rtp ,
 to a given routing table.
 .El
 .It Fa info
-Describes the route to add or remove.
+Describes the routing entry to add or remove.
 .It Fa prio
-Specifies the priority of the route described by
+Specifies the priority of the routing entry described by
 .Fa info .
 If it is
 .Dv 0
@@ -79,12 +80,12 @@ and the requested action is
 then a default priority based on the priority of the associated
 interface is chosen.
 .It Fa rtp
-Points to the cloning route if the action is
+Points to the cloning entry if the action is
 .Dv RTM_RESOLVE
 or, if the action is
 .Dv RTM_DELETE
-and it is non-NULL, a pointer to the removed route is placed there.
-In this case, the caller must take care of releasing the returned route by
+and it is non-NULL, a pointer to the removed entry is placed there.
+In this case, the caller must take care of releasing the returned entry by
 calling
 .Xr rtfree 9 .
 .It Fa rtableid
@@ -104,32 +105,32 @@ The routing table with ID of
 does not exist or it does not support the protocol specified in
 .Fa info .
 .It Bq Er ESRCH
-No route corresponding to
+No routing entry corresponding to
 .Fa info
 could be found.
 .It Bq Er ESRCH
-Multipath route with no gateway provided in
+Multipath routing entry with no gateway provided in
 .Fa info .
 .It Bq Er ESRCH
-The route could not be found in the routing table of ID
+The entry could not be found in the routing table of ID
 .Fa rtableid .
 specified
 .It Bq Er EINVAL
-The route pointed by
+The entry pointed by
 .Fa rtp
-is not valid or does not point to a cloning route in the
+is not valid or does not point to a cloning entry in the
 .Dv RTM_RESOLVE
 case.
 .It Bq Er EEXIST
-Multipath route conflicts with existing multipath route.
+Multipath routing entry conflicts with an existing one.
 .It Bq Er EEXIST
-The route could not be entered into the routing table.
+The entry could not be entered into the routing table.
 .It Bq Er ENOMEM
 Space for MPLS protocol data could not be allocated.
 .It Bq Er ENOBUFS
-Space for a new route could not be allocated.
+Space for a new routing entry could not be allocated.
 .It Bq Er ENETUNREACH
-An interface address corresponding to the route described by
+An interface address corresponding to the routing entry described by
 .Fa info
 could not be found.
 .El

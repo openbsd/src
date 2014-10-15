@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rt_ifa_add.9,v 1.2 2014/04/25 11:49:47 mpi Exp $
+.\"	$OpenBSD: rt_ifa_add.9,v 1.3 2014/10/15 11:58:13 mpi Exp $
 .\"
 .\" Copyright (c) 2014 Martin Pieuchot
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2014 $
+.Dd $Mdocdate: October 15 2014 $
 .Dt RT_IFA_ADD 9
 .Os
 .Sh NAME
@@ -22,8 +22,9 @@
 .Nm rt_ifa_del ,
 .Nm rt_ifa_addloop ,
 .Nm rt_ifa_delloop
-.Nd add or delete routes associated with an address
+.Nd add or delete routing entries associated with an address
 .Sh SYNOPSIS
+.In sys/types.h
 .In sys/socket.h
 .In net/if.h
 .In net/route.h
@@ -36,14 +37,15 @@
 .Ft void
 .Fn rt_ifa_delloop "struct ifaddr *ifa"
 .Sh DESCRIPTION
-These functions create and delete routes required by the network stack
-and managed by the kernel.
+These functions create and delete routing entries required by the network
+stack and managed by the kernel.
 .Bl -tag -width rt_ifa_addloopxx
 .It Fn rt_ifa_add
-Creates and associates a connected route with
+Creates and associates a connected routing entry with
 .Fa ifa .
 .Pp
-Connected routes are mostly routes to prefixes and should be created with
+Connected routing entries represent routes to prefixes and should be created
+with
 .Dv RTF_CLONING
 in
 .Fa flags
@@ -51,26 +53,26 @@ and the address of
 .Fa ifa
 in
 .Fa dst .
-But for Point-to-Point interfaces, connected routes are routes to hosts and
-should be created
+But for Point-to-Point interfaces, connected routing entries represent routes
+to hosts and should be created
 with
 .Dv RTF_HOST
 in
 .Fa flags
 and the destination address in
 .Fa dst .
-Connected routes have a priority of
+Connected routing entries have a priority of
 .Dv RTP_CONNECTED .
 .It Fn rt_ifa_del
-Removes the connected route associated with
+Removes the connected routing entry associated with
 .Fa ifa .
 .It Fn rt_ifa_addloop
-Creates and associates a local route
+Creates and associates a local routing entry
 with
 .Fa ifa .
 .Pp
-Local routes are used to not send packets destined to a local address on the
-wire and instead redirect them to
+Local routing entries are used to not send packets destined to a local
+address on the wire and instead redirect them to
 .Xr lo 4 .
 They have the lowest priority available,
 .Dv RTP_LOCAL ,
@@ -78,7 +80,7 @@ and contain a special flag,
 .Dv RTF_LOCAL ,
 that can be checked to determine if the address is configured on the system.
 .It Fn rt_ifa_delloop
-Removes the local route associated with
+Removes the local routing entry associated with
 .Fa ifa .
 .El
 .Sh CONTEXT
