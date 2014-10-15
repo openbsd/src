@@ -1,4 +1,4 @@
-.\" $OpenBSD: ressl_init.3,v 1.6 2014/10/14 22:05:28 tedu Exp $
+.\" $OpenBSD: ressl_init.3,v 1.7 2014/10/15 19:57:43 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 14 2014 $
+.Dd $Mdocdate: October 15 2014 $
 .Dt RESSL 3
 .Os
 .Sh NAME
@@ -275,7 +275,7 @@ operations.
 .It
 .Fn ressl_connect
 connects a client context to the server named by
-.Fa host.
+.Fa host .
 The
 .Fa port
 may be numeric or a service name.
@@ -315,4 +315,3 @@ API first appeared in
 .Ox 5.6
 as a response to the unnecessary challenges other APIs present in
 order to use them safely.
-
