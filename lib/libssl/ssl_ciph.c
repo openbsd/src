@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.69 2014/10/03 06:02:38 doug Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.70 2014/10/15 13:57:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -327,8 +327,18 @@ static const SSL_CIPHER cipher_aliases[] = {
 	
 	/* aliases combining key exchange and server authentication */
 	{
+		.name = SSL_TXT_DHE,
+		.algorithm_mkey = SSL_kDHE,
+		.algorithm_auth = ~SSL_aNULL,
+	},
+	{
 		.name = SSL_TXT_EDH,
 		.algorithm_mkey = SSL_kDHE,
+		.algorithm_auth = ~SSL_aNULL,
+	},
+	{
+		.name = SSL_TXT_ECDHE,
+		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = ~SSL_aNULL,
 	},
 	{

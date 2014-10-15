@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.67 2014/10/03 13:58:18 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.68 2014/10/15 13:57:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -259,11 +259,13 @@ extern "C" {
 
 #define	SSL_TXT_DSS		"DSS"
 #define SSL_TXT_DH		"DH"
-#define SSL_TXT_EDH		"EDH" /* same as "kEDH:-ADH" */
+#define SSL_TXT_DHE		"DHE" /* same as "kDHE:-ADH" */
+#define SSL_TXT_EDH		"EDH" /* previous name for DHE */
 #define SSL_TXT_ADH		"ADH"
 #define SSL_TXT_RSA		"RSA"
 #define SSL_TXT_ECDH		"ECDH"
-#define SSL_TXT_EECDH		"EECDH" /* same as "kEECDH:-AECDH" */
+#define SSL_TXT_ECDHE		"ECDHE" /* same as "kECDHE:-AECDH" */
+#define SSL_TXT_EECDH		"EECDH" /* previous name for ECDHE */
 #define SSL_TXT_AECDH		"AECDH"
 #define SSL_TXT_ECDSA		"ECDSA"
 #define SSL_TXT_KRB5      	"KRB5"
