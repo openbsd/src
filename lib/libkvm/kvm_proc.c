@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.50 2014/07/04 05:58:31 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.51 2014/10/15 02:03:05 deraadt Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -194,9 +194,9 @@ _kvm_ureadm(kvm_t *kd, const struct kinfo_proc *p, u_long va, u_long *cnt)
 }
 
 void *
-_kvm_realloc(kvm_t *kd, void *p, size_t n)
+_kvm_reallocarray(kvm_t *kd, void *p, size_t i, size_t n)
 {
-	void *np = (void *)realloc(p, n);
+	void *np = reallocarray(p, i, n);
 
 	if (np == 0)
 		_kvm_err(kd, kd->program, "out of memory");
@@ -229,13 +229,13 @@ kvm_argv(kvm_t *kd, const struct kinfo_proc *p, u_long addr, int narg,
 		 * Try to avoid reallocs.
 		 */
 		kd->argc = MAX(narg + 1, 32);
-		kd->argv = _kvm_malloc(kd, kd->argc *
+		kd->argv = _kvm_reallocarray(kd, NULL, kd->argc,
 		    sizeof(*kd->argv));
 		if (kd->argv == 0)
 			return (0);
 	} else if (narg + 1 > kd->argc) {
 		kd->argc = MAX(2 * kd->argc, narg + 1);
-		kd->argv = (char **)_kvm_realloc(kd, kd->argv, kd->argc *
+		kd->argv = (char **)_kvm_reallocarray(kd, kd->argv, kd->argc,
 		    sizeof(*kd->argv));
 		if (kd->argv == 0)
 			return (0);
@@ -282,11 +282,11 @@ kvm_argv(kvm_t *kd, const struct kinfo_proc *p, u_long addr, int narg,
 			char **pp;
 			char *op = kd->argspc;
 
-			kd->arglen *= 2;
-			kd->argspc = (char *)_kvm_realloc(kd, kd->argspc,
-			    kd->arglen);
+			kd->argspc = _kvm_reallocarray(kd, kd->argspc,
+			    kd->arglen, 2);
 			if (kd->argspc == 0)
 				return (0);
+			kd->arglen *= 2;
 			/*
 			 * Adjust argv pointers in case realloc moved
 			 * the string space.
@@ -426,10 +426,10 @@ again:
 	len = orglen;
 	ret = (sysctl(mib, 4, kd->argbuf, &len, NULL, 0) < 0);
 	if (ret && errno == ENOMEM) {
-		orglen *= 2;
-		buf = _kvm_realloc(kd, kd->argbuf, orglen);
+		buf = _kvm_reallocarray(kd, kd->argbuf, orglen, 2);
 		if (buf == NULL)
 			return (NULL);
+		orglen *= 2;
 		kd->argbuf = buf;
 		goto again;
 	}

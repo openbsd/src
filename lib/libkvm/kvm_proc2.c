@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.24 2014/07/08 23:31:22 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.25 2014/10/15 02:03:05 deraadt Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -471,7 +471,7 @@ kvm_getprocs(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		}
 		maxthread += maxprocess;
 
-		kd->procbase = _kvm_malloc(kd, maxthread * esize);
+		kd->procbase = _kvm_reallocarray(kd, NULL, maxthread, esize);
 		if (kd->procbase == 0)
 			return (NULL);
 		bp = (char *)kd->procbase;

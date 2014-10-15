@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.36 2014/07/04 05:58:31 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.37 2014/10/15 02:03:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -227,11 +227,11 @@ kvm_deadfile_byfile(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		_kvm_err(kd, kd->program, "can't read nfiles");
 		return (NULL);
 	}
-	buflen = nfiles * esize;
-	where = _kvm_malloc(kd, buflen);
+	where = _kvm_reallocarray(kd, NULL, nfiles, esize);
 	kd->filebase = (void *)where;
 	if (kd->filebase == NULL)
 		return (NULL);
+	buflen = nfiles * esize;
 
 	for (fp = LIST_FIRST(&filehead);
 	    fp != NULL && esize <= buflen;
@@ -300,11 +300,11 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		return (NULL);
 	}
 	/* this may be more room than we need but counting is expensive */
-	buflen = (nfiles + 10) * esize;
-	where = _kvm_malloc(kd, buflen);
+	where = _kvm_reallocarray(kd, NULL, nfiles + 10, esize);
 	kd->filebase = (void *)where;
 	if (kd->filebase == NULL)
 		return (NULL);
+	buflen = (nfiles + 10) * esize;
 
 	for (pr = LIST_FIRST(&allprocess);
 	    pr != NULL;
@@ -358,9 +358,11 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			filed.fd_ofiles = filed0.fd_dfiles;
 			filed.fd_ofileflags = filed0.fd_dfileflags;
 		} else {
-			size_t fsize = filed.fd_nfiles * OFILESIZE;
-			char *tmp = realloc(filebuf, fsize);
+			size_t fsize;
+			char *tmp = reallocarray(filebuf,
+			    filed.fd_nfiles, OFILESIZE);
 
+			fsize = filed.fd_nfiles * OFILESIZE;
 			if (tmp == NULL) {
 				_kvm_syserr(kd, kd->program, "realloc ofiles");
 				goto cleanup;
