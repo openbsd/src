@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc2822.c,v 1.1 2014/10/12 16:19:30 gilles Exp $	*/
+/*	$OpenBSD: rfc2822.c,v 1.2 2014/10/15 19:23:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -75,8 +75,8 @@ parser_feed_header(struct rfc2822_parser *rp, char *line)
 	struct rfc2822_line	*hdrline;
 	char			*pos;
 
-	/* new header */	
-	if (! isspace(*line)) {
+	/* new header */
+	if (! isspace(*line) && *line != '\0') {
 		rp->in_hdr = 1;
 		if ((pos = strchr(line, ':')) == NULL)
 			return 0;
