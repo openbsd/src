@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc822.h,v 1.1 2014/10/12 18:54:31 gilles Exp $	*/
+/*	$OpenBSD: rfc822.h,v 1.2 2014/10/15 08:04:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -20,6 +20,7 @@
 #define	_RFC822_H_
 
 #define	RFC822_MAX_LINE_SIZE	998
+#define	RFC822_MAX_BUFFERS	1000
 
 struct rfc822_address {
 	TAILQ_ENTRY(rfc822_address)	next;
@@ -28,6 +29,7 @@ struct rfc822_address {
 };
 
 struct rfc822_parser {
+	size_t					count;
 	TAILQ_HEAD(addresses, rfc822_address)	addresses;
 
 	uint8_t				quote;
