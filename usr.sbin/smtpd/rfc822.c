@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc822.c,v 1.2 2014/10/12 18:58:57 gilles Exp $	*/
+/*	$OpenBSD: rfc822.c,v 1.3 2014/10/15 07:35:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -57,10 +57,14 @@ parse_addresses(struct rfc822_parser *rp, const char *buffer, size_t len)
 		if (*s == '"' && !rp->escape && !rp->comment)
 			rp->quote = !rp->quote;
 		if (!rp->comment && !rp->quote && !rp->escape) {
-			if (*s == '<' && rp->bracket)
+			if (*s == '<' && rp->bracket) {
+				free(ra);
 				return 0;
-			if (*s == '>' && !rp->bracket)
+			}
+			if (*s == '>' && !rp->bracket) {
+				free(ra);
 				return 0;
+			}
 
 			if (*s == '<') {
 				wptr = ra->address;
@@ -84,12 +88,16 @@ parse_addresses(struct rfc822_parser *rp, const char *buffer, size_t len)
 	}
 
 	/* some flags still set, malformed header */
-	if (rp->escape || rp->comment || rp->quote || rp->bracket)
+	if (rp->escape || rp->comment || rp->quote || rp->bracket) {
+		free(ra);
 		return 0;
+	}
 
 	/* no value, malformed header */
-	if (ra->name[0] == '\0' && ra->address[0] == '\0')
+	if (ra->name[0] == '\0' && ra->address[0] == '\0') {
+		free(ra);
 		return 0;
+	}
 
 	/* no <>, use name as address */
 	if (ra->address[0] == '\0') {
