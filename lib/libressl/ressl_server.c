@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_server.c,v 1.10 2014/10/03 14:09:09 jsing Exp $ */
+/* $OpenBSD: ressl_server.c,v 1.11 2014/10/15 14:08:26 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -70,8 +70,8 @@ ressl_configure_server(struct ressl *ctx)
 			ressl_set_error(ctx, "failed to set ECDH curve");
 			goto err;
 		}
-		SSL_CTX_set_tmp_ecdh(ctx->ssl_ctx, ecdh_key);
 		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_SINGLE_ECDH_USE);
+		SSL_CTX_set_tmp_ecdh(ctx->ssl_ctx, ecdh_key);
 		EC_KEY_free(ecdh_key);
 	}
 
