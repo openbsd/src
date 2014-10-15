@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.141 2014/09/27 08:01:26 benno Exp $	*/
+/*	$OpenBSD: theo.c,v 1.142 2014/10/15 18:20:06 tedu Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -184,6 +184,8 @@ static const char *talk[] = {
 	"It's largely bad style to do (int)sizeof",
 	"When I see Makefile.in, I know that \"in\" is short for \"insane\".",
 	"This is the beer. And that's why we need a hackathon.",
+	"Kill the past with fire, and declare Duran Duran is less cool today.  Await remixes of the same thing performed by new talent.",
+	"Where did my \"fuck backwards compat\" compatriots go?",
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
