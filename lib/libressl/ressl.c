@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl.c,v 1.17 2014/10/15 14:11:47 jsing Exp $ */
+/* $OpenBSD: ressl.c,v 1.18 2014/10/15 21:02:39 tedu Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -172,14 +172,12 @@ int
 ressl_configure_ssl(struct ressl *ctx)
 {
 	SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_SSLv2);
+	SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_SSLv3);
 
-	SSL_CTX_clear_options(ctx->ssl_ctx, SSL_OP_NO_SSLv3);
 	SSL_CTX_clear_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1);
 	SSL_CTX_clear_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1_1);
 	SSL_CTX_clear_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1_2);
 
-	if ((ctx->config->protocols & RESSL_PROTOCOL_SSLv3) == 0)
-		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_SSLv3);
 	if ((ctx->config->protocols & RESSL_PROTOCOL_TLSv1_0) == 0)
 		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1);
 	if ((ctx->config->protocols & RESSL_PROTOCOL_TLSv1_1) == 0)
