@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.20 2010/06/29 18:10:04 kjell Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.21 2014/10/16 04:05:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -324,12 +324,12 @@ pfkey_read(void)
 		log_err("pfkey_read: recv() failed");
 		return -1;
 	}
-	datalen = hdr.sadb_msg_len * CHUNK;
-	data = (u_int8_t *)malloc(datalen);
+	data = reallocarray(NULL, hdr.sadb_msg_len, CHUNK);
 	if (!data) {
 		log_err("pfkey_read: malloc(%lu) failed", datalen);
 		return -1;
 	}
+	datalen = hdr.sadb_msg_len * CHUNK;
 	msg = (struct sadb_msg *)data;
 
 	if (read(fd, data, datalen) != datalen) {
