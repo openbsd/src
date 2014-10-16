@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.25 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: csh.c,v 1.26 2014/10/16 19:43:31 deraadt Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -1288,7 +1288,7 @@ defaultpath(void)
     Char  **blk, **blkp;
     struct stat stb;
 
-    blkp = blk = (Char **) xmalloc((size_t) sizeof(Char *) * 10);
+    blkp = blk = xreallocarray(NULL, 10, sizeof(Char *));
 
 #define DIRAPPEND(a)  \
 	if (stat(ptr = a, &stb) == 0 && S_ISDIR(stb.st_mode)) \

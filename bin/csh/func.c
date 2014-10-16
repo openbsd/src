@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.25 2009/10/27 23:59:21 deraadt Exp $       */
+/*    $OpenBSD: func.c,v 1.26 2014/10/16 19:43:31 deraadt Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -954,7 +954,7 @@ dounsetenv(Char **v, struct command *t)
 	    maxi = i;
     }
 
-    name = (Char *) xmalloc((size_t) (maxi + 1) * sizeof(Char));
+    name = xreallocarray(NULL, maxi + 1, sizeof(Char));
 
     while (++v && *v)
 	for (maxi = 1; maxi;)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.13 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: glob.c,v 1.14 2014/10/16 19:43:31 deraadt Exp $	*/
 /*	$NetBSD: glob.c,v 1.10 1995/03/21 09:03:01 cgd Exp $	*/
 
 /*-
@@ -122,7 +122,7 @@ globbrace(Char *s, Char *p, Char ***bl)
     Char    gbuf[MAXPATHLEN];
     int     size = GLOBSPACE;
 
-    nv = vl = (Char **) xmalloc((size_t) sizeof(Char *) * size);
+    nv = vl = xreallocarray(NULL, size, sizeof(Char *));
     *vl = NULL;
 
     len = 0;
@@ -189,8 +189,7 @@ globbrace(Char *s, Char *p, Char ***bl)
 		pl = pm + 1;
 		if (vl == &nv[size]) {
 		    size += GLOBSPACE;
-		    nv = (Char **) xrealloc((ptr_t) nv, (size_t)
-					    size * sizeof(Char *));
+		    nv = xreallocarray(nv, size, sizeof(Char *));
 		    vl = &nv[size - GLOBSPACE];
 		}
 	    }
@@ -245,8 +244,7 @@ expbrace(Char ***nvp, Char ***elp, int size)
 		size += GLOBSPACE > l ? GLOBSPACE : l;
 		l = vl - nv;
 		e = el - nv;
-		nv = (Char **) xrealloc((ptr_t) nv, (size_t)
-					size * sizeof(Char *));
+		nv = xreallocarray(nv, size, sizeof(Char *));
 		vl = nv + l;
 		el = nv + e;
 	    }
@@ -276,7 +274,7 @@ globexpand(Char **v)
     int     size = GLOBSPACE;
 
 
-    nv = vl = (Char **) xmalloc((size_t) sizeof(Char *) * size);
+    nv = vl = xreallocarray(NULL, size, sizeof(Char *));
     *vl = NULL;
 
     /*
@@ -291,8 +289,7 @@ globexpand(Char **v)
 		*vl++ = pargv[i];
 		if (vl == &nv[size]) {
 		    size += GLOBSPACE;
-		    nv = (Char **) xrealloc((ptr_t) nv,
-					    (size_t) size * sizeof(Char *));
+		    nv = xreallocarray(nv, size, sizeof(Char *));
 		    vl = &nv[size - GLOBSPACE];
 		}
 	    }
@@ -303,8 +300,7 @@ globexpand(Char **v)
 	    *vl++ = Strsave(s);
 	    if (vl == &nv[size]) {
 		size += GLOBSPACE;
-		nv = (Char **) xrealloc((ptr_t) nv, (size_t)
-					size * sizeof(Char *));
+		nv = xreallocarray(nv, size, sizeof(Char *));
 		vl = &nv[size - GLOBSPACE];
 	    }
 	}
@@ -508,7 +504,7 @@ void
 ginit(void)
 {
     gargsiz = GLOBSPACE;
-    gargv = (Char **) xmalloc((size_t) sizeof(Char *) * gargsiz);
+    gargv = xreallocarray(NULL, gargsiz, sizeof(Char *));
     gargv[0] = 0;
     gargc = 0;
 }
@@ -588,7 +584,7 @@ dobackp(Char *cp, bool literal)
 	blkfree(pargv);
     }
     pargsiz = GLOBSPACE;
-    pargv = (Char **) xmalloc((size_t) sizeof(Char *) * pargsiz);
+    pargv = xreallocarray(NULL, pargsiz, sizeof(Char *));
     pargv[0] = NULL;
     pargcp = pargs = word;
     pargc = 0;
@@ -768,8 +764,7 @@ pword(void)
     psave(0);
     if (pargc == pargsiz - 1) {
 	pargsiz += GLOBSPACE;
-	pargv = (Char **) xrealloc((ptr_t) pargv,
-				   (size_t) pargsiz * sizeof(Char *));
+	pargv = xreallocarray(pargv, pargsiz, sizeof(Char *));
     }
     pargv[pargc++] = Strsave(pargs);
     pargv[pargc] = NULL;
@@ -788,7 +783,7 @@ Gmatch(Char *string, Char *pattern)
 	pattern++;
     }
 
-    blk = (Char **) xmalloc(GLOBSPACE * sizeof(Char *));
+    blk = xreallocarray(NULL, GLOBSPACE, sizeof(Char *));
     blk[0] = Strsave(pattern);
     blk[1] = NULL;
 
@@ -869,11 +864,10 @@ Gcat(Char *s1, Char *s2)
     n = (p - s1) + (q - s2) - 1;
     if (++gargc >= gargsiz) {
 	gargsiz += GLOBSPACE;
-	gargv = (Char **) xrealloc((ptr_t) gargv,
-				   (size_t) gargsiz * sizeof(Char *));
+	gargv = xreallocarray(gargv, gargsiz, sizeof(Char *));
     }
     gargv[gargc] = 0;
-    p = gargv[gargc - 1] = (Char *) xmalloc((size_t) n * sizeof(Char));
+    p = gargv[gargc - 1] = (Char *) xreallocarray(NULL, n, sizeof(Char));
     for (q = s1; (*p++ = *q++) != '\0';)
 	continue;
     for (p--, q = s2; (*p++ = *q++) != '\0';)

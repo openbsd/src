@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.12 2012/12/04 02:24:46 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.13 2014/10/16 19:43:31 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/21 09:03:09 cgd Exp $	*/
 
 /*-
@@ -61,7 +61,7 @@ strsave(char *s)
 	s = "";
     for (p = s; *p++;)
 	continue;
-    n = p = (char *) xmalloc((size_t) ((p - s) * sizeof(char)));
+    n = p = xreallocarray(NULL, (p - s), sizeof(char));
     while ((*p++ = *s++) != '\0')
 	continue;
     return (n);
@@ -173,7 +173,7 @@ strspl(char *cp, char *dp)
 	continue;
     for (q = dp; *q++;)
 	continue;
-    ep = (char *) xmalloc((size_t) (((p - cp) + (q - dp) - 1) * sizeof(char)));
+    ep = xreallocarray(NULL, ((p - cp) + (q - dp) - 1), sizeof(char));
     for (p = ep, q = cp; *p++ = *q++;)
 	continue;
     for (p--, q = dp; *p++ = *q++;)

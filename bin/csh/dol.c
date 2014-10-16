@@ -1,4 +1,4 @@
-/*	$OpenBSD: dol.c,v 1.17 2010/08/12 02:00:27 kevlo Exp $	*/
+/*	$OpenBSD: dol.c,v 1.18 2014/10/16 19:43:31 deraadt Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -712,7 +712,7 @@ setDolp(Char *cp)
 		if (dp) {
 		    size_t len = Strlen(cp) + 1 - lhlen + rhlen;
 
-		    np = (Char *) xmalloc(len * sizeof(Char));
+		    np = xreallocarray(NULL, len, sizeof(Char));
 		    *dp = 0;
 		    (void) Strlcpy(np, cp, len);
 		    (void) Strlcat(np, rhsub, len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.16 2014/07/12 02:47:51 guenther Exp $	*/
+/*	$OpenBSD: dir.c,v 1.17 2014/10/16 19:43:31 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
 
 /*-
@@ -132,7 +132,7 @@ dset(Char *dp)
      * Don't call set() directly cause if the directory contains ` or
      * other junk characters glob will fail.
      */
-    Char **vec = (Char **) xmalloc((size_t) (2 * sizeof(Char **)));
+    Char **vec = xreallocarray(NULL, 2, sizeof(Char **));
 
     vec[0] = Strsave(dp);
     vec[1] = 0;
@@ -267,7 +267,7 @@ dnormalize(Char *cp)
 	size_t	len;
 
 	len = (size_t) (Strlen(dcwd->di_name) + 3);
-	cwd = (Char *) xmalloc(len * sizeof(Char));
+	cwd = xreallocarray(NULL, len, sizeof(Char));
 	(void) Strlcpy(cwd, dcwd->di_name, len);
 
 	/*
@@ -377,7 +377,7 @@ dgoto(Char *cp)
 	    cwdlen = 0;
 	for (p = cp; *p++;)
 	    continue;
-	dp = (Char *) xmalloc((size_t)((cwdlen + (p - cp) + 1) * sizeof(Char)));
+	dp = xreallocarray(NULL, (cwdlen + (p - cp) + 1), sizeof(Char));
 	for (p = dp, q = dcwd->di_name; (*p++ = *q++) != '\0';)
 	    continue;
 	if (cwdlen)
@@ -701,9 +701,8 @@ dcanon(Char *cp, Char *p)
 		    /*
 		     * New length is "yyy/" + link + "/.." and rest
 		     */
-		    p1 = newcp = (Char *) xmalloc((size_t)
-						(((sp - cp) + cc + (p1 - p)) *
-						 sizeof(Char)));
+		    p1 = newcp = xreallocarray(NULL,
+			(sp - cp) + cc + (p1 - p), sizeof(Char));
 		    /*
 		     * Copy new path into newcp
 		     */
@@ -722,8 +721,8 @@ dcanon(Char *cp, Char *p)
 		    /*
 		     * New length is link + "/.." and rest
 		     */
-		    p1 = newcp = (Char *) xmalloc((size_t)
-					    ((cc + (p1 - p)) * sizeof(Char)));
+		    p1 = newcp = xreallocarray(NULL, cc + (p1 - p),
+		        sizeof(Char));
 		    /*
 		     * Copy new path into newcp
 		     */
@@ -792,9 +791,8 @@ dcanon(Char *cp, Char *p)
 		    /*
 		     * New length is "yyy/" + link + "/.." and rest
 		     */
-		    p1 = newcp = (Char *) xmalloc((size_t)
-						  (((sp - cp) + cc + (p1 - p))
-						   * sizeof(Char)));
+		    p1 = newcp = xreallocarray(NULL,
+			  (sp - cp) + cc + (p1 - p), sizeof(Char));
 		    /*
 		     * Copy new path into newcp
 		     */
@@ -813,8 +811,7 @@ dcanon(Char *cp, Char *p)
 		    /*
 		     * New length is link + the rest
 		     */
-		    p1 = newcp = (Char *) xmalloc((size_t)
-					    ((cc + (p1 - p)) * sizeof(Char)));
+		    p1 = newcp = xreallocarray(NULL, cc + (p1 - p), sizeof(Char));
 		    /*
 		     * Copy new path into newcp
 		     */

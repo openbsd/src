@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.16 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.17 2014/10/16 19:43:31 deraadt Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -450,14 +450,9 @@ again:				/* search for matches */
 	if (command == LIST) {
 	    if (numitems >= maxitems) {
 		maxitems += 1024;
-		if (items == NULL)
-			items = (Char **) xmalloc(sizeof(*items) * maxitems);
-		else
-			items = (Char **) xrealloc((ptr_t) items,
-			    sizeof(*items) * maxitems);
+		items = xreallocarray(items, maxitems, sizeof(*items));
 	    }
-	    items[numitems] = (Char *) xmalloc((size_t) (Strlen(entry) + 1) *
-					       sizeof(Char));
+	    items[numitems] = xreallocarray(NULL, (Strlen(entry) + 1), sizeof(Char));
 	    copyn(items[numitems], entry, MAXNAMLEN);
 	    numitems++;
 	}
