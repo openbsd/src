@@ -1,4 +1,4 @@
-.\" $OpenBSD: ressl_init.3,v 1.8 2014/10/15 21:02:39 tedu Exp $
+.\" $OpenBSD: ressl_init.3,v 1.9 2014/10/16 12:46:35 tedu Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 15 2014 $
+.Dd $Mdocdate: October 16 2014 $
 .Dt RESSL 3
 .Os
 .Sh NAME
@@ -145,7 +145,7 @@ A client connection is initiated after configuration by calling
 This function will create a new socket, connect to the specified host and
 port, and then establish a secure connection.
 An already existing socket can be upgraded to a secure connection by calling
-the ressl_connect_socket function.
+.Fn ressl_connect_socket .
 .Pp
 Two functions are provided for input and output,
 .Fn ressl_read
