@@ -447,8 +447,8 @@ check_prepare_kvars(char *list)
 
 	while ((item = strsep(&list, ", \t\n")) != NULL) {
 		check_kvar(item);
-		if ((ret = realloc(ret, sizeof(*ret) * (++n + 1))) == NULL)
-			errx(1, "realloc(kvars)");
+		if ((ret = reallocarray(ret, (++n + 1), sizeof(*ret))) == NULL)
+			errx(1, "reallocarray(kvars)");
 		if ((ret[n - 1] = strdup(item)) == NULL)
 			errx(1, "strdup");
 		ret[n] = NULL;
