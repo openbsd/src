@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.9 2009/08/17 14:23:09 jsing Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.10 2014/10/16 20:47:52 kettenis Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
 
 /*
@@ -226,7 +226,7 @@ OF_close(int handle)
 
 	args.name = ADR2CELL("close");
 	args.nargs = 1;
-	args.nreturns = 1;
+	args.nreturns = 0;
 	args.handle = HDL2CELL(handle);
 	openfirmware(&args);
 }
