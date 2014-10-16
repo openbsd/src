@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.60 2014/09/18 19:17:02 jmc Exp $
+.\"	$OpenBSD: ssl.8,v 1.61 2014/10/16 02:51:26 lteo Exp $
 .\"
 .\" Copyright (c) 1999 Theo de Raadt, Bob Beck
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 18 2014 $
+.Dd $Mdocdate: October 16 2014 $
 .Dt SSL 8
 .Os
 .Sh NAME
@@ -268,9 +268,11 @@ libraries ship with the system.
 However, this entire debacle is worth remembering when choosing
 software and vendors.
 .Pp
-Due to multiple flaws in the protocol, SSL version 2 was disabled in
-.Ox 5.2 .
-Users and programs should use SSL version 3 or TLS version 1 instead.
+Due to multiple flaws in the protocols, SSL version 2 was removed in
+.Ox 5.2
+and SSL version 3 was disabled in
+.Ox 5.7 .
+Users and programs should use TLS version 1.2 instead.
 .Pp
 This document first appeared in
 .Ox 2.5 .
