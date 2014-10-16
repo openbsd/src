@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.10 2014/09/01 14:21:06 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.11 2014/10/16 10:43:54 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2107,7 +2107,9 @@ pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value)
 	int rv;
 	char *stmp, *vtmp = NULL;
 
-	stmp = BUF_strdup(value);
+	if (value == NULL)
+		return -1;
+	stmp = strdup(value);
 	if (!stmp)
 		return -1;
 	vtmp = strchr(stmp, ':');

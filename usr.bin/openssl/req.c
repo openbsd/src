@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.3 2014/10/01 13:15:40 sthen Exp $ */
+/* $OpenBSD: req.c,v 1.4 2014/10/16 10:43:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1480,7 +1480,7 @@ set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
 			return NULL;
 		}
 		EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL, &anam, ameth);
-		*palgnam = BUF_strdup(anam);
+		*palgnam = strdup(anam);
 #ifndef OPENSSL_NO_ENGINE
 		if (tmpeng)
 			ENGINE_finish(tmpeng);
