@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.102 2014/10/16 01:10:06 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.103 2014/10/16 01:27:48 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1881,8 +1881,8 @@ roff_eqndelim(struct roff *r, char **bufp, size_t *szp, int pos)
 
 	/* Replace the delimiter with an equation macro. */
 
-	*szp = mandoc_asprintf(&cp1, "%s\n.E%c\n\\&%s", *bufp,
-	    r->eqn == NULL ? 'Q' : 'N', cp2) + 1;
+	*szp = mandoc_asprintf(&cp1, "%s\n.E%s%s", *bufp,
+	    r->eqn == NULL ? "Q\n" : "N\n\\&", cp2) + 1;
 	free(*bufp);
 	*bufp = cp1;
 
