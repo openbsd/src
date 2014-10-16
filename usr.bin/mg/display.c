@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.41 2013/05/31 18:03:44 lum Exp $	*/
+/*	$OpenBSD: display.c,v 1.42 2014/10/16 17:36:11 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -170,6 +170,14 @@ vtresize(int force, int newrow, int newcol)
 		(a) = tmp;					\
 	} while (0)
 
+#define TRYREALLOCARRAY(a, n, m) do {				\
+		void *tmp;					\
+		if ((tmp = reallocarray((a), (n), (m))) == NULL) {\
+			panic("out of memory in display code");	\
+		}						\
+		(a) = tmp;					\
+	} while (0)
+
 	/* No update needed */
 	if (!first_run && !force && !rowchanged && !colchanged)
 		return (TRUE);
@@ -198,10 +206,10 @@ vtresize(int force, int newrow, int newcol)
 			}
 		}
 
-		TRYREALLOC(score, newrow * newrow * sizeof(struct score));
-		TRYREALLOC(vscreen, (newrow - 1) * sizeof(struct video *));
-		TRYREALLOC(pscreen, (newrow - 1) * sizeof(struct video *));
-		TRYREALLOC(video, (2 * (newrow - 1)) * sizeof(struct video));
+		TRYREALLOCARRAY(score, newrow * newrow, sizeof(struct score));
+		TRYREALLOCARRAY(vscreen, (newrow - 1), sizeof(struct video *));
+		TRYREALLOCARRAY(pscreen, (newrow - 1), sizeof(struct video *));
+		TRYREALLOCARRAY(video, (2 * (newrow - 1)), sizeof(struct video));
 
 		/*
 		 * Zero-out the entries we just allocated.
@@ -222,8 +230,8 @@ vtresize(int force, int newrow, int newcol)
 	}
 	if (rowchanged || colchanged || first_run) {
 		for (i = 0; i < 2 * (newrow - 1); i++)
-			TRYREALLOC(video[i].v_text, newcol * sizeof(char));
-		TRYREALLOC(blanks.v_text, newcol * sizeof(char));
+			TRYREALLOC(video[i].v_text, newcol);
+		TRYREALLOC(blanks.v_text, newcol);
 	}
 
 	nrow = newrow;
