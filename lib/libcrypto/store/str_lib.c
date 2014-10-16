@@ -1,4 +1,4 @@
-/* $OpenBSD: str_lib.c,v 1.10 2014/07/10 22:45:58 jsing Exp $ */
+/* $OpenBSD: str_lib.c,v 1.11 2014/10/16 03:19:02 beck Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2003.
  */
@@ -1341,7 +1341,7 @@ STORE_ATTR_INFO_set_cstr(STORE_ATTR_INFO *attrs, STORE_ATTR_TYPES code,
 		return 0;
 	}
 	if (!ATTR_IS_SET(attrs, code)) {
-		if ((attrs->values[code].cstring = BUF_strndup(cstr, cstr_size)))
+		if (cstr && (attrs->values[code].cstring = strndup(cstr, cstr_size)))
 			return 1;
 		STOREerr(STORE_F_STORE_ATTR_INFO_SET_CSTR,
 		    ERR_R_MALLOC_FAILURE);

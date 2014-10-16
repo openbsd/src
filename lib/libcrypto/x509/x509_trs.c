@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.16 2014/09/28 10:52:59 miod Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.17 2014/10/16 03:19:02 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
@@ -202,7 +203,7 @@ X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 	if (trtmp->flags & X509_TRUST_DYNAMIC_NAME)
 		free(trtmp->name);
 	/* dup supplied name */
-	if ((trtmp->name = BUF_strdup(name)) == NULL)
+	if (name == NULL || (trtmp->name = strdup(name)) == NULL)
 		goto err;
 	/* Keep the dynamic flag of existing entry */
 	trtmp->flags &= X509_TRUST_DYNAMIC;
