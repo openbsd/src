@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.19 2014/10/08 20:14:19 bluhm Exp $	*/
+/*	$OpenBSD: signal.c,v 1.20 2014/10/16 07:38:06 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -26,9 +26,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_TIME_H

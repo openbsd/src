@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.20 2014/10/08 20:14:19 bluhm Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.21 2014/10/16 07:38:06 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -26,10 +26,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #ifdef HAVE_VASPRINTF
 /* If we have vasprintf, we need to define this before we include stdio.h. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer.c,v 1.13 2014/10/08 20:14:19 bluhm Exp $	*/
+/*	$OpenBSD: evbuffer.c,v 1.14 2014/10/16 07:38:06 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -28,10 +28,6 @@
  */
 
 #include <sys/types.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>

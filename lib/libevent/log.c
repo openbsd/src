@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.7 2014/10/08 20:14:19 bluhm Exp $	*/
+/*	$OpenBSD: log.c,v 1.8 2014/10/16 07:38:06 bluhm Exp $	*/
 
 /*
  * log.c
@@ -36,10 +36,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_TIME_H

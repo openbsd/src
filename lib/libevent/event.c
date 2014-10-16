@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.30 2014/10/08 20:14:19 bluhm Exp $	*/
+/*	$OpenBSD: event.c,v 1.31 2014/10/16 07:38:06 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -26,9 +26,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
