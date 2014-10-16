@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.114 2014/09/06 23:24:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.115 2014/10/16 01:10:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -89,9 +89,6 @@ static	struct mdoc_node *node_alloc(struct mdoc *, int, int,
 				enum mdoct, enum mdoc_type);
 static	int		  node_append(struct mdoc *,
 				struct mdoc_node *);
-#if 0
-static	int		  mdoc_preptext(struct mdoc *, int, char *, int);
-#endif
 static	int		  mdoc_ptext(struct mdoc *, int, char *, int);
 static	int		  mdoc_pmacro(struct mdoc *, int, char *, int);
 
@@ -606,60 +603,6 @@ mdoc_node_relink(struct mdoc *mdoc, struct mdoc_node *p)
 	mdoc_node_unlink(mdoc, p);
 	return(node_append(mdoc, p));
 }
-
-#if 0
-/*
- * Pre-treat a text line.
- * Text lines can consist of equations, which must be handled apart from
- * the regular text.
- * Thus, use this function to step through a line checking if it has any
- * equations embedded in it.
- * This must handle multiple equations AND equations that do not end at
- * the end-of-line, i.e., will re-enter in the next roff parse.
- */
-static int
-mdoc_preptext(struct mdoc *mdoc, int line, char *buf, int offs)
-{
-	char		*start, *end;
-	char		 delim;
-
-	while ('\0' != buf[offs]) {
-		/* Mark starting position if eqn is set. */
-		start = NULL;
-		if ('\0' != (delim = roff_eqndelim(mdoc->roff)))
-			if (NULL != (start = strchr(buf + offs, delim)))
-				*start++ = '\0';
-
-		/* Parse text as normal. */
-		if ( ! mdoc_ptext(mdoc, line, buf, offs))
-			return(0);
-
-		/* Continue only if an equation exists. */
-		if (NULL == start)
-			break;
-
-		/* Read past the end of the equation. */
-		offs += start - (buf + offs);
-		assert(start == &buf[offs]);
-		if (NULL != (end = strchr(buf + offs, delim))) {
-			*end++ = '\0';
-			while (' ' == *end)
-				end++;
-		}
-
-		/* Parse the equation itself. */
-		roff_openeqn(mdoc->roff, NULL, line, offs, buf);
-
-		/* Process a finished equation? */
-		if (roff_closeeqn(mdoc->roff))
-			if ( ! mdoc_addeqn(mdoc, roff_eqn(mdoc->roff)))
-				return(0);
-		offs += (end - (buf + offs));
-	}
-
-	return(1);
-}
-#endif
 
 /*
  * Parse free-form text, that is, a line that does not begin with the

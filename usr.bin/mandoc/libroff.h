@@ -1,6 +1,7 @@
-/*	$Id: libroff.h,v 1.7 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$OpenBSD: libroff.h,v 1.8 2014/10/16 01:10:06 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,16 +44,19 @@ struct	tbl_node {
 };
 
 struct	eqn_node {
-	struct eqn_def	 *defs;
-	size_t		  defsz;
-	char		 *data;
-	size_t		  rew;
-	size_t		  cur;
-	size_t		  sz;
-	int		  gsize;
-	struct eqn	  eqn;
-	struct mparse	 *parse;
-	struct eqn_node  *next;
+	struct eqn	  eqn;    /* syntax tree of this equation */
+	struct mparse	 *parse;  /* main parser, for error reporting */
+	struct eqn_node  *next;   /* singly linked list of equations */
+	struct eqn_def	 *defs;   /* array of definitions */
+	char		 *data;   /* source code of this equation */
+	size_t		  defsz;  /* number of definitions */
+	size_t		  sz;     /* length of the source code */
+	size_t		  cur;    /* parse point in the source code */
+	size_t		  rew;    /* beginning of the current token */
+	int		  gsize;  /* default point size */
+	int		  delim;  /* in-line delimiters enabled */
+	char		  odelim; /* in-line opening delimiter */
+	char		  cdelim; /* in-line closing delimiter */
 };
 
 struct	eqn_def {

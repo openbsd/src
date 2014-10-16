@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmandoc.h,v 1.29 2014/09/06 22:38:35 schwarze Exp $ */
+/*	$OpenBSD: libmandoc.h,v 1.30 2014/10/16 01:10:06 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -75,12 +75,6 @@ char		*roff_strdup(const struct roff *, const char *);
 int		 roff_getcontrol(const struct roff *,
 			const char *, int *);
 int		 roff_getformat(const struct roff *);
-#if 0
-char		 roff_eqndelim(const struct roff *);
-void		 roff_openeqn(struct roff *, const char *,
-			int, int, const char *);
-int		 roff_closeeqn(struct roff *);
-#endif
 
 const struct tbl_span	*roff_span(const struct roff *);
 const struct eqn	*roff_eqn(const struct roff *);

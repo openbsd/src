@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.101 2014/09/07 00:21:23 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.102 2014/10/16 01:10:06 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -118,6 +118,7 @@ struct	roff {
 	struct eqn_node	*last_eqn; /* last equation parsed */
 	struct eqn_node	*first_eqn; /* first equation parsed */
 	struct eqn_node	*eqn; /* current equation being parsed */
+	int		 eqn_inline; /* current equation is inline */
 	int		 options; /* parse options */
 	int		 rstacksz; /* current size limit of rstack */
 	int		 rstackpos; /* position in rstack */
@@ -181,6 +182,8 @@ static	enum rofferr	 roff_cond(ROFF_ARGS);
 static	enum rofferr	 roff_cond_text(ROFF_ARGS);
 static	enum rofferr	 roff_cond_sub(ROFF_ARGS);
 static	enum rofferr	 roff_ds(ROFF_ARGS);
+static	enum rofferr	 roff_eqndelim(struct roff *,
+				char **, size_t *, int);
 static	int		 roff_evalcond(const char *, int *);
 static	int		 roff_evalnum(const char *, int *, int *, int);
 static	int		 roff_evalpar(const char *, int *, int *);
@@ -722,10 +725,17 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 	enum rofferr	 e;
 	int		 ppos, ctl;
 
-	/*
-	 * Run the reserved-word filter only if we have some reserved
-	 * words to fill in.
-	 */
+	/* Handle in-line equation delimiters. */
+
+	if (r->last_eqn != NULL && r->last_eqn->delim &&
+	    (r->eqn == NULL || r->eqn_inline)) {
+		e = roff_eqndelim(r, bufp, szp, pos);
+		if (e == ROFF_REPARSE)
+			return(e);
+		assert(e == ROFF_CONT);
+	}
+
+	/* Expand some escape sequences. */
 
 	e = roff_res(r, bufp, szp, ln, pos);
 	if (ROFF_IGN == e)
@@ -1839,14 +1849,48 @@ roff_T_(ROFF_ARGS)
 	return(ROFF_IGN);
 }
 
-#if 0
-static int
-roff_closeeqn(struct roff *r)
+/*
+ * Handle in-line equation delimiters.
+ */
+static enum rofferr
+roff_eqndelim(struct roff *r, char **bufp, size_t *szp, int pos)
 {
+	char	*cp1, *cp2;
 
-	return(r->eqn && ROFF_EQN == eqn_end(&r->eqn) ? 1 : 0);
+	/*
+	 * Outside equations, look for an opening delimiter.
+	 * If we are inside an equation, we already know it is
+	 * in-line, or this function wouldn't have been called;
+	 * so look for a closing delimiter.
+	 */
+
+	cp1 = *bufp + pos;
+	cp2 = strchr(cp1, r->eqn == NULL ?
+	    r->last_eqn->odelim : r->last_eqn->cdelim);
+	if (cp2 == NULL)
+		return(ROFF_CONT);
+
+	/* Found a delimiter; get rid of surrounding blanks. */
+
+	cp1 = cp2++;
+	while (cp2[0] == ' ')
+		cp2++;
+	while (cp1[-1] == ' ')
+		cp1--;
+	*cp1 = '\0';
+
+	/* Replace the delimiter with an equation macro. */
+
+	*szp = mandoc_asprintf(&cp1, "%s\n.E%c\n\\&%s", *bufp,
+	    r->eqn == NULL ? 'Q' : 'N', cp2) + 1;
+	free(*bufp);
+	*bufp = cp1;
+
+	/* Toggle the in-line state of the eqn subsystem. */
+
+	r->eqn_inline = r->eqn == NULL;
+	return(ROFF_REPARSE);
 }
-#endif
 
 static void
 roff_openeqn(struct roff *r, const char *name, int line,
@@ -1858,9 +1902,12 @@ roff_openeqn(struct roff *r, const char *name, int line,
 	assert(NULL == r->eqn);
 	e = eqn_alloc(name, offs, line, r->parse);
 
-	if (r->last_eqn)
+	if (r->last_eqn) {
 		r->last_eqn->next = e;
-	else
+		e->delim = r->last_eqn->delim;
+		e->odelim = r->last_eqn->odelim;
+		e->cdelim = r->last_eqn->cdelim;
+	} else
 		r->first_eqn = r->last_eqn = e;
 
 	r->eqn = r->last_eqn = e;
