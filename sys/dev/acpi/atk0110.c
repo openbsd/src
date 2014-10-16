@@ -1,4 +1,4 @@
-/*	$OpenBSD: atk0110.c,v 1.10 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: atk0110.c,v 1.11 2014/10/16 03:42:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -248,7 +248,7 @@ aibs_attach_new(struct aibs_softc *sc)
 	int			i;
 
 	if (aibs_getpack(sc, sc->sc_ggrpnode, ATK_ID_MUX_HWMON, &res)) {
-		printf("%s: GGRP: sensor enumeration failed", DEVNAME(sc));
+		printf("%s: GGRP: sensor enumeration failed\n", DEVNAME(sc));
 		return;
 	}
 
