@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.29 2014/06/01 00:37:37 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.30 2014/10/16 17:37:42 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -367,9 +367,9 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_2)
 	/* Get out of 64 bit CS */
 	lgdtq	tmp_gdt6416
 
-	rex64	ljmp	*(hibernate_indirect_16)
+	ljmp	*(hibernate_indirect_16)
 _ACPI_TRMP_LABEL(hibernate_indirect_16)
-	.quad	hibernate_resume_vector_3
+	.long	hibernate_resume_vector_3
 	.word	0x18
 
 _ACPI_TRMP_OFFSET(hibernate_resume_vector_3)
@@ -405,9 +405,9 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_2b)
 	/* Get out of 64 bit CS */
 	lgdtq	tmp_gdt6416
 
-	rex64	ljmp	*(hibernate_indirect_16b)
+	ljmp	*(hibernate_indirect_16b)
 _ACPI_TRMP_LABEL(hibernate_indirect_16b)
-	.quad	hibernate_resume_vector_3b
+	.long	hibernate_resume_vector_3b
 	.word	0x18
 
 _ACPI_TRMP_OFFSET(hibernate_resume_vector_3b)
