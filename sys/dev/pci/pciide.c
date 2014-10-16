@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.348 2014/08/13 07:45:37 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.349 2014/10/16 19:30:59 kettenis Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1575,9 +1575,9 @@ pciide_activate(struct device *self, int act)
 			sc->sc_save2[2] = pciide_pci_read(sc->sc_pc,
 			    sc->sc_tag, ICH_SATA_PCS);
 		} else if (sc->sc_pp->chip_map == sii3112_chip_map) {
-			sc->sc_save[0] = pci_conf_read(sc->sc_pc,
+			sc->sc_save2[0] = pci_conf_read(sc->sc_pc,
 			    sc->sc_tag, SII3112_SCS_CMD);
-			sc->sc_save[1] = pci_conf_read(sc->sc_pc,
+			sc->sc_save2[1] = pci_conf_read(sc->sc_pc,
 			    sc->sc_tag, SII3112_PCI_CFGCTL);
 		} else if (sc->sc_pp->chip_map == ite_chip_map) {
 			sc->sc_save2[0] = pci_conf_read(sc->sc_pc,
@@ -1622,10 +1622,10 @@ pciide_activate(struct device *self, int act)
 			    ICH_SATA_PCS, sc->sc_save2[2]);
 		} else if (sc->sc_pp->chip_map == sii3112_chip_map) {
 			pci_conf_write(sc->sc_pc, sc->sc_tag,
-			    SII3112_SCS_CMD, sc->sc_save[0]);
+			    SII3112_SCS_CMD, sc->sc_save2[0]);
 			delay(50 * 1000);
 			pci_conf_write(sc->sc_pc, sc->sc_tag,
-			    SII3112_PCI_CFGCTL, sc->sc_save[1]);
+			    SII3112_PCI_CFGCTL, sc->sc_save2[1]);
 			delay(50 * 1000);
 		} else if (sc->sc_pp->chip_map == ite_chip_map) {
 			pci_conf_write(sc->sc_pc, sc->sc_tag,
