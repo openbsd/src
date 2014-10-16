@@ -1,4 +1,4 @@
-/*	$OpenBSD: getdelim.c,v 1.1 2012/03/21 23:44:35 fgsch Exp $	*/
+/*	$OpenBSD: getdelim.c,v 1.2 2014/10/16 17:31:51 millert Exp $	*/
 /* $NetBSD: getdelim.c,v 1.13 2011/07/22 23:12:30 joerg Exp $ */
 
 /*
@@ -78,13 +78,12 @@ getdelim(char **__restrict buf, size_t *__restrict buflen,
 		else
 			len = (p - fp->_p) + 1;
 
-		newlen = off + len;
 		/* Ensure we can handle it */
-		if (newlen < off || newlen > SSIZE_MAX) {
+		if (off > SSIZE_MAX || len + 1 > SSIZE_MAX - off) {
 			errno = EOVERFLOW;
 			goto error;
 		}
-		newlen++; /* reserve space for the NULL terminator */
+		newlen = off + len + 1; /* reserve space for NUL terminator */
 		if (newlen > *buflen) {
 			if (newlen < MINBUF)
 				newlen = MINBUF;
