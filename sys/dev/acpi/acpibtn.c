@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.36 2014/09/14 14:17:24 jsg Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.37 2014/10/16 17:46:06 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -132,11 +132,12 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!strcmp(aa->aaa_dev, ACPI_DEV_LD)) {
 		sc->sc_btn_type = ACPIBTN_LID;
-		if (acpibtn_setpsw(sc, 0) == 0) {
-			lid = malloc(sizeof(*lid), M_DEVBUF, M_WAITOK | M_ZERO);
-			lid->abl_softc = sc;
-			SLIST_INSERT_HEAD(&acpibtn_lids, lid, abl_link);
-		}
+
+		/* Set PSW (if present) to disable wake on this LID */
+		(void)acpibtn_setpsw(sc, 0);
+		lid = malloc(sizeof(*lid), M_DEVBUF, M_WAITOK | M_ZERO);
+		lid->abl_softc = sc;
+		SLIST_INSERT_HEAD(&acpibtn_lids, lid, abl_link);
 	} else if (!strcmp(aa->aaa_dev, ACPI_DEV_PBD))
 		sc->sc_btn_type = ACPIBTN_POWER;
 	else if (!strcmp(aa->aaa_dev, ACPI_DEV_SBD))
