@@ -1,4 +1,4 @@
-/*	$OpenBSD: _time.h,v 1.6 2013/10/06 01:27:49 guenther Exp $	*/
+/*	$OpenBSD: _time.h,v 1.7 2014/10/16 15:50:49 millert Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -33,7 +33,6 @@
 #define _SYS__TIME_H_
 
 #define CLOCK_REALTIME			0
-#define CLOCK_VIRTUAL			1
 #define CLOCK_PROCESS_CPUTIME_ID	2
 #define CLOCK_MONOTONIC			3
 #define CLOCK_THREAD_CPUTIME_ID		4
