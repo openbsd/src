@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.7 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.8 2014/10/16 18:23:26 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.6 1995/03/21 09:03:05 cgd Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@ struct biltins bfunc[] =
 {
     { "@", 		dolet, 		0, INF	},
     { "alias", 		doalias, 	0, INF	},
-    { "alloc", 		showall, 	0, 1	},
     { "bg", 		dobg, 		0, INF	},
     { "break", 		dobreak, 	0, 0	},
     { "breaksw", 	doswbrk, 	0, 0	},

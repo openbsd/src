@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.70 2014/01/21 03:15:44 schwarze Exp $
+.\"	$OpenBSD: csh.1,v 1.71 2014/10/16 18:23:26 deraadt Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)csh.1	8.2 (Berkeley) 1/21/94
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: October 16 2014 $
 .Dt CSH 1
 .Os
 .Sh NAME
@@ -1521,17 +1521,6 @@ is not allowed to be
 .Dq alias
 or
 .Dq unalias .
-.Pp
-.It Ic alloc
-Shows the amount of dynamic memory acquired, broken down into used and
-free memory.
-With an argument shows the number of free and used blocks in each size
-category.
-The categories start at size 8 and double at each step.
-This command's output may vary across system types, since
-systems other than the
-.Tn VAX
-may use a different memory allocator.
 .Pp
 .It Ic bg
 .It Ic bg \&% Ns Ar job ...
