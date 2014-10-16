@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.103 2014/10/09 00:50:54 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.104 2014/10/16 04:19:33 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1315,12 +1315,8 @@ hibernate_write_chunks(union hibernate_info *hib)
 	 * Map the utility VAs to the piglet. See the piglet map at the
 	 * top of this file for piglet layout information.
 	 */
-	pmap_kenter_pa(hibernate_copy_page,
-		(hib->piglet_pa + 3 * PAGE_SIZE), VM_PROT_ALL);
-	pmap_kenter_pa(hibernate_rle_page,
-		(hib->piglet_pa + 28 * PAGE_SIZE), VM_PROT_ALL);
-
-	pmap_activate(curproc);
+	hibernate_copy_page = global_piglet_va + 3 * PAGE_SIZE;
+	hibernate_rle_page = global_piglet_va + 28 * PAGE_SIZE;
 
 	chunks = (struct hibernate_disk_chunk *)(hib->piglet_va +
 	    HIBERNATE_CHUNK_SIZE);
@@ -1834,37 +1830,21 @@ hibernate_alloc(void)
 {
 	KASSERT(global_piglet_va == 0);
 	KASSERT(hibernate_temp_page == 0);
-	KASSERT(hibernate_copy_page == 0);
-	KASSERT(hibernate_rle_page == 0);
 
 	if (uvm_pmr_alloc_piglet(&global_piglet_va, &global_piglet_pa,
 	    HIBERNATE_CHUNK_SIZE * 4, HIBERNATE_CHUNK_SIZE))
 		return (ENOMEM);
 
 	/*
-	 * Allocate VA for the temp and copy page.
+	 * Allocate VA for the temp page.
 	 * 
-	 * These will become part of the suspended kernel and will
+	 * This will become part of the suspended kernel and will
 	 * be freed in hibernate_free, upon resume.
 	 */
 	hibernate_temp_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
 	    &kp_none, &kd_nowait);
 	if (!hibernate_temp_page) {
 		DPRINTF("out of memory allocating hibernate_temp_page\n");
-		return (ENOMEM);
-	}
-
-	hibernate_copy_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
-	    &kp_none, &kd_nowait);
-	if (!hibernate_copy_page) {
-		DPRINTF("out of memory allocating hibernate_copy_page\n");
-		return (ENOMEM);
-	}
-
-	hibernate_rle_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
-	    &kp_none, &kd_nowait);
-	if (!hibernate_rle_page) {
-		DPRINTF("out of memory allocating hibernate_rle_page\n");
 		return (ENOMEM);
 	}
 
@@ -1881,27 +1861,15 @@ hibernate_free(void)
 		uvm_pmr_free_piglet(global_piglet_va,
 		    4 * HIBERNATE_CHUNK_SIZE);
 
-	if (hibernate_copy_page)
-		pmap_kremove(hibernate_copy_page, PAGE_SIZE);
 	if (hibernate_temp_page)
 		pmap_kremove(hibernate_temp_page, PAGE_SIZE);
-	if (hibernate_rle_page)
-		pmap_kremove(hibernate_rle_page, PAGE_SIZE);
 
 	pmap_update(pmap_kernel());
 
-	if (hibernate_copy_page)
-		km_free((void *)hibernate_copy_page, PAGE_SIZE,
-		    &kv_any, &kp_none);
 	if (hibernate_temp_page)
 		km_free((void *)hibernate_temp_page, PAGE_SIZE,
 		    &kv_any, &kp_none);
-	if (hibernate_rle_page)
-		km_free((void *)hibernate_rle_page, PAGE_SIZE,
-		    &kv_any, &kp_none);
 
 	global_piglet_va = 0;
-	hibernate_copy_page = 0;
 	hibernate_temp_page = 0;
-	hibernate_rle_page = 0;
 }
