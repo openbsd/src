@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.70 2014/10/17 01:55:00 tedu Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.71 2014/10/17 07:41:40 jmc Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -98,7 +98,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-AaCdHLs] [-f devname] [-S sockname] [-t seconds]\n",
+	    "usage: %s [-AadHLs] [-f devname] [-S sockname] [-t seconds]\n",
 	    __progname);
 	exit(1);
 }
