@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.24 2013/11/26 13:18:55 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.25 2014/10/17 08:03:04 doug Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -393,7 +393,7 @@ vs(struct storage **exist, char *src)
 	char *dst;
 	struct storage *n;
 
-	if ((n = malloc(sizeof(struct storage) + 4 * strlen(src))) == NULL)
+	if ((n = malloc(sizeof(struct storage) + 4 * strlen(src) + 1)) == NULL)
 		err(1, "malloc failed");
 	n->next = *exist;
 	*exist = n;
