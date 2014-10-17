@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.33 2014/10/10 09:50:32 jmatthew Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.34 2014/10/17 02:05:06 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -156,7 +156,7 @@ vscsi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.openings = 16;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
+	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
@@ -356,7 +356,7 @@ vscsi_i2t(struct vscsi_softc *sc, struct vscsi_ioc_i2t *i2t)
 	i2t->tag = ccb->ccb_tag;
 	i2t->target = link->target;
 	i2t->lun = link->lun;
-	bcopy(xs->cmd, &i2t->cmd, xs->cmdlen);
+	memcpy(&i2t->cmd, xs->cmd, xs->cmdlen);
 	i2t->cmdlen = xs->cmdlen;
 	i2t->datalen = xs->datalen;
 
@@ -455,7 +455,7 @@ vscsi_t2i(struct vscsi_softc *sc, struct vscsi_ioc_t2i *t2i)
 		break;
 	case VSCSI_STAT_SENSE:
 		xs->error = XS_SENSE;
-		bcopy(&t2i->sense, &xs->sense, sizeof(xs->sense));
+		memcpy(&xs->sense, &t2i->sense, sizeof(xs->sense));
 		break;
 	case VSCSI_STAT_RESET:
 		xs->error = XS_RESET;

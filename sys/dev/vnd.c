@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.153 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.154 2014/10/17 02:05:06 tedu Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -123,8 +123,8 @@ vndencrypt(struct vnd_softc *sc, caddr_t addr, size_t size, daddr_t off,
 
 	bsize = dbtob(1);
 	for (i = 0; i < size/bsize; i++) {
-		bzero(iv, sizeof(iv));
-		bcopy(&off, iv, sizeof(off));
+		memset(iv, 0, sizeof(iv));
+		memcpy(iv, &off, sizeof(off));
 		blf_ecb_encrypt(sc->sc_keyctx, iv, sizeof(iv));
 		if (encrypt)
 			blf_cbc_encrypt(sc->sc_keyctx, iv, addr, bsize);
@@ -214,7 +214,7 @@ int
 vndgetdisklabel(dev_t dev, struct vnd_softc *sc, struct disklabel *lp,
     int spoofonly)
 {
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 
 	lp->d_secsize = sc->sc_secsize;
 	lp->d_nsectors = sc->sc_nsectors;
@@ -671,7 +671,7 @@ vndclear(struct vnd_softc *sc)
 	sc->sc_vp = NULL;
 	sc->sc_cred = NULL;
 	sc->sc_size = 0;
-	bzero(sc->sc_file, sizeof(sc->sc_file));
+	memset(sc->sc_file, 0, sizeof(sc->sc_file));
 }
 
 daddr_t
