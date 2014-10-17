@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.35 2014/07/04 05:58:31 guenther Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.36 2014/10/17 01:51:39 tedu Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
@@ -563,3 +564,152 @@ schedclock(struct proc *p)
 		p->p_priority = p->p_usrpri;
 	SCHED_UNLOCK(s);
 }
+
+#ifndef SMALL_KERNEL
+/*
+ * The code below handles CPU throttling.
+ */
+#include <sys/sysctl.h>
+
+#define PERFPOL_MANUAL 0
+#define PERFPOL_AUTO 1
+#define PERFPOL_HIGH 2
+int perflevel = 100;
+int perfpolicy = PERFPOL_MANUAL;
+
+void (*cpu_setperf)(int);
+
+struct timeout setperf_to;
+void setperf_auto(void *);
+
+void
+setperf_auto(void *v)
+{
+	static uint64_t *idleticks, *totalticks;
+
+	int i, j;
+	int speedup;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	uint64_t idle, total, allidle, alltotal;
+
+	if (perfpolicy != PERFPOL_AUTO)
+		return;
+
+	if (!idleticks)
+		if (!(idleticks = malloc(sizeof(*idleticks) * ncpusfound,
+		    M_DEVBUF, M_NOWAIT | M_ZERO)))
+			return;
+	if (!totalticks)
+		if (!(totalticks = malloc(sizeof(*totalticks) * ncpusfound,
+		    M_DEVBUF, M_NOWAIT | M_ZERO))) {
+			free(idleticks, M_DEVBUF, 0);
+			return;
+		}
+
+	alltotal = allidle = 0;
+	j = 0;
+	speedup = 0;
+	CPU_INFO_FOREACH(cii, ci) {
+		total = 0;
+		for (i = 0; i < CPUSTATES; i++) {
+			total += ci->ci_schedstate.spc_cp_time[i];
+		}
+		total -= totalticks[j];
+		idle = ci->ci_schedstate.spc_cp_time[CP_IDLE] - idleticks[j];
+		if (idle < total / 3)
+			speedup = 1;
+		alltotal += total;
+		allidle += idle;
+		idleticks[j] += idle;
+		totalticks[j] += total;
+		j++;
+	}
+	if (allidle < alltotal / 2)
+		speedup = 1;
+
+	if (speedup && perflevel != 100) {
+		perflevel = 100;
+		cpu_setperf(perflevel);
+	} else if (!speedup && perflevel != 0) {
+		perflevel = 0;
+		cpu_setperf(perflevel);
+	}
+	
+	timeout_add_msec(&setperf_to, 100);
+}
+
+int
+sysctl_hwsetperf(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+{
+	int err, newperf;
+
+	if (!cpu_setperf)
+		return EOPNOTSUPP;
+
+	if (perfpolicy != PERFPOL_MANUAL)
+		return sysctl_rdint(oldp, oldlenp, newp, perflevel);
+	
+	newperf = perflevel;
+	err = sysctl_int(oldp, oldlenp, newp, newlen, &newperf);
+	if (err)
+		return err;
+	if (newperf > 100)
+		newperf = 100;
+	if (newperf < 0)
+		newperf = 0;
+	perflevel = newperf;
+	cpu_setperf(perflevel);
+
+	return 0;
+}
+
+int
+sysctl_hwperfpolicy(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+{
+	char policy[32];
+	int err;
+
+	if (!cpu_setperf)
+		return EOPNOTSUPP;
+
+	switch (perfpolicy) {
+	case PERFPOL_MANUAL:
+		strlcpy(policy, "manual", sizeof(policy));
+		break;
+	case PERFPOL_AUTO:
+		strlcpy(policy, "auto", sizeof(policy));
+		break;
+	case PERFPOL_HIGH:
+		strlcpy(policy, "high", sizeof(policy));
+		break;
+	default:
+		strlcpy(policy, "unknown", sizeof(policy));
+		break;
+	}
+
+	if (newp == NULL)
+		return sysctl_rdstring(oldp, oldlenp, newp, policy);
+
+	err = sysctl_string(oldp, oldlenp, newp, newlen, policy, sizeof(policy));
+	if (err)
+		return err;
+	if (strcmp(policy, "manual") == 0)
+		perfpolicy = PERFPOL_MANUAL;
+	else if (strcmp(policy, "auto") == 0)
+		perfpolicy = PERFPOL_AUTO;
+	else if (strcmp(policy, "high") == 0)
+		perfpolicy = PERFPOL_HIGH;
+	else
+		return EINVAL;
+
+	if (perfpolicy == PERFPOL_AUTO) {
+		timeout_add_msec(&setperf_to, 200);
+	} else if (perfpolicy == PERFPOL_HIGH) {
+		perflevel = 100;
+		cpu_setperf(perflevel);
+	}
+	return 0;
+}
+#endif
+

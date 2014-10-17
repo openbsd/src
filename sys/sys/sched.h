@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.36 2014/09/09 07:07:39 blambert Exp $	*/
+/*	$OpenBSD: sched.h,v 1.37 2014/10/17 01:51:39 tedu Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -152,6 +152,9 @@ void cpu_idle_enter(void);
 void cpu_idle_cycle(void);
 void cpu_idle_leave(void);
 void sched_peg_curproc(struct cpu_info *ci);
+
+int sysctl_hwsetperf(void *, size_t *, void *, size_t);
+int sysctl_hwperfpolicy(void *, size_t *, void *, size_t);
 
 #ifdef MULTIPROCESSOR
 void sched_start_secondary_cpus(void);

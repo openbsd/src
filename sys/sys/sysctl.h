@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.149 2014/08/20 06:23:03 mikeb Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.150 2014/10/17 01:51:39 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -798,7 +798,8 @@ struct kinfo_file {
 #define	HW_USERMEM64		20	/* quad: non-kernel memory */
 #define	HW_NCPUFOUND		21	/* int: number of cpus found*/
 #define	HW_ALLOWPOWERDOWN	22	/* allow power button shutdown */
-#define	HW_MAXID		23	/* number of valid hw ids */
+#define	HW_PERFPOLICY		23	/* set performance policy */
+#define	HW_MAXID		24	/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -824,6 +825,7 @@ struct kinfo_file {
 	{ "usermem", CTLTYPE_QUAD }, \
 	{ "ncpufound", CTLTYPE_INT }, \
 	{ "allowpowerdown", CTLTYPE_INT }, \
+	{ "perfpolicy", CTLTYPE_STRING }, \
 }
 
 /*

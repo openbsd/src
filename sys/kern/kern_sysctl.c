@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.266 2014/10/11 17:12:30 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.267 2014/10/17 01:51:39 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -127,8 +127,6 @@ void fill_file(struct kinfo_file *, struct file *, struct filedesc *,
 void fill_kproc(struct process *, struct kinfo_proc *, struct proc *, int);
 
 int (*cpu_cpuspeed)(int *);
-void (*cpu_setperf)(int);
-int perflevel = 100;
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory
@@ -649,11 +647,6 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		    disk_count * sizeof(struct diskstats)));
 	case HW_DISKCOUNT:
 		return (sysctl_rdint(oldp, oldlenp, newp, disk_count));
-#ifndef	SMALL_KERNEL
-	case HW_SENSORS:
-		return (sysctl_sensors(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen));
-#endif
 	case HW_CPUSPEED:
 		if (!cpu_cpuspeed)
 			return (EOPNOTSUPP);
@@ -661,19 +654,15 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		if (err)
 			return err;
 		return (sysctl_rdint(oldp, oldlenp, newp, cpuspeed));
+#ifndef	SMALL_KERNEL
+	case HW_SENSORS:
+		return (sysctl_sensors(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
 	case HW_SETPERF:
-		if (!cpu_setperf)
-			return (EOPNOTSUPP);
-		err = sysctl_int(oldp, oldlenp, newp, newlen, &perflevel);
-		if (err)
-			return err;
-		if (perflevel > 100)
-			perflevel = 100;
-		if (perflevel < 0)
-			perflevel = 0;
-		if (newp)
-			cpu_setperf(perflevel);
-		return (0);
+		return (sysctl_hwsetperf(oldp, oldlenp, newp, newlen));
+	case HW_PERFPOLICY:
+		return (sysctl_hwperfpolicy(oldp, oldlenp, newp, newlen));
+#endif /* !SMALL_KERNEL */
 	case HW_VENDOR:
 		if (hw_vendor)
 			return (sysctl_rdstring(oldp, oldlenp, newp,
