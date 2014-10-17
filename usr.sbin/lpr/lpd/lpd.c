@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.55 2014/10/11 03:01:58 doug Exp $ */
+/*	$OpenBSD: lpd.c,v 1.56 2014/10/17 06:11:27 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -154,23 +154,17 @@ main(int argc, char **argv)
 		switch (i) {
 		case 'b':
 			if (blist_addrs >= blist_size) {
-				if (blist == NULL) {
-					blist_size += sizeof(char *) * 4;
-					blist = malloc(blist_size);
+				char **newblist;
+				int newblist_size = blist_size +
+				    sizeof(char *) * 4;
+				newblist = realloc(blist, newblist_size);
+				if (newblist == NULL) {
+					free(blist);
+					blist_size = 0;
+					blist = NULL;
 				}
-				else {
-					char **newblist;
-					int newblist_size = blist_size +
-					    sizeof(char *) * 4;
-					newblist = realloc(blist, newblist_size);
-					if (newblist == NULL) {
-						free(blist);
-						blist_size = 0;
-						blist = NULL;
-					}
-					blist = newblist;
-					blist_size = newblist_size;
-				}
+				blist = newblist;
+				blist_size = newblist_size;
 				if (blist == NULL)
 					err(1, "cant allocate bind addr list");
 			}
