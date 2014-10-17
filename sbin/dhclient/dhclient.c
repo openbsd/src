@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.320 2014/10/02 18:04:49 matthew Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.321 2014/10/17 13:21:44 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1166,7 +1166,7 @@ void
 send_discover(void)
 {
 	time_t cur_time;
-	int interval, increase = 1;
+	int interval;
 
 	time(&cur_time);
 
@@ -1185,21 +1185,17 @@ send_discover(void)
 	 * number between zero and two times itself.  On average, this
 	 * means that it will double with every transmission.
 	 */
-	if (increase) {
-		if (!client->interval)
-			client->interval = config->initial_interval;
-		else {
-			client->interval += (arc4random() >> 2) %
-			    (2 * client->interval);
-		}
-
-		/* Don't backoff past cutoff. */
-		if (client->interval > config->backoff_cutoff)
-			client->interval = ((config->backoff_cutoff / 2)
-				 + ((arc4random() >> 2) %
-				    config->backoff_cutoff));
-	} else if (!client->interval)
+	if (!client->interval)
 		client->interval = config->initial_interval;
+	else {
+		client->interval += (arc4random() >> 2) %
+		    (2 * client->interval);
+	}
+
+	/* Don't backoff past cutoff. */
+	if (client->interval > config->backoff_cutoff)
+		client->interval = ((config->backoff_cutoff / 2) +
+		    ((arc4random() >> 2) % config->backoff_cutoff));
 
 	/* If the backoff would take us to the panic timeout, just use that
 	   as the interval. */
