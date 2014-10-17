@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.105 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: bios.c,v 1.106 2014/10/17 20:34:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -563,6 +563,7 @@ bios_getopt()
 					comconsunit = unit;
 					comconsaddr = consaddr;
 					comconsrate = cdp->conspeed;
+					comconsiot = I386_BUS_SPACE_IO;
 
 					/* Probe the serial port this time. */
 					cninit();
