@@ -22,7 +22,6 @@ _sshagnt:*:34:
 _x11:*:35:
 utmp:*:45:
 _unbound:*:53:
-_lkm:*:61:
 _spamd:*:62:
 _radius:*:63:
 _token:*:64:
