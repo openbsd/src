@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprint.c,v 1.13 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: sprint.c,v 1.14 2014/10/17 20:19:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -50,7 +50,6 @@ sflag_print(void)
 	int cnt;
 	char *p;
 	PERSON **list;
-	struct storage *mem;
 
 	list = sort();
 	/*
@@ -80,11 +79,10 @@ sflag_print(void)
 	for (cnt = 0; cnt < entries; ++cnt) {
 		pn = list[cnt];
 		for (w = pn->whead; w != NULL; w = w->next) {
-			mem =  NULL;
 			(void)printf("%-*.*s %-*.*s ",
-			    NAME_WIDTH, UT_NAMESIZE, vs(&mem, pn->name),
+			    NAME_WIDTH, UT_NAMESIZE, pn->name,
 			    MAXREALNAME, MAXREALNAME,
-			    pn->realname ? vs(&mem, pn->realname) : "");
+			    pn->realname ? pn->realname : "");
 			if (!w->loginat) {
 				(void)printf("  *     *  No logins   ");
 				goto office;
@@ -115,17 +113,15 @@ office:
 			putchar(' ');
 			if (oflag) {
 				if (pn->office)
-					(void)printf("%-10.10s",
-					    vs(&mem, pn->office));
+					(void)printf("%-10.10s", pn->office);
 				else if (pn->officephone)
 					(void)printf("%-10.10s", " ");
 				if (pn->officephone)
 					(void)printf(" %-.15s",
-					    vs(&mem, prphone(pn->officephone)));
+					    prphone(pn->officephone));
 			} else
 				(void)printf("%.*s", MAXHOSTNAME, w->host);
 			putchar('\n');
-			free_storage(mem);
 		}
 	}
 }

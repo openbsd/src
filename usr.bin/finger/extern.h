@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 2005/08/23 13:43:53 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 2014/10/17 20:19:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,8 +38,6 @@ extern int lflag;
 extern int oflag;
 extern int pplan;
 
-struct storage;
-
 int	 demi_print(char *, int);
 void	 enter_lastlog(PERSON *);
 PERSON	*enter_person(struct passwd *);
@@ -59,7 +57,6 @@ void	 sflag_print(void);
 int	 show_text(char *, char *, char *);
 PERSON **sort(void);
 void	 stimeprint(WHERE *);
-char	*vs(struct storage **, char *);
+char	*vs(const char *);
 void	 userlist(int, char **);
 void	 vputc(int);
-void	 free_storage(struct storage *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.26 2014/10/17 20:16:13 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.27 2014/10/17 20:19:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -56,23 +56,6 @@ WHERE	*walloc(PERSON *pn);
 void	find_idle_and_ttywrite(WHERE *);
 void	userinfo(PERSON *, struct passwd *);
 
-struct storage {
-	struct storage *next;
-	char a[1];
-};
-
-void
-free_storage(struct storage *st)
-{
-	struct storage *nx;
-
-	while (st != NULL) {
-		nx = st->next;
-		free(st);
-		st = nx;
-	}
-}
-
 void
 find_idle_and_ttywrite(WHERE *w)
 {
@@ -121,13 +104,13 @@ userinfo(PERSON *pn, struct passwd *pw)
 	if (!(p = strsep(&bp, ",")))
 		return;
 	expandusername(p, pw->pw_name, name, sizeof(name));
-	pn->realname = estrdup(name);
+	pn->realname = vs(name);
 	pn->office = ((p = strsep(&bp, ",")) && *p) ?
-	    estrdup(p) : NULL;
+	    vs(p) : NULL;
 	pn->officephone = ((p = strsep(&bp, ",")) && *p) ?
-	    estrdup(p) : NULL;
+	    vs(p) : NULL;
 	pn->homephone = ((p = strsep(&bp, ",")) && *p) ?
-	    estrdup(p) : NULL;
+	    vs(p) : NULL;
 	(void)snprintf(tbuf, sizeof(tbuf), "%s/%s", _PATH_MAILSPOOL,
 	    pw->pw_name);
 	pn->mailrecv = -1;		/* -1 == not_valid */
@@ -382,24 +365,21 @@ prphone(char *num)
 	return (pbuf);
 }
 
-/* Like strvis(), but use malloc() to get the space and return a pointer
- * to the beginning of the converted string, not the end.
+/*
+ * Like strvis(), but use malloc() to get the space and returns a pointer
+ * to the destination string.
  *
  * The caller is responsible for free()'ing the returned string.
  */
 char *
-vs(struct storage **exist, char *src)
+vs(const char *src)
 {
 	char *dst;
-	struct storage *n;
 
-	if ((n = malloc(sizeof(struct storage) + 4 * strlen(src) + 1)) == NULL)
-		err(1, "malloc failed");
-	n->next = *exist;
-	*exist = n;
-
-	dst = n->a;
-
+	/* This will allocate 3 extra bytes but gives overflow protection. */
+	dst = reallocarray(NULL, 4, strlen(src) + 1);
+	if (dst == NULL)
+		err(1, "reallocarray");
 	strvis(dst, src, VIS_SAFE|VIS_NOSLASH);
 	return (dst);
 }
