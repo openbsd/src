@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.552 2014/10/17 01:46:26 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.553 2014/10/17 18:15:48 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1815,7 +1815,7 @@ identifycpu(struct cpu_info *ci)
 		}
 	}
 
-	/* Remove leading and duplicated spaces from cpu_brandstr */
+	/* Remove leading, trailing and duplicated spaces from cpu_brandstr */
 	brandstr_from = brandstr_to = cpu_brandstr;
 	skipspace = 1;
 	while (*brandstr_from != '\0') {
@@ -1827,6 +1827,8 @@ identifycpu(struct cpu_info *ci)
 			skipspace = 1;
 		brandstr_from++;
 	}
+	if (skipspace && brandstr_to > cpu_brandstr)
+		brandstr_to--;
 	*brandstr_to = '\0';
 
 	if (cpu_brandstr[0] == '\0') {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.55 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.56 2014/10/17 18:15:48 kettenis Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -408,7 +408,7 @@ identifycpu(struct cpu_info *ci)
 	CPUID(0x80000004, brand[8], brand[9], brand[10], brand[11]);
 	strlcpy(mycpu_model, (char *)brand, sizeof(mycpu_model));
 
-	/* Remove leading and duplicated spaces from mycpu_model */
+	/* Remove leading, trailing and duplicated spaces from mycpu_model */
 	brandstr_from = brandstr_to = mycpu_model;
 	skipspace = 1;
 	while (*brandstr_from != '\0') {
@@ -420,6 +420,8 @@ identifycpu(struct cpu_info *ci)
 			skipspace = 1;
 		brandstr_from++;
 	}
+	if (skipspace && brandstr_to > mycpu_model)
+		brandstr_to--;
 	*brandstr_to = '\0';
 
 	if (mycpu_model[0] == 0)
