@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.33 2014/10/13 21:01:05 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.34 2014/10/17 13:25:13 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -90,11 +90,15 @@ gotoeop(int f, int n)
 
 			curwp->w_dotp = lforw(curwp->w_dotp);
 			curwp->w_dotline++;
+
+			/* do not continue after end of buffer */
+			if (lforw(curwp->w_dotp) == curbp->b_headp) {
+				gotoeol(FFRAND, 1);
+				curwp->w_rflag |= WFMOVE;
+				return (FALSE);
+			}
 		}
 	}
-	/* covers corner case of no '\n' at end of buffer */
-	if (lforw(curwp->w_dotp) == curbp->b_headp)
-		gotoeol(FFRAND, 1);
 
 	/* force screen update */
 	curwp->w_rflag |= WFMOVE;
@@ -242,13 +246,14 @@ cleanup:
 int
 killpara(int f, int n)
 {
-	int	status;		/* returned status of functions */
+	int	status, end = FALSE;	/* returned status of functions */
 
 	/* for each paragraph to delete */
 	while (n--) {
 
 		/* mark out the end and beginning of the para to delete */
-		(void)gotoeop(FFRAND, 1);
+		if (!gotoeop(FFRAND, 1))
+			end = TRUE;
 
 		/* set the mark here */
 		curwp->w_markp = curwp->w_dotp;
@@ -263,6 +268,9 @@ killpara(int f, int n)
 		/* and delete it */
 		if ((status = killregion(FFRAND, 1)) != TRUE)
 			return (status);
+
+		if (end)
+			return (TRUE);
 	}
 	return (TRUE);
 }
