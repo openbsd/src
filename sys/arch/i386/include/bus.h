@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.61 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: bus.h,v 1.62 2014/10/17 01:46:26 dlg Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -72,12 +72,6 @@
 #include <machine/pio.h>
 
 /*
- * Values for the i386 bus space tag, not to be used directly by MI code.
- */
-#define	I386_BUS_SPACE_IO	0	/* space is i/o space */
-#define I386_BUS_SPACE_MEM	1	/* space is mem space */
-
-/*
  * Bus address and size types
  */
 typedef u_long bus_addr_t;
@@ -86,7 +80,8 @@ typedef u_long bus_size_t;
 /*
  * Access methods for bus resources and address space.
  */
-typedef	int bus_space_tag_t;
+struct	i386_bus_space_ops;
+typedef	const struct i386_bus_space_ops *bus_space_tag_t;
 typedef	u_long bus_space_handle_t;
 
 int	bus_space_map(bus_space_tag_t t, bus_addr_t addr,
@@ -110,6 +105,8 @@ int	bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart,
 void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size);
 
+struct i386_bus_space_ops {
+
 /*
  *	u_intN_t bus_space_read_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset);
@@ -117,14 +114,13 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
  * Read a 1, 2, 4, or 8 byte quantity from bus space
  * described by tag/handle/offset.
  */
-u_int8_t	bus_space_read_1(bus_space_tag_t, bus_space_handle_t,
-		    bus_size_t);
+	u_int8_t	(*read_1)(bus_space_handle_t, bus_size_t);
+	u_int16_t	(*read_2)(bus_space_handle_t, bus_size_t);
+	u_int32_t	(*read_4)(bus_space_handle_t, bus_size_t);
 
-u_int16_t	bus_space_read_2(bus_space_tag_t, bus_space_handle_t,
-		    bus_size_t);
-
-u_int32_t	bus_space_read_4(bus_space_tag_t, bus_space_handle_t,
-		    bus_size_t);
+#define bus_space_read_1(_t, _h, _o) ((_t)->read_1((_h), (_o)))
+#define bus_space_read_2(_t, _h, _o) ((_t)->read_2((_h), (_o)))
+#define bus_space_read_4(_t, _h, _o) ((_t)->read_4((_h), (_o)))
 
 #define bus_space_read_raw_2(t, h, o) \
     bus_space_read_2((t), (h), (o))
@@ -146,17 +142,19 @@ u_int32_t	bus_space_read_4(bus_space_tag_t, bus_space_handle_t,
  * described by tag/handle/offset and copy into buffer provided.
  */
 
-#define	bus_space_read_raw_multi_2(t, h, o, a, c) \
-    bus_space_read_multi_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
-#define	bus_space_read_raw_multi_4(t, h, o, a, c) \
-    bus_space_read_multi_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
+	void		(*read_multi_1)(bus_space_handle_t, bus_size_t,
+			    u_int8_t *, bus_size_t);
+	void		(*read_multi_2)(bus_space_handle_t, bus_size_t,
+			    u_int16_t *, bus_size_t);
+	void		(*read_multi_4)(bus_space_handle_t, bus_size_t,
+			    u_int32_t *, bus_size_t);
 
-void	bus_space_read_multi_1(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    u_int8_t *, bus_size_t);
-void	bus_space_read_multi_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    u_int16_t *, bus_size_t);
-void	bus_space_read_multi_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    u_int32_t *, bus_size_t);
+#define bus_space_read_multi_1(_t, _h, _o, _a, _c) \
+	((_t)->read_multi_1((_h), (_o), (_a), (_c)))
+#define bus_space_read_multi_2(_t, _h, _o, _a, _c) \
+	((_t)->read_multi_2((_h), (_o), (_a), (_c)))
+#define bus_space_read_multi_4(_t, _h, _o, _a, _c) \
+	((_t)->read_multi_4((_h), (_o), (_a), (_c)))
 
 #if 0	/* Cause a link error for bus_space_read_multi_8 */
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
@@ -193,12 +191,19 @@ void	bus_space_read_multi_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
  * buffer provided.
  */
 
-void	bus_space_read_region_1(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int8_t *, bus_size_t);
-void	bus_space_read_region_2(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int16_t *, bus_size_t);
-void	bus_space_read_region_4(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int32_t *, bus_size_t);
+	void		(*read_region_1)(bus_space_handle_t,
+			    bus_size_t, u_int8_t *, bus_size_t);
+	void		(*read_region_2)(bus_space_handle_t,
+			    bus_size_t, u_int16_t *, bus_size_t);
+	void		(*read_region_4)(bus_space_handle_t,
+			    bus_size_t, u_int32_t *, bus_size_t);
+
+#define bus_space_read_region_1(_t, _h, _o, _a, _c) \
+	((_t)->read_region_1((_h), (_o), (_a), (_c)))
+#define bus_space_read_region_2(_t, _h, _o, _a, _c) \
+	((_t)->read_region_2((_h), (_o), (_a), (_c)))
+#define bus_space_read_region_4(_t, _h, _o, _a, _c) \
+	((_t)->read_region_4((_h), (_o), (_a), (_c)))
 
 #if 0	/* Cause a link error for bus_space_read_region_8 */
 #define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
@@ -216,10 +221,10 @@ void	bus_space_read_region_4(bus_space_tag_t, bus_space_handle_t,
  * these functions.
  */
 
-#define	bus_space_read_raw_region_2(t, h, o, a, c) \
-    bus_space_read_region_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
-#define	bus_space_read_raw_region_4(t, h, o, a, c) \
-    bus_space_read_region_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
+#define bus_space_read_raw_region_2(_t, _h, _o, _a, _c) \
+	((_t)->read_region_2((_h), (_o), (u_int16_t *)(_a), (_c) >> 1))
+#define bus_space_read_raw_region_4(_t, _h, _o, _a, _c) \
+	((_t)->read_region_4((_h), (_o), (u_int32_t *)(_a), (_c) >> 2))
 
 #if 0	/* Cause a link error for bus_space_read_raw_region_8 */
 #define	bus_space_read_raw_region_8 \
@@ -235,12 +240,16 @@ void	bus_space_read_region_4(bus_space_tag_t, bus_space_handle_t,
  * described by tag/handle/offset.
  */
 
-void	bus_space_write_1(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int8_t);
-void	bus_space_write_2(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int16_t);
-void	bus_space_write_4(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int32_t);
+	void		(*write_1)(bus_space_handle_t, bus_size_t, u_int8_t);
+	void		(*write_2)(bus_space_handle_t, bus_size_t, u_int16_t);
+	void		(*write_4)(bus_space_handle_t, bus_size_t, u_int32_t);
+
+#define bus_space_write_1(_t, _h, _o, _v) \
+	((_t)->write_1((_h), (_o), (_v)))
+#define bus_space_write_2(_t, _h, _o, _v) \
+	((_t)->write_2((_h), (_o), (_v)))
+#define bus_space_write_4(_t, _h, _o, _v) \
+	((_t)->write_4((_h), (_o), (_v)))
 
 #define bus_space_write_raw_2(t, h, o, v) \
     bus_space_write_2((t), (h), (o), (v))
@@ -262,12 +271,19 @@ void	bus_space_write_4(bus_space_tag_t, bus_space_handle_t,
  * provided to bus space described by tag/handle/offset.
  */
 
-void	bus_space_write_multi_1(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, const u_int8_t *, bus_size_t);
-void	bus_space_write_multi_2(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, const u_int16_t *, bus_size_t);
-void	bus_space_write_multi_4(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, const u_int32_t *, bus_size_t);
+	void		(*write_multi_1)(bus_space_handle_t,
+			    bus_size_t, const u_int8_t *, bus_size_t);
+	void		(*write_multi_2)(bus_space_handle_t,
+			    bus_size_t, const u_int16_t *, bus_size_t);
+	void		(*write_multi_4)(bus_space_handle_t,
+			    bus_size_t, const u_int32_t *, bus_size_t);
+
+#define bus_space_write_multi_1(_t, _h, _o, _a, _c) \
+	((_t)->write_multi_1((_h), (_o), (_a), (_c)))
+#define bus_space_write_multi_2(_t, _h, _o, _a, _c) \
+	((_t)->write_multi_2((_h), (_o), (_a), (_c)))
+#define bus_space_write_multi_4(_t, _h, _o, _a, _c) \
+	((_t)->write_multi_4((_h), (_o), (_a), (_c)))
 
 #if 0	/* Cause a link error for bus_space_write_multi_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
@@ -285,10 +301,10 @@ void	bus_space_write_multi_4(bus_space_tag_t, bus_space_handle_t,
  * possible byte-swapping should be done by these functions.
  */
 
-#define	bus_space_write_raw_multi_2(t, h, o, a, c) \
-    bus_space_write_multi_2((t), (h), (o), (const u_int16_t *)(a), (c) >> 1)
-#define	bus_space_write_raw_multi_4(t, h, o, a, c) \
-    bus_space_write_multi_4((t), (h), (o), (const u_int32_t *)(a), (c) >> 2)
+#define bus_space_write_raw_multi_2(_t, _h, _o, _a, _c) \
+	((_t)->write_multi_2((_h), (_o), (const u_int16_t *)(_a), (_c) >> 1))
+#define bus_space_write_raw_multi_4(_t, _h, _o, _a, _c) \
+	((_t)->write_multi_4((_h), (_o), (const u_int32_t *)(_a), (_c) >> 2))
 
 #if 0	/* Cause a link error for bus_space_write_raw_multi_8 */
 #define	bus_space_write_raw_multi_8 \
@@ -304,12 +320,19 @@ void	bus_space_write_multi_4(bus_space_tag_t, bus_space_handle_t,
  * to bus space described by tag/handle starting at `offset'.
  */
 
-void	bus_space_write_region_1(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, const u_int8_t *, bus_size_t);
-void	bus_space_write_region_2(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, const u_int16_t *, bus_size_t);
-void	bus_space_write_region_4(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, const u_int32_t *, bus_size_t);
+	void		(*write_region_1)(bus_space_handle_t,
+			    bus_size_t, const u_int8_t *, bus_size_t);
+	void		(*write_region_2)(bus_space_handle_t,
+			    bus_size_t, const u_int16_t *, bus_size_t);
+	void		(*write_region_4)(bus_space_handle_t,
+			    bus_size_t, const u_int32_t *, bus_size_t);
+
+#define bus_space_write_region_1(_t, _h, _o, _a, _c) \
+	((_t)->write_region_1((_h), (_o), (_a), (_c)))
+#define bus_space_write_region_2(_t, _h, _o, _a, _c) \
+	((_t)->write_region_2((_h), (_o), (_a), (_c)))
+#define bus_space_write_region_4(_t, _h, _o, _a, _c) \
+	((_t)->write_region_4((_h), (_o), (_a), (_c)))
 
 #if 0	/* Cause a link error for bus_space_write_region_8 */
 #define	bus_space_write_region_8					\
@@ -328,10 +351,10 @@ void	bus_space_write_region_4(bus_space_tag_t, bus_space_handle_t,
  * these functions.
  */
 
-#define	bus_space_write_raw_region_2(t, h, o, a, c) \
-    bus_space_write_region_2((t), (h), (o), (const u_int16_t *)(a), (c) >> 1)
-#define	bus_space_write_raw_region_4(t, h, o, a, c) \
-    bus_space_write_region_4((t), (h), (o), (const u_int32_t *)(a), (c) >> 2)
+#define bus_space_write_raw_region_2(_t, _h, _o, _a, _c) \
+	((_t)->write_region_2((_h), (_o), (const u_int16_t *)(_a), (_c) >> 1))
+#define bus_space_write_raw_region_4(_t, _h, _o, _a, _c) \
+	((_t)->write_region_4((_h), (_o), (const u_int32_t *)(_a), (_c) >> 2))
 
 #if 0	/* Cause a link error for bus_space_write_raw_region_8 */
 #define	bus_space_write_raw_region_8 \
@@ -347,12 +370,19 @@ void	bus_space_write_region_4(bus_space_tag_t, bus_space_handle_t,
  * by tag/handle/offset `count' times.
  */
 
-void	bus_space_set_multi_1(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int8_t, size_t);
-void	bus_space_set_multi_2(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int16_t, size_t);
-void	bus_space_set_multi_4(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int32_t, size_t);
+	void		(*set_multi_1)(bus_space_handle_t,
+			    bus_size_t, u_int8_t, size_t);
+	void		(*set_multi_2)(bus_space_handle_t,
+			    bus_size_t, u_int16_t, size_t);
+	void		(*set_multi_4)(bus_space_handle_t,
+			    bus_size_t, u_int32_t, size_t);
+
+#define bus_space_set_multi_1(_t, _h, _o, _a, _c) \
+	((_t)->set_multi_1((_h), (_o), (_a), (_c)))
+#define bus_space_set_multi_2(_t, _h, _o, _a, _c) \
+	((_t)->set_multi_2((_h), (_o), (_a), (_c)))
+#define bus_space_set_multi_4(_t, _h, _o, _a, _c) \
+	((_t)->set_multi_4((_h), (_o), (_a), (_c)))
 
 #if 0	/* Cause a link error for bus_space_set_multi_8 */
 #define	bus_space_set_multi_8					\
@@ -367,13 +397,20 @@ void	bus_space_set_multi_4(bus_space_tag_t, bus_space_handle_t,
  * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle starting at `offset'.
  */
-void	bus_space_set_region_1(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int8_t, size_t);
-void	bus_space_set_region_2(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int16_t, size_t);
-void	bus_space_set_region_4(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int32_t, size_t);
 
+	void		(*set_region_1)(bus_space_handle_t,
+			    bus_size_t, u_int8_t, size_t);
+	void		(*set_region_2)(bus_space_handle_t,
+			    bus_size_t, u_int16_t, size_t);
+	void		(*set_region_4)(bus_space_handle_t,
+			    bus_size_t, u_int32_t, size_t);
+
+#define bus_space_set_region_1(_t, _h, _o, _a, _c) \
+	((_t)->set_region_1((_h), (_o), (_a), (_c)))
+#define bus_space_set_region_2(_t, _h, _o, _a, _c) \
+	((_t)->set_region_2((_h), (_o), (_a), (_c)))
+#define bus_space_set_region_4(_t, _h, _o, _a, _c) \
+	((_t)->set_region_4((_h), (_o), (_a), (_c)))
 
 #if 0	/* Cause a link error for bus_space_set_region_8 */
 #define	bus_space_set_region_8					\
@@ -390,12 +427,19 @@ void	bus_space_set_region_4(bus_space_tag_t, bus_space_handle_t,
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
 
-void	bus_space_copy_1(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     bus_space_handle_t, bus_size_t, bus_size_t);
-void	bus_space_copy_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     bus_space_handle_t, bus_size_t, bus_size_t);
-void	bus_space_copy_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     bus_space_handle_t, bus_size_t, bus_size_t);
+	void		(*copy_1)(bus_space_handle_t,
+			    bus_size_t, bus_space_handle_t, bus_size_t, size_t);
+	void		(*copy_2)(bus_space_handle_t,
+			    bus_size_t, bus_space_handle_t, bus_size_t, size_t);
+	void		(*copy_4)(bus_space_handle_t,
+			    bus_size_t, bus_space_handle_t, bus_size_t, size_t);
+
+#define bus_space_copy_1(_t, _h1, _o1, _h2, _o2, _c) \
+	((_t)->copy_1((_h1), (_o1), (_h2), (_o2), (_c)))
+#define bus_space_copy_2(_t, _h1, _o1, _h2, _o2, _c) \
+	((_t)->copy_2((_h1), (_o1), (_h2), (_o2), (_c)))
+#define bus_space_copy_4(_t, _h1, _o1, _h2, _o2, _c) \
+	((_t)->copy_4((_h1), (_o1), (_h2), (_o2), (_c)))
 
 #if 0	/* Cause a link error for bus_space_copy_8 */
 #define	bus_space_copy_8					\
@@ -423,6 +467,18 @@ void	bus_space_copy_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 } while (0)
 
 /*
+ *	void *bus_space_vaddr(bus_space_tag_t, bus_space_handle_t);
+ *
+ * Get the kernel virtual address for the mapped bus space.
+ * Only allowed for regions mapped with BUS_SPACE_MAP_LINEAR.
+ */
+	void *		(*vaddr)(bus_space_handle_t);
+
+#define bus_space_vaddr(_t, _h) \
+	((_t)->vaddr((_h)))
+};
+
+/*
  * Bus read/write barrier methods.
  *
  *	void bus_space_barrier(bus_space_tag_t tag,
@@ -444,13 +500,16 @@ void	bus_space_copy_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 #define	BUS_SPACE_MAP_PREFETCHABLE	0x0008
 
 /*
- *	void *bus_space_vaddr(bus_space_tag_t, bus_space_handle_t);
- *
- * Get the kernel virtual address for the mapped bus space.
- * Only allowed for regions mapped with BUS_SPACE_MAP_LINEAR.
+ * Values for the i386 bus space tag, not to be used directly by MI code.
  */
-#define bus_space_vaddr(t, h) \
-	((t) == I386_BUS_SPACE_IO ? (void *)(NULL) : (void *)(h))
+
+/* space is i/o space */
+extern const struct i386_bus_space_ops i386_bus_space_io_ops;
+#define	I386_BUS_SPACE_IO	(&i386_bus_space_io_ops)
+
+/* space is mem space */
+extern const struct i386_bus_space_ops i386_bus_space_mem_ops;
+#define I386_BUS_SPACE_MEM	(&i386_bus_space_mem_ops)
 
 /*
  * Flags used in various bus DMA methods.
