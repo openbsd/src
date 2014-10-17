@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.36 2014/10/17 01:51:39 tedu Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.37 2014/10/17 15:34:55 deraadt Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -565,11 +565,7 @@ schedclock(struct proc *p)
 	SCHED_UNLOCK(s);
 }
 
-#ifndef SMALL_KERNEL
-/*
- * The code below handles CPU throttling.
- */
-#include <sys/sysctl.h>
+void (*cpu_setperf)(int);
 
 #define PERFPOL_MANUAL 0
 #define PERFPOL_AUTO 1
@@ -577,7 +573,11 @@ schedclock(struct proc *p)
 int perflevel = 100;
 int perfpolicy = PERFPOL_MANUAL;
 
-void (*cpu_setperf)(int);
+#ifndef SMALL_KERNEL
+/*
+ * The code below handles CPU throttling.
+ */
+#include <sys/sysctl.h>
 
 struct timeout setperf_to;
 void setperf_auto(void *);
