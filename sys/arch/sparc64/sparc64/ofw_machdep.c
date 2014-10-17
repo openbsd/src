@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.31 2009/02/19 11:12:42 kettenis Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.32 2014/10/17 03:04:30 daniel Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -519,27 +519,13 @@ prom_get_msgbuf(len, align)
 		cell_t phys_lo;
 	} args;
 	paddr_t addr;
-	int rooth;
-	int is_e250 = 1;
-
-	/* E250s tend to have buggy PROMs that break on test-method */
-	if ((rooth = OF_finddevice("/")) != -1) {
-		char name[80];
-
-		if ((OF_getprop(rooth, "name", &name, sizeof(name))) != -1) {
-			if (strcmp(name, "SUNW,Ultra-250") && strcmp(name, "SUNW,Ultra-4")) 
-				is_e250 = 0;
-		} else prom_printf("prom_get_msgbuf: cannot get \"name\"\r\n");
-	} else prom_printf("prom_get_msgbuf: cannot open root device \r\n");
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
 		prom_printf("prom_get_msgbuf: cannot get memh\r\n");
 		return -1;
 	}
-	if (is_e250) {
-		prom_printf("prom_get_msgbuf: Cannot recover msgbuf on E250/450\r\n");
-	} else if (OF_test("test-method") == 0) {
-		if (OF_test_method(memh, "SUNW,retain") != 0) {
+	if (OF_test("test-method") == 0) {
+		if (OF_test_method(OF_instance_to_package(memh), "SUNW,retain") == 0) {
 			args.name = ADR2CELL("call-method");
 			args.nargs = 5;
 			args.nreturns = 3;
