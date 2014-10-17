@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.33 2014/10/17 20:52:59 bluhm Exp $	*/
+/*	$OpenBSD: event.c,v 1.34 2014/10/17 22:59:46 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -48,45 +48,15 @@
 #include "evutil.h"
 #include "log.h"
 
-#ifdef HAVE_EVENT_PORTS
-extern const struct eventop evportops;
-#endif
-#ifdef HAVE_SELECT
 extern const struct eventop selectops;
-#endif
-#ifdef HAVE_POLL
 extern const struct eventop pollops;
-#endif
-#ifdef HAVE_EPOLL
-extern const struct eventop epollops;
-#endif
-#ifdef HAVE_WORKING_KQUEUE
 extern const struct eventop kqops;
-#endif
-#ifdef HAVE_DEVPOLL
-extern const struct eventop devpollops;
-#endif
 
 /* In order of preference */
 static const struct eventop *eventops[] = {
-#ifdef HAVE_EVENT_PORTS
-	&evportops,
-#endif
-#ifdef HAVE_WORKING_KQUEUE
 	&kqops,
-#endif
-#ifdef HAVE_EPOLL
-	&epollops,
-#endif
-#ifdef HAVE_DEVPOLL
-	&devpollops,
-#endif
-#ifdef HAVE_POLL
 	&pollops,
-#endif
-#ifdef HAVE_SELECT
 	&selectops,
-#endif
 	NULL
 };
 
