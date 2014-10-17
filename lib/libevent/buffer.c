@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.21 2014/10/16 07:38:06 bluhm Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.22 2014/10/17 19:16:01 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -33,30 +33,20 @@
 #endif
 
 #include <sys/types.h>
-
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
-
-#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
-#endif
 
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
 #include "event.h"
 #include "evutil.h"
-#include "./log.h"
+#include "log.h"
 
 struct evbuffer *
 evbuffer_new(void)

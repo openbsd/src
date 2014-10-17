@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.30 2014/10/16 07:38:06 bluhm Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.31 2014/10/17 19:16:01 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -30,13 +30,10 @@
 #define _GNU_SOURCE 1
 
 #include <sys/types.h>
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#else
-#include <sys/_libevent_time.h>
-#endif
 #include <sys/queue.h>
 #include <sys/event.h>
+
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,14 +41,12 @@
 #include <unistd.h>
 #include <errno.h>
 #include <assert.h>
-#ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
-#endif
 
 /* Some platforms apparently define the udata field of struct kevent as
  * intptr_t, whereas others define it as void*.  There doesn't seem to be an
  * easy way to tell them apart via autoconf, so we need to use OS macros. */
-#if defined(HAVE_INTTYPES_H) && !defined(__OpenBSD__) && !defined(__FreeBSD__) && !defined(__darwin__) && !defined(__APPLE__)
+#if !defined(__OpenBSD__) && !defined(__FreeBSD__) && !defined(__darwin__) && !defined(__APPLE__)
 #define PTR_TO_UDATA(x)	((intptr_t)(x))
 #else
 #define PTR_TO_UDATA(x)	(x)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.c,v 1.19 2014/10/16 07:38:06 bluhm Exp $	*/
+/*	$OpenBSD: select.c,v 1.20 2014/10/17 19:16:01 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -28,15 +28,10 @@
  */
 
 #include <sys/types.h>
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#else
-#include <sys/_libevent_time.h>
-#endif
-#ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
-#endif
 #include <sys/queue.h>
+
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>

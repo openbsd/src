@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.8 2014/10/16 07:38:06 bluhm Exp $	*/
+/*	$OpenBSD: log.c,v 1.9 2014/10/17 19:16:01 bluhm Exp $	*/
 
 /*
  * log.c
@@ -38,18 +38,15 @@
  */
 
 #include <sys/types.h>
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#else
-#include <sys/_libevent_time.h>
-#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
-#include "event.h"
 
+#include "event.h"
 #include "log.h"
 #include "evutil.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: event_tagging.c,v 1.6 2014/10/16 07:38:06 bluhm Exp $	*/
+/*	$OpenBSD: event_tagging.c,v 1.7 2014/10/17 19:16:01 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Niels Provos <provos@citi.umich.edu>
@@ -27,28 +27,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-
 #include <sys/ioctl.h>
-
 #include <sys/queue.h>
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
 #include "event.h"
 #include "evutil.h"
