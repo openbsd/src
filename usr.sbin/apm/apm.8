@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.8,v 1.39 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: apm.8,v 1.40 2014/10/17 01:56:48 tedu Exp $
 .\"
 .\" Copyright (c) 1996 John T. Kohl
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: October 17 2014 $
 .Dt APM 8
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@
 .Nd Advanced Power Management control program
 .Sh SYNOPSIS
 .Nm apm
-.Op Fl AabCHLlmPSvZz
+.Op Fl AabHLlmPSvZz
 .Op Fl f Ar sockname
 .Nm zzz
 .Op Fl SZz
@@ -57,21 +57,7 @@ displays the current power management state in verbose form.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl A
-Set
-.Xr apmd 8
-to automatic performance adjustment mode.
-In this mode, when CPU idle time falls below 10%,
-or if the AC power is connected and the battery is more than 15% charged,
-.Nm
-raises
-.Va hw.setperf
-to 100.
-Otherwise when CPU idle time is above 30%
-and the system is running on battery power,
-.Nm
-lowers
-.Va hw.setperf
-as much as possible to reduce power consumption.
+Switch to automatic performance adjustment mode.
 .It Fl a
 Display the external charger (A/C status).
 0 means disconnected, 1
@@ -80,20 +66,6 @@ means connected, 2 means backup power source, and 255 means unknown.
 Display the battery status.
 0 means high, 1 means low, 2 means
 critical, 3 means charging, 4 means absent, and 255 means unknown.
-.It Fl C
-Set
-.Xr apmd 8
-to cool running performance adjustment mode.
-In this mode, when CPU idle time falls below 10%,
-.Nm
-raises
-.Va hw.setperf
-as much as necessary.
-Otherwise when CPU idle time is above 30%,
-.Nm
-lowers
-.Va hw.setperf
-as much as possible to reduce heat, noise, and power consumption.
 .It Fl f Ar sockname
 Set the name of the socket via which to contact
 .Xr apmd 8
@@ -101,14 +73,10 @@ to
 .Ar sockname .
 .It Fl H
 Set
-.Xr apmd 8
-to manual performance adjustment mode and
 .Va hw.setperf
 to 100.
 .It Fl L
 Set
-.Xr apmd 8
-to manual performance adjustment mode and
 .Va hw.setperf
 to 0.
 .It Fl l
