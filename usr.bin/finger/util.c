@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.25 2014/10/17 08:03:04 doug Exp $	*/
+/*	$OpenBSD: util.c,v 1.26 2014/10/17 20:16:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -115,7 +115,7 @@ userinfo(PERSON *pn, struct passwd *pw)
 	pn->dir = estrdup(pw->pw_dir);
 	pn->shell = estrdup(pw->pw_shell);
 
-	(void)strncpy(bp = tbuf, pw->pw_gecos, sizeof(tbuf));
+	(void)strlcpy(bp = tbuf, pw->pw_gecos, sizeof(tbuf));
 
 	/* ampersands get replaced by the login name */
 	if (!(p = strsep(&bp, ",")))
@@ -148,7 +148,7 @@ match(struct passwd *pw, char *user)
 	char *p, *t;
 	char name[1024];
 
-	(void)strncpy(p = tbuf, pw->pw_gecos, sizeof(tbuf));
+	(void)strlcpy(p = tbuf, pw->pw_gecos, sizeof(tbuf));
 
 	/* ampersands get replaced by the login name */
 	if (!(p = strtok(p, ",")))
