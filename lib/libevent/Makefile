@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 2014/10/17 19:16:01 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.36 2014/10/17 20:52:59 bluhm Exp $
 
 LIB=	event
 SRCS=	buffer.c evbuffer.c event.c event_tagging.c evutil.c kqueue.c \
@@ -59,15 +59,7 @@ MLINKS=	event.3 bufferevent_base_set.3 \
 	event.3 event_asr_abort.3
 
 CFLAGS+= -I${.CURDIR} -DNDEBUG \
-	-DHAVE_CLOCK_GETTIME \
-	-DHAVE_CLOCK_MONOTONIC \
 	-DHAVE_FD_MASK \
-	-DHAVE_GETADDRINFO \
-	-DHAVE_GETEGID \
-	-DHAVE_GETEUID \
-	-DHAVE_GETNAMEINFO \
-	-DHAVE_GETTIMEOFDAY \
-	-DHAVE_ISSETUGID \
 	-DHAVE_POLL \
 	-DHAVE_SELECT \
 	-DHAVE_SETFD \
@@ -75,7 +67,6 @@ CFLAGS+= -I${.CURDIR} -DNDEBUG \
 	-DHAVE_STRSEP \
 	-DHAVE_STRTOK_R \
 	-DHAVE_STRTOLL \
-	-DHAVE_STRUCT_IN6_ADDR \
 	-DHAVE_VASPRINTF \
 	-DHAVE_WORKING_KQUEUE
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.32 2014/10/17 19:16:01 bluhm Exp $	*/
+/*	$OpenBSD: event.c,v 1.33 2014/10/17 20:52:59 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -113,12 +113,10 @@ static void	timeout_correct(struct event_base *, struct timeval *);
 static void
 detect_monotonic(void)
 {
-#if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_MONOTONIC)
 	struct timespec	ts;
 
 	if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
 		use_monotonic = 1;
-#endif
 }
 
 static int
@@ -129,7 +127,6 @@ gettime(struct event_base *base, struct timeval *tp)
 		return (0);
 	}
 
-#if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_MONOTONIC)
 	if (use_monotonic) {
 		struct timespec	ts;
 
@@ -140,7 +137,6 @@ gettime(struct event_base *base, struct timeval *tp)
 		tp->tv_usec = ts.tv_nsec / 1000;
 		return (0);
 	}
-#endif
 
 	return (evutil_gettimeofday(tp, NULL));
 }
