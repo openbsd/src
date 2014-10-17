@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.209 2014/09/08 06:24:13 jsg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.210 2014/10/17 00:47:48 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1678,6 +1678,9 @@ pfsync_sendout(void)
 	}
 #endif
 
+	/* start again */
+	sc->sc_len = PFSYNC_MINPKT;
+
 	sc->sc_if.if_opackets++;
 	sc->sc_if.if_obytes += m->m_pkthdr.len;
 
@@ -1687,9 +1690,6 @@ pfsync_sendout(void)
 		pfsyncstats.pfsyncs_opackets++;
 	else
 		pfsyncstats.pfsyncs_oerrors++;
-
-	/* start again */
-	sc->sc_len = PFSYNC_MINPKT;
 }
 
 void
