@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.11 2011/07/07 05:40:42 okan Exp $	*/
+/*	$OpenBSD: chared.c,v 1.12 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -445,58 +445,59 @@ ch_init(EditLine *el)
 {
 	c_macro_t *ma = &el->el_chared.c_macro;
 
-	el->el_line.buffer		= el_malloc(EL_BUFSIZ *
+	el->el_line.buffer = reallocarray(NULL, EL_BUFSIZ,
 	    sizeof(*el->el_line.buffer));
 	if (el->el_line.buffer == NULL)
 		return (-1);
 
 	(void) memset(el->el_line.buffer, 0, EL_BUFSIZ *
 	    sizeof(*el->el_line.buffer));
-	el->el_line.cursor		= el->el_line.buffer;
-	el->el_line.lastchar		= el->el_line.buffer;
-	el->el_line.limit		= &el->el_line.buffer[EL_BUFSIZ - EL_LEAVE];
+	el->el_line.cursor = el->el_line.buffer;
+	el->el_line.lastchar = el->el_line.buffer;
+	el->el_line.limit = &el->el_line.buffer[EL_BUFSIZ - EL_LEAVE];
 
-	el->el_chared.c_undo.buf	= el_malloc(EL_BUFSIZ *
+	el->el_chared.c_undo.buf = reallocarray(NULL, EL_BUFSIZ,
 	    sizeof(*el->el_chared.c_undo.buf));
 	if (el->el_chared.c_undo.buf == NULL)
 		return (-1);
 	(void) memset(el->el_chared.c_undo.buf, 0, EL_BUFSIZ *
 	    sizeof(*el->el_chared.c_undo.buf));
-	el->el_chared.c_undo.len	= -1;
-	el->el_chared.c_undo.cursor	= 0;
-	el->el_chared.c_redo.buf	= el_malloc(EL_BUFSIZ *
+	el->el_chared.c_undo.len = -1;
+	el->el_chared.c_undo.cursor = 0;
+	el->el_chared.c_redo.buf = reallocarray(NULL, EL_BUFSIZ,
 	    sizeof(*el->el_chared.c_redo.buf));
 	if (el->el_chared.c_redo.buf == NULL)
 		return (-1);
-	el->el_chared.c_redo.pos	= el->el_chared.c_redo.buf;
-	el->el_chared.c_redo.lim	= el->el_chared.c_redo.buf + EL_BUFSIZ;
-	el->el_chared.c_redo.cmd	= ED_UNASSIGNED;
+	el->el_chared.c_redo.pos = el->el_chared.c_redo.buf;
+	el->el_chared.c_redo.lim = el->el_chared.c_redo.buf + EL_BUFSIZ;
+	el->el_chared.c_redo.cmd = ED_UNASSIGNED;
 
-	el->el_chared.c_vcmd.action	= NOP;
-	el->el_chared.c_vcmd.pos	= el->el_line.buffer;
+	el->el_chared.c_vcmd.action = NOP;
+	el->el_chared.c_vcmd.pos = el->el_line.buffer;
 
-	el->el_chared.c_kill.buf	= el_malloc(EL_BUFSIZ *
+	el->el_chared.c_kill.buf = reallocarray(NULL, EL_BUFSIZ,
 	    sizeof(*el->el_chared.c_kill.buf));
 	if (el->el_chared.c_kill.buf == NULL)
 		return (-1);
 	(void) memset(el->el_chared.c_kill.buf, 0, EL_BUFSIZ *
 	    sizeof(*el->el_chared.c_kill.buf));
-	el->el_chared.c_kill.mark	= el->el_line.buffer;
-	el->el_chared.c_kill.last	= el->el_chared.c_kill.buf;
-	el->el_chared.c_resizefun	= NULL;
-	el->el_chared.c_resizearg	= NULL;
+	el->el_chared.c_kill.mark = el->el_line.buffer;
+	el->el_chared.c_kill.last = el->el_chared.c_kill.buf;
+	el->el_chared.c_resizefun = NULL;
+	el->el_chared.c_resizearg = NULL;
 
-	el->el_map.current		= el->el_map.key;
+	el->el_map.current = el->el_map.key;
 
-	el->el_state.inputmode		= MODE_INSERT; /* XXX: save a default */
-	el->el_state.doingarg		= 0;
-	el->el_state.metanext		= 0;
-	el->el_state.argument		= 1;
-	el->el_state.lastcmd		= ED_UNASSIGNED;
+	el->el_state.inputmode = MODE_INSERT; /* XXX: save a default */
+	el->el_state.doingarg = 0;
+	el->el_state.metanext = 0;
+	el->el_state.argument = 1;
+	el->el_state.lastcmd = ED_UNASSIGNED;
 
-	ma->level	= -1;
-	ma->offset	= 0;
-	ma->macro	= el_malloc(EL_MAXMACRO * sizeof(*ma->macro));
+	ma->level = -1;
+	ma->offset = 0;
+	ma->macro = reallocarray(NULL, EL_MAXMACRO,
+	    sizeof(*ma->macro));
 	if (ma->macro == NULL)
 		return (-1);
 	return (0);
@@ -538,7 +539,7 @@ ch__clearmacro(EditLine *el)
 {
 	c_macro_t *ma = &el->el_chared.c_macro;
 	while (ma->level >= 0)
-		el_free((ptr_t)ma->macro[ma->level--]);
+		free((ptr_t)ma->macro[ma->level--]);
 }
 
 /* ch_enlargebufs():
@@ -565,7 +566,8 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 	/*
 	 * Reallocate line buffer.
 	 */
-	newbuffer = el_realloc(el->el_line.buffer, newsz * sizeof(*newbuffer));
+	newbuffer = reallocarray(el->el_line.buffer, newsz,
+	    sizeof(*newbuffer));
 	if (!newbuffer)
 		return 0;
 
@@ -583,7 +585,8 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 	/*
 	 * Reallocate kill buffer.
 	 */
-	newbuffer = el_realloc(el->el_chared.c_kill.buf, newsz * sizeof(*newbuffer));
+	newbuffer = reallocarray(el->el_chared.c_kill.buf, newsz,
+	    sizeof(*newbuffer));
 	if (!newbuffer)
 		return 0;
 
@@ -601,8 +604,8 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 	/*
 	 * Reallocate undo buffer.
 	 */
-	newbuffer = el_realloc(el->el_chared.c_undo.buf,
-	    newsz * sizeof(*newbuffer));
+	newbuffer = reallocarray(el->el_chared.c_undo.buf,
+	    newsz, sizeof(*newbuffer));
 	if (!newbuffer)
 		return 0;
 
@@ -610,8 +613,8 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 	(void) memset(&newbuffer[sz], 0, (newsz - sz) * sizeof(*newbuffer));
 	el->el_chared.c_undo.buf = newbuffer;
 
-	newbuffer = el_realloc(el->el_chared.c_redo.buf,
-	    newsz * sizeof(*newbuffer));
+	newbuffer = reallocarray(el->el_chared.c_redo.buf,
+	    newsz, sizeof(*newbuffer));
 	if (!newbuffer)
 		return 0;
 	el->el_chared.c_redo.pos = newbuffer +
@@ -636,20 +639,20 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 protected void
 ch_end(EditLine *el)
 {
-	el_free((ptr_t) el->el_line.buffer);
+	free((ptr_t) el->el_line.buffer);
 	el->el_line.buffer = NULL;
 	el->el_line.limit = NULL;
-	el_free((ptr_t) el->el_chared.c_undo.buf);
+	free((ptr_t) el->el_chared.c_undo.buf);
 	el->el_chared.c_undo.buf = NULL;
-	el_free((ptr_t) el->el_chared.c_redo.buf);
+	free((ptr_t) el->el_chared.c_redo.buf);
 	el->el_chared.c_redo.buf = NULL;
 	el->el_chared.c_redo.pos = NULL;
 	el->el_chared.c_redo.lim = NULL;
 	el->el_chared.c_redo.cmd = ED_UNASSIGNED;
-	el_free((ptr_t) el->el_chared.c_kill.buf);
+	free((ptr_t) el->el_chared.c_kill.buf);
 	el->el_chared.c_kill.buf = NULL;
 	ch_reset(el, 1);
-	el_free((ptr_t) el->el_chared.c_macro.macro);
+	free((ptr_t) el->el_chared.c_macro.macro);
 	el->el_chared.c_macro.macro = NULL;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokenizer.c,v 1.12 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: tokenizer.c,v 1.13 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: tokenizer.c,v 1.18 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
@@ -56,9 +56,6 @@ typedef enum {
 
 #define	IFS		STR("\t \n")
 
-#define	tok_malloc(a)		malloc(a)
-#define	tok_free(a)		free(a)
-#define	tok_realloc(a, b)	realloc(a, b)
 #define	tok_strdup(a)		Strdup(a)
 
 
@@ -100,29 +97,29 @@ FUN(tok,finish)(TYPE(Tokenizer) *tok)
 public TYPE(Tokenizer) *
 FUN(tok,init)(const Char *ifs)
 {
-	TYPE(Tokenizer) *tok = tok_malloc(sizeof(TYPE(Tokenizer)));
+	TYPE(Tokenizer) *tok = malloc(sizeof(TYPE(Tokenizer)));
 
 	if (tok == NULL)
 		return NULL;
 	tok->ifs = tok_strdup(ifs ? ifs : IFS);
 	if (tok->ifs == NULL) {
-		tok_free((ptr_t)tok);
+		free((ptr_t)tok);
 		return NULL;
 	}
 	tok->argc = 0;
 	tok->amax = AINCR;
-	tok->argv = tok_malloc(sizeof(*tok->argv) * tok->amax);
+	tok->argv = reallocarray(NULL, tok->amax, sizeof(*tok->argv));
 	if (tok->argv == NULL) {
-		tok_free((ptr_t)tok->ifs);
-		tok_free((ptr_t)tok);
+		free((ptr_t)tok->ifs);
+		free((ptr_t)tok);
 		return NULL;
 	}
 	tok->argv[0] = NULL;
-	tok->wspace = tok_malloc(WINCR * sizeof(*tok->wspace));
+	tok->wspace = reallocarray(NULL, WINCR, sizeof(*tok->wspace));
 	if (tok->wspace == NULL) {
-		tok_free((ptr_t)tok->argv);
-		tok_free((ptr_t)tok->ifs);
-		tok_free((ptr_t)tok);
+		free((ptr_t)tok->argv);
+		free((ptr_t)tok->ifs);
+		free((ptr_t)tok);
 		return NULL;
 	}
 	tok->wmax = tok->wspace + WINCR;
@@ -157,10 +154,10 @@ public void
 FUN(tok,end)(TYPE(Tokenizer) *tok)
 {
 
-	tok_free((ptr_t) tok->ifs);
-	tok_free((ptr_t) tok->wspace);
-	tok_free((ptr_t) tok->argv);
-	tok_free((ptr_t) tok);
+	free((ptr_t) tok->ifs);
+	free((ptr_t) tok->wspace);
+	free((ptr_t) tok->argv);
+	free((ptr_t) tok);
 }
 
 
@@ -386,8 +383,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 
 		if (tok->wptr >= tok->wmax - 4) {
 			size_t size = tok->wmax - tok->wspace + WINCR;
-			Char *s = tok_realloc(tok->wspace,
-			    size * sizeof(*s));
+			Char *s = reallocarray(tok->wspace, size, sizeof(*s));
 			if (s == NULL)
 				return (-1);
 
@@ -406,7 +402,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 		if (tok->argc >= tok->amax - 4) {
 			Char **p;
 			tok->amax += AINCR;
-			p = tok_realloc(tok->argv, tok->amax * sizeof(*p));
+			p = reallocarray(tok->argv, tok->amax, sizeof(*p));
 			if (p == NULL)
 				return (-1);
 			tok->argv = p;

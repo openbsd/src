@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.11 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: key.c,v 1.12 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: key.c,v 1.23 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -96,7 +96,8 @@ protected int
 key_init(EditLine *el)
 {
 
-	el->el_key.buf = el_malloc(KEY_BUFSIZ * sizeof(*el->el_key.buf));
+	el->el_key.buf = reallocarray(NULL, KEY_BUFSIZ,
+	    sizeof(*el->el_key.buf));
 	if (el->el_key.buf == NULL)
 		return (-1);
 	el->el_key.map = NULL;
@@ -111,7 +112,7 @@ protected void
 key_end(EditLine *el)
 {
 
-	el_free((ptr_t) el->el_key.buf);
+	free((ptr_t) el->el_key.buf);
 	el->el_key.buf = NULL;
 	node__free(el->el_key.map);
 }
@@ -333,7 +334,7 @@ node__try(EditLine *el, key_node_t *ptr, const Char *str, key_value_t *val, int 
 		case XK_STR:
 		case XK_EXE:
 			if (ptr->val.str)
-				el_free((ptr_t) ptr->val.str);
+				free((ptr_t) ptr->val.str);
 			break;
 		default:
 			EL_ABORT((el->el_errfile, "Bad XK_ type %d\n",
@@ -434,13 +435,13 @@ node__put(EditLine *el, key_node_t *ptr)
 	case XK_EXE:
 	case XK_STR:
 		if (ptr->val.str != NULL)
-			el_free((ptr_t) ptr->val.str);
+			free((ptr_t) ptr->val.str);
 		break;
 	default:
 		EL_ABORT((el->el_errfile, "Bad XK_ type %d\n", ptr->type));
 		break;
 	}
-	el_free((ptr_t) ptr);
+	free((ptr_t) ptr);
 }
 
 
@@ -452,7 +453,7 @@ node__get(Int ch)
 {
 	key_node_t *ptr;
 
-	ptr = (key_node_t *) el_malloc((size_t) sizeof(key_node_t));
+	ptr = malloc(sizeof(key_node_t));
 	if (ptr == NULL)
 		return NULL;
 	ptr->ch = ch;
@@ -470,7 +471,7 @@ node__free(key_node_t *k)
 		return;
 	node__free(k->sibling);
 	node__free(k->next);
-	el_free((ptr_t) k);
+	free((ptr_t) k);
 }
 
 /* node_lookup():

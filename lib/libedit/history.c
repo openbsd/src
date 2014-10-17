@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.18 2014/05/19 08:58:34 nicm Exp $	*/
+/*	$OpenBSD: history.c,v 1.19 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: history.c,v 1.37 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
@@ -85,9 +85,6 @@ struct TYPE(history) {
 #define	HDEL(h, ev, n)		(*(h)->h_del)((h)->h_ref, ev, n)
 
 #define	h_strdup(a)	Strdup(a)
-#define	h_malloc(a)	malloc(a)
-#define	h_realloc(a, b)	realloc((a), (b))
-#define	h_free(a)	free(a)
 
 typedef struct {
     int		num;
@@ -379,7 +376,7 @@ history_def_add(ptr_t p, TYPE(HistEvent) *ev, const Char *str)
 	if (h->cursor == &h->list)
 		return (history_def_enter(p, ev, str));
 	len = Strlen(evp->str) + Strlen(str) + 1;
-	s = h_malloc(len * sizeof(*s));
+	s = reallocarray(NULL, len, sizeof(*s));
 	if (s == NULL) {
 		he_seterrev(ev, _HE_MALLOC_FAILED);
 		return (-1);
@@ -387,7 +384,7 @@ history_def_add(ptr_t p, TYPE(HistEvent) *ev, const Char *str)
 	(void) Strncpy(s, h->cursor->ev.str, len);
         s[len - 1] = '\0';
 	(void) Strncat(s, str, len - Strlen(s) - 1);
-	h_free((ptr_t)evp->str);
+	free((ptr_t)evp->str);
 	evp->str = s;
 	*ev = h->cursor->ev;
 	return (0);
@@ -448,8 +445,8 @@ history_def_delete(history_t *h,
 	}
 	hp->prev->next = hp->next;
 	hp->next->prev = hp->prev;
-	h_free((ptr_t) evp->str);
-	h_free(hp);
+	free((ptr_t) evp->str);
+	free(hp);
 	h->cur--;
 }
 
@@ -461,11 +458,11 @@ private int
 history_def_insert(history_t *h, TYPE(HistEvent) *ev, const Char *str)
 {
 
-	h->cursor = (hentry_t *) h_malloc(sizeof(hentry_t));
+	h->cursor = (hentry_t *) malloc(sizeof(hentry_t));
 	if (h->cursor == NULL)
 		goto oomem;
 	if ((h->cursor->ev.str = h_strdup(str)) == NULL) {
-		h_free((ptr_t)h->cursor);
+		free((ptr_t)h->cursor);
 		goto oomem;
 	}
 	h->cursor->data = NULL;
@@ -517,7 +514,7 @@ history_def_enter(ptr_t p, TYPE(HistEvent) *ev, const Char *str)
 private int
 history_def_init(ptr_t *p, TYPE(HistEvent) *ev __attribute__((__unused__)), int n)
 {
-	history_t *h = (history_t *) h_malloc(sizeof(history_t));
+	history_t *h = (history_t *) malloc(sizeof(history_t));
 	if (h == NULL)
 		return -1;
 
@@ -562,12 +559,12 @@ public TYPE(History) *
 FUN(history,init)(void)
 {
 	TYPE(HistEvent) ev;
-	TYPE(History) *h = (TYPE(History) *) h_malloc(sizeof(TYPE(History)));
+	TYPE(History) *h = (TYPE(History) *) malloc(sizeof(TYPE(History)));
 	if (h == NULL)
 		return NULL;
 
 	if (history_def_init(&h->h_ref, &ev, 0) == -1) {
-		h_free((ptr_t)h);
+		free((ptr_t)h);
 		return NULL;
 	}
 	h->h_ent = -1;
@@ -596,8 +593,8 @@ FUN(history,end)(TYPE(History) *h)
 
 	if (h->h_next == history_def_next)
 		history_def_clear(h->h_ref, &ev);
-	h_free(h->h_ref);
-	h_free(h);
+	free(h->h_ref);
+	free(h);
 }
 
 
@@ -744,7 +741,7 @@ history_load(TYPE(History) *h, const char *fname)
 	if (strncmp(line, hist_cookie, sz) != 0)
 		goto done;
 
-	ptr = h_malloc(max_size = 1024);
+	ptr = malloc(max_size = 1024);
 	if (ptr == NULL)
 		goto done;
 	for (i = 0; (line = fgetln(fp, &sz)) != NULL; i++) {
@@ -763,7 +760,7 @@ history_load(TYPE(History) *h, const char *fname)
 		if (sz > max_size) {
 			char *nptr;
 			max_size = (sz + 1024) & ~1023;
-			nptr = h_realloc(ptr, max_size);
+			nptr = realloc(ptr, max_size);
 			if (nptr == NULL) {
 				i = -1;
 				goto oomem;
@@ -777,9 +774,9 @@ history_load(TYPE(History) *h, const char *fname)
 		}
 	}
 oomem:
-	h_free((ptr_t)ptr);
+	free((ptr_t)ptr);
 done:
-	h_free(lbuf);
+	free(lbuf);
 	(void) fclose(fp);
 	return (i);
 }
@@ -803,7 +800,7 @@ history_save_fp(TYPE(History) *h, FILE *fp)
 		goto done;
 	if (fputs(hist_cookie, fp) == EOF)
 		goto done;
-	ptr = h_malloc(max_size = 1024);
+	ptr = malloc(max_size = 1024);
 	if (ptr == NULL)
 		goto done;
 	for (i = 0, retval = HLAST(h, &ev);
@@ -813,7 +810,7 @@ history_save_fp(TYPE(History) *h, FILE *fp)
 		if (len > max_size) {
 			char *nptr;
 			max_size = (len + 1024) & ~1023;
-			nptr = h_realloc(ptr, max_size);
+			nptr = realloc(ptr, max_size);
 			if (nptr == NULL) {
 				i = -1;
 				goto oomem;
@@ -825,7 +822,7 @@ history_save_fp(TYPE(History) *h, FILE *fp)
 		(void) fprintf(fp, "%s\n", ptr);
 	}
 oomem:
-	h_free((ptr_t)ptr);
+	free((ptr_t)ptr);
 done:
 	return (i);
 }

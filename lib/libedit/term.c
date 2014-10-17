@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.16 2014/01/19 11:48:54 tobias Exp $	*/
+/*	$OpenBSD: term.c,v 1.17 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: term.c,v 1.57 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -331,21 +331,21 @@ protected int
 term_init(EditLine *el)
 {
 
-	el->el_term.t_buf = (char *) el_malloc(TC_BUFSIZE);
+	el->el_term.t_buf = (char *)malloc(TC_BUFSIZE);
 	if (el->el_term.t_buf == NULL)
 		goto fail;
-	el->el_term.t_cap = (char *) el_malloc(TC_BUFSIZE);
+	el->el_term.t_cap = (char *)malloc(TC_BUFSIZE);
 	if (el->el_term.t_cap == NULL)
 		goto fail2;
-	el->el_term.t_fkey = (fkey_t *) el_malloc(A_K_NKEYS * sizeof(fkey_t));
+	el->el_term.t_fkey = reallocarray(NULL, A_K_NKEYS, sizeof(fkey_t));
 	if (el->el_term.t_fkey == NULL)
 		goto fail3;
 	el->el_term.t_loc = 0;
-	el->el_term.t_str = (char **) el_malloc(T_str * sizeof(char *));
+	el->el_term.t_str = reallocarray(NULL, T_str, sizeof(char *));
 	if (el->el_term.t_str == NULL)
 		goto fail4;
 	(void) memset(el->el_term.t_str, 0, T_str * sizeof(char *));
-	el->el_term.t_val = (int *) el_malloc(T_val * sizeof(int));
+	el->el_term.t_val = reallocarray(NULL, T_val, sizeof(int));
 	if (el->el_term.t_val == NULL)
 		goto fail5;
 	(void) memset(el->el_term.t_val, 0, T_val * sizeof(int));
@@ -353,16 +353,16 @@ term_init(EditLine *el)
 	term_init_arrow(el);
 	return (0);
 fail5:
-	el_free(el->el_term.t_str);
+	free(el->el_term.t_str);
 	el->el_term.t_str = NULL;
 fail4:
-	el_free(el->el_term.t_fkey);
+	free(el->el_term.t_fkey);
 	el->el_term.t_fkey = NULL;
 fail3:
-	el_free(el->el_term.t_cap);
+	free(el->el_term.t_cap);
 	el->el_term.t_cap = NULL;
 fail2:
-	el_free(el->el_term.t_buf);
+	free(el->el_term.t_buf);
 	el->el_term.t_buf = NULL;
 fail:
 	return (-1);
@@ -375,16 +375,16 @@ protected void
 term_end(EditLine *el)
 {
 
-	el_free((ptr_t) el->el_term.t_buf);
+	free((ptr_t) el->el_term.t_buf);
 	el->el_term.t_buf = NULL;
-	el_free((ptr_t) el->el_term.t_cap);
+	free((ptr_t) el->el_term.t_cap);
 	el->el_term.t_cap = NULL;
 	el->el_term.t_loc = 0;
-	el_free((ptr_t) el->el_term.t_str);
+	free((ptr_t) el->el_term.t_str);
 	el->el_term.t_str = NULL;
-	el_free((ptr_t) el->el_term.t_val);
+	free((ptr_t) el->el_term.t_val);
 	el->el_term.t_val = NULL;
-	el_free((ptr_t) el->el_term.t_fkey);
+	free((ptr_t) el->el_term.t_fkey);
 	el->el_term.t_fkey = NULL;
 	term_free_display(el);
 }
@@ -483,30 +483,30 @@ term_alloc_display(EditLine *el)
 	Char **b;
 	coord_t *c = &el->el_term.t_size;
 
-	b =  el_malloc(sizeof(*b) * (c->v + 1));
+	b = reallocarray(NULL, c->v + 1, sizeof(*b));
 	if (b == NULL)
 		goto done;
 	for (i = 0; i < c->v; i++) {
-		b[i] = el_malloc(sizeof(**b) * (c->h + 1));
+		b[i] = reallocarray(NULL, c->h + 1, sizeof(**b));
 		if (b[i] == NULL) {
 			while (--i >= 0)
-				el_free((ptr_t) b[i]);
-			el_free((ptr_t) b);
+				free((ptr_t) b[i]);
+			free((ptr_t) b);
 			goto done;
 		}
 	}
 	b[c->v] = NULL;
 	el->el_display = b;
 
-	b = el_malloc(sizeof(*b) * (c->v + 1));
+	b = reallocarray(NULL, c->v + 1, sizeof(*b));
 	if (b == NULL)
 		goto done;
 	for (i = 0; i < c->v; i++) {
-		b[i] = el_malloc(sizeof(**b) * (c->h + 1));
+		b[i] = reallocarray(NULL, c->h + 1, sizeof(**b));
 		if (b[i] == NULL) {
 			while (--i >= 0)
-				el_free((ptr_t) b[i]);
-			el_free((ptr_t) b);
+				free((ptr_t) b[i]);
+			free((ptr_t) b);
 			goto done;
 		}
 	}
@@ -534,15 +534,15 @@ term_free_display(EditLine *el)
 	el->el_display = NULL;
 	if (b != NULL) {
 		for (bufp = b; *bufp != NULL; bufp++)
-			el_free((ptr_t) *bufp);
-		el_free((ptr_t) b);
+			free((ptr_t) *bufp);
+		free((ptr_t) b);
 	}
 	b = el->el_vdisplay;
 	el->el_vdisplay = NULL;
 	if (b != NULL) {
 		for (bufp = b; *bufp != NULL; bufp++)
-			el_free((ptr_t) *bufp);
-		el_free((ptr_t) b);
+			free((ptr_t) *bufp);
+		free((ptr_t) b);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.11 2011/07/07 05:40:42 okan Exp $	*/
+/*	$OpenBSD: vi.c,v 1.12 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: vi.c,v 1.33 2011/02/17 16:44:48 joerg Exp $	*/
 
 /*-
@@ -1013,17 +1013,17 @@ vi_histedit(EditLine *el, Int c)
 		return CC_ERROR;
 	len = (size_t)(el->el_line.lastchar - el->el_line.buffer);
 #define TMP_BUFSIZ (EL_BUFSIZ * MB_LEN_MAX)
-	cp = el_malloc(TMP_BUFSIZ);
+	cp = malloc(TMP_BUFSIZ);
 	if (cp == NULL) {
 		close(fd);
 		unlink(tempfile);
 		return CC_ERROR;
 	}
-	line = el_malloc(len * sizeof(*line));
+	line = reallocarray(NULL, len, sizeof(*line));
 	if (line == NULL) {
 		close(fd);
 		unlink(tempfile);
-		el_free((ptr_t)cp);
+		free((ptr_t)cp);
 		return CC_ERROR;
 	}
 	Strncpy(line, el->el_line.buffer, len);
@@ -1038,8 +1038,8 @@ vi_histedit(EditLine *el, Int c)
 	case -1:
 		close(fd);
 		unlink(tempfile);
-		el_free(cp);
-                el_free(line);
+		free(cp);
+                free(line);
 		return CC_ERROR;
 	case 0:
 		close(fd);
@@ -1062,8 +1062,8 @@ vi_histedit(EditLine *el, Int c)
 			len = 0;
                 el->el_line.cursor = el->el_line.buffer;
                 el->el_line.lastchar = el->el_line.buffer + len;
-		el_free(cp);
-                el_free(line);
+		free(cp);
+                free(line);
 		break;
 	}
 

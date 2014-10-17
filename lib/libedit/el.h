@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.h,v 1.8 2011/07/07 05:40:42 okan Exp $	*/
+/*	$OpenBSD: el.h,v 1.9 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: el.h,v 1.21 2009/12/31 15:58:26 christos Exp $	*/
 
 /*-
@@ -91,13 +91,6 @@ typedef struct el_state_t {
 	el_action_t	thiscmd;	/* this command 		*/
 	Char		thisch;		/* char that generated it	*/
 } el_state_t;
-
-/*
- * Until we come up with something better...
- */
-#define	el_malloc(a)	malloc(a)
-#define	el_realloc(a,b)	realloc(a, b)
-#define	el_free(a)	free(a)
 
 #include "tty.h"
 #include "prompt.h"

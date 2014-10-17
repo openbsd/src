@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.18 2011/07/13 11:05:17 otto Exp $	*/
+/*	$OpenBSD: el.c,v 1.19 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -54,7 +54,7 @@
 public EditLine *
 el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 {
-	EditLine *el = (EditLine *) el_malloc(sizeof(EditLine));
+	EditLine *el = (EditLine *) malloc(sizeof(EditLine));
 
 	if (el == NULL)
 		return (NULL);
@@ -71,7 +71,7 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 
 	el->el_prog = Strdup(ct_decode_string(prog, &el->el_scratch));
 	if (el->el_prog == NULL) {
-		el_free(el);
+		free(el);
 		return NULL;
 	}
 
@@ -87,8 +87,8 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 #endif
 
 	if (term_init(el) == -1) {
-		el_free(el->el_prog);
-		el_free(el);
+		free(el->el_prog);
+		free(el);
 		return NULL;
 	}
 	(void) key_init(el);
@@ -128,14 +128,14 @@ el_end(EditLine *el)
 	prompt_end(el);
 	sig_end(el);
 
-	el_free((ptr_t) el->el_prog);
+	free((ptr_t) el->el_prog);
 #ifdef WIDECHAR
-	el_free((ptr_t) el->el_scratch.cbuff);
-	el_free((ptr_t) el->el_scratch.wbuff);
-	el_free((ptr_t) el->el_lgcyconv.cbuff);
-	el_free((ptr_t) el->el_lgcyconv.wbuff);
+	free((ptr_t) el->el_scratch.cbuff);
+	free((ptr_t) el->el_scratch.wbuff);
+	free((ptr_t) el->el_lgcyconv.cbuff);
+	free((ptr_t) el->el_lgcyconv.wbuff);
 #endif
-	el_free((ptr_t) el);
+	free((ptr_t) el);
 }
 
 

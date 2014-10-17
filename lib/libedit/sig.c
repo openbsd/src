@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig.c,v 1.13 2011/06/03 23:34:56 deraadt Exp $	*/
+/*	$OpenBSD: sig.c,v 1.14 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: sig.c,v 1.15 2009/02/19 15:20:22 christos Exp $	*/
 
 /*-
@@ -111,7 +111,7 @@ sig_init(EditLine *el)
 	size_t i;
 	sigset_t *nset, oset;
 
-	el->el_signal = el_malloc(sizeof(*el->el_signal));
+	el->el_signal = malloc(sizeof(*el->el_signal));
 	if (el->el_signal == NULL)
 		return -1;
 
@@ -141,7 +141,7 @@ protected void
 sig_end(EditLine *el)
 {
 
-	el_free((ptr_t) el->el_signal);
+	free((ptr_t) el->el_signal);
 	el->el_signal = NULL;
 }
 

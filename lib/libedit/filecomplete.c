@@ -1,4 +1,4 @@
-/*	$OpenBSD: filecomplete.c,v 1.3 2014/10/11 03:10:06 doug Exp $	*/
+/*	$OpenBSD: filecomplete.c,v 1.4 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: filecomplete.c,v 1.22 2010/12/02 04:42:46 dholland Exp $	*/
 
 /*-
@@ -433,11 +433,7 @@ fn_complete(EditLine *el,
 		ctemp--;
 
 	len = li->cursor - ctemp;
-#if defined(__SSP__) || defined(__SSP_ALL__)
-	temp = malloc(sizeof(*temp) * (len + 1));
-#else
-	temp = alloca(sizeof(*temp) * (len + 1));
-#endif
+	temp = reallocarray(NULL, len + 1, sizeof(*temp));
 	(void)Strncpy(temp, ctemp, len);
 	temp[len] = '\0';
 
@@ -552,9 +548,7 @@ fn_complete(EditLine *el,
 		free(matches);
 		matches = NULL;
 	}
-#if defined(__SSP__) || defined(__SSP_ALL__)
 	free(temp);
-#endif
 	return retval;
 }
 

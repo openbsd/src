@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.9 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: hist.c,v 1.10 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: hist.c,v 1.17 2009/12/30 23:54:52 christos Exp $	*/
 
 /*-
@@ -50,7 +50,8 @@ hist_init(EditLine *el)
 
 	el->el_history.fun = NULL;
 	el->el_history.ref = NULL;
-	el->el_history.buf = el_malloc(EL_BUFSIZ * sizeof(*el->el_history.buf));
+	el->el_history.buf = reallocarray(NULL, EL_BUFSIZ,
+	    sizeof(*el->el_history.buf));
 	el->el_history.sz  = EL_BUFSIZ;
 	if (el->el_history.buf == NULL)
 		return (-1);
@@ -66,7 +67,7 @@ protected void
 hist_end(EditLine *el)
 {
 
-	el_free((ptr_t) el->el_history.buf);
+	free((ptr_t) el->el_history.buf);
 	el->el_history.buf = NULL;
 }
 
@@ -190,7 +191,7 @@ hist_enlargebuf(EditLine *el, size_t oldsz, size_t newsz)
 {
 	Char *newbuf;
 
-	newbuf = el_realloc(el->el_history.buf, newsz * sizeof(*newbuf));
+	newbuf = reallocarray(el->el_history.buf, newsz, sizeof(*newbuf));
 	if (!newbuf)
 		return 0;
 

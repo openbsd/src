@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.12 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: search.c,v 1.13 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: search.c,v 1.24 2010/04/15 00:57:33 christos Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ protected int
 search_init(EditLine *el)
 {
 
-	el->el_search.patbuf = el_malloc(EL_BUFSIZ *
+	el->el_search.patbuf = reallocarray(NULL, EL_BUFSIZ,
 	    sizeof(*el->el_search.patbuf));
 	if (el->el_search.patbuf == NULL)
 		return (-1);
@@ -80,7 +80,7 @@ protected void
 search_end(EditLine *el)
 {
 
-	el_free((ptr_t) el->el_search.patbuf);
+	free((ptr_t) el->el_search.patbuf);
 	el->el_search.patbuf = NULL;
 }
 

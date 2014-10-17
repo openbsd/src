@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.11 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: map.c,v 1.12 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: map.c,v 1.25 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -897,23 +897,23 @@ map_init(EditLine *el)
 		EL_ABORT((el->errfile, "Vi insert map incorrect\n"));
 #endif
 
-	el->el_map.alt = (el_action_t *)el_malloc(sizeof(el_action_t) * N_KEYS);
+	el->el_map.alt = reallocarray(NULL, N_KEYS, sizeof(el_action_t));
 	if (el->el_map.alt == NULL)
 		return (-1);
-	el->el_map.key = (el_action_t *)el_malloc(sizeof(el_action_t) * N_KEYS);
+	el->el_map.key = reallocarray(NULL, N_KEYS, sizeof(el_action_t));
 	if (el->el_map.key == NULL)
 		return (-1);
 	el->el_map.emacs = el_map_emacs;
 	el->el_map.vic = el_map_vi_command;
 	el->el_map.vii = el_map_vi_insert;
-	el->el_map.help = (el_bindings_t *) el_malloc(sizeof(el_bindings_t) *
-	    EL_NUM_FCNS);
+	el->el_map.help = reallocarray(NULL, EL_NUM_FCNS,
+	    sizeof(el_bindings_t));
 	if (el->el_map.help == NULL)
 		return (-1);
 	(void) memcpy(el->el_map.help, help__get(),
 	    sizeof(el_bindings_t) * EL_NUM_FCNS);
-	el->el_map.func = (el_func_t *)el_malloc(sizeof(el_func_t) *
-	    EL_NUM_FCNS);
+	el->el_map.func = reallocarray(NULL, EL_NUM_FCNS,
+	    sizeof(el_func_t));
 	if (el->el_map.func == NULL)
 		return (-1);
 	memcpy(el->el_map.func, func__get(), sizeof(el_func_t) * EL_NUM_FCNS);
@@ -935,16 +935,16 @@ protected void
 map_end(EditLine *el)
 {
 
-	el_free((ptr_t) el->el_map.alt);
+	free((ptr_t) el->el_map.alt);
 	el->el_map.alt = NULL;
-	el_free((ptr_t) el->el_map.key);
+	free((ptr_t) el->el_map.key);
 	el->el_map.key = NULL;
 	el->el_map.emacs = NULL;
 	el->el_map.vic = NULL;
 	el->el_map.vii = NULL;
-	el_free((ptr_t) el->el_map.help);
+	free((ptr_t) el->el_map.help);
 	el->el_map.help = NULL;
-	el_free((ptr_t) el->el_map.func);
+	free((ptr_t) el->el_map.func);
 	el->el_map.func = NULL;
 }
 
@@ -1395,10 +1395,10 @@ map_addfunc(EditLine *el, const Char *name, const Char *help, el_func_t func)
 	if (name == NULL || help == NULL || func == NULL)
 		return (-1);
 
-	if ((p = el_realloc(el->el_map.func, nf * sizeof(el_func_t))) == NULL)
+	if ((p = reallocarray(el->el_map.func, nf, sizeof(el_func_t))) == NULL)
 		return (-1);
 	el->el_map.func = (el_func_t *) p;
-	if ((p = el_realloc(el->el_map.help, nf * sizeof(el_bindings_t)))
+	if ((p = reallocarray(el->el_map.help, nf, sizeof(el_bindings_t)))
 	    == NULL)
 		return (-1);
 	el->el_map.help = (el_bindings_t *) p;

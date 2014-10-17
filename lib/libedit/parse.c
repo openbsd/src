@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.11 2011/11/27 21:46:44 pascal Exp $	*/
+/*	$OpenBSD: parse.c,v 1.12 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: parse.c,v 1.23 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -103,14 +103,14 @@ FUN(el,parse)(EditLine *el, int argc, const Char *argv[])
 		if (ptr == argv[0])
 			return (0);
 		l = ptr - argv[0] - 1;
-		tprog = el_malloc((l + 1) * sizeof(*tprog));
+		tprog = reallocarray(NULL, l + 1, sizeof(*tprog));
 		if (tprog == NULL)
 			return (0);
 		(void) Strncpy(tprog, argv[0], l);
 		tprog[l] = '\0';
 		ptr++;
 		l = el_match(el->el_prog, tprog);
-		el_free(tprog);
+		free(tprog);
 		if (!l)
 			return (0);
 	} else

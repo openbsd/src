@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.c,v 1.5 2013/05/22 00:31:38 yasuoka Exp $	*/
+/*	$OpenBSD: chartype.c,v 1.6 2014/10/17 06:07:50 deraadt Exp $	*/
 /*	$NetBSD: chartype.c,v 1.6 2011/07/28 00:48:21 christos Exp $	*/
 
 /*-
@@ -50,10 +50,10 @@ ct_conv_buff_resize(ct_buffer_t *conv, size_t mincsize, size_t minwsize)
 	void *p;
 	if (mincsize > conv->csize) {
 		conv->csize = mincsize;
-		p = el_realloc(conv->cbuff, conv->csize * sizeof(char));
+		p = reallocarray(conv->cbuff, conv->csize, sizeof(char));
 		if (p == NULL) {
 			conv->csize = 0;
-			el_free(conv->cbuff);
+			free(conv->cbuff);
 			conv->cbuff = NULL;
 		} else 
 			conv->cbuff = p;
@@ -61,10 +61,10 @@ ct_conv_buff_resize(ct_buffer_t *conv, size_t mincsize, size_t minwsize)
 
 	if (minwsize > conv->wsize) {
 		conv->wsize = minwsize;
-		p = el_realloc(conv->wbuff, conv->wsize * sizeof(Char));
+		p = reallocarray(conv->wbuff, conv->wsize, sizeof(Char));
 		if (p == NULL) {
 			conv->wsize = 0;
-			el_free(conv->wbuff);
+			free(conv->wbuff);
 			conv->wbuff = NULL;
 		} else
 			conv->wbuff = p;
@@ -146,7 +146,7 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 	if (!conv->wsize)
 		return NULL;
 
-	wargv = el_malloc(argc * sizeof(*wargv));
+	wargv = reallocarray(NULL, argc, sizeof(*wargv));
 
 	for (i = 0, p = conv->wbuff; i < argc; ++i) {
 		if (!argv[i]) {   /* don't pass null pointers to mbstowcs */
@@ -158,7 +158,7 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 		}
 		if (wlen == (size_t)-1 || wlen == bufspace) {
 			/* Encoding error or not enough room for NUL. */
-			el_free(wargv);
+			free(wargv);
 			return NULL;
 		} else
 			wlen++; /* include NUL in the count */
@@ -215,7 +215,7 @@ ct_visual_string(const Char *s)
 		return NULL;
 	if (!buff) {
 	    buffsize = CT_BUFSIZ;
-	    buff = el_malloc(buffsize * sizeof(*buff));
+	    buff = reallocarray(NULL, buffsize, sizeof(*buff));
 	}
 	dst = buff;
 	while (*s) {
@@ -223,7 +223,7 @@ ct_visual_string(const Char *s)
 		if (used == -1) { /* failed to encode, need more buffer space */
 			used = dst - buff;
 			buffsize += CT_BUFSIZ;
-			p = el_realloc(buff, buffsize * sizeof(*buff));
+			p = reallocarray(buff, buffsize, sizeof(*buff));
 			if (p == NULL)
 				goto out;
 			buff = p;
@@ -236,7 +236,7 @@ ct_visual_string(const Char *s)
 	}
 	if (dst >= (buff + buffsize)) { /* sigh */
 		buffsize += 1;
-		p = el_realloc(buff, buffsize * sizeof(*buff));
+		p = reallocarray(buff, buffsize, sizeof(*buff));
 		if (p == NULL)
 			goto out;
 		buff = p;
@@ -245,7 +245,7 @@ ct_visual_string(const Char *s)
 	*dst = 0;
 	return buff;
 out:
-	el_free(buff);
+	free(buff);
 	buffsize = 0;
 	return NULL;
 }
