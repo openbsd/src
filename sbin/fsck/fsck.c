@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.31 2014/10/08 16:27:53 deraadt Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.32 2014/10/17 06:33:35 deraadt Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -250,7 +250,7 @@ checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
 		vfstype = MOUNT_UFS;
 
 	maxargc = 100;
-	argv = emalloc(sizeof(char *) * maxargc);
+	argv = ereallocarray(NULL, maxargc, sizeof(char *));
 
 	argc = 0;
 	(void)snprintf(fsname, sizeof(fsname), "fsck_%s", vfstype);
