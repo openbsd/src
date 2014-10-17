@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.44 2014/07/24 01:04:58 tedu Exp $
+.\"	$OpenBSD: apmd.8,v 1.45 2014/10/17 01:55:00 tedu Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 24 2014 $
+.Dd $Mdocdate: October 17 2014 $
 .Dt APMD 8
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 .Nd Advanced Power Management daemon
 .Sh SYNOPSIS
 .Nm apmd
-.Op Fl AaCdHLs
+.Op Fl AadHLs
 .Op Fl f Ar devname
 .Op Fl S Ar sockname
 .Op Fl t Ar seconds
@@ -69,21 +69,10 @@ The options are as follows:
 Start
 .Nm
 in automatic performance adjustment mode.
-Optimize for performance, but lower
-.Va hw.setperf
-when running on battery power or when AC is connected but the battery charge
-level is low.
 .It Fl a
 BIOS-initiated suspend or standby requests are
 ignored if the system is connected to line current and not running from
 batteries (user requests are still honored).
-.It Fl C
-Start
-.Nm
-in cool running performance adjustment mode.
-Optimize for low power use by keeping
-.Va hw.setperf
-low, except when CPU idle time drops and more performance is required.
 .It Fl d
 .Nm
 enters debug mode, logging to facility

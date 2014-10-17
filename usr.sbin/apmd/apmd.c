@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.69 2014/09/26 10:39:28 dcoppa Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.70 2014/10/17 01:55:00 tedu Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -79,7 +79,7 @@ void perf_status(struct apm_power_info *pinfo, int ncpu);
 void suspend(int ctl_fd);
 void stand_by(int ctl_fd);
 void hibernate(int ctl_fd);
-void setperf(int new_perf);
+void setperfpolicy(char *policy);
 void sigexit(int signo);
 void do_etc_file(const char *file);
 void sockunlink(void);
@@ -195,159 +195,6 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 	return acon;
 }
 
-/* multi- and uni-processor case */
-int
-get_avg_idle_mp(int ncpu)
-{
-	static int64_t **cp_time_old;
-	static int64_t **cp_time;
-	static int *avg_idle;
-	int64_t change, sum, idle;
-	int i, cpu, min_avg_idle;
-	size_t cp_time_sz = CPUSTATES * sizeof(int64_t);
-
-	if (!cp_time_old)
-		if ((cp_time_old = calloc(sizeof(int64_t *), ncpu)) == NULL)
-			return -1;
-
-	if (!cp_time)
-		if ((cp_time = calloc(sizeof(int64_t *), ncpu)) == NULL)
-			return -1;
-
-	if (!avg_idle)
-		if ((avg_idle = calloc(sizeof(int), ncpu)) == NULL)
-			return -1;
-
-	min_avg_idle = 0;
-	for (cpu = 0; cpu < ncpu; cpu++) {
-		int cp_time_mib[] = {CTL_KERN, KERN_CPTIME2, cpu};
-
-		if (!cp_time_old[cpu])
-			if ((cp_time_old[cpu] =
-			    calloc(sizeof(int64_t), CPUSTATES)) == NULL)
-				return -1;
-
-		if (!cp_time[cpu])
-			if ((cp_time[cpu] =
-			    calloc(sizeof(int64_t), CPUSTATES)) == NULL)
-				return -1;
-
-		if (sysctl(cp_time_mib, 3, cp_time[cpu], &cp_time_sz, NULL, 0)
-		    < 0)
-			syslog(LOG_INFO, "cannot read kern.cp_time2");
-
-		sum = 0;
-		for (i = 0; i < CPUSTATES; i++) {
-			if ((change = cp_time[cpu][i] - cp_time_old[cpu][i])
-			    < 0) {
-				/* counter wrapped */
-				change = ((uint64_t)cp_time[cpu][i] -
-				    (uint64_t)cp_time_old[cpu][i]);
-			}
-			sum += change;
-			if (i == CP_IDLE)
-				idle = change;
-		}
-		if (sum == 0)
-			sum = 1;
-
-		/* smooth data */
-		avg_idle[cpu] = (avg_idle[cpu] + (100 * idle) / sum) / 2;
-
-		if (cpu == 0)
-			min_avg_idle = avg_idle[cpu];
-
-		if (avg_idle[cpu] < min_avg_idle)
-			min_avg_idle = avg_idle[cpu];
-
-		memcpy(cp_time_old[cpu], cp_time[cpu], cp_time_sz);
-	}
-
-	return min_avg_idle;
-}
-
-int
-get_avg_idle_up(void)
-{
-	static long cp_time_old[CPUSTATES];
-	static int avg_idle;
-	long change, cp_time[CPUSTATES];
-	int cp_time_mib[] = {CTL_KERN, KERN_CPTIME};
-	size_t cp_time_sz = sizeof(cp_time);
-	int i, idle, sum = 0;
-
-	if (sysctl(cp_time_mib, 2, &cp_time, &cp_time_sz, NULL, 0) < 0)
-		syslog(LOG_INFO, "cannot read kern.cp_time");
-
-	for (i = 0; i < CPUSTATES; i++) {
-		if ((change = cp_time[i] - cp_time_old[i]) < 0) {
-			/* counter wrapped */
-			change = ((unsigned long)cp_time[i] -
-			    (unsigned long)cp_time_old[i]);
-		}
-		sum += change;
-		if (i == CP_IDLE)
-			idle = change;
-	}
-	if (sum == 0)
-		sum = 1;
-
-	/* smooth data */
-	avg_idle = (avg_idle + (100 * idle) / sum) / 2;
-
-	memcpy(cp_time_old, cp_time, sizeof(cp_time_old));
-
-	return avg_idle;
-}
-
-void
-perf_status(struct apm_power_info *pinfo, int ncpu)
-{
-	int avg_idle;
-	int hw_perf_mib[] = {CTL_HW, HW_SETPERF};
-	int perf;
-	int forcehi = 0;
-	size_t perf_sz = sizeof(perf);
-
-	if (ncpu > 1) {
-		avg_idle = get_avg_idle_mp(ncpu);
-	} else {
-		avg_idle = get_avg_idle_up();
-	}
-
-	if (avg_idle == -1)
-		return;
-
-	switch (doperf) {
-	case PERF_AUTO:
-		/*
-		 * force setperf towards the max if we are connected to AC
-		 * power and have a battery life greater than 15%, or if
-		 * the battery is absent
-		 */
-		if ((pinfo->ac_state == APM_AC_ON && pinfo->battery_life > 15) ||
-		    pinfo->battery_state == APM_BATTERY_ABSENT)
-			forcehi = 1;		
-		break;
-	case PERF_COOL:
-		forcehi = 0;
-		break;
-	}
-	
-	if (sysctl(hw_perf_mib, 2, &perf, &perf_sz, NULL, 0) < 0)
-		syslog(LOG_INFO, "cannot read hw.setperf");
-
-	if (forcehi || (avg_idle < PERFINCTHRES && perf < PERFMAX)) {
-		perf = PERFMAX;
-		setperf(perf);
-	} else if (avg_idle > PERFDECTHRES && perf > PERFMIN) {
-		perf -= PERFDEC;
-		if (perf < PERFMIN)
-			perf = PERFMIN;
-		setperf(perf);
-	}
-}
-
 char socketname[MAXPATHLEN];
 
 void
@@ -435,24 +282,21 @@ handle_client(int sock_fd, int ctl_fd)
 	case SETPERF_LOW:
 		doperf = PERF_MANUAL;
 		reply.newstate = NORMAL;
-		syslog(LOG_NOTICE, "setting hw.setperf to %d", PERFMIN);
-		setperf(PERFMIN);
+		syslog(LOG_NOTICE, "setting hw.perfpolicy to manual");
+		setperfpolicy("low");
 		break;
 	case SETPERF_HIGH:
 		doperf = PERF_MANUAL;
 		reply.newstate = NORMAL;
-		syslog(LOG_NOTICE, "setting hw.setperf to %d", PERFMAX);
-		setperf(PERFMAX);
+		syslog(LOG_NOTICE, "setting hw.perfpolicy to high");
+		setperfpolicy("high");
 		break;
 	case SETPERF_AUTO:
+	case SETPERF_COOL:
 		doperf = PERF_AUTO;
 		reply.newstate = NORMAL;
-		syslog(LOG_NOTICE, "setting hw.setperf automatically");
-		break;
-	case SETPERF_COOL:
-		doperf = PERF_COOL;
-		reply.newstate = NORMAL;
-		syslog(LOG_NOTICE, "setting hw.setperf for cool running");
+		syslog(LOG_NOTICE, "setting hw.perfpolicy to auto");
+		setperfpolicy("auto");
 		break;
 	default:
 		reply.newstate = NORMAL;
@@ -545,26 +389,23 @@ main(int argc, char *argv[])
 			statonly = 1;
 			break;
 		case 'A':
-			if (doperf != PERF_NONE)
-				usage();
-			doperf = PERF_AUTO;
-			break;
 		case 'C':
 			if (doperf != PERF_NONE)
 				usage();
-			doperf = PERF_COOL;
+			doperf = PERF_AUTO;
+			setperfpolicy("auto");
 			break;
 		case 'L':
 			if (doperf != PERF_NONE)
 				usage();
 			doperf = PERF_MANUAL;
-			setperf(PERFMIN);
+			setperfpolicy("low");
 			break;
 		case 'H':
 			if (doperf != PERF_NONE)
 				usage();
 			doperf = PERF_MANUAL;
-			setperf(PERFMAX);
+			setperfpolicy("high");
 			break;
 		case '?':
 		default:
@@ -629,24 +470,12 @@ main(int argc, char *argv[])
 	if (sysctl(ncpu_mib, 2, &ncpu, &ncpu_sz, NULL, 0) < 0)
 		error("cannot read hw.ncpu", NULL);
 
-	if (doperf == PERF_AUTO || doperf == PERF_COOL) {
-		setperf(0);
-		setperf(100);
-	}
 	for (;;) {
 		int rv;
 
 		sts = ts;
 
-		if (doperf == PERF_AUTO || doperf == PERF_COOL) {
-			sts.tv_sec = 0;
-			sts.tv_nsec = 200000000;
-			perf_status(&pinfo, ncpu);
-			apmtimeout += 1;
-		} else {
-			apmtimeout += sts.tv_sec;
-		}
-
+		apmtimeout += 1;
 		if ((rv = kevent(kq, NULL, 0, ev, 1, &sts)) < 0)
 			break;
 
@@ -749,14 +578,29 @@ main(int argc, char *argv[])
 }
 
 void
-setperf(int new_perf)
+setperfpolicy(char *policy)
 {
-	int hw_perf_mib[] = {CTL_HW, HW_SETPERF};
-	int perf;
-	size_t perf_sz = sizeof(perf);
+	int hw_perfpol_mib[] = { CTL_HW, HW_PERFPOLICY };
+	char oldpolicy[32];
+	size_t oldsz = sizeof(oldpolicy);
+	int setlo = 0;
 
-	if (sysctl(hw_perf_mib, 2, &perf, &perf_sz, &new_perf, perf_sz) < 0)
-		syslog(LOG_INFO, "cannot set hw.setperf");
+	if (strcmp(policy, "low") == 0) {
+		policy = "manual";
+		setlo = 1;
+	}
+
+	if (sysctl(hw_perfpol_mib, 2, oldpolicy, &oldsz, policy, strlen(policy) + 1) < 0)
+		syslog(LOG_INFO, "cannot set hw.perfpolicy");
+
+	if (setlo == 1) {
+		int hw_perf_mib[] = {CTL_HW, HW_SETPERF};
+		int perf;
+		int new_perf = 0;
+		size_t perf_sz = sizeof(perf);
+		if (sysctl(hw_perf_mib, 2, &perf, &perf_sz, &new_perf, perf_sz) < 0)
+			syslog(LOG_INFO, "cannot set hw.setperf");
+	}
 }
 
 void
