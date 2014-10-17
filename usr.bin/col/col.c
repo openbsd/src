@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.13 2014/10/16 13:45:12 schwarze Exp $	*/
+/*	$OpenBSD: col.c,v 1.14 2014/10/17 21:27:10 schwarze Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -350,7 +350,7 @@ flush_blanks(void)
 		PUTC('\n');
 	if (half) {
 		PUTC('\033');
-		PUTC('9');
+		PUTC('\011');
 		if (!nb)
 			PUTC('\r');
 	}
