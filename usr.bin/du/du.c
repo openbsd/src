@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.25 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: du.c,v 1.26 2014/10/17 14:46:54 schwarze Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,16 +60,18 @@ main(int argc, char *argv[])
 	FTSENT *p;
 	long blocksize;
 	quad_t totalblocks;
-	int ftsoptions, listdirs, listfiles;
-	int Hflag, Lflag, aflag, cflag, hflag, kflag, sflag;
+	int ftsoptions, listfiles, maxdepth;
+	int Hflag, Lflag, cflag, hflag, kflag;
 	int ch, notused, rval;
 	char **save;
+	const char *errstr;
 
 	save = argv;
-	Hflag = Lflag = aflag = cflag = hflag = kflag = sflag = 0;
+	Hflag = Lflag = cflag = hflag = kflag = listfiles = 0;
 	totalblocks = 0;
 	ftsoptions = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "HLPachksxr")) != -1)
+	maxdepth = -1;
+	while ((ch = getopt(argc, argv, "HLPacd:hkrsx")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -82,10 +85,17 @@ main(int argc, char *argv[])
 			Hflag = Lflag = 0;
 			break;
 		case 'a':
-			aflag = 1;
+			listfiles = 1;
 			break;
 		case 'c':
 			cflag = 1;
+			break;
+		case 'd':
+			maxdepth = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr) {
+				warnx("max depth %s: %s", optarg, errstr);
+				usage();
+			}
 			break;
 		case 'h':
 			hflag = 1;
@@ -96,7 +106,7 @@ main(int argc, char *argv[])
 			hflag = 0;
 			break;
 		case 's':
-			sflag = 1;
+			maxdepth = 0;
 			break;
 		case 'r':
 			break;
@@ -129,16 +139,8 @@ main(int argc, char *argv[])
 		ftsoptions |= FTS_LOGICAL;
 	}
 
-	if (aflag) {
-		if (sflag)
-			usage();
-		listdirs = listfiles = 1;
-	} else if (sflag)
-		listdirs = listfiles = 0;
-	else {
-		listfiles = 0;
-		listdirs = 1;
-	}
+	if (maxdepth == -1)
+		maxdepth = INT_MAX;
 
 	if (!*argv) {
 		argv = save;
@@ -171,12 +173,10 @@ main(int argc, char *argv[])
 			 * or directories and this is post-order of the
 			 * root of a traversal, display the total.
 			 */
-			if (listdirs ||
-			    (!listfiles && p->fts_level == FTS_ROOTLEVEL)) {
+			if (p->fts_level <= maxdepth)
 				prtout((quad_t)howmany(p->fts_number,
 				    (unsigned long)blocksize), p->fts_path,
 				    hflag);
-			}
 			break;
 		case FTS_DC:			/* Ignore. */
 			break;
@@ -193,7 +193,7 @@ main(int argc, char *argv[])
 			 * If listing each file, or a non-directory file was
 			 * the root of a traversal, display the total.
 			 */
-			if (listfiles || p->fts_level == FTS_ROOTLEVEL)
+			if (listfiles && p->fts_level <= maxdepth)
 				prtout(howmany(p->fts_statp->st_blocks,
 				    blocksize), p->fts_path, hflag);
 			p->fts_parent->fts_number += p->fts_statp->st_blocks;
@@ -315,6 +315,6 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-		"usage: du [-a | -s] [-chkrx] [-H | -L | -P] [file ...]\n");
+	    "usage: du [-d depth] [-achkrsx] [-H | -L | -P] [file ...]\n");
 	exit(1);
 }

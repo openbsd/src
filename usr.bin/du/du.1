@@ -1,4 +1,4 @@
-.\"	$OpenBSD: du.1,v 1.31 2014/02/14 18:17:50 schwarze Exp $
+.\"	$OpenBSD: du.1,v 1.32 2014/10/17 14:46:54 schwarze Exp $
 .\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)du.1	8.2 (Berkeley) 4/1/94
 .\"
-.Dd $Mdocdate: February 14 2014 $
+.Dd $Mdocdate: October 17 2014 $
 .Dt DU 1
 .Os
 .Sh NAME
@@ -38,8 +38,8 @@
 .Nd display disk usage statistics
 .Sh SYNOPSIS
 .Nm du
-.Op Fl a | s
-.Op Fl chkrx
+.Op Fl d Ar depth
+.Op Fl achkrsx
 .Op Fl H | L | P
 .Op Ar
 .Sh DESCRIPTION
@@ -58,9 +58,21 @@ the current directory is displayed.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
-Display an entry for each file in the file hierarchy.
+Display entries for files in addition to entries for directories.
 .It Fl c
 Display the grand total after all the arguments have been processed.
+.It Fl d Ar depth
+Do not display entries for files and directories more than
+.Ar depth
+levels deep;
+.Fl d Cm 0
+has the same effect as
+.Fl s .
+Overrides earlier
+.Fl d
+and
+.Fl s
+options.
 .It Fl H
 Symbolic links on the command line are followed.
 Symbolic links encountered in the tree traversal are not followed.
@@ -83,7 +95,10 @@ Generate messages about directories that cannot be read, files
 that cannot be opened, and so on.
 This is the default.
 .It Fl s
-Display only the grand total for the specified files.
+Display only the total for each of the specified files and directories.
+Overrides earlier
+.Fl d
+options.
 .It Fl x
 File system mount points are not traversed.
 .El
@@ -145,7 +160,7 @@ utility is compliant with the
 specification.
 .Pp
 The flags
-.Op Fl chP ,
+.Op Fl cdhP ,
 as well as the
 .Ev BLOCKSIZE
 environment variable,
@@ -158,10 +173,55 @@ the obsolete
 .St -xcu5
 standard.
 .Sh HISTORY
-A
+The
 .Nm
-command first appeared in
-.At v3 .
+utility and its
+.Fl a
+and
+.Fl s
+options first appeared in
+.At v1 .
+.Pp
+The
+.Fl r
+option first appeared in
+.At III
+and is available since
+.Ox 2.3 .
+The
+.Fl k
+and
+.Fl x
+options first appeared in
+.Bx 4.3 Reno
+and
+.Fl H
+in
+.Bx 4.4 .
+The
+.Fl c
+and
+.Fl L
+options first appeared in the GNU fileutils;
+.Fl L
+and
+.Fl P
+are available since
+.Bx 4.4 Lite1 ,
+.Fl c
+since
+.Ox 2.1 .
+The
+.Fl d
+option first appeared in
+.Fx 2.2
+and is available since
+.Ox 5.7 ,
+.Fl h
+first appeared in
+.Fx 4.0
+and is available since
+.Ox 2.9 .
 .Sh AUTHORS
 .An -nosplit
 This version of
