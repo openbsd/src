@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.100 2014/09/03 23:20:33 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.101 2014/10/18 15:46:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -564,14 +564,15 @@ passthrough(const char *file, int fd)
 		for (off = 0; off < nr; off += nw)
 			if ((nw = write(STDOUT_FILENO, buf + off,
 			    (size_t)(nr - off))) == -1 || nw == 0) {
+				close(fd);
 				syscall = "write";
 				goto fail;
 			}
 
-        if (nr == 0) {
-		close(fd);
+	close(fd);
+
+	if (nr == 0)
 		return(MANDOCLEVEL_OK);
-        }
 
 	syscall = "read";
 fail:
