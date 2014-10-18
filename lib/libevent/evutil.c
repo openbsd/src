@@ -1,4 +1,4 @@
-/*	$OpenBSD: evutil.c,v 1.8 2014/10/18 16:48:28 bluhm Exp $	*/
+/*	$OpenBSD: evutil.c,v 1.9 2014/10/18 21:56:44 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007 Niels Provos <provos@citi.umich.edu>
@@ -85,18 +85,9 @@ evutil_snprintf(char *buf, size_t buflen, const char *format, ...)
 int
 evutil_vsnprintf(char *buf, size_t buflen, const char *format, va_list ap)
 {
-#ifdef _MSC_VER
-	int r = _vsnprintf(buf, buflen, format, ap);
-	buf[buflen-1] = '\0';
-	if (r >= 0)
-		return r;
-	else
-		return _vscprintf(format, ap);
-#else
 	int r = vsnprintf(buf, buflen, format, ap);
 	buf[buflen-1] = '\0';
 	return r;
-#endif
 }
 
 static int

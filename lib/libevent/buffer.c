@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.23 2014/10/18 16:48:28 bluhm Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.24 2014/10/18 21:56:44 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -128,9 +128,6 @@ evbuffer_add_vprintf(struct evbuffer *buf, const char *fmt, va_list ap)
 		assert(buf->totallen >= used);
 		space = buf->totallen - used;
 
-#ifndef va_copy
-#define	va_copy(dst, src)	memcpy(&(dst), &(src), sizeof(va_list))
-#endif
 		va_copy(aq, ap);
 
 		sz = evutil_vsnprintf(buffer, space, fmt, aq);
@@ -417,7 +414,6 @@ evbuffer_read(struct evbuffer *buf, int fd, int howmuch)
 	size_t oldoff = buf->off;
 	int n = EVBUFFER_MAX_READ;
 
-#if defined(FIONREAD)
 	if (ioctl(fd, FIONREAD, &n) == -1 || n <= 0) {
 		n = EVBUFFER_MAX_READ;
 	} else if (n > EVBUFFER_MAX_READ && n > howmuch) {
@@ -433,7 +429,6 @@ evbuffer_read(struct evbuffer *buf, int fd, int howmuch)
 		if (n < EVBUFFER_MAX_READ)
 			n = EVBUFFER_MAX_READ;
 	}
-#endif	
 	if (howmuch < 0 || howmuch > n)
 		howmuch = n;
 

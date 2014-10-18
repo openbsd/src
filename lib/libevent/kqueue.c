@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.32 2014/10/18 16:48:28 bluhm Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.33 2014/10/18 21:56:44 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -40,15 +40,6 @@
 #include <errno.h>
 #include <assert.h>
 #include <inttypes.h>
-
-/* Some platforms apparently define the udata field of struct kevent as
- * intptr_t, whereas others define it as void*.  There doesn't seem to be an
- * easy way to tell them apart via autoconf, so we need to use OS macros. */
-#if !defined(__OpenBSD__) && !defined(__FreeBSD__) && !defined(__darwin__) && !defined(__APPLE__)
-#define PTR_TO_UDATA(x)	((intptr_t)(x))
-#else
-#define PTR_TO_UDATA(x)	(x)
-#endif
 
 #include "event.h"
 #include "event-internal.h"
@@ -326,7 +317,7 @@ kq_add(void *arg, struct event *ev)
 			kev.ident = nsignal;
 			kev.filter = EVFILT_SIGNAL;
 			kev.flags = EV_ADD;
-			kev.udata = PTR_TO_UDATA(&kqop->evsigevents[nsignal]);
+			kev.udata = &kqop->evsigevents[nsignal];
 			
 			/* Be ready for the signal if it is sent any
 			 * time between now and the next call to
@@ -349,14 +340,12 @@ kq_add(void *arg, struct event *ev)
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_READ;
-#ifdef NOTE_EOF
 		/* Make it behave like select() and poll() */
 		kev.fflags = NOTE_EOF;
-#endif
 		kev.flags = EV_ADD;
 		if (!(ev->ev_events & EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
-		kev.udata = PTR_TO_UDATA(ev);
+		kev.udata = ev;
 		
 		if (kq_insert(kqop, &kev) == -1)
 			return (-1);
@@ -371,7 +360,7 @@ kq_add(void *arg, struct event *ev)
 		kev.flags = EV_ADD;
 		if (!(ev->ev_events & EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
-		kev.udata = PTR_TO_UDATA(ev);
+		kev.udata = ev;
 		
 		if (kq_insert(kqop, &kev) == -1)
 			return (-1);

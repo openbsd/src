@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.c,v 1.21 2014/10/18 16:48:28 bluhm Exp $	*/
+/*	$OpenBSD: select.c,v 1.22 2014/10/18 21:56:44 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -47,10 +47,6 @@
 #include "event-internal.h"
 #include "evsignal.h"
 #include "log.h"
-
-#ifndef howmany
-#define        howmany(x, y)   (((x)+((y)-1))/(y))
-#endif
 
 struct selectop {
 	int event_fds;		/* Highest fd in fd set */
