@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.44 2014/09/28 10:43:33 benno Exp $
+.\" $OpenBSD: gcc-local.1,v 1.45 2014/10/18 14:08:48 miod Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 28 2014 $
+.Dd $Mdocdate: October 18 2014 $
 .Dt GCC-LOCAL 1
 .Os
 .Sh NAME
@@ -201,8 +201,11 @@ This behavior can be restored with
 .It
 The option
 .Fl fstack-shuffle
-will randomize the order of stack variables at compile time, which can
-be helpful to find bugs.
+will randomize the order of stack variables at compile time with
+.Nm gcc 4.2.1 ,
+which can be helpful to find bugs.
+This option is silently ignored by
+.Nm gcc 3.3.6 .
 .It
 .Nm gcc
 will not move variables initialized with the value zero
