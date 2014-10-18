@@ -1,4 +1,4 @@
-/*	$OpenBSD: mppe.c,v 1.11 2014/07/21 01:51:11 guenther Exp $ */
+/*	$OpenBSD: mppe.c,v 1.12 2014/10/18 04:12:57 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: mppe.c,v 1.11 2014/07/21 01:51:11 guenther Exp $ */
+/* $Id: mppe.c,v 1.12 2014/10/18 04:12:57 deraadt Exp $ */
 /**@file
  *
  * The implementation of MPPE(Microsoft Point-To-Point Encryption Protocol)
@@ -632,8 +632,8 @@ mppe_rc4_init(mppe *_mppe, mppe_rc4_t *_this, int has_oldkey)
 	}
 
 	if (has_oldkey)
-		_this->old_session_keys =
-		    malloc(MPPE_KEYLEN * MPPE_NOLDKEY);
+		_this->old_session_keys = reallocarray(NULL,
+		    MPPE_KEYLEN, MPPE_NOLDKEY);
 	else
 		_this->old_session_keys = NULL;
 
