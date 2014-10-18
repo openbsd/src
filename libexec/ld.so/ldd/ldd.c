@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.16 2013/07/14 14:36:41 jca Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.17 2014/10/18 03:16:19 doug Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -116,9 +116,9 @@ doit(char *name)
 		return 1;
 	}
 
+	if ((phdr = reallocarray(NULL, ehdr.e_phnum, sizeof(Elf_Phdr))) == NULL)
+		err(1, "reallocarray");
 	size = ehdr.e_phnum * sizeof(Elf_Phdr);
-	if ((phdr = malloc(size)) == NULL)
-		err(1, "malloc");
 
 	if (pread(fd, phdr, size, ehdr.e_phoff) != size) {
 		warn("read(%s)", name);
