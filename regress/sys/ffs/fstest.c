@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstest.c,v 1.3 2013/08/05 07:17:45 guenther Exp $	*/
+/*	$OpenBSD: fstest.c,v 1.4 2014/10/18 03:13:04 doug Exp $	*/
 
 /*
  * Copyright (c) 2006-2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -426,7 +426,7 @@ set_gids(char *gids)
 
 	ngroups = sysconf(_SC_NGROUPS_MAX);
 	assert(ngroups > 0);
-	gidset = malloc(sizeof(*gidset) * ngroups);
+	gidset = reallocarray(NULL, ngroups, sizeof(*gidset));
 	assert(gidset != NULL);
 	for (i = 0, g = strtok(gids, ","); g != NULL;
 	    g = strtok(NULL, ","), i++) {
