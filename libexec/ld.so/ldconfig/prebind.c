@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.26 2014/03/18 22:36:30 miod Exp $ */
+/* $OpenBSD: prebind.c,v 1.27 2014/10/18 03:19:04 doug Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -601,14 +601,16 @@ elf_load_object(void *pexe, const char *name)
 			hashtab = (void *)hash;
 			object->nbuckets = hashtab[0];
 			object->nchains = hashtab[1];
-			hashsz = (2 + object->nbuckets + object->nchains) *
-			    sizeof (Elf_Word);
-			hash = malloc(hashsz);
+			hash = reallocarray(NULL, 2 + object->nbuckets
+			    + object->nchains, sizeof(Elf_Word));
 			if (hash == NULL) {
 				printf("unable to allocate hash for %s\n",
 				    name);
 				exit(10);
 			}
+			hashsz = (2 + object->nbuckets + object->nchains) *
+			    sizeof(Elf_Word);
+
 			bcopy(object->dyn.hash, hash, hashsz);
 			object->dyn.hash = hash;
 			object->buckets = ((Elf_Word *)hash + 2);
@@ -963,8 +965,8 @@ add_fixup_prog(struct elf_object *prog, struct elf_object *obj, int idx,
 
 	if (pl->fixupcntalloc[libidx] < pl->fixupcnt[libidx] + 1) {
 		pl->fixupcntalloc[libidx] += 16;
-		pl->fixup[libidx] = realloc(pl->fixup[libidx],
-		    sizeof (struct fixup) * pl->fixupcntalloc[libidx]);
+		pl->fixup[libidx] = reallocarray(pl->fixup[libidx],
+		    pl->fixupcntalloc[libidx], sizeof(struct fixup));
 		if (pl->fixup[libidx] == NULL)  {
 			printf("realloc fixup, out of memory\n");
 			exit(20);
@@ -2125,8 +2127,8 @@ elf_add_object(struct elf_object *object, int objtype)
 		TAILQ_INSERT_TAIL(&library_list, ol, list);
 	if (objarray_cnt+1 >= objarray_sz) {
 		objarray_sz += 512;
-		newarray = realloc(objarray, sizeof (objarray[0]) *
-		    objarray_sz);
+		newarray = reallocarray(objarray, objarray_sz,
+		    sizeof(objarray[0]));
 		if (newarray != NULL)
 			objarray = newarray;
 		else {
