@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.13 2014/10/09 09:44:22 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.14 2014/10/18 22:36:36 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -1031,7 +1031,7 @@ s_isitrap:
 	mfsrr1	%r31			/* test if this may be a spill fault */
 	mtcr	%r31
 	mtsprg	1,%r1			/* save SP */
-	bc	4,%r1,disitrap		/* branch if table miss is false */
+	bc	4,1,disitrap		/* branch if table miss is false */
 	GET_CPUINFO(%r30)
 	lwz	%r30,CI_INTSTK(%r30)	/* get interrupt stack */
 	addi	%r1,%r30,1024
