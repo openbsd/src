@@ -1,4 +1,4 @@
-/*	$OpenBSD: video_if.h,v 1.17 2011/03/26 08:13:05 jakemsr Exp $	*/
+/*	$OpenBSD: video_if.h,v 1.18 2014/10/18 08:01:34 armani Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -44,6 +44,7 @@ struct video_hw_if {
 	int	(*g_parm)(void *, struct v4l2_streamparm *);
 	int	(*enum_input)(void *, struct v4l2_input *);
 	int	(*s_input)(void *, int);
+	int	(*g_input)(void *, int *);
 	int	(*reqbufs)(void *, struct v4l2_requestbuffers *);
 	int	(*querybuf)(void *, struct v4l2_buffer *);
 	int	(*qbuf)(void *, struct v4l2_buffer *);

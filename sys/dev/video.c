@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.32 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: video.c,v 1.33 2014/10/18 08:01:34 armani Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -248,6 +248,11 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		if (sc->hw_if->s_input)
 			error = (sc->hw_if->s_input)(sc->hw_hdl,
 			    (int)*data);
+		break;
+	case VIDIOC_G_INPUT:
+		if (sc->hw_if->g_input)
+			error = (sc->hw_if->g_input)(sc->hw_hdl,
+			    (int *)data);
 		break;
 	case VIDIOC_REQBUFS:
 		if (sc->hw_if->reqbufs)

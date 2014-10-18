@@ -1,4 +1,4 @@
-.\" $OpenBSD: video.4,v 1.11 2014/06/28 06:27:31 matthew Exp $
+.\" $OpenBSD: video.4,v 1.12 2014/10/18 08:01:34 armani Exp $
 .\"
 .\" Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 28 2014 $
+.Dd $Mdocdate: October 18 2014 $
 .Dt VIDEO 4
 .Os
 .Sh NAME
@@ -102,6 +102,8 @@ struct v4l2_input {
 	u_int32_t	reserved[32];
 };
 .Ed
+.It Dv VIDIOC_G_INPUT Fa "int *"
+Get the current video input.
 .It Dv VIDIOC_S_INPUT Fa "int *"
 Select the current video input.
 .It Dv VIDIOC_REQBUFS Fa "struct v4l2_requestbuffers *"

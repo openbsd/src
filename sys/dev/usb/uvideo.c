@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.175 2014/07/12 18:48:53 tedu Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.176 2014/10/18 08:01:34 armani Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -179,6 +179,7 @@ int		uvideo_s_parm(void *, struct v4l2_streamparm *);
 int		uvideo_g_parm(void *, struct v4l2_streamparm *);
 int		uvideo_enum_input(void *, struct v4l2_input *);
 int		uvideo_s_input(void *, int);
+int		uvideo_g_input(void *, int *);
 int		uvideo_reqbufs(void *, struct v4l2_requestbuffers *);
 int		uvideo_querybuf(void *, struct v4l2_buffer *);
 int		uvideo_qbuf(void *, struct v4l2_buffer *);
@@ -228,6 +229,7 @@ struct video_hw_if uvideo_hw_if = {
 	uvideo_g_parm,		/* VIDIOC_G_PARM */
 	uvideo_enum_input,	/* VIDIOC_ENUMINPUT */
 	uvideo_s_input,		/* VIDIOC_S_INPUT */
+	uvideo_g_input,		/* VIDIOC_G_INPUT */
 	uvideo_reqbufs,		/* VIDIOC_REQBUFS */
 	uvideo_querybuf,	/* VIDIOC_QUERYBUF */
 	uvideo_qbuf,		/* VIDIOC_QBUF */
@@ -3069,6 +3071,15 @@ uvideo_s_input(void *v, int input)
 	if (input != 0)
 		/* XXX we just support one input for now */
 		return (EINVAL);
+
+	return (0);
+}
+
+int
+uvideo_g_input(void *v, int *input)
+{
+	/* XXX we just support one input for now */
+	*input = 0;
 
 	return (0);
 }
