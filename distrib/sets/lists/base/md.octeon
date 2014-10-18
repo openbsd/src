@@ -1,5 +1,4 @@
 ./etc/examples/wsconsctl.conf
-./sbin/kbd
 ./usr/lib/gcc-lib/mips64-unknown-openbsd5.6
 ./usr/lib/libc.so.77.2
 ./usr/lib/libcrypto.so.30.1
