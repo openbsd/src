@@ -1,4 +1,4 @@
-/*	$OpenBSD: evutil.c,v 1.7 2014/10/17 20:52:59 bluhm Exp $	*/
+/*	$OpenBSD: evutil.c,v 1.8 2014/10/18 16:48:28 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007 Niels Provos <provos@citi.umich.edu>
@@ -68,13 +68,7 @@ evutil_make_socket_nonblocking(int fd)
 ev_int64_t
 evutil_strtoll(const char *s, char **endptr, int base)
 {
-#ifdef HAVE_STRTOLL
 	return (ev_int64_t)strtoll(s, endptr, base);
-#elif SIZEOF_LONG == 8
-	return (ev_int64_t)strtol(s, endptr, base);
-#else
-#error "I don't know how to parse 64-bit integers."
-#endif
 }
 
 int

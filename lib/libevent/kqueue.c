@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.31 2014/10/17 19:16:01 bluhm Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.32 2014/10/18 16:48:28 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -26,8 +26,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#define _GNU_SOURCE 1
 
 #include <sys/types.h>
 #include <sys/time.h>
