@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.h,v 1.29 2014/06/22 12:16:28 jsing Exp $ */
+/* $OpenBSD: engine.h,v 1.30 2014/10/18 17:20:40 jsing Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -87,7 +87,6 @@
 #ifndef OPENSSL_NO_ECDSA
 #include <openssl/ecdsa.h>
 #endif
-#include <openssl/rand.h>
 #include <openssl/ui.h>
 #include <openssl/err.h>
 #endif

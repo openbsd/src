@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.21 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.22 2014/10/18 17:20:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,7 +64,6 @@
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
 #include <openssl/sha.h>
 
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);

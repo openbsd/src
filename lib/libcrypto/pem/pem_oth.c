@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_oth.c,v 1.6 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: pem_oth.c,v 1.7 2014/10/18 17:20:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,7 +63,6 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 #include <openssl/x509.h>
 
 /* Handle 'other' PEMs: not private keys */

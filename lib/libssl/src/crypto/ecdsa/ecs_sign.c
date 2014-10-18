@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_sign.c,v 1.4 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: ecs_sign.c,v 1.5 2014/10/18 17:20:40 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -59,7 +59,6 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
-#include <openssl/rand.h>
 
 ECDSA_SIG *ECDSA_do_sign(const unsigned char *dgst, int dlen, EC_KEY *eckey)
 {

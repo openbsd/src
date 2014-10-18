@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_key.c,v 1.21 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: dh_key.c,v 1.22 2014/10/18 17:20:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,7 +61,6 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
 
 static int generate_key(DH *dh);
 static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh);

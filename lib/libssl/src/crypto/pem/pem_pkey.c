@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_pkey.c,v 1.18 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: pem_pkey.c,v 1.19 2014/10/18 17:20:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,7 +66,6 @@
 #include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
-#include <openssl/rand.h>
 #include <openssl/x509.h>
 
 #ifndef OPENSSL_NO_ENGINE

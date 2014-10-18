@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.11 2014/07/12 16:03:36 miod Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.12 2014/10/18 17:20:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -111,8 +111,6 @@
 
 #include <stdio.h>
 #include <time.h>
-
-#include <openssl/rand.h>
 
 #include "bn_lcl.h"
 

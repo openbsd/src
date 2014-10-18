@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_x931.c,v 1.8 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: rsa_x931.c,v 1.9 2014/10/18 17:20:40 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -62,7 +62,6 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/objects.h>
-#include <openssl/rand.h>
 #include <openssl/rsa.h>
 
 int
