@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.188 2012/06/30 14:51:31 naddy Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.189 2014/10/18 03:10:00 doug Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -253,13 +253,14 @@ pf_key_v2_read(u_int32_t seq)
 			    pf_key_v2_socket, (unsigned long) n);
 			goto cleanup;
 		}
-		n = hdr.sadb_msg_len * PF_KEY_V2_CHUNK;
-		buf = malloc(n);
+		buf = reallocarray(NULL, hdr.sadb_msg_len, PF_KEY_V2_CHUNK);
 		if (!buf) {
-			log_error("pf_key_v2_read: malloc (%lu) failed",
-			    (unsigned long) n);
+			log_error("pf_key_v2_read: malloc (%zu) failed",
+			    hdr.sadb_msg_len * PF_KEY_V2_CHUNK);
 			goto cleanup;
 		}
+		n = hdr.sadb_msg_len * PF_KEY_V2_CHUNK;
+
 		n = read(pf_key_v2_socket, buf, n);
 		if (n == -1) {
 			log_error("pf_key_v2_read: read (%d, ...) failed",
