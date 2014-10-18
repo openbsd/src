@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.38 2014/07/09 12:05:01 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.39 2014/10/18 03:11:54 doug Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1143,11 +1143,13 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 			return (-1);
 		}
 
-		len = hdr.sadb_msg_len * PFKEYV2_CHUNK;
-		if ((data = malloc(len)) == NULL) {
+		if ((data = reallocarray(NULL, hdr.sadb_msg_len,
+		    PFKEYV2_CHUNK)) == NULL) {
 			log_warn("%s: malloc", __func__);
 			return (-1);
 		}
+		len = hdr.sadb_msg_len * PFKEYV2_CHUNK;
+
 		if (read(sd, data, len) != len) {
 			log_warnx("%s: short read", __func__);
 			free(data);
@@ -1519,11 +1521,13 @@ pfkey_dispatch(int sd, short event, void *arg)
 		return;
 	}
 
-	len = hdr.sadb_msg_len * PFKEYV2_CHUNK;
-	if ((data = malloc(len)) == NULL) {
+	if ((data = reallocarray(NULL, hdr.sadb_msg_len, PFKEYV2_CHUNK))
+	    == NULL) {
 		log_warn("%s: malloc", __func__);
 		return;
 	}
+	len = hdr.sadb_msg_len * PFKEYV2_CHUNK;
+
 	if (read(sd, data, len) != len) {
 		log_warn("%s: short read", __func__);
 		free(data);
