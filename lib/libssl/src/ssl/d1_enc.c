@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_enc.c,v 1.6 2014/07/10 08:51:14 tedu Exp $ */
+/* $OpenBSD: d1_enc.c,v 1.7 2014/10/18 16:13:16 jsing Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -118,7 +118,6 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
-#include <openssl/rand.h>
 
 /* dtls1_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
  *
@@ -154,8 +153,8 @@ dtls1_enc(SSL *s, int send)
 				fprintf(stderr, "%s:%d: rec->data != rec->input\n",
 				    __FILE__, __LINE__);
 			else if (EVP_CIPHER_block_size(ds->cipher) > 1) {
-				if (RAND_bytes(rec->input, EVP_CIPHER_block_size(ds->cipher)) <= 0)
-					return -1;
+				arc4random_buf(rec->input,
+				    EVP_CIPHER_block_size(ds->cipher));
 			}
 		}
 	} else {

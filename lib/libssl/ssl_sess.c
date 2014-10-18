@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.41 2014/09/22 14:26:22 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.42 2014/10/18 16:13:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -136,7 +136,6 @@
  */
 
 #include <openssl/lhash.h>
-#include <openssl/rand.h>
 
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
@@ -258,8 +257,7 @@ def_generate_session_id(const SSL *ssl, unsigned char *id, unsigned int *id_len)
 	unsigned int retry = 0;
 
 	do {
-		if (RAND_pseudo_bytes(id, *id_len) <= 0)
-			return 0;
+		arc4random_buf(id, *id_len);
 	} while (SSL_has_matching_session_id(ssl, id, *id_len) &&
 	    (++retry < MAX_SESS_ID_ATTEMPTS));
 

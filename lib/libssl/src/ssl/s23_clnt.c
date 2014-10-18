@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.32 2014/08/10 14:42:56 jsing Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.33 2014/10/18 16:13:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -112,7 +112,6 @@
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/buffer.h>
-#include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 
@@ -317,8 +316,7 @@ ssl23_client_hello(SSL *s)
 
 	buf = (unsigned char *)s->init_buf->data;
 	if (s->state == SSL23_ST_CW_CLNT_HELLO_A) {
-		p = s->s3->client_random;
-		RAND_pseudo_bytes(p, SSL3_RANDOM_SIZE);
+		arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
 
 		if (version == TLS1_2_VERSION) {
 			version_major = TLS1_2_VERSION_MAJOR;

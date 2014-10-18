@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.64 2014/10/15 14:02:16 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.65 2014/10/18 16:13:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,7 +115,6 @@
 #include <openssl/hmac.h>
 #include <openssl/objects.h>
 #include <openssl/ocsp.h>
-#include <openssl/rand.h>
 
 #include "ssl_locl.h"
 

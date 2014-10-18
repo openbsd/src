@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_clnt.c,v 1.14 2014/08/10 14:42:56 jsing Exp $ */
+/* $OpenBSD: t1_clnt.c,v 1.15 2014/10/18 16:13:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,7 +59,6 @@
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/buffer.h>
-#include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 

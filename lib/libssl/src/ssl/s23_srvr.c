@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.34 2014/08/10 14:42:56 jsing Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.35 2014/10/18 16:13:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -112,7 +112,6 @@
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/buffer.h>
-#include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 

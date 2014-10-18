@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.30 2014/09/22 13:18:50 jsing Exp $ */
+/* $OpenBSD: s3_both.c,v 1.31 2014/10/18 16:13:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,7 +119,6 @@
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/buffer.h>
-#include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>

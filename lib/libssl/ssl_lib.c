@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.86 2014/10/15 17:39:34 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.87 2014/10/18 16:13:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -145,7 +145,6 @@
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
 #include <openssl/x509v3.h>
-#include <openssl/rand.h>
 #include <openssl/ocsp.h>
 #include <openssl/dh.h>
 #ifndef OPENSSL_NO_ENGINE
@@ -1786,11 +1785,11 @@ SSL_CTX_new(const SSL_METHOD *meth)
 
 	ret->tlsext_servername_callback = 0;
 	ret->tlsext_servername_arg = NULL;
+
 	/* Setup RFC4507 ticket keys */
-	if ((RAND_pseudo_bytes(ret->tlsext_tick_key_name, 16) <= 0)
-	    || (RAND_bytes(ret->tlsext_tick_hmac_key, 16) <= 0)
-	    || (RAND_bytes(ret->tlsext_tick_aes_key, 16) <= 0))
-		ret->options |= SSL_OP_NO_TICKET;
+	arc4random_buf(ret->tlsext_tick_key_name, 16);
+	arc4random_buf(ret->tlsext_tick_hmac_key, 16);
+	arc4random_buf(ret->tlsext_tick_aes_key, 16);
 
 	ret->tlsext_status_cb = 0;
 	ret->tlsext_status_arg = NULL;

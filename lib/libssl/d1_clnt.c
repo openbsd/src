@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.35 2014/09/07 12:16:23 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.36 2014/10/18 16:13:16 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -116,7 +116,6 @@
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/buffer.h>
-#include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -779,7 +778,7 @@ dtls1_client_hello(SSL *s)
 		for (i = 0; p[i]=='\0' && i < sizeof(s->s3->client_random); i++)
 			;
 		if (i == sizeof(s->s3->client_random))
-			RAND_pseudo_bytes(p, sizeof(s->s3->client_random));
+			arc4random_buf(p, sizeof(s->s3->client_random));
 
 		/* Do the message type and length last */
 		d = p = &(buf[DTLS1_HM_HEADER_LENGTH]);
@@ -954,8 +953,7 @@ dtls1_send_client_key_exchange(SSL *s)
 
 			tmp_buf[0] = s->client_version >> 8;
 			tmp_buf[1] = s->client_version&0xff;
-			if (RAND_bytes(&(tmp_buf[2]), sizeof tmp_buf - 2) <= 0)
-				goto err;
+			arc4random_buf(&tmp_buf[2], sizeof(tmp_buf) - 2);
 
 			s->session->master_key_length = sizeof tmp_buf;
 

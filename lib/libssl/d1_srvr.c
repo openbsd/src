@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.39 2014/09/27 11:03:43 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.40 2014/10/18 16:13:16 jsing Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -116,7 +116,6 @@
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/buffer.h>
-#include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
@@ -902,8 +901,7 @@ dtls1_send_server_hello(SSL *s)
 
 	if (s->state == SSL3_ST_SW_SRVR_HELLO_A) {
 		buf = (unsigned char *)s->init_buf->data;
-		p = s->s3->server_random;
-		RAND_pseudo_bytes(p, SSL3_RANDOM_SIZE);
+		arc4random_buf(s->s3->server_random, SSL3_RANDOM_SIZE);
 
 		/* Do the message type and length last */
 		d = p= &(buf[DTLS1_HM_HEADER_LENGTH]);
@@ -1513,7 +1511,7 @@ dtls1_send_newsession_ticket(SSL *s)
 				return -1;
 			}
 		} else {
-			RAND_pseudo_bytes(iv, 16);
+			arc4random_buf(iv, 16);
 			EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
 			    tctx->tlsext_tick_aes_key, iv);
 			HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,

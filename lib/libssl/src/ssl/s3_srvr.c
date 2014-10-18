@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.86 2014/10/03 13:58:18 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.87 2014/10/18 16:13:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -154,7 +154,6 @@
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/buffer.h>
-#include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -1106,11 +1105,7 @@ ssl3_get_client_hello(SSL *s)
 	 * server_random before calling tls_session_secret_cb in order to allow
 	 * SessionTicket processing to use it in key derivation.
 	 */
-	{
-		unsigned char *pos;
-		pos = s->s3->server_random;
-		RAND_pseudo_bytes(pos, SSL3_RANDOM_SIZE);
-	}
+	arc4random_buf(s->s3->server_random, SSL3_RANDOM_SIZE);
 
 	if (!s->hit && s->version >= TLS1_VERSION && s->tls_session_secret_cb) {
 		SSL_CIPHER *pref_cipher = NULL;
@@ -1961,7 +1956,7 @@ ssl3_get_client_key_exchange(SSL *s)
 			i = SSL_MAX_MASTER_KEY_LENGTH;
 			p[0] = s->client_version >> 8;
 			p[1] = s->client_version & 0xff;
-			RAND_bytes(p+2, i-2);
+			arc4random_buf(p + 2, i - 2);
 		}
 
 		s->session->master_key_length =
@@ -2774,7 +2769,7 @@ ssl3_send_newsession_ticket(SSL *s)
 				return (-1);
 			}
 		} else {
-			RAND_pseudo_bytes(iv, 16);
+			arc4random_buf(iv, 16);
 			EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
 			    tctx->tlsext_tick_aes_key, iv);
 			HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,

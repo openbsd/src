@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.91 2014/09/27 11:01:05 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.92 2014/10/18 16:13:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -151,7 +151,6 @@
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/buffer.h>
-#include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -657,8 +656,7 @@ ssl3_client_hello(SSL *s)
 		}
 		/* else use the pre-loaded session */
 
-		p = s->s3->client_random;
-		RAND_pseudo_bytes(p, SSL3_RANDOM_SIZE);
+		arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
 
 		/* Do the message type and length last */
 		d = p = &buf[4];
@@ -1990,8 +1988,7 @@ ssl3_send_client_key_exchange(SSL *s)
 
 			tmp_buf[0] = s->client_version >> 8;
 			tmp_buf[1] = s->client_version & 0xff;
-			if (RAND_bytes(&(tmp_buf[2]), sizeof tmp_buf - 2) <= 0)
-				goto err;
+			arc4random_buf(&tmp_buf[2], sizeof(tmp_buf) - 2);
 
 			s->session->master_key_length = sizeof tmp_buf;
 
@@ -2303,7 +2300,7 @@ ssl3_send_client_key_exchange(SSL *s)
 
 			EVP_PKEY_encrypt_init(pkey_ctx);
 			/* Generate session key. */
-			RAND_bytes(premaster_secret, 32);
+			arc4random_buf(premaster_secret, 32);
 			/*
 			 * If we have client certificate, use its secret
 			 * as peer key.

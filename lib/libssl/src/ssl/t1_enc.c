@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.70 2014/10/18 03:04:28 doug Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.71 2014/10/18 16:13:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,7 +140,6 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
-#include <openssl/rand.h>
 
 /* seed1 through seed5 are virtually concatenated */
 static int
@@ -810,8 +809,8 @@ tls1_enc(SSL *s, int send)
 					fprintf(stderr,
 					    "%s:%d: rec->data != rec->input\n",
 					    __FILE__, __LINE__);
-				else if (RAND_bytes(rec->input, ivlen) <= 0)
-					return -1;
+				else 
+					arc4random_buf(rec->input, ivlen);
 			}
 		}
 	} else {
