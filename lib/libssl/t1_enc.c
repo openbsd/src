@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.69 2014/08/07 20:02:23 miod Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.70 2014/10/18 03:04:28 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -603,14 +603,14 @@ tls1_setup_key_block(SSL *s)
 	s->s3->tmp.new_mac_pkey_type = mac_type;
 	s->s3->tmp.new_mac_secret_size = mac_secret_size;
 
-	key_block_len = (mac_secret_size + key_len + iv_len) * 2;
-
 	ssl3_cleanup_key_block(s);
 
-	if ((key_block = malloc(key_block_len)) == NULL) {
+	if ((key_block = reallocarray(NULL, mac_secret_size + key_len + iv_len,
+	    2)) == NULL) {
 		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
+	key_block_len = (mac_secret_size + key_len + iv_len) * 2;
 
 	s->s3->tmp.key_block_length = key_block_len;
 	s->s3->tmp.key_block = key_block;
