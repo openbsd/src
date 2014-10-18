@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.402 2014/10/02 14:21:06 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.403 2014/10/18 20:28:19 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 2 2014 $
+.Dd $Mdocdate: October 18 2014 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3648,7 +3648,7 @@ to change the cursor colour from inside
 $ printf '\e033]12;red\e033\e\e'
 .Ed
 .It Em \&Ss , Se
-Change the cursor style.
+Set or reset the cursor style.
 If set, a sequence such as this may be used
 to change the cursor to an underline:
 .Bd -literal -offset indent
@@ -3656,10 +3656,8 @@ $ printf '\e033[4 q'
 .Ed
 .Pp
 If
-.Em Csr
-is set, it will be used to reset the cursor style instead
-of
-.Em Cs .
+.Em Se
+is not set, \&Ss with argument 0 will be used to reset the cursor style instead.
 .It Em \&Ms
 This sequence can be used by
 .Nm
