@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_realpath.c,v 1.1 2013/04/05 12:58:03 kurt Exp $ */
+/*	$OpenBSD: dl_realpath.c,v 1.2 2014/10/18 20:43:52 doug Exp $ */
 /*
  * Copyright (c) 2003 Constantin S. Svintsoff <kostik@iclub.nsu.ru>
  *
@@ -56,6 +56,9 @@ _dl_realpath(const char *path, char *resolved)
 	int slen, mem_allocated, ret;
 	char left[PATH_MAX], next_token[PATH_MAX], symlink[PATH_MAX];
 
+	if (path == NULL) {
+		return (NULL);
+	}
 	if (path[0] == '\0') {
 		return (NULL);
 	}
@@ -135,18 +138,13 @@ _dl_realpath(const char *path, char *resolved)
 		}
 
 		/*
-		 * Append the next path component and lstat() it. If
-		 * lstat() fails we still can return successfully if
-		 * there are no more path components left.
+		 * Append the next path component and lstat() it.
 		 */
 		resolved_len = _dl_strlcat(resolved, next_token, PATH_MAX);
 		if (resolved_len >= PATH_MAX) {
 			goto err;
 		}
 		if ((ret = _dl_lstat(resolved, &sb)) != 0) {
-			if (ret == ENOENT && p == NULL) {
-				return (resolved);
-			}
 			goto err;
 		}
 		if (S_ISLNK(sb.st_mode)) {
@@ -187,6 +185,8 @@ _dl_realpath(const char *path, char *resolved)
 				}
 			}
 			left_len = _dl_strlcpy(left, symlink, sizeof(left));
+		} else if (!S_ISDIR(sb.st_mode) && p != NULL) {
+			goto err;
 		}
 	}
 
