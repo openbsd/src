@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.115 2014/10/18 12:21:57 miod Exp $
+#	$OpenBSD: files.isa,v 1.116 2014/10/18 15:37:06 miod Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -142,7 +142,7 @@ file	dev/isa/if_ne_isa.c		ne_isa
 # and registers are clobbered by other drivers' probes
 device	we: ether, ifnet, dp8390nic, ifmedia
 attach	we at isa with we_isa
-file	dev/isa/if_we.c			we & (we_isa | we_isapnp)
+file	dev/isa/if_we.c			we & (we_isa | we_isapnp) needs-flag
 
 # 3Com common probe code
 define	elink
