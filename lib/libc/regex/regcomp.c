@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.25 2014/09/08 15:45:20 tedu Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.26 2014/10/18 04:12:28 deraadt Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -1047,16 +1047,16 @@ allocset(struct parse *p)
 		p->ncsalloc += CHAR_BIT;
 		nc = p->ncsalloc;
 		assert(nc % CHAR_BIT == 0);
-		nbytes = nc / CHAR_BIT * css;
 
 		ptr = reallocarray(p->g->sets, nc, sizeof(cset));
 		if (ptr == NULL)
 			goto nomem;
 		p->g->sets = ptr;
 
-		ptr = realloc(p->g->setbits, nbytes);
+		ptr = reallocarray(p->g->setbits, nc / CHAR_BIT, css);
 		if (ptr == NULL)
 			goto nomem;
+		nbytes = (nc / CHAR_BIT) * css;
 		p->g->setbits = ptr;
 
 		for (i = 0; i < no; i++)
