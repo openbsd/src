@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pxa2x0,v 1.23 2010/06/07 16:34:20 drahn Exp $
+#	$OpenBSD: files.pxa2x0,v 1.24 2014/10/18 12:21:56 miod Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -21,7 +21,7 @@ file	arch/arm/xscale/pxa2x0_dma.c
 # INTC controller
 device	pxaintc
 attach	pxaintc at pxaip
-file	arch/arm/xscale/pxa2x0_intr.c		pxaintc needs-flag
+file	arch/arm/xscale/pxa2x0_intr.c		pxaintc
 file	arch/arm/xscale/pxa2x0_mutex.c		pxaintc
 #defflag  opt_pxa2x0_gpio.h		PXAGPIO_HAS_GPION_INTRS
 
@@ -38,7 +38,7 @@ file	arch/arm/xscale/pxa2x0_dmac.c		pxadmac needs-flag
 # PXA2x0's built-in timer.
 device	pxaost
 attach	pxaost at pxaip
-file	arch/arm/xscale/pxa2x0_clock.c		pxaost needs-flag
+file	arch/arm/xscale/pxa2x0_clock.c		pxaost
 
 # NS16550 compatible serial ports
 attach	com at pxaip with com_pxaip

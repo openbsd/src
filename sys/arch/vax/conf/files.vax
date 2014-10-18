@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.57 2013/09/24 20:10:50 miod Exp $
+#	$OpenBSD: files.vax,v 1.58 2014/10/18 12:21:56 miod Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -101,12 +101,12 @@ major	{cd = 22}
 # builtin NCR53C95 SCSI Controller on VAXstation 4000 VLC/60/9x
 device	asc: scsi, ncr53c9x
 attach	asc at vsbus with asc_vsbus
-file	arch/vax/vsa/asc_vsbus.c		asc needs-flag
+file	arch/vax/vsa/asc_vsbus.c		asc
 
 # builtin NCR5380 SCSI-controller on VAXstation 
 device	ncr: scsi, ncr5380sbc
 attach	ncr at vsbus
-file	arch/vax/vsa/ncr.c			ncr needs-flag
+file	arch/vax/vsa/ncr.c			ncr
 
 # LANCE ethernet controller on VAXstation
 attach	le at vsbus with le_vsbus: le24

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0.c,v 1.18 2014/03/29 18:09:28 guenther Exp $ */
+/*	$OpenBSD: pxa2x0.c,v 1.19 2014/10/18 12:21:56 miod Exp $ */
 /*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
 
 /*
@@ -87,7 +87,6 @@
  *
  */
 
-#include "pxaintc.h"
 #include "pxagpio.h"
 #include "pxadmac.h"
 

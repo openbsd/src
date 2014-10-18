@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.78 2014/07/11 21:54:37 tedu Exp $
+#	$OpenBSD: files.macppc,v 1.79 2014/10/18 12:21:56 miod Exp $
 
 #
 # macppc-specific configuration info
@@ -112,7 +112,7 @@ file	arch/macppc/pci/macobio.c			macobio
 # kauai ATA glue
 device	kauaiata {}
 attach	kauaiata at pci 
-file	arch/macppc/pci/kauaiata.c			kauaiata needs-flag
+file	arch/macppc/pci/kauaiata.c			kauaiata
 
 #device	esp: scsi, ncr53c9x
 #attach	esp at macobio

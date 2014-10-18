@@ -1,4 +1,4 @@
-#	$OpenBSD: files.tc,v 1.11 2013/10/28 12:33:32 mpi Exp $
+#	$OpenBSD: files.tc,v 1.12 2014/10/18 12:21:57 miod Exp $
 #	$NetBSD: files.tc,v 1.26 2001/11/28 10:21:24 lukem Exp $
 #
 # Config file and device description for machine-independent
@@ -6,7 +6,7 @@
 
 device	tc {[slot = -1], [offset = -1]}
 #attach	tc at tcbus
-file	dev/tc/tc.c			tc	needs-flag
+file	dev/tc/tc.c			tc
 
 # IOCTL ASIC
 device	ioasic {[offset = -1]}
