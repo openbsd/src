@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.109 2014/10/09 09:34:17 mpi Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.110 2014/10/19 03:54:56 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -459,8 +459,8 @@ msk_init_tx_ring(struct sk_if_softc *sc_if)
 			nexti = i + 1;
 		cd->sk_tx_chain[i].sk_next = &cd->sk_tx_chain[nexti];
 
-		if (bus_dmamap_create(sc->sc_dmatag, SK_JLEN, SK_NTXSEG,
-		   SK_JLEN, 0, BUS_DMA_NOWAIT, &dmamap))
+		if (bus_dmamap_create(sc->sc_dmatag, sc_if->sk_pktlen,
+		    SK_NTXSEG, sc_if->sk_pktlen, 0, BUS_DMA_NOWAIT, &dmamap))
 			return (ENOBUFS);
 
 		entry = malloc(sizeof(*entry), M_DEVBUF, M_NOWAIT);
