@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.26 2014/10/17 14:46:54 schwarze Exp $	*/
+/*	$OpenBSD: du.c,v 1.27 2014/10/19 14:27:41 schwarze Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -315,6 +315,6 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: du [-d depth] [-achkrsx] [-H | -L | -P] [file ...]\n");
+	    "usage: du [-achkrsx] [-d depth] [-H | -L | -P] [file ...]\n");
 	exit(1);
 }
