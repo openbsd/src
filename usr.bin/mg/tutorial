@@ -15,17 +15,13 @@ If you don't have a Meta key, you can use Esc instead. Press and release the
 Esc key and type <chr>. This is equivalent to M-<chr>.
 
 The first thing to learn is how to move up and down a document. To move your 
-cursor down, use the down-arrow cursor key or C-n (Control and n).
+cursor down a line, use the down-arrow cursor key or C-n (Control and n).
 
 >> Now type C-n multiple times and move your cursor past this line.
 
-Congratulations. You have now learned how to move your cursor down. Note how 
-mg has redrawn your screen so that the cursor is now in the middle of the 
-screen. This is a feature of mg, which allows you to see the lines before and 
-after the current cursor position.
-
-To move your cursor up, you can use the up-arrow cursor key or C-p (Control and
-p). 
+Congratulations. You have now learned how to move your cursor down. To move
+your cursor up one line, you can use the up-arrow cursor key or C-p (Control
+and p). 
 
 >> Try using C-p and C-n to move up and down and then move past this line.
 
@@ -49,10 +45,14 @@ moves one letter forward, whereas M-f moves one word forward. There are many
 key combinations in mg, where C-<chr> will perform one function and M-<chr>
 will perform a similar related function.
 
-Next, we will learn how to refresh and redraw the screen.
+Most probably by now you have moved passed the bottom of the text which was
+initially shown to you when you opened this document. mg redraws your terminal
+screen so that the cursor is in the middle. This is a feature of mg, which
+allows you to see the lines before and after the current cursor position. The
+same effect can be achieved manually.
 
 >> Now move the cursor down to this line and then type C-l (that's Control and
-   lowercase L) to refresh the screen.
+   lowercase L).
 
 Note that C-l refreshes the screen and centers it on the line you typed it on.
 
@@ -333,10 +333,9 @@ Author Info
 -----------
 
 Original Author of this document: Mayukh Bose, 
-Date last updated: 2013-05-17
+Date last updated: 2014-10-19
 
 Copyright
 ---------
 
 None. This document is in the public domain.
-
