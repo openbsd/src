@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.79 2014/10/19 17:58:14 doug Exp $
+.\"	$OpenBSD: malloc.3,v 1.80 2014/10/19 21:05:53 schwarze Exp $
 .\"
 .Dd $Mdocdate: October 19 2014 $
 .Dt MALLOC 3
@@ -97,6 +97,14 @@ If the space cannot be allocated, the object
 pointed to by
 .Fa ptr
 is unchanged.
+If
+.Fa ptr
+is
+.Dv NULL ,
+.Fn realloc
+behaves like
+.Fn malloc
+and allocates a new object.
 .Pp
 The
 .Fn reallocarray
@@ -139,95 +147,38 @@ function is also provided for compatibility with old systems and other
 libraries; it is simply an alias for
 .Fn free .
 .Sh RETURN VALUES
-If
+Upon successful completion, the functions
 .Fn malloc ,
 .Fn calloc ,
 .Fn realloc ,
-or
+and
 .Fn reallocarray
-is called with
+return a pointer to the allocated space; otherwise, a
+.Dv NULL
+pointer is returned and
+.Va errno
+is set to
+.Er ENOMEM .
+If
 .Fa size
 or
 .Fa nmemb
 is equal to 0,
 a pointer to an access protected, zero sized object is returned.
 .Pp
-If
-.Fn malloc
-is called with
-.Fa size
-greater than 0, it returns a pointer to the allocated space if successful;
-otherwise, a
-.Dv NULL
-pointer is returned and
-.Va errno
-is set to
-.Er ENOMEM .
-.Pp
-The
-.Fn calloc
-function checks for integer overflow and returns
-.Dv NULL
-if
-.Fa nmemb
-*
-.Fa size
-will result in integer overflow.
-If
+If multiplying
 .Fa nmemb
 and
 .Fa size
-are greater than 0,
+results in integer overflow,
 .Fn calloc
-returns a pointer to the allocated space if successful; otherwise, a
-.Dv NULL
-pointer is returned and
-.Va errno
-is set to
-.Er ENOMEM .
-.Pp
-The
-.Fn realloc
-function behaves like
-.Fn malloc
-for the specified
-.Fa size
-when
-.Fa ptr
-is
-.Dv NULL .
-If
-.Fa size
-is greater than 0,
-.Fn realloc
-returns a pointer to the allocated space if successful; otherwise, a
-.Dv NULL
-pointer is returned and
-.Va errno
-is set to
-.Er ENOMEM .
-.Pp
-The
-.Fn reallocarray
-function checks for integer overflow and returns
-.Dv NULL
-if
-.Fa nmemb
-*
-.Fa size
-will result in integer overflow.
-If
-.Fn reallocarray
-is called with
-.Fa size
 and
-.Fa nmemb
-greater than 0, it returns a pointer to the allocated space if successful;
-otherwise, a
+.Fn reallocarray
+return
 .Dv NULL
-pointer is returned and
+and set
 .Va errno
-is set to
+to
 .Er ENOMEM .
 .Pp
 The
@@ -315,8 +266,8 @@ Code designed for some ancient platforms avoided calling
 with a
 .Dv NULL
 .Fa ptr .
-Such hacks are no longer necessary in modern code.  Instead of
-this idiom:
+Such hacks are no longer necessary in modern code.
+Instead of this idiom:
 .Bd -literal -offset indent
 if (p == NULL)
 	newp = malloc(newsize);
@@ -361,8 +312,8 @@ if ((p = malloc(size * num)) == NULL)
 	err(1, "malloc");
 .Ed
 .Pp
-The above test is not sufficient in all cases.  For example, multiplying
-ints requires a different set of checks:
+The above test is not sufficient in all cases.
+For example, multiplying ints requires a different set of checks:
 .Bd -literal -offset indent
 int size;
 int num;
