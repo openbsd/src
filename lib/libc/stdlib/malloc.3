@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.80 2014/10/19 21:05:53 schwarze Exp $
+.\"	$OpenBSD: malloc.3,v 1.81 2014/10/20 19:35:23 schwarze Exp $
 .\"
-.Dd $Mdocdate: October 19 2014 $
+.Dd $Mdocdate: October 20 2014 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -159,12 +159,16 @@ pointer is returned and
 .Va errno
 is set to
 .Er ENOMEM .
+.Pp
 If
 .Fa size
 or
 .Fa nmemb
-is equal to 0,
-a pointer to an access protected, zero sized object is returned.
+is equal to 0, a unique pointer to an access protected,
+zero sized object is returned.
+Access via this pointer will generate a
+.Dv SIGSEGV
+exception.
 .Pp
 If multiplying
 .Fa nmemb
@@ -564,6 +568,28 @@ and
 .Fn free
 functions conform to
 .St -ansiC .
+.Pp
+If
+.Fa size
+or
+.Fa nmemb
+are 0, the return value is implementation defined;
+other conforming implementations may return
+.Dv NULL
+in this case.
+.Pp
+The standard does not require
+.Fn calloc
+to check for integer overflow,
+but most modern implementations provide this check.
+.Pp
+The
+.Ev MALLOC_OPTIONS
+environment variable, the file
+.Pa /etc/malloc.conf ,
+and the
+.Sx DIAGNOSTICS
+output are extensions to the standard.
 .Sh HISTORY
 A
 .Fn free
@@ -618,35 +644,6 @@ The
 .Fn cfree
 function appeared in SunOS 4.x.
 .Sh CAVEATS
-The
-.Fn calloc
-function checks for integer overflow in
-.Ox
-and most other modern platforms.
-Software targeting ancient platforms should not rely on this behavior.
-.Pp
-The
-.Fn malloc ,
-.Fn calloc ,
-and
-.Fn realloc
-functions have implementation defined behavior when
-.Fa size
-or
-.Fa nmemb
-are zero.
-.Pp
-Allocation of a zero size object returns a pointer to an access protected zero
-size object.
-Many zero-sized objects can be placed consecutively in shared
-protected pages.
-The minimum size of the protection on each object is suitably aligned and
-sized as previously stated, but the protection may extend further depending
-on where in a protected zone the object lands.
-Attempting to access these objects will generate a
-.Pq Dv SIGSEGV
-exception.
-.Pp
 When using
 .Fn malloc ,
 be wary of signed integer and
