@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.120 2014/10/12 02:59:04 bentley Exp $
+.\"	$OpenBSD: mdoc.7,v 1.121 2014/10/20 17:58:56 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 12 2014 $
+.Dd $Mdocdate: October 20 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1585,7 +1585,7 @@ arguments are treated as separate utilities.
 See also
 .Sx \&Rv .
 .Ss \&Fa
-Function argument.
+Function argument or parameter.
 Its syntax is as follows:
 .Bd -ragged -offset indent
 .Pf \. Sx \&Fa
@@ -2719,8 +2719,17 @@ A variable name.
 Examples:
 .Dl \&.Va foo
 .Dl \&.Va const char *bar ;
+.Pp
+For function arguments and parameters, use
+.Sx \&Fa
+instead.
+For declarations of global variables in the
+.Em SYNOPSIS
+section, use
+.Sx \&Vt .
 .Ss \&Vt
 A variable type.
+.Pp
 This is also used for indicating global variables in the
 .Em SYNOPSIS
 section, in which case a variable name is also specified.
@@ -2735,18 +2744,21 @@ In the former case, this macro starts a new output line,
 and a blank line is inserted in front if there is a preceding
 function definition or include directive.
 .Pp
-Note that this should not be confused with
-.Sx \&Ft ,
-which is used for function return types.
-.Pp
 Examples:
 .Dl \&.Vt unsigned char
 .Dl \&.Vt extern const char * const sys_signame[] \&;
 .Pp
+For parameters in function prototypes, use
+.Sx \&Fa
+instead, for function return types
+.Sx \&Ft ,
+and for variable names outside the
+.Em SYNOPSIS
+section
+.Sx \&Va ,
+even when including a type with the name.
 See also
-.Sx MANUAL STRUCTURE
-and
-.Sx \&Va .
+.Sx MANUAL STRUCTURE .
 .Ss \&Xc
 Close a scope opened by
 .Sx \&Xo .
