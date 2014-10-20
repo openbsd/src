@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.35 2014/07/08 05:35:19 dlg Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.36 2014/10/20 07:06:00 jsg Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -335,7 +335,7 @@ read_mb(void)
 		int pnd = num_disp;
 		for (p = 0; p < ifi->data.ifri_total; p++) {
 			ifr = &ifi->data.ifri_entries[p];
-			if (ifr->ifr_info.rxr_alive == 0);
+			if (ifr->ifr_info.rxr_alive == 0)
 				continue;
 			num_disp++;
 		}
