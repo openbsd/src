@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.25 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.26 2014/10/20 23:35:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -26,6 +26,11 @@
 /*
  * Displays a message in the status line.
  */
+
+#define DISPLAY_MESSAGE_TEMPLATE			\
+	"[#{session_name}] #{window_index}:"		\
+	"#{window_name}, current pane #{pane_index} "	\
+	"- (%H:%M %d-%b-%y)"
 
 enum cmd_retval	 cmd_display_message_exec(struct cmd *, struct cmd_q *);
 

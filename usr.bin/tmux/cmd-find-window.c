@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find-window.c,v 1.28 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-find-window.c,v 1.29 2014/10/20 23:35:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,6 +27,11 @@
 /*
  * Find window containing text.
  */
+
+#define FIND_WINDOW_TEMPLATE					\
+	"#{window_index}: #{window_name} "			\
+	"[#{window_width}x#{window_height}] "			\
+	"(#{window_panes} panes) #{window_find_matches}"
 
 enum cmd_retval	 cmd_find_window_exec(struct cmd *, struct cmd_q *);
 

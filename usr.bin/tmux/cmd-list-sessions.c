@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-sessions.c,v 1.17 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-list-sessions.c,v 1.18 2014/10/20 23:35:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,6 +27,14 @@
 /*
  * List all sessions.
  */
+
+#define LIST_SESSIONS_TEMPLATE				\
+	"#{session_name}: #{session_windows} windows "	\
+	"(created #{session_created_string}) "		\
+	"[#{session_width}x#{session_height}]"		\
+	"#{?session_grouped, (group ,}"			\
+	"#{session_group}#{?session_grouped,),}"	\
+	"#{?session_attached, (attached),}"
 
 enum cmd_retval	 cmd_list_sessions_exec(struct cmd *, struct cmd_q *);
 

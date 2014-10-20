@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.62 2014/10/20 22:57:46 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.63 2014/10/20 23:35:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -30,6 +30,8 @@
 /*
  * Create a new session and attach to the current terminal unless -d is given.
  */
+
+#define NEW_SESSION_TEMPLATE "#{session_name}:"
 
 enum cmd_retval	 cmd_new_session_exec(struct cmd *, struct cmd_q *);
 

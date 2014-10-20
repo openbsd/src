@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-buffers.c,v 1.22 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-list-buffers.c,v 1.23 2014/10/20 23:35:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,6 +26,9 @@
 /*
  * List paste buffers.
  */
+
+#define LIST_BUFFERS_TEMPLATE						\
+	"#{buffer_name}: #{buffer_size} bytes: \"#{buffer_sample}\""
 
 enum cmd_retval	 cmd_list_buffers_exec(struct cmd *, struct cmd_q *);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-buffer.c,v 1.19 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-choose-buffer.c,v 1.20 2014/10/20 23:35:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,6 +26,9 @@
 /*
  * Enter choice mode to choose a buffer.
  */
+
+#define CHOOSE_BUFFER_TEMPLATE						\
+	"#{buffer_name}: #{buffer_size} bytes: #{buffer_sample}"
 
 enum cmd_retval	 cmd_choose_buffer_exec(struct cmd *, struct cmd_q *);
 

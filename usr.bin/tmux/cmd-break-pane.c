@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.24 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.25 2014/10/20 23:35:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -25,6 +25,8 @@
 /*
  * Break pane off into a window.
  */
+
+#define BREAK_PANE_TEMPLATE "#{session_name}:#{window_index}.#{pane_index}"
 
 enum cmd_retval	 cmd_break_pane_exec(struct cmd *, struct cmd_q *);
 

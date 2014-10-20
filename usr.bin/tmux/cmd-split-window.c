@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.52 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.53 2014/10/20 23:35:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -30,6 +30,8 @@
 /*
  * Split a window (add a new pane).
  */
+
+#define SPLIT_WINDOW_TEMPLATE "#{session_name}:#{window_index}.#{pane_index}"
 
 enum cmd_retval	 cmd_split_window_exec(struct cmd *, struct cmd_q *);
 

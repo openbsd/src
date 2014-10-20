@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.42 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.43 2014/10/20 23:35:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,6 +29,8 @@
 /*
  * Create a new window.
  */
+
+#define NEW_WINDOW_TEMPLATE "#{session_name}:#{window_index}.#{pane_index}"
 
 enum cmd_retval	cmd_new_window_exec(struct cmd *, struct cmd_q *);
 

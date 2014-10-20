@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-client.c,v 1.20 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-choose-client.c,v 1.21 2014/10/20 23:35:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,6 +26,12 @@
 /*
  * Enter choice mode to choose a client.
  */
+
+#define CHOOSE_CLIENT_TEMPLATE					\
+	"#{client_tty}: #{session_name} "			\
+	"[#{client_width}x#{client_height} #{client_termname}]"	\
+	"#{?client_utf8, (utf8),}#{?client_readonly, (ro),} "	\
+	"(last used #{client_activity_string})"
 
 enum cmd_retval	 cmd_choose_client_exec(struct cmd *, struct cmd_q *);
 
