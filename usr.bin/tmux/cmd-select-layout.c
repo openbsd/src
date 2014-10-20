@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-layout.c,v 1.23 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-select-layout.c,v 1.24 2014/10/20 22:34:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -30,6 +30,7 @@ const struct cmd_entry cmd_select_layout_entry = {
 	"select-layout", "selectl",
 	"npt:", 0, 1,
 	"[-np] " CMD_TARGET_WINDOW_USAGE " [layout-name]",
+	0,
 	cmd_select_layout_exec
 };
 

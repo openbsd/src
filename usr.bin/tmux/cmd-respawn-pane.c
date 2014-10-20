@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-pane.c,v 1.12 2014/05/13 08:08:32 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-pane.c,v 1.13 2014/10/20 22:34:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -35,7 +35,6 @@ const struct cmd_entry cmd_respawn_pane_entry = {
 	"kt:", 0, -1,
 	"[-k] " CMD_TARGET_PANE_USAGE " [command]",
 	0,
-	NULL,
 	cmd_respawn_pane_exec
 };
 
