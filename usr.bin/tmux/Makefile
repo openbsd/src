@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.72 2014/10/20 22:44:30 nicm Exp $
+# $OpenBSD: Makefile,v 1.73 2014/10/20 22:57:46 nicm Exp $
 
 PROG=	tmux
 SRCS=	arguments.c \
@@ -22,7 +22,6 @@ SRCS=	arguments.c \
 	cmd-display-message.c \
 	cmd-display-panes.c \
 	cmd-find-window.c \
-	cmd-has-session.c \
 	cmd-if-shell.c \
 	cmd-join-pane.c \
 	cmd-kill-pane.c \
