@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 1989 Jan-Simon Pendry
- * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1989, 1993
+ * Copyright (c) 1989, 1990 Jan-Simon Pendry
+ * Copyright (c) 1989, 1990 Imperial College of Science, Technology & Medicine
+ * Copyright (c) 1989, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mtab.c	8.1 (Berkeley) 6/6/93
- *	$Id: mtab.c,v 1.5 2003/06/02 23:36:51 millert Exp $
+ *	$Id: mtab.c,v 1.6 2014/10/20 00:20:04 guenther Exp $
  */
 
 #include "am.h"
@@ -47,7 +47,7 @@ mnt_free(struct mntent *mp)
 	free(mp->mnt_dir);
 	free(mp->mnt_type);
 	free(mp->mnt_opts);
-	free((void *)mp);
+	free(mp);
 }
 
 /*
@@ -62,7 +62,7 @@ discard_mntlist(mntlist *mp)
 		mp = mp->mnext;
 		if (mp2->mnt)
 			mnt_free(mp2->mnt);
-		free((void *)mp2);
+		free(mp2);
 	}
 }
 
@@ -94,4 +94,63 @@ hasmntval(struct mntent *mnt, char *opt)
 	}
 
 	return 0;
+}
+
+static struct mntent *
+mnt_dup(struct statfs *mp)
+{
+	struct mntent *new_mp = ALLOC(mntent);
+	char *ty;
+
+	new_mp->mnt_fsname = strdup(mp->f_mntfromname);
+	new_mp->mnt_dir = strdup(mp->f_mntonname);
+	ty = mp->f_fstypename;
+	new_mp->mnt_type = strdup(ty);
+	new_mp->mnt_opts = strdup("unset");
+	new_mp->mnt_freq = 0;
+	new_mp->mnt_passno = 0;
+
+	return new_mp;
+}
+
+/*
+ * Read a mount table into memory
+ */
+mntlist *
+read_mtab(char *fs)
+{
+	mntlist **mpp, *mhp;
+	struct statfs *mntbufp, *mntp;
+
+	int nloc = getmntinfo(&mntbufp, MNT_NOWAIT);
+
+	if (nloc == 0) {
+		plog(XLOG_ERROR, "Can't read mount table");
+		return 0;
+	}
+
+	mpp = &mhp;
+	for (mntp = mntbufp; mntp < mntbufp + nloc; mntp++) {
+		/*
+		 * Allocate a new slot
+		 */
+		*mpp = ALLOC(mntlist);
+
+		/*
+		 * Copy the data returned by getmntent
+		 */
+		(*mpp)->mnt = mnt_dup(mntp);
+
+		/*
+		 * Move to next pointer
+		 */
+		mpp = &(*mpp)->mnext;
+	}
+
+	/*
+	 * Terminate the list
+	 */
+	*mpp = 0;
+
+	return mhp;
 }

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)get_args.c	8.1 (Berkeley) 6/6/93
- *	$Id: get_args.c,v 1.12 2014/01/21 22:19:32 jsg Exp $
+ *	$Id: get_args.c,v 1.13 2014/10/20 00:20:04 guenther Exp $
  */
 
 /*
@@ -40,9 +40,7 @@
  */
 
 #include "am.h"
-#ifdef HAS_SYSLOG
 #include <syslog.h>
-#endif /* HAS_SYSLOG */
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -246,15 +244,6 @@ get_args(int c, char *v[])
 	}
 
 	if (optind == c) {
-#ifdef hpux
-		/*
-		 * HP-UX can't handle ./mtab
-		 * That system is sick - really.
-		 */
-#ifdef	DEBUG
-		debug_option("nomtab");
-#endif	/* DEBUG */
-#endif	/* hpux */
 
 		/*
 		 * Append domain name to hostname.

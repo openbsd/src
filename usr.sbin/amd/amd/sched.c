@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.c,v 1.14 2011/11/06 01:43:50 guenther Exp $	*/
+/*	$OpenBSD: sched.c,v 1.15 2014/10/20 00:20:04 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sched.c	8.1 (Berkeley) 6/6/93
- *	$Id: sched.c,v 1.14 2011/11/06 01:43:50 guenther Exp $
+ *	$Id: sched.c,v 1.15 2014/10/20 00:20:04 guenther Exp $
  */
 
 /*
@@ -43,7 +43,7 @@
 
 #include "am.h"
 #include <signal.h>
-#include WAIT
+#include <sys/wait.h>
 #include <setjmp.h>
 extern jmp_buf select_intr;
 extern int select_intr_valid;
@@ -197,11 +197,7 @@ sigchld(int sig)
 	int save_errno = errno;
 	pid_t pid;
 
-#ifdef SYS5_SIGNALS
-	if ((pid = wait(&w)) > 0) {
-#else
 	while ((pid = waitpid((pid_t)-1, &w, WNOHANG)) > 0) {
-#endif /* SYS5_SIGNALS */
 		pjob *p, *p2;
 
 		if (WIFSIGNALED(w))
@@ -229,9 +225,6 @@ sigchld(int sig)
 #endif /* DEBUG */
 	}
 
-#ifdef SYS5_SIGNALS
-	signal(sig, sigchld);
-#endif /* SYS5_SIGNALS */
 	if (select_intr_valid)
 		longjmp(select_intr, sig);
 	errno = save_errno;

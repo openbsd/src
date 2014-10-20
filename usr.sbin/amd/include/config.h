@@ -32,20 +32,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
- *	$Id: config.h,v 1.7 2005/12/21 01:40:24 millert Exp $
+ *	$Id: config.h,v 1.8 2014/10/20 00:20:04 guenther Exp $
  */
-
-#ifdef __GNUC__
-#define INLINE /* __inline */
-#else
-#define	INLINE
-#endif /* __GNUC__ */
 
 /*
  * Pick up target dependent definitions
  */
 #include "os-defaults.h"
-#include OS_HDR
+#include "os-bsd44.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -59,9 +53,7 @@ extern char *__progname;
 extern char hostname[];		/* "kiska" */
 extern pid_t mypid;		/* Current process id */
 
-#ifdef HAS_SYSLOG
 extern int syslogging;		/* Really using syslog */
-#endif /* HAS_SYSLOG */
 extern FILE *logfp;		/* Log file */
 extern int xlog_level;		/* Logging level */
 extern int xlog_level_init;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: os-bsd44.h,v 1.9 2010/07/05 21:54:11 tedu Exp $	*/
+/*	$OpenBSD: os-bsd44.h,v 1.10 2014/10/20 00:20:04 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -59,18 +59,6 @@
 #define OS_HAS_NDBM
 
 /*
- * 4.4 doesn't provide NIS, but NetBSD does.
- */
-#if !(defined(__NetBSD__) || defined(__OpenBSD__))
-#undef HAS_NIS_MAPS
-#endif
-
-/*
- * OS provides strerror()
- */
-#define HAS_STRERROR
-
-/*
  * The mount table is obtained from the kernel
  */
 #undef	UPDATE_MTAB
@@ -88,17 +76,6 @@
 #undef MTAB_TYPE_UFS
 #define	MTAB_TYPE_UFS	"ufs"
 #define	MTAB_TYPE_MFS	"mfs"
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-#undef MTYPE_TYPE
-#define MTYPE_TYPE char *
-#endif
-
-/*
- * How to unmount filesystems
- */
-#undef UNMOUNT_TRAP
-#undef	NEED_UMOUNT_FS
-#define	NEED_UMOUNT_BSD
 
 /*
  * How to copy an address into an NFS filehandle
@@ -110,24 +87,6 @@
 		(dst).sotype = SOCK_DGRAM; \
 		(dst).proto = 0; \
 	}
-
-/*
- * Byte ordering
- */
-#ifndef BYTE_ORDER
-#include <sys/types.h>
-#endif /* BYTE_ORDER */
-
-#undef ARCH_ENDIAN
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define ARCH_ENDIAN "little"
-#else
-#if BYTE_ORDER == BIG_ENDIAN
-#define ARCH_ENDIAN "big"
-#else
-XXX - Probably no hope of running Amd on this machine!
-#endif /* BIG */
-#endif /* LITTLE */
 
 /*
  * Miscellaneous 4.4 BSD bits
@@ -169,15 +128,7 @@ struct mntent {
  * Type of a file handle
  */
 #undef NFS_FH_TYPE
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define NFS_FH_TYPE void *
-#endif
-
-/*
- * How to get a mount list
- */
-#undef	READ_MTAB_FROM_FILE
-#define	READ_MTAB_BSD_STYLE
 
 /*
  * The data for the mount syscall needs the path in addition to the
@@ -185,12 +136,6 @@ struct mntent {
  * mounted filesystem.
  */
 #define	NFS_ARGS_NEEDS_PATH
-
-/*
- * 4.4 has RE support built in
- */
-#undef RE_HDR
-#define RE_HDR <regex.h>
 
 /*
  * Need precise length links

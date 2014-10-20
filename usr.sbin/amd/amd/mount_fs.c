@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount_fs.c	8.1 (Berkeley) 6/6/93
- *	$Id: mount_fs.c,v 1.11 2013/12/03 02:14:57 deraadt Exp $
+ *	$Id: mount_fs.c,v 1.12 2014/10/20 00:20:04 guenther Exp $
  */
 
 #include "am.h"
@@ -46,13 +46,6 @@ typedef nfs_fh fhandle_t;
 /*
  * Standard mount flags
  */
-#ifdef hpux
-/*
- * HP-UX has an annoying feature of printing
- * error msgs on /dev/console
- */
-#undef M_NOSUID
-#endif /* hpux */
 
 struct opt_tab mnt_flags[] = {
 	{ "ro", M_RDONLY },

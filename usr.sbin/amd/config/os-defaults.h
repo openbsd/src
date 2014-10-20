@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
@@ -32,10 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)os-defaults.h	8.1 (Berkeley) 6/6/93
- *	$Id: os-defaults.h,v 1.2 2003/06/02 23:36:52 millert Exp $
- *
- * Common OS definitions.  These may be overridden in
- * the OS specific files ("os-foo.h").
+ *	$Id: os-defaults.h,v 1.3 2014/10/20 00:20:04 guenther Exp $
  */
 
 /*
@@ -46,34 +44,14 @@
 #define	AMD_COMPAT	5000000		/* 5.0 */
 
 /*
- * What type is free(void*) returning?
- */
-#define FREE_RETURN_TYPE	void
-
-/*
  * Is the mount table mirrored in software
  */
 #define	UPDATE_MTAB
 
 /*
- * Where to get union wait
- */
-#define	WAIT	<sys/wait.h>
-
-/*
  * Where to get mount entry info
  */
 #define	MNTENT_HDR	<mntent.h>
-
-/*
- * Include support for syslog()
- */
-#define	HAS_SYSLOG
-
-/*
- * Byte ordering
- */
-#define	ARCH_ENDIAN	"unknown"
 
 /*
  * Name of filesystem types
@@ -83,22 +61,13 @@
 
 /*
  * Name of mount & unmount system calls
- *
- * NOTE:
- *  UNMOUNT_TRAP takes a struct mntent *
  */
 #define	MOUNT_TRAP(type, mnt, flags, mnt_data) \
 	mount(type, mnt->mnt_dir, flags, mnt_data)
-#define	UNMOUNT_TRAP(mnt)	unmount(mnt->mnt_dir)
 
 /*
  * How to unmount filesystems.
- * NEED_UMOUNT_FS includes code to scan the mount table
- * to find the correct information for the unmount system
- * call.  Some systems, such as 4.4bsd, do not require
- * this - they can just do an unmount system call directly.
  */
-#define	NEED_UMOUNT_FS
 #define	UMOUNT_FS(dir)	umount_fs(dir)
 
 /*
@@ -115,12 +84,7 @@
 /*
  * Type of filesystem type
  */
-#define	MTYPE_TYPE	int
-
-/*
- * How to get a mount list
- */
-#define	READ_MTAB_FROM_FILE
+#define MTYPE_TYPE	char *
 
 /*
  * Make Amd automount points appear
@@ -129,10 +93,3 @@
  * problem in df et al.
  */
 #define	HAS_EMPTY_AUTOMOUNTS
-
-/*
- * For the RE matcher
- */
-#define	CHARBITS 0377
-#define STRCSPN
-#define RE_HDR "re.h"

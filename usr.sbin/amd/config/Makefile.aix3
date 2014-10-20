@@ -1,4 +1,0 @@
-#	from: @(#)Makefile.aix3	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile.aix3,v 1.1.1.1 1995/10/18 08:47:13 deraadt Exp $
-#
-SYSLIB = -lbsd

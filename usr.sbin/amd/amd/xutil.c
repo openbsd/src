@@ -32,16 +32,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
- *	$Id: xutil.c,v 1.12 2009/08/12 13:21:17 deraadt Exp $
+ *	$Id: xutil.c,v 1.13 2014/10/20 00:20:04 guenther Exp $
  */
 
 #include "config.h"
-#ifdef HAS_SYSLOG
 #include <syslog.h>
-#endif /* HAS_SYSLOG */
-#ifdef HAS_STRERROR
 #include <string.h>
-#endif
 
 #include <unistd.h>
 #include <stdarg.h>
@@ -49,9 +45,7 @@
 #include <sys/stat.h>
 
 FILE *logfp = stderr;		/* Log errors to stderr initially */
-#ifdef HAS_SYSLOG
 int syslogging;
-#endif /* HAS_SYSLOG */
 int xlog_level = XLOG_ALL & ~XLOG_MAP & ~XLOG_STATS & ~XLOG_INFO;
 int xlog_level_init = ~0;
 
@@ -173,13 +167,9 @@ checkup_mem(void)
  * with the current error code taken from errno.  Make sure
  * 'e' never gets longer than maxlen characters.
  */
-INLINE static void
+static void
 expand_error(char *f, char *e, int maxlen)
 {
-#ifndef HAS_STRERROR
-	extern int sys_nerr;
-	extern char *sys_errlist[];
-#endif
 	char *p, *q;
 	int error = errno;
 	int len = 0;
@@ -187,14 +177,7 @@ expand_error(char *f, char *e, int maxlen)
 	for (p = f, q = e; (*q = *p) && len < maxlen; len++, q++, p++) {
 		if (p[0] == '%' && p[1] == 'm') {
 			char *errstr;
-#ifdef HAS_STRERROR
 			errstr = strerror(error);
-#else
-			if (error < 0 || error >= sys_nerr)
-				errstr = 0;
-			else
-				errstr = sys_errlist[error];
-#endif
 			if (errstr)
 				strlcpy(q, errstr, maxlen - (q - e));
 			else
@@ -279,7 +262,6 @@ plog(int lvl, char *fmt, ...)
 	ptr = msg + strlen(msg);
 	if (ptr[-1] == '\n')
 		*--ptr  = '\0';
-#ifdef HAS_SYSLOG
 	if (syslogging) {
 		switch(lvl) {	/* from mike <mcooper@usc.edu> */
 		case XLOG_FATAL:	lvl = LOG_CRIT; break;
@@ -295,7 +277,6 @@ plog(int lvl, char *fmt, ...)
 		syslog(lvl, "%s", msg);
 		return;
 	}
-#endif /* HAS_SYSLOG */
 
 	/*
 	 * Mimic syslog header
@@ -421,13 +402,10 @@ switch_to_logfile(char *logfile)
 	FILE *new_logfp = stderr;
 
 	if (logfile) {
-#ifdef HAS_SYSLOG
 		syslogging = 0;
-#endif /* HAS_SYSLOG */
 		if (strcmp(logfile, "/dev/stderr") == 0)
 			new_logfp = stderr;
 		else if (strcmp(logfile, "syslog") == 0) {
-#ifdef HAS_SYSLOG
 			syslogging = 1;
 			new_logfp = stderr;
 #if defined(LOG_CONS) && defined(LOG_NOWAIT)
@@ -437,9 +415,6 @@ switch_to_logfile(char *logfile)
 			/* 4.2 compat mode - XXX */
 			openlog(__progname, LOG_PID);
 #endif /* LOG_CONS && LOG_NOWAIT */
-#else
-			plog(XLOG_WARNING, "syslog option not supported, logging unchanged");
-#endif /* HAS_SYSLOG */
 		} else {
 			(void) umask(orig_umask);
 			new_logfp = fopen(logfile, "a");

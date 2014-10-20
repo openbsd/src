@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2010/11/03 12:01:10 jsg Exp $
+#	$OpenBSD: Makefile,v 1.5 2014/10/20 00:20:04 guenther Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/22/94
 
 .include "../config/Makefile.config"
@@ -10,7 +10,7 @@ SRCS=	afs_ops.c am_ops.c clock.c util.c xutil.c \
 	info_ndbm.c info_passwd.c info_nis.c \
 	info_union.c map.c srvr_afs.c srvr_nfs.c \
 	mntfs.c misc_rpc.c mount_fs.c mount_xdr.c \
-	mtab.c mtab_bsd.c nfs_ops.c nfs_prot_svc.c \
+	mtab.c nfs_ops.c nfs_prot_svc.c \
 	nfs_start.c nfs_subr.c nfs_prot_xdr.c opts.c \
 	pfs_ops.c rpc_fwd.c sched.c sfs_ops.c amq_svc.c \
 	amq_subr.c umount_fs.c host_ops.c nfsx_ops.c \
@@ -20,7 +20,6 @@ CFLAGS+=-I${.CURDIR}/../config
 CFLAGS+=-I${.CURDIR}/../include
 CFLAGS+=-DARCH_REP=\"${MACHINE}\"
 CFLAGS+=-DOS_REP=\"${OS}\"
-CFLAGS+=-DOS_HDR=\"os-${OS}.h\"
 CFLAGS+=${CONFIG}
 
 .PATH: ${.CURDIR}/../rpcx ${.CURDIR}/../config
