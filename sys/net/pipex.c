@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.56 2014/10/18 19:28:02 uebayasi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.57 2014/10/20 16:33:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -38,6 +38,7 @@
 #include <sys/time.h>
 #include <sys/timeout.h>
 #include <sys/kernel.h>
+#include <sys/pool.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -81,6 +82,9 @@
 
 #include <net/pipex.h>
 #include "pipex_local.h"
+
+struct pool pipex_session_pool;
+struct pool mppe_key_pool;
 
 /*
  * static/global variables
@@ -130,6 +134,11 @@ pipex_init(void)
 	if (pipex_softintr != NULL)
 		return;
 
+	pool_init(&pipex_session_pool, sizeof(struct pipex_session), 0, 0, 0,
+	    "ppxsspl", NULL);
+	pool_init(&mppe_key_pool, PIPEX_MPPE_KEYLEN * PIPEX_MPPE_NOLDKEY, 0, 0, 0,
+	    "mppekeypl", NULL);
+
 	LIST_INIT(&pipex_session_list);
 	LIST_INIT(&pipex_close_wait_list);
 
@@ -169,7 +178,7 @@ pipex_iface_init(struct pipex_iface_context *pipex_iface, struct ifnet *ifp)
 	splx(s);
 
 	/* virtual pipex_session entry for multicast */
-	session = malloc(sizeof(*session), M_TEMP, M_WAITOK);
+	session = pool_get(&pipex_session_pool, PR_WAITOK);
 	session->is_multicast = 1;
 	session->pipex_iface = pipex_iface;
 	pipex_iface->multicast_session = session;
@@ -317,7 +326,7 @@ pipex_add_session(struct pipex_session_req *req,
 	}
 
 	/* prepare a new session */
-	session = malloc(sizeof(*session), M_TEMP, M_WAITOK | M_ZERO);
+	session = pool_get(&pipex_session_pool, PR_WAITOK | PR_ZERO);
 	session->state = PIPEX_STATE_OPENED;
 	session->protocol = req->pr_protocol;
 	session->session_id = req->pr_session_id;
@@ -396,7 +405,7 @@ pipex_add_session(struct pipex_session_req *req,
 #ifdef PIPEX_MPPE
 	if ((req->pr_ppp_flags & PIPEX_PPP_MPPE_ACCEPTED) != 0) {
 		if (req->pr_mppe_recv.keylenbits <= 0) {
-			free(session, M_TEMP, 0);
+			pool_put(&pipex_session_pool, session);
 			return (EINVAL);
 		}
 		pipex_session_init_mppe_recv(session,
@@ -405,7 +414,7 @@ pipex_add_session(struct pipex_session_req *req,
 	}
 	if ((req->pr_ppp_flags & PIPEX_PPP_MPPE_ENABLED) != 0) {
 		if (req->pr_mppe_send.keylenbits <= 0) {
-			free(session, M_TEMP, 0);
+			pool_put(&pipex_session_pool, session);
 			return (EINVAL);
 		}
 		pipex_session_init_mppe_send(session,
@@ -416,7 +425,7 @@ pipex_add_session(struct pipex_session_req *req,
 	if (pipex_session_is_mppe_required(session)) {
 		if (!pipex_session_is_mppe_enabled(session) ||
 		    !pipex_session_is_mppe_accepted(session)) {
-			free(session, M_TEMP, 0);
+			pool_put(&pipex_session_pool, session);
 			return (EINVAL);
 		}
 	}
@@ -428,7 +437,7 @@ pipex_add_session(struct pipex_session_req *req,
 		if (pipex_lookup_by_ip_address(session->ip_address.sin_addr)
 		    != NULL) {
 			splx(s);
-			free(session, M_TEMP, 0);
+			pool_put(&pipex_session_pool, session);
 			return (EADDRINUSE);
 		}
 
@@ -436,7 +445,7 @@ pipex_add_session(struct pipex_session_req *req,
 		    &session->ip_netmask, &pipex_rd_head4, session->ps4_rn, RTP_STATIC);
 		if (rn == NULL) {
 			splx(s);
-			free(session, M_TEMP, 0);
+			pool_put(&pipex_session_pool, session);
 			return (ENOMEM);
 		}
 	}
@@ -446,7 +455,7 @@ pipex_add_session(struct pipex_session_req *req,
 		    RTP_STATIC);
 		if (rn == NULL) {
 			splx(s);
-			free(session, M_TEMP, 0);
+			pool_put(&pipex_session_pool, session);
 			return (ENOMEM);
 		}
 	}
@@ -625,8 +634,8 @@ pipex_destroy_session(struct pipex_session *session)
 	splx(s);
 
 	if (session->mppe_recv.old_session_keys)
-		free(session->mppe_recv.old_session_keys, M_TEMP, 0);
-	free(session, M_TEMP, 0);
+		pool_put(&mppe_key_pool, session->mppe_recv.old_session_keys);
+	pool_put(&pipex_session_pool, session);
 
 	return (0);
 }
@@ -2344,8 +2353,7 @@ pipex_mppe_init(struct pipex_mppe *mppe, int stateless, int keylenbits,
 		mppe->stateless = 1;
 	if (has_oldkey)
 		mppe->old_session_keys =
-		    malloc(PIPEX_MPPE_KEYLEN * PIPEX_MPPE_NOLDKEY,
-		    M_TEMP, M_WAITOK);
+		    pool_get(&mppe_key_pool, PR_WAITOK);
 	else
 		mppe->old_session_keys = NULL;
 	memcpy(mppe->master_key, master_key, sizeof(mppe->master_key));
