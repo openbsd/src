@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.28 2014/10/19 18:24:58 jmc Exp $	*/
+/*	$OpenBSD: du.c,v 1.29 2014/10/20 22:13:11 schwarze Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -193,7 +193,8 @@ main(int argc, char *argv[])
 			 * If listing each file, or a non-directory file was
 			 * the root of a traversal, display the total.
 			 */
-			if (listfiles && p->fts_level <= maxdepth)
+			if ((listfiles && p->fts_level <= maxdepth) ||
+			    p->fts_level == FTS_ROOTLEVEL)
 				prtout(howmany(p->fts_statp->st_blocks,
 				    blocksize), p->fts_path, hflag);
 			p->fts_parent->fts_number += p->fts_statp->st_blocks;
