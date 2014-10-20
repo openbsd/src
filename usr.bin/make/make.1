@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.115 2014/07/16 14:11:50 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.116 2014/10/20 07:27:46 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: July 16 2014 $
+.Dd $Mdocdate: October 20 2014 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1228,6 +1228,26 @@ must be a multiple of three.
 .Pp
 Loops and conditional expressions may nest arbitrarily, but
 they may not cross include file boundaries.
+.Pp
+.Nm
+also supports
+.Ic sinclude
+and
+.Ic -include
+for compatibility with other implementations.
+Both use the same syntax:
+.Bd -unfilled -offset indent
+.Ic sinclude Pa file
+.Ic -include Pa file
+.Ed
+.Pp
+.Po
+note no quotes around
+.Pa file
+.Pc
+and will include
+.Pa file ,
+but without any error if it does not exist.
 .Sh COMMENTS
 Comments begin with a hash
 .Pq Ql \&#
