@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.132 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.133 2014/10/20 03:43:40 tedu Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -99,6 +99,7 @@
 #endif /* INET6 */
 
 #include <crypto/md5.h>
+#include <crypto/sha2.h>
 
 /* patchable/settable parameters for tcp */
 int	tcp_mssdflt = TCP_MSS;
@@ -945,38 +946,42 @@ tcp_mtudisc_increase(inp, errno)
 #define TCP_ISS_CONN_INC 4096
 int tcp_secret_init;
 u_char tcp_secret[16];
-MD5_CTX tcp_secret_ctx;
+SHA2_CTX tcp_secret_ctx;
 
 void
 tcp_set_iss_tsm(struct tcpcb *tp)
 {
-	MD5_CTX ctx;
-	u_int32_t digest[4];
+	SHA2_CTX ctx;
+	union {
+		uint8_t bytes[SHA512_DIGEST_LENGTH];
+		uint32_t words[2];
+	} digest;
+
 
 	if (tcp_secret_init == 0) {
 		arc4random_buf(tcp_secret, sizeof(tcp_secret));
-		MD5Init(&tcp_secret_ctx);
-		MD5Update(&tcp_secret_ctx, tcp_secret, sizeof(tcp_secret));
+		SHA512Init(&tcp_secret_ctx);
+		SHA512Update(&tcp_secret_ctx, tcp_secret, sizeof(tcp_secret));
 		tcp_secret_init = 1;
 	}
 	ctx = tcp_secret_ctx;
-	MD5Update(&ctx, (char *)&tp->t_inpcb->inp_lport, sizeof(u_short));
-	MD5Update(&ctx, (char *)&tp->t_inpcb->inp_fport, sizeof(u_short));
+	SHA512Update(&ctx, (char *)&tp->t_inpcb->inp_lport, sizeof(u_short));
+	SHA512Update(&ctx, (char *)&tp->t_inpcb->inp_fport, sizeof(u_short));
 	if (tp->pf == AF_INET6) {
-		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_laddr6,
+		SHA512Update(&ctx, (char *)&tp->t_inpcb->inp_laddr6,
 		    sizeof(struct in6_addr));
-		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_faddr6,
+		SHA512Update(&ctx, (char *)&tp->t_inpcb->inp_faddr6,
 		    sizeof(struct in6_addr));
 	} else {
-		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_laddr,
+		SHA512Update(&ctx, (char *)&tp->t_inpcb->inp_laddr,
 		    sizeof(struct in_addr));
-		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_faddr,
+		SHA512Update(&ctx, (char *)&tp->t_inpcb->inp_faddr,
 		    sizeof(struct in_addr));
 	}
-	MD5Final((u_char *)digest, &ctx);
+	SHA512Final(digest.bytes, &ctx);
 	tcp_iss += TCP_ISS_CONN_INC;
-	tp->iss = digest[0] + tcp_iss;
-	tp->ts_modulate = digest[1];
+	tp->iss = digest.words[0] + tcp_iss;
+	tp->ts_modulate = digest.words[1];
 }
 
 #ifdef TCP_SIGNATURE
