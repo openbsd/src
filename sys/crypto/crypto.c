@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.67 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.68 2014/10/20 00:40:33 dlg Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -220,15 +220,12 @@ crypto_get_driverid(u_int8_t flags)
 	if (crypto_drivers_num == 0) {
 		crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
 		crypto_drivers = mallocarray(crypto_drivers_num,
-		    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT);
+		    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
 		if (crypto_drivers == NULL) {
 			crypto_drivers_num = 0;
 			splx(s);
 			return -1;
 		}
-
-		bzero(crypto_drivers, crypto_drivers_num *
-		    sizeof(struct cryptocap));
 	}
 
 	for (i = 0; i < crypto_drivers_num; i++) {
@@ -484,22 +481,20 @@ crypto_getreq(int num)
 	
 	s = splvm();
 
-	crp = pool_get(&cryptop_pool, PR_NOWAIT);
+	crp = pool_get(&cryptop_pool, PR_NOWAIT | PR_ZERO);
 	if (crp == NULL) {
 		splx(s);
 		return NULL;
 	}
-	bzero(crp, sizeof(struct cryptop));
 
 	while (num--) {
-		crd = pool_get(&cryptodesc_pool, PR_NOWAIT);
+		crd = pool_get(&cryptodesc_pool, PR_NOWAIT | PR_ZERO);
 		if (crd == NULL) {
 			splx(s);
 			crypto_freereq(crp);
 			return NULL;
 		}
 
-		bzero(crd, sizeof(struct cryptodesc));
 		crd->crd_next = crp->crp_desc;
 		crp->crp_desc = crd;
 	}
