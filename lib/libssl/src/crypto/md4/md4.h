@@ -1,4 +1,4 @@
-/* $OpenBSD: md4.h,v 1.13 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: md4.h,v 1.14 2014/10/20 13:06:54 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,8 +73,7 @@ extern "C" {
 
 /*
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * ! MD4_LONG has to be at least 32 bits wide. If it's wider, then !
- * ! MD4_LONG_LOG2 has to be defined along.			   !
+ * ! MD4_LONG has to be at least 32 bits wide.                     !
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 

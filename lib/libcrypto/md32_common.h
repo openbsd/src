@@ -1,4 +1,4 @@
-/* $OpenBSD: md32_common.h,v 1.18 2014/08/18 19:11:48 bcook Exp $ */
+/* $OpenBSD: md32_common.h,v 1.19 2014/10/20 13:06:54 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -64,8 +64,7 @@
  * HASH_CBLOCK
  *	size of a unit chunk HASH_BLOCK operates on.
  * HASH_LONG
- *	has to be at lest 32 bit wide, if it's wider, then
- *	HASH_LONG_LOG2 *has to* be defined along
+ *	has to be at least 32 bit wide.
  * HASH_CTX
  *	context structure that at least contains following
  *	members:
@@ -98,7 +97,6 @@
  *	#define DATA_ORDER_IS_LITTLE_ENDIAN
  *
  *	#define HASH_LONG		MD5_LONG
- *	#define HASH_LONG_LOG2		MD5_LONG_LOG2
  *	#define HASH_CTX		MD5_CTX
  *	#define HASH_CBLOCK		MD5_CBLOCK
  *	#define HASH_UPDATE		MD5_Update

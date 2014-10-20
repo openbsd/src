@@ -1,4 +1,4 @@
-/* $OpenBSD: md5_locl.h,v 1.12 2014/08/18 19:11:48 bcook Exp $ */
+/* $OpenBSD: md5_locl.h,v 1.13 2014/10/20 13:06:54 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,10 +62,6 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/md5.h>
-
-#ifndef MD5_LONG_LOG2
-#define MD5_LONG_LOG2 2 /* default to 32 bits */
-#endif
 
 #ifdef MD5_ASM
 # if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) || \

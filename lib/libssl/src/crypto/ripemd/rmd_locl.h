@@ -1,4 +1,4 @@
-/* $OpenBSD: rmd_locl.h,v 1.11 2014/08/18 19:11:48 bcook Exp $ */
+/* $OpenBSD: rmd_locl.h,v 1.12 2014/10/20 13:06:54 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,10 +60,6 @@
 #include <string.h>
 #include <openssl/opensslconf.h>
 #include <openssl/ripemd.h>
-
-#ifndef RIPEMD160_LONG_LOG2
-#define RIPEMD160_LONG_LOG2 2 /* default to 32 bits */
-#endif
 
 /*
  * DO EXAMINE COMMENTS IN crypto/md5/md5_locl.h & crypto/md5/md5_dgst.c

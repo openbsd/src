@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.h,v 1.19 2014/07/13 14:13:27 beck Exp $ */
+/* $OpenBSD: md5.h,v 1.20 2014/10/20 13:06:54 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,8 +76,7 @@ extern "C" {
 
 /*
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * ! MD5_LONG has to be at least 32 bits wide. If it's wider, then !
- * ! MD5_LONG_LOG2 has to be defined along.			   !
+ * ! MD5_LONG has to be at least 32 bits wide.                     !
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 

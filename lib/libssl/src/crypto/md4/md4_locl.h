@@ -1,4 +1,4 @@
-/* $OpenBSD: md4_locl.h,v 1.6 2014/08/18 19:11:48 bcook Exp $ */
+/* $OpenBSD: md4_locl.h,v 1.7 2014/10/20 13:06:54 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,10 +60,6 @@
 #include <string.h>
 #include <openssl/opensslconf.h>
 #include <openssl/md4.h>
-
-#ifndef MD4_LONG_LOG2
-#define MD4_LONG_LOG2 2 /* default to 32 bits */
-#endif
 
 void md4_block_data_order (MD4_CTX *c, const void *p,size_t num);
 
