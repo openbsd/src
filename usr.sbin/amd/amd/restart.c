@@ -61,12 +61,12 @@ restart()
 	for (mlp = ml = read_mtab("restart"); mlp; mlp = mlp->mnext) {
 		struct mntent *me = mlp->mnt;
 		am_ops *fs_ops = 0;
-		if (STREQ(me->mnt_type, MTAB_TYPE_UFS)) {
+		if (STREQ(me->mnt_type, "ffs")) {
 			/*
 			 * UFS entry
 			 */
 			fs_ops = &ufs_ops;
-		} else if (STREQ(me->mnt_type, MTAB_TYPE_NFS)) {
+		} else if (STREQ(me->mnt_type, "nfs")) {
 			/*
 			 * NFS entry, or possibly an Amd entry...
 			 */
@@ -78,13 +78,11 @@ restart()
 			} else {
 				fs_ops = &nfs_ops;
 			}
-#ifdef MTAB_TYPE_MFS
-		} else if (STREQ(me->mnt_type, MTAB_TYPE_MFS)) {
+		} else if (STREQ(me->mnt_type, "mfs")) {
 			/*
 			 * MFS entry.  Fake with a symlink.
 			 */
 			fs_ops = &sfs_ops;
-#endif /* MTAB_TYPE_MFS */
 		} else {
 			/*
 			 * Catch everything else with symlinks to

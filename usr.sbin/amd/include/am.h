@@ -1,4 +1,4 @@
-/*	$OpenBSD: am.h,v 1.13 2014/10/20 02:33:42 guenther Exp $	*/
+/*	$OpenBSD: am.h,v 1.14 2014/10/20 06:55:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -50,17 +50,8 @@
 #include "nfs_prot.h"
 #include <assert.h>
 
-#ifdef DEBUG_MEM
-#include <malloc.h>
-#endif /* DEBUG_MEM */
-
-#ifndef MAXHOSTNAMELEN
-#define MAXHOSTNAMELEN 64
-#endif /* MAXHOSTNAMELEN */
-
-#ifndef MNTTYPE_AUTO
-#define MNTTYPE_AUTO "auto"
-#endif /* MNTTYPE_AUTO */
+/* max length of mount options */
+#define	MNTMAXSTR	128
 
 #ifndef FALSE
 #define FALSE 0
@@ -187,6 +178,16 @@ struct qelem {
 #define	ITER(v, ty, q) \
 	for ((v) = FIRST(ty,(q)); (v) != HEAD(ty,(q)); (v) = NEXT(ty,(v)))
 
+
+struct mntent {
+	char	*mnt_fsname;	/* name of mounted file system */
+	char	*mnt_dir;	/* file system path prefix */
+	char	*mnt_type;	/* MNTTYPE_* */
+	char	*mnt_opts;	/* MNTOPT* */
+	int	mnt_freq;	/* dump frequency, in days */
+	int	mnt_passno;	/* pass number on parallel fsck */
+};
+
 /*
  * List of mount table entries
  */
@@ -269,7 +270,7 @@ extern void	 mnt_free(struct mntent *);
 extern int	 mount_auto_node(char *, void *);
 extern int	 mount_automounter(pid_t);
 extern int	 mount_exported(void);
-extern int	 mount_fs(struct mntent *, int, caddr_t, int, MTYPE_TYPE);
+extern int	 mount_fs(struct mntent *, int, caddr_t, int, const char *);
 extern int	 mount_nfs_fh(struct fhstatus *, char *, char *, char *, mntfs *);
 extern int	 mount_node(am_node *);
 extern mntfs	*new_mntfs(void);
@@ -315,7 +316,6 @@ extern void	 wakeup(void *);
 extern void	 wakeup_task(int, int, void *);
 extern void	 wakeup_srvr(fserver *);
 extern void	 write_mntent(struct mntent *);
-#define	unlock_mntlist()
 
 
 #define	ALLOC(ty)	((struct ty *) xmalloc(sizeof(struct ty)))

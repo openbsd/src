@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.20 2014/10/20 02:33:42 guenther Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.21 2014/10/20 06:55:59 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -41,12 +41,7 @@
 
 #define NFS
 #define NFSCLIENT
-#ifdef NFS_3
-typedef nfs_fh fhandle_t;
-#endif /* NFS_3 */
-#ifdef NFS_HDR
-#include NFS_HDR
-#endif /* NFS_HDR */
+
 #include "mount.h"
 
 /*
@@ -461,7 +456,7 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 	unsigned short port;
 #endif /* notdef */
 
-	MTYPE_TYPE type = MOUNT_TYPE_NFS;
+	const char *type = MOUNT_NFS;
 
 	bzero((void *)&nfs_args, sizeof(nfs_args));	/* Paranoid */
 
@@ -482,7 +477,7 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 
 	mnt.mnt_dir = dir;
 	mnt.mnt_fsname = fs_name;
-	mnt.mnt_type = MTAB_TYPE_NFS;
+	mnt.mnt_type = "nfs";
 	mnt.mnt_opts = xopts;
 	mnt.mnt_freq = 0;
 	mnt.mnt_passno = 0;
@@ -496,13 +491,11 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 	/*
 	 * set mount args
 	 */
-	NFS_FH_DREF(nfs_args.fh, (NFS_FH_TYPE) fhp->fhs_fhandle);
-
+	nfs_args.fh = (void *)fhp->fhs_fhandle;
 	nfs_args.fhsize = fhp->fhs_size;
 	nfs_args.version = NFS_ARGSVERSION;
 
 	nfs_args.hostname = host;
-	nfs_args.flags |= NFSMNT_HOSTNAME;
 #ifdef HOSTNAMESZ
 	/*
 	 * Most kernels have a name length restriction.
@@ -559,7 +552,7 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 		sin.sin_port = htons(NFS_PORT);	/* XXX should use portmapper */
 #endif /* notdef */
 
-	if (hasmntopt(&mnt, MNTOPT_SOFT) != NULL)
+	if (hasmntopt(&mnt, "soft") != NULL)
 		nfs_args.flags |= NFSMNT_SOFT;
 
 #ifdef NFSMNT_SPONGY
@@ -572,10 +565,8 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 	}
 #endif /* MNTOPT_SPONGY */
 
-#ifdef MNTOPT_INTR
-	if (hasmntopt(&mnt, MNTOPT_INTR) != NULL)
+	if (hasmntopt(&mnt, "intr") != NULL)
 		nfs_args.flags |= NFSMNT_INT;
-#endif /* MNTOPT_INTR */
 
 #ifdef MNTOPT_NODEVS
 	if (hasmntopt(&mnt, MNTOPT_NODEVS) != NULL)
@@ -583,23 +574,21 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 #endif /* MNTOPT_NODEVS */
 
 
-#ifdef MNTOPT_NOCONN
-	if (hasmntopt(&mnt, MNTOPT_NOCONN) != NULL)
+	if (hasmntopt(&mnt, "noconn") != NULL)
 		nfs_args.flags |= NFSMNT_NOCONN;
-#endif /* MNTOPT_NOCONN */
 
-#ifdef MNTOPT_RESVPORT
-	if (hasmntopt(&mnt, MNTOPT_RESVPORT) != NULL)
+	if (hasmntopt(&mnt, "resvport") != NULL)
 		nfs_args.flags |= NFSMNT_RESVPORT;
-#endif /* MNTOPT_RESVPORT */
-
 
 #ifdef NFSMNT_PGTHRESH
 	if (nfs_args.pg_thresh = hasmntval(&mnt, "pgthresh"))
 		nfs_args.flags |= NFSMNT_PGTHRESH;
 #endif /* NFSMNT_PGTHRESH */
 
-	NFS_SA_DREF(nfs_args, fs->fs_ip);
+	nfs_args.addr = (struct sockaddr *)fs->fs_ip;
+	nfs_args.addrlen = sizeof(*fs->fs_ip);
+	nfs_args.sotype = SOCK_DGRAM;
+	nfs_args.proto = 0;
 
 	flags = compute_mount_flags(&mnt);
 
@@ -666,11 +655,7 @@ nfs_fmount(mntfs *mf)
 static int
 nfs_fumount(mntfs *mf)
 {
-	int error = UMOUNT_FS(mf->mf_mount);
-	if (error)
-		return error;
-
-	return 0;
+	return (umount_fs(mf->mf_mount));
 }
 
 static void

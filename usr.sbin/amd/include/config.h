@@ -32,19 +32,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
- *	$Id: config.h,v 1.8 2014/10/20 00:20:04 guenther Exp $
+ *	$Id: config.h,v 1.9 2014/10/20 06:55:59 guenther Exp $
  */
 
 /*
  * Pick up target dependent definitions
  */
-#include "os-defaults.h"
-#include "os-bsd44.h"
-
-#include <errno.h>
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <errno.h>
+#include <stdio.h>
 
 #define clocktime() (clock_valid ? clock_valid : time(&clock_valid))
 extern time_t clock_valid;	/* Clock needs recalculating */

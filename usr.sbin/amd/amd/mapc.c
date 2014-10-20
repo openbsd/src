@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapc.c,v 1.16 2014/10/20 02:33:42 guenther Exp $	*/
+/*	$OpenBSD: mapc.c,v 1.17 2014/10/20 06:55:59 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -175,17 +175,6 @@ extern int	ndbm_search(mnt_map *, char *, charo *, char **, time_t *);
 extern int	passwd_init(char *, time_t *);
 extern int	passwd_search(mnt_map *, char *, char *, char **, time_t *);
 
-/* HESIOD MAPS */
-#ifdef HAS_HESIOD_MAPS
-extern int	hesiod_init(char *, time_t *);
-#ifdef HAS_HESIOD_RELOAD
-extern int	hesiod_reload(mnt_map *, char *, add_fn *);
-#else
-#define hesiod_reload error_reload
-#endif
-extern int	hesiod_search(mnt_map *, char *, char *, char **, time_t *);
-#endif /* HAS_HESIOD_MAPS */
-
 /* UNION MAPS */
 extern int	union_init(char *, time_t *);
 extern int	union_search(mnt_map *, char *, char *, char **, time_t *);
@@ -201,10 +190,6 @@ static map_type maptypes[] = {
 	{ "root", root_init, error_reload, error_search, error_mtime, MAPC_ROOT },
 
 	{ "passwd", passwd_init, error_reload, passwd_search, error_mtime, MAPC_INC },
-
-#ifdef HAS_HESIOD_MAPS
-	{ "hesiod", hesiod_init, hesiod_reload, hesiod_search, error_mtime, MAPC_ALL },
-#endif
 
 	{ "union", union_init, union_reload, union_search, error_mtime, MAPC_ALL },
 

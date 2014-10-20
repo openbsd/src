@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ops.c,v 1.7 2014/10/20 02:33:42 guenther Exp $	*/
+/*	$OpenBSD: ufs_ops.c,v 1.8 2014/10/20 06:55:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -41,13 +41,6 @@
 #ifdef HAS_UFS
 
 #include <sys/stat.h>
-#ifdef NFS_3
-typedef nfs_fh fhandle_t;
-#endif /* NFS_3 */
-
-#ifdef UFS_HDR
-#include UFS_HDR
-#endif /* UFS_HDR */
 
 /*
  * UN*X file system
@@ -85,7 +78,7 @@ mount_ufs(char *dir, char *fs_name, char *opts)
 	/*
 	 * Figure out the name of the file system type.
 	 */
-	MTYPE_TYPE type = MOUNT_TYPE_UFS;
+	const char *type = MOUNT_FFS;
 
 	bzero((void *)&ufs_args, sizeof(ufs_args));	/* Paranoid */
 
@@ -94,7 +87,7 @@ mount_ufs(char *dir, char *fs_name, char *opts)
 	 */
 	mnt.mnt_dir = dir;
 	mnt.mnt_fsname = fs_name;
-	mnt.mnt_type = MTAB_TYPE_UFS;
+	mnt.mnt_type = "ffs";
 	mnt.mnt_opts = opts;
 	mnt.mnt_freq = 1;
 	mnt.mnt_passno = 2;
@@ -128,7 +121,7 @@ ufs_fmount(mntfs *mf)
 static int
 ufs_fumount(mntfs *mf)
 {
-	return UMOUNT_FS(mf->mf_mount);
+	return umount_fs(mf->mf_mount);
 }
 
 /*

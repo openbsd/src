@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.19 2014/10/20 02:33:42 guenther Exp $
+ *	$Id: amd.c,v 1.20 2014/10/20 06:55:59 guenther Exp $
  */
 
 /*
@@ -70,7 +70,7 @@ char *auto_dir = "/tmp_mnt";
 char *hostdomain = "unknown.domain";
 char hostname[MAXHOSTNAMELEN] = "localhost"; /* Hostname */
 char hostd[2*MAXHOSTNAMELEN];		/* Host+domain */
-char *op_sys = OS_REP;			/* Name of current op_sys */
+char *op_sys = "bsd44";			/* Name of current op_sys */
 char *arch = ARCH_REP;			/* Name of current architecture */
 char *endian = ARCH_ENDIAN;		/* Big or Little endian */
 char *wire;

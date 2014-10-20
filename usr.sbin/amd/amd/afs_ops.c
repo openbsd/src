@@ -1,4 +1,4 @@
-/*	$OpenBSD: afs_ops.c,v 1.13 2014/10/20 02:33:42 guenther Exp $	*/
+/*	$OpenBSD: afs_ops.c,v 1.14 2014/10/20 06:55:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -42,14 +42,8 @@
 #define NFSCLIENT
 
 #include <unistd.h>
-
 #include <sys/stat.h>
-#ifdef NFS_3
-typedef nfs_fh fhandle_t;
-#endif /* NFS_3 */
-#ifdef NFS_HDR
-#include NFS_HDR
-#endif /* NFS_HDR */
+
 #include "mount.h"
 
 /*
@@ -112,13 +106,13 @@ mount_toplvl(char *dir, char *opts)
 	nfs_fh *fhp;
 	char fs_hostname[MAXHOSTNAMELEN+MAXPATHLEN+1];
 
-	MTYPE_TYPE type = MOUNT_TYPE_NFS;
+	const char *type = MOUNT_NFS;
 
 	bzero((void *)&nfs_args, sizeof(nfs_args));	/* Paranoid */
 
 	mnt.mnt_dir = dir;
 	mnt.mnt_fsname = pid_fsname;
-	mnt.mnt_type = MNTTYPE_AUTO;
+	mnt.mnt_type = "auto";			/* fake type */
 	mnt.mnt_opts = opts;
 	mnt.mnt_freq = 0;
 	mnt.mnt_passno = 0;
@@ -136,9 +130,9 @@ mount_toplvl(char *dir, char *opts)
 		return EINVAL;
 	}
 
+	nfs_args.fh = (void *)fhp;
 	nfs_args.fhsize = NFSX_V2FH;
 	nfs_args.version = NFS_ARGSVERSION;
-	NFS_FH_DREF(nfs_args.fh, (NFS_FH_TYPE) fhp);
 
 	/*
 	 * Create sockaddr to point to the local machine.  127.0.0.1
@@ -158,7 +152,10 @@ mount_toplvl(char *dir, char *opts)
 	/*
 	 * set mount args
 	 */
-	NFS_SA_DREF(nfs_args, &sin);
+	nfs_args.addr = (struct sockaddr *)&sin;
+	nfs_args.addrlen = sizeof sin;
+	nfs_args.sotype = SOCK_DGRAM;
+	nfs_args.proto = 0;
 
 	/*
 	 * Make a ``hostname'' string for the kernel
@@ -169,7 +166,6 @@ mount_toplvl(char *dir, char *opts)
 	snprintf(fs_hostname, sizeof(fs_hostname), "amd:%ld",
 	    foreground ? (long)mypid : (long)getppid());
 	nfs_args.hostname = fs_hostname;
-	nfs_args.flags |= NFSMNT_HOSTNAME;
 #ifdef HOSTNAMESZ
 	/*
 	 * Most kernels have a name length restriction.
@@ -210,13 +206,11 @@ mount_toplvl(char *dir, char *opts)
 	/*
 	 * These two are constructed internally by the calling routine
 	 */
-	if (hasmntopt(&mnt, MNTOPT_SOFT) != NULL)
+	if (hasmntopt(&mnt, "soft") != NULL)
 		nfs_args.flags |= NFSMNT_SOFT;
 
-#ifdef MNTOPT_INTR
-	if (hasmntopt(&mnt, MNTOPT_INTR) != NULL)
+	if (hasmntopt(&mnt, "intr") != NULL)
 		nfs_args.flags |= NFSMNT_INT;
-#endif /* MNTOPT_INTR */
 
 	flags = compute_mount_flags(&mnt);
 	return mount_fs(&mnt, flags, (caddr_t) &nfs_args, retry, type);
@@ -347,12 +341,8 @@ toplvl_mount(am_node *mp)
 	 * Construct some mount options
 	 */
 	snprintf(opts, sizeof(opts),
-#ifdef MNTOPT_INTR
 		"%s,%s,%s=%d,%s=%d,%s=%d,%s",
-		MNTOPT_INTR,
-#else
-		"%s,%s=%d,%s=%d,%s=%d,%s",
-#endif /* MNTOPT_INTR */
+		"intr",
 		"rw",
 		"port", nfs_port,
 		"timeo", afs_timeo,
@@ -463,7 +453,7 @@ again:
 		dlog("lstat(%s): %m", mp->am_path);
 #endif /* DEBUG */
 	}
-	error = UMOUNT_FS(mp->am_path);
+	error = umount_fs(mp->am_path);
 	if (error == EBUSY) {
 		plog(XLOG_WARNING, "afs_unmount retrying %s in 1s", mp->am_path);
 		sleep(1);	/* XXX */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.14 2014/10/20 02:33:42 guenther Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.15 2014/10/20 06:55:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -238,11 +238,6 @@ host_fmount(mntfs *mf)
 	mlist = read_mtab(mf->mf_mount);
 
 	/*
-	 * Unlock the mount list
-	 */
-	unlock_mntlist();
-
-	/*
 	 * Take a copy of the server address
 	 */
 	sin = *mf->mf_server->fs_ip;
@@ -414,11 +409,6 @@ host_fumount(mntfs *mf)
 	mntlist *mlist = read_mtab(mf->mf_mount);
 
 	/*
-	 * Unlock the mount list
-	 */
-	unlock_mntlist();
-
-	/*
 	 * Reverse list...
 	 */
 	ml = mlist;
@@ -444,7 +434,7 @@ host_fumount(mntfs *mf)
 			/*
 			 * Unmount "dir"
 			 */
-			error = UMOUNT_FS(dir);
+			error = umount_fs(dir);
 			/*
 			 * Keep track of errors
 			 */

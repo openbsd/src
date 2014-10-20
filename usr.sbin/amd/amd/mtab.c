@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mtab.c	8.1 (Berkeley) 6/6/93
- *	$Id: mtab.c,v 1.6 2014/10/20 00:20:04 guenther Exp $
+ *	$Id: mtab.c,v 1.7 2014/10/20 06:55:59 guenther Exp $
  */
 
 #include "am.h"
@@ -73,7 +73,6 @@ void
 free_mntlist(mntlist *mp)
 {
 	discard_mntlist(mp);
-	unlock_mntlist();
 }
 
 /*
@@ -100,12 +99,10 @@ static struct mntent *
 mnt_dup(struct statfs *mp)
 {
 	struct mntent *new_mp = ALLOC(mntent);
-	char *ty;
 
 	new_mp->mnt_fsname = strdup(mp->f_mntfromname);
 	new_mp->mnt_dir = strdup(mp->f_mntonname);
-	ty = mp->f_fstypename;
-	new_mp->mnt_type = strdup(ty);
+	new_mp->mnt_type = strdup(mp->f_fstypename);
 	new_mp->mnt_opts = strdup("unset");
 	new_mp->mnt_freq = 0;
 	new_mp->mnt_passno = 0;

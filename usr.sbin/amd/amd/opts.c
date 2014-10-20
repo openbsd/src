@@ -268,7 +268,7 @@ eval_opts(char *opts, char *mapkey)
 			 */
 			if (FSTREQ(op->name, f)) {
 				switch (vs_opt) {
-#if AMD_COMPAT <= 5000108
+#if 1	/* XXX ancient compat */
 				case OldSyn:
 					plog(XLOG_WARNING, "key %s: Old syntax selector found: %s=%s", mapkey, f, opt);
 					if (!op->sel_p) {
@@ -276,7 +276,7 @@ eval_opts(char *opts, char *mapkey)
 						break;
 					}
 					/* fall through ... */
-#endif /* 5000108 */
+#endif
 				case SelEQ:
 				case SelNE:
 					if (op->sel_p && (STREQ(*op->sel_p, opt) == (vs_opt == SelNE))) {
