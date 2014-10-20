@@ -1085,6 +1085,15 @@ operand (expressionS *expressionP)
 	      {
 		for (i = 0; i < expressionP->X_add_number; ++i)
 		  generic_bignum[i] = ~generic_bignum[i];
+
+		/* Extend the bignum to at least the size of .octa.  */
+		if (expressionP->X_add_number < SIZE_OF_LARGE_NUMBER)
+		  {
+		    expressionP->X_add_number = SIZE_OF_LARGE_NUMBER;
+		    for (; i < expressionP->X_add_number; ++i)
+		      generic_bignum[i] = ~(LITTLENUM_TYPE) 0;
+		  }
+
 		if (c == '-')
 		  for (i = 0; i < expressionP->X_add_number; ++i)
 		    {
@@ -1095,14 +1104,12 @@ operand (expressionS *expressionP)
 	      }
 	    else if (c == '!')
 	      {
-		int nonzero = 0;
 		for (i = 0; i < expressionP->X_add_number; ++i)
-		  {
-		    if (generic_bignum[i])
-		      nonzero = 1;
-		    generic_bignum[i] = 0;
-		  }
-		generic_bignum[0] = nonzero;
+		  if (generic_bignum[i] != 0)
+		    break;
+		expressionP->X_add_number = i >= expressionP->X_add_number;
+		expressionP->X_op = O_constant;
+		expressionP->X_unsigned = 1;
 	      }
 	  }
 	else if (expressionP->X_op != O_illegal
