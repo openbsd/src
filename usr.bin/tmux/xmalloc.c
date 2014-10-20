@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.6 2014/10/20 23:27:14 nicm Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.7 2014/10/20 23:57:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2004 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -94,7 +94,7 @@ xreallocarray(void *oldptr, size_t nmemb, size_t size)
 	return (newptr);
 }
 
-int printflike2
+int
 xasprintf(char **ret, const char *fmt, ...)
 {
 	va_list ap;
@@ -119,7 +119,7 @@ xvasprintf(char **ret, const char *fmt, va_list ap)
 	return (i);
 }
 
-int printflike3
+int
 xsnprintf(char *buf, size_t len, const char *fmt, ...)
 {
 	va_list ap;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.17 2014/09/01 21:50:18 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.18 2014/10/20 23:57:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -57,7 +57,7 @@ cmdq_free(struct cmd_q *cmdq)
 }
 
 /* Show message from command. */
-void printflike2
+void
 cmdq_print(struct cmd_q *cmdq, const char *fmt, ...)
 {
 	struct client	*c = cmdq->client;
@@ -87,7 +87,7 @@ cmdq_print(struct cmd_q *cmdq, const char *fmt, ...)
 }
 
 /* Show error from command. */
-void printflike2
+void
 cmdq_error(struct cmd_q *cmdq, const char *fmt, ...)
 {
 	struct client	*c = cmdq->client;

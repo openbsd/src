@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.12 2013/10/10 11:45:29 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.13 2014/10/20 23:57:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,7 +27,7 @@
 #include "tmux.h"
 
 /* Write a line. */
-void printflike2
+void
 control_write(struct client *c, const char *fmt, ...)
 {
 	va_list		 ap;

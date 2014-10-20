@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.10 2014/01/28 23:07:09 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.11 2014/10/20 23:57:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -99,7 +99,7 @@ options_remove(struct options *oo, const char *name)
 	free(o);
 }
 
-struct options_entry *printflike3
+struct options_entry *
 options_set_string(struct options *oo, const char *name, const char *fmt, ...)
 {
 	struct options_entry	*o;

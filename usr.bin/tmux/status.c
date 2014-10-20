@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.116 2014/10/08 17:35:58 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.117 2014/10/20 23:57:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -651,7 +651,7 @@ status_print(
 }
 
 /* Set a status line message. */
-void printflike2
+void
 status_message_set(struct client *c, const char *fmt, ...)
 {
 	struct timeval		 tv;
