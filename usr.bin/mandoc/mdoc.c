@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.115 2014/10/16 01:10:06 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.116 2014/10/20 02:31:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -203,6 +203,8 @@ mdoc_addeqn(struct mdoc *mdoc, const struct eqn *ep)
 
 	n = node_alloc(mdoc, ep->ln, ep->pos, MDOC_MAX, MDOC_EQN);
 	n->eqn = ep;
+	if (ep->ln > mdoc->last->line)
+		n->flags |= MDOC_LINE;
 
 	if ( ! node_append(mdoc, n))
 		return(0);
