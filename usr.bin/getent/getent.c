@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.6 2013/03/30 14:03:08 florian Exp $	*/
+/*	$OpenBSD: getent.c,v 1.7 2014/10/20 16:19:05 schwarze Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -268,10 +268,10 @@ hosts(int argc, char *argv[])
 	int		i, rv = RV_OK;
 	struct hostent	*he;
 
-	sethostent(1);
 	if (argc == 2) {
-		while ((he = gethostent()) != NULL)
-			hostsprint(he);
+		fprintf(stderr, "%s: Enumeration not supported on hosts\n",
+		    __progname);
+		rv = RV_NOENUM;
 	} else {
 		for (i = 2; i < argc; i++) {
 			he = NULL;
@@ -285,7 +285,6 @@ hosts(int argc, char *argv[])
 				break;
 		}
 	}
-	endhostent();
 	return rv;
 }
 
