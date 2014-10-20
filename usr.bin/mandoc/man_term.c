@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.106 2014/10/20 02:46:00 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.107 2014/10/20 15:49:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -988,7 +988,7 @@ print_man_node(DECL_ARGS)
 		if ( ! (n->flags & MAN_LINE))
 			p->flags |= TERMP_NOSPACE;
 		term_eqn(p, n->eqn);
-		if ( ! (n->flags & MAN_LINE))
+		if (n->next != NULL && ! (n->next->flags & MAN_LINE))
 			p->flags |= TERMP_NOSPACE;
 		return;
 	case MAN_TBL:

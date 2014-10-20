@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.116 2014/10/20 02:31:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.117 2014/10/20 15:49:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -236,7 +236,8 @@ int
 mdoc_parseln(struct mdoc *mdoc, int ln, char *buf, int offs)
 {
 
-	mdoc->flags |= MDOC_NEWLINE;
+	if (mdoc->last->type != MDOC_EQN || ln > mdoc->last->line)
+		mdoc->flags |= MDOC_NEWLINE;
 
 	/*
 	 * Let the roff nS register switch SYNOPSIS mode early,
