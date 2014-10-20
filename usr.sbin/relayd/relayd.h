@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.193 2014/10/15 11:06:16 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.194 2014/10/20 14:50:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -716,7 +716,6 @@ struct relay_config {
 	u_int32_t		 flags;
 	objid_t			 proto;
 	char			 name[MAXHOSTNAMELEN];
-	char			 ifname[IFNAMSIZ];
 	in_port_t		 port;
 	in_port_t		 dstport;
 	int			 dstretry;

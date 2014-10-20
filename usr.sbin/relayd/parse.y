@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.190 2014/10/15 11:06:16 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.191 2014/10/20 14:50:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1619,32 +1619,11 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			tableport = h->port.val[0];
 			host_free(&al);
 		}
-		| forwardmode optsslclient TO forwardspec interface dstaf {
+		| forwardmode optsslclient TO forwardspec dstaf {
 			rlay->rl_conf.fwdmode = $1;
-			switch ($1) {
-			case FWD_NORMAL:
-				if ($5 == NULL)
-					break;
-				yyerror("superfluous interface");
+			if ($1 == FWD_ROUTE) {
+				yyerror("no route for relays");
 				YYERROR;
-			case FWD_ROUTE:
-				yyerror("no route for redirections");
-				YYERROR;
-			case FWD_TRANS:
-				if ($5 != NULL)
-					break;
-				yyerror("missing interface");
-				YYERROR;
-			}
-			if ($5 != NULL) {
-				if (strlcpy(rlay->rl_conf.ifname, $5,
-				    sizeof(rlay->rl_conf.ifname)) >=
-				    sizeof(rlay->rl_conf.ifname)) {
-					yyerror("interface name truncated");
-					free($5);
-					YYERROR;
-				}
-				free($5);
 			}
 			if ($2) {
 				rlay->rl_conf.flags |= F_SSLCLIENT;
