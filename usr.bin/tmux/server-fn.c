@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.76 2014/04/17 14:45:49 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.77 2014/10/20 23:27:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,7 +31,7 @@ void		server_callback_identify(int, short, void *);
 void
 server_fill_environ(struct session *s, struct environ *env)
 {
-	char	var[MAXPATHLEN], *term;
+	char	var[PATH_MAX], *term;
 	u_int	idx;
 	long	pid;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.84 2014/10/01 23:23:19 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.85 2014/10/20 23:27:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

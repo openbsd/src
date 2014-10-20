@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.24 2014/10/20 22:44:30 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.25 2014/10/20 23:27:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -165,7 +165,7 @@ enum cmd_retval
 cmd_list_keys_commands(unused struct cmd *self, struct cmd_q *cmdq)
 {
 	const struct cmd_entry	**entryp;
-	struct cmd_entry	 *entry;
+	const struct cmd_entry	 *entry;
 
 	for (entryp = cmd_table; *entryp != NULL; entryp++) {
 		entry = *entryp;

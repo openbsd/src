@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.473 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.474 2014/10/20 23:27:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -21,7 +21,6 @@
 
 #define PROTOCOL_VERSION 8
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
@@ -29,10 +28,8 @@
 
 #include <bitstring.h>
 #include <event.h>
-#include <getopt.h>
 #include <imsg.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -1565,7 +1562,7 @@ extern char	*cfg_file;
 extern char	*shell_cmd;
 extern int	 debug_level;
 extern time_t	 start_time;
-extern char	 socket_path[MAXPATHLEN];
+extern char	 socket_path[PATH_MAX];
 extern int	 login_shell;
 extern char	*environ_path;
 void		 logfile(const char *);

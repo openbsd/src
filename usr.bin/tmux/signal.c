@@ -1,4 +1,4 @@
-/* $OpenBSD: signal.c,v 1.6 2010/08/19 18:29:01 nicm Exp $ */
+/* $OpenBSD: signal.c,v 1.7 2014/10/20 23:27:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -16,6 +16,8 @@
  * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/types.h>
 
 #include <string.h>
 #include <signal.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.33 2014/04/14 22:27:30 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.34 2014/10/20 23:27:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -21,6 +21,7 @@
 
 #include <fcntl.h>
 #include <paths.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

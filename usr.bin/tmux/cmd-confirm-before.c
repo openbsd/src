@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.21 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.22 2014/10/20 23:27:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -15,6 +15,8 @@
  * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/types.h>
 
 #include <ctype.h>
 #include <stdlib.h>

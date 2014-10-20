@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.5 2014/10/08 17:35:58 nicm Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.6 2014/10/20 23:27:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2004 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -16,10 +16,8 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 
-#include <errno.h>
-#include <libgen.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
