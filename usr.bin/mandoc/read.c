@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.67 2014/10/18 15:46:16 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.68 2014/10/20 19:21:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -205,6 +205,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"skipping request without numeric argument",
 	"skipping all arguments",
 	"skipping excess arguments",
+	"divide by zero",
 
 	"generic fatal error",
 
