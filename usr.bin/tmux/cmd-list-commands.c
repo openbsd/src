@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-commands.c,v 1.12 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-list-commands.c,v 1.13 2014/10/20 22:44:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -25,14 +25,6 @@
  */
 
 enum cmd_retval	 cmd_list_commands_exec(struct cmd *, struct cmd_q *);
-
-const struct cmd_entry cmd_list_commands_entry = {
-	"list-commands", "lscm",
-	"", 0, 0,
-	"",
-	0,
-	cmd_list_commands_exec
-};
 
 enum cmd_retval
 cmd_list_commands_exec(unused struct cmd *self, struct cmd_q *cmdq)

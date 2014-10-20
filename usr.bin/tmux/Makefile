@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.71 2014/04/16 21:02:41 nicm Exp $
+# $OpenBSD: Makefile,v 1.72 2014/10/20 22:44:30 nicm Exp $
 
 PROG=	tmux
 SRCS=	arguments.c \
@@ -32,7 +32,6 @@ SRCS=	arguments.c \
 	cmd-link-window.c \
 	cmd-list-buffers.c \
 	cmd-list-clients.c \
-	cmd-list-commands.c \
 	cmd-list-keys.c \
 	cmd-list-panes.c \
 	cmd-list-sessions.c \
