@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-buffer.c,v 1.18 2014/05/13 07:34:35 nicm Exp $ */
+/* $OpenBSD: cmd-choose-buffer.c,v 1.19 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -34,7 +34,6 @@ const struct cmd_entry cmd_choose_buffer_entry = {
 	"F:t:", 0, 1,
 	CMD_TARGET_WINDOW_USAGE " [-F format] [template]",
 	0,
-	NULL,
 	cmd_choose_buffer_exec
 };
 

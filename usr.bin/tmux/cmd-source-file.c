@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.19 2013/10/10 12:04:38 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.20 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -36,7 +36,6 @@ const struct cmd_entry cmd_source_file_entry = {
 	"", 1, 1,
 	"path",
 	0,
-	NULL,
 	cmd_source_file_exec
 };
 

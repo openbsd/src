@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.16 2014/04/17 09:13:13 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.17 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -29,7 +29,6 @@
  * Join or move a pane into another (like split/swap/kill).
  */
 
-void		 cmd_join_pane_key_binding(struct cmd *, int);
 enum cmd_retval	 cmd_join_pane_exec(struct cmd *, struct cmd_q *);
 
 enum cmd_retval	 join_pane(struct cmd *, struct cmd_q *, int);
@@ -39,7 +38,6 @@ const struct cmd_entry cmd_join_pane_entry = {
 	"bdhvp:l:s:t:", 0, 0,
 	"[-bdhv] [-p percentage|-l size] [-s src-pane] [-t dst-pane]",
 	0,
-	cmd_join_pane_key_binding,
 	cmd_join_pane_exec
 };
 
@@ -48,23 +46,8 @@ const struct cmd_entry cmd_move_pane_entry = {
 	"bdhvp:l:s:t:", 0, 0,
 	"[-bdhv] [-p percentage|-l size] [-s src-pane] [-t dst-pane]",
 	0,
-	NULL,
 	cmd_join_pane_exec
 };
-
-void
-cmd_join_pane_key_binding(struct cmd *self, int key)
-{
-	switch (key) {
-	case '%':
-		self->args = args_create(0);
-		args_set(self->args, 'h', NULL);
-		break;
-	default:
-		self->args = args_create(0);
-		break;
-	}
-}
 
 enum cmd_retval
 cmd_join_pane_exec(struct cmd *self, struct cmd_q *cmdq)

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-session.c,v 1.15 2013/10/10 12:00:21 nicm Exp $ */
+/* $OpenBSD: cmd-rename-session.c,v 1.16 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,6 @@ const struct cmd_entry cmd_rename_session_entry = {
 	"t:", 1, 1,
 	CMD_TARGET_SESSION_USAGE " new-name",
 	0,
-	NULL,
 	cmd_rename_session_exec
 };
 

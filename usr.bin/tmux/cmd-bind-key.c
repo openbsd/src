@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-bind-key.c,v 1.18 2014/05/14 06:45:35 nicm Exp $ */
+/* $OpenBSD: cmd-bind-key.c,v 1.19 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,7 +36,6 @@ const struct cmd_entry cmd_bind_key_entry = {
 	"cnrt:", 1, -1,
 	"[-cnr] [-t mode-table] key command [arguments]",
 	0,
-	NULL,
 	cmd_bind_key_exec
 };
 

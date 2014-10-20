@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-tree.c,v 1.25 2013/10/10 12:00:18 nicm Exp $ */
+/* $OpenBSD: cmd-choose-tree.c,v 1.26 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -40,7 +40,6 @@ const struct cmd_entry cmd_choose_tree_entry = {
 	"[-suw] [-b session-template] [-c window template] [-S format] " \
 	"[-W format] " CMD_TARGET_WINDOW_USAGE,
 	0,
-	NULL,
 	cmd_choose_tree_exec
 };
 
@@ -49,7 +48,6 @@ const struct cmd_entry cmd_choose_session_entry = {
 	"F:t:", 0, 1,
 	CMD_TARGET_WINDOW_USAGE " [-F format] [template]",
 	0,
-	NULL,
 	cmd_choose_tree_exec
 };
 
@@ -58,7 +56,6 @@ const struct cmd_entry cmd_choose_window_entry = {
 	"F:t:", 0, 1,
 	CMD_TARGET_WINDOW_USAGE "[-F format] [template]",
 	0,
-	NULL,
 	cmd_choose_tree_exec
 };
 

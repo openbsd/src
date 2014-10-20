@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-unlink-window.c,v 1.13 2013/10/10 12:00:24 nicm Exp $ */
+/* $OpenBSD: cmd-unlink-window.c,v 1.14 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,7 +31,6 @@ const struct cmd_entry cmd_unlink_window_entry = {
 	"kt:", 0, 0,
 	"[-k] " CMD_TARGET_WINDOW_USAGE,
 	0,
-	NULL,
 	cmd_unlink_window_exec
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-commands.c,v 1.11 2013/10/10 12:00:20 nicm Exp $ */
+/* $OpenBSD: cmd-list-commands.c,v 1.12 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,7 +31,6 @@ const struct cmd_entry cmd_list_commands_entry = {
 	"", 0, 0,
 	"",
 	0,
-	NULL,
 	cmd_list_commands_exec
 };
 

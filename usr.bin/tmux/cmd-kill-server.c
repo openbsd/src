@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-server.c,v 1.12 2014/01/27 23:57:35 nicm Exp $ */
+/* $OpenBSD: cmd-kill-server.c,v 1.13 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -34,7 +34,6 @@ const struct cmd_entry cmd_kill_server_entry = {
 	"", 0, 0,
 	"",
 	0,
-	NULL,
 	cmd_kill_server_exec
 };
 
@@ -43,7 +42,6 @@ const struct cmd_entry cmd_start_server_entry = {
 	"", 0, 0,
 	"",
 	CMD_STARTSERVER,
-	NULL,
 	cmd_kill_server_exec
 };
 

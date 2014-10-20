@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-copy-mode.c,v 1.16 2013/10/10 12:00:19 nicm Exp $ */
+/* $OpenBSD: cmd-copy-mode.c,v 1.17 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,7 +24,6 @@
  * Enter copy mode.
  */
 
-void		 cmd_copy_mode_key_binding(struct cmd *, int);
 enum cmd_retval	 cmd_copy_mode_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_copy_mode_entry = {
@@ -32,17 +31,8 @@ const struct cmd_entry cmd_copy_mode_entry = {
 	"t:u", 0, 0,
 	"[-u] " CMD_TARGET_PANE_USAGE,
 	0,
-	cmd_copy_mode_key_binding,
 	cmd_copy_mode_exec
 };
-
-void
-cmd_copy_mode_key_binding(struct cmd *self, int key)
-{
-	self->args = args_create(0);
-	if (key == KEYC_PPAGE)
-		args_set(self->args, 'u', NULL);
-}
 
 enum cmd_retval
 cmd_copy_mode_exec(struct cmd *self, struct cmd_q *cmdq)

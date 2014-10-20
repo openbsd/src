@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.26 2013/10/10 12:00:21 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.27 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -41,7 +41,6 @@ const struct cmd_entry cmd_pipe_pane_entry = {
 	"ot:", 0, 1,
 	"[-o] " CMD_TARGET_PANE_USAGE " [command]",
 	0,
-	NULL,
 	cmd_pipe_pane_exec
 };
 

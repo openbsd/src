@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.60 2014/05/13 08:08:32 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.61 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -40,7 +40,6 @@ const struct cmd_entry cmd_new_session_entry = {
 	"[-s session-name] " CMD_TARGET_SESSION_USAGE " [-x width] "
 	"[-y height] [command]",
 	CMD_STARTSERVER|CMD_CANTNEST,
-	NULL,
 	cmd_new_session_exec
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.21 2014/04/17 07:55:43 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.22 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,7 +27,6 @@
  * Switch client to a different session.
  */
 
-void		 cmd_switch_client_key_binding(struct cmd *, int);
 enum cmd_retval	 cmd_switch_client_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_switch_client_entry = {
@@ -35,26 +34,8 @@ const struct cmd_entry cmd_switch_client_entry = {
 	"lc:npt:r", 0, 0,
 	"[-lnpr] [-c target-client] [-t target-session]",
 	CMD_READONLY,
-	cmd_switch_client_key_binding,
 	cmd_switch_client_exec
 };
-
-void
-cmd_switch_client_key_binding(struct cmd *self, int key)
-{
-	self->args = args_create(0);
-	switch (key) {
-	case '(':
-		args_set(self->args, 'p', NULL);
-		break;
-	case ')':
-		args_set(self->args, 'n', NULL);
-		break;
-	case 'L':
-		args_set(self->args, 'l', NULL);
-		break;
-	}
-}
 
 enum cmd_retval
 cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-layout.c,v 1.22 2014/04/17 07:55:43 nicm Exp $ */
+/* $OpenBSD: cmd-select-layout.c,v 1.23 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,15 +24,12 @@
  * Switch window to selected layout.
  */
 
-void		 cmd_select_layout_key_binding(struct cmd *, int);
 enum cmd_retval	 cmd_select_layout_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_select_layout_entry = {
 	"select-layout", "selectl",
 	"npt:", 0, 1,
 	"[-np] " CMD_TARGET_WINDOW_USAGE " [layout-name]",
-	0,
-	cmd_select_layout_key_binding,
 	cmd_select_layout_exec
 };
 
@@ -41,7 +38,6 @@ const struct cmd_entry cmd_next_layout_entry = {
 	"t:", 0, 0,
 	CMD_TARGET_WINDOW_USAGE,
 	0,
-	NULL,
 	cmd_select_layout_exec
 };
 
@@ -50,34 +46,8 @@ const struct cmd_entry cmd_previous_layout_entry = {
 	"t:", 0, 0,
 	CMD_TARGET_WINDOW_USAGE,
 	0,
-	NULL,
 	cmd_select_layout_exec
 };
-
-void
-cmd_select_layout_key_binding(struct cmd *self, int key)
-{
-	switch (key) {
-	case '1' | KEYC_ESCAPE:
-		self->args = args_create(1, "even-horizontal");
-		break;
-	case '2' | KEYC_ESCAPE:
-		self->args = args_create(1, "even-vertical");
-		break;
-	case '3' | KEYC_ESCAPE:
-		self->args = args_create(1, "main-horizontal");
-		break;
-	case '4' | KEYC_ESCAPE:
-		self->args = args_create(1, "main-vertical");
-		break;
-	case '5' | KEYC_ESCAPE:
-		self->args = args_create(1, "tiled");
-		break;
-	default:
-		self->args = args_create(0);
-		break;
-	}
-}
 
 enum cmd_retval
 cmd_select_layout_exec(struct cmd *self, struct cmd_q *cmdq)

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.25 2014/04/17 07:55:43 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.26 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -40,7 +40,6 @@ const struct cmd_entry cmd_run_shell_entry = {
 	"bt:", 1, 1,
 	"[-b] " CMD_TARGET_PANE_USAGE " shell-command",
 	0,
-	NULL,
 	cmd_run_shell_exec
 };
 

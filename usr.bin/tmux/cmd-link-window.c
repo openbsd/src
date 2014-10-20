@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-link-window.c,v 1.14 2013/10/10 12:00:20 nicm Exp $ */
+/* $OpenBSD: cmd-link-window.c,v 1.15 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,6 @@ const struct cmd_entry cmd_link_window_entry = {
 	"dks:t:", 0, 0,
 	"[-dk] " CMD_SRCDST_WINDOW_USAGE,
 	0,
-	NULL,
 	cmd_link_window_exec
 };
 

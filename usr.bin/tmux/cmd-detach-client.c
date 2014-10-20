@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-detach-client.c,v 1.16 2013/10/15 00:15:11 nicm Exp $ */
+/* $OpenBSD: cmd-detach-client.c,v 1.17 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,6 @@ const struct cmd_entry cmd_detach_client_entry = {
 	"as:t:P", 0, 0,
 	"[-P] [-a] [-s target-session] " CMD_TARGET_CLIENT_USAGE,
 	CMD_READONLY,
-	NULL,
 	cmd_detach_client_exec
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.51 2014/09/01 21:50:18 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.52 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,7 +31,6 @@
  * Split a window (add a new pane).
  */
 
-void		 cmd_split_window_key_binding(struct cmd *, int);
 enum cmd_retval	 cmd_split_window_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_split_window_entry = {
@@ -40,17 +39,8 @@ const struct cmd_entry cmd_split_window_entry = {
 	"[-dhvP] [-c start-directory] [-F format] [-p percentage|-l size] "
 	CMD_TARGET_PANE_USAGE " [command]",
 	0,
-	cmd_split_window_key_binding,
 	cmd_split_window_exec
 };
-
-void
-cmd_split_window_key_binding(struct cmd *self, int key)
-{
-	self->args = args_create(0);
-	if (key == '%')
-		args_set(self->args, 'h', NULL);
-}
 
 enum cmd_retval
 cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)

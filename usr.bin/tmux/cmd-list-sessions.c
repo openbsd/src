@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-sessions.c,v 1.16 2013/10/10 12:00:21 nicm Exp $ */
+/* $OpenBSD: cmd-list-sessions.c,v 1.17 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -35,7 +35,6 @@ const struct cmd_entry cmd_list_sessions_entry = {
 	"F:", 0, 0,
 	"[-F format]",
 	0,
-	NULL,
 	cmd_list_sessions_exec
 };
 

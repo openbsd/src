@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-windows.c,v 1.27 2013/10/10 12:00:21 nicm Exp $ */
+/* $OpenBSD: cmd-list-windows.c,v 1.28 2014/10/20 22:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -38,7 +38,6 @@ const struct cmd_entry cmd_list_windows_entry = {
 	"F:at:", 0, 0,
 	"[-a] [-F format] " CMD_TARGET_SESSION_USAGE,
 	0,
-	NULL,
 	cmd_list_windows_exec
 };
 
