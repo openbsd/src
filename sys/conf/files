@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.582 2014/10/12 19:33:32 miod Exp $
+#	$OpenBSD: files,v 1.583 2014/10/20 00:38:50 tedu Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -855,7 +855,7 @@ file crypto/rijndael.c			(inet & ipsec) | crypto | uvm_swap_encrypt | wlan
 file crypto/md5.c
 file crypto/rmd160.c			(inet & ipsec) | crypto
 file crypto/sha1.c			(inet & ipsec) | crypto | carp | wlan
-file crypto/sha2.c			(inet & ipsec) | crypto | wlan
+file crypto/sha2.c
 file crypto/blf.c			(inet & ipsec) | crypto | vnd
 file crypto/cast.c			(inet & ipsec) | crypto
 file crypto/ecb_enc.c			(inet & ipsec) | crypto
