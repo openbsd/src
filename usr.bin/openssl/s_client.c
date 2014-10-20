@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.3 2014/10/13 02:39:09 bcook Exp $ */
+/* $OpenBSD: s_client.c,v 1.4 2014/10/20 01:58:10 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -822,8 +822,6 @@ re_start:
 
 	if (init_client(&s, host, port, socket_type, af) == 0) {
 		BIO_printf(bio_err, "connect:errno=%d\n", errno);
-		shutdown(s, SHUT_RD);
-		close(s);
 		goto end;
 	}
 	BIO_printf(bio_c_out, "CONNECTED(%08X)\n", s);
