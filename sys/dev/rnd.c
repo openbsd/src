@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.160 2014/09/15 22:00:24 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.161 2014/10/20 00:40:19 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -64,17 +64,17 @@
  * a small random token to the "rnd states" queue.
  *
  * When random bytes are desired, they are obtained by pulling from
- * the entropy pool and running a MD5 hash. The MD5 hash avoids
+ * the entropy pool and running a SHA512 hash. The SHA512 hash avoids
  * exposing the internal state of the entropy pool.  Even if it is
- * possible to analyze MD5 in some clever way, as long as the amount
+ * possible to analyze SHA512 in some clever way, as long as the amount
  * of data returned from the generator is less than the inherent
  * entropy in the pool, the output data is totally unpredictable.  For
  * this reason, the routine decreases its internal estimate of how many
  * bits of "true randomness" are contained in the entropy pool as it
  * outputs random numbers.
  *
- * If this estimate goes to zero, the MD5 hash will continue to generate
- * output since there is no true risk because the MD5 output is not
+ * If this estimate goes to zero, the SHA512 hash will continue to generate
+ * output since there is no true risk because the SHA512 output is not
  * exported outside this subsystem.  It is next used as input to seed a
  * ChaCha20 stream cipher, which is re-seeded from time to time.  This
  * design provides very high amounts of output data from a potentially
@@ -106,7 +106,7 @@
  * RFC 1750, "Randomness Recommendations for Security", by Donald
  * Eastlake, Steve Crocker, and Jeff Schiller.
  *
- * Using a RC4 stream cipher as 2nd stage after the MD5 output
+ * Using a RC4 stream cipher as 2nd stage after the MD5 (now SH512) output
  * is the result of work by David Mazieres.
  */
 
@@ -127,7 +127,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <crypto/md5.h>
+#include <crypto/sha2.h>
 
 #define KEYSTREAM_ONLY
 #include <crypto/chacha_private.h>
@@ -483,15 +483,15 @@ dequeue_randomness(void *v)
 }
 
 /*
- * Grabs a chunk from the entropy_pool[] and slams it through MD5 when
+ * Grabs a chunk from the entropy_pool[] and slams it through SHA512 when
  * requested.
  */
 void
 extract_entropy(u_int8_t *buf, int nbytes)
 {
 	static u_int32_t extract_pool[POOLWORDS];
-	u_char buffer[MD5_DIGEST_LENGTH];
-	MD5_CTX tmp;
+	u_char buffer[SHA512_DIGEST_LENGTH];
+	SHA2_CTX tmp;
 	u_int i;
 
 	add_timer_randomness(nbytes);
@@ -502,15 +502,15 @@ extract_entropy(u_int8_t *buf, int nbytes)
 		/*
 		 * INTENTIONALLY not protected by entropylock.  Races
 		 * during bcopy() result in acceptable input data; races
-		 * during MD5Update() would create nasty data dependencies.
+		 * during SHA512Update() would create nasty data dependencies.
 		 */
 		bcopy(entropy_pool, extract_pool,
 		    sizeof(extract_pool));
 
 		/* Hash the pool to get the output */
-		MD5Init(&tmp);
-		MD5Update(&tmp, (u_int8_t *)extract_pool, sizeof(extract_pool));
-		MD5Final(buffer, &tmp);
+		SHA512Init(&tmp);
+		SHA512Update(&tmp, (u_int8_t *)extract_pool, sizeof(extract_pool));
+		SHA512Final(buffer, &tmp);
 
 		/* Copy data to destination buffer */
 		bcopy(buffer, buf, i);
@@ -578,7 +578,7 @@ _rs_stir(int do_lock)
 	int i;
 
 	/*
-	 * Use MD5 PRNG data and a system timespec; early in the boot
+	 * Use SHA512 PRNG data and a system timespec; early in the boot
 	 * process this is the best we can do -- some architectures do
 	 * not collect entropy very well during this time, but may have
 	 * clock information which is better than nothing.
