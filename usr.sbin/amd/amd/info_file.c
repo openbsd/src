@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_file.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_file.c,v 1.7 2013/12/03 02:14:57 deraadt Exp $
+ *	$Id: info_file.c,v 1.8 2014/10/20 02:33:42 guenther Exp $
  */
 
 /*
@@ -41,7 +41,6 @@
 
 #include "am.h"
 
-#ifdef HAS_FILE_MAPS
 #include <ctype.h>
 #include <sys/stat.h>
 
@@ -260,4 +259,3 @@ file_mtime(char *map, time_t *tp)
 
 	return errno;
 }
-#endif /* HAS_FILE_MAPS */

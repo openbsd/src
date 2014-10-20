@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount_fs.c	8.1 (Berkeley) 6/6/93
- *	$Id: mount_fs.c,v 1.12 2014/10/20 00:20:04 guenther Exp $
+ *	$Id: mount_fs.c,v 1.13 2014/10/20 02:33:42 guenther Exp $
  */
 
 #include "am.h"
@@ -101,10 +101,6 @@ mount_fs(struct mntent *mnt, int flags, caddr_t mnt_data, int retry,
     MTYPE_TYPE type)
 {
 	int error = 0;
-#ifdef MNTINFO_DEV
-	struct stat stb;
-	char *xopts = 0;
-#endif /* MNTINFO_DEV */
 
 #ifdef DEBUG
 #ifdef NFS_4
@@ -149,50 +145,10 @@ again:
 		return errno;
 	}
 
-#ifdef UPDATE_MTAB
-#ifdef MNTINFO_DEV
-	/*
-	 * Add the extra dev= field to the mount table.
-	 */
-	if (lstat(mnt->mnt_dir, &stb) == 0) {
-		char *zopts = (char *) xmalloc(strlen(mnt->mnt_opts) + 32);
-		xopts = mnt->mnt_opts;
-		if (sizeof(stb.st_dev) == 2) {
-			/* e.g. SunOS 4.1 */
-			snprintf(zopts, strlen(mnt->mnt_opts) + 32,
-					"%s,%s=%s%04x", xopts, MNTINFO_DEV,
-					MNTINFO_PREF, (u_int) stb.st_dev & 0xffff);
-		} else {
-			/* e.g. System Vr4 */
-			snprintf(zopts, strlen(mnt->mnt_opts) + 32,
-					"%s,%s=%s%08x", xopts, MNTINFO_DEV,
-					MNTINFO_PREF, (u_int) stb.st_dev);
-		}
-		mnt->mnt_opts = zopts;
-	}
-#endif /* MNTINFO_DEV */
-
-#ifdef FIXUP_MNTENT
-	/*
-	 * Additional fields in struct mntent
-	 * are fixed up here
-	 */
-	FIXUP_MNTENT(mnt);
-#endif
-
-	write_mntent(mnt);
-#ifdef MNTINFO_DEV
-	if (xopts) {
-		free(mnt->mnt_opts);
-		mnt->mnt_opts = xopts;
-	}
-#endif /* MNTINFO_DEV */
-#endif /* UPDATE_MTAB */
 
 	return 0;
 }
 
-#ifdef NEED_MNTOPT_PARSER
 /*
  * Some systems don't provide these to the user,
  * but amd needs them, so...
@@ -251,7 +207,6 @@ hasmntopt(struct mntent *mnt, char *opt)
 
 	return 0;
 }
-#endif /* NEED_MNTOPT_PARSER */
 
 #ifdef MOUNT_HELPER_SOURCE
 #include MOUNT_HELPER_SOURCE

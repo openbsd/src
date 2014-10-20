@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_subr.c,v 1.5 2003/06/02 23:36:51 millert Exp $
+ *	$Id: nfs_subr.c,v 1.6 2014/10/20 02:33:42 guenther Exp $
  */
 
 #include "am.h"
@@ -103,16 +103,13 @@ nfsproc_getattr_2(struct nfs_fh *argp, struct svc_req *rqstp)
 
 	mp = fh_to_mp2(argp, &retry);
 	if (mp == 0) {
-#ifdef PRECISE_SYMLINKS
 getattr_retry:
-#endif /* PRECISE_SYMLINKS */
 
 		if (retry < 0)
 			return 0;
 		res.status = nfs_error(retry);
 	} else {
 		struct attrstat *attrp = &mp->am_attr;
-#ifdef PRECISE_SYMLINKS
 		if (mp->am_fattr.type == NFLNK) {
 			/*
 			 * Make sure we can read the link,
@@ -122,7 +119,6 @@ getattr_retry:
 			if (ln == 0)
 				goto getattr_retry;
 		}
-#endif /* PRECISE_SYMLINKS */
 #ifdef DEBUG
 		Debug(D_TRACE)
 			plog(XLOG_DEBUG, "\tstat(%s), size = %d", mp->am_path, attrp->attrstat_u.attributes.size);
@@ -490,11 +486,7 @@ nfsproc_statfs_2(struct nfs_fh *argp, struct svc_req *rqstp)
 
 		fp->tsize = 1024;
 		fp->bsize = 4096;
-#ifdef HAS_EMPTY_AUTOMOUNTS
 		fp->blocks = 0;
-#else
-		fp->blocks = 1;
-#endif
 		fp->bfree = 0;
 		fp->bavail = 0;
 

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.18 2014/10/20 00:20:04 guenther Exp $
+ *	$Id: amd.c,v 1.19 2014/10/20 02:33:42 guenther Exp $
  */
 
 /*
@@ -298,7 +298,6 @@ main(int argc, char *argv[])
 		going_down(1);
 	}
 
-#ifdef HAS_NIS_MAPS
 	/*
 	 * If the domain was specified then bind it here
 	 * to circumvent any default bindings that may
@@ -308,7 +307,6 @@ main(int argc, char *argv[])
 		plog(XLOG_FATAL, "Can't bind to domain \"%s\"", domain);
 		going_down(1);
 	}
-#endif /* HAS_NIS_MAPS */
 
 #ifdef DEBUG
 	Debug(D_DAEMON)

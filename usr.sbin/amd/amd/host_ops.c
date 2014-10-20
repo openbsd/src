@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.13 2003/06/02 23:36:51 millert Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.14 2014/10/20 02:33:42 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -172,9 +172,7 @@ fetch_fhandle(CLIENT *client, char *dir, fhstatus *fhp)
 	 * Call the mount daemon on the remote host to
 	 * get the filehandle.
 	 */
-#if NFS_PROTOCOL_VERSION >= 3
 	fhp->fhs_vers = MOUNTVERS;
-#endif
 	clnt_stat = clnt_call(client, MOUNTPROC_MNT, xdr_dirpath, &dir, xdr_fhstatus, fhp, tv);
 	if (clnt_stat != RPC_SUCCESS) {
 		extern char *clnt_sperrno();
@@ -494,61 +492,6 @@ host_fumount(mntfs *mf)
  */
 static void host_umounted(am_node *mp)
 {
-#ifdef INFORM_MOUNTD
-	mntfs *mf = mp->am_mnt;
-	char *host;
-	CLIENT *client;
-	enum clnt_stat clnt_stat;
-	struct sockaddr_in sin;
-	int sock = RPC_ANYSOCK;
-	struct timeval tv;
-	tv.tv_sec = 10; tv.tv_usec = 0;
-
-	if (mf->mf_error || mf->mf_refc > 1 || ! mf->mf_server)
-		return;
-
-	host = mf->mf_server->fs_host;
-	sin = *mf->mf_server->fs_ip;
-
-	/*
-	 * Zero out the port - make sure we recompute
-	 */
-	sin.sin_port = 0;
-	/*
-	 * Make a client end-point.
-	 * Try TCP first
-	 */
-	if ((client = clnttcp_create(&sin, MOUNTPROG, MOUNTVERS, &sock, 0, 0)) == NULL &&
-		(client = clntudp_create(&sin, MOUNTPROG, MOUNTVERS, tv, &sock)) == NULL) {
-		plog(XLOG_ERROR, "Failed to make rpc connection to mountd on %s", host);
-		goto out;
-	}
-
-	if (!nfs_auth) {
-		if (make_nfs_auth())
-			goto out;
-	}
-
-	client->cl_auth = nfs_auth;
-
-#ifdef DEBUG
-	dlog("Unmounting all from %s", host);
-#endif /* DEBUG */
-
-	clnt_stat = clnt_call(client, MOUNTPROC_UMNTALL, xdr_void, 0, xdr_void, 0, tv);
-	if (clnt_stat != RPC_SUCCESS && clnt_stat != RPC_SYSTEMERROR) {
-		/* RPC_SYSTEMERROR seems to be returned for no good reason ...*/
-		extern char *clnt_sperrno();
-		char *msg = clnt_sperrno(clnt_stat);
-		plog(XLOG_ERROR, "unmount all from %s rpc failed: %s", host, msg, clnt_stat);
-		goto out;
-	}
-
-out:
-	if (client)
-		clnt_destroy(client);
-
-#endif /* INFORM_MOUNTD */
 }
 
 

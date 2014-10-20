@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
- *	$Id: util.c,v 1.12 2013/12/03 02:14:57 deraadt Exp $
+ *	$Id: util.c,v 1.13 2014/10/20 02:33:42 guenther Exp $
  */
 
 /*
@@ -541,22 +541,6 @@ mkdirs(char *path, int mode)
 #endif
 	}
 
-#ifdef SUNOS4_WORKAROUND
-	/*
-	 * Do a sync - if we do rmdirs() immediately
-	 * and then the system crashes it leaves
-	 * the filesystem in a state that fsck -p
-	 * can't fix.  (Observed more than once on
-	 * SunOS 4 ...)
-	 *
-	 * The problem was caused by a bug somewhere
-	 * in the UFS code which has since been fixed
-	 * (at least at Berkeley).
-	 *
-	 * Attempted workaround - XXX.
-	 */
-	sync();
-#endif /* SUNOS4_WORKAROUND */
 
 	free(p2);
 

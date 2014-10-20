@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)get_args.c	8.1 (Berkeley) 6/6/93
- *	$Id: get_args.c,v 1.13 2014/10/20 00:20:04 guenther Exp $
+ *	$Id: get_args.c,v 1.14 2014/10/20 02:33:42 guenther Exp $
  */
 
 /*
@@ -55,12 +55,7 @@ int print_pid;
 int normalize_hosts;
 char *karch;			/* Kernel architecture */
 char *cluster;			/* Cluster name */
-#ifdef HAS_NIS_MAPS
 char *domain;			/* YP domain */
-#endif /* HAS_NIS_MAPS */
-#ifdef UPDATE_MTAB
-char *mtab;
-#endif /* UPDATE_MTAB */
 int afs_timeo = -1;
 int afs_retrans = -1;
 int am_timeo = AM_TTL;
@@ -194,11 +189,7 @@ get_args(int c, char *v[])
 			break;
 
 		case 'y':
-#ifdef HAS_NIS_MAPS
 			domain = optarg;
-#else
-			plog(XLOG_USER, "-y: option ignored.  No NIS support available.");
-#endif /* HAS_NIS_MAPS */
 			break;
 
 		case 'C':
@@ -257,20 +248,11 @@ get_args(int c, char *v[])
 		strlcat(hostd,  ".", 2 * MAXHOSTNAMELEN);
 		strlcat(hostd, hostdomain, 2 * MAXHOSTNAMELEN);
 
-#ifdef UPDATE_MTAB
-#ifdef DEBUG
-		if (debug_flags & D_MTAB)
-			mtab = DEBUG_MTAB;
-		else
-#endif /* DEBUG */
-		mtab = MOUNTED;
-#else
 #ifdef DEBUG
 		{ if (debug_flags & D_MTAB) {
 			dlog("-D mtab option ignored");
 		} }
 #endif /* DEBUG */
-#endif /* UPDATE_MTAB */
 
 		if (switch_to_logfile(logfile) != 0)
 			plog(XLOG_USER, "Cannot switch logfile");
@@ -306,11 +288,7 @@ show_usage:
 	fputs(" [-h host_helper]\n", stderr);
 #endif /* defined(HAS_HOST) && defined(HOST_EXEC) */
 
-#ifdef HAS_NIS_MAPS
 	fputs(" [-y YP-domain]\n", stderr);
-#else
-	fputc('\n', stderr);
-#endif /* HAS_NIS_MAPS */
 
 	show_opts('x', xlog_opt);
 #ifdef DEBUG

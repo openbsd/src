@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_union.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_union.c,v 1.7 2013/06/02 06:25:20 guenther Exp $
+ *	$Id: info_union.c,v 1.8 2014/10/20 02:33:42 guenther Exp $
  */
 
 /*
@@ -44,7 +44,6 @@
 
 #include "am.h"
 
-#ifdef HAS_UNION_MAPS
 
 #include <dirent.h>
 #define	DIRENT struct dirent
@@ -136,4 +135,3 @@ union_reload(mnt_map *m, char *map, void (*fn)())
 	return 0;
 }
 
-#endif /* HAS_UNION_MAPS */

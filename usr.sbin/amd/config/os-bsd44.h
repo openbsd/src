@@ -1,4 +1,4 @@
-/*	$OpenBSD: os-bsd44.h,v 1.10 2014/10/20 00:20:04 guenther Exp $	*/
+/*	$OpenBSD: os-bsd44.h,v 1.11 2014/10/20 02:33:42 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,34 +39,11 @@
  */
 
 /*
- * Which version of the Sun RPC library we are using
- * This is the implementation release number, not
- * the protocol revision number.
- */
-#define	RPC_4
-
-/*
  * Which version of the NFS interface are we using.
  * This is the implementation release number, not
  * the protocol revision number.
  */
 #define	NFS_44
-#define HAS_TCP_NFS
-
-/*
- * Does this OS have NDBM support?
- */
-#define OS_HAS_NDBM
-
-/*
- * The mount table is obtained from the kernel
- */
-#undef	UPDATE_MTAB
-
-/*
- * No mntent info on 4.4 BSD
- */
-#undef	MNTENT_HDR
 
 /*
  * Name of filesystem types
@@ -91,8 +68,6 @@
 /*
  * Miscellaneous 4.4 BSD bits
  */
-#define	NEED_MNTOPT_PARSER
-#define	SHORT_MOUNT_NAME
 
 #define	MNTMAXSTR       128
 
@@ -129,15 +104,3 @@ struct mntent {
  */
 #undef NFS_FH_TYPE
 #define NFS_FH_TYPE void *
-
-/*
- * The data for the mount syscall needs the path in addition to the
- * host name since that is the only source of information about the
- * mounted filesystem.
- */
-#define	NFS_ARGS_NEEDS_PATH
-
-/*
- * Need precise length links
- */
-#define	PRECISE_SYMLINKS

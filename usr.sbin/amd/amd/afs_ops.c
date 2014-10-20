@@ -1,4 +1,4 @@
-/*	$OpenBSD: afs_ops.c,v 1.12 2004/07/17 06:55:02 otto Exp $	*/
+/*	$OpenBSD: afs_ops.c,v 1.13 2014/10/20 02:33:42 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -136,10 +136,8 @@ mount_toplvl(char *dir, char *opts)
 		return EINVAL;
 	}
 
-#if NFS_PROTOCOL_VERSION >= 3
 	nfs_args.fhsize = NFSX_V2FH;
 	nfs_args.version = NFS_ARGSVERSION;
-#endif
 	NFS_FH_DREF(nfs_args.fh, (NFS_FH_TYPE) fhp);
 
 	/*
@@ -168,13 +166,8 @@ mount_toplvl(char *dir, char *opts)
 #ifndef HOSTNAMESZ
 #define	SHORT_MOUNT_NAME
 #endif /* HOSTNAMESZ */
-#ifdef SHORT_MOUNT_NAME
 	snprintf(fs_hostname, sizeof(fs_hostname), "amd:%ld",
 	    foreground ? (long)mypid : (long)getppid());
-#else
-	snprintf(fs_hostname, sizeof(fs_hostname), "pid%ld@%s:%s",
-	    foreground ? (long)mypid : (long)getppid(), hostname, dir);
-#endif /* SHORT_MOUNT_NAME */
 	nfs_args.hostname = fs_hostname;
 	nfs_args.flags |= NFSMNT_HOSTNAME;
 #ifdef HOSTNAMESZ
@@ -226,12 +219,6 @@ mount_toplvl(char *dir, char *opts)
 #endif /* MNTOPT_INTR */
 
 	flags = compute_mount_flags(&mnt);
-#ifdef ULTRIX_HACK
-	nfs_args.gfs_flags = flags;
-	flags &= M_RDONLY;
-	if (flags & M_RDONLY)
-		nfs_args.flags |= NFSMNT_RONLY;
-#endif /* ULTRIX_HACK */
 	return mount_fs(&mnt, flags, (caddr_t) &nfs_args, retry, type);
 }
 

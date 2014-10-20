@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapc.c,v 1.15 2014/10/20 00:20:04 guenther Exp $	*/
+/*	$OpenBSD: mapc.c,v 1.16 2014/10/20 02:33:42 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -39,9 +39,7 @@
  */
 
 #include "am.h"
-#ifdef HAS_REGEXP
 #include <regex.h>
-#endif
 
 /*
  * Hash table size
@@ -64,12 +62,8 @@ static char wildcard[] = "*";
 #define	MAPC_INC	0x002
 #define	MAPC_ROOT	0x004
 #define	MAPC_ALL	0x010
-#ifdef HAS_REGEXP
 #define MAPC_RE		0x020
 #define	MAPC_ISRE(m) ((m)->alloc == MAPC_RE)
-#else
-#define MAPC_ISRE(m) FALSE
-#endif
 #define	MAPC_CACHE_MASK	0x0ff
 #define	MAPC_SYNC	0x100
 
@@ -79,10 +73,8 @@ static struct opt_tab mapc_opt[] = {
 	{ "inc", MAPC_INC },
 	{ "mapdefault", MAPC_DFLT },
 	{ "none", MAPC_NONE },
-#ifdef HAS_REGEXP
 	{ "re", MAPC_RE },
 	{ "regexp", MAPC_RE },
-#endif
 	{ "sync", MAPC_SYNC },
 	{ 0, 0 }
 };
@@ -161,39 +153,27 @@ qelem map_list_head = { &map_list_head, &map_list_head };
 static int	root_init(char *, time_t *);
 
 /* FILE MAPS */
-#ifdef HAS_FILE_MAPS
 extern int	file_init(char *, time_t *);
 extern int	file_reload(mnt_map *, char *, add_fn *);
 extern int	file_search(mnt_map *, char *, char *, char **, time_t *);
 extern int	file_mtime(char *, time_t *);
-#endif /* HAS_FILE_MAPS */
 
 /* Network Information Service (NIS) MAPS */
-#ifdef HAS_NIS_MAPS
 extern int	nis_init(char *, time_t *);
-#ifdef HAS_NIS_RELOAD
 extern int	nis_reload(mnt_map *, char *, add_fn *);
-#else
-#define nis_reload error_reload
-#endif
 extern int	nis_search(mnt_map *, char *, char *, char **, time_t *);
 #define nis_mtime nis_init
-#endif /* HAS_NIS_MAPS */
 
 /* NDBM MAPS */
 #ifdef HAS_NDBM_MAPS
-#ifdef OS_HAS_NDBM
 extern int	ndbm_init(char *, time_t *);
 extern int	ndbm_search(mnt_map *, char *, charo *, char **, time_t *);
 #define ndbm_mtime ndbm_init
-#endif /* OS_HAS_NDBM */
 #endif /* HAS_NDBM_MAPS */
 
 /* PASSWD MAPS */
-#ifdef HAS_PASSWD_MAPS
 extern int	passwd_init(char *, time_t *);
 extern int	passwd_search(mnt_map *, char *, char *, char **, time_t *);
-#endif /* HAS_PASSWD_MAPS */
 
 /* HESIOD MAPS */
 #ifdef HAS_HESIOD_MAPS
@@ -207,11 +187,9 @@ extern int	hesiod_search(mnt_map *, char *, char *, char **, time_t *);
 #endif /* HAS_HESIOD_MAPS */
 
 /* UNION MAPS */
-#ifdef HAS_UNION_MAPS
 extern int	union_init(char *, time_t *);
 extern int	union_search(mnt_map *, char *, char *, char **, time_t *);
 extern int	union_reload(mnt_map *, char *, add_fn *);
-#endif /* HAS_UNION_MAPS */
 
 /* ERROR MAP */
 static int	error_init(char *, time_t *);
@@ -222,29 +200,21 @@ static int	error_mtime(char *, time_t *);
 static map_type maptypes[] = {
 	{ "root", root_init, error_reload, error_search, error_mtime, MAPC_ROOT },
 
-#ifdef HAS_PASSWD_MAPS
 	{ "passwd", passwd_init, error_reload, passwd_search, error_mtime, MAPC_INC },
-#endif
 
 #ifdef HAS_HESIOD_MAPS
 	{ "hesiod", hesiod_init, hesiod_reload, hesiod_search, error_mtime, MAPC_ALL },
 #endif
 
-#ifdef HAS_UNION_MAPS
 	{ "union", union_init, union_reload, union_search, error_mtime, MAPC_ALL },
-#endif
 
-#ifdef HAS_NIS_MAPS
 	{ "nis", nis_init, nis_reload, nis_search, nis_mtime, MAPC_INC },
-#endif
 
 #ifdef HAS_NDBM_MAPS
 	{ "ndbm", ndbm_init, error_reload, ndbm_search, ndbm_mtime, MAPC_INC },
 #endif
 
-#ifdef HAS_FILE_MAPS
 	{ "file", file_init, file_reload, file_search, file_mtime, MAPC_ALL },
-#endif
 
 	{ "error", error_init, error_reload, error_search, error_mtime, MAPC_NONE },
 };
@@ -290,7 +260,6 @@ mapc_add_kv(mnt_map *m, char *key, char *val)
 	dlog("add_kv: %s -> %s", key, val);
 #endif
 
-#ifdef HAS_REGEXP
 	if (MAPC_ISRE(m)) {
 		char keyb[MAXPATHLEN];
 		regex_t *re;
@@ -308,7 +277,6 @@ mapc_add_kv(mnt_map *m, char *key, char *val)
 			key = (char *)re;
 		}
 	}
-#endif
 
 	h = &m->kvhash[hash];
 	n = ALLOC(kv);
@@ -449,7 +417,6 @@ mapc_create(char *map, char *opt)
 			alloc = MAPC_INC;
 		}
 		break;
-#ifdef HAS_REGEXP
 	case MAPC_RE:
 		if (mt->reload == error_reload) {
 			plog(XLOG_WARNING, "Map type \"%s\" does not support cache type \"re\"", mt->name);
@@ -457,7 +424,6 @@ mapc_create(char *map, char *opt)
 			/* assert: mt->name == "error" */
 		}
 		break;
-#endif
 	}
 
 #ifdef DEBUG
@@ -605,7 +571,6 @@ mapc_meta_search(mnt_map *m, char *key, char **pval, int recurse)
 		while (k && !FSTREQ(k->key, key)) k = k->next;
 
 	}
-#ifdef HAS_REGEXP
 	else if (recurse == MREC_FULL) {
 		/*
 		 * Try for an RE match against the entire map.
@@ -627,7 +592,6 @@ mapc_meta_search(mnt_map *m, char *key, char **pval, int recurse)
 				break;
 		}
 	}
-#endif
 
 	/*
 	 * If found then take a copy

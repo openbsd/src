@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.19 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.20 2014/10/20 02:33:42 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -150,9 +150,7 @@ got_nfs_fh(void *pkt, int len, struct sockaddr_in *sa,
 {
 	fh_cache *fp = find_nfs_fhandle_cache(idv, done);
 	if (fp) {
-#if NFS_PROTOCOL_VERSION >= 3
 		fp->fh_handle.fhs_vers = MOUNTVERS;
-#endif
 		fp->fh_error = pickup_rpc_reply(pkt, len, (void *)&fp->fh_handle, xdr_fhstatus);
 		if (!fp->fh_error) {
 #ifdef DEBUG
@@ -321,7 +319,6 @@ prime_nfs_fhandle_cache(char *path, fserver *fs, fhstatus *fhbuf, void *wchan)
 int
 make_nfs_auth(void)
 {
-#ifdef HAS_NFS_QUALIFIED_NAMES
 	/*
 	 * From: Chris Metcalf <metcalf@masala.lcs.mit.edu>
 	 * Use hostd, not just hostname.  Note that uids
@@ -330,9 +327,6 @@ make_nfs_auth(void)
 	 */
 	static int group_wheel = 0;
 	nfs_auth = authunix_create(hostd, 0, 0, 1, &group_wheel);
-#else
-	nfs_auth = authunix_create_default();
-#endif
 	if (!nfs_auth)
 		return ENOBUFS;
 	return 0;
@@ -476,13 +470,7 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 	 */
 	if (!(colon = strchr(fs_name, ':')))
 		return ENOENT;
-#ifndef NFS_ARGS_NEEDS_PATH
-	*colon = '\0';
-#endif
 	strlcpy(host, fs_name, sizeof(host));
-#ifndef NFS_ARGS_NEEDS_PATH
-	*colon = ':';
-#endif /* NFS_ARGS_NEEDS_PATH */
 	/*path = colon + 1;*/
 
 	if (mf->mf_remopts && *mf->mf_remopts && !islocalnet(fs->fs_ip->sin_addr.s_addr))
@@ -510,13 +498,8 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 	 */
 	NFS_FH_DREF(nfs_args.fh, (NFS_FH_TYPE) fhp->fhs_fhandle);
 
-#if NFS_PROTOCOL_VERSION >= 3
 	nfs_args.fhsize = fhp->fhs_size;
 	nfs_args.version = NFS_ARGSVERSION;
-#endif
-#ifdef ULTRIX_HACK
-	nfs_args.optstr = mnt.mnt_opts;
-#endif /* ULTRIX_HACK */
 
 	nfs_args.hostname = host;
 	nfs_args.flags |= NFSMNT_HOSTNAME;
@@ -599,10 +582,6 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 		nfs_args.flags |= NFSMNT_NODEVS;
 #endif /* MNTOPT_NODEVS */
 
-#ifdef MNTOPT_COMPRESS
-	if (hasmntopt(&mnt, MNTOPT_COMPRESS) != NULL)
-		nfs_args.flags |= NFSMNT_COMPRESS;
-#endif /* MNTOPT_COMPRESS */
 
 #ifdef MNTOPT_NOCONN
 	if (hasmntopt(&mnt, MNTOPT_NOCONN) != NULL)
@@ -614,14 +593,6 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 		nfs_args.flags |= NFSMNT_RESVPORT;
 #endif /* MNTOPT_RESVPORT */
 
-#ifdef MNTOPT_NQNFS
-	if (hasmntopt(&mnt, MNTOPT_NQNFS) != NULL)
-		nfs_args.flags |= NFSMNT_NQNFS;
-#ifdef NFSMNT_NQLOOKLEASE
-	if (hasmntopt(&mnt, "nolooklease") == NULL)
-		nfs_args.flags |= NFSMNT_NQLOOKLEASE;
-#endif /* NFSMNT_NQLOOKLEASE */
-#endif /* MNTOPT_NQNFS */
 
 #ifdef NFSMNT_PGTHRESH
 	if (nfs_args.pg_thresh = hasmntval(&mnt, "pgthresh"))
@@ -637,28 +608,10 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 		nfs_args.flags |= NFSMNT_NOCTO;
 #endif /* NFSMNT_NOCTO */
 
-#ifdef HAS_TCP_NFS
 	if (hasmntopt(&mnt, "tcp") != NULL)
 		nfs_args.sotype = SOCK_STREAM;
-#endif /* HAS_TCP_NFS */
 
 
-#ifdef ULTRIX_HACK
-	/*
-	 * Ultrix passes the flags argument as part of the
-	 * mount data structure, rather than using the
-	 * flags argument to the system call.  This is
-	 * confusing...
-	 */
-	if (!(nfs_args.flags & NFSMNT_PGTHRESH)) {
-		nfs_args.pg_thresh = 64; /* 64k - XXX */
-		nfs_args.flags |= NFSMNT_PGTHRESH;
-	}
-	nfs_args.gfs_flags = flags;
-	flags &= M_RDONLY;
-	if (flags & M_RDONLY)
-		nfs_args.flags |= NFSMNT_RONLY;
-#endif /* ULTRIX_HACK */
 
 	error = mount_fs(&mnt, flags, (caddr_t) &nfs_args, retry, type);
 	free(xopts);
@@ -723,51 +676,6 @@ nfs_fumount(mntfs *mf)
 static void
 nfs_umounted(am_node *mp)
 {
-#ifdef INFORM_MOUNTD
-	/*
-	 * Don't bother to inform remote mountd
-	 * that we are finished.  Until a full
-	 * track of filehandles is maintained
-	 * the mountd unmount callback cannot
-	 * be done correctly anyway...
-	 */
-
-	mntfs *mf = mp->am_mnt;
-	fserver *fs;
-	char *colon, *path;
-
-	if (mf->mf_error || mf->mf_refc > 1)
-		return;
-
-	fs = mf->mf_server;
-
-	/*
-	 * Call the mount daemon on the server to
-	 * announce that we are not using the fs any more.
-	 *
-	 * This is *wrong*.  The mountd should be called
-	 * when the fhandle is flushed from the cache, and
-	 * a reference held to the cached entry while the
-	 * fs is mounted...
-	 */
-	colon = path = strchr(mf->mf_info, ':');
-	if (fs && colon) {
-		fh_cache f;
-#ifdef DEBUG
-		dlog("calling mountd for %s", mf->mf_info);
-#endif /* DEBUG */
-		*path++ = '\0';
-		f.fh_path = path;
-		f.fh_sin = *fs->fs_ip;
-		f.fh_sin.sin_port = (u_short) 0;
-		f.fh_fs = fs;
-		f.fh_id = 0;
-		f.fh_error = 0;
-		(void) prime_nfs_fhandle_cache(colon+1, mf->mf_server, (fhstatus *) 0, (void *)mf);
-		(void) call_mountd(&f, MOUNTPROC_UMNT, (fwd_fun) 0, (void *)0);
-		*colon = ':';
-	}
-#endif /* INFORM_MOUNTD */
 
 #ifdef KICK_KERNEL
 	/* This should go into the mainline code, not in nfs_ops... */

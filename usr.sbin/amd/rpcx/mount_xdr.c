@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_xdr.c,v 1.4 2003/06/02 23:36:52 millert Exp $	*/
+/*	$OpenBSD: mount_xdr.c,v 1.5 2014/10/20 02:33:42 guenther Exp $	*/
 
 /*
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -40,33 +40,6 @@
 #include "mount.h"
 
 
-#if NFS_PROTOCOL_VERSION < 3
-bool_t
-xdr_fhandle(XDR *xdrs, fhandle objp)
-{
-	if (!xdr_opaque(xdrs, objp, FHSIZE)) {
-		return (FALSE);
-	}
-	return (TRUE);
-}
-
-bool_t
-xdr_fhstatus(XDR *xdrs, fhstatus *objp)
-{
-	if (!xdr_u_int(xdrs, &objp->fhs_stat)) {
-		return (FALSE);
-	}
-	switch (objp->fhs_stat) {
-	case 0:
-		if (!xdr_fhandle(xdrs, objp->fhs_fhandle)) {
-			return (FALSE);
-		}
-		break;
-	}
-	return (TRUE);
-}
-
-#else
 #include <nfs/rpcv2.h>
 
 int
@@ -110,7 +83,6 @@ xdr_fhstatus(XDR *xdrsp, fhstatus *objp)
 		return (0);
 	};
 }
-#endif
 
 bool_t
 xdr_dirpath(XDR *xdrs, dirpath *objp)

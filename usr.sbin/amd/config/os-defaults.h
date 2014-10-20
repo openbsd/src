@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)os-defaults.h	8.1 (Berkeley) 6/6/93
- *	$Id: os-defaults.h,v 1.3 2014/10/20 00:20:04 guenther Exp $
+ *	$Id: os-defaults.h,v 1.4 2014/10/20 02:33:42 guenther Exp $
  */
 
 /*
@@ -42,16 +42,6 @@
  * Rev.Minor.Branch.Patch (2 digits each)
  */
 #define	AMD_COMPAT	5000000		/* 5.0 */
-
-/*
- * Is the mount table mirrored in software
- */
-#define	UPDATE_MTAB
-
-/*
- * Where to get mount entry info
- */
-#define	MNTENT_HDR	<mntent.h>
 
 /*
  * Name of filesystem types
@@ -85,11 +75,3 @@
  * Type of filesystem type
  */
 #define MTYPE_TYPE	char *
-
-/*
- * Make Amd automount points appear
- * to be zero sized.  undef this
- * if the O/S has a divide by zero
- * problem in df et al.
- */
-#define	HAS_EMPTY_AUTOMOUNTS

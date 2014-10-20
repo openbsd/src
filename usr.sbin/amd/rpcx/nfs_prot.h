@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_prot.h,v 1.4 2003/06/02 23:36:52 millert Exp $	*/
+/*	$OpenBSD: nfs_prot.h,v 1.5 2014/10/20 02:33:42 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -36,9 +36,7 @@
  *	from: @(#)nfs_prot.h	8.1 (Berkeley) 6/6/93
  */
 
-#if NFS_PROTOCOL_VERSION >= 3
 #include <nfs/nfsproto.h>
-#endif
 
 #define	xdr_nfsstat xdr_enum
 #define	xdr_ftype xdr_enum
@@ -61,51 +59,12 @@
 #define NFSMODE_SOCK 0140000
 #define NFSMODE_FIFO 0010000
 
-#if NFS_PROTOCOL_VERSION < 3
-enum nfsstat {
-	NFS_OK = 0,
-	NFSERR_PERM = 1,
-	NFSERR_NOENT = 2,
-	NFSERR_IO = 5,
-	NFSERR_NXIO = 6,
-	NFSERR_ACCES = 13,
-	NFSERR_EXIST = 17,
-	NFSERR_NODEV = 19,
-	NFSERR_NOTDIR = 20,
-	NFSERR_ISDIR = 21,
-	NFSERR_FBIG = 27,
-	NFSERR_NOSPC = 28,
-	NFSERR_ROFS = 30,
-	NFSERR_NAMETOOLONG = 63,
-	NFSERR_NOTEMPTY = 66,
-	NFSERR_DQUOT = 69,
-	NFSERR_STALE = 70,
-	NFSERR_WFLUSH = 99
-};
-typedef enum nfsstat nfsstat;
-#else
 typedef int nfsstat;
-#endif
 
 bool_t xdr_nfsstat();
 
 
-#if NFS_PROTOCOL_VERSION < 3
-enum ftype {
-	NFNON = 0,
-	NFREG = 1,
-	NFDIR = 2,
-	NFBLK = 3,
-	NFCHR = 4,
-	NFLNK = 5,
-	NFSOCK = 6,
-	NFBAD = 7,
-	NFFIFO = 8
-};
-typedef enum ftype ftype;
-#else
 typedef int ftype;
-#endif
 
 /* static bool_t xdr_ftype(); */
 
