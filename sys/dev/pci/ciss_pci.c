@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss_pci.c,v 1.19 2014/09/13 05:17:48 jsg Exp $	*/
+/*	$OpenBSD: ciss_pci.c,v 1.20 2014/10/20 19:19:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -201,6 +201,7 @@ ciss_pci_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_unmap(sc->iot, sc->ioh, size);
 		if (cfg_bar != CISS_BAR)
 			bus_space_unmap(sc->iot, sc->cfg_ioh, cfgsz);
+		return;
 	}
 
 	printf(": %s\n%s", intrstr, sc->sc_dev.dv_xname);
