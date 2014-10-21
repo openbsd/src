@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.19 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.20 2014/10/21 22:22:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -99,8 +99,7 @@ cmd_select_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 		wp->flags &= ~PANE_INPUTOFF;
 	else if (args_has(self->args, 'd'))
 		wp->flags |= PANE_INPUTOFF;
-	else {
-		window_set_active_pane(wl->window, wp);
+	else if (window_set_active_pane(wl->window, wp)) {
 		server_status_window(wl->window);
 		server_redraw_window_borders(wl->window);
 	}
