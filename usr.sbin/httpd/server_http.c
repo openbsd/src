@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.51 2014/09/29 19:30:47 deraadt Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.52 2014/10/21 13:00:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -689,9 +689,6 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 
 	/* Do not send details of the Internal Server Error */
 	switch (code) {
-	case 500:
-		/* Do not send details of the Internal Server Error */
-		break;
 	case 301:
 	case 302:
 		if (asprintf(&extraheader, "Location: %s\r\n", msg) == -1) {
@@ -700,13 +697,20 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 		}
 		break;
 	default:
-		text = msg;
+		/*
+		 * Do not send details of the error.  Traditionally,
+		 * web servers responsed with the request path on 40x
+		 * errors which could be abused to inject JavaScript etc.
+		 * Instead of sanitizing the path here, we just don't
+		 * reprint it.
+		 */
 		break;
 	}
 
 	/* A CSS stylesheet allows minimal customization by the user */
 	style = "body { background-color: white; color: black; font-family: "
-	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }";
+	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }\n"
+	    "hr { border: 0; border-bottom: 1px dashed; }\n";
 	/* Generate simple HTTP+HTML error document */
 	if (asprintf(&httpmsg,
 	    "HTTP/1.0 %03d %s\r\n"
@@ -724,15 +728,15 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
 	    "</head>\n"
 	    "<body>\n"
-	    "<h1>%s</h1>\n"
+	    "<h1>%03d %s</h1>\n"
 	    "<div id='m'>%s</div>\n"
-	    "<hr><address>%s at %s port %d</address>\n"
+	    "<hr>\n<address>%s</address>\n"
 	    "</body>\n"
 	    "</html>\n",
 	    code, httperr, tmbuf, HTTPD_SERVERNAME,
 	    extraheader == NULL ? "" : extraheader,
-	    code, httperr, style, httperr, text,
-	    HTTPD_SERVERNAME, hbuf, ntohs(srv_conf->port)) == -1)
+	    code, httperr, style, code, httperr, text,
+	    HTTPD_SERVERNAME) == -1)
 		goto done;
 
 	/* Dump the message without checking for success */

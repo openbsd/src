@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.37 2014/10/02 19:22:43 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.38 2014/10/21 13:00:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -311,7 +311,7 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 
 	/* A CSS stylesheet allows minimal customization by the user */
 	style = "body { background-color: white; color: black; font-family: "
-	    "sans-serif; }";
+	    "sans-serif; }\nhr { border: 0; border-bottom: 1px dashed; }\n";
 	/* Generate simple HTML index document */
 	if (evbuffer_add_printf(evb,
 	    "<!DOCTYPE HTML PUBLIC "
