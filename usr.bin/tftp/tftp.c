@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.23 2012/05/01 04:23:21 gsoares Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.24 2014/10/21 06:15:16 dlg Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -132,21 +132,22 @@ sendfile(int fd, char *name, char *mode)
 	unsigned long		 amount;
 	socklen_t		 fromlen;
 	int			 convert; /* true if converting crlf -> lf */
-	int			 n, nfds, error, timeouts, block, size;
+	int			 n, nfds, error, timeouts, size;
+	uint16_t		 block = 0;
+	int			 firsttrip = 1;
 
 	startclock();		/* start stat's clock */
 	dp = r_init();		/* reset fillbuf/read-ahead code */
 	ap = (struct tftphdr *)ackbuf;
 	file = fdopen(fd, "r");
 	convert = !strcmp(mode, "netascii");
-	block = 0;
 	amount = 0;
 	memcpy(&peer, &peeraddr, peeraddr.ss_len);
 	memset(&serv, 0, sizeof(serv));
 
 	do {
 		/* read data from file */
-		if (!block)
+		if (firsttrip)
 			size = makerequest(WRQ, name, dp, mode) - 4;
 		else {
 			size = readit(file, &dp, convert, segment_size);
@@ -155,7 +156,7 @@ sendfile(int fd, char *name, char *mode)
 				break;
 			}
 			dp->th_opcode = htons((u_short)DATA);
-			dp->th_block = htons((u_short)block);
+			dp->th_block = htons(block);
 		}
 
 		/* send data to server and wait for server ACK */
@@ -174,7 +175,7 @@ sendfile(int fd, char *name, char *mode)
 					warn("sendto");
 					goto abort;
 				}
-				if (block > 0)
+				if (!firsttrip)
 					read_ahead(file, convert, segment_size);
 			}
 			error = 0;
@@ -246,10 +247,13 @@ sendfile(int fd, char *name, char *mode)
 			error = 1;	/* received packet does not match */
 		}
 
-		if (block > 0)
+		if (firsttrip) {
+			size = segment_size;
+			firsttrip = 0;
+		} else
 			amount += size;
 		block++;
-	} while ((size == segment_size || block == 1) && !intrflag);
+	} while ((size == segment_size) && !intrflag);
 
 abort:
 	fclose(file);
@@ -274,8 +278,9 @@ recvfile(int fd, char *name, char *mode)
 	unsigned long		 amount;
 	socklen_t		 fromlen;
 	int			 convert; /* true if converting crlf -> lf */
-	int			 n, nfds, error, timeouts, block, size;
+	int			 n, nfds, error, timeouts, size;
 	int			 firsttrip;
+	uint16_t		 block;
 
 	startclock();		/* start stat's clock */
 	dp = w_init();		/* reset fillbuf/read-ahead code */
@@ -297,7 +302,7 @@ options:
 			firsttrip = 0;
 		} else {
 			ap->th_opcode = htons((u_short)ACK);
-			ap->th_block = htons((u_short)(block));
+			ap->th_block = htons(block);
 			size = 4;
 			block++;
 		}
@@ -402,7 +407,7 @@ options:
 abort:
 	/* ok to ack, since user has seen err msg */
 	ap->th_opcode = htons((u_short)ACK);
-	ap->th_block = htons((u_short)block);
+	ap->th_block = htons(block);
 	(void)sendto(f, ackbuf, 4, 0, (struct sockaddr *)&peer,
 	    peer.ss_len);
 	write_behind(file, convert);	/* flush last buffer */
