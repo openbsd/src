@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.150 2014/10/15 11:06:16 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.151 2014/10/21 02:29:54 lteo Exp $
 .\"
 .\" Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 15 2014 $
+.Dd $Mdocdate: October 21 2014 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -1472,7 +1472,7 @@ http protocol "http_ssl" {
 	pass
 	block path "/cgi-bin/index.cgi" value "*command=*"
 
-	ssl { sslv2, ciphers "MEDIUM:HIGH" }
+	ssl { no tlsv1.0, ciphers "HIGH" }
 }
 
 relay "sslaccel" {
