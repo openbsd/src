@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.72 2014/07/12 18:48:17 tedu Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.73 2014/10/21 08:48:38 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -741,7 +741,7 @@ kcs_recvmsg(struct ipmi_softc *sc, int maxlen, int *rxlen, u_int8_t * data)
 	sts = kcs_wait(sc, KCS_IBF, 0, "recv");
 	*rxlen = idx;
 	if (sts != KCS_IDLE_STATE) {
-		dbg_printf(1, "kcs read = %d/%d <%.2x>\n", idx, maxlen, sts);
+		dbg_printf(1, "kcs recvmsg = %d/%d <%.2x>\n", idx, maxlen, sts);
 		return (-1);
 	}
 
@@ -1057,7 +1057,7 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 	rc = buf[IPMI_MSG_CCODE];
 #ifdef IPMI_DEBUG
 	if (rc != 0)
-		dbg_printf(1, "ipmi_recvmsg: nfln=%.2x cmd=%.2x err=%.2x\n",
+		dbg_printf(1, "ipmi_recvcmd: nfln=%.2x cmd=%.2x err=%.2x\n",
 		    buf[IPMI_MSG_NFLN], buf[IPMI_MSG_CMD], buf[IPMI_MSG_CCODE]);
 #endif
 
@@ -1080,7 +1080,8 @@ ipmi_delay(struct ipmi_softc *sc, int period)
 	if (cold)
 		delay(period * 10000);
 	else
-		while (tsleep(sc, PWAIT, "ipmicmd", period) != EWOULDBLOCK);
+		while (tsleep(sc, PWAIT, "ipmicmd", period) != EWOULDBLOCK)
+			continue;
 }
 
 /* Read a partial SDR entry */
@@ -1611,7 +1612,8 @@ ipmi_poll_thread(void *arg)
 			printf("%s: no SDRs IPMI disabled\n", DEVNAME(sc));
 			goto done;
 		}
-		while (tsleep(sc, PUSER + 1, "ipmirun", 1) != EWOULDBLOCK);
+		while (tsleep(sc, PUSER + 1, "ipmirun", 1) != EWOULDBLOCK)
+			continue;
 	}
 
 	/* initialize sensor list for thread */
