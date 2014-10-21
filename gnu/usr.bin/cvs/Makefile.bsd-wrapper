@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.51 2014/04/22 10:21:56 reyk Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.52 2014/10/21 00:12:46 daniel Exp $
 
 .include <bsd.own.mk>
 
@@ -33,7 +33,7 @@ config: .FORCE
 		ACLOCAL=true AUTOCONF=true AUTOMAKE=true AUTOHEADER=true \
 		MAKEINFO='makeinfo --no-split' \
 		sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man \
-			--datadir=/usr/libdata ${KRB} ${KRB5} ${CF}
+			--datadir=/usr/libdata ${CF}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
@@ -42,7 +42,7 @@ config.status:
 		ACLOCAL=true AUTOCONF=true AUTOMAKE=true AUTOHEADER=true \
 		MAKEINFO='makeinfo --no-split' \
 		sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man \
-			--datadir=/usr/libdata ${KRB} ${KRB5} ${CF}
+			--datadir=/usr/libdata ${CF}
 
 .ifdef NOMAN
 maninstall:
