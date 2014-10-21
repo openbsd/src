@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.57 2014/10/20 16:33:32 uebayasi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.58 2014/10/21 10:52:53 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -184,20 +184,18 @@ pipex_iface_init(struct pipex_iface_context *pipex_iface, struct ifnet *ifp)
 	pipex_iface->multicast_session = session;
 }
 
-void
+Static void
 pipex_iface_start(struct pipex_iface_context *pipex_iface)
 {
 	pipex_iface->pipexmode = 1;
 }
 
-void
+Static void
 pipex_iface_stop(struct pipex_iface_context *pipex_iface)
 {
 	struct pipex_session *session;
 	struct pipex_session *session_next;
-	int s;
 
-	s = splnet();
 	pipex_iface->pipexmode = 0;
 	/*
 	 * traversal all pipex sessions.
@@ -209,6 +207,18 @@ pipex_iface_stop(struct pipex_iface_context *pipex_iface)
 		if (session->pipex_iface == pipex_iface)
 			pipex_destroy_session(session);
 	}
+}
+
+void
+pipex_iface_fini(struct pipex_iface_context *pipex_iface)
+{
+	int	 s;
+
+	s = splnet();
+
+	pool_put(&pipex_session_pool, pipex_iface->multicast_session);
+	pipex_iface_stop(pipex_iface);
+
 	splx(s);
 }
 

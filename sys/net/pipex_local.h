@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.19 2013/04/20 07:54:28 yasuoka Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.20 2014/10/21 10:52:53 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -374,6 +374,8 @@ extern struct pipex_hash_head	pipex_id_hashtable[];
 /*
  * static function prototypes
  */
+Static void                  pipex_iface_start (struct pipex_iface_context *);
+Static void                  pipex_iface_stop (struct pipex_iface_context *);
 Static int                   pipex_add_session (struct pipex_session_req *, struct pipex_iface_context *);
 Static int                   pipex_close_session (struct pipex_session_close_req *);
 Static int                   pipex_config_session (struct pipex_session_config_req *);

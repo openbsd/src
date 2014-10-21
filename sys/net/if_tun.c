@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.128 2014/09/08 06:24:13 jsg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.129 2014/10/21 10:52:53 yasuoka Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -226,7 +226,7 @@ tun_clone_destroy(struct ifnet *ifp)
 	int			 s;
 
 #ifdef PIPEX
-	pipex_iface_stop(&tp->pipex_iface);
+	pipex_iface_fini(&tp->pipex_iface);
 #endif
 	tun_wakeup(tp);
 

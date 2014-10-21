@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.18 2014/07/11 16:24:00 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.19 2014/10/21 10:52:53 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -194,8 +194,7 @@ struct pipex_iface_context {
 __BEGIN_DECLS
 void                  pipex_init (void);
 void                  pipex_iface_init (struct pipex_iface_context *, struct ifnet *);
-void                  pipex_iface_start (struct pipex_iface_context *);
-void                  pipex_iface_stop (struct pipex_iface_context *);
+void                  pipex_iface_fini (struct pipex_iface_context *);
 
 int                   pipex_notify_close_session(struct pipex_session *session);
 int                   pipex_notify_close_session_all(void);
