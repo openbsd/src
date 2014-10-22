@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.43 2014/05/27 17:45:02 jmc Exp $
+.\"	$OpenBSD: sed.1,v 1.44 2014/10/22 23:23:22 schwarze Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: May 27 2014 $
+.Dd $Mdocdate: October 22 2014 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -268,7 +268,7 @@ Functions can be combined to form a
 .Em function list ,
 a list of
 .Nm
-functions separated by newlines, as follows:
+functions each followed by a newline, as follows:
 .Bd -literal -offset indent
 { function
   function
@@ -277,13 +277,8 @@ functions separated by newlines, as follows:
 }
 .Ed
 .Pp
-The
-.Ql {
-can be preceded or followed by whitespace.
-The function can be preceded by whitespace as well.
-The terminating
-.Ql }
-must be preceded by a newline or optional whitespace.
+The braces can be preceded and followed by whitespace.
+The functions can be preceded by whitespace as well.
 .Pp
 Functions and function lists may be preceded by an exclamation mark,
 in which case they are applied only to lines that are
