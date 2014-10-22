@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.104 2014/10/16 04:19:33 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.105 2014/10/22 04:46:05 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -64,7 +64,19 @@ vaddr_t hibernate_rle_page;
 
 /* Hibernate info as read from disk during resume */
 union hibernate_info disk_hib;
+
+/*
+ * Global copy of the pig start address. This needs to be a global as we
+ * switch stacks after computing it - it can't be stored on the stack.
+ */
 paddr_t global_pig_start;
+
+/*
+ * Global copies of the piglet start addresses (PA/VA). We store these
+ * as globals to avoid having to carry them around as parameters, as the
+ * piglet is allocated early and freed late - its lifecycle extends beyond
+ * that of the hibernate info union which is calculated on suspend/resume.
+ */
 vaddr_t global_piglet_va;
 paddr_t global_piglet_pa;
 
@@ -569,6 +581,7 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 	    min(strlen(version), sizeof(hib->kernel_version)-1));
 
 	if (suspend) {
+		/* Grab the previously-allocated piglet addresses */
 		hib->piglet_va = global_piglet_va;
 		hib->piglet_pa = global_piglet_pa;
 		hib->io_page = (void *)hib->piglet_va;
@@ -596,7 +609,6 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 		if (!hib->io_page)
 			goto fail;
 	}
-
 
 	if (get_hibernate_info_md(hib))
 		goto fail;
@@ -1315,8 +1327,8 @@ hibernate_write_chunks(union hibernate_info *hib)
 	 * Map the utility VAs to the piglet. See the piglet map at the
 	 * top of this file for piglet layout information.
 	 */
-	hibernate_copy_page = global_piglet_va + 3 * PAGE_SIZE;
-	hibernate_rle_page = global_piglet_va + 28 * PAGE_SIZE;
+	hibernate_copy_page = hib->piglet_va + 3 * PAGE_SIZE;
+	hibernate_rle_page = hib->piglet_va + 28 * PAGE_SIZE;
 
 	chunks = (struct hibernate_disk_chunk *)(hib->piglet_va +
 	    HIBERNATE_CHUNK_SIZE);
@@ -1831,6 +1843,7 @@ hibernate_alloc(void)
 	KASSERT(global_piglet_va == 0);
 	KASSERT(hibernate_temp_page == 0);
 
+	/* Allocate a piglet, store its addresses in the supplied globals */
 	if (uvm_pmr_alloc_piglet(&global_piglet_va, &global_piglet_pa,
 	    HIBERNATE_CHUNK_SIZE * 4, HIBERNATE_CHUNK_SIZE))
 		return (ENOMEM);
@@ -1839,7 +1852,8 @@ hibernate_alloc(void)
 	 * Allocate VA for the temp page.
 	 * 
 	 * This will become part of the suspended kernel and will
-	 * be freed in hibernate_free, upon resume.
+	 * be freed in hibernate_free, upon resume (or hibernate
+	 * failure)
 	 */
 	hibernate_temp_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
 	    &kp_none, &kd_nowait);
@@ -1861,14 +1875,12 @@ hibernate_free(void)
 		uvm_pmr_free_piglet(global_piglet_va,
 		    4 * HIBERNATE_CHUNK_SIZE);
 
-	if (hibernate_temp_page)
+	if (hibernate_temp_page) {
 		pmap_kremove(hibernate_temp_page, PAGE_SIZE);
-
-	pmap_update(pmap_kernel());
-
-	if (hibernate_temp_page)
+		pmap_update(pmap_kernel());
 		km_free((void *)hibernate_temp_page, PAGE_SIZE,
 		    &kv_any, &kp_none);
+	}
 
 	global_piglet_va = 0;
 	hibernate_temp_page = 0;
