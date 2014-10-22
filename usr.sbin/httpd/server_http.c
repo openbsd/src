@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.52 2014/10/21 13:00:33 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.53 2014/10/22 09:48:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -784,6 +784,7 @@ server_response(struct httpd *httpd, struct client *clt)
 
 	/* Canonicalize the request path */
 	if (desc->http_path == NULL ||
+	    url_decode(desc->http_path) == NULL ||
 	    canonicalize_path(desc->http_path, path, sizeof(path)) == NULL)
 		goto fail;
 	free(desc->http_path);

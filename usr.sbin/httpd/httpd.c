@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.22 2014/09/29 19:30:47 deraadt Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.23 2014/10/22 09:48:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -533,6 +533,46 @@ canonicalize_host(const char *host, char *name, size_t len)
  fail:
 	errno = EINVAL;
 	return (NULL);
+}
+
+const char *
+url_decode(char *url)
+{
+	char	*p, *q;
+	char	 hex[3];
+	u_long	 x;
+
+	hex[2] = '\0';
+	p = q = url;
+
+	while (*p != '\0') {
+		switch (*p) {
+		case '%':
+			/* Encoding character is followed by two hex chars */
+			if (!(isxdigit(p[1]) && isxdigit(p[2])))
+				return (NULL);
+
+			hex[0] = p[1];
+			hex[1] = p[2];
+
+			/*
+			 * We don't have to validate "hex" because it is
+			 * guaranteed to include two hex chars followed by nul.
+			 */
+			x = strtoul(hex, NULL, 16);		
+			*q = (char)x;
+			p += 2;
+			break;
+		default:
+			*q = *p;
+			break;
+		}
+		p++;
+		q++;
+	}
+	*q = '\0';
+
+	return(url);
 }
 
 const char *
