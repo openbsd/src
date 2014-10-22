@@ -1,4 +1,4 @@
-/*	$OpenBSD: mont.c,v 1.1 2014/06/20 10:38:22 miod Exp $	*/
+/*	$OpenBSD: mont.c,v 1.2 2014/10/22 13:23:05 jsing Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -25,7 +25,6 @@
 #include <openssl/crypto.h>
 #include <openssl/dh.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
 
 /*
  * Test for proper bn_mul_mont behaviour when operands are of vastly different
@@ -39,7 +38,7 @@ main(int argc, char *argv[])
 	unsigned char *key, r[32 + 16 * 8];
 	size_t privsz;
 
-	RAND_bytes(r, sizeof r);
+	arc4random_buf(r, sizeof(r));
 
 	for (privsz = 32; privsz <= sizeof(r); privsz += 8) {
 		dh = DH_new();

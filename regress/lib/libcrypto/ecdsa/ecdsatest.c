@@ -82,7 +82,6 @@
 #include <openssl/engine.h>
 #endif
 #include <openssl/err.h>
-#include <openssl/rand.h>
 
 /* declaration of the test functions */
 int x9_62_test_internal(BIO *out, int nid, const char *r, const char *s);
@@ -169,12 +168,8 @@ int test_builtin(BIO *out)
 	int		nid, ret =  0;
 	
 	/* fill digest values with some random data */
-	if (!RAND_pseudo_bytes(digest, 20) ||
-	    !RAND_pseudo_bytes(wrong_digest, 20))
-		{
-		BIO_printf(out, "ERROR: unable to get random data\n");
-		goto builtin_err;
-		}
+	arc4random_buf(digest, 20);
+	arc4random_buf(wrong_digest, 20);
 
 	/* create and verify a ecdsa signature with every availble curve
 	 * (with ) */

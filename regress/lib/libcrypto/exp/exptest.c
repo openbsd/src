@@ -62,7 +62,6 @@
 
 #include <openssl/bio.h>
 #include <openssl/bn.h>
-#include <openssl/rand.h>
 #include <openssl/err.h>
 
 #define NUM_BITS	(BN_BITS*2)
@@ -97,15 +96,15 @@ int main(int argc, char *argv[])
 
 	for (i=0; i<200; i++)
 		{
-		RAND_bytes(&c,1);
+		arc4random_buf(&c,1);
 		c=(c%BN_BITS)-BN_BITS2;
 		BN_rand(a,NUM_BITS+c,0,0);
 
-		RAND_bytes(&c,1);
+		arc4random_buf(&c,1);
 		c=(c%BN_BITS)-BN_BITS2;
 		BN_rand(b,NUM_BITS+c,0,0);
 
-		RAND_bytes(&c,1);
+		arc4random_buf(&c,1);
 		c=(c%BN_BITS)-BN_BITS2;
 		BN_rand(m,NUM_BITS+c,0,1);
 
