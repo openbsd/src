@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.1 2014/08/26 17:47:25 jsing Exp $ */
+/* $OpenBSD: openssl.c,v 1.2 2014/10/22 13:54:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,7 +123,6 @@
 #include <openssl/err.h>
 #include <openssl/lhash.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
 
@@ -233,7 +232,6 @@ openssl_shutdown(void)
 
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_thread_state(NULL);
-	RAND_cleanup();
 	ERR_free_strings();
 }
 

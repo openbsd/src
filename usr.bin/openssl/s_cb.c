@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.1 2014/08/26 17:47:25 jsing Exp $ */
+/* $OpenBSD: s_cb.c,v 1.2 2014/10/22 13:54:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,7 +121,6 @@
 #include "apps.h"
 
 #include <openssl/err.h>
-#include <openssl/rand.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
 
@@ -728,11 +727,7 @@ generate_cookie_callback(SSL * ssl, unsigned char *cookie,
 
 	/* Initialize a random secret */
 	if (!cookie_initialized) {
-		if (!RAND_bytes(cookie_secret, COOKIE_SECRET_LENGTH)) {
-			BIO_printf(bio_err,
-			    "error setting random cookie secret\n");
-			return 0;
-		}
+		arc4random_buf(cookie_secret, COOKIE_SECRET_LENGTH);
 		cookie_initialized = 1;
 	}
 	/* Read peer information */

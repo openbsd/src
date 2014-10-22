@@ -1,4 +1,4 @@
-/* $OpenBSD: passwd.c,v 1.1 2014/08/26 17:47:25 jsing Exp $ */
+/* $OpenBSD: passwd.c,v 1.2 2014/10/22 13:54:03 jsing Exp $ */
 
 #if defined OPENSSL_NO_MD5
 #define NO_MD5CRYPT_1
@@ -14,7 +14,6 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/rand.h>
 
 #ifndef OPENSSL_NO_DES
 #include <openssl/des.h>
@@ -384,8 +383,7 @@ do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 				if (*salt_malloc_p == NULL)
 					goto err;
 			}
-			if (RAND_pseudo_bytes((unsigned char *) *salt_p, 2) < 0)
-				goto err;
+			arc4random_buf(*salt_p, 2);
 			(*salt_p)[0] = cov_2char[(*salt_p)[0] & 0x3f];	/* 6 bits */
 			(*salt_p)[1] = cov_2char[(*salt_p)[1] & 0x3f];	/* 6 bits */
 			(*salt_p)[2] = 0;
@@ -401,8 +399,7 @@ do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 				if (*salt_malloc_p == NULL)
 					goto err;
 			}
-			if (RAND_pseudo_bytes((unsigned char *) *salt_p, 8) < 0)
-				goto err;
+			arc4random_buf(*salt_p, 8);
 
 			for (i = 0; i < 8; i++)
 				(*salt_p)[i] = cov_2char[(*salt_p)[i] & 0x3f];	/* 6 bits */

@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
+/* $OpenBSD: ts.c,v 1.3 2014/10/22 13:54:03 jsing Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -66,7 +66,6 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 #include <openssl/ts.h>
 
 /* Length of the nonce of the request in bits (must be a multiple of 8). */
@@ -593,8 +592,7 @@ create_nonce(int bits)
 	/* Generating random byte sequence. */
 	if (len > (int) sizeof(buf))
 		goto err;
-	if (RAND_bytes(buf, len) <= 0)
-		goto err;
+	arc4random_buf(buf, len);
 
 	/* Find the first non-zero byte and creating ASN1_INTEGER object. */
 	for (i = 0; i < len && !buf[i]; ++i)

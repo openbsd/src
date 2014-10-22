@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.1 2014/08/26 17:47:25 jsing Exp $ */
+/* $OpenBSD: speed.c,v 1.2 2014/10/22 13:54:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,7 +98,6 @@
 #include <openssl/evp.h>
 #include <openssl/modes.h>
 #include <openssl/objects.h>
-#include <openssl/rand.h>
 #include <openssl/x509.h>
 
 #ifndef OPENSSL_NO_AES
@@ -1471,7 +1470,7 @@ speed_main(int argc, char **argv)
 			print_result(D_EVP, j, count, d);
 		}
 	}
-	RAND_pseudo_bytes(buf, 36);
+	arc4random_buf(buf, 36);
 	for (j = 0; j < RSA_NUM; j++) {
 		int ret;
 		if (!rsa_doit[j])
@@ -1543,7 +1542,7 @@ speed_main(int argc, char **argv)
 		}
 	}
 
-	RAND_pseudo_bytes(buf, 20);
+	arc4random_buf(buf, 20);
 	for (j = 0; j < DSA_NUM; j++) {
 		unsigned int kk;
 		int ret;

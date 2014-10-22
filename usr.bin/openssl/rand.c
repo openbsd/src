@@ -1,4 +1,4 @@
-/* $OpenBSD: rand.c,v 1.4 2014/10/13 02:46:14 bcook Exp $ */
+/* $OpenBSD: rand.c,v 1.5 2014/10/22 13:54:03 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -61,7 +61,6 @@
 
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
 
 struct {
 	int base64;
@@ -171,9 +170,7 @@ rand_main(int argc, char **argv)
 		chunk = num;
 		if (chunk > (int) sizeof(buf))
 			chunk = sizeof(buf);
-		r = RAND_bytes(buf, chunk);
-		if (r <= 0)
-			goto err;
+		arc4random_buf(buf, chunk);
 		if (rand_config.hex) {
 			for (i = 0; i < chunk; i++)
 				BIO_printf(out, "%02x", buf[i]);

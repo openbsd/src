@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.2 2014/10/13 02:39:09 bcook Exp $ */
+/* $OpenBSD: s_server.c,v 1.3 2014/10/22 13:54:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -166,7 +166,6 @@
 #include <openssl/lhash.h>
 #include <openssl/ocsp.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
 
@@ -2130,7 +2129,7 @@ generate_session_id(const SSL * ssl, unsigned char *id,
 {
 	unsigned int count = 0;
 	do {
-		RAND_pseudo_bytes(id, *id_len);
+		arc4random_buf(id, *id_len);
 		/*
 		 * Prefix the session_id with the required prefix. NB: If our
 		 * prefix is too long, clip it - but there will be worse

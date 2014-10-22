@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.2 2014/09/01 20:54:37 doug Exp $ */
+/* $OpenBSD: enc.c,v 1.3 2014/10/22 13:54:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,7 +69,6 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 #include <openssl/x509.h>
 
 int set_hex(char *in, unsigned char *out, int size);
@@ -461,8 +460,9 @@ enc_main(int argc, char **argv)
 							    "invalid hex salt value\n");
 							goto end;
 						}
-					} else if (RAND_pseudo_bytes(salt, sizeof salt) < 0)
-						goto end;
+					} else
+						arc4random_buf(salt,
+						    sizeof(salt));
 					/*
 					 * If -P option then don't bother
 					 * writing
