@@ -1,4 +1,4 @@
-# $OpenBSD: northamerica,v 1.51 2014/10/02 21:04:03 millert Exp $
+# $OpenBSD: northamerica,v 1.52 2014/10/22 21:45:50 millert Exp $
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -1102,17 +1102,16 @@ Zone America/Menominee	-5:50:27 -	LMT	1885 Sep 18 12:00
 # An amendment to the Interpretation Act was registered on February 19/2007....
 # http://action.attavik.ca/home/justice-gn/attach/2007/gaz02part2.pdf
 
-# From Paul Eggert (2006-04-25):
+# From Paul Eggert (2014-10-18):
 # H. David Matthews and Mary Vincent's map
 # "It's about TIME", _Canadian Geographic_ (September-October 1998)
-# http://www.canadiangeographic.ca/Magazine/SO98/geomap.asp
+# http://www.canadiangeographic.ca/Magazine/SO98/alacarte.asp
 # contains detailed boundaries for regions observing nonstandard
 # time and daylight saving time arrangements in Canada circa 1998.
 #
-# INMS, the Institute for National Measurement Standards in Ottawa, has
-# information about standard and daylight saving time zones in Canada.
-# http://inms-ienm.nrc-cnrc.gc.ca/en/time_services/daylight_saving_e.php
-# (updated periodically).
+# National Research Council Canada maintains info about time zones and DST.
+# http://www.nrc-cnrc.gc.ca/eng/services/time/time_zones.html
+# http://www.nrc-cnrc.gc.ca/eng/services/time/faq/index.html#Q5
 # Its unofficial information is often taken from Matthews and Vincent.
 
 # From Paul Eggert (2006-06-27):
@@ -1977,10 +1976,7 @@ Zone America/Creston	-7:46:04 -	LMT	1884
 # [Also see <http://www.nunatsiaq.com/nunavut/nvt10309_06.html> (2001-03-09).]
 
 # From Gwillim Law (2005-05-21):
-# According to maps at
-# http://inms-ienm.nrc-cnrc.gc.ca/images/time_services/TZ01SWE.jpg
-# http://inms-ienm.nrc-cnrc.gc.ca/images/time_services/TZ01SSE.jpg
-# (both dated 2003), and
+# According to ...
 # http://www.canadiangeographic.ca/Magazine/SO98/geomap.asp
 # (from a 1998 Canadian Geographic article), the de facto and de jure time
 # for Southampton Island (at the north end of Hudson Bay) is UTC-5 all year
@@ -1989,9 +1985,11 @@ Zone America/Creston	-7:46:04 -	LMT	1884
 # predates the creation of Nunavut, it probably goes back many years....
 # The Inuktitut name of Coral Harbour is Sallit, but it's rarely used.
 #
-# From Paul Eggert (2005-07-26):
+# From Paul Eggert (2014-10-17):
 # For lack of better information, assume that Southampton Island observed
-# daylight saving only during wartime.
+# daylight saving only during wartime.  Gwillim Law's email also
+# mentioned maps now maintained by National Research Council Canada;
+# see above for an up-to-date link.
 
 # From Chris Walton (2007-03-01):
 # ... the community of Resolute (located on Cornwallis Island in
