@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find-window.c,v 1.29 2014/10/20 23:35:28 nicm Exp $ */
+/* $OpenBSD: cmd-find-window.c,v 1.30 2014/10/22 23:18:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -162,7 +162,7 @@ cmd_find_window_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	xasprintf(&searchstr, "*%s*", str);
 	RB_FOREACH(wm, winlinks, &s->windows)
-	    cmd_find_window_match (&find_list, match_flags, wm, str, searchstr);
+	    cmd_find_window_match(&find_list, match_flags, wm, str, searchstr);
 	free(searchstr);
 
 	if (ARRAY_LENGTH(&find_list) == 0) {

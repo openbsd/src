@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.116 2014/10/08 17:35:58 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.117 2014/10/22 23:18:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1585,7 +1585,7 @@ window_copy_copy_line(struct window_pane *wp,
 				s = tty_acs_get(NULL, ud.data[0]);
 				if (s != NULL && strlen(s) <= sizeof ud.data) {
 					ud.size = strlen(s);
-					memcpy (ud.data, s, ud.size);
+					memcpy(ud.data, s, ud.size);
 				}
 			}
 

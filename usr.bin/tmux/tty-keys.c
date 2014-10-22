@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.70 2014/07/21 10:25:48 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.71 2014/10/22 23:18:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -382,7 +382,7 @@ tty_keys_build(struct tty *tty)
 	const char				*s;
 
 	if (tty->key_tree != NULL)
-		tty_keys_free (tty);
+		tty_keys_free(tty);
 	tty->key_tree = NULL;
 
 	for (i = 0; i < nitems(tty_default_raw_keys); i++) {

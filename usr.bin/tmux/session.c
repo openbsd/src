@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.45 2014/10/22 23:11:41 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.46 2014/10/22 23:18:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -127,7 +127,7 @@ session_create(const char *name, int argc, char **argv, const char *path,
 		s->name = NULL;
 		do {
 			s->id = next_session_id++;
-			free (s->name);
+			free(s->name);
 			xasprintf(&s->name, "%u", s->id);
 		} while (RB_FIND(sessions, &sessions, s) != NULL);
 	}
