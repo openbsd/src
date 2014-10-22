@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.189 2014/10/18 03:10:00 doug Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.190 2014/10/22 16:35:34 millert Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -255,8 +255,8 @@ pf_key_v2_read(u_int32_t seq)
 		}
 		buf = reallocarray(NULL, hdr.sadb_msg_len, PF_KEY_V2_CHUNK);
 		if (!buf) {
-			log_error("pf_key_v2_read: malloc (%zu) failed",
-			    hdr.sadb_msg_len * PF_KEY_V2_CHUNK);
+			log_error("pf_key_v2_read: reallocarray (%d, %d) failed",
+			    hdr.sadb_msg_len, PF_KEY_V2_CHUNK);
 			goto cleanup;
 		}
 		n = hdr.sadb_msg_len * PF_KEY_V2_CHUNK;
