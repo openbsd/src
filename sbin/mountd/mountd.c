@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.76 2014/08/24 14:45:00 doug Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.77 2014/10/22 13:31:04 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <grp.h>
 #include <netdb.h>
 #include <netgroup.h>
+#include <poll.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -289,10 +290,9 @@ main(int argc, char *argv[])
 void
 mountd_svc_run(void)
 {
-	fd_set *fds = NULL;
-	int fds_size = 0;
-	extern fd_set *__svc_fdset;
-	extern int __svc_fdsetsize;
+	struct pollfd *pfd = NULL, *newp;
+	nfds_t saved_max_pollfd = 0;
+	int nready;
 
 	for (;;) {
 		if (gothup) {
@@ -305,33 +305,30 @@ mountd_svc_run(void)
 			    (caddr_t)0, umntall_each);
 			exit(0);
 		}
-		if (__svc_fdset) {
-			int bytes = howmany(__svc_fdsetsize, NFDBITS) *
-			    sizeof(fd_mask);
-			if (fds_size != __svc_fdsetsize) {
-				if (fds)
-					free(fds);
-				fds = (fd_set *)malloc(bytes);  /* XXX */
-				fds_size = __svc_fdsetsize;
+		if (svc_max_pollfd > saved_max_pollfd) {
+			newp = reallocarray(pfd, svc_max_pollfd, sizeof(*pfd));
+			if (!newp) {
+				free(pfd);
+				perror("mountd_svc_run: - realloc failed");
+				return;
 			}
-			memcpy(fds, __svc_fdset, bytes);
-		} else {
-			if (fds)
-				free(fds);
-			fds = NULL;
+			pfd = newp;
+			saved_max_pollfd = svc_max_pollfd;
 		}
-		switch (select(svc_maxfd+1, fds, 0, 0, (struct timeval *)0)) {
+		memcpy(pfd, svc_pollfd, svc_max_pollfd * sizeof(*pfd));
+
+		nready = poll(pfd, svc_max_pollfd, INFTIM);
+		switch (nready) {
 		case -1:
 			if (errno == EINTR)
 				break;
-			perror("mountd_svc_run: - select failed");
-			if (fds)
-				free(fds);
+			perror("mountd_svc_run: - poll failed");
+			free(pfd);
 			return;
 		case 0:
 			break;
 		default:
-			svc_getreqset2(fds, svc_maxfd+1);
+			svc_getreq_poll(pfd, nready);
 			break;
 		}
 	}
