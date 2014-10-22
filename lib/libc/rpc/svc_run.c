@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_run.c,v 1.21 2014/10/22 15:47:18 millert Exp $ */
+/*	$OpenBSD: svc_run.c,v 1.22 2014/10/22 23:10:30 millert Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -50,7 +50,7 @@ svc_run(void)
 
 	for (;;) {
 		if (svc_max_pollfd > saved_max_pollfd) {
-			pfd = reallocarray(pfd, sizeof(*pfd), svc_max_pollfd);
+			pfd = reallocarray(pfd, svc_max_pollfd, sizeof(*pfd));
 			if (pfd == NULL) {
 				perror("svc_run");	/* XXX */
 				return;			/* XXX */
