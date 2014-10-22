@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.477 2014/10/21 22:22:04 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.478 2014/10/22 23:11:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -2296,6 +2296,7 @@ struct session_group *session_group_find(struct session *);
 u_int		 session_group_index(struct session_group *);
 void		 session_group_add(struct session *, struct session *);
 void		 session_group_remove(struct session *);
+u_int		 session_group_count(struct session_group *);
 void		 session_group_synchronize_to(struct session *);
 void		 session_group_synchronize_from(struct session *);
 void		 session_group_synchronize1(struct session *, struct session *);
