@@ -1,4 +1,4 @@
-/* $OpenBSD: gendh.c,v 1.1 2014/08/26 17:47:24 jsing Exp $ */
+/* $OpenBSD: gendh.c,v 1.2 2014/10/22 13:51:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,7 +79,6 @@
 #include <openssl/dh.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 #include <openssl/x509.h>
 
 #define DEFBITS	512

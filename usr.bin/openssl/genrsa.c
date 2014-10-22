@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
+/* $OpenBSD: genrsa.c,v 1.3 2014/10/22 13:51:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,7 +78,6 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 
