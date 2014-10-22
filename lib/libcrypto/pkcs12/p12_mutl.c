@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_mutl.c,v 1.18 2014/10/22 13:02:04 jsing Exp $ */
+/* $OpenBSD: p12_mutl.c,v 1.19 2014/10/22 18:37:22 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -100,7 +100,7 @@ PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
 	md_size = EVP_MD_size(md_type);
 	if (md_size < 0)
 		return 0;
-	if (!PKCS12_key_gen (pass, passlen, salt, saltlen, PKCS12_MAC_ID, iter,
+	if (!PKCS12_key_gen(pass, passlen, salt, saltlen, PKCS12_MAC_ID, iter,
 	    md_size, key, md_type)) {
 		PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_KEY_GEN_ERROR);
 		return 0;
@@ -123,11 +123,12 @@ PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
 {
 	unsigned char mac[EVP_MAX_MD_SIZE];
 	unsigned int maclen;
+
 	if (p12->mac == NULL) {
 		PKCS12err(PKCS12_F_PKCS12_VERIFY_MAC, PKCS12_R_MAC_ABSENT);
 		return 0;
 	}
-	if (!PKCS12_gen_mac (p12, pass, passlen, mac, &maclen)) {
+	if (!PKCS12_gen_mac(p12, pass, passlen, mac, &maclen)) {
 		PKCS12err(PKCS12_F_PKCS12_VERIFY_MAC,
 		    PKCS12_R_MAC_GENERATION_ERROR);
 		return 0;
@@ -149,17 +150,17 @@ PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen, unsigned char *salt,
 
 	if (!md_type)
 		md_type = EVP_sha1();
-	if (PKCS12_setup_mac (p12, iter, salt, saltlen, md_type) ==
+	if (PKCS12_setup_mac(p12, iter, salt, saltlen, md_type) ==
 	    PKCS12_ERROR) {
 		PKCS12err(PKCS12_F_PKCS12_SET_MAC, PKCS12_R_MAC_SETUP_ERROR);
 		return 0;
 	}
-	if (!PKCS12_gen_mac (p12, pass, passlen, mac, &maclen)) {
+	if (!PKCS12_gen_mac(p12, pass, passlen, mac, &maclen)) {
 		PKCS12err(PKCS12_F_PKCS12_SET_MAC,
 		    PKCS12_R_MAC_GENERATION_ERROR);
 		return 0;
 	}
-	if (!(M_ASN1_OCTET_STRING_set (p12->mac->dinfo->digest, mac, maclen))) {
+	if (!(M_ASN1_OCTET_STRING_set(p12->mac->dinfo->digest, mac, maclen))) {
 		PKCS12err(PKCS12_F_PKCS12_SET_MAC,
 		    PKCS12_R_MAC_STRING_SET_ERROR);
 		return 0;
@@ -188,11 +189,11 @@ PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
 	}
 	if (!saltlen)
 		saltlen = PKCS12_SALT_LEN;
-	p12->mac->salt->length = saltlen;
-	if (!(p12->mac->salt->data = malloc (saltlen))) {
+	if (!(p12->mac->salt->data = malloc(saltlen))) {
 		PKCS12err(PKCS12_F_PKCS12_SETUP_MAC, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
+	p12->mac->salt->length = saltlen;
 	if (!salt)
 		arc4random_buf(p12->mac->salt->data, saltlen);
 	else
