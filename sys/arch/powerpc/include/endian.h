@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.20 2014/07/12 16:25:09 guenther Exp $ */
+/*	$OpenBSD: endian.h,v 1.21 2014/10/22 23:56:47 dlg Exp $ */
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef _KERNEL
 
 static inline __uint16_t
-__mswap16(volatile __uint16_t *m)
+__mswap16(volatile const __uint16_t *m)
 {
 	__uint16_t v;
 
@@ -42,7 +42,7 @@ __mswap16(volatile __uint16_t *m)
 }
 
 static inline __uint32_t
-__mswap32(volatile __uint32_t *m)
+__mswap32(volatile const __uint32_t *m)
 {
 	__uint32_t v;
 
@@ -54,7 +54,7 @@ __mswap32(volatile __uint32_t *m)
 }
 
 static inline __uint64_t
-__mswap64(volatile __uint64_t *m)
+__mswap64(volatile const __uint64_t *m)
 {
 	__uint32_t *a = (__uint32_t *)m;
 	__uint64_t v;

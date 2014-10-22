@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.6 2014/07/12 16:25:09 guenther Exp $	*/
+/*	$OpenBSD: endian.h,v 1.7 2014/10/22 23:56:47 dlg Exp $	*/
 
 #ifndef _MACHINE_ENDIAN_H_
 #define _MACHINE_ENDIAN_H_
@@ -10,7 +10,7 @@
 #define __ASI_P_L	0x88 /* == ASI_PRIMARY_LITTLE */
 
 static inline __uint16_t
-__mswap16(volatile __uint16_t *m)
+__mswap16(volatile const __uint16_t *m)
 {
 	__uint16_t v;
 
@@ -22,7 +22,7 @@ __mswap16(volatile __uint16_t *m)
 }
 
 static inline __uint32_t
-__mswap32(volatile __uint32_t *m)
+__mswap32(volatile const __uint32_t *m)
 {
 	__uint32_t v;
 
@@ -34,7 +34,7 @@ __mswap32(volatile __uint32_t *m)
 }
 
 static inline __uint64_t
-__mswap64(volatile __uint64_t *m)
+__mswap64(volatile const __uint64_t *m)
 {
 	__uint64_t v;
 

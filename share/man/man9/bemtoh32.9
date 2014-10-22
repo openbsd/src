@@ -1,4 +1,4 @@
-.\" $OpenBSD: bemtoh32.9,v 1.4 2014/03/14 11:53:35 jmc Exp $
+.\" $OpenBSD: bemtoh32.9,v 1.5 2014/10/22 23:56:47 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 14 2014 $
+.Dd $Mdocdate: October 22 2014 $
 .Dt BEMTOH32 9
 .Os
 .Sh NAME
@@ -35,29 +35,29 @@
 .Sh SYNOPSIS
 .In sys/types.h
 .Ft uint16_t
-.Fn bemtoh16 "uint16_t *m"
+.Fn bemtoh16 "volatile const uint16_t *m"
 .Ft uint32_t
-.Fn bemtoh32 "uint32_t *m"
+.Fn bemtoh32 "volatile const uint32_t *m"
 .Ft uint64_t
-.Fn bemtoh64 "uint64_t *m"
+.Fn bemtoh64 "volatile const uint64_t *m"
 .Ft uint16_t
-.Fn lemtoh16 "uint16_t *m"
+.Fn lemtoh16 "volatile const uint16_t *m"
 .Ft uint32_t
-.Fn lemtoh32 "uint32_t *m"
+.Fn lemtoh32 "volatile const uint32_t *m"
 .Ft uint64_t
-.Fn lemtoh64 "uint64_t *m"
+.Fn lemtoh64 "volatile const uint64_t *m"
 .Ft void
-.Fn htobem16 "uint16_t *m" "uint16_t v"
+.Fn htobem16 "volatile uint16_t *m" "uint16_t v"
 .Ft void
-.Fn htobem32 "uint32_t *m" "uint32_t v"
+.Fn htobem32 "volatile uint32_t *m" "uint32_t v"
 .Ft void
-.Fn htobem64 "uint64_t *m" "uint64_t v"
+.Fn htobem64 "volatile uint64_t *m" "uint64_t v"
 .Ft void
-.Fn htolem16 "uint16_t *m" "uint16_t v"
+.Fn htolem16 "volatile uint16_t *m" "uint16_t v"
 .Ft void
-.Fn htolem32 "uint32_t *m" "uint32_t v"
+.Fn htolem32 "volatile uint32_t *m" "uint32_t v"
 .Ft void
-.Fn htolem64 "uint64_t *m" "uint64_t v"
+.Fn htolem64 "volatile uint64_t *m" "uint64_t v"
 .Sh DESCRIPTION
 This API provides a way to take advantage of an architecture's ability
 to load and store words in memory of different endians.
