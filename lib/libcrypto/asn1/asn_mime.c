@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_mime.c,v 1.22 2014/07/13 16:03:09 beck Exp $ */
+/* $OpenBSD: asn_mime.c,v 1.23 2014/10/22 13:02:03 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -54,12 +54,12 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
 #include <openssl/x509.h>
 
 #include "asn1_locl.h"
@@ -298,7 +298,7 @@ SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
 	if ((flags & SMIME_DETACHED) && data) {
 		/* We want multipart/signed */
 		/* Generate a random boundary */
-		RAND_pseudo_bytes((unsigned char *)bound, 32);
+		arc4random_buf(bound, 32);
 		for (i = 0; i < 32; i++) {
 			c = bound[i] & 0xf;
 			if (c < 10)

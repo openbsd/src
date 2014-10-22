@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_enc.c,v 1.5 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: cms_enc.c,v 1.6 2014/10/22 13:02:04 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -51,11 +51,12 @@
  * ====================================================================
  */
 
+#include <stdlib.h>
+
 #include <openssl/asn1t.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 #include <openssl/x509v3.h>
 
 #include "cms_lcl.h"
@@ -119,8 +120,7 @@ cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 		/* Generate a random IV if we need one */
 		ivlen = EVP_CIPHER_CTX_iv_length(ctx);
 		if (ivlen > 0) {
-			if (RAND_pseudo_bytes(iv, ivlen) <= 0)
-				goto err;
+			arc4random_buf(iv, ivlen);
 			piv = iv;
 		}
 	} else if (EVP_CIPHER_asn1_to_param(ctx, calg->parameter) <= 0) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: p_seal.c,v 1.13 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: p_seal.c,v 1.14 2014/10/22 13:02:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,12 +57,12 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <openssl/opensslconf.h>
 
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <openssl/rand.h>
 #include <openssl/x509.h>
 
 #ifndef OPENSSL_NO_RSA
@@ -86,7 +86,7 @@ EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek,
 	if (EVP_CIPHER_CTX_rand_key(ctx, key) <= 0)
 		return 0;
 	if (EVP_CIPHER_CTX_iv_length(ctx))
-		RAND_pseudo_bytes(iv, EVP_CIPHER_CTX_iv_length(ctx));
+		arc4random_buf(iv, EVP_CIPHER_CTX_iv_length(ctx));
 
 	if (!EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
 		return 0;

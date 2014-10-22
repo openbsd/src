@@ -1,4 +1,4 @@
-/* $OpenBSD: rand_key.c,v 1.7 2014/07/22 18:09:20 miod Exp $ */
+/* $OpenBSD: rand_key.c,v 1.8 2014/10/22 13:02:04 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
  *
@@ -53,15 +53,15 @@
  *
  */
 
+#include <stdlib.h>
+
 #include <openssl/des.h>
-#include <openssl/rand.h>
 
 int
 DES_random_key(DES_cblock *ret)
 {
 	do {
-		if (RAND_bytes((unsigned char *)ret, sizeof(DES_cblock)) != 1)
-			return (0);
+		arc4random_buf(ret, sizeof(DES_cblock));
 		DES_set_odd_parity(ret);
 	} while (DES_is_weak_key(ret));
 	return (1);

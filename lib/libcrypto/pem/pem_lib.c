@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_lib.c,v 1.34 2014/07/23 20:43:56 miod Exp $ */
+/* $OpenBSD: pem_lib.c,v 1.35 2014/10/22 13:02:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,6 +58,7 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
@@ -67,7 +68,6 @@
 #include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
-#include <openssl/rand.h>
 #include <openssl/x509.h>
 
 #ifndef OPENSSL_NO_DES
@@ -390,8 +390,7 @@ PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp, void *x,
 			kstr = (unsigned char *)buf;
 		}
 		OPENSSL_assert(enc->iv_len <= (int)sizeof(iv));
-		if (RAND_pseudo_bytes(iv, enc->iv_len) < 0) /* Generate a salt */
-			goto err;
+		arc4random_buf(iv, enc->iv_len); /* Generate a salt */
 		/* The 'iv' is used as the iv and as a salt.  It is
 		 * NOT taken from the BytesToKey function */
 		if (!EVP_BytesToKey(enc, EVP_md5(), iv, kstr, klen, 1,

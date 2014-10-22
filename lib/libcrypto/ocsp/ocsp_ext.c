@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ext.c,v 1.11 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: ocsp_ext.c,v 1.12 2014/10/22 13:02:04 jsing Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -62,11 +62,11 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/objects.h>
 #include <openssl/ocsp.h>
-#include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
@@ -389,7 +389,7 @@ ocsp_add1_nonce(STACK_OF(X509_EXTENSION) **exts, unsigned char *val, int len)
 	if (val)
 		memcpy(tmpval, val, len);
 	else
-		RAND_pseudo_bytes(tmpval, len);
+		arc4random_buf(tmpval, len);
 	if (!X509V3_add1_i2d(exts, NID_id_pkix_OCSP_Nonce, &os, 0,
 	    X509V3_ADD_REPLACE))
 		goto err;

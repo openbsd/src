@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.7 2014/07/11 15:42:34 miod Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.8 2014/10/22 13:02:04 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -51,12 +51,13 @@
  * ====================================================================
  */
 
+#include <stdlib.h>
+
 #include <openssl/aes.h>
 #include <openssl/asn1t.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 #include <openssl/x509v3.h>
 
 #include "asn1_locl.h"
@@ -130,8 +131,7 @@ CMS_add0_recipient_password(CMS_ContentInfo *cms, int iter, int wrap_nid,
 	ivlen = EVP_CIPHER_CTX_iv_length(&ctx);
 
 	if (ivlen > 0) {
-		if (RAND_pseudo_bytes(iv, ivlen) <= 0)
-			goto err;
+		arc4random_buf(iv, ivlen);
 		if (EVP_EncryptInit_ex(&ctx, NULL, NULL, NULL, iv) <= 0) {
 			CMSerr(CMS_F_CMS_ADD0_RECIPIENT_PASSWORD,
 			    ERR_R_EVP_LIB);
@@ -297,7 +297,7 @@ kek_wrap_key(unsigned char *out, size_t *outlen, const unsigned char *in,
 		memcpy(out + 4, in, inlen);
 		/* Add random padding to end */
 		if (olen > inlen + 4)
-			RAND_pseudo_bytes(out + 4 + inlen, olen - 4 - inlen);
+			arc4random_buf(out + 4 + inlen, olen - 4 - inlen);
 		/* Encrypt twice */
 		EVP_EncryptUpdate(ctx, out, &dummy, out, olen);
 		EVP_EncryptUpdate(ctx, out, &dummy, out, olen);

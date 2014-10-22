@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.25 2014/07/12 19:31:03 miod Exp $ */
+/* $OpenBSD: e_aes.c,v 1.26 2014/10/22 13:02:04 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -50,6 +50,7 @@
  */
 
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
@@ -58,7 +59,6 @@
 #include <openssl/aes.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/rand.h>
 
 #include "evp_locl.h"
 #include "modes_lcl.h"
@@ -769,9 +769,8 @@ aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 			return 0;
 		if (arg)
 			memcpy(gctx->iv, ptr, arg);
-		if (c->encrypt &&
-		    RAND_bytes(gctx->iv + arg, gctx->ivlen - arg) <= 0)
-			return 0;
+		if (c->encrypt)
+			arc4random_buf(gctx->iv + arg, gctx->ivlen - arg);
 		gctx->iv_gen = 1;
 		return 1;
 

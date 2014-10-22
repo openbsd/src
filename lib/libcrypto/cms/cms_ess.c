@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_ess.c,v 1.6 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: cms_ess.c,v 1.7 2014/10/22 13:02:04 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -51,11 +51,12 @@
  * ====================================================================
  */
 
+#include <stdlib.h>
+
 #include <openssl/asn1t.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 #include <openssl/x509v3.h>
 
 #include "cms_lcl.h"
@@ -105,9 +106,7 @@ CMS_ReceiptRequest_create0(unsigned char *id, int idlen, int allorfirst,
 	else {
 		if (!ASN1_STRING_set(rr->signedContentIdentifier, NULL, 32))
 			goto merr;
-		if (RAND_pseudo_bytes(rr->signedContentIdentifier->data, 32)
-			<= 0)
-			goto err;
+		arc4random_buf(rr->signedContentIdentifier->data, 32);
 	}
 
 	sk_GENERAL_NAMES_pop_free(rr->receiptsTo, GENERAL_NAMES_free);

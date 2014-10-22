@@ -1,4 +1,4 @@
-/* $OpenBSD: enc_writ.c,v 1.12 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: enc_writ.c,v 1.13 2014/10/22 13:02:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,11 +58,10 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include <openssl/opensslconf.h>
-
-#include <openssl/rand.h>
 
 #include "des_locl.h"
 
@@ -136,7 +135,7 @@ int DES_enc_write(int fd, const void *_buf, int len,
 		{
 		cp=shortbuf;
 		memcpy(shortbuf,buf,len);
-		RAND_pseudo_bytes(shortbuf+len, 8-len);
+		arc4random_buf(shortbuf+len, 8-len);
 		rnum=8;
 		}
 	else

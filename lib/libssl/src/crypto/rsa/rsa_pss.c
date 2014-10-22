@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pss.c,v 1.10 2014/07/13 12:53:46 miod Exp $ */
+/* $OpenBSD: rsa_pss.c,v 1.11 2014/10/22 13:02:04 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -57,12 +57,12 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/sha.h>
 
@@ -243,8 +243,7 @@ RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 			    ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
-		if (RAND_bytes(salt, sLen) <= 0)
-			goto err;
+		arc4random_buf(salt, sLen);
 	}
 	maskedDBLen = emLen - hLen - 1;
 	H = EM + maskedDBLen;

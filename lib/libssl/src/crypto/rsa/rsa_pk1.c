@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pk1.c,v 1.13 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: rsa_pk1.c,v 1.14 2014/10/22 13:02:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,12 +57,12 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/rsa.h>
-#include <openssl/rand.h>
 
 int
 RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
@@ -167,13 +167,10 @@ RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
 	/* pad out with non-zero random data */
 	j = tlen - 3 - flen;
 
-	if (RAND_bytes(p, j) <= 0)
-		return 0;
+	arc4random_buf(p, j);
 	for (i = 0; i < j; i++) {
-		while (*p == '\0') {
-			if (RAND_bytes(p, 1) <= 0)
-				return 0;
-		}
+		while (*p == '\0')
+			arc4random_buf(p, 1);
 		p++;
 	}
 

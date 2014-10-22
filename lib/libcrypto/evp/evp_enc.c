@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.24 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.25 2014/10/22 13:02:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,13 +57,13 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/rand.h>
 
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
@@ -613,8 +613,7 @@ EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 {
 	if (ctx->cipher->flags & EVP_CIPH_RAND_KEY)
 		return EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_RAND_KEY, 0, key);
-	if (RAND_bytes(key, ctx->key_len) <= 0)
-		return 0;
+	arc4random_buf(key, ctx->key_len);
 	return 1;
 }
 

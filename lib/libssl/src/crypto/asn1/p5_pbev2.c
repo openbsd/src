@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbev2.c,v 1.17 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: p5_pbev2.c,v 1.18 2014/10/22 13:02:03 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -57,11 +57,11 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/asn1t.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
 #include <openssl/x509.h>
 
 /* PKCS#5 v2.0 password based encryption structures */
@@ -121,9 +121,8 @@ PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
 	if (EVP_CIPHER_iv_length(cipher)) {
 		if (aiv)
 			memcpy(iv, aiv, EVP_CIPHER_iv_length(cipher));
-		else if (RAND_pseudo_bytes(iv,
-		    EVP_CIPHER_iv_length(cipher)) < 0)
-			goto err;
+		else
+			arc4random_buf(iv, EVP_CIPHER_iv_length(cipher));
 	}
 
 	EVP_CIPHER_CTX_init(&ctx);
@@ -227,8 +226,8 @@ PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen, int prf_nid,
 
 	if (salt)
 		memcpy (osalt->data, salt, saltlen);
-	else if (RAND_pseudo_bytes (osalt->data, saltlen) < 0)
-		goto merr;
+	else
+		arc4random_buf(osalt->data, saltlen);
 
 	if (iter <= 0)
 		iter = PKCS5_DEFAULT_ITER;

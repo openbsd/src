@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.29 2014/07/25 06:05:32 doug Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.30 2014/10/22 13:02:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,11 +57,11 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/err.h>
 #include <openssl/objects.h>
-#include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
@@ -324,8 +324,7 @@ PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 		ivlen = EVP_CIPHER_iv_length(evp_cipher);
 		xalg->algorithm = OBJ_nid2obj(EVP_CIPHER_type(evp_cipher));
 		if (ivlen > 0)
-			if (RAND_pseudo_bytes(iv, ivlen) <= 0)
-				goto err;
+			arc4random_buf(iv, ivlen);
 		if (EVP_CipherInit_ex(ctx, evp_cipher, NULL, NULL,
 		    NULL, 1) <= 0)
 			goto err;

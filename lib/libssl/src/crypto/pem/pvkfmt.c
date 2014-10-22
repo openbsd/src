@@ -1,4 +1,4 @@
-/* $OpenBSD: pvkfmt.c,v 1.11 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: pvkfmt.c,v 1.12 2014/10/22 13:02:04 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -60,6 +60,7 @@
  * and PRIVATEKEYBLOB).
  */
 
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
@@ -67,7 +68,6 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
 #include <openssl/dsa.h>
@@ -869,8 +869,7 @@ i2b_PVK(unsigned char **out, EVP_PKEY*pk, int enclevel, pem_password_cb *cb,
 	write_ledword(&p, enclevel ? PVK_SALTLEN : 0);
 	write_ledword(&p, pklen);
 	if (enclevel) {
-		if (RAND_bytes(p, PVK_SALTLEN) <= 0)
-			goto error;
+		arc4random_buf(p, PVK_SALTLEN);
 		salt = p;
 		p += PVK_SALTLEN;
 	}

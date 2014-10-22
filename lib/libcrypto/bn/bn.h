@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.24 2014/06/27 06:07:35 deraadt Exp $ */
+/* $OpenBSD: bn.h,v 1.25 2014/10/22 13:02:04 jsing Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,9 +125,11 @@
 #ifndef HEADER_BN_H
 #define HEADER_BN_H
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <openssl/opensslconf.h>
 
-#include <stdio.h> /* FILE */
 #include <openssl/ossl_typ.h>
 #include <openssl/crypto.h>
 
@@ -673,11 +675,6 @@ BIGNUM *bn_dup_expand(const BIGNUM *a, int words); /* unused */
 #include <assert.h>
 
 #ifdef BN_DEBUG_RAND
-/* To avoid "make update" cvs wars due to BN_DEBUG, use some tricks */
-#ifndef RAND_pseudo_bytes
-int RAND_pseudo_bytes(unsigned char *buf, int num);
-#define BN_DEBUG_TRIX
-#endif
 #define bn_pollute(a) \
 	do { \
 		const BIGNUM *_bnum1 = (a); \
@@ -688,17 +685,15 @@ int RAND_pseudo_bytes(unsigned char *buf, int num);
 			 * wouldn't be constructed with top!=dmax. */ \
 			BN_ULONG *_not_const; \
 			memcpy(&_not_const, &_bnum1->d, sizeof(BN_ULONG*)); \
-			RAND_pseudo_bytes(&_tmp_char, 1); \
+			arc4random_buf(&_tmp_char, 1); \
 			memset((unsigned char *)(_not_const + _bnum1->top), _tmp_char, \
 				(_bnum1->dmax - _bnum1->top) * sizeof(BN_ULONG)); \
 		} \
 	} while(0)
-#ifdef BN_DEBUG_TRIX
-#undef RAND_pseudo_bytes
-#endif
 #else
 #define bn_pollute(a)
 #endif
+
 #define bn_check_top(a) \
 	do { \
 		const BIGNUM *_bnum2 = (a); \

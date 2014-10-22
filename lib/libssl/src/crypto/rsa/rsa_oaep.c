@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_oaep.c,v 1.23 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: rsa_oaep.c,v 1.24 2014/10/22 13:02:04 jsing Exp $ */
 /* Written by Ulf Moeller. This software is distributed on an "AS IS"
    basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. */
 
@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
@@ -28,7 +29,6 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/sha.h>
 
@@ -65,8 +65,7 @@ RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 	    emlen - flen - 2 * SHA_DIGEST_LENGTH - 1);
 	db[emlen - flen - SHA_DIGEST_LENGTH - 1] = 0x01;
 	memcpy(db + emlen - flen - SHA_DIGEST_LENGTH, from, flen);
-	if (RAND_bytes(seed, SHA_DIGEST_LENGTH) <= 0)
-		return 0;
+	arc4random_buf(seed, SHA_DIGEST_LENGTH);
 
 	dbmask = malloc(emlen - SHA_DIGEST_LENGTH);
 	if (dbmask == NULL) {

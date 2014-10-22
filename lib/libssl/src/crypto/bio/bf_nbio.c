@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_nbio.c,v 1.17 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: bf_nbio.c,v 1.18 2014/10/22 13:02:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,9 +58,9 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <openssl/bio.h>
-#include <openssl/rand.h>
 
 /* BIO_put and BIO_get both add to the digest,
  * BIO_gets returns the digest */
@@ -142,7 +142,7 @@ nbiof_read(BIO *b, char *out, int outl)
 
 	BIO_clear_retry_flags(b);
 #if 1
-	RAND_pseudo_bytes(&n, 1);
+	arc4random_buf(&n, 1);
 	num = (n & 0x07);
 
 	if (outl > num)
@@ -182,7 +182,7 @@ nbiof_write(BIO *b, const char *in, int inl)
 		num = nt->lwn;
 		nt->lwn = 0;
 	} else {
-		RAND_pseudo_bytes(&n, 1);
+		arc4random_buf(&n, 1);
 		num = (n&7);
 	}
 

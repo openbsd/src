@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_rand.c,v 1.15 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: bn_rand.c,v 1.16 2014/10/22 13:02:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,10 +110,10 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include <openssl/err.h>
-#include <openssl/rand.h>
 
 #include "bn_lcl.h"
 
@@ -139,14 +139,7 @@ bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 	}
 
 	/* make a random number and set the top and bottom bits */
-
-	if (pseudorand) {
-		if (RAND_pseudo_bytes(buf, bytes) == -1)
-			goto err;
-	} else {
-		if (RAND_bytes(buf, bytes) <= 0)
-			goto err;
-	}
+	arc4random_buf(buf, bytes);
 
 #if 1
 	if (pseudorand == 2) {
@@ -156,7 +149,7 @@ bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 		unsigned char c;
 
 		for (i = 0; i < bytes; i++) {
-			RAND_pseudo_bytes(&c, 1);
+			arc4random_buf(&c, 1);
 			if (c >= 128 && i > 0)
 				buf[i] = buf[i - 1];
 			else if (c < 42)

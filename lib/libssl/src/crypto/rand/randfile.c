@@ -1,4 +1,4 @@
-/* $OpenBSD: randfile.c,v 1.39 2014/07/14 00:01:39 deraadt Exp $ */
+/* $OpenBSD: randfile.c,v 1.40 2014/10/22 13:02:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,8 +118,7 @@ RAND_write_file(const char *file)
 	for (;;) {
 		i = (n > BUFSIZE) ? BUFSIZE : n;
 		n -= BUFSIZE;
-		if (RAND_bytes(buf, i) <= 0)
-			rand_err = 1;
+		arc4random_buf(buf, i);
 		i = fwrite(buf, 1, i, out);
 		if (i <= 0) {
 			ret = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_gen.c,v 1.16 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: dsa_gen.c,v 1.17 2014/10/22 13:02:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,11 +61,11 @@
 #ifndef OPENSSL_NO_SHA
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
-#include <openssl/rand.h>
 #include <openssl/sha.h>
 
 #include "dsa_locl.h"
@@ -169,7 +169,7 @@ dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits, const EVP_MD *evpmd,
 				goto err;
 
 			if (!seed_len) {
-				RAND_pseudo_bytes(seed, qsize);
+				arc4random_buf(seed, qsize);
 				seed_is_random = 1;
 			} else {
 				seed_is_random = 0;
