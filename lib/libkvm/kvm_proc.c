@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.51 2014/10/15 02:03:05 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.52 2014/10/22 04:13:35 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -281,11 +281,13 @@ kvm_argv(kvm_t *kd, const struct kinfo_proc *p, u_long addr, int narg,
 			int off;
 			char **pp;
 			char *op = kd->argspc;
+			char *newp;
 
-			kd->argspc = _kvm_reallocarray(kd, kd->argspc,
+			newp = _kvm_reallocarray(kd, kd->argspc,
 			    kd->arglen, 2);
-			if (kd->argspc == 0)
+			if (newp == 0)
 				return (0);
+			kd->argspc = newp;
 			kd->arglen *= 2;
 			/*
 			 * Adjust argv pointers in case realloc moved
