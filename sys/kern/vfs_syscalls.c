@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.210 2014/10/13 15:23:34 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.211 2014/10/22 21:43:16 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -69,7 +69,6 @@ int copyout_statfs(struct statfs *, void *, struct proc *);
 
 int doopenat(struct proc *, int, const char *, int, mode_t, register_t *);
 int domknodat(struct proc *, int, const char *, mode_t, dev_t);
-int domkfifoat(struct proc *, int, const char *, mode_t);
 int dolinkat(struct proc *, int, const char *, int, const char *, int);
 int dosymlinkat(struct proc *, const char *, int, const char *);
 int dounlinkat(struct proc *, int, const char *, int);
@@ -1173,7 +1172,7 @@ sys_fhstatfs(struct proc *p, void *v, register_t *retval)
 }
 
 /*
- * Create a special file.
+ * Create a special file or named pipe.
  */
 /* ARGSUSED */
 int
@@ -1211,12 +1210,12 @@ domknodat(struct proc *p, int fd, const char *path, mode_t mode, dev_t dev)
 	int error;
 	struct nameidata nd;
 
-	if (S_ISFIFO(mode) && dev == 0)
-		return (domkfifoat(p, fd, path, mode));
-	if ((error = suser(p, 0)) != 0)
-		return (error);
-	if (p->p_fd->fd_rdir)
-		return (EINVAL);
+	if (!S_ISFIFO(mode) || dev != 0) {
+		if ((error = suser(p, 0)) != 0)
+			return (error);
+		if (p->p_fd->fd_rdir)
+			return (EINVAL);
+	}
 	NDINITAT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -1238,6 +1237,16 @@ domknodat(struct proc *p, int fd, const char *path, mode_t mode, dev_t dev)
 		case S_IFBLK:
 			vattr.va_type = VBLK;
 			break;
+		case S_IFIFO:
+#ifndef FIFO
+			return (EOPNOTSUPP);
+#else
+			if (dev == 0) {
+				vattr.va_type = VFIFO;
+				break;
+			}
+			/* FALLTHROUGH */
+#endif /* FIFO */
 		default:
 			error = EINVAL;
 			break;
@@ -1269,7 +1278,8 @@ sys_mkfifo(struct proc *p, void *v, register_t *retval)
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
 
-	return (domkfifoat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, mode)));
+	return (domknodat(p, AT_FDCWD, SCARG(uap, path),
+	    (SCARG(uap, mode) & ALLPERMS) | S_IFIFO, 0));
 }
 
 int
@@ -1281,37 +1291,8 @@ sys_mkfifoat(struct proc *p, void *v, register_t *retval)
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
 
-	return (domkfifoat(p, SCARG(uap, fd), SCARG(uap, path),
-	    SCARG(uap, mode)));
-}
-
-int
-domkfifoat(struct proc *p, int fd, const char *path, mode_t mode)
-{
-#ifndef FIFO
-	return (EOPNOTSUPP);
-#else
-	struct vattr vattr;
-	int error;
-	struct nameidata nd;
-
-	NDINITAT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, fd, path, p);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	if (nd.ni_vp != NULL) {
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (nd.ni_dvp == nd.ni_vp)
-			vrele(nd.ni_dvp);
-		else
-			vput(nd.ni_dvp);
-		vrele(nd.ni_vp);
-		return (EEXIST);
-	}
-	VATTR_NULL(&vattr);
-	vattr.va_type = VFIFO;
-	vattr.va_mode = (mode & ALLPERMS) &~ p->p_fd->fd_cmask;
-	return (VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr));
-#endif /* FIFO */
+	return (domknodat(p, SCARG(uap, fd), SCARG(uap, path),
+	    (SCARG(uap, mode) & ALLPERMS) | S_IFIFO, 0));
 }
 
 /*
