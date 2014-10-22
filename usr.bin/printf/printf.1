@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.27 2014/05/25 07:36:36 jmc Exp $
+.\"	$OpenBSD: printf.1,v 1.28 2014/10/22 21:00:05 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	5.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: May 25 2014 $
+.Dd $Mdocdate: October 22 2014 $
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -80,12 +80,12 @@ Character escape sequences are in backslash notation as defined in
 The characters and their meanings are as follows:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Cm \ee
-Write an <escape> character.
 .It Cm \ea
 Write a <bell> character.
 .It Cm \eb
 Write a <backspace> character.
+.It Cm \ee
+Write an <escape> character.
 .It Cm \ef
 Write a <form-feed> character.
 .It Cm \en
@@ -322,6 +322,15 @@ respectively.
 Characters from the string
 .Ar argument
 are printed with backslash-escape sequences expanded.
+If the
+.Ar argument
+contains the special escape sequence
+.Cm \ec ,
+this escape sequence is discarded together with
+all remaining characters in this argument, all further arguments,
+and all remaining characters in the
+.Ar format
+string.
 .It Cm c
 The first character of
 .Ar argument
