@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.105 2014/10/22 04:46:05 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.106 2014/10/22 05:44:00 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1074,10 +1074,6 @@ hibernate_resume(void)
 		goto fail;
 	}
 
-	pmap_kenter_pa(HIBERNATE_HIBALLOC_PAGE, HIBERNATE_HIBALLOC_PAGE,
-	    VM_PROT_ALL);
-	pmap_activate(curproc);
-
 	printf("Unpacking image...\n");
 
 	/* Switch stacks */
@@ -1112,10 +1108,6 @@ hibernate_unpack_image(union hibernate_info *hib)
 	paddr_t image_cur = global_pig_start;
 	short i, *fchunks;
 	char *pva;
-	struct hibernate_zlib_state *hibernate_state;
-
-	hibernate_state =
-	    (struct hibernate_zlib_state *)HIBERNATE_HIBALLOC_PAGE;
 
 	/* Piglet will be identity mapped (VA == PA) */
 	pva = (char *)hib->piglet_pa;
