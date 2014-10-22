@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.142 2014/10/14 09:52:26 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.143 2014/10/22 09:48:19 stsp Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -2027,8 +2027,26 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			}
 			tlen = in6_matchlen(IFA_IN6(ifa), dst);
 			matchcmp = tlen - blen;
-			if (matchcmp > 0) /* (8) */
+			if (matchcmp > 0) { /* (8) */
+#if NCARP > 0
+				/* 
+				 * Don't let carp interfaces win a tie against
+				 * the output interface based on matchlen.
+				 * We should only use a carp address if no
+				 * other interface has a usable address.
+				 * Otherwise, when communicating from a carp
+				 * master to a carp slave, the slave won't
+				 * respond since the carp address is also
+				 * configured as a local address on the slave.
+				 * Note that carp interfaces in backup state
+				 * were already skipped above.
+				 */
+				if (ifp->if_type == IFT_CARP &&
+				    oifp->if_type != IFT_CARP)
+					continue;
+#endif
 				goto replace;
+			}
 			if (matchcmp < 0) /* (9) */
 				continue;
 			if (oifp == ifp) /* (a) */
