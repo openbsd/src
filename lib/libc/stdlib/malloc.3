@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.81 2014/10/20 19:35:23 schwarze Exp $
+.\"	$OpenBSD: malloc.3,v 1.82 2014/10/22 05:19:27 doug Exp $
 .\"
-.Dd $Mdocdate: October 20 2014 $
+.Dd $Mdocdate: October 22 2014 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -195,7 +195,7 @@ Consider
 .Fn calloc
 or the extension
 .Fn reallocarray
-when you have multiplication in the
+when there is multiplication in the
 .Fa size
 argument of
 .Fn malloc
@@ -648,26 +648,25 @@ When using
 .Fn malloc ,
 be wary of signed integer and
 .Vt size_t
-overflow especially when you
-have multiplication in the
+overflow especially when there is multiplication in the
 .Fa size
 argument.
 .Pp
 Signed integer overflow will cause undefined behavior which compilers
 typically handle by wrapping back around to negative numbers.
 Depending on the input, this can result in allocating more or less
-memory than you intended.
+memory than intended.
 .Pp
-An unsigned overflow has defined behavior which will wrap back around and you
-will receive less memory than you intended.
+An unsigned overflow has defined behavior which will wrap back around and
+return less memory than intended.
 .Pp
 A signed or unsigned integer overflow is a
 .Em security
-risk if you end up allocating less memory than you intended.
-Your code may corrupt the heap by writing beyond the memory that you
-were allocated.
-An attacker may be able to leverage this heap corruption to convince your
-program to execute arbitrary code.
+risk if less memory is returned than intended.
+Subsequent code may corrupt the heap by writing beyond the memory that was
+allocated.
+An attacker may be able to leverage this heap corruption to execute arbitrary
+code.
 .Pp
 Consider using
 .Fn calloc
