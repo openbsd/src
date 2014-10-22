@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.35 2014/10/18 16:13:16 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.36 2014/10/22 15:29:31 jsing Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -586,7 +586,7 @@ again:
 		 * would be dropped unnecessarily.
 		 */
 		if (!(s->d1->listen && rr->type == SSL3_RT_HANDSHAKE &&
-		    *p == SSL3_MT_CLIENT_HELLO) &&
+		    p != NULL && *p == SSL3_MT_CLIENT_HELLO) &&
 		    !dtls1_record_replay_check(s, bitmap)) {
 			rr->length = 0;
 			s->packet_length=0; /* dump this record */
