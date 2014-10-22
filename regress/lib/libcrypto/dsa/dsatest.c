@@ -69,7 +69,6 @@
 #include <sys/stat.h>
 
 #include <openssl/crypto.h>
-#include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>

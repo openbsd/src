@@ -75,7 +75,6 @@
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/objects.h>
-#include <openssl/rand.h>
 #include <openssl/sha.h>
 #include <openssl/err.h>
 
