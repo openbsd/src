@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.184 2014/08/27 14:04:15 florian Exp $
+.\"	$OpenBSD: sysctl.8,v 1.185 2014/10/23 18:25:27 deraadt Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: August 27 2014 $
+.Dd $Mdocdate: October 23 2014 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -358,6 +358,7 @@ and a few require a kernel compiled with non-standard
 .It hw.uuid Ta string Ta no
 .It hw.ncpufound Ta integer Ta no
 .It hw.allowpowerdown Ta integer Ta yes
+.It hw.perfpolicy Ta string Ta yes
 .It machdep.console_device Ta dev_t Ta no
 .It machdep.unaligned_print Ta integer Ta yes
 .It machdep.unaligned_fix Ta integer Ta yes
