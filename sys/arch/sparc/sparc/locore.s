@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.94 2013/06/13 19:33:59 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.95 2014/10/23 19:09:04 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -2534,7 +2534,7 @@ nmi_sun4:
 	 */
 	sethi	%hi(INTRREG_VA), %o0
 	ldub	[%o0 + %lo(INTRREG_VA)], %o1
-	andn	%o0, IE_ALLIE, %o1
+	andn	%o1, IE_ALLIE, %o1
 	stb	%o1, [%o0 + %lo(INTRREG_VA)]
 	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
 
@@ -2560,7 +2560,7 @@ nmi_sun4c:
 	 */
 	sethi	%hi(INTRREG_VA), %o0
 	ldub	[%o0 + %lo(INTRREG_VA)], %o1
-	andn	%o0, IE_ALLIE, %o1
+	andn	%o1, IE_ALLIE, %o1
 	stb	%o1, [%o0 + %lo(INTRREG_VA)]
 	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
 
