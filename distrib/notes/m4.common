@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.112 2014/09/11 07:08:37 rpe Exp $
+dnl	$OpenBSD: m4.common,v 1.113 2014/10/23 21:33:21 rpe Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -757,12 +757,17 @@ define({:-OpenBSDUnattendedInstallation-:},
 Preparing an unattended installation of OpenBSD:
 ------------------------------------------------
 
-If the installation system detects that it booted from the network,
-and isn't interrupted within 5 seconds, it attempts a fully-automatic
-installation.  In this mode the installer runs dhclient(8) on the
-network interface the system booted from, or in case of multiple
-interfaces it will ask which one to use. Upon success it retrieves a
-response file via HTTP.
+If '(A)utoinstall' is choosen at the install prompt or if the
+installation system detects that it booted from the network, and
+isn't interrupted within 5 seconds, it attempts a fully-automatic
+installation. 
+
+The installer runs dhclient(8) on the network interface the system
+booted from, or in case of multiple interfaces it will ask which one
+to use. Upon success it retrieves a response file via HTTP. If that
+fails, the installer asks for the response file location which can be
+either an url or a local path and retrieves the response file from
+there.
 
 The "next-server" DHCP option specifies the hostname part of the URL,
 as in "http://<next-server>/install.conf".  The "filename" DHCP

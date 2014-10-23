@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.25 2014/07/16 14:19:05 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.26 2014/10/23 21:33:21 rpe Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -69,7 +69,9 @@ __EOT
 	# after a timeout, but only the very first time around.
 	timeout=false
 	timer_pid=
-	if [ ! -f /tmp/noai ] && ifconfig netboot >/dev/null 2>&1; then
+	if [ ! -f /tmp/noai ] && { ifconfig netboot >/dev/null 2>&1 ||
+		[ -f /auto_install.conf ] ||
+		[ -f /auto_upgrade.conf ]; }; then
 		echo "Starting non-interactive mode in 5 seconds..."
 		>/tmp/noai
 
