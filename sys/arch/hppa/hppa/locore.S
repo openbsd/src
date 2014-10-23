@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.191 2014/10/14 17:25:48 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.192 2014/10/23 16:51:30 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1840,8 +1840,9 @@ LEAF_ENTRY(desidhash_s)
 	MFCPU_T(DR_CPUCFG,22)
 	nop
 	nop
-	depi	0, DR0_PCXS_DHE, 3, t1	/* 3 4 DR0_PCXS_DOMAIN|DR0_PCXS_IHE */
+	depi	0, DR0_PCXS_DHE, 3, t1	/* 3: DR0_PCXS_DOMAIN|DR0_PCXS_IHE */
 	depi	1, DR0_PCXS_EQWSTO, 1, t1
+	/* clear `write to clear' bits so they don't get reset */
 	depi	0, DR0_PCXS_DHPMC, 1, t1
 	depi	0, DR0_PCXS_ILPMC, 1, t1
 	sync
@@ -1866,6 +1867,7 @@ LEAF_ENTRY(desidhash_t)
 	nop
 	depi	0, DR0_PCXT_IHE, 1, t1
 	depi	0, DR0_PCXT_DHE, 1, t1
+	/* clear `write to clear' bits so they don't get reset */
 	depi	0, DR0_PCXT_DHPMC, 1, t1
 	depi	0, DR0_PCXT_ILPMC, 1, t1
 	sync
@@ -1957,11 +1959,15 @@ LEAF_ENTRY(desidhash_l)
 	MFCPU_C(DR_CPUCFG,22)	/* t1 */
 	nop
 	nop
-	depi	0, DR0_PCXL_L2IHASH_EN, 2, t1	/* + DR0_PCXL_L2DHASH_EN */
-	depi	0, DR0_PCXL_L2IHPMC, 1, t1	/* don't reset */
-	depi	0, DR0_PCXL_L2DHPMC, 1, t1	/* don't reset */
-	depi	0, DR0_PCXL_L1IHPMC, 1, t1	/* don't reset */
-	depi	0, DR0_PCXL_L2PARERR,1, t1	/* don't reset */
+	depi	0, DR0_PCXL_L2IHASH_EN, 2, t1	/* 2: DR0_PCXL_L2DHASH_EN */
+#if 0 /* better trust the PROM if it left some bits set here */
+	depi	0, DR0_PCXL_DUAL_DIS, 2, t1
+#endif
+	/* clear `write to clear' bits so they don't get reset */
+	depi	0, DR0_PCXL_L2IHPMC, 1, t1
+	depi	0, DR0_PCXL_L2DHPMC, 1, t1
+	depi	0, DR0_PCXL_L1IHPMC, 1, t1
+	depi	0, DR0_PCXL_L2PARERR, 4, t1
 	sync
 	MTCPU_C(22,DR_CPUCFG)
 	nop
