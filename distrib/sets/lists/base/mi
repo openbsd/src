@@ -3680,6 +3680,7 @@
 ./usr/share/zoneinfo/Pacific
 ./usr/share/zoneinfo/Pacific/Apia
 ./usr/share/zoneinfo/Pacific/Auckland
+./usr/share/zoneinfo/Pacific/Bougainville
 ./usr/share/zoneinfo/Pacific/Chatham
 ./usr/share/zoneinfo/Pacific/Chuuk
 ./usr/share/zoneinfo/Pacific/Easter
@@ -4290,6 +4291,7 @@
 ./usr/share/zoneinfo/posix/Pacific
 ./usr/share/zoneinfo/posix/Pacific/Apia
 ./usr/share/zoneinfo/posix/Pacific/Auckland
+./usr/share/zoneinfo/posix/Pacific/Bougainville
 ./usr/share/zoneinfo/posix/Pacific/Chatham
 ./usr/share/zoneinfo/posix/Pacific/Chuuk
 ./usr/share/zoneinfo/posix/Pacific/Easter
@@ -4901,6 +4903,7 @@
 ./usr/share/zoneinfo/right/Pacific
 ./usr/share/zoneinfo/right/Pacific/Apia
 ./usr/share/zoneinfo/right/Pacific/Auckland
+./usr/share/zoneinfo/right/Pacific/Bougainville
 ./usr/share/zoneinfo/right/Pacific/Chatham
 ./usr/share/zoneinfo/right/Pacific/Chuuk
 ./usr/share/zoneinfo/right/Pacific/Easter
