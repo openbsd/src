@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.71 2014/05/10 23:31:40 jmc Exp $
+.\"	$OpenBSD: netstat.1,v 1.72 2014/10/23 16:45:57 schwarze Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: May 10 2014 $
+.Dd $Mdocdate: October 23 2014 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -312,12 +312,10 @@ Address formats are of the form
 or
 .Dq network.port
 if a socket's address specifies a network but no specific host address.
-When known, the host and network addresses are displayed symbolically
-according to the databases
-.Pa /etc/hosts
-and
-.Pa /etc/networks ,
-respectively.
+When known, the host addresses are displayed symbolically
+according to the
+.Xr hosts 5
+database.
 If a symbolic name for an address is unknown, or if the
 .Fl n
 option is specified, the address is printed numerically, according
@@ -427,7 +425,6 @@ Subsequent lines of output show values accumulated over the preceding interval.
 .Xr netintro 4 ,
 .Xr route 4 ,
 .Xr hosts 5 ,
-.Xr networks 5 ,
 .Xr protocols 5 ,
 .Xr services 5 ,
 .Xr iostat 8 ,

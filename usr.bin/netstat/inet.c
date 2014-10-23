@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.134 2014/08/14 12:55:50 mpi Exp $	*/
+/*	$OpenBSD: inet.c,v 1.135 2014/10/23 16:45:57 schwarze Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -801,7 +801,6 @@ inetname(struct in_addr *inp)
 	char *cp;
 	static char line[50];
 	struct hostent *hp;
-	struct netent *np;
 	static char domain[MAXHOSTNAMELEN];
 	static int first = 1;
 
@@ -818,19 +817,12 @@ inetname(struct in_addr *inp)
 		int net = inet_netof(*inp);
 		int lna = inet_lnaof(*inp);
 
-		if (lna == INADDR_ANY) {
-			np = getnetbyaddr(net, AF_INET);
-			if (np)
-				cp = np->n_name;
-		}
-		if (cp == NULL) {
-			hp = gethostbyaddr((char *)inp, sizeof (*inp), AF_INET);
-			if (hp) {
-				if ((cp = strchr(hp->h_name, '.')) &&
-				    !strcmp(cp + 1, domain))
-					*cp = '\0';
-				cp = hp->h_name;
-			}
+		hp = gethostbyaddr((char *)inp, sizeof (*inp), AF_INET);
+		if (hp) {
+			if ((cp = strchr(hp->h_name, '.')) &&
+			    !strcmp(cp + 1, domain))
+				*cp = '\0';
+			cp = hp->h_name;
 		}
 	}
 	if (inp->s_addr == INADDR_ANY)

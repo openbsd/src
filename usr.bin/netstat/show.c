@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.42 2014/05/08 09:28:08 mpi Exp $	*/
+/*	$OpenBSD: show.c,v 1.43 2014/10/23 16:45:57 schwarze Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -713,21 +713,13 @@ routename6(struct sockaddr_in6 *sin6)
 char *
 netname4(in_addr_t in, in_addr_t mask)
 {
-	char *cp = NULL;
-	struct netent *np = NULL;
 	int mbits;
 
 	in = ntohl(in);
 	mask = ntohl(mask);
-	if (!nflag && in != INADDR_ANY) {
-		if ((np = getnetbyaddr(in, AF_INET)) != NULL)
-			cp = np->n_name;
-	}
-	if (in == INADDR_ANY && mask == INADDR_ANY)
-		cp = "default";
 	mbits = mask ? 33 - ffs(mask) : 0;
-	if (cp)
-		strlcpy(line, cp, sizeof(line));
+	if (in == INADDR_ANY && mask == INADDR_ANY)
+		strlcpy(line, "default", sizeof(line));
 #define C(x)	((x) & 0xff)
 	else if (mbits < 9)
 		snprintf(line, sizeof(line), "%u/%d", C(in >> 24), mbits);
