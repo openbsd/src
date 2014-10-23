@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.70 2014/10/23 00:10:09 dlg Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.71 2014/10/23 00:11:48 dlg Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -506,7 +506,7 @@ crypto_getreq(int num)
 void
 crypto_init(void)
 {
-	crypto_taskq = taskq_create("crypto", 1, IPL_HIGH);
+	crypto_taskq = taskq_create("crypto", 1, IPL_VM);
 
 	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,
 	    0, "cryptop", NULL);
