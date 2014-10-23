@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.176 2014/10/18 08:01:34 armani Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.177 2014/10/23 07:34:48 brad Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2847,9 +2847,9 @@ uvideo_enum_fsizes(void *v, struct v4l2_frmsizeenum *fsizes)
 		return (EINVAL);
 
 	fsizes->type = V4L2_FRMSIZE_TYPE_DISCRETE;
-	fsizes->un.discrete.width =
+	fsizes->discrete.width =
 	    UGETW(sc->sc_fmtgrp[idx].frame[fsizes->index]->wWidth);
-	fsizes->un.discrete.height =
+	fsizes->discrete.height =
 	    UGETW(sc->sc_fmtgrp[idx].frame[fsizes->index]->wHeight);
 
 	return (0);
@@ -2891,14 +2891,14 @@ uvideo_enum_fivals(void *v, struct v4l2_frmivalenum *fivals)
 		if (fivals->index != 0)
 			return (EINVAL);
 		fivals->type = V4L2_FRMIVAL_TYPE_STEPWISE;
-		fivals->un.stepwise.min.numerator = UGETDW(p);
-		fivals->un.stepwise.min.denominator = 10000000;
+		fivals->stepwise.min.numerator = UGETDW(p);
+		fivals->stepwise.min.denominator = 10000000;
 		p += sizeof(uDWord);
-		fivals->un.stepwise.max.numerator = UGETDW(p);
-		fivals->un.stepwise.max.denominator = 10000000;
+		fivals->stepwise.max.numerator = UGETDW(p);
+		fivals->stepwise.max.denominator = 10000000;
 		p += sizeof(uDWord);
-		fivals->un.stepwise.step.numerator = UGETDW(p);
-		fivals->un.stepwise.step.denominator = 10000000;
+		fivals->stepwise.step.numerator = UGETDW(p);
+		fivals->stepwise.step.denominator = 10000000;
 		p += sizeof(uDWord);
 	} else {
 		if (fivals->index >= frame->bFrameIntervalType)
@@ -2909,8 +2909,8 @@ uvideo_enum_fivals(void *v, struct v4l2_frmivalenum *fivals)
 			return (EINVAL);
 		}
 		fivals->type = V4L2_FRMIVAL_TYPE_DISCRETE;
-		fivals->un.discrete.numerator = UGETDW(p);
-		fivals->un.discrete.denominator = 10000000;
+		fivals->discrete.numerator = UGETDW(p);
+		fivals->discrete.denominator = 10000000;
 	}
 
 	return (0);
