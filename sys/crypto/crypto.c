@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.69 2014/10/22 05:37:54 dlg Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.70 2014/10/23 00:10:09 dlg Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -453,9 +453,12 @@ void
 crypto_freereq(struct cryptop *crp)
 {
 	struct cryptodesc *crd;
+	int s;
 
 	if (crp == NULL)
 		return;
+
+	s = splvm();
 
 	while ((crd = crp->crp_desc) != NULL) {
 		crp->crp_desc = crd->crd_next;
@@ -463,6 +466,7 @@ crypto_freereq(struct cryptop *crp)
 	}
 
 	pool_put(&cryptop_pool, crp);
+	splx(s);
 }
 
 /*
@@ -473,14 +477,20 @@ crypto_getreq(int num)
 {
 	struct cryptodesc *crd;
 	struct cryptop *crp;
+	int s;
 	
+	s = splvm();
+
 	crp = pool_get(&cryptop_pool, PR_NOWAIT | PR_ZERO);
-	if (crp == NULL)
+	if (crp == NULL) {
+		splx(s);
 		return NULL;
+	}
 
 	while (num--) {
 		crd = pool_get(&cryptodesc_pool, PR_NOWAIT | PR_ZERO);
 		if (crd == NULL) {
+			splx(s);
 			crypto_freereq(crp);
 			return NULL;
 		}
@@ -489,20 +499,19 @@ crypto_getreq(int num)
 		crp->crp_desc = crd;
 	}
 
+	splx(s);
 	return crp;
 }
 
 void
 crypto_init(void)
 {
-	crypto_taskq = taskq_create("crypto", 1, IPL_VM);
+	crypto_taskq = taskq_create("crypto", 1, IPL_HIGH);
 
 	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,
 	    0, "cryptop", NULL);
-	pool_setipl(&cryptop_pool, IPL_VM);
 	pool_init(&cryptodesc_pool, sizeof(struct cryptodesc), 0, 0,
 	    0, "cryptodesc", NULL);
-	pool_setipl(&cryptodesc_pool, IPL_VM);
 }
 
 /*
