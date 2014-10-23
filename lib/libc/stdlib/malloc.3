@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.82 2014/10/22 05:19:27 doug Exp $
+.\"	$OpenBSD: malloc.3,v 1.83 2014/10/23 05:48:40 doug Exp $
 .\"
-.Dd $Mdocdate: October 22 2014 $
+.Dd $Mdocdate: October 23 2014 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -303,15 +303,13 @@ If
 .Fn malloc
 must be used with multiplication, be sure to test for overflow:
 .Bd -literal -offset indent
-size_t size;
-size_t num;
+size_t num, size;
 \&...
 
 /* Check for size_t overflow */
-if (size && num > SIZE_MAX / size) {
-	errno = EOVERFLOW;
-	err(1, "overflow");
-}
+if (size && num > SIZE_MAX / size)
+	errc(1, EOVERFLOW, "overflow");
+
 if ((p = malloc(size * num)) == NULL)
 	err(1, "malloc");
 .Ed
@@ -319,21 +317,16 @@ if ((p = malloc(size * num)) == NULL)
 The above test is not sufficient in all cases.
 For example, multiplying ints requires a different set of checks:
 .Bd -literal -offset indent
-int size;
-int num;
+int num, size;
 \&...
 
 /* Avoid invalid requests */
-if (size < 0 || num < 0) {
-	errno = EOVERFLOW;
-	err(1, "overflow");
-}
+if (size < 0 || num < 0)
+	errc(1, EOVERFLOW, "overflow");
 
 /* Check for signed int overflow */
-if (size && num > INT_MAX / size) {
-	errno = EOVERFLOW;
-	err(1, "overflow");
-}
+if (size && num > INT_MAX / size)
+	errc(1, EOVERFLOW, "overflow");
 
 if ((p = malloc(size * num)) == NULL)
 	err(1, "malloc");
