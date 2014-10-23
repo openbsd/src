@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.192 2014/10/23 16:51:30 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.193 2014/10/23 16:57:45 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2007,6 +2007,7 @@ EXIT(pbtlb_u)
  */
 	.export	TLABEL(hpmc), entry
 ENTRY(TLABEL(hpmc),0)
+ALTENTRY(hpmc_tramp)
 
 	mtsp	r0, sr0
 	ldil	L%hppa_vtop, t1
@@ -2031,6 +2032,7 @@ ENTRY(TLABEL(hpmc),0)
 hpmc_never_dies
 	b	hpmc_never_dies
 	nop
+ALTENTRY(hpmc_tramp_end)
 EXIT(TLABEL(hpmc))
 
 /*

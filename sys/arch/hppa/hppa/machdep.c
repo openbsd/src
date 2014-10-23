@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.237 2014/10/23 16:49:58 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.238 2014/10/23 16:57:45 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -308,15 +308,22 @@ hppa_init(paddr_t start)
 
 	/* setup hpmc handler */
 	{
-		extern u_int hpmc_v[];	/* from locore.s */
-		u_int *p = hpmc_v;
+		/* from locore.s */
+		extern uint32_t hpmc_v[], hpmc_tramp[], hpmc_tramp_end[];
+		uint32_t *p;
+		uint32_t cksum = 0;
 
+		for (p = hpmc_tramp; p < hpmc_tramp_end; p++)
+			cksum += *p;
+
+		p = hpmc_v;
 		if (pdc_call((iodcio_t)pdc, 0, PDC_INSTR, PDC_INSTR_DFLT, p))
 			*p = 0x08000240;
 
-		p[6] = (u_int)&hpmc_dump;
-		p[7] = 32;
-		p[5] = -(p[0] + p[1] + p[2] + p[3] + p[4] + p[6] + p[7]);
+		p[6] = (uint32_t)&hpmc_tramp;
+		p[7] = (hpmc_tramp_end - hpmc_tramp) * sizeof(uint32_t);
+		p[5] =
+		    -(p[0] + p[1] + p[2] + p[3] + p[4] + p[6] + p[7] + cksum);
 	}
 
 	{
