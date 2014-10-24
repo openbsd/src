@@ -1,4 +1,4 @@
-.\"     $OpenBSD: divert.4,v 1.14 2014/06/05 03:36:46 lteo Exp $
+.\"     $OpenBSD: divert.4,v 1.15 2014/10/24 02:02:08 lteo Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2012-2014 Lawrence Teo <lteo@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2014 $
+.Dd $Mdocdate: October 24 2014 $
 .Dt DIVERT 4
 .Os
 .Sh NAME
@@ -117,7 +117,6 @@ apart from discarding invalid IP packets.
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
