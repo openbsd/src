@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.c,v 1.94 2014/07/15 15:54:14 millert Exp $ */
+/* $OpenBSD: misc.c,v 1.95 2014/10/24 02:01:20 lteo Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -32,7 +32,6 @@
 
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 

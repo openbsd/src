@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.87 2014/08/16 07:49:27 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.88 2014/10/24 02:01:20 lteo Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -64,7 +64,6 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <arpa/ftp.h>
