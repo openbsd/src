@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wire.c	8.1 (Berkeley) 6/6/93
- *	$Id: wire.c,v 1.12 2003/06/17 18:00:24 millert Exp $
+ *	$Id: wire.c,v 1.13 2014/10/24 10:29:56 schwarze Exp $
  */
 
 /*
@@ -72,7 +72,6 @@ getwire(void)
 {
 	struct ifaddrs *ifa, *ifaddrs;
 	struct hostent *hp;
-	struct netent *np;
 	addrlist *al;
 	char *s, *netname = NULL;
 
@@ -101,68 +100,19 @@ getwire(void)
 		al->ip_next = localnets;
 		localnets = al;
 
+		/*
+		 * Look up the host name; fall back to a dotted quad.
+		 */
 		if (netname == NULL) {
-			in_addr_t net;
-			in_addr_t mask;
 			in_addr_t subnet;
-			in_addr_t subnetshift;
 			char dq[20];
 
-			/*
-			 * Figure out the subnet's network address
-			 */
 			subnet = al->ip_addr & al->ip_mask;
-
-#ifdef IN_CLASSA
-			subnet = ntohl(subnet);
-
-			if (IN_CLASSA(subnet)) {
-				mask = IN_CLASSA_NET;
-				subnetshift = 8;
-			} else if (IN_CLASSB(subnet)) {
-				mask = IN_CLASSB_NET;
-				subnetshift = 8;
-			} else {
-				mask = IN_CLASSC_NET;
-				subnetshift = 4;
-			}
-
-			/*
-			 * If there are more bits than the standard mask
-			 * would suggest, subnets must be in use.
-			 * Guess at the subnet mask, assuming reasonable
-			 * width subnet fields.
-			 * XXX: Or-in at least 1 byte's worth of 1s to make
-			 * sure the top bits remain set.
-			 */
-			while (subnet &~ mask)
-				mask = (mask >> subnetshift) | 0xff000000;
-
-			net = subnet & mask;
-			while ((mask & 1) == 0)
-				mask >>= 1, net >>= 1;
-
-			/*
-			 * Now get a usable name.
-			 * First use the network database,
-			 * then the host database,
-			 * and finally just make a dotted quad.
-			 */
-			np = getnetbyaddr(net, AF_INET);
-#else
-			/* This is probably very wrong. */
-			np = getnetbyaddr(subnet, AF_INET);
-#endif /* IN_CLASSA */
-			if (np)
-				s = np->n_name;
-			else {
-				subnet = al->ip_addr & al->ip_mask;
-				hp = gethostbyaddr((char *) &subnet, 4, AF_INET);
-				if (hp)
-					s = hp->h_name;
-				else
-					s = inet_dquad(dq, sizeof(dq), subnet);
-			}
+			hp = gethostbyaddr((char *) &subnet, 4, AF_INET);
+			if (hp)
+				s = hp->h_name;
+			else
+				s = inet_dquad(dq, sizeof(dq), subnet);
 			netname = strdup(s);
 		}
 	}

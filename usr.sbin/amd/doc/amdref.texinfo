@@ -36,7 +36,7 @@
 @c OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 @c
 @c	from: @(#)amdref.texinfo	8.1 (Berkeley) 6/6/93
-@c	$Id: amdref.texinfo,v 1.11 2004/02/19 23:40:38 deraadt Exp $
+@c	$Id: amdref.texinfo,v 1.12 2014/10/24 10:29:56 schwarze Exp $
 @c
 @setfilename amdref.info
 @c @setfilename /usr/local/emacs/info/amd
@@ -1238,7 +1238,7 @@ the full pathname of the name being resolved.  For example
 @cindex Mount selector; wire
 @cindex Selector; wire
 the name of the network to which the primary network interface is
-attached.  If a symbolic name cannot be found in the networks or hosts
+attached.  If a symbolic name cannot be found in the hosts
 database then dotted IP address format is used.  This value is also
 output by the ``-v'' option.
 
