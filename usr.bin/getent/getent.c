@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.7 2014/10/20 16:19:05 schwarze Exp $	*/
+/*	$OpenBSD: getent.c,v 1.8 2014/10/24 10:23:32 schwarze Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -58,7 +58,6 @@ static int	usage(void);
 static int	ethers(int, char *[]);
 static int	group(int, char *[]);
 static int	hosts(int, char *[]);
-static int	networks(int, char *[]);
 static int	passwd(int, char *[]);
 static int	protocols(int, char *[]);
 static int	rpc(int, char *[]);
@@ -80,7 +79,6 @@ static struct getentdb {
 	{	"ethers",	ethers,		},
 	{	"group",	group,		},
 	{	"hosts",	hosts,		},
-	{	"networks",	networks,	},
 	{	"passwd",	passwd,		},
 	{	"protocols",	protocols,	},
 	{	"rpc",		rpc,		},
@@ -285,48 +283,6 @@ hosts(int argc, char *argv[])
 				break;
 		}
 	}
-	return rv;
-}
-
-static void
-networksprint(const struct netent *ne)
-{
-	char		buf[INET6_ADDRSTRLEN];
-	struct in_addr	ianet;
-
-	ianet = inet_makeaddr(ne->n_net, 0);
-	if (inet_ntop(ne->n_addrtype, &ianet, buf, sizeof(buf)) == NULL)
-		strlcpy(buf, "# unknown", sizeof(buf));
-	printfmtstrings(ne->n_aliases, "  ", " ", "%-16s  %s", ne->n_name, buf);
-}
-
-static int
-networks(int argc, char *argv[])
-{
-	int		i, rv = RV_OK;
-	struct netent	*ne;
-	in_addr_t	net;
-
-	setnetent(1);
-	if (argc == 2) {
-		while ((ne = getnetent()) != NULL)
-			networksprint(ne);
-	} else {
-		for (i = 2; i < argc; i++) {
-			net = inet_network(argv[i]);
-			if (net != INADDR_NONE)
-				ne = getnetbyaddr(net, AF_INET);
-			else
-				ne = getnetbyname(argv[i]);
-			if (ne != NULL)
-				networksprint(ne);
-			else {
-				rv = RV_NOTFOUND;
-				break;
-			}
-		}
-	}
-	endnetent();
 	return rv;
 }
 
