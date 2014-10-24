@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.41 2014/10/08 04:10:04 doug Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.42 2014/10/24 10:18:49 schwarze Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -209,18 +209,10 @@ enter(struct inpcb *inp, struct socket *so, int state, char *proto)
 int
 select_ns(void)
 {
-	static int init = 0;
 	if (kd == NULL) {
 		num_disp = 1;
 		return (0);
 	}
-
-	if (!init) {
-		sethostent(1);
-		setnetent(1);
-		init = 1;
-	}
-
 	num_disp = num_ns;
 	return (0);
 }

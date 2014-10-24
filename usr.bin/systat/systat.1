@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.98 2014/08/14 08:10:30 mpi Exp $
+.\"	$OpenBSD: systat.1,v 1.99 2014/10/24 10:18:50 schwarze Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: August 14 2014 $
+.Dd $Mdocdate: October 24 2014 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -592,11 +592,9 @@ number of kernel map entries
 .\"Multiple drives may be specified, separated by spaces.
 .\".El
 .Sh FILES
-.Bl -tag -width "/etc/networksXXX" -compact
+.Bl -tag -width "/etc/servicesXXX" -compact
 .It Pa /etc/hosts
 Host names.
-.It Pa /etc/networks
-Network names.
 .It Pa /etc/pf.conf
 .Xr pf 4
 configuration.
