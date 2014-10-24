@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.27 2014/10/09 04:01:27 tedu Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.28 2014/10/24 20:26:58 kettenis Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2001/05/01 02:19:19 thorpej Exp $ */
 
 /*
@@ -94,6 +94,11 @@
 #endif
 
 /*
+ * Size of User Raw I/O map
+ */
+#define USRIOSIZE 	300
+
+/*
  * Mach derived constants
  */
 
@@ -110,6 +115,9 @@
 
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0x000007ffffffffffL)
+
+/* virtual sizes (bytes) for various kernel submaps */
+#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 #define VM_PHYSSEG_MAX          32       /* up to 32 segments */
 #define VM_PHYSSEG_STRAT        VM_PSTRAT_BSEARCH

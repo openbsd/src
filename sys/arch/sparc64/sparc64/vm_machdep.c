@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.30 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.31 2014/10/24 20:26:58 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -75,9 +75,7 @@
  * do not need to pass an access_type to pmap_enter().   
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	struct pmap *upmap, *kpmap;
 	vaddr_t uva;	/* User VA (map from) */
@@ -96,7 +94,7 @@ vmapbuf(bp, len)
 	uva = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - uva;
 	len = round_page(off + len);
-	kva = uvm_km_valloc_prefer_wait(kernel_map, len, uva);
+	kva = uvm_km_valloc_prefer_wait(phys_map, len, uva);
 	bp->b_data = (caddr_t)(kva + off);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
@@ -121,9 +119,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t kva;
 	vsize_t off;
@@ -137,7 +133,7 @@ vunmapbuf(bp, len)
 
 	pmap_remove(pmap_kernel(), kva, kva + len);
 	pmap_update(pmap_kernel());
-	uvm_km_free_wakeup(kernel_map, kva, len);
+	uvm_km_free_wakeup(phys_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }

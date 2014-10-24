@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.168 2014/09/18 18:55:23 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.169 2014/10/24 20:26:58 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -160,6 +160,7 @@ int     _bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_dma_tag_t,
 int bus_space_debug = 0;
 
 struct vm_map *exec_map = NULL;
+struct vm_map *phys_map = NULL;
 
 struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
 struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
@@ -232,6 +233,13 @@ cpu_startup()
 	minaddr = vm_map_min(kernel_map);
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+
+	/*
+	 * Allocate a submap for physio
+	 */
+	minaddr = vm_map_min(kernel_map);
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
