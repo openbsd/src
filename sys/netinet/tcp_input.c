@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.280 2014/10/14 09:52:26 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.281 2014/10/24 17:58:47 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -588,7 +588,7 @@ tcp_input(struct mbuf *m, ...)
 		inp = m->m_pkthdr.pf.statekey->inp;
 		if (inp && inp->inp_pf_sk)
 			KASSERT(m->m_pkthdr.pf.statekey == inp->inp_pf_sk);
-}
+	}
 #endif
 findpcb:
 	if (inp == NULL) {
