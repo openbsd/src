@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.158 2014/10/08 22:52:08 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.159 2014/10/24 23:30:05 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1058,7 +1058,6 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	/*
 	 * Call MI attach routine.
 	 */
-	re_reset(sc);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -1525,7 +1524,6 @@ re_intr(void *arg)
 		}
 
 		if (status & RL_ISR_SYSTEM_ERR) {
-			re_reset(sc);
 			re_init(ifp);
 			claimed = 1;
 		}
@@ -1836,6 +1834,9 @@ re_init(struct ifnet *ifp)
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
 	re_stop(ifp);
+
+	/* Put controller into known state. */
+	re_reset(sc);
 
 	/*
 	 * Enable C+ RX and TX mode, as well as VLAN stripping and
