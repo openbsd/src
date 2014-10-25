@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.238 2014/10/23 16:57:45 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.239 2014/10/25 17:31:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -145,8 +145,6 @@ struct consdev *cn_tab;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
-/* Virtual page frame for /dev/mem (see mem.c) */
-vaddr_t vmmap;
 
 void delay_init(void);
 static __inline void fall(int, int, int, int, int);
@@ -646,7 +644,6 @@ cpu_startup(void)
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-	vmmap = uvm_km_valloc_wait(kernel_map, NBPG);
 
 	/*
 	 * Configure the system.
