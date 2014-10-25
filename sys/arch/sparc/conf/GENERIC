@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.105 2014/02/19 05:32:57 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.106 2014/10/25 16:51:31 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -151,6 +151,7 @@ esp*	at dma? flags 0x00ff000f			# depending on model
 
 #sun4c, sun4e, sun4m
 isp*	at sbus?
+qlw*	at sbus?
 #qla*	at sbus?
 
 # sun4m Ethernet - an AMD 7990 LANCE behind
