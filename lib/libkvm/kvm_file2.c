@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.37 2014/10/15 02:03:05 deraadt Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.38 2014/10/25 03:18:58 lteo Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -95,7 +95,6 @@
 
 #include <net/route.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 
