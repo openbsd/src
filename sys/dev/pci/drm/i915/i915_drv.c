@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.67 2014/07/12 14:18:06 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.68 2014/10/25 14:20:09 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1121,6 +1121,9 @@ inteldrm_activate(struct device *self, int act)
 	struct inteldrm_softc *dev_priv = (struct inteldrm_softc *)self;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	int rv = 0;
+
+	if (dev == NULL)
+		return (0);
 
 	switch (act) {
 	case DVACT_QUIESCE:
