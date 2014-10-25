@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw_sbus.c,v 1.1 2014/05/30 13:57:40 kettenis Exp $	*/
+/*	$OpenBSD: qlw_sbus.c,v 1.2 2014/10/25 18:21:01 miod Exp $	*/
 /*
  * Copyright (c) 2014 Mark Kettenis
  *
@@ -58,6 +58,10 @@ qlw_sbus_match(struct device *parent, void *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
+
+	/* XXX this assumes dma through sun4m's iommu */
+	if (!CPU_ISSUN4M)
+		return 0;
 
 	if (strcmp("ptisp", ra->ra_name) == 0 ||
 	    strcmp("PTI,ptisp", ra->ra_name) == 0 ||
