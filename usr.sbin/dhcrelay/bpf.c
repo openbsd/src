@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.7 2009/09/03 11:56:49 reyk Exp $ */
+/*	$OpenBSD: bpf.c,v 1.8 2014/10/25 03:23:49 lteo Exp $ */
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -47,7 +47,6 @@
 #include <net/bpf.h>
 #include <net/if_types.h>
 
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <netinet/if_ether.h>

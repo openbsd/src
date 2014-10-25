@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.2 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: packet.c,v 1.3 2014/10/25 03:23:49 lteo Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -21,7 +21,6 @@
 #include <sys/time.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_mroute.h>
 #include <arpa/inet.h>

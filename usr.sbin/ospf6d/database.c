@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.14 2013/03/25 14:29:34 markus Exp $ */
+/*	$OpenBSD: database.c,v 1.15 2014/10/25 03:23:49 lteo Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -20,7 +20,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.64 2013/03/10 23:32:53 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.65 2014/10/25 03:23:49 lteo Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/un.h>
 
 #include <net/if.h>
-#include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 

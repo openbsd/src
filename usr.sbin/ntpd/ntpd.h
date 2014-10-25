@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.109 2014/01/22 02:55:15 benno Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.110 2014/10/25 03:23:49 lteo Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <netdb.h>

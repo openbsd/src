@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.38 2014/10/21 13:00:33 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.39 2014/10/25 03:23:49 lteo Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -26,7 +26,6 @@
 #include <sys/hash.h>
 
 #include <net/if.h>
-#include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>

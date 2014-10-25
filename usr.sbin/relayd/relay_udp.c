@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.32 2014/08/08 18:26:50 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.33 2014/10/25 03:23:49 lteo Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -26,7 +26,6 @@
 #include <sys/hash.h>
 
 #include <net/if.h>
-#include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>

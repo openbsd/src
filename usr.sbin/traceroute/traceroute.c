@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.132 2014/06/05 14:49:11 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.133 2014/10/25 03:23:49 lteo Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -241,7 +241,6 @@
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 
-#include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>

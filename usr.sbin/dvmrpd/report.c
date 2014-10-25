@@ -1,4 +1,4 @@
-/*	$OpenBSD: report.c,v 1.8 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: report.c,v 1.9 2014/10/25 03:23:49 lteo Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 

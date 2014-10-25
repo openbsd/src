@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.4 2013/10/17 08:42:44 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.5 2014/10/25 03:23:49 lteo Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/socket.h>
 #include <sys/tree.h>
 
-#include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <net/if.h>

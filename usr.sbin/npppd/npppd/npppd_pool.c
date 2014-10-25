@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_pool.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: npppd_pool.c,v 1.8 2014/10/25 03:23:49 lteo Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <net/route.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.178 2014/10/15 11:06:16 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.179 2014/10/25 03:23:49 lteo Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -26,7 +26,6 @@
 #include <sys/hash.h>
 
 #include <net/if.h>
-#include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>

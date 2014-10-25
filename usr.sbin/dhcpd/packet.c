@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.8 2014/08/18 20:58:56 tobias Exp $	*/
+/*	$OpenBSD: packet.c,v 1.9 2014/10/25 03:23:49 lteo Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -42,7 +42,6 @@
 
 #include "dhcpd.h"
 
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <netinet/if_ether.h>

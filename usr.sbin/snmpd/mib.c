@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.71 2014/07/04 05:58:31 guenther Exp $	*/
+/*	$OpenBSD: mib.c,v 1.72 2014/10/25 03:23:49 lteo Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -40,7 +40,6 @@
 #include <net/pfvar.h>
 #include <net/if_pfsync.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_carp.h>
 #include <netinet/ip_var.h>

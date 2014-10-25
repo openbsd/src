@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_iface.c,v 1.8 2013/02/13 22:10:38 yasuoka Exp $ */
+/*	$OpenBSD: npppd_iface.c,v 1.9 2014/10/25 03:23:49 lteo Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_iface.c,v 1.8 2013/02/13 22:10:38 yasuoka Exp $ */
+/* $Id: npppd_iface.c,v 1.9 2014/10/25 03:23:49 lteo Exp $ */
 /**@file
  * The interface of npppd and kernel.
  * This is an implementation to use tun(4) or pppx(4).
@@ -37,7 +37,6 @@
 #include <sys/uio.h>
 #include <sys/sockio.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <net/if_dl.h>

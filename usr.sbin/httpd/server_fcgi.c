@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.39 2014/09/29 19:30:47 deraadt Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.40 2014/10/25 03:23:49 lteo Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -26,7 +26,6 @@
 #include <sys/hash.h>
 
 #include <net/if.h>
-#include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>

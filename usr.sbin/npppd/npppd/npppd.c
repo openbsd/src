@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.36 2014/07/08 18:49:27 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.37 2014/10/25 03:23:49 lteo Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.36 2014/07/08 18:49:27 yasuoka Exp $
+ * $Id: npppd.c,v 1.37 2014/10/25 03:23:49 lteo Exp $
  */
 #include "version.h"
 #include <sys/types.h>
@@ -38,7 +38,6 @@
 #include <sys/sysctl.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <net/route.h>
 #include <arpa/inet.h>
