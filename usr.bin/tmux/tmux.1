@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.403 2014/10/18 20:28:19 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.404 2014/10/25 08:47:04 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 18 2014 $
+.Dd $Mdocdate: October 25 2014 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3099,6 +3099,7 @@ The following variables are available, where appropriate:
 .It Li "pane_height" Ta "" Ta "Height of pane"
 .It Li "pane_id" Ta "#D" Ta "Unique pane ID"
 .It Li "pane_in_mode" Ta "" Ta "If pane is in a mode"
+.It Li "pane_input_off" Ta "" Ta "If input to pane is disabled"
 .It Li "pane_index" Ta "#P" Ta "Index of pane"
 .It Li "pane_left" Ta "" Ta "Left of pane"
 .It Li "pane_pid" Ta "" Ta "PID of first process in pane"

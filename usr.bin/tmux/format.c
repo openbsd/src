@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.50 2014/10/08 17:35:58 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.51 2014/10/25 08:47:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -554,6 +554,7 @@ format_window_pane(struct format_tree *ft, struct window_pane *wp)
 	format_add(ft, "pane_id", "%%%u", wp->id);
 	format_add(ft, "pane_active", "%d", wp == wp->window->active);
 	format_add(ft, "pane_dead", "%d", wp->fd == -1);
+	format_add(ft, "pane_input_off", "%d", !!(wp->flags & PANE_INPUTOFF));
 
 	if (window_pane_visible(wp)) {
 		format_add(ft, "pane_left", "%u", wp->xoff);
