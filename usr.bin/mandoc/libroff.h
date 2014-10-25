@@ -1,4 +1,4 @@
-/*	$OpenBSD: libroff.h,v 1.8 2014/10/16 01:10:06 schwarze Exp $ */
+/*	$OpenBSD: libroff.h,v 1.9 2014/10/25 14:32:07 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -77,7 +77,7 @@ int		 tbl_data(struct tbl_node *, int, const char *);
 int		 tbl_cdata(struct tbl_node *, int, const char *);
 const struct tbl_span	*tbl_span(struct tbl_node *);
 void		 tbl_end(struct tbl_node **);
-struct eqn_node	*eqn_alloc(const char *, int, int, struct mparse *);
+struct eqn_node	*eqn_alloc(int, int, struct mparse *);
 enum rofferr	 eqn_end(struct eqn_node **);
 void		 eqn_free(struct eqn_node *);
 enum rofferr	 eqn_read(struct eqn_node **, int,

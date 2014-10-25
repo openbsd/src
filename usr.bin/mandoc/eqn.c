@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.17 2014/10/16 01:10:06 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.18 2014/10/25 14:32:07 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -34,8 +34,6 @@
 #define	EQN_NEST_MAX	 128 /* maximum nesting of defines */
 #define	STRNEQ(p1, sz1, p2, sz2) \
 	((sz1) == (sz2) && 0 == strncmp((p1), (p2), (sz1)))
-#define	EQNSTREQ(x, p, sz) \
-	STRNEQ((x)->name, (x)->sz, (p), (sz))
 
 enum	eqn_tok {
 	EQN_TOK_DYAD = 0,
@@ -313,23 +311,11 @@ eqn_read(struct eqn_node **epp, int ln,
 }
 
 struct eqn_node *
-eqn_alloc(const char *name, int pos, int line, struct mparse *parse)
+eqn_alloc(int pos, int line, struct mparse *parse)
 {
 	struct eqn_node	*p;
-	size_t		 sz;
-	const char	*end;
 
 	p = mandoc_calloc(1, sizeof(struct eqn_node));
-
-	if (name && '\0' != *name) {
-		sz = strlen(name);
-		assert(sz);
-		do {
-			sz--;
-			end = name + (int)sz;
-		} while (' ' == *end || '\t' == *end);
-		p->eqn.name = mandoc_strndup(name, sz + 1);
-	}
 
 	p->parse = parse;
 	p->eqn.ln = line;
@@ -1106,7 +1092,6 @@ eqn_free(struct eqn_node *p)
 		free(p->defs[i].val);
 	}
 
-	free(p->eqn.name);
 	free(p->data);
 	free(p->defs);
 	free(p);
