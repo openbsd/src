@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.111 2014/07/11 15:30:47 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.112 2014/10/25 03:18:13 lteo Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <sys/file.h>
 #include <sys/time.h>
 
-#include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>

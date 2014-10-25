@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.298 2014/01/20 02:59:13 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.299 2014/10/25 03:18:13 lteo Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -37,7 +37,6 @@
 #include <net/if_dl.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.639 2014/09/13 16:06:36 doug Exp $	*/
+/*	$OpenBSD: parse.y,v 1.640 2014/10/25 03:18:13 lteo Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -32,7 +32,6 @@
 #include <sys/stat.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>

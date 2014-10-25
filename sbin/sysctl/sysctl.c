@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.204 2014/09/15 19:08:21 miod Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.205 2014/10/25 03:18:13 lteo Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_icmp.h>
