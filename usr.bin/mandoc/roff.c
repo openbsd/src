@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.107 2014/10/25 14:32:07 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.108 2014/10/25 15:23:25 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -728,7 +728,8 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 
 	/* Handle in-line equation delimiters. */
 
-	if (r->last_eqn != NULL && r->last_eqn->delim &&
+	if (r->tbl == NULL &&
+	    r->last_eqn != NULL && r->last_eqn->delim &&
 	    (r->eqn == NULL || r->eqn_inline)) {
 		e = roff_eqndelim(r, bufp, szp, pos);
 		if (e == ROFF_REPARSE)
