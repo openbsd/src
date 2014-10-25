@@ -1,4 +1,4 @@
-/*	$OpenBSD: logutmp.c,v 1.11 2008/06/30 12:03:51 ragge Exp $	*/
+/*	$OpenBSD: logutmp.c,v 1.12 2014/10/25 03:19:22 lteo Exp $	*/
 /*
  * Portions Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,6 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 

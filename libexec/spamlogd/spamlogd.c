@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.22 2013/08/21 16:13:30 millert Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.23 2014/10/25 03:19:22 lteo Exp $	*/
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -31,7 +31,6 @@
 #include <net/if_pflog.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 
