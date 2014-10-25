@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.169 2014/10/24 20:26:58 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.170 2014/10/25 16:58:59 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1648,7 +1648,7 @@ sparc_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t	addr,
 	if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0)
 		pm_flags |= PMAP_NC;
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = (vaddr_t)km_alloc(size, &kv_any, &kp_none, &kd_nowait);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -1761,7 +1761,7 @@ sparc_bus_unmap(bus_space_tag_t t, bus_space_tag_t t0, bus_space_handle_t bh,
 
 	pmap_remove(pmap_kernel(), va, endva);
 	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, va, endva - va);
+	km_free((void *)va, endva - va, &kv_any, &kp_none);
 
 	return (0);
 }
