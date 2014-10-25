@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.18 2014/10/25 14:32:07 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.19 2014/10/25 15:05:21 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -682,7 +682,9 @@ eqn_parse(struct eqn_node *ep, struct eqn_box *parent)
 	char		 sym[64];
 	const char	*start;
 
-	assert(NULL != parent);
+	assert(parent != NULL);
+	if (ep->data == NULL)
+		return(-1);
 
 next_tok:
 	tok = eqn_tok_parse(ep, &p);
