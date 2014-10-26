@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.796 2014/10/23 21:33:21 rpe Exp $
+#	$OpenBSD: install.sub,v 1.797 2014/10/26 23:31:00 krw Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1010,8 +1010,100 @@ v6_defroute() {
 }
 
 # Much of this is gratuitously stolen from /etc/netstart.
+ifstart () {
+	local _hn=$1 if=${1#/mnt/etc/hostname.}
+
+	((NIFS++))
+	while :; do
+		if [ "$cmd2" ]; then
+			# we are carrying over from the 'read dt dtaddr'
+			# last time
+			set -- $cmd2
+			af=$1 name=$2 mask=$3 bcaddr=$4 ext1=$5 cmd2=
+			# make sure and get any remaining args in ext2,
+			# like the read below
+			i=1
+			while [ i -lt 6 -a -n "$1" ]; do shift; let i=i+1; done
+			ext2="$@"
+		else
+			# read the next line or exit the while loop
+			read af name mask bcaddr ext1 ext2 || break
+		fi
+		# $af can be "dhcp", "rtsol", an address family,
+		# commands, or a comment.
+		case "$af" in
+		"#"*|"!"*|"bridge"|"")
+			# skip comments, user commands, bridges,
+			# and empty lines
+			continue
+			;;
+		"dhcp")	[ "$name" = "NONE" ] && name=
+			[ "$mask" = "NONE" ] && mask=
+			[ "$bcaddr" = "NONE" ] && bcaddr=
+			dhcpif="$dhcpif $if"
+			cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 down"
+			if [[ -x /sbin/dhclient ]]; then
+				cmd="$cmd; dhclient $if"
+			else
+				cmd="$cmd; echo /sbin/dhclient missing - skipping dhcp request."
+			fi
+			;;
+		"rtsol")
+			rtsolif="$rtsolif $if"
+			cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
+			;;
+		*)	read dt dtaddr
+			if [ "$name" = "alias" ]; then
+				# perform a 'shift' of sorts
+				alias=$name
+				name=$mask
+				mask=$bcaddr
+				bcaddr=$ext1
+				ext1=$ext2
+				ext2=
+			else
+				alias=
+			fi
+			cmd="ifconfig $if $af $alias $name"
+			case "$dt" in
+			dest)	cmd="$cmd $dtaddr"
+				;;
+			*)
+				cmd2="$dt $dtaddr"
+				;;
+			esac
+			case $af in
+			inet)
+				if [ ! -n "$name" ]; then
+					echo "/etc/hostname.$if: inet alone is invalid"
+					return
+				fi
+				[ "$mask" ] && cmd="$cmd netmask $mask"
+				if [ "$bcaddr" -a X"$bcaddr" != "XNONE" ]; then
+					cmd="$cmd broadcast $bcaddr"
+				fi
+				[ "$alias" ] && rtcmd=";route -qn add -host $name 127.0.0.1"
+				;;
+			inet6)
+				if [ ! -n "$name" ]; then
+					echo "/etc/hostname.$if: inet6 alone is invalid"
+					return
+				fi
+				[ "$mask" ] && cmd="$cmd prefixlen $mask"
+				cmd="$cmd $bcaddr"
+				;;
+			*)	cmd="$cmd $mask $bcaddr"
+				;;
+			esac
+			cmd="$cmd $ext1 $ext2$rtcmd" rtcmd=
+			;;
+		esac
+		eval "$cmd"
+	done <$_hn
+}
+
 enable_network() {
-	local _f _gw
+	local _f _gw _trunks _svlans _vlans
 
 	# Copy any network configuration files. N.B.: hosts already copied.
 	for _f in dhclient.conf resolv.conf resolv.conf.tail; do
@@ -1027,101 +1119,33 @@ enable_network() {
 	# configure all of the non-loopback interfaces which we know about.
 	# refer to hostname.if(5)
 	for hn in /mnt/etc/hostname.*; do
-		((NIFS++))
-
-		# Strip off /mnt/etc/hostname. prefix
+		# Strip off prefix to get interface name.
 		if=${hn#/mnt/etc/hostname.}
-
 		# Check for ifconfig'able interface.
 		(ifconfig $if||ifconfig $if create) >/dev/null 2>&1 || continue
-
+		# Don't immediately do interfaces constructed from others.
+		# Skip uninteresting devices.
+		case ${if%%[0-9]*} in
+		trunk)	_trunks="$_trunks $hn"
+			continue
+		       ;;
+		svlan)	_svlans="$_svlans $hn"
+			continue
+			;;
+		vlan)	_vlans="$_vlans $hn"
+			continue
+			;;
+		bridge|carp|enc|gif|gre|lo|pflog|pfsync|ppp|tun)
+			continue
+			;;
+		esac
 		# Now parse the hostname.* file
-		while :; do
-			if [ "$cmd2" ]; then
-				# we are carrying over from the 'read dt dtaddr'
-				# last time
-				set -- $cmd2
-				af=$1 name=$2 mask=$3 bcaddr=$4 ext1=$5 cmd2=
-				# make sure and get any remaining args in ext2,
-				# like the read below
-				i=1
-				while [ i -lt 6 -a -n "$1" ]; do shift; let i=i+1; done
-				ext2="$@"
-			else
-				# read the next line or exit the while loop
-				read af name mask bcaddr ext1 ext2 || break
-			fi
-			# $af can be "dhcp", "rtsol", an address family,
-			# commands, or a comment.
-			case "$af" in
-			"#"*|"!"*|"bridge"|"")
-				# skip comments, user commands, bridges,
-				# and empty lines
-				continue
-				;;
-			"dhcp")	[ "$name" = "NONE" ] && name=
-				[ "$mask" = "NONE" ] && mask=
-				[ "$bcaddr" = "NONE" ] && bcaddr=
-				dhcpif="$dhcpif $if"
-				cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 down"
-				if [[ -x /sbin/dhclient ]]; then
-					cmd="$cmd; dhclient $if"
-				else
-					cmd="$cmd; echo /sbin/dhclient missing - skipping dhcp request."
-				fi
-				;;
-			"rtsol")
-				rtsolif="$rtsolif $if"
-				cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
-				;;
-			*)	read dt dtaddr
-				if [ "$name" = "alias" ]; then
-					# perform a 'shift' of sorts
-					alias=$name
-					name=$mask
-					mask=$bcaddr
-					bcaddr=$ext1
-					ext1=$ext2
-					ext2=
-				else
-					alias=
-				fi
-				cmd="ifconfig $if $af $alias $name"
-				case "$dt" in
-				dest)	cmd="$cmd $dtaddr"
-					;;
-				*)
-					cmd2="$dt $dtaddr"
-					;;
-				esac
-				case $af in
-				inet)
-					if [ ! -n "$name" ]; then
-						echo "/etc/hostname.$if: inet alone is invalid"
-						return
-					fi
-					[ "$mask" ] && cmd="$cmd netmask $mask"
-					if [ "$bcaddr" -a X"$bcaddr" != "XNONE" ]; then
-						cmd="$cmd broadcast $bcaddr"
-					fi
-					[ "$alias" ] && rtcmd=";route -qn add -host $name 127.0.0.1"
-					;;
-				inet6)
-					if [ ! -n "$name" ]; then
-						echo "/etc/hostname.$if: inet6 alone is invalid"
-						return
-					fi
-					[ "$mask" ] && cmd="$cmd prefixlen $mask"
-					cmd="$cmd $bcaddr"
-					;;
-				*)	cmd="$cmd $mask $bcaddr"
-					;;
-				esac
-				cmd="$cmd $ext1 $ext2$rtcmd" rtcmd=
-				;;
-			esac
-			eval "$cmd"
-		done </mnt/etc/hostname.$if
+		ifstart $hn
+	done
+	# Configure any constructed interfaces now that 'real' ones are up.
+	# ORDER IS IMPORTANT! (see /etc/netstart)
+	for hn in $_trunks $_svlans $_vlans; do
+		ifstart $hn
 	done
 
 	[[ -n $rtsolif ]] && /mnt/sbin/rtsol -F $rtsolif
