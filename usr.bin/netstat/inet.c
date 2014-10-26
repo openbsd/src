@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.135 2014/10/23 16:45:57 schwarze Exp $	*/
+/*	$OpenBSD: inet.c,v 1.136 2014/10/26 14:43:03 chl Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -814,9 +814,6 @@ inetname(struct in_addr *inp)
 	}
 	cp = NULL;
 	if (!nflag && inp->s_addr != INADDR_ANY) {
-		int net = inet_netof(*inp);
-		int lna = inet_lnaof(*inp);
-
 		hp = gethostbyaddr((char *)inp, sizeof (*inp), AF_INET);
 		if (hp) {
 			if ((cp = strchr(hp->h_name, '.')) &&
