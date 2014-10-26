@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2013/10/23 03:43:27 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.28 2014/10/26 10:42:59 miod Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -70,7 +70,7 @@ bsd.rd:	obsd ${IMAGE} rdsetroot
 	@${STRIP} bsd.rd
 
 bsd:	bsd.rd
-	${GZIPCMD} ${GZIPFLAGS} < bsd.rd > bsd
+	(cat bsd.rd ; dd if=/dev/zero count=1) | ${GZIPCMD} ${GZIPFLAGS} > bsd
 
 rdsetroot: ${.CURDIR}/../../common/elfrdsetroot.c \
 	   ${.CURDIR}/../../common/elf32.c ${.CURDIR}/../../common/elf64.c
