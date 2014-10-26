@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.69 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.70 2014/10/26 18:17:16 kettenis Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, u_int32_t iovabase)
 	    (paddr_t)PAGE_SIZE, (paddr_t)0, &mlist, 1, UVM_PLA_NOWAIT) != 0)
 		panic("iommu_init: no memory");
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = (vaddr_t)km_alloc(size, &kv_any, &kp_none, &kd_nowait);
 	if (va == 0)
 		panic("iommu_init: no memory");
 	is->is_tsb = (int64_t *)va;
