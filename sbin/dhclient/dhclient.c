@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.321 2014/10/17 13:21:44 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.322 2014/10/26 23:36:44 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -633,7 +633,7 @@ usage(void)
 void
 state_reboot(void)
 {
-	struct client_lease *lp, *pl;
+	struct client_lease *lp;
 	time_t cur_time;
 
 	cancel_timeout();
@@ -647,12 +647,10 @@ state_reboot(void)
 	}
 
 	/* Run through the list of leases and see if one can be used. */
-	TAILQ_FOREACH_SAFE(lp, &client->leases, next, pl) {
+	TAILQ_FOREACH(lp, &client->leases, next) {
 		if (client->active || lp->is_static)
 			break;
-		else if (lp->expiry <= cur_time)
-			free_client_lease(lp);
-		else {
+		if (lp->expiry > cur_time) {
 			client->active = lp;
 			break;
 		}
@@ -813,6 +811,7 @@ bind_lease(void)
 	struct in_addr gateway, mask;
 	struct option_data *options, *opt;
 	struct client_lease *lease, *pl;
+	time_t cur_time;
 	int seen;
 
 	/*
@@ -907,14 +906,18 @@ newlease:
 	rewrite_option_db(client->active, lease);
 	free_client_lease(lease);
 
-	/* Remove previous dynamic lease(es) for this address. */
+	/*
+	 * Remove previous dynamic lease(es) for this address, and any expired
+	 * dynamic leases.
+	 */
 	seen = 0;
+	time(&cur_time);
 	TAILQ_FOREACH_SAFE(lease, &client->leases, next, pl) {
 		if (lease->is_static)
 			break;
 		if (client->active == lease)
 			seen = 1;
-		else if (lease->address.s_addr ==
+		else if (lease->expiry <= cur_time || lease->address.s_addr ==
 		    client->active->address.s_addr)
 			free_client_lease(lease);
 	}
@@ -1226,7 +1229,7 @@ send_discover(void)
 void
 state_panic(void)
 {
-	struct client_lease *lp, *pl;
+	struct client_lease *lp;
 	time_t cur_time;
 
 	time(&cur_time);
@@ -1234,12 +1237,11 @@ state_panic(void)
 
 	/* Run through the list of leases and see if one can be used. */
 	time(&cur_time);
-	TAILQ_FOREACH_SAFE(lp, &client->leases, next, pl) {
+	TAILQ_FOREACH(lp, &client->leases, next) {
 		if (lp->is_static) {
 			set_lease_times(lp);
 			note("Trying static lease %s", inet_ntoa(lp->address));
 		} else if (lp->expiry <= cur_time) {
-			free_client_lease(lp);
 			continue;
 		} else
 			note("Trying recorded lease %s",
