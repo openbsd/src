@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapc.c,v 1.18 2014/10/26 02:43:50 guenther Exp $	*/
+/*	$OpenBSD: mapc.c,v 1.19 2014/10/26 02:51:47 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -248,19 +248,30 @@ mapc_add_kv(mnt_map *m, char *key, char *val)
 	if (MAPC_ISRE(m)) {
 		char keyb[MAXPATHLEN];
 		regex_t *re;
+		int err;
+
 		/*
 		 * Make sure the string is bound to the start and end
 		 */
 		snprintf(keyb, sizeof(keyb), "^%s$", key);
 		re = malloc(sizeof(*re));
-		if (!re || regcomp(re, keyb, 0)) {
-			free(re);
-			plog(XLOG_USER, "error compiling RE \"%s\": %s", keyb);
+		if (re == NULL) {
+			plog(XLOG_USER, "error allocating RE \"%s\"", keyb);
 			return;
-		} else {
-			free(key);
-			key = (char *)re;
 		}
+		err = regcomp(re, keyb, 0);
+		if (err) {
+			char errbuf[100];
+
+			regerror(err, re, errbuf, sizeof errbuf);
+			free(re);
+			plog(XLOG_USER, "error compiling RE \"%s\": %s",
+			    keyb, errbuf);
+			return;
+		}
+
+		free(key);
+		key = (char *)re;
 	}
 
 	h = &m->kvhash[hash];
