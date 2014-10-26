@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.17 2014/10/26 01:38:02 guenther Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.18 2014/10/26 03:00:35 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -175,7 +175,6 @@ fetch_fhandle(CLIENT *client, char *dir, fhstatus *fhp)
 	fhp->fhs_vers = MOUNTVERS;
 	clnt_stat = clnt_call(client, MOUNTPROC_MNT, xdr_dirpath, &dir, xdr_fhstatus, fhp, tv);
 	if (clnt_stat != RPC_SUCCESS) {
-		extern char *clnt_sperrno();
 		char *msg = clnt_sperrno(clnt_stat);
 		plog(XLOG_ERROR, "mountd rpc failed: %s", msg);
 		return EIO;
