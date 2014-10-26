@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.22 2014/10/26 01:16:48 guenther Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.23 2014/10/26 01:22:34 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -526,7 +526,7 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 		nfs_args.flags |= NFSMNT_RETRANS;
 
 #ifdef NFSMNT_BIODS
-	if (nfs_args.biods = hasmntval(&mnt, "biods"))
+	if ((nfs_args.biods = hasmntval(&mnt, "biods")))
 		nfs_args.flags |= NFSMNT_BIODS;
 
 #endif /* NFSMNT_BIODS */
@@ -537,7 +537,7 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 #endif /* NFSMNT_MAXGRPS */
 
 #ifdef NFSMNT_READAHEAD
-	if (nfs_args.readahead = hasmntval(&mnt, "readahead"))
+	if ((nfs_args.readahead = hasmntval(&mnt, "readahead")))
 		nfs_args.flags |= NFSMNT_READAHEAD;
 #endif /* NFSMNT_READAHEAD */
 
@@ -546,7 +546,7 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
  * This isn't supported by the ping algorithm yet.
  * In any case, it is all done in nfs_init().
  */
-	if (port = hasmntval(&mnt, "port"))
+	if ((port = hasmntval(&mnt, "port")))
 		sin.sin_port = htons(port);
 	else
 		sin.sin_port = htons(NFS_PORT);	/* XXX should use portmapper */
@@ -581,7 +581,7 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 		nfs_args.flags |= NFSMNT_RESVPORT;
 
 #ifdef NFSMNT_PGTHRESH
-	if (nfs_args.pg_thresh = hasmntval(&mnt, "pgthresh"))
+	if ((nfs_args.pg_thresh = hasmntval(&mnt, "pgthresh")))
 		nfs_args.flags |= NFSMNT_PGTHRESH;
 #endif /* NFSMNT_PGTHRESH */
 
