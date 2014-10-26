@@ -1,4 +1,4 @@
-/*	$Id: octeon_model.h,v 1.2 2014/06/17 01:33:04 jmatthew Exp $	*/
+/*	$Id: octeon_model.h,v 1.3 2014/10/26 15:10:15 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -39,6 +39,7 @@
 #define OCTEON_MODEL_CN5010		0x000d0600
 #define OCTEON_MODEL_CN5010_PASS1_1	0x000d0601
 #define OCTEON_MODEL_CN61XX_PASS1_0	0x000d9300
+#define OCTEON_MODEL_CN61XX_PASS1_1	0x000d9301
 
 #define OCTEON_MODEL_MASK		0x00ffff10
 #define OCTEON_MODEL_REV_MASK		0x00ffff1f
