@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.31 2014/05/18 17:50:11 espie Exp $ */
+/*	$OpenBSD: apprentice.c,v 1.32 2014/10/26 04:10:26 brad Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -642,7 +642,7 @@ apprentice_load(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 	if (stat(fn, &st) == 0 && S_ISDIR(st.st_mode)) {
 		dir = opendir(fn);
 		if (dir) {
-			while (d = readdir(dir)) {
+			while ((d = readdir(dir)) != NULL) {
 				snprintf(subfn, sizeof(subfn), "%s/%s",
 				    fn, d->d_name);
 				if (stat(subfn, &st) == 0 && S_ISREG(st.st_mode)) {
