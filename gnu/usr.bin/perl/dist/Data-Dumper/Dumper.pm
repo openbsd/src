@@ -56,6 +56,7 @@ $Useperl    = 0         unless defined $Useperl;
 $Sortkeys   = 0         unless defined $Sortkeys;
 $Deparse    = 0         unless defined $Deparse;
 $Sparseseen = 0         unless defined $Sparseseen;
+$Maxrecurse = 1000      unless defined $Maxrecurse;
 
 #
 # expects an arrayref of values to be dumped.
@@ -92,6 +93,7 @@ sub new {
         'bless'    => $Bless,    # keyword to use for "bless"
 #        expdepth   => $Expdepth,   # cutoff depth for explicit dumping
         maxdepth   => $Maxdepth,   # depth beyond which we give up
+	maxrecurse => $Maxrecurse, # depth beyond which we abort
         useperl    => $Useperl,    # use the pure Perl implementation
         sortkeys   => $Sortkeys,   # flag or filter for sorting hash keys
         deparse    => $Deparse,    # use B::Deparse for coderefs
@@ -349,6 +351,12 @@ sub _dump {
       and $s->{level} >= $s->{maxdepth})
     {
       return qq['$val'];
+    }
+
+    # avoid recursing infinitely [perl #122111]
+    if ($s->{maxrecurse} > 0
+        and $s->{level} >= $s->{maxrecurse}) {
+        die "Recursion limit of $s->{maxrecurse} exceeded";
     }
 
     # we have a blessed ref
@@ -681,6 +689,11 @@ sub Bless {
 sub Maxdepth {
   my($s, $v) = @_;
   defined($v) ? (($s->{'maxdepth'} = $v), return $s) : $s->{'maxdepth'};
+}
+
+sub Maxrecurse {
+  my($s, $v) = @_;
+  defined($v) ? (($s->{'maxrecurse'} = $v), return $s) : $s->{'maxrecurse'};
 }
 
 sub Useperl {
@@ -1105,6 +1118,16 @@ we don't venture into a structure.  Has no effect when
 C<Data::Dumper::Purity> is set.  (Useful in debugger when we often don't
 want to see more than enough).  Default is 0, which means there is
 no maximum depth.
+
+=item *
+
+$Data::Dumper::Maxrecurse  I<or>  $I<OBJ>->Maxrecurse(I<[NEWVAL]>)
+
+Can be set to a positive integer that specifies the depth beyond which
+recursion into a structure will throw an exception.  This is intended
+as a security measure to prevent perl running out of stack space when
+dumping an excessively deep structure.  Can be set to 0 to remove the
+limit.  Default is 1000.
 
 =item *
 

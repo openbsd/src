@@ -3155,6 +3155,7 @@ dist/Data-Dumper/t/perl-74170.t	Regression test for stack reallocation
 dist/Data-Dumper/t/purity_deepcopy_maxdepth.t	See if three Data::Dumper functions work
 dist/Data-Dumper/t/qr.t		See if Data::Dumper works with qr|/|
 dist/Data-Dumper/t/quotekeys.t	See if Data::Dumper::Quotekeys works
+dist/Data-Dumper/t/recurse.t	See if Data::Dumper::Maxrecurse works
 dist/Data-Dumper/t/seen.t	See if Data::Dumper::Seen works
 dist/Data-Dumper/t/sortkeys.t	See if Data::Dumper::Sortkeys works
 dist/Data-Dumper/t/sparseseen.t	See if Data::Dumper::Sparseseen works

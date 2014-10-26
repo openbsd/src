@@ -134,6 +134,7 @@ hunk.
 static const char * const local_patches[] = {
 	NULL
 	,"Update libnet to 1.27"
+	,"CVE-2014-4330"
 #ifdef PERL_GIT_UNCOMMITTED_CHANGES
 	,"uncommitted-changes"
 #endif
