@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.19 2014/09/24 00:13:13 doug Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.20 2014/10/26 10:32:30 miod Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -197,10 +197,10 @@ putfile(char *from_file, int to)
 	else if (IS_ELF(*(Elf32_Ehdr *)&ex)) {
 		Elf32_Ehdr elf_header;
 		Elf32_Phdr *elf_segments;
-		int i,header_count, memory_needed, elf_load_image_segment;
+		int i, header_count, memory_needed, elf_load_image_segment;
 
 		(void) lseek(from, 0, SEEK_SET);
-		n = read(from, &elf_header, sizeof (elf_header));
+		n = read(from, &elf_header, sizeof(elf_header));
 		if (n != sizeof (elf_header))
 			err(1, "%s: reading ELF header", from_file);
 		header_count = ntohs(elf_header.e_phnum);
@@ -221,12 +221,13 @@ putfile(char *from_file, int to)
 					errx(1, "%s: more than one ELF program segment", from_file);
 				elf_load_image_segment = i;
 			}
-			if (elf_load_image_segment == -1)
-				errx(1, "%s: no suitable ELF program segment", from_file);
 		}
+		if (elf_load_image_segment == -1)
+			errx(1, "%s: no suitable ELF program segment", from_file);
 		entry = ntohl(elf_header.e_entry) +
 			ntohl(elf_segments[elf_load_image_segment].p_offset) -
 			ntohl(elf_segments[elf_load_image_segment].p_vaddr);
+		free(elf_segments);
 	} else if (*(u_char *)&ex == 0x1f && ((u_char *)&ex)[1] == 0x8b) {
 		entry = 0;
 	} else
