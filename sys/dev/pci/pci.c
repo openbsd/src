@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.105 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: pci.c,v 1.106 2014/10/26 16:18:42 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -797,12 +797,14 @@ pci_reserve_resources(struct pci_attach_args *pa)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
 	pcireg_t bhlc, blr, type, bir;
+	pcireg_t addr, mask;
 	bus_addr_t base, limit;
 	bus_size_t size;
-	int reg, reg_start, reg_end;
+	int reg, reg_start, reg_end, reg_rom;
 	int bus, dev, func;
 	int sec, sub;
 	int flags;
+	int s;
 
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
@@ -811,14 +813,17 @@ pci_reserve_resources(struct pci_attach_args *pa)
 	case 0:
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_END;
+		reg_rom = PCI_ROM_REG;
 		break;
 	case 1: /* PCI-PCI bridge */
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_PPB_END;
+		reg_rom = 0;	/* 0x38 */
 		break;
 	case 2: /* PCI-CardBus bridge */
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_PCB_END;
+		reg_rom = 0;
 		break;
 	default:
 		return (0);
@@ -863,6 +868,28 @@ pci_reserve_resources(struct pci_attach_args *pa)
 
 		if (type & PCI_MAPREG_MEM_TYPE_64BIT)
 			reg += 4;
+	}
+
+	if (reg_rom != 0) {
+		s = splhigh();
+		addr = pci_conf_read(pc, tag, PCI_ROM_REG);
+		pci_conf_write(pc, tag, PCI_ROM_REG, ~PCI_ROM_ENABLE);
+		mask = pci_conf_read(pc, tag, PCI_ROM_REG);
+		pci_conf_write(pc, tag, PCI_ROM_REG, addr);
+		splx(s);
+
+		base = PCI_ROM_ADDR(addr);
+		size = PCI_ROM_SIZE(mask);
+		if (base != 0 && size != 0) {
+			if (pa->pa_pmemex && extent_alloc_region(pa->pa_pmemex,
+			    base, size, EX_NOWAIT) &&
+			    pa->pa_memex && extent_alloc_region(pa->pa_memex,
+			    base, size, EX_NOWAIT)) {
+				printf("%d:%d:%d: mem address conflict 0x%lx/0x%lx\n",
+				    bus, dev, func, base, size);
+				pci_conf_write(pc, tag, PCI_ROM_REG, 0);
+			}
+		}
 	}
 
 	if (PCI_HDRTYPE_TYPE(bhlc) != 1)
