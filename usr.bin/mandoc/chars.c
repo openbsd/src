@@ -1,4 +1,4 @@
-/*	$OpenBSD: chars.c,v 1.30 2014/10/26 17:11:18 schwarze Exp $ */
+/*	$OpenBSD: chars.c,v 1.31 2014/10/26 18:06:28 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/types.h>
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -143,6 +145,17 @@ mchars_spec2str(const struct mchars *arg,
 
 	*rsz = strlen(ln->ascii);
 	return(ln->ascii);
+}
+
+const char *
+mchars_uc2str(int uc)
+{
+	int	 i;
+
+	for (i = 0; i < LINES_MAX; i++)
+		if (uc == lines[i].unicode)
+			return(lines[i].ascii);
+	return("<?>");
 }
 
 static const struct ln *
