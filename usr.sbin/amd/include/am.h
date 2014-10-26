@@ -1,4 +1,4 @@
-/*	$OpenBSD: am.h,v 1.14 2014/10/20 06:55:59 guenther Exp $	*/
+/*	$OpenBSD: am.h,v 1.15 2014/10/26 02:50:44 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -304,7 +304,6 @@ extern int	 switch_option(char *);
 extern int	 switch_to_logfile(char *);
 extern void	 do_task_notify(void);
 extern int	 timeout(unsigned int, void (*fn)(), void *);
-extern void	 timeout_mp(void);
 extern void	 umount_exported(void);
 extern int	 umount_fs(char *);
 /*extern int unmount_node(am_node*);
