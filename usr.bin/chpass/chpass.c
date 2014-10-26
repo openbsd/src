@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.39 2013/04/18 16:23:25 okan Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.40 2014/10/26 20:38:13 guenther Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -167,8 +167,8 @@ main(int argc, char *argv[])
 
 		if ((pw = pw_dup(pw)) == NULL)
 			pw_error(NULL, 1, 1);
-		dfd = mkstemp(tempname);
-		if (dfd == -1 || fcntl(dfd, F_SETFD, FD_CLOEXEC) == -1)
+		dfd = mkostemp(tempname, O_CLOEXEC);
+		if (dfd == -1)
 			pw_error(tempname, 1, 1);
 		display(tempname, dfd, pw);
 		edit_status = edit(tempname, pw);

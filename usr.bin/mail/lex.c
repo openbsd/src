@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.37 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: lex.c,v 1.38 2014/10/26 20:38:13 guenther Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -124,13 +124,11 @@ setfile(char *name)
 	mailsize = fsize(ibuf);
 	(void)snprintf(tempname, sizeof(tempname),
 	    "%s/mail.RxXXXXXXXXXX", tmpdir);
-	if ((fd = mkstemp(tempname)) == -1 ||
+	if ((fd = mkostemp(tempname, O_CLOEXEC)) == -1 ||
 	    (otf = fdopen(fd, "w")) == NULL)
 		err(1, "%s", tempname);
-	(void)fcntl(fileno(otf), F_SETFD, FD_CLOEXEC);
-	if ((itf = fopen(tempname, "r")) == NULL)
+	if ((itf = fopen(tempname, "re")) == NULL)
 		err(1, "%s", tempname);
-	(void)fcntl(fileno(itf), F_SETFD, FD_CLOEXEC);
 	(void)rm(tempname);
 	setptr(ibuf, (off_t)0);
 	setmsize(msgCount);
