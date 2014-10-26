@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.71 2014/10/17 07:41:40 jmc Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.72 2014/10/26 22:16:16 guenther Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -211,7 +211,7 @@ bind_socket(const char *sockname)
 	mode_t old_umask;
 	int sock;
 
-	sock = socket(AF_UNIX, SOCK_STREAM, 0);
+	sock = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
 	if (sock == -1)
 		error("cannot create local socket", NULL);
 
@@ -440,9 +440,6 @@ main(int argc, char *argv[])
 	}
 
 	sock_fd = bind_socket(sockname);
-
-	if (fcntl(sock_fd, F_SETFD, FD_CLOEXEC) == -1)
-		error("cannot set close-on-exec for the socket", NULL);
 
 	power_status(ctl_fd, 1, &pinfo);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.47 2014/08/15 03:51:40 guenther Exp $	*/
+/*	$OpenBSD: misc.c,v 1.48 2014/10/26 22:16:16 guenther Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -248,8 +248,9 @@ acquire_daemonlock(int closeflag) {
 
 	if (fd == -1) {
 		pidfile = _PATH_CRON_PID;
-		if ((fd = open(pidfile, O_RDWR|O_CREAT|O_EXLOCK|O_NONBLOCK,
-		    0644)) == -1) {
+		fd = open(pidfile,
+		    O_RDWR|O_CREAT|O_EXLOCK|O_NONBLOCK|O_CLOEXEC, 0644);
+		if (fd == -1) {
 			int save_errno = errno;
 
 			if (errno != EWOULDBLOCK)  {
@@ -281,7 +282,10 @@ acquire_daemonlock(int closeflag) {
 		}
 		/* fd must be > STDERR_FILENO since we dup fd 0-2 to /dev/null */
 		if (fd <= STDERR_FILENO) {
-			if (dup2(fd, STDERR_FILENO + 1) < 0) {
+			int newfd;
+
+			newfd = fcntl(fd, F_DUPFD_CLOEXEC, STDERR_FILENO + 1);
+			if (newfd < 0) {
 				snprintf(buf, sizeof buf,
 				    "can't dup pid fd: %s", strerror(errno));
 				fprintf(stderr, "%s: %s\n", ProgramName, buf);
@@ -289,9 +293,8 @@ acquire_daemonlock(int closeflag) {
 				exit(EXIT_FAILURE);
 			}
 			close(fd);
-			fd = STDERR_FILENO + 1;
+			fd = newfd;
 		}
-		(void) fcntl(fd, F_SETFD, FD_CLOEXEC);
 	}
 
 	snprintf(buf, sizeof(buf), "%ld\n", (long)getpid());
