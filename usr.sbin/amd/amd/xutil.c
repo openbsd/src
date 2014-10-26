@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
- *	$Id: xutil.c,v 1.14 2014/10/26 01:16:48 guenther Exp $
+ *	$Id: xutil.c,v 1.15 2014/10/26 02:32:51 guenther Exp $
  */
 
 #include "config.h"
@@ -156,9 +156,10 @@ checkup_mem(void)
  * 'e' never gets longer than maxlen characters.
  */
 static void
-expand_error(char *f, char *e, int maxlen)
+expand_error(const char *f, char *e, int maxlen)
 {
-	char *p, *q;
+	const char *p;
+	char *q;
 	int error = errno;
 	int len = 0;
 
@@ -224,14 +225,10 @@ extern char **gargv;
 
 /*VARARGS1*/
 void
-plog(int lvl, char *fmt, ...)
+plog(int lvl, const char *fmt, ...)
 {
-	char msg[1024];
 	char efmt[1024];
-	char *ptr;
 	va_list ap;
-
-	va_start(ap, fmt);
 
 	if (!(xlog_level & lvl))
 		return;
@@ -240,16 +237,6 @@ plog(int lvl, char *fmt, ...)
 	checkup_mem();
 #endif /* DEBUG_MEM */
 
-	expand_error(fmt, efmt, sizeof(efmt));
-	/*
-	 * XXX: msg is 1024 bytes long.  It is possible to write into it
-	 * more than 1024 bytes, if efmt is already large, and vargs expand
-	 * as well.
-	 */
-	vsnprintf(msg, sizeof(msg), efmt, ap);
-	ptr = msg + strlen(msg);
-	if (ptr[-1] == '\n')
-		*--ptr  = '\0';
 	if (syslogging) {
 		switch(lvl) {	/* from mike <mcooper@usc.edu> */
 		case XLOG_FATAL:	lvl = LOG_CRIT; break;
@@ -262,16 +249,21 @@ plog(int lvl, char *fmt, ...)
 		case XLOG_STATS:	lvl = LOG_INFO; break;
 		default:		lvl = LOG_ERR; break;
 		}
-		syslog(lvl, "%s", msg);
+		va_start(ap, fmt);
+		vsyslog(lvl, fmt, ap);
+		va_end(ap);
 		return;
 	}
+
+	expand_error(fmt, efmt, sizeof(efmt));
 
 	/*
 	 * Mimic syslog header
 	 */
-	va_end(ap);
 	show_time_host_and_name(lvl);
-	fwrite(msg, ptr - msg, 1, logfp);
+	va_start(ap, fmt);
+	vfprintf(logfp, efmt, ap);
+	va_end(ap);
 	fputc('\n', logfp);
 	fflush(logfp);
 }
