@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.205 2014/10/25 03:18:13 lteo Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.206 2014/10/26 03:45:29 brad Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -2556,7 +2556,7 @@ print_sensor(struct sensor *s)
 				name = "unknown";
 				break;
 			}
-			printf(name);
+			printf("%s", name);
 			break;
 		case SENSOR_TIMEDELTA:
 			printf("%.6f secs", s->value / 1000000000.0);
