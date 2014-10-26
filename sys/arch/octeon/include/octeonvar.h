@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.21 2014/08/11 18:29:56 miod Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.22 2014/10/26 15:13:04 jasper Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -194,14 +194,12 @@ struct octeon_fau_map {
 
 /*
  * Octeon board types known to work with OpenBSD/octeon.
- * One of the main reasons for keeping this list is to be able to tell which
- * boards do and do not have octcf(4). Currently the only board not to have octcf(4)
- * is BOARD_TYPE_UBIQUITI_E100. Sadly, this number is also used by other vendors, but
- * we don't run on those boards yet. When that time comes, iobus needs extra care for
- * not blindly attaching octcf(4) on every board.
+ * NB: BOARD_TYPE_UBIQUITI_E100 is also used by other vendors, but we don't run
+ * on those boards yet.
  */
 #define	BOARD_TYPE_SIM			1
 #define	BOARD_TYPE_UBIQUITI_E100	20002
+#define	BOARD_TYPE_UBIQUITI_E200	20003
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #define OCTEON_ARGV_MAX 64
