@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.24 2014/10/26 03:03:34 guenther Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.25 2014/10/26 03:08:21 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -186,8 +186,8 @@ discard_fh(void *arg)
 	dlog("Discarding filehandle for %s:%s", fp->fh_fs->fs_host, fp->fh_path);
 #endif /* DEBUG */
 	free_srvr(fp->fh_fs);
-	free((void *)fp->fh_path);
-	free((void *)fp);
+	free(fp->fh_path);
+	free(fp);
 }
 
 /*

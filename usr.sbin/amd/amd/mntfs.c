@@ -205,10 +205,10 @@ new_mntfs()
 static void
 uninit_mntfs(mntfs *mf, int rmd)
 {
-	if (mf->mf_auto) free((void *)mf->mf_auto);
-	if (mf->mf_mopts) free((void *)mf->mf_mopts);
-	if (mf->mf_remopts) free((void *)mf->mf_remopts);
-	if (mf->mf_info) free((void *)mf->mf_info);
+	if (mf->mf_auto) free(mf->mf_auto);
+	if (mf->mf_mopts) free(mf->mf_mopts);
+	if (mf->mf_remopts) free(mf->mf_remopts);
+	if (mf->mf_info) free(mf->mf_info);
 	if (mf->mf_private && mf->mf_prfree)
 		(*mf->mf_prfree)(mf->mf_private);
 	/*
@@ -216,7 +216,7 @@ uninit_mntfs(mntfs *mf, int rmd)
 	 */
 	if (rmd && (mf->mf_flags & MFF_MKMNT))
 		rmdirs(mf->mf_mount);
-	if (mf->mf_mount) free((void *)mf->mf_mount);
+	if (mf->mf_mount) free(mf->mf_mount);
 
 	/*
 	 * Clean up the file server
@@ -243,7 +243,7 @@ discard_mntfs(void *arg)
 	 * Free memory
 	 */
 	uninit_mntfs(mf, TRUE);
-	free((void *)mf);
+	free(mf);
 
 	--mntfs_allocated;
 }

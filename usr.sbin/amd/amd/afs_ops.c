@@ -1,4 +1,4 @@
-/*	$OpenBSD: afs_ops.c,v 1.17 2014/10/26 03:03:34 guenther Exp $	*/
+/*	$OpenBSD: afs_ops.c,v 1.18 2014/10/26 03:08:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -518,13 +518,13 @@ free_continuation(struct continuation *cp)
 {
 	if (cp->callout)
 		untimeout(cp->callout);
-	free((void *)cp->key);
-	free((void *)cp->xivec);
-	free((void *)cp->info);
-	free((void *)cp->auto_opts);
-	free((void *)cp->def_opts);
+	free(cp->key);
+	free(cp->xivec);
+	free(cp->info);
+	free(cp->auto_opts);
+	free(cp->def_opts);
 	free_opts(&cp->fs_opts);
-	free((void *)cp);
+	free(cp);
 }
 
 static int afs_bgmount(struct continuation *, int);
@@ -1361,9 +1361,9 @@ in_progrss:
 	 */
 	new_mp = exported_ap_alloc();
 	if (new_mp == 0) {
-		free((void *)xivec);
-		free((void *)info);
-		free((void *)fname);
+		free(xivec);
+		free(info);
+		free(fname);
 		ereturn(ENOSPC);
 	}
 
@@ -1430,7 +1430,7 @@ in_progrss:
 		/*
 		 * Don't need info vector any more
 		 */
-		free((void *)rvec);
+		free(rvec);
 	}
 
 	/*

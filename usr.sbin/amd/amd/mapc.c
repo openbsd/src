@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapc.c,v 1.20 2014/10/26 03:03:34 guenther Exp $	*/
+/*	$OpenBSD: mapc.c,v 1.21 2014/10/26 03:08:21 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -460,10 +460,10 @@ mapc_clear(mnt_map *m)
 		kv *k = m->kvhash[i];
 		while (k) {
 			kv *n = k->next;
-			free((void *)k->key);
+			free(k->key);
 			if (k->val)
-				free((void *)k->val);
-			free((void *)k);
+				free(k->val);
+			free(k);
 			k = n;
 		}
 	}
@@ -518,9 +518,9 @@ mapc_free(void *arg)
 	 */
 	if (m && --m->refc == 0) {
 		mapc_clear(m);
-		free((void *)m->map_name);
+		free(m->map_name);
 		rem_que(&m->hdr);
-		free((void *)m);
+		free(m);
 	}
 }
 

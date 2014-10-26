@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pfs_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: pfs_ops.c,v 1.6 2003/06/02 23:36:51 millert Exp $
+ *	$Id: pfs_ops.c,v 1.7 2014/10/26 03:08:21 guenther Exp $
  */
 
 #include "am.h"
@@ -123,8 +123,8 @@ pfs_exec(char *info)
 	/*
 	 * Free allocate memory
 	 */
-	free((void *)info);
-	free((void *)xivec);
+	free(info);
+	free(xivec);
 	/*
 	 * Return error
 	 */

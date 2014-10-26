@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.13 2014/10/26 02:48:37 guenther Exp $	*/
+/*	$OpenBSD: map.c,v 1.14 2014/10/26 03:08:21 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -204,7 +204,7 @@ exported_ap_free(am_node *mp)
 	/*
 	 * Free the mount node
 	 */
-	free((void *)mp);
+	free(mp);
 }
 
 /*
