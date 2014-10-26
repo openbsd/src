@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.9 2014/10/09 08:21:48 matthew Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.10 2014/10/26 10:33:48 miod Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -207,7 +207,7 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 			FREE(shp, sz);
 			return 1;
 		}
-		if (READ(fd, shstr, shstrsz) != shstrsz) {
+		if (read(fd, shstr, shstrsz) != shstrsz) {
 			WARN(("read section header string table"));
 			FREE(shstr, shstrsz);
 			FREE(shp, sz);
