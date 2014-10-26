@@ -1,4 +1,4 @@
-/*	$OpenBSD: room.c,v 1.9 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: room.c,v 1.10 2014/10/26 07:03:47 brad Exp $	*/
 /*	$NetBSD: room.c,v 1.3 1995/03/21 15:07:54 cgd Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ writedes(void)
 					putchar(c);
 			} else {
 				if (c != '*')
-					printf(truedirec(compass, c));
+					printf("%s", truedirec(compass, c));
 				compass++;
 			}
 	}
