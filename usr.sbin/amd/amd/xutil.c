@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
- *	$Id: xutil.c,v 1.13 2014/10/20 00:20:04 guenther Exp $
+ *	$Id: xutil.c,v 1.14 2014/10/26 01:16:48 guenther Exp $
  */
 
 #include "config.h"
@@ -68,23 +68,25 @@ struct opt_tab xlog_opt[] = {
 	{ 0, 0 }
 };
 
+__dead void
+xmallocfailure(void)
+{
+	plog(XLOG_FATAL, "Out of memory");
+	going_down(1);
+	abort();
+}
+
 void *
-xmalloc(int len)
+xmalloc(size_t len)
 {
 	void *p;
 	int retries = 600;
 
-	/*
-	 * Avoid malloc's which return NULL for malloc(0)
-	 */
-	if (len == 0)
-		len = 1;
-
 	do {
-		p = (void *)malloc((unsigned) len);
+		p = malloc(len);
 		if (p) {
 #if defined(DEBUG) && defined(DEBUG_MEM)
-			Debug(D_MEM) plog(XLOG_DEBUG, "Allocated size %d; block %#x", len, p);
+			Debug(D_MEM) plog(XLOG_DEBUG, "Allocated size %zu; block %#x", len, p);
 #endif /* defined(DEBUG) && defined(DEBUG_MEM) */
 			return p;
 		}
@@ -94,35 +96,21 @@ xmalloc(int len)
 		}
 	} while (--retries);
 
-	plog(XLOG_FATAL, "Out of memory");
-	going_down(1);
-
-	abort();
-
-	return 0;
+	xmallocfailure();
 }
 
 void *
-xrealloc(void *ptr, int len)
+xreallocarray(void *ptr, size_t nmemb, size_t size)
 {
 #if defined(DEBUG) && defined(DEBUG_MEM)
-	Debug(D_MEM) plog(XLOG_DEBUG, "Reallocated size %d; block %#x", len, ptr);
+	Debug(D_MEM) plog(XLOG_DEBUG, "Reallocated nmemb %zu of size %zu; block %#x", nmemb, size, ptr);
 #endif /* defined(DEBUG) && defined(DEBUG_MEM) */
 
-	if (len == 0)
-		len = 1;
+	ptr = reallocarray(ptr, nmemb, size);
 
-	if (ptr)
-		ptr = (void *)realloc(ptr, (unsigned) len);
-	else
-		ptr = (void *)xmalloc((unsigned) len);
-
-	if (!ptr) {
-		plog(XLOG_FATAL, "Out of memory in realloc");
-		going_down(1);
-		abort();
-	}
-	return ptr;
+	if (ptr == NULL)
+		xmallocfailure();
+	return (ptr);
 }
 
 #if defined(DEBUG) && defined(DEBUG_MEM)

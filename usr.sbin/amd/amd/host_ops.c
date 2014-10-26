@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.15 2014/10/20 06:55:59 guenther Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.16 2014/10/26 01:16:48 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -296,7 +296,7 @@ host_fmount(mntfs *mf)
 	 * so that they can be sorted.  If the filesystem
 	 * is already mounted then ignore it.
 	 */
-	ep = (exports *) xmalloc(n_export * sizeof(exports));
+	ep = xreallocarray(NULL, n_export, sizeof *ep);
 	for (j = 0, ex = exlist; ex; ex = ex->ex_next) {
 		MAKE_MNTPT(mntpt, ex, mf);
 		if (!already_mounted(mlist, mntpt))
@@ -315,7 +315,7 @@ host_fmount(mntfs *mf)
 	/*
 	 * Allocate an array of filehandles
 	 */
-	fp = (fhstatus *) xmalloc(n_export * sizeof(fhstatus));
+	fp = xreallocarray(NULL, n_export, sizeof *fp);
 
 	/*
 	 * Try to obtain filehandles for each directory.

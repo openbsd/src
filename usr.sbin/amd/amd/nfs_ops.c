@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.21 2014/10/20 06:55:59 guenther Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.22 2014/10/26 01:16:48 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -401,7 +401,7 @@ nfs_match(am_opts *fo)
 	/*
 	 * Determine magic cookie to put in mtab
 	 */
-	xmtab = (char *) xmalloc(strlen(fo->opt_rhost) + strlen(fo->opt_rfs) + 2);
+	xmtab = xmalloc(strlen(fo->opt_rhost) + strlen(fo->opt_rfs) + 2);
 	snprintf(xmtab, strlen(fo->opt_rhost) + strlen(fo->opt_rfs) + 2,
 		"%s:%s", fo->opt_rhost, fo->opt_rfs);
 #ifdef DEBUG

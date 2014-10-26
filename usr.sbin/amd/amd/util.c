@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
- *	$Id: util.c,v 1.13 2014/10/20 02:33:42 guenther Exp $
+ *	$Id: util.c,v 1.14 2014/10/26 01:16:48 guenther Exp $
  */
 
 /*
@@ -49,7 +49,7 @@
 char *
 strnsave(const char *str, int len)
 {
-	char *sp = (char *) xmalloc(len+1);
+	char *sp = xmalloc(len+1);
 
 	bcopy(str, sp, len);
 	sp[len] = 0;
@@ -64,10 +64,13 @@ strnsave(const char *str, int len)
 char *
 str3cat(char *p, char *s1, char *s2, char *s3)
 {
-	int l1 = strlen(s1);
-	int l2 = strlen(s2);
-	int l3 = strlen(s3);
-	p = (char *) xrealloc(p, l1 + l2 + l3 + 1);
+	size_t l1 = strlen(s1);
+	size_t l2 = strlen(s2);
+	size_t l3 = strlen(s3);
+
+	if (l1 > SIZE_MAX - l2 || l1 + l2 > SIZE_MAX - l3)
+		 xmallocfailure();
+	p = xreallocarray(p, l1 + l2 + l3 + 1, 1);
 	bcopy(s1, p, l1);
 	bcopy(s2, p + l1, l2);
 	bcopy(s3, p + l1 + l2, l3 + 1);
@@ -77,9 +80,11 @@ str3cat(char *p, char *s1, char *s2, char *s3)
 char *
 strealloc(char *p, char *s)
 {
-	int len = strlen(s) + 1;
+	size_t len = strlen(s) + 1;
 
-	p = (char *) xrealloc((void *)p, len);
+	if (len > SIZE_MAX - 1)
+		 xmallocfailure();
+	p = xreallocarray(p, len, 1);
 
 	strlcpy(p, s, len);
 #ifdef DEBUG_MEM
@@ -95,7 +100,7 @@ strsplit(char *s, int ch, int qc)
 	int ic = 0;
 	int done = 0;
 
-	ivec = (char **) xmalloc((ic+1)*sizeof(char *));
+	ivec = xreallocarray(NULL, ic + 1, sizeof *ivec);
 
 	while (!done) {
 		char *v;
@@ -144,7 +149,7 @@ strsplit(char *s, int ch, int qc)
 		 * save string in new ivec slot
 		 */
 		ivec[ic++] = v;
-		ivec = (char **) xrealloc((void *)ivec, (ic+1)*sizeof(char *));
+		ivec = xreallocarray(ivec, ic + 1, sizeof *ivec);
 #ifdef DEBUG
 		Debug(D_STR)
 			plog(XLOG_DEBUG, "strsplit saved \"%s\"", v);

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsx_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfsx_ops.c,v 1.6 2003/06/02 23:36:51 millert Exp $
+ *	$Id: nfsx_ops.c,v 1.7 2014/10/26 01:16:48 guenther Exp $
  */
 
 #include "am.h"
@@ -106,7 +106,9 @@ nfsx_match(am_opts *fo)
 	 * Bump string length to allow trailing /
 	 */
 	len = strlen(fo->opt_fs);
-	fo->opt_fs = xrealloc(fo->opt_fs, len + 1 + 1);
+	if (len > SIZE_MAX - 2)
+		 xmallocfailure();
+	fo->opt_fs = xreallocarray(fo->opt_fs, len + 1 + 1, 1);
 	ptr = fo->opt_fs + len;
 	/*
 	 * Make unique...
@@ -189,7 +191,7 @@ nfsx_init(mntfs *mf)
 		mf->mf_prfree = nfsx_prfree;
 
 		nx->nx_c = i - 1;	/* i-1 because we don't want the prefix */
-		nx->nx_v = (nfsx_mnt *) xmalloc(nx->nx_c * sizeof(nfsx_mnt));
+		nx->nx_v = xreallocarray(NULL, nx->nx_c, sizeof *nx->nx_v);
 		{ char *mp = 0;
 		  char *xinfo = 0;
 		  char *fs = mf->mf_fo->opt_fs;

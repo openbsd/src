@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
- *	$Id: config.h,v 1.9 2014/10/20 06:55:59 guenther Exp $
+ *	$Id: config.h,v 1.10 2014/10/26 01:16:49 guenther Exp $
  */
 
 /*
@@ -95,7 +95,8 @@ extern void going_down(int);
 #ifdef DEBUG
 #define dplog(fmt, args...) plog(XLOG_DEBUG, fmt, ## args)
 #endif /* DEBUG */
-extern void plog(int, char *, ...);
+extern void plog(int, char *, ...) __attribute__((__format__ (syslog, 2, 3)));
 extern void show_opts(int ch, struct opt_tab *);
-extern void *xmalloc(int);
-extern void *xrealloc(void *, int);
+__dead void xmallocfailure(void);
+extern void *xmalloc(size_t);
+extern void *xreallocarray(void *, size_t, size_t);
