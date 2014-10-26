@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.35 2014/09/15 19:08:22 miod Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.36 2014/10/26 20:37:15 brad Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -208,19 +208,21 @@ header(void)
 		return;
 
 	/* Main Headers. */
-	if (ISSET(todo, SHOW_TTY))
+	if (ISSET(todo, SHOW_TTY)) {
 		if (ISSET(todo, SHOW_TOTALS))
 			printf("            tty");
 		else
 			printf("      tty");
+	}
 
 	if (ISSET(todo, SHOW_STATS_1))
 		for (i = 0; i < dk_ndrive; i++)
-			if (cur.dk_select[i])
+			if (cur.dk_select[i]) {
 				if (ISSET(todo, SHOW_TOTALS))
 					printf(" %18.18s ", cur.dk_name[i]);
 				else
 					printf(" %16.16s ", cur.dk_name[i]);
+			}
 	if (ISSET(todo, SHOW_STATS_2))
 		for (i = 0; i < dk_ndrive; i++)
 			if (cur.dk_select[i])
@@ -231,11 +233,12 @@ header(void)
 	printf("\n");
 
 	/* Sub-Headers. */
-	if (ISSET(todo, SHOW_TTY))
+	if (ISSET(todo, SHOW_TTY)) {
 		if (ISSET(todo, SHOW_TOTALS))
 			printf("   tin     tout");
 		else
 			printf(" tin tout");
+	}
 
 	if (ISSET(todo, SHOW_STATS_1))
 		for (i = 0; i < dk_ndrive; i++)
@@ -365,13 +368,14 @@ display(void)
 	if (ISSET(todo, SHOW_TOTALS))
 		etime = 1.0;
 
-	if (ISSET(todo, SHOW_TTY))
+	if (ISSET(todo, SHOW_TTY)) {
 		if (ISSET(todo, SHOW_TOTALS))
 			printf("%6.0f %8.0f", cur.tk_nin / etime,
 			    cur.tk_nout / etime);
 		else
 			printf("%4.0f %4.0f", cur.tk_nin / etime,
 			    cur.tk_nout / etime);
+	}
 
 	if (ISSET(todo, SHOW_STATS_1))
 		disk_stats(etime);
