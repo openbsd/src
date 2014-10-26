@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.47 2014/09/17 20:17:55 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.48 2014/10/26 17:11:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -103,6 +103,8 @@ struct	termp {
 	const void	 *argf;		/* arg for headf/footf */
 	struct termp_ps	 *ps;
 };
+
+const char	 *ascii_uc2str(int);
 
 void		  term_eqn(struct termp *, const struct eqn *);
 void		  term_tbl(struct termp *, const struct tbl_span *);

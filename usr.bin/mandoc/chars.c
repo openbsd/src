@@ -1,7 +1,7 @@
-/*	$Id: chars.c,v 1.29 2014/07/23 15:00:00 schwarze Exp $ */
+/*	$OpenBSD: chars.c,v 1.30 2014/10/26 17:11:18 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -100,9 +100,7 @@ mchars_spec2cp(const struct mchars *arg, const char *p, size_t sz)
 	const struct ln	*ln;
 
 	ln = find(arg, p, sz);
-	if (NULL == ln)
-		return(-1);
-	return(ln->unicode);
+	return(ln != NULL ? ln->unicode : sz == 1 ? *p : -1);
 }
 
 char
@@ -122,20 +120,13 @@ mchars_num2uc(const char *p, size_t sz)
 	int	 i;
 
 	if ((i = mandoc_strntoi(p, sz, 16)) < 0)
-		return('\0');
+		return(0xFFFD);
 
 	/*
-	 * Security warning:
-	 * Never extend the range of accepted characters
-	 * to overlap with the ASCII range, 0x00-0x7F
-	 * without re-auditing the callers of this function.
-	 * Some callers might relay on the fact that we never
-	 * return ASCII characters for their escaping decisions.
-	 *
 	 * XXX Code is missing here to exclude bogus ranges.
 	 */
 
-	return(i > 0x80 && i <= 0x10FFFF ? i : '\0');
+	return(i <= 0x10FFFF ? i : 0xFFFD);
 }
 
 const char *
@@ -145,9 +136,9 @@ mchars_spec2str(const struct mchars *arg,
 	const struct ln	*ln;
 
 	ln = find(arg, p, sz);
-	if (NULL == ln) {
+	if (ln == NULL) {
 		*rsz = 1;
-		return(NULL);
+		return(sz == 1 ? p : NULL);
 	}
 
 	*rsz = strlen(ln->ascii);

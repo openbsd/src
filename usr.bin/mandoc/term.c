@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.88 2014/08/18 22:21:52 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.89 2014/10/26 17:11:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -442,27 +442,14 @@ term_word(struct termp *p, const char *word)
 		if (ESCAPE_ERROR == esc)
 			continue;
 
-		if (TERMENC_ASCII != p->enc)
-			switch (esc) {
-			case ESCAPE_UNICODE:
-				uc = mchars_num2uc(seq + 1, sz - 1);
-				if ('\0' == uc)
-					break;
-				encode1(p, uc);
-				continue;
-			case ESCAPE_SPECIAL:
-				uc = mchars_spec2cp(p->symtab, seq, sz);
-				if (uc <= 0)
-					break;
-				encode1(p, uc);
-				continue;
-			default:
-				break;
-			}
-
 		switch (esc) {
 		case ESCAPE_UNICODE:
-			encode1(p, '?');
+			uc = mchars_num2uc(seq + 1, sz - 1);
+			if (p->enc == TERMENC_ASCII) {
+				cp = ascii_uc2str(uc);
+				encode(p, cp, strlen(cp));
+			} else
+				encode1(p, uc);
 			break;
 		case ESCAPE_NUMBERED:
 			c = mchars_num2char(seq, sz);
@@ -470,11 +457,19 @@ term_word(struct termp *p, const char *word)
 				encode(p, &c, 1);
 			break;
 		case ESCAPE_SPECIAL:
-			cp = mchars_spec2str(p->symtab, seq, sz, &ssz);
-			if (NULL != cp)
-				encode(p, cp, ssz);
-			else if (1 == ssz)
-				encode(p, seq, sz);
+			if (p->enc == TERMENC_ASCII) {
+				cp = mchars_spec2str(p->symtab,
+				    seq, sz, &ssz);
+				if (cp == NULL)
+					encode(p, "<?>", 3);
+				else
+					encode(p, cp, ssz);
+			} else {
+				uc = mchars_spec2cp(p->symtab, seq, sz);
+				if (uc <= 0)
+					uc = 0xFFFD;
+				encode1(p, uc);
+			}
 			break;
 		case ESCAPE_FONTBOLD:
 			term_fontrepl(p, TERMFONT_BOLD);
@@ -681,31 +676,16 @@ term_strlen(const struct termp *p, const char *cp)
 			if (ESCAPE_ERROR == esc)
 				continue;
 
-			if (TERMENC_ASCII != p->enc)
-				switch (esc) {
-				case ESCAPE_UNICODE:
-					c = mchars_num2uc(seq + 1,
-					    ssz - 1);
-					if ('\0' == c)
-						break;
-					sz += cond_width(p, c, &skip);
-					continue;
-				case ESCAPE_SPECIAL:
-					c = mchars_spec2cp(p->symtab,
-					    seq, ssz);
-					if (c <= 0)
-						break;
-					sz += cond_width(p, c, &skip);
-					continue;
-				default:
-					break;
-				}
-
 			rhs = NULL;
 
 			switch (esc) {
 			case ESCAPE_UNICODE:
-				sz += cond_width(p, '?', &skip);
+				c = mchars_num2uc(seq + 1, sz - 1);
+				if (p->enc == TERMENC_ASCII) {
+					rhs = ascii_uc2str(c);
+					rsz = strlen(rhs);
+				} else
+					sz += cond_width(p, c, &skip);
 				break;
 			case ESCAPE_NUMBERED:
 				c = mchars_num2char(seq, ssz);
@@ -713,14 +693,20 @@ term_strlen(const struct termp *p, const char *cp)
 					sz += cond_width(p, c, &skip);
 				break;
 			case ESCAPE_SPECIAL:
-				rhs = mchars_spec2str(p->symtab,
-				    seq, ssz, &rsz);
-
-				if (ssz != 1 || rhs)
-					break;
-
-				rhs = seq;
-				rsz = ssz;
+				if (p->enc == TERMENC_ASCII) {
+					rhs = mchars_spec2str(p->symtab,
+					    seq, ssz, &rsz);
+					if (rhs == NULL) {
+						rhs = "<?>";
+						rsz = 3;
+					}
+				} else {
+					c = mchars_spec2cp(p->symtab,
+					    seq, ssz);
+					if (c <= 0)
+						c = 0xFFFD;
+					sz += cond_width(p, c, &skip);
+				}
 				break;
 			case ESCAPE_SKIPCHAR:
 				skip = 1;
