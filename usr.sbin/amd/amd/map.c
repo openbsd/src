@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.12 2014/10/26 01:38:02 guenther Exp $	*/
+/*	$OpenBSD: map.c,v 1.13 2014/10/26 02:48:37 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -172,7 +172,7 @@ am_node *exported_ap_alloc(void)
 /*
  * Free a mount slot
  */
-void
+static void
 exported_ap_free(am_node *mp)
 {
 	/*
@@ -236,7 +236,7 @@ insert_am(am_node *mp, am_node *p_mp)
 /*
  * Remove am from its place in the mount tree
  */
-void
+static void
 remove_am(am_node *mp)
 {
 	/*
@@ -982,7 +982,8 @@ unmount_mp(am_node *mp)
 	return was_backgrounded;
 }
 
-void timeout_mp()
+static void
+timeout_mp(void *arg)
 {
 #define NEVER (time_t) 0
 #define	smallest_t(t1, t2) \
