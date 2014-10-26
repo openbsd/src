@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.123 2014/10/24 02:01:20 lteo Exp $ */
+/* $OpenBSD: netcat.c,v 1.124 2014/10/26 13:59:30 millert Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -760,7 +760,7 @@ readwrite(int nfd)
 		if (n == 0)
 			return;
 
-		if (pfd[0].revents & POLLIN) {
+		if (pfd[0].revents & (POLLIN|POLLHUP)) {
 			if ((n = read(nfd, buf, plen)) < 0)
 				return;
 			else if (n == 0) {
@@ -775,7 +775,7 @@ readwrite(int nfd)
 			}
 		}
 
-		if (!dflag && pfd[1].revents & POLLIN) {
+		if (!dflag && pfd[1].revents & (POLLIN|POLLHUP)) {
 			if ((n = read(wfd, buf, plen)) < 0)
 				return;
 			else if (n == 0) {
