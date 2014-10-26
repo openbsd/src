@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.c,v 1.17 2014/10/26 03:08:21 guenther Exp $	*/
+/*	$OpenBSD: sched.c,v 1.18 2014/10/26 03:28:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sched.c	8.1 (Berkeley) 6/6/93
- *	$Id: sched.c,v 1.17 2014/10/26 03:08:21 guenther Exp $
+ *	$Id: sched.c,v 1.18 2014/10/26 03:28:41 guenther Exp $
  */
 
 /*
@@ -106,7 +106,7 @@ run_task(task_fun tf, void *ta, cb_fun cf, void *ca)
 	pjob *p = sched_job(cf, ca);
 	sigset_t mask, omask;
 
-	p->wchan = (void *)p;
+	p->wchan = p;
 
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGCHLD);
@@ -137,7 +137,7 @@ sched_task(cb_fun cf, void *ca, void *wchan)
 #endif
 	p->wchan = wchan;
 	p->pid = 0;
-	bzero((void *)&p->w, sizeof(p->w));
+	bzero(&p->w, sizeof(p->w));
 }
 
 static void
@@ -200,17 +200,17 @@ sigchld(int sig)
 		pjob *p, *p2;
 
 		if (WIFSIGNALED(w))
-			plog(XLOG_ERROR, "Process %ld exited with signal %ld",
+			plog(XLOG_ERROR, "Process %ld exited with signal %d",
 				(long)pid, WTERMSIG(w));
 #ifdef DEBUG
 		else
-			dlog("Process %ld exited with status %ld",
+			dlog("Process %ld exited with status %d",
 				(long)pid, WEXITSTATUS(w));
 #endif /* DEBUG */
 
 		for (p = FIRST(pjob, &proc_wait_list);
-				p2 = NEXT(pjob, p), p != HEAD(pjob, &proc_wait_list);
-				p = p2) {
+		     p2 = NEXT(pjob, p), p != HEAD(pjob, &proc_wait_list);
+		     p = p2) {
 			if (p->pid == pid) {
 				p->w = w;
 				wakeupjob(p);

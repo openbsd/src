@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_subr.c,v 1.15 2014/10/26 03:03:34 guenther Exp $
+ *	$Id: amq_subr.c,v 1.16 2014/10/26 03:28:41 guenther Exp $
  */
 
 /*
@@ -50,7 +50,7 @@ amqproc_null_1_svc(void *argp, struct svc_req *rqstp)
 {
 	static char res;
 
-	return (void *)&res;
+	return &res;
 }
 
 /*
@@ -77,7 +77,7 @@ amqproc_umnt_1_svc(void *argp, struct svc_req *rqstp)
 	if (mp)
 		forcibly_timeout_mp(mp);
 
-	return (void *)&res;
+	return &res;
 }
 
 /*
@@ -218,7 +218,7 @@ struct svc_req *rqstp;
 		cp++;
 
 	root_newmap(s, cp, (char *) 0);
-	rc = mount_auto_node(s, (void *)root_node);
+	rc = mount_auto_node(s, root_node);
 	if (rc < 0)
 		return 0;
 	return &rc;

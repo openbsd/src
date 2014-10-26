@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)srvr_afs.c	8.1 (Berkeley) 6/6/93
- *	$Id: srvr_afs.c,v 1.6 2014/10/26 03:08:21 guenther Exp $
+ *	$Id: srvr_afs.c,v 1.7 2014/10/26 03:28:41 guenther Exp $
  */
 
 /*
@@ -88,7 +88,7 @@ void
 wakeup_srvr(fserver *fs)
 {
 	fs->fs_flags &= ~FSF_WANT;
-	wakeup((void *)fs);
+	wakeup(fs);
 }
 
 /*
@@ -165,7 +165,7 @@ free_srvr(fserver *fs)
 		/*
 		 * Keep structure lying around for a while
 		 */
-		fs->fs_cid = timeout(ttl, timeout_srvr, (void *)fs);
+		fs->fs_cid = timeout(ttl, timeout_srvr, fs);
 		/*
 		 * Mark the fileserver down and invalid again
 		 */

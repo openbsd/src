@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.c	8.1 (Berkeley) 6/7/93
- *	$Id: amq.c,v 1.15 2014/10/20 00:20:04 guenther Exp $
+ *	$Id: amq.c,v 1.16 2014/10/26 03:28:41 guenther Exp $
  */
 
 /*
@@ -311,7 +311,7 @@ show_usage:
 	bzero(&server_addr, sizeof server_addr);
 	server_addr.sin_family = AF_INET;
 	if (hp) {
-		bcopy((void *)hp->h_addr, (void *)&server_addr.sin_addr,
+		bcopy(hp->h_addr, &server_addr.sin_addr,
 			sizeof(server_addr.sin_addr));
 	} else {
 		/* fake "localhost" */
@@ -444,7 +444,7 @@ show_usage:
 	 * Get Version
 	 */
 	if (getvers_flag) {
-		amq_string *spp = amqproc_getvers_1((void *)0, clnt);
+		amq_string *spp = amqproc_getvers_1(NULL, clnt);
 		if (spp && *spp) {
 			printf("%s.\n", *spp);
 			free(*spp);
@@ -502,7 +502,7 @@ show_usage:
 	} else if (unmount_flag) {
 		goto show_usage;
 	} else if (stats_flag) {
-		amq_mount_stats *ms = amqproc_stats_1((void *)0, clnt);
+		amq_mount_stats *ms = amqproc_stats_1(NULL, clnt);
 		if (ms) {
 			show_ms(ms);
 		} else {
@@ -511,7 +511,7 @@ show_usage:
 			errs = 1;
 		}
 	} else if (!nodefault) {
-		amq_mount_tree_list *mlp = amqproc_export_1((void *)0, clnt);
+		amq_mount_tree_list *mlp = amqproc_export_1(NULL, clnt);
 		if (mlp) {
 			enum show_opt e = Calc;
 			int mwid = 0, dwid = 0, pwid = 0;

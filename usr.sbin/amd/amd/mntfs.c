@@ -300,7 +300,8 @@ free_mntfs(void *arg)
 			if (mf->mf_flags & (MFF_MOUNTED|MFF_MOUNTING|MFF_UNMOUNTING))
 				dlog("mntfs reference for %s still active", mf->mf_mount);
 #endif /* DEBUG */
-			mf->mf_cid = timeout(ALLOWED_MOUNT_TIME, discard_mntfs, (void *)mf);
+			mf->mf_cid = timeout(ALLOWED_MOUNT_TIME,
+			    discard_mntfs, mf);
 		}
 	}
 }

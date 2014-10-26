@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_subr.c,v 1.7 2014/10/26 02:43:50 guenther Exp $
+ *	$Id: nfs_subr.c,v 1.8 2014/10/26 03:28:41 guenther Exp $
  */
 
 #include "am.h"
@@ -83,7 +83,7 @@ nfsproc_null_2(void *argp, struct svc_req *rqstp)
 {
 	static char res;
 
-	return (void *)&res;
+	return &res;
 }
 
 
@@ -148,7 +148,7 @@ nfsproc_root_2(void *argp, struct svc_req *rqstp)
 {
 	static char res;
 
-	return (void *)&res;
+	return &res;
 }
 
 
@@ -240,7 +240,7 @@ nfsproc_read_2(struct readargs *argp, struct svc_req *rqstp)
 {
 	static struct readres res;
 
-	bzero((char *)&res, sizeof(res));
+	bzero(&res, sizeof(res));
 
 	res.status = nfs_error(EACCES);
 
@@ -253,7 +253,7 @@ nfsproc_writecache_2(void *argp, struct svc_req *rqstp)
 {
 	static char res;
 
-	return (void *)&res;
+	return &res;
 }
 
 

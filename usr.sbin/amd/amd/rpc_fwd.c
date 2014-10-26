@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rpc_fwd.c	8.1 (Berkeley) 6/6/93
- *	$Id: rpc_fwd.c,v 1.8 2014/10/26 03:08:21 guenther Exp $
+ *	$Id: rpc_fwd.c,v 1.9 2014/10/26 03:28:41 guenther Exp $
  */
 
 /*
@@ -302,7 +302,7 @@ fwd_packet(int type_id, void *pkt, int len, struct sockaddr_in *fwdto,
 	if (replyto)
 		p->rf_sin = *replyto;
 	else
-		bzero((void *)&p->rf_sin, sizeof(p->rf_sin));
+		bzero(&p->rf_sin, sizeof(p->rf_sin));
 	p->rf_ptr = i;
 
 	return error;
@@ -330,7 +330,7 @@ fwd_reply()
 	 * Determine the length of the packet
 	 */
 #ifdef DYNAMIC_BUFFERS
-	if (ioctl(fwd_sock, FIONREAD, &len) < 0) {
+	if (ioctl(fwd_sock, FIONREAD, &len) < 0 || len < 0) {
 		plog(XLOG_ERROR, "Error reading packet size: %m");
 		return;
 	}
@@ -338,7 +338,7 @@ fwd_reply()
 	/*
 	 * Allocate a buffer
 	 */
-	pkt = (void *)malloc((unsigned) len);
+	pkt = malloc(len);
 	if (!pkt) {
 		plog(XLOG_ERROR, "Out of buffers in fwd_reply");
 		return;
@@ -407,7 +407,7 @@ again:
 		/*
 		 * Call forwarding function
 		 */
-		(*p->rf_fwd)((void *)pkt, rc, &src_addr, &p->rf_sin, p->rf_ptr, TRUE);
+		(*p->rf_fwd)(pkt, rc, &src_addr, &p->rf_sin, p->rf_ptr, TRUE);
 	}
 
 	/*

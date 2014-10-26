@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pfs_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: pfs_ops.c,v 1.7 2014/10/26 03:08:21 guenther Exp $
+ *	$Id: pfs_ops.c,v 1.8 2014/10/26 03:28:41 guenther Exp $
  */
 
 #include "am.h"
@@ -68,8 +68,8 @@ pfs_init(mntfs *mf)
 	 * Save unmount command
 	 */
 	if (mf->mf_refc == 1) {
-		mf->mf_private = (void *)strdup(mf->mf_fo->opt_unmount);
-		mf->mf_prfree = (void (*) ()) free;
+		mf->mf_private = strdup(mf->mf_fo->opt_unmount);
+		mf->mf_prfree = free;
 	}
 	return 0;
 }

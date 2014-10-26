@@ -734,9 +734,9 @@ eval_fs_opts(am_opts *fo, char *opts, char *g_opts, char *path,
 	/*
 	 * Clear out the option table
 	 */
-	bzero((void *)&fs_static, sizeof(fs_static));
-	bzero((void *)vars, sizeof(vars));
-	bzero((void *)fo, sizeof(*fo));
+	bzero(&fs_static, sizeof(fs_static));
+	bzero(vars, sizeof(vars));
+	bzero(fo, sizeof(*fo));
 
 	/*
 	 * Set key, map & path before expansion

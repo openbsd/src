@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ops.c,v 1.9 2014/10/26 02:43:50 guenther Exp $	*/
+/*	$OpenBSD: ufs_ops.c,v 1.10 2014/10/26 03:28:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -80,7 +80,7 @@ mount_ufs(char *dir, char *fs_name, char *opts)
 	 */
 	const char *type = MOUNT_FFS;
 
-	bzero((void *)&ufs_args, sizeof(ufs_args));	/* Paranoid */
+	bzero(&ufs_args, sizeof(ufs_args));	/* Paranoid */
 
 	/*
 	 * Fill in the mount structure

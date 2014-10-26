@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.25 2014/10/26 03:08:21 guenther Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.26 2014/10/26 03:28:41 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -146,7 +146,8 @@ got_nfs_fh(void *pkt, int len, struct sockaddr_in *sa,
 	fh_cache *fp = find_nfs_fhandle_cache(idv, done);
 	if (fp) {
 		fp->fh_handle.fhs_vers = MOUNTVERS;
-		fp->fh_error = pickup_rpc_reply(pkt, len, (void *)&fp->fh_handle, xdr_fhstatus);
+		fp->fh_error = pickup_rpc_reply(pkt, len, &fp->fh_handle,
+		    xdr_fhstatus);
 		if (!fp->fh_error) {
 #ifdef DEBUG
 			dlog("got filehandle for %s:%s", fp->fh_fs->fs_host, fp->fh_path);
@@ -214,7 +215,7 @@ prime_nfs_fhandle_cache(char *path, fserver *fs, fhstatus *fhbuf, void *wchan)
 				error = fp->fh_error = unx_error(fp->fh_handle.fhs_stat);
 				if (error == 0) {
 					if (fhbuf)
-						bcopy((void *)&fp->fh_handle, (void *)fhbuf,
+						bcopy(&fp->fh_handle, fhbuf,
 							sizeof(fp->fh_handle));
 					if (fp->fh_cid)
 						untimeout(fp->fh_cid);
@@ -278,7 +279,7 @@ prime_nfs_fhandle_cache(char *path, fserver *fs, fhstatus *fhbuf, void *wchan)
 		free(fp->fh_path);
 	} else {
 		fp = ALLOC(fh_cache);
-		bzero((void *)fp, sizeof(*fp));
+		bzero(fp, sizeof(*fp));
 		ins_que(&fp->fh_q, &fh_head);
 	}
 	if (!reuse_id)
@@ -354,7 +355,7 @@ call_mountd(fh_cache *fp, u_long proc, fwd_fun f, void *wchan)
 
 	rpc_msg_init(&mnt_msg, MOUNTPROG, MOUNTVERS, (unsigned long) 0);
 	len = make_rpc_packet(iobuf, sizeof(iobuf), proc,
-			&mnt_msg, (void *)&fp->fh_path, xdr_nfspath,  nfs_auth);
+			&mnt_msg, &fp->fh_path, xdr_nfspath,  nfs_auth);
 
 	/*
 	 * XXX EVIL!  We cast fh_id to a pointer, then back to an int
@@ -362,7 +363,8 @@ call_mountd(fh_cache *fp, u_long proc, fwd_fun f, void *wchan)
 	 */
 	if (len > 0) {
 		error = fwd_packet(MK_RPC_XID(RPC_XID_MOUNTD, fp->fh_id),
-			(void *)iobuf, len, &fp->fh_sin, &fp->fh_sin, (void *)((long)fp->fh_id), f);
+			iobuf, len, &fp->fh_sin, &fp->fh_sin,
+			(void *)((long)fp->fh_id), f);
 	} else {
 		error = -len;
 	}
@@ -462,7 +464,7 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 
 	const char *type = MOUNT_NFS;
 
-	bzero((void *)&nfs_args, sizeof(nfs_args));	/* Paranoid */
+	bzero(&nfs_args, sizeof(nfs_args));	/* Paranoid */
 
 	/*
 	 * Extract host name to give to kernel
@@ -477,7 +479,7 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 	else
 		xopts = strdup(opts);
 
-	bzero((void *)&nfs_args, sizeof(nfs_args));
+	bzero(&nfs_args, sizeof(nfs_args));
 
 	mnt.mnt_dir = dir;
 	mnt.mnt_fsname = fs_name;
@@ -625,7 +627,7 @@ mount_nfs(char *dir, char *fs_name, char *opts, mntfs *mf)
 #ifdef DEBUG
 	dlog("locating fhandle for %s", fs_name);
 #endif /* DEBUG */
-	error = prime_nfs_fhandle_cache(colon+1, mf->mf_server, &fhs, (void *)0);
+	error = prime_nfs_fhandle_cache(colon+1, mf->mf_server, &fhs, NULL);
 
 	if (error)
 		return error;

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsx_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfsx_ops.c,v 1.8 2014/10/26 03:08:21 guenther Exp $
+ *	$Id: nfsx_ops.c,v 1.9 2014/10/26 03:28:41 guenther Exp $
  */
 
 #include "am.h"
@@ -187,7 +187,7 @@ nfsx_init(mntfs *mf)
 			;
 
 		nx = ALLOC(nfsx);
-		mf->mf_private = (void *)nx;
+		mf->mf_private = nx;
 		mf->mf_prfree = nfsx_prfree;
 
 		nx->nx_c = i - 1;	/* i-1 because we don't want the prefix */
@@ -259,7 +259,7 @@ errexit:
 			glob_error = -1;
 			if (!asked_for_wakeup) {
 				asked_for_wakeup = 1;
-				sched_task(wakeup_task, (void *)mf, (void *)m);
+				sched_task(wakeup_task, mf, m);
 			}
 		}
 	}
@@ -280,7 +280,7 @@ nfsx_cont(int rc, int term, void *closure)
 	/*
 	 * Wakeup anything waiting for this mount
 	 */
-	wakeup((void *)n->n_mnt);
+	wakeup(n->n_mnt);
 
 	if (rc || term) {
 		if (term) {
@@ -313,7 +313,7 @@ nfsx_cont(int rc, int term, void *closure)
 	 * Do the remaining bits
 	 */
 	if (nfsx_fmount(mf) >= 0) {
-		wakeup((void *)mf);
+		wakeup(mf);
 		mf->mf_flags &= ~MFF_MOUNTING;
 		mf_mounted(mf);
 	}
@@ -372,7 +372,8 @@ nfsx_remount(mntfs *mf, int fg)
 					dlog("backgrounding mount of \"%s\"", m->mf_info);
 #endif
 					nx->nx_try = n;
-					run_task(try_nfsx_mount, (void *)m, nfsx_cont, (void *)mf);
+					run_task(try_nfsx_mount, m,
+					    nfsx_cont, mf);
 					n->n_error = -1;
 					return -1;
 				} else {

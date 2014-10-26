@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.14 2014/10/26 03:08:21 guenther Exp $	*/
+/*	$OpenBSD: map.c,v 1.15 2014/10/26 03:28:41 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -90,15 +90,6 @@ static struct fattr gen_fattr = {
 static int
 exported_ap_realloc_map(int nsize)
 {
-#ifdef notdef
-	/*
-	 * If a second realloc occasionally causes Amd to die
-	 * in then include this check.
-	 */
-	if (exported_ap_size != 0)	/* XXX */
-		return 0;
-#endif
-
 	/*
 	 * this shouldn't happen, but...
 	 */
@@ -108,7 +99,7 @@ exported_ap_realloc_map(int nsize)
 	exported_ap = xreallocarray(exported_ap, nsize, sizeof *exported_ap);
 
 	if (nsize > exported_ap_size)
-		bzero((char *) (exported_ap+exported_ap_size),
+		bzero(exported_ap+exported_ap_size,
 			(nsize - exported_ap_size) * sizeof(am_node*));
 	exported_ap_size = nsize;
 
@@ -142,7 +133,7 @@ am_node *exported_ap_alloc(void)
 	 */
 	mpp = exported_ap + first_free_map;
 	mp = *mpp = ALLOC(am_node);
-	bzero((char *) mp, sizeof(*mp));
+	bzero(mp, sizeof(*mp));
 
 	mp->am_mapno = first_free_map++;
 
@@ -925,7 +916,7 @@ free_map_if_success(int rc, int term, void *closure)
 	/*
 	 * Wakeup anything waiting for this mount
 	 */
-	wakeup((void *)mf);
+	wakeup(mf);
 }
 
 static int
@@ -960,8 +951,8 @@ unmount_mp(am_node *mp)
 			 * Note that we are unmounting this node
 			 */
 			mf->mf_flags |= MFF_UNMOUNTING;
-			run_task(unmount_node_wrap, (void *)mp,
-				 free_map_if_success, (void *)mp);
+			run_task(unmount_node_wrap, mp,
+				 free_map_if_success, mp);
 			was_backgrounded = 1;
 #ifdef DEBUG
 			dlog("unmount attempt backgrounded");
@@ -973,7 +964,7 @@ unmount_mp(am_node *mp)
 		dlog("Trying unmount in foreground");
 #endif
 		mf->mf_flags |= MFF_UNMOUNTING;
-		free_map_if_success(unmount_node(mp), 0, (void *)mp);
+		free_map_if_success(unmount_node(mp), 0, mp);
 #ifdef DEBUG
 		dlog("unmount attempt done");
 #endif /* DEBUG */

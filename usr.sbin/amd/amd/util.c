@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
- *	$Id: util.c,v 1.14 2014/10/26 01:16:48 guenther Exp $
+ *	$Id: util.c,v 1.15 2014/10/26 03:28:41 guenther Exp $
  */
 
 /*
@@ -286,7 +286,7 @@ bind_resv_port(int so, u_short *pp)
 	struct sockaddr_in sin;
 	int rc;
 
-	bzero((void *)&sin, sizeof(sin));
+	bzero(&sin, sizeof(sin));
 	sin.sin_family = AF_INET;
 
 	rc = bindresvport(so, &sin);

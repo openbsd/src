@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapc.c,v 1.21 2014/10/26 03:08:21 guenther Exp $	*/
+/*	$OpenBSD: mapc.c,v 1.22 2014/10/26 03:28:41 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -431,7 +431,7 @@ mapc_create(char *map, char *opt)
 	m->modify = modify;
 	m->search = alloc >= MAPC_ALL ? error_search : mt->search;
 	m->mtime = mt->mtime;
-	bzero((void *)m->kvhash, sizeof(m->kvhash));
+	bzero(m->kvhash, sizeof(m->kvhash));
 	m->map_name = strdup(map);
 	m->refc = 1;
 	m->wildcard = 0;
@@ -470,7 +470,7 @@ mapc_clear(mnt_map *m)
 	/*
 	 * Zero the hash slots
 	 */
-	bzero((void *)m->kvhash, sizeof(m->kvhash));
+	bzero(m->kvhash, sizeof(m->kvhash));
 	/*
 	 * Free the wildcard if it exists
 	 */
