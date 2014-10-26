@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapc.c,v 1.17 2014/10/20 06:55:59 guenther Exp $	*/
+/*	$OpenBSD: mapc.c,v 1.18 2014/10/26 02:43:50 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -779,14 +779,12 @@ error_init(char *map, time_t *tp)
 	return 0;
 }
 
-/*ARGSUSED*/
 static int
 error_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 {
 	return ENOENT;
 }
 
-/*ARGSUSED*/
 static int
 error_reload(mnt_map *m, char *map, add_fn *fn)
 {

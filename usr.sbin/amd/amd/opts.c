@@ -312,7 +312,6 @@ eval_opts(char *opts, char *mapkey)
 /*
  * Free an option
  */
-/*ARGSUSED*/
 static void
 free_op(opt_apply *p, int b)
 {

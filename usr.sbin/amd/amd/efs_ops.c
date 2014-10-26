@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)efs_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: efs_ops.c,v 1.3 2003/06/02 23:36:51 millert Exp $
+ *	$Id: efs_ops.c,v 1.4 2014/10/26 02:43:50 guenther Exp $
  */
 
 #include "am.h"
@@ -56,14 +56,12 @@ efs_match(am_opts *fo)
 	return strdup("(error-hook)");
 }
 
-/*ARGSUSED*/
 static int
 efs_fmount(mntfs *mf)
 {
 	return ENOENT;
 }
 
-/*ARGSUSED*/
 static int
 efs_fumount(mntfs *mf)
 {
@@ -79,7 +77,6 @@ efs_fumount(mntfs *mf)
  * Should never get here in the automounter.
  * If we do then just give an error.
  */
-/*ARGSUSED*/
 am_node *
 efs_lookuppn(am_node *mp, char *fname, int *error_return, int op)
 {
@@ -92,7 +89,6 @@ efs_lookuppn(am_node *mp, char *fname, int *error_return, int op)
  * Should never get here in the automounter.
  * If we do then just give an error.
  */
-/*ARGSUSED*/
 int
 efs_readdir(am_node *mp, nfscookie cookie, dirlist *dp, entry *ep,
     int count)

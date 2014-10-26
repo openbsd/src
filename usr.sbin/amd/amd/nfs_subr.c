@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_subr.c,v 1.6 2014/10/20 02:33:42 guenther Exp $
+ *	$Id: nfs_subr.c,v 1.7 2014/10/26 02:43:50 guenther Exp $
  */
 
 #include "am.h"
@@ -78,7 +78,6 @@ do_readlink(am_node *mp, int *error_return, struct attrstat **attrpp)
 	return ln;
 }
 
-/*ARGSUSED*/
 void *
 nfsproc_null_2(void *argp, struct svc_req *rqstp)
 {
@@ -88,7 +87,6 @@ nfsproc_null_2(void *argp, struct svc_req *rqstp)
 }
 
 
-/*ARGSUSED*/
 struct attrstat *
 nfsproc_getattr_2(struct nfs_fh *argp, struct svc_req *rqstp)
 {
@@ -131,7 +129,6 @@ getattr_retry:
 }
 
 
-/*ARGSUSED*/
 struct attrstat *
 nfsproc_setattr_2(struct sattrargs *argp, struct svc_req *rqstp)
 {
@@ -146,7 +143,6 @@ nfsproc_setattr_2(struct sattrargs *argp, struct svc_req *rqstp)
 }
 
 
-/*ARGSUSED*/
 void *
 nfsproc_root_2(void *argp, struct svc_req *rqstp)
 {
@@ -156,7 +152,6 @@ nfsproc_root_2(void *argp, struct svc_req *rqstp)
 }
 
 
-/*ARGSUSED*/
 struct diropres *
 nfsproc_lookup_2(struct diropargs *argp, struct svc_req *rqstp)
 {
@@ -204,7 +199,6 @@ nfsproc_lookup_2(struct diropargs *argp, struct svc_req *rqstp)
 }
 
 
-/*ARGSUSED*/
 struct readlinkres *
 nfsproc_readlink_2(struct nfs_fh *argp, struct svc_req *rqstp)
 {
@@ -241,7 +235,6 @@ readlink_retry:
 }
 
 
-/*ARGSUSED*/
 struct readres *
 nfsproc_read_2(struct readargs *argp, struct svc_req *rqstp)
 {
@@ -255,7 +248,6 @@ nfsproc_read_2(struct readargs *argp, struct svc_req *rqstp)
 }
 
 
-/*ARGSUSED*/
 void *
 nfsproc_writecache_2(void *argp, struct svc_req *rqstp)
 {
@@ -265,7 +257,6 @@ nfsproc_writecache_2(void *argp, struct svc_req *rqstp)
 }
 
 
-/*ARGSUSED*/
 struct attrstat *
 nfsproc_write_2(writeargs *argp, struct svc_req *rqstp)
 {
@@ -280,7 +271,6 @@ nfsproc_write_2(writeargs *argp, struct svc_req *rqstp)
 }
 
 
-/*ARGSUSED*/
 struct diropres *
 nfsproc_create_2(createargs *argp, struct svc_req *rqstp)
 {
@@ -295,7 +285,6 @@ nfsproc_create_2(createargs *argp, struct svc_req *rqstp)
 }
 
 
-/*ARGSUSED*/
 static nfsstat *
 unlink_or_rmdir(struct diropargs *argp, struct svc_req *rqstp,
     int unlinkp)
@@ -343,14 +332,12 @@ out:
 }
 
 
-/*ARGSUSED*/
 nfsstat *
 nfsproc_remove_2(struct diropargs *argp, struct svc_req *rqstp)
 {
 	return unlink_or_rmdir(argp, rqstp, TRUE);
 }
 
-/*ARGSUSED*/
 nfsstat *
 nfsproc_rename_2(renameargs *argp, struct svc_req *rqstp)
 {
@@ -372,7 +359,6 @@ nfsproc_rename_2(renameargs *argp, struct svc_req *rqstp)
 }
 
 
-/*ARGSUSED*/
 nfsstat *
 nfsproc_link_2(linkargs *argp, struct svc_req *rqstp)
 {
@@ -386,7 +372,6 @@ nfsproc_link_2(linkargs *argp, struct svc_req *rqstp)
 }
 
 
-/*ARGSUSED*/
 nfsstat *
 nfsproc_symlink_2(symlinkargs *argp, struct svc_req *rqstp)
 {
@@ -400,7 +385,6 @@ nfsproc_symlink_2(symlinkargs *argp, struct svc_req *rqstp)
 }
 
 
-/*ARGSUSED*/
 struct diropres *
 nfsproc_mkdir_2(createargs *argp, struct svc_req *rqstp)
 {
@@ -414,7 +398,6 @@ nfsproc_mkdir_2(createargs *argp, struct svc_req *rqstp)
 }
 
 
-/*ARGSUSED*/
 nfsstat *
 nfsproc_rmdir_2(struct diropargs *argp, struct svc_req *rqstp)
 {
@@ -422,7 +405,6 @@ nfsproc_rmdir_2(struct diropargs *argp, struct svc_req *rqstp)
 }
 
 
-/*ARGSUSED*/
 struct readdirres *
 nfsproc_readdir_2(readdirargs *argp, struct svc_req *rqstp)
 {
@@ -454,7 +436,6 @@ nfsproc_readdir_2(readdirargs *argp, struct svc_req *rqstp)
 	return &res;
 }
 
-/*ARGSUSED*/
 struct statfsres *
 nfsproc_statfs_2(struct nfs_fh *argp, struct svc_req *rqstp)
 {

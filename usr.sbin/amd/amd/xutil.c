@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
- *	$Id: xutil.c,v 1.15 2014/10/26 02:32:51 guenther Exp $
+ *	$Id: xutil.c,v 1.16 2014/10/26 02:43:50 guenther Exp $
  */
 
 #include "config.h"
@@ -223,7 +223,6 @@ extern char **gargv;
 		sev);
 }
 
-/*VARARGS1*/
 void
 plog(int lvl, const char *fmt, ...)
 {

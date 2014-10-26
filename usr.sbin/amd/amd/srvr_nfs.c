@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)srvr_nfs.c	8.1 (Berkeley) 6/6/93
- *	$Id: srvr_nfs.c,v 1.7 2014/10/20 02:33:42 guenther Exp $
+ *	$Id: srvr_nfs.c,v 1.8 2014/10/26 02:43:50 guenther Exp $
  */
 
 /*
@@ -140,7 +140,6 @@ start_ping(void)
 /*
  * Called when a portmap reply arrives
  */
-/*ARGSUSED*/
 static void
 got_portmap(void *pkt, int len, struct sockaddr_in *sa,
     struct sockaddr_in *ia, void *idv, int done)
@@ -253,7 +252,6 @@ recompute_portmap(fserver *fs)
  * The value of id was taken from the nfs_private
  * structure when the ping was transmitted.
  */
-/*ARGSUSED*/
 static void
 nfs_pinged(void *pkt, int len, struct sockaddr_in *sp,
     struct sockaddr_in *tsp, void *idv, int done)

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_subr.c,v 1.13 2013/12/03 02:14:57 deraadt Exp $
+ *	$Id: amq_subr.c,v 1.14 2014/10/26 02:43:50 guenther Exp $
  */
 
 /*
@@ -43,7 +43,6 @@
 #include "amq.h"
 #include <ctype.h>
 
-/*ARGSUSED*/
 void *
 amqproc_null_1(void *argp, struct svc_req *rqstp)
 {
@@ -55,7 +54,6 @@ amqproc_null_1(void *argp, struct svc_req *rqstp)
 /*
  * Return a sub-tree of mounts
  */
-/*ARGSUSED*/
 amq_mount_tree_p *
 amqproc_mnttree_1(void *argp, struct svc_req *rqstp)
 {
@@ -68,7 +66,6 @@ amqproc_mnttree_1(void *argp, struct svc_req *rqstp)
 /*
  * Unmount a single node
  */
-/*ARGSUSED*/
 void *
 amqproc_umnt_1(void *argp, struct svc_req *rqstp)
 {
@@ -84,7 +81,6 @@ amqproc_umnt_1(void *argp, struct svc_req *rqstp)
 /*
  * Return global statistics
  */
-/*ARGSUSED*/
 amq_mount_stats *
 amqproc_stats_1(void *argp, struct svc_req *rqstp)
 {
@@ -94,7 +90,6 @@ amqproc_stats_1(void *argp, struct svc_req *rqstp)
 /*
  * Return the entire tree of mount nodes
  */
-/*ARGSUSED*/
 amq_mount_tree_list *
 amqproc_export_1(void *argp, struct svc_req *rqstp)
 {

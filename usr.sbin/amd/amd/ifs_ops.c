@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ifs_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: ifs_ops.c,v 1.4 2007/11/26 09:28:34 martynas Exp $
+ *	$Id: ifs_ops.c,v 1.5 2014/10/26 02:43:50 guenther Exp $
  */
 
 #include "am.h"
@@ -51,7 +51,6 @@ static char not_a_filesystem[] = "Attempting to inherit not-a-filesystem";
 /*
  * This should never be called.
  */
-/*ARGSUSED*/
 static char *
 ifs_match(am_opts *fo)
 {
@@ -150,7 +149,6 @@ ifs_fmount(mntfs *mf)
 	return ifs_inherit(mf) ? 0 : EINVAL;
 }
 
-/*ARGSUSED*/
 static int
 ifs_fumount(mntfs *mf)
 {

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfs_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: sfs_ops.c,v 1.3 2003/06/02 23:36:51 millert Exp $
+ *	$Id: sfs_ops.c,v 1.4 2014/10/26 02:43:50 guenther Exp $
  */
 
 #include "am.h"
@@ -100,7 +100,6 @@ sfs_match(am_opts *fo)
 #endif
 
 #ifdef HAS_SFSX
-/*ARGUSED*/
 static int
 sfsx_mount(am_node *mp)
 {
@@ -128,7 +127,6 @@ sfsx_mount(am_node *mp)
 #endif
 
 #ifdef HAS_SFS
-/*ARGUSED*/
 static int
 sfs_fmount(mntfs *mf)
 {
@@ -141,7 +139,6 @@ sfs_fmount(mntfs *mf)
 #endif
 
 #ifdef NEED_SFS_UMOUNT
-/*ARGUSED*/
 static int
 sfs_fumount(mntfs *mf)
 {

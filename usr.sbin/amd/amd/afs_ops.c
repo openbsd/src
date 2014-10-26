@@ -1,4 +1,4 @@
-/*	$OpenBSD: afs_ops.c,v 1.15 2014/10/26 01:16:48 guenther Exp $	*/
+/*	$OpenBSD: afs_ops.c,v 1.16 2014/10/26 02:43:50 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -636,7 +636,6 @@ afs_cont(int rc, int term, void *closure)
 /*
  * Retry a mount
  */
-/*ARGSUSED*/
 static void
 afs_retry(int rc, int term, void *closure)
 {

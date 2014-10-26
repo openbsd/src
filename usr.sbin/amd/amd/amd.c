@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.20 2014/10/20 06:55:59 guenther Exp $
+ *	$Id: amd.c,v 1.21 2014/10/26 02:43:50 guenther Exp $
  */
 
 /*
@@ -115,7 +115,6 @@ sigterm(int sig)
  * Hook for cache reload.
  * When a SIGHUP arrives it schedules a call to mapc_reload
  */
-/*ARGSUSED*/
 static void
 sighup(int sig)
 {
@@ -131,7 +130,6 @@ sighup(int sig)
 		do_mapc_reload = 0;
 }
 
-/*ARGSUSED*/
 static void
 parent_exit(int sig)
 {
