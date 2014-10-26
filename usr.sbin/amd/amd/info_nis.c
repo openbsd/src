@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_nis.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_nis.c,v 1.11 2014/10/20 02:33:42 guenther Exp $
+ *	$Id: info_nis.c,v 1.12 2014/10/26 03:03:34 guenther Exp $
  */
 
 /*
@@ -86,7 +86,7 @@ determine_nis_domain(void)
 struct nis_callback_data {
 	mnt_map *ncd_m;
 	char *ncd_map;
-	void (*ncd_fn)();
+	void (*ncd_fn)(mnt_map *, char *, char *);
 };
 
 /*
@@ -132,7 +132,7 @@ callback(int status, char *key, int kl, char *val,
 }
 
 int
-nis_reload(mnt_map *m, char *map, void (*fn)())
+nis_reload(mnt_map *m, char *map, void (*fn)(mnt_map *, char *, char *))
 {
 	struct ypall_callback cbinfo;
 	int error;

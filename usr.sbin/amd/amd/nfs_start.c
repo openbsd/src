@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.17 2014/10/20 02:33:42 guenther Exp $
+ *	$Id: nfs_start.c,v 1.18 2014/10/26 03:03:34 guenther Exp $
  */
 
 #include "am.h"
@@ -52,9 +52,6 @@ extern int select_intr_valid;
 #define	svcudp_create svcudp2_create
 extern SVCXPRT *svcudp2_create(int);
 #endif /* HAS_TFS */
-
-extern void nfs_program_2();
-extern void amq_program_1();
 
 unsigned short nfs_port;
 SVCXPRT *nfsxprt, *lnfsxprt;
@@ -154,7 +151,7 @@ do_select(sigset_t *mask, sigset_t *omask, int fds, fd_set *fdp,
  * the RPC input queue.
  */
 static int
-rpc_pending_now()
+rpc_pending_now(void)
 {
 	struct timeval tvv;
 	int nsel;

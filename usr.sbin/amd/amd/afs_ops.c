@@ -1,4 +1,4 @@
-/*	$OpenBSD: afs_ops.c,v 1.16 2014/10/26 02:43:50 guenther Exp $	*/
+/*	$OpenBSD: afs_ops.c,v 1.17 2014/10/26 03:03:34 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -102,7 +102,6 @@ mount_toplvl(char *dir, char *opts)
 	struct sockaddr_in sin;
 	unsigned short port;
 	int flags;
-	extern nfs_fh *root_fh();
 	nfs_fh *fhp;
 	char fs_hostname[MAXHOSTNAMELEN+MAXPATHLEN+1];
 

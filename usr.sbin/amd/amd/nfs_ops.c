@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.23 2014/10/26 01:22:34 guenther Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.24 2014/10/26 03:03:34 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -177,8 +177,10 @@ flush_nfs_fhandle_cache(fserver *fs)
 }
 
 static void
-discard_fh(fh_cache *fp)
+discard_fh(void *arg)
 {
+	fh_cache *fp = arg;
+
 	rem_que(&fp->fh_q);
 #ifdef DEBUG
 	dlog("Discarding filehandle for %s:%s", fp->fh_fs->fs_host, fp->fh_path);
@@ -216,7 +218,8 @@ prime_nfs_fhandle_cache(char *path, fserver *fs, fhstatus *fhbuf, void *wchan)
 							sizeof(fp->fh_handle));
 					if (fp->fh_cid)
 						untimeout(fp->fh_cid);
-					fp->fh_cid = timeout(FH_TTL, discard_fh, (void *)fp);
+					fp->fh_cid = timeout(FH_TTL,
+					    discard_fh, fp);
 				} else if (error == EACCES) {
 					/*
 					 * Now decode the file handle return code.
@@ -282,7 +285,7 @@ prime_nfs_fhandle_cache(char *path, fserver *fs, fhstatus *fhbuf, void *wchan)
 		fp->fh_id = FHID_ALLOC();
 	fp->fh_wchan = wchan;
 	fp->fh_error = -1;
-	fp->fh_cid = timeout(FH_TTL, discard_fh, (void *)fp);
+	fp->fh_cid = timeout(FH_TTL, discard_fh, fp);
 
 	/*
 	 * If the address has changed then don't try to re-use the
@@ -303,7 +306,7 @@ prime_nfs_fhandle_cache(char *path, fserver *fs, fhstatus *fhbuf, void *wchan)
 		 */
 		untimeout(fp->fh_cid);
 		fp->fh_cid = timeout(error < 0 ? 2 * ALLOWED_MOUNT_TIME : FH_TTL_ERROR,
-						discard_fh, (void *)fp);
+						discard_fh, fp);
 		fp->fh_error = error;
 	} else {
 		error = fp->fh_error;
@@ -426,11 +429,12 @@ nfs_init(mntfs *mf)
 		if (colon == 0)
 			return ENOENT;
 
-		error = prime_nfs_fhandle_cache(colon+1, mf->mf_server, &fhs, (void *)mf);
+		error = prime_nfs_fhandle_cache(colon+1, mf->mf_server,
+		    &fhs, mf);
 		if (!error) {
-			mf->mf_private = (void *)ALLOC(fhstatus);
-			mf->mf_prfree = (void (*)()) free;
-			bcopy((void *)&fhs, mf->mf_private, sizeof(fhs));
+			mf->mf_private = ALLOC(fhstatus);
+			mf->mf_prfree = free;
+			bcopy(&fhs, mf->mf_private, sizeof(fhs));
 		}
 		return error;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.7 2014/10/20 02:33:42 guenther Exp $	*/
+/*	$OpenBSD: mount.h,v 1.8 2014/10/26 03:03:34 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -49,22 +49,22 @@ typedef struct fhstatus {
 	fhandle		fhs_fhandle;
 } fhstatus;
 
-bool_t xdr_fhandle();
+bool_t xdr_fhandle(XDR *, fhandle *);
 
 
-bool_t xdr_fhstatus();
+bool_t xdr_fhstatus(XDR *, fhstatus *);
 
 
 typedef char *dirpath;
-bool_t xdr_dirpath();
+bool_t xdr_dirpath(XDR *, dirpath *);
 
 
 typedef char *name;
-bool_t xdr_name();
+bool_t xdr_name(XDR *, name *);
 
 
 typedef struct mountbody *mountlist;
-bool_t xdr_mountlist();
+bool_t xdr_mountlist(XDR *, mountlist *);
 
 
 struct mountbody {
@@ -73,11 +73,11 @@ struct mountbody {
 	mountlist ml_next;
 };
 typedef struct mountbody mountbody;
-bool_t xdr_mountbody();
+bool_t xdr_mountbody(XDR *, mountbody *);
 
 
 typedef struct groupnode *groups;
-bool_t xdr_groups();
+bool_t xdr_groups(XDR *, groups *);
 
 
 struct groupnode {
@@ -85,11 +85,11 @@ struct groupnode {
 	groups gr_next;
 };
 typedef struct groupnode groupnode;
-bool_t xdr_groupnode();
+bool_t xdr_groupnode(XDR *, groupnode *);
 
 
 typedef struct exportnode *exports;
-bool_t xdr_exports();
+bool_t xdr_exports(XDR *, exports *);
 
 
 struct exportnode {
@@ -98,22 +98,22 @@ struct exportnode {
 	exports ex_next;
 };
 typedef struct exportnode exportnode;
-bool_t xdr_exportnode();
+bool_t xdr_exportnode(XDR *, exportnode *);
 
 
 #define MOUNTPROG ((u_long)100005)
 #define MOUNTVERS ((u_long)1)
 #define MOUNTPROC_NULL ((u_long)0)
-extern void *mountproc_null_1();
+extern void *mountproc_null_1(void *, CLIENT *);
 #define MOUNTPROC_MNT ((u_long)1)
-extern fhstatus *mountproc_mnt_1();
+extern fhstatus *mountproc_mnt_1(void *, CLIENT *);
 #define MOUNTPROC_DUMP ((u_long)2)
-extern mountlist *mountproc_dump_1();
+extern mountlist *mountproc_dump_1(void *, CLIENT *);
 #define MOUNTPROC_UMNT ((u_long)3)
-extern void *mountproc_umnt_1();
+extern void *mountproc_umnt_1(void *, CLIENT *);
 #define MOUNTPROC_UMNTALL ((u_long)4)
-extern void *mountproc_umntall_1();
+extern void *mountproc_umntall_1(void *, CLIENT *);
 #define MOUNTPROC_EXPORT ((u_long)5)
-extern exports *mountproc_export_1();
+extern exports *mountproc_export_1(void *, CLIENT *);
 #define MOUNTPROC_EXPORTALL ((u_long)6)
-extern exports *mountproc_exportall_1();
+extern exports *mountproc_exportall_1(void *, CLIENT *);

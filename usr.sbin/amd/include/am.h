@@ -1,4 +1,4 @@
-/*	$OpenBSD: am.h,v 1.15 2014/10/26 02:50:44 guenther Exp $	*/
+/*	$OpenBSD: am.h,v 1.16 2014/10/26 03:03:34 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -209,6 +209,7 @@ struct fhstatus;
  */
 extern void	 am_mounted(am_node *);
 extern void	 am_unmounted(am_node *);
+extern void	 amq_program_1(struct svc_req *, SVCXPRT *);
 extern pid_t	 background(void);
 extern int	 bind_resv_port(int, unsigned short *);
 extern int	 compute_mount_flags(struct mntent *);
@@ -232,7 +233,7 @@ extern void	 flush_mntfs(void);
 extern void	 flush_nfs_fhandle_cache(fserver *);
 extern void	 flush_srvr_nfs_cache(void);
 extern void	 forcibly_timeout_mp(am_node *);
-extern void	 free_mntfs(mntfs *);
+extern void	 free_mntfs(void *);
 extern void	 free_opts(am_opts *);
 extern void	 free_map(am_node *);
 extern void	 free_mntlist(mntlist *);
@@ -258,7 +259,7 @@ extern int	 make_rpc_packet(char *, int, u_long, struct rpc_msg *,
 extern void	 map_flush_srvr(fserver *);
 extern void	 mapc_add_kv(mnt_map *, char *, char *);
 extern mnt_map	*mapc_find(char *, char *);
-extern void	 mapc_free(mnt_map *);
+extern void	 mapc_free(void *);
 extern int	 mapc_keyiter(mnt_map*, void (*)(char *,void *), void *);
 extern int	 mapc_search(mnt_map *, char *, char **);
 extern void	 mapc_reload(void);
@@ -277,6 +278,7 @@ extern mntfs	*new_mntfs(void);
 extern void	 new_ttl(am_node *);
 extern am_node	*next_map(int *);
 extern int	 nfs_srvr_port(fserver *, u_short *, void *);
+extern void	 nfs_program_2(struct svc_req *, SVCXPRT *);
 extern void	 normalize_slash(char *);
 extern void	 ops_showfstypes(FILE *);
 extern int	 pickup_rpc_reply(void *, int, void *, xdrproc_t);
@@ -285,7 +287,9 @@ extern mntfs	*realloc_mntfs(mntfs *, am_ops *, am_opts *, char *,
 		 char *, char *, char *, char *);
 extern void	 rem_que(qelem *);
 extern void	 reschedule_timeout_mp(void);
+extern void	 reschedule_timeouts(time_t, time_t);
 extern void	 restart(void);
+extern nfs_fh	*root_fh(char *);
 extern void	 rmdirs(char *);
 extern am_node	*root_ap(char *, int);
 extern int	 root_keyiter(void (*)(char *,void *), void *);
@@ -303,7 +307,7 @@ extern char	**strsplit(char *, int, int);
 extern int	 switch_option(char *);
 extern int	 switch_to_logfile(char *);
 extern void	 do_task_notify(void);
-extern int	 timeout(unsigned int, void (*fn)(), void *);
+extern int	 timeout(unsigned int, void (*fn)(void *), void *);
 extern void	 umount_exported(void);
 extern int	 umount_fs(char *);
 /*extern int unmount_node(am_node*);
@@ -458,7 +462,7 @@ struct fserver {
 	int		fs_flags;	/* Flags */
 	char		*fs_type;	/* File server type */
 	void 		*fs_private;	/* Private data */
-	void		(*fs_prfree)();	/* Free private data */
+	void		(*fs_prfree)(void *);	/* Free private data */
 };
 #define	FSF_VALID	0x0001		/* Valid information available */
 #define	FSF_DOWN	0x0002		/* This fileserver is thought to be down */
@@ -485,7 +489,7 @@ struct mntfs {
 	int		mf_error;	/* Error code from background mount */
 	int		mf_refc;	/* Number of references to this node */
 	int		mf_cid;		/* Callout id */
-	void		(*mf_prfree)();	/* Free private space */
+	void		(*mf_prfree)(void *);	/* Free private space */
 	void 		*mf_private;	/* Private - per-fs data */
 };
 

@@ -32,15 +32,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_prot_svc.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_prot_svc.c,v 1.3 2003/06/02 23:36:52 millert Exp $
+ *	$Id: nfs_prot_svc.c,v 1.4 2014/10/26 03:03:34 guenther Exp $
  *
  */
 
 #include "am.h"
 
-void nfs_program_2(rqstp, transp)
-struct svc_req *rqstp;
-SVCXPRT *transp;
+void
+nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
 		nfs_fh nfsproc_getattr_2_arg;
@@ -61,115 +60,115 @@ SVCXPRT *transp;
 	} argument;
 	char *result;
 	bool_t (*xdr_argument)(), (*xdr_result)();
-	char *(*local)();
+	char *(*local)(void *, struct svc_req *);
 
 	switch (rqstp->rq_proc) {
 	case NFSPROC_NULL:
 		xdr_argument = xdr_void;
 		xdr_result = xdr_void;
-		local = (char *(*)()) nfsproc_null_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_null_2;
 		break;
 
 	case NFSPROC_GETATTR:
 		xdr_argument = xdr_nfs_fh;
 		xdr_result = xdr_attrstat;
-		local = (char *(*)()) nfsproc_getattr_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_getattr_2;
 		break;
 
 	case NFSPROC_SETATTR:
 		xdr_argument = xdr_sattrargs;
 		xdr_result = xdr_attrstat;
-		local = (char *(*)()) nfsproc_setattr_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_setattr_2;
 		break;
 
 	case NFSPROC_ROOT:
 		xdr_argument = xdr_void;
 		xdr_result = xdr_void;
-		local = (char *(*)()) nfsproc_root_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_root_2;
 		break;
 
 	case NFSPROC_LOOKUP:
 		xdr_argument = xdr_diropargs;
 		xdr_result = xdr_diropres;
-		local = (char *(*)()) nfsproc_lookup_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_lookup_2;
 		break;
 
 	case NFSPROC_READLINK:
 		xdr_argument = xdr_nfs_fh;
 		xdr_result = xdr_readlinkres;
-		local = (char *(*)()) nfsproc_readlink_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_readlink_2;
 		break;
 
 	case NFSPROC_READ:
 		xdr_argument = xdr_readargs;
 		xdr_result = xdr_readres;
-		local = (char *(*)()) nfsproc_read_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_read_2;
 		break;
 
 	case NFSPROC_WRITECACHE:
 		xdr_argument = xdr_void;
 		xdr_result = xdr_void;
-		local = (char *(*)()) nfsproc_writecache_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_writecache_2;
 		break;
 
 	case NFSPROC_WRITE:
 		xdr_argument = xdr_writeargs;
 		xdr_result = xdr_attrstat;
-		local = (char *(*)()) nfsproc_write_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_write_2;
 		break;
 
 	case NFSPROC_CREATE:
 		xdr_argument = xdr_createargs;
 		xdr_result = xdr_diropres;
-		local = (char *(*)()) nfsproc_create_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_create_2;
 		break;
 
 	case NFSPROC_REMOVE:
 		xdr_argument = xdr_diropargs;
 		xdr_result = xdr_nfsstat;
-		local = (char *(*)()) nfsproc_remove_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_remove_2;
 		break;
 
 	case NFSPROC_RENAME:
 		xdr_argument = xdr_renameargs;
 		xdr_result = xdr_nfsstat;
-		local = (char *(*)()) nfsproc_rename_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_rename_2;
 		break;
 
 	case NFSPROC_LINK:
 		xdr_argument = xdr_linkargs;
 		xdr_result = xdr_nfsstat;
-		local = (char *(*)()) nfsproc_link_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_link_2;
 		break;
 
 	case NFSPROC_SYMLINK:
 		xdr_argument = xdr_symlinkargs;
 		xdr_result = xdr_nfsstat;
-		local = (char *(*)()) nfsproc_symlink_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_symlink_2;
 		break;
 
 	case NFSPROC_MKDIR:
 		xdr_argument = xdr_createargs;
 		xdr_result = xdr_diropres;
-		local = (char *(*)()) nfsproc_mkdir_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_mkdir_2;
 		break;
 
 	case NFSPROC_RMDIR:
 		xdr_argument = xdr_diropargs;
 		xdr_result = xdr_nfsstat;
-		local = (char *(*)()) nfsproc_rmdir_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_rmdir_2;
 		break;
 
 	case NFSPROC_READDIR:
 		xdr_argument = xdr_readdirargs;
 		xdr_result = xdr_readdirres;
-		local = (char *(*)()) nfsproc_readdir_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_readdir_2;
 		break;
 
 	case NFSPROC_STATFS:
 		xdr_argument = xdr_nfs_fh;
 		xdr_result = xdr_statfsres;
-		local = (char *(*)()) nfsproc_statfs_2;
+		local = (char *(*)(void *, struct svc_req *)) nfsproc_statfs_2;
 		break;
 
 	default:

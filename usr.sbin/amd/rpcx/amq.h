@@ -32,18 +32,18 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.h	8.1 (Berkeley) 6/6/93
- *	$Id: amq.h,v 1.4 2003/06/02 23:36:52 millert Exp $
+ *	$Id: amq.h,v 1.5 2014/10/26 03:03:34 guenther Exp $
  *
  */
 
 #define AMQ_STRLEN 1024
 
 typedef char *amq_string;
-bool_t xdr_amq_string();
+bool_t xdr_amq_string(XDR *, amq_string *);
 
 
 typedef int *time_type;
-bool_t xdr_time_type();
+bool_t xdr_time_type(XDR *, time_type *);
 
 
 struct amq_mount_tree {
@@ -62,11 +62,11 @@ struct amq_mount_tree {
 	struct amq_mount_tree *mt_child;
 };
 typedef struct amq_mount_tree amq_mount_tree;
-bool_t xdr_amq_mount_tree();
+bool_t xdr_amq_mount_tree(XDR *, amq_mount_tree *);
 
 
 typedef amq_mount_tree *amq_mount_tree_p;
-bool_t xdr_amq_mount_tree_p();
+bool_t xdr_amq_mount_tree_p(XDR *, amq_mount_tree_p *);
 
 
 struct amq_mount_info {
@@ -79,21 +79,21 @@ struct amq_mount_info {
 	int mi_up;
 };
 typedef struct amq_mount_info amq_mount_info;
-bool_t xdr_amq_mount_info();
+bool_t xdr_amq_mount_info(XDR *, amq_mount_info *);
 
 
 typedef struct {
 	u_int amq_mount_info_list_len;
 	amq_mount_info *amq_mount_info_list_val;
 } amq_mount_info_list;
-bool_t xdr_amq_mount_info_list();
+bool_t xdr_amq_mount_info_list(XDR *, amq_mount_info_list *);
 
 
 typedef struct {
 	u_int amq_mount_tree_list_len;
 	amq_mount_tree_p *amq_mount_tree_list_val;
 } amq_mount_tree_list;
-bool_t xdr_amq_mount_tree_list();
+bool_t xdr_amq_mount_tree_list(XDR *, amq_mount_tree_list *);
 
 
 struct amq_mount_stats {
@@ -104,7 +104,7 @@ struct amq_mount_stats {
 	int as_uerr;
 };
 typedef struct amq_mount_stats amq_mount_stats;
-bool_t xdr_amq_mount_stats();
+bool_t xdr_amq_mount_stats(XDR *, amq_mount_stats *);
 
 
 enum amq_opt {
@@ -114,7 +114,7 @@ enum amq_opt {
 	AMOPT_FLUSHMAPC = 3
 };
 typedef enum amq_opt amq_opt;
-bool_t xdr_amq_opt();
+bool_t xdr_amq_opt(XDR *, amq_opt *);
 
 
 struct amq_setopt {
@@ -122,27 +122,36 @@ struct amq_setopt {
 	amq_string as_str;
 };
 typedef struct amq_setopt amq_setopt;
-bool_t xdr_amq_setopt();
+bool_t xdr_amq_setopt(XDR *, amq_setopt *);
 
 
 #define AMQ_PROGRAM ((u_long)300019)
 #define AMQ_VERSION ((u_long)1)
 #define AMQPROC_NULL ((u_long)0)
-extern void *amqproc_null_1();
+extern void *amqproc_null_1(void *, CLIENT *);
+extern void *amqproc_null_1_svc(void *, struct svc_req *);
 #define AMQPROC_MNTTREE ((u_long)1)
-extern amq_mount_tree_p *amqproc_mnttree_1();
+extern amq_mount_tree_p *amqproc_mnttree_1(void *, CLIENT *);
+extern amq_mount_tree_p *amqproc_mnttree_1_svc(void *, struct svc_req *);
 #define AMQPROC_UMNT ((u_long)2)
-extern void *amqproc_umnt_1();
+extern void *amqproc_umnt_1(void *, CLIENT *);
+extern void *amqproc_umnt_1_svc(void *, struct svc_req *);
 #define AMQPROC_STATS ((u_long)3)
-extern amq_mount_stats *amqproc_stats_1();
+extern amq_mount_stats *amqproc_stats_1(void *, CLIENT *);
+extern amq_mount_stats *amqproc_stats_1_svc(void *, struct svc_req *);
 #define AMQPROC_EXPORT ((u_long)4)
-extern amq_mount_tree_list *amqproc_export_1();
+extern amq_mount_tree_list *amqproc_export_1(void *, CLIENT *);
+extern amq_mount_tree_list *amqproc_export_1_svc(void *, struct svc_req *);
 #define AMQPROC_SETOPT ((u_long)5)
-extern int *amqproc_setopt_1();
+extern int *amqproc_setopt_1(void *, CLIENT *);
+extern int *amqproc_setopt_1_svc(void *, struct svc_req *);
 #define AMQPROC_GETMNTFS ((u_long)6)
-extern amq_mount_info_list *amqproc_getmntfs_1();
+extern amq_mount_info_list *amqproc_getmntfs_1(void *, CLIENT *);
+extern amq_mount_info_list *amqproc_getmntfs_1_svc(void *, struct svc_req *);
 #define AMQPROC_MOUNT ((u_long)7)
-extern int *amqproc_mount_1();
+extern int *amqproc_mount_1(void *, CLIENT *);
+extern int *amqproc_mount_1_svc(void *, struct svc_req *);
 #define AMQPROC_GETVERS ((u_long)8)
-extern amq_string *amqproc_getvers_1();
+extern amq_string *amqproc_getvers_1(void *, CLIENT *);
+extern amq_string *amqproc_getvers_1_svc(void *, struct svc_req *);
 

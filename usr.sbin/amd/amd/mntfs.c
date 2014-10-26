@@ -167,7 +167,7 @@ find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info,
 				/*
 				 * Remember who we are restarting
 				 */
-				mf2->mf_private = (void *)dup_mntfs(mf);
+				mf2->mf_private = dup_mntfs(mf);
 				mf2->mf_prfree = free_mntfs;
 				return mf2;
 			}
@@ -234,8 +234,10 @@ uninit_mntfs(mntfs *mf, int rmd)
 }
 
 static void
-discard_mntfs(mntfs *mf)
+discard_mntfs(void *arg)
 {
+	mntfs *mf = arg;
+
 	rem_que(&mf->mf_q);
 	/*
 	 * Free memory
@@ -247,7 +249,7 @@ discard_mntfs(mntfs *mf)
 }
 
 void
-flush_mntfs()
+flush_mntfs(void)
 {
 	mntfs *mf;
 
@@ -261,8 +263,10 @@ flush_mntfs()
 }
 
 void
-free_mntfs(mntfs *mf)
+free_mntfs(void *arg)
 {
+	mntfs *mf = arg;
+
 	if (--mf->mf_refc == 0) {
 		if (mf->mf_flags & MFF_MOUNTED) {
 			int quoted;

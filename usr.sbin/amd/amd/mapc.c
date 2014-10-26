@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapc.c,v 1.19 2014/10/26 02:51:47 guenther Exp $	*/
+/*	$OpenBSD: mapc.c,v 1.20 2014/10/26 03:03:34 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -282,7 +282,7 @@ mapc_add_kv(mnt_map *m, char *key, char *val)
 	*h = n;
 }
 
-void
+static void
 mapc_repl_kv(mnt_map *m, char *key, char *val)
 {
 	kv *k;
@@ -508,8 +508,9 @@ mapc_find(char *map, char *opt)
  * Free a map.
  */
 void
-mapc_free(mnt_map *m)
+mapc_free(void *arg)
 {
+	mnt_map *m = arg;
 	/*
 	 * Decrement the reference count.
 	 * If the reference count hits zero

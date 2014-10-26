@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)srvr_nfs.c	8.1 (Berkeley) 6/6/93
- *	$Id: srvr_nfs.c,v 1.8 2014/10/26 02:43:50 guenther Exp $
+ *	$Id: srvr_nfs.c,v 1.9 2014/10/26 03:03:34 guenther Exp $
  */
 
 /*
@@ -226,7 +226,7 @@ call_portmap(fserver *fs, AUTH *auth, unsigned long prog,
 	return error;
 }
 
-static void nfs_keepalive(fserver *);
+static void nfs_keepalive(void *);
 
 static void
 recompute_portmap(fserver *fs)
@@ -313,7 +313,7 @@ nfs_pinged(void *pkt, int len, struct sockaddr_in *sp,
 			 * Adjust ping interval
 			 */
 			untimeout(fs->fs_cid);
-			fs->fs_cid = timeout(fs->fs_pinger, nfs_keepalive, (void *)fs);
+			fs->fs_cid = timeout(fs->fs_pinger, nfs_keepalive, fs);
 
 			/*
 			 * Update ttl for this server
@@ -354,8 +354,10 @@ nfs_pinged(void *pkt, int len, struct sockaddr_in *sp,
  * Called when no ping-reply received
  */
 static void
-nfs_timed_out(fserver *fs)
+nfs_timed_out(void *arg)
 {
+	fserver *fs = arg;
+
 	nfs_private *np = (nfs_private *) fs->fs_private;
 
 	/*
@@ -425,8 +427,10 @@ nfs_timed_out(fserver *fs)
  * Keep track of whether a server is alive
  */
 static void
-nfs_keepalive(fserver *fs)
+nfs_keepalive(void *arg)
 {
+	fserver *fs = arg;
+
 	int error;
 	nfs_private *np = (nfs_private *) fs->fs_private;
 	int fstimeo = -1;
@@ -500,7 +504,7 @@ nfs_keepalive(fserver *fs)
 	dlog("NFS timeout in %d seconds", fstimeo);
 #endif /* DEBUG */
 
-	fs->fs_cid = timeout(fstimeo, nfs_timed_out, (void *)fs);
+	fs->fs_cid = timeout(fstimeo, nfs_timed_out, fs);
 }
 
 int
@@ -674,8 +678,8 @@ find_nfs_srvr(mntfs *mf)
 	 * MAX_ALLOWED_PINGS of the fast variety have failed.
 	 */
 	np->np_ttl = clocktime() + MAX_ALLOWED_PINGS * FAST_NFS_PING - 1;
-	fs->fs_private = (void *)np;
-	fs->fs_prfree = (void (*)()) free;
+	fs->fs_private = np;
+	fs->fs_prfree = free;
 
 	if (!(fs->fs_flags & FSF_ERROR)) {
 		/*

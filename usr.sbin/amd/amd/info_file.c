@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_file.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_file.c,v 1.8 2014/10/20 02:33:42 guenther Exp $
+ *	$Id: info_file.c,v 1.9 2014/10/26 03:03:34 guenther Exp $
  */
 
 /*
@@ -213,7 +213,7 @@ file_init(char *map, time_t *tp)
 }
 
 int
-file_reload(mnt_map *m, char *map, void (*fn)())
+file_reload(mnt_map *m, char *map, void (*fn)(mnt_map *, char *, char *))
 {
 	FILE *mapf = file_open(map, (time_t *) 0);
 

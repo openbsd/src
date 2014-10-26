@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_prot.h,v 1.5 2014/10/20 02:33:42 guenther Exp $	*/
+/*	$OpenBSD: nfs_prot.h,v 1.6 2014/10/26 03:03:34 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -61,19 +61,19 @@
 
 typedef int nfsstat;
 
-bool_t xdr_nfsstat();
+bool_t xdr_nfsstat(XDR *, nfsstat *);
 
 
 typedef int ftype;
 
-/* static bool_t xdr_ftype(); */
+/* static bool_t xdr_ftype(XDR *, ftype *); */
 
 
 struct nfs_fh {
 	char data[NFS_FHSIZE];
 };
 typedef struct nfs_fh nfs_fh;
-bool_t xdr_nfs_fh();
+bool_t xdr_nfs_fh(XDR *, nfs_fh *);
 
 
 struct nfstime {
@@ -81,7 +81,7 @@ struct nfstime {
 	u_int useconds;
 };
 typedef struct nfstime nfstime;
-/* static bool_t xdr_nfstime(); */
+/* static bool_t xdr_nfstime(XDR *, nfstime *); */
 
 
 struct fattr {
@@ -101,7 +101,7 @@ struct fattr {
 	nfstime ctime;
 };
 typedef struct fattr fattr;
-/* static bool_t xdr_fattr(); */
+/* static bool_t xdr_fattr(XDR *, fattr *); */
 
 
 struct sattr {
@@ -113,15 +113,15 @@ struct sattr {
 	nfstime mtime;
 };
 typedef struct sattr sattr;
-/* static bool_t xdr_sattr(); */
+/* static bool_t xdr_sattr(XDR *, sattr *); */
 
 
 typedef char *filename;
-/* static bool_t xdr_filename(); */
+/* static bool_t xdr_filename(XDR *, filename *); */
 
 
 typedef char *nfspath;
-bool_t xdr_nfspath();
+bool_t xdr_nfspath(XDR *, nfspath *);
 
 
 struct attrstat {
@@ -131,7 +131,7 @@ struct attrstat {
 	} attrstat_u;
 };
 typedef struct attrstat attrstat;
-bool_t xdr_attrstat();
+bool_t xdr_attrstat(XDR *, attrstat *);
 
 
 struct sattrargs {
@@ -139,7 +139,7 @@ struct sattrargs {
 	sattr attributes;
 };
 typedef struct sattrargs sattrargs;
-bool_t xdr_sattrargs();
+bool_t xdr_sattrargs(XDR *, sattrargs *);
 
 
 struct diropargs {
@@ -147,7 +147,7 @@ struct diropargs {
 	filename name;
 };
 typedef struct diropargs diropargs;
-bool_t xdr_diropargs();
+bool_t xdr_diropargs(XDR *, diropargs *);
 
 
 struct diropokres {
@@ -155,7 +155,7 @@ struct diropokres {
 	fattr attributes;
 };
 typedef struct diropokres diropokres;
-bool_t xdr_diropokres();
+bool_t xdr_diropokres(XDR *, diropokres *);
 
 
 struct diropres {
@@ -165,7 +165,7 @@ struct diropres {
 	} diropres_u;
 };
 typedef struct diropres diropres;
-bool_t xdr_diropres();
+bool_t xdr_diropres(XDR *, diropres *);
 
 
 struct readlinkres {
@@ -175,7 +175,7 @@ struct readlinkres {
 	} readlinkres_u;
 };
 typedef struct readlinkres readlinkres;
-bool_t xdr_readlinkres();
+bool_t xdr_readlinkres(XDR *, readlinkres *);
 
 
 struct readargs {
@@ -185,7 +185,7 @@ struct readargs {
 	u_int totalcount;
 };
 typedef struct readargs readargs;
-bool_t xdr_readargs();
+bool_t xdr_readargs(XDR *, readargs *);
 
 
 struct readokres {
@@ -196,7 +196,7 @@ struct readokres {
 	} data;
 };
 typedef struct readokres readokres;
-bool_t xdr_readokres();
+bool_t xdr_readokres(XDR *, readokres *);
 
 
 struct readres {
@@ -206,7 +206,7 @@ struct readres {
 	} readres_u;
 };
 typedef struct readres readres;
-bool_t xdr_readres();
+bool_t xdr_readres(XDR *, readres *);
 
 
 struct writeargs {
@@ -220,7 +220,7 @@ struct writeargs {
 	} data;
 };
 typedef struct writeargs writeargs;
-bool_t xdr_writeargs();
+bool_t xdr_writeargs(XDR *, writeargs *);
 
 
 struct createargs {
@@ -228,7 +228,7 @@ struct createargs {
 	sattr attributes;
 };
 typedef struct createargs createargs;
-bool_t xdr_createargs();
+bool_t xdr_createargs(XDR *, createargs *);
 
 
 struct renameargs {
@@ -236,7 +236,7 @@ struct renameargs {
 	diropargs to;
 };
 typedef struct renameargs renameargs;
-bool_t xdr_renameargs();
+bool_t xdr_renameargs(XDR *, renameargs *);
 
 
 struct linkargs {
@@ -244,7 +244,7 @@ struct linkargs {
 	diropargs to;
 };
 typedef struct linkargs linkargs;
-bool_t xdr_linkargs();
+bool_t xdr_linkargs(XDR *, linkargs *);
 
 
 struct symlinkargs {
@@ -253,11 +253,11 @@ struct symlinkargs {
 	sattr attributes;
 };
 typedef struct symlinkargs symlinkargs;
-bool_t xdr_symlinkargs();
+bool_t xdr_symlinkargs(XDR *, symlinkargs *);
 
 
 typedef char nfscookie[NFS_COOKIESIZE];
-/* static bool_t xdr_nfscookie(); */
+/* static bool_t xdr_nfscookie(XDR *, nfscookie *); */
 
 
 struct readdirargs {
@@ -266,7 +266,7 @@ struct readdirargs {
 	u_int count;
 };
 typedef struct readdirargs readdirargs;
-bool_t xdr_readdirargs();
+bool_t xdr_readdirargs(XDR *, readdirargs *);
 
 
 struct entry {
@@ -276,7 +276,7 @@ struct entry {
 	struct entry *nextentry;
 };
 typedef struct entry entry;
-/* static bool_t xdr_entry(); */
+/* static bool_t xdr_entry(XDR *, entry *); */
 
 
 struct dirlist {
@@ -284,7 +284,7 @@ struct dirlist {
 	bool_t eof;
 };
 typedef struct dirlist dirlist;
-/* static bool_t xdr_dirlist(); */
+/* static bool_t xdr_dirlist(XDR *, dirlist *); */
 
 
 struct readdirres {
@@ -294,7 +294,7 @@ struct readdirres {
 	} readdirres_u;
 };
 typedef struct readdirres readdirres;
-bool_t xdr_readdirres();
+bool_t xdr_readdirres(XDR *, readdirres *);
 
 
 struct statfsokres {
@@ -305,7 +305,7 @@ struct statfsokres {
 	u_int bavail;
 };
 typedef struct statfsokres statfsokres;
-bool_t xdr_statfsokres();
+bool_t xdr_statfsokres(XDR *, statfsokres *);
 
 
 struct statfsres {
@@ -315,7 +315,7 @@ struct statfsres {
 	} statfsres_u;
 };
 typedef struct statfsres statfsres;
-bool_t xdr_statfsres();
+bool_t xdr_statfsres(XDR *, statfsres *);
 
 
 #define NFS_PROGRAM ((u_long)100003)
@@ -359,21 +359,21 @@ bool_t xdr_statfsres();
 #undef NFSPROC_STATFS
 #define NFSPROC_STATFS ((u_long)17)
 
-extern void *nfsproc_null_2();
-extern attrstat *nfsproc_getattr_2();
-extern attrstat *nfsproc_setattr_2();
-extern void *nfsproc_root_2();
-extern diropres *nfsproc_lookup_2();
-extern readlinkres *nfsproc_readlink_2();
-extern readres *nfsproc_read_2();
-extern void *nfsproc_writecache_2();
-extern attrstat *nfsproc_write_2();
-extern diropres *nfsproc_create_2();
-extern nfsstat *nfsproc_remove_2();
-extern nfsstat *nfsproc_rename_2();
-extern nfsstat *nfsproc_link_2();
-extern nfsstat *nfsproc_symlink_2();
-extern diropres *nfsproc_mkdir_2();
-extern nfsstat *nfsproc_rmdir_2();
-extern readdirres *nfsproc_readdir_2();
-extern statfsres *nfsproc_statfs_2();
+extern void *nfsproc_null_2(void *, struct svc_req *);
+extern attrstat *nfsproc_getattr_2(nfs_fh *, struct svc_req *);
+extern attrstat *nfsproc_setattr_2(sattrargs *, struct svc_req *);
+extern void *nfsproc_root_2(void *, struct svc_req *);
+extern diropres *nfsproc_lookup_2(diropargs *, struct svc_req *);
+extern readlinkres *nfsproc_readlink_2(nfs_fh *, struct svc_req *);
+extern readres *nfsproc_read_2(readargs *, struct svc_req *);
+extern void *nfsproc_writecache_2(void *, struct svc_req *);
+extern attrstat *nfsproc_write_2(writeargs *, struct svc_req *);
+extern diropres *nfsproc_create_2(createargs *, struct svc_req *);
+extern nfsstat *nfsproc_remove_2(diropargs *, struct svc_req *);
+extern nfsstat *nfsproc_rename_2(renameargs *, struct svc_req *);
+extern nfsstat *nfsproc_link_2(linkargs *, struct svc_req *);
+extern nfsstat *nfsproc_symlink_2(symlinkargs *, struct svc_req *);
+extern diropres *nfsproc_mkdir_2(createargs *, struct svc_req *);
+extern nfsstat *nfsproc_rmdir_2(diropargs *, struct svc_req *);
+extern readdirres *nfsproc_readdir_2(readdirargs *, struct svc_req *);
+extern statfsres *nfsproc_statfs_2(nfs_fh *, struct svc_req *);

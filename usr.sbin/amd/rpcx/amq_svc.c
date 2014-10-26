@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_svc.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_svc.c,v 1.7 2003/07/18 22:58:56 david Exp $
+ *	$Id: amq_svc.c,v 1.8 2014/10/26 03:03:34 guenther Exp $
  *
  */
 
@@ -74,55 +74,55 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
 	case AMQPROC_NULL:
 		xdr_argument = xdr_void;
 		xdr_result = xdr_void;
-		local = (char *(*)()) amqproc_null_1;
+		local = (char *(*)()) amqproc_null_1_svc;
 		break;
 
 	case AMQPROC_MNTTREE:
 		xdr_argument = xdr_amq_string;
 		xdr_result = xdr_amq_mount_tree_p;
-		local = (char *(*)()) amqproc_mnttree_1;
+		local = (char *(*)()) amqproc_mnttree_1_svc;
 		break;
 
 	case AMQPROC_UMNT:
 		xdr_argument = xdr_amq_string;
 		xdr_result = xdr_void;
-		local = (char *(*)()) amqproc_umnt_1;
+		local = (char *(*)()) amqproc_umnt_1_svc;
 		break;
 
 	case AMQPROC_STATS:
 		xdr_argument = xdr_void;
 		xdr_result = xdr_amq_mount_stats;
-		local = (char *(*)()) amqproc_stats_1;
+		local = (char *(*)()) amqproc_stats_1_svc;
 		break;
 
 	case AMQPROC_EXPORT:
 		xdr_argument = xdr_void;
 		xdr_result = xdr_amq_mount_tree_list;
-		local = (char *(*)()) amqproc_export_1;
+		local = (char *(*)()) amqproc_export_1_svc;
 		break;
 
 	case AMQPROC_SETOPT:
 		xdr_argument = xdr_amq_setopt;
 		xdr_result = xdr_int;
-		local = (char *(*)()) amqproc_setopt_1;
+		local = (char *(*)()) amqproc_setopt_1_svc;
 		break;
 
 	case AMQPROC_GETMNTFS:
 		xdr_argument = xdr_void;
 		xdr_result = xdr_amq_mount_info_qelem;
-		local = (char *(*)()) amqproc_getmntfs_1;
+		local = (char *(*)()) amqproc_getmntfs_1_svc;
 		break;
 
 	case AMQPROC_MOUNT:
 		xdr_argument = xdr_amq_string;
 		xdr_result = xdr_int;
-		local = (char *(*)()) amqproc_mount_1;
+		local = (char *(*)()) amqproc_mount_1_svc;
 		break;
 
 	case AMQPROC_GETVERS:
 		xdr_argument = xdr_void;
 		xdr_result = xdr_amq_string;
-		local = (char *(*)()) amqproc_getvers_1;
+		local = (char *(*)()) amqproc_getvers_1_svc;
 		break;
 
 	default:
