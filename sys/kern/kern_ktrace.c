@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.69 2014/07/13 15:46:21 uebayasi Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.70 2014/10/26 20:34:37 guenther Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -423,7 +423,6 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 		 * an operation which requires a file argument.
 		 */
 		cred = curp->p_ucred;
-		crhold(cred);
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, fname),
 		    curp);
 		if ((error = vn_open(&nd, FREAD|FWRITE|O_NOFOLLOW, 0)) != 0)
@@ -500,8 +499,6 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 done:
 	if (vp != NULL)
 		(void) vn_close(vp, FREAD|FWRITE, cred, curp);
-	if (cred != NULL)
-		crfree(cred);
 	return (error);
 }
 
