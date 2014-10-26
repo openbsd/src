@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.11 2014/10/26 01:16:48 guenther Exp $	*/
+/*	$OpenBSD: map.c,v 1.12 2014/10/26 01:38:02 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -162,7 +162,7 @@ am_node *exported_ap_alloc(void)
 		exported_ap_realloc_map(exported_ap_size - NEXP_AP);
 
 #ifdef DEBUG
-	/*dlog("alloc_exp: last_used_map = %d, first_free_map = %d\n",
+	/*dlog("alloc_exp: last_used_map = %d, first_free_map = %d",
 		last_used_map, first_free_map);*/
 #endif /* DEBUG */
 
@@ -197,7 +197,7 @@ exported_ap_free(am_node *mp)
 		first_free_map = mp->am_mapno;
 
 #ifdef DEBUG
-	/*dlog("free_exp: last_used_map = %d, first_free_map = %d\n",
+	/*dlog("free_exp: last_used_map = %d, first_free_map = %d",
 		last_used_map, first_free_map);*/
 #endif /* DEBUG */
 

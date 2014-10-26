@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.16 2014/10/26 01:16:48 guenther Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.17 2014/10/26 01:38:02 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -130,7 +130,7 @@ do_mount(fhstatus *fhp, char *dir, char *fs_name, char *opts, mntfs *mf)
 	struct stat stb;
 
 #ifdef DEBUG
-	dlog("host: mounting fs %s on %s\n", fs_name, dir);
+	dlog("host: mounting fs %s on %s", fs_name, dir);
 #endif /* DEBUG */
 #ifdef HOST_MKDIRS
 	(void) mkdirs(dir, 0555);
@@ -288,7 +288,7 @@ host_fmount(mntfs *mf)
 		n_export++;
 	}
 #ifdef DEBUG
-	/*dlog("%d exports returned\n", n_export);*/
+	/*dlog("%d exports returned", n_export);*/
 #endif /* DEBUG */
 
 	/*
