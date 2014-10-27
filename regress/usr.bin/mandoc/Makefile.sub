@@ -1,8 +1,9 @@
-# $OpenBSD: Makefile.sub,v 1.2 2014/08/14 00:07:55 schwarze Exp $
+# $OpenBSD: Makefile.sub,v 1.3 2014/10/27 15:05:45 schwarze Exp $
 
-_MAIN_TARGETS = ascii utf8 tman lint html
-_CLEAN_TARGETS = ascii-clean utf8-clean tman-clean lint-clean
-_OUT_TARGETS = groff groff-clean lint-out lint-out-clean obj-clean
+_MAIN_TARGETS =  ascii utf8 html tman lint htmlval
+_CLEAN_TARGETS = ascii-clean utf8-clean html-clean tman-clean lint-clean
+_OUT_TARGETS =   groff groff-clean html-out html-out-clean \
+		 lint-out lint-out-clean obj-clean
 
 ${_MAIN_TARGETS} ${_CLEAN_TARGETS} ${_OUT_TARGETS}: _SUBDIRUSE
 
