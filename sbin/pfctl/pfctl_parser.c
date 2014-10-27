@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.299 2014/10/25 03:18:13 lteo Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.300 2014/10/27 21:51:32 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1243,16 +1243,12 @@ int
 check_netmask(struct node_host *h, sa_family_t af)
 {
 	struct node_host	*n = NULL;
-	struct pf_addr	*m;
+	struct pf_addr		*m;
 
 	for (n = h; n != NULL; n = n->next) {
 		if (h->addr.type == PF_ADDR_TABLE)
 			continue;
 		m = &h->addr.v.a.mask;
-		/* fix up netmask for dynaddr */
-		if (af == AF_INET && h->addr.type == PF_ADDR_DYNIFTL &&
-		    unmask(m, AF_INET6) > 32)
-			set_ipmask(n, 32);
 		/* netmasks > 32 bit are invalid on v4 */
 		if (af == AF_INET &&
 		    (m->addr32[1] || m->addr32[2] || m->addr32[3])) {
@@ -1262,6 +1258,30 @@ check_netmask(struct node_host *h, sa_family_t af)
 		}
 	}
 	return (0);
+}
+
+struct node_host *
+gen_dynnode(struct node_host *h, sa_family_t af)
+{
+	struct node_host	*n;
+	struct pf_addr		*m;
+
+	if (h->addr.type != PF_ADDR_DYNIFTL)
+		return (NULL);
+
+	if ((n = calloc(1, sizeof(*n))) == NULL)
+		return (NULL);
+	bcopy(h, n, sizeof(*n));
+	n->ifname = NULL;
+	n->next = NULL;
+	n->tail = NULL;
+
+	/* fix up netmask */
+	m = &n->addr.v.a.mask;
+	if (af == AF_INET && unmask(m, AF_INET6) > 32)
+		set_ipmask(n, 32);
+
+	return (n);
 }
 
 /* interface lookup routines */
