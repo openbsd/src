@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.45 2014/10/15 07:38:24 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.46 2014/10/27 21:24:26 rpe Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -123,7 +123,7 @@ svc_get_flags()
 	else
 		# set pkg daemon_flags to "NO" to match base svc
 		if ! svc_is_base ${_svc}; then
-			if ! echo ${pkg_scripts} | grep -qw ${_svc}; then
+			if ! echo ${pkg_scripts} | grep -qw -- ${_svc}; then
 				echo "NO" && return
 			fi
 		fi
@@ -168,7 +168,7 @@ svc_is_base()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	grep "^start_daemon " /etc/rc | cut -d ' ' -f2- | grep -qw ${_svc}
+	grep "^start_daemon " /etc/rc | cut -d ' ' -f2- | grep -qw -- ${_svc}
 }
 
 svc_is_enabled()
@@ -184,7 +184,7 @@ svc_is_special()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	echo ${_special_services} | grep -qw ${_svc}
+	echo ${_special_services} | grep -qw -- ${_svc}
 }
 
 append_to_pkg_scripts()
@@ -195,7 +195,7 @@ append_to_pkg_scripts()
 	rcconf_edit_begin
 	if [ -z "${pkg_scripts}" ]; then
 		echo pkg_scripts="${_svc}" >>${_TMP_RCCONF}
-	elif ! echo ${pkg_scripts} | grep -qw ${_svc}; then
+	elif ! echo ${pkg_scripts} | grep -qw -- ${_svc}; then
 		grep -v "^pkg_scripts.*=" /etc/rc.conf.local >${_TMP_RCCONF}
 		echo pkg_scripts="${pkg_scripts} ${_svc}" >>${_TMP_RCCONF}
 	fi
