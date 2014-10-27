@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.89 2014/10/26 17:11:18 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.90 2014/10/27 13:29:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -466,9 +466,8 @@ term_word(struct termp *p, const char *word)
 					encode(p, cp, ssz);
 			} else {
 				uc = mchars_spec2cp(p->symtab, seq, sz);
-				if (uc <= 0)
-					uc = 0xFFFD;
-				encode1(p, uc);
+				if (uc > 0)
+					encode1(p, uc);
 			}
 			break;
 		case ESCAPE_FONTBOLD:
@@ -703,9 +702,8 @@ term_strlen(const struct termp *p, const char *cp)
 				} else {
 					c = mchars_spec2cp(p->symtab,
 					    seq, ssz);
-					if (c <= 0)
-						c = 0xFFFD;
-					sz += cond_width(p, c, &skip);
+					if (c > 0)
+						sz += cond_width(p, c, &skip);
 				}
 				break;
 			case ESCAPE_SKIPCHAR:
