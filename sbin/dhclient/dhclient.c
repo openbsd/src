@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.322 2014/10/26 23:36:44 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.323 2014/10/27 19:54:31 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -63,6 +63,7 @@
 #include <poll.h>
 #include <pwd.h>
 #include <resolv.h>
+#include <stdint.h>
 
 #define DEFAULT_LEASE_TIME	43200	/* 12 hours. */
 #define TIME_MAX		2147483647
@@ -1208,10 +1209,10 @@ send_discover(void)
 			 config->timeout) - cur_time + 1;
 
 	/* Record the number of seconds since we started sending. */
-	if (interval < 65536)
+	if (interval < UINT16_MAX)
 		client->bootrequest_packet.secs = htons(interval);
 	else
-		client->bootrequest_packet.secs = htons(65535);
+		client->bootrequest_packet.secs = htons(UINT16_MAX);
 	client->secs = client->bootrequest_packet.secs;
 
 	note("DHCPDISCOVER on %s - interval %lld", ifi->name,
@@ -1356,10 +1357,10 @@ send_request(void)
 	if (client->state == S_REQUESTING)
 		client->bootrequest_packet.secs = client->secs;
 	else {
-		if (interval < 65536)
+		if (interval < UINT16_MAX)
 			client->bootrequest_packet.secs = htons(interval);
 		else
-			client->bootrequest_packet.secs = htons(65535);
+			client->bootrequest_packet.secs = htons(UINT16_MAX);
 	}
 
 	note("DHCPREQUEST on %s to %s", ifi->name,
