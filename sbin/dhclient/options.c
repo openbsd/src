@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.72 2014/10/27 14:17:01 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.73 2014/10/27 17:01:28 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -306,6 +306,9 @@ pretty_print_option(unsigned int code, struct option_data *option,
 	int opcount = 0;
 	struct in_addr foo;
 	char comma;
+	int32_t int32val;
+	u_int32_t uint32val;
+	u_int16_t uint16val;
 
 	memset(optbuf, 0, sizeof(optbuf));
 
@@ -438,19 +441,22 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				dp += sizeof(foo.s_addr);
 				break;
 			case 'l':
-				opcount = snprintf(op, opleft, "%ld",
-				    (long)getLong(dp));
-				dp += 4;
+				memcpy(&int32val, dp, sizeof(int32val));
+				opcount = snprintf(op, opleft, "%d",
+				    ntohl(int32val));
+				dp += sizeof(int32val);
 				break;
 			case 'L':
-				opcount = snprintf(op, opleft, "%lu",
-				    (unsigned long)getULong(dp));
-				dp += 4;
+				memcpy(&uint32val, dp, sizeof(uint32val));
+				opcount = snprintf(op, opleft, "%u",
+				    ntohl(uint32val));
+				dp += sizeof(uint32val);
 				break;
 			case 'S':
-				opcount = snprintf(op, opleft, "%u",
-				    getUShort(dp));
-				dp += 2;
+				memcpy(&uint16val, dp, sizeof(uint16val));
+				opcount = snprintf(op, opleft, "%hu",
+				    ntohs(uint16val));
+				dp += sizeof(uint16val);
 				break;
 			case 'B':
 				opcount = snprintf(op, opleft, "%u", *dp);
