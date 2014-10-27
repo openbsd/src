@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.129 2014/05/09 18:16:15 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.130 2014/10/27 19:16:38 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -1742,10 +1742,11 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 		ppc_mtsrin(PPC_KERNEL_SEG0 + i, i << ADDR_SR_SHIFT);
 	}
 
+	/* first segment contains executable pages */
+	pmap_kernel()->pm_exec[0]++;
+	pmap_kernel()->pm_sr[0] &= ~SR_NOEXEC;
+
 	if (ppc_proc_is_64b) {
-		for(i = 0; i < 0x10000; i++)
-			pmap_kenter_cache(ptoa(i), ptoa(i), VM_PROT_ALL,
-			    PMAP_CACHE_WB);
 		asm volatile ("sync; mtsdr1 %0; isync"
 		    :: "r"((u_int)pmap_ptable64 | HTABSIZE_64));
 	} else 
@@ -2298,24 +2299,29 @@ pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t dsisr, int exec_fault)
 
 	pm = pmap_kernel();
 
-
+	/* 0 - physmaxaddr mapped 1-1 */
 	if (va < physmaxaddr) {
 		u_int32_t aligned_va;
-		pted =  &pted_store;
-		/* 0 - physmaxaddr mapped 1-1 */
-		/* XXX - no WRX control */
+		vm_prot_t prot = VM_PROT_READ | VM_PROT_WRITE;
+		extern caddr_t kernel_text;
+		extern caddr_t etext;
+
+		pted = &pted_store;
+
+		if (va >= trunc_page((vaddr_t)&kernel_text) &&
+		    va < round_page((vaddr_t)&etext)) {
+			prot |= VM_PROT_EXECUTE;
+		}
 
 		aligned_va = trunc_page(va);
 		if (ppc_proc_is_64b) {
 			pmap_fill_pte64(pm, aligned_va, aligned_va,
-			    pted, VM_PROT_READ | VM_PROT_WRITE |
-			    VM_PROT_EXECUTE, 0, PMAP_CACHE_WB);
+			    pted, prot, 0, PMAP_CACHE_WB);
 			pte_insert64(pted);
 			return 1;
 		} else {
 			pmap_fill_pte32(pm, aligned_va, aligned_va,
-			    &pted_store, VM_PROT_READ | VM_PROT_WRITE |
-			    VM_PROT_EXECUTE, 0, PMAP_CACHE_WB);
+			    pted, prot, 0, PMAP_CACHE_WB);
 			pte_insert32(pted);
 			return 1;
 		}
