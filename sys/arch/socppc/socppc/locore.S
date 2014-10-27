@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.14 2014/10/18 22:36:36 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.15 2014/10/27 21:56:57 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -436,26 +436,6 @@ nop32_4e:
 	mfcr	%r29			/* save CR */
 	mfsrr1	%r31			/* test kernel mode */
 	mfsprg	%r1,1                   /* restore SP */
-nop64_2s:
-	mtcr	%r31
-	bc	12,17,1f		/* branch if PSL_PR is set */
-	mfsrr0	%r31			/* get fault address */
-	rlwinm	%r31,%r31,7,25,28		/* get segment * 8 */
-	addis	%r31,%r31,_C_LABEL(battable)@ha
-	lwz	%r30,_C_LABEL(battable)@l(%r31)	/* get batu */
-	mtcr	%r30
-	bc	4,30,1f			/* branch if supervisor valid is false */
-	mtibatu	3,%r30
-	lwz	%r30,_C_LABEL(battable)+4@l(%r31)	/* get batl */
-	mtibatl	3,%r30
-	mtcr	%r29			/* restore CR */
-	mtsprg	1,%r1
-	GET_CPUINFO(%r1)
-	lmw	%r28,CI_DISISAVE(%r1)	/* restore r28-r31 */
-	mfsprg	%r1,1
-	rfi				/* return to trapped code */
-1:
-nop64_2e:
 	bla	s_isitrap
 _C_LABEL(isisize) =	.-_C_LABEL(isitrap)
 
@@ -1374,7 +1354,6 @@ _C_LABEL(rfi_start):
 	.globl  _C_LABEL(nop64_start)
 _C_LABEL(nop64_start):
 	.long	nop64_1s, nop64_1e
-	.long	nop64_2s, nop64_2e
 	.long	0, 0
 
 	.globl  _C_LABEL(nop32_start)

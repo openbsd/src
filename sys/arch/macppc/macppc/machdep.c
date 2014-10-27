@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.162 2014/09/19 17:34:05 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.163 2014/10/27 21:56:57 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ initppc(startkernel, endkernel, args)
 	 * Set up initial BAT table to only map the lowest 256 MB area
 	 */
 	battable[0].batl = BATL(0x00000000, BAT_M);
-	battable[0].batu = BATU(0x00000000);
+	battable[0].batu = BATU(0x00000000, BAT_BL_256M);
 
 	/*
 	 * Now setup fixed bat registers
@@ -203,13 +203,13 @@ initppc(startkernel, endkernel, args)
 	 * Note that we still run in real mode, and the BAT
 	 * registers were cleared above.
 	 */
-	/* IBAT0 used for initial 256 MB segment */
-	ppc_mtibat0l(battable[0].batl);
-	ppc_mtibat0u(battable[0].batu);
-
-	/* DBAT0 used similar */
+	/* DBAT0 used for initial 256 MB segment */
 	ppc_mtdbat0l(battable[0].batl);
 	ppc_mtdbat0u(battable[0].batu);
+
+	/* IBAT0 only covering the kernel .text */
+	ppc_mtibat0l(battable[0].batl);
+	ppc_mtibat0u(BATU(0x00000000, BAT_BL_8M));
 
 	/*
 	 * Set up trap vectors
@@ -281,31 +281,31 @@ initppc(startkernel, endkernel, args)
 	/* now that we know physmem size, map physical memory with BATs */
 	if (physmem > atop(0x10000000)) {
 		battable[0x1].batl = BATL(0x10000000, BAT_M);
-		battable[0x1].batu = BATU(0x10000000);
+		battable[0x1].batu = BATU(0x10000000, BAT_BL_256M);
 	}
 	if (physmem > atop(0x20000000)) {
 		battable[0x2].batl = BATL(0x20000000, BAT_M);
-		battable[0x2].batu = BATU(0x20000000);
+		battable[0x2].batu = BATU(0x20000000, BAT_BL_256M);
 	}
 	if (physmem > atop(0x30000000)) {
 		battable[0x3].batl = BATL(0x30000000, BAT_M);
-		battable[0x3].batu = BATU(0x30000000);
+		battable[0x3].batu = BATU(0x30000000, BAT_BL_256M);
 	}
 	if (physmem > atop(0x40000000)) {
 		battable[0x4].batl = BATL(0x40000000, BAT_M);
-		battable[0x4].batu = BATU(0x40000000);
+		battable[0x4].batu = BATU(0x40000000, BAT_BL_256M);
 	}
 	if (physmem > atop(0x50000000)) {
 		battable[0x5].batl = BATL(0x50000000, BAT_M);
-		battable[0x5].batu = BATU(0x50000000);
+		battable[0x5].batu = BATU(0x50000000, BAT_BL_256M);
 	}
 	if (physmem > atop(0x60000000)) {
 		battable[0x6].batl = BATL(0x60000000, BAT_M);
-		battable[0x6].batu = BATU(0x60000000);
+		battable[0x6].batu = BATU(0x60000000, BAT_BL_256M);
 	}
 	if (physmem > atop(0x70000000)) {
 		battable[0x7].batl = BATL(0x70000000, BAT_M);
-		battable[0x7].batu = BATU(0x70000000);
+		battable[0x7].batu = BATU(0x70000000, BAT_BL_256M);
 	}
 
 	/*

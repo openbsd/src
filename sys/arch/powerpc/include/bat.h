@@ -1,4 +1,4 @@
-/*	$OpenBSD: bat.h,v 1.4 2001/09/01 15:49:05 drahn Exp $	*/
+/*	$OpenBSD: bat.h,v 1.5 2014/10/27 21:56:57 kettenis Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,13 +39,26 @@ struct bat {
 	u_int32_t batl;
 };
 
-#define	BATU(vaddr)		(((vaddr)&0xf0000000)|0x1ffe)
+#define	BATU(vaddr,len)		(((vaddr)&0xf0000000)|(len)|0x2)
 #define	BATL(raddr,wimg)	(((raddr)&0xf0000000)|(wimg)|0x2)
 
 #define	BAT_W		0x40
 #define	BAT_I		0x20
 #define	BAT_M		0x10
 #define	BAT_G		0x08
+
+#define BAT_BL_128K     0x00000000
+#define BAT_BL_256K     0x00000004
+#define BAT_BL_512K     0x0000000c
+#define BAT_BL_1M       0x0000001c
+#define BAT_BL_2M       0x0000003c
+#define BAT_BL_4M       0x0000007c
+#define BAT_BL_8M       0x000000fc
+#define BAT_BL_16M      0x000001fc
+#define BAT_BL_32M      0x000003fc
+#define BAT_BL_64M      0x000007fc
+#define BAT_BL_128M     0x00000ffc
+#define BAT_BL_256M     0x00001ffc
 
 #ifdef	_KERNEL
 extern struct bat battable[16];
