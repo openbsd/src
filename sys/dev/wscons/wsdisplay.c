@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.120 2014/09/14 14:17:25 jsg Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.121 2014/10/27 13:55:05 mpi Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -58,7 +58,6 @@
 
 #include "wsdisplay.h"
 #include "wskbd.h"
-#include "wsmouse.h"
 #include "wsmux.h"
 
 #if NWSKBD > 0
@@ -66,15 +65,7 @@
 #include <dev/wscons/wsmuxvar.h>
 #endif
 
-#if NWSMOUSE > 0
-#include <dev/wscons/wsmousevar.h>
-#endif
-
 #include "wsmoused.h"
-
-#if NWSMOUSE > 0
-extern struct cfdriver wsmouse_cd;
-#endif /* NWSMOUSE > 0 */
 
 struct wsscreen_internal {
 	const struct wsdisplay_emulops *emulops;
@@ -192,9 +183,6 @@ struct wsdisplay_softc {
 #endif /* NWSKBD > 0 */
 
 #ifdef HAVE_WSMOUSED_SUPPORT
-	dev_t wsmoused_dev; /* device opened by wsmoused(8), when active */
-	int wsmoused_sleep; /* true when wsmoused(8) is sleeping */
-
 	char *sc_copybuffer;
 	u_int sc_copybuffer_size;
 #endif
@@ -1151,14 +1139,6 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			scr->scr_flags |= SCR_GRAPHICS |
 			    ((d == WSDISPLAYIO_MODE_DUMBFB) ?  SCR_DUMBFB : 0);
 
-#ifdef HAVE_WSMOUSED_SUPPORT
-			/*
-			 * wsmoused cohabitation with X-Window support
-			 * X-Window is starting
-			 */
-			wsmoused_release(sc);
-#endif
-
 			/* clear cursor */
 			(*scr->scr_dconf->wsemul->reset)
 			    (scr->scr_dconf->wsemulcookie, WSEMUL_CLEARCURSOR);
@@ -1172,22 +1152,12 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 				timeout_del(&sc->sc_burner);
 				sc->sc_burnout = 0;
 			}
-#endif
 		} else {
-#ifdef HAVE_BURNER_SUPPORT
 			/* reenable the burner after exiting from X */
 			if (!sc->sc_burnman) {
 				sc->sc_burnout = sc->sc_burnoutintvl;
 				wsdisplay_burn(sc, sc->sc_burnflags);
 			}
-#endif
-
-#ifdef HAVE_WSMOUSED_SUPPORT
-			/*
-			 * wsmoused cohabitation with X-Window support
-			 * X-Window is ending
-			 */
-			wsmoused_wakeup(sc);
 #endif
 		}
 
@@ -1494,13 +1464,8 @@ wsdisplaystart(struct tty *tp)
 		wsdisplay_burn(sc, WSDISPLAY_BURN_OUTPUT);
 #endif
 #ifdef HAVE_WSMOUSED_SUPPORT
-		if (scr == sc->sc_focus) {
-			if (ISSET(scr->mouse_flags, SEL_EXISTS))
-				/* hide a potential selection */
-				remove_selection(scr);
-			/* hide a potential mouse cursor */
-			mouse_hide(scr);
-		}
+		if (scr == sc->sc_focus)
+			mouse_remove(scr);
 #endif
 		done = (*scr->scr_dconf->wsemul->output)
 		    (scr->scr_dconf->wsemulcookie, buf, n, 0);
@@ -1880,52 +1845,6 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 	} else
 		sc->sc_oldscreen = sc->sc_focusidx;
 
-
-#ifdef HAVE_WSMOUSED_SUPPORT
-	/*
-	 *  wsmoused cohabitation with X-Window support
-	 *
-	 *  Detect switch from a graphic to text console and vice-versa
-	 *  This only happen when switching from X-Window to text mode and
-	 *  switching back from text mode to X-Window.
-	 *
-	 *  scr_flags is not yet flagged with SCR_GRAPHICS when X-Window starts
-	 *  (KD_GRAPHICS ioctl happens after VT_ACTIVATE ioctl in
-	 *  xf86OpenPcvt()). Conversely, scr_flags is no longer flagged with
-	 *  SCR_GRAPHICS when X-Window stops. In this case, the first of the
-	 *  three following 'if' statements is evaluated.
-	 *  We handle wsmoused(8) events the WSDISPLAYIO_SMODE ioctl.
-	 */
-
-	if (!(scr->scr_flags & SCR_GRAPHICS) &&
-	    (no == WSDISPLAY_NULLSCREEN ||
-	     !(sc->sc_scr[no]->scr_flags & SCR_GRAPHICS))) {
-		/* switching from a text console to another text console */
-		/* XXX evaluated when the X-server starts or stops, see above */
-
-		/* remove a potential wsmoused(8) selection */
-		mouse_remove(scr);
-	}
-
-	if (!(scr->scr_flags & SCR_GRAPHICS) &&
-	    (no != WSDISPLAY_NULLSCREEN &&
-	     (sc->sc_scr[no]->scr_flags & SCR_GRAPHICS))) {
-		/* switching from a text console to a graphic console */
-
-		/* remove a potential wsmoused(8) selection */
-		mouse_remove(scr);
-		wsmoused_release(sc);
-	}
-
-	if ((scr->scr_flags & SCR_GRAPHICS) &&
-	    (no == WSDISPLAY_NULLSCREEN ||
-	     !(sc->sc_scr[no]->scr_flags & SCR_GRAPHICS))) {
-		/* switching from a graphic console to a text console */
-
-		wsmoused_wakeup(sc);
-	}
-#endif	/* HAVE_WSMOUSED_SUPPORT */
-
 #ifdef WSDISPLAY_COMPAT_USL
 #define wsswitch_cb1 ((void (*)(void *, int, int))wsdisplay_switch1)
 	if (scr->scr_syncops) {
@@ -1940,6 +1859,10 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 		/* no way to save state */
 		res = EBUSY;
 	}
+#endif
+
+#ifdef HAVE_WSMOUSED_SUPPORT
+	mouse_remove(scr);
 #endif
 
 	return (wsdisplay_switch1(sc, res, waitok));
@@ -2424,9 +2347,11 @@ motion_event(struct wsscreen *scr, u_int type, int value)
 	case WSCONS_EVENT_MOUSE_DELTA_Y:
 		mouse_moverel(scr, 0, -value);
 		break;
+#ifdef HAVE_SCROLLBACK_SUPPORT
 	case WSCONS_EVENT_MOUSE_DELTA_Z:
 		mouse_zaxis(scr, value);
 		break;
+#endif
 	default:
 		break;
 	}
@@ -2479,29 +2404,19 @@ int
 ctrl_event(struct wsdisplay_softc *sc, u_int type, int value, struct proc *p)
 {
 	struct wsscreen *scr;
-	int i, error;
+	int i;
 
 	switch (type) {
 	case WSCONS_EVENT_WSMOUSED_OFF:
 		CLR(sc->sc_flags, SC_PASTE_AVAIL);
-		sc->wsmoused_dev = 0;
 		return (0);
-	case WSCONS_EVENT_WSMOUSED_SLEEP:
-		/* sleeping until next switch to text mode */
-		sc->wsmoused_sleep = 1;
-		error = 0;
-		while (sc->wsmoused_sleep && error == 0)
-			error = tsleep(&sc->wsmoused_sleep, PPAUSE,
-			    "wsmoused_sleep", 0);
-		return (error);
 	case WSCONS_EVENT_WSMOUSED_ON:
 		if (!sc->sc_accessops->getchar)
 			/* no wsmoused(8) support in the display driver */
 			return (1);
 		allocate_copybuffer(sc);
 		CLR(sc->sc_flags, SC_PASTE_AVAIL);
-		sc->wsmoused_dev = value;
-	
+
 		for (i = 0 ; i < WSDISPLAY_DEFAULTSCREENS ; i++)
 			if ((scr = sc->sc_scr[i]) != NULL) {
 				scr->mouse =
@@ -3318,6 +3233,7 @@ mouse_paste(struct wsscreen *scr)
 	}
 }
 
+#ifdef HAVE_SCROLLBACK_SUPPORT
 /*
  * Handle the z axis.
  * The z axis (roller or wheel) is mapped by default to scrollback.
@@ -3330,6 +3246,7 @@ mouse_zaxis(struct wsscreen *scr, int z)
 	else
 		wsscrollback(scr->sc, WSDISPLAY_SCROLL_FORWARD);
 }
+#endif
 
 /*
  * Allocate the copy buffer. The size is:
@@ -3377,77 +3294,4 @@ mouse_remove(struct wsscreen *scr)
 	mouse_hide(scr);
 }
 
-/* Send a wscons event to notify wsmoused(8) to release the mouse device */
-void
-wsmoused_release(struct wsdisplay_softc *sc)
-{
-#if NWSMOUSE > 0
-	struct device *wsms_dev = NULL;
-	struct device **wsms_dev_list;
-	int is_wsmouse = 0;
-#if NWSMUX > 0
-	int is_wsmux = 0;
-#endif /* NWSMUX > 0 */
-
-	if (sc->wsmoused_dev) {
-		/* wsmoused(8) is running */
-
-		wsms_dev_list = (struct device **) wsmouse_cd.cd_devs;
-		if (!wsms_dev_list)
-			/* no wsmouse device exists */
-			return ;
-
-		/* test whether device opened by wsmoused(8) is a wsmux device
-		 * (/dev/wsmouse) or a wsmouse device (/dev/wsmouse{0..n} */
-
-#if NWSMUX > 0
-		/* obtain major of /dev/wsmouse multiplexor device */
-		/* XXX first member of wsmux_softc is of type struct device */
-		if (cdevsw[major(sc->wsmoused_dev)].d_open == wsmuxopen)
-			is_wsmux = 1;
-
-		if (is_wsmux && (minor(sc->wsmoused_dev) == WSMOUSEDEVCF_MUX)) {
-			/* /dev/wsmouse case */
-			/* XXX at least, wsmouse0 exist */
-			wsms_dev = wsms_dev_list[0];
-		}
-#endif /* NWSMUX > 0 */
-
-		/* obtain major of /dev/wsmouse{0..n} devices */
-		if (wsmouse_cd.cd_ndevs > 0) {
-			if (cdevsw[major(sc->wsmoused_dev)].d_open ==
-			     wsmouseopen)
-				is_wsmouse = 1;
-		}
-
-		if (is_wsmouse && (minor(sc->wsmoused_dev) <= NWSMOUSE)) {
-			/* /dev/wsmouseX case */
-			if (minor(sc->wsmoused_dev) < wsmouse_cd.cd_ndevs) {
-				wsms_dev =
-				    wsms_dev_list[minor(sc->wsmoused_dev)];
-			}
-			else
-				/* no corresponding /dev/wsmouseX device */
-				return;
-		}
-
-		/* inject event to notify wsmoused(8) to close mouse device */
-		if (wsms_dev != NULL)
-			wsmouse_input(wsms_dev, 0, 0, 0, 0, 0,
-				      WSMOUSE_INPUT_WSMOUSED_CLOSE);
-	}
-#endif /* NWSMOUSE > 0 */
-}
-
-/* Wakeup wsmoused(8), so that the mouse device can be reopened */
-void
-wsmoused_wakeup(struct wsdisplay_softc *sc)
-{
-#if NWSMOUSE > 0
-	if (sc->wsmoused_dev) {
-		sc->wsmoused_sleep = 0;
-		wakeup(&sc->wsmoused_sleep);
-	}
-#endif /* NWSMOUSE > 0 */
-}
 #endif /* HAVE_WSMOUSED_SUPPORT */

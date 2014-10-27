@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.h,v 1.9 2014/05/14 18:11:24 shadchin Exp $ */
+/* $OpenBSD: wsmoused.h,v 1.10 2014/10/27 13:55:05 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -69,8 +69,6 @@ void	mouse_paste(struct wsscreen *);
 void	mouse_zaxis(struct wsscreen *, int);
 void	allocate_copybuffer(struct wsdisplay_softc *);
 void	mouse_remove(struct wsscreen *);
-void	wsmoused_release(struct wsdisplay_softc *);
-void	wsmoused_wakeup(struct wsdisplay_softc *);
 
 #define NO_BORDER 0
 #define BORDER 1
