@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.15 2014/10/27 15:05:45 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.16 2014/10/27 18:09:36 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -193,20 +193,21 @@ NOPTS	?= -mandoc
 
 # --- the list of targets ---
 
-SKIP_GROFF ?=
+SKIP_GROFF_ASCII += ${SKIP_GROFF}
+SKIP_GROFF_UTF8  += ${SKIP_GROFF}
 
 _OUTFILES =
 _HTMLOUTFILES =
 _LINTOUTFILES =
 .for t in ${REGRESS_TARGETS}
-.  if empty(SKIP_GROFF:M${t}) && \
+.  if empty(SKIP_GROFF_ASCII:M${t}) && \
       empty(SKIP_ASCII:M${t}) && empty(SKIP_ASCII:MALL)
 _OUTFILES += ${t}.out_ascii
 .  endif
 .endfor
 
 .for t in ${UTF8_TARGETS}
-.  if empty(SKIP_GROFF:M${t})
+.  if empty(SKIP_GROFF_UTF8:M${t})
 _OUTFILES += ${t}.out_utf8
 .  endif
 .endfor
@@ -231,7 +232,7 @@ lint-out: obj-check ${_LINTOUTFILES}
 
 .for t in ${REGRESS_TARGETS}
 .  if empty(SKIP_ASCII:M${t}) && empty(SKIP_ASCII:MALL)
-.    if empty(SKIP_GROFF:M${t})
+.    if empty(SKIP_GROFF_ASCII:M${t})
 ${t}.out_ascii: ${t}.in
 	${NROFF} ${NOPTS} -Tascii ${.ALLSRC} > ${.TARGET}
 .    else
@@ -243,7 +244,7 @@ ${t}.out_ascii:
 .endfor
 
 .for t in ${UTF8_TARGETS}
-.  if empty(SKIP_GROFF:M${t})
+.  if empty(SKIP_GROFF_UTF8:M${t})
 ${t}.out_utf8: ${t}.in
 	${NROFF} ${NOPTS} -Tutf8 ${.ALLSRC} > ${.TARGET}
 .  else
