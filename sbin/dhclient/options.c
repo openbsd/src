@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.71 2014/10/27 13:36:21 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.72 2014/10/27 14:17:01 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -432,10 +432,10 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				    dp, len, emit_punct);
 				break;
 			case 'I':
-				foo.s_addr = htonl(getULong(dp));
+				memcpy(&foo.s_addr, dp, sizeof(foo.s_addr));
 				opcount = snprintf(op, opleft, "%s",
 				    inet_ntoa(foo));
-				dp += 4;
+				dp += sizeof(foo.s_addr);
 				break;
 			case 'l':
 				opcount = snprintf(op, opleft, "%ld",
