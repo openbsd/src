@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.67 2014/07/14 18:16:27 miod Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.68 2014/10/27 13:36:21 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -188,7 +188,7 @@ add_route(int rdomain, struct in_addr dest, struct in_addr netmask,
 	if (rslt == -1)
 		warning("add_route: imsg_compose: %s", strerror(errno));
 
- 	flush_unpriv_ibuf("add_route");
+	flush_unpriv_ibuf("add_route");
 }
 
 void
@@ -302,7 +302,7 @@ delete_addresses(char *ifname, int rdomain)
 		    sizeof(addr));
 
 		delete_address(ifi->name, ifi->rdomain, addr);
- 	}
+	}
 
 	freeifaddrs(ifap);
 }

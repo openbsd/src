@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.70 2014/07/28 16:45:35 tobias Exp $	*/
+/*	$OpenBSD: options.c,v 1.71 2014/10/27 13:36:21 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -256,7 +256,7 @@ pretty_print_classless_routes(unsigned char *dst, size_t dstlen,
 	struct in_addr mask, gateway;
 	int opcount = 0, total = 0, bits, bytes;
 	char ntoabuf[INET_ADDRSTRLEN];
-	
+
 	while (srclen && dstlen) {
 		bits = *src;
 		src++;
@@ -465,7 +465,6 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				    *dp ? "true" : "false");
 				dp++;
 				break;
- 				break;
 			default:
 				warning("Unexpected format code %c", fmtbuf[j]);
 				goto toobig;

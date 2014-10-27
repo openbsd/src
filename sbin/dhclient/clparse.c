@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.87 2014/05/12 13:12:41 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.88 2014/10/27 13:36:21 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -129,7 +129,7 @@ read_client_leases(void)
 			warning("Corrupt lease file - possible data loss!");
 			break;
 		}
-	       	parse_client_lease_statement(cfile, 0);
+		parse_client_lease_statement(cfile, 0);
 	} while (1);
 	fclose(cfile);
 }

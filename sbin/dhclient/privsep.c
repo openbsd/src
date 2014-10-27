@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.36 2014/02/09 14:21:17 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.37 2014/10/27 13:36:21 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -85,7 +85,7 @@ dispatch_imsg(struct imsgbuf *ibuf)
 			if (imsg.hdr.len < IMSG_HEADER_SIZE +
 			    sizeof(struct imsg_write_file))
 				warning("short IMSG_WRITE_FILE");
- 			else {
+			else {
 				wfimsg = (struct imsg_write_file *)imsg.data;
 				len = imsg.hdr.len;
 				len -= IMSG_HEADER_SIZE;
@@ -97,7 +97,7 @@ dispatch_imsg(struct imsgbuf *ibuf)
 					warning("bad IMSG_WRITE_FILE (%zu)",
 					    len);
 			}
- 			break;
+			break;
 
 		default:
 			warning("received unknown message, code %u",
