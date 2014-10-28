@@ -1,4 +1,4 @@
-/* $OpenBSD: mdc2dgst.c,v 1.6 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: mdc2dgst.c,v 1.7 2014/10/28 07:35:59 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,8 +123,8 @@ int MDC2_Update(MDC2_CTX *c, const unsigned char *in, size_t len)
 
 static void mdc2_body(MDC2_CTX *c, const unsigned char *in, size_t len)
 	{
-	register DES_LONG tin0,tin1;
-	register DES_LONG ttin0,ttin1;
+	DES_LONG tin0,tin1;
+	DES_LONG ttin0,ttin1;
 	DES_LONG d[2],dd[2];
 	DES_key_schedule k;
 	unsigned char *p;

@@ -1,4 +1,4 @@
-/* $OpenBSD: fcrypt_b.c,v 1.8 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: fcrypt_b.c,v 1.9 2014/10/28 07:35:58 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -82,13 +82,13 @@
 void fcrypt_body(DES_LONG *out, DES_key_schedule *ks, DES_LONG Eswap0,
 		 DES_LONG Eswap1)
 	{
-	register DES_LONG l,r,t,u;
+	DES_LONG l,r,t,u;
 #ifdef DES_PTR
-	register const unsigned char *des_SP=(const unsigned char *)DES_SPtrans;
+	const unsigned char *des_SP=(const unsigned char *)DES_SPtrans;
 #endif
-	register DES_LONG *s;
-	register int j;
-	register DES_LONG E0,E1;
+	DES_LONG *s;
+	int j;
+	DES_LONG E0,E1;
 
 	l=0;
 	r=0;
@@ -100,7 +100,7 @@ void fcrypt_body(DES_LONG *out, DES_key_schedule *ks, DES_LONG Eswap0,
 	for (j=0; j<25; j++)
 		{
 #ifndef DES_UNROLL
-		register int i;
+		int i;
 
 		for (i=0; i<32; i+=4)
 			{

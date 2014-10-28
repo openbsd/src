@@ -1,4 +1,4 @@
-/* $OpenBSD: rmd_dgst.c,v 1.16 2014/08/18 19:11:48 bcook Exp $ */
+/* $OpenBSD: rmd_dgst.c,v 1.17 2014/10/28 07:35:59 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,7 +86,7 @@ int RIPEMD160_Init(RIPEMD160_CTX *c)
 void ripemd160_block_data_order (RIPEMD160_CTX *ctx, const void *p, size_t num)
 	{
 	const unsigned char *data=p;
-	register unsigned MD32_REG_T A,B,C,D,E;
+	unsigned MD32_REG_T A,B,C,D,E;
 	unsigned MD32_REG_T a,b,c,d,e,l;
 #ifndef MD32_XARRAY
 	/* See comment in crypto/sha/sha_locl.h for details. */

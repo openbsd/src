@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_enc.c,v 1.5 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bf_enc.c,v 1.6 2014/10/28 07:35:58 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,8 +72,8 @@ to modify the code.
 void BF_encrypt(BF_LONG *data, const BF_KEY *key)
 	{
 #ifndef BF_PTR2
-	register BF_LONG l,r;
-	register const BF_LONG *p,*s;
+	BF_LONG l,r;
+	const BF_LONG *p,*s;
 
 	p=key->P;
 	s= &(key->S[0]);
@@ -108,7 +108,7 @@ void BF_encrypt(BF_LONG *data, const BF_KEY *key)
 	data[1]=l&0xffffffffL;
 	data[0]=r&0xffffffffL;
 #else
-	register BF_LONG l,r,t,*k;
+	BF_LONG l,r,t,*k;
 
 	l=data[0];
 	r=data[1];
@@ -149,8 +149,8 @@ void BF_encrypt(BF_LONG *data, const BF_KEY *key)
 void BF_decrypt(BF_LONG *data, const BF_KEY *key)
 	{
 #ifndef BF_PTR2
-	register BF_LONG l,r;
-	register const BF_LONG *p,*s;
+	BF_LONG l,r;
+	const BF_LONG *p,*s;
 
 	p=key->P;
 	s= &(key->S[0]);
@@ -185,7 +185,7 @@ void BF_decrypt(BF_LONG *data, const BF_KEY *key)
 	data[1]=l&0xffffffffL;
 	data[0]=r&0xffffffffL;
 #else
-	register BF_LONG l,r,t,*k;
+	BF_LONG l,r,t,*k;
 
 	l=data[0];
 	r=data[1];
@@ -224,9 +224,9 @@ void BF_decrypt(BF_LONG *data, const BF_KEY *key)
 void BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	     const BF_KEY *schedule, unsigned char *ivec, int encrypt)
 	{
-	register BF_LONG tin0,tin1;
-	register BF_LONG tout0,tout1,xor0,xor1;
-	register long l=length;
+	BF_LONG tin0,tin1;
+	BF_LONG tout0,tout1,xor0,xor1;
+	long l=length;
 	BF_LONG tin[2];
 
 	if (encrypt)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ofb_enc.c,v 1.5 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: ofb_enc.c,v 1.6 2014/10/28 07:35:58 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,10 +68,10 @@ void DES_ofb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 		     long length, DES_key_schedule *schedule,
 		     DES_cblock *ivec)
 	{
-	register DES_LONG d0,d1,vv0,vv1,v0,v1,n=(numbits+7)/8;
-	register DES_LONG mask0,mask1;
-	register long l=length;
-	register int num=numbits;
+	DES_LONG d0,d1,vv0,vv1,v0,v1,n=(numbits+7)/8;
+	DES_LONG mask0,mask1;
+	long l=length;
+	int num=numbits;
 	DES_LONG ti[2];
 	unsigned char *iv;
 

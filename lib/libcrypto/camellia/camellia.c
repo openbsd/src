@@ -1,4 +1,4 @@
-/* $OpenBSD: camellia.c,v 1.7 2014/07/10 22:45:56 jsing Exp $ */
+/* $OpenBSD: camellia.c,v 1.8 2014/10/28 07:35:58 jsg Exp $ */
 /* ====================================================================
  * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) . 
  * ALL RIGHTS RESERVED.
@@ -314,7 +314,7 @@ static const u32 SIGMA[] = {
  * specific] assembler version should be/is provided anyway...
  */
 #define Camellia_Feistel(_s0,_s1,_s2,_s3,_key) do {\
-	register u32 _t0,_t1,_t2,_t3;\
+	u32 _t0,_t1,_t2,_t3;\
 \
 	_t0  = _s0 ^ (_key)[0];\
 	_t3  = SBOX4_4404[_t0&0xff];\
@@ -348,7 +348,7 @@ static const u32 SIGMA[] = {
 
 int Camellia_Ekeygen(int keyBitLength, const u8 *rawKey, KEY_TABLE_TYPE k)
 	{
-	register u32 s0,s1,s2,s3;
+	u32 s0,s1,s2,s3;
 
 	k[0] = s0 = GETU32(rawKey);
 	k[1] = s1 = GETU32(rawKey+4);
@@ -473,7 +473,7 @@ int Camellia_Ekeygen(int keyBitLength, const u8 *rawKey, KEY_TABLE_TYPE k)
 void Camellia_EncryptBlock_Rounds(int grandRounds, const u8 plaintext[], 
 		const KEY_TABLE_TYPE keyTable, u8 ciphertext[])
 	{
-	register u32 s0,s1,s2,s3; 
+	u32 s0,s1,s2,s3; 
 	const u32 *k = keyTable,*kend = keyTable+grandRounds*16; 
 
 	s0 = GETU32(plaintext)    ^ k[0];

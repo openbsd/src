@@ -1,4 +1,4 @@
-/* $OpenBSD: ofb64ede.c,v 1.4 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: ofb64ede.c,v 1.5 2014/10/28 07:35:58 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,17 +62,17 @@
  * used.  The extra state information to record how much of the
  * 64bit block we have used is contained in *num;
  */
-void DES_ede3_ofb64_encrypt(register const unsigned char *in,
-			    register unsigned char *out, long length,
+void DES_ede3_ofb64_encrypt(const unsigned char *in,
+			    unsigned char *out, long length,
 			    DES_key_schedule *k1, DES_key_schedule *k2,
 			    DES_key_schedule *k3, DES_cblock *ivec,
 			    int *num)
 	{
-	register DES_LONG v0,v1;
-	register int n= *num;
-	register long l=length;
+	DES_LONG v0,v1;
+	int n= *num;
+	long l=length;
 	DES_cblock d;
-	register char *dp;
+	char *dp;
 	DES_LONG ti[2];
 	unsigned char *iv;
 	int save=0;
@@ -116,8 +116,8 @@ void DES_ede3_ofb64_encrypt(register const unsigned char *in,
 	}
 
 #ifdef undef /* MACRO */
-void DES_ede2_ofb64_encrypt(register unsigned char *in,
-	     register unsigned char *out, long length, DES_key_schedule k1,
+void DES_ede2_ofb64_encrypt(unsigned char *in,
+	     unsigned char *out, long length, DES_key_schedule k1,
 	     DES_key_schedule k2, DES_cblock (*ivec), int *num)
 	{
 	DES_ede3_ofb64_encrypt(in, out, length, k1,k2,k1, ivec, num);

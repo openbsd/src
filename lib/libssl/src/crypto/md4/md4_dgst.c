@@ -1,4 +1,4 @@
-/* $OpenBSD: md4_dgst.c,v 1.13 2014/08/18 19:11:48 bcook Exp $ */
+/* $OpenBSD: md4_dgst.c,v 1.14 2014/10/28 07:35:59 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,7 +86,7 @@ int MD4_Init(MD4_CTX *c)
 void md4_block_data_order (MD4_CTX *c, const void *data_, size_t num)
 	{
 	const unsigned char *data=data_;
-	register unsigned MD32_REG_T A,B,C,D,l;
+	unsigned MD32_REG_T A,B,C,D,l;
 #ifndef MD32_XARRAY
 	/* See comment in crypto/sha/sha_locl.h for details. */
 	unsigned MD32_REG_T	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,

@@ -1,4 +1,4 @@
-/* $OpenBSD: ecb_enc.c,v 1.15 2014/07/09 11:10:50 bcook Exp $ */
+/* $OpenBSD: ecb_enc.c,v 1.16 2014/10/28 07:35:58 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -104,7 +104,7 @@ const char *DES_options(void)
 void DES_ecb_encrypt(const_DES_cblock *input, DES_cblock *output,
 		     DES_key_schedule *ks, int enc)
 	{
-	register DES_LONG l;
+	DES_LONG l;
 	DES_LONG ll[2];
 	const unsigned char *in = &(*input)[0];
 	unsigned char *out = &(*output)[0];

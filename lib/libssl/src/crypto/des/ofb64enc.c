@@ -1,4 +1,4 @@
-/* $OpenBSD: ofb64enc.c,v 1.5 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: ofb64enc.c,v 1.6 2014/10/28 07:35:58 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,15 +62,15 @@
  * used.  The extra state information to record how much of the
  * 64bit block we have used is contained in *num;
  */
-void DES_ofb64_encrypt(register const unsigned char *in,
-		       register unsigned char *out, long length,
+void DES_ofb64_encrypt(const unsigned char *in,
+		       unsigned char *out, long length,
 		       DES_key_schedule *schedule, DES_cblock *ivec, int *num)
 	{
-	register DES_LONG v0,v1,t;
-	register int n= *num;
-	register long l=length;
+	DES_LONG v0,v1,t;
+	int n= *num;
+	long l=length;
 	DES_cblock d;
-	register unsigned char *dp;
+	unsigned char *dp;
 	DES_LONG ti[2];
 	unsigned char *iv;
 	int save=0;

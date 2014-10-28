@@ -1,4 +1,4 @@
-/* $OpenBSD: i_skey.c,v 1.3 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: i_skey.c,v 1.4 2014/10/28 07:35:58 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,7 +64,7 @@ static IDEA_INT inverse(unsigned int xin);
 void idea_set_encrypt_key(const unsigned char *key, IDEA_KEY_SCHEDULE *ks)
 	{
 	int i;
-	register IDEA_INT *kt,*kf,r0,r1,r2;
+	IDEA_INT *kt,*kf,r0,r1,r2;
 
 	kt= &(ks->data[0][0]);
 	n2s(key,kt[0]); n2s(key,kt[1]); n2s(key,kt[2]); n2s(key,kt[3]);
@@ -98,7 +98,7 @@ void idea_set_encrypt_key(const unsigned char *key, IDEA_KEY_SCHEDULE *ks)
 void idea_set_decrypt_key(IDEA_KEY_SCHEDULE *ek, IDEA_KEY_SCHEDULE *dk)
 	{
 	int r;
-	register IDEA_INT *fp,*tp,t;
+	IDEA_INT *fp,*tp,t;
 
 	tp= &(dk->data[0][0]);
 	fp= &(ek->data[8][0]);

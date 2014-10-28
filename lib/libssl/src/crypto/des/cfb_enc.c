@@ -1,4 +1,4 @@
-/* $OpenBSD: cfb_enc.c,v 1.11 2014/07/09 16:06:13 miod Exp $ */
+/* $OpenBSD: cfb_enc.c,v 1.12 2014/10/28 07:35:58 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,9 +72,9 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 		     long length, DES_key_schedule *schedule, DES_cblock *ivec,
 		     int enc)
 	{
-	register DES_LONG d0,d1,v0,v1;
-	register unsigned long l=length;
-	register int num=numbits/8,n=(numbits+7)/8,i,rem=numbits%8;
+	DES_LONG d0,d1,v0,v1;
+	unsigned long l=length;
+	int num=numbits/8,n=(numbits+7)/8,i,rem=numbits%8;
 	DES_LONG ti[2];
 	unsigned char *iv;
 #if BYTE_ORDER != LITTLE_ENDIAN

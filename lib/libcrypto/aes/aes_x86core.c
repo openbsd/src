@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_x86core.c,v 1.6 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: aes_x86core.c,v 1.7 2014/10/28 07:35:58 jsg Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -90,7 +90,7 @@ typedef unsigned long long u64;
 #undef ROTATE
 #if defined(__GNUC__) && __GNUC__>=2
 # if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
-#   define ROTATE(a,n)	({ register unsigned int ret;	\
+#   define ROTATE(a,n)	({ unsigned int ret;	\
 				asm (			\
 				"roll %1,%0"		\
 				: "=r"(ret)		\

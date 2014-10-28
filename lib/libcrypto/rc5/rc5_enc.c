@@ -1,4 +1,4 @@
-/* $OpenBSD: rc5_enc.c,v 1.2 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: rc5_enc.c,v 1.3 2014/10/28 07:35:59 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,9 +64,9 @@ void RC5_32_cbc_encrypt(const unsigned char *in, unsigned char *out,
 			long length, RC5_32_KEY *ks, unsigned char *iv,
 			int encrypt)
 	{
-	register unsigned long tin0,tin1;
-	register unsigned long tout0,tout1,xor0,xor1;
-	register long l=length;
+	unsigned long tin0,tin1;
+	unsigned long tout0,tout1,xor0,xor1;
+	long l=length;
 	unsigned long tin[2];
 
 	if (encrypt)

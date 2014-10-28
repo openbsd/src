@@ -1,4 +1,4 @@
-/* $OpenBSD: xcbc_enc.c,v 1.7 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: xcbc_enc.c,v 1.8 2014/10/28 07:35:58 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,11 +114,11 @@ void DES_xcbc_encrypt(const unsigned char *in, unsigned char *out,
 		      DES_cblock *ivec, const_DES_cblock *inw,
 		      const_DES_cblock *outw, int enc)
 	{
-	register DES_LONG tin0,tin1;
-	register DES_LONG tout0,tout1,xor0,xor1;
-	register DES_LONG inW0,inW1,outW0,outW1;
-	register const unsigned char *in2;
-	register long l=length;
+	DES_LONG tin0,tin1;
+	DES_LONG tout0,tout1,xor0,xor1;
+	DES_LONG inW0,inW1,outW0,outW1;
+	const unsigned char *in2;
+	long l=length;
 	DES_LONG tin[2];
 	unsigned char *iv;
 

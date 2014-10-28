@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gf2m.c,v 1.15 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: bn_gf2m.c,v 1.16 2014/10/28 07:35:58 jsg Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -137,9 +137,9 @@ static void
 bn_GF2m_mul_1x1(BN_ULONG *r1, BN_ULONG *r0, const BN_ULONG a, const BN_ULONG b)
 {
 #ifndef _LP64
-	register BN_ULONG h, l, s;
+	BN_ULONG h, l, s;
 	BN_ULONG tab[8], top2b = a >> 30;
-	register BN_ULONG a1, a2, a4;
+	BN_ULONG a1, a2, a4;
 
 	a1 = a & (0x3FFFFFFF);
 	a2 = a1 << 1;
@@ -200,9 +200,9 @@ bn_GF2m_mul_1x1(BN_ULONG *r1, BN_ULONG *r0, const BN_ULONG a, const BN_ULONG b)
 	*r1 = h;
 	*r0 = l;
 #else
-	register BN_ULONG h, l, s;
+	BN_ULONG h, l, s;
 	BN_ULONG tab[16], top3b = a >> 61;
-	register BN_ULONG a1, a2, a4, a8;
+	BN_ULONG a1, a2, a4, a8;
 
 	a1 = a & (0x1FFFFFFFFFFFFFFFULL);
 	a2 = a1 << 1;

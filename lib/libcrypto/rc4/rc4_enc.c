@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4_enc.c,v 1.12 2014/07/09 16:06:13 miod Exp $ */
+/* $OpenBSD: rc4_enc.c,v 1.13 2014/10/28 07:35:59 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,8 +71,8 @@
 void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 	     unsigned char *outdata)
 	{
-        register RC4_INT *d;
-        register RC4_INT x,y,tx,ty;
+        RC4_INT *d;
+        RC4_INT x,y,tx,ty;
 	size_t i;
         
         x=key->x;     

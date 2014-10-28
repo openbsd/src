@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_shift.c,v 1.12 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: bn_shift.c,v 1.13 2014/10/28 07:35:58 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,7 +64,7 @@
 int
 BN_lshift1(BIGNUM *r, const BIGNUM *a)
 {
-	register BN_ULONG *ap, *rp, t, c;
+	BN_ULONG *ap, *rp, t, c;
 	int i;
 
 	bn_check_top(r);

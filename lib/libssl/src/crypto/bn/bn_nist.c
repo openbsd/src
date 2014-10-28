@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_nist.c,v 1.14 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: bn_nist.c,v 1.15 2014/10/28 07:35:58 jsg Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -424,7 +424,7 @@ BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 {
 	int top = a->top, i;
 	int carry;
-	register BN_ULONG *r_d, *a_d = a->d;
+	BN_ULONG *r_d, *a_d = a->d;
 	union {
 		BN_ULONG bn[BN_NIST_192_TOP];
 		unsigned int ui[BN_NIST_192_TOP *
@@ -740,7 +740,7 @@ BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 {
 	int i, top = a->top;
 	int carry = 0;
-	register BN_ULONG *a_d = a->d, *r_d;
+	BN_ULONG *a_d = a->d, *r_d;
 	union {
 		BN_ULONG bn[BN_NIST_256_TOP];
 		unsigned int ui[BN_NIST_256_TOP *
@@ -888,7 +888,7 @@ BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 		carry = (int)bn_add_words(t_d, t_d, c_d, BN_NIST_256_TOP);
 		/* left shift */
 		{
-			register BN_ULONG *ap, t, c;
+			BN_ULONG *ap, t, c;
 			ap = t_d;
 			c = 0;
 			for (i = BN_NIST_256_TOP; i != 0; --i) {
@@ -967,7 +967,7 @@ BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 {
 	int i, top = a->top;
 	int carry = 0;
-	register BN_ULONG *r_d, *a_d = a->d;
+	BN_ULONG *r_d, *a_d = a->d;
 	union {
 		BN_ULONG bn[BN_NIST_384_TOP];
 		unsigned int ui[BN_NIST_384_TOP *
@@ -1140,7 +1140,7 @@ BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 		    21 - 4);
 		/* left shift */
 		{
-			register BN_ULONG *ap, t, c;
+			BN_ULONG *ap, t, c;
 			ap = t_d;
 			c = 0;
 			for (i = 3; i != 0; --i) {

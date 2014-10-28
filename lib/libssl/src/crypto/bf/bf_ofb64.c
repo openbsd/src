@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_ofb64.c,v 1.4 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bf_ofb64.c,v 1.5 2014/10/28 07:35:58 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,11 +66,11 @@
 void BF_ofb64_encrypt(const unsigned char *in, unsigned char *out, long length,
 	     const BF_KEY *schedule, unsigned char *ivec, int *num)
 	{
-	register BF_LONG v0,v1,t;
-	register int n= *num;
-	register long l=length;
+	BF_LONG v0,v1,t;
+	int n= *num;
+	long l=length;
 	unsigned char d[8];
-	register char *dp;
+	char *dp;
 	BF_LONG ti[2];
 	unsigned char *iv;
 	int save=0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cfb64enc.c,v 1.5 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: cfb64enc.c,v 1.6 2014/10/28 07:35:58 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,9 +67,9 @@ void DES_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 		       long length, DES_key_schedule *schedule,
 		       DES_cblock *ivec, int *num, int enc)
 	{
-	register DES_LONG v0,v1;
-	register long l=length;
-	register int n= *num;
+	DES_LONG v0,v1;
+	long l=length;
+	int n= *num;
 	DES_LONG ti[2];
 	unsigned char *iv,c,cc;
 

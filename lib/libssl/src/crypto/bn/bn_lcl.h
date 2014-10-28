@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lcl.h,v 1.20 2014/07/10 22:45:56 jsing Exp $ */
+/* $OpenBSD: bn_lcl.h,v 1.21 2014/10/28 07:35:58 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -227,7 +227,7 @@ extern "C" {
 # if defined(__alpha)
 #  if defined(__GNUC__) && __GNUC__>=2
 #   define BN_UMULT_HIGH(a,b)	({	\
-	register BN_ULONG ret;		\
+	BN_ULONG ret;		\
 	asm ("umulh	%1,%2,%0"	\
 	     : "=r"(ret)		\
 	     : "r"(a), "r"(b));		\
@@ -236,7 +236,7 @@ extern "C" {
 # elif defined(_ARCH_PPC) && defined(_LP64)
 #  if defined(__GNUC__) && __GNUC__>=2
 #   define BN_UMULT_HIGH(a,b)	({	\
-	register BN_ULONG ret;		\
+	BN_ULONG ret;		\
 	asm ("mulhdu	%0,%1,%2"	\
 	     : "=r"(ret)		\
 	     : "r"(a), "r"(b));		\
@@ -245,7 +245,7 @@ extern "C" {
 # elif defined(__x86_64) || defined(__x86_64__)
 #  if defined(__GNUC__) && __GNUC__>=2
 #   define BN_UMULT_HIGH(a,b)	({	\
-	register BN_ULONG ret,discard;	\
+	BN_ULONG ret,discard;	\
 	asm ("mulq	%3"		\
 	     : "=a"(discard),"=d"(ret)	\
 	     : "a"(a), "g"(b)		\
@@ -266,7 +266,7 @@ extern "C" {
 	(high)=ret>>64; (low)=ret;	 })
 #   else
 #     define BN_UMULT_HIGH(a,b)	({	\
-	register BN_ULONG ret;		\
+	BN_ULONG ret;		\
 	asm ("dmultu	%1,%2"		\
 	     : "=h"(ret)		\
 	     : "r"(a), "r"(b) : "l");	\

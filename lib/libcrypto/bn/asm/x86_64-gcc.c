@@ -1,4 +1,4 @@
-/* $OpenBSD: x86_64-gcc.c,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: x86_64-gcc.c,v 1.4 2014/10/28 07:35:58 jsg Exp $ */
 #include "../bn_lcl.h"
 #if !(defined(__GNUC__) && __GNUC__>=2)
 # include "../bn_asm.c"	/* kind of dirty hack for Sun Studio */
@@ -68,7 +68,7 @@
  *			want to keep the value of zero;
  */
 #define mul_add(r,a,word,carry) do {	\
-	register BN_ULONG high,low;	\
+	BN_ULONG high,low;	\
 	asm ("mulq %3"			\
 		: "=a"(low),"=d"(high)	\
 		: "a"(word),"m"(a)	\
@@ -85,7 +85,7 @@
 	} while (0)
 
 #define mul(r,a,word,carry) do {	\
-	register BN_ULONG high,low;	\
+	BN_ULONG high,low;	\
 	asm ("mulq %3"			\
 		: "=a"(low),"=d"(high)	\
 		: "a"(word),"g"(a)	\
