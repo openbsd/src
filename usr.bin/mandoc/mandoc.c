@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.54 2014/10/13 17:16:25 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.55 2014/10/28 13:22:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -332,13 +332,18 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		if (1 == *sz && 'c' == **start)
 			gly = ESCAPE_NOSPACE;
 		/*
-		 * Unicode escapes are defined in groff as \[uXXXX]
+		 * Unicode escapes are defined in groff as \[u0000]
 		 * to \[u10FFFF], where the contained value must be
 		 * a valid Unicode codepoint.  Here, however, only
-		 * check the length and the validity of all digits.
+		 * check the length and range.
 		 */
-		else if (*sz > 4 && *sz < 8 && **start == 'u' &&
-		    (int)strspn(*start + 1, "0123456789ABCDEFabcdef")
+		if (**start != 'u' || *sz < 5 || *sz > 7)
+			break;
+		if (*sz == 7 && ((*start)[1] != '1' || (*start)[2] != '0'))
+			break;
+		if (*sz == 6 && (*start)[1] == '0')
+			break;
+		if ((int)strspn(*start + 1, "0123456789ABCDEFabcdef")
 		    + 1 == *sz)
 			gly = ESCAPE_UNICODE;
 		break;
