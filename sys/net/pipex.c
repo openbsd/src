@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.59 2014/10/28 09:10:21 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.60 2014/10/28 09:15:09 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -129,7 +129,8 @@ int pipex_debug = 0;		/* systcl net.inet.ip.pipex_debug */
 void
 pipex_init(void)
 {
-	extern int max_keylen;		/* for radix.c */
+	int		 i;
+	extern int	 max_keylen;		/* for radix.c */
 
 	if (pipex_softintr != NULL)
 		return;
@@ -144,8 +145,10 @@ pipex_init(void)
 
 	if (sizeof(struct sockaddr_in) > max_keylen)
 		max_keylen = sizeof(struct sockaddr_in);
-	memset(pipex_id_hashtable, 0, sizeof(pipex_id_hashtable));
-	memset(pipex_peer_addr_hashtable, 0, sizeof(pipex_peer_addr_hashtable));
+	for (i = 0; i < nitems(pipex_id_hashtable); i++)
+		LIST_INIT(&pipex_id_hashtable[i]);
+	for (i = 0; i < nitems(pipex_peer_addr_hashtable); i++)
+		LIST_INIT(&pipex_peer_addr_hashtable[i]);
 	/* queue and softintr init */
 	IFQ_SET_MAXLEN(&pipexinq, IFQ_MAXLEN);
 	IFQ_SET_MAXLEN(&pipexoutq, IFQ_MAXLEN);
@@ -178,7 +181,7 @@ pipex_iface_init(struct pipex_iface_context *pipex_iface, struct ifnet *ifp)
 	splx(s);
 
 	/* virtual pipex_session entry for multicast */
-	session = pool_get(&pipex_session_pool, PR_WAITOK);
+	session = pool_get(&pipex_session_pool, PR_WAITOK | PR_ZERO);
 	session->is_multicast = 1;
 	session->pipex_iface = pipex_iface;
 	pipex_iface->multicast_session = session;
