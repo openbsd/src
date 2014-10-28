@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.60 2014/10/28 09:15:09 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.61 2014/10/28 09:45:37 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -753,7 +753,7 @@ pipex_ppp_dequeue(void)
 				if (session->ip_forward == 0 &&
 				    session->ip6_forward == 0)
 					continue;
-				m0 = m_copym(m, 0, M_COPYALL, M_WAITOK);
+				m0 = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 				if (m0 == NULL) {
 					session->stat.oerrors++;
 					continue;
@@ -913,8 +913,10 @@ pipex_output(struct mbuf *m0, int af, int off,
 	struct ip ip;
 	struct pipex_tag *tag;
 	struct m_tag *mtag;
+	struct mbuf *mret;
 
 	session = NULL;
+	mret = NULL;
 	switch (af) {
 	case AF_INET:
 		if (m0->m_pkthdr.len >= sizeof(struct ip) + off) {
@@ -939,16 +941,33 @@ pipex_output(struct mbuf *m0, int af, int off,
 				}
 			}
 
+			if (session == pipex_iface->multicast_session) {
+				mret = m0;
+				m0 = m_copym(m0, 0, M_COPYALL, M_NOWAIT);
+				if (m0 == NULL) {
+					m0 = mret;
+					mret = NULL;
+					goto drop;
+				}
+			}
+
 			if (off > 0)
 				m_adj(m0, off);
 
 			pipex_ip_output(m0, session);
-			return (NULL);
+			return (mret);
 		}
 		break;
 	}
 
 	return (m0);
+
+drop:
+	if (m0 != NULL)
+		m_freem(m0);
+	if (session != NULL)
+		session->stat.oerrors++;
+	return(NULL);
 }
 
 Static void
