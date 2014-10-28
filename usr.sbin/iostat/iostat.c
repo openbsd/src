@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.36 2014/10/26 20:37:15 brad Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.37 2014/10/28 05:48:22 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ main(int argc, char *argv[])
 {
 	const char *errstr;
 	int ch, hdrcnt;
-	struct timeval	tv;
+	struct timespec	ts;
 
 	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:")) != -1)
 		switch(ch) {
@@ -164,8 +164,8 @@ main(int argc, char *argv[])
 	dkreadstats();
 	selectdrives(argv);
 
-	tv.tv_sec = interval;
-	tv.tv_usec = 0;
+	ts.tv_sec = interval;
+	ts.tv_nsec = 0;
 
 	/* print a new header on sigcont */
 	signal(SIGCONT, sigheader);
@@ -183,7 +183,7 @@ main(int argc, char *argv[])
 
 		if (reps >= 0 && --reps <= 0)
 			break;
-		select(0, NULL, NULL, NULL, &tv);
+		nanosleep(&ts, NULL);
 		dkreadstats();
 		if (last.dk_ndrive != cur.dk_ndrive)
 			wantheader = 1;
