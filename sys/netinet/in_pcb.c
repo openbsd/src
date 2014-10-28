@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.160 2014/10/14 09:52:26 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.161 2014/10/28 11:02:38 yasuoka Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -799,10 +799,11 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 	struct in_ifaddr *ia = NULL;
 
 	/*
-	 * If the source address is not specified but the socket(if any)
-	 * is already bound, use the bound address.
+	 * If the socket(if any) is already bound, use that bound address
+	 * unless it is INADDR_ANY or INADDR_BROADCAST.
 	 */
-	if (laddr && laddr->s_addr != INADDR_ANY) {
+	if (laddr && laddr->s_addr != INADDR_ANY &&
+	    laddr->s_addr != INADDR_BROADCAST) {
 		*insrc = laddr;
 		return (0);
 	}
