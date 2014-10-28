@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.58 2014/10/21 10:52:53 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.59 2014/10/28 09:10:21 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -2019,6 +2019,7 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		ip->ip_len = htons(hlen + plen);
 		ip->ip_ttl = MAXTTL;
 		ip->ip_tos = 0;
+		ip->ip_off = 0;
 
 		if (ip_output(m0, NULL, NULL, 0, NULL, NULL,
 		    session->proto.l2tp.ipsecflowinfo) != 0) {
