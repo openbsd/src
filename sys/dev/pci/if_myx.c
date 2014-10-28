@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.70 2014/10/04 11:42:27 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.71 2014/10/28 00:36:06 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1875,13 +1875,57 @@ myx_rx_zero(struct myx_softc *sc, int ring)
 	}
 }
 
-int
-myx_rx_fill(struct myx_softc *sc, int ring)
+static inline int
+myx_rx_fill_slots(struct myx_softc *sc, int ring, u_int slots)
 {
 	struct myx_rx_desc rxd;
 	struct myx_buf *mb, *firstmb;
 	u_int32_t offset = sc->sc_rx_ring_offset[ring];
-	u_int idx, firstidx, slots;
+	u_int idx, firstidx;
+
+	firstmb = myx_buf_fill(sc, ring);
+	if (firstmb == NULL)
+		return (slots);
+
+	myx_buf_put(&sc->sc_rx_buf_list[ring], firstmb);
+
+	firstidx = sc->sc_rx_ring_idx[ring];
+	idx = firstidx + 1;
+	idx %= sc->sc_rx_ring_count;
+	slots--;
+
+	while (slots > 0 && (mb = myx_buf_fill(sc, ring)) != NULL) {
+		myx_buf_put(&sc->sc_rx_buf_list[ring], mb);
+
+		rxd.rx_addr = htobe64(mb->mb_map->dm_segs[0].ds_addr);
+		myx_bus_space_write(sc->sc_memt, sc->sc_memh,
+		    offset + idx * sizeof(rxd), &rxd, sizeof(rxd));
+
+		idx++;
+		idx %= sc->sc_rx_ring_count;
+		slots--;
+	}
+
+	/* make sure the first descriptor is seen after the others */
+	if (idx != firstidx + 1) {
+		bus_space_barrier(sc->sc_memt, sc->sc_memh,
+		    offset, sizeof(rxd) * sc->sc_rx_ring_count,
+		    BUS_SPACE_BARRIER_WRITE);
+	}
+
+	rxd.rx_addr = htobe64(firstmb->mb_map->dm_segs[0].ds_addr);
+	myx_write(sc, offset + firstidx * sizeof(rxd),
+	    &rxd, sizeof(rxd));
+
+	sc->sc_rx_ring_idx[ring] = idx;
+
+	return (slots);
+}
+
+int
+myx_rx_fill(struct myx_softc *sc, int ring)
+{
+	u_int slots;
 	int rv = 1;
 
 	if (!myx_ring_enter(&sc->sc_rx_ring_lock[ring]))
@@ -1892,44 +1936,12 @@ myx_rx_fill(struct myx_softc *sc, int ring)
 		slots = if_rxr_get(&sc->sc_rx_ring[ring], sc->sc_rx_ring_count);
 		mtx_leave(&sc->sc_rx_ring_lock[ring].mrl_mtx);
 
-		if (slots-- == 0)
+		if (slots == 0)
 			continue;
 
-		firstmb = myx_buf_fill(sc, ring);
-		if (firstmb == NULL)
-			continue;
-
+		slots = myx_rx_fill_slots(sc, ring, slots);
 		rv = 0;
-		myx_buf_put(&sc->sc_rx_buf_list[ring], firstmb);
 
-		firstidx = sc->sc_rx_ring_idx[ring];
-		idx = firstidx + 1;
-		idx %= sc->sc_rx_ring_count;
-
-		while (slots > 0 && (mb = myx_buf_fill(sc, ring)) != NULL) {
-			myx_buf_put(&sc->sc_rx_buf_list[ring], mb);
-
-			rxd.rx_addr = htobe64(mb->mb_map->dm_segs[0].ds_addr);
-			myx_bus_space_write(sc->sc_memt, sc->sc_memh,
-			    offset + idx * sizeof(rxd), &rxd, sizeof(rxd));
-
-			idx++;
-			idx %= sc->sc_rx_ring_count;
-			slots--;
-		}
-
-		/* make sure the first descriptor is seen after the others */
-		if (idx != firstidx + 1) {
-			bus_space_barrier(sc->sc_memt, sc->sc_memh,
-			    offset, sizeof(rxd) * sc->sc_rx_ring_count,
-			    BUS_SPACE_BARRIER_WRITE);
-		}
-
-		rxd.rx_addr = htobe64(firstmb->mb_map->dm_segs[0].ds_addr);
-		myx_write(sc, offset + firstidx * sizeof(rxd),
-		    &rxd, sizeof(rxd));
-
-		sc->sc_rx_ring_idx[ring] = idx;
 		mtx_enter(&sc->sc_rx_ring_lock[ring].mrl_mtx);
 		if_rxr_put(&sc->sc_rx_ring[ring], slots);
 		mtx_leave(&sc->sc_rx_ring_lock[ring].mrl_mtx);
