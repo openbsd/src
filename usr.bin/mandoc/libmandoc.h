@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmandoc.h,v 1.30 2014/10/16 01:10:06 schwarze Exp $ */
+/*	$OpenBSD: libmandoc.h,v 1.31 2014/10/28 17:35:42 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -64,7 +64,7 @@ int		 man_addspan(struct man *, const struct tbl_span *);
 int		 man_addeqn(struct man *, const struct eqn *);
 
 void		 roff_free(struct roff *);
-struct roff	*roff_alloc(struct mparse *, int);
+struct roff	*roff_alloc(struct mparse *, const struct mchars *, int);
 void		 roff_reset(struct roff *);
 enum rofferr	 roff_parseln(struct roff *, int,
 			char **, size_t *, int, int *);

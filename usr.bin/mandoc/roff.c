@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.108 2014/10/25 15:23:25 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.109 2014/10/28 17:35:42 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -105,6 +105,7 @@ struct	roffreg {
 
 struct	roff {
 	struct mparse	*parse; /* parse point */
+	const struct mchars *mchars; /* character table */
 	struct roffnode	*last; /* leaf of stack */
 	int		*rstack; /* stack of inverted `ie' values */
 	struct roffreg	*regtab; /* number registers */
@@ -474,12 +475,13 @@ roff_free(struct roff *r)
 }
 
 struct roff *
-roff_alloc(struct mparse *parse, int options)
+roff_alloc(struct mparse *parse, const struct mchars *mchars, int options)
 {
 	struct roff	*r;
 
 	r = mandoc_calloc(1, sizeof(struct roff));
 	r->parse = parse;
+	r->mchars = mchars;
 	r->options = options;
 	r->format = options & (MPARSE_MDOC | MPARSE_MAN);
 	r->rstackpos = -1;
@@ -506,6 +508,8 @@ roff_res(struct roff *r, char **bufp, size_t *szp, int ln, int pos)
 	char		*nbuf;	/* new buffer to copy bufp to */
 	size_t		 maxl;  /* expected length of the escape name */
 	size_t		 naml;	/* actual length of the escape name */
+	enum mandoc_esc	 esc;	/* type of the escape sequence */
+	int		 inaml;	/* length returned from mandoc_escape() */
 	int		 expand_count;	/* to avoid infinite loops */
 	int		 npos;	/* position in numeric expression */
 	int		 arg_complete; /* argument not interrupted by eol */
@@ -549,7 +553,10 @@ roff_res(struct roff *r, char **bufp, size_t *szp, int ln, int pos)
 			res = ubuf;
 			break;
 		default:
-			if (ESCAPE_ERROR == mandoc_escape(&cp, NULL, NULL))
+			esc = mandoc_escape(&cp, &stnam, &inaml);
+			if (esc == ESCAPE_ERROR ||
+			    (esc == ESCAPE_SPECIAL &&
+			     mchars_spec2cp(r->mchars, stnam, inaml) < 0))
 				mandoc_vmsg(MANDOCERR_ESC_BAD,
 				    r->parse, ln, (int)(stesc - *bufp),
 				    "%.*s", (int)(cp - stesc), stesc);
