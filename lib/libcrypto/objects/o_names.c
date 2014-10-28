@@ -1,4 +1,4 @@
-/* $OpenBSD: o_names.c,v 1.18 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: o_names.c,v 1.19 2014/10/28 05:46:56 miod Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,7 +74,11 @@ OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 		name_funcs->hash_func = lh_strhash;
 		name_funcs->cmp_func = strcmp;
 		name_funcs->free_func = NULL;
-		sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
+		if (sk_NAME_FUNCS_push(name_funcs_stack, name_funcs) == 0) {
+			free(name_funcs);
+			OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);
+			return (0);
+		}
 	}
 	name_funcs = sk_NAME_FUNCS_value(name_funcs_stack, ret);
 	if (hash_func != NULL)

@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_alt.c,v 1.21 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_alt.c,v 1.22 2014/10/28 05:46:56 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -253,21 +253,24 @@ v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	CONF_VALUE *cnf;
 	int i;
 
-	if (!(gens = sk_GENERAL_NAME_new_null())) {
+	if ((gens = sk_GENERAL_NAME_new_null()) == NULL) {
 		X509V3err(X509V3_F_V2I_ISSUER_ALT, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
 		cnf = sk_CONF_VALUE_value(nval, i);
-		if (!name_cmp(cnf->name, "issuer") && cnf->value &&
-		    !strcmp(cnf->value, "copy")) {
+		if (name_cmp(cnf->name, "issuer") == 0 && cnf->value != NULL &&
+		    strcmp(cnf->value, "copy") == 0) {
 			if (!copy_issuer(ctx, gens))
 				goto err;
 		} else {
 			GENERAL_NAME *gen;
-			if (!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
+			if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL)
 				goto err;
-			sk_GENERAL_NAME_push(gens, gen);
+			if (sk_GENERAL_NAME_push(gens, gen) == 0) {
+				GENERAL_NAME_free(gen);
+				goto err;
+			}
 		}
 	}
 	return gens;
@@ -344,7 +347,10 @@ v2i_subject_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 			GENERAL_NAME *gen;
 			if (!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
 				goto err;
-			sk_GENERAL_NAME_push(gens, gen);
+			if (sk_GENERAL_NAME_push(gens, gen) == 0) {
+				GENERAL_NAME_free(gen);
+				goto err;
+			}
 		}
 	}
 	return gens;
@@ -429,7 +435,10 @@ v2i_GENERAL_NAMES(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 		cnf = sk_CONF_VALUE_value(nval, i);
 		if (!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
 			goto err;
-		sk_GENERAL_NAME_push(gens, gen);
+		if (sk_GENERAL_NAME_push(gens, gen) == 0) {
+			GENERAL_NAME_free(gen);
+			goto err;
+		}
 	}
 	return gens;
 
@@ -537,7 +546,7 @@ a2i_GENERAL_NAME(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 	return gen;
 
 err:
-	if (!out)
+	if (out == NULL)
 		GENERAL_NAME_free(gen);
 	return NULL;
 }

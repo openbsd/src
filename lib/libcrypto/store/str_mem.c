@@ -1,4 +1,4 @@
-/* $OpenBSD: str_mem.c,v 1.9 2014/07/09 16:59:33 miod Exp $ */
+/* $OpenBSD: str_mem.c,v 1.10 2014/10/28 05:46:56 miod Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2003.
  */
@@ -250,7 +250,11 @@ mem_list_start(STORE *s, STORE_OBJECT_TYPES type, OPENSSL_ITEM attributes[],
 				goto err;
 			}
 		}
-		sk_STORE_ATTR_INFO_push(context->search_attributes, attrs);
+		if (sk_STORE_ATTR_INFO_push(context->search_attributes,
+		    attrs) == 0) {
+			STOREerr(STORE_F_MEM_LIST_START, ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
 	}
 	if (!STORE_parse_attrs_endp(attribute_context))
 		goto err;

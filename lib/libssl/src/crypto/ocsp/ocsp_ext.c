@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ext.c,v 1.12 2014/10/22 13:02:04 jsing Exp $ */
+/* $OpenBSD: ocsp_ext.c,v 1.13 2014/10/28 05:46:56 miod Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -526,7 +526,10 @@ OCSP_accept_responses_new(char **oids)
 	while (oids && *oids) {
 		if ((nid = OBJ_txt2nid(*oids)) != NID_undef &&
 		    (o = OBJ_nid2obj(nid)))
-			sk_ASN1_OBJECT_push(sk, o);
+			if (sk_ASN1_OBJECT_push(sk, o) == 0) {
+				sk_ASN1_OBJECT_pop_free(sk, ASN1_OBJECT_free);
+				return NULL;
+			}
 		oids++;
 	}
 	x = X509V3_EXT_i2d(NID_id_pkix_OCSP_acceptableResponses, 0, sk);

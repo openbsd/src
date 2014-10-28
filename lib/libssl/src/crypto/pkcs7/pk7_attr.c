@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_attr.c,v 1.9 2014/06/29 17:05:36 jsing Exp $ */
+/* $OpenBSD: pk7_attr.c,v 1.10 2014/10/28 05:46:56 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -107,29 +107,29 @@ PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
 		return 0;
 	}
 	ASN1_OBJECT_free(alg->algorithm);
-	alg->algorithm = OBJ_nid2obj (nid);
+	alg->algorithm = OBJ_nid2obj(nid);
 	if (arg > 0) {
 		ASN1_INTEGER *nbit;
-		if (!(alg->parameter = ASN1_TYPE_new())) {
-			PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP,
-			    ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		if (!(nbit = ASN1_INTEGER_new())) {
-			PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP,
-			    ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		if (!ASN1_INTEGER_set (nbit, arg)) {
-			PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP,
-			    ERR_R_MALLOC_FAILURE);
-			return 0;
+
+		if (!(alg->parameter = ASN1_TYPE_new()))
+			goto err;
+		if (!(nbit = ASN1_INTEGER_new()))
+			goto err;
+		if (!ASN1_INTEGER_set(nbit, arg)) {
+			ASN1_INTEGER_free(nbit);
+			goto err;
 		}
 		alg->parameter->value.integer = nbit;
 		alg->parameter->type = V_ASN1_INTEGER;
 	}
-	sk_X509_ALGOR_push (sk, alg);
+	if (sk_X509_ALGOR_push(sk, alg) == 0)
+		goto err;
 	return 1;
+
+err:
+	PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP, ERR_R_MALLOC_FAILURE);
+	X509_ALGOR_free(alg);
+	return 0;
 }
 
 int

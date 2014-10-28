@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.21 2014/07/11 14:16:10 miod Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.22 2014/10/28 05:46:56 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -130,7 +130,7 @@ EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 		char obj_tmp[80];
 		EVPerr(EVP_F_EVP_PBE_CIPHERINIT, EVP_R_UNKNOWN_PBE_ALGORITHM);
 		if (!pbe_obj)
-			strlcpy (obj_tmp, "NULL", sizeof obj_tmp);
+			strlcpy(obj_tmp, "NULL", sizeof obj_tmp);
 		else
 			i2t_ASN1_OBJECT(obj_tmp, sizeof obj_tmp, pbe_obj);
 		ERR_asprintf_error_data("TYPE=%s", obj_tmp);
@@ -205,7 +205,7 @@ EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
 
 	if (!pbe_algs)
 		pbe_algs = sk_EVP_PBE_CTL_new(pbe_cmp);
-	if (!(pbe_tmp = (EVP_PBE_CTL*) malloc (sizeof(EVP_PBE_CTL)))) {
+	if (!(pbe_tmp = (EVP_PBE_CTL*)malloc(sizeof(EVP_PBE_CTL)))) {
 		EVPerr(EVP_F_EVP_PBE_ALG_ADD_TYPE, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -215,7 +215,11 @@ EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
 	pbe_tmp->md_nid = md_nid;
 	pbe_tmp->keygen = keygen;
 
-	sk_EVP_PBE_CTL_push (pbe_algs, pbe_tmp);
+	if (sk_EVP_PBE_CTL_push(pbe_algs, pbe_tmp) == 0) {
+		free(pbe_tmp);
+		EVPerr(EVP_F_EVP_PBE_ALG_ADD_TYPE, ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
 	return 1;
 }
 

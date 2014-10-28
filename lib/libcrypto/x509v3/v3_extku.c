@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_extku.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_extku.c,v 1.10 2014/10/28 05:46:56 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -144,7 +144,13 @@ v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 			X509V3_conf_err(val);
 			return NULL;
 		}
-		sk_ASN1_OBJECT_push(extku, objtmp);
+		if (sk_ASN1_OBJECT_push(extku, objtmp) == 0) {
+			ASN1_OBJECT_free(objtmp);
+			sk_ASN1_OBJECT_pop_free(extku, ASN1_OBJECT_free);
+			X509V3err(X509V3_F_V2I_EXTENDED_KEY_USAGE,
+			    ERR_R_MALLOC_FAILURE);
+			return NULL;
+		}
 	}
 	return extku;
 }
