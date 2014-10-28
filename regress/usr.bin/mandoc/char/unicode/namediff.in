@@ -1,0 +1,12 @@
+.TH CHAR-UNICODE-NAMEDIFF 1 "October 27, 2014" OpenBSD
+.SH NAME
+char-unicode-namediff \- Unicode characters having named escapes
+.SH DESCRIPTION
+.nf
+BEGINTEST
+\[u0237]\(.j LATIN SMALL LETTER DOTLESS J
+\[u02D9]\(a. DOT ABOVE
+\[u0393]\(*G GREEK CAPITAL LETTER GAMMA
+\[u03A3]\(*S GREEK CAPITAL LETTER SIGMA
+ENDTEST
+.fi

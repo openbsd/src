@@ -1,0 +1,18 @@
+CHAR-UNICODE-NAMEDIFF(1)    General Commands Manual   CHAR-UNICODE-NAMEDIFF(1)
+
+
+
+NNAAMMEE
+       char-unicode-namediff - Unicode characters having named escapes
+
+DDEESSCCRRIIPPTTIIOONN
+       BEGINTEST
+       ȷȷ LATIN SMALL LETTER DOTLESS J
+       ˙˙ DOT ABOVE
+       ΓΓ GREEK CAPITAL LETTER GAMMA
+       ΣΣ GREEK CAPITAL LETTER SIGMA
+       ENDTEST
+
+
+
+OpenBSD                        October 27, 2014       CHAR-UNICODE-NAMEDIFF(1)

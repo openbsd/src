@@ -1,4 +1,4 @@
-.Dd May 28, 2012
+.Dd October 27, 2014
 .Dt ESC-ONE 1
 .Os OpenBSD
 .Sh NAME
@@ -12,3 +12,5 @@ minus: >\-<
 acute: >\'<
 .br
 grave: >\`<
+.br
+normal character: >\q<

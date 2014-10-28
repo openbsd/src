@@ -1,0 +1,25 @@
+CHAR-UNICODE-LATIN1DIFF(1)  General Commands Manual CHAR-UNICODE-LATIN1DIFF(1)
+
+
+
+NNAAMMEE
+       char-unicode-latin1diff - Unicode characters in the ISO-8859-1 range
+
+DDEESSCCRRIIPPTTIIOONN
+       BEGINTEST
+       !!   INVERTED EXCLAMATION MARK
+       GBPGBP    POUND SIGN
+       <sec><sec>     SECTION SIGN
+       --   MACRON
+       <deg><deg>     DEGREE SIGN
+       <par><par>     PILCROW SIGN
+       ??   INVERTED QUESTION MARK
+       ThTh LATIN CAPITAL LETTER THORN
+       ssss LATIN SMALL LETTER SHARP S
+       dd   LATIN SMALL LETTER ETH
+       thth LATIN SMALL LETTER THORN
+       ENDTEST
+
+
+
+OpenBSD                        October 27, 2014     CHAR-UNICODE-LATIN1DIFF(1)

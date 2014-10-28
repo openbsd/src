@@ -1,0 +1,29 @@
+.TH CHAR-UNICODE-ASCII 1 "October 27, 2014" OpenBSD
+.SH NAME
+char-unicode-ascii \- Unicode characters in the ASCII range
+.SH DESCRIPTION
+.nf
+BEGINTEST
+\[u0022]\N'34'\(dq	QUOTATION MARK
+\[u0023]\N'35'\(sh	NUMBER SIGN
+\[u0024]\N'36'\(Do	DOLLAR SIGN
+\[u0027]\N'39'\(aq	APOSTROPHE
+\[u002B]\N'43'\(pl	PLUS SIGN
+\N'45'\-	HYPHEN-MINUS
+\N'46'\.	FULL STOP
+\[u002F]\N'47'\(sl	SOLIDUS
+\[u003D]\N'61'\(eq	EQUALS SIGN
+\[u0040]\N'64'\(at	COMMERCIAL AT
+\[u005B]\N'91'\(lB	LEFT SQUARE BRACKET
+\[u005C]\N'92'\e\(rs	REVERSE SOLIDUS
+\[u005D]\N'93'\(rB	RIGHT SQUARE BRACKET
+\[u005E]\N'94'\(a^\(ha	CIRCUMFLEX ACCENT
+\[u005F]\N'95'\(ul	LOW LINE
+\[u0060]\N'96'\`\(ga	GRAVE ACCENT
+\[u007B]\N'123'\(lC	LEFT CURLY BRACKET
+\[u007C]\N'124'\(ba\(or	VERTICAL LINE
+\[u007D]\N'125'\(rC	RIGHT CURLY BRACKET
+\[u007E]\N'126'\(a~\(ti	TILDE
+ENDTEST
+.fi
+Note that groff does not handle \eC'u00XX' in the ASCII range.

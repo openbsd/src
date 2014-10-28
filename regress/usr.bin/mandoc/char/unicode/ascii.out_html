@@ -1,0 +1,22 @@
+BEGINTEST<br/>
+&quot;&quot;&quot;	QUOTATION MARK<br/>
+###	NUMBER SIGN<br/>
+$$$	DOLLAR SIGN<br/>
+'''	APOSTROPHE<br/>
++++	PLUS SIGN<br/>
+--	HYPHEN-MINUS<br/>
+..	FULL STOP<br/>
+///	SOLIDUS<br/>
+===	EQUALS SIGN<br/>
+@@@	COMMERCIAL AT<br/>
+[[[	LEFT SQUARE BRACKET<br/>
+\\\\	REVERSE SOLIDUS<br/>
+]]]	RIGHT SQUARE BRACKET<br/>
+^^^^	CIRCUMFLEX ACCENT<br/>
+___	LOW LINE<br/>
+````	GRAVE ACCENT<br/>
+{{{	LEFT CURLY BRACKET<br/>
+||||	VERTICAL LINE<br/>
+}}}	RIGHT CURLY BRACKET<br/>
+~~~~	TILDE<br/>
+ENDTEST<br/>

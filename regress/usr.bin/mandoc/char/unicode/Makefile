@@ -1,7 +1,10 @@
-# $OpenBSD: Makefile,v 1.1 2013/11/10 19:26:31 schwarze Exp $
+# $OpenBSD: Makefile,v 1.2 2014/10/28 02:49:48 schwarze Exp $
 
-REGRESS_TARGETS = man mdoc
-SKIP_ASCII = ALL
-UTF8_TARGETS = man mdoc
+REGRESS_TARGETS = ascii latin1 latin1diff man mdoc named namediff
+SKIP_ASCII = man mdoc
+UTF8_TARGETS = ascii latin1 latin1diff man mdoc named namediff
+HTML_TARGETS = ascii latin1 latin1diff named namediff
+
+SKIP_GROFF_ASCII = latin1diff namediff
 
 .include <bsd.regress.mk>

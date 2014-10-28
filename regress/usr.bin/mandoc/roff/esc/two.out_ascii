@@ -5,7 +5,7 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
      lines: | | _ | / \
-     markers: o <> [] 9| S <= => @ # _|
+     markers: o <> [] <= => @ # _|
      legal: (C) (R) tm
      punctuation: -- - -
      quotes: ,, , ` ' ' " << >> < >
@@ -15,11 +15,12 @@ DDEESSCCRRIIPPTTIIOONN
      mathematical: + - -+ +- . x -:- / * <= >= << >> = != == !== =~ ~ ~~ ~= oc
      {} E (= =) (^) U \/ |~ ~| |_ _| oo N I R a
      ligatures: ff fi fl ffi ffl AE ae OE oe IJ ij
-     accents: " ^ ' ` , " v o ~ , ^ ~
-     special letter: i
-     currency: $ EUR EUR <<
-     units: o '
-     greek letters: A B E Z H I K /\ M N O TT P T Y X a B y d e n i k v o p u
-     x w e s
+     accents: " ^ ' ` '` , " v o ~ , ^ ~
+     accented and special letters: 'A 'E 'I 'O 'U 'a 'e 'i 'o 'u `A `E `I `O `U `a `e `i `o `u ~A ~N
+     ~O ~a ~n ~o "A "E "I "O "U "a "e "i "o "u "y ^A ^E ^I ^O ^U ^a ^e ^i ^o ^u ,C ,c /L /l /O /o oA oa -D i
+     currency: $ /c EUR EUR =Y <<
+     units: ' ,u
+     greek letters: A B  E Z H  I K /\ M N  O TT P T Y  X IY _O a B y d e ,C n -0
+     i k >\ ,u v ,E o -n p -o ~t u |o x |u w -0 |o +p e s
 
-OpenBSD                          May 28, 2012                          OpenBSD
+OpenBSD                        October 28, 2014                        OpenBSD

@@ -1,4 +1,4 @@
-.Dd May 28, 2012
+.Dd October 28, 2014
 .Dt ESC-TWO 1
 .Os OpenBSD
 .Sh NAME
@@ -8,15 +8,16 @@
 lines: \(ba \(br \(ul \(bb \(sl \(rs
 .\" groff doesn't know \(rl
 .br
-markers: \(bu \(lz \(sq \(ps \(sc \(lh \(rh \(at \(sh \(CR
+markers: \(bu \(lz \(sq \(lh \(rh \(at \(sh \(CR
 .\" the circle \(ci differs
 .\" the daggers \(dd and \(dg use backspace
+.\" \(ps and \(sc intentionally differ
 .\" groff doesn't know \(OK
 .br
 legal: \(co \(rg \(tm
 .br
 punctuation: \(em \(en \(hy
-.\" the inverted punctuation \(r! and \(r? use backspace
+.\" the inverted punctuation is intentionally different
 .br
 quotes: \(Bq \(bq \(oq \(cq \(aq \(dq \(Fo \(Fc \(fo \(fc
 .\" the double quotes \(lq and \(rq differ
@@ -43,33 +44,32 @@ mathematical: \(pl \(mi \(-+ \(+- \(pc \(mu \(di \(f/ \(**
 ligatures: \(ff \(fi \(fl \(Fi \(Fl \(AE \(ae \(OE \(oe \(IJ \(ij
 .\" the German eszett \(ss differs
 .br
-accents: \(a" \(a^ \(aa \(ga \(ac \(ad \(ah \(ao \(a~ \(ho \(ha \(ti
+accents: \(a" \(a^ \(aa \(ga \(ab \(ac \(ad \(ah \(ao \(a~ \(ho \(ha \(ti
 .\" the macron \(a- differs
 .\" groff doesn't know \(a.
-.\" the breve \(ab uses backspace
 .br
-.\" accented and special letters all use backspace:
-.\" \('A \('E \('I \('O \('U \('a \('e \('i \('o \('u
-.\" \(`A \(`E \(`I \(`O \(`U \(`a \(`e \(`i \(`o \(`u
-.\" \(~A \(~N \(~O \(~a \(~n \(~o
-.\" \(:A \(:E \(:I \(:O \(:U \(:a \(:e \(:i \(:o \(:u \(:y
-.\" \(^A \(^E \(^I \(^O \(^U \(^a \(^e \(^i \(^o \(^u
-.\" \(,C \(,c \(/L \(/l \(/O \(/o \(oA \(oa
-.\" \(-D \(Sd \(TP \(Tp
-.\" except:
-special letter: \(.i
+accented and special letters:
+\('A \('E \('I \('O \('U \('a \('e \('i \('o \('u
+\(`A \(`E \(`I \(`O \(`U \(`a \(`e \(`i \(`o \(`u
+\(~A \(~N \(~O \(~a \(~n \(~o
+\(:A \(:E \(:I \(:O \(:U \(:a \(:e \(:i \(:o \(:u \(:y
+\(^A \(^E \(^I \(^O \(^U \(^a \(^e \(^i \(^o \(^u
+\(,C \(,c \(/L \(/l \(/O \(/o \(oA \(oa \(-D \(.i
+.\" these intentionally differ: \(Sd \(TP \(Tp
 .\" groff doesn't know \(.j
 .br
-currency: \(Do \(Eu \(eu \(Fo
-.\" these use backspace: \(ct \(Ye \(Po \(Cs
+currency: \(Do \(ct \(Eu \(eu \(Ye \(Fo
+.\" uses backspace: \(Cs
+.\" the GB pound \(Po is intentionally different
 .br
-units: \(de \(fm
-.\" groff doesn't know \(%O, and \(sd and \(mc differ
+units: \(fm \(mc
+.\" groff doesn't know \(%O
+.\" \(sd differs
+.\" \(de is intentionally different
 .br
-greek letters: \(*A \(*B \(*E \(*Z \(*Y \(*I \(*K \(*L
-\(*M \(*N \(*O \(*P \(*R \(*T \(*U \(*X
-\(*a \(*b \(*g \(*d \(*e \(*y \(*i \(*k
-\(*n \(*o \(*r \(*u \(*x \(*w \(+e \(ts
-.\" these differ: \(*G \(*S \(*F
-.\" these use backspace: \(*D \(*H \(*C \(*Q \(*W
-.\" \(*z \(*h \(*l \(*m \(*c \(*p \(*s \(*t \(*f \(*q \(+h \(+f \+p
+greek letters: \(*A \(*B \*D \(*E \(*Z \(*Y \*H \(*I \(*K \(*L
+\(*M \(*N \*C \(*O \(*P \(*R \(*T \(*U \*F \(*X \(*Q \(*W
+\(*a \(*b \(*g \(*d \(*e \(*z \(*y \(*h \(*i \(*k \(*l
+\(*m \(*n \(*c \(*o \(*p \(*r \(*s \(*t \(*u \(*f \(*x \(*q \(*w
+\(+h \(+f \+p \(+e \(ts
+.\" these differ: \(*G \(*S
