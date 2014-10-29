@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.h,v 1.12 2010/09/01 14:43:34 millert Exp $	*/
+/*	$OpenBSD: svc.h,v 1.13 2014/10/29 04:34:21 guenther Exp $	*/
 /*	$NetBSD: svc.h,v 1.9 1995/04/29 05:28:01 cgd Exp $	*/
 
 /*
@@ -305,6 +305,7 @@ __END_DECLS
 __BEGIN_DECLS
 extern SVCXPRT *svcudp_create(int);
 extern SVCXPRT *svcudp_bufcreate(int, unsigned int, unsigned int);
+extern int svcudp_enablecache(SVCXPRT *, u_long);
 __END_DECLS
 
 
