@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.54 2014/10/08 04:58:18 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.55 2014/10/29 06:16:34 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -437,15 +437,7 @@ rarp_loop(void)
 			/* Don't choke when we get ptraced */
 			if (cc < 0 && errno == EINTR)
 				goto again;
-			/* Due to a SunOS bug, after 2^31 bytes, the file
-			 * offset overflows and read fails with EINVAL.  The
-			 * lseek() to 0 will fix things. */
 			if (cc < 0) {
-				if (errno == EINVAL &&
-				    (lseek(fd, (off_t)0, SEEK_CUR) + bufsize) < 0) {
-					(void) lseek(fd, (off_t)0, SEEK_SET);
-					goto again;
-				}
 				error(FATAL, "read: %s", strerror(errno));
 				/* NOTREACHED */
 			}
