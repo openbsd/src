@@ -1,6 +1,8 @@
-#	$OpenBSD: Makefile,v 1.3 2000/03/31 01:00:49 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2014/10/29 03:33:14 dlg Exp $
 
 PROG=	inetd
+LDADD=	-levent
+DPADD=	${LIBEVENT}
 MAN=	inetd.8
 MLINKS=	inetd.8 inetd.conf.5
 
