@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.5 2014/09/13 23:38:24 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.6 2014/10/29 16:42:57 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -67,6 +67,7 @@ sub new {
 		$loghost .= ":$connectport" if $connectport;
 	}
 	print $fh "*.*\t$loghost\n";
+	print $fh $self->{conf} if $self->{conf};
 	close $fh;
 
 	return $self->create_out();
