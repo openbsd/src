@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.323 2014/10/27 19:54:31 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.324 2014/10/29 15:28:51 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -727,27 +727,32 @@ state_selecting(void)
 		client->new = picked;
 
 		/*
-		 * Fake up DHO_DHCP_LEASE_TIME, DHO_RENEWAL_TIME and
-		 * DHO_REBINDING_TIME options so bind_lease() can
-		 * set the times.
+		 * Set (unsigned 32 bit) options
+		 *
+		 * DHO_DHCP_LEASE_TIME (12000 seconds),
+		 * DHO_RENEWAL_TIME (8000 seconds)
+		 * DHO_REBINDING_TIME (10000 seconds)
+		 *
+		 * so bind_lease() can set the lease times. Note that the
+		 * values must be big-endian.
 		 */
 		option = &client->new->options[DHO_DHCP_LEASE_TIME];
 		option->data = malloc(4);
 		if (option->data) {
 			option->len = 4;
-			putULong(option->data, 12000);
+			memcpy(option->data, "\x00\x00\x2e\xe0", 4);
 		}
 		option = &client->new->options[DHO_DHCP_RENEWAL_TIME];
 		option->data = malloc(4);
 		if (option->data) {
 			option->len = 4;
-			putULong(option->data, 8000);
+			memcpy(option->data, "\x00\x00\x1f\x40", 4);
 		}
 		option = &client->new->options[DHO_DHCP_REBINDING_TIME];
 		option->data = malloc(4);
 		if (option->data) {
 			option->len = 4;
-			putULong(option->data, 10000);
+			memcpy(option->data, "\x00\x00\x27\x10", 4);
 		}
 
 		client->state = S_REQUESTING;
