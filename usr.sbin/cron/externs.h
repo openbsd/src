@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.11 2013/04/17 15:58:45 deraadt Exp $	*/
+/*	$OpenBSD: externs.h,v 1.12 2014/10/29 04:39:02 deraadt Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -50,6 +50,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <poll.h>
 #include <unistd.h>
 #include <utime.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.44 2013/04/17 15:58:45 deraadt Exp $	*/
+/*	$OpenBSD: cron.c,v 1.45 2014/10/29 04:39:02 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -379,17 +379,15 @@ cron_sleep(time_t target) {
 	struct timeval t1, t2, tv;
 	struct sockaddr_un s_un;
 	socklen_t sunlen;
-	static fd_set *fdsr;
+	static struct pollfd pfd[1];
 
 	gettimeofday(&t1, NULL);
 	t1.tv_sec += GMToff;
 	tv.tv_sec = (target * SECONDS_PER_MINUTE - t1.tv_sec) + 1;
 	tv.tv_usec = 0;
 
-	if (fdsr == NULL) {
-		fdsr = (fd_set *)calloc(howmany(cronSock + 1, NFDBITS),
-		    sizeof(fd_mask));
-	}
+	pfd[0].fd = cronSock;
+	pfd[0].events = POLLIN;
 
 	while (timerisset(&tv) && tv.tv_sec < 65) {
 		Debug(DSCH, ("[%ld] Target time=%lld, sec-to-wait=%lld\n",
@@ -397,10 +395,9 @@ cron_sleep(time_t target) {
 		    (long long)tv.tv_sec))
 
 		poke = RELOAD_CRON | RELOAD_AT;
-		if (fdsr)
-			FD_SET(cronSock, fdsr);
+
 		/* Sleep until we time out, get a poke, or get a signal. */
-		nfds = select(cronSock + 1, fdsr, NULL, NULL, &tv);
+		nfds = poll(pfd, 1, tv.tv_sec * 1000 + tv.tv_usec / 1000);
 		if (nfds == 0)
 			break;		/* timer expired */
 		if (nfds == -1 && errno != EINTR)
