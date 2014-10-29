@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.c,v 1.22 2014/10/18 21:56:44 bluhm Exp $	*/
+/*	$OpenBSD: select.c,v 1.23 2014/10/29 22:47:29 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -43,7 +43,6 @@
 #endif
 
 #include "event.h"
-#include "evutil.h"
 #include "event-internal.h"
 #include "evsignal.h"
 #include "log.h"
@@ -83,7 +82,7 @@ select_init(struct event_base *base)
 	struct selectop *sop;
 
 	/* Disable select when this environment variable is set */
-	if (evutil_getenv("EVENT_NOSELECT"))
+	if (!issetugid() && getenv("EVENT_NOSELECT"))
 		return (NULL);
 
 	if (!(sop = calloc(1, sizeof(struct selectop))))

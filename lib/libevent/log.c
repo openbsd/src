@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.9 2014/10/17 19:16:01 bluhm Exp $	*/
+/*	$OpenBSD: log.c,v 1.10 2014/10/29 22:47:29 bluhm Exp $	*/
 
 /*
  * log.c
@@ -48,7 +48,6 @@
 
 #include "event.h"
 #include "log.h"
-#include "evutil.h"
 
 static void _warn_helper(int severity, int log_errno, const char *fmt,
                          va_list ap);
@@ -123,14 +122,14 @@ _warn_helper(int severity, int log_errno, const char *fmt, va_list ap)
 	size_t len;
 
 	if (fmt != NULL)
-		evutil_vsnprintf(buf, sizeof(buf), fmt, ap);
+		vsnprintf(buf, sizeof(buf), fmt, ap);
 	else
 		buf[0] = '\0';
 
 	if (log_errno >= 0) {
 		len = strlen(buf);
 		if (len < sizeof(buf) - 3) {
-			evutil_snprintf(buf + len, sizeof(buf) - len, ": %s",
+			snprintf(buf + len, sizeof(buf) - len, ": %s",
 			    strerror(log_errno));
 		}
 	}

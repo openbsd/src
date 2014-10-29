@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.24 2014/10/18 21:56:44 bluhm Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.25 2014/10/29 22:47:29 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -40,7 +40,6 @@
 #include <unistd.h>
 
 #include "event.h"
-#include "evutil.h"
 #include "log.h"
 
 struct evbuffer *
@@ -130,7 +129,7 @@ evbuffer_add_vprintf(struct evbuffer *buf, const char *fmt, va_list ap)
 
 		va_copy(aq, ap);
 
-		sz = evutil_vsnprintf(buffer, space, fmt, aq);
+		sz = vsnprintf(buffer, space, fmt, aq);
 
 		va_end(aq);
 

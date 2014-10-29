@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.34 2014/10/29 22:38:42 bluhm Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.35 2014/10/29 22:47:29 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -84,7 +84,7 @@ kq_init(struct event_base *base)
 	struct kqop *kqueueop;
 
 	/* Disable kqueue when this environment variable is set */
-	if (evutil_getenv("EVENT_NOKQUEUE"))
+	if (!issetugid() && getenv("EVENT_NOKQUEUE"))
 		return (NULL);
 
 	if (!(kqueueop = calloc(1, sizeof(struct kqop))))

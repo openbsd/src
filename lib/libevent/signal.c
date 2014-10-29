@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.22 2014/10/18 16:48:28 bluhm Exp $	*/
+/*	$OpenBSD: signal.c,v 1.23 2014/10/29 22:47:29 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -44,7 +44,6 @@
 #include "event.h"
 #include "event-internal.h"
 #include "evsignal.h"
-#include "evutil.h"
 #include "log.h"
 
 struct event_base *evsignal_base = NULL;
@@ -63,29 +62,26 @@ evsignal_cb(int fd, short what, void *arg)
 		event_err(1, "%s: read", __func__);
 }
 
-#define FD_CLOSEONEXEC(x) do { \
-        if (fcntl(x, F_SETFD, FD_CLOEXEC) == -1) \
-                event_warn("fcntl(%d, F_SETFD)", x); \
-} while (0)
-
 int
 evsignal_init(struct event_base *base)
 {
-	int i;
+	int i, flags;
 
 	/* 
 	 * Our signal handler is going to write to one end of the socket
 	 * pair to wake up our event loop.  The event loop then scans for
 	 * signals that got delivered.
 	 */
-	if (evutil_socketpair(
+	if (socketpair(
 		    AF_UNIX, SOCK_STREAM, 0, base->sig.ev_signal_pair) == -1) {
 		event_err(1, "%s: socketpair", __func__);
 		return -1;
 	}
 
-	FD_CLOSEONEXEC(base->sig.ev_signal_pair[0]);
-	FD_CLOSEONEXEC(base->sig.ev_signal_pair[1]);
+	if (fcntl(base->sig.ev_signal_pair[0], F_SETFD, FD_CLOEXEC) == -1)
+		event_warn("fcntl(signal_pair[0], FD_CLOEXEC)");
+	if (fcntl(base->sig.ev_signal_pair[1], F_SETFD, FD_CLOEXEC) == -1)
+		event_warn("fcntl(signal_pair[1], FD_CLOEXEC)");
 	base->sig.sh_old = NULL;
 	base->sig.sh_old_max = 0;
 	base->sig.evsignal_caught = 0;
@@ -94,7 +90,9 @@ evsignal_init(struct event_base *base)
 	for (i = 0; i < NSIG; ++i)
 		TAILQ_INIT(&base->sig.evsigevents[i]);
 
-        evutil_make_socket_nonblocking(base->sig.ev_signal_pair[0]);
+	if ((flags = fcntl(base->sig.ev_signal_pair[0], F_GETFL, NULL)) == -1 ||
+	    fcntl(base->sig.ev_signal_pair[0], F_SETFL, flags|O_NONBLOCK) == -1)
+		event_warn("fcntl(signal_pair[0], O_NONBLOCK)");
 
 	event_set(&base->sig.ev_signal, base->sig.ev_signal_pair[1],
 		EV_READ | EV_PERSIST, evsignal_cb, &base->sig.ev_signal);
@@ -290,11 +288,11 @@ evsignal_dealloc(struct event_base *base)
 	}
 
 	if (base->sig.ev_signal_pair[0] != -1) {
-		EVUTIL_CLOSESOCKET(base->sig.ev_signal_pair[0]);
+		close(base->sig.ev_signal_pair[0]);
 		base->sig.ev_signal_pair[0] = -1;
 	}
 	if (base->sig.ev_signal_pair[1] != -1) {
-		EVUTIL_CLOSESOCKET(base->sig.ev_signal_pair[1]);
+		close(base->sig.ev_signal_pair[1]);
 		base->sig.ev_signal_pair[1] = -1;
 	}
 	base->sig.sh_old_max = 0;
