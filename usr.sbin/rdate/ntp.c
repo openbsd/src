@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.31 2011/12/28 21:39:30 sthen Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.32 2014/10/29 04:00:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <poll.h>
 #include <unistd.h>
 
 #include "ntpleaps.h"
@@ -264,7 +265,7 @@ write_packet(int fd, struct ntp_data *data)
 
 	packet[0] = (NTP_VERSION << 3) | (NTP_MODE_CLIENT);
 
-	data->xmitck = (u_int64_t)arc4random() << 32 | arc4random();
+	arc4random_buf(&data->xmitck, sizeof(data->xmitck));
 
 	/*
 	 * Send out a random 64-bit number as our transmit time.  The NTP
@@ -306,42 +307,28 @@ int
 read_packet(int fd, struct ntp_data *data, double *off, double *error)
 {
 	u_char	receive[NTP_PACKET_MAX];
-	struct	timeval tv;
+	struct	pollfd pfd[1];
 	double	x, y;
 	int	length, r;
-	fd_set	*rfds;
 
-	rfds = calloc(howmany(fd + 1, NFDBITS), sizeof(fd_mask));
-	if (rfds == NULL)
-		err(1, "calloc");
-
-	FD_SET(fd, rfds);
+	pfd[0].fd = fd;
+	pfd[0].events = POLLIN;
 
 retry:
-	tv.tv_sec = 0;
-	tv.tv_usec = 1000000 * MAX_DELAY / MAX_QUERIES;
-
-	r = select(fd + 1, rfds, NULL, NULL, &tv);
-
+	r = poll(pfd, 1, 1000 * MAX_DELAY / MAX_QUERIES);
 	if (r < 0) {
 		if (errno == EINTR)
 			goto retry;
-		else
-			warn("select");
-
-		free(rfds);
+		warn("select");
 		return (r);
 	}
 
-	if (r != 1 || !FD_ISSET(fd, rfds)) {
-		free(rfds);
+	if (r != 1)
 		return (1);
-	}
-
-	free(rfds);
+	if ((pfd[0].revents & POLLIN) == 0)
+		return (1);
 
 	length = read(fd, receive, NTP_PACKET_MAX);
-
 	if (length < 0) {
 		warn("Unable to receive NTP packet from server");
 		return (-1);
