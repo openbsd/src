@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.190 2014/10/22 16:35:34 millert Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.191 2014/10/29 06:26:40 deraadt Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -43,6 +43,7 @@
 #include <netinet/ip_ipsp.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
+#include <poll.h>
 #include <string.h>
 #include <unistd.h>
 #include <pwd.h>
@@ -203,8 +204,11 @@ pf_key_v2_read(u_int32_t seq)
 	struct sadb_msg *msg;
 	struct sadb_msg hdr;
 	struct sadb_ext *ext;
-	struct timeval  tv;
-	fd_set         *fds;
+	struct timeval	tv;
+	struct pollfd	pfd[1];
+
+	pfd[0].fd = pf_key_v2_socket;
+	pfd[0].events = POLLIN;
 
 	while (1) {
 		/*
@@ -214,25 +218,9 @@ pf_key_v2_read(u_int32_t seq)
 		 * and if it is not readable in that time, we fail the read.
 		 */
 		if (seq) {
-			fds = calloc(howmany(pf_key_v2_socket + 1, NFDBITS),
-			    sizeof(fd_mask));
-			if (!fds) {
-				log_error("pf_key_v2_read: "
-				    "calloc (%lu, %lu) failed",
-				    (unsigned long) howmany(pf_key_v2_socket + 1,
-					NFDBITS),
-				    (unsigned long) sizeof(fd_mask));
-				goto cleanup;
-			}
-			FD_SET(pf_key_v2_socket, fds);
-			tv.tv_sec = 0;
-			tv.tv_usec = PF_KEY_REPLY_TIMEOUT;
-			n = select(pf_key_v2_socket + 1, fds, 0, 0, &tv);
-			free(fds);
+			n = poll(pfd, 1, PF_KEY_REPLY_TIMEOUT / 1000);
 			if (n == -1) {
-				log_error("pf_key_v2_read: "
-				    "select (%d, fds, 0, 0, &tv) failed",
-				    pf_key_v2_socket + 1);
+				log_error("pf_key_v2_read: poll() failed");
 				goto cleanup;
 			}
 			if (!n) {
