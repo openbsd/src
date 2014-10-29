@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_vnd.c,v 1.15 2014/05/30 16:14:19 tedu Exp $	*/
+/*	$OpenBSD: mount_vnd.c,v 1.16 2014/10/29 21:30:10 tedu Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -144,8 +144,8 @@ main(int argc, char **argv)
 		int ind_raw, ind_reg;
 
 		if (opt_k || opt_K) {
-			fprintf(stderr, "WARNING: Encrypted vnd is insecure.\n"
-			    "Migrate your data to softraid before 5.7.\n");
+			fprintf(stderr,
+			    "WARNING: Consider using softraid crypto.\n");
 		}
 		if (opt_k) {
 			if (opt_K)
