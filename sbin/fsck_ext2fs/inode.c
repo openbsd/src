@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.23 2014/10/08 16:28:12 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.24 2014/10/29 06:31:58 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -398,8 +398,7 @@ resetinodebuf(void)
 		partialsize = inobufsize;
 	}
 	if (inodebuf == NULL &&
-	    (inodebuf = (struct ext2fs_dinode *)malloc((unsigned)inobufsize)) ==
-		NULL)
+	    (inodebuf = malloc((unsigned)inobufsize)) == NULL)
 		errexit("Cannot allocate space for inode buffer\n");
 	while (nextino < EXT2_ROOTINO)
 		(void)getnextinode(nextino);
@@ -431,8 +430,7 @@ cacheino(struct ext2fs_dinode *dp, ino_t inumber)
 	blks = howmany(inosize(dp), sblock.e2fs_bsize);
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
-	inp = (struct inoinfo *)
-		malloc(sizeof(*inp) + (blks - 1) * sizeof(daddr32_t));
+	inp = malloc(sizeof(*inp) + (blks - 1) * sizeof(daddr32_t));
 	if (inp == NULL)
 		return;
 	inpp = &inphead[inumber % numdirs];
