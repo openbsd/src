@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.50 2014/10/28 17:35:42 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.51 2014/10/29 00:17:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -420,9 +420,13 @@ print_encode(struct html *h, const char *p, int norecurse)
 			break;
 		case ESCAPE_NUMBERED:
 			c = mchars_num2char(seq, len);
+			if (c < 0)
+				continue;
 			break;
 		case ESCAPE_SPECIAL:
 			c = mchars_spec2cp(h->symtab, seq, len);
+			if (c <= 0)
+				continue;
 			break;
 		case ESCAPE_NOSPACE:
 			if ('\0' == *p)
@@ -431,9 +435,8 @@ print_encode(struct html *h, const char *p, int norecurse)
 		default:
 			continue;
 		}
-		if (c <= 0)
-			continue;
-		if (c < 0x20 || (c > 0x7E && c < 0xA0))
+		if ((c < 0x20 && c != 0x09) ||
+		    (c > 0x7E && c < 0xA0))
 			c = 0xFFFD;
 		if (c > 0x7E)
 			printf("&#%d;", c);

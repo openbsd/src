@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.92 2014/10/28 18:48:56 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.93 2014/10/29 00:17:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -389,7 +389,6 @@ term_word(struct termp *p, const char *word)
 {
 	const char	 nbrsp[2] = { ASCII_NBRSP, 0 };
 	const char	*seq, *cp;
-	char		 c;
 	int		 sz, uc;
 	size_t		 ssz;
 	enum mandoc_esc	 esc;
@@ -441,16 +440,11 @@ term_word(struct termp *p, const char *word)
 		switch (esc) {
 		case ESCAPE_UNICODE:
 			uc = mchars_num2uc(seq + 1, sz - 1);
-			if (p->enc == TERMENC_ASCII) {
-				cp = ascii_uc2str(uc);
-				encode(p, cp, strlen(cp));
-			} else
-				encode1(p, uc);
 			break;
 		case ESCAPE_NUMBERED:
-			c = mchars_num2char(seq, sz);
-			if ('\0' != c)
-				encode(p, &c, 1);
+			uc = mchars_num2char(seq, sz);
+			if (uc < 0)
+				continue;
 			break;
 		case ESCAPE_SPECIAL:
 			if (p->enc == TERMENC_ASCII) {
@@ -463,35 +457,50 @@ term_word(struct termp *p, const char *word)
 				if (uc > 0)
 					encode1(p, uc);
 			}
-			break;
+			continue;
 		case ESCAPE_FONTBOLD:
 			term_fontrepl(p, TERMFONT_BOLD);
-			break;
+			continue;
 		case ESCAPE_FONTITALIC:
 			term_fontrepl(p, TERMFONT_UNDER);
-			break;
+			continue;
 		case ESCAPE_FONTBI:
 			term_fontrepl(p, TERMFONT_BI);
-			break;
+			continue;
 		case ESCAPE_FONT:
 			/* FALLTHROUGH */
 		case ESCAPE_FONTROMAN:
 			term_fontrepl(p, TERMFONT_NONE);
-			break;
+			continue;
 		case ESCAPE_FONTPREV:
 			term_fontlast(p);
-			break;
+			continue;
 		case ESCAPE_NOSPACE:
 			if (TERMP_SKIPCHAR & p->flags)
 				p->flags &= ~TERMP_SKIPCHAR;
 			else if ('\0' == *word)
 				p->flags |= TERMP_NOSPACE;
-			break;
+			continue;
 		case ESCAPE_SKIPCHAR:
 			p->flags |= TERMP_SKIPCHAR;
-			break;
+			continue;
 		default:
-			break;
+			continue;
+		}
+
+		/*
+		 * Common handling for Unicode and numbered
+		 * character escape sequences.
+		 */
+
+		if (p->enc == TERMENC_ASCII) {
+			cp = ascii_uc2str(uc);
+			encode(p, cp, strlen(cp));
+		} else {
+			if ((uc < 0x20 && uc != 0x09) ||
+			    (uc > 0x7E && uc < 0xA0))
+				uc = 0xFFFD;
+			encode1(p, uc);
 		}
 	}
 	p->flags &= ~TERMP_NBRWORD;
@@ -643,7 +652,7 @@ size_t
 term_strlen(const struct termp *p, const char *cp)
 {
 	size_t		 sz, rsz, i;
-	int		 ssz, skip, c;
+	int		 ssz, skip, uc;
 	const char	*seq, *rhs;
 	enum mandoc_esc	 esc;
 	static const char rej[] = { '\\', ASCII_NBRSP, ASCII_HYPH,
@@ -673,43 +682,60 @@ term_strlen(const struct termp *p, const char *cp)
 
 			switch (esc) {
 			case ESCAPE_UNICODE:
-				c = mchars_num2uc(seq + 1, sz - 1);
-				if (p->enc == TERMENC_ASCII) {
-					rhs = ascii_uc2str(c);
-					rsz = strlen(rhs);
-				} else
-					sz += cond_width(p, c, &skip);
+				uc = mchars_num2uc(seq + 1, sz - 1);
 				break;
 			case ESCAPE_NUMBERED:
-				c = mchars_num2char(seq, ssz);
-				if ('\0' != c)
-					sz += cond_width(p, c, &skip);
+				uc = mchars_num2char(seq, ssz);
+				if (uc < 0)
+					continue;
 				break;
 			case ESCAPE_SPECIAL:
-				if (p->enc == TERMENC_ASCII)
+				if (p->enc == TERMENC_ASCII) {
 					rhs = mchars_spec2str(p->symtab,
 					    seq, ssz, &rsz);
-				else {
-					c = mchars_spec2cp(p->symtab,
+					if (rhs != NULL)
+						break;
+				} else {
+					uc = mchars_spec2cp(p->symtab,
 					    seq, ssz);
-					if (c > 0)
-						sz += cond_width(p, c, &skip);
+					if (uc > 0)
+						sz += cond_width(p, uc, &skip);
 				}
-				break;
+				continue;
 			case ESCAPE_SKIPCHAR:
 				skip = 1;
-				break;
+				continue;
 			default:
-				break;
+				continue;
 			}
 
-			if (NULL == rhs)
-				break;
+			/*
+			 * Common handling for Unicode and numbered
+			 * character escape sequences.
+			 */
+
+			if (rhs == NULL) {
+				if (p->enc == TERMENC_ASCII) {
+					rhs = ascii_uc2str(uc);
+					rsz = strlen(rhs);
+				} else {
+					if ((uc < 0x20 && uc != 0x09) ||
+					    (uc > 0x7E && uc < 0xA0))
+						uc = 0xFFFD;
+					sz += cond_width(p, uc, &skip);
+					continue;
+				}
+			}
 
 			if (skip) {
 				skip = 0;
 				break;
 			}
+
+			/*
+			 * Common handling for all escape sequences
+			 * printing more than one character.
+			 */
 
 			for (i = 0; i < rsz; i++)
 				sz += (*p->width)(p, *rhs++);
