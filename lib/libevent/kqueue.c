@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.33 2014/10/18 21:56:44 bluhm Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.34 2014/10/29 22:38:42 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -119,27 +119,6 @@ kq_init(struct event_base *base)
 	/* we need to keep track of multiple events per signal */
 	for (i = 0; i < NSIG; ++i) {
 		TAILQ_INIT(&kqueueop->evsigevents[i]);
-	}
-
-	/* Check for Mac OS X kqueue bug. */
-	kqueueop->changes[0].ident = -1;
-	kqueueop->changes[0].filter = EVFILT_READ;
-	kqueueop->changes[0].flags = EV_ADD;
-	/* 
-	 * If kqueue works, then kevent will succeed, and it will
-	 * stick an error in events[0].  If kqueue is broken, then
-	 * kevent will fail.
-	 */
-	if (kevent(kq,
-		kqueueop->changes, 1, kqueueop->events, NEVENT, NULL) != 1 ||
-	    kqueueop->events[0].ident != -1 ||
-	    kqueueop->events[0].flags != EV_ERROR) {
-		event_warn("%s: detected broken kqueue; not using.", __func__);
-		free(kqueueop->changes);
-		free(kqueueop->events);
-		free(kqueueop);
-		close(kq);
-		return (NULL);
 	}
 
 	return (kqueueop);
