@@ -1,0 +1,17 @@
+.Dd October 28, 2014
+.Dt CHAR-UNICODE-INVALID 1
+.Os OpenBSD
+.Sh NAME
+.Nm char-unicode-invalid
+.Nd invalid unicode characters
+.Sh DESCRIPTION
+.Bd -unfilled
+BEGINTEST
+too short: >\[u2B].\[u02B]<
+just right: >\[u002B]<
+too long: >\[u0002B].\[u00002B].\[u000002B]<
+too large: >\[u110000].\[u200000].\[u1000000]<
+trailing garbage: >\[u1234g]<
+not unicode: >\[ul].\[ua].\[uA]<
+ENDTEST
+.Ed

@@ -1,0 +1,57 @@
+.TH CHAR-UNICODE-NOGROFF 1 "October 28, 2014" OpenBSD
+.SH NAME
+char-unicode-nogroff \- characters handled differently by groff
+.SH DESCRIPTION
+.nf
+BEGINTEST
+\[u0000]\N'0'	<control> NULL
+\[u0001]\N'1'	<control> START OF HEADING
+\[u0007]\N'7'	<control> BELL
+\[u0008]\N'8'	<control> BACKSPACE
+\[u0009]\N'9'	<control> CHARACTER TABULATION
+\[u000A]\N'10'	<control> LINE FEED
+\[u000B]\N'11'	<control> LINE TABULATION
+\[u000C]\N'12'	<control> FORM FEED
+\[u000D]\N'13'	<control> CARRIAGE RETURN
+\[u001B]\N'27'	<control> ESCAPE
+\[u007F]\N'127'	<control> DELETE
+\[u0080]\N'128'	<control> 0x80
+\[u0081]\N'129'	<control> 0x81
+\[u0082]\N'130'	<control> BREAK PERMITTED HERE
+\[u0083]\N'131'	<control> NO BREAK HERE
+\[u009E]\N'158'	<control> PRIVACY MESSAGE
+\[u009F]\N'159'	<control> APPLICATION PROGRAM COMMAND
+\[u2022]\(bu	BULLET
+\[u203E]\(rl	OVERLINE
+\[u2243]\(-~	ASYMPTOTICALLY EQUAL TO
+\[u224C]\(~=	ALL EQUAL TO
+\[u226A]\(<<	MUCH LESS-THAN
+\[u226B]\(>>	MUCH GREATER-THAN
+\[u239D]\[parenleftbp]	LEFT PARENTHESIS LOWER HOOK
+\[u23A0]\[parenrightbp]	RIGHT PARENTHESIS LOWER HOOK
+\[u23A3]\[bracketleftbp]	LEFT SQUARE BRACKET LOWER CORNER
+\[u23A6]\[bracketrightbp]	RIGHT SQUARE BRACKET LOWER CORNER
+\[u23A7]\(lt	LEFT CURLY BRACKET UPPER HOOK
+\[u23A8]\(lk	LEFT CURLY BRACKET MIDDLE PIECE
+\[u23A9]\(lb	LEFT CURLY BRACKET LOWER HOOK
+\[u23AB]\(rt	RIGHT CURLY BRACKET UPPER HOOK
+\[u23AC]\(rk	RIGHT CURLY BRACKET MIDDLE PIECE
+\[u23AD]\(rb	RIGHT CURLY BRACKET LOWER HOOK
+\[uFB00]\(ff	LATIN SMALL LIGATURE FF
+\[uFB01]\(fi	LATIN SMALL LIGATURE FI
+\[uFB02]\(fl	LATIN SMALL LIGATURE FL
+\[uFB03]\(Fi	LATIN SMALL LIGATURE FFI
+\[uFB04]\(Fl	LATIN SMALL LIGATURE FFL
+\[uFFFD]	REPLACEMENT CHARACTER
+\[uFFFE]	<undefined>
+\[uFFFF]	<undefined>
+\[u10000]	LINEAR B SYLLABLE B008 A
+\[uFFFFD]	<Plane 15 Private Use, Last>
+\[uFFFFE]	<undefined>
+\[uFFFFF]	<undefined>
+\[u100000]	<Plane 16 Private Use, First>
+\[u10FFFD]	<Plane 16 Private Use, Last>
+\[u10FFFE]	<undefined>
+\[u10FFFF]	<undefined>
+ENDTEST
+.fi

@@ -1,0 +1,16 @@
+CHAR-UNICODE-INVALID(1)     General Commands Manual    CHAR-UNICODE-INVALID(1)
+
+NNAAMMEE
+     cchhaarr--uunniiccooddee--iinnvvaalliidd - invalid unicode characters
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+     too short: >.<
+     just right: >+<
+     too long: >..<
+     too large: >..<
+     trailing garbage: ><
+     not unicode: >_.|^.=^<
+     ENDTEST
+
+OpenBSD                        October 28, 2014                        OpenBSD

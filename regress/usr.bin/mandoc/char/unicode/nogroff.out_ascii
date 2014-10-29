@@ -1,0 +1,63 @@
+CHAR-UNICODE-NOGROFF(1)     General Commands Manual    CHAR-UNICODE-NOGROFF(1)
+
+
+
+NNAAMMEE
+       char-unicode-nogroff - characters handled differently by groff
+
+DDEESSCCRRIIPPTTIIOONN
+       BEGINTEST
+       <NUL><NUL>     <control> NULL
+       <SOH><SOH>     <control> START OF HEADING
+       <BEL><BEL>     <control> BELL
+       <BS><BS>  <control> BACKSPACE
+                      <control> CHARACTER TABULATION
+       <LF><LF>  <control> LINE FEED
+       <VT><VT>  <control> LINE TABULATION
+       <FF><FF>  <control> FORM FEED
+       <CR><CR>  <control> CARRIAGE RETURN
+       <ESC><ESC>     <control> ESCAPE
+       <DEL><DEL>     <control> DELETE
+       <80><80>  <control> 0x80
+       <81><81>  <control> 0x81
+       <82><82>  <control> BREAK PERMITTED HERE
+       <83><83>  <control> NO BREAK HERE
+       <9E><9E>  <control> PRIVACY MESSAGE
+       <9F><9F>  <control> APPLICATION PROGRAM COMMAND
+       oo   BULLET
+       --   OVERLINE
+       -~-~ ASYMPTOTICALLY EQUAL TO
+       ~=~= ALL EQUAL TO
+       <<<< MUCH LESS-THAN
+       >>>> MUCH GREATER-THAN
+       \\   LEFT PARENTHESIS LOWER HOOK
+       //   RIGHT PARENTHESIS LOWER HOOK
+       ||   LEFT SQUARE BRACKET LOWER CORNER
+       ||   RIGHT SQUARE BRACKET LOWER CORNER
+       ,-,- LEFT CURLY BRACKET UPPER HOOK
+       {{   LEFT CURLY BRACKET MIDDLE PIECE
+       `-`- LEFT CURLY BRACKET LOWER HOOK
+       -.-. RIGHT CURLY BRACKET UPPER HOOK
+       }}   RIGHT CURLY BRACKET MIDDLE PIECE
+       -'-' RIGHT CURLY BRACKET LOWER HOOK
+       ffff LATIN SMALL LIGATURE FF
+       fifi LATIN SMALL LIGATURE FI
+       flfl LATIN SMALL LIGATURE FL
+       ffiffi    LATIN SMALL LIGATURE FFI
+       fflffl    LATIN SMALL LIGATURE FFL
+       <?>  REPLACEMENT CHARACTER
+       <?>  <undefined>
+       <?>  <undefined>
+       <?>  LINEAR B SYLLABLE B008 A
+       <?>  <Plane 15 Private Use, Last>
+       <?>  <undefined>
+       <?>  <undefined>
+       <?>  <Plane 16 Private Use, First>
+       <?>  <Plane 16 Private Use, Last>
+       <?>  <undefined>
+       <?>  <undefined>
+       ENDTEST
+
+
+
+OpenBSD                        October 28, 2014        CHAR-UNICODE-NOGROFF(1)

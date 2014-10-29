@@ -26,4 +26,3 @@ BEGINTEST
 \[u007E]\N'126'\(a~\(ti	TILDE
 ENDTEST
 .fi
-Note that groff does not handle \eC'u00XX' in the ASCII range.

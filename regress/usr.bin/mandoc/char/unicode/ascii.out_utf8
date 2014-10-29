@@ -28,7 +28,6 @@ DDEESSCCRRIIPPTTIIOONN
        }}}  RIGHT CURLY BRACKET
        ~~~~ TILDE
        ENDTEST
-       Note that groff does not handle \C'u00XX' in the ASCII range.
 
 
 

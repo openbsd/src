@@ -1,0 +1,63 @@
+CHAR-UNICODE-NOGROFF(1)     General Commands Manual    CHAR-UNICODE-NOGROFF(1)
+
+
+
+NNAAMMEE
+       char-unicode-nogroff - characters handled differently by groff
+
+DDEESSCCRRIIPPTTIIOONN
+       BEGINTEST
+       ��   <control> NULL
+       ��   <control> START OF HEADING
+       ��   <control> BELL
+       ��   <control> BACKSPACE
+                      <control> CHARACTER TABULATION
+       ��   <control> LINE FEED
+       ��   <control> LINE TABULATION
+       ��   <control> FORM FEED
+       ��   <control> CARRIAGE RETURN
+       ��   <control> ESCAPE
+       ��   <control> DELETE
+       ��   <control> 0x80
+       ��   <control> 0x81
+       ��   <control> BREAK PERMITTED HERE
+       ��   <control> NO BREAK HERE
+       ��   <control> PRIVACY MESSAGE
+       ��   <control> APPLICATION PROGRAM COMMAND
+       ••   BULLET
+       ‾‾   OVERLINE
+       ≃≃   ASYMPTOTICALLY EQUAL TO
+       ≌≌   ALL EQUAL TO
+       ≪≪   MUCH LESS-THAN
+       ≫≫   MUCH GREATER-THAN
+       ⎝⎝   LEFT PARENTHESIS LOWER HOOK
+       ⎠⎠   RIGHT PARENTHESIS LOWER HOOK
+       ⎣⎣   LEFT SQUARE BRACKET LOWER CORNER
+       ⎦⎦   RIGHT SQUARE BRACKET LOWER CORNER
+       ⎧⎧   LEFT CURLY BRACKET UPPER HOOK
+       ⎨⎨   LEFT CURLY BRACKET MIDDLE PIECE
+       ⎩⎩   LEFT CURLY BRACKET LOWER HOOK
+       ⎫⎫   RIGHT CURLY BRACKET UPPER HOOK
+       ⎬⎬   RIGHT CURLY BRACKET MIDDLE PIECE
+       ⎭⎭   RIGHT CURLY BRACKET LOWER HOOK
+       ﬀﬀ   LATIN SMALL LIGATURE FF
+       ﬁﬁ   LATIN SMALL LIGATURE FI
+       ﬂﬂ   LATIN SMALL LIGATURE FL
+       ﬃﬃ   LATIN SMALL LIGATURE FFI
+       ﬄﬄ   LATIN SMALL LIGATURE FFL
+       �    REPLACEMENT CHARACTER
+       ￾     <undefined>
+       ￿     <undefined>
+       𐀀     LINEAR B SYLLABLE B008 A
+       󿿽    <Plane 15 Private Use, Last>
+       󿿾     <undefined>
+       󿿿     <undefined>
+       􀀀    <Plane 16 Private Use, First>
+       􏿽    <Plane 16 Private Use, Last>
+       􏿾     <undefined>
+       􏿿     <undefined>
+       ENDTEST
+
+
+
+OpenBSD                        October 28, 2014        CHAR-UNICODE-NOGROFF(1)

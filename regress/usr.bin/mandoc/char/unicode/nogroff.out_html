@@ -1,0 +1,51 @@
+BEGINTEST<br/>
+&#65533;&#65533;	&lt;control&gt; NULL<br/>
+&#65533;&#65533;	&lt;control&gt; START OF HEADING<br/>
+&#65533;&#65533;	&lt;control&gt; BELL<br/>
+&#65533;&#65533;	&lt;control&gt; BACKSPACE<br/>
+			&lt;control&gt; CHARACTER TABULATION<br/>
+&#65533;&#65533;	&lt;control&gt; LINE FEED<br/>
+&#65533;&#65533;	&lt;control&gt; LINE TABULATION<br/>
+&#65533;&#65533;	&lt;control&gt; FORM FEED<br/>
+&#65533;&#65533;	&lt;control&gt; CARRIAGE RETURN<br/>
+&#65533;&#65533;	&lt;control&gt; ESCAPE<br/>
+&#65533;&#65533;	&lt;control&gt; DELETE<br/>
+&#65533;&#65533;	&lt;control&gt; 0x80<br/>
+&#65533;&#65533;	&lt;control&gt; 0x81<br/>
+&#65533;&#65533;	&lt;control&gt; BREAK PERMITTED HERE<br/>
+&#65533;&#65533;	&lt;control&gt; NO BREAK HERE<br/>
+&#65533;&#65533;	&lt;control&gt; PRIVACY MESSAGE<br/>
+&#65533;&#65533;	&lt;control&gt; APPLICATION PROGRAM COMMAND<br/>
+&#8226;&#8226;	BULLET<br/>
+&#8254;&#8254;	OVERLINE<br/>
+&#8771;&#8771;	ASYMPTOTICALLY EQUAL TO<br/>
+&#8780;&#8780;	ALL EQUAL TO<br/>
+&#8810;&#8810;	MUCH LESS-THAN<br/>
+&#8811;&#8811;	MUCH GREATER-THAN<br/>
+&#9117;&#9117;	LEFT PARENTHESIS LOWER HOOK<br/>
+&#9120;&#9120;	RIGHT PARENTHESIS LOWER HOOK<br/>
+&#9123;&#9123;	LEFT SQUARE BRACKET LOWER CORNER<br/>
+&#9126;&#9126;	RIGHT SQUARE BRACKET LOWER CORNER<br/>
+&#9127;&#9127;	LEFT CURLY BRACKET UPPER HOOK<br/>
+&#9128;&#9128;	LEFT CURLY BRACKET MIDDLE PIECE<br/>
+&#9129;&#9129;	LEFT CURLY BRACKET LOWER HOOK<br/>
+&#9131;&#9131;	RIGHT CURLY BRACKET UPPER HOOK<br/>
+&#9132;&#9132;	RIGHT CURLY BRACKET MIDDLE PIECE<br/>
+&#9133;&#9133;	RIGHT CURLY BRACKET LOWER HOOK<br/>
+&#64256;&#64256;	LATIN SMALL LIGATURE FF<br/>
+&#64257;&#64257;	LATIN SMALL LIGATURE FI<br/>
+&#64258;&#64258;	LATIN SMALL LIGATURE FL<br/>
+&#64259;&#64259;	LATIN SMALL LIGATURE FFI<br/>
+&#64260;&#64260;	LATIN SMALL LIGATURE FFL<br/>
+&#65533;	REPLACEMENT CHARACTER<br/>
+&#65534;	&lt;undefined&gt;<br/>
+&#65535;	&lt;undefined&gt;<br/>
+&#65536;	LINEAR B SYLLABLE B008 A<br/>
+&#1048573;	&lt;Plane 15 Private Use, Last&gt;<br/>
+&#1048574;	&lt;undefined&gt;<br/>
+&#1048575;	&lt;undefined&gt;<br/>
+&#1048576;	&lt;Plane 16 Private Use, First&gt;<br/>
+&#1114109;	&lt;Plane 16 Private Use, Last&gt;<br/>
+&#1114110;	&lt;undefined&gt;<br/>
+&#1114111;	&lt;undefined&gt;<br/>
+ENDTEST<br/>

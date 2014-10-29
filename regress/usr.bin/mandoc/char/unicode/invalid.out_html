@@ -1,0 +1,8 @@
+BEGINTEST 
+too short: &gt;.&lt; 
+just right: &gt;+&lt; 
+too long: &gt;..&lt; 
+too large: &gt;..&lt; 
+trailing garbage: &gt;&lt; 
+not unicode: &gt;_.&#8593;.&#8657;&lt; 
+ENDTEST</pre>

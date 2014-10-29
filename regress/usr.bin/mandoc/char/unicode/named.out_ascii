@@ -71,6 +71,85 @@ DDEESSCCRRIIPPTTIIOONN
        |o|o   GREEK PHI SYMBOL
        -w-w   GREEK PI SYMBOL
        ee   GREEK LUNATE EPSILON SYMBOL
+       --   HYPHEN
+       --   EN DASH
+       ---- EM DASH
+       ``   LEFT SINGLE QUOTATION MARK
+       ''   RIGHT SINGLE QUOTATION MARK
+       ,,   SINGLE LOW-9 QUOTATION MARK
+       ,,,, DOUBLE LOW-9 QUOTATION MARK
+       |-|-   DAGGER
+       |=|=   DOUBLE DAGGER
+       %o%o PER MILLE SIGN
+       ''   PRIME
+       '''' DOUBLE PRIME
+       <<   SINGLE LEFT-POINTING ANGLE QUOTATION MARK
+       >>   SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
+       //   FRACTION SLASH
+       EUREUREUR EURO SIGN
+       II   BLACK-LETTER CAPITAL I
+       RR   BLACK-LETTER CAPITAL R
+       tmtm TRADE MARK SIGN
+       NN   ALEF SYMBOL
+       <-<- LEFTWARDS ARROW
+       |^|^   UPWARDS ARROW
+       ->-> RIGHTWARDS ARROW
+       |v|v   DOWNWARDS ARROW
+       <-><->    LEFT RIGHT ARROW
+       _|_| DOWNWARDS ARROW WITH CORNER LEFTWARDS
+       <=<= LEFTWARDS DOUBLE ARROW
+       =^=^   UPWARDS DOUBLE ARROW
+       =>=> RIGHTWARDS DOUBLE ARROW
+       =v=v   DOWNWARDS DOUBLE ARROW
+       <=><=>    LEFT RIGHT DOUBLE ARROW
+       -V-V   FOR ALL
+       aa   PARTIAL DIFFERENTIAL
+       33   THERE EXISTS
+       {}{} EMPTY SET
+       EE   ELEMENT OF
+       -)-) CONTAINS AS MEMBER
+       --   MINUS SIGN
+       -+-+ MINUS-OR-PLUS SIGN
+       **   ASTERISK OPERATOR
+       \/\/ SQUARE ROOT
+       ococ PROPORTIONAL TO
+       oooo INFINITY
+       _/_/   ANGLE
+       ^^   LOGICAL AND
+       vv   LOGICAL OR
+       (^)(^)    INTERSECTION
+       UU   UNION
+       ',I',I   INTEGRAL
+       .:..:..:. THEREFORE
+       ~~   TILDE OPERATOR
+       =~=~ APPROXIMATELY EQUAL TO
+       ~~~~ ALMOST EQUAL TO
+       !=!= NOT EQUAL TO
+       ==== IDENTICAL TO
+       !==!==    NOT IDENTICAL TO
+       <=<= LESS-THAN OR EQUAL TO
+       >=>= GREATER-THAN OR EQUAL TO
+       (=(= SUBSET OF
+       =)=) SUPERSET OF
+       (=_(=_ SUBSET OF OR EQUAL TO
+       =_)=_) SUPERSET OF OR EQUAL TO
+       O+O+   CIRCLED PLUS
+       OxOx   CIRCLED TIMES
+       _|_|   UP TACK
+       ..   DOT OPERATOR
+       |~|~ LEFT CEILING
+       ~|~| RIGHT CEILING
+       |_|_ LEFT FLOOR
+       _|_| RIGHT FLOOR
+       ||   CURLY BRACKET EXTENSION
+       ||   BOX DRAWINGS LIGHT VERTICAL
+       [][] WHITE SQUARE
+       <><> LOZENGE
+       OO   WHITE CIRCLE
+       <=<= WHITE LEFT POINTING INDEX
+       =>=> WHITE RIGHT POINTING INDEX
+       <<   MATHEMATICAL LEFT ANGLE BRACKET
+       >>   MATHEMATICAL RIGHT ANGLE BRACKET
        ENDTEST
 
 
