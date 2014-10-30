@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp $ */
+/*	$OpenBSD: xhci_pci.c,v 1.5 2014/10/30 18:25:08 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ xhci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	xhci_pci_takecontroller(psc, 0);
 
-	if (xhci_init(&psc->sc)) {
+	if ((error = xhci_init(&psc->sc)) != 0) {
 		printf("%s: init failed, error=%d\n",
 		    psc->sc.sc_bus.bdev.dv_xname, error);
 		goto disestablish_ret;
@@ -202,6 +202,9 @@ xhci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach usb device. */
 	config_found(self, &psc->sc.sc_bus, usbctlprint);
+
+	/* Now that the stack is ready, config' the HC and enable interrupts. */
+	xhci_config(&psc->sc);
 
 	return;
 

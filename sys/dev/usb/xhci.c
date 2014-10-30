@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.29 2014/10/30 18:08:24 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.30 2014/10/30 18:25:08 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -72,7 +72,6 @@ struct xhci_pipe {
 };
 
 int	xhci_reset(struct xhci_softc *);
-void	xhci_config(struct xhci_softc *);
 int	xhci_intr1(struct xhci_softc *);
 void	xhci_waitintr(struct xhci_softc *, struct usbd_xfer *);
 void	xhci_event_dequeue(struct xhci_softc *);
@@ -331,8 +330,6 @@ xhci_init(struct xhci_softc *sc)
 		return (ENOMEM);
 	}
 
-
-	xhci_config(sc);
 
 	return (0);
 }

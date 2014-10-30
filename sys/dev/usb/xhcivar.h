@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcivar.h,v 1.4 2014/04/29 12:45:29 mpi Exp $ */
+/* $OpenBSD: xhcivar.h,v 1.5 2014/10/30 18:25:08 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -109,6 +109,7 @@ struct xhci_softc {
 };
 
 int	xhci_init(struct xhci_softc *);
+void	xhci_config(struct xhci_softc *);
 int	xhci_intr(void *);
 int	xhci_detach(struct device *, int);
 int	xhci_activate(struct device *, int);
