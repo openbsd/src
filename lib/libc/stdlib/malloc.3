@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.84 2014/10/30 20:43:35 millert Exp $
+.\"	$OpenBSD: malloc.3,v 1.85 2014/10/30 21:47:47 deraadt Exp $
 .\"
 .Dd $Mdocdate: October 30 2014 $
 .Dt MALLOC 3
@@ -62,8 +62,8 @@
 .Sh DESCRIPTION
 The
 .Fn malloc
-function allocates uninitialized space for an object whose
-size is specified by
+function allocates uninitialized space for an object of
+the specified
 .Fa size .
 .Fn malloc
 maintains multiple lists of free blocks according to size, allocating
@@ -78,7 +78,7 @@ The
 .Fn calloc
 function allocates space for an array of
 .Fa nmemb
-objects, each of whose size is
+objects, each of the specified
 .Fa size .
 The space is initialized to zero.
 .Pp
@@ -114,7 +114,7 @@ except it operates on
 .Fa nmemb
 members of size
 .Fa size
-and checks for integer overflow in
+and checks for integer overflow in the calculation
 .Fa nmemb
 *
 .Fa size .
