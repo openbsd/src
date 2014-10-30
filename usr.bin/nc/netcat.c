@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.125 2014/10/30 16:06:07 tedu Exp $ */
+/* $OpenBSD: netcat.c,v 1.126 2014/10/30 16:08:31 tedu Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -68,7 +68,7 @@
 #define POLL_NETOUT 1
 #define POLL_NETIN 2
 #define POLL_STDOUT 3
-#define BUFSIZE 2048
+#define BUFSIZE 16384
 
 /* Command Line Options */
 int	dflag;					/* detached, no stdin */
