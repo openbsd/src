@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.131 2014/08/10 11:18:57 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.132 2014/10/30 23:50:25 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -2424,11 +2424,6 @@ uhci_device_isoc_done(struct usbd_xfer *xfer)
 		return;
 
 #ifdef DIAGNOSTIC
-	if (xfer->busy_free == XFER_FREE) {
-		printf("uhci_device_isoc_done: xfer=%p is free\n", xfer);
-		return;
-	}
-
         if (ux->stdend == NULL) {
                 printf("uhci_device_isoc_done: xfer=%p stdend==NULL\n", xfer);
 #ifdef UHCI_DEBUG
