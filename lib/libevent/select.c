@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.c,v 1.23 2014/10/29 22:47:29 bluhm Exp $	*/
+/*	$OpenBSD: select.c,v 1.24 2014/10/30 13:43:28 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -49,7 +49,7 @@
 
 struct selectop {
 	int event_fds;		/* Highest fd in fd set */
-	int event_fdsz;
+	size_t event_fdsz;
 	fd_set *event_readset_in;
 	fd_set *event_writeset_in;
 	fd_set *event_readset_out;
@@ -74,7 +74,7 @@ const struct eventop selectops = {
 	0
 };
 
-static int select_resize(struct selectop *sop, int fdsz);
+static int select_resize(struct selectop *sop, size_t fdsz);
 
 static void *
 select_init(struct event_base *base)
@@ -184,9 +184,9 @@ select_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 
 
 static int
-select_resize(struct selectop *sop, int fdsz)
+select_resize(struct selectop *sop, size_t fdsz)
 {
-	int n_events, n_events_old;
+	size_t n_events, n_events_old;
 
 	fd_set *readset_in = NULL;
 	fd_set *writeset_in = NULL;
@@ -256,7 +256,7 @@ select_add(void *arg, struct event *ev)
 	 * of the fd_sets for select(2)
 	 */
 	if (sop->event_fds < ev->ev_fd) {
-		int fdsz = sop->event_fdsz;
+		size_t fdsz = sop->event_fdsz;
 
 		if (fdsz < sizeof(fd_mask))
 			fdsz = sizeof(fd_mask);
