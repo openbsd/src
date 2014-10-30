@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.132 2014/10/08 04:01:10 doug Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.133 2014/10/30 15:50:50 tedu Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1519,7 +1519,7 @@ SSL_readline(struct ressl *ssl, size_t *lenp)
 		}
 again:
 		ret = ressl_read(ssl, &c, 1, &nr);
-		if (ret == -2)
+		if (ret == RESSL_READ_AGAIN)
 			goto again;
 		if (ret != 0)
 			errx(1, "SSL read error: %u", ret);
