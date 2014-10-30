@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.112 2014/09/14 14:17:24 jsg Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.113 2014/10/30 17:23:45 tedu Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -356,7 +356,7 @@ sr_crypto_get_kdf(struct bioc_createraid *bc, struct sr_discipline *sd)
 	rv = 0;
 out:
 	explicit_bzero(kdfinfo, bc->bc_opaque_size);
-	free(kdfinfo, M_DEVBUF, 0);
+	free(kdfinfo, M_DEVBUF, bc->bc_opaque_size);
 
 	return (rv);
 }
@@ -590,7 +590,7 @@ sr_crypto_change_maskkey(struct sr_discipline *sd,
 out:
 	if (p) {
 		explicit_bzero(p, ksz);
-		free(p, M_DEVBUF, 0);
+		free(p, M_DEVBUF, ksz);
 	}
 
 	explicit_bzero(check_digest, sizeof(check_digest));
@@ -751,19 +751,16 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 	goto done;
 
 fail:
-	if (key_disk)
-		free(key_disk, M_DEVBUF, 0);
+	free(key_disk, M_DEVBUF, sizeof(struct sr_chunk));
 	key_disk = NULL;
 
 done:
-	if (omi)
-		free(omi, M_DEVBUF, 0);
+	free(omi, M_DEVBUF, sizeof(struct sr_meta_opt_item));
 	if (fakesd && fakesd->sd_vol.sv_chunks)
-		free(fakesd->sd_vol.sv_chunks, M_DEVBUF, 0);
-	if (fakesd)
-		free(fakesd, M_DEVBUF, 0);
-	if (sm)
-		free(sm, M_DEVBUF, 0);
+		free(fakesd->sd_vol.sv_chunks, M_DEVBUF,
+		    sizeof(struct sr_chunk *));
+	free(fakesd, M_DEVBUF, sizeof(struct sr_discipline));
+	free(sm, M_DEVBUF, sizeof(struct sr_metadata));
 	if (open) {
 		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
 		vput(vn);
@@ -893,8 +890,7 @@ done:
 		free(omi, M_DEVBUF, 0);
 	}
 
-	if (sm)
-		free(sm, M_DEVBUF, 0);
+	free(sm, M_DEVBUF, SR_META_SIZE * 512);
 
 	if (vn && open) {
 		VOP_CLOSE(vn, FREAD, NOCRED, curproc);
@@ -999,8 +995,9 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 	    DEVNAME(sd->sd_sc));
 
 	if (sd->mds.mdd_crypto.key_disk != NULL) {
-		explicit_bzero(sd->mds.mdd_crypto.key_disk, sizeof
-		    sd->mds.mdd_crypto.key_disk);
+		explicit_bzero(sd->mds.mdd_crypto.key_disk,
+		    sizeof(sd->mds.mdd_crypto.key_disk));
+		/* XXX correct size? XXX */
 		free(sd->mds.mdd_crypto.key_disk, M_DEVBUF, 0);
 	}
 

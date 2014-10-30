@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.341 2014/10/07 20:23:32 tedu Exp $ */
+/* $OpenBSD: softraid.c,v 1.342 2014/10/30 17:23:45 tedu Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -523,7 +523,7 @@ sr_meta_clear(struct sr_discipline *sd)
 
 	bzero(sd->sd_meta, SR_META_SIZE * 512);
 
-	free(m, M_DEVBUF, 0);
+	free(m, M_DEVBUF, SR_META_SIZE * 512);
 	rv = 0;
 done:
 	return (rv);
@@ -726,7 +726,7 @@ restart:
 		wu.swu_dis = sd;
 		sd->sd_scsi_sync(&wu);
 	}
-	free(m, M_DEVBUF, 0);
+	free(m, M_DEVBUF, SR_META_SIZE * 512);
 	return (0);
 bad:
 	return (1);
@@ -797,9 +797,8 @@ sr_meta_read(struct sr_discipline *sd)
 		cp++;
 	}
 
-	free(sm, M_DEVBUF, 0);
-	if (fm)
-		free(fm, M_DEVBUF, 0);
+	free(sm, M_DEVBUF, SR_META_SIZE * 512);
+	free(fm, M_DEVBUF, s->smd_size);
 
 done:
 	DNPRINTF(SR_D_META, "%s: sr_meta_read found %d parts\n", DEVNAME(sc),
@@ -1128,10 +1127,8 @@ sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
 	}
 
 done:
-	if (fake_sd)
-		free(fake_sd, M_DEVBUF, 0);
-	if (md)
-		free(md, M_DEVBUF, 0);
+	free(fake_sd, M_DEVBUF, sizeof(struct sr_discipline));
+	free(md, M_DEVBUF, SR_META_SIZE * 512);
 
 	return (rv);
 }
@@ -1493,10 +1490,8 @@ unwind:
 		free(sdk, M_DEVBUF, 0);
 	}
 
-	if (devs)
-		free(devs, M_DEVBUF, 0);
-	if (ondisk)
-		free(ondisk, M_DEVBUF, 0);
+	free(devs, M_DEVBUF, BIOC_CRMAXLEN);
+	free(ondisk, M_DEVBUF, BIOC_CRMAXLEN * sizeof(u_int64_t));
 
 	return (rv);
 }
@@ -1692,8 +1687,7 @@ sr_meta_native_attach(struct sr_discipline *sd, int force)
 
 	rv = 0;
 bad:
-	if (md)
-		free(md, M_DEVBUF, 0);
+	free(md, M_DEVBUF, SR_META_SIZE * 512);
 	return (rv);
 }
 
@@ -4448,7 +4442,7 @@ sr_uuid_print(struct sr_uuid *uuid, int cr)
 
 	uuidstr = sr_uuid_format(uuid);
 	printf("%s%s", uuidstr, (cr ? "\n" : ""));
-	free(uuidstr, M_DEVBUF, 0);
+	free(uuidstr, M_DEVBUF, 37);
 }
 
 int
