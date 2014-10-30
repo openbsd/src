@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.30 2014/10/30 18:25:08 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.31 2014/10/30 18:29:59 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -51,7 +51,7 @@ int xhcidebug = 3;
 
 #define DEVNAME(sc)		((sc)->sc_bus.bdev.dv_xname)
 
-#define TRBOFF(ring, trb)	((void *)(trb) - (void *)((ring).trbs))
+#define TRBOFF(ring, trb)	((char *)(trb) - (char *)((ring).trbs))
 
 struct pool *xhcixfer;
 
@@ -2295,7 +2295,7 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 	    XHCI_TRB_TYPE_NORMAL | XHCI_TRB_ISP | XHCI_TRB_IOC | toggle
 	);
 
-	usb_syncmem(&xp->ring.dma, ((void *)trb - (void *)xp->ring.trbs),
+	usb_syncmem(&xp->ring.dma, TRBOFF(xp->ring, trb),
 	    sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
 	XDWRITE4(sc, XHCI_DOORBELL(xp->slot), xp->dci);
 
