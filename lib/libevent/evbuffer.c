@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer.c,v 1.16 2014/10/29 22:47:29 bluhm Exp $	*/
+/*	$OpenBSD: evbuffer.c,v 1.17 2014/10/30 16:45:37 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -56,7 +56,7 @@ bufferevent_add(struct event *ev, int timeout)
 	return (event_add(ev, ptv));
 }
 
-/* 
+/*
  * This callback is executed when the size of the input buffer changes.
  * We use it to apply back pressure on the reading side.
  */
@@ -65,7 +65,7 @@ void
 bufferevent_read_pressure_cb(struct evbuffer *buf, size_t old, size_t now,
     void *arg) {
 	struct bufferevent *bufev = arg;
-	/* 
+	/*
 	 * If we are below the watermark then reschedule reading if it's
 	 * still enabled.
 	 */

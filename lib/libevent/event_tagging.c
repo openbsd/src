@@ -1,4 +1,4 @@
-/*	$OpenBSD: event_tagging.c,v 1.9 2014/10/29 22:47:29 bluhm Exp $	*/
+/*	$OpenBSD: event_tagging.c,v 1.10 2014/10/30 16:45:37 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Niels Provos <provos@citi.umich.edu>
@@ -58,7 +58,7 @@ evtag_init(void)
 		event_err(1, "%s: malloc", __func__);
 }
 
-/* 
+/*
  * We encode integer's by nibbles; the first nibble contains the number
  * of significant nibbles - 1;  this allows us to encode up to 64-bit
  * integers.  This function is byte-order independent.
@@ -318,7 +318,7 @@ evtag_unmarshal(struct evbuffer *src, ev_uint32_t *ptag, struct evbuffer *dst)
 
 	if (EVBUFFER_LENGTH(src) < len)
 		return (-1);
-	
+
 	if (evbuffer_add(dst, EVBUFFER_DATA(src), len) == -1)
 		return (-1);
 

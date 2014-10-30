@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.20 2014/10/29 22:47:29 bluhm Exp $	*/
+/*	$OpenBSD: poll.c,v 1.21 2014/10/30 16:45:37 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2003 Niels Provos <provos@citi.umich.edu>
@@ -142,7 +142,7 @@ poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 
 	if (res == -1) {
 		if (errno != EINTR) {
-                        event_warn("poll");
+			event_warn("poll");
 			return (-1);
 		}
 
@@ -338,7 +338,7 @@ poll_del(void *arg, struct event *ev)
 
 	--pop->nfds;
 	if (i != pop->nfds) {
-		/* 
+		/*
 		 * Shift the last pollfd down into the now-unoccupied
 		 * position.
 		 */

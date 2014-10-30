@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.35 2014/10/29 22:47:29 bluhm Exp $	*/
+/*	$OpenBSD: event.c,v 1.36 2014/10/30 16:45:37 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -135,12 +135,12 @@ event_base_new(void)
 
 	detect_monotonic();
 	gettime(base, &base->event_tv);
-	
+
 	min_heap_ctor(&base->timeheap);
 	TAILQ_INIT(&base->eventqueue);
 	base->sig.ev_signal_pair[0] = -1;
 	base->sig.ev_signal_pair[1] = -1;
-	
+
 	base->evbase = NULL;
 	for (i = 0; eventops[i] && !base->evbase; i++) {
 		base->evsel = eventops[i];
@@ -151,7 +151,7 @@ event_base_new(void)
 	if (base->evbase == NULL)
 		event_errx(1, "%s: no event mechanism available", __func__);
 
-	if (!issetugid() && getenv("EVENT_SHOW_METHOD")) 
+	if (!issetugid() && getenv("EVENT_SHOW_METHOD"))
 		event_msgx("libevent using: %s", base->evsel->name);
 
 	/* allocate a single active event queue */
@@ -340,7 +340,7 @@ event_process_active(struct event_base *base)
 			event_queue_remove(base, ev, EVLIST_ACTIVE);
 		else
 			event_del(ev);
-		
+
 		/* Allows deletes to work */
 		ncalls = ev->ev_ncalls;
 		ev->ev_pncalls = &ncalls;
@@ -471,13 +471,13 @@ event_base_loop(struct event_base *base, int flags)
 		if (!base->event_count_active && !(flags & EVLOOP_NONBLOCK)) {
 			timeout_next(base, &tv_p);
 		} else {
-			/* 
+			/*
 			 * if we have active events, we just poll new events
 			 * without waiting.
 			 */
 			timerclear(&tv);
 		}
-		
+
 		/* If we have no events, we just exit */
 		if (!event_haveevents(base)) {
 			event_debug(("%s: no events registered.", __func__));
@@ -708,14 +708,14 @@ event_add(struct event *ev, const struct timeval *tv)
 			event_queue_insert(base, ev, EVLIST_INSERTED);
 	}
 
-	/* 
+	/*
 	 * we should change the timout state only if the previous event
 	 * addition succeeded.
 	 */
 	if (res != -1 && tv != NULL) {
 		struct timeval now;
 
-		/* 
+		/*
 		 * we already reserved memory above for the case where we
 		 * are not replacing an exisiting timeout.
 		 */
@@ -734,7 +734,7 @@ event_add(struct event *ev, const struct timeval *tv)
 				/* Abort loop */
 				*ev->ev_pncalls = 0;
 			}
-			
+
 			event_queue_remove(base, ev, EVLIST_ACTIVE);
 		}
 
@@ -971,7 +971,7 @@ event_get_version(void)
 	return (_EVENT_VERSION);
 }
 
-/* 
+/*
  * No thread-safe interface needed - the information should be the same
  * for all threads.
  */
