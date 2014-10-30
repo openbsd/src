@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.82 2014/08/27 00:06:08 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.83 2014/10/30 00:05:02 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ CFLAGS  += -W -Wall -Wstrict-prototypes -Wno-unused-parameter
 DPADD += ${LIBUTIL}
 LDADD	+= -lsqlite3 -lutil
 
-SRCS=	mandoc.c mandoc_aux.c read.c \
+SRCS=	mandoc.c mandoc_aux.c preconv.c read.c \
 	roff.c tbl.c tbl_opts.c tbl_layout.c tbl_data.c eqn.c
 SRCS+=	mdoc_macro.c mdoc.c mdoc_hash.c \
 	mdoc_argv.c mdoc_validate.c lib.c att.c \

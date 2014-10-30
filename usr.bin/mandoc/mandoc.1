@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.63 2014/10/07 18:17:05 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.64 2014/10/30 00:05:02 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 7 2014 $
+.Dd $Mdocdate: October 30 2014 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Sm off
 .Op Fl I Cm os Li = Ar name
 .Sm on
+.Op Fl K Na Ar encoding
 .Op Fl m Ns Ar format
 .Op Fl O Ns Ar option
 .Op Fl T Ns Ar output
@@ -89,6 +90,31 @@ macro.
 Display only the SYNOPSIS lines.
 Implies
 .Fl a .
+.It Fl K Ns Ar encoding
+Specify the input encoding.
+The supported
+.Ar encoding
+arguments are
+.Cm us-ascii ,
+.Cm iso-8859-1 ,
+and
+.Cm utf-8 .
+If not specified, autodetection uses the first match:
+.Bl -tag -width iso-8859-1
+.It Cm utf-8
+if the first three bytes of the input file
+are the UTF-8 byte order mark (BOM, 0xefbbbf)
+.It Ar encoding
+if the first or second line of the input file matches the
+.Sy emacs
+mode line format
+.Pp
+.D1 .\e" -*- Oo ...; Oc coding: Ar encoding ; No -*-
+.It Cm utf-8
+if the first non-ASCII byte in the file introduces a valid UTF-8 sequence
+.It Cm iso-8859-1
+otherwise
+.El
 .It Fl k
 A synonym for
 .Xr apropos 1 .

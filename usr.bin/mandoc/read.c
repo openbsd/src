@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.69 2014/10/28 17:35:42 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.70 2014/10/30 00:05:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -39,11 +39,6 @@
 
 #define	REPARSE_LIMIT	1000
 
-struct	buf {
-	char		 *buf; /* binary input buffer */
-	size_t		  sz; /* size of binary buffer */
-};
-
 struct	mparse {
 	struct man	 *pman; /* persistent man parser */
 	struct mdoc	 *pmdoc; /* persistent mdoc parser */
@@ -60,6 +55,7 @@ struct	mparse {
 	enum mandoclevel  file_status; /* status of current parse */
 	enum mandoclevel  wlevel; /* ignore messages below this */
 	int		  options; /* parser options */
+	int		  filenc; /* encoding of the current file */
 	int		  reparse_count; /* finite interp. stack */
 	int		  line; /* line number in the file */
 };
@@ -321,13 +317,20 @@ mparse_buf_r(struct mparse *curp, struct buf blk, int start)
 	lnn = curp->line;
 	pos = 0;
 
-	for (i = 0; i < (int)blk.sz; ) {
+	for (i = blk.offs; i < (int)blk.sz; ) {
 		if (0 == pos && '\0' == blk.buf[i])
 			break;
 
 		if (start) {
 			curp->line = lnn;
 			curp->reparse_count = 0;
+
+			if (lnn < 3 &&
+			    curp->filenc & MPARSE_UTF8 &&
+			    curp->filenc & MPARSE_LATIN1) {
+				blk.offs = i;
+				curp->filenc = preconv_cue(&blk);
+			}
 		}
 
 		while (i < (int)blk.sz && (start || '\0' != blk.buf[i])) {
@@ -348,27 +351,40 @@ mparse_buf_r(struct mparse *curp, struct buf blk, int start)
 			}
 
 			/*
-			 * Make sure we have space for at least
-			 * one backslash and one other character
-			 * and the trailing NUL byte.
+			 * Make sure we have space for the worst
+			 * case of 11 bytes: "\\[u10ffff]\0"
 			 */
 
-			if (pos + 2 >= (int)ln.sz)
+			if (pos + 11 > (int)ln.sz)
 				resize_buf(&ln, 256);
 
 			/*
-			 * Warn about bogus characters.  If you're using
-			 * non-ASCII encoding, you're screwing your
-			 * readers.  Since I'd rather this not happen,
-			 * I'll be helpful and replace these characters
-			 * with "?", so we don't display gibberish.
-			 * Note to manual writers: use special characters.
+			 * Encode 8-bit input.
 			 */
 
-			c = (unsigned char) blk.buf[i];
+			c = blk.buf[i];
+			if (c & 0x80) {
+				blk.offs = i;
+				ln.offs = pos;
+				if (curp->filenc && preconv_encode(
+				    &blk, &ln, &curp->filenc)) {
+					pos = ln.offs;
+					i = blk.offs;
+				} else {
+					mandoc_vmsg(MANDOCERR_BADCHAR,
+					    curp, curp->line, pos,
+					    "0x%x", c);
+					ln.buf[pos++] = '?';
+					i++;
+				}
+				continue;
+			}
 
-			if ( ! (isascii(c) &&
-			    (isgraph(c) || isblank(c)))) {
+			/*
+			 * Exclude control characters.
+			 */
+
+			if (c == 0x7f || (c < 0x20 && c != 0x09)) {
 				mandoc_vmsg(MANDOCERR_BADCHAR, curp,
 				    curp->line, pos, "0x%x", c);
 				i++;
@@ -627,6 +643,7 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 			return(0);
 		}
 		*with_mmap = 1;
+		fb->offs = 0;
 		fb->sz = (size_t)st.st_size;
 		fb->buf = mmap(NULL, fb->sz, PROT_READ, MAP_SHARED, fd, 0);
 		if (fb->buf != MAP_FAILED)
@@ -657,6 +674,7 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 		ssz = read(fd, fb->buf + (int)off, fb->sz - off);
 		if (ssz == 0) {
 			fb->sz = off;
+			fb->offs = 0;
 			return(1);
 		}
 		if (ssz == -1) {
@@ -728,6 +746,15 @@ mparse_parse_buffer(struct mparse *curp, struct buf blk, const char *file)
 	curp->line = 1;
 	recursion_depth++;
 
+	/* Skip an UTF-8 byte order mark. */
+	if (curp->filenc & MPARSE_UTF8 && blk.sz > 2 &&
+	    (unsigned char)blk.buf[0] == 0xef &&
+	    (unsigned char)blk.buf[1] == 0xbb &&
+	    (unsigned char)blk.buf[2] == 0xbf) {
+		blk.offs = 3;
+		curp->filenc &= ~MPARSE_LATIN1;
+	}
+
 	mparse_buf_r(curp, blk, 1);
 
 	if (0 == --recursion_depth && MANDOCLEVEL_FATAL > curp->file_status)
@@ -742,6 +769,7 @@ mparse_readfd(struct mparse *curp, int fd, const char *file)
 {
 	struct buf	 blk;
 	int		 with_mmap;
+	int		 save_filenc;
 
 	if (-1 == fd && -1 == (fd = open(file, O_RDONLY, 0))) {
 		curp->file_status = MANDOCLEVEL_SYSERR;
@@ -760,7 +788,11 @@ mparse_readfd(struct mparse *curp, int fd, const char *file)
 	 */
 
 	if (read_whole_file(curp, file, fd, &blk, &with_mmap)) {
+		save_filenc = curp->filenc;
+		curp->filenc = curp->options &
+		    (MPARSE_UTF8 | MPARSE_LATIN1);
 		mparse_parse_buffer(curp, blk, file);
+		curp->filenc = save_filenc;
 		if (with_mmap)
 			munmap(blk.buf, blk.sz);
 		else

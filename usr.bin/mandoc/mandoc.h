@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.110 2014/10/29 00:17:01 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.111 2014/10/30 00:05:02 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -393,6 +393,8 @@ struct	eqn {
 #define	MPARSE_MAN	2  /* assume -man */
 #define	MPARSE_SO	4  /* honour .so requests */
 #define	MPARSE_QUICK	8  /* abort the parse early */
+#define	MPARSE_UTF8	16 /* accept UTF-8 input */
+#define	MPARSE_LATIN1	32 /* accept ISO-LATIN-1 input */
 
 enum	mandoc_esc {
 	ESCAPE_ERROR = 0, /* bail! unparsable escape */
