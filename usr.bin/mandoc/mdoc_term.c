@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.186 2014/10/28 17:35:42 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.187 2014/10/30 20:05:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,7 +49,6 @@ struct	termact {
 
 static	size_t	  a2width(const struct termp *, const char *);
 static	size_t	  a2height(const struct termp *, const char *);
-static	size_t	  a2offs(const struct termp *, const char *);
 
 static	void	  print_bvspace(struct termp *,
 			const struct mdoc_node *,
@@ -548,27 +547,6 @@ a2width(const struct termp *p, const char *v)
 	return(term_hspan(p, &su));
 }
 
-static size_t
-a2offs(const struct termp *p, const char *v)
-{
-	struct roffsu	 su;
-
-	if ('\0' == *v)
-		return(0);
-	else if (0 == strcmp(v, "left"))
-		return(0);
-	else if (0 == strcmp(v, "indent"))
-		return(term_len(p, p->defindent + 1));
-	else if (0 == strcmp(v, "indent-two"))
-		return(term_len(p, (p->defindent + 1) * 2));
-	else if ( ! a2roffsu(v, &su, SCALE_MAX)) {
-		SCALE_HS_INIT(&su, term_strlen(p, v));
-		su.scale /= term_strlen(p, "0");
-	}
-
-	return(term_hspan(p, &su));
-}
-
 /*
  * Determine how much space to print out before block elements of `It'
  * (and thus `Bl') and `Bd'.  And then go ahead and print that space,
@@ -657,7 +635,7 @@ termp_it_pre(DECL_ARGS)
 	width = offset = 0;
 
 	if (bl->norm->Bl.offs)
-		offset = a2offs(p, bl->norm->Bl.offs);
+		offset = a2width(p, bl->norm->Bl.offs);
 
 	switch (type) {
 	case LIST_column:
@@ -1579,8 +1557,17 @@ termp_bd_pre(DECL_ARGS)
 	} else if (MDOC_HEAD == n->type)
 		return(0);
 
-	if (n->norm->Bd.offs)
-		p->offset += a2offs(p, n->norm->Bd.offs);
+	/* Handle the -offset argument. */
+
+	if (n->norm->Bd.offs == NULL ||
+	    ! strcmp(n->norm->Bd.offs, "left"))
+		/* nothing */;
+	else if ( ! strcmp(n->norm->Bd.offs, "indent"))
+		p->offset += term_len(p, p->defindent + 1);
+	else if ( ! strcmp(n->norm->Bd.offs, "indent-two"))
+		p->offset += term_len(p, (p->defindent + 1) * 2);
+	else
+		p->offset += a2width(p, n->norm->Bd.offs);
 
 	/*
 	 * If -ragged or -filled are specified, the block does nothing

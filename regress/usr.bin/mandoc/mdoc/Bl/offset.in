@@ -1,0 +1,63 @@
+.Dd October 30, 2014
+.Dt BL-OFFSET 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bl-offset
+.Nd various arguments for Bl offset
+.Sh DESCRIPTION
+.Bl -item -offset
+.It
+Bl item offset empty
+.El
+.Bl -item -offset left
+.It
+Bl item offset left
+.El
+.Bl -item -offset indent
+.It
+Bl item offset indent
+.El
+.Bl -item -offset indent-two
+.It
+Bl item offset indent-two
+.El
+.Bl -item -offset 4n
+.It
+Bl item offset 4n
+.El
+.Bl -item -offset mystring
+.It
+Bl item offset mystring
+.El
+.Bl -item -offset Ds
+.It
+Bl item offset Ds
+.El
+.Bl -tag -width Ds -offset
+.It tag
+Bl tag width Ds offset empty
+.El
+.Bl -tag -width Ds -offset left
+.It tag
+Bl tag width Ds offset left
+.El
+.Bl -tag -width Ds -offset indent
+.It tag
+Bl tag width Ds offset indent
+.El
+.Bl -tag -width Ds -offset indent-two
+.It tag
+Bl tag width Ds offset indent-two
+.El
+.Bl -tag -width Ds -offset 4n
+.It tag
+Bl tag width Ds offset 4n
+.El
+.Bl -tag -width Ds -offset mystring
+.It tag
+Bl tag width Ds offset mystring
+.El
+.Bl -tag -width Ds -offset Ds
+.It tag
+Bl tag width Ds offset Ds
+.El

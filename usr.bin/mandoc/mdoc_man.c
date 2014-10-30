@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.68 2014/08/21 12:56:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.69 2014/10/30 20:05:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/types.h>
+
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -108,7 +110,7 @@ static	int	  pre_xr(DECL_ARGS);
 static	void	  print_word(const char *);
 static	void	  print_line(const char *, int);
 static	void	  print_block(const char *, int);
-static	void	  print_offs(const char *);
+static	void	  print_offs(const char *, int);
 static	void	  print_width(const char *,
 				const struct mdoc_node *, size_t);
 static	void	  print_count(int *);
@@ -412,7 +414,7 @@ print_block(const char *s, int newflags)
 }
 
 static void
-print_offs(const char *v)
+print_offs(const char *v, int keywords)
 {
 	char		  buf[24];
 	struct roffsu	  su;
@@ -421,11 +423,11 @@ print_offs(const char *v)
 	print_line(".RS", MMAN_Bk_susp);
 
 	/* Convert v into a number (of characters). */
-	if (NULL == v || '\0' == *v || 0 == strcmp(v, "left"))
+	if (NULL == v || '\0' == *v || (keywords && !strcmp(v, "left")))
 		sz = 0;
-	else if (0 == strcmp(v, "indent"))
+	else if (keywords && !strcmp(v, "indent"))
 		sz = 6;
-	else if (0 == strcmp(v, "indent-two"))
+	else if (keywords && !strcmp(v, "indent-two"))
 		sz = 12;
 	else if (a2roffsu(v, &su, SCALE_MAX)) {
 		if (SCALE_EN == su.unit)
@@ -872,7 +874,7 @@ pre_bd(DECL_ARGS)
 		print_line(".nf", 0);
 	if (0 == n->norm->Bd.comp && NULL != n->parent->prev)
 		outflags |= MMAN_sp;
-	print_offs(n->norm->Bd.offs);
+	print_offs(n->norm->Bd.offs, 1);
 	return(1);
 }
 
@@ -959,7 +961,7 @@ pre_bl(DECL_ARGS)
 	 * just nest and do not add up their indentation.
 	 */
 	if (n->norm->Bl.offs) {
-		print_offs(n->norm->Bl.offs);
+		print_offs(n->norm->Bl.offs, 0);
 		Bl_stack[Bl_stack_len++] = 0;
 	}
 
@@ -1044,7 +1046,7 @@ static int
 pre_dl(DECL_ARGS)
 {
 
-	print_offs("6n");
+	print_offs("6n", 0);
 	return(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.83 2014/10/07 18:17:05 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.84 2014/10/30 20:05:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -54,7 +54,6 @@ static	void		  synopsis_pre(struct html *,
 				const struct mdoc_node *);
 
 static	void		  a2width(const char *, struct roffsu *);
-static	void		  a2offs(const char *, struct roffsu *);
 
 static	void		  mdoc_root_post(MDOC_ARGS);
 static	int		  mdoc_root_pre(MDOC_ARGS);
@@ -279,7 +278,7 @@ a2width(const char *p, struct roffsu *su)
 {
 
 	if ( ! a2roffsu(p, su, SCALE_MAX)) {
-		su->unit = SCALE_BU;
+		su->unit = SCALE_EN;
 		su->scale = html_strlen(p);
 	}
 }
@@ -324,27 +323,6 @@ synopsis_pre(struct html *h, const struct mdoc_node *n)
 		print_otag(h, TAG_BR, 0, NULL);
 		break;
 	}
-}
-
-/*
- * Calculate the scaling unit passed in an `-offset' argument.  This
- * uses either a native scaling unit (e.g., 1i, 2m), one of a set of
- * predefined strings (indent, etc.), or the string length of the value.
- */
-static void
-a2offs(const char *p, struct roffsu *su)
-{
-
-	/* FIXME: "right"? */
-
-	if (0 == strcmp(p, "left"))
-		SCALE_HS_INIT(su, 0);
-	else if (0 == strcmp(p, "indent"))
-		SCALE_HS_INIT(su, INDENT);
-	else if (0 == strcmp(p, "indent-two"))
-		SCALE_HS_INIT(su, INDENT * 2);
-	else if ( ! a2roffsu(p, su, SCALE_MAX))
-		SCALE_HS_INIT(su, html_strlen(p));
 }
 
 static void
@@ -992,7 +970,7 @@ mdoc_bl_pre(MDOC_ARGS)
 	/* Set the block's left-hand margin. */
 
 	if (n->norm->Bl.offs) {
-		a2offs(n->norm->Bl.offs, &su);
+		a2width(n->norm->Bl.offs, &su);
 		bufcat_su(h, "margin-left", &su);
 	}
 
@@ -1158,9 +1136,17 @@ mdoc_bd_pre(MDOC_ARGS)
 		return(1);
 	}
 
-	SCALE_HS_INIT(&su, 0);
-	if (n->norm->Bd.offs)
-		a2offs(n->norm->Bd.offs, &su);
+	/* Handle the -offset argument. */
+
+	if (n->norm->Bd.offs == NULL ||
+	    ! strcmp(n->norm->Bd.offs, "left"))
+		SCALE_HS_INIT(&su, 0);
+	else if ( ! strcmp(n->norm->Bd.offs, "indent"))
+		SCALE_HS_INIT(&su, INDENT);
+	else if ( ! strcmp(n->norm->Bd.offs, "indent-two"))
+		SCALE_HS_INIT(&su, INDENT * 2);
+	else
+		a2width(n->norm->Bd.offs, &su);
 
 	bufinit(h);
 	bufcat_su(h, "margin-left", &su);

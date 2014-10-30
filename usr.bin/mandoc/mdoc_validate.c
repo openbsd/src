@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.169 2014/10/13 14:01:03 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.170 2014/10/30 20:05:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -69,6 +69,7 @@ static	void	 check_args(struct mdoc *, struct mdoc_node *);
 static	int	 child_an(const struct mdoc_node *);
 static	enum mdoc_sec	a2sec(const char *);
 static	size_t		macro2len(enum mdoct);
+static	void	 rewrite_macro2len(char **);
 
 static	int	 ebool(POST_ARGS);
 static	int	 berr_ge1(POST_ARGS);
@@ -87,7 +88,6 @@ static	int	 post_bf(POST_ARGS);
 static	int	 post_bk(POST_ARGS);
 static	int	 post_bl(POST_ARGS);
 static	int	 post_bl_block(POST_ARGS);
-static	int	 post_bl_block_width(POST_ARGS);
 static	int	 post_bl_block_tag(POST_ARGS);
 static	int	 post_bl_head(POST_ARGS);
 static	int	 post_bx(POST_ARGS);
@@ -596,6 +596,7 @@ pre_bl(PRE_ARGS)
 				    mdoc->parse, argv->line,
 				    argv->pos, "Bl -width %s",
 				    argv->value[0]);
+			rewrite_macro2len(argv->value);
 			n->norm->Bl.width = argv->value[0];
 			break;
 		case MDOC_Offset:
@@ -610,6 +611,7 @@ pre_bl(PRE_ARGS)
 				    mdoc->parse, argv->line,
 				    argv->pos, "Bl -offset %s",
 				    argv->value[0]);
+			rewrite_macro2len(argv->value);
 			n->norm->Bl.offs = argv->value[0];
 			break;
 		default:
@@ -757,6 +759,7 @@ pre_bd(PRE_ARGS)
 				    mdoc->parse, argv->line,
 				    argv->pos, "Bd -offset %s",
 				    argv->value[0]);
+			rewrite_macro2len(argv->value);
 			n->norm->Bd.offs = argv->value[0];
 			break;
 		case MDOC_Compact:
@@ -1335,10 +1338,6 @@ post_bl_block(POST_ARGS)
 		if ( ! post_bl_block_tag(mdoc))
 			return(0);
 		assert(n->norm->Bl.width);
-	} else if (NULL != n->norm->Bl.width) {
-		if ( ! post_bl_block_width(mdoc))
-			return(0);
-		assert(n->norm->Bl.width);
 	}
 
 	for (ni = n->body->child; ni; ni = ni->next) {
@@ -1378,50 +1377,27 @@ post_bl_block(POST_ARGS)
 	return(1);
 }
 
-static int
-post_bl_block_width(POST_ARGS)
+/*
+ * If the argument of -offset or -width is a macro,
+ * replace it with the associated default width.
+ */
+void
+rewrite_macro2len(char **arg)
 {
 	size_t		  width;
-	int		  i;
 	enum mdoct	  tok;
-	struct mdoc_node *n;
-	char		  buf[24];
 
-	n = mdoc->last;
-
-	/*
-	 * Calculate the real width of a list from the -width string,
-	 * which may contain a macro (with a known default width), a
-	 * literal string, or a scaling width.
-	 *
-	 * If the value to -width is a macro, then we re-write it to be
-	 * the macro's width as set in share/tmac/mdoc/doc-common.
-	 */
-
-	if (0 == strcmp(n->norm->Bl.width, "Ds"))
+	if (*arg == NULL)
+		return;
+	else if ( ! strcmp(*arg, "Ds"))
 		width = 6;
-	else if (MDOC_MAX == (tok = mdoc_hash_find(n->norm->Bl.width)))
-		return(1);
+	else if ((tok = mdoc_hash_find(*arg)) == MDOC_MAX)
+		return;
 	else
 		width = macro2len(tok);
 
-	/* The value already exists: free and reallocate it. */
-
-	assert(n->args);
-
-	for (i = 0; i < (int)n->args->argc; i++)
-		if (MDOC_Width == n->args->argv[i].arg)
-			break;
-
-	assert(i < (int)n->args->argc);
-
-	(void)snprintf(buf, sizeof(buf), "%un", (unsigned int)width);
-	free(n->args->argv[i].value[0]);
-	n->args->argv[i].value[0] = mandoc_strdup(buf);
-
-	/* Set our width! */
-	n->norm->Bl.width = n->args->argv[i].value[0];
-	return(1);
+	free(*arg);
+	mandoc_asprintf(arg, "%zun", width);
 }
 
 static int
@@ -1436,7 +1412,7 @@ post_bl_block_tag(POST_ARGS)
 	 * Calculate the -width for a `Bl -tag' list if it hasn't been
 	 * provided.  Uses the first head macro.  NOTE AGAIN: this is
 	 * ONLY if the -width argument has NOT been provided.  See
-	 * post_bl_block_width() for converting the -width string.
+	 * rewrite_macro2len() for converting the -width string.
 	 */
 
 	sz = 10;

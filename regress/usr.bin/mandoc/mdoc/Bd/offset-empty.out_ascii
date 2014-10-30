@@ -16,4 +16,6 @@ DDEESSCCRRIIPPTTIIOONN
 
              Bd literal offset mystring
 
-OpenBSD                          July 6, 2012                          OpenBSD
+           Bd literal offset Ds
+
+OpenBSD                        October 30, 2014                        OpenBSD

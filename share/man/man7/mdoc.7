@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.121 2014/10/20 17:58:56 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.122 2014/10/30 20:05:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 20 2014 $
+.Dd $Mdocdate: October 30 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -937,8 +937,11 @@ The
 .Fl width
 and
 .Fl offset
-arguments accept scaling widths as described in
-.Xr roff 7
+arguments accept macro names as described for
+.Sx \&Bd
+.Fl offset ,
+scaling widths as described in
+.Xr roff 7 ,
 or use the length of the given string.
 The
 .Fl offset
