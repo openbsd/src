@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.83 2014/10/23 05:48:40 doug Exp $
+.\"	$OpenBSD: malloc.3,v 1.84 2014/10/30 20:43:35 millert Exp $
 .\"
-.Dd $Mdocdate: October 23 2014 $
+.Dd $Mdocdate: October 30 2014 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -265,12 +265,13 @@ if ((newp = reallocarray(p, num, size)) == NULL) {
 	...
 .Ed
 .Pp
-Code designed for some ancient platforms avoided calling
+Calling
 .Fn realloc
 with a
 .Dv NULL
-.Fa ptr .
-Such hacks are no longer necessary in modern code.
+.Fa ptr
+is equivalent to calling
+.Fn malloc .
 Instead of this idiom:
 .Bd -literal -offset indent
 if (p == NULL)
@@ -279,12 +280,7 @@ else
 	newp = realloc(p, newsize);
 .Ed
 .Pp
-Use the following as calling
-.Fn realloc
-with
-.Dv NULL
-is equivalent to calling
-.Fn malloc :
+Use the following:
 .Bd -literal -offset indent
 newp = realloc(p, newsize);
 .Ed
