@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2014/07/11 20:41:20 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.5 2014/10/30 20:41:02 bluhm Exp $
 
 PROG ?=		relay
 CFLAGS +=	-Wall -Werror
@@ -21,6 +21,7 @@ copy splice: ${PROG}
 
 run-regress-$p-$r: $r
 	@echo '\n======== $@ ========'
+	-pkill -x tcpbench
 .if empty (REMOTE_SSH)
 	./$r ${p:S/tcp//:S/udp/-u/} 12345 localhost 12346 & \
 	rpid=$$! ; \
@@ -31,6 +32,7 @@ run-regress-$p-$r: $r
 	pkill -x tcpbench
 .else
 	ssh -f ${REMOTE_SSH} 'cd ${.CURDIR} && make PROG= LOCAL_ADDR=${LOCAL_ADDR} REMOTE_ADDR=${REMOTE_ADDR} remote-regress-$p-$r' ; \
+	sleep 2 ; \
 	tcpbench ${p:S/tcp//:S/udp/-u/} -t 7 -b ${LOCAL_ADDR} -s -p 12346 & \
 	sleep 1 ; \
 	tcpbench ${p:S/tcp//:S/udp/-u/} -t 5 ${REMOTE_ADDR} ; \
@@ -39,6 +41,7 @@ run-regress-$p-$r: $r
 	sleep 1
 
 remote-regress-$p-$r: $r
+	-pkill -x $r
 	./$r ${p:S/tcp//:S/udp/-u/} -b ${REMOTE_ADDR} 12345 ${LOCAL_ADDR} 12346 & \
 	rpid=$$! ; \
 	sleep 7 ; \
