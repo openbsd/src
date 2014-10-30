@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.28 2014/10/05 13:32:14 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.29 2014/10/30 18:08:24 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -79,7 +79,8 @@ void	xhci_event_dequeue(struct xhci_softc *);
 void	xhci_event_xfer(struct xhci_softc *, uint64_t, uint32_t, uint32_t);
 void	xhci_event_command(struct xhci_softc *, uint64_t);
 void	xhci_event_port_change(struct xhci_softc *, uint64_t, uint32_t);
-int	xhci_pipe_init(struct xhci_softc *, struct usbd_pipe *, uint32_t);
+int	xhci_pipe_init(struct xhci_softc *, struct usbd_pipe *, uint32_t,
+	    uint32_t);
 int	xhci_scratchpad_alloc(struct xhci_softc *, int);
 void	xhci_scratchpad_free(struct xhci_softc *);
 int	xhci_softdev_alloc(struct xhci_softc *, uint8_t);
@@ -882,7 +883,7 @@ xhci_pipe_open(struct usbd_pipe *pipe)
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
 	uint8_t slot = 0, xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
 	struct usbd_device *hub;
-	uint32_t rhport = 0;
+	uint32_t route = 0, rhport = 0;
 	int error;
 
 	KASSERT(xp->slot == 0);
@@ -931,9 +932,19 @@ xhci_pipe_open(struct usbd_pipe *pipe)
 		if (xhci_softdev_alloc(sc, slot))
 			return (USBD_NOMEM);
 
-		/* Get root hub port */
-		for (hub = pipe->device; hub->myhub->depth; hub = hub->myhub)
-			;
+		/*
+		 * Calculate the Route String.  Note that this code assume
+		 * that there is no hub with more than 16 ports and that
+		 * they all are at a detph < USB_HUB_MAX_DEPTH.
+		 */
+		for (hub = pipe->device; hub->myhub->depth; hub = hub->myhub) {
+			uint32_t port = hub->powersrc->portno;
+			uint32_t depth = hub->myhub->depth;
+
+			route |= port << (4 * (depth - 1));
+		}
+
+		/* Get Root Hub port */
 		rhport = hub->powersrc->portno;
 		break;
 	case UE_ISOCHRONOUS:
@@ -963,7 +974,7 @@ xhci_pipe_open(struct usbd_pipe *pipe)
 	else
 		xp->slot = ((struct xhci_pipe *)pipe->device->default_pipe)->slot;
 
-	if (xhci_pipe_init(sc, pipe, rhport))
+	if (xhci_pipe_init(sc, pipe, rhport, route))
 		return (USBD_IOERROR);
 
 	return (USBD_NORMAL_COMPLETION);
@@ -1006,7 +1017,8 @@ xhci_get_txinfo(struct xhci_softc *sc, struct usbd_pipe *pipe)
 }
 
 int
-xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
+xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port,
+    uint32_t route)
 {
 	struct xhci_pipe *xp = (struct xhci_pipe *)pipe;
 	struct xhci_soft_dev *sdev = &sc->sc_sdevs[xp->slot];
@@ -1058,8 +1070,8 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
 	if (pipe->interval != USBD_DEFAULT_INTERVAL)
 		ival = min(ival, pipe->interval);
 
-	DPRINTF(("%s: speed %d mps %d rhport %d\n", DEVNAME(sc), speed, mps,
-	    port));
+	DPRINTF(("%s: speed %d mps %d rhport %d route 0x%x\n", DEVNAME(sc),
+	    speed, mps, port, route));
 
 	/* Setup the endpoint context */
 	if (xfertype != UE_ISOCHRONOUS)
@@ -1087,12 +1099,14 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
 
 	/* Setup the slot context */
 	sdev->slot_ctx->info_lo = htole32(
-	    XHCI_SCTX_DCI(xp->dci) | XHCI_SCTX_SPEED(speed)
+	    XHCI_SCTX_DCI(xp->dci) | XHCI_SCTX_SPEED(speed) |
+	    XHCI_SCTX_ROUTE(route)
 	);
 	sdev->slot_ctx->info_hi = htole32(XHCI_SCTX_RHPORT(port));
 	sdev->slot_ctx->tt = 0;
 	sdev->slot_ctx->state = 0;
 
+	/* If we are opening the interrupt pipe of a hub, update its context. */
 	if (pipe->device->hub != NULL) {
 		int nports = pipe->device->hub->nports;
 
@@ -2310,8 +2324,10 @@ xhci_device_generic_done(struct usbd_xfer *xfer)
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
 	/* Only happens with interrupt transfers. */
-	if (xfer->pipe->repeat)
-		xfer->status = xhci_device_generic_start(xfer);
+	if (xfer->pipe->repeat) {
+		xfer->actlen = 0;
+		xhci_device_generic_start(xfer);
+	}
 }
 
 void
