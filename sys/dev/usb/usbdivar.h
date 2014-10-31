@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.63 2014/10/30 23:50:25 mpi Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.64 2014/10/31 12:43:33 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -192,7 +192,7 @@ struct usbd_xfer {
 	volatile char		done;
 #ifdef DIAGNOSTIC
 	u_int32_t		busy_free;
-#define XFER_BUSY 0x42555359
+#define XFER_FREE 0x42555359
 #define XFER_ONQU 0x4f4e5155
 #endif
 
@@ -220,13 +220,11 @@ struct usbd_xfer {
 	struct timeout		timeout_handle;
 };
 
-#ifdef USB_DEBUG
 void usbd_dump_iface(struct usbd_interface *);
 void usbd_dump_device(struct usbd_device *);
 void usbd_dump_endpoint(struct usbd_endpoint *);
 void usbd_dump_queue(struct usbd_pipe *);
 void usbd_dump_pipe(struct usbd_pipe *);
-#endif
 
 /* Routines from usb_subr.c */
 int		usbctlprint(void *, const char *);

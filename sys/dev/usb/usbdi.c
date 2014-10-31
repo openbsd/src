@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.73 2014/09/26 09:31:08 guenther Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.74 2014/10/31 12:43:33 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -396,7 +396,7 @@ usbd_alloc_xfer(struct usbd_device *dev)
 	if (xfer == NULL)
 		return (NULL);
 #ifdef DIAGNOSTIC
-	xfer->busy_free = XFER_BUSY;
+	xfer->busy_free = XFER_FREE;
 #endif
 	xfer->device = dev;
 	timeout_set(&xfer->timeout_handle, NULL, NULL);
@@ -411,9 +411,8 @@ usbd_free_xfer(struct usbd_xfer *xfer)
 	if (xfer->rqflags & (URQ_DEV_DMABUF | URQ_AUTO_DMABUF))
 		usbd_free_buffer(xfer);
 #ifdef DIAGNOSTIC
-	if (xfer->busy_free != XFER_BUSY) {
-		printf("%s: xfer=%p not busy, 0x%08x\n", __func__, xfer,
-		    xfer->busy_free);
+	if (xfer->busy_free != XFER_FREE) {
+		printf("%s: xfer=%p not free\n", __func__, xfer);
 		return;
 	}
 #endif
@@ -718,8 +717,7 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 		     "actlen=%d\n", pipe, xfer, xfer->status, xfer->actlen));
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_ONQU) {
-		printf("usb_transfer_complete: xfer=%p not busy 0x%08x\n",
-		    xfer, xfer->busy_free);
+		printf("%s: xfer=%p not on queue\n", __func__, xfer);
 		return;
 	}
 #endif
@@ -762,7 +760,7 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 		if (xfer != SIMPLEQ_FIRST(&pipe->queue))
 			printf("usb_transfer_complete: bad dequeue %p != %p\n",
 			    xfer, SIMPLEQ_FIRST(&pipe->queue));
-		xfer->busy_free = XFER_BUSY;
+		xfer->busy_free = XFER_FREE;
 #endif
 		SIMPLEQ_REMOVE_HEAD(&pipe->queue, next);
 	}
@@ -825,9 +823,8 @@ usb_insert_transfer(struct usbd_xfer *xfer)
 	DPRINTFN(5,("usb_insert_transfer: pipe=%p running=%d timeout=%d\n",
 	    pipe, pipe->running, xfer->timeout));
 #ifdef DIAGNOSTIC
-	if (xfer->busy_free != XFER_BUSY) {
-		printf("usb_insert_transfer: xfer=%p not busy 0x%08x\n", xfer,
-		    xfer->busy_free);
+	if (xfer->busy_free != XFER_FREE) {
+		printf("%s: xfer=%p not free\n", __func__, xfer);
 		return (USBD_INVAL);
 	}
 	xfer->busy_free = XFER_ONQU;
