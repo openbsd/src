@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.34 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: cy.c,v 1.35 2014/10/31 09:45:27 jsg Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -64,16 +64,6 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-
-#if NCY_ISA > 0	
-#include <dev/isa/isavar.h>
-#include <dev/isa/isareg.h>
-#endif /* NCY_ISA > 0 */
-#if NCY_PCI > 0
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h>
-#endif /* NCY_PCI > 0 */
 
 #include <dev/ic/cd1400reg.h>
 #include <dev/ic/cyreg.h>
