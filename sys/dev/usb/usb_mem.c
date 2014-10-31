@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.c,v 1.26 2014/07/12 18:48:53 tedu Exp $ */
+/*	$OpenBSD: usb_mem.c,v 1.27 2014/10/31 15:20:01 mpi Exp $ */
 /*	$NetBSD: usb_mem.c,v 1.26 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
@@ -93,13 +93,6 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 
 	DPRINTFN(5, ("usb_block_allocmem: size=%lu align=%lu\n",
 		     (u_long)size, (u_long)align));
-
-#ifdef DIAGNOSTIC
-	if (!curproc) {
-		printf("usb_block_allocmem: in interrupt context, size=%lu\n",
-		    (unsigned long) size);
-	}
-#endif
 
 	s = splusb();
 	/* First check the free list. */
@@ -269,7 +262,7 @@ usb_freemem(struct usbd_bus *bus, struct usb_dma *p)
 	s = splusb();
 	LIST_INSERT_HEAD(&usb_frag_freelist, f, next);
 	splx(s);
-	DPRINTFN(5, ("usb_freemem: frag=%p\n", f));
+	DPRINTFN(5, ("usb_freemem: frag=%p block=%p\n", f, f->block));
 }
 
 void
