@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.4 2014/10/31 16:56:00 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.5 2014/10/31 16:59:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -178,7 +178,6 @@
 #include "s_apps.h"
 #include "timeouts.h"
 
-static RSA *tmp_rsa_cb(SSL * s, int is_export, int keylength);
 static int sv_body(char *hostname, int s, unsigned char *context);
 static int www_body(char *hostname, int s, unsigned char *context);
 static void close_accept_socket(void);
@@ -325,7 +324,6 @@ sv_usage(void)
 	BIO_printf(bio_err, " -cipher arg   - play with 'openssl ciphers' to see what goes here\n");
 	BIO_printf(bio_err, " -serverpref   - Use server's cipher preferences\n");
 	BIO_printf(bio_err, " -quiet        - Inhibit printing of session and certificate information\n");
-	BIO_printf(bio_err, " -no_tmp_rsa   - Do not generate a tmp RSA key\n");
 	BIO_printf(bio_err, " -ssl3         - Just talk SSLv3\n");
 	BIO_printf(bio_err, " -tls1_2       - Just talk TLSv1.2\n");
 	BIO_printf(bio_err, " -tls1_1       - Just talk TLSv1.1\n");
@@ -581,7 +579,7 @@ s_server_main(int argc, char *argv[])
 	int badop = 0, bugs = 0;
 	int ret = 1;
 	int off = 0;
-	int no_tmp_rsa = 0, no_dhe = 0, no_ecdhe = 0, nocert = 0;
+	int no_dhe = 0, no_ecdhe = 0, nocert = 0;
 	int state = 0;
 	const SSL_METHOD *meth = NULL;
 	int socket_type = SOCK_STREAM;
@@ -773,13 +771,12 @@ s_server_main(int argc, char *argv[])
 		} else if (strcmp(*argv, "-bugs") == 0) {
 			bugs = 1;
 		} else if (strcmp(*argv, "-no_tmp_rsa") == 0) {
-			no_tmp_rsa = 1;
+			/* No-op. */
 		} else if (strcmp(*argv, "-no_dhe") == 0) {
 			no_dhe = 1;
 		} else if (strcmp(*argv, "-no_ecdhe") == 0) {
 			no_ecdhe = 1;
-		}
-		else if (strcmp(*argv, "-www") == 0) {
+		} else if (strcmp(*argv, "-www") == 0) {
 			www = 1;
 		} else if (strcmp(*argv, "-WWW") == 0) {
 			www = 2;
@@ -1210,14 +1207,6 @@ bad:
 		if (!set_cert_key_stuff(ctx, s_dcert, s_dkey))
 			goto end;
 	}
-	if (!no_tmp_rsa) {
-		SSL_CTX_set_tmp_rsa_callback(ctx, tmp_rsa_cb);
-#ifndef OPENSSL_NO_TLSEXT
-		if (ctx2)
-			SSL_CTX_set_tmp_rsa_callback(ctx2, tmp_rsa_cb);
-#endif
-	}
-
 
 	if (cipher != NULL) {
 		if (!SSL_CTX_set_cipher_list(ctx, cipher)) {
@@ -2077,34 +2066,6 @@ err:
 		BIO_free_all(io);
 /*	if (ssl_bio != NULL) BIO_free(ssl_bio);*/
 	return (ret);
-}
-
-static RSA *
-tmp_rsa_cb(SSL * s, int is_export, int keylength)
-{
-	BIGNUM *bn = NULL;
-	static RSA *rsa_tmp = NULL;
-
-	if (!rsa_tmp && ((bn = BN_new()) == NULL))
-		BIO_printf(bio_err, "Allocation error in generating RSA key\n");
-	if (!rsa_tmp && bn) {
-		if (!s_quiet) {
-			BIO_printf(bio_err, "Generating temp (%d bit) RSA key...", keylength);
-			(void) BIO_flush(bio_err);
-		}
-		if (!BN_set_word(bn, RSA_F4) || ((rsa_tmp = RSA_new()) == NULL) ||
-		    !RSA_generate_key_ex(rsa_tmp, keylength, bn, NULL)) {
-			if (rsa_tmp)
-				RSA_free(rsa_tmp);
-			rsa_tmp = NULL;
-		}
-		if (!s_quiet) {
-			BIO_printf(bio_err, "\n");
-			(void) BIO_flush(bio_err);
-		}
-		BN_free(bn);
-	}
-	return (rsa_tmp);
 }
 
 #define MAX_SESSION_ID_ATTEMPTS 10
