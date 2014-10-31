@@ -1,4 +1,4 @@
-package ressl
+package tls
 
 import (
 	"encoding/pem"
@@ -13,9 +13,9 @@ import (
 )
 
 // createCAFile writes a PEM encoded version of the certificate out to a
-// temporary file, for use by ressl.
+// temporary file, for use by libtls.
 func createCAFile(cert []byte) (string, error) {
-	f, err := ioutil.TempFile("", "ressl")
+	f, err := ioutil.TempFile("", "tls")
 	if err != nil {
 		return "", fmt.Errorf("failed to create file: %v", err)
 	}
@@ -30,9 +30,9 @@ func createCAFile(cert []byte) (string, error) {
 	return f.Name(), nil
 }
 
-const httpContent = "Hello, ressl!"
+const httpContent = "Hello, TLS!"
 
-func TestResslBasic(t *testing.T) {
+func TestTLSBasic(t *testing.T) {
 	ts := httptest.NewTLSServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -64,27 +64,31 @@ func TestResslBasic(t *testing.T) {
 	defer cfg.Free()
 	cfg.SetCAFile(caFile)
 
-	ssl, err := NewClient(cfg)
+	tls, err := NewClient(cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer ssl.Free()
+	defer tls.Free()
 
 	t.Logf("Connecting to %s", u.Host)
 
-	if err := ssl.Connect(u.Host, ""); err != nil {
+	if err := tls.Connect(u.Host, ""); err != nil {
 		t.Fatal(err)
 	}
-	defer ssl.Close()
+	defer func() {
+		if err := tls.Close(); err != nil {
+			t.Logf("Close failed: %v", err)
+		}
+	}()
 
-	n, err := ssl.Write([]byte("GET / HTTP/1.0\n\n"))
+	n, err := tls.Write([]byte("GET / HTTP/1.0\n\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Logf("Wrote %d bytes...", n)
 
 	buf := make([]byte, 1024)
-	n, err = ssl.Read(buf)
+	n, err = tls.Read(buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,9 +96,5 @@ func TestResslBasic(t *testing.T) {
 
 	if !strings.Contains(string(buf), httpContent) {
 		t.Errorf("Response does not contain %q", httpContent)
-	}
-
-	if err := ssl.Close(); err != nil {
-		t.Fatal(err)
 	}
 }
