@@ -1,4 +1,6 @@
-#	$OpenBSD: Makefile,v 1.38 2014/10/18 16:48:28 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.39 2014/10/31 12:50:31 bluhm Exp $
+
+.include <bsd.own.mk>
 
 LIB=	event
 SRCS=	buffer.c evbuffer.c event.c event_tagging.c evutil.c kqueue.c \
@@ -60,17 +62,14 @@ MLINKS=	event.3 bufferevent_base_set.3 \
 
 CFLAGS+= -I${.CURDIR} -DNDEBUG
 
-CDIAGFLAGS=	-Wall
-#CDIAGFLAGS+=	-Werror
-CDIAGFLAGS+=	-Wstrict-prototypes
-CDIAGFLAGS+=	-Wmissing-prototypes
-CDIAGFLAGS+=	-Wmissing-declarations
-CDIAGFLAGS+=	-Wshadow
-CDIAGFLAGS+=	-Wpointer-arith
-CDIAGFLAGS+=	-Wcast-qual
-CDIAGFLAGS+=	-Wsign-compare
-CDIAGFLAGS+=	-Wcast-align
+# use more warnings than defined in bsd.own.mk
 CDIAGFLAGS+=	-Wbad-function-cast
+CDIAGFLAGS+=	-Wcast-align
+CDIAGFLAGS+=	-Wcast-qual
+CDIAGFLAGS+=	-Wextra
+CDIAGFLAGS+=	-Wmissing-declarations
+CDIAGFLAGS+=	-Wuninitialized
+CDIAGFLAGS+=	-Wno-unused-parameter
 
 includes:
 	@cd ${.CURDIR}; for i in ${HDRS}; do \
