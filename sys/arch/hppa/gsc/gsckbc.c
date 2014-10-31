@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.17 2013/05/23 18:29:51 tobias Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.18 2014/10/31 10:29:33 jsg Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -69,6 +69,8 @@
  * they are driven by a custom chip not 8042-compatible.
  */
 
+#include "pckbd.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -110,11 +112,6 @@ struct cfdriver gsckbc_cd = {
 };
 
 void	gsckbc_intr_establish(struct pckbc_softc *, pckbc_slot_t);
-
-#include "pckbd.h"
-#if (NGSCKBD > 0)
-#include <dev/pckbc/pckbdvar.h>
-#endif
 
 /* descriptor for one device command */
 struct pckbc_devcmd {
