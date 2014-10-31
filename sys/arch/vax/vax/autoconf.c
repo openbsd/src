@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.37 2014/05/17 12:08:37 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.38 2014/10/31 10:54:39 jsg Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -177,9 +177,6 @@ static int booted_de(struct device *, void *);
 #if NSD > 0 || NCD > 0
 static int booted_sd(struct device *, void *);
 #endif
-#if NRL > 0
-static int booted_rl(struct device *, void *);
-#endif
 #if NRA
 static int booted_ra(struct device *, void *);
 #endif
@@ -194,9 +191,6 @@ int (*devreg[])(struct device *, void *) = {
 	booted_de,
 #if NSD > 0 || NCD > 0
 	booted_sd,
-#endif
-#if NRL > 0
-	booted_rl,
 #endif
 #if NRA
 	booted_ra,
@@ -325,25 +319,6 @@ booted_sd(struct device *dev, void *aux)
 #endif
 
 	return 0; /* Where did we come from??? */
-}
-#endif
-#if NRL > 0
-#include <dev/qbus/rlvar.h>
-int
-booted_rl(struct device *dev, void *aux)
-{
-	struct rlc_attach_args *raa = aux;
-	static int ub;
-
-	if (jmfr("rlc", dev, BDEV_RL) == 0)
-		ub = ubtest(aux);
-	if (ub)
-		return 0;
-	if (jmfr("rl", dev, BDEV_RL))
-		return 0;
-	if (raa->hwid != rpb.unit)
-		return 0; /* Wrong unit number */
-	return 1;
 }
 #endif
 
