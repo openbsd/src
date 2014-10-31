@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.20 2014/10/31 15:49:18 jsing Exp $ */
+/* $OpenBSD: tls1.h,v 1.21 2014/10/31 15:50:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -511,13 +511,6 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 #define TLS1_CK_ECDHE_ECDSA_CHACHA20_POLY1305		0x0300CC14
 #define TLS1_CK_DHE_RSA_CHACHA20_POLY1305		0x0300CC15
 
-/* XXX
- * Inconsistency alert:
- * The OpenSSL names of ciphers with ephemeral DH here include the string
- * "DHE", while elsewhere it has always been "EDH".
- * (The alias for the list of all such ciphers also is "EDH".)
- * The specifications speak of "EDH"; maybe we should allow both forms
- * for everything. */
 #define TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_MD5		"EXP1024-RC4-MD5"
 #define TLS1_TXT_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5	"EXP1024-RC2-CBC-MD5"
 #define TLS1_TXT_RSA_EXPORT1024_WITH_DES_CBC_SHA	"EXP1024-DES-CBC-SHA"
