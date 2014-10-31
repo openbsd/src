@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2014/07/14 09:26:27 jsing Exp $
+#	$OpenBSD: Makefile,v 1.27 2014/10/31 13:48:21 jsing Exp $
 
 # Define SMALL to disable command line editing and https support
 #CFLAGS+=-DSMALL
@@ -17,8 +17,8 @@ SRCS=	cmds.c cmdtab.c complete.c cookie.c domacro.c fetch.c ftp.c \
 
 CPPFLAGS+= -DINET6
 
-LDADD+=	-ledit -lcurses -lutil -lressl -lssl -lcrypto
-DPADD+=	${LIBEDIT} ${LIBCURSES} ${LIBUTIL} ${LIBRESSL} ${LIBSSL} ${LIBCRYPTO}
+LDADD+=	-ledit -lcurses -lutil -ltls -lssl -lcrypto
+DPADD+=	${LIBEDIT} ${LIBCURSES} ${LIBUTIL} ${LIBTLS} ${LIBSSL} ${LIBCRYPTO}
 LDSTATIC= ${STATIC}
 
 #COPTS+= -Wall -Wconversion -Wstrict-prototypes -Wmissing-prototypes

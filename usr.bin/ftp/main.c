@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.94 2014/10/03 14:15:41 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.95 2014/10/31 13:48:21 jsing Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <ressl.h>
+#include <tls.h>
 
 #include "cmds.h"
 #include "ftp_var.h"
@@ -98,7 +98,7 @@ char * const ssl_verify_opts[] = {
 	NULL
 };
 
-struct ressl_config *ressl_config;
+struct tls_config *tls_config;
 #endif /* !SMALL */
 
 int family = PF_UNSPEC;
@@ -309,10 +309,10 @@ main(volatile int argc, char *argv[])
 
 		case 'S':
 #ifndef SMALL
-			if (ressl_config == NULL) {
-				ressl_config = ressl_config_new();
-				if (ressl_config == NULL)
-					errx(1, "ressl config failed");
+			if (tls_config == NULL) {
+				tls_config = tls_config_new();
+				if (tls_config == NULL)
+					errx(1, "tls config failed");
 			}
 
 			cp = optarg;
@@ -322,33 +322,33 @@ main(volatile int argc, char *argv[])
 				case SSL_CAFILE:
 					if (str == NULL)
 						errx(1, "missing CA file");
-					if (ressl_config_set_ca_file(
-					    ressl_config, str) != 0)
-						errx(1, "ressl ca file failed");
+					if (tls_config_set_ca_file(
+					    tls_config, str) != 0)
+						errx(1, "tls ca file failed");
 					break;
 				case SSL_CAPATH:
 					if (str == NULL)
 						errx(1, "missing CA directory"
 						    " path");
-					if (ressl_config_set_ca_path(
-					    ressl_config, str) != 0)
-						errx(1, "ressl ca path failed");
+					if (tls_config_set_ca_path(
+					    tls_config, str) != 0)
+						errx(1, "tls ca path failed");
 					break;
 				case SSL_CIPHERS:
 					if (str == NULL)
 						errx(1, "missing cipher list");
-					if (ressl_config_set_ciphers(
-					    ressl_config, str) != 0)
-						errx(1, "ressl ciphers failed");
+					if (tls_config_set_ciphers(
+					    tls_config, str) != 0)
+						errx(1, "tls ciphers failed");
 					break;
 				case SSL_DONTVERIFY:
-					ressl_config_insecure_noverifyhost(
-					    ressl_config);
-					ressl_config_insecure_noverifycert(
-					    ressl_config);
+					tls_config_insecure_noverifyhost(
+					    tls_config);
+					tls_config_insecure_noverifycert(
+					    tls_config);
 					break;
 				case SSL_DOVERIFY:
-					ressl_config_verify(ressl_config);
+					tls_config_verify(tls_config);
 					break;
 				case SSL_VERIFYDEPTH:
 					if (str == NULL)
@@ -359,8 +359,8 @@ main(volatile int argc, char *argv[])
 						errx(1, "certificate "
 						    "validation depth is %s",
 						    errstr);
-					ressl_config_set_verify_depth(
-					    ressl_config, (int)depth);
+					tls_config_set_verify_depth(
+					    tls_config, (int)depth);
 					break;
 				default:
 					errx(1, "unknown -S suboption `%s'",
