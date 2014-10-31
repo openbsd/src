@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.43 2014/10/31 14:51:01 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.44 2014/10/31 15:25:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -229,6 +229,7 @@ ssl_cert_dup(CERT *cert)
 		}
 	}
 	ret->dh_tmp_cb = cert->dh_tmp_cb;
+	ret->dh_tmp_auto = cert->dh_tmp_auto;
 
 	if (cert->ecdh_tmp) {
 		ret->ecdh_tmp = EC_KEY_dup(cert->ecdh_tmp);

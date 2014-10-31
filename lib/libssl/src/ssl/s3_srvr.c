@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.88 2014/10/31 14:51:01 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.89 2014/10/31 15:25:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1360,10 +1360,21 @@ ssl3_send_server_key_exchange(SSL *s)
 		r[0] = r[1] = r[2] = r[3] = NULL;
 		n = 0;
 		if (type & SSL_kDHE) {
-			dhp = cert->dh_tmp;
-			if ((dhp == NULL) && (s->cert->dh_tmp_cb != NULL))
+			if (s->cert->dh_tmp_auto != 0) {
+				if ((dhp = ssl_get_auto_dh(s)) == NULL) {
+					al = SSL_AD_INTERNAL_ERROR;
+					SSLerr(
+					    SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+					    ERR_R_INTERNAL_ERROR);
+					goto f_err;
+				}
+			} else
+				dhp = cert->dh_tmp;
+
+			if (dhp == NULL && s->cert->dh_tmp_cb != NULL)
 				dhp = s->cert->dh_tmp_cb(s, 0,
 				    SSL_C_PKEYLENGTH(s->s3->tmp.new_cipher));
+
 			if (dhp == NULL) {
 				al = SSL_AD_HANDSHAKE_FAILURE;
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
@@ -1377,7 +1388,9 @@ ssl3_send_server_key_exchange(SSL *s)
 				goto err;
 			}
 
-			if ((dh = DHparams_dup(dhp)) == NULL) {
+			if (s->cert->dh_tmp_auto != 0) {
+				dh = dhp;
+			} else if ((dh = DHparams_dup(dhp)) == NULL) {
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
 				    ERR_R_DH_LIB);
 				goto err;

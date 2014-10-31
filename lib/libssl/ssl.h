@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.68 2014/10/15 13:57:21 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.69 2014/10/31 15:25:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1429,6 +1429,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 
 #define SSL_CTRL_SET_ECDH_AUTO				94
 
+#define SSL_CTRL_SET_DH_AUTO			118
+
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
 #define DTLSv1_handle_timeout(ssl) \
@@ -1453,6 +1455,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH,0,(char *)dh)
 #define SSL_CTX_set_tmp_ecdh(ctx,ecdh) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_ECDH,0,(char *)ecdh)
+#define SSL_CTX_set_dh_auto(ctx, onoff) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_DH_AUTO,onoff,NULL)
 #define SSL_CTX_set_ecdh_auto(ctx, onoff) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_ECDH_AUTO,onoff,NULL)
 
@@ -1464,6 +1468,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_ctrl(ssl,SSL_CTRL_SET_TMP_DH,0,(char *)dh)
 #define SSL_set_tmp_ecdh(ssl,ecdh) \
 	SSL_ctrl(ssl,SSL_CTRL_SET_TMP_ECDH,0,(char *)ecdh)
+#define SSL_set_dh_auto(s, onoff) \
+	SSL_ctrl(s,SSL_CTRL_SET_DH_AUTO,onoff,NULL)
 #define SSL_set_ecdh_auto(s, onoff) \
 	SSL_ctrl(s,SSL_CTRL_SET_ECDH_AUTO,onoff,NULL)
 

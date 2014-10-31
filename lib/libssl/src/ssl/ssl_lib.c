@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.88 2014/10/31 14:51:01 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.89 2014/10/31 15:25:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1942,7 +1942,8 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	if (c == NULL)
 		return;
 
-	dh_tmp = (c->dh_tmp != NULL || c->dh_tmp_cb != NULL);
+	dh_tmp = (c->dh_tmp != NULL || c->dh_tmp_cb != NULL ||
+	    c->dh_tmp_auto != 0);
 
 	have_ecdh_tmp = (c->ecdh_tmp != NULL || c->ecdh_tmp_cb != NULL ||
 	    c->ecdh_tmp_auto != 0);
@@ -2174,6 +2175,54 @@ ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher, const EVP_MD **pmd)
 	if (pmd)
 		*pmd = c->pkeys[idx].digest;
 	return (c->pkeys[idx].privatekey);
+}
+
+DH *
+ssl_get_auto_dh(SSL *s)
+{
+	CERT_PKEY *cpk;
+	int keylen;
+	DH *dhp;
+
+	if (s->cert->dh_tmp_auto == 2) {
+		keylen = 1024;
+	} else if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) {
+		keylen = 1024;
+		if (s->s3->tmp.new_cipher->strength_bits == 256)
+			keylen = 3072;
+	} else {
+		if ((cpk = ssl_get_server_send_pkey(s)) == NULL)
+			return (NULL);
+		if (cpk->privatekey == NULL || cpk->privatekey->pkey.dh == NULL)
+			return (NULL);
+		keylen = EVP_PKEY_bits(cpk->privatekey);
+	}
+
+	if ((dhp = DH_new()) == NULL)
+		return (NULL);
+
+	dhp->g = BN_new();
+	if (dhp->g != NULL)
+		BN_set_word(dhp->g, 2);
+
+	if (keylen >= 8192)
+		dhp->p = get_rfc3526_prime_8192(NULL);
+	else if (keylen >= 4096)
+		dhp->p = get_rfc3526_prime_4096(NULL);
+	else if (keylen >= 3072)
+		dhp->p = get_rfc3526_prime_3072(NULL);
+	else if (keylen >= 2048)
+		dhp->p = get_rfc3526_prime_2048(NULL);
+	else if (keylen >= 1536)
+		dhp->p = get_rfc3526_prime_1536(NULL);
+	else
+		dhp->p = get_rfc2409_prime_1024(NULL);
+
+	if (dhp->p == NULL || dhp->g == NULL) {
+		DH_free(dhp);
+		return (NULL);
+	}
+	return (dhp);
 }
 
 void

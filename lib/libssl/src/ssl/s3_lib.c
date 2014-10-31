@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.83 2014/10/31 14:51:01 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.84 2014/10/31 15:25:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1994,13 +1994,15 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			ret = 1;
 		}
 		break;
+
 	case SSL_CTRL_SET_TMP_DH_CB:
-		{
-			SSLerr(SSL_F_SSL3_CTRL,
-			    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-			return (ret);
-		}
-		break;
+		SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return (ret);
+
+	case SSL_CTRL_SET_DH_AUTO:
+		s->cert->dh_tmp_auto = larg;
+		return 1;
+
 	case SSL_CTRL_SET_TMP_ECDH:
 		{
 			EC_KEY *ecdh = NULL;
@@ -2183,13 +2185,15 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 			return 1;
 		}
 		/*break; */
+
 	case SSL_CTRL_SET_TMP_DH_CB:
-		{
-			SSLerr(SSL_F_SSL3_CTX_CTRL,
-			    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-			return (0);
-		}
-		break;
+		SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return (0);
+
+	case SSL_CTRL_SET_DH_AUTO:
+		ctx->cert->dh_tmp_auto = larg;
+		return (1);
+
 	case SSL_CTRL_SET_TMP_ECDH:
 		{
 			EC_KEY *ecdh = NULL;
