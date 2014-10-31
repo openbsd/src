@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.71 2014/10/03 13:58:18 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.72 2014/10/31 14:51:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -439,9 +439,6 @@ typedef struct cert_st {
 	int valid;
 	unsigned long mask_k;
 	unsigned long mask_a;
-
-	RSA *rsa_tmp;
-	RSA *(*rsa_tmp_cb)(SSL *ssl, int is_export, int keysize);
 
 	DH *dh_tmp;
 	DH *(*dh_tmp_cb)(SSL *ssl, int is_export, int keysize);

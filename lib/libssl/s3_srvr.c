@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.87 2014/10/18 16:13:16 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.88 2014/10/31 14:51:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -392,37 +392,14 @@ ssl3_accept(SSL *s)
 			alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
 			/*
-			 * Clear this, it may get reset by
-			 * send_server_key_exchange.
-			 */
-			if ((s->options & SSL_OP_EPHEMERAL_RSA)
-			    )
-				/*
-				 * option SSL_OP_EPHEMERAL_RSA sends temporary
-				 * RSA key even when forbidden by protocol
-				 * specs (handshake may fail as clients are
-				 * not required to be able to handle this)
-				 */
-				s->s3->tmp.use_rsa_tmp = 1;
-			else
-				s->s3->tmp.use_rsa_tmp = 0;
-
-
-			/*
-			 * Only send if a DH key exchange, fortezza or
-			 * RSA but we have a sign only certificate.
+			 * Only send if using a DH key exchange.
 			 *
-			 * For ECC ciphersuites, we send a serverKeyExchange
-			 * message only if the cipher suite is either
-			 * ECDH-anon or ECDHE. In other cases, the
-			 * server certificate contains the server's
+			 * For ECC ciphersuites, we send a ServerKeyExchange
+			 * message only if the cipher suite is ECDHE. In other
+			 * cases, the server certificate contains the server's
 			 * public key for key exchange.
 			 */
-			if (s->s3->tmp.use_rsa_tmp ||
-			    (alg_k & (SSL_kDHE|SSL_kECDHE)) ||
-			    ((alg_k & SSL_kRSA) &&
-			     (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey ==
-			     NULL))) {
+			if (alg_k & (SSL_kDHE|SSL_kECDHE)) {
 				ret = ssl3_send_server_key_exchange(s);
 				if (ret <= 0)
 					goto end;
@@ -1352,7 +1329,6 @@ ssl3_send_server_key_exchange(SSL *s)
 {
 	unsigned char *q;
 	int j, num;
-	RSA *rsa;
 	unsigned char md_buf[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
 	unsigned int u;
 	DH *dh = NULL, *dhp;
@@ -1383,31 +1359,6 @@ ssl3_send_server_key_exchange(SSL *s)
 
 		r[0] = r[1] = r[2] = r[3] = NULL;
 		n = 0;
-		if (type & SSL_kRSA) {
-			rsa = cert->rsa_tmp;
-			if ((rsa == NULL) && (s->cert->rsa_tmp_cb != NULL)) {
-				rsa = s->cert->rsa_tmp_cb(s, 0,
-				    SSL_C_PKEYLENGTH(s->s3->tmp.new_cipher));
-				if (rsa == NULL) {
-					al = SSL_AD_HANDSHAKE_FAILURE;
-					SSLerr(
-					    SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-					    SSL_R_ERROR_GENERATING_TMP_RSA_KEY);
-					goto f_err;
-				}
-				RSA_up_ref(rsa);
-				cert->rsa_tmp = rsa;
-			}
-			if (rsa == NULL) {
-				al = SSL_AD_HANDSHAKE_FAILURE;
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-				    SSL_R_MISSING_TMP_RSA_KEY);
-				goto f_err;
-			}
-			r[0] = rsa->n;
-			r[1] = rsa->e;
-			s->s3->tmp.use_rsa_tmp = 1;
-		} else
 		if (type & SSL_kDHE) {
 			dhp = cert->dh_tmp;
 			if ((dhp == NULL) && (s->cert->dh_tmp_cb != NULL))
@@ -1855,32 +1806,15 @@ ssl3_get_client_key_exchange(SSL *s)
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
 	if (alg_k & SSL_kRSA) {
-		/* FIX THIS UP EAY EAY EAY EAY */
-		if (s->s3->tmp.use_rsa_tmp) {
-			if ((s->cert != NULL) && (s->cert->rsa_tmp != NULL))
-				rsa = s->cert->rsa_tmp;
-			/*
-			 * Don't do a callback because rsa_tmp should
-			 * be sent already
-			 */
-			if (rsa == NULL) {
-				al = SSL_AD_HANDSHAKE_FAILURE;
-				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-				    SSL_R_MISSING_TMP_RSA_PKEY);
-				goto f_err;
-
-			}
-		} else {
-			pkey = s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey;
-			if ((pkey == NULL) || (pkey->type != EVP_PKEY_RSA) ||
-			    (pkey->pkey.rsa == NULL)) {
-				al = SSL_AD_HANDSHAKE_FAILURE;
-				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-				    SSL_R_MISSING_RSA_CERTIFICATE);
-				goto f_err;
-			}
-			rsa = pkey->pkey.rsa;
+		pkey = s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey;
+		if ((pkey == NULL) || (pkey->type != EVP_PKEY_RSA) ||
+		    (pkey->pkey.rsa == NULL)) {
+			al = SSL_AD_HANDSHAKE_FAILURE;
+			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+			    SSL_R_MISSING_RSA_CERTIFICATE);
+			goto f_err;
 		}
+		rsa = pkey->pkey.rsa;
 
 		/* TLS and [incidentally] DTLS{0xFEFF} */
 		if (s->version > SSL3_VERSION && s->version != DTLS1_BAD_VER) {

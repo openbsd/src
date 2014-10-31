@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.82 2014/10/03 13:58:17 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.83 2014/10/31 14:51:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1934,8 +1934,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
 	int ret = 0;
 
-	if (cmd == SSL_CTRL_SET_TMP_RSA || cmd == SSL_CTRL_SET_TMP_RSA_CB ||
-	    cmd == SSL_CTRL_SET_TMP_DH || cmd == SSL_CTRL_SET_TMP_DH_CB) {
+	if (cmd == SSL_CTRL_SET_TMP_DH || cmd == SSL_CTRL_SET_TMP_DH_CB) {
 		if (!ssl_cert_inst(&s->cert)) {
 			SSLerr(SSL_F_SSL3_CTRL,
 			    ERR_R_MALLOC_FAILURE);
@@ -1963,36 +1962,11 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		ret = (int)(s->s3->flags);
 		break;
 	case SSL_CTRL_NEED_TMP_RSA:
-		if ((s->cert != NULL) && (s->cert->rsa_tmp == NULL) &&
-		    ((s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL) ||
-		    (EVP_PKEY_size(s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey)
-		    > (512 / 8))))
-			ret = 1;
+		ret = 0;
 		break;
 	case SSL_CTRL_SET_TMP_RSA:
-		{
-			RSA *rsa = (RSA *)parg;
-			if (rsa == NULL) {
-				SSLerr(SSL_F_SSL3_CTRL,
-				    ERR_R_PASSED_NULL_PARAMETER);
-				return (ret);
-			}
-			if ((rsa = RSAPrivateKey_dup(rsa)) == NULL) {
-				SSLerr(SSL_F_SSL3_CTRL,
-				    ERR_R_RSA_LIB);
-				return (ret);
-			}
-			RSA_free(s->cert->rsa_tmp);
-			s->cert->rsa_tmp = rsa;
-			ret = 1;
-		}
-		break;
 	case SSL_CTRL_SET_TMP_RSA_CB:
-		{
-			SSLerr(SSL_F_SSL3_CTRL,
-			    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-			return (ret);
-		}
+		SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		break;
 	case SSL_CTRL_SET_TMP_DH:
 		{
@@ -2144,7 +2118,7 @@ ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 {
 	int	ret = 0;
 
-	if (cmd == SSL_CTRL_SET_TMP_RSA_CB || cmd == SSL_CTRL_SET_TMP_DH_CB) {
+	if (cmd == SSL_CTRL_SET_TMP_DH_CB) {
 		if (!ssl_cert_inst(&s->cert)) {
 			SSLerr(SSL_F_SSL3_CALLBACK_CTRL,
 			    ERR_R_MALLOC_FAILURE);
@@ -2154,20 +2128,13 @@ ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 
 	switch (cmd) {
 	case SSL_CTRL_SET_TMP_RSA_CB:
-		{
-			s->cert->rsa_tmp_cb = (RSA *(*)(SSL *, int, int))fp;
-		}
+		SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		break;
 	case SSL_CTRL_SET_TMP_DH_CB:
-		{
-			s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
-		}
+		s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
 		break;
 	case SSL_CTRL_SET_TMP_ECDH_CB:
-		{
-			s->cert->ecdh_tmp_cb =
-			    (EC_KEY *(*)(SSL *, int, int))fp;
-		}
+		s->cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
 		break;
 	case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
 		s->tlsext_debug_cb = (void (*)(SSL *, int , int,
@@ -2188,45 +2155,11 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
 	switch (cmd) {
 	case SSL_CTRL_NEED_TMP_RSA:
-		if ((cert->rsa_tmp == NULL) &&
-		    ((cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL) ||
-		    (EVP_PKEY_size(cert->pkeys[SSL_PKEY_RSA_ENC].privatekey) >
-		    (512 / 8))))
-			return (1);
-		else
-			return (0);
-		/* break; */
+		return (0);
 	case SSL_CTRL_SET_TMP_RSA:
-		{
-			RSA *rsa;
-			int i;
-
-			rsa = (RSA *)parg;
-			i = 1;
-			if (rsa == NULL)
-				i = 0;
-			else {
-				if ((rsa = RSAPrivateKey_dup(rsa)) == NULL)
-					i = 0;
-			}
-			if (!i) {
-				SSLerr(SSL_F_SSL3_CTX_CTRL,
-				    ERR_R_RSA_LIB);
-				return (0);
-			} else {
-				RSA_free(cert->rsa_tmp);
-				cert->rsa_tmp = rsa;
-				return (1);
-			}
-		}
-		/* break; */
 	case SSL_CTRL_SET_TMP_RSA_CB:
-		{
-			SSLerr(SSL_F_SSL3_CTX_CTRL,
-			    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-			return (0);
-		}
-		break;
+		SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return (0);
 	case SSL_CTRL_SET_TMP_DH:
 		{
 			DH *new = NULL, *dh;
@@ -2366,19 +2299,13 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 
 	switch (cmd) {
 	case SSL_CTRL_SET_TMP_RSA_CB:
-		{
-			cert->rsa_tmp_cb = (RSA *(*)(SSL *, int, int))fp;
-		}
-		break;
+		SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return (0);
 	case SSL_CTRL_SET_TMP_DH_CB:
-		{
-			cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
-		}
+		cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
 		break;
 	case SSL_CTRL_SET_TMP_ECDH_CB:
-		{
-			cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
-		}
+		cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
 		break;
 	case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
 		ctx->tlsext_servername_callback =
