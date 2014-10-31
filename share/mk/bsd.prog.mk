@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.64 2014/09/29 19:37:51 gsoares Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.65 2014/10/31 13:46:17 jsing Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -48,11 +48,11 @@ LIBPANELW?=	${DESTDIR}/usr/lib/libpanelw.a
 LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
 LIBPERL?=	${DESTDIR}/usr/lib/libperl.a
 LIBPTHREAD?=	${DESTDIR}/usr/lib/libpthread.a
-LIBRESSL?=	${DESTDIR}/usr/lib/libressl.a
 LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
 LIBSNDIO?=	${DESTDIR}/usr/lib/libsndio.a
 LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
+LIBTLS?=	${DESTDIR}/usr/lib/libtls.a
 LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
 LIBTERMLIB?=	${DESTDIR}/usr/lib/libtermlib.a
 LIBUSB?=	${DESTDIR}/usr/lib/libusbhid.a

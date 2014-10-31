@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_config.c,v 1.14 2014/10/03 14:14:40 tedu Exp $ */
+/* $OpenBSD: tls_config.c,v 1.1 2014/10/31 13:46:17 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -18,8 +18,8 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#include <ressl.h>
-#include "ressl_internal.h"
+#include <tls.h>
+#include "tls_internal.h"
 
 static int
 set_string(const char **dest, const char *src)
@@ -56,10 +56,10 @@ set_mem(char **dest, size_t *destlen, const void *src, size_t srclen)
 	return 0;
 }
 
-struct ressl_config *
-ressl_config_new(void)
+struct tls_config *
+tls_config_new(void)
 {
-	struct ressl_config *config;
+	struct tls_config *config;
 
 	if ((config = calloc(1, sizeof(*config))) == NULL)
 		return (NULL);
@@ -67,26 +67,26 @@ ressl_config_new(void)
 	/*
 	 * Default configuration.
 	 */
-	if (ressl_config_set_ca_file(config, _PATH_SSL_CA_FILE) != 0) {
-		ressl_config_free(config);
+	if (tls_config_set_ca_file(config, _PATH_SSL_CA_FILE) != 0) {
+		tls_config_free(config);
 		return (NULL);
 	}
-	ressl_config_set_ecdhcurve(config, "auto");
-	ressl_config_set_protocols(config, RESSL_PROTOCOLS_DEFAULT);
-	ressl_config_set_verify_depth(config, 6);
+	tls_config_set_ecdhcurve(config, "auto");
+	tls_config_set_protocols(config, TLS_PROTOCOLS_DEFAULT);
+	tls_config_set_verify_depth(config, 6);
 	
-	ressl_config_verify(config);
+	tls_config_verify(config);
 
 	return (config);
 }
 
 void
-ressl_config_free(struct ressl_config *config)
+tls_config_free(struct tls_config *config)
 {
 	if (config == NULL)
 		return;
 
-	ressl_config_clear_keys(config);
+	tls_config_clear_keys(config);
 
 	free((char *)config->ca_file);
 	free((char *)config->ca_path);
@@ -100,45 +100,45 @@ ressl_config_free(struct ressl_config *config)
 }
 
 void
-ressl_config_clear_keys(struct ressl_config *config)
+tls_config_clear_keys(struct tls_config *config)
 {
-	ressl_config_set_cert_mem(config, NULL, 0);
-	ressl_config_set_key_mem(config, NULL, 0);
+	tls_config_set_cert_mem(config, NULL, 0);
+	tls_config_set_key_mem(config, NULL, 0);
 }
 
 int
-ressl_config_set_ca_file(struct ressl_config *config, const char *ca_file)
+tls_config_set_ca_file(struct tls_config *config, const char *ca_file)
 {
 	return set_string(&config->ca_file, ca_file);
 }
 
 int
-ressl_config_set_ca_path(struct ressl_config *config, const char *ca_path)
+tls_config_set_ca_path(struct tls_config *config, const char *ca_path)
 {
 	return set_string(&config->ca_path, ca_path);
 }
 
 int
-ressl_config_set_cert_file(struct ressl_config *config, const char *cert_file)
+tls_config_set_cert_file(struct tls_config *config, const char *cert_file)
 {
 	return set_string(&config->cert_file, cert_file);
 }
 
 int
-ressl_config_set_cert_mem(struct ressl_config *config, const uint8_t *cert,
+tls_config_set_cert_mem(struct tls_config *config, const uint8_t *cert,
     size_t len)
 {
 	return set_mem(&config->cert_mem, &config->cert_len, cert, len);
 }
 
 int
-ressl_config_set_ciphers(struct ressl_config *config, const char *ciphers)
+tls_config_set_ciphers(struct tls_config *config, const char *ciphers)
 {
 	return set_string(&config->ciphers, ciphers);
 }
 
 int
-ressl_config_set_ecdhcurve(struct ressl_config *config, const char *name)
+tls_config_set_ecdhcurve(struct tls_config *config, const char *name)
 {
 	int nid;
 
@@ -155,13 +155,13 @@ ressl_config_set_ecdhcurve(struct ressl_config *config, const char *name)
 }
 
 int
-ressl_config_set_key_file(struct ressl_config *config, const char *key_file)
+tls_config_set_key_file(struct tls_config *config, const char *key_file)
 {
 	return set_string(&config->key_file, key_file);
 }
 
 int
-ressl_config_set_key_mem(struct ressl_config *config, const uint8_t *key,
+tls_config_set_key_mem(struct tls_config *config, const uint8_t *key,
     size_t len)
 {
 	if (config->key_mem)
@@ -170,31 +170,31 @@ ressl_config_set_key_mem(struct ressl_config *config, const uint8_t *key,
 }
 
 void
-ressl_config_set_protocols(struct ressl_config *config, uint32_t protocols)
+tls_config_set_protocols(struct tls_config *config, uint32_t protocols)
 {
 	config->protocols = protocols;
 }
 
 void
-ressl_config_set_verify_depth(struct ressl_config *config, int verify_depth)
+tls_config_set_verify_depth(struct tls_config *config, int verify_depth)
 {
 	config->verify_depth = verify_depth;
 }
 
 void
-ressl_config_insecure_noverifyhost(struct ressl_config *config)
+tls_config_insecure_noverifyhost(struct tls_config *config)
 {
 	config->verify_host = 0;
 }
 
 void
-ressl_config_insecure_noverifycert(struct ressl_config *config)
+tls_config_insecure_noverifycert(struct tls_config *config)
 {
 	config->verify_cert = 0;
 }
 
 void
-ressl_config_verify(struct ressl_config *config)
+tls_config_verify(struct tls_config *config)
 {
 	config->verify_host = 1;
 	config->verify_cert = 1;

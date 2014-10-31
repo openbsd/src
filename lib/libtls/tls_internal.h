@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_internal.h,v 1.12 2014/10/03 14:14:40 tedu Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.1 2014/10/31 13:46:17 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef HEADER_RESSL_INTERNAL_H
-#define HEADER_RESSL_INTERNAL_H
+#ifndef HEADER_TLS_INTERNAL_H
+#define HEADER_TLS_INTERNAL_H
 
 #include <openssl/ssl.h>
 
@@ -25,7 +25,7 @@
 
 #define _PATH_SSL_CA_FILE "/etc/ssl/cert.pem"
 
-struct ressl_config {
+struct tls_config {
 	const char *ca_file;
 	const char *ca_path;
 	const char *cert_file;
@@ -42,12 +42,12 @@ struct ressl_config {
 	int verify_depth;
 };
 
-#define RESSL_CLIENT		(1 << 0)
-#define RESSL_SERVER		(1 << 1)
-#define RESSL_SERVER_CONN	(1 << 2)
+#define TLS_CLIENT		(1 << 0)
+#define TLS_SERVER		(1 << 1)
+#define TLS_SERVER_CONN	(1 << 2)
 
-struct ressl {
-	struct ressl_config *config;
+struct tls {
+	struct tls_config *config;
 	uint64_t flags;
 
 	int err;
@@ -59,14 +59,14 @@ struct ressl {
 	SSL_CTX *ssl_ctx;
 };
 
-struct ressl *ressl_new(void);
-struct ressl *ressl_server_conn(struct ressl *ctx);
+struct tls *tls_new(void);
+struct tls *tls_server_conn(struct tls *ctx);
 
-int ressl_check_hostname(X509 *cert, const char *host);
-int ressl_configure_keypair(struct ressl *ctx);
-int ressl_configure_server(struct ressl *ctx);
-int ressl_configure_ssl(struct ressl *ctx);
-int ressl_host_port(const char *hostport, char **host, char **port);
-int ressl_set_error(struct ressl *ctx, char *fmt, ...);
+int tls_check_hostname(X509 *cert, const char *host);
+int tls_configure_keypair(struct tls *ctx);
+int tls_configure_server(struct tls *ctx);
+int tls_configure_ssl(struct tls *ctx);
+int tls_host_port(const char *hostport, char **host, char **port);
+int tls_set_error(struct tls *ctx, char *fmt, ...);
 
-#endif /* HEADER_RESSL_INTERNAL_H */
+#endif /* HEADER_TLS_INTERNAL_H */

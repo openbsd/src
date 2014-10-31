@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_verify.c,v 1.5 2014/10/06 11:55:48 jca Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.1 2014/10/31 13:46:17 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -24,14 +24,14 @@
 
 #include <openssl/x509v3.h>
 
-#include "ressl_internal.h"
+#include "tls_internal.h"
 
-int ressl_match_hostname(const char *cert_hostname, const char *hostname);
-int ressl_check_subject_altname(X509 *cert, const char *host);
-int ressl_check_common_name(X509 *cert, const char *host);
+int tls_match_hostname(const char *cert_hostname, const char *hostname);
+int tls_check_subject_altname(X509 *cert, const char *host);
+int tls_check_common_name(X509 *cert, const char *host);
 
 int
-ressl_match_hostname(const char *cert_hostname, const char *hostname)
+tls_match_hostname(const char *cert_hostname, const char *hostname)
 {
 	const char *cert_domain, *domain, *next_dot;
 
@@ -80,7 +80,7 @@ ressl_match_hostname(const char *cert_hostname, const char *hostname)
 }
 
 int
-ressl_check_subject_altname(X509 *cert, const char *host)
+tls_check_subject_altname(X509 *cert, const char *host)
 {
 	STACK_OF(GENERAL_NAME) *altname_stack = NULL;
 	union { struct in_addr ip4; struct in6_addr ip6; } addrbuf;
@@ -131,7 +131,7 @@ ressl_check_subject_altname(X509 *cert, const char *host)
 					break;
 				}
 
-				if (ressl_match_hostname(data, host) == 0) {
+				if (tls_match_hostname(data, host) == 0) {
 					rv = 0;
 					break;
 				}
@@ -160,7 +160,7 @@ ressl_check_subject_altname(X509 *cert, const char *host)
 }
 
 int
-ressl_check_common_name(X509 *cert, const char *host)
+tls_check_common_name(X509 *cert, const char *host)
 {
 	X509_NAME *name;
 	char *common_name = NULL;
@@ -205,7 +205,7 @@ ressl_check_common_name(X509 *cert, const char *host)
 		goto out;
 	}
 
-	if (ressl_match_hostname(common_name, host) == 0)
+	if (tls_match_hostname(common_name, host) == 0)
 		rv = 0;
 out:
 	free(common_name);
@@ -213,13 +213,13 @@ out:
 }
 
 int
-ressl_check_hostname(X509 *cert, const char *host)
+tls_check_hostname(X509 *cert, const char *host)
 {
 	int	rv;
 
-	rv = ressl_check_subject_altname(cert, host);
+	rv = tls_check_subject_altname(cert, host);
 	if (rv == 0 || rv == -2)
 		return rv;
 
-	return ressl_check_common_name(cert, host);
+	return tls_check_common_name(cert, host);
 }

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ressl_init.3,v 1.9 2014/10/16 12:46:35 tedu Exp $
+.\" $OpenBSD: tls_init.3,v 1.1 2014/10/31 13:46:17 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,167 +14,167 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 16 2014 $
-.Dt RESSL 3
+.Dd $Mdocdate: October 31 2014 $
+.Dt TLS 3
 .Os
 .Sh NAME
-.Nm ressl_init ,
-.Nm ressl_error ,
-.Nm ressl_config_new ,
-.Nm ressl_config_free ,
-.Nm ressl_config_set_ca_file ,
-.Nm ressl_config_set_ca_path ,
-.Nm ressl_config_set_cert_file ,
-.Nm ressl_config_set_cert_mem ,
-.Nm ressl_config_set_ciphers ,
-.Nm ressl_config_set_ecdhcurve ,
-.Nm ressl_config_set_key_file ,
-.Nm ressl_config_set_key_mem ,
-.Nm ressl_config_set_protocols ,
-.Nm ressl_config_set_verify_depth ,
-.Nm ressl_config_clear_keys ,
-.Nm ressl_config_insecure_noverifyhost ,
-.Nm ressl_config_insecure_noverifycert ,
-.Nm ressl_config_verify ,
-.Nm ressl_client ,
-.Nm ressl_server ,
-.Nm ressl_configure ,
-.Nm ressl_reset ,
-.Nm ressl_close ,
-.Nm ressl_free ,
-.Nm ressl_connect ,
-.Nm ressl_connect_socket ,
-.Nm ressl_read ,
-.Nm ressl_write ,
-.Nd ressl TLS client and server API
+.Nm tls_init ,
+.Nm tls_error ,
+.Nm tls_config_new ,
+.Nm tls_config_free ,
+.Nm tls_config_set_ca_file ,
+.Nm tls_config_set_ca_path ,
+.Nm tls_config_set_cert_file ,
+.Nm tls_config_set_cert_mem ,
+.Nm tls_config_set_ciphers ,
+.Nm tls_config_set_ecdhcurve ,
+.Nm tls_config_set_key_file ,
+.Nm tls_config_set_key_mem ,
+.Nm tls_config_set_protocols ,
+.Nm tls_config_set_verify_depth ,
+.Nm tls_config_clear_keys ,
+.Nm tls_config_insecure_noverifyhost ,
+.Nm tls_config_insecure_noverifycert ,
+.Nm tls_config_verify ,
+.Nm tls_client ,
+.Nm tls_server ,
+.Nm tls_configure ,
+.Nm tls_reset ,
+.Nm tls_close ,
+.Nm tls_free ,
+.Nm tls_connect ,
+.Nm tls_connect_socket ,
+.Nm tls_read ,
+.Nm tls_write ,
+.Nd tls TLS client and server API
 .Sh SYNOPSIS
-.In ressl.h
+.In tls.h
 .Ft "int"
-.Fn ressl_init "void"
+.Fn tls_init "void"
 .Ft "const char *"
-.Fn ressl_error "struct ressl *ctx"
-.Ft "struct ressl_config *"
-.Fn ressl_config_new "void"
+.Fn tls_error "struct tls *ctx"
+.Ft "struct tls_config *"
+.Fn tls_config_new "void"
 .Ft "void"
-.Fn ressl_config_free "struct ressl_config *config"
+.Fn tls_config_free "struct tls_config *config"
 .Ft "int"
-.Fn ressl_config_set_ca_file "struct ressl_config *config" "const char *ca_file"
+.Fn tls_config_set_ca_file "struct tls_config *config" "const char *ca_file"
 .Ft "int"
-.Fn ressl_config_set_ca_path "struct ressl_config *config" "const char *ca_path"
+.Fn tls_config_set_ca_path "struct tls_config *config" "const char *ca_path"
 .Ft "int"
-.Fn ressl_config_set_cert_file "struct ressl_config *config" "const char *cert_file"
+.Fn tls_config_set_cert_file "struct tls_config *config" "const char *cert_file"
 .Ft "int"
-.Fn ressl_config_set_cert_mem  "struct ressl_config *config" "const uint8_t *cert" "size_t len"
+.Fn tls_config_set_cert_mem  "struct tls_config *config" "const uint8_t *cert" "size_t len"
 .Ft "int"
-.Fn ressl_config_set_ciphers "struct ressl_config *config" "const char *ciphers"
+.Fn tls_config_set_ciphers "struct tls_config *config" "const char *ciphers"
 .Ft "int"
-.Fn ressl_config_set_ecdhcurve "struct ressl_config *config" "const char *name"
+.Fn tls_config_set_ecdhcurve "struct tls_config *config" "const char *name"
 .Ft "int"
-.Fn ressl_config_set_key_file "struct ressl_config *config" "const char *key_file"
+.Fn tls_config_set_key_file "struct tls_config *config" "const char *key_file"
 .Ft "int"
-.Fn ressl_config_set_key_mem "struct ressl_config *config" "const uint8_t *key" "size_t len"
+.Fn tls_config_set_key_mem "struct tls_config *config" "const uint8_t *key" "size_t len"
 .Ft "int"
-.Fn ressl_config_set_protocols "struct ressl_config *config" "uint32_t protocols"
+.Fn tls_config_set_protocols "struct tls_config *config" "uint32_t protocols"
 .Ft "int"
-.Fn ressl_config_set_verify_depth "struct ressl_config *config" "int verify_depth"
+.Fn tls_config_set_verify_depth "struct tls_config *config" "int verify_depth"
 .Ft "void"
-.Fn ressl_config_clear_keys "struct ressl_config *config"
+.Fn tls_config_clear_keys "struct tls_config *config"
 .Ft "void"
-.Fn ressl_config_insecure_noverifyhost "struct ressl_config *config"
+.Fn tls_config_insecure_noverifyhost "struct tls_config *config"
 .Ft "void"
-.Fn ressl_config_insecure_noverifycert "struct ressl_config *config"
+.Fn tls_config_insecure_noverifycert "struct tls_config *config"
 .Ft "void"
-.Fn ressl_config_verify "struct ressl_config *config"
-.Ft "struct ressl *"
-.Fn ressl_client void
-.Ft "struct ressl *"
-.Fn ressl_server void
+.Fn tls_config_verify "struct tls_config *config"
+.Ft "struct tls *"
+.Fn tls_client void
+.Ft "struct tls *"
+.Fn tls_server void
 .Ft "int"
-.Fn ressl_configure "struct ressl *ctx" "struct ressl_config *config"
+.Fn tls_configure "struct tls *ctx" "struct tls_config *config"
 .Ft "void"
-.Fn ressl_reset "struct ressl *ctx"
+.Fn tls_reset "struct tls *ctx"
 .Ft "int"
-.Fn ressl_close "struct ressl *ctx"
+.Fn tls_close "struct tls *ctx"
 .Ft "void"
-.Fn ressl_free "struct ressl *ctx"
+.Fn tls_free "struct tls *ctx"
 .Ft "int"
-.Fn ressl_connect "struct ressl *ctx" "const char *host" "const char *port"
+.Fn tls_connect "struct tls *ctx" "const char *host" "const char *port"
 .Ft "int"
-.Fn ressl_connect_socket "struct ressl *ctx" "int s" "const char *hostname"
+.Fn tls_connect_socket "struct tls *ctx" "int s" "const char *hostname"
 .Ft "int"
-.Fn ressl_read "struct ressl *ctx" "void *buf" "size_t buflen" "size_t *outlen"
+.Fn tls_read "struct tls *ctx" "void *buf" "size_t buflen" "size_t *outlen"
 .Ft "int"
-.Fn ressl_write "struct ressl *ctx" "const void *buf" "size_t buflen"
+.Fn tls_write "struct tls *ctx" "const void *buf" "size_t buflen"
 .Sh DESCRIPTION
 The
-.Nm ressl
+.Nm tls
 family of functions establishes a secure communications channel
 using the TLS socket protocol.
 Both clients and servers are supported.
 .Pp
 The
-.Fn ressl_init
+.Fn tls_init
 function should be called once before any function is used.
 .Pp
 Before a connection is created, a configuration must be created.
 The
-.Fn ressl_config_new
+.Fn tls_config_new
 function returns a new default configuration that can be used for future
 connections.
 Several functions exist to change the options of the configuration; see below.
 .Pp
 A
-.Em ressl
+.Em tls
 connection is represented as a
 .Em context .
 A new
 .Em context
 is created by either the
-.Fn ressl_client
+.Fn tls_client
 or
-.Fn ressl_server
+.Fn tls_server
 functions.
 The context can then be configured with the function
-.Fn ressl_configure .
+.Fn tls_configure .
 The same
-.Em ressl_config
+.Em tls_config
 object can be used to configure multiple contexts.
 .Pp
 A client connection is initiated after configuration by calling
-.Fn ressl_connect .
+.Fn tls_connect .
 This function will create a new socket, connect to the specified host and
 port, and then establish a secure connection.
 An already existing socket can be upgraded to a secure connection by calling
-.Fn ressl_connect_socket .
+.Fn tls_connect_socket .
 .Pp
 Two functions are provided for input and output,
-.Fn ressl_read
+.Fn tls_read
 and
-.Fn ressl_write .
+.Fn tls_write .
 .Pp
-After use, a ressl
+After use, a tls
 .Em context
 should be closed with
-.Fn ressl_close ,
+.Fn tls_close ,
 and then freed by calling
-.Fn ressl_free .
+.Fn tls_free .
 When no more contexts are to be created, the
-.Em ressl_config
+.Em tls_config
 object should be freed by calling
-.Fn ressl_config_free .
+.Fn tls_config_free .
 .Sh FUNCTIONS
 The
-.Fn ressl_init
+.Fn tls_init
 function initializes global data structures.
 It should be called once before any other functions.
 .Pp
 The following functions create and free configuration objects.
 .Bl -bullet -offset four
 .It
-.Fn ressl_config_new
+.Fn tls_config_new
 allocates a new default configuration object.
 .It
-.Fn ressl_config_free
+.Fn tls_config_free
 frees a configuration object.
 .El
 .Pp
@@ -182,68 +182,68 @@ The following functions modify a configuration by setting parameters.
 Configuration options may apply to only clients or only servers or both.
 .Bl -bullet -offset four
 .It
-.Fn ressl_config_set_ca_file
+.Fn tls_config_set_ca_file
 sets the filename used to load a file
 containing the root certificates.
 .Em (Client)
 .It
-.Fn ressl_config_set_ca_path
+.Fn tls_config_set_ca_path
 sets the path (directory) which should be searched for root
 certificates.
 .Em (Client)
 .It
-.Fn ressl_config_set_cert_file
+.Fn tls_config_set_cert_file
 sets file from which the public certificate will be read.
 .Em (Client and server)
 .It
-.Fn ressl_config_set_cert_mem
+.Fn tls_config_set_cert_mem
 sets the public certificate directly from memory.
 .Em (Client and server)
 .It
-.Fn ressl_config_set_ciphers
+.Fn tls_config_set_ciphers
 sets the list of ciphers that may be used.
 .Em (Client and server)
 .It
-.Fn ressl_config_set_key_file
+.Fn tls_config_set_key_file
 sets the file from which the private key will be read.
 .Em (Server)
 .It
-.Fn ressl_config_set_key_mem
+.Fn tls_config_set_key_mem
 directly sets the private key from memory.
 .Em (Server)
 .It
-.Fn ressl_config_set_protocols
+.Fn tls_config_set_protocols
 sets which versions of the protocol may be used.
 Possible values are the bitwise OR of:
 .Pp
-.Bl -tag -width "RESSL_PROTOCOL_TLSv1_2" -offset indent -compact
-.It Dv RESSL_PROTOCOL_TLSv1_0
-.It Dv RESSL_PROTOCOL_TLSv1_1
-.It Dv RESSL_PROTOCOL_TLSv1_2
+.Bl -tag -width "TLS_PROTOCOL_TLSv1_2" -offset indent -compact
+.It Dv TLS_PROTOCOL_TLSv1_0
+.It Dv TLS_PROTOCOL_TLSv1_1
+.It Dv TLS_PROTOCOL_TLSv1_2
 .El
 .Pp
 Additionally, the values
-.Dv RESSL_PROTOCOL_TLSv1
+.Dv TLS_PROTOCOL_TLSv1
 (all TLS versions) and
-.Dv RESSL_PROTOCOLS_DEFAULT
+.Dv TLS_PROTOCOLS_DEFAULT
 (currently all TLS versions) may be used.
 .Em (Client and server)
 .It
-.Fn ressl_config_clear_keys
+.Fn tls_config_clear_keys
 clears any secret keys from memory.
 .Em (Server)
 .It
-.Fn ressl_config_insecure_noverifyhost
+.Fn tls_config_insecure_noverifyhost
 disables hostname verification.
 Be careful when using this option.
 .Em (Client)
 .It
-.Fn ressl_config_insecure_noverifycert
+.Fn tls_config_insecure_noverifycert
 disables certificate verification.
 Be extremely careful when using this option.
 .Em (Client)
 .It
-.Fn ressl_config_verify
+.Fn tls_config_verify
 reenables hostname and certificate verification.
 .Em (Client)
 .El
@@ -251,28 +251,28 @@ reenables hostname and certificate verification.
 The following functions create, prepare, and free a connection context.
 .Bl -bullet -offset four
 .It
-.Fn ressl_client
-creates a new ressl context for client connections.
+.Fn tls_client
+creates a new tls context for client connections.
 .It
-.Fn ressl_server
-creates a new ressl context for server connections.
+.Fn tls_server
+creates a new tls context for server connections.
 .It
-.Fn ressl_configure
-readies a ressl context for use by applying the configuration
+.Fn tls_configure
+readies a tls context for use by applying the configuration
 options.
 .It
-.Fn ressl_close
+.Fn tls_close
 closes a connection after use.
 .It
-.Fn ressl_free
-frees a ressl context after use.
+.Fn tls_free
+frees a tls context after use.
 .El
 .Pp
 The following functions initiate a connection and perform input and output
 operations.
 .Bl -bullet -offset four
 .It
-.Fn ressl_connect
+.Fn tls_connect
 connects a client context to the server named by
 .Fa host .
 The
@@ -280,10 +280,10 @@ The
 may be numeric or a service name.
 If it is NULL then a host of the format "hostname:port" is permitted.
 .It
-.Fn ressl_connect_socket
+.Fn tls_connect_socket
 connects a client context to an already established socket connection.
 .It
-.Fn ressl_read
+.Fn tls_read
 reads
 .Fa buflen
 bytes of data from the socket into
@@ -291,7 +291,7 @@ bytes of data from the socket into
 The amount of data read is returned in
 .Fa outlen .
 .It
-.Fn ressl_write
+.Fn tls_write
 writes
 .Fa buflen
 bytes of data from
@@ -309,7 +309,7 @@ Functions that return a pointer will return NULL on error.
 .\" .Sh SEE ALSO
 .Sh HISTORY
 The
-.Nm ressl
+.Nm tls
 API first appeared in
 .Ox 5.6
 as a response to the unnecessary challenges other APIs present in

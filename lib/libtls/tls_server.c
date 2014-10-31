@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_server.c,v 1.11 2014/10/15 14:08:26 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.1 2014/10/31 13:46:17 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -18,48 +18,48 @@
 #include <openssl/ec.h>
 #include <openssl/ssl.h>
 
-#include <ressl.h>
-#include "ressl_internal.h"
+#include <tls.h>
+#include "tls_internal.h"
 
-struct ressl *
-ressl_server(void)
+struct tls *
+tls_server(void)
 {
-	struct ressl *ctx;
+	struct tls *ctx;
 
-	if ((ctx = ressl_new()) == NULL)
+	if ((ctx = tls_new()) == NULL)
 		return (NULL);
 
-	ctx->flags |= RESSL_SERVER;
+	ctx->flags |= TLS_SERVER;
 
 	return (ctx);
 }
 
-struct ressl *
-ressl_server_conn(struct ressl *ctx)
+struct tls *
+tls_server_conn(struct tls *ctx)
 {
-	struct ressl *conn_ctx;
+	struct tls *conn_ctx;
 
-	if ((conn_ctx = ressl_new()) == NULL)
+	if ((conn_ctx = tls_new()) == NULL)
 		return (NULL);
 
-	conn_ctx->flags |= RESSL_SERVER_CONN;
+	conn_ctx->flags |= TLS_SERVER_CONN;
 
 	return (conn_ctx);
 }
 
 int
-ressl_configure_server(struct ressl *ctx)
+tls_configure_server(struct tls *ctx)
 {
 	EC_KEY *ecdh_key;
 
 	if ((ctx->ssl_ctx = SSL_CTX_new(SSLv23_server_method())) == NULL) {
-		ressl_set_error(ctx, "ssl context failure");
+		tls_set_error(ctx, "ssl context failure");
 		goto err;
 	}
 
-	if (ressl_configure_ssl(ctx) != 0)
+	if (tls_configure_ssl(ctx) != 0)
 		goto err;
-	if (ressl_configure_keypair(ctx) != 0)
+	if (tls_configure_keypair(ctx) != 0)
 		goto err;
 
 	if (ctx->config->ecdhcurve == -1) {
@@ -67,7 +67,7 @@ ressl_configure_server(struct ressl *ctx)
 	} else if (ctx->config->ecdhcurve != NID_undef) {
 		if ((ecdh_key = EC_KEY_new_by_curve_name(
 		    ctx->config->ecdhcurve)) == NULL) {
-			ressl_set_error(ctx, "failed to set ECDH curve");
+			tls_set_error(ctx, "failed to set ECDH curve");
 			goto err;
 		}
 		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_SINGLE_ECDH_USE);
@@ -82,43 +82,19 @@ err:
 }
 
 int
-ressl_listen(struct ressl *ctx, const char *host, const char *port, int af)
+tls_accept_socket(struct tls *ctx, struct tls **cctx, int socket)
 {
-	if ((ctx->flags & RESSL_SERVER) == 0) {
-		ressl_set_error(ctx, "not a server context");
-		goto err;
-	}
-
-err:
-	return (-1);
-}
-
-int
-ressl_accept(struct ressl *ctx, struct ressl **cctx)
-{
-	if ((ctx->flags & RESSL_SERVER) == 0) {
-		ressl_set_error(ctx, "not a server context");
-		goto err;
-	}
-
-err:
-	return (-1);
-}
-
-int
-ressl_accept_socket(struct ressl *ctx, struct ressl **cctx, int socket)
-{
-	struct ressl *conn_ctx = *cctx;
+	struct tls *conn_ctx = *cctx;
 	int ret, ssl_err;
 	
-	if ((ctx->flags & RESSL_SERVER) == 0) {
-		ressl_set_error(ctx, "not a server context");
+	if ((ctx->flags & TLS_SERVER) == 0) {
+		tls_set_error(ctx, "not a server context");
 		goto err;
 	}
 
 	if (conn_ctx == NULL) {
-		if ((conn_ctx = ressl_server_conn(ctx)) == NULL) {
-			ressl_set_error(ctx, "connection context failure");
+		if ((conn_ctx = tls_server_conn(ctx)) == NULL) {
+			tls_set_error(ctx, "connection context failure");
 			goto err;
 		}
 		*cctx = conn_ctx;
@@ -126,12 +102,12 @@ ressl_accept_socket(struct ressl *ctx, struct ressl **cctx, int socket)
 		conn_ctx->socket = socket;
 
 		if ((conn_ctx->ssl_conn = SSL_new(ctx->ssl_ctx)) == NULL) {
-			ressl_set_error(ctx, "ssl failure");
+			tls_set_error(ctx, "ssl failure");
 			goto err;
 		}
 
 		if (SSL_set_fd(conn_ctx->ssl_conn, socket) != 1) {
-			ressl_set_error(ctx, "ssl set fd failure");
+			tls_set_error(ctx, "ssl set fd failure");
 			goto err;
 		}
 		SSL_set_app_data(conn_ctx->ssl_conn, conn_ctx);
@@ -141,11 +117,11 @@ ressl_accept_socket(struct ressl *ctx, struct ressl **cctx, int socket)
 		ssl_err = SSL_get_error(conn_ctx->ssl_conn, ret);
 		switch (ssl_err) {
 		case SSL_ERROR_WANT_READ:
-			return (RESSL_READ_AGAIN);
+			return (TLS_READ_AGAIN);
 		case SSL_ERROR_WANT_WRITE:
-			return (RESSL_WRITE_AGAIN);
+			return (TLS_WRITE_AGAIN);
 		default:
-			ressl_set_error(ctx, "ssl accept failure (%i)",
+			tls_set_error(ctx, "ssl accept failure (%i)",
 			    ssl_err);
 			goto err;
 		}

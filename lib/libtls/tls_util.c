@@ -1,4 +1,4 @@
-/* $OpenBSD: ressl_util.c,v 1.2 2014/08/05 12:46:16 jsing Exp $ */
+/* $OpenBSD: tls_util.c,v 1.1 2014/10/31 13:46:17 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <stdlib.h>
 
-#include "ressl_internal.h"
+#include "tls_internal.h"
 
 /*
  * Extract the host and port from a colon separated value. For a literal IPv6
@@ -28,7 +28,7 @@
  * On memory allocation failure -1 will be returned.
  */
 int
-ressl_host_port(const char *hostport, char **host, char **port)
+tls_host_port(const char *hostport, char **host, char **port)
 {
 	char *h, *p, *s;
 	int rv = 1;

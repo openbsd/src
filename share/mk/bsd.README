@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.58 2014/10/13 14:31:01 schwarze Exp $
+#	$OpenBSD: bsd.README,v 1.59 2014/10/31 13:46:17 jsing Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -355,13 +355,13 @@ DPADD		Additional dependencies for the program.  Usually used for
 			LIBPCAP		/usr/lib/libpcap.a
 			LIBPERL		/usr/lib/libperl.a
 			LIBPTHREAD	/usr/lib/libpthread.a
-			LIBRESSL	/usr/lib/libressl.a
 			LIBRPCSVC	/usr/lib/librpcsvc.a
 			LIBSKEY		/usr/lib/libskey.a
 			LIBSNDIO	/usr/lib/libsndio.a
 			LIBSSL		/usr/lib/libssl.a
 			LIBTERMCAP	/usr/lib/libtermcap.a
 			LIBTERMLIB	/usr/lib/libtermlib.a
+			LIBTLS		/usr/lib/libtls.a
 			LIBUSB		/usr/lib/libusbhid.a
 			LIBUTIL		/usr/lib/libutil.a
 			LIBY		/usr/lib/liby.a
