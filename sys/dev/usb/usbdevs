@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.638 2014/10/12 09:27:25 armani Exp $
+$OpenBSD: usbdevs,v 1.639 2014/10/31 21:17:42 tedu Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3211,6 +3211,7 @@ product PALM ZIRE		0x0070	Palm Zire
 product PANASONIC LS120		0x0901	LS-120
 product PANASONIC SDCAAE	0x1b00	MultiMediaCard
 product PANASONIC TYTP50P6S	0x3900	TY-TP50P6-S 50in Touch Panel
+product PANASONIC N5HBZ0000055	0x3904	UB94
 
 /* Papouch products */
 product PAPOUCH SB485_1		0x0100	SB485 USB-485/422
