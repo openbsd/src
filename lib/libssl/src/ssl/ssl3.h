@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.27 2014/10/31 14:51:01 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.28 2014/10/31 15:34:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -472,8 +472,6 @@ typedef struct ssl3_state_st {
 		int ctype_num;
 		char ctype[SSL3_CT_NUMBER];
 		STACK_OF(X509_NAME) *ca_names;
-
-		int use_rsa_tmp;	/* XXX - remove at next bump. */
 
 		int key_block_length;
 		unsigned char *key_block;
