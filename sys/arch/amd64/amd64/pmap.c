@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.75 2014/10/18 17:28:34 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.76 2014/10/31 04:33:51 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -120,6 +120,8 @@
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
+
+#include "acpi.h"
 
 /*
  * general info:
