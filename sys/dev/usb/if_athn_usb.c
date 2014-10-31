@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.22 2014/07/13 15:52:49 mpi Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.23 2014/10/31 21:19:14 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -87,6 +87,8 @@ static const struct athn_usb_type {
 	{{ USB_VENDOR_LITEON, USB_PRODUCT_LITEON_AR9271 }},
 	{{ USB_VENDOR_NETGEAR, USB_PRODUCT_NETGEAR_WNA1100 }},
 	{{ USB_VENDOR_NETGEAR, USB_PRODUCT_NETGEAR_WNDA3200 },
+	   ATHN_USB_FLAG_AR7010 },
+	{{ USB_VENDOR_PANASONIC, USB_PRODUCT_PANASONIC_N5HBZ0000055 },
 	   ATHN_USB_FLAG_AR7010 },
 	{{ USB_VENDOR_VIA, USB_PRODUCT_VIA_AR9271 }}
 };
