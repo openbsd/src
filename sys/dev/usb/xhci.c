@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.32 2014/10/31 16:39:34 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.33 2014/10/31 23:11:48 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -657,6 +657,8 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 	}
 
 	xp = sc->sc_sdevs[slot].pipes[dci - 1];
+	if (xp == NULL)
+		return;
 
 	code = XHCI_TRB_GET_CODE(status);
 	remain = XHCI_TRB_REMAIN(status);
@@ -762,7 +764,6 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 
 	slot = XHCI_TRB_GET_SLOT(flags);
 	dci = XHCI_TRB_GET_EP(flags);
-	xp = sc->sc_sdevs[slot].pipes[dci - 1];
 
 	switch (flags & XHCI_TRB_TYPE_MASK) {
 	case XHCI_CMD_RESET_EP:
@@ -770,6 +771,10 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 		 * Clear the TRBs and reconfigure the dequeue pointer
 		 * before declaring the endpoint ready.
 		 */
+		xp = sc->sc_sdevs[slot].pipes[dci - 1];
+		if (xp == NULL)
+			break;
+
 		xhci_ring_reset(sc, &xp->ring);
 		xp->free_trbs = xp->ring.ntrb;
 		xhci_cmd_set_tr_deq_async(sc, xp->slot, xp->dci,
@@ -781,6 +786,10 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 		 * can finish all its pending transfers and let the
 		 * stack play with it again.
 		 */
+		xp = sc->sc_sdevs[slot].pipes[dci - 1];
+		if (xp == NULL)
+			break;
+
 		xp->halted = 0;
 		for (i = 0; i < XHCI_MAX_TRANSFERS; i++) {
 			xfer = xp->pending_xfers[i];
