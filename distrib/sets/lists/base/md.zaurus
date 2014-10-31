@@ -63,7 +63,6 @@
 ./usr/lib/libperl.so.15.0
 ./usr/lib/libpthread.so.18.1
 ./usr/lib/libreadline.so.4.0
-./usr/lib/libressl.so.2.0
 ./usr/lib/librpcsvc.so.2.0
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.6.0
@@ -72,6 +71,7 @@
 ./usr/lib/libstdc++.so.57.0
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
+./usr/lib/libtls.so.1.0
 ./usr/lib/libusbhid.so.7.0
 ./usr/lib/libutil.so.12.1
 ./usr/lib/libz.so.5.0
@@ -1931,7 +1931,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/regex.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/resolv.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/ressl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/rmd160.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/rpc
 ./usr/libdata/perl5/site_perl/arm-openbsd/rpc/auth.ph
@@ -2143,6 +2142,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/termios.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/tgmath.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/time.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/tls.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ttyent.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/tzfile.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ufs

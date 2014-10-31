@@ -1279,7 +1279,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/regex.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/resolv.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/ressl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/rmd160.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/rpc
 ./usr/libdata/perl5/site_perl/vax-openbsd/rpc/auth.ph
@@ -1491,6 +1490,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/termios.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/tgmath.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/time.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/tls.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ttyent.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/tzfile.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ufs
