@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.31 2014/10/30 18:29:59 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.32 2014/10/31 16:39:34 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -113,9 +113,7 @@ void	xhci_abort_xfer(struct usbd_xfer *, usbd_status);
 void	xhci_pipe_close(struct usbd_pipe *);
 void	xhci_noop(struct usbd_xfer *);
 
-/* XXX these are common to all HC drivers and should be merged. */
 void 	xhci_timeout(void *);
-void 	xhci_timeout_task(void *);
 
 /* USBD Bus Interface. */
 usbd_status	  xhci_pipe_open(struct usbd_pipe *);
@@ -739,7 +737,6 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 	}
 
 	xhci_xfer_done(xfer);
-	usb_transfer_complete(xfer);
 }
 
 void
@@ -790,7 +787,7 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 			if (xfer != NULL && xfer->done == 0) {
 				if (xfer->status != USBD_STALLED)
 					xfer->status = USBD_IOERROR;
-				usb_transfer_complete(xfer);
+				xhci_xfer_done(xfer);
 			}
 			xp->pending_xfers[i] = NULL;
 		}
@@ -854,6 +851,9 @@ xhci_xfer_done(struct usbd_xfer *xfer)
 	xp->free_trbs += xx->ntrb;
 	xx->index = -1;
 	xx->ntrb = 0;
+
+	timeout_del(&xfer->timeout_handle);
+	usb_transfer_complete(xfer);
 }
 
 static inline uint8_t
@@ -1721,13 +1721,12 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 {
 	int s;
 
+	DPRINTF(("%s: xfer=%p err=%s\n", __func__, xfer, usbd_errstr(status)));
+
 	xfer->status = status;
-	timeout_del(&xfer->timeout_handle);
-	usb_rem_task(xfer->device, &xfer->abort_task);
 
 	s = splusb();
 	xhci_xfer_done(xfer);
-	usb_transfer_complete(xfer);
 	splx(s);
 }
 
@@ -1735,24 +1734,6 @@ void
 xhci_timeout(void *addr)
 {
 	struct usbd_xfer *xfer = addr;
-	struct xhci_softc *sc = (struct xhci_softc *)xfer->device->bus;
-
-	if (sc->sc_bus.dying) {
-		xhci_timeout_task(addr);
-		return;
-	}
-
-	usb_init_task(&xfer->abort_task, xhci_timeout_task, addr,
-	    USB_TASK_TYPE_ABORT);
-	usb_add_task(xfer->device, &xfer->abort_task);
-}
-
-void
-xhci_timeout_task(void *addr)
-{
-	struct usbd_xfer *xfer = addr;
-
-	DPRINTF(("%s: xfer=%p\n", __func__, xfer));
 
 	xhci_abort_xfer(xfer, USBD_TIMEOUT);
 }
@@ -2241,13 +2222,11 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	if (sc->sc_bus.use_polling)
 		xhci_waitintr(sc, xfer);
-#if notyet
 	else if (xfer->timeout) {
 		timeout_del(&xfer->timeout_handle);
 		timeout_set(&xfer->timeout_handle, xhci_timeout, xfer);
 		timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 	}
-#endif
 
 	return (USBD_IN_PROGRESS);
 }
@@ -2303,13 +2282,11 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 
 	if (sc->sc_bus.use_polling)
 		xhci_waitintr(sc, xfer);
-#if notyet
 	else if (xfer->timeout) {
 		timeout_del(&xfer->timeout_handle);
 		timeout_set(&xfer->timeout_handle, xhci_timeout, xfer);
 		timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 	}
-#endif
 
 	return (USBD_IN_PROGRESS);
 }
