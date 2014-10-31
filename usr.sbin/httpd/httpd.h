@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.60 2014/10/22 09:48:03 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.61 2014/10/31 13:49:52 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -26,7 +26,7 @@
 #include <sys/param.h>		/* MAXHOSTNAMELEN */
 #include <limits.h>
 #include <imsg.h>
-#include <ressl.h>
+#include <tls.h>
 
 #define CONF_FILE		"/etc/httpd.conf"
 #define HTTPD_SOCKET		"/var/run/httpd.sock"
@@ -281,7 +281,7 @@ struct client {
 	int			 clt_sndbufsiz;
 
 	int			 clt_fd;
-	struct ressl		*clt_ressl_ctx;
+	struct tls		*clt_tls_ctx;
 	struct bufferevent	*clt_srvbev;
 
 	off_t			 clt_toread;
@@ -408,8 +408,8 @@ struct server {
 	struct event		 srv_ev;
 	struct event		 srv_evt;
 
-	struct ressl		 *srv_ressl_ctx;
-	struct ressl_config	 *srv_ressl_config;
+	struct tls		 *srv_tls_ctx;
+	struct tls_config	 *srv_tls_config;
 
 	struct client_tree	 srv_clients;
 };

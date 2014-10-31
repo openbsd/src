@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.45 2014/10/25 03:23:49 lteo Exp $	*/
+/*	$OpenBSD: server.c,v 1.46 2014/10/31 13:49:52 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -43,7 +43,7 @@
 #include <pwd.h>
 #include <event.h>
 #include <fnmatch.h>
-#include <ressl.h>
+#include <tls.h>
 
 #include "httpd.h"
 
@@ -174,43 +174,43 @@ server_ssl_init(struct server *srv)
 
 	log_debug("%s: setting up SSL for %s", __func__, srv->srv_conf.name);
 
-	if (ressl_init() != 0) {
-		log_warn("%s: failed to initialise ressl", __func__);
+	if (tls_init() != 0) {
+		log_warn("%s: failed to initialise tls", __func__);
 		return (-1);
 	}
-	if ((srv->srv_ressl_config = ressl_config_new()) == NULL) {
-		log_warn("%s: failed to get ressl config", __func__);
+	if ((srv->srv_tls_config = tls_config_new()) == NULL) {
+		log_warn("%s: failed to get tls config", __func__);
 		return (-1);
 	}
-	if ((srv->srv_ressl_ctx = ressl_server()) == NULL) {
-		log_warn("%s: failed to get ressl server", __func__);
+	if ((srv->srv_tls_ctx = tls_server()) == NULL) {
+		log_warn("%s: failed to get tls server", __func__);
 		return (-1);
 	}
 
-	if (ressl_config_set_ciphers(srv->srv_ressl_config,
+	if (tls_config_set_ciphers(srv->srv_tls_config,
 	    srv->srv_conf.ssl_ciphers) != 0) {
-		log_warn("%s: failed to set ressl ciphers", __func__);
+		log_warn("%s: failed to set tls ciphers", __func__);
 		return (-1);
 	}
-	if (ressl_config_set_cert_mem(srv->srv_ressl_config,
+	if (tls_config_set_cert_mem(srv->srv_tls_config,
 	    srv->srv_conf.ssl_cert, srv->srv_conf.ssl_cert_len) != 0) {
-		log_warn("%s: failed to set ressl cert", __func__);
+		log_warn("%s: failed to set tls cert", __func__);
 		return (-1);
 	}
-	if (ressl_config_set_key_mem(srv->srv_ressl_config,
+	if (tls_config_set_key_mem(srv->srv_tls_config,
 	    srv->srv_conf.ssl_key, srv->srv_conf.ssl_key_len) != 0) {
-		log_warn("%s: failed to set ressl key", __func__);
+		log_warn("%s: failed to set tls key", __func__);
 		return (-1);
 	}
 
-	if (ressl_configure(srv->srv_ressl_ctx, srv->srv_ressl_config) != 0) {
+	if (tls_configure(srv->srv_tls_ctx, srv->srv_tls_config) != 0) {
 		log_warn("%s: failed to configure SSL - %s", __func__,
-		    ressl_error(srv->srv_ressl_ctx));
+		    tls_error(srv->srv_tls_ctx));
 		return (-1);
 	}
 
 	/* We're now done with the public/private key... */
-	ressl_config_clear_keys(srv->srv_ressl_config);
+	tls_config_clear_keys(srv->srv_tls_config);
 	explicit_bzero(srv->srv_conf.ssl_cert, srv->srv_conf.ssl_cert_len);
 	explicit_bzero(srv->srv_conf.ssl_key, srv->srv_conf.ssl_key_len);
 	free(srv->srv_conf.ssl_cert);
@@ -299,8 +299,8 @@ server_purge(struct server *srv)
 		}
 	}
 
-	ressl_config_free(srv->srv_ressl_config);
-	ressl_free(srv->srv_ressl_ctx);
+	tls_config_free(srv->srv_tls_config);
+	tls_free(srv->srv_tls_ctx);
 
 	free(srv);
 }
@@ -556,8 +556,8 @@ server_ssl_readcb(int fd, short event, void *arg)
 	if (bufev->wm_read.high != 0)
 		howmuch = MIN(sizeof(rbuf), bufev->wm_read.high);
 
-	ret = ressl_read(clt->clt_ressl_ctx, rbuf, howmuch, &len);
-	if (ret == RESSL_READ_AGAIN || ret == RESSL_WRITE_AGAIN) {
+	ret = tls_read(clt->clt_tls_ctx, rbuf, howmuch, &len);
+	if (ret == TLS_READ_AGAIN || ret == TLS_WRITE_AGAIN) {
 		goto retry;
 	} else if (ret != 0) {
 		what |= EVBUFFER_ERROR;
@@ -617,9 +617,9 @@ server_ssl_writecb(int fd, short event, void *arg)
 			bcopy(EVBUFFER_DATA(bufev->output),
 			    clt->clt_buf, clt->clt_buflen);
 		}
-		ret = ressl_write(clt->clt_ressl_ctx, clt->clt_buf,
+		ret = tls_write(clt->clt_tls_ctx, clt->clt_buf,
 		    clt->clt_buflen, &len);
-		if (ret == RESSL_READ_AGAIN || ret == RESSL_WRITE_AGAIN) {
+		if (ret == TLS_READ_AGAIN || ret == TLS_WRITE_AGAIN) {
 			goto retry;
 		} else if (ret != 0) {
 			what |= EVBUFFER_ERROR;
@@ -742,8 +742,8 @@ server_dump(struct client *clt, const void *buf, size_t len)
 	 * of non-blocking events etc. This is useful to print an
 	 * error message before gracefully closing the client.
 	 */
-	if (clt->clt_ressl_ctx != NULL)
-		(void)ressl_write(clt->clt_ressl_ctx, buf, len, &outlen);
+	if (clt->clt_tls_ctx != NULL)
+		(void)tls_write(clt->clt_tls_ctx, buf, len, &outlen);
 	else
 		(void)write(clt->clt_s, buf, len);
 }
@@ -934,22 +934,22 @@ server_accept_ssl(int fd, short event, void *arg)
 		return;
 	}
 
-	if (srv->srv_ressl_ctx == NULL)
-		fatalx("NULL ressl context");
+	if (srv->srv_tls_ctx == NULL)
+		fatalx("NULL tls context");
 
-	ret = ressl_accept_socket(srv->srv_ressl_ctx, &clt->clt_ressl_ctx,
+	ret = tls_accept_socket(srv->srv_tls_ctx, &clt->clt_tls_ctx,
 	    clt->clt_s);
-	if (ret == RESSL_READ_AGAIN) {
+	if (ret == TLS_READ_AGAIN) {
 		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_READ,
 		    server_accept_ssl, &clt->clt_tv_start,
 		    &srv->srv_conf.timeout, clt);
-	} else if (ret == RESSL_WRITE_AGAIN) {
+	} else if (ret == TLS_WRITE_AGAIN) {
 		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_WRITE,
 		    server_accept_ssl, &clt->clt_tv_start,
 		    &srv->srv_conf.timeout, clt);
 	} else if (ret != 0) {
 		log_warnx("%s: SSL accept failed - %s", __func__,
-		    ressl_error(srv->srv_ressl_ctx));
+		    tls_error(srv->srv_tls_ctx));
 		return;
 	}
 
@@ -1084,9 +1084,9 @@ server_close(struct client *clt, const char *msg)
 	if (clt->clt_s != -1)
 		close(clt->clt_s);
 
-	if (clt->clt_ressl_ctx != NULL)
-		ressl_close(clt->clt_ressl_ctx);
-	ressl_free(clt->clt_ressl_ctx);
+	if (clt->clt_tls_ctx != NULL)
+		tls_close(clt->clt_tls_ctx);
+	tls_free(clt->clt_tls_ctx);
 
 	server_inflight_dec(clt, __func__);
 
