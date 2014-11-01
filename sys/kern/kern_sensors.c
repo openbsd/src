@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.29 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.30 2014/11/01 23:58:28 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -247,7 +247,7 @@ sensor_task_work(void *xst, void *arg)
 	rw_exit_write(&st->lock);
 
 	if (period == 0)
-		free(st, M_DEVBUF, 0);
+		free(st, M_DEVBUF, sizeof(struct sensor_task));
 	else 
 		timeout_add_sec(&st->timeout, period);
 }

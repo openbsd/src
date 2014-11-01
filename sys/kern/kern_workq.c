@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_workq.c,v 1.16 2014/10/08 15:28:39 blambert Exp $ */
+/*	$OpenBSD: kern_workq.c,v 1.17 2014/11/01 23:58:28 tedu Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -116,7 +116,7 @@ workq_destroy(struct workq *wq)
 	}
 	mtx_leave(&wq->wq_mtx);
 
-	free(wq, M_DEVBUF, 0);
+	free(wq, M_DEVBUF, sizeof(*wq));
 }
 
 int
@@ -164,7 +164,7 @@ workq_create_thread(void *arg)
 	switch (wq->wq_state) {
 	case WQ_S_DESTROYED:
 		mtx_leave(&wq->wq_mtx);
-		free(wq, M_DEVBUF, 0);
+		free(wq, M_DEVBUF, sizeof(*wq));
 		return;
 
 	case WQ_S_CREATED:
