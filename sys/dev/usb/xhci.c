@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.33 2014/10/31 23:11:48 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.34 2014/11/01 18:21:07 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -1049,12 +1049,12 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port,
 	case USB_SPEED_LOW:
 		ival= 3;
 		speed = XHCI_SPEED_LOW;
-		mps = USB_MAX_IPACKET;
+		mps = 8;
 		break;
 	case USB_SPEED_FULL:
 		ival = 3;
 		speed = XHCI_SPEED_FULL;
-		mps = 64;
+		mps = 8;
 		break;
 	case USB_SPEED_HIGH:
 		ival = min(3, ed->bInterval);
