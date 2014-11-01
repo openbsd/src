@@ -1,0 +1,78 @@
+.\" $OpenBSD: rtalloc.9,v 1.1 2014/11/01 21:45:54 mpi Exp $
+.\"
+.\" Copyright (c) 2014 Martin Pieuchot
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 1 2014 $
+.Dt RTALLOC 9
+.Os
+.Sh NAME
+.Nm rtalloc, rtalloc_mpath, rtfree
+.Nd routing entries interface
+.Sh SYNOPSIS
+.In sys/types.h
+.In sys/socket.h
+.In net/route.h
+.Ft struct rtentry *
+.Fn rtalloc "struct sockaddr *dst" "int flags" "unsigned int rtableid"
+.Ft struct rtentry *
+.Fn rtalloc_mpath "struct sockaddr *dst" "uint32_t *src" "unsigned int rtableid"
+.Ft void
+.Fn rtfree "struct rtentry *rt"
+.Sh DESCRIPTION
+The
+.Fn rtalloc
+function looks up in the routing table specified by
+.Fa rtableid
+for an entry matching
+.Fa dst .
+The following
+.Fa flags
+can be specified:
+.Bl -tag -width RT_RESOLVE -offset indent
+.It Dv RT_REPORT
+Notify the routing sockets if the lookup fails.
+.It Dv RT_RESOLVE
+Allocate and return a cloned entry for
+.Fa dst
+if it does not exist and the lookup returned a cloning entry. 
+.El
+.Pp
+The
+.Fn rtalloc_mpath
+function does the same as
+.Fn rtalloc
+with the
+.Dv RT_REPORT
+and
+.Dv RT_RESOLVE 
+.Fa flags ,
+but selects a multipath routing entry corresponding to
+.Fa src
+when possible.
+.Pp
+The
+.Fn rtfree
+function releases a reference to the routing entry
+.Fa rt ,
+freeing it if the reference count drops to 0.
+.Sh CONTEXT
+.Fn rtalloc ,
+.Fn rtalloc_mpath ,
+and
+.Fn rtfree
+can be called during autoconf, from process context, or from interrupt context.
+.Sh SEE ALSO
+.Xr route 4 ,
+.Xr rtrequest1 9
