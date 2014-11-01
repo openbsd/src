@@ -1,4 +1,4 @@
-/*	$OpenBSD: preconv.c,v 1.1 2014/10/30 00:05:02 schwarze Exp $ */
+/*	$OpenBSD: preconv.c,v 1.2 2014/11/01 04:07:25 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -24,7 +24,8 @@
 #include "libmandoc.h"
 
 int
-preconv_encode(struct buf *ib, struct buf *ob, int *filenc)
+preconv_encode(struct buf *ib, size_t *ii, struct buf *ob, size_t *oi,
+    int *filenc)
 {
 	size_t		 i;
 	const long	 one = 1L;
@@ -44,7 +45,7 @@ preconv_encode(struct buf *ib, struct buf *ob, int *filenc)
 	if ( ! (*((const char *)(&one))))
 		be = 1;
 
-	for (i = ib->offs; i < ib->sz; i++) {
+	for (i = *ii; i < ib->sz; i++) {
 		cu = ib->buf[i];
 		if (state) {
 			if ( ! (cu & 128) || (cu & 64)) {
@@ -78,11 +79,11 @@ preconv_encode(struct buf *ib, struct buf *ob, int *filenc)
 					(accum << 24);
 
 			if (accum < 0x80)
-				ob->buf[ob->offs++] = accum;
+				ob->buf[(*oi)++] = accum;
 			else
-				ob->offs += snprintf(ob->buf + ob->offs,
+				*oi += snprintf(ob->buf + *oi,
 				    11, "\\[u%.4X]", accum);
-			ib->offs = i + 1;
+			*ii = i + 1;
 			*filenc &= ~MPARSE_LATIN1;
 			return(1);
 		} else {
@@ -133,21 +134,21 @@ latin:
 	if ( ! (*filenc & MPARSE_LATIN1))
 		return(0);
 
-	ob->offs += snprintf(ob->buf + ob->offs, 11,
-	    "\\[u%.4X]", (unsigned char)ib->buf[ib->offs++]);
+	*oi += snprintf(ob->buf + *oi, 11,
+	    "\\[u%.4X]", (unsigned char)ib->buf[(*ii)++]);
 
 	*filenc &= ~MPARSE_UTF8;
 	return(1);
 }
 
 int
-preconv_cue(const struct buf *b)
+preconv_cue(const struct buf *b, size_t offset)
 {
 	const char	*ln, *eoln, *eoph;
 	size_t		 sz, phsz;
 
-	ln = b->buf + b->offs;
-	sz = b->sz - b->offs;
+	ln = b->buf + offset;
+	sz = b->sz - offset;
 
 	/* Look for the end-of-line. */
 

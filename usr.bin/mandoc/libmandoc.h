@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmandoc.h,v 1.32 2014/10/30 00:05:02 schwarze Exp $ */
+/*	$OpenBSD: libmandoc.h,v 1.33 2014/11/01 04:07:25 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -33,7 +33,6 @@ enum	rofferr {
 struct	buf {
 	char	*buf;
 	size_t	 sz;
-	size_t	 offs;
 };
 
 __BEGIN_DECLS
@@ -69,8 +68,9 @@ int		 man_endparse(struct man *);
 int		 man_addspan(struct man *, const struct tbl_span *);
 int		 man_addeqn(struct man *, const struct eqn *);
 
-int		 preconv_cue(const struct buf *);
-int		 preconv_encode(struct buf *, struct buf *, int *);
+int		 preconv_cue(const struct buf *, size_t);
+int		 preconv_encode(struct buf *, size_t *,
+			struct buf *, size_t *, int *);
 
 void		 roff_free(struct roff *);
 struct roff	*roff_alloc(struct mparse *, const struct mchars *, int);
