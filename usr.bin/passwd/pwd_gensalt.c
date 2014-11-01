@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_gensalt.c,v 1.28 2014/09/17 17:58:41 kspillner Exp $ */
+/*	$OpenBSD: pwd_gensalt.c,v 1.29 2014/11/01 17:48:00 tedu Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -43,8 +43,7 @@
 void	to64(char *, u_int32_t, int n);
 int	pwd_gensalt(char *, int, login_cap_t *, char);
 
-#define	YPCIPHER_DEF		"old"
-#define	LOCALCIPHER_DEF		"blowfish,8"
+#define	CIPHER_DEF		"blowfish,8"
 
 int
 pwd_gensalt(char *salt, int saltlen, login_cap_t *lc, char type)
@@ -53,62 +52,15 @@ pwd_gensalt(char *salt, int saltlen, login_cap_t *lc, char type)
 
 	*salt = '\0';
 
-	switch (type) {
-	case 'y':
-		next = login_getcapstr(lc, "ypcipher", NULL, NULL);
-		if (next == NULL && (next = strdup(YPCIPHER_DEF)) == NULL) {
-			warn(NULL);
-			return 0;
-		}
-		break;
-	case 'l':
-	default:
-		next = login_getcapstr(lc, "localcipher", NULL, NULL);
-		if (next == NULL && (next = strdup(LOCALCIPHER_DEF)) == NULL) {
-			warn(NULL);
-			return 0;
-		}
-		break;
+	next = login_getcapstr(lc, "localcipher", NULL, NULL);
+	if (next == NULL && (next = strdup(CIPHER_DEF)) == NULL) {
+		warn(NULL);
+		return 0;
 	}
 
 	oldnext = next;
 	now = strsep(&next, ",");
-	if (!strcmp(now, "old")) {
-		if (saltlen < 3) {
-			free(oldnext);
-			return 0;
-		}
-		to64(&salt[0], arc4random(), 2);
-		salt[2] = '\0';
-	} else if (!strcmp(now, "newsalt")) {
-		u_int32_t rounds = 7250;
-
-		if (next)
-			rounds = atol(next);
-		if (saltlen < 10) {
-			free(oldnext);
-			return 0;
-		}
-		/* Check rounds, 24 bit is max */
-		if (rounds < 7250)
-			rounds = 7250;
-		else if (rounds > 0xffffff)
-			rounds = 0xffffff;
-		salt[0] = _PASSWORD_EFMT1;
-		to64(&salt[1], (u_int32_t)rounds, 4);
-		to64(&salt[5], arc4random(), 4);
-		salt[9] = '\0';
-	} else if (!strcmp(now, "md5")) {
-		if (saltlen < 13) {	/* $1$8salt$\0 */
-			free(oldnext);
-			return 0;
-		}
-
-		strlcpy(salt, "$1$", saltlen);
-		to64(&salt[3], arc4random(), 4);
-		to64(&salt[7], arc4random(), 4);
-		strlcpy(&salt[11], "$", saltlen - 11);
-	} else if (!strcmp(now, "blowfish")) {
+	if (!strcmp(now, "blowfish")) {
 		int rounds = 8;
 
 		if (next)
