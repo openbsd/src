@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.47 2014/08/08 14:20:05 mpi Exp $ */
+/*	$OpenBSD: usb.h,v 1.48 2014/11/01 14:04:27 mpi Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -286,21 +286,35 @@ typedef struct {
 /* Hub features */
 #define UHF_C_HUB_LOCAL_POWER	0
 #define UHF_C_HUB_OVER_CURRENT	1
-#define UHF_PORT_CONNECTION	0
-#define UHF_PORT_ENABLE		1
-#define UHF_PORT_SUSPEND	2
-#define UHF_PORT_OVER_CURRENT	3
-#define UHF_PORT_RESET		4
-#define UHF_PORT_POWER		8
-#define UHF_PORT_LOW_SPEED	9
-#define UHF_C_PORT_CONNECTION	16
-#define UHF_C_PORT_ENABLE	17
-#define UHF_C_PORT_SUSPEND	18
-#define UHF_C_PORT_OVER_CURRENT	19
-#define UHF_C_PORT_RESET	20
-#define UHF_PORT_TEST		21
-#define UHF_PORT_INDICATOR	22
-#define UHF_PORT_DISOWN_TO_1_1	30
+
+/* Port feature */
+#define UHF_PORT_CONNECTION		0
+#define UHF_PORT_ENABLE			1
+#define UHF_PORT_SUSPEND		2
+#define UHF_PORT_OVER_CURRENT		3
+#define UHF_PORT_RESET			4
+#define UHF_PORT_POWER			8
+#define UHF_PORT_LOW_SPEED		9
+#define UHF_C_PORT_CONNECTION		16
+#define UHF_C_PORT_ENABLE		17
+#define UHF_C_PORT_SUSPEND		18
+#define UHF_C_PORT_OVER_CURRENT		19
+#define UHF_C_PORT_RESET		20
+#define UHF_PORT_TEST			21
+#define UHF_PORT_INDICATOR		22
+#define UHF_C_PORT_L1			23
+#define UHF_PORT_DISOWN_TO_1_1		30
+
+/* Super-Speed Port feature */
+#define UHF_PORT_U1_TIMEOUT		23
+#define UHF_PORT_U2_TIMEOUT		24
+#define UHF_C_PORT_LINK_STATE		25
+#define UHF_C_PORT_CONFIG_ERROR		26
+#define UHF_PORT_REMOTE_WAKE_MASK	27
+#define UHF_BH_PORT_RESET		28
+#define UHF_C_BH_PORT_RESET		29
+#define UHF_FORCE_LINKPM_ACCEPT		30
+
 
 typedef struct {
 	uByte		bDescLength;
@@ -393,19 +407,40 @@ typedef struct {
 #define UPS_SUSPEND			0x0004
 #define UPS_OVERCURRENT_INDICATOR	0x0008
 #define UPS_RESET			0x0010
+#define UPS_PORT_L1			0x0020	/* USB 2.0 only */
+
+/* Super-Speed port link state values. */
+#define UPS_PORT_LS_U0			0x0000
+#define UPS_PORT_LS_U1			0x0020
+#define UPS_PORT_LS_U2			0x0040
+#define UPS_PORT_LS_U3			0x0060
+#define UPS_PORT_LS_SS_DISABLED		0x0080
+#define UPS_PORT_LS_RX_DETECT		0x00a0
+#define UPS_PORT_LS_SS_INACTIVE		0x00c0
+#define UPS_PORT_LS_POLLING		0x00e0
+#define UPS_PORT_LS_RECOVERY		0x0100
+#define UPS_PORT_LS_HOT_RESET		0x0120
+#define UPS_PORT_LS_COMP_MOD		0x0140
+#define UPS_PORT_LS_LOOPBACK		0x0160
+
 #define UPS_PORT_POWER			0x0100
-#define UPS_PORT_POWER_SS		0x0200	/* super-speed only */
+#define UPS_PORT_POWER_SS		0x0200	/* USB 3.0 only */
 #define UPS_FULL_SPEED			0x0000
 #define UPS_LOW_SPEED			0x0200
 #define UPS_HIGH_SPEED			0x0400
 #define UPS_SUPER_SPEED			0x0800
 #define UPS_PORT_INDICATOR		0x1000
+
 	uWord		wPortChange;
 #define UPS_C_CONNECT_STATUS		0x0001
 #define UPS_C_PORT_ENABLED		0x0002
 #define UPS_C_SUSPEND			0x0004
 #define UPS_C_OVERCURRENT_INDICATOR	0x0008
 #define UPS_C_PORT_RESET		0x0010
+#define UPS_C_PORT_L1			0x0020	/* USB 2.0 only */
+#define UPS_C_BH_PORT_RESET		0x0020	/* USB 3.0 only */
+#define UPS_C_PORT_LINK_STATE		0x0040
+#define UPS_C_PORT_CONFIG_ERROR		0x0080
 } __packed usb_port_status_t;
 
 /* Device class codes */
