@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.129 2014/10/06 19:36:34 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.130 2014/11/01 12:07:41 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1469,11 +1469,8 @@ cfline(char *line, char *prog)
 		f->f_quick = 0;
 	if (!strcmp(prog, "*"))
 		prog = NULL;
-	else {
-		f->f_program = calloc(1, strlen(prog)+1);
-		if (f->f_program)
-			strlcpy(f->f_program, prog, strlen(prog)+1);
-	}
+	else
+		f->f_program = strdup(prog);
 
 	/* scan through the list of selectors */
 	for (p = line; *p && *p != '\t';) {
