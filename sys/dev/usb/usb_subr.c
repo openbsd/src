@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.110 2014/10/05 08:40:29 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.111 2014/11/01 10:21:02 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -344,16 +344,10 @@ usbd_status
 usbd_port_disown_to_1_1(struct usbd_device *dev, int port,
     usb_port_status_t *ps)
 {
-	usb_device_request_t req;
 	usbd_status err;
 	int n;
 
-	req.bmRequestType = UT_WRITE_CLASS_OTHER;
-	req.bRequest = UR_SET_FEATURE;
-	USETW(req.wValue, UHF_PORT_DISOWN_TO_1_1);
-	USETW(req.wIndex, port);
-	USETW(req.wLength, 0);
-	err = usbd_do_request(dev, &req, 0);
+	err = usbd_set_port_feature(dev, port, UHF_PORT_DISOWN_TO_1_1);
 	DPRINTF(("usbd_disown_to_1_1: port %d disown request done, error=%s\n",
 	    port, usbd_errstr(err)));
 	if (err)
@@ -380,16 +374,10 @@ usbd_port_disown_to_1_1(struct usbd_device *dev, int port,
 usbd_status
 usbd_reset_port(struct usbd_device *dev, int port, usb_port_status_t *ps)
 {
-	usb_device_request_t req;
 	usbd_status err;
 	int n;
 
-	req.bmRequestType = UT_WRITE_CLASS_OTHER;
-	req.bRequest = UR_SET_FEATURE;
-	USETW(req.wValue, UHF_PORT_RESET);
-	USETW(req.wIndex, port);
-	USETW(req.wLength, 0);
-	err = usbd_do_request(dev, &req, 0);
+	err = usbd_set_port_feature(dev, port, UHF_PORT_RESET);
 	DPRINTFN(1,("usbd_reset_port: port %d reset done, error=%s\n",
 		    port, usbd_errstr(err)));
 	if (err)
