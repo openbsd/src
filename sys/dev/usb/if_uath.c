@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.61 2014/07/13 15:52:49 mpi Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.62 2014/11/01 14:44:08 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -218,14 +218,12 @@ uath_attachhook(void *xsc)
 	free(fw, M_DEVBUF, 0);
 
 	if (error == 0) {
-		usb_port_status_t status;
-
 		/*
 		 * Hack alert: the device doesn't always gracefully detach
 		 * from the bus after a firmware upload.  We need to force
 		 * a port reset and a re-exploration on the parent hub.
 		 */
-		usbd_reset_port(sc->sc_uhub, sc->sc_port, &status);
+		usbd_reset_port(sc->sc_uhub, sc->sc_port);
 		usb_needs_reattach(sc->sc_udev);
 	} else {
 		printf("%s: could not load firmware (error=%s)\n",

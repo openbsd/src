@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.74 2014/10/01 08:29:01 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.75 2014/11/01 14:44:08 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -425,7 +425,7 @@ uhub_explore(struct usbd_device *dev)
 		usbd_delay_ms(dev, USB_PORT_POWERUP_DELAY);
 
 		/* Reset port, which implies enabling it. */
-		if (usbd_reset_port(dev, port, &up->status)) {
+		if (usbd_reset_port(dev, port)) {
 			printf("%s: port %d reset failed\n",
 			       sc->sc_dev.dv_xname, port);
 			continue;

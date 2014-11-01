@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.111 2014/11/01 10:21:02 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.112 2014/11/01 14:44:08 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -341,9 +341,9 @@ usbd_delay_ms(struct usbd_device *dev, u_int ms)
 }
 
 usbd_status
-usbd_port_disown_to_1_1(struct usbd_device *dev, int port,
-    usb_port_status_t *ps)
+usbd_port_disown_to_1_1(struct usbd_device *dev, int port)
 {
+	usb_port_status_t ps;
 	usbd_status err;
 	int n;
 
@@ -356,15 +356,15 @@ usbd_port_disown_to_1_1(struct usbd_device *dev, int port,
 	do {
 		/* Wait for device to recover from reset. */
 		usbd_delay_ms(dev, USB_PORT_RESET_DELAY);
-		err = usbd_get_port_status(dev, port, ps);
+		err = usbd_get_port_status(dev, port, &ps);
 		if (err) {
 			DPRINTF(("%s: get status failed %d\n", __func__, err));
 			return (err);
 		}
 		/* If the device disappeared, just give up. */
-		if (!(UGETW(ps->wPortStatus) & UPS_CURRENT_CONNECT_STATUS))
+		if (!(UGETW(ps.wPortStatus) & UPS_CURRENT_CONNECT_STATUS))
 			return (USBD_NORMAL_COMPLETION);
-	} while ((UGETW(ps->wPortChange) & UPS_C_PORT_RESET) == 0 && --n > 0);
+	} while ((UGETW(ps.wPortChange) & UPS_C_PORT_RESET) == 0 && --n > 0);
 	if (n == 0)
 		return (USBD_TIMEOUT);
 
@@ -372,37 +372,35 @@ usbd_port_disown_to_1_1(struct usbd_device *dev, int port,
 }
 
 usbd_status
-usbd_reset_port(struct usbd_device *dev, int port, usb_port_status_t *ps)
+usbd_reset_port(struct usbd_device *dev, int port)
 {
+	usb_port_status_t ps;
 	usbd_status err;
 	int n;
 
 	err = usbd_set_port_feature(dev, port, UHF_PORT_RESET);
-	DPRINTFN(1,("usbd_reset_port: port %d reset done, error=%s\n",
-		    port, usbd_errstr(err)));
+	DPRINTF(("%s: port %d reset done\n", __func__, port));
 	if (err)
 		return (err);
 	n = 10;
 	do {
 		/* Wait for device to recover from reset. */
 		usbd_delay_ms(dev, USB_PORT_RESET_DELAY);
-		err = usbd_get_port_status(dev, port, ps);
+		err = usbd_get_port_status(dev, port, &ps);
 		if (err) {
-			DPRINTF(("usbd_reset_port: get status failed %d\n",
-				 err));
+			DPRINTF(("%s: get status failed %d\n", __func__, err));
 			return (err);
 		}
 		/* If the device disappeared, just give up. */
-		if (!(UGETW(ps->wPortStatus) & UPS_CURRENT_CONNECT_STATUS))
+		if (!(UGETW(ps.wPortStatus) & UPS_CURRENT_CONNECT_STATUS))
 			return (USBD_NORMAL_COMPLETION);
-	} while ((UGETW(ps->wPortChange) & UPS_C_PORT_RESET) == 0 && --n > 0);
+	} while ((UGETW(ps.wPortChange) & UPS_C_PORT_RESET) == 0 && --n > 0);
 	if (n == 0)
 		return (USBD_TIMEOUT);
 	err = usbd_clear_port_feature(dev, port, UHF_C_PORT_RESET);
 #ifdef USB_DEBUG
 	if (err)
-		DPRINTF(("usbd_reset_port: clear port feature failed %d\n",
-			 err));
+		DPRINTF(("%s: clear port feature failed %d\n", __func__, err));
 #endif
 
 	/* Wait for the device to recover from reset. */
@@ -999,7 +997,6 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	struct usbd_device *dev, *adev;
 	struct usbd_device *hub;
 	usb_device_descriptor_t *dd;
-	usb_port_status_t ps;
 	usbd_status err;
 	int addr;
 	int i;
@@ -1092,7 +1089,7 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	if (err) {
 		USETW(dev->def_ep_desc.wMaxPacketSize,
 			USB_DEVICE_DESCRIPTOR_SIZE);
-		usbd_reset_port(up->parent, port, &ps);
+		usbd_reset_port(up->parent, port);
 		for (i = 0; i < 3; i++) {
 			err = usbd_get_desc(dev, UDESC_DEVICE, 0, 
 				USB_DEVICE_DESCRIPTOR_SIZE, dd);
@@ -1105,7 +1102,7 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	/* XXX some devices need more time to wake up */
 	if (err) {
 		USETW(dev->def_ep_desc.wMaxPacketSize, USB_MAX_IPACKET);
-		usbd_reset_port(up->parent, port, &ps);
+		usbd_reset_port(up->parent, port);
 		usbd_delay_ms(dev, 500);
 		err = usbd_get_desc(dev, UDESC_DEVICE, 0, 
 			USB_MAX_IPACKET, dd);
@@ -1176,9 +1173,9 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 		if (dev->bus->usbrev == USBREV_2_0) {
 			DPRINTF(("%s: disown request issues to dev:%p on usb2.0 bus\n",
 				__func__, dev));
-			(void) usbd_port_disown_to_1_1(dev->myhub, port, &ps);
+			usbd_port_disown_to_1_1(dev->myhub, port);
 			/* reset_port required to finish disown request */
-			(void) usbd_reset_port(dev->myhub, port, &ps);
+			usbd_reset_port(dev->myhub, port);
   			return (USBD_NORMAL_COMPLETION);
 		}
 	}
