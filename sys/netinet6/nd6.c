@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.123 2014/10/14 09:52:26 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.124 2014/11/01 21:40:39 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -649,13 +649,15 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 {
 	struct rtentry *rt;
 	struct sockaddr_in6 sin6;
+	int flags;
 
 	bzero(&sin6, sizeof(sin6));
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_addr = *addr6;
+	flags = (create) ? (RT_REPORT|RT_RESOLVE) : 0;
 
-	rt = rtalloc1(sin6tosa(&sin6), create, rtableid);
+	rt = rtalloc(sin6tosa(&sin6), flags, rtableid);
 	if (rt && (rt->rt_flags & RTF_LLINFO) == 0) {
 		/*
 		 * This is the case for the default route.
@@ -1390,7 +1392,7 @@ nd6_cache_lladdr(struct ifnet *ifp, struct in6_addr *from, char *lladdr,
 			return NULL;
 #endif
 
-		rt = nd6_lookup(from, RT_REPORT, ifp, ifp->if_rdomain);
+		rt = nd6_lookup(from, 1, ifp, ifp->if_rdomain);
 		is_newentry = 1;
 	} else {
 		/* do nothing if static ndp is set */
@@ -1672,8 +1674,9 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	 */
 	if (rt) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = rtalloc1(sin6tosa(dst),
-			    RT_REPORT, m->m_pkthdr.ph_rtableid)) != NULL)
+			if ((rt0 = rt = rtalloc(sin6tosa(dst),
+			    RT_REPORT|RT_RESOLVE,
+			    m->m_pkthdr.ph_rtableid)) != NULL)
 			{
 				rt->rt_refcnt--;
 				if (rt->rt_ifp != ifp)
@@ -1711,8 +1714,9 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt); rt = rt0;
 			lookup:
-				rt->rt_gwroute = rtalloc1(rt->rt_gateway,
-				    RT_REPORT, m->m_pkthdr.ph_rtableid);
+				rt->rt_gwroute = rtalloc(rt->rt_gateway,
+				    RT_REPORT|RT_RESOLVE,
+				    m->m_pkthdr.ph_rtableid);
 				if ((rt = rt->rt_gwroute) == 0)
 					senderr(EHOSTUNREACH);
 			}
@@ -1736,7 +1740,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 		 * it is tolerable, because this should be a rare case.
 		 */
 		if (nd6_is_addr_neighbor(dst, ifp) &&
-		    (rt = nd6_lookup(&dst->sin6_addr, RT_REPORT, ifp,
+		    (rt = nd6_lookup(&dst->sin6_addr, 1, ifp,
 		     ifp->if_rdomain)) != NULL)
 			ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	}

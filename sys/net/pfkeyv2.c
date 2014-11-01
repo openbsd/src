@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.135 2014/10/14 09:52:26 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.136 2014/11/01 21:40:38 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1569,8 +1569,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		/* Set the rdomain that was obtained from the socket */
 		re.re_tableid = rdomain;
 
-		re.re_rt = rtalloc1((struct sockaddr *)&re.re_dst, RT_REPORT,
-		    re.re_tableid);
+		re.re_rt = rtalloc((struct sockaddr *)&re.re_dst,
+		    RT_REPORT|RT_RESOLVE, re.re_tableid);
 		if (re.re_rt != NULL) {
 			ipo = ((struct sockaddr_encap *) re.re_rt->rt_gateway)->sen_ipsp;
 			rtfree(re.re_rt);

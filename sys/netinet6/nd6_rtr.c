@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.88 2014/10/07 08:47:28 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.89 2014/11/01 21:40:39 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -685,7 +685,7 @@ defrouter_reset(void)
 
 	/*
 	 * XXX should we also nuke any default routers in the kernel, by
-	 * going through them by rtalloc1()?
+	 * going through them by rtalloc()?
 	 */
 }
 

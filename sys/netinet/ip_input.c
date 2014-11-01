@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.238 2014/10/14 09:52:26 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.239 2014/11/01 21:40:38 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -667,7 +667,7 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr = ina;
-	rt = rtalloc1(sintosa(&sin), 0, m->m_pkthdr.ph_rtableid);
+	rt = rtalloc(sintosa(&sin), 0, m->m_pkthdr.ph_rtableid);
 	if (rt != NULL) {
 		if (rt->rt_flags & (RTF_LOCAL|RTF_BROADCAST))
 			ia = ifatoia(rt->rt_ifa);
@@ -1251,8 +1251,8 @@ ip_rtaddr(struct in_addr dst, u_int rtableid)
 		sin->sin_len = sizeof(*sin);
 		sin->sin_addr = dst;
 
-		ipforward_rt.ro_rt = rtalloc1(&ipforward_rt.ro_dst, RT_REPORT,
-		    rtableid);
+		ipforward_rt.ro_rt = rtalloc(&ipforward_rt.ro_dst,
+		    RT_REPORT|RT_RESOLVE, rtableid);
 	}
 	if (ipforward_rt.ro_rt == 0)
 		return (NULL);

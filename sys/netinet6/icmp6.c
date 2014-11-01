@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.149 2014/10/14 09:52:26 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.150 2014/11/01 21:40:39 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1432,7 +1432,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	bcopy(&reddst6, &sin6.sin6_addr, sizeof(reddst6));
-	rt = rtalloc1(sin6tosa(&sin6), 0, m->m_pkthdr.ph_rtableid);
+	rt = rtalloc(sin6tosa(&sin6), 0, m->m_pkthdr.ph_rtableid);
 	if (rt) {
 		if (rt->rt_gateway == NULL ||
 		    rt->rt_gateway->sa_family != AF_INET6) {
@@ -1939,7 +1939,7 @@ icmp6_mtudisc_clone(struct sockaddr *dst, u_int rdomain)
 	struct rtentry *rt;
 	int    error;
 
-	rt = rtalloc1(dst, RT_REPORT, rdomain);
+	rt = rtalloc(dst, RT_REPORT|RT_RESOLVE, rdomain);
 	if (rt == 0)
 		return NULL;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.99 2014/10/14 09:52:26 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.100 2014/11/01 21:40:38 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -331,10 +331,10 @@ struct sockaddr	*rtlabel_id2sa(u_int16_t, struct sockaddr_rtlabel *);
 void		 rtlabel_unref(u_int16_t);
 
 /*
- * Values for additional argument to rtalloc1()
+ * Values for additional argument to rtalloc()
  */
 #define	RT_REPORT	0x1
-#define	RT_NOCLONING	0x2
+#define	RT_RESOLVE	0x2
 
 extern struct rtstat rtstat;
 extern const struct sockaddr_rtin rt_defmask4;
@@ -374,11 +374,11 @@ unsigned long		 rt_timer_queue_count(struct rttimer_queue *);
 void			 rt_timer_timer(void *);
 
 #ifdef SMALL_KERNEL
-#define	rtalloc_mpath(dst, s, rtableid)	rtalloc1((dst), RT_REPORT, (rtableid))
+#define	 rtalloc_mpath(dst, s, rid) rtalloc((dst), RT_REPORT|RT_RESOLVE, (rid))
 #endif
-struct rtentry *
-	 rtalloc1(struct sockaddr *, int, u_int);
+struct	 rtentry *rtalloc(struct sockaddr *, int, unsigned int);
 void	 rtfree(struct rtentry *);
+
 int	 rt_getifa(struct rt_addrinfo *, u_int);
 int	 rt_ifa_add(struct ifaddr *, int, struct sockaddr *);
 int	 rt_ifa_del(struct ifaddr *, int, struct sockaddr *);

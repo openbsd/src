@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.73 2014/08/25 14:00:34 florian Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.74 2014/11/01 21:40:39 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -656,7 +656,7 @@ in6_ifdetach(struct ifnet *ifp)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_addr = in6addr_intfacelocal_allnodes;
 	sin6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-	rt = rtalloc1(sin6tosa(&sin6), 0, ifp->if_rdomain);
+	rt = rtalloc(sin6tosa(&sin6), 0, ifp->if_rdomain);
 	if (rt && rt->rt_ifp == ifp) {
 		struct rt_addrinfo info;
 
@@ -676,7 +676,7 @@ in6_ifdetach(struct ifnet *ifp)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_addr = in6addr_linklocal_allnodes;
 	sin6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-	rt = rtalloc1(sin6tosa(&sin6), 0, ifp->if_rdomain);
+	rt = rtalloc(sin6tosa(&sin6), 0, ifp->if_rdomain);
 	if (rt && rt->rt_ifp == ifp) {
 		struct rt_addrinfo info;
 

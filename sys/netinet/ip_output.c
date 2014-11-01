@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.269 2014/10/14 09:52:26 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.270 2014/11/01 21:40:38 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -583,7 +583,8 @@ sendit:
 				rt->rt_rmx.rmx_mtu = icmp_mtu;
 				if (ro && ro->ro_rt != NULL) {
 					rtfree(ro->ro_rt);
-					ro->ro_rt = rtalloc1(&ro->ro_dst, RT_REPORT,
+					ro->ro_rt = rtalloc(&ro->ro_dst,
+					    RT_REPORT|RT_RESOLVE,
 					    m->m_pkthdr.ph_rtableid);
 				}
 				if (rt_mtucloned)
@@ -1771,8 +1772,8 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 			dst->sin_addr = mreq->imr_multiaddr;
 			if (!(ro.ro_rt && ro.ro_rt->rt_ifp &&
 			    (ro.ro_rt->rt_flags & RTF_UP)))
-				ro.ro_rt = rtalloc1(&ro.ro_dst, RT_REPORT,
-				    rtableid);
+				ro.ro_rt = rtalloc(&ro.ro_dst,
+				    RT_REPORT|RT_RESOLVE, rtableid);
 			if (ro.ro_rt == NULL) {
 				error = EADDRNOTAVAIL;
 				break;

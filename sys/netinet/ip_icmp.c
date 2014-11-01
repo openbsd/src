@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.125 2014/09/30 08:26:15 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.126 2014/11/01 21:40:38 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -715,7 +715,7 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 		sin.sin_family = AF_INET;
 		sin.sin_addr = ip->ip_dst;
 
-		rt = rtalloc1(sintosa(&sin), 0, rtableid);
+		rt = rtalloc(sintosa(&sin), 0, rtableid);
 		if (rt != NULL) {
 			if (rt->rt_flags & (RTF_LOCAL|RTF_BROADCAST))
 				ia = ifatoia(rt->rt_ifa);
@@ -735,7 +735,7 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 		sin.sin_addr = ip->ip_src;
 
 		/* keep packet in the original virtual instance */
-		rt = rtalloc1(sintosa(&sin), RT_REPORT, rtableid);
+		rt = rtalloc(sintosa(&sin), RT_REPORT|RT_RESOLVE, rtableid);
 		if (rt == NULL) {
 			ipstat.ips_noroute++;
 			m_freem(m);
@@ -924,7 +924,7 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 	sin->sin_len = sizeof(*sin);
 	sin->sin_addr = dst;
 
-	rt = rtalloc1(&ro.ro_dst, RT_REPORT, rtableid);
+	rt = rtalloc(&ro.ro_dst, RT_REPORT|RT_RESOLVE, rtableid);
 	if (rt == NULL)
 		return (NULL);
 

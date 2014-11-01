@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.889 2014/10/14 09:52:25 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.890 2014/11/01 21:40:38 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2968,8 +2968,7 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, u_int16_t offer)
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = addr->v4;
 		ro.ro_tableid = rtableid;
-		ro.ro_rt = rtalloc1(&ro.ro_dst, RT_REPORT | RT_NOCLONING,
-		    ro.ro_tableid);
+		ro.ro_rt = rtalloc(&ro.ro_dst, RT_REPORT, ro.ro_tableid);
 		rt = ro.ro_rt;
 		break;
 #endif /* INET */
@@ -2982,8 +2981,8 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, u_int16_t offer)
 		dst6->sin6_len = sizeof(*dst6);
 		dst6->sin6_addr = addr->v6;
 		ro6.ro_tableid = rtableid;
-		ro6.ro_rt = rtalloc1(sin6tosa(&ro6.ro_dst),
-		    RT_REPORT | RT_NOCLONING, ro6.ro_tableid);
+		ro6.ro_rt = rtalloc(sin6tosa(&ro6.ro_dst), RT_REPORT,
+		    ro6.ro_tableid);
 		rt = ro6.ro_rt;
 		break;
 #endif /* INET6 */
@@ -5437,8 +5436,8 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 	if (kif != NULL && kif->pfik_ifp->if_type == IFT_ENC)
 		goto out;
 
-	ro.ro_rt = rtalloc1((struct sockaddr *)&ro.ro_dst,
-	    RT_REPORT | RT_NOCLONING, ro.ro_tableid);
+	ro.ro_rt = rtalloc((struct sockaddr *)&ro.ro_dst, RT_REPORT,
+	    ro.ro_tableid);
 
 	if (ro.ro_rt != NULL) {
 		/* No interface given, this is a no-route check */
@@ -5505,8 +5504,8 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
 #endif /* INET6 */
 	}
 
-	ro.ro_rt = rtalloc1((struct sockaddr *)&ro.ro_dst,
-	    RT_REPORT | RT_NOCLONING, ro.ro_tableid);
+	ro.ro_rt = rtalloc((struct sockaddr *)&ro.ro_dst, RT_REPORT,
+	    ro.ro_tableid);
 
 	if (ro.ro_rt != NULL) {
 		if (ro.ro_rt->rt_labelid == aw->v.rtlabel)
@@ -5571,7 +5570,8 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	ro->ro_tableid = m0->m_pkthdr.ph_rtableid;
 
 	if (!r->rt) {
-		ro->ro_rt = rtalloc1(&ro->ro_dst, RT_REPORT, ro->ro_tableid);
+		ro->ro_rt = rtalloc(&ro->ro_dst, RT_REPORT|RT_RESOLVE,
+		    ro->ro_tableid);
 		if (ro->ro_rt == 0) {
 			ipstat.ips_noroute++;
 			goto bad;

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.37 2014/10/14 09:52:25 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.38 2014/11/01 21:40:38 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -163,7 +163,7 @@ mpestart(struct ifnet *ifp)
 			continue;
 		}
 
-		rt = rtalloc1(sa, RT_REPORT, 0);
+		rt = rtalloc(sa, RT_REPORT|RT_RESOLVE, 0);
 		if (rt == NULL) {
 			/* no route give up */
 			m_freem(m);

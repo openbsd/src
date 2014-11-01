@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.143 2014/10/22 09:48:19 stsp Exp $	*/
+/*	$OpenBSD: in6.c,v 1.144 2014/11/01 21:40:39 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -870,7 +870,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 * actually do not need the routes, since they usually specify
 		 * the outgoing interface.
 		 */
-		rt = rtalloc1(sin6tosa(&mltaddr), 0, ifp->if_rdomain);
+		rt = rtalloc(sin6tosa(&mltaddr), 0, ifp->if_rdomain);
 		if (rt) {
 			/*
 			 * 32bit came from "mltmask"
@@ -941,7 +941,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		mltaddr.sin6_scope_id = 0;
 
 		/* XXX: again, do we really need the route? */
-		rt = rtalloc1(sin6tosa(&mltaddr), 0, ifp->if_rdomain);
+		rt = rtalloc(sin6tosa(&mltaddr), 0, ifp->if_rdomain);
 		if (rt) {
 			/* 32bit came from "mltmask" */
 			if (memcmp(&mltaddr.sin6_addr,
@@ -1604,7 +1604,7 @@ in6_ifpprefix(const struct ifnet *ifp, const struct in6_addr *addr)
 	dst.sin6_len = sizeof(struct sockaddr_in6);
 	dst.sin6_family = AF_INET6;
 	dst.sin6_addr = *addr;
-	rt = rtalloc1(sin6tosa(&dst), RT_NOCLONING, tableid);
+	rt = rtalloc(sin6tosa(&dst), 0, tableid);
 
 	if (rt == NULL)
 		return (0);

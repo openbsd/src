@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.136 2014/09/03 08:53:54 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.137 2014/11/01 21:40:38 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ arpresolve(struct arpcom *ac, struct rtentry *rt, struct mbuf *m,
 			    "local address\n", inet_ntop(AF_INET,
 				&satosin(dst)->sin_addr, addr, sizeof(addr)));
 	} else {
-		if ((la = arplookup(satosin(dst)->sin_addr.s_addr, RT_REPORT, 0,
+		if ((la = arplookup(satosin(dst)->sin_addr.s_addr, 1, 0,
 		    ac->ac_if.if_rdomain)) != NULL)
 			rt = la->la_rt;
 		else
@@ -801,13 +801,16 @@ arplookup(u_int32_t addr, int create, int proxy, u_int tableid)
 {
 	struct rtentry *rt;
 	struct sockaddr_inarp sin;
+	int flags;
 
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = addr;
 	sin.sin_other = proxy ? SIN_PROXY : 0;
-	rt = rtalloc1((struct sockaddr *)&sin, create, tableid);
+	flags = (create) ? (RT_REPORT|RT_RESOLVE) : 0;
+
+	rt = rtalloc((struct sockaddr *)&sin, flags, tableid);
 	if (rt == 0)
 		return (0);
 	rt->rt_refcnt--;

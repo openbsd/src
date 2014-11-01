@@ -1,4 +1,4 @@
-/* $OpenBSD: mpls_output.c,v 1.17 2014/07/22 11:06:10 mpi Exp $ */
+/* $OpenBSD: mpls_output.c,v 1.18 2014/11/01 21:40:39 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -121,7 +121,7 @@ mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 			break;
 
 		smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
-		rt = rtalloc1(smplstosa(smpls), RT_REPORT, 0);
+		rt = rtalloc(smplstosa(smpls), RT_REPORT|RT_RESOLVE, 0);
 		if (rt == NULL) {
 			/* no entry for this label */
 #ifdef MPLS_DEBUG

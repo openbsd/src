@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.187 2014/10/14 09:52:26 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.188 2014/11/01 21:40:38 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -311,7 +311,7 @@ rtable_exists(u_int id)	/* verify table with that ID exists */
 }
 
 struct rtentry *
-rtalloc1(struct sockaddr *dst, int flags, u_int tableid)
+rtalloc(struct sockaddr *dst, int flags, unsigned int tableid)
 {
 	struct radix_node_head	*rnh;
 	struct rtentry		*rt;
@@ -327,8 +327,7 @@ rtalloc1(struct sockaddr *dst, int flags, u_int tableid)
 	if (rnh && (rn = rnh->rnh_matchaddr((caddr_t)dst, rnh)) &&
 	    ((rn->rn_flags & RNF_ROOT) == 0)) {
 		newrt = rt = (struct rtentry *)rn;
-		if ((rt->rt_flags & RTF_CLONING) &&
-		    ISSET(flags,  RT_REPORT | RT_NOCLONING) == RT_REPORT) {
+		if ((rt->rt_flags & RTF_CLONING) && ISSET(flags, RT_RESOLVE)) {
 			err = rtrequest1(RTM_RESOLVE, &info, RTP_DEFAULT,
 			    &newrt, tableid);
 			if (err) {
@@ -452,7 +451,7 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 		goto out;
 	}
 	ifp = ifa->ifa_ifp;
-	rt = rtalloc1(dst, 0, rdomain);
+	rt = rtalloc(dst, 0, rdomain);
 	/*
 	 * If the redirect isn't from our current router for this dst,
 	 * it's either old or wrong.  If it redirects us to ourselves,
@@ -651,7 +650,7 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 		}
 	}
 	if (ifa == NULL) {
-		struct rtentry	*rt = rtalloc1(gateway, 0, rtable_l2(rtableid));
+		struct rtentry	*rt = rtalloc(gateway, 0, rtableid);
 		if (rt == NULL)
 			return (NULL);
 		rt->rt_refcnt--;
@@ -962,7 +961,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		rn = rnh->rnh_addaddr((caddr_t)ndst,
 		    (caddr_t)info->rti_info[RTAX_NETMASK], rnh, rt->rt_nodes,
 		    rt->rt_priority);
-		if (rn == NULL && (crt = rtalloc1(ndst, 0, tableid)) != NULL) {
+		if (rn == NULL && (crt = rtalloc(ndst, 0, tableid)) != NULL) {
 			/* overwrite cloned route */
 			if ((crt->rt_flags & RTF_CLONED) != 0) {
 				rtdeletemsg(crt, tableid);
@@ -1032,7 +1031,7 @@ rt_setgate(struct rtentry *rt, struct sockaddr *dst, struct sockaddr *gate,
 	}
 	if (rt->rt_flags & RTF_GATEWAY) {
 		/* XXX is this actually valid to cross tables here? */
-		rt->rt_gwroute = rtalloc1(gate, RT_REPORT, rtable_l2(tableid));
+		rt->rt_gwroute = rtalloc(gate, RT_REPORT|RT_RESOLVE, tableid);
 		/*
 		 * If we switched gateways, grab the MTU from the new
 		 * gateway route if the current MTU is 0 or greater
@@ -1140,7 +1139,7 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 		rt_maskedcopy(dst, deldst, ifa->ifa_netmask);
 		dst = deldst;
 	}
-	if ((rt = rtalloc1(dst, 0, rtableid)) != NULL) {
+	if ((rt = rtalloc(dst, 0, rtableid)) != NULL) {
 		rt->rt_refcnt--;
 		/* try to find the right route */
 		while (rt && rt->rt_ifa != ifa)
@@ -1217,7 +1216,7 @@ rt_ifa_addloop(struct ifaddr *ifa)
 		flags |= RTF_LLINFO;
 
 	/* If there is no loopback entry, allocate one. */
-	rt = rtalloc1(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
+	rt = rtalloc(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
 	if (rt == NULL || !ISSET(rt->rt_flags, flags));
 		rt_ifa_add(ifa, RTF_UP | flags, ifa->ifa_addr);
 	if (rt)
@@ -1264,7 +1263,7 @@ rt_ifa_delloop(struct ifaddr *ifa)
 	 * a subnet-router anycast address on an interface attached
 	 * to a shared medium.
 	 */
-	rt = rtalloc1(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
+	rt = rtalloc(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
 	if (rt != NULL && ISSET(rt->rt_flags, flags))
 		rt_ifa_del(ifa, flags, ifa->ifa_addr);
 	if (rt)
