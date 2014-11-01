@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.53 2014/09/22 01:04:58 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.54 2014/11/01 23:58:07 tedu Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -128,8 +128,6 @@ struct pool {
 	RB_HEAD(phtree, pool_item_header)
 			pr_phtree;
 
-	int		pr_maxcolor;	/* Cache colouring */
-	int		pr_curcolor;
 	int		pr_phoffset;	/* Offset in page of page header */
 
 	/*

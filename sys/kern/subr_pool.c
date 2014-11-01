@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.163 2014/10/13 00:12:51 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.164 2014/11/01 23:58:07 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -82,7 +82,6 @@ struct pool_item_header {
 				ph_node;	/* Off-page page headers */
 	int			ph_nmissing;	/* # of chunks in use */
 	caddr_t			ph_page;	/* this page's address */
-	caddr_t			ph_colored;	/* page's colored address */
 	u_long			ph_magic;
 };
 #define POOL_MAGICBIT (1 << 3) /* keep away from perturbed low bits */
@@ -217,7 +216,7 @@ void
 pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
     const char *wchan, struct pool_allocator *palloc)
 {
-	int off = 0, space;
+	int off = 0;
 	unsigned int pgsize = PAGE_SIZE, items;
 #ifdef DIAGNOSTIC
 	struct pool *iter;
@@ -292,15 +291,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_hardlimit_warning_last.tv_sec = 0;
 	pp->pr_hardlimit_warning_last.tv_usec = 0;
 	RB_INIT(&pp->pr_phtree);
-
-	/*
-	 * Use the space between the chunks and the page header
-	 * for "cache coloring".
-	 */
-	space = POOL_INPGHDR(pp) ? pp->pr_phoffset : pp->pr_pgsize;
-	space -= pp->pr_itemsperpage * pp->pr_size;
-	pp->pr_maxcolor = (space / align) * align;
-	pp->pr_curcolor = 0;
 
 	pp->pr_nget = 0;
 	pp->pr_nfail = 0;
@@ -1232,7 +1222,7 @@ pool_walk(struct pool *pp, int full,
 	int n;
 
 	LIST_FOREACH(ph, &pp->pr_fullpages, ph_pagelist) {
-		cp = ph->ph_colored;
+		cp = ph->ph_page;
 		n = ph->ph_nmissing;
 
 		while (n--) {
@@ -1242,7 +1232,7 @@ pool_walk(struct pool *pp, int full,
 	}
 
 	LIST_FOREACH(ph, &pp->pr_partpages, ph_pagelist) {
-		cp = ph->ph_colored;
+		cp = ph->ph_page;
 		n = ph->ph_nmissing;
 
 		do {
