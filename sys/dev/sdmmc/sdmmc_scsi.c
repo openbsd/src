@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.32 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.33 2014/11/01 16:32:06 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
 
 #include <scsi/scsi_all.h>

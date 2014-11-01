@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.35 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.36 2014/11/01 16:32:06 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -827,7 +827,7 @@ sdmmc_dump_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 
 	rw_assert_wrlock(&sc->sc_lock);
 
-	DPRINTF(1,("%s: cmd %u arg=%#x data=%#x dlen=%d flags=%#x "
+	DPRINTF(1,("%s: cmd %u arg=%#x data=%p dlen=%d flags=%#x "
 	    "proc=\"%s\" (error %d)\n", DEVNAME(sc), cmd->c_opcode,
 	    cmd->c_arg, cmd->c_data, cmd->c_datalen, cmd->c_flags,
 	    curproc ? curproc->p_comm : "", cmd->c_error));
