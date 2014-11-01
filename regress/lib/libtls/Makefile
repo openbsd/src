@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 2014/10/31 14:10:55 jsing Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/11/01 11:55:27 jsing Exp $
 
 SUBDIR= \
-	gotls
+	gotls \
+	verify
 
 install:
 
