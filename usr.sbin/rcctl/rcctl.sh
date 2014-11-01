@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.48 2014/10/31 09:07:48 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.49 2014/11/01 13:59:42 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -100,9 +100,7 @@ svc_get_defaults()
 	local _i _svc=$1
 
 	if [ -n "${_svc}" ]; then
-		# XXX would be much simpler to just do that:
-		#svc_default_enabled_flags ${_svc}
-		print -r -- "$(svc_default_enabled_flags ${_svc})" | sed '/^$/d'
+		( svc_default_enabled_flags ${_svc} )
 		svc_default_enabled ${_svc}
 	else
 		for _i in $(ls_rcscripts); do
