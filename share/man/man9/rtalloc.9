@@ -1,4 +1,4 @@
-.\" $OpenBSD: rtalloc.9,v 1.1 2014/11/01 21:45:54 mpi Exp $
+.\" $OpenBSD: rtalloc.9,v 1.2 2014/11/01 23:14:02 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Martin Pieuchot
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm rtalloc, rtalloc_mpath, rtfree
-.Nd routing entries interface
+.Nd routing entry interface
 .Sh SYNOPSIS
 .In sys/types.h
 .In sys/socket.h
@@ -33,7 +33,7 @@
 .Sh DESCRIPTION
 The
 .Fn rtalloc
-function looks up in the routing table specified by
+function looks in the routing table
 .Fa rtableid
 for an entry matching
 .Fa dst .
@@ -46,7 +46,7 @@ Notify the routing sockets if the lookup fails.
 .It Dv RT_RESOLVE
 Allocate and return a cloned entry for
 .Fa dst
-if it does not exist and the lookup returned a cloning entry. 
+if it does not exist and the lookup returned a cloning entry.
 .El
 .Pp
 The
@@ -56,7 +56,7 @@ function does the same as
 with the
 .Dv RT_REPORT
 and
-.Dv RT_RESOLVE 
+.Dv RT_RESOLVE
 .Fa flags ,
 but selects a multipath routing entry corresponding to
 .Fa src
