@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.74 2014/10/31 12:43:33 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.75 2014/11/01 00:41:33 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -281,7 +281,6 @@ usbd_status
 usbd_transfer(struct usbd_xfer *xfer)
 {
 	struct usbd_pipe *pipe = xfer->pipe;
-	struct usb_dma *dmap = &xfer->dmabuf;
 	usbd_status err;
 	u_int size;
 	int flags, s;
@@ -309,7 +308,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 		if (xfer->rqflags & URQ_AUTO_DMABUF)
 			printf("usbd_transfer: has old buffer!\n");
 #endif
-		err = usb_allocmem(bus, size, 0, dmap);
+		err = usb_allocmem(bus, size, 0, &xfer->dmabuf);
 		if (err)
 			return (err);
 		xfer->rqflags |= URQ_AUTO_DMABUF;
@@ -318,7 +317,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 	/* Copy data if going out. */
 	if (!(xfer->flags & USBD_NO_COPY) && size != 0 &&
 	    !usbd_xfer_isread(xfer))
-		memcpy(KERNADDR(dmap, 0), xfer->buffer, size);
+		memcpy(KERNADDR(&xfer->dmabuf, 0), xfer->buffer, size);
 
 	err = pipe->methods->transfer(xfer);
 
@@ -708,7 +707,6 @@ void
 usb_transfer_complete(struct usbd_xfer *xfer)
 {
 	struct usbd_pipe *pipe = xfer->pipe;
-	struct usb_dma *dmap = &xfer->dmabuf;
 	int polling;
 
 	SPLUSBCHECK;
@@ -742,14 +740,13 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 			xfer->actlen = xfer->length;
 		}
 #endif
-		memcpy(xfer->buffer, KERNADDR(dmap, 0), xfer->actlen);
+		memcpy(xfer->buffer, KERNADDR(&xfer->dmabuf, 0), xfer->actlen);
 	}
 
 	/* if we allocated the buffer in usbd_transfer() we free it here. */
 	if (xfer->rqflags & URQ_AUTO_DMABUF) {
 		if (!pipe->repeat) {
-			struct usbd_bus *bus = pipe->device->bus;
-			usb_freemem(bus, dmap);
+			usb_freemem(pipe->device->bus, &xfer->dmabuf);
 			xfer->rqflags &= ~URQ_AUTO_DMABUF;
 		}
 	}
