@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.93 2014/10/29 00:17:01 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.94 2014/11/01 04:03:22 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -682,7 +682,7 @@ term_strlen(const struct termp *p, const char *cp)
 
 			switch (esc) {
 			case ESCAPE_UNICODE:
-				uc = mchars_num2uc(seq + 1, sz - 1);
+				uc = mchars_num2uc(seq + 1, ssz - 1);
 				break;
 			case ESCAPE_NUMBERED:
 				uc = mchars_num2char(seq, ssz);
