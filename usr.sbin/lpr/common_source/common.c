@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.36 2014/10/16 04:17:48 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.37 2014/11/02 13:56:55 deraadt Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -415,13 +415,13 @@ done:
 void
 delay(int n)
 {
-	struct timeval tdelay;
+	struct timespec tdelay;
 
 	if (n <= 0 || n > 10000)
 		fatal("unreasonable delay period (%d)", n);
 	tdelay.tv_sec = n / 1000;
-	tdelay.tv_usec = n * 1000 % 1000000;
-	(void) select(0, (fd_set *)0, (fd_set *)0, (fd_set *)0, &tdelay);
+	tdelay.tv_nsec = n * 1000000 % 1000000000;
+	nanosleep(&tdelay, NULL);
 }
 
 __dead void
