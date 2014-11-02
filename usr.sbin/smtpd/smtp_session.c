@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.219 2014/11/02 21:13:32 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.220 2014/11/02 21:46:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -406,6 +406,7 @@ header_masquerade_callback(const struct rfc2822_header *hdr, void *arg)
 				if (skip) {
 					if (fprintf(s->ofile, "%c", l->buffer[i]) != (int)1)
 						goto ioerror;
+					s->datalen += 1;
 				}
 				else {
 					buffer[j++] = l->buffer[i];
@@ -413,6 +414,7 @@ header_masquerade_callback(const struct rfc2822_header *hdr, void *arg)
 						len = strlen(buffer);
 						if (fprintf(s->ofile, "%s", buffer) != (int)len)
 							goto ioerror;
+						s->datalen += len;
 						skip = 1;
 						j = 0;
 						memset(buffer, 0, sizeof buffer);
@@ -423,6 +425,7 @@ header_masquerade_callback(const struct rfc2822_header *hdr, void *arg)
 		if (skip) {
 			if (fprintf(s->ofile, "\n") != (int)1)
 				goto ioerror;
+			s->datalen += 1;
 		}
 		else {
 			buffer[j++] = '\n';
@@ -430,6 +433,7 @@ header_masquerade_callback(const struct rfc2822_header *hdr, void *arg)
 				len = strlen(buffer);
 				if (fprintf(s->ofile, "%s", buffer) != (int)len)
 					goto ioerror;
+				s->datalen += len;
 				skip = 1;
 				j = 0;
 				memset(buffer, 0, sizeof buffer);
@@ -444,6 +448,7 @@ header_masquerade_callback(const struct rfc2822_header *hdr, void *arg)
 		len = strlen(buffer);
 		if (fprintf(s->ofile, "%s", buffer) != (int)len)
 			goto ioerror;
+		s->datalen += len;
 	}
 	return;
 
