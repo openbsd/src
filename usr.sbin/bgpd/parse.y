@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.272 2014/05/02 14:12:05 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.273 2014/11/02 00:30:41 doug Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -55,7 +55,9 @@ int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
 int		 yyparse(void);
 int		 yylex(void);
-int		 yyerror(const char *, ...);
+int		 yyerror(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 lgetc(int);
@@ -838,7 +840,7 @@ rdomainopts	: RD STRING {
 			if (strlcpy(currdom->descr, $2,
 			    sizeof(currdom->descr)) >=
 			    sizeof(currdom->descr)) {
-				yyerror("descr \"%s\" too long: max %u",
+				yyerror("descr \"%s\" too long: max %zu",
 				    $2, sizeof(currdom->descr) - 1);
 				free($2);
 				YYERROR;
@@ -909,7 +911,7 @@ group		: GROUP string optnl '{' optnl {
 			if (strlcpy(curgroup->conf.group, $2,
 			    sizeof(curgroup->conf.group)) >=
 			    sizeof(curgroup->conf.group)) {
-				yyerror("group name \"%s\" too long: max %u",
+				yyerror("group name \"%s\" too long: max %zu",
 				    $2, sizeof(curgroup->conf.group) - 1);
 				free($2);
 				YYERROR;
@@ -963,7 +965,7 @@ peeropts	: REMOTEAS as4number	{
 			if (strlcpy(curpeer->conf.descr, $2,
 			    sizeof(curpeer->conf.descr)) >=
 			    sizeof(curpeer->conf.descr)) {
-				yyerror("descr \"%s\" too long: max %u",
+				yyerror("descr \"%s\" too long: max %zu",
 				    $2, sizeof(curpeer->conf.descr) - 1);
 				free($2);
 				YYERROR;
@@ -976,7 +978,7 @@ peeropts	: REMOTEAS as4number	{
 		}
 		| MULTIHOP NUMBER	{
 			if ($2 < 2 || $2 > 255) {
-				yyerror("invalid multihop distance %d", $2);
+				yyerror("invalid multihop distance %lld", $2);
 				YYERROR;
 			}
 			curpeer->conf.distance = $2;
@@ -996,7 +998,7 @@ peeropts	: REMOTEAS as4number	{
 			if (strlcpy(curpeer->conf.rib, $2,
 			    sizeof(curpeer->conf.rib)) >=
 			    sizeof(curpeer->conf.rib)) {
-				yyerror("rib name \"%s\" too long: max %u",
+				yyerror("rib name \"%s\" too long: max %zu",
 				   $2, sizeof(curpeer->conf.rib) - 1);
 				free($2);
 				YYERROR;
@@ -1099,7 +1101,7 @@ peeropts	: REMOTEAS as4number	{
 			if (strlcpy(curpeer->conf.auth.md5key, $4,
 			    sizeof(curpeer->conf.auth.md5key)) >=
 			    sizeof(curpeer->conf.auth.md5key)) {
-				yyerror("tcp md5sig password too long: max %u",
+				yyerror("tcp md5sig password too long: max %zu",
 				    sizeof(curpeer->conf.auth.md5key) - 1);
 				free($4);
 				YYERROR;
@@ -1167,7 +1169,7 @@ peeropts	: REMOTEAS as4number	{
 
 			if (strlen($7) / 2 != keylen) {
 				yyerror("auth key len: must be %u bytes, "
-				    "is %u bytes", keylen, strlen($7) / 2);
+				    "is %zu bytes", keylen, strlen($7) / 2);
 				free($7);
 				YYERROR;
 			}
@@ -1281,7 +1283,7 @@ peeropts	: REMOTEAS as4number	{
 			    sizeof(curpeer->conf.if_depend)) >=
 			    sizeof(curpeer->conf.if_depend)) {
 				yyerror("interface name \"%s\" too long: "
-				    "max %u", $3,
+				    "max %zu", $3,
 				    sizeof(curpeer->conf.if_depend) - 1);
 				free($3);
 				YYERROR;
@@ -1293,7 +1295,7 @@ peeropts	: REMOTEAS as4number	{
 			    sizeof(curpeer->conf.demote_group)) >=
 			    sizeof(curpeer->conf.demote_group)) {
 				yyerror("demote group name \"%s\" too long: "
-				    "max %u", $2,
+				    "max %zu", $2,
 				    sizeof(curpeer->conf.demote_group) - 1);
 				free($2);
 				YYERROR;
@@ -1365,7 +1367,7 @@ encspec		: /* nada */	{
 
 			if (strlen($2) / 2 != $$.enc_key_len) {
 				yyerror("enc key length wrong: should be %u "
-				    "bytes, is %u bytes",
+				    "bytes, is %zu bytes",
 				    $$.enc_key_len * 2, strlen($2));
 				free($2);
 				YYERROR;
@@ -1403,7 +1405,7 @@ filterrule	: action quick filter_rib direction filter_peer_h filter_match_h filt
 				if (strlcpy(r.rib, $3, sizeof(r.rib)) >=
 				    sizeof(r.rib)) {
 					yyerror("rib name \"%s\" too long: "
-					    "max %u", $3, sizeof(r.rib) - 1);
+					    "max %zu", $3, sizeof(r.rib) - 1);
 					free($3);
 					YYERROR;
 				}
@@ -3120,7 +3122,7 @@ add_mrtconfig(enum mrt_type type, char *name, int timeout, struct peer *p,
 	n->type = type;
 	if (strlcpy(MRT2MC(n)->name, name, sizeof(MRT2MC(n)->name)) >=
 	    sizeof(MRT2MC(n)->name)) {
-		yyerror("filename \"%s\" too long: max %u",
+		yyerror("filename \"%s\" too long: max %zu",
 		    name, sizeof(MRT2MC(n)->name) - 1);
 		free(n);
 		return (-1);
@@ -3143,7 +3145,7 @@ add_mrtconfig(enum mrt_type type, char *name, int timeout, struct peer *p,
 		}
 		if (strlcpy(n->rib, rib, sizeof(n->rib)) >=
 		    sizeof(n->rib)) {
-			yyerror("rib name \"%s\" too long: max %u",
+			yyerror("rib name \"%s\" too long: max %zu",
 			    name, sizeof(n->rib) - 1);
 			free(n);
 			return (-1);
@@ -3168,7 +3170,7 @@ add_rib(char *name, u_int rtableid, u_int16_t flags)
 		}
 	}
 	if (strlcpy(rr->name, name, sizeof(rr->name)) >= sizeof(rr->name)) {
-		yyerror("rib name \"%s\" too long: max %u",
+		yyerror("rib name \"%s\" too long: max %zu",
 		   name, sizeof(rr->name) - 1);
 		free(rr);
 		return (-1);
@@ -3176,12 +3178,12 @@ add_rib(char *name, u_int rtableid, u_int16_t flags)
 	rr->flags |= flags;
 	if ((rr->flags & F_RIB_HASNOFIB) == 0) {
 		if (ktable_exists(rtableid, &rdom) != 1) {
-			yyerror("rtable id %lld does not exist", rtableid);
+			yyerror("rtable id %u does not exist", rtableid);
 			free(rr);
 			return (-1);
 		}
 		if (rdom != 0) {
-			yyerror("rtable %lld does not belong to rdomain 0",
+			yyerror("rtable %u does not belong to rdomain 0",
 			    rtableid);
 			free(rr);
 			return (-1);
