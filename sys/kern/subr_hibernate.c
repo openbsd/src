@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.106 2014/10/22 05:44:00 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.107 2014/11/02 22:59:58 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1644,8 +1644,6 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 	piglet_base = hib->piglet_pa;
 	global_pig_start = pig_start;
 
-	pmap_activate(curproc);
-
 	/*
 	 * These mappings go into the resuming kernel's page table, and are
 	 * used only during image read. They dissappear from existence
@@ -1802,19 +1800,19 @@ hibernate_suspend(void)
 	DPRINTF("hibernate: writing chunks\n");
 	if (hibernate_write_chunks(&hib)) {
 		DPRINTF("hibernate_write_chunks failed\n");
-		return (1);
+		goto fail;
 	}
 
 	DPRINTF("hibernate: writing chunktable\n");
 	if (hibernate_write_chunktable(&hib)) {
 		DPRINTF("hibernate_write_chunktable failed\n");
-		return (1);
+		goto fail;
 	}
 
 	DPRINTF("hibernate: writing signature\n");
 	if (hibernate_write_signature(&hib)) {
 		DPRINTF("hibernate_write_signature failed\n");
-		return (1);
+		goto fail;
 	}
 
 	/* Allow the disk to settle */
@@ -1827,6 +1825,10 @@ hibernate_suspend(void)
 	hib.io_func(hib.dev, 0, (vaddr_t)NULL, 0, HIB_DONE, hib.io_page);
 
 	return (0);
+fail:
+	pmap_kremove(HIBERNATE_HIBALLOC_PAGE, PAGE_SIZE);
+	pmap_update(pmap_kernel());
+	return (1);
 }
 
 int
@@ -1869,11 +1871,12 @@ hibernate_free(void)
 
 	if (hibernate_temp_page) {
 		pmap_kremove(hibernate_temp_page, PAGE_SIZE);
-		pmap_update(pmap_kernel());
 		km_free((void *)hibernate_temp_page, PAGE_SIZE,
 		    &kv_any, &kp_none);
 	}
 
 	global_piglet_va = 0;
 	hibernate_temp_page = 0;
+	pmap_kremove(HIBERNATE_HIBALLOC_PAGE, PAGE_SIZE);
+	pmap_update(pmap_kernel());
 }
