@@ -6517,7 +6517,8 @@
 ./usr/share/man/man9/rtable_get.9
 ./usr/share/man/man9/rtable_l2.9
 ./usr/share/man/man9/rtable_l2set.9
-./usr/share/man/man9/rtalloc1.9
+./usr/share/man/man9/rtalloc.9
+./usr/share/man/man9/rtalloc_mpath.9
 ./usr/share/man/man9/rtdeletemsg.9
 ./usr/share/man/man9/rtfree.9
 ./usr/share/man/man9/rtlabel_id2name.9
