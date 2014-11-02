@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.48 2014/11/02 01:09:54 jca Exp $
+#	$OpenBSD: Makefile,v 1.49 2014/11/02 10:34:52 jca Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -9,6 +9,12 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers2-4 \
 		cmp-vers2-5 \
 		cmp-vers2-6 \
+		cmp-vers2-7 \
+		cmp-vers2-8 \
+		cmp-vers2-9 \
+		cmp-vers2-10 \
+		cmp-vers2-11 \
+		cmp-vers2-12 \
 		cmp-vers3 \
 		cmp-vers4-1 \
 		cmp-vers4-2 \
@@ -156,6 +162,30 @@ cmp-vers2-5:
 cmp-vers2-6:
 	# Test regular versions (a != b)
 	@if ${PCONFIG} --exists "vers2 != 0.2.0"; then false; fi
+
+cmp-vers2-7:
+	# Test regular versions (a >= b a != c)
+	@${PCONFIG} --exists "vers2 >= 0.1.0 vers2 != 0.3.0"
+
+cmp-vers2-8:
+	# Test regular versions (a >= b a != c)
+	@${PCONFIG} --exists "vers2 >= 0.2.0 vers2 != 0.3.0"
+
+cmp-vers2-9:
+	# Test regular versions (a >= b a != c)
+	@if ${PCONFIG} --exists "vers2 >= 0.1.0 vers2 != 0.2.0"; then false; fi
+
+cmp-vers2-10:
+	# Test regular versions (a >= b a < c)
+	@if ${PCONFIG} --exists "vers2 >= 0.2.0 vers2 < 0.1.0"; then false; fi
+
+cmp-vers2-11:
+	# Test regular versions (a >= b a < c)
+	@if ${PCONFIG} --exists "vers2 >= 0.2.0 vers2 < 0.2.0"; then false; fi
+
+cmp-vers2-12:
+	# Test regular versions (a >= b a < c)
+	@${PCONFIG} --exists "vers2 >= 0.2.0 vers2 < 0.3.0"
 
 cmp-vers3:
 	# Test regular versions (a = b)
