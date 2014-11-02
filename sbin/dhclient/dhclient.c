@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.325 2014/11/01 15:49:07 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.326 2014/11/02 15:18:32 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1026,9 +1026,8 @@ dhcpoffer(struct in_addr client_addr, struct option_data *options, char *info)
 
 	if (stop_selecting <= time(NULL))
 		state_selecting();
-	else {
+	else
 		set_timeout(stop_selecting, state_selecting);
-	}
 }
 
 /*
@@ -1337,7 +1336,7 @@ send_request(void)
 		client->interval = client->active->expiry - cur_time + 1;
 
 	/*
- 	 * If the reboot timeout has expired, or the lease rebind time has
+	 * If the reboot timeout has expired, or the lease rebind time has
 	 * elapsed, or if we're not yet bound, broadcast the DHCPREQUEST rather
 	 * than unicasting.
 	 */
@@ -2386,7 +2385,7 @@ add_direct_route(int rdomain, struct in_addr dest, struct in_addr mask, struct i
  *
  *	or
  *
- * 	route -q $rdomain add default $router
+ *	route -q $rdomain add default $router
  */
 void
 add_default_route(int rdomain, struct in_addr addr, struct in_addr gateway)

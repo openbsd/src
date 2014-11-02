@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.88 2014/10/27 13:36:21 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.89 2014/11/02 15:18:32 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -663,7 +663,7 @@ alloc:
 				memcpy(&hunkbuf[hunkix], dp, len);
 				hunkix += len;
 				break;
- 			case 'l':	/* Signed 32-bit integer. */
+			case 'l':	/* Signed 32-bit integer. */
 				if (!parse_decimal(cfile, buf, *fmt)) {
 					parse_warn("expecting signed 32-bit "
 					    "integer.");
