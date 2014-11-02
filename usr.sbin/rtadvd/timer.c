@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.12 2014/07/04 22:39:31 guenther Exp $	*/
+/*	$OpenBSD: timer.c,v 1.13 2014/11/02 02:45:46 deraadt Exp $	*/
 /*	$KAME: timer.c,v 1.7 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ rtadvd_set_timer(struct timeval *tm, struct rtadvd_timer *timer)
 /*
  * Check expiration for each timer. If a timer is expired,
  * call the expire function for the timer and update the timer.
- * Return the next interval for select() call.
+ * Return the next interval.
  */
 struct timeval *
 rtadvd_check_timer()
