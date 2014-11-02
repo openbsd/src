@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.40 2014/05/19 17:07:16 jmc Exp $
+.\"	$OpenBSD: passwd.1,v 1.41 2014/11/02 05:25:09 tedu Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)passwd.1	6.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: May 19 2014 $
+.Dd $Mdocdate: November 2 2014 $
 .Dt PASSWD 1
 .Os
 .Sh NAME
@@ -81,19 +81,11 @@ database, then an attempt is made to use the YP database.
 The superuser is not required to provide a user's current password
 if only the local password is modified.
 .Pp
-Which type of cipher is used to encrypt the password information
-depends on the configuration in
+Password encryption parameters depend on the configuration of the
+.Dq localcipher
+capability in
 .Xr login.conf 5 .
-It can be different for local
-.Pq Dq localcipher
-and YP
-.Pq Dq ypcipher
-passwords.
-If none is specified, then blowfish with 6 rounds is used for local
-.Pq Dq localcipher
-and old is used for YP
-.Pq Dq ypcipher
-by default.
+If none is specified, then blowfish with 8 rounds is used.
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact
 .It /etc/login.conf
