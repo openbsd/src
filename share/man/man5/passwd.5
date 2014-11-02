@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.39 2012/06/20 22:15:13 schwarze Exp $
+.\"	$OpenBSD: passwd.5,v 1.40 2014/11/02 05:30:54 tedu Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)passwd.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: June 20 2012 $
+.Dd $Mdocdate: November 2 2014 $
 .Dt PASSWD 5
 .Os
 .Sh NAME
@@ -298,29 +298,6 @@ file.
 .Pp
 .%T "Managing NFS and NIS"
 (O'Reilly & Associates)
-.Sh STANDARDS
-The password file format has changed since
-.Bx 4.3 .
-The following
-.Xr awk 1
-script can be used to convert your old-style password
-file into a new style password file.
-The additional fields
-.Dq class ,
-.Dq change ,
-and
-.Dq expire
-are added, but are turned off by default.
-To set
-.Ar change
-and
-.Ar expire
-use the current day in seconds from the Epoch plus the number of seconds
-of offset desired.
-.Bd -literal -offset indent
-BEGIN { FS = ":"}
-{ print $1 ":" $2 ":" $3 ":" $4 "::0:0:" $5 ":" $6 ":" $7 }
-.Ed
 .Sh HISTORY
 A
 .Nm passwd
