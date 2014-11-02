@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.83 2014/11/02 01:11:47 jca Exp $
+# $OpenBSD: pkg-config,v 1.84 2014/11/02 13:28:50 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -165,7 +165,7 @@ while (@ARGV){
 	my $p = shift @ARGV;
 	my $op = undef;
 	my $v = undef;
-	if (@ARGV >= 2  && $ARGV[0] =~ /^[<=>!]+$/ &&
+	if (@ARGV >= 2  && $ARGV[0] =~ /^[<=>]+$/ &&
 	    $ARGV[1] =~ /^[\d\.]+[\w\.]*$/) {
 	    	$op = shift @ARGV;
 		$v = shift @ARGV;
