@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.116 2014/11/02 05:12:14 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.117 2014/11/02 05:15:34 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -387,9 +387,9 @@ free(void *addr, int type, size_t freedsize)
 	s = splvm();
 #ifdef DIAGNOSTIC
 	if (freedsize != 0 && freedsize > size)
-		panic("freed too much: %zu > %ld (%p)", freedsize, size, addr);
+		panic("free: size too large %zu > %ld (%p)", freedsize, size, addr);
 	if (freedsize != 0 && size > MINALLOCSIZE && freedsize < size / 2)
-		panic("freed too little: %zu < %ld / 2 (%p)",
+		panic("free: size too small %zu < %ld / 2 (%p)",
 		    freedsize, size, addr);
 	/*
 	 * Check for returns of data that do not point to the
