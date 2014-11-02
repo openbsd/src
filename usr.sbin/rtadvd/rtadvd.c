@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.48 2014/10/22 19:47:28 brad Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.49 2014/11/02 02:33:33 deraadt Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <poll.h>
 #include <err.h>
 #include <errno.h>
 #include <string.h>
@@ -158,12 +159,10 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	fd_set *fdsetp, *selectfdp;
-	int fdmasks;
-	int maxfd = 0;
+	struct pollfd pfd[2];
 	struct timeval *timeout;
-	int i, ch;
 	struct passwd *pw;
+	int i, ch, npfd;
 
 	log_init(1);		/* log to stderr until daemonized */
 
@@ -229,13 +228,9 @@ main(argc, argv)
 	if (pidfile(NULL) < 0)
 		log_warnx("failed to open the pid log file, run anyway.");
 
-	maxfd = sock;
 	if (sflag == 0) {
 		rtsock_open();
-		if (rtsock > sock)
-			maxfd = rtsock;
-	} else
-		rtsock = -1;
+	}
 
 	if ((pw = getpwnam(RTADVD_USER)) == NULL)
 		fatal("getpwnam(" RTADVD_USER ")");
@@ -248,25 +243,19 @@ main(argc, argv)
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("cannot drop privileges");
 
-	fdmasks = howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask);
-	if ((fdsetp = calloc(1, fdmasks)) == NULL) {
-		err(1, "calloc");
-		/*NOTREACHED*/
+	npfd = 1;
+	pfd[0].fd = sock;
+	pfd[0].events = POLLIN;
+	if (rtsock >= 0) {
+		pfd[1].fd = rtsock;
+		pfd[1].events = POLLIN;
+		npfd++;
 	}
-	if ((selectfdp = malloc(fdmasks)) == NULL) {
-		err(1, "malloc");
-		/*NOTREACHED*/
-	}
-	FD_SET(sock, fdsetp);
-	if (rtsock >= 0)
-		FD_SET(rtsock, fdsetp);
 
 	signal(SIGTERM, set_die);
 	signal(SIGUSR1, rtadvd_set_dump);
 
 	while (1) {
-		memcpy(selectfdp, fdsetp, fdmasks); /* reinitialize */
-
 		if (do_dump) {	/* SIGUSR1 */
 			do_dump = 0;
 			rtadvd_dump();
@@ -288,8 +277,8 @@ main(argc, argv)
 		else
 			log_debug("there's no timer. waiting for inputs");
 
-		if ((i = select(maxfd + 1, selectfdp, NULL, NULL,
-		    timeout)) < 0) {
+		if ((i = poll(pfd, npfd,
+		    timeout->tv_sec * 1000 + timeout->tv_usec / 1000)) < 0) {
 			/* EINTR would occur upon SIGUSR1 for status dump */
 			if (errno != EINTR)
 				log_warn("select");
@@ -297,9 +286,9 @@ main(argc, argv)
 		}
 		if (i == 0)	/* timeout */
 			continue;
-		if (rtsock != -1 && FD_ISSET(rtsock, selectfdp))
+		if (rtsock != -1 && (pfd[1].revents & POLLIN))
 			rtmsg_input();
-		if (FD_ISSET(sock, selectfdp))
+		if (pfd[0].revents & POLLIN)
 			rtadvd_input();
 	}
 	exit(0);		/* NOTREACHED */
