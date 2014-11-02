@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2014/01/22 00:21:16 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.25 2014/11/02 00:22:00 doug Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -58,7 +58,9 @@ int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
 int		 yyparse(void);
 int		 yylex(void);
-int		 yyerror(const char *, ...);
+int		 yyerror(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 lgetc(int);
@@ -432,7 +434,8 @@ areaoptsl	: interface
 			if (strlcpy(area->demote_group, $2,
 			    sizeof(area->demote_group)) >=
 			    sizeof(area->demote_group)) {
-				yyerror("demote group name \"%s\" too long");
+				yyerror("demote group name \"%s\" too long",
+				    $2);
 				free($2);
 				YYERROR;
 			}
@@ -492,7 +495,8 @@ interfaceoptsl	: PASSIVE		{ iface->cflags |= F_IFACE_PASSIVE; }
 			if (strlcpy(iface->demote_group, $2,
 			    sizeof(iface->demote_group)) >=
 			    sizeof(iface->demote_group)) {
-				yyerror("demote group name \"%s\" too long");
+				yyerror("demote group name \"%s\" too long",
+				    $2);
 				free($2);
 				YYERROR;
 			}
