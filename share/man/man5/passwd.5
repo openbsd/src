@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.40 2014/11/02 05:30:54 tedu Exp $
+.\"	$OpenBSD: passwd.5,v 1.41 2014/11/02 05:33:04 tedu Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -138,10 +138,9 @@ Because
 contains the encrypted user passwords, it should not be readable by anyone
 without appropriate privileges.
 .Pp
-Which type of cipher is used to encrypt the password information
-depends on the configuration in
+Configuration for the cipher used to encrypt the password information
+is contained in
 .Xr login.conf 5 .
-It can be different for local and YP passwords.
 .Pp
 The
 .Ar group
