@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.1 2014/10/31 13:46:17 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.2 2014/11/02 14:45:05 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -66,6 +66,8 @@ void tls_free(struct tls *ctx);
 
 int tls_accept_socket(struct tls *ctx, struct tls **cctx, int socket);
 int tls_connect(struct tls *ctx, const char *host, const char *port);
+int tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
+    const char *hostname);
 int tls_connect_socket(struct tls *ctx, int s, const char *hostname);
 int tls_read(struct tls *ctx, void *buf, size_t buflen, size_t *outlen);
 int tls_write(struct tls *ctx, const void *buf, size_t buflen, size_t *outlen);

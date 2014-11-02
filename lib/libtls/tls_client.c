@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.1 2014/10/31 13:46:17 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.2 2014/11/02 14:45:05 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -123,6 +123,15 @@ err:
 int
 tls_connect_socket(struct tls *ctx, int socket, const char *hostname)
 {
+	ctx->socket = socket;
+
+	return tls_connect_fds(ctx, socket, socket, hostname);
+}
+
+int
+tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
+    const char *hostname)
+{
 	union { struct in_addr ip4; struct in6_addr ip6; } addrbuf;
 	X509 *cert = NULL;
 	int ret;
@@ -132,7 +141,10 @@ tls_connect_socket(struct tls *ctx, int socket, const char *hostname)
 		goto err;
 	}
 
-	ctx->socket = socket;
+	if (fd_read < 0 || fd_write < 0) {
+		tls_set_error(ctx, "invalid file descriptors");
+		return (-1);
+	}
 
 	if ((ctx->ssl_ctx = SSL_CTX_new(SSLv23_client_method())) == NULL) {
 		tls_set_error(ctx, "ssl context failure");
@@ -166,7 +178,8 @@ tls_connect_socket(struct tls *ctx, int socket, const char *hostname)
 		tls_set_error(ctx, "ssl connection failure");
 		goto err;
 	}
-	if (SSL_set_fd(ctx->ssl_conn, ctx->socket) != 1) {
+	if (SSL_set_rfd(ctx->ssl_conn, fd_read) != 1 ||
+	    SSL_set_wfd(ctx->ssl_conn, fd_write) != 1) {
 		tls_set_error(ctx, "ssl file descriptor failure");
 		goto err;
 	}

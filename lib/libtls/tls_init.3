@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.1 2014/10/31 13:46:17 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.2 2014/11/02 14:45:05 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 31 2014 $
+.Dd $Mdocdate: November 2 2014 $
 .Dt TLS 3
 .Os
 .Sh NAME
@@ -43,6 +43,7 @@
 .Nm tls_close ,
 .Nm tls_free ,
 .Nm tls_connect ,
+.Nm tls_connect_fds ,
 .Nm tls_connect_socket ,
 .Nm tls_read ,
 .Nm tls_write ,
@@ -100,6 +101,8 @@
 .Ft "int"
 .Fn tls_connect "struct tls *ctx" "const char *host" "const char *port"
 .Ft "int"
+.Fn tls_connect_fds "struct tls *ctx" "int fd_read" "int fd_write" "const char *hostname"
+.Ft "int"
 .Fn tls_connect_socket "struct tls *ctx" "int s" "const char *hostname"
 .Ft "int"
 .Fn tls_read "struct tls *ctx" "void *buf" "size_t buflen" "size_t *outlen"
@@ -146,6 +149,9 @@ This function will create a new socket, connect to the specified host and
 port, and then establish a secure connection.
 An already existing socket can be upgraded to a secure connection by calling
 .Fn tls_connect_socket .
+Alternatively, a secure connection can be established over a pair of existing
+file descriptors by calling
+.Fn tls_connect_fds .
 .Pp
 Two functions are provided for input and output,
 .Fn tls_read
@@ -263,6 +269,10 @@ options.
 .It
 .Fn tls_close
 closes a connection after use.
+If the connection was established using
+.Fn tls_connect_fds ,
+only the TLS layer will be closed and it is the caller's responsibility to close
+the file descriptors.
 .It
 .Fn tls_free
 frees a tls context after use.
@@ -279,6 +289,9 @@ The
 .Fa port
 may be numeric or a service name.
 If it is NULL then a host of the format "hostname:port" is permitted.
+.It
+.Fn tls_connect_fds
+connects a client context to a pair of existing file descriptors.
 .It
 .Fn tls_connect_socket
 connects a client context to an already established socket connection.
