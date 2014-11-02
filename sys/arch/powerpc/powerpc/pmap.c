@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.130 2014/10/27 19:16:38 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.131 2014/11/02 00:11:32 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -1742,11 +1742,11 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 		ppc_mtsrin(PPC_KERNEL_SEG0 + i, i << ADDR_SR_SHIFT);
 	}
 
-	/* first segment contains executable pages */
-	pmap_kernel()->pm_exec[0]++;
-	pmap_kernel()->pm_sr[0] &= ~SR_NOEXEC;
-
 	if (ppc_proc_is_64b) {
+		/* first segment contains executable pages */
+		pmap_kernel()->pm_exec[0]++;
+		pmap_kernel()->pm_sr[0] &= ~SR_NOEXEC;
+
 		asm volatile ("sync; mtsdr1 %0; isync"
 		    :: "r"((u_int)pmap_ptable64 | HTABSIZE_64));
 	} else 
