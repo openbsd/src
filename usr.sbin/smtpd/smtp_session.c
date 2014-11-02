@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.218 2014/10/15 08:09:02 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.219 2014/11/02 21:13:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -49,6 +49,8 @@
 
 #define SMTP_KICK_CMD		5
 #define SMTP_KICK_RCPTFAIL	50
+
+#define	APPEND_DOMAIN_BUFFER_SIZE	4096
 
 enum smtp_phase {
 	PHASE_INIT = 0,
@@ -278,74 +280,176 @@ header_bcc_callback(const struct rfc2822_header *hdr, void *arg)
 }
 
 static void
+header_append_domain_buffer(char *buffer, char *domain, size_t len)
+{
+	size_t	i;
+	int	escape, quote, comment, bracket;
+	int	has_domain, has_bracket, has_group;
+	int	pos_bracket, pos_component, pos_insert;
+	char	copy[APPEND_DOMAIN_BUFFER_SIZE];
+
+	i = 0;
+	escape = quote = comment = bracket = 0;
+	has_domain = has_bracket = has_group = 0;
+	pos_bracket = pos_insert = pos_component = 0;
+	for (i = 0; buffer[i]; ++i) {
+		if (buffer[i] == '(' && !escape && !quote)
+			comment++;
+		if (buffer[i] == '"' && !escape && !comment)
+			quote = !quote;
+		if (buffer[i] == ')' && !escape && !quote && comment)
+			comment--;
+		if (buffer[i] == '\\' && !escape && !comment && !quote)
+			escape = 1;
+		else
+			escape = 0;
+		if (buffer[i] == '<' && !escape && !comment && !quote && !bracket) {
+			bracket++;
+			has_bracket = 1;
+		}
+		if (buffer[i] == '>' && !escape && !comment && !quote && bracket) {
+			bracket--;
+			pos_bracket = i;
+		}
+		if (buffer[i] == '@' && !escape && !comment && !quote)
+			has_domain = 1;
+		if (buffer[i] == ':' && !escape && !comment && !quote)
+			has_group = 1;
+		if (! isspace(buffer[i]))
+			pos_component = i;
+	}
+
+	/* parse error, do not attempt to modify */
+	if (escape || quote || comment || bracket)
+		return;
+
+	/* domain already present, no need to modify */
+	if (has_domain)
+		return;
+
+	/* address is group, skip */
+	if (has_group)
+		return;
+
+	/* there's an address between brackets, just append domain */
+	if (has_bracket) {
+		pos_bracket--;
+		while (isspace(buffer[pos_bracket]))
+			pos_bracket--;
+		if (buffer[pos_bracket] == '<')
+			return;
+		pos_insert = pos_bracket + 1;
+	}
+	else {
+		/* otherwise append address to last component */
+		pos_insert = pos_component + 1;
+
+		/* empty address */
+                if (buffer[pos_component] == '\0' || isspace(buffer[pos_component]))
+                        return;
+	}
+
+	if (snprintf(copy, sizeof copy, "%.*s@%s%s",
+		(int)pos_insert, buffer,
+		domain,
+		buffer+pos_insert) >= (int)sizeof copy)
+		return;
+
+	memcpy(buffer, copy, len);
+}
+
+static void
 header_masquerade_callback(const struct rfc2822_header *hdr, void *arg)
 {
 	struct smtp_session    *s = arg;
-	struct rfc822_parser	rp;
 	struct rfc2822_line    *l;
-	struct rfc822_address  *ra;
+	size_t			i, j;
+	int			escape, quote, comment, skip;
 	size_t			len;
-	char			buf[SMTPD_MAXLINESIZE];
-	int			ret;
-
-	rfc822_parser_init(&rp);
-	TAILQ_FOREACH(l, &hdr->lines, next)
-	    if (! rfc822_parser_feed(&rp, l->buffer))
-		    goto fail;
+	char			buffer[APPEND_DOMAIN_BUFFER_SIZE];
 
 	len = strlen(hdr->name) + 1;
-	if (fprintf(s->ofile, "%s:", hdr->name) != (int)len) {
-		s->msgflags |= MF_ERROR_IO;
-		rfc822_parser_reset(&rp);
-		return;
-	}
+	if (fprintf(s->ofile, "%s:", hdr->name) != (int)len)
+		goto ioerror;
 	s->datalen += len;
 
-	TAILQ_FOREACH(ra, &rp.addresses, next) {
-		/* no address provided, append local host */
-		if (strchr(ra->address, '@') == NULL) {
-			(void)strlcat(ra->address, "@", sizeof ra->address);
-			if (strlcat(ra->address, s->listener->hostname,
-				sizeof ra->address) >= sizeof ra->address) {
-				s->msgflags |= MF_ERROR_MALFORMED;
-				rfc822_parser_reset(&rp);
-				return;
+	i = j = 0;
+	escape = quote = comment = skip = 0;
+	memset(buffer, 0, sizeof buffer);
+
+	TAILQ_FOREACH(l, &hdr->lines, next) {
+		for (i = 0; i < strlen(l->buffer); ++i) {
+			if (l->buffer[i] == '(' && !escape && !quote)
+				comment++;
+			if (l->buffer[i] == '"' && !escape && !comment)
+				quote = !quote;
+			if (l->buffer[i] == ')' && !escape && !quote && comment)
+				comment--;
+			if (l->buffer[i] == '\\' && !escape && !comment && !quote)
+				escape = 1;
+			else
+				escape = 0;
+
+			/* found a separator, buffer contains a full address */
+			if (l->buffer[i] == ',' && !escape && !quote && !comment) {
+				if (!skip && j + strlen(s->listener->hostname) + 1 < sizeof buffer)
+					header_append_domain_buffer(buffer, s->listener->hostname, sizeof buffer);
+				len = strlen(buffer) + 1;
+				if (fprintf(s->ofile, "%s,", buffer) != (int)len)
+					goto ioerror;
+				s->datalen += len;
+				j = 0;
+				skip = 0;
+				memset(buffer, 0, sizeof buffer);
+			}
+			else {
+				if (skip) {
+					if (fprintf(s->ofile, "%c", l->buffer[i]) != (int)1)
+						goto ioerror;
+				}
+				else {
+					buffer[j++] = l->buffer[i];
+					if (j == sizeof (buffer) - 1) {
+						len = strlen(buffer);
+						if (fprintf(s->ofile, "%s", buffer) != (int)len)
+							goto ioerror;
+						skip = 1;
+						j = 0;
+						memset(buffer, 0, sizeof buffer);
+					}
+				}
 			}
 		}
-
-		if (ra->name[0] == '\0') {
-			ret = snprintf(buf, sizeof buf, "%s%s%s",
-			    TAILQ_FIRST(&rp.addresses) == ra ? " " : "\t",
-			    ra->address,
-			    TAILQ_LAST(&rp.addresses, addresses) == ra ? "" : ",");
+		if (skip) {
+			if (fprintf(s->ofile, "\n") != (int)1)
+				goto ioerror;
 		}
 		else {
-			ret = snprintf(buf, sizeof buf, "%s%s <%s>%s",
-			    TAILQ_FIRST(&rp.addresses) == ra ? " " : "\t",
-			    ra->name,
-			    ra->address,
-			    TAILQ_LAST(&rp.addresses, addresses) == ra ? "" : ",");
+			buffer[j++] = '\n';
+			if (j == sizeof (buffer) - 1) {
+				len = strlen(buffer);
+				if (fprintf(s->ofile, "%s", buffer) != (int)len)
+					goto ioerror;
+				skip = 1;
+				j = 0;
+				memset(buffer, 0, sizeof buffer);
+			}
 		}
-		if (ret == -1 || ret >= (int)sizeof buf) {
-			s->msgflags |= MF_ERROR_MALFORMED;
-			rfc822_parser_reset(&rp);
-			return;
-		}
-
-		len = strlen(buf) + 1;
-		if (fprintf(s->ofile, "%s\n", buf) != (int)len) {
-			s->msgflags |= MF_ERROR_IO;
-			rfc822_parser_reset(&rp);
-			return;
-		}
-		s->datalen += len;
 	}
-	rfc822_parser_reset(&rp);
+
+	/* end of header, if buffer is not empty we'll process it */
+	if (buffer[0]) {
+		if (j + strlen(s->listener->hostname) + 1 < sizeof buffer)
+			header_append_domain_buffer(buffer, s->listener->hostname, sizeof buffer);
+		len = strlen(buffer);
+		if (fprintf(s->ofile, "%s", buffer) != (int)len)
+			goto ioerror;
+	}
 	return;
 
-fail:
-	rfc822_parser_reset(&rp);
-	header_default_callback(hdr, arg);
+ioerror:
+	s->msgflags |= MF_ERROR_IO;
+	return;
 }
 
 static void
