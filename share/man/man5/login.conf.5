@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.56 2014/09/17 17:58:35 kspillner Exp $
+.\" $OpenBSD: login.conf.5,v 1.57 2014/11/02 05:36:10 tedu Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: September 17 2014 $
+.Dd $Mdocdate: November 2 2014 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -160,29 +160,11 @@ See
 .\"
 .Pp
 .It localcipher Ta string Ta blowfish,8 Ta
-The cipher to use for local passwords.
+The cipher to use for encrypting passwords.
 Possible values are:
-.Dq old ,
-.Dq newsalt,<rounds> ,
-.Dq md5 ,
-and
 .Dq blowfish,<rounds>
-where
-.Dq old
-means classic 56-bit DES.
-For
-.Dq newsalt
-the value of rounds is a 24-bit integer with a minimum of 7250 rounds.
-For
-.Dq blowfish
-the value can be between 4 and 31.
+where the value of rounds can be between 4 and 31.
 It specifies the base 2 logarithm of the number of rounds.
-.\"
-.Pp
-.It ypcipher Ta string Ta old Ta
-The cipher to use for YP passwords.
-The possible values are the same as for
-.Ar localcipher .
 .\"
 .Pp
 .It login-backoff Ta number Ta 3 Ta
