@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.65 2014/10/18 16:13:16 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.66 2014/11/03 17:21:30 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -869,7 +869,7 @@ skip_ext:
 #endif
 
 #ifndef OPENSSL_NO_SRTP
-	if (SSL_get_srtp_profiles(s)) {
+	if (SSL_IS_DTLS(s) && SSL_get_srtp_profiles(s)) {
 		int el;
 
 		ssl_add_clienthello_use_srtp_ext(s, 0, &el, 0);
@@ -1038,7 +1038,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	}
 
 #ifndef OPENSSL_NO_SRTP
-	if (s->srtp_profile) {
+	if (SSL_IS_DTLS(s) && s->srtp_profile) {
 		int el;
 
 		ssl_add_serverhello_use_srtp_ext(s, 0, &el, 0);
@@ -1513,7 +1513,7 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 
 		/* session ticket processed earlier */
 #ifndef OPENSSL_NO_SRTP
-		else if (type == TLSEXT_TYPE_use_srtp) {
+		else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_use_srtp) {
 			if (ssl_parse_clienthello_use_srtp_ext(s, data, size, al))
 				return 0;
 		}
@@ -1686,7 +1686,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			renegotiate_seen = 1;
 		}
 #ifndef OPENSSL_NO_SRTP
-		else if (type == TLSEXT_TYPE_use_srtp) {
+		else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_use_srtp) {
 			if (ssl_parse_serverhello_use_srtp_ext(s, data,
 			    size, al))
 				return 0;
