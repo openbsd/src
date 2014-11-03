@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.32 2014/09/03 08:26:00 jmc Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.33 2014/11/03 16:47:55 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -105,6 +105,14 @@ print_passwd(char *string, int operation, void *extra)
 	int pwd_gensalt(char *, int, login_cap_t *, char);
 	void to64(char *, u_int32_t, int n);
 
+	if (operation == DO_BLF) {
+		if (bcrypt_newhash(string, *(int *)extra, buffer,
+		    sizeof(buffer)) != 0)
+			errx(1, "bcrypt newhash failed");
+		fputs(buffer, stdout);
+		return;
+	}
+
 	switch(operation) {
 	case DO_MAKEKEY:
 		/*
@@ -116,11 +124,6 @@ print_passwd(char *string, int operation, void *extra)
 		}
 		strlcpy(msalt, &string[8], sizeof msalt);
 		salt = msalt;
-		break;
-
-	case DO_BLF:
-		strlcpy(buffer, bcrypt_gensalt(*(int *)extra), _PASSWORD_LEN);
-		salt = buffer;
 		break;
 
 	case DO_DES:
