@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.136 2014/10/26 14:43:03 chl Exp $	*/
+/*	$OpenBSD: inet.c,v 1.137 2014/11/03 17:20:46 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -91,6 +91,7 @@ char	*inetname(struct in_addr *);
 void	inetprint(struct in_addr *, in_port_t, char *, int);
 char	*inet6name(struct in6_addr *);
 void	inet6print(struct in6_addr *, int, char *);
+void	sosplice_dump(u_long);
 void	sockbuf_dump(struct sockbuf *, const char *);
 void	protosw_dump(u_long, u_long);
 void	domain_dump(u_long, u_long, short);
@@ -1166,7 +1167,6 @@ socket_dump(u_long off)
 	kread(off, &so, sizeof(so));
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, so.v);
-#define	pll(fmt, v, sep) printf(#v " " fmt sep, (long long) so.v);
 #define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : so.v);
 	printf("socket %#lx\n ", hideroot ? 0 : off);
 	p("%#.4x", so_type, "\n ");
@@ -1185,12 +1185,8 @@ socket_dump(u_long off)
 	p("%u", so_siguid, ", ");
 	p("%u", so_sigeuid, "\n ");
 	p("%lu", so_oobmark, "\n ");
-	pp("%p", so_splice, ", ");
-	pp("%p", so_spliceback, "\n ");
-	p("%lld", so_splicelen, ", ");
-	p("%lld", so_splicemax, ", ");
-	pll("%lld", so_idletv.tv_sec, ", ");
-	p("%ld", so_idletv.tv_usec, "\n ");
+	if (so.so_sp)
+		sosplice_dump((u_long)so.so_sp);
 	sockbuf_dump(&so.so_rcv, "so_rcv");
 	sockbuf_dump(&so.so_snd, "so_snd");
 	p("%u", so_euid, ", ");
@@ -1204,6 +1200,32 @@ socket_dump(u_long off)
 	if (!vflag)
 		return;
 	protosw_dump((u_long)so.so_proto, (u_long)so.so_pcb);
+}
+
+/*
+ * Dump the contents of a struct sosplice
+ */
+void
+sosplice_dump(u_long off)
+{
+	struct sosplice ssp;
+
+	if (off == 0)
+		return;
+	kread(off, &ssp, sizeof(ssp));
+
+#define	p(fmt, v, sep) printf(#v " " fmt sep, ssp.v);
+#define	pll(fmt, v, sep) printf(#v " " fmt sep, (long long) ssp.v);
+#define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : ssp.v);
+	pp("%p", ssp_socket, ", ");
+	pp("%p", ssp_soback, "\n ");
+	p("%lld", ssp_len, ", ");
+	p("%lld", ssp_max, ", ");
+	pll("%lld", ssp_idletv.tv_sec, ", ");
+	p("%ld", ssp_idletv.tv_usec, "\n ");
+#undef	p
+#undef	pll
+#undef	pp
 }
 
 /*

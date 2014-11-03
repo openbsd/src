@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.133 2014/09/09 02:07:17 guenther Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.134 2014/11/03 17:20:46 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -80,12 +80,19 @@ int	somaxconn = SOMAXCONN;
 int	sominconn = SOMINCONN;
 
 struct pool socket_pool;
+#ifdef SOCKET_SPLICE
+struct pool sosplice_pool;
+#endif
 
 void
 soinit(void)
 {
 
 	pool_init(&socket_pool, sizeof(struct socket), 0, 0, 0, "sockpl", NULL);
+#ifdef SOCKET_SPLICE
+	pool_init(&sosplice_pool, sizeof(struct sosplice), 0, 0, 0, "sosppl",
+	    NULL);
+#endif
 }
 
 /*
@@ -157,7 +164,7 @@ solisten(struct socket *so, int backlog)
 	if (so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING|SS_ISDISCONNECTING))
 		return (EOPNOTSUPP);
 #ifdef SOCKET_SPLICE
-	if (so->so_splice || so->so_spliceback)
+	if (isspliced(so) || issplicedback(so))
 		return (EOPNOTSUPP);
 #endif /* SOCKET_SPLICE */
 	s = splsoftnet();
@@ -199,10 +206,15 @@ sofree(struct socket *so)
 			return;
 	}
 #ifdef SOCKET_SPLICE
-	if (so->so_spliceback)
-		sounsplice(so->so_spliceback, so, so->so_spliceback != so);
-	if (so->so_splice)
-		sounsplice(so, so->so_splice, 0);
+	if (so->so_sp) {
+		if (issplicedback(so))
+			sounsplice(so->so_sp->ssp_soback, so,
+			    so->so_sp->ssp_soback != so);
+		if (isspliced(so))
+			sounsplice(so, so->so_sp->ssp_socket, 0);
+		pool_put(&sosplice_pool, so->so_sp);
+		so->so_sp = NULL;
+	}
 #endif /* SOCKET_SPLICE */
 	sbrelease(&so->so_snd);
 	sorflush(so);
@@ -647,7 +659,7 @@ restart:
 
 	m = so->so_rcv.sb_mb;
 #ifdef SOCKET_SPLICE
-	if (so->so_splice)
+	if (isspliced(so))
 		m = NULL;
 #endif /* SOCKET_SPLICE */
 	/*
@@ -669,7 +681,7 @@ restart:
 #ifdef DIAGNOSTIC
 		if (m == NULL && so->so_rcv.sb_cc)
 #ifdef SOCKET_SPLICE
-		    if (so->so_splice == NULL)
+		    if (!isspliced(so))
 #endif /* SOCKET_SPLICE */
 			panic("receive 1");
 #endif
@@ -1021,6 +1033,12 @@ sorflush(struct socket *so)
 }
 
 #ifdef SOCKET_SPLICE
+
+#define so_splicelen	so_sp->ssp_len
+#define so_splicemax	so_sp->ssp_max
+#define so_idletv	so_sp->ssp_idletv
+#define so_idleto	so_sp->ssp_idleto
+
 int
 sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 {
@@ -1035,6 +1053,8 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	if ((so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING)) == 0 &&
 	    (so->so_proto->pr_flags & PR_CONNREQUIRED))
 		return (ENOTCONN);
+	if (so->so_sp == NULL)
+		so->so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
 
 	/* If no fd is given, unsplice by removing existing link. */
 	if (fd < 0) {
@@ -1043,8 +1063,8 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 		    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK)) != 0)
 			return (error);
 		s = splsoftnet();
-		if (so->so_splice)
-			sounsplice(so, so->so_splice, 1);
+		if (so->so_sp->ssp_socket)
+			sounsplice(so, so->so_sp->ssp_socket, 1);
 		splx(s);
 		sbunlock(&so->so_rcv);
 		return (0);
@@ -1060,6 +1080,8 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	if ((error = getsock(curproc->p_fd, fd, &fp)) != 0)
 		return (error);
 	sosp = fp->f_data;
+	if (sosp->so_sp == NULL)
+		sosp->so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
 
 	/* Lock both receive and send buffer. */
 	if ((error = sblock(&so->so_rcv,
@@ -1074,7 +1096,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	}
 	s = splsoftnet();
 
-	if (so->so_splice || sosp->so_spliceback) {
+	if (so->so_sp->ssp_socket || sosp->so_sp->ssp_soback) {
 		error = EBUSY;
 		goto release;
 	}
@@ -1092,8 +1114,8 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	}
 
 	/* Splice so and sosp together. */
-	so->so_splice = sosp;
-	sosp->so_spliceback = so;
+	so->so_sp->ssp_socket = sosp;
+	sosp->so_sp->ssp_soback = so;
 	so->so_splicelen = 0;
 	so->so_splicemax = max;
 	if (tv)
@@ -1127,7 +1149,7 @@ sounsplice(struct socket *so, struct socket *sosp, int wakeup)
 	timeout_del(&so->so_idleto);
 	sosp->so_snd.sb_flagsintr &= ~SB_SPLICE;
 	so->so_rcv.sb_flagsintr &= ~SB_SPLICE;
-	so->so_splice = sosp->so_spliceback = NULL;
+	so->so_sp->ssp_socket = sosp->so_sp->ssp_soback = NULL;
 	if (wakeup && soreadable(so))
 		sorwakeup(so);
 }
@@ -1139,9 +1161,9 @@ soidle(void *arg)
 	int s;
 
 	s = splsoftnet();
-	if (so->so_splice) {
+	if (so->so_rcv.sb_flagsintr & SB_SPLICE) {
 		so->so_error = ETIMEDOUT;
-		sounsplice(so, so->so_splice, 1);
+		sounsplice(so, so->so_sp->ssp_socket, 1);
 	}
 	splx(s);
 }
@@ -1155,7 +1177,7 @@ soidle(void *arg)
 int
 somove(struct socket *so, int wait)
 {
-	struct socket	*sosp = so->so_splice;
+	struct socket	*sosp = so->so_sp->ssp_socket;
 	struct mbuf	*m, **mp, *nextrecord;
 	u_long		 len, off, oobmark;
 	long		 space;
@@ -1408,6 +1430,12 @@ somove(struct socket *so, int wait)
 		timeout_add_tv(&so->so_idleto, &so->so_idletv);
 	return (1);
 }
+
+#undef so_splicelen
+#undef so_splicemax
+#undef so_idletv
+#undef so_idleto
+
 #endif /* SOCKET_SPLICE */
 
 void
@@ -1416,7 +1444,7 @@ sorwakeup(struct socket *so)
 #ifdef SOCKET_SPLICE
 	if (so->so_rcv.sb_flagsintr & SB_SPLICE)
 		(void) somove(so, M_DONTWAIT);
-	if (so->so_splice)
+	if (isspliced(so))
 		return;
 #endif
 	sowakeup(so, &so->so_rcv);
@@ -1429,7 +1457,7 @@ sowwakeup(struct socket *so)
 {
 #ifdef SOCKET_SPLICE
 	if (so->so_snd.sb_flagsintr & SB_SPLICE)
-		(void) somove(so->so_spliceback, M_DONTWAIT);
+		(void) somove(so->so_sp->ssp_soback, M_DONTWAIT);
 #endif
 	sowakeup(so, &so->so_snd);
 }
@@ -1722,11 +1750,12 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 #ifdef SOCKET_SPLICE
 		case SO_SPLICE:
 		    {
+			off_t len;
 			int s = splsoftnet();
 
 			m->m_len = sizeof(off_t);
-			memcpy(mtod(m, off_t *), &so->so_splicelen,
-			    sizeof(off_t));
+			len = so->so_sp ? so->so_sp->ssp_len : 0;
+			memcpy(mtod(m, off_t *), &len, sizeof(off_t));
 			splx(s);
 			break;
 		    }
@@ -1815,7 +1844,7 @@ filt_soread(struct knote *kn, long hint)
 
 	kn->kn_data = so->so_rcv.sb_cc;
 #ifdef SOCKET_SPLICE
-	if (so->so_splice)
+	if (isspliced(so))
 		return (0);
 #endif /* SOCKET_SPLICE */
 	if (so->so_state & SS_CANTRCVMORE) {

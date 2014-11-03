@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.56 2014/09/09 02:07:17 guenther Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.57 2014/11/03 17:20:46 bluhm Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -81,13 +81,17 @@ struct socket {
 	uid_t	so_siguid;		/* uid of process who set so_pgid */
 	uid_t	so_sigeuid;		/* euid of process who set so_pgid */
 	u_long	so_oobmark;		/* chars to oob mark */
-
-	struct	socket *so_splice;	/* send data to drain socket */
-	struct	socket *so_spliceback;	/* back ref for notify and cleanup */
-	off_t	so_splicelen;		/* number of bytes spliced so far */
-	off_t	so_splicemax;		/* maximum number of bytes to splice */
-	struct	timeval so_idletv;	/* idle timeout */
-	struct	timeout so_idleto;
+/*
+ * Variables for socket splicing, allocated only when needed.
+ */
+	struct sosplice {
+		struct	socket *ssp_socket;	/* send data to drain socket */
+		struct	socket *ssp_soback;	/* back ref to source socket */
+		off_t	ssp_len;		/* number of bytes spliced */
+		off_t	ssp_max;		/* maximum number of bytes */
+		struct	timeval ssp_idletv;	/* idle timeout */
+		struct	timeout ssp_idleto;
+	} *so_sp;
 /*
  * Variables for socket buffering.
  */
@@ -148,6 +152,9 @@ struct socket {
  * Macros for sockets and socket buffering.
  */
 
+#define isspliced(so)		((so)->so_sp && (so)->so_sp->ssp_socket)
+#define issplicedback(so)	((so)->so_sp && (so)->so_sp->ssp_soback)
+
 /*
  * Do we need to notify the other side when I/O is possible?
  */
@@ -173,7 +180,7 @@ struct socket {
 
 /* can we read something from so? */
 #define	soreadable(so)	\
-    ((so)->so_splice == NULL && \
+    (!isspliced(so) && \
     ((so)->so_rcv.sb_cc >= (so)->so_rcv.sb_lowat || \
     ((so)->so_state & SS_CANTRCVMORE) || \
     (so)->so_qlen || (so)->so_error))

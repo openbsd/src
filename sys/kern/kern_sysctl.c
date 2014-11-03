@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.268 2014/11/01 23:58:28 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.269 2014/11/03 17:20:46 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1062,11 +1062,12 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 		kf->so_family = so->so_proto->pr_domain->dom_family;
 		kf->so_rcv_cc = so->so_rcv.sb_cc;
 		kf->so_snd_cc = so->so_snd.sb_cc;
-		if (so->so_splice) {
+		if (isspliced(so)) {
 			if (show_pointers)
-				kf->so_splice = PTRTOINT64(so->so_splice);
-			kf->so_splicelen = so->so_splicelen;
-		} else if (so->so_spliceback)
+				kf->so_splice =
+				    PTRTOINT64(so->so_sp->ssp_socket);
+			kf->so_splicelen = so->so_sp->ssp_len;
+		} else if (issplicedback(so))
 			kf->so_splicelen = -1;
 		if (!so->so_pcb)
 			break;

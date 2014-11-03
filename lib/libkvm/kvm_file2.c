@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.38 2014/10/25 03:18:58 lteo Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.39 2014/11/03 17:20:46 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -542,6 +542,7 @@ fill_file(kvm_t *kd, struct kinfo_file *kf, struct file *fp, u_long fpaddr,
 
 	case DTYPE_SOCKET: {
 		struct socket sock;
+		struct sosplice ssp;
 		struct protosw protosw;
 		struct domain domain;
 
@@ -565,11 +566,18 @@ fill_file(kvm_t *kd, struct kinfo_file *kf, struct file *fp, u_long fpaddr,
 		kf->so_family = domain.dom_family;
 		kf->so_rcv_cc = sock.so_rcv.sb_cc;
 		kf->so_snd_cc = sock.so_snd.sb_cc;
-		if (sock.so_splice) {
-			kf->so_splice = PTRTOINT64(sock.so_splice);
-			kf->so_splicelen = sock.so_splicelen;
-		} else if (sock.so_spliceback)
-			kf->so_splicelen = -1;
+		if (sock.so_sp) {
+			if (KREAD(kd, (u_long)sock.so_sp, &ssp)) {
+				_kvm_err(kd, kd->program, "can't read splice");
+				return (-1);
+			}
+			if (ssp.ssp_socket) {
+				kf->so_splice = PTRTOINT64(ssp.ssp_socket);
+				kf->so_splicelen = ssp.ssp_len;
+			} else if (ssp.ssp_soback) {
+				kf->so_splicelen = -1;
+			}
+		}
 		if (!sock.so_pcb)
 			break;
 		switch (kf->so_family) {
