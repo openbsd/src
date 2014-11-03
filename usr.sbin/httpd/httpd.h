@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.61 2014/10/31 13:49:52 jsing Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.62 2014/11/03 18:43:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -587,6 +587,7 @@ void	log_warn(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
 void	log_warnx(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
 void	log_info(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
 void	log_debug(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
+void	logit(int, const char *, ...) __attribute__((__format__ (printf, 2, 3)));
 void	vlog(int, const char *, va_list) __attribute__((__format__ (printf, 2, 0)));
 __dead void fatal(const char *);
 __dead void fatalx(const char *);
