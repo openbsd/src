@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.236 2014/10/07 08:47:28 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.237 2014/11/03 11:43:47 gerhard Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -169,6 +169,8 @@ struct carp_softc {
 
 int carp_opts[CARPCTL_MAXID] = { 0, 1, 0, LOG_CRIT };	/* XXX for now */
 struct carpstats carpstats;
+
+int	carp_send_all_recur = 0;
 
 struct carp_if {
 	TAILQ_HEAD(, carp_softc) vhif_vrs;
@@ -925,6 +927,9 @@ carp_send_ad_all(void)
 	struct carp_if *cif;
 	struct carp_softc *vh;
 
+	if (carp_send_all_recur > 0)
+		return;
+	++carp_send_all_recur;
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_carp == NULL || ifp->if_type == IFT_CARP)
 			continue;
@@ -937,6 +942,7 @@ carp_send_ad_all(void)
 			}
 		}
 	}
+	--carp_send_all_recur;
 }
 
 void
@@ -2424,7 +2430,7 @@ void
 carp_group_demote_adj(struct ifnet *ifp, int adj, char *reason)
 {
 	struct ifg_list	*ifgl;
-	int *dm;
+	int *dm, need_ad;
 	struct carp_softc *nil = NULL;
 
 	if (ifp->if_type == IFT_CARP) {
@@ -2435,6 +2441,7 @@ carp_group_demote_adj(struct ifnet *ifp, int adj, char *reason)
 			*dm = 0;
 	}
 
+	need_ad = 0;
 	TAILQ_FOREACH(ifgl, &ifp->if_groups, ifgl_next) {
 		if (!strcmp(ifgl->ifgl_group->ifg_group, IFG_ALL))
 			continue;
@@ -2446,12 +2453,14 @@ carp_group_demote_adj(struct ifnet *ifp, int adj, char *reason)
 			*dm = 0;
 
 		if (adj > 0 && *dm == 1)
-			carp_send_ad_all();
+			need_ad = 1;
 		CARP_LOG(LOG_ERR, nil,
 		    ("%s demoted group %s by %d to %d (%s)",
 		    ifp->if_xname, ifgl->ifgl_group->ifg_group,
 		    adj, *dm, reason));
 	}
+	if (need_ad)
+		carp_send_ad_all();
 }
 
 int
