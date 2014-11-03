@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 2006/03/09 19:14:10 millert Exp $
+#	$OpenBSD: Makefile,v 1.3 2014/11/03 16:50:20 tedu Exp $
 
 PROG=	login_reject
-SRCS=	login_reject.c pwd_gensalt.c
+SRCS=	login_reject.c
 MAN=	login_reject.8
 CFLAGS+=-Wall
-.PATH:  ${.CURDIR}/../../usr.bin/passwd
 
 BINOWN=	root
 BINGRP=	auth
