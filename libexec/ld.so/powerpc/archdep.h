@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.15 2014/07/05 12:22:41 miod Exp $ */
+/*	$OpenBSD: archdep.h,v 1.16 2014/11/03 17:50:56 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -40,8 +40,6 @@
 #include <machine/reloc.h>
 #include "syscall.h"
 #include "util.h"
-
-#define RTLD_PROTECT_PLT
 
 /*
  *	The following functions are declared inline so they can

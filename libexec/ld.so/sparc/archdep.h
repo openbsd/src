@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.9 2010/01/02 12:16:35 kettenis Exp $ */
+/*	$OpenBSD: archdep.h,v 1.10 2014/11/03 17:50:56 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -42,8 +42,6 @@
 #include <sys/syscall.h>
 #include "syscall.h"
 #include "util.h"
-
-#define RTLD_PROTECT_PLT
 
 static inline void *
 _dl_mmap(void *addr, unsigned int len, unsigned int prot,
