@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.53 2012/06/30 14:51:31 naddy Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.54 2014/11/03 03:22:22 deraadt Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <poll.h>
 #include <unistd.h>
 
 #include "ipsecctl.h"
@@ -1307,10 +1308,10 @@ pfkey_promisc(void)
 int
 pfkey_monitor(int opts)
 {
-	fd_set *rset;
-	u_int8_t *data;
+	struct pollfd pfd[1];
 	struct sadb_msg *msg;
-	ssize_t len, set_size;
+	u_int8_t *data;
+	ssize_t len;
 	int n;
 
 	if (pfkey_init() < 0)
@@ -1318,19 +1319,14 @@ pfkey_monitor(int opts)
 	if (pfkey_promisc() < 0)
 		return -1;
 
-	set_size = howmany(fd + 1, NFDBITS) * sizeof(fd_mask);
-	if ((rset = malloc(set_size)) == NULL) {
-		warn("malloc");
-		return -1;
-	}
+	pfd[0].fd = fd;
+	pfd[0].events = POLLIN;
 	for (;;) {
-		memset(rset, 0, set_size);
-		FD_SET(fd, rset);
-		if ((n = select(fd+1, rset, NULL, NULL, NULL)) < 0)
-			err(2, "select");
+		if ((n = poll(pfd, 1, -1)) < 0)
+			err(2, "poll");
 		if (n == 0)
 			break;
-		if (!FD_ISSET(fd, rset))
+		if ((pfd[0].revents & POLLIN) == 0)
 			continue;
 		if (pfkey_reply(fd, &data, &len) < 0)
 			continue;
@@ -1349,7 +1345,6 @@ pfkey_monitor(int opts)
 		free(data);
 	}
 	close(fd);
-	free(rset);
 	return 0;
 }
 
