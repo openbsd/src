@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.9 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: move.c,v 1.10 2014/11/03 22:14:54 deraadt Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/04/22 10:08:58 cgd Exp $	*/
 
 /*
@@ -90,8 +90,12 @@ get_move(void)
 		else {
 over:
 			if (Real_time) {
-				FD_SET(STDIN_FILENO, &rset);
-				retval = select(STDIN_FILENO + 1, &rset, NULL, NULL, &t);
+				struct pollfd pfd[1];
+
+				pfd[0].fd = STDIN_FILENO;
+				pfd[0].events = POLLIN;
+				retval = poll(pfd, 1,
+				    t.tv_sec * 1000 + t.tv_usec / 1000);
 				if (retval > 0)
 					c = getchar();
 				else	/* Don't move if timed out or error */

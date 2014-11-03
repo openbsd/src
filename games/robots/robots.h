@@ -1,4 +1,4 @@
-/*	$OpenBSD: robots.h,v 1.6 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: robots.h,v 1.7 2014/11/03 22:14:54 deraadt Exp $	*/
 /*	$NetBSD: robots.h,v 1.5 1995/04/24 12:24:54 cgd Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include	<stdlib.h>
 #include	<termios.h>
 #include	<unistd.h>
+#include	<poll.h>
 
 /*
  * miscellaneous constants
@@ -106,7 +107,6 @@ extern char	Cnt_move, Field[Y_FIELDSIZE][X_FIELDSIZE], *Next_move,
 extern int	Count, Level, Num_robots, Num_scores, Score,
 		Start_level, Wait_bonus;
 
-extern fd_set	rset;
 extern struct timeval	tv;
 
 extern COORD	Max, Min, My_pos, Robots[];

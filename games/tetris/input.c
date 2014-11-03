@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.12 2005/04/13 02:33:08 deraadt Exp $	*/
+/*	$OpenBSD: input.c,v 1.13 2014/11/03 22:14:54 deraadt Exp $	*/
 /*    $NetBSD: input.c,v 1.3 1996/02/06 22:47:33 jtc Exp $    */
 
 /*-
@@ -44,6 +44,7 @@
 
 #include <errno.h>
 #include <unistd.h>
+#include <poll.h>
 #include <string.h>
 
 #include "input.h"
@@ -76,15 +77,10 @@ int
 rwait(struct timeval *tvp)
 {
 	struct timeval starttv, endtv, *s;
-	fd_set fds;
+	struct pollfd pfd[1];
 
 #define	NILTZ ((struct timezone *)0)
 
-	/*
-	 * Someday, select() will do this for us.
-	 * Just in case that day is now, and no one has
-	 * changed this, we use a temporary.
-	 */
 	if (tvp) {
 		(void) gettimeofday(&starttv, NILTZ);
 		endtv = *tvp;
@@ -92,9 +88,9 @@ rwait(struct timeval *tvp)
 	} else
 		s = NULL;
 again:
-	FD_ZERO(&fds);
-	FD_SET(STDIN_FILENO, &fds);
-	switch (select(STDIN_FILENO + 1, &fds, (fd_set *)0, (fd_set *)0, s)) {
+	pfd[0].fd = STDIN_FILENO;
+	pfd[0].events = POLLIN;
+	switch (poll(pfd, 1, s->tv_sec * 1000 + s->tv_usec / 1000)) {
 
 	case -1:
 		if (tvp == 0)

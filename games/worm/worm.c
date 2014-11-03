@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.26 2014/01/28 14:30:28 jmc Exp $	*/
+/*	$OpenBSD: worm.c,v 1.27 2014/11/03 22:14:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,6 +43,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <poll.h>
 
 #define HEAD '@'
 #define BODY 'o'
@@ -88,10 +89,9 @@ main(int argc, char **argv)
 	int retval;
 	struct timeval t, tod;
 	struct timezone tz;
-	fd_set rset;
+	struct pollfd pfd[1];
 	const char *errstr;
 
-	FD_ZERO(&rset);
 	setbuf(stdout, outbuf);
 	signal(SIGINT, leave);
 	signal(SIGQUIT, leave);
@@ -159,8 +159,9 @@ main(int argc, char **argv)
 			t.tv_sec = 1;
 			t.tv_usec = 0;
 			(void)gettimeofday(&tod, &tz);
-			FD_SET(STDIN_FILENO, &rset);
-			retval = select(STDIN_FILENO + 1, &rset, NULL, NULL, &t);
+			pfd[0].fd = STDIN_FILENO;
+			pfd[0].events = POLLIN;
+			retval = poll(pfd, 1, t.tv_sec * 1000 + t.tv_usec / 1000);
 			if (retval > 0)
 				process(getch());
 			else
