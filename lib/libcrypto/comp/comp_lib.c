@@ -1,4 +1,4 @@
-/* $OpenBSD: comp_lib.c,v 1.7 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: comp_lib.c,v 1.8 2014/11/03 16:58:28 tedu Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,7 +11,6 @@ COMP_CTX_new(COMP_METHOD *meth)
 	COMP_CTX *ret;
 
 	if ((ret = calloc(1, sizeof(COMP_CTX))) == NULL) {
-		/* ZZZZZZZZZZZZZZZZ */
 		return (NULL);
 	}
 	ret->meth = meth;
@@ -41,7 +40,6 @@ COMP_compress_block(COMP_CTX *ctx, unsigned char *out, int olen,
 	int ret;
 
 	if (ctx->meth->compress == NULL) {
-		/* ZZZZZZZZZZZZZZZZZ */
 		return (-1);
 	}
 	ret = ctx->meth->compress(ctx, out, olen, in, ilen);
@@ -59,7 +57,6 @@ COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
 	int ret;
 
 	if (ctx->meth->expand == NULL) {
-		/* ZZZZZZZZZZZZZZZZZ */
 		return (-1);
 	}
 	ret = ctx->meth->expand(ctx, out, olen, in, ilen);

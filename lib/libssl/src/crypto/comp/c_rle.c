@@ -1,4 +1,4 @@
-/* $OpenBSD: c_rle.c,v 1.7 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: c_rle.c,v 1.8 2014/11/03 16:58:28 tedu Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,10 +27,8 @@ static int
 rle_compress_block(COMP_CTX *ctx, unsigned char *out, unsigned int olen,
     unsigned char *in, unsigned int ilen)
 {
-	/* int i; */
 
 	if (ilen == 0 || olen < (ilen - 1)) {
-		/* ZZZZZZZZZZZZZZZZZZZZZZ */
 		return (-1);
 	}
 
@@ -46,7 +44,6 @@ rle_expand_block(COMP_CTX *ctx, unsigned char *out, unsigned int olen,
 	int i;
 
 	if (olen < (ilen - 1)) {
-		/* ZZZZZZZZZZZZZZZZZZZZZZ */
 		return (-1);
 	}
 
