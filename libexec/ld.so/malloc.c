@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.4 2014/07/06 08:34:12 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.5 2014/11/03 06:08:56 guenther Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -379,7 +379,7 @@ omalloc_init(struct dir_info **dp)
 
 	_dl_randombuf(&tmp, sizeof(tmp));
 	d = (struct dir_info *)(p + MALLOC_PAGESIZE +
-	    ((d_avail % tmp) << MALLOC_MINSHIFT)); /* not uniform */
+	    ((tmp % d_avail) << MALLOC_MINSHIFT)); /* not uniform */
 
 	rbytes_init(d);
 	d->regions_free = d->regions_total = MALLOC_INITIAL_REGIONS;
