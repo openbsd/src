@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.42 2014/07/23 20:49:53 mpi Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.43 2014/11/03 03:08:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -464,7 +464,7 @@ userconf_change(int devno)
 		}
 
 		if (c == 'y' || c == 'Y') {
-			int share = 0, i, *lk;
+			int share = 0, i, *lk, lklen;
 
 			/* XXX add cmd 'c' <devno> */
 			userconf_hist_cmd('c');
@@ -491,7 +491,8 @@ userconf_change(int devno)
 					printf("out of memory.\n");
 					return;
 				}
-				bcopy(cd->cf_loc, l, sizeof(int) * i);
+				lklen = i * sizeof(int);
+				bcopy(cd->cf_loc, l, lklen);
 			}
 
 			while (locnamp[ln] != -1) {
@@ -507,10 +508,10 @@ userconf_change(int devno)
 			userconf_hist_int(cd->cf_flags);
 
 			if (share) {
-				if (memcmp(cd->cf_loc, lk, sizeof(int) * i))
+				if (memcmp(cd->cf_loc, lk, lklen))
 					cd->cf_loc = lk;
 				else
-					free(lk, M_TEMP, 0);
+					free(lk, M_TEMP, lklen);
 			}
 
 			printf("%3d ", devno);

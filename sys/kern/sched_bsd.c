@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.37 2014/10/17 15:34:55 deraadt Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.38 2014/11/03 03:08:00 deraadt Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -603,7 +603,8 @@ setperf_auto(void *v)
 	if (!totalticks)
 		if (!(totalticks = malloc(sizeof(*totalticks) * ncpusfound,
 		    M_DEVBUF, M_NOWAIT | M_ZERO))) {
-			free(idleticks, M_DEVBUF, 0);
+			free(idleticks, M_DEVBUF,
+			    sizeof(*idleticks) * ncpusfound);
 			return;
 		}
 

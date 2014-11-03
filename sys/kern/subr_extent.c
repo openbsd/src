@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.54 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.55 2014/11/03 03:08:00 deraadt Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -242,7 +242,7 @@ extent_create(char *name, u_long start, u_long end, int mtype, caddr_t storage,
 		rp = extent_alloc_region_descriptor(ex, flags);
 		if (rp == NULL) {
 			if (!fixed_extent)
-				free(ex, mtype, 0);
+				free(ex, mtype, sizeof(struct extent));
 			return (NULL);
 		}
 		rp->er_start = start;

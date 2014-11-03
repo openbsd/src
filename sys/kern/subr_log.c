@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.22 2014/07/28 20:30:01 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.23 2014/11/03 03:08:00 deraadt Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -345,6 +345,7 @@ sys_sendsyslog(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 #ifdef KTRACE
 	struct iovec *ktriov = NULL;
+	int iovlen;
 #endif
 	struct iovec aiov;
 	struct uio auio;
@@ -368,7 +369,7 @@ sys_sendsyslog(struct proc *p, void *v, register_t *retval)
 	auio.uio_resid = aiov.iov_len;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO)) {
-		int iovlen = auio.uio_iovcnt * sizeof (struct iovec);
+		iovlen = auio.uio_iovcnt * sizeof (struct iovec);
 
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		bcopy(auio.uio_iov, ktriov, iovlen);
@@ -384,7 +385,7 @@ sys_sendsyslog(struct proc *p, void *v, register_t *retval)
 	if (ktriov != NULL) {
 		if (error == 0)
 			ktrgenio(p, -1, UIO_WRITE, ktriov, len);
-		free(ktriov, M_TEMP, 0);
+		free(ktriov, M_TEMP, iovlen);
 	}
 #endif
 	FRELE(f, p);

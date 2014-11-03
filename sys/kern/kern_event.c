@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.58 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.59 2014/11/03 03:08:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -376,7 +376,7 @@ filt_timerdetach(struct knote *kn)
 
 	to = (struct timeout *)kn->kn_hook;
 	timeout_del(to);
-	free(to, M_KEVENT, 0);
+	free(to, M_KEVENT, sizeof(*to));
 	kq_ntimeouts--;
 }
 

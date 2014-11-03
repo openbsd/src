@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.77 2014/08/31 01:42:36 guenther Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.78 2014/11/03 03:08:00 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -636,7 +636,7 @@ unp_drop(struct unpcb *unp, int errno)
 		so->so_pcb = NULL;
 		sofree(so);
 		m_freem(unp->unp_addr);
-		free(unp, M_PCB, 0);
+		free(unp, M_PCB, sizeof(*unp));
 	}
 }
 
@@ -813,14 +813,14 @@ morespace:
 		/* allocate a cluster and try again */
 		MCLGET(control, M_WAIT);
 		if ((control->m_flags & M_EXT) == 0) {
-			free(tmp, M_TEMP, 0);
+			free(tmp, M_TEMP, control->m_len);
 			return (ENOBUFS);       /* allocation failed */
 		}
 
 		/* copy the data back into the cluster */
 		cm = mtod(control, struct cmsghdr *);
 		memcpy(cm, tmp, control->m_len);
-		free(tmp, M_TEMP, 0);
+		free(tmp, M_TEMP, control->m_len);
 		goto morespace;
 	}
 

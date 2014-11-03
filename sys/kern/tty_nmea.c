@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.43 2014/09/14 14:17:26 jsg Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.44 2014/11/03 03:08:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -134,7 +134,7 @@ nmeaopen(dev_t dev, struct tty *tp, struct proc *p)
 
 	error = linesw[TTYDISC].l_open(dev, tp, p);
 	if (error) {
-		free(np, M_DEVBUF, 0);
+		free(np, M_DEVBUF, sizeof(*np));
 		tp->t_sc = NULL;
 	} else {
 		sensordev_install(&np->timedev);
@@ -151,7 +151,7 @@ nmeaclose(struct tty *tp, int flags, struct proc *p)
 	tp->t_line = TTYDISC;	/* switch back to termios */
 	timeout_del(&np->nmea_tout);
 	sensordev_deinstall(&np->timedev);
-	free(np, M_DEVBUF, 0);
+	free(np, M_DEVBUF, sizeof(*np));
 	tp->t_sc = NULL;
 	nmea_count--;
 	if (nmea_count == 0)

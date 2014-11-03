@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.219 2014/09/13 16:06:37 doug Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.220 2014/11/03 03:08:00 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1390,7 +1390,7 @@ vfs_hang_addrlist(struct mount *mp, struct netexport *nep,
 {
 	struct netcred *np;
 	struct radix_node_head *rnh;
-	int i;
+	int nplen, i;
 	struct radix_node *rn;
 	struct sockaddr *saddr, *smask = 0;
 	int error;
@@ -1405,8 +1405,8 @@ vfs_hang_addrlist(struct mount *mp, struct netexport *nep,
 	if (argp->ex_addrlen > MLEN || argp->ex_masklen > MLEN ||
 	    argp->ex_addrlen < 0 || argp->ex_masklen < 0)
 		return (EINVAL);
-	i = sizeof(struct netcred) + argp->ex_addrlen + argp->ex_masklen;
-	np = (struct netcred *)malloc(i, M_NETADDR, M_WAITOK|M_ZERO);
+	nplen = sizeof(struct netcred) + argp->ex_addrlen + argp->ex_masklen;
+	np = (struct netcred *)malloc(nplen, M_NETADDR, M_WAITOK|M_ZERO);
 	saddr = (struct sockaddr *)(np + 1);
 	error = copyin(argp->ex_addr, saddr, argp->ex_addrlen);
 	if (error)
@@ -1449,7 +1449,7 @@ finish:
 	crfromxucred(&np->netc_anon, &argp->ex_anon);
 	return (0);
 out:
-	free(np, M_NETADDR, 0);
+	free(np, M_NETADDR, nplen);
 	return (error);
 }
 

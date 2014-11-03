@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.100 2014/07/13 23:59:58 tedu Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.101 2014/11/03 03:08:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -490,7 +490,7 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 bad1:
 	VOP_CLOSE(nd.ni_vp, FREAD, p->p_ucred, p);
 bad:
-	free(ph, M_TEMP, 0);
+	free(ph, M_TEMP, phsize);
 
 	*last = addr;
 	vput(nd.ni_vp);
@@ -750,14 +750,14 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 		epp->ep_interp_pos = pos;
 	}
 
-	free(ph, M_TEMP, 0);
+	free(ph, M_TEMP, phsize);
 	vn_marktext(epp->ep_vp);
 	return (exec_setup_stack(p, epp));
 
 bad:
 	if (interp)
 		pool_put(&namei_pool, interp);
-	free(ph, M_TEMP, 0);
+	free(ph, M_TEMP, phsize);
 	kill_vmcmds(&epp->ep_vmcmds);
 	return (ENOEXEC);
 }
@@ -879,7 +879,7 @@ ELFNAME(os_pt_note)(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 
 #if 0
 		if (np->type != ELF_NOTE_TYPE_OSVERSION) {
-			free(np, M_TEMP, 0);
+			free(np, M_TEMP, ph->p_filesz);
 			np = NULL;
 			continue;
 		}
@@ -902,9 +902,9 @@ ELFNAME(os_pt_note)(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 out3:
 	error = ENOEXEC;
 out2:
-	free(np, M_TEMP, 0);
+	free(np, M_TEMP, ph->p_filesz);
 out1:
-	free(hph, M_TEMP, 0);
+	free(hph, M_TEMP, phsize);
 	return error;
 }
 
@@ -942,7 +942,7 @@ ELFNAMEEND(coredump)(struct proc *p, void *cookie)
 	struct countsegs_state cs;
 	struct writesegs_state ws;
 	off_t notestart, secstart, offset;
-	size_t notesize;
+	size_t notesize, psectionslen;
 	int error, i;
 
 	psections = NULL;
@@ -1007,6 +1007,7 @@ ELFNAMEEND(coredump)(struct proc *p, void *cookie)
 
 	psections = mallocarray(cs.npsections, sizeof(Elf_Phdr),
 	    M_TEMP, M_WAITOK|M_ZERO);
+	psectionslen = cs.npsections * sizeof(Elf_Phdr);
 
 	/* Pass 2: now write the P-section headers. */
 	ws.secoff = secstart;
@@ -1077,7 +1078,7 @@ ELFNAMEEND(coredump)(struct proc *p, void *cookie)
 	}
 
 out:
-	free(psections, M_TEMP, 0);
+	free(psections, M_TEMP, psectionslen);
 	return (error);
 #endif
 }

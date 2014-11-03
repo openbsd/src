@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.60 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.61 2014/11/03 03:08:00 deraadt Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ uid_find(uid_t uid)
 		if (uip->ui_uid == uid)
 			break;
 	if (uip) {
-		free(nuip, M_PROC, 0);
+		free(nuip, M_PROC, sizeof(*nuip));
 		return (uip);
 	}
 	nuip->ui_uid = uid;
