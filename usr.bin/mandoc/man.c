@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.89 2014/10/20 15:49:45 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.90 2014/11/03 23:17:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -311,6 +311,21 @@ man_word_alloc(struct man *man, int line, int pos, const char *word)
 
 	man->next = MAN_NEXT_SIBLING;
 	return(1);
+}
+
+void
+man_word_append(struct man *man, const char *word)
+{
+	struct man_node	*n;
+	char		*addstr, *newstr;
+
+	n = man->last;
+	addstr = roff_strdup(man->roff, word);
+	mandoc_asprintf(&newstr, "%s %s", n->string, addstr);
+	free(addstr);
+	free(n->string);
+	n->string = newstr;
+	man->next = MAN_NEXT_SIBLING;
 }
 
 /*

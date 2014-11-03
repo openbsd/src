@@ -1,6 +1,7 @@
-/*	$Id: libman.h,v 1.38 2014/08/08 16:05:42 schwarze Exp $ */
+/*	$OpenBSD: libman.h,v 1.39 2014/11/03 23:17:21 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -53,6 +54,7 @@ struct	man_macro {
 #define	MAN_NSCOPED	 (1 << 3)	/* See in_line_eoln(). */
 #define	MAN_NOCLOSE	 (1 << 4)	/* See blk_exp(). */
 #define	MAN_BSCOPE	 (1 << 5)	/* Break BLINE scope. */
+#define	MAN_JOIN	 (1 << 6)	/* Join arguments together. */
 };
 
 extern	const struct man_macro *const man_macros;
@@ -60,6 +62,7 @@ extern	const struct man_macro *const man_macros;
 __BEGIN_DECLS
 
 int		  man_word_alloc(struct man *, int, int, const char *);
+void		  man_word_append(struct man *, const char *);
 int		  man_block_alloc(struct man *, int, int, enum mant);
 int		  man_head_alloc(struct man *, int, int, enum mant);
 int		  man_tail_alloc(struct man *, int, int, enum mant);

@@ -1,7 +1,7 @@
-/*	$Id: man_macro.c,v 1.51 2014/08/18 16:26:13 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.52 2014/11/03 23:17:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2013 Franco Fichtner <franco@lastsummer.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -16,7 +16,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
 #include <sys/types.h>
 
 #include <assert.h>
@@ -60,15 +59,15 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 	{ blk_imp, MAN_BSCOPE }, /* P */
 	{ blk_imp, MAN_BSCOPE }, /* IP */
 	{ blk_imp, MAN_BSCOPE }, /* HP */
-	{ in_line_eoln, MAN_SCOPED }, /* SM */
-	{ in_line_eoln, MAN_SCOPED }, /* SB */
+	{ in_line_eoln, MAN_SCOPED | MAN_JOIN }, /* SM */
+	{ in_line_eoln, MAN_SCOPED | MAN_JOIN }, /* SB */
 	{ in_line_eoln, 0 }, /* BI */
 	{ in_line_eoln, 0 }, /* IB */
 	{ in_line_eoln, 0 }, /* BR */
 	{ in_line_eoln, 0 }, /* RB */
-	{ in_line_eoln, MAN_SCOPED }, /* R */
-	{ in_line_eoln, MAN_SCOPED }, /* B */
-	{ in_line_eoln, MAN_SCOPED }, /* I */
+	{ in_line_eoln, MAN_SCOPED | MAN_JOIN }, /* R */
+	{ in_line_eoln, MAN_SCOPED | MAN_JOIN }, /* B */
+	{ in_line_eoln, MAN_SCOPED | MAN_JOIN }, /* I */
 	{ in_line_eoln, 0 }, /* IR */
 	{ in_line_eoln, 0 }, /* RI */
 	{ in_line_eoln, MAN_NSCOPED }, /* na */
@@ -422,7 +421,10 @@ in_line_eoln(MACRO_PROT_ARGS)
 		la = *pos;
 		if ( ! man_args(man, line, pos, buf, &p))
 			break;
-		if ( ! man_word_alloc(man, line, la, p))
+		if (man_macros[tok].flags & MAN_JOIN &&
+		    man->last->type == MAN_TEXT)
+			man_word_append(man, p);
+		else if ( ! man_word_alloc(man, line, la, p))
 			return(0);
 	}
 
