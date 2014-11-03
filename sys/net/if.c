@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.302 2014/10/08 12:37:57 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.303 2014/11/03 11:02:08 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1018,7 +1018,6 @@ p2p_rtrequest(int req, struct rtentry *rt)
 		if (lo0ifa == NULL)
 			break;
 
-		rt_setgate(rt, rt_key(rt), lo0ifa->ifa_addr, ifp->if_rdomain);
 		rt->rt_ifp = lo0ifp;
 		rt->rt_flags &= ~RTF_LLINFO;
 
