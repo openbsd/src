@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.2 2009/11/02 20:31:50 claudio Exp $ */
+/*	$OpenBSD: log.h,v 1.3 2014/11/03 16:55:59 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,7 @@
 
 void	 log_init(int);
 void	 log_verbose(int);
+void	 logit(int, const char *, ...);
 void	 vlog(int, const char *, va_list);
 void	 log_warn(const char *, ...);
 void	 log_warnx(const char *, ...);
