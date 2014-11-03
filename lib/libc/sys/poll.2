@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.23 2013/11/02 17:25:34 espie Exp $
+.\"	$OpenBSD: poll.2,v 1.24 2014/11/03 22:15:14 millert Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\"
-.Dd $Mdocdate: November 2 2013 $
+.Dd $Mdocdate: November 3 2014 $
 .Dt POLL 2
 .Os
 .Sh NAME
@@ -282,10 +282,8 @@ function appeared in
 .Ox 5.4 .
 .Sh BUGS
 The
-.Dv POLLERR
-and
 .Dv POLLWRBAND
-flags are accepted but ignored by the kernel.
+flag is accepted but ignored by the kernel.
 .Pp
 Because
 .Ox
