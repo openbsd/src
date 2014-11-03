@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.89 2014/11/02 15:18:32 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.90 2014/11/03 22:06:39 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -458,7 +458,6 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	if (!lease)
 		error("no memory for lease.");
 
-	lease->is_static = is_static;
 	do {
 		token = peek_token(NULL, cfile);
 		if (token == EOF) {
@@ -491,12 +490,19 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	 */
 	TAILQ_FOREACH_SAFE(lp, &client->leases, next, pl) {
 		if (lp->address.s_addr == lease->address.s_addr &&
-		    lp->is_static == lease->is_static) {
+		    lp->is_static == is_static) {
 			TAILQ_REMOVE(&client->leases, lp, next);
+			lp->is_static = 0;	/* Else it won't be freed. */
 			free_client_lease(lp);
 		}
 	}
 
+	/*
+	 * If the lease is marked as static before now it will leak on parse
+	 * errors because free_client_lease() ignores attempts to free static
+	 * leases.
+	 */
+	lease->is_static = is_static;
 	if (is_static)
 		TAILQ_INSERT_TAIL(&client->leases, lease, next);
 	else
