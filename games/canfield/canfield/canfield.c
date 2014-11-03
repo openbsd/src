@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.13 2013/08/29 20:22:11 naddy Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.14 2014/11/03 19:18:16 tedu Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -533,8 +533,8 @@ shuffle(struct cardtype *deck[])
 		deck[i]->visible = FALSE;
 		deck[i]->paid = FALSE;
 	}
-	for (i = decksize-1; i>=0; i--) {
-		j = arc4random_uniform(decksize);
+	for (i = decksize - 1; i > 0; i--) {
+		j = arc4random_uniform(i + 1);
 		if (i != j) {
 			temp = deck[i];
 			deck[i] = deck[j];
