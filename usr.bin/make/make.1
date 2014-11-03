@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.116 2014/10/20 07:27:46 espie Exp $
+.\"	$OpenBSD: make.1,v 1.117 2014/11/03 12:48:37 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: October 20 2014 $
+.Dd $Mdocdate: November 3 2014 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -712,6 +712,9 @@ Should that fail,
 .Va .OBJDIR
 is set to
 .Va .CURDIR .
+.It Va MAKEFILE_LIST
+The list of files read by
+.Nm .
 .It Va .MAKEFLAGS
 The environment variable
 .Ev MAKEFLAGS

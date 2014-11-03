@@ -1,4 +1,4 @@
-/*	$OpenBSD: lowparse.c,v 1.32 2012/11/07 14:18:41 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.33 2014/11/03 12:48:37 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -46,14 +46,10 @@
 #ifndef LOCATION_TYPE
 #include "location.h"
 #endif
+#include "var.h"
 
 
-/* XXX check whether we can free filenames at the end, for a proper
- * definition of `end'. */
-
-#if 0
-static LIST	    fileNames;	/* file names to free at end */
-#endif
+#define READ_MAKEFILES "MAKEFILE_LIST"
 
 /* Input stream structure: file or string.
  * Files have str == NULL, F != NULL.
@@ -138,7 +134,7 @@ simplify(const char *filename)
 {
 	if (startswith(filename, curdir, curdir_len))
 		return filename + curdir_len + 1;
-	else if (startswith(filename, _PATH_DEFSYSPATH, 
+	else if (startswith(filename, _PATH_DEFSYSPATH,
 	    sizeof(_PATH_DEFSYSPATH)-1)) {
 	    	size_t sz;
 		char *buf;
@@ -154,12 +150,10 @@ static struct input_stream *
 new_input_file(const char *name, FILE *stream)
 {
 	struct input_stream *istream;
-#if 0
-	Lst_AtEnd(&fileNames, name);
-#endif
 
 	istream = emalloc(sizeof(*istream));
 	istream->origin.fname = simplify(name);
+	Var_Append(READ_MAKEFILES, name);
 	istream->str = NULL;
 	/* Naturally enough, we start reading at line 0. */
 	istream->origin.lineno = 0;
@@ -174,7 +168,7 @@ free_input_stream(struct input_stream *istream)
 	if (istream->F && fileno(istream->F) != STDIN_FILENO)
 		(void)fclose(istream->F);
 	free(istream->str);
-	/* Note we can't free the file names yet, as they are embedded in GN
+	/* Note we can't free the file names, as they are embedded in GN
 	 * for error reports. */
 	free(istream);
 }
@@ -186,8 +180,8 @@ new_input_string(char *str, const Location *origin)
 
 	istream = emalloc(sizeof(*istream));
 	/* No malloc, name is always taken from an already existing istream
-	 * and strings are used in for loops, so we need to reset the line counter
-         * to an appropriate value. */
+	 * and strings are used in for loops, so we need to reset the line
+	 * counter to an appropriate value. */
 	istream->origin = *origin;
 	istream->F = NULL;
 	istream->ptr = istream->str = str;
