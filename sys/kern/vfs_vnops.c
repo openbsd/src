@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.78 2014/07/13 15:00:40 tedu Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.79 2014/11/03 21:28:35 tedu Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/poll.h>
 #include <sys/filedesc.h>
 #include <sys/specdev.h>
+#include <sys/unistd.h>
 
 int vn_read(struct file *, off_t *, struct uio *, struct ucred *);
 int vn_write(struct file *, off_t *, struct uio *, struct ucred *);

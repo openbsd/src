@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.67 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.68 2014/11/03 21:28:35 tedu Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
 #include <sys/cdio.h>
 #include <sys/poll.h>
 #include <sys/specdev.h>
+#include <sys/unistd.h>
 
 #include <miscfs/fifofs/fifo.h>
 

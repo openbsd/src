@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.175 2014/11/03 03:08:00 deraadt Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.176 2014/11/03 21:28:35 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include <sys/mman.h>
 #include <sys/ptrace.h>
 #include <sys/atomic.h>
+#include <sys/unistd.h>
 
 #include <sys/syscallargs.h>
 
