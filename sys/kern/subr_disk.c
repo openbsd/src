@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.172 2014/11/03 16:55:21 tedu Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.173 2014/11/03 21:00:27 tedu Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -702,7 +702,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		 * Header size must be greater than or equal to 92 and less
 		 * than or equal to the logical block size.
 		 */
-		if (ghsize < GPTMINHDRSIZE && ghsize > DEV_BSIZE)
+		if (ghsize < GPTMINHDRSIZE || ghsize > DEV_BSIZE)
 			return (EINVAL);
 
 		if (letoh64(gh.gh_lba_start) >= DL_GETDSIZE(lp) ||
