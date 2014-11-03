@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2014/04/21 17:33:20 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.6 2014/11/03 03:42:12 doug Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -57,7 +57,9 @@ struct file	*pushfile(const char *, int);
 int		 popfile(void);
 int		 yyparse(void);
 int		 yylex(void);
-int		 yyerror(const char *, ...);
+int		 yyerror(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 lgetc(int);
@@ -202,9 +204,9 @@ target		: TARGET STRING {
 			if (strlcpy(session->SessionName, $2,
 			    sizeof(session->SessionName)) >=
 			    sizeof(session->SessionName)) {
+				yyerror("target name \"%s\" too long", $2);
 				free($2);
 				free(scelm);
-				yyerror("target name \"%s\" too long");
 				YYERROR;
 			}
 			free($2);

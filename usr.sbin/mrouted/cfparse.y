@@ -32,8 +32,12 @@
 /*
  * Local function declarations
  */
-static void		fatal(char *fmt, ...);
-static void		warn(char *fmt, ...);
+static void		fatal(const char *fmt, ...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
+static void		warn(const char *fmt, ...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
 static void		yyerror(char *s);
 static char *		next_word(void);
 static int		yylex(void);
@@ -368,7 +372,7 @@ addrmask	: ADDRMASK	{ $$ = $1; }
 	;
 %%
 static void
-fatal(char *fmt, ...)
+fatal(const char *fmt, ...)
 {
 	va_list ap;
 	char buf[200];
@@ -381,7 +385,7 @@ fatal(char *fmt, ...)
 }
 
 static void
-warn(char *fmt, ...)
+warn(const char *fmt, ...)
 {
 	va_list ap;
 	char buf[200];
