@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.h,v 1.14 2013/03/06 21:42:40 sthen Exp $ */
+/*	$OpenBSD: ypldap.h,v 1.15 2014/11/03 20:15:31 bluhm Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -184,6 +184,7 @@ void		 log_warn(const char *, ...);
 void		 log_warnx(const char *, ...);
 void		 log_info(const char *, ...);
 void		 log_debug(const char *, ...);
+void		 logit(int, const char *, ...);
 void		 vlog(int, const char *, va_list);
 __dead void	 fatal(const char *);
 __dead void	 fatalx(const char *);

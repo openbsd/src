@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.110 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.111 2014/11/03 20:15:30 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -271,6 +271,7 @@ enum ctl_actions {
 /* prototypes */
 /* log.c */
 void		 log_init(int);
+void		 logit(int, const char *, ...);
 void		 vlog(int, const char *, va_list);
 void		 log_warn(const char *, ...);
 void		 log_warnx(const char *, ...);
