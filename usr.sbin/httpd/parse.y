@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.38 2014/09/05 10:04:20 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.39 2014/11/03 03:46:44 doug Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -69,7 +69,9 @@ int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
 int		 yyparse(void);
 int		 yylex(void);
-int		 yyerror(const char *, ...);
+int		 yyerror(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 lgetc(int);
@@ -181,7 +183,7 @@ main		: PREFORK NUMBER	{
 				break;
 			if ($2 <= 0 || $2 > SERVER_MAXPROC) {
 				yyerror("invalid number of preforked "
-				    "servers: %d", $2);
+				    "servers: %lld", $2);
 				YYERROR;
 			}
 			conf->sc_prefork_server = $2;
@@ -658,7 +660,7 @@ tcpflags	: SACK			{ srv_conf->tcpflags |= TCPFLAG_SACK; }
 		}
 		| BACKLOG NUMBER	{
 			if ($2 < 0 || $2 > SERVER_MAX_CLIENTS) {
-				yyerror("invalid backlog: %d", $2);
+				yyerror("invalid backlog: %lld", $2);
 				YYERROR;
 			}
 			srv_conf->tcpbacklog = $2;
@@ -666,13 +668,13 @@ tcpflags	: SACK			{ srv_conf->tcpflags |= TCPFLAG_SACK; }
 		| SOCKET BUFFER NUMBER	{
 			srv_conf->tcpflags |= TCPFLAG_BUFSIZ;
 			if ((srv_conf->tcpbufsiz = $3) < 0) {
-				yyerror("invalid socket buffer size: %d", $3);
+				yyerror("invalid socket buffer size: %lld", $3);
 				YYERROR;
 			}
 		}
 		| IP STRING NUMBER	{
 			if ($3 < 0) {
-				yyerror("invalid ttl: %d", $3);
+				yyerror("invalid ttl: %lld", $3);
 				free($2);
 				YYERROR;
 			}
@@ -768,7 +770,7 @@ port		: PORT STRING {
 		}
 		| PORT NUMBER {
 			if ($2 <= 0 || $2 >= (int)USHRT_MAX) {
-				yyerror("invalid port: %d", $2);
+				yyerror("invalid port: %lld", $2);
 				YYERROR;
 			}
 			$$.val[0] = htons($2);
@@ -779,7 +781,7 @@ port		: PORT STRING {
 timeout		: NUMBER
 		{
 			if ($1 < 0) {
-				yyerror("invalid timeout: %d\n", $1);
+				yyerror("invalid timeout: %lld", $1);
 				YYERROR;
 			}
 			$$.tv_sec = $1;
