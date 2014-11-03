@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.h,v 1.7 2013/03/06 21:42:40 sthen Exp $	*/
+/*	$OpenBSD: ifstated.h,v 1.8 2014/11/03 18:44:36 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride
@@ -143,5 +143,6 @@ void	log_warnx(const char *, ...);
 void	log_info(const char *, ...);
 void	log_debug(const char *, ...);
 void	vlog(int, const char *, va_list);
+void	logit(int, const char *, ...);
 __dead void fatal(const char *);
 __dead void fatalx(const char *);
