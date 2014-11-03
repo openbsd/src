@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.326 2014/11/02 15:18:32 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.327 2014/11/03 02:22:15 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -639,10 +639,8 @@ state_reboot(void)
 	adding.s_addr = INADDR_ANY;
 
 	time(&cur_time);
-	if (client->active && client->active->expiry <= cur_time) {
-		free_client_lease(client->active);
+	if (client->active && client->active->expiry <= cur_time)
 		client->active = NULL;
-	}
 
 	/* Run through the list of leases and see if one can be used. */
 	TAILQ_FOREACH(lp, &client->leases, next) {
