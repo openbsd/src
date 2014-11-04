@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.133 2014/10/20 03:43:40 tedu Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.134 2014/11/04 15:24:40 mpi Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -151,13 +151,11 @@ void
 tcp_init()
 {
 	tcp_iss = 1;		/* wrong */
-	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
-	    NULL);
-	pool_init(&tcpqe_pool, sizeof(struct tcpqent), 0, 0, 0, "tcpqepl",
-	    NULL);
+	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcb", NULL);
+	pool_init(&tcpqe_pool, sizeof(struct tcpqent), 0, 0, 0, "tcpqe", NULL);
 	pool_sethardlimit(&tcpqe_pool, tcp_reass_limit, NULL, 0);
 #ifdef TCP_SACK
-	pool_init(&sackhl_pool, sizeof(struct sackhole), 0, 0, 0, "sackhlpl",
+	pool_init(&sackhl_pool, sizeof(struct sackhole), 0, 0, 0, "sackhl",
 	    NULL);
 	pool_sethardlimit(&sackhl_pool, tcp_sackhole_limit, NULL, 0);
 #endif /* TCP_SACK */

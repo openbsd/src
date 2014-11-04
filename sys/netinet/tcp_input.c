@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.281 2014/10/24 17:58:47 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.282 2014/11/04 15:24:40 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3409,7 +3409,7 @@ syn_cache_init()
 
 	/* Initialize the syn cache pool. */
 	pool_init(&syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0,
-	    "synpl", NULL);
+	    "syncache", NULL);
 }
 
 void

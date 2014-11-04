@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.239 2014/11/01 21:40:38 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.240 2014/11/04 15:24:40 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -155,10 +155,8 @@ ip_init(void)
 	const u_int16_t defbaddynamicports_tcp[] = DEFBADDYNAMICPORTS_TCP;
 	const u_int16_t defbaddynamicports_udp[] = DEFBADDYNAMICPORTS_UDP;
 
-	pool_init(&ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl",
-	    NULL);
-	pool_init(&ipq_pool, sizeof(struct ipq), 0, 0, 0, "ipqpl",
-	    NULL);
+	pool_init(&ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqe",  NULL);
+	pool_init(&ipq_pool, sizeof(struct ipq), 0, 0, 0, "ipq", NULL);
 
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)

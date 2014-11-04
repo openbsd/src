@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.61 2014/10/28 09:45:37 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.62 2014/11/04 15:24:40 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -136,9 +136,9 @@ pipex_init(void)
 		return;
 
 	pool_init(&pipex_session_pool, sizeof(struct pipex_session), 0, 0, 0,
-	    "ppxsspl", NULL);
-	pool_init(&mppe_key_pool, PIPEX_MPPE_KEYLEN * PIPEX_MPPE_NOLDKEY, 0, 0, 0,
-	    "mppekeypl", NULL);
+	    "ppxss", NULL);
+	pool_init(&mppe_key_pool, PIPEX_MPPE_KEYLEN * PIPEX_MPPE_NOLDKEY, 0, 0,
+	    0, "mppekey", NULL);
 
 	LIST_INIT(&pipex_session_list);
 	LIST_INIT(&pipex_close_wait_list);

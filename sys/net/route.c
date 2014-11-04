@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.188 2014/11/01 21:40:38 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.189 2014/11/04 15:24:40 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ route_init(void)
 {
 	struct domain	 *dom;
 
-	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentpl",
+	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtent",
 	    NULL);
 	rn_init();	/* initialize all zeroes, all ones, mask table */
 
@@ -1309,7 +1309,7 @@ rt_timer_init()
 	if (rt_init_done)
 		panic("rt_timer_init: already initialized");
 
-	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl",
+	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmr",
 	    NULL);
 
 	LIST_INIT(&rttimer_queue_head);
