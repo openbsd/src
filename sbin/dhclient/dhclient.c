@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.328 2014/11/04 01:20:27 guenther Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.329 2014/11/04 04:03:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -915,8 +915,10 @@ newlease:
 		if (client->active == lease)
 			seen = 1;
 		else if (lease->expiry <= cur_time || lease->address.s_addr ==
-		    client->active->address.s_addr)
+		    client->active->address.s_addr) {
+			TAILQ_REMOVE(&client->leases, lease, next);
 			free_client_lease(lease);
+		}
 	}
 	if (!client->active->is_static && !seen)
 		TAILQ_INSERT_HEAD(&client->leases, client->active,  next);
@@ -1146,7 +1148,12 @@ dhcpnak(struct in_addr client_addr, struct option_data *options, char *info)
 
 	note("%s", info);
 
-	free_client_lease(client->active);
+	/* XXX Do we really want to remove a NAK'd lease from the database? */
+	if (!client->active->is_static) {
+		TAILQ_REMOVE(&client->leases, client->active, next);
+		free_client_lease(client->active);
+	}
+
 	client->active = NULL;
 
 	/* Stop sending DHCPREQUEST packets. */
@@ -1580,17 +1587,11 @@ make_decline(struct client_lease *lease)
 void
 free_client_lease(struct client_lease *lease)
 {
-	struct client_lease *lp, *pl;
 	int i;
 
 	/* Static leases are forever. */
 	if (lease->is_static)
 		return;
-
-	TAILQ_FOREACH_SAFE(lp, &client->leases, next, pl) {
-		if (lease == lp)
-			TAILQ_REMOVE(&client->leases, lp, next);
-	}
 
 	if (lease->server_name)
 		free(lease->server_name);
