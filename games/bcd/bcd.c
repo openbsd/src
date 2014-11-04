@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcd.c,v 1.15 2014/11/04 17:52:12 tedu Exp $	*/
+/*	$OpenBSD: bcd.c,v 1.16 2014/11/04 17:58:26 tedu Exp $	*/
 /*	$NetBSD: bcd.c,v 1.6 1995/04/24 12:22:23 cgd Exp $	*/
 
 /*
@@ -110,7 +110,8 @@ u_short holes[256] = {
  */
 #define	bit(w,i)	((w)&(1<<(i)))
 
-void	printcard(char *, size_t);
+void	printonecard(char *, size_t);
+void	printcard(char *);
 
 #define	COLUMNS	48
 
@@ -126,26 +127,31 @@ main(int argc, char *argv[])
 	if (argc > 1) {
 		while (--argc) {
 			argv++;
-			printcard(*argv, strlen(*argv));
+			printcard(*argv);
 		}
 	} else {
 		char cardline[1024];
-		while (fgets(cardline, sizeof(cardline), stdin)) {
-			char *p = cardline;
-			size_t len = strlen(p);
-			while (len > 0) {
-				size_t amt = len > COLUMNS ? COLUMNS : len;
-				printcard(p, amt);
-				p += amt;
-				len -= amt;
-			}
-		}
+		while (fgets(cardline, sizeof(cardline), stdin))
+			printcard(cardline);
 	}
 	exit(0);
 }
 
 void
-printcard(char *str, size_t len)
+printcard(char *str)
+{
+	size_t len = strlen(str);
+
+	while (len > 0) {
+		size_t amt = len > COLUMNS ? COLUMNS : len;
+		printonecard(str, amt);
+		str += amt;
+		len -= amt;
+	}
+}
+
+void
+printonecard(char *str, size_t len)
 {
 	static const char rowchars[] = "   123456789";
 	int	i, row;
