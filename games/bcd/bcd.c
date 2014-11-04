@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcd.c,v 1.14 2014/11/04 17:50:23 tedu Exp $	*/
+/*	$OpenBSD: bcd.c,v 1.15 2014/11/04 17:52:12 tedu Exp $	*/
 /*	$NetBSD: bcd.c,v 1.6 1995/04/24 12:22:23 cgd Exp $	*/
 
 /*
@@ -155,8 +155,7 @@ printcard(char *str, size_t len)
 
 	/* make string upper case. */
 	for (p = str; p < end; ++p)
-		if (isascii(*p) && islower(*p))
-			*p = toupper(*p);
+		*p = toupper((unsigned char)*p);
 
 	 /* top of card */
 	putchar(' ');
