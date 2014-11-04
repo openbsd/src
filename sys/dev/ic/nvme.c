@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.8 2014/09/12 06:54:38 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.9 2014/11/04 12:41:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -438,7 +438,7 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 	}
 
 	if (rv)
-		nvme_write4(sc, q->q_sqtdbl, q->q_cq_head = head);
+		nvme_write4(sc, q->q_cqhdbl, q->q_cq_head = head);
 	mtx_leave(&q->q_cq_mtx);
 
 	return (rv);
