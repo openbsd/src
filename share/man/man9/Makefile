@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.221 2014/11/01 21:45:54 mpi Exp $
+#	$OpenBSD: Makefile,v 1.222 2014/11/04 23:27:02 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -27,7 +27,7 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
 	radio.9 arc4random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 \
 	route.9 rt_ifa_add.9 rt_timer_add.9 rtalloc.9 rtable_add.9 \
-	rtlabel_id2name.9 rtrequest1.9 rwlock.9 sensor_attach.9 \
+	rtlabel_id2name.9 rtrequest1.9 rwlock.9 SipHash24.9 sensor_attach.9 \
 	shutdownhook_establish.9 tsleep.9 spl.9 startuphook_establish.9 \
 	socreate.9 sosplice.9 style.9 syscall.9 systrace.9 sysctl_int.9 \
 	task_add.9 tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 \
@@ -345,6 +345,8 @@ MLINKS+=rwlock.9 rw_init.9 rwlock.9 rw_enter.9 rwlock.9 rw_exit.9 \
 	rwlock.9 RWLOCK_INITIALIZER.9 rwlock.9 rrw_init.9 \
 	rwlock.9 rrw_enter.9 rwlock.9 rrw_exit.9 \
 	rwlock.9 rrw_status.9
+MLINKS+=SipHash24.9 SipHash24_Init.9 SipHash24.9 SipHash24_Update.9 \
+	SipHash24.9 SipHash24_End.9 SipHash24.9 SipHash24_Final.9
 MLINKS+=sensor_attach.9 sensordev_install.9 \
 	sensor_attach.9 sensordev_deinstall.9 \
 	sensor_attach.9 sensordev_get.9 \
