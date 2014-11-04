@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-OMAP,v 1.10 2014/10/10 05:43:35 deraadt Exp $
+#	$OpenBSD: RAMDISK-OMAP,v 1.11 2014/11/04 12:26:09 jsg Exp $
 
 machine		armv7 arm
 maxusers	4
@@ -81,7 +81,8 @@ uhid*		at uhidev?		# USB generic HID support
 smsc*		at uhub?		# SMSC LAN95xx Ethernet
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 
-ukphy*		at mii?				# "unknown" PHYs
+ukphy*		at mii?			# "unknown" PHYs
+atphy*		at mii?			# Attansic F1 PHYs
 
 scsibus*	at scsi?
 sd*		at scsibus?

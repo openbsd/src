@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-OMAP,v 1.10 2014/07/12 21:56:56 tedu Exp $
+# $OpenBSD: GENERIC-OMAP,v 1.11 2014/11/04 12:26:09 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -143,7 +143,8 @@ radio*		at udsbr?		# USB radio
 ugen*		at uhub?		# USB Generic driver
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 
-ukphy*	at mii?				# "unknown" PHYs
+ukphy*		at mii?			# "unknown" PHYs
+atphy*		at mii?			# Attansic F1 PHYs
 
 scsibus*	at scsi?
 sd*		at scsibus?
