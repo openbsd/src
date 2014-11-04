@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.327 2014/11/03 02:22:15 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.328 2014/11/04 01:20:27 guenther Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -103,7 +103,6 @@ void		 write_file(char *, int, mode_t, uid_t, gid_t, u_int8_t *,
 		     size_t);
 struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
-void		 socket_nonblockmode(int);
 void		 apply_ignore_list(char *);
 
 void add_direct_route(int, struct in_addr, struct in_addr, struct in_addr);
@@ -549,12 +548,9 @@ main(int argc, char *argv[])
 	if_register_receive();
 	if_register_send();
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, socket_fd) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
+	    PF_UNSPEC, socket_fd) == -1)
 		error("socketpair: %s", strerror(errno));
-	socket_nonblockmode(socket_fd[0]);
-	fcntl(socket_fd[0], F_SETFD, FD_CLOEXEC);
-	socket_nonblockmode(socket_fd[1]);
-	fcntl(socket_fd[1], F_SETFD, FD_CLOEXEC);
 
 	fork_privchld(socket_fd[0], socket_fd[1]);
 
@@ -2239,20 +2235,6 @@ cleanup:
 		free_client_lease(newlease);
 
 	return (NULL);
-}
-
-void
-socket_nonblockmode(int fd)
-{
-	int	flags;
-
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
-		error("fcntl F_GETF: %s", strerror(errno));
-
-	flags |= O_NONBLOCK;
-
-	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
-		error("fcntl F_SETFL: %s", strerror(errno));
 }
 
 /*
