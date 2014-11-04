@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.12 2013/12/04 12:31:14 syl Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.13 2014/11/04 13:18:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -300,11 +300,8 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 		goto err;
 	}
 
-#if 0
-	/* XXX - IIRC firmware should set this */
 	/* Controller Voltage Capabilities Initialization */
 	HSET4(sc, MMCHS_CAPA, MMCHS_CAPA_VS18 | MMCHS_CAPA_VS30);
-#endif
 
 #ifdef SDHC_DEBUG
 	ommmc_dump_regs(sc);
