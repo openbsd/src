@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.29 2014/10/11 02:29:24 doug Exp $ */
+/*	$OpenBSD: yppush.c,v 1.30 2014/11/04 16:16:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -99,7 +99,6 @@ my_svc_run(void)
 			exit(0);
 		default:
 			svc_getreq_poll(pfd, nready);
-			free(pfd);
 			break;
 		}
 	}
