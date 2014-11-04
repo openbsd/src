@@ -1,4 +1,4 @@
-/*	$OpenBSD: readelf.c,v 1.11 2009/10/27 23:59:38 deraadt Exp $ */
+/*	$OpenBSD: readelf.c,v 1.12 2014/11/04 16:18:54 deraadt Exp $ */
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -358,6 +358,13 @@ donote(struct magic_set *ms, unsigned char *nbuf, size_t offset, size_t size,
 	int os_style = -1;
 #endif
 	uint32_t namesz, descsz;
+
+	if (xnh_sizeof + offset > size) {
+		/*
+		 * We're out of note headers.
+		 */
+		return xnh_sizeof + offset;
+	}
 
 	(void)memcpy(xnh_addr, &nbuf[offset], xnh_sizeof);
 	offset += xnh_sizeof;
