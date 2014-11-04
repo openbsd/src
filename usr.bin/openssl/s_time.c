@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.2 2014/09/01 20:54:37 doug Exp $ */
+/* $OpenBSD: s_time.c,v 1.3 2014/11/04 18:15:22 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,7 +63,7 @@
    Written and donated by Larry Streepy <streepy@healthcare.com>
   -----------------------------------------*/
 
-#include <sys/select.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 
 #include <stdio.h>
@@ -71,6 +71,7 @@
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 
 #include "apps.h"
 
@@ -530,10 +531,10 @@ end:
 static SSL *
 doConnection(SSL * scon)
 {
-	BIO *conn;
+	struct pollfd pfd[1];
 	SSL *serverCon;
-	int width, i;
-	fd_set readfds;
+	BIO *conn;
+	int i;
 
 	if ((conn = BIO_new(BIO_s_connect())) == NULL)
 		return (NULL);
@@ -562,10 +563,9 @@ doConnection(SSL * scon)
 			BIO_printf(bio_err, "DELAY\n");
 
 			i = SSL_get_fd(serverCon);
-			width = i + 1;
-			FD_ZERO(&readfds);
-			FD_SET(i, &readfds);
-			select(width, &readfds, NULL, NULL, NULL);
+			pfd[0].fd = i;
+			pfd[0].events = POLLIN;
+			poll(pfd, 1, -1);
 			continue;
 		}
 		break;
