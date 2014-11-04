@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.159 2014/01/22 00:21:16 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.160 2014/11/04 05:56:39 doug Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -60,8 +60,12 @@ int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
 int		 yyparse(void);
 int		 yylex(void);
-int		 yyerror(const char *, ...);
-int		 yywarn(const char *, ...);
+int		 yyerror(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
+int		 yywarn(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 lgetc(int);
@@ -2291,7 +2295,7 @@ validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
 		}
 		if (authkey && authkey->len != xfs->authxf->keymin) {
 			yyerror("wrong authentication key length, needs to be "
-			    "%d bits", xfs->authxf->keymin * 8);
+			    "%zu bits", xfs->authxf->keymin * 8);
 			return (0);
 		}
 	}
@@ -2302,14 +2306,14 @@ validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
 		}
 		if (enckey) {
 			if (enckey->len < xfs->encxf->keymin) {
-				yyerror("encryption key too short (%d bits), "
-				    "minimum %d bits", enckey->len * 8,
+				yyerror("encryption key too short (%zu bits), "
+				    "minimum %zu bits", enckey->len * 8,
 				    xfs->encxf->keymin * 8);
 				return (0);
 			}
 			if (xfs->encxf->keymax < enckey->len) {
-				yyerror("encryption key too long (%d bits), "
-				    "maximum %d bits", enckey->len * 8,
+				yyerror("encryption key too long (%zu bits), "
+				    "maximum %zu bits", enckey->len * 8,
 				    xfs->encxf->keymax * 8);
 				return (0);
 			}
