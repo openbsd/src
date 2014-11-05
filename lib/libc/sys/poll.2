@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.24 2014/11/03 22:15:14 millert Exp $
+.\"	$OpenBSD: poll.2,v 1.25 2014/11/05 00:08:40 millert Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\"
-.Dd $Mdocdate: November 3 2014 $
+.Dd $Mdocdate: November 5 2014 $
 .Dt POLL 2
 .Os
 .Sh NAME
@@ -214,28 +214,80 @@ Otherwise, they return the number of
 structures for which
 .Fa revents
 is non-zero.
-.Sh EXAMPLES
-The following example implements a read from the standard input that times
-out after 60 seconds:
+.Sh IDIOMS
+Care must be taken when converting code from
+.Fn select
+to
+.Fn poll
+as they have slightly different semantics.
+The first semantic difference is that, unlike
+.Fn select ,
+.Fn poll
+has a way of of indicating that one or more file descriptors is invalid
+by setting a flag in the
+.Fa revents
+field of corresponding entry of
+.Fa fds ,
+whereas
+.Fn select
+returns an error (-1) if any of the descriptors with bits set in
+the fd_set are invalid.
+The second difference is that on EOF there is no guarantee that
+.Dv POLLIN
+will be set in
+.Fa revents ,
+the caller must also check for
+.Dv POLLHUP .
+This differs from
+.Fn select
+where EOF is considered as a read event.
+.Pp
+Consider the following usage of
+.Fn select
+that implements a read from the standard input with a
+60 second time out:
 .Bd -literal -offset indent
-#include <err.h>
-#include <poll.h>
-#include <stdio.h>
-#include <unistd.h>
-
-struct pollfd pfd[1];
+struct timeval timeout;
+fd_set readfds;
 char buf[BUFSIZ];
-int nfds;
+int nready;
+
+timeout.tv_sec = 60;
+timeout.tv_usec = 0;
+FD_ZERO(&readfds);
+FD_SET(STDIN_FILENO);
+nready = select(STDIN_FILENO + 1, &readfds, NULL, NULL, &timeout);
+if (nready == -1)
+	err(1, "select");
+if (nready == 0)
+	errx(1, "time out");
+if (FD_ISSET(STDIN_FILENO, &readfds)) {
+	if (read(STDIN_FILENO, buf, sizeof(buf)) == -1)
+		err(1, "read");
+}
+.Ed
+.Pp
+This can be converted to
+.Fn poll
+as follows:
+.Bd -literal -offset indent
+struct pollfd pdf[1];
+char buf[BUFSIZ];
+int nready;
 
 pfd[0].fd = STDIN_FILENO;
 pfd[0].events = POLLIN;
-nfds = poll(pfd, 1, 60 * 1000);
-if (nfds == -1 || (pfd[0].revents & (POLLERR|POLLHUP|POLLNVAL)))
-	errx(1, "poll error");
-if (nfds == 0)
+nready = poll(pfd, 1, 60 * 1000);
+if (nready == -1)
+	err(1, "poll");
+if (nready == 0)
 	errx(1, "time out");
-if (read(STDIN_FILENO, buf, sizeof(buf)) == -1)
-	errx(1, "read");
+if ((pfd[0].revents & (POLLERR|POLLNVAL)))
+	errx(1, "bad fd %d", pfd[0].fd);
+if ((pfd[0].revents & (POLLIN|POLLHUP)))
+	if (read(STDIN_FILENO, buf, sizeof(buf)) == -1)
+		err(1, "read");
+}
 .Ed
 .Sh ERRORS
 .Fn poll
