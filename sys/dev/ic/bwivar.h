@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.30 2014/07/20 11:59:12 stsp Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.31 2014/11/05 01:02:10 daniel Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -725,7 +725,7 @@ bwi_rf_calc_rssi(struct bwi_mac *_mac, const struct bwi_rxbuf_hdr *_hdr)
 static __inline void
 bwi_rf_lo_update(struct bwi_mac *_mac)
 {
-	return (_mac->mac_rf.rf_lo_update(_mac));
+	_mac->mac_rf.rf_lo_update(_mac);
 }
 
 #define RF_WRITE(mac, ofs, val)		bwi_rf_write((mac), (ofs), (val))
