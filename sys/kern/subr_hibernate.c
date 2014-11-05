@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.107 2014/11/02 22:59:58 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.108 2014/11/05 05:48:45 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1392,7 +1392,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 					if (rle == 0) {
 						pmap_kenter_pa(hibernate_temp_page,
 							inaddr & PMAP_PA_MASK,
-							VM_PROT_ALL);
+							VM_PROT_READ);
 
 						pmap_activate(curproc);
 
@@ -1570,7 +1570,7 @@ hibernate_read_image(union hibernate_info *hib)
 	/* Map chunktable pages */
 	for (i = 0; i < HIBERNATE_CHUNK_TABLE_SIZE; i += PAGE_SIZE)
 		pmap_kenter_pa(chunktable + i, piglet_chunktable + i,
-		    VM_PROT_ALL);
+		    VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	/* Read the chunktable from disk into the piglet chunktable */
@@ -1664,7 +1664,8 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 	/* Map the chunk ordering region */
 	for(i = 0; i < 24 ; i++)
 		pmap_kenter_pa(hibernate_fchunk_area + (i * PAGE_SIZE),
-			piglet_base + ((4 + i) * PAGE_SIZE), VM_PROT_ALL);
+			piglet_base + ((4 + i) * PAGE_SIZE),
+			VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	nchunks = hib->chunk_ctr;
@@ -1724,7 +1725,8 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 			/* Map pages for this read */
 			for (j = 0; j < num_io_pages; j ++)
 				pmap_kenter_pa(tempva + j * PAGE_SIZE,
-					img_cur + j * PAGE_SIZE, VM_PROT_ALL);
+					img_cur + j * PAGE_SIZE,
+					VM_PROT_READ | VM_PROT_WRITE);
 
 			pmap_update(pmap_kernel());
 
@@ -1794,7 +1796,7 @@ hibernate_suspend(void)
 	    hib.image_offset, ctod(end) - ctod(start));
 
 	pmap_kenter_pa(HIBERNATE_HIBALLOC_PAGE, HIBERNATE_HIBALLOC_PAGE,
-		VM_PROT_ALL);
+		VM_PROT_READ | VM_PROT_WRITE);
 	pmap_activate(curproc);
 
 	DPRINTF("hibernate: writing chunks\n");
