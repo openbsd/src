@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.25 2014/11/05 00:08:40 millert Exp $
+.\"	$OpenBSD: poll.2,v 1.26 2014/11/05 07:04:49 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -223,7 +223,7 @@ as they have slightly different semantics.
 The first semantic difference is that, unlike
 .Fn select ,
 .Fn poll
-has a way of of indicating that one or more file descriptors is invalid
+has a way of indicating that one or more file descriptors is invalid
 by setting a flag in the
 .Fa revents
 field of corresponding entry of
