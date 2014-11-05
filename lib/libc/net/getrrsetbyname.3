@@ -1,4 +1,4 @@
-.\" $OpenBSD: getrrsetbyname.3,v 1.19 2014/08/23 07:25:54 jmc Exp $
+.\" $OpenBSD: getrrsetbyname.3,v 1.20 2014/11/05 15:12:23 jmc Exp $
 .\"
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
 .\"
@@ -15,7 +15,7 @@
 .\" NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 .\" WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 23 2014 $
+.Dd $Mdocdate: November 5 2014 $
 .Dt GETRRSETBYNAME 3
 .Os
 .Sh NAME
@@ -114,11 +114,11 @@ is a pointer to a
 .Li struct rrsetinfo
 created by a call to
 .Fn getrrsetbyname .
-.Pp
-If the EDNS0 option is activated in
-.Xr resolv.conf 5 ,
-.Fn getrrsetbyname
-will request DNSSEC authentication using the EDNS0 DNSSEC OK (DO) bit.
+.\" .Pp
+.\" If the EDNS0 option is activated in
+.\" .Xr resolv.conf 5 ,
+.\" .Fn getrrsetbyname
+.\" will request DNSSEC authentication using the EDNS0 DNSSEC OK (DO) bit.
 .Sh RETURN VALUES
 .Fn getrrsetbyname
 returns zero on success, and one of the following error
