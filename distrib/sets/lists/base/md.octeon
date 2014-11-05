@@ -540,6 +540,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/crypto/rmd160.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/crypto/sha1.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/crypto/sha2.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/crypto/siphash.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/crypto/sk.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/crypto/spr.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/crypto/xform.ph

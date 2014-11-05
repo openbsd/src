@@ -89,6 +89,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/rmd160.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/sha1.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/sha2.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/siphash.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/sk.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/spr.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/xform.ph

@@ -57,6 +57,7 @@
 ./usr/include/crypto/rmd160.h
 ./usr/include/crypto/sha1.h
 ./usr/include/crypto/sha2.h
+./usr/include/crypto/siphash.h
 ./usr/include/crypto/sk.h
 ./usr/include/crypto/spr.h
 ./usr/include/crypto/xform.h

@@ -599,6 +599,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/rmd160.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/sha1.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/sha2.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/siphash.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/sk.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/spr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/xform.ph
