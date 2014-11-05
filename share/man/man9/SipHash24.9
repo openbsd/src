@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SipHash24.9,v 1.1 2014/11/04 23:27:02 dlg Exp $
+.\"	$OpenBSD: SipHash24.9,v 1.2 2014/11/05 00:43:33 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 4 2014 $
+.Dd $Mdocdate: November 5 2014 $
 .Dt SIPHASH24 9
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Fn "SipHash24" "const SIPHASH_KEY *key" "const void *data" "size_t len"
 .Sh DESCRIPTION
 The SipHash algorithm is a keyed hash algorithm optimised for short
-inputs and produces a 64-bit digest of data.
+inputs which produces a 64-bit digest of data.
 The SipHash24 functions implement the algorithm with 2 compression
 rounds and 4 finalisation rounds.
 .Pp
@@ -63,7 +63,7 @@ is called after all data has been added to
 .Fa ctx
 via
 .Fn SipHash24_Update
-and returns a message digest in the hosts native endian.
+and returns a message digest in the hosts' native endian.
 .Pp
 .Fn SipHash24_Final
 is called after all data has been added to
