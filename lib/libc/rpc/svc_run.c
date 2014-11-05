@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_run.c,v 1.23 2014/11/04 17:17:05 millert Exp $ */
+/*	$OpenBSD: svc_run.c,v 1.24 2014/11/05 21:06:51 sthen Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -57,6 +57,7 @@ svc_run(void)
 				return;			/* XXX */
 			}
 			saved_max_pollfd = svc_max_pollfd;
+			pfd = newp;
 		}
 		memcpy(pfd, svc_pollfd, sizeof(*pfd) * svc_max_pollfd);
 
