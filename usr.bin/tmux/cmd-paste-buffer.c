@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-paste-buffer.c,v 1.26 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-paste-buffer.c,v 1.27 2014/11/05 23:25:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,7 +49,6 @@ cmd_paste_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct session		*s;
 	struct paste_buffer	*pb;
 	const char		*sepstr, *bufname;
-	int			 pflag;
 
 	if (cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp) == NULL)
 		return (CMD_RETURN_ERROR);
@@ -76,8 +75,7 @@ cmd_paste_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 			else
 				sepstr = "\r";
 		}
-		pflag = (wp->screen->mode & MODE_BRACKETPASTE);
-		paste_send_pane(pb, wp, sepstr, args_has(args, 'p') && pflag);
+		paste_send_pane(pb, wp, sepstr, args_has(args, 'p'));
 	}
 
 	/* Delete the buffer if -d. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.25 2014/10/08 17:35:58 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.26 2014/11/05 23:25:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -301,7 +301,7 @@ paste_send_pane(struct paste_buffer *pb, struct window_pane *wp,
 	if (wp->flags & PANE_INPUTOFF)
 		return;
 
-	if (bracket)
+	if (bracket && (wp->screen->mode & MODE_BRACKETPASTE))
 		bufferevent_write(wp->event, "\033[200~", 6);
 
 	seplen = strlen(sep);
@@ -315,6 +315,6 @@ paste_send_pane(struct paste_buffer *pb, struct window_pane *wp,
 	if (end != data)
 		bufferevent_write(wp->event, data, end - data);
 
-	if (bracket)
+	if (bracket && (wp->screen->mode & MODE_BRACKETPASTE))
 		bufferevent_write(wp->event, "\033[201~", 6);
 }
