@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.55 2014/10/09 04:18:09 tedu Exp $	*/
+/*	$OpenBSD: locore.S,v 1.56 2014/11/05 05:40:02 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -440,11 +440,24 @@ bi_size_ok:
 	orl     $(PG_V|PG_KR),%eax
 	fillkpt
 
+	/* Map .rodata read-only, and NX if available */
+	movl	$RELOC(__rodata_start), %eax
+	movl	$RELOC(erodata), %ecx
+	addl	$PGOFSET, %ecx
+	andl	$~PGOFSET, %ecx
+	subl	%eax, %ecx
+	shrl	$PGSHIFT, %ecx
+	orl	$(PG_V|PG_KR), %eax
+	fillkpt
+
+	/* Reload %edx for data_start */
+	movl	$RELOC(__data_start), %edx
+
 	/* Map the data, BSS, and bootstrap tables read-write. */
 	leal	(PG_V|PG_KW)(%edx),%eax
 	movl	$TABLESIZE,%ecx
-	addl	%esi,%ecx		/* %ecx = &end[TABLESIZE] */
-	subl	%edx,%ecx		/* %ecx = %ecx - etext */
+	addl	%esi,%ecx		/* %ecx = end + TABLESIZE */
+	subl	%edx,%ecx		/* %ecx = %ecx - data_start */
 	shrl	$PGSHIFT,%ecx
 	fillkpt
 

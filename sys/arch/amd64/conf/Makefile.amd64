@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.60 2014/10/04 18:10:14 brad Exp $
+#	$OpenBSD: Makefile.amd64,v 1.61 2014/11/05 05:40:02 mlarkin Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -42,7 +42,7 @@ CMACHFLAGS+=	-Wa,-n
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
-LINKFLAGS=	-Ttext 0xffffffff810001e0 -e start --warn-common -nopie
+LINKFLAGS=	-T ${_machdir}/conf/kern.ldscript -X --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
@@ -80,7 +80,6 @@ SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
-LINKFLAGS+=	-X
 STRIPFLAGS=	-g -x
 SYSTEM_LD_TAIL+=; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
