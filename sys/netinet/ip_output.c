@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.270 2014/11/01 21:40:38 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.271 2014/11/05 14:03:02 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1656,9 +1656,6 @@ int
 ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
     u_int rtableid)
 {
-	int error = 0;
-	u_char loop;
-	int i;
 	struct in_addr addr;
 	struct in_ifaddr *ia;
 	struct ip_mreq *mreq;
@@ -1666,7 +1663,9 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 	struct ip_moptions *imo = *imop;
 	struct in_multi **immp;
 	struct route ro;
-	struct sockaddr_in *dst;
+	struct sockaddr_in *dst, sin;
+	int i, error = 0;
+	u_char loop;
 
 	if (imo == NULL) {
 		/*
@@ -1712,8 +1711,12 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		 * IP address.  Find the interface and confirm that
 		 * it supports multicasting.
 		 */
-		ia = in_iawithaddr(addr, rtableid);
-		if (ia)
+		memset(&sin, 0, sizeof(sin));
+		sin.sin_len = sizeof(sin);
+		sin.sin_family = AF_INET;
+		sin.sin_addr = addr;
+		ia = ifatoia(ifa_ifwithaddr(sintosa(&sin), rtableid));
+		if (ia && in_hosteq(sin.sin_addr, ia->ia_addr.sin_addr))
 			ifp = ia->ia_ifp;
 		if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
 			error = EADDRNOTAVAIL;
@@ -1781,8 +1784,12 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 			ifp = ro.ro_rt->rt_ifp;
 			rtfree(ro.ro_rt);
 		} else {
-			ia = in_iawithaddr(mreq->imr_interface, rtableid);
-			if (ia)
+			memset(&sin, 0, sizeof(sin));
+			sin.sin_len = sizeof(sin);
+			sin.sin_family = AF_INET;
+			sin.sin_addr = mreq->imr_interface;
+			ia = ifatoia(ifa_ifwithaddr(sintosa(&sin), rtableid));
+			if (ia && in_hosteq(sin.sin_addr, ia->ia_addr.sin_addr))
 				ifp = ia->ia_ifp;
 		}
 		/*
@@ -1870,12 +1877,17 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		if (mreq->imr_interface.s_addr == INADDR_ANY)
 			ifp = NULL;
 		else {
-			ia = in_iawithaddr(mreq->imr_interface, rtableid);
-			if (ia == NULL) {
+			memset(&sin, 0, sizeof(sin));
+			sin.sin_len = sizeof(sin);
+			sin.sin_family = AF_INET;
+			sin.sin_addr = mreq->imr_interface;
+			ia = ifatoia(ifa_ifwithaddr(sintosa(&sin), rtableid));
+			if (ia && in_hosteq(sin.sin_addr, ia->ia_addr.sin_addr))
+				ifp = ia->ia_ifp;
+			else {
 				error = EADDRNOTAVAIL;
 				break;
 			}
-			ifp = ia->ia_ifp;
 		}
 		/*
 		 * Find the membership in the membership array.

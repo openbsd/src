@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.240 2014/11/04 15:24:40 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.241 2014/11/05 14:03:02 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -719,23 +719,6 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
 	}
 
 	return (ISSET(ia->ia_ifp->if_flags, IFF_UP));
-}
-
-struct in_ifaddr *
-in_iawithaddr(struct in_addr ina, u_int rtableid)
-{
-	struct in_ifaddr	*ia;
-	struct sockaddr_in	 sin;
-
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_len = sizeof(sin);
-	sin.sin_family = AF_INET;
-	sin.sin_addr = ina;
-	ia = ifatoia(ifa_ifwithaddr(sintosa(&sin), rtableid));
-	if (ia == NULL || ina.s_addr == ia->ia_addr.sin_addr.s_addr)
-		return (ia);
-
-	return (NULL);
 }
 
 /*
