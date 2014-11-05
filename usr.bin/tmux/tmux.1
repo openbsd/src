@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.404 2014/10/25 08:47:04 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.405 2014/11/05 23:15:11 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 25 2014 $
+.Dd $Mdocdate: November 5 2014 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2581,6 +2581,9 @@ By default, UTF-8 in
 is not interpreted, to enable UTF-8, use the
 .Ic status-utf8
 option.
+.Pp
+The default is
+.Ql "[#S] " .
 .It Ic status-left-length Ar length
 Set the maximum
 .Ar length
