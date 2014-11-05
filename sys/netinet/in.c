@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.106 2014/10/07 08:47:28 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.107 2014/11/05 14:40:51 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -664,8 +664,6 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 			ia->ia_broadaddr.sin_addr.s_addr =
 			    ia->ia_net | ~ia->ia_netmask;
 		}
-	} else if (ifp->if_flags & IFF_LOOPBACK) {
-		ia->ia_dstaddr = ia->ia_addr;
 	} else if (ifp->if_flags & IFF_POINTOPOINT) {
 		if (ia->ia_dstaddr.sin_family != AF_INET)
 			goto out;
