@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ze_vsbus.c,v 1.6 2010/09/20 06:33:48 matthew Exp $	*/
+/*	$OpenBSD: if_ze_vsbus.c,v 1.7 2014/11/05 07:09:04 jsg Exp $	*/
 /*      $NetBSD: if_ze_vsbus.c,v 1.5 2000/07/26 21:50:49 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -42,11 +42,6 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/vsbus.h>
