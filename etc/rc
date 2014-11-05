@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.442 2014/09/15 22:28:58 matthieu Exp $
+#	$OpenBSD: rc,v 1.443 2014/11/05 17:07:59 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -442,8 +442,8 @@ echo clearing /tmp
 # (not needed with mfs /tmp, but doesn't hurt there...)
 (cd /tmp && rm -rf [a-km-pr-zA-Z]*)
 (cd /tmp &&
-    find . ! -name . ! -name lost+found ! -name quota.user \
-	! -name quota.group -execdir rm -rf -- {} \; -type d -prune)
+    find . -maxdepth 1 ! -name . ! -name lost+found ! -name quota.user \
+	! -name quota.group -execdir rm -rf -- {} \;)
 
 setup_X_sockets
 
