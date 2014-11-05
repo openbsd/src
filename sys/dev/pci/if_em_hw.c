@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.80 2014/07/22 13:12:11 mpi Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.81 2014/11/05 15:30:17 claudio Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -163,6 +163,7 @@ int32_t		em_lv_phy_workarounds_ich8lan(struct em_hw *);
 int32_t		em_link_stall_workaround_hv(struct em_hw *);
 int32_t		em_k1_gig_workaround_hv(struct em_hw *, boolean_t);
 int32_t		em_k1_workaround_lv(struct em_hw *);
+int32_t		em_k1_workaround_lpt_lp(struct em_hw *, boolean_t);
 int32_t		em_configure_k1_ich8lan(struct em_hw *, boolean_t);
 void		em_gate_hw_phy_config_ich8lan(struct em_hw *, boolean_t);
 int32_t		em_access_phy_wakeup_reg_bm(struct em_hw *, uint32_t,
@@ -3706,6 +3707,16 @@ em_check_for_link(struct em_hw *hw)
 
 			if (hw->mac_type == em_pch2lan) {
 				ret_val = em_k1_workaround_lv(hw);
+				if (ret_val)
+					return ret_val;
+			}
+			/* Work-around I218 hang issue */
+			if ((hw->device_id == E1000_DEV_ID_PCH_LPTLP_I218_LM) ||
+			    (hw->device_id == E1000_DEV_ID_PCH_LPTLP_I218_V) ||
+			    (hw->device_id == E1000_DEV_ID_PCH_I218_LM3) ||
+			    (hw->device_id == E1000_DEV_ID_PCH_I218_V3)) {
+				ret_val = em_k1_workaround_lpt_lp(hw,
+				    hw->icp_xxxx_is_link_up);
 				if (ret_val)
 					return ret_val;
 			}
@@ -10185,6 +10196,84 @@ em_k1_workaround_lv(struct em_hw *hw)
 	
 	return E1000_SUCCESS;
 }
+
+/**
+ *  em_k1_workaround_lpt_lp - K1 workaround on Lynxpoint-LP
+ *
+ *  When K1 is enabled for 1Gbps, the MAC can miss 2 DMA completion indications
+ *  preventing further DMA write requests.  Workaround the issue by disabling
+ *  the de-assertion of the clock request when in 1Gbps mode.
+ *  Also, set appropriate Tx re-transmission timeouts for 10 and 100Half link
+ *  speeds in order to avoid Tx hangs.
+ **/
+int32_t
+em_k1_workaround_lpt_lp(struct em_hw *hw, boolean_t link)
+{
+	uint32_t fextnvm6 = E1000_READ_REG(hw, FEXTNVM6);
+	uint32_t status = E1000_READ_REG(hw, STATUS);
+	int32_t ret_val = E1000_SUCCESS;
+	uint16_t reg;
+
+	if (link && (status & E1000_STATUS_SPEED_1000)) {
+		ret_val = em_read_kmrn_reg(hw, E1000_KMRNCTRLSTA_K1_CONFIG,
+		    &reg);
+		if (ret_val)
+			return ret_val;
+
+		ret_val = em_write_kmrn_reg(hw, E1000_KMRNCTRLSTA_K1_CONFIG,
+		    reg & ~E1000_KMRNCTRLSTA_K1_ENABLE);
+		if (ret_val)
+			return ret_val;
+
+		usec_delay(10);
+
+		E1000_WRITE_REG(hw, FEXTNVM6,
+				fextnvm6 | E1000_FEXTNVM6_REQ_PLL_CLK);
+
+		ret_val = em_write_kmrn_reg(hw, E1000_KMRNCTRLSTA_K1_CONFIG,
+		    reg);
+	} else {
+		/* clear FEXTNVM6 bit 8 on link down or 10/100 */
+		fextnvm6 &= ~E1000_FEXTNVM6_REQ_PLL_CLK;
+
+		if (!link || ((status & E1000_STATUS_SPEED_100) &&
+			      (status & E1000_STATUS_FD)))
+			goto update_fextnvm6;
+
+		ret_val = em_read_phy_reg(hw, I217_INBAND_CTRL, &reg);
+		if (ret_val)
+			return ret_val;
+
+		/* Clear link status transmit timeout */
+		reg &= ~I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_MASK;
+
+		if (status & E1000_STATUS_SPEED_100) {
+			/* Set inband Tx timeout to 5x10us for 100Half */
+			reg |= 5 << I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_SHIFT;
+
+			/* Do not extend the K1 entry latency for 100Half */
+			fextnvm6 &= ~E1000_FEXTNVM6_ENABLE_K1_ENTRY_CONDITION;
+		} else {
+			/* Set inband Tx timeout to 50x10us for 10Full/Half */
+			reg |= 50 <<
+			       I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_SHIFT;
+
+			/* Extend the K1 entry latency for 10 Mbps */
+			fextnvm6 |= E1000_FEXTNVM6_ENABLE_K1_ENTRY_CONDITION;
+		}
+
+		ret_val = em_write_phy_reg(hw, I217_INBAND_CTRL, reg);
+		if (ret_val)
+			return ret_val;
+
+update_fextnvm6:
+		E1000_WRITE_REG(hw, FEXTNVM6, fextnvm6);
+	}
+
+	return ret_val;
+
+}
+
 
 /***************************************************************************
  *  e1000_gate_hw_phy_config_ich8lan - disable PHY config via hardware

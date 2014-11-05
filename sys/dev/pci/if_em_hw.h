@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.60 2014/03/10 04:09:53 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.61 2014/11/05 15:30:17 claudio Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -987,8 +987,9 @@ struct em_ffvt_entry {
 #define E1000_MDIC     0x00020  /* MDI Control - RW */
 #define E1000_MDICNFG  0x00E04  /* MDI Config - RW */
 #define E1000_SCTL     0x00024  /* SerDes Control - RW */
-#define E1000_FEXTNVM4 0x00024  /* Future Extended NVM 4 - RW */
 #define E1000_FEXTNVM  0x00028  /* Future Extended NVM register */
+#define E1000_FEXTNVM4 0x00024  /* Future Extended NVM 4 - RW */
+#define E1000_FEXTNVM6 0x00010  /* Future Extended NVM 6 - RW */
 #define E1000_FCAL     0x00028  /* Flow Control Address Low - RW */
 #define E1000_FCAH     0x0002C  /* Flow Control Address High -RW */
 #define E1000_FCT      0x00030  /* Flow Control Type - RW */
@@ -1215,8 +1216,9 @@ struct em_ffvt_entry {
 #define E1000_82542_FLA      E1000_FLA
 #define E1000_82542_MDIC     E1000_MDIC
 #define E1000_82542_SCTL     E1000_SCTL
-#define E1000_82542_FEXTNVM4 E1000_FEXTNVM4
 #define E1000_82542_FEXTNVM  E1000_FEXTNVM
+#define E1000_82542_FEXTNVM4 E1000_FEXTNVM4
+#define E1000_82542_FEXTNVM6 E1000_FEXTNVM6
 #define E1000_82542_FCAL     E1000_FCAL
 #define E1000_82542_FCAH     E1000_FCAH
 #define E1000_82542_FCT      E1000_FCT
@@ -1429,6 +1431,9 @@ struct em_ffvt_entry {
 #define E1000_FEXTNVM4_BEACON_DURATION_MASK    0x7
 #define E1000_FEXTNVM4_BEACON_DURATION_8USEC   0x7
 #define E1000_FEXTNVM4_BEACON_DURATION_16USEC  0x3
+
+#define E1000_FEXTNVM6_REQ_PLL_CLK	0x00000100
+#define E1000_FEXTNVM6_ENABLE_K1_ENTRY_CONDITION	0x00000200
 
 /* Statistics counters collected by the MAC */
 struct em_hw_stats {
@@ -3719,6 +3724,11 @@ union ich8_hws_flash_regacc {
 #define HV_M_STATUS_SPEED_MASK            0x0300
 #define HV_M_STATUS_SPEED_1000            0x0200
 #define HV_M_STATUS_LINK_UP               0x0040
+
+/* Inband Control */
+#define I217_INBAND_CTRL				PHY_REG(770, 18)
+#define I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_MASK	0x3F00
+#define I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_SHIFT	8
 
 /* PHY Low Power Idle Control */
 #define I82579_LPI_CTRL				PHY_REG(772, 20)
