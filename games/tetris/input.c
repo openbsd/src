@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.13 2014/11/03 22:14:54 deraadt Exp $	*/
+/*	$OpenBSD: input.c,v 1.14 2014/11/05 20:23:38 tedu Exp $	*/
 /*    $NetBSD: input.c,v 1.3 1996/02/06 22:47:33 jtc Exp $    */
 
 /*-
@@ -64,12 +64,12 @@
 	}
 
 /*
- * Do a `read wait': select for reading from stdin, with timeout *tvp.
+ * Do a `read wait': poll for reading from stdin, with timeout *tvp.
  * On return, modify *tvp to reflect the amount of time spent waiting.
  * It will be positive only if input appeared before the time ran out;
  * otherwise it will be zero or perhaps negative.
  *
- * If tvp is nil, wait forever, but return if select is interrupted.
+ * If tvp is nil, wait forever, but return if poll is interrupted.
  *
  * Return 0 => no input, 1 => can read() from stdin
  */
@@ -90,14 +90,15 @@ rwait(struct timeval *tvp)
 again:
 	pfd[0].fd = STDIN_FILENO;
 	pfd[0].events = POLLIN;
-	switch (poll(pfd, 1, s->tv_sec * 1000 + s->tv_usec / 1000)) {
+	switch (poll(pfd, 1, s ? s->tv_sec * 1000 + s->tv_usec / 1000 :
+	    INFTIM)) {
 
 	case -1:
 		if (tvp == 0)
 			return (-1);
 		if (errno == EINTR)
 			goto again;
-		stop("select failed, help");
+		stop("poll failed, help");
 		/* NOTREACHED */
 
 	case 0:	/* timed out */
@@ -115,7 +116,7 @@ again:
 }
 
 /*
- * `sleep' for the current turn time (using select).
+ * `sleep' for the current turn time (using poll).
  * Eat any input that might be available.
  */
 void
