@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.119 2014/11/05 17:44:54 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.120 2014/11/05 18:08:21 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -613,10 +613,11 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
 		if (memall == NULL) {
 			int totlen;
+			int error;
 
-			i = rw_enter(&sysctl_kmemlock, RW_WRITE|RW_INTR);
-			if (i)
-				return (i);
+			error = rw_enter(&sysctl_kmemlock, RW_WRITE|RW_INTR);
+			if (error)
+				return (error);
 
 			/* Figure out how large a buffer we need */
 			for (totlen = 0, i = 0; i < M_LAST; i++) {
