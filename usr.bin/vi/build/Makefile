@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2013/06/22 18:52:52 miod Exp $
+#	$OpenBSD: Makefile,v 1.19 2014/11/06 10:48:52 bentley Exp $
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
 PROG=	vi
@@ -11,11 +11,6 @@ CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include
 LDADD+=-lcurses
 DPADD+= ${LIBCURSES}
 
-# Old BSD curses
-#CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include -D_USE_OLD_CURSES_
-#LDADD+= -locurses
-#DPADD+= ${LIBOLDCURSES}
-
 LDADD+=-lutil
 DPADD+= ${LIBUTIL}
 
@@ -24,7 +19,7 @@ DPADD+= ${LIBUTIL}
 CFLAGS+= -fno-tree-dominator-opts
 .endif
 
-SRCS=	cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
+SRCS=	cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	cut.c delete.c ex.c ex_abbrev.c ex_append.c ex_args.c ex_argv.c \
 	ex_at.c ex_bang.c ex_cd.c ex_cmd.c ex_cscope.c ex_delete.c \
 	ex_display.c ex_edit.c ex_equal.c ex_file.c ex_filter.c \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_funcs.c,v 1.14 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: cl_funcs.c,v 1.15 2014/11/06 10:48:52 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -604,14 +604,8 @@ cl_suspend(sp, allowedp)
 	/*
 	 * Temporarily end the screen.  System V introduced a semantic where
 	 * endwin() could be restarted.  We use it because restarting curses
-	 * from scratch often fails in System V.  4BSD curses didn't support
-	 * restarting after endwin(), so we have to do what clean up we can
-	 * without calling it.
+	 * from scratch often fails in System V.
 	 */
-#ifdef HAVE_BSD_CURSES
-	/* Save the terminal settings. */
-	(void)tcgetattr(STDIN_FILENO, &t);
-#endif
 
 	/* Restore the cursor keys to normal mode. */
 	(void)keypad(stdscr, FALSE);
@@ -619,11 +613,8 @@ cl_suspend(sp, allowedp)
 	/* Restore the window name. */
 	(void)cl_rename(sp, NULL, 0);
 
-#ifdef HAVE_BSD_CURSES
-	(void)cl_attr(sp, SA_ALTERNATE, 0);
-#else
 	(void)endwin();
-#endif
+
 	/*
 	 * XXX
 	 * Restore the original terminal settings.  This is bad -- the
@@ -647,14 +638,6 @@ cl_suspend(sp, allowedp)
 		F_CLR(clp, CL_SCR_EX_INIT | CL_SCR_VI_INIT);
 		return (0);
 	}
-
-#ifdef HAVE_BSD_CURSES
-	/* Restore terminal settings. */
-	if (F_ISSET(clp, CL_STDIN_TTY))
-		(void)tcsetattr(STDIN_FILENO, TCSASOFT | TCSADRAIN, &t);
-
-	(void)cl_attr(sp, SA_ALTERNATE, 1);
-#endif
 
 	/* Set the window name. */
 	(void)cl_rename(sp, sp->frp->name, 1);
