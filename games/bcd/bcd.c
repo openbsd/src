@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcd.c,v 1.17 2014/11/06 19:35:13 tedu Exp $	*/
+/*	$OpenBSD: bcd.c,v 1.18 2014/11/06 19:42:06 tedu Exp $	*/
 /*	$NetBSD: bcd.c,v 1.6 1995/04/24 12:22:23 cgd Exp $	*/
 
 /*
@@ -114,25 +114,45 @@ void	printonecard(char *, size_t);
 void	printcard(char *);
 int	decode(char *buf);
 
-#define	COLUMNS	48
+int	columns	= 48;
 
 
 int
 main(int argc, char *argv[])
 {
 	char cardline[1024];
+	int dflag = 0;
+	int ch;
+
+	while ((ch = getopt(argc, argv, "dl")) != -1) {
+		switch (ch) {
+		case 'd':
+			dflag = 1;
+			break;
+		case 'l':
+			columns = 80;
+			break;
+		default:
+			fprintf(stderr, "unknown option");
+			exit(1);
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (dflag) {
+		while (decode(cardline) == 0) {
+			printf("%s\n", cardline);
+		}
+		return 0;
+	}
+
 
 	/*
 	 * The original bcd prompts with a "%" when reading from stdin,
 	 * but this seems kind of silly.  So this one doesn't.
 	 */
 	if (argc > 1) {
-		if (strcmp(argv[1], "-d") == 0) {
-			while (decode(cardline) == 0) {
-				printf("%s\n", cardline);
-			}
-			return 0;
-		}
 		while (--argc) {
 			argv++;
 			printcard(*argv);
@@ -150,7 +170,7 @@ printcard(char *str)
 	size_t len = strlen(str);
 
 	while (len > 0) {
-		size_t amt = len > COLUMNS ? COLUMNS : len;
+		size_t amt = len > columns ? columns : len;
 		printonecard(str, amt);
 		str += amt;
 		len -= amt;
@@ -170,13 +190,9 @@ printonecard(char *str, size_t len)
 	for (p = str; p < end; ++p)
 		*p = toupper((unsigned char)*p);
 
-	for (p = str; p < end; p++) {
-		printf("%c: %x\n", *p, holes[(unsigned char)*p]);
-	}
-
-	 /* top of card */
+	/* top of card */
 	putchar(' ');
-	for (i = 1; i <= COLUMNS; ++i)
+	for (i = 1; i <= columns; ++i)
 		putchar('_');
 	putchar('\n');
 
@@ -191,7 +207,7 @@ printonecard(char *str, size_t len)
 			putchar(*p);
 		else
 			putchar(' ');
-	while (i++ <= COLUMNS)
+	while (i++ <= columns)
 		putchar(' ');
 	putchar('|');
 	putchar('\n');
@@ -210,7 +226,7 @@ printonecard(char *str, size_t len)
 			else
 				putchar(rowchars[row]);
 		}
-		while (i++ < COLUMNS)
+		while (i++ < columns)
 			putchar(rowchars[row]);
 		putchar('|');
 		putchar('\n');
@@ -218,7 +234,7 @@ printonecard(char *str, size_t len)
 
 	/* bottom of card */
 	putchar('|');
-	for (i = 1; i <= COLUMNS; i++)
+	for (i = 1; i <= columns; i++)
 		putchar('_');
 	putchar('|');
 	putchar('\n');
@@ -248,14 +264,14 @@ decode(char *buf)
 		return -1;
 
 	for (i = 0; i < LINES; i++) {
-		if (strlen(lines[i]) < COLUMNS + 2)
+		if (strlen(lines[i]) < columns + 2)
 			return -1;
-		if (lines[i][0] != '|' || lines[i][COLUMNS + 1] != '|')
+		if (lines[i][0] != '|' || lines[i][columns + 1] != '|')
 			return -1;
-		memmove(&lines[i][0], &lines[i][1], COLUMNS);
-		lines[i][COLUMNS] = 0;
+		memmove(&lines[i][0], &lines[i][1], columns);
+		lines[i][columns] = 0;
 	}
-	for (col = 0; col < COLUMNS; col++) {
+	for (col = 0; col < columns; col++) {
 		unsigned int val = 0;
 		for (i = 0; i < LINES; i++)
 			if (lines[i][col] == ']')
@@ -268,7 +284,7 @@ decode(char *buf)
 			}
 	}
 	buf[col] = 0;
-	for (col = COLUMNS - 1; col >= 0; col--) {
+	for (col = columns - 1; col >= 0; col--) {
 		if (buf[col] == ' ')
 			buf[col] = '\0';
 		else

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bcd.6,v 1.18 2014/11/06 19:35:13 tedu Exp $
+.\"	$OpenBSD: bcd.6,v 1.19 2014/11/06 19:42:06 tedu Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,6 +39,7 @@
 .Nd reformat input as punch cards, paper tape or morse code
 .Sh SYNOPSIS
 .Nm bcd
+.Op Fl l
 .Oo
 .Fl d Oc \*(Ba
 .Ar string ...
@@ -70,6 +71,13 @@ The
 option for
 .Nm bcd
 decodes punch cards on the standard input back to ASCII.
+.It Fl l
+The
+.Fl l
+option for
+.Nm bcd
+creates 80 column punch cards.
+The default is 48 columns.
 .El
 .Pp
 Available options for
