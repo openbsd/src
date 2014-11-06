@@ -1,4 +1,4 @@
-/*	$OpenBSD: chars.in,v 1.24 2014/10/29 03:34:26 schwarze Exp $ */
+/*	$OpenBSD: chars.in,v 1.25 2014/11/06 22:27:52 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -364,7 +364,7 @@ CHAR("rs",			"\\",		92)
 
 /* Text markers. */
 CHAR("ci",			"O",		9675)
-CHAR("bu",			"o",		8226)
+CHAR("bu",			"+\bo",		8226)
 CHAR("dd",			"|\b=",		8225)
 CHAR("dg",			"|\b-",		8224)
 CHAR("lz",			"<>",		9674)
