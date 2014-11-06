@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.121 2014/11/05 22:27:40 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.122 2014/11/06 03:20:36 deraadt Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -572,7 +572,10 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
 	struct kmembuckets kb;
-	int error, i, siz;
+#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
+	int error;
+#endif
+	int i, siz;
 
 	if (namelen != 2 && name[0] != KERN_MALLOC_BUCKETS &&
 	    name[0] != KERN_MALLOC_KMEMNAMES)
