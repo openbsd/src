@@ -14,7 +14,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "vga.h"
 #include "drm.h"
+#if defined(__i386__) || defined(__amd64__)
+#include "acpi.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -25,6 +29,11 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
+#include <dev/ic/vgareg.h>
+#include <dev/ic/vgavar.h>
 #include <dev/pci/vga_pcivar.h>
 
 #include <dev/pci/drm/i915/i915_devlist.h>

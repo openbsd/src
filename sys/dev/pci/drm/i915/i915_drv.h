@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.52 2014/05/12 19:29:16 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.53 2014/11/06 05:48:42 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -36,13 +36,20 @@
 #include "intel_bios.h"
 #include "intel_ringbuffer.h"
 
+#include "acpi.h"
+#include "drm.h"
+#include "vga.h"
+
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
+#include <dev/ic/vgareg.h>
+#include <dev/ic/vgavar.h>
+
 #include <sys/task.h>
 #include <dev/pci/vga_pcivar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
-
-#include "acpi.h"
 
 struct intel_gtt {
 	/* Size of memory reserved for graphics by the BIOS */

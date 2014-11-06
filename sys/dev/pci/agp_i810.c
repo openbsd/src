@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.88 2014/09/06 06:00:54 jsg Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.89 2014/11/06 05:48:42 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -28,6 +28,10 @@
  *
  */
 
+#include "acpi.h"
+#include "drm.h"
+#include "vga.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -39,6 +43,10 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
+#include <dev/ic/vgareg.h>
+#include <dev/ic/vgavar.h>
 #include <dev/pci/vga_pcivar.h>
 
 #include <machine/bus.h>
