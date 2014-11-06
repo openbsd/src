@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcd.c,v 1.18 2014/11/06 19:42:06 tedu Exp $	*/
+/*	$OpenBSD: bcd.c,v 1.19 2014/11/06 19:54:10 tedu Exp $	*/
 /*	$NetBSD: bcd.c,v 1.6 1995/04/24 12:22:23 cgd Exp $	*/
 
 /*
@@ -152,10 +152,10 @@ main(int argc, char *argv[])
 	 * The original bcd prompts with a "%" when reading from stdin,
 	 * but this seems kind of silly.  So this one doesn't.
 	 */
-	if (argc > 1) {
-		while (--argc) {
-			argv++;
+	if (argc > 0) {
+		while (argc--) {
 			printcard(*argv);
+			argv++;
 		}
 	} else {
 		while (fgets(cardline, sizeof(cardline), stdin))
