@@ -1,4 +1,4 @@
-/* $OpenBSD: s_socket.c,v 1.1 2014/08/26 17:47:25 jsing Exp $ */
+/* $OpenBSD: s_socket.c,v 1.2 2014/11/06 13:46:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,27 +73,17 @@
 
 #include "s_apps.h"
 
-static int ssl_sock_init(void);
 static int init_server(int *sock, int port, int type);
 static int init_server_long(int *sock, int port, char *ip, int type);
 static int do_accept(int acc_sock, int *sock, char **host);
 
 #define SOCKET_PROTOCOL	IPPROTO_TCP
 
-static int
-ssl_sock_init(void)
-{
-	return (1);
-}
-
 int
 init_client(int *sock, char *host, char *port, int type, int af)
 {
 	struct addrinfo hints, *ai_top, *ai;
 	int i, s;
-
-	if (!ssl_sock_init())
-		return (0);
 
 	memset(&hints, '\0', sizeof(hints));
 	hints.ai_family = af;
@@ -186,9 +176,6 @@ init_server_long(int *sock, int port, char *ip, int type)
 	struct sockaddr_in server;
 	int s = -1;
 
-	if (!ssl_sock_init())
-		return (0);
-
 	memset((char *) &server, 0, sizeof(server));
 	server.sin_family = AF_INET;
 	server.sin_port = htons((unsigned short) port);
@@ -242,9 +229,6 @@ do_accept(int acc_sock, int *sock, char **host)
 	static struct sockaddr_in from;
 	socklen_t len;
 /*	struct linger ling; */
-
-	if (!ssl_sock_init())
-		return (0);
 
 redoit:
 
