@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.176 2014/11/01 21:40:38 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.177 2014/11/06 14:28:47 henning Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -270,6 +270,8 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		senderr(EBUSY);
 #endif
 
+	esrc = ac->ac_enaddr;
+
 #if NCARP > 0
 	if (ifp->if_type == IFT_CARP) {
 		ifp = ifp->if_carpdev;
@@ -310,7 +312,6 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 			    time_second < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
-	esrc = ac->ac_enaddr;
 	switch (dst->sa_family) {
 
 #ifdef INET
