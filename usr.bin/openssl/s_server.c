@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.5 2014/10/31 16:59:00 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.6 2014/11/06 14:50:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -200,9 +200,7 @@ static int bufsize = BUFSIZZ;
 static int accept_socket = -1;
 
 #define TEST_CERT	"server.pem"
-#ifndef OPENSSL_NO_TLSEXT
 #define TEST_CERT2	"server2.pem"
-#endif
 
 extern int verify_depth, verify_return_error;
 
@@ -210,26 +208,20 @@ static char *cipher = NULL;
 static int s_server_verify = SSL_VERIFY_NONE;
 static int s_server_session_id_context = 1;	/* anything will do */
 static const char *s_cert_file = TEST_CERT, *s_key_file = NULL;
-#ifndef OPENSSL_NO_TLSEXT
 static const char *s_cert_file2 = TEST_CERT2, *s_key_file2 = NULL;
-#endif
 static char *s_dcert_file = NULL, *s_dkey_file = NULL;
 static int s_nbio = 0;
 static int s_nbio_test = 0;
 int s_crlf = 0;
 static SSL_CTX *ctx = NULL;
-#ifndef OPENSSL_NO_TLSEXT
 static SSL_CTX *ctx2 = NULL;
-#endif
 static int www = 0;
 
 static BIO *bio_s_out = NULL;
 static int s_debug = 0;
-#ifndef OPENSSL_NO_TLSEXT
 static int s_tlsextdebug = 0;
 static int s_tlsextstatus = 0;
 static int cert_status_cb(SSL * s, void *arg);
-#endif
 static int s_msg = 0;
 static int s_quiet = 0;
 
@@ -261,11 +253,9 @@ s_server_init(void)
 	s_dkey_file = NULL;
 	s_cert_file = TEST_CERT;
 	s_key_file = NULL;
-#ifndef OPENSSL_NO_TLSEXT
 	s_cert_file2 = TEST_CERT2;
 	s_key_file2 = NULL;
 	ctx2 = NULL;
-#endif
 	s_nbio = 0;
 	s_nbio_test = 0;
 	ctx = NULL;
@@ -350,7 +340,6 @@ sv_usage(void)
 	BIO_printf(bio_err, " -engine id    - Initialise and use the specified engine\n");
 #endif
 	BIO_printf(bio_err, " -id_prefix arg - Generate SSL/TLS session IDs prefixed by 'arg'\n");
-#ifndef OPENSSL_NO_TLSEXT
 	BIO_printf(bio_err, " -servername host - servername for HostName TLS extension\n");
 	BIO_printf(bio_err, " -servername_fatal - on mismatch send fatal alert (default warning alert)\n");
 	BIO_printf(bio_err, " -cert2 arg    - certificate file to use for servername\n");
@@ -365,7 +354,6 @@ sv_usage(void)
 #ifndef OPENSSL_NO_SRTP
 	BIO_printf(bio_err, " -use_srtp profiles - Offer SRTP key management with a colon-separated profile list\n");
 #endif
-#endif
 	BIO_printf(bio_err, " -keymatexport label   - Export keying material using label\n");
 	BIO_printf(bio_err, " -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
 }
@@ -373,7 +361,6 @@ sv_usage(void)
 static int local_argc = 0;
 static char **local_argv;
 
-#ifndef OPENSSL_NO_TLSEXT
 
 /* This is a context that we pass to callbacks */
 typedef struct tlsextctx_st {
@@ -558,7 +545,6 @@ next_proto_cb(SSL * s, const unsigned char **data, unsigned int *len, void *arg)
 #endif				/* ndef OPENSSL_NO_NEXTPROTONEG */
 
 
-#endif
 
 int s_server_main(int, char **);
 
@@ -592,14 +578,12 @@ s_server_main(int argc, char *argv[])
 	EVP_PKEY *s_key = NULL, *s_dkey = NULL;
 	int no_cache = 0;
 	const char *errstr = NULL;
-#ifndef OPENSSL_NO_TLSEXT
 	EVP_PKEY *s_key2 = NULL;
 	X509 *s_cert2 = NULL;
 	tlsextctx tlsextcbp = {NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING};
 #ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
 	tlsextnextprotoctx next_proto;
-#endif
 #endif
 	meth = SSLv23_server_method();
 
@@ -729,7 +713,6 @@ s_server_main(int argc, char *argv[])
 		} else if (strcmp(*argv, "-debug") == 0) {
 			s_debug = 1;
 		}
-#ifndef OPENSSL_NO_TLSEXT
 		else if (strcmp(*argv, "-tlsextdebug") == 0)
 			s_tlsextdebug = 1;
 		else if (strcmp(*argv, "-status") == 0)
@@ -757,7 +740,6 @@ s_server_main(int argc, char *argv[])
 				goto bad;
 			}
 		}
-#endif
 		else if (strcmp(*argv, "-msg") == 0) {
 			s_msg = 1;
 		} else if (strcmp(*argv, "-hack") == 0) {
@@ -795,11 +777,9 @@ s_server_main(int argc, char *argv[])
 		} else if (strcmp(*argv, "-no_comp") == 0) {
 			off |= SSL_OP_NO_COMPRESSION;
 		}
-#ifndef OPENSSL_NO_TLSEXT
 		else if (strcmp(*argv, "-no_ticket") == 0) {
 			off |= SSL_OP_NO_TICKET;
 		}
-#endif
 		else if (strcmp(*argv, "-ssl3") == 0) {
 			meth = SSLv3_server_method();
 		} else if (strcmp(*argv, "-tls1") == 0) {
@@ -836,7 +816,6 @@ s_server_main(int argc, char *argv[])
 			engine_id = *(++argv);
 		}
 #endif
-#ifndef OPENSSL_NO_TLSEXT
 		else if (strcmp(*argv, "-servername") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -858,7 +837,6 @@ s_server_main(int argc, char *argv[])
 				goto bad;
 			next_proto_neg_in = *(++argv);
 		}
-#endif
 #endif
 #ifndef OPENSSL_NO_SRTP
 		else if (strcmp(*argv, "-use_srtp") == 0) {
@@ -905,10 +883,8 @@ bad:
 	}
 	if (s_key_file == NULL)
 		s_key_file = s_cert_file;
-#ifndef OPENSSL_NO_TLSEXT
 	if (s_key_file2 == NULL)
 		s_key_file2 = s_cert_file2;
-#endif
 
 	if (nocert == 0) {
 		s_key = load_key(bio_err, s_key_file, s_key_format, 0, pass, e,
@@ -924,7 +900,6 @@ bad:
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-#ifndef OPENSSL_NO_TLSEXT
 		if (tlsextcbp.servername) {
 			s_key2 = load_key(bio_err, s_key_file2, s_key_format, 0, pass, e,
 			    "second server certificate private key file");
@@ -940,7 +915,6 @@ bad:
 				goto end;
 			}
 		}
-#endif
 	}
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	if (next_proto_neg_in) {
@@ -989,10 +963,8 @@ bad:
 		s_key_file = NULL;
 		s_dcert_file = NULL;
 		s_dkey_file = NULL;
-#ifndef OPENSSL_NO_TLSEXT
 		s_cert_file2 = NULL;
 		s_key_file2 = NULL;
-#endif
 	}
 	ctx = SSL_CTX_new(meth);
 	if (ctx == NULL) {
@@ -1048,7 +1020,6 @@ bad:
 	if (vpm)
 		SSL_CTX_set1_param(ctx, vpm);
 
-#ifndef OPENSSL_NO_TLSEXT
 	if (s_cert2) {
 		ctx2 = SSL_CTX_new(meth);
 		if (ctx2 == NULL) {
@@ -1105,7 +1076,6 @@ bad:
 	if (next_proto.data)
 		SSL_CTX_set_next_protos_advertised_cb(ctx, next_proto_cb, &next_proto);
 #endif
-#endif
 
 #ifndef OPENSSL_NO_DH
 	if (!no_dhe) {
@@ -1132,7 +1102,6 @@ bad:
 			goto end;
 		}
 
-#ifndef OPENSSL_NO_TLSEXT
 		if (ctx2) {
 			if (!dhfile) {
 				DH *dh2 = load_dh_param(s_cert_file2);
@@ -1154,7 +1123,6 @@ bad:
 				goto end;
 			}
 		}
-#endif
 		DH_free(dh);
 	}
 #endif
@@ -1190,19 +1158,15 @@ bad:
 		(void) BIO_flush(bio_s_out);
 
 		SSL_CTX_set_tmp_ecdh(ctx, ecdh);
-#ifndef OPENSSL_NO_TLSEXT
 		if (ctx2)
 			SSL_CTX_set_tmp_ecdh(ctx2, ecdh);
-#endif
 		EC_KEY_free(ecdh);
 	}
 
 	if (!set_cert_key_stuff(ctx, s_cert, s_key))
 		goto end;
-#ifndef OPENSSL_NO_TLSEXT
 	if (ctx2 && !set_cert_key_stuff(ctx2, s_cert2, s_key2))
 		goto end;
-#endif
 	if (s_dcert != NULL) {
 		if (!set_cert_key_stuff(ctx, s_dcert, s_dkey))
 			goto end;
@@ -1214,13 +1178,11 @@ bad:
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-#ifndef OPENSSL_NO_TLSEXT
 		if (ctx2 && !SSL_CTX_set_cipher_list(ctx2, cipher)) {
 			BIO_printf(bio_err, "error setting cipher list\n");
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-#endif
 	}
 	SSL_CTX_set_verify(ctx, s_server_verify, verify_callback);
 	SSL_CTX_set_session_id_context(ctx, (void *) &s_server_session_id_context,
@@ -1230,7 +1192,6 @@ bad:
 	SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie_callback);
 	SSL_CTX_set_cookie_verify_cb(ctx, verify_cookie_callback);
 
-#ifndef OPENSSL_NO_TLSEXT
 	if (ctx2) {
 		SSL_CTX_set_verify(ctx2, s_server_verify, verify_callback);
 		SSL_CTX_set_session_id_context(ctx2, (void *) &s_server_session_id_context,
@@ -1242,14 +1203,11 @@ bad:
 		SSL_CTX_set_tlsext_servername_callback(ctx, ssl_servername_cb);
 		SSL_CTX_set_tlsext_servername_arg(ctx, &tlsextcbp);
 	}
-#endif
 
 	if (CAfile != NULL) {
 		SSL_CTX_set_client_CA_list(ctx, SSL_load_client_CA_file(CAfile));
-#ifndef OPENSSL_NO_TLSEXT
 		if (ctx2)
 			SSL_CTX_set_client_CA_list(ctx2, SSL_load_client_CA_file(CAfile));
-#endif
 	}
 	BIO_printf(bio_s_out, "ACCEPT\n");
 	(void) BIO_flush(bio_s_out);
@@ -1274,7 +1232,6 @@ end:
 	free(dpass);
 	if (vpm)
 		X509_VERIFY_PARAM_free(vpm);
-#ifndef OPENSSL_NO_TLSEXT
 	free(tlscstatp.host);
 	free(tlscstatp.port);
 	free(tlscstatp.path);
@@ -1284,7 +1241,6 @@ end:
 		X509_free(s_cert2);
 	if (s_key2)
 		EVP_PKEY_free(s_key2);
-#endif
 	if (bio_s_out != NULL) {
 		BIO_free(bio_s_out);
 		bio_s_out = NULL;
@@ -1345,7 +1301,6 @@ sv_body(char *hostname, int s, unsigned char *context)
 
 	if (con == NULL) {
 		con = SSL_new(ctx);
-#ifndef OPENSSL_NO_TLSEXT
 		if (s_tlsextdebug) {
 			SSL_set_tlsext_debug_callback(con, tlsext_cb);
 			SSL_set_tlsext_debug_arg(con, bio_s_out);
@@ -1355,7 +1310,6 @@ sv_body(char *hostname, int s, unsigned char *context)
 			tlscstatp.err = bio_err;
 			SSL_CTX_set_tlsext_status_arg(ctx, &tlscstatp);
 		}
-#endif
 		if (context)
 			SSL_set_session_id_context(con, context,
 			    strlen((char *) context));
@@ -1407,12 +1361,10 @@ sv_body(char *hostname, int s, unsigned char *context)
 		SSL_set_msg_callback(con, msg_cb);
 		SSL_set_msg_callback_arg(con, bio_s_out);
 	}
-#ifndef OPENSSL_NO_TLSEXT
 	if (s_tlsextdebug) {
 		SSL_set_tlsext_debug_callback(con, tlsext_cb);
 		SSL_set_tlsext_debug_arg(con, bio_s_out);
 	}
-#endif
 
 	width = s + 1;
 	for (;;) {
@@ -1781,12 +1733,10 @@ www_body(char *hostname, int s, unsigned char *context)
 
 	if ((con = SSL_new(ctx)) == NULL)
 		goto err;
-#ifndef OPENSSL_NO_TLSEXT
 	if (s_tlsextdebug) {
 		SSL_set_tlsext_debug_callback(con, tlsext_cb);
 		SSL_set_tlsext_debug_arg(con, bio_s_out);
 	}
-#endif
 	if (context)
 		SSL_set_session_id_context(con, context,
 		    strlen((char *) context));
