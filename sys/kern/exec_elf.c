@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.102 2014/11/06 16:43:42 tedu Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.103 2014/11/06 17:23:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -938,14 +938,13 @@ ELFNAMEEND(coredump)(struct proc *p, void *cookie)
 	return EPERM;
 #else
 	Elf_Ehdr ehdr;
-	Elf_Phdr phdr, *psections;
+	Elf_Phdr *psections = NULL;
 	struct countsegs_state cs;
 	struct writesegs_state ws;
 	off_t notestart, secstart, offset;
 	size_t notesize, psectionslen;
 	int error, i;
 
-	psections = NULL;
 	/*
 	 * We have to make a total of 3 passes across the map:
 	 *
@@ -1000,15 +999,14 @@ ELFNAMEEND(coredump)(struct proc *p, void *cookie)
 	if (error)
 		goto out;
 
-	offset = sizeof(ehdr);
-
-	notestart = offset + sizeof(phdr) * cs.npsections;
-	secstart = notestart + notesize;
-
 	psections = mallocarray(cs.npsections, sizeof(Elf_Phdr),
 	    M_TEMP, M_WAITOK|M_ZERO);
 	psectionslen = cs.npsections * sizeof(Elf_Phdr);
 	printf("coredump: malloc %zu bytes at %p\n", psectionslen, psections);
+
+	offset = sizeof(ehdr);
+	notestart = offset + psectionslen;
+	secstart = notestart + notesize;
 
 	/* Pass 2: now write the P-section headers. */
 	ws.secoff = secstart;
@@ -1028,13 +1026,12 @@ ELFNAMEEND(coredump)(struct proc *p, void *cookie)
 	ws.psections->p_flags = PF_R;
 	ws.psections->p_align = ELFROUNDSIZE;
 
-	error = coredump_write(cookie, UIO_SYSSPACE, psections,
-	    cs.npsections * sizeof(Elf_Phdr));
+	error = coredump_write(cookie, UIO_SYSSPACE, psections, psectionslen);
 	if (error)
 		goto out;
 
 #ifdef DIAGNOSTIC
-	offset += cs.npsections * sizeof(Elf_Phdr);
+	offset += psectionslen;
 	if (offset != notestart)
 		panic("coredump: offset %lld != notestart %lld",
 		    (long long) offset, (long long) notestart);
