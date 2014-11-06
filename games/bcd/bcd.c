@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcd.c,v 1.16 2014/11/04 17:58:26 tedu Exp $	*/
+/*	$OpenBSD: bcd.c,v 1.17 2014/11/06 19:35:13 tedu Exp $	*/
 /*	$NetBSD: bcd.c,v 1.6 1995/04/24 12:22:23 cgd Exp $	*/
 
 /*
@@ -112,6 +112,7 @@ u_short holes[256] = {
 
 void	printonecard(char *, size_t);
 void	printcard(char *);
+int	decode(char *buf);
 
 #define	COLUMNS	48
 
@@ -119,18 +120,24 @@ void	printcard(char *);
 int
 main(int argc, char *argv[])
 {
+	char cardline[1024];
 
 	/*
 	 * The original bcd prompts with a "%" when reading from stdin,
 	 * but this seems kind of silly.  So this one doesn't.
 	 */
 	if (argc > 1) {
+		if (strcmp(argv[1], "-d") == 0) {
+			while (decode(cardline) == 0) {
+				printf("%s\n", cardline);
+			}
+			return 0;
+		}
 		while (--argc) {
 			argv++;
 			printcard(*argv);
 		}
 	} else {
-		char cardline[1024];
 		while (fgets(cardline, sizeof(cardline), stdin))
 			printcard(cardline);
 	}
@@ -162,6 +169,10 @@ printonecard(char *str, size_t len)
 	/* make string upper case. */
 	for (p = str; p < end; ++p)
 		*p = toupper((unsigned char)*p);
+
+	for (p = str; p < end; p++) {
+		printf("%c: %x\n", *p, holes[(unsigned char)*p]);
+	}
 
 	 /* top of card */
 	putchar(' ');
@@ -211,4 +222,57 @@ printonecard(char *str, size_t len)
 		putchar('_');
 	putchar('|');
 	putchar('\n');
+}
+
+#define LINES 12
+
+int
+decode(char *buf)
+{
+	int col, i;
+	char lines[LINES][1024];
+	char tmp[1024];
+
+	/* top of card; if missing signal no more input */
+	if (fgets(tmp, sizeof(tmp), stdin) == NULL)
+		return 1;
+	/* text line, ignored */
+	if (fgets(tmp, sizeof(tmp), stdin) == NULL)
+		return -1;
+	/* twelve lines of data */
+	for (i = 0; i < LINES; i++)
+		if (fgets(lines[i], sizeof(lines[i]), stdin) == NULL)
+			return -1;
+	/* bottom of card */
+	if (fgets(tmp, sizeof(tmp), stdin) == NULL)
+		return -1;
+
+	for (i = 0; i < LINES; i++) {
+		if (strlen(lines[i]) < COLUMNS + 2)
+			return -1;
+		if (lines[i][0] != '|' || lines[i][COLUMNS + 1] != '|')
+			return -1;
+		memmove(&lines[i][0], &lines[i][1], COLUMNS);
+		lines[i][COLUMNS] = 0;
+	}
+	for (col = 0; col < COLUMNS; col++) {
+		unsigned int val = 0;
+		for (i = 0; i < LINES; i++)
+			if (lines[i][col] == ']')
+				val |= 1 << (11 - i);
+		buf[col] = ' ';
+		for (i = 0; i < 256; i++)
+			if (holes[i] == val && holes[i]) {
+				buf[col] = i;
+				break;
+			}
+	}
+	buf[col] = 0;
+	for (col = COLUMNS - 1; col >= 0; col--) {
+		if (buf[col] == ' ')
+			buf[col] = '\0';
+		else
+			break;
+	}
+	return 0;
 }

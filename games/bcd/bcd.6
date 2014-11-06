@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bcd.6,v 1.17 2013/08/14 06:32:38 jmc Exp $
+.\"	$OpenBSD: bcd.6,v 1.18 2014/11/06 19:35:13 tedu Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)bcd.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: November 6 2014 $
 .Dt BCD 6
 .Os
 .Sh NAME
@@ -39,7 +39,10 @@
 .Nd reformat input as punch cards, paper tape or morse code
 .Sh SYNOPSIS
 .Nm bcd
-.Op Ar string ...
+.Oo
+.Fl d Oc \*(Ba
+.Ar string ...
+.Oc
 .Nm ppt
 .Oo
 .Fl d Oo Fl b Oc \*(Ba
@@ -57,6 +60,17 @@ and
 commands read the given input and reformat it in the form of
 punched cards, paper tape, or morse code, respectively.
 Acceptable input are command line arguments or the standard input.
+.Pp
+Available options for
+.Nm bcd :
+.Bl -tag -width Ds
+.It Fl d
+The
+.Fl d
+option for
+.Nm bcd
+decodes punch cards on the standard input back to ASCII.
+.El
 .Pp
 Available options for
 .Nm ppt :
