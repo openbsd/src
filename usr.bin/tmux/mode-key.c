@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-key.c,v 1.60 2014/08/11 22:39:57 nicm Exp $ */
+/* $OpenBSD: mode-key.c,v 1.61 2014/11/06 09:17:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -289,6 +289,7 @@ const struct mode_key_entry mode_key_vi_copy[] = {
 	{ 'M',			    0, MODEKEYCOPY_MIDDLELINE },
 	{ 'N',			    0, MODEKEYCOPY_SEARCHREVERSE },
 	{ 'T',			    0, MODEKEYCOPY_JUMPTOBACK },
+	{ 'V',			    0, MODEKEYCOPY_SELECTLINE },
 	{ 'W',			    0, MODEKEYCOPY_NEXTSPACE },
 	{ '\002' /* C-b */,	    0, MODEKEYCOPY_PREVIOUSPAGE },
 	{ '\003' /* C-c */,	    0, MODEKEYCOPY_CANCEL },
