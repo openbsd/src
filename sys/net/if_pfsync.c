@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.210 2014/10/17 00:47:48 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.211 2014/11/06 05:29:35 lteo Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -76,7 +76,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
-#include <netinet6/ip6_divert.h>
 #endif /* INET6 */
 
 #include "carp.h"
