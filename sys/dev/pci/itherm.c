@@ -14,9 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*                                                         
+/*
  * Intel 3400 thermal sensor controller driver
- */                                                                     
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -27,43 +27,47 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#define ITHERM_NUM_SENSORS 12
-#define ITHERM_SENSOR_THERMOMETER 0
-#define ITHERM_SENSOR_CORETEMP1 1
-#define ITHERM_SENSOR_CORETEMP2 2
-#define ITHERM_SENSOR_COREENERGY 3
-#define ITHERM_SENSOR_GPUTEMP 4
-#define ITHERM_SENSOR_MAXPROCTEMP 5
-#define ITHERM_SENSOR_DIMMTEMP1 6
-#define ITHERM_SENSOR_DIMMTEMP2 7
-#define ITHERM_SENSOR_DIMMTEMP3 8
-#define ITHERM_SENSOR_DIMMTEMP4 9
-#define ITHERM_SENSOR_GPUTEMP_ABSOLUTE 10
-#define ITHERM_SENSOR_PCHTEMP_ABSOLUTE 11
+/*
+ * Intel 5 series (3400) Thermal Sensor Data
+ * See Intel document 322169-004 (January 2012)
+ */
+#define	ITHERM_NUM_SENSORS		12
+#define	ITHERM_SENSOR_THERMOMETER	0
+#define	ITHERM_SENSOR_CORETEMP1		1
+#define	ITHERM_SENSOR_CORETEMP2		2
+#define	ITHERM_SENSOR_COREENERGY	3
+#define	ITHERM_SENSOR_GPUTEMP		4
+#define	ITHERM_SENSOR_MAXPROCTEMP	5
+#define	ITHERM_SENSOR_DIMMTEMP1		6
+#define	ITHERM_SENSOR_DIMMTEMP2		7
+#define	ITHERM_SENSOR_DIMMTEMP3		8
+#define	ITHERM_SENSOR_DIMMTEMP4		9
+#define	ITHERM_SENSOR_GPUTEMP_ABSOLUTE	10
+#define	ITHERM_SENSOR_PCHTEMP_ABSOLUTE	11
 
-/* Intel 3400 Thermal Sensor Data */
-#define ITHERM_TSE	0x1
-#define ITHERM_TSTR	0x3
-#define ITHERM_TRC	0x1A
-#define ITHERM_CTV1	0x30
-#define ITHERM_CTV2	0x32
-#define ITHERM_CEV1	0x34
-#define ITHERM_MGTV	0x58
-#define ITHERM_PTV	0x60
-#define ITHERM_DTV	0xAC
-#define ITHERM_ITV	0xD8
+/* Section 22.2 of datasheet */
+#define	ITHERM_TSE	0x1	/* TS enable */
+#define	ITHERM_TSTR	0x3	/* TS thermometer read */
+#define	ITHERM_TRC	0x1A	/* TS reporting control */
+#define	ITHERM_CTV1	0x30	/* TS core temp value 1 */
+#define	ITHERM_CTV2	0x32	/* TS core temp value 2 */
+#define	ITHERM_CEV1	0x34	/* TS core energy value 1 */
+#define	ITHERM_MGTV	0x58	/* mem/GPU temp value */
+#define	ITHERM_PTV	0x60	/* TS CPU temp value */
+#define	ITHERM_DTV	0xAC	/* DIMM temp values */
+#define	ITHERM_ITV	0xD8	/* Internal temp values */
 
-#define ITHERM_TEMP_READ_ENABLE	0xFF
-#define ITHERM_TDR_ENABLE 0x1000
-#define ITHERM_SECOND_CORE_ENABLE 0x8000 
+#define	ITHERM_TEMP_READ_ENABLE		0xFF
+#define	ITHERM_TDR_ENABLE		0x1000
+#define	ITHERM_SECOND_CORE_ENABLE	0x8000
 
-#define ITHERM_TSE_ENABLE 0xB8
+#define	ITHERM_TSE_ENABLE	0xB8	/* magic number in datasheet */
 
-#define ITHERM_CTV_INVALID	0x8000
-#define ITHERM_CTV_INT_MASK	0x3FC0
-#define ITHERM_CTV_FRAC_MASK	0x003F
+#define	ITHERM_CTV_INVALID	0x8000
+#define	ITHERM_CTV_INT_MASK	0x3FC0	/* higher 8 bits */
+#define	ITHERM_CTV_FRAC_MASK	0x003F	/* lower 6 bits */
 
-#define ITHERM_REFRESH_INTERVAL 5
+#define	ITHERM_REFRESH_INTERVAL 5
 
 struct itherm_softc {
 	struct device		sc_dev;
@@ -74,7 +78,7 @@ struct itherm_softc {
 	bus_size_t		size;
 
 	int64_t			energy_prev;
-	
+
 	struct ksensor sensors[ITHERM_NUM_SENSORS];
 	struct ksensordev sensordev;
 	void (*refresh_sensor_data)(struct itherm_softc *);
@@ -97,7 +101,7 @@ void itherm_bias_temperature_sensor(struct ksensor *);
 const struct pci_matchid itherm_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_THERMAL }
 };
-        
+
 struct cfdriver itherm_cd = {
 	NULL, "itherm", DV_DULL
 };
@@ -124,7 +128,7 @@ itherm_attach(struct device *parent, struct device *self, void *aux)
 
 	v = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
 	v &= PCI_MAPREG_TYPE_MASK | PCI_MAPREG_MEM_TYPE_MASK;
-	if (pci_mapreg_map(pa, PCI_MAPREG_START, 
+	if (pci_mapreg_map(pa, PCI_MAPREG_START,
 	    v, 0, &sc->iot, &sc->ioh, NULL, &sc->size, 0)) {
 		printf(": can't map mem space\n");
 		return;
@@ -152,9 +156,9 @@ itherm_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sensors[ITHERM_SENSOR_CORETEMP1].desc));
 
 	strlcpy(sc->sensors[ITHERM_SENSOR_CORETEMP2].desc,
-	    "Core 2", 
+	    "Core 2",
 	    sizeof(sc->sensors[ITHERM_SENSOR_CORETEMP2].desc));
-	
+
 	strlcpy(sc->sensors[ITHERM_SENSOR_COREENERGY].desc,
 	    "CPU power consumption",
 	    sizeof(sc->sensors[ITHERM_SENSOR_COREENERGY].desc));
@@ -196,14 +200,14 @@ itherm_attach(struct device *parent, struct device *self, void *aux)
 
 	itherm_enable(sc);
 
-	for (i=0; i < ITHERM_NUM_SENSORS; i++)
+	for (i = 0; i < ITHERM_NUM_SENSORS; i++)
 		sensor_attach(&sc->sensordev, &sc->sensors[i]);
 
 	sensordev_install(&sc->sensordev);
 	sensor_task_register(sc, itherm_refresh, ITHERM_REFRESH_INTERVAL);
 
 	printf("\n");
-	
+
 	return;
 }
 
@@ -242,7 +246,7 @@ itherm_refresh_sensor_data(struct itherm_softc *sc)
 	u_int32_t i;
 
 	/* Thermometer sensor */
-	sc->sensors[ITHERM_SENSOR_THERMOMETER].value = 
+	sc->sensors[ITHERM_SENSOR_THERMOMETER].value =
 	    IREAD1(sc, ITHERM_TSTR);
 
 	itherm_bias_temperature_sensor(
@@ -260,11 +264,11 @@ itherm_refresh_sensor_data(struct itherm_softc *sc)
     	data = IREAD2(sc, ITHERM_CTV1);
 	if (data & ITHERM_CTV_INVALID)
 		sc->sensors[ITHERM_SENSOR_CORETEMP1].flags |=
-		   SENSOR_FINVALID;
+		    SENSOR_FINVALID;
 	else {
 		sc->sensors[ITHERM_SENSOR_CORETEMP1].flags &=
 		    ~SENSOR_FINVALID;
-		sc->sensors[ITHERM_SENSOR_CORETEMP1].value = 	
+		sc->sensors[ITHERM_SENSOR_CORETEMP1].value =
 		    (data & ITHERM_CTV_INT_MASK) >> 6;
 		sc->sensors[ITHERM_SENSOR_CORETEMP1].value *=
 		    1000000;
@@ -280,11 +284,11 @@ itherm_refresh_sensor_data(struct itherm_softc *sc)
     	data = IREAD2(sc, ITHERM_CTV2);
 	if (data & ITHERM_CTV_INVALID)
 		sc->sensors[ITHERM_SENSOR_CORETEMP2].flags |=
-		   SENSOR_FINVALID;
+		    SENSOR_FINVALID;
 	else {
 		sc->sensors[ITHERM_SENSOR_CORETEMP2].flags &=
 		    ~SENSOR_FINVALID;
-		sc->sensors[ITHERM_SENSOR_CORETEMP2].value = 	
+		sc->sensors[ITHERM_SENSOR_CORETEMP2].value =
 		    (data & ITHERM_CTV_INT_MASK) >> 6;
 		sc->sensors[ITHERM_SENSOR_CORETEMP2].value *=
 		    1000000;
@@ -312,11 +316,11 @@ itherm_refresh_sensor_data(struct itherm_softc *sc)
 	/* Convert to Joules per second */
 	energy = energy / ITHERM_REFRESH_INTERVAL;
 	/* Convert to micro Joules per second (micro Watts) */
-	energy = energy * 1000 * 1000; 
+	energy = energy * 1000 * 1000;
 
 	sc->sensors[ITHERM_SENSOR_COREENERGY].value = energy;
 
-	/* 
+	/*
 	 * XXX - the GPU temp is reported as a 64 bit value with no
 	 * documented structure. Disabled for now
 	 */
@@ -333,7 +337,7 @@ itherm_refresh_sensor_data(struct itherm_softc *sc)
 	    IREAD1(sc, ITHERM_PTV) * 1000000;
 	itherm_bias_temperature_sensor(
 	    &sc->sensors[ITHERM_SENSOR_MAXPROCTEMP]);
-		
+
 	/* DIMM 1 */
 	sc->sensors[ITHERM_SENSOR_DIMMTEMP1].value =
 	    IREAD1(sc, ITHERM_DTV) * 1000000;
@@ -382,7 +386,7 @@ itherm_bias_temperature_sensor(struct ksensor *sensor)
 	/* Bias anyway from degC to degK, even if invalid */
 	sensor->value += 273150000;
 }
-		
+
 void
 itherm_refresh(void *arg)
 {
