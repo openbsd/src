@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.76 2014/10/31 04:33:51 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.77 2014/11/07 03:20:02 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -278,6 +278,47 @@ extern vaddr_t lo32_paddr;
 vaddr_t virtual_avail;
 extern int end;
 
+extern vaddr_t __rodata_start;
+extern int __rodata_size;
+extern vaddr_t erodata;
+
+/*
+ * NX range definitions
+ */
+struct nx_range_description {
+	vaddr_t start;
+	size_t size;
+	vm_prot_t prot;
+	int is_ptr;
+};
+
+static const struct nx_range_description nx_ranges[] = {
+	/*
+	 * List of ranges to map as NX (non-execute) if the processor supports
+	 * NX. Each range consists of a start vaddr and size (in bytes), and a
+	 * protection value (eg, VM_PROT_READ or VM_PROT_READ | VM_PROT_WRITE).
+	 *
+	 * The list also includes an 'is_ptr' field in each element to denote
+	 * if the 'start' value is a constant (is_ptr == 0) or should be
+	 * interpreted as an address containing the real value (is_ptr == 1).
+	 *
+	 * The range includes the page containing [start va] and extends through
+	 * and including the page containing [end va].
+	 */
+	{ /* .rodata range */
+	    (vaddr_t)&__rodata_start,
+	    (size_t)&__rodata_size,
+	    VM_PROT_READ,
+	    0
+	},
+	{ /* ISA hole */
+	    (vaddr_t)&atdevbase,
+	    IOM_SIZE,
+	    VM_PROT_READ | VM_PROT_WRITE,
+	    1
+	}
+};
+
 /*
  * local prototypes
  */
@@ -531,13 +572,13 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 paddr_t
 pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 {
-	vaddr_t kva, kva_end, kva_start = VM_MIN_KERNEL_ADDRESS;
+	vaddr_t kva, kva_end, kva_start = VM_MIN_KERNEL_ADDRESS, nx_start;
 	struct pmap *kpm;
 	int i;
 	unsigned long p1i;
 	pt_entry_t pg_nx = (cpu_feature & CPUID_NXE? PG_NX : 0);
 	long ndmpdp;
-	paddr_t dmpd, dmpdp;
+	paddr_t dmpd, dmpdp, nx_paddr;
 
 	/*
 	 * define the boundaries of the managed kernel virtual address
@@ -690,6 +731,25 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 
 	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
 	    &pool_allocator_nointr);
+
+	/*
+	 * Enable NX ranges, resets page permissions on already mapped ranges
+	 */
+	 if (pg_nx) {
+		for (i = 0 ; i < nitems(nx_ranges); i++ ) {
+			if (nx_ranges[i].is_ptr)
+				nx_start = *(vaddr_t *)(nx_ranges[i].start);
+			else
+				nx_start = nx_ranges[i].start;
+
+			for (kva = nx_start; kva < nx_start + nx_ranges[i].size;
+			    kva += PAGE_SIZE) {
+				if(pmap_extract(pmap_kernel(), kva, &nx_paddr))
+					pmap_kenter_pa(kva, nx_paddr,
+					    nx_ranges[i].prot);
+			}
+		}	
+	}
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...
