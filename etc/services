@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.89 2014/07/15 15:58:39 sthen Exp $
+# $OpenBSD: services,v 1.90 2014/11/07 09:23:20 sthen Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -226,12 +226,13 @@ isisd		2608/tcp			# Quagga/Zebra
 netplan		2983/tcp			# netplan daemon
 eppc		3031/tcp			# Remote AppleEvents/PPC Toolbox
 eppc		3031/udp			# Remote AppleEvents/PPC Toolbox
+iscsi		3260/tcp			# ISCSI
 mysql		3306/tcp			# MySQL
 iapp		3517/tcp	802-11-iapp	# IEEE 802.11f IAPP
-iscsi		3260/tcp			# ISCSI
 iapp		3517/udp	802-11-iapp	# IEEE 802.11f IAPP
 daap		3689/tcp			# Digital Audio Access Protocol
 daap		3689/udp			# Digital Audio Access Protocol
+svn		3690/tcp			# Subversion
 sieve		4190/tcp			# ManageSieve Protocol
 sieve		4190/udp			# ManageSieve Protocol
 krb524		4444/tcp			# Kerberos 5->4
