@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.192 2014/11/02 13:59:40 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.193 2014/11/07 13:48:06 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1059,9 +1059,7 @@ sslflags	: SESSION CACHE sslcache	{ proto->cache = $3; }
 		;
 
 flag		: STRING			{
-			if (strcmp("sslv2", $1) == 0)
-				$$ = SSLFLAG_SSLV2;
-			else if (strcmp("sslv3", $1) == 0)
+			if (strcmp("sslv3", $1) == 0)
 				$$ = SSLFLAG_SSLV3;
 			else if (strcmp("tlsv1", $1) == 0)
 				$$ = SSLFLAG_TLSV1;

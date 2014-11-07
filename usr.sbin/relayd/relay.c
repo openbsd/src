@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.179 2014/10/25 03:23:49 lteo Exp $	*/
+/*	$OpenBSD: relay.c,v 1.180 2014/11/07 13:48:06 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1983,14 +1983,17 @@ relay_ssl_ctx_create(struct relay *rlay)
 		SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
 
 	/* Set the allowed SSL protocols */
-	if ((proto->sslflags & SSLFLAG_SSLV2) == 0)
-		SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
+	SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
+	SSL_CTX_clear_options(ctx, SSL_OP_NO_SSLv3);
 	if ((proto->sslflags & SSLFLAG_SSLV3) == 0)
 		SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
+	SSL_CTX_clear_options(ctx, SSL_OP_NO_TLSv1);
 	if ((proto->sslflags & SSLFLAG_TLSV1_0) == 0)
 		SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+	SSL_CTX_clear_options(ctx, SSL_OP_NO_TLSv1_1);
 	if ((proto->sslflags & SSLFLAG_TLSV1_1) == 0)
 		SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
+	SSL_CTX_clear_options(ctx, SSL_OP_NO_TLSv1_2);
 	if ((proto->sslflags & SSLFLAG_TLSV1_2) == 0)
 		SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
 

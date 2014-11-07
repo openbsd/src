@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.151 2014/10/21 02:29:54 lteo Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.152 2014/11/07 13:48:06 jsing Exp $
 .\"
 .\" Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 21 2014 $
+.Dd $Mdocdate: November 7 2014 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -920,12 +920,6 @@ is zero, the default size defined by the SSL library will be used.
 A positive number will set the maximum size in bytes and the keyword
 .Ic disable
 will disable the SSL session cache.
-.It Xo
-.Op Ic no
-.Ic sslv2
-.Xc
-Enable the SSLv2 protocol;
-disabled by default.
 .It Xo
 .Op Ic no
 .Ic sslv3

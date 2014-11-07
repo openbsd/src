@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.195 2014/11/02 13:59:40 bluhm Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.196 2014/11/07 13:48:06 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -635,12 +635,11 @@ TAILQ_HEAD(relay_rules, relay_rule);
 	"\10\01NODELAY\02NO_NODELAY\03SACK\04NO_SACK"		\
 	"\05SOCKET_BUFFER_SIZE\06IP_TTL\07IP_MINTTL\10NO_SPLICE"
 
-#define SSLFLAG_SSLV2				0x01
-#define SSLFLAG_SSLV3				0x02
-#define SSLFLAG_TLSV1_0				0x04
-#define SSLFLAG_TLSV1_1				0x08
-#define SSLFLAG_TLSV1_2				0x10
-#define SSLFLAG_TLSV1				0x1c
+#define SSLFLAG_SSLV3				0x01
+#define SSLFLAG_TLSV1_0				0x02
+#define SSLFLAG_TLSV1_1				0x04
+#define SSLFLAG_TLSV1_2				0x08
+#define SSLFLAG_TLSV1				0x0e
 #define SSLFLAG_VERSION				0x1f
 #define SSLFLAG_CIPHER_SERVER_PREF		0x20
 #define SSLFLAG_CLIENT_RENEG			0x40
@@ -648,7 +647,7 @@ TAILQ_HEAD(relay_rules, relay_rule);
 	(SSLFLAG_TLSV1|SSLFLAG_CLIENT_RENEG)
 
 #define SSLFLAG_BITS						\
-	"\10\01sslv2\02sslv3\03tlsv1.0\04tlsv1.1\05tlsv1.2"	\
+	"\06\01sslv3\02tlsv1.0\03tlsv1.1\04tlsv1.2"	\
 	"\06cipher-server-preference\07client-renegotiation"
 
 #define SSLCIPHERS_DEFAULT	"HIGH:!aNULL"
