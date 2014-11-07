@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.4 2014/10/01 13:15:40 sthen Exp $
+.\" $OpenBSD: openssl.1,v 1.5 2014/11/07 13:13:08 jsing Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: October 1 2014 $
+.Dd $Mdocdate: November 7 2014 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -6617,6 +6617,7 @@ which it can be seen agrees with the recovered value above.
 .Op Fl psk_identity Ar identity
 .Op Fl quiet
 .Op Fl reconnect
+.Op Fl servername Ar name
 .Op Fl showcerts
 .Op Fl ssl3
 .Op Fl starttls Ar protocol
@@ -6773,6 +6774,10 @@ as well.
 .It Fl reconnect
 Reconnects to the same server 5 times using the same session ID; this can
 be used as a test that session caching is working.
+.It Fl servername Ar name
+Include the TLS Server Name Indication (SNI) extension in the ClientHello
+message, using the specified server
+.Ar name .
 .It Fl showcerts
 Display the whole server certificate chain: normally only the server
 certificate itself is displayed.
