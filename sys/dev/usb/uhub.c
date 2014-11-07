@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.75 2014/11/01 14:44:08 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.76 2014/11/07 13:56:29 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -138,6 +138,21 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: hub depth (%d) exceeded, hub ignored\n",
 		       sc->sc_dev.dv_xname, USB_HUB_MAX_DEPTH);
 		return;
+	}
+
+	/*
+	 * Super-Speed hubs need to know their depth to be able to
+	 * parse the bits of the route-string that correspond to
+	 * their downstream port number.
+	 *
+	 * This does no apply to root hubs.
+	 */
+	if (dev->depth != 0 && dev->speed == USB_SPEED_SUPER) {
+		if (usbd_set_hub_depth(dev, dev->depth - 1)) {
+			printf("%s: unable to set HUB depth\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
 	}
 
 	/* Get hub descriptor. */
