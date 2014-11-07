@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.34 2014/05/06 10:24:22 markus Exp $	*/
+/*	$OpenBSD: policy.c,v 1.35 2014/11/07 14:12:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -286,8 +286,7 @@ sa_stateok(struct iked_sa *sa, int state)
 
 	if (state == IKEV2_STATE_SA_INIT ||
 	    state == IKEV2_STATE_VALID ||
-	    state == IKEV2_STATE_EAP_VALID ||
-	    state == IKEV2_STATE_EAP) {
+	    state == IKEV2_STATE_EAP_VALID) {
 		log_debug("%s: %s flags 0x%02x, require 0x%02x %s", __func__,
 		    print_map(state, ikev2_state_map),
 		    (sa->sa_stateflags & require), require,
