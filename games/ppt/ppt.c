@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppt.c,v 1.11 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: ppt.c,v 1.12 2014/11/07 22:17:49 schwarze Exp $	*/
 /*	$NetBSD: ppt.c,v 1.4 1995/03/23 08:35:40 cgd Exp $	*/
 
 /*
@@ -49,7 +49,8 @@ void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-d [-b] | string ...]\n", __progname);
+	fprintf(stderr, "usage: %s [string ...]\n", __progname);
+	fprintf(stderr, "usage: %s -d [-b]\n", __progname);
 	exit(1);
 }
 
