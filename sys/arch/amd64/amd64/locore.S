@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.56 2014/11/05 05:40:02 mlarkin Exp $	*/
+/*	$OpenBSD: locore.S,v 1.57 2014/11/07 19:34:22 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -440,7 +440,7 @@ bi_size_ok:
 	orl     $(PG_V|PG_KR),%eax
 	fillkpt
 
-	/* Map .rodata read-only, and NX if available */
+	/* Map .rodata read-only */
 	movl	$RELOC(__rodata_start), %eax
 	movl	$RELOC(erodata), %ecx
 	addl	$PGOFSET, %ecx
