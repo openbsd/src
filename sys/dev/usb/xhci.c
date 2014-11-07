@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.34 2014/11/01 18:21:07 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.35 2014/11/07 14:06:43 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -1381,39 +1381,43 @@ int
 xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 {
 	struct xhci_trb *trb;
-	int error = 0;
+	int s, error = 0;
 
 	KASSERT(timeout == 0 || sc->sc_cmd_trb == NULL);
 
 	trb0->trb_flags |= htole32(sc->sc_cmd_ring.toggle);
 
 	trb = xhci_ring_dequeue(sc, &sc->sc_cmd_ring, 0);
+	if (trb == NULL)
+		return (EAGAIN);
 	memcpy(trb, trb0, sizeof(struct xhci_trb));
 	usb_syncmem(&sc->sc_cmd_ring.dma, TRBOFF(sc->sc_cmd_ring, trb),
 	    sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
 
-	if (timeout)
-		sc->sc_cmd_trb = trb;
-
-	XDWRITE4(sc, XHCI_DOORBELL(0), 0);
-
-	if (timeout == 0)
+	if (timeout == 0) {
+		XDWRITE4(sc, XHCI_DOORBELL(0), 0);
 		return (0);
+	}
 
 	assertwaitok();
 
+	s = splusb();
+	sc->sc_cmd_trb = trb;
+	XDWRITE4(sc, XHCI_DOORBELL(0), 0);
 	error = tsleep(&sc->sc_cmd_trb, PZERO, "xhcicmd",
 	    (timeout*hz+999)/ 1000 + 1);
 	if (error) {
 #ifdef XHCI_DEBUG
 		printf("%s: tsleep() = %d\n", __func__, error);
-		printf("cmd = %d " ,XHCI_TRB_TYPE(letoh32(trb->trb_flags)));
+		printf("cmd = %d ", XHCI_TRB_TYPE(letoh32(trb->trb_flags)));
 		xhci_dump_trb(trb);
 #endif
 		KASSERT(sc->sc_cmd_trb == trb);
 		sc->sc_cmd_trb = NULL;
+		splx(s);
 		return (error);
 	}
+	splx(s);
 
 	memcpy(trb0, &sc->sc_result_trb, sizeof(struct xhci_trb));
 
