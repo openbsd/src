@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.16 2014/08/27 10:28:57 reyk Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.17 2014/11/07 14:02:32 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -32,13 +32,14 @@
 #define IKEV2_STATE_COOKIE		1	/* cookie requested */
 #define IKEV2_STATE_SA_INIT		2	/* init IKE SA */
 #define IKEV2_STATE_EAP			3	/* EAP requested */
-#define IKEV2_STATE_AUTH_REQUEST	4	/* auth received */
-#define IKEV2_STATE_AUTH_SUCCESS	5	/* authenticated */
-#define IKEV2_STATE_VALID		6	/* authenticated AND validated certs */
-#define IKEV2_STATE_EAP_VALID		7	/* EAP validated */
-#define IKEV2_STATE_ESTABLISHED		8	/* active IKE SA */
-#define IKEV2_STATE_CLOSING		9	/* expect delete for this SA */
-#define IKEV2_STATE_CLOSED		10	/* delete this SA */
+#define IKEV2_STATE_EAP_SUCCESS		4	/* EAP succeeded */
+#define IKEV2_STATE_AUTH_REQUEST	5	/* auth received */
+#define IKEV2_STATE_AUTH_SUCCESS	6	/* authenticated */
+#define IKEV2_STATE_VALID		7	/* authenticated AND validated certs */
+#define IKEV2_STATE_EAP_VALID		8	/* EAP validated */
+#define IKEV2_STATE_ESTABLISHED		9	/* active IKE SA */
+#define IKEV2_STATE_CLOSING		10	/* expect delete for this SA */
+#define IKEV2_STATE_CLOSED		11	/* delete this SA */
 
 extern struct iked_constmap ikev2_state_map[];
 

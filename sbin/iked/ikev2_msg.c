@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.36 2014/08/25 07:50:25 doug Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.37 2014/11/07 14:02:32 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -773,10 +773,6 @@ ikev2_msg_authverify(struct iked *env, struct iked_sa *sa,
 		log_debug("%s: authentication successful", __func__);
 		sa_state(env, sa, IKEV2_STATE_AUTH_SUCCESS);
 		sa_stateflags(sa, IKED_REQ_AUTHVALID);
-
-		if (!sa->sa_policy->pol_auth.auth_eap &&
-		    auth->auth_method == IKEV2_AUTH_SHARED_KEY_MIC)
-			sa_state(env, sa, IKEV2_STATE_VALID);
 	} else {
 		log_debug("%s: authentication failed", __func__);
 		sa_state(env, sa, IKEV2_STATE_AUTH_REQUEST);
