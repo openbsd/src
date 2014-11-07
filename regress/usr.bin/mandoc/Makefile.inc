@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.17 2014/10/30 17:45:58 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.18 2014/11/07 00:40:27 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -285,7 +285,7 @@ lint-out-clean: obj-check
 obj-clean:
 	rm -rf ${.CURDIR}/obj/*
 	rm -f ${.CURDIR}/obj
-	${MAKE} clean
+	cd ${.CURDIR} && ${MAKE} clean
 
 obj-check:
 	@test ! -e ${.CURDIR}/obj || \
