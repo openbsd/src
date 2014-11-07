@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.35 2014/11/07 14:06:43 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.36 2014/11/07 16:33:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -78,8 +78,7 @@ void	xhci_event_dequeue(struct xhci_softc *);
 void	xhci_event_xfer(struct xhci_softc *, uint64_t, uint32_t, uint32_t);
 void	xhci_event_command(struct xhci_softc *, uint64_t);
 void	xhci_event_port_change(struct xhci_softc *, uint64_t, uint32_t);
-int	xhci_pipe_init(struct xhci_softc *, struct usbd_pipe *, uint32_t,
-	    uint32_t);
+int	xhci_pipe_init(struct xhci_softc *, struct usbd_pipe *);
 int	xhci_scratchpad_alloc(struct xhci_softc *, int);
 void	xhci_scratchpad_free(struct xhci_softc *);
 int	xhci_softdev_alloc(struct xhci_softc *, uint8_t);
@@ -865,6 +864,10 @@ xhci_xfer_done(struct usbd_xfer *xfer)
 	usb_transfer_complete(xfer);
 }
 
+/*
+ * Calculate the Device Context Index (DCI) for endpoints as stated
+ * in section 4.5.1 of xHCI specification r1.1.
+ */
 static inline uint8_t
 xhci_ed2dci(usb_endpoint_descriptor_t *ed)
 {
@@ -888,8 +891,6 @@ xhci_pipe_open(struct usbd_pipe *pipe)
 	struct xhci_pipe *xp = (struct xhci_pipe *)pipe;
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
 	uint8_t slot = 0, xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
-	struct usbd_device *hub;
-	uint32_t route = 0, rhport = 0;
 	int error;
 
 	KASSERT(xp->slot == 0);
@@ -930,28 +931,23 @@ xhci_pipe_open(struct usbd_pipe *pipe)
 	case UE_CONTROL:
 		pipe->methods = &xhci_device_ctrl_methods;
 
-		/* Get a slot and init the device's contexts. */
+		/*
+		 * Get a slot and init the device's contexts.
+		 *
+		 * Since the control enpoint, represented as the default
+		 * pipe, is always opened first we are dealing with a
+		 * new device.  Put a new slot in the ENABLED state.
+		 *
+		 */
 		error = xhci_cmd_slot_control(sc, &slot, 1);
 		if (error || slot == 0 || slot > sc->sc_noslot)
 			return (USBD_INVAL);
 
-		if (xhci_softdev_alloc(sc, slot))
+		if (xhci_softdev_alloc(sc, slot)) {
+			xhci_cmd_slot_control(sc, &slot, 0);
 			return (USBD_NOMEM);
-
-		/*
-		 * Calculate the Route String.  Note that this code assume
-		 * that there is no hub with more than 16 ports and that
-		 * they all are at a detph < USB_HUB_MAX_DEPTH.
-		 */
-		for (hub = pipe->device; hub->myhub->depth; hub = hub->myhub) {
-			uint32_t port = hub->powersrc->portno;
-			uint32_t depth = hub->myhub->depth;
-
-			route |= port << (4 * (depth - 1));
 		}
 
-		/* Get Root Hub port */
-		rhport = hub->powersrc->portno;
 		break;
 	case UE_ISOCHRONOUS:
 #if notyet
@@ -972,16 +968,21 @@ xhci_pipe_open(struct usbd_pipe *pipe)
 		return (USBD_INVAL);
 	}
 
-	/* XXX Section nb? */
+	/*
+	 * Our USBD Bus Interface is pipe-oriented but for most of the
+	 * operations we need to access a device context, so keep trace
+	 * of the slot ID in every pipe.
+	 */
+	if (slot == 0)
+		slot = ((struct xhci_pipe *)pipe->device->default_pipe)->slot;
+
+	xp->slot = slot;
 	xp->dci = xhci_ed2dci(ed);
 
-	if (slot != 0)
-		xp->slot = slot;
-	else
-		xp->slot = ((struct xhci_pipe *)pipe->device->default_pipe)->slot;
-
-	if (xhci_pipe_init(sc, pipe, rhport, route))
+	if (xhci_pipe_init(sc, pipe)) {
+		xhci_cmd_slot_control(sc, &slot, 0);
 		return (USBD_IOERROR);
+	}
 
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -1023,15 +1024,15 @@ xhci_get_txinfo(struct xhci_softc *sc, struct usbd_pipe *pipe)
 }
 
 int
-xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port,
-    uint32_t route)
+xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe)
 {
 	struct xhci_pipe *xp = (struct xhci_pipe *)pipe;
 	struct xhci_soft_dev *sdev = &sc->sc_sdevs[xp->slot];
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
 	uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
 	uint8_t ival, speed, cerr = 0;
-	uint32_t mps;
+	uint32_t mps, route = 0, rhport = 0;
+	struct usbd_device *hub;
 	int error;
 
 	DPRINTF(("%s: dev %d dci %u (epAddr=0x%x)\n", DEVNAME(sc), xp->slot,
@@ -1044,6 +1045,21 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port,
 	xp->halted = 0;
 
 	sdev->pipes[xp->dci - 1] = xp;
+
+	/*
+	 * Calculate the Route String.  Assume that there is no hub with
+	 * more than 15 ports and that they all have a detph < 6.  See
+	 * section 8.9 of USB 3.1 Specification for more details.
+	 */
+	for (hub = pipe->device; hub->myhub->depth; hub = hub->myhub) {
+		uint32_t port = hub->powersrc->portno;
+		uint32_t depth = hub->myhub->depth;
+
+		route |= port << (4 * (depth - 1));
+	}
+
+	/* Get Root Hub port */
+	rhport = hub->powersrc->portno;
 
 	switch (pipe->device->speed) {
 	case USB_SPEED_LOW:
@@ -1067,6 +1083,7 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port,
 		mps = 512;
 		break;
 	default:
+		xhci_ring_free(sc, &xp->ring);
 		return (EINVAL);
 	}
 
@@ -1077,7 +1094,7 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port,
 		ival = min(ival, pipe->interval);
 
 	DPRINTF(("%s: speed %d mps %d rhport %d route 0x%x\n", DEVNAME(sc),
-	    speed, mps, port, route));
+	    speed, mps, rhport, route));
 
 	/* Setup the endpoint context */
 	if (xfertype != UE_ISOCHRONOUS)
@@ -1108,11 +1125,14 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port,
 	    XHCI_SCTX_DCI(xp->dci) | XHCI_SCTX_SPEED(speed) |
 	    XHCI_SCTX_ROUTE(route)
 	);
-	sdev->slot_ctx->info_hi = htole32(XHCI_SCTX_RHPORT(port));
+	sdev->slot_ctx->info_hi = htole32(XHCI_SCTX_RHPORT(rhport));
 	sdev->slot_ctx->tt = 0;
 	sdev->slot_ctx->state = 0;
 
-	/* If we are opening the interrupt pipe of a hub, update its context. */
+	/*
+	 * If we are opening the interrupt pipe of a hub, update its
+	 * context before putting it in the CONFIGURED state.
+	 */
 	if (pipe->device->hub != NULL) {
 		int nports = pipe->device->hub->nports;
 
@@ -1125,11 +1145,13 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port,
 
 	usb_syncmem(&sdev->ictx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
 
-	/*
-	 * Issue only one Set address to set up the slot context and
-	 * assign an address.
-	 */
 	if (xp->dci == 1) {
+		/*
+		 * If we are opening the default pipe, the Slot should
+		 * be in the ENABLED state.  Issue an "Address Device"
+		 * with BSR=0 and jump directly to the ADDRESSED state.
+		 * This way we don't need a callback to assign an addr.
+		 */
 		error = xhci_cmd_address_device(sc, xp->slot,
 		    DMAADDR(&sdev->ictx_dma, 0));
 	} else {
@@ -1166,7 +1188,6 @@ xhci_pipe_close(struct usbd_pipe *pipe)
 {
 	struct xhci_softc *sc = (struct xhci_softc *)pipe->device->bus;
 	struct xhci_pipe *lxp, *xp = (struct xhci_pipe *)pipe;
-	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
 	struct xhci_soft_dev *sdev = &sc->sc_sdevs[xp->slot];
 	int i;
 
@@ -1200,7 +1221,11 @@ xhci_pipe_close(struct usbd_pipe *pipe)
 	xhci_ring_free(sc, &xp->ring);
 	sdev->pipes[xp->dci - 1] = NULL;
 
-	if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_CONTROL) {
+	/*
+	 * If we are closing the default pipe, the device is probably
+	 * gone, so put its slot in the DISABLED state.
+	 */
+	if (xp->dci == 1) {
 		xhci_cmd_slot_control(sc, &xp->slot, 0);
 		xhci_softdev_free(sc, xp->slot);
 	}
