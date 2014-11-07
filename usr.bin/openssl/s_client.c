@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.6 2014/11/06 14:50:12 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.7 2014/11/07 14:16:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -638,7 +638,7 @@ bad:
 		goto end;
 	}
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
 	next_proto.status = -1;
 	if (next_proto_neg_in) {
 		next_proto.data = next_protos_parse(&next_proto.len, next_proto_neg_in);
@@ -734,7 +734,7 @@ bad:
 	if (socket_type == SOCK_DGRAM)
 		SSL_CTX_set_read_ahead(ctx, 1);
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
 	if (next_proto.data)
 		SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
 #endif
@@ -1243,7 +1243,7 @@ end:
 			print_stuff(bio_c_out, con, 1);
 		SSL_free(con);
 	}
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
 	free(next_proto.data);
 #endif
 	if (ctx != NULL)
@@ -1399,7 +1399,7 @@ print_stuff(BIO * bio, SSL * s, int full)
 	}
 #endif
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
 	if (next_proto.status != -1) {
 		const unsigned char *proto;
 		unsigned int proto_len;
