@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.20 2014/04/16 12:01:33 aoyama Exp $
+#	$OpenBSD: files.luna88k,v 1.21 2014/11/08 21:18:42 aoyama Exp $
 #
 maxpartitions 16
 
@@ -20,11 +20,6 @@ file	arch/luna88k/dev/if_le.c			le
 device sio {[channel = -1]}
 attach sio at mainbus
 file	arch/luna88k/dev/sio.c				sio
-
-# this should be removed after bringup
-#device romtty: tty
-#attach romtty at mainbus
-#file	arch/luna88k/dev/romtty.c			romtty needs-flag
 
 device siotty: tty
 attach siotty at sio
