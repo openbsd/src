@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.29 2014/10/01 19:41:06 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.30 2014/11/08 08:18:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -355,6 +355,19 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 		pa = (paddr_t)(phys_page_number * NBPD_L2);
 		hibernate_enter_resume_mapping(page, pa, 1);
 	}
+
+	/* Unmap MMU pages (stack remains mapped) */
+	pmap_kremove(HIBERNATE_PML4T, PAGE_SIZE);
+	pmap_kremove(HIBERNATE_PDPT_LOW, PAGE_SIZE);
+	pmap_kremove(HIBERNATE_PDPT_HI, PAGE_SIZE);
+	pmap_kremove(HIBERNATE_PD_LOW, PAGE_SIZE);
+	pmap_kremove(HIBERNATE_PD_LOW2, PAGE_SIZE);
+	pmap_kremove(HIBERNATE_PD_HI, PAGE_SIZE);
+	pmap_kremove(HIBERNATE_PT_LOW, PAGE_SIZE);
+	pmap_kremove(HIBERNATE_PT_LOW2, PAGE_SIZE);
+	pmap_kremove(HIBERNATE_PT_HI, PAGE_SIZE);
+
+	pmap_activate(curproc);
 }
 
 /*
