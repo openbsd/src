@@ -14,6 +14,7 @@
 ./usr/bin/gprof
 ./usr/bin/ld
 ./usr/bin/lex
+./usr/bin/libtool
 ./usr/bin/lorder
 ./usr/bin/objdump
 ./usr/bin/ranlib
@@ -1607,6 +1608,7 @@
 ./usr/share/man/man1/gprof.1
 ./usr/share/man/man1/ld.1
 ./usr/share/man/man1/lex.1
+./usr/share/man/man1/libtool.1
 ./usr/share/man/man1/lorder.1
 ./usr/share/man/man1/objcopy.1
 ./usr/share/man/man1/objdump.1

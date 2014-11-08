@@ -416,7 +416,6 @@
 ./usr/bin/less
 ./usr/bin/lesskey
 ./usr/bin/libnetcfg
-./usr/bin/libtool
 ./usr/bin/lndir
 ./usr/bin/locale
 ./usr/bin/locate
@@ -5013,7 +5012,6 @@
 ./var/spool/uucp
 ./var/spool/uucppublic
 ./var/tmp
-./var/tmp/vi.recover
 ./var/unbound
 ./var/unbound/db
 ./var/unbound/etc
