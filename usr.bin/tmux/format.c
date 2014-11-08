@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.51 2014/10/25 08:47:04 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.52 2014/11/08 12:50:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -236,7 +236,8 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 		*ptr = '\0';
 
 		value = format_find(ft, copy + 1);
-		if (value != NULL && (value[0] != '0' || value[1] != '\0')) {
+		if (value != NULL && *value != '\0' &&
+		    (value[0] != '0' || value[1] != '\0')) {
 			value = ptr + 1;
 			ptr = strchr(value, ',');
 			if (ptr == NULL)
