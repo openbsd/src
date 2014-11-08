@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.31 2014/11/04 18:29:32 jasper Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.32 2014/11/08 13:36:51 jasper Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -50,7 +50,7 @@ sensordev_install(struct ksensordev *sensdev)
 		for (v = SLIST_FIRST(&sensordev_list);
 		    (nv = SLIST_NEXT(v, list)) != NULL; v = nv)
 			if (nv->num - v->num > 1)
-				panic("sensor installed twice");
+				break;
 		sensdev->num = v->num + 1;
 		SLIST_INSERT_AFTER(v, sensdev, list);
 	}
