@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmfile.c,v 1.14 2011/07/17 12:17:10 aschrijver Exp $	*/
+/*	$OpenBSD: mmfile.c,v 1.15 2014/11/08 22:13:47 brad Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -47,8 +47,8 @@ mmopen(char *fn, char *mode)
 	mmf_t *mmf;
 	struct stat st;
 
-	/* XXX ignore mode for now */
-	mode = mode;
+	if (*mode != 'r')
+		return NULL;
 
 	mmf = grep_malloc(sizeof *mmf);
 	if ((mmf->fd = open(fn, O_RDONLY)) == -1)
