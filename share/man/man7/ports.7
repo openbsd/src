@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.99 2014/09/08 01:27:55 schwarze Exp $
+.\" $OpenBSD: ports.7,v 1.100 2014/11/08 21:06:43 brad Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: November 8 2014 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -585,7 +585,7 @@ each subpackage will have a corresponding description in the
 file.
 .Pp
 For example, the
-.Pa database/mysql
+.Pa databases/mariadb
 port comes with subpackages called
 .Ic -main ,
 .Ic -tests
@@ -594,12 +594,12 @@ and
 .Pp
 In this instance, the build will yield multiple packages, one
 corresponding to each subpackage.
-In the case of our mysql example,
+In the case of our mariadb example,
 the packages will be called
-.Ic mysql-client-<version> ,
-.Ic mysql-tests-<version> ,
+.Ic mariadb-client-<version> ,
+.Ic mariadb-tests-<version> ,
 and
-.Ic mysql-server-<version> .
+.Ic mariadb-server-<version> .
 .Pp
 To install/deinstall a specific subpackage of a port, you may
 .Xr pkg_add 1
