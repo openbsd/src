@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.34 2014/11/08 19:30:30 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.35 2014/11/08 22:08:01 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -66,7 +66,7 @@ if_register_bpf(void)
 	/* Open a BPF device */
 	for (b = 0; 1; b++) {
 		snprintf(filename, sizeof(filename), BPF_FORMAT, b);
-		sock = open(filename, O_RDWR, 0);
+		sock = open(filename, O_RDWR | O_CLOEXEC, 0);
 		if (sock < 0) {
 			if (errno == EBUSY)
 				continue;
@@ -195,7 +195,6 @@ if_register_receive(void)
 
 	/* Open a BPF device and hang it on this interface. */
 	ifi->rfdesc = if_register_bpf();
-	fcntl(ifi->rfdesc, F_SETFD, FD_CLOEXEC);
 
 	/* Make sure the BPF version is in range. */
 	if (ioctl(ifi->rfdesc, BIOCVERSION, &v) < 0)
