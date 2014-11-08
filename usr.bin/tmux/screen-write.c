@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.71 2014/10/20 23:57:14 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.72 2014/11/08 12:58:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -795,8 +795,6 @@ screen_write_linefeed(struct screen_write_ctx *ctx, int wrapped)
 	gl = &s->grid->linedata[s->grid->hsize + s->cy];
 	if (wrapped)
 		gl->flags |= GRID_LINE_WRAPPED;
-	else
-		gl->flags &= ~GRID_LINE_WRAPPED;
 
 	if (s->cy == s->rlower)
 		grid_view_scroll_region_up(s->grid, s->rupper, s->rlower);
