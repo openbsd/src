@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.33 2014/10/25 03:18:13 lteo Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.34 2014/11/08 19:30:30 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -203,7 +203,7 @@ if_register_receive(void)
 
 	if (v.bv_major != BPF_MAJOR_VERSION ||
 	    v.bv_minor < BPF_MINOR_VERSION)
-		error("Kernel BPF version out of range - recompile dhcpd!");
+		error("Kernel BPF version out of range - recompile dhclient!");
 
 	/*
 	 * Set immediate mode so that reads return as soon as a packet
