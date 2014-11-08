@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.74 2014/11/02 10:42:38 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.75 2014/11/08 15:21:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -301,7 +301,6 @@
 #define SSL_AEAD		0x00000040L
 
 /* Bits for algorithm_ssl (protocol version) */
-#define SSL_SSLV2		0x00000001L
 #define SSL_SSLV3		0x00000002L
 #define SSL_TLSV1		SSL_SSLV3	/* for now */
 #define SSL_TLSV1_2		0x00000004L

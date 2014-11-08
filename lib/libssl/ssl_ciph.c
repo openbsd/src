@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.71 2014/11/02 10:42:38 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.72 2014/11/08 15:21:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -450,10 +450,6 @@ static const SSL_CIPHER cipher_aliases[] = {
 	
 	/* protocol version aliases */
 	{
-		.name = SSL_TXT_SSLV2,
-		.algorithm_ssl = SSL_SSLV2,
-	},
-	{
 		.name = SSL_TXT_SSLV3,
 		.algorithm_ssl = SSL_SSLV3,
 	},
@@ -872,9 +868,8 @@ CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 
 	/*
 	 * We have num_of_ciphers descriptions compiled in, depending on the
-	 * method selected (SSLv2 and/or SSLv3, TLSv1 etc).
-	 * These will later be sorted in a linked list with at most num
-	 * entries.
+	 * method selected (SSLv3, TLSv1, etc). These will later be sorted in
+	 * a linked list with at most num entries.
 	 */
 
 	/* Get the initial list of ciphers */
@@ -1560,9 +1555,7 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 
 	alg2 = cipher->algorithm2;
 
-	if (alg_ssl & SSL_SSLV2)
-		ver = "SSLv2";
-	else if (alg_ssl & SSL_SSLV3)
+	if (alg_ssl & SSL_SSLV3)
 		ver = "SSLv3";
 	else if (alg_ssl & SSL_TLSV1_2)
 		ver = "TLSv1.2";
@@ -1691,15 +1684,10 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 char *
 SSL_CIPHER_get_version(const SSL_CIPHER *c)
 {
-	int i;
-
 	if (c == NULL)
 		return("(NONE)");
-	i = (int)(c->id >> 24L);
-	if (i == 3)
+	if ((c->id >> 24) == 3)
 		return("TLSv1/SSLv3");
-	else if (i == 2)
-		return("SSLv2");
 	else
 		return("unknown");
 }

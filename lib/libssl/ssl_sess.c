@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.42 2014/10/18 16:13:16 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.43 2014/11/08 15:21:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -238,15 +238,14 @@ SSL_SESSION_get_compress_id(const SSL_SESSION *s)
 }
 
 /*
- * Even with SSLv2, we have 16 bytes (128 bits) of session ID space.
- * SSLv3/TLSv1 has 32 bytes (256 bits). As such, filling the ID with random
- * gunk repeatedly until we have no conflict is going to complete in one
- * iteration pretty much "most" of the time (btw: understatement). So, if it
- * takes us 10 iterations and we still can't avoid a conflict - well that's a
- * reasonable point to call it quits. Either the RAND code is broken or someone
- * is trying to open roughly very close to 2^128 (or 2^256) SSL sessions to our
- * server. How you might store that many sessions is perhaps a more interesting
- * question...
+ * SSLv3/TLSv1 has 32 bytes (256 bits) of session ID space. As such, filling
+ * the ID with random gunk repeatedly until we have no conflict is going to
+ * complete in one iteration pretty much "most" of the time (btw:
+ * understatement). So, if it takes us 10 iterations and we still can't avoid
+ * a conflict - well that's a reasonable point to call it quits. Either the
+ * arc4random code is broken or someone is trying to open roughly very close to
+ * 2^128 (or 2^256) SSL sessions to our server. How you might store that many
+ * sessions is perhaps a more interesting question...
  */
 
 #define MAX_SESS_ID_ATTEMPTS 10
