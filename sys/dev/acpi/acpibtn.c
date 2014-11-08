@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.37 2014/10/16 17:46:06 mlarkin Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.38 2014/11/08 07:45:10 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -74,6 +74,25 @@ struct cfdriver acpibtn_cd = {
 };
 
 const char *acpibtn_hids[] = { ACPI_DEV_LD, ACPI_DEV_PBD, ACPI_DEV_SBD, 0 };
+
+int
+acpibtn_checklidopen(void)
+{
+	int64_t val, status;
+	struct acpi_lid *lid;
+
+	status = 0;
+
+	/* Check if any of the lid(s) are open */
+	SLIST_FOREACH(lid, &acpibtn_lids, abl_link)
+		if (!aml_evalinteger(lid->abl_softc->sc_acpi,
+		    lid->abl_softc->sc_devnode, "_LID", 0, NULL, &val))
+			status |= val;
+		else
+			return (0);
+
+	return (status);
+}
 
 int
 acpibtn_setpsw(struct acpibtn_softc *sc, int psw)
