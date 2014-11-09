@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.36 2014/11/07 16:33:02 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.37 2014/11/09 14:03:04 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -1211,7 +1211,7 @@ xhci_pipe_close(struct usbd_pipe *pipe)
 	sdev->slot_ctx->info_lo = htole32(XHCI_SCTX_DCI(lxp->dci));
 
 	/* Clear the Endpoint Context */
-	memset(&sdev->ep_ctx[xp->dci - 1], 0, sizeof(struct xhci_epctx));
+	memset(sdev->ep_ctx[xp->dci - 1], 0, sizeof(struct xhci_epctx));
 
 	usb_syncmem(&sdev->ictx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
 
