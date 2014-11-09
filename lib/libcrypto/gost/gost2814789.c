@@ -1,4 +1,4 @@
-/* $OpenBSD: gost2814789.c,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: gost2814789.c,v 1.2 2014/11/09 23:06:52 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -59,16 +59,19 @@
 
 #include "gost_locl.h"
 
-static inline unsigned int f(const GOST2814789_KEY *c, unsigned int x)
+static inline unsigned int
+f(const GOST2814789_KEY *c, unsigned int x)
 {
 	return  c->k87[(x>>24) & 255] | c->k65[(x>>16) & 255]|
 		c->k43[(x>> 8) & 255] | c->k21[(x    ) & 255];
 }
 
-void Gost2814789_encrypt(const unsigned char *in, unsigned char *out,
-	const GOST2814789_KEY *key)
+void
+Gost2814789_encrypt(const unsigned char *in, unsigned char *out,
+    const GOST2814789_KEY *key)
 {
 	unsigned int n1, n2; /* As named in the GOST */
+
 	c2l(in, n1);
 	c2l(in, n2);
 
@@ -97,10 +100,12 @@ void Gost2814789_encrypt(const unsigned char *in, unsigned char *out,
 	l2c(n1, out);
 }
 
-void Gost2814789_decrypt(const unsigned char *in, unsigned char *out,
-	const GOST2814789_KEY *key)
+void
+Gost2814789_decrypt(const unsigned char *in, unsigned char *out,
+    const GOST2814789_KEY *key)
 {
 	unsigned int n1, n2; /* As named in the GOST */
+
 	c2l(in, n1);
 	c2l(in, n2);
 
@@ -129,9 +134,9 @@ void Gost2814789_decrypt(const unsigned char *in, unsigned char *out,
 	l2c(n1, out);
 }
 
-static void Gost2814789_mac(const unsigned char *in,
-		unsigned char *mac,
-		GOST2814789_KEY *key)
+static void
+Gost2814789_mac(const unsigned char *in, unsigned char *mac,
+    GOST2814789_KEY *key)
 {
 	unsigned int n1, n2; /* As named in the GOST */
 	unsigned char *p;
@@ -160,9 +165,9 @@ static void Gost2814789_mac(const unsigned char *in,
 	l2c(n2, p);
 }
 
-
-void Gost2814789_ecb_encrypt(const unsigned char *in, unsigned char *out,
-	GOST2814789_KEY *key, const int enc)
+void
+Gost2814789_ecb_encrypt(const unsigned char *in, unsigned char *out,
+    GOST2814789_KEY *key, const int enc)
 {
 	if (key->key_meshing && key->count == 1024) {
 		Gost2814789_cryptopro_key_mesh(key);
@@ -175,7 +180,8 @@ void Gost2814789_ecb_encrypt(const unsigned char *in, unsigned char *out,
 		Gost2814789_decrypt(in, out, key);
 }
 
-static inline void Gost2814789_encrypt_mesh(unsigned char *iv, GOST2814789_KEY *key)
+static inline void
+Gost2814789_encrypt_mesh(unsigned char *iv, GOST2814789_KEY *key)
 {
 	if (key->key_meshing && key->count == 1024) {
 		Gost2814789_cryptopro_key_mesh(key);
@@ -186,9 +192,9 @@ static inline void Gost2814789_encrypt_mesh(unsigned char *iv, GOST2814789_KEY *
 	key->count += 8;
 }
 
-static inline void Gost2814789_mac_mesh(const unsigned char *data,
-		unsigned char *mac,
-		GOST2814789_KEY *key)
+static inline void
+Gost2814789_mac_mesh(const unsigned char *data, unsigned char *mac,
+    GOST2814789_KEY *key)
 {
 	if (key->key_meshing && key->count == 1024) {
 		Gost2814789_cryptopro_key_mesh(key);
@@ -198,115 +204,125 @@ static inline void Gost2814789_mac_mesh(const unsigned char *data,
 	key->count += 8;
 }
 
-void Gost2814789_cfb64_encrypt(const unsigned char *in, unsigned char *out,
-	size_t len, GOST2814789_KEY *key,
-	unsigned char *ivec, int *num, const int enc)
+void
+Gost2814789_cfb64_encrypt(const unsigned char *in, unsigned char *out,
+    size_t len, GOST2814789_KEY *key, unsigned char *ivec, int *num,
+    const int enc)
 {
-    unsigned int n;
-    size_t l = 0;
+	unsigned int n;
+	size_t l = 0;
 
-    OPENSSL_assert(in && out && key && ivec && num);
+	OPENSSL_assert(in && out && key && ivec && num);
 
-    n = *num;
+	n = *num;
 
-    if (enc) {
+	if (enc) {
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
-	if (8%sizeof(size_t) == 0) do {	/* always true actually */
-		while (n && len) {
-			*(out++) = ivec[n] ^= *(in++);
-			--len;
-			n = (n+1) % 8;
-		}
+		if (8 % sizeof(size_t) == 0) do { /* always true actually */
+			while (n && len) {
+				*(out++) = ivec[n] ^= *(in++);
+				--len;
+				n = (n + 1) % 8;
+			}
 #ifdef __STRICT_ALIGNMENT
-		if (((size_t)in|(size_t)out|(size_t)ivec)%sizeof(size_t) != 0)
-			break;
+			if (((size_t)in | (size_t)out | (size_t)ivec) %
+			    sizeof(size_t) != 0)
+				break;
 #endif
-		while (len>=8) {
-			Gost2814789_encrypt_mesh(ivec, key);
-			for (; n<8; n+=sizeof(size_t)) {
-				*(size_t*)(out+n) =
-				*(size_t*)(ivec+n) ^= *(size_t*)(in+n);
+			while (len >= 8) {
+				Gost2814789_encrypt_mesh(ivec, key);
+				for (; n < 8; n += sizeof(size_t)) {
+					*(size_t*)(out + n) =
+					*(size_t*)(ivec + n) ^=
+					    *(size_t*)(in + n);
+				}
+				len -= 8;
+				out += 8;
+				in  += 8;
+				n = 0;
 			}
-			len -= 8;
-			out += 8;
-			in  += 8;
-			n = 0;
-		}
-		if (len) {
-			Gost2814789_encrypt_mesh(ivec, key);
-			while (len--) {
-				out[n] = ivec[n] ^= in[n];
-				++n;
+			if (len) {
+				Gost2814789_encrypt_mesh(ivec, key);
+				while (len--) {
+					out[n] = ivec[n] ^= in[n];
+					++n;
+				}
 			}
+			*num = n;
+			return;
+		} while (0);
+		/* the rest would be commonly eliminated by x86* compiler */
+#endif
+		while (l<len) {
+			if (n == 0) {
+				Gost2814789_encrypt_mesh(ivec, key);
+			}
+			out[l] = ivec[n] ^= in[l];
+			++l;
+			n = (n + 1) % 8;
 		}
 		*num = n;
-		return;
-	} while (0);
-	/* the rest would be commonly eliminated by x86* compiler */
-#endif
-	while (l<len) {
-		if (n == 0) {
-			Gost2814789_encrypt_mesh(ivec, key);
-		}
-		out[l] = ivec[n] ^= in[l];
-		++l;
-		n = (n+1) % 8;
-	}
-	*num = n;
-    } else {
+	} else {
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
-	if (8%sizeof(size_t) == 0) do {	/* always true actually */
-		while (n && len) {
-			unsigned char c;
-			*(out++) = ivec[n] ^ (c = *(in++)); ivec[n] = c;
-			--len;
-			n = (n+1) % 8;
- 		}
-#ifdef __STRICT_ALIGNMENT
-		if (((size_t)in|(size_t)out|(size_t)ivec)%sizeof(size_t) != 0)
-			break;
-#endif
-		while (len>=8) {
-			Gost2814789_encrypt_mesh(ivec, key);
-			for (; n<8; n+=sizeof(size_t)) {
-				size_t t = *(size_t*)(in+n);
-				*(size_t*)(out+n) = *(size_t*)(ivec+n) ^ t;
-				*(size_t*)(ivec+n) = t;
-			}
-			len -= 8;
-			out += 8;
-			in  += 8;
-			n = 0;
-		}
-		if (len) {
-			Gost2814789_encrypt_mesh(ivec, key);
-			while (len--) {
+		if (8 % sizeof(size_t) == 0) do { /* always true actually */
+			while (n && len) {
 				unsigned char c;
-				out[n] = ivec[n] ^ (c = in[n]); ivec[n] = c;
-				++n;
-			}
- 		}
-		*num = n;
-		return;
-	} while (0);
-	/* the rest would be commonly eliminated by x86* compiler */
+
+				*(out++) = ivec[n] ^ (c = *(in++));
+				ivec[n] = c;
+				--len;
+				n = (n + 1) % 8;
+ 			}
+#ifdef __STRICT_ALIGNMENT
+			if (((size_t)in | (size_t)out | (size_t)ivec) %
+			    sizeof(size_t) != 0)
+				break;
 #endif
-	while (l<len) {
-		unsigned char c;
-		if (n == 0) {
-			Gost2814789_encrypt_mesh(ivec, key);
+			while (len >= 8) {
+				Gost2814789_encrypt_mesh(ivec, key);
+				for (; n < 8; n += sizeof(size_t)) {
+					size_t t = *(size_t*)(in + n);
+					*(size_t*)(out + n) =
+					    *(size_t*)(ivec + n) ^ t;
+					*(size_t*)(ivec + n) = t;
+				}
+				len -= 8;
+				out += 8;
+				in  += 8;
+				n = 0;
+			}
+			if (len) {
+				Gost2814789_encrypt_mesh(ivec, key);
+				while (len--) {
+					unsigned char c;
+
+					out[n] = ivec[n] ^ (c = in[n]);
+					ivec[n] = c;
+					++n;
+				}
+ 			}
+			*num = n;
+			return;
+		} while (0);
+		/* the rest would be commonly eliminated by x86* compiler */
+#endif
+		while (l < len) {
+			unsigned char c;
+
+			if (n == 0) {
+				Gost2814789_encrypt_mesh(ivec, key);
+			}
+			out[l] = ivec[n] ^ (c = in[l]); ivec[n] = c;
+			++l;
+			n = (n + 1) % 8;
 		}
-		out[l] = ivec[n] ^ (c = in[l]); ivec[n] = c;
-		++l;
-		n = (n+1) % 8;
+		*num = n;
 	}
-	*num=n;
-    }
 }
 
-static inline void Gost2814789_cnt_next(unsigned char *ivec,
-		unsigned char *out,
-		GOST2814789_KEY *key)
+static inline void
+Gost2814789_cnt_next(unsigned char *ivec, unsigned char *out,
+    GOST2814789_KEY *key)
 {
 	unsigned char *p = ivec, *p2 = ivec;
 	unsigned int val, val2;
@@ -334,34 +350,35 @@ static inline void Gost2814789_cnt_next(unsigned char *ivec,
 	key->count += 8;
 }
 
-void Gost2814789_cnt_encrypt(const unsigned char *in, unsigned char *out,
-	size_t len, GOST2814789_KEY *key,
-	unsigned char *ivec, unsigned char *cnt_buf, int *num)
+void
+Gost2814789_cnt_encrypt(const unsigned char *in, unsigned char *out, size_t len,
+    GOST2814789_KEY *key, unsigned char *ivec, unsigned char *cnt_buf, int *num)
 {
 	unsigned int n;
-	size_t l=0;
+	size_t l = 0;
 
 	OPENSSL_assert(in && out && key && cnt_buf && num);
 
 	n = *num;
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
-	if (8%sizeof(size_t) == 0) do { /* always true actually */
+	if (8 % sizeof(size_t) == 0) do { /* always true actually */
 		while (n && len) {
 			*(out++) = *(in++) ^ cnt_buf[n];
 			--len;
-			n = (n+1) % 8;
+			n = (n + 1) % 8;
 		}
 
 #ifdef __STRICT_ALIGNMENT
-		if (((size_t)in|(size_t)out|(size_t)ivec)%sizeof(size_t) != 0)
+		if (((size_t)in | (size_t)out | (size_t)ivec) %
+		    sizeof(size_t) != 0)
 			break;
 #endif
-		while (len>=8) {
+		while (len >= 8) {
 			Gost2814789_cnt_next(ivec, cnt_buf, key);
-			for (; n<8; n+=sizeof(size_t))
-				*(size_t *)(out+n) =
-				*(size_t *)(in+n) ^ *(size_t *)(cnt_buf+n);
+			for (; n < 8; n += sizeof(size_t))
+				*(size_t *)(out + n) = *(size_t *)(in + n) ^
+				    *(size_t *)(cnt_buf + n);
 			len -= 8;
 			out += 8;
 			in  += 8;
@@ -379,27 +396,31 @@ void Gost2814789_cnt_encrypt(const unsigned char *in, unsigned char *out,
 	} while(0);
 	/* the rest would be commonly eliminated by x86* compiler */
 #endif
-	while (l<len) {
+	while (l < len) {
 		if (n==0)
 			Gost2814789_cnt_next(ivec, cnt_buf, key);
 		out[l] = in[l] ^ cnt_buf[n];
 		++l;
-		n = (n+1) % 8;
+		n = (n + 1) % 8;
 	}
 
 	*num=n;
 }
 
-int GOST2814789IMIT_Init(GOST2814789IMIT_CTX *c, int nid)
+int
+GOST2814789IMIT_Init(GOST2814789IMIT_CTX *c, int nid)
 {
 	c->Nl = c->Nh = c->num = 0;
 	memset(c->mac, 0, 8);
 	return Gost2814789_set_sbox(&c->cipher, nid);
 }
 
-static void GOST2814789IMIT_block_data_order(GOST2814789IMIT_CTX *ctx, const void *p, size_t num)
+static void
+GOST2814789IMIT_block_data_order(GOST2814789IMIT_CTX *ctx, const void *p,
+    size_t num)
 {
 	int i;
+
 	for (i = 0; i < num; i++) {
 		Gost2814789_mac_mesh(p, ctx->mac, &ctx->cipher);
 		p += 8;
@@ -418,7 +439,8 @@ static void GOST2814789IMIT_block_data_order(GOST2814789IMIT_CTX *ctx, const voi
 
 #include "md32_common.h"
 
-int GOST2814789IMIT_Final(unsigned char *md, GOST2814789IMIT_CTX *c)
+int
+GOST2814789IMIT_Final(unsigned char *md, GOST2814789IMIT_CTX *c)
 {
 	if (c->num) {
 		memset(c->data + c->num, 0, 8 - c->num);
@@ -432,9 +454,9 @@ int GOST2814789IMIT_Final(unsigned char *md, GOST2814789IMIT_CTX *c)
 	return 1;
 }
 
-unsigned char *GOST2814789IMIT(const unsigned char *d, size_t n,
-		unsigned char *md, int nid,
-		const unsigned char *key, const unsigned char *iv)
+unsigned char *
+GOST2814789IMIT(const unsigned char *d, size_t n, unsigned char *md, int nid,
+    const unsigned char *key, const unsigned char *iv)
 {
 	GOST2814789IMIT_CTX c;
 	static unsigned char m[GOST2814789IMIT_LENGTH];

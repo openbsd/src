@@ -1,4 +1,4 @@
-/* $OpenBSD: streebog.c,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: streebog.c,v 1.2 2014/11/09 23:06:52 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -1166,7 +1166,9 @@ static const STREEBOG_LONG64 C16[12][8] =
 #define PULL64(x) (B(x,0,0)|B(x,1,1)|B(x,2,2)|B(x,3,3)|B(x,4,4)|B(x,5,5)|B(x,6,6)|B(x,7,7))
 #define SWAB64(x) (B(x,0,7)|B(x,1,6)|B(x,2,5)|B(x,3,4)|B(x,4,3)|B(x,5,2)|B(x,6,1)|B(x,7,0))
 
-static inline STREEBOG_LONG64 multipermute(const STREEBOG_LONG64 *in, int i) {
+static inline STREEBOG_LONG64
+multipermute(const STREEBOG_LONG64 *in, int i)
+{
 	STREEBOG_LONG64 t = 0;
 
 	t ^= A_PI_table[0][(in[0] >> (i * 8)) & 0xff];
@@ -1181,30 +1183,33 @@ static inline STREEBOG_LONG64 multipermute(const STREEBOG_LONG64 *in, int i) {
 	return t;
 }
 
-static void transform(STREEBOG_LONG64 *out, const STREEBOG_LONG64 *a, const STREEBOG_LONG64 *b)
+static void
+transform(STREEBOG_LONG64 *out, const STREEBOG_LONG64 *a,
+    const STREEBOG_LONG64 *b)
 {
-  STREEBOG_LONG64 tmp[8];
+	STREEBOG_LONG64 tmp[8];
 
-  tmp[0] = a[0] ^ b[0];
-  tmp[1] = a[1] ^ b[1];
-  tmp[2] = a[2] ^ b[2];
-  tmp[3] = a[3] ^ b[3];
-  tmp[4] = a[4] ^ b[4];
-  tmp[5] = a[5] ^ b[5];
-  tmp[6] = a[6] ^ b[6];
-  tmp[7] = a[7] ^ b[7];
+	tmp[0] = a[0] ^ b[0];
+	tmp[1] = a[1] ^ b[1];
+	tmp[2] = a[2] ^ b[2];
+	tmp[3] = a[3] ^ b[3];
+	tmp[4] = a[4] ^ b[4];
+	tmp[5] = a[5] ^ b[5];
+	tmp[6] = a[6] ^ b[6];
+	tmp[7] = a[7] ^ b[7];
 
-  out[0] = multipermute(tmp, 0);
-  out[1] = multipermute(tmp, 1);
-  out[2] = multipermute(tmp, 2);
-  out[3] = multipermute(tmp, 3);
-  out[4] = multipermute(tmp, 4);
-  out[5] = multipermute(tmp, 5);
-  out[6] = multipermute(tmp, 6);
-  out[7] = multipermute(tmp, 7);
+	out[0] = multipermute(tmp, 0);
+	out[1] = multipermute(tmp, 1);
+	out[2] = multipermute(tmp, 2);
+	out[3] = multipermute(tmp, 3);
+	out[4] = multipermute(tmp, 4);
+	out[5] = multipermute(tmp, 5);
+	out[6] = multipermute(tmp, 6);
+	out[7] = multipermute(tmp, 7);
 }
 
-static inline void gN(STREEBOG_LONG64 *h, STREEBOG_LONG64 *m, STREEBOG_LONG64 *N)
+static inline void
+gN(STREEBOG_LONG64 *h, STREEBOG_LONG64 *m, STREEBOG_LONG64 *N)
 {
 	STREEBOG_LONG64 K[8];
 	STREEBOG_LONG64 T[8];
@@ -1230,7 +1235,8 @@ static inline void gN(STREEBOG_LONG64 *h, STREEBOG_LONG64 *m, STREEBOG_LONG64 *N
 }
 
 
-static void streebog_single_block(STREEBOG_CTX * ctx, const unsigned char *in, size_t num)
+static void
+streebog_single_block(STREEBOG_CTX *ctx, const unsigned char *in, size_t num)
 {
 	STREEBOG_LONG64 M[8], l;
 	int i;
@@ -1261,14 +1267,17 @@ static void streebog_single_block(STREEBOG_CTX * ctx, const unsigned char *in, s
 
 
 
-static void streebog_block_data_order(STREEBOG_CTX * ctx, const void *in, size_t num)
+static void
+streebog_block_data_order(STREEBOG_CTX *ctx, const void *in, size_t num)
 {
 	int i;
+
 	for (i = 0; i < num; i++)
 		streebog_single_block(ctx, in + i * STREEBOG_CBLOCK, 64 * 8);
 }
 
-int STREEBOG512_Final(unsigned char *md, STREEBOG_CTX * c)
+int
+STREEBOG512_Final(unsigned char *md, STREEBOG_CTX *c)
 {
 	int n;
 	unsigned char *p = (unsigned char *)c->data;
@@ -1281,7 +1290,7 @@ int STREEBOG512_Final(unsigned char *md, STREEBOG_CTX * c)
 
 	n = c->num;
 	p[n++] = 1;
-	memset(p+n, 0, STREEBOG_CBLOCK - n);
+	memset(p + n, 0, STREEBOG_CBLOCK - n);
 
 	streebog_single_block(c, p, c->num * 8);
 
@@ -1291,7 +1300,7 @@ int STREEBOG512_Final(unsigned char *md, STREEBOG_CTX * c)
 	for (n = 0; n < STREEBOG_LBLOCK; n++)
 		c->h[n] = SWAB64(c->h[n]);
 
-	if (md == 0)
+	if (md == NULL)
 		return 0;
 
 	switch (c->md_len) {
@@ -1332,12 +1341,14 @@ int STREEBOG512_Final(unsigned char *md, STREEBOG_CTX * c)
 	return 1;
 }
 
-int STREEBOG256_Final(unsigned char *md, STREEBOG_CTX * c)
+int
+STREEBOG256_Final(unsigned char *md, STREEBOG_CTX * c)
 {
 	return STREEBOG512_Final(md, c);
 }
 
-int STREEBOG512_Update(STREEBOG_CTX * c, const void *_data, size_t len)
+int
+STREEBOG512_Update(STREEBOG_CTX *c, const void *_data, size_t len)
 {
 	unsigned char *p = (unsigned char *)c->data;
 	const unsigned char *data = (const unsigned char *)_data;
@@ -1376,17 +1387,20 @@ int STREEBOG512_Update(STREEBOG_CTX * c, const void *_data, size_t len)
 	return 1;
 }
 
-int STREEBOG256_Update(STREEBOG_CTX * c, const void *data, size_t len)
+int
+STREEBOG256_Update(STREEBOG_CTX *c, const void *data, size_t len)
 {
 	return STREEBOG512_Update(c, data, len);
 }
 
-void STREEBOG512_Transform(STREEBOG_CTX * c, const unsigned char *data)
+void
+STREEBOG512_Transform(STREEBOG_CTX *c, const unsigned char *data)
 {
 	streebog_block_data_order(c, data, 1);
 }
 
-int STREEBOG256_Init(STREEBOG_CTX * c)
+int
+STREEBOG256_Init(STREEBOG_CTX *c)
 {
 	memset(c, 0, sizeof(*c));
 	memset(c->h, 1, sizeof(c->h));
@@ -1395,7 +1409,8 @@ int STREEBOG256_Init(STREEBOG_CTX * c)
 	return 1;
 }
 
-int STREEBOG512_Init(STREEBOG_CTX * c)
+int
+STREEBOG512_Init(STREEBOG_CTX *c)
 {
 	memset(c, 0, sizeof(*c));
 	memset(c->h, 0, sizeof(c->h));
@@ -1405,7 +1420,8 @@ int STREEBOG512_Init(STREEBOG_CTX * c)
 	return 1;
 }
 
-unsigned char *STREEBOG256(const unsigned char *d, size_t n, unsigned char *md)
+unsigned char *
+STREEBOG256(const unsigned char *d, size_t n, unsigned char *md)
 {
 	STREEBOG_CTX c;
 	static unsigned char m[STREEBOG256_LENGTH];
@@ -1419,7 +1435,8 @@ unsigned char *STREEBOG256(const unsigned char *d, size_t n, unsigned char *md)
 	return (md);
 }
 
-unsigned char *STREEBOG512(const unsigned char *d, size_t n, unsigned char *md)
+unsigned char *
+STREEBOG512(const unsigned char *d, size_t n, unsigned char *md)
 {
 	STREEBOG_CTX c;
 	static unsigned char m[STREEBOG512_LENGTH];

@@ -1,4 +1,4 @@
-/* $OpenBSD: m_gostr341194.c,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: m_gostr341194.c,v 1.2 2014/11/09 23:06:50 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -58,17 +58,21 @@
 #include <openssl/gost.h>
 #include <openssl/objects.h>
 
-static int init(EVP_MD_CTX *ctx)
+static int
+gostr341194_init(EVP_MD_CTX *ctx)
 {
-	return GOSTR341194_Init(ctx->md_data, NID_id_GostR3411_94_CryptoProParamSet);
+	return GOSTR341194_Init(ctx->md_data,
+	    NID_id_GostR3411_94_CryptoProParamSet);
 }
 
-static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
+static int
+gostr341194_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
 	return GOSTR341194_Update(ctx->md_data, data, count);
 }
 
-static int final(EVP_MD_CTX *ctx, unsigned char *md)
+static int
+gostr341194_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
 	return GOSTR341194_Final(md, ctx->md_data);
 }
@@ -78,9 +82,9 @@ static const EVP_MD gostr341194_md = {
 	.pkey_type = NID_undef,
 	.md_size = GOSTR341194_LENGTH,
 	.flags = EVP_MD_FLAG_PKEY_METHOD_SIGNATURE,
-	.init = init,
-	.update = update,
-	.final = final,
+	.init = gostr341194_init,
+	.update = gostr341194_update,
+	.final = gostr341194_final,
 	.block_size = GOSTR341194_CBLOCK,
 	.ctx_size = sizeof(EVP_MD *) + sizeof(GOSTR341194_CTX),
 };

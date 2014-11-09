@@ -1,4 +1,4 @@
-/* $OpenBSD: gost89_params.c,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: gost89_params.c,v 1.2 2014/11/09 23:06:52 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -179,7 +179,8 @@ static const struct gost89_parameters_info {
 	{NID_undef,NULL,0}
 };
 
-int Gost2814789_set_sbox(GOST2814789_KEY *key, int nid)
+int
+Gost2814789_set_sbox(GOST2814789_KEY *key, int nid)
 {
 	int i;
 	const gost_subst_block *b = NULL;
@@ -194,7 +195,7 @@ int Gost2814789_set_sbox(GOST2814789_KEY *key, int nid)
 		break;
 	}
 
-	if (!b)
+	if (b == NULL)
 		return 0;
 
 	for (i = 0; i < 256; i++) {
@@ -211,8 +212,9 @@ int Gost2814789_set_sbox(GOST2814789_KEY *key, int nid)
 	return 1;
 }
 
-int Gost2814789_set_key(GOST2814789_KEY *key,
-		const unsigned char *userKey, const int bits)
+int
+Gost2814789_set_key(GOST2814789_KEY *key, const unsigned char *userKey,
+    const int bits)
 {
 	int i;
 
@@ -227,7 +229,8 @@ int Gost2814789_set_key(GOST2814789_KEY *key,
 	return 1;
 }
 
-void Gost2814789_cryptopro_key_mesh(GOST2814789_KEY *key)
+void
+Gost2814789_cryptopro_key_mesh(GOST2814789_KEY *key)
 {
 	unsigned char newkey[32];
 

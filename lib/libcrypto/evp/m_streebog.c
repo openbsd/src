@@ -1,4 +1,4 @@
-/* $OpenBSD: m_streebog.c,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: m_streebog.c,v 1.2 2014/11/09 23:06:50 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -57,32 +57,38 @@
 #include <openssl/gost.h>
 #include <openssl/objects.h>
 
-static int init256(EVP_MD_CTX *ctx)
+static int
+streebog_init256(EVP_MD_CTX *ctx)
 {
 	return STREEBOG256_Init(ctx->md_data);
 }
 
-static int update256(EVP_MD_CTX *ctx, const void *data, size_t count)
+static int
+streebog_update256(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
 	return STREEBOG256_Update(ctx->md_data, data, count);
 }
 
-static int final256(EVP_MD_CTX *ctx, unsigned char *md)
+static int
+streebog_final256(EVP_MD_CTX *ctx, unsigned char *md)
 {
 	return STREEBOG256_Final(md, ctx->md_data);
 }
 
-static int init512(EVP_MD_CTX *ctx)
+static int
+streebog_init512(EVP_MD_CTX *ctx)
 {
 	return STREEBOG512_Init(ctx->md_data);
 }
 
-static int update512(EVP_MD_CTX *ctx, const void *data, size_t count)
+static int
+streebog_update512(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
 	return STREEBOG512_Update(ctx->md_data, data, count);
 }
 
-static int final512(EVP_MD_CTX *ctx, unsigned char *md)
+static int
+streebog_final512(EVP_MD_CTX *ctx, unsigned char *md)
 {
 	return STREEBOG512_Final(md, ctx->md_data);
 }
@@ -92,9 +98,9 @@ static const EVP_MD streebog256_md = {
 	.pkey_type = NID_undef,
 	.md_size = STREEBOG256_LENGTH,
 	.flags = EVP_MD_FLAG_PKEY_METHOD_SIGNATURE,
-	.init = init256,
-	.update = update256,
-	.final = final256,
+	.init = streebog_init256,
+	.update = streebog_update256,
+	.final = streebog_final256,
 	.block_size = STREEBOG_CBLOCK,
 	.ctx_size = sizeof(EVP_MD *) + sizeof(STREEBOG_CTX),
 };
@@ -104,9 +110,9 @@ static const EVP_MD streebog512_md = {
 	.pkey_type = NID_undef,
 	.md_size = STREEBOG512_LENGTH,
 	.flags = EVP_MD_FLAG_PKEY_METHOD_SIGNATURE,
-	.init = init512,
-	.update = update512,
-	.final = final512,
+	.init = streebog_init512,
+	.update = streebog_update512,
+	.final = streebog_final512,
 	.block_size = STREEBOG_CBLOCK,
 	.ctx_size = sizeof(EVP_MD *) + sizeof(STREEBOG_CTX),
 };

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_gost2814789.c,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: e_gost2814789.c,v 1.2 2014/11/09 23:06:50 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -63,13 +63,14 @@ typedef struct {
 	int param_nid;
 } EVP_GOST2814789_CTX;
 
-static int gost2814789_ctl(EVP_CIPHER_CTX *ctx,int type,int arg,void *ptr)
+static int
+gost2814789_ctl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
 	EVP_GOST2814789_CTX *c = ctx->cipher_data;
 
 	switch (type) {
 	case EVP_CTRL_PBE_PRF_NID:
-		if (ptr) {
+		if (ptr != NULL) {
 			*((int *)ptr) = NID_id_HMACGostR3411_94;
 			return 1;
 		} else {
@@ -137,7 +138,8 @@ int gost2814789_set_asn1_params(EVP_CIPHER_CTX * ctx, ASN1_TYPE * params)
 	return 1;
 }
 
-int gost2814789_get_asn1_params(EVP_CIPHER_CTX * ctx, ASN1_TYPE * params)
+int
+gost2814789_get_asn1_params(EVP_CIPHER_CTX *ctx, ASN1_TYPE *params)
 {
 	int ret = -1;
 	int len;
@@ -145,20 +147,19 @@ int gost2814789_get_asn1_params(EVP_CIPHER_CTX * ctx, ASN1_TYPE * params)
 	EVP_GOST2814789_CTX *c = ctx->cipher_data;
 	unsigned char *p;
 
-	if (ASN1_TYPE_get(params) != V_ASN1_SEQUENCE) {
+	if (ASN1_TYPE_get(params) != V_ASN1_SEQUENCE)
 		return ret;
-	}
 
 	p = params->value.sequence->data;
 
 	gcp = d2i_GOST_CIPHER_PARAMS(NULL, (const unsigned char **)&p,
-				     params->value.sequence->length);
+	    params->value.sequence->length);
 
 	len = gcp->iv->length;
 	if (len != ctx->cipher->iv_len) {
 		GOST_CIPHER_PARAMS_free(gcp);
 		GOSTerr(GOST_F_GOST89_GET_ASN1_PARAMETERS,
-			GOST_R_INVALID_IV_LENGTH);
+		    GOST_R_INVALID_IV_LENGTH);
 		return -1;
 	}
 
@@ -179,22 +180,23 @@ int gost2814789_get_asn1_params(EVP_CIPHER_CTX * ctx, ASN1_TYPE * params)
 BLOCK_CIPHER_func_ecb(gost2814789, Gost2814789, EVP_GOST2814789_CTX, ks)
 BLOCK_CIPHER_func_cfb(gost2814789, Gost2814789, 64, EVP_GOST2814789_CTX, ks)
 
-static int gost2814789_cnt_cipher(EVP_CIPHER_CTX * ctx, unsigned char *out,
-				  const unsigned char *in, size_t inl)
+static int
+gost2814789_cnt_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t inl)
 {
 	EVP_GOST2814789_CTX *c = ctx->cipher_data;
 
 	while (inl >= EVP_MAXCHUNK) {
 		Gost2814789_cnt_encrypt(in, out, (long)EVP_MAXCHUNK, &c->ks,
-					ctx->iv, ctx->buf, &ctx->num);
+		    ctx->iv, ctx->buf, &ctx->num);
 		inl -= EVP_MAXCHUNK;
 		in += EVP_MAXCHUNK;
 		out += EVP_MAXCHUNK;
 	}
 
 	if (inl)
-		Gost2814789_cnt_encrypt(in, out, inl, &c->ks,
-					ctx->iv, ctx->buf, &ctx->num);
+		Gost2814789_cnt_encrypt(in, out, inl, &c->ks, ctx->iv, ctx->buf,
+		    &ctx->num);
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: m_gost2814789.c,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: m_gost2814789.c,v 1.2 2014/11/09 23:06:50 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -56,22 +56,27 @@
 #include <openssl/gost.h>
 #include <openssl/objects.h>
 
-static int init(EVP_MD_CTX *ctx)
+static int
+gost2814789_init(EVP_MD_CTX *ctx)
 {
-	return GOST2814789IMIT_Init(ctx->md_data, NID_id_Gost28147_89_CryptoPro_A_ParamSet);
+	return GOST2814789IMIT_Init(ctx->md_data,
+	    NID_id_Gost28147_89_CryptoPro_A_ParamSet);
 }
 
-static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
+static int
+gost2814789_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
 	return GOST2814789IMIT_Update(ctx->md_data, data, count);
 }
 
-static int final(EVP_MD_CTX *ctx, unsigned char *md)
+static int
+gost2814789_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
 	return GOST2814789IMIT_Final(md, ctx->md_data);
 }
 
-static int md_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
+static int
+gost2814789_md_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
 {
 	GOST2814789IMIT_CTX *gctx = ctx->md_data;
 
@@ -89,12 +94,12 @@ static const EVP_MD gost2814789imit_md = {
 	.pkey_type = NID_undef,
 	.md_size = GOST2814789IMIT_LENGTH,
 	.flags = 0,
-	.init = init,
-	.update = update,
-	.final = final,
+	.init = gost2814789_init,
+	.update = gost2814789_update,
+	.final = gost2814789_final,
 	.block_size = GOST2814789IMIT_CBLOCK,
 	.ctx_size = sizeof(EVP_MD *) + sizeof(GOST2814789IMIT_CTX),
-	.md_ctrl = md_ctrl,
+	.md_ctrl = gost2814789_md_ctrl,
 };
 
 const EVP_MD *

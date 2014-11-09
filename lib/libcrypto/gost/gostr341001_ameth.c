@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.2 2014/11/09 23:06:52 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -68,15 +68,18 @@
 #include "gost_locl.h"
 #include "gost_asn1.h"
 
-static void pkey_free_gost01(EVP_PKEY *key)
+static void
+pkey_free_gost01(EVP_PKEY *key)
 {
 	GOST_KEY_free(key->pkey.gost);
 }
 
-/* Parses GOST algorithm parameters from X509_ALGOR and
+/*
+ * Parses GOST algorithm parameters from X509_ALGOR and
  * modifies pkey setting NID and parameters
  */
-static int decode_gost01_algor_params(EVP_PKEY * pkey, const unsigned char **p, int len)
+static int
+decode_gost01_algor_params(EVP_PKEY *pkey, const unsigned char **p, int len)
 {
 	int param_nid = NID_undef, digest_nid = NID_undef;
 	GOST_KEY_PARAMS *gkp = NULL;
@@ -84,7 +87,7 @@ static int decode_gost01_algor_params(EVP_PKEY * pkey, const unsigned char **p, 
 	GOST_KEY *ec;
 
 	gkp = d2i_GOST_KEY_PARAMS(NULL, p, len);
-	if (!gkp) {
+	if (gkp == NULL) {
 		GOSTerr(GOST_F_DECODE_GOST01_ALGOR_PARAMS,
 			GOST_R_BAD_PKEY_PARAMETERS_FORMAT);
 		return 0;
@@ -92,10 +95,13 @@ static int decode_gost01_algor_params(EVP_PKEY * pkey, const unsigned char **p, 
 	param_nid = OBJ_obj2nid(gkp->key_params);
 	digest_nid = OBJ_obj2nid(gkp->hash_params);
 	GOST_KEY_PARAMS_free(gkp);
+
 	ec = pkey->pkey.gost;
-	if (!ec) {
+	if (ec == NULL) {
 		ec = GOST_KEY_new();
-		if (!EVP_PKEY_assign_GOST(pkey, ec))
+		if (ec == NULL)
+			return 0;
+		if (EVP_PKEY_assign_GOST(pkey, ec) == 0)
 			return 0;
 	}
 
@@ -113,26 +119,30 @@ static int decode_gost01_algor_params(EVP_PKEY * pkey, const unsigned char **p, 
 	return 1;
 }
 
-static ASN1_STRING *encode_gost01_algor_params(const EVP_PKEY * key)
+static ASN1_STRING *
+encode_gost01_algor_params(const EVP_PKEY *key)
 {
 	ASN1_STRING *params = ASN1_STRING_new();
 	GOST_KEY_PARAMS *gkp = GOST_KEY_PARAMS_new();
 	int pkey_param_nid = NID_undef;
 
-	if (!params || !gkp) {
-		GOSTerr(GOST_F_ENCODE_GOST01_ALGOR_PARAMS, ERR_R_MALLOC_FAILURE);
+	if (params == NULL || gkp == NULL) {
+		GOSTerr(GOST_F_ENCODE_GOST01_ALGOR_PARAMS,
+		    ERR_R_MALLOC_FAILURE);
 		ASN1_STRING_free(params);
 		params = NULL;
 		goto err;
 	}
 
-	pkey_param_nid = EC_GROUP_get_curve_name(GOST_KEY_get0_group(key->pkey.gost));
+	pkey_param_nid =
+	    EC_GROUP_get_curve_name(GOST_KEY_get0_group(key->pkey.gost));
 	gkp->key_params = OBJ_nid2obj(pkey_param_nid);
 	gkp->hash_params = OBJ_nid2obj(GOST_KEY_get_digest(key->pkey.gost));
 	/*gkp->cipher_params = OBJ_nid2obj(cipher_param_nid); */
 	params->length = i2d_GOST_KEY_PARAMS(gkp, &params->data);
 	if (params->length <= 0) {
-		GOSTerr(GOST_F_ENCODE_GOST01_ALGOR_PARAMS, ERR_R_MALLOC_FAILURE);
+		GOSTerr(GOST_F_ENCODE_GOST01_ALGOR_PARAMS,
+		    ERR_R_MALLOC_FAILURE);
 		ASN1_STRING_free(params);
 		params = NULL;
 		goto err;
@@ -143,37 +153,42 @@ err:
 	return params;
 }
 
-static int pub_cmp_gost01(const EVP_PKEY * a, const EVP_PKEY * b)
+static int
+pub_cmp_gost01(const EVP_PKEY *a, const EVP_PKEY *b)
 {
 	const GOST_KEY *ea = a->pkey.gost;
 	const GOST_KEY *eb = b->pkey.gost;
 	const EC_POINT *ka, *kb;
 	int ret = 0;
-	if (!ea || !eb)
+
+	if (ea == NULL || eb == NULL)
 		return 0;
 	ka = GOST_KEY_get0_public_key(ea);
 	kb = GOST_KEY_get0_public_key(eb);
-	if (!ka || !kb)
+	if (ka == NULL || kb == NULL)
 		return 0;
 	ret = (0 == EC_POINT_cmp(GOST_KEY_get0_group(ea), ka, kb, NULL));
 	return ret;
 }
 
-static int pkey_size_gost01(const EVP_PKEY * pk)
+static int
+pkey_size_gost01(const EVP_PKEY *pk)
 {
 	if (GOST_KEY_get_digest(pk->pkey.gost) == NID_id_tc26_gost3411_2012_512)
 		return 128;
 	return 64;
 }
 
-static int pkey_bits_gost01(const EVP_PKEY * pk)
+static int
+pkey_bits_gost01(const EVP_PKEY *pk)
 {
 	if (GOST_KEY_get_digest(pk->pkey.gost) == NID_id_tc26_gost3411_2012_512)
 		return 512;
 	return 256;
 }
 
-static int pub_decode_gost01(EVP_PKEY *pk, X509_PUBKEY *pub)
+static int
+pub_decode_gost01(EVP_PKEY *pk, X509_PUBKEY *pub)
 {
 	X509_ALGOR *palg = NULL;
 	const unsigned char *pubkey_buf = NULL;
@@ -187,21 +202,22 @@ static int pub_decode_gost01(EVP_PKEY *pk, X509_PUBKEY *pub)
 	int ptype = V_ASN1_UNDEF;
 	ASN1_STRING *pval = NULL;
 
-	if (!X509_PUBKEY_get0_param(&palgobj, &pubkey_buf, &pub_len,
-				    &palg, pub))
+	if (X509_PUBKEY_get0_param(&palgobj, &pubkey_buf, &pub_len, &palg, pub)
+	    == 0)
 		return 0;
-	EVP_PKEY_assign_GOST(pk, NULL);
+	(void)EVP_PKEY_assign_GOST(pk, NULL);
 	X509_ALGOR_get0(NULL, &ptype, (void **)&pval, palg);
 	if (ptype != V_ASN1_SEQUENCE) {
 		GOSTerr(GOST_F_PUB_DECODE_GOST01,
-			GOST_R_BAD_KEY_PARAMETERS_FORMAT);
+		    GOST_R_BAD_KEY_PARAMETERS_FORMAT);
 		return 0;
 	}
 	p = pval->data;
-	if (!decode_gost01_algor_params(pk, &p, pval->length))
+	if (decode_gost01_algor_params(pk, &p, pval->length) == 0)
 		return 0;
+
 	octet = d2i_ASN1_OCTET_STRING(NULL, &pubkey_buf, pub_len);
-	if (!octet) {
+	if (octet == NULL) {
 		GOSTerr(GOST_F_PUB_DECODE_GOST01, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -363,7 +379,8 @@ static int priv_print_gost01(BIO * out, const EVP_PKEY * pkey, int indent,
 	return pub_print_gost01(out, pkey, indent, pctx);
 }
 
-static int priv_decode_gost01(EVP_PKEY * pk, PKCS8_PRIV_KEY_INFO * p8inf)
+static int
+priv_decode_gost01(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf)
 {
 	const unsigned char *pkey_buf = NULL, *p = NULL;
 	int priv_len = 0;
@@ -376,25 +393,27 @@ static int priv_decode_gost01(EVP_PKEY * pk, PKCS8_PRIV_KEY_INFO * p8inf)
 	int ptype = V_ASN1_UNDEF;
 	ASN1_STRING *pval = NULL;
 
-	if (!PKCS8_pkey_get0(&palg_obj, &pkey_buf, &priv_len, &palg, p8inf))
+	if (PKCS8_pkey_get0(&palg_obj, &pkey_buf, &priv_len, &palg, p8inf) == 0)
 		return 0;
-	EVP_PKEY_assign_GOST(pk, NULL);
+	(void)EVP_PKEY_assign_GOST(pk, NULL);
 	X509_ALGOR_get0(NULL, &ptype, (void **)&pval, palg);
 	if (ptype != V_ASN1_SEQUENCE) {
 		GOSTerr(GOST_F_PUB_DECODE_GOST01,
-			GOST_R_BAD_KEY_PARAMETERS_FORMAT);
+		    GOST_R_BAD_KEY_PARAMETERS_FORMAT);
 		return 0;
 	}
 	p = pval->data;
-	if (!decode_gost01_algor_params(pk, &p, pval->length))
+	if (decode_gost01_algor_params(pk, &p, pval->length) == 0)
 		return 0;
 	p = pkey_buf;
 	if (V_ASN1_OCTET_STRING == *p) {
 		/* New format - Little endian octet string */
 		unsigned char rev_buf[32];
 		int i;
-		ASN1_OCTET_STRING *s = d2i_ASN1_OCTET_STRING(NULL, &p, priv_len);
-		if (!s || s->length != 32) {
+		ASN1_OCTET_STRING *s =
+		    d2i_ASN1_OCTET_STRING(NULL, &p, priv_len);
+
+		if (s == NULL || s->length != 32) {
 			GOSTerr(GOST_F_PRIV_DECODE_GOST01, EVP_R_DECODE_ERROR);
 			return 0;
 		}
@@ -483,13 +502,14 @@ static int param_decode_gost01(EVP_PKEY * pkey, const unsigned char **pder,
 	ASN1_OBJECT_free(obj);
 
 	ec = GOST_KEY_new();
-	if (!ec) {
+	if (ec == NULL) {
 		GOSTerr(GOST_F_PARAM_DECODE_GOST01, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	group = EC_GROUP_new_by_curve_name(nid);
 	if (group == NULL) {
-		GOSTerr(GOST_F_PARAM_DECODE_GOST01, EC_R_EC_GROUP_NEW_BY_NAME_FAILURE);
+		GOSTerr(GOST_F_PARAM_DECODE_GOST01,
+		    EC_R_EC_GROUP_NEW_BY_NAME_FAILURE);
 		GOST_KEY_free(ec);
 		return 0;
 	}
@@ -602,10 +622,12 @@ static int pkey_ctrl_gost01(EVP_PKEY * pkey, int op, long arg1, void *arg2)
 		X509_ALGOR_set0(alg2, OBJ_nid2obj(GostR3410_get_pk_digest(digest)), V_ASN1_NULL, 0);
 	if (alg3) {
 		ASN1_STRING *params = encode_gost01_algor_params(pkey);
-		if (!params) {
+		if (params == NULL) {
 			return -1;
 		}
-		X509_ALGOR_set0(alg3, OBJ_nid2obj(GostR3410_get_pk_digest(digest)), V_ASN1_SEQUENCE, params);
+		X509_ALGOR_set0(alg3,
+		    OBJ_nid2obj(GostR3410_get_pk_digest(digest)),
+		    V_ASN1_SEQUENCE, params);
 	}
 
 	return 1;

@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_pmeth.c,v 1.4 2014/11/09 19:28:44 miod Exp $ */
+/* $OpenBSD: gostr341001_pmeth.c,v 1.5 2014/11/09 23:06:52 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -65,7 +65,8 @@
 #include "gost_locl.h"
 #include "gost_asn1.h"
 
-static ECDSA_SIG *unpack_signature_cp(const unsigned char *sig, size_t siglen)
+static ECDSA_SIG *
+unpack_signature_cp(const unsigned char *sig, size_t siglen)
 {
 	ECDSA_SIG *s;
 
@@ -79,12 +80,13 @@ static ECDSA_SIG *unpack_signature_cp(const unsigned char *sig, size_t siglen)
 	return s;
 }
 
-static int pack_signature_cp(ECDSA_SIG * s, int order, unsigned char *sig, size_t * siglen)
+static int
+pack_signature_cp(ECDSA_SIG *s, int order, unsigned char *sig, size_t *siglen)
 {
 	int r_len = BN_num_bytes(s->r);
 	int s_len = BN_num_bytes(s->s);
 
-	if ((r_len > order) || (s_len > order))
+	if (r_len > order || s_len > order)
 		return 0;
 
 	*siglen = 2 * order;
@@ -96,7 +98,8 @@ static int pack_signature_cp(ECDSA_SIG * s, int order, unsigned char *sig, size_
 	return 1;
 }
 
-static ECDSA_SIG *unpack_signature_le(const unsigned char *sig, size_t siglen)
+static ECDSA_SIG *
+unpack_signature_le(const unsigned char *sig, size_t siglen)
 {
 	ECDSA_SIG *s;
 
@@ -110,7 +113,8 @@ static ECDSA_SIG *unpack_signature_le(const unsigned char *sig, size_t siglen)
 	return s;
 }
 
-static int pack_signature_le(ECDSA_SIG * s, int order, unsigned char *sig, size_t * siglen)
+static int
+pack_signature_le(ECDSA_SIG *s, int order, unsigned char *sig, size_t *siglen)
 {
 	*siglen = 2 * order;
 	memset(sig, 0, *siglen);
@@ -259,7 +263,7 @@ static int pkey_gost01_verify(EVP_PKEY_CTX * ctx, const unsigned char *sig,
 	ECDSA_SIG *s = NULL;
 	BIGNUM *md;
 
-	if  (!pub_key)
+	if (pub_key == NULL)
 		return 0;
 	switch (pctx->sig_format) {
 	case GOST_SIG_FORMAT_SR_BE:
@@ -269,10 +273,10 @@ static int pkey_gost01_verify(EVP_PKEY_CTX * ctx, const unsigned char *sig,
 		s = unpack_signature_le(sig, siglen);
 		break;
 	}
-	if (!s)
+	if (s == NULL)
 		return 0;
 	md = GOST_le2bn(tbs, tbs_len, NULL);
-	if (!md)
+	if (md == NULL)
 		goto err;
 	ok = gost2001_do_verify(md, s, pub_key->pkey.gost);
 
@@ -341,34 +345,36 @@ int pkey_gost01_decrypt(EVP_PKEY_CTX * pctx, unsigned char *key,
 	EVP_PKEY *eph_key = NULL, *peerkey = NULL;
 	int nid;
 
-	if (!key) {
+	if (key == NULL) {
 		*key_len = 32;
 		return 1;
 	}
 	gkt = d2i_GOST_KEY_TRANSPORT(NULL, (const unsigned char **)&p, in_len);
-	if (!gkt) {
+	if (gkt == NULL) {
 		GOSTerr(GOST_F_PKEY_GOST01_DECRYPT,
-			GOST_R_ERROR_PARSING_KEY_TRANSPORT_INFO);
+		    GOST_R_ERROR_PARSING_KEY_TRANSPORT_INFO);
 		return -1;
 	}
 
 	/* If key transport structure contains public key, use it */
 	eph_key = X509_PUBKEY_get(gkt->key_agreement_info->ephem_key);
-	if (eph_key) {
+	if (eph_key != NULL) {
 		if (EVP_PKEY_derive_set_peer(pctx, eph_key) <= 0) {
 			GOSTerr(GOST_F_PKEY_GOST01_DECRYPT,
-				GOST_R_INCOMPATIBLE_PEER_KEY);
+			    GOST_R_INCOMPATIBLE_PEER_KEY);
 			goto err;
 		}
 	} else {
 		/* Set control "public key from client certificate used" */
-		if (EVP_PKEY_CTX_ctrl(pctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 3, NULL) <= 0) {
-			GOSTerr(GOST_F_PKEY_GOST01_DECRYPT, GOST_R_CTRL_CALL_FAILED);
+		if (EVP_PKEY_CTX_ctrl(pctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 3,
+		    NULL) <= 0) {
+			GOSTerr(GOST_F_PKEY_GOST01_DECRYPT,
+			    GOST_R_CTRL_CALL_FAILED);
 			goto err;
 		}
 	}
 	peerkey = EVP_PKEY_CTX_get0_peerkey(pctx);
-	if (!peerkey) {
+	if (peerkey == NULL) {
 		GOSTerr(GOST_F_PKEY_GOST01_DECRYPT, GOST_R_NO_PEER_KEY);
 		goto err;
 	}
@@ -408,7 +414,7 @@ int pkey_gost01_derive(EVP_PKEY_CTX * ctx, unsigned char *key,
 	EVP_PKEY *peer_key = EVP_PKEY_CTX_get0_peerkey(ctx);
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
 
-	if (!data->shared_ukm) {
+	if (data->shared_ukm == NULL) {
 		GOSTerr(GOST_F_PKEY_GOST01_DERIVE, GOST_R_UKM_NOT_SET);
 		return 0;
 	}
@@ -573,17 +579,17 @@ static int pkey_gost01_ctrl(EVP_PKEY_CTX * ctx, int type, int p1, void *p2)
 	}
 }
 
-static int pkey_gost01_ctrl_str(EVP_PKEY_CTX * ctx,
-				const char *type, const char *value)
+static int
+pkey_gost01_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 {
 	int param_nid = NID_undef;
 	int digest_nid = NID_undef;
 
-	if (!strcmp(type, "paramset")) {
-		if (!value) {
+	if (strcmp(type, "paramset") == 0) {
+		if (value == NULL)
 			return 0;
-		}
-		if (!pkey_gost01_ctrl(ctx, EVP_PKEY_CTRL_GOST_GET_DIGEST, 0, &digest_nid))
+		if (pkey_gost01_ctrl(ctx, EVP_PKEY_CTRL_GOST_GET_DIGEST, 0,
+		    &digest_nid) == 0)
 			return 0;
 		if (digest_nid == NID_id_tc26_gost3411_2012_512)
 			param_nid = GostR3410_512_param_id(value);
@@ -595,23 +601,24 @@ static int pkey_gost01_ctrl_str(EVP_PKEY_CTX * ctx,
 			return 0;
 
 		return pkey_gost01_ctrl(ctx, EVP_PKEY_CTRL_GOST_PARAMSET,
-				      param_nid, NULL);
+		    param_nid, NULL);
 	}
-	if (!strcmp(type, "dgst")) {
-		if (!value)
+	if (strcmp(type, "dgst") == 0) {
+		if (value == NULL)
 			return 0;
-		else if (!strcmp(value, "gost94") || !strcmp(value, "md_gost94"))
+		else if (strcmp(value, "gost94") == 0 ||
+		    strcmp(value, "md_gost94") == 0)
 			digest_nid = NID_id_GostR3411_94_CryptoProParamSet;
-		else if (!strcmp(value, "streebog256"))
+		else if (strcmp(value, "streebog256") == 0)
 			digest_nid = NID_id_tc26_gost3411_2012_256;
-		else if (!strcmp(value, "streebog512"))
+		else if (strcmp(value, "streebog512") == 0)
 			digest_nid = NID_id_tc26_gost3411_2012_512;
 
 		if (digest_nid == NID_undef)
 			return 0;
 
 		return pkey_gost01_ctrl(ctx, EVP_PKEY_CTRL_GOST_SET_DIGEST,
-				        digest_nid, NULL);
+		    digest_nid, NULL);
 	}
 	return -2;
 }

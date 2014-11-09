@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_params.c,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: gostr341001_params.c,v 1.2 2014/11/09 23:06:52 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -59,14 +59,16 @@
 
 #include "gost_locl.h"
 
-int GostR3410_get_md_digest(int nid)
+int
+GostR3410_get_md_digest(int nid)
 {
 	if (nid == NID_id_GostR3411_94_CryptoProParamSet)
 		return NID_id_GostR3411_94;
 	return nid;
 }
 
-int GostR3410_get_pk_digest(int nid)
+int
+GostR3410_get_pk_digest(int nid)
 {
 	switch (nid) {
 	case NID_id_GostR3411_94_CryptoProParamSet:
@@ -101,22 +103,26 @@ static const GostR3410_params GostR3410_512_params[] = {
 	{ NULL, NID_undef },
 };
 
-int GostR3410_256_param_id(const char *value)
+int
+GostR3410_256_param_id(const char *value)
 {
 	int i;
+
 	for (i = 0; GostR3410_256_params[i].nid != NID_undef; i++) {
-		if (!strcasecmp(GostR3410_256_params[i].name, value))
+		if (strcasecmp(GostR3410_256_params[i].name, value) == 0)
 			return GostR3410_256_params[i].nid;
 	}
 
 	return NID_undef;
 }
 
-int GostR3410_512_param_id(const char *value)
+int
+GostR3410_512_param_id(const char *value)
 {
 	int i;
+
 	for (i = 0; GostR3410_512_params[i].nid != NID_undef; i++) {
-		if (!strcasecmp(GostR3410_512_params[i].name, value))
+		if (strcasecmp(GostR3410_512_params[i].name, value) == 0)
 			return GostR3410_512_params[i].nid;
 	}
 

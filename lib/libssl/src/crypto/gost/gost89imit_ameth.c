@@ -1,4 +1,4 @@
-/* $OpenBSD: gost89imit_ameth.c,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: gost89imit_ameth.c,v 1.2 2014/11/09 23:06:52 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -56,14 +56,14 @@
 
 #include "asn1_locl.h"
 
-static void mackey_free_gost(EVP_PKEY *pk)
+static void
+mackey_free_gost(EVP_PKEY *pk)
 {
-	if (pk->pkey.ptr) {
-		free(pk->pkey.ptr);
-	}
+	free(pk->pkey.ptr);
 }
 
-static int mac_ctrl_gost(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+static int
+mac_ctrl_gost(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
 	switch (op) {
 	case ASN1_PKEY_CTRL_DEFAULT_MD_NID:

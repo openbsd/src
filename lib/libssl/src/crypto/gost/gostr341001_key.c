@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_key.c,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: gostr341001_key.c,v 1.2 2014/11/09 23:06:52 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -68,7 +68,8 @@ struct gost_key_st {
 	int digest_nid;
 };
 
-GOST_KEY * GOST_KEY_new(void)
+GOST_KEY *
+GOST_KEY_new(void)
 {
 	GOST_KEY *ret;
 
@@ -85,7 +86,8 @@ GOST_KEY * GOST_KEY_new(void)
 	return (ret);
 }
 
-void GOST_KEY_free(GOST_KEY * r)
+void
+GOST_KEY_free(GOST_KEY *r)
 {
 	int i;
 
@@ -100,23 +102,23 @@ void GOST_KEY_free(GOST_KEY * r)
 	EC_POINT_free(r->pub_key);
 	BN_clear_free(r->priv_key);
 
-	OPENSSL_cleanse((void *) r, sizeof(GOST_KEY));
-
+	OPENSSL_cleanse((void *)r, sizeof(GOST_KEY));
 	free(r);
 }
 
-int GOST_KEY_check_key(const GOST_KEY * key)
+int
+GOST_KEY_check_key(const GOST_KEY *key)
 {
 	int ok = 0;
 	BN_CTX *ctx = NULL;
 	BIGNUM *order = NULL;
 	EC_POINT *point = NULL;
 
-	if (!key || !key->group || !key->pub_key) {
+	if (key == NULL || key->group == NULL || key->pub_key == NULL) {
 		GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
-	if (EC_POINT_is_at_infinity(key->group, key->pub_key)) {
+	if (EC_POINT_is_at_infinity(key->group, key->pub_key) != 0) {
 		GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, EC_R_POINT_AT_INFINITY);
 		goto err;
 	}
@@ -126,22 +128,23 @@ int GOST_KEY_check_key(const GOST_KEY * key)
 		goto err;
 
 	/* testing whether the pub_key is on the elliptic curve */
-	if (!EC_POINT_is_on_curve(key->group, key->pub_key, ctx)) {
+	if (EC_POINT_is_on_curve(key->group, key->pub_key, ctx) == 0) {
 		GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, EC_R_POINT_IS_NOT_ON_CURVE);
 		goto err;
 	}
 	/* testing whether pub_key * order is the point at infinity */
 	if ((order = BN_new()) == NULL)
 		goto err;
-	if (!EC_GROUP_get_order(key->group, order, ctx)) {
+	if (EC_GROUP_get_order(key->group, order, ctx) == 0) {
 		GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
-	if (!EC_POINT_mul(key->group, point, NULL, key->pub_key, order, ctx)) {
+	if (EC_POINT_mul(key->group, point, NULL, key->pub_key, order,
+	    ctx) == 0) {
 		GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, ERR_R_EC_LIB);
 		goto err;
 	}
-	if (!EC_POINT_is_at_infinity(key->group, point)) {
+	if (EC_POINT_is_at_infinity(key->group, point) == 0) {
 		GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, EC_R_WRONG_ORDER);
 		goto err;
 	}
@@ -149,19 +152,19 @@ int GOST_KEY_check_key(const GOST_KEY * key)
 	 * in case the priv_key is present : check if generator * priv_key ==
 	 * pub_key
 	 */
-	if (key->priv_key) {
+	if (key->priv_key != NULL) {
 		if (BN_cmp(key->priv_key, order) >= 0) {
 			GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, EC_R_WRONG_ORDER);
 			goto err;
 		}
-		if (!EC_POINT_mul(key->group, point, key->priv_key,
-			NULL, NULL, ctx)) {
+		if (EC_POINT_mul(key->group, point, key->priv_key, NULL, NULL,
+		    ctx) == 0) {
 			GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, ERR_R_EC_LIB);
 			goto err;
 		}
-		if (EC_POINT_cmp(key->group, point, key->pub_key,
-			ctx) != 0) {
-			GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, EC_R_INVALID_PRIVATE_KEY);
+		if (EC_POINT_cmp(key->group, point, key->pub_key, ctx) != 0) {
+			GOSTerr(GOST_F_GOST_KEY_CHECK_KEY,
+			    EC_R_INVALID_PRIVATE_KEY);
 			goto err;
 		}
 	}
@@ -220,30 +223,34 @@ int GOST_KEY_set_public_key_affine_coordinates(GOST_KEY * key, BIGNUM * x, BIGNU
 	ok = 1;
 
 err:
-	BN_CTX_free(ctx);
 	EC_POINT_free(point);
+	BN_CTX_free(ctx);
 	return ok;
 
 }
 
-const EC_GROUP * GOST_KEY_get0_group(const GOST_KEY * key)
+const EC_GROUP *
+GOST_KEY_get0_group(const GOST_KEY *key)
 {
 	return key->group;
 }
 
-int GOST_KEY_set_group(GOST_KEY * key, const EC_GROUP * group)
+int
+GOST_KEY_set_group(GOST_KEY *key, const EC_GROUP *group)
 {
 	EC_GROUP_free(key->group);
 	key->group = EC_GROUP_dup(group);
 	return (key->group == NULL) ? 0 : 1;
 }
 
-const BIGNUM * GOST_KEY_get0_private_key(const GOST_KEY * key)
+const BIGNUM *
+GOST_KEY_get0_private_key(const GOST_KEY *key)
 {
 	return key->priv_key;
 }
 
-int GOST_KEY_set_private_key(GOST_KEY * key, const BIGNUM * priv_key)
+int
+GOST_KEY_set_private_key(GOST_KEY *key, const BIGNUM *priv_key)
 {
 	BN_clear_free(key->priv_key);
 	key->priv_key = BN_dup(priv_key);
@@ -251,23 +258,26 @@ int GOST_KEY_set_private_key(GOST_KEY * key, const BIGNUM * priv_key)
 }
 
 const EC_POINT *
-GOST_KEY_get0_public_key(const GOST_KEY * key)
+GOST_KEY_get0_public_key(const GOST_KEY *key)
 {
 	return key->pub_key;
 }
 
-int GOST_KEY_set_public_key(GOST_KEY * key, const EC_POINT * pub_key)
+int
+GOST_KEY_set_public_key(GOST_KEY *key, const EC_POINT *pub_key)
 {
 	EC_POINT_free(key->pub_key);
 	key->pub_key = EC_POINT_dup(pub_key, key->group);
 	return (key->pub_key == NULL) ? 0 : 1;
 }
 
-int GOST_KEY_get_digest(const GOST_KEY * key)
+int
+GOST_KEY_get_digest(const GOST_KEY *key)
 {
 	return key->digest_nid;
 }
-int GOST_KEY_set_digest(GOST_KEY * key, int digest_nid)
+int
+GOST_KEY_set_digest(GOST_KEY *key, int digest_nid)
 {
 	if (digest_nid == NID_id_GostR3411_94_CryptoProParamSet ||
 	    digest_nid == NID_id_tc26_gost3411_2012_256 ||
@@ -279,7 +289,8 @@ int GOST_KEY_set_digest(GOST_KEY * key, int digest_nid)
 	return 0;
 }
 
-size_t GOST_KEY_get_size(const GOST_KEY * r)
+size_t
+GOST_KEY_get_size(const GOST_KEY *r)
 {
 	int i;
 	BIGNUM *order = NULL;
@@ -294,7 +305,7 @@ size_t GOST_KEY_get_size(const GOST_KEY * r)
 	if ((order = BN_new()) == NULL)
 		return 0;
 
-	if (!EC_GROUP_get_order(group,order,NULL)) {
+	if (EC_GROUP_get_order(group, order, NULL) == 0) {
 		BN_clear_free(order);
 		return 0;
 	}
