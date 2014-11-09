@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.190 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.191 2014/11/09 22:05:08 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -617,6 +617,11 @@ udp_input(struct mbuf *m, ...)
 	KASSERT(sotoinpcb(inp->inp_socket) == inp);
 
 #if NPF > 0
+	if (m->m_pkthdr.pf.statekey && !m->m_pkthdr.pf.statekey->inp &&
+	    !inp->inp_pf_sk && (inp->inp_socket->so_state & SS_ISCONNECTED)) {
+		m->m_pkthdr.pf.statekey->inp = inp;
+		inp->inp_pf_sk = m->m_pkthdr.pf.statekey;
+	}
 	/* The statekey has finished finding the inp, it is no longer needed. */
 	m->m_pkthdr.pf.statekey = NULL;
 #endif
@@ -1102,6 +1107,11 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 
 	/* force routing table */
 	m->m_pkthdr.ph_rtableid = inp->inp_rtableid;
+
+#if NPF > 0
+	if (inp->inp_socket->so_state & SS_ISCONNECTED)
+		m->m_pkthdr.pf.inp = inp;
+#endif
 
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
 	    (inp->inp_socket->so_options & SO_BROADCAST), inp->inp_moptions,

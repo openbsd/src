@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.31 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.32 2014/11/09 22:05:08 bluhm Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -58,6 +58,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include "pf.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -222,6 +224,11 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 
 	/* force routing table */
 	m->m_pkthdr.ph_rtableid = in6p->inp_rtableid;
+
+#if NPF > 0
+	if (in6p->inp_socket->so_state & SS_ISCONNECTED)
+		m->m_pkthdr.pf.inp = in6p;
+#endif
 
 	error = ip6_output(m, optp, &in6p->inp_route6,
 	    flags, in6p->inp_moptions6, NULL, in6p);
