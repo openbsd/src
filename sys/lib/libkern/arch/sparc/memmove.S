@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmove.S,v 1.5 2013/06/15 19:36:59 miod Exp $	*/
+/*	$OpenBSD: memmove.S,v 1.6 2014/11/09 16:41:26 miod Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -111,7 +111,7 @@ Lbcopy_fancy:
 	EMPTY
 	btst	7, %o1
 	be,a	Lbcopy_doubles
-	dec	8, %o2		! if all lined up, len -= 8, goto bcopy_doubes
+	dec	8, %o2		! if all lined up, len -= 8, goto bcopy_doubles
 
 	! If the low bits match, we can make these line up.
 1:
