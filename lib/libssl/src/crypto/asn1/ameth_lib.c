@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.14 2014/07/13 16:03:09 beck Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.15 2014/11/09 19:17:13 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -74,6 +74,8 @@ extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[];
 extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[];
 extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD gostr01_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD gostimit_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD cmac_asn1_meth;
 
@@ -96,8 +98,16 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_EC
 	&eckey_asn1_meth,
 #endif
+#ifndef OPENSSL_NO_GOST
+	&gostr01_asn1_meths[0],
+	&gostimit_asn1_meth,
+#endif
 	&hmac_asn1_meth,
-	&cmac_asn1_meth
+	&cmac_asn1_meth,
+#ifndef OPENSSL_NO_GOST
+	&gostr01_asn1_meths[1],
+	&gostr01_asn1_meths[2],
+#endif
 };
 
 typedef int sk_cmp_fn_type(const char * const *a, const char * const *b);

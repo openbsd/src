@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.39 2014/07/11 15:28:27 tedu Exp $ */
+/* $OpenBSD: evp.h,v 1.40 2014/11/09 19:17:13 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -107,8 +107,12 @@
 #define EVP_PKEY_DSA4	NID_dsaWithSHA1_2
 #define EVP_PKEY_DH	NID_dhKeyAgreement
 #define EVP_PKEY_EC	NID_X9_62_id_ecPublicKey
+#define EVP_PKEY_GOSTR01 NID_id_GostR3410_2001
+#define EVP_PKEY_GOSTIMIT NID_id_Gost28147_89_MAC
 #define EVP_PKEY_HMAC	NID_hmac
 #define EVP_PKEY_CMAC	NID_cmac
+#define EVP_PKEY_GOSTR12_256 NID_id_tc26_gost3410_2012_256
+#define EVP_PKEY_GOSTR12_512 NID_id_tc26_gost3410_2012_512
 
 #ifdef	__cplusplus
 extern "C" {
@@ -136,6 +140,9 @@ struct evp_pkey_st {
 #endif
 #ifndef OPENSSL_NO_EC
 		struct ec_key_st *ec;	/* ECC */
+#endif
+#ifndef OPENSSL_NO_GOST
+		struct gost_key_st *gost; /* GOST */
 #endif
 	} pkey;
 	int save_parameters;
@@ -213,6 +220,8 @@ typedef int evp_verify_method(int type, const unsigned char *m,
 
 #define	EVP_MD_CTRL_DIGALGID			0x1
 #define	EVP_MD_CTRL_MICALG			0x2
+#define	EVP_MD_CTRL_SET_KEY			0x3
+#define	EVP_MD_CTRL_GOST_SET_SBOX		0x4
 
 /* Minimum Algorithm specific ctrl value */
 
@@ -381,6 +390,8 @@ struct evp_cipher_st {
 #define		EVP_CTRL_AEAD_SET_MAC_KEY	0x17
 /* Set the GCM invocation field, decrypt only */
 #define		EVP_CTRL_GCM_SET_IV_INV		0x18
+/* Set the S-BOX NID for GOST ciphers */
+#define		EVP_CTRL_GOST_SET_SBOX		0x19
 
 /* GCM TLS constants */
 /* Length of fixed part of IV derived from PRF */
@@ -449,6 +460,11 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #ifndef OPENSSL_NO_EC
 #define EVP_PKEY_assign_EC_KEY(pkey,eckey) EVP_PKEY_assign((pkey),EVP_PKEY_EC,\
                                         (char *)(eckey))
+#endif
+
+#ifndef OPENSSL_NO_GOST
+#define EVP_PKEY_assign_GOST(pkey,gostkey) EVP_PKEY_assign((pkey),EVP_PKEY_GOSTR01,\
+                                        (char *)(gostkey))
 #endif
 
 /* Add some extra combinations */
@@ -530,6 +546,7 @@ void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
 int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
 void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
 void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
+int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int type, int arg, void *ptr);
 int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags);
 int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
 int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
@@ -664,6 +681,12 @@ const EVP_MD *EVP_ripemd160(void);
 #endif
 #ifndef OPENSSL_NO_WHIRLPOOL
 const EVP_MD *EVP_whirlpool(void);
+#endif
+#ifndef OPENSSL_NO_GOST
+const EVP_MD *EVP_gostr341194(void);
+const EVP_MD *EVP_gost2814789imit(void);
+const EVP_MD *EVP_streebog256(void);
+const EVP_MD *EVP_streebog512(void);
 #endif
 const EVP_CIPHER *EVP_enc_null(void);		/* does nothing :-) */
 #ifndef OPENSSL_NO_DES
@@ -804,6 +827,12 @@ const EVP_CIPHER *EVP_camellia_256_ofb(void);
 const EVP_CIPHER *EVP_chacha20(void);
 #endif
 
+#ifndef OPENSSL_NO_GOST
+const EVP_CIPHER *EVP_gost2814789_ecb(void);
+const EVP_CIPHER *EVP_gost2814789_cfb64(void);
+const EVP_CIPHER *EVP_gost2814789_cnt(void);
+#endif
+
 void OPENSSL_add_all_algorithms_noconf(void);
 void OPENSSL_add_all_algorithms_conf(void);
 
@@ -870,6 +899,9 @@ struct dh_st *EVP_PKEY_get1_DH(EVP_PKEY *pkey);
 struct ec_key_st;
 int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, struct ec_key_st *key);
 struct ec_key_st *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
+#endif
+#ifndef OPENSSL_NO_GOST
+struct gost_key_st;
 #endif
 
 EVP_PKEY *EVP_PKEY_new(void);
@@ -1337,6 +1369,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_EVP_DIGESTINIT_EX				 128
 #define EVP_F_EVP_ENCRYPTFINAL_EX			 127
 #define EVP_F_EVP_MD_CTX_COPY_EX			 110
+#define EVP_F_EVP_MD_CTX_CTRL				 195
 #define EVP_F_EVP_MD_SIZE				 162
 #define EVP_F_EVP_OPENINIT				 102
 #define EVP_F_EVP_PBE_ALG_ADD				 115

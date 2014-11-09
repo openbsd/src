@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.9 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.10 2014/11/09 19:17:13 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -79,6 +79,7 @@ STACK_OF(EVP_PKEY_METHOD) *app_pkey_methods = NULL;
 
 extern const EVP_PKEY_METHOD rsa_pkey_meth, dh_pkey_meth, dsa_pkey_meth;
 extern const EVP_PKEY_METHOD ec_pkey_meth, hmac_pkey_meth, cmac_pkey_meth;
+extern const EVP_PKEY_METHOD gostimit_pkey_meth, gostr01_pkey_meth;
 
 static const EVP_PKEY_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_RSA
@@ -93,8 +94,12 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_EC
 	&ec_pkey_meth,
 #endif
+#ifndef OPENSSL_NO_GOST
+	&gostr01_pkey_meth,
+	&gostimit_pkey_meth,
+#endif
 	&hmac_pkey_meth,
-	&cmac_pkey_meth
+	&cmac_pkey_meth,
 };
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_METHOD *, const EVP_PKEY_METHOD *,

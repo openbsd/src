@@ -1,4 +1,4 @@
-/* $OpenBSD: err.h,v 1.21 2014/07/11 09:25:24 jsing Exp $ */
+/* $OpenBSD: err.h,v 1.22 2014/11/09 19:17:13 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -195,6 +195,7 @@ typedef struct err_state_st {
 #define ERR_LIB_TS		47
 #define ERR_LIB_HMAC		48
 #define ERR_LIB_JPAKE		49
+#define ERR_LIB_GOST		50
 
 #define ERR_LIB_USER		128
 
@@ -231,6 +232,7 @@ typedef struct err_state_st {
 #define TSerr(f,r) ERR_PUT_error(ERR_LIB_TS,(f),(r),__FILE__,__LINE__)
 #define HMACerr(f,r) ERR_PUT_error(ERR_LIB_HMAC,(f),(r),__FILE__,__LINE__)
 #define JPAKEerr(f,r) ERR_PUT_error(ERR_LIB_JPAKE,(f),(r),__FILE__,__LINE__)
+#define GOSTerr(f,r) ERR_PUT_error(ERR_LIB_GOST,(f),(r),__FILE__,__LINE__)
 
 #define ERR_PACK(l,f,r)		(((((unsigned long)l)&0xffL)<<24L)| \
 				((((unsigned long)f)&0xfffL)<<12L)| \

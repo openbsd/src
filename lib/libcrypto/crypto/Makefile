@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.46 2014/07/28 17:57:18 tedu Exp $
+# $OpenBSD: Makefile,v 1.47 2014/11/09 19:17:11 miod Exp $
 
 LIB=	crypto
 
@@ -154,6 +154,13 @@ SRCS+= evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c
 SRCS+= e_old.c pmeth_lib.c pmeth_fn.c pmeth_gn.c m_sigver.c
 SRCS+= e_aes_cbc_hmac_sha1.c e_rc4_hmac_md5.c
 SRCS+= e_chacha.c evp_aead.c e_chacha20poly1305.c
+#SRCS+= e_gost2814789.c m_gost2814789.c m_gostr341194.c m_streebog.c
+
+# gost/
+#SRCS+= gost2814789.c gost89_keywrap.c gost89_params.c gost89imit_ameth.c
+#SRCS+= gost89imit_pmeth.c gost_asn1.c gost_err.c gostr341001.c
+#SRCS+= gostr341001_ameth.c gostr341001_key.c gostr341001_params.c
+#SRCS+= gostr341001_pmeth.c gostr341194.c streebog.c
 
 # hmac/
 SRCS+= hmac.c hm_ameth.c hm_pmeth.c
@@ -285,6 +292,7 @@ SRCS+= v3_asid.c v3_addr.c
 	${LCRYPTO_SRC}/engine \
 	${LCRYPTO_SRC}/err \
 	${LCRYPTO_SRC}/evp \
+	${LCRYPTO_SRC}/gost \
 	${LCRYPTO_SRC}/hmac \
 	${LCRYPTO_SRC}/idea \
 	${LCRYPTO_SRC}/krb5 \
@@ -346,6 +354,7 @@ HDRS=\
 	crypto/engine/engine.h \
 	crypto/err/err.h \
 	crypto/evp/evp.h \
+	crypto/gost/gost.h \
 	crypto/hmac/hmac.h \
 	crypto/idea/idea.h \
 	crypto/krb5/krb5_asn.h \

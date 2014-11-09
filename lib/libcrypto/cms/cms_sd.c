@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.8 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.9 2014/11/09 19:17:13 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -920,6 +920,8 @@ CMS_add_standard_smimecap(STACK_OF(X509_ALGOR) **smcap)
 {
 	if (!cms_add_cipher_smcap(smcap, NID_aes_256_cbc, -1) ||
 	    !cms_add_digest_smcap(smcap, NID_id_GostR3411_94, -1) ||
+	    !cms_add_digest_smcap(smcap, NID_id_tc26_gost3411_2012_256, -1) ||
+	    !cms_add_digest_smcap(smcap, NID_id_tc26_gost3411_2012_512, -1) ||
 	    !cms_add_cipher_smcap(smcap, NID_id_Gost28147_89, -1) ||
 	    !cms_add_cipher_smcap(smcap, NID_aes_192_cbc, -1) ||
 	    !cms_add_cipher_smcap(smcap, NID_aes_128_cbc, -1) ||

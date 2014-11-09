@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.40 2014/10/05 15:21:48 deraadt Exp $ */
+/* $OpenBSD: err.c,v 1.41 2014/11/09 19:17:13 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -157,6 +157,7 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
 	{ERR_PACK(ERR_LIB_FIPS,0,0),		"FIPS routines"},
 	{ERR_PACK(ERR_LIB_CMS,0,0),		"CMS routines"},
 	{ERR_PACK(ERR_LIB_HMAC,0,0),		"HMAC routines"},
+	{ERR_PACK(ERR_LIB_GOST,0,0),		"GOST routines"},
 	{0, NULL},
 };
 

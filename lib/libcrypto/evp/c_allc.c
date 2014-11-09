@@ -1,4 +1,4 @@
-/* $OpenBSD: c_allc.c,v 1.13 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: c_allc.c,v 1.14 2014/11/09 19:17:13 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -224,5 +224,11 @@ OpenSSL_add_all_ciphers(void)
 
 #ifndef OPENSSL_NO_CHACHA
 	EVP_add_cipher(EVP_chacha20());
+#endif
+
+#ifndef OPENSSL_NO_GOST
+	EVP_add_cipher(EVP_gost2814789_ecb());
+	EVP_add_cipher(EVP_gost2814789_cfb64());
+	EVP_add_cipher(EVP_gost2814789_cnt());
 #endif
 }
