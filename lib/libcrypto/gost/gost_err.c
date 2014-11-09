@@ -120,7 +120,6 @@ static ERR_STRING_DATA GOST_str_reasons[]=
 {ERR_REASON(GOST_R_NO_PEER_KEY)          ,"no peer key"},
 {ERR_REASON(GOST_R_NO_PRIVATE_PART_OF_NON_EPHEMERAL_KEYPAIR),"no private part of non ephemeral keypair"},
 {ERR_REASON(GOST_R_PUBLIC_KEY_UNDEFINED) ,"public key undefined"},
-{ERR_REASON(GOST_R_RANDOM_GENERATOR_FAILURE),"random generator failure"},
 {ERR_REASON(GOST_R_RANDOM_NUMBER_GENERATOR_FAILED),"random number generator failed"},
 {ERR_REASON(GOST_R_SIGNATURE_MISMATCH)   ,"signature mismatch"},
 {ERR_REASON(GOST_R_SIGNATURE_PARTS_GREATER_THAN_Q),"signature parts greater than q"},

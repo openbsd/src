@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_pmeth.c,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: gostr341001_pmeth.c,v 1.2 2014/11/09 19:24:30 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -60,7 +60,6 @@
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 #include <openssl/x509.h>
-#include <openssl/rand.h> /* for RAND_bytes */
 
 #include "evp_locl.h"
 #include "gost_locl.h"
@@ -454,11 +453,7 @@ int pkey_gost01_encrypt(EVP_PKEY_CTX * pctx, unsigned char *out,
 	if (data->shared_ukm) {
 		memcpy(ukm, data->shared_ukm, 8);
 	} else if (out) {
-		if (RAND_bytes(ukm, 8) <= 0) {
-			GOSTerr(GOST_F_PKEY_GOST01_ENCRYPT,
-				GOST_R_RANDOM_GENERATOR_FAILURE);
-			return 0;
-		}
+		arc4random_buf(ukm, 8);
 	}
 	/* Check for private key in the peer_key of context */
 	if (sec_key) {

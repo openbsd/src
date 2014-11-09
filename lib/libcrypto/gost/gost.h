@@ -1,4 +1,4 @@
-/* $OpenBSD: gost.h,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: gost.h,v 1.2 2014/11/09 19:24:30 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -251,7 +251,6 @@ void ERR_load_GOST_strings(void);
 #define GOST_R_NO_PEER_KEY				 116
 #define GOST_R_NO_PRIVATE_PART_OF_NON_EPHEMERAL_KEYPAIR	 117
 #define GOST_R_PUBLIC_KEY_UNDEFINED			 118
-#define GOST_R_RANDOM_GENERATOR_FAILURE			 119
 #define GOST_R_RANDOM_NUMBER_GENERATOR_FAILED		 120
 #define GOST_R_SIGNATURE_MISMATCH			 121
 #define GOST_R_SIGNATURE_PARTS_GREATER_THAN_Q		 122
