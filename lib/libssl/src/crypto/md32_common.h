@@ -1,4 +1,4 @@
-/* $OpenBSD: md32_common.h,v 1.19 2014/10/20 13:06:54 bcook Exp $ */
+/* $OpenBSD: md32_common.h,v 1.20 2014/11/09 19:08:24 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -131,8 +131,8 @@
 #ifndef HASH_TRANSFORM
 #error "HASH_TRANSFORM must be defined!"
 #endif
-#ifndef HASH_FINAL
-#error "HASH_FINAL must be defined!"
+#if !defined(HASH_FINAL) && !defined(HASH_NO_FINAL)
+#error "HASH_FINAL or HASH_NO_FINAL must be defined!"
 #endif
 
 #ifndef HASH_BLOCK_DATA_ORDER
@@ -287,6 +287,7 @@ void HASH_TRANSFORM (HASH_CTX *c, const unsigned char *data)
 }
 
 
+#ifndef HASH_NO_FINAL
 int HASH_FINAL (unsigned char *md, HASH_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
@@ -323,6 +324,7 @@ int HASH_FINAL (unsigned char *md, HASH_CTX *c)
 
 	return 1;
 }
+#endif
 
 #ifndef MD32_REG_T
 #if defined(__alpha) || defined(__sparcv9) || defined(__mips)
