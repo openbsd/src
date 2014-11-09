@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-SUNXI,v 1.8 2014/11/04 12:34:06 jsg Exp $
+# $OpenBSD: GENERIC-SUNXI,v 1.9 2014/11/09 05:12:15 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -127,7 +127,6 @@ wi*		at uhub?		# WaveLAN IEEE 802.11DS
 urio*		at uhub?		# Diamond Multimedia Rio 500
 udsbr*		at uhub?		# D-Link DSB-R100 radio
 radio*		at udsbr?		# USB radio
-#ubt*		at uhub? disable	# USB Bluetooth
 ugen*		at uhub?		# USB Generic driver
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 # XXX missing usable drivers, like run(4).

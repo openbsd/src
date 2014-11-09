@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-IMX,v 1.8 2014/07/12 21:56:56 tedu Exp $
+# $OpenBSD: GENERIC-IMX,v 1.9 2014/11/09 05:12:15 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -125,7 +125,6 @@ wi*		at uhub?		# WaveLAN IEEE 802.11DS
 urio*		at uhub?		# Diamond Multimedia Rio 500
 udsbr*		at uhub?		# D-Link DSB-R100 radio
 radio*		at udsbr?		# USB radio
-#ubt*		at uhub? disable	# USB Bluetooth
 ugen*		at uhub?		# USB Generic driver
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 
