@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_pmeth.c,v 1.2 2014/11/09 19:24:30 miod Exp $ */
+/* $OpenBSD: gostr341001_pmeth.c,v 1.3 2014/11/09 19:27:29 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -396,7 +396,7 @@ int pkey_gost01_decrypt(EVP_PKEY_CTX * pctx, unsigned char *key,
 	OPENSSL_assert(gkt->key_info->imit->length == 4);
 	memcpy(wrappedKey + 40, gkt->key_info->imit->data, 4);
 	gost01_VKO_key(peerkey, priv, wrappedKey, sharedKey);
-	if (!key_unwrap_crypto_pro(nid, sharedKey, wrappedKey, key)) {
+	if (!gost_key_unwrap_crypto_pro(nid, sharedKey, wrappedKey, key)) {
 		GOSTerr(GOST_F_PKEY_GOST01_DECRYPT,
 			GOST_R_ERROR_COMPUTING_SHARED_KEY);
 		goto err;
@@ -478,7 +478,7 @@ int pkey_gost01_encrypt(EVP_PKEY_CTX * pctx, unsigned char *out,
 
 	if (out) {
 		gost01_VKO_key(pubk, sec_key, ukm, shared_key);
-		key_wrap_crypto_pro(nid, shared_key, ukm, key, crypted_key);
+		gost_key_wrap_crypto_pro(nid, shared_key, ukm, key, crypted_key);
 	}
 	gkt = GOST_KEY_TRANSPORT_new();
 	if (!gkt) {

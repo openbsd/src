@@ -1,4 +1,4 @@
-/* $OpenBSD: gost89_keywrap.c,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: gost89_keywrap.c,v 1.2 2014/11/09 19:27:29 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -59,14 +59,15 @@
 
 #include "gost_locl.h"
 
-static void key_diversify_crypto_pro(GOST2814789_KEY * ctx, const unsigned char *inputKey,
-			   const unsigned char *ukm, unsigned char *outputKey)
+static void
+key_diversify_crypto_pro(GOST2814789_KEY *ctx, const unsigned char *inputKey,
+    const unsigned char *ukm, unsigned char *outputKey)
 {
-
 	unsigned long k, s1, s2;
 	int i, mask;
 	unsigned char S[8];
 	unsigned char *p;
+
 	memcpy(outputKey, inputKey, 32);
 	for (i = 0; i < 8; i++) {
 		/* Make array of integers from key */
@@ -86,13 +87,15 @@ static void key_diversify_crypto_pro(GOST2814789_KEY * ctx, const unsigned char 
 		l2c (s2, p);
 		Gost2814789_set_key(ctx, outputKey, 256);
 		mask = 0;
-		Gost2814789_cfb64_encrypt(outputKey, outputKey, 32, ctx, S, &mask, 1);
+		Gost2814789_cfb64_encrypt(outputKey, outputKey, 32, ctx, S,
+		    &mask, 1);
 	}
 }
 
-int key_wrap_crypto_pro(int nid, const unsigned char *keyExchangeKey,
-		     const unsigned char *ukm, const unsigned char *sessionKey,
-		     unsigned char *wrappedKey)
+int
+gost_key_wrap_crypto_pro(int nid, const unsigned char *keyExchangeKey,
+    const unsigned char *ukm, const unsigned char *sessionKey,
+    unsigned char *wrappedKey)
 {
 	GOST2814789_KEY ctx;
 	unsigned char kek_ukm[32];
@@ -109,9 +112,9 @@ int key_wrap_crypto_pro(int nid, const unsigned char *keyExchangeKey,
 	return 1;
 }
 
-int key_unwrap_crypto_pro(int nid, const unsigned char *keyExchangeKey,
-		       const unsigned char *wrappedKey,
-		       unsigned char *sessionKey)
+int
+gost_key_unwrap_crypto_pro(int nid, const unsigned char *keyExchangeKey,
+    const unsigned char *wrappedKey, unsigned char *sessionKey)
 {
 	unsigned char kek_ukm[32], cek_mac[4];
 	GOST2814789_KEY ctx;

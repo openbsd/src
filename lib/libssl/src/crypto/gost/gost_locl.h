@@ -1,4 +1,4 @@
-/* $OpenBSD: gost_locl.h,v 1.1 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: gost_locl.h,v 1.2 2014/11/09 19:27:29 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -88,22 +88,21 @@ extern void Gost2814789_decrypt(const unsigned char *in, unsigned char *out,
 extern void Gost2814789_cryptopro_key_mesh(GOST2814789_KEY *key);
 
 /* GOST 28147-89 key wrapping */
-extern int key_unwrap_crypto_pro(int nid, const unsigned char *keyExchangeKey,
-		       const unsigned char *wrappedKey,
-		       unsigned char *sessionKey);
-extern int key_wrap_crypto_pro(int nid, const unsigned char *keyExchangeKey,
-		     const unsigned char *ukm, const unsigned char *sessionKey,
-		     unsigned char *wrappedKey);
+extern int gost_key_unwrap_crypto_pro(int nid,
+    const unsigned char *keyExchangeKey, const unsigned char *wrappedKey,
+    unsigned char *sessionKey);
+extern int gost_key_wrap_crypto_pro(int nid,
+    const unsigned char *keyExchangeKey, const unsigned char *ukm,
+    const unsigned char *sessionKey, unsigned char *wrappedKey);
 /* Pkey part */
-extern int gost2001_compute_public(GOST_KEY * ec);
-extern ECDSA_SIG *gost2001_do_sign(BIGNUM * md, GOST_KEY * eckey);
-extern int gost2001_do_verify(BIGNUM * md, ECDSA_SIG * sig, GOST_KEY * ec);
-extern int gost2001_keygen(GOST_KEY * ec);
-extern void VKO_compute_key(BIGNUM * X, BIGNUM * Y,
-			    const GOST_KEY * pkey, GOST_KEY * priv_key,
-			    const BIGNUM * ukm);
-extern BIGNUM *GOST_le2bn(const unsigned char * buf, size_t len, BIGNUM * bn);
-extern int GOST_bn2le(BIGNUM * bn, unsigned char * buf, int len);
+extern int gost2001_compute_public(GOST_KEY *ec);
+extern ECDSA_SIG *gost2001_do_sign(BIGNUM *md, GOST_KEY *eckey);
+extern int gost2001_do_verify(BIGNUM *md, ECDSA_SIG *sig, GOST_KEY *ec);
+extern int gost2001_keygen(GOST_KEY *ec);
+extern void VKO_compute_key(BIGNUM *X, BIGNUM *Y, const GOST_KEY *pkey,
+    GOST_KEY *priv_key, const BIGNUM *ukm);
+extern BIGNUM *GOST_le2bn(const unsigned char *buf, size_t len, BIGNUM *bn);
+extern int GOST_bn2le(BIGNUM *bn, unsigned char *buf, int len);
 
 /* GOST R 34.10 parameters */
 extern int GostR3410_get_md_digest(int nid);
