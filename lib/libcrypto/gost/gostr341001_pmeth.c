@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_pmeth.c,v 1.3 2014/11/09 19:27:29 miod Exp $ */
+/* $OpenBSD: gostr341001_pmeth.c,v 1.4 2014/11/09 19:28:44 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -235,13 +235,6 @@ static int pkey_gost01_sign(EVP_PKEY_CTX * ctx, unsigned char *sig,
 	OPENSSL_assert(tbs_len == 32 || tbs_len == 64);
 	md = GOST_le2bn(tbs, tbs_len, NULL);
 	unpacked_sig = gost2001_do_sign(md, pkey->pkey.gost);
-#ifdef DEBUG_SIGN
-	fprintf(stderr, "S.R=");
-	BN_print_fp(stderr, unpacked_sig->r);
-	fprintf(stderr, "\nS.S=");
-	BN_print_fp(stderr, unpacked_sig->s);
-	fprintf(stderr, "\n");
-#endif
 	if (!unpacked_sig) {
 		return 0;
 	}
@@ -281,13 +274,6 @@ static int pkey_gost01_verify(EVP_PKEY_CTX * ctx, const unsigned char *sig,
 	md = GOST_le2bn(tbs, tbs_len, NULL);
 	if (!md)
 		goto err;
-#ifdef DEBUG_SIGN
-	fprintf(stderr, "V.R=");
-	BN_print_fp(stderr, s->r);
-	fprintf(stderr, "\nV.S=");
-	BN_print_fp(stderr, s->s);
-	fprintf(stderr, "\n");
-#endif
 	ok = gost2001_do_verify(md, s, pub_key->pkey.gost);
 
 err:

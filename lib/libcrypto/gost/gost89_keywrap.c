@@ -1,4 +1,4 @@
-/* $OpenBSD: gost89_keywrap.c,v 1.2 2014/11/09 19:27:29 miod Exp $ */
+/* $OpenBSD: gost89_keywrap.c,v 1.3 2014/11/09 19:28:44 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -129,10 +129,9 @@ gost_key_unwrap_crypto_pro(int nid, const unsigned char *keyExchangeKey,
 	Gost2814789_decrypt(wrappedKey + 8 + 24, sessionKey + 24, &ctx);
 
 	GOST2814789IMIT(sessionKey, 32, cek_mac, nid, kek_ukm, wrappedKey);
-	if (memcmp(cek_mac, wrappedKey + 40, 4)) {
-		printf("IMIT Missmatch!\n");
+	if (memcmp(cek_mac, wrappedKey + 40, 4))
 		return 0;
-	}
+
 	return 1;
 }
 
