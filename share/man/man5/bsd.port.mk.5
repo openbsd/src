@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.410 2014/11/04 10:00:24 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.411 2014/11/09 01:12:59 schwarze Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 4 2014 $
+.Dd $Mdocdate: November 9 2014 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -219,7 +219,7 @@ Shorthand for `sub package'.
 Shorthand for `work flavors packages plist'.
 .El
 .It Ar clean-depends
-Short hand for make clean=depends.
+Shorthand for make clean=depends.
 .It Ar configure
 Configure the port.
 Might be a void operation.
@@ -237,7 +237,7 @@ Check all the port's dependencies, that is:
 Prints a one-line index entry of the port, suitable for
 .Pa ${PORTSDIR}/INDEX .
 .It Ar distclean
-Short-hand for make clean=dist.
+Shorthand for make clean=dist.
 .It Ar distpatch
 Apply distribution patches only.
 See
@@ -447,7 +447,7 @@ to fetch files, see
 .It Ar no-lib-depends-args
 Degenerate form of
 .Ar lib-depends-args
-that does not do anthing.
+that does not do anything.
 See
 .Ar print-package-args .
 .It Ar no-wantlib-args
@@ -574,7 +574,7 @@ see
 Print all dependency-related information that will be passed as parameters
 to
 .Xr pkg_create 1 ,
-\&.e.g.,
+e.g.,
 .Fl W Ar wantlib
 and
 .Fl P Ar depends
@@ -2408,7 +2408,7 @@ to build xenocara through ports.
 This is highly experimental and not recommended.
 .It Ev PORTROACH
 Controls the behavior of
-.Pa misc/portscout
+.Pa misc/portroach
 as documented in detail at
 http://jasperla.github.io/portroach/docs/portroach-portconfig.txt .
 .It Ev PREFERRED_CIPHERS
