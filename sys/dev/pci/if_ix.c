@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.103 2014/11/10 16:35:06 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.104 2014/11/10 17:07:52 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -1606,7 +1606,7 @@ ixgbe_config_link(struct ix_softc *sc)
 	}
 
 	if (sfp) {
-		if (&sc->hw.phy.multispeed_fiber) {
+		if (sc->hw.phy.multispeed_fiber) {
 			sc->hw.mac.ops.setup_sfp(&sc->hw);
 			sc->hw.mac.ops.enable_tx_laser(&sc->hw);
 			ixgbe_handle_msf(sc);
