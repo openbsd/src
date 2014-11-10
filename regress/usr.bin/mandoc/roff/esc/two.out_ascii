@@ -5,7 +5,7 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
      lines: | | _ | / \
-     markers: o <> [] <= => @ # _|
+     markers: +o <> [] <= => @ # _|
      legal: (C) (R) tm
      punctuation: -- - -
      quotes: ,, , ` ' ' " << >> < >

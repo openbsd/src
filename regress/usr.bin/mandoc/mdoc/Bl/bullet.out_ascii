@@ -4,52 +4,52 @@ NNAAMMEE
      BBll--bbuulllleett - bullet lists
 
 DDEESSCCRRIIPPTTIIOONN
-     oo x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
        x x x x
 
-     oo  x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo  x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
         x x x x x
 
-     oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
          x x x x x
 
-     oo    x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo    x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
           x x x x x x
 
-     oo     x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo     x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
            x x x x x x
 
-     oo      x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo      x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
             x x x x x x x
 
-     oo       x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo       x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
              x x x x x x x
 
-     oo        x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo        x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
               x x x x x x x x
-     oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
          x x x x x
-     oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
          x x x x x
-     oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
          x x x x x
-     oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
          x x x x x
-     oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
          x x x x x
-     oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
          x x x x x
-     oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
          x x x x x
-     oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
          x x x x x
-     oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
          x x x x x
-     oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
          x x x x x
-     oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
          x x x x x
-     oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     ++oo   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
          x x x x x
 
 OpenBSD                          June 17, 2009                         OpenBSD

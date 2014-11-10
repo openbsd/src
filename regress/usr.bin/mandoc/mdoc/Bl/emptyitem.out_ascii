@@ -6,11 +6,11 @@ NNAAMMEE
 DDEESSCCRRIIPPTTIIOONN
      bullet list:
 
-     oo   one
+     ++oo   one
 
-     oo
+     ++oo
 
-     oo   three
+     ++oo   three
      dash list:
 
      --   one

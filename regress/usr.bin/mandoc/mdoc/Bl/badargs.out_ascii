@@ -6,10 +6,10 @@ NNAAMMEE
 DDEESSCCRRIIPPTTIIOONN
      trailing -offset:
 
-     oo   is ignored
+     ++oo   is ignored
      trailing -width:
 
-     oo bullet
+     ++oo bullet
 
      -- dash
 
@@ -21,7 +21,7 @@ DDEESSCCRRIIPPTTIIOONN
        Here we need a very long line.  It must be sufficiently long such that
        it wraps the line.
      double type:
-     oo   bullet enum
+     ++oo   bullet enum
      1.   enum bullet
      double arguments:
        last    wins

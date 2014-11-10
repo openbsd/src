@@ -9,7 +9,7 @@ DDEESSCCRRIIPPTTIIOONN
      tag     Tagged text.
      Stray text.  _M_o_r_e _s_t_r_a_y _t_e_x_t_.
 
-     oo   Bullet point.
+     ++oo   Bullet point.
      Stray text only.
 
 OpenBSD                         October 6, 2013                        OpenBSD
