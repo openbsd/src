@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.4 2014/10/05 12:46:58 mpi Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.5 2014/11/10 14:29:49 mpi Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -257,10 +257,8 @@ struct xhci_sctx {
 
 	 uint32_t		tt;
 #define XHCI_SCTX_TT_HUB_SID(x)		((x) & 0xff)
-#define XHCI_SCTX_SET_TT_PORT_NUM(x)	(((x) & 0xff) << 8)
-#define XHCI_SCTX_GET_TT_PORT_NUM(x)	(((x) >> 8) & 0xff)
-#define XHCI_SCTX_SET_TT_THINK_TIME(x)	(((x) & 0x3) << 16)
-#define XHCI_SCTX_GET_TT_THINK_TIME(x)	(((x) >> 16) & 0x3)
+#define XHCI_SCTX_TT_PORT_NUM(x)	(((x) & 0xff) << 8)
+#define XHCI_SCTX_TT_THINK_TIME(x)	(((x) & 0x3) << 16)
 #define XHCI_SCTX_SET_IRQ_TARGET(x)	(((x) & 0x3ff) << 22)
 #define XHCI_SCTX_GET_IRQ_TARGET(x)	(((x) >> 22) & 0x3ff)
 

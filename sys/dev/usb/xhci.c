@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.38 2014/11/10 14:16:13 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.39 2014/11/10 14:29:49 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -1119,6 +1119,9 @@ xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 	sdev->slot_ctx->tt = 0;
 	sdev->slot_ctx->state = 0;
 
+/* XXX */
+#define UHUB_IS_MTT(dev) (dev->ddesc.bDeviceProtocol == UDPROTO_HSHUBMTT)
+
 	/*
 	 * If we are opening the interrupt pipe of a hub, update its
 	 * context before putting it in the CONFIGURED state.
@@ -1131,7 +1134,32 @@ xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 
 		sdev->slot_ctx->info_lo |= htole32(XHCI_SCTX_HUB(1));
 		sdev->slot_ctx->info_hi |= htole32(XHCI_SCTX_NPORTS(nports));
+
+		if (UHUB_IS_MTT(pipe->device))
+			sdev->slot_ctx->info_lo |= htole32(XHCI_SCTX_MTT(1));
+
+		sdev->slot_ctx->tt |= htole32(
+		    XHCI_SCTX_TT_THINK_TIME(pipe->device->hub->ttthink)
+		);
 	}
+
+	/*
+	 * If this is a Low or Full Speed device below an external High
+	 * Speed hub, it needs some TT love.
+	 */
+	if (speed < XHCI_SPEED_HIGH && pipe->device->myhsport != NULL) {
+		struct usbd_device *hshub = pipe->device->myhsport->parent;
+		uint8_t slot = ((struct xhci_pipe *)hshub->default_pipe)->slot;
+
+		if (UHUB_IS_MTT(hshub))
+			sdev->slot_ctx->info_lo |= htole32(XHCI_SCTX_MTT(1));
+
+		sdev->slot_ctx->tt |= htole32(
+		    XHCI_SCTX_TT_HUB_SID(slot) |
+		    XHCI_SCTX_TT_PORT_NUM(pipe->device->myhsport->portno)
+		);
+	}
+#undef UHUB_IS_MTT
 
 	usb_syncmem(&sdev->ictx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
 }
