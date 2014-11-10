@@ -620,7 +620,7 @@ int flag_syntax_only = 0;
 
 /* Nonzero means perform global cse.  */
 
-static int flag_gcse;
+int flag_gcse = 0;
 
 /* Nonzero means perform loop optimizer.  */
 

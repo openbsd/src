@@ -654,6 +654,10 @@ extern enum graph_dump_types graph_dump_format;
 
 extern int flag_no_ident;
 
+/* Nonzero if we want to perform global cse.  */
+
+extern int flag_gcse;
+
 /* Nonzero if we want to perform enhanced load motion during gcse.  */
 
 extern int flag_gcse_lm;
