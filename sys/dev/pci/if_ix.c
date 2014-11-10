@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.105 2014/11/10 17:53:10 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.106 2014/11/10 17:53:43 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3237,12 +3237,15 @@ void
 ixgbe_handle_msf(struct ix_softc *sc)
 {
 	struct ixgbe_hw *hw = &sc->hw;
-	uint32_t autoneg;
+	uint32_t autoneg, err;
 	bool negotiate;
 
 	autoneg = hw->phy.autoneg_advertised;
 	if ((!autoneg) && (hw->mac.ops.get_link_capabilities))
-		hw->mac.ops.get_link_capabilities(hw, &autoneg, &negotiate);
+		err = hw->mac.ops.get_link_capabilities(hw, &autoneg,
+		    &negotiate);
+	if (err)
+		return;
 	if (hw->mac.ops.setup_link)
 		hw->mac.ops.setup_link(hw, autoneg, TRUE);
 }
