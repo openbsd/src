@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.15 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: recover.c,v 1.16 2014/11/10 21:31:42 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -339,15 +339,6 @@ rcv_mailfile(sp, issync, cp_path)
 	int fd;
 	char *dp, *p, *t, buf[4096], mpath[MAXPATHLEN];
 	char *t1, *t2, *t3;
-
-	/*
-	 * XXX
-	 * MAXHOSTNAMELEN is in various places on various systems, including
-	 * <netdb.h> and <sys/socket.h>.  If not found, use a large default.
-	 */
-#ifndef MAXHOSTNAMELEN
-#define	MAXHOSTNAMELEN	1024
-#endif
 	char host[MAXHOSTNAMELEN];
 
 	gp = sp->gp;

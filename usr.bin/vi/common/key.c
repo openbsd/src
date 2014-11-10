@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.11 2013/11/28 22:12:40 krw Exp $	*/
+/*	$OpenBSD: key.c,v 1.12 2014/11/10 21:31:42 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -114,16 +114,6 @@ v_key_init(sp)
 	 * character set, as long as nul isn't a character.
 	 */
 	(void)setlocale(LC_ALL, "");
-#if __linux__
-	/*
-	 * In libc 4.5.26, setlocale(LC_ALL, ""), doesn't setup the table
-	 * for ctype(3c) correctly.  This bug is fixed in libc 4.6.x.
-	 *
-	 * This code works around this problem for libc 4.5.x users.
-	 * Note that this code is harmless if you're using libc 4.6.x.
-	 */
-	(void)setlocale(LC_CTYPE, "");
-#endif
 	v_key_ilookup(sp);
 
 	v_keyval(sp, K_CNTRLD, KEY_VEOF);
