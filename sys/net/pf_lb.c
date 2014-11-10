@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.34 2014/09/08 06:24:13 jsg Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.35 2014/11/10 18:49:42 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,6 +58,7 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/bpf.h>
+#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -70,6 +71,7 @@
 #include <netinet/udp_var.h>
 #include <netinet/icmp_var.h>
 #include <netinet/if_ether.h>
+#include <netinet/in_pcb.h>
 
 #include <dev/rndvar.h>
 #include <net/pfvar.h>
@@ -82,7 +84,6 @@
 
 #ifdef INET6
 #include <netinet/ip6.h>
-#include <netinet/in_pcb.h>
 #include <netinet/icmp6.h>
 #endif /* INET6 */
 
@@ -174,14 +175,22 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 	    PF_SN_NAT))
 		return (1);
 
-	if (pd->proto == IPPROTO_ICMP || pd->proto == IPPROTO_ICMPV6) {
-		if (pd->ndport == htons(ICMP6_ECHO_REQUEST) ||
-		    pd->ndport == htons(ICMP_ECHO)) {
+	if (pd->proto == IPPROTO_ICMP) {
+		if (pd->ndport == htons(ICMP_ECHO)) {
 			low = 1;
 			high = 65535;
 		} else
 			return (0);	/* Don't try to modify non-echo ICMP */
 	}
+#ifdef INET6
+	if (pd->proto == IPPROTO_ICMPV6) {
+		if (pd->ndport == htons(ICMP6_ECHO_REQUEST)) {
+			low = 1;
+			high = 65535;
+		} else
+			return (0);	/* Don't try to modify non-echo ICMP */
+	}
+#endif /* INET6 */
 
 	do {
 		key.af = pd->naf;
