@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.39 2014/08/25 14:00:34 florian Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.40 2014/11/10 10:46:10 mpi Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -299,7 +299,6 @@ void nd6_ns_output(struct ifnet *, struct in6_addr *,
 caddr_t nd6_ifptomac(struct ifnet *);
 void nd6_dad_start(struct ifaddr *, int *);
 void nd6_dad_stop(struct ifaddr *);
-void nd6_dad_duplicated(struct ifaddr *);
 
 void nd6_rs_input(struct mbuf *, int, int);
 void nd6_ra_input(struct mbuf *, int, int);
