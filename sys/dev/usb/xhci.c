@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.37 2014/11/09 14:03:04 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.38 2014/11/10 14:16:13 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -79,6 +79,7 @@ void	xhci_event_xfer(struct xhci_softc *, uint64_t, uint32_t, uint32_t);
 void	xhci_event_command(struct xhci_softc *, uint64_t);
 void	xhci_event_port_change(struct xhci_softc *, uint64_t, uint32_t);
 int	xhci_pipe_init(struct xhci_softc *, struct usbd_pipe *);
+void	xhci_context_setup(struct xhci_softc *, struct usbd_pipe *);
 int	xhci_scratchpad_alloc(struct xhci_softc *, int);
 void	xhci_scratchpad_free(struct xhci_softc *);
 int	xhci_softdev_alloc(struct xhci_softc *, uint8_t);
@@ -101,7 +102,7 @@ void	xhci_cmd_set_tr_deq_async(struct xhci_softc *, uint8_t, uint8_t, uint64_t);
 int	xhci_cmd_configure_ep(struct xhci_softc *, uint8_t, uint64_t);
 int	xhci_cmd_stop_ep(struct xhci_softc *, uint8_t, uint8_t);
 int	xhci_cmd_slot_control(struct xhci_softc *, uint8_t *, int);
-int	xhci_cmd_address_device(struct xhci_softc *,uint8_t,  uint64_t);
+int	xhci_cmd_set_address(struct xhci_softc *, uint8_t,  uint64_t, uint32_t);
 int	xhci_cmd_evaluate_ctx(struct xhci_softc *, uint8_t, uint64_t);
 #ifdef XHCI_DEBUG
 int	xhci_cmd_noop(struct xhci_softc *);
@@ -116,6 +117,7 @@ void 	xhci_timeout(void *);
 
 /* USBD Bus Interface. */
 usbd_status	  xhci_pipe_open(struct usbd_pipe *);
+int		  xhci_setaddr(struct usbd_device *, int);
 void		  xhci_softintr(void *);
 void		  xhci_poll(struct usbd_bus *);
 struct usbd_xfer *xhci_allocx(struct usbd_bus *);
@@ -142,6 +144,7 @@ void		  xhci_device_generic_done(struct usbd_xfer *);
 
 struct usbd_bus_methods xhci_bus_methods = {
 	.open_pipe = xhci_pipe_open,
+	.dev_setaddr = xhci_setaddr,
 	.soft_intr = xhci_softintr,
 	.do_poll = xhci_poll,
 	.allocx = xhci_allocx,
@@ -1023,8 +1026,8 @@ xhci_get_txinfo(struct xhci_softc *sc, struct usbd_pipe *pipe)
 	return (XHCI_EPCTX_MAX_ESIT_PAYLOAD(mep) | XHCI_EPCTX_AVG_TRB_LEN(atl));
 }
 
-int
-xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe)
+void
+xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 {
 	struct xhci_pipe *xp = (struct xhci_pipe *)pipe;
 	struct xhci_soft_dev *sdev = &sc->sc_sdevs[xp->slot];
@@ -1033,18 +1036,6 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe)
 	uint8_t ival, speed, cerr = 0;
 	uint32_t mps, route = 0, rhport = 0;
 	struct usbd_device *hub;
-	int error;
-
-	DPRINTF(("%s: dev %d dci %u (epAddr=0x%x)\n", DEVNAME(sc), xp->slot,
-	    xp->dci, pipe->endpoint->edesc->bEndpointAddress));
-
-	if (xhci_ring_alloc(sc, &xp->ring, XHCI_MAX_TRANSFERS))
-		return (ENOMEM);
-
-	xp->free_trbs = xp->ring.ntrb;
-	xp->halted = 0;
-
-	sdev->pipes[xp->dci - 1] = xp;
 
 	/*
 	 * Calculate the Route String.  Assume that there is no hub with
@@ -1083,8 +1074,7 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe)
 		mps = 512;
 		break;
 	default:
-		xhci_ring_free(sc, &xp->ring);
-		return (EINVAL);
+		return;
 	}
 
 	/* XXX Until we fix wMaxPacketSize for ctrl ep depending on the speed */
@@ -1144,36 +1134,44 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe)
 	}
 
 	usb_syncmem(&sdev->ictx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
+}
+
+int
+xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe)
+{
+	struct xhci_pipe *xp = (struct xhci_pipe *)pipe;
+	struct xhci_soft_dev *sdev = &sc->sc_sdevs[xp->slot];
+	int error;
+
+	DPRINTF(("%s: dev %d dci %u (epAddr=0x%x)\n", DEVNAME(sc), xp->slot,
+	    xp->dci, pipe->endpoint->edesc->bEndpointAddress));
+
+	if (xhci_ring_alloc(sc, &xp->ring, XHCI_MAX_TRANSFERS))
+		return (ENOMEM);
+
+	xp->free_trbs = xp->ring.ntrb;
+	xp->halted = 0;
+
+	sdev->pipes[xp->dci - 1] = xp;
+
+	xhci_context_setup(sc, pipe);
 
 	if (xp->dci == 1) {
 		/*
 		 * If we are opening the default pipe, the Slot should
 		 * be in the ENABLED state.  Issue an "Address Device"
-		 * with BSR=0 and jump directly to the ADDRESSED state.
-		 * This way we don't need a callback to assign an addr.
+		 * with BSR=1 to put the device in the DEFAULT state.
+		 * We cannot jump directly to the ADDRESSED state with
+		 * BSR=0 because some Low/Full speed devices wont accept
+		 * a SET_ADDRESS command before we've read their device
+		 * descriptor.
 		 */
-		error = xhci_cmd_address_device(sc, xp->slot,
-		    DMAADDR(&sdev->ictx_dma, 0));
+		error = xhci_cmd_set_address(sc, xp->slot,
+		    DMAADDR(&sdev->ictx_dma, 0), XHCI_TRB_BSR);
 	} else {
 		error = xhci_cmd_configure_ep(sc, xp->slot,
 		    DMAADDR(&sdev->ictx_dma, 0));
 	}
-
-	usb_syncmem(&sdev->octx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_POSTREAD);
-
-#ifdef XHCI_DEBUG
-	if (xp->dci == 1 && !error) {
-		struct xhci_sctx *sctx;
-		uint8_t addr;
-
-		/* Get output slot context. */
-		sctx = KERNADDR(&sdev->octx_dma, 0);
-		addr = XHCI_SCTX_DEV_ADDR(letoh32(sctx->state));
-		error = (addr == 0);
-
-		printf("%s: dev %d addr %d\n", DEVNAME(sc), xp->slot, addr);
-	}
-#endif
 
 	if (error) {
 		xhci_ring_free(sc, &xp->ring);
@@ -1229,6 +1227,51 @@ xhci_pipe_close(struct usbd_pipe *pipe)
 		xhci_cmd_slot_control(sc, &xp->slot, 0);
 		xhci_softdev_free(sc, xp->slot);
 	}
+}
+
+/*
+ * Transition a device from DEFAULT to ADDRESSED Slot state, this hook
+ * is needed for Low/Full speed devices.
+ *
+ * See section 4.5.3 of USB 3.1 Specification for more details.
+ */
+int
+xhci_setaddr(struct usbd_device *dev, int addr)
+{
+	struct xhci_softc *sc = (struct xhci_softc *)dev->bus;
+	struct xhci_pipe *xp = (struct xhci_pipe *)dev->default_pipe;
+	struct xhci_soft_dev *sdev = &sc->sc_sdevs[xp->slot];
+	int error;
+
+	/* Root Hub */
+	if (dev->depth == 0)
+		return (0);
+
+	KASSERT(xp->dci == 1);
+
+	xhci_context_setup(sc, dev->default_pipe);
+
+	error = xhci_cmd_set_address(sc, xp->slot,
+	    DMAADDR(&sdev->ictx_dma, 0), 0);
+
+#ifdef XHCI_DEBUG
+	if (error == 0) {
+		struct xhci_sctx *sctx;
+		uint8_t addr;
+
+		usb_syncmem(&sdev->octx_dma, 0, sc->sc_pagesize,
+		    BUS_DMASYNC_POSTREAD);
+
+		/* Get output slot context. */
+		sctx = KERNADDR(&sdev->octx_dma, 0);
+		addr = XHCI_SCTX_DEV_ADDR(letoh32(sctx->state));
+		error = (addr == 0);
+
+		printf("%s: dev %d addr %d\n", DEVNAME(sc), xp->slot, addr);
+	}
+#endif
+
+	return (error);
 }
 
 struct usbd_xfer *
@@ -1580,16 +1623,17 @@ xhci_cmd_slot_control(struct xhci_softc *sc, uint8_t *slotp, int enable)
 }
 
 int
-xhci_cmd_address_device(struct xhci_softc *sc, uint8_t slot, uint64_t addr)
+xhci_cmd_set_address(struct xhci_softc *sc, uint8_t slot, uint64_t addr,
+    uint32_t bsr)
 {
 	struct xhci_trb trb;
 
-	DPRINTF(("%s: %s\n", DEVNAME(sc), __func__));
+	DPRINTF(("%s: %s BSR=%u\n", DEVNAME(sc), __func__, bsr ? 1 : 0));
 
 	trb.trb_paddr = htole64(addr);
 	trb.trb_status = 0;
 	trb.trb_flags = htole32(
-	    XHCI_TRB_SET_SLOT(slot) | XHCI_CMD_ADDRESS_DEVICE
+	    XHCI_TRB_SET_SLOT(slot) | XHCI_CMD_ADDRESS_DEVICE | bsr
 	);
 
 	return (xhci_command_submit(sc, &trb, XHCI_COMMAND_TIMEOUT));
