@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.104 2014/11/10 17:07:52 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.105 2014/11/10 17:53:10 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -888,11 +888,8 @@ ixgbe_intr(void *arg)
 	}
 
 	/* Link status change */
-	if (reg_eicr & IXGBE_EICR_LSC) {
-		timeout_del(&sc->timer);
+	if (reg_eicr & IXGBE_EICR_LSC)
 		ixgbe_update_link_status(sc);
-		timeout_add_sec(&sc->timer, 1);
-	}
 
 	if (hw->mac.type != ixgbe_mac_82598EB) {
 		if (reg_eicr & IXGBE_EICR_GPI_SDP2) {
