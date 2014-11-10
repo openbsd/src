@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.131 2014/05/20 23:41:36 dlg Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.132 2014/11/10 20:48:33 miod Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 20 2014 $
+.Dd $Mdocdate: November 10 2014 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -935,7 +935,7 @@ The default is
 Enable TCP MD5 signatures per RFC 2385.
 The shared secret can either be given as a password or hexadecimal key.
 .Bd -literal -offset indent
-tcp md5sig password mekmidasdigoat
+tcp md5sig password mekmitasdigoat
 tcp md5sig key deadbeef
 .Ed
 .Pp
