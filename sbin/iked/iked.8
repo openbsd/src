@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.18 2014/11/10 12:59:21 mikeb Exp $
+.\" $OpenBSD: iked.8,v 1.19 2014/11/10 13:57:32 jmc Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -23,9 +23,7 @@
 .Sh SYNOPSIS
 .Nm iked
 .Op Fl 6dnSTtv
-.Oo
-.Fl D Ar macro Ns = Ns Ar value
-.Oc
+.Op Fl D Ar macro Ns = Ns Ar value
 .Op Fl f Ar file
 .Sh DESCRIPTION
 .Nm
@@ -108,7 +106,7 @@ usable by
 bypassing the need to use certificates.
 The keys should be saved in PEM format (see
 .Xr openssl 1 )
-and named and stored under chosen identity subdirectory:
+and named and stored as follows:
 .Pp
 .Bl -tag -width "for_ufqdn_identitiesXX" -offset 3n -compact
 .It For IPv4 identities:
@@ -121,7 +119,7 @@ and named and stored under chosen identity subdirectory:
 /etc/iked/pubkeys/ufqdn/user@foo.bar.org
 .El
 .Pp
-Depending on
+Depending on the
 .Ic srcid
 and
 .Ic dstid
