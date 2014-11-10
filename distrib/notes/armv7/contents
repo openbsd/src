@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.4 2014/05/01 11:48:47 jasper Exp $
+dnl	$OpenBSD: contents,v 1.5 2014/11/10 07:15:41 jsg Exp $
 TopPart
 
 	miniroot-am335x-{:--:}OSrev.fs
@@ -35,15 +35,11 @@ OpenBSDbase(59810834,166146114)
 
 OpenBSDcomp(49060908,148496717)
 
-OpenBSDetc(526168,1717454)
-
 OpenBSDgame(2677213,6022047)
 
 OpenBSDman(10062290,39102681)
 
 OpenBSDxbase(12620198,33609128)
-
-OpenBSDxetc(64962,272508)
 
 OpenBSDxfont(39938719,52169245)
 
