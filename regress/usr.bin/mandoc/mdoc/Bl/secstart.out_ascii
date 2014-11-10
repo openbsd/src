@@ -1,0 +1,26 @@
+BL-SECSTART(1)              General Commands Manual             BL-SECSTART(1)
+
+NNAAMMEE
+     BBll--sseeccssttaarrtt - nested lists at the beginning of sections
+
+DDEESSCCRRIIPPTTIIOONN
+   iitteemm
+     text
+
+   ddaasshh
+     --
+
+         --   text
+
+   iinnsseett
+     outer
+
+     inner text
+
+   ttaagg
+     outer tag
+
+           inner tag
+                 text
+
+OpenBSD                        November 10, 2014                       OpenBSD

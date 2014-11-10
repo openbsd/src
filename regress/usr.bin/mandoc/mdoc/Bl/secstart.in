@@ -1,0 +1,39 @@
+.Dd November 10, 2014
+.Dt BL-SECSTART 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bl-secstart
+.Nd nested lists at the beginning of sections
+.Sh DESCRIPTION
+.Ss item
+.Bl -item
+.It
+.Bl -item
+.It
+text
+.El
+.El
+.Ss dash
+.Bl -dash
+.It
+.Bl -dash
+.It
+text
+.El
+.El
+.Ss inset
+.Bl -inset
+.It outer
+.Bl -inset
+.It inner
+text
+.El
+.El
+.Ss tag
+.Bl -tag -width 4n
+.It outer tag
+.Bl -tag -width 4n
+.It inner tag
+text
+.El
+.El
