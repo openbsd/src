@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.17 2014/04/28 11:17:15 reyk Exp $
+.\" $OpenBSD: iked.8,v 1.18 2014/11/10 12:59:21 mikeb Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2014 $
+.Dd $Mdocdate: November 10 2014 $
 .Dt IKED 8
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ is provided by
 .Nm
 supports mutual authentication using RSA public keys and X.509 certificates.
 See the
-.Sx FILES
+.Sx PUBLIC KEY AUTHENTICATION
 section below and PKI AND CERTIFICATE AUTHORITY COMMANDS in
 .Xr ikectl 8
 for more information about creating and maintaining the public key
@@ -101,6 +101,54 @@ negotiate NAT-Traversal with the peers.
 .It Fl v
 Produce more verbose output.
 .El
+.Sh PUBLIC KEY AUTHENTICATION
+It is possible to store trusted public keys to make them directly
+usable by
+.Nm ,
+bypassing the need to use certificates.
+The keys should be saved in PEM format (see
+.Xr openssl 1 )
+and named and stored under chosen identity subdirectory:
+.Pp
+.Bl -tag -width "for_ufqdn_identitiesXX" -offset 3n -compact
+.It For IPv4 identities:
+/etc/iked/pubkeys/ipv4/A.B.C.D
+.It For IPv6 identities:
+/etc/iked/pubkeys/ipv6/abcd:abcd::ab:bc
+.It For FQDN identities:
+/etc/iked/pubkeys/fqdn/foo.bar.org
+.It For UFQDN identities:
+/etc/iked/pubkeys/ufqdn/user@foo.bar.org
+.El
+.Pp
+Depending on
+.Ic srcid
+and
+.Ic dstid
+specifications in
+.Xr iked.conf 5 ,
+keys may be named after their IPv4 address, IPv6 address,
+fully qualified domain name (FQDN) or user fully qualified domain name (UFQDN).
+.Pp
+For example,
+.Nm
+can authenticate using the pre-generated keys if the local public key,
+by default
+.Pa /etc/iked/local.pub ,
+is copied to the remote gateway as
+.Pa /etc/iked/pubkeys/ipv4/local.gateway.ip.address
+and the remote gateway's public key
+is copied to the local gateway as
+.Pa /etc/iked/pubkeys/ipv4/remote.gateway.ip.address .
+Of course, new keys may also be generated
+(the user is not required to use the pre-generated keys).
+In this example,
+.Ic srcid
+and
+.Ic dstid
+would also have to be set to the specified addresses
+in
+.Xr iked.conf 5 .
 .Sh FILES
 .Bl -tag -width "/etc/iked/private/XXX" -compact
 .It Pa /etc/iked.conf
