@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.164 2014/11/01 23:58:07 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.165 2014/11/10 18:55:43 kettenis Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1297,8 +1297,8 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 	case KERN_POOL_POOL:
 		memset(&pi, 0, sizeof(pi));
 
-		/* XXX can't mtx until all pools setipl correctly */
-		/* mtx_enter(&pp->pr_mtx); */
+		if (pp->pr_ipl != -1)
+			mtx_enter(&pp->pr_mtx);
 		pi.pr_size = pp->pr_size;
 		pi.pr_pgsize = pp->pr_pgsize;
 		pi.pr_itemsperpage = pp->pr_itemsperpage;
@@ -1315,7 +1315,8 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 		pi.pr_npagefree = pp->pr_npagefree;
 		pi.pr_hiwat = pp->pr_hiwat;
 		pi.pr_nidle = pp->pr_nidle;
-		/* mtx_leave(&pp->pr_mtx); */
+		if (pp->pr_ipl != -1)
+			mtx_leave(&pp->pr_mtx);
 
 		rv = sysctl_rdstruct(oldp, oldlenp, NULL, &pi, sizeof(pi));
 		break;
