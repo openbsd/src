@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.20 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.21 2014/11/10 21:34:13 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -27,9 +27,6 @@
 #include <unistd.h>
 
 #include "../common/common.h"
-#ifdef RUNNING_IP
-#include "../ip/ip.h"
-#endif
 #include "cl.h"
 #include "pathnames.h"
 
@@ -57,10 +54,6 @@ main(int argc, char *argv[])
 	size_t rows, cols;
 	int rval;
 	char *ttype;
-#ifdef RUNNING_IP
-	char *ip_arg;
-	char **p_av, **t_av;
-#endif
 
 	/* If loaded at 0 and jumping through a NULL pointer, stop. */
 	if (reenter++)
@@ -69,47 +62,6 @@ main(int argc, char *argv[])
 	/* Create and initialize the global structure. */
 	__global_list = gp = gs_init(argv[0]);
 
-	/*
-	 * Strip out any arguments that vi isn't going to understand.  There's
-	 * no way to portably call getopt twice, so arguments parsed here must
-	 * be removed from the argument list.
-	 */
-#ifdef RUNNING_IP
-	ip_arg = NULL;
-	for (p_av = t_av = argv;;) {
-		if (*t_av == NULL) {
-			*p_av = NULL;
-			break;
-		}
-		if (!strcmp(*t_av, "--")) {
-			while ((*p_av++ = *t_av++) != NULL);
-			break;
-		}
-		if (!memcmp(*t_av, "-I", sizeof("-I") - 1)) {
-			if (t_av[0][2] != '\0') {
-				ip_arg = t_av[0] + 2;
-				++t_av;
-				--argc;
-				continue;
-			}
-			if (t_av[1] != NULL) {
-				ip_arg = t_av[1];
-				t_av += 2;
-				argc -= 2;
-				continue;
-			}
-		}
-		*p_av++ = *t_av++;
-	}
-
-	/*
-	 * If we're being called as an editor library, we're done here, we
-	 * get loaded with the curses screen, we don't share much code.
-	 */
-	if (ip_arg != NULL)
-		exit (ip_main(argc, argv, gp, ip_arg));
-#endif
-		
 	/* Create and initialize the CL_PRIVATE structure. */
 	clp = cl_init(gp);
 
