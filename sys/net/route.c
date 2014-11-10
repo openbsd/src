@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.189 2014/11/04 15:24:40 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.190 2014/11/10 10:38:46 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ route_init(void)
 {
 	struct domain	 *dom;
 
-	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtent",
+	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentry",
 	    NULL);
 	rn_init();	/* initialize all zeroes, all ones, mask table */
 
@@ -1220,7 +1220,7 @@ rt_ifa_addloop(struct ifaddr *ifa)
 	if (rt == NULL || !ISSET(rt->rt_flags, flags));
 		rt_ifa_add(ifa, RTF_UP | flags, ifa->ifa_addr);
 	if (rt)
-		rt->rt_refcnt--;
+		rtfree(rt);
 }
 
 /*
@@ -1267,7 +1267,7 @@ rt_ifa_delloop(struct ifaddr *ifa)
 	if (rt != NULL && ISSET(rt->rt_flags, flags))
 		rt_ifa_del(ifa, flags, ifa->ifa_addr);
 	if (rt)
-		rt->rt_refcnt--;
+		rtfree(rt);
 }
 
 /*
