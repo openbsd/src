@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.100 2014/09/08 02:39:57 chris Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.101 2014/11/10 15:58:32 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -143,7 +143,6 @@ uint8_t	*ixgbe_mc_array_itr(struct ixgbe_hw *, uint8_t **, uint32_t *);
 void	ixgbe_setup_vlan_hw_support(struct ix_softc *);
 
 /* Support for pluggable optic modules */
-bool	ixgbe_sfp_probe(struct ix_softc *);
 void	ixgbe_setup_optics(struct ix_softc *);
 void	ixgbe_handle_mod(struct ix_softc *);
 void	ixgbe_handle_msf(struct ix_softc *);
@@ -1227,15 +1226,6 @@ ixgbe_mc_array_itr(struct ixgbe_hw *hw, uint8_t **update_ptr, uint32_t *vmdq)
 	return addr;
 }
 
-
-/*********************************************************************
- *  Timer routine
- *
- *  This routine checks for link status,updates statistics,
- *  and runs the watchdog check.
- *
- **********************************************************************/
-
 void
 ixgbe_local_timer(void *arg)
 {
@@ -1247,20 +1237,15 @@ ixgbe_local_timer(void *arg)
 
 	s = splnet();
 
-	/* Check for pluggable optics */
-	if (sc->sfp_probe)
-		if (!ixgbe_sfp_probe(sc))
-			goto out; /* Nothing to do */
-
 	ixgbe_update_link_status(sc);
 	ixgbe_update_stats_counters(sc);
 
-out:
 #ifdef IX_DEBUG
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_DEBUG)) ==
 	    (IFF_RUNNING|IFF_DEBUG))
 		ixgbe_print_hw_stats(sc);
 #endif
+
 	timeout_add_sec(&sc->timer, 1);
 
 	splx(s);
@@ -3219,36 +3204,6 @@ ixgbe_configure_ivars(struct ix_softc *sc)
 	/* For the Link interrupt */
 	ixgbe_set_ivar(sc, 1, sc->linkvec, -1);
 #endif
-}
-
-/*
- * ixgbe_sfp_probe - called in the local timer to
- * determine if a port had optics inserted.
- */
-bool
-ixgbe_sfp_probe(struct ix_softc *sc)
-{
-	bool result = FALSE;
-
-	if ((sc->hw.phy.type == ixgbe_phy_nl) &&
-	    (sc->hw.phy.sfp_type == ixgbe_sfp_type_not_present)) {
-		int32_t  ret = sc->hw.phy.ops.identify_sfp(&sc->hw);
-		if (ret)
-			goto out;
-		ret = sc->hw.phy.ops.reset(&sc->hw);
-		if (ret == IXGBE_ERR_SFP_NOT_SUPPORTED) {
-			printf("%s: Unsupported SFP+ module detected!",
-			    sc->dev.dv_xname);
-			goto out;
-		}
-		/* We now have supported optics */
-		sc->sfp_probe = FALSE;
-		/* Set the optics type so system reports correctly */
-		ixgbe_setup_optics(sc);
-		result = TRUE;
-	}
-out:
-	return (result);
 }
 
 /*
