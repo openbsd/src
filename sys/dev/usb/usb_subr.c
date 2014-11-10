@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.112 2014/11/01 14:44:08 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.113 2014/11/10 11:01:13 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -66,7 +66,6 @@ void		usbd_devinfo_vp(struct usbd_device *, char *, size_t,
 char		*usbd_get_string(struct usbd_device *, int, char *, size_t);
 int		usbd_getnewaddr(struct usbd_bus *);
 int		usbd_print(void *, const char *);
-int		usbd_submatch(struct device *, void *, void *);
 void		usbd_free_iface_data(struct usbd_device *, int);
 usbd_status	usbd_probe_and_attach(struct device *,
 		    struct usbd_device *, int, int);
@@ -859,7 +858,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 
 	/* First try with device specific drivers. */
 	DPRINTF(("usbd_probe_and_attach trying device specific drivers\n"));
-	dv = config_found_sm(parent, &uaa, usbd_print, usbd_submatch);
+	dv = config_found(parent, &uaa, usbd_print);
 	if (dv) {
 		dev->subdevs = malloc(2 * sizeof dv, M_USB, M_NOWAIT);
 		if (dev->subdevs == NULL) {
@@ -919,8 +918,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 				continue;
 			uaa.iface = ifaces[i];
 			uaa.ifaceno = ifaces[i]->idesc->bInterfaceNumber;
-			dv = config_found_sm(parent, &uaa, usbd_print,
-					   usbd_submatch);
+			dv = config_found(parent, &uaa, usbd_print);
 			if (dv != NULL) {
 				dev->subdevs[dev->ndevs++] = dv;
 				usbd_claim_iface(dev, i);
@@ -956,7 +954,7 @@ generic:
 	uaa.configno = dev->ndevs == 0 ? UHUB_UNK_CONFIGURATION :
 	    dev->cdesc->bConfigurationValue;
 	uaa.ifaceno = UHUB_UNK_INTERFACE;
-	dv = config_found_sm(parent, &uaa, usbd_print, usbd_submatch);
+	dv = config_found(parent, &uaa, usbd_print);
 	if (dv != NULL) {
 		if (dev->ndevs == 0) {
 			dev->subdevs = malloc(2 * sizeof dv, M_USB, M_NOWAIT);
@@ -1242,45 +1240,6 @@ usbd_print(void *aux, const char *pnp)
 		printf(" %s\n", devinfop);
 	free(devinfop, M_TEMP, 0);
 	return (UNCONF);
-}
-
-int
-usbd_submatch(struct device *parent, void *match, void *aux)
-{
-	struct cfdata *cf = match;
-	struct usb_attach_arg *uaa = aux;
-
-	DPRINTFN(5,("usbd_submatch port=%d,%d configno=%d,%d "
-	    "ifaceno=%d,%d vendor=0x%x,0x%x product=0x%x,0x%x release=%d,%d\n",
-	    uaa->port, cf->uhubcf_port,
-	    uaa->configno, cf->uhubcf_configuration,
-	    uaa->ifaceno, cf->uhubcf_interface,
-	    uaa->vendor, cf->uhubcf_vendor,
-	    uaa->product, cf->uhubcf_product,
-	    uaa->release, cf->uhubcf_release));
-	if (uaa->port != 0 &&	/* root hub has port 0, it should match */
-	    ((uaa->port != 0 &&
-	      cf->uhubcf_port != UHUB_UNK_PORT &&
-	      cf->uhubcf_port != uaa->port) ||
-	     (uaa->configno != UHUB_UNK_CONFIGURATION &&
-	      cf->uhubcf_configuration != UHUB_UNK_CONFIGURATION &&
-	      cf->uhubcf_configuration != uaa->configno) ||
-	     (uaa->ifaceno != UHUB_UNK_INTERFACE &&
-	      cf->uhubcf_interface != UHUB_UNK_INTERFACE &&
-	      cf->uhubcf_interface != uaa->ifaceno) ||
-	     (uaa->vendor != UHUB_UNK_VENDOR &&
-	      cf->uhubcf_vendor != UHUB_UNK_VENDOR &&
-	      cf->uhubcf_vendor != uaa->vendor) ||
-	     (uaa->product != UHUB_UNK_PRODUCT &&
-	      cf->uhubcf_product != UHUB_UNK_PRODUCT &&
-	      cf->uhubcf_product != uaa->product) ||
-	     (uaa->release != UHUB_UNK_RELEASE &&
-	      cf->uhubcf_release != UHUB_UNK_RELEASE &&
-	      cf->uhubcf_release != uaa->release)
-	     )
-	   )
-		return 0;
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
 void

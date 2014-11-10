@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.65 2014/11/01 14:44:08 mpi Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.66 2014/11/10 11:01:13 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -248,39 +248,8 @@ void		usb_needs_explore(struct usbd_device *, int);
 void		usb_needs_reattach(struct usbd_device *);
 void		usb_schedsoftintr(struct usbd_bus *);
 
-/* Locator stuff. */
-
-/* XXX these values are used to statically bind some elements in the USB tree
- * to specific driver instances. This should be somehow emulated in FreeBSD
- * but can be done later on.
- * The values are copied from the files.usb file in the NetBSD sources.
- */
-#define UHUBCF_PORT_DEFAULT -1
-#define UHUBCF_CONFIGURATION_DEFAULT -1
-#define UHUBCF_INTERFACE_DEFAULT -1
-#define UHUBCF_VENDOR_DEFAULT -1
-#define UHUBCF_PRODUCT_DEFAULT -1
-#define UHUBCF_RELEASE_DEFAULT -1
-
-#define	UHUBCF_PORT		0
-#define	UHUBCF_CONFIGURATION	1
-#define	UHUBCF_INTERFACE	2
-#define	UHUBCF_VENDOR		3
-#define	UHUBCF_PRODUCT		4
-#define	UHUBCF_RELEASE		5
-
-#define	uhubcf_port		cf_loc[UHUBCF_PORT]
-#define	uhubcf_configuration	cf_loc[UHUBCF_CONFIGURATION]
-#define	uhubcf_interface	cf_loc[UHUBCF_INTERFACE]
-#define	uhubcf_vendor		cf_loc[UHUBCF_VENDOR]
-#define	uhubcf_product		cf_loc[UHUBCF_PRODUCT]
-#define	uhubcf_release		cf_loc[UHUBCF_RELEASE]
-#define	UHUB_UNK_PORT		UHUBCF_PORT_DEFAULT /* wildcarded 'port' */
-#define	UHUB_UNK_CONFIGURATION	UHUBCF_CONFIGURATION_DEFAULT /* wildcarded 'configuration' */
-#define	UHUB_UNK_INTERFACE	UHUBCF_INTERFACE_DEFAULT /* wildcarded 'interface' */
-#define	UHUB_UNK_VENDOR		UHUBCF_VENDOR_DEFAULT /* wildcarded 'vendor' */
-#define	UHUB_UNK_PRODUCT	UHUBCF_PRODUCT_DEFAULT /* wildcarded 'product' */
-#define	UHUB_UNK_RELEASE	UHUBCF_RELEASE_DEFAULT /* wildcarded 'release' */
+#define	UHUB_UNK_CONFIGURATION	-1
+#define	UHUB_UNK_INTERFACE	-1
 
 static inline int
 usbd_xfer_isread(struct usbd_xfer *xfer)
