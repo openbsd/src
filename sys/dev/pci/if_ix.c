@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.102 2014/11/10 16:01:18 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.103 2014/11/10 16:35:06 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3260,12 +3260,16 @@ ixgbe_update_stats_counters(struct ix_softc *sc)
 {
 	struct ifnet	*ifp = &sc->arpcom.ac_if;
 	struct ixgbe_hw	*hw = &sc->hw;
-	uint32_t	missed_rx = 0, bprc, lxon, lxoff, total;
 	uint64_t	total_missed_rx = 0;
+#ifdef IX_DEBUG
+	uint32_t	missed_rx = 0, bprc, lxon, lxoff, total;
 	int		i;
+#endif
 
 	sc->stats.crcerrs += IXGBE_READ_REG(hw, IXGBE_CRCERRS);
+	sc->stats.rlec += IXGBE_READ_REG(hw, IXGBE_RLEC);
 
+#ifdef IX_DEBUG
 	for (i = 0; i < 8; i++) {
 		uint32_t mp;
 		mp = IXGBE_READ_REG(hw, IXGBE_MPC(i));
@@ -3318,7 +3322,6 @@ ixgbe_update_stats_counters(struct ix_softc *sc)
 	sc->stats.prc511 += IXGBE_READ_REG(hw, IXGBE_PRC511);
 	sc->stats.prc1023 += IXGBE_READ_REG(hw, IXGBE_PRC1023);
 	sc->stats.prc1522 += IXGBE_READ_REG(hw, IXGBE_PRC1522);
-	sc->stats.rlec += IXGBE_READ_REG(hw, IXGBE_RLEC);
 
 	lxon = IXGBE_READ_REG(hw, IXGBE_LXONTXC);
 	sc->stats.lxontxc += lxon;
@@ -3344,6 +3347,7 @@ ixgbe_update_stats_counters(struct ix_softc *sc)
 	sc->stats.ptc1023 += IXGBE_READ_REG(hw, IXGBE_PTC1023);
 	sc->stats.ptc1522 += IXGBE_READ_REG(hw, IXGBE_PTC1522);
 	sc->stats.bptc += IXGBE_READ_REG(hw, IXGBE_BPTC);
+#endif
 
 #if 0
 	/* Fill out the OS statistics structure */
