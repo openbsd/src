@@ -54,6 +54,15 @@ DDEESSCCRRIIPPTTIIOONN
 
      tag         text
 
+     Scaling units other than n:
+
+     tag   text
+
+     tag       text
+
+     tag
+         text
+
      Indented list:
 
            one  first text

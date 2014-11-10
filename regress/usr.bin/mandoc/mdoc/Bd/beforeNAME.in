@@ -1,0 +1,15 @@
+.Dd July 28, 2014
+.Dt BD-BEFORENAME 1
+.Os OpenBSD
+.Bd -centered
+Building and Debugging NetBSD Kernels
+.br
+David A. Holland
+.br
+August 17, 2009
+.Ed
+.Sh NAME
+.Nm Bd-beforename
+.Nd title and author block before the NAME section
+.Sh DESCRIPTION
+some text

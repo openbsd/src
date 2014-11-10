@@ -6,8 +6,15 @@ This is
 .B bold
 text.
 It also works with
+.B several words on a line
+and with
 .B
 next line
 scope.
+.nf
+In no-fill mode:
+.B two words
+and another line.
+.fi
 It has no effect at the end of the file:
 .B

@@ -1,0 +1,13 @@
+NR-DIVZERO(1)               General Commands Manual              NR-DIVZERO(1)
+
+
+
+NNAAMMEE
+       nr-divzero - division by zero in numerical expression
+
+DDEESSCCRRIIPPTTIIOONN
+       initial text final 0 text
+
+
+
+OpenBSD                        October 19, 2014                  NR-DIVZERO(1)

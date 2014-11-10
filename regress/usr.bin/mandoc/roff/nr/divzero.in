@@ -1,0 +1,7 @@
+.TH NR-DIVZERO 1 "October 19, 2014" OpenBSD
+.SH NAME
+nr-divzero \- division by zero in numerical expression
+.SH DESCRIPTION
+initial text
+.nr result 1/0
+final \n[result] text

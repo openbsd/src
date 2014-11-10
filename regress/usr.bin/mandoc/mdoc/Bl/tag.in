@@ -67,6 +67,20 @@ text
 text
 .El
 .Pp
+Scaling units other than n:
+.Bl -tag -width 4m
+.It tag
+text
+.El
+.Bl -tag -width 800M
+.It tag
+text
+.El
+.Bl -tag -width 14
+.It tag
+text
+.El
+.Pp
 Indented list:
 .Bl -tag -offset 6n -width xxx
 .It one

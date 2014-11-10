@@ -6,8 +6,12 @@ NNAAMMEE
        B-args - arguments to font macros
 
 DDEESSCCRRIIPPTTIIOONN
-       This is bboolldd text.  It also works with nneexxtt lliinnee scope.  It has no
-       effect at the end of the file:
+       This is bboolldd text.  It also works with sseevveerraall wwoorrddss oonn aa lliinnee and with
+       nneexxtt lliinnee scope.
+       In no-fill mode:
+       ttwwoo wwoorrddss
+       and another line.
+       It has no effect at the end of the file:
 
 
 
