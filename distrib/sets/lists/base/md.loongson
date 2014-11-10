@@ -36,7 +36,7 @@
 ./sbin/wsconsctl
 ./usr/lib/gcc-lib/mips64el-unknown-openbsd5.6
 ./usr/lib/libc.so.77.2
-./usr/lib/libcrypto.so.30.1
+./usr/lib/libcrypto.so.30.2
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.1
 ./usr/lib/libevent.so.4.1
@@ -1908,6 +1908,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/engine.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/err.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/evp.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/gost.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/hmac.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/idea.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/krb5_asn.ph

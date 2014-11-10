@@ -11,7 +11,7 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd5.6/4.2.1/collect2
 ./usr/lib/gcc-lib/arm-unknown-openbsd5.6/4.2.1/specs
 ./usr/lib/libc.so.77.2
-./usr/lib/libcrypto.so.30.1
+./usr/lib/libcrypto.so.30.2
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.1
 ./usr/lib/libevent.so.4.1
@@ -1881,6 +1881,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/engine.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/err.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/evp.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/openssl/gost.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/hmac.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/idea.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/krb5_asn.ph

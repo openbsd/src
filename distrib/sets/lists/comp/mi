@@ -1,3 +1,4 @@
+./usr/include/openssl/gost.h
 ./sys
 ./usr/bin/ar
 ./usr/bin/as

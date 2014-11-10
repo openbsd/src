@@ -1209,6 +1209,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/engine.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/err.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/evp.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/openssl/gost.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/hmac.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/idea.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/krb5_asn.ph
