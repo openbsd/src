@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.76 2014/11/07 13:56:29 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.77 2014/11/10 14:26:38 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -120,6 +120,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	struct usbd_interface *iface;
 	usb_endpoint_descriptor_t *ed;
 	struct usbd_tt *tts = NULL;
+	uint8_t ttthink = 0;
 	usbd_status err;
 #ifdef UHUB_DEBUG
 	int nremov;
@@ -219,6 +220,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	hub->explore = uhub_explore;
 	hub->nports = nports;
 	hub->powerdelay = powerdelay;
+	hub->ttthink = ttthink;
 
 	if (!dev->self_powered && dev->powersrc->parent != NULL &&
 	    !dev->powersrc->parent->self_powered) {
