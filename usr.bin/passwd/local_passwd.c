@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.41 2013/01/18 11:13:38 guenther Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.42 2014/11/11 21:06:24 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -163,7 +163,7 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 				pw_abort();
 				exit(p == NULL ? 1 : 0);
 			}
-			if (strcmp(crypt(p, pw->pw_passwd), pw->pw_passwd)) {
+			if (crypt_checkpass(p, pw->pw_passwd) != 0) {
 				errno = EACCES;
 				pw_error(NULL, 1, 1);
 			}
