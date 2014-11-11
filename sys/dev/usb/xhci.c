@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.39 2014/11/10 14:29:49 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.40 2014/11/11 12:10:44 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -1103,7 +1103,8 @@ xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 	);
 	sdev->ep_ctx[xp->dci-1]->txinfo = htole32(xhci_get_txinfo(sc, pipe));
 	sdev->ep_ctx[xp->dci-1]->deqp = htole64(
-	    DMAADDR(&xp->ring.dma, 0) | XHCI_EPCTX_DCS
+	    DMAADDR(&xp->ring.dma, sizeof(struct xhci_trb) * xp->ring.index) |
+	    XHCI_EPCTX_DCS
 	);
 
 	/* Unmask the new endoint */
