@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.40 2014/11/10 13:03:51 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.41 2014/11/11 19:59:47 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -1306,13 +1306,22 @@ dhcp_reply(struct lease *lease)
 	raw.op = BOOTREPLY;
 
 	/* Say what we're doing... */
-	note("%s on %s to %s via %s",
-	    (state->offer ? (state->offer == DHCPACK ? "DHCPACK" : "DHCPOFFER") :
-	    "BOOTREPLY"),
-	    piaddr(lease->ip_addr),
-	    print_hw_addr(lease->hardware_addr.htype, lease->hardware_addr.hlen,
-	    lease->hardware_addr.haddr),
-	    state->giaddr.s_addr ? inet_ntoa(state->giaddr) : state->ip->name);
+	if ((state->offer == DHCPACK) && (lease->flags & INFORM_NOLEASE))
+		note("DHCPACK to %s (%s) via %s",
+		    inet_ntoa(state->ciaddr),
+		    print_hw_addr(lease->hardware_addr.htype,
+		        lease->hardware_addr.hlen, lease->hardware_addr.haddr),
+		    state->giaddr.s_addr ? inet_ntoa(state->giaddr) :
+		        state->ip->name);
+	else
+		note("%s on %s to %s via %s",
+		    (state->offer ? (state->offer == DHCPACK ? "DHCPACK" :
+			"DHCPOFFER") : "BOOTREPLY"),
+		    piaddr(lease->ip_addr),
+		    print_hw_addr(lease->hardware_addr.htype,
+		        lease->hardware_addr.hlen, lease->hardware_addr.haddr),
+		    state->giaddr.s_addr ? inet_ntoa(state->giaddr) :
+		        state->ip->name);
 
 	memset(&to, 0, sizeof to);
 	to.sin_family = AF_INET;
