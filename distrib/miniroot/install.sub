@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.797 2014/10/26 23:31:00 krw Exp $
+#	$OpenBSD: install.sub,v 1.798 2014/11/11 21:31:29 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -2178,7 +2178,7 @@ elif [[ -z $respfile ]]; then
 	if [[ -f /ai.done ]]; then
 		# Generate unique filename and let rc.firsttime feed it to
 		# whatever mail system we have at hand by then.
-		while _lf=/mnt/var/tmp/ai.log.$RANDOM && test -e $_lf; do done
+		while _lf=/mnt/var/log/ai.log.$RANDOM && test -e $_lf; do done
 		cp /ai.log $_lf
 		chmod 600 $_lf
 		_lf=${_lf#/mnt}
