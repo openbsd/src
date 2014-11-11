@@ -1,4 +1,4 @@
-/* $OpenBSD: b_dump.c,v 1.19 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: b_dump.c,v 1.20 2014/11/11 19:26:12 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -149,7 +149,7 @@ BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 static int
 write_fp(const void *data, size_t len, void *fp)
 {
-	return fwrite(data, len, 1, fp);
+	return fwrite(data, 1, len, fp);
 }
 
 int

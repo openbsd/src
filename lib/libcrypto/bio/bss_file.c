@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_file.c,v 1.30 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: bss_file.c,v 1.31 2014/11/11 19:26:12 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -185,8 +185,8 @@ file_read(BIO *b, char *out, int outl)
 {
 	int ret = 0;
 
-	if (b->init && (out != NULL)) {
-		ret = fread(out, 1,(int)outl,(FILE *)b->ptr);
+	if (b->init && out != NULL) {
+		ret = fread(out, 1, outl, (FILE *)b->ptr);
 		if (ret == 0 && ferror((FILE *)b->ptr)) {
 			SYSerr(SYS_F_FREAD, errno);
 			BIOerr(BIO_F_FILE_READ, ERR_R_SYS_LIB);
@@ -201,15 +201,8 @@ file_write(BIO *b, const char *in, int inl)
 {
 	int ret = 0;
 
-	if (b->init && (in != NULL)) {
-		ret = fwrite(in,(int)inl, 1,(FILE *)b->ptr);
-		if (ret)
-			ret = inl;
-		/* ret=fwrite(in,1,(int)inl,(FILE *)b->ptr); */
-		/* according to Tim Hudson <tjh@cryptsoft.com>, the commented
-		 * out version above can cause 'inl' write calls under
-		 * some stupid stdio implementations (VMS) */
-	}
+	if (b->init && in != NULL)
+		ret = fwrite(in, 1, inl, (FILE *)b->ptr);
 	return (ret);
 }
 
