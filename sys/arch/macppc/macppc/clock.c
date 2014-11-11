@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.38 2014/10/08 10:12:41 mpi Exp $	*/
+/*	$OpenBSD: clock.c,v 1.39 2014/11/11 21:02:06 mpi Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -227,8 +227,6 @@ decr_intr(struct clockframe *frame)
 	if (ci->ci_cpl >= IPL_CLOCK) {
 		ci->ci_statspending += nstats;
 	} else {
-		KERNEL_LOCK();
-
 		nstats += ci->ci_statspending;
 		ci->ci_statspending = 0;
 
@@ -258,7 +256,6 @@ decr_intr(struct clockframe *frame)
 		/* if a tick has occurred while dealing with these,
 		 * dont service it now, delay until the next tick.
 		 */
-		KERNEL_UNLOCK();
 	}
 }
 
