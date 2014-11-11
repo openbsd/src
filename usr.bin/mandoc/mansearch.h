@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.h,v 1.14 2014/09/03 18:08:26 schwarze Exp $ */
+/*	$OpenBSD: mansearch.h,v 1.15 2014/11/11 19:03:10 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -94,6 +94,7 @@ struct	mansearch {
 	const char	*sec; /* mansection/NULL */
 	const char	*outkey; /* show content of this macro */
 	enum argmode	 argmode; /* interpretation of arguments */
+	int		 firstmatch; /* first matching database only */
 };
 
 __BEGIN_DECLS

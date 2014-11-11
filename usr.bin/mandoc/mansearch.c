@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.35 2014/09/03 18:08:26 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.36 2014/11/11 19:03:10 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -344,6 +344,14 @@ mansearch(const struct mansearch *search,
 		sqlite3_finalize(s2);
 		sqlite3_close(db);
 		ohash_delete(&htab);
+
+		/*
+		 * In man(1) mode, prefer matches in earlier trees
+		 * over matches in later trees.
+		 */
+
+		if (cur && search->firstmatch)
+			break;
 	}
 	qsort(*res, cur, sizeof(struct manpage), manpage_compare);
 	rc = 1;

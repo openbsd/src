@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.106 2014/11/11 02:43:11 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.107 2014/11/11 19:03:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -286,6 +286,10 @@ main(int argc, char *argv[])
 	if (search.argmode != ARG_FILE) {
 		if (argc == 0)
 			usage(search.argmode);
+
+		if (search.argmode == ARG_NAME &&
+		    outmode == OUTMODE_ONE)
+			search.firstmatch = 1;
 
 		/* Access the mandoc database. */
 
