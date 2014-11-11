@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.18 2014/11/11 07:15:33 phessler Exp $ */
+/*	$OpenBSD: util.c,v 1.19 2014/11/11 08:02:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -290,32 +290,10 @@ aspath_strlen(void *data, u_int16_t len)
 
 		for (i = 0; i < seg_len; i++) {
 			as = aspath_extract(seg, i);
-			if (as > USHRT_MAX) {
-				u_int32_t	a = as >> 16;
 
-				if (a >= 10000)
-					total_size += 5;
-				else if (a >= 1000)
-					total_size += 4;
-				else if (a >= 100)
-					total_size += 3;
-				else if (a >= 10)
-					total_size += 2;
-				else
-					total_size += 1;
-				total_size += 1; /* dot between hi & lo */
-				as &= 0xffff;
-			}
-			if (as >= 10000)
-				total_size += 5;
-			else if (as >= 1000)
-				total_size += 4;
-			else if (as >= 100)
-				total_size += 3;
-			else if (as >= 10)
-				total_size += 2;
-			else
-				total_size += 1;
+			do {
+				total_size++;
+			} while ((as = as / 10) != 0);
 
 			if (i + 1 < seg_len)
 				total_size += 1;
