@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.104 2014/10/30 15:05:05 jmc Exp $ */
+/*	$OpenBSD: main.c,v 1.105 2014/11/11 02:08:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -82,7 +82,7 @@ static	void		  mmsg(enum mandocerr, enum mandoclevel,
 				const char *, int, int, const char *);
 static	void		  parse(struct curparse *, int,
 				const char *, enum mandoclevel *);
-static	enum mandoclevel  passthrough(const char *, int);
+static	enum mandoclevel  passthrough(const char *, int, int);
 static	void		  spawn_pager(void);
 static	int		  toptions(struct curparse *, char *);
 static	void		  usage(enum argmode) __attribute__((noreturn));
@@ -111,6 +111,7 @@ main(int argc, char *argv[])
 	int		 fd;
 	int		 show_usage;
 	int		 use_pager;
+	int		 synopsis_only;
 	int		 options;
 	int		 c;
 
@@ -151,6 +152,7 @@ main(int argc, char *argv[])
 
 	use_pager = 1;
 	show_usage = 0;
+	synopsis_only = 0;
 	outmode = OUTMODE_DEF;
 
 	while (-1 != (c = getopt(argc, argv,
@@ -170,6 +172,7 @@ main(int argc, char *argv[])
 			break;
 		case 'h':
 			(void)strlcat(curp.outopts, "synopsis,", BUFSIZ);
+			synopsis_only = 1;
 			outmode = OUTMODE_ALL;
 			break;
 		case 'I':
@@ -376,7 +379,8 @@ main(int argc, char *argv[])
 				chdir(paths.paths[resp->ipath]);
 				parse(&curp, fd, resp->file, &rc);
 			} else
-				rc = passthrough(resp->file, fd);
+				rc = passthrough(resp->file, fd,
+				    synopsis_only);
 			resp++;
 		} else {
 			rc = mparse_open(curp.mp, &fd, *argv++,
@@ -562,27 +566,63 @@ parse(struct curparse *curp, int fd, const char *file,
 }
 
 static enum mandoclevel
-passthrough(const char *file, int fd)
+passthrough(const char *file, int fd, int synopsis_only)
 {
-	char		 buf[BUFSIZ];
-	const char	*syscall;
-	ssize_t		 nr, nw, off;
+	const char	 synb[] = "S\bSY\bYN\bNO\bOP\bPS\bSI\bIS\bS";
+	const char	 synr[] = "SYNOPSIS";
 
-	while ((nr = read(fd, buf, BUFSIZ)) != -1 && nr != 0)
-		for (off = 0; off < nr; off += nw)
-			if ((nw = write(STDOUT_FILENO, buf + off,
-			    (size_t)(nr - off))) == -1 || nw == 0) {
-				close(fd);
+	FILE		*stream;
+	const char	*syscall;
+	char		*line;
+	size_t		 len, off;
+	ssize_t		 nw;
+	int		 print;
+
+	if ((stream = fdopen(fd, "r")) == NULL) {
+		close(fd);
+		syscall = "fdopen";
+		goto fail;
+	}
+
+	print = 0;
+	while ((line = fgetln(stream, &len)) != NULL) {
+		if (synopsis_only) {
+			if (print) {
+				if ( ! isspace((unsigned char)*line))
+					goto done;
+				while (len &&
+				    isspace((unsigned char)*line)) {
+					line++;
+					len--;
+				}
+			} else {
+				if ((len == sizeof(synb) &&
+				     ! strncmp(line, synb, len - 1)) ||
+				    (len == sizeof(synr) &&
+				     ! strncmp(line, synr, len - 1)))
+					print = 1;
+				continue;
+			}
+		}
+		for (off = 0; off < len; off += nw)
+			if ((nw = write(STDOUT_FILENO, line + off,
+			    len - off)) == -1 || nw == 0) {
+				fclose(stream);
 				syscall = "write";
 				goto fail;
 			}
+	}
 
-	close(fd);
+	if (ferror(stream)) {
+		fclose(stream);
+		syscall = "fgetln";
+		goto fail;
+	}
 
-	if (nr == 0)
-		return(MANDOCLEVEL_OK);
+done:
+	fclose(stream);
+	return(MANDOCLEVEL_OK);
 
-	syscall = "read";
 fail:
 	fprintf(stderr, "%s: %s: SYSERR: %s: %s",
 	    progname, file, syscall, strerror(errno));
