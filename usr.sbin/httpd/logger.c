@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.6 2014/11/10 14:16:22 beck Exp $	*/
+/*	$OpenBSD: logger.c,v 1.7 2014/11/11 15:54:45 beck Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -164,8 +164,8 @@ logger_open_priv(struct imsg *imsg)
 
 	if ((size_t)snprintf(name, sizeof(name), "/%s", p) >= sizeof(name))
 		return (-1);
-	if ((len = (size_t)snprintf(path, sizeof(path), "%s%s",
-	    env->sc_chroot, HTTPD_LOGROOT)) >= sizeof(path))
+	if ((len = strlcpy(path, env->sc_logdir, sizeof(path)))
+	    >= sizeof(path))
 		return (-1);
 
 	p = path + len;

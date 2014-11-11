@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.40 2014/11/03 18:43:24 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.41 2014/11/11 15:54:45 beck Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -129,8 +129,8 @@ typedef struct {
 
 %token	ACCESS AUTO BACKLOG BODY BUFFER CERTIFICATE CHROOT CIPHERS COMMON
 %token	COMBINED CONNECTION DIRECTORY ERR FCGI INDEX IP KEY LISTEN LOCATION
-%token	LOG MAXIMUM NO NODELAY ON PORT PREFORK REQUEST REQUESTS ROOT SACK
-%token	SERVER SOCKET SSL STYLE SYSLOG TCP TIMEOUT TYPES
+%token	LOG LOGDIR MAXIMUM NO NODELAY ON PORT PREFORK REQUEST REQUESTS ROOT
+%token	SACK SERVER SOCKET SSL STYLE SYSLOG TCP TIMEOUT TYPES
 %token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -190,6 +190,9 @@ main		: PREFORK NUMBER	{
 		}
 		| CHROOT STRING		{
 			conf->sc_chroot = $2;
+		}
+		| LOGDIR STRING		{
+			conf->sc_logdir = $2;
 		}
 		;
 
@@ -871,6 +874,7 @@ lookup(char *s)
 		{ "listen",		LISTEN },
 		{ "location",		LOCATION },
 		{ "log",		LOG },
+		{ "logdir",		LOGDIR },
 		{ "max",		MAXIMUM },
 		{ "no",			NO },
 		{ "nodelay",		NODELAY },

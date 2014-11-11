@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.23 2014/10/22 09:48:03 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.24 2014/11/11 15:54:45 beck Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -230,6 +230,12 @@ main(int argc, char *argv[])
 		env->sc_chroot = ps->ps_pw->pw_dir;
 	for (proc = 0; proc < nitems(procs); proc++)
 		procs[proc].p_chroot = env->sc_chroot;
+
+	if (env->sc_logdir == NULL) {
+		if (asprintf(&env->sc_logdir, "%s%s", env->sc_chroot,
+			HTTPD_LOGROOT) == -1)
+			errx(1, "malloc failed");
+	}
 
 	proc_init(ps, procs, nitems(procs));
 

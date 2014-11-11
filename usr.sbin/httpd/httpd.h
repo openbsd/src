@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.62 2014/11/03 18:43:24 bluhm Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.63 2014/11/11 15:54:45 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -433,6 +433,7 @@ struct httpd {
 	u_int16_t		 sc_id;
 	int			 sc_paused;
 	char			*sc_chroot;
+	char			*sc_logdir;
 
 	struct serverlist	*sc_servers;
 	struct mediatypes	*sc_mediatypes;
