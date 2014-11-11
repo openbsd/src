@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.77 2014/11/10 14:26:38 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.78 2014/11/11 20:57:27 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -57,8 +57,11 @@ struct uhub_softc {
 	struct device		sc_dev;		/* base device */
 	struct usbd_device	*sc_hub;	/* USB device */
 	struct usbd_pipe	*sc_ipipe;	/* interrupt pipe */
-	u_int8_t		*sc_statusbuf;	/* per port status buffer */
-	size_t			sc_statuslen;	/* status bufferlen */
+
+	uint32_t		 sc_status;	/* status from last interrupt */
+	uint8_t			*sc_statusbuf;	/* per port status buffer */
+	size_t			 sc_statuslen;	/* status bufferlen */
+
 	u_char			sc_running;
 };
 #define UHUB_PROTO(sc) ((sc)->sc_hub->ddesc.bDeviceProtocol)
@@ -366,18 +369,24 @@ uhub_explore(struct usbd_device *dev)
 
 	for (port = 1; port <= dev->hub->nports; port++) {
 		up = &dev->hub->ports[port-1];
-		err = usbd_get_port_status(dev, port, &up->status);
-		if (err) {
-			DPRINTF("%s: get port %d status failed, error=%s\n",
-			    sc->sc_dev.dv_xname, port, usbd_errstr(err));
-			continue;
-		}
-		status = UGETW(up->status.wPortStatus);
-		change = UGETW(up->status.wPortChange);
+
 		reconnect = up->reattach;
 		up->reattach = 0;
-		DPRINTF("%s: port %d status=0x%04x change=0x%04x\n",
-		    sc->sc_dev.dv_xname, port, status, change);
+		change = 0;
+		status = 0;
+
+		if ((sc->sc_status & (1 << port)) || reconnect) {
+			sc->sc_status &= ~(1 << port);
+
+			if (usbd_get_port_status(dev, port, &up->status))
+				continue;
+
+			status = UGETW(up->status.wPortStatus);
+			change = UGETW(up->status.wPortChange);
+			DPRINTF("%s: port %d status=0x%04x change=0x%04x\n",
+			    sc->sc_dev.dv_xname, port, status, change);
+		}
+
 		if (change & UPS_C_PORT_ENABLED) {
 			usbd_clear_port_feature(dev, port, UHF_C_PORT_ENABLE);
 			if (change & UPS_C_CONNECT_STATUS) {
@@ -410,7 +419,7 @@ uhub_explore(struct usbd_device *dev)
 
 		/* We have a connect status change, handle it. */
 		usbd_clear_port_feature(dev, port, UHF_C_PORT_CONNECTION);
-		/*usbd_clear_port_feature(dev, port, UHF_C_PORT_ENABLE);*/
+
 		/*
 		 * If there is already a device on the port the change status
 		 * must mean that is has disconnected.  Looking at the
@@ -573,13 +582,21 @@ void
 uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct uhub_softc *sc = addr;
+	uint32_t stats;
+	int i;
 
 	if (usbd_is_dying(sc->sc_hub))
 		return;
 
 	DPRINTF("%s: intr status=%d\n", sc->sc_dev.dv_xname, status);
+
 	if (status == USBD_STALLED)
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
-	else if (status == USBD_NORMAL_COMPLETION)
+	else if (status == USBD_NORMAL_COMPLETION) {
+		for (i = 0; i < xfer->actlen; i++)
+			stats |= (uint32_t)(xfer->buffer[i]) << (i * 8);
+		sc->sc_status |= stats;
+
 		usb_needs_explore(sc->sc_hub, 0);
+	}
 }

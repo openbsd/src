@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.67 2014/11/10 14:26:38 mpi Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.68 2014/11/11 20:57:27 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -183,7 +183,7 @@ struct usbd_pipe {
 struct usbd_xfer {
 	struct usbd_pipe       *pipe;
 	void		       *priv;
-	void		       *buffer;
+	char		       *buffer;
 	u_int32_t		length;
 	u_int32_t		actlen;
 	u_int16_t		flags;
