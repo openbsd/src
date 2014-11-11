@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.17 2013/10/30 17:28:33 deraadt Exp $ */
+/*	$OpenBSD: util.c,v 1.18 2014/11/11 07:15:33 phessler Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -92,16 +92,11 @@ log_sockaddr(struct sockaddr *sa)
 const char *
 log_as(u_int32_t as)
 {
-	static char	buf[12];	/* "65000.65000\0" */
+	static char	buf[11];	/* "4294967294\0" */
 
-	if (as <= USHRT_MAX) {
-		if (snprintf(buf, sizeof(buf), "%u", as) == -1)
-			return ("?");
-	} else {
-		if (snprintf(buf, sizeof(buf), "%u.%u", as >> 16,
-		    as & 0xffff) == -1)
-			return ("?");
-	}
+	if (snprintf(buf, sizeof(buf), "%u", as) == -1)
+		return ("?");
+
 	return (buf);
 }
 
