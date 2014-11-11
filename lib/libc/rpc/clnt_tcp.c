@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_tcp.c,v 1.25 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: clnt_tcp.c,v 1.26 2014/11/11 04:51:49 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -102,7 +102,9 @@ static int	writetcp(struct ct_data *, caddr_t, int);
  * If raddr->sin_port is 0, then a binder on the remote machine is
  * consulted for the right port number.
  * NB: *sockp is copied into a private area.
- * NB: It is the clients responsibility to close *sockp.
+ * NB: It is the client's responsibility to close *sockp, unless
+ *     clnttcp_create() was called with *sockp = -1 (so it created
+ *     the socket), and CLNT_DESTROY() is used.
  * NB: The rpch->cl_auth is set null authentication.  Caller may wish to set this
  * something more useful.
  */
@@ -368,7 +370,7 @@ clnttcp_destroy(CLIENT *h)
 	struct ct_data *ct =
 	    (struct ct_data *) h->cl_private;
 
-	if (ct->ct_closeit) {
+	if (ct->ct_closeit && ct->ct_sock != -1) {
 		(void)close(ct->ct_sock);
 	}
 	XDR_DESTROY(&(ct->ct_xdrs));

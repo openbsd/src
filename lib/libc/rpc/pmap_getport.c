@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_getport.c,v 1.11 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: pmap_getport.c,v 1.12 2014/11/11 04:51:49 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -77,8 +77,6 @@ pmap_getport(struct sockaddr_in *address, u_long program, u_long version,
 		}
 		CLNT_DESTROY(client);
 	}
-	if (sock != -1)
-		(void)close(sock);
 	address->sin_port = 0;
 	return (port);
 }

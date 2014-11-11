@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_clnt.c,v 1.16 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: pmap_clnt.c,v 1.17 2014/11/11 04:51:49 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -57,6 +57,7 @@ pmap_set(u_long program, u_long version, u_int protocol, int iport)
 	CLIENT *client;
 	struct pmap parms;
 	bool_t rslt;
+	int save_errno;
 	u_short port = iport;
 
 	if (get_myaddress(&myaddress) != 0)
@@ -72,15 +73,13 @@ pmap_set(u_long program, u_long version, u_int protocol, int iport)
 	parms.pm_port = port;
 	if (CLNT_CALL(client, PMAPPROC_SET, xdr_pmap, &parms, xdr_bool, &rslt,
 	    tottimeout) != RPC_SUCCESS) {
-		int save_errno = errno;
-
+		save_errno = errno;
 		clnt_perror(client, "Cannot register service");
-		errno = save_errno;
-		return (FALSE);
-	}
+		rslt = FALSE;
+	} else
+		save_errno = errno;
 	CLNT_DESTROY(client);
-	if (sock != -1)
-		(void)close(sock);
+	errno = save_errno;
 	return (rslt);
 }
 
@@ -110,7 +109,5 @@ pmap_unset(u_long program, u_long version)
 	CLNT_CALL(client, PMAPPROC_UNSET, xdr_pmap, &parms, xdr_bool, &rslt,
 	    tottimeout);
 	CLNT_DESTROY(client);
-	if (sock != -1)
-		(void)close(sock);
 	return (rslt);
 }

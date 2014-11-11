@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.26 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.27 2014/11/11 04:51:49 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -90,7 +90,9 @@ struct cu_data {
  * If *sockp<0, *sockp is set to a newly created UPD socket.
  * If raddr->sin_port is 0 a binder on the remote machine
  * is consulted for the correct port number.
- * NB: It is the clients responsibility to close *sockp.
+ * NB: It is the client's responsibility to close *sockp, unless
+ *	clntudp_bufcreate() was called with *sockp = -1 (so it created
+ *	the socket), and CLNT_DESTROY() is used.
  * NB: The rpch->cl_auth is initialized to null authentication.
  *     Caller may wish to set this something more useful.
  *
@@ -428,7 +430,7 @@ clntudp_destroy(CLIENT *cl)
 {
 	struct cu_data *cu = (struct cu_data *)cl->cl_private;
 
-	if (cu->cu_closeit) {
+	if (cu->cu_closeit && cu->cu_sock != -1) {
 		(void)close(cu->cu_sock);
 	}
 	XDR_DESTROY(&(cu->cu_outxdrs));
