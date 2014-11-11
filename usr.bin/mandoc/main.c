@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.105 2014/11/11 02:08:57 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.106 2014/11/11 02:43:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -173,6 +173,7 @@ main(int argc, char *argv[])
 		case 'h':
 			(void)strlcat(curp.outopts, "synopsis,", BUFSIZ);
 			synopsis_only = 1;
+			use_pager = 0;
 			outmode = OUTMODE_ALL;
 			break;
 		case 'I':
