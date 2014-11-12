@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.35 2014/11/11 15:54:45 beck Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.36 2014/11/12 16:52:44 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 11 2014 $
+.Dd $Mdocdate: November 12 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -103,19 +103,20 @@ directory.
 If not specified, it defaults to
 .Pa /var/www ,
 the home directory of the www user.
+.It Ic logdir Ar directory
+Specifies the full path of the directory in which log files will be written.
+If not specified, it defaults to
+.Pa /logs
+within the
+.Xr chroot 2
+directory.
 .It Ic prefork Ar number
 Run the specified number of server processes.
 This increases the performance and prevents delays when connecting
 to a server.
 .Xr httpd 8
 runs 3 server processes by default.
-.It Ic logdir Ar directory
-Specifies the full path of the directory in which log files will be written. 
-If not specified, it defaults to
-.Pa /logs
-within the
-.Xr chroot 2
-directory.
+.El
 .Sh SERVERS
 The configured web servers.
 .Pp
