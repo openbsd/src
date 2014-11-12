@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.8 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.9 2014/11/12 18:21:07 miod Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -3209,7 +3209,7 @@ static const ec_list_element curve_list[] = {
 	{NID_id_GostR3410_2001_CryptoPro_XchA_ParamSet, &_EC_GOST_2001_CryptoPro_A.h, 0, "GOST R 34.10-2001 CryptoPro-XchA"},
 	{NID_id_GostR3410_2001_CryptoPro_XchB_ParamSet, &_EC_GOST_2001_CryptoPro_C.h, 0, "GOST R 34.10-2001 CryptoPro-XchB"},
 	{NID_id_tc26_gost_3410_2012_512_paramSetA, &_EC_GOST_2012_TC26_A.h, 0, "GOST R 34.10-2012 TC26-A"},
-	{NID_id_tc26_gost_3410_2012_512_paramSetB, &_EC_GOST_2012_TC26_B.h, 0, "GOST R 34.10-2012 TC26-A"},
+	{NID_id_tc26_gost_3410_2012_512_paramSetB, &_EC_GOST_2012_TC26_B.h, 0, "GOST R 34.10-2012 TC26-B"},
 #endif
 };
 
