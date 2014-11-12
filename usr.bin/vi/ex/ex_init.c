@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_init.c,v 1.12 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_init.c,v 1.13 2014/11/12 16:29:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,6 @@
 #include "config.h"
 
 #include <sys/param.h>
-#include <sys/types.h>		/* XXX: param.h may not have included types.h */
 #include <sys/queue.h>
 #include <sys/stat.h>
 

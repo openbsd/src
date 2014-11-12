@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_term.c,v 1.18 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: cl_term.c,v 1.19 2014/11/12 16:29:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -315,9 +315,7 @@ cl_omesg(SCR *sp, CL_PRIVATE *clp, int on)
 int
 cl_ssize(SCR *sp, int sigwinch, size_t *rowp, size_t *colp, int *changedp)
 {
-#ifdef TIOCGWINSZ
 	struct winsize win;
-#endif
 	size_t col, row;
 	int rval;
 	char *p;
@@ -338,12 +336,10 @@ cl_ssize(SCR *sp, int sigwinch, size_t *rowp, size_t *colp, int *changedp)
 	 * Try TIOCGWINSZ.
 	 */
 	row = col = 0;
-#ifdef TIOCGWINSZ
 	if (ioctl(STDERR_FILENO, TIOCGWINSZ, &win) != -1) {
 		row = win.ws_row;
 		col = win.ws_col;
 	}
-#endif
 	/* If here because of suspend or a signal, only trust TIOCGWINSZ. */
 	if (sigwinch) {
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_tag.c,v 1.19 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_tag.c,v 1.20 2014/11/12 16:29:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -15,7 +15,6 @@
 #include "config.h"
 
 #include <sys/param.h>
-#include <sys/types.h>		/* XXX: param.h may not have included types.h */
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -1008,14 +1007,6 @@ ctag_sfile(SCR *sp, TAGF *tfp, TAGQ *tqp, char *tname)
 
 	/*
 	 * XXX
-	 * Some old BSD systems require MAP_FILE as an argument when mapping
-	 * regular files.
-	 */
-#ifndef MAP_FILE
-#define	MAP_FILE	0
-#endif
-	/*
-	 * XXX
 	 * We'd like to test if the file is too big to mmap.  Since we don't
 	 * know what size or type off_t's or size_t's are, what the largest
 	 * unsigned integral type is, or what random insanity the local C
@@ -1024,7 +1015,7 @@ ctag_sfile(SCR *sp, TAGF *tfp, TAGQ *tqp, char *tname)
 	 */
 	if (fstat(fd, &sb) != 0 ||
 	    (map = mmap(NULL, (size_t)sb.st_size, PROT_READ | PROT_WRITE,
-	    MAP_FILE | MAP_PRIVATE, fd, (off_t)0)) == MAP_FAILED) {
+	    MAP_PRIVATE, fd, (off_t)0)) == MAP_FAILED) {
 		tfp->errnum = errno;
 		(void)close(fd);
 		return (1);

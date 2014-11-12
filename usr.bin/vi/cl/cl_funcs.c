@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_funcs.c,v 1.16 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: cl_funcs.c,v 1.17 2014/11/12 16:29:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -287,24 +287,7 @@ cl_deleteln(SCR *sp)
 	 */
 	if (!F_ISSET(sp, SC_SCR_EXWROTE) && IS_SPLIT(sp)) {
 		getyx(stdscr, oldy, oldx);
-#ifdef mvchgat
 		mvchgat(RLNO(sp, LASTLINE(sp)), 0, -1, A_NORMAL, 0, NULL);
-#else
-		for (lno = RLNO(sp, LASTLINE(sp)), col = spcnt = 0;;) {
-			(void)move(lno, col);
-			ch = winch(stdscr);
-			if (isblank(ch))
-				++spcnt;
-			else {
-				(void)move(lno, col - spcnt);
-				for (; spcnt > 0; --spcnt)
-					(void)addch(' ');
-				(void)addch(ch);
-			}
-			if (++col >= sp->cols)
-				break;
-		}
-#endif
 		(void)move(oldy, oldx);
 	}
 
@@ -413,11 +396,9 @@ cl_keyval(SCR *sp, scr_keyval_t val, CHAR_T *chp, int *dnep)
 	case KEY_VKILL:
 		*dnep = (*chp = clp->orig.c_cc[VKILL]) == _POSIX_VDISABLE;
 		break;
-#ifdef VWERASE
 	case KEY_VWERASE:
 		*dnep = (*chp = clp->orig.c_cc[VWERASE]) == _POSIX_VDISABLE;
 		break;
-#endif
 	default:
 		*dnep = 1;
 		break;

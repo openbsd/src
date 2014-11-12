@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.6 2014/11/06 11:35:02 bentley Exp $	*/
+/*	$OpenBSD: common.h,v 1.7 2014/11/12 16:29:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -10,12 +10,6 @@
  *
  *	@(#)common.h	10.13 (Berkeley) 9/25/96
  */
-
-/*
- * Porting information built at configuration time.  Included before
- * any of nvi's include files.
- */
-#include "port.h"
 
 #include <db.h>
 #include <regex.h>

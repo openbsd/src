@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.22 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.23 2014/11/12 16:29:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -288,12 +288,9 @@ sig_init(GS *gp, SCR *sp)
 		    sigaddset(&__sigblockset, SIGINT) ||
 		    setsig(SIGINT, &clp->oact[INDX_INT], h_int) ||
 		    sigaddset(&__sigblockset, SIGTERM) ||
-		    setsig(SIGTERM, &clp->oact[INDX_TERM], h_term)
-#ifdef SIGWINCH
-		    ||
+		    setsig(SIGTERM, &clp->oact[INDX_TERM], h_term) ||
 		    sigaddset(&__sigblockset, SIGWINCH) ||
 		    setsig(SIGWINCH, &clp->oact[INDX_WINCH], h_winch)
-#endif
 		    ) {
 			perr(gp->progname, NULL);
 			return (1);
@@ -301,11 +298,8 @@ sig_init(GS *gp, SCR *sp)
 	} else
 		if (setsig(SIGHUP, NULL, h_hup) ||
 		    setsig(SIGINT, NULL, h_int) ||
-		    setsig(SIGTERM, NULL, h_term)
-#ifdef SIGWINCH
-		    ||
+		    setsig(SIGTERM, NULL, h_term) ||
 		    setsig(SIGWINCH, NULL, h_winch)
-#endif
 		    ) {
 			msgq(sp, M_SYSERR, "signal-reset");
 		}
@@ -356,9 +350,7 @@ sig_end(GS *gp)
 	(void)sigaction(SIGHUP, NULL, &clp->oact[INDX_HUP]);
 	(void)sigaction(SIGINT, NULL, &clp->oact[INDX_INT]);
 	(void)sigaction(SIGTERM, NULL, &clp->oact[INDX_TERM]);
-#ifdef SIGWINCH
 	(void)sigaction(SIGWINCH, NULL, &clp->oact[INDX_WINCH]);
-#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cscope.c,v 1.21 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_cscope.c,v 1.22 2014/11/12 16:29:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -12,7 +12,6 @@
 #include "config.h"
 
 #include <sys/param.h>
-#include <sys/types.h>		/* XXX: param.h may not have included types.h */
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/time.h>

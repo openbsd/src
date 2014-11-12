@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.20 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: msg.c,v 1.21 2014/11/12 16:29:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -12,7 +12,6 @@
 #include "config.h"
 
 #include <sys/param.h>
-#include <sys/types.h>		/* XXX: param.h may not have included types.h */
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -40,27 +39,11 @@
 void
 msgq(SCR *sp, mtype_t mt, const char *fmt, ...)
 {
-#ifndef NL_ARGMAX
-#define	__NL_ARGMAX	20		/* Set to 9 by System V. */
-	struct {
-		const char *str;	/* String pointer. */
-		size_t	 arg;		/* Argument number. */
-		size_t	 prefix;	/* Prefix string length. */
-		size_t	 skip;		/* Skipped string length. */
-		size_t	 suffix;	/* Suffix string length. */
-	} str[__NL_ARGMAX];
-#endif
 	static int reenter;		/* STATIC: Re-entrancy check. */
 	GS *gp;
 	size_t blen, len, mlen, nlen;
 	const char *p;
 	char *bp, *mp;
-#ifndef NL_ARGMAX
-	size_t cnt1, cnt2, soff;
-	CHAR_T ch;
-	const char *t, *u;
-	char *rbp, *s_rbp;
-#endif
         va_list ap;
 
 	/*
@@ -166,151 +149,12 @@ retry:		FREE_SPACE(sp, bp, blen);
 	}
 	fmt = msg_cat(sp, fmt, NULL);
 
-#ifndef NL_ARGMAX
-	/*
-	 * Nvi should run on machines that don't support the numbered argument
-	 * specifications (%[digit]*$).  We do this by reformatting the string
-	 * so that we can hand it to vsnprintf(3) and it will use the arguments
-	 * in the right order.  When vsnprintf returns, we put the string back
-	 * into the right order.  It's undefined, according to SVID III, to mix
-	 * numbered argument specifications with the standard style arguments,
-	 * so this should be safe.
-	 *
-	 * In addition, we also need a character that is known to not occur in
-	 * any vi message, for separating the parts of the string.  As callers
-	 * of msgq are responsible for making sure that all the non-printable
-	 * characters are formatted for printing before calling msgq, we use a
-	 * random non-printable character selected at terminal initialization
-	 * time.  This code isn't fast by any means, but as messages should be
-	 * relatively short and normally have only a few arguments, it won't be
-	 * too bad.  Regardless, nobody has come up with any other solution.
-	 *
-	 * The result of this loop is an array of pointers into the message
-	 * string, with associated lengths and argument numbers.  The array
-	 * is in the "correct" order, and the arg field contains the argument
-	 * order.
-	 */
-	for (p = fmt, soff = 0; soff < __NL_ARGMAX;) {
-		for (t = p; *p != '\0' && *p != '%'; ++p);
-		if (*p == '\0')
-			break;
-		++p;
-		if (!isdigit(*p)) {
-			if (*p == '%')
-				++p;
-			continue;
-		}
-		for (u = p; isdigit(*++p););
-		if (*p != '$')
-			continue;
-
-		/* Up to, and including the % character. */
-		str[soff].str = t;
-		str[soff].prefix = u - t;
-
-		/* Up to, and including the $ character. */
-		str[soff].arg = atoi(u);
-		str[soff].skip = (p - u) + 1;
-		if (str[soff].arg >= __NL_ARGMAX)
-			goto ret;
-
-		/* Up to, and including the conversion character. */
-		for (u = p; (ch = *++p) != '\0';)
-			if (isalpha(ch) &&
-			    strchr("diouxXfeEgGcspn", ch) != NULL)
-				break;
-		str[soff].suffix = p - u;
-		if (ch != '\0')
-			++p;
-		++soff;
-	}
-
-	/* If no magic strings, we're done. */
-	if (soff == 0)
-		goto format;
-
-	 /* Get space for the reordered strings. */
-	if ((rbp = malloc(nlen)) == NULL)
-		goto ret;
-	s_rbp = rbp;
-
-	/*
-	 * Reorder the strings into the message string based on argument
-	 * order.
-	 *
-	 * !!!
-	 * We ignore arguments that are out of order, i.e. if we don't find
-	 * an argument, we continue.  Assume (almost certainly incorrectly)
-	 * that whoever created the string knew what they were doing.
-	 *
-	 * !!!
-	 * Brute force "sort", but since we don't expect more than one or two
-	 * arguments in a string, the setup cost of a fast sort will be more
-	 * expensive than the loop.
-	 */
-	for (cnt1 = 1; cnt1 <= soff; ++cnt1)
-		for (cnt2 = 0; cnt2 < soff; ++cnt2)
-			if (cnt1 == str[cnt2].arg) {
-				memmove(s_rbp, str[cnt2].str, str[cnt2].prefix);
-				memmove(s_rbp + str[cnt2].prefix,
-				    str[cnt2].str + str[cnt2].prefix +
-				    str[cnt2].skip, str[cnt2].suffix);
-				s_rbp += str[cnt2].prefix + str[cnt2].suffix;
-				*s_rbp++ =
-				    gp == NULL ? DEFAULT_NOPRINT : gp->noprint;
-				break;
-			}
-	*s_rbp = '\0';
-	fmt = rbp;
-
-format:
-#endif
 	/* Format the arguments into the string. */
         va_start(ap, fmt);
 	len = vsnprintf(mp, REM, fmt, ap);
 	va_end(ap);
 	if (len >= nlen)
 		goto retry;
-
-#ifndef NL_ARGMAX
-	if (soff == 0)
-		goto nofmt;
-
-	/*
-	 * Go through the resulting string, and, for each separator character
-	 * separated string, enter its new starting position and length in the
-	 * array.
-	 */
-	for (p = t = mp, cnt1 = 1,
-	    ch = gp == NULL ? DEFAULT_NOPRINT : gp->noprint; *p != '\0'; ++p)
-		if (*p == ch) {
-			for (cnt2 = 0; cnt2 < soff; ++cnt2)
-				if (str[cnt2].arg == cnt1)
-					break;
-			str[cnt2].str = t;
-			str[cnt2].prefix = p - t;
-			t = p + 1;
-			++cnt1;
-		}
-
-	/*
-	 * Reorder the strings once again, putting them back into the
-	 * message buffer.
-	 *
-	 * !!!
-	 * Note, the length of the message gets decremented once for
-	 * each substring, when we discard the separator character.
-	 */
-	for (s_rbp = rbp, cnt1 = 0; cnt1 < soff; ++cnt1) {
-		memmove(rbp, str[cnt1].str, str[cnt1].prefix);
-		rbp += str[cnt1].prefix;
-		--len;
-	}
-	memmove(mp, s_rbp, rbp - s_rbp);
-
-	/* Free the reordered string memory. */
-	free(s_rbp);
-#endif
 
 nofmt:	mp += len;
 	if ((mlen += len) > blen)

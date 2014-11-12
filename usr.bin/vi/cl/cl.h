@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.h,v 1.7 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: cl.h,v 1.8 2014/11/12 16:29:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -64,17 +64,5 @@ typedef enum { INP_OK=0, INP_EOF, INP_ERR, INP_INTR, INP_TIMEOUT } input_t;
 
 /* X11 xterm escape sequence to rename the icon/window. */
 #define	XTERM_RENAME	"\033]0;%s\007"
-
-/*
- * XXX
- * Some implementations of curses.h don't define these for us.  Used for
- * compatibility only.
- */
-#ifndef TRUE
-#define	TRUE	1
-#endif
-#ifndef FALSE
-#define	FALSE	0
-#endif
 
 #include "cl_extern.h"

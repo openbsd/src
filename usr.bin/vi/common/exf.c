@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.30 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: exf.c,v 1.31 2014/11/12 16:29:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,6 @@
 #include "config.h"
 
 #include <sys/param.h>
-#include <sys/types.h>		/* XXX: param.h may not have included types.h */
 #include <sys/queue.h>
 #include <sys/stat.h>
 
@@ -1418,11 +1417,9 @@ file_lock(SCR *sp, char *name, int *fdp, int fd, int iswrite)
 	 * they are the former.  There's no portable way to do this.
 	 */
 	errno = 0;
-	return (flock(fd, LOCK_EX | LOCK_NB) ? errno == EAGAIN
-#ifdef EWOULDBLOCK
-	    || errno == EWOULDBLOCK
-#endif
-	    ? LOCK_UNAVAIL : LOCK_FAILED : LOCK_SUCCESS);
+	return (flock(fd, LOCK_EX | LOCK_NB) ?
+	    errno == EAGAIN || errno == EWOULDBLOCK ? LOCK_UNAVAIL : LOCK_FAILED :
+	    LOCK_SUCCESS);
 #endif
 #ifdef HAVE_LOCK_FCNTL			/* Gag me.  We've got fcntl(2). */
 {
@@ -1465,11 +1462,8 @@ file_lock(SCR *sp, char *name, int *fdp, int fd, int iswrite)
 	 * as returning EACCESS and EAGAIN; add EWOULDBLOCK for good measure,
 	 * and assume they are the former.  There's no portable way to do this.
 	 */
-	return (errno == EACCES || errno == EAGAIN
-#ifdef EWOULDBLOCK
-	|| errno == EWOULDBLOCK
-#endif
-	?  LOCK_UNAVAIL : LOCK_FAILED);
+	return (errno == EACCES || errno == EAGAIN || errno == EWOULDBLOCK ?
+	    LOCK_UNAVAIL : LOCK_FAILED);
 }
 #endif
 #if !defined(HAVE_LOCK_FLOCK) && !defined(HAVE_LOCK_FCNTL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_argv.c,v 1.15 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_argv.c,v 1.16 2014/11/12 16:29:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -488,7 +488,7 @@ argv_lexp(SCR *sp, EXCMD *excp, char *path)
 	DIR *dirp;
 	EX_PRIVATE *exp;
 	int off;
-	size_t dlen, len, nlen;
+	size_t dlen, nlen;
 	char *dname, *name, *p;
 
 	exp = EXP(sp);
@@ -511,11 +511,6 @@ argv_lexp(SCR *sp, EXCMD *excp, char *path)
 	}
 	nlen = strlen(name);
 
-	/*
-	 * XXX
-	 * We don't use the d_namlen field, it's not portable enough; we
-	 * assume that d_name is nul terminated, instead.
-	 */
 	if ((dirp = opendir(dname)) == NULL) {
 		msgq_str(sp, M_SYSERR, dname, "%s");
 		return (1);
@@ -524,15 +519,14 @@ argv_lexp(SCR *sp, EXCMD *excp, char *path)
 		if (nlen == 0) {
 			if (dp->d_name[0] == '.')
 				continue;
-			len = strlen(dp->d_name);
 		} else {
-			len = strlen(dp->d_name);
-			if (len < nlen || memcmp(dp->d_name, name, nlen))
+			if (dp->d_namlen < nlen ||
+			    memcmp(dp->d_name, name, nlen))
 				continue;
 		}
 
 		/* Directory + name + slash + null. */
-		argv_alloc(sp, dlen + len + 2);
+		argv_alloc(sp, dlen + dp->d_namlen + 2);
 		p = exp->args[exp->argsoff]->bp;
 		if (dlen != 0) {
 			memcpy(p, dname, dlen);
@@ -540,8 +534,8 @@ argv_lexp(SCR *sp, EXCMD *excp, char *path)
 			if (dlen > 1 || dname[0] != '/')
 				*p++ = '/';
 		}
-		memcpy(p, dp->d_name, len + 1);
-		exp->args[exp->argsoff]->len = dlen + len + 1;
+		memcpy(p, dp->d_name, dp->d_namlen + 1);
+		exp->args[exp->argsoff]->len = dlen + dp->d_namlen + 1;
 		++exp->argsoff;
 		excp->argv = exp->args;
 		excp->argc = exp->argsoff;

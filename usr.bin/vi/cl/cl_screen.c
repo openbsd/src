@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_screen.c,v 1.21 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: cl_screen.c,v 1.22 2014/11/12 16:29:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -333,9 +333,7 @@ cl_vi_init(SCR *sp)
 		clp->vi_enter.c_iflag |= IXOFF;
 
 	clp->vi_enter.c_lflag |= ISIG;
-#ifdef VDSUSP
 	clp->vi_enter.c_cc[VDSUSP] = _POSIX_VDISABLE;
-#endif
 	clp->vi_enter.c_cc[VQUIT] = _POSIX_VDISABLE;
 	clp->vi_enter.c_cc[VSUSP] = _POSIX_VDISABLE;
 
@@ -345,15 +343,9 @@ cl_vi_init(SCR *sp)
 	 * characters when curses switches into raw mode.  It should be OK
 	 * to do it explicitly for everyone.
 	 */
-#ifdef VDISCARD
 	clp->vi_enter.c_cc[VDISCARD] = _POSIX_VDISABLE;
-#endif
-#ifdef VLNEXT
 	clp->vi_enter.c_cc[VLNEXT] = _POSIX_VDISABLE;
-#endif
-#ifdef VSTATUS
 	clp->vi_enter.c_cc[VSTATUS] = _POSIX_VDISABLE;
-#endif
 
 	/* Initialize terminal based information. */
 	if (cl_term_init(sp))
@@ -465,18 +457,10 @@ cl_ex_init(SCR *sp)
 	 * to make all ex printf's output \r\n instead of \n.
 	 */
 	clp->ex_enter = clp->orig;
-	clp->ex_enter.c_lflag  |= ECHO | ECHOE | ECHOK | ICANON | IEXTEN | ISIG;
-#ifdef ECHOCTL
-	clp->ex_enter.c_lflag |= ECHOCTL;
-#endif
-#ifdef ECHOKE
-	clp->ex_enter.c_lflag |= ECHOKE;
-#endif
+	clp->ex_enter.c_lflag |=
+	    ECHO | ECHOCTL | ECHOE | ECHOK | ECHOKE | ICANON | IEXTEN | ISIG;
 	clp->ex_enter.c_iflag |= ICRNL;
-	clp->ex_enter.c_oflag |= OPOST;
-#ifdef ONLCR
-	clp->ex_enter.c_oflag |= ONLCR;
-#endif
+	clp->ex_enter.c_oflag |= ONLCR | OPOST;
 
 fast:	if (tcsetattr(STDIN_FILENO, TCSADRAIN | TCSASOFT, &clp->ex_enter)) {
 		if (errno == EINTR)
