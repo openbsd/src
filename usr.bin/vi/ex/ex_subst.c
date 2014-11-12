@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.20 2014/10/14 22:23:12 deraadt Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.21 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -45,9 +45,7 @@ static int s(SCR *, EXCMD *, char *, regex_t *, u_int);
  * PUBLIC: int ex_s(SCR *, EXCMD *);
  */
 int
-ex_s(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_s(SCR *sp, EXCMD *cmdp)
 {
 	regex_t *re;
 	size_t blen, len;
@@ -252,9 +250,7 @@ tilde:				++p;
  * PUBLIC: int ex_subagain(SCR *, EXCMD *);
  */
 int
-ex_subagain(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_subagain(SCR *sp, EXCMD *cmdp)
 {
 	if (sp->subre == NULL) {
 		ex_emsg(sp, NULL, EXM_NOPREVRE);
@@ -276,9 +272,7 @@ ex_subagain(sp, cmdp)
  * PUBLIC: int ex_subtilde(SCR *, EXCMD *);
  */
 int
-ex_subtilde(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_subtilde(SCR *sp, EXCMD *cmdp)
 {
 	if (sp->re == NULL) {
 		ex_emsg(sp, NULL, EXM_NOPREVRE);
@@ -342,12 +336,7 @@ ex_subtilde(sp, cmdp)
 }
 
 static int
-s(sp, cmdp, s, re, flags)
-	SCR *sp;
-	EXCMD *cmdp;
-	char *s;
-	regex_t *re;
-	u_int flags;
+s(SCR *sp, EXCMD *cmdp, char *s, regex_t *re, u_int flags)
 {
 	EVENT ev;
 	MARK from, to;
@@ -889,12 +878,8 @@ err:		rval = 1;
  * PUBLIC:     char *, size_t, char **, size_t *, regex_t *, u_int);
  */
 int
-re_compile(sp, ptrn, plen, ptrnp, lenp, rep, flags)
-	SCR *sp;
-	char *ptrn, **ptrnp;
-	size_t plen, *lenp;
-	regex_t *rep;
-	u_int flags;
+re_compile(SCR *sp, char *ptrn, size_t plen, char **ptrnp, size_t *lenp,
+    regex_t *rep, u_int flags)
 {
 	size_t len;
 	int reflags, replaced, rval;
@@ -1022,11 +1007,7 @@ re_compile(sp, ptrn, plen, ptrnp, lenp, rep, flags)
  * weren't historically.  It's a bug.
  */
 static int
-re_conv(sp, ptrnp, plenp, replacedp)
-	SCR *sp;
-	char **ptrnp;
-	size_t *plenp;
-	int *replacedp;
+re_conv(SCR *sp, char **ptrnp, size_t *plenp, int *replacedp)
 {
 	size_t blen, len, needlen;
 	int magic;
@@ -1152,11 +1133,7 @@ re_conv(sp, ptrnp, plenp, replacedp)
  *	1003.2 RE functions can handle.
  */
 static int
-re_tag_conv(sp, ptrnp, plenp, replacedp)
-	SCR *sp;
-	char **ptrnp;
-	size_t *plenp;
-	int *replacedp;
+re_tag_conv(SCR *sp, char **ptrnp, size_t *plenp, int *replacedp)
 {
 	size_t blen, len;
 	int lastdollar;
@@ -1223,11 +1200,7 @@ re_tag_conv(sp, ptrnp, plenp, replacedp)
  *      1003.2 RE functions can handle.
  */
 static int
-re_cscope_conv(sp, ptrnp, plenp, replacedp)
-	SCR *sp;
-	char **ptrnp;
-	size_t *plenp;
-	int *replacedp;
+re_cscope_conv(SCR *sp, char **ptrnp, size_t *plenp, int *replacedp)
 {
 	size_t blen, len, nspaces;
 	char *bp, *p, *t;
@@ -1284,10 +1257,7 @@ re_cscope_conv(sp, ptrnp, plenp, replacedp)
  * PUBLIC: void re_error(SCR *, int, regex_t *);
  */
 void
-re_error(sp, errcode, preg)
-	SCR *sp;
-	int errcode;
-	regex_t *preg;
+re_error(SCR *sp, int errcode, regex_t *preg)
 {
 	size_t s;
 	char *oe;
@@ -1307,12 +1277,8 @@ re_error(sp, errcode, preg)
  * 	Do the substitution for a regular expression.
  */
 static int
-re_sub(sp, ip, lbp, lbclenp, lblenp, match)
-	SCR *sp;
-	char *ip;			/* Input line. */
-	char **lbp;
-	size_t *lbclenp, *lblenp;
-	regmatch_t match[10];
+re_sub(SCR *sp, char *ip, char **lbp, size_t *lbclenp, size_t *lblenp,
+    regmatch_t match[10])
 {
 	enum { C_NOTSET, C_LOWER, C_ONELOWER, C_ONEUPPER, C_UPPER } conv;
 	size_t lbclen, lblen;		/* Local copies. */

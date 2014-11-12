@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_txt.c,v 1.12 2014/07/10 20:33:42 deraadt Exp $	*/
+/*	$OpenBSD: ex_txt.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -51,11 +51,7 @@ static void	txt_prompt(SCR *, TEXT *, ARG_CHAR_T, u_int32_t);
  * PUBLIC: int ex_txt(SCR *, TEXTH *, ARG_CHAR_T, u_int32_t);
  */
 int
-ex_txt(sp, tiqh, prompt, flags)
-	SCR *sp;
-	TEXTH *tiqh;
-	ARG_CHAR_T prompt;
-	u_int32_t flags;
+ex_txt(SCR *sp, TEXTH *tiqh, ARG_CHAR_T prompt, u_int32_t flags)
 {
 	EVENT ev;
 	GS *gp;
@@ -351,11 +347,7 @@ alloc_err:
  *	not ours.
  */
 static void
-txt_prompt(sp, tp, prompt, flags)
-	SCR *sp;
-	TEXT *tp;
-	ARG_CHAR_T prompt;
-	u_int32_t flags;
+txt_prompt(SCR *sp, TEXT *tp, ARG_CHAR_T prompt, u_int32_t flags)
 {
 	/* Display the prompt. */
 	if (LF_ISSET(TXT_PROMPT))
@@ -379,9 +371,7 @@ txt_prompt(sp, tp, prompt, flags)
  * ranting and raving.  This is a fair bit simpler as ^T isn't special.
  */
 static int
-txt_dent(sp, tp)
-	SCR *sp;
-	TEXT *tp;
+txt_dent(SCR *sp, TEXT *tp)
 {
 	u_long sw, ts;
 	size_t cno, off, scno, spaces, tabs;

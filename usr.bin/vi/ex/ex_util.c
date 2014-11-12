@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_util.c,v 1.7 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_util.c,v 1.8 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -32,11 +32,8 @@
  * PUBLIC: void ex_cinit(EXCMD *, int, int, recno_t, recno_t, int, ARGS **);
  */
 void
-ex_cinit(cmdp, cmd_id, naddr, lno1, lno2, force, ap)
-	EXCMD *cmdp;
-	int cmd_id, force, naddr;
-	recno_t lno1, lno2;
-	ARGS **ap;
+ex_cinit(EXCMD *cmdp, int cmd_id, int naddr, recno_t lno1, recno_t lno2,
+    int force, ARGS **ap)
 {
 	memset(cmdp, 0, sizeof(EXCMD));
 	cmdp->cmd = &cmds[cmd_id];
@@ -58,11 +55,7 @@ ex_cinit(cmdp, cmd_id, naddr, lno1, lno2, force, ap)
  * PUBLIC: void ex_cadd(EXCMD *, ARGS *, char *, size_t);
  */
 void
-ex_cadd(cmdp, ap, arg, len)
-	EXCMD *cmdp;
-	ARGS *ap;
-	char *arg;
-	size_t len;
+ex_cadd(EXCMD *cmdp, ARGS *ap, char *arg, size_t len)
 {
 	cmdp->argv[cmdp->argc] = ap;
 	ap->bp = arg;
@@ -77,10 +70,7 @@ ex_cadd(cmdp, ap, arg, len)
  * PUBLIC: int ex_getline(SCR *, FILE *, size_t *);
  */
 int
-ex_getline(sp, fp, lenp)
-	SCR *sp;
-	FILE *fp;
-	size_t *lenp;
+ex_getline(SCR *sp, FILE *fp, size_t *lenp)
 {
 	EX_PRIVATE *exp;
 	size_t off;
@@ -120,9 +110,7 @@ ex_getline(sp, fp, lenp)
  * PUBLIC: int ex_ncheck(SCR *, int);
  */
 int
-ex_ncheck(sp, force)
-	SCR *sp;
-	int force;
+ex_ncheck(SCR *sp, int force)
 {
 	char **ap;
 
@@ -151,8 +139,7 @@ ex_ncheck(sp, force)
  * PUBLIC: int ex_init(SCR *);
  */
 int
-ex_init(sp)
-	SCR *sp;
+ex_init(SCR *sp)
 {
 	GS *gp;
 
@@ -177,10 +164,7 @@ ex_init(sp)
  * PUBLIC: void ex_emsg(SCR *, char *, exm_t);
  */
 void
-ex_emsg(sp, p, which)
-	SCR *sp;
-	char *p;
-	exm_t which;
+ex_emsg(SCR *sp, char *p, exm_t which)
 {
 	switch (which) {
 	case EXM_EMPTYBUF:

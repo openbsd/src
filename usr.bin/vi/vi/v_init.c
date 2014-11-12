@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_init.c,v 1.5 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: v_init.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -32,8 +32,7 @@
  * PUBLIC: int v_screen_copy(SCR *, SCR *);
  */
 int
-v_screen_copy(orig, sp)
-	SCR *orig, *sp;
+v_screen_copy(SCR *orig, SCR *sp)
 {
 	VI_PRIVATE *ovip, *nvip;
 
@@ -76,8 +75,7 @@ v_screen_copy(orig, sp)
  * PUBLIC: int v_screen_end(SCR *);
  */
 int
-v_screen_end(sp)
-	SCR *sp;
+v_screen_end(SCR *sp)
 {
 	VI_PRIVATE *vip;
 
@@ -106,11 +104,7 @@ v_screen_end(sp)
  * PUBLIC: int v_optchange(SCR *, int, char *, u_long *);
  */
 int
-v_optchange(sp, offset, str, valp)
-	SCR *sp;
-	int offset;
-	char *str;
-	u_long *valp;
+v_optchange(SCR *sp, int offset, char *str, u_long *valp)
 {
 	switch (offset) {
 	case O_PARAGRAPHS:

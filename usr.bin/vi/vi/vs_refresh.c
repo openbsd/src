@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_refresh.c,v 1.18 2013/11/28 22:12:40 krw Exp $	*/
+/*	$OpenBSD: vs_refresh.c,v 1.19 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,9 +38,7 @@ static int	vs_paint(SCR *, u_int);
  * PUBLIC: int vs_repaint(SCR *, EVENT *);
  */
 int
-vs_repaint(sp, evp)
-	SCR *sp;
-	EVENT *evp;
+vs_repaint(SCR *sp, EVENT *evp)
 {
 	SMAP *smp;
 
@@ -60,9 +58,7 @@ vs_repaint(sp, evp)
  * PUBLIC: int vs_refresh(SCR *, int);
  */
 int
-vs_refresh(sp, forcepaint)
-	SCR *sp;
-	int forcepaint;
+vs_refresh(SCR *sp, int forcepaint)
 {
 	GS *gp;
 	SCR *tsp;
@@ -158,9 +154,7 @@ vs_refresh(sp, forcepaint)
  *	what you're doing.  It's subtle and quick to anger.
  */
 static int
-vs_paint(sp, flags)
-	SCR *sp;
-	u_int flags;
+vs_paint(SCR *sp, u_int flags)
 {
 	GS *gp;
 	SMAP *smp, tmp;
@@ -773,8 +767,7 @@ number:	if (O_ISSET(sp, O_NUMBER) &&
  *	Update the mode line.
  */
 static void
-vs_modeline(sp)
-	SCR *sp;
+vs_modeline(SCR *sp)
 {
 	static char * const modes[] = {
 		"215|Append",			/* SM_APPEND */

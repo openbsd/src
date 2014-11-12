@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_paragraph.c,v 1.6 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: v_paragraph.c,v 1.7 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -62,9 +62,7 @@
  * PUBLIC: int v_paragraphf(SCR *, VICMD *);
  */
 int
-v_paragraphf(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_paragraphf(SCR *sp, VICMD *vp)
 {
 	enum { P_INTEXT, P_INBLANK } pstate;
 	size_t lastlen, len;
@@ -202,9 +200,7 @@ eof:	if (vp->m_start.lno == lno || vp->m_start.lno == lno - 1) {
  * PUBLIC: int v_paragraphb(SCR *, VICMD *);
  */
 int
-v_paragraphb(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_paragraphb(SCR *sp, VICMD *vp)
 {
 	enum { P_INTEXT, P_INBLANK } pstate;
 	size_t len;
@@ -311,9 +307,7 @@ found:	vp->m_stop.lno = lno;
  * PUBLIC: int v_buildps(SCR *, char *, char *);
  */
 int
-v_buildps(sp, p_p, s_p)
-	SCR *sp;
-	char *p_p, *s_p;
+v_buildps(SCR *sp, char *p_p, char *s_p)
 {
 	VI_PRIVATE *vip;
 	size_t p_len, s_len;

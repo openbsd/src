@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.21 2014/11/10 21:34:13 tedu Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.22 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -141,8 +141,7 @@ main(int argc, char *argv[])
  *	Create and partially initialize the GS structure.
  */
 static GS *
-gs_init(name)
-	char *name;
+gs_init(char *name)
 {
 	GS *gp;
 	char *p;
@@ -166,8 +165,7 @@ gs_init(name)
  *	Create and partially initialize the CL structure.
  */
 static CL_PRIVATE *
-cl_init(gp)
-	GS *gp;
+cl_init(GS *gp)
 {
 	CL_PRIVATE *clp;
 	int fd;
@@ -215,8 +213,7 @@ tcfail:			perr(gp->progname, "tcgetattr");
  *	Initialize terminal information.
  */
 static void
-term_init(name, ttype)
-	char *name, *ttype;
+term_init(char *name, char *ttype)
 {
 	int err;
 
@@ -237,8 +234,7 @@ term_init(name, ttype)
 #define	GLOBAL_CLP \
 	CL_PRIVATE *clp = GCLP(__global_list);
 static void
-h_hup(signo)
-	int signo;
+h_hup(int signo)
 {
 	GLOBAL_CLP;
 
@@ -247,8 +243,7 @@ h_hup(signo)
 }
 
 static void
-h_int(signo)
-	int signo;
+h_int(int signo)
 {
 	GLOBAL_CLP;
 
@@ -256,8 +251,7 @@ h_int(signo)
 }
 
 static void
-h_term(signo)
-	int signo;
+h_term(int signo)
 {
 	GLOBAL_CLP;
 
@@ -266,8 +260,7 @@ h_term(signo)
 }
 
 static void
-h_winch(signo)
-	int signo;
+h_winch(int signo)
 {
 	GLOBAL_CLP;
 
@@ -282,9 +275,7 @@ h_winch(signo)
  * PUBLIC: int sig_init(GS *, SCR *);
  */
 int
-sig_init(gp, sp)
-	GS *gp;
-	SCR *sp;
+sig_init(GS *gp, SCR *sp)
 {
 	CL_PRIVATE *clp;
 
@@ -326,10 +317,7 @@ sig_init(gp, sp)
  *	Set a signal handler.
  */
 static int
-setsig(signo, oactp, handler)
-	int signo;
-	struct sigaction *oactp;
-	void (*handler)(int);
+setsig(int signo, struct sigaction *oactp, void (*handler)(int))
 {
 	struct sigaction act;
 
@@ -360,8 +348,7 @@ setsig(signo, oactp, handler)
  *	End signal setup.
  */
 static void
-sig_end(gp)
-	GS *gp;
+sig_end(GS *gp)
 {
 	CL_PRIVATE *clp;
 
@@ -379,8 +366,7 @@ sig_end(gp)
  *	Initialize the standard curses functions.
  */
 static void
-cl_func_std(gp)
-	GS *gp;
+cl_func_std(GS *gp)
 {
 	gp->scr_addstr = cl_addstr;
 	gp->scr_attr = cl_attr;
@@ -410,8 +396,7 @@ cl_func_std(gp)
  *	Print system error.
  */
 static void
-perr(name, msg)
-	char *name, *msg;
+perr(char *name, char *msg)
 {
 	(void)fprintf(stderr, "%s:", name);
 	if (msg != NULL)

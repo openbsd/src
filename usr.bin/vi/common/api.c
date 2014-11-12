@@ -1,4 +1,4 @@
-/*	$OpenBSD: api.c,v 1.15 2013/11/28 22:12:40 krw Exp $	*/
+/*	$OpenBSD: api.c,v 1.16 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -37,9 +37,7 @@ extern GS *__global_list;			/* XXX */
  * PUBLIC: SCR *api_fscreen(int, char *);
  */
 SCR *
-api_fscreen(id, name)
-	int id;
-	char *name;
+api_fscreen(int id, char *name)
 {
 	GS *gp;
 	SCR *tsp;
@@ -71,11 +69,7 @@ api_fscreen(id, name)
  * PUBLIC: int api_aline(SCR *, recno_t, char *, size_t);
  */
 int
-api_aline(sp, lno, line, len)
-	SCR *sp;
-	recno_t lno;
-	char *line;
-	size_t len;
+api_aline(SCR *sp, recno_t lno, char *line, size_t len)
 {
 	return (db_append(sp, 1, lno, line, len));
 }
@@ -87,9 +81,7 @@ api_aline(sp, lno, line, len)
  * PUBLIC: int api_dline(SCR *, recno_t);
  */
 int
-api_dline(sp, lno)
-	SCR *sp;
-	recno_t lno;
+api_dline(SCR *sp, recno_t lno)
 {
 	return (db_delete(sp, lno));
 }
@@ -101,11 +93,7 @@ api_dline(sp, lno)
  * PUBLIC: int api_gline(SCR *, recno_t, char **, size_t *);
  */
 int
-api_gline(sp, lno, linepp, lenp)
-	SCR *sp;
-	recno_t lno;
-	char **linepp;
-	size_t *lenp;
+api_gline(SCR *sp, recno_t lno, char **linepp, size_t *lenp)
 {
 	int isempty;
 
@@ -124,11 +112,7 @@ api_gline(sp, lno, linepp, lenp)
  * PUBLIC: int api_iline(SCR *, recno_t, char *, size_t);
  */
 int
-api_iline(sp, lno, line, len)
-	SCR *sp;
-	recno_t lno;
-	char *line;
-	size_t len;
+api_iline(SCR *sp, recno_t lno, char *line, size_t len)
 {
 	return (db_insert(sp, lno, line, len));
 }
@@ -140,9 +124,7 @@ api_iline(sp, lno, line, len)
  * PUBLIC: int api_lline(SCR *, recno_t *);
  */
 int
-api_lline(sp, lnop)
-	SCR *sp;
-	recno_t *lnop;
+api_lline(SCR *sp, recno_t *lnop)
 {
 	return (db_last(sp, lnop));
 }
@@ -154,11 +136,7 @@ api_lline(sp, lnop)
  * PUBLIC: int api_sline(SCR *, recno_t, char *, size_t);
  */
 int
-api_sline(sp, lno, line, len)
-	SCR *sp;
-	recno_t lno;
-	char *line;
-	size_t len;
+api_sline(SCR *sp, recno_t lno, char *line, size_t len)
 {
 	return (db_set(sp, lno, line, len));
 }
@@ -170,10 +148,7 @@ api_sline(sp, lno, line, len)
  * PUBLIC: int api_getmark(SCR *, int, MARK *);
  */
 int
-api_getmark(sp, markname, mp)
-	SCR *sp;
-	int markname;
-	MARK *mp;
+api_getmark(SCR *sp, int markname, MARK *mp)
 {
 	return (mark_get(sp, (ARG_CHAR_T)markname, mp, M_ERR));
 }
@@ -185,10 +160,7 @@ api_getmark(sp, markname, mp)
  * PUBLIC: int api_setmark(SCR *, int, MARK *);
  */
 int
-api_setmark(sp, markname, mp)
-	SCR *sp;
-	int markname;
-	MARK *mp;
+api_setmark(SCR *sp, int markname, MARK *mp)
 {
 	return (mark_set(sp, (ARG_CHAR_T)markname, mp, 1));
 }
@@ -201,10 +173,7 @@ api_setmark(sp, markname, mp)
  * PUBLIC: int api_nextmark(SCR *, int, char *);
  */
 int
-api_nextmark(sp, next, namep)
-	SCR *sp;
-	int next;
-	char *namep;
+api_nextmark(SCR *sp, int next, char *namep)
 {
 	LMARK *mp;
 
@@ -228,9 +197,7 @@ api_nextmark(sp, next, namep)
  * PUBLIC: int api_getcursor(SCR *, MARK *);
  */
 int
-api_getcursor(sp, mp)
-	SCR *sp;
-	MARK *mp;
+api_getcursor(SCR *sp, MARK *mp)
 {
 	mp->lno = sp->lno;
 	mp->cno = sp->cno;
@@ -244,9 +211,7 @@ api_getcursor(sp, mp)
  * PUBLIC: int api_setcursor(SCR *, MARK *);
  */
 int
-api_setcursor(sp, mp)
-	SCR *sp;
-	MARK *mp;
+api_setcursor(SCR *sp, MARK *mp)
 {
 	size_t len;
 
@@ -270,9 +235,7 @@ api_setcursor(sp, mp)
  * PUBLIC: void api_emessage(SCR *, char *);
  */
 void
-api_emessage(sp, text)
-	SCR *sp;
-	char *text;
+api_emessage(SCR *sp, char *text)
 {
 	msgq(sp, M_ERR, "%s", text);
 }
@@ -284,9 +247,7 @@ api_emessage(sp, text)
  * PUBLIC: void api_imessage(SCR *, char *);
  */
 void
-api_imessage(sp, text)
-	SCR *sp;
-	char *text;
+api_imessage(SCR *sp, char *text)
 {
 	msgq(sp, M_INFO, "%s", text);
 }
@@ -299,11 +260,7 @@ api_imessage(sp, text)
  * PUBLIC: int api_edit(SCR *, char *, SCR **, int);
  */
 int
-api_edit(sp, file, spp, newscreen)
-	SCR *sp;
-	char *file;
-	SCR **spp;
-	int newscreen;
+api_edit(SCR *sp, char *file, SCR **spp, int newscreen)
 {
 	ARGS *ap[2], a;
 	EXCMD cmd;
@@ -328,8 +285,7 @@ api_edit(sp, file, spp, newscreen)
  * PUBLIC: int api_escreen(SCR *);
  */
 int
-api_escreen(sp)
-	SCR *sp;
+api_escreen(SCR *sp)
 {
 	EXCMD cmd;
 
@@ -349,8 +305,7 @@ api_escreen(sp)
  * PUBLIC: int api_swscreen(SCR *, SCR *);
  */
 int
-api_swscreen(sp, new)
-      SCR *sp, *new;
+api_swscreen(SCR *sp, SCR *new)
 {
 	/*
 	 * XXX
@@ -370,10 +325,7 @@ api_swscreen(sp, new)
  * PUBLIC: int api_map(SCR *, char *, char *, size_t);
  */
 int
-api_map(sp, name, map, len)
-	SCR *sp;
-	char *name, *map;
-	size_t len;
+api_map(SCR *sp, char *name, char *map, size_t len)
 {
 	ARGS *ap[3], a, b;
 	EXCMD cmd;
@@ -391,9 +343,7 @@ api_map(sp, name, map, len)
  * PUBLIC: int api_unmap(SCR *, char *);
  */
 int 
-api_unmap(sp, name)
-	SCR *sp;
-	char *name;
+api_unmap(SCR *sp, char *name)
 {
 	ARGS *ap[2], a;
 	EXCMD cmd;
@@ -412,10 +362,7 @@ api_unmap(sp, name)
  * PUBLIC: int api_opts_get(SCR *, char *, char **, int *);
  */
 int
-api_opts_get(sp, name, value, boolvalue)
-	SCR *sp;
-	char *name, **value;
-	int *boolvalue;
+api_opts_get(SCR *sp, char *name, char **value, int *boolvalue)
 {
 	OPTLIST const *op;
 	int offset;
@@ -466,11 +413,8 @@ api_opts_get(sp, name, value, boolvalue)
  * PUBLIC: int api_opts_set(SCR *, char *, char *, u_long, int);
  */
 int
-api_opts_set(sp, name, str_value, num_value, bool_value)
-	SCR *sp;
-	char *name, *str_value;
-	u_long num_value;
-	int bool_value;
+api_opts_set(SCR *sp, char *name, char *str_value, u_long num_value,
+    int bool_value)
 {
 	ARGS *ap[2], a, b;
 	OPTLIST const *op;
@@ -523,9 +467,7 @@ api_opts_set(sp, name, str_value, num_value, bool_value)
  * PUBLIC: int api_run_str(SCR *, char *);
  */
 int     
-api_run_str(sp, cmd)
-	SCR *sp;
-	char *cmd;
+api_run_str(SCR *sp, char *cmd)
 {
 	return (ex_run_str(sp, NULL, cmd, strlen(cmd), 0, 0));
 }

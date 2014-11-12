@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex.c,v 1.18 2013/12/01 13:42:42 krw Exp $	*/
+/*	$OpenBSD: ex.c,v 1.19 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -46,8 +46,7 @@ static void	ex_unknown(SCR *, char *, size_t);
  * PUBLIC: int ex(SCR **);
  */
 int
-ex(spp)
-	SCR **spp;
+ex(SCR **spp)
 {
 	GS *gp;
 	MSGS *mp;
@@ -188,8 +187,7 @@ ex(spp)
  * PUBLIC: int ex_cmd(SCR *);
  */
 int
-ex_cmd(sp)
-	SCR *sp;
+ex_cmd(SCR *sp)
 {
 	enum nresult nret;
 	EX_PRIVATE *exp;
@@ -1605,10 +1603,7 @@ rsuccess:	tmp = 0;
  * PUBLIC: int ex_range(SCR *, EXCMD *, int *);
  */
 int
-ex_range(sp, ecp, errp)
-	SCR *sp;
-	EXCMD *ecp;
-	int *errp;
+ex_range(SCR *sp, EXCMD *ecp, int *errp)
 {
 	enum { ADDR_FOUND, ADDR_NEED, ADDR_NONE } addr;
 	MARK m;
@@ -1803,11 +1798,7 @@ ret:	if (F_ISSET(ecp, E_VISEARCH))
  * it's fairly close.
  */
 static int
-ex_line(sp, ecp, mp, isaddrp, errp)
-	SCR *sp;
-	EXCMD *ecp;
-	MARK *mp;
-	int *isaddrp, *errp;
+ex_line(SCR *sp, EXCMD *ecp, MARK *mp, int *isaddrp, int *errp)
 {
 	enum nresult nret;
 	long total, val;
@@ -2048,8 +2039,7 @@ search:		mp->lno = sp->lno;
  *	Load up the next command, which may be an @ buffer or global command.
  */
 static int
-ex_load(sp)
-	SCR *sp;
+ex_load(SCR *sp)
 {
 	GS *gp;
 	EXCMD *ecp;
@@ -2144,8 +2134,7 @@ ex_load(sp)
  *	Discard any pending ex commands.
  */
 static int
-ex_discard(sp)
-	SCR *sp;
+ex_discard(SCR *sp)
 {
 	GS *gp;
 	EXCMD *ecp;
@@ -2175,10 +2164,7 @@ ex_discard(sp)
  *	Display an unknown command name.
  */
 static void
-ex_unknown(sp, cmd, len)
-	SCR *sp;
-	char *cmd;
-	size_t len;
+ex_unknown(SCR *sp, char *cmd, size_t len)
 {
 	size_t blen;
 	char *bp;
@@ -2202,9 +2188,7 @@ alloc_err:
  * PUBLIC: int ex_is_abbrev(char *, size_t);
  */
 int
-ex_is_abbrev(name, len)
-	char *name;
-	size_t len;
+ex_is_abbrev(char *name, size_t len)
 {
 	EXCMDLIST const *cp;
 
@@ -2221,9 +2205,7 @@ ex_is_abbrev(name, len)
  * PUBLIC: int ex_is_unmap(char *, size_t);
  */
 int
-ex_is_unmap(name, len)
-	char *name;
-	size_t len;
+ex_is_unmap(char *name, size_t len)
 {
 	EXCMDLIST const *cp;
 
@@ -2243,9 +2225,7 @@ ex_is_unmap(name, len)
  *	Search for a command name.
  */
 static EXCMDLIST const *
-ex_comm_search(name, len)
-	char *name;
-	size_t len;
+ex_comm_search(char *name, size_t len)
 {
 	EXCMDLIST const *cp;
 
@@ -2268,11 +2248,7 @@ ex_comm_search(name, len)
  * PUBLIC:(SCR *, EXCMDLIST const *, enum badaddr, enum nresult);
  */
 void
-ex_badaddr(sp, cp, ba, nret)
-	SCR *sp;
-	EXCMDLIST const *cp;
-	enum badaddr ba;
-	enum nresult nret;
+ex_badaddr(SCR *sp, EXCMDLIST const *cp, enum badaddr ba, enum nresult nret)
 {
 	recno_t lno;
 
@@ -2334,9 +2310,7 @@ ex_badaddr(sp, cp, ba, nret)
  *	Log ex commands.
  */
 static void
-ex_comlog(sp, ecp)
-	SCR *sp;
-	EXCMD *ecp;
+ex_comlog(SCR *sp, EXCMD *ecp)
 {
 	TRACE(sp, "ecmd: %s", ecp->cmd->name);
 	if (ecp->addrcnt > 0) {

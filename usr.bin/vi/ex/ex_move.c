@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_move.c,v 1.9 2013/11/25 23:27:11 krw Exp $	*/
+/*	$OpenBSD: ex_move.c,v 1.10 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -29,9 +29,7 @@
  * PUBLIC: int ex_copy(SCR *, EXCMD *);
  */
 int
-ex_copy(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_copy(SCR *sp, EXCMD *cmdp)
 {
 	CB cb;
 	MARK fm1, fm2, m, tm;
@@ -84,9 +82,7 @@ err:	text_lfree(&cb.textq);
  * PUBLIC: int ex_move(SCR *, EXCMD *);
  */
 int
-ex_move(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_move(SCR *sp, EXCMD *cmdp)
 {
 	LMARK *lmp;
 	MARK fm1, fm2;

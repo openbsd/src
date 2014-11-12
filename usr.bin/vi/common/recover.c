@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.16 2014/11/10 21:31:42 tedu Exp $	*/
+/*	$OpenBSD: recover.c,v 1.17 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -120,10 +120,7 @@ static int	 rcv_mktemp(SCR *, char *, char *, int);
  * PUBLIC: int rcv_tmp(SCR *, EXF *, char *);
  */
 int
-rcv_tmp(sp, ep, name)
-	SCR *sp;
-	EXF *ep;
-	char *name;
+rcv_tmp(SCR *sp, EXF *ep, char *name)
 {
 	struct stat sb;
 	int fd;
@@ -184,8 +181,7 @@ err:		msgq(sp, M_ERR,
  * PUBLIC: int rcv_init(SCR *);
  */
 int
-rcv_init(sp)
-	SCR *sp;
+rcv_init(SCR *sp)
 {
 	EXF *ep;
 	recno_t lno;
@@ -247,9 +243,7 @@ err:	msgq(sp, M_ERR,
  * PUBLIC: int rcv_sync(SCR *, u_int);
  */
 int
-rcv_sync(sp, flags)
-	SCR *sp;
-	u_int flags;
+rcv_sync(SCR *sp, u_int flags)
 {
 	EXF *ep;
 	int fd, rval;
@@ -325,10 +319,7 @@ err:		rval = 1;
  *	Build the file to mail to the user.
  */
 static int
-rcv_mailfile(sp, issync, cp_path)
-	SCR *sp;
-	int issync;
-	char *cp_path;
+rcv_mailfile(SCR *sp, int issync, char *cp_path)
 {
 	EXF *ep;
 	GS *gp;
@@ -478,8 +469,7 @@ err:	if (!issync)
  * PUBLIC: int rcv_list(SCR *);
  */
 int
-rcv_list(sp)
-	SCR *sp;
+rcv_list(SCR *sp)
 {
 	struct dirent *dp;
 	struct stat sb;
@@ -581,9 +571,7 @@ next:		(void)fclose(fp);
  * PUBLIC: int rcv_read(SCR *, FREF *);
  */
 int
-rcv_read(sp, frp)
-	SCR *sp;
-	FREF *frp;
+rcv_read(SCR *sp, FREF *frp)
 {
 	struct dirent *dp;
 	struct stat sb;
@@ -767,10 +755,7 @@ next:			(void)close(fd);
  *	Copy a recovery file.
  */
 static int
-rcv_copy(sp, wfd, fname)
-	SCR *sp;
-	int wfd;
-	char *fname;
+rcv_copy(SCR *sp, int wfd, char *fname)
 {
 	int nr, nw, off, rfd;
 	char buf[8 * 1024];
@@ -793,10 +778,7 @@ err:	msgq_str(sp, M_SYSERR, fname, "%s");
  *	Fgets(3) for a file descriptor.
  */
 static char *
-rcv_gets(buf, len, fd)
-	char *buf;
-	size_t len;
-	int fd;
+rcv_gets(char *buf, size_t len, int fd)
 {
 	int nr;
 	char *p;
@@ -815,10 +797,7 @@ rcv_gets(buf, len, fd)
  *	Paranoid make temporary file routine.
  */
 static int
-rcv_mktemp(sp, path, dname, perms)
-	SCR *sp;
-	char *path, *dname;
-	int perms;
+rcv_mktemp(SCR *sp, char *path, char *dname, int perms)
 {
 	int fd;
 
@@ -847,9 +826,7 @@ rcv_mktemp(sp, path, dname, perms)
  *	Send email.
  */
 static void
-rcv_email(sp, fname)
-	SCR *sp;
-	char *fname;
+rcv_email(SCR *sp, char *fname)
 {
 	struct stat sb;
 	char buf[MAXPATHLEN * 2 + 20];

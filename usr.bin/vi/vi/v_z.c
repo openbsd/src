@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_z.c,v 1.5 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: v_z.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -29,9 +29,7 @@
  * PUBLIC: int v_z(SCR *, VICMD *);
  */
 int
-v_z(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_z(SCR *sp, VICMD *vp)
 {
 	recno_t lno;
 	u_int value;
@@ -134,9 +132,7 @@ v_z(sp, vp)
  * PUBLIC: int vs_crel(SCR *, long);
  */
 int
-vs_crel(sp, count)
-	SCR *sp;
-	long count;
+vs_crel(SCR *sp, long count)
 {
 	sp->t_minrows = sp->t_rows = count;
 	if (sp->t_rows > sp->rows - 1)

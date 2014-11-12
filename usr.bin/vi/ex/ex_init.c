@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_init.c,v 1.11 2013/12/01 16:47:59 krw Exp $	*/
+/*	$OpenBSD: ex_init.c,v 1.12 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -41,8 +41,7 @@ static int ex_run_file(SCR *, int, char *);
  * PUBLIC: int ex_screen_copy(SCR *, SCR *);
  */
 int
-ex_screen_copy(orig, sp)
-	SCR *orig, *sp;
+ex_screen_copy(SCR *orig, SCR *sp)
 {
 	EX_PRIVATE *oexp, *nexp;
 
@@ -77,8 +76,7 @@ ex_screen_copy(orig, sp)
  * PUBLIC: int ex_screen_end(SCR *);
  */
 int
-ex_screen_end(sp)
-	SCR *sp;
+ex_screen_end(SCR *sp)
 {
 	EX_PRIVATE *exp;
 	int rval;
@@ -118,11 +116,7 @@ ex_screen_end(sp)
  * PUBLIC: int ex_optchange(SCR *, int, char *, u_long *);
  */
 int
-ex_optchange(sp, offset, str, valp)
-	SCR *sp;
-	int offset;
-	char *str;
-	u_long *valp;
+ex_optchange(SCR *sp, int offset, char *str, u_long *valp)
 {
 	switch (offset) {
 	case O_TAGS:
@@ -139,8 +133,7 @@ ex_optchange(sp, offset, str, valp)
  * PUBLIC: int ex_exrc(SCR *);
  */
 int
-ex_exrc(sp)
-	SCR *sp;
+ex_exrc(SCR *sp)
 {
 	struct stat hsb, lsb;
 	char *p, path[MAXPATHLEN];
@@ -257,10 +250,7 @@ ex_exrc(sp)
  *	Set up a file of ex commands to run.
  */
 static int
-ex_run_file(sp, fd, name)
-	SCR *sp;
-	int fd;
-	char *name;
+ex_run_file(SCR *sp, int fd, char *name)
 {
 	ARGS *ap[2], a;
 	EXCMD cmd;
@@ -277,11 +267,8 @@ ex_run_file(sp, fd, name)
  * PUBLIC: int ex_run_str(SCR *, char *, char *, size_t, int, int);
  */
 int
-ex_run_str(sp, name, str, len, ex_flags, nocopy)
-	SCR *sp;
-	char *name, *str;
-	size_t len;
-	int ex_flags, nocopy;
+ex_run_str(SCR *sp, char *name, char *str, size_t len, int ex_flags,
+    int nocopy)
 {
 	GS *gp;
 	EXCMD *ecp;
@@ -352,12 +339,8 @@ ex_run_str(sp, name, str, len, ex_flags, nocopy)
  * files.
  */
 static enum rc
-exrc_isok(sp, sbp, fdp, path, rootown, rootid)
-	SCR *sp;
-	struct stat *sbp;
-	int *fdp;
-	char *path;
-	int rootown, rootid;
+exrc_isok(SCR *sp, struct stat *sbp, int *fdp, char *path, int rootown,
+    int rootid)
 {
 	enum { ROOTOWN, OWN, WRITER } etype;
 	uid_t euid;

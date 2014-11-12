@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_shell.c,v 1.12 2014/11/10 21:31:42 tedu Exp $	*/
+/*	$OpenBSD: ex_shell.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,9 +34,7 @@
  * PUBLIC: int ex_shell(SCR *, EXCMD *);
  */
 int
-ex_shell(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_shell(SCR *sp, EXCMD *cmdp)
 {
 	int rval;
 	char buf[MAXPATHLEN];
@@ -77,12 +75,8 @@ ex_shell(sp, cmdp)
  * PUBLIC: int ex_exec_proc(SCR *, EXCMD *, char *, const char *, int);
  */
 int
-ex_exec_proc(sp, cmdp, cmd, msg, need_newline)
-	SCR *sp;
-	EXCMD *cmdp;
-	char *cmd;
-	const char *msg;
-	int need_newline;
+ex_exec_proc(SCR *sp, EXCMD *cmdp, char *cmd, const char *msg,
+    int need_newline)
 {
 	GS *gp;
 	const char *name;
@@ -145,11 +139,7 @@ ex_exec_proc(sp, cmdp, cmd, msg, need_newline)
  * PUBLIC: int proc_wait(SCR *, pid_t, const char *, int, int);
  */
 int
-proc_wait(sp, pid, cmd, silent, okpipe)
-	SCR *sp;
-	pid_t pid;
-	const char *cmd;
-	int silent, okpipe;
+proc_wait(SCR *sp, pid_t pid, const char *cmd, int silent, int okpipe)
 {
 	size_t len;
 	int nf, pstat;

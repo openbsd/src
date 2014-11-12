@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_relative.c,v 1.8 2009/10/27 23:59:49 deraadt Exp $	*/
+/*	$OpenBSD: vs_relative.c,v 1.9 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -30,9 +30,7 @@
  * PUBLIC: int vs_column(SCR *, size_t *);
  */
 int
-vs_column(sp, colp)
-	SCR *sp;
-	size_t *colp;
+vs_column(SCR *sp, size_t *colp)
 {
 	VI_PRIVATE *vip;
 
@@ -53,10 +51,7 @@ vs_column(sp, colp)
  * PUBLIC: size_t vs_screens(SCR *, recno_t, size_t *);
  */
 size_t
-vs_screens(sp, lno, cnop)
-	SCR *sp;
-	recno_t lno;
-	size_t *cnop;
+vs_screens(SCR *sp, recno_t lno, size_t *cnop)
 {
 	size_t cols, screens;
 
@@ -99,11 +94,7 @@ vs_screens(sp, lno, cnop)
  * PUBLIC: size_t vs_columns(SCR *, char *, recno_t, size_t *, size_t *);
  */
 size_t
-vs_columns(sp, lp, lno, cnop, diffp)
-	SCR *sp;
-	char *lp;
-	recno_t lno;
-	size_t *cnop, *diffp;
+vs_columns(SCR *sp, char *lp, recno_t lno, size_t *cnop, size_t *diffp)
 {
 	size_t chlen, cno, curoff, last, len, scno;
 	int ch, leftright, listset;
@@ -205,10 +196,7 @@ done:		if (diffp != NULL)		/* XXX */
  * PUBLIC: size_t vs_rcm(SCR *, recno_t, int);
  */
 size_t
-vs_rcm(sp, lno, islast)
-	SCR *sp;
-	recno_t lno;
-	int islast;
+vs_rcm(SCR *sp, recno_t lno, int islast)
 {
 	size_t len;
 
@@ -234,10 +222,7 @@ vs_rcm(sp, lno, islast)
  * PUBLIC: size_t vs_colpos(SCR *, recno_t, size_t);
  */
 size_t
-vs_colpos(sp, lno, cno)
-	SCR *sp;
-	recno_t lno;
-	size_t cno;
+vs_colpos(SCR *sp, recno_t lno, size_t cno)
 {
 	size_t chlen, curoff, len, llen, off, scno;
 	int ch, leftright, listset;

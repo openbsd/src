@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_write.c,v 1.11 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_write.c,v 1.12 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -37,9 +37,7 @@ static int exwr(SCR *, EXCMD *, enum which);
  * PUBLIC: int ex_wn(SCR *, EXCMD *);
  */
 int
-ex_wn(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_wn(SCR *sp, EXCMD *cmdp)
 {
 	if (exwr(sp, cmdp, WN))
 		return (1);
@@ -59,9 +57,7 @@ ex_wn(sp, cmdp)
  * PUBLIC: int ex_wq(SCR *, EXCMD *);
  */
 int
-ex_wq(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_wq(SCR *sp, EXCMD *cmdp)
 {
 	int force;
 
@@ -87,9 +83,7 @@ ex_wq(sp, cmdp)
  * PUBLIC: int ex_write(SCR *, EXCMD *);
  */
 int
-ex_write(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_write(SCR *sp, EXCMD *cmdp)
 {
 	return (exwr(sp, cmdp, WRITE));
 }
@@ -102,9 +96,7 @@ ex_write(sp, cmdp)
  * PUBLIC: int ex_xit(SCR *, EXCMD *);
  */
 int
-ex_xit(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_xit(SCR *sp, EXCMD *cmdp)
 {
 	int force;
 
@@ -129,10 +121,7 @@ ex_xit(sp, cmdp)
  *	The guts of the ex write commands.
  */
 static int
-exwr(sp, cmdp, cmd)
-	SCR *sp;
-	EXCMD *cmdp;
-	enum which cmd;
+exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
 {
 	MARK rm;
 	int flags;
@@ -275,13 +264,8 @@ exwr(sp, cmdp, cmd)
  * PUBLIC:    char *, FILE *, MARK *, MARK *, u_long *, u_long *, int);
  */
 int
-ex_writefp(sp, name, fp, fm, tm, nlno, nch, silent)
-	SCR *sp;
-	char *name;
-	FILE *fp;
-	MARK *fm, *tm;
-	u_long *nlno, *nch;
-	int silent;
+ex_writefp(SCR *sp, char *name, FILE *fp, MARK *fm, MARK *tm, u_long *nlno,
+    u_long *nch, int silent)
 {
 	struct stat sb;
 	GS *gp;

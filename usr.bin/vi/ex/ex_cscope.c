@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cscope.c,v 1.20 2013/12/01 19:26:37 krw Exp $	*/
+/*	$OpenBSD: ex_cscope.c,v 1.21 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -105,9 +105,7 @@ static int	 terminate(SCR *, CSC *, int);
  * PUBLIC: int ex_cscope(SCR *, EXCMD *);
  */
 int
-ex_cscope(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_cscope(SCR *sp, EXCMD *cmdp)
 {
 	CC const *ccp;
 	EX_PRIVATE *exp;
@@ -150,9 +148,7 @@ usage:		msgq(sp, M_ERR, "309|Use \"cscope help\" for help");
  *	Initialize the cscope package.
  */
 static int
-start_cscopes(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+start_cscopes(SCR *sp, EXCMD *cmdp)
 {
 	size_t blen, len;
 	char *bp, *cscopes, *p, *t;
@@ -188,10 +184,7 @@ start_cscopes(sp, cmdp)
  *	The cscope add command.
  */
 static int
-cscope_add(sp, cmdp, dname)
-	SCR *sp;
-	EXCMD *cmdp;
-	char *dname;
+cscope_add(SCR *sp, EXCMD *cmdp, char *dname)
 {
 	struct stat sb;
 	EX_PRIVATE *exp;
@@ -286,9 +279,7 @@ err:	free(csc);
  *	cscope database.
  */
 static int
-get_paths(sp, csc)
-	SCR *sp;
-	CSC *csc;
+get_paths(SCR *sp, CSC *csc)
 {
 	struct stat sb;
 	int fd, nentries;
@@ -361,10 +352,7 @@ alloc_err:
  *	Fork off the cscope process.
  */
 static int
-run_cscope(sp, csc, dbname)
-	SCR *sp;
-	CSC *csc;
-	char *dbname;
+run_cscope(SCR *sp, CSC *csc, char *dbname)
 {
 	int to_cs[2], from_cs[2];
 	char cmd[MAXPATHLEN * 2];
@@ -430,10 +418,7 @@ err:		if (to_cs[0] != -1)
  *	The cscope find command.
  */
 static int
-cscope_find(sp, cmdp, pattern)
-	SCR *sp;
-	EXCMD *cmdp;
-	char *pattern;
+cscope_find(SCR *sp, EXCMD *cmdp, char *pattern)
 {
 	CSC *csc, *csc_next;
 	EX_PRIVATE *exp;
@@ -578,10 +563,7 @@ alloc_err:
  *	Build a cscope command, creating and initializing the base TAGQ.
  */
 static TAGQ *
-create_cs_cmd(sp, pattern, searchp)
-	SCR *sp;
-	char *pattern;
-	size_t *searchp;
+create_cs_cmd(SCR *sp, char *pattern, size_t *searchp)
 {
 	CB *cbp;
 	TAGQ *tqp;
@@ -651,11 +633,7 @@ usage:		(void)csc_help(sp, "find");
  *	Parse the cscope output.
  */
 static int
-parse(sp, csc, tqp, matchesp)
-	SCR *sp;
-	CSC *csc;
-	TAGQ *tqp;
-	int *matchesp;
+parse(SCR *sp, CSC *csc, TAGQ *tqp, int *matchesp)
 {
 	TAG *tp;
 	recno_t slno;
@@ -771,12 +749,8 @@ io_err:	if (feof(csc->from_fp))
  *	Search for the right path to this file.
  */
 static void
-csc_file(sp, csc, name, dirp, dlenp, isolderp)
-	SCR *sp;
-	CSC *csc;
-	char *name, **dirp;
-	size_t *dlenp;
-	int *isolderp;
+csc_file(SCR *sp, CSC *csc, char *name, char **dirp, size_t *dlenp,
+    int *isolderp)
 {
 	struct stat sb;
 	char **pp, buf[MAXPATHLEN];
@@ -805,10 +779,7 @@ csc_file(sp, csc, name, dirp, dlenp, isolderp)
  *	The cscope help command.
  */
 static int
-cscope_help(sp, cmdp, subcmd)
-	SCR *sp;
-	EXCMD *cmdp;
-	char *subcmd;
+cscope_help(SCR *sp, EXCMD *cmdp, char *subcmd)
 {
 	return (csc_help(sp, subcmd));
 }
@@ -818,9 +789,7 @@ cscope_help(sp, cmdp, subcmd)
  *	Display help/usage messages.
  */
 static int
-csc_help(sp, cmd)
-	SCR *sp;
-	char *cmd;
+csc_help(SCR *sp, char *cmd)
 {
 	CC const *ccp;
 
@@ -848,10 +817,7 @@ csc_help(sp, cmd)
  *	The cscope kill command.
  */
 static int
-cscope_kill(sp, cmdp, cn)
-	SCR *sp;
-	EXCMD *cmdp;
-	char *cn;
+cscope_kill(SCR *sp, EXCMD *cmdp, char *cn)
 {
 	return (terminate(sp, NULL, atoi(cn)));
 }
@@ -861,10 +827,7 @@ cscope_kill(sp, cmdp, cn)
  *	Detach from a cscope process.
  */
 static int
-terminate(sp, csc, n)
-	SCR *sp;
-	CSC *csc;
-	int n;
+terminate(SCR *sp, CSC *csc, int n)
 {
 	EX_PRIVATE *exp;
 	int i, pstat;
@@ -917,10 +880,7 @@ badno:			msgq(sp, M_ERR, "312|%d: no such cscope session", n);
  *	The cscope reset command.
  */
 static int
-cscope_reset(sp, cmdp, notusedp)
-	SCR *sp;
-	EXCMD *cmdp;
-	char *notusedp;
+cscope_reset(SCR *sp, EXCMD *cmdp, char *notusedp)
 {
 	EX_PRIVATE *exp;
 
@@ -937,8 +897,7 @@ cscope_reset(sp, cmdp, notusedp)
  * PUBLIC: int cscope_display(SCR *);
  */
 int
-cscope_display(sp)
-	SCR *sp;
+cscope_display(SCR *sp)
 {
 	EX_PRIVATE *exp;
 	CSC *csc;
@@ -963,10 +922,7 @@ cscope_display(sp)
  * PUBLIC: int cscope_search(SCR *, TAGQ *, TAG *);
  */
 int
-cscope_search(sp, tqp, tp)
-	SCR *sp;
-	TAGQ *tqp;
-	TAG *tp;
+cscope_search(SCR *sp, TAGQ *tqp, TAG *tp)
 {
 	MARK m;
 
@@ -1015,8 +971,7 @@ cscope_search(sp, tqp, tp)
  *	Return a pointer to the command structure.
  */
 static CC const *
-lookup_ccmd(name)
-	char *name;
+lookup_ccmd(char *name)
 {
 	CC const *ccp;
 	size_t len;
@@ -1033,9 +988,7 @@ lookup_ccmd(name)
  *	Read a prompt from cscope.
  */
 static int
-read_prompt(sp, csc)
-	SCR *sp;
-	CSC *csc;
+read_prompt(SCR *sp, CSC *csc)
 {
 	int ch;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_display.c,v 1.8 2013/11/25 23:27:11 krw Exp $	*/
+/*	$OpenBSD: ex_display.c,v 1.9 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,9 +34,7 @@ static void	db(SCR *, CB *, CHAR_T *);
  * PUBLIC: int ex_display(SCR *, EXCMD *);
  */
 int
-ex_display(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_display(SCR *sp, EXCMD *cmdp)
 {
 	switch (cmdp->argv[0]->bp[0]) {
 	case 'b':
@@ -78,8 +76,7 @@ ex_display(sp, cmdp)
  *	Display buffers.
  */
 static int
-bdisplay(sp)
-	SCR *sp;
+bdisplay(SCR *sp)
 {
 	CB *cbp;
 
@@ -117,10 +114,7 @@ bdisplay(sp)
  *	Display a buffer.
  */
 static void
-db(sp, cbp, name)
-	SCR *sp;
-	CB *cbp;
-	CHAR_T *name;
+db(SCR *sp, CB *cbp, CHAR_T *name)
 {
 	CHAR_T *p;
 	TEXT *tp;

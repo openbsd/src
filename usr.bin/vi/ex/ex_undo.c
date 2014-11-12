@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_undo.c,v 1.5 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_undo.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -28,9 +28,7 @@
  * PUBLIC: int ex_undo(SCR *, EXCMD *);
  */
 int
-ex_undo(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_undo(SCR *sp, EXCMD *cmdp)
 {
 	EXF *ep;
 	MARK m;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.6 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: dump.c,v 1.7 2014/11/12 04:28:40 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -33,8 +33,7 @@
 #include <stdio.h>
 
 static void
-parse(fp)
-	FILE *fp;
+parse(FILE *fp)
 {
 	int ch, s1, s2, s3;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_msg.c,v 1.12 2013/11/28 22:12:40 krw Exp $	*/
+/*	$OpenBSD: vs_msg.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -54,10 +54,7 @@ static void	vs_wait(SCR *, int *, sw_t);
  * PUBLIC: void vs_busy(SCR *, const char *, busy_t);
  */
 void
-vs_busy(sp, msg, btype)
-	SCR *sp;
-	const char *msg;
-	busy_t btype;
+vs_busy(SCR *sp, const char *msg, busy_t btype)
 {
 	GS *gp;
 	VI_PRIVATE *vip;
@@ -144,8 +141,7 @@ vs_busy(sp, msg, btype)
  * PUBLIC: void vs_home(SCR *);
  */
 void
-vs_home(sp)
-	SCR *sp;
+vs_home(SCR *sp)
 {
 	(void)sp->gp->scr_move(sp, LASTLINE(sp), 0);
 	(void)sp->gp->scr_refresh(sp, 0);
@@ -158,9 +154,7 @@ vs_home(sp)
  * PUBLIC: void vs_update(SCR *, const char *, const char *);
  */
 void
-vs_update(sp, m1, m2)
-	SCR *sp;
-	const char *m1, *m2;
+vs_update(SCR *sp, const char *m1, const char *m2)
 {
 	GS *gp;
 	size_t len, mlen, oldx, oldy;
@@ -226,11 +220,7 @@ vs_update(sp, m1, m2)
  * PUBLIC: void vs_msg(SCR *, mtype_t, char *, size_t);
  */
 void
-vs_msg(sp, mtype, line, len)
-	SCR *sp;
-	mtype_t mtype;
-	char *line;
-	size_t len;
+vs_msg(SCR *sp, mtype_t mtype, char *line, size_t len)
 {
 	GS *gp;
 	VI_PRIVATE *vip;
@@ -395,11 +385,7 @@ ret:	(void)gp->scr_move(sp, oldy, oldx);
  *	Output the text to the screen.
  */
 static void
-vs_output(sp, mtype, line, llen)
-	SCR *sp;
-	mtype_t mtype;
-	const char *line;
-	int llen;
+vs_output(SCR *sp, mtype_t mtype, const char *line, int llen)
 {
 	CHAR_T *kp;
 	GS *gp;
@@ -524,9 +510,7 @@ vs_output(sp, mtype, line, llen)
  * PUBLIC: int vs_ex_resolve(SCR *, int *);
  */
 int
-vs_ex_resolve(sp, continuep)
-	SCR *sp;
-	int *continuep;
+vs_ex_resolve(SCR *sp, int *continuep)
 {
 	EVENT ev;
 	GS *gp;
@@ -650,9 +634,7 @@ vs_ex_resolve(sp, continuep)
  * PUBLIC: int vs_resolve(SCR *, SCR *, int);
  */
 int
-vs_resolve(sp, csp, forcewait)
-	SCR *sp, *csp;
-	int forcewait;
+vs_resolve(SCR *sp, SCR *csp, int forcewait)
 {
 	EVENT ev;
 	GS *gp;
@@ -759,10 +741,7 @@ vs_resolve(sp, csp, forcewait)
  *	Scroll the screen for output.
  */
 static void
-vs_scroll(sp, continuep, wtype)
-	SCR *sp;
-	int *continuep;
-	sw_t wtype;
+vs_scroll(SCR *sp, int *continuep, sw_t wtype)
 {
 	GS *gp;
 	VI_PRIVATE *vip;
@@ -795,10 +774,7 @@ vs_scroll(sp, continuep, wtype)
  *	Prompt the user to continue.
  */
 static void
-vs_wait(sp, continuep, wtype)
-	SCR *sp;
-	int *continuep;
-	sw_t wtype;
+vs_wait(SCR *sp, int *continuep, sw_t wtype)
 {
 	EVENT ev;
 	VI_PRIVATE *vip;
@@ -869,8 +845,7 @@ vs_wait(sp, continuep, wtype)
  *	Draw a dividing line between the screen and the output.
  */
 static void
-vs_divider(sp)
-	SCR *sp;
+vs_divider(SCR *sp)
 {
 	GS *gp;
 	size_t len;
@@ -889,11 +864,7 @@ vs_divider(sp)
  *	Save a message for later display.
  */
 static void
-vs_msgsave(sp, mt, p, len)
-	SCR *sp;
-	mtype_t mt;
-	char *p;
-	size_t len;
+vs_msgsave(SCR *sp, mtype_t mt, char *p, size_t len)
 {
 	GS *gp;
 	MSGS *mp_c, *mp_n;

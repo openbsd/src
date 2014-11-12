@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_line.c,v 1.13 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: vs_line.c,v 1.14 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -36,10 +36,7 @@
  * PUBLIC: int vs_line(SCR *, SMAP *, size_t *, size_t *);
  */
 int
-vs_line(sp, smp, yp, xp)
-	SCR *sp;
-	SMAP *smp;
-	size_t *xp, *yp;
+vs_line(SCR *sp, SMAP *smp, size_t *yp, size_t *xp)
 {
 	CHAR_T *kp;
 	GS *gp;
@@ -466,8 +463,7 @@ ret1:	(void)gp->scr_move(sp, oldy, oldx);
  * PUBLIC: int vs_number(SCR *);
  */
 int
-vs_number(sp)
-	SCR *sp;
+vs_number(SCR *sp)
 {
 	GS *gp;
 	SMAP *smp;

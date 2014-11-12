@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_search.c,v 1.12 2013/11/25 23:27:11 krw Exp $	*/
+/*	$OpenBSD: v_search.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -36,9 +36,7 @@ static int v_search(SCR *, VICMD *, char *, size_t, u_int, dir_t);
  * PUBLIC: int v_searchb(SCR *, VICMD *);
  */
 int
-v_searchb(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_searchb(SCR *sp, VICMD *vp)
 {
 	return (v_exaddr(sp, vp, BACKWARD));
 }
@@ -50,9 +48,7 @@ v_searchb(sp, vp)
  * PUBLIC: int v_searchf(SCR *, VICMD *);
  */
 int
-v_searchf(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_searchf(SCR *sp, VICMD *vp)
 {
 	return (v_exaddr(sp, vp, FORWARD));
 }
@@ -62,10 +58,7 @@ v_searchf(sp, vp)
  *	Do a vi search (which is really an ex address).
  */
 static int
-v_exaddr(sp, vp, dir)
-	SCR *sp;
-	VICMD *vp;
-	dir_t dir;
+v_exaddr(SCR *sp, VICMD *vp, dir_t dir)
 {
 	static EXCMDLIST fake = { "search" };
 	EXCMD *cmdp;
@@ -284,9 +277,7 @@ err2:	vp->m_final.lno = s_lno;
  * PUBLIC: int v_searchN(SCR *, VICMD *);
  */
 int
-v_searchN(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_searchN(SCR *sp, VICMD *vp)
 {
 	dir_t dir;
 
@@ -311,9 +302,7 @@ v_searchN(sp, vp)
  * PUBLIC: int v_searchn(SCR *, VICMD *);
  */
 int
-v_searchn(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_searchn(SCR *sp, VICMD *vp)
 {
 	return (v_search(sp, vp, NULL, 0, SEARCH_PARSE, sp->searchdir));
 }
@@ -325,9 +314,7 @@ v_searchn(sp, vp)
  * PUBLIC: int v_searchw(SCR *, VICMD *);
  */
 int
-v_searchw(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_searchw(SCR *sp, VICMD *vp)
 {
 	size_t blen, len;
 	int rval;
@@ -350,13 +337,7 @@ v_searchw(sp, vp)
  *	The search commands.
  */
 static int
-v_search(sp, vp, ptrn, plen, flags, dir)
-	SCR *sp;
-	VICMD *vp;
-	u_int flags;
-	char *ptrn;
-	size_t plen;
-	dir_t dir;
+v_search(SCR *sp, VICMD *vp, char *ptrn, size_t plen, u_int flags, dir_t dir)
 {
 	/* Display messages. */
 	LF_SET(SEARCH_MSG);
@@ -419,10 +400,7 @@ v_search(sp, vp, ptrn, plen, flags, dir)
  * PUBLIC: int v_correct(SCR *, VICMD *, int);
  */
 int
-v_correct(sp, vp, isdelta)
-	SCR *sp;
-	VICMD *vp;
-	int isdelta;
+v_correct(SCR *sp, VICMD *vp, int isdelta)
 {
 	MARK m;
 	size_t len;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_global.c,v 1.12 2013/12/01 13:42:42 krw Exp $	*/
+/*	$OpenBSD: ex_global.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -36,9 +36,7 @@ static int ex_g_setup(SCR *, EXCMD *, enum which);
  * PUBLIC: int ex_global(SCR *, EXCMD *);
  */
 int
-ex_global(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_global(SCR *sp, EXCMD *cmdp)
 {
 	return (ex_g_setup(sp,
 	    cmdp, FL_ISSET(cmdp->iflags, E_C_FORCE) ? V : GLOBAL));
@@ -51,9 +49,7 @@ ex_global(sp, cmdp)
  * PUBLIC: int ex_v(SCR *, EXCMD *);
  */
 int
-ex_v(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_v(SCR *sp, EXCMD *cmdp)
 {
 	return (ex_g_setup(sp, cmdp, V));
 }
@@ -63,10 +59,7 @@ ex_v(sp, cmdp)
  *	Ex global and v commands.
  */
 static int
-ex_g_setup(sp, cmdp, cmd)
-	SCR *sp;
-	EXCMD *cmdp;
-	enum which cmd;
+ex_g_setup(SCR *sp, EXCMD *cmdp, enum which cmd)
 {
 	CHAR_T *ptrn, *p, *t;
 	EXCMD *ecp;
@@ -255,10 +248,7 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
  * PUBLIC: int ex_g_insdel(SCR *, lnop_t, recno_t);
  */
 int
-ex_g_insdel(sp, op, lno)
-	SCR *sp;
-	lnop_t op;
-	recno_t lno;
+ex_g_insdel(SCR *sp, lnop_t op, recno_t lno)
 {
 	EXCMD *ecp;
 	RANGE *nrp, *rp;

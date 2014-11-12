@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_append.c,v 1.9 2013/11/25 23:27:11 krw Exp $	*/
+/*	$OpenBSD: ex_append.c,v 1.10 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,9 +34,7 @@ static int ex_aci(SCR *, EXCMD *, enum which);
  * PUBLIC: int ex_append(SCR *, EXCMD *);
  */
 int
-ex_append(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_append(SCR *sp, EXCMD *cmdp)
 {
 	return (ex_aci(sp, cmdp, APPEND));
 }
@@ -48,9 +46,7 @@ ex_append(sp, cmdp)
  * PUBLIC: int ex_change(SCR *, EXCMD *);
  */
 int
-ex_change(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_change(SCR *sp, EXCMD *cmdp)
 {
 	return (ex_aci(sp, cmdp, CHANGE));
 }
@@ -63,9 +59,7 @@ ex_change(sp, cmdp)
  * PUBLIC: int ex_insert(SCR *, EXCMD *);
  */
 int
-ex_insert(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_insert(SCR *sp, EXCMD *cmdp)
 {
 	return (ex_aci(sp, cmdp, INSERT));
 }
@@ -75,10 +69,7 @@ ex_insert(sp, cmdp)
  *	Append, change, insert in ex.
  */
 static int
-ex_aci(sp, cmdp, cmd)
-	SCR *sp;
-	EXCMD *cmdp;
-	enum which cmd;
+ex_aci(SCR *sp, EXCMD *cmdp, enum which cmd)
 {
 	CHAR_T *p, *t;
 	GS *gp;

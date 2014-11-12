@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_argv.c,v 1.14 2014/10/14 22:23:12 deraadt Exp $	*/
+/*	$OpenBSD: ex_argv.c,v 1.15 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -40,9 +40,7 @@ static int argv_sexp(SCR *, char **, size_t *, size_t *);
  * PUBLIC: int argv_init(SCR *, EXCMD *);
  */
 int
-argv_init(sp, excp)
-	SCR *sp;
-	EXCMD *excp;
+argv_init(SCR *sp, EXCMD *excp)
 {
 	EX_PRIVATE *exp;
 
@@ -62,11 +60,7 @@ argv_init(sp, excp)
  * PUBLIC: int argv_exp0(SCR *, EXCMD *, char *, size_t);
  */
 int
-argv_exp0(sp, excp, cmd, cmdlen)
-	SCR *sp;
-	EXCMD *excp;
-	char *cmd;
-	size_t cmdlen;
+argv_exp0(SCR *sp, EXCMD *excp, char *cmd, size_t cmdlen)
 {
 	EX_PRIVATE *exp;
 
@@ -89,12 +83,7 @@ argv_exp0(sp, excp, cmd, cmdlen)
  * PUBLIC: int argv_exp1(SCR *, EXCMD *, char *, size_t, int);
  */
 int
-argv_exp1(sp, excp, cmd, cmdlen, is_bang)
-	SCR *sp;
-	EXCMD *excp;
-	char *cmd;
-	size_t cmdlen;
-	int is_bang;
+argv_exp1(SCR *sp, EXCMD *excp, char *cmd, size_t cmdlen, int is_bang)
 {
 	size_t blen, len;
 	char *bp, *p, *t;
@@ -131,11 +120,7 @@ ret:	FREE_SPACE(sp, bp, blen);
  * PUBLIC: int argv_exp2(SCR *, EXCMD *, char *, size_t);
  */
 int
-argv_exp2(sp, excp, cmd, cmdlen)
-	SCR *sp;
-	EXCMD *excp;
-	char *cmd;
-	size_t cmdlen;
+argv_exp2(SCR *sp, EXCMD *excp, char *cmd, size_t cmdlen)
 {
 	size_t blen, len, n;
 	int rval;
@@ -243,11 +228,7 @@ err:	FREE_SPACE(sp, bp, blen);
  * PUBLIC: int argv_exp3(SCR *, EXCMD *, char *, size_t);
  */
 int
-argv_exp3(sp, excp, cmd, cmdlen)
-	SCR *sp;
-	EXCMD *excp;
-	char *cmd;
-	size_t cmdlen;
+argv_exp3(SCR *sp, EXCMD *excp, char *cmd, size_t cmdlen)
 {
 	EX_PRIVATE *exp;
 	size_t len;
@@ -312,12 +293,8 @@ argv_exp3(sp, excp, cmd, cmdlen)
  *	Do file name and bang command expansion.
  */
 static int
-argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
-	SCR *sp;
-	EXCMD *excp;
-	char *cmd, *p, **bpp;
-	size_t cmdlen, *lenp, *blenp;
-	int is_bang;
+argv_fexp(SCR *sp, EXCMD *excp, char *cmd, size_t cmdlen, char *p,
+    size_t *lenp, char **bpp, size_t *blenp, int is_bang)
 {
 	EX_PRIVATE *exp;
 	char *bp, *t;
@@ -412,9 +389,7 @@ ins_ch:			++len;
  *	Make more space for arguments.
  */
 static int
-argv_alloc(sp, len)
-	SCR *sp;
-	size_t len;
+argv_alloc(SCR *sp, size_t len)
 {
 	ARGS *ap;
 	EX_PRIVATE *exp;
@@ -479,8 +454,7 @@ mem:			msgq(sp, M_SYSERR, NULL);
  * PUBLIC: int argv_free(SCR *);
  */
 int
-argv_free(sp)
-	SCR *sp;
+argv_free(SCR *sp)
 {
 	EX_PRIVATE *exp;
 	int off;
@@ -508,10 +482,7 @@ argv_free(sp)
  *	buffer.
  */
 static int
-argv_lexp(sp, excp, path)
-	SCR *sp;
-	EXCMD *excp;
-	char *path;
+argv_lexp(SCR *sp, EXCMD *excp, char *path)
 {
 	struct dirent *dp;
 	DIR *dirp;
@@ -595,8 +566,7 @@ argv_lexp(sp, excp, path)
  *	Alphabetic comparison.
  */
 static int
-argv_comp(a, b)
-	const void *a, *b;
+argv_comp(const void *a, const void *b)
 {
 	return (strcmp((char *)(*(ARGS **)a)->bp, (char *)(*(ARGS **)b)->bp));
 }
@@ -607,10 +577,7 @@ argv_comp(a, b)
  *	a buffer.
  */
 static int
-argv_sexp(sp, bpp, blenp, lenp)
-	SCR *sp;
-	char **bpp;
-	size_t *blenp, *lenp;
+argv_sexp(SCR *sp, char **bpp, size_t *blenp, size_t *lenp)
 {
 	enum { SEXP_ERR, SEXP_EXPANSION_ERR, SEXP_OK } rval;
 	FILE *ifp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_visual.c,v 1.8 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_visual.c,v 1.9 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -32,9 +32,7 @@
  * PUBLIC: int ex_visual(SCR *, EXCMD *);
  */
 int
-ex_visual(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_visual(SCR *sp, EXCMD *cmdp)
 {
 	SCR *tsp;
 	size_t len;

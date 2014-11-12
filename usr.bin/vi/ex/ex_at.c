@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_at.c,v 1.10 2013/12/01 13:42:42 krw Exp $	*/
+/*	$OpenBSD: ex_at.c,v 1.11 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -32,9 +32,7 @@
  * PUBLIC: int ex_at(SCR *, EXCMD *);
  */
 int
-ex_at(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_at(SCR *sp, EXCMD *cmdp)
 {
 	CB *cbp;
 	CHAR_T name;

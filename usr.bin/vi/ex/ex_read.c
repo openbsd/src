@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_read.c,v 1.9 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_read.c,v 1.10 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,9 +38,7 @@
  * PUBLIC: int ex_read(SCR *, EXCMD *);
  */
 int
-ex_read(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_read(SCR *sp, EXCMD *cmdp)
 {
 	enum { R_ARG, R_EXPANDARG, R_FILTER } which;
 	struct stat sb;
@@ -294,13 +292,8 @@ ex_read(sp, cmdp)
  * PUBLIC: int ex_readfp(SCR *, char *, FILE *, MARK *, recno_t *, int);
  */
 int
-ex_readfp(sp, name, fp, fm, nlinesp, silent)
-	SCR *sp;
-	char *name;
-	FILE *fp;
-	MARK *fm;
-	recno_t *nlinesp;
-	int silent;
+ex_readfp(SCR *sp, char *name, FILE *fp, MARK *fm, recno_t *nlinesp,
+    int silent)
 {
 	EX_PRIVATE *exp;
 	GS *gp;

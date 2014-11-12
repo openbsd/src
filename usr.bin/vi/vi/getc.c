@@ -1,4 +1,4 @@
-/*	$OpenBSD: getc.c,v 1.8 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: getc.c,v 1.9 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -41,9 +41,7 @@
  * PUBLIC: int cs_init(SCR *, VCS *);
  */
 int
-cs_init(sp, csp)
-	SCR *sp;
-	VCS *csp;
+cs_init(SCR *sp, VCS *csp)
 {
 	int isempty;
 
@@ -70,9 +68,7 @@ cs_init(sp, csp)
  * PUBLIC: int cs_next(SCR *, VCS *);
  */
 int
-cs_next(sp, csp)
-	SCR *sp;
-	VCS *csp;
+cs_next(SCR *sp, VCS *csp)
 {
 	char *p;
 
@@ -122,9 +118,7 @@ cs_next(sp, csp)
  * PUBLIC: int cs_fspace(SCR *, VCS *);
  */
 int
-cs_fspace(sp, csp)
-	SCR *sp;
-	VCS *csp;
+cs_fspace(SCR *sp, VCS *csp)
 {
 	if (csp->cs_flags != 0 || !isblank(csp->cs_ch))
 		return (0);
@@ -144,9 +138,7 @@ cs_fspace(sp, csp)
  * PUBLIC: int cs_fblank(SCR *, VCS *);
  */
 int
-cs_fblank(sp, csp)
-	SCR *sp;
-	VCS *csp;
+cs_fblank(SCR *sp, VCS *csp)
 {
 	for (;;) {
 		if (cs_next(sp, csp))
@@ -166,9 +158,7 @@ cs_fblank(sp, csp)
  * PUBLIC: int cs_prev(SCR *, VCS *);
  */
 int
-cs_prev(sp, csp)
-	SCR *sp;
-	VCS *csp;
+cs_prev(SCR *sp, VCS *csp)
 {
 	switch (csp->cs_flags) {
 	case CS_EMP:				/* EMP; get previous line. */
@@ -218,9 +208,7 @@ cs_prev(sp, csp)
  * PUBLIC: int cs_bblank(SCR *, VCS *);
  */
 int
-cs_bblank(sp, csp)
-	SCR *sp;
-	VCS *csp;
+cs_bblank(SCR *sp, VCS *csp)
 {
 	for (;;) {
 		if (cs_prev(sp, csp))

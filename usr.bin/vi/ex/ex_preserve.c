@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_preserve.c,v 1.5 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_preserve.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -29,9 +29,7 @@
  * PUBLIC: int ex_preserve(SCR *, EXCMD *);
  */
 int
-ex_preserve(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_preserve(SCR *sp, EXCMD *cmdp)
 {
 	recno_t lno;
 
@@ -65,9 +63,7 @@ ex_preserve(sp, cmdp)
  * PUBLIC: int ex_recover(SCR *, EXCMD *);
  */
 int
-ex_recover(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_recover(SCR *sp, EXCMD *cmdp)
 {
 	ARGS *ap;
 	FREF *frp;

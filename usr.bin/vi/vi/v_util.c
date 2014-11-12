@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_util.c,v 1.6 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: v_util.c,v 1.7 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -33,9 +33,7 @@
  * PUBLIC: void v_eof(SCR *, MARK *);
  */
 void
-v_eof(sp, mp)
-	SCR *sp;
-	MARK *mp;
+v_eof(SCR *sp, MARK *mp)
 {
 	recno_t lno;
 
@@ -58,9 +56,7 @@ v_eof(sp, mp)
  * PUBLIC: void v_eol(SCR *, MARK *);
  */
 void
-v_eol(sp, mp)
-	SCR *sp;
-	MARK *mp;
+v_eol(SCR *sp, MARK *mp)
 {
 	size_t len;
 
@@ -83,8 +79,7 @@ v_eol(sp, mp)
  * PUBLIC: void v_nomove(SCR *);
  */
 void
-v_nomove(sp)
-	SCR *sp;
+v_nomove(SCR *sp)
 {
 	msgq(sp, M_BERR, "197|No cursor movement made");
 }
@@ -96,9 +91,7 @@ v_nomove(sp)
  * PUBLIC: void v_sof(SCR *, MARK *);
  */
 void
-v_sof(sp, mp)
-	SCR *sp;
-	MARK *mp;
+v_sof(SCR *sp, MARK *mp)
 {
 	if (mp == NULL || mp->lno == 1)
 		msgq(sp, M_BERR, "198|Already at the beginning of the file");
@@ -113,8 +106,7 @@ v_sof(sp, mp)
  * PUBLIC: void v_sol(SCR *);
  */
 void
-v_sol(sp)
-	SCR *sp;
+v_sol(SCR *sp)
 {
 	msgq(sp, M_BERR, "200|Already in the first column");
 }
@@ -126,9 +118,7 @@ v_sol(sp)
  * PUBLIC: int v_isempty(char *, size_t);
  */
 int
-v_isempty(p, len)
-	char *p;
-	size_t len;
+v_isempty(char *p, size_t len)
 {
 	for (; len--; ++p)
 		if (!isblank(*p))
@@ -143,10 +133,7 @@ v_isempty(p, len)
  * PUBLIC: void v_emsg(SCR *, char *, vim_t);
  */
 void
-v_emsg(sp, p, which)
-	SCR *sp;
-	char *p;
-	vim_t which;
+v_emsg(SCR *sp, char *p, vim_t which)
 {
 	switch (which) {
 	case VIM_COMBUF:

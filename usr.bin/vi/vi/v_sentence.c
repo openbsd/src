@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_sentence.c,v 1.6 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: v_sentence.c,v 1.7 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -50,9 +50,7 @@
  * PUBLIC: int v_sentencef(SCR *, VICMD *);
  */
 int
-v_sentencef(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_sentencef(SCR *sp, VICMD *vp)
 {
 	enum { BLANK, NONE, PERIOD } state;
 	VCS cs;
@@ -191,9 +189,7 @@ okret:	vp->m_stop.lno = cs.cs_lno;
  * PUBLIC: int v_sentenceb(SCR *, VICMD *);
  */
 int
-v_sentenceb(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_sentenceb(SCR *sp, VICMD *vp)
 {
 	VCS cs;
 	recno_t slno;

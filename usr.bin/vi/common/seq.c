@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.8 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: seq.c,v 1.9 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -32,12 +32,8 @@
  * PUBLIC:    size_t, CHAR_T *, size_t, CHAR_T *, size_t, seq_t, int);
  */
 int
-seq_set(sp, name, nlen, input, ilen, output, olen, stype, flags)
-	SCR *sp;
-	CHAR_T *name, *input, *output;
-	size_t nlen, ilen, olen;
-	seq_t stype;
-	int flags;
+seq_set(SCR *sp, CHAR_T *name, size_t nlen, CHAR_T *input, size_t ilen,
+    CHAR_T *output, size_t olen, seq_t stype, int flags)
 {
 	CHAR_T *p;
 	SEQ *lastqp, *qp;
@@ -132,11 +128,7 @@ mem1:		errno = sv_errno;
  * PUBLIC: int seq_delete(SCR *, CHAR_T *, size_t, seq_t);
  */
 int
-seq_delete(sp, input, ilen, stype)
-	SCR *sp;
-	CHAR_T *input;
-	size_t ilen;
-	seq_t stype;
+seq_delete(SCR *sp, CHAR_T *input, size_t ilen, seq_t stype)
 {
 	SEQ *qp;
 
@@ -152,8 +144,7 @@ seq_delete(sp, input, ilen, stype)
  * PUBLIC: int seq_mdel(SEQ *);
  */
 int
-seq_mdel(qp)
-	SEQ *qp;
+seq_mdel(SEQ *qp)
 {
 	LIST_REMOVE(qp, q);
 	if (qp->name != NULL)
@@ -174,14 +165,8 @@ seq_mdel(qp)
  * PUBLIC:(SCR *, SEQ **, EVENT *, CHAR_T *, size_t, seq_t, int *);
  */
 SEQ *
-seq_find(sp, lastqp, e_input, c_input, ilen, stype, ispartialp)
-	SCR *sp;
-	SEQ **lastqp;
-	EVENT *e_input;
-	CHAR_T *c_input;
-	size_t ilen;
-	seq_t stype;
-	int *ispartialp;
+seq_find(SCR *sp, SEQ **lastqp, EVENT *e_input, CHAR_T *c_input, size_t ilen,
+    seq_t stype, int *ispartialp)
 {
 	SEQ *lqp, *qp;
 	int diff;
@@ -259,8 +244,7 @@ seq_find(sp, lastqp, e_input, c_input, ilen, stype, ispartialp)
  * PUBLIC: void seq_close(GS *);
  */
 void
-seq_close(gp)
-	GS *gp;
+seq_close(GS *gp)
 {
 	SEQ *qp;
 
@@ -283,10 +267,7 @@ seq_close(gp)
  * PUBLIC: int seq_dump(SCR *, seq_t, int);
  */
 int
-seq_dump(sp, stype, isname)
-	SCR *sp;
-	seq_t stype;
-	int isname;
+seq_dump(SCR *sp, seq_t stype, int isname)
 {
 	CHAR_T *p;
 	GS *gp;
@@ -331,11 +312,7 @@ seq_dump(sp, stype, isname)
  * PUBLIC: int seq_save(SCR *, FILE *, char *, seq_t);
  */
 int
-seq_save(sp, fp, prefix, stype)
-	SCR *sp;
-	FILE *fp;
-	char *prefix;
-	seq_t stype;
+seq_save(SCR *sp, FILE *fp, char *prefix, seq_t stype)
 {
 	CHAR_T *p;
 	SEQ *qp;
@@ -377,10 +354,7 @@ seq_save(sp, fp, prefix, stype)
  * PUBLIC: int e_memcmp(CHAR_T *, EVENT *, size_t);
  */
 int
-e_memcmp(p1, ep, n)
-	CHAR_T *p1;
-	EVENT *ep;
-	size_t n;
+e_memcmp(CHAR_T *p1, EVENT *ep, size_t n)
 {
 	if (n != 0) {
                 do {

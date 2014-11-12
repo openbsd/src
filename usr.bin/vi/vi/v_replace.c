@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_replace.c,v 1.7 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: v_replace.c,v 1.8 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -41,9 +41,7 @@
  * PUBLIC: int v_replace(SCR *, VICMD *);
  */
 int
-v_replace(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_replace(SCR *sp, VICMD *vp)
 {
 	EVENT ev;
 	VI_PRIVATE *vip;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_increment.c,v 1.7 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: v_increment.c,v 1.8 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -48,9 +48,7 @@ static void inc_err(SCR *, enum nresult);
  * PUBLIC: int v_increment(SCR *, VICMD *);
  */
 int
-v_increment(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_increment(SCR *sp, VICMD *vp)
 {
 	enum nresult nret;
 	u_long ulval;
@@ -249,9 +247,7 @@ err:		rval = 1;
 }
 
 static void
-inc_err(sp, nret)
-	SCR *sp;
-	enum nresult nret;
+inc_err(SCR *sp, enum nresult nret)
 {
 	switch (nret) {
 	case NUM_ERR:

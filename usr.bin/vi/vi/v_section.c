@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_section.c,v 1.6 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: v_section.c,v 1.7 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -60,9 +60,7 @@
  * PUBLIC: int v_sectionf(SCR *, VICMD *);
  */
 int
-v_sectionf(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_sectionf(SCR *sp, VICMD *vp)
 {
 	recno_t cnt, lno;
 	size_t len;
@@ -169,9 +167,7 @@ ret2:	if (ISMOTION(vp)) {
  * PUBLIC: int v_sectionb(SCR *, VICMD *);
  */
 int
-v_sectionb(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_sectionb(SCR *sp, VICMD *vp)
 {
 	size_t len;
 	recno_t cnt, lno;

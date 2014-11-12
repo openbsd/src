@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_edit.c,v 1.5 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_edit.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -44,9 +44,7 @@ static int ex_N_edit(SCR *, EXCMD *, FREF *, int);
  * PUBLIC: int ex_edit(SCR *, EXCMD *);
  */
 int
-ex_edit(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_edit(SCR *sp, EXCMD *cmdp)
 {
 	FREF *frp;
 	int attach, setalt;
@@ -106,11 +104,7 @@ ex_edit(sp, cmdp)
  *	New screen version of ex_edit.
  */
 static int
-ex_N_edit(sp, cmdp, frp, attach)
-	SCR *sp;
-	EXCMD *cmdp;
-	FREF *frp;
-	int attach;
+ex_N_edit(SCR *sp, EXCMD *cmdp, FREF *frp, int attach)
 {
 	SCR *new;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_ulcase.c,v 1.7 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: v_ulcase.c,v 1.8 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -45,9 +45,7 @@ static int ulcase(SCR *, recno_t, CHAR_T *, size_t, size_t, size_t);
  * PUBLIC: int v_ulcase(SCR *, VICMD *);
  */
 int
-v_ulcase(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_ulcase(SCR *sp, VICMD *vp)
 {
 	recno_t lno;
 	size_t cno, lcnt, len;
@@ -105,9 +103,7 @@ v_ulcase(sp, vp)
  * PUBLIC: int v_mulcase(SCR *, VICMD *);
  */
 int
-v_mulcase(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_mulcase(SCR *sp, VICMD *vp)
 {
 	CHAR_T *p;
 	size_t len;
@@ -143,11 +139,7 @@ v_mulcase(sp, vp)
  *	Change part of a line's case.
  */
 static int
-ulcase(sp, lno, lp, len, scno, ecno)
-	SCR *sp;
-	recno_t lno;
-	CHAR_T *lp;
-	size_t len, scno, ecno;
+ulcase(SCR *sp, recno_t lno, CHAR_T *lp, size_t len, size_t scno, size_t ecno)
 {
 	size_t blen;
 	int change, rval;

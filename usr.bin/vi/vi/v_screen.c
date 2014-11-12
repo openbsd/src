@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_screen.c,v 1.7 2013/11/28 22:12:40 krw Exp $	*/
+/*	$OpenBSD: v_screen.c,v 1.8 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -29,9 +29,7 @@
  * PUBLIC: int v_screen(SCR *, VICMD *);
  */
 int
-v_screen(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_screen(SCR *sp, VICMD *vp)
 {
 	/*
 	 * You can't leave a colon command-line edit window -- it's not that

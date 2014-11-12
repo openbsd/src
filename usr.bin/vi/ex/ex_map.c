@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_map.c,v 1.5 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_map.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -40,9 +40,7 @@
  * PUBLIC: int ex_map(SCR *, EXCMD *);
  */
 int
-ex_map(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_map(SCR *sp, EXCMD *cmdp)
 {
 	seq_t stype;
 	CHAR_T *input, *p;
@@ -105,9 +103,7 @@ nofunc:	if (stype == SEQ_COMMAND && input[1] == '\0')
  * PUBLIC: int ex_unmap(SCR *, EXCMD *);
  */
 int
-ex_unmap(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_unmap(SCR *sp, EXCMD *cmdp)
 {
 	if (seq_delete(sp, cmdp->argv[0]->bp, cmdp->argv[0]->len,
 	    FL_ISSET(cmdp->iflags, E_C_FORCE) ? SEQ_INPUT : SEQ_COMMAND)) {

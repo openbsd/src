@@ -1,4 +1,4 @@
-/*	$OpenBSD: perlsfio.c,v 1.4 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: perlsfio.c,v 1.5 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -41,11 +41,7 @@
 #define NIL(type)       ((type)0)
 
 static int
-sfnviwrite(f, buf, n, disc)
-Sfio_t* f;      /* stream involved */
-char*           buf;    /* buffer to read into */
-int             n;      /* number of bytes to read */
-Sfdisc_t*       disc;   /* discipline */        
+sfnviwrite(Sfio_t *f, char *buf, int n, Sfdisc_t *disc)
 {
 	SCR *scrp;
 
@@ -62,8 +58,7 @@ Sfdisc_t*       disc;   /* discipline */
  */
 
 Sfdisc_t *
-sfdcnewnvi(scrp)
-	SCR *scrp;
+sfdcnewnvi(SCR *scrp)
 {
 	Sfdisc_t*   disc;
 

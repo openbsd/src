@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.16 2011/07/10 13:20:25 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.17 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -280,9 +280,7 @@ static OABBREV const abbrev[] = {
  * PUBLIC: int opts_init(SCR *, int *);
  */
 int
-opts_init(sp, oargs)
-	SCR *sp;
-	int *oargs;
+opts_init(SCR *sp, int *oargs)
 {
 	ARGS *argv[2], a, b;
 	OPTLIST const *op;
@@ -446,10 +444,7 @@ err:	msgq(sp, M_ERR,
  * PUBLIC: int opts_set(SCR *, ARGS *[], char *);
  */
 int
-opts_set(sp, argv, usage)
-	SCR *sp;
-	ARGS *argv[];
-	char *usage;
+opts_set(SCR *sp, ARGS *argv[], char *usage)
 {
 	enum optdisp disp;
 	enum nresult nret;
@@ -750,12 +745,7 @@ badnum:				p = msg_print(sp, name, &nf);
  * PUBLIC: int o_set(SCR *, int, u_int, char *, u_long);
  */
 int
-o_set(sp, opt, flags, str, val)
-	SCR *sp;
-	int opt;
-	u_int flags;
-	char *str;
-	u_long val;
+o_set(SCR *sp, int opt, u_int flags, char *str, u_long val)
 {
 	OPTION *op;
 
@@ -794,9 +784,7 @@ o_set(sp, opt, flags, str, val)
  * PUBLIC: int opts_empty(SCR *, int, int);
  */
 int
-opts_empty(sp, off, silent)
-	SCR *sp;
-	int off, silent;
+opts_empty(SCR *sp, int off, int silent)
 {
 	char *p;
 
@@ -816,9 +804,7 @@ opts_empty(sp, off, silent)
  * PUBLIC: void opts_dump(SCR *, enum optdisp);
  */
 void
-opts_dump(sp, type)
-	SCR *sp;
-	enum optdisp type;
+opts_dump(SCR *sp, enum optdisp type)
 {
 	OPTLIST const *op;
 	int base, b_num, cnt, col, colwidth, curlen, s_num;
@@ -950,9 +936,7 @@ opts_dump(sp, type)
  *	Print out an option.
  */
 static int
-opts_print(sp, op)
-	SCR *sp;
-	OPTLIST const *op;
+opts_print(SCR *sp, OPTLIST const *op)
 {
 	int curlen, offset;
 
@@ -982,9 +966,7 @@ opts_print(sp, op)
  * PUBLIC: int opts_save(SCR *, FILE *);
  */
 int
-opts_save(sp, fp)
-	SCR *sp;
-	FILE *fp;
+opts_save(SCR *sp, FILE *fp)
 {
 	OPTLIST const *op;
 	int ch, cnt;
@@ -1039,8 +1021,7 @@ opts_save(sp, fp)
  * PUBLIC: OPTLIST const *opts_search(char *);
  */
 OPTLIST const *
-opts_search(name)
-	char *name;
+opts_search(char *name)
 {
 	OPTLIST const *op, *found;
 	OABBREV atmp, *ap;
@@ -1085,24 +1066,20 @@ opts_search(name)
  * PUBLIC: void opts_nomatch(SCR *, char *);
  */
 void
-opts_nomatch(sp, name)
-	SCR *sp;
-	char *name;
+opts_nomatch(SCR *sp, char *name)
 {
 	msgq_str(sp, M_ERR, name,
 	    "033|set: no %s option: 'set all' gives all option values");
 }
 
 static int
-opts_abbcmp(a, b)
-        const void *a, *b;
+opts_abbcmp(const void *a, const void *b)
 {
         return(strcmp(((OABBREV *)a)->name, ((OABBREV *)b)->name));
 }
 
 static int
-opts_cmp(a, b)
-        const void *a, *b;
+opts_cmp(const void *a, const void *b)
 {
         return(strcmp(((OPTLIST *)a)->name, ((OPTLIST *)b)->name));
 }
@@ -1114,8 +1091,7 @@ opts_cmp(a, b)
  * PUBLIC: int opts_copy(SCR *, SCR *);
  */
 int
-opts_copy(orig, sp)
-	SCR *orig, *sp;
+opts_copy(SCR *orig, SCR *sp)
 {
 	int cnt, rval;
 
@@ -1161,8 +1137,7 @@ nomem:			msgq(orig, M_SYSERR, NULL);
  * PUBLIC: void opts_free(SCR *);
  */
 void
-opts_free(sp)
-	SCR *sp;
+opts_free(SCR *sp)
 {
 	int cnt;
 

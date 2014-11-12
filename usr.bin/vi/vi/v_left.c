@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_left.c,v 1.5 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: v_left.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -29,9 +29,7 @@
  * PUBLIC: int v_left(SCR *, VICMD *);
  */
 int
-v_left(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_left(SCR *sp, VICMD *vp)
 {
 	recno_t cnt;
 
@@ -69,9 +67,7 @@ v_left(sp, vp)
  * PUBLIC: int v_cfirst(SCR *, VICMD *);
  */
 int
-v_cfirst(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_cfirst(SCR *sp, VICMD *vp)
 {
 	recno_t cnt, lno;
 
@@ -138,9 +134,7 @@ v_cfirst(sp, vp)
  * PUBLIC: int v_first(SCR *, VICMD *);
  */
 int
-v_first(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_first(SCR *sp, VICMD *vp)
 {
 	/*
 	 * !!!
@@ -202,9 +196,7 @@ v_first(sp, vp)
  * PUBLIC: int v_ncol(SCR *, VICMD *);
  */
 int
-v_ncol(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_ncol(SCR *sp, VICMD *vp)
 {
 	if (F_ISSET(vp, VC_C1SET) && vp->count > 1) {
 		--vp->count;
@@ -264,9 +256,7 @@ v_ncol(sp, vp)
  * PUBLIC: int v_zero(SCR *, VICMD *);
  */
 int
-v_zero(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_zero(SCR *sp, VICMD *vp)
 {
 	/*
 	 * !!!

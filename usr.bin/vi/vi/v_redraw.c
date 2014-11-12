@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_redraw.c,v 1.5 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: v_redraw.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -29,9 +29,7 @@
  * PUBLIC: int v_redraw(SCR *, VICMD *);
  */
 int
-v_redraw(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_redraw(SCR *sp, VICMD *vp)
 {
 	return (sp->gp->scr_refresh(sp, 1));
 }

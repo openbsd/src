@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_args.c,v 1.9 2009/11/15 04:32:31 deraadt Exp $	*/
+/*	$OpenBSD: ex_args.c,v 1.10 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -40,9 +40,7 @@ static int ex_N_next(SCR *, EXCMD *);
  * PUBLIC: int ex_next(SCR *, EXCMD *);
  */
 int
-ex_next(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_next(SCR *sp, EXCMD *cmdp)
 {
 	ARGS **argv;
 	FREF *frp;
@@ -123,9 +121,7 @@ ex_next(sp, cmdp)
  *	New screen version of ex_next.
  */
 static int
-ex_N_next(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_N_next(SCR *sp, EXCMD *cmdp)
 {
 	SCR *new;
 	FREF *frp;
@@ -167,9 +163,7 @@ ex_N_next(sp, cmdp)
  * PUBLIC: int ex_prev(SCR *, EXCMD *);
  */
 int
-ex_prev(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_prev(SCR *sp, EXCMD *cmdp)
 {
 	FREF *frp;
 
@@ -214,9 +208,7 @@ ex_prev(sp, cmdp)
  * PUBLIC: int ex_rew(SCR *, EXCMD *);
  */
 int
-ex_rew(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_rew(SCR *sp, EXCMD *cmdp)
 {
 	FREF *frp;
 
@@ -254,9 +246,7 @@ ex_rew(sp, cmdp)
  * PUBLIC: int ex_args(SCR *, EXCMD *);
  */
 int
-ex_args(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_args(SCR *sp, EXCMD *cmdp)
 {
 	int cnt, col, len, sep;
 	char **ap;
@@ -295,10 +285,7 @@ ex_args(sp, cmdp)
  * PUBLIC: char **ex_buildargv(SCR *, EXCMD *, char *);
  */
 char **
-ex_buildargv(sp, cmdp, name)
-	SCR *sp;
-	EXCMD *cmdp;
-	char *name;
+ex_buildargv(SCR *sp, EXCMD *cmdp, char *name)
 {
 	ARGS **argv;
 	int argc;

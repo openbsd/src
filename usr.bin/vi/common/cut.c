@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.12 2013/11/25 23:27:11 krw Exp $	*/
+/*	$OpenBSD: cut.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -62,11 +62,7 @@ static void	cb_rotate(SCR *);
  * PUBLIC: int cut(SCR *, CHAR_T *, MARK *, MARK *, int);
  */
 int
-cut(sp, namep, fm, tm, flags)
-	SCR *sp;
-	CHAR_T *namep;
-	MARK *fm, *tm;
-	int flags;
+cut(SCR *sp, CHAR_T *namep, MARK *fm, MARK *tm, int flags)
 {
 	CB *cbp;
 	CHAR_T name = '1';	/* default numeric buffer */
@@ -187,8 +183,7 @@ cut_line_err:
  *	Rotate the numbered buffers up one.
  */
 static void
-cb_rotate(sp)
-	SCR *sp;
+cb_rotate(SCR *sp)
 {
 	CB *cbp, *del_cbp;
 
@@ -237,11 +232,7 @@ cb_rotate(sp)
  * PUBLIC: int cut_line(SCR *, recno_t, size_t, size_t, CB *);
  */
 int
-cut_line(sp, lno, fcno, clen, cbp)
-	SCR *sp;
-	recno_t lno;
-	size_t fcno, clen;
-	CB *cbp;
+cut_line(SCR *sp, recno_t lno, size_t fcno, size_t clen, CB *cbp)
 {
 	TEXT *tp;
 	size_t len;
@@ -280,8 +271,7 @@ cut_line(sp, lno, fcno, clen, cbp)
  * PUBLIC: void cut_close(GS *);
  */
 void
-cut_close(gp)
-	GS *gp;
+cut_close(GS *gp)
 {
 	CB *cbp;
 
@@ -306,10 +296,7 @@ cut_close(gp)
  * PUBLIC: TEXT *text_init(SCR *, const char *, size_t, size_t);
  */
 TEXT *
-text_init(sp, p, len, total_len)
-	SCR *sp;
-	const char *p;
-	size_t len, total_len;
+text_init(SCR *sp, const char *p, size_t len, size_t total_len)
 {
 	TEXT *tp;
 
@@ -337,8 +324,7 @@ text_init(sp, p, len, total_len)
  * PUBLIC: void text_lfree(TEXTH *);
  */
 void
-text_lfree(headp)
-	TEXTH *headp;
+text_lfree(TEXTH *headp)
 {
 	TEXT *tp;
 
@@ -355,8 +341,7 @@ text_lfree(headp)
  * PUBLIC: void text_free(TEXT *);
  */
 void
-text_free(tp)
-	TEXT *tp;
+text_free(TEXT *tp)
 {
 	if (tp->lb != NULL)
 		free(tp->lb);

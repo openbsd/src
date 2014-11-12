@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_itxt.c,v 1.7 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: v_itxt.c,v 1.8 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -64,9 +64,7 @@ static u_int32_t set_txt_std(SCR *, VICMD *, u_int32_t);
  * PUBLIC: int v_iA(SCR *, VICMD *);
  */
 int
-v_iA(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_iA(SCR *sp, VICMD *vp)
 {
 	size_t len;
 
@@ -86,9 +84,7 @@ v_iA(sp, vp)
  * PUBLIC: int v_ia(SCR *, VICMD *);
  */
 int
-v_ia(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_ia(SCR *sp, VICMD *vp)
 {
 	size_t len;
 	u_int32_t flags;
@@ -125,9 +121,7 @@ v_ia(sp, vp)
  * PUBLIC: int v_iI(SCR *, VICMD *);
  */
 int
-v_iI(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_iI(SCR *sp, VICMD *vp)
 {
 	sp->cno = 0;
 	if (nonblank(sp, vp->m_start.lno, &sp->cno))
@@ -146,9 +140,7 @@ v_iI(sp, vp)
  * PUBLIC: int v_ii(SCR *, VICMD *);
  */
 int
-v_ii(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_ii(SCR *sp, VICMD *vp)
 {
 	size_t len;
 	u_int32_t flags;
@@ -181,9 +173,7 @@ static int io(SCR *, VICMD *, enum which);
  * PUBLIC: int v_iO(SCR *, VICMD *);
  */
 int
-v_iO(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_iO(SCR *sp, VICMD *vp)
 {
 	return (io(sp, vp, O_cmd));
 }
@@ -195,18 +185,13 @@ v_iO(sp, vp)
  * PUBLIC: int v_io(SCR *, VICMD *);
  */
 int
-v_io(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_io(SCR *sp, VICMD *vp)
 {
 	return (io(sp, vp, o_cmd));
 }
 
 static int
-io(sp, vp, cmd)
-	SCR *sp;
-	VICMD *vp;
-	enum which cmd;
+io(SCR *sp, VICMD *vp, enum which cmd)
 {
 	recno_t ai_line, lno;
 	size_t len;
@@ -256,9 +241,7 @@ insert:		p = "";
  * PUBLIC: int v_change(SCR *, VICMD *);
  */
 int
-v_change(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_change(SCR *sp, VICMD *vp)
 {
 	size_t blen, len;
 	u_int32_t flags;
@@ -397,9 +380,7 @@ v_change(sp, vp)
  * PUBLIC: int v_Replace(SCR *, VICMD *);
  */
 int
-v_Replace(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_Replace(SCR *sp, VICMD *vp)
 {
 	size_t len;
 	u_int32_t flags;
@@ -433,9 +414,7 @@ v_Replace(sp, vp)
  * PUBLIC: int v_subst(SCR *, VICMD *);
  */
 int
-v_subst(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_subst(SCR *sp, VICMD *vp)
 {
 	size_t len;
 	u_int32_t flags;
@@ -475,10 +454,7 @@ v_subst(sp, vp)
  *	Initialize text processing flags.
  */
 static u_int32_t
-set_txt_std(sp, vp, flags)
-	SCR *sp;
-	VICMD *vp;
-	u_int32_t flags;
+set_txt_std(SCR *sp, VICMD *vp, u_int32_t flags)
 {
 	LF_SET(TXT_CNTRLT |
 	    TXT_ESCAPE | TXT_MAPINPUT | TXT_RECORD | TXT_RESOLVE);

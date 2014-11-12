@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_read.c,v 1.18 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: cl_read.c,v 1.19 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -42,11 +42,7 @@ static int	cl_resize(SCR *, size_t, size_t);
  * PUBLIC: int cl_event(SCR *, EVENT *, u_int32_t, int);
  */
 int
-cl_event(sp, evp, flags, ms)
-	SCR *sp;
-	EVENT *evp;
-	u_int32_t flags;
-	int ms;
+cl_event(SCR *sp, EVENT *evp, u_int32_t flags, int ms)
 {
 	struct timeval t, *tp;
 	CL_PRIVATE *clp;
@@ -127,13 +123,8 @@ retest:	if (LF_ISSET(EC_INTERRUPT) || F_ISSET(clp, CL_SIGINT)) {
  *	Read characters from the input.
  */
 static input_t
-cl_read(sp, flags, bp, blen, nrp, tp)
-	SCR *sp;
-	u_int32_t flags;
-	CHAR_T *bp;
-	size_t blen;
-	int *nrp;
-	struct timeval *tp;
+cl_read(SCR *sp, u_int32_t flags, CHAR_T *bp, size_t blen, int *nrp,
+    struct timeval *tp)
 {
 	struct termios term1, term2;
 	CL_PRIVATE *clp;
@@ -283,9 +274,7 @@ err:		if (errno == EINTR)
  *	Reset the options for a resize event.
  */
 static int
-cl_resize(sp, lines, columns)
-	SCR *sp;
-	size_t lines, columns;
+cl_resize(SCR *sp, size_t lines, size_t columns)
 {
 	ARGS *argv[2], a, b;
 	char b1[1024];

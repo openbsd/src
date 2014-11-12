@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_print.c,v 1.9 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_print.c,v 1.10 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -33,9 +33,7 @@ static int ex_prchars(SCR *, const char *, size_t *, size_t, u_int, int);
  * PUBLIC: int ex_list(SCR *, EXCMD *);
  */
 int
-ex_list(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_list(SCR *sp, EXCMD *cmdp)
 {
 	if (ex_print(sp, cmdp,
 	    &cmdp->addr1, &cmdp->addr2, cmdp->iflags | E_C_LIST))
@@ -53,9 +51,7 @@ ex_list(sp, cmdp)
  * PUBLIC: int ex_number(SCR *, EXCMD *);
  */
 int
-ex_number(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_number(SCR *sp, EXCMD *cmdp)
 {
 	if (ex_print(sp, cmdp,
 	    &cmdp->addr1, &cmdp->addr2, cmdp->iflags | E_C_HASH))
@@ -73,9 +69,7 @@ ex_number(sp, cmdp)
  * PUBLIC: int ex_pr(SCR *, EXCMD *);
  */
 int
-ex_pr(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_pr(SCR *sp, EXCMD *cmdp)
 {
 	if (ex_print(sp, cmdp, &cmdp->addr1, &cmdp->addr2, cmdp->iflags))
 		return (1);
@@ -91,11 +85,7 @@ ex_pr(sp, cmdp)
  * PUBLIC: int ex_print(SCR *, EXCMD *, MARK *, MARK *, u_int32_t);
  */
 int
-ex_print(sp, cmdp, fp, tp, flags)
-	SCR *sp;
-	EXCMD *cmdp;
-	MARK *fp, *tp;
-	u_int32_t flags;
+ex_print(SCR *sp, EXCMD *cmdp, MARK *fp, MARK *tp, u_int32_t flags)
 {
 	recno_t from, to;
 	size_t col, len;
@@ -147,11 +137,7 @@ ex_print(sp, cmdp, fp, tp, flags)
  * PUBLIC: int ex_ldisplay(SCR *, const char *, size_t, size_t, u_int);
  */
 int
-ex_ldisplay(sp, p, len, col, flags)
-	SCR *sp;
-	const char *p;
-	size_t len, col;
-	u_int flags;
+ex_ldisplay(SCR *sp, const char *p, size_t len, size_t col, u_int flags)
 {
 	if (len > 0 && ex_prchars(sp, p, &col, len, LF_ISSET(E_C_LIST), 0))
 		return (1);
@@ -172,9 +158,7 @@ ex_ldisplay(sp, p, len, col, flags)
  * PUBLIC: int ex_scprint(SCR *, MARK *, MARK *);
  */
 int
-ex_scprint(sp, fp, tp)
-	SCR *sp;
-	MARK *fp, *tp;
+ex_scprint(SCR *sp, MARK *fp, MARK *tp)
 {
 	const char *p;
 	size_t col, len;
@@ -209,12 +193,8 @@ ex_scprint(sp, fp, tp)
  *	Local routine to dump characters to the screen.
  */
 static int
-ex_prchars(sp, p, colp, len, flags, repeatc)
-	SCR *sp;
-	const char *p;
-	size_t *colp, len;
-	u_int flags;
-	int repeatc;
+ex_prchars(SCR *sp, const char *p, size_t *colp, size_t len, u_int flags,
+    int repeatc)
 {
 	CHAR_T ch, *kp;
 	size_t col, tlen, ts;
@@ -290,9 +270,7 @@ ex_printf(SCR *sp, const char *fmt, ...)
  * PUBLIC: int ex_puts(SCR *, const char *);
  */
 int
-ex_puts(sp, str)
-	SCR *sp;
-	const char *str;
+ex_puts(SCR *sp, const char *str)
 {
 	EX_PRIVATE *exp;
 	int doflush, n;
@@ -318,8 +296,7 @@ ex_puts(sp, str)
  * PUBLIC: int ex_fflush(SCR *sp);
  */
 int
-ex_fflush(sp)
-	SCR *sp;
+ex_fflush(SCR *sp)
 {
 	EX_PRIVATE *exp;
 

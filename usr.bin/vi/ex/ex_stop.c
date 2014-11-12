@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_stop.c,v 1.5 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_stop.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -31,9 +31,7 @@
  * PUBLIC: int ex_stop(SCR *, EXCMD *);
  */
 int
-ex_stop(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_stop(SCR *sp, EXCMD *cmdp)
 {
 	int allowed;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.12 2013/11/28 22:12:40 krw Exp $	*/
+/*	$OpenBSD: line.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -33,12 +33,7 @@ static int scr_update(SCR *, recno_t, lnop_t, int);
  * PUBLIC: int db_eget(SCR *, recno_t, char **, size_t *, int *);
  */
 int
-db_eget(sp, lno, pp, lenp, isemptyp)
-	SCR *sp;
-	recno_t lno;				/* Line number. */
-	char **pp;				/* Pointer store. */
-	size_t *lenp;				/* Length store. */
-	int *isemptyp;
+db_eget(SCR *sp, recno_t lno, char **pp, size_t *lenp, int *isemptyp)
 {
 	recno_t l1;
 
@@ -77,12 +72,7 @@ db_eget(sp, lno, pp, lenp, isemptyp)
  * PUBLIC: int db_get(SCR *, recno_t, u_int32_t, char **, size_t *);
  */
 int
-db_get(sp, lno, flags, pp, lenp)
-	SCR *sp;
-	recno_t lno;				/* Line number. */
-	u_int32_t flags;
-	char **pp;				/* Pointer store. */
-	size_t *lenp;				/* Length store. */
+db_get(SCR *sp, recno_t lno, u_int32_t flags, char **pp, size_t *lenp)
 {
 	DBT data, key;
 	EXF *ep;
@@ -187,9 +177,7 @@ err3:		if (lenp != NULL)
  * PUBLIC: int db_delete(SCR *, recno_t);
  */
 int
-db_delete(sp, lno)
-	SCR *sp;
-	recno_t lno;
+db_delete(SCR *sp, recno_t lno)
 {
 	DBT key;
 	EXF *ep;
@@ -245,12 +233,7 @@ db_delete(sp, lno)
  * PUBLIC: int db_append(SCR *, int, recno_t, char *, size_t);
  */
 int
-db_append(sp, update, lno, p, len)
-	SCR *sp;
-	int update;
-	recno_t lno;
-	char *p;
-	size_t len;
+db_append(SCR *sp, int update, recno_t lno, char *p, size_t len)
 {
 	DBT data, key;
 	EXF *ep;
@@ -319,11 +302,7 @@ db_append(sp, update, lno, p, len)
  * PUBLIC: int db_insert(SCR *, recno_t, char *, size_t);
  */
 int
-db_insert(sp, lno, p, len)
-	SCR *sp;
-	recno_t lno;
-	char *p;
-	size_t len;
+db_insert(SCR *sp, recno_t lno, char *p, size_t len)
 {
 	DBT data, key;
 	EXF *ep;
@@ -384,11 +363,7 @@ db_insert(sp, lno, p, len)
  * PUBLIC: int db_set(SCR *, recno_t, char *, size_t);
  */
 int
-db_set(sp, lno, p, len)
-	SCR *sp;
-	recno_t lno;
-	char *p;
-	size_t len;
+db_set(SCR *sp, recno_t lno, char *p, size_t len)
 {
 	DBT data, key;
 	EXF *ep;
@@ -443,9 +418,7 @@ db_set(sp, lno, p, len)
  * PUBLIC: int db_exist(SCR *, recno_t);
  */
 int
-db_exist(sp, lno)
-	SCR *sp;
-	recno_t lno;
+db_exist(SCR *sp, recno_t lno)
 {
 	EXF *ep;
 
@@ -478,9 +451,7 @@ db_exist(sp, lno)
  * PUBLIC: int db_last(SCR *, recno_t *);
  */
 int
-db_last(sp, lnop)
-	SCR *sp;
-	recno_t *lnop;
+db_last(SCR *sp, recno_t *lnop)
 {
 	DBT data, key;
 	EXF *ep;
@@ -539,9 +510,7 @@ db_last(sp, lnop)
  * PUBLIC: void db_err(SCR *, recno_t);
  */
 void
-db_err(sp, lno)
-	SCR *sp;
-	recno_t lno;
+db_err(SCR *sp, recno_t lno)
 {
 	msgq(sp, M_ERR,
 	    "008|Error: unable to retrieve line %lu", (u_long)lno);
@@ -553,11 +522,7 @@ db_err(sp, lno)
  *	just changed.
  */
 static int
-scr_update(sp, lno, op, current)
-	SCR *sp;
-	recno_t lno;
-	lnop_t op;
-	int current;
+scr_update(SCR *sp, recno_t lno, lnop_t op, int current)
 {
 	EXF *ep;
 	SCR *tsp;

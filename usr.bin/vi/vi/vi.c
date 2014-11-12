@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.14 2013/11/28 22:12:40 krw Exp $	*/
+/*	$OpenBSD: vi.c,v 1.15 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -60,8 +60,7 @@ static void	v_comlog(SCR *, VICMD *);
  * PUBLIC: int vi(SCR **);
  */
 int
-vi(spp)
-	SCR **spp;
+vi(SCR **spp)
 {
 	GS *gp;
 	MARK abs;
@@ -450,11 +449,8 @@ VIKEYS const tmotion = {
  *	[count] key [character]
  */
 static gcret_t
-v_cmd(sp, dp, vp, ismotion, comcountp, mappedp)
-	SCR *sp;
-	VICMD *dp, *vp;
-	VICMD *ismotion;	/* Previous key if getting motion component. */
-	int *comcountp, *mappedp;
+v_cmd(SCR *sp, VICMD *dp, VICMD *vp, VICMD *ismotion, int *comcountp,
+    int *mappedp)
 {
 	enum { COMMANDMODE, ISPARTIAL, NOTPARTIAL } cpart;
 	EVENT ev;
@@ -714,10 +710,7 @@ esc:	switch (cpart) {
  * Get resulting motion mark.
  */
 static int
-v_motion(sp, dm, vp, mappedp)
-	SCR *sp;
-	VICMD *dm, *vp;
-	int *mappedp;
+v_motion(SCR *sp, VICMD *dm, VICMD *vp, int *mappedp)
 {
 	VICMD motion;
 	size_t len;
@@ -927,8 +920,7 @@ v_motion(sp, dm, vp, mappedp)
  *	Initialize the vi screen.
  */
 static int
-v_init(sp)
-	SCR *sp;
+v_init(SCR *sp)
 {
 	GS *gp;
 	VI_PRIVATE *vip;
@@ -999,8 +991,7 @@ v_init(sp)
  *	Move all but the current screen to the hidden queue.
  */
 static void
-v_dtoh(sp)
-	SCR *sp;
+v_dtoh(SCR *sp)
 {
 	GS *gp;
 	SCR *tsp;
@@ -1039,8 +1030,7 @@ v_dtoh(sp)
  *	Get the word (or non-word) the cursor is on.
  */
 static int
-v_keyword(sp)
-	SCR *sp;
+v_keyword(SCR *sp)
 {
 	VI_PRIVATE *vip;
 	size_t beg, end, len;
@@ -1093,10 +1083,7 @@ v_keyword(sp)
  *	Check for a command alias.
  */
 static VIKEYS const *
-v_alias(sp, vp, kp)
-	SCR *sp;
-	VICMD *vp;
-	VIKEYS const *kp;
+v_alias(SCR *sp, VICMD *vp, VIKEYS const *kp)
 {
 	CHAR_T push;
 
@@ -1129,10 +1116,7 @@ v_alias(sp, vp, kp)
  *	Return the next count.
  */
 static int
-v_count(sp, fkey, countp)
-	SCR *sp;
-	ARG_CHAR_T fkey;
-	u_long *countp;
+v_count(SCR *sp, ARG_CHAR_T fkey, u_long *countp)
 {
 	EVENT ev;
 	u_long count, tc;
@@ -1169,11 +1153,7 @@ v_count(sp, fkey, countp)
  *	Return the next event.
  */
 static gcret_t
-v_key(sp, command_events, evp, ec_flags)
-	SCR *sp;
-	int command_events;
-	EVENT *evp;
-	u_int32_t ec_flags;
+v_key(SCR *sp, int command_events, EVENT *evp, u_int32_t ec_flags)
 {
 	u_int32_t quote;
 
@@ -1236,9 +1216,7 @@ v_key(sp, command_events, evp, ec_flags)
  *	Log the contents of the command structure.
  */
 static void
-v_comlog(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_comlog(SCR *sp, VICMD *vp)
 {
 	TRACE(sp, "vcmd: %c", vp->key);
 	if (F_ISSET(vp, VC_BUFFER))

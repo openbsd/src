@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_term.c,v 1.17 2014/11/06 10:48:52 bentley Exp $	*/
+/*	$OpenBSD: cl_term.c,v 1.18 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -79,8 +79,7 @@ static TKLIST const m2_tklist[] = {	/* Input mappings (set or delete). */
  * PUBLIC: int cl_term_init(SCR *);
  */
 int
-cl_term_init(sp)
-	SCR *sp;
+cl_term_init(SCR *sp)
 {
 	KEYLIST *kp;
 	SEQ *qp;
@@ -154,8 +153,7 @@ cl_term_init(sp)
  * PUBLIC: int cl_term_end(GS *);
  */
 int
-cl_term_end(gp)
-	GS *gp;
+cl_term_end(GS *gp)
 {
 	SEQ *qp, *nqp;
 
@@ -175,11 +173,8 @@ cl_term_end(gp)
  * PUBLIC: int cl_fmap(SCR *, seq_t, CHAR_T *, size_t, CHAR_T *, size_t);
  */
 int
-cl_fmap(sp, stype, from, flen, to, tlen)
-	SCR *sp;
-	seq_t stype;
-	CHAR_T *from, *to;
-	size_t flen, tlen;
+cl_fmap(SCR *sp, seq_t stype, CHAR_T *from, size_t flen, CHAR_T *to,
+    size_t tlen)
 {
 	/* Ignore until the screen is running, do the real work then. */
 	if (F_ISSET(sp, SC_VI) && !F_ISSET(sp, SC_SCR_VI))
@@ -195,11 +190,8 @@ cl_fmap(sp, stype, from, flen, to, tlen)
  *	Map a function key (private version).
  */
 static int
-cl_pfmap(sp, stype, from, flen, to, tlen)
-	SCR *sp;
-	seq_t stype;
-	CHAR_T *from, *to;
-	size_t flen, tlen;
+cl_pfmap(SCR *sp, seq_t stype, CHAR_T *from, size_t flen, CHAR_T *to,
+    size_t tlen)
 {
 	size_t nlen;
 	char *p, key_name[64];
@@ -228,11 +220,7 @@ cl_pfmap(sp, stype, from, flen, to, tlen)
  * PUBLIC: int cl_optchange(SCR *, int, char *, u_long *);
  */
 int
-cl_optchange(sp, opt, str, valp)
-	SCR *sp;
-	int opt;
-	char *str;
-	u_long *valp;
+cl_optchange(SCR *sp, int opt, char *str, u_long *valp)
 {
 	CL_PRIVATE *clp;
 
@@ -279,10 +267,7 @@ cl_optchange(sp, opt, str, valp)
  * PUBLIC: int cl_omesg(SCR *, CL_PRIVATE *, int);
  */
 int
-cl_omesg(sp, clp, on)
-	SCR *sp;
-	CL_PRIVATE *clp;
-	int on;
+cl_omesg(SCR *sp, CL_PRIVATE *clp, int on)
 {
 	struct stat sb;
 	char *tty;
@@ -328,11 +313,7 @@ cl_omesg(sp, clp, on)
  * PUBLIC: int cl_ssize(SCR *, int, size_t *, size_t *, int *);
  */
 int
-cl_ssize(sp, sigwinch, rowp, colp, changedp)
-	SCR *sp;
-	int sigwinch;
-	size_t *rowp, *colp;
-	int *changedp;
+cl_ssize(SCR *sp, int sigwinch, size_t *rowp, size_t *colp, int *changedp)
 {
 #ifdef TIOCGWINSZ
 	struct winsize win;
@@ -454,8 +435,7 @@ noterm:	if (row == 0)
  * PUBLIC: int cl_putchar(int);
  */
 int
-cl_putchar(ch)
-	int ch;
+cl_putchar(int ch)
 {
 	return (putchar(ch));
 }

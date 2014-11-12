@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_abbrev.c,v 1.5 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_abbrev.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -32,9 +32,7 @@
  * PUBLIC: int ex_abbr(SCR *, EXCMD *);
  */
 int
-ex_abbr(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_abbr(SCR *sp, EXCMD *cmdp)
 {
 	CHAR_T *p;
 	size_t len;
@@ -98,9 +96,7 @@ ex_abbr(sp, cmdp)
  * PUBLIC: int ex_unabbr(SCR *, EXCMD *);
  */
 int
-ex_unabbr(sp, cmdp)
-	SCR *sp;
-        EXCMD *cmdp;
+ex_unabbr(SCR *sp, EXCMD *cmdp)
 {
 	ARGS *ap;
 

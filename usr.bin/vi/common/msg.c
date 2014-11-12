@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.19 2013/11/26 17:48:01 pelikan Exp $	*/
+/*	$OpenBSD: msg.c,v 1.20 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -348,10 +348,7 @@ alloc_err:
  * PUBLIC: void msgq_str(SCR *, mtype_t, char *, char *);
  */
 void
-msgq_str(sp, mtype, str, fmt)
-	SCR *sp;
-	mtype_t mtype;
-	char *str, *fmt;
+msgq_str(SCR *sp, mtype_t mtype, char *str, char *fmt)
 {
 	int nf, sv_errno;
 	char *p;
@@ -390,8 +387,7 @@ msgq_str(sp, mtype, str, fmt)
  * PUBLIC: void mod_rpt(SCR *);
  */
 void
-mod_rpt(sp)
-	SCR *sp;
+mod_rpt(SCR *sp)
 {
 	static char * const action[] = {
 		"293|added",
@@ -500,10 +496,7 @@ alloc_err:
  * PUBLIC: void msgq_status(SCR *, recno_t, u_int);
  */
 void
-msgq_status(sp, lno, flags)
-	SCR *sp;
-	recno_t lno;
-	u_int flags;
+msgq_status(SCR *sp, recno_t lno, u_int flags)
 {
 	recno_t last;
 	size_t blen, len;
@@ -667,9 +660,7 @@ alloc_err:
  * PUBLIC: int msg_open(SCR *, char *);
  */
 int
-msg_open(sp, file)
-	SCR *sp;
-	char *file;
+msg_open(SCR *sp, char *file)
 {
 	/*
 	 * !!!
@@ -738,8 +729,7 @@ msg_open(sp, file)
  * PUBLIC: void msg_close(GS *);
  */
 void
-msg_close(gp)
-	GS *gp;
+msg_close(GS *gp)
 {
 	if (gp->msg != NULL)
 		(void)gp->msg->close(gp->msg);
@@ -752,10 +742,7 @@ msg_close(gp)
  * PUBLIC: const char *msg_cmsg(SCR *, cmsg_t, size_t *);
  */
 const char *
-msg_cmsg(sp, which, lenp)
-	SCR *sp;
-	cmsg_t which;
-	size_t *lenp;
+msg_cmsg(SCR *sp, cmsg_t which, size_t *lenp)
 {
 	switch (which) {
 	case CMSG_CONF:
@@ -790,10 +777,7 @@ msg_cmsg(sp, which, lenp)
  * PUBLIC: const char *msg_cat(SCR *, const char *, size_t *);
  */
 const char *
-msg_cat(sp, str, lenp)
-	SCR *sp;
-	const char *str;
-	size_t *lenp;
+msg_cat(SCR *sp, const char *str, size_t *lenp)
 {
 	GS *gp;
 	DBT data, key;
@@ -840,10 +824,7 @@ msg_cat(sp, str, lenp)
  * PUBLIC: char *msg_print(SCR *, const char *, int *);
  */
 char *
-msg_print(sp, s, needfree)
-	SCR *sp;
-	const char *s;
-	int *needfree;
+msg_print(SCR *sp, const char *s, int *needfree)
 {
 	size_t blen, nlen;
 	const char *cp;

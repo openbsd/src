@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_filter.c,v 1.11 2011/07/10 13:20:25 millert Exp $	*/
+/*	$OpenBSD: ex_filter.c,v 1.12 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -39,12 +39,8 @@ static int filter_ldisplay(SCR *, FILE *);
  * PUBLIC:    EXCMD *, MARK *, MARK *, MARK *, char *, enum filtertype);
  */
 int
-ex_filter(sp, cmdp, fm, tm, rp, cmd, ftype)
-	SCR *sp;
-	EXCMD *cmdp;
-	MARK *fm, *tm, *rp;
-	char *cmd;
-	enum filtertype ftype;
+ex_filter(SCR *sp, EXCMD *cmdp, MARK *fm, MARK *tm, MARK *rp, char *cmd,
+    enum filtertype ftype)
 {
 	FILE *ifp, *ofp;
 	pid_t parent_writer_pid, utility_pid;
@@ -344,9 +340,7 @@ uwait:	return (proc_wait(sp, utility_pid, cmd,
  * We use the ex print routines to make sure they're printable.
  */
 static int
-filter_ldisplay(sp, fp)
-	SCR *sp;
-	FILE *fp;
+filter_ldisplay(SCR *sp, FILE *fp)
 {
 	size_t len;
 

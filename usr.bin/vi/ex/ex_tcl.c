@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_tcl.c,v 1.6 2014/11/10 21:40:11 tedu Exp $	*/
+/*	$OpenBSD: ex_tcl.c,v 1.7 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -26,9 +26,7 @@
  * PUBLIC: int ex_tcl(SCR*, EXCMD *);
  */
 int 
-ex_tcl(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_tcl(SCR *sp, EXCMD *cmdp)
 {
 	msgq(sp, M_ERR, "302|Vi was not loaded with a Tcl interpreter");
 	return (1);

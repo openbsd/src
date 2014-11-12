@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_funcs.c,v 1.15 2014/11/06 10:48:52 bentley Exp $	*/
+/*	$OpenBSD: cl_funcs.c,v 1.16 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,10 +37,7 @@
  * PUBLIC: int cl_addstr(SCR *, const char *, size_t);
  */
 int
-cl_addstr(sp, str, len)
-	SCR *sp;
-	const char *str;
-	size_t len;
+cl_addstr(SCR *sp, const char *str, size_t len)
 {
 	size_t oldy, oldx;
 	int iv;
@@ -72,10 +69,7 @@ cl_addstr(sp, str, len)
  * PUBLIC: int cl_attr(SCR *, scr_attr_t, int);
  */
 int
-cl_attr(sp, attribute, on)
-	SCR *sp;
-	scr_attr_t attribute;
-	int on;
+cl_attr(SCR *sp, scr_attr_t attribute, int on)
 {
 	CL_PRIVATE *clp;
 
@@ -160,9 +154,7 @@ cl_attr(sp, attribute, on)
  * PUBLIC: int cl_baud(SCR *, u_long *);
  */
 int
-cl_baud(sp, ratep)
-	SCR *sp;
-	u_long *ratep;
+cl_baud(SCR *sp, u_long *ratep)
 {
 	CL_PRIVATE *clp;
 
@@ -203,8 +195,7 @@ cl_baud(sp, ratep)
  * PUBLIC: int cl_bell(SCR *);
  */
 int
-cl_bell(sp)
-	SCR *sp;
+cl_bell(SCR *sp)
 {
 	if (F_ISSET(sp, SC_EX | SC_SCR_EXWROTE))
 		(void)write(STDOUT_FILENO, "\07", 1);		/* \a */
@@ -235,8 +226,7 @@ cl_bell(sp)
  * PUBLIC: int cl_clrtoeol(SCR *);
  */
 int
-cl_clrtoeol(sp)
-	SCR *sp;
+cl_clrtoeol(SCR *sp)
 {
 	return (clrtoeol() == ERR);
 }
@@ -248,9 +238,7 @@ cl_clrtoeol(sp)
  * PUBLIC: int cl_cursor(SCR *, size_t *, size_t *);
  */
 int
-cl_cursor(sp, yp, xp)
-	SCR *sp;
-	size_t *yp, *xp;
+cl_cursor(SCR *sp, size_t *yp, size_t *xp)
 {
 	/*
 	 * The curses screen support splits a single underlying curses screen
@@ -271,8 +259,7 @@ cl_cursor(sp, yp, xp)
  * PUBLIC: int cl_deleteln(SCR *);
  */
 int
-cl_deleteln(sp)
-	SCR *sp;
+cl_deleteln(SCR *sp)
 {
 #ifndef mvchgat
 	CHAR_T ch;
@@ -336,9 +323,7 @@ cl_deleteln(sp)
  * PUBLIC: int cl_ex_adjust(SCR *, exadj_t);
  */
 int
-cl_ex_adjust(sp, action)
-	SCR *sp;
-	exadj_t action;
+cl_ex_adjust(SCR *sp, exadj_t action)
 {
 	CL_PRIVATE *clp;
 	int cnt;
@@ -393,8 +378,7 @@ cl_ex_adjust(sp, action)
  * PUBLIC: int cl_insertln(SCR *);
  */
 int
-cl_insertln(sp)
-	SCR *sp;
+cl_insertln(SCR *sp)
 {
 	/*
 	 * The current line is expected to be blank after this operation,
@@ -410,11 +394,7 @@ cl_insertln(sp)
  * PUBLIC: int cl_keyval(SCR *, scr_keyval_t, CHAR_T *, int *);
  */
 int
-cl_keyval(sp, val, chp, dnep)
-	SCR *sp;
-	scr_keyval_t val;
-	CHAR_T *chp;
-	int *dnep;
+cl_keyval(SCR *sp, scr_keyval_t val, CHAR_T *chp, int *dnep)
 {
 	CL_PRIVATE *clp;
 
@@ -452,9 +432,7 @@ cl_keyval(sp, val, chp, dnep)
  * PUBLIC: int cl_move(SCR *, size_t, size_t);
  */
 int
-cl_move(sp, lno, cno)
-	SCR *sp;
-	size_t lno, cno;
+cl_move(SCR *sp, size_t lno, size_t cno)
 {
 	/* See the comment in cl_cursor. */
 	if (move(RLNO(sp, lno), cno) == ERR) {
@@ -472,9 +450,7 @@ cl_move(sp, lno, cno)
  * PUBLIC: int cl_refresh(SCR *, int);
  */
 int
-cl_refresh(sp, repaint)
-	SCR *sp;
-	int repaint;
+cl_refresh(SCR *sp, int repaint)
 {
 	CL_PRIVATE *clp;
 
@@ -507,10 +483,7 @@ cl_refresh(sp, repaint)
  * PUBLIC: int cl_rename(SCR *, char *, int);
  */
 int
-cl_rename(sp, name, on)
-	SCR *sp;
-	char *name;
-	int on;
+cl_rename(SCR *sp, char *name, int on)
 {
 	GS *gp;
 	CL_PRIVATE *clp;
@@ -548,9 +521,7 @@ cl_rename(sp, name, on)
  * PUBLIC: int cl_suspend(SCR *, int *);
  */
 int
-cl_suspend(sp, allowedp)
-	SCR *sp;
-	int *allowedp;
+cl_suspend(SCR *sp, int *allowedp)
 {
 	struct termios t;
 	CL_PRIVATE *clp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_right.c,v 1.5 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: v_right.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -29,9 +29,7 @@
  * PUBLIC: int v_right(SCR *, VICMD *);
  */
 int
-v_right(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_right(SCR *sp, VICMD *vp)
 {
 	size_t len;
 	int isempty;
@@ -81,9 +79,7 @@ eol:		v_eol(sp, NULL);
  * PUBLIC: int v_dollar(SCR *, VICMD *);
  */
 int
-v_dollar(sp, vp)
-	SCR *sp;
-	VICMD *vp;
+v_dollar(SCR *sp, VICMD *vp)
 {
 	size_t len;
 	int isempty;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: put.c,v 1.12 2013/11/26 13:16:06 otto Exp $	*/
+/*	$OpenBSD: put.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -30,12 +30,7 @@
  * PUBLIC: int put(SCR *, CB *, CHAR_T *, MARK *, MARK *, int);
  */
 int
-put(sp, cbp, namep, cp, rp, append)
-	SCR *sp;
-	CB *cbp;
-	CHAR_T *namep;
-	MARK *cp, *rp;
-	int append;
+put(SCR *sp, CB *cbp, CHAR_T *namep, MARK *cp, MARK *rp, int append)
 {
 	CHAR_T name;
 	TEXT *ltp, *tp;

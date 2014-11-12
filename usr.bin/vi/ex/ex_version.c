@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_version.c,v 1.9 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_version.c,v 1.10 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -28,9 +28,7 @@
  * PUBLIC: int ex_version(SCR *, EXCMD *);
  */
 int
-ex_version(sp, cmdp)
-	SCR *sp;
-	EXCMD *cmdp;
+ex_version(SCR *sp, EXCMD *cmdp)
 {
 	msgq(sp, M_INFO, VI_VERSION);
 	return (0);

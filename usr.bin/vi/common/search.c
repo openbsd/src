@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.9 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: search.c,v 1.10 2014/11/12 04:28:41 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -35,12 +35,8 @@ static int	search_init(SCR *, dir_t, char *, size_t, char **, u_int);
  *	Set up a search.
  */
 static int
-search_init(sp, dir, ptrn, plen, epp, flags)
-	SCR *sp;
-	dir_t dir;
-	char *ptrn, **epp;
-	size_t plen;
-	u_int flags;
+search_init(SCR *sp, dir_t dir, char *ptrn, size_t plen, char **epp,
+    u_int flags)
 {
 	recno_t lno;
 	int delim;
@@ -141,12 +137,8 @@ prev:			if (sp->re == NULL) {
  * PUBLIC: int f_search(SCR *, MARK *, MARK *, char *, size_t, char **, u_int);
  */
 int
-f_search(sp, fm, rm, ptrn, plen, eptrn, flags)
-	SCR *sp;
-	MARK *fm, *rm;
-	char *ptrn, **eptrn;
-	size_t plen;
-	u_int flags;
+f_search(SCR *sp, MARK *fm, MARK *rm, char *ptrn, size_t plen, char **eptrn,
+    u_int flags)
 {
 	busy_t btype;
 	recno_t lno;
@@ -284,12 +276,8 @@ f_search(sp, fm, rm, ptrn, plen, eptrn, flags)
  * PUBLIC: int b_search(SCR *, MARK *, MARK *, char *, size_t, char **, u_int);
  */
 int
-b_search(sp, fm, rm, ptrn, plen, eptrn, flags)
-	SCR *sp;
-	MARK *fm, *rm;
-	char *ptrn, **eptrn;
-	size_t plen;
-	u_int flags;
+b_search(SCR *sp, MARK *fm, MARK *rm, char *ptrn, size_t plen, char **eptrn,
+    u_int flags)
 {
 	busy_t btype;
 	recno_t lno;
@@ -443,9 +431,7 @@ err:	if (LF_ISSET(SEARCH_MSG))
  *	Display one of the search messages.
  */
 static void
-search_msg(sp, msg)
-	SCR *sp;
-	smsg_t msg;
+search_msg(SCR *sp, smsg_t msg)
 {
 	switch (msg) {
 	case S_EMPTY:
@@ -480,9 +466,7 @@ search_msg(sp, msg)
  * PUBLIC: void search_busy(SCR *, busy_t);
  */
 void
-search_busy(sp, btype)
-	SCR *sp;
-	busy_t btype;
+search_busy(SCR *sp, busy_t btype)
 {
 	sp->gp->scr_busy(sp, "078|Searching...", btype);
 }
