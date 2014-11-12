@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.26 2014/11/10 15:58:32 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.27 2014/11/12 16:06:47 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -83,7 +83,7 @@
 #define IXGBE_TX_CLEANUP_THRESHOLD	(sc->num_tx_desc / 16)
 #define IXGBE_TX_OP_THRESHOLD		(sc->num_tx_desc / 32)
 
-#define IXGBE_MAX_FRAME_SIZE	0x3F00
+#define IXGBE_MAX_FRAME_SIZE	9216
 
 /* Flow control constants */
 #define IXGBE_FC_PAUSE		0xFFFF

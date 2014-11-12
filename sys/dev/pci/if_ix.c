@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.106 2014/11/10 17:53:43 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.107 2014/11/12 16:06:47 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -441,18 +441,6 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, caddr_t data)
 #endif
 		break;
 
-	case SIOCSIFMTU:
-		IOCTL_DEBUGOUT("ioctl: SIOCSIFMTU (Set Interface MTU)");
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu) {
-			ifp->if_mtu = ifr->ifr_mtu;
-			sc->max_frame_size =
-				ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
-			ixgbe_init(sc);
-		}
-		break;
-
 	case SIOCSIFFLAGS:
 		IOCTL_DEBUGOUT("ioctl: SIOCSIFFLAGS (Set Interface Flags)");
 		if (ifp->if_flags & IFF_UP) {
@@ -629,15 +617,8 @@ ixgbe_init(void *arg)
 	ixgbe_init_hw(&sc->hw);
 	ixgbe_initialize_transmit_units(sc);
 
-	/* Determine the correct mbuf pool for doing jumbo frames */
-	if (sc->max_frame_size <= 2048)
-		sc->rx_mbuf_sz = MCLBYTES;
-	else if (sc->max_frame_size <= 4096)
-		sc->rx_mbuf_sz = 4096;
-	else if (sc->max_frame_size <= 9216)
-		sc->rx_mbuf_sz = 9216;
-	else
-		sc->rx_mbuf_sz = 16 * 1024;
+	/* Use 2k clusters, even for jumbo frames */
+	sc->rx_mbuf_sz = MCLBYTES;
 
 	/* Prepare receive descriptors and buffers */
 	if (ixgbe_setup_receive_structures(sc)) {
@@ -689,13 +670,11 @@ ixgbe_init(void *arg)
 	}
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_GPIE, gpie);
 
-	/* Set MTU size */
-	if (ifp->if_mtu > ETHERMTU) {
-		mhadd = IXGBE_READ_REG(&sc->hw, IXGBE_MHADD);
-		mhadd &= ~IXGBE_MHADD_MFS_MASK;
-		mhadd |= sc->max_frame_size << IXGBE_MHADD_MFS_SHIFT;
-		IXGBE_WRITE_REG(&sc->hw, IXGBE_MHADD, mhadd);
-	}
+	/* Set MRU size */
+	mhadd = IXGBE_READ_REG(&sc->hw, IXGBE_MHADD);
+	mhadd &= ~IXGBE_MHADD_MFS_MASK;
+	mhadd |= sc->max_frame_size << IXGBE_MHADD_MFS_SHIFT;
+	IXGBE_WRITE_REG(&sc->hw, IXGBE_MHADD, mhadd);
 
 	/* Now enable all the queues */
 
@@ -1578,8 +1557,7 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	sc->max_frame_size =
-	    ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
+	sc->max_frame_size = IXGBE_MAX_FRAME_SIZE;
 }
 
 void
@@ -2640,7 +2618,6 @@ void
 ixgbe_initialize_receive_units(struct ix_softc *sc)
 {
 	struct	rx_ring	*rxr = sc->rx_rings;
-	struct ifnet   *ifp = &sc->arpcom.ac_if;
 	uint32_t	bufsz, rxctrl, fctrl, srrctl, rxcsum;
 	uint32_t	reta, mrqc = 0, hlreg;
 	uint32_t	random[10];
@@ -2661,12 +2638,9 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 	fctrl |= IXGBE_FCTRL_PMCF;
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_FCTRL, fctrl);
 
-	/* Set for Jumbo Frames? */
+	/* Always enable jumbo frame reception */
 	hlreg = IXGBE_READ_REG(&sc->hw, IXGBE_HLREG0);
-	if (ifp->if_mtu > ETHERMTU)
-		hlreg |= IXGBE_HLREG0_JUMBOEN;
-	else
-		hlreg &= ~IXGBE_HLREG0_JUMBOEN;
+	hlreg |= IXGBE_HLREG0_JUMBOEN;
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_HLREG0, hlreg);
 
 	bufsz = sc->rx_mbuf_sz >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
