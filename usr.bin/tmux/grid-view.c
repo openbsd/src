@@ -1,4 +1,4 @@
-/* $OpenBSD: grid-view.c,v 1.18 2014/11/10 19:53:32 nicm Exp $ */
+/* $OpenBSD: grid-view.c,v 1.19 2014/11/12 22:59:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -184,7 +184,9 @@ grid_view_insert_cells(struct grid *gd, u_int px, u_int py, u_int nx)
 	px = grid_view_x(gd, px);
 	py = grid_view_y(gd, py);
 
-	sx = grid_view_x(gd, gd->sx);
+	sx = grid_view_x(gd, gd->linedata[py].cellsize);
+	if (sx < px + nx)
+		sx = px + nx;
 
 	if (px == sx - 1)
 		grid_clear(gd, px, py, 1, 1);
@@ -201,7 +203,9 @@ grid_view_delete_cells(struct grid *gd, u_int px, u_int py, u_int nx)
 	px = grid_view_x(gd, px);
 	py = grid_view_y(gd, py);
 
-	sx = grid_view_x(gd, gd->sx);
+	sx = grid_view_x(gd, gd->linedata[py].cellsize);
+	if (sx < px + nx)
+		sx = px + nx;
 
 	grid_move_cells(gd, px, px + nx, py, sx - px - nx);
 	grid_clear(gd, sx - nx, py, px + nx - (sx - nx), 1);
