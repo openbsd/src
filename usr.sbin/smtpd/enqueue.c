@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.87 2014/11/06 08:55:06 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.88 2014/11/12 10:28:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -854,7 +854,7 @@ savedeadletter(struct passwd *pw, FILE *in)
 	if (fseek(in, 0, SEEK_SET) != 0)
 		return 0;
 	
-	if ((fp = fopen(buffer, "a")) == NULL)
+	if ((fp = fopen(buffer, "w")) == NULL)
 		return 0;
 
 	/* add From */
