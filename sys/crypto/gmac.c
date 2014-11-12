@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmac.c,v 1.3 2011/01/11 15:44:23 deraadt Exp $	*/
+/*	$OpenBSD: gmac.c,v 1.4 2014/11/12 17:52:02 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010 Mike Belopuhov <mike@vantronix.net>
@@ -38,7 +38,7 @@ ghash_gfmul(uint32_t *X, uint32_t *Y, uint32_t *product)
 	uint32_t	v[4];
 	uint32_t	z[4] = { 0, 0, 0, 0};
 	uint8_t		*x = (uint8_t *)X;
-	uint32_t	mul;
+	uint32_t	mask, mul;
 	int		i;
 
 	v[0] = betoh32(Y[0]);
@@ -48,12 +48,12 @@ ghash_gfmul(uint32_t *X, uint32_t *Y, uint32_t *product)
 
 	for (i = 0; i < GMAC_BLOCK_LEN * 8; i++) {
 		/* update Z */
-		if (x[i >> 3] & (1 << (~i & 7))) {
-			z[0] ^= v[0];
-			z[1] ^= v[1];
-			z[2] ^= v[2];
-			z[3] ^= v[3];
-		} /* else: we preserve old values */
+		mask = !!(x[i >> 3] & (1 << (~i & 7)));
+		mask = ~(mask - 1);
+		z[0] ^= v[0] & mask;
+		z[1] ^= v[1] & mask;
+		z[2] ^= v[2] & mask;
+		z[3] ^= v[3] & mask;
 
 		/* update V */
 		mul = v[3] & 1;
