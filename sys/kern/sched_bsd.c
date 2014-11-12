@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.38 2014/11/03 03:08:00 deraadt Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.39 2014/11/12 22:27:45 tedu Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -586,6 +586,7 @@ void
 setperf_auto(void *v)
 {
 	static uint64_t *idleticks, *totalticks;
+	static int downbeats;
 
 	int i, j;
 	int speedup;
@@ -628,11 +629,13 @@ setperf_auto(void *v)
 	}
 	if (allidle < alltotal / 2)
 		speedup = 1;
+	if (speedup)
+		downbeats = 5;
 
 	if (speedup && perflevel != 100) {
 		perflevel = 100;
 		cpu_setperf(perflevel);
-	} else if (!speedup && perflevel != 0) {
+	} else if (!speedup && perflevel != 0 && --downbeats <= 0) {
 		perflevel = 0;
 		cpu_setperf(perflevel);
 	}
