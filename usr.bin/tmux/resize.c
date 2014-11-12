@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.12 2014/03/31 21:37:55 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.13 2014/11/12 16:00:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -117,10 +117,10 @@ recalculate_sizes(void)
 			continue;
 
 		limit = options_get_number(&w->options, "force-width");
-		if (limit != 0 && ssx > limit)
+		if (limit >= PANE_MINIMUM && ssx > limit)
 			ssx = limit;
 		limit = options_get_number(&w->options, "force-height");
-		if (limit != 0 && ssy > limit)
+		if (limit >= PANE_MINIMUM && ssy > limit)
 			ssy = limit;
 
 		if (w->sx == ssx && w->sy == ssy)
