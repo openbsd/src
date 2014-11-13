@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.90 2014/05/05 18:02:49 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.91 2014/11/13 00:33:35 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -137,21 +137,18 @@ dispatch(void)
 	void (*func)(void);
 
 	while (quit == 0) {
-		/*
-		 * Call expired timeout, and then if there's still
-		 * a timeout registered, time out the select call then.
-		 */
-another:
 		if (!ifi) {
-			warning("No interfaces available");
+			warning("No interface!");
 			quit = INTERNALSIG;
 			continue;
 		}
-
 		if (ifi->rdomain != get_rdomain(ifi->name)) {
-			warning("Interface %s:"
-			    " rdomain changed out from under us",
-			    ifi->name);
+			warning("%s rdomain changed; exiting", ifi->name);
+			quit = INTERNALSIG;
+			continue;
+		}
+		if (ifi->rfdesc == -1) {
+			warning("%s bpf socket gone; exiting");
 			quit = INTERNALSIG;
 			continue;
 		}
@@ -162,7 +159,7 @@ another:
 				func = timeout.func;
 				cancel_timeout();
 				(*(func))();
-				goto another;
+				continue;
 			}
 			/*
 			 * Figure timeout in milliseconds, and check for
@@ -177,25 +174,22 @@ another:
 		} else
 			to_msec = -1;
 
-		/* Set up the descriptors to be polled. */
-		if (!ifi || ifi->rfdesc == -1) {
-			warning("No live interface to poll on");
-			quit = INTERNALSIG;
-			continue;
-		}
-
+		/*
+		 * Set up the descriptors to be polled.
+		 *
+		 *  fds[0] == bpf socket for incoming packets
+		 *  fds[1] == routing socket for incoming RTM messages
+		 *  fds[2] == imsg socket to privileged process
+		*/
 		fds[0].fd = ifi->rfdesc;
-		fds[1].fd = routefd; /* Could be -1, which will be ignored. */
+		fds[1].fd = routefd;
 		fds[2].fd = unpriv_ibuf->fd;
 		fds[0].events = fds[1].events = fds[2].events = POLLIN;
 
 		if (unpriv_ibuf->w.queued)
 			fds[2].events |= POLLOUT;
 
-		/* Wait for a packet or a timeout or unpriv_ibuf->fd. XXX */
 		count = poll(fds, 3, to_msec);
-
-		/* Not likely to be transitory. */
 		if (count == -1) {
 			if (errno == EAGAIN || errno == EINTR) {
 				continue;
