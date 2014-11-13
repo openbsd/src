@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.32 2011/10/02 06:25:53 nicm Exp $	*/
+/*	$OpenBSD: auth.c,v 1.33 2014/11/13 06:19:51 schwarze Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -1227,7 +1227,6 @@ ip_addr_check(addr, addrs)
     int accept, r = 1;
     char *ptr_word, *ptr_mask;
     struct hostent *hp;
-    struct netent *np;
 
     /* don't allow loopback or multicast address */
     if (bad_ip_adrs(addr))
@@ -1270,11 +1269,7 @@ ip_addr_check(addr, addrs)
 	if (hp != NULL && hp->h_addrtype == AF_INET) {
 	    ina.s_addr = *(u_int32_t *)hp->h_addr;
 	} else {
-	    np = getnetbyname (ptr_word);
-	    if (np != NULL && np->n_addrtype == AF_INET)
-		ina.s_addr = htonl (np->n_net);
-	    else
-		r = inet_aton (ptr_word, &ina);
+	    r = inet_aton (ptr_word, &ina);
 	    if (ptr_mask == NULL) {
 		/* calculate appropriate mask for net */
 		ah = ntohl(ina.s_addr);
