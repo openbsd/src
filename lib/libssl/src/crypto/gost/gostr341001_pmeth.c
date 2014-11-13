@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_pmeth.c,v 1.5 2014/11/09 23:06:52 miod Exp $ */
+/* $OpenBSD: gostr341001_pmeth.c,v 1.6 2014/11/13 20:29:55 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -133,17 +133,19 @@ struct gost_pmeth_data {
 	int sig_format;
 };
 
-static int pkey_gost01_init(EVP_PKEY_CTX * ctx)
+static int
+pkey_gost01_init(EVP_PKEY_CTX *ctx)
 {
 	struct gost_pmeth_data *data;
 	EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(ctx);
-	data = malloc(sizeof(struct gost_pmeth_data));
-	if (!data)
+
+	data = calloc(1, sizeof(struct gost_pmeth_data));
+	if (data == NULL)
 		return 0;
 
-	memset(data, 0, sizeof(struct gost_pmeth_data));
-	if (pkey && pkey->pkey.gost) {
-		data->sign_param_nid = EC_GROUP_get_curve_name(GOST_KEY_get0_group(pkey->pkey.gost));
+	if (pkey != NULL && pkey->pkey.gost != NULL) {
+		data->sign_param_nid =
+		    EC_GROUP_get_curve_name(GOST_KEY_get0_group(pkey->pkey.gost));
 		data->digest_nid = GOST_KEY_get_digest(pkey->pkey.gost);
 	}
 	EVP_PKEY_CTX_set_data(ctx, data);
@@ -151,85 +153,95 @@ static int pkey_gost01_init(EVP_PKEY_CTX * ctx)
 }
 
 /* Copies contents of gost_pmeth_data structure */
-static int pkey_gost01_copy(EVP_PKEY_CTX * dst, EVP_PKEY_CTX * src)
+static int
+pkey_gost01_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 {
 	struct gost_pmeth_data *dst_data, *src_data;
-	if (!pkey_gost01_init(dst)) {
+
+	if (pkey_gost01_init(dst) == 0)
 		return 0;
-	}
+
 	src_data = EVP_PKEY_CTX_get_data(src);
 	dst_data = EVP_PKEY_CTX_get_data(dst);
 	*dst_data = *src_data;
-	if (src_data->shared_ukm) {
+	if (src_data->shared_ukm != NULL)
 		dst_data->shared_ukm = NULL;
-	}
 	return 1;
 }
 
 /* Frees up gost_pmeth_data structure */
-static void pkey_gost01_cleanup(EVP_PKEY_CTX * ctx)
+static void
+pkey_gost01_cleanup(EVP_PKEY_CTX *ctx)
 {
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
+
 	free(data->shared_ukm);
 	free(data);
 }
 
-static int pkey_gost01_paramgen(EVP_PKEY_CTX * ctx, EVP_PKEY * pkey)
+static int
+pkey_gost01_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
 	EC_GROUP *group;
 	GOST_KEY *gost;
 	int ret;
 
-	if (data->sign_param_nid == NID_undef || data->digest_nid == NID_undef) {
+	if (data->sign_param_nid == NID_undef ||
+	    data->digest_nid == NID_undef) {
 		GOSTerr(GOST_F_PKEY_GOST01_PARAMGEN, GOST_R_NO_PARAMETERS_SET);
 		return 0;
 	}
 
 	group = EC_GROUP_new_by_curve_name(data->sign_param_nid);
-	if (!group)
+	if (group == NULL)
 		return 0;
 
 	EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
 
 	gost = GOST_KEY_new();
-	if (!gost)
+	if (gost == NULL)
 		return 0;
 
-	if (!GOST_KEY_set_digest(gost, data->digest_nid))
+	if (GOST_KEY_set_digest(gost, data->digest_nid) == 0)
 		return 0;
 
 	ret = GOST_KEY_set_group(gost, group);
-	if (ret)
-		EVP_PKEY_assign_GOST(pkey, gost);
-	else
+	if (ret != 0)
+		ret = EVP_PKEY_assign_GOST(pkey, gost);
+	if (ret == 0)
 		GOST_KEY_free(gost);
 
 	EC_GROUP_free(group);
 	return ret;
 }
 
-static int pkey_gost01_keygen(EVP_PKEY_CTX * ctx, EVP_PKEY * pkey)
+static int
+pkey_gost01_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
-	if (!pkey_gost01_paramgen(ctx, pkey))
+	if (pkey_gost01_paramgen(ctx, pkey) == 0)
 		return 0;
-	gost2001_keygen(pkey->pkey.gost);
-	return 1;
+	return gost2001_keygen(pkey->pkey.gost) != 0;
 }
 
-static int pkey_gost01_sign(EVP_PKEY_CTX * ctx, unsigned char *sig,
-			    size_t * siglen, const unsigned char *tbs,
-			    size_t tbs_len)
+static int
+pkey_gost01_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
+    const unsigned char *tbs, size_t tbs_len)
 {
 	ECDSA_SIG *unpacked_sig = NULL;
 	EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(ctx);
 	struct gost_pmeth_data *pctx = EVP_PKEY_CTX_get_data(ctx);
 	BIGNUM *md;
-	size_t size = GOST_KEY_get_size(pkey->pkey.gost);
+	size_t size;
+	int ret;
 
-	if (!siglen)
+	if (pkey == NULL || pkey->pkey.gost == NULL)
 		return 0;
-	if (!sig) {
+	size = GOST_KEY_get_size(pkey->pkey.gost);
+
+	if (siglen == NULL)
+		return 0;
+	if (sig == NULL) {
 		*siglen = 2 * size;
 		return 1;
 	} else if (*siglen < 2 * size) {
@@ -238,24 +250,32 @@ static int pkey_gost01_sign(EVP_PKEY_CTX * ctx, unsigned char *sig,
 	}
 	OPENSSL_assert(tbs_len == 32 || tbs_len == 64);
 	md = GOST_le2bn(tbs, tbs_len, NULL);
+	if (md == NULL)
+		return 0;
 	unpacked_sig = gost2001_do_sign(md, pkey->pkey.gost);
-	if (!unpacked_sig) {
+	BN_free(md);
+	if (unpacked_sig == NULL) {
 		return 0;
 	}
 	switch (pctx->sig_format) {
 	case GOST_SIG_FORMAT_SR_BE:
-		return pack_signature_cp(unpacked_sig, size, sig, siglen);
+		ret = pack_signature_cp(unpacked_sig, size, sig, siglen);
+		break;
 	case GOST_SIG_FORMAT_RS_LE:
-		return pack_signature_le(unpacked_sig, size, sig, siglen);
+		ret = pack_signature_le(unpacked_sig, size, sig, siglen);
+		break;
 	default:
-		ECDSA_SIG_free(unpacked_sig);
-		return -1;
+		ret = -1;
+		break;
 	}
+	if (ret <= 0)
+		ECDSA_SIG_free(unpacked_sig);
+	return ret;
 }
 
-static int pkey_gost01_verify(EVP_PKEY_CTX * ctx, const unsigned char *sig,
-			      size_t siglen, const unsigned char *tbs,
-			      size_t tbs_len)
+static int
+pkey_gost01_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig, size_t siglen,
+    const unsigned char *tbs, size_t tbs_len)
 {
 	int ok = 0;
 	EVP_PKEY *pub_key = EVP_PKEY_CTX_get0_pkey(ctx);
@@ -286,24 +306,33 @@ err:
 	return ok;
 }
 
-static int gost01_VKO_key(EVP_PKEY * pub_key, EVP_PKEY * priv_key,
-			  const unsigned char *ukm, unsigned char *key)
+static int
+gost01_VKO_key(EVP_PKEY *pub_key, EVP_PKEY *priv_key, const unsigned char *ukm,
+    unsigned char *key)
 {
 	unsigned char hashbuf[128];
 	int digest_nid;
-	int ret;
+	int ret = 0;
 	BN_CTX *ctx = BN_CTX_new();
 	BIGNUM *UKM, *X, *Y;
+
+	if (ctx == NULL)
+		return 0;
 
 	BN_CTX_start(ctx);
 	UKM = BN_CTX_get(ctx);
 	X = BN_CTX_get(ctx);
 	Y = BN_CTX_get(ctx);
+	if (Y == NULL)
+		goto err;
 
 	GOST_le2bn(ukm, 8, UKM);
 
 	digest_nid = GOST_KEY_get_digest(priv_key->pkey.gost);
-	VKO_compute_key(X, Y, pub_key->pkey.gost, priv_key->pkey.gost, UKM);
+	if (VKO_compute_key(X, Y, pub_key->pkey.gost, priv_key->pkey.gost,
+	    UKM) == 0)
+		goto err;
+
 	switch (digest_nid) {
 	case NID_id_GostR3411_94_CryptoProParamSet:
 		GOST_bn2le(X, hashbuf, 32);
@@ -327,14 +356,15 @@ static int gost01_VKO_key(EVP_PKEY * pub_key, EVP_PKEY * priv_key,
 		ret = -2;
 		break;
 	}
+err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	return ret;
 }
 
-int pkey_gost01_decrypt(EVP_PKEY_CTX * pctx, unsigned char *key,
-			size_t * key_len, const unsigned char *in,
-			size_t in_len)
+int
+pkey_gost01_decrypt(EVP_PKEY_CTX *pctx, unsigned char *key, size_t *key_len,
+    const unsigned char *in, size_t in_len)
 {
 	const unsigned char *p = in;
 	EVP_PKEY *priv = EVP_PKEY_CTX_get0_pkey(pctx);
@@ -387,26 +417,26 @@ int pkey_gost01_decrypt(EVP_PKEY_CTX * pctx, unsigned char *key,
 	memcpy(wrappedKey + 8, gkt->key_info->encrypted_key->data, 32);
 	OPENSSL_assert(gkt->key_info->imit->length == 4);
 	memcpy(wrappedKey + 40, gkt->key_info->imit->data, 4);
-	gost01_VKO_key(peerkey, priv, wrappedKey, sharedKey);
-	if (!gost_key_unwrap_crypto_pro(nid, sharedKey, wrappedKey, key)) {
+	if (gost01_VKO_key(peerkey, priv, wrappedKey, sharedKey) <= 0)
+		goto err;
+	if (gost_key_unwrap_crypto_pro(nid, sharedKey, wrappedKey, key) == 0) {
 		GOSTerr(GOST_F_PKEY_GOST01_DECRYPT,
-			GOST_R_ERROR_COMPUTING_SHARED_KEY);
+		    GOST_R_ERROR_COMPUTING_SHARED_KEY);
 		goto err;
 	}
 
 	ret = 1;
- err:
-	if (eph_key)
-		EVP_PKEY_free(eph_key);
-	if (gkt)
-		GOST_KEY_TRANSPORT_free(gkt);
+err:
+	EVP_PKEY_free(eph_key);
+	GOST_KEY_TRANSPORT_free(gkt);
 	return ret;
 }
 
-int pkey_gost01_derive(EVP_PKEY_CTX * ctx, unsigned char *key,
-		       size_t * keylen)
+int
+pkey_gost01_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 {
-	/* Public key of peer in the ctx field peerkey
+	/*
+	 * Public key of peer in the ctx field peerkey
 	 * Our private key in the ctx pkey
 	 * ukm is in the algorithm specific context data
 	 */
@@ -424,86 +454,98 @@ int pkey_gost01_derive(EVP_PKEY_CTX * ctx, unsigned char *key,
 		return 32;
 	}
 
-	gost01_VKO_key(peer_key, my_key, data->shared_ukm, key);
+	if (gost01_VKO_key(peer_key, my_key, data->shared_ukm, key) <= 0)
+		return 0;
+
 	*keylen = 32;
 	return 1;
 }
 
-int pkey_gost01_encrypt(EVP_PKEY_CTX * pctx, unsigned char *out,
-		size_t * out_len, const unsigned char *key,
-		size_t key_len)
+int
+pkey_gost01_encrypt(EVP_PKEY_CTX *pctx, unsigned char *out, size_t *out_len,
+    const unsigned char *key, size_t key_len)
 {
 	GOST_KEY_TRANSPORT *gkt = NULL;
 	EVP_PKEY *pubk = EVP_PKEY_CTX_get0_pkey(pctx);
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(pctx);
 	unsigned char ukm[8], shared_key[32], crypted_key[44];
 	int ret = 0;
-	int key_is_ephemeral = 1;
+	int key_is_ephemeral;
 	EVP_PKEY *sec_key = EVP_PKEY_CTX_get0_peerkey(pctx);
 	int nid = NID_id_Gost28147_89_CryptoPro_A_ParamSet;
 
-	if (data->shared_ukm) {
+	if (data->shared_ukm != NULL) {
 		memcpy(ukm, data->shared_ukm, 8);
-	} else if (out) {
+	} else /* if (out != NULL) */ {
 		arc4random_buf(ukm, 8);
 	}
 	/* Check for private key in the peer_key of context */
 	if (sec_key) {
 		key_is_ephemeral = 0;
-		if (!GOST_KEY_get0_private_key(sec_key->pkey.gost)) {
+		if (GOST_KEY_get0_private_key(sec_key->pkey.gost) == 0) {
 			GOSTerr(GOST_F_PKEY_GOST01_ENCRYPT,
-				GOST_R_NO_PRIVATE_PART_OF_NON_EPHEMERAL_KEYPAIR);
+			    GOST_R_NO_PRIVATE_PART_OF_NON_EPHEMERAL_KEYPAIR);
 			goto err;
 		}
 	} else {
 		key_is_ephemeral = 1;
-		if (out) {
+		if (out != NULL) {
+			GOST_KEY *tmp_key;
+
 			sec_key = EVP_PKEY_new();
-			EVP_PKEY_assign(sec_key, EVP_PKEY_base_id(pubk),
-					GOST_KEY_new());
-			EVP_PKEY_copy_parameters(sec_key, pubk);
-			if (!gost2001_keygen(sec_key->pkey.gost)) {
+			if (sec_key == NULL)
+				goto err;
+			tmp_key = GOST_KEY_new();
+			if (tmp_key == NULL)
+				goto err;
+			if (EVP_PKEY_assign(sec_key, EVP_PKEY_base_id(pubk),
+			    tmp_key) == 0) {
+				GOST_KEY_free(tmp_key);
+				goto err;
+			}
+			if (EVP_PKEY_copy_parameters(sec_key, pubk) == 0)
+				goto err;
+			if (gost2001_keygen(sec_key->pkey.gost) == 0) {
 				goto err;
 			}
 		}
 	}
 
-	if (out) {
-		gost01_VKO_key(pubk, sec_key, ukm, shared_key);
-		gost_key_wrap_crypto_pro(nid, shared_key, ukm, key, crypted_key);
+	if (out != NULL) {
+		if (gost01_VKO_key(pubk, sec_key, ukm, shared_key) <= 0)
+			goto err;
+		gost_key_wrap_crypto_pro(nid, shared_key, ukm, key,
+		    crypted_key);
 	}
 	gkt = GOST_KEY_TRANSPORT_new();
-	if (!gkt) {
+	if (gkt == NULL)
 		goto err;
-	}
-	if (!ASN1_OCTET_STRING_set(gkt->key_agreement_info->eph_iv, ukm, 8)) {
+	if (ASN1_OCTET_STRING_set(gkt->key_agreement_info->eph_iv, ukm, 8) == 0)
 		goto err;
-	}
-	if (!ASN1_OCTET_STRING_set(gkt->key_info->imit, crypted_key + 40, 4)) {
+	if (ASN1_OCTET_STRING_set(gkt->key_info->imit, crypted_key + 40,
+	    4) == 0)
 		goto err;
-	}
-	if (!ASN1_OCTET_STRING_set(gkt->key_info->encrypted_key, crypted_key + 8, 32)) {
+	if (ASN1_OCTET_STRING_set(gkt->key_info->encrypted_key, crypted_key + 8,
+	    32) == 0)
 		goto err;
-	}
 	if (key_is_ephemeral) {
-		if (!X509_PUBKEY_set
-		    (&gkt->key_agreement_info->ephem_key,
-		     out ? sec_key : pubk)) {
+		if (X509_PUBKEY_set(&gkt->key_agreement_info->ephem_key,
+		    out != NULL ? sec_key : pubk) == 0) {
 			GOSTerr(GOST_F_PKEY_GOST01_ENCRYPT,
-				GOST_R_CANNOT_PACK_EPHEMERAL_KEY);
+			    GOST_R_CANNOT_PACK_EPHEMERAL_KEY);
 			goto err;
 		}
 	}
 	ASN1_OBJECT_free(gkt->key_agreement_info->cipher);
 	gkt->key_agreement_info->cipher = OBJ_nid2obj(nid);
-	if (key_is_ephemeral && sec_key)
+	if (key_is_ephemeral)
 		EVP_PKEY_free(sec_key);
-	if (!key_is_ephemeral) {
+	else {
 		/* Set control "public key from client certificate used" */
-		if (EVP_PKEY_CTX_ctrl
-		    (pctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 3, NULL) <= 0) {
+		if (EVP_PKEY_CTX_ctrl(pctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 3,
+		    NULL) <= 0) {
 			GOSTerr(GOST_F_PKEY_GOST01_ENCRYPT,
-				GOST_R_CTRL_CALL_FAILED);
+			    GOST_R_CTRL_CALL_FAILED);
 			goto err;
 		}
 	}
@@ -511,21 +553,26 @@ int pkey_gost01_encrypt(EVP_PKEY_CTX * pctx, unsigned char *out,
 		ret = 1;
 	GOST_KEY_TRANSPORT_free(gkt);
 	return ret;
- err:
-	if (key_is_ephemeral && sec_key)
+
+err:
+	if (key_is_ephemeral)
 		EVP_PKEY_free(sec_key);
 	GOST_KEY_TRANSPORT_free(gkt);
 	return -1;
 }
 
 
-static int pkey_gost01_ctrl(EVP_PKEY_CTX * ctx, int type, int p1, void *p2)
+static int
+pkey_gost01_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
 	struct gost_pmeth_data *pctx = EVP_PKEY_CTX_get_data(ctx);
+
 	switch (type) {
 	case EVP_PKEY_CTRL_MD:
-		if (EVP_MD_type(p2) != GostR3410_get_md_digest(pctx->digest_nid)) {
-			GOSTerr(GOST_F_PKEY_GOST01_CTRL, GOST_R_INVALID_DIGEST_TYPE);
+		if (EVP_MD_type(p2) !=
+		    GostR3410_get_md_digest(pctx->digest_nid)) {
+			GOSTerr(GOST_F_PKEY_GOST01_CTRL,
+			    GOST_R_INVALID_DIGEST_TYPE);
 			return 0;
 		}
 		pctx->md = p2;
@@ -546,9 +593,19 @@ static int pkey_gost01_ctrl(EVP_PKEY_CTX * ctx, int type, int p1, void *p2)
 		return 1;
 
 	case EVP_PKEY_CTRL_SET_IV:
-		pctx->shared_ukm = malloc((int)p1);
-		memcpy(pctx->shared_ukm, p2, (int)p1);
+	    {
+		char *ukm = malloc(p1);
+
+		if (ukm == NULL) {
+			GOSTerr(GOST_F_PKEY_GOST01_CTRL,
+			    ERR_R_MALLOC_FAILURE);
+			return 0;
+		}
+		memcpy(ukm, p2, p1);
+		free(pctx->shared_ukm);
+		pctx->shared_ukm = ukm;
 		return 1;
+	    }
 
 	case EVP_PKEY_CTRL_PEER_KEY:
 		if (p1 == 0 || p1 == 1)	/* call from EVP_PKEY_derive_set_peer */

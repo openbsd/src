@@ -1,4 +1,4 @@
-/* $OpenBSD: gost89imit_pmeth.c,v 1.2 2014/11/09 23:06:52 miod Exp $ */
+/* $OpenBSD: gost89imit_pmeth.c,v 1.3 2014/11/13 20:29:55 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -115,20 +115,26 @@ pkey_gost_mac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	}
 
 	keydata = malloc(32);
+	if (keydata == NULL) {
+		GOSTerr(GOST_F_PKEY_GOST_MAC_KEYGEN, ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
 	memcpy(keydata, data->key, 32);
 	EVP_PKEY_assign(pkey, NID_id_Gost28147_89_MAC, keydata);
 
 	return 1;
 }
 
-static int pkey_gost_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
+static int
+pkey_gost_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
 	struct gost_mac_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
 
 	switch (type) {
 	case EVP_PKEY_CTRL_MD:
 		if (EVP_MD_type(p2) != NID_id_Gost28147_89_MAC) {
-			GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL, GOST_R_INVALID_DIGEST_TYPE);
+			GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL,
+			    GOST_R_INVALID_DIGEST_TYPE);
 			return 0;
 		}
 		data->md = p2;

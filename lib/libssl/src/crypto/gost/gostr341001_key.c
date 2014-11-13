@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_key.c,v 1.2 2014/11/09 23:06:52 miod Exp $ */
+/* $OpenBSD: gostr341001_key.c,v 1.3 2014/11/13 20:29:55 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -176,45 +176,47 @@ err:
 	return (ok);
 }
 
-int GOST_KEY_set_public_key_affine_coordinates(GOST_KEY * key, BIGNUM * x, BIGNUM * y)
+int
+GOST_KEY_set_public_key_affine_coordinates(GOST_KEY *key, BIGNUM *x, BIGNUM *y)
 {
 	BN_CTX *ctx = NULL;
 	BIGNUM *tx, *ty;
 	EC_POINT *point = NULL;
 	int ok = 0;
 
-	if (!key || !key->group || !x || !y) {
+	if (key == NULL || key->group == NULL || x == NULL || y == NULL) {
 		GOSTerr(GOST_F_GOST_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES,
 		    ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	ctx = BN_CTX_new();
-	if (!ctx)
+	if (ctx == NULL)
 		goto err;
 
 	point = EC_POINT_new(key->group);
-
-	if (!point)
+	if (point == NULL)
 		goto err;
 
 	tx = BN_CTX_get(ctx);
 	ty = BN_CTX_get(ctx);
-	if (!EC_POINT_set_affine_coordinates_GFp(key->group, point,
-				x, y, ctx))
+	if (ty == NULL)
 		goto err;
-	if (!EC_POINT_get_affine_coordinates_GFp(key->group, point,
-				tx, ty, ctx))
+	if (EC_POINT_set_affine_coordinates_GFp(key->group, point, x, y,
+	    ctx) == 0)
+		goto err;
+	if (EC_POINT_get_affine_coordinates_GFp(key->group, point, tx, ty,
+	    ctx) == 0)
 		goto err;
 	/*
-	 * Check if retrieved coordinates match originals: if not values are
+	 * Check if retrieved coordinates match originals: if not, values are
 	 * out of range.
 	 */
-	if (BN_cmp(x, tx) || BN_cmp(y, ty)) {
+	if (BN_cmp(x, tx) != 0 || BN_cmp(y, ty) != 0) {
 		GOSTerr(GOST_F_GOST_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES,
 		    EC_R_COORDINATES_OUT_OF_RANGE);
 		goto err;
 	}
-	if (!GOST_KEY_set_public_key(key, point))
+	if (GOST_KEY_set_public_key(key, point) == 0)
 		goto err;
 
 	if (GOST_KEY_check_key(key) == 0)
