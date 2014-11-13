@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.128 2014/07/12 18:44:01 tedu Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.129 2014/11/13 03:56:51 tedu Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -497,7 +497,7 @@ swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
 			LIST_INSERT_HEAD(&swap_priority, spp, spi_swappri);
 	} else {
 	  	/* we don't need a new priority structure, free it */
-		free(newspp, M_VMSWAP, 0);
+		free(newspp, M_VMSWAP, sizeof(*newspp));
 	}
 
 	/*
@@ -555,7 +555,7 @@ swaplist_trim(void)
 		if (!TAILQ_EMPTY(&spp->spi_swapdev))
 			continue;
 		LIST_REMOVE(spp, spi_swappri);
-		free(spp, M_VMSWAP, 0);
+		free(spp, M_VMSWAP, sizeof(*spp));
 	}
 }
 
@@ -728,7 +728,7 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 			swaplist_trim();
 		}
 		if (error)
-			free(spp, M_VMSWAP, 0);
+			free(spp, M_VMSWAP, sizeof(*spp));
 		break;
 	case SWAP_ON:
 		/*
@@ -776,7 +776,7 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 				crfree(sdp->swd_cred);
 			}
 			free(sdp->swd_path, M_VMSWAP, 0);
-			free(sdp, M_VMSWAP, 0);
+			free(sdp, M_VMSWAP, sizeof(*sdp));
 			break;
 		}
 		break;
@@ -1052,7 +1052,8 @@ swap_off(struct proc *p, struct swapdev *sdp)
 	extent_free(swapmap, sdp->swd_drumoffset, sdp->swd_drumsize,
 		    EX_WAITOK);
 	extent_destroy(sdp->swd_ex);
-	free(sdp, M_VMSWAP, 0);
+	/* free sdp->swd_path ? */
+	free(sdp, M_VMSWAP, sizeof(*sdp));
 	return (0);
 }
 
@@ -1910,8 +1911,8 @@ swapmount(void)
 #endif
 	if (bdevvp(swap_dev, &vp)) {
 		free(sdp->swd_path, M_VMSWAP, 0);
-		free(sdp, M_VMSWAP, 0);
-		free(spp, M_VMSWAP, 0);
+		free(sdp, M_VMSWAP, sizeof(*sdp));
+		free(spp, M_VMSWAP, sizeof(*spp));
 		return;
 	}
 
@@ -1935,7 +1936,7 @@ gotit:
 		swaplist_trim();
 		vput(sdp->swd_vp);
 		free(sdp->swd_path, M_VMSWAP, 0);
-		free(sdp, M_VMSWAP, 0);
+		free(sdp, M_VMSWAP, sizeof(*sdp));
 		return;
 	}
 }
