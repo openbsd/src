@@ -1,4 +1,4 @@
-/* $OpenBSD: cmll_cbc.c,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: cmll_cbc.c,v 1.4 2014/11/13 20:01:58 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -52,13 +52,14 @@
 #include <openssl/camellia.h>
 #include <openssl/modes.h>
 
-void Camellia_cbc_encrypt(const unsigned char *in, unsigned char *out,
-	size_t len, const CAMELLIA_KEY *key,
-	unsigned char *ivec, const int enc) 
-	{
-
+void
+Camellia_cbc_encrypt(const unsigned char *in, unsigned char *out, size_t len,
+    const CAMELLIA_KEY *key, unsigned char *ivec, const int enc)
+{
 	if (enc)
-		CRYPTO_cbc128_encrypt(in,out,len,key,ivec,(block128_f)Camellia_encrypt);
+		CRYPTO_cbc128_encrypt(in, out, len, key, ivec,
+		    (block128_f)Camellia_encrypt);
 	else
-		CRYPTO_cbc128_decrypt(in,out,len,key,ivec,(block128_f)Camellia_decrypt);
-	}
+		CRYPTO_cbc128_decrypt(in, out, len, key, ivec,
+		   (block128_f)Camellia_decrypt);
+}

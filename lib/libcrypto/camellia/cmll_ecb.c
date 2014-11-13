@@ -1,4 +1,4 @@
-/* $OpenBSD: cmll_ecb.c,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: cmll_ecb.c,v 1.4 2014/11/13 20:01:58 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -49,26 +49,15 @@
  *
  */
 
-#ifndef CAMELLIA_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
-#include <assert.h>
-
 #include <openssl/camellia.h>
 #include "cmll_locl.h"
 
-void Camellia_ecb_encrypt(const unsigned char *in, unsigned char *out,
-	const CAMELLIA_KEY *key, const int enc) 
-	{
-
-	assert(in && out && key);
-	assert((CAMELLIA_ENCRYPT == enc)||(CAMELLIA_DECRYPT == enc));
-
+void
+Camellia_ecb_encrypt(const unsigned char *in, unsigned char *out,
+    const CAMELLIA_KEY *key, const int enc)
+{
 	if (CAMELLIA_ENCRYPT == enc)
 		Camellia_encrypt(in, out, key);
 	else
 		Camellia_decrypt(in, out, key);
-	}
-
+}

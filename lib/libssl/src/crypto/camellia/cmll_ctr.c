@@ -1,4 +1,4 @@
-/* $OpenBSD: cmll_ctr.c,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: cmll_ctr.c,v 1.4 2014/11/13 20:01:58 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -52,13 +52,12 @@
 #include <openssl/camellia.h>
 #include <openssl/modes.h>
 
-void Camellia_ctr128_encrypt(const unsigned char *in, unsigned char *out,
-	size_t length, const CAMELLIA_KEY *key,
-	unsigned char ivec[CAMELLIA_BLOCK_SIZE],
-	unsigned char ecount_buf[CAMELLIA_BLOCK_SIZE],
-	unsigned int *num) 
-	{
-
-	CRYPTO_ctr128_encrypt(in,out,length,key,ivec,ecount_buf,num,(block128_f)Camellia_encrypt);
-	}
-
+void
+Camellia_ctr128_encrypt(const unsigned char *in, unsigned char *out,
+    size_t length, const CAMELLIA_KEY *key,
+    unsigned char ivec[CAMELLIA_BLOCK_SIZE],
+    unsigned char ecount_buf[CAMELLIA_BLOCK_SIZE], unsigned int *num)
+{
+	CRYPTO_ctr128_encrypt(in, out, length, key, ivec, ecount_buf, num,
+	    (block128_f)Camellia_encrypt);
+}
