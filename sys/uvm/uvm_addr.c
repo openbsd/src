@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.8 2014/06/10 20:08:48 kettenis Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.9 2014/11/13 00:47:44 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1369,7 +1369,7 @@ uaddr_pivot_create(vaddr_t minaddr, vaddr_t maxaddr)
 	uaddr->up_uaddr.uaddr_maxaddr = maxaddr;
 	uaddr->up_uaddr.uaddr_functions = &uaddr_pivot_functions;
 	RB_INIT(&uaddr->up_free);
-	bzero(uaddr->up_pivots, sizeof(uaddr->up_pivots));
+	memset(uaddr->up_pivots, 0, sizeof(uaddr->up_pivots));
 
 	return &uaddr->up_uaddr;
 }

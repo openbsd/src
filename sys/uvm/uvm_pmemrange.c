@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.43 2014/10/03 22:25:58 guenther Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.44 2014/11/13 00:47:44 tedu Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1475,7 +1475,7 @@ uvm_pmr_allocpmr(void)
 		    M_VMMAP, M_NOWAIT);
 	}
 	KASSERT(nw != NULL);
-	bzero(nw, sizeof(struct uvm_pmemrange));
+	memset(nw, 0, sizeof(struct uvm_pmemrange));
 	RB_INIT(&nw->addr);
 	for (i = 0; i < UVM_PMR_MEMTYPE_MAX; i++) {
 		RB_INIT(&nw->size[i]);

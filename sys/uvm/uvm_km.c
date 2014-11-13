@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.115 2014/09/14 14:17:27 jsg Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.116 2014/11/13 00:47:44 tedu Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -724,7 +724,7 @@ uvm_km_thread(void *arg)
 			flags = UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
 			    UVM_INH_NONE, UVM_ADV_RANDOM,
 			    fp != NULL ? UVM_KMF_TRYLOCK : 0);
-			bzero(pg, sizeof(pg));
+			memset(pg, 0, sizeof(pg));
 			for (i = 0; i < nitems(pg); i++) {
 				pg[i] = vm_map_min(kernel_map);
 				if (uvm_map(kernel_map, &pg[i], PAGE_SIZE,
