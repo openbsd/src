@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.326 2014/08/23 00:11:03 pelikan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.327 2014/11/13 17:35:30 pelikan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -61,6 +61,7 @@
 void	 usage(void);
 int	 pfctl_enable(int, int);
 int	 pfctl_disable(int, int);
+void	 pfctl_clear_queues(struct pf_qihead *);
 int	 pfctl_clear_stats(int, const char *, int);
 int	 pfctl_clear_interface_flags(int, int);
 int	 pfctl_clear_rules(int, int, char *);
@@ -1199,21 +1200,20 @@ pfctl_load_queue(struct pfctl *pf, u_int32_t ticket, struct pfctl_qsitem *qi)
 			err(1, "DIOCADDQUEUE");
 	if (pf->opts & PF_OPT_VERBOSE)
 		print_queuespec(&qi->qs);
-	while ((p = TAILQ_FIRST(&qi->children)) != NULL) {
-		TAILQ_REMOVE(&qi->children, p, entries);
+
+	TAILQ_FOREACH(p, &qi->children, entries) {
 		strlcpy(p->qs.ifname, qi->qs.ifname, IFNAMSIZ);
 		pfctl_load_queue(pf, ticket, p);
-		free(p);
 	}
 }
 
 int
 pfctl_load_queues(struct pfctl *pf)
 {
-	struct pfctl_qsitem	*qi, rqi;
+	struct pfctl_qsitem	*qi, *tempqi, rqi;
 	u_int32_t		 ticket;
 
-	while ((qi = TAILQ_FIRST(&qspecs)) != NULL) {
+	TAILQ_FOREACH(qi, &qspecs, entries) {
 		if (qi->matches == 0)
 			errx(1, "queue %s: parent %s not found\n", qi->qs.qname,
 			    qi->qs.parent);
@@ -1223,14 +1223,12 @@ pfctl_load_queues(struct pfctl *pf)
 		    qi->qs.upperlimit.m1.percent ||
 		    qi->qs.upperlimit.m2.percent)
 			errx(1, "only absolute bandwidth specs for now");
-
-		TAILQ_REMOVE(&qspecs, qi, entries);
-		free(qi);
 	}
 
 	if ((pf->opts & PF_OPT_NOACTION) == 0)
 		ticket = pfctl_get_ticket(pf->trans, PF_TRANS_RULESET, "");
-	while ((qi = TAILQ_FIRST(&rootqs)) != NULL) {
+
+	TAILQ_FOREACH_SAFE(qi, &rootqs, entries, tempqi) {
 		TAILQ_REMOVE(&rootqs, qi, entries);
 
 		/*
@@ -1249,9 +1247,22 @@ pfctl_load_queues(struct pfctl *pf)
 
 		pfctl_load_queue(pf, ticket, &rqi);
 
+		TAILQ_INSERT_HEAD(&rootqs, qi, entries);
 	}
 
 	return (0);
+}
+
+void
+pfctl_clear_queues(struct pf_qihead *head)
+{
+	struct pfctl_qsitem *qi;
+
+	while ((qi = TAILQ_FIRST(head)) != NULL) {
+		TAILQ_REMOVE(head, qi, entries);
+		pfctl_clear_queues(&qi->children);
+		free(qi);
+	}
 }
 
 u_int
@@ -1510,10 +1521,13 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	free(path);
 	path = NULL;
 
-	/* process "load anchor" directives */
-	if (!anchorname[0])
+	/* process "load anchor" directives that might have used queues */
+	if (!anchorname[0]) {
 		if (pfctl_load_anchors(dev, &pf, t) == -1)
 			ERRX("load anchors");
+		pfctl_clear_queues(&qspecs);
+		pfctl_clear_queues(&rootqs);
+	}
 
 	if (trans == NULL && (opts & PF_OPT_NOACTION) == 0) {
 		if (!anchorname[0])
