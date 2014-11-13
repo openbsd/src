@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.72 2014/03/22 11:05:37 lum Exp $	*/
+/*	$OpenBSD: main.c,v 1.73 2014/11/13 21:36:23 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -235,7 +235,7 @@ quit(int f, int n)
 	    || eyesno("Modified buffers exist; really exit") == TRUE) {
 		vttidy();
 		closetags();
-		exit(GOOD);
+		exit(0);
 	}
 	return (TRUE);
 }
