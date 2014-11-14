@@ -214,11 +214,17 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
+./usr/lib/gcc-lib/vax-unknown-openbsd5.6
+./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6
 ./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6/SYSCALLS.c.X
+./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6/cc1
 ./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6/cc1obj
 ./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6/cc1plus
+./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6/collect2
+./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6/include
 ./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6/include/unwind.h
 ./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6/libgcc.a
+./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6/specs
 ./usr/lib/libsupc++.a
 ./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/elf32vax_obsd.x

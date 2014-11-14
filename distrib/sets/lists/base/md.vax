@@ -2,12 +2,6 @@
 ./sbin/kbd
 ./sbin/wsconsctl
 ./usr/bin/gccbug
-./usr/lib/gcc-lib/vax-unknown-openbsd5.6
-./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6
-./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6/cc1
-./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6/collect2
-./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6/include
-./usr/lib/gcc-lib/vax-unknown-openbsd5.6/3.3.6/specs
 ./usr/libdata/perl5/site_perl/vax-openbsd
 ./usr/libdata/perl5/site_perl/vax-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/a.out.ph

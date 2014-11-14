@@ -631,10 +631,15 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
+./usr/lib/gcc-lib/amd64-unknown-openbsd5.6
+./usr/lib/gcc-lib/amd64-unknown-openbsd5.6/4.2.1
+./usr/lib/gcc-lib/amd64-unknown-openbsd5.6/4.2.1/cc1
 ./usr/lib/gcc-lib/amd64-unknown-openbsd5.6/4.2.1/cc1obj
 ./usr/lib/gcc-lib/amd64-unknown-openbsd5.6/4.2.1/cc1plus
+./usr/lib/gcc-lib/amd64-unknown-openbsd5.6/4.2.1/collect2
 ./usr/lib/gcc-lib/amd64-unknown-openbsd5.6/4.2.1/libgcc.a
 ./usr/lib/gcc-lib/amd64-unknown-openbsd5.6/4.2.1/libgcov.a
+./usr/lib/gcc-lib/amd64-unknown-openbsd5.6/4.2.1/specs
 ./usr/lib/libamd64.a
 ./usr/lib/libamd64_p.a
 ./usr/lib/libstdc++_p.a

@@ -1509,6 +1509,7 @@
 ./usr/include/zlib.h
 ./usr/lib/crt0.o
 ./usr/lib/debug
+./usr/lib/gcc-lib
 ./usr/lib/gcrt0.o
 ./usr/lib/libc.a
 ./usr/lib/libc_p.a

@@ -1,12 +1,6 @@
 ./etc/examples/wsconsctl.conf
 ./sbin/kbd
 ./sbin/wsconsctl
-./usr/lib/gcc-lib/m88k-unknown-openbsd5.6
-./usr/lib/gcc-lib/m88k-unknown-openbsd5.6/3.3.6
-./usr/lib/gcc-lib/m88k-unknown-openbsd5.6/3.3.6/cc1
-./usr/lib/gcc-lib/m88k-unknown-openbsd5.6/3.3.6/collect2
-./usr/lib/gcc-lib/m88k-unknown-openbsd5.6/3.3.6/include
-./usr/lib/gcc-lib/m88k-unknown-openbsd5.6/3.3.6/specs
 ./usr/lib/libc.so.77.2
 ./usr/lib/libcrypto.so.30.2
 ./usr/lib/libcurses.so.14.0

@@ -614,7 +614,6 @@
 ./usr/games
 ./usr/include
 ./usr/lib
-./usr/lib/gcc-lib
 ./usr/lib/locate
 ./usr/lib/locate/src.db
 ./usr/lib/pkgconfig

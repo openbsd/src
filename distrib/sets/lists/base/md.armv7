@@ -5,11 +5,6 @@
 ./etc/firmware/run-rt2870
 ./etc/firmware/run-rt3071
 ./sbin/kbd
-./usr/lib/gcc-lib/arm-unknown-openbsd5.6
-./usr/lib/gcc-lib/arm-unknown-openbsd5.6/4.2.1
-./usr/lib/gcc-lib/arm-unknown-openbsd5.6/4.2.1/cc1
-./usr/lib/gcc-lib/arm-unknown-openbsd5.6/4.2.1/collect2
-./usr/lib/gcc-lib/arm-unknown-openbsd5.6/4.2.1/specs
 ./usr/lib/libc.so.77.2
 ./usr/lib/libcrypto.so.30.2
 ./usr/lib/libcurses.so.14.0

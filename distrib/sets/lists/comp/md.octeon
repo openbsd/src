@@ -650,6 +650,7 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
+./usr/lib/gcc-lib/mips64-unknown-openbsd5.6
 ./usr/lib/gcc-lib/mips64-unknown-openbsd5.6/4.2.1
 ./usr/lib/gcc-lib/mips64-unknown-openbsd5.6/4.2.1/cc1
 ./usr/lib/gcc-lib/mips64-unknown-openbsd5.6/4.2.1/cc1obj
