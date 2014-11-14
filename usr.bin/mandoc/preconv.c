@@ -1,4 +1,4 @@
-/*	$OpenBSD: preconv.c,v 1.2 2014/11/01 04:07:25 schwarze Exp $ */
+/*	$OpenBSD: preconv.c,v 1.3 2014/11/14 04:23:08 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,8 +28,7 @@ preconv_encode(struct buf *ib, size_t *ii, struct buf *ob, size_t *oi,
     int *filenc)
 {
 	size_t		 i;
-	const long	 one = 1L;
-	int		 state, be;
+	int		 state;
 	unsigned int	 accum;
 	unsigned char	 cu;
 
@@ -38,12 +37,6 @@ preconv_encode(struct buf *ib, size_t *ii, struct buf *ob, size_t *oi,
 
 	state = 0;
 	accum = 0U;
-	be = 0;
-
-	/* Quick test for big-endian value. */
-
-	if ( ! (*((const char *)(&one))))
-		be = 1;
 
 	for (i = *ii; i < ib->sz; i++) {
 		cu = ib->buf[i];
@@ -64,19 +57,6 @@ preconv_encode(struct buf *ib, size_t *ii, struct buf *ob, size_t *oi,
 
 			if (state)
 				continue;
-
-			/*
-			 * Accum is held in little-endian order as
-			 * stipulated by the UTF-8 sequence coding.  We
-			 * need to convert to a native big-endian if our
-			 * architecture requires it.
-			 */
-
-			if (be)
-				accum = (accum >> 24) |
-					((accum << 8) & 0x00FF0000) |
-					((accum >> 8) & 0x0000FF00) |
-					(accum << 24);
 
 			if (accum < 0x80)
 				ob->buf[(*oi)++] = accum;
