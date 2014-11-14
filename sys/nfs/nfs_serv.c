@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.98 2014/11/03 21:28:35 tedu Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.99 2014/11/14 23:01:44 tedu Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -386,7 +386,7 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	vrele(nd.ni_startdir);
 	pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 	vp = nd.ni_vp;
-	bzero((caddr_t)fhp, sizeof(nfh));
+	memset(fhp, 0, sizeof(nfh));
 	fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 	error = VFS_VPTOFH(vp, &fhp->fh_fid);
 	if (!error)
@@ -1046,7 +1046,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		}
 	}
 	if (!error) {
-		bzero((caddr_t)fhp, sizeof(nfh));
+		memset(fhp, 0, sizeof(nfh));
 		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 		error = VFS_VPTOFH(vp, &fhp->fh_fid);
 		if (!error)
@@ -1209,7 +1209,7 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 out:
 	vp = nd.ni_vp;
 	if (!error) {
-		bzero((caddr_t)fhp, sizeof(nfh));
+		memset(fhp, 0, sizeof(nfh));
 		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 		error = VFS_VPTOFH(vp, &fhp->fh_fid);
 		if (!error)
@@ -1715,7 +1715,7 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		nd.ni_cnd.cn_cred = cred;
 		error = vfs_lookup(&nd);
 		if (!error) {
-			bzero((caddr_t)fhp, sizeof(nfh));
+			memset(fhp, 0, sizeof(nfh));
 			fhp->fh_fsid = nd.ni_vp->v_mount->mnt_stat.f_fsid;
 			error = VFS_VPTOFH(nd.ni_vp, &fhp->fh_fid);
 			if (!error)
@@ -1842,7 +1842,7 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	error = VOP_MKDIR(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 	if (!error) {
 		vp = nd.ni_vp;
-		bzero((caddr_t)fhp, sizeof(nfh));
+		memset(fhp, 0, sizeof(nfh));
 		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 		error = VFS_VPTOFH(vp, &fhp->fh_fid);
 		if (!error)
@@ -2380,7 +2380,7 @@ again:
 			 */
 			if (VFS_VGET(vp->v_mount, dp->d_fileno, &nvp))
 				goto invalid;
-			bzero((caddr_t)nfhp, NFSX_V3FH);
+			memset(nfhp, 0, NFSX_V3FH);
 			nfhp->fh_fsid =
 				nvp->v_mount->mnt_stat.f_fsid;
 			if (VFS_VPTOFH(nvp, &nfhp->fh_fid)) {

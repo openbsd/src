@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.101 2014/09/08 06:24:13 jsg Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.102 2014/11/14 23:01:44 tedu Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -596,7 +596,7 @@ nfs_mount(struct mount *mp, const char *path, void *data,
 	error = copyinstr(args.hostname, hst, MNAMELEN-1, &len);
 	if (error)
 		return (error);
-	bzero(&hst[len], MNAMELEN - len);
+	memset(&hst[len], 0, MNAMELEN - len);
 	/* sockargs() call must be after above copyin() calls */
 	error = sockargs(&nam, args.addr, args.addrlen, MT_SONAME);
 	if (error)

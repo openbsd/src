@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.117 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.118 2014/11/14 23:01:44 tedu Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -734,7 +734,7 @@ nfsm_uiotombuf(struct mbuf **mp, struct uio *uiop, size_t len)
 			mb->m_next = mb2;
 			mb = mb2;
 		}
-		bzero(mb_offset(mb), pad);
+		memset(mb_offset(mb), 0, pad);
 		mb->m_len += pad;
 	}
 

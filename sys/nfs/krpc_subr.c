@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.22 2013/11/11 09:15:35 mpi Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.23 2014/11/14 23:01:44 tedu Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -305,7 +305,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	mhead->m_next = *data;
 	call = mtod(mhead, struct rpc_call *);
 	mhead->m_len = sizeof(*call);
-	bzero((caddr_t)call, sizeof(*call));
+	memset(call, 0, sizeof(*call));
 	/* rpc_call part */
 	xid = krpc_get_xid();
 	call->rp_xid = txdr_unsigned(xid);

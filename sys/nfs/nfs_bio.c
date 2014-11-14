@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.76 2014/07/08 17:19:26 deraadt Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.77 2014/11/14 23:01:44 tedu Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -592,7 +592,7 @@ nfs_doio(struct buf *bp, struct proc *p)
 				+ diff);
 			if (len > 0) {
 			    len = min(len, uiop->uio_resid);
-			    bzero((char *)bp->b_data + diff, len);
+			    memset((char *)bp->b_data + diff, 0, len);
 			    bp->b_validend = diff + len;
 			} else
 			    bp->b_validend = diff;

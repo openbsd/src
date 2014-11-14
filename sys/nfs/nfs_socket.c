@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.105 2014/04/18 13:35:31 kettenis Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.106 2014/11/14 23:01:44 tedu Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1503,7 +1503,7 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 		}
 		nfsm_adv(nfsm_rndup(len));
 		nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
-		bzero((caddr_t)&nd->nd_cr, sizeof (struct ucred));
+		memset(&nd->nd_cr, 0, sizeof (struct ucred));
 		nd->nd_cr.cr_ref = 1;
 		nd->nd_cr.cr_uid = fxdr_unsigned(uid_t, *tl++);
 		nd->nd_cr.cr_gid = fxdr_unsigned(gid_t, *tl++);
