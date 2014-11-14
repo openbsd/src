@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2014/11/06 10:48:52 bentley Exp $
+#	$OpenBSD: Makefile,v 1.20 2014/11/14 20:26:12 tedu Exp $
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
 PROG=	vi
@@ -26,7 +26,7 @@ SRCS=	cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	ex_global.c ex_init.c ex_join.c ex_map.c ex_mark.c ex_mkexrc.c \
 	ex_move.c ex_open.c ex_perl.c ex_preserve.c ex_print.c ex_put.c \
 	ex_quit.c ex_read.c ex_screen.c ex_script.c ex_set.c ex_shell.c \
-	ex_shift.c ex_source.c ex_stop.c ex_subst.c ex_tag.c ex_tcl.c \
+	ex_shift.c ex_source.c ex_stop.c ex_subst.c ex_tag.c \
 	ex_txt.c ex_undo.c ex_usage.c ex_util.c ex_version.c ex_visual.c \
 	ex_write.c ex_yank.c ex_z.c exf.c getc.c key.c line.c log.c main.c \
 	mark.c msg.c options.c options_f.c put.c recover.c screen.c \

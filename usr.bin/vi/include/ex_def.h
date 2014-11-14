@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_def.h,v 1.2 2001/01/29 01:58:47 niklas Exp $	*/
+/*	$OpenBSD: ex_def.h,v 1.3 2014/11/14 20:26:13 tedu Exp $	*/
 
 #define C_SCROLL 0
 #define C_BANG 1
@@ -62,19 +62,18 @@
 #define C_TAGPOP 59
 #define C_TAGPREV 60
 #define C_TAGTOP 61
-#define C_TCLCMD 62
-#define C_UNDO 63
-#define C_UNABBREVIATE 64
-#define C_UNMAP 65
-#define C_V 66
-#define C_VERSION 67
-#define C_VISUAL_EX 68
-#define C_VISUAL_VI 69
-#define C_VIUSAGE 70
-#define C_WRITE 71
-#define C_WN 72
-#define C_WQ 73
-#define C_XIT 74
-#define C_YANK 75
-#define C_Z 76
-#define C_SUBTILDE 77
+#define C_UNDO 62
+#define C_UNABBREVIATE 63
+#define C_UNMAP 64
+#define C_V 65
+#define C_VERSION 66
+#define C_VISUAL_EX 67
+#define C_VISUAL_VI 68
+#define C_VIUSAGE 69
+#define C_WRITE 70
+#define C_WN 71
+#define C_WQ 72
+#define C_XIT 73
+#define C_YANK 74
+#define C_Z 75
+#define C_SUBTILDE 76

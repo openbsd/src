@@ -188,7 +188,6 @@ EX COMMANDS:
       tagpop: return to the previous group of tags
      tagprev: move to the previous tag
       tagtop: discard all tags
-	 tcl: run the tcl interpreter with the command
 	undo: undo the most recent change
 unabbreviate: delete an abbreviation
        unmap: delete an input or command map

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cmd.c,v 1.7 2010/05/29 06:40:00 jmc Exp $	*/
+/*	$OpenBSD: ex_cmd.c,v 1.8 2014/11/14 20:26:13 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -370,12 +370,6 @@ EXCMDLIST const cmds[] = {
 	    "!",
 	    "tagt[op][!]",
 	    "discard all tags"},
-/* C_TCLCMD */
-	{"tcl",		ex_tcl,		E_ADDR2_ALL|E_ADDR_ZERO|
-					    E_ADDR_ZERODEF|E_SECURE,
-	    "s",
-	    "tc[l] cmd",
-	    "run the tcl interpreter with the command"},
 /* C_UNDO */
 	{"undo",	ex_undo,	E_AUTOPRINT,
 	    "",

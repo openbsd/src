@@ -1,4 +1,4 @@
-/*	$OpenBSD: gs.h,v 1.11 2013/12/01 20:22:34 krw Exp $	*/
+/*	$OpenBSD: gs.h,v 1.12 2014/11/14 20:26:12 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -64,7 +64,6 @@ struct _gs {
 	SCR	*ccl_sp;		/* Colon command-line screen. */
 
 	void	*perl_interp;		/* Perl interpreter. */
-	void	*tcl_interp;		/* Tcl_Interp *: Tcl interpreter. */
 
 	void	*cl_private;		/* Curses support private area. */
 	void	*ip_private;		/* IP support private area. */
