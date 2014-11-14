@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.287 2014/07/12 19:58:17 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.288 2014/11/14 15:03:11 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -205,6 +205,10 @@ void	unsetifgroup(const char *, int);
 void	setgroupattribs(char *, int, char *[]);
 int	printgroup(char *, int);
 void	setautoconf(const char *, int);
+void	settrunkport(const char *, int);
+void	unsettrunkport(const char *, int);
+void	settrunkproto(const char *, int);
+void	trunk_status(void);
 
 #ifndef SMALL
 void	carp_status(void);
@@ -240,10 +244,6 @@ void	setsppppeerflag(const char *, int);
 void	unsetsppppeerflag(const char *, int);
 void	sppp_status(void);
 void	sppp_printproto(const char *, struct sauthreq *);
-void	settrunkport(const char *, int);
-void	unsettrunkport(const char *, int);
-void	settrunkproto(const char *, int);
-void	trunk_status(void);
 void	setifpriority(const char *, int);
 void	setifpowersave(const char *, int);
 void	setifmetric(const char *, int);
@@ -337,6 +337,9 @@ const struct	cmd {
 	{ "-group",	NEXTARG,	0,		unsetifgroup },
 	{ "autoconf",	1,		0,		setautoconf },
 	{ "-autoconf",	-1,		0,		setautoconf },
+	{ "trunkport",	NEXTARG,	0,		settrunkport },
+	{ "-trunkport",	NEXTARG,	0,		unsettrunkport },
+	{ "trunkproto",	NEXTARG,	0,		settrunkproto },
 #ifdef INET6
 	{ "anycast",	IN6_IFF_ANYCAST,	0,	setia6flags },
 	{ "-anycast",	-IN6_IFF_ANYCAST,	0,	setia6flags },
@@ -397,9 +400,6 @@ const struct	cmd {
 	{ "timeslot",	NEXTARG,	0,		settimeslot },
 	{ "txpower",	NEXTARG,	0,		setiftxpower },
 	{ "-txpower",	1,		0,		setiftxpower },
-	{ "trunkport",	NEXTARG,	0,		settrunkport },
-	{ "-trunkport",	NEXTARG,	0,		unsettrunkport },
-	{ "trunkproto",	NEXTARG,	0,		settrunkproto },
 	{ "authproto",	NEXTARG,	0,		setspppproto },
 	{ "authname",	NEXTARG,	0,		setspppname },
 	{ "authkey",	NEXTARG,	0,		setspppkey },
@@ -2917,10 +2917,10 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	pppoe_status();
 	timeslot_status();
 	sppp_status();
-	trunk_status();
 	mpe_status();
 	pflow_status();
 #endif
+	trunk_status();
 	getifgroups();
 
 	(void) memset(&ifmr, 0, sizeof(ifmr));
@@ -3467,6 +3467,124 @@ unsetvlandev(const char *val, int d)
 
 	if (ioctl(s, SIOCSETVLAN, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETVLAN");
+}
+
+void
+settrunkport(const char *val, int d)
+{
+	struct trunk_reqport rp;
+
+	bzero(&rp, sizeof(rp));
+	strlcpy(rp.rp_ifname, name, sizeof(rp.rp_ifname));
+	strlcpy(rp.rp_portname, val, sizeof(rp.rp_portname));
+
+	if (ioctl(s, SIOCSTRUNKPORT, &rp))
+		err(1, "SIOCSTRUNKPORT");
+}
+
+void
+unsettrunkport(const char *val, int d)
+{
+	struct trunk_reqport rp;
+
+	bzero(&rp, sizeof(rp));
+	strlcpy(rp.rp_ifname, name, sizeof(rp.rp_ifname));
+	strlcpy(rp.rp_portname, val, sizeof(rp.rp_portname));
+
+	if (ioctl(s, SIOCSTRUNKDELPORT, &rp))
+		err(1, "SIOCSTRUNKDELPORT");
+}
+
+void
+settrunkproto(const char *val, int d)
+{
+	struct trunk_protos tpr[] = TRUNK_PROTOS;
+	struct trunk_reqall ra;
+	int i;
+
+	bzero(&ra, sizeof(ra));
+	ra.ra_proto = TRUNK_PROTO_MAX;
+
+	for (i = 0; i < (sizeof(tpr) / sizeof(tpr[0])); i++) {
+		if (strcmp(val, tpr[i].tpr_name) == 0) {
+			ra.ra_proto = tpr[i].tpr_proto;
+			break;
+		}
+	}
+	if (ra.ra_proto == TRUNK_PROTO_MAX)
+		errx(1, "Invalid trunk protocol: %s", val);
+
+	strlcpy(ra.ra_ifname, name, sizeof(ra.ra_ifname));
+	if (ioctl(s, SIOCSTRUNK, &ra) != 0)
+		err(1, "SIOCSTRUNK");
+}
+
+void
+trunk_status(void)
+{
+	struct trunk_protos tpr[] = TRUNK_PROTOS;
+	struct trunk_reqport rp, rpbuf[TRUNK_MAX_PORTS];
+	struct trunk_reqall ra;
+	struct lacp_opreq *lp;
+	const char *proto = "<unknown>";
+	int i, isport = 0;
+
+	bzero(&rp, sizeof(rp));
+	bzero(&ra, sizeof(ra));
+
+	strlcpy(rp.rp_ifname, name, sizeof(rp.rp_ifname));
+	strlcpy(rp.rp_portname, name, sizeof(rp.rp_portname));
+
+	if (ioctl(s, SIOCGTRUNKPORT, &rp) == 0)
+		isport = 1;
+
+	strlcpy(ra.ra_ifname, name, sizeof(ra.ra_ifname));
+	ra.ra_size = sizeof(rpbuf);
+	ra.ra_port = rpbuf;
+
+	if (ioctl(s, SIOCGTRUNK, &ra) == 0) {
+		lp = (struct lacp_opreq *)&ra.ra_lacpreq;
+
+		for (i = 0; i < (sizeof(tpr) / sizeof(tpr[0])); i++) {
+			if (ra.ra_proto == tpr[i].tpr_proto) {
+				proto = tpr[i].tpr_name;
+				break;
+			}
+		}
+
+		printf("\ttrunk: trunkproto %s", proto);
+		if (isport)
+			printf(" trunkdev %s", rp.rp_ifname);
+		putchar('\n');
+		if (ra.ra_proto == TRUNK_PROTO_LACP) {
+			char *act_mac = strdup(
+			    ether_ntoa((struct ether_addr*)lp->actor_mac));
+			if (act_mac == NULL)
+				err(1, "strdup");
+			printf("\ttrunk id: [(%04X,%s,%04X,%04X,%04X),\n"
+			    "\t\t (%04X,%s,%04X,%04X,%04X)]\n",
+			    lp->actor_prio, act_mac,
+			    lp->actor_key, lp->actor_portprio, lp->actor_portno,
+			    lp->partner_prio,
+			    ether_ntoa((struct ether_addr*)lp->partner_mac),
+			    lp->partner_key, lp->partner_portprio,
+			    lp->partner_portno);
+			free(act_mac);
+		}
+
+		for (i = 0; i < ra.ra_ports; i++) {
+			printf("\t\ttrunkport %s ", rpbuf[i].rp_portname);
+			printb_status(rpbuf[i].rp_flags, TRUNK_PORT_BITS);
+			putchar('\n');
+		}
+
+		if (showmediaflag) {
+			printf("\tsupported trunk protocols:\n");
+			for (i = 0; i < (sizeof(tpr) / sizeof(tpr[0])); i++)
+				printf("\t\ttrunkproto %s\n", tpr[i].tpr_name);
+		}
+	} else if (isport)
+		printf("\ttrunk: trunkdev %s\n", rp.rp_ifname);
 }
 
 #ifndef SMALL
@@ -4402,124 +4520,6 @@ sppp_status(void)
 	if (spa.flags & AUTHFLAG_NORECHALLENGE)
 		printf("norechallenge ");
 	putchar('\n');
-}
-
-void
-settrunkport(const char *val, int d)
-{
-	struct trunk_reqport rp;
-
-	bzero(&rp, sizeof(rp));
-	strlcpy(rp.rp_ifname, name, sizeof(rp.rp_ifname));
-	strlcpy(rp.rp_portname, val, sizeof(rp.rp_portname));
-
-	if (ioctl(s, SIOCSTRUNKPORT, &rp))
-		err(1, "SIOCSTRUNKPORT");
-}
-
-void
-unsettrunkport(const char *val, int d)
-{
-	struct trunk_reqport rp;
-
-	bzero(&rp, sizeof(rp));
-	strlcpy(rp.rp_ifname, name, sizeof(rp.rp_ifname));
-	strlcpy(rp.rp_portname, val, sizeof(rp.rp_portname));
-
-	if (ioctl(s, SIOCSTRUNKDELPORT, &rp))
-		err(1, "SIOCSTRUNKDELPORT");
-}
-
-void
-settrunkproto(const char *val, int d)
-{
-	struct trunk_protos tpr[] = TRUNK_PROTOS;
-	struct trunk_reqall ra;
-	int i;
-
-	bzero(&ra, sizeof(ra));
-	ra.ra_proto = TRUNK_PROTO_MAX;
-
-	for (i = 0; i < (sizeof(tpr) / sizeof(tpr[0])); i++) {
-		if (strcmp(val, tpr[i].tpr_name) == 0) {
-			ra.ra_proto = tpr[i].tpr_proto;
-			break;
-		}
-	}
-	if (ra.ra_proto == TRUNK_PROTO_MAX)
-		errx(1, "Invalid trunk protocol: %s", val);
-
-	strlcpy(ra.ra_ifname, name, sizeof(ra.ra_ifname));
-	if (ioctl(s, SIOCSTRUNK, &ra) != 0)
-		err(1, "SIOCSTRUNK");
-}
-
-void
-trunk_status(void)
-{
-	struct trunk_protos tpr[] = TRUNK_PROTOS;
-	struct trunk_reqport rp, rpbuf[TRUNK_MAX_PORTS];
-	struct trunk_reqall ra;
-	struct lacp_opreq *lp;
-	const char *proto = "<unknown>";
-	int i, isport = 0;
-
-	bzero(&rp, sizeof(rp));
-	bzero(&ra, sizeof(ra));
-
-	strlcpy(rp.rp_ifname, name, sizeof(rp.rp_ifname));
-	strlcpy(rp.rp_portname, name, sizeof(rp.rp_portname));
-
-	if (ioctl(s, SIOCGTRUNKPORT, &rp) == 0)
-		isport = 1;
-
-	strlcpy(ra.ra_ifname, name, sizeof(ra.ra_ifname));
-	ra.ra_size = sizeof(rpbuf);
-	ra.ra_port = rpbuf;
-
-	if (ioctl(s, SIOCGTRUNK, &ra) == 0) {
-		lp = (struct lacp_opreq *)&ra.ra_lacpreq;
-
-		for (i = 0; i < (sizeof(tpr) / sizeof(tpr[0])); i++) {
-			if (ra.ra_proto == tpr[i].tpr_proto) {
-				proto = tpr[i].tpr_name;
-				break;
-			}
-		}
-
-		printf("\ttrunk: trunkproto %s", proto);
-		if (isport)
-			printf(" trunkdev %s", rp.rp_ifname);
-		putchar('\n');
-		if (ra.ra_proto == TRUNK_PROTO_LACP) {
-			char *act_mac = strdup(
-			    ether_ntoa((struct ether_addr*)lp->actor_mac));
-			if (act_mac == NULL)
-				err(1, "strdup");
-			printf("\ttrunk id: [(%04X,%s,%04X,%04X,%04X),\n"
-			    "\t\t (%04X,%s,%04X,%04X,%04X)]\n",
-			    lp->actor_prio, act_mac,
-			    lp->actor_key, lp->actor_portprio, lp->actor_portno,
-			    lp->partner_prio,
-			    ether_ntoa((struct ether_addr*)lp->partner_mac),
-			    lp->partner_key, lp->partner_portprio,
-			    lp->partner_portno);
-			free(act_mac);
-		}
-
-		for (i = 0; i < ra.ra_ports; i++) {
-			printf("\t\ttrunkport %s ", rpbuf[i].rp_portname);
-			printb_status(rpbuf[i].rp_flags, TRUNK_PORT_BITS);
-			putchar('\n');
-		}
-
-		if (showmediaflag) {
-			printf("\tsupported trunk protocols:\n");
-			for (i = 0; i < (sizeof(tpr) / sizeof(tpr[0])); i++)
-				printf("\t\ttrunkproto %s\n", tpr[i].tpr_name);
-		}
-	} else if (isport)
-		printf("\ttrunk: trunkdev %s\n", rp.rp_ifname);
 }
 
 void
