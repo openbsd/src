@@ -1,4 +1,4 @@
-/*      $OpenBSD: agentx.c,v 1.6 2014/10/12 13:08:47 blambert Exp $    */
+/*      $OpenBSD: agentx.c,v 1.7 2014/11/14 16:18:43 reyk Exp $    */
 /*
  * Copyright (c) 2013,2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -953,21 +953,20 @@ snmp_agentx_dump_hdr(struct agentx_hdr *hdr)
 		return;
 	}
 
-	printf("Version: %i\n", hdr->version);
-	printf("Type: %s\n", snmp_agentx_type2name(hdr->type));
-	printf("Flags: %i\n", hdr->flags);
-	printf("Reserved: %i\n", hdr->reserved);
-	printf("Session ID: %i\n", hdr->sessionid);
-	printf("Transaction ID: %i\n", hdr->transactid);
-	printf("Packet ID: %i\n", hdr->packetid);
-	printf("Data Length: %i\n", hdr->length);
+	fprintf(stderr, 
+	    "agentx: version %d type %s flags %d reserved %d"
+	    " sessionid %d transactid %d packetid %d length %d",
+	    hdr->version, snmp_agentx_type2name(hdr->type), hdr->flags,
+	    hdr->reserved, hdr->sessionid, hdr->transactid,
+	    hdr->packetid, hdr->length);
 
 	if (hdr->type == AGENTX_RESPONSE) {
 		struct agentx_response *r = (struct agentx_response *)hdr;
 
-		printf("SysUptime: %i\n", r->data.sysuptime);
-		printf("Error: %i\n", r->data.error);
-		printf("Index: %i\n", r->data.index);
+		fprintf(stderr, " sysuptime %d error %d index %d",
+		    r->data.sysuptime, r->data.error, r->data.index);
 	}
+
+	fprintf(stderr, "\n");
 }
 #endif
