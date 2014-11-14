@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.288 2014/11/14 15:03:11 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.289 2014/11/14 15:09:29 tedu Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1082,6 +1082,9 @@ list_cloners(void)
 	 */
 	if (ifcr.ifcr_count > ifcr.ifcr_total)
 		ifcr.ifcr_count = ifcr.ifcr_total;
+
+	qsort(buf, ifcr.ifcr_count, IFNAMSIZ,
+	    (int(*)(const void *, const void *))strcmp);
 
 	for (cp = buf, idx = 0; idx < ifcr.ifcr_count; idx++, cp += IFNAMSIZ) {
 		if (idx > 0)
