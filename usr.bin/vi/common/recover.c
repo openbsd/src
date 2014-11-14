@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.18 2014/11/12 16:29:04 millert Exp $	*/
+/*	$OpenBSD: recover.c,v 1.19 2014/11/14 20:27:03 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +36,6 @@
 #include <unistd.h>
 
 #include "common.h"
-#include "pathnames.h"
 
 /*
  * Recovery code.

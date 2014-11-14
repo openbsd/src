@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2014/11/14 20:27:03 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +28,6 @@
 
 #include "common.h"
 #include "../vi/vi.h"
-#include "pathnames.h"
 
 #ifdef DEBUG
 static void	 attach(GS *);

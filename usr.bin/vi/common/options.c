@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.17 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: options.c,v 1.18 2014/11/14 20:27:03 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -20,6 +20,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
