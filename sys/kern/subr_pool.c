@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.165 2014/11/10 18:55:43 kettenis Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.166 2014/11/14 02:02:42 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -105,7 +105,7 @@ int	pool_debug = 0;
 #define POOL_INPGHDR(pp) ((pp)->pr_phoffset != 0)
 
 struct pool_item_header *
-	 pool_p_alloc(struct pool *, int);
+	 pool_p_alloc(struct pool *, int, int *);
 void	 pool_p_insert(struct pool *, struct pool_item_header *);
 void	 pool_p_remove(struct pool *, struct pool_item_header *);
 void	 pool_p_free(struct pool *, struct pool_item_header *);
@@ -538,9 +538,12 @@ pool_do_get(struct pool *pp, int flags)
 	 */
 	pp->pr_nout++;
 
+again:
 	if (pp->pr_curpage == NULL) {
+		int slowdown = 0;
+
 		mtx_leave(&pp->pr_mtx);
-		ph = pool_p_alloc(pp, flags);
+		ph = pool_p_alloc(pp, flags, &slowdown);
 		mtx_enter(&pp->pr_mtx);
 
 		if (ph == NULL) {
@@ -549,6 +552,13 @@ pool_do_get(struct pool *pp, int flags)
 		}
 
 		pool_p_insert(pp, ph);
+
+		if (slowdown && ISSET(flags, PR_WAITOK)) {
+			mtx_leave(&pp->pr_mtx);
+			yield();
+			mtx_enter(&pp->pr_mtx);
+			goto again;
+		}
 	}
 
 	ph = pp->pr_curpage;
@@ -689,11 +699,12 @@ pool_prime(struct pool *pp, int n)
 	struct pool_pagelist pl = LIST_HEAD_INITIALIZER(pl);
 	struct pool_item_header *ph;
 	int newpages;
+	int slowdown = 0;
 
 	newpages = roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
 	while (newpages-- > 0) {
-		ph = pool_p_alloc(pp, PR_NOWAIT);
+		ph = pool_p_alloc(pp, PR_NOWAIT, &slowdown);
 		if (ph == NULL)
 			break;
 
@@ -711,22 +722,19 @@ pool_prime(struct pool *pp, int n)
 }
 
 struct pool_item_header *
-pool_p_alloc(struct pool *pp, int flags)
+pool_p_alloc(struct pool *pp, int flags, int *slowdown)
 {
 	struct pool_item_header *ph;
 	struct pool_item *pi;
 	caddr_t addr;
-	int n, slowdown = 0;
+	int n; 
 
 	MUTEX_ASSERT_UNLOCKED(&pp->pr_mtx);
 	KASSERT(pp->pr_size >= sizeof(*pi));
 
-	addr = pool_allocator_alloc(pp, flags, &slowdown);
+	addr = pool_allocator_alloc(pp, flags, slowdown);
 	if (addr == NULL)
 		return (NULL);
-
-	if (slowdown && ISSET(flags, PR_WAITOK))
-		yield();
 
 	if (POOL_INPGHDR(pp))
 		ph = (struct pool_item_header *)(addr + pp->pr_phoffset);
