@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1746 2014/10/08 07:41:27 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1747 2014/11/14 11:55:09 mpi Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3036,6 +3036,11 @@
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_SMB	0x0f12		/* Baytrail SMBus */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_SATA_1	0x0f20		/* Baytrail SATA */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_SATA_2	0x0f21		/* Baytrail SATA */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_AHCI	0x0f23		/* Baytrail AHCI */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_XHCI	0x0f35		/* Baytrail xHCI */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_PCIE_1	0x0f48		/* Baytrail PCIE */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_PCIE_2	0x0f4a		/* Baytrail PCIE */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_PCIE_3	0x0f4e		/* Baytrail PCIE */
 #define	PCI_PRODUCT_INTEL_82542	0x1000		/* 82542 */
 #define	PCI_PRODUCT_INTEL_82543GC_FIBER	0x1001		/* 82543GC */
 #define	PCI_PRODUCT_INTEL_MODEM56	0x1002		/* 56k Modem */
