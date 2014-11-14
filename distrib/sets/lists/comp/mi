@@ -1,4 +1,3 @@
-./usr/include/openssl/gost.h
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1149,6 +1148,7 @@
 ./usr/include/openssl/engine.h
 ./usr/include/openssl/err.h
 ./usr/include/openssl/evp.h
+./usr/include/openssl/gost.h
 ./usr/include/openssl/hmac.h
 ./usr/include/openssl/idea.h
 ./usr/include/openssl/krb5_asn.h
@@ -1823,6 +1823,7 @@
 ./usr/share/man/man2/revoke.2
 ./usr/share/man/man2/rmdir.2
 ./usr/share/man/man2/sbrk.2
+./usr/share/man/man2/sched_yield.2
 ./usr/share/man/man2/select.2
 ./usr/share/man/man2/semctl.2
 ./usr/share/man/man2/semget.2
@@ -5926,10 +5927,6 @@
 ./usr/share/man/man3/ypprot_err.3
 ./usr/share/man/man3/zlibCompileFlags.3
 ./usr/share/man/man3/zlibVersion.3
-./usr/share/man/man4/luna88k/pcexmem.4
-./usr/share/man/man4/qlw.4
-./usr/share/man/man4/xhci.4
-./usr/share/man/man9
 ./usr/share/man/man9/FREF.9
 ./usr/share/man/man9/FRELE.9
 ./usr/share/man/man9/KASSERT.9

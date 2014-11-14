@@ -536,9 +536,6 @@
 ./usr/share/man/man1/zless.1
 ./usr/share/man/man1/zmore.1
 ./usr/share/man/man1/znew.1
-./usr/share/man/man2
-./usr/share/man/man3
-./usr/share/man/man3p
 ./usr/share/man/man3p/AnyDBM_File.3p
 ./usr/share/man/man3p/App::Cpan.3p
 ./usr/share/man/man3p/App::Prove.3p
@@ -1587,6 +1584,7 @@
 ./usr/share/man/man4/luna88k/le.4
 ./usr/share/man/man4/luna88k/mem.4
 ./usr/share/man/man4/luna88k/pcexio.4
+./usr/share/man/man4/luna88k/pcexmem.4
 ./usr/share/man/man4/luna88k/spc.4
 ./usr/share/man/man4/luphy.4
 ./usr/share/man/man4/lxtphy.4
@@ -1720,6 +1718,7 @@
 ./usr/share/man/man4/pwdog.4
 ./usr/share/man/man4/qla.4
 ./usr/share/man/man4/qle.4
+./usr/share/man/man4/qlw.4
 ./usr/share/man/man4/qsphy.4
 ./usr/share/man/man4/radeondrm.4
 ./usr/share/man/man4/radio.4
@@ -2144,6 +2143,7 @@
 ./usr/share/man/man4/xe.4
 ./usr/share/man/man4/xf86.4
 ./usr/share/man/man4/xge.4
+./usr/share/man/man4/xhci.4
 ./usr/share/man/man4/xl.4
 ./usr/share/man/man4/xmphy.4
 ./usr/share/man/man4/yds.4
