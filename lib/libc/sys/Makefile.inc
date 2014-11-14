@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.122 2014/08/31 04:02:08 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.123 2014/11/14 00:24:28 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -212,7 +212,7 @@ MAN+=	__get_tcb.2 __thrsigdivert.2 __thrsleep.2 _exit.2 accept.2 \
 	msgget.2 msgrcv.2 msgsnd.2 msync.2 munmap.2 nanosleep.2 \
 	nfssvc.2 open.2 pathconf.2 pipe.2 poll.2 profil.2 \
 	ptrace.2 quotactl.2 read.2 readlink.2 reboot.2 recv.2 \
-	rename.2 revoke.2 rmdir.2 select.2 semctl.2 semget.2 \
+	rename.2 revoke.2 rmdir.2 sched_yield.2 select.2 semctl.2 semget.2 \
 	semop.2 send.2 setgroups.2 setpgid.2 setregid.2 \
 	setresuid.2 setreuid.2 setsid.2 sendsyslog.2 setuid.2 shmat.2 \
 	shmctl.2 shmget.2 shutdown.2 sigaction.2 sigaltstack.2 sigpending.2 \
