@@ -1,24 +1,53 @@
-dnl	$OpenBSD: prep,v 1.4 2014/05/01 11:48:47 jasper Exp $
+dnl	$OpenBSD: prep,v 1.5 2014/11/14 06:12:36 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
-At the moment the only way to boot the OpenBSD install is to copy the
-miniroot for your board "miniroot-{am335x,beagle,imx,panda,sunxi}-{:--:}OSrev.fs"
-image to an sdcard.
+OpenBSD can be installed onto a disk by copying the miniroot for your
+board "miniroot-{am335x,beagle,imx,panda,sunxi}-{:--:}OSrev.fs"
+image to an SD card or by booting the ramdisk kernel over the network
+using a TFTP server.
 
-As a result you need another machine to plug the sdcard in. Any
-machine type will do, as long as it supports sdcard storage devices.
-Under OpenBSD, it will appear as a ``sd'' device, for example sd1.
+Booting from an SD card:
 
-Use the dd(1) utility to copy the miniroot to the hard drive.
-The command would likely be, under OpenBSD:
-	dd if=miniroot-beagle-{:--:}OSrev.fs of=/dev/rsd1c
+  To use the miniroot image you will need another machine to plug the
+  SD card in to. Any machine type will do, as long as it supports SD card
+  storage devices.  Under OpenBSD, it will appear as a ``sd'' device, for
+  example sd1.
+  
+  Use the dd(1) utility to copy the miniroot to the hard drive.
+  The command would likely be, under OpenBSD:
+  	dd if=miniroot-beagle-{:--:}OSrev.fs of=/dev/rsd1c
+  
+  When you have connected the BeagleBoard to you computer, a command such
+  as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
+  should connect you to the board's console.
+  
+  Note: By default the BeagleBone Black will boot from the internal emmc.
+  In order to make it boot from the micro SD card, you will need to hold down
+  the small button located by the SD card slot while powering on the board.
+  Once you have done this the board will boot from the SD card as the default.
 
-When you have connected the BeagleBoard to you computer, a command such
-as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
-should connect you to the board's console.
+Booting over the network:
 
-Note: By default the BeagleBone Black will boot from the internal emmc.
-In order to make it boot from the micro sdcard, you will need to hold down
-the small button located by the sdcard slot while powering on the board.
-Once you have done this the board will boot from the sdcard as the default.
+  To interrupt the U-Boot boot process press a key after the banner is
+  displayed on the serial console.
+
+  Then the U-Boot image of the ramdisk kernel can be loaded via TFTP.
+
+  Configure the local IP address via DHCP:
+
+      U-Boot# setenv autoload no
+      U-Boot# dhcp
+
+  Or with a static address:
+
+      U-Boot# setenv ipaddr 192.168.1.2
+
+  Set the IP address of the TFTP server:
+
+      U-Boot# setenv serverip 192.168.1.1
+
+  To load an OMAP ramdisk image via TFTP:
+
+      U-Boot# tftpboot bsd.rd.OMAP.umg
+      U-Boot# bootm
