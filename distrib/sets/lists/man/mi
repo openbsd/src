@@ -1110,6 +1110,9 @@
 ./usr/share/man/man3p/Unicode::UCD.3p
 ./usr/share/man/man3p/User::grent.3p
 ./usr/share/man/man3p/User::pwent.3p
+./usr/share/man/man3p/XS::APItest.3p
+./usr/share/man/man3p/XS::Typemap.3p
+./usr/share/man/man3p/XSLoader.3p
 ./usr/share/man/man3p/arybase.3p
 ./usr/share/man/man3p/attributes.3p
 ./usr/share/man/man3p/autodie.3p

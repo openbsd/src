@@ -3006,9 +3006,6 @@
 ./usr/share/man/man1/help.1
 ./usr/share/man/man1/man.1
 ./usr/share/man/man1/pkg_add.1
-./usr/share/man/man3p/XS::APItest.3p
-./usr/share/man/man3p/XS::Typemap.3p
-./usr/share/man/man3p/XSLoader.3p
 ./usr/share/man/man7
 ./usr/share/man/man7/packages.7
 ./usr/share/man/man8
