@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.145 2014/10/10 05:43:35 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.146 2014/11/14 15:07:09 henning Exp $
 
 machine		amd64
 maxusers	4
@@ -274,6 +274,7 @@ vioscsi*	at virtio?		# Virtio SCSI device
 
 pseudo-device	loop 1
 pseudo-device	vlan
+pseudo-device	trunk
 pseudo-device	bpfilter 1
 pseudo-device	rd 1
 pseudo-device	wsmux 2
