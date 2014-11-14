@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.213 2014/11/03 21:28:35 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.214 2014/11/14 23:26:48 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -232,8 +232,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	/*
 	 * Allocate and initialize the file system.
 	 */
-	mp = (struct mount *)malloc((u_long)sizeof(struct mount),
-		M_MOUNT, M_WAITOK|M_ZERO);
+	mp = malloc(sizeof(*mp), M_MOUNT, M_WAITOK|M_ZERO);
 	(void) vfs_busy(mp, VB_READ|VB_NOWAIT);
 	mp->mnt_op = vfsp->vfc_vfsops;
 	mp->mnt_vfc = vfsp;
@@ -304,7 +303,7 @@ update:
 	} else {
 		mp->mnt_vnodecovered->v_mountedhere = NULL;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT, sizeof(struct mount));
+		free(mp, M_MOUNT, sizeof(*mp));
 		vput(vp);
 	}
 	return (error);
@@ -454,7 +453,7 @@ dounmount(struct mount *mp, int flags, struct proc *p, struct vnode *olddp)
 		panic("unmount: dangling vnode");
 
 	vfs_unbusy(mp);
-	free(mp, M_MOUNT, sizeof(struct mount));
+	free(mp, M_MOUNT, sizeof(*mp));
 
 	return (0);
 }

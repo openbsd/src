@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.32 2014/11/08 13:36:51 jasper Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.33 2014/11/14 23:26:48 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -196,7 +196,7 @@ sensor_task_register(void *arg, void (*func)(void *), unsigned int period)
 	    (sensors_taskq = taskq_create("sensors", 1, IPL_HIGH)) == NULL)
 		sensors_taskq = systq;
 
-	st = malloc(sizeof(struct sensor_task), M_DEVBUF, M_NOWAIT);
+	st = malloc(sizeof(*st), M_DEVBUF, M_NOWAIT);
 	if (st == NULL)
 		return (NULL);
 
@@ -247,7 +247,7 @@ sensor_task_work(void *xst, void *arg)
 	rw_exit_write(&st->lock);
 
 	if (period == 0)
-		free(st, M_DEVBUF, sizeof(struct sensor_task));
+		free(st, M_DEVBUF, sizeof(*st));
 	else 
 		timeout_add_sec(&st->timeout, period);
 }

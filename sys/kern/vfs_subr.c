@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.220 2014/11/03 03:08:00 deraadt Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.221 2014/11/14 23:26:48 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 			break;
 	if (vfsp == NULL)
 		return (ENODEV);
-	mp = malloc(sizeof(struct mount), M_MOUNT, M_WAITOK|M_ZERO);
+	mp = malloc(sizeof(*mp), M_MOUNT, M_WAITOK|M_ZERO);
 	(void)vfs_busy(mp, VB_READ|VB_NOWAIT);
 	LIST_INIT(&mp->mnt_vnodelist);
 	mp->mnt_vfc = vfsp;
