@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.142 2014/09/27 06:07:01 jsg Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.143 2014/11/14 07:03:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -937,6 +937,10 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 	    (iicprobew(0x07) & 0xffff) == 0x0a00 &&
 	    (iicprobew(0x00) & 0x001f) == 0x001f) {
 		name = "cat34ts02c";
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x1b09 &&
+	    (iicprobew(0x07) & 0xffff) == 0x2200 &&
+	    (iicprobew(0x00) == 0x007f)) {
+		name = "cat34ts04";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x00b3 &&
 	    (iicprobew(0x07) & 0xffff) == 0x2903 &&
 	    (iicprobew(0x00) == 0x004f)) {
@@ -953,6 +957,10 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 	    (iicprobew(0x07) & 0xffff) == 0x3001 &&
 	    (iicprobew(0x00) == 0x006f)) {
 		name = "ts3001gb2";
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x00b3 &&
+	    (iicprobew(0x07) & 0xffff) == 0x2214 &&
+	    (iicprobew(0x00) == 0x00ff)) {
+		name = "tse2004gb2";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x001f &&
 	    (iicprobew(0x07) & 0xffff) == 0x8201 &&
 	    (iicprobew(0x00) & 0xff00) == 0x0000) {

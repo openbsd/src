@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdtemp.c,v 1.14 2014/09/27 06:07:01 jsg Exp $	*/
+/*	$OpenBSD: sdtemp.c,v 1.15 2014/11/14 07:03:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Theo de Raadt
@@ -74,10 +74,12 @@ sdtemp_match(struct device *parent, void *match, void *aux)
 	    strcmp(ia->ia_name, "ts3000gb0") == 0 ||
 	    strcmp(ia->ia_name, "ts3000gb2") == 0 ||
 	    strcmp(ia->ia_name, "ts3001gb2") == 0 ||
+	    strcmp(ia->ia_name, "tse2004gb2") == 0 ||
 	    strcmp(ia->ia_name, "at30ts00") == 0 ||
 	    strcmp(ia->ia_name, "at30tse004") == 0 ||
 	    strcmp(ia->ia_name, "cat34ts02") == 0 ||
 	    strcmp(ia->ia_name, "cat34ts02c") == 0 ||
+	    strcmp(ia->ia_name, "cat34ts04") == 0 ||
 	    strcmp(ia->ia_name, "gt30ts00") == 0 ||
 	    strcmp(ia->ia_name, "gt34ts02") == 0)
 		return (1);
