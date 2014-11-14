@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2014/07/08 19:00:12 yasuoka Exp $ */
+/*	$OpenBSD: parse.y,v 1.13 2014/11/14 03:20:37 doug Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -61,7 +61,9 @@ struct file	*pushfile(const char *);
 int		 popfile(void);
 int		 yyparse(void);
 int		 yylex(void);
-int		 yyerror(const char *, ...);
+int		 yyerror(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 lgetc(int);

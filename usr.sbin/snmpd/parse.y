@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.32 2014/04/25 06:57:11 blambert Exp $	*/
+/*	$OpenBSD: parse.y,v 1.33 2014/11/14 03:20:37 doug Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -69,7 +69,9 @@ int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
 int		 yyparse(void);
 int		 yylex(void);
-int		 yyerror(const char *, ...);
+int		 yyerror(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 lgetc(int);

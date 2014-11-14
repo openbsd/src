@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.146 2014/07/09 12:44:54 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.147 2014/11/14 03:20:37 doug Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -75,7 +75,8 @@ int		 lgetc(int);
 int		 lungetc(int);
 int		 findeol(void);
 int		 yyerror(const char *, ...)
-    __attribute__ ((format (printf, 1, 2)));
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
