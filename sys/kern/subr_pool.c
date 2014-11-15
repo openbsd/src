@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.166 2014/11/14 02:02:42 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.167 2014/11/15 06:55:32 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -111,7 +111,7 @@ void	 pool_p_remove(struct pool *, struct pool_item_header *);
 void	 pool_p_free(struct pool *, struct pool_item_header *);
 
 void	 pool_update_curpage(struct pool *);
-void	*pool_do_get(struct pool *, int);
+void	*pool_do_get(struct pool *, int, int *);
 int	 pool_chk_page(struct pool *, struct pool_item_header *, int);
 int	 pool_chk(struct pool *);
 void	 pool_get_done(void *, void *);
@@ -416,6 +416,7 @@ void *
 pool_get(struct pool *pp, int flags)
 {
 	void *v = NULL;
+	int slowdown = 0;
 
 	KASSERT(flags & (PR_WAITOK | PR_NOWAIT));
 
@@ -424,11 +425,14 @@ pool_get(struct pool *pp, int flags)
 	if (pp->pr_nout >= pp->pr_hardlimit) {
 		if (ISSET(flags, PR_NOWAIT|PR_LIMITFAIL))
 			goto fail;
-	} else if ((v = pool_do_get(pp, flags)) == NULL) {
+	} else if ((v = pool_do_get(pp, flags, &slowdown)) == NULL) {
 		if (ISSET(flags, PR_NOWAIT))
 			goto fail;
 	}
 	mtx_leave(&pp->pr_mtx);
+
+	if (slowdown && ISSET(flags, PR_WAITOK))
+		yield();
 
 	if (v == NULL) {
 		struct pool_get_memory mem =
@@ -497,11 +501,13 @@ pool_runqueue(struct pool *pp, int flags)
 		mtx_enter(&pp->pr_mtx);
 		pr = TAILQ_FIRST(&prl);
 		while (pr != NULL) {
+			int slowdown = 0;
+
 			if (pp->pr_nout >= pp->pr_hardlimit)
 				break;
 
-			pr->pr_item = pool_do_get(pp, flags);
-			if (pr->pr_item == NULL)
+			pr->pr_item = pool_do_get(pp, flags, &slowdown);
+			if (pr->pr_item == NULL) /* || slowdown ? */
 				break;
 
 			pr = TAILQ_NEXT(pr, pr_entry);
@@ -525,7 +531,7 @@ pool_runqueue(struct pool *pp, int flags)
 }
 
 void *
-pool_do_get(struct pool *pp, int flags)
+pool_do_get(struct pool *pp, int flags, int *slowdown)
 {
 	struct pool_item *pi;
 	struct pool_item_header *ph;
@@ -538,12 +544,9 @@ pool_do_get(struct pool *pp, int flags)
 	 */
 	pp->pr_nout++;
 
-again:
 	if (pp->pr_curpage == NULL) {
-		int slowdown = 0;
-
 		mtx_leave(&pp->pr_mtx);
-		ph = pool_p_alloc(pp, flags, &slowdown);
+		ph = pool_p_alloc(pp, flags, slowdown);
 		mtx_enter(&pp->pr_mtx);
 
 		if (ph == NULL) {
@@ -552,13 +555,6 @@ again:
 		}
 
 		pool_p_insert(pp, ph);
-
-		if (slowdown && ISSET(flags, PR_WAITOK)) {
-			mtx_leave(&pp->pr_mtx);
-			yield();
-			mtx_enter(&pp->pr_mtx);
-			goto again;
-		}
 	}
 
 	ph = pp->pr_curpage;
@@ -699,13 +695,14 @@ pool_prime(struct pool *pp, int n)
 	struct pool_pagelist pl = LIST_HEAD_INITIALIZER(pl);
 	struct pool_item_header *ph;
 	int newpages;
-	int slowdown = 0;
 
 	newpages = roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
 	while (newpages-- > 0) {
+		int slowdown = 0;
+
 		ph = pool_p_alloc(pp, PR_NOWAIT, &slowdown);
-		if (ph == NULL)
+		if (ph == NULL) /* or slowdown? */
 			break;
 
 		LIST_INSERT_HEAD(&pl, ph, ph_pagelist);
