@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.3 2014/08/19 10:01:50 uebayasi Exp $ */
+/*	$OpenBSD: boot.c,v 1.4 2014/11/15 02:14:10 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -51,7 +51,7 @@
 #include "stdlib.h"
 #include "dl_prebind.h"
 
-#include "../../lib/csu/common_elf/os-note-elf.h"
+#include "../../lib/csu/os-note-elf.h"
 
 /*
  * Local decls.
