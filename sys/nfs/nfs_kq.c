@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.21 2014/08/06 19:31:30 guenther Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.22 2014/11/15 00:03:12 tedu Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -203,7 +203,7 @@ filt_nfsdetach(struct knote *kn)
 			} else {
 				/* last user, g/c */
 				SLIST_REMOVE(&kevlist, ke, kevq, kev_link);
-				free(ke, M_KEVENT, 0);
+				free(ke, M_KEVENT, sizeof(*ke));
 			}
 			break;
 		}
@@ -317,7 +317,7 @@ nfs_kqfilter(void *v)
 		ke->usecount++;
 	} else {
 		/* need a new one */
-		ke = malloc(sizeof(struct kevq), M_KEVENT, M_WAITOK);
+		ke = malloc(sizeof(*ke), M_KEVENT, M_WAITOK);
 		ke->vp = vp;
 		ke->usecount = 1;
 		ke->flags = 0;

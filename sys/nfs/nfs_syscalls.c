@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.97 2014/07/12 18:43:52 tedu Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.98 2014/11/15 00:03:12 tedu Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -271,7 +271,7 @@ nfssvc_addsock(struct file *fp, struct mbuf *mynam)
 	if (tslp)
 		slp = tslp;
 	else {
-		slp = malloc(sizeof(struct nfssvc_sock), M_NFSSVC,
+		slp = malloc(sizeof(*slp), M_NFSSVC,
 		    M_WAITOK|M_ZERO);
 		TAILQ_INSERT_TAIL(&nfssvc_sockhead, slp, ns_chain);
 	}
@@ -456,7 +456,7 @@ loop:
 done:
 	TAILQ_REMOVE(&nfsd_head, nfsd, nfsd_chain);
 	splx(s);
-	free((caddr_t)nfsd, M_NFSD, 0);
+	free(nfsd, M_NFSD, sizeof(*nfsd));
 	if (--nfs_numnfsd == 0)
 		nfsrv_init(1);	/* Reinitialize everything */
 	return (error);
@@ -506,7 +506,7 @@ nfsrv_slpderef(struct nfssvc_sock *slp)
 {
 	if (--(slp->ns_sref) == 0 && (slp->ns_flag & SLP_VALID) == 0) {
 		TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
-		free((caddr_t)slp, M_NFSSVC, 0);
+		free(slp, M_NFSSVC, sizeof(*slp));
 	}
 }
 
@@ -530,7 +530,7 @@ nfsrv_init(int terminating)
 			if (slp->ns_flag & SLP_VALID)
 				nfsrv_zapsock(slp);
 			TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
-			free((caddr_t)slp, M_NFSSVC, 0);
+			free(slp, M_NFSSVC, sizeof(*slp));
 		}
 		nfsrv_cleancache();	/* And clear out server cache */
 	}
@@ -545,7 +545,7 @@ nfsrv_init(int terminating)
 	TAILQ_INIT(&nfsd_head);
 	nfsd_head_flag &= ~NFSD_CHECKSLP;
 
-	nfs_udpsock =  malloc(sizeof(struct nfssvc_sock), M_NFSSVC,
+	nfs_udpsock =  malloc(sizeof(*nfs_udpsock), M_NFSSVC,
 	    M_WAITOK|M_ZERO);
 	TAILQ_INSERT_HEAD(&nfssvc_sockhead, nfs_udpsock, ns_chain);
 
