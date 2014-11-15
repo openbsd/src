@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgrcv.2,v 1.15 2014/02/12 16:46:29 schwarze Exp $
+.\"	$OpenBSD: msgrcv.2,v 1.16 2014/11/15 22:19:53 guenther Exp $
 .\"	$NetBSD: msgrcv.2,v 1.2 1997/03/27 08:20:37 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -30,16 +30,14 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd $Mdocdate: February 12 2014 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt MSGRCV 2
 .Os
 .Sh NAME
 .Nm msgrcv
 .Nd receive a message from a message queue
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/ipc.h>
-.Fd #include <sys/msg.h>
+.In sys/msg.h
 .Ft int
 .Fn msgrcv "int msqid" "void *msgp" "size_t msgsz" "long msgtyp" "int msgflg"
 .Sh DESCRIPTION
