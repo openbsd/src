@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2014/11/15 01:40:07 guenther Exp $
+#	$OpenBSD: Makefile,v 1.20 2014/11/15 21:59:29 guenther Exp $
 
 OBJS=		crt0.o gcrt0.o
 OBJS+=		crtbegin.o crtend.o
@@ -23,14 +23,6 @@ CFLAGS+=	-fpie
 # entries?
 .if ${MACHINE_ARCH} == "powerpc"
 CFLAGS+=	-fpie
-.endif
-
-# Override sparc64 default of -fPIE
-# XXX Why do we need to compile the csu bits that are linked into the
-# *executable* with -fPIC and not just the default of -fPIE?  The
-# bits for shared libraries are handled below.
-.if ${MACHINE_ARCH} == "sparc64"
-CFLAGS+=	-fPIC
 .endif
 
 .ifdef NOPIC
