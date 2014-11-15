@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.329 2014/11/04 04:03:10 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.330 2014/11/15 00:12:52 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -418,7 +418,9 @@ main(int argc, char *argv[])
 			path_dhclient_conf = optarg;
 			break;
 		case 'd':
-			no_daemon = 1;
+			if (log_perror == 0)
+				usage();
+			no_daemon = log_perror = 1;
 			break;
 		case 'i':
 			ignore_list = optarg;
@@ -440,7 +442,9 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'q':
-			log_perror = 0;
+			if (no_daemon == 1)
+				usage();
+			no_daemon = log_perror = 0;
 			break;
 		case 'u':
 			unknown_ok = 0;
@@ -616,7 +620,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-dqu] [-c file] [-i options] [-L file] [-l file] "
+	    "usage: %s [-d | -q] [-u] [-c file] [-i options] [-L file] [-l file] "
 	    "interface\n", __progname);
 	exit(1);
 }
