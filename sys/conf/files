@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.583 2014/10/20 00:38:50 tedu Exp $
+#	$OpenBSD: files,v 1.584 2014/11/15 10:29:42 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -873,6 +873,7 @@ file crypto/hmac.c			wlan | (softraid & crypto)
 file crypto/gmac.c			(inet & ipsec) | crypto
 file crypto/key_wrap.c			wlan
 file crypto/idgen.c			inet6 | nfsclient | nfsserver
+file crypto/siphash.c
 file netmpls/mpls_input.c		mpls
 file netmpls/mpls_output.c		mpls
 file netmpls/mpls_proto.c		mpls
