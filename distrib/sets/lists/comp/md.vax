@@ -1,4 +1,5 @@
 ./usr/bin/addr2line
+./usr/bin/gccbug
 ./usr/bin/objcopy
 ./usr/bin/protoize
 ./usr/bin/readelf

@@ -1,7 +1,6 @@
 ./etc/examples/wsconsctl.conf
 ./sbin/kbd
 ./sbin/wsconsctl
-./usr/bin/gccbug
 ./usr/libdata/perl5/site_perl/vax-openbsd
 ./usr/libdata/perl5/site_perl/vax-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/a.out.ph
