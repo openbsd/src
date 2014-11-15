@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.93 2014/07/11 03:31:52 lteo Exp $
+.\" 	$OpenBSD: ftp.1,v 1.94 2014/11/15 14:41:02 bentley Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: July 11 2014 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -273,7 +273,8 @@ Enables packet tracing.
 Set
 .Ar useragent
 as the User-Agent for HTTP(S) URL requests.
-If not specified, the default User-Agent is ``OpenBSD ftp''.
+If not specified, the default User-Agent is
+.Dq OpenBSD ftp .
 .It Fl V
 Disable verbose mode, overriding the default of enabled when input
 is from a terminal.

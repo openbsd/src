@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acct.5,v 1.13 2010/11/01 22:07:08 jmc Exp $
+.\"	$OpenBSD: acct.5,v 1.14 2014/11/15 14:41:02 bentley Exp $
 .\"	$NetBSD: acct.5,v 1.4 1995/10/22 01:40:10 ghudson Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)acct.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: November 1 2010 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt ACCT 5
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ to the accounting file.
 .Bd -literal
 /*
  * Accounting structures; these use a comp_t type which is a 3 bits base 8
- * exponent, 13 bit fraction ``floating point'' number.  Units are 1/AHZ
+ * exponent, 13 bit fraction floating point number.  Units are 1/AHZ
  * seconds.
  */
 typedef u_int16_t comp_t;

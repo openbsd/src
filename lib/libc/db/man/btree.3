@@ -1,4 +1,4 @@
-.\"	$OpenBSD: btree.3,v 1.21 2014/01/21 03:15:44 schwarze Exp $
+.\"	$OpenBSD: btree.3,v 1.22 2014/11/15 14:41:02 bentley Exp $
 .\"	$NetBSD: btree.3,v 1.6 1996/05/03 21:26:48 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)btree.3	8.4 (Berkeley) 8/18/94
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt BTREE 3
 .Os
 .Sh NAME
@@ -104,7 +104,8 @@ routine is used; however,
 routine calls with the
 .Dv R_CURSOR
 flag set will always return the logical
-``first'' of any group of duplicate keys.
+.Dq first
+of any group of duplicate keys.
 .El
 .It Fa cachesize
 A suggested maximum size (in bytes) of the memory cache.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.53 2014/08/10 02:41:41 guenther Exp $
+.\"	$OpenBSD: telnet.1,v 1.54 2014/11/15 14:41:02 bentley Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)telnet.1	8.4 (Berkeley) 2/3/94
 .\"
-.Dd $Mdocdate: August 10 2014 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt TELNET 1
 .Os
 .Sh NAME
@@ -105,7 +105,9 @@ Uses
 .Xr bind 2
 on the local socket to bind it to an aliased address (see
 .Xr ifconfig 8
-and the ``alias'' specifier) or to the address of
+and the
+.Cm alias
+specifier) or to the address of
 another interface than the one naturally chosen by
 .Xr connect 2 .
 This can be useful when connecting to services which use IP addresses
@@ -203,8 +205,10 @@ option.
 If this fails,
 .Nm
 will revert to one of two input modes:
-either ``character at a time''
-or ``old line by line''
+either
+.Dq character at a time
+or
+.Dq old line by line
 depending on what the remote system supports.
 .Pp
 When
@@ -218,12 +222,18 @@ The remote system will also relay
 changes to any special characters that happen on the remote
 system, so that they can take effect on the local system.
 .Pp
-In ``character at a time'' mode, most
+In
+.Dq character at a time
+mode, most
 text typed is immediately sent to the remote host for processing.
 .Pp
-In ``old line by line'' mode, all text is echoed locally,
+In
+.Dq old line by line
+mode, all text is echoed locally,
 and (normally) only completed lines are sent to the remote host.
-The ``local echo character'' (initially ``^E'') may be used
+The local echo character
+.Pq initially Sq ^E
+may be used
 to turn off and on the local echo
 (this would mostly be used to enter passwords
 without the password being echoed).
@@ -234,7 +244,9 @@ option is enabled, or if the
 .Ic localchars
 toggle is
 .Dv TRUE
-(the default for ``old line by line''; see below),
+(the default for
+.Dq old line by line ;
+see below),
 the user's
 .Ic quit ,
 .Ic intr ,
@@ -273,7 +285,8 @@ While connected to a remote host,
 .Nm
 command mode may be entered by typing the
 .Nm
-``escape character'' (initially ``^]'').
+escape character
+.Pq initially Sq ^] .
 When in command mode, the normal terminal editing conventions are available.
 Note that the escape character will return to the command mode of the initial
 invocation of
@@ -397,13 +410,17 @@ Disable the
 .Dv TELNET LINEMODE
 option, or, if the remote side does not understand the
 .Dv LINEMODE
-option, then enter ``character at a time'' mode.
+option, then enter
+.Dq character at a time
+mode.
 .It Ic line
 Enable the
 .Dv TELNET LINEMODE
 option, or, if the remote side does not understand the
 .Dv LINEMODE
-option, then attempt to enter ``old-line-by-line'' mode.
+option, then attempt to enter
+.Dq old line by line
+mode.
 .It Ic isig Pq Ic \-isig
 Attempt to enable (disable) the
 .Dv TRAPSIG
@@ -460,7 +477,9 @@ is specified,
 will attempt to contact a TELNET server at the default port.
 The host specification may be either a host name (see
 .Xr hosts 5 )
-or an Internet address specified in the ``dot notation'' (see
+or an Internet address specified in the
+.Dq dot notation
+(see
 .Xr inet_ntop 3 ) .
 The
 .Fl a ,
@@ -478,8 +497,9 @@ After establishing a connection, the file
 .Pa \&.telnetrc
 in the
 user's home directory is opened.
-Lines beginning with a ``#'' are
-comment lines.
+Lines beginning with a
+.Sq #
+are comment lines.
 Blank lines are ignored.
 Lines that begin
 without whitespace are the start of a machine entry.
@@ -551,7 +571,8 @@ sequence.
 .It Ic escape
 Sends the current
 .Nm
-escape character (initially ``^]'').
+escape character
+.Pq initially Sq ^] .
 .It Ic ga
 Sends the
 .Dv TELNET GA
@@ -589,7 +610,9 @@ This sequence is sent as TCP urgent
 data (and may not work if the remote system is a
 .Bx 4.2
 system -- if
-it doesn't work, a lower case ``r'' may be echoed on the terminal).
+it doesn't work, a lower case
+.Sq r
+may be echoed on the terminal).
 .It Ic do Ar cmd
 Sends the
 .Dv TELNET DO
@@ -702,8 +725,11 @@ remote host.
 The initial value for the "Are You There"
 character is the terminal's status character.
 .It Ic echo
-This is the value (initially ``^E'') which, when in
-``line by line'' mode, toggles between doing local echoing
+This is the value
+.Pq initially Sq ^E
+which, when in
+.Dq line by line
+mode, toggles between doing local echoing
 of entered characters (for normal processing), and suppressing
 echoing of entered characters (for entering, say, a password).
 .It Ic eof
@@ -711,7 +737,9 @@ If
 .Nm
 is operating in
 .Dv LINEMODE
-or ``old line by line'' mode, entering this character
+or
+.Dq old line by line
+mode, entering this character
 as the first character on a line will cause this character to be
 sent to the remote system.
 The initial value of the
@@ -730,8 +758,9 @@ mode (see
 below),
 and if
 .Nm
-is operating in ``character at a time'' mode, then when this
-character is typed, a
+is operating in
+.Dq character at a time
+mode, then when this character is typed, a
 .Dv TELNET EC
 sequence (see
 .Ic send
@@ -747,8 +776,9 @@ character.
 .It Ic escape
 This is the
 .Nm
-escape character (initially ``^['') which causes entry
-into
+escape character
+.Pq initially Sq ^[
+which causes entry into
 .Nm
 command mode (when connected to a remote system).
 .It Ic flushoutput
@@ -820,8 +850,9 @@ mode (see
 below),
 and if
 .Nm
-is operating in ``character at a time'' mode, then when this
-character is typed, a
+is operating in
+.Dq character at a time
+mode, then when this character is typed, a
 .Dv TELNET EL
 sequence (see
 .Ic send
@@ -839,8 +870,9 @@ If
 .Nm
 is operating in
 .Dv LINEMODE
-or ``old line by line'' mode, then this character is taken to
-be the terminal's
+or
+.Dq old line by line
+mode, then this character is taken to be the terminal's
 .Ic lnext
 character.
 The initial value for the
@@ -878,8 +910,9 @@ If
 .Nm
 is operating in
 .Dv LINEMODE
-or ``old line by line'' mode, then this character is taken to
-be the terminal's
+or
+.Dq old line by line
+mode, then this character is taken to be the terminal's
 .Ic reprint
 character.
 The initial value for the
@@ -968,8 +1001,9 @@ If
 .Nm
 is operating in
 .Dv LINEMODE
-or ``old line by line'' mode, then this character is taken to
-be the terminal's
+or
+.Dq old line by line
+mode, then this character is taken to be the terminal's
 .Ic worderase
 character.
 The initial value for the
@@ -1187,10 +1221,13 @@ see
 above).
 The initial value for this toggle is
 .Dv TRUE
-in ``old line by line'' mode,
-and
+in
+.Dq old line by line
+mode, and
 .Dv FALSE
-in ``character at a time'' mode.
+in
+.Dq character at a time
+mode.
 When the
 .Dv LINEMODE
 option is enabled, the value of
@@ -1303,9 +1340,12 @@ command appeared in
 .Bx 4.2 .
 .Sh NOTES
 On some remote systems, echo has to be turned off manually when in
-``old line by line'' mode.
+.Dq old line by line
+mode.
 .Pp
-In ``old line by line'' mode or
+In
+.Dq old line by line
+mode or
 .Dv LINEMODE
 the terminal's
 .Ic eof

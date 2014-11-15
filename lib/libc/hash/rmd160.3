@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.32 2014/03/23 23:27:22 naddy Exp $
+.\"	$OpenBSD: rmd160.3,v 1.33 2014/11/15 14:41:02 bentley Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -17,7 +17,7 @@
 .\" See http://www.esat.kuleuven.ac.be/~bosselae/ripemd160.html
 .\"	for detailed information about RIPEMD-160.
 .\"
-.Dd $Mdocdate: March 23 2014 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt RMD160 3
 .Os
 .Sh NAME
@@ -30,7 +30,7 @@
 .Nm RMD160File ,
 .Nm RMD160FileChunk ,
 .Nm RMD160Data
-.Nd calculate the ``RIPEMD-160'' message digest
+.Nd calculate the RIPEMD-160 message digest
 .Sh SYNOPSIS
 .In sys/types.h
 .In rmd160.h
@@ -167,7 +167,10 @@ and should be freed using
 when it is no longer needed.
 .Sh EXAMPLES
 The follow code fragment will calculate the digest for
-the string "abc" which is ``0x8eb208f7e05d987a9b044a8e98c6b087f15a0bfc''.
+the string
+.Dq abc
+which is
+.Dq 0x8eb208f7e05d987a9b044a8e98c6b087f15a0bfc .
 .Bd -literal -offset indent
 RMD160_CTX rmd;
 u_int8_t results[RMD160_DIGEST_LENGTH];

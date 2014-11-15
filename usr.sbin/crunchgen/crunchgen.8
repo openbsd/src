@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crunchgen.8,v 1.7 2013/08/14 08:39:33 jmc Exp $
+.\"	$OpenBSD: crunchgen.8,v 1.8 2014/11/15 14:41:03 bentley Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 University of Maryland
@@ -25,7 +25,7 @@
 .\"			   Computer Science Department
 .\"			   University of Maryland at College Park
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt CRUNCHGEN 8
 .Os
 .Sh NAME
@@ -84,7 +84,9 @@ The
 .Ar keep-list-file
 must contain a list of symbols to keep visible, one symbol per line.
 Note that the C compiler prepends an underscore in front of
-symbols, so to keep the C function ``foo'' visible, the option
+symbols, so to keep the C function
+.Dq foo
+visible, the option
 .Dq -k _foo
 must be used.
 .Pp

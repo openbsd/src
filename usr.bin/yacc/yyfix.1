@@ -1,4 +1,4 @@
-.\"	$OpenBSD: yyfix.1,v 1.5 2014/01/20 05:07:48 schwarze Exp $
+.\"	$OpenBSD: yyfix.1,v 1.6 2014/11/15 14:41:02 bentley Exp $
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)yyfix.1	5.4 (Berkeley) 3/23/93
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt YYFIX 1
 .Os
 .Sh NAME
@@ -39,8 +39,9 @@
 .Ar file
 .Op Ar tables
 .Sh DESCRIPTION
-Programs have historically used a script (often named ``:yyfix'') to
-extract tables from the
+Programs have historically used a script (often named
+.Pa :yyfix )
+to extract tables from the
 .Xr yacc 1
 generated file
 .Pa y.tab.c .

@@ -1,4 +1,4 @@
-.\" $OpenBSD: getsubopt.3,v 1.13 2013/06/05 03:39:23 tedu Exp $
+.\" $OpenBSD: getsubopt.3,v 1.14 2014/11/15 14:41:02 bentley Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getsubopt.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt GETSUBOPT 3
 .Os
 .Sh NAME
@@ -107,17 +107,17 @@ char *options, *value;
 while ((ch = getopt(argc, argv, "ab:")) != -1) {
 	switch (ch) {
 	case 'a':
-		/* process ``a'' option */
+		/* process "a" option */
 		break;
 	case 'b':
 		options = optarg;
 		while (*options) {
 			switch (getsubopt(&options, tokens, &value)) {
 			case ONE:
-				/* process ``one'' sub option */
+				/* process "one" sub option */
 				break;
 			case TWO:
-				/* process ``two'' sub option */
+				/* process "two" sub option */
 				if (!value)
 					error("no value for two");
 				i = atoi(value);

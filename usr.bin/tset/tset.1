@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tset.1,v 1.19 2013/09/18 16:21:30 millert Exp $
+.\"	$OpenBSD: tset.1,v 1.20 2014/11/15 14:41:02 bentley Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)tset.1	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: September 18 2013 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt TSET 1
 .Os
 .Sh NAME
@@ -244,9 +244,11 @@ option is to
 .Dq map
 from some set of conditions to a terminal type, that is, to
 tell
-.Nm tset
-``If I'm on this port at a particular speed, guess that I'm on that
-kind of terminal''.
+.Nm tset :
+.Do
+If I'm on this port at a particular speed, guess that I'm on that
+kind of terminal
+.Dc .
 .Pp
 The argument to the
 .Fl m

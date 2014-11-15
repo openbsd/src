@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stat.1,v 1.21 2013/07/16 00:07:52 schwarze Exp $
+.\"	$OpenBSD: stat.1,v 1.22 2014/11/15 14:41:02 bentley Exp $
 .\"	$NetBSD: stat.1,v 1.11 2003/05/08 13:07:10 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt STAT 1
 .Os
 .Sh NAME
@@ -124,7 +124,7 @@ That is, for all the fields in the stat-structure,
 display the raw, numerical value (for example, times in seconds since the
 Epoch, etc.).
 .It Fl s
-Display information in ``shell output'', suitable for initializing variables.
+Format the output as a line of shell variable assignments.
 .It Fl t Ar timefmt
 Display timestamps using the specified format.
 This format is
@@ -158,7 +158,9 @@ Any of the following optional flags:
 .It Cm #
 Selects an alternate output form for octal and hexadecimal output.
 Non-zero octal output will have a leading zero, and non-zero
-hexadecimal output will have ``0x'' prepended to it.
+hexadecimal output will have
+.Sq 0x
+prepended to it.
 .It Cm +
 Asserts that a sign indicating whether a number is positive or negative
 should always be printed.
@@ -232,7 +234,9 @@ Displays the name of
 Displays the type of
 .Ar file .
 .It Cm Y
-Insert a `` -\*(Gt '' into the output.
+Insert a
+.Dq "\ ->\ "
+into the output.
 Note that the default output format
 for
 .Cm Y
@@ -252,24 +256,24 @@ output formats.
 It can be one of the following:
 .Bl -tag -width Ds
 .It Cm H
-``High'' -- specifies the major number for devices from
+High -- specifies the major number for devices from
 .Cm r
 or
 .Cm d ,
-the ``user'' bits for permissions from the string form of
+the user bits for permissions from the string form of
 .Cm p ,
-the file ``type'' bits from the numeric forms of
+the file type bits from the numeric forms of
 .Cm p ,
 and the long output form of
 .Cm T .
 .It Cm L
-``Low'' -- specifies the minor number for devices from
+Low -- specifies the minor number for devices from
 .Cm r
 or
 .Cm d ,
-the ``other'' bits for permissions from the string form of
+the other bits for permissions from the string form of
 .Cm p ,
-the ``user'', ``group'', and ``other'' bits from the numeric forms of
+the user, group, and other bits from the numeric forms of
 .Cm p ,
 and the
 .Ic ls -F
@@ -279,10 +283,11 @@ style output character for file type when used with
 .Cm L
 for this is optional).
 .It Cm M
-``Middle'' -- specifies the ``group'' bits for permissions from the
+Middle -- specifies the group bits for permissions from the
 string output form of
 .Cm p ,
-or the ``suid'', ``sgid'', and ``sticky'' bits for the numeric forms of
+or the
+suid, sgid, and sticky bits for the numeric forms of
 .Cm p .
 .El
 .It Cm datum
@@ -354,7 +359,9 @@ is given.
 .It Cm Y
 The target of a symbolic link.
 .It Cm Z
-Expands to ``major,minor'' from the rdev field for character or block
+Expands to
+.Ar major , Ns Ar minor
+from the rdev field for character or block
 special devices and gives size output for all others.
 .El
 .El
@@ -383,7 +390,13 @@ which default to
 .Sh EXIT STATUS
 .Ex -std stat
 .Sh EXAMPLES
-Given a symbolic link ``foo'' that points from /tmp/foo to /, you would use
+Given a symbolic link
+.Pa foo
+that points from
+.Pa /tmp/foo
+to
+.Pa / ,
+you would use
 .Nm
 as follows:
 .Bd -literal -offset indent

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rbootd.8,v 1.13 2011/09/03 22:59:08 jmc Exp $
+.\"	$OpenBSD: rbootd.8,v 1.14 2014/11/15 14:41:03 bentley Exp $
 .\"	$NetBSD: rbootd.8,v 1.3 1995/08/21 17:05:16 thorpej Exp $
 .\"
 .\" Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -41,7 +41,7 @@
 .\" Utah Hdr: rbootd.man 3.1 92/07/06
 .\" Author: Jeff Forys, University of Utah CSS
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt RBOOTD 8
 .Os
 .Sh NAME
@@ -80,7 +80,8 @@ Service boot requests on specified
 If unspecified,
 .Nm
 searches the system interface list for the lowest numbered, configured
-``up'' interface (excluding loopback).
+.Dq up
+interface (excluding loopback).
 Ties are broken by choosing the earliest match.
 .El
 .Pp

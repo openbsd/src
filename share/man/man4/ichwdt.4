@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ichwdt.4,v 1.7 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: ichwdt.4,v 1.8 2014/11/15 14:41:02 bentley Exp $
 .\"
 .\" Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt ICHWDT 4
 .Os
 .Sh NAME
@@ -36,7 +36,9 @@ The watchdog timer can be configured via
 .Xr sysctl 8 .
 .Pp
 Once the watchdog timer resets the CPU, the driver reports it on the
-next boot displaying the ``reboot on timeout'' message in the dmesg.
+next boot displaying the
+.Dq reboot on timeout
+message in the dmesg.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,

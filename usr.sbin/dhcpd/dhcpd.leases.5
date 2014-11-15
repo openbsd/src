@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.leases.5,v 1.11 2014/01/03 16:21:58 jmc Exp $
+.\"	$OpenBSD: dhcpd.leases.5,v 1.12 2014/11/15 14:41:02 bentley Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: January 3 2014 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt DHCPD.LEASES 5
 .Os
 .Sh NAME
@@ -71,8 +71,11 @@ leased to the client.
 The statements within the braces define the duration of the lease
 and to whom it is assigned.
 .Pp
-The start and end time of a lease are recorded using the ``starts''
-and ``ends'' statements:
+The start and end time of a lease are recorded using the
+.Ic starts
+and
+.Ic ends
+statements:
 .Pp
 .D1 Ic starts Ar date ;
 .D1 Ic ends Ar date ;

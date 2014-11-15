@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.51 2014/05/30 04:42:07 guenther Exp $
+.\"	$OpenBSD: intro.2,v 1.52 2014/11/15 14:41:02 bentley Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.2	8.3 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 30 2014 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt INTRO 2
 .Os
 .Sh NAME
@@ -550,7 +550,8 @@ does not result in the loss of the original (real) group ID.
 .Pp
 The group access list is a set of group IDs
 used only in determining resource accessibility.
-Access checks are performed as described below in ``File Access Permissions''.
+Access checks are performed as described below in
+.Dq File Access Permissions .
 .It Saved Set User ID and Saved Set Group ID
 When a process executes a new file, the effective user ID is set
 to the owner of the file if the file is set-user-ID, and the effective
@@ -708,7 +709,9 @@ and the group permissions allow the access.
 Neither the effective user ID nor effective group ID
 and group access list of the process
 match the corresponding user ID and group ID of the file,
-but the permissions for ``other users'' allow access.
+but the permissions for
+.Dq other users
+allow access.
 .Pp
 Otherwise, permission is denied.
 .It Sockets and Address Families

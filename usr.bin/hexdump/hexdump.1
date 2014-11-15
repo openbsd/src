@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hexdump.1,v 1.24 2011/05/06 18:11:43 otto Exp $
+.\"	$OpenBSD: hexdump.1,v 1.25 2014/11/15 14:41:02 bentley Exp $
 .\"	$NetBSD: hexdump.1,v 1.14 2001/12/07 14:46:24 bjh21 Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)hexdump.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: May 6 2011 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt HEXDUMP 1
 .Os
 .Sh NAME
@@ -64,7 +64,9 @@ in octal, per line.
 .Em Canonical hex+ASCII display .
 Display the input offset in hexadecimal, followed by sixteen
 space-separated, two column, hexadecimal bytes, followed by the
-same sixteen bytes in %_p format enclosed in ``|'' characters.
+same sixteen bytes in %_p format enclosed in
+.Sq |
+characters.
 .It Fl c
 .Em One-byte character display .
 Display the input offset in hexadecimal, followed by sixteen

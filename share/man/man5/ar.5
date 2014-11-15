@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ar.5,v 1.1 2013/07/05 21:37:15 miod Exp $
+.\"	$OpenBSD: ar.5,v 1.2 2014/11/15 14:41:02 bentley Exp $
 .\"	$NetBSD: ar.5,v 1.2 1995/03/25 06:39:38 glass Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ar.5.5	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: July 5 2013 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt AR 5
 .Os
 .Sh NAME
@@ -48,7 +48,8 @@ loaded using the link-editor
 .Pp
 A file created with
 .Nm ar
-begins with the ``magic'' string "!<arch>\en".
+begins with the magic string
+.Dq !<arch>\en .
 The rest of the archive is made up of objects, each of which is composed
 of a header for a file, a possible file name, and the file contents.
 The header is portable between machine architectures, and, if the file
@@ -113,7 +114,7 @@ all of the above.
 There have been at least four
 .Nm ar
 formats.
-The first was denoted by the leading ``magic'' number 0177555 (stored as
+The first was denoted by the leading magic number 0177555 (stored as
 type int).
 These archives were almost certainly created on a 16-bit machine, and
 contain headers made up of five fields.
@@ -122,7 +123,7 @@ time (type long), the user ID (type char), the file mode (type char) and
 the file size (type unsigned int).
 Files were padded to an even number of bytes.
 .Pp
-The second was denoted by the leading ``magic'' number 0177545 (stored as
+The second was denoted by the leading magic number 0177545 (stored as
 type int).
 These archives may have been created on either 16 or 32-bit machines, and
 contain headers made up of six fields.

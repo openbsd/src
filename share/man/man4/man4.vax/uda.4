@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uda.4,v 1.21 2013/06/02 20:51:58 tedu Exp $
+.\"	$OpenBSD: uda.4,v 1.22 2014/11/15 14:41:02 bentley Exp $
 .\"	$NetBSD: uda.4,v 1.3 1996/03/03 17:14:10 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1987, 1991 Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)uda.4	6.6 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt UDA 4 vax
 .Os
 .Sh NAME
@@ -405,7 +405,10 @@ DEC order number AA-M879A-TC, in appendices E and F.
 .It "unit N: small disk error, cyl N"
 Yet another kind of disk error, but for small disks.
 .Po
-``That's what it says, guv'nor. Dunnask me what it means.''
+.Do
+That's what it says, guv'nor.
+Dunnask me what it means.
+.Dc
 .Pc
 .It "unit N: unknown error, format 0x%x"
 A mysterious error: the given format code is not known.

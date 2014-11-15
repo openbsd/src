@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tc_init.9,v 1.7 2013/06/04 19:27:13 schwarze Exp $
+.\"	$OpenBSD: tc_init.9,v 1.8 2014/11/15 14:41:03 bentley Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: November 15 2014 $
 .Dt TC_INIT 9
 .Os
 .Sh NAME
@@ -80,7 +80,7 @@ Can be any null-terminated string.
 .It Va tc_quality
 Used to determine if this timecounter is better than another timecounter \-
 higher means better.
-Negative means ``only use at explicit request''.
+If this field is negative, the counter is only used at explicit request.
 .It Va tc_priv
 Pointer to the timecounter's private parts.
 .It Va tc_next
