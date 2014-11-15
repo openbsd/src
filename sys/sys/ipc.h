@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipc.h,v 1.12 2014/07/10 14:16:49 deraadt Exp $	*/
+/*	$OpenBSD: ipc.h,v 1.13 2014/11/15 21:42:50 guenther Exp $	*/
 /*	$NetBSD: ipc.h,v 1.15 1996/02/09 18:25:12 christos Exp $	*/
 
 /*
@@ -48,6 +48,8 @@
 #ifndef _SYS_IPC_H_
 #define _SYS_IPC_H_
 
+#include <sys/types.h>
+
 struct ipc_perm {
 	uid_t		cuid;	/* creator user id */
 	gid_t		cgid;	/* creator group id */
@@ -85,8 +87,6 @@ struct ucred;
 int ipcperm(struct ucred *, struct ipc_perm *, int);
 
 #else /* !_KERNEL */
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 key_t	ftok(const char *, int);
