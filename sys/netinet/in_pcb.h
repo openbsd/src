@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.86 2014/07/12 21:06:34 yasuoka Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.87 2014/11/15 10:55:47 dlg Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -69,6 +69,8 @@
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet/ip_ipsp.h>
+
+#include <crypto/siphash.h>
 
 struct pf_state_key;
 
@@ -153,9 +155,12 @@ struct inpcb {
 	int	inp_divertfl;		/* divert flags */
 };
 
+LIST_HEAD(inpcbhead, inpcb);
+
 struct inpcbtable {
 	TAILQ_HEAD(inpthead, inpcb) inpt_queue;
-	LIST_HEAD(inpcbhead, inpcb) *inpt_hashtbl, *inpt_lhashtbl;
+	struct inpcbhead *inpt_hashtbl, *inpt_lhashtbl;
+	SIPHASH_KEY inpt_key;
 	u_long	  inpt_hash, inpt_lhash;
 	u_int16_t inpt_lastport;
 	int	  inpt_count;

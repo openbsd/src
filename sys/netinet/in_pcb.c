@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.161 2014/10/28 11:02:38 yasuoka Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.162 2014/11/15 10:55:47 dlg Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -121,17 +121,68 @@ int in_pcbresize (struct inpcbtable *, int);
 
 #define	INPCBHASH_LOADFACTOR(_x)	(((_x) * 3) / 4)
 
+struct inpcbhead *in_pcbhash(struct inpcbtable *, int,
+    const struct in_addr *, u_short, const struct in_addr *, u_short);
+struct inpcbhead *in6_pcbhash(struct inpcbtable *, int,
+    const struct in6_addr *, u_short, const struct in6_addr *, u_short);
+struct inpcbhead *in_pcblhash(struct inpcbtable *, int, u_short);
+
+struct inpcbhead *
+in_pcbhash(struct inpcbtable *table, int rdom,
+    const struct in_addr *faddr, u_short fport,
+    const struct in_addr *laddr, u_short lport)
+{
+	SIPHASH_CTX ctx;
+	u_int32_t nrdom = htonl(rdom);
+
+	SipHash24_Init(&ctx, &table->inpt_key);
+	SipHash24_Update(&ctx, &nrdom, sizeof(nrdom));
+	SipHash24_Update(&ctx, faddr, sizeof(*faddr));
+	SipHash24_Update(&ctx, &fport, sizeof(fport));
+	SipHash24_Update(&ctx, laddr, sizeof(*laddr));
+	SipHash24_Update(&ctx, &lport, sizeof(lport));
+
+	return (&table->inpt_hashtbl[SipHash24_End(&ctx) & table->inpt_hash]);
+}
+
 #define	INPCBHASH(table, faddr, fport, laddr, lport, rdom) \
-	&(table)->inpt_hashtbl[(ntohl((faddr)->s_addr) + \
-	ntohs((fport)) + ntohs((lport)) + (rdom)) & (table->inpt_hash)]
+	in_pcbhash(table, rdom, faddr, fport, laddr, lport)
+
+struct inpcbhead *
+in6_pcbhash(struct inpcbtable *table, int rdom,
+    const struct in6_addr *faddr, u_short fport,
+    const struct in6_addr *laddr, u_short lport)
+{
+	SIPHASH_CTX ctx;
+	u_int32_t nrdom = htonl(rdom);
+
+	SipHash24_Init(&ctx, &table->inpt_key);
+	SipHash24_Update(&ctx, &nrdom, sizeof(nrdom));
+	SipHash24_Update(&ctx, faddr, sizeof(*faddr));
+	SipHash24_Update(&ctx, &fport, sizeof(fport));
+	SipHash24_Update(&ctx, laddr, sizeof(*laddr));
+	SipHash24_Update(&ctx, &lport, sizeof(lport));
+
+	return (&table->inpt_hashtbl[SipHash24_End(&ctx) & table->inpt_hash]);
+}
 
 #define	IN6PCBHASH(table, faddr, fport, laddr, lport, rdom) \
-	&(table)->inpt_hashtbl[(ntohl((faddr)->s6_addr32[0] ^ \
-	(faddr)->s6_addr32[3]) + ntohs((fport)) + ntohs((lport)) + (rdom)) & \
-	(table->inpt_hash)]
+	in6_pcbhash(table, rdom, faddr, fport, laddr, lport)
 
-#define	INPCBLHASH(table, lport, rdom) \
-	&(table)->inpt_lhashtbl[(ntohs((lport)) + (rdom)) & table->inpt_lhash]
+struct inpcbhead *
+in_pcblhash(struct inpcbtable *table, int rdom, u_short lport)
+{
+	SIPHASH_CTX ctx;
+	u_int32_t nrdom = htonl(rdom);
+
+	SipHash24_Init(&ctx, &table->inpt_key);
+	SipHash24_Update(&ctx, &nrdom, sizeof(nrdom));
+	SipHash24_Update(&ctx, &lport, sizeof(lport));
+
+	return (&table->inpt_lhashtbl[SipHash24_End(&ctx) & table->inpt_lhash]);
+}
+
+#define	INPCBLHASH(table, lport, rdom) in_pcblhash(table, rdom, lport)
 
 void
 in_pcbinit(struct inpcbtable *table, int hashsize)
@@ -148,6 +199,7 @@ in_pcbinit(struct inpcbtable *table, int hashsize)
 		panic("in_pcbinit: hashinit failed for lport");
 	table->inpt_lastport = 0;
 	table->inpt_count = 0;
+	arc4random_buf(&table->inpt_key, sizeof(table->inpt_key));
 }
 
 /*
@@ -176,6 +228,7 @@ in_pcballoc(struct socket *so, struct inpcbtable *table)
 {
 	struct inpcb *inp;
 	int s;
+	struct inpcbhead *head;
 
 	splsoftassert(IPL_SOFTNET);
 
@@ -199,11 +252,11 @@ in_pcballoc(struct socket *so, struct inpcbtable *table)
 	    table->inpt_count++ > INPCBHASH_LOADFACTOR(table->inpt_hash))
 		(void)in_pcbresize(table, (table->inpt_hash + 1) * 2);
 	TAILQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
-	LIST_INSERT_HEAD(INPCBLHASH(table, inp->inp_lport,
-	    inp->inp_rtableid), inp, inp_lhash);
-	LIST_INSERT_HEAD(INPCBHASH(table, &inp->inp_faddr, inp->inp_fport,
-	    &inp->inp_laddr, inp->inp_lport, rtable_l2(inp->inp_rtableid)),
-	    inp, inp_hash);
+	head = INPCBLHASH(table, inp->inp_lport, inp->inp_rtableid);
+	LIST_INSERT_HEAD(head, inp, inp_lhash);
+	head = INPCBHASH(table, &inp->inp_faddr, inp->inp_fport,
+	    &inp->inp_laddr, inp->inp_lport, rtable_l2(inp->inp_rtableid));
+	LIST_INSERT_HEAD(head, inp, inp_hash);
 	splx(s);
 	so->so_pcb = inp;
 	inp->inp_hops = -1;
@@ -659,9 +712,11 @@ in_pcblookup(struct inpcbtable *table, void *faddrp, u_int fport_arg,
 	u_int16_t fport = fport_arg, lport = lport_arg;
 	struct in_addr faddr = *(struct in_addr *)faddrp;
 	struct in_addr laddr = *(struct in_addr *)laddrp;
+	struct inpcbhead *head;
 
 	rdomain = rtable_l2(rdomain);	/* convert passed rtableid to rdomain */
-	LIST_FOREACH(inp, INPCBLHASH(table, lport, rdomain), inp_lhash) {
+	head = INPCBLHASH(table, lport, rdomain);
+	LIST_FOREACH(inp, head, inp_lhash) {
 		if (rtable_l2(inp->inp_rtableid) != rdomain)
 			continue;
 		if (inp->inp_lport != lport)
@@ -870,25 +925,24 @@ in_pcbrehash(struct inpcb *inp)
 {
 	struct inpcbtable *table = inp->inp_table;
 	int s;
+	struct inpcbhead *head;
 
 	s = splnet();
 	LIST_REMOVE(inp, inp_lhash);
-	LIST_INSERT_HEAD(INPCBLHASH(table, inp->inp_lport, inp->inp_rtableid),
-	    inp, inp_lhash);
+	head = INPCBLHASH(table, inp->inp_lport, inp->inp_rtableid);
+	LIST_INSERT_HEAD(head, inp, inp_lhash);
 	LIST_REMOVE(inp, inp_hash);
 #ifdef INET6
-	if (inp->inp_flags & INP_IPV6) {
-		LIST_INSERT_HEAD(IN6PCBHASH(table, &inp->inp_faddr6,
-		    inp->inp_fport, &inp->inp_laddr6, inp->inp_lport,
-		    rtable_l2(inp->inp_rtableid)), inp, inp_hash);
-	} else {
+	if (inp->inp_flags & INP_IPV6)
+		head = IN6PCBHASH(table, &inp->inp_faddr6, inp->inp_fport,
+		    &inp->inp_laddr6, inp->inp_lport,
+		    rtable_l2(inp->inp_rtableid));
+	else
 #endif /* INET6 */
-		LIST_INSERT_HEAD(INPCBHASH(table, &inp->inp_faddr,
-		    inp->inp_fport, &inp->inp_laddr, inp->inp_lport,
-		    rtable_l2(inp->inp_rtableid)), inp, inp_hash);
-#ifdef INET6
-	}
-#endif /* INET6 */
+		head = INPCBHASH(table, &inp->inp_faddr, inp->inp_fport,
+		    &inp->inp_laddr, inp->inp_lport,
+		    rtable_l2(inp->inp_rtableid));
+	LIST_INSERT_HEAD(head, inp, inp_hash);
 	splx(s);
 }
 
@@ -915,6 +969,7 @@ in_pcbresize(struct inpcbtable *table, int hashsize)
 	table->inpt_lhashtbl = nlhashtbl;
 	table->inpt_hash = nhash;
 	table->inpt_lhash = nlhash;
+	arc4random_buf(&table->inpt_key, sizeof(table->inpt_key));
 
 	TAILQ_FOREACH_SAFE(inp0, &table->inpt_queue, inp_queue, inp1) {
 		in_pcbrehash(inp0);
