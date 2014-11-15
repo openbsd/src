@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.121 2014/10/03 18:06:47 kettenis Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.122 2014/11/15 21:42:07 deraadt Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -164,8 +164,8 @@ typedef int		vm_prot_t;
 #define UVM_MAXPROTECTION(X)	(((X) >> 8) & UVM_PROT_MASK)
 #define UVM_ADVICE(X)		(((X) >> 12) & UVM_ADV_MASK)
 
-#define UVM_MAPFLAG(PROT,MAXPROT,INH,ADVICE,FLAGS) \
-	((MAXPROT << 8)|(PROT)|(INH)|((ADVICE) << 12)|(FLAGS))
+#define UVM_MAPFLAG(prot, maxprot, inh, advice, flags) \
+	(((maxprot) << 8) | (prot) | (inh) | ((advice) << 12) | (flags))
 
 /* magic offset value */
 #define UVM_UNKNOWN_OFFSET ((voff_t) -1)
