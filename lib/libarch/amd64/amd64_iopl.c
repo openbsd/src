@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd64_iopl.c,v 1.3 2012/12/05 23:19:58 deraadt Exp $	*/
+/*	$OpenBSD: amd64_iopl.c,v 1.4 2014/11/15 02:23:28 tedu Exp $	*/
 /*	$NetBSD: i386_iopl.c,v 1.2 1996/02/27 22:57:29 jtc Exp $	*/
 
 /*-
@@ -43,6 +43,5 @@ amd64_iopl(iopl)
 
 	p.iopl = iopl;
 
-	/* LINTED pointer casts may be troublesome */
-	return sysarch(AMD64_IOPL, (char *)&p);
+	return sysarch(AMD64_IOPL, &p);
 }

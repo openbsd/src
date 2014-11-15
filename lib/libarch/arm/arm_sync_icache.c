@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm_sync_icache.c,v 1.2 2012/12/05 23:19:58 deraadt Exp $	*/
+/*	$OpenBSD: arm_sync_icache.c,v 1.3 2014/11/15 02:23:28 tedu Exp $	*/
 /*	$NetBSD: arm_sync_icache.c,v 1.1 2002/03/30 06:24:34 thorpej Exp $	*/
 
 /*
@@ -47,5 +47,5 @@ arm_sync_icache(addr, len)
 	p.addr = addr;
 	p.len = len;
 
-	return sysarch(ARM_SYNC_ICACHE, (void *)&p);
+	return sysarch(ARM_SYNC_ICACHE, &p);
 }
