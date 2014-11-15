@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1747 2014/11/14 11:55:09 mpi Exp $
+$OpenBSD: pcidevs,v 1.1748 2014/11/15 10:33:32 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3373,8 +3373,9 @@ product INTEL Z77_LPC		0x1e44	Z77 LPC
 product INTEL Z75_LPC		0x1e46	Z75 LPC
 product INTEL B75_LPC		0x1e49	B75 LPC
 product INTEL H77_LPC		0x1e4a	H77 LPC
-product	INTEL C216_LPC		0x1e53	C216 LPC
+product INTEL C216_LPC		0x1e53	C216 LPC
 product INTEL QM77_LPC		0x1e55	QM77 LPC
+product INTEL QS77_LPC		0x1e56	QS77 LPC
 product INTEL HM77_LPC		0x1e57	HM77 LPC
 product INTEL UM77_LPC		0x1e58	UM77 LPC
 product INTEL HM76_LPC		0x1e59	HM76 LPC
