@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.136 2014/11/06 12:05:32 mpi Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.137 2014/11/16 17:40:17 tedu Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -963,18 +963,18 @@ tcp_set_iss_tsm(struct tcpcb *tp)
 		tcp_secret_init = 1;
 	}
 	ctx = tcp_secret_ctx;
-	SHA512Update(&ctx, (char *)&rdomain, sizeof(rdomain));
-	SHA512Update(&ctx, (char *)&tp->t_inpcb->inp_lport, sizeof(u_short));
-	SHA512Update(&ctx, (char *)&tp->t_inpcb->inp_fport, sizeof(u_short));
+	SHA512Update(&ctx, &rdomain, sizeof(rdomain));
+	SHA512Update(&ctx, &tp->t_inpcb->inp_lport, sizeof(u_short));
+	SHA512Update(&ctx, &tp->t_inpcb->inp_fport, sizeof(u_short));
 	if (tp->pf == AF_INET6) {
-		SHA512Update(&ctx, (char *)&tp->t_inpcb->inp_laddr6,
+		SHA512Update(&ctx, &tp->t_inpcb->inp_laddr6,
 		    sizeof(struct in6_addr));
-		SHA512Update(&ctx, (char *)&tp->t_inpcb->inp_faddr6,
+		SHA512Update(&ctx, &tp->t_inpcb->inp_faddr6,
 		    sizeof(struct in6_addr));
 	} else {
-		SHA512Update(&ctx, (char *)&tp->t_inpcb->inp_laddr,
+		SHA512Update(&ctx, &tp->t_inpcb->inp_laddr,
 		    sizeof(struct in_addr));
-		SHA512Update(&ctx, (char *)&tp->t_inpcb->inp_faddr,
+		SHA512Update(&ctx, &tp->t_inpcb->inp_faddr,
 		    sizeof(struct in_addr));
 	}
 	SHA512Final(digest.bytes, &ctx);

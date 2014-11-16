@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.893 2014/11/16 17:37:42 tedu Exp $ */
+/*	$OpenBSD: pf.c,v 1.894 2014/11/16 17:40:17 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3046,20 +3046,20 @@ pf_tcp_iss(struct pf_pdesc *pd)
 	}
 	ctx = pf_tcp_secret_ctx;
 
-	SHA512Update(&ctx, (char *)&pd->rdomain, sizeof(pd->rdomain));
-	SHA512Update(&ctx, (char *)&pd->hdr.tcp->th_sport, sizeof(u_short));
-	SHA512Update(&ctx, (char *)&pd->hdr.tcp->th_dport, sizeof(u_short));
+	SHA512Update(&ctx, &pd->rdomain, sizeof(pd->rdomain));
+	SHA512Update(&ctx, &pd->hdr.tcp->th_sport, sizeof(u_short));
+	SHA512Update(&ctx, &pd->hdr.tcp->th_dport, sizeof(u_short));
 	switch (pd->af) {
 #ifdef INET
 	case AF_INET:
-		SHA512Update(&ctx, (char *)&pd->src->v4, sizeof(struct in_addr));
-		SHA512Update(&ctx, (char *)&pd->dst->v4, sizeof(struct in_addr));
+		SHA512Update(&ctx, &pd->src->v4, sizeof(struct in_addr));
+		SHA512Update(&ctx, &pd->dst->v4, sizeof(struct in_addr));
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		SHA512Update(&ctx, (char *)&pd->src->v6, sizeof(struct in6_addr));
-		SHA512Update(&ctx, (char *)&pd->dst->v6, sizeof(struct in6_addr));
+		SHA512Update(&ctx, &pd->src->v6, sizeof(struct in6_addr));
+		SHA512Update(&ctx, &pd->dst->v6, sizeof(struct in6_addr));
 		break;
 #endif /* INET6 */
 	}
