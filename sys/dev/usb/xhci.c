@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.40 2014/11/11 12:10:44 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.41 2014/11/16 18:31:07 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -1122,16 +1122,12 @@ xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 
 /* XXX */
 #define UHUB_IS_MTT(dev) (dev->ddesc.bDeviceProtocol == UDPROTO_HSHUBMTT)
-
 	/*
 	 * If we are opening the interrupt pipe of a hub, update its
 	 * context before putting it in the CONFIGURED state.
 	 */
 	if (pipe->device->hub != NULL) {
 		int nports = pipe->device->hub->nports;
-
-		/* Unmask the slot context */
-		sdev->input_ctx->add_flags |= htole32(XHCI_INCTX_MASK_DCI(0));
 
 		sdev->slot_ctx->info_lo |= htole32(XHCI_SCTX_HUB(1));
 		sdev->slot_ctx->info_hi |= htole32(XHCI_SCTX_NPORTS(nports));
@@ -1161,6 +1157,9 @@ xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 		);
 	}
 #undef UHUB_IS_MTT
+
+	/* Unmask the slot context */
+	sdev->input_ctx->add_flags |= htole32(XHCI_INCTX_MASK_DCI(0));
 
 	usb_syncmem(&sdev->ictx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
 }
@@ -2276,6 +2275,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	struct xhci_trb *trb0, *trb;
 	uint32_t len = UGETW(xfer->request.wLength);
 	uint8_t toggle0, toggle;
+	int s;
 
 	KASSERT(xfer->rqflags & URQ_REQUEST);
 
@@ -2327,6 +2327,8 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	usb_syncmem(&xp->ring.dma, TRBOFF(xp->ring, trb0),
 	    3 * sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
+
+	s = splusb();
 	XDWRITE4(sc, XHCI_DOORBELL(xp->slot), xp->dci);
 
 	xfer->status = USBD_IN_PROGRESS;
@@ -2338,6 +2340,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 		timeout_set(&xfer->timeout_handle, xhci_timeout, xfer);
 		timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 	}
+	splx(s);
 
 	return (USBD_IN_PROGRESS);
 }
@@ -2367,6 +2370,7 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 	struct xhci_pipe *xp = (struct xhci_pipe *)xfer->pipe;
 	struct xhci_trb *trb;
 	uint8_t toggle;
+	int s;
 
 	KASSERT(!(xfer->rqflags & URQ_REQUEST));
 
@@ -2387,6 +2391,8 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 
 	usb_syncmem(&xp->ring.dma, TRBOFF(xp->ring, trb),
 	    sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
+
+	s = splusb();
 	XDWRITE4(sc, XHCI_DOORBELL(xp->slot), xp->dci);
 
 	xfer->status = USBD_IN_PROGRESS;
@@ -2398,6 +2404,7 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 		timeout_set(&xfer->timeout_handle, xhci_timeout, xfer);
 		timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 	}
+	splx(s);
 
 	return (USBD_IN_PROGRESS);
 }
