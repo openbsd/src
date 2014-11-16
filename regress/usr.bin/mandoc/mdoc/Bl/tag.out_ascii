@@ -46,6 +46,8 @@ DDEESSCCRRIIPPTTIIOONN
 
      a      b
 
+            white space only
+
      a      b
 
      Non-numeric width specification:
@@ -75,4 +77,4 @@ DDEESSCCRRIIPPTTIIOONN
 
              second paragraph
 
-OpenBSD                          April 8, 2014                         OpenBSD
+OpenBSD                        November 16, 2014                       OpenBSD

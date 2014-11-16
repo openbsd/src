@@ -1,4 +1,4 @@
-.Dd April 8, 2014
+.Dd November 16, 2014
 .Dt BL-TAG 1
 .Os OpenBSD
 .Sh NAME
@@ -53,6 +53,8 @@ Trailing white space in the head:
 b
 .It "a "
 b
+.It " "
+white space only
 .It "a  "
 b
 .El
