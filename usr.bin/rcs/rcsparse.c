@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsparse.c,v 1.10 2014/10/10 08:15:25 otto Exp $	*/
+/*	$OpenBSD: rcsparse.c,v 1.11 2014/11/16 19:14:34 bluhm Exp $	*/
 /*
  * Copyright (c) 2010 Tobias Stoeckmann <tobias@openbsd.org>
  *
@@ -1256,15 +1256,16 @@ rcsparse_warnx(RCSFILE *rfp, char *fmt, ...)
 {
 	struct rcs_pdata *pdp;
 	va_list ap;
-	char *nfmt;
+	char *msg;
 
 	pdp = (struct rcs_pdata *)rfp->rf_pdata;
 	va_start(ap, fmt);
-	if (asprintf(&nfmt, "%s:%d: %s", rfp->rf_path, pdp->rp_msglineno, fmt)
-	    == -1)
-		nfmt = fmt;
-	vwarnx(nfmt, ap);
+	if (vasprintf(&msg, fmt, ap) == -1) {
+		warn("vasprintf");
+		va_end(ap);
+		return;
+	}
 	va_end(ap);
-	if (nfmt != fmt)
-		free(nfmt);
+	warnx("%s:%d: %s", rfp->rf_path, pdp->rp_msglineno, msg);
+	free(msg);
 }
