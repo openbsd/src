@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.9 2014/03/31 14:26:03 bcallah Exp $ */
+/* $OpenBSD: cmode.c,v 1.10 2014/11/16 01:08:36 guenther Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -157,8 +157,8 @@ cc_tab(int f, int n)
 int
 cc_indent(int f, int n)
 {
-	int pi, mi;			/* Previous indents */
-	int ci, dci;			/* current indent, don't care */
+	int pi, mi;			/* Previous indents (mi is ignored) */
+	int ci;				/* current indent */
 	struct line *lp;
 	int ret;
 	
@@ -181,7 +181,7 @@ cc_indent(int f, int n)
 	/* Strip leading space on current line */
 	delleadwhite(FFRAND, 1);
 	/* current indent is computed only to current position */
-	dci = getindent(curwp->w_dotp, &ci);
+	(void)getindent(curwp->w_dotp, &ci);
 	
 	if (pi + ci < 0)
 		ret = indent(FFOTHARG, 0);
