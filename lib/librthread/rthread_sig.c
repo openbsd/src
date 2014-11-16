@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sig.c,v 1.15 2013/06/21 06:08:50 guenther Exp $ */
+/*	$OpenBSD: rthread_sig.c,v 1.16 2014/11/16 05:24:25 guenther Exp $ */
 /*
  * Copyright (c) 2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -53,9 +53,11 @@ sigwait(const sigset_t *set, int *sig)
 	int ret;
 
 	sigdelset(&s, SIGTHR);
-	_enter_cancel(self);
-	ret = __thrsigdivert(s, NULL, NULL);
-	_leave_cancel(self);
+	do {
+		_enter_cancel(self);
+		ret = __thrsigdivert(s, NULL, NULL);
+		_leave_cancel(self);
+	} while (ret == -1 && errno == EINTR);
 	if (ret == -1)
 		return (errno);
 	*sig = ret;
