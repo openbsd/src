@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.17 2014/09/28 14:45:48 reyk Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.18 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,12 +57,14 @@
  */
 
 #include <stdio.h>
+
 #include "ssl_locl.h"
+
 #include <openssl/bio.h>
-#include <openssl/objects.h>
 #include <openssl/evp.h>
-#include <openssl/x509.h>
+#include <openssl/objects.h>
 #include <openssl/pem.h>
+#include <openssl/x509.h>
 
 static int ssl_set_cert(CERT *c, X509 *x509);
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);

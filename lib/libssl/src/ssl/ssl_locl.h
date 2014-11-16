@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.75 2014/11/08 15:21:02 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.76 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -145,20 +145,20 @@
 
 #include <sys/types.h>
 
-#include <stdlib.h>
-#include <time.h>
-#include <string.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <openssl/opensslconf.h>
-#include <openssl/buffer.h>
 #include <openssl/bio.h>
-#include <openssl/stack.h>
-#include <openssl/rsa.h>
+#include <openssl/buffer.h>
 #include <openssl/dsa.h>
 #include <openssl/err.h>
+#include <openssl/rsa.h>
 #include <openssl/ssl.h>
+#include <openssl/stack.h>
 
 #define c2l(c,l)	(l = ((unsigned long)(*((c)++)))     , \
 			 l|=(((unsigned long)(*((c)++)))<< 8), \

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.44 2014/10/31 15:25:55 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.45 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,17 +116,18 @@
 
 #include <sys/types.h>
 
+#include <dirent.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <dirent.h>
 
-#include <openssl/opensslconf.h>
-#include <openssl/objects.h>
 #include <openssl/bio.h>
+#include <openssl/bn.h>
+#include <openssl/dh.h>
+#include <openssl/objects.h>
+#include <openssl/opensslconf.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
-#include <openssl/dh.h>
-#include <openssl/bn.h>
+
 #include "ssl_locl.h"
 
 int

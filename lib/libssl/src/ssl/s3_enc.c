@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.55 2014/10/18 03:04:28 doug Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.56 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -136,7 +136,9 @@
  */
 
 #include <stdio.h>
+
 #include "ssl_locl.h"
+
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 

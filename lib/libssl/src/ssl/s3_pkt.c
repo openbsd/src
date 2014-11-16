@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.51 2014/10/18 16:13:16 jsing Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.52 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,11 +109,13 @@
  *
  */
 
-#include <stdio.h>
 #include <errno.h>
+#include <stdio.h>
+
 #include "ssl_locl.h"
-#include <openssl/evp.h>
+
 #include <openssl/buffer.h>
+#include <openssl/evp.h>
 
 static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     unsigned int len, int create_empty_fragment);

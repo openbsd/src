@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_stat.c,v 1.11 2014/07/13 00:08:44 jsing Exp $ */
+/* $OpenBSD: ssl_stat.c,v 1.12 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -83,6 +83,7 @@
  */
 
 #include <stdio.h>
+
 #include "ssl_locl.h"
 
 const char *

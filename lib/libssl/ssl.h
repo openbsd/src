@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.70 2014/10/31 15:34:06 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.71 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -144,22 +144,23 @@
 #define HEADER_SSL_H 
 
 #include <openssl/opensslconf.h>
+#include <openssl/hmac.h>
+#include <openssl/pem.h>
+#include <openssl/safestack.h>
 
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
+
 #ifndef OPENSSL_NO_DEPRECATED
+#include <openssl/buffer.h>
+#include <openssl/crypto.h>
+#include <openssl/lhash.h>
+
 #ifndef OPENSSL_NO_X509
 #include <openssl/x509.h>
 #endif
-#include <openssl/crypto.h>
-#include <openssl/lhash.h>
-#include <openssl/buffer.h>
 #endif
-#include <openssl/pem.h>
-#include <openssl/hmac.h>
-
-#include <openssl/safestack.h>
 
 #ifdef  __cplusplus
 extern "C" {

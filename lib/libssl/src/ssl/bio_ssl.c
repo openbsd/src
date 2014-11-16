@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ssl.c,v 1.20 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: bio_ssl.c,v 1.21 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,12 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <openssl/crypto.h>
+
 #include <openssl/bio.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.72 2014/11/08 15:21:02 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.73 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -141,10 +141,13 @@
  */
 
 #include <stdio.h>
+
 #include <openssl/objects.h>
+
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+
 #include "ssl_locl.h"
 
 #define SSL_ENC_DES_IDX		0

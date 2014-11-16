@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_reneg.c,v 1.8 2014/06/21 20:27:25 tedu Exp $ */
+/* $OpenBSD: t1_reneg.c,v 1.9 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -108,8 +108,11 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
 #include <stdio.h>
+
 #include <openssl/objects.h>
+
 #include "ssl_locl.h"
 
 /* Add the client's renegotiation binding */

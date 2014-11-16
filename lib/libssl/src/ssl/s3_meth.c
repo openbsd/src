@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_meth.c,v 1.10 2014/08/10 14:42:56 jsing Exp $ */
+/* $OpenBSD: s3_meth.c,v 1.11 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +57,9 @@
  */
 
 #include <stdio.h>
+
 #include <openssl/objects.h>
+
 #include "ssl_locl.h"
 
 static const SSL_METHOD *ssl3_get_method(int ver);

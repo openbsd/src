@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.26 2014/09/27 11:01:06 jsing Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.27 2014/11/16 14:12:47 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -59,6 +59,7 @@
  */
 
 #include <stdio.h>
+
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 

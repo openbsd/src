@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.92 2014/10/18 16:13:16 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.93 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -149,13 +149,16 @@
  */
 
 #include <stdio.h>
+
 #include "ssl_locl.h"
+
+#include <openssl/bn.h>
 #include <openssl/buffer.h>
-#include <openssl/objects.h>
+#include <openssl/dh.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
-#include <openssl/dh.h>
-#include <openssl/bn.h>
+#include <openssl/objects.h>
+
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif

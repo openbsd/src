@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srtp.c,v 1.8 2014/07/14 08:21:47 miod Exp $ */
+/* $OpenBSD: d1_srtp.c,v 1.9 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,7 +116,9 @@
  */
 
 #include <stdio.h>
+
 #include <openssl/objects.h>
+
 #include "ssl_locl.h"
 
 #ifndef OPENSSL_NO_SRTP

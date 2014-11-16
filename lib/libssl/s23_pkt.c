@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_pkt.c,v 1.8 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: s23_pkt.c,v 1.9 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,11 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
 #include <errno.h>
+#include <stdio.h>
+
 #include "ssl_locl.h"
-#include <openssl/evp.h>
+
 #include <openssl/buffer.h>
+#include <openssl/evp.h>
 
 int
 ssl23_write_bytes(SSL *s)

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.31 2014/10/18 16:13:16 jsing Exp $ */
+/* $OpenBSD: s3_both.c,v 1.32 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,12 +115,14 @@
  */
 
 #include <limits.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+
 #include "ssl_locl.h"
+
 #include <openssl/buffer.h>
-#include <openssl/objects.h>
 #include <openssl/evp.h>
+#include <openssl/objects.h>
 #include <openssl/x509.h>
 
 /* send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or SSL3_RT_CHANGE_CIPHER_SPEC) */

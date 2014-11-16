@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.89 2014/10/31 15:25:55 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.90 2014/11/16 14:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -141,12 +141,15 @@
  */
 
 #include <stdio.h>
+
 #include "ssl_locl.h"
-#include <openssl/objects.h>
-#include <openssl/lhash.h>
-#include <openssl/x509v3.h>
-#include <openssl/ocsp.h>
+
 #include <openssl/dh.h>
+#include <openssl/lhash.h>
+#include <openssl/objects.h>
+#include <openssl/ocsp.h>
+#include <openssl/x509v3.h>
+
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
