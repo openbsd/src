@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.40 2014/03/20 07:47:29 lum Exp $	*/
+/*	$OpenBSD: grep.c,v 1.41 2014/11/16 00:59:25 guenther Exp $	*/
 
 /* This file is in the public domain */
 
@@ -113,7 +113,8 @@ static int
 gid(int f, int n)
 {
 	char	 command[NFILEN];
-	char	 cprompt[NFILEN], c, *bufp;
+	char	 cprompt[NFILEN], *bufp;
+	int	c;
 	struct buffer	*bp;
 	struct mgwin	*wp;
 	int	 i, j, len;
