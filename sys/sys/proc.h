@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.190 2014/07/13 16:41:21 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.191 2014/11/16 05:42:21 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -281,7 +281,6 @@ struct proc {
 #define	p_startzero	p_dupfd
 	int	p_dupfd;	 /* Sideways return value from filedescopen. XXX */
 
-	int	p_sigwait;	/* signal handled by sigwait() */
 	long 	p_thrslpid;	/* for thrsleep syscall */
 
 	/* scheduling */
@@ -306,7 +305,6 @@ struct proc {
 	void	*p_emuldata;		/* Per-process emulation data, or */
 					/* NULL. Malloc type M_EMULDATA */
 	int	 p_siglist;		/* Signals arrived but not delivered. */
-	sigset_t p_sigdivert;		/* Signals to be diverted to thread. */
 
 /* End area that is zeroed on creation. */
 #define	p_endzero	p_startcopy

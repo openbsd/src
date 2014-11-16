@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.174 2014/08/10 23:44:20 bluhm Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.175 2014/11/16 05:42:21 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -836,12 +836,11 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 
 		/*
 		 * If the current thread can process the signal
-		 * immediately, either because it's sigwait()ing
-		 * on it or has it unblocked, then have it take it.
+		 * immediately (it's unblocked) then have it take it.
 		 */
 		q = curproc;
 		if (q != NULL && q->p_p == pr && (q->p_flag & P_WEXIT) == 0 &&
-		    ((q->p_sigdivert & mask) || (q->p_sigmask & mask) == 0))
+		    (q->p_sigmask & mask) == 0)
 			p = q;
 		else {
 			/*
@@ -858,15 +857,20 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 				if (q->p_flag & P_WEXIT)
 					continue;
 
-				/* sigwait: definitely go to this thread */
-				if (q->p_sigdivert & mask) {
-					p = q;
-					break;
-				}
+				/* skip threads that have the signal blocked */
+				if ((q->p_sigmask & mask) != 0)
+					continue;
 
-				/* unblocked: possibly go to this thread */
-				if ((q->p_sigmask & mask) == 0)
-					p = q;
+				/* okay, could send to this thread */
+				p = q;
+
+				/*
+				 * sigsuspend, sigwait, ppoll/pselect, etc?
+				 * Definitely go to this thread, as it's
+				 * already blocked in the kernel.
+				 */
+				if (q->p_flag & P_SIGSUSPEND)
+					break;
 			}
 		}
 	}
@@ -878,15 +882,8 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 
 	/*
 	 * If proc is traced, always give parent a chance.
-	 * XXX give sigwait() priority until it's fixed to do this
-	 * XXX from issignal/postsig
 	 */
-	if (p->p_sigdivert & mask) {
-		p->p_sigwait = signum;
-		atomic_clearbits_int(&p->p_sigdivert, ~0);
-		action = SIG_CATCH;
-		wakeup(&p->p_sigdivert);
-	} else if (pr->ps_flags & PS_TRACED) {
+	if (pr->ps_flags & PS_TRACED) {
 		action = SIG_DFL;
 		atomic_setbits_int(&p->p_siglist, mask);
 	} else {
@@ -1668,30 +1665,21 @@ sys_nosys(struct proc *p, void *v, register_t *retval)
 int
 sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 {
+	static int sigwaitsleep;
 	struct sys___thrsigdivert_args /* {
 		syscallarg(sigset_t) sigmask;
 		syscallarg(siginfo_t *) info;
 		syscallarg(const struct timespec *) timeout;
 	} */ *uap = v;
-	sigset_t mask;
+	struct process *pr = p->p_p;
 	sigset_t *m;
+	sigset_t mask = SCARG(uap, sigmask) &~ sigcantmask;
+	siginfo_t si;
 	long long to_ticks = 0;
-	int error;
+	int timeinvalid = 0;
+	int error = 0;
 
-	m = NULL;
-	mask = SCARG(uap, sigmask) &~ sigcantmask;
-
-	/* pending signal for this thread? */
-	if (p->p_siglist & mask)
-		m = &p->p_siglist;
-	else if (p->p_p->ps_mainproc->p_siglist & mask)
-		m = &p->p_p->ps_mainproc->p_siglist;
-	if (m != NULL) {
-		int sig = ffs((long)(*m & mask));
-		atomic_clearbits_int(m, sigmask(sig));
-		*retval = sig;
-		return (0);
-	}
+	memset(&si, 0, sizeof(si));
 
 	if (SCARG(uap, timeout) != NULL) {
 		struct timespec ts;
@@ -1701,39 +1689,59 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrreltimespec(p, &ts);
 #endif
-		to_ticks = (long long)hz * ts.tv_sec +
-		    ts.tv_nsec / (tick * 1000);
-		if (to_ticks > INT_MAX)
-			to_ticks = INT_MAX;
+		if (ts.tv_nsec < 0 || ts.tv_nsec >= 1000000000)
+			timeinvalid = 1;
+		else {
+			to_ticks = (long long)hz * ts.tv_sec +
+			    ts.tv_nsec / (tick * 1000);
+			if (to_ticks > INT_MAX)
+				to_ticks = INT_MAX;
+		}
 	}
 
-	p->p_sigwait = 0;
-	atomic_setbits_int(&p->p_sigdivert, mask);
-	error = tsleep(&p->p_sigdivert, PPAUSE|PCATCH, "sigwait",
-	    (int)to_ticks);
-	if (p->p_sigdivert) {
-		/* interrupted */
-		KASSERT(error != 0);
-		atomic_clearbits_int(&p->p_sigdivert, ~0);
-		if (error == EINTR)
-			error = ERESTART;
-		else if (error == ETIMEDOUT)
-			error = EAGAIN;
-		return (error);
+	dosigsuspend(p, p->p_sigmask &~ mask);
+	for (;;) {
+		si.si_signo = CURSIG(p);
+		if (si.si_signo != 0) {
+			sigset_t smask = sigmask(si.si_signo);
+			if (smask & mask) {
+				if (p->p_siglist & smask)
+					m = &p->p_siglist;
+				else if (pr->ps_mainproc->p_siglist & smask)
+					m = &pr->ps_mainproc->p_siglist;
+				else {
+					/* signal got eaten by someone else? */
+					continue;
+				}
+				atomic_clearbits_int(m, smask);
+				error = 0;
+				break;
+			}
+		}
 
+		/* per-POSIX, delay this error until after the above */
+		if (timeinvalid)
+			error = EINVAL;
+
+		if (error != 0)
+			break;
+
+		error = tsleep(&sigwaitsleep, PPAUSE|PCATCH, "sigwait",
+		    (int)to_ticks);
 	}
-	KASSERT(p->p_sigwait != 0);
-	*retval = p->p_sigwait;
 
-	if (SCARG(uap, info) == NULL) {
-		error = 0;
-	} else {
-		siginfo_t si;
-
-		memset(&si, 0, sizeof(si));
-		si.si_signo = p->p_sigwait;
-		error = copyout(&si, SCARG(uap, info), sizeof(si));
+	if (error == 0) {
+		*retval = si.si_signo;
+		if (SCARG(uap, info) != NULL)
+			error = copyout(&si, SCARG(uap, info), sizeof(si));
+	} else if (error == ERESTART && SCARG(uap, timeout) != NULL) {
+		/*
+		 * Restarting is wrong if there's a timeout, as it'll be
+		 * for the same interval again
+		 */
+		error = EINTR;
 	}
+
 	return (error);
 }
 
