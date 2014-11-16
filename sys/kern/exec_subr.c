@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.40 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.41 2014/11/16 23:54:56 guenther Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -264,28 +264,20 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 
 /*
  * vmcmd_map_zero():
- *	handle vmcmd which specifies a zero-filled address space region.  The
- *	address range must be first allocated, then protected appropriately.
+ *	handle vmcmd which specifies a zero-filled address space region.
  */
 
 int
 vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 {
-	int error;
-
 	if (cmd->ev_len == 0)
 		return (0);
 	
 	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
-	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
+	return (uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 	    round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(cmd->ev_prot, PROT_MASK, UVM_INH_COPY,
-	    POSIX_MADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_COPYONW));
-
-	if (error)
-		return error;
-
-	return (0);
+	    POSIX_MADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_COPYONW)));
 }
 
 /*
