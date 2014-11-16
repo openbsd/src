@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.80 2014/11/15 14:41:02 bentley Exp $
+.\" $OpenBSD: ipsec.4,v 1.81 2014/11/16 19:57:24 schwarze Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: November 16 2014 $
 .Dt IPSEC 4
 .Os
 .Sh NAME
@@ -398,16 +398,24 @@ and
 The latest transforms and new features were
 implemented by Angelos D. Keromytis and Niels Provos.
 .Sh AUTHORS
+.An -nosplit
 The authors of the IPsec code proper are
-John Ioannidis, Angelos D. Keromytis, and Niels Provos.
+.An John Ioannidis ,
+.An Angelos D. Keromytis ,
+and
+.An Niels Provos .
 .Pp
-Niklas Hallqvist and Niels Provos are the authors of
+.An Niklas Hallqvist
+and
+.An Niels Provos
+are the authors of
 .Xr isakmpd 8 .
 .Pp
-Eric Young's libdeslite was used in this implementation for the
-DES algorithm.
+.An Eric Young Ap s
+libdeslite was used in this implementation for the DES algorithm.
 .Pp
-Steve Reid's SHA-1 code was also used.
+.An Steve Reid Ap s
+SHA-1 code was also used.
 .Pp
 The
 .Xr setsockopt 2 Ns / Ns Xr getsockopt 2

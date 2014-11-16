@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.33 2014/11/15 14:41:02 bentley Exp $
+.\"	$OpenBSD: rmd160.3,v 1.34 2014/11/16 19:57:24 schwarze Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -17,7 +17,7 @@
 .\" See http://www.esat.kuleuven.ac.be/~bosselae/ripemd160.html
 .\"	for detailed information about RIPEMD-160.
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: November 16 2014 $
 .Dt RMD160 3
 .Os
 .Sh NAME
@@ -116,8 +116,7 @@ The
 .Fn RMD160End
 function is a front end for
 .Fn RMD160Final
-which converts the digest into an
-.Tn ASCII
+which converts the digest into an ASCII
 representation of the 160 bit digest in hexadecimal.
 .Pp
 The
@@ -223,7 +222,9 @@ printf("0x%s\en", RMD160Data(buf, strlen(buf), output));
 The RMD-160 functions appeared in
 .Ox 2.1 .
 .Sh AUTHORS
-This implementation of RMD-160 was written by Markus Friedl.
+.An -nosplit
+This implementation of RMD-160 was written by
+.An Markus Friedl .
 .Pp
 The
 .Fn RMD160End ,
@@ -231,7 +232,8 @@ The
 .Fn RMD160FileChunk ,
 and
 .Fn RMD160Data
-helper functions are derived from code written by Poul-Henning Kamp.
+helper functions are derived from code written by
+.An Poul-Henning Kamp .
 .Sh CAVEATS
 If a message digest is to be copied to a multi-byte type (ie:
 an array of five 32-bit integers) it will be necessary to

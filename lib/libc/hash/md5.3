@@ -16,9 +16,9 @@
 .\" If we meet some day, and you think this stuff is worth it, you
 .\" can buy me a beer in return. Poul-Henning Kamp
 .\"
-.\" 	$OpenBSD: md5.3,v 1.3 2014/11/15 14:41:02 bentley Exp $
+.\" 	$OpenBSD: md5.3,v 1.4 2014/11/16 19:57:24 schwarze Exp $
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: November 16 2014 $
 .Dt MD5 3
 .Os
 .Sh NAME
@@ -112,8 +112,7 @@ is a wrapper for
 .Fn MD5Final
 which converts the return value to an MD5_DIGEST_STRING_LENGTH-character
 (including the terminating '\e0')
-.Tn ASCII
-string which represents the 128 bits in hexadecimal.
+ASCII string which represents the 128 bits in hexadecimal.
 .Pp
 .Fn MD5File
 calculates the digest of a file, and uses
@@ -195,10 +194,11 @@ characters of buffer space.
 These functions appeared in
 .Ox 2.0 .
 .Sh AUTHORS
+.An -nosplit
 The original MD5 routines were developed by
-.Tn RSA
-Data Security, Inc., and published in the above references.
-This code is derived from a public domain implementation written by Colin Plumb.
+RSA Data Security, Inc., and published in the above references.
+This code is derived from a public domain implementation written by
+.An Colin Plumb .
 .Pp
 The
 .Fn MD5End ,
@@ -206,7 +206,8 @@ The
 .Fn MD5FileChunk ,
 and
 .Fn MD5Data
-helper functions are derived from code written by Poul-Henning Kamp.
+helper functions are derived from code written by
+.An Poul-Henning Kamp .
 .Sh BUGS
 Collisions have been found for the full version of MD5.
 The use of
