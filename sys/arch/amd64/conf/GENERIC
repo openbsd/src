@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.377 2014/11/07 16:44:17 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.378 2014/11/16 05:33:58 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -446,7 +446,8 @@ nfe*	at pci?				# NVIDIA nForce Ethernet
 xge*	at pci?				# Neterion Xframe-I/II 10Gb ethernet
 thtc*	at pci?				# Tehuti Networks 10Gb ethernet
 tht*	at thtc?
-gem*	at pci?				# Sun 'gem' ethernet
+gem*	at pci?				# Sun GEM 10/100/Gigabit
+cas*	at pci?				# Sun Cassini 100/Gigabit
 bce*	at pci?				# Broadcom BCM4401
 vic*	at pci?				# VMware VMXnet virtual interface
 vmx*	at pci?				# VMware VMXNET3 virtual interface
