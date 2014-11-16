@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.11 2014/10/08 04:04:37 doug Exp $
+/*	$OpenBSD: util.c,v 1.12 2014/11/16 00:04:53 tedu Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: util.c,v 1.11 2014/10/08 04:04:37 doug Exp $
+ * $Id: util.c,v 1.12 2014/11/16 00:04:53 tedu Exp $
  */
 
 
@@ -72,8 +72,8 @@ check_bigram_char(ch)
 
 /* split a colon separated string into a char vector
  *
- * "bla:foo" -> {"foo", "bla"}
- * "bla:"    -> {"foo", dot}
+ * "bla:foo" -> {"bla", "foo"}
+ * "bla:"    -> {"bla", dot}
  * "bla"     -> {"bla"}
  * ""	     -> do nothing
  *
@@ -89,7 +89,7 @@ colon(dbv, path, dot)
 	char **pv;
 
 	if (dbv == NULL) {
-		if ((dbv = malloc(sizeof(char **))) == NULL)
+		if ((dbv = malloc(sizeof(*dbv))) == NULL)
 			err(1, "malloc");
 		*dbv = NULL;
 	}
@@ -123,7 +123,7 @@ colon(dbv, path, dot)
 			}
 			/* increase dbv with element p */
 			if ((newdbv = reallocarray(dbv, vlen + 2,
-			    sizeof(char **))) == NULL)
+			    sizeof(*newdbv))) == NULL)
 				err(1, "realloc");
 			dbv = newdbv;
 			*(dbv + vlen) = p;
