@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.8 2011/01/11 15:42:05 deraadt Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.9 2014/11/16 17:39:09 tedu Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -444,8 +444,9 @@ SHA256Transform(SHA2_CTX *context, const u_int8_t *data)
 #endif /* SHA2_UNROLL_TRANSFORM */
 
 void
-SHA256Update(SHA2_CTX *context, const u_int8_t *data, size_t len)
+SHA256Update(SHA2_CTX *context, const void *dataptr, size_t len)
 {
+	const uint8_t *data = dataptr;
 	size_t	freespace, usedspace;
 
 	/* Calling with no data is valid (we do nothing) */
@@ -730,8 +731,9 @@ SHA512Transform(SHA2_CTX *context, const u_int8_t *data)
 #endif /* SHA2_UNROLL_TRANSFORM */
 
 void
-SHA512Update(SHA2_CTX *context, const u_int8_t *data, size_t len)
+SHA512Update(SHA2_CTX *context, const void *dataptr, size_t len)
 {
+	const uint8_t *data = dataptr;
 	size_t	freespace, usedspace;
 
 	/* Calling with no data is valid (we do nothing) */
@@ -861,9 +863,9 @@ SHA384Init(SHA2_CTX *context)
 }
 
 void
-SHA384Update(SHA2_CTX *context, const u_int8_t *data, size_t len)
+SHA384Update(SHA2_CTX *context, const void *data, size_t len)
 {
-	SHA512Update((SHA2_CTX *)context, data, len);
+	SHA512Update(context, data, len);
 }
 
 void

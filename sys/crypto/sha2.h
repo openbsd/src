@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.h,v 1.4 2012/12/05 23:20:15 deraadt Exp $	*/
+/*	$OpenBSD: sha2.h,v 1.5 2014/11/16 17:39:09 tedu Exp $	*/
 
 /*
  * FILE:	sha2.h
@@ -62,19 +62,19 @@ typedef struct _SHA2_CTX {
 
 __BEGIN_DECLS
 void SHA256Init(SHA2_CTX *);
-void SHA256Update(SHA2_CTX *, const u_int8_t *, size_t)
+void SHA256Update(SHA2_CTX *, const void *, size_t)
 	__attribute__((__bounded__(__string__,2,3)));
 void SHA256Final(u_int8_t[SHA256_DIGEST_LENGTH], SHA2_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA256_DIGEST_LENGTH)));
 
 void SHA384Init(SHA2_CTX *);
-void SHA384Update(SHA2_CTX *, const u_int8_t *, size_t)
+void SHA384Update(SHA2_CTX *, const void *, size_t)
 	__attribute__((__bounded__(__string__,2,3)));
 void SHA384Final(u_int8_t[SHA384_DIGEST_LENGTH], SHA2_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA384_DIGEST_LENGTH)));
 
 void SHA512Init(SHA2_CTX *);
-void SHA512Update(SHA2_CTX *, const u_int8_t *, size_t)
+void SHA512Update(SHA2_CTX *, const void *, size_t)
 	__attribute__((__bounded__(__string__,2,3)));
 void SHA512Final(u_int8_t[SHA512_DIGEST_LENGTH], SHA2_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA512_DIGEST_LENGTH)));

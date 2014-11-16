@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.h,v 1.2 2012/12/05 23:20:15 deraadt Exp $	*/
+/*	$OpenBSD: md5.h,v 1.3 2014/11/16 17:39:09 tedu Exp $	*/
 
 /*
  * This code implements the MD5 message-digest algorithm.
@@ -26,7 +26,7 @@ typedef struct MD5Context {
 
 __BEGIN_DECLS
 void	 MD5Init(MD5_CTX *);
-void	 MD5Update(MD5_CTX *, const u_int8_t *, size_t)
+void	 MD5Update(MD5_CTX *, const void *, size_t)
 		__attribute__((__bounded__(__string__,2,3)));
 void	 MD5Final(u_int8_t [MD5_DIGEST_LENGTH], MD5_CTX *)
 		__attribute__((__bounded__(__minbytes__,1,MD5_DIGEST_LENGTH)));

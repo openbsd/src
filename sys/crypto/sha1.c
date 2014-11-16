@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.9 2011/01/11 15:50:40 deraadt Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.10 2014/11/16 17:39:09 tedu Exp $	*/
 
 /*
  * SHA-1 in C
@@ -121,8 +121,9 @@ SHA1Init(SHA1_CTX *context)
 /* Run your data through this. */
 
 void
-SHA1Update(SHA1_CTX *context, const unsigned char *data, unsigned int len)
+SHA1Update(SHA1_CTX *context, const void *dataptr, unsigned int len)
 {
+    const uint8_t *data = dataptr;
     unsigned int i;
     unsigned int j;
 
@@ -153,9 +154,9 @@ SHA1Final(unsigned char digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
         finalcount[i] = (unsigned char)((context->count >>
             ((7 - (i & 7)) * 8)) & 255);  /* Endian independent */
     }
-    SHA1Update(context, (unsigned char *)"\200", 1);
+    SHA1Update(context, "\200", 1);
     while ((context->count & 504) != 448) {
-        SHA1Update(context, (unsigned char *)"\0", 1);
+        SHA1Update(context, "\0", 1);
     }
     SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
 
