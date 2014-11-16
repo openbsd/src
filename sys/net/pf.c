@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.891 2014/11/11 11:37:05 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.892 2014/11/16 11:58:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3043,6 +3043,7 @@ pf_tcp_iss(struct pf_pdesc *pd)
 	}
 	ctx = pf_tcp_secret_ctx;
 
+	MD5Update(&ctx, (char *)&pd->rdomain, sizeof(pd->rdomain));
 	MD5Update(&ctx, (char *)&pd->hdr.tcp->th_sport, sizeof(u_short));
 	MD5Update(&ctx, (char *)&pd->hdr.tcp->th_dport, sizeof(u_short));
 	switch (pd->af) {
