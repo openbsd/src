@@ -1,4 +1,4 @@
-/*	$OpenBSD: alias.c,v 1.6 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: alias.c,v 1.7 2014/11/16 22:09:21 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -122,7 +122,7 @@ systrace_reverse(const char *emulation, const char *name)
 	if (reverse != NULL)
 		return (reverse);
 
-	reverse = calloc(1, sizeof(struct systrace_alias));
+	reverse = calloc(1, sizeof(*reverse));
 	if (reverse == NULL)
 		err(1, "%s: %s-%s: malloc", __func__, emulation, name);
 
@@ -145,7 +145,7 @@ systrace_new_alias(const char *emulation, const char *name,
 	struct systrace_alias *alias;
 	struct systrace_revalias *reverse;
 
-	alias = malloc(sizeof(struct systrace_alias));
+	alias = malloc(sizeof(*alias));
 	if (alias == NULL)
 		err(1, "%s: %s-%s: malloc", __func__, emulation, name);
 
