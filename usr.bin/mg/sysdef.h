@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdef.h,v 1.17 2014/11/13 21:36:23 florian Exp $	*/
+/*	$OpenBSD: sysdef.h,v 1.18 2014/11/16 01:01:28 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -13,6 +13,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <time.h>		/* for struct timespec */
 
 #define	KBLOCK		8192	/* Kill grow.			 */
 
