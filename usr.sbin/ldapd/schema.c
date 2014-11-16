@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.15 2012/11/12 14:01:20 gsoares Exp $ */
+/*	$OpenBSD: schema.c,v 1.16 2014/11/16 19:04:40 bluhm Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -441,15 +441,14 @@ static void
 schema_err(struct schema *schema, const char *fmt, ...)
 {
 	va_list		 ap;
-	char		*nfmt;
+	char		*msg;
 
 	va_start(ap, fmt);
-	if (asprintf(&nfmt, "%s:%d: %s", schema->filename, schema->lineno,
-	    fmt) == -1)
-		fatal("asprintf");
-	vlog(LOG_CRIT, nfmt, ap);
+	if (vasprintf(&msg, fmt, ap) == -1)
+		fatal("vasprintf");
 	va_end(ap);
-	free(nfmt);
+	logit(LOG_CRIT, "%s:%d: %s", schema->filename, schema->lineno, msg);
+	free(msg);
 
 	schema->error++;
 }
