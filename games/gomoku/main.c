@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2013/08/29 20:22:13 naddy Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2014/11/16 04:49:48 guenther Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,9 +31,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <curses.h>
 #include <err.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,7 +64,7 @@ int	movelog[BSZ * BSZ];		/* log of all the moves */
 int	movenum;			/* current move number */
 char	*plyr[2];			/* who's who */
 
-static char you[MAXLOGNAME];	/* username */
+static char you[LOGIN_NAME_MAX];	/* username */
 
 int
 main(argc, argv)
@@ -72,7 +72,7 @@ main(argc, argv)
 	char **argv;
 {
 	char buf[128];
-	char fname[MAXPATHLEN];
+	char fname[PATH_MAX];
 	int color = BLACK, curmove = 0, i, ch;
 	int input[2];
 	static char *fmt[2] = {

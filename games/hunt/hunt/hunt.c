@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.13 2008/03/17 09:17:56 sobrado Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.14 2014/11/16 04:49:48 guenther Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -45,8 +45,6 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/sockio.h>
 
 #include <netinet/in.h>
 #include <net/if.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.10 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: save.c,v 1.11 2014/11/16 04:49:48 guenther Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -29,8 +29,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <ctype.h>
+#include <limits.h>
 #include <errno.h>
 #include "back.h"
 
@@ -51,7 +51,7 @@ save(n)
 {
 	int     fdesc;
 	char   *fs;
-	char    fname[MAXPATHLEN];
+	char    fname[PATH_MAX];
 	int     r, c, i;
 
 	if (n) {
@@ -75,7 +75,7 @@ save(n)
 					beep();
 				continue;
 			}
-			if (fs - fname < MAXPATHLEN - 1) {
+			if (fs - fname < sizeof(fname) - 1) {
 				if (isascii(i)) {
 					*fs = i;
 					addch(*fs++);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.15 2013/08/29 20:22:10 naddy Exp $	*/
+/*	$OpenBSD: extern.h,v 1.16 2014/11/16 04:49:48 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
  *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 
 #include <ctype.h>

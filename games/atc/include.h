@@ -1,4 +1,4 @@
-/*	$OpenBSD: include.h,v 1.6 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: include.h,v 1.7 2014/11/16 04:49:48 guenther Exp $	*/
 /*	$NetBSD: include.h,v 1.5 1995/04/27 21:22:23 mycroft Exp $	*/
 
 /*-
@@ -45,8 +45,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/file.h>
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/utsname.h>
@@ -57,6 +55,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <math.h>
 #include <pwd.h>
 #include <signal.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unstr.c,v 1.10 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: unstr.c,v 1.11 2014/11/16 04:49:48 guenther Exp $	*/
 /*	$NetBSD: unstr.c,v 1.3 1995/03/23 08:29:00 cgd Exp $	*/
 
 /*-
@@ -46,15 +46,15 @@
  *	Ken Arnold		Aug 13, 1978
  */
 
-#include	<sys/param.h>
 #include	<ctype.h>
 #include	<err.h>
+#include	<limits.h>
 #include	<stdio.h>
 #include	<string.h>
 #include	"strfile.h"
 
 char	*Infile,			/* name of input file */
-	Datafile[MAXPATHLEN],		/* name of data file */
+	Datafile[PATH_MAX],		/* name of data file */
 	Delimch;			/* delimiter character */
 
 FILE	*Inf, *Dataf;
@@ -97,7 +97,7 @@ getargs(char *av[])
 	}
 	Infile = *av;
 	(void) strlcpy(Datafile, Infile, sizeof(Datafile));
-	if (strlcat(Datafile, ".dat", sizeof(Datafile)) >= MAXPATHLEN)
+	if (strlcat(Datafile, ".dat", sizeof(Datafile)) >= sizeof(Datafile))
 		errx(1, "`%s': filename too long", Infile);
 }
 

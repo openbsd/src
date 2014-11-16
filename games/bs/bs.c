@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.25 2014/07/12 08:29:56 tedu Exp $	*/
+/*	$OpenBSD: bs.c,v 1.26 2014/11/16 04:49:48 guenther Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -39,11 +39,11 @@
  * v2.2 with bugfixes and strategical improvements, March 1998.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <curses.h>
 #include <ctype.h>
 #include <err.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -115,7 +115,7 @@ static char sub[] = "Submarine";
 static char destroy[] = "Destroyer";
 static char ptboat[] = "PT Boat";
 
-static char name[MAXLOGNAME];
+static char name[LOGIN_NAME_MAX];
 static char dftname[] = "stranger";
 
 /* direction constants */

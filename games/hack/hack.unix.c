@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.unix.c,v 1.14 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.unix.c,v 1.15 2014/11/16 04:49:48 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -74,11 +74,11 @@
 
 #include	<sys/types.h>		/* for time_t and stat */
 #include	<sys/stat.h>
-#include	<sys/param.h>
 #include	<sys/time.h>
 
 #include	<err.h>
 #include	<errno.h>
+#include	<limits.h>
 #include	<signal.h>
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -156,7 +156,7 @@ void
 gethdate(char *name)
 {
 	char *p, *np, *path;
-	char filename[MAXPATHLEN+1];
+	char filename[PATH_MAX+1];
 
 	if (strchr(name, '/') != NULL || (p = getenv("PATH")) == NULL)
 		p = "";

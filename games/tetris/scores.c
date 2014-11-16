@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.11 2006/04/20 03:25:36 ray Exp $	*/
+/*	$OpenBSD: scores.c,v 1.12 2014/11/16 04:49:49 guenther Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -42,9 +42,13 @@
  *
  * Major whacks since then.
  */
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include <errno.h>
 #include <err.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,9 +56,6 @@
 #include <time.h>
 #include <term.h>
 #include <unistd.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 #include "pathnames.h"
 #include "screen.h"

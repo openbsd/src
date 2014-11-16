@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.h,v 1.5 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: scores.h,v 1.6 2014/11/16 04:49:49 guenther Exp $	*/
 /*	$NetBSD: scores.h,v 1.2 1995/04/22 07:42:40 cgd Exp $	*/
 
 /*-
@@ -39,10 +39,10 @@
  * Tetris scores.
  */
 struct highscore {
-	char	hs_name[MAXLOGNAME];	/* login name */
-	int	hs_score;	/* raw score */
-	int	hs_level;	/* play level */
-	time_t	hs_time;	/* time at game end */
+	char	hs_name[LOGIN_NAME_MAX];	/* login name */
+	int	hs_score;			/* raw score */
+	int	hs_level;			/* play level */
+	time_t	hs_time;			/* time at game end */
 };
 
 #define MAXHISCORES	80

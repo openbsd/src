@@ -1,4 +1,4 @@
-/*	$OpenBSD: robots.h,v 1.7 2014/11/03 22:14:54 deraadt Exp $	*/
+/*	$OpenBSD: robots.h,v 1.8 2014/11/16 04:49:48 guenther Exp $	*/
 /*	$NetBSD: robots.h,v 1.5 1995/04/24 12:24:54 cgd Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
  *	@(#)robots.h	8.1 (Berkeley) 5/31/93
  */
 
-#include	<sys/param.h>
 #include	<sys/types.h>
 #include	<sys/time.h>
 #include	<ctype.h>
@@ -40,6 +39,7 @@
 #include	<err.h>
 #include	<errno.h>
 #include	<fcntl.h>
+#include	<limits.h>
 #include	<pwd.h>
 #include	<signal.h>
 #include	<string.h>
@@ -85,7 +85,7 @@ typedef struct {
 typedef struct {
 	uid_t	s_uid;
 	int	s_score;
-	char	s_name[MAXLOGNAME];
+	char	s_name[LOGIN_NAME_MAX];
 } SCORE;
 
 typedef struct passwd	PASSWD;
