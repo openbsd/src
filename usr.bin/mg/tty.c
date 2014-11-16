@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.31 2014/11/16 00:47:35 guenther Exp $	*/
+/*	$OpenBSD: tty.c,v 1.32 2014/11/16 00:50:00 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -39,7 +39,7 @@ static int	 charcost(const char *);
 
 static int	 cci;
 static int	 insdel;	/* Do we have both insert & delete line? */
-static char	*scroll_fwd;	/* How to scroll forward. */
+static const char	*scroll_fwd;	/* How to scroll forward. */
 
 static void	 winchhandler(int);
 
