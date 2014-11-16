@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.18 2014/11/14 03:20:36 doug Exp $ */
+/*	$OpenBSD: parse.y,v 1.19 2014/11/16 19:07:50 bluhm Exp $ */
 
 /*
  * Copyright (c) 2006 Bob Beck <beck@openbsd.org>
@@ -139,15 +139,15 @@ int
 yyerror(const char *fmt, ...)
 {
 	va_list		 ap;
-	char		*nfmt;
+	char		*msg;
 
 	file->errors++;
 	va_start(ap, fmt);
-	if (asprintf(&nfmt, "%s:%d: %s", file->name, yylval.lineno, fmt) == -1)
-		err(1, "yyerror asprintf");
-	err(1, nfmt, ap);
+	if (vasprintf(&msg, fmt, ap) == -1)
+		err(1, "yyerror vasprintf");
 	va_end(ap);
-	free(nfmt);
+	err(1, "%s:%d: %s", file->name, yylval.lineno, msg);
+	free(msg);
 	return (0);
 }
 

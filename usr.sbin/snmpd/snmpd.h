@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.56 2014/08/18 13:13:42 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.57 2014/11/16 19:07:51 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -581,6 +581,7 @@ void		 print_debug(const char *, ...);
 void		 print_verbose(const char *, ...);
 __dead void	 fatal(const char *);
 __dead void	 fatalx(const char *);
+void		 logit(int, const char *, ...);
 void		 vlog(int, const char *, va_list);
 const char	*log_in6addr(const struct in6_addr *);
 const char	*print_host(struct sockaddr_storage *, char *, size_t);
