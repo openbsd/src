@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.33 2013/08/21 05:21:44 dlg Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.34 2014/11/16 05:46:20 brad Exp $	*/
 
 /*
  *
@@ -167,10 +167,15 @@ cas_match(struct device *parent, void *cf, void *aux)
 #define	PROMDATA_DATA2		0x0a
 
 static const u_int8_t cas_promhdr[] = { 0x55, 0xaa };
-static const u_int8_t cas_promdat[] = {
+static const u_int8_t cas_promdat_sun[] = {
 	'P', 'C', 'I', 'R',
 	PCI_VENDOR_SUN & 0xff, PCI_VENDOR_SUN >> 8,
 	PCI_PRODUCT_SUN_CASSINI & 0xff, PCI_PRODUCT_SUN_CASSINI >> 8
+};
+static const u_int8_t cas_promdat_ns[] = {
+	'P', 'C', 'I', 'R',
+	PCI_VENDOR_NS & 0xff, PCI_VENDOR_NS >> 8,
+	PCI_PRODUCT_NS_SATURN & 0xff, PCI_PRODUCT_NS_SATURN >> 8
 };
 
 static const u_int8_t cas_promdat2[] = {
@@ -211,7 +216,8 @@ cas_pci_enaddr(struct cas_softc *sc, struct pci_attach_args *pa)
 		goto fail;
 
 	bus_space_read_region_1(romt, romh, dataoff, buf, sizeof(buf));
-	if (bcmp(buf, cas_promdat, sizeof(cas_promdat)) ||
+	if ((bcmp(buf, cas_promdat_sun, sizeof(cas_promdat_sun)) &&
+	    bcmp(buf, cas_promdat_ns, sizeof(cas_promdat_ns))) ||
 	    bcmp(buf + PROMDATA_DATA2, cas_promdat2, sizeof(cas_promdat2)))
 		goto fail;
 
