@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.34 2014/10/17 13:25:13 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.35 2014/11/16 04:16:41 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -8,6 +8,7 @@
  */
 
 #include <ctype.h>
+#include <limits.h>
 
 #include "def.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.67 2014/04/03 20:17:12 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.68 2014/11/16 04:16:41 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -17,6 +17,7 @@
 #include <sys/wait.h>
 
 #include <ctype.h>
+#include <limits.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <err.h>
@@ -496,7 +497,7 @@ reaper(int signo __attribute__((unused)))
 int
 d_shell_command(int f, int n)
 {
-	char		 command[512], fname[MAXPATHLEN], *bufp;
+	char		 command[512], fname[PATH_MAX], *bufp;
 	struct buffer	*bp;
 	struct mgwin	*wp;
 	char		 sname[NFILEN];

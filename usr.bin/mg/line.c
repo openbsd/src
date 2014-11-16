@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.53 2014/03/20 07:47:29 lum Exp $	*/
+/*	$OpenBSD: line.c,v 1.54 2014/11/16 04:16:41 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -19,6 +19,7 @@
 
 #include "def.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 

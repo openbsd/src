@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.73 2014/11/13 21:36:23 florian Exp $	*/
+/*	$OpenBSD: main.c,v 1.74 2014/11/16 04:16:41 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -12,6 +12,7 @@
 #include "macro.h"
 
 #include <err.h>
+#include <limits.h>
 #include <locale.h>
 
 int		 thisflag;			/* flags, this command	*/

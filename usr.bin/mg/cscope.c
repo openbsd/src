@@ -1,4 +1,4 @@
-/*	$OpenBSD: cscope.c,v 1.7 2014/11/16 00:59:25 guenther Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.8 2014/11/16 04:16:41 guenther Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <fnmatch.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

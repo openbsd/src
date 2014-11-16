@@ -1,11 +1,11 @@
-/*	$OpenBSD: sysdef.h,v 1.18 2014/11/16 01:01:28 guenther Exp $	*/
+/*	$OpenBSD: sysdef.h,v 1.19 2014/11/16 04:16:41 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
 /*
  *		POSIX system header file
  */
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <stdio.h>
 #include <unistd.h>

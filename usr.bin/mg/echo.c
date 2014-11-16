@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.56 2014/03/20 07:47:29 lum Exp $	*/
+/*	$OpenBSD: echo.c,v 1.57 2014/11/16 04:16:41 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -711,7 +711,7 @@ complt_list(int flags, char *buf, int cpos)
 	 * Now do the display.  Objects are written into linebuf until
 	 * it fills, and then put into the help buffer.
 	 */
-	linesize = MAX(ncol, maxwidth) + 1;
+	linesize = (ncol > maxwidth ? ncol : maxwidth) + 1;
 	if ((linebuf = malloc(linesize)) == NULL) {
 		free_file_list(wholelist);
 		return (FALSE);
