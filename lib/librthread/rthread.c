@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.78 2014/07/01 03:32:18 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.79 2014/11/16 05:26:20 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -227,7 +227,6 @@ _rthread_init(void)
 	 */
 	memset(&sa, 0, sizeof(sa));
 	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = sigthr_handler;
 	_thread_sys_sigaction(SIGTHR, &sa, NULL);
 	sigaddset(&sa.sa_mask, SIGTHR);
