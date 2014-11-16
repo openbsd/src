@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigwait.c,v 1.5 2012/02/20 02:07:41 guenther Exp $	*/
+/*	$OpenBSD: sigwait.c,v 1.6 2014/11/16 05:08:48 guenther Exp $	*/
 /*
  * Copyright (c) 1998 Daniel M. Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -226,23 +226,10 @@ int main (int argc, char *argv[])
 	/* Release the waiter from sigwait. */
 	CHECKe(kill(getpid(), SIGHUP));
 	sleep (1);
-	/* signal handler should wake up for SIGHUP */
+	/* signal waiter should wake up for SIGHUP */
 	ASSERT(sigcounts[SIGHUP] == 1);
-	/*
-	 * Add SIGHUP to all threads pending signals.  Since there is
-	 * a signal handler installed for SIGHUP and this signal is
-	 * blocked from the waiter thread and unblocked in the main
-	 * thread, the signal handler should be called once for SIGHUP.
-	 */
-	CHECKe(kill(getpid(), SIGHUP));
 	/* Release the waiter thread and allow him to run. */
 	CHECKr(pthread_mutex_unlock (&waiter_mutex));
-	sleep (1);
-	/*
-	 * sigwait should NOT return for pending SIGHUP.  Nothing is pending
-	 * because the signal was processed by the SIGHUP signal handler.
-	 */
-	ASSERT(sigcounts[SIGHUP] == 2);
 
 	/*
 	 * Repeat the above test using pthread_kill and SIGUSR1
