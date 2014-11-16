@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmap.9,v 1.13 2014/07/13 23:03:03 schwarze Exp $
+.\"	$OpenBSD: pmap.9,v 1.14 2014/11/16 12:31:01 deraadt Exp $
 .\"
 .\" Copyright (c) 2001, 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 13 2014 $
+.Dd $Mdocdate: November 16 2014 $
 .Dt PMAP 9
 .Os
 .Sh NAME
@@ -120,12 +120,12 @@ in the target physical map
 .Fa pmap
 with protection specified by
 .Fa prot :
-.Bl -tag -width "VM_PROT_EXECUTE"
-.It VM_PROT_READ
+.Bl -tag -width "PROT_WRITE"
+.It PROT_READ
 The mapping must allow reading.
-.It VM_PROT_WRITE
+.It PROT_WRITE
 The mapping must allow writing.
-.It VM_PROT_EXECUTE
+.It PROT_EXEC
 The page mapped contains instructions that will be executed by the
 processor.
 .El

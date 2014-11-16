@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.68 2014/05/11 00:12:44 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.69 2014/11/16 12:30:59 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -604,7 +604,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		v = pc;
 	if (VA_INHOLE(v))
 		goto fault;
-	ftype = ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ;
+	ftype = ser & SER_WRITE ? PROT_WRITE : PROT_READ;
 	va = trunc_page(v);
 	if (psr & PSR_PS) {
 #if defined(SUN4)
@@ -648,7 +648,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	 */
 	vm = p->p_vmspace;
 	rv = mmu_pagein(vm->vm_map.pmap, va,
-			ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ);
+			ser & SER_WRITE ? PROT_WRITE : PROT_READ);
 	if (rv < 0)
 		goto fault;
 	if (rv > 0)
@@ -677,7 +677,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		 * entries for `wired' pages).  Instead, we call
 		 * mmu_pagein here to make sure the new PTE gets installed.
 		 */
-		(void) mmu_pagein(vm->vm_map.pmap, va, VM_PROT_NONE);
+		(void) mmu_pagein(vm->vm_map.pmap, va, PROT_NONE);
 	} else {
 		/*
 		 * Pagein failed.  If doing copyin/out, return to onfault
@@ -702,8 +702,8 @@ kfault:
 		}
 		
 		sv.sival_int = v;
-		trapsignal(p, SIGSEGV, (ser & SER_WRITE) ? VM_PROT_WRITE :
-		    VM_PROT_READ, SEGV_MAPERR, sv);
+		trapsignal(p, SIGSEGV, (ser & SER_WRITE) ? PROT_WRITE :
+		    PROT_READ, SEGV_MAPERR, sv);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
@@ -792,11 +792,11 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 
 	if ((sfsr & SFSR_AT_STORE)) {
 		/* stores are never text faults. */
-		ftype = VM_PROT_WRITE;
+		ftype = PROT_WRITE;
 	} else {
-		ftype = VM_PROT_READ;
+		ftype = PROT_READ;
 		if ((sfsr & SFSR_AT_TEXT) || (type == T_TEXTFAULT)) {
-			ftype |= VM_PROT_EXECUTE;
+			ftype |= PROT_EXEC;
 		}
 	}
 
@@ -842,7 +842,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		 */
 		if (mmumod == SUN4M_MMU_HS) { /* On HS, we have va for both */
 			if (vm_fault(kernel_map, trunc_page(pc),
-				     VM_PROT_READ, 0))
+				     PROT_READ, 0))
 #ifdef DEBUG
 				printf("mem_access_fault: "
 					"can't pagein 1st text fault.\n")

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo.c,v 1.8 2014/04/12 06:08:22 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo.c,v 1.9 2014/11/16 12:31:00 deraadt Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -1649,14 +1649,14 @@ void ttm_bo_unmap_virtual_locked(struct ttm_buffer_object *bo)
 			page = PHYS_TO_VM_PAGE(paddr);
 			if (unlikely(page == NULL))
 				continue;
-			pmap_page_protect(page, VM_PROT_NONE);
+			pmap_page_protect(page, PROT_NONE);
 		}
 	} else if (ttm) {
 		for (i = 0; i < ttm->num_pages; ++i) {
 			page = ttm->pages[i];
 			if (unlikely(page == NULL))
 				continue;
-			pmap_page_protect(page, VM_PROT_NONE);
+			pmap_page_protect(page, PROT_NONE);
 		}
 	}
 	ttm_mem_io_free_vm(bo);

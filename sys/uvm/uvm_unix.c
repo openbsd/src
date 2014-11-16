@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.50 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.51 2014/11/16 12:31:01 deraadt Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -85,8 +85,8 @@ sys_obreak(struct proc *p, void *v, register_t *retval)
 	if (new > old) {
 		error = uvm_map(&vm->vm_map, &old, new - old, NULL,
 		    UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RWX, UVM_INH_COPY,
-		    UVM_ADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
+		    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_MASK, UVM_INH_COPY,
+		    POSIX_MADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
 		    UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 		if (error) {
 			uprintf("sbrk: grow %ld failed, error = %d\n",
@@ -159,7 +159,7 @@ uvm_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 			panic("uvm_coredump: user process with submap?");
 		}
 
-		if (!(entry->protection & VM_PROT_WRITE) &&
+		if (!(entry->protection & PROT_WRITE) &&
 		    entry->start != p->p_p->ps_sigcode)
 			continue;
 
@@ -268,7 +268,7 @@ uvm_coredump_walkmap(struct proc *p, void *iocookie,
 			panic("uvm_coredump: user process with submap?");
 		}
 
-		if (!(entry->protection & VM_PROT_WRITE) &&
+		if (!(entry->protection & PROT_WRITE) &&
 		    entry->start != p->p_p->ps_sigcode)
 			continue;
 

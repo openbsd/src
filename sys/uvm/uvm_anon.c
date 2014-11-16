@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.40 2014/09/14 14:17:27 jsg Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.41 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ uvm_anfree(struct vm_anon *anon)
 				atomic_setbits_int(&pg->pg_flags, PG_RELEASED);
 				return;
 			} 
-			pmap_page_protect(pg, VM_PROT_NONE);
+			pmap_page_protect(pg, PROT_NONE);
 			uvm_lock_pageq();	/* lock out pagedaemon */
 			uvm_pagefree(pg);	/* bye bye */
 			uvm_unlock_pageq();	/* free the daemon */
@@ -250,7 +250,7 @@ uvm_anon_pagein(struct vm_anon *anon)
 
 	/* deactivate the page (to put it on a page queue) */
 	pmap_clear_reference(pg);
-	pmap_page_protect(pg, VM_PROT_NONE);
+	pmap_page_protect(pg, PROT_NONE);
 	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();

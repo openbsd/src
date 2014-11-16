@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.27 2014/10/07 10:10:58 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.28 2014/11/16 12:30:56 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -682,15 +682,15 @@ L1_S_PROT(int ku, vm_prot_t pr)
 	pt_entry_t pte;
 
 	if (ku == PTE_USER)
-		pte = (pr & VM_PROT_WRITE) ? L1_S_PROT_UW : L1_S_PROT_UR;
+		pte = (pr & PROT_WRITE) ? L1_S_PROT_UW : L1_S_PROT_UR;
 	else
-		pte = (pr & VM_PROT_WRITE) ? L1_S_PROT_KW : L1_S_PROT_KR;
+		pte = (pr & PROT_WRITE) ? L1_S_PROT_KW : L1_S_PROT_KR;
 	/*
 	 * If we set the XN bit, the abort handlers or the vector page
 	 * might be marked as such. Needs Debugging.
 	 */
 	/*
-	if ((pr & VM_PROT_EXECUTE) == 0)
+	if ((pr & PROT_EXEC) == 0)
 		pte |= L1_S_V7_XN;
 	*/
 
@@ -702,15 +702,15 @@ L2_L_PROT(int ku, vm_prot_t pr)
 	pt_entry_t pte;
 
 	if (ku == PTE_USER)
-		pte = (pr & VM_PROT_WRITE) ? L2_L_PROT_UW : L2_L_PROT_UR;
+		pte = (pr & PROT_WRITE) ? L2_L_PROT_UW : L2_L_PROT_UR;
 	else
-		pte = (pr & VM_PROT_WRITE) ? L2_L_PROT_KW : L2_L_PROT_KR;
+		pte = (pr & PROT_WRITE) ? L2_L_PROT_KW : L2_L_PROT_KR;
 	/*
 	 * If we set the XN bit, the abort handlers or the vector page
 	 * might be marked as such. Needs Debugging.
 	 */
 	/*
-	if ((pr & VM_PROT_EXECUTE) == 0)
+	if ((pr & PROT_EXEC) == 0)
 		pte |= L2_V7_L_XN;
 	*/
 
@@ -722,15 +722,15 @@ L2_S_PROT(int ku, vm_prot_t pr)
 	pt_entry_t pte;
 
 	if (ku == PTE_USER)
-		pte = (pr & VM_PROT_WRITE) ? L2_S_PROT_UW : L2_S_PROT_UR;
+		pte = (pr & PROT_WRITE) ? L2_S_PROT_UW : L2_S_PROT_UR;
 	else
-		pte = (pr & VM_PROT_WRITE) ? L2_S_PROT_KW : L2_S_PROT_KR;
+		pte = (pr & PROT_WRITE) ? L2_S_PROT_KW : L2_S_PROT_KR;
 	/*
 	 * If we set the XN bit, the abort handlers or the vector page
 	 * might be marked as such. Needs Debugging.
 	 */
 	/*
-	if ((pr & VM_PROT_EXECUTE) == 0)
+	if ((pr & PROT_EXEC) == 0)
 		pte |= L2_V7_S_XN;
 	*/
 
@@ -743,7 +743,7 @@ l2pte_is_writeable(pt_entry_t pte, struct pmap *pm)
 	/* XXX use of L2_V7_S_XN */
 	return (pte & L2_S_PROT_MASK & ~L2_V7_S_XN) ==
 	    L2_S_PROT(pm == pmap_kernel() ? PTE_KERNEL : PTE_USER,
-	              VM_PROT_WRITE);
+	              PROT_WRITE);
 }
 #endif
 

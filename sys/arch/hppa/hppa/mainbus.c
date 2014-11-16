@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.85 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.86 2014/11/16 12:30:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -220,7 +220,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 
 				if (btlb_insert(HPPA_SID_KERNEL, spa, spa, &len,
 				    pmap_sid2pid(HPPA_SID_KERNEL) |
-				    pmap_prot(pmap_kernel(), UVM_PROT_RW))
+				    pmap_prot(pmap_kernel(), PROT_READ | PROT_WRITE))
 				    >= 0) {
 					pa = spa + len;	/* may wrap to 0... */
 #ifdef BTLBDEBUG
@@ -247,7 +247,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 #endif
 					for (; spa != epa; spa += PAGE_SIZE)
 						pmap_kenter_pa(spa, spa,
-						    UVM_PROT_RW);
+						    PROT_READ | PROT_WRITE);
 				}
 #ifdef BTLBDEBUG
 				printf("\n");

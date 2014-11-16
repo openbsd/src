@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.8 2014/07/13 12:11:01 jasper Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.9 2014/11/16 12:30:56 deraadt Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /* 
@@ -245,7 +245,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 			pgva = (vaddr_t)dst & L1_S_FRAME;
 			limit = L1_S_SIZE - ((vaddr_t)dst & L1_S_OFFSET);
 
-			tmppde = oldpde | L1_S_PROT(PTE_KERNEL, VM_PROT_WRITE);
+			tmppde = oldpde | L1_S_PROT(PTE_KERNEL, PROT_WRITE);
 			*pde = tmppde;
 			PTE_SYNC(pde);
 			break;
@@ -257,7 +257,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 			if (pte == NULL)
 				goto no_mapping;
 			oldpte = *pte;
-			tmppte = oldpte | L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE);
+			tmppte = oldpte | L2_S_PROT(PTE_KERNEL, PROT_WRITE);
 			*pte = tmppte;
 			PTE_SYNC(pte);
 			break;

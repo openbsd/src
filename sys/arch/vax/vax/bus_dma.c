@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.30 2014/09/13 16:06:37 doug Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.31 2014/11/16 12:30:59 deraadt Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.5 1999/11/13 00:32:20 thorpej Exp $	*/
 
 /*-
@@ -444,7 +444,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		if (vax_boardtype == VAX_BTYP_43) {
 			pmap_map((vaddr_t)*kvap, segs[0].ds_addr|KA43_DIAGMEM,
 			    (segs[0].ds_addr|KA43_DIAGMEM) + size,
-			    VM_PROT_READ|VM_PROT_WRITE);
+			    PROT_READ | PROT_WRITE);
 		}
 		return 0;
 	}
@@ -467,8 +467,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (vax_boardtype == VAX_BTYP_43)
 				addr |= KA43_DIAGMEM;
 			error = pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, VM_PROT_READ |
-			    VM_PROT_WRITE | PMAP_WIRED | PMAP_CANFAIL);
+			    PROT_READ | PROT_WRITE,
+			    PROT_READ | PROT_WRITE | PMAP_WIRED | PMAP_CANFAIL);
 			if (error) {
 				pmap_update(pmap_kernel());
 				km_free((void *)sva, ssize, &kv_any, &kp_none);

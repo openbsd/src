@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.47 2014/10/07 07:14:55 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.48 2014/11/16 12:30:56 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1871,7 +1871,7 @@ pmap_create(void)
 		 * Map the vector page.
 		 */
 		pmap_enter(pm, vector_page, systempage.pv_pa,
-		    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
+		    PROT_READ, PROT_READ | PMAP_WIRED);
 		pmap_update(pm);
 	}
 
@@ -1902,7 +1902,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	NPDEBUG(PDB_ENTER, printf("pmap_enter: pm %p va 0x%lx pa 0x%lx prot %x flag %x\n", pm, va, pa, prot, flags));
 
-	KDASSERT((flags & PMAP_WIRED) == 0 || (flags & VM_PROT_ALL) != 0);
+	KDASSERT((flags & PMAP_WIRED) == 0 || (flags & PROT_MASK) != 0);
 	KDASSERT(((va | pa) & PGOFSET) == 0);
 
 	/*
@@ -1912,9 +1912,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	pg = pmap_initialized ? PHYS_TO_VM_PAGE(pa) : NULL;
 
 	nflags = 0;
-	if (prot & VM_PROT_WRITE)
+	if (prot & PROT_WRITE)
 		nflags |= PVF_WRITE;
-	if (prot & VM_PROT_EXECUTE)
+	if (prot & PROT_EXEC)
 		nflags |= PVF_EXEC;
 	if (flags & PMAP_WIRED)
 		nflags |= PVF_WIRED;
@@ -1960,7 +1960,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		/*
 		 * This is to be a managed mapping.
 		 */
-		if ((flags & VM_PROT_ALL) ||
+		if ((flags & PROT_MASK) ||
 		    (pg->mdpage.pvh_attrs & PVF_REF)) {
 			/*
 			 * - The access type indicates that we don't need
@@ -1973,8 +1973,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 			nflags |= PVF_REF;
 
-			if ((prot & VM_PROT_WRITE) != 0 &&
-			    ((flags & VM_PROT_WRITE) != 0 ||
+			if ((prot & PROT_WRITE) != 0 &&
+			    ((flags & PROT_WRITE) != 0 ||
 			     (pg->mdpage.pvh_attrs & PVF_MOD) != 0)) {
 				/*
 				 * This is a writable mapping, and the
@@ -2011,7 +2011,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			if (pm->pm_cstate.cs_cache_d &&
 			    (oflags & PVF_NC) == 0 &&
 			    (opte & L2_S_PROT_KW) != 0 &&
-			    (prot & VM_PROT_WRITE) == 0)
+			    (prot & PROT_WRITE) == 0)
 				cpu_dcache_wb_range(va, PAGE_SIZE);
 		} else {
 			/*
@@ -2071,7 +2071,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 * the get go as we don't need to track ref/mod status.
 		 */
 		npte |= L2_S_PROTO;
-		if (prot & VM_PROT_WRITE)
+		if (prot & PROT_WRITE)
 			npte |= L2_S_PROT_KW;
 
 		/*
@@ -2552,12 +2552,12 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	    printf("pmap_protect: pm %p sva 0x%lx eva 0x%lx prot 0x%x\n",
 	    pm, sva, eva, prot));
 
-	if ((prot & VM_PROT_READ) == 0) {
+	if ((prot & PROT_READ) == 0) {
 		pmap_remove(pm, sva, eva);
 		return;
 	}
 
-	if (prot & VM_PROT_WRITE) {
+	if (prot & PROT_WRITE) {
 		/*
 		 * If this is a read->write transition, just ignore it and let
 		 * uvm_fault() take care of it later.
@@ -2648,12 +2648,12 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	    pg, pg->phys_addr, prot));
 
 	switch(prot) {
-	case VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE:
-	case VM_PROT_READ|VM_PROT_WRITE:
+	case PROT_READ | PROT_WRITE | PROT_EXEC:
+	case PROT_READ | PROT_WRITE:
 		return;
 
-	case VM_PROT_READ:
-	case VM_PROT_READ|VM_PROT_EXECUTE:
+	case PROT_READ:
+	case PROT_READ | PROT_EXEC:
 		pmap_clearbit(pg, PVF_WRITE);
 		break;
 
@@ -2765,7 +2765,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 	pa = l2pte_pa(pte);
 
-	if ((ftype & VM_PROT_WRITE) && (pte & L2_S_PROT_KW) == 0) {
+	if ((ftype & PROT_WRITE) && (pte & L2_S_PROT_KW) == 0) {
 		/*
 		 * This looks like a good candidate for "page modified"
 		 * emulation...
@@ -3226,7 +3226,7 @@ pmap_zero_page_generic(struct vm_page *pg)
 	 * zeroed page. Invalidate the TLB as needed.
 	 */
 	*cdst_pte = L2_S_PROTO | phys |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_l2_s_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, PROT_WRITE) | pte_l2_s_cache_mode;
 	PTE_SYNC(cdst_pte);
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
@@ -3252,7 +3252,7 @@ pmap_zero_page_xscale(struct vm_page *pg)
 	 * zeroed page. Invalidate the TLB as needed.
 	 */
 	*cdst_pte = L2_S_PROTO | phys |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) |
+	    L2_S_PROT(PTE_KERNEL, PROT_WRITE) |
 	    L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X);	/* mini-data */
 	PTE_SYNC(cdst_pte);
 	cpu_tlb_flushD_SE(cdstp);
@@ -3287,7 +3287,7 @@ pmap_pageidlezero(struct vm_page *pg)
 	 * zeroed page. Invalidate the TLB as needed.
 	 */
 	*cdst_pte = L2_S_PROTO | phys |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_l2_s_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, PROT_WRITE) | pte_l2_s_cache_mode;
 	PTE_SYNC(cdst_pte);
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
@@ -3352,10 +3352,10 @@ pmap_copy_page_generic(struct vm_page *src_pg, struct vm_page *dst_pg)
 	 * as required.
 	 */
 	*csrc_pte = L2_S_PROTO | src |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, PROT_READ) | pte_l2_s_cache_mode;
 	PTE_SYNC(csrc_pte);
 	*cdst_pte = L2_S_PROTO | dst |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_l2_s_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, PROT_WRITE) | pte_l2_s_cache_mode;
 	PTE_SYNC(cdst_pte);
 	cpu_tlb_flushD_SE(csrcp);
 	cpu_tlb_flushD_SE(cdstp);
@@ -3395,11 +3395,11 @@ pmap_copy_page_xscale(struct vm_page *src_pg, struct vm_page *dst_pg)
 	 * as required.
 	 */
 	*csrc_pte = L2_S_PROTO | src |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) |
+	    L2_S_PROT(PTE_KERNEL, PROT_READ) |
 	    L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X);	/* mini-data */
 	PTE_SYNC(csrc_pte);
 	*cdst_pte = L2_S_PROTO | dst |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) |
+	    L2_S_PROT(PTE_KERNEL, PROT_WRITE) |
 	    L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X);	/* mini-data */
 	PTE_SYNC(cdst_pte);
 	cpu_tlb_flushD_SE(csrcp);
@@ -3443,7 +3443,7 @@ pmap_copy_page_v7(struct vm_page *src_pg, struct vm_page *dst_pg)
 	    L2_V7_AP(0x5) | pte_l2_s_cache_mode;
 	PTE_SYNC(csrc_pte);
 	*cdst_pte = L2_S_PROTO | dst |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_l2_s_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, PROT_WRITE) | pte_l2_s_cache_mode;
 	PTE_SYNC(cdst_pte);
 	cpu_tlb_flushD_SE(csrcp);
 	cpu_tlb_flushD_SE(cdstp);
@@ -3498,7 +3498,7 @@ pmap_grow_map(vaddr_t va, pt_entry_t cache_mode, paddr_t *pap)
 
 	ptep = &l2b->l2b_kva[l2pte_index(va)];
 	*ptep = L2_S_PROTO | pa | cache_mode |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ | VM_PROT_WRITE);
+	    L2_S_PROT(PTE_KERNEL, PROT_READ | PROT_WRITE);
 	PTE_SYNC(ptep);
 	memset((void *)va, 0, PAGE_SIZE);
 	return (0);
@@ -4157,7 +4157,7 @@ pmap_postinit(void)
 			paddr_t pa = VM_PAGE_TO_PHYS(m);
 
 
-			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+			pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
 
 			/*
 			 * Make sure the L1 descriptor table is mapped
@@ -4973,7 +4973,7 @@ xscale_setup_minidata(vaddr_t l1pt, vaddr_t va, paddr_t pa)
 #else
 		pte[l2pte_index(va)] =
 #endif
-		    L2_S_PROTO | pa | L2_S_PROT(PTE_KERNEL, VM_PROT_READ) |
+		    L2_S_PROTO | pa | L2_S_PROT(PTE_KERNEL, PROT_READ) |
 		    L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X);
 	}
 

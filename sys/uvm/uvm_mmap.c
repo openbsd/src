@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.99 2014/10/03 17:41:00 kettenis Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.100 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ sys_mquery(struct proc *p, void *v, register_t *retval)
 	size = (vsize_t) SCARG(uap, len);
 	fd = SCARG(uap, fd);
 
-	if ((prot & VM_PROT_ALL) != prot)
+	if ((prot & PROT_MASK) != prot)
 		return (EINVAL);
 
 	if (SCARG(uap, flags) & MAP_FIXED)
@@ -210,7 +210,7 @@ sys_mincore(struct proc *p, void *v, register_t *retval)
 	 * Lock down vec, so our returned status isn't outdated by
 	 * storing the status byte for a page.
 	 */
-	if ((error = uvm_vslock(p, vec, npgs, VM_PROT_WRITE)) != 0) {
+	if ((error = uvm_vslock(p, vec, npgs, PROT_WRITE)) != 0) {
 		free(pgs, M_TEMP, 0);
 		return (error);
 	}
@@ -341,7 +341,7 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 	 * Fixup the old deprecated MAP_COPY into MAP_PRIVATE, and
 	 * validate the flags.
 	 */
-	if ((prot & VM_PROT_ALL) != prot)
+	if ((prot & PROT_MASK) != prot)
 		return (EINVAL);
 	if ((flags & MAP_FLAGMASK) != flags)
 		return (EINVAL);
@@ -435,11 +435,11 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 		}
 
 		/* now check protection */
-		maxprot = VM_PROT_EXECUTE;
+		maxprot = PROT_EXEC;
 
 		/* check read access */
 		if (fp->f_flag & FREAD)
-			maxprot |= VM_PROT_READ;
+			maxprot |= PROT_READ;
 		else if (prot & PROT_READ) {
 			error = EACCES;
 			goto out;
@@ -458,7 +458,7 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 				    VOP_GETATTR(vp, &va, p->p_ucred, p)))
 					goto out;
 				if ((va.va_flags & (IMMUTABLE|APPEND)) == 0)
-					maxprot |= VM_PROT_WRITE;
+					maxprot |= PROT_WRITE;
 				else if (prot & PROT_WRITE) {
 					error = EPERM;
 					goto out;
@@ -469,7 +469,7 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 			}
 		} else {
 			/* MAP_PRIVATE mappings can always write to */
-			maxprot |= VM_PROT_WRITE;
+			maxprot |= PROT_WRITE;
 		}
 
 		/* set handle to vnode */
@@ -485,7 +485,7 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 
 is_anon:		/* label for SunOS style /dev/zero */
 		handle = NULL;
-		maxprot = VM_PROT_ALL;
+		maxprot = PROT_MASK;
 		pos = 0;
 	}
 
@@ -604,7 +604,7 @@ sys_munmap(struct proc *p, void *v, register_t *retval)
 	 * interesting system call semantic: make sure entire range is 
 	 * allocated before allowing an unmap.
 	 */
-	if (!uvm_map_checkprot(map, addr, addr + size, VM_PROT_NONE)) {
+	if (!uvm_map_checkprot(map, addr, addr + size, PROT_NONE)) {
 		vm_map_unlock(map);
 		return (EINVAL);
 	}
@@ -642,7 +642,7 @@ sys_mprotect(struct proc *p, void *v, register_t *retval)
 	size = (vsize_t)SCARG(uap, len);
 	prot = SCARG(uap, prot);
 	
-	if ((prot & VM_PROT_ALL) != prot)
+	if ((prot & PROT_MASK) != prot)
 		return (EINVAL);
 
 	/*
@@ -904,7 +904,7 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	struct uvm_object *uobj;
 	struct vnode *vp;
 	int error;
-	int advice = UVM_ADV_NORMAL;
+	int advice = POSIX_MADV_NORMAL;
 	uvm_flag_t uvmflag = 0;
 	vsize_t align = 0;	/* userland page size */
 
@@ -950,7 +950,7 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 		vp = (struct vnode *) handle;	/* get vnode */
 		if (vp->v_type != VCHR) {
 			uobj = uvn_attach(vp, (flags & MAP_SHARED) ?
-			   maxprot : (maxprot & ~VM_PROT_WRITE));
+			   maxprot : (maxprot & ~PROT_WRITE));
 
 			/*
 			 * XXXCDC: hack from old code
@@ -976,27 +976,27 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 			 * the uncache to kill the uvn and trigger I/O.
 			 */
 			if (flags & MAP_SHARED) {
-				if ((prot & VM_PROT_WRITE) ||
-				    (maxprot & VM_PROT_WRITE)) {
+				if ((prot & PROT_WRITE) ||
+				    (maxprot & PROT_WRITE)) {
 					uvm_vnp_uncache(vp);
 				}
 			}
 		} else {
 			uobj = udv_attach(vp->v_rdev,
 			    (flags & MAP_SHARED) ? maxprot :
-			    (maxprot & ~VM_PROT_WRITE), foff, size);
+			    (maxprot & ~PROT_WRITE), foff, size);
 			/*
 			 * XXX Some devices don't like to be mapped with
 			 * XXX PROT_EXEC, but we don't really have a
 			 * XXX better way of handling this, right now
 			 */
 			if (uobj == NULL && (prot & PROT_EXEC) == 0) {
-				maxprot &= ~VM_PROT_EXECUTE;
+				maxprot &= ~PROT_EXEC;
 				uobj = udv_attach(vp->v_rdev,
 				    (flags & MAP_SHARED) ? maxprot :
-				    (maxprot & ~VM_PROT_WRITE), foff, size);
+				    (maxprot & ~PROT_WRITE), foff, size);
 			}
-			advice = UVM_ADV_RANDOM;
+			advice = POSIX_MADV_RANDOM;
 		}
 		
 		if (uobj == NULL)
@@ -1020,7 +1020,7 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 		 * POSIX 1003.1b -- if our address space was configured
 		 * to lock all future mappings, wire the one we just made.
 		 */
-		if (prot == VM_PROT_NONE) {
+		if (prot == PROT_NONE) {
 			/*
 			 * No more work to do in this case.
 			 */

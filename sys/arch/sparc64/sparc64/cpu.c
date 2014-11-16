@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.62 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.63 2014/11/16 12:30:59 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -147,7 +147,7 @@ alloc_cpuinfo(struct mainbus_attach_args *ma)
 	cpu0paddr += sz;
 
 	for (pa = pa0; pa < cpu0paddr; pa += PAGE_SIZE, va += PAGE_SIZE)
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
 
 	pmap_update(pmap_kernel());
 

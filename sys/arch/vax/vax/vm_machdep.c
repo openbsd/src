@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.41 2013/11/24 22:08:25 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.42 2014/11/16 12:30:59 deraadt Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
@@ -291,7 +291,8 @@ vmapbuf(bp, len)
 				&pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
-		    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		    PROT_READ | PROT_WRITE,
+		    PROT_READ | PROT_WRITE | PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}

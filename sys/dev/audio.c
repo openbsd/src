@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.123 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: audio.c,v 1.124 2014/11/16 12:30:59 deraadt Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -2028,18 +2028,18 @@ audio_mmap(dev_t dev, off_t off, int prot)
  * The idea here was to use the protection to determine if
  * we are mapping the read or write buffer, but it fails.
  * The VM system is broken in (at least) two ways.
- * 1) If you map memory VM_PROT_WRITE you SIGSEGV
- *    when writing to it, so VM_PROT_READ|VM_PROT_WRITE
+ * 1) If you map memory PROT_WRITE you SIGSEGV
+ *    when writing to it, so PROT_READ|PROT_WRITE
  *    has to be used for mmapping the play buffer.
- * 2) Even if calling mmap() with VM_PROT_READ|VM_PROT_WRITE
- *    audio_mmap will get called at some point with VM_PROT_READ
+ * 2) Even if calling mmap() with PROT_READ|PROT_WRITE
+ *    audio_mmap will get called at some point with PROT_READ
  *    only.
  * So, alas, we always map the play buffer for now.
  */
-	if (prot == (VM_PROT_READ|VM_PROT_WRITE) ||
-	    prot == VM_PROT_WRITE)
+	if (prot == (PROT_READ | PROT_WRITE) ||
+	    prot == PROT_WRITE)
 		cb = &sc->sc_pr;
-	else if (prot == VM_PROT_READ)
+	else if (prot == PROT_READ)
 		cb = &sc->sc_rr;
 	else
 		return -1;

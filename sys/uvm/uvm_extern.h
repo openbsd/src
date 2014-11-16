@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.122 2014/11/15 21:42:07 deraadt Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.123 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -81,22 +81,7 @@ struct vm_page;
 typedef struct vm_page  *vm_page_t;
 
 /* protections bits */
-#define UVM_PROT_MASK	0x07	/* protection mask */
-#define UVM_PROT_NONE	0x00	/* protection none */
-#define UVM_PROT_ALL	0x07	/* everything */
-#define UVM_PROT_READ	0x01	/* read */
-#define UVM_PROT_WRITE  0x02	/* write */
-#define UVM_PROT_EXEC	0x04	/* exec */
-
-/* protection short codes */
-#define UVM_PROT_R	0x01	/* read */
-#define UVM_PROT_W	0x02	/* write */
-#define UVM_PROT_RW	0x03    /* read-write */
-#define UVM_PROT_X	0x04	/* exec */
-#define UVM_PROT_RX	0x05	/* read-exec */
-#define UVM_PROT_WX	0x06	/* write-exec */
-#define UVM_PROT_RWX	0x07	/* read-write-exec */
-
+#define PROT_MASK	(PROT_READ | PROT_WRITE | PROT_EXEC)
 /* 0x08: not used */
 
 /* inherit codes */
@@ -107,44 +92,11 @@ typedef struct vm_page  *vm_page_t;
 #define UVM_INH_ZERO	0x30	/* "zero" */
 
 /* 0x40, 0x80: not used */
-
 /* bits 0x700: max protection, 0x800: not used */
-
 /* bits 0x7000: advice, 0x8000: not used */
 
 typedef int		vm_prot_t;
 
-/*
- *	Protection values, defined as bits within the vm_prot_t type
- *
- *   These are funky definitions from old CMU VM and are kept
- *   for compatibility reasons, one day they are going to die,
- *   just like everybody else.
- */
-
-#define	VM_PROT_NONE	((vm_prot_t) 0x00)
-
-#define VM_PROT_READ	((vm_prot_t) 0x01)	/* read permission */
-#define VM_PROT_WRITE	((vm_prot_t) 0x02)	/* write permission */
-#define VM_PROT_EXECUTE	((vm_prot_t) 0x04)	/* execute permission */
-
-/*
- *	The default protection for newly-created virtual memory
- */
-
-#define VM_PROT_DEFAULT	(VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)
-
-/*
- *	The maximum privileges possible, for parameter checking.
- */
-
-#define VM_PROT_ALL	(VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)
-
-/* advice: matches MADV_* from sys/mman.h */
-#define UVM_ADV_NORMAL	0x0	/* 'normal' */
-#define UVM_ADV_RANDOM	0x1	/* 'random' */
-#define UVM_ADV_SEQUENTIAL 0x2	/* 'sequential' */
-/* 0x3: will need, 0x4: dontneed */
 #define UVM_ADV_MASK	0x7	/* mask */
 
 /* mapping flags */
@@ -159,9 +111,9 @@ typedef int		vm_prot_t;
 #define UVM_FLAG_NOFAULT 0x1000000 /* don't fault */
 
 /* macros to extract info */
-#define UVM_PROTECTION(X)	((X) & UVM_PROT_MASK)
+#define UVM_PROTECTION(X)	((X) & PROT_MASK)
 #define UVM_INHERIT(X)		(((X) & UVM_INH_MASK) >> 4)
-#define UVM_MAXPROTECTION(X)	(((X) >> 8) & UVM_PROT_MASK)
+#define UVM_MAXPROTECTION(X)	(((X) >> 8) & PROT_MASK)
 #define UVM_ADVICE(X)		(((X) >> 12) & UVM_ADV_MASK)
 
 #define UVM_MAPFLAG(prot, maxprot, inh, advice, flags) \
@@ -209,6 +161,7 @@ typedef int		vm_prot_t;
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/lock.h>
+#include <sys/mman.h>
 
 #ifdef _KERNEL
 struct buf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.6 2014/01/24 05:33:32 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.7 2014/11/16 12:30:58 deraadt Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -789,7 +789,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	struct pvlist *pvl;
 	int s;
 
-	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {	/* remove all */
+	if ((prot & PROT_READ) == PROT_NONE) {	/* remove all */
 		s = splvm();
 		pvl = pg_to_pvl(pg);
 
@@ -802,7 +802,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		}
 
 		splx(s);
-	} else if ((prot & VM_PROT_WRITE) == VM_PROT_NONE) {
+	} else if ((prot & PROT_WRITE) == PROT_NONE) {
 		s = splvm();
 		pvl = pg_to_pvl(pg);
 
@@ -838,7 +838,7 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t e, vm_prot_t prot)
 	DPRINTF(PDB_PROTECT,
 	    ("pmap_protect(%p,%08x,%08x,%x)\n", pmap, sva, e, prot));
 
-	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
+	if ((prot & PROT_READ) == PROT_NONE) {
 		pmap_remove(pmap, sva, e);
 		splx(s);
 		return;
@@ -863,7 +863,7 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t e, vm_prot_t prot)
 				continue;
 
 			npte = (opte & ~PG_RO) | 
-			    (prot & VM_PROT_WRITE) ? PG_RW : PG_RO;
+			    (prot & PROT_WRITE) ? PG_RW : PG_RO;
 			if (opte != npte) {
 				*pte = npte;
 				tlb_flush(va);
@@ -944,7 +944,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 
 	pa = trunc_page(pa);
-	npte |= pa | PG_V | (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
+	npte |= pa | PG_V | (prot & PROT_WRITE ? PG_RW : PG_RO);
 
 	pg = PHYS_TO_VM_PAGE(pa);
 	if (pg != NULL) {
@@ -1064,7 +1064,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	}
 
 	pa = trunc_page(pa);
-	npte |= pa | PG_V | PG_W | (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
+	npte |= pa | PG_V | PG_W | (prot & PROT_WRITE ? PG_RW : PG_RO);
 
 	if ((opte & PG_W) == 0)
 		pmap_kernel()->pm_stats.wired_count++;
@@ -1476,7 +1476,7 @@ pmap_changeprot(struct pmap *pmap, vaddr_t va, vm_prot_t prot, int wired)
 
 	s = splvm();
 
-	npte = PG_S | (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
+	npte = PG_S | (prot & PROT_WRITE ? PG_RW : PG_RO);
 
 	pte = pmap_pte(pmap, va);
 	if ((*pte & PG_PROT) != npte) {

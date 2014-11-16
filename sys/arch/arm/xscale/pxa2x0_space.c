@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_space.c,v 1.4 2008/05/15 22:17:08 brad Exp $ */
+/*	$OpenBSD: pxa2x0_space.c,v 1.5 2014/11/16 12:30:56 deraadt Exp $ */
 /*	$NetBSD: pxa2x0_space.c,v 1.5 2004/06/07 19:45:22 nathanw Exp $ */
 
 /*
@@ -194,7 +194,7 @@ pxa2x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
 		if ((flag & BUS_SPACE_MAP_CACHEABLE) == 0) {
 			pte = vtopte(va);
 			*pte &= ~L2_S_CACHE_MASK;

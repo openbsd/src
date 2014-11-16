@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.24 2014/10/25 16:57:58 kettenis Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.25 2014/11/16 12:30:56 deraadt Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -508,8 +508,7 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 
 	for (; map_size > 0;
 	    pa += PAGE_SIZE, va += PAGE_SIZE, map_size -= PAGE_SIZE)
-		pmap_kenter_pa(va, pa | pmap_flags,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa | pmap_flags, PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	return 0;

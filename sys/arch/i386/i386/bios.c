@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.106 2014/10/17 20:34:23 kettenis Exp $	*/
+/*	$OpenBSD: bios.c,v 1.107 2014/11/16 12:30:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -282,7 +282,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 			smbios_entry.count = sh->count;
 
 			for (; pa < end; pa+= NBPG, eva+= NBPG)
-				pmap_kenter_pa(eva, pa, VM_PROT_READ);
+				pmap_kenter_pa(eva, pa, PROT_READ);
 
 			printf(", SMBIOS rev. %d.%d @ 0x%x (%hd entries)",
 			    sh->majrev, sh->minrev, sh->addr, sh->count);
@@ -670,14 +670,14 @@ bios32_service(u_int32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 	    va += trunc_page(BIOS32_START);
 	    pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE,
-		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+		    PROT_READ | PROT_WRITE,
+		    PROT_READ | PROT_WRITE | PMAP_WIRED);
 
 		/* for all you, broken hearted */
 		if (pa >= trunc_page(base)) {
 			pmap_enter(pmap_kernel(), sva, pa,
-			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			    PROT_READ | PROT_WRITE,
+			    PROT_READ | PROT_WRITE | PMAP_WIRED);
 			sva += NBPG;
 		}
 	}

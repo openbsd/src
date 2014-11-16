@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.102 2014/09/06 09:42:23 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.103 2014/11/16 12:30:58 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -289,9 +289,9 @@ trap(struct trapframe *frame)
 					return;
 			}
 			if (frame->dsisr & DSISR_STORE)
-				ftype = VM_PROT_READ | VM_PROT_WRITE;
+				ftype = PROT_READ | PROT_WRITE;
 			else
-				ftype = VM_PROT_READ;
+				ftype = PROT_READ;
 			KERNEL_LOCK();
 			if (uvm_fault(map, trunc_page(va), 0, ftype) == 0) {
 				KERNEL_UNLOCK();
@@ -323,10 +323,10 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 
 			KERNEL_LOCK();
 			if (frame->dsisr & DSISR_STORE) {
-				ftype = VM_PROT_READ | VM_PROT_WRITE;
-				vftype = VM_PROT_WRITE;
+				ftype = PROT_READ | PROT_WRITE;
+				vftype = PROT_WRITE;
 			} else
-				vftype = ftype = VM_PROT_READ;
+				vftype = ftype = PROT_READ;
 			if (uvm_fault(&p->p_vmspace->vm_map,
 				     trunc_page(frame->dar), 0, ftype) == 0) {
 				uvm_grow(p, trunc_page(frame->dar));
@@ -355,7 +355,7 @@ printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 				break;
 
 			KERNEL_LOCK();
-			ftype = VM_PROT_READ | VM_PROT_EXECUTE;
+			ftype = PROT_READ | PROT_EXEC;
 			if (uvm_fault(&p->p_vmspace->vm_map,
 			    trunc_page(frame->srr0), 0, ftype) == 0) {
 				uvm_grow(p, trunc_page(frame->srr0));
@@ -373,7 +373,7 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 /* XXX Have to make sure that sigreturn does the right thing. */
 		sv.sival_int = frame->srr0;
 		KERNEL_LOCK();
-		trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR, sv);
+		trapsignal(p, SIGSEGV, PROT_EXEC, SEGV_MAPERR, sv);
 		KERNEL_UNLOCK();
 		break;
 	case EXC_SC|EXC_USER:
@@ -483,7 +483,7 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 		else {
 			sv.sival_int = frame->srr0;
 			KERNEL_LOCK();
-			trapsignal(p, SIGBUS, VM_PROT_EXECUTE, BUS_ADRALN,
+			trapsignal(p, SIGBUS, PROT_EXEC, BUS_ADRALN,
 				sv);
 			KERNEL_UNLOCK();
 		}

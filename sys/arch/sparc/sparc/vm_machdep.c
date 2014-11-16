@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.57 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.58 2014/11/16 12:30:59 deraadt Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -205,7 +205,7 @@ dvma_mapin_space(map, va, len, canwait, space)
 #endif
 #endif
 			pmap_kenter_pa(tva, pa | PMAP_NC,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    PROT_READ | PROT_WRITE);
 		}
 
 		tva += PAGE_SIZE;
@@ -302,7 +302,7 @@ vmapbuf(struct buf *bp, vsize_t sz)
 			pa |= PMAP_NC;
 
 		pmap_enter(pmap_kernel(), kva, pa,
-			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		    PROT_READ | PROT_WRITE, PMAP_WIRED);
 
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;

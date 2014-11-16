@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.5 2014/10/24 21:49:34 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.6 2014/11/16 12:30:59 deraadt Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -69,8 +69,9 @@ again:
 	m = TAILQ_FIRST(&mlist);
 	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
 		pa = VM_PAGE_TO_PHYS(m);
-		pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_enter(pmap_kernel(), va, pa,
+		    PROT_READ | PROT_WRITE,
+		    PROT_READ | PROT_WRITE | PMAP_WIRED);
 		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.78 2014/10/03 17:41:00 kettenis Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.79 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ uvmfault_anonflush(struct vm_anon **anons, int n)
 		if (pg && (pg->pg_flags & PG_BUSY) == 0 && pg->loan_count == 0) {
 			uvm_lock_pageq();
 			if (pg->wire_count == 0) {
-				pmap_page_protect(pg, VM_PROT_NONE);
+				pmap_page_protect(pg, PROT_NONE);
 				uvm_pagedeactivate(pg);
 			}
 			uvm_unlock_pageq();
@@ -206,15 +206,15 @@ uvmfault_init()
 	npages = atop(16384);
 	if (npages > 0) {
 		KASSERT(npages <= UVM_MAXRANGE / 2);
-		uvmadvice[UVM_ADV_NORMAL].nforw = npages;
-		uvmadvice[UVM_ADV_NORMAL].nback = npages - 1;
+		uvmadvice[POSIX_MADV_NORMAL].nforw = npages;
+		uvmadvice[POSIX_MADV_NORMAL].nback = npages - 1;
 	}
 
 	npages = atop(32768);
 	if (npages > 0) {
 		KASSERT(npages <= UVM_MAXRANGE / 2);
-		uvmadvice[UVM_ADV_SEQUENTIAL].nforw = npages - 1;
-		uvmadvice[UVM_ADV_SEQUENTIAL].nback = npages;
+		uvmadvice[POSIX_MADV_SEQUENTIAL].nforw = npages - 1;
+		uvmadvice[POSIX_MADV_SEQUENTIAL].nback = npages;
 	}
 }
 
@@ -380,7 +380,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 * anon and try again.
 			 */
 			if (pg->pg_flags & PG_RELEASED) {
-				pmap_page_protect(pg, VM_PROT_NONE);
+				pmap_page_protect(pg, PROT_NONE);
 				uvm_anfree(anon);	/* frees page for us */
 				if (locked)
 					uvmfault_unlockall(ufi, amap, NULL,
@@ -506,7 +506,7 @@ uvmfault_update_stats(struct uvm_faultinfo *ufi)
  *	the map locked off during I/O.
  */
 #define MASK(entry)     (UVM_ET_ISCOPYONWRITE(entry) ? \
-			 ~VM_PROT_WRITE : VM_PROT_ALL)
+			 ~PROT_WRITE : PROT_MASK)
 int
 uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
     vm_prot_t access_type)
@@ -571,7 +571,7 @@ ReFault:
 
 	/* handle "needs_copy" case. */
 	if (UVM_ET_ISNEEDSCOPY(ufi.entry)) {
-		if ((access_type & VM_PROT_WRITE) ||
+		if ((access_type & PROT_WRITE) ||
 		    (ufi.entry->object.uvm_obj == NULL)) {
 			/* need to clear */
 			uvmfault_unlockmaps(&ufi, FALSE);
@@ -583,7 +583,7 @@ ReFault:
 			 * ensure that we pmap_enter page R/O since
 			 * needs_copy is still true
 			 */
-			enter_prot &= ~VM_PROT_WRITE; 
+			enter_prot &= ~PROT_WRITE; 
 		}
 	}
 
@@ -710,7 +710,7 @@ ReFault:
 			 */
 			(void) pmap_enter(ufi.orig_map->pmap, currva,
 			    VM_PAGE_TO_PHYS(anon->an_page),
-			    (anon->an_ref > 1) ? (enter_prot & ~VM_PROT_WRITE) :
+			    (anon->an_ref > 1) ? (enter_prot & ~PROT_WRITE) :
 			    enter_prot,
 			    PMAP_CANFAIL |
 			     (VM_MAPENT_ISWIRED(ufi.entry) ? PMAP_WIRED : 0));
@@ -887,12 +887,12 @@ ReFault:
 
 	/* special handling for loaned pages */
 	if (anon->an_page->loan_count) {
-		if ((access_type & VM_PROT_WRITE) == 0) {
+		if ((access_type & PROT_WRITE) == 0) {
 			/*
 			 * for read faults on loaned pages we just cap the
 			 * protection at read-only.
 			 */
-			enter_prot = enter_prot & ~VM_PROT_WRITE;
+			enter_prot = enter_prot & ~PROT_WRITE;
 		} else {
 			/*
 			 * note that we can't allow writes into a loaned page!
@@ -923,8 +923,7 @@ ReFault:
 				uvm_pagecopy(anon->an_page, pg);
 
 				/* force reload */
-				pmap_page_protect(anon->an_page,
-						  VM_PROT_NONE);
+				pmap_page_protect(anon->an_page, PROT_NONE);
 				uvm_lock_pageq();	  /* KILL loan */
 				if (uobj)
 					/* if we were loaning */
@@ -963,7 +962,7 @@ ReFault:
 	 * if we are out of anon VM we kill the process (XXX: could wait?).
 	 */
 
-	if ((access_type & VM_PROT_WRITE) != 0 && anon->an_ref > 1) {
+	if ((access_type & PROT_WRITE) != 0 && anon->an_ref > 1) {
 		uvmexp.flt_acow++;
 		oanon = anon;		/* oanon = old */
 		anon = uvm_analloc();
@@ -1008,7 +1007,7 @@ ReFault:
 		oanon = anon;
 		pg = anon->an_page;
 		if (anon->an_ref > 1)     /* disallow writes to ref > 1 anons */
-			enter_prot = enter_prot & ~VM_PROT_WRITE;
+			enter_prot = enter_prot & ~PROT_WRITE;
 	}
 
 	/*
@@ -1077,7 +1076,7 @@ Case2:
 		promote = TRUE;		/* always need anon here */
 	} else {
 		KASSERT(uobjpage != PGO_DONTCARE);
-		promote = (access_type & VM_PROT_WRITE) &&
+		promote = (access_type & PROT_WRITE) &&
 		     UVM_ET_ISCOPYONWRITE(ufi.entry);
 	}
 
@@ -1172,7 +1171,7 @@ Case2:
 		 */
 		uvmexp.flt_obj++;
 		if (UVM_ET_ISCOPYONWRITE(ufi.entry))
-			enter_prot &= ~VM_PROT_WRITE;
+			enter_prot &= ~PROT_WRITE;
 		pg = uobjpage;		/* map in the actual object */
 
 		/* assert(uobjpage != PGO_DONTCARE) */
@@ -1183,10 +1182,10 @@ Case2:
 		 */
 		if (uobjpage->loan_count) {
 
-			if ((access_type & VM_PROT_WRITE) == 0) {
+			if ((access_type & PROT_WRITE) == 0) {
 				/* read fault: cap the protection at readonly */
 				/* cap! */
-				enter_prot = enter_prot & ~VM_PROT_WRITE;
+				enter_prot = enter_prot & ~PROT_WRITE;
 			} else {
 				/* write fault: must break the loan here */
 				/* alloc new un-owned page */
@@ -1227,7 +1226,7 @@ Case2:
 				uvm_pagecopy(uobjpage, pg);	/* old -> new */
 				atomic_clearbits_int(&pg->pg_flags,
 				    PG_FAKE|PG_CLEAN);
-				pmap_page_protect(uobjpage, VM_PROT_NONE);
+				pmap_page_protect(uobjpage, PROT_NONE);
 				if (uobjpage->pg_flags & PG_WANTED)
 					wakeup(uobjpage);
 				atomic_clearbits_int(&uobjpage->pg_flags,
@@ -1320,7 +1319,7 @@ Case2:
 			 * procs see it
 			 */
 			if ((amap_flags(amap) & AMAP_SHARED) != 0) {
-				pmap_page_protect(uobjpage, VM_PROT_NONE);
+				pmap_page_protect(uobjpage, PROT_NONE);
 			}
 			
 			/* dispose of uobjpage. drop handle to uobj as well. */
@@ -1427,7 +1426,7 @@ uvm_fault_wire(vm_map_t map, vaddr_t start, vaddr_t end, vm_prot_t access_type)
 
 	/*
 	 * now fault it in a page at a time.   if the fault fails then we have
-	 * to undo what we have done.   note that in uvm_fault VM_PROT_NONE 
+	 * to undo what we have done.   note that in uvm_fault PROT_NONE 
 	 * is replaced with the max protection if fault_type is VM_FAULT_WIRE.
 	 */
 	for (va = start ; va < end ; va += PAGE_SIZE) {

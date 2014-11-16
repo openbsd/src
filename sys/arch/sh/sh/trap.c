@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.31 2014/10/13 04:47:22 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.32 2014/11/16 12:30:58 deraadt Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -350,15 +350,15 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 	switch (tf->tf_expevt) {
 	case EXPEVT_TLB_MISS_LD:
 		track = PVH_REFERENCED;
-		ftype = VM_PROT_READ;
+		ftype = PROT_READ;
 		break;
 	case EXPEVT_TLB_MISS_ST:
 		track = PVH_REFERENCED;
-		ftype = VM_PROT_WRITE;
+		ftype = PROT_WRITE;
 		break;
 	case EXPEVT_TLB_MOD:
 		track = PVH_REFERENCED | PVH_MODIFIED;
-		ftype = VM_PROT_WRITE;
+		ftype = PROT_WRITE;
 		break;
 	case EXPEVT_TLB_PROT_LD:
 		TLB_ASSERT((int)va > 0,
@@ -376,7 +376,7 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 
 	case EXPEVT_TLB_PROT_ST:
 		track = 0;	/* call uvm_fault first. (COW) */
-		ftype = VM_PROT_WRITE;
+		ftype = PROT_WRITE;
 		break;
 
 	default:

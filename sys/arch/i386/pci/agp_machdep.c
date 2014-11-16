@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.19 2014/09/20 16:15:16 kettenis Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.20 2014/11/16 12:30:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -157,7 +157,7 @@ agp_map_atomic(struct agp_map *map, bus_size_t offset,
 		pmap_flags = PMAP_WC;
 
 	pa = bus_space_mmap(map->bst, map->addr, offset, 0, 0);
-	pmap_kenter_pa(map->va, pa | pmap_flags, VM_PROT_READ | VM_PROT_WRITE);
+	pmap_kenter_pa(map->va, pa | pmap_flags, PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	*bshp = (bus_space_handle_t)map->va;

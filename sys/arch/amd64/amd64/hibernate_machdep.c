@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.30 2014/11/08 08:18:37 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.31 2014/11/16 12:30:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -272,22 +272,22 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	pt_entry_t *pde, npde;
 
 	/* Identity map MMU pages */
-	pmap_kenter_pa(HIBERNATE_PML4T, HIBERNATE_PML4T, VM_PROT_ALL);
-	pmap_kenter_pa(HIBERNATE_PDPT_LOW, HIBERNATE_PDPT_LOW, VM_PROT_ALL);
-	pmap_kenter_pa(HIBERNATE_PDPT_HI, HIBERNATE_PDPT_HI, VM_PROT_ALL);
-	pmap_kenter_pa(HIBERNATE_PD_LOW, HIBERNATE_PD_LOW, VM_PROT_ALL);
-	pmap_kenter_pa(HIBERNATE_PD_LOW2, HIBERNATE_PD_LOW2, VM_PROT_ALL);
-	pmap_kenter_pa(HIBERNATE_PD_HI, HIBERNATE_PD_HI, VM_PROT_ALL);
-	pmap_kenter_pa(HIBERNATE_PT_LOW, HIBERNATE_PT_LOW, VM_PROT_ALL);
-	pmap_kenter_pa(HIBERNATE_PT_LOW2, HIBERNATE_PT_LOW2, VM_PROT_ALL);
-	pmap_kenter_pa(HIBERNATE_PT_HI, HIBERNATE_PT_HI, VM_PROT_ALL);
+	pmap_kenter_pa(HIBERNATE_PML4T, HIBERNATE_PML4T, PROT_MASK);
+	pmap_kenter_pa(HIBERNATE_PDPT_LOW, HIBERNATE_PDPT_LOW, PROT_MASK);
+	pmap_kenter_pa(HIBERNATE_PDPT_HI, HIBERNATE_PDPT_HI, PROT_MASK);
+	pmap_kenter_pa(HIBERNATE_PD_LOW, HIBERNATE_PD_LOW, PROT_MASK);
+	pmap_kenter_pa(HIBERNATE_PD_LOW2, HIBERNATE_PD_LOW2, PROT_MASK);
+	pmap_kenter_pa(HIBERNATE_PD_HI, HIBERNATE_PD_HI, PROT_MASK);
+	pmap_kenter_pa(HIBERNATE_PT_LOW, HIBERNATE_PT_LOW, PROT_MASK);
+	pmap_kenter_pa(HIBERNATE_PT_LOW2, HIBERNATE_PT_LOW2, PROT_MASK);
+	pmap_kenter_pa(HIBERNATE_PT_HI, HIBERNATE_PT_HI, PROT_MASK);
 
 	/* Identity map 3 pages for stack */
-	pmap_kenter_pa(HIBERNATE_STACK_PAGE, HIBERNATE_STACK_PAGE, VM_PROT_ALL);
+	pmap_kenter_pa(HIBERNATE_STACK_PAGE, HIBERNATE_STACK_PAGE, PROT_MASK);
 	pmap_kenter_pa(HIBERNATE_STACK_PAGE - PAGE_SIZE,
-		HIBERNATE_STACK_PAGE - PAGE_SIZE, VM_PROT_ALL);
+		HIBERNATE_STACK_PAGE - PAGE_SIZE, PROT_MASK);
 	pmap_kenter_pa(HIBERNATE_STACK_PAGE - 2*PAGE_SIZE,
-		HIBERNATE_STACK_PAGE - 2*PAGE_SIZE, VM_PROT_ALL);
+		HIBERNATE_STACK_PAGE - 2*PAGE_SIZE, PROT_MASK);
 	pmap_activate(curproc);
 
 	bzero((caddr_t)HIBERNATE_PML4T, PAGE_SIZE);

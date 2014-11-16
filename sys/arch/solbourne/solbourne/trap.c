@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2014/05/11 00:12:44 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2014/11/16 12:30:58 deraadt Exp $	*/
 /*	OpenBSD: trap.c,v 1.42 2004/12/06 20:12:25 miod Exp 	*/
 
 /*
@@ -651,7 +651,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	 */
 	if (type == T_TEXTFAULT)
 		v = pc;
-	ftype = ser & FCR_RO ? VM_PROT_WRITE : VM_PROT_READ;
+	ftype = ser & FCR_RO ? PROT_WRITE : PROT_READ;
 	va = trunc_page(v);
 	if (psr & PSR_PS) {
 		if (type == T_TEXTFAULT) {
@@ -724,8 +724,8 @@ kfault:
 		}
 		
 		sv.sival_int = v;
-		trapsignal(p, SIGSEGV, (ser & FCR_RO) ? VM_PROT_WRITE :
-		    VM_PROT_READ, SEGV_MAPERR, sv);
+		trapsignal(p, SIGSEGV, (ser & FCR_RO) ? PROT_WRITE :
+		    PROT_READ, SEGV_MAPERR, sv);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {

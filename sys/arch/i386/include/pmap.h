@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.65 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.66 2014/11/16 12:30:57 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 #define	_MACHINE_PMAP_H_
 
 #ifdef _KERNEL
+#include <sys/mman.h>
 #include <machine/cpufunc.h>
 #include <machine/segments.h>
 #endif
@@ -435,8 +436,8 @@ boolean_t	pmap_zero_page_uncached(paddr_t);
 __inline static void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-	if ((prot & VM_PROT_WRITE) == 0) {
-		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
+	if ((prot & PROT_WRITE) == 0) {
+		if (prot & (PROT_READ | PROT_EXEC)) {
 			(void) pmap_clear_attrs(pg, PG_RW);
 		} else {
 			pmap_page_remove(pg);
@@ -455,8 +456,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 __inline static void
 pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
-	if ((prot & VM_PROT_WRITE) == 0) {
-		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
+	if ((prot & PROT_WRITE) == 0) {
+		if (prot & (PROT_READ | PROT_EXEC)) {
 			pmap_write_protect(pmap, sva, eva, prot);
 		} else {
 			pmap_remove(pmap, sva, eva);

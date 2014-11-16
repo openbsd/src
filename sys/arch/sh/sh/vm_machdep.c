@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.11 2013/01/16 19:04:43 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.12 2014/11/16 12:30:58 deraadt Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.53 2006/08/31 16:49:21 matt Exp $	*/
 
 /*
@@ -340,7 +340,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	while (len) {
 		pmap_extract(upmap, faddr, &fpa);
 		pmap_enter(kpmap, taddr, fpa,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		    PROT_READ | PROT_WRITE, PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;

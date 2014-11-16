@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.27 2014/09/13 16:06:36 doug Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.28 2014/11/16 12:30:56 deraadt Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -765,7 +765,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_kenter_cache(va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE,
+			    PROT_READ | PROT_WRITE,
 			    !(flags & BUS_DMA_COHERENT));
 
 #ifdef DEBUG_DMA

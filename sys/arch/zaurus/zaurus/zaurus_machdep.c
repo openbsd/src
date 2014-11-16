@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.52 2014/09/20 09:28:25 kettenis Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.53 2014/11/16 12:30:59 deraadt Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -432,7 +432,7 @@ map_io_area(paddr_t pagedir)
 		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_S_SIZE)
 			pmap_map_section(pagedir, l1_sec_table[loop].va + sz,
 			    l1_sec_table[loop].pa + sz,
-			    VM_PROT_READ|VM_PROT_WRITE,
+			    PROT_READ | PROT_WRITE,
 			    l1_sec_table[loop].flags);
 		++loop;
 	}
@@ -459,7 +459,7 @@ bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 
 	startpa = trunc_page(bpa);
 	pmap_map_section((vaddr_t)pagedir, va, startpa, 
-	    VM_PROT_READ | VM_PROT_WRITE, PTE_NOCACHE);
+	    PROT_READ | PROT_WRITE, PTE_NOCACHE);
 	cpu_tlb_flushD();
 
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
@@ -939,10 +939,10 @@ initarm(void *arg0, void *arg1, void *arg2)
 
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, textsize,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		    PROT_READ | PROT_WRITE, PTE_CACHE);
 		pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, totalsize - textsize,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		    PROT_READ | PROT_WRITE, PTE_CACHE);
 	}
 
 #ifdef VERBOSE_INIT_ARM
@@ -951,21 +951,21 @@ initarm(void *arg0, void *arg1, void *arg2)
 
 	/* Map the stack pages */
 	pmap_map_chunk(l1pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    IRQ_STACK_SIZE * PAGE_SIZE, PROT_READ | PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    ABT_STACK_SIZE * PAGE_SIZE, PROT_READ | PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    UND_STACK_SIZE * PAGE_SIZE, PROT_READ | PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * PAGE_SIZE, VM_PROT_READ | VM_PROT_WRITE, PTE_CACHE);
+	    UPAGES * PAGE_SIZE, PROT_READ | PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    L1_TABLE_SIZE, VM_PROT_READ | VM_PROT_WRITE, PTE_PAGETABLE);
+	    L1_TABLE_SIZE, PROT_READ | PROT_WRITE, PTE_PAGETABLE);
 
 	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
 		pmap_map_chunk(l1pagetable, kernel_pt_table[loop].pv_va,
 		    kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+		    PROT_READ | PROT_WRITE, PTE_PAGETABLE);
 	}
 
 	/* Map the Mini-Data cache clean area. */
@@ -977,10 +977,10 @@ initarm(void *arg0, void *arg1, void *arg2)
 	/* MULTI-ICE requires that page 0 is NC/NB so that it can download the
 	 * cache-clean code there.  */
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    PROT_READ | PROT_WRITE, PTE_NOCACHE);
 #else
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    PROT_READ | PROT_WRITE, PTE_CACHE);
 #endif
 
 	/*

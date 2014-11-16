@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.170 2014/10/25 16:58:59 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.171 2014/11/16 12:30:59 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -825,7 +825,7 @@ printf("starting dump, blkno %lld\n", (long long)blkno);
 			if (i && (i % (1024*1024)) == 0)
 				printf("%lld ", i / (1024*1024));
 			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
-					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+			    PROT_READ, PROT_READ | PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
@@ -1476,8 +1476,8 @@ _bus_dmamem_map(t, t0, segs, nsegs, size, kvap, flags)
 #endif
 		addr = VM_PAGE_TO_PHYS(m);
 		error = pmap_enter(pmap_kernel(), va, addr | cbit,
-		    VM_PROT_READ | VM_PROT_WRITE, VM_PROT_READ |
-		    VM_PROT_WRITE | PMAP_WIRED | PMAP_CANFAIL);
+		    PROT_READ | PROT_WRITE,
+		    PROT_READ | PROT_WRITE | PMAP_WIRED | PMAP_CANFAIL);
 		if (error) {
 			pmap_update(pmap_kernel());
 			km_free((void *)sva, ssize, &kv_any, &kp_none);
@@ -1596,7 +1596,7 @@ sparc_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t	addr,
 	vaddr_t va;
 	u_int64_t pa;
 	paddr_t	pm_flags = 0;
-	vm_prot_t pm_prot = VM_PROT_READ;
+	vm_prot_t pm_prot = PROT_READ;
 
 	if (flags & BUS_SPACE_MAP_PROMADDRESS) {
 		hp->bh_ptr = addr;
@@ -1657,7 +1657,7 @@ sparc_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t	addr,
 
 	pa = trunc_page(addr);
 	if ((flags & BUS_SPACE_MAP_READONLY) == 0)
-		pm_prot |= VM_PROT_WRITE;
+		pm_prot |= PROT_WRITE;
 
 #ifdef BUS_SPACE_DEBUG
 	{ /* scope */
@@ -1728,7 +1728,7 @@ sparc_bus_protect(bus_space_tag_t t, bus_space_tag_t t0, bus_space_handle_t h,
 	}
 
         prot = (flags & BUS_SPACE_MAP_READONLY) ?
-	    VM_PROT_READ : VM_PROT_READ | VM_PROT_WRITE;
+	    PROT_READ : PROT_READ | PROT_WRITE;
 	if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0)
 	    pm_flags |= PMAP_NC;
 

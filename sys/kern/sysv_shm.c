@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.58 2014/07/13 15:29:04 tedu Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.59 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -248,9 +248,9 @@ sys_shmat(struct proc *p, void *v, register_t *retval)
 	if (i >= shmmap_h->shmseg)
 		return (EMFILE);
 	size = round_page(shmseg->shm_segsz);
-	prot = VM_PROT_READ;
+	prot = PROT_READ;
 	if ((SCARG(uap, shmflg) & SHM_RDONLY) == 0)
-		prot |= VM_PROT_WRITE;
+		prot |= PROT_WRITE;
 	flags = MAP_ANON | MAP_SHARED;
 	if (SCARG(uap, shmaddr)) {
 		flags |= MAP_FIXED;
@@ -267,7 +267,7 @@ sys_shmat(struct proc *p, void *v, register_t *retval)
 	uao_reference(shm_handle->shm_object);
 	error = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
 	    shm_handle->shm_object, 0, 0, UVM_MAPFLAG(prot, prot,
-	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
+	    UVM_INH_SHARE, POSIX_MADV_RANDOM, 0));
 	if (error) {
 		uao_detach(shm_handle->shm_object);
 		return (error);

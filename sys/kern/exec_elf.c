@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.105 2014/11/14 23:26:48 tedu Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.106 2014/11/16 12:31:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -242,9 +242,9 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 		diff = uaddr - *addr;
 	}
 
-	*prot |= (ph->p_flags & PF_R) ? VM_PROT_READ : 0;
-	*prot |= (ph->p_flags & PF_W) ? VM_PROT_WRITE : 0;
-	*prot |= (ph->p_flags & PF_X) ? VM_PROT_EXECUTE : 0;
+	*prot |= (ph->p_flags & PF_R) ? PROT_READ : 0;
+	*prot |= (ph->p_flags & PF_W) ? PROT_WRITE : 0;
+	*prot |= (ph->p_flags & PF_X) ? PROT_EXEC : 0;
 
 	msize = ph->p_memsz + diff;
 	offset = ph->p_offset - bdiff;
@@ -379,7 +379,7 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 	 * would (i.e. something safely out of the way).
 	 */
 	if (pos == ELFDEFNNAME(NO_ADDR)) {
-		pos = uvm_map_hint(p->p_vmspace, VM_PROT_EXECUTE);
+		pos = uvm_map_hint(p->p_vmspace, PROT_EXEC);
 	}
 
 	pos = ELF_ROUND(pos, file_align);
@@ -642,7 +642,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 			 * Decide whether it's text or data by looking
 			 * at the protection of the section
 			 */
-			if (prot & VM_PROT_WRITE) {
+			if (prot & PROT_WRITE) {
 				/* data section */
 				if (epp->ep_dsize == ELFDEFNNAME(NO_ADDR)) {
 					epp->ep_daddr = addr;
@@ -658,7 +658,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 						epp->ep_dsize = addr+size -
 						    epp->ep_daddr;
 				}
-			} else if (prot & VM_PROT_EXECUTE) {
+			} else if (prot & PROT_EXEC) {
 				/* text section */
 				if (epp->ep_tsize == ELFDEFNNAME(NO_ADDR)) {
 					epp->ep_taddr = addr;
@@ -1111,11 +1111,11 @@ ELFNAMEEND(coredump_writeseghdrs)(struct proc *p, void *iocookie,
 	phdr.p_filesz = realsize;
 	phdr.p_memsz = size;
 	phdr.p_flags = 0;
-	if (us->prot & VM_PROT_READ)
+	if (us->prot & PROT_READ)
 		phdr.p_flags |= PF_R;
-	if (us->prot & VM_PROT_WRITE)
+	if (us->prot & PROT_WRITE)
 		phdr.p_flags |= PF_W;
-	if (us->prot & VM_PROT_EXECUTE)
+	if (us->prot & PROT_EXEC)
 		phdr.p_flags |= PF_X;
 	phdr.p_align = PAGE_SIZE;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.162 2014/05/12 14:35:56 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.163 2014/11/16 12:30:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -463,14 +463,14 @@ pmap_bootstrap(vaddr_t vstart)
 
 	uvm_setpagesize();
 
-	hppa_prot[UVM_PROT_NONE]  = TLB_AR_NA;
-	hppa_prot[UVM_PROT_READ]  = TLB_AR_R;
-	hppa_prot[UVM_PROT_WRITE] = TLB_AR_RW;
-	hppa_prot[UVM_PROT_RW]    = TLB_AR_RW;
-	hppa_prot[UVM_PROT_EXEC]  = TLB_AR_RX;
-	hppa_prot[UVM_PROT_RX]    = TLB_AR_RX;
-	hppa_prot[UVM_PROT_WX]    = TLB_AR_RWX;
-	hppa_prot[UVM_PROT_RWX]   = TLB_AR_RWX;
+	hppa_prot[PROT_NONE]  = TLB_AR_NA;
+	hppa_prot[PROT_READ]  = TLB_AR_R;
+	hppa_prot[PROT_WRITE] = TLB_AR_RW;
+	hppa_prot[PROT_READ | PROT_WRITE] = TLB_AR_RW;
+	hppa_prot[PROT_EXEC]  = TLB_AR_RX;
+	hppa_prot[PROT_READ | PROT_EXEC] = TLB_AR_RX;
+	hppa_prot[PROT_WRITE | PROT_EXEC] = TLB_AR_RWX;
+	hppa_prot[PROT_READ | PROT_WRITE | PROT_EXEC] = TLB_AR_RWX;
 
 	/*
 	 * Initialize kernel pmap
@@ -547,7 +547,7 @@ pmap_bootstrap(vaddr_t vstart)
 
 		if (btlb_insert(HPPA_SID_KERNEL, va, va, &size,
 		    pmap_sid2pid(HPPA_SID_KERNEL) |
-		    pmap_prot(pmap_kernel(), UVM_PROT_RX)) < 0) {
+		    pmap_prot(pmap_kernel(), PROT_READ | PROT_EXEC)) < 0) {
 			printf("WARNING: cannot block map kernel text\n");
 			break;
 		}
@@ -592,14 +592,14 @@ pmap_bootstrap(vaddr_t vstart)
 	/* TODO optimize/inline the kenter */
 	for (va = 0; va < ptoa(physmem); va += PAGE_SIZE) {
 		extern struct user *proc0paddr;
-		vm_prot_t prot = UVM_PROT_RW;
+		vm_prot_t prot = PROT_READ | PROT_WRITE;
 
 		if (va < (vaddr_t)&etext)
-			prot = UVM_PROT_RX;
+			prot = PROT_READ | PROT_EXEC;
 		else if (va < (vaddr_t)&__rodata_end)
-			prot = UVM_PROT_READ;
+			prot = PROT_READ;
 		else if (va == (vaddr_t)proc0paddr + USPACE)
-			prot = UVM_PROT_NONE;
+			prot = PROT_NONE;
 
 		pmap_kenter_pa(va, va, prot);
 	}

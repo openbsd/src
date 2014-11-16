@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.75 2014/09/20 21:17:43 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.76 2014/11/16 12:31:00 deraadt Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -306,7 +306,7 @@ kmap(struct vm_page *pg)
 	va = pmap_map_direct(pg);
 #else
 	va = uvm_km_valloc_wait(phys_map, PAGE_SIZE);
-	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 #endif
 	return (void *)va;
@@ -1450,8 +1450,8 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 
 	addr = 0;
 	ret = -uvm_map(&curproc->p_vmspace->vm_map, &addr, size,
-	    obj->uao, args->offset, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
+	    obj->uao, args->offset, 0, UVM_MAPFLAG(PROT_READ | PROT_WRITE,
+	    PROT_READ | PROT_WRITE, UVM_INH_SHARE, POSIX_MADV_RANDOM, 0));
 	if (ret == 0)
 		uao_reference(obj->uao);
 	drm_gem_object_unreference_unlocked(obj);
@@ -1473,7 +1473,7 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	paddr_t paddr;
 	int lcv, ret;
-	int write = !!(access_type & VM_PROT_WRITE);
+	int write = !!(access_type & PROT_WRITE);
 	vm_prot_t mapprot;
 	boolean_t locked = TRUE;
 
@@ -1527,7 +1527,7 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 	 * it wrong, and makes us fully coherent with the gpu re mmap.
 	 */
 	if (write == 0)
-		mapprot &= ~VM_PROT_WRITE;
+		mapprot &= ~PROT_WRITE;
 	/* XXX try and  be more efficient when we do this */
 	for (lcv = 0 ; lcv < npages ; lcv++, offset += PAGE_SIZE,
 	    vaddr += PAGE_SIZE) {
@@ -1622,7 +1622,7 @@ i915_gem_release_mmap(struct drm_i915_gem_object *obj)
 	for (pg = &dev_priv->pgs[atop(obj->gtt_offset)];
 	     pg != &dev_priv->pgs[atop(obj->gtt_offset + obj->base.size)];
 	     pg++)
-		pmap_page_protect(pg, VM_PROT_NONE);
+		pmap_page_protect(pg, PROT_NONE);
 
 	obj->fault_mappable = false;
 }

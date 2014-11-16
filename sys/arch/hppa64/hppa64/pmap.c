@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.24 2014/10/12 20:39:46 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.25 2014/11/16 12:30:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -485,14 +485,15 @@ pmap_bootstrap(vaddr_t vstart)
 	uvmexp.pagesize = PAGE_SIZE;
 	uvm_setpagesize();
 
-	hppa_prot[UVM_PROT_NONE]  = PTE_ORDER|PTE_ACC_NONE;
-	hppa_prot[UVM_PROT_READ]  = PTE_ORDER|PTE_READ;
-	hppa_prot[UVM_PROT_WRITE] = PTE_ORDER|PTE_WRITE;
-	hppa_prot[UVM_PROT_RW]    = PTE_ORDER|PTE_READ|PTE_WRITE;
-	hppa_prot[UVM_PROT_EXEC]  = PTE_ORDER|PTE_EXEC;
-	hppa_prot[UVM_PROT_RX]    = PTE_ORDER|PTE_READ|PTE_EXEC;
-	hppa_prot[UVM_PROT_WX]    = PTE_ORDER|PTE_WRITE|PTE_EXEC;
-	hppa_prot[UVM_PROT_RWX]   = PTE_ORDER|PTE_READ|PTE_WRITE|PTE_EXEC;
+	hppa_prot[PROT_NONE]  = PTE_ORDER|PTE_ACC_NONE;
+	hppa_prot[PROT_READ]  = PTE_ORDER|PTE_READ;
+	hppa_prot[PROT_WRITE] = PTE_ORDER|PTE_WRITE;
+	hppa_prot[PROT_READ | PROT_WRITE] = PTE_ORDER|PTE_READ|PTE_WRITE;
+	hppa_prot[PROT_EXEC]  = PTE_ORDER|PTE_EXEC;
+	hppa_prot[PROT_READ | PROT_EXEC] = PTE_ORDER|PTE_READ|PTE_EXEC;
+	hppa_prot[PROT_WRITE | PROT_EXEC] = PTE_ORDER|PTE_WRITE|PTE_EXEC;
+	hppa_prot[PROT_READ | PROT_WRITE | PROT_EXEC] =
+	    PTE_ORDER|PTE_READ|PTE_WRITE|PTE_EXEC;
 
 	/*
 	 * Initialize kernel pmap

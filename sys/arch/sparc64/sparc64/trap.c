@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.84 2014/05/11 00:12:44 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.85 2014/11/16 12:30:59 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -794,10 +794,10 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	 */
 	if (type == T_FDMMU_MISS || (sfsr & SFSR_FV) == 0) {
 		/* Punt */
-		access_type = VM_PROT_READ;
+		access_type = PROT_READ;
 	} else {
-		access_type = (sfsr & SFSR_W) ? VM_PROT_READ|VM_PROT_WRITE
-			: VM_PROT_READ;
+		access_type = (sfsr & SFSR_W) ? PROT_READ | PROT_WRITE
+			: PROT_READ;
 	}
 	if (tstate & TSTATE_PRIV) {
 		KERNEL_LOCK();
@@ -975,7 +975,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 	}
 
 	KERNEL_LOCK();
-	trapsignal(p, SIGSEGV, VM_PROT_READ|VM_PROT_WRITE, SEGV_MAPERR, sv);
+	trapsignal(p, SIGSEGV, PROT_READ | PROT_WRITE, SEGV_MAPERR, sv);
 	KERNEL_UNLOCK();
 out:
 
@@ -1016,7 +1016,7 @@ text_access_fault(tf, type, pc, sfsr)
 
 	/* Now munch on protections... */
 
-	access_type = VM_PROT_EXECUTE;
+	access_type = PROT_EXEC;
 	if (tstate & TSTATE_PRIV) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
@@ -1124,7 +1124,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 	va = trunc_page(pc);
 
 	/* Now munch on protections... */
-	access_type = VM_PROT_EXECUTE;
+	access_type = PROT_EXEC;
 	if (tstate & TSTATE_PRIV) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */

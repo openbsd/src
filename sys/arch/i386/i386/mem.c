@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.40 2014/09/14 14:17:23 jsg Exp $ */
+/*	$OpenBSD: mem.c,v 1.41 2014/11/16 12:30:57 deraadt Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -147,7 +147,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			v = uio->uio_offset;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, PMAP_WIRED);
+			    PROT_READ : PROT_WRITE, PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));

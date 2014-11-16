@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.16 2014/10/25 10:19:20 kettenis Exp $	*/
+/*	$OpenBSD: astro.c,v 1.17 2014/11/16 12:30:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -292,7 +292,7 @@ astro_attach(struct device *parent, struct device *self, void *aux)
 	for (; m != NULL; m = TAILQ_NEXT(m, pageq)) {
 		pa = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		    PROT_READ | PROT_WRITE, PMAP_WIRED);
 		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());

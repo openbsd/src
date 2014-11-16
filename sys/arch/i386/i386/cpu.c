@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.56 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.57 2014/11/16 12:30:57 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -219,9 +219,8 @@ replacesmap(void)
 
 		pmap_extract(pmap_kernel(), kva, &pa1);
 		pmap_extract(pmap_kernel(), kva + PAGE_SIZE, &pa2);
-		pmap_kenter_pa(nva, pa1, VM_PROT_READ | VM_PROT_WRITE);
-		pmap_kenter_pa(nva + PAGE_SIZE, pa2, VM_PROT_READ | 
-		    VM_PROT_WRITE);
+		pmap_kenter_pa(nva, pa1, PROT_READ | PROT_WRITE);
+		pmap_kenter_pa(nva + PAGE_SIZE, pa2, PROT_READ | PROT_WRITE);
 		pmap_update(pmap_kernel());
 
 		/* replace 3 byte nops with stac/clac instructions */
@@ -724,7 +723,7 @@ mp_cpu_start(struct cpu_info *ci)
 
 	pmap_activate(curproc);
 
-	pmap_kenter_pa(0, 0, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(0, 0, PROT_READ | PROT_WRITE);
 	memcpy((u_int8_t *)0x467, dwordptr, 4);
 	pmap_kremove(0, PAGE_SIZE);
 

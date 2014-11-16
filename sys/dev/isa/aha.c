@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.77 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: aha.c,v 1.78 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1079,15 +1079,15 @@ aha_init(sc)
 	TAILQ_INIT(&pglist);
 	if (uvm_pglistalloc(size, 0, 0xffffff, PAGE_SIZE, 0, &pglist, 1,
 	    UVM_PLA_NOWAIT) || uvm_map(kernel_map, &va, size, NULL,
-	    UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
-	    UVM_INH_NONE, UVM_ADV_RANDOM, 0)))
+	    UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(PROT_MASK, PROT_MASK,
+	    UVM_INH_NONE, POSIX_MADV_RANDOM, 0)))
 		panic("aha_init: could not allocate mailbox");
 
 	wmbx = (struct aha_mbx *)va;
 	for (pg = TAILQ_FIRST(&pglist); pg != NULL;
 	    pg = TAILQ_NEXT(pg, pageq)) {
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-			VM_PROT_READ|VM_PROT_WRITE);
+		    PROT_READ | PROT_WRITE);
 		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.66 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.67 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -89,7 +89,7 @@ uvm_kernacc(caddr_t addr, size_t len, int rw)
 {
 	boolean_t rv;
 	vaddr_t saddr, eaddr;
-	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
+	vm_prot_t prot = rw == B_READ ? PROT_READ : PROT_WRITE;
 
 	saddr = trunc_page((vaddr_t)addr);
 	eaddr = round_page((vaddr_t)addr + len);
@@ -120,7 +120,7 @@ uvm_chgkprot(caddr_t addr, size_t len, int rw)
 	paddr_t pa;
 	vaddr_t sva, eva;
 
-	prot = rw == B_READ ? VM_PROT_READ : VM_PROT_READ|VM_PROT_WRITE;
+	prot = rw == B_READ ? PROT_READ : PROT_READ | PROT_WRITE;
 	eva = round_page((vaddr_t)addr + len);
 	for (sva = trunc_page((vaddr_t)addr); sva < eva; sva += PAGE_SIZE) {
 		/*
@@ -240,8 +240,7 @@ uvm_vslock_device(struct proc *p, void *addr, size_t len,
 
 	while ((pg = TAILQ_FIRST(&pgl)) != NULL) {
 		TAILQ_REMOVE(&pgl, pg, pageq);
-		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), PROT_READ | PROT_WRITE);
 		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());

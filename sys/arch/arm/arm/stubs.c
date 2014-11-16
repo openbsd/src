@@ -1,4 +1,4 @@
-/*	$OpenBSD: stubs.c,v 1.8 2013/06/11 16:42:07 deraadt Exp $	*/
+/*	$OpenBSD: stubs.c,v 1.9 2014/11/16 12:30:56 deraadt Exp $	*/
 /*	$NetBSD: stubs.c,v 1.14 2003/07/15 00:24:42 lukem Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ dumpsys()
 		     addr += PAGE_SIZE) {
 		    	if ((len % (1024*1024)) == 0)
 		    		printf("%d ", len / (1024*1024));
-			pmap_kenter_pa(dumpspace, addr, VM_PROT_READ);
+			pmap_kenter_pa(dumpspace, addr, PROT_READ);
 			pmap_update(pmap_kernel());
 
 			error = (*bdev->d_dump)(dumpdev,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.123 2014/11/06 17:29:23 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.124 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -294,7 +294,7 @@ malloc(size_t size, int type, int flags)
 
 		vm_map_lock(kmem_map);
 		rv = uvm_map_checkprot(kmem_map, addr,
-		    addr + sizeof(struct kmem_freelist), VM_PROT_WRITE);
+		    addr + sizeof(struct kmem_freelist), PROT_WRITE);
 		vm_map_unlock(kmem_map);
 
 		if (!rv)  {

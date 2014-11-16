@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_util.c,v 1.5 2014/02/10 02:24:05 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_util.c,v 1.6 2014/11/16 12:31:00 deraadt Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
@@ -531,7 +531,7 @@ kmap(struct vm_page *pg)
 	va = uvm_km_valloc(kernel_map, PAGE_SIZE);
 	if (va == 0)
 		return (NULL);
-	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), UVM_PROT_RW);
+	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 #endif
 	return (void *)va;
@@ -565,8 +565,8 @@ vmap(struct vm_page **pages, unsigned int npages, unsigned long flags,
 	for (i = 0; i < npages; i++) {
 		pa = VM_PAGE_TO_PHYS(pages[i]) | prot;
 		pmap_enter(pmap_kernel(), va + (i * PAGE_SIZE), pa,
-		    VM_PROT_READ | VM_PROT_WRITE,
-		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+		    PROT_READ | PROT_WRITE,
+		    PROT_READ | PROT_WRITE | PMAP_WIRED);
 		pmap_update(pmap_kernel());
 	}
 

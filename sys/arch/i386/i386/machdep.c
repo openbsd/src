@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.556 2014/10/25 16:57:58 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.557 2014/11/16 12:30:57 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -392,7 +392,7 @@ cpu_startup()
 	pa = avail_end;
 	va = (vaddr_t)msgbufp;
 	for (i = 0; i < atop(MSGBUFSIZE); i++) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
 		va += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	}
@@ -2794,7 +2794,7 @@ dumpsys()
 			printf("(%x %lld) ", maddr, (long long)blkno);
 #endif
 			pmap_enter(pmap_kernel(), dumpspace, maddr,
-			    VM_PROT_READ, PMAP_WIRED);
+			    PROT_READ, PMAP_WIRED);
 			if ((error = (*dump)(dumpdev, blkno,
 			    (caddr_t)dumpspace, NBPG)))
 				break;
@@ -3148,8 +3148,8 @@ init386(paddr_t first_avail)
 			panic("cannot reserve /boot args memory");
 
 		pmap_enter(pmap_kernel(), (vaddr_t)bootargp, (paddr_t)bootargv,
-		    VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		    PROT_READ | PROT_WRITE,
+		    PROT_READ | PROT_WRITE | PMAP_WIRED);
 
 		bios_getopt();
 
@@ -3322,13 +3322,13 @@ init386(paddr_t first_avail)
 #ifdef MULTIPROCESSOR
 	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,  /* virtual */
 	    (paddr_t)MP_TRAMPOLINE,             /* physical */
-	    VM_PROT_ALL);                       /* protection */
+	    PROT_MASK);                       /* protection */
 #endif
 
 #if NACPI > 0 && !defined(SMALL_KERNEL)
 	pmap_kenter_pa((vaddr_t)ACPI_TRAMPOLINE,/* virtual */
 	    (paddr_t)ACPI_TRAMPOLINE,           /* physical */
-	    VM_PROT_ALL);                       /* protection */
+	    PROT_MASK);                       /* protection */
 #endif
 
 	tlbflush();
@@ -3740,7 +3740,7 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 	for (; map_size > 0;
 	    pa += PAGE_SIZE, va += PAGE_SIZE, map_size -= PAGE_SIZE)
 		pmap_kenter_pa(va, pa | pmap_flags,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	return 0;

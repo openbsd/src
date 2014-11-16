@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.33 2014/03/28 17:57:11 mpi Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.34 2014/11/16 12:31:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -38,7 +38,7 @@
  * This is really simple. Every malloc() allocates two virtual pages,
  * the second page is left unmapped, and the value returned is aligned
  * so that it ends at (or very close to) the page boundary to catch overflows.
- * Every free() changes the protection of the first page to VM_PROT_NONE so
+ * Every free() changes the protection of the first page to PROT_NONE so
  * that we can catch any dangling writes to it.
  * To minimize the risk of writes to recycled chunks we keep an LRU of latest
  * freed chunks. The length of it is controlled by MALLOC_DEBUG_CHUNKS.
@@ -139,7 +139,7 @@ debug_malloc(unsigned long size, int type, int flags, void **addr)
 	debug_malloc_allocs++;
 	splx(s);
 
-	pmap_kenter_pa(md->md_va, md->md_pa, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(md->md_va, md->md_pa, PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	md->md_size = size;

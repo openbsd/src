@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmap.h,v 1.22 2010/12/26 15:41:00 miod Exp $	*/
+/*	$OpenBSD: uvm_pmap.h,v 1.23 2014/11/16 12:31:01 deraadt Exp $	*/
 /*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
 /* 
@@ -86,7 +86,7 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #include <machine/pmap.h>
 
 /*
- * Flags passed to pmap_enter().  Note the bottom 3 bits are VM_PROT_*
+ * Flags passed to pmap_enter().  Note the bottom 3 bits are PROT_*
  * bits, used to indicate the access type that was made (to seed modified
  * and referenced information).
  */

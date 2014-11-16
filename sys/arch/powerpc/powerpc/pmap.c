@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.131 2014/11/02 00:11:32 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.132 2014/11/16 12:30:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -616,7 +616,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	else
 		pte_insert32(pted);
 
-        if (prot & VM_PROT_EXECUTE) {
+        if (prot & PROT_EXEC) {
 		u_int sn = VP_SR(va);
 
         	pm->pm_exec[sn]++;
@@ -625,7 +625,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 		if (pg != NULL) {
 			need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
-			if (prot & VM_PROT_WRITE)
+			if (prot & PROT_WRITE)
 				atomic_clearbits_int(&pg->pg_flags,
 				    PG_PMAP_EXE);
 			else
@@ -638,7 +638,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 * Should we be paranoid about writeable non-exec 
 		 * mappings ? if so, clear the exec tag
 		 */
-		if ((prot & VM_PROT_WRITE) && (pg != NULL))
+		if ((prot & PROT_WRITE) && (pg != NULL))
 			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
 	}
 
@@ -794,7 +794,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 		pmap_kremove_pg(va); /* pted is reused */
 
 	pm->pm_stats.resident_count++;
-	if (prot & VM_PROT_WRITE) {
+	if (prot & PROT_WRITE) {
 		pg = PHYS_TO_VM_PAGE(pa);
 		if (pg != NULL)
 			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
@@ -832,7 +832,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 
 	pted->pted_va |= PTED_VA_WIRED_M;
 
-        if (prot & VM_PROT_EXECUTE) {
+        if (prot & PROT_EXEC) {
 		u_int sn = VP_SR(va);
 
         	pm->pm_exec[sn]++;
@@ -1030,14 +1030,14 @@ pmap_fill_pte64(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	else
 		pte64->pte_lo |= (PTE_M_64 | PTE_I_64 | PTE_G_64);
 
-	if (prot & VM_PROT_WRITE)
+	if (prot & PROT_WRITE)
 		pte64->pte_lo |= PTE_RW_64;
 	else
 		pte64->pte_lo |= PTE_RO_64;
 
 	pted->pted_va = va & ~PAGE_MASK;
 
-	if (prot & VM_PROT_EXECUTE)
+	if (prot & PROT_EXEC)
 		pted->pted_va  |= PTED_VA_EXEC_M;
 	else
 		pte64->pte_lo |= PTE_N_64;
@@ -1068,7 +1068,7 @@ pmap_fill_pte32(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	else
 		pte32->pte_lo |= (PTE_M_32 | PTE_I_32 | PTE_G_32);
 
-	if (prot & VM_PROT_WRITE)
+	if (prot & PROT_WRITE)
 		pte32->pte_lo |= PTE_RW_32;
 	else
 		pte32->pte_lo |= PTE_RO_32;
@@ -1076,7 +1076,7 @@ pmap_fill_pte32(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	pted->pted_va = va & ~PAGE_MASK;
 
 	/* XXX Per-page execution control. */
-	if (prot & VM_PROT_EXECUTE)
+	if (prot & PROT_EXEC)
 		pted->pted_va  |= PTED_VA_EXEC_M;
 
 	pted->pted_pmap = pm;
@@ -1227,7 +1227,7 @@ pmap_zero_page(struct vm_page *pg)
 #endif
 
 	/* simple_lock(&pmap_zero_page_lock); */
-	pmap_kenter_pa(zero_page, pa, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(zero_page, pa, PROT_READ | PROT_WRITE);
 #ifdef USE_DCBZ
 	for (i = PAGE_SIZE/CACHELINESIZE; i>0; i--) {
 		__asm volatile ("dcbz 0,%0" :: "r"(addr));
@@ -1251,8 +1251,8 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	paddr_t dstpa = VM_PAGE_TO_PHYS(dstpg);
 	/* simple_lock(&pmap_copy_page_lock); */
 
-	pmap_kenter_pa(copy_src_page, srcpa, VM_PROT_READ);
-	pmap_kenter_pa(copy_dst_page, dstpa, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(copy_src_page, srcpa, PROT_READ);
+	pmap_kenter_pa(copy_dst_page, dstpa, PROT_READ | PROT_WRITE);
 
 	bcopy((void *)copy_src_page, (void *)copy_dst_page, PAGE_SIZE);
 	
@@ -2054,7 +2054,7 @@ pmap_page_ro64(pmap_t pm, vaddr_t va, vm_prot_t prot)
 
 	pg = PHYS_TO_VM_PAGE(pted->p.pted_pte64.pte_lo & PTE_RPGN_64);
 	if (pg->pg_flags & PG_PMAP_EXE) {
-		if ((prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) == VM_PROT_WRITE) {
+		if ((prot & (PROT_WRITE | PROT_EXEC)) == PROT_WRITE) {
 			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
 		} else {
 			pmap_syncicache_user_virt(pm, va);
@@ -2064,7 +2064,7 @@ pmap_page_ro64(pmap_t pm, vaddr_t va, vm_prot_t prot)
 	pted->p.pted_pte64.pte_lo &= ~PTE_PP_64;
 	pted->p.pted_pte64.pte_lo |= PTE_RO_64;
 
-	if ((prot & VM_PROT_EXECUTE) == 0)
+	if ((prot & PROT_EXEC) == 0)
 		pted->p.pted_pte64.pte_lo |= PTE_N_64;
 
 	sr = ptesr(pm->pm_sr, va);
@@ -2113,7 +2113,7 @@ pmap_page_ro32(pmap_t pm, vaddr_t va, vm_prot_t prot)
 
 	pg = PHYS_TO_VM_PAGE(pted->p.pted_pte32.pte_lo & PTE_RPGN_32);
 	if (pg->pg_flags & PG_PMAP_EXE) {
-		if ((prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) == VM_PROT_WRITE) {
+		if ((prot & (PROT_WRITE | PROT_EXEC)) == PROT_WRITE) {
 			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
 		} else {
 			pmap_syncicache_user_virt(pm, va);
@@ -2170,7 +2170,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	/* need to lock for this pv */
 	s = splvm();
 
-	if (prot == VM_PROT_NONE) {
+	if (prot == PROT_NONE) {
 		while (!LIST_EMPTY(&(pg->mdpage.pv_list))) {
 			pted = LIST_FIRST(&(pg->mdpage.pv_list));
 			pmap_remove_pg(pted->pted_pmap, pted->pted_va);
@@ -2194,7 +2194,7 @@ void
 pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	int s;
-	if (prot & (VM_PROT_READ | VM_PROT_EXECUTE)) {
+	if (prot & (PROT_READ | PROT_EXEC)) {
 		s = splvm();
 		if (ppc_proc_is_64b) {
 			while (sva < eva) {
@@ -2302,7 +2302,7 @@ pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t dsisr, int exec_fault)
 	/* 0 - physmaxaddr mapped 1-1 */
 	if (va < physmaxaddr) {
 		u_int32_t aligned_va;
-		vm_prot_t prot = VM_PROT_READ | VM_PROT_WRITE;
+		vm_prot_t prot = PROT_READ | PROT_WRITE;
 		extern caddr_t kernel_text;
 		extern caddr_t etext;
 
@@ -2310,7 +2310,7 @@ pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t dsisr, int exec_fault)
 
 		if (va >= trunc_page((vaddr_t)&kernel_text) &&
 		    va < round_page((vaddr_t)&etext)) {
-			prot |= VM_PROT_EXECUTE;
+			prot |= PROT_EXEC;
 		}
 
 		aligned_va = trunc_page(va);

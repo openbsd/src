@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.35 2014/05/26 19:03:28 kettenis Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.36 2014/11/16 12:30:57 deraadt Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -267,7 +267,7 @@ mpbios_map(paddr_t pa, int len, struct mp_map *handle)
 	handle->vsize = endpa - pgpa;
 
 	do {
-		pmap_kenter_pa(va, pgpa, VM_PROT_READ);
+		pmap_kenter_pa(va, pgpa, PROT_READ);
 		va += PAGE_SIZE;
 		pgpa += PAGE_SIZE;
 	} while (pgpa < endpa);

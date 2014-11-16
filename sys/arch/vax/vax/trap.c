@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.53 2014/05/11 00:12:44 guenther Exp $     */
+/*	$OpenBSD: trap.c,v 1.54 2014/11/16 12:30:59 deraadt Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -187,9 +187,9 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			map = &p->p_vmspace->vm_map;
 
 		if (frame->trap & T_WRITE)
-			ftype = VM_PROT_WRITE|VM_PROT_READ;
+			ftype = PROT_READ | PROT_WRITE;
 		else
-			ftype = VM_PROT_READ;
+			ftype = PROT_READ;
 
 		addr = trunc_page((vaddr_t)frame->code);
 		rv = uvm_fault(map, addr, 0, ftype);

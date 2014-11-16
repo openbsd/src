@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.131 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.132 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -385,7 +385,7 @@ uvm_pageboot_alloc(vsize_t size)
 		 * Note this memory is no longer managed, so using
 		 * pmap_kenter is safe.
 		 */
-		pmap_kenter_pa(vaddr, paddr, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa(vaddr, paddr, PROT_READ | PROT_WRITE);
 	}
 	pmap_update(pmap_kernel());
 	return(addr);
@@ -1097,7 +1097,7 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			uobj = pg->uobject;
 			if (uobj != NULL) {
 				uvm_lock_pageq();
-				pmap_page_protect(pg, VM_PROT_NONE);
+				pmap_page_protect(pg, PROT_NONE);
 				/* XXX won't happen right now */
 				if (pg->pg_flags & PQ_AOBJ)
 					uao_dropswap(uobj,

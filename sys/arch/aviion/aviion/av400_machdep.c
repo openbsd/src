@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.26 2013/10/23 10:07:14 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.27 2014/11/16 12:30:56 deraadt Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
@@ -170,9 +170,9 @@ void	av400_ipi_handler(struct trapframe *);
 
 const struct pmap_table
 av400_ptable[] = {
-	{ AV400_PROM,	AV400_PROM_SIZE,	UVM_PROT_RW,	CACHE_INH },
+	{ AV400_PROM,	AV400_PROM_SIZE,	PROT_READ | PROT_WRITE, CACHE_INH },
 #if 0	/* mapped by the hardcoded BATC entries */
-	{ AV400_UTILITY,AV400_UTILITY_SIZE,	UVM_PROT_RW,	CACHE_INH },
+	{ AV400_UTILITY,AV400_UTILITY_SIZE,	PROT_READ | PROT_WRITE, CACHE_INH },
 #endif
 	{ 0, (vsize_t)-1, 0, 0 }
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.28 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: bios.c,v 1.29 2014/11/16 12:30:56 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -133,7 +133,7 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 		smbios_entry.count = hdr->count;
 
 		for (; pa < end; pa+= NBPG, va+= NBPG)
-			pmap_kenter_pa(va, pa, VM_PROT_READ);
+			pmap_kenter_pa(va, pa, PROT_READ);
 
 		printf(": SMBIOS rev. %d.%d @ 0x%x (%d entries)",
 		    hdr->majrev, hdr->minrev, hdr->addr, hdr->count);

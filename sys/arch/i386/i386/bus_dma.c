@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.32 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.33 2014/11/16 12:30:57 deraadt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -456,8 +456,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			 * alloc
 			 */
 			ret = pmap_enter(pmap_kernel(), va, addr | pmapflags,
-			    VM_PROT_READ | VM_PROT_WRITE, VM_PROT_READ |
-			    VM_PROT_WRITE | PMAP_WIRED | PMAP_CANFAIL);
+			    PROT_READ | PROT_WRITE,
+			    PROT_READ | PROT_WRITE | PMAP_WIRED | PMAP_CANFAIL);
 			if (ret) {
 				pmap_update(pmap_kernel());
 				km_free((void *)sva, ssize, &kv_any, &kp_none);

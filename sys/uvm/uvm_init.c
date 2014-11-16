@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.34 2014/09/14 14:17:27 jsg Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.35 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -147,15 +147,15 @@ uvm_init(void)
 #ifdef DEADBEEF0
 	kvm_start = trunc_page(DEADBEEF0) - PAGE_SIZE;
 	if (uvm_map(kernel_map, &kvm_start, 3 * PAGE_SIZE,
-	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE,
-	    UVM_PROT_NONE, UVM_INH_NONE, UVM_ADV_RANDOM, UVM_FLAG_FIXED)))
+	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(PROT_NONE,
+	    PROT_NONE, UVM_INH_NONE, POSIX_MADV_RANDOM, UVM_FLAG_FIXED)))
 		panic("uvm_init: cannot reserve dead beef @0x%x", DEADBEEF0);
 #endif
 #ifdef DEADBEEF1
 	kvm_start = trunc_page(DEADBEEF1) - PAGE_SIZE;
 	if (uvm_map(kernel_map, &kvm_start, 3 * PAGE_SIZE,
-	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE,
-	    UVM_PROT_NONE, UVM_INH_NONE, UVM_ADV_RANDOM, UVM_FLAG_FIXED)))
+	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(PROT_NONE,
+	    PROT_NONE, UVM_INH_NONE, POSIX_MADV_RANDOM, UVM_FLAG_FIXED)))
 		panic("uvm_init: cannot reserve dead beef @0x%x", DEADBEEF1);
 #endif
 	/*

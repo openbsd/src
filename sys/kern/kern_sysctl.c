@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.269 2014/11/03 17:20:46 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.270 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -214,7 +214,7 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 				return (ENOMEM);
 			}
 			error = uvm_vslock(p, SCARG(uap, old), oldlen,
-			    VM_PROT_READ|VM_PROT_WRITE);
+			    PROT_READ | PROT_WRITE);
 			if (error) {
 				rw_exit_write(&sysctl_lock);
 				return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.91 2014/09/08 01:47:06 guenther Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.92 2014/11/16 12:30:59 deraadt Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -810,8 +810,8 @@ linux_to_bsd_mmap_args(cma, uap)
 	SCARG(cma, addr) = (void *)SCARG(uap, addr);
 	SCARG(cma, len) = SCARG(uap, len);
 	SCARG(cma, prot) = SCARG(uap, prot);
-	if (SCARG(cma, prot) & VM_PROT_WRITE) /* XXX */
-		SCARG(cma, prot) |= VM_PROT_READ;
+	if (SCARG(cma, prot) & PROT_WRITE) /* XXX */
+		SCARG(cma, prot) |= PROT_READ;
 	SCARG(cma, flags) = flags;
 	SCARG(cma, fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
 	SCARG(cma, pad) = 0;

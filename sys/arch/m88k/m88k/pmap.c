@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.78 2014/06/09 14:33:20 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.79 2014/11/16 12:30:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -179,7 +179,7 @@ pg_to_pvh(struct vm_page *pg)
  * PTE routines
  */
 
-#define	m88k_protection(prot)	((prot) & VM_PROT_WRITE ? PG_RW : PG_RO)
+#define	m88k_protection(prot)	((prot) & PROT_WRITE ? PG_RW : PG_RO)
 #define	pmap_pte_w(pte)		(*(pte) & PG_W)
 
 #define SDTENT(pm, va)		((pm)->pm_stab + SDTIDX(va))
@@ -617,7 +617,7 @@ pmap_map(paddr_t pa, psize_t sz, vm_prot_t prot, u_int cmode,
 		pa = trunc_batc(pa);
 
 		batc = BATC_SO | BATC_V;
-		if ((prot & VM_PROT_WRITE) == 0)
+		if ((prot & PROT_WRITE) == 0)
 			batc |= BATC_PROT;
 		if (cmode & CACHE_INH)
 			batc |= BATC_INH;
@@ -791,7 +791,8 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 	if (e_rom != s_rom) {
 		s_firmware = s_rom;
 		l_firmware = e_rom - s_rom;
-		pmap_map(s_firmware, l_firmware, UVM_PROT_RW, CACHE_INH, FALSE);
+		pmap_map(s_firmware, l_firmware, PROT_READ | PROT_WRITE,
+		    CACHE_INH, FALSE);
 	}
 
 	for (ptable = pmap_table_build(); ptable->size != (vsize_t)-1; ptable++)
@@ -1099,7 +1100,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (wired)
 		npte |= PG_W;
 
-	if (prot & VM_PROT_WRITE) {
+	if (prot & PROT_WRITE) {
 		/*
 		 * On 88110, do not mark writable mappings as dirty unless we
 		 * know the page is dirty, or we are using the kernel pmap.
@@ -1109,7 +1110,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			npte |= PG_U;
 		else
 			npte |= PG_M_U;
-	} else if (prot & VM_PROT_ALL)
+	} else if (prot & PROT_MASK)
 		npte |= PG_U;
 
 	/*
@@ -1133,12 +1134,12 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * Cache attribute flags
 	 */
 	if (pvl != NULL) {
-		if (flags & VM_PROT_WRITE) {
+		if (flags & PROT_WRITE) {
 			if (CPU_IS88110 && pmap != pmap_kernel())
 				pvl->pv_flags |= PG_U;
 			else
 				pvl->pv_flags |= PG_M_U;
-		} else if (flags & VM_PROT_ALL)
+		} else if (flags & PROT_MASK)
 			pvl->pv_flags |= PG_U;
 	}
 
@@ -1439,7 +1440,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	pt_entry_t *pte, ap, opte, npte;
 	vaddr_t va, eseg;
 
-	if ((prot & VM_PROT_READ) == 0) {
+	if ((prot & PROT_READ) == 0) {
 		pmap_remove(pmap, sva, eva);
 		return;
 	}
@@ -1783,9 +1784,9 @@ pmap_is_referenced(struct vm_page *pg)
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-	if ((prot & VM_PROT_READ) == VM_PROT_NONE)
+	if ((prot & PROT_READ) == PROT_NONE)
 		pmap_remove_page(pg);
-	else if ((prot & VM_PROT_WRITE) == VM_PROT_NONE)
+	else if ((prot & PROT_WRITE) == PROT_NONE)
 		pmap_changebit(pg, PG_RO, ~0);
 }
 

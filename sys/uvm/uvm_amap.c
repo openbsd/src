@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.54 2014/09/14 14:17:27 jsg Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.55 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -1032,7 +1032,7 @@ amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
 		if (amap->am_anon[slot]->an_page != NULL && 
 		    (amap->am_flags & AMAP_SHARED) != 0) {
 			pmap_page_protect(amap->am_anon[slot]->an_page,
-			    VM_PROT_NONE);
+			    PROT_NONE);
 			/*
 			 * XXX: suppose page is supposed to be wired somewhere?
 			 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_machdep.c,v 1.32 2014/09/20 09:28:24 kettenis Exp $ */
+/*	$OpenBSD: armish_machdep.c,v 1.33 2014/11/16 12:30:56 deraadt Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -316,7 +316,7 @@ const struct pmap_devmap iq80321_devmap[] = {
 	IQ80321_OBIO_BASE,
 	IQ80321_OBIO_BASE,
 	0x00100000 /*	IQ80321_OBIO_SIZE, */,
-	VM_PROT_READ|VM_PROT_WRITE,
+	PROT_READ | PROT_WRITE,
 	PTE_NOCACHE,
     },
     {0, 0, 0, 0, 0}
@@ -600,10 +600,10 @@ initarm(void *arg0, void *arg1, void *arg2)
 
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, textsize,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		    PROT_READ | PROT_WRITE, PTE_CACHE);
 		pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, totalsize - textsize,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		    PROT_READ | PROT_WRITE, PTE_CACHE);
 	}
 
 #ifdef VERBOSE_INIT_ARM
@@ -612,21 +612,21 @@ initarm(void *arg0, void *arg1, void *arg2)
 
 	/* Map the stack pages */
 	pmap_map_chunk(l1pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    IRQ_STACK_SIZE * PAGE_SIZE, PROT_READ | PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    ABT_STACK_SIZE * PAGE_SIZE, PROT_READ | PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    UND_STACK_SIZE * PAGE_SIZE, PROT_READ | PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * PAGE_SIZE, VM_PROT_READ | VM_PROT_WRITE, PTE_CACHE);
+	    UPAGES * PAGE_SIZE, PROT_READ | PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    L1_TABLE_SIZE, VM_PROT_READ | VM_PROT_WRITE, PTE_PAGETABLE);
+	    L1_TABLE_SIZE, PROT_READ | PROT_WRITE, PTE_PAGETABLE);
 
 	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
 		pmap_map_chunk(l1pagetable, kernel_pt_table[loop].pv_va,
 		    kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+		    PROT_READ | PROT_WRITE, PTE_PAGETABLE);
 	}
 
 	/* Map the Mini-Data cache clean area. */
@@ -636,10 +636,10 @@ initarm(void *arg0, void *arg1, void *arg2)
 	/* Map the vector page. */
 #ifdef HIGH_VECT
 	pmap_map_entry(l1pagetable, ARM_VECTORS_HIGH, systempage.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    PROT_READ | PROT_WRITE, PTE_CACHE);
 #else
         pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    PROT_READ | PROT_WRITE, PTE_CACHE);
 #endif
 
 	pmap_devmap_bootstrap(l1pagetable, iq80321_devmap);

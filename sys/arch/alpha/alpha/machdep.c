@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.165 2014/09/20 09:28:24 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.166 2014/11/16 12:30:52 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -485,10 +485,10 @@ nobootinfo:
 			    memc->mddt_usage & MDDT_NONVOLATILE || /* XXX */
 			    memc->mddt_usage & MDDT_PALCODE)
 				mem_clusters[mem_cluster_cnt].size |=
-				    VM_PROT_READ;
+				    PROT_READ;
 			else
 				mem_clusters[mem_cluster_cnt].size |=
-				    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE;
+				    PROT_READ | PROT_WRITE | PROT_EXEC;
 			mem_cluster_cnt++;
 		} /* XXX else print something! */
 
@@ -1905,9 +1905,9 @@ alpha_pa_access(pa)
 	 * access.  Otherwise, grant read/write.
 	 */
 	if (securelevel > 0)
-		return (VM_PROT_NONE);
+		return (PROT_NONE);
 	else
-		return (VM_PROT_READ | VM_PROT_WRITE);
+		return (PROT_READ | PROT_WRITE);
 }
 
 /* XXX XXX BEGIN XXX XXX */

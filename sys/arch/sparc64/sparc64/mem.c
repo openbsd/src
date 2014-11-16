@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.11 2007/11/14 20:43:12 kettenis Exp $	*/
+/*	$OpenBSD: mem.c,v 1.12 2014/11/16 12:30:59 deraadt Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*
@@ -129,8 +129,8 @@ mmrw(dev, uio, flags)
 				error = EFAULT;
 				goto unlock;
 			}
-			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
-			    VM_PROT_WRITE;
+			prot = uio->uio_rw == UIO_READ ? PROT_READ :
+			    PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());

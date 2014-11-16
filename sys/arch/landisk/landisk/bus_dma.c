@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.11 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.12 2014/11/16 12:30:57 deraadt Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*
@@ -662,7 +662,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_kenter_pa(va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    PROT_READ | PROT_WRITE);
 		}
 	}
 	pmap_update(pmap_kernel());

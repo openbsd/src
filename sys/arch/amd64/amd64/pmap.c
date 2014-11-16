@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.77 2014/11/07 03:20:02 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.78 2014/11/16 12:30:56 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ static const struct nx_range_description nx_ranges[] = {
 	/*
 	 * List of ranges to map as NX (non-execute) if the processor supports
 	 * NX. Each range consists of a start vaddr and size (in bytes), and a
-	 * protection value (eg, VM_PROT_READ or VM_PROT_READ | VM_PROT_WRITE).
+	 * protection value (eg, PROT_READ or PROT_READ | PROT_WRITE).
 	 *
 	 * The list also includes an 'is_ptr' field in each element to denote
 	 * if the 'start' value is a constant (is_ptr == 0) or should be
@@ -308,13 +308,13 @@ static const struct nx_range_description nx_ranges[] = {
 	{ /* .rodata range */
 	    (vaddr_t)&__rodata_start,
 	    (size_t)&__rodata_size,
-	    VM_PROT_READ,
+	    PROT_READ,
 	    0
 	},
 	{ /* ISA hole */
 	    (vaddr_t)&atdevbase,
 	    IOM_SIZE,
-	    VM_PROT_READ | VM_PROT_WRITE,
+	    PROT_READ | PROT_WRITE,
 	    1
 	}
 };
@@ -493,7 +493,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	pte = kvtopte(va);
 
-	npte = (pa & PMAP_PA_MASK) | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
+	npte = (pa & PMAP_PA_MASK) | ((prot & PROT_WRITE) ? PG_RW : PG_RO) |
 	    ((pa & PMAP_NOCACHE) ? PG_N : 0) |
 	    ((pa & PMAP_WC) ? pmap_pg_wc : 0) | PG_V;
 
@@ -501,7 +501,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	if (va >= (vaddr_t)NBPD_L2)
 		npte |= PG_G;
 
-	if ((cpu_feature & CPUID_NXE) && !(prot & VM_PROT_EXECUTE))
+	if ((cpu_feature & CPUID_NXE) && !(prot & PROT_EXEC))
 		npte |= PG_NX;
 	opte = pmap_pte_set(pte, npte);
 #ifdef LARGEPAGES
@@ -593,15 +593,14 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	 * we can jam into a i386 PTE.
 	 */
 
-	protection_codes[VM_PROT_NONE] = pg_nx;			/* --- */
-	protection_codes[VM_PROT_EXECUTE] = PG_RO;		/* --x */
-	protection_codes[VM_PROT_READ] = PG_RO | pg_nx;		/* -r- */
-	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_RO;	/* -rx */
-	protection_codes[VM_PROT_WRITE] = PG_RW | pg_nx;	/* w-- */
-	protection_codes[VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;/* w-x */
-	protection_codes[VM_PROT_WRITE|VM_PROT_READ] = PG_RW | pg_nx;
-								/* wr- */
-	protection_codes[VM_PROT_ALL] = PG_RW;			/* wrx */
+	protection_codes[PROT_NONE] = pg_nx;			/* --- */
+	protection_codes[PROT_EXEC] = PG_RO;			/* --x */
+	protection_codes[PROT_READ] = PG_RO | pg_nx;		/* -r- */
+	protection_codes[PROT_READ | PROT_EXEC] = PG_RO;	/* -rx */
+	protection_codes[PROT_WRITE] = PG_RW | pg_nx;		/* w-- */
+	protection_codes[PROT_WRITE | PROT_EXEC] = PG_RW;	/* w-x */
+	protection_codes[PROT_WRITE | PROT_READ] = PG_RW | pg_nx; /* wr- */
+	protection_codes[PROT_READ | PROT_WRITE | PROT_EXEC] = PG_RW;	/* wrx */
 
 	/*
 	 * now we init the kernel's pmap
@@ -1850,7 +1849,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	eva &= PG_FRAME;
 
 	nx = 0;
-	if ((cpu_feature & CPUID_NXE) && !(prot & VM_PROT_EXECUTE))
+	if ((cpu_feature & CPUID_NXE) && !(prot & PROT_EXEC))
 		nx = PG_NX;
 
 	if ((eva - sva > 32 * PAGE_SIZE) && pmap != pmap_kernel())

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.20 2014/03/30 00:58:24 jsg Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.21 2014/11/16 12:31:00 deraadt Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -475,8 +475,8 @@ init_pipe_control(struct intel_ring_buffer *ring)
 	pc->cpu_page = (volatile u_int32_t *)vm_map_min(kernel_map);
 	obj->base.uao->pgops->pgo_reference(obj->base.uao);
 	ret = uvm_map(kernel_map, (vaddr_t *)&pc->cpu_page,
-	    PAGE_SIZE, obj->base.uao, 0, 0, UVM_MAPFLAG(UVM_PROT_RW,
-	    UVM_PROT_RW, UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
+	    PAGE_SIZE, obj->base.uao, 0, 0, UVM_MAPFLAG(PROT_READ | PROT_WRITE,
+	    PROT_READ | PROT_WRITE, UVM_INH_SHARE, POSIX_MADV_RANDOM, 0));
 	if (ret != 0) {
 		DRM_ERROR("Failed to map status page.\n");
 		obj->base.uao->pgops->pgo_detach(obj->base.uao);
@@ -1122,8 +1122,8 @@ static int init_status_page(struct intel_ring_buffer *ring)
 	ring->status_page.page_addr = (u_int32_t *)vm_map_min(kernel_map);
 	obj->base.uao->pgops->pgo_reference(obj->base.uao);
 	ret = uvm_map(kernel_map, (vaddr_t *)&ring->status_page.page_addr,
-	    PAGE_SIZE, obj->base.uao, 0, 0, UVM_MAPFLAG(UVM_PROT_RW,
-	    UVM_PROT_RW, UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
+	    PAGE_SIZE, obj->base.uao, 0, 0, UVM_MAPFLAG(PROT_READ | PROT_WRITE,
+	    PROT_READ | PROT_WRITE, UVM_INH_SHARE, POSIX_MADV_RANDOM, 0));
 	if (ret != 0) {
 		obj->base.uao->pgops->pgo_detach(obj->base.uao);
 		ret = -ENOMEM;

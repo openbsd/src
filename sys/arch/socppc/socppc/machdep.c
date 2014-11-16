@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.58 2014/10/27 21:56:57 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.59 2014/11/16 12:30:58 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -579,7 +579,7 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 		bpa, size, *bshp, spa);
 #endif
 	for (; len > 0; len -= PAGE_SIZE) {
-		pmap_kenter_cache(vaddr, spa, VM_PROT_READ | VM_PROT_WRITE,
+		pmap_kenter_cache(vaddr, spa, PROT_READ | PROT_WRITE,
 		    (flags & BUS_SPACE_MAP_CACHEABLE) ?
 		      PMAP_CACHE_WT : PMAP_CACHE_CI);
 		spa += PAGE_SIZE;
@@ -632,7 +632,7 @@ mapiodev(paddr_t pa, psize_t len)
 
 	for (vaddr = va; size > 0; size -= PAGE_SIZE) {
 		pmap_kenter_cache(vaddr, spa,
-			VM_PROT_READ | VM_PROT_WRITE, PMAP_CACHE_DEFAULT);
+		    PROT_READ | PROT_WRITE, PMAP_CACHE_DEFAULT);
 		spa += PAGE_SIZE;
 		vaddr += PAGE_SIZE;
 	}

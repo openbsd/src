@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.19 2014/11/14 09:56:06 dlg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.20 2014/11/16 12:30:56 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -530,7 +530,7 @@ cpu_alloc_idlepcb(struct cpu_info *ci)
 	 */
 	if (uvm_uarea_alloc(&uaddr)) {
 		error = uvm_fault_wire(kernel_map, uaddr, uaddr + USPACE,
-		    VM_FAULT_WIRE, VM_PROT_READ | VM_PROT_WRITE);
+		    VM_FAULT_WIRE, PROT_READ | PROT_WRITE);
 		if (error)
 			return error;
 	}

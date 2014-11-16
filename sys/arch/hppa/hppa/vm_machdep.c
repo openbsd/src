@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.78 2014/04/08 09:34:23 mpi Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.79 2014/11/16 12:30:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -203,7 +203,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 		if (pmap_extract(pm, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		else
-			pmap_kenter_pa(kva, pa, UVM_PROT_RW);
+			pmap_kenter_pa(kva, pa, PROT_READ | PROT_WRITE);
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
 		size -= PAGE_SIZE;

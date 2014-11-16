@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.147 2014/10/18 15:20:32 kettenis Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.148 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -835,8 +835,8 @@ exec_sigcode_map(struct process *pr, struct emul *e)
 		uao_reference(e->e_sigobject);	/* permanent reference */
 
 		if ((r = uvm_map(kernel_map, &va, round_page(sz), e->e_sigobject,
-		    0, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0)))) {
+		    0, 0, UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
+		    UVM_INH_SHARE, POSIX_MADV_RANDOM, 0)))) {
 			uao_detach(e->e_sigobject);
 			return (ENOMEM);
 		}
@@ -847,8 +847,8 @@ exec_sigcode_map(struct process *pr, struct emul *e)
 	pr->ps_sigcode = 0; /* no hint */
 	uao_reference(e->e_sigobject);
 	if (uvm_map(&pr->ps_vmspace->vm_map, &pr->ps_sigcode, round_page(sz),
-	    e->e_sigobject, 0, 0, UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX,
-	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0))) {
+	    e->e_sigobject, 0, 0, UVM_MAPFLAG(PROT_READ | PROT_EXEC,
+	    PROT_READ | PROT_EXEC, UVM_INH_SHARE, POSIX_MADV_RANDOM, 0))) {
 		uao_detach(e->e_sigobject);
 		return (ENOMEM);
 	}

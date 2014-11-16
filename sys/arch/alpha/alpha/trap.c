@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.75 2014/07/02 18:37:33 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.76 2014/11/16 12:30:52 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -375,7 +375,7 @@ trap(a0, a1, a2, entry, framep)
 		case ALPHA_MMCSR_FOW:
 			KERNEL_LOCK();
 			if (pmap_emulate_reference(p, a0, user, a1)) {
-				ftype = VM_PROT_EXECUTE;
+				ftype = PROT_EXEC;
 				goto do_fault;
 			}
 			KERNEL_UNLOCK();
@@ -392,13 +392,13 @@ trap(a0, a1, a2, entry, framep)
 
 			switch (a2) {
 			case -1:		/* instruction fetch fault */
-				ftype = VM_PROT_EXECUTE;
+				ftype = PROT_EXEC;
 				break;
 			case 0:			/* load instruction */
-				ftype = VM_PROT_READ;
+				ftype = PROT_READ;
 				break;
 			case 1:			/* store instruction */
-				ftype = VM_PROT_READ|VM_PROT_WRITE;
+				ftype = PROT_READ | PROT_WRITE;
 				break;
 			}
 	

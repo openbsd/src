@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.70 2014/10/26 18:17:16 kettenis Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.71 2014/11/16 12:30:59 deraadt Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -188,8 +188,8 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, u_int32_t iovabase)
 	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
 		pa = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, pa | PMAP_NVC,
-			VM_PROT_READ|VM_PROT_WRITE,
-			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		    PROT_READ | PROT_WRITE,
+		    PROT_READ | PROT_WRITE | PMAP_WIRED);
 		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());

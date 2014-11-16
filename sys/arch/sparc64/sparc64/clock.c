@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.54 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: clock.c,v 1.55 2014/11/16 12:30:59 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -308,10 +308,10 @@ clock_bus_wenable(handle, onoff)
 	s = splhigh();
 	if (onoff)
 		prot = writers++ == 0 ?
-		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED : 0;
+		    PROT_READ | PROT_WRITE | PMAP_WIRED : 0;
 	else
 		prot = --writers == 0 ?
-		    VM_PROT_READ | PMAP_WIRED : 0;
+		    PROT_READ | PMAP_WIRED : 0;
 	splx(s);
 
 	if (prot) {

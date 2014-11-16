@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 2014/01/20 21:19:28 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.22 2014/11/16 12:30:58 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -296,7 +296,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	boolean_t kva = (pmap == pmap_kernel());
 
 	/* "flags" never exceed "prot" */
-	KDASSERT(prot != 0 && ((flags & VM_PROT_ALL) & ~prot) == 0);
+	KDASSERT(prot != 0 && ((flags & PROT_MASK) & ~prot) == 0);
 
 	pg = PHYS_TO_VM_PAGE(pa);
 	entry = (pa & PG_PPN) | PG_4K;
@@ -308,16 +308,16 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		entry |= PG_C;	/* always cached */
 
 		/* Modified/reference tracking */
-		if (flags & VM_PROT_WRITE) {
+		if (flags & PROT_WRITE) {
 			entry |= PG_V | PG_D;
 			pvh->pvh_flags |= PVH_MODIFIED | PVH_REFERENCED;
-		} else if (flags & VM_PROT_ALL) {
+		} else if (flags & PROT_MASK) {
 			entry |= PG_V;
 			pvh->pvh_flags |= PVH_REFERENCED;
 		}
 
 		/* Protection */
-		if ((prot & VM_PROT_WRITE) && (pvh->pvh_flags & PVH_MODIFIED)) {
+		if ((prot & PROT_WRITE) && (pvh->pvh_flags & PVH_MODIFIED)) {
 			if (kva)
 				entry |= PG_PR_KRW | PG_SH;
 			else
@@ -343,11 +343,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	} else {	/* bus-space (always uncached map) */
 		if (kva) {
 			entry |= PG_V | PG_SH |
-			    ((prot & VM_PROT_WRITE) ?
+			    ((prot & PROT_WRITE) ?
 			    (PG_PR_KRW | PG_D) : PG_PR_KRO);
 		} else {
 			entry |= PG_V |
-			    ((prot & VM_PROT_WRITE) ?
+			    ((prot & PROT_WRITE) ?
 			    (PG_PR_URW | PG_D) : PG_PR_URO);
 		}
 	}
@@ -370,7 +370,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		sh_tlb_update(pmap->pm_asid, va, entry);
 
 	if (!SH_HAS_UNIFIED_CACHE &&
-	    (prot == (VM_PROT_READ | VM_PROT_EXECUTE)))
+	    (prot == (PROT_READ | PROT_EXEC)))
 		sh_icache_sync_range_index(va, PAGE_SIZE);
 
 	if (entry & _PG_WIRED)
@@ -444,11 +444,11 @@ __pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot)
 	if (SH_HAS_VIRTUAL_ALIAS) {
 		/* Remove all other mapping on this physical page */
 		pvh = &pg->mdpage;
-		if (prot & VM_PROT_WRITE)
+		if (prot & PROT_WRITE)
 			have_writeable = 1;
 		else {
 			SLIST_FOREACH(pv, &pvh->pvh_head, pv_link) {
-				if (pv->pv_prot & VM_PROT_WRITE) {
+				if (pv->pv_prot & PROT_WRITE) {
 					have_writeable = 1;
 					break;
 				}
@@ -557,7 +557,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	KDASSERT(va >= VM_MIN_KERNEL_ADDRESS && va < VM_MAX_KERNEL_ADDRESS);
 
 	entry = (pa & PG_PPN) | PG_V | PG_SH | PG_4K;
-	if (prot & VM_PROT_WRITE)
+	if (prot & PROT_WRITE)
 		entry |= (PG_PR_KRW | PG_D);
 	else
 		entry |= PG_PR_KRO;
@@ -632,7 +632,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 	sva = trunc_page(sva);
 
-	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
+	if ((prot & PROT_READ) == PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
 		return;
 	}
@@ -641,14 +641,14 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	default:
 		panic("pmap_protect: invalid protection mode %x", prot);
 		/* NOTREACHED */
-	case VM_PROT_READ:
+	case PROT_READ:
 		/* FALLTHROUGH */
-	case VM_PROT_READ | VM_PROT_EXECUTE:
+	case PROT_READ | PROT_EXEC:
 		protbits = kernel ? PG_PR_KRO : PG_PR_URO;
 		break;
-	case VM_PROT_READ | VM_PROT_WRITE:
+	case PROT_READ | PROT_WRITE:
 		/* FALLTHROUGH */
-	case VM_PROT_ALL:
+	case PROT_MASK:
 		protbits = kernel ? PG_PR_KRW : PG_PR_URW;
 		break;
 	}
@@ -660,7 +660,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			continue;
 
 		if (SH_HAS_VIRTUAL_ALIAS && (entry & PG_D)) {
-			if (!SH_HAS_UNIFIED_CACHE && (prot & VM_PROT_EXECUTE))
+			if (!SH_HAS_UNIFIED_CACHE && (prot & PROT_EXEC))
 				sh_icache_sync_range_index(va, PAGE_SIZE);
 			else
 				sh_dcache_wbinv_range_index(va, PAGE_SIZE);
@@ -711,14 +711,14 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	int s;
 
 	switch (prot) {
-	case VM_PROT_READ | VM_PROT_WRITE:
+	case PROT_READ | PROT_WRITE:
 		/* FALLTHROUGH */
-	case VM_PROT_ALL:
+	case PROT_MASK:
 		break;
 
-	case VM_PROT_READ:
+	case PROT_READ:
 		/* FALLTHROUGH */
-	case VM_PROT_READ | VM_PROT_EXECUTE:
+	case PROT_READ | PROT_EXEC:
 		s = splvm();
 		SLIST_FOREACH(pv, &pvh->pvh_head, pv_link) {
 			pmap = pv->pv_pmap;

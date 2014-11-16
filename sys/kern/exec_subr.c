@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.39 2014/11/14 23:26:48 tedu Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.40 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 	 * first, attach to the object
 	 */
 
-	uobj = uvn_attach(cmd->ev_vp, VM_PROT_READ|VM_PROT_EXECUTE);
+	uobj = uvn_attach(cmd->ev_vp, PROT_READ | PROT_EXEC);
 	if (uobj == NULL)
 		return (ENOMEM);
 
@@ -196,8 +196,8 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
 	    uobj, cmd->ev_offset, 0,
-	    UVM_MAPFLAG(cmd->ev_prot, VM_PROT_ALL, UVM_INH_COPY,
-	    UVM_ADV_NORMAL, UVM_FLAG_COPYONW|UVM_FLAG_FIXED));
+	    UVM_MAPFLAG(cmd->ev_prot, PROT_MASK, UVM_INH_COPY,
+	    POSIX_MADV_NORMAL, UVM_FLAG_COPYONW|UVM_FLAG_FIXED));
 
 	/*
 	 * check for error
@@ -234,8 +234,8 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 	    round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(prot | UVM_PROT_WRITE, UVM_PROT_ALL, UVM_INH_COPY,
-	    UVM_ADV_NORMAL,
+	    UVM_MAPFLAG(prot | PROT_WRITE, PROT_MASK, UVM_INH_COPY,
+	    POSIX_MADV_NORMAL,
 	    UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 
 	if (error)
@@ -247,7 +247,7 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 	if (error)
 		return (error);
 
-	if ((prot & VM_PROT_WRITE) == 0) {
+	if ((prot & PROT_WRITE) == 0) {
 		/*
 		 * we had to map in the area at PROT_WRITE so that vn_rdwr()
 		 * could write to it.   however, the caller seems to want
@@ -279,8 +279,8 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 	    round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(cmd->ev_prot, UVM_PROT_ALL, UVM_INH_COPY,
-	    UVM_ADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_COPYONW));
+	    UVM_MAPFLAG(cmd->ev_prot, PROT_MASK, UVM_INH_COPY,
+	    POSIX_MADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_COPYONW));
 
 	if (error)
 		return error;
@@ -351,17 +351,17 @@ exec_setup_stack(struct proc *p, struct exec_package *epp)
 #ifdef MACHINE_STACK_GROWS_UP
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr + epp->ep_ssize, NULLVP, 0, VM_PROT_NONE);
+	    epp->ep_maxsaddr + epp->ep_ssize, NULLVP, 0, PROT_NONE);
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
 	    epp->ep_maxsaddr, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE);
+	    PROT_READ | PROT_WRITE);
 #else
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
+	    epp->ep_maxsaddr, NULLVP, 0, PROT_NONE);
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
 	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE);
+	    PROT_READ | PROT_WRITE);
 #endif
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: r4000_errata.c,v 1.4 2014/04/04 20:52:05 miod Exp $	*/
+/*	$OpenBSD: r4000_errata.c,v 1.5 2014/11/16 12:30:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -215,7 +215,7 @@ eop_tlb_miss_handler(struct trap_frame *trapframe, struct cpu_info *ci,
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = 0;
 		KERNEL_LOCK();
-		(void)uvm_fault(map, va, 0, VM_PROT_READ | VM_PROT_EXECUTE);
+		(void)uvm_fault(map, va, 0, PROT_READ | PROT_EXEC);
 		KERNEL_UNLOCK();
 		pcb->pcb_onfault = onfault;
 	}

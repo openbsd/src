@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.69 2014/05/24 20:13:52 guenther Exp $ */
+/*	$OpenBSD: pmap.c,v 1.70 2014/11/16 12:30:59 deraadt Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
@@ -283,7 +283,7 @@ pmap_bootstrap()
 	 * memory mapped in. This makes some mm routines both simpler
 	 * and faster, but takes ~0.75% more memory.
 	 */
-	pmap_map(KERNBASE, 0, avail_end, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_map(KERNBASE, 0, avail_end, PROT_READ | PROT_WRITE);
 	/*
 	 * Kernel code is always readable for user, it must be because
 	 * of the emulation code that is somewhere in there.
@@ -860,7 +860,7 @@ pmap_remove_holes(struct vm_map *map)
 		return;
 
 	(void)uvm_map(map, &shole, ehole - shole, NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_SHARE,
+	    UVM_MAPFLAG(PROT_NONE, PROT_NONE, UVM_INH_SHARE,
 	      UVM_ADV_RANDOM,
 	      UVM_FLAG_NOMERGE | UVM_FLAG_HOLE | UVM_FLAG_FIXED));
 }
@@ -969,7 +969,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		pmap_kernel()->pm_stats.resident_count++;
 		pmap_kernel()->pm_stats.wired_count++;
 	}
-	mapin8(ptp, PG_V | ((prot & VM_PROT_WRITE) ? PG_KW : PG_KR) |
+	mapin8(ptp, PG_V | ((prot & PROT_WRITE) ? PG_KW : PG_KR) |
 	    PG_PFNUM(pa) | PG_W | PG_SREF);
 	if (opte & PG_V) {
 		mtpr(0, PR_TBIA);
@@ -1038,7 +1038,7 @@ pmap_enter(struct pmap *pmap, vaddr_t v, paddr_t p, vm_prot_t prot, int flags)
 	switch (SEGTYPE(v)) {
 	case SYSSEG:
 		pteptr = Sysmap + vax_btop(v - KERNBASE);
-		newpte = prot & VM_PROT_WRITE ? PG_KW : PG_KR;
+		newpte = prot & PROT_WRITE ? PG_KW : PG_KR;
 		break;
 	case P0SEG:
 		pteidx = vax_btop(v);
@@ -1047,7 +1047,7 @@ pmap_enter(struct pmap *pmap, vaddr_t v, paddr_t p, vm_prot_t prot, int flags)
 				return ENOMEM;
 		}
 		pteptr = pmap->pm_p0br + pteidx;
-		newpte = prot & VM_PROT_WRITE ? PG_RW : PG_RO;
+		newpte = prot & PROT_WRITE ? PG_RW : PG_RO;
 		break;
 	case P1SEG:
 		pteidx = vax_btop(v - 0x40000000);
@@ -1056,7 +1056,7 @@ pmap_enter(struct pmap *pmap, vaddr_t v, paddr_t p, vm_prot_t prot, int flags)
 				return ENOMEM;
 		}
 		pteptr = pmap->pm_p1br + pteidx;
-		newpte = prot & VM_PROT_WRITE ? PG_RW : PG_RO;
+		newpte = prot & PROT_WRITE ? PG_RW : PG_RO;
 		break;
 	default:
 		panic("bad seg");
@@ -1152,11 +1152,11 @@ pmap_enter(struct pmap *pmap, vaddr_t v, paddr_t p, vm_prot_t prot, int flags)
 			pmap->pm_stats.wired_count++;
 	}
 
-	if (flags & VM_PROT_READ) {
+	if (flags & PROT_READ) {
 		pg->mdpage.pv_attr |= PG_V;
 		newpte |= PG_V;
 	}
-	if (flags & VM_PROT_WRITE)
+	if (flags & PROT_WRITE)
 		pg->mdpage.pv_attr |= PG_M;
 
 	if (flags & PMAP_WIRED)
@@ -1184,7 +1184,7 @@ pmap_map(vaddr_t va, paddr_t pstart, paddr_t pend, int prot)
 	pentry = Sysmap + vax_btop(va);
 	for (count = pstart; count < pend; count += VAX_NBPG) {
 		*pentry++ = vax_btop(count) | PG_V |
-		    (prot & VM_PROT_WRITE ? PG_KW : PG_KR);
+		    (prot & PROT_WRITE ? PG_KW : PG_KR);
 	}
 	return va + (count - pstart) + KERNBASE;
 }
@@ -1257,7 +1257,7 @@ pmap_protect(struct pmap *pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 #endif
 		start &= ~KERNBASE;
 		end &= ~KERNBASE;
-		pr = (prot & VM_PROT_WRITE ? PG_KW : PG_KR);
+		pr = (prot & PROT_WRITE ? PG_KW : PG_KR);
 		break;
 
 	case P1SEG:
@@ -1270,7 +1270,7 @@ pmap_protect(struct pmap *pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 		pt = pmap->pm_p1br;
 		start &= 0x3fffffff;
 		end = (end == KERNBASE ? 0x40000000 : end & 0x3fffffff);
-		pr = (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
+		pr = (prot & PROT_WRITE ? PG_RW : PG_RO);
 		break;
 
 	case P0SEG:
@@ -1284,7 +1284,7 @@ pmap_protect(struct pmap *pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 		if (vax_btop(end) > lr)
 			end = lr * VAX_NBPG;
 		pt = pmap->pm_p0br;
-		pr = (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
+		pr = (prot & PROT_WRITE ? PG_RW : PG_RO);
 		break;
 	default:
 		panic("unsupported segtype: %d", (int)SEGTYPE(start));
@@ -1301,7 +1301,7 @@ pmap_protect(struct pmap *pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 
 	while (pts < ptd) {
 		if ((*kvtopte((vaddr_t)pts) & PG_FRAME) != 0 && *pts != PG_NV) {
-			if (prot == VM_PROT_NONE) {
+			if (prot == PROT_NONE) {
 				pmap->pm_stats.resident_count--;
 				if ((*pts & PG_W))
 					pmap->pm_stats.wired_count--;
@@ -1519,11 +1519,11 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	if (pg->mdpage.pv_head == NULL)
 		return;
 
-	if (prot == VM_PROT_ALL) /* 'cannot happen' */
+	if (prot == PROT_MASK) /* 'cannot happen' */
 		return;
 
 	RECURSESTART;
-	if (prot == VM_PROT_NONE) {
+	if (prot == PROT_NONE) {
 		s = splvm();
 		npv = pg->mdpage.pv_head;
 		pg->mdpage.pv_head = NULL;

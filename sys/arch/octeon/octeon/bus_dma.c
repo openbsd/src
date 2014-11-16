@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.13 2014/09/13 16:06:36 doug Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.14 2014/11/16 12:30:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -457,8 +457,8 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 				panic("_dmamem_map: size botch");
 			pa = (*t->_device_to_pa)(addr);
 			error = pmap_enter(pmap_kernel(), va, pa,
-			    VM_PROT_READ | VM_PROT_WRITE, VM_PROT_READ |
-			    VM_PROT_WRITE | pmap_flags);
+			    PROT_READ | PROT_WRITE,
+			    PROT_READ | PROT_WRITE | pmap_flags);
 			if (error) {
 				pmap_update(pmap_kernel());
 				km_free((void *)sva, ssize, &kv_any, &kp_none);

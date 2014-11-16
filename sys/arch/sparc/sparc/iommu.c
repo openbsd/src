@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.27 2014/07/11 09:36:26 mpi Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.28 2014/11/16 12:30:58 deraadt Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -253,7 +253,7 @@ iommu_attach(parent, self, aux)
 
 	while (m) {
 		paddr_t pa = VM_PAGE_TO_PHYS(m);
-		pmap_kenter_pa(va, pa | PMAP_NC, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa | PMAP_NC, PROT_READ | PROT_WRITE);
 		va += PAGE_SIZE;
 		m = TAILQ_NEXT(m, pageq);
 	}
@@ -730,7 +730,7 @@ iommu_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			panic("iommu_dmamem_map: size botch");
 
 		addr = VM_PAGE_TO_PHYS(m);
-		pmap_kenter_pa(va, addr | cbit, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, addr | cbit, PROT_READ | PROT_WRITE);
 #if 0
 			if (flags & BUS_DMA_COHERENT)
 				/* XXX */;

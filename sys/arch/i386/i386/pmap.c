@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.160 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.161 2014/11/16 12:30:57 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -605,7 +605,7 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 
 	vm_map_lock(map);
 	RB_FOREACH_REVERSE(ent, uvm_map_addr, &map->addr) {
-		if (ent->protection & VM_PROT_EXECUTE)
+		if (ent->protection & PROT_EXEC)
 			break;
 	}
 	/*
@@ -696,7 +696,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pt_entry_t *pte, opte, npte;
 
 	pte = vtopte(va);
-	npte = (pa & PMAP_PA_MASK) | ((prot & VM_PROT_WRITE)? PG_RW : PG_RO) |
+	npte = (pa & PMAP_PA_MASK) | ((prot & PROT_WRITE)? PG_RW : PG_RO) |
 	    PG_V | PG_U | PG_M | ((pa & PMAP_NOCACHE) ? PG_N : 0) |
 	    ((pa & PMAP_WC) ? pmap_pg_wc : 0);
 
@@ -795,14 +795,14 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * we can jam into a i386 PTE.
 	 */
 
-	protection_codes[UVM_PROT_NONE] = 0;  			/* --- */
-	protection_codes[UVM_PROT_EXEC] = PG_X;			/* --x */
-	protection_codes[UVM_PROT_READ] = PG_RO;		/* -r- */
-	protection_codes[UVM_PROT_RX] = PG_X;			/* -rx */
-	protection_codes[UVM_PROT_WRITE] = PG_RW;		/* w-- */
-	protection_codes[UVM_PROT_WX] = PG_RW|PG_X;		/* w-x */
-	protection_codes[UVM_PROT_RW] = PG_RW;			/* wr- */
-	protection_codes[UVM_PROT_RWX] = PG_RW|PG_X;		/* wrx */
+	protection_codes[PROT_NONE] = 0;  			/* --- */
+	protection_codes[PROT_EXEC] = PG_X;			/* --x */
+	protection_codes[PROT_READ] = PG_RO;			/* -r- */
+	protection_codes[PROT_READ | PROT_EXEC] = PG_X;		/* -rx */
+	protection_codes[PROT_WRITE] = PG_RW;			/* w-- */
+	protection_codes[PROT_WRITE | PROT_EXEC] = PG_RW|PG_X;	/* w-x */
+	protection_codes[PROT_READ | PROT_WRITE] = PG_RW;	/* wr- */
+	protection_codes[PROT_READ | PROT_WRITE | PROT_EXEC] = PG_RW|PG_X; /* wrx */
 
 	/*
 	 * now we init the kernel's pmap
@@ -1122,7 +1122,7 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 	 */
 
 	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg),
-	    VM_PROT_READ|VM_PROT_WRITE);
+	    PROT_READ | PROT_WRITE);
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = 0;
 	return (pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
@@ -2594,9 +2594,9 @@ enter_now:
 		npte |= PG_RW;	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
-	if (flags & VM_PROT_READ)
+	if (flags & PROT_READ)
 		npte |= PG_U;
-	if (flags & VM_PROT_WRITE)
+	if (flags & PROT_WRITE)
 		npte |= PG_M;
 	if (pg) {
 		npte |= PG_PVLIST;

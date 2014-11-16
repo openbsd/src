@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.11 2014/04/16 12:01:33 aoyama Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.12 2014/11/16 12:30:57 deraadt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -34,8 +34,8 @@
 #include <machine/board.h>
 #include <machine/pmap_table.h>
 
-#define	R	VM_PROT_READ
-#define	RW	(VM_PROT_READ | VM_PROT_WRITE)
+#define	R	PROT_READ
+#define	RW	(PROT_READ | PROT_WRITE)
 #define	CW	CACHE_WT
 #define	CI	CACHE_INH
 #define	CG	CACHE_GLOBAL

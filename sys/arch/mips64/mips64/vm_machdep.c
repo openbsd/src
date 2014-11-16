@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.29 2014/05/10 22:25:16 jasper Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.30 2014/11/16 12:30:58 deraadt Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -245,8 +245,8 @@ vmapbuf(bp, len)
 			    pmap, uva);
 
 		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-			VM_PROT_READ | VM_PROT_WRITE,
-			VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+		    PROT_READ | PROT_WRITE,
+		    PROT_READ | PROT_WRITE | PMAP_WIRED);
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
 		sz -= PAGE_SIZE;

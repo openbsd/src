@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.165 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.166 2014/11/16 12:30:58 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -668,35 +668,35 @@ sparc_protection_init4m(void)
 
 	for (prot = 0; prot < 8; prot++) {
 		switch (prot) {
-		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE:
+		case PROT_READ | PROT_WRITE | PROT_EXEC:
 			kp[prot] = PPROT_N_RWX;
 			up[prot] = PPROT_RWX_RWX;
 			break;
-		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_NONE:
+		case PROT_READ | PROT_WRITE | PROT_NONE:
 			kp[prot] = PPROT_N_RWX;
 			up[prot] = PPROT_RW_RW;
 			break;
-		case VM_PROT_READ | VM_PROT_NONE  | VM_PROT_EXECUTE:
+		case PROT_READ | PROT_NONE  | PROT_EXEC:
 			kp[prot] = PPROT_N_RX;
 			up[prot] = PPROT_RX_RX;
 			break;
-		case VM_PROT_READ | VM_PROT_NONE  | VM_PROT_NONE:
+		case PROT_READ | PROT_NONE  | PROT_NONE:
 			kp[prot] = PPROT_N_RX;
 			up[prot] = PPROT_R_R;
 			break;
-		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_EXECUTE:
+		case PROT_NONE | PROT_WRITE | PROT_EXEC:
 			kp[prot] = PPROT_N_RWX;
 			up[prot] = PPROT_RWX_RWX;
 			break;
-		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_NONE:
+		case PROT_NONE | PROT_WRITE | PROT_NONE:
 			kp[prot] = PPROT_N_RWX;
 			up[prot] = PPROT_RW_RW;
 			break;
-		case VM_PROT_NONE | VM_PROT_NONE  | VM_PROT_EXECUTE:
+		case PROT_NONE | PROT_NONE  | PROT_EXEC:
 			kp[prot] = PPROT_N_RX;
 			up[prot] = PPROT_X_X;
 			break;
-		case VM_PROT_NONE | VM_PROT_NONE  | VM_PROT_NONE:
+		case PROT_NONE | PROT_NONE  | PROT_NONE:
 			kp[prot] = PPROT_N_RX;
 			up[prot] = PPROT_R_R;
 			break;
@@ -1655,8 +1655,8 @@ mmu_pagein(pm, va, prot)
 	struct regmap *rp;
 	struct segmap *sp;
 
-	if (prot != VM_PROT_NONE)
-		bits = PG_V | ((prot & VM_PROT_WRITE) ? PG_W : 0);
+	if (prot != PROT_NONE)
+		bits = PG_V | ((prot & PROT_WRITE) ? PG_W : 0);
 	else
 		bits = 0;
 
@@ -4331,17 +4331,17 @@ pmap_page_protect4_4c(struct vm_page *pg, vm_prot_t prot)
 
 #ifdef DEBUG
 	if ((pmapdebug & PDB_CHANGEPROT) ||
-	    (pmapdebug & PDB_REMOVE && prot == VM_PROT_NONE))
+	    (pmapdebug & PDB_REMOVE && prot == PROT_NONE))
 		printf("pmap_page_protect(0x%lx, 0x%x)\n", pg, prot);
 #endif
 	pv = &pg->mdpage.pv_head;
 	/*
 	 * Skip operations that do not take away write permission.
 	 */
-	if (prot & VM_PROT_WRITE)
+	if (prot & PROT_WRITE)
 		return;
 	write_user_windows();	/* paranoia */
-	if (prot & VM_PROT_READ) {
+	if (prot & PROT_READ) {
 		pv_changepte4_4c(pv, 0, PG_W);
 		return;
 	}
@@ -4514,10 +4514,10 @@ pmap_protect4_4c(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	struct regmap *rp;
 	struct segmap *sp;
 
-	if (pm == NULL || prot & VM_PROT_WRITE)
+	if (pm == NULL || prot & PROT_WRITE)
 		return;
 
-	if ((prot & VM_PROT_READ) == 0) {
+	if ((prot & PROT_READ) == 0) {
 		pmap_remove(pm, sva, eva);
 		return;
 	}
@@ -4628,9 +4628,9 @@ pmap_changeprot4_4c(pm, va, prot, wired)
 
 	va = trunc_page(va);
 	if (pm == pmap_kernel())
-		newprot = prot & VM_PROT_WRITE ? PG_S|PG_W : PG_S;
+		newprot = prot & PROT_WRITE ? PG_S|PG_W : PG_S;
 	else
-		newprot = prot & VM_PROT_WRITE ? PG_W : 0;
+		newprot = prot & PROT_WRITE ? PG_W : 0;
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	s = splvm();		/* conservative */
@@ -4728,17 +4728,17 @@ pmap_page_protect4m(struct vm_page *pg, vm_prot_t prot)
 
 #ifdef DEBUG
 	if ((pmapdebug & PDB_CHANGEPROT) ||
-	    (pmapdebug & PDB_REMOVE && prot == VM_PROT_NONE))
+	    (pmapdebug & PDB_REMOVE && prot == PROT_NONE))
 		printf("pmap_page_protect(0x%lx, 0x%x)\n", pg, prot);
 #endif
 	pv = &pg->mdpage.pv_head;
 	/*
 	 * Skip operations that do not take away write permission.
 	 */
-	if (prot & VM_PROT_WRITE)
+	if (prot & PROT_WRITE)
 		return;
 	write_user_windows();	/* paranoia */
-	if (prot & VM_PROT_READ) {
+	if (prot & PROT_READ) {
 		pv_changepte4m(pv, 0, PPROT_WRITE);
 		return;
 	}
@@ -4841,7 +4841,7 @@ pmap_protect4m(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	struct segmap *sp;
 	int newprot;
 
-	if ((prot & VM_PROT_READ) == 0) {
+	if ((prot & PROT_READ) == 0) {
 		pmap_remove(pm, sva, eva);
 		return;
 	}
@@ -4851,7 +4851,7 @@ pmap_protect4m(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	 * or PROT_WRITE, we don't attempt to guess what to do, just lower
 	 * to read-only and let the real protection be faulted in.
 	 */
-	newprot = pte_prot4m(pm, VM_PROT_READ);
+	newprot = pte_prot4m(pm, PROT_READ);
 
 	write_user_windows();
 	ctx = getcontext4m();
@@ -5031,7 +5031,7 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 		pv = NULL;
 
 	pteproto |= atop(pa) & PG_PFNUM;
-	if (prot & VM_PROT_WRITE)
+	if (prot & PROT_WRITE)
 		pteproto |= PG_W;
 
 	ctx = getcontext4();
@@ -5350,7 +5350,7 @@ pmap_kenter_pa4_4c(va, pa, prot)
 	int pteproto, ctx;
 
 	pteproto = PG_S | PG_V | PMAP_T2PTE_4(pa);
-	if (prot & VM_PROT_WRITE)
+	if (prot & PROT_WRITE)
 		pteproto |= PG_W;
 
 	pa &= ~PMAP_TNC_4;
@@ -5440,9 +5440,9 @@ pmap_enter4m(pm, va, pa, prot, flags)
 		panic("pmap_enter4m: can't fail, but did");
 #endif
 	if (pv) {
-		if (flags & VM_PROT_WRITE)
+		if (flags & PROT_WRITE)
 			pv->pv_flags |= PV_MOD4M;
-		if (flags & VM_PROT_READ)
+		if (flags & PROT_READ)
 			pv->pv_flags |= PV_REF4M;
 	}
 	setcontext4m(ctx);
@@ -5684,7 +5684,7 @@ pmap_kenter_pa4m(va, pa, prot)
 
 	pteproto = ((pa & PMAP_NC) == 0 ? SRMMU_PG_C : 0) |
 		PMAP_T2PTE_SRMMU(pa) | SRMMU_TEPTE |
-		((prot & VM_PROT_WRITE) ? PPROT_N_RWX : PPROT_N_RX);
+		((prot & PROT_WRITE) ? PPROT_N_RWX : PPROT_N_RX);
 
 	pa &= ~PMAP_TNC_SRMMU;
 
@@ -6274,7 +6274,7 @@ pmap_remove_holes(struct vm_map *map)
 
 		(void)uvm_map(map, &shole, ehole - shole, NULL,
 		    UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_SHARE,
+		    UVM_MAPFLAG(PROT_NONE, PROT_NONE, UVM_INH_SHARE,
 		      UVM_ADV_RANDOM,
 		      UVM_FLAG_NOMERGE | UVM_FLAG_HOLE | UVM_FLAG_FIXED));
 	}

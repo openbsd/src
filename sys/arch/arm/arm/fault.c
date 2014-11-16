@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.17 2014/05/08 21:17:00 miod Exp $	*/
+/*	$OpenBSD: fault.c,v 1.18 2014/11/16 12:30:56 deraadt Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -343,22 +343,22 @@ data_abort_handler(trapframe_t *tf)
 	 * responsible to determine if it was a write.
 	 */
 	if (IS_PERMISSION_FAULT(fsr))
-		ftype = VM_PROT_WRITE; 
+		ftype = PROT_WRITE; 
 	else {
 		u_int insn = *(u_int *)tf->tf_pc;
 
 		if (((insn & 0x0c100000) == 0x04000000) ||	/* STR/STRB */
 		    ((insn & 0x0e1000b0) == 0x000000b0) ||	/* STRH/STRD */
 		    ((insn & 0x0a100000) == 0x08000000))	/* STM/CDT */
-			ftype = VM_PROT_WRITE; 
+			ftype = PROT_WRITE; 
 		else
 		if ((insn & 0x0fb00ff0) == 0x01000090)		/* SWP */
-			ftype = VM_PROT_READ | VM_PROT_WRITE; 
+			ftype = PROT_READ | PROT_WRITE; 
 		else
-			ftype = VM_PROT_READ; 
+			ftype = PROT_READ; 
 	}
 #else
-	ftype = fsr & FAULT_WNR ? VM_PROT_WRITE : VM_PROT_READ;
+	ftype = fsr & FAULT_WNR ? PROT_WRITE : PROT_READ;
 #endif
 
 	/*
@@ -689,7 +689,7 @@ prefetch_abort_handler(trapframe_t *tf)
 #ifdef DEBUG
 	last_fault_code = -1;
 #endif
-	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ|VM_PROT_EXECUTE, 1))
+	if (pmap_fault_fixup(map->pmap, va, PROT_READ | PROT_EXEC, 1))
 		goto out;
 
 #ifdef DIAGNOSTIC
@@ -699,7 +699,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	}
 #endif
 
-	error = uvm_fault(map, va, 0, VM_PROT_READ|VM_PROT_EXECUTE);
+	error = uvm_fault(map, va, 0, PROT_READ | PROT_EXEC);
 	if (__predict_true(error == 0))
 		goto out;
 

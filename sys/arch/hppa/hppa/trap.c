@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.137 2014/10/08 22:23:57 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.138 2014/11/16 12:30:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -170,16 +170,16 @@ trap(int type, struct trapframe *frame)
 	    trapnum == T_IDEBUG || trapnum == T_PERFMON) {
 		va = frame->tf_iioq_head;
 		space = frame->tf_iisq_head;
-		vftype = UVM_PROT_EXEC;
+		vftype = PROT_EXEC;
 	} else {
 		va = frame->tf_ior;
 		space = frame->tf_isr;
 		if (va == frame->tf_iioq_head)
-			vftype = UVM_PROT_EXEC;
+			vftype = PROT_EXEC;
 		else if (inst_store(opcode))
-			vftype = UVM_PROT_WRITE;
+			vftype = PROT_WRITE;
 		else
-			vftype = UVM_PROT_READ;
+			vftype = PROT_READ;
 	}
 
 	if (frame->tf_flags & TFF_LAST)
@@ -447,7 +447,7 @@ trap(int type, struct trapframe *frame)
 			    (frame->tf_iioq_head & 3) != pl ||
 			    (type & T_USER && va >= VM_MAXUSER_ADDRESS) ||
 			    uvm_fault(map, trunc_page(va), fault,
-			     opcode & 0x40? UVM_PROT_WRITE : UVM_PROT_READ)) {
+			     opcode & 0x40? PROT_WRITE : PROT_READ)) {
 				frame_regmap(frame, opcode & 0x1f) = 0;
 				frame->tf_ipsw |= PSL_N;
 			}

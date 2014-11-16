@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.72 2014/03/29 18:09:28 guenther Exp $ */
+/* $OpenBSD: pmap.c,v 1.73 2014/11/16 12:30:52 deraadt Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -1382,18 +1382,18 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 
 #ifdef DEBUG
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
-	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
+	    (prot == PROT_NONE && (pmapdebug & PDB_REMOVE)))
 		printf("pmap_page_protect(%p, %x)\n", pg, prot);
 #endif
 
 	switch (prot) {
-	case VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE:
-	case VM_PROT_READ|VM_PROT_WRITE:
+	case PROT_READ | PROT_WRITE | PROT_EXEC:
+	case PROT_READ | PROT_WRITE:
 		return;
 
 	/* copy_on_write */
-	case VM_PROT_READ|VM_PROT_EXECUTE:
-	case VM_PROT_READ:
+	case PROT_READ | PROT_EXEC:
+	case PROT_READ:
 		PMAP_HEAD_TO_MAP_LOCK();
 		for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next) {
 			PMAP_LOCK(pv->pv_pmap);
@@ -1465,7 +1465,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		    pmap, sva, eva, prot);
 #endif
 
-	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
+	if ((prot & PROT_READ) == PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
 		return;
 	}
@@ -1507,7 +1507,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 	PMAP_TLB_SHOOTNOW();
 
-	if (prot & VM_PROT_EXECUTE)
+	if (prot & PROT_EXEC)
 		PMAP_SYNC_ISTREAM(pmap);
 
 	PMAP_UNLOCK(pmap);
@@ -1554,11 +1554,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	/*
 	 * Determine what we need to do about the I-stream.  If
-	 * VM_PROT_EXECUTE is set, we mark a user pmap as needing
+	 * PROT_EXEC is set, we mark a user pmap as needing
 	 * an I-sync on the way back out to userspace.  We always
 	 * need an immediate I-sync for the kernel pmap.
 	 */
-	if (prot & VM_PROT_EXECUTE) {
+	if (prot & PROT_EXEC) {
 		if (pmap == pmap_kernel())
 			needisync = TRUE;
 		else {
@@ -1756,12 +1756,12 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		int attrs;
 
 #ifdef DIAGNOSTIC
-		if ((flags & VM_PROT_ALL) & ~prot)
+		if ((flags & PROT_MASK) & ~prot)
 			panic("pmap_enter: access type exceeds prot");
 #endif
-		if (flags & VM_PROT_WRITE)
+		if (flags & PROT_WRITE)
 			pg->mdpage.pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
-		else if (flags & VM_PROT_ALL)
+		else if (flags & PROT_MASK)
 			pg->mdpage.pvh_attrs |= PGA_REFERENCED;
 		attrs = pg->mdpage.pvh_attrs;
 
@@ -1856,7 +1856,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	if (pmap_pte_w(pte) == 0)
 		PMAP_STAT_DECR(pmap->pm_stats.wired_count, 1);
 
-	if ((prot & VM_PROT_EXECUTE) != 0 || pmap_pte_exec(pte))
+	if ((prot & PROT_EXEC) != 0 || pmap_pte_exec(pte))
 		needisync = TRUE;
 
 	/*
@@ -2359,15 +2359,15 @@ alpha_protection_init(void)
 		kp[prot] = PG_ASM;
 		up[prot] = 0;
 
-		if (prot & VM_PROT_READ) {
+		if (prot & PROT_READ) {
 			kp[prot] |= PG_KRE;
 			up[prot] |= PG_KRE | PG_URE;
 		}
-		if (prot & VM_PROT_WRITE) {
+		if (prot & PROT_WRITE) {
 			kp[prot] |= PG_KWE;
 			up[prot] |= PG_KWE | PG_UWE;
 		}
-		if (prot & VM_PROT_EXECUTE) {
+		if (prot & PROT_EXEC) {
 			kp[prot] |= PG_EXEC | PG_KRE;
 			up[prot] |= PG_EXEC | PG_KRE | PG_URE;
 		} else {

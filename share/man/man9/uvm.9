@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.58 2014/07/03 06:55:59 matthew Exp $
+.\"	$OpenBSD: uvm.9,v 1.59 2014/11/16 12:31:01 deraadt Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: July 3 2014 $
+.Dd $Mdocdate: November 16 2014 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -213,21 +213,13 @@ The
 .Fa prot
 and
 .Fa maxprot
-can take the following values:
+can take a mix of the following values:
 .Bd -literal
-#define UVM_PROT_MASK   0x07    /* protection mask */
-#define UVM_PROT_NONE   0x00    /* protection none */
-#define UVM_PROT_ALL    0x07    /* everything */
-#define UVM_PROT_READ   0x01    /* read */
-#define UVM_PROT_WRITE  0x02    /* write */
-#define UVM_PROT_EXEC   0x04    /* exec */
-#define UVM_PROT_R      0x01    /* read */
-#define UVM_PROT_W      0x02    /* write */
-#define UVM_PROT_RW     0x03    /* read-write */
-#define UVM_PROT_X      0x04    /* exec */
-#define UVM_PROT_RX     0x05    /* read-exec */
-#define UVM_PROT_WX     0x06    /* write-exec */
-#define UVM_PROT_RWX    0x07    /* read-write-exec */
+#define PROT_MASK   0x07    /* protection mask */
+#define PROT_NONE   0x00    /* protection none */
+#define PROT_READ   0x01    /* read */
+#define PROT_WRITE  0x02    /* write */
+#define PROT_EXEC   0x04    /* exec */
 .Ed
 .Pp
 The values that
@@ -267,10 +259,6 @@ can take are:
 The
 .Dv UVM_MAPFLAG
 macro arguments can be combined with an or operator.
-There are several special purpose macros for checking protection combinations,
-e.g., the
-.Dv UVM_PROT_WX
-macro.
 There are also some additional macros to extract bits from the flags.
 The
 .Dv UVM_PROTECTION ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.40 2014/11/08 08:18:37 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.41 2014/11/16 12:30:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -239,9 +239,9 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	vaddr_t piglet_start_va, piglet_end_va;
 
 	/* Identity map PD, PT, and stack pages */
-	pmap_kenter_pa(HIBERNATE_PT_PAGE, HIBERNATE_PT_PAGE, VM_PROT_ALL);
-	pmap_kenter_pa(HIBERNATE_PD_PAGE, HIBERNATE_PD_PAGE, VM_PROT_ALL);
-	pmap_kenter_pa(HIBERNATE_STACK_PAGE, HIBERNATE_STACK_PAGE, VM_PROT_ALL);
+	pmap_kenter_pa(HIBERNATE_PT_PAGE, HIBERNATE_PT_PAGE, PROT_MASK);
+	pmap_kenter_pa(HIBERNATE_PD_PAGE, HIBERNATE_PD_PAGE, PROT_MASK);
+	pmap_kenter_pa(HIBERNATE_STACK_PAGE, HIBERNATE_STACK_PAGE, PROT_MASK);
 	pmap_activate(curproc);
 
 	bzero((caddr_t)HIBERNATE_PT_PAGE, PAGE_SIZE);

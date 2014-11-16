@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.101 2014/09/30 06:51:58 jmatthew Exp $	*/
+/*	$OpenBSD: trap.c,v 1.102 2014/11/16 12:30:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -283,7 +283,7 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 			if (pmap_is_page_ro(pmap_kernel(),
 			    trunc_page(trapframe->badvaddr), entry)) {
 				/* write to read only page in the kernel */
-				ftype = VM_PROT_WRITE;
+				ftype = PROT_WRITE;
 				pcb = &p->p_addr->u_pcb;
 				goto kernel_fault;
 			}
@@ -320,7 +320,7 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 		if (pmap_is_page_ro(pmap,
 		    trunc_page(trapframe->badvaddr), entry)) {
 			/* write to read only page */
-			ftype = VM_PROT_WRITE;
+			ftype = PROT_WRITE;
 			pcb = &p->p_addr->u_pcb;
 			goto fault_common_no_miss;
 		}
@@ -340,7 +340,7 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 
 	case T_TLB_LD_MISS:
 	case T_TLB_ST_MISS:
-		ftype = (type == T_TLB_ST_MISS) ? VM_PROT_WRITE : VM_PROT_READ;
+		ftype = (type == T_TLB_ST_MISS) ? PROT_WRITE : PROT_READ;
 		pcb = &p->p_addr->u_pcb;
 		/* check for kernel address */
 		if (trapframe->badvaddr < 0) {
@@ -379,12 +379,12 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 		}
 
 	case T_TLB_LD_MISS+T_USER:
-		ftype = VM_PROT_READ;
+		ftype = PROT_READ;
 		pcb = &p->p_addr->u_pcb;
 		goto fault_common;
 
 	case T_TLB_ST_MISS+T_USER:
-		ftype = VM_PROT_WRITE;
+		ftype = PROT_WRITE;
 		pcb = &p->p_addr->u_pcb;
 fault_common:
 
@@ -453,13 +453,13 @@ fault_common_no_miss:
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
 	case T_ADDR_ERR_ST+T_USER:	/* misaligned or kseg access */
-		ucode = 0;		/* XXX should be VM_PROT_something */
+		ucode = 0;		/* XXX should be PROT_something */
 		i = SIGBUS;
 		typ = BUS_ADRALN;
 		break;
 	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to cpu */
 	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to cpu */
-		ucode = 0;		/* XXX should be VM_PROT_something */
+		ucode = 0;		/* XXX should be PROT_something */
 		i = SIGBUS;
 		typ = BUS_OBJERR;
 		break;
@@ -659,7 +659,7 @@ fault_common_no_miss:
 				    p->p_md.md_fppgva + PAGE_SIZE);
 				(void)uvm_map_protect(map, p->p_md.md_fppgva,
 				    p->p_md.md_fppgva + PAGE_SIZE,
-				    UVM_PROT_NONE, FALSE);
+				    PROT_NONE, FALSE);
 				return;
 			}
 			/* FALLTHROUGH */
@@ -1498,7 +1498,7 @@ fpe_branch_emulate(struct proc *p, struct trap_frame *tf, uint32_t insn,
 	 */
 
 	rc = uvm_map_protect(map, p->p_md.md_fppgva,
-	    p->p_md.md_fppgva + PAGE_SIZE, UVM_PROT_RWX, FALSE);
+	    p->p_md.md_fppgva + PAGE_SIZE, PROT_MASK, FALSE);
 	if (rc != 0) {
 #ifdef DEBUG
 		printf("%s: uvm_map_protect on %p failed: %d\n",
@@ -1507,7 +1507,7 @@ fpe_branch_emulate(struct proc *p, struct trap_frame *tf, uint32_t insn,
 		return rc;
 	}
 	rc = uvm_fault_wire(map, p->p_md.md_fppgva,
-	    p->p_md.md_fppgva + PAGE_SIZE, UVM_PROT_RWX);
+	    p->p_md.md_fppgva + PAGE_SIZE, PROT_MASK);
 	if (rc != 0) {
 #ifdef DEBUG
 		printf("%s: uvm_fault_wire on %p failed: %d\n",
@@ -1535,7 +1535,7 @@ fpe_branch_emulate(struct proc *p, struct trap_frame *tf, uint32_t insn,
 	}
 
 	(void)uvm_map_protect(map, p->p_md.md_fppgva,
-	    p->p_md.md_fppgva + PAGE_SIZE, UVM_PROT_RX, FALSE);
+	    p->p_md.md_fppgva + PAGE_SIZE, PROT_READ | PROT_EXEC, FALSE);
 	p->p_md.md_fpbranchva = dest;
 	p->p_md.md_fpslotva = (vaddr_t)tf->pc + 4;
 	p->p_md.md_flags |= MDP_FPUSED;
@@ -1548,7 +1548,7 @@ err:
 	uvm_fault_unwire(map, p->p_md.md_fppgva, p->p_md.md_fppgva + PAGE_SIZE);
 err2:
 	(void)uvm_map_protect(map, p->p_md.md_fppgva,
-	    p->p_md.md_fppgva + PAGE_SIZE, UVM_PROT_NONE, FALSE);
+	    p->p_md.md_fppgva + PAGE_SIZE, PROT_NONE, FALSE);
 	return rc;
 }
 #endif

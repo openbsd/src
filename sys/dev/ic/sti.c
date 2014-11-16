@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.73 2014/08/30 14:42:05 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.74 2014/11/16 12:31:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -337,7 +337,7 @@ sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
 	STI_DISABLE_ROM(rom->rom_softc);
 
 	if ((error = uvm_map_protect(kernel_map, rom->rom_code,
-	    rom->rom_code + round_page(size), UVM_PROT_RX, FALSE))) {
+	    rom->rom_code + round_page(size), PROT_READ | PROT_EXEC, FALSE))) {
 		printf(": uvm_map_protect failed (%d)\n", error);
 		uvm_km_free(kernel_map, rom->rom_code, round_page(size));
 		return (error);

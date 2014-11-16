@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_post.c,v 1.7 2014/07/12 18:44:41 tedu Exp $ */
+/* $OpenBSD: vga_post.c,v 1.8 2014/11/16 12:30:56 deraadt Exp $ */
 /* $NetBSD: vga_post.c,v 1.12 2009/03/15 21:32:36 cegger Exp $ */
 
 /*-
@@ -149,7 +149,7 @@ vga_post_init(int bus, int device, int function)
 	sc->sys_image = sys_image;
 	sc->emu.sys_private = sc;
 
-	pmap_kenter_pa(sys_bios_data, 0, VM_PROT_READ);
+	pmap_kenter_pa(sys_bios_data, 0, PROT_READ);
 	pmap_update(pmap_kernel());
 	memcpy((void *)sc->bios_data, (void *)sys_bios_data, PAGE_SIZE);
 	pmap_kremove(sys_bios_data, PAGE_SIZE);
@@ -158,14 +158,14 @@ vga_post_init(int bus, int device, int function)
 	iter = 0;
 	TAILQ_FOREACH(pg, &sc->ram_backing, pageq) {
 		pmap_kenter_pa(sc->sys_image + iter, VM_PAGE_TO_PHYS(pg),
-				VM_PROT_READ | VM_PROT_WRITE);
+		    PROT_READ | PROT_WRITE);
 		iter += PAGE_SIZE;
 	}
 	KASSERT(iter == BASE_MEMORY);
 
 	for (iter = 640 * 1024; iter < 1024 * 1024; iter += PAGE_SIZE)
 		pmap_kenter_pa(sc->sys_image + iter, iter,
-				VM_PROT_READ | VM_PROT_WRITE);
+		    PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	memset(&sc->emu, 0, sizeof(sc->emu));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.82 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.83 2014/11/16 12:30:59 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1971,24 +1971,24 @@ pmap_kenter_pa(va, pa, prot)
 	tte.tag = TSB_TAG(0,pm->pm_ctx,va);
 	if (CPU_ISSUN4V) {
 		tte.data = SUN4V_TSB_DATA(0, PGSZ_8K, pa, 1 /* Privileged */,
-		    (VM_PROT_WRITE & prot), 1, 0, 1, 0);
+		    (PROT_WRITE & prot), 1, 0, 1, 0);
 		/*
 		 * We don't track modification on kenter mappings.
 		 */
-		if (prot & VM_PROT_WRITE)
+		if (prot & PROT_WRITE)
 			tte.data |= SUN4V_TLB_REAL_W|SUN4V_TLB_W;
-		if (prot & VM_PROT_EXECUTE)
+		if (prot & PROT_EXEC)
 			tte.data |= SUN4V_TLB_EXEC;
 		tte.data |= SUN4V_TLB_TSB_LOCK;	/* wired */
 	} else {
 		tte.data = SUN4U_TSB_DATA(0, PGSZ_8K, pa, 1 /* Privileged */,
-		    (VM_PROT_WRITE & prot), 1, 0, 1, 0);
+		    (PROT_WRITE & prot), 1, 0, 1, 0);
 		/*
 		 * We don't track modification on kenter mappings.
 		 */
-		if (prot & VM_PROT_WRITE)
+		if (prot & PROT_WRITE)
 			tte.data |= SUN4U_TLB_REAL_W|SUN4U_TLB_W;
-		if (prot & VM_PROT_EXECUTE)
+		if (prot & PROT_EXEC)
 			tte.data |= SUN4U_TLB_EXEC;
 		tte.data |= SUN4U_TLB_TSB_LOCK;	/* wired */
 	}
@@ -2131,13 +2131,13 @@ pmap_enter(pm, va, pa, prot, flags)
 	if (pv != NULL) {
 		aliased = (pv->pv_va&(PV_ALIAS|PV_NVC));
 #ifdef DIAGNOSTIC
-		if ((flags & VM_PROT_ALL) & ~prot)
+		if ((flags & PROT_MASK) & ~prot)
 			panic("pmap_enter: access_type exceeds prot");
 #endif
 		/* If we don't have the traphandler do it, set the ref/mod bits now */
-		if (flags & VM_PROT_ALL)
+		if (flags & PROT_MASK)
 			pv->pv_va |= PV_REF;
-		if (flags & VM_PROT_WRITE)
+		if (flags & PROT_WRITE)
 			pv->pv_va |= PV_MOD;
 		pv->pv_va |= pmap_tte2flags(tte.data);
 #ifdef DEBUG
@@ -2158,21 +2158,21 @@ pmap_enter(pm, va, pa, prot, flags)
 #endif
 	if (CPU_ISSUN4V) {
 		tte.data = SUN4V_TSB_DATA(0, size, pa, pm == pmap_kernel(),
-		    (flags & VM_PROT_WRITE), (!(pa & PMAP_NC)), 
+		    (flags & PROT_WRITE), (!(pa & PMAP_NC)), 
 		    aliased, 1, (pa & PMAP_LITTLE));
-		if (prot & VM_PROT_WRITE)
+		if (prot & PROT_WRITE)
 			tte.data |= SUN4V_TLB_REAL_W;
-		if (prot & VM_PROT_EXECUTE)
+		if (prot & PROT_EXEC)
 			tte.data |= SUN4V_TLB_EXEC;
 		if (wired)
 			tte.data |= SUN4V_TLB_TSB_LOCK;
 	} else {
 		tte.data = SUN4U_TSB_DATA(0, size, pa, pm == pmap_kernel(),
-		    (flags & VM_PROT_WRITE), (!(pa & PMAP_NC)), 
+		    (flags & PROT_WRITE), (!(pa & PMAP_NC)), 
 		    aliased, 1, (pa & PMAP_LITTLE));
-		if (prot & VM_PROT_WRITE)
+		if (prot & PROT_WRITE)
 			tte.data |= SUN4U_TLB_REAL_W;
-		if (prot & VM_PROT_EXECUTE)
+		if (prot & PROT_EXEC)
 			tte.data |= SUN4U_TLB_EXEC;
 		if (wired)
 			tte.data |= SUN4U_TLB_TSB_LOCK;
@@ -2318,11 +2318,11 @@ pmap_protect(pm, sva, eva, prot)
 	KDASSERT(pm != pmap_kernel() || eva < INTSTACK || sva > EINTSTACK);
 	KDASSERT(pm != pmap_kernel() || eva < kdata || sva > ekdata);
 
-	if ((prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) ==
-	    (VM_PROT_WRITE|VM_PROT_EXECUTE))
+	if ((prot & (PROT_WRITE | PROT_EXEC)) ==
+	    (PROT_WRITE | PROT_EXEC))
 		return;
 
-	if (prot == VM_PROT_NONE) {
+	if (prot == PROT_NONE) {
 		pmap_remove(pm, sva, eva);
 		return;
 	}
@@ -2362,14 +2362,14 @@ pmap_protect(pm, sva, eva, prot)
 			}
 			/* Just do the pmap and TSB, not the pv_list */
 			if (CPU_ISSUN4V) {
-				if ((prot & VM_PROT_WRITE) == 0)
+				if ((prot & PROT_WRITE) == 0)
 					data &= ~(SUN4V_TLB_W|SUN4V_TLB_REAL_W);
-				if ((prot & VM_PROT_EXECUTE) == 0)
+				if ((prot & PROT_EXEC) == 0)
 					data &= ~(SUN4V_TLB_EXEC);
 			} else {
-				if ((prot & VM_PROT_WRITE) == 0)
+				if ((prot & PROT_WRITE) == 0)
 					data &= ~(SUN4U_TLB_W|SUN4U_TLB_REAL_W);
-				if ((prot & VM_PROT_EXECUTE) == 0)
+				if ((prot & PROT_EXEC) == 0)
 					data &= ~(SUN4U_TLB_EXEC);
 			}
 			KDASSERT((data & TLB_NFO) == 0);
@@ -3018,28 +3018,28 @@ pmap_page_protect(pg, prot)
 			(unsigned long long)pa, prot);
 #endif
 
-	if (prot & VM_PROT_WRITE) {
+	if (prot & PROT_WRITE) {
 		pv_check();
 		return;
 	}
 
-	if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
+	if (prot & (PROT_READ | PROT_EXEC)) {
 		/* copy_on_write */
 
 		set = TLB_V;
 		if (CPU_ISSUN4V) {
 			clear = SUN4V_TLB_REAL_W|SUN4V_TLB_W;
-			if (VM_PROT_EXECUTE & prot)
+			if (PROT_EXEC & prot)
 				set |= SUN4V_TLB_EXEC;
 			else
 				clear |= SUN4V_TLB_EXEC;
 		} else {
 			clear = SUN4U_TLB_REAL_W|SUN4U_TLB_W;
-			if (VM_PROT_EXECUTE & prot)
+			if (PROT_EXEC & prot)
 				set |= SUN4U_TLB_EXEC;
 			else
 				clear |= SUN4U_TLB_EXEC;
-			if (VM_PROT_EXECUTE == prot)
+			if (PROT_EXEC == prot)
 				set |= SUN4U_TLB_EXEC_ONLY;
 		}
 
@@ -3639,8 +3639,8 @@ pmap_remove_holes(struct vm_map *map)
 		return;
 
 	(void)uvm_map(map, &shole, ehole - shole, NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_SHARE,
-	      UVM_ADV_RANDOM,
+	    UVM_MAPFLAG(PROT_NONE, PROT_NONE, UVM_INH_SHARE,
+	      POSIX_MADV_RANDOM,
 	      UVM_FLAG_NOMERGE | UVM_FLAG_HOLE | UVM_FLAG_FIXED));
 }
 
@@ -3692,8 +3692,8 @@ pmap_testout()
 
 	pmap_get_page(&pa, NULL, pmap_kernel());
 	pg = PHYS_TO_VM_PAGE(pa);
-	pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ|VM_PROT_WRITE,
-	    VM_PROT_READ|VM_PROT_WRITE);
+	pmap_enter(pmap_kernel(), va, pa, PROT_READ | PROT_WRITE,
+	    PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	/* Now clear reference and modify */
@@ -3754,11 +3754,11 @@ pmap_testout()
 	       ref, mod);
 
 	/* Check pmap_protect() */
-	pmap_protect(pmap_kernel(), va, va+1, VM_PROT_READ);
+	pmap_protect(pmap_kernel(), va, va+1, PROT_READ);
 	pmap_update(pmap_kernel());
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
-	printf("pmap_protect(VM_PROT_READ): ref %d, mod %d\n",
+	printf("pmap_protect(PROT_READ): ref %d, mod %d\n",
 	       ref, mod);
 
 	/* Now clear reference and modify */
@@ -3769,8 +3769,8 @@ pmap_testout()
 	       ref, mod);
 
 	/* Modify page */
-	pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ|VM_PROT_WRITE,
-	    VM_PROT_READ|VM_PROT_WRITE);
+	pmap_enter(pmap_kernel(), va, pa, PROT_READ | PROT_WRITE,
+	    PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 	*loc = 1;
 
@@ -3780,11 +3780,11 @@ pmap_testout()
 	       ref, mod);
 
 	/* Check pmap_protect() */
-	pmap_protect(pmap_kernel(), va, va+1, VM_PROT_NONE);
+	pmap_protect(pmap_kernel(), va, va+1, PROT_NONE);
 	pmap_update(pmap_kernel());
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
-	printf("pmap_protect(VM_PROT_READ): ref %d, mod %d\n",
+	printf("pmap_protect(PROT_READ): ref %d, mod %d\n",
 	       ref, mod);
 
 	/* Now clear reference and modify */
@@ -3795,8 +3795,8 @@ pmap_testout()
 	       ref, mod);
 
 	/* Modify page */
-	pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ|VM_PROT_WRITE,
-	    VM_PROT_READ|VM_PROT_WRITE);
+	pmap_enter(pmap_kernel(), va, pa, PROT_READ | PROT_WRITE,
+	    PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 	*loc = 1;
 
@@ -3806,7 +3806,7 @@ pmap_testout()
 	       ref, mod);
 
 	/* Check pmap_pag_protect() */
-	pmap_page_protect(pg, VM_PROT_READ);
+	pmap_page_protect(pg, PROT_READ);
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
 	printf("pmap_protect(): ref %d, mod %d\n",
@@ -3821,8 +3821,8 @@ pmap_testout()
 
 
 	/* Modify page */
-	pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ|VM_PROT_WRITE,
-	    VM_PROT_READ|VM_PROT_WRITE);
+	pmap_enter(pmap_kernel(), va, pa, PROT_READ | PROT_WRITE,
+	    PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 	*loc = 1;
 
@@ -3832,7 +3832,7 @@ pmap_testout()
 	       ref, mod);
 
 	/* Check pmap_pag_protect() */
-	pmap_page_protect(pg, VM_PROT_NONE);
+	pmap_page_protect(pg, PROT_NONE);
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
 	printf("pmap_protect(): ref %d, mod %d\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio_space.c,v 1.2 2006/05/29 17:30:26 drahn Exp $	*/
+/*	$OpenBSD: obio_space.c,v 1.3 2014/11/16 12:30:56 deraadt Exp $	*/
 /*	$NetBSD: obio_space.c,v 1.9 2005/11/24 13:08:33 yamt Exp $	*/
 
 
@@ -160,7 +160,7 @@ obio_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
 		if ((flag & BUS_SPACE_MAP_CACHEABLE) == 0) {
 			pte = vtopte(va);
 			*pte &= ~L2_S_CACHE_MASK;

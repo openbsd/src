@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.42 2014/07/13 12:11:01 jasper Exp $	*/
+/*	$OpenBSD: trap.c,v 1.43 2014/11/16 12:30:56 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -353,11 +353,11 @@ faultcommon:
 		else
 			map = &vm->vm_map;
 		if (frame->tf_err & PGEX_W)
-			ftype = VM_PROT_WRITE;
+			ftype = PROT_WRITE;
 		else if (frame->tf_err & PGEX_I)
-			ftype = VM_PROT_EXECUTE;
+			ftype = PROT_EXEC;
 		else
-			ftype = VM_PROT_READ;
+			ftype = PROT_READ;
 
 #ifdef DIAGNOSTIC
 		if (map == kernel_map && va == 0) {

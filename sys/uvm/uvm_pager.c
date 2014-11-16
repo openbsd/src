@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.69 2014/09/14 14:17:27 jsg Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.70 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -233,9 +233,9 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 	vsize_t size;
 	struct vm_page *pp;
 
-	prot = VM_PROT_READ;
+	prot = PROT_READ;
 	if (flags & UVMPAGER_MAPIN_READ)
-		prot |= VM_PROT_WRITE;
+		prot |= PROT_WRITE;
 	size = ptoa(npages);
 
 	KASSERT(size <= MAXBSIZE);
@@ -395,7 +395,7 @@ uvm_mk_pcluster(struct uvm_object *uobj, struct vm_page **pps, int *npages,
 				    PG_RELEASED);
 
 			/* XXX: protect wired page?   see above comment. */
-			pmap_page_protect(pclust, VM_PROT_READ);
+			pmap_page_protect(pclust, PROT_READ);
 			if (!forward) {
 				ppsp--;			/* back up one page */
 				*ppsp = pclust;

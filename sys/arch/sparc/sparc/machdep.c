@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.165 2014/09/20 09:28:24 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.166 2014/11/16 12:30:58 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -163,7 +163,7 @@ cpu_startup()
 
 	/* Enter the new mapping */
 	pmap_map(MSGBUF_VA, msgbufpa, msgbufpa + PAGE_SIZE,
-	    VM_PROT_READ | VM_PROT_WRITE);
+	    PROT_READ | PROT_WRITE);
 
 	/* Re-initialize the message buffer. */
 	initmsgbuf((caddr_t)(MSGBUF_VA + (CPU_ISSUN4 ? 4096 : 0)), MSGBUFSIZE);
@@ -718,7 +718,7 @@ dumpsys()
 				printf("%d ", i / (1024*1024));
 
 			(void) pmap_map(dumpspace, maddr, maddr + n,
-					VM_PROT_READ);
+					PROT_READ);
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
 			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
@@ -823,7 +823,7 @@ mapdev(phys, virt, offset, size)
 
 	do {
 		pmap_kenter_pa(va, pa | pmtype | PMAP_NC,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    PROT_READ | PROT_WRITE);
 		va += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.33 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.34 2014/11/16 12:30:57 deraadt Exp $	*/
 /*	$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $	*/
 
 /*-
@@ -111,7 +111,7 @@ gdt_init()
 		if (pg == NULL)
 			panic("gdt_init: no pages");
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    PROT_READ | PROT_WRITE);
 	}
 	bcopy(bootstrap_gdt, gdt, NGDT * sizeof(union descriptor));
 	ci->ci_gdt = gdt;
@@ -140,7 +140,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 		if (pg == NULL)
 			panic("gdt_init: no pages");
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    PROT_READ | PROT_WRITE);
 	}
 	bzero(ci->ci_gdt, MAXGDTSIZ);
 	bcopy(gdt, ci->ci_gdt, MAXGDTSIZ);

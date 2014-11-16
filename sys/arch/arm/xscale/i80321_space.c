@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_space.c,v 1.4 2006/06/01 03:46:01 drahn Exp $	*/
+/*	$OpenBSD: i80321_space.c,v 1.5 2014/11/16 12:30:56 deraadt Exp $	*/
 /*	$NetBSD: i80321_space.c,v 1.9 2005/11/24 13:08:32 yamt Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ printf("i80321_bs_map va %x pa %x, endpa %x, sz %x\n", va, startpa,
 
 	for (pa = startpa; pagecnt > 0;
 	    pa += PAGE_SIZE, va += PAGE_SIZE, pagecnt -= PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
 		if ((flag & BUS_SPACE_MAP_CACHEABLE) == 0) {
 			pte = vtopte(va);
 			*pte &= ~L2_S_CACHE_MASK;
@@ -385,7 +385,7 @@ printf("i80321_bs_map va %x pa %x, endpa %x, sz %x\n", va, pa,
 	*bshp = va + (bpa & PAGE_MASK);
 
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
 		if ((flag & BUS_SPACE_MAP_CACHEABLE) == 0) {
 			pte = vtopte(va);
 			*pte &= ~L2_S_CACHE_MASK;

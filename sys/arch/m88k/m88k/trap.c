@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.100 2014/07/02 18:37:34 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.101 2014/11/16 12:30:58 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -295,11 +295,11 @@ lose:
 
 		fault_addr = frame->tf_dma0;
 		if (frame->tf_dmt0 & (DMT_WRITE|DMT_LOCKBAR)) {
-			ftype = VM_PROT_READ|VM_PROT_WRITE;
-			fault_code = VM_PROT_WRITE;
+			ftype = PROT_READ | PROT_WRITE;
+			fault_code = PROT_WRITE;
 		} else {
-			ftype = VM_PROT_READ;
-			fault_code = VM_PROT_READ;
+			ftype = PROT_READ;
+			fault_code = PROT_READ;
 		}
 
 		va = trunc_page((vaddr_t)fault_addr);
@@ -399,11 +399,11 @@ user_fault:
 		}
 
 		if (frame->tf_dmt0 & (DMT_WRITE | DMT_LOCKBAR)) {
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
-			fault_code = VM_PROT_WRITE;
+			ftype = PROT_READ | PROT_WRITE;
+			fault_code = PROT_WRITE;
 		} else {
-			ftype = VM_PROT_READ;
-			fault_code = VM_PROT_READ;
+			ftype = PROT_READ;
+			fault_code = PROT_READ;
 		}
 
 		va = trunc_page((vaddr_t)fault_addr);
@@ -813,11 +813,11 @@ lose:
 
 		fault_addr = frame->tf_dlar;
 		if (frame->tf_dsr & CMMU_DSR_RW) {
-			ftype = VM_PROT_READ;
-			fault_code = VM_PROT_READ;
+			ftype = PROT_READ;
+			fault_code = PROT_READ;
 		} else {
-			ftype = VM_PROT_READ|VM_PROT_WRITE;
-			fault_code = VM_PROT_WRITE;
+			ftype = PROT_READ | PROT_WRITE;
+			fault_code = PROT_WRITE;
 		}
 
 		va = trunc_page((vaddr_t)fault_addr);
@@ -860,8 +860,8 @@ lose:
 		KERNEL_LOCK();
 m88110_user_fault:
 		if (type == T_INSTFLT+T_USER) {
-			ftype = VM_PROT_READ;
-			fault_code = VM_PROT_READ;
+			ftype = PROT_READ;
+			fault_code = PROT_READ;
 #ifdef TRAPDEBUG
 			printf("User Instruction fault exip %x isr %x ilar %x\n",
 			    frame->tf_exip, frame->tf_isr, frame->tf_ilar);
@@ -869,11 +869,11 @@ m88110_user_fault:
 		} else {
 			fault_addr = frame->tf_dlar;
 			if (frame->tf_dsr & CMMU_DSR_RW) {
-				ftype = VM_PROT_READ;
-				fault_code = VM_PROT_READ;
+				ftype = PROT_READ;
+				fault_code = PROT_READ;
 			} else {
-				ftype = VM_PROT_READ|VM_PROT_WRITE;
-				fault_code = VM_PROT_WRITE;
+				ftype = PROT_READ | PROT_WRITE;
+				fault_code = PROT_WRITE;
 			}
 #ifdef TRAPDEBUG
 			printf("User Data access fault exip %x dsr %x dlar %x\n",

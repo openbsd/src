@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.177 2014/11/13 00:47:44 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.178 2014/11/16 12:31:00 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1066,7 +1066,7 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 		 * Note: we enforce the alignment restriction,
 		 * but ignore pmap_prefer.
 		 */
-	} else if ((maxprot & VM_PROT_EXECUTE) != 0 &&
+	} else if ((maxprot & PROT_EXEC) != 0 &&
 	    map->uaddr_exe != NULL) {
 		/* Run selection algorithm for executables. */
 		error = uvm_addr_invoke(map, map->uaddr_exe, &first, &last,
@@ -1871,7 +1871,7 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 	    iter = RB_NEXT(uvm_map_addr, &map->addr, iter)) {
 		KDASSERT(iter->start >= start_addr && iter->end <= end_addr);
 		if (UVM_ET_ISHOLE(iter) || iter->start == iter->end ||
-		    iter->protection == VM_PROT_NONE)
+		    iter->protection == PROT_NONE)
 			continue;
 
 		/*
@@ -1882,7 +1882,7 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 		 */
 		if (!VM_MAPENT_ISWIRED(iter) && !UVM_ET_ISSUBMAP(iter) &&
 		    UVM_ET_ISNEEDSCOPY(iter) &&
-		    ((iter->protection & VM_PROT_WRITE) ||
+		    ((iter->protection & PROT_WRITE) ||
 		    iter->object.uvm_obj == NULL)) {
 			amap_copy(map, iter, M_WAITOK, TRUE,
 			    iter->start, iter->end);
@@ -1903,7 +1903,7 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 	for (iter = first; error == 0 && iter != end;
 	    iter = RB_NEXT(uvm_map_addr, &map->addr, iter)) {
 		if (UVM_ET_ISHOLE(iter) || iter->start == iter->end ||
-		    iter->protection == VM_PROT_NONE)
+		    iter->protection == PROT_NONE)
 			continue;
 
 		error = uvm_fault_wire(map, iter->start, iter->end,
@@ -1931,7 +1931,7 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 		    first = RB_NEXT(uvm_map_addr, &map->addr, first)) {
 			if (UVM_ET_ISHOLE(first) ||
 			    first->start == first->end ||
-			    first->protection == VM_PROT_NONE)
+			    first->protection == PROT_NONE)
 				continue;
 
 			first->wired_count--;
@@ -1945,7 +1945,7 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 		for (; iter != end;
 		    iter = RB_NEXT(uvm_map_addr, &map->addr, iter)) {
 			if (UVM_ET_ISHOLE(iter) || iter->start == iter->end ||
-			    iter->protection == VM_PROT_NONE)
+			    iter->protection == PROT_NONE)
 				continue;
 
 			iter->wired_count--;
@@ -2910,7 +2910,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 		 */
 		if (iter->protection != old_prot) {
 			mask = UVM_ET_ISCOPYONWRITE(iter) ?
-			    ~VM_PROT_WRITE : VM_PROT_ALL;
+			    ~PROT_WRITE : PROT_MASK;
 
 			/* update pmap */
 			if ((iter->protection & mask) == PROT_NONE &&
@@ -2935,13 +2935,13 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 		/*
 		 * If the map is configured to lock any future mappings,
-		 * wire this entry now if the old protection was VM_PROT_NONE
-		 * and the new protection is not VM_PROT_NONE.
+		 * wire this entry now if the old protection was PROT_NONE
+		 * and the new protection is not PROT_NONE.
 		 */
 		if ((map->flags & VM_MAP_WIREFUTURE) != 0 &&
 		    VM_MAPENT_ISWIRED(iter) == 0 &&
-		    old_prot == VM_PROT_NONE &&
-		    new_prot != VM_PROT_NONE) {
+		    old_prot == PROT_NONE &&
+		    new_prot != PROT_NONE) {
 			if (uvm_map_pageable(map, iter->start, iter->end,
 			    FALSE, UVM_LK_ENTER | UVM_LK_EXIT) != 0) {
 				/*
@@ -3347,13 +3347,12 @@ uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
 			 * calling pmap_protect needlessly.
 			 */
 			if (!UVM_ET_ISNEEDSCOPY(old_entry)) {
-				if (old_entry->max_protection &
-				    VM_PROT_WRITE) {
+				if (old_entry->max_protection & PROT_WRITE) {
 					pmap_protect(old_map->pmap,
 					    old_entry->start,
 					    old_entry->end,
 					    old_entry->protection &
-					    ~VM_PROT_WRITE);
+					    ~PROT_WRITE);
 					pmap_update(old_map->pmap);
 				}
 				old_entry->etype |= UVM_ET_NEEDSCOPY;
@@ -3366,7 +3365,7 @@ uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
 			 * we only need to protect the child if the 
 			 * parent has write access.
 			 */
-			if (old_entry->max_protection & VM_PROT_WRITE)
+			if (old_entry->max_protection & PROT_WRITE)
 				protect_child = TRUE;
 			else
 				protect_child = FALSE;
@@ -3386,7 +3385,7 @@ uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
 			pmap_protect(new_map->pmap, new_entry->start,
 			    new_entry->end,
 			    new_entry->protection &
-			    ~VM_PROT_WRITE);
+			    ~PROT_WRITE);
 		}
 	}
 
@@ -3535,7 +3534,7 @@ uvm_map_hint(struct vmspace *vm, vm_prot_t prot)
 	 * If executable skip first two pages, otherwise start
 	 * after data + heap region.
 	 */
-	if ((prot & VM_PROT_EXECUTE) != 0 &&
+	if ((prot & PROT_EXEC) != 0 &&
 	    (vaddr_t)vm->vm_daddr >= I386_MAX_EXE_ADDR) {
 		addr = (PAGE_SIZE*2) +
 		    (arc4random() & (I386_MAX_EXE_ADDR / 2 - 1));
@@ -3878,7 +3877,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 	if (uvm_map_findspace(kernel_map, &tmp1, &tmp2, &dstaddr, len,
 	    MAX(PAGE_SIZE, PMAP_PREFER_ALIGN()), PMAP_PREFER_OFFSET(start),
-	    VM_PROT_NONE, 0) != 0) {
+	    PROT_NONE, 0) != 0) {
 		error = ENOMEM;
 		goto fail2;
 	}
@@ -4065,7 +4064,7 @@ deactivate_it:
 				KASSERT(pg->uanon == anon);
 
 				/* zap all mappings for the page. */
-				pmap_page_protect(pg, VM_PROT_NONE);
+				pmap_page_protect(pg, PROT_NONE);
 
 				/* ...and deactivate the page. */
 				uvm_pagedeactivate(pg);
@@ -4108,7 +4107,7 @@ flush_object:
 		 */
 		if (uobj != NULL &&
 		    ((flags & PGO_FREE) == 0 ||
-		     ((entry->max_protection & VM_PROT_WRITE) != 0 &&
+		     ((entry->max_protection & PROT_WRITE) != 0 &&
 		      (entry->etype & UVM_ET_COPYONWRITE) == 0))) {
 			rv = uobj->pgops->pgo_flush(uobj,
 			    cp_start - entry->start + entry->offset,
