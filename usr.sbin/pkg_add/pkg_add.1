@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.128 2014/09/08 01:27:55 schwarze Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.129 2014/11/17 23:03:37 sthen Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: November 17 2014 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -533,9 +533,7 @@ into a special staging directory in
 .Pa /var/tmp
 (or
 .Ev PKG_TMPDIR
-if set \- see
-.Sx CAVEATS ,
-below)
+if set)
 and then runs through the following sequence to fully extract the contents
 of the package:
 .Bl -enum
