@@ -1,4 +1,4 @@
-.\"	$OpenBSD: signal.3,v 1.51 2014/09/15 06:18:36 guenther Exp $
+.\"	$OpenBSD: signal.3,v 1.52 2014/11/17 00:11:05 guenther Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 15 2014 $
+.Dd $Mdocdate: November 17 2014 $
 .Dt SIGNAL 3
 .Os
 .Sh NAME
@@ -239,9 +239,10 @@ by signals and are async-signal-safe.
 Therefore applications may
 invoke them, without restriction, from signal-catching functions:
 .Pp
-Base Interfaces:
+Standard Interfaces:
 .Pp
 .Fn _exit ,
+.Fn _Exit ,
 .Fn abort ,
 .Fn accept ,
 .Fn access ,
@@ -271,6 +272,7 @@ Base Interfaces:
 .Fn fchown ,
 .Fn fchownat ,
 .Fn fcntl ,
+.Fn fdatasync ,
 .Fn fork ,
 .Fn fpathconf ,
 .Fn fstat ,
@@ -346,6 +348,10 @@ Base Interfaces:
 .Fn socket ,
 .Fn socketpair ,
 .Fn stat ,
+.Fn strcat ,
+.Fn strcpy ,
+.Fn strncat ,
+.Fn strncpy ,
 .Fn symlink ,
 .Fn symlinkat ,
 .Fn sysconf ,
@@ -368,8 +374,8 @@ Base Interfaces:
 .Fn utimes ,
 .Fn wait ,
 .Fn waitpid ,
-.Fn write .
-.Pp
+.Fn write ,
+and perhaps some others.
 .\" unimplemented functions that should be async-sig-safe, if we had them
 .\" POSIX Issue 7 additions
 .\" .Pp
@@ -380,21 +386,11 @@ Base Interfaces:
 .\" .Fn aio_error ,
 .\" .Fn aio_return ,
 .\" .Fn aio_suspend ,
-.\" .Fn fdatasync ,
 .\" .Fn sem_post ,
 .\" .Fn sigqueue ,
 .\" .Fn timer_getoverrun ,
 .\" .Fn timer_gettime ,
 .\" .Fn timer_settime .
-ANSI C Interfaces:
-.Pp
-.Fn _Exit ,
-.Fn raise ,
-.Fn strcat ,
-.Fn strcpy ,
-.Fn strncat ,
-.Fn strncpy ,
-and perhaps some others.
 .Pp
 Extension Interfaces:
 .Pp
