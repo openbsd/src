@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.51 2014/11/16 12:31:01 deraadt Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.52 2014/11/17 03:15:58 deraadt Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -85,7 +85,8 @@ sys_obreak(struct proc *p, void *v, register_t *retval)
 	if (new > old) {
 		error = uvm_map(&vm->vm_map, &old, new - old, NULL,
 		    UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_MASK, UVM_INH_COPY,
+		    UVM_MAPFLAG(PROT_READ | PROT_WRITE,
+		    PROT_READ | PROT_WRITE | PROT_EXEC, UVM_INH_COPY,
 		    POSIX_MADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
 		    UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 		if (error) {
