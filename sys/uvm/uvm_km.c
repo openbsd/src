@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.117 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.118 2014/11/17 04:26:53 deraadt Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -492,9 +492,8 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 		 * object, so we always use regular old pmap_enter().
 		 */
 		pmap_enter(map->pmap, loopva, VM_PAGE_TO_PHYS(pg),
-		    PROT_READ | PROT_WRITE | PROT_EXEC,
+		    PROT_READ | PROT_WRITE,
 		    PROT_READ | PROT_WRITE | PMAP_WIRED);
-		/* XXX why is the above executable? */
 
 		loopva += PAGE_SIZE;
 		offset += PAGE_SIZE;
