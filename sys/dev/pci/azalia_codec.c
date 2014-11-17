@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.163 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.164 2014/11/17 16:34:51 landry Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -149,11 +149,13 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->name = "Realtek ALC885";
 		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
 		if (this->subid == 0x00a1106b ||	/* APPLE_MB3 */
+		    this->subid == 0xcb7910de ||	/* APPLE_MACMINI3_1 (line-in + hp) */
 		    this->subid == 0x00a0106b ||	/* APPLE_MB3_1 */
 		    this->subid == 0x00a3106b) {	/* APPLE_MB4 */
 			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
 		}
 		if (this->subid == 0x00a1106b ||
+		    this->subid == 0xcb7910de ||	/* APPLE_MACMINI3_1 (internal spkr) */
 		    this->subid == 0x00a0106b)
 			this->qrks |= AZ_QRK_WID_OVREF50;
 		break;
