@@ -14,6 +14,8 @@ CFLAGS+= -DOPENSSL_BN_ASM_MONT
 SSLASM+= bn armv4-mont
 CFLAGS+= -DOPENSSL_BN_ASM_GF2m
 SSLASM+= bn armv4-gf2m
+# camellia
+SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 # des
 SRCS+= des_enc.c fcrypt_b.c
 # modes

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.6 2014/09/27 20:42:38 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.7 2014/11/17 20:31:21 miod Exp $
 
 # hppa-specific libcrypto build rules
 
@@ -12,6 +12,8 @@ SRCS+= bf_enc.c
 SRCS+= bn_asm.c
 SSLASM+= bn parisc-mont parisc-mont
 CFLAGS+= -DOPENSSL_BN_ASM_MONT -DBN_DIV2W
+# camellia
+SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 # des
 SRCS+= des_enc.c fcrypt_b.c
 # modes

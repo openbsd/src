@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.1 2014/05/03 11:41:05 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2014/11/17 20:31:22 miod Exp $
 
 # powerpc-specific libcrypto build rules
 
@@ -14,6 +14,8 @@ SSLASM+= bn ppc bn-ppc
 SSLASM+= bn ppc-mont ppc-mont		# bn_mul_mont_int
 #SSLASM+= bn ppc64-mont ppc64-mont	# bn_mul_mont_fpu64
 CFLAGS+= -DOPENSSL_BN_ASM_MONT
+# camellia
+SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 # des
 SRCS+= des_enc.c fcrypt_b.c
 # rc4

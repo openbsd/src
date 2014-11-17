@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.2 2014/05/02 21:55:31 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.3 2014/11/17 20:31:22 miod Exp $
 
 # mips64-specific libcrypto build rules
 
@@ -12,6 +12,8 @@ SRCS+= bf_enc.c
 SSLASM+= bn mips bn-mips
 SSLASM+= bn mips-mont mips-mont
 CFLAGS+= -DOPENSSL_BN_ASM_MONT -DBN_DIV3W
+# camellia
+SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 # des
 SRCS+= des_enc.c fcrypt_b.c
 # rc4

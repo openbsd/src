@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.1 2014/05/04 17:13:05 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2014/11/17 20:31:22 miod Exp $
 
 # vax-specific libcrypto build rules
 
@@ -9,6 +9,8 @@ SRCS+= aes_core.c aes_cbc.c
 SRCS+= bf_enc.c
 # bn
 SRCS+= bn_asm_vax.S
+# camellia
+SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 # des
 SRCS+= des_enc.c fcrypt_b.c
 # rc4

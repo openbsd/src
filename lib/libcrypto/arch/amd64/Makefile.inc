@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.3 2014/08/11 13:29:43 bcook Exp $
+# $OpenBSD: Makefile.inc,v 1.4 2014/11/17 20:31:21 miod Exp $
 
 # amd64-specific libcrypto build rules
 
@@ -23,6 +23,9 @@ CFLAGS+= -DOPENSSL_BN_ASM_MONT5
 SSLASM+= bn x86_64-mont5
 CFLAGS+= -DOPENSSL_BN_ASM_GF2m
 SSLASM+= bn x86_64-gf2m
+# camellia
+SRCS+=	cmll_misc.c
+SSLASM+= camellia cmll-x86_64
 # des
 SRCS+= des_enc.c fcrypt_b.c
 # md5
