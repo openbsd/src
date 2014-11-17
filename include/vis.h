@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.h,v 1.13 2010/08/24 23:49:06 djm Exp $	*/
+/*	$OpenBSD: vis.h,v 1.14 2014/11/17 19:51:54 millert Exp $	*/
 /*	$NetBSD: vis.h,v 1.4 1994/10/26 00:56:41 cgd Exp $	*/
 
 /*-
@@ -77,6 +77,7 @@
 __BEGIN_DECLS
 char	*vis(char *, int, int, int);
 int	strvis(char *, const char *, int);
+int	stravis(char **, const char *, int);
 int	strnvis(char *, const char *, size_t, int)
 		__attribute__ ((__bounded__(__string__,1,3)));
 int	strvisx(char *, const char *, size_t, int)
