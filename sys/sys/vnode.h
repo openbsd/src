@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.125 2014/09/08 01:47:06 guenther Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.126 2014/11/17 16:49:04 tedu Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -90,6 +90,7 @@ struct vnode {
 	struct uvm_vnode v_uvm;			/* uvm data */
 	struct vops *v_op;			/* vnode operations vector */
 	enum	vtype v_type;			/* vnode type */
+	enum	vtagtype v_tag;			/* type of underlying data */
 	u_int	v_flag;				/* vnode flags (see below) */
 	u_int   v_usecount;			/* reference count of users */
 	/* reference count of writers */
@@ -117,7 +118,6 @@ struct vnode {
 	struct namecache_rb_cache v_nc_tree;
 	TAILQ_HEAD(, namecache) v_cache_dst;	 /* cache entries to us */
 
-	enum	vtagtype v_tag;			/* type of underlying data */
 	void	*v_data;			/* private data for fs */
 	struct	selinfo v_selectinfo;		/* identity of poller(s) */
 };
