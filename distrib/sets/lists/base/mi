@@ -5012,7 +5012,6 @@
 ./var/spool/uucp
 ./var/spool/uucppublic
 ./var/tmp
-./var/tmp/vi.recover
 ./var/unbound
 ./var/unbound/db
 ./var/unbound/etc
