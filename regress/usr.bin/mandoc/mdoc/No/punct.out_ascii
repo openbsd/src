@@ -4,10 +4,23 @@ NNAAMMEE
      NNoo--ppuunncctt - punctuation after the normal macro
 
 DDEESSCCRRIIPPTTIIOONN
-     One arg: one Two args: one two Trailing punctuation: arg.  Leading
-     punctuation: (arg Multiple punctuation: [(arg)].  Isolated opening
-     punctuation: pre (post.  Isolated closing punctuation: pre ) post.
-     Multiple opening punctuation: pre ([post.  Multiple closing punctuation:
-     pre )] post.
+     Leading punctuation: (b [b | b . b , b ; b : b ? b ! b ) b ] b
 
-OpenBSD                         October 1, 2010                        OpenBSD
+     Trailing punctuation: a ( a [ a | a.  a, a; a: a?  a!  a) a]
+
+     Middle punctuation: a (b a [b a | b a. b a, b a; b a: b a? b a! b a) b a]
+     b
+
+     Isolated punctuation: a (b a [b a | b a . b a , b a ; b a : b a ? b a ! b
+     a ) b a ] b
+
+     Isolated trailing punctuation: a ( a [ a | a .  a , a ; a : a ?  a !  a )
+     a ]
+
+     Multiple isolated punctuation: a ([b a )] b
+
+     Multiple punctuation: [(arg)].
+
+     Quoted: a . b Nm . b Nm .
+
+OpenBSD                        November 17, 2014                       OpenBSD

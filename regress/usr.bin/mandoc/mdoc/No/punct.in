@@ -1,25 +1,83 @@
-.Dd October 1, 2010
+.Dd November 17, 2014
 .Dt NO-PUNCT 1
 .Os OpenBSD
 .Sh NAME
 .Nm No-punct
 .Nd punctuation after the normal macro
 .Sh DESCRIPTION
-One arg:
-.No one
-Two args:
-.No one two
-Trailing punctuation:
-.No arg .
 Leading punctuation:
-.No ( arg
+.No ( b
+.No [ b
+.No | b
+.No . b
+.No , b
+.No ; b
+.No : b
+.No ? b
+.No ! b
+.No ) b
+.No ] b
+.Pp
+Trailing punctuation:
+.No a (
+.No a [
+.No a |
+.No a .
+.No a ,
+.No a ;
+.No a :
+.No a ?
+.No a !
+.No a )
+.No a ]
+.Pp
+Middle punctuation:
+.No a ( b
+.No a [ b
+.No a | b
+.No a . b
+.No a , b
+.No a ; b
+.No a : b
+.No a ? b
+.No a ! b
+.No a ) b
+.No a ] b
+.Pp
+Isolated punctuation:
+.No a No ( No b
+.No a No [ No b
+.No a No | No b
+.No a No . No b
+.No a No , No b
+.No a No ; No b
+.No a No : No b
+.No a No ? No b
+.No a No ! No b
+.No a No ) No b
+.No a No ] No b
+.Pp
+Isolated trailing punctuation:
+.No a No (
+.No a No [
+.No a No |
+.No a No .
+.No a No ,
+.No a No ;
+.No a No :
+.No a No ?
+.No a No !
+.No a No )
+.No a No ]
+.Pp
+Multiple isolated punctuation:
+.No a No ( [ No b
+.No a No ) ] No b
+.Pp
 Multiple punctuation:
 .No [ ( arg ) ] .
-Isolated opening punctuation:
-.No pre No ( No post .
-Isolated closing punctuation:
-.No pre No ) No post .
-Multiple opening punctuation:
-.No pre No ( [ No post .
-Multiple closing punctuation:
-.No pre No ) ] No post .
+.Pp
+Quoted:
+.No "a . b Nm"
+.No ". b Nm"
+.No "."

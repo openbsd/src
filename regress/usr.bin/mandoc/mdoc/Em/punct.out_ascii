@@ -1,0 +1,26 @@
+EM-PUNCT(1)                 General Commands Manual                EM-PUNCT(1)
+
+NNAAMMEE
+     EEmm--ppuunncctt - punctuation following an emphasis macro
+
+DDEESSCCRRIIPPTTIIOONN
+     Leading punctuation: (_b [_b | _b . _b , _b ; _b : _b ? _b ! _b ) _b ] _b
+
+     Trailing punctuation: _a ( _a [ _a | _a.  _a, _a; _a: _a?  _a!  _a) _a]
+
+     Middle punctuation: _a (_b _a [_b _a | _b _a. _b _a, _b _a; _b _a: _b _a? _b _a! _b _a) _b _a]
+     _b
+
+     Isolated punctuation: _a (_b _a [_b _a | _b _a . _b _a , _b _a ; _b _a : _b _a ? _b _a ! _b
+     _a ) _b _a ] _b
+
+     Isolated trailing punctuation: _a ( _a [ _a | _a .  _a , _a ; _a : _a ?  _a !  _a )
+     _a ]
+
+     Multiple isolated punctuation: _a ([_b _a )] _b
+
+     Multiple punctuation: [(_a_r_g)].
+
+     Quoted: _a _. _b _N_m _. _b _N_m
+
+OpenBSD                        November 17, 2014                       OpenBSD

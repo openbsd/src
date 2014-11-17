@@ -1,0 +1,26 @@
+SY-PUNCT(1)                 General Commands Manual                SY-PUNCT(1)
+
+NNAAMMEE
+     SSyy--ppuunncctt - punctuation following a symbolic macro
+
+DDEESSCCRRIIPPTTIIOONN
+     Leading punctuation: (bb [bb | bb . bb , bb ; bb : bb ? bb ! bb ) bb ] bb
+
+     Trailing punctuation: aa ( aa [ aa | aa.  aa, aa; aa: aa?  aa!  aa) aa]
+
+     Middle punctuation: aa (bb aa [bb aa | bb aa. bb aa, bb aa; bb aa: bb aa? bb aa! bb aa) bb aa]
+     bb
+
+     Isolated punctuation: aa (bb aa [bb aa | bb aa . bb aa , bb aa ; bb aa : bb aa ? bb aa ! bb
+     aa ) bb aa ] bb
+
+     Isolated trailing punctuation: aa ( aa [ aa | aa .  aa , aa ; aa : aa ?  aa !  aa )
+     aa ]
+
+     Multiple isolated punctuation: aa ([bb aa )] bb
+
+     Multiple punctuation: [(aarrgg)].
+
+     Quoted: aa .. bb NNmm .. bb NNmm
+
+OpenBSD                        November 17, 2014                       OpenBSD

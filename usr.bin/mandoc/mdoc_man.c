@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.70 2014/11/06 22:27:52 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.71 2014/11/17 06:44:35 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -592,7 +592,11 @@ print_node(DECL_ARGS)
 			printf("\\&");
 			outflags &= ~MMAN_spc;
 		}
+		if (outflags & MMAN_Sm && ! (n->flags & MDOC_DELIMC))
+			outflags |= MMAN_spc_force;
 		print_word(n->string);
+		if (outflags & MMAN_Sm && ! (n->flags & MDOC_DELIMO))
+			outflags |= MMAN_spc;
 	} else {
 		/*
 		 * Conditionally run the pre-node action handler for a

@@ -1,18 +1,83 @@
-.Dd April 8, 2010
+.Dd November 17, 2014
 .Dt LI-PUNCT 1
 .Os OpenBSD
 .Sh NAME
 .Nm Li-punct
 .Nd punctuation following a literal macro
 .Sh DESCRIPTION
-.Li before . after Nm
+Leading punctuation:
+.Li ( b
+.Li [ b
+.Li | b
+.Li . b
+.Li , b
+.Li ; b
+.Li : b
+.Li ? b
+.Li ! b
+.Li ) b
+.Li ] b
 .Pp
-.Li "before . after Nm"
+Trailing punctuation:
+.Li a (
+.Li a [
+.Li a |
+.Li a .
+.Li a ,
+.Li a ;
+.Li a :
+.Li a ?
+.Li a !
+.Li a )
+.Li a ]
 .Pp
-.Li . after Nm
+Middle punctuation:
+.Li a ( b
+.Li a [ b
+.Li a | b
+.Li a . b
+.Li a , b
+.Li a ; b
+.Li a : b
+.Li a ? b
+.Li a ! b
+.Li a ) b
+.Li a ] b
 .Pp
-.Li ". after Nm"
+Isolated punctuation:
+.Li a Li ( Li b
+.Li a Li [ Li b
+.Li a Li | Li b
+.Li a Li . Li b
+.Li a Li , Li b
+.Li a Li ; Li b
+.Li a Li : Li b
+.Li a Li ? Li b
+.Li a Li ! Li b
+.Li a Li ) Li b
+.Li a Li ] Li b
 .Pp
-.Li .
+Isolated trailing punctuation:
+.Li a Li (
+.Li a Li [
+.Li a Li |
+.Li a Li .
+.Li a Li ,
+.Li a Li ;
+.Li a Li :
+.Li a Li ?
+.Li a Li !
+.Li a Li )
+.Li a Li ]
 .Pp
+Multiple isolated punctuation:
+.Li a Li ( [ Li b
+.Li a Li ) ] Li b
+.Pp
+Multiple punctuation:
+.Li [ ( arg ) ] .
+.Pp
+Quoted:
+.Li "a . b Nm"
+.Li ". b Nm"
 .Li "."

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.84 2014/10/30 20:05:33 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.85 2014/11/17 06:44:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -96,6 +96,7 @@ static	int		  mdoc_mt_pre(MDOC_ARGS);
 static	int		  mdoc_ms_pre(MDOC_ARGS);
 static	int		  mdoc_nd_pre(MDOC_ARGS);
 static	int		  mdoc_nm_pre(MDOC_ARGS);
+static	int		  mdoc_no_pre(MDOC_ARGS);
 static	int		  mdoc_ns_pre(MDOC_ARGS);
 static	int		  mdoc_pa_pre(MDOC_ARGS);
 static	void		  mdoc_pf_post(MDOC_ARGS);
@@ -190,7 +191,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_quote_pre, mdoc_quote_post}, /* Eo */
 	{mdoc_xx_pre, NULL}, /* Fx */
 	{mdoc_ms_pre, NULL}, /* Ms */
-	{mdoc_igndelim_pre, NULL}, /* No */
+	{mdoc_no_pre, NULL}, /* No */
 	{mdoc_ns_pre, NULL}, /* Ns */
 	{mdoc_xx_pre, NULL}, /* Nx */
 	{mdoc_xx_pre, NULL}, /* Ox */
@@ -1878,6 +1879,16 @@ mdoc_rs_pre(MDOC_ARGS)
 
 	PAIR_CLASS_INIT(&tag, "ref");
 	print_otag(h, TAG_SPAN, 1, &tag);
+	return(1);
+}
+
+static int
+mdoc_no_pre(MDOC_ARGS)
+{
+	struct htmlpair	tag;
+
+	PAIR_CLASS_INIT(&tag, "none");
+	print_otag(h, TAG_CODE, 1, &tag);
 	return(1);
 }
 

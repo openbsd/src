@@ -1,0 +1,82 @@
+.Dd November 17, 2014
+.Dt SY-PUNCT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Sy-punct
+.Nd punctuation following a symbolic macro
+.Sh DESCRIPTION
+Leading punctuation:
+.Sy ( b
+.Sy [ b
+.Sy | b
+.Sy . b
+.Sy , b
+.Sy ; b
+.Sy : b
+.Sy ? b
+.Sy ! b
+.Sy ) b
+.Sy ] b
+.Pp
+Trailing punctuation:
+.Sy a (
+.Sy a [
+.Sy a |
+.Sy a .
+.Sy a ,
+.Sy a ;
+.Sy a :
+.Sy a ?
+.Sy a !
+.Sy a )
+.Sy a ]
+.Pp
+Middle punctuation:
+.Sy a ( b
+.Sy a [ b
+.Sy a | b
+.Sy a . b
+.Sy a , b
+.Sy a ; b
+.Sy a : b
+.Sy a ? b
+.Sy a ! b
+.Sy a ) b
+.Sy a ] b
+.Pp
+Isolated punctuation:
+.Sy a Sy ( Sy b
+.Sy a Sy [ Sy b
+.Sy a Sy | Sy b
+.Sy a Sy . Sy b
+.Sy a Sy , Sy b
+.Sy a Sy ; Sy b
+.Sy a Sy : Sy b
+.Sy a Sy ? Sy b
+.Sy a Sy ! Sy b
+.Sy a Sy ) Sy b
+.Sy a Sy ] Sy b
+.Pp
+Isolated trailing punctuation:
+.Sy a Sy (
+.Sy a Sy [
+.Sy a Sy |
+.Sy a Sy .
+.Sy a Sy ,
+.Sy a Sy ;
+.Sy a Sy :
+.Sy a Sy ?
+.Sy a Sy !
+.Sy a Sy )
+.Sy a Sy ]
+.Pp
+Multiple isolated punctuation:
+.Sy a Sy ( [ Sy b
+.Sy a Sy ) ] Sy b
+.Pp
+Multiple punctuation:
+.Sy [ ( arg ) ] .
+.Pp
+Quoted:
+.Sy "a . b Nm"
+.Sy ". b Nm"

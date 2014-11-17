@@ -1,0 +1,82 @@
+.Dd November 17, 2014
+.Dt EM-PUNCT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Em-punct
+.Nd punctuation following an emphasis macro
+.Sh DESCRIPTION
+Leading punctuation:
+.Em ( b
+.Em [ b
+.Em | b
+.Em . b
+.Em , b
+.Em ; b
+.Em : b
+.Em ? b
+.Em ! b
+.Em ) b
+.Em ] b
+.Pp
+Trailing punctuation:
+.Em a (
+.Em a [
+.Em a |
+.Em a .
+.Em a ,
+.Em a ;
+.Em a :
+.Em a ?
+.Em a !
+.Em a )
+.Em a ]
+.Pp
+Middle punctuation:
+.Em a ( b
+.Em a [ b
+.Em a | b
+.Em a . b
+.Em a , b
+.Em a ; b
+.Em a : b
+.Em a ? b
+.Em a ! b
+.Em a ) b
+.Em a ] b
+.Pp
+Isolated punctuation:
+.Em a Em ( Em b
+.Em a Em [ Em b
+.Em a Em | Em b
+.Em a Em . Em b
+.Em a Em , Em b
+.Em a Em ; Em b
+.Em a Em : Em b
+.Em a Em ? Em b
+.Em a Em ! Em b
+.Em a Em ) Em b
+.Em a Em ] Em b
+.Pp
+Isolated trailing punctuation:
+.Em a Em (
+.Em a Em [
+.Em a Em |
+.Em a Em .
+.Em a Em ,
+.Em a Em ;
+.Em a Em :
+.Em a Em ?
+.Em a Em !
+.Em a Em )
+.Em a Em ]
+.Pp
+Multiple isolated punctuation:
+.Em a Em ( [ Em b
+.Em a Em ) ] Em b
+.Pp
+Multiple punctuation:
+.Em [ ( arg ) ] .
+.Pp
+Quoted:
+.Em "a . b Nm"
+.Em ". b Nm"

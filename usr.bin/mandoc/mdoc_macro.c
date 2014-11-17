@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.99 2014/09/07 00:04:47 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.100 2014/11/17 06:44:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/types.h>
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -143,8 +145,7 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ blk_part_exp, MDOC_CALLABLE | MDOC_PARSED | MDOC_EXPLICIT }, /* Eo */
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* Fx */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Ms */
-	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED |
-			MDOC_IGNDELIM | MDOC_JOIN }, /* No */
+	{ in_line, MDOC_CALLABLE | MDOC_PARSED | MDOC_JOIN }, /* No */
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED |
 			MDOC_IGNDELIM | MDOC_JOIN }, /* Ns */
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* Nx */
@@ -623,23 +624,21 @@ dword(struct mdoc *mdoc, int line, int col, const char *p,
 	if ( ! mdoc_word_alloc(mdoc, line, col, p))
 		return(0);
 
-	if (DELIM_OPEN == d)
-		mdoc->last->flags |= MDOC_DELIMO;
-
 	/*
-	 * Closing delimiters only suppress the preceding space
-	 * when they follow something, not when they start a new
-	 * block or element, and not when they follow `No'.
-	 *
-	 * XXX	Explicitly special-casing MDOC_No here feels
-	 *	like a layering violation.  Find a better way
-	 *	and solve this in the code related to `No'!
+	 * If the word consists of a bare delimiter,
+	 * flag the new node accordingly,
+	 * unless doing so was vetoed by the invoking macro.
+	 * Always clear the veto, it is only valid for one word.
 	 */
 
-	else if (DELIM_CLOSE == d && mdoc->last->prev &&
-	    mdoc->last->prev->tok != MDOC_No &&
+	if (d == DELIM_OPEN)
+		mdoc->last->flags |= MDOC_DELIMO;
+	else if (d == DELIM_CLOSE &&
+	    ! (mdoc->flags & MDOC_NODELIMC) &&
 	    mdoc->last->parent->tok != MDOC_Fd)
 		mdoc->last->flags |= MDOC_DELIMC;
+
+	mdoc->flags &= ~MDOC_NODELIMC;
 
 	return(1);
 }
@@ -839,7 +838,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 static int
 in_line(MACRO_PROT_ARGS)
 {
-	int		 la, scope, cnt, mayopen, nc, nl;
+	int		 la, scope, cnt, firstarg, mayopen, nc, nl;
 	enum margverr	 av;
 	enum mdoct	 ntok;
 	enum margserr	 ac;
@@ -890,17 +889,40 @@ in_line(MACRO_PROT_ARGS)
 		return(0);
 	}
 
+	d = DELIM_NONE;
+	firstarg = 1;
 	mayopen = 1;
 	for (cnt = scope = 0;; ) {
 		la = *pos;
 		ac = mdoc_args(mdoc, line, pos, buf, tok, &p);
 
-		if (ARGS_ERROR == ac)
+		if (ac == ARGS_ERROR)
 			return(0);
-		if (ARGS_EOLN == ac)
+
+		/*
+		 * At the end of a macro line,
+		 * opening delimiters do not suppress spacing.
+		 */
+
+		if (ac == ARGS_EOLN) {
+			if (d == DELIM_OPEN)
+				mdoc->last->flags &= ~MDOC_DELIMO;
 			break;
-		if (ARGS_PUNCT == ac)
+		}
+
+		/*
+		 * The rest of the macro line is only punctuation,
+		 * to be handled by append_delims().
+		 * If there were no other arguments,
+		 * do not allow the first one to suppress spacing,
+		 * even if it turns out to be a closing one.
+		 */
+
+		if (ac == ARGS_PUNCT) {
+			if (cnt == 0 && nc == 0)
+				mdoc->flags |= MDOC_NODELIMC;
 			break;
+		}
 
 		ntok = ARGS_QWORD == ac ? MDOC_MAX : lookup(tok, p);
 
@@ -945,20 +967,19 @@ in_line(MACRO_PROT_ARGS)
 		if (DELIM_NONE != d) {
 			/*
 			 * If we encounter closing punctuation, no word
-			 * has been omitted, no scope is open, and we're
+			 * has been emitted, no scope is open, and we're
 			 * allowed to have an empty element, then start
 			 * a new scope.
 			 */
 			if ((d == DELIM_CLOSE ||
 			     (d == DELIM_MIDDLE && tok == MDOC_Fl)) &&
-			    (nc || tok == MDOC_Li) &&
-			    !scope && !cnt && mayopen) {
+			    !cnt && !scope && nc && mayopen) {
 				if ( ! mdoc_elem_alloc(mdoc,
 				    line, ppos, tok, arg))
 					return(0);
 				scope = 1;
 				cnt++;
-				if (MDOC_Li == tok || MDOC_Nm == tok)
+				if (MDOC_Nm == tok)
 					mayopen = 0;
 			}
 			/*
@@ -978,6 +999,15 @@ in_line(MACRO_PROT_ARGS)
 		if ( ! dword(mdoc, line, la, p, d,
 		    MDOC_JOIN & mdoc_macros[tok].flags))
 			return(0);
+
+		/*
+		 * If the first argument is a closing delimiter,
+		 * do not suppress spacing before it.
+		 */
+
+		if (firstarg && d == DELIM_CLOSE && !nc)
+			mdoc->last->flags &= ~MDOC_DELIMC;
+		firstarg = 0;
 
 		/*
 		 * `Fl' macros have their scope re-opened with each new
@@ -1528,8 +1558,6 @@ in_line_argn(MACRO_PROT_ARGS)
 
 	switch (tok) {
 	case MDOC_Ap:
-		/* FALLTHROUGH */
-	case MDOC_No:
 		/* FALLTHROUGH */
 	case MDOC_Ns:
 		/* FALLTHROUGH */

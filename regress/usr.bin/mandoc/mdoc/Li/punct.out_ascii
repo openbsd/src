@@ -4,16 +4,23 @@ NNAAMMEE
      LLii--ppuunncctt - punctuation following a literal macro
 
 DDEESSCCRRIIPPTTIIOONN
-     before. after LLii--ppuunncctt
+     Leading punctuation: (b [b | b . b , b ; b : b ? b ! b ) b ] b
 
-     before . after Nm
+     Trailing punctuation: a ( a [ a | a.  a, a; a: a?  a!  a) a]
 
-     . after LLii--ppuunncctt
+     Middle punctuation: a (b a [b a | b a. b a, b a; b a: b a? b a! b a) b a]
+     b
 
-     . after Nm
+     Isolated punctuation: a (b a [b a | b a . b a , b a ; b a : b a ? b a ! b
+     a ) b a ] b
 
-     .
+     Isolated trailing punctuation: a ( a [ a | a .  a , a ; a : a ?  a !  a )
+     a ]
 
-     .
+     Multiple isolated punctuation: a ([b a )] b
 
-OpenBSD                          April 8, 2010                         OpenBSD
+     Multiple punctuation: [(arg)].
+
+     Quoted: a . b Nm . b Nm .
+
+OpenBSD                        November 17, 2014                       OpenBSD
