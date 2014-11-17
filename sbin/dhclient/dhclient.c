@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.331 2014/11/16 21:05:24 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.332 2014/11/17 16:18:20 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -462,11 +462,6 @@ main(int argc, char *argv[])
 	ifi = calloc(1, sizeof(*ifi));
 	if (ifi == NULL)
 		error("ifi calloc");
-	config = calloc(1, sizeof(*config));
-	if (config == NULL)
-		error("config calloc");
-	TAILQ_INIT(&config->reject_list);
-
 	get_ifname(argv[0]);
 
 	tzset();
@@ -476,6 +471,22 @@ main(int argc, char *argv[])
 	if (setrtable(ifi->rdomain) == -1)
 		error("setting routing table to %u: '%s'", ifi->rdomain,
 		    strerror(errno));
+
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
+	    PF_UNSPEC, socket_fd) == -1)
+		error("socketpair: %s", strerror(errno));
+
+	fork_privchld(socket_fd[0], socket_fd[1]);
+
+	close(socket_fd[0]);
+	if ((unpriv_ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
+		error("no memory for unpriv_ibuf");
+	imsg_init(unpriv_ibuf, socket_fd[1]);
+
+	config = calloc(1, sizeof(*config));
+	if (config == NULL)
+		error("config calloc");
+	TAILQ_INIT(&config->reject_list);
 
 	read_client_conf();	/* Needed for config->link_timeout below! */
 
@@ -514,17 +525,6 @@ main(int argc, char *argv[])
 	/* Register the interface. */
 	if_register_receive();
 	if_register_send();
-
-	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
-	    PF_UNSPEC, socket_fd) == -1)
-		error("socketpair: %s", strerror(errno));
-
-	fork_privchld(socket_fd[0], socket_fd[1]);
-
-	close(socket_fd[0]);
-	if ((unpriv_ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
-		error("no memory for unpriv_ibuf");
-	imsg_init(unpriv_ibuf, socket_fd[1]);
 
 	if (path_dhclient_db == NULL && asprintf(&path_dhclient_db, "%s.%s",
 	    _PATH_DHCLIENT_DB, ifi->name) == -1)
