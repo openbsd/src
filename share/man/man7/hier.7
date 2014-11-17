@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.136 2014/10/09 04:22:20 tedu Exp $
+.\"	$OpenBSD: hier.7,v 1.137 2014/11/17 18:19:08 deraadt Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: October 9 2014 $
+.Dd $Mdocdate: November 17 2014 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -603,8 +603,14 @@ uucp spool directory.
 Commonly ~uucp; public uucp temporary directory.
 .El
 .Pp
-.It tmp/
-Temporary files that are kept between system reboots.
+.It tmp -> ../tmp
+A symbolic link to the system
+.Pa /tmp
+directory.
+To protect other users of
+.Pa /var
+from overfill conditions, this is no longer a space you can trust to
+retain storage over a reboot.
 Periodically cleaned by
 .Xr daily 8 .
 .It unbound/
