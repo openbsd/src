@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.129 2014/11/13 03:56:51 tedu Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.130 2014/11/17 00:15:38 tedu Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -759,8 +759,7 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 
 		sdp->swd_pathlen = len;
 		sdp->swd_path = malloc(sdp->swd_pathlen, M_VMSWAP, M_WAITOK);
-		if (copystr(userpath, sdp->swd_path, sdp->swd_pathlen, 0) != 0)
-			panic("swapctl: copystr");
+		strlcpy(sdp->swd_path, userpath, len);
 
 		/*
 		 * we've now got a FAKE placeholder in the swap list.
@@ -1881,52 +1880,49 @@ swapmount(void)
 	struct vnode *vp;
 	dev_t swap_dev = swdevt[0].sw_dev;
 	char *nam;
+	char path[MNAMELEN + 1];
 
 	/*
 	 * No locking here since we happen to know that we will just be called
 	 * once before any other process has forked.
 	 */
-
 	if (swap_dev == NODEV)
 		return;
 
+#if defined(NFSCLIENT)
+	if (swap_dev == NETDEV) {
+		extern struct nfs_diskless nfs_diskless;
+
+		snprintf(path, sizeof(path), "%s",
+		    nfs_diskless.nd_swap.ndm_host);
+		vp = nfs_diskless.sw_vp;
+		goto gotit;
+	} else
+#endif
+	if (bdevvp(swap_dev, &vp))
+		return;
+
+	/* Construct a potential path to swap */
+	if ((nam = findblkname(major(swap_dev))))
+		snprintf(path, sizeof(path), "/dev/%s%d%c", nam,
+		    DISKUNIT(swap_dev), 'a' + DISKPART(swap_dev));
+	else
+		snprintf(path, sizeof(path), "blkdev0x%x",
+		    swap_dev);
+
+#if defined(NFSCLIENT)
+gotit:
+#endif
 	sdp = malloc(sizeof(*sdp), M_VMSWAP, M_WAITOK|M_ZERO);
 	spp = malloc(sizeof(*spp), M_VMSWAP, M_WAITOK);
 
 	sdp->swd_flags = SWF_FAKE;
 	sdp->swd_dev = swap_dev;
 
-	/* Construct a potential path to swap */
-	sdp->swd_pathlen = MNAMELEN + 1;
+	sdp->swd_pathlen = strlen(path) + 1;
 	sdp->swd_path = malloc(sdp->swd_pathlen, M_VMSWAP, M_WAITOK | M_ZERO);
-#if defined(NFSCLIENT)
-	if (swap_dev == NETDEV) {
-		extern struct nfs_diskless nfs_diskless;
+	strlcpy(sdp->swd_path, path, sdp->swd_pathlen);
 
-		snprintf(sdp->swd_path, sdp->swd_pathlen, "%s",
-		    nfs_diskless.nd_swap.ndm_host);
-		vp = nfs_diskless.sw_vp;
-		goto gotit;
-	} else
-#endif
-	if (bdevvp(swap_dev, &vp)) {
-		free(sdp->swd_path, M_VMSWAP, 0);
-		free(sdp, M_VMSWAP, sizeof(*sdp));
-		free(spp, M_VMSWAP, sizeof(*spp));
-		return;
-	}
-
-	if ((nam = findblkname(major(swap_dev))))
-		snprintf(sdp->swd_path, sdp->swd_pathlen, "/dev/%s%d%c", nam,
-		    DISKUNIT(swap_dev), 'a' + DISKPART(swap_dev));
-	else
-		snprintf(sdp->swd_path, sdp->swd_pathlen, "blkdev0x%x",
-		    swap_dev);
-
-#if defined(NFSCLIENT)
-gotit:
-#endif
-	sdp->swd_pathlen = strlen(sdp->swd_path) + 1;
 	sdp->swd_vp = vp;
 
 	swaplist_insert(sdp, spp, 0);
