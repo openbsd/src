@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.89 2014/08/30 20:33:27 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.90 2014/11/17 13:52:44 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -226,9 +226,8 @@ rc_cmd() {
 		_rc_exit ok
 		;;
 	reload)
-		_rc_do rc_check || exit 0
 		echo $_n "${INRC:+ }${_name}"
-		_rc_do rc_reload || _rc_exit failed
+		_rc_do rc_check && _rc_do rc_reload || _rc_exit failed
 		_rc_do _rc_wait reload || _rc_exit failed
 		_rc_exit ok
 		;;
