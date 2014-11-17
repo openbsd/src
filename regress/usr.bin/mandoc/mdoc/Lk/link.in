@@ -6,9 +6,11 @@
 .Nd formatting of hyperlinks
 .Sh DESCRIPTION
 Here are some web sites of BSD operating systems:
-.br
 .Lk http://www.freebsd.org/ FreeBSD
-.br
 .Lk http://www.netbsd.org/ NetBSD
-.br
+.Lk http://www.openbsd.org/ OpenBSD
+.Sh SEE ALSO
+Here are some web sites of BSD operating systems:
+.Lk http://www.freebsd.org/ FreeBSD
+.Lk http://www.netbsd.org/ NetBSD
 .Lk http://www.openbsd.org/ OpenBSD
