@@ -589,6 +589,7 @@ d_localtime_r=''
 d_localtime_r_needs_tzset=''
 localtime_r_proto=''
 d_locconv=''
+d_lc_monetary_2008=''
 d_lockf=''
 d_longdbl=''
 longdblsize=''
@@ -2795,36 +2796,29 @@ $define|true|[yY]*)
 	*)	case "$lns:$issymlink" in
 		*"ln"*" -s:"*"test -"?)
 			echo "Creating the symbolic links..." >&4
-			echo "(First creating the subdirectories...)" >&4
 			cd ..
-			awk '{print $1}' $src/MANIFEST | grep / | sed 's:/[^/]*$::' | sort -u | while true; do
-				read directory
-				test -z "$directory" && break
-				mkdir -p $directory
-			done
+			awk -v src="$src" '{
+				dir=$1;
+				if (!sub(/\/[^\/]*$/, "", dir)) { dir = "." }
+				mf[dir] = mf[dir]" "src"/"$1;
+			} END {
+				for (d in mf) {
+					if (d != ".") { system("mkdir -p "d) }
+					system("ln -sf "mf[d]" "d);
+				}
+			}' $src/MANIFEST
 			# Sanity check 1.
 			if test ! -d t/base; then
 				echo "Failed to create the subdirectories.  Aborting." >&4
 				exit 1
 			fi
-			echo "(Then creating the symlinks...)" >&4
-			awk '{print $1}' $src/MANIFEST | while true; do
-				read filename
-				test -z "$filename" && break
-				if test -f $filename; then
-					if $issymlink $filename; then
-						rm -f $filename
-					fi
-				fi
-				if test -f $filename; then
-					echo "$filename already exists, not symlinking."
-				else
-					ln -s $src/$filename $filename
-				fi
-			done
 			# Sanity check 2.
 			if test ! -f t/base/lex.t; then
 				echo "Failed to create the symlinks (t/base/lex.t missing).  Aborting." >&4
+				exit 1
+			fi
+			if test ! -f x2p/walk.c; then
+				echo "Failed to create the symlinks (x2p/walk.c missing).  Aborting." >&4
 				exit 1
 			fi
 			cd UU
@@ -5347,6 +5341,25 @@ default|recommended)
 	2.[0-8]*) ;;
 	?*)	set strict-aliasing -fno-strict-aliasing
 		eval $checkccflag
+		;;
+	esac
+	case "$gccversion" in
+	1*) ;;
+	2*) ;;
+	?*) 	echo " "
+		echo "Checking if your compiler accepts -fno-delete-null-pointer-checks" 2>&1
+		echo 'int main(void) { return 0; }' > gcctest.c
+		if $cc -O2 -fno-delete-null-pointer-checks -o gcctest gcctest.c; then
+			echo "Yes, it does." 2>&1
+			case "$ccflags" in
+			*delete-null-pointer-checks*)
+				echo "Leaving current flags $ccflags alone." 2>&1
+				;;
+			*) dflt="$dflt -fno-delete-null-pointer-checks" ;;
+			esac
+		else
+			echo "Nope, it doesn't, but that's ok." 2>&1
+		fi
 		;;
 	esac
 	# For gcc, adding -pipe speeds up compilations for some, but apparently
@@ -15585,6 +15598,27 @@ $rm_try
 set localeconv d_locconv
 eval $inlibc
 
+: see if localtime_r calls tzset
+case "$d_locconv:$d_lc_monetary_2008" in
+define:)
+	$cat >try.c <<EOCP
+#include <locale.h>
+int main() {
+	struct lconv *lc = localeconv();
+	char int_p_cs_precedes = lc->int_p_cs_precedes;
+	return 0;
+}
+EOCP
+	set try
+	if eval $compile; then
+		d_lc_monetary_2008="$define"
+	else
+		d_lc_monetary_2008="$undef"
+	fi;
+	$rm_try
+	;;
+esac
+
 : see if lockf exists
 set lockf d_lockf
 eval $inlibc
@@ -22393,6 +22427,7 @@ xs_extensions=''
 find_extensions='
     for xxx in *; do
 	case "$xxx" in
+	    CVS) ;;
 	    DynaLoader|dynaload) ;;
 	    *)
 	    this_ext=`echo $xxx | $sed -e s/-/\\\//g`;
@@ -22620,6 +22655,8 @@ esac
 nonxs_ext=''
 for xxx in $nonxs_extensions ; do
 	case "$xxx" in
+	CVS|RCS|SCCS|.svn)
+		;;
 	VMS*)
 		;;
 	*)	nonxs_ext="$nonxs_ext $xxx"
@@ -23179,6 +23216,7 @@ d_localtime64='$d_localtime64'
 d_localtime_r='$d_localtime_r'
 d_localtime_r_needs_tzset='$d_localtime_r_needs_tzset'
 d_locconv='$d_locconv'
+d_lc_monetary_2008='$d_lc_monetary_2008'
 d_lockf='$d_lockf'
 d_longdbl='$d_longdbl'
 d_longlong='$d_longlong'

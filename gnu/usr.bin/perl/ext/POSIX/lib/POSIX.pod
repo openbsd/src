@@ -848,6 +848,12 @@ Here is how to query the database for the B<de> (Deutsch or German) locale.
 		n_sep_by_space
 		p_sign_posn
 		n_sign_posn
+		int_p_cs_precedes
+		int_p_sep_by_space
+		int_n_cs_precedes
+		int_n_sep_by_space
+		int_p_sign_posn
+		int_n_sign_posn
 	))
 	{
 		printf qq(%s: "%s",\n),

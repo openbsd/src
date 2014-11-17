@@ -596,6 +596,11 @@ sub pod2text {
     }
 }
 
+sub begin_pod {
+    my $self = shift;
+    $$self{EXCLUDE} = 0;
+    $$self{VERBATIM} = 0;
+}
 
 ############################################################################
 # Module return value and documentation

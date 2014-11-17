@@ -1,4 +1,4 @@
-Digest::MD5 cpan/Digest-MD5/t/files.t bdbe05b705d9da305fedce7a9f4b6ba63250c7cf
+Digest::MD5 cpan/Digest-MD5/t/files.t c1417867017210ce3d199eb9d55d8ef61fdf1a83
 Encode cpan/Encode/bin/enc2xs f60036fd3574ec05c9aab7f4db00a828d5dea92d
 Encode cpan/Encode/Byte/Makefile.PL 0986e25f981a3bf182a13a0060d28d4efedd87e6
 Encode cpan/Encode/CN/Makefile.PL 5507a49d822d0c1d14e967f4595e29e9c873540b

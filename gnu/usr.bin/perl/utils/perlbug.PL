@@ -345,15 +345,14 @@ sub Query {
 This program provides an easy way to send a thank-you message back to the
 authors and maintainers of perl.
 
-If you wish to submit a bug report, please run it without the -T flag
-(or run the program perlbug rather than perlthanks)
+If you wish to submit a bug report, please run it without the -T flag.
 EOF
 	} else {
 	    paraprint <<"EOF";
 This program provides an easy way to create a message reporting a
 bug in the core perl distribution (along with tests or patches)
 to the volunteers who maintain perl at $address.  To send a thank-you
-note to $thanksaddress instead of a bug report, please run 'perlthanks'.
+note to $thanksaddress instead of a bug report, please use the -T flag.
 
 Please do not use $0 to send test messages, test whether perl
 works, or to report bugs in perl modules from CPAN.
@@ -1244,8 +1243,6 @@ S<[ B<-S> ]> S<[ B<-t> ]>  S<[ B<-d> ]>  S<[ B<-A> ]>  S<[ B<-h> ]> S<[ B<-T> ]>
 B<perlbug> S<[ B<-v> ]> S<[ B<-r> I<returnaddress> ]>
  S<[ B<-A> ]> S<[ B<-ok> | B<-okay> | B<-nok> | B<-nokay> ]>
 
-B<perlthanks>
-
 =head1 DESCRIPTION
 
 
@@ -1398,8 +1395,8 @@ description of what's wrong is fine.
 
 =item Can you use C<perlbug> to submit a thank-you note?
 
-Yes, you can do this by either using the C<-T> option, or by invoking
-the program as C<perlthanks>. Thank-you notes are good. It makes people
+Yes, you can do this by using the C<-T> option.
+Thank-you notes are good. It makes people
 smile. 
 
 =back

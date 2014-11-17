@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.95 2014/05/29 05:43:06 guenther Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.96 2014/11/17 21:00:55 afresh1 Exp $
 #
-# Build wrapper for Perl 5.16.2
+# Build wrapper for Perl 5.20.1-RC2
 #
 
 # For ``NOMAN''
@@ -52,7 +52,7 @@ STRIPFLAGS='-s'
 
 GEN_AFTER= 	bitcount.h config.h mg_data.h uudmap.h cflags makedepend \
 		myconfig Makefile Policy.sh pod/Makefile \
-		x2p/Makefile x2p/cflags
+		x2p/Makefile
 
 GENERATED=	config.sh ${GEN_AFTER}
 
@@ -68,7 +68,7 @@ man.build: perl.build
 beforedepend: config.sh config.h bitcount.h mg_data.h uudmap.h Makefile makedepend x2p/Makefile
 	cd ${.OBJDIR} && exec ${MAKE} depend
 
-perl.build:	perl.lib
+perl.build:	perl.lib DynaLoader.c
 	cd ${.OBJDIR} && exec ${MAKE}
 
 config.sh:	${.CURDIR}/config.over
@@ -91,16 +91,13 @@ bitcount.h: generate_uudmap
 	./generate_uudmap uudmap.h bitcount.h mg_data.h
 
 generate_uudmap: generate_uudmap.o
-	${CC} -o generate_uudmap generate_uudmap.o
+	${CC} ${CPPFLAGS} ${CFLAGS} -o generate_uudmap generate_uudmap.o
 
 pod/Makefile:
 	cd ${.OBJDIR}/pod && exec /bin/sh Makefile.SH
 
 x2p/Makefile:
 	cd ${.OBJDIR}/x2p && exec /bin/sh Makefile.SH
-
-x2p/cflags:
-	cd ${.OBJDIR}/x2p && exec /bin/sh cflags.SH
 
 # Never try to regenerate perly.c or perly.h
 perly.c perly.h: perly.y
@@ -118,7 +115,7 @@ install: install.lib install.perl maninstall
 install.perl:
 	cd ${.OBJDIR}; INSTALL=${INSTALL} INSTALL_COPY=${INSTALL_COPY} \
 	 STRIPFLAGS=${STRIPFLAGS} INSTALLFLAGS=-o NOLIBINSTALL=1 \
-	 LD_LIBRARY_PATH=${.OBJDIR} exec ./perl installperl --destdir=${DESTDIR} -o STRIPFLAGS=${STRIPFLAGS}
+	 LD_LIBRARY_PATH=${.OBJDIR} exec ./perl installperl --destdir=${DESTDIR} -o ${STRIPFLAGS}
 
 test:
 	-@if [ -e Makefile ]; then ${MAKE} test; fi
@@ -160,8 +157,8 @@ CFLAGS+= -fno-tree-ter
 .endif
 
 # The DynaLoader extension is now compiled statically into libperl
-miniperl: ${GENERATED} ${SRCS1:S/.c/.o/g} opmini.o miniperl.o miniperlmain.o
-	${CC} -o miniperl ${SRCS1:S/.c/.o/g} opmini.o miniperl.o miniperlmain.o ${LDFLAGS} -lm -lpthread
+miniperl: ${GENERATED} ${SRCS1:S/.c/.o/g} caretx.o opmini.o perlmini.o miniperlmain.o
+	${CC} ${CPPFLAGS} ${CFLAGS} -o $@ ${SRCS1:S/.c/.o/g} caretx.o opmini.o perlmini.o miniperlmain.o ${LDFLAGS} -lm -lutil
 
 opmini.c: op.c
 	rm -f opmini.c
@@ -170,8 +167,11 @@ opmini.c: op.c
 opmini.o: opmini.c
 	${CC} ${CPPFLAGS} ${CFLAGS} -DPERL_EXTERNAL_GLOB -c  $> -o $@
 
-miniperl.o: perl.c
-	${CC} ${CPPFLAGS} ${CFLAGS} -DPERL_EXTERNAL_GLOB -DPERL_IS_MINIPERL -c  $> -o $@
+caretx.o: caretx.c
+	${CC} ${CPPFLAGS} ${CFLAGS} -DPERL_EXTERNAL_GLOB -c  $> -o $@
+
+perlmini.o: perlmini.c
+	${CC} ${CPPFLAGS} ${CFLAGS} -DPERL_EXTERNAL_GLOB -DPERL_IS_MINIPERL -c $> -o $@
 
 lib/Config.pm: miniperl config.sh
 	cd ${.OBJDIR} && exec ${MAKE} preplibrary

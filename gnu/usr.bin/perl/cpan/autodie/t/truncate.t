@@ -6,13 +6,12 @@ use File::Temp qw(tempfile);
 use IO::Handle;
 use File::Spec;
 use FindBin qw($Bin);
-use constant TRUNCATE_ME => File::Spec->catfile($Bin,'truncate_me');
 
-my ($truncate_status, $tmpfh);
+my ($truncate_status, $tmpfh, $tmpfile);
 
 # Some systems have a screwy tempfile. We don't run our tests there.
 eval {
-    $tmpfh = tempfile();
+    ($tmpfh, $tmpfile) = tempfile();
 };
 
 if ($@ or !defined $tmpfh) {
@@ -80,7 +79,7 @@ isa_ok($@, 'autodie::exception', "Truncating unopened file (TRUNCATE_FH)");
 # wrong with our tests, or autodie...
 {
     use autodie qw(open);
-    open(TRUNCATE_FH, '+<', TRUNCATE_ME);
+    open(TRUNCATE_FH, '+<', $tmpfile);
 }
 
 # Now try truncating the filehandle. This should succeed.

@@ -23,6 +23,12 @@ use File::Spec::Functions;
 # Exceptions that are found in dual-life bin dirs but aren't
 # installed by default; some occur only during testing:
 my $not_installed = qr{^(?:
+  \.\./cpan/Archive-Tar/bin/ptar.*
+   |
+  \.\./cpan/JSON-PP/bin/json_pp
+   |
+  \.\./cpan/IO-Compress/bin/zipdetails
+   |
   \.\./cpan/Encode/bin/u(?:cm(?:2table|lint|sort)|nidump)
    |
   \.\./cpan/Module-(?:Metadata|Build)

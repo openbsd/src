@@ -1493,6 +1493,9 @@ use File::Glob qw(:case);
                 lib/vmsish.{pm,t}
                 ],
     },
+    'openbsd' => {
+        'FILES'      => q[lib/Config_git.pl],
+    },
 );
 
 # legacy CPAN flag

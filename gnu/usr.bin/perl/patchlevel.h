@@ -134,6 +134,7 @@ hunk.
 static const char * const local_patches[] = {
 	NULL
 #ifdef PERL_GIT_UNCOMMITTED_CHANGES
+	,"CVE-2014-4330"
 	,"uncommitted-changes"
 #endif
 	PERL_GIT_UNPUSHED_COMMITS    	/* do not remove this line */

@@ -190,7 +190,7 @@ __END__
 
 =head1 NAME
 
-NEXT.pm - Provide a pseudo-class NEXT (et al) that allows method redispatch
+NEXT - Provide a pseudo-class NEXT (et al) that allows method redispatch
 
 
 =head1 SYNOPSIS

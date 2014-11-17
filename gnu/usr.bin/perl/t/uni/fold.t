@@ -432,7 +432,7 @@ foreach my $test_ref (@CF) {
         utf8::upgrade($utf8);
         is(fc($latin1), fc($utf8), "fc() gives the same results for \\x{$_} in Latin-1 and UTF-8 under unicode_strings");
         SKIP: {
-              skip 'No locale testing without d_setlocale', 2 if(!$Config{d_setlocale});
+              skip 'No locale testing without d_setlocale', 2 if(!$Config{d_setlocale}) || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/;
               BEGIN {
                   if($Config{d_setlocale}) {
                       require locale; import locale;
@@ -441,7 +441,13 @@ foreach my $test_ref (@CF) {
             is(fc($latin1), lc($latin1), "use locale; fc(qq{\\x{$_}}), lc(qq{\\x{$_}}) when qq{\\x{$_}} is in latin-1");
             is(fc($utf8), lc($utf8), "use locale; fc(qq{\\x{$_}}), lc(qq{\\x{$_}}) when qq{\\x{$_}} is in latin-1");
         }
-        {
+        SKIP: {
+            if (
+                !$Config::Config{d_setlocale}
+            || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
+            ) {
+                skip "no locale support", 2
+            }
             no feature 'unicode_strings';
             is(fc($latin1), lc($latin1), "under nothing, fc() for <256 is the same as lc");
         }

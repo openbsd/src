@@ -35,9 +35,9 @@ print $fh <<'EOT';
 # Files to be built with variable substitution after miniperl is
 # available.  Dependencies handled manually below (for now).
 
-pl = c2ph.PL config_data.PL corelist.PL cpan.PL h2ph.PL h2xs.PL instmodsh.PL json_pp.PL perlbug.PL perldoc.PL perlivp.PL pl2pm.PL prove.PL ptar.PL ptardiff.PL ptargrep.PL shasum.PL splain.PL libnetcfg.PL piconv.PL enc2xs.PL xsubpp.PL pod2html.PL zipdetails.PL
-plextract = c2ph config_data corelist cpan h2ph h2xs instmodsh json_pp perlbug perldoc perlivp pl2pm prove ptar ptardiff ptargrep shasum splain libnetcfg piconv enc2xs xsubpp pod2html zipdetails
-plextractexe = ./c2ph ./config_data ./corelist ./cpan ./h2ph ./h2xs ./json_pp ./instmodsh ./perlbug ./perldoc ./perlivp ./pl2pm ./prove ./ptar ./ptardiff ./ptargrep ./shasum ./splain ./libnetcfg ./piconv ./enc2xs ./xsubpp ./pod2html ./zipdetails
+pl = c2ph.PL config_data.PL corelist.PL cpan.PL h2ph.PL h2xs.PL instmodsh.PL perlbug.PL perldoc.PL perlivp.PL pl2pm.PL prove.PL splain.PL libnetcfg.PL piconv.PL enc2xs.PL xsubpp.PL pod2html.PL
+plextract = c2ph config_data corelist cpan h2ph h2xs instmodsh perlbug perldoc perlivp pl2pm prove splain libnetcfg piconv enc2xs xsubpp pod2html
+plextractexe = ./c2ph ./config_data ./corelist ./cpan ./h2ph ./h2xs ./instmodsh ./perlbug ./perldoc ./perlivp ./pl2pm ./prove ./splain ./libnetcfg ./piconv ./enc2xs ./xsubpp ./pod2html
 
 all: $(plextract) 
 
@@ -58,8 +58,6 @@ h2xs:		h2xs.PL ../config.sh
 
 instmodsh:	instmodsh.PL ../config.sh
 
-json_pp:	json_pp.PL ../config.sh
-
 perlbug:	perlbug.PL ../config.sh ../patchlevel.h
 
 perldoc:	perldoc.PL ../config.sh
@@ -68,15 +66,7 @@ perlivp:	perlivp.PL ../config.sh
 
 prove:		prove.PL ../config.sh
 
-ptar:		ptar.PL ../config.sh
-
-ptardiff:	ptardiff.PL ../config.sh
-
-ptargrep:	ptargrep.PL ../config.sh
-
 pl2pm:		pl2pm.PL ../config.sh
-
-shasum:		shasum.PL ../config.sh
 
 splain:		splain.PL ../config.sh ../lib/diagnostics.pm
 
@@ -87,8 +77,6 @@ piconv:		piconv.PL ../config.sh
 enc2xs:		enc2xs.PL ../config.sh
 
 xsubpp:		xsubpp.PL ../config.sh
-
-zipdetails:	zipdetails.PL ../config.sh
 
 pod2html:	pod2html.PL ../config.sh ../ext/Pod-Html/bin/pod2html
 
